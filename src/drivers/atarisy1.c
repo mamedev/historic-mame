@@ -491,7 +491,7 @@ static OPBASE_HANDLER( indytemp_setopbase )
 
 static MEMORY_READ16_START( main_readmem )
 	{ 0x000000, 0x087fff, MRA16_ROM },
-	{ 0x2e0000, 0x2e0001, atarisys1_int3state_r },
+	{ 0x2e0000, 0x2e0001, atarisy1_int3state_r },
 	{ 0x400000, 0x401fff, MRA16_RAM },
 	{ 0x900000, 0x9fffff, MRA16_RAM },
 	{ 0xa00000, 0xa03fff, MRA16_RAM },
@@ -507,20 +507,21 @@ MEMORY_END
 static MEMORY_WRITE16_START( main_writemem )
 	{ 0x000000, 0x087fff, MWA16_ROM },
 	{ 0x400000, 0x401fff, MWA16_RAM },
-	{ 0x800000, 0x800001, atarisys1_hscroll_w },
-	{ 0x820000, 0x820001, atarisys1_vscroll_w },
-	{ 0x840000, 0x840001, atarisys1_priority_w },
-	{ 0x860000, 0x860001, atarisys1_bankselect_w },
+	{ 0x800000, 0x800001, atarisy1_xscroll_w, &atarigen_xscroll },
+	{ 0x820000, 0x820001, atarisy1_yscroll_w, &atarigen_yscroll },
+	{ 0x840000, 0x840001, atarisy1_priority_w },
+	{ 0x860000, 0x860001, atarisy1_bankselect_w, &atarisy1_bankselect },
 	{ 0x880000, 0x880001, watchdog_reset16_w },
 	{ 0x8a0000, 0x8a0001, atarigen_video_int_ack_w },
 	{ 0x8c0000, 0x8c0001, atarigen_eeprom_enable_w },
 	{ 0x900000, 0x9fffff, MWA16_RAM },
-	{ 0xa00000, 0xa01fff, ataripf_0_simple_w, &ataripf_0_base },
-	{ 0xa02000, 0xa02fff, atarisys1_spriteram_w, &atarimo_0_spriteram },
-	{ 0xa03000, 0xa03fff, atarian_0_vram_w, &atarian_0_base },
+	{ 0xa00000, 0xa01fff, atarigen_playfield_w, &atarigen_playfield },
+	{ 0xa02000, 0xa02fff, atarisy1_spriteram_w, &atarimo_0_spriteram },
+	{ 0xa03000, 0xa03fff, atarigen_alpha_w, &atarigen_alpha },
 	{ 0xb00000, 0xb007ff, paletteram16_IIIIRRRRGGGGBBBB_word_w, &paletteram16 },
 	{ 0xf00000, 0xf00fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0xf40000, 0xf4001f, joystick_w },
+	{ 0xf80000, 0xf80001, atarigen_sound_w },	/* used by roadbls2 */
 	{ 0xfe0000, 0xfe0001, atarigen_sound_w },
 MEMORY_END
 
@@ -820,23 +821,23 @@ static MACHINE_DRIVER_START( atarisy1 )
 	MDRV_CPU_ADD(M68010, ATARI_CLOCK_14MHz/2)
 	MDRV_CPU_MEMORY(main_readmem,main_writemem)
 	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
-	
+
 	MDRV_CPU_ADD(M6502, ATARI_CLOCK_14MHz/8)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	MDRV_MACHINE_INIT(atarisy1)
 	MDRV_NVRAM_HANDLER(atarigen)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_NEEDS_6BITS_PER_GUN)
 	MDRV_SCREEN_SIZE(42*8, 30*8)
 	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024)
-	
+
 	MDRV_VIDEO_START(atarisy1)
 	MDRV_VIDEO_UPDATE(atarisy1)
 

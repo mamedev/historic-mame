@@ -695,19 +695,6 @@ INPUT_PORTS_START( berabohm )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
 INPUT_PORTS_END
 
-
-
-static struct GfxLayout charlayout =
-{
-	8,8,	/* 8*8 characters */
-	16384,	/* 16384 characters max */
-	1,		/* 1 bit per pixel */
-	{ 0 },	/* bitplanes offset */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8 	/* every char takes 8 consecutive bytes */
-};
-
 static struct GfxLayout tilelayout =
 {
 	8,8,	/* 8*8 characters */
@@ -738,7 +725,6 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,		 0,   1 },	/* character mask */
 	{ REGION_GFX2, 0, &tilelayout,	128*16,   6 },	/* characters */
 	{ REGION_GFX3, 0, &spritelayout,	 0, 128 },	/* sprites 32/16/8/4 dots */
 	{ -1 } /* end of array */
@@ -953,7 +939,7 @@ ROM_START( shadowld )
 	ROM_LOAD( "yd_voi-1.bin",		0x30000, 0x20000, 0x7809035c ) // yd1.v1 + yd1.v4
 	ROM_LOAD( "yd_voi-2.bin",		0x50000, 0x20000, 0x73bffc16 ) // yd1.v2 + yd1.v5
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "yd_chr-8.bin",		0x00000, 0x20000, 0x0c8e69d0 )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -1005,7 +991,7 @@ ROM_START( youkaidk )
 	ROM_LOAD( "yd_voi-1.bin",		0x30000, 0x20000, 0x7809035c ) // yd1.v1 + yd1.v4
 	ROM_LOAD( "yd_voi-2.bin",		0x50000, 0x20000, 0x73bffc16 ) // yd1.v2 + yd1.v5
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "yd_chr-8.bin",		0x00000, 0x20000, 0x0c8e69d0 )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -1056,7 +1042,7 @@ ROM_START( yokaidko )
 	ROM_LOAD( "yd_voi-1.bin",		0x30000, 0x20000, 0x7809035c ) // yd1.v1 + yd1.v4
 	ROM_LOAD( "yd_voi-2.bin",		0x50000, 0x20000, 0x73bffc16 ) // yd1.v2 + yd1.v5
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "yd_chr-8.bin",		0x00000, 0x20000, 0x0c8e69d0 )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -1109,7 +1095,7 @@ ROM_START( dspirit )
 	ROM_LOAD( "ds_voi-3.bin",		0x70000, 0x20000, 0x13e84c7e )
 	ROM_LOAD( "ds_voi-4.bin",		0x90000, 0x20000, 0x34fbb8cd )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "ds_chr-8.bin",		0x00000, 0x20000, 0x946eb242 )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -1162,7 +1148,7 @@ ROM_START( dspirito )
 	ROM_LOAD( "ds_voi-3.bin",		0x70000, 0x20000, 0x13e84c7e )
 	ROM_LOAD( "ds_voi-4.bin",		0x90000, 0x20000, 0x34fbb8cd )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "ds_chr-8.bin",		0x00000, 0x20000, 0x946eb242 )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -1214,7 +1200,7 @@ ROM_START( blazer )
 	ROM_LOAD( "bz_voi-3.bin",		0x70000, 0x20000, 0x26cfc510 )
 	ROM_LOAD( "bz_voi-4.bin",		0x90000, 0x20000, 0xd206b1bd )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "bz_chr-8.bin",		0x00000, 0x20000, 0xdb28bfca )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -1256,7 +1242,7 @@ ROM_START( quester )
 	ROM_LOAD( "ns1-mcu.bin",		0x0f000, 0x01000, 0xffb5c0bd )
 	ROM_LOAD_HS( "qs1_v0.bin",		0x10000, 0x10000, 0x6a2f3038 )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "qs1_c8.bin", 		0x00000, 0x10000, 0x06730d54 )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -1291,7 +1277,7 @@ ROM_START( pacmania )
 	ROM_LOAD( "ns1-mcu.bin",		0x0f000, 0x01000, 0xffb5c0bd )
 	ROM_LOAD_HS( "pnx_v0.bin",		0x10000, 0x10000, 0x1ad5788f )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "pn1_c8.bin",			0x00000, 0x10000, 0xf3afd65d )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -1327,7 +1313,7 @@ ROM_START( pacmanij )
 	ROM_LOAD( "ns1-mcu.bin",		0x0f000, 0x01000, 0xffb5c0bd )
 	ROM_LOAD_HS( "pn1_v0.bin",		0x10000, 0x10000, 0xe2689f79 )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "pn1_c8.bin",			0x00000, 0x10000, 0xf3afd65d )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -1371,7 +1357,7 @@ ROM_START( galaga88 )
 	ROM_LOAD_HS( "g81_v4.bin",		0x90000, 0x10000, 0xac0279a7 )
 	ROM_LOAD_HS( "g81_v5.bin",		0xb0000, 0x10000, 0x014ddba1 )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "g8_chr-8.bin",		0x00000, 0x20000, 0x3862ed0a )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -1418,7 +1404,7 @@ ROM_START( galag88b )
 	ROM_LOAD_HS( "g81_v4.bin",		0x90000, 0x10000, 0xac0279a7 )
 	ROM_LOAD_HS( "g81_v5.bin",		0xb0000, 0x10000, 0x014ddba1 )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "g8_chr-8.bin",		0x00000, 0x20000, 0x3862ed0a )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -1466,7 +1452,7 @@ ROM_START( galag88j )
 	ROM_LOAD_HS( "g81_v4.bin",		0x90000, 0x10000, 0xac0279a7 )
 	ROM_LOAD_HS( "g81_v5.bin",		0xb0000, 0x10000, 0x014ddba1 )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "g8_chr-8.bin",		0x00000, 0x20000, 0x3862ed0a )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -1509,7 +1495,7 @@ ROM_START( ws )
 	ROM_LOAD_HS( "ws1_voi0.bin",	0x10000, 0x10000, 0xf6949199 )
 	ROM_LOAD( "ws_voi-1.bin", 		0x30000, 0x20000, 0x210e2af9 )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "ws_chr-8.bin", 		0x00000, 0x20000, 0xd1897b9b )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -1554,7 +1540,7 @@ ROM_START( berabohm )
 	ROM_LOAD(	 "bm_voi-1.bin",	0x30000, 0x20000, 0xbe9ce0a8 )
 	ROM_LOAD_HS( "bm1_v2.bin",		0x50000, 0x10000, 0x41225d04 )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "bm_chr-8.bin",		0x00000, 0x20000, 0x92860e95 )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -1602,7 +1588,7 @@ ROM_START( beraboho )
 	ROM_LOAD(	 "bm_voi-1.bin",	0x30000, 0x20000, 0xbe9ce0a8 )
 	ROM_LOAD_HS( "bm1_v2.bin",		0x50000, 0x10000, 0x41225d04 )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "bm_chr-8.bin",		0x00000, 0x20000, 0x92860e95 )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -1651,7 +1637,7 @@ ROM_START( mmaze )
 	ROM_CONTINUE(					0x10000, 0x10000 )
 	ROM_LOAD( "mm_voi-1.bin",		0x30000, 0x20000, 0xd09b5830 )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "mm_chr-8.bin",		0x00000, 0x20000, 0xa3784dfe )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -1697,7 +1683,7 @@ ROM_START( bakutotu )
 	ROM_LOAD( "ns1-mcu.bin",		0x0f000, 0x01000, 0xffb5c0bd )
 	ROM_LOAD_HS( "bk1_v0.bin",		0x10000, 0x10000, 0x008e290e )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "bk_chr-8.bin",		0x00000, 0x20000, 0x6c8d4029 )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -1739,7 +1725,7 @@ ROM_START( wldcourt )
 	ROM_LOAD_HS( "wc1_voi0.bin",	0x10000, 0x10000, 0xb57919f7 )
 	ROM_LOAD( "wc1_voi1.bin",		0x30000, 0x20000, 0x97974b4b )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "wc1_chr8.bin",		0x00000, 0x20000, 0x23e1c399 )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -1787,7 +1773,7 @@ ROM_START( splatter )
 	ROM_LOAD( "sh_voi-2.bin",		0x50000, 0x20000, 0x25ea75b6 )
 	ROM_LOAD( "sh_voi-3.bin",		0x70000, 0x20000, 0x5eebcdb4 )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "sh_chr-8.bin",		0x00000, 0x20000, 0x321f483b )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -1831,7 +1817,7 @@ ROM_START( faceoff )
 	ROM_LOAD_HS( "fo1_v0.bin",		0x10000, 0x10000, 0xe6edf63e )
 	ROM_LOAD_HS( "fo1_v1.bin",		0x30000, 0x10000, 0x132a5d90 )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "fo1_c8.bin", 		0x00000, 0x10000, 0xd397216c )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -1872,7 +1858,7 @@ ROM_START( rompers )
 	ROM_LOAD( "rp_voi-0.bin",		0x20000, 0x10000, 0x11caef7e )
 	ROM_CONTINUE(					0x10000, 0x10000 )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "rp1_chr8.bin",		0x00000, 0x10000, 0x69cfe46a )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -1915,7 +1901,7 @@ ROM_START( romperso )
 	ROM_LOAD( "rp_voi-0.bin",		0x20000, 0x10000, 0x11caef7e )
 	ROM_CONTINUE(					0x10000, 0x10000 )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "rp1_chr8.bin",		0x00000, 0x10000, 0x69cfe46a )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -1960,7 +1946,7 @@ ROM_START( blastoff )
 	ROM_LOAD( "bo_voi-1.bin",		0x30000, 0x20000, 0x0308b18e )
 	ROM_LOAD( "bo_voi-2.bin",		0x50000, 0x20000, 0x88cab230 )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "bo_chr-8.bin",		0x00000, 0x20000, 0xe8b5f2d4 )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -2005,7 +1991,7 @@ ROM_START( ws89 )
 	ROM_LOAD_HS( "ws1_voi0.bin",	0x10000, 0x10000, 0xf6949199 )
 	ROM_LOAD( "ws_voi-1.bin", 		0x30000, 0x20000, 0x210e2af9 )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "ws_chr-8.bin", 		0x00000, 0x20000, 0xd1897b9b )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -2047,7 +2033,7 @@ ROM_START( dangseed )
 	ROM_LOAD( "dr_voi-0.bin",		0x20000, 0x10000, 0xde4fdc0e )
 	ROM_CONTINUE(					0x10000, 0x10000 )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "dr_chr-8.bin",		0x00000, 0x20000, 0x0fbaa10e )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -2090,7 +2076,7 @@ ROM_START( ws90 )
 	ROM_LOAD_HS( "ws1_voi0.bin",	0x10000, 0x10000, 0xf6949199 )
 	ROM_LOAD( "ws_voi-1.bin", 		0x30000, 0x20000, 0x210e2af9 )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "ws_chr-8.bin", 		0x00000, 0x20000, 0xd1897b9b )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -2134,7 +2120,7 @@ ROM_START( pistoldm )
 	ROM_LOAD( "pd_voi-2.bin",		0x50000, 0x20000, 0xe783f0c4 )
 
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "pd_chr-8.bin",		0x00000, 0x20000, 0xa5f516db )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -2176,7 +2162,7 @@ ROM_START( boxyboy )
 	ROM_LOAD( "ns1-mcu.bin",		0x0f000, 0x01000, 0xffb5c0bd )
 	ROM_LOAD_HS( "sb1_voi0.bin",	0x10000, 0x10000, 0x63d9cedf )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "sb1_chr8.bin",		0x00000, 0x10000, 0x5692b297 )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -2210,7 +2196,7 @@ ROM_START( soukobdx )
 	ROM_LOAD( "ns1-mcu.bin",		0x0f000, 0x01000, 0xffb5c0bd )
 	ROM_LOAD_HS( "sb1_voi0.bin",	0x10000, 0x10000, 0x63d9cedf )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "sb1_chr8.bin",		0x00000, 0x10000, 0x5692b297 )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -2245,7 +2231,7 @@ ROM_START( puzlclub )
 	ROM_LOAD( "ns1-mcu.bin",		0x0f000, 0x01000, 0xffb5c0bd )
 	/* no voices */
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "pc1-c8.bin", 		0x00000, 0x20000, 0x4e196bcd )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -2286,7 +2272,7 @@ ROM_START( tankfrce )
 	ROM_CONTINUE(					0x10000, 0x10000 )
 	ROM_LOAD( "tf1_voi1.bin",		0x30000, 0x20000, 0x615d09cd )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "tf1_chr8.bin",		0x00000, 0x20000, 0x7d53b31e )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
@@ -2327,7 +2313,7 @@ ROM_START( tankfrcj )
 	ROM_CONTINUE(					0x10000, 0x10000 )
 	ROM_LOAD( "tf1_voi1.bin",		0x30000, 0x20000, 0x615d09cd )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )  /* character mask */
 	ROM_LOAD( "tf1_chr8.bin",		0x00000, 0x20000, 0x7d53b31e )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */

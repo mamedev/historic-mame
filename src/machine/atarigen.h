@@ -7,9 +7,7 @@
 ##########################################################################*/
 
 #include "driver.h"
-#include "vidhrdw/ataripf.h"
 #include "vidhrdw/atarimo.h"
-#include "vidhrdw/atarian.h"
 #include "vidhrdw/atarirle.h"
 
 #ifndef __MACHINE_ATARIGEN__
@@ -57,16 +55,32 @@ struct atarivc_state_desc
 	GLOBALS
 ##########################################################################*/
 
-extern int 				atarigen_scanline_int_state;
-extern int 				atarigen_sound_int_state;
-extern int 				atarigen_video_int_state;
+extern UINT8			atarigen_scanline_int_state;
+extern UINT8			atarigen_sound_int_state;
+extern UINT8			atarigen_video_int_state;
 
 extern const data16_t *	atarigen_eeprom_default;
 extern data16_t *		atarigen_eeprom;
 extern size_t 			atarigen_eeprom_size;
 
-extern int 				atarigen_cpu_to_sound_ready;
-extern int 				atarigen_sound_to_cpu_ready;
+extern UINT8			atarigen_cpu_to_sound_ready;
+extern UINT8			atarigen_sound_to_cpu_ready;
+
+extern data16_t *		atarigen_playfield;
+extern data16_t *		atarigen_playfield2;
+extern data16_t *		atarigen_playfield_upper;
+extern data16_t *		atarigen_alpha;
+extern data16_t *		atarigen_alpha2;
+extern data16_t *		atarigen_xscroll;
+extern data16_t *		atarigen_yscroll;
+
+extern data32_t *		atarigen_playfield32;
+extern data32_t *		atarigen_alpha32;
+
+extern struct tilemap *	atarigen_playfield_tilemap;
+extern struct tilemap *	atarigen_playfield2_tilemap;
+extern struct tilemap *	atarigen_alpha_tilemap;
+extern struct tilemap *	atarigen_alpha2_tilemap;
 
 extern data16_t *		atarivc_data;
 extern data16_t *		atarivc_eof_data;
@@ -171,7 +185,7 @@ void atarigen_set_oki6295_vol(int volume);
 	VIDEO CONTROLLER
 ---------------------------------------------------------------*/
 
-void atarivc_reset(data16_t *eof_data);
+void atarivc_reset(data16_t *eof_data, int playfields);
 void atarivc_update(const data16_t *data);
 
 WRITE16_HANDLER( atarivc_w );
@@ -182,6 +196,26 @@ INLINE void atarivc_update_pf_xscrolls(void)
 	atarivc_state.pf0_xscroll = atarivc_state.pf0_xscroll_raw + ((atarivc_state.pf1_xscroll_raw) & 7);
 	atarivc_state.pf1_xscroll = atarivc_state.pf1_xscroll_raw + 4;
 }
+
+
+/*---------------------------------------------------------------
+	PLAYFIELD/ALPHA MAP HELPERS
+---------------------------------------------------------------*/
+
+WRITE16_HANDLER( atarigen_alpha_w );
+WRITE32_HANDLER( atarigen_alpha32_w );
+WRITE16_HANDLER( atarigen_alpha2_w );
+void atarigen_set_playfield_latch(int data);
+void atarigen_set_playfield2_latch(int data);
+WRITE16_HANDLER( atarigen_playfield_w );
+WRITE32_HANDLER( atarigen_playfield32_w );
+WRITE16_HANDLER( atarigen_playfield_large_w );
+WRITE16_HANDLER( atarigen_playfield_upper_w );
+WRITE16_HANDLER( atarigen_playfield_dual_upper_w );
+WRITE16_HANDLER( atarigen_playfield_latched_lsb_w );
+WRITE16_HANDLER( atarigen_playfield_latched_msb_w );
+WRITE16_HANDLER( atarigen_playfield2_w );
+WRITE16_HANDLER( atarigen_playfield2_latched_msb_w );
 
 
 /*---------------------------------------------------------------
@@ -201,5 +235,54 @@ WRITE32_HANDLER( atarigen_666_paletteram32_w );
 ---------------------------------------------------------------*/
 
 void atarigen_swap_mem(void *ptr1, void *ptr2, int bytes);
+void atarigen_blend_gfx(int gfx0, int gfx1, int mask0, int mask1);
+
+
+
+/*##########################################################################
+	GENERAL ATARI NOTES
+############################################################################
+	
+	Atari 68000 list:
+	
+	Driver		Pr? Up?	VC?	PF?	P2?	MO?	AL? BM? PH?
+	----------	---	---	---	---	---	---	--- ---	---
+	arcadecl.c		 *				 *		 *
+	atarig1.c		 *		 *		rle	 *
+	atarig42.c		 *		 *		rle	 *
+	atarigt.c				 *		rle	 *
+	atarigx2.c				 *		rle	 *
+	atarisy1.c	 *	 *		 *		 *	 *				270->260
+	atarisy2.c	 *	 *		 *		 *	 *				150->120
+	badlands.c		 *		 *		 *					250->260
+	batman.c	 *	 *	 *	 *	 *	 *	 *		 *		200->160 ?
+	blstroid.c		 *		 *		 *					240->230
+	cyberbal.c		 *		 *	 	 *	 *				125->105 ?
+	eprom.c			 *		 *		 *	 *				170->170
+	gauntlet.c	 *	 *		 *		 *	 *		 *		220->250
+	klax.c		 *	 *		 *		 *					480->440 ?
+	offtwall.c		 *	 *	 *		 *					260->260
+	rampart.c		 *				 *		 *			280->280
+	relief.c	 *	 *	 *	 *	 *	 *					240->240
+	shuuz.c			 *	 *	 *		 *					410->290 fix!
+	skullxbo.c		 *	 	 *		 *	 *				150->145
+	thunderj.c		 *	 *	 *	 *	 *	 *		 *		180->180
+	toobin.c		 *		 *		 *	 *				140->115 fix!
+	vindictr.c	 *	 *		 *		 *	 *		 *		200->210
+	xybots.c	 *	 *		 *		 *	 *				235->238
+	----------	---	---	---	---	---	---	--- ---	---
+
+	Pr? - do we have verifiable proof on priorities?
+	Up? - have we updated to use new MO's & tilemaps?
+	VC? - does it use the video controller?
+	PF? - does it have a playfield?
+	P2? - does it have a dual playfield?
+	MO? - does it have MO's?
+	AL? - does it have an alpha layer?
+	BM? - does it have a bitmap layer?
+	PH? - does it use the palette hack?
+
+##########################################################################*/
+
 
 #endif

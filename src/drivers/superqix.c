@@ -260,7 +260,7 @@ ROM_START( superqix )
 	ROM_LOAD( "sq05.1",       0x00000, 0x10000, 0xdf326540 )
 
 	ROM_REGION( 0x1000, REGION_USER1, 0 )	/* Unknown (protection related?) */
-	ROM_LOAD( "sq07.108",     0x00000, 0x1000, 0x071a598c )
+	ROM_LOAD( "sq07.108",     0x00000, 0x1000, 0x071a598c )	// FIXED BITS (xxxx1xxx)
 ROM_END
 
 ROM_START( sqixbl )

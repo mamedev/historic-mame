@@ -1711,7 +1711,7 @@ static struct YM3812interface ym3812_interface =
 {
 	1,				/* 1 chip */
 	2500000,			/* 4 MHz */
-	{ 35 }
+	{ 70 }
 };
 
 static struct AY8910interface ay8910_interface =

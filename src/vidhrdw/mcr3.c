@@ -252,18 +252,10 @@ VIDEO_UPDATE( mcrmono )
 PALETTE_INIT( spyhunt )
 {
 	/* add some colors for the alpha RAM */
-	palette[(4*16)*3+0] = 0;
-	palette[(4*16)*3+1] = 0;
-	palette[(4*16)*3+2] = 0;
-	palette[(4*16+1)*3+0] = 0;
-	palette[(4*16+1)*3+1] = 255;
-	palette[(4*16+1)*3+2] = 0;
-	palette[(4*16+2)*3+0] = 0;
-	palette[(4*16+2)*3+1] = 0;
-	palette[(4*16+2)*3+2] = 255;
-	palette[(4*16+3)*3+0] = 255;
-	palette[(4*16+3)*3+1] = 255;
-	palette[(4*16+3)*3+2] = 255;
+	palette_set_color(4*16,  0x00,0x00,0x00);
+	palette_set_color(4*16+1,0x00,0xff,0x00);
+	palette_set_color(4*16+2,0x00,0x00,0xff);
+	palette_set_color(4*16+3,0xff,0xff,0xff);
 }
 
 
@@ -305,7 +297,7 @@ VIDEO_UPDATE( spyhunt )
 {
 	struct rectangle clip = { 0, 30*16-1, 0, 30*16-1 };
 	int offs, scrollx, scrolly;
-	
+
 	sect_rect(&clip, cliprect);
 
 	/* for every character in the Video RAM, check if it has been modified */

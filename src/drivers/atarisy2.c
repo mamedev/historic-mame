@@ -192,10 +192,6 @@ static void update_interrupts(void)
 
 static void scanline_update(int scanline)
 {
-	/* update the display list */
-	if (scanline < Machine->drv->screen_height)
-		atarisy2_scanline_update(scanline);
-
 	if (scanline <= Machine->drv->screen_height)
 	{
 		/* generate the 32V interrupt (IRQ 2) */
@@ -218,8 +214,8 @@ static MACHINE_INIT( atarisy2 )
 	atarigen_eeprom_reset();
 	slapstic_reset();
 	atarigen_interrupt_reset(update_interrupts);
-	atarigen_scanline_timer_reset(scanline_update, 8);
 	atarigen_sound_io_reset(1);
+	atarigen_scanline_timer_reset(scanline_update, 64);
 
 	tms5220_data_strobe = 1;
 
@@ -519,8 +515,8 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ 0x15e0, 0x15ff, atarigen_video_int_ack_w },
 	{ 0x1600, 0x1601, int_enable_w },
 	{ 0x1680, 0x1681, atarigen_sound_w },
-	{ 0x1700, 0x1701, atarisy2_hscroll_w },
-	{ 0x1780, 0x1781, atarisy2_vscroll_w },
+	{ 0x1700, 0x1701, atarisy2_xscroll_w, &atarigen_xscroll },
+	{ 0x1780, 0x1781, atarisy2_yscroll_w, &atarigen_yscroll },
 	{ 0x1800, 0x1801, watchdog_reset16_w },
 	{ 0x2000, 0x3fff, atarisy2_videoram_w },
 	{ 0x4000, 0x7fff, MWA16_ROM },

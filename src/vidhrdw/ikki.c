@@ -15,22 +15,25 @@ static UINT8 ikki_flipscreen, ikki_scroll[2];
 PALETTE_INIT( ikki )
 {
 	int i;
-	int colors = Machine->drv->total_colors-1;
 
-	for (i = 0; i<colors; i++)
+	for (i = 0; i<256; i++)
 	{
-		*(palette++) = color_prom[0]*0x11;
-		*(palette++) = color_prom[colors]*0x11;
-		*(palette++) = color_prom[2*colors]*0x11;
+		int r,g,b;
+
+		r = color_prom[0]*0x11;
+		g = color_prom[256]*0x11;
+		b = color_prom[2*256]*0x11;
+
+		palette_set_color(i,r,g,b);
 
 		color_prom++;
 	}
 
-		*(palette++) = 0; /* 256th color is not drawn on screen */
-		*(palette++) = 0; /* this is used for special transparent function */
-		*(palette++) = 1;
+	/* 256th color is not drawn on screen */
+	/* this is used for special transparent function */
+	palette_set_color(256,0,0,1);
 
-	color_prom += 2*colors;
+	color_prom += 2*256;
 
 	/* color_prom now points to the beginning of the lookup table */
 

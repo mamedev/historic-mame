@@ -46,6 +46,7 @@ static void plot_pixel_8080(int x, int y, int col);
 
 #define RED				0xff,0x20,0x20,OVERLAY_DEFAULT_OPACITY
 #define GREEN 			0x20,0xff,0x20,OVERLAY_DEFAULT_OPACITY
+#define BLUE			0x20,0x20,0xff,OVERLAY_DEFAULT_OPACITY
 #define LT_BLUE 		0xa0,0xa0,0xff,OVERLAY_DEFAULT_OPACITY
 #define YELLOW			0xff,0xff,0x20,OVERLAY_DEFAULT_OPACITY
 #define CYAN			0x20,0xff,0xff,OVERLAY_DEFAULT_OPACITY
@@ -97,6 +98,33 @@ static const struct artwork_element phantom2_overlay[]=
 static const struct artwork_element gunfight_overlay[]=
 {
 	{{   0,  255, 0, 255}, YELLOW },
+	END
+};
+
+static const struct artwork_element bandido_overlay[]=
+{
+	{{   0,  23,   0, 255}, BLUE },
+	{{  24,  39,   0,  99}, BLUE },
+	{{  24,  39, 124, 255}, BLUE },
+	{{  24,  39, 100, 123}, GREEN },
+	{{  40, 183,   0,  23}, BLUE },
+	{{  40,  99,  24,  31}, BLUE },
+	{{ 124, 183,  24,  31}, BLUE },
+	{{ 100, 123,  24,  39}, RED },
+	{{ 184, 199, 100, 123}, GREEN },
+	{{ 184, 199,   0,  99}, BLUE },
+	{{ 184, 199, 124, 255}, BLUE },
+	{{ 200, 231,   0, 255}, BLUE },
+	{{ 232, 255,   0, 255}, RED },
+	{{  40,  99,  32,  39}, YELLOW },
+	{{ 124, 183,  32,  39}, YELLOW },
+	{{  40, 183,  40, 183}, YELLOW },
+	{{  40,  99, 184, 191}, YELLOW },
+	{{ 124, 183, 184, 191}, YELLOW },
+	{{  40,  99, 192, 199}, BLUE },
+	{{ 124, 183, 192, 199}, BLUE },
+	{{  40, 183, 200, 255}, BLUE },
+	{{ 100, 123, 184, 199}, RED },
 	END
 };
 
@@ -250,6 +278,13 @@ DRIVER_INIT( gunfight )
 {
 	init_8080bw();
 	init_artwork = gunfight_overlay;
+	artwork_type = SIMPLE_OVERLAY;
+}
+
+DRIVER_INIT( bandido )
+{
+	init_8080bw();
+	init_artwork = bandido_overlay;
 	artwork_type = SIMPLE_OVERLAY;
 }
 
@@ -720,10 +755,10 @@ PALETTE_INIT( invadpt2 )
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		/* this bit arrangment is a little unusual but are confirmed by screen shots */
-
-		*(palette++) = 0xff * ((i >> 0) & 1);
-		*(palette++) = 0xff * ((i >> 2) & 1);
-		*(palette++) = 0xff * ((i >> 1) & 1);
+		int r = 0xff * ((i >> 0) & 1);
+		int g = 0xff * ((i >> 2) & 1);
+		int b = 0xff * ((i >> 1) & 1);
+		palette_set_color(i,r,g,b);
 	}
 }
 
@@ -734,9 +769,10 @@ PALETTE_INIT( helifire )
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		*(palette++) = 0xff * ((i >> 0) & 1);
-		*(palette++) = 0xff * ((i >> 1) & 1);
-		*(palette++) = 0xff * ((i >> 2) & 1);
+		int r = 0xff * ((i >> 0) & 1);
+		int g = 0xff * ((i >> 1) & 1);
+		int b = 0xff * ((i >> 2) & 1);
+		palette_set_color(i,r,g,b);
 	}
 }
 

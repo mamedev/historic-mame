@@ -306,7 +306,7 @@ INPUT_PORTS_START( wwfwfest )
 	PORT_DIPSETTING(	0x00, "2" )
 	PORT_DIPSETTING(	0x08, "3" )
 	PORT_DIPSETTING(	0x0c, "4" )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) ) /* Unused according to manual */
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x60, 0x60, "Health For Winning" )

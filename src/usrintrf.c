@@ -29,6 +29,7 @@ extern unsigned int coinlockedout[COIN_COUNTERS];
 #ifndef MESS
 #ifndef TINY_COMPILE
 #ifndef CPSMAME
+#ifndef MMSND
 int 		memcard_menu(struct mame_bitmap *bitmap, int);
 extern int	mcd_action;
 extern int	mcd_number;
@@ -36,6 +37,7 @@ extern int	memcard_status;
 extern int	memcard_number;
 extern int	memcard_manager;
 extern struct GameDriver driver_neogeo;
+#endif
 #endif
 #endif
 #endif
@@ -2758,6 +2760,7 @@ static int displayhistory (struct mame_bitmap *bitmap, int selected)
 #ifndef MESS
 #ifndef TINY_COMPILE
 #ifndef CPSMAME
+#ifndef MMSND
 int memcard_menu(struct mame_bitmap *bitmap, int selection)
 {
 	int sel;
@@ -2878,6 +2881,7 @@ int memcard_menu(struct mame_bitmap *bitmap, int selection)
 #endif
 #endif
 #endif
+#endif
 
 
 #ifndef MESS
@@ -2952,12 +2956,14 @@ static void setup_menu_init(void)
 #ifndef MESS
 #ifndef TINY_COMPILE
 #ifndef CPSMAME
+#ifndef MMSND
 	if (Machine->gamedrv->clone_of == &driver_neogeo ||
 			(Machine->gamedrv->clone_of &&
 				Machine->gamedrv->clone_of->clone_of == &driver_neogeo))
 	{
 		menu_item[menu_total] = ui_getstring (UI_memorycard); menu_action[menu_total++] = UI_MEMCARD;
 	}
+#endif
 #endif
 #endif
 #endif
@@ -3025,9 +3031,11 @@ static int setup_menu(struct mame_bitmap *bitmap, int selected)
 #ifndef MESS
 #ifndef TINY_COMPILE
 #ifndef CPSMAME
+#ifndef MMSND
 			case UI_MEMCARD:
 				res = memcard_menu(bitmap, sel >> SEL_BITS);
 				break;
+#endif
 #endif
 #endif
 #endif
@@ -3794,7 +3802,13 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 			if (options.cheat) DisplayWatches(bitmap);
 
 			/* show popup message if any */
-			if (messagecounter > 0) displaymessage(bitmap, messagetext);
+			if (messagecounter > 0)
+			{
+				displaymessage(bitmap, messagetext);
+
+				if (--messagecounter == 0)
+					schedule_full_refresh();
+			}
 
 			update_video_and_audio();
 			reset_partial_updates();

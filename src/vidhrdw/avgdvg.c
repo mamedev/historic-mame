@@ -1058,7 +1058,7 @@ PALETTE_INIT( avg_astdelux )
 {
 	/* Use backdrop if present */
 	backdrop_load("astdelux.png", 0);
-	palette_init_avg_aqua(palette, colortable, color_prom);
+	palette_init_avg_aqua(colortable, color_prom);
 }
 
 
@@ -1067,7 +1067,7 @@ PALETTE_INIT( avg_bzone )
 {
 	/* Use backdrop if present */
 	backdrop_load("bzone.png", 0);
-	palette_init_avg_white(palette, colortable, color_prom);
+	palette_init_avg_white(colortable, color_prom);
 }
 
 

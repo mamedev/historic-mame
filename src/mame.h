@@ -119,7 +119,6 @@ struct GameOptions
 
 	int samplerate;
 	int use_samples;
-	int use_emulated_ym3812;
 	int use_filter;
 
 	int color_depth;	/* 8 or 16, any other value means auto */

@@ -32,9 +32,9 @@
 
 static data16_t *shared_ram;
 
-static READ16_HANDLER( pfram_r ) { return ataripf_0_base[offset]; }
+static READ16_HANDLER( pfram_r ) { return atarigen_playfield[offset]; }
 static READ16_HANDLER( moram_r ) { return atarimo_0_spriteram[offset]; }
-static READ16_HANDLER( anram_r ) { return atarian_0_base[offset]; }
+static READ16_HANDLER( anram_r ) { return atarigen_alpha[offset]; }
 static READ16_HANDLER( shared_ram_r ) { return shared_ram[offset]; }
 
 static WRITE16_HANDLER( shared_ram_w ) { COMBINE_DATA(&shared_ram[offset]); }
@@ -162,15 +162,15 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ 0x360010, 0x360011, MWA16_NOP },
 	{ 0x360020, 0x360021, atarigen_sound_reset_w },
 	{ 0x360030, 0x360031, atarigen_sound_w },
-	{ 0x3e0000, 0x3e0fff, paletteram16_IIIIRRRRGGGGBBBB_word_w, &paletteram16 },
-	{ 0x3f0000, 0x3f1fff, ataripf_0_simple_w, &ataripf_0_base },
+	{ 0x3e0000, 0x3e0fff, vindictr_paletteram_w, &paletteram16 },
+	{ 0x3f0000, 0x3f1fff, atarigen_playfield_w, &atarigen_playfield },
 	{ 0x3f2000, 0x3f3fff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
-	{ 0x3f4000, 0x3f4f7f, atarian_0_vram_w, &atarian_0_base },
+	{ 0x3f4000, 0x3f4f7f, atarigen_alpha_w, &atarigen_alpha },
 	{ 0x3f4f80, 0x3f4fff, atarimo_0_slipram_w, &atarimo_0_slipram },
 	{ 0x3f5000, 0x3f7fff, shared_ram_w, &shared_ram },
-	{ 0xff8000, 0xff9fff, ataripf_0_simple_w },
+	{ 0xff8000, 0xff9fff, atarigen_playfield_w },
 	{ 0xffa000, 0xffbfff, atarimo_0_spriteram_w },
-	{ 0xffc000, 0xffcf7f, atarian_0_vram_w },
+	{ 0xffc000, 0xffcf7f, atarigen_alpha_w },
 	{ 0xffcf80, 0xffcfff, atarimo_0_slipram_w },
 	{ 0xffd000, 0xffffff, shared_ram_w },
 MEMORY_END
@@ -296,7 +296,7 @@ static MACHINE_DRIVER_START( vindictr )
 	MDRV_SCREEN_SIZE(42*8, 30*8)
 	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(2048)
+	MDRV_PALETTE_LENGTH(2048*8)
 	
 	MDRV_VIDEO_START(vindictr)
 	MDRV_VIDEO_UPDATE(vindictr)

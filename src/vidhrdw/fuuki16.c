@@ -93,7 +93,8 @@ PALETTE_INIT( fuuki16 )
 
 	/* The game does not initialise the palette at startup. It should
 	   be totally black */
-	memset(palette, 0, 3 * Machine->drv->total_colors);
+	for (pen = 0; pen < Machine->drv->total_colors; pen++)
+		palette_set_color(pen,0,0,0);
 }
 
 VIDEO_START( fuuki16 )

@@ -578,10 +578,32 @@ INPUT_PORTS_START( gunbird )
 	PORT_DIPSETTING(      0x0000, "Yes   [Free Play]" )
 
 	PORT_START	// IN3 - c00006&7
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )	// bits 3-0 -> !fffe0256, but unused?
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
+/***********************************************
+
+This Dip port is bit based:
+
+Bit 0 1 2 4
+    0 x x x USA With FBI logo
+    1 0 x x Korea
+    1 1 0 x Hong Kong
+    1 1 1 0 Taiwan
+    1 1 1 1 World (No "For use in ...." screen)
+
+	x = Doesn't seem to matter (most likely should be 1's)
+
+Japan is listed in the code but how do you activate it?
+
+Has no effects on Japan or Korea versions, except possible
+re-ordering of stages (first 4 stages only).
+
+************************************************/
+
+	PORT_DIPNAME( 0x000f, 0x000f, "Country" )
+	PORT_DIPSETTING(      0x000f, "World" )
+	PORT_DIPSETTING(      0x000e, "USA" )
+	PORT_DIPSETTING(      0x000d, "Korea" )
+	PORT_DIPSETTING(      0x000b, "Hong Kong" )
+	PORT_DIPSETTING(      0x0007, "Taiwan" )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -959,6 +981,40 @@ Chips:	PS2001B
 ROM_START( gunbird )
 
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_LOAD32_WORD_SWAP( "4-u46.bin", 0x000000, 0x040000, 0x48652105 ) // 1&0
+	ROM_LOAD32_WORD_SWAP( "5-u39.bin", 0x000002, 0x040000, 0x7f20e4e6 ) // 3&2
+
+	ROM_REGION( 0x030000, REGION_CPU2, 0 )		/* Sound CPU Code */
+	ROM_LOAD( "3-u71.bin", 0x00000, 0x20000, 0x2168e4ba )
+	ROM_RELOAD(            0x10000, 0x20000             )
+
+	ROM_REGION( 0x700000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "u14.bin",  0x000000, 0x200000, 0x7d7e8a00 )
+	ROM_LOAD( "u24.bin",  0x200000, 0x200000, 0x5e3ffc9d )
+	ROM_LOAD( "u15.bin",  0x400000, 0x200000, 0xa827bfb5 )
+	ROM_LOAD( "u25.bin",  0x600000, 0x100000, 0xef652e0c )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "u33.bin",  0x000000, 0x200000, 0x54494e6b )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "u33.bin",  0x000000, 0x100000, 0x54494e6b )
+	ROM_CONTINUE(         0x000000, 0x100000             )
+
+	ROM_REGION( 0x080000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* DELTA-T Samples */
+	ROM_LOAD( "u64.bin",  0x000000, 0x080000, 0xe187ed4f )
+
+	ROM_REGION( 0x100000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* ADPCM Samples */
+	ROM_LOAD( "u56.bin",  0x000000, 0x100000, 0x9e07104d )
+
+	ROM_REGION( 0x040000, REGION_USER1, 0 )	/* Sprites LUT */
+	ROM_LOAD( "u3.bin",  0x000000, 0x040000, 0x0905aeb2 )
+
+ROM_END
+
+ROM_START( gunbirdk )
+
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* Main CPU Code */
 	ROM_LOAD32_WORD_SWAP( "1k-u46.bin", 0x000000, 0x080000, 0x745cee52 ) // 1&0
 	ROM_LOAD32_WORD_SWAP( "2k-u39.bin", 0x000002, 0x080000, 0x669632fb ) // 3&2
 
@@ -976,8 +1032,7 @@ ROM_START( gunbird )
 	ROM_LOAD( "u33.bin",  0x000000, 0x200000, 0x54494e6b )
 
 	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
-	ROM_LOAD( "u33.bin",  0x000000, 0x100000, 0x54494e6b )
-	ROM_CONTINUE(         0x000000, 0x100000             )
+	ROM_COPY( REGION_GFX2, 0x100000, 0x000000, 0x100000 )
 
 	ROM_REGION( 0x080000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* DELTA-T Samples */
 	ROM_LOAD( "u64.bin",  0x000000, 0x080000, 0xe187ed4f )
@@ -1010,8 +1065,7 @@ ROM_START( gunbirdj )
 	ROM_LOAD( "u33.bin",  0x000000, 0x200000, 0x54494e6b )
 
 	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
-	ROM_LOAD( "u33.bin",  0x000000, 0x100000, 0x54494e6b )
-	ROM_CONTINUE(         0x000000, 0x100000             )
+	ROM_COPY( REGION_GFX2, 0x100000, 0x000000, 0x100000 )
 
 	ROM_REGION( 0x080000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* DELTA-T Samples */
 	ROM_LOAD( "u64.bin",  0x000000, 0x080000, 0xe187ed4f )
@@ -1045,8 +1099,7 @@ ROM_START( btlkrodj )
 	ROM_LOAD( "u33.bin",  0x000000, 0x200000, 0x4c8577f1 )
 
 	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
-	ROM_LOAD( "u33.bin",  0x000000, 0x100000, 0x4c8577f1 )
-	ROM_CONTINUE(         0x000000, 0x100000             )
+	ROM_COPY( REGION_GFX2, 0x100000, 0x000000, 0x100000 )
 
 	ROM_REGION( 0x080000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* DELTA-T Samples */
 	ROM_LOAD( "u64.bin",  0x000000, 0x080000, 0x0f33049f )
@@ -1174,8 +1227,7 @@ ROM_START( sngkblad )
 	ROM_LOAD16_WORD_SWAP( "u34.bin",  0x000000, 0x400000, 0x2a2e2eeb )
 
 	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
-	ROM_LOAD16_WORD_SWAP( "u34.bin",  0x000000, 0x200000, 0x2a2e2eeb )
-	ROM_LOAD16_WORD_SWAP( 0,          0x000000, 0x200000, 0          )	/* CONTINUE */
+	ROM_COPY( REGION_GFX2, 0x200000,  0x000000, 0x200000 )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "u61.bin",  0x000000, 0x200000, 0xa63633c5 )	// 8 bit signed pcm (16KHz)
@@ -1249,8 +1301,7 @@ ROM_START( s1945 )
 	ROM_LOAD( "u34.bin",  0x000000, 0x200000, 0xaaf83e23 )
 
 	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
-	ROM_LOAD( "u34.bin",  0x000000, 0x100000, 0xaaf83e23 )
-	ROM_CONTINUE(         0x000000, 0x100000             )
+	ROM_COPY( REGION_GFX2, 0x100000, 0x000000, 0x100000 )
 
 	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "u61.bin",  0x000000, 0x200000, 0xa839cf47 )	// 8 bit signed pcm (16KHz)
@@ -1289,7 +1340,8 @@ DRIVER_INIT( s1945 )
 
 /* Working Games */
 GAME ( 1993, sngkace,  0,       sngkace,  sngkace,  sngkace,  ROT270, "Psikyo", "Sengoku Ace (Japan)"   ) // Banpresto?
-GAME ( 1994, gunbird,  0,       gunbird,  gunbird,  gunbird,  ROT270, "Psikyo", "Gun Bird (Korea)"      )
+GAME ( 1994, gunbird,  0,       gunbird,  gunbird,  gunbird,  ROT270, "Psikyo", "Gun Bird (World)"      )
+GAME ( 1994, gunbirdk, gunbird, gunbird,  gunbird,  gunbird,  ROT270, "Psikyo", "Gun Bird (Korea)"      )
 GAME ( 1994, gunbirdj, gunbird, gunbird,  gunbird,  gunbird,  ROT270, "Psikyo", "Gun Bird (Japan)"      )
 GAME ( 1994, btlkrodj, 0,       gunbird,  btlkrodj, gunbird,  ROT0,   "Psikyo", "Battle K-Road (Japan)" )
 

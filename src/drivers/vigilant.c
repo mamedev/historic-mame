@@ -599,6 +599,11 @@ ROM_START( kikcubic )
 
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "mqj-v0",       0x00000, 0x10000, 0x54762956 )
+
+	ROM_REGION( 0x0140, REGION_PROMS, 0 )
+	ROM_LOAD( "8d",           0x0000, 0x0100, 0x7379bb12 )	/* unknown (timing?) */
+	ROM_LOAD( "6h",           0x0100, 0x0020, 0xface0cbb )	/* unknown (bad read?) */
+	ROM_LOAD( "7s",           0x0120, 0x0020, 0xface0cbb )	/* unknown (bad read?) */
 ROM_END
 
 

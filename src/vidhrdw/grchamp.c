@@ -53,21 +53,22 @@ PALETTE_INIT( grchamp )
 	for( i=0; i<0x20; i++ )
 	{
 		UINT8 data = *color_prom++;
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 		/* red component */
 		bit0 = (data >> 0) & 0x01;
 		bit1 = (data >> 1) & 0x01;
 		bit2 = (data >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
 		bit0 = (data >> 3) & 0x01;
 		bit1 = (data >> 4) & 0x01;
 		bit2 = (data >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = (data >> 6) & 0x01;
 		bit1 = (data >> 7) & 0x01;
-		*(palette++) = 0x4f * bit0 + 0xa8 * bit1;
+		b = 0x4f * bit0 + 0xa8 * bit1;
+		palette_set_color(i,r,g,b);
 	}
 
 	for( i=0; i<0x20; i++ )
@@ -77,16 +78,17 @@ PALETTE_INIT( grchamp )
 		int g = (data&2)?0:1;
 		int b = (data&1)?0:1;
 		int intensity = (data&0x08)?0x55:0xff;
-		*palette++ = r*intensity;
-		*palette++ = g*intensity;
-		*palette++ = b*intensity;
+		r = r*intensity;
+		g = g*intensity;
+		b = b*intensity;
+		palette_set_color(i+0x20,r,g,b);
 	}
 	/* add a fake entry for fog */
-	*palette++ = 0x55;
-	*palette++ = 0x55;
-	*palette++ = 0x55;
+	palette_set_color(0x40,0x55,0x55,0x55);
 
-	memset( palette, 0x00, 3*3 );
+	palette_set_color(0x41,0,0,0);
+	palette_set_color(0x42,0,0,0);
+	palette_set_color(0x43,0,0,0);
 }
 
 WRITE_HANDLER( grchamp_videoram_w )

@@ -12,31 +12,29 @@
 
 /*************************************
  *
+ *	Tilemap callbacks
+ *
+ *************************************/
+
+static void get_playfield_tile_info(int tile_index)
+{
+	UINT16 data1 = atarigen_playfield[tile_index];
+	UINT16 data2 = atarigen_playfield_upper[tile_index] >> 8;
+	int code = data1 & 0x7fff;
+	int color = 0x10 + (data2 & 0x0f);
+	SET_TILE_INFO(0, code, color, (data1 >> 15) & 1);
+}
+
+
+
+/*************************************
+ *
  *	Video system start
  *
  *************************************/
 
 VIDEO_START( offtwall )
 {
-	static const struct ataripf_desc pfdesc =
-	{
-		0,			/* index to which gfx system */
-		64,64,		/* size of the playfield in tiles (x,y) */
-		64,1,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-
-		0x200,		/* index of palette base */
-		0x100,		/* maximum number of colors */
-		0,			/* color XOR for shadow effect (if any) */
-		0xff00,		/* latch mask */
-		0,			/* transparent pen mask */
-
-		0x07fff,	/* tile data index mask */
-		0xf0000,	/* tile data color mask */
-		0x08000,	/* tile data hflip mask */
-		0,			/* tile data vflip mask */
-		0			/* tile data priority mask */
-	};
-
 	static const struct atarimo_desc modesc =
 	{
 		0,					/* index to which gfx system */
@@ -47,7 +45,7 @@ VIDEO_START( offtwall )
 		0,					/* render in swapped X/Y order? */
 		0,					/* does the neighbor bit affect the next object? */
 		8,					/* pixels per SLIP entry (0 for no-slip) */
-		8,					/* number of scanlines between MO updates */
+		0,					/* pixel offset for SLIPs */
 
 		0x100,				/* base palette entry */
 		0x100,				/* maximum number of colors */
@@ -68,13 +66,14 @@ VIDEO_START( offtwall )
 		{{ 0 }},			/* mask for the neighbor */
 		{{ 0 }},			/* mask for absolute coordinates */
 
-		{{ 0 }},			/* mask for the ignore value */
-		0,					/* resulting value to indicate "ignore" */
-		0					/* callback routine for ignored entries */
+		{{ 0 }},			/* mask for the special value */
+		0,					/* resulting value to indicate "special" */
+		0					/* callback routine for special entries */
 	};
 
 	/* initialize the playfield */
-	if (!ataripf_init(0, &pfdesc))
+	atarigen_playfield_tilemap = tilemap_create(get_playfield_tile_info, tilemap_scan_cols, TILEMAP_OPAQUE, 8,8, 64,64);
+	if (!atarigen_playfield_tilemap)
 		return 1;
 
 	/* initialize the motion objects */
@@ -93,7 +92,29 @@ VIDEO_START( offtwall )
 
 VIDEO_UPDATE( offtwall )
 {
-	/* draw the layers */
-	ataripf_render(0, bitmap, cliprect);
-	atarimo_render(0, bitmap, cliprect, NULL, NULL);
+	struct atarimo_rect_list rectlist;
+	struct mame_bitmap *mobitmap;
+	int x, y, r;
+
+	/* draw the playfield */
+	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 0, 0);
+
+	/* draw and merge the MO */
+	mobitmap = atarimo_render(0, cliprect, &rectlist);
+	for (r = 0; r < rectlist.numrects; r++, rectlist.rect++)
+		for (y = rectlist.rect->min_y; y <= rectlist.rect->max_y; y++)
+		{
+			UINT16 *mo = (UINT16 *)mobitmap->base + mobitmap->rowpixels * y;
+			UINT16 *pf = (UINT16 *)bitmap->base + bitmap->rowpixels * y;
+			for (x = rectlist.rect->min_x; x <= rectlist.rect->max_x; x++)
+				if (mo[x])
+				{
+					/* not yet verified
+					*/
+					pf[x] = mo[x];
+					
+					/* erase behind ourselves */
+					mo[x] = 0;
+				}
+		}
 }

@@ -215,7 +215,7 @@ static struct YM3812interface splash_ym3812_interface =
 {
 	1,						/* 1 chip */
 	3000000,				/* 3 MHz? */
-	{ 40 },					/* volume */
+	{ 80 },					/* volume */
 	{ 0 }					/* IRQ handler */
 };
 

@@ -250,9 +250,9 @@ INPUT_PORTS_START( wc90b )
 	PORT_DIPSETTING(    0x10, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x40, 0x40, "Continue Game countdown speed" )
-	PORT_DIPSETTING(    0x40, "Normal (1 sec per number)" )
-	PORT_DIPSETTING(    0x00, "Faster (56/60 per number)" )
+	PORT_DIPNAME( 0x40, 0x40, "Countdown Speed" )
+	PORT_DIPSETTING(    0x40, "Normal" )					// 60/60
+	PORT_DIPSETTING(    0x00, "Fast" )						// 56/60
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )

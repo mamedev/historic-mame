@@ -120,9 +120,9 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ 0x2e0000, 0x2e0001, watchdog_reset16_w },
 	{ 0x360000, 0x360001, interrupt_ack_w },
 	{ 0x3e0000, 0x3e07ff, atarigen_expanded_666_paletteram_w, &paletteram16 },
-	{ 0x3f0000, 0x3f0f7f, ataripf_0_simple_w, &ataripf_0_base },
+	{ 0x3f0000, 0x3f0f7f, atarigen_playfield_w, &atarigen_playfield },
 	{ 0x3f0f80, 0x3f0fff, atarimo_0_slipram_w, &atarimo_0_slipram },
-	{ 0x3f1000, 0x3f1fff, ataripf_0_upper_msb_w, &ataripf_0_upper },
+	{ 0x3f1000, 0x3f1fff, atarigen_playfield_upper_w, &atarigen_playfield_upper },
 	{ 0x3f2000, 0x3f27ff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
 	{ 0x3f2800, 0x3f3fff, MWA16_RAM },
 MEMORY_END

@@ -985,7 +985,7 @@ static MEMORY_READ16_START( uopoko_readmem )
 	{ 0x300002, 0x300003, cave_sound_r			},	// YMZ280
 /**/{ 0x400000, 0x407fff, MRA16_RAM				},	// Sprites
 /**/{ 0x408000, 0x40ffff, MRA16_RAM				},	// Sprites?
-/**/{ 0x500000, 0x501fff, MRA16_RAM				},	// Layer 0
+/**/{ 0x500000, 0x507fff, MRA16_RAM				},	// Layer 0
 	{ 0x600000, 0x600007, cave_irq_cause_r		},	// IRQ Cause
 /**/{ 0x700000, 0x700005, MRA16_RAM				},	// Layer 0 Control
 /**/{ 0x800000, 0x80ffff, MRA16_RAM				},	// Palette
@@ -999,7 +999,7 @@ static MEMORY_WRITE16_START( uopoko_writemem )
 	{ 0x300000, 0x300003, cave_sound_w					},	// YMZ280
 	{ 0x400000, 0x407fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
 	{ 0x408000, 0x40ffff, MWA16_RAM						},	// Sprites?
-	{ 0x500000, 0x501fff, cave_vram_0_w, &cave_vram_0	},	// Layer 0
+	{ 0x500000, 0x507fff, cave_vram_0_w, &cave_vram_0	},	// Layer 0
 	{ 0x600000, 0x60007f, MWA16_RAM, &cave_videoregs	},	// Video Regs
 	{ 0x700000, 0x700005, MWA16_RAM, &cave_vctrl_0		},	// Layer 0 Control
 	{ 0x800000, 0x80ffff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16 },	// Palette

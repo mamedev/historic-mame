@@ -45,25 +45,26 @@ PALETTE_INIT( cclimber )
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
 		bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
 		bit0 = (*color_prom >> 3) & 0x01;
 		bit1 = (*color_prom >> 4) & 0x01;
 		bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = 0;
 		bit1 = (*color_prom >> 6) & 0x01;
 		bit2 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -135,24 +136,26 @@ PALETTE_INIT( swimmer )
 
 	for (i = 0;i < 256;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = (color_prom[i] >> 0) & 0x01;
 		bit1 = (color_prom[i] >> 1) & 0x01;
 		bit2 = (color_prom[i] >> 2) & 0x01;
-		*(palette++) = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
+		r = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 		/* green component */
 		bit0 = (color_prom[i] >> 3) & 0x01;
 		bit1 = (color_prom[i+256] >> 0) & 0x01;
 		bit2 = (color_prom[i+256] >> 1) & 0x01;
-		*(palette++) = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
+		g = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 		/* blue component */
 		bit0 = 0;
 		bit1 = (color_prom[i+256] >> 2) & 0x01;
 		bit2 = (color_prom[i+256] >> 3) & 0x01;
-		*(palette++) = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
+		b = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
+
+		palette_set_color(i,r,g,b);
 
 		/* side panel */
 		if (i % 8)
@@ -173,43 +176,39 @@ PALETTE_INIT( swimmer )
 	/* big sprite */
 	for (i = 0;i < 32;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = (color_prom[i] >> 0) & 0x01;
 		bit1 = (color_prom[i] >> 1) & 0x01;
 		bit2 = (color_prom[i] >> 2) & 0x01;
-		*(palette++) = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
+		r = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 		/* green component */
 		bit0 = (color_prom[i] >> 3) & 0x01;
 		bit1 = (color_prom[i] >> 4) & 0x01;
 		bit2 = (color_prom[i] >> 5) & 0x01;
-		*(palette++) = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
+		g = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 		/* blue component */
 		bit0 = 0;
 		bit1 = (color_prom[i] >> 6) & 0x01;
 		bit2 = (color_prom[i] >> 7) & 0x01;
-		*(palette++) = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
+		b = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
+
+		palette_set_color(i+256,r,g,b);
 
 		if (i % 8 == 0) COLOR(2,i) = BGPEN;  /* enforce transparency */
 		else COLOR(2,i) = i+256;
 	}
 
 	/* background */
-	*(palette++) = 0;
-	*(palette++) = 0;
-	*(palette++) = 0;
+	palette_set_color(BGPEN,0,0,0);
 	/* side panel background color */
 #if 0
 	// values calculated from the resistors don't seem to match the real board
-	*(palette++) = 0x24;
-	*(palette++) = 0x5d;
-	*(palette++) = 0x4e;
+	palette_set_color(SIDEPEN,0x24,0x5d,0x4e);
 #endif
-	*(palette++) = 0x20;
-	*(palette++) = 0x98;
-	*(palette++) = 0x79;
+	palette_set_color(SIDEPEN,0x20,0x98,0x79);
 }
 
 

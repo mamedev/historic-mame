@@ -7,24 +7,31 @@
 	Galactic Warriors		GX578
 	Konami GT				GX561
 	RF2						GX561
-	Salamander (Version D)			GX587
-	Salamander (Version J)			GX587
+	Salamander (Version D)	GX587
+	Salamander (Version J)	GX587
 	Lifeforce (US)			GX587
 	Lifeforce (Japan)		GX587
 	Black Panther			GX604
 	City Bomber (World)		GX787
 	City Bomber (Japan)		GX787
+	Kitten Kaboodle			GX712
 	Nyan Nyan Panic (Japan)	GX712
 
 driver by Bryan McPhail
 modified by Eisuke Watanabe
-
+ spthx to Unagi,rassy,hina,nori,Tobikage,Tommy,Crimson,yasuken,cupmen,zoo
 TODO:
-- wall of the tunnel is not displayed (konamigt / rf2).
-- weapon panel is transparent (gwarrior).
-- bomb in the shop is incorrect (nyanpani / kittenk ).
-They are caused by "black is incorrectly set to transparent".
+- 'Your Stage Position' gauge is incorrect (nyanpani / kittenk ).
 
+Notes:
+- blkpnthr:
+There are sprite priority problems in upper part of the screen ,
+they can only be noticed in 2nd and 4th level .
+Enemy sprites are behind blue walls 2 level) or metal construction (4 )
+but when they get close to top of the screen they go in front of them.
+--
+To display score, priority of upper part is always lower.
+So this is the correct behavior of real hardware, not an emulation bug.
 
 ***************************************************************************/
 
@@ -1350,7 +1357,7 @@ INPUT_PORTS_START( salamand )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x80, 0x00, "Sound Type" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
@@ -1442,7 +1449,7 @@ INPUT_PORTS_START( lifefrcj )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_DIPNAME( 0x80, 0x00, "Sound Type" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
@@ -1499,7 +1506,7 @@ INPUT_PORTS_START( lifefrcj )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x00, "6" )
-	PORT_DIPNAME( 0x04, 0x04, "Coin Counter(s)" )
+	PORT_DIPNAME( 0x04, 0x04, "Coin Slot(s)" )
 	PORT_DIPSETTING(    0x04, "1" )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
@@ -1688,7 +1695,7 @@ INPUT_PORTS_START( citybomb )
 	PORT_DIPSETTING(    0x00, "Disabled" )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x04, 0x00, "Sound Type" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x18, 0x10, "Qualify" )
@@ -1781,9 +1788,6 @@ INPUT_PORTS_START( nyanpani )
 	PORT_DIPSETTING(    0x02, "3" )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x00, "7" )
-	PORT_DIPNAME( 0x04, 0x04, "Coin Counter(s)" )
-	PORT_DIPSETTING(    0x04, "1" )
-	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x60, "Easy" )
 	PORT_DIPSETTING(    0x40, "Normal" )
@@ -1799,7 +1803,7 @@ INPUT_PORTS_END
 static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
-	2048,	/* 2048 characters */
+	2048+1,	/* 2048 characters (+ blank one) */
 	4,	/* 4 bits per pixel */
 	{ 0, 1, 2, 3 }, /* the two bitplanes are merged in the same nibble */
 	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
@@ -1961,7 +1965,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,
 	3579545,
-	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
 	{ sound_irq }
 };
 
@@ -1982,7 +1986,7 @@ static struct k051649_interface k051649_interface =
 static struct VLM5030interface vlm5030_interface =
 {
     3579545,       /* master clock  */
-    70,            /* volume        */
+    60,            /* volume        */
     REGION_SOUND1, /* memory region  */
     0              /* memory length */
 };
@@ -2005,7 +2009,7 @@ static struct K007232_interface k007232_interface =
 {
 	1,		/* number of chips */
 	{ REGION_SOUND2 },	/* memory regions */
-	{ K007232_VOL(15,MIXER_PAN_CENTER,15,MIXER_PAN_CENTER) },	/* volume */
+	{ K007232_VOL(10,MIXER_PAN_CENTER,10,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback }	/* external port callback */
 };
 

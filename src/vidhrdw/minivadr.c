@@ -17,15 +17,11 @@ Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/12/19 -
 	Palette Setting.
 
 *******************************************************************/
-static unsigned char minivadr_palette[] =
-{
-	0x00,0x00,0x00,			/* black */
-	0xff,0xff,0xff			/* white */
-};
 
 PALETTE_INIT( minivadr )
 {
-	memcpy(palette, minivadr_palette, sizeof(minivadr_palette));
+	palette_set_color(0,0x00,0x00,0x00);
+	palette_set_color(1,0xff,0xff,0xff);
 }
 
 

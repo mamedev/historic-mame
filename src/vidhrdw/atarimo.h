@@ -9,18 +9,21 @@
 #ifndef __ATARIMO__
 #define __ATARIMO__
 
-#include "ataripf.h"
-
 
 /*##########################################################################
 	CONSTANTS
 ##########################################################################*/
 
 /* maximum number of motion object processors */
-#define ATARIMO_MAX			2
+#define ATARIMO_MAX				2
 
 /* maximum objects per bank */
-#define ATARIMO_MAXPERBANK	1024
+#define ATARIMO_MAXPERBANK		1024
+
+/* shift to get to priority in raw data */
+#define ATARIMO_PRIORITY_SHIFT	12
+#define ATARIMO_PRIORITY_MASK	((~0 << ATARIMO_PRIORITY_SHIFT) & 0xffff)
+#define ATARIMO_DATA_MASK		(ATARIMO_PRIORITY_MASK ^ 0xffff)
 
 
 
@@ -29,7 +32,7 @@
 ##########################################################################*/
 
 /* callback for special processing */
-typedef void (*atarimo_special_cb)(struct mame_bitmap *bitmap, struct rectangle *clip, int code, int color, int xpos, int ypos);
+typedef int (*atarimo_special_cb)(struct mame_bitmap *bitmap, const struct rectangle *clip, int code, int color, int xpos, int ypos, struct rectangle *mobounds);
 
 /* description for a four-word mask */
 struct atarimo_entry
@@ -48,8 +51,8 @@ struct atarimo_desc
 	UINT8				swapxy;				/* render in swapped X/Y order? */
 	UINT8				nextneighbor;		/* does the neighbor bit affect the next object? */
 	UINT16				slipheight;			/* pixels per SLIP entry (0 for no-slip) */
-	UINT16				updatescans;		/* number of scanlines between MO updates */
-
+	UINT8				slipoffset;			/* pixel offset for SLIPs */
+	
 	UINT16				palettebase;		/* base palette entry */
 	UINT16				maxcolors;			/* maximum number of colors */
 	UINT8				transpen;			/* transparent pen index */
@@ -69,11 +72,17 @@ struct atarimo_desc
 	struct atarimo_entry neighbormask;		/* mask for the neighbor */
 	struct atarimo_entry absolutemask;		/* mask for absolute coordinates */
 
-	struct atarimo_entry ignoremask;		/* mask for the ignore value */
-	data16_t			ignorevalue;		/* resulting value to indicate "ignore" */
-	atarimo_special_cb	ignorecb;			/* callback routine for ignored entries */
+	struct atarimo_entry specialmask;		/* mask for the special value */
+	data16_t			specialvalue;		/* resulting value to indicate "special" */
+	atarimo_special_cb	specialcb;			/* callback routine for special entries */
 };
 
+/* rectangle list */
+struct atarimo_rect_list
+{
+	int					numrects;
+	struct rectangle *	rect;
+};
 
 
 /*##########################################################################
@@ -87,14 +96,13 @@ UINT8 *atarimo_get_color_lookup(int map, int *size);
 UINT8 *atarimo_get_gfx_lookup(int map, int *size);
 
 /* core processing */
-void atarimo_render(int map, struct mame_bitmap *bitmap, const struct rectangle *cliprect, ataripf_overrender_cb callback1, ataripf_overrender_cb callback2);
-void atarimo_force_update(int map, int scanline);
+struct mame_bitmap *atarimo_render(int map, const struct rectangle *cliprect, struct atarimo_rect_list *rectlist);
 
 /* atrribute setters */
-void atarimo_set_bank(int map, int bank, int scanline);
-void atarimo_set_palettebase(int map, int base, int scanline);
-void atarimo_set_xscroll(int map, int xscroll, int scanline);
-void atarimo_set_yscroll(int map, int yscroll, int scanline);
+void atarimo_set_bank(int map, int bank);
+void atarimo_set_palettebase(int map, int base);
+void atarimo_set_xscroll(int map, int xscroll);
+void atarimo_set_yscroll(int map, int yscroll);
 
 /* atrribute getters */
 int atarimo_get_bank(int map);

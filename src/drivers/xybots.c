@@ -94,10 +94,10 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( main_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0xff8000, 0xff8fff, atarian_0_vram_w, &atarian_0_base },
+	{ 0xff8000, 0xff8fff, atarigen_alpha_w, &atarigen_alpha },
 	{ 0xff9000, 0xffadff, MWA16_RAM },
 	{ 0xffae00, 0xffafff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
-	{ 0xffb000, 0xffbfff, ataripf_0_simple_w, &ataripf_0_base },
+	{ 0xffb000, 0xffbfff, atarigen_playfield_w, &atarigen_playfield },
 	{ 0xffc000, 0xffc7ff, paletteram16_IIIIRRRRGGGGBBBB_word_w, &paletteram16 },
 	{ 0xffd000, 0xffdfff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0xffe800, 0xffe8ff, atarigen_eeprom_enable_w },

@@ -57,7 +57,8 @@ extern unsigned char tw640x480arc_h, tw640x480arc_v;
 extern int soundcard, usestereo, attenuation, sampleratedetect;
 
 /* from input.c */
-extern int use_mouse, joystick, use_hotrod, steadykey;
+extern int use_mouse, joystick, steadykey;
+//extern int use_hotrod;
 
 /* from cheat.c */
 extern char *cheatfile;
@@ -447,7 +448,6 @@ void parse_cmdline (int argc, char **argv, int game_index, char *override_defaul
 	/* read sound configuration */
 
 	soundcard			= get_int  ("config", "soundcard",  NULL, -1);
-	options.use_emulated_ym3812 = !get_bool ("config", "ym3812opl",  NULL,  0);
 	options.samplerate = get_int  ("config", "samplerate", "sr", 44100);
 	if (options.samplerate < 5000) options.samplerate = 5000;
 	if (options.samplerate > 50000) options.samplerate = 50000;
@@ -463,9 +463,9 @@ void parse_cmdline (int argc, char **argv, int game_index, char *override_defaul
 	joyname   = get_string ("config", "joystick", "joy", "none");
     steadykey = get_bool   ("config", "steadykey", NULL, 0);
 
-	use_hotrod = 0;
-	if (get_bool  ("config", "hotrod",   NULL,  0)) use_hotrod = 1;
-	if (get_bool  ("config", "hotrodse",   NULL,  0)) use_hotrod = 2;
+//	use_hotrod = 0;
+//	if (get_bool  ("config", "hotrod",   NULL,  0)) use_hotrod = 1;
+//	if (get_bool  ("config", "hotrodse",   NULL,  0)) use_hotrod = 2;
 
 	/* misc configuration */
 	options.cheat	   = get_bool ("config", "cheat", NULL, 0);

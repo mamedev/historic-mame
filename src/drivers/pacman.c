@@ -2181,7 +2181,7 @@ ROM_START( crush )
 
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
-	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
+	ROM_LOAD( "2s140.4a",     0x0020, 0x0100, 0x63efb927 )
 
 	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
@@ -2210,7 +2210,7 @@ ROM_START( crush2 )
 
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
-	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
+	ROM_LOAD( "2s140.4a",     0x0020, 0x0100, 0x63efb927 )
 
 	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
@@ -2239,7 +2239,7 @@ ROM_START( crush3 )
 
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
-	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
+	ROM_LOAD( "2s140.4a",     0x0020, 0x0100, 0x63efb927 )
 
 	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
@@ -2262,7 +2262,7 @@ ROM_START( maketrax )
 
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
-	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
+	ROM_LOAD( "2s140.4a",     0x0020, 0x0100, 0x63efb927 )
 
 	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
@@ -2287,7 +2287,7 @@ ROM_START( mbrush )
 
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
-	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
+	ROM_LOAD( "2s140.4a",     0x0020, 0x0100, 0x63efb927 )
 
 	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
@@ -2316,7 +2316,7 @@ ROM_START( paintrlr )
 
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
-	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
+	ROM_LOAD( "2s140.4a",     0x0020, 0x0100, 0x63efb927 )
 
 	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )

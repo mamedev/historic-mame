@@ -646,6 +646,7 @@ static MACHINE_DRIVER_START( sprtmtch )
 	MDRV_VIDEO_UPDATE(sprtmtch)
 
 	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2203, ym2203_intf)
 MACHINE_DRIVER_END
 
@@ -690,6 +691,7 @@ static MACHINE_DRIVER_START( ddenlovr )
 	MDRV_VIDEO_UPDATE(dynax)
 
 	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2413, ym2413_intf)
 	MDRV_SOUND_ADD(OKIM6295, okim6295_intf)
 MACHINE_DRIVER_END
@@ -721,6 +723,7 @@ static MACHINE_DRIVER_START( rongrong )
 	MDRV_VIDEO_UPDATE(dynax)
 
 	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2413, ym2413_intf)
 	MDRV_SOUND_ADD(OKIM6295, okim6295_intf)
 MACHINE_DRIVER_END
@@ -773,7 +776,24 @@ ROM_START( sprtmtch )
 	ROM_LOAD( "17g", 0x200, 0x200, 0x5443ebfb )
 ROM_END
 
+ROM_START( drgpunch )
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* Z80 Code */
+	ROM_LOAD( "2401.3d", 0x00000, 0x08000, 0xb310709c )
+	ROM_CONTINUE(        0x10000, 0x08000 )
+	ROM_LOAD( "2402.6d", 0x30000, 0x10000, 0xd21ed237 )
 
+	ROM_REGION( 0xc0000, REGION_GFX1, 0 )	/* Gfx Data (Do not dispose) */
+	ROM_LOAD( "2403.6c", 0x00000, 0x20000, 0xb936f202 )
+	ROM_LOAD( "2404.5c", 0x20000, 0x20000, 0x2ee0683a )
+	ROM_LOAD( "2405.3c", 0x40000, 0x20000, 0xaefbe192 )
+	ROM_LOAD( "2406.1c", 0x60000, 0x20000, 0xe137f96e )
+	ROM_LOAD( "2407.6a", 0x80000, 0x20000, 0xf3f1b065 )
+	ROM_LOAD( "2408.5a", 0xa0000, 0x20000, 0x3a91e2b9 )
+
+	ROM_REGION( 0x400, REGION_PROMS, ROMREGION_DISPOSE )	/* Color PROMs */
+	ROM_LOAD( "2.18g", 0x000, 0x200, 0x9adccc33 )	// FIXED BITS (0xxxxxxx)
+	ROM_LOAD( "1.17g", 0x200, 0x200, 0x324fa9cf )
+ROM_END
 
 
 /***************************************************************************
@@ -869,7 +889,7 @@ ROM_END
 ***************************************************************************/
 
 GAME ( 1989, sprtmtch,        0, sprtmtch, sprtmtch, 0, ROT0, "Log+Dynax (Fabtek license)", "Sports Match" )
-
+GAME ( 1989, drgpunch, sprtmtch, sprtmtch, sprtmtch, 0, ROT0, "Log+Dynax", "Dragon Punch (Japan)" )
 
 /* TESTDRIVERS */
 GAMEX( 1995, ddenlovr, 0, ddenlovr, ddenlovr, 0, ROT0, "Dynax",     "Don Den Lover Vol 1", GAME_NOT_WORKING )

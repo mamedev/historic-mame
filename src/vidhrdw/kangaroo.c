@@ -44,9 +44,10 @@ PALETTE_INIT( kangaroo )
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		*(palette++) = ((i & 4) >> 2) * 0xff;
-		*(palette++) = ((i & 2) >> 1) * 0xff;
-		*(palette++) = ((i & 1) >> 0) * 0xff;
+		int r = ((i & 4) >> 2) * 0xff;
+		int g = ((i & 2) >> 1) * 0xff;
+		int b = ((i & 1) >> 0) * 0xff;
+		palette_set_color(i,r,g,b);
 	}
 }
 

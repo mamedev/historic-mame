@@ -59,7 +59,7 @@ PALETTE_INIT( zaccaria )
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/*
@@ -72,9 +72,7 @@ PALETTE_INIT( zaccaria )
 		 */
 		if (((i % 64) / 8) == 0)
 		{
-			*(palette++) = 0;
-			*(palette++) = 0;
-			*(palette++) = 0;
+			palette_set_color(i,0,0,0);
 		}
 		else
 		{
@@ -82,16 +80,17 @@ PALETTE_INIT( zaccaria )
 			bit0 = (color_prom[0] >> 3) & 0x01;
 			bit1 = (color_prom[0] >> 2) & 0x01;
 			bit2 = (color_prom[0] >> 1) & 0x01;
-			*(palette++) = 0x46 * bit0 + 0x53 * bit1 + 0x66 * bit2;
+			r = 0x46 * bit0 + 0x53 * bit1 + 0x66 * bit2;
 			/* green component */
 			bit0 = (color_prom[0] >> 0) & 0x01;
 			bit1 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
 			bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
-			*(palette++) = 0x46 * bit0 + 0x53 * bit1 + 0x66 * bit2;
+			g = 0x46 * bit0 + 0x53 * bit1 + 0x66 * bit2;
 			/* blue component */
 			bit0 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
 			bit1 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
-			*(palette++) = 0x66 * bit0 + 0x96 * bit1;
+			b = 0x66 * bit0 + 0x96 * bit1;
+			palette_set_color(i,r,g,b);
 		}
 
 		color_prom++;
@@ -200,12 +199,12 @@ WRITE_HANDLER( zaccaria_attributes_w )
 
 WRITE_HANDLER( zaccaria_flip_screen_x_w )
 {
-	flip_screen_x_set(data);
+	flip_screen_x_set(data & 1);
 }
 
 WRITE_HANDLER( zaccaria_flip_screen_y_w )
 {
-	flip_screen_y_set(data);
+	flip_screen_y_set(data & 1);
 }
 
 
@@ -220,7 +219,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 {
 	int offs;
 	struct rectangle clip = *cliprect;
-	
+
 	if (flip_screen_x)
 		sect_rect(&clip, &spritevisiblearea_flipx);
 	else

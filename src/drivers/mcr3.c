@@ -1234,19 +1234,19 @@ static MACHINE_DRIVER_START( mcr3 )
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_PORTS(readport,writeport)
 	MDRV_CPU_VBLANK_INT(mcr_interrupt,2)
-	
+
 	MDRV_FRAMES_PER_SECOND(30)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_30HZ_VBLANK_DURATION)
 	MDRV_MACHINE_INIT(mcr)
 	MDRV_NVRAM_HANDLER(mcr3)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(32*16, 30*16)
 	MDRV_VISIBLE_AREA(0*16, 32*16-1, 0*16, 30*16-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(64)
-	
+
 	MDRV_VIDEO_START(generic)
 	MDRV_VIDEO_UPDATE(mcr3)
 MACHINE_DRIVER_END
@@ -1267,12 +1267,12 @@ static MACHINE_DRIVER_START( dotron )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(mcr3_ssio)
 	MDRV_IMPORT_FROM(squawk_n_talk)
-	
+
 	/* video hardware */
 	MDRV_SCREEN_SIZE(684, 642)
 	MDRV_VISIBLE_AREA(0, 684-1, 0, 642-1)
 	MDRV_PALETTE_LENGTH(64+32768)
-	
+
 	MDRV_VIDEO_START(dotron)
 	MDRV_VIDEO_UPDATE(dotron)
 MACHINE_DRIVER_END
@@ -1295,11 +1295,11 @@ static MACHINE_DRIVER_START( mcrmono )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(mcr3)
-	
+
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(readmem,mcrmono_writemem)
 	MDRV_CPU_PORTS(readport,mcrmono_writeport)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_UPDATE(mcrmono)
 MACHINE_DRIVER_END
@@ -1332,16 +1332,16 @@ static MACHINE_DRIVER_START( mcrscroll )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(mcr3)
-	
+
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(spyhunt_readmem,spyhunt_writemem)
-	
+
 	/* video hardware */
 	MDRV_SCREEN_SIZE(30*16, 30*16)
 	MDRV_VISIBLE_AREA(0, 30*16-1, 0, 30*16-1)
 	MDRV_GFXDECODE(spyhunt_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(64+4)
-	
+
 	MDRV_PALETTE_INIT(spyhunt)
 	MDRV_VIDEO_START(spyhunt)
 	MDRV_VIDEO_UPDATE(spyhunt)
@@ -1355,7 +1355,7 @@ static MACHINE_DRIVER_START( spyhunt )
 	MDRV_IMPORT_FROM(mcrscroll)
 	MDRV_IMPORT_FROM(mcr_ssio)
 	MDRV_IMPORT_FROM(chip_squeak_deluxe)
-	
+
 	/* video hardware */
 	MDRV_ASPECT_RATIO(62,45)
 	MDRV_SCREEN_SIZE(31*16, 30*16)
@@ -1414,6 +1414,9 @@ ROM_START( tapper )
 	ROM_LOAD( "tapfg4.bin",   0x14000, 0x4000, 0x32674ee6 )
 	ROM_LOAD( "tapfg7.bin",   0x18000, 0x4000, 0x070b4c81 )
 	ROM_LOAD( "tapfg6.bin",   0x1c000, 0x4000, 0xa37aef36 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "5784",         0x0000, 0x0020, 0xe1281ee9 )
 ROM_END
 
 
@@ -1443,6 +1446,9 @@ ROM_START( tappera )
 	ROM_LOAD( "fg4_a4.128",   0x14000, 0x4000, 0x082a4059 )
 	ROM_LOAD( "fg7_a1.128",   0x18000, 0x4000, 0x3b476abe )
 	ROM_LOAD( "fg6_a2.128",   0x1c000, 0x4000, 0x6717264c )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "5784",         0x0000, 0x0020, 0xe1281ee9 )
 ROM_END
 
 
@@ -1472,6 +1478,9 @@ ROM_START( sutapper )
 	ROM_LOAD( "5800",         0x14000, 0x4000, 0xebf1f948 )
 	ROM_LOAD( "5801",         0x18000, 0x4000, 0xd70defa7 )
 	ROM_LOAD( "5802",         0x1c000, 0x4000, 0xd4f114b9 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "5784",         0x0000, 0x0020, 0xe1281ee9 )
 ROM_END
 
 
@@ -1501,6 +1510,9 @@ ROM_START( rbtapper )
 	ROM_LOAD( "rbtfg4.bin",   0x14000, 0x4000, 0x8c79e7d7 )
 	ROM_LOAD( "rbtfg7.bin",   0x18000, 0x4000, 0x8dbf0c36 )
 	ROM_LOAD( "rbtfg6.bin",   0x1c000, 0x4000, 0x441201a0 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "5784",         0x0000, 0x0020, 0xe1281ee9 )
 ROM_END
 
 
@@ -1529,6 +1541,9 @@ ROM_START( timber )
 	ROM_LOAD( "timfg4.bin",   0x14000, 0x4000, 0xb7105eb7 )
 	ROM_LOAD( "timfg7.bin",   0x18000, 0x4000, 0xd9c27475 )
 	ROM_LOAD( "timfg6.bin",   0x1c000, 0x4000, 0x244778e8 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 
@@ -1563,6 +1578,9 @@ ROM_START( dotron )
 	ROM_LOAD( "loc-d.cp7",    0x0a000, 0x2000, 0x5e8a3ef3 )
 	ROM_LOAD( "loc-a.cp0",    0x0c000, 0x2000, 0xb35f5374 )
 	ROM_LOAD( "loc-b.cp9",    0x0e000, 0x2000, 0x565a5c48 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 
@@ -1597,6 +1615,9 @@ ROM_START( dotrone )
 	ROM_LOAD( "loc-d.cp7",    0x0a000, 0x2000, 0x5e8a3ef3 )
 	ROM_LOAD( "loc-a.cp0",    0x0c000, 0x2000, 0xb35f5374 )
 	ROM_LOAD( "loc-b.cp9",    0x0e000, 0x2000, 0x565a5c48 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 
@@ -1669,6 +1690,9 @@ ROM_START( sarge )
 	ROM_LOAD( "spr_6e.bin",   0x08000, 0x8000, 0x7cc6fb28 )
 	ROM_LOAD( "spr_5e.bin",   0x10000, 0x8000, 0xc832375c )
 	ROM_LOAD( "spr_4e.bin",   0x18000, 0x8000, 0xc382267d )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 
@@ -1692,6 +1716,9 @@ ROM_START( maxrpm )
 	ROM_LOAD( "fg-1",         0x08000, 0x8000, 0xe54b7f2a )
 	ROM_LOAD( "fg-2",         0x10000, 0x8000, 0x38be8505 )
 	ROM_LOAD( "fg-3",         0x18000, 0x8000, 0x9ae3eb52 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 
@@ -1715,6 +1742,9 @@ ROM_START( rampage )
 	ROM_LOAD( "fg-1",         0x10000, 0x10000, 0x8728532b )
 	ROM_LOAD( "fg-2",         0x20000, 0x10000, 0x9489f714 )
 	ROM_LOAD( "fg-3",         0x30000, 0x10000, 0x81e1de40 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 
@@ -1822,6 +1852,9 @@ ROM_START( spyhunt )
 
 	ROM_REGION( 0x01000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "cpu_alph.10g", 0x00000, 0x1000, 0x936dc87f )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 
@@ -1857,6 +1890,9 @@ ROM_START( crater )
 
 	ROM_REGION( 0x01000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "crcpu.10g",    0x00000, 0x1000, 0x6fe53c8d )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 

@@ -8,5 +8,3 @@
 
 VIDEO_START( shuuz );
 VIDEO_UPDATE( shuuz );
-
-void shuuz_scanline_update(int scanline);

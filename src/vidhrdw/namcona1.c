@@ -18,6 +18,7 @@ static data16_t *shaperam;
 static data16_t *cgram;
 static struct tilemap *tilemap[NAMCONA1_NUM_TILEMAPS];
 static int tilemap_palette_bank[NAMCONA1_NUM_TILEMAPS];
+static int palette_is_dirty;
 
 static void tilemap_get_info(
 	int tile_index,const data16_t *tilemap_videoram,int tilemap_color )
@@ -74,6 +75,26 @@ READ16_HANDLER( namcona1_videoram_r )
 
 /*************************************************************************/
 
+static void
+UpdatePalette( int offset )
+{
+	data16_t color;
+	int r,g,b;
+
+	color = paletteram16[offset];
+
+	/* -RRRRRGGGGGBBBBB */
+	r = (color>>10)&0x1f;
+	g = (color>>5)&0x1f;
+	b = (color)&0x1f;
+
+	r = (r<<3)|(r>>2);
+	g = (g<<3)|(g>>2);
+	b = (b<<3)|(b>>2);
+
+	palette_set_color( offset, r,g,b );
+} /* namcona1_paletteram_w */
+
 READ16_HANDLER( namcona1_paletteram_r )
 {
 	return paletteram16[offset];
@@ -81,22 +102,17 @@ READ16_HANDLER( namcona1_paletteram_r )
 
 WRITE16_HANDLER( namcona1_paletteram_w )
 {
-	int r,g,b;
 	COMBINE_DATA( &paletteram16[offset] );
-	/* -RRRRRGGGGGBBBBB */
-	r = (paletteram16[offset]>>10)&0x1f;
-	g = (paletteram16[offset]>>5)&0x1f;
-	b = paletteram16[offset]&0x001f;
-
-	r = (r<<3)|(r>>2);
-	g = (g<<3)|(g>>2);
-	b = (b<<3)|(b>>2);
-
-	palette_set_color( offset, r,g,b );
-
-	/* shadow */
-	palette_set_color( offset+0x1000, r/2,g/2,b/2 );
-} /* namcona1_paletteram_w */
+	if( namcona1_vreg[0x8e/2] )
+	{
+		/* graphics enabled; update palette immediately */
+		UpdatePalette( offset );
+	}
+	else
+	{
+		palette_is_dirty = 1;
+	}
+}
 
 /*************************************************************************/
 
@@ -254,8 +270,7 @@ VIDEO_START( namcona1 )
 
 static void pdraw_masked_tile(
 		struct mame_bitmap *bitmap,
-		const struct rectangle *cliprect,
-		unsigned int code,
+		unsigned code,
 		int color,
 		int sx, int sy,
 		int flipx, int flipy,
@@ -268,7 +283,24 @@ static void pdraw_masked_tile(
 	int gfx_pitch;
 	data8_t *mask_addr;
 	int mask_pitch;
-	int x,y;
+	int x,y,temp;
+
+	if( Machine->orientation & ORIENTATION_SWAP_XY )
+	{
+		temp = sx; sx = sy; sy = temp;
+		temp = flipx; flipx = flipy; flipy = temp;
+	}
+	if( Machine->orientation & ORIENTATION_FLIP_X )
+	{
+		sx = bitmap->width - 1 - sx;
+		flipx = !flipx;
+	}
+	if( Machine->orientation & ORIENTATION_FLIP_Y )
+	{
+		sy = bitmap->height - 1 - sy;
+		flipy = !flipy;
+	}
+
 	/*
 	 *	custom blitter for drawing a masked 8x8x8BPP tile
 	 *	- doesn't yet handle screen orientation (needed particularly for F/A, a vertical game)
@@ -292,10 +324,8 @@ static void pdraw_masked_tile(
 		/* The way we render shadows makes some Emeralda text invisible.
 		 * The relevant text is composed of sprites with the shadow bit set,
 		 * displayed over a black backdrop.
-		 *
-		 * For now, just disable shadows in all games.
 		 */
-		if( 0 && bShadow )
+		if( bShadow && namcona1_gametype!=NAMCO_EMERALDA )
 		{
 			for( y=0; y<8; y++ )
 			{
@@ -385,8 +415,7 @@ static void pdraw_masked_tile(
 
 static void pdraw_opaque_tile(
 		struct mame_bitmap *bitmap,
-		const struct rectangle *cliprect,
-		unsigned int code,
+		unsigned code,
 		int color,
 		int sx, int sy,
 		int flipx, int flipy,
@@ -397,7 +426,26 @@ static void pdraw_opaque_tile(
 	const pen_t *paldata;
 	data8_t *gfx_addr;
 	int gfx_pitch;
-	int x,y;
+	int x,y,temp;
+	int ypos;
+	data8_t *pri;
+	UINT16 *dest;
+
+	if( Machine->orientation & ORIENTATION_SWAP_XY )
+	{
+		temp = sx; sx = sy; sy = temp;
+		temp = flipx; flipx = flipy; flipy = temp;
+	}
+	if( Machine->orientation & ORIENTATION_FLIP_X )
+	{
+		sx = bitmap->width - 1 - sx;
+		flipx = !flipx;
+	}
+	if( Machine->orientation & ORIENTATION_FLIP_Y )
+	{
+		sy = bitmap->height - 1 - sy;
+		flipy = !flipy;
+	}
 
 	if( sx > -8 &&
 		sy > -8 &&
@@ -413,9 +461,9 @@ static void pdraw_opaque_tile(
 
 		for( y=0; y<8; y++ )
 		{
-			int ypos = sy+(flipy?7-y:y);
-			data8_t *pri = (data8_t *)priority_bitmap->line[ypos];
-			UINT16 *dest = (UINT16 *)bitmap->line[ypos];
+			ypos = sy+(flipy?7-y:y);
+			pri = (data8_t *)priority_bitmap->line[ypos];
+			dest = (UINT16 *)bitmap->line[ypos];
 			if( flipx )
 			{
 				dest += sx+7;
@@ -449,20 +497,25 @@ static void pdraw_opaque_tile(
 
 static const data8_t pri_mask[8] = { 0x00,0x01,0x03,0x07,0x0f,0x1f,0x3f,0x7f };
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_sprites( struct mame_bitmap *bitmap )
 {
 	int which;
 	const data16_t *source = spriteram16;
 	void (*drawtile)(
 		struct mame_bitmap *,
-		const struct rectangle *,
-		unsigned int code,
+		unsigned code,
 		int color,
 		int sx, int sy,
 		int flipx, int flipy,
 		int priority,
 		int bShadow );
 	data16_t sprite_control;
+	data16_t ypos,tile,color,xpos;
+	int priority;
+	int width,height;
+	int flipy,flipx;
+	int row,col;
+	int sx,sy;
 
 	sprite_control = namcona1_vreg[0x22/2];
 
@@ -470,21 +523,20 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 
 	for( which=0; which<0x100; which++ )
 	{ /* max 256 sprites */
-		data16_t ypos	= source[0];	/* FHHH---E YYYYYYYY	flipy, height, ypos */
-		data16_t tile	= source[1];	/* O???TTTT TTTTTTTT	opaque tile */
-		data16_t color	= source[2];	/* FSWW???B CCCC?PPP	flipx, shadow, width, color, pri*/
-		data16_t xpos	= source[3];	/* -------X XXXXXXXX	xpos */
+		ypos	= source[0];	/* FHHH---E YYYYYYYY	flipy, height, ypos */
+		tile	= source[1];	/* O???TTTT TTTTTTTT	opaque tile */
+		color	= source[2];	/* FSWW???B CCCC?PPP	flipx, shadow, width, color, pri*/
+		xpos	= source[3];	/* -------X XXXXXXXX	xpos */
 
-		int priority = pri_mask[color&0x7];
-		int width = ((color>>12)&0x3)+1;
-		int height = ((ypos>>12)&0x7)+1;
-		int flipy = ypos&0x8000;
-		int flipx = color&0x8000;
-		int row,col;
+		priority = pri_mask[color&0x7];
+		width = ((color>>12)&0x3)+1;
+		height = ((ypos>>12)&0x7)+1;
+		flipy = ypos&0x8000;
+		flipx = color&0x8000;
 
-		if( ypos&0x0100 )
+		if( namcona1_gametype==NAMCO_NUMANATH && ypos&0x0100 )
 		{
-			return; /* end-of-list marker? */
+			return; /* end-of-list marker; nb2 specific? */
 		}
 
 		if( (tile&0x8000)==0 )
@@ -497,7 +549,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 		}
 		for( row=0; row<height; row++ )
 		{
-			int sy = (ypos&0x1ff)-30+32;
+			sy = (ypos&0x1ff)-30+32;
 			if( flipy )
 			{
 				sy += (height-1-row)*8;
@@ -508,7 +560,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 			}
 			for( col=0; col<width; col++ )
 			{
-				int sx = (xpos&0x1ff)-10;
+				sx = (xpos&0x1ff)-10;
 				if( flipx )
 				{
 					sx += (width-1-col)*8;
@@ -518,7 +570,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 					sx+=col*8;
 				}
 				drawtile(
-					bitmap,cliprect,
+					bitmap,
 					tile + row*64+col,
 					(color>>4)&0xf,
 					((sx+16)&0x1ff)-8,
@@ -572,22 +624,24 @@ static void draw_background( struct mame_bitmap *bitmap, const struct rectangle 
 	scrollx = 0;
 	scrolly = 0;
 	for( line=0; line<256; line++ )
+	{
+		clip.min_y = line;
+		clip.max_y = line;
+		xdata = scroll[line];
+		if( xdata )
+		{
+			/* screenwise linescroll */
+			scrollx = xadjust+xdata;
+		}
+		ydata = scroll[line+0x100];
+		if( ydata&0x4000 )
+		{
+			/* line select: dword offset from 0xff000 or tilemap source line */
+			scrolly = (ydata - line)&0x1ff;
+		}
+
 		if (line >= cliprect->min_y && line <= cliprect->max_y)
 		{
-			clip.min_y = line;
-			clip.max_y = line;
-			xdata = scroll[line];
-			if( xdata )
-			{
-				/* screenwise linescroll */
-				scrollx = xadjust+xdata;
-			}
-			ydata = scroll[line+0x100];
-			if( ydata&0x4000 )
-			{
-				/* line select: dword offset from 0xff000 or tilemap source line */
-				scrolly = (ydata - line)&0x1ff;
-			}
 			if( xdata == 0xc001 )
 			{
 				/* This is a simplification, but produces the correct behavior for the only game that uses this
@@ -606,6 +660,7 @@ static void draw_background( struct mame_bitmap *bitmap, const struct rectangle 
 				tilemap_draw( bitmap, &clip, tilemap[which], 0, primask );
 			}
 		}
+	}
 } /* draw_background */
 
 VIDEO_UPDATE( namcona1 )
@@ -616,6 +671,15 @@ VIDEO_UPDATE( namcona1 )
 
 	if( namcona1_vreg[0x8e/2] )
 	{ /* gfx enabled */
+		if( palette_is_dirty )
+		{
+			/* palette updates are delayed when graphics are disabled */
+			for( which=0; which<0x1000; which++ )
+			{
+				UpdatePalette( which );
+			}
+			palette_is_dirty = 0;
+		}
 		update_gfx();
 		for( which=0; which<NAMCONA1_NUM_TILEMAPS; which++ )
 		{
@@ -628,7 +692,7 @@ VIDEO_UPDATE( namcona1 )
 			}
 		} /* next tilemap */
 		fillbitmap( priority_bitmap,0,cliprect );
-		fillbitmap( bitmap,get_black_pen(),cliprect );
+		fillbitmap( bitmap,0,cliprect );
 		for( priority = 0; priority<8; priority++ )
 		{
 			for( which=NAMCONA1_NUM_TILEMAPS-1; which>=0; which-- )
@@ -639,6 +703,6 @@ VIDEO_UPDATE( namcona1 )
 				}
 			} /* next tilemap */
 		} /* next priority level */
-		draw_sprites( bitmap,cliprect );
+		draw_sprites( bitmap );
 	} /* gfx enabled */
 } /* namcona1_vh_screenrefresh */

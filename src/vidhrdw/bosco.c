@@ -78,21 +78,23 @@ PALETTE_INIT( bosco )
 
 	for (i = 0;i < 32;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		bit0 = (color_prom[31-i] >> 0) & 0x01;
 		bit1 = (color_prom[31-i] >> 1) & 0x01;
 		bit2 = (color_prom[31-i] >> 2) & 0x01;
-		palette[3*i] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		bit0 = (color_prom[31-i] >> 3) & 0x01;
 		bit1 = (color_prom[31-i] >> 4) & 0x01;
 		bit2 = (color_prom[31-i] >> 5) & 0x01;
-		palette[3*i + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		bit0 = 0;
 		bit1 = (color_prom[31-i] >> 6) & 0x01;
 		bit2 = (color_prom[31-i] >> 7) & 0x01;
-		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		palette_set_color(i,r,g,b);
 	}
 
 	/* characters / sprites */
@@ -111,15 +113,17 @@ PALETTE_INIT( bosco )
 	/* now the stars */
 	for (i = 32;i < 32 + 64;i++)
 	{
-		int bits;
+		int bits,r,g,b;
 		int map[4] = { 0x00, 0x88, 0xcc, 0xff };
 
 		bits = ((i-32) >> 0) & 0x03;
-		palette[3*i] = map[bits];
+		r = map[bits];
 		bits = ((i-32) >> 2) & 0x03;
-		palette[3*i + 1] = map[bits];
+		g = map[bits];
 		bits = ((i-32) >> 4) & 0x03;
-		palette[3*i + 2] = map[bits];
+		b = map[bits];
+
+		palette_set_color(i,r,g,b);
 	}
 }
 

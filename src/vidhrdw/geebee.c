@@ -131,14 +131,18 @@ VIDEO_START( kaitei )
 /* Initialise the palette */
 PALETTE_INIT( geebee )
 {
-	memcpy(palette, geebee_palette, sizeof (geebee_palette));
+	int i;
+	for (i = 0; i < sizeof(geebee_palette)/3; i++)
+		palette_set_color(i,geebee_palette[i*3+0],geebee_palette[i*3+1],geebee_palette[i*3+2]);
 	memcpy(colortable, geebee_colortable, sizeof (geebee_colortable));
 }
 
 /* Initialise the palette */
 PALETTE_INIT( navalone )
 {
-	memcpy(palette, geebee_palette, sizeof (geebee_palette));
+	int i;
+	for (i = 0; i < sizeof(geebee_palette)/3; i++)
+		palette_set_color(i,geebee_palette[i*3+0],geebee_palette[i*3+1],geebee_palette[i*3+2]);
 	memcpy(colortable, navalone_colortable, sizeof (navalone_colortable));
 }
 

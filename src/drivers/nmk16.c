@@ -97,6 +97,17 @@ ram there in that cpu's address space (shared with the main cpu ?)
 .. maybe the roms are bitswapped like the gfx.. needs investigating
 really..
 
+'manybloc' :
+
+  - There are writes to 0x080010.w and 0x080012.w (MCU ?) in code between
+    0x005000 to 0x005690, but I see no call to "main" routine at 0x005504 !
+  - There are writes to 0x08001c.w and 0x08001e.w but I can't tell what
+    the effect is ! Could it be related to sound and/or interrupts ?
+
+  - In the "test mode", press BOTH player 1 buttons to exit
+
+  - When help is available, press BUTTON2 twice within the timer to "solve"
+
 ********************************************************************/
 
 #include "driver.h"
@@ -124,6 +135,7 @@ WRITE16_HANDLER( mustang_scroll_w );
 WRITE16_HANDLER( vandyke_scroll_w );
 
 VIDEO_START( macross );
+VIDEO_UPDATE( manybloc );
 VIDEO_START( gunnail );
 VIDEO_START( macross2 );
 VIDEO_START( bjtwin );
@@ -199,8 +211,16 @@ static void setvector_callback(int param)
 	}
 }
 
+static int respcount; // used with mcu function
+
+static MACHINE_INIT( nmk16 )
+{
+	respcount = 0;
+}
+
 static MACHINE_INIT( mustang_sound )
 {
+	respcount = 0;
 	setvector_callback(VECTOR_INIT);
 }
 
@@ -251,9 +271,9 @@ static WRITE16_HANDLER( macross_mcu_w )
 logerror("%04x: mcu_w %02x\n",activecpu_get_pc(),data);
 }
 
+
 static READ16_HANDLER( macross_mcu_r )
 {
-	static int respcount = 0;
 	static int resp[] = {	0x82, 0xc7, 0x00,
 							0x2c, 0x6c, 0x00,
 							0x9f, 0xc7, 0x00,
@@ -279,7 +299,6 @@ logerror("%04x: mcu_r %02x\n",activecpu_get_pc(),res);
 
 static READ16_HANDLER( urashima_mcu_r )
 {
-	static int respcount = 0;
 	static int resp[] = {	0x99, 0xd8, 0x00,
 							0x2a, 0x6a, 0x00,
 							0x9c, 0xd8, 0x00,
@@ -437,6 +456,38 @@ static READ16_HANDLER(logr)
 return ~input_port_0_word_r(0,0);
 }
 
+static MEMORY_READ16_START( manybloc_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x080000, 0x080001, input_port_0_word_r },
+	{ 0x080002, 0x080003, input_port_1_word_r },
+	{ 0x080004, 0x080005, input_port_2_word_r },
+//	{ 0x08000e, 0x08000f, soundlatch2_word_r },	/* NO read from there in M68000 code ! */
+	{ 0x088000, 0x0883ff, MRA16_RAM },
+	{ 0x090000, 0x093fff, nmk_bgvideoram_r },
+	{ 0x09c000, 0x09cfff, MRA16_RAM }, /* Scroll? */
+	{ 0x09d000, 0x09d7ff, nmk_txvideoram_r },
+	{ 0x0f0000, 0x0f7fff, MRA16_RAM },
+	{ 0x0f8000, 0x0f8fff, MRA16_RAM },
+	{ 0x0f9000, 0x0fffff, MRA16_RAM },
+MEMORY_END
+
+static MEMORY_WRITE16_START( manybloc_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x080010, 0x080011, MWA16_NOP },			/* See notes at the top of the driver */
+	{ 0x080012, 0x080013, MWA16_NOP },			/* See notes at the top of the driver */
+	{ 0x080014, 0x080015, nmk_flipscreen_w },
+	{ 0x08001c, 0x08001d, MWA16_NOP },			/* See notes at the top of the driver */
+	{ 0x08001e, 0x08001f, MWA16_NOP },			/* See notes at the top of the driver */
+	{ 0x088000, 0x0883ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
+	{ 0x08c000, 0x08c007, nmk_scroll_w },
+	{ 0x090000, 0x093fff, nmk_bgvideoram_w, &nmk_bgvideoram },
+	{ 0x09c000, 0x09cfff, MWA16_RAM }, /* Scroll? */
+	{ 0x09d000, 0x09d7ff, nmk_txvideoram_w, &nmk_txvideoram },
+	{ 0x0f0000, 0x0f7fff, MWA16_RAM },	/* Work RAM */
+	{ 0x0f8000, 0x0f8fff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x0f9000, 0x0fffff, MWA16_RAM, &ram },
+MEMORY_END
+
 static MEMORY_READ16_START( tharrier_readmem )
 	{ 0x000000, 0x03ffff, MRA16_ROM },
 	{ 0x080000, 0x080001, logr },//input_port_0_word_r },
@@ -513,7 +564,7 @@ PORT_END
 static MEMORY_READ16_START( mustang_readmem )
 	{ 0x000000, 0x03ffff, MRA16_ROM },
 	{ 0x080000, 0x080001, input_port_0_word_r },
-	{ 0x080002, 0x080003, logr }, //input_port_1_word_r },
+	{ 0x080002, 0x080003, input_port_1_word_r },
 	{ 0x080004, 0x080005, input_port_2_word_r },
 	{ 0x08000e, 0x08000f, macross_mcu_r },
 //	{ 0x08000e, 0x08000f, soundlatch2_word_r },	/* from Z80 bootleg only? */
@@ -532,8 +583,8 @@ static MEMORY_WRITE16_START( mustang_writemem )
 	{ 0x08001e, 0x08001f, macross_mcu_w },
 //	{ 0x08001e, 0x08001f, mustang_sound_command_w },	/* to Z80 bootleg only? */
 	{ 0x088000, 0x0887ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
-//	{ 0x08c000, 0x08c007, mustang_scroll_w },
-{ 0x08c000, 0x08c001, MWA16_NOP },
+	{ 0x08c000, 0x08c007, mustang_scroll_w },
+//{ 0x08c000, 0x08c001, MWA16_NOP },
 	{ 0x090000, 0x093fff, nmk_bgvideoram_w, &nmk_bgvideoram },
 	{ 0x09c000, 0x09c7ff, nmk_txvideoram_w, &nmk_txvideoram },
 	{ 0x0f0000, 0x0f7fff, MWA16_RAM },	/* Work RAM */
@@ -1020,6 +1071,76 @@ INPUT_PORTS_START( blkheart )
 	PORT_DIPSETTING(      0xa0, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(      0x20, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(      0x00, DEF_STR( Free_Play ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( manybloc )
+	PORT_START	/* IN0 - 0x080000 */
+	PORT_BIT( 0x7fff, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW,  IPT_UNKNOWN )		// VBLANK ? Check code at 0x005640
+
+	PORT_START	/* IN1 - 0x080002 */
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )	// select fruits
+	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )	// help
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )	// select fruits
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )	// help
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_COIN2 )
+
+	PORT_START	/* DSW - 0x080004 -> 0x0f0036 */
+	PORT_DIPNAME( 0x0001, 0x0000, "Slot System" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0000, "Explanation" )
+	PORT_DIPSETTING(      0x0000, "English" )
+	PORT_DIPSETTING(      0x0002, "Japanese" )
+	PORT_DIPNAME( 0x0004, 0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Cabinet ) )		// "Play Type"
+	PORT_DIPSETTING(      0x0008, DEF_STR( Upright ) )		//   "Uplight" !
+	PORT_DIPSETTING(      0x0000, DEF_STR( Cocktail ) )		//   "Table"
+	PORT_SERVICE( 0x0010, IP_ACTIVE_HIGH )				// "Test Mode"
+	PORT_DIPNAME( 0x0060, 0x0000, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0060, "Easy" )				//   "Level 1
+	PORT_DIPSETTING(      0x0000, "Normal" )				//   "Level 2
+	PORT_DIPSETTING(      0x0020, "Hard" )				//   "Level 3
+	PORT_DIPSETTING(      0x0040, "Hardest" )				//   "Level 4
+	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Flip_Screen ) )	// "Display"
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )			//   "Normal"
+	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )			//   "Inverse"
+	PORT_DIPNAME( 0x0700, 0x0000, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0700, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0600, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0500, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0300, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x3800, 0x0000, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x3800, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x3000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x2800, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x1800, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0xc000, 0x0000, "Plate Probability" )
+	PORT_DIPSETTING(      0xc000, "Bad" )
+	PORT_DIPSETTING(      0x0000, "Normal" )
+	PORT_DIPSETTING(      0x4000, "Better" )
+	PORT_DIPSETTING(      0x8000, "Best" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( tharrier )
@@ -2292,7 +2413,6 @@ static struct GfxDecodeInfo strahl_gfxdecodeinfo[] =
 };
 
 
-
 static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip */
@@ -2351,6 +2471,7 @@ static MACHINE_DRIVER_START( urashima )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(nmk16)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2378,6 +2499,7 @@ static MACHINE_DRIVER_START( vandyke )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(nmk16)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2411,7 +2533,6 @@ static MACHINE_DRIVER_START( tharrier )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
 	MDRV_MACHINE_INIT(mustang_sound)
 
 	/* video hardware */
@@ -2430,6 +2551,28 @@ static MACHINE_DRIVER_START( tharrier )
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_single)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( manybloc )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 10000000) /* 10? MHz - check */
+	MDRV_CPU_MEMORY(manybloc_readmem,manybloc_writemem)
+	MDRV_CPU_VBLANK_INT(nmk_interrupt,2)
+	MDRV_CPU_PERIODIC_INT(irq1_line_hold,60)/* is this is too high it breaks the game on this one, too low sprites flicker */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(tharrier_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
+
+	MDRV_VIDEO_START(macross)
+//	MDRV_VIDEO_EOF(nmk)
+	MDRV_VIDEO_UPDATE(manybloc)
+MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( mustang )
 
@@ -2445,7 +2588,6 @@ static MACHINE_DRIVER_START( mustang )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-
 	MDRV_MACHINE_INIT(mustang_sound)
 
 	/* video hardware */
@@ -2474,6 +2616,7 @@ static MACHINE_DRIVER_START( acrobatm )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(nmk16)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2502,6 +2645,7 @@ static MACHINE_DRIVER_START( bioship )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(nmk16)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2530,6 +2674,7 @@ static MACHINE_DRIVER_START( tdragon )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(nmk16)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2557,6 +2702,7 @@ static MACHINE_DRIVER_START( strahl )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(nmk16)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2585,6 +2731,7 @@ static MACHINE_DRIVER_START( hachamf )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(nmk16)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2613,6 +2760,7 @@ static MACHINE_DRIVER_START( macross )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(nmk16)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2641,6 +2789,7 @@ static MACHINE_DRIVER_START( gunnail )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(nmk16)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2673,6 +2822,7 @@ static MACHINE_DRIVER_START( macross2 )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(nmk16)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2701,6 +2851,7 @@ static MACHINE_DRIVER_START( bjtwin )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(nmk16)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -3312,7 +3463,39 @@ ROM_START( nouryoku )
 	ROM_LOAD( "ic27.7",     0x040000, 0x100000, 0x8a69fded )	/* all banked */
 ROM_END
 
+ROM_START( manybloc )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )		/* 68000 code */
+	ROM_LOAD16_BYTE( "1-u33.bin",  0x00001, 0x20000, 0x07473154  )
+	ROM_LOAD16_BYTE( "2-u35.bin",  0x00000, 0x20000, 0x04acd8c1  )
 
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Z80? CPU */
+	ROM_LOAD( "3-u146.bin",      0x00000, 0x10000, 0x7bf5fafa  )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "12-u39.bin",    0x000000, 0x10000, 0x413b5438  )	/* 8x8 tiles */
+
+	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 sprite tiles */
+	ROM_LOAD16_BYTE( "8-u54b.bin",  0x000000, 0x20000, 0x03eede77 )
+	ROM_LOAD16_BYTE( "10-u86b.bin", 0x000001, 0x20000, 0x9eab216f )
+	ROM_LOAD16_BYTE( "9-u53b.bin",  0x040000, 0x20000, 0xdfcfa040 )
+	ROM_LOAD16_BYTE( "11-u85b.bin", 0x040001, 0x20000, 0xfe747dd5 )
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "4-u96.bin", 0x000000, 0x40000, 0x28af2640 )
+	ROM_LOAD( "5-u97.bin", 0x040000, 0x40000, 0x536699e6 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "6-u131.bin", 0x000000, 0x40000, 0x79a4ae75   )
+
+	ROM_REGION( 0x40000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "7-u132.bin", 0x000000, 0x40000, 0x21db875e   )
+
+	ROM_REGION( 0x20220, REGION_PROMS, 0 )
+	ROM_LOAD( "u7.bpr",      0x0000, 0x0100, 0xcfdbb86c )	/* unknown */
+	ROM_LOAD( "u120.bpr",      0x0100, 0x0100, 0x576c5984  )	/* unknown */
+	ROM_LOAD( "u200.bpr",      0x0200, 0x0020, 0x1823600b  )	/* unknown */
+	ROM_LOAD( "u10.bpr",      0x0100, 0x0200, 0x8e9b569a   )	/* unknown */
+ROM_END
 
 static unsigned char decode_byte(unsigned char src, unsigned char *bitp)
 {
@@ -3515,6 +3698,71 @@ static DRIVER_INIT( bioship )
 	RAM[0xe79a/2] = 0x4e71;
 }
 
+
+int is_blkheart;
+
+// see raine's games/nmk.c
+
+static WRITE16_HANDLER ( test_2a_w )
+{
+	data = data >> 8;
+
+	ram[0x2a/2] = (data << 8) | data;
+
+	if (data == 1 || data == 2) {
+		ram[0x68/2] = 11;
+		ram[0x6a/2] = 0;
+	}
+}
+
+static WRITE16_HANDLER ( test_2a_mustang_w )
+{
+	data = data >> 8;
+
+	ram[0x2a/2] = (data << 8) | data;
+
+	if (data == 1 || data == 2) {
+		ram[0x2e/2] = 10;
+		ram[0x2c/2] = 0;
+	}
+
+}
+
+static DRIVER_INIT( blkheart )
+{
+	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
+
+	is_blkheart = 1; // sprite enable is different?
+
+   // see raine's games/nmk.c
+	RAM[0x872/2] = 0x4e71;
+   	RAM[0x874/2] = 0x4e71;
+   	RAM[0x876/2] = 0x4e71;
+   	RAM[0x8d6/2] = 0x0300;
+   	RAM[0xe1c/2] = 0x0300;
+   	RAM[0x23dc/2] = 0x0300;
+   	RAM[0x3dea/2] = 0x0300;
+
+	install_mem_write16_handler(0, 0xf902a, 0xf902b, test_2a_w );
+}
+
+static DRIVER_INIT( mustang )
+{
+	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
+
+	is_blkheart = 1; // sprite enable is different?
+
+   // see raine's games/nmk.c
+	RAM[0x85c/2] = 0x4e71;
+	RAM[0x85e/2] = 0x4e71;
+	RAM[0x860/2] = 0x4e71;
+	RAM[0x8c0/2] = 0x0300;
+  	RAM[0xc00/2] = 0x0300;
+  	RAM[0x30b2/2] = 0x0300;
+
+	install_mem_write16_handler(0, 0xf902a, 0xf902b, test_2a_mustang_w );
+}
+
 static DRIVER_INIT( bjtwin )
 {
 	init_nmk();
@@ -3544,13 +3792,14 @@ static DRIVER_INIT( bjtwin )
 
 GAMEX( 1989, urashima, 0,       urashima, macross,  0,        ROT0,   "UPL",							"Urashima Mahjong", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING ) /* Similar Hardware? */
 GAMEX( 1989, tharrier, 0,       tharrier, tharrier, 0,        ROT270, "UPL (American Sammy license)",	"Task Force Harrier", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
-GAMEX( 1990, mustang,  0,       mustang,  mustang,  0,        ROT0,   "UPL",							"US AAF Mustang (Japan)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
-GAMEX( 1990, mustangs, mustang, mustang,  mustang,  0,        ROT0,   "UPL (Seoul Trading license)",	"US AAF Mustang (Seoul Trading)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
-GAMEX( 1990, mustangb, mustang, mustang,  mustang,  0,        ROT0,   "bootleg",						"US AAF Mustang (bootleg)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
+GAMEX( 1990, mustang,  0,       mustang,  mustang,  mustang,  ROT0,   "UPL",							"US AAF Mustang (Japan)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND) // Playable but there are Still Protection Problems
+GAMEX( 1990, mustangs, mustang, mustang,  mustang,  mustang,  ROT0,   "UPL (Seoul Trading license)",	"US AAF Mustang (Seoul Trading)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND ) // Playable but there are Still Protection Problems
+GAMEX( 1990, mustangb, mustang, mustang,  mustang,  mustang,  ROT0,   "bootleg",						"US AAF Mustang (bootleg)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND ) // Playable but there are Still Protection Problems
 GAMEX( 1990, bioship,  0,       bioship,  bioship,  bioship,  ROT0,   "UPL (American Sammy license)",	"Bio-ship Paladin", GAME_NO_SOUND )
 GAMEX( 1990, vandyke,  0,       vandyke,  vandyke,  0,        ROT270, "UPL",							"Vandyke (Japan)",  GAME_NO_SOUND )
-GAMEX( 1991, blkheart, 0,       macross,  blkheart, 0,        ROT0,   "UPL",							"Black Heart", GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1991, blkhearj, blkheart,macross,  blkheart, 0,        ROT0,   "UPL",							"Black Heart (Japan)", GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1991, manybloc, 0,       manybloc, manybloc, 0,        ROT270, "Bee-Oh",                         "Many Block", GAME_NO_COCKTAIL | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1991, blkheart, 0,       macross,  blkheart, blkheart, ROT0,   "UPL",							"Black Heart", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND  ) // Playable but there are Still Protection Problems
+GAMEX( 1991, blkhearj, blkheart,macross,  blkheart, blkheart, ROT0,   "UPL",							"Black Heart (Japan)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND ) // Playable but there are Still Protection Problems
 GAMEX( 1991, acrobatm, 0,       acrobatm, acrobatm, acrobatm, ROT270, "UPL (Taito license)",			"Acrobat Mission", GAME_NO_SOUND )
 GAMEX( 1992, strahl,   0,       strahl,   strahl,   strahl,   ROT0,   "UPL",							"Koutetsu Yousai Strahl (Japan set 1)", GAME_NO_SOUND )
 GAMEX( 1992, strahla,  strahl,  strahl,   strahl,   strahl,   ROT0,   "UPL",							"Koutetsu Yousai Strahl (Japan set 2)", GAME_NO_SOUND )

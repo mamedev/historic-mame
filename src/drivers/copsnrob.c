@@ -64,12 +64,6 @@
  *
  *************************************/
 
-static unsigned char palette_source[] =
-{
-	0x00,0x00,0x00, /* black */
-	0xff,0xff,0xff  /* white */
-};
-
 static unsigned short colortable_source[] =
 {
 	0x00, 0x01
@@ -77,7 +71,8 @@ static unsigned short colortable_source[] =
 
 static PALETTE_INIT( copsnrob )
 {
-	memcpy(palette,palette_source,sizeof(palette_source));
+	palette_set_color(0,0x00,0x00,0x00); /* black */
+	palette_set_color(1,0xff,0xff,0xff);  /* white */
 	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 

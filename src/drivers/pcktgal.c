@@ -242,7 +242,7 @@ static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip (no more supported) */
 	3000000,	/* 3 MHz */
-	{ 50 }
+	{ 100 }
 };
 
 static struct MSM5205interface msm5205_interface =

@@ -119,11 +119,24 @@ extern unsigned char *renegade_textram;
 
 static WRITE_HANDLER( adpcm_play_w )
 {
-	if (data >= 0x2c)
-		ADPCM_play( 0, 0x2000*(data-0x2c), 0x2000*2 );
+	int offs;
+	int len;
+
+	offs = (data - 0x2c) * 0x2000;
+	len = 0x2000*2;
+
+	/* kludge to avoid reading past end of ROM */
+	if (offs + len > 0x20000)
+		len = 0x1000;
+
+	if (offs >= 0 && offs+len <= 0x20000)
+		ADPCM_play(0,offs,len);
+	else
+		logerror("out of range adpcm command: 0x%02x\n",data);
 }
 
-static WRITE_HANDLER( sound_w ){
+static WRITE_HANDLER( sound_w )
+{
 	soundlatch_w(offset,data);
 	cpu_set_irq_line(1,M6809_IRQ_LINE,HOLD_LINE);
 }
@@ -635,7 +648,7 @@ static void irqhandler(int linestate)
 static struct YM3526interface ym3526_interface = {
 	1,			/* 1 chip (no more supported) */
 	3000000,	/* 3 MHz ? (hand tuned) */
-	{ 50 }, 	/* volume */
+	{ 100 }, 	/* volume */
 	{ irqhandler },
 };
 

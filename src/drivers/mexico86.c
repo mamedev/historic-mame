@@ -15,6 +15,55 @@ Notes:
 
 - kikikai sometimes crashes, might be a synchronization issue
 
+
+Revision:
+
+4-1-2002 Acho A. Tang
+
+[Kiki Kaikai]
+
+- Part of Kiki's code runs straight across banked ROM boundaries which MAME's
+  current memory model doesn't seem to handle very well. The result is
+  garbage being executed and thus the game crashes. This can be avoided by
+  preloading bank zero into its default location.
+
+- Kiki Kaikai also suffers from random lock-up's. It happens when the sound
+  CPU misses CTS from YM2203. The processor will loop infinitely and the main
+  CPU will in turn wait forever. It's difficult to meet the required level
+  of synchronization but we can filter the 2205's busy signal.
+
+- Collision is not working on some sprites and the exact reason is unknown.
+  My investigation so far has dismissed the following possibilities:
+
+  1) Hidden IRQ's - RST38 and NMI are the only interrupts operatubg in mode 1
+     and they both work as supposed to.
+
+  2) Collision code missing - I've located collision routines responsible for
+     over 90% of the enemies. They're called by individual sprite handlers
+     everytime after VRAM update - except those with collision problems.
+
+  3) Collision data missing - Sprite information is stored at $D800. Data of
+     the questionable sprites is further formatted, tagged and copied to the
+     memory area shared with the MCU.
+
+  4) MCU not working - The MCU latches specially formatted sprite data at
+     $E820 byte-by-byte, one after another into the accumulator, but does
+     not process nor store them into memory. It then asserts $E8A3 when
+     the reading is done. The code is about a kilobyte long and I checked
+     everywhere including IRQ services but no sign of collision functions.
+     The main CPU expects a result at $E8A2 however. The problrm is quite
+     similar to the randomization at $C07C in Bubble Bobble.
+
+  Kiki Kaikai is likely to have extra circuitary connected to the MCU. I've
+  added a function in machine\mexico86.c to simulate its I/O behavior but we
+  need real board owners to verify. Mexico86 and Kick'n Run don't use
+  $E8A2-$E8A3 so they're not affected in any way.
+
+- Modified VIDEO_UPDATE. The orignal is a Mexico86 duplicate which produces
+  graphics artifacts especially beyond stage 3.
+
+- Rearranged DIP settings according to the Japanese manual.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -37,7 +86,12 @@ WRITE_HANDLER( mexico86_bankswitch_w );
 VIDEO_UPDATE( mexico86 );
 VIDEO_UPDATE( kikikai );
 
-
+//AT
+static READ_HANDLER( kiki_2203_r )
+{
+        return(YM2203Read(0,0) & 0x7f);
+}
+//ZT
 
 static unsigned char *shared;
 
@@ -83,7 +137,8 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xe7ff, shared_w, &shared },	/* shared with sound cpu */
-	{ 0xc000, 0xcfff, MWA_RAM, &mexico86_videoram },
+	//{ 0xc000, 0xcfff, MWA_RAM, &mexico86_videoram },
+	{ 0xc000, 0xd4ff, MWA_RAM, &mexico86_videoram }, //AT: corrected size
 	{ 0xd500, 0xd7ff, MWA_RAM, &mexico86_objectram, &mexico86_objectram_size },
 	{ 0xe800, 0xe8ff, MWA_RAM, &mexico86_protection_ram },	/* shared with mcu */
 	{ 0xe900, 0xefff, MWA_RAM },
@@ -97,7 +152,8 @@ static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xa7ff, shared_r },
 	{ 0xa800, 0xbfff, MRA_RAM },
-	{ 0xc000, 0xc000, YM2203_status_port_0_r },
+	//{ 0xc000, 0xc000, YM2203_status_port_0_r },
+	{ 0xc000, 0xc000, kiki_2203_r }, //AT
 	{ 0xc001, 0xc001, YM2203_read_port_0_r },
 MEMORY_END
 
@@ -254,18 +310,30 @@ INPUT_PORTS_START( kikikai )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
+//AT
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+#if 0 //AT: copied from the manual but type B doesn't work
+	PORT_DIPNAME( 0x30, 0x30, "Coin 1" )
+	PORT_DIPSETTING(    0x30, "A:1C/1C B:1C/1C" )
+	PORT_DIPSETTING(    0x20, "A:1C/2C B:2C/1C" )
+	PORT_DIPSETTING(    0x10, "A:2C/1C B:3C/1C" )
+	PORT_DIPSETTING(    0x00, "A:2C/3C B:4C/1C" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Coin 2" )
+	PORT_DIPSETTING(    0xc0, "A:1C/1C B:1C/2C" )
+	PORT_DIPSETTING(    0x80, "A:1C/2C B:1C/3C" )
+	PORT_DIPSETTING(    0x40, "A:2C/1C B:1C/4C" )
+	PORT_DIPSETTING(    0x00, "A:2C/3C B:1C/6C" )
+#endif
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
@@ -279,27 +347,27 @@ INPUT_PORTS_START( kikikai )
 
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, "Easy" )
 	PORT_DIPSETTING(    0x03, "Normal" )
+	PORT_DIPSETTING(    0x02, "Easy" )
 	PORT_DIPSETTING(    0x01, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "50000 100000" )
 	PORT_DIPSETTING(    0x0c, "70000 150000" )
 	PORT_DIPSETTING(    0x08, "70000 200000" )
 	PORT_DIPSETTING(    0x04, "100000 300000" )
+	PORT_DIPSETTING(    0x00, "50000 100000" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "4" )
 	PORT_DIPSETTING(    0x10, "5" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Number Match" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x40, "A" )
+	PORT_DIPSETTING(    0x00, "B" )
+	PORT_DIPNAME( 0x80, 0x00, "Number Match" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
+//ZT
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -400,6 +468,7 @@ ROM_START( kikikai )
 	ROM_LOAD( "a85-17.rom", 0x00000, 0x08000, 0xc141d5ab ) /* 1st half, main code		 */
 	ROM_CONTINUE(           0x20000, 0x08000 )			   /* 2nd half, banked at 0x8000 */
 	ROM_LOAD( "a85-16.rom", 0x10000, 0x10000, 0x4094d750 ) /* banked at 0x8000			 */
+        ROM_COPY(  REGION_CPU1, 0x10000, 0x08000, 0x04000 ) //AT: set as default to avoid banking problems
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	 /* 64k for the audio cpu */
 	ROM_LOAD( "a85-11.rom", 0x0000, 0x8000, 0xcc3539db )
@@ -424,6 +493,7 @@ ROM_START( kicknrun )
 	ROM_LOAD( "a87-08.bin", 0x00000, 0x08000, 0x715e1b04 ) /* 1st half, main code		 */
 	ROM_CONTINUE(           0x20000, 0x08000 )			   /* 2nd half, banked at 0x8000 */
 	ROM_LOAD( "a87-07.bin", 0x10000, 0x10000, 0x6cb6ebfe ) /* banked at 0x8000			 */
+        ROM_COPY(  REGION_CPU1, 0x10000, 0x08000, 0x04000 ) //AT: set as default to avoid banking problems
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	 /* 64k for the audio cpu */
 	ROM_LOAD( "a87-06.bin", 0x0000, 0x8000, 0x1625b587 )
@@ -452,6 +522,7 @@ ROM_START( mexico86 )
 	ROM_LOAD( "2_g.bin",    0x00000, 0x08000, 0x2bbfe0fb ) /* 1st half, main code		 */
 	ROM_CONTINUE(           0x20000, 0x08000 )			   /* 2nd half, banked at 0x8000 */
 	ROM_LOAD( "1_f.bin",    0x10000, 0x10000, 0x0b93e68e ) /* banked at 0x8000			 */
+        ROM_COPY(  REGION_CPU1, 0x10000, 0x08000, 0x04000 ) //AT: set as default to avoid banking problems
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	 /* 64k for the audio cpu */
 	ROM_LOAD( "a87-06.bin", 0x0000, 0x8000, 0x1625b587 )
@@ -476,7 +547,6 @@ ROM_START( mexico86 )
 ROM_END
 
 
-
-GAMEX(1986, kikikai,  0,        kikikai,  kikikai,  0, ROT90, "Taito Corporation", "KiKi KaiKai", GAME_NOT_WORKING )
+GAME( 1986, kikikai,  0,        kikikai,  kikikai,  0, ROT90, "Taito Corporation", "KiKi KaiKai" )
 GAME( 1986, kicknrun, 0,        mexico86, mexico86, 0, ROT0, "Taito Corporation", "Kick and Run" )
 GAME( 1986, mexico86, kicknrun, mexico86, mexico86, 0, ROT0, "bootleg", "Mexico 86" )

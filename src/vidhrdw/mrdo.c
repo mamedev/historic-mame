@@ -83,20 +83,21 @@ PALETTE_INIT( mrdo )
 	for (i = 0;i < 256;i++)
 	{
 		int a1,a2;
-		int bits0,bits2;
+		int bits0,bits2,r,g,b;
 
 		a1 = ((i >> 3) & 0x1c) + (i & 0x03) + 32;
 		a2 = ((i >> 0) & 0x1c) + (i & 0x03);
 
 		bits0 = (color_prom[a1] >> 0) & 0x03;
 		bits2 = (color_prom[a2] >> 0) & 0x03;
-		*(palette++) = weight[bits0 + (bits2 << 2)];
+		r = weight[bits0 + (bits2 << 2)];
 		bits0 = (color_prom[a1] >> 2) & 0x03;
 		bits2 = (color_prom[a2] >> 2) & 0x03;
-		*(palette++) = weight[bits0 + (bits2 << 2)];
+		g = weight[bits0 + (bits2 << 2)];
 		bits0 = (color_prom[a1] >> 4) & 0x03;
 		bits2 = (color_prom[a2] >> 4) & 0x03;
-		*(palette++) = weight[bits0 + (bits2 << 2)];
+		b = weight[bits0 + (bits2 << 2)];
+		palette_set_color(i,r,g,b);
 	}
 
 	color_prom += 64;

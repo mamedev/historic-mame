@@ -68,16 +68,35 @@ enum {
 	NAMCOS2_SUZUKA_8_HOURS,
 	NAMCOS2_SUZUKA_8_HOURS_2,
 	NAMCOS2_VALKYRIE,
-	NAMCOS2_KYUUKAI_DOUCHUUKI
+	NAMCOS2_KYUUKAI_DOUCHUUKI,
+
+	NAMCOS21_AIRCOMBAT,
+	NAMCOS21_STARBLADE,
+	NAMCOS21_CYBERSLED,
+	NAMCOS21_SOLVALOU,
+	NAMCOS21_WINRUN91,
+
+	NAMCONB1,
+	NAMCONB2
 };
 
 extern int namcos2_gametype;
 
+extern data16_t *namcos21_dspram16;
+
+#define NAMCOS21_NUM_COLORS 0x8000
+
 /*********************************************/
+
+VIDEO_START( namcos21 );
+VIDEO_UPDATE( namcos21_default );
 
 VIDEO_START( namcos2 );
 VIDEO_UPDATE( namcos2_default );
 VIDEO_UPDATE( namcos2_finallap );
+
+VIDEO_START( luckywld );
+VIDEO_UPDATE( luckywld );
 
 /* MACHINE */
 

@@ -195,12 +195,12 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ 0xfd8000, 0xfd9fff, atarigen_sound_upper_w },
 	{ 0xfe8000, 0xfe8fff, cyberbal_paletteram_1_w, &cyberbal_paletteram_1 },
 	{ 0xfec000, 0xfecfff, cyberbal_paletteram_0_w, &cyberbal_paletteram_0 },
-	{ 0xff0000, 0xff1fff, ataripf_1_simple_w, &ataripf_1_base },
-	{ 0xff2000, 0xff2fff, atarian_1_vram_w, &atarian_1_base },
+	{ 0xff0000, 0xff1fff, atarigen_playfield2_w, &atarigen_playfield2 },
+	{ 0xff2000, 0xff2fff, atarigen_alpha2_w, &atarigen_alpha2 },
 	{ 0xff3000, 0xff37ff, atarimo_1_spriteram_w, &atarimo_1_spriteram },
 	{ 0xff3800, 0xff3fff, MWA16_BANK2 },
-	{ 0xff4000, 0xff5fff, ataripf_0_simple_w, &ataripf_0_base },
-	{ 0xff6000, 0xff6fff, atarian_0_vram_w, &atarian_0_base },
+	{ 0xff4000, 0xff5fff, atarigen_playfield_w, &atarigen_playfield },
+	{ 0xff6000, 0xff6fff, atarigen_alpha_w, &atarigen_alpha },
 	{ 0xff7000, 0xff77ff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
 	{ 0xff7800, 0xff9fff, MWA16_BANK4 },
 	{ 0xffa000, 0xffbfff, MWA16_NOP },
@@ -235,12 +235,12 @@ static MEMORY_WRITE16_START( extra_writemem )
 	{ 0xfc0000, 0xfdffff, atarigen_video_int_ack_w },
 	{ 0xfe8000, 0xfe8fff, cyberbal_paletteram_1_w },
 	{ 0xfec000, 0xfecfff, cyberbal_paletteram_0_w },
-	{ 0xff0000, 0xff1fff, ataripf_1_simple_w },
-	{ 0xff2000, 0xff2fff, atarian_1_vram_w },
+	{ 0xff0000, 0xff1fff, atarigen_playfield2_w },
+	{ 0xff2000, 0xff2fff, atarigen_alpha2_w },
 	{ 0xff3000, 0xff37ff, atarimo_1_spriteram_w },
 	{ 0xff3800, 0xff3fff, MWA16_BANK2 },
-	{ 0xff4000, 0xff5fff, ataripf_0_simple_w },
-	{ 0xff6000, 0xff6fff, atarian_0_vram_w },
+	{ 0xff4000, 0xff5fff, atarigen_playfield_w },
+	{ 0xff6000, 0xff6fff, atarigen_alpha_w },
 	{ 0xff7000, 0xff77ff, atarimo_0_spriteram_w },
 	{ 0xff7800, 0xff9fff, MWA16_BANK4 },
 	{ 0xffa000, 0xffbfff, MWA16_BANK5 },
@@ -332,8 +332,8 @@ static MEMORY_WRITE16_START( cyberb2p_writemem )
 	{ 0xfd4000, 0xfd4003, watchdog_reset16_w },
 	{ 0xfd6000, 0xfd6003, atarigen_video_int_ack_w },
 	{ 0xfd8000, 0xfd8003, atarigen_sound_upper_w },
-	{ 0xff0000, 0xff1fff, ataripf_0_simple_w, &ataripf_0_base },
-	{ 0xff2000, 0xff2fff, atarian_0_vram_w, &atarian_0_base },
+	{ 0xff0000, 0xff1fff, atarigen_playfield_w, &atarigen_playfield },
+	{ 0xff2000, 0xff2fff, atarigen_alpha_w, &atarigen_alpha },
 	{ 0xff3000, 0xff37ff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
 	{ 0xff3800, 0xffffff, MWA16_RAM },
 MEMORY_END
@@ -838,8 +838,8 @@ static DRIVER_INIT( cyberbal )
 	atarigen_init_6502_speedup(1, 0x4191, 0x41A9);
 
 	/* make sure the banks are pointing to the correct location */
-	cpu_setbank(1, ataripf_1_base);
-	cpu_setbank(3, ataripf_0_base);
+	cpu_setbank(1, atarigen_playfield2);
+	cpu_setbank(3, atarigen_playfield);
 }
 
 
@@ -850,8 +850,8 @@ static DRIVER_INIT( cyberbt )
 	atarigen_init_6502_speedup(1, 0x4191, 0x41A9);
 
 	/* make sure the banks are pointing to the correct location */
-	cpu_setbank(1, ataripf_1_base);
-	cpu_setbank(3, ataripf_0_base);
+	cpu_setbank(1, atarigen_playfield2);
+	cpu_setbank(3, atarigen_playfield);
 }
 
 

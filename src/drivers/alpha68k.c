@@ -1731,7 +1731,7 @@ static struct YM3812interface ym3812_interface =
 {
         1,
         4000000,
-        { 75 },
+        { 100 },
         { YM3812_irq },
 };
 //ZT
@@ -1739,7 +1739,7 @@ static struct YM2413interface ym2413_interface=
 {
     1,
     8000000,	/* ??? */
-    { 50 },
+    { 100 },
 };
 
 static struct YM2203interface ym2203_interface =
@@ -1778,7 +1778,7 @@ static INTERRUPT_GEN( goldmedl_interrupt )
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 100 }
+	{ 50 }
 };
 
 static INTERRUPT_GEN( kyros_interrupt )
@@ -1799,13 +1799,13 @@ static MACHINE_DRIVER_START( kouyakyu )
 	MDRV_CPU_MEMORY(kouyakyu_readmem,kouyakyu_writemem)
 	MDRV_CPU_VBLANK_INT(kyros_interrupt,2)
 
-#if 0
+
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* ? */
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_PORTS(sound_readport,sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
-#endif
+
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

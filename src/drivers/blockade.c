@@ -438,23 +438,15 @@ static struct GfxDecodeInfo blasto_gfxdecodeinfo[] =
 };
 
 
-static unsigned char gr_palette[] =
-{
-	0x00,0x00,0x00, /* BLACK */
-	0x00,0xff,0x00, /* GREEN */     /* overlay (Blockade/Hustle) */
-};
-static unsigned char bw_palette[] =
-{
-	0x00,0x00,0x00, /* BLACK */
-	0xff,0xff,0xff, /* WHITE */     /* Comotion/Blasto */
-};
 static PALETTE_INIT( green )
 {
-	memcpy(palette,gr_palette,sizeof(gr_palette));
+	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
+	palette_set_color(1,0x00,0xff,0x00); /* GREEN */     /* overlay (Blockade/Hustle) */
 }
 static PALETTE_INIT( bw )
 {
-	memcpy(palette,bw_palette,sizeof(bw_palette));
+	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
+	palette_set_color(1,0xff,0xff,0xff); /* WHITE */     /* Comotion/Blasto */
 }
 
 

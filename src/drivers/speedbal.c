@@ -248,7 +248,7 @@ static struct YM3812interface ym3812_interface =
 {
 	1,		      /* 1 chip (no more supported) */
 	3600000,	/* 3.600000 MHz ? (partially supported) */
-	{ 255 }	 /* (not supported) */
+	{ 100 }	 /* (not supported) */
 };
 
 

@@ -297,9 +297,9 @@ static struct YM2203interface ym2203_interface =
 
 static struct YM3526interface ym3526_interface =
 {
-    1,                      /* 1 chip (no more supported) */
+	1,                      /* 1 chip (no more supported) */
 	3600000,	/* 3.600000 MHz ? (partially supported) */
-    { 30 },		/* volume */
+	{ 60 },		/* volume */
 	{ irqhandler }
 };
 

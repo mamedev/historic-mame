@@ -240,7 +240,7 @@ static struct YM3812interface ym3812_interface =
 {
 	1,
 	3579545,
-	{ 80 },
+	{ 100 },
 	{ 0 },
 };
 
@@ -249,7 +249,7 @@ static struct K053260_interface k053260_interface =
 	1,
 	{ 3579545 },
 	{ REGION_SOUND1 }, /* memory region */
-	{ { MIXER(100,MIXER_PAN_LEFT), MIXER(100,MIXER_PAN_RIGHT) } },
+	{ { MIXER(70,MIXER_PAN_LEFT), MIXER(70,MIXER_PAN_RIGHT) } },
 	{ 0 }
 };
 

@@ -51,28 +51,30 @@ PALETTE_INIT( thepit )
 	/* this is wrong, but I don't know where to pick the colors from */
 	for (i = 0;i < 8;i++)
 	{
-		*(palette++) = 0xff * ((i >> 2) & 1);
-		*(palette++) = 0xff * ((i >> 1) & 1);
-		*(palette++) = 0xff * ((i >> 0) & 1);
+		int r = 0xff * ((i >> 2) & 1);
+		int g = 0xff * ((i >> 1) & 1);
+		int b = 0xff * ((i >> 0) & 1);
+		palette_set_color(i,r,g,b);
 	}
 
 	for (i = 0;i < Machine->drv->total_colors-8;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		bit0 = (color_prom[i] >> 0) & 0x01;
 		bit1 = (color_prom[i] >> 1) & 0x01;
 		bit2 = (color_prom[i] >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		bit0 = (color_prom[i] >> 3) & 0x01;
 		bit1 = (color_prom[i] >> 4) & 0x01;
 		bit2 = (color_prom[i] >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		bit0 = 0;
 		bit1 = (color_prom[i] >> 6) & 0x01;
 		bit2 = (color_prom[i] >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		palette_set_color(i+8,r,g,b);
 	}
 
 	for (i = 0;i < Machine->drv->color_table_len;i++)
@@ -98,14 +100,15 @@ PALETTE_INIT( suprmous )
 	/* this is wrong, but I don't know where to pick the colors from */
 	for (i = 0;i < 8;i++)
 	{
-		*(palette++) = 0xff * ((i >> 2) & 1);
-		*(palette++) = 0xff * ((i >> 1) & 1);
-		*(palette++) = 0xff * ((i >> 0) & 1);
+		int r = 0xff * ((i >> 2) & 1);
+		int g = 0xff * ((i >> 1) & 1);
+		int b = 0xff * ((i >> 0) & 1);
+		palette_set_color(i,r,g,b);
 	}
 
 	for (i = 0;i < Machine->drv->total_colors-8;i++)
 	{
-		int bit0,bit1,bit2,bit3,bit4;
+		int bit0,bit1,bit2,bit3,bit4,r,g,b;
 
 
 		bit0 = (color_prom[i+0x20] >> 6) & 0x01;
@@ -113,19 +116,20 @@ PALETTE_INIT( suprmous )
 		bit2 = (color_prom[i] >> 0) & 0x01;
 		bit3 = (color_prom[i] >> 1) & 0x01;
 		bit4 = (color_prom[i] >> 2) & 0x01;
-		*(palette++) = 0x10 * bit0 + 0x20 * bit1 + 0x30 * bit2 + 0x40 * bit3 + 0x50 * bit4;
+		r = 0x10 * bit0 + 0x20 * bit1 + 0x30 * bit2 + 0x40 * bit3 + 0x50 * bit4;
 		bit0 = (color_prom[i+0x20] >> 1) & 0x01;
 		bit1 = (color_prom[i+0x20] >> 2) & 0x01;
 		bit2 = (color_prom[i+0x20] >> 3) & 0x01;
 		bit3 = (color_prom[i+0x20] >> 4) & 0x01;
 		bit4 = (color_prom[i+0x20] >> 5) & 0x01;
-		*(palette++) = 0x50 * bit0 + 0x40 * bit1 + 0x30 * bit2 + 0x20 * bit3 + 0x10 * bit4;
+		g = 0x50 * bit0 + 0x40 * bit1 + 0x30 * bit2 + 0x20 * bit3 + 0x10 * bit4;
 		bit0 = (color_prom[i] >> 3) & 0x01;
 		bit1 = (color_prom[i] >> 4) & 0x01;
 		bit2 = (color_prom[i] >> 5) & 0x01;
 		bit3 = (color_prom[i] >> 6) & 0x01;
 		bit4 = (color_prom[i] >> 7) & 0x01;
-		*(palette++) = 0x50 * bit0 + 0x40 * bit1 + 0x30 * bit2 + 0x20 * bit3 + 0x10 * bit4;
+		b = 0x50 * bit0 + 0x40 * bit1 + 0x30 * bit2 + 0x20 * bit3 + 0x10 * bit4;
+		palette_set_color(i+8,r,g,b);
 	}
 
 	for (i = 0;i < Machine->drv->color_table_len;i++)

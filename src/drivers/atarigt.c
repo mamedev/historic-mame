@@ -22,7 +22,12 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
-#include "atarig42.h"
+#include "vidhrdw/atarirle.h"
+#include "cpu/m68000/m68000.h"
+#include "atarigt.h"
+
+
+#define LOG_PROTECTION		1
 
 
 
@@ -32,8 +37,8 @@
  *
  *************************************/
 
-static UINT8 		which_input;
-static data32_t *	protection_base;
+static void (*protection_w)(offs_t offset, data16_t data);
+static void (*protection_r)(offs_t offset, data16_t *data);
 
 
 
@@ -65,16 +70,22 @@ static MACHINE_INIT( atarigt )
 {
 	atarigen_eeprom_reset();
 	atarigen_interrupt_reset(update_interrupts);
-	atarigen_scanline_timer_reset(atarigx2_scanline_update, 8);
+	atarigen_scanline_timer_reset(atarigt_scanline_update, 8);
 }
 
 
 
 /*************************************
  *
- *	I/O read dispatch.
+ *	Input ports
  *
  *************************************/
+
+static READ32_HANDLER( inputs_01_r )
+{
+	return (readinputport(0) << 16) | readinputport(1);
+}
+
 
 static READ32_HANDLER( special_port2_r )
 {
@@ -94,31 +105,12 @@ static READ32_HANDLER( special_port3_r )
 }
 
 
-static WRITE32_HANDLER( a2d_select_w )
-{
-	if (ACCESSING_MSW32)
-		which_input = offset * 2;
-	if (ACCESSING_LSW32)
-		which_input = offset * 2 + 1;
-}
 
-
-static READ32_HANDLER( a2d_data_r )
-{
-	offset = (offset - 2) / 2;
-
-	/* otherwise, assume it's hydra */
-	switch (which_input)
-	{
-		case 0:
-			return (readinputport(5) << 24) | (readinputport(6) << 8);
-		case 1:
-			return (readinputport(7) << 24) | (readinputport(8) << 8);
-	}
-
-	return 0;
-}
-
+/*************************************
+ *
+ *	Output ports
+ *
+ *************************************/
 
 static WRITE32_HANDLER( latch_w )
 {
@@ -132,130 +124,460 @@ static WRITE32_HANDLER( latch_w )
 		D3  = CC.L
 		D0  = CC.R
 	*/
+
+	/* upper byte */
+	if (!(mem_mask & 0xff000000))
+	{
+		/* bits 13-11 are the MO control bits */
+		atarirle_control_w(0, (data >> 27) & 7);
+	}
+
+	if (!(mem_mask & 0x00ff0000))
+	{
+		coin_counter_w(0, data & 0x00080000);
+		coin_counter_w(1, data & 0x00010000);
+	}
+
+//logerror("latch=%08X\n", latch);
+
 //	if (ACCESSING_MSW32 && !ACCESSING_MSB32)
 //		cpu_set_reset_line(1, (data & 0x100000) ? CLEAR_LINE : ASSERT_LINE);
 }
 
 
-
-/*************************************
- *
- *	Protection?
- *
- *************************************/
-
-static UINT16 last_write;
-
-static WRITE32_HANDLER( tmek_protection_w )
+static WRITE32_HANDLER( led_w )
 {
-	logerror("%06X:Protection W@%04X = %08X & %08X\n", activecpu_get_previouspc(), offset, data, ~mem_mask);
-	COMBINE_DATA(&protection_base[offset]);
-	if (ACCESSING_MSW32)
-		last_write = protection_base[offset] >> 16;
-	else
-		last_write = protection_base[offset];
-}
-
-
-static READ32_HANDLER( tmek_protection_r )
-{
-	int result = protection_base[offset];
-
-	result = rand();
-	if (offset == 0x1c0)
-		result |= 0x80000000;
-	if (offset == 0x1f0)
-		result = 0xffffffff;
-
-	logerror("%06X:Protection R@%04X = %08X\n", activecpu_get_previouspc(), offset, result);
-	return result;
-}
-
-
-static WRITE32_HANDLER( primrage_protection_w )
-{
-	logerror("%06X:Protection W@%04X = %08X & %08X\n", activecpu_get_previouspc(), offset, data, ~mem_mask);
-	COMBINE_DATA(&protection_base[offset]);
-	if (ACCESSING_MSW32)
-		last_write = protection_base[offset] >> 16;
-	else
-		last_write = protection_base[offset];
-}
-
-
-static READ32_HANDLER( primrage_protection_r )
-{
-	int result = protection_base[offset];
-
-	if (offset == 0x1c0)
-		result |= 0x80000000;
-//	if (offset == 0x1f0)
-//		result = 0xffffffff;
-	if (offset == 0x21f0)
-		result = last_write & 0xffff;
-
-	logerror("%06X:Protection R@%04X = %08X\n", activecpu_get_previouspc(), offset, result);
-	return result;
+//	logerror("LED = %08X & %08X\n", data, ~mem_mask);
 }
 
 
 
 /*************************************
  *
- *	8-8-8 palettes
+ *	Sound I/O
  *
  *************************************/
 
-/*
-WRITE_HANDLER( atarigen_888_paletteram_lo_w )
+static data32_t sound_data;
+static READ32_HANDLER( sound_data_r )
 {
-	int oldword = READ_WORD(&paletteram[offset]);
-	int newword = COMBINE_WORD(oldword, data);
-	WRITE_WORD(&paletteram[offset], newword);
+	return sound_data;
+}
 
-logerror("%06X:Palette lo W=%04X\n", activecpu_get_previouspc(), data);
+
+static WRITE32_HANDLER( sound_data_w )
+{
+	COMBINE_DATA(&sound_data);
+}
+
+
+
+/*************************************
+ *
+ *	T-Mek protection
+ *
+ *************************************/
+
+#define ADDRSEQ_COUNT	4
+
+static offs_t protaddr[ADDRSEQ_COUNT];
+static UINT8 protmode;
+static UINT16 protresult;
+static UINT8 protdata[0x800];
+
+static void tmek_update_mode(offs_t offset)
+{
+	int i;
+
+	/* pop us into the readseq */
+	for (i = 0; i < ADDRSEQ_COUNT - 1; i++)
+		protaddr[i] = protaddr[i + 1];
+	protaddr[ADDRSEQ_COUNT - 1] = offset;
+
+	/* check for particular sequences */
+	if (!protmode)
 	{
-		int r, g, b;
+		/* this is from the code at $20f90 */
+		if (protaddr[1] == 0xdcc7c4 && protaddr[2] == 0xdcc7c4 && protaddr[3] == 0xdc4010)
+		{
+//			logerror("prot:Entering mode 1\n");
+			protmode = 1;
+		}
 
-		r = newword >> 8;
-		g = newword & 0xff;
-		b = READ_WORD(&paletteram_2[offset]) & 0xff;
+		/* this is from the code at $27592 */
+		if (protaddr[0] == 0xdcc7ca && protaddr[1] == 0xdcc7ca && protaddr[2] == 0xdcc7c6 && protaddr[3] == 0xdc4022)
+		{
+//			logerror("prot:Entering mode 2\n");
+			protmode = 2;
+		}
 
-		palette_set_color(offset / 2, r, g, b);
+		/* this is from the code at $3d8dc */
+		if (protaddr[0] == 0xdcc7c0 && protaddr[1] == 0xdcc7c0 && protaddr[2] == 0xdc80f2 && protaddr[3] == 0xdc7af2)
+		{
+//			logerror("prot:Entering mode 3\n");
+			protmode = 3;
+		}
 	}
 }
 
 
-WRITE_HANDLER( atarigen_888_paletteram_hi_w )
+static void tmek_protection_w(offs_t offset, UINT16 data)
 {
-	int oldword = READ_WORD(&paletteram_2[offset]);
-	int newword = COMBINE_WORD(oldword, data);
-	WRITE_WORD(&paletteram_2[offset], newword);
+#if LOG_PROTECTION
+	logerror("%06X:Protection W@%06X = %04X\n", activecpu_get_previouspc(), offset, data);
+#endif
 
-logerror("%06X:Palette hi W=%04X\n", activecpu_get_previouspc(), data);
+/* mask = 0x78fff */
+
+	/* track accesses */
+	tmek_update_mode(offset);
+
+	/* check for certain read sequences */
+	if (protmode == 1 && offset >= 0xdc7800 && offset < 0xdc7800 + sizeof(protdata) * 2)
+		protdata[(offset - 0xdc7800) / 2] = data;
+
+	if (protmode == 2)
 	{
-		int r, g, b;
+		int temp = (offset - 0xdc7800) / 2;
+		logerror("prot:mode 2 param = %04X\n", temp);
+		protresult = temp * 0x6915 + 0x6915;
+	}
 
-		r = READ_WORD(&paletteram[offset]) >> 8;
-		g = READ_WORD(&paletteram[offset]) & 0xff;
-		b = newword & 0xff;
-
-		palette_set_color(offset / 2, r, g, b);
+	if (protmode == 3)
+	{
+		if (offset == 0xdc4700)
+		{
+			logerror("prot:Clearing mode 3\n");
+			protmode = 0;
+		}
 	}
 }
-*/
+
+static void tmek_protection_r(offs_t offset, data16_t *data)
+{
+	/* track accesses */
+	tmek_update_mode(offset);
+
+#if LOG_PROTECTION
+	logerror("%06X:Protection R@%06X\n", activecpu_get_previouspc(), offset);
+#endif
+
+	/* handle specific reads */
+	switch (offset)
+	{
+		/* status register; the code spins on this waiting for the high bit to be set */
+		case 0xdb8700:
+//			if (protmode != 0)
+			{
+				*data = 0x8000;
+			}
+			break;
+
+		/* some kind of result register */
+		case 0xdcc7c2:
+			if (protmode == 2)
+			{
+				*data = protresult;
+				protmode = 0;
+				logerror("prot:Clearing mode 2\n");
+			}
+			break;
+
+		case 0xdcc7c4:
+			if (protmode == 1)
+			{
+				protmode = 0;
+				logerror("prot:Clearing mode 1\n");
+			}
+			break;
+	}
+}
 
 
 
 /*************************************
  *
- *	32-bit stub handlers
+ *	Primal Rage protection
  *
  *************************************/
 
-static READ32_HANDLER( inputs_01_r )
+static void primage_update_mode(offs_t offset)
 {
-	return (readinputport(0) << 16) | readinputport(1);
+	int i;
+
+	/* pop us into the readseq */
+	for (i = 0; i < ADDRSEQ_COUNT - 1; i++)
+		protaddr[i] = protaddr[i + 1];
+	protaddr[ADDRSEQ_COUNT - 1] = offset;
+
+	/* check for particular sequences */
+	if (!protmode)
+	{
+		/* this is from the code at $20f90 */
+		if (protaddr[1] == 0xdcc7c4 && protaddr[2] == 0xdcc7c4 && protaddr[3] == 0xdc4010)
+		{
+//			logerror("prot:Entering mode 1\n");
+			protmode = 1;
+		}
+
+		/* this is from the code at $27592 */
+		if (protaddr[0] == 0xdcc7ca && protaddr[1] == 0xdcc7ca && protaddr[2] == 0xdcc7c6 && protaddr[3] == 0xdc4022)
+		{
+//			logerror("prot:Entering mode 2\n");
+			protmode = 2;
+		}
+
+		/* this is from the code at $3d8dc */
+		if (protaddr[0] == 0xdcc7c0 && protaddr[1] == 0xdcc7c0 && protaddr[2] == 0xdc80f2 && protaddr[3] == 0xdc7af2)
+		{
+//			logerror("prot:Entering mode 3\n");
+			protmode = 3;
+		}
+	}
+}
+
+
+
+static void primrage_protection_w(offs_t offset, data16_t data)
+{
+#if LOG_PROTECTION
+{
+	UINT32 pc = activecpu_get_previouspc();
+	switch (pc)
+	{
+		/* protection code from 20f90 - 21000 */
+		case 0x20fba:
+			if (offset % 16 == 0) logerror("\n   ");
+			logerror("W@%06X(%04X) ", offset, data);
+			break;
+
+		/* protection code from 27592 - 27664 */
+		case 0x275f6:
+			logerror("W@%06X(%04X) ", offset, data);
+			break;
+
+		/* protection code from 3d8dc - 3d95a */
+		case 0x3d908:
+		case 0x3d932:
+		case 0x3d938:
+		case 0x3d93e:
+			logerror("W@%06X(%04X) ", offset, data);
+			break;
+		case 0x3d944:
+			logerror("W@%06X(%04X) - done\n", offset, data);
+			break;
+
+		/* protection code from 437fa - 43860 */
+		case 0x43830:
+		case 0x43838:
+			logerror("W@%06X(%04X) ", offset, data);
+			break;
+
+		/* catch anything else */
+		default:
+			logerror("%06X:Unknown protection W@%06X = %04X\n", activecpu_get_previouspc(), offset, data);
+			break;
+	}
+}
+#endif
+
+/* mask = 0x78fff */
+
+	/* track accesses */
+	primage_update_mode(offset);
+
+	/* check for certain read sequences */
+	if (protmode == 1 && offset >= 0xdc7800 && offset < 0xdc7800 + sizeof(protdata) * 2)
+		protdata[(offset - 0xdc7800) / 2] = data;
+
+	if (protmode == 2)
+	{
+		int temp = (offset - 0xdc7800) / 2;
+//		logerror("prot:mode 2 param = %04X\n", temp);
+		protresult = temp * 0x6915 + 0x6915;
+	}
+
+	if (protmode == 3)
+	{
+		if (offset == 0xdc4700)
+		{
+//			logerror("prot:Clearing mode 3\n");
+			protmode = 0;
+		}
+	}
+}
+
+
+
+static void primrage_protection_r(offs_t offset, data16_t *data)
+{
+	/* track accesses */
+	primage_update_mode(offset);
+
+#if LOG_PROTECTION
+{
+	UINT32 pc = activecpu_get_previouspc();
+	UINT32 p1, p2, a6;
+	switch (pc)
+	{
+		/* protection code from 20f90 - 21000 */
+		case 0x20f90:
+			logerror("Known Protection @ 20F90: R@%06X ", offset);
+			break;
+		case 0x20f98:
+		case 0x20fa0:
+			logerror("R@%06X ", offset);
+			break;
+		case 0x20fcc:
+			logerror("R@%06X - done\n", offset);
+			break;
+
+		/* protection code from 27592 - 27664 */
+		case 0x275bc:
+			break;
+		case 0x275cc:
+			a6 = activecpu_get_reg(M68K_A6);
+			p1 = (cpu_readmem24bedw_word(a6+8) << 16) | cpu_readmem24bedw_word(a6+10);
+			p2 = (cpu_readmem24bedw_word(a6+12) << 16) | cpu_readmem24bedw_word(a6+14);
+			logerror("Known Protection @ 275BC(%08X, %08X): R@%06X ", p1, p2, offset);
+			break;
+		case 0x275d2:
+		case 0x275d8:
+		case 0x275de:
+		case 0x2761e:
+		case 0x2762e:
+			logerror("R@%06X ", offset);
+			break;
+		case 0x2763e:
+			logerror("R@%06X - done\n", offset);
+			break;
+
+		/* protection code from 3d8dc - 3d95a */
+		case 0x3d8f4:
+			a6 = activecpu_get_reg(M68K_A6);
+			p1 = (cpu_readmem24bedw_word(a6+12) << 16) | cpu_readmem24bedw_word(a6+14);
+			logerror("Known Protection @ 3D8F4(%08X): R@%06X ", p1, offset);
+			break;
+		case 0x3d8fa:
+		case 0x3d90e:
+			logerror("R@%06X ", offset);
+			break;
+
+		/* protection code from 437fa - 43860 */
+		case 0x43814:
+			a6 = activecpu_get_reg(M68K_A6);
+			p1 = cpu_readmem24bedw(a6+15);
+			logerror("Known Protection @ 43814(%08X): R@%06X ", p1, offset);
+			break;
+		case 0x4381c:
+		case 0x43840:
+			logerror("R@%06X ", offset);
+			break;
+		case 0x43848:
+			logerror("R@%06X - done\n", offset);
+			break;
+
+		/* catch anything else */
+		default:
+			logerror("%06X:Unknown protection R@%06X\n", activecpu_get_previouspc(), offset);
+			break;
+	}
+}
+#endif
+
+	/* handle specific reads */
+	switch (offset)
+	{
+		/* status register; the code spins on this waiting for the high bit to be set */
+		case 0xdc4700:
+//			if (protmode != 0)
+			{
+				*data = 0x8000;
+			}
+			break;
+
+		/* some kind of result register */
+		case 0xdcc7c2:
+			if (protmode == 2)
+			{
+				*data = protresult;
+				protmode = 0;
+//				logerror("prot:Clearing mode 2\n");
+			}
+			break;
+
+		case 0xdcc7c4:
+			if (protmode == 1)
+			{
+				protmode = 0;
+//				logerror("prot:Clearing mode 1\n");
+			}
+			break;
+	}
+}
+
+
+
+/*************************************
+ *
+ *	Protection/color RAM
+ *
+ *************************************/
+
+static READ32_HANDLER( colorram_protection_r )
+{
+	offs_t address = 0xd80000 + offset * 4;
+	data32_t result32 = 0;
+	data16_t result;
+
+	if ((mem_mask & 0xffff0000) != 0xffff0000)
+	{
+		result = atarigt_colorram_r(address);
+		(*protection_r)(address, &result);
+		result32 |= result << 16;
+	}
+	if ((mem_mask & 0x0000ffff) != 0x0000ffff)
+	{
+		result = atarigt_colorram_r(address + 2);
+		(*protection_r)(address + 2, &result);
+		result32 |= result;
+	}
+
+	return result32;
+}
+
+
+static WRITE32_HANDLER( colorram_protection_w )
+{
+	offs_t address = 0xd80000 + offset * 4;
+
+	if ((mem_mask & 0xffff0000) != 0xffff0000)
+	{
+		atarigt_colorram_w(address, data >> 16, mem_mask >> 16);
+		(*protection_w)(address, data >> 16);
+	}
+	if ((mem_mask & 0x0000ffff) != 0x0000ffff)
+	{
+		atarigt_colorram_w(address + 2, data, mem_mask);
+		(*protection_w)(address + 2, data);
+	}
+}
+
+
+
+/*************************************
+ *
+ *	Primal Rage speedups
+ *
+ *************************************/
+
+static data32_t *speedup;
+
+static READ32_HANDLER( primrage_speedup_r )
+{
+	if (activecpu_get_previouspc() == 0x10b0e && ((*speedup >> 8) & 0xff) == 0)
+		cpu_spinuntil_int();
+	return *speedup;
 }
 
 
@@ -268,39 +590,30 @@ static READ32_HANDLER( inputs_01_r )
 
 static MEMORY_READ32_START( readmem )
 	{ 0x000000, 0x1fffff, MRA32_ROM },
-//	{ 0xc00000, 0xc00003, ????_r },		// Primal Rage reads from this (sound?)
+	{ 0xc00000, 0xc00003, sound_data_r },
 	{ 0xd20000, 0xd20fff, atarigen_eeprom_upper32_r },
 	{ 0xd70000, 0xd7ffff, MRA32_RAM },
-	{ 0xd80000, 0xd83fff, MRA32_RAM },
-	{ 0xda0000, 0xda0fff, MRA32_RAM },
-//	{ 0xdb0000
-	{ 0xdc0000, 0xdc3fff, MRA32_RAM },	// Primal Rage uses $dcc7c4
-	{ 0xde0000, 0xde3fff, MRA32_RAM },
+	{ 0xd80000, 0xdfffff, colorram_protection_r },
 	{ 0xe80000, 0xe80003, inputs_01_r },
 	{ 0xe82000, 0xe82003, special_port2_r },
 	{ 0xe82004, 0xe82007, special_port3_r },
-	{ 0xe86000, 0xe86003, atarigen_sound_upper32_r },
 	{ 0xf80000, 0xffffff, MRA32_RAM },
 MEMORY_END
 
 
 static MEMORY_WRITE32_START( writemem )
 	{ 0x000000, 0x1fffff, MWA32_ROM },
-//	{ 0xc00000, 0xc00003, ????_w },		// Primal Rage writes to this (sound?)
+	{ 0xc00000, 0xc00003, sound_data_w },
 	{ 0xd20000, 0xd20fff, atarigen_eeprom32_w, (data32_t **)&atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0xd40000, 0xd4ffff, atarigen_eeprom_enable32_w },
 	{ 0xd70000, 0xd71fff, MWA32_RAM },
-	{ 0xd72000, 0xd75fff, ataripf_0_split32_w, &ataripf_0_base32 },
-	{ 0xd76000, 0xd76fff, atarian_0_vram32_w, &atarian_0_base32 },
+	{ 0xd72000, 0xd75fff, atarigen_playfield32_w, &atarigen_playfield32 },
+	{ 0xd76000, 0xd76fff, atarigen_alpha32_w, &atarigen_alpha32 },
 	{ 0xd77000, 0xd77fff, MWA32_RAM },
 	{ 0xd78000, 0xd78fff, atarirle_0_spriteram32_w, &atarirle_0_spriteram32 },
 	{ 0xd79000, 0xd7ffff, MWA32_RAM },
-	{ 0xd80000, 0xd83fff, atarigen_666_paletteram32_w, &paletteram32 },
-	{ 0xda0000, 0xda0fff, MWA32_RAM },
-	{ 0xdc0000, 0xdc3fff, MWA32_RAM },//atarigen_888_paletteram_lo_w, &paletteram },
-	{ 0xde0000, 0xde3fff, MWA32_RAM },//atarigen_888_paletteram_hi_w, &paletteram_2 },
-//	{ 0xe04000, 0xe04003, ????_w },		// Primal Rage writes to this ($0 or $200)
-	{ 0xe06000, 0xe06003, atarigen_sound_upper32_w },
+	{ 0xd80000, 0xdfffff, colorram_protection_w, (data32_t **)&atarigt_colorram },
+	{ 0xe04000, 0xe04003, led_w },
 	{ 0xe08000, 0xe08003, latch_w },
 	{ 0xe0a000, 0xe0a003, atarigen_scanline_int_ack32_w },
 	{ 0xe0c000, 0xe0c003, atarigen_video_int_ack32_w },
@@ -391,6 +704,7 @@ INPUT_PORTS_START( primrage )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 )
 
 	PORT_START		/* 68.SW (A1=1) */
+// bit 0x0008 does something
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
@@ -436,7 +750,7 @@ static struct GfxLayout pflayout =
 	8,8,
 	RGN_FRAC(1,3),
 	5,
-	{ 0, 0, 0, 1, 2, 3 },
+	{ 0, 0, 1, 2, 3 },
 	{ RGN_FRAC(1,3)+0, RGN_FRAC(1,3)+4, 0, 4, RGN_FRAC(1,3)+8, RGN_FRAC(1,3)+12, 8, 12 },
 	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8 },
 	16*8
@@ -453,6 +767,7 @@ static struct GfxLayout pftoplayout =
 	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8 },
 	16*8
 };
+
 
 static struct GfxLayout anlayout =
 {
@@ -489,23 +804,24 @@ static MACHINE_DRIVER_START( atarigt )
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
 	MDRV_CPU_PERIODIC_INT(atarigen_scanline_int_gen,250)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	MDRV_MACHINE_INIT(atarigt)
 	MDRV_NVRAM_HANDLER(atarigen)
-	
+
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(42*8, 30*8)
 	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(8192)
-	
+	MDRV_PALETTE_LENGTH(32768)
+
 	MDRV_VIDEO_START(atarigt)
-	MDRV_VIDEO_UPDATE(atarig42)
-	
+	MDRV_VIDEO_EOF(atarirle)
+	MDRV_VIDEO_UPDATE(atarigt)
+
 	/* sound hardware */
 MACHINE_DRIVER_END
 
@@ -558,6 +874,11 @@ ROM_START( tmek )
 	ROM_LOAD16_BYTE( "0313", 0xc00000, 0x100000, 0xa8cf049d )
 	ROM_LOAD16_BYTE( "0314", 0xe00001, 0x100000, 0x4f01db8d )
 	ROM_LOAD16_BYTE( "0315", 0xe00000, 0x100000, 0x28e97d06 )
+
+	ROM_REGION( 0x0600, REGION_PROMS, ROMREGION_DISPOSE )
+	ROM_LOAD( "0001a",  0x0000, 0x0200, 0xa70ade3f )	/* microcode for growth renderer */
+	ROM_LOAD( "0001b",  0x0200, 0x0200, 0xf4768b4d )
+	ROM_LOAD( "0001c",  0x0400, 0x0200, 0x22a76ad4 )
 ROM_END
 
 
@@ -602,6 +923,11 @@ ROM_START( tmekprot )
 	ROM_LOAD16_BYTE( "0313", 0xc00000, 0x100000, 0xa8cf049d )
 	ROM_LOAD16_BYTE( "0314", 0xe00001, 0x100000, 0x4f01db8d )
 	ROM_LOAD16_BYTE( "0315", 0xe00000, 0x100000, 0x28e97d06 )
+
+	ROM_REGION( 0x0600, REGION_PROMS, ROMREGION_DISPOSE )
+	ROM_LOAD( "0001a",  0x0000, 0x0200, 0xa70ade3f )	/* microcode for growth renderer */
+	ROM_LOAD( "0001b",  0x0200, 0x0200, 0xf4768b4d )
+	ROM_LOAD( "0001c",  0x0400, 0x0200, 0x22a76ad4 )
 ROM_END
 
 
@@ -652,6 +978,11 @@ ROM_START( primrage )
 	ROM_LOAD16_BYTE( "0329",  0x1c00000, 0x100000, 0xeff3d2cd )
 	ROM_LOAD16_BYTE( "0330",  0x1e00001, 0x100000, 0x7bf6bb8f )
 	ROM_LOAD16_BYTE( "0331",  0x1e00000, 0x100000, 0xc6a64dad )
+
+	ROM_REGION( 0x0600, REGION_PROMS, ROMREGION_DISPOSE )
+	ROM_LOAD( "0001a",  0x0000, 0x0200, 0xa70ade3f )	/* microcode for growth renderer */
+	ROM_LOAD( "0001b",  0x0200, 0x0200, 0xf4768b4d )
+	ROM_LOAD( "0001c",  0x0400, 0x0200, 0x22a76ad4 )
 ROM_END
 
 
@@ -702,6 +1033,11 @@ ROM_START( primrag2 )
 	ROM_LOAD16_BYTE( "0329",  0x1c00000, 0x100000, 0xeff3d2cd )
 	ROM_LOAD16_BYTE( "0330",  0x1e00001, 0x100000, 0x7bf6bb8f )
 	ROM_LOAD16_BYTE( "0331",  0x1e00000, 0x100000, 0xc6a64dad )
+
+	ROM_REGION( 0x0600, REGION_PROMS, ROMREGION_DISPOSE )
+	ROM_LOAD( "0001a",  0x0000, 0x0200, 0xa70ade3f )	/* microcode for growth renderer */
+	ROM_LOAD( "0001b",  0x0200, 0x0200, 0xf4768b4d )
+	ROM_LOAD( "0001c",  0x0400, 0x0200, 0x22a76ad4 )
 ROM_END
 
 
@@ -715,28 +1051,25 @@ ROM_END
 static DRIVER_INIT( tmek )
 {
 	atarigen_eeprom_default = NULL;
+	atarigt_motion_object_mask = 0xff0;
 
-	atarig42_swapcolors = 0;
-
-	/* install protection */
-	install_mem_read32_handler(0, 0xdb8000, 0xdb87ff, tmek_protection_r);
-	install_mem_write32_handler(0, 0xdb8000, 0xdb87ff, tmek_protection_w);
-
-	protection_base = auto_malloc(0x800);
+	/* setup protection */
+	protection_r = tmek_protection_r;
+	protection_w = tmek_protection_w;
 }
 
 
 static DRIVER_INIT( primrage )
 {
 	atarigen_eeprom_default = NULL;
-
-	atarig42_swapcolors = 0;
+	atarigt_motion_object_mask = 0x7f0;
 
 	/* install protection */
-	install_mem_read32_handler(0, 0xdc4000, 0xdcffff, primrage_protection_r);
-	install_mem_write32_handler(0, 0xdc4000, 0xdcffff, primrage_protection_w);
+	protection_r = primrage_protection_r;
+	protection_w = primrage_protection_w;
 
-	protection_base = auto_malloc(0xc000);
+	/* intall speedups */
+	speedup = install_mem_read32_handler(0, 0xffcde8, 0xffcdeb, primrage_speedup_r);
 }
 
 
@@ -747,7 +1080,7 @@ static DRIVER_INIT( primrage )
  *
  *************************************/
 
-GAMEX( 1994, tmek,     0,        atarigt,  tmek,     tmek,     ROT0, "Atari Games", "T-MEK", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1994, tmekprot, tmek,     atarigt,  tmek,     tmek,     ROT0, "Atari Games", "T-MEK (prototype)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1994, primrage, 0,        atarigt,  primrage, primrage, ROT0, "Atari Games", "Primal Rage (version 2.3)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1994, primrag2, primrage, atarigt,  primrage, primrage, ROT0, "Atari Games", "Primal Rage (version 2.0)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1994, tmek,     0,        atarigt,  tmek,     tmek,     ROT0, "Atari Games", "T-MEK", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
+GAMEX( 1994, tmekprot, tmek,     atarigt,  tmek,     tmek,     ROT0, "Atari Games", "T-MEK (prototype)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
+GAMEX( 1994, primrage, 0,        atarigt,  primrage, primrage, ROT0, "Atari Games", "Primal Rage (version 2.3)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
+GAMEX( 1994, primrag2, primrage, atarigt,  primrage, primrage, ROT0, "Atari Games", "Primal Rage (version 2.0)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )

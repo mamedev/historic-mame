@@ -714,7 +714,7 @@ static void drawplane(int n,struct mame_bitmap *bitmap)
 
 VIDEO_UPDATE( taitosj )
 {
-	int offs,i;
+	int offs,i,alldirty = 0;
 
 
 	/* decode modified characters */
@@ -724,13 +724,24 @@ VIDEO_UPDATE( taitosj )
 		{
 			decodechar(Machine->gfx[0],offs,taitosj_characterram,Machine->drv->gfxdecodeinfo[0].gfxlayout);
 			dirtycharacter1[offs] = 0;
+			alldirty = 1;
 		}
 		if (dirtycharacter2[offs] == 1)
 		{
 			decodechar(Machine->gfx[2],offs,taitosj_characterram + 0x1800,Machine->drv->gfxdecodeinfo[2].gfxlayout);
 			dirtycharacter2[offs] = 0;
+			alldirty = 1;
 		}
 	}
+
+	/* if characters changed, redraw everything */
+	if (alldirty)
+	{
+		memset(dirtybuffer, 1,videoram_size);
+		memset(dirtybuffer2,1,videoram_size);
+		memset(dirtybuffer3,1,videoram_size);
+	}
+
 	/* decode modified sprites */
 	for (offs = 0;offs < 64;offs++)
 	{

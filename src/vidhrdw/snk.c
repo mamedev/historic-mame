@@ -51,7 +51,7 @@ static void print( struct mame_bitmap *bitmap, int num, int row ){
 
 PALETTE_INIT( snk_3bpp_shadow ){
 	int i;
-	palette_init_RRRR_GGGG_BBBB(palette, colortable, color_prom);
+	palette_init_RRRR_GGGG_BBBB(colortable, color_prom);
 
 	if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
 	usrintf_showmessage("driver should use VIDEO_HAS_SHADOWS");
@@ -67,7 +67,7 @@ PALETTE_INIT( snk_3bpp_shadow ){
 
 PALETTE_INIT( snk_4bpp_shadow ){
 	int i;
-	palette_init_RRRR_GGGG_BBBB(palette, colortable, color_prom);
+	palette_init_RRRR_GGGG_BBBB(colortable, color_prom);
 
 	if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
 	usrintf_showmessage("driver should use VIDEO_HAS_SHADOWS");

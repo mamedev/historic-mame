@@ -29,26 +29,27 @@ PALETTE_INIT( toypop )
 
 	for (i = 0;i < 256;i++)
 	{
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
 		// red component
 		bit0 = (color_prom[i] >> 0) & 0x01;
 		bit1 = (color_prom[i] >> 1) & 0x01;
 		bit2 = (color_prom[i] >> 2) & 0x01;
 		bit3 = (color_prom[i] >> 3) & 0x01;
-		palette[3*i] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		// green component
 		bit0 = (color_prom[i+0x100] >> 0) & 0x01;
 		bit1 = (color_prom[i+0x100] >> 1) & 0x01;
 		bit2 = (color_prom[i+0x100] >> 2) & 0x01;
 		bit3 = (color_prom[i+0x100] >> 3) & 0x01;
-		palette[3*i + 1] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		// blue component
 		bit0 = (color_prom[i+0x200] >> 0) & 0x01;
 		bit1 = (color_prom[i+0x200] >> 1) & 0x01;
 		bit2 = (color_prom[i+0x200] >> 2) & 0x01;
 		bit3 = (color_prom[i+0x200] >> 3) & 0x01;
-		palette[3*i + 2] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		palette_set_color(i,r,g,b);
 	}
 
 	for (i = 0;i < 256;i++)

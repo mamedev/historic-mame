@@ -217,43 +217,49 @@ static void MUL_C(void)
 /* 48 31: 0100 1000 0011 0001 */
 static void RLR_A(void)
 {
+	UINT8 carry=(PSW&CY)<<7;
 	PSW = (PSW & ~CY) | (A & CY);
-	A = (A >> 1) | (A << 7);
+	A = (A >> 1) | carry;
 }
 
 /* 48 32: 0100 1000 0011 0010 */
 static void RLR_B(void)
 {
+	UINT8 carry=(PSW&CY)<<7;
 	PSW = (PSW & ~CY) | (B & CY);
-	B = (B >> 1) | (B << 7);
+	B = (B >> 1) | carry;
 }
 
 /* 48 33: 0100 1000 0011 0011 */
 static void RLR_C(void)
 {
+	UINT8 carry=(PSW&CY)<<7;
 	PSW = (PSW & ~CY) | (C & CY);
-	C = (C >> 1) | (C << 7);
+	C = (C >> 1) | carry;
 }
 
 /* 48 35: 0100 1000 0011 0101 */
 static void RLL_A(void)
 {
+	UINT8 carry=PSW&CY;
 	PSW = (PSW & ~CY) | ((A >> 7) & CY);
-	A = (A << 1) | (A >> 7);
+	A = (A << 1) | carry;
 }
 
 /* 48 36: 0100 1000 0011 0110 */
 static void RLL_B(void)
 {
+	UINT8 carry=PSW&CY;
 	PSW = (PSW & ~CY) | ((B >> 7) & CY);
-	B = (B << 1) | (B >> 7);
+	B = (B << 1) | carry;
 }
 
 /* 48 37: 0100 1000 0011 0111 */
 static void RLL_C(void)
 {
+	UINT8 carry=PSW&CY;
 	PSW = (PSW & ~CY) | ((C >> 7) & CY);
-	C = (C << 1) | (C >> 7);
+	C = (C << 1) | carry;
 }
 
 /* 48 38: 0100 1000 0011 1000 */
@@ -792,15 +798,17 @@ static void TABLE(void)
 /* 48 b0: 0100 1000 1011 0000 */
 static void DRLR_EA(void)
 {
+	UINT8 carry=PSW&CY;
 	PSW = (PSW & ~CY) | (EA & CY);
-	EA = (EA >> 1) | (EA << 15);
+	EA = (EA >> 1) | (carry << 15);
 }
 
 /* 48 b4: 0100 1000 1011 0100 */
 static void DRLL_EA(void)
 {
+	UINT8 carry=PSW&CY;
 	PSW = (PSW & ~CY) | ((EA >> 15) & CY);
-	EA = (EA << 1) | (EA >> 15);
+	EA = (EA << 1) | carry;
 }
 
 /* 48 bb: 0100 1000 1011 1011 */
@@ -2811,7 +2819,7 @@ static void MVI_PA_xx(void)
 {
 	UINT8 imm;
 	RDOPARG( imm );
-	cpu_writeport16( 0, imm );
+	WP( UPD7810_PORTA, imm );
 }
 
 /* 64 01: 0110 0100 0000 0001 xxxx xxxx */
@@ -2819,7 +2827,7 @@ static void MVI_PB_xx(void)
 {
 	UINT8 imm;
 	RDOPARG( imm );
-	cpu_writeport16( 1, imm );
+	WP( UPD7810_PORTB, imm );
 }
 
 /* 64 02: 0110 0100 0000 0010 xxxx xxxx */
@@ -2827,7 +2835,7 @@ static void MVI_PC_xx(void)
 {
 	UINT8 imm;
 	RDOPARG( imm );
-	cpu_writeport16( 2, imm );
+	WP( UPD7810_PORTC, imm );
 }
 
 /* 64 03: 0110 0100 0000 0011 xxxx xxxx */
@@ -2835,7 +2843,7 @@ static void MVI_PD_xx(void)
 {
 	UINT8 imm;
 	RDOPARG( imm );
-	cpu_writeport16( 3, imm );
+	WP( UPD7810_PORTD, imm );
 }
 
 /* 64 05: 0110 0100 0000 0101 xxxx xxxx */
@@ -2843,7 +2851,7 @@ static void MVI_PF_xx(void)
 {
 	UINT8 imm;
 	RDOPARG( imm );
-	cpu_writeport16( 5, imm );
+	WP( UPD7810_PORTF, imm );
 }
 
 /* 64 06: 0110 0100 0000 0110 xxxx xxxx */
@@ -5186,6 +5194,59 @@ static void XRAX_Dm(void)
 static void XRAX_Hm(void)
 {
 	A ^= RM( HL );
+	HL--;
+	SET_Z(A);
+}
+
+/* 70 99: 0111 0000 1001 1001 */
+static void ORAX_B(void)
+{
+	A |= RM( BC );
+	SET_Z(A);
+}
+
+/* 70 9a: 0111 0000 1001 1010 */
+static void ORAX_D(void)
+{
+	A |= RM( DE );
+	SET_Z(A);
+}
+
+/* 70 9b: 0111 0000 1001 1011 */
+static void ORAX_H(void)
+{
+	A |= RM( HL );
+	SET_Z(A);
+}
+
+/* 70 9c: 0111 0000 1001 0100 */
+static void ORAX_Dp(void)
+{
+	A |= RM( DE );
+	DE++;
+	SET_Z(A);
+}
+
+/* 70 9d: 0111 0000 1001 1101 */
+static void ORAX_Hp(void)
+{
+	A |= RM( HL );
+	HL++;
+	SET_Z(A);
+}
+
+/* 70 9e: 0111 0000 1001 1110 */
+static void ORAX_Dm(void)
+{
+	A |= RM( DE );
+	DE--;
+	SET_Z(A);
+}
+
+/* 70 9f: 0111 0000 1001 1111 */
+static void ORAX_Hm(void)
+{
+	A |= RM( HL );
 	HL--;
 	SET_Z(A);
 }
@@ -8142,8 +8203,10 @@ static void DCX_HL(void)
 /* 34: 0011 0100 llll llll hhhh hhhh */
 static void LXI_H_w(void)
 {
-	if (PSW & L0)	/* overlay active? */
-		return; 	/* NOP */
+	if (PSW & L0) { /* overlay active? */
+		PC+=2;
+		return;
+	}
 	RDOPARG( L );
 	RDOPARG( H );
 	PSW |= L0;
@@ -8343,7 +8406,7 @@ static void JRE(void)
 	UINT8 offs;
 	RDOPARG( offs );
 	if (OP & 0x01)
-		PC -= offs;
+		PC -= 256 - offs;
 	else
 		PC += offs;
 	change_pc16( PCD );
@@ -8520,8 +8583,7 @@ static void DAA(void)
 	{
 		if (l < 10)
 		{
-			if (h < 10 && 0 == (PSW & CY))
-				return;
+		    if (!(h < 10 && 0 == (PSW & CY)))
 			adj = 0x60;
 		}
 		else
@@ -8541,7 +8603,7 @@ static void DAA(void)
 			adj = 0x66;
 	}
 	tmp = A + adj;
-	ZHC_ADD( tmp, A, 0 );
+	ZHC_ADD( tmp, A, PSW & CY );
 	A = tmp;
 }
 
@@ -8606,8 +8668,10 @@ static void MVI_V_xx(void)
 /* 69: 0110 1001 xxxx xxxx */
 static void MVI_A_xx(void)
 {
-	if (PSW & L1)	/* overlay active? */
+	if (PSW & L1) {	/* overlay active? */
+		PC++;
 		return; 	/* NOP */
+	}
 	RDOPARG( A );
 	PSW |= L1;
 }
@@ -8645,8 +8709,10 @@ static void MVI_H_xx(void)
 /* 6f: 0110 1111 xxxx xxxx */
 static void MVI_L_xx(void)
 {
-	if (PSW & L0)	/* overlay active? */
+	if (PSW & L0) {	/* overlay active? */
+		PC++;
 		return; 	/* NOP */
+	}
 	RDOPARG( L );
 	PSW |= L0;
 }
@@ -8742,17 +8808,26 @@ static void CALT(void)
 	PAIR w;
 	w.d = 0;
 
-	RDOPARG( w.b.l );
+	switch (upd7810.config.type) {
+	case TYPE_7810_GAMEMASTER:
+	    logerror ("!!!!!!!%.4x calt %.2x game master table position not known\n",PPC, OP);
+	    break;
+	default:
 	w.w.l = 0x80 + 2 * (OP & 0x1f);
+	}
 
+	if (upd7810.config.type!=TYPE_7810_GAMEMASTER) {
 	SP--;
 	WM( SPD, PCH );
 	SP--;
 	WM( SPD, PCL );
 
-	PCD = w.d;
+	    PCL=RM(w.w.l);
+	    PCH=RM(w.w.l+1);
 
 	change_pc16( PCD );
+	    logerror ("!!!!!!!%.4x calt %.2x %.4x; game master table position not known\n",PPC, OP, PCD);
+	}
 }
 
 /* a0: 1010 0000 */
@@ -8958,7 +9033,7 @@ static void RETS(void)
 	SP++;
 	PCH = RM( SPD );
 	SP++;
-	PC++;	/* skip one instruction */
+	PSW|=SK;	/* skip one instruction */
 	change_pc16( PCD );
 }
 

@@ -59,14 +59,6 @@
  *
  *************************************/
 
-static unsigned char palette_source[] =
-{
-	0x00,0x00,0x00, /* BLACK - oil slicks, text, black car */
-	0x55,0x55,0x55, /* DK GREY - default background */
-	0x80,0x80,0x80, /* LT GREY - grey cars */
-	0xff,0xff,0xff, /* WHITE - track, text, white car */
-};
-
 static unsigned short colortable_source[] =
 {
 	0x01, 0x00, /* Black playfield */
@@ -79,7 +71,10 @@ static unsigned short colortable_source[] =
 
 static PALETTE_INIT( sprint2 )
 {
-	memcpy(palette,palette_source,sizeof(palette_source));
+	palette_set_color(0,0x00,0x00,0x00); /* BLACK - oil slicks, text, black car */
+	palette_set_color(1,0x55,0x55,0x55); /* DK GREY - default background */
+	palette_set_color(2,0x80,0x80,0x80); /* LT GREY - grey cars */
+	palette_set_color(3,0xff,0xff,0xff); /* WHITE - track, text, white car */
 	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 
@@ -332,7 +327,7 @@ static MACHINE_DRIVER_START( sprint2 )
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(sizeof(palette_source) / sizeof(palette_source[0]) / 3)
+	MDRV_PALETTE_LENGTH(4)
 	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
 
 	MDRV_PALETTE_INIT(sprint2)

@@ -7,8 +7,8 @@
 /*----------- defined in vidhrdw/skullxbo.c -----------*/
 
 WRITE16_HANDLER( skullxbo_playfieldlatch_w );
-WRITE16_HANDLER( skullxbo_hscroll_w );
-WRITE16_HANDLER( skullxbo_vscroll_w );
+WRITE16_HANDLER( skullxbo_xscroll_w );
+WRITE16_HANDLER( skullxbo_yscroll_w );
 WRITE16_HANDLER( skullxbo_mobmsb_w );
 
 VIDEO_START( skullxbo );

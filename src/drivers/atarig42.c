@@ -21,6 +21,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
+#include "vidhrdw/atarirle.h"
 #include "atarig42.h"
 
 
@@ -130,11 +131,16 @@ static READ16_HANDLER( a2d_data_r )
 
 static WRITE16_HANDLER( io_latch_w )
 {
+	logerror("io_latch = %04X (scan %d)\n", data, cpu_getscanline());
+
 	/* upper byte */
 	if (ACCESSING_MSB)
 	{
 		/* bit 14 controls the ASIC65 reset line */
 		asic65_reset((~data >> 14) & 1);
+		
+		/* bits 13-11 are the MO control bits */
+		atarirle_control_w(0, (data >> 11) & 7);
 	}
 	
 	/* lower byte */
@@ -260,8 +266,8 @@ static MEMORY_READ16_START( main_readmem )
 	{ 0xe00020, 0xe00027, a2d_data_r },
 	{ 0xe00030, 0xe00031, atarigen_sound_r },
 	{ 0xe80000, 0xe80fff, MRA16_RAM },
-	{ 0xf40000, 0xf40001, asic65_status_r },
-	{ 0xf60000, 0xf60001, asic65_data_r },
+	{ 0xf40000, 0xf40001, asic65_io_r },
+	{ 0xf60000, 0xf60001, asic65_r },
 	{ 0xfa0000, 0xfa0fff, atarigen_eeprom_r },
 	{ 0xfc0000, 0xfc0fff, MRA16_RAM },
 	{ 0xff0000, 0xffffff, MRA16_RAM },
@@ -282,8 +288,8 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ 0xfc0000, 0xfc0fff, atarigen_666_paletteram_w, &paletteram16 },
 	{ 0xff0000, 0xff0fff, atarirle_0_spriteram_w, &atarirle_0_spriteram },
 	{ 0xff1000, 0xff1fff, MWA16_RAM },
-	{ 0xff2000, 0xff5fff, ataripf_0_split_w, &ataripf_0_base },
-	{ 0xff6000, 0xff6fff, atarian_0_vram_w, &atarian_0_base },
+	{ 0xff2000, 0xff5fff, atarigen_playfield_w, &atarigen_playfield },
+	{ 0xff6000, 0xff6fff, atarigen_alpha_w, &atarigen_alpha },
 	{ 0xff7000, 0xffffff, MWA16_RAM },
 MEMORY_END
 
@@ -442,6 +448,7 @@ static MACHINE_DRIVER_START( atarig42 )
 	MDRV_PALETTE_LENGTH(2048)
 	
 	MDRV_VIDEO_START(atarig42)
+	MDRV_VIDEO_EOF(atarirle)
 	MDRV_VIDEO_UPDATE(atarig42)
 	
 	/* sound hardware */
@@ -638,7 +645,9 @@ static DRIVER_INIT( roadriot )
 	atarijsa3_init_adpcm(REGION_SOUND1);
 	atarigen_init_6502_speedup(1, 0x4168, 0x4180);
 
-	atarig42_swapcolors = 1;
+	atarig42_playfield_base = 0x400;
+	atarig42_motion_object_base = 0x200;
+	atarig42_motion_object_mask = 0x3ff;
 }
 
 
@@ -662,7 +671,9 @@ static DRIVER_INIT( guardian )
 	atarijsa3_init_adpcm(REGION_SOUND1);
 	atarigen_init_6502_speedup(1, 0x3168, 0x3180);
 
-	atarig42_swapcolors = 0;
+	atarig42_playfield_base = 0x000;
+	atarig42_motion_object_base = 0x400;
+	atarig42_motion_object_mask = 0x3ff;
 
 	/* it looks like they jsr to $80000 as some kind of protection */
 	/* put an RTS there so we don't die */

@@ -59,7 +59,7 @@ static void update_interrupts(void)
 static MACHINE_INIT( batman )
 {
 	atarigen_eeprom_reset();
-	atarivc_reset(atarivc_eof_data);
+	atarivc_reset(atarivc_eof_data, 2);
 	atarigen_interrupt_reset(update_interrupts);
 	atarigen_scanline_timer_reset(batman_scanline_update, 8);
 	atarijsa_reset();
@@ -95,7 +95,11 @@ static WRITE16_HANDLER( latch_w )
 
 	/* alpha bank is selected by the upper 4 bits */
 	if ((oldword ^ latch_data) & 0x7000)
-		atarian_set_bankbits(0, ((latch_data >> 12) & 7) << 16);
+	{
+		force_partial_update(cpu_getscanline());
+		tilemap_mark_all_tiles_dirty(atarigen_alpha_tilemap);
+		batman_alpha_tile_bank = (latch_data >> 12) & 7;
+	}
 }
 
 
@@ -110,12 +114,12 @@ static MEMORY_READ16_START( main_readmem )
 	{ 0x000000, 0x0bffff, MRA16_ROM },
 	{ 0x100000, 0x10ffff, MRA16_RAM },
 	{ 0x120000, 0x120fff, atarigen_eeprom_r },
-	{ 0x3e0000, 0x3e0fff, MRA16_RAM },
-	{ 0x3effc0, 0x3effff, atarivc_r },
 	{ 0x260000, 0x260001, input_port_0_word_r },
 	{ 0x260002, 0x260003, input_port_1_word_r },
 	{ 0x260010, 0x260011, special_port2_r },
 	{ 0x260030, 0x260031, atarigen_sound_r },
+	{ 0x3e0000, 0x3e0fff, MRA16_RAM },
+	{ 0x3effc0, 0x3effff, atarivc_r },
 	{ 0x3f0000, 0x3fffff, MRA16_RAM },
 MEMORY_END
 
@@ -130,11 +134,11 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ 0x2a0000, 0x2a0001, watchdog_reset16_w },
 	{ 0x3e0000, 0x3e0fff, atarigen_666_paletteram_w, &paletteram16 },
 	{ 0x3effc0, 0x3effff, atarivc_w, &atarivc_data },
-	{ 0x3f0000, 0x3f1fff, ataripf_1_latched_w, &ataripf_1_base },
-	{ 0x3f2000, 0x3f3fff, ataripf_0_latched_w, &ataripf_0_base },
-	{ 0x3f4000, 0x3f5fff, ataripf_01_upper_lsb_msb_w, &ataripf_0_upper },
+	{ 0x3f0000, 0x3f1fff, atarigen_playfield2_latched_msb_w, &atarigen_playfield2 },
+	{ 0x3f2000, 0x3f3fff, atarigen_playfield_latched_lsb_w, &atarigen_playfield },
+	{ 0x3f4000, 0x3f5fff, atarigen_playfield_dual_upper_w, &atarigen_playfield_upper },
 	{ 0x3f6000, 0x3f7fff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
-	{ 0x3f8000, 0x3f8fef, atarian_0_vram_w, &atarian_0_base },
+	{ 0x3f8000, 0x3f8fef, atarigen_alpha_w, &atarigen_alpha },
 	{ 0x3f8f00, 0x3f8f7f, MWA16_RAM, &atarivc_eof_data },
 	{ 0x3f8f80, 0x3f8fff, atarimo_0_slipram_w, &atarimo_0_slipram },
 	{ 0x3f9000, 0x3fffff, MWA16_RAM },

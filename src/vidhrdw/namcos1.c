@@ -51,9 +51,7 @@ struct playfield {
 
 struct playfield playfields[MAX_PLAYFIELDS];
 
-/* playfields maskdata for tilemap */
-static unsigned char **mask_ptr;
-static unsigned char *mask_data;
+static UINT8 *mpMaskData;
 
 /* palette dirty information */
 static unsigned char sprite_palette_state[MAX_SPRITES+1];
@@ -287,23 +285,15 @@ WRITE_HANDLER( namcos1_videocontrol_w )
 INLINE void background_get_info(int tile_index,int info_color,data8_t *info_vram)
 {
 	int code = info_vram[2*tile_index+1]+((info_vram[2*tile_index]&0x3f)<<8);
-	SET_TILE_INFO(
-			1,
-			code,
-			info_color,
-			0)
-	tile_info.mask_data = mask_ptr[code];
+	SET_TILE_INFO(0,code,info_color,0);
+	tile_info.mask_data = &mpMaskData[code*8];
 }
 
 INLINE void foreground_get_info(int tile_index,int info_color,data8_t *info_vram)
 {
 	int code = info_vram[2*tile_index+1]+((info_vram[2*tile_index]&0x3f)<<8);
-	SET_TILE_INFO(
-			1,
-			code,
-			info_color,
-			0)
-	tile_info.mask_data = mask_ptr[code];
+	SET_TILE_INFO(0,code,info_color,0);
+	tile_info.mask_data = &mpMaskData[code*8];
 }
 
 static void background_get_info0(int tile_index) { background_get_info(tile_index,0,&namcos1_videoram[0x0000]); }
@@ -338,6 +328,7 @@ VIDEO_START( namcos1 )
 {
 	int i;
 
+	mpMaskData = (UINT8 *)memory_region( REGION_GFX1 );
 
 	/* set table for sprite color == 0x7f */
 	for(i=0;i<=15;i++)
@@ -371,39 +362,6 @@ VIDEO_START( namcos1 )
 		namcos1_displaycontrol_w(i,0);
 	for(i=0;i<0xff;i++)
 		namcos1_playfield_control_w(i,0);
-
-	/* build tilemap mask data from gfx data of mask */
-	/* because this driver use ORIENTATION_ROTATE_90 */
-	/* mask data can't made by ROM image             */
-	{
-		const struct GfxElement *mask = Machine->gfx[0];
-		int total  = mask->total_elements;
-		int width  = mask->width;
-		int height = mask->height;
-		int line,x,c;
-
-		mask_ptr = auto_malloc(total * sizeof(unsigned char *));
-		if(mask_ptr == 0)
-			return 1;
-		mask_data = auto_malloc(total * 8);
-		if(mask_data == 0)
-			return 1;
-
-		for(c=0;c<total;c++)
-		{
-			unsigned char *src_mask = &mask_data[c*8];
-			for(line=0;line<height;line++)
-			{
-				unsigned char  *maskbm = get_gfx_pointer(mask,c,line);
-				src_mask[line] = 0;
-				for (x=0;x<width;x++)
-				{
-					src_mask[line] |= maskbm[x]<<(7-x);
-				}
-			}
-			mask_ptr[c] = src_mask;
-		}
-	}
 
 	for (i = 0;i < TILECOLORS;i++)
 	{
@@ -463,7 +421,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 		rect.max_x=sx+(width-1);
 		rect.min_y=sy;
 		rect.max_y=sy+(height-1);
-		
+
 		if (cliprect->min_x > rect.min_x) rect.min_x = cliprect->min_x;
 		if (cliprect->max_x < rect.max_x) rect.max_x = cliprect->max_x;
 		if (cliprect->min_y > rect.min_y) rect.min_y = cliprect->min_y;
@@ -474,7 +432,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 		if (flipy) sy -= 32-height-top;
 		else sy -= top;
 
-		drawgfx(bitmap,Machine->gfx[2],
+		drawgfx(bitmap,Machine->gfx[1],
 				code,
 				color,
 				flipx,flipy,

@@ -14,9 +14,13 @@
 data8_t *popeye_background_pos;
 data8_t *popeye_palettebank;
 data8_t *popeye_textram;
+static data8_t *popeye_bitmapram;
+static size_t popeye_bitmapram_size = 0x2000;
 
 static struct mame_bitmap *tmpbitmap2;
 static int invertmask;
+static int bitmap_type;
+enum { TYPE_SKYSKIPR, TYPE_POPEYE };
 
 #define BGRAM_SIZE 0x2000
 
@@ -44,7 +48,7 @@ static int invertmask;
   The background PROM is connected to the RGB output this way:
 
   bit 7 -- 470 ohm resistor  -- BLUE (inverted)
-        -- 680 ohm resistor  -- BLUE (inverted)
+        -- 680 ohm resistor  -- BLUE (inverted)  (1300 ohm in Sky Skipper)
         -- 470 ohm resistor  -- GREEN (inverted)
         -- 680 ohm resistor  -- GREEN (inverted)
         -- 1.2kohm resistor  -- GREEN (inverted)
@@ -55,63 +59,66 @@ static int invertmask;
   The bootleg is the same, but the outputs are not inverted.
 
 ***************************************************************************/
-static void convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom)
+static void convert_color_prom(unsigned short *colortable,const unsigned char *color_prom)
 {
-	int i;
+	int i,pal_index;
 
 
 	/* palette entries 0-15 are directly used by the background and changed at runtime */
-	palette += 3*16;
+	pal_index = 16;
 	color_prom += 32;
 
 	/* characters */
 	for (i = 0;i < 16;i++)
 	{
-		int bit0,bit1,bit2;
+		int prom_offs = i | ((i & 8) << 1);	/* address bits 3 and 4 are tied together */
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
-		bit0 = ((*color_prom ^ invertmask) >> 0) & 0x01;
-		bit1 = ((*color_prom ^ invertmask) >> 1) & 0x01;
-		bit2 = ((*color_prom ^ invertmask) >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit0 = ((color_prom[prom_offs] ^ invertmask) >> 0) & 0x01;
+		bit1 = ((color_prom[prom_offs] ^ invertmask) >> 1) & 0x01;
+		bit2 = ((color_prom[prom_offs] ^ invertmask) >> 2) & 0x01;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
-		bit0 = ((*color_prom ^ invertmask) >> 3) & 0x01;
-		bit1 = ((*color_prom ^ invertmask) >> 4) & 0x01;
-		bit2 = ((*color_prom ^ invertmask) >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit0 = ((color_prom[prom_offs] ^ invertmask) >> 3) & 0x01;
+		bit1 = ((color_prom[prom_offs] ^ invertmask) >> 4) & 0x01;
+		bit2 = ((color_prom[prom_offs] ^ invertmask) >> 5) & 0x01;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = 0;
-		bit1 = ((*color_prom ^ invertmask) >> 6) & 0x01;
-		bit2 = ((*color_prom ^ invertmask) >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit1 = ((color_prom[prom_offs] ^ invertmask) >> 6) & 0x01;
+		bit2 = ((color_prom[prom_offs] ^ invertmask) >> 7) & 0x01;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		color_prom++;
+		palette_set_color(pal_index++,r,g,b);
 	}
 
-	color_prom += 16;	/* skip unused part of the PROM */
+	color_prom += 32;
 
 	/* sprites */
 	for (i = 0;i < 256;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = ((color_prom[0] ^ invertmask) >> 0) & 0x01;
 		bit1 = ((color_prom[0] ^ invertmask) >> 1) & 0x01;
 		bit2 = ((color_prom[0] ^ invertmask) >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
 		bit0 = ((color_prom[0] ^ invertmask) >> 3) & 0x01;
 		bit1 = ((color_prom[256] ^ invertmask) >> 0) & 0x01;
 		bit2 = ((color_prom[256] ^ invertmask) >> 1) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = 0;
 		bit1 = ((color_prom[256] ^ invertmask) >> 2) & 0x01;
 		bit2 = ((color_prom[256] ^ invertmask) >> 3) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		palette_set_color(pal_index++,r,g,b);
 
 		color_prom++;
 	}
@@ -135,14 +142,14 @@ PALETTE_INIT( popeye )
 {
 	invertmask = 0xff;
 
-	convert_color_prom(palette,colortable,color_prom);
+	convert_color_prom(colortable,color_prom);
 }
 
 PALETTE_INIT( popeyebl )
 {
 	invertmask = 0x00;
 
-	convert_color_prom(palette,colortable,color_prom);
+	convert_color_prom(colortable,color_prom);
 }
 
 
@@ -152,10 +159,29 @@ PALETTE_INIT( popeyebl )
   Start the video hardware emulation.
 
 ***************************************************************************/
+
+VIDEO_START( skyskipr )
+{
+	if ((popeye_bitmapram = auto_malloc(popeye_bitmapram_size)) == 0)
+		return 1;
+
+	if ((tmpbitmap2 = auto_bitmap_alloc(1024,1024)) == 0)	/* actually 1024x512 but not rolling over vertically? */
+		return 1;
+
+	bitmap_type = TYPE_SKYSKIPR;
+
+	return 0;
+}
+
 VIDEO_START( popeye )
 {
+	if ((popeye_bitmapram = auto_malloc(popeye_bitmapram_size)) == 0)
+		return 1;
+
 	if ((tmpbitmap2 = auto_bitmap_alloc(512,512)) == 0)
 		return 1;
+
+	bitmap_type = TYPE_POPEYE;
 
 	return 0;
 }
@@ -166,20 +192,45 @@ WRITE_HANDLER( popeye_bitmap_w )
 {
 	int sx,sy,x,y,colour;
 
-	sx = 8 * (offset % 64);
-	sy = 4 * (offset / 64);
+	popeye_bitmapram[offset] = data;
 
-	colour = Machine->pens[data & 0x0f];
-	for (y = 0; y < 4; y++)
+	if (bitmap_type == TYPE_SKYSKIPR)
 	{
-		for (x = 0; x < 8; x++)
+		sx = 8 * (offset % 128);
+		sy = 8 * (offset / 128);
+
+		if (flip_screen)
+			sy = 512-8 - sy;
+
+		colour = Machine->pens[data & 0x0f];
+		for (y = 0; y < 8; y++)
 		{
-			plot_pixel(tmpbitmap2, sx+x, sy+y, colour);
+			for (x = 0; x < 8; x++)
+			{
+				plot_pixel(tmpbitmap2, sx+x, sy+y, colour);
+			}
+		}
+	}
+	else
+	{
+		sx = 8 * (offset % 64);
+		sy = 4 * (offset / 64);
+
+		if (flip_screen)
+			sy = 512-4 - sy;
+
+		colour = Machine->pens[data & 0x0f];
+		for (y = 0; y < 4; y++)
+		{
+			for (x = 0; x < 8; x++)
+			{
+				plot_pixel(tmpbitmap2, sx+x, sy+y, colour);
+			}
 		}
 	}
 }
 
-WRITE_HANDLER( popeyebl_bitmap_w )
+WRITE_HANDLER( skyskipr_bitmap_w )
 {
 	offset = ((offset & 0xfc0) << 1) | (offset & 0x03f);
 	if (data & 0x80)
@@ -221,6 +272,12 @@ static void set_background_palette(int bank)
 		bit0 = 0;
 		bit1 = ((*color_prom ^ invertmask) >> 6) & 0x01;
 		bit2 = ((*color_prom ^ invertmask) >> 7) & 0x01;
+		if (bitmap_type == TYPE_SKYSKIPR)
+		{
+			/* Sky Skipper has different weights */
+			bit0 = bit1;
+			bit1 = 0;
+		}
 		b = 0x1c * bit0 + 0x31 * bit1 + 0x47 * bit2;
 
 		palette_set_color(i,r,g,b);
@@ -236,7 +293,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 
 	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
-		int code,color;
+		int code,color,flipx,flipy,sx,sy;
 
 		/*
 		 * offs+3:
@@ -253,34 +310,72 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 		code = (spriteram[offs + 2] & 0x7f) + ((spriteram[offs + 3] & 0x10) << 3)
 							+ ((spriteram[offs + 3] & 0x04) << 6);
 		color = (spriteram[offs + 3] & 0x07) + 8*(*popeye_palettebank & 0x07);
+		if (bitmap_type == TYPE_SKYSKIPR)
+		{
+			/* Two of the PROM address pins are tied together and one is not connected... */
+			color = (color & 0x0f) | ((color & 0x08) << 1);
+		}
+
+		flipx = spriteram[offs + 2] & 0x80;
+		flipy = spriteram[offs + 3] & 0x08;
+
+		sx = 2*(spriteram[offs])-8;
+		sy = 2*(256-spriteram[offs + 1]);
+
+		if (flip_screen)
+		{
+			flipx = !flipx;
+			flipy = !flipy;
+			sx = 496 - sx;
+			sy = 496 - sy;
+		}
 
 		if (spriteram[offs] != 0)
 			drawgfx(bitmap,Machine->gfx[1],
 					code ^ 0x1ff,
 					color,
-					spriteram[offs + 2] & 0x80,spriteram[offs + 3] & 0x08,
-					2*(spriteram[offs])-8,2*(256-spriteram[offs + 1]),
+					flipx,flipy,
+					sx,sy,
 					&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
 VIDEO_UPDATE( popeye )
 {
+	static int lastflip = 0;
 	int offs;
 
 
+	if (lastflip != flip_screen)
+	{
+		for (offs = 0;offs < popeye_bitmapram_size;offs++)
+			popeye_bitmap_w(offs,popeye_bitmapram[offs]);
+
+		lastflip = flip_screen;
+	}
+
 	set_background_palette((*popeye_palettebank & 0x08) >> 3);
 
-	if (popeye_background_pos[0] == 0)	/* no background */
+	if (popeye_background_pos[1] == 0)	/* no background */
 	{
 		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	}
 	else
 	{
 		/* copy the background graphics */
+		int scrollx = 200 - popeye_background_pos[0] - 256*(popeye_background_pos[2]&1); /* ??? */
+		int scrolly = 2 * (256 - popeye_background_pos[1]);
 
-       	int scrollx = 199 - popeye_background_pos[0];	/* ??? */
-        int scrolly = 2 * (256 - popeye_background_pos[1]);
+		if (bitmap_type == TYPE_SKYSKIPR)
+			scrollx = 2*scrollx - 512;
+
+		if (flip_screen)
+		{
+			if (bitmap_type == TYPE_POPEYE)
+				scrollx = -scrollx;
+			scrolly = -scrolly;
+		}
+
 		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
@@ -292,14 +387,20 @@ VIDEO_UPDATE( popeye )
 	{
 		int sx,sy;
 
-		sx = 16 * (offs % 32);
-		sy = 16 * (offs / 32);
+		sx = offs % 32;
+		sy = offs / 32;
+
+		if (flip_screen)
+		{
+			sx = 31 - sx;
+			sy = 31 - sy;
+		}
 
 		drawgfx(bitmap,Machine->gfx[0],
 				popeye_textram[offs],
 				popeye_textram[offs + 0x400],
-				0,0,
-				sx,sy,
+				flip_screen,flip_screen,
+				16*sx,16*sy,
 				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

@@ -433,7 +433,8 @@ INTERRUPT_GEN( namcos2_68k_slave_vblank ){
 WRITE_HANDLER( namcos2_sound_bankselect_w )
 {
 	unsigned char *RAM=memory_region(REGION_CPU3);
-	int bank = ( data >> 4 ) & 0x0f;	/* 991104.CAB */
+	unsigned long max = (memory_region_length(REGION_CPU3) - 0x10000) / 0x4000;
+	int bank = ( data >> 4 ) % max;	/* 991104.CAB */
 	cpu_setbank( CPU3_ROM1, &RAM[ 0x10000 + ( 0x4000 * bank ) ] );
 }
 

@@ -43,21 +43,22 @@ PALETTE_INIT( jrpacman )
 
 	for (i = 0;i < 32;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		bit0 = (color_prom[i] >> 0) & 0x01;
 		bit1 = (color_prom[i] >> 1) & 0x01;
 		bit2 = (color_prom[i] >> 2) & 0x01;
-		palette[3*i] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		bit0 = (color_prom[i] >> 3) & 0x01;
 		bit1 = (color_prom[i+256] >> 0) & 0x01;
 		bit2 = (color_prom[i+256] >> 1) & 0x01;
-		palette[3*i + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		bit0 = 0;
 		bit1 = (color_prom[i+256] >> 2) & 0x01;
 		bit2 = (color_prom[i+256] >> 3) & 0x01;
-		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		palette_set_color(i,r,g,b);
 	}
 
 	color_prom += 2*256;

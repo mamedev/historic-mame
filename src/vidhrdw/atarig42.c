@@ -31,7 +31,9 @@
  *
  *************************************/
 
-UINT8 atarig42_swapcolors;
+UINT16 atarig42_playfield_base;
+UINT16 atarig42_motion_object_base;
+UINT16 atarig42_motion_object_mask;
 
 
 
@@ -42,8 +44,45 @@ UINT8 atarig42_swapcolors;
  *************************************/
 
 static data16_t current_control;
-static UINT32 bankbits;
+static UINT8 playfield_tile_bank;
+static UINT8 playfield_color_bank;
+static UINT16 playfield_xscroll;
+static UINT16 playfield_yscroll;
 
+
+
+/*************************************
+ *
+ *	Tilemap callbacks
+ *
+ *************************************/
+
+static void get_alpha_tile_info(int tile_index)
+{
+	UINT16 data = atarigen_alpha[tile_index];
+	int code = data & 0xfff;
+	int color = (data >> 12) & 0x0f;
+	int opaque = data & 0x8000;
+	SET_TILE_INFO(1, code, color, opaque ? TILE_IGNORE_TRANSPARENCY : 0);
+}
+
+
+static void get_playfield_tile_info(int tile_index)
+{
+	UINT16 data = atarigen_playfield[tile_index];
+	int code = (playfield_tile_bank << 12) | (data & 0xfff);
+	int color = (atarig42_playfield_base >> 5) + ((playfield_color_bank << 3) & 0x18) + ((data >> 12) & 7);
+	SET_TILE_INFO(0, code, color, (data >> 15) & 1);
+	tile_info.priority = (playfield_color_bank >> 2) & 7;
+}
+
+
+static UINT32 atarig42_playfield_scan(UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows)
+{
+	int bank = 1 - (col / (num_cols / 2));
+	return bank * (num_rows * num_cols / 2) + row * (num_cols / 2) + (col % (num_cols / 2));
+}
+ 
 
 
 /*************************************
@@ -52,67 +91,9 @@ static UINT32 bankbits;
  *
  *************************************/
 
-static int video_start_common(int gt)
+VIDEO_START( atarig42 )
 {
-	static const struct ataripf_desc pfdesc =
-	{
-		0,			/* index to which gfx system */
-		128,64,		/* size of the playfield in tiles (x,y) */
-		1,128,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-	
-		0x000,		/* index of palette base */
-		0x400,		/* maximum number of colors */
-		0,			/* color XOR for shadow effect (if any) */
-		0,			/* latch mask */
-		0,			/* transparent pen mask */
-	
-		0x00f0fff,	/* tile data index mask */
-		0x0307000,	/* tile data color mask */
-		0x0008000,	/* tile data hflip mask */
-		0,			/* tile data vflip mask */
-		0x1c00000	/* tile data priority mask */
-	};
-
-	static const struct ataripf_desc pfdesc_swap =
-	{
-		0,			/* index to which gfx system */
-		128,64,		/* size of the playfield in tiles (x,y) */
-		1,128,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-	
-		0x400,		/* index of palette base */
-		0x400,		/* maximum number of colors */
-		0,			/* color XOR for shadow effect (if any) */
-		0,			/* latch mask */
-		0,			/* transparent pen mask */
-	
-		0x00f0fff,	/* tile data index mask */
-		0x0307000,	/* tile data color mask */
-		0x0008000,	/* tile data hflip mask */
-		0,			/* tile data vflip mask */
-		0x1c00000	/* tile data priority mask */
-	};
-
 	static const struct atarirle_desc modesc =
-	{
-		REGION_GFX3,/* region where the GFX data lives */
-		256,		/* number of entries in sprite RAM */
-		0,			/* left clip coordinate */
-		0,			/* right clip coordinate */
-		
-		0x400,		/* base palette entry */
-		0x400,		/* maximum number of colors */
-	
-		{{ 0x7fff,0,0,0,0,0,0,0 }},	/* mask for the code index */
-		{{ 0,0x03f0,0,0,0,0,0,0 }},	/* mask for the color */
-		{{ 0,0,0xffc0,0,0,0,0,0 }},	/* mask for the X position */
-		{{ 0,0,0,0xffc0,0,0,0,0 }},	/* mask for the Y position */
-		{{ 0,0,0,0,0xffff,0,0,0 }},	/* mask for the scale factor */
-		{{ 0x8000,0,0,0,0,0,0,0 }},	/* mask for the horizontal flip */
-		{{ 0,0,0,0,0,0,0x00ff,0 }},	/* mask for the order */
-		{{ 0,0x0e00,0,0,0,0,0,0 }}	/* mask for the priority */
-	};
-
-	static const struct atarirle_desc modesc_swap =
 	{
 		REGION_GFX3,/* region where the GFX data lives */
 		256,		/* number of entries in sprite RAM */
@@ -129,81 +110,40 @@ static int video_start_common(int gt)
 		{{ 0,0,0,0,0xffff,0,0,0 }},	/* mask for the scale factor */
 		{{ 0x8000,0,0,0,0,0,0,0 }},	/* mask for the horizontal flip */
 		{{ 0,0,0,0,0,0,0x00ff,0 }},	/* mask for the order */
-		{{ 0,0x0e00,0,0,0,0,0,0 }}	/* mask for the priority */
+		{{ 0,0x0e00,0,0,0,0,0,0 }},	/* mask for the priority */
+		{{ 0 }}						/* mask for the VRAM target */
 	};
-
-	static const struct atarirle_desc modesc_gt =
-	{
-		REGION_GFX3,/* region where the GFX data lives */
-		256,		/* number of entries in sprite RAM */
-		0,			/* left clip coordinate */
-		0,			/* right clip coordinate */
-		
-		0x1000,		/* base palette entry */
-		0x1000,		/* maximum number of colors */
-	
-		{{ 0x7fff,0,0,0,0,0,0,0 }},	/* mask for the code index */
-		{{ 0,0x07f0,0,0,0,0,0,0 }},	/* mask for the color */
-		{{ 0,0,0xffc0,0,0,0,0,0 }},	/* mask for the X position */
-		{{ 0,0,0,0xffc0,0,0,0,0 }},	/* mask for the Y position */
-		{{ 0,0,0,0,0xffff,0,0,0 }},	/* mask for the scale factor */
-		{{ 0x8000,0,0,0,0,0,0,0 }},	/* mask for the horizontal flip */
-		{{ 0,0,0,0,0,0,0x00ff,0 }},	/* mask for the order */
-		{{ 0,0x0e00,0,0,0,0,0,0 }}	/* mask for the priority */
-	};
-
-	static const struct atarian_desc andesc =
-	{
-		1,			/* index to which gfx system */
-		64,32,		/* size of the alpha RAM in tiles (x,y) */
-	
-		0x000,		/* index of palette base */
-		0x100,		/* maximum number of colors */
-		0,			/* mask of the palette split */
-
-		0x0fff,		/* tile data index mask */
-		0xf000,		/* tile data color mask */
-		0,			/* tile data hflip mask */
-		0x8000		/* tile data opacity mask */
-	};
+	struct atarirle_desc adjusted_modesc = modesc;
+	int i;
 
 	/* blend the playfields and free the temporary one */
-	ataripf_blend_gfx(0, 2, 0x0f, 0x30);
+	atarigen_blend_gfx(0, 2, 0x0f, 0x30);
 
 	/* initialize the playfield */
-	if (!ataripf_init(0, atarig42_swapcolors ? &pfdesc_swap : &pfdesc))
+	atarigen_playfield_tilemap = tilemap_create(get_playfield_tile_info, atarig42_playfield_scan, TILEMAP_OPAQUE, 8,8, 128,64);
+	if (!atarigen_playfield_tilemap)
 		return 1;
-	
+
 	/* initialize the motion objects */
-	if (!atarirle_init(0, gt ? &modesc_gt : atarig42_swapcolors ? &modesc_swap : &modesc))
+	adjusted_modesc.palettebase = atarig42_motion_object_base;
+	for (i = 0; i < 8; i++)
+		adjusted_modesc.colormask.data[i] &= atarig42_motion_object_mask;
+	if (!atarirle_init(0, &adjusted_modesc))
 		return 1;
 
 	/* initialize the alphanumerics */
-	if (!atarian_init(0, &andesc))
+	atarigen_alpha_tilemap = tilemap_create(get_alpha_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,8, 64,32);
+	if (!atarigen_alpha_tilemap)
 		return 1;
-	
+	tilemap_set_transparent_pen(atarigen_alpha_tilemap, 0);
+
 	/* reset statics */
 	current_control = 0;
-	bankbits = 0;//(atarig42_guardian || gt) ? 0x000000 : 0x200000;
+	playfield_tile_bank = 0;
+	playfield_color_bank = 0;
+	playfield_xscroll = 0;
+	playfield_yscroll = 0;
 	return 0;
-}
-
-
-VIDEO_START( atarig42 )
-{
-	return video_start_common(0);
-}
-
-
-VIDEO_START( atarigx2 )
-{
-	return video_start_common(0);
-}
-
-
-VIDEO_START( atarigt )
-{
-	return video_start_common(1);
 }
 
 
@@ -225,13 +165,13 @@ WRITE16_HANDLER( atarig42_mo_control_w )
 
 void atarig42_scanline_update(int scanline)
 {
-	data16_t *base = &atarian_0_base[(scanline / 8) * 64 + 48];
+	data16_t *base = &atarigen_alpha[(scanline / 8) * 64 + 48];
 	int i;
 
 	if (scanline == 0) logerror("-------\n");
 
 	/* keep in range */
-	if (base >= &atarian_0_base[0x800])
+	if (base >= &atarigen_alpha[0x800])
 		return;
 
 	/* update the playfield scrolls */
@@ -242,50 +182,39 @@ void atarig42_scanline_update(int scanline)
 		word = *base++;
 		if (word & 0x8000)
 		{
-			ataripf_set_xscroll(0, (word >> 5) & 0x3ff, scanline + i);
-			bankbits = (bankbits & ~0x1f00000) | ((word & 0x1f) << 20);
-			ataripf_set_bankbits(0, bankbits, scanline + i);
+			int newscroll = (word >> 5) & 0x3ff;
+			int newbank = word & 0x1f;
+			if (newscroll != playfield_xscroll)
+			{
+				force_partial_update(scanline + i - 1);
+				tilemap_set_scrollx(atarigen_playfield_tilemap, 0, newscroll);
+				playfield_xscroll = newscroll;
+			}
+			if (newbank != playfield_color_bank)
+			{
+				force_partial_update(scanline + i - 1);
+				tilemap_mark_all_tiles_dirty(atarigen_playfield_tilemap);
+				playfield_color_bank = newbank;
+			}
 		}
 
 		word = *base++;
 		if (word & 0x8000)
 		{
-			ataripf_set_yscroll(0, ((word >> 6) - (scanline + i)) & 0x1ff, scanline + i);
-			bankbits = (bankbits & ~0x0070000) | ((word & 0x07) << 16);
-			ataripf_set_bankbits(0, bankbits, scanline + i);
-		}
-	}
-}
-
-
-void atarigx2_scanline_update(int scanline)
-{
-	data32_t *base = &atarian_0_base32[(scanline / 8) * 32 + 24];
-	int i;
-
-	if (scanline == 0) logerror("-------\n");
-
-	/* keep in range */
-	if (base >= &atarian_0_base32[0x400])
-		return;
-
-	/* update the playfield scrolls */
-	for (i = 0; i < 8; i++)
-	{
-		data32_t word = *base++;
-
-		if (word & 0x80000000)
-		{
-			ataripf_set_xscroll(0, (word >> 21) & 0x3ff, scanline + i);
-			bankbits = (bankbits & ~0x1f00000) | ((word & 0x1f0000) << 4);
-			ataripf_set_bankbits(0, bankbits, scanline + i);
-		}
-
-		if (word & 0x00008000)
-		{
-			ataripf_set_yscroll(0, ((word >> 6) - (scanline + i)) & 0x1ff, scanline + i);
-			bankbits = (bankbits & ~0x00f0000) | ((word & 0x0f) << 16);
-			ataripf_set_bankbits(0, bankbits, scanline + i);
+			int newscroll = ((word >> 6) - (scanline + i)) & 0x1ff;
+			int newbank = word & 7;
+			if (newscroll != playfield_yscroll)
+			{
+				force_partial_update(scanline + i - 1);
+				tilemap_set_scrolly(atarigen_playfield_tilemap, 0, newscroll);
+				playfield_yscroll = newscroll;
+			}
+			if (newbank != playfield_tile_bank)
+			{
+				force_partial_update(scanline + i - 1);
+				tilemap_mark_all_tiles_dirty(atarigen_playfield_tilemap);
+				playfield_tile_bank = newbank;
+			}
 		}
 	}
 }
@@ -300,8 +229,56 @@ void atarigx2_scanline_update(int scanline)
 
 VIDEO_UPDATE( atarig42 )
 {
-	/* draw the layers */
-	ataripf_render(0, bitmap, cliprect);
-	atarirle_render(0, bitmap, cliprect, NULL);
-	atarian_render(0, bitmap, cliprect);
+	/* draw the playfield */
+	fillbitmap(priority_bitmap, 0, cliprect);
+	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 1, 1);
+	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 2, 2);
+	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 3, 3);
+	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 4, 4);
+	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 5, 5);
+	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 6, 6);
+	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 7, 7);
+	
+	/* copy the motion objects on top */
+	{
+		struct mame_bitmap *mo_bitmap = atarirle_get_vram(0, 0);
+		int left	= cliprect->min_x;
+		int top		= cliprect->min_y;
+		int right	= cliprect->max_x + 1;
+		int bottom	= cliprect->max_y + 1;
+		int x, y;
+
+		/* adjust for orientation */
+		if (Machine->orientation & ORIENTATION_SWAP_XY)
+		{
+			int temp = left; left = top; top = temp;
+			temp = right; right = bottom; bottom = temp;
+		}
+		if (Machine->orientation & ORIENTATION_FLIP_X)
+		{
+			int temp = left; left = right; right = temp;
+			left	= bitmap->width - left;
+			right	= bitmap->width - right;
+		}
+		if (Machine->orientation & ORIENTATION_FLIP_Y)
+		{
+			int temp = top; top = bottom; bottom = temp;
+			top		= bitmap->height - top;
+			bottom	= bitmap->height - bottom;
+		}
+		
+		/* now blend with the playfield */
+		for (y = top; y < bottom; y++)
+		{
+			UINT16 *pf = (UINT16 *)bitmap->base + y * bitmap->rowpixels;
+			UINT16 *mo = (UINT16 *)mo_bitmap->base + y * mo_bitmap->rowpixels;
+			for (x = left; x < right; x++)
+				if (mo[x])
+					pf[x] = mo[x] & ATARIRLE_DATA_MASK;
+		}
+	}
+	
+	/* add the alpha on top */
+	tilemap_draw(bitmap, cliprect, atarigen_alpha_tilemap, 0, 0);
 }

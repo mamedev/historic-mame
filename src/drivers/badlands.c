@@ -334,7 +334,7 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ 0xfec000, 0xfedfff, badlands_pf_bank_w },
 	{ 0xfee000, 0xfeffff, atarigen_eeprom_enable_w },
 	{ 0xffc000, 0xffc3ff, atarigen_expanded_666_paletteram_w, &paletteram16 },
-	{ 0xffe000, 0xffefff, ataripf_0_simple_w, &ataripf_0_base },
+	{ 0xffe000, 0xffefff, atarigen_playfield_w, &atarigen_playfield },
 	{ 0xfff000, 0xfff1ff, atarimo_0_spriteram_expanded_w, &atarimo_0_spriteram },
 	{ 0xfff200, 0xffffff, MWA16_RAM },
 MEMORY_END

@@ -261,7 +261,7 @@ WRITE_HANDLER( fromance_scroll_w )
 
 static void crtc_interrupt_gen(int param)
 {
-	cpu_set_irq_line(1, 1, HOLD_LINE);
+	cpu_set_irq_line(1, 0, HOLD_LINE);
 	if (param != 0)
 		timer_adjust(crtc_timer, TIME_IN_HZ(Machine->drv->frames_per_second * param), 0, TIME_IN_HZ(Machine->drv->frames_per_second * param));
 }

@@ -44,6 +44,7 @@ struct RomModule
 	const char *_name;	/* name of the file to load */
 	UINT32 _offset;		/* offset to load it to */
 	UINT32 _length;		/* length of the file */
+	UINT32 _flags;		/* flags */
 	UINT32 _crc;		/* standard CRC-32 checksum */
 };
 
@@ -120,20 +121,6 @@ enum
 
 ***************************************************************************/
 
-/* ----- length compaction macros ----- */
-#define INVALID_LENGTH 				0x7ff
-#define COMPACT_LENGTH(x)									\
-	((((x) & 0xffffff00) == 0) ? (0x000 | ((x) >> 0)) :		\
-	 (((x) & 0xfffff00f) == 0) ? (0x100 | ((x) >> 4)) :		\
-	 (((x) & 0xffff00ff) == 0) ? (0x200 | ((x) >> 8)) :		\
-	 (((x) & 0xfff00fff) == 0) ? (0x300 | ((x) >> 12)) : 	\
-	 (((x) & 0xff00ffff) == 0) ? (0x400 | ((x) >> 16)) : 	\
-	 (((x) & 0xf00fffff) == 0) ? (0x500 | ((x) >> 20)) : 	\
-	 (((x) & 0x00ffffff) == 0) ? (0x600 | ((x) >> 24)) : 	\
-	 INVALID_LENGTH)
-#define UNCOMPACT_LENGTH(x)	(((x) == INVALID_LENGTH) ? 0 : (((x) & 0xff) << (((x) & 0x700) >> 6)))
-
-
 /* ----- per-entry constants ----- */
 #define ROMENTRYTYPE_REGION			1					/* this entry marks the start of a region */
 #define ROMENTRYTYPE_END			2					/* this entry marks the end of a region */
@@ -202,7 +189,7 @@ enum
 /* ----- per-region macros ----- */
 #define ROMREGION_GETTYPE(r)		((r)->_crc)
 #define ROMREGION_GETLENGTH(r)		((r)->_length)
-#define ROMREGION_GETFLAGS(r)		((r)->_offset)
+#define ROMREGION_GETFLAGS(r)		((r)->_flags)
 #define ROMREGION_GETWIDTH(r)		(8 << (ROMREGION_GETFLAGS(r) & ROMREGION_WIDTHMASK))
 #define ROMREGION_ISLITTLEENDIAN(r)	((ROMREGION_GETFLAGS(r) & ROMREGION_ENDIANMASK) == ROMREGION_LE)
 #define ROMREGION_ISBIGENDIAN(r)	((ROMREGION_GETFLAGS(r) & ROMREGION_ENDIANMASK) == ROMREGION_BE)
@@ -215,9 +202,6 @@ enum
 
 
 /* ----- per-ROM constants ----- */
-#define ROM_LENGTHMASK				0x000007ff			/* the compacted length of the ROM */
-#define		ROM_INVALIDLENGTH		INVALID_LENGTH
-
 #define ROM_OPTIONALMASK			0x00000800			/* optional - won't hurt if it's not there */
 #define		ROM_REQUIRED			0x00000000
 #define		ROM_OPTIONAL			0x00000800
@@ -257,8 +241,8 @@ enum
 #define ROM_SAFEGETNAME(r)			(ROMENTRY_ISFILL(r) ? "fill" : ROMENTRY_ISCOPY(r) ? "copy" : ROM_GETNAME(r))
 #define ROM_GETOFFSET(r)			((r)->_offset)
 #define ROM_GETCRC(r)				((r)->_crc)
-#define ROM_GETLENGTH(r)			(UNCOMPACT_LENGTH((r)->_length & ROM_LENGTHMASK))
-#define ROM_GETFLAGS(r)				((r)->_length & ~ROM_LENGTHMASK)
+#define ROM_GETLENGTH(r)			((r)->_length)
+#define ROM_GETFLAGS(r)				((r)->_flags)
 #define ROM_ISOPTIONAL(r)			((ROM_GETFLAGS(r) & ROM_OPTIONALMASK) == ROM_OPTIONAL)
 #define ROM_GETGROUPSIZE(r)			(((ROM_GETFLAGS(r) & ROM_GROUPMASK) >> 12) + 1)
 #define ROM_GETSKIPCOUNT(r)			((ROM_GETFLAGS(r) & ROM_SKIPMASK) >> 16)
@@ -278,17 +262,17 @@ enum
 
 /* ----- start/stop macros ----- */
 #define ROM_START(name)								static const struct RomModule rom_##name[] = {
-#define ROM_END										{ ROMENTRY_END, 0, 0, 0 } };
+#define ROM_END										{ ROMENTRY_END, 0, 0, 0, 0 } };
 
 /* ----- ROM region macros ----- */
-#define ROM_REGION(length,type,flags)				{ ROMENTRY_REGION, flags, length, type },
+#define ROM_REGION(length,type,flags)				{ ROMENTRY_REGION, 0, length, flags, type },
 #define ROM_REGION16_LE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_16BIT | ROMREGION_LE)
 #define ROM_REGION16_BE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_16BIT | ROMREGION_BE)
 #define ROM_REGION32_LE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_32BIT | ROMREGION_LE)
 #define ROM_REGION32_BE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_32BIT | ROMREGION_BE)
 
 /* ----- core ROM loading macros ----- */
-#define ROMX_LOAD(name,offset,length,crc,flags)		{ name, offset, (flags) | COMPACT_LENGTH(length), crc },
+#define ROMX_LOAD(name,offset,length,crc,flags)		{ name, offset, length, flags, crc },
 #define ROM_LOAD(name,offset,length,crc)			ROMX_LOAD(name, offset, length, crc, 0)
 #define ROM_LOAD_OPTIONAL(name,offset,length,crc)	ROMX_LOAD(name, offset, length, crc, ROM_OPTIONAL)
 #define ROM_CONTINUE(offset,length)					ROMX_LOAD(ROMENTRY_CONTINUE, offset, length, 0, ROM_INHERITFLAGS)

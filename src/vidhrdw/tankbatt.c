@@ -27,16 +27,14 @@ PALETTE_INIT( tankbatt )
 	#define RES_2	0x3f /* this is a guess */
 
 	/* Stick black in there */
-	*(palette++) = 0;
-	*(palette++) = 0;
-	*(palette++) = 0;
+	palette_set_color(0,0,0,0);
 
 	/* ? Skip the first byte ? */
 	color_prom++;
 
 	for (i = 1;i < Machine->drv->total_colors;i++)
 	{
-		int bit0, bit1, bit2, bit3;
+		int bit0, bit1, bit2, bit3, r, g, b;
 
 		bit0 = (*color_prom >> 0) & 0x01; /* intensity */
 		bit1 = (*color_prom >> 1) & 0x01; /* red */
@@ -44,18 +42,18 @@ PALETTE_INIT( tankbatt )
 		bit3 = (*color_prom >> 3) & 0x01; /* blue */
 
 		/* red component */
-		*(palette) = RES_1 * bit1;
-		if (bit1) *(palette) += RES_2 * bit0;
-		palette++;
-		/* green component */
-		*(palette) = RES_1 * bit2;
-		if (bit2) *(palette) += RES_2 * bit0;
-		palette++;
-		/* blue component */
-		*(palette) = RES_1 * bit3;
-		if (bit3) *(palette) += RES_2 * bit0;
-		palette++;
+		r = RES_1 * bit1;
+		if (bit1) r += RES_2 * bit0;
 
+		/* green component */
+		g = RES_1 * bit2;
+		if (bit2) g += RES_2 * bit0;
+
+		/* blue component */
+		b = RES_1 * bit3;
+		if (bit3) b += RES_2 * bit0;
+
+		palette_set_color(i,r,g,b);
 		color_prom += 4;
 	}
 

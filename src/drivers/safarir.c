@@ -122,12 +122,6 @@ VIDEO_UPDATE( safarir )
 }
 
 
-static unsigned char palette_source[] =
-{
-	0x00,0x00,0x00, /* black */
-	0x80,0x80,0x80, /* gray */
-	0xff,0xff,0xff, /* white */
-};
 static unsigned short colortable_source[] =
 {
 	0x00, 0x01,
@@ -136,7 +130,10 @@ static unsigned short colortable_source[] =
 
 static PALETTE_INIT( safarir )
 {
-	memcpy(palette,palette_source,sizeof(palette_source));
+	palette_set_color(0,0x00,0x00,0x00); /* black */
+	palette_set_color(1,0x80,0x80,0x80); /* gray */
+	palette_set_color(2,0xff,0xff,0xff); /* white */
+	
 	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 

@@ -81,8 +81,8 @@ static MACHINE_INIT( sbrkout )
 static PALETTE_INIT( sbrkout )
 {
 	/* 2 colors in the palette: black & white */
-	memset(palette, 0, ARTWORK_COLORS * 3 * sizeof(palette[0]));
-	palette[1*3+0] = palette[1*3+1] = palette[1*3+2] = 0xff;
+	palette_set_color(0,0x00,0x00,0x00);
+	palette_set_color(1,0xff,0xff,0xff);
 
 	/* 4 entries in the color table */
 	memset(colortable, 0, ARTWORK_COLORS * sizeof(colortable[0]));
@@ -188,9 +188,9 @@ INPUT_PORTS_START( sbrkout )
 	PORT_ANALOG( 0xff, 0x00, IPT_PADDLE | IPF_REVERSE, 50, 10, 0, 255 )
 
 	PORT_START		/* IN6 - fake port, used to set the game select dial */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN, "Progressive", KEYCODE_E, IP_JOY_NONE )
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN, "Double", KEYCODE_D, IP_JOY_NONE )
-	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN, "Cavity", KEYCODE_C, IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_BUTTON2, "Progressive", KEYCODE_E, IP_JOY_DEFAULT )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_BUTTON3, "Double",      KEYCODE_D, IP_JOY_DEFAULT )
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_BUTTON4, "Cavity",      KEYCODE_C, IP_JOY_DEFAULT )
 INPUT_PORTS_END
 
 
@@ -263,7 +263,7 @@ static MACHINE_DRIVER_START( sbrkout )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	MDRV_MACHINE_INIT(sbrkout)
 
 	/* video hardware */

@@ -260,7 +260,7 @@ static struct YM3526interface ym3812_interface =
 {
 	1,			/* 1 chip (no more supported) */
 	3600000,	/* 3.600000 MHz ? */
-	{ 255 } 	/* (not supported) */
+	{ 100 } 	/* volume */
 };
 
 

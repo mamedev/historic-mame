@@ -40,7 +40,7 @@ PALETTE_INIT( llander )
 {
 	int width, height, i, nextcol;
 
-	palette_init_avg_white(palette,colortable,color_prom);
+	palette_init_avg_white(colortable,color_prom);
 
 	llander_lit_panel = NULL;
 	width = Machine->scrbitmap->width;
@@ -62,7 +62,7 @@ PALETTE_INIT( llander )
 		return;
 
 	for (i = 0; i < 16; i++)
-		palette[3*(i+8)]=palette[3*(i+8)+1]=palette[3*(i+8)+2]= (255*i)/15;
+		palette_set_color(i+8,(255*i)/15,(255*i)/15,(255*i)/15);
 }
 
 

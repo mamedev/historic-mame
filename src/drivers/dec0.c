@@ -854,7 +854,7 @@ static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip */
 	3000000,	/* 12MHz clock divided by 4 = 3.00 MHz */
-	{ 40 },
+	{ 80 },
 	{ sound_irq },
 };
 
@@ -862,7 +862,7 @@ static struct YM3812interface ym3812b_interface =
 {
 	1,			/* 1 chip */
 	3000000,
-	{ 40 },
+	{ 80 },
 	{ sound_irq2 },
 };
 

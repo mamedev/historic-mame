@@ -2,7 +2,7 @@
 
  Wild West C.O.W.boys of Moo Mesa
  Bucky O'Hare
- (c) 1993 Konami
+ (c) 1992 Konami
 
  Video hardware emulation.
 
@@ -15,13 +15,13 @@
 static int sprite_colorbase;
 static int layer_colorbase[4], layerpri[4];
 static int moo_scrolld[2][4][2] = {
- 	{{ 0, 0 }, {0, 0}, {0, 0}, {0, 0}},
+ 	{{ 4, 0 }, {0, 0}, {0, 0}, {0, 0}},
  	{{ 0, 0 }, {0, 0}, {0, 0}, {0, 0}}
 };
 
 static void moo_sprite_callback(int *code, int *color, int *priority_mask)
 {
-	int pri = (*color & 0x00e0) >> 3;
+	int pri = (*color & 0x01e0) >> 4;
 
 	if (pri <= layerpri[3])					*priority_mask = 0;
 	else if (pri > layerpri[3] && pri <= layerpri[2])	*priority_mask = 0xff00;
@@ -138,8 +138,6 @@ VIDEO_UPDATE(moo)
 	layerpri[1] = K053251_get_priority(K053251_CI2);
 	layerpri[2] = K053251_get_priority(K053251_CI3);
 	layerpri[3] = K053251_get_priority(K053251_CI4);
-
-
 	sortlayers(layers, layerpri);
 
 	for (i = 0; i < 4; i++)

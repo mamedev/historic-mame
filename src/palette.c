@@ -206,7 +206,7 @@ int palette_init(void)
 
 	/* now the driver can modify the default values if it wants to. */
 	if (Machine->drv->init_palette)
-		(*Machine->drv->init_palette)(game_palette,Machine->game_colortable,memory_region(REGION_PROMS));
+		(*Machine->drv->init_palette)(Machine->game_colortable,memory_region(REGION_PROMS));
 
 
 	switch (colormode)
@@ -924,6 +924,18 @@ WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_swap_w )
 {
 	paletteram[offset] = data;
 	changecolor_xBBBBBGGGGGRRRRR(offset / 2,paletteram[offset | 1] | (paletteram[offset & ~1] << 8));
+}
+
+WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_split1_w )
+{
+	paletteram[offset] = data;
+	changecolor_xBBBBBGGGGGRRRRR(offset,paletteram[offset] | (paletteram_2[offset] << 8));
+}
+
+WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_split2_w )
+{
+	paletteram_2[offset] = data;
+	changecolor_xBBBBBGGGGGRRRRR(offset,paletteram[offset] | (paletteram_2[offset] << 8));
 }
 
 WRITE16_HANDLER( paletteram16_xBBBBBGGGGGRRRRR_word_w )

@@ -25,7 +25,7 @@ static int flipscreen;
 PALETTE_INIT( skykid )
 {
 	int i;
-	int bit0,bit1,bit2,bit3;
+	int bit0,bit1,bit2,bit3,r,g,b;
 	int totcolors = Machine->drv->total_colors;
 
 	for (i = 0; i < totcolors; i++)
@@ -35,22 +35,23 @@ PALETTE_INIT( skykid )
 		bit1 = (color_prom[totcolors*0] >> 1) & 0x01;
 		bit2 = (color_prom[totcolors*0] >> 2) & 0x01;
 		bit3 = (color_prom[totcolors*0] >> 3) & 0x01;
-		*(palette++) = 0x0e*bit0 + 0x1f*bit1 + 0x43*bit2 + 0x8f*bit3;
+		r = 0x0e*bit0 + 0x1f*bit1 + 0x43*bit2 + 0x8f*bit3;
 
 		/* green component */
 		bit0 = (color_prom[totcolors*1] >> 0) & 0x01;
 		bit1 = (color_prom[totcolors*1] >> 1) & 0x01;
 		bit2 = (color_prom[totcolors*1] >> 2) & 0x01;
 		bit3 = (color_prom[totcolors*1] >> 3) & 0x01;
-		*(palette++) = 0x0e*bit0 + 0x1f*bit1 + 0x43*bit2 + 0x8f*bit3;
+		g = 0x0e*bit0 + 0x1f*bit1 + 0x43*bit2 + 0x8f*bit3;
 
 		/* blue component */
 		bit0 = (color_prom[totcolors*2] >> 0) & 0x01;
 		bit1 = (color_prom[totcolors*2] >> 1) & 0x01;
 		bit2 = (color_prom[totcolors*2] >> 2) & 0x01;
 		bit3 = (color_prom[totcolors*2] >> 3) & 0x01;
-		*(palette++) = 0x0e*bit0 + 0x1f*bit1 + 0x43*bit2 + 0x8f*bit3;
+		b = 0x0e*bit0 + 0x1f*bit1 + 0x43*bit2 + 0x8f*bit3;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 

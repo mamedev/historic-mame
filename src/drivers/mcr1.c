@@ -353,22 +353,22 @@ static MACHINE_DRIVER_START( mcr1 )
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_PORTS(readport,writeport)
 	MDRV_CPU_VBLANK_INT(mcr_interrupt,2)
-	
+
 	MDRV_FRAMES_PER_SECOND(30)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_30HZ_VBLANK_DURATION)
 	MDRV_MACHINE_INIT(mcr)
 	MDRV_NVRAM_HANDLER(mcr1)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(32*16, 30*16)
 	MDRV_VISIBLE_AREA(0*16, 32*16-1, 0*16, 30*16-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32)
-	
+
 	MDRV_VIDEO_START(mcr12)
 	MDRV_VIDEO_UPDATE(mcr1)
-	
+
 	/* sound hardware */
 	MDRV_IMPORT_FROM(mcr_ssio)
 MACHINE_DRIVER_END
@@ -405,6 +405,9 @@ ROM_START( solarfox )
 	ROM_LOAD( "sfvid.1b",     0x2000, 0x2000, 0x78801e83 )
 	ROM_LOAD( "sfvid.1d",     0x4000, 0x2000, 0x4d8445cf )
 	ROM_LOAD( "sfvid.1e",     0x6000, 0x2000, 0x3da25495 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 
@@ -432,6 +435,9 @@ ROM_START( kick )
 	ROM_LOAD( "2700b-v2.1d",  0x2000, 0x2000, 0x565ea97d )
 	ROM_LOAD( "2800c-v2.1b",  0x4000, 0x2000, 0xf3be56a1 )
 	ROM_LOAD( "2900d-v2.1a",  0x6000, 0x2000, 0x77da795e )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 
@@ -459,6 +465,9 @@ ROM_START( kicka )
 	ROM_LOAD( "2700-b.1d",    0x2000, 0x2000, 0x78eda36c )
 	ROM_LOAD( "2800-c.1b",    0x4000, 0x2000, 0xc93e0170 )
 	ROM_LOAD( "2900-d.1a",    0x6000, 0x2000, 0x91e59383 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 

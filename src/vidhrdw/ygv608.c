@@ -616,6 +616,22 @@ VIDEO_UPDATE( ygv608 )
     int xc, yc;
     double r, alpha, sin_theta, cos_theta;
 #endif
+	struct rectangle finalclip;
+
+	// clip to the current bitmap
+	finalclip.min_x = 0;
+	finalclip.max_x = Machine->drv->screen_width - 1;
+	finalclip.min_y = 0;
+	finalclip.max_y = Machine->drv->screen_height - 1;
+	sect_rect(&finalclip, cliprect);
+	cliprect = &finalclip;
+
+	// punt if not initialized
+	if (ygv608.page_x == 0 || ygv608.page_y == 0)
+	{
+		fillbitmap(bitmap, 0, cliprect);
+		return;
+	}
 
 	if( ygv608.screen_resize )
 	{
@@ -642,7 +658,6 @@ VIDEO_UPDATE( ygv608 )
 
 	if( ygv608.tilemap_resize )
 	{
-
 		if (tilemap_A)
 		{
 			tilemap_dispose( tilemap_A );
@@ -747,7 +762,7 @@ VIDEO_UPDATE( ygv608 )
 	}
 	else
 #endif
-		tilemap_draw( work_bitmap,NULL, tilemap_B, 0, 0 );
+		tilemap_draw( work_bitmap,cliprect, tilemap_B, 0, 0 );
 
 #ifdef _ENABLE_ROTATE_ZOOM
 

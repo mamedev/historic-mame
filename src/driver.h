@@ -25,7 +25,7 @@
 
 #define NVRAM_HANDLER(name)		void nvram_handler_##name(void *file,int read_or_write)
 
-#define PALETTE_INIT(name)		void palette_init_##name(UINT8 *palette, UINT16 *colortable, const UINT8 *color_prom)
+#define PALETTE_INIT(name)		void palette_init_##name(UINT16 *colortable, const UINT8 *color_prom)
 
 #define VIDEO_START(name)		int video_start_##name(void)
 #define VIDEO_STOP(name)		void video_stop_##name(void)
@@ -73,6 +73,9 @@
 #include "network.h"
 #endif /* MAME_NET */
 
+#ifdef MMSND
+#include "mmsnd/mmsnd.h"
+#endif
 
 
 /***************************************************************************
@@ -295,7 +298,7 @@ struct InternalMachineDriver
 	UINT32 total_colors;
 	UINT32 color_table_len;
 
-	void (*init_palette)(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+	void (*init_palette)(unsigned short *colortable,const unsigned char *color_prom);
 	int (*video_start)(void);
 	void (*video_stop)(void);
 	void (*video_eof)(void);

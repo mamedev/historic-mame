@@ -58,7 +58,7 @@ static WRITE_HANDLER( mjsister_dac_adr_e_w )
 	dac_busy = 1;
 }
 
-static void init_mjsister(void)
+static MACHINE_INIT( mjsister )
 {
 	dac_busy = 0;
 }
@@ -319,6 +319,7 @@ static MACHINE_DRIVER_START( mjsister )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(mjsister)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -359,4 +360,4 @@ ROM_START( mjsister )
 	ROM_LOAD( "ms08.bpr", 0x0300,  0x0100, 0xda2b3b38 ) // ?
 ROM_END
 
-GAME( 1986, mjsister, 0, mjsister, mjsister, mjsister, 0, "Toaplan", "Mahjong Sisters (Japan)" )
+GAME( 1986, mjsister, 0, mjsister, mjsister, 0, ROT0, "Toaplan", "Mahjong Sisters (Japan)" )

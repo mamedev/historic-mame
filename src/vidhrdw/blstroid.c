@@ -22,31 +22,28 @@ data16_t *blstroid_priorityram;
 
 /*************************************
  *
+ *	Tilemap callbacks
+ *
+ *************************************/
+
+static void get_playfield_tile_info(int tile_index)
+{
+	UINT16 data = atarigen_playfield[tile_index];
+	int code = data & 0x1fff;
+	int color = (data >> 13) & 0x07;
+	SET_TILE_INFO(0, code, color, 0);
+}
+
+
+
+/*************************************
+ *
  *	Video system start
  *
  *************************************/
 
 VIDEO_START( blstroid )
 {
-	static const struct ataripf_desc pfdesc =
-	{
-		0,			/* index to which gfx system */
-		64,32,		/* size of the playfield in tiles (x,y) */
-		1,64,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-
-		0x100,		/* index of palette base */
-		0x080,		/* maximum number of colors */
-		0,			/* color XOR for shadow effect (if any) */
-		0,			/* latch mask */
-		0,			/* transparent pen mask */
-
-		0x1fff,		/* tile data index mask */
-		0xe000,		/* tile data color mask */
-		0,			/* tile data hflip mask */
-		0,			/* tile data vflip mask */
-		0			/* tile data priority mask */
-	};
-
 	static const struct atarimo_desc modesc =
 	{
 		1,					/* index to which gfx system */
@@ -57,7 +54,7 @@ VIDEO_START( blstroid )
 		0,					/* render in swapped X/Y order? */
 		0,					/* does the neighbor bit affect the next object? */
 		0,					/* pixels per SLIP entry (0 for no-slip) */
-		256,				/* number of scanlines between MO updates */
+		0,					/* pixel offset for SLIPs */
 
 		0x000,				/* base palette entry */
 		0x100,				/* maximum number of colors */
@@ -78,13 +75,14 @@ VIDEO_START( blstroid )
 		{{ 0 }},			/* mask for the neighbor */
 		{{ 0 }},			/* mask for absolute coordinates */
 
-		{{ 0 }},			/* mask for the ignore value */
-		0,					/* resulting value to indicate "ignore" */
-		0					/* callback routine for ignored entries */
+		{{ 0 }},			/* mask for the special value */
+		0,					/* resulting value to indicate "special" */
+		0					/* callback routine for special entries */
 	};
 
 	/* initialize the playfield */
-	if (!ataripf_init(0, &pfdesc))
+	atarigen_playfield_tilemap = tilemap_create(get_playfield_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,8, 64,64);
+	if (!atarigen_playfield_tilemap)
 		return 1;
 
 	/* initialize the motion objects */
@@ -103,7 +101,16 @@ VIDEO_START( blstroid )
 
 static void irq_off(int param)
 {
+	/* clear the interrupt */
 	atarigen_scanline_int_ack_w(0, 0, 0);
+}
+
+
+static void irq_on(int param)
+{
+	/* generate the interrupt */
+	atarigen_scanline_int_gen();
+	atarigen_update_interrupts();
 }
 
 
@@ -113,52 +120,18 @@ void blstroid_scanline_update(int scanline)
 
 	/* check for interrupts */
 	if (offset < 0x1000)
-		if (ataripf_0_base[offset] & 0x8000)
+		if (atarigen_playfield[offset] & 0x8000)
 		{
-			/* generate the interrupt */
-			atarigen_scanline_int_gen();
-			atarigen_update_interrupts();
-
-			/* also set a timer to turn ourself off */
-			timer_set(cpu_getscanlineperiod(), 0, irq_off);
+			/* fix me - the only thing this IRQ does it tweak the starting MO link */
+			/* unfortunately, it does it too early for the given MOs! */
+			/* perhaps it is not actually hooked up on the real PCB... */
+			return;
+			
+			/* set a timer to turn the interrupt on at HBLANK of the 7th scanline */
+			/* and another to turn it off one scanline later */
+			timer_set(cpu_getscanlineperiod() * 7.9, 0, irq_on);
+			timer_set(cpu_getscanlineperiod() * 8.9, 0, irq_off);
 		}
-}
-
-
-
-/*************************************
- *
- *	Overrendering
- *
- *************************************/
-
-static int overrender_callback(struct ataripf_overrender_data *data, int state)
-{
-	/* we need to check tile-by-tile, so always return OVERRENDER_SOME */
-	if (state == OVERRENDER_BEGIN)
-	{
-		/* by default, draw anywhere the MO is non-zero */
-		data->drawmode = TRANSPARENCY_PENS;
-		data->maskpens = 0x0001;
-		return OVERRENDER_SOME;
-	}
-
-	/* handle a query */
-	else if (state == OVERRENDER_QUERY)
-	{
-		int idx = (data->mocolor & 0x0f) | ((data->pfcolor & 0x07) << 4);
-
-		/* determine the priority bits */
-		data->drawpens = 0xffff;
-		if (!blstroid_priorityram[idx])
-			data->drawpens ^= 0x00ff;
-		if (!blstroid_priorityram[idx + 0x80])
-			data->drawpens ^= 0xff00;
-
-		/* only overdraw if the mask is not fully transparent */
-		return (data->drawpens != 0xffff) ? OVERRENDER_YES : OVERRENDER_NO;
-	}
-	return 0;
 }
 
 
@@ -171,7 +144,33 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 
 VIDEO_UPDATE( blstroid )
 {
-	/* draw the layers */
-	ataripf_render(0, bitmap, cliprect);
-	atarimo_render(0, bitmap, cliprect, overrender_callback, NULL);
+	struct atarimo_rect_list rectlist;
+	struct mame_bitmap *mobitmap;
+	int x, y, r;
+
+	/* draw the playfield */
+	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 0, 0);
+
+	/* draw and merge the MO */
+	mobitmap = atarimo_render(0, cliprect, &rectlist);
+	for (r = 0; r < rectlist.numrects; r++, rectlist.rect++)
+		for (y = rectlist.rect->min_y; y <= rectlist.rect->max_y; y++)
+		{
+			UINT16 *mo = (UINT16 *)mobitmap->base + mobitmap->rowpixels * y;
+			UINT16 *pf = (UINT16 *)bitmap->base + bitmap->rowpixels * y;
+			for (x = rectlist.rect->min_x; x <= rectlist.rect->max_x; x++)
+				if (mo[x])
+				{
+					/* verified via schematics
+					
+						priority address = HPPPMMMM
+					*/
+					int priaddr = ((pf[x] & 8) << 4) | (pf[x] & 0x70) | ((mo[x] & 0xf0) >> 4);
+					if (blstroid_priorityram[priaddr] & 1)
+						pf[x] = mo[x];
+					
+					/* erase behind ourselves */
+					mo[x] = 0;
+				}
+		}
 }

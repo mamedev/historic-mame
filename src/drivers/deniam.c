@@ -318,7 +318,7 @@ static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip */
 	25000000/8,	/* ??? */
-	{ 30 },	/* volume */
+	{ 60 },	/* volume */
 	{ irqhandler },
 };
 

@@ -3028,7 +3028,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,				/* 1 chip */
 	27000000/8,		/* 3.375MHz , 27MHz Oscillator */
-	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(25,MIXER_PAN_LEFT,25,MIXER_PAN_RIGHT) },
 	{ 0 }
 };
 
@@ -3036,7 +3036,7 @@ static struct YM2151interface raizing_ym2151_interface =
 {
 	1,				/* 1 chip */
 	32000000/8,		/* 4.00MHz , 32MHz Oscillator */
-	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(25,MIXER_PAN_LEFT,25,MIXER_PAN_RIGHT) },
 	{ 0 }
 };
 
@@ -3046,7 +3046,7 @@ static struct OKIM6295interface okim6295_interface =
 	1,						/* 1 chip */
 	{ 27000000/10/132 },	/* frequency (Hz). 2.7MHz to 6295 (using B mode) */
 	{ REGION_SOUND1 },		/* memory region */
-	{ 47 }
+	{ 25 }
 };
 
 static struct OKIM6295interface raizing_okim6295_interface =
@@ -3054,7 +3054,7 @@ static struct OKIM6295interface raizing_okim6295_interface =
 	1,						/* 1 chip */
 	{ 32000000/32/132 },	/* frequency (Hz) 1MHz to 6295 (using B mode) */
 	{ REGION_SOUND1 },		/* memory region */
-	{ 47 }
+	{ 25 }
 };
 
 static struct OKIM6295interface battleg_okim6295_interface =
@@ -3062,7 +3062,7 @@ static struct OKIM6295interface battleg_okim6295_interface =
 	1,						/* 1 chip */
 	{ 32000000/16/132 },	/* frequency (Hz). 2MHz to 6295 (using B mode) */
 	{ REGION_SOUND1 },		/* memory region */
-	{ 47 }
+	{ 25 }
 };
 
 static struct OKIM6295interface batrider_okim6295_interface =
@@ -3070,7 +3070,7 @@ static struct OKIM6295interface batrider_okim6295_interface =
 	2,										/* 2 chips */
 	{ 32000000/10/132, 32000000/10/165 },	/* frequency (Hz). 3.2MHz to two 6295 (using B mode / A mode) */
 	{ REGION_SOUND1, REGION_SOUND2 },		/* memory region */
-	{ 47, 47 }
+	{ 25, 25 }
 };
 
 
@@ -3088,7 +3088,7 @@ static MACHINE_DRIVER_START( tekipaki )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(32*16, 32*16)
@@ -3119,7 +3119,7 @@ static MACHINE_DRIVER_START( ghox )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(32*16, 32*16)
@@ -3152,7 +3152,7 @@ static MACHINE_DRIVER_START( dogyuun )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(32*16, 32*16)
@@ -3186,7 +3186,7 @@ static MACHINE_DRIVER_START( kbash )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(32*16, 32*16)
@@ -3214,7 +3214,7 @@ static MACHINE_DRIVER_START( truxton2 )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(32*16, 32*16)
@@ -3339,7 +3339,7 @@ static MACHINE_DRIVER_START( fixeight )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 ///	MDRV_NVRAM_HANDLER(fixeight)		/* See 37B6 code */
 
 	/* video hardware */
@@ -3375,7 +3375,7 @@ static MACHINE_DRIVER_START( vfive )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(32*16, 32*16)
@@ -3408,7 +3408,7 @@ static MACHINE_DRIVER_START( batsugun )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(32*16, 32*16)
@@ -3436,7 +3436,7 @@ static MACHINE_DRIVER_START( snowbro2 )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(32*16, 32*16)

@@ -35,7 +35,7 @@ PALETTE_INIT( yamato )
 	/* chars - 12 bits RGB */
 	for (i = 0;i < 64;i++)
 	{
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
 
 		/* red component */
@@ -43,20 +43,21 @@ PALETTE_INIT( yamato )
 		bit1 = (color_prom[0] >> 1) & 0x01;
 		bit2 = (color_prom[0] >> 2) & 0x01;
 		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		/* green component */
 		bit0 = (color_prom[0] >> 4) & 0x01;
 		bit1 = (color_prom[0] >> 5) & 0x01;
 		bit2 = (color_prom[0] >> 6) & 0x01;
 		bit3 = (color_prom[0] >> 7) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		/* blue component */
 		bit0 = (color_prom[64] >> 0) & 0x01;
 		bit1 = (color_prom[64] >> 1) & 0x01;
 		bit2 = (color_prom[64] >> 2) & 0x01;
 		bit3 = (color_prom[64] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 	color_prom += 64;
@@ -64,25 +65,26 @@ PALETTE_INIT( yamato )
 	/* big sprite - 8 bits RGB */
 	for (i = 0;i < 32;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
 		bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
 		bit0 = (*color_prom >> 3) & 0x01;
 		bit1 = (*color_prom >> 4) & 0x01;
 		bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = 0;
 		bit1 = (*color_prom >> 6) & 0x01;
 		bit2 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
+		palette_set_color(i+64,r,g,b);
 		color_prom++;
 	}
 

@@ -3,6 +3,7 @@
 # TARGET = mess
 # TARGET = neomame
 # TARGET = cpmame
+# TARGET = mmsnd
 # example for a tiny compile
 # TARGET = tiny
 ifeq ($(TARGET),)
@@ -23,6 +24,10 @@ X86_ASM_68000 = 1
 
 # uncomment next line to use Assembler 68020 engine
 # X86_ASM_68020 = 1
+
+# uncomment next line to use cygwin compiler
+# COMPILESYSTEM_CYGWIN	= 1
+
 
 # set this the operating system you're building for
 # MAMEOS = msdos
@@ -125,6 +130,10 @@ OBJDIRS += $(OBJ)/mess $(OBJ)/mess/systems $(OBJ)/mess/machine \
 	$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/tools
 endif
 
+ifeq ($(TARGET),mmsnd)
+OBJDIRS	+= $(OBJ)/mmsnd $(OBJ)/mmsnd/machine $(OBJ)/mmsnd/drivers $(OBJ)/mmsnd/sndhrdw
+endif
+
 all:	maketree $(EMULATOR) extra
 
 # include the various .mak files
@@ -138,6 +147,11 @@ DBGDEFS = -DMAME_DEBUG
 else
 DBGDEFS =
 DBGOBJS =
+endif
+
+ifdef COMPILESYSTEM_CYGWIN
+CFLAGS	+= -mno-cygwin
+LDFLAGS	+= -mno-cygwin
 endif
 
 extra:	$(TOOLS) $(TEXTS)

@@ -421,8 +421,8 @@ static struct K007232_interface k007232_interface =
 {
 	2,			/* number of chips */
 	{ REGION_SOUND1, REGION_SOUND2 },	/* memory regions */
-	{ K007232_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER),
-			K007232_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER) },	/* volume */
+	{ K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER),
+			K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback0, volume_callback1 }	/* external port callback */
 };
 

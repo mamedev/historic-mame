@@ -214,7 +214,7 @@ static struct YM3812interface bigkarnk_ym3812_interface =
 {
 	1,						/* 1 chip */
 	3580000,				/* 3.58 MHz? */
-	{ 60 },					/* volume */
+	{ 100 },					/* volume */
 	{ 0 }					/* IRQ handler */
 };
 
@@ -235,7 +235,7 @@ static MACHINE_DRIVER_START( bigkarnk )
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	MDRV_CPU_ADD(M6809, 8867000/4)	/* 68B09, 2.21675 MHz? */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(bigkarnk_readmem_snd,bigkarnk_writemem_snd)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -31,12 +31,6 @@
  *
  *************************************/
 
-static unsigned char videopin_palette[] =
-{
-	0x00,0x00,0x00, /* BLACK (transparent) */
-	0xff,0xff,0xff  /* WHITE */
-};
-
 static unsigned short videopin_colortable[] =
 {
 	0x00, 0x01
@@ -44,7 +38,8 @@ static unsigned short videopin_colortable[] =
 
 static PALETTE_INIT( videopin )
 {
-	memcpy(palette,videopin_palette,sizeof(videopin_palette));
+	palette_set_color(0,0x00,0x00,0x00); /* BLACK (transparent) */
+	palette_set_color(1,0xff,0xff,0xff);  /* WHITE */
 	memcpy(colortable,videopin_colortable,sizeof(videopin_colortable));
 
 	/* Get Artwork */

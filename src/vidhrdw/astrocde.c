@@ -110,13 +110,7 @@ PALETTE_INIT( astrocde )
 				B = 255;
 
 			/* Round, and set the value */
-
-			*palette = floor(R+.5);
-			palette++;
-			*palette = floor(G+.5);
-			palette++;
-			*palette = floor(B+.5);
-			palette++;
+			palette_set_color(i*8+j,floor(R+.5),floor(G+.5),floor(B+.5));
 		}
 	}
 }

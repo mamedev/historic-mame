@@ -15,6 +15,10 @@
 #include "wmstunit.h"
 
 
+/* compile-time constants */
+#define ENABLE_ALL_JDREDD_LEVELS	0
+
+
 /* constant definitions */
 #define SOUND_ADPCM					1
 #define SOUND_ADPCM_LARGE			2
@@ -267,6 +271,129 @@ static WRITE16_HANDLER( nbajam_prot_w )
 
 /*************************************
  *
+ *	Judge Dredd protection
+ *
+ *************************************/
+
+static const UINT8 jdredd_prot_values_10740[] =
+{
+	0x14,0x2A,0x15,0x0A,0x25,0x32,0x39,0x1C,
+	0x2E,0x37,0x3B,0x1D,0x2E,0x37,0x1B,0x0D,
+	0x26,0x33,0x39,0x3C,0x1E,0x2F,0x37,0x3B,
+	0x3D,0x3E,0x3F,0x1F,0x2F,0x17,0x0B,0x25,
+	0x32,0x19,0x0C,0x26,0x33,0x19,0x2C,0x16,
+	0x2B,0x15,0x0A,0x05,0x22,0x00
+};
+
+static const UINT8 jdredd_prot_values_13240[] =
+{
+	0x28
+};
+
+static const UINT8 jdredd_prot_values_76540[] =
+{
+	0x04,0x08
+};
+
+static const UINT8 jdredd_prot_values_77760[] =
+{
+	0x14,0x2A,0x14,0x2A,0x35,0x2A,0x35,0x1A,
+	0x35,0x1A,0x2D,0x1A,0x2D,0x36,0x2D,0x36,
+	0x1B,0x36,0x1B,0x36,0x2C,0x36,0x2C,0x18,
+	0x2C,0x18,0x31,0x18,0x31,0x22,0x31,0x22,
+	0x04,0x22,0x04,0x08,0x04,0x08,0x10,0x08,
+	0x10,0x20,0x10,0x20,0x00,0x20,0x00,0x00,
+	0x00,0x00,0x01,0x00,0x01,0x02,0x01,0x02,
+	0x05,0x02,0x05,0x0B,0x05,0x0B,0x16,0x0B,
+	0x16,0x2C,0x16,0x2C,0x18,0x2C,0x18,0x31,
+	0x18,0x31,0x22,0x31,0x22,0x04,0x22,0x04,
+	0x08,0x04,0x08,0x10,0x08,0x10,0x20,0x10,
+	0x20,0x00,0x00
+};
+
+static const UINT8 jdredd_prot_values_80020[] =
+{
+	0x3A,0x1D,0x2E,0x37,0x00,0x00,0x2C,0x1C,
+	0x39,0x33,0x00,0x00,0x00,0x00,0x00,0x00
+};
+
+static const UINT8 *jdredd_prot_table;
+static UINT8 jdredd_prot_index;
+static UINT8 jdredd_prot_max;
+
+static WRITE16_HANDLER( jdredd_prot_w )
+{
+	logerror("%08X:jdredd_prot_w(%04X,%04X)\n", activecpu_get_previouspc(), offset*16, data);
+
+	switch (offset)
+	{
+		case TOWORD(0x10740):
+			jdredd_prot_index = 0;
+			jdredd_prot_table = jdredd_prot_values_10740;
+			jdredd_prot_max = sizeof(jdredd_prot_values_10740);
+			logerror("-- reset prot table 10740\n");
+			break;
+
+		case TOWORD(0x13240):
+			jdredd_prot_index = 0;
+			jdredd_prot_table = jdredd_prot_values_13240;
+			jdredd_prot_max = sizeof(jdredd_prot_values_13240);
+			logerror("-- reset prot table 13240\n");
+			break;
+
+		case TOWORD(0x76540):
+			jdredd_prot_index = 0;
+			jdredd_prot_table = jdredd_prot_values_76540;
+			jdredd_prot_max = sizeof(jdredd_prot_values_76540);
+			logerror("-- reset prot table 76540\n");
+			break;
+
+		case TOWORD(0x77760):
+			jdredd_prot_index = 0;
+			jdredd_prot_table = jdredd_prot_values_77760;
+			jdredd_prot_max = sizeof(jdredd_prot_values_77760);
+			logerror("-- reset prot table 77760\n");
+			break;
+
+		case TOWORD(0x80020):
+			jdredd_prot_index = 0;
+			jdredd_prot_table = jdredd_prot_values_80020;
+			jdredd_prot_max = sizeof(jdredd_prot_values_80020);
+			logerror("-- reset prot table 80020\n");
+			break;
+	}
+}
+
+static READ16_HANDLER( jdredd_prot_r )
+{
+	data16_t result = 0xffff;
+
+	if (jdredd_prot_table && jdredd_prot_index < jdredd_prot_max)
+		result = jdredd_prot_table[jdredd_prot_index++] << 9;
+
+	logerror("%08X:jdredd_prot_r(%04X) = %04X\n", activecpu_get_previouspc(), offset*16, result);
+	return result;
+}
+
+
+#if ENABLE_ALL_JDREDD_LEVELS
+static data16_t *jdredd_hack;
+static READ16_HANDLER( jdredd_hack_r )
+{
+	if (activecpu_get_pc() == 0xFFBA7EB0)
+	{
+		fprintf(stderr, "jdredd_hack_r\n");
+		return 0;
+	}
+
+	return jdredd_hack[offset];
+}
+#endif
+
+
+
+/*************************************
+ *
  *	Generic driver init
  *
  *************************************/
@@ -402,6 +529,32 @@ DRIVER_INIT( nbajamte )
 	INSTALL_SPEEDUP_1_16BIT(0x0106d480, 0xff84e480, 0x1000040, 0xd0, 0xb0);
 }
 
+DRIVER_INIT( jdredd )
+{
+	/* common init */
+	init_tunit_generic(SOUND_ADPCM_LARGE);
+
+	/* looks like the watchdog needs to be disabled */
+	install_mem_write16_handler(0, TOBYTE(0x01d81060), TOBYTE(0x01d8107f), MWA16_NOP);
+
+	/* protection */
+	install_mem_read16_handler (0, TOBYTE(0x1b00000), TOBYTE(0x1bfffff), jdredd_prot_r);
+	install_mem_write16_handler(0, TOBYTE(0x1b00000), TOBYTE(0x1bfffff), jdredd_prot_w);
+
+	/* sound chip protection (hidden RAM) */
+	install_mem_write_handler(1, 0xfbcf, 0xfbf9, MWA_RAM);
+
+	/* make sure that unmapped memory returns $ffff (necessary to work around bug) */
+	memory_set_unmap_value(0xffffffff);
+
+#if ENABLE_ALL_JDREDD_LEVELS
+	/* how about the final levels? */
+	jdredd_hack = install_mem_read16_handler(0, TOBYTE(0xFFBA7FF0), TOBYTE(0xFFBA7FFf), jdredd_hack_r);
+#endif
+
+	/* no obvious speedups */
+}
+
 
 
 /*************************************
@@ -481,7 +634,7 @@ MACHINE_INIT( wms_tunit )
 
 READ16_HANDLER( wms_tunit_sound_state_r )
 {
-	logerror("%08X:Sound status read\n", activecpu_get_pc());
+/*	logerror("%08X:Sound status read\n", activecpu_get_pc());*/
 
 	if (sound_type == SOUND_DCS && Machine->sample_rate)
 		return williams_dcs_control_r() >> 4;

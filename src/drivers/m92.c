@@ -17,6 +17,7 @@
 	The Irem Skins Game (USA Set 2)	M92-F	(c) 1992 Irem America Corp
 	Hook (World)							(c) 1992 Irem Corp
 	Hook (USA)								(c) 1992 Irem America Corp
+	R-Type Leo (World)						(c) 1992 Irem Corp
 	R-Type Leo (Japan)						(c) 1992 Irem Corp
 	In The Hunt	(World)				M92-E	(c) 1993 Irem Corp
 	In The Hunt	(USA)				M92-E	(c) 1993 Irem Corp
@@ -1592,6 +1593,33 @@ ROM_END
 
 ROM_START( rtypeleo )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "rtl-h0-c",     0x000001, 0x040000, 0x5fef7fa1 )
+	ROM_LOAD16_BYTE( "rtl-l0-c",     0x000000, 0x040000, 0x8156456b )
+	ROM_LOAD16_BYTE( "rtl-h1-d.bin", 0x080001, 0x020000, 0x352ff444 )
+	ROM_LOAD16_BYTE( "rtl-l1-d.bin", 0x080000, 0x020000, 0xfd34ea46 )
+
+	ROM_REGION( 0x100000 * 2, REGION_CPU2, 0 )	/* 1MB for the audio CPU - encrypted V30 = NANAO custom D80001 (?) */
+	ROM_LOAD16_BYTE( "rtl-sh0a.bin",0x000001, 0x010000, 0xe518b4e3 )
+	ROM_LOAD16_BYTE( "rtl-sl0a.bin",0x000000, 0x010000, 0x896f0d36 )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE ) /* Tiles */
+	ROM_LOAD( "rtl-c0.bin", 0x000000, 0x080000, 0xfb588d7c )
+	ROM_LOAD( "rtl-c1.bin", 0x080000, 0x080000, 0xe5541bff )
+	ROM_LOAD( "rtl-c2.bin", 0x100000, 0x080000, 0xfaa9ae27 )
+	ROM_LOAD( "rtl-c3.bin", 0x180000, 0x080000, 0x3a2343f6 )
+
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD( "rtl-000.bin",0x000000, 0x100000, 0x82a06870 )
+	ROM_LOAD( "rtl-010.bin",0x100000, 0x100000, 0x417e7a56 )
+	ROM_LOAD( "rtl-020.bin",0x200000, 0x100000, 0xf9a3f3a1 )
+	ROM_LOAD( "rtl-030.bin",0x300000, 0x100000, 0x03528d95 )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "rtl-da.bin" ,0x000000, 0x080000, 0xdbebd1ff )
+ROM_END
+
+ROM_START( rtypelej )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "rtl-h0-d.bin", 0x000001, 0x040000, 0x3dbac89f )
 	ROM_LOAD16_BYTE( "rtl-l0-d.bin", 0x000000, 0x040000, 0xf85a2537 )
 	ROM_LOAD16_BYTE( "rtl-h1-d.bin", 0x080001, 0x020000, 0x352ff444 )
@@ -2280,7 +2308,8 @@ GAMEX(1992, skingame, majtitl2, raster,    majtitl2, majtitl2, ROT0,   "Irem Ame
 GAMEX(1992, skingam2, majtitl2, raster,    majtitl2, majtitl2, ROT0,   "Irem America", "The Irem Skins Game (US set 2)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1992, hook,     0,        nonraster, hook,     hook,     ROT0,   "Irem",         "Hook (World)" )
 GAME( 1992, hooku,    hook,     nonraster, hook,     hook,     ROT0,   "Irem America", "Hook (US)" )
-GAME( 1992, rtypeleo, 0,        raster,    rtypeleo, rtypeleo, ROT0,   "Irem",         "R-Type Leo (Japan)" )
+GAME( 1992, rtypeleo, 0,        raster,    rtypeleo, rtypeleo, ROT0,   "Irem",         "R-Type Leo (World rev. C)" )
+GAME( 1992, rtypelej, rtypeleo, raster,    rtypeleo, rtypeleo, ROT0,   "Irem",         "R-Type Leo (Japan rev. D)" )
 GAME( 1993, inthunt,  0,        raster,    inthunt,  inthunt,  ROT0,   "Irem",         "In The Hunt (World)" )
 GAME( 1993, inthuntu, inthunt,  raster,    inthunt,  inthunt,  ROT0,   "Irem America", "In The Hunt (US)" )
 GAME( 1993, kaiteids, inthunt,  raster,    inthunt,  inthunt,  ROT0,   "Irem",         "Kaitei Daisensou (Japan)" )

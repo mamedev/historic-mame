@@ -662,7 +662,7 @@ static struct YM2203interface ym2203_interface =
 {
 	1,
 	1500000,	/* Accurate */
-	{ YM2203_VOL(30,30) },
+	{ YM2203_VOL(25,25) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -673,7 +673,7 @@ static struct YM3526interface ym3526_interface =
 {
 	1,			/* 1 chip */
 	3000000,	/* Accurate */
-	{ 60 },	/*  */
+	{ 100 },	/*  */
 	{ sound_irq },
 };
 

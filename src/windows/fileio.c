@@ -106,7 +106,7 @@ static int samplepath_needs_decomposition = 1;
 
 static const char *rompath;
 static const char *samplepath;
-static const char *cfgdir, *nvdir, *hidir, *inpdir, *stadir, *diffdir;
+static const char *cfgdir, *nvdir, *hidir, *inpdir, *stadir, *diffdir, *ctrlrdir;
 static const char *memcarddir, *artworkdir, *screenshotdir, *cheatdir;
 
 static struct stat_cache_entry *stat_cache[STATCACHE_SIZE];
@@ -154,6 +154,7 @@ struct rc_option fileio_opts[] =
 	{ "cheat_file", NULL, rc_string, &cheatfile, "cheat.dat", 0, 0, NULL, "cheat filename" },
 	{ "history_file", NULL, rc_string, &history_filename, "history.dat", 0, 0, NULL, NULL },
 	{ "mameinfo_file", NULL, rc_string, &mameinfo_filename, "mameinfo.dat", 0, 0, NULL, NULL },
+	{ "ctrlr_directory", NULL, rc_string, &ctrlrdir, "ctrlr", 0, 0, NULL, "directory to save controller definitions" },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 
@@ -283,6 +284,10 @@ void *osd_fopen(const char *gamename, const char *filename, int filetype, int op
 		case OSD_FILETYPE_LANGUAGE:
 			return generic_fopen(pathc, pathv, NULL, filename, extension, 0, FILEFLAG_OPENREAD);
 
+		// ctrlr files
+		case OSD_FILETYPE_CTRLR:
+			return generic_fopen(pathc, pathv, gamename, filename, extension, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD);
+
 		// anything else
 		default:
 			logerror("osd_fopen(): unknown filetype %02x\n", filetype);
@@ -355,6 +360,12 @@ int osd_faccess(const char *filename, int filetype)
 		{
 			struct stat stat_buffer;
 			char name[256];
+
+			// first check the raw filename, in case we're looking for a directory
+			sprintf(name, "%s/%s", dir_name, filename);
+			LOG(("osd_faccess: trying %s\n", name));
+			if (cache_stat(name, &stat_buffer) == 0)
+				return 1;
 
 			// does such a directory (or file) exist?
 			sprintf(name, "%s/%s", dir_name, modified_filename);
@@ -1244,6 +1255,12 @@ static int get_pathlist_for_filetype(int filetype, const char ***pathlist, const
 		case OSD_FILETYPE_CHEAT:
 			*pathlist = &cheatdir;
 			*extension = NULL;
+			return 1;
+
+		// config files
+		case OSD_FILETYPE_CTRLR:
+			*pathlist = &ctrlrdir;
+			*extension = "ini";
 			return 1;
 
 		// anything else

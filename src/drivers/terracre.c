@@ -253,7 +253,7 @@ static struct YM3526interface ym3526_interface =
 {
 	1,			/* 1 chip (no more supported) */
 	4000000,	/* 4 MHz ? (hand tuned) */
-	{ 50 }		/* volume */
+	{ 100 }		/* volume */
 };
 
 static struct YM2203interface ym2203_interface =

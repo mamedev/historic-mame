@@ -24,29 +24,6 @@ WRITE_HANDLER( skychut_vh_flipscreen_w );
 
 static UINT8 *memory;
 
-static unsigned char palette_source[] = /* V.V */ /* Smoothed pure colors, overlays are not so contrasted */
-{
-	0x00,0x00,0x00, /* BLACK */
-	0xff,0x20,0x20, /* RED */
-	0x20,0xff,0x20, /* GREEN */
-	0xff,0xff,0x20, /* YELLOW */
-	0x20,0xff,0xff, /* CYAN */
-	0xff,0x20,0xff,  /* PURPLE */
-	0xff,0xff,0xff /* WHITE */
-};
-
-static unsigned char spacebeam_palette[] = /* total estimation */
-{
-	0xff,0xff,0xff, /* WHITE */
-	0xff,0x20,0x20, /* RED */
-	0x20,0xff,0x20, /* GREEN */
-	0xff,0xff,0x20, /* YELLOW */
-	0x20,0xff,0xff, /* CYAN */
-	0xff,0x20,0xff,  /* PURPLE */
-	0x00,0x00,0xf0, /* blue */
-	0x00,0x00,0x00 /* BLACK */
-};
-
 static unsigned short colortable_source[] =
 {
 	0,1,0,2,0,3,0,4,0,5,0,6
@@ -54,13 +31,26 @@ static unsigned short colortable_source[] =
 
 static PALETTE_INIT( skychut )
 {
-	memcpy(palette,palette_source,sizeof(palette_source));
+	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
+	palette_set_color(1,0xff,0x20,0x20); /* RED */
+	palette_set_color(2,0x20,0xff,0x20); /* GREEN */
+	palette_set_color(3,0xff,0xff,0x20); /* YELLOW */
+	palette_set_color(4,0x20,0xff,0xff); /* CYAN */
+	palette_set_color(5,0xff,0x20,0xff);  /* PURPLE */
+	palette_set_color(6,0xff,0xff,0xff); /* WHITE */
 	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 
 static PALETTE_INIT( greenber )
 {
-	memcpy(palette,spacebeam_palette,sizeof(spacebeam_palette));
+	palette_set_color(0,0xff,0xff,0xff); /* WHITE */
+	palette_set_color(1,0xff,0x20,0x20); /* RED */
+	palette_set_color(2,0x20,0xff,0x20); /* GREEN */
+	palette_set_color(3,0xff,0xff,0x20); /* YELLOW */
+	palette_set_color(4,0x20,0xff,0xff); /* CYAN */
+	palette_set_color(5,0xff,0x20,0xff);  /* PURPLE */
+	palette_set_color(6,0x00,0x00,0xf0); /* blue */
+	palette_set_color(7,0x00,0x00,0x00); /* BLACK */
 }
 
 static MEMORY_READ_START( skychut_readmem )
@@ -202,7 +192,7 @@ static MACHINE_DRIVER_START( skychut )
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(sizeof(palette_source) / sizeof(palette_source[0]) / 3)
+	MDRV_PALETTE_LENGTH(7)
 	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
 	
 	MDRV_PALETTE_INIT(skychut)
@@ -227,7 +217,7 @@ static MACHINE_DRIVER_START( greenberet )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_PALETTE_LENGTH(sizeof(spacebeam_palette) / sizeof(spacebeam_palette[0]) / 3)
+	MDRV_PALETTE_LENGTH(8)
 
 	MDRV_PALETTE_INIT(greenber)
 	MDRV_VIDEO_START(generic)

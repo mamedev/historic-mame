@@ -44,8 +44,8 @@
 static PALETTE_INIT( avalnche )
 {
 	/* 2 colors in the palette: black & white */
-	memset(palette, 0, ARTWORK_COLORS * 3 * sizeof(palette[0]));
-	palette[1*3+0] = palette[1*3+1] = palette[1*3+2] = 0xff;
+	palette_set_color(0,0x00,0x00,0x00);
+	palette_set_color(1,0xff,0xff,0xff);
 
 	/* 4 entries in the color table */
 	memset(colortable, 0, ARTWORK_COLORS * sizeof(colortable[0]));

@@ -34,6 +34,8 @@ static const unsigned char *system1_color_prom;
 static unsigned char *wbml_paged_videoram;
 static unsigned char wbml_videoram_bank=0,wbml_videoram_bank_latch=0;
 
+static int blockgal_kludgeoffset;
+
 /***************************************************************************
 
   There are two kind of color handling: in the System 1 games, values in the
@@ -372,6 +374,7 @@ static int system1_draw_fg(struct mame_bitmap *bitmap,int priority)
 				sy = 31 - sy;
 			}
 
+			code %= Machine->gfx[0]->total_elements;
 			if (Machine->gfx[0]->pen_usage[code] & ~1)
 			{
 				drawn = 1;
@@ -380,7 +383,7 @@ static int system1_draw_fg(struct mame_bitmap *bitmap,int priority)
 						code,
 						color,
 						flip_screen,flip_screen,
-						8*sx,8*sy,
+						8*sx + blockgal_kludgeoffset,8*sy,
 						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
@@ -395,7 +398,7 @@ static void system1_draw_bg(struct mame_bitmap *bitmap,int priority)
 	int background_scrollx_flip, background_scrolly_flip;
 
 
-	background_scrollx = ((system1_scroll_x[0] >> 1) + ((system1_scroll_x[1] & 1) << 7) + 14) & 0xff;
+	background_scrollx = ((system1_scroll_x[0] >> 1) + ((system1_scroll_x[1] & 1) << 7) + 14 + 2*blockgal_kludgeoffset) & 0xff;
 	background_scrolly = (-*system1_scroll_y) & 0xff;
 
 	background_scrollx_flip = (275 - background_scrollx) & 0xff;
@@ -790,4 +793,26 @@ VIDEO_UPDATE( wbml )
 	/* even if screen is off, sprites must still be drawn to update the collision table */
 	if (system1_video_mode & 0x10)  /* screen off */
 		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+}
+
+VIDEO_UPDATE( blockgal )
+{
+	int drawn;
+
+
+	blockgal_kludgeoffset = -8;
+
+	system1_draw_bg(bitmap,-1);
+	drawn = system1_draw_fg(bitmap,0);
+	/* redraw low priority bg tiles if necessary */
+	if (drawn) system1_draw_bg(bitmap,0);
+	draw_sprites(bitmap);
+	system1_draw_bg(bitmap,1);
+	system1_draw_fg(bitmap,1);
+
+	/* even if screen is off, sprites must still be drawn to update the collision table */
+	if (system1_video_mode & 0x10)  /* screen off */
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+
+	blockgal_kludgeoffset = 0;
 }

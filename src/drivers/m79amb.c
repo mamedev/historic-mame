@@ -108,20 +108,15 @@ INPUT_PORTS_START( m79amb )
 INPUT_PORTS_END
 
 
-static unsigned char palette_source[] = /* V.V */ /* Smoothed pure colors, overlays are not so contrasted */
-{
-	0x00,0x00,0x00, /* BLACK */
-	0xff,0xff,0xff, /* WHITE */
-	0xff,0x20,0x20, /* RED */
-	0x20,0xff,0x20, /* GREEN */
-	0xff,0xff,0x20, /* YELLOW */
-	0x20,0xff,0xff, /* CYAN */
-	0xff,0x20,0xff  /* PURPLE */
-};
-
 static PALETTE_INIT( m79amb )
 {
-	memcpy(palette,palette_source,sizeof(palette_source));
+	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
+	palette_set_color(1,0xff,0xff,0xff); /* WHITE */
+	palette_set_color(2,0xff,0x20,0x20); /* RED */
+	palette_set_color(3,0x20,0xff,0x20); /* GREEN */
+	palette_set_color(4,0xff,0xff,0x20); /* YELLOW */
+	palette_set_color(5,0x20,0xff,0xff); /* CYAN */
+	palette_set_color(6,0xff,0x20,0xff); /* PURPLE */
 }
 
 static INTERRUPT_GEN( M79_interrupt )
@@ -153,7 +148,7 @@ static MACHINE_DRIVER_START( m79amb )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY)
 	MDRV_SCREEN_SIZE(32*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
-	MDRV_PALETTE_LENGTH(sizeof(palette_source) / sizeof(palette_source[0]) / 3)
+	MDRV_PALETTE_LENGTH(7)
 
 	MDRV_PALETTE_INIT(m79amb)
 	MDRV_VIDEO_START(generic_bitmapped)

@@ -18,10 +18,11 @@ static UINT16 *tile_data;
 PALETTE_INIT( moleattack ){
 	int i;
 	for( i=0; i<8; i++ ){
-		colortable[i] = i;
-		*palette++ = (i&1)?0xff:0x00;
-		*palette++ = (i&4)?0xff:0x00;
-		*palette++ = (i&2)?0xff:0x00;
+		int r,g,b;
+		r = (i&1)?0xff:0x00;
+		g = (i&4)?0xff:0x00;
+		b = (i&2)?0xff:0x00;
+		palette_set_color(i,r,g,b);
 	}
 }
 

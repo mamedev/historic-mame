@@ -62,9 +62,7 @@ PALETTE_INIT( segar )
 	int i;
 
 	/* Our first color needs to be black (transparent) */
-	*(palette++) = 0;
-	*(palette++) = 0;
-	*(palette++) = 0;
+	palette_set_color(0,0,0,0);
 
 	/* Space Odyssey uses a static palette for the background, so
 	   our choice of colors isn't exactly arbitrary.  S.O. uses a
@@ -75,9 +73,10 @@ PALETTE_INIT( segar )
 	*/
 	for (i = 0;i < (Machine->drv->total_colors - 1);i++)
 	{
-		*(palette++) = color_scale[((i & 0x30) >> 4)];
-		*(palette++) = color_scale[((i & 0x0C) >> 2)];
-		*(palette++) = color_scale[((i & 0x03) << 0)];
+		int r = color_scale[((i & 0x30) >> 4)];
+		int g = color_scale[((i & 0x0C) >> 2)];
+		int b = color_scale[((i & 0x03) << 0)];
+		palette_set_color(i+1,r,g,b);
 	}
 
 	for (i = 0;i < Machine->drv->total_colors;i++)

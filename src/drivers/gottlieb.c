@@ -998,7 +998,7 @@ INPUT_PORTS_START( 3stooges )
 	PORT_DIPSETTING (   0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING (   0x10, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING (   0x14, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME (0x40, 0x00, "1st Bonus Life at" )
@@ -1441,7 +1441,7 @@ static MACHINE_DRIVER_START( reactor )
 	MDRV_IMPORT_FROM(gottlieb)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(reactor_readmem, reactor_writemem)
-	
+
 	MDRV_NVRAM_HANDLER(NULL)
 
 	/* video hardware */

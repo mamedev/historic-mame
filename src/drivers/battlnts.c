@@ -333,7 +333,7 @@ static struct YM3812interface ym3812_interface =
 {
 	2,				/* 2 chips */
 	3000000,		/* ? */
-	{ 50, 50 },
+	{ 100, 100 },
 	{ 0, 0 },
 };
 

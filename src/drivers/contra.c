@@ -350,11 +350,12 @@ ROM_START( contrab )
 	ROM_LOAD16_BYTE( "633e06.16d",   0x00000, 0x40000, 0x9cf6faae )
 	ROM_LOAD16_BYTE( "633e07.16f",   0x00001, 0x40000, 0xf2d06638 )
 
-	ROM_REGION( 0x0400, REGION_PROMS, 0 )
+	ROM_REGION( 0x0500, REGION_PROMS, 0 )
 	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #0 sprite lookup table */
 	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #0 char lookup table */
 	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #1 sprite lookup table */
 	ROM_LOAD( "633f11.20g",   0x0300, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
+	ROM_LOAD( "conprom.53",   0x0400, 0x0100, 0x05a1da7e )	/* unknown (only present in this bootleg) */
 ROM_END
 
 ROM_START( contraj )

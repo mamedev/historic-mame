@@ -5,7 +5,6 @@
 
 #include "cpuintrf.h"
 #include "osd_cpu.h"
-#include "osdepend.h"
 #include "mamedbg.h"
 
 #include <assert.h>

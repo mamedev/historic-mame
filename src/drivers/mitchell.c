@@ -953,7 +953,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct YM2413interface ym2413_interface=
+static struct YM2413interface ym2413_interface =
 {
 	1,	/* 1 chip */
 	8000000,	/* 8MHz ??? (hand tuned) */
@@ -1007,7 +1007,7 @@ static MACHINE_DRIVER_START( pang )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	
+
 	MDRV_NVRAM_HANDLER(mitchell)
 
 	/* video hardware */

@@ -1508,20 +1508,22 @@ VIDEO_UPDATE( batsugun_1 )
 
 	for (priority = 0; priority < 16; priority++)
 	{
-		tilemap_draw(bitmap,cliprect,bg_tilemap[1],priority,0); /* 2 */
+		tilemap_draw(bitmap,cliprect,bg_tilemap[1],priority,0);/* 2 */
 		tilemap_draw(bitmap,cliprect,bg_tilemap[0],priority,0);
 		tilemap_draw(bitmap,cliprect,fg_tilemap[0],priority,0);
+		tilemap_draw(bitmap,cliprect,fg_tilemap[1],priority,0);
 		tilemap_draw(bitmap,cliprect,top_tilemap[0],priority,0);
 		if (sprite_priority[0][priority])
 			draw_sprites(bitmap,cliprect,0,priority,0);
 	}
+
 	for (priority = 0; priority < 16; priority++)
 	{
-		tilemap_draw(bitmap,cliprect,fg_tilemap[1],priority,0);
 		tilemap_draw(bitmap,cliprect,top_tilemap[1],priority,0);
 		if (sprite_priority[1][priority])
 			draw_sprites(bitmap,cliprect,1,priority,0);
 	}
+
 }
 
 VIDEO_UPDATE( truxton2_0 )

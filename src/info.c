@@ -692,7 +692,7 @@ static void print_game_info(FILE* out, const struct GameDriver* game)
 	fprintf(out, L1E);
 }
 
-#if !defined(MESS) && !defined(TINY_COMPILE) && !defined(CPSMAME)
+#if !defined(MESS) && !defined(TINY_COMPILE) && !defined(CPSMAME) && !defined(MMSND)
 /* Print the resource info */
 static void print_resource_info(FILE* out, const struct GameDriver* game)
 {
@@ -743,12 +743,13 @@ void print_mame_info(FILE* out, const struct GameDriver* games[])
 		print_game_info( out, games[j] );
 
 	/* print the resources (only if linked) */
-#if !defined(MESS) && !defined(TINY_COMPILE) && !defined(CPSMAME)
+#if !defined(MESS) && !defined(TINY_COMPILE) && !defined(CPSMAME) && !defined(MMSND)
 	PRINT_RESOURCE(neogeo);
 #if !defined(NEOMAME)
 	PRINT_RESOURCE(cvs);
 	PRINT_RESOURCE(decocass);
 	PRINT_RESOURCE(playch10);
+	PRINT_RESOURCE(pgm);
 #endif
 #endif
 }

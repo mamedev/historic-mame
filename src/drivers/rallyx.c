@@ -265,8 +265,8 @@ static struct GfxLayout dotlayout =
 	8,	/* 8 characters */
 	2,	/* 2 bits per pixel */
 	{ 6, 7 },
-	{ 3*8, 2*8, 1*8, 0*8 },
-	{ 3*32, 2*32, 1*32, 0*32 },
+	{ 0*8, 1*8, 2*8, 3*8 },
+	{ 0*32, 1*32, 2*32, 3*32 },
 	16*8	/* every char takes 16 consecutive bytes */
 };
 

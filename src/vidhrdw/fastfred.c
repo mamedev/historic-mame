@@ -83,10 +83,7 @@ PALETTE_INIT( fastfred )
 		int r,g,b;
 
 		convert_color(i, &r, &g, &b);
-
-		*(palette++) = r;
-		*(palette++) = g;
-		*(palette++) = b;
+		palette_set_color(i,r,g,b);
 	}
 
 

@@ -550,13 +550,13 @@ static struct YM3526interface YM3526_interface =
 {
 	1,
 	8000000/2,	/* 4 MHz? */
-	{ 60 }
+	{ 100 }
 };
 
 static struct DACinterface dac_interface =
 {
 	2,
-	{ 60, 60 }
+	{ 50, 50 }
 };
 
 

@@ -360,7 +360,7 @@ static struct Y8950interface y8950_interface =
 {
 	1,
 	3579545,	/* ? */
-	{ 63 },
+	{ 100 },
 	{ 0 },
 	{ REGION_SOUND1 },	/* ROM region */
 	{ 0 },	/* keyboarc read  */

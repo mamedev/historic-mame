@@ -58,7 +58,8 @@ VIDEO_UPDATE( yunsun16 );
 
 static WRITE16_HANDLER( yunsun16_sound_bank_w )
 {
-	if (ACCESSING_LSB)
+	/* To avoid crash if running the game without sound */
+	if ((Machine->sample_rate != 0) && (ACCESSING_LSB))
 	{
 		int bank = data & 3;
 		unsigned char *dst	= memory_region(REGION_SOUND1);

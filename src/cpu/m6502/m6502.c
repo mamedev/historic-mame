@@ -196,6 +196,8 @@ void m6502_reset(void *param)
 	m6502.pending_irq = 0;	/* nonzero if an IRQ is pending */
 	m6502.after_cli = 0;	/* pending IRQ and last insn cleared I */
 	m6502.irq_callback = NULL;
+	m6502.irq_state = 0;
+	m6502.nmi_state = 0;
 
 	change_pc16(PCD);
 }

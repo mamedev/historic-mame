@@ -230,17 +230,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 /* 1-bit RGB palette */
-static unsigned char palette_source[] =
-{
-	0x00, 0x00, 0x00,
-	0xff, 0x00, 0x00,
-	0x00, 0xff, 0x00,
-	0xff, 0xff, 0x00,
-	0x00, 0x00, 0xff,
-	0xff, 0x00, 0xff,
-	0x00, 0xff, 0xff,
-	0xff, 0xff, 0xff
-};
 static unsigned short colortable_source[] =
 {
 	0, 1, 2, 3, 4, 5, 6, 7,
@@ -254,7 +243,9 @@ static unsigned short colortable_source[] =
 };
 static PALETTE_INIT( spcforce )
 {
-	memcpy(palette,palette_source,sizeof(palette_source));
+	int i;
+	for (i = 0; i < 8; i++)
+		palette_set_color(i, (i & 1) * 0xff, ((i >> 1) & 1) * 0xff, ((i >> 2) & 1) * 0xff);
 	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 
@@ -287,7 +278,7 @@ static MACHINE_DRIVER_START( spcforce )
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(sizeof(palette_source) / sizeof(palette_source[0]) / 3)
+	MDRV_PALETTE_LENGTH(8)
 	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
 
 	MDRV_PALETTE_INIT(spcforce)

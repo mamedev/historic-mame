@@ -47,5 +47,6 @@ READ_HANDLER( system1_videomode_r );
 WRITE_HANDLER( choplifter_scroll_x_w );
 VIDEO_UPDATE( choplifter );
 VIDEO_UPDATE( wbml );
+VIDEO_UPDATE( blockgal );
 
 #endif

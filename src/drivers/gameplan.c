@@ -487,21 +487,16 @@ INPUT_PORTS_END
 
 
 
-static unsigned char palette_source[] =
-{
-	0xff,0xff,0xff, /* 0 WHITE   */
-	0x20,0xff,0xff, /* 1 CYAN    */
-	0xff,0x20,0xff, /* 2 MAGENTA */
-	0x20,0x20,0xFF, /* 3 BLUE    */
-	0xff,0xff,0x20, /* 4 YELLOW  */
-	0x20,0xff,0x20, /* 5 GREEN   */
-	0xff,0x20,0x20, /* 6 RED     */
-	0x00,0x00,0x00, /* 7 BLACK   */
-};
-
 static PALETTE_INIT( gameplan )
 {
-	memcpy(palette,palette_source,sizeof(palette_source));
+	palette_set_color(0,0xff,0xff,0xff); /* 0 WHITE   */
+	palette_set_color(1,0x20,0xff,0xff); /* 1 CYAN    */
+	palette_set_color(2,0xff,0x20,0xff); /* 2 MAGENTA */
+	palette_set_color(3,0x20,0x20,0xFF); /* 3 BLUE    */
+	palette_set_color(4,0xff,0xff,0x20); /* 4 YELLOW  */
+	palette_set_color(5,0x20,0xff,0x20); /* 5 GREEN   */
+	palette_set_color(6,0xff,0x20,0x20); /* 6 RED     */
+	palette_set_color(7,0x00,0x00,0x00); /* 7 BLACK   */
 }
 
 
@@ -536,7 +531,7 @@ static MACHINE_DRIVER_START( gameplan )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0, 32*8-1, 0, 32*8-1)
-	MDRV_PALETTE_LENGTH(sizeof(palette_source) / sizeof(palette_source[0]) / 3)
+	MDRV_PALETTE_LENGTH(8)
 	
 	MDRV_PALETTE_INIT(gameplan)
 	MDRV_VIDEO_START(gameplan)

@@ -153,6 +153,8 @@ static offs_t				port_amask;						/* port address mask */
 UINT8 *						cpu_bankbase[STATIC_COUNT];		/* array of bank bases */
 struct ExtMemory			ext_memory[MAX_EXT_MEMORY];		/* externally-allocated memory */
 
+static data32_t				unmap_value;					/* unmapped memory value */
+
 static opbase_handler		opbasefunc;						/* opcode base override */
 
 static struct handler_data 	rmemhandler8[ENTRY_COUNT];		/* 8-bit memory read handlers */
@@ -225,6 +227,7 @@ int memory_init(void)
 
 	/* no current context to start */
 	cur_context = -1;
+	unmap_value = 0;
 
 	/* init the static handlers */
 	if (!init_static())
@@ -341,6 +344,17 @@ void memory_set_context(int activecpu)
 	port_amask = cpudata[activecpu].port.mask;
 
 	opbasefunc = cpudata[activecpu].opbase;
+}
+
+
+/*-------------------------------------------------
+	memory_set_unmap_value - set the unmapped
+	memory value
+-------------------------------------------------*/
+
+void memory_set_unmap_value(data32_t value)
+{
+	unmap_value = value;
 }
 
 
@@ -1814,7 +1828,7 @@ data16_t name(offs_t address)															\
 	MEMREADSTART																		\
 																						\
 	/* perform lookup */																\
-	address &= mask;																	\
+	address &= mask & ~1;																\
 	entry = lookup[LEVEL1_INDEX(address,abits,1)];										\
 	if (entry >= SUBTABLE_BASE)															\
 		entry = lookup[LEVEL2_INDEX(entry,address,abits,1)];							\
@@ -1840,7 +1854,7 @@ data16_t name(offs_t address)															\
 	MEMREADSTART																		\
 																						\
 	/* perform lookup */																\
-	address &= mask;																	\
+	address &= mask & ~1;																\
 	entry = lookup[LEVEL1_INDEX(address,abits,2)];										\
 	if (entry >= SUBTABLE_BASE)															\
 		entry = lookup[LEVEL2_INDEX(entry,address,abits,2)];							\
@@ -1867,7 +1881,7 @@ data16_t name(offs_t address)															\
 	MEMREADSTART																		\
 																						\
 	/* perform lookup */																\
-	address &= mask;																	\
+	address &= mask & ~1;																\
 	entry = lookup[LEVEL1_INDEX(address,abits,2)];										\
 	if (entry >= SUBTABLE_BASE)															\
 		entry = lookup[LEVEL2_INDEX(entry,address,abits,2)];							\
@@ -1900,7 +1914,7 @@ data32_t name(offs_t address)															\
 	MEMREADSTART																		\
 																						\
 	/* perform lookup */																\
-	address &= mask;																	\
+	address &= mask & ~3;																\
 	entry = lookup[LEVEL1_INDEX(address,abits,2)];										\
 	if (entry >= SUBTABLE_BASE)															\
 		entry = lookup[LEVEL2_INDEX(entry,address,abits,2)];							\
@@ -2066,7 +2080,7 @@ void name(offs_t address, data16_t data)												\
 	MEMWRITESTART																		\
 																						\
 	/* perform lookup */																\
-	address &= mask;																	\
+	address &= mask & ~1;																\
 	entry = lookup[LEVEL1_INDEX(address,abits,1)];										\
 	if (entry >= SUBTABLE_BASE)															\
 		entry = lookup[LEVEL2_INDEX(entry,address,abits,1)];							\
@@ -2091,7 +2105,7 @@ void name(offs_t address, data16_t data)												\
 	MEMWRITESTART																		\
 																						\
 	/* perform lookup */																\
-	address &= mask;																	\
+	address &= mask & ~1;																\
 	entry = lookup[LEVEL1_INDEX(address,abits,2)];										\
 	if (entry >= SUBTABLE_BASE)															\
 		entry = lookup[LEVEL2_INDEX(entry,address,abits,2)];							\
@@ -2117,7 +2131,7 @@ void name(offs_t address, data16_t data)												\
 	MEMWRITESTART																		\
 																						\
 	/* perform lookup */																\
-	address &= mask;																	\
+	address &= mask & ~1;																\
 	entry = lookup[LEVEL1_INDEX(address,abits,2)];										\
 	if (entry >= SUBTABLE_BASE)															\
 		entry = lookup[LEVEL2_INDEX(entry,address,abits,2)];							\
@@ -2149,7 +2163,7 @@ void name(offs_t address, data32_t data)												\
 	MEMWRITESTART																		\
 																						\
 	/* perform lookup */																\
-	address &= mask;																	\
+	address &= mask & ~3;																\
 	entry = lookup[LEVEL1_INDEX(address,abits,2)];										\
 	if (entry >= SUBTABLE_BASE)															\
 		entry = lookup[LEVEL2_INDEX(entry,address,abits,2)];							\
@@ -2420,19 +2434,19 @@ static READ_HANDLER( mrh8_bad )
 {
 	logerror("cpu #%d (PC=%08X): unmapped memory byte read from %08X\n", cpu_getactivecpu(), activecpu_get_pc(), offset);
 	if (activecpu_address_bits() <= SPARSE_THRESH) return cpu_bankbase[STATIC_RAM][offset];
-	return 0;
+	return unmap_value;
 }
 static READ16_HANDLER( mrh16_bad )
 {
 	logerror("cpu #%d (PC=%08X): unmapped memory word read from %08X & %04X\n", cpu_getactivecpu(), activecpu_get_pc(), offset*2, mem_mask ^ 0xffff);
 	if (activecpu_address_bits() <= SPARSE_THRESH) return ((data16_t *)cpu_bankbase[STATIC_RAM])[offset];
-	return 0;
+	return unmap_value;
 }
 static READ32_HANDLER( mrh32_bad )
 {
 	logerror("cpu #%d (PC=%08X): unmapped memory dword read from %08X & %08X\n", cpu_getactivecpu(), activecpu_get_pc(), offset*4, mem_mask ^ 0xffffffff);
 	if (activecpu_address_bits() <= SPARSE_THRESH) return ((data32_t *)cpu_bankbase[STATIC_RAM])[offset];
-	return 0;
+	return unmap_value;
 }
 
 static WRITE_HANDLER( mwh8_bad )
@@ -2454,17 +2468,17 @@ static WRITE32_HANDLER( mwh32_bad )
 static READ_HANDLER( prh8_bad )
 {
 	logerror("cpu #%d (PC=%08X): unmapped port byte read from %08X\n", cpu_getactivecpu(), activecpu_get_pc(), offset);
-	return 0;
+	return unmap_value;
 }
 static READ16_HANDLER( prh16_bad )
 {
 	logerror("cpu #%d (PC=%08X): unmapped port word read from %08X & %04X\n", cpu_getactivecpu(), activecpu_get_pc(), offset*2, mem_mask ^ 0xffff);
-	return 0;
+	return unmap_value;
 }
 static READ32_HANDLER( prh32_bad )
 {
 	logerror("cpu #%d (PC=%08X): unmapped port dword read from %08X & %08X\n", cpu_getactivecpu(), activecpu_get_pc(), offset*4, mem_mask ^ 0xffffffff);
-	return 0;
+	return unmap_value;
 }
 
 static WRITE_HANDLER( pwh8_bad )

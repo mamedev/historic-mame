@@ -224,14 +224,6 @@ static WRITE_HANDLER( atarifb_out3_w )
  *
  *************************************/
 
-static const unsigned char palette_source[] =
-{
-	0x00,0x00,0x00, /* black  */
-	0x80,0x80,0x80, /* grey  */
-	0xff,0xff,0xff, /* white  */
-	0x40,0x40,0x40, /* dark grey (?) - used in Soccer only */
-};
-
 static const unsigned short colortable_source[] =
 {
 	0x02, 0x00, /* chars */
@@ -244,7 +236,10 @@ static const unsigned short colortable_source[] =
 
 static PALETTE_INIT( atarifb )
 {
-	memcpy(palette,palette_source,sizeof(palette_source));
+	palette_set_color(0,0x00,0x00,0x00); /* black  */
+	palette_set_color(1,0x80,0x80,0x80); /* grey  */
+	palette_set_color(2,0xff,0xff,0xff); /* white  */
+	palette_set_color(3,0x40,0x40,0x40); /* dark grey (?) - used in Soccer only */
 	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 
@@ -712,7 +707,7 @@ static MACHINE_DRIVER_START( atarifb )
 	MDRV_SCREEN_SIZE(38*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 38*8-1, 0*8, 32*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(sizeof(palette_source) / sizeof(palette_source[0]) / 3)
+	MDRV_PALETTE_LENGTH(4)
 	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
 
 	MDRV_PALETTE_INIT(atarifb)

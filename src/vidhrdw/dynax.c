@@ -57,9 +57,10 @@ PALETTE_INIT( sprtmtch )
 		int r = BITSWAP5((x >>  0) & 0x1f);
 		int g = BITSWAP5((x >>  5) & 0x1f);
 		int b = BITSWAP5((x >> 10) & 0x1f);
-		palette[i * 3 + 0] =  (r << 3) | (r >> 2);
-		palette[i * 3 + 1] =  (g << 3) | (g >> 2);
-		palette[i * 3 + 2] =  (b << 3) | (b >> 2);
+		r =  (r << 3) | (r >> 2);
+		g =  (g << 3) | (g >> 2);
+		b =  (b << 3) | (b >> 2);
+		palette_set_color(i,r,g,b);
 	}
 }
 

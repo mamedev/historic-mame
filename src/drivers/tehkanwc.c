@@ -810,7 +810,7 @@ static struct MSM5205interface msm5205_interface =
 	384000,				/* 384KHz             */
 	{ tehkanwc_adpcm_int },/* interrupt function */
 	{ MSM5205_S48_4B },	/* 8KHz               */
-	{ 25 }
+	{ 45 }
 };
 
 static MACHINE_DRIVER_START( tehkanwc )

@@ -126,7 +126,7 @@ WRITE16_HANDLER( galpani2_bg15_w )
 PALETTE_INIT( galpani2 )
 {
 	int i;
-	palette += 0x4200 * 3;	/* first $4200 colors are dynamic */
+	/* first $4200 colors are dynamic */
 
 	/* initialize 555 RGB lookup */
 	for (i = 0; i < 0x8000; i++)
@@ -136,9 +136,10 @@ PALETTE_INIT( galpani2 )
 		g = (i >> 10) & 0x1f;
 		b = (i >>  0) & 0x1f;
 
-		(*palette++) = (r << 3) | (r >> 2);
-		(*palette++) = (g << 3) | (g >> 2);
-		(*palette++) = (b << 3) | (b >> 2);
+		r = (r << 3) | (r >> 2);
+		g = (g << 3) | (g >> 2);
+		b = (b << 3) | (b >> 2);
+		palette_set_color(0x4200+i,r,g,b);
 	}
 }
 

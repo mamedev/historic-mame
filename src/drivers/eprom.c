@@ -176,12 +176,12 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ 0x360020, 0x360021, atarigen_sound_reset_w },
 	{ 0x360030, 0x360031, atarigen_sound_w },
 	{ 0x3e0000, 0x3e0fff, paletteram16_IIIIRRRRGGGGBBBB_word_w, &paletteram16 },
-	{ 0x3f0000, 0x3f1fff, ataripf_0_simple_w, &ataripf_0_base },
+	{ 0x3f0000, 0x3f1fff, atarigen_playfield_w, &atarigen_playfield },
 	{ 0x3f2000, 0x3f3fff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
-	{ 0x3f4000, 0x3f4f7f, atarian_0_vram_w, &atarian_0_base },
+	{ 0x3f4000, 0x3f4f7f, atarigen_alpha_w, &atarigen_alpha },
 	{ 0x3f4f80, 0x3f4fff, atarimo_0_slipram_w, &atarimo_0_slipram },
 	{ 0x3f5000, 0x3f7fff, MWA16_RAM },
-	{ 0x3f8000, 0x3f9fff, ataripf_0_upper_msb_w, &ataripf_0_upper },
+	{ 0x3f8000, 0x3f9fff, atarigen_playfield_upper_w, &atarigen_playfield_upper },
 MEMORY_END
 
 

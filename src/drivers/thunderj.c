@@ -24,14 +24,8 @@
 
 
 
-/*************************************
- *
- *	Statics
- *
- *************************************/
-
-static data16_t *rts_address;
-
+static data16_t *shared_ram;
+static data16_t *rom_base[2];
 
 
 /*************************************
@@ -65,10 +59,13 @@ static void update_interrupts(void)
 static MACHINE_INIT( thunderj )
 {
 	atarigen_eeprom_reset();
-	atarivc_reset(atarivc_eof_data);
+	atarivc_reset(atarivc_eof_data, 2);
 	atarigen_interrupt_reset(update_interrupts);
-	atarigen_scanline_timer_reset(thunderj_scanline_update, 1024);
 	atarijsa_reset();
+	
+	rom_base[0] = (data16_t *)memory_region(REGION_CPU1);
+	rom_base[1] = (data16_t *)memory_region(REGION_CPU2);
+	cpu_setbank(1, shared_ram);
 }
 
 
@@ -103,8 +100,55 @@ static WRITE16_HANDLER( latch_w )
 			cpu_set_reset_line(1, ASSERT_LINE);
 
 		/* bits 2-5 are the alpha bank */
-		atarian_set_bankbits(0, ((data >> 2) & 7) << 16);
+		if (thunderj_alpha_tile_bank != ((data >> 2) & 7))
+		{
+			force_partial_update(cpu_getscanline());
+			tilemap_mark_all_tiles_dirty(atarigen_alpha_tilemap);
+			thunderj_alpha_tile_bank = (data >> 2) & 7;
+		}
 	}
+}
+
+
+
+/*************************************
+ *
+ *	Synchronization helper
+ *
+ *************************************/
+ 
+static void shared_sync_callback(int param)
+{
+	if (--param)
+		timer_set(TIME_IN_USEC(50), param, shared_sync_callback);
+}
+
+
+static READ16_HANDLER( shared_ram_r )
+{
+	data16_t result = shared_ram[offset];
+	
+	/* look for a byte access, and then check for the high bit and a TAS opcode */
+	if (mem_mask != 0 && (result & ~mem_mask & 0x8080))
+	{
+		offs_t ppc = activecpu_get_previouspc();
+		if (ppc < 0xa0000)
+		{
+			int cpunum = cpu_getactivecpu();
+			UINT16 opcode = rom_base[cpunum][ppc / 2];
+
+			/* look for TAS or BTST #$7; both CPUs spin waiting for these in order to */
+			/* coordinate communications. Some spins have timeouts that reset the machine */
+			/* if they fail, so we must make sure they are released in time */
+			if ((opcode & 0xffc0) == 0x4ac0 ||
+				((opcode & 0xffc0) == 0x0080 && rom_base[cpunum][ppc / 2 + 1] == 7))
+			{
+				timer_set(TIME_NOW, 4, shared_sync_callback);
+			}
+		}
+	}
+	
+	return result;
 }
 
 
@@ -149,7 +193,7 @@ READ16_HANDLER( thunderj_video_control_r )
 static MEMORY_READ16_START( main_readmem )
 	{ 0x000000, 0x09ffff, MRA16_ROM },
 	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_r },
-	{ 0x160000, 0x16ffff, MRA16_BANK1 },
+	{ 0x160000, 0x16ffff, shared_ram_r },
 	{ 0x260000, 0x26000f, input_port_0_word_r },
 	{ 0x260010, 0x260011, input_port_1_word_r },
 	{ 0x260012, 0x260013, special_port2_r },
@@ -157,14 +201,13 @@ static MEMORY_READ16_START( main_readmem )
 	{ 0x3e0000, 0x3e0fff, MRA16_RAM },
 	{ 0x3effc0, 0x3effff, thunderj_video_control_r },
 	{ 0x3f0000, 0x3fffff, MRA16_RAM },
-	{ 0x800000, 0x800001, MRA16_RAM },
 MEMORY_END
 
 
 static MEMORY_WRITE16_START( main_writemem )
 	{ 0x000000, 0x09ffff, MWA16_ROM },
 	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0x160000, 0x16ffff, MWA16_BANK1 },	/* shared */
+	{ 0x160000, 0x16ffff, MWA16_BANK1, &shared_ram },
 	{ 0x1f0000, 0x1fffff, atarigen_eeprom_enable_w },
 	{ 0x2e0000, 0x2e0001, watchdog_reset16_w },
 	{ 0x360010, 0x360011, latch_w },
@@ -172,15 +215,14 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ 0x360030, 0x360031, atarigen_sound_w },
 	{ 0x3e0000, 0x3e0fff, atarigen_666_paletteram_w, &paletteram16 },
 	{ 0x3effc0, 0x3effff, atarivc_w, &atarivc_data },
-	{ 0x3f0000, 0x3f1fff, ataripf_1_latched_w, &ataripf_1_base },
-	{ 0x3f2000, 0x3f3fff, ataripf_0_latched_w, &ataripf_0_base },
-	{ 0x3f4000, 0x3f5fff, ataripf_01_upper_lsb_msb_w, &ataripf_0_upper },
+	{ 0x3f0000, 0x3f1fff, atarigen_playfield2_latched_msb_w, &atarigen_playfield2 },
+	{ 0x3f2000, 0x3f3fff, atarigen_playfield_latched_lsb_w, &atarigen_playfield },
+	{ 0x3f4000, 0x3f5fff, atarigen_playfield_dual_upper_w, &atarigen_playfield_upper },
 	{ 0x3f6000, 0x3f7fff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
-	{ 0x3f8000, 0x3f8eff, atarian_0_vram_w, &atarian_0_base },
+	{ 0x3f8000, 0x3f8eff, atarigen_alpha_w, &atarigen_alpha },
 	{ 0x3f8f00, 0x3f8f7f, MWA16_RAM, &atarivc_eof_data },
 	{ 0x3f8f80, 0x3f8fff, atarimo_0_slipram_w, &atarimo_0_slipram },
 	{ 0x3f9000, 0x3fffff, MWA16_RAM },
-	{ 0x800000, 0x800001, MWA16_RAM, &rts_address },
 MEMORY_END
 
 
@@ -194,7 +236,7 @@ MEMORY_END
 static MEMORY_READ16_START( extra_readmem )
 	{ 0x000000, 0x03ffff, MRA16_ROM },
 	{ 0x060000, 0x07ffff, MRA16_ROM },
-	{ 0x160000, 0x16ffff, MRA16_BANK1 },
+	{ 0x160000, 0x16ffff, shared_ram_r },
 	{ 0x260000, 0x26000f, input_port_0_word_r },
 	{ 0x260010, 0x260011, input_port_1_word_r },
 	{ 0x260012, 0x260013, special_port2_r },
@@ -313,10 +355,10 @@ static MACHINE_DRIVER_START( thunderj )
 	
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(100)
 	
 	MDRV_MACHINE_INIT(thunderj)
 	MDRV_NVRAM_HANDLER(atarigen)
+	MDRV_INTERLEAVE(100)
 	
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
@@ -324,7 +366,6 @@ static MACHINE_DRIVER_START( thunderj )
 	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2048)
-	MDRV_COLORTABLE_LENGTH(2048) /* can't make colortable_len = 0 because of 0xffff transparency kludge */
 	
 	MDRV_VIDEO_START(thunderj)
 	MDRV_VIDEO_UPDATE(thunderj)
@@ -422,10 +463,6 @@ static DRIVER_INIT( thunderj )
 	atarigen_eeprom_default = NULL;
 	atarijsa_init(2, 3, 2, 0x0002);
 	atarigen_init_6502_speedup(2, 0x4159, 0x4171);
-
-	/* it looks like they jsr to $800000 as some kind of protection */
-	/* put an RTS there so we don't die */
-	*rts_address = 0x4e75;
 }
 
 

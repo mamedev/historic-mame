@@ -193,20 +193,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-/* Arbitrary colors */
-static unsigned char palette_source[] =
-{
-	0x40,0x80,0xff,	/* Background */
-	0x00,0x00,0xff,	/* Blue */
-	0xff,0x00,0xff,	/* Magenta */
-	0x00,0xff,0xff,	/* Cyan */
-	0xff,0x00,0x00,	/* Red */
-	0xff,0x80,0x00,	/* Orange */
-	0xff,0xff,0x00,	/* Yellow */
-	0xff,0xff,0xff,	/* White */
-	0x00,0x00,0x00,	/* Black */
-};
-
 /* Arbitrary colortable */
 static unsigned short colortable_source[] =
 {
@@ -227,7 +213,17 @@ static unsigned short colortable_source[] =
 
 static PALETTE_INIT( redalert )
 {
-	memcpy(palette,palette_source,sizeof(palette_source));
+	/* Arbitrary colors */
+	palette_set_color(0,0x40,0x80,0xff);	/* Background */
+	palette_set_color(1,0x00,0x00,0xff);	/* Blue */
+	palette_set_color(2,0xff,0x00,0xff);	/* Magenta */
+	palette_set_color(3,0x00,0xff,0xff);	/* Cyan */
+	palette_set_color(4,0xff,0x00,0x00);	/* Red */
+	palette_set_color(5,0xff,0x80,0x00);	/* Orange */
+	palette_set_color(6,0xff,0xff,0x00);	/* Yellow */
+	palette_set_color(7,0xff,0xff,0xff);	/* White */
+	palette_set_color(8,0x00,0x00,0x00);	/* Black */
+
 	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 
@@ -298,7 +294,7 @@ static MACHINE_DRIVER_START( redalert )
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(sizeof(palette_source) / sizeof(palette_source[0]) / 3)
+	MDRV_PALETTE_LENGTH(9)
 	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
 
 	MDRV_PALETTE_INIT(redalert)

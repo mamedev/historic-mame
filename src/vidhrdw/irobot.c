@@ -53,9 +53,10 @@ PALETTE_INIT( irobot )
 	/* pre-cooked values so the startup copyright notice can be displayed. */
 	for (i = 0;i < 64;i++)
 	{
-		*(palette++) = ((i & 1) >> 0) * 0xff;
-		*(palette++) = ((i & 2) >> 1) * 0xff;
-		*(palette++) = ((i & 4) >> 2) * 0xff;
+		int r = ((i & 1) >> 0) * 0xff;
+		int g = ((i & 2) >> 1) * 0xff;
+		int b = ((i & 4) >> 2) * 0xff;
+		palette_set_color(i,r,g,b);
 	}
 
 	/* Convert the color prom for the text palette */
@@ -73,9 +74,7 @@ PALETTE_INIT( irobot )
 	    g = 28 * bits * intensity;
 	    bits = (color >> 2) & 0x03;
 	    b = 28 * bits * intensity;
-		*(palette++) = r;
-		*(palette++) = g;
-		*(palette++) = b;
+		palette_set_color(i+64,r,g,b);
 		color_prom++;
 	}
 

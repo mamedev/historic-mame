@@ -55,28 +55,30 @@ PALETTE_INIT( polepos )
 	 *******************************************************/
 	for (i = 0; i < 128; i++)
 	{
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
 		/* Sheet 15B: 136014-0137 red component */
 		bit0 = (color_prom[0x000 + i] >> 0) & 1;
 		bit1 = (color_prom[0x000 + i] >> 1) & 1;
 		bit2 = (color_prom[0x000 + i] >> 2) & 1;
 		bit3 = (color_prom[0x000 + i] >> 3) & 1;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
 		/* Sheet 15B: 136014-0138 green component */
 		bit0 = (color_prom[0x100 + i] >> 0) & 1;
 		bit1 = (color_prom[0x100 + i] >> 1) & 1;
 		bit2 = (color_prom[0x100 + i] >> 2) & 1;
 		bit3 = (color_prom[0x100 + i] >> 3) & 1;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
 		/* Sheet 15B: 136014-0139 blue component */
 		bit0 = (color_prom[0x200 + i] >> 0) & 1;
 		bit1 = (color_prom[0x200 + i] >> 1) & 1;
 		bit2 = (color_prom[0x200 + i] >> 2) & 1;
 		bit3 = (color_prom[0x200 + i] >> 3) & 1;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		
+		palette_set_color(i,r,g,b);
 	}
 
 	/*******************************************************

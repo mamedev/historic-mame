@@ -175,6 +175,17 @@ PORT_END
 
 
 
+
+static MEMORY_READ_START( speech_readmem )
+	{ 0x0000, 0x07ff, MRA_ROM },
+MEMORY_END
+
+
+static MEMORY_WRITE_START( speech_writemem )
+	{ 0x0000, 0x07ff, MWA_ROM },
+MEMORY_END
+
+
 /*************************************
  *
  *	Port definitions
@@ -644,7 +655,7 @@ static const char *spacfury_sample_names[] =
 static struct Samplesinterface spacfury_samples_interface =
 {
 	9,	/* 9 channels */
-	25, /* volume */
+	100, /* volume */
 	spacfury_sample_names
 };
 
@@ -709,7 +720,7 @@ static const char *zektor_sample_names[] =
 static struct Samplesinterface zektor_samples_interface =
 {
 	12, /* only speech for now */
-	25, /* volume */
+	100, /* volume */
 	zektor_sample_names
 };
 
@@ -755,7 +766,7 @@ static const char *tacscan_sample_names[] =
 static struct Samplesinterface tacscan_samples_interface =
 {
 	12, /* 12 channels */
-	25, /* volume */
+	100, /* volume */
 	tacscan_sample_names
 };
 
@@ -796,7 +807,7 @@ static const char *elim_sample_names[] =
 static struct Samplesinterface elim2_samples_interface =
 {
 	8,	/* 8 channels */
-	25, /* volume */
+	100, /* volume */
 	elim_sample_names
 };
 
@@ -871,7 +882,7 @@ static const char *startrek_sample_names[] =
 static struct Samplesinterface startrek_samples_interface =
 {
 	10, /* 10 channels */
-	25, /* volume */
+	100, /* volume */
 	startrek_sample_names
 };
 
@@ -883,7 +894,7 @@ static struct Samplesinterface startrek_samples_interface =
  *
  *************************************/
 
-static MACHINE_DRIVER_START( spacfury )
+static MACHINE_DRIVER_START( elim2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3867120)
@@ -896,14 +907,14 @@ static MACHINE_DRIVER_START( spacfury )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(400, 300)
-	MDRV_VISIBLE_AREA(512, 1536, 552, 1464)
+	MDRV_VISIBLE_AREA(512, 1536, 600, 1440)
 	MDRV_PALETTE_LENGTH(256)
 
 	MDRV_VIDEO_START(sega)
 	MDRV_VIDEO_UPDATE(sega)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("samples", SAMPLES, spacfury_samples_interface)
+	MDRV_SOUND_ADD_TAG("samples", SAMPLES, elim2_samples_interface)
 	MDRV_SOUND_ADD_TAG("custom",  CUSTOM,  sega_custom_interface)
 MACHINE_DRIVER_END
 
@@ -911,7 +922,11 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( zektor )
 
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(spacfury)
+	MDRV_IMPORT_FROM(elim2)
+
+	MDRV_CPU_ADD(I8035, 3120000/15)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(speech_readmem,speech_writemem)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(512, 1536, 624, 1432)
@@ -924,7 +939,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( tacscan )
 
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(spacfury)
+	MDRV_IMPORT_FROM(elim2)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(496, 1552, 592, 1456)
@@ -935,23 +950,31 @@ static MACHINE_DRIVER_START( tacscan )
 MACHINE_DRIVER_END
 
 
-static MACHINE_DRIVER_START( elim )
+static MACHINE_DRIVER_START( spacfury )
 
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(spacfury)
+	MDRV_IMPORT_FROM(elim2)
+
+	MDRV_CPU_ADD(I8035, 3120000/15)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(speech_readmem,speech_writemem)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(512, 1536, 600, 1440)
+	MDRV_VISIBLE_AREA(512, 1536, 552, 1464)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("samples", SAMPLES, elim2_samples_interface)
+	MDRV_SOUND_REPLACE("samples", SAMPLES, spacfury_samples_interface)
 MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( startrek )
 
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(spacfury)
+	MDRV_IMPORT_FROM(elim2)
+
+	MDRV_CPU_ADD(I8035, 3120000/15)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(speech_readmem,speech_writemem)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(512, 1536, 616, 1464)
@@ -980,6 +1003,16 @@ ROM_START( spacfury ) /* Revision C */
 	ROM_LOAD( "966c.u7",      0x3800, 0x0800, 0x1985ccfc )
 	ROM_LOAD( "967c.u8",      0x4000, 0x0800, 0x330f0751 )
 	ROM_LOAD( "968c.u9",      0x4800, 0x0800, 0x8366eadb )
+
+/* I'm not sure where these roms are supposed to go, but they are speech */
+/* related (from what I've read), so I just took a wild guess here, */
+/* until their location is determined and speech is emulated, plus, it */
+/* helps make sure everyone has them for the future... MRH */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for speech code */
+	ROM_LOAD( "808c.u7",     0x0000, 0x0800, 0xb779884b )
+	ROM_LOAD( "970c.u6",     0x0800, 0x1000, 0x979d8535 )
+	ROM_LOAD( "971c.u5",     0x1800, 0x1000, 0x022dbd32 )
+	ROM_LOAD( "972c.u4",     0x2800, 0x1000, 0xfad9346d )
 ROM_END
 
 
@@ -995,6 +1028,16 @@ ROM_START( spacfura ) /* Revision A */
 	ROM_LOAD( "966a.u7",      0x3800, 0x0800, 0xa8a51105 )
 	ROM_LOAD( "967a.u8",      0x4000, 0x0800, 0xd60f667d )
 	ROM_LOAD( "968a.u9",      0x4800, 0x0800, 0xaea85b6a )
+
+/* I'm not sure where these roms are supposed to go, but they are speech */
+/* related (from what I've read), so I just took a wild guess here, */
+/* until their location is determined and speech is emulated, plus, it */
+/* helps make sure everyone has them for the future... MRH */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for speech code */
+	ROM_LOAD( "808a.u7",     0x0000, 0x0800, 0x5988c767 )
+	ROM_LOAD( "970.u6",      0x0800, 0x1000, 0xf3b47b36 )
+	ROM_LOAD( "971.u5",      0x1800, 0x1000, 0xe72bbe88 )
+	ROM_LOAD( "972.u4",      0x2800, 0x1000, 0x8b3da539 )
 ROM_END
 
 
@@ -1022,6 +1065,16 @@ ROM_START( zektor )
 	ROM_LOAD( "1604.rom",     0x9800, 0x0800, 0xad2f0f6c )
 	ROM_LOAD( "1605.rom",     0xa000, 0x0800, 0xe27d7144 )
 	ROM_LOAD( "1606.rom",     0xa800, 0x0800, 0x7965f636 )
+
+/* I'm not sure where these roms are supposed to go, but they are speech */
+/* related (from what I've read), so I just took a wild guess here, */
+/* until their location is determined and speech is emulated, plus, it */
+/* helps make sure everyone has them for the future... MRH */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for speech code */
+	ROM_LOAD( "1607.spc",    0x0000, 0x0800, 0xb779884b )
+	ROM_LOAD( "1608.spc",    0x0800, 0x1000, 0x637e2b13 )
+	ROM_LOAD( "1609.spc",    0x1800, 0x1000, 0x675ee8e5 )
+	ROM_LOAD( "1610.spc",    0x2800, 0x1000, 0x2915c7bd )
 ROM_END
 
 
@@ -1068,6 +1121,9 @@ ROM_START( elim2 )
 	ROM_LOAD( "1343",         0x5800, 0x0800, 0xd29d70d2 )
 	ROM_LOAD( "1344",         0x6000, 0x0800, 0xc5e153a3 )
 	ROM_LOAD( "1345",         0x6800, 0x0800, 0x40597a92 )
+
+	ROM_REGION( 0x0400, REGION_USER1, 0 )
+	ROM_LOAD ("s-c.u39",      0x0000, 0x0400, 0x56484d19 )	/* unknown */
 ROM_END
 
 
@@ -1087,6 +1143,9 @@ ROM_START( elim2a )
 	ROM_LOAD( "1168a",        0x5800, 0x0800, 0x3c7c893a )
 	ROM_LOAD( "1169a",        0x6000, 0x0800, 0x5cee23b1 )
 	ROM_LOAD( "1170a",        0x6800, 0x0800, 0x8cdacd35 )
+
+	ROM_REGION( 0x0400, REGION_USER1, 0 )
+	ROM_LOAD ("s-c.u39",      0x0000, 0x0400, 0x56484d19 )	/* unknown */
 ROM_END
 
 
@@ -1107,6 +1166,9 @@ ROM_START( elim4 )
 	ROM_LOAD( "1358",         0x6000, 0x0800, 0xc5dabc77 )
 	ROM_LOAD( "1359",         0x6800, 0x0800, 0x24c8e5d8 )
 	ROM_LOAD( "1360",         0x7000, 0x0800, 0x96d48238 )
+
+	ROM_REGION( 0x0400, REGION_USER1, 0 )
+	ROM_LOAD ("s-c.u39",      0x0000, 0x0400, 0x56484d19 )	/* unknown */
 ROM_END
 
 
@@ -1141,9 +1203,13 @@ ROM_START( startrek )
 /* related (from what I've read), so I just took a wild guess here, */
 /* until their location is determined and speech is emulated, plus, it */
 /* helps make sure everyone has them for the future... MRH */
-	ROM_LOAD ("1670",         0xc000, 0x0800, 0xb779884b )
-	ROM_LOAD ("1871",         0xc800, 0x1000, 0x03713920 )
-	ROM_LOAD ("1872",         0xd800, 0x1000, 0xebb5c3a9 )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for speech code */
+	ROM_LOAD ("1670",         0x0000, 0x0800, 0xb779884b )
+	ROM_LOAD ("1871",         0x0800, 0x1000, 0x03713920 )
+	ROM_LOAD ("1872",         0x1800, 0x1000, 0xebb5c3a9 )
+
+	ROM_REGION( 0x0400, REGION_USER1, 0 )
+	ROM_LOAD ("s-c.u39",      0x0000, 0x0400, 0x56484d19 )	/* unknown */
 ROM_END
 
 
@@ -1235,12 +1301,12 @@ DRIVER_INIT( tacscan )
  *
  *************************************/
 
-GAME( 1981, spacfury, 0,		spacfury, spacfury, spacfury, ROT0,   "Sega", "Space Fury (revision C)" )
+GAME( 1981, spacfury, 0,        spacfury, spacfury, spacfury, ROT0,   "Sega", "Space Fury (revision C)" )
 GAME( 1981, spacfura, spacfury, spacfury, spacfury, spacfury, ROT0,   "Sega", "Space Fury (revision A)" )
-GAME( 1982, zektor,   0,		zektor,   zektor,	zektor,   ROT0,   "Sega", "Zektor (revision B)" )
-GAME( 1982, tacscan,  0,		tacscan,  tacscan,	tacscan,  ROT270, "Sega", "Tac/Scan" )
-GAME( 1981, elim2,	  0,		elim,	  elim2,	elim2,	  ROT0,   "Gremlin", "Eliminator (2 Players, set 1)" )
-GAME( 1981, elim2a,   elim2,	elim,	  elim2,	elim2,	  ROT0,   "Gremlin", "Eliminator (2 Players, set 2)" )
-GAME( 1981, elim4,	  elim2,	elim,	  elim4,	elim4,	  ROT0,   "Gremlin", "Eliminator (4 Players)" )
-GAME( 1982, startrek, 0,		startrek, startrek, startrek, ROT0,   "Sega", "Star Trek" )
+GAME( 1982, zektor,   0,        zektor,   zektor,   zektor,   ROT0,   "Sega", "Zektor (revision B)" )
+GAME( 1982, tacscan,  0,        tacscan,  tacscan,  tacscan,  ROT270, "Sega", "Tac/Scan" )
+GAME( 1981, elim2,	  0,        elim2,    elim2,    elim2,    ROT0,   "Gremlin", "Eliminator (2 Players, set 1)" )
+GAME( 1981, elim2a,   elim2,    elim2,    elim2,    elim2,    ROT0,   "Gremlin", "Eliminator (2 Players, set 2)" )
+GAME( 1981, elim4,	  elim2,    elim2,    elim4,    elim4,    ROT0,   "Gremlin", "Eliminator (4 Players)" )
+GAME( 1982, startrek, 0,        startrek, startrek, startrek, ROT0,   "Sega", "Star Trek" )
 

@@ -76,12 +76,24 @@ static int					dinput_version;
 static int					input_paused;
 static TICKER				last_poll;
 
-// HotRod override options
-static int					hotrod;
-static int					hotrodse;
+// Controller override options
+//static int					hotrod;
+//static int					hotrodse;
 static int					use_mouse;
 static int					use_joystick;
 static int					steadykey;
+static const char*			ctrlrtype;
+static const char*			ctrlrname;
+static const char*			trackball_ini;
+static const char*			paddle_ini;
+static const char*			dial_ini;
+static const char*			ad_stick_ini;
+static const char*			pedal_ini;
+
+// this is used for the ipdef_custom_rc_func
+static struct ipd 			*ipddef_ptr = NULL;
+
+static int					num_osd_ik = 0;
 
 // keyboard states
 static int					keyboard_count;
@@ -121,14 +133,28 @@ struct rc_option input_opts[] =
 {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
 	{ "Input device options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "hotrod", NULL, rc_bool, &hotrod, "0", 0, 0, NULL, "preconfigure for hotrod" },
-	{ "hotrodse", NULL, rc_bool, &hotrodse, "0", 0, 0, NULL, "preconfigure for hotrod se" },
+//	{ "hotrod", NULL, rc_bool, &hotrod, "0", 0, 0, NULL, "preconfigure for hotrod" },
+//	{ "hotrodse", NULL, rc_bool, &hotrodse, "0", 0, 0, NULL, "preconfigure for hotrod se" },
 	{ "mouse", NULL, rc_bool, &use_mouse, "0", 0, 0, NULL, "enable mouse input" },
 	{ "joystick", "joy", rc_bool, &use_joystick, "0", 0, 0, NULL, "enable joystick input" },
 	{ "steadykey", "steady", rc_bool, &steadykey, "0", 0, 0, NULL, "enable steadykey support" },
+	{ "ctrlr", NULL, rc_string, &ctrlrtype, 0, 0, 0, NULL, "preconfigure for specified controller" },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 
+struct rc_option *ctrlr_input_opts = NULL;
+
+struct rc_option ctrlr_input_opts2[] =
+{
+	/* name, shortname, type, dest, deflt, min, max, func, help */
+	{ "ctrlrname", NULL, rc_string, &ctrlrname, 0, 0, 0, NULL, "name of controller" },
+	{ "trackball_ini", NULL, rc_string, &trackball_ini, 0, 0, 0, NULL, "ctrlr opts if game has TRACKBALL input" },
+	{ "paddle_ini", NULL, rc_string, &paddle_ini, 0, 0, 0, NULL, "ctrlr opts if game has PADDLE input" },
+	{ "dial_ini", NULL, rc_string, &dial_ini, 0, 0, 0, NULL, "ctrlr opts if game has DIAL input" },
+	{ "ad_stick_ini", NULL, rc_string, &ad_stick_ini, 0, 0, 0, NULL, "ctrlr opts if game has AD STICK input" },
+	{ "pedal_ini", NULL, rc_string, &pedal_ini, 0, 0, 0, NULL, "ctrlr opts if game has PEDAL input" },
+	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
+};
 
 
 //============================================================
@@ -343,7 +369,11 @@ static int joy_trans_table[][2] =
 	{ JOYCODE(3, JOYTYPE_BUTTON, 2),	JOYCODE_4_BUTTON3 },
 	{ JOYCODE(3, JOYTYPE_BUTTON, 3),	JOYCODE_4_BUTTON4 },
 	{ JOYCODE(3, JOYTYPE_BUTTON, 4),	JOYCODE_4_BUTTON5 },
-	{ JOYCODE(3, JOYTYPE_BUTTON, 5),	JOYCODE_4_BUTTON6 }
+	{ JOYCODE(3, JOYTYPE_BUTTON, 5),	JOYCODE_4_BUTTON6 },
+
+	{ JOYCODE(0, JOYTYPE_MOUSEBUTTON, 0), 	JOYCODE_MOUSE_1_BUTTON1 },
+	{ JOYCODE(0, JOYTYPE_MOUSEBUTTON, 1), 	JOYCODE_MOUSE_1_BUTTON2 },
+	{ JOYCODE(0, JOYTYPE_MOUSEBUTTON, 2), 	JOYCODE_MOUSE_1_BUTTON3 },
 };
 
 
@@ -563,21 +593,15 @@ int win_init_input(void)
 
 	// initialize mouse devices
 	mouse_count = 0;
-	if (use_mouse)
-	{
-		result = IDirectInput_EnumDevices(dinput, DIDEVTYPE_MOUSE, enum_mouse_callback, 0, DIEDFL_ATTACHEDONLY);
-		if (result != DI_OK)
-			goto cant_init_mouse;
-	}
+	result = IDirectInput_EnumDevices(dinput, DIDEVTYPE_MOUSE, enum_mouse_callback, 0, DIEDFL_ATTACHEDONLY);
+	if (result != DI_OK)
+		goto cant_init_mouse;
 
 	// initialize joystick devices
 	joystick_count = 0;
-	if (use_joystick)
-	{
-		result = IDirectInput_EnumDevices(dinput, DIDEVTYPE_JOYSTICK, enum_joystick_callback, 0, DIEDFL_ATTACHEDONLY);
-		if (result != DI_OK)
-			goto cant_init_joystick;
-	}
+	result = IDirectInput_EnumDevices(dinput, DIDEVTYPE_JOYSTICK, enum_joystick_callback, 0, DIEDFL_ATTACHEDONLY);
+	if (result != DI_OK)
+		goto cant_init_joystick;
 
 	// init the keyboard list
 	init_keylist();
@@ -658,7 +682,7 @@ void win_pause_input(int paused)
 
 		// acquire all our mice if active
 		if (mouse_active)
-			for (i = 0; i < mouse_count; i++)
+			for (i = 0; i < mouse_count && use_mouse; i++)
 				IDirectInputDevice_Acquire(mouse_device[i]);
 	}
 
@@ -737,7 +761,7 @@ void win_poll_input(void)
 		return;
 
 	// poll all joysticks
-	for (i = 0; i < joystick_count; i++)
+	for (i = 0; i < joystick_count && use_joystick; i++)
 	{
 		// first poll the device
 		if (joystick_device2[i])
@@ -757,7 +781,7 @@ void win_poll_input(void)
 
 	// poll all our mice if active
 	if (mouse_active)
-		for (i = 0; i < mouse_count; i++)
+		for (i = 0; i < mouse_count && use_mouse; i++)
 		{
 			// first poll the device
 			if (mouse_device2[i])
@@ -784,7 +808,7 @@ void win_poll_input(void)
 
 int win_is_mouse_captured(void)
 {
-	return (!input_paused && mouse_active && mouse_count > 0);
+	return (!input_paused && mouse_active && mouse_count > 0 && use_mouse);
 }
 
 
@@ -898,6 +922,7 @@ int osd_readkey_unicode(int flush)
 static void init_keylist(void)
 {
 	int keycount = 0, key;
+	struct ik *temp;
 
 	// iterate over all possible keys
 	for (key = 0; key < MAX_KEYS; key++)
@@ -938,6 +963,42 @@ static void init_keylist(void)
 				keylist[keycount].code = code;
 				keylist[keycount].standardcode = standardcode;
 				keycount++;
+
+				// make sure we have enough room for the new entry and the terminator (2 more)
+				temp = realloc (osd_input_keywords, (num_osd_ik+2)*sizeof (struct ik));
+				if (temp)
+				{
+					const char *src;
+					char *dst;
+
+					osd_input_keywords =  temp;
+
+					osd_input_keywords[num_osd_ik].name = malloc (strlen(instance.tszName) + 4 + 1);
+
+					src = instance.tszName;
+					dst = osd_input_keywords[num_osd_ik].name;
+
+					strcpy (dst, "Key_");
+					dst += strlen(dst);
+
+					// copy name converting all spaces to underscores
+					while (*src != 0)
+					{
+						if (*src == ' ')
+							*dst++ = '_';
+						else
+							*dst++ = *src;
+						src++;
+					}
+
+					osd_input_keywords[num_osd_ik].type = IKT_OSD_KEY;
+					osd_input_keywords[num_osd_ik].val = code;
+
+					num_osd_ik++;
+
+					// indicate end of list
+					osd_input_keywords[num_osd_ik].name = 0;
+				}
 			}
 		}
 	}
@@ -954,6 +1015,9 @@ static void init_keylist(void)
 
 static void add_joylist_entry(const char *name, int code, int *joycount)
 {
+	int standardcode = JOYCODE_OTHER;
+ 	struct ik *temp;
+
 	// copy the name
 	char *namecopy = malloc(strlen(name) + 1);
 	if (namecopy)
@@ -968,10 +1032,43 @@ static void add_joylist_entry(const char *name, int code, int *joycount)
 		// fill in the joy description
 		joylist[*joycount].name = strcpy(namecopy, name);
 		joylist[*joycount].code = code;
-		joylist[*joycount].standardcode = JOYCODE_OTHER;
 		if (entry < ELEMENTS(joy_trans_table))
-			joylist[*joycount].standardcode = joy_trans_table[entry][1];
+			standardcode = joy_trans_table[entry][1];
+		joylist[*joycount].standardcode = standardcode;
 		*joycount += 1;
+
+		// make sure we have enough room for the new entry and the terminator (2 more)
+ 		temp = realloc (osd_input_keywords, (num_osd_ik+2)*sizeof (struct ik));
+ 		if (temp)
+ 		{
+			const char *src;
+			char *dst;
+
+			osd_input_keywords = temp;
+
+			osd_input_keywords[num_osd_ik].name = malloc (strlen(name) + 1);
+
+			src = name;
+			dst = osd_input_keywords[num_osd_ik].name;
+
+			// copy name converting all spaces to underscores
+			while (*src != 0)
+			{
+				if (*src == ' ')
+					*dst++ = '_';
+				else
+					*dst++ = *src;
+				src++;
+			}
+
+			osd_input_keywords[num_osd_ik].type = IKT_OSD_JOY;
+			osd_input_keywords[num_osd_ik].val = code;
+
+			num_osd_ik++;
+
+			// indicate end of list
+			osd_input_keywords[num_osd_ik].name = 0;
+		}
 	}
 }
 
@@ -1175,14 +1272,14 @@ void osd_analogjoy_read(int player, int *analog_x, int *analog_y)
 	LONG top, bottom, middle;
 
 	// if the mouse isn't yet active, make it so
-	if (!mouse_active)
+	if (!mouse_active && use_mouse)
 	{
 		mouse_active = 1;
 		win_pause_input(0);
 	}
 
 	// if out of range, skip it
-	if (player >= joystick_count)
+	if (player >= joystick_count || !use_joystick)
 	{
 		*analog_x = *analog_y = 0;
 		return;
@@ -1214,7 +1311,7 @@ void osd_analogjoy_read(int player, int *analog_x, int *analog_y)
 void osd_trak_read(int player, int *deltax, int *deltay)
 {
 	// if the mouse isn't yet active, make it so
-	if (!mouse_active)
+	if (!mouse_active && use_mouse)
 	{
 		mouse_active = 1;
 		win_pause_input(0);
@@ -1283,109 +1380,312 @@ void osd_joystick_end_calibration(void)
 //	osd_customize_inputport_defaults
 //============================================================
 
+extern struct rc_struct *rc;
+
+void process_ctrlr_file(struct rc_struct *iptrc, const char *ctype, const char *filename)
+{
+	void *f;
+
+	// open the specified controller type/filename
+	f = osd_fopen (ctype, filename, OSD_FILETYPE_CTRLR, 0);
+
+	if (f)
+	{
+		if (verbose)
+		{
+			if (ctype)
+				fprintf (stderr, "trying to parse ctrlr file %s/%s.ini\n", ctype, filename);
+			else
+				fprintf (stderr, "trying to parse ctrlr file %s.ini\n", filename);
+		}
+
+		// process this file
+		if(osd_rc_read(iptrc, f, filename, 1, 1))
+		{
+			if (verbose)
+			{
+				if (ctype)
+					fprintf (stderr, "problem parsing ctrlr file %s/%s.ini\n", ctype, filename);
+				else
+					fprintf (stderr, "problem parsing ctrlr file %s.ini\n", filename);
+			}
+		}
+	}
+
+	// close the file
+	if (f)
+		osd_fclose (f);
+}
+
+void process_ctrlr_game(struct rc_struct *iptrc, const char *ctype, const struct GameDriver *drv)
+{
+	// recursive call to process parents first
+	if (drv->clone_of)
+		process_ctrlr_game (iptrc, ctype, drv->clone_of);
+
+	// now process this game
+	if (drv->name && *(drv->name) != 0)
+		process_ctrlr_file (iptrc, ctype, drv->name);
+}
+
+
+static int ipdef_custom_rc_func(struct rc_option *option, const char *arg, int priority)
+{
+	struct ik *pinput_keywords = (struct ik *)option->dest;
+	struct ipd *idef = ipddef_ptr;
+
+	// only process the default definitions if the input port definitions
+	// pointer has been defined
+	if (idef)
+	{
+		// if a keycode was re-assigned
+		if (pinput_keywords->type == IKT_STD)
+		{
+			InputSeq is;
+
+			// get the new keycode
+			seq_set_string (&is, arg);
+
+			// was a sequence was assigned to a keycode? - not valid!
+			if (is[1] != CODE_NONE)
+			{
+				fprintf(stderr, "error: can't map \"%s\" to \"%s\"\n",pinput_keywords->name,arg);
+			}
+
+			// for all definitions
+			while (idef->type != IPT_END)
+			{
+				int j;
+
+				// reassign all matching keystrokes to the given argument
+				for (j = 0; j < SEQ_MAX; j++)
+				{
+					// if the keystroke matches
+					if (idef->seq[j] == pinput_keywords->val)
+					{
+						// re-assign
+						idef->seq[j] = is[0];
+					}
+				}
+				// move to the next definition
+				idef++;
+			}
+		}
+
+		// if an input definition was re-defined
+		else if (pinput_keywords->type == IKT_IPT ||
+                 pinput_keywords->type == IKT_IPT_EXT)
+		{
+			// loop through all definitions
+			while (idef->type != IPT_END)
+			{
+				// if the definition matches
+				if (idef->type == pinput_keywords->val)
+				{
+                    if (pinput_keywords->type == IKT_IPT_EXT)
+                        idef++;
+					seq_set_string(&idef->seq, arg);
+					// and abort (there shouldn't be duplicate definitions)
+					break;
+				}
+
+				// move to the next definition
+				idef++;
+			}
+		}
+	}
+
+	return 0;
+}
+
+
 void osd_customize_inputport_defaults(struct ipd *defaults)
 {
 	static InputSeq no_alt_tab_seq = SEQ_DEF_5(KEYCODE_TAB, CODE_NOT, KEYCODE_LALT, CODE_NOT, KEYCODE_RALT);
-	int fullscreen_set = 0;
+	UINT32 next_reserved = IPT_OSD_1;
+	struct ipd *idef = defaults;
+	int i;
 
 	// loop over all the defaults
-	while (defaults->type != IPT_END)
+	while (idef->type != IPT_END)
 	{
-		// Add alt-enter for fullscreen
-		if (defaults->type == IPT_OSD_RESERVED && !fullscreen_set)
+		// if the type is OSD reserved
+		if (idef->type == IPT_OSD_RESERVED)
 		{
-			defaults->type = IPT_OSD_1;
-			defaults->name = "Toggle fullscreen";
-			seq_set_2(&defaults->seq, KEYCODE_LALT, KEYCODE_ENTER);
-			fullscreen_set = 1;
+			// process the next reserved entry
+			switch (next_reserved)
+			{
+				// OSD_1 is alt-enter for fullscreen
+				case IPT_OSD_1:
+					idef->type = next_reserved;
+					idef->name = "Toggle fullscreen";
+					seq_set_2 (&idef->seq, KEYCODE_LALT, KEYCODE_ENTER);
+				break;
+
+				default:
+				break;
+			}
+			next_reserved++;
 		}
 
-		// in all cases, disable the config menu if the ALT key is down
-		if (defaults->type == IPT_UI_CONFIGURE)
-			seq_copy(&defaults->seq, &no_alt_tab_seq);
-
-		// if we're mapping the hotrod, handle that
-		if (hotrod || hotrodse)
+		// disable the config menu if the ALT key is down
+		// (allows ALT-TAB to switch between windows apps)
+		if (idef->type == IPT_UI_CONFIGURE)
 		{
-			int j;
-
-			// map up/down/left/right to the numpad
-			for (j = 0; j < SEQ_MAX; j++)
-			{
-				if (defaults->seq[j] == KEYCODE_UP) defaults->seq[j] = KEYCODE_8_PAD;
-				if (defaults->seq[j] == KEYCODE_DOWN) defaults->seq[j] = KEYCODE_2_PAD;
-				if (defaults->seq[j] == KEYCODE_LEFT) defaults->seq[j] = KEYCODE_4_PAD;
-				if (defaults->seq[j] == KEYCODE_RIGHT) defaults->seq[j] = KEYCODE_6_PAD;
-			}
-
-			// UI select is button 1
-			if (defaults->type == IPT_UI_SELECT) seq_set_1(&defaults->seq, KEYCODE_LCONTROL);
-
-			// map to the old start/coinage
-			if (defaults->type == IPT_START1) seq_set_1(&defaults->seq, KEYCODE_1);
-			if (defaults->type == IPT_START2) seq_set_1(&defaults->seq, KEYCODE_2);
-			if (defaults->type == IPT_COIN1)  seq_set_1(&defaults->seq, KEYCODE_3);
-			if (defaults->type == IPT_COIN2)  seq_set_1(&defaults->seq, KEYCODE_4);
-
-			// map left/right joysticks to the player1/2 joysticks
-			if (defaults->type == (IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_R);
-			if (defaults->type == (IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_F);
-			if (defaults->type == (IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_D);
-			if (defaults->type == (IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_G);
-			if (defaults->type == (IPT_JOYSTICKLEFT_UP     | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_8_PAD);
-			if (defaults->type == (IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_2_PAD);
-			if (defaults->type == (IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_4_PAD);
-			if (defaults->type == (IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_6_PAD);
-
-			// make sure the buttons are mapped like the hotrod expects
-			if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER1)) seq_set_3(&defaults->seq, KEYCODE_LCONTROL, CODE_OR, JOYCODE_1_BUTTON1);
-			if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER1)) seq_set_3(&defaults->seq, KEYCODE_LALT, CODE_OR, JOYCODE_1_BUTTON2);
-			if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER1)) seq_set_3(&defaults->seq, KEYCODE_SPACE, CODE_OR, JOYCODE_1_BUTTON3);
-			if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER1)) seq_set_3(&defaults->seq, KEYCODE_LSHIFT, CODE_OR, JOYCODE_1_BUTTON4);
-			if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER1)) seq_set_3(&defaults->seq, KEYCODE_Z, CODE_OR, JOYCODE_1_BUTTON5);
-			if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER1)) seq_set_3(&defaults->seq, KEYCODE_X, CODE_OR, JOYCODE_1_BUTTON6);
-			if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER2)) seq_set_3(&defaults->seq, KEYCODE_A, CODE_OR, JOYCODE_2_BUTTON1);
-			if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER2)) seq_set_3(&defaults->seq, KEYCODE_S, CODE_OR, JOYCODE_2_BUTTON2);
-			if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER2)) seq_set_3(&defaults->seq, KEYCODE_Q, CODE_OR, JOYCODE_2_BUTTON3);
-			if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER2)) seq_set_3(&defaults->seq, KEYCODE_W, CODE_OR, JOYCODE_2_BUTTON4);
-			if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER2)) seq_set_3(&defaults->seq, KEYCODE_E, CODE_OR, JOYCODE_2_BUTTON5);
-			if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER2)) seq_set_3(&defaults->seq, KEYCODE_OPENBRACE, CODE_OR, JOYCODE_2_BUTTON6);
-
-#ifndef MESS
-#ifndef TINY_COMPILE
-#ifndef CPSMAME
-			{
-				extern struct GameDriver driver_neogeo;
-
-				// if hotrodse is specified, and this is a neogeo game, work some more magic I don't understand
-				if (hotrodse &&
-						(Machine->gamedrv->clone_of == &driver_neogeo ||
-						(Machine->gamedrv->clone_of && Machine->gamedrv->clone_of->clone_of == &driver_neogeo)))
-				{
-					if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER1)) seq_set_3(&defaults->seq, KEYCODE_C, CODE_OR, JOYCODE_1_BUTTON1);
-					if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER1)) seq_set_3(&defaults->seq, KEYCODE_LSHIFT, CODE_OR, JOYCODE_1_BUTTON2);
-					if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER1)) seq_set_3(&defaults->seq, KEYCODE_Z, CODE_OR, JOYCODE_1_BUTTON3);
-					if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER1)) seq_set_3(&defaults->seq, KEYCODE_X, CODE_OR, JOYCODE_1_BUTTON4);
-					if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_NONE);
-					if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_NONE);
-					if (defaults->type == (IPT_BUTTON7 | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_NONE);
-					if (defaults->type == (IPT_BUTTON8 | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_NONE);
-					if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER2)) seq_set_3(&defaults->seq, KEYCODE_CLOSEBRACE, CODE_OR, JOYCODE_2_BUTTON1);
-					if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER2)) seq_set_3(&defaults->seq, KEYCODE_W, CODE_OR, JOYCODE_2_BUTTON2);
-					if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER2)) seq_set_3(&defaults->seq, KEYCODE_E, CODE_OR, JOYCODE_2_BUTTON3);
-					if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER2)) seq_set_3(&defaults->seq, KEYCODE_OPENBRACE, CODE_OR, JOYCODE_2_BUTTON4);
-					if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER2)) seq_set_1(&defaults->seq, KEYCODE_NONE);
-					if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER2)) seq_set_1(&defaults->seq, KEYCODE_NONE);
-					if (defaults->type == (IPT_BUTTON7 | IPF_PLAYER2)) seq_set_1(&defaults->seq, KEYCODE_NONE);
-					if (defaults->type == (IPT_BUTTON8 | IPF_PLAYER2)) seq_set_1(&defaults->seq, KEYCODE_NONE);
-				}
-			}
-#endif
-#endif
-#endif
+			seq_copy(&idef->seq, &no_alt_tab_seq);
 		}
 
 		// find the next one
-		defaults++;
+		idef++;
+	}
+
+#if 0
+	// if a controller type hasn't been specified
+	if (ctrlrtype == NULL || *ctrlrtype == 0 || (stricmp(ctrlrtype,"Standard") == 0))
+	{
+		// default to the legacy controller types if selected
+		if (hotrod)
+			ctrlrtype = "hotrod";
+
+		if (hotrodse)
+			ctrlrtype = "hotrodse";
+	}
+#endif
+
+	// create a structure for the input port options
+	if (!(ctrlr_input_opts = calloc (num_ik+num_osd_ik+1, sizeof(struct rc_option))))
+	{
+		fprintf(stderr, "error on ctrlr_input_opts creation\n");
+		exit(1);
+	}
+
+	// Populate the structure with the input_keywords.
+	// For all, use the ipdef_custom_rc_func callback.
+	// Also, reference the original ik structure.
+	for (i=0; i<num_ik+num_osd_ik; i++)
+	{
+		if (i < num_ik)
+		{
+	   		ctrlr_input_opts[i].name = input_keywords[i].name;
+			ctrlr_input_opts[i].dest = (void *)&input_keywords[i];
+		}
+		else
+		{
+	   		ctrlr_input_opts[i].name = osd_input_keywords[i-num_ik].name;
+			ctrlr_input_opts[i].dest = (void *)&osd_input_keywords[i-num_ik];
+		}
+		ctrlr_input_opts[i].shortname = NULL;
+		ctrlr_input_opts[i].type = rc_use_function;
+		ctrlr_input_opts[i].deflt = NULL;
+		ctrlr_input_opts[i].min = 0.0;
+		ctrlr_input_opts[i].max = 0.0;
+		ctrlr_input_opts[i].func = ipdef_custom_rc_func;
+		ctrlr_input_opts[i].help = NULL;
+		ctrlr_input_opts[i].priority = 0;
+	}
+
+	// add an end-of-opts indicator
+	ctrlr_input_opts[i].type = rc_end;
+
+	if (rc_register(rc, ctrlr_input_opts))
+	{
+		fprintf (stderr, "error on registering ctrlr_input_opts\n");
+		exit(1);
+	}
+
+	if (rc_register(rc, ctrlr_input_opts2))
+	{
+		fprintf (stderr, "error on registering ctrlr_input_opts2\n");
+		exit(1);
+	}
+
+	// set a static variable for the ipdef_custom_rc_func callback
+	ipddef_ptr = defaults;
+
+	// process the main platform-specific default file
+	process_ctrlr_file (rc, NULL, "windows");
+
+	// if a custom controller has been selected
+	if (ctrlrtype && *ctrlrtype != 0 && (stricmp(ctrlrtype,"Standard") != 0))
+	{
+		const struct InputPortTiny* input = Machine->gamedrv->input_ports;
+		int paddle = 0, dial = 0, trackball = 0, adstick = 0, pedal = 0;
+
+		// process the controller-specific default file
+		process_ctrlr_file (rc, ctrlrtype, "default");
+
+		// process the game-specific files for this controller
+		process_ctrlr_game (rc, ctrlrtype, Machine->gamedrv);
+
+		while ((input->type & ~IPF_MASK) != IPT_END)
+		{
+			switch (input->type & ~IPF_MASK)
+			{
+				case IPT_PADDLE:
+				case IPT_PADDLE_V:
+					if (!paddle)
+					{
+						if ((paddle_ini != NULL) && (*paddle_ini != 0))
+							process_ctrlr_file (rc, ctrlrtype, paddle_ini);
+						paddle = 1;
+					}
+					break;
+
+				case IPT_DIAL:
+				case IPT_DIAL_V:
+					if (!dial)
+					{
+						if ((dial_ini != NULL) && (*dial_ini != 0))
+							process_ctrlr_file (rc, ctrlrtype, dial_ini);
+						dial = 1;
+					}
+					break;
+
+				case IPT_TRACKBALL_X:
+				case IPT_TRACKBALL_Y:
+					if (!trackball)
+					{
+						if ((trackball_ini != NULL) && (*trackball_ini != 0))
+							process_ctrlr_file (rc, ctrlrtype, trackball_ini);
+						trackball = 1;
+					}
+					break;
+
+				case IPT_AD_STICK_X:
+				case IPT_AD_STICK_Y:
+					if (!adstick)
+					{
+						if ((ad_stick_ini != NULL) && (*ad_stick_ini != 0))
+							process_ctrlr_file (rc, ctrlrtype, ad_stick_ini);
+						adstick = 1;
+					}
+					break;
+
+				case IPT_PEDAL:
+					if (!pedal)
+					{
+						if ((pedal_ini != NULL) && (*pedal_ini != 0))
+							process_ctrlr_file (rc, ctrlrtype, pedal_ini);
+						pedal = 1;
+					}
+					break;
+
+			}
+			++input;
+		}
+	}
+
+	// print the results
+	if (verbose)
+	{
+		if (ctrlrname)
+			fprintf (stderr,"\"%s\" controller support enabled\n",ctrlrname);
+
+		fprintf(stderr, "Mouse support %sabled\n",use_mouse ? "en" : "dis");
+		fprintf(stderr, "Joystick support %sabled\n",use_joystick ? "en" : "dis");
+		fprintf(stderr, "Keyboards=%d  Mice=%d  Joysticks=%d\n",
+			keyboard_count,
+			use_mouse ? mouse_count : 0,
+			use_joystick ? joystick_count : 0);
 	}
 }

@@ -1555,14 +1555,14 @@ static struct YM3812interface pstadium_ym3812_interface =
 {
 	1,				/* 1 chip */
 	25000000/6.25,			/* 4.00 MHz */
-	{ 35 }
+	{ 70 }
 };
 
 static struct YM3812interface galkoku_ym3812_interface =
 {
 	1,				/* 1 chip */
 	25000000/10,			/* 2.50 MHz */
-	{ 35 }
+	{ 70 }
 };
 
 static struct AY8910interface ay8910_interface =
@@ -1791,7 +1791,7 @@ static MACHINE_DRIVER_START( av2mj1bb )
 	MDRV_IMPORT_FROM(nbmjdrv1)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(readmem_av2mj1bb,writemem_av2mj1bb)
-	MDRV_CPU_PORTS(readport_pstadium,writemem_av2mj1bb)
+	MDRV_CPU_PORTS(readport_pstadium,writeport_av2mj1bb)
 MACHINE_DRIVER_END
 
 
@@ -1801,7 +1801,7 @@ static MACHINE_DRIVER_START( av2mj2rg )
 	MDRV_IMPORT_FROM(nbmjdrv1)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(readmem_av2mj2rg,writemem_av2mj2rg)
-	MDRV_CPU_PORTS(readport_pstadium,writemem_av2mj1bb)
+	MDRV_CPU_PORTS(readport_pstadium,writeport_av2mj1bb)
 MACHINE_DRIVER_END
 
 

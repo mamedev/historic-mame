@@ -266,28 +266,6 @@ void msdos_shutdown_sound(void)
 {
 	if (Machine->sample_rate != 0)
 	{
-		int chip,n;
-
-		for(chip=0;chip<num_used_opl;chip++)
-		{
-			/* silence the OPL */
-			for (n = 0x40;n <= 0x55;n++)
-			{
-				osd_opl_control(chip,n);
-				osd_opl_write(chip,0x3f);
-			}
-			for (n = 0x60;n <= 0x95;n++)
-			{
-				osd_opl_control(chip,n);
-				osd_opl_write(chip,0xff);
-			}
-			for (n = 0xa0;n <= 0xb0;n++)
-			{
-				osd_opl_control(chip,n);
-				osd_opl_write(chip,0);
-			}
-		}
-
 #ifdef USE_SEAL
 		ACloseVoices();
 		ACloseAudio();
@@ -668,37 +646,4 @@ void osd_sound_enable(int enable_it)
 	else
 		set_volume(0,0);
 #endif
-}
-
-
-
-/* linux sound driver opl3.c does a so called tenmicrosec() delay */
-static void tenmicrosec(void)
-{
-    int i;
-    for (i = 0; i < 16; i++)
-        inportb(0x80);
-}
-
-//#define MAX_OPLCHIP 2  /* SOUND BLASTER 16 or compatible ?? */
-#define MAX_OPLCHIP 1  /* SOUND BLASTER pro compatible ??  */
-
-void osd_opl_control(int chip,int reg)
-{
-    if (Machine->sample_rate == 0) return;
-
-    if (chip >= MAX_OPLCHIP ) return;
-    tenmicrosec();
-    outportb(0x388+chip*2,reg);
-}
-
-void osd_opl_write(int chip,int data)
-{
-    if (Machine->sample_rate == 0) return;
-
-    if (chip >=MAX_OPLCHIP ) return;
-    tenmicrosec();
-    outportb(0x389+chip*2,data);
-
-	if(chip >= num_used_opl) num_used_opl = chip+1;
 }

@@ -23,16 +23,11 @@
 /* Formulas for noise generator */
 /* bit0 = output */
 
-/* noise feedback for white noise mode */
-#define FB_WNOISE 0x12000	/* bit15.d(16bits) = bit0(out) ^ bit2 */
-//#define FB_WNOISE 0x14000	/* bit15.d(16bits) = bit0(out) ^ bit1 */
-//#define FB_WNOISE 0x28000	/* bit16.d(17bits) = bit0(out) ^ bit2 (same to AY-3-8910) */
-//#define FB_WNOISE 0x50000	/* bit17.d(18bits) = bit0(out) ^ bit2 */
+/* noise feedback for white noise mode (verified on real SN76489 by John Kortink) */
+#define FB_WNOISE 0x14002	/* (16bits) bit16 = bit0(out) ^ bit2 ^ bit15 */
 
 /* noise feedback for periodic noise mode */
-/* it is correct maybe (it was in the Megadrive sound manual) */
-//#define FB_PNOISE 0x10000	/* 16bit rorate */
-#define FB_PNOISE 0x08000   /* JH 981127 - fixes Do Run Run */
+#define FB_PNOISE 0x08000	/* 15bit rotate */
 
 /* noise generator start preset (for periodic noise) */
 #define NG_PRESET 0x0f35

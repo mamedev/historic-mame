@@ -322,7 +322,7 @@ static struct OKIM6295interface okim6295_interface =
 	1,					/* 1 chip */
 	{ 8000 },			/* 8000Hz frequency? */
 	{ REGION_SOUND1 },	/* memory region */
-	{ 100 }
+	{ 50 }
 };
 
 

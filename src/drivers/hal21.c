@@ -484,7 +484,7 @@ static READ_HANDLER( snk_soundcommand_r )
 static struct YM3526interface ym3526_interface ={
 	1,			/* number of chips */
 	4000000,	/* 4 MHz? (hand tuned) */
-	{ 50 }		/* (not supported) */
+	{ 100 }		/* (not supported) */
 };
 
 static MEMORY_READ_START( aso_readmem_sound )

@@ -12,7 +12,7 @@ PALETTE_INIT( galpanic )
 {
 	int i;
 
-	palette += 3*1024;	/* first 1024 colors are dynamic */
+	/* first 1024 colors are dynamic */
 
 	/* initialize 555 RGB lookup */
 	for (i = 0;i < 32768;i++)
@@ -23,9 +23,10 @@ PALETTE_INIT( galpanic )
 		g = (i >> 10) & 0x1f;
 		b = (i >>  0) & 0x1f;
 
-		(*palette++) = (r << 3) | (r >> 2);
-		(*palette++) = (g << 3) | (g >> 2);
-		(*palette++) = (b << 3) | (b >> 2);
+		r = (r << 3) | (r >> 2);
+		g = (g << 3) | (g >> 2);
+		b = (b << 3) | (b >> 2);
+		palette_set_color(i+1024,r,g,b);
 	}
 }
 

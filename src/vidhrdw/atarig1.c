@@ -28,6 +28,35 @@ UINT8 atarig1_pitfight;
 
 static int pfscroll_xoffset;
 static UINT16 current_control;
+static UINT8 playfield_tile_bank;
+static UINT16 playfield_xscroll;
+static UINT16 playfield_yscroll;
+
+
+
+/*************************************
+ *
+ *	Tilemap callbacks
+ *
+ *************************************/
+
+static void get_alpha_tile_info(int tile_index)
+{
+	UINT16 data = atarigen_alpha[tile_index];
+	int code = data & 0xfff;
+	int color = (data >> 12) & 0x0f;
+	int opaque = data & 0x8000;
+	SET_TILE_INFO(1, code, color, opaque ? TILE_IGNORE_TRANSPARENCY : 0);
+}
+
+
+static void get_playfield_tile_info(int tile_index)
+{
+	UINT16 data = atarigen_playfield[tile_index];
+	int code = (playfield_tile_bank << 12) | (data & 0xfff);
+	int color = (data >> 12) & 7;
+	SET_TILE_INFO(0, code, color, (data >> 15) & 1);
+}
 
 
 
@@ -39,25 +68,6 @@ static UINT16 current_control;
 
 VIDEO_START( atarig1 )
 {
-	static const struct ataripf_desc pfdesc =
-	{
-		0,			/* index to which gfx system */
-		64,64,		/* size of the playfield in tiles (x,y) */
-		1,64,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-	
-		0x300,		/* index of palette base */
-		0x100,		/* maximum number of colors */
-		0,			/* color XOR for shadow effect (if any) */
-		0,			/* latch mask */
-		0,			/* transparent pen mask */
-	
-		0x70fff,	/* tile data index mask */
-		0x07000,	/* tile data color mask */
-		0x08000,	/* tile data hflip mask */
-		0,			/* tile data vflip mask */
-		0			/* tile data priority mask */
-	};
-
 	static const struct atarirle_desc modesc_hydra =
 	{
 		REGION_GFX3,/* region where the GFX data lives */
@@ -75,7 +85,8 @@ VIDEO_START( atarig1 )
 		{{ 0,0,0,0,0xffff,0,0,0 }},	/* mask for the scale factor */
 		{{ 0x8000,0,0,0,0,0,0,0 }},	/* mask for the horizontal flip */
 		{{ 0,0,0,0,0,0x00ff,0,0 }},	/* mask for the order */
-		{{ 0 }}						/* mask for the priority */
+		{{ 0 }},					/* mask for the priority */
+		{{ 0 }}						/* mask for the VRAM target */
 	};
 
 	static const struct atarirle_desc modesc_pitfight =
@@ -95,42 +106,34 @@ VIDEO_START( atarig1 )
 		{{ 0,0,0,0,0xffff,0,0,0 }},	/* mask for the scale factor */
 		{{ 0x8000,0,0,0,0,0,0,0 }},	/* mask for the horizontal flip */
 		{{ 0,0,0,0,0,0,0x00ff,0 }},	/* mask for the order */
-		{{ 0 }}						/* mask for the priority */
-	};
-
-	static const struct atarian_desc andesc =
-	{
-		1,			/* index to which gfx system */
-		64,32,		/* size of the alpha RAM in tiles (x,y) */
-	
-		0x100,		/* index of palette base */
-		0x100,		/* maximum number of colors */
-		0,			/* mask of the palette split */
-
-		0x0fff,		/* tile data index mask */
-		0xf000,		/* tile data color mask */
-		0,			/* tile data hflip mask */
-		0x8000		/* tile data opacity mask */
+		{{ 0 }},					/* mask for the priority */
+		{{ 0 }}						/* mask for the VRAM target */
 	};
 
 	/* blend the playfields and free the temporary one */
-	ataripf_blend_gfx(0, 2, 0x0f, 0x10);
+	atarigen_blend_gfx(0, 2, 0x0f, 0x10);
 
 	/* initialize the playfield */
-	if (!ataripf_init(0, &pfdesc))
+	atarigen_playfield_tilemap = tilemap_create(get_playfield_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 64,64);
+	if (!atarigen_playfield_tilemap)
 		return 1;
-	
+
 	/* initialize the motion objects */
 	if (!atarirle_init(0, atarig1_pitfight ? &modesc_pitfight : &modesc_hydra))
 		return 1;
 
 	/* initialize the alphanumerics */
-	if (!atarian_init(0, &andesc))
+	atarigen_alpha_tilemap = tilemap_create(get_alpha_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,8, 64,32);
+	if (!atarigen_alpha_tilemap)
 		return 1;
-	
+	tilemap_set_transparent_pen(atarigen_alpha_tilemap, 0);
+
 	/* reset statics */
 	current_control = 0;
 	pfscroll_xoffset = atarig1_pitfight ? 2 : 0;
+	playfield_tile_bank = 0;
+	playfield_xscroll = 0;
+	playfield_yscroll = 0;
 	return 0;
 }
 
@@ -153,13 +156,13 @@ WRITE16_HANDLER( atarig1_mo_control_w )
 
 void atarig1_scanline_update(int scanline)
 {
-	data16_t *base = &atarian_0_base[(scanline / 8) * 64 + 48];
+	data16_t *base = &atarigen_alpha[(scanline / 8) * 64 + 48];
 	int i;
 
 	if (scanline == 0) logerror("-------\n");
 
 	/* keep in range */
-	if (base >= &atarian_0_base[0x800])
+	if (base >= &atarigen_alpha[0x800])
 		return;
 
 	/* update the playfield scrolls */
@@ -167,15 +170,37 @@ void atarig1_scanline_update(int scanline)
 	{
 		data16_t word;
 
-		word = *base++;
-		if (word & 0x8000)
-			ataripf_set_xscroll(0, ((word >> 6) + pfscroll_xoffset) & 0x1ff, scanline + i);
-
+		/* first word controls horizontal scroll */
 		word = *base++;
 		if (word & 0x8000)
 		{
-			ataripf_set_yscroll(0, ((word >> 6) - (scanline + i)) & 0x1ff, scanline + i);
-			ataripf_set_bankbits(0, (word & 7) << 16, scanline + i);
+			int newscroll = ((word >> 6) + pfscroll_xoffset) & 0x1ff;
+			if (newscroll != playfield_xscroll)
+			{
+				force_partial_update(scanline + i - 1);
+				tilemap_set_scrollx(atarigen_playfield_tilemap, 0, newscroll);
+				playfield_xscroll = newscroll;
+			}
+		}
+
+		/* second word controls vertical scroll and tile bank */
+		word = *base++;
+		if (word & 0x8000)
+		{
+			int newscroll = ((word >> 6) - (scanline + i)) & 0x1ff;
+			int newbank = word & 7;
+			if (newscroll != playfield_yscroll)
+			{
+				force_partial_update(scanline + i - 1);
+				tilemap_set_scrolly(atarigen_playfield_tilemap, 0, newscroll);
+				playfield_yscroll = newscroll;
+			}
+			if (newbank != playfield_tile_bank)
+			{
+				force_partial_update(scanline + i - 1);
+				tilemap_mark_all_tiles_dirty(atarigen_playfield_tilemap);
+				playfield_tile_bank = newbank;
+			}
 		}
 	}
 }
@@ -190,8 +215,12 @@ void atarig1_scanline_update(int scanline)
 
 VIDEO_UPDATE( atarig1 )
 {
-	/* draw the layers */
-	ataripf_render(0, bitmap, cliprect);
-	atarirle_render(0, bitmap, cliprect, NULL);
-	atarian_render(0, bitmap, cliprect);
+	/* draw the playfield */
+	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 0, 0);
+	
+	/* copy the motion objects on top */
+	copybitmap(bitmap, atarirle_get_vram(0, 0), 0, 0, 0, 0, cliprect, TRANSPARENCY_PEN, 0);
+	
+	/* add the alpha on top */
+	tilemap_draw(bitmap, cliprect, atarigen_alpha_tilemap, 0, 0);
 }

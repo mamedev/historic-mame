@@ -201,30 +201,30 @@ MACHINE_DRIVER_END
 
 
 ROM_START( kncljoe )
-    ROM_REGION( 0x10000, REGION_CPU1, 0 )  /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )  /* 64k for code */
 	ROM_LOAD( "kj-1.bin", 0x0000, 0x4000, 0x4e4f5ff2 )
 	ROM_LOAD( "kj-2.bin", 0x4000, 0x4000, 0xcb11514b )
 	ROM_LOAD( "kj-3.bin", 0x8000, 0x4000, 0x0f50697b )
 
-    ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for audio code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for audio code */
 	ROM_LOAD( "kj-13.bin",0xe000, 0x2000, 0x0a0be3f5 )
 
-    ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )	/* tiles */
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )	/* tiles */
 	ROM_LOAD( "kj-10.bin", 0x0000,  0x4000, 0x74d3ba33 )
-    ROM_LOAD( "kj-11.bin", 0x4000,  0x4000, 0x8ea01455 )
-    ROM_LOAD( "kj-12.bin", 0x8000,  0x4000, 0x33367c41 )
+	ROM_LOAD( "kj-11.bin", 0x4000,  0x4000, 0x8ea01455 )
+	ROM_LOAD( "kj-12.bin", 0x8000,  0x4000, 0x33367c41 )
 
-    ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "kj-4.bin", 0x00000,  0x8000, 0xa499ea10 )
 	ROM_LOAD( "kj-6.bin", 0x08000,  0x8000, 0x815f5c0a )
 	ROM_LOAD( "kj-5.bin", 0x10000,  0x8000, 0x11111759 )
 
-    ROM_REGION( 0xc000, REGION_GFX3, ROMREGION_DISPOSE )	/* sprites */
+	ROM_REGION( 0xc000, REGION_GFX3, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "kj-7.bin", 0x0000,   0x4000, 0x121fcccb )
 	ROM_LOAD( "kj-9.bin", 0x4000,   0x4000, 0xaffbe3eb )
 	ROM_LOAD( "kj-8.bin", 0x8000,   0x4000, 0xe057e72a )
 
-    ROM_REGION( 0x420, REGION_PROMS, 0 )
+	ROM_REGION( 0x420, REGION_PROMS, 0 )
 	ROM_LOAD( "kjclr1.bin",  0x000, 0x100, 0xc3378ac2 ) /* tile red */
 	ROM_LOAD( "kjclr2.bin",  0x100, 0x100, 0x2126da97 ) /* tile green */
 	ROM_LOAD( "kjclr3.bin",  0x200, 0x100, 0xfde62164 ) /* tile blue */
@@ -233,30 +233,62 @@ ROM_START( kncljoe )
 ROM_END
 
 ROM_START( kncljoea )
-    ROM_REGION( 0x10000, REGION_CPU1, 0 )  /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )  /* 64k for code */
 	ROM_LOAD( "kj01.bin", 0x0000, 0x4000, 0xf251019e )
 	ROM_LOAD( "kj-2.bin", 0x4000, 0x4000, 0xcb11514b )
 	ROM_LOAD( "kj-3.bin", 0x8000, 0x4000, 0x0f50697b )
 
-    ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for audio code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for audio code */
 	ROM_LOAD( "kj-13.bin",0xe000, 0x2000, 0x0a0be3f5 )
 
-    ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )	/* tiles */
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )	/* tiles */
 	ROM_LOAD( "kj-10.bin", 0x0000,  0x4000, 0x74d3ba33 )
-    ROM_LOAD( "kj-11.bin", 0x4000,  0x4000, 0x8ea01455 )
-    ROM_LOAD( "kj-12.bin", 0x8000,  0x4000, 0x33367c41 )
+	ROM_LOAD( "kj-11.bin", 0x4000,  0x4000, 0x8ea01455 )
+	ROM_LOAD( "kj-12.bin", 0x8000,  0x4000, 0x33367c41 )
 
-    ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "kj-4.bin", 0x00000,  0x8000, 0xa499ea10 )
 	ROM_LOAD( "kj-6.bin", 0x08000,  0x8000, 0x815f5c0a )
 	ROM_LOAD( "kj-5.bin", 0x10000,  0x8000, 0x11111759 )
 
-    ROM_REGION( 0xc000, REGION_GFX3, ROMREGION_DISPOSE )	/* sprites */
+	ROM_REGION( 0xc000, REGION_GFX3, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "kj-7.bin", 0x0000,   0x4000, 0x121fcccb )
 	ROM_LOAD( "kj-9.bin", 0x4000,   0x4000, 0xaffbe3eb )
 	ROM_LOAD( "kj-8.bin", 0x8000,   0x4000, 0xe057e72a )
 
-    ROM_REGION( 0x420, REGION_PROMS, 0 )
+	ROM_REGION( 0x420, REGION_PROMS, 0 )
+	ROM_LOAD( "kjclr1.bin",  0x000, 0x100, 0xc3378ac2 ) /* tile red */
+	ROM_LOAD( "kjclr2.bin",  0x100, 0x100, 0x2126da97 ) /* tile green */
+	ROM_LOAD( "kjclr3.bin",  0x200, 0x100, 0xfde62164 ) /* tile blue */
+	ROM_LOAD( "kjprom5.bin", 0x300, 0x020, 0x5a81dd9f ) /* sprite palette */
+	ROM_LOAD( "kjprom4.bin", 0x320, 0x100, 0x48dc2066 ) /* sprite clut */
+ROM_END
+
+ROM_START( bcrusher )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )  /* 64k for code */
+	ROM_LOAD( "bcrush1.bin", 0x0000, 0x4000, 0xe8979196 )
+	ROM_LOAD( "bcrush2.bin", 0x4000, 0x4000, 0x1be4c731 )
+	ROM_LOAD( "bcrush3.bin", 0x8000, 0x4000, 0x0772d993 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for audio code */
+	ROM_LOAD( "kj-13.bin",0xe000, 0x2000, 0x0a0be3f5 )
+
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )	/* tiles */
+	ROM_LOAD( "bcrush10.bin", 0x0000,  0x4000, 0xa62f4572 )
+	ROM_LOAD( "bcrush11.bin", 0x4000,  0x4000, 0x79cc5644 )
+	ROM_LOAD( "bcrush12.bin", 0x8000,  0x4000, 0x8f09641d )
+
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD( "kj-4.bin", 0x00000,  0x8000, 0xa499ea10 )
+	ROM_LOAD( "kj-6.bin", 0x08000,  0x8000, 0x815f5c0a )
+	ROM_LOAD( "kj-5.bin", 0x10000,  0x8000, 0x11111759 )
+
+	ROM_REGION( 0xc000, REGION_GFX3, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD( "kj-7.bin", 0x0000,   0x4000, 0x121fcccb )
+	ROM_LOAD( "kj-9.bin", 0x4000,   0x4000, 0xaffbe3eb )
+	ROM_LOAD( "kj-8.bin", 0x8000,   0x4000, 0xe057e72a )
+
+	ROM_REGION( 0x420, REGION_PROMS, 0 )
 	ROM_LOAD( "kjclr1.bin",  0x000, 0x100, 0xc3378ac2 ) /* tile red */
 	ROM_LOAD( "kjclr2.bin",  0x100, 0x100, 0x2126da97 ) /* tile green */
 	ROM_LOAD( "kjclr3.bin",  0x200, 0x100, 0xfde62164 ) /* tile blue */
@@ -268,3 +300,4 @@ ROM_END
 
 GAME( 1985, kncljoe,  0,       kncljoe, kncljoe, 0, ROT0, "[Seibu Kaihatsu] (Taito license)", "Knuckle Joe (set 1)" )
 GAME( 1985, kncljoea, kncljoe, kncljoe, kncljoe, 0, ROT0, "[Seibu Kaihatsu] (Taito license)", "Knuckle Joe (set 2)" )
+GAME( 1985, bcrusher, kncljoe, kncljoe, kncljoe, 0, ROT0, "bootleg",                          "Bone Crusher" )

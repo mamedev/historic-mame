@@ -51,9 +51,10 @@ PALETTE_INIT( hyhoo )
 		g = ((i >>  6) & 0x1f);
 		b = ((i >> 11) & 0x1f);
 
-		(*palette++) = ((r << 2) | (r >> 3));
-		(*palette++) = ((g << 3) | (g >> 2));
-		(*palette++) = ((b << 3) | (b >> 2));
+		r = ((r << 2) | (r >> 3));
+		g = ((g << 3) | (g >> 2));
+		b = ((b << 3) | (b >> 2));
+		palette_set_color(i,r,g,b);
 	}
 }
 

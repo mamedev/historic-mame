@@ -57,7 +57,7 @@ static struct EEPROM_interface eeprom_interface =
 	0
 };
 
-static NRAM_HANDLER( system32 )
+static NVRAM_HANDLER( system32 )
 {
 	if (read_or_write)
 		EEPROM_save(file);

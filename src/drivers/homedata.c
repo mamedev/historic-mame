@@ -117,9 +117,11 @@ PALETTE_INIT( reikaids )
 		r = ((color >>  7) & 0x1e) | ((color >> 2) & 1);
 		b = ((color >>  3) & 0x1e) | ((color >> 1) & 1);
 
-		(*palette++) = (r << 3) | (r >> 2);
-		(*palette++) = (g << 3) | (g >> 2);
-		(*palette++) = (b << 3) | (b >> 2);
+		r = (r << 3) | (r >> 2);
+		g = (g << 3) | (g >> 2);
+		b = (b << 3) | (b >> 2);
+
+		palette_set_color(i,r,g,b);
 	}
 }
 
@@ -421,9 +423,11 @@ PALETTE_INIT( pteacher )
 		r = ((color >>  6) & 0x1f);
 		b = ((color >>  1) & 0x1f);
 
-		(*palette++) = (r << 3) | (r >> 2);
-		(*palette++) = (g << 3) | (g >> 2);
-		(*palette++) = (b << 3) | (b >> 2);
+		r = (r << 3) | (r >> 2);
+		g = (g << 3) | (g >> 2);
+		b = (b << 3) | (b >> 2);
+
+		palette_set_color(i,r,g,b);
 	}
 }
 
@@ -998,7 +1002,7 @@ static struct Y8950interface reikaids_y8950_interface =
 {
 	1,
 	3000000,	/* ? */
-	{ 50 },
+	{ 100 },
 	{ 0 },
 	{ REGION_SOUND1 }, /* ROM region */
 	{ 0 },  /* keyboard read  */
@@ -1169,22 +1173,22 @@ INPUT_PORTS_START( reikaids )
 	PORT_BIT(  0x80, IP_ACTIVE_LOW,	IPT_UNKNOWN  )
 
 	PORT_START	// IN4 -
-	PORT_DIPNAME( 0x01, 0x00, "Allow Continue" )
+	PORT_DIPNAME( 0x01, 0x01, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "20K" )
-	PORT_DIPSETTING(    0x02, "20K, Every 60K" )
-	PORT_DIPSETTING(    0x04, "30K" )
-	PORT_DIPSETTING(    0x06, "30K, Every 80K" )
+	PORT_DIPSETTING(    0x00, "20k then every 60k" )
+	PORT_DIPSETTING(    0x02, "30k then every 80k" )
+	PORT_DIPSETTING(    0x04, "20k" )
+	PORT_DIPSETTING(    0x06, "30k" )
 	PORT_DIPNAME( 0x18, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x18, DEF_STR( Free_Play ) )
 	PORT_DIPNAME( 0x20, 0x00, "Time" )
-	PORT_DIPSETTING(    0x00, "45 s" )
-	PORT_DIPSETTING(    0x20, "60 s" )
+	PORT_DIPSETTING(    0x00, "60" )
+	PORT_DIPSETTING(    0x20, "45" )
 	PORT_DIPNAME( 0x40, 0x00, "Unknown 2-6" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
@@ -1209,13 +1213,13 @@ INPUT_PORTS_START( reikaids )
 	PORT_DIPSETTING(    0x10, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0xe0, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0xe0, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x60, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_5C ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( pteacher ) /* all unconfirmed except where noted! */

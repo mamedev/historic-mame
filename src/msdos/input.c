@@ -14,7 +14,7 @@ static int use_mouse_2; /* OptiMAME mouse extension, mapped on player 2 */
 static int mouse_button_2; /* OptiMAME mouse extension */
 
 int joystick;
-int use_hotrod;
+//int use_hotrod;
 int steadykey;
 
 
@@ -597,14 +597,17 @@ void osd_trak_read(int player,int *deltax,int *deltay)
 #ifndef MESS
 #ifndef TINY_COMPILE
 #ifndef CPSMAME
+#ifndef MMSND
 extern int no_of_tiles;
 extern struct GameDriver driver_neogeo;
+#endif
 #endif
 #endif
 #endif
 
 void osd_customize_inputport_defaults(struct ipd *defaults)
 {
+#if 0
 	if (use_hotrod)
 	{
 		while (defaults->type != IPT_END)
@@ -646,6 +649,7 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 #ifndef MESS
 #ifndef TINY_COMPILE
 #ifndef CPSMAME
+#ifndef MMSND
 			if (use_hotrod == 2 &&
 					(Machine->gamedrv->clone_of == &driver_neogeo ||
 					(Machine->gamedrv->clone_of && Machine->gamedrv->clone_of->clone_of == &driver_neogeo)))
@@ -670,10 +674,12 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 #endif
 #endif
 #endif
+#endif
 
 			defaults++;
 		}
 	}
+#endif
 }
 
 

@@ -430,7 +430,7 @@ static struct YM3812interface unico16_ym3812_intf =
 {
 	1,
 	4000000,		/* ? */
-	{ 20 },
+	{ 40 },
 	{ 0 },	/* IRQ Line */
 };
 
@@ -456,7 +456,7 @@ static MACHINE_DRIVER_START( burglarx )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	
+
 	MDRV_MACHINE_INIT(unico16)
 
 	/* video hardware */

@@ -60,7 +60,7 @@ INLINE void ojankoy_get_tile_info(int tile_index)
 PALETTE_INIT( ojankoy )
 {
 	int i;
-	int bit0, bit1, bit2, bit3, bit4;
+	int bit0, bit1, bit2, bit3, bit4, r, g, b;
 
 	for (i = 0; i < Machine->drv->total_colors; i++)
 	{
@@ -69,20 +69,21 @@ PALETTE_INIT( ojankoy )
 		bit2 = (color_prom[0] >> 4) & 0x01;
 		bit3 = (color_prom[0] >> 5) & 0x01;
 		bit4 = (color_prom[0] >> 6) & 0x01;
-		*(palette++) = 0x08 * bit0 + 0x11 * bit1 + 0x21 * bit2 + 0x43 * bit3 + 0x82 * bit4;
+		r = 0x08 * bit0 + 0x11 * bit1 + 0x21 * bit2 + 0x43 * bit3 + 0x82 * bit4;
 		bit0 = (color_prom[Machine->drv->total_colors] >> 5) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 6) & 0x01;
 		bit2 = (color_prom[Machine->drv->total_colors] >> 7) & 0x01;
 		bit3 = (color_prom[0] >> 0) & 0x01;
 		bit4 = (color_prom[0] >> 1) & 0x01;
-		*(palette++) = 0x08 * bit0 + 0x11 * bit1 + 0x21 * bit2 + 0x43 * bit3 + 0x82 * bit4;
+		g = 0x08 * bit0 + 0x11 * bit1 + 0x21 * bit2 + 0x43 * bit3 + 0x82 * bit4;
 		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
 		bit4 = (color_prom[Machine->drv->total_colors] >> 4) & 0x01;
-		*(palette++) = 0x08 * bit0 + 0x11 * bit1 + 0x21 * bit2 + 0x43 * bit3 + 0x82 * bit4;
+		b = 0x08 * bit0 + 0x11 * bit1 + 0x21 * bit2 + 0x43 * bit3 + 0x82 * bit4;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 }

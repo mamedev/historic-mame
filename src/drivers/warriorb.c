@@ -100,94 +100,13 @@ Darius 2
 The unpleasant sounds when some big enemies appear are wrong: they
 are meant to create rumbling on a subwoofer in the cabinet, a sort of
 vibration device. They still affect the other channels despite
-filtering above 100Hz.
+filtering above 20Hz.
 
 
 Warriorb
 --------
 
 Colscroll effects?
-
-Please can someone make sense of these DIPs from
-http://www.funtom.com/dip.html
-
-DIP 1
-
-Item Contents 1 2 3 4 5 6 7 8 Each round
-When clearing
-Physical reconditioning quantity Normally
-It is little
-It is many
-Furthermore many OFF
-ON
-OFF
-ON OFF
-OFF
-ON
-ON Static test mode Normality play
-Static test mode OFF
-ON Demonstration sound Possession
-Nothing OFF
-ON Play fee
-COIN A 1 coin 1 play
-1 coin 2 play
-2 coins 1 play
-3 coins 1 play OFF
-ON
-OFF
-ON OFF
-OFF
-ON
-ON Play fee
-COIN B 1 coin 1 play
-1 coin 2 play
-2 coins 1 play
-3 coins 1 play OFF
-ON
-OFF
-ON OFF
-OFF
-ON
-ON
-
-DIP 2
-
-Item Contents 1 2 3 4 5 6 7 8 Degree of hardness setting
-Divination (A) - > difficulty (D) Ranking B
-Ranking A
-Ranking C
-Ranking D OFF
-ON
-OFF
-ON OFF
-OFF
-ON
-ON Gold ship
-Frequency of occurrence
-Note) 1 Only 50,000pts
-Every after 70,000 the 50,000pts OFF
-ON When starting
-Power of prayer
-Note) 2 Normal
-Full power OFF
-ON Old person of puzzle
-Condition of appearance
-Note) 3 Item (crystal) acquisition time
-Regular appearance OFF
-ON Continuing Possession
-Nothing OFF
-ON Round number
-Note) 4 Normal specification
-Long specification OFF
-ON Unused OFF
-
-Note) the gold ship of 1 item appears the point number where
-Note) round it clears 2 these games it is the game where the prayer becomes strong
-every.
-When starting it decides you start with either one.
-Note) the old person of 3 puzzles appears condition because
-Note) the numbers of 4 round with normal with play contents change in 10 - 14 stages.
-When it is long, 14 stages everything is possible.
 
 ***************************************************************************/
 
@@ -206,7 +125,7 @@ VIDEO_UPDATE( warriorb );
 
 
 /***********************************************************
-				  SOUND
+                          SOUND
 ***********************************************************/
 
 static int banknum = -1;
@@ -237,22 +156,26 @@ static READ16_HANDLER( warriorb_sound_r )
 	else return 0;
 }
 
-/**** sound pan control ****/
-static int ninjaw_pandata[4];
+
+static int ninjaw_pandata[4];		/**** sound pan control ****/
+
 WRITE_HANDLER( warriorb_pancontrol )
 {
-  offset = offset&3;
-  ninjaw_pandata[offset] = (data<<1) + data;   /* original volume * 3 */
-  //usrintf_showmessage(" pan %02x %02x %02x %02x", ninjaw_pandata[0], ninjaw_pandata[1], ninjaw_pandata[2], ninjaw_pandata[3] );
-  if( offset < 2 ){
-    mixer_set_stereo_volume( 3, ninjaw_pandata[0], ninjaw_pandata[1] );
-  }
-  else{
-    mixer_set_stereo_volume( 4, ninjaw_pandata[2], ninjaw_pandata[3] );
-  }
+	offset = offset&3;
+	ninjaw_pandata[offset] = (data<<1) + data;   /* original volume*3 */
+
+//	usrintf_showmessage(" pan %02x %02x %02x %02x", ninjaw_pandata[0], ninjaw_pandata[1], ninjaw_pandata[2], ninjaw_pandata[3] );
+
+	if (offset < 2)
+		mixer_set_stereo_volume( 3, ninjaw_pandata[0], ninjaw_pandata[1] );
+	else
+		mixer_set_stereo_volume( 4, ninjaw_pandata[2], ninjaw_pandata[3] );
 }
+
+
+
 /***********************************************************
-			 MEMORY STRUCTURES
+                      MEMORY STRUCTURES
 ***********************************************************/
 
 static MEMORY_READ16_START( darius2d_readmem )
@@ -347,7 +270,7 @@ MEMORY_END
 
 
 /***********************************************************
-			 INPUT PORTS, DIPs
+                     INPUT PORTS, DIPs
 ***********************************************************/
 
 #define TAITO_COINAGE_JAPAN_8 \
@@ -362,6 +285,18 @@ MEMORY_END
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) ) \
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 
+#define TAITO_COINAGE_JAPAN_NEW_8 \
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) ) \
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+
 #define TAITO_DIFFICULTY_8 \
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) ) \
 	PORT_DIPSETTING(    0x02, "Easy" ) \
@@ -369,12 +304,46 @@ MEMORY_END
 	PORT_DIPSETTING(    0x01, "Hard" ) \
 	PORT_DIPSETTING(    0x00, "Hardest" )
 
+#define WARRIORB_SYSTEM_INPUT \
+	PORT_START \
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 ) \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 ) \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 ) \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 ) \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+#define WARRIORB_PLAYERS_INPUT_1 \
+	PORT_START \
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 ) \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 ) \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 ) \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 ) \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 ) \
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+
+#define WARRIORB_PLAYERS_INPUT_2( freeze_button) \
+	PORT_START \
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNKNOWN ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_UNKNOWN ) \
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, freeze_button | IPF_PLAYER1 ) \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER1 ) \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER1 ) \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER2 ) \
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER2 )
+
+
 INPUT_PORTS_START( darius2d )
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )  // used, but manual in japanese
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Continuous fire" )
+	PORT_DIPNAME( 0x02, 0x02, "Autofire" )
 	PORT_DIPSETTING(    0x02, "Normal" )
 	PORT_DIPSETTING(    0x00, "Fast" )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
@@ -402,106 +371,63 @@ INPUT_PORTS_START( darius2d )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
 
-	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	/* IN0 */
+	WARRIORB_SYSTEM_INPUT
 
-	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	/* IN1 */
+	WARRIORB_PLAYERS_INPUT_1
 
-	PORT_START      /* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER1 )	// Freezes game
-	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER2 )
+	/* IN2 */
+	WARRIORB_PLAYERS_INPUT_2( IPT_BUTTON3 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( warriorb )
 	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x03, "Vitality Recovery" ) //after finishing a level
+	PORT_DIPSETTING(    0x02, "Less" )
+	PORT_DIPSETTING(    0x03, "Normal" )
+	PORT_DIPSETTING(    0x01, "More" )
+	PORT_DIPSETTING(    0x00, "Most" )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	TAITO_COINAGE_JAPAN_8
+	TAITO_COINAGE_JAPAN_NEW_8
 
 	PORT_START /* DSW B */
 	TAITO_DIFFICULTY_8
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x04, 0x04, "Gold Sheep at" )
+	PORT_DIPSETTING(    0x04, "50k only" )
+	PORT_DIPSETTING(    0x00, "50k and every 70k" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )	//in manual
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, "Power Ups" )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, "Magician" )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Player Starting Strength" )
+	PORT_DIPSETTING(    0x10, "Normal" )
+	PORT_DIPSETTING(    0x00, "Full" )
+	PORT_DIPNAME( 0x20, 0x20, "Magician appears" )
+	PORT_DIPSETTING(    0x20, "When you get a Crystal" )
+	PORT_DIPSETTING(    0x00, "Always" )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Rounds" )
+	PORT_DIPSETTING(    0x80, "Normal (10-14, depends on skill)" )
+	PORT_DIPSETTING(    0x00, "Long (14)" )
 
-	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	/* IN0 */
+	WARRIORB_SYSTEM_INPUT
 
-	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	/* IN1 */
+	WARRIORB_PLAYERS_INPUT_1
 
-	PORT_START      /* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1 )	// Freezes game
-	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER2 )
+	/* IN2 */
+	WARRIORB_PLAYERS_INPUT_2( IPT_BUTTON4 )
 INPUT_PORTS_END
 
 
 /***********************************************************
-				GFX DECODING
+                        GFX DECODING
 ***********************************************************/
 
 static struct GfxLayout tilelayout =
@@ -536,7 +462,7 @@ static struct GfxDecodeInfo warriorb_gfxdecodeinfo[] =
 
 
 /**************************************************************
-				YM2610 (SOUND)
+                           YM2610 (SOUND)
 **************************************************************/
 
 /* handler called by the YM2610 emulator when the internal timers cause an IRQ */
@@ -562,7 +488,7 @@ static struct YM2610interface ym2610_interface =
 
 
 /**************************************************************
-			     SUBWOOFER (SOUND)
+                         SUBWOOFER (SOUND)
 **************************************************************/
 
 static int subwoofer_sh_start(const struct MachineSound *msound)
@@ -585,7 +511,7 @@ static struct CustomSound_interface subwoofer_interface =
 
 
 /***********************************************************
-			     MACHINE DRIVERS
+                       MACHINE DRIVERS
 ***********************************************************/
 
 static MACHINE_DRIVER_START( darius2d )
@@ -656,7 +582,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-					DRIVERS
+                                 DRIVERS
 ***************************************************************************/
 
 ROM_START( darius2d )
@@ -798,13 +724,13 @@ static DRIVER_INIT( warriorb )
 
 MACHINE_INIT( taito_dualscreen )
 {
-  /**** mixer control enable ****/
-  mixer_sound_enable_global_w( 1 );	/* mixer enabled */
+	/**** mixer control enable ****/
+	mixer_sound_enable_global_w( 1 );	/* mixer enabled */
 }
+
 
 /* Working Games */
 
 GAME( 1989, darius2d, darius2,  darius2d, darius2d, warriorb, ROT0, "Taito Corporation", "Darius II (dual screen) (Japan)" )
 GAME( 1989, drius2do, darius2,  darius2d, darius2d, warriorb, ROT0, "Taito Corporation", "Darius II (dual screen) (Japan old version)" )
 GAME( 1991, warriorb, 0,        warriorb, warriorb, warriorb, ROT0, "Taito Corporation", "Warrior Blade (Japan)" )
-

@@ -1,10 +1,14 @@
 #include "driver.h"
 #include "machine/pd4990a.h"
 #include "neogeo.h"
+#include "inptport.h"
 #include <time.h>
+
 
 static int sram_locked;
 static offs_t sram_protection_hack;
+extern void *record;
+extern void *playback;
 
 data16_t *neogeo_ram16;
 data16_t *neogeo_sram16;
@@ -59,13 +63,29 @@ MACHINE_INIT( neogeo )
 	time(&ltime);
 	today = localtime(&ltime);
 
-	pd4990a.seconds = ((today->tm_sec/10)<<4) + (today->tm_sec%10);
-	pd4990a.minutes = ((today->tm_min/10)<<4) + (today->tm_min%10);
-	pd4990a.hours = ((today->tm_hour/10)<<4) + (today->tm_hour%10);
-	pd4990a.days = ((today->tm_mday/10)<<4) + (today->tm_mday%10);
-	pd4990a.month = (today->tm_mon + 1);
-	pd4990a.year = (((today->tm_year%100)/10)<<4) + (today->tm_year%10);
-	pd4990a.weekday = today->tm_wday;
+	/* Disable Real Time Clock if the user selects to record or playback an .inp file   */
+	/* This is needed in order to playback correctly an .inp on several games,as these  */
+	/* use the RTC of the NEC pd4990a as pseudo-random number generator   -kal 8 apr 02 */
+	if( record != 0 || playback != 0 )
+	{
+		pd4990a.seconds = 0;
+		pd4990a.minutes = 0;
+		pd4990a.hours = 0;
+		pd4990a.days = 0;
+		pd4990a.month = 0;
+		pd4990a.year = 0;
+		pd4990a.weekday = 0;
+	}
+	else
+	{
+		pd4990a.seconds = ((today->tm_sec/10)<<4) + (today->tm_sec%10);
+		pd4990a.minutes = ((today->tm_min/10)<<4) + (today->tm_min%10);
+		pd4990a.hours = ((today->tm_hour/10)<<4) + (today->tm_hour%10);
+		pd4990a.days = ((today->tm_mday/10)<<4) + (today->tm_mday%10);
+		pd4990a.month = (today->tm_mon + 1);
+		pd4990a.year = (((today->tm_year%100)/10)<<4) + (today->tm_year%10);
+		pd4990a.weekday = today->tm_wday;
+	}
 }
 
 

@@ -105,7 +105,7 @@ _osd_pdo16:
 	pand	mm1,mm7						;// mm1 = source & mask
 	pandn	mm7,mm2						;// mm7 = dest & ~mask
 	por		mm1,mm7						;// mm1 = (source & mask) | (dest & ~mask)
-	movq	[edi + 8],mm0				;// write dest
+	movq	[edi + 8],mm1				;// write dest
 
 .nomore:
 	popad

@@ -109,6 +109,7 @@ enum { IPT_END=1,IPT_PORT,
 	IPT_UI_DELETE_CHEAT,
 	IPT_UI_SAVE_CHEAT,
 	IPT_UI_WATCH_VALUE,
+	IPT_UI_EDIT_CHEAT,
 	__ipt_max
 };
 
@@ -307,6 +308,8 @@ enum {
 	STR_TOTAL
 };
 
+enum { IKT_STD, IKT_IPT, IKT_IPT_EXT, IKT_OSD_KEY, IKT_OSD_JOY };
+
 #define DEF_STR(str_num) (ipdn_defaultstrings[STR_##str_num])
 
 #define MAX_INPUT_PORTS 20
@@ -379,6 +382,18 @@ struct ipd
 	const char *name;
 	InputSeq seq;
 };
+
+struct ik
+{
+	char *name;
+	UINT32 type;
+	UINT32 val;
+};
+extern struct ik input_keywords[];
+extern struct ik *osd_input_keywords;
+extern int num_ik;
+
+void seq_set_string(InputSeq* a, const char *buf);
 
 #ifdef __cplusplus
 }

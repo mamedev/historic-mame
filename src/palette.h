@@ -154,6 +154,8 @@ WRITE_HANDLER( paletteram_BBBBGGGGRRRRxxxx_split2_w );	/* uses paletteram_2[] */
 WRITE16_HANDLER( paletteram16_BBBBGGGGRRRRxxxx_word_w );
 WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_w );
 WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_swap_w );
+WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_split1_w );	/* uses paletteram[] */
+WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_split2_w );	/* uses paletteram_2[] */
 WRITE16_HANDLER( paletteram16_xBBBBBGGGGGRRRRR_word_w );
 WRITE_HANDLER( paletteram_xRRRRRGGGGGBBBBB_w );
 WRITE16_HANDLER( paletteram16_xRRRRRGGGGGBBBBB_word_w );
@@ -165,7 +167,7 @@ WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBIIII_word_w );
 WRITE16_HANDLER( paletteram16_xrgb_word_w );
 WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBRGBx_word_w );
 
-void palette_init_RRRR_GGGG_BBBB(UINT8 *palette, UINT16 *colortable, const UINT8 *color_prom);
+PALETTE_INIT( RRRR_GGGG_BBBB );
 
 #ifdef __cplusplus
 }

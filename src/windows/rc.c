@@ -39,6 +39,7 @@ Version 0.3, Februari 2000
 #include "misc.h"
 
 #include "rc.h"
+#include "osdepend.h"
 
 #ifdef _MSC_VER
 #define snprintf _snprintf
@@ -214,6 +215,67 @@ int rc_save(struct rc_struct *rc, const char *name, int append)
       return -1;
 
    return rc_write(rc, f, name);
+}
+
+int osd_rc_read(struct rc_struct *rc, void *f, const char *description,
+   int priority, int continue_on_errors)
+{
+   char buf[BUF_SIZE];
+   int line = 0;
+
+   while(osd_fgets(buf, BUF_SIZE, f))
+   {
+      struct rc_option *option;
+      char *name, *tmp, *arg = NULL;
+
+      line ++;
+
+      /* get option name */
+      if(!(name = strtok(buf, " \t\r\n")))
+         continue;
+      if(name[0] == '#')
+         continue;
+
+      /* get complete rest of line */
+      arg = strtok(NULL, "\r\n");
+
+      /* ignore white space */
+      for (; (*arg == '\t' || *arg == ' '); arg++) {}
+
+      /* deal with quotations */
+      if (arg[0] == '"')
+         arg = strtok (arg, "\"");
+      else if (arg[0] == '\'')
+         arg = strtok (arg, "'");
+      else
+         arg = strtok (arg, " \t\r\n");
+
+      if(!(option = rc_get_option2(rc->option, name)))
+      {
+         fprintf(stderr, "error: unknown option %s, on line %d of file: %s\n",
+            name, line, description);
+      }
+      else if (rc_requires_arg[option->type] && !arg)
+      {
+         fprintf(stderr,
+            "error: %s requires an argument, on line %d of file: %s\n",
+            name, line, description);
+      }
+      else if ( (tmp = strtok(NULL, " \t\r\n")) && (tmp[0] != '#') )
+      {
+         fprintf(stderr,
+            "error: trailing garbage: \"%s\" on line: %d of file: %s\n",
+            tmp, line, description);
+      }
+      else if (!rc_set_option3(option, arg, priority))
+         continue;
+
+      if (continue_on_errors)
+         fprintf(stderr, "   ignoring line\n");
+      else
+         return -1;
+   }
+   return 0;
 }
 
 int rc_read(struct rc_struct *rc, FILE *f, const char *description,

@@ -22,31 +22,39 @@ static double brightness;
 
 /*************************************
  *
+ *	Tilemap callbacks
+ *
+ *************************************/
+
+static void get_alpha_tile_info(int tile_index)
+{
+	UINT16 data = atarigen_alpha[tile_index];
+	int code = data & 0x3ff;
+	int color = (data >> 12) & 0x0f;
+	SET_TILE_INFO(2, code, color, (data >> 10) & 1);
+}
+
+
+static void get_playfield_tile_info(int tile_index)
+{
+	UINT16 data1 = atarigen_playfield[tile_index * 2];
+	UINT16 data2 = atarigen_playfield[tile_index * 2 + 1];
+	int code = data2 & 0x3fff;
+	int color = data1 & 0x0f;
+	SET_TILE_INFO(0, code, color, TILE_FLIPYX(data2 >> 14));
+	tile_info.priority = (data1 >> 4) & 3;
+}
+
+
+
+/*************************************
+ *
  *	Video system start
  *
  *************************************/
 
 VIDEO_START( toobin )
 {
-	static const struct ataripf_desc pfdesc =
-	{
-		0,			/* index to which gfx system */
-		128,64,		/* size of the playfield in tiles (x,y) */
-		1,128,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-
-		0x000,		/* index of palette base */
-		0x100,		/* maximum number of colors */
-		0,			/* color XOR for shadow effect (if any) */
-		0,			/* latch mask */
-		0,			/* transparent pen mask */
-
-		0x003fff,	/* tile data index mask */
-		0x0f0000,	/* tile data color mask */
-		0x004000,	/* tile data hflip mask */
-		0x008000,	/* tile data vflip mask */
-		0x300000	/* tile data priority mask */
-	};
-
 	static const struct atarimo_desc modesc =
 	{
 		1,					/* index to which gfx system */
@@ -57,7 +65,7 @@ VIDEO_START( toobin )
 		1,					/* render in swapped X/Y order? */
 		0,					/* does the neighbor bit affect the next object? */
 		1024,				/* pixels per SLIP entry (0 for no-slip) */
-		8,					/* number of scanlines between MO updates */
+		0,					/* pixel offset for SLIPs */
 
 		0x100,				/* base palette entry */
 		0x100,				/* maximum number of colors */
@@ -78,28 +86,14 @@ VIDEO_START( toobin )
 		{{ 0 }},			/* mask for the neighbor */
 		{{ 0x8000,0,0,0 }},	/* mask for absolute coordinates */
 
-		{{ 0 }},			/* mask for the ignore value */
-		0,					/* resulting value to indicate "ignore" */
-		0					/* callback routine for ignored entries */
-	};
-
-	static const struct atarian_desc andesc =
-	{
-		2,			/* index to which gfx system */
-		64,64,		/* size of the alpha RAM in tiles (x,y) */
-
-		0x200,		/* index of palette base */
-		0x040,		/* maximum number of colors */
-		0,			/* mask of the palette split */
-
-		0x03ff,		/* tile data index mask */
-		0xf000,		/* tile data color mask */
-		0x0400,		/* tile data hflip mask */
-		0			/* tile data opacity mask */
+		{{ 0 }},			/* mask for the special value */
+		0,					/* resulting value to indicate "special" */
+		0					/* callback routine for special entries */
 	};
 
 	/* initialize the playfield */
-	if (!ataripf_init(0, &pfdesc))
+	atarigen_playfield_tilemap = tilemap_create(get_playfield_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 128,64);
+	if (!atarigen_playfield_tilemap)
 		return 1;
 
 	/* initialize the motion objects */
@@ -107,8 +101,11 @@ VIDEO_START( toobin )
 		return 1;
 
 	/* initialize the alphanumerics */
-	if (!atarian_init(0, &andesc))
+	atarigen_alpha_tilemap = tilemap_create(get_alpha_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,8, 64,48);
+	if (!atarigen_alpha_tilemap)
 		return 1;
+	tilemap_set_transparent_pen(atarigen_alpha_tilemap, 0);
+
 	return 0;
 }
 
@@ -167,53 +164,63 @@ WRITE16_HANDLER( toobin_intensity_w )
  *
  *************************************/
 
-WRITE16_HANDLER( toobin_hscroll_w )
+WRITE16_HANDLER( toobin_xscroll_w )
 {
-	int scanline = cpu_getscanline() + 1;
-	int newscroll = ataripf_get_xscroll(0) << 6;
+	data16_t oldscroll = *atarigen_xscroll;
+	data16_t newscroll = oldscroll;
 	COMBINE_DATA(&newscroll);
+	
+	/* if anything has changed, force a partial update */
+	if (newscroll != oldscroll)
+		force_partial_update(cpu_getscanline());
 
-	ataripf_set_xscroll(0, (newscroll >> 6) & 0x3ff, scanline);
-	atarimo_set_xscroll(0, (newscroll >> 6) & 0x3ff, scanline);
+	/* update the playfield scrolling - hscroll is clocked on the following scanline */
+	tilemap_set_scrollx(atarigen_playfield_tilemap, 0, newscroll >> 6);
+	atarimo_set_xscroll(0, newscroll >> 6);
+	
+	/* update the data */
+	*atarigen_xscroll = newscroll;
 }
 
 
-WRITE16_HANDLER( toobin_vscroll_w )
+WRITE16_HANDLER( toobin_yscroll_w )
 {
-	int scanline = cpu_getscanline() + 1;
-	int newscroll = ataripf_get_yscroll(0) << 6;
+	data16_t oldscroll = *atarigen_yscroll;
+	data16_t newscroll = oldscroll;
 	COMBINE_DATA(&newscroll);
 
-	ataripf_set_yscroll(0, (newscroll >> 6) & 0x1ff, scanline);
-	atarimo_set_yscroll(0, (newscroll >> 6) & 0x1ff, scanline);
+	/* if anything has changed, force a partial update */
+	if (newscroll != oldscroll)
+		force_partial_update(cpu_getscanline());
+
+	/* if bit 4 is zero, the scroll value is clocked in right away */
+	tilemap_set_scrolly(atarigen_playfield_tilemap, 0, newscroll >> 6);
+	atarimo_set_yscroll(0, (newscroll >> 6) & 0x1ff);
+
+	/* update the data */
+	*atarigen_yscroll = newscroll;
 }
 
 
 
 /*************************************
  *
- *	Overrendering
+ *	X/Y scroll handlers
  *
  *************************************/
 
-static int overrender_callback(struct ataripf_overrender_data *data, int state)
+WRITE16_HANDLER( toobin_slip_w )
 {
-	/* we need to check tile-by-tile, so always return OVERRENDER_SOME */
-	if (state == OVERRENDER_BEGIN)
-	{
-		/* by default, draw anywhere the MO pen was 1 */
-		data->drawmode = TRANSPARENCY_PENS;
-		data->drawpens = 0x00ff;
-		data->maskpens = 0x0001;
-		return OVERRENDER_SOME;
-	}
+	int oldslip = atarimo_0_slipram[offset];
+	int newslip = oldslip;
+	COMBINE_DATA(&newslip);
 
-	/* handle a query */
-	else if (state == OVERRENDER_QUERY)
-	{
-		return data->pfpriority ? OVERRENDER_YES : OVERRENDER_NO;
-	}
-	return 0;
+	/* if the SLIP is changing, force a partial update first */
+	if (oldslip != newslip)
+		force_partial_update(cpu_getscanline());
+	
+	/* update the data */
+	atarimo_0_slipram_w(offset, data, mem_mask);
 }
 
 
@@ -226,8 +233,43 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 
 VIDEO_UPDATE( toobin )
 {
-	/* draw the layers */
-	ataripf_render(0, bitmap, cliprect);
-	atarimo_render(0, bitmap, cliprect, overrender_callback, NULL);
-	atarian_render(0, bitmap, cliprect);
+	struct atarimo_rect_list rectlist;
+	struct mame_bitmap *mobitmap;
+	int x, y, r;
+
+	/* draw the playfield */
+	fillbitmap(priority_bitmap, 0, cliprect);
+	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 1, 1);
+	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 2, 2);
+	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 3, 3);
+
+	/* draw and merge the MO */
+	mobitmap = atarimo_render(0, cliprect, &rectlist);
+	for (r = 0; r < rectlist.numrects; r++, rectlist.rect++)
+		for (y = rectlist.rect->min_y; y <= rectlist.rect->max_y; y++)
+		{
+			UINT16 *mo = (UINT16 *)mobitmap->base + mobitmap->rowpixels * y;
+			UINT16 *pf = (UINT16 *)bitmap->base + bitmap->rowpixels * y;
+			UINT8 *pri = (UINT8 *)priority_bitmap->base + priority_bitmap->rowpixels * y;
+			for (x = rectlist.rect->min_x; x <= rectlist.rect->max_x; x++)
+				if (mo[x])
+				{
+					/* not verified: logic is all controlled in a PAL
+					
+						factors: LBPRI1-0, LBPIX3, ANPIX1-0, PFPIX3, PFPRI1-0,
+						         (~LBPIX3 & ~LBPIX2 & ~LBPIX1 & ~LBPIX0)
+					*/
+
+					/* only draw if not high priority PF */
+					if (!pri[x] || !(pf[x] & 8))
+						pf[x] = mo[x];
+					
+					/* erase behind ourselves */
+					mo[x] = 0;
+				}
+		}
+
+	/* add the alpha on top */
+	tilemap_draw(bitmap, cliprect, atarigen_alpha_tilemap, 0, 0);
 }

@@ -10,16 +10,22 @@
 #ifndef __ATARIRLE__
 #define __ATARIRLE__
 
-#include "ataripf.h"
-
 
 /*##########################################################################
 	CONSTANTS
 ##########################################################################*/
 
 /* maximum number of motion object processors */
-#define ATARIRLE_MAX		1
+#define ATARIRLE_MAX				1
 
+#define ATARIRLE_PRIORITY_SHIFT		12
+#define ATARIRLE_BANK_SHIFT			15
+#define ATARIRLE_PRIORITY_MASK		((~0 << ATARIRLE_PRIORITY_SHIFT) & 0xffff)
+#define ATARIRLE_DATA_MASK			(ATARIRLE_PRIORITY_MASK ^ 0xffff)
+
+#define ATARIRLE_CONTROL_MOGO		1
+#define ATARIRLE_CONTROL_ERASE		2
+#define ATARIRLE_CONTROL_FRAME		4
 
 
 /*##########################################################################
@@ -42,7 +48,7 @@ struct atarirle_desc
 	
 	UINT16				palettebase;		/* base palette entry */
 	UINT16				maxcolors;			/* maximum number of colors */
-
+	
 	struct atarirle_entry codemask;			/* mask for the code index */
 	struct atarirle_entry colormask;		/* mask for the color */
 	struct atarirle_entry xposmask;			/* mask for the X position */
@@ -51,6 +57,7 @@ struct atarirle_desc
 	struct atarirle_entry hflipmask;		/* mask for the horizontal flip */
 	struct atarirle_entry ordermask;		/* mask for the order */
 	struct atarirle_entry prioritymask;		/* mask for the priority */
+	struct atarirle_entry vrammask;			/* mask for the VRAM target */
 };
 
 
@@ -62,21 +69,16 @@ struct atarirle_desc
 /* setup/shutdown */
 int atarirle_init(int map, const struct atarirle_desc *desc);
 
-/* core processing */
-void atarirle_render(int map, struct mame_bitmap *bitmap, const struct rectangle *cliprect, ataripf_overrender_cb callback);
-
-/* attribute setters */
-void atarirle_set_xscroll(int map, int xscroll, int scanline);
-void atarirle_set_yscroll(int map, int xscroll, int scanline);
-
-/* attribute getters */
-int atarirle_get_xscroll(int map);
-int atarirle_get_yscroll(int map);
+/* control handlers */
+void atarirle_control_w(int map, UINT8 bits);
+VIDEO_EOF( atarirle );
 
 /* write handlers */
 WRITE16_HANDLER( atarirle_0_spriteram_w );
-
 WRITE32_HANDLER( atarirle_0_spriteram32_w );
+
+/* render helpers */
+struct mame_bitmap *atarirle_get_vram(int map, int idx);
 
 
 
@@ -85,7 +87,6 @@ WRITE32_HANDLER( atarirle_0_spriteram32_w );
 ##########################################################################*/
 
 extern data16_t *atarirle_0_spriteram;
-
 extern data32_t *atarirle_0_spriteram32;
 
 

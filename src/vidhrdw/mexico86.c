@@ -98,7 +98,8 @@ if (offs >= mexico86_objectram_size+0x1c0) continue;
 		}
 	}
 }
-
+//AT
+#if 0
 VIDEO_UPDATE( kikikai )
 {
 	int offs;
@@ -176,3 +177,69 @@ if (offs >= mexico86_objectram_size+0x1c0) continue;
 		}
 	}
 }
+#endif
+VIDEO_UPDATE( kikikai )
+{
+	int offs;
+	int sx,sy,yc;
+	int gfx_num,gfx_attr,gfx_offs;
+	int height;
+	int goffs,code,color,y;
+        int tx, ty;
+
+        fillbitmap(bitmap, get_black_pen(), &Machine->visible_area);
+        sx = 0;
+        for (offs=0; offs<mexico86_objectram_size; offs+=4)
+        {
+                if (*(UINT32*)(mexico86_objectram + offs) == 0) continue;
+
+		ty = mexico86_objectram[offs];
+		gfx_num = mexico86_objectram[offs + 1];
+                tx = mexico86_objectram[offs + 2];
+		gfx_attr = mexico86_objectram[offs + 3];
+
+		if (gfx_num & 0x80)
+		{
+			gfx_offs = ((gfx_num & 0x3f) << 7);
+			height = 32;
+               	        if (gfx_num & 0x40) sx += 16;
+                        else sx = tx;
+		}
+                else
+		{
+                        if (!(ty && tx)) continue;
+			gfx_offs = ((gfx_num & 0x1f) << 7) + ((gfx_num & 0x60) >> 1) + 12;
+			height = 2;
+                        sx = tx;
+		}
+		sy = 256 - (height << 3) - ty;
+
+                height <<= 1;
+		for (yc=0; yc<height; yc+=2)
+		{
+			y = (sy + (yc << 2)) & 0xff;
+			goffs = gfx_offs + yc;
+			code = mexico86_videoram[goffs] + ((mexico86_videoram[goffs + 1] & 0x1f) << 8);
+			color = (mexico86_videoram[goffs + 1] & 0xe0) >> 5;
+			goffs += 0x40;
+
+			drawgfx(bitmap,Machine->gfx[0],
+					code,
+					color,
+					0,0,
+					sx&0xff,y,
+					&Machine->visible_area,TRANSPARENCY_PEN,15);
+
+			code = mexico86_videoram[goffs] + ((mexico86_videoram[goffs + 1] & 0x1f) << 8);
+			color = (mexico86_videoram[goffs + 1] & 0xe0) >> 5;
+
+			drawgfx(bitmap,Machine->gfx[0],
+					code,
+					color,
+					0,0,
+					(sx+8)&0xff,y,
+					&Machine->visible_area,TRANSPARENCY_PEN,15);
+		}
+	}
+}
+//ZT

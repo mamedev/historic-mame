@@ -583,9 +583,11 @@ PALETTE_INIT( zn )
 		n_g = ( n_colour >> 5 ) & 0x1f;
 		n_b = ( n_colour >> 10 ) & 0x1f;
 
-		*( palette++ ) = ( n_r * 0xff ) / 0x1f;
-		*( palette++ ) = ( n_g * 0xff ) / 0x1f;
-		*( palette++ ) = ( n_b * 0xff ) / 0x1f;
+		n_r = ( n_r * 0xff ) / 0x1f;
+		n_g = ( n_g * 0xff ) / 0x1f;
+		n_b = ( n_b * 0xff ) / 0x1f;
+		
+		palette_set_color(n_colour, n_r, n_g, n_b);
 	}
 }
 

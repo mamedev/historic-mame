@@ -10,9 +10,11 @@
 		* Mortal Kombat 2
 		* NBA Jam
 		* NBA Jam Tournament Edition
+		* Judge Dredd (prototype)
 
 	Known bugs:
 		* shadows are missing in MK2
+		* page flipping seems off in NBA Jam
 
 **************************************************************************/
 
@@ -262,6 +264,97 @@ INPUT_PORTS_START( mk2 )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( jdredd )
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_TILT ) /* Slam Switch */
+	PORT_SERVICE( 0x0010, IP_ACTIVE_LOW )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_START4 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_SPECIAL ) /* volume down */
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_SPECIAL ) /* volume up */
+	PORT_BIT( 0xe000, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER3 | IPF_8WAY )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER3 | IPF_8WAY )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER3 | IPF_8WAY )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER3 | IPF_8WAY )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER3 )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	    /* DS1 */
+	PORT_DIPNAME( 0x0001, 0x0001, "Test Switch" )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0002, 0x0000, "Powerup Test" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0002, DEF_STR( On ))
+	PORT_BIT( 0x001c, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_DIPNAME( 0x0020, 0x0020, "Blood" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0020, DEF_STR( On ))
+	PORT_DIPNAME( 0x0040, 0x0040, "Validator" )
+	PORT_DIPSETTING(      0x0000, "Installed" )
+	PORT_DIPSETTING(      0x0040, "None" )
+	PORT_DIPNAME( 0x0080, 0x0080, "Freeze" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0080, DEF_STR( On ))
+	PORT_DIPNAME( 0x0300, 0x0000, "Coin Counters" )
+	PORT_DIPSETTING(      0x0300, "1 Counter, 1 count/coin" )
+	PORT_DIPSETTING(      0x0200, "1 Counter, Totalizing" )
+	PORT_DIPSETTING(      0x0100, "2 Counters, 1 count/coin" )
+	PORT_DIPSETTING(      0x0000, "1 Counter, 1 count/coin" )
+	PORT_DIPNAME( 0x7c00, 0x7c00, DEF_STR( Coinage ))
+	PORT_DIPSETTING(      0x7c00, "USA-1" )
+	PORT_DIPSETTING(      0x3c00, "USA-2" )
+	PORT_DIPSETTING(      0x5c00, "USA-3" )
+	PORT_DIPSETTING(      0x1c00, "USA-4" )
+	PORT_DIPSETTING(      0x6c00, "USA-ECA" )
+	PORT_DIPSETTING(      0x7400, "German-1" )
+	PORT_DIPSETTING(      0x3400, "German-2" )
+	PORT_DIPSETTING(      0x5400, "German-3" )
+	PORT_DIPSETTING(      0x1400, "German-4" )
+	PORT_DIPSETTING(      0x6400, "German-5" )
+	PORT_DIPSETTING(      0x7800, "French-1" )
+	PORT_DIPSETTING(      0x3800, "French-2" )
+	PORT_DIPSETTING(      0x5800, "French-3" )
+	PORT_DIPSETTING(      0x1800, "French-4" )
+	PORT_DIPSETTING(      0x6800, "French-ECA" )
+	PORT_DIPSETTING(      0x0c00, DEF_STR( Free_Play ))
+	PORT_DIPNAME( 0x8000, 0x0000, "Coinage Source" )
+	PORT_DIPSETTING(      0x8000, "Dipswitch" )
+	PORT_DIPSETTING(      0x0000, "CMOS" )
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( nbajam )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 | IPF_8WAY )
@@ -388,7 +481,7 @@ static struct tms34010_config cpu_config =
 static MACHINE_DRIVER_START( tunit_core )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(TMS34010, 50000000/TMS34010_CLOCK_DIVIDER)
+	MDRV_CPU_ADD_TAG("main", TMS34010, 50000000/TMS34010_CLOCK_DIVIDER)
 	MDRV_CPU_CONFIG(cpu_config)
 	MDRV_CPU_MEMORY(readmem,writemem)
 
@@ -1045,6 +1138,44 @@ ROM_START( nbajamt3 )
 ROM_END
 
 
+ROM_START( jdredd )
+	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
+
+	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD(  "jd_u3.rom", 0x010000, 0x20000, 0x6154d108 )
+	ROM_RELOAD(             0x030000, 0x20000 )
+
+	ROM_REGION( 0x1c0000, REGION_SOUND1, 0 )	/* ADPCM */
+	ROM_LOAD( "jd_u12.rom", 0x000000, 0x80000, 0xef32f202 )
+	ROM_LOAD( "jd_u13.rom", 0x080000, 0x80000, 0x3dc70473 )
+
+	ROM_REGION16_LE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_LOAD16_BYTE( "jd_uj12.rom", 0x00000, 0x80000, 0x7e5c8d5a )
+	ROM_LOAD16_BYTE( "jd_ug12.rom", 0x00001, 0x80000, 0xa16b8a4a )
+
+	ROM_REGION( 0xc00000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "jd_ug14.rom", 0x000000, 0x80000, 0x468484d7 )
+	ROM_LOAD( "jd_ug16.rom", 0x080000, 0x80000, 0x1d7f12b6 )
+	ROM_LOAD( "jd_ug17.rom", 0x100000, 0x80000, 0xb6d83d74 )
+	ROM_LOAD( "jd_ug18.rom", 0x180000, 0x80000, 0xc8a45e01 )
+
+	ROM_LOAD( "jd_uj14.rom", 0x300000, 0x80000, 0xfe6ec0ec )
+	ROM_LOAD( "jd_uj16.rom", 0x380000, 0x80000, 0x31d4a71b )
+	ROM_LOAD( "jd_uj17.rom", 0x400000, 0x80000, 0xddc76f0b )
+	ROM_LOAD( "jd_uj18.rom", 0x480000, 0x80000, 0x3e16e7a9 )
+
+	ROM_LOAD( "jd_ug19.rom", 0x600000, 0x80000, 0xe076c08e )
+	ROM_LOAD( "jd_ug20.rom", 0x680000, 0x80000, 0x7b8c370a )
+	ROM_LOAD( "jd_ug22.rom", 0x700000, 0x80000, 0x6705d5b3 )
+	ROM_LOAD( "jd_ug23.rom", 0x780000, 0x80000, 0x0c9edbc4 )
+
+	ROM_LOAD( "jd_uj19.rom", 0x900000, 0x80000, 0xbd8cffe0 )
+	ROM_LOAD( "jd_uj20.rom", 0x980000, 0x80000, 0x8fc7bfb9 )
+	ROM_LOAD( "jd_uj22.rom", 0xa00000, 0x80000, 0x7438295e )
+	ROM_LOAD( "jd_uj23.rom", 0xa80000, 0x80000, 0x86ea157d )
+ROM_END
+
+
 
 /*************************************
  *
@@ -1062,6 +1193,8 @@ GAME( 1993, mk2r14,   mk2,     tunit_dcs,   mk2,     mk2r14,   ROT0, "Midway",  
 GAME( 1993, mk2r42,   mk2,     tunit_dcs,   mk2,     mk2,      ROT0, "hack",     "Mortal Kombat II (rev L4.2, hack)" )
 GAME( 1993, mk2r91,   mk2,     tunit_dcs,   mk2,     mk2,      ROT0, "hack",     "Mortal Kombat II (rev L9.1, hack)" )
 GAME( 1993, mk2chal,  mk2,     tunit_dcs,   mk2,     mk2,      ROT0, "hack",     "Mortal Kombat II Challenger (hack)" )
+
+GAME( 1993, jdredd,   0,       tunit_adpcm, jdredd,  jdredd,   ROT0, "Midway",   "Judge Dredd (rev LA1, prototype)" )
 
 GAME( 1993, nbajam,   0,       tunit_adpcm, nbajam,  nbajam,   ROT0, "Midway",   "NBA Jam (rev 3.01 04/07/93)" )
 GAME( 1993, nbajamr2, nbajam,  tunit_adpcm, nbajam,  nbajam20, ROT0, "Midway",   "NBA Jam (rev 2.00 02/10/93)" )

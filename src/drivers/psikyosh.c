@@ -19,6 +19,7 @@ There appear to be multiple revisions of this board
  ------------------------------
  Taisen Hot Gimmick (c)1997
  Taisen Hot Gimmick Kairakuten (c)1998
+ Rest of the Hot Gimmick games (there are several)? (guess)
  Lode Runner - The Dig Fight (c)2000
  Quiz de Idol Hot Debut (c)2001 *not confirmed*
 
@@ -26,6 +27,8 @@ There appear to be multiple revisions of this board
  -------------------------------
  Gunbird 2 (c)1998
  Strikers 1999 / Strikers 1945 III *not confirmed ps5, but is custom chip ps6406b*
+ Dragon Blaze? (guess)
+ GunBarich? (guess)
 
 All the boards have
 
@@ -37,20 +40,35 @@ YMF278B-F (80 pin PQFP) & YAC513 (16 pin SOIC)
 
 To Do:
 
+Gunbird 2 has some bad tiles on levels 5 and 7.
+Bad tiles are between 0x30000 - 0x33000.
+Either 3l.u6 or 3h.u13 is bad.
+
 Backgrounds (I think its the ram after the sprite ram .. ) *started*
   - see notes in vidhrdw file-
 
 Sound (Sound Chip Isn't Emulated)
-Games Hang when Saving EEProm (verify code) *done*
-Sprite Zoom
-Investigate why other games don't work.  *differnet custom chip, different features?*
-Gunbird 2 crashes after inserting a coin if the eeprom test pass *fixed*
+
+Investigate why other games don't work.  *different custom chip, different features?*
+they might be waiting on some register at the end of sprite ram ..
+
 Strikers 1945 II hangs on one of the bosses sometimes, core bug?
 or something to do with unknown / incorrectly handled reads?
+
+are sprite colours 100% now? black clouds in one level of sbomberb, maybe alpha, yep alpha.
+See small submarines on sea level of Strikers.
+
+Getting the priorities right is a pain ;)
+
+We probably need some addition type blend effect which the mame core doesn't support
+
+Fixed:
+
+Games Hang when Saving EEProm (verify code) *done*
+Sprite Zoom *done* -Paul Priest
+Gunbird 2 crashes after inserting a coin if the eeprom test pass *fixed*
 Find Idle Loops for Speed Up *done*
-are sprite colours 100% now? black clouds in one level of sbomberb, maybe alpha
-blending instead? or another core bug?
-why does s1945ii boot as japan when the board was world? eeprom value?
+why does s1945ii boot as japan when the board was world? eeprom value? *done* -Paul Priest
 
 ----------------------------------------------------------------*/
 
@@ -64,15 +82,15 @@ why does s1945ii boot as japan when the board was world? eeprom value?
 
 #define MASTER_CLOCK 57272700	// main oscillator frequency
 
-data32_t *psikyosh_spriteram, *psikyosh_unknownram1, *psikyosh_unknownram2, *psikyosh_unknownram3, *psh_ram;
+data32_t *psikyosh_bgram, *psikyosh_unknownram2, *psikyosh_vidregs, *psh_ram;
 int psikyosh_drawbg;
 
 int use_factory_eeprom;
 static data8_t factory_eeprom[16] =	{0x00,0x02,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x03,0x00,0x00,0x00,0x00,0x00 };
 
-
-VIDEO_START(psikyosh);
-VIDEO_UPDATE(psikyosh);
+VIDEO_START( psikyosh );
+VIDEO_EOF( psikyosh );
+VIDEO_UPDATE( psikyosh );
 
 static struct GfxLayout layout_16x16x4 =
 {
@@ -116,7 +134,6 @@ struct EEPROM_interface eeprom_interface_93C56 =
 //	"*10010xxxx"	// erase all	1 00 10xxxx
 };
 
-
 static NVRAM_HANDLER(93C56)
 {
 	if (read_or_write)
@@ -140,8 +157,6 @@ static NVRAM_HANDLER(93C56)
 
 			if (use_factory_eeprom)	/* Set the EEPROM to Factory Defaults for games needing them*/
 				EEPROM_set_data(factory_eeprom,16);
-
-
 		}
 	}
 }
@@ -164,7 +179,7 @@ static READ32_HANDLER( psh_eeprom_r )
 {
 	if (ACCESSING_MSB32)
 	{
-		return (EEPROM_read_bit()<<28);
+		return ((EEPROM_read_bit() << 28) | (readinputport(4) << 24));
 	}
 
 	logerror("Unk EEPROM read mask %x\n", mem_mask);
@@ -241,15 +256,14 @@ static WRITE32_HANDLER( psh_ymf_pcm_w )
 
 static MEMORY_READ32_START( ps3v1_readmem )
 	{ 0x00000000, 0x000fffff, MRA32_ROM },	// program ROM (1 meg)
-	{ 0x02000000, 0x021fffff, MRA32_BANK1 }, // Data Rom */
+	{ 0x02000000, 0x021fffff, MRA32_BANK1 }, // data ROM */
 	{ 0x03000000, 0x03003fff, MRA32_RAM },	// sprites
-	{ 0x03004000, 0x03005fff, MRA32_RAM },
-	{ 0x03006000, 0x0300ffff, MRA32_RAM },
-	{ 0x03040000, 0x03043fff, MRA32_RAM },
+	{ 0x03004000, 0x0300ffff, MRA32_RAM },
+	{ 0x03040000, 0x03044fff, MRA32_RAM },
 	{ 0x03050000, 0x030501ff, MRA32_RAM },
 //	{ 0x0305ffdc, 0x0305ffdf, MRA32_RAM }, // also writes to this address - might be vblank reads?
+	{ 0x0305ffe0, 0x0305ffff, MRA32_RAM }, //  video registers .. or so it seems, needed by s1945ii
 	{ 0x05000000, 0x05000003, psh_ymf_fm_r }, // read YMF status
-
 	{ 0x05800000, 0x05800003, io32_r },
 	{ 0x05800004, 0x05800007, psh_eeprom_r },
 	{ 0x06000000, 0x060fffff, MRA32_RAM },	// main RAM (1 meg)
@@ -257,13 +271,13 @@ MEMORY_END
 
 static MEMORY_WRITE32_START( ps3v1_writemem )
 	{ 0x00000000, 0x000fffff, MWA32_ROM },	// program ROM (1 meg)
-	{ 0x02000000, 0x021fffff, MWA32_ROM }, // data Rom */
-	{ 0x03000000, 0x03003fff, MWA32_RAM, &psikyosh_spriteram },	// sprites (might be a bit longer)
-	{ 0x03004000, 0x0300ffff, MWA32_RAM, &psikyosh_unknownram1 }, // backgrounds I think
-	{ 0x03040000, 0x03043fff, paletteram32_xRRRRRGGGGGBBBBB_dword_w, &paletteram32 }, // palette..
+	{ 0x02000000, 0x021fffff, MWA32_ROM }, // data ROM */
+	{ 0x03000000, 0x03003fff, MWA32_RAM, &spriteram32, &spriteram_size },	// sprites (might be a bit longer)
+	{ 0x03004000, 0x0300ffff, MWA32_RAM, &psikyosh_bgram }, // backgrounds I think
+	{ 0x03040000, 0x03044fff, paletteram32_xRRRRRGGGGGBBBBB_dword_w, &paletteram32 }, // palette..
 	{ 0x03050000, 0x030501ff, MWA32_RAM, &psikyosh_unknownram2 }, // a gradient sometimes ...
 //	{ 0x0305ffdc, 0x0305ffdf, MWA32_RAM }, // also reads from this address
-	{ 0x0305ffe0, 0x0305ffff, MWA32_RAM, &psikyosh_unknownram3 }, //  video registers .. or so it seems
+	{ 0x0305ffe0, 0x0305ffff, MWA32_RAM, &psikyosh_vidregs }, //  video registers .. or so it seems
 	{ 0x05000000, 0x05000003, psh_ymf_fm_w }, // first 2 OPL4 register banks
 	{ 0x05000004, 0x05000007, psh_ymf_pcm_w }, // third OPL4 register bank
 	{ 0x05800004, 0x05800007, psh_eeprom_w },
@@ -275,10 +289,12 @@ static MEMORY_READ32_START( ps5_readmem )
 	{ 0x03000000, 0x03000003, io32_r },
 	{ 0x03000004, 0x03000007, psh_eeprom_r },
 	{ 0x03100000, 0x03100003, psh_ymf_fm_r },
-	{ 0x04000000, 0x0400ffff, MRA32_RAM },
-	{ 0x04040000, 0x04043fff, MRA32_RAM },
+	{ 0x04000000, 0x04003fff, MRA32_RAM },
+	{ 0x04004000, 0x0400ffff, MRA32_RAM },
+	{ 0x04040000, 0x04044fff, MRA32_RAM },
 	{ 0x04050000, 0x040501ff, MRA32_RAM },
 	{ 0x05000000, 0x0507ffff, MRA32_BANK1 },
+	{ 0x0405ffe0, 0x0405ffff, MRA32_RAM }, //  video registers .. or so it seems
 	{ 0x06000000, 0x060fffff, MRA32_RAM },
 MEMORY_END
 
@@ -286,11 +302,11 @@ static MEMORY_WRITE32_START( ps5_writemem )
 	{ 0x03000004, 0x03000007, psh_eeprom_w },
 	{ 0x03100000, 0x03100003, psh_ymf_fm_w }, // first 2 OPL4 register banks
 	{ 0x03100004, 0x03100007, psh_ymf_pcm_w }, // third OPL4 register bank
-	{ 0x04000000, 0x04003fff, MWA32_RAM, &psikyosh_spriteram  },
-	{ 0x04004000, 0x0400ffff, MWA32_RAM, &psikyosh_unknownram1  },
-	{ 0x04040000, 0x04043fff, paletteram32_xRRRRRGGGGGBBBBB_dword_w, &paletteram32 },
+	{ 0x04000000, 0x04003fff, MWA32_RAM, &spriteram32, &spriteram_size },
+	{ 0x04004000, 0x0400ffff, MWA32_RAM, &psikyosh_bgram },
+	{ 0x04040000, 0x04044fff, paletteram32_xRRRRRGGGGGBBBBB_dword_w, &paletteram32 },
 	{ 0x04050000, 0x040501ff, MWA32_RAM, &psikyosh_unknownram2 },
-	{ 0x0405ffe0, 0x0405ffff, MWA32_RAM, &psikyosh_unknownram3 }, //  video registers .. or so it seems
+	{ 0x0405ffe0, 0x0405ffff, MWA32_RAM, &psikyosh_vidregs }, //  video registers .. or so it seems
 	{ 0x06000000, 0x060fffff, MWA32_RAM, &psh_ram },
 MEMORY_END
 
@@ -323,7 +339,8 @@ static MACHINE_DRIVER_START( psikyo3v1 )
 	MDRV_NVRAM_HANDLER(93C56)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+//	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM | VIDEO_RGB_DIRECT) /* If using alpha */
 	MDRV_SCREEN_SIZE(64*8, 32*8)
 	MDRV_VISIBLE_AREA(0, 40*8-1, 0, 28*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
@@ -331,6 +348,7 @@ static MACHINE_DRIVER_START( psikyo3v1 )
 	MDRV_PALETTE_LENGTH((0x4000/4)*2)
 
 	MDRV_VIDEO_START(psikyosh)
+	MDRV_VIDEO_EOF(psikyosh)
 	MDRV_VIDEO_UPDATE(psikyosh)
 
 	/* sound hardware */
@@ -404,6 +422,76 @@ INPUT_PORTS_START( psikyosh )
 	PORT_BITX(0x20, IP_ACTIVE_LOW,  IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN     )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
+
+	PORT_START /* fake region */
+	PORT_DIPNAME( 0x01, 0x01, "Region" )
+	PORT_DIPSETTING(    0x00, "Japan" )
+	PORT_DIPSETTING(    0x01, "World" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( gunbird2 )
+	PORT_START	/* player 1 controls */
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_START1                       )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER1 )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+
+	PORT_START	/* player 2 controls */
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_START2                       )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER2 )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+
+
+	PORT_START	/* not read? */
+	PORT_DIPNAME( 0x01, 0x01, "3" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START	/* system inputs */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN1    )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_COIN2    )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW,  IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
+
+	PORT_START /* fake region */
+	PORT_DIPNAME( 0x03, 0x01, "Region" )
+	PORT_DIPSETTING(    0x00, "Japan" )
+	PORT_DIPSETTING(    0x01, "International Ver A." )
+	PORT_DIPSETTING(    0x02, "International Ver B." )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( daraku )
@@ -446,6 +534,11 @@ INPUT_PORTS_START( daraku )
     PORT_BITX(0x20, IP_ACTIVE_LOW,  IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
     PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
     PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
+
+	PORT_START /* fake region */
+	PORT_DIPNAME( 0x01, 0x00, "Region" )
+	PORT_DIPSETTING(    0x00, "Japan" )
+	PORT_DIPSETTING(    0x01, "World" ) /* Title screen is different, but English region text is missing */
 INPUT_PORTS_END
 
 
@@ -454,7 +547,7 @@ ROM_START( sbomberb )
 	ROM_LOAD32_WORD_SWAP( "1-b_pr_l.u18", 0x000002, 0x080000, 0x52d12225 )
 	ROM_LOAD32_WORD_SWAP( "1-b_pr_h.u17", 0x000000, 0x080000, 0x1bbd0345 )
 
-	ROM_REGION( 0x2800000, REGION_GFX1, 0)
+	ROM_REGION( 0x2800000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD32_WORD( "0l.u4",  0x0000000, 0x400000, 0xb7e4ac51 )
 	ROM_LOAD32_WORD( "0h.u13", 0x0000002, 0x400000, 0x235e6c27 )
 	ROM_LOAD32_WORD( "1l.u3",  0x0800000, 0x400000, 0x3c88c48c )
@@ -476,14 +569,14 @@ ROM_START( gunbird2 )
 	ROM_LOAD32_WORD_SWAP( "1_prog_h.u17", 0x000000, 0x080000, 0x7328d8bf )
 	ROM_LOAD16_WORD_SWAP( "3_pdata.u1",   0x100000, 0x080000, 0xa5b697e6 )
 
-	ROM_REGION( 0x4000000, REGION_GFX1, 0)
+	ROM_REGION( 0x4000000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD32_WORD( "0l.u3",  0x0000000, 0x800000, 0x5c826bc8 )
 	ROM_LOAD32_WORD( "0h.u10", 0x0000002, 0x800000, 0x3df0cb6c )
 	ROM_LOAD32_WORD( "1l.u4",  0x1000000, 0x800000, 0x8df0c310 )
 	ROM_LOAD32_WORD( "1h.u11", 0x1000002, 0x800000, 0x4ee0103b )
 	ROM_LOAD32_WORD( "2l.u5",  0x2000000, 0x800000, 0xe1c7a7b8 )
 	ROM_LOAD32_WORD( "2h.u12", 0x2000002, 0x800000, 0xbc8a41df )
-	ROM_LOAD32_WORD( "3l.u6",  0x3000000, 0x800000, 0x5102f479 )
+	ROM_LOAD32_WORD( "3l.u6",  0x3000000, 0x800000, BADCRC(0x5102f479) ) // FIRST AND SECOND HALF IDENTICAL
 	ROM_LOAD32_WORD( "3h.u13", 0x3000002, 0x800000, 0xaf9bd58c )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples */
@@ -498,7 +591,7 @@ ROM_START( s1945ii )
 	ROM_REGION( 0x2000000, REGION_GFX1, ROMREGION_DISPOSE )	/* Tiles */
 	ROM_LOAD32_WORD( "0l.u4",    0x0000000, 0x400000, 0xbfacf98d )
 	ROM_LOAD32_WORD( "0h.u13",   0x0000002, 0x400000, 0x1266f67c )
-	ROM_LOAD32_WORD( "1lnew.u3", 0x0800000, 0x400000, 0x2d3332c9 )
+	ROM_LOAD32_WORD( "1l.u3",    0x0800000, 0x400000, 0x2d3332c9 )
 	ROM_LOAD32_WORD( "1h.u12",   0x0800002, 0x400000, 0x27b32c3e )
 	ROM_LOAD32_WORD( "2l.u2",    0x1000000, 0x400000, 0x91ba6d23 )
 	ROM_LOAD32_WORD( "2h.u20",   0x1000002, 0x400000, 0xfabf4334 )
@@ -603,17 +696,17 @@ ROM_END
 
 ROM_START( loderndf )
 	ROM_REGION( 0x100000, REGION_CPU1, 0)
-	ROM_LOAD32_WORD_SWAP( "2b-47ca.u22", 0x000002, 0x080000, 0xfe2424c0 )
-	ROM_LOAD32_WORD_SWAP( "1b-d58b.u23", 0x000000, 0x080000, 0xfae92286 )
+	ROM_LOAD32_WORD_SWAP( "1b.u23", 0x000002, 0x080000, 0xfae92286 )
+	ROM_LOAD32_WORD_SWAP( "2b.u22", 0x000000, 0x080000, 0xfe2424c0 )
 
-	ROM_REGION( 0x1000000, REGION_GFX1, ROMREGION_DISPOSE ) /* gfx - not dumped */
-	ROM_LOAD32_WORD( "0l.u2",  0x0000000, 0x400000, 0 )
-	ROM_LOAD32_WORD( "0h.u11", 0x0000002, 0x400000, 0 )
-	ROM_LOAD32_WORD( "1l.u3",  0x0800000, 0x400000, 0 )
-	ROM_LOAD32_WORD( "1h.u12", 0x0800002, 0x400000, 0 )
+	ROM_REGION( 0x2000000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD32_WORD( "0l.u2",  0x0000000, 0x800000, 0xccae855d )
+	ROM_LOAD32_WORD( "0h.u11", 0x0000002, 0x800000, 0x7a146c59 )
+	ROM_LOAD32_WORD( "1l.u3",  0x1000000, 0x800000, 0x7a9cd21e )
+	ROM_LOAD32_WORD( "1h.u12", 0x1000002, 0x800000, 0x78f40d0d )
 
-	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* samples - not dumped */
-	ROM_LOAD( "snd0.u10", 0x000000, 0x400000, 0 )
+	ROM_REGION( 0x800000, REGION_SOUND1, 0 )
+	ROM_LOAD( "snd0.u10", 0x000000, 0x800000, 0x2da3788f )
 ROM_END
 
 
@@ -703,9 +796,7 @@ PC  : 0602897E: BT      $06028972
 	return psh_ram[0x04000C/4];
 }
 
-
-
-static DRIVER_INIT(psh)
+static DRIVER_INIT( psh )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	cpu_setbank(1,&RAM[0x100000]);
@@ -713,39 +804,37 @@ static DRIVER_INIT(psh)
 	use_factory_eeprom=0;
 }
 
-
-static DRIVER_INIT(s1945ii)
+static DRIVER_INIT( s1945ii )
 {
 	install_mem_read32_handler(0, 0x600000C, 0x600000f, s1945ii_speedup_r );
-	psikyosh_drawbg=0;
+	psikyosh_drawbg=1;
 	use_factory_eeprom=1;
 }
 
-static DRIVER_INIT(soldivid)
+static DRIVER_INIT( soldivid )
 {
 	install_mem_read32_handler(0, 0x600000C, 0x600000f, soldivid_speedup_r );
-	psikyosh_drawbg=0;
+	psikyosh_drawbg=1;
 	use_factory_eeprom=0;
 }
 
-static DRIVER_INIT(sbomberb)
+static DRIVER_INIT( sbomberb )
 {
 	install_mem_read32_handler(0, 0x600000C, 0x600000f, sbomberb_speedup_r );
 	psikyosh_drawbg=1;
 	use_factory_eeprom=1;
 }
 
-static DRIVER_INIT(daraku)
+static DRIVER_INIT( daraku )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	cpu_setbank(1,&RAM[0x100000]);
 	install_mem_read32_handler(0, 0x600000C, 0x600000f, daraku_speedup_r );
-	psikyosh_drawbg=0;
+	psikyosh_drawbg=1;
 	use_factory_eeprom=0;
 }
 
-
-static DRIVER_INIT(gunbird2)
+static DRIVER_INIT( gunbird2 )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	cpu_setbank(1,&RAM[0x100000]);
@@ -754,20 +843,16 @@ static DRIVER_INIT(gunbird2)
 	use_factory_eeprom=1;
 }
 
-
 /* ps3-v1 */
 GAMEX( 1997, s1945ii,  0,        psikyo3v1, psikyosh, s1945ii,  ROT270, "Psikyo", "Strikers 1945 II", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-/* the strikers board this was dumped from was world .. it must depend on an eeprom value or something as it gives a japan export message */
-GAMEX( 1997, soldivid, 0,        psikyo3v1, psikyosh, soldivid, ROT0,   "Psikyo", "Sol Divide (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1998, sbomberb, 0,        psikyo3v1, psikyosh, sbomberb, ROT270, "Psikyo", "Space Bomber (ver. B) (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1997, soldivid, 0,        psikyo3v1, psikyosh, soldivid, ROT0,   "Psikyo", "Sol Divide - The Sword Of Darkness", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1998, sbomberb, 0,        psikyo3v1, psikyosh, sbomberb, ROT270, "Psikyo", "Space Bomber (ver. B)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1998, daraku,   0,        psikyo3v1, daraku,   daraku,   ROT0,   "Psikyo", "Daraku Tenshi - The Fallen Angels (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 
 /* ps4 */
-GAMEX( 1997, hotgmck,  0,        psikyo3v1,   psikyosh, psh,      ROT0,   "Psikyo", "Taisen Hot Gimmick (Japan)", GAME_NOT_WORKING )
-GAMEX( 1998, hgkairak, 0,        psikyo3v1,   psikyosh, psh,      ROT0,   "Psikyo", "Taisen Hot Gimmick Kairakuten (Japan)", GAME_NOT_WORKING )
-GAMEX( 2000, loderndf, 0,        psikyo3v1,   psikyosh, psh,      ROT0,   "Psikyo", "Lode Runner - The Dig Fight (ver. B)  (Japan)", GAME_NOT_WORKING )
+GAMEX( 1997, hotgmck,  0,        psikyo3v1, psikyosh, psh,      ROT0,   "Psikyo", "Taisen Hot Gimmick (Japan)", GAME_NOT_WORKING )
+GAMEX( 1998, hgkairak, 0,        psikyo3v1, psikyosh, psh,      ROT0,   "Psikyo", "Taisen Hot Gimmick Kairakuten (Japan)", GAME_NOT_WORKING )
+GAMEX( 2000, loderndf, 0,        psikyo3v1, psikyosh, psh,      ROT0,   "Psikyo", "Lode Runner - The Dig Fight (ver. B)  (Japan)", GAME_NOT_WORKING )
 
 /* ps5 */
-GAMEX( 1998, gunbird2, 0,        psikyo5,   psikyosh, gunbird2,    ROT270, "Psikyo", "Gunbird 2 (ver. B?)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-// gunbird 2 at one point displayed 'international version b' on the screen, although it was in japanese, now it displays nothing there, but maybe its still version b?
-
+GAMEX( 1998, gunbird2, 0,        psikyo5,   gunbird2, gunbird2, ROT270, "Psikyo", "Gunbird 2", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )

@@ -165,6 +165,15 @@ void m68k_write_memory_8(unsigned int address, unsigned int value);
 void m68k_write_memory_16(unsigned int address, unsigned int value);
 void m68k_write_memory_32(unsigned int address, unsigned int value);
 
+/* Special call to simulate undocumented 68k behavior when move.l with a
+ * predecrement destination mode is executed.
+ * To simulate real 68k behavior, first write the high word to
+ * [address+2], and then write the low word to [address].
+ *
+ * Enable this functionality with M68K_SIMULATE_PD_WRITES in m68kconf.h.
+ */
+INLINE void m68k_write_memory_32_pd(unsigned int address, unsigned int value);
+
 
 
 /* ======================================================================== */

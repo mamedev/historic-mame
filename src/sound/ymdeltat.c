@@ -9,6 +9,8 @@
 ** Written by Tatsuyuki Satoh
 **
 ** History:
+** 12-28-2001 Acho A. Tang
+**  - added EOS status report on ADPCM playback.
 ** 05-08-2001 Jarek Burczynski:
 **  - now_step is initialized with 0 at the start of play.
 ** 12-06-2001 Jarek Burczynski:
@@ -76,6 +78,7 @@ void YM_DELTAT_ADPCM_Write(YM_DELTAT *DELTAT,int r,int v)
 #endif
 		if( v&0x80 ){
 			DELTAT->portstate = v&0x90; /* start req,memory mode,repeat flag copy */
+			DELTAT->eos      = 0; //AT
 			/**** start ADPCM ****/
 			DELTAT->volume_w_step = (double)DELTAT->volume * DELTAT->step / (1<<YM_DELTAT_SHIFT);
 			DELTAT->now_addr = (DELTAT->start)<<1;
@@ -172,6 +175,7 @@ void YM_DELTAT_ADPCM_Reset(YM_DELTAT *DELTAT,int pan)
 	DELTAT->volume_w_step = 0;
 	DELTAT->next_leveling = 0;
 	DELTAT->portstate = 0;
+	DELTAT->eos = 0; //AT
 	/* DELTAT->portshift = 8; */
 }
 
@@ -192,6 +196,7 @@ void YM_DELTAT_postload(YM_DELTAT *DELTAT,UINT8 *regs)
 void YM_DELTAT_savestate(const char *statename,int num,YM_DELTAT *DELTAT)
 {
 	state_save_register_UINT8 (statename, num, "DeltaT.portstate" , &DELTAT->portstate , 1);
+	state_save_register_UINT8 (statename, num, "DeltaT.eos"       , &DELTAT->eos       , 1); //AT
 	state_save_register_UINT32(statename, num, "DeltaT.address"   , &DELTAT->now_addr  , 1);
 	state_save_register_UINT32(statename, num, "DeltaT.step"      , &DELTAT->now_step  , 1);
 	state_save_register_INT32 (statename, num, "DeltaT.acc"       , &DELTAT->acc    , 1);
@@ -247,6 +252,7 @@ INLINE void YM_DELTAT_ADPCM_CALC(YM_DELTAT *DELTAT)
 					if(DELTAT->arrivedFlagPtr)
 						(*DELTAT->arrivedFlagPtr) |= DELTAT->flagMask;
 					DELTAT->portstate = 0;
+					DELTAT->eos = 1; //AT: raise EOS flag at the end of sample playback
 					DELTAT->adpcml = 0;
 					now_leveling = 0;
 					return;

@@ -1,15 +1,15 @@
 # a tiny compile is without Neogeo games
 COREDEFS += -DTINY_COMPILE=1
-COREDEFS += -DTINY_NAME="driver_buckrog,driver_zoom909,driver_zoom909a"
-COREDEFS += -DTINY_POINTER="&driver_buckrog,&driver_zoom909,&driver_zoom909a"
+COREDEFS += -DTINY_NAME="driver_taxidrvr"
+COREDEFS += -DTINY_POINTER="&driver_taxidrvr"
 
 # uses these CPUs
-CPUS+=CPU_Z80@
+CPUS+=Z80@
 
 # uses these SOUNDs
-SOUNDS+=SOUND_SAMPLES@
+SOUNDS+=AY8910@
 
-OBJS = $(OBJ)/drivers/turbo.o $(OBJ)/machine/turbo.o $(OBJ)/vidhrdw/turbo.o $(OBJ)/machine/segacrpt.o
+OBJS = $(OBJ)/drivers/taxidrvr.o $(OBJ)/vidhrdw/taxidrvr.o
 
 # MAME specific core objs
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

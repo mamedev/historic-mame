@@ -684,6 +684,13 @@ static void ONI_SMH_xx(void);
 static void ONI_TMM_xx(void);
 static void ONI_V_xx(void);
 static void ORAW_wa(void);
+static void ORAX_B(void);
+static void ORAX_D(void);
+static void ORAX_Dm(void);
+static void ORAX_Dp(void);
+static void ORAX_H(void);
+static void ORAX_Hm(void);
+static void ORAX_Hp(void);
 static void ORA_A_A(void);
 static void ORA_A_A(void);
 static void ORA_A_B(void);
@@ -2556,13 +2563,14 @@ static struct opcode_s op70[256] =
 	{XRAX_Dm,		2,11,11,L0|L1}, /* 96: 0111 0000 1001 0110						*/
 	{XRAX_Hm,		2,11,11,L0|L1}, /* 97: 0111 0000 1001 0111						*/
 	{illegal2,		2, 8, 8,L0|L1}, /* 98: 0111 0000 1001 1000						*/
-	{illegal2,		2, 8, 8,L0|L1}, /* 99: 0111 0000 1001 1001						*/
-	{illegal2,		2, 8, 8,L0|L1}, /* 9a: 0111 0000 1001 1010						*/
-	{illegal2,		2, 8, 8,L0|L1}, /* 9b: 0111 0000 1001 1011						*/
-	{illegal2,		2, 8, 8,L0|L1}, /* 9c: 0111 0000 1001 1100						*/
-	{illegal2,		2, 8, 8,L0|L1}, /* 9d: 0111 0000 1001 1101						*/
-	{illegal2,		2, 8, 8,L0|L1}, /* 9e: 0111 0000 1001 1110						*/
-	{illegal2,		2, 8, 8,L0|L1}, /* 9f: 0111 0000 1001 1111						*/
+// orax added, timings not verified
+	{ORAX_B,		2,11, 8,L0|L1}, /* 99: 0111 0000 1001 1001						*/
+	{ORAX_D,		2,11, 8,L0|L1}, /* 9a: 0111 0000 1001 1010						*/
+	{ORAX_H,		2,11, 8,L0|L1}, /* 9b: 0111 0000 1001 1011						*/
+	{ORAX_Dp,		2,11, 8,L0|L1}, /* 9c: 0111 0000 1001 1100						*/
+	{ORAX_Hp,		2,11, 8,L0|L1}, /* 9d: 0111 0000 1001 1101						*/
+	{ORAX_Dm,		2,11, 8,L0|L1}, /* 9e: 0111 0000 1001 1110						*/
+	{ORAX_Hm,		2,11, 8,L0|L1}, /* 9f: 0111 0000 1001 1111						*/
 
 	{illegal2,		2, 8, 8,L0|L1}, /* a0: 0111 0000 1010 0000						*/
 	{ADDNCX_B,		2,11, 8,L0|L1}, /* a1: 0111 0000 1010 0001						*/

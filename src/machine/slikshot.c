@@ -556,7 +556,7 @@ void slikshot_extra_draw(struct mame_bitmap *bitmap, const struct rectangle *cli
 	curx = xpos;
 
 	/* if the shoot button is pressed, fire away */
-	newshoot = readinputport(2) & 1;
+	newshoot = readinputport(7) & 1;
 	if (newshoot && !lastshoot)
 	{
 		compute_sensors();

@@ -15,6 +15,8 @@ extern int m68ki_remaining_cycles;
 /* Configuration switches (see m68kconf.h for explanation) */
 #define M68K_SEPARATE_READS         OPT_ON
 
+#define M68K_SIMULATE_PD_WRITES     OPT_ON
+
 #define M68K_EMULATE_INT_ACK        OPT_ON
 #define M68K_INT_ACK_CALLBACK(A)
 
@@ -95,6 +97,17 @@ INLINE unsigned int m68k_read_pcrelative_32(unsigned int address)
 #define m68k_write_memory_8(address, value)  (*m68k_memory_intf.write8)(address, value)
 #define m68k_write_memory_16(address, value) (*m68k_memory_intf.write16)(address, value)
 #define m68k_write_memory_32(address, value) (*m68k_memory_intf.write32)(address, value)
+
+/* Special call to simulate undocumented 68k behavior when move.l with a
+ * predecrement destination mode is executed.
+ * A real 68k first writes the high word to [address+2], and then writes the
+ * low word to [address].
+ */
+INLINE void m68k_write_memory_32_pd(unsigned int address, unsigned int value)
+{
+	(*m68k_memory_intf.write16)(address+2, value>>16);
+	(*m68k_memory_intf.write16)(address, value&0xffff);
+}
 
 
 #ifdef A68K0

@@ -863,21 +863,21 @@ static MACHINE_DRIVER_START( cinemat )
 	MDRV_CPU_ADD(CCPU, 5000000)
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_PORTS(readport,writeport)
-	
+
 	MDRV_FRAMES_PER_SECOND(38)
 	MDRV_MACHINE_INIT(cinemat_sound)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(400, 300)
 	MDRV_VISIBLE_AREA(0, 1024, 0, 768)
 	MDRV_PALETTE_LENGTH(256+32768)
-	
+
 	MDRV_PALETTE_INIT(cinemat)
 	MDRV_VIDEO_START(cinemat)
 	MDRV_VIDEO_EOF(cinemat)
 	MDRV_VIDEO_UPDATE(vector)
-	
+
 	/* sound hardware */
 MACHINE_DRIVER_END
 
@@ -954,7 +954,7 @@ static MACHINE_DRIVER_START( demon )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(cinemat)
 	MDRV_IMPORT_FROM(demon_sound)
-	
+
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 1024, 0, 800)
 MACHINE_DRIVER_END
@@ -997,6 +997,14 @@ ROM_START( starcas )
 	ROM_LOAD16_BYTE( "starcas3.r7", 0x9001, 0x0800, 0xc367b69d )
 ROM_END
 
+ROM_START( starcasp )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 8k for code */
+	ROM_LOAD16_BYTE( "starcasp.t7", 0x8000, 0x0800, 0xd2c551a2 )
+	ROM_LOAD16_BYTE( "starcasp.p7", 0x8001, 0x0800, 0xbaa4e422 )
+	ROM_LOAD16_BYTE( "starcasp.u7", 0x9000, 0x0800, 0x26941991 )
+	ROM_LOAD16_BYTE( "starcasp.r7", 0x9001, 0x0800, 0x5dd151e5 )
+ROM_END
+
 
 ROM_START( starcas1 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 8k for code */
@@ -1004,6 +1012,22 @@ ROM_START( starcas1 )
 	ROM_LOAD16_BYTE( "starcast.p7", 0x8001, 0x0800, 0xd8f58d9a )
 	ROM_LOAD16_BYTE( "starcast.u7", 0x9000, 0x0800, 0xd4f35b82 )
 	ROM_LOAD16_BYTE( "starcast.r7", 0x9001, 0x0800, 0x9fd3de54 )
+ROM_END
+
+ROM_START( starcase )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 8k for code */
+	ROM_LOAD16_BYTE( "mottoeis.t7", 0x8000, 0x0800, 0x65d0a225 )
+	ROM_LOAD16_BYTE( "mottoeis.p7", 0x8001, 0x0800, 0xd8f58d9a )
+	ROM_LOAD16_BYTE( "mottoeis.u7", 0x9000, 0x0800, 0xd4f35b82 )
+	ROM_LOAD16_BYTE( "mottoeis.r7", 0x9001, 0x0800, 0xa2c1ed52 )
+ROM_END
+
+ROM_START( stellcas )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 8k for code */
+	ROM_LOAD16_BYTE( "elttron.t7", 0x8000, 0x0800, 0x65d0a225 )
+	ROM_LOAD16_BYTE( "elttron.p7", 0x8001, 0x0800, 0xd8f58d9a )
+	ROM_LOAD16_BYTE( "elttron.u7", 0x9000, 0x0800, 0xd5b44050 )
+	ROM_LOAD16_BYTE( "elttron.r7", 0x9001, 0x0800, 0x6f1f261e )
 ROM_END
 
 
@@ -1058,6 +1082,22 @@ ROM_START( armora )
 	ROM_LOAD16_BYTE( "ar414lo.p6", 0x8001, 0x1000, 0xdf1c2370 )
 	ROM_LOAD16_BYTE( "ar414ue.u6", 0xa000, 0x1000, 0xb0276118 )
 	ROM_LOAD16_BYTE( "ar414uo.r6", 0xa001, 0x1000, 0x229d779f )
+ROM_END
+
+ROM_START( armorap )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 16k for code */
+	ROM_LOAD16_BYTE( "armorp.t7", 0x8000, 0x1000, 0xd7e71f84 )
+	ROM_LOAD16_BYTE( "armorp.p7", 0x8001, 0x1000, 0xdf1c2370 )
+	ROM_LOAD16_BYTE( "armorp.u7", 0xa000, 0x1000, 0x4a86bd8a )
+	ROM_LOAD16_BYTE( "armorp.r7", 0xa001, 0x1000, 0xd2dd4eae )
+ROM_END
+
+ROM_START( armorar )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 16k for code */
+	ROM_LOAD16_BYTE( "armorr.t7", 0x8000, 0x0800, 0x256d1ed9 )
+	ROM_LOAD16_BYTE( "armorr.p7", 0x8001, 0x0800, 0xbf75c158 )
+	ROM_LOAD16_BYTE( "armorr.u7", 0x9000, 0x0800, 0xba68331d )
+	ROM_LOAD16_BYTE( "armorr.r7", 0x9001, 0x0800, 0xfa14c0b3 )
 ROM_END
 
 
@@ -1191,6 +1231,13 @@ static DRIVER_INIT( armora )
 	cinemat_select_artwork(CCPU_MONITOR_BILEV, 1, 0, 0);
 }
 
+static DRIVER_INIT( armorar )
+{
+	ccpu_Config(1, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
+	cinemat_sound_handler = 0;
+	cinemat_select_artwork(CCPU_MONITOR_BILEV, 1, 0, 0);
+}
+
 
 static DRIVER_INIT( solarq )
 {
@@ -1249,12 +1296,17 @@ GAMEX(1979, barrier,  0,       cinemat,  barrier,  barrier,  ROT270, "Vectorbeam
 GAMEX(1981, starhawk, 0,       cinemat,  starhawk, starhawk, ROT0,   "Cinematronics", "Star Hawk", GAME_NO_SOUND )
 GAME( 1980, starcas,  0,       starcas,  starcas,  starcas,  ROT0,   "Cinematronics", "Star Castle (version 3)" )
 GAME( 1980, starcas1, starcas, starcas,  starcas,  starcas,  ROT0,   "Cinematronics", "Star Castle (older)" )
+GAME( 1980, starcasp, starcas, starcas,  starcas,  starcas,  ROT0,   "Cinematronics", "Star Castle (prototype)" )
+GAME( 1980, starcase, starcas, starcas,  starcas,  starcas,  ROT0,   "Cinematronics (Mottoeis license)", "Star Castle (Mottoeis)" )
+GAME( 1980, stellcas, starcas, starcas,  starcas,  starcas,  ROT0,   "bootleg", "Stellar Castle (Elettronolo)" )
 GAMEX(1979, tailg,    0,       cinemat,  tailg,    tailg,    ROT0,   "Cinematronics", "Tailgunner", GAME_NO_SOUND )
 GAME( 1979, ripoff,   0,       ripoff,   ripoff,   ripoff,   ROT0,   "Cinematronics", "Rip Off" )
 GAMEX(19??, speedfrk, 0,       cinemat,  speedfrk, speedfrk, ROT0,   "Vectorbeam", "Speed Freak", GAME_NO_SOUND )
 GAMEX(1979, sundance, 0,       cinemat,  sundance, sundance, ROT270, "Cinematronics", "Sundance", GAME_NOT_WORKING )
 GAME( 1978, warrior,  0,       warrior,  warrior,  warrior,  ROT0,   "Vectorbeam", "Warrior" )
 GAMEX(1980, armora,   0,       armora,   armora,   armora,   ROT0,   "Cinematronics", "Armor Attack", GAME_NO_SOUND )
+GAMEX(1980, armorap,  0,       armora,   armora,   armora,   ROT0,   "Cinematronics", "Armor Attack (prototype)", GAME_NO_SOUND )
+GAMEX(1980, armorar,  0,       armora,   armora,   armorar,  ROT0,  "Cinematronics (Rock-ola license)", "Armor Attack (Rock-ola)", GAME_NO_SOUND )
 GAME( 1981, solarq,   0,       solarq,   solarq,   solarq,   ORIENTATION_FLIP_X, "Cinematronics", "Solar Quest" )
 GAME( 1982, demon,    0,       demon,    demon,    demon,    ROT0,   "Rock-ola", "Demon" )
 GAMEX(1981, wotw,     0,       cinemat,  wotw,     wotw,     ROT0,   "Cinematronics", "War of the Worlds", GAME_IMPERFECT_COLORS | GAME_NO_SOUND )

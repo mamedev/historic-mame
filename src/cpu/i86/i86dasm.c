@@ -1420,13 +1420,23 @@ static void ua_str(char *str)
 unsigned DasmI86(char* buffer, unsigned pc)
 {
   	unsigned c;
+	static UINT8 map[20];
 
 	instruction_offset = pc;
 	instruction_segment = i86_get_reg(I86_CS);
 
 	/* input buffer */
-	getbyte_map = &OP_ROM[pc];
+	getbyte_map = map;
 	getbyte_mac = 0;
+
+	/* kludge to avoid crashes with e.g. qbert */
+	for (c = 0;c < 20;c++)
+	{
+		int pc_masked = (pc+c)&0xfffff;
+		change_pc20(pc_masked);
+		map[c] = OP_ROM[pc_masked];
+	}
+	change_pc20(i86_get_reg(REG_PC));
 
 	/* output buffer */
 	ubufs = buffer;
@@ -1445,7 +1455,7 @@ unsigned DasmI86(char* buffer, unsigned pc)
 	opmap1=&op86map1;
 	ua_str(op86map1[c]);
 
-  	if (invalid_opcode) {
+	if (invalid_opcode) {
 		/* restart output buffer */
 		ubufp = buffer;
 		/* invalid instruction, use db xx */

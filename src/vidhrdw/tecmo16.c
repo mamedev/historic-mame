@@ -23,7 +23,7 @@ static struct tilemap *fg_tilemap,*bg_tilemap,*tx_tilemap;
 static void fg_get_tile_info(int tile_index)
 {
 	int tile = tecmo16_videoram[tile_index] & 0x1fff;
-	int color = tecmo16_colorram[tile_index] & 0x7f;
+	int color = tecmo16_colorram[tile_index] & 0x0f;
 
 	SET_TILE_INFO(
 			1,
@@ -35,7 +35,7 @@ static void fg_get_tile_info(int tile_index)
 static void bg_get_tile_info(int tile_index)
 {
 	int tile = tecmo16_videoram2[tile_index] & 0x1fff;
-	int color = (tecmo16_colorram2[tile_index] & 0x7f)+0x10;
+	int color = (tecmo16_colorram2[tile_index] & 0x0f)+0x10;
 
 	SET_TILE_INFO(
 			1,

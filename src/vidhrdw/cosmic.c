@@ -121,12 +121,14 @@ PALETTE_INIT( panic )
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		*(palette++) = 0xff * ((i >> 0) & 1);
-		*(palette++) = 0xff * ((i >> 1) & 1);
+		int r = 0xff * ((i >> 0) & 1);
+		int g = 0xff * ((i >> 1) & 1);
+		int b;
 		if ((i & 0x0c) == 0x08)
-			*(palette++) = 0xaa;
+			b = 0xaa;
 		else
-			*(palette++) = 0xff * ((i >> 2) & 1);
+			b = 0xff * ((i >> 2) & 1);
+		palette_set_color(i,r,g,b);
 	}
 
 
@@ -156,9 +158,10 @@ PALETTE_INIT( cosmica )
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		*(palette++) = 0xff * ((i >> 0) & 1);
-		*(palette++) = 0xff * ((i >> 1) & 1);
-		*(palette++) = 0xff * ((i >> 2) & 1);
+		int r = 0xff * ((i >> 0) & 1);
+		int g = 0xff * ((i >> 1) & 1);
+		int b = 0xff * ((i >> 2) & 1);
+		palette_set_color(i,r,g,b);
 	}
 
 
@@ -193,11 +196,14 @@ PALETTE_INIT( cosmicg )
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-    	if (i > 8) *(palette++) = 0xff;
-        else *(palette++) = 0xaa * ((i >> 0) & 1);
+		int r,g,b;
+		
+    	if (i > 8) r = 0xff;
+        else r = 0xaa * ((i >> 0) & 1);
 
-		*(palette++) = 0xaa * ((i >> 1) & 1);
-		*(palette++) = 0xaa * ((i >> 2) & 1);
+		g = 0xaa * ((i >> 1) & 1);
+		b = 0xaa * ((i >> 2) & 1);
+		palette_set_color(i,r,g,b);
 	}
 
 
@@ -219,13 +225,16 @@ PALETTE_INIT( magspot2 )
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
+		int r,g,b;
+		
 		if ((i & 0x09) == 0x08)
-			*(palette++) = 0xaa;
+			r = 0xaa;
 	 	else
-			*(palette++) = 0xff * ((i >> 0) & 1);
+			r = 0xff * ((i >> 0) & 1);
 
-		*(palette++) = 0xff * ((i >> 1) & 1);
-		*(palette++) = 0xff * ((i >> 2) & 1);
+		g = 0xff * ((i >> 1) & 1);
+		b = 0xff * ((i >> 2) & 1);
+		palette_set_color(i,r,g,b);
 	}
 
 

@@ -57,11 +57,11 @@ static void irq_gen(int param)
 
 static void alpha_row_update(int scanline)
 {
-	data16_t *check = &atarian_0_base[(scanline / 8) * 64 + 42];
+	data16_t *check = &atarigen_alpha[(scanline / 8) * 64 + 42];
 
 	/* check for interrupts in the alpha ram */
 	/* the interrupt occurs on the HBLANK of the 6th scanline following */
-	if (check < &atarian_0_base[0x7c0] && (*check & 0x8000))
+	if (check < &atarigen_alpha[0x7c0] && (*check & 0x8000))
 		timer_set(cpu_getscanlineperiod() * 6.9, 0, irq_gen);
 
 	/* update the playfield and motion objects */
@@ -134,20 +134,20 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ 0xff1400, 0xff17ff, atarigen_sound_w },
 	{ 0xff1800, 0xff1bff, atarigen_sound_reset_w },
 	{ 0xff1c00, 0xff1c7f, skullxbo_playfieldlatch_w },
-	{ 0xff1c80, 0xff1cff, skullxbo_hscroll_w },
+	{ 0xff1c80, 0xff1cff, skullxbo_xscroll_w, &atarigen_xscroll },
 	{ 0xff1d00, 0xff1d7f, atarigen_scanline_int_ack_w },
 	{ 0xff1d80, 0xff1dff, watchdog_reset16_w },
 	{ 0xff1e00, 0xff1e7f, skullxbo_playfieldlatch_w },
-	{ 0xff1e80, 0xff1eff, skullxbo_hscroll_w },
+	{ 0xff1e80, 0xff1eff, skullxbo_xscroll_w },
 	{ 0xff1f00, 0xff1f7f, atarigen_scanline_int_ack_w },
 	{ 0xff1f80, 0xff1fff, watchdog_reset16_w },
 	{ 0xff2000, 0xff2fff, atarigen_666_paletteram_w, &paletteram16 },
-	{ 0xff4000, 0xff47ff, skullxbo_vscroll_w },
+	{ 0xff4000, 0xff47ff, skullxbo_yscroll_w, &atarigen_yscroll },
 	{ 0xff4800, 0xff4fff, skullxbo_mobwr_w },
 	{ 0xff6000, 0xff6fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0xff8000, 0xff9fff, ataripf_0_latched_w, &ataripf_0_base },
-	{ 0xffa000, 0xffbfff, ataripf_0_upper_lsb_w, &ataripf_0_upper },
-	{ 0xffc000, 0xffcf7f, atarian_0_vram_w, &atarian_0_base },
+	{ 0xff8000, 0xff9fff, atarigen_playfield_latched_lsb_w, &atarigen_playfield },
+	{ 0xffa000, 0xffbfff, atarigen_playfield_upper_w, &atarigen_playfield_upper },
+	{ 0xffc000, 0xffcf7f, atarigen_alpha_w, &atarigen_alpha },
 	{ 0xffcf80, 0xffcfff, atarimo_0_slipram_w, &atarimo_0_slipram },
 	{ 0xffd000, 0xffdfff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
 	{ 0xffe000, 0xffffff, MWA16_RAM },

@@ -1,7 +1,7 @@
 #ifndef _MAMEDBG_H
 #define _MAMEDBG_H
 
-#include "mame.h"
+#include "driver.h"
 
 #define DEBUGGER_TOTAL_COLORS 16
 

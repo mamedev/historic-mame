@@ -1,3 +1,135 @@
+0.60
+
+
+These drivers have improved GRAPHICS:
+-------------------------------------
+
+- Fixed disappearing enemies in later levels of Batsugun. [Kale]
+
+
+These drivers have improved SOUND:
+----------------------------------
+
+- Improved Irem GA20 emulation, used by M92 games. [Acho A. Tang]
+
+
+Other drivers changes:
+----------------------
+
+- Fixed several problems in Kiki KaiKai. [Acho A. Tang]
+
+- Fixed colors in Wec Le Mans and wrong graphics in Hot Chase. [Acho A. Tang]
+
+- Several fixes to Psikyo games. [Paul Priest, David Haywood]
+
+- Several fixes to nemesis.c. [Hau]
+
+
+Changes to the main program:
+----------------------------
+
+- Support for external configuration files for special controllers; this
+  replaces the -hotrod and -hotrodse options. See ctrl.txt for the detailed
+  explanation. [Ron Fries]
+
+- Complete rewrite of the cheat engine. [Ian Patterson]
+
+
+Source:
+-------
+
+- New function memory_set_unmap_value(), to specify the value returned when an
+  unmapped memory address is read. [Aaron Giles]
+
+- Fixes to Y8950 sample playback. [Acho A. Tang]
+
+- Complete rewrite of YM3812/YM3526/Y8950 emulation, verified on the real chip.
+  [Jarek Burczynski]
+
+- osd_opl_control() and osd_opl_write() removed; direct access to the
+  SoundBlaster OPL chip is no longer useful.
+
+
+MAME Testers bugs fixed (there are probably more)
+-----------------------
+
+blmbycar059red
+uopoko059red
+gcpinbal059red
+jitsupro059red
+metroc059red
+phelios059red
+paclandc059red
+ncv1058red
+av2mj059red
+fromancec058red
+neogeoc37b15gre
+fround056red
+bioatack37b6gre
+crush057gre
+driverc056ora
+batsugun37b6gre
+
+
+New games supported:
+--------------------
+
+Judge Dredd [Aaron Giles]
+Primal Rage [Aaron Giles]
+Road Riot's Revenge [Aaron Giles]
+World Class Bowling [Aaron Giles]
+Tactician [Nicola Salmoria, Stephane Humbert]
+The Masters of Kin [Nicola Salmoria]
+IQ Block [Nicola Salmoria, Ernesto Corvi]
+Taxi Driver [Nicola Salmoria]
+Block Gal [Angelo Salese]
+Drag Race [Stefan Jokisch]
+Pool Shark [Stefan Jokisch]
+The Outfoxies [Phil Stroffolino]
+Oriental Legend [ElSemi, David Haywood]
+News [David Haywood]
+Shadow Force [David Haywood]
+The Legend of Silk Road [David Haywood, Stephane Humbert, R.Belmont]
+Miss Bubble 2 [David Haywood]
+Black Heart [from Raine]
+Mustang [from Raine]
+Many Bloc [David Haywood, Stephan Humbert]
+Xyonix [David Haywood, Stephan Humbert, Nicola Salmoria]
+Hyper Pacman [David Haywood, Stephan Humbert]
+Mille Miglia 2: Great 1000 Miles Rally [David Haywood, Stephan Humbert]
+Formation Z [Acho A. Tang]
+Tank Busters [Jarek Burczynski]
+Hyper Duel [E. Watanabe]
+
+
+New clones supported:
+---------------------
+
+Pengo (bootleg)
+Bone Crusher (= Knuckle Joe)
+Fighter & Attacker (= F/A)
+Knuckle Heads (World)
+Hero in the Castle of Doom (Donkey Kong conversion)
+Blood Storm (v1.10)
+Fighting Golf (set 2)
+Clowns (rev 1)
+Magic Worm (= Centipede)
+Hot Shots Tennis (V1.0)
+Strata Bowling (V1)
+Pirate Pete (= Jungle King)
+Street Fighter (prototype)
+Nebulas Ray (World)
+Gun Bird (World)
+Bubble Symphony (Europe)
+Space Invaders '95 (US)
+C.O.W. Boys of Moo Mesa (World)
+R-Type Leo (World)
+Dragon Punch (= Sports Match)
+
+
+==========================================================================
+
+
 0.59
 
 
@@ -61,8 +193,8 @@ Mahjong Sisters [Uki]
 Quiz Gakuen Paradise [Uki]
 Quiz DNA no Hanran [Uki]
 Quiz Gekiretsu Scramble [Uki]
-Wild West C.O.W.boys of Moo Mesa [Olivier Galibert, R.Belmont]
-Bucky O'Hare [Olivier Galibert, R.Belmont]
+Wild West C.O.W.boys of Moo Mesa [R.Belmont]
+Bucky O'Hare [R.Belmont]
 Super Bug [Stefan Jokisch]
 Paddle Mania [Acho A. Tang]
 Scorpion [Stephane Humbert]
@@ -225,570 +357,3 @@ Mayday (set 3)
 Alpha One (prototype of Major Havoc)
 Blaster (kit)
 Buck Rogers (encrypted)
-
-
-==========================================================================
-
-
-0.57
-
-
-These drivers have improved GRAPHICS:
--------------------------------------
-
-- Fixed Quantum colors. [Aaron Giles]
-
-- Misc fixes to Taito F3. [Bryan McPhail]
-
-- Fixed colors in Battle City and Vs. Tetris, plus other fixes to the vsnes
-  driver. [Kale]
-
-- Fixed background color in Van-Van Car. [Nicola Salmoria]
-
-
-These drivers have improved SOUND:
-----------------------------------
-
-- Added reverb to the 054539, improving sound in Xexex and Twinbee Yahhoo.
-  [Olivier Galibert]
-
-- MSM5232 support in Fairy Land Story and Buggy Challenge. [Jarek Burczynski]
-
-- Fixed missing speech in Twinbee. [Uki]
-
-- Fixed sound in Kirameki. [Uki]
-
-
-Other drivers changes:
-----------------------
-
-- Improved C-Chip simulation in Bonze Adventure. [Stefan Jokisch, Ruben Panossian]
-
-- Simulated protection in Pop Flamer. [Paul Priest]
-
-
-Source:
--------
-
-- New function get_black_pen() which allows to fillbitmap() the background with
-  black without relying on a palette entry.
-
-- MSM5232 sound emulator. [Jarek Burczynski, Hiromitsu Shioya]
-
-- BSMT2000 sound emulator. [Aaron Giles]
-
-- SSG EG type support added to YM2203 emulation (which is now complete).
-  This fixes hbarrel wave sound on start of level 1, and some sound effects in
-  other games (e.g. Dark Seal). [Jarek Burczynski]
-
-- Z180 emulator. [Juergen Buchmueller]
-
-- Fixed a bug in the nec V30 disassembler. [Bart]
-
-- Fixed OUTSB/OUTSW bugs in I86 emulation. [Julien Frelat]
-
-
-MAME Testers bugs fixed (there are probably more)
------------------------
-
-gameplan055red
-wwfmaniab13gre
-dariusg053gre
-taitof3c053yel
-ridingf053gre
-elvactr37b15gre
-asukac37b16gre1.
-paperboy055yel
-alleymas055yel
-alpha68k055red
-brkthruc055red
-ajax056red
-champbas056gre
-msword056gre
-cvs056gre
-ironhors056gre
-gunbird056red (to be checked)
-snowbros056gre
-razmataz056yel
-exterm055red
-harddriv055red
-captcomm36b11yel
-ghouls37b11gra
-rbibb37b11red
-excitbkj37b15gre
-truxton2055gra
-
-
-New games supported:
---------------------
-
-Quiz Kokology 2 [Luca Elia]
-Air Gallet [Luca Elia]
-Dramatic Adventure Quiz Keith & Lucy [Luca Elia]
-Survival Arts [Luca Elia]
-Drift Out '94 - The Hard Order [Luca Elia]
-Lovely Pop Mahjong Jan Jan Shimasyo [Luca Elia]
-Meosis Magic [Luca Elia]
-Mahjong Hyper Reaction 2 [Luca Elia]
-Monster Slider [Luca Elia]
-Gourmet Battle Quiz Ryorioh CooKing [Luca Elia]
-Pachinko Sexy Reaction [Luca Elia]
-Wit's [Luca Elia]
-SD Gundam Psycho Salamander no Kyoui [Bryan McPhail]
-Subroc 3D [Aaron Giles]
-Buck Rogers: Planet of Zoom [Aaron Giles]
-Revolution X [Aaron Giles]
-Battle Toads [Aaron Giles]
-Playball! [Aaron Giles]
-Acrobat Mission [Bryan McPhail]
-Destroyer [Stefan Jokisch]
-Onna Sansirou  - Typhoon Gal [Uki]
-Forty-Love [Uki]
-The Undoukai [Uki]
-Welltris [David Haywood]
-Ultra Maru-hi Mahjong [Takahiro Nogi]
-Mahjong Ren-ai Club [Takahiro Nogi]
-Crystal Gal [Takahiro Nogi]
-Mahjong Uchuu yori Ai wo komete [Takahiro Nogi]
-AV2Mahjong No.2 Rouge no Kaori [Takahiro Nogi]
-Rettou Juudan Nekkyoku Janshi - Higashi Nippon Hen [Takahiro Nogi]
-Ojanko Yakata [Takahiro Nogi]
-Ojanko Yakata 2bankan [Takahiro Nogi]
-Chinese Casino [Takahiro Nogi]
-Ojanko High School [Takahiro Nogi]
-Taisen Idol-Mahjong Final Romance 2 [Takahiro Nogi, Uki]
-Taisen Mahjong FinalRomance R [Takahiro Nogi, Uki]
-Taisen Mahjong FinalRomance 4 [Takahiro Nogi, Uki]
-Mahjong Pon Chin Kan [Takahiro Nogi, Uki]
-Mosaic [Nicola Salmoria]
-Sky Base [inside out boy]
-Car Jamboree [inside out boy]
-Popper [inside out boy]
-Super Cross 2 [inside out boy]
-Reikai Doushi [Phil Stroffolino]
-F/A [Phil Stroffolino]
-Numan Athletics [Phil Stroffolino]
-
-
-New clones supported:
----------------------
-
-Road Blasters (set 2)
-Block Out (Japan)
-Mahjong CLUB 90's (set 2)
-Pop Flamer (protected)
-Gun Bird (Korea)
-Demon's World (set 2)
-Pretty Soldier Sailor Moon (set 2)
-Space Echo (= Speak & Rescue)
-Volfied (US & World)
-Don Pachi (Korea)
-Catch-22 (= Combat)
-
-
-==========================================================================
-
-
-0.56
-
-
-These drivers have improved GRAPHICS:
--------------------------------------
-
-- Fixed Gururin. [Miguel Angel Horna]
-
-- Rowscroll in Kaneko16 games. [Luca Elia]
-
-- Overlay for Demon. [Pete Ashdown]
-
-
-These drivers have improved SOUND:
-----------------------------------
-
-- Fixed sound in Venture and other Exidy games. [Aaron Giles]
-
-
-Changes to the main program:
-----------------------------
-
-- Updated the cheat engine. [Ian Patterson]
-
-
-Source:
--------
-
-- V60 cpu core. [Farfetch'd, R.Belmont]
-
-
-MAME Testers bugs fixed (there are probably more)
------------------------
-
-quizkof37b4gre
-speedfrk055yel
-vectorsshot055gre
-chasehq055gre
-blazstar37b16gre
-mazinger053gre
-block37b14yel
-spacfury36finalgre
-
-
-New games supported:
---------------------
-
-Water Match [Nicola Salmoria]
-Spatter [Nicola Salmoria]
-Raflesia [Chack'n]
-Kosodate Quiz My Angel [Luca Elia]
-Kosodate Quiz My Angel 2 [Luca Elia]
-Puzzle De Bowling [Luca Elia]
-Chameleon [Luca Elia]
-Wai Wai Jockey Gate-In! [Luca Elia]
-Metamoqester [Luca Elia]
-Star Guards [Aaron Giles]
-
-
-==========================================================================
-
-
-0.55
-
-
-These drivers have improved GRAPHICS:
--------------------------------------
-
-- Preliminary road support in the Taito Z games. [David Graves]
-
-
-These drivers have improved SOUND:
-----------------------------------
-
-- Added support for using AY8910 and YM2203 at the same time, fixing sound in
-  City Connection. [Tatsuyuki Satoh]
-
-- Sound in Money Money and Jack Rabbit. [Nicola Salmoria]
-
-
-Source:
--------
-
-- Changed vector games to use direct RGB modes. [Mathis Rosenhauer]
-
-- New data type pen_t, use it instead of UINT32 when dealing with pens and
-  colortables.
-
-
-MAME Testers bugs fixed (there are probably more)
------------------------
-
-3wonders054gre
-artwork054gre
-bssoccer054gre
-bublbobl054red
-cps2c054ora
-drtoppel054gre
-galaxian053gre
-ghostb054yel
-holeland37b10gre
-konami054red
-madmotor054gre
-mrgoemon37b9gre
-offroad054gre
-sharkatt37b15red
-stfight054red
-tailg054gre
-ym2151_054yel
-
-
-New games supported:
---------------------
-
-Ninja Baseball Batman [Bryan McPhail]
-Sports Match [Sports Match]
-Zero Hour [David Haywood]
-Sky Smasher [David Graves]
-New York New York [Darren Olafson]
-Crazy Rally [Mathis Rosenhauer]
-Space Fortress [Mike Coates]
-Ultraman Club - Tatakae! Ultraman Kyoudai!! [Luca Elia]
-
-
-New clones supported:
----------------------
-
-Dream Soccer '94 (Japan)
-Space Invaders DX (Japan v2.0)
-Typhoon (= Ajax)
-Rambo III (Europe set 2)
-Space Invaders DX (US)
-The Hand (=Got-Ya)
-Ms. Pacman Champion Edition / Super Zola Pac Gal
-Kuri Kinton (Japan, US)
-Blomby Car (encrypted)
-
-
-==========================================================================
-
-
-0.54
-
-
-These drivers have improved GRAPHICS:
--------------------------------------
-
-- Fixed road lines in Top Speed. [David Graves]
-
-
-These drivers have improved SOUND:
-----------------------------------
-
-- Decrypted the sound CPU in Dream Soccer 94. [Bryan McPhail, Nicola Salmoria]
-
-- Fixed crowd noise in Premier Soccer. [Olivier Galibert]
-
-
-Source:
--------
-
-- Fixes to the YM2610 and YM2151 emulation, verified on the real chip.
-  [Jarek Burczynski]
-
-- New core function palette_get_pen() replaces the removed osd_get_pen().
-  Renamed palette_change_color() to palette_set_color().
-
-- Major changes to the CPU interface. As a result of this, some games are
-  temporarily broken, most notably CPS2. [Aaron Giles]
-
-- improved auto_malloc so that you can auto_malloc at machine_init time and
-  have the memory disposed of on a reset. [Aaron Giles]
-
-
-MAME Testers bugs fixed (there are probably more)
------------------------
-
-sidepckt37b16yel
-tumblepb37b16red
-strahl37b16ora
-rtype37b1gre
-poundfou37b1gre
-tp8437b7gre
-bloodbroc053red
-terraf37b13gre/terraf053gre
-cinemat053red
-dotrone053gre
-relief053yel
-pbancho053red
-goindolc053gre
-namcona1c053red
-hellfire053yel
-
-
-New games supported:
---------------------
-
-Fire Barrel [Bryan McPhail, Nicola Salmoria]
-Time Limit [Ernesto Corvi]
-Youjyuden [Nicola Salmoria]
-Gulf Storm [Nicola Salmoria]
-Minesweeper [Frank Palazzolo]
-
-
-New clones supported:
----------------------
-
-Space Force (= Meteoroids)
-Last Mission (Japan)
-Gun Dealer '94 (= Primella)
-Blue Hawk (NTC)
-
-
-==========================================================================
-
-
-0.53
-
-We have abandoned the "beta" numbering scheme, which was becoming pointless.
-The current version is 0.53 because 0.36 (the last "non-beta" release) + .16
-(the number of "beta" releases since then) = 0.52.
-
-
-These drivers have improved GRAPHICS:
--------------------------------------
-
-- Fixed background in Bioship Paladin. [Nicola Salmoria]
-
-- Fixed some issues in Taito B system games. [Nicola Salmoria]
-
-- Real shadows in some Konami games (88 Games, Chequered Flag, X-Men, Asterix,
-  Surprise Attack, Sunset Riders, etc.). [Nicola Salmoria]
-
-- Real shadows in some SNK games (Ikari Warriors, Victory Road, etc.).
-  [David Haywood]
-
-- Real shadows in Cisco Heat and F1 Grand Prix Star. [Luca Elia]
-
-- Fixed some protection related issues in Sunset Riders. [Nicola Salmoria]
-
-- Fixed colors in Major Title 2. [Nicola Salmoria]
-
-- Fixed colors in Berlin Wall. [Nicola Salmoria]
-
-- Fixed radar display in Aztarac. [Mathis Rosenhauer]
-
-
-These drivers have improved SOUND:
-----------------------------------
-
-- Decrypted the sound CPU in Gunforce, Blade Master, Lethal Thunder, Undercover
-  Cops, Mystic Riders, Major Title 2, Hook, R-Type Leo, In the Hunt, and
-  Perfect Soldiers. [Bryan McPhail, Nicola Salmoria]
-
-- Fixed a EX550x bug that caused Taito F3 and Incredible Tech games to sound
-  bad. [Aaron Giles]
-
-
-Other drivers changes:
-----------------------
-
-- Fixed the remaining issues in Slapstic emulation.
-  - Pit Fighter works to the end
-  - Rampart works to the end
-  - Tetris now uses the slapstic code
-  [Aaron Giles]
-
-- Fixed the protection in the original Robocop. [Bryan McPhail]
-
-- Decrypted the original Popeye. [Nicola Salmoria]
-
-- Fixed Free Play mode in Galaga. [Scott Brasington]
-
-- Added support for the target data extracted from the laserdisc to MACH 3.
-  [Fabrice Frances]
-
-
-Changes to the main program:
-----------------------------
-
-- The Windows port is now called "MAME" (instead of "MAMEW"). The DOS port is
-  called "DMAME".
-
-- [Windows] CLI improvements:
-  * config option for steadykey (default: OFF)
-  * parse debug.ini in debug builds
-  * mamew \anywhere\roms\pacman.zip works
-  * improved -log option
-  * mame will now parse argv[0].ini instead of mame.ini.
-    i.e. if the mame executable is called "m37b17.exe" it will
-    parse m37b17.ini instead of mame.ini
-  [Paul Priest, Bernd Wiebelt]
-
-- [DOS] Support for C64/Atari/Sinclair joysticks connected via DB9 or
-  Turbografix interface. [Aley Keprt]
-
-
-Source:
--------
-
-- Big changes to the palette system. 8-bit modes are no longer supported, only
-  16-bit ones are used. 8-bit support may be removed from the OS dependant
-  code; the core will never ask for an 8-bit deep screen. 8-bit bitmaps could
-  still be used though.
-
-- Palette compression has been removed. palette_recalc(), palette_transparent_pen
-  and palette_used_colors[] are not available anymore. Drivers that relied on
-  PALETTE_COLOR_TRANSPARENT for transparency effects must be rewritten to
-  implement them differently.
-
-- tilemap_update() is gone. Everything is handled by tilemap_draw().
-
-- IMPORTANT CHANGE FOR PORTERS: the OS dependant code is now required to
-  guarantee, in 16-bit palettized mode, that Machine->pens[i] == i. The "pens"
-  argument to osd_allocate_colors() will be NULL, actually it has been renamed
-  "rgb_components" since direct RGB modes are the only ones that will pass that
-  argument.
-
-- Remove VIDEO_MODIFIES_PALETTE and the "modifiable" parameter from
-  osd_allocate_colors().
-
-- New flags VIDEO_HAS_SHADOWS and VIDEO_HAS_HIGHLIGHTS that automatically extend
-  the palette creating a darker(brighter copy for shadows handling.
-  palette_set_shadow_factor() and palette_set_highlight_factor() allow to
-  control the adjustment to apply (shadow can be > 1.0, making it an highlight,
-  and highlight can be < 1.0 making it a shadow - the names are just conventional).
-  [Nicola Salmoria]
-
-- New function palette_set_brightness(), allowing selective control of palette
-  brightness independently of the palette RAM contents. [Nicola Salmoria]
-
-- MachineDriver.color_table_len can now be 0, meaning that the colortable is a
-  1:1 mapping from the palette. Note that you CANNOT use this feature if you use
-  TRANSPARENCY_COLOR; but of course, if you need TRANSPARENCY_COLOR you'll not
-  have a 1:1 colortable.
-
-- New function tilemap_draw_roz(). [Phil Stroffolino]
-
-- New function auto_malloc(); this is the same as malloc(), but the memory is
-  automatically freed when the driver exits. [Aaron Giles]
-
-- osd_bitmap.line is now a void ** to prevent confusion.
-
-
-New games supported:
---------------------
-
-Mazinger Z [Luca Elia, Nicola Salmoria]
-Pretty Soldier Sailor Moon [Luca Elia, Nicola Salmoria]
-Sokonuke Taisen Game [Luca Elia]
-Mahjong Doukyuusei [Luca Elia]
-Mahjong Doukyuusei Special [Luca Elia]
-Big Run [Luca Elia]
-Magical Crystals [Luca Elia]
-Sand Scorpion [Luca Elia]
-Continental Circus [David Graves]
-Chase HQ [David Graves]
-Battle Shark [David Graves]
-Special Criminal Investigation [David Graves]
-Night Striker [David Graves]
-Aqua Jack [David Graves]
-Double Axle [David Graves]
-World Grand Prix 2 [David Graves]
-Super Real Mahjong Part 3 [Takahiro Nogi]
-Mahjong Yuugi [Takahiro Nogi]
-Funky Jet [Bryan McPhail, Nicola Salmoria]
-Sotsugyo Shousho [Bryan McPhail, Nicola Salmoria]
-Hasamu [Bryan McPhail, Nicola Salmoria]
-Kengo [Bryan McPhail, Nicola Salmoria]
-Dirt Fox
-Mighty Guy [Victor Trucco]
-Ultra Tank [Phil Stroffolino]
-
-
-New clones supported:
----------------------
-
-Astro Flash (= Transformer)
-Twin Hawk (= Daisenpu)
-Omega (= The End)
-Gingateikoku No Gyakushu (bootleg, set 2)
-Point Blank (= Gun Bullet)
-Robocop 2 (World, Japan)
-Don Doko Don (US)
-Thunder Fox (World)
-Camel Try (US, alt sound)
-Robocop (World rev 4)
-Chelnov (World)
-Twin Hawk (World)
-Swimmer (set 3)
-Boulder Dash (Japan)
-Robocop (Japan)
-Great 1000 Miles Rally (USA)
-Super Real Darwin (World)
-Pit Fighter (bootleg)
-Klax (2 prototypes)
-Up'n Down (encrypted)
-
-
-Removed:
---------
-
-Speak & Rescue bootleg (identical to Speak & Rescue with copyright notice removed)

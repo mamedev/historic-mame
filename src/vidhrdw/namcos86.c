@@ -59,25 +59,26 @@ PALETTE_INIT( namcos86 )
 
 	for (i = 0;i < totcolors;i++)
 	{
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
 
 		bit0 = (color_prom[0] >> 0) & 0x01;
 		bit1 = (color_prom[0] >> 1) & 0x01;
 		bit2 = (color_prom[0] >> 2) & 0x01;
 		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		bit0 = (color_prom[0] >> 4) & 0x01;
 		bit1 = (color_prom[0] >> 5) & 0x01;
 		bit2 = (color_prom[0] >> 6) & 0x01;
 		bit3 = (color_prom[0] >> 7) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		bit0 = (color_prom[totcolors] >> 0) & 0x01;
 		bit1 = (color_prom[totcolors] >> 1) & 0x01;
 		bit2 = (color_prom[totcolors] >> 2) & 0x01;
 		bit3 = (color_prom[totcolors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 

@@ -2,15 +2,40 @@
 
  Wild West C.O.W.boys of Moo Mesa
  Bucky O'Hare
- (c) 1992, 1993 Konami
+ (c) 1992 Konami
  Driver by R. Belmont based on xexex.c by Olivier Galibert.
  Moo Mesa protection information thanks to ElSemi and OG.
 
  These are the final Xexex hardware games before the pre-GX/Mystic Warriors
  hardware took over.
 
-TODO:
+TODO
+----
  - 54338 color blender support (is this even used in moo?)
+ - Moon in ghost town stage of moo is in front of everything.  Priority
+   set in the sprite is in fact in front of the bg tilemaps, so the video
+   emulation is doing it's job.  Core bug?
+ - Memory trashing(?) during moo causes a hang around the second boss even
+   with the protection correct.  (Save a state before that and restore it
+   to work around).
+ - The table on ropes looks weird when it's first scrolling down.  Appears
+   to be related to some '157 linescroll bugs also seen in Xexex.
+
+CHANGELOG
+---------
+* March 18, 2002 (RB except as noted)
+ - Visible area adjusted to make sense (384x224 is a reasonable resolution
+   for a standard-resolution PCB).  There's still a minor glitch on one of
+   the intro scenes but I consider that acceptable.  And sorry Stephh, we
+   definitely can't show the green lines.
+ - Z80 banking corrected (bucky cared, moo didn't seem to)
+ - Tilemaps in moo now use the correct '251 priority registers (confirmed
+   by the swinging table stage, which sends the linescroll data using plane 1's
+   RAM to the far back).
+ - Game infos more exactly match the title screens (stephh)
+ - Removed third button for moo (stephh)
+ - Made bucky world version the parent as per mame tradition (stephh)
+ - Can now pass ram/rom test with sound off (reported by stephh)
 
 ***************************************************************************/
 
@@ -28,7 +53,7 @@ VIDEO_UPDATE(bucky);
 
 static int cur_control2;
 
-static int init_eeprom_count;
+static int init_eeprom_count, init_nosound_count;
 
 static data16_t *workram;
 
@@ -92,6 +117,7 @@ static WRITE16_HANDLER( control2_w )
 	/* bit 0  is data */
 	/* bit 1  is cs (active low) */
 	/* bit 2  is clock (active high) */
+	/* bit 8 = enable sprite ROM reading */
 	/* bit 10 is watchdog */
 
 	cur_control2 = data;
@@ -100,7 +126,6 @@ static WRITE16_HANDLER( control2_w )
 	EEPROM_set_cs_line((cur_control2 & 0x02) ? CLEAR_LINE : ASSERT_LINE);
 	EEPROM_set_clock_line((cur_control2 & 0x04) ? ASSERT_LINE : CLEAR_LINE);
 
-	/* bit 8 = enable sprite ROM reading */
 	if (data & 0x100)
 	{
 		K053246_set_OBJCHA_line(ASSERT_LINE);
@@ -131,9 +156,6 @@ static WRITE16_HANDLER( sound_cmd1_w )
 	if((data & 0x00ff0000) == 0) {
 		data &= 0xff;
 		soundlatch_w(0, data);
-		if(!Machine->sample_rate)
-			if(data == 0xfc || data == 0xfe)
-				soundlatch3_w(0, 0x7f);
 	}
 }
 
@@ -152,13 +174,32 @@ static WRITE16_HANDLER( sound_irq_w )
 static READ16_HANDLER( sound_status_r )
 {
 	int latch = soundlatch3_r(0);
-	if (latch == 0xe) latch = 0xf;	/* hack for bucky! */
+
+	/* make test pass with sound off.
+	   these games are trickier than your usual konami stuff, they expect to
+	   read 0xff (meaning the z80 booted properly) then 0x80 (z80 busy) then
+	   the self-test result */
+	if (!Machine->sample_rate) {
+		if (init_nosound_count < 10)
+		{
+			if (!init_nosound_count)
+				latch = 0xff;
+			else
+				latch = 0x80;
+			init_nosound_count++;
+		}
+		else
+		{
+			latch = 0x0f;
+		}
+	}
+
 	return latch;
 }
 
 static WRITE_HANDLER( sound_bankswitch_w )
 {
-	cpu_setbank(2, memory_region(REGION_CPU2) + 0x10000 + (data&7)*0x4000);
+	cpu_setbank(2, memory_region(REGION_CPU2) + 0x10000 + (data&0xf)*0x4000);
 }
 
 /* the interface with the 053247 is weird. The chip can address only 0x1000 bytes */
@@ -213,7 +254,7 @@ static WRITE16_HANDLER( moo_prot_w )
 		{
 			a = cpu_readmem24bew_word(src1);
 			b = cpu_readmem24bew_word(src2);
-			res = (a+b)/2;
+			res = a+2*b;
 
 			cpu_writemem24bew_word(dst, res);
 
@@ -255,6 +296,7 @@ static MEMORY_WRITE16_START( writemem )
 	{ 0x0d600e, 0x0d600f, sound_cmd2_w },
 	{ 0x0d8000, 0x0d8007, K054157_b_word_w },
 	{ 0x0de000, 0x0de001, control2_w },
+	{ 0x100000, 0x17ffff, MWA16_ROM },
 	{ 0x180000, 0x18ffff, MWA16_RAM, &workram },
 	{ 0x190000, 0x19ffff, K053247_scattered_word_w, &spriteram16 },
 	{ 0x1a0000, 0x1a1fff, K054157_ram_word_w },
@@ -273,7 +315,7 @@ static MEMORY_READ16_START( buckyreadmem )
 	{ 0x0da002, 0x0da003, player2_r },
 	{ 0x0dc000, 0x0dc001, input_port_0_word_r },
 	{ 0x0dc002, 0x0dc003, control1_r },
-        { 0x0de000, 0x0de001, control2_r },
+	{ 0x0de000, 0x0de001, control2_r },
 	{ 0x180000, 0x181fff, K054157_ram_word_r },	/* Graphic planes */
 	{ 0x182000, 0x187fff, MRA16_RAM },
 	{ 0x190000, 0x191fff, K054157_rom_word_r }, 	/* Passthrough to tile roms */
@@ -297,10 +339,11 @@ static MEMORY_WRITE16_START( buckywritemem )
 	{ 0x0d600c, 0x0d600d, sound_cmd1_w },
 	{ 0x0d600e, 0x0d600f, sound_cmd2_w },
 	{ 0x0d8000, 0x0d8007, K054157_b_word_w },
-      	{ 0x0de000, 0x0de001, control2_w },
+	{ 0x0de000, 0x0de001, control2_w },
 	{ 0x180000, 0x181fff, K054157_ram_word_w },
 	{ 0x182000, 0x187fff, MWA16_RAM },
 	{ 0x1b0000, 0x1b3fff, paletteram16_xrgb_word_w, &paletteram16 },
+	{ 0x200000, 0x23ffff, MWA16_ROM },
 MEMORY_END
 
 static MEMORY_READ_START( sound_readmem )
@@ -340,7 +383,76 @@ INPUT_PORTS_START( moo )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL )	/* EEPROM ready (always 1) */
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_DIPNAME( 0x10, 0x00, "Stereo/Mono")
+	PORT_DIPNAME( 0x10, 0x00, "Sound Output")
+	PORT_DIPSETTING(    0x10, "Mono")
+	PORT_DIPSETTING(    0x00, "Stereo")
+	PORT_DIPNAME( 0x20, 0x20, "Coin Mechanism")
+	PORT_DIPSETTING(    0x20, "Common")
+	PORT_DIPSETTING(    0x00, "Independant")
+	PORT_DIPNAME( 0xc0, 0x80, "Number of Players")
+	PORT_DIPSETTING(    0xc0, "2")
+	PORT_DIPSETTING(    0x40, "3")
+	PORT_DIPSETTING(    0x80, "4")
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START3 )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START4 )
+INPUT_PORTS_END
+
+/* Same as 'moo', but additional "Button 3" for all players */
+INPUT_PORTS_START( bucky )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE4 )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* EEPROM data */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL )	/* EEPROM ready (always 1) */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_DIPNAME( 0x10, 0x00, "Sound Output")
 	PORT_DIPSETTING(    0x10, "Mono")
 	PORT_DIPSETTING(    0x00, "Stereo")
 	PORT_DIPNAME( 0x20, 0x20, "Coin Mechanism")
@@ -392,6 +504,7 @@ INPUT_PORTS_START( moo )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START4 )
 INPUT_PORTS_END
 
+
 static struct YM2151interface ym2151_interface =
 {
 	1,
@@ -427,7 +540,10 @@ static MACHINE_DRIVER_START( moo )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_HAS_SHADOWS)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
-	MDRV_VISIBLE_AREA(36, 36+380-1, 2*8, 2*8+224-1)
+	/* visrgn derived by opening it all the way up, taking snapshots,
+	   and measuring in the GIMP.  The character select screen demands this
+	   geometry or stuff gets cut off */
+	MDRV_VISIBLE_AREA(34, 34+384-1, 16, 16+224-1)
 
 	MDRV_PALETTE_LENGTH(2048)
 
@@ -457,7 +573,41 @@ static MACHINE_DRIVER_START( bucky )
 	MDRV_VIDEO_UPDATE(bucky)
 MACHINE_DRIVER_END
 
+
+
 ROM_START( moo )
+	ROM_REGION( 0x180000, REGION_CPU1, 0 )
+	/* main program */
+	ROM_LOAD16_BYTE( "151b01",    0x000000,  0x40000, 0xfb2fa298 )
+	ROM_LOAD16_BYTE( "151b02.ea", 0x000001,  0x40000, 0x37b30c01 )
+
+	/* data */
+	ROM_LOAD16_BYTE( "151a03", 0x100000,  0x40000, 0xc896d3ea )
+	ROM_LOAD16_BYTE( "151a04", 0x100001,  0x40000, 0x3b24706a )
+
+	ROM_REGION( 0x050000, REGION_CPU2, 0 )
+	/* Z80 sound program */
+	ROM_LOAD( "151a07", 0x000000, 0x040000, 0xcde247fc )
+	ROM_RELOAD(         0x010000, 0x040000 )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 )
+	/* tilemaps */
+	ROM_LOAD( "151a05", 0x000000, 0x100000, 0xbc616249 )
+	ROM_LOAD( "151a06", 0x100000, 0x100000, 0x38dbcac1 )
+
+	ROM_REGION( 0x800000, REGION_GFX2, 0 )
+	/* sprites */
+	ROM_LOAD( "151a10", 0x000000, 0x200000, 0x376c64f1 )
+	ROM_LOAD( "151a11", 0x200000, 0x200000, 0xe7f49225 )
+	ROM_LOAD( "151a12", 0x400000, 0x200000, 0x4978555f )
+	ROM_LOAD( "151a13", 0x600000, 0x200000, 0x4771f525 )
+
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
+	/* K054539 samples */
+	ROM_LOAD( "151a08", 0x000000, 0x200000, 0x962251d7 )
+ROM_END
+
+ROM_START( mooua )
 	ROM_REGION( 0x180000, REGION_CPU1, 0 )
 	/* main program */
 	ROM_LOAD16_BYTE( "151b01", 0x000000,  0x40000, 0xfb2fa298 )
@@ -534,7 +684,7 @@ ROM_START( buckyua )
 
 	ROM_REGION( 0x050000, REGION_CPU2, 0 )
 	/* Z80 sound program */
-	ROM_LOAD("173.a07", 0x000000, 0x40000, 0x4cdaee71)
+	ROM_LOAD("f5", 0x000000, 0x40000, 0x4cdaee71)
 	ROM_RELOAD(         0x010000, 0x040000 )
 
 	ROM_REGION( 0x200000, REGION_GFX1, 0 )
@@ -555,16 +705,21 @@ ROM_START( buckyua )
 	ROM_LOAD("173a09.a6", 0x200000, 0x200000, 0xc93697c4)
 ROM_END
 
+
 static void init_moo(void)
 {
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_4(REGION_GFX2);
 
-	state_save_register_INT32("Moo", 0, "control2", &cur_control2, 1);
-	state_save_register_UINT16("Moo", 0, "protram", protram, 1);
+	init_nosound_count = 0;
+
+	state_save_register_INT32("Moo", 0, "control2", (INT32 *)&cur_control2, 1);
+	state_save_register_UINT16("Moo", 0, "protram", (UINT16 *)protram, 1);
 }
 
-GAME( 1992, moo,     0,     moo,   moo, moo, ROT0, "Konami", "Wild West C.O.W.boys of Moo Mesa (US)" )
-GAME( 1992, bucky,   0,     bucky, moo, moo, ROT0, "Konami", "Bucky O'Hare (World version EA)" )
-GAME( 1992, buckyua, bucky, bucky, moo, moo, ROT0, "Konami", "Bucky O'Hare (US version UA)" )
+
+GAME( 1992, moo,      0,       moo,     moo,     moo,      ROT0, "Konami", "Wild West C.O.W.-Boys of Moo Mesa (World version EA)")
+GAME( 1992, mooua,    moo,     moo,     moo,     moo,      ROT0, "Konami", "Wild West C.O.W.-Boys of Moo Mesa (US version UA)")
+GAME( 1992, bucky,    0,       bucky,   bucky,   moo,      ROT0, "Konami", "Bucky O'Hare (World version EA)")
+GAME( 1992, buckyua,  bucky,   bucky,   bucky,   moo,      ROT0, "Konami", "Bucky O'Hare (US version UA)")
 

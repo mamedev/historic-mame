@@ -398,12 +398,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static unsigned char palette_source[] =
-{
-	0x00,0x00,0x00, /* BLACK */
-	0xff,0xff,0xff, /* WHITE */
-};
-
 #define ARTWORK_COLORS (2 + 32768)
 
 static unsigned short colortable_source[ARTWORK_COLORS] =
@@ -413,7 +407,8 @@ static unsigned short colortable_source[ARTWORK_COLORS] =
 };
 static PALETTE_INIT( meadows )
 {
-	memcpy(palette,palette_source,sizeof(palette_source));
+	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
+	palette_set_color(1,0xff,0xff,0xff); /* WHITE */
 	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 

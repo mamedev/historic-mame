@@ -1,6 +1,5 @@
 #include "driver.h"
 
-#if 0
 
 /*************************************
  *
@@ -9,19 +8,21 @@
  *************************************/
 
 static int    asic65_command;
+static UINT8  asic65_command_ready;
 static UINT16 asic65_param[32];
 static UINT8  asic65_param_index;
 static UINT16 asic65_result[32];
 static UINT8  asic65_result_index;
+static UINT8  asic65_result_ready;
 static UINT8  asic65_reset_state;
 
 static FILE * asic65_log;
 
+WRITE16_HANDLER( asic65_w );
+WRITE16_HANDLER( asic65_data_w );
 
-extern READ16_HANDLER( asic65_status_r );
-extern READ16_HANDLER( asic65_data_r );
-extern WRITE16_HANDLER( asic65_param_w );
-extern WRITE16_HANDLER( asic65_command_w );
+READ16_HANDLER( asic65_r );
+READ16_HANDLER( asic65_io_r );
 
 
 #define PARAM_WRITE		0
@@ -45,14 +46,14 @@ void asic65_reset(int state)
 		asic65_result_ready = 0;
 		asic65_command_ready = 0;
 	}
-
+	
 	/* if reset is going high, latch the command */
 	else if (!state && asic65_reset_state)
 	{
 		if (asic65_command != -1)
 			asic65_data_w(1, asic65_command, 0);
 	}
-
+	
 	/* update the state */
 	asic65_reset_state = state;
 }
@@ -70,21 +71,21 @@ static UINT16 writeback_data;
 static int update_command_01(int action, int data)
 {
 	int result = 0;
-
+	
 	/* on a parameter write, store the data */
 	if (action == PARAM_WRITE)
 	{
 		writeback_data = data;
 		asic65_result_ready = 1;
 	}
-
+	
 	/* on a parameter read, return the data */
 	else if (action == DATA_READ)
 	{
 		result = writeback_data;
 		asic65_result_ready = 0;
 	}
-
+	
 	return result;
 }
 
@@ -106,20 +107,19 @@ static void checksum_ready(int param)
 
 static int update_command_02(int action, int data)
 {
-	static UINT16 writeback_data;
 	int result = 0;
-
+	
 	/* on a command write, start the timer */
 	if (action == PARAM_WRITE)
 		timer_set(TIME_IN_HZ(30), 0x3159, checksum_ready);
-
+	
 	/* on a parameter read, return the data */
 	else if (action == DATA_READ)
 	{
 		result = checksum_data;
 		asic65_result_ready = 0;
 	}
-
+	
 	return result;
 }
 
@@ -134,22 +134,22 @@ static int update_command_02(int action, int data)
 WRITE16_HANDLER( asic65_data_w )
 {
 	int is_command = offset & 1;
-
+	
 	/* logging */
 	if (!asic65_log) asic65_log = fopen("asic65.log", "w");
-
+	
 	/* if it's being written to the command register, latch it */
 	if (is_command)
 	{
-		if (asic65_log) fprintf(asic65_log, "\n(%06X) %04X:", cpu_getpreviouspc(), data);
+//		if (asic65_log) fprintf(asic65_log, "\n(%06X) %04X:", activecpu_get_previouspc(), data);
 		asic65_command = data;
 		asic65_command_ready = 1;
 	}
 	else
 	{
-		if (asic65_log) fprintf(asic65_log, " W=%04X", data);
+//		if (asic65_log) fprintf(asic65_log, " W=%04X", data);
 	}
-
+	
 	/* switch off the command number */
 	switch (asic65_command)
 	{
@@ -161,7 +161,7 @@ WRITE16_HANDLER( asic65_data_w )
 			update_command_02(is_command, data);
 			break;
 	}
-
+	
 	/* parameters go to offset 0 */
 	if (offset == 0)
 	{
@@ -175,7 +175,7 @@ WRITE16_HANDLER( asic65_data_w )
 	/* commands go to offset 2 */
 	else
 	{
-		if (asic65_log) fprintf(asic65_log, "\n(%06X) %04X:", cpu_getpreviouspc(), data);
+		if (asic65_log) fprintf(asic65_log, "\n(%06X) %04X:", activecpu_get_previouspc(), data);
 
 		asic65_command = data;
 		asic65_result_index = asic65_param_index = 0;
@@ -263,7 +263,7 @@ WRITE16_HANDLER( asic65_data_w )
 		case 0x17:	/* vector scale */
 			if (asic65_param_index >= 2)
 			{
-				asic65_result[0] = ((INT16)asic65_param[0] * (INT16)asic65_param[1]) >> 12;
+				asic65_result[0] = ((INT16)asic65_param[0] * (INT16)asic65_param[1]) >> 15;
 				asic65_result_index = 0;
 				asic65_param_index = 1;
 			}
@@ -272,11 +272,11 @@ WRITE16_HANDLER( asic65_data_w )
 }
 
 
-
+#if 0
 WRITE16_HANDLER( asic65_w )
 {
 	if (!asic65_log) asic65_log = fopen("asic65.log", "w");
-
+	
 	/* parameters go to offset 0 */
 	if (offset == 0)
 	{
@@ -290,7 +290,7 @@ WRITE16_HANDLER( asic65_w )
 	/* commands go to offset 2 */
 	else
 	{
-		if (asic65_log) fprintf(asic65_log, "\n(%06X) %04X:", cpu_getpreviouspc(), data);
+		if (asic65_log) fprintf(asic65_log, "\n(%06X) %04X:", activecpu_get_previouspc(), data);
 
 		asic65_command = data;
 		asic65_result_index = asic65_param_index = 0;
@@ -385,6 +385,7 @@ WRITE16_HANDLER( asic65_w )
 			break;
 	}
 }
+#endif
 
 
 READ16_HANDLER( asic65_r )
@@ -407,16 +408,3 @@ READ16_HANDLER( asic65_io_r )
 	/* indicate that we always are ready to accept data and always ready to send */
 	return 0x4000;
 }
-
-
-
-#endif
-READ16_HANDLER( asic65_status_r )
-{ return 0; }
-
-READ16_HANDLER( asic65_data_r )
-{ return 0; }
-
-WRITE16_HANDLER( asic65_data_w ) { }
-void asic65_reset(void) { }
-

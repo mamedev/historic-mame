@@ -13,6 +13,7 @@
 unsigned char *trackfld_scroll;
 unsigned char *trackfld_scroll2;
 
+static int mastkin_kludge;
 
 
 /***************************************************************************
@@ -42,24 +43,26 @@ PALETTE_INIT( trackfld )
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
 		bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
 		bit0 = (*color_prom >> 3) & 0x01;
 		bit1 = (*color_prom >> 4) & 0x01;
 		bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = 0;
 		bit1 = (*color_prom >> 6) & 0x01;
 		bit2 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		palette_set_color(i,r,g,b);
 
 		color_prom++;
 	}
@@ -93,9 +96,21 @@ VIDEO_START( trackfld )
 	if ((tmpbitmap = auto_bitmap_alloc(2 * Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
+	mastkin_kludge = 0;
+
 	return 0;
 }
 
+VIDEO_START( mastkin )
+{
+	int res;
+
+	res = video_start_trackfld();
+
+	mastkin_kludge = 1;
+
+	return res;
+}
 
 
 /***************************************************************************
@@ -156,8 +171,16 @@ VIDEO_UPDATE( trackfld )
 
 		if (flip_screen)
 		{
-			for (offs = 0;offs < 32;offs++)
-				scroll[31-offs] = 256 - (trackfld_scroll[offs] + 256 * (trackfld_scroll2[offs] & 1));
+			if (mastkin_kludge)
+			{
+				for (offs = 0;offs < 32;offs++)
+					scroll[31-offs] = 256 + (trackfld_scroll[offs] + 256 * (trackfld_scroll2[offs] & 1));
+			}
+			else
+			{
+				for (offs = 0;offs < 32;offs++)
+					scroll[31-offs] = 256 - (trackfld_scroll[offs] + 256 * (trackfld_scroll2[offs] & 1));
+			}
 		}
 		else
 		{
@@ -183,6 +206,12 @@ VIDEO_UPDATE( trackfld )
 		{
 			sy = 240 - sy;
 			flipy = !flipy;
+
+			if (mastkin_kludge)
+			{
+				sx = (240 - sx) & 0xff;
+				flipx = !flipx;
+			}
 		}
 
 		/* Note that this adjustement must be done AFTER handling flip screen, thus */

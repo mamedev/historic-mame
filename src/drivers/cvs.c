@@ -474,10 +474,11 @@ MACHINE_DRIVER_END
 
 ROM_START( cvs )
 	ROM_REGION( 0x8000, REGION_CPU3, 0 )
-	ROM_LOAD( "5b.bin",            0x0000, 0x0800, 0xf055a624)
+	ROM_LOAD( "5b.bin",            0x0000, 0x0800, 0xf055a624 )
 
-	ROM_REGION( 0x0800, REGION_PROMS, 0 )
-    ROM_LOAD( "82s185.10h",        0x0000, 0x0800, 0xc205bca6)
+	ROM_REGION( 0x0820, REGION_PROMS, 0 )
+    ROM_LOAD( "82s185.10h",        0x0000, 0x0800, 0xc205bca6 )
+	ROM_LOAD( "82s123.10k",        0x0800, 0x0020, 0xb5221cec )
 ROM_END
 
 
@@ -506,21 +507,22 @@ ROM_START( name )                                               \
 	ROM_CONTINUE(                  0x7000, 0x0400 )             \
                                                                 \
 	ROM_REGION( 0x2000, REGION_CPU2, 0 ) 						\
-	ROM_LOAD( #p9"-sdp1.bin",  0x0000, size1, sdp1)  			\
+	ROM_LOAD( #p9"-sdp1.bin",  0x0000, size1, sdp1 )  			\
                                                                 \
 	ROM_REGION( 0x0800, REGION_CPU3, 0 ) 						\
 	ROM_LOAD( "5b.bin",            0x0000, 0x0800, 0xf055a624)  \
                                                                 \
 	ROM_REGION( 0x1000, REGION_SOUND1, 0 ) 						\
-    ROM_LOAD( #p10"-sp1.bin",   0x0000, size2, sp1)  			\
+    ROM_LOAD( #p10"-sp1.bin",   0x0000, size2, sp1 )  			\
                                                                 \
 	ROM_REGION( 0x1800, REGION_GFX1, ROMREGION_DISPOSE )        \
 	ROM_LOAD( #p6"-cp1.bin",   0x0000, 0x0800, cp1 )        	\
 	ROM_LOAD( #p7"-cp2.bin",   0x0800, 0x0800, cp2 )        	\
 	ROM_LOAD( #p8"-cp3.bin",   0x1000, 0x0800, cp3 )        	\
                                                                 \
-	ROM_REGION( 0x0800, REGION_PROMS, ROMREGION_DISPOSE  )      \
-    ROM_LOAD( "82s185.10h",        0x0000, 0x0800, 0xc205bca6 ) \
+	ROM_REGION( 0x0820, REGION_PROMS, 0 )						\
+    ROM_LOAD( "82s185.10h",        0x0000, 0x0800, 0xc205bca6 )	\
+	ROM_LOAD( "82s123.10k",        0x0800, 0x0020, 0xb5221cec )	\
 ROM_END
 
 CVS_ROM(huncholy,ho,0x4f17cda7,ho,0x70fa52c7,ho,0x931934b1,ho,0xaf5cd501,ho,0x658e8974,ho,0xc6c73d46,ho,0xe596371c,ho,0x11fae1cf,ho,0x3efb3ffd,0x1000,ho,0x3fd39b1e,0x1000)

@@ -198,17 +198,12 @@ INPUT_PORTS_START( ripcord )
 	PORT_ANALOG( 0xff, 115, IPT_PADDLE, 30, 10, 64, 167 )
 INPUT_PORTS_END
 
-static unsigned char palette_source[] =
-{
-	0x00,0x00,0x00, /* BLACK */
-	0xff,0xff,0xff, /* WHITE */
-};
-
 #define ARTWORK_COLORS (254 + 32768)
 
 static PALETTE_INIT( circus )
 {
-	memcpy(palette,palette_source,sizeof(palette_source));
+	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
+	palette_set_color(0,0xff,0xff,0xff); /* WHITE */
 }
 
 

@@ -247,28 +247,18 @@ INPUT_PORTS_END
 
 
 /* RGBI palette. Is it correct? */
-static unsigned char palette_source[16 * 3] =
-{
-    0x00, 0x00, 0x00,
-    0xff, 0x00, 0x00,
-    0x00, 0xff, 0x00,
-    0xff, 0xff, 0x00,
-    0x00, 0x00, 0xff,
-    0xff, 0x00, 0xff,
-    0x00, 0xff, 0xff,
-    0xff, 0xff, 0xff,
-    0x40, 0x40, 0x40,
-    0xff, 0x40, 0x40,
-    0x40, 0xff, 0x40,
-    0xff, 0xff, 0x40,
-    0x40, 0x40, 0xff,
-    0xff, 0x40, 0xff,
-    0x40, 0xff, 0xff,
-    0xff, 0xff, 0xff
-};
 static PALETTE_INIT( leprechn )
 {
-    memcpy(palette,palette_source,sizeof(palette_source));
+	int i;
+	
+	for (i = 0; i < 16; i++)
+	{
+		int bk = (i & 8) ? 0x40 : 0x00;
+		int r = (i & 1) ? 0xff : bk;
+		int g = (i & 2) ? 0xff : bk;
+		int b = (i & 4) ? 0xff : bk;
+		palette_set_color(i,r,g,b);
+	}
 }
 
 
@@ -307,7 +297,7 @@ static MACHINE_DRIVER_START( leprechn )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
 	MDRV_SCREEN_SIZE(256, 256)
 	MDRV_VISIBLE_AREA(0, 256-1, 0, 256-1)
-	MDRV_PALETTE_LENGTH(sizeof(palette_source) / sizeof(palette_source[0]) / 3)
+	MDRV_PALETTE_LENGTH(16)
 
 	MDRV_PALETTE_INIT(leprechn)
 	MDRV_VIDEO_START(leprechn)

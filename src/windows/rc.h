@@ -1,7 +1,7 @@
 /* A simple rcfile and commandline parsing mechanism
 
    Copyright 1999,2000 Hans de Goede
-   
+
    This file and the acompanying files in this directory are free software;
    you can redistribute them and/or modify them under the terms of the GNU
    Library General Public License as published by the Free Software Foundation;
@@ -65,6 +65,8 @@ int rc_unregister(struct rc_struct *rc, struct rc_option *option);
 int rc_load(struct rc_struct *rc, const char *name, int priority,
    int continue_on_errors);
 int rc_save(struct rc_struct *rc, const char *name, int append);
+int osd_rc_read(struct rc_struct *rc, void *f, const char *description,
+   int priority, int continue_on_errors);
 int rc_read(struct rc_struct *rc, FILE *f, const char *description,
    int priority, int continue_on_errors);
 int rc_write(struct rc_struct *rc, FILE *f, const char *description);
@@ -105,7 +107,7 @@ int rc_set_option(struct rc_struct *rc, const char *name, const char *arg,
 int rc_set_option2(struct rc_option *option, const char *name,
    const char *arg, int priority);
 int rc_set_option3(struct rc_option *option, const char *arg, int priority);
-   
+
 /* 2 ways to get the option_struct belonging to a certain option:
    -by name, searching the options in a rc instance
    -by name, searching an array of options, as given to rc_register */

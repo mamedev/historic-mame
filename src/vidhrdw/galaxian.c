@@ -92,7 +92,7 @@ static int stars_blink_state;
 static void *stars_blink_timer;
 static void *stars_scroll_timer;
 static int timer_adjusted;
-       void galaxian_init_stars(unsigned char **palette);
+       void galaxian_init_stars(void);
 static void (*draw_stars)(struct mame_bitmap *);		/* function to call to draw the star layer */
 static void galaxian_draw_stars(struct mame_bitmap *bitmap);
 	   void scramble_draw_stars(struct mame_bitmap *bitmap);
@@ -165,61 +165,52 @@ PALETTE_INIT( galaxian )
 
 	for (i = 0;i < 32;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
 		bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
 		bit0 = (*color_prom >> 3) & 0x01;
 		bit1 = (*color_prom >> 4) & 0x01;
 		bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = (*color_prom >> 6) & 0x01;
 		bit1 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x4f * bit0 + 0xa8 * bit1;
+		b = 0x4f * bit0 + 0xa8 * bit1;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
 
-	galaxian_init_stars(&palette);
+	galaxian_init_stars();
 
 
 	/* bullets - yellow and white */
-
-	*(palette++) = 0xef;
-	*(palette++) = 0xef;
-	*(palette++) = 0x00;
-
-	*(palette++) = 0xef;
-	*(palette++) = 0xef;
-	*(palette++) = 0xef;
+	palette_set_color(BULLETS_COLOR_BASE+0,0xef,0xef,0x00);
+	palette_set_color(BULLETS_COLOR_BASE+1,0xef,0xef,0xef);
 }
 
 PALETTE_INIT( scramble )
 {
-	palette_init_galaxian(palette, colortable, color_prom);
+	palette_init_galaxian(colortable, color_prom);
 
 
 	/* blue background - 390 ohm resistor */
-
-	palette[(BACKGROUND_COLOR_BASE * 3) + 0] = 0;
-	palette[(BACKGROUND_COLOR_BASE * 3) + 1] = 0;
-	palette[(BACKGROUND_COLOR_BASE * 3) + 2] = 0x56;
+	palette_set_color(BACKGROUND_COLOR_BASE,0,0,0x56);
 }
 
 PALETTE_INIT( moonwar )
 {
-	palette_init_scramble(palette, colortable, color_prom);
+	palette_init_scramble(colortable, color_prom);
 
 
 	/* wire mod to connect the bullet blue output to the 220 ohm resistor */
-
-	palette[BULLETS_COLOR_BASE * 3 + 2] = 0x97;
+	palette_set_color(BULLETS_COLOR_BASE+0,0xef,0xef,0x97);
 }
 
 PALETTE_INIT( turtles )
@@ -227,7 +218,7 @@ PALETTE_INIT( turtles )
 	int i;
 
 
-	palette_init_galaxian(palette, colortable, color_prom);
+	palette_init_galaxian(colortable, color_prom);
 
 
 	/*  The background color generator is connected this way:
@@ -238,9 +229,10 @@ PALETTE_INIT( turtles )
 
 	for (i = 0; i < 8; i++)
 	{
-		palette[(BACKGROUND_COLOR_BASE + i) * 3 + 0] = (i & 0x01) ? 0x55 : 0x00;
-		palette[(BACKGROUND_COLOR_BASE + i) * 3 + 1] = (i & 0x02) ? 0x47 : 0x00;
-		palette[(BACKGROUND_COLOR_BASE + i) * 3 + 2] = (i & 0x04) ? 0x55 : 0x00;
+		int r = (i & 0x01) ? 0x55 : 0x00;
+		int g = (i & 0x02) ? 0x47 : 0x00;
+		int b = (i & 0x04) ? 0x55 : 0x00;
+		palette_set_color(BACKGROUND_COLOR_BASE+i,r,g,b);
 	}
 }
 
@@ -249,7 +241,7 @@ PALETTE_INIT( stratgyx )
 	int i;
 
 
-	palette_init_galaxian(palette, colortable, color_prom);
+	palette_init_galaxian(colortable, color_prom);
 
 
 	/*  The background color generator is connected this way:
@@ -260,22 +252,20 @@ PALETTE_INIT( stratgyx )
 
 	for (i = 0; i < 8; i++)
 	{
-		palette[(BACKGROUND_COLOR_BASE + i) * 3 + 0] = (i & 0x01) ? 0x7c : 0x00;
-		palette[(BACKGROUND_COLOR_BASE + i) * 3 + 1] = (i & 0x02) ? 0x3c : 0x00;
-		palette[(BACKGROUND_COLOR_BASE + i) * 3 + 2] = (i & 0x04) ? 0x47 : 0x00;
+		int r = (i & 0x01) ? 0x7c : 0x00;
+		int g = (i & 0x02) ? 0x3c : 0x00;
+		int b = (i & 0x04) ? 0x47 : 0x00;
+		palette_set_color(BACKGROUND_COLOR_BASE+i,r,g,b);
 	}
 }
 
 PALETTE_INIT( frogger )
 {
-	palette_init_galaxian(palette, colortable, color_prom);
+	palette_init_galaxian(colortable, color_prom);
 
 
 	/* blue background - 470 ohm resistor */
-
-	palette[(BACKGROUND_COLOR_BASE * 3) + 0] = 0;
-	palette[(BACKGROUND_COLOR_BASE * 3) + 1] = 0;
-	palette[(BACKGROUND_COLOR_BASE * 3) + 2] = 0x47;
+	palette_set_color(BACKGROUND_COLOR_BASE,0,0,0x47);
 }
 
 
@@ -306,34 +296,29 @@ PALETTE_INIT( darkplnt )
 
 	for (i = 0;i < 32;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
 		bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
-		*(palette++) = 0x00;
+		g = 0x00;
 		/* blue component */
 		bit0 = (*color_prom >> 3) & 0x01;
 		bit1 = (*color_prom >> 4) & 0x01;
 		bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
 
 	/* bullets - red and blue */
-
-	*(palette++) = 0xef;
-	*(palette++) = 0x00;
-	*(palette++) = 0x00;
-
-	*(palette++) = 0x00;
-	*(palette++) = 0x00;
-	*(palette++) = 0xef;
+	palette_set_color(BULLETS_COLOR_BASE+0,0xef,0x00,0x00);
+	palette_set_color(BULLETS_COLOR_BASE+1,0x00,0x00,0xef);
 }
 
 PALETTE_INIT( minefld )
@@ -341,7 +326,7 @@ PALETTE_INIT( minefld )
 	int i;
 
 
-	palette_init_galaxian(palette, colortable, color_prom);
+	palette_init_galaxian(colortable, color_prom);
 
 
 	/* set up background colors */
@@ -350,18 +335,20 @@ PALETTE_INIT( minefld )
 
 	for (i = 0; i < 128; i++)
 	{
-		palette[(BACKGROUND_COLOR_BASE + i) * 3 + 0] = 0;
-		palette[(BACKGROUND_COLOR_BASE + i) * 3 + 1] = i;
-		palette[(BACKGROUND_COLOR_BASE + i) * 3 + 2] = i * 2;
+		int r = 0;
+		int g = i;
+		int b = i * 2;
+		palette_set_color(BACKGROUND_COLOR_BASE+i,r,g,b);
 	}
 
 	/* graduated brown */
 
 	for (i = 0; i < 128; i++)
 	{
-		palette[(BACKGROUND_COLOR_BASE + 128 + i) * 3 + 0] = i * 1.5;
-		palette[(BACKGROUND_COLOR_BASE + 128 + i) * 3 + 1] = i * 0.75;
-		palette[(BACKGROUND_COLOR_BASE + 128 + i) * 3 + 2] = i / 2;
+		int r = i * 1.5;
+		int g = i * 0.75;
+		int b = i / 2;
+		palette_set_color(BACKGROUND_COLOR_BASE+128+i,r,g,b);
 	}
 }
 
@@ -370,7 +357,7 @@ PALETTE_INIT( rescue )
 	int i;
 
 
-	palette_init_galaxian(palette, colortable, color_prom);
+	palette_init_galaxian(colortable, color_prom);
 
 
 	/* set up background colors */
@@ -379,9 +366,10 @@ PALETTE_INIT( rescue )
 
 	for (i = 0; i < 128; i++)
 	{
-		palette[(BACKGROUND_COLOR_BASE + i) * 3 + 0] = 0;
-		palette[(BACKGROUND_COLOR_BASE + i) * 3 + 1] = i;
-		palette[(BACKGROUND_COLOR_BASE + i) * 3 + 2] = i * 2;
+		int r = 0;
+		int g = i;
+		int b = i * 2;
+		palette_set_color(BACKGROUND_COLOR_BASE+i,r,g,b);
 	}
 }
 
@@ -390,7 +378,7 @@ PALETTE_INIT( mariner )
 	int i;
 
 
-	palette_init_galaxian(palette, colortable, color_prom);
+	palette_init_galaxian(colortable, color_prom);
 
 
 	/* set up background colors */
@@ -404,16 +392,17 @@ PALETTE_INIT( mariner )
 
 	for (i = 0; i < 16; i++)
 	{
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
 		bit0 = (i >> 0) & 0x01;
 		bit1 = (i >> 1) & 0x01;
 		bit2 = (i >> 2) & 0x01;
 		bit3 = (i >> 3) & 0x01;
 
-		palette[(BACKGROUND_COLOR_BASE + i) * 3 + 0] = 0;
-		palette[(BACKGROUND_COLOR_BASE + i) * 3 + 1] = 0;
-		palette[(BACKGROUND_COLOR_BASE + i) * 3 + 2] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		r = 0;
+		g = 0;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		palette_set_color(BACKGROUND_COLOR_BASE+i,r,g,b);
 	}
 }
 
@@ -1207,7 +1196,7 @@ static void mariner_draw_background(struct mame_bitmap *bitmap)
 
 /* star drawing functions */
 
-void galaxian_init_stars(unsigned char **palette)
+void galaxian_init_stars(void)
 {
 	int i;
 	int total_stars;
@@ -1225,16 +1214,17 @@ void galaxian_init_stars(unsigned char **palette)
 
 	for (i = 0;i < 64;i++)
 	{
-		int bits;
+		int bits,r,g,b;
 		int map[4] = { 0x00, 0x88, 0xcc, 0xff };
 
 
 		bits = (i >> 0) & 0x03;
-		*((*palette)++) = map[bits];
+		r = map[bits];
 		bits = (i >> 2) & 0x03;
-		*((*palette)++) = map[bits];
+		g = map[bits];
 		bits = (i >> 4) & 0x03;
-		*((*palette)++) = map[bits];
+		b = map[bits];
+		palette_set_color(STARS_COLOR_BASE+i,r,g,b);
 	}
 
 

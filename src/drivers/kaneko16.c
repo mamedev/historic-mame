@@ -32,7 +32,7 @@ Year + Game					PCB			Notes
 	Sand Scorpion (by Face)				MCU protection (collision detection etc.)
 	Shogun Warriors						MCU protection (68k code snippets, NOT WORKING)
 94	Great 1000 Miles Rally				MCU protection (EEPROM handling etc.)
-9?	Great 1000 Miles Rally 2			Incomplete dump (code missing!)
+95	Great 1000 Miles Rally 2			MCU protection (EEPROM handling etc.)
 ---------------------------------------------------------------------------
 
 Note: gtmr manual shows "Compatible with AX Kaneko System Board"
@@ -48,6 +48,12 @@ To Do:
   screen and the very first screen (with the Kaneko logo in the middle).
   They're probably supposed to be disabled in those occasions, but the
   relevant registers aren't changed throughout the game (?)
+
+[gtmr2]
+
+- Finish the Inputs (different wheels and pedals)
+
+- Find infos about the communication stuff (even if it won't be supported)
 
 ***************************************************************************/
 
@@ -198,6 +204,7 @@ static MACHINE_INIT( shogwarr )
 const struct GameDriver driver_gtmr;
 const struct GameDriver driver_gtmre;
 const struct GameDriver driver_gtmrusa;
+const struct GameDriver driver_gtmr2;
 
 /*
 
@@ -263,7 +270,8 @@ void gtmr_mcu_run(void)
 				mcu_ram[mcu_offset+7] = 0x3939;
 			}
 			else if ( (Machine->gamedrv == &driver_gtmre)  ||
-					  (Machine->gamedrv == &driver_gtmrusa) )
+					  (Machine->gamedrv == &driver_gtmrusa) ||
+					  (Machine->gamedrv == &driver_gtmr2) )
 			{
 				/* MCU writes the string "USMM0713-TB1994 " to shared ram */
 				mcu_ram[mcu_offset+0] = 0x5553;
@@ -1023,6 +1031,61 @@ MEMORY_END
 
 
 /***************************************************************************
+							Great 1000 Miles Rally 2
+***************************************************************************/
+
+
+READ16_HANDLER( gtmr2_wheel_r )
+{
+	switch (readinputport(4) & 0x1800)
+	{
+		case 0x0000:	// 270° A. Wheel
+			return	(readinputport(5));
+			break;
+		case 0x1000:	// 270° D. Wheel
+			return	(readinputport(6) << 8);
+			break;
+		case 0x0800:	// 360° Wheel
+			return	(readinputport(7) << 8);
+			break;
+		default:
+			logerror("gtmr2_wheel_r : read at %06x with joystick\n", activecpu_get_pc());
+			return	(~0);
+			break;
+	}
+}
+
+READ16_HANDLER( gtmr2_IN1_r )
+{
+	return	(readinputport(1) & (readinputport(8) | ~0x7100));
+}
+
+static MEMORY_READ16_START( gtmr2_readmem )
+	{ 0x000000, 0x0ffffd, MRA16_ROM					},	// ROM
+	{ 0x0ffffe, 0x0fffff, gtmr2_wheel_r				},	// Wheel Value
+	{ 0x100000, 0x10ffff, MRA16_RAM					},	// Work RAM
+	{ 0x200000, 0x20ffff, MRA16_RAM					},	// Shared With MCU
+	{ 0x300000, 0x30ffff, MRA16_RAM					},	// Palette
+	{ 0x310000, 0x327fff, MRA16_RAM					},	//
+	{ 0x400000, 0x401fff, MRA16_RAM					},	// Sprites
+	{ 0x500000, 0x503fff, MRA16_RAM					},	// Layers 0
+	{ 0x580000, 0x583fff, MRA16_RAM					},	// Layers 1
+	{ 0x600000, 0x60000f, MRA16_RAM					},	// Layers 0 Regs
+	{ 0x680000, 0x68000f, MRA16_RAM					},	// Layers 1 Regs
+	{ 0x700000, 0x70001f, kaneko16_sprites_regs_r	},	// Sprites Regs
+	{ 0x800000, 0x800001, OKIM6295_status_0_lsb_r	},	// Samples
+	{ 0x880000, 0x880001, OKIM6295_status_1_lsb_r	},
+	{ 0x900014, 0x900015, kaneko16_rnd_r			},	// Random Number ?
+	{ 0xa00000, 0xa00001, watchdog_reset16_r		},	// Watchdog
+	{ 0xb00000, 0xb00001, input_port_0_word_r		},	// Inputs
+//	{ 0xb00002, 0xb00003, input_port_1_word_r		},
+	{ 0xb00002, 0xb00003, gtmr2_IN1_r		},
+	{ 0xb00004, 0xb00005, input_port_2_word_r		},
+	{ 0xb00006, 0xb00007, input_port_3_word_r		},
+	{ 0xd00000, 0xd00001, MRA16_NOP					},	// ? (bit 0)
+MEMORY_END
+
+/***************************************************************************
 								Magical Crystal
 ***************************************************************************/
 
@@ -1751,6 +1814,97 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
+							Great 1000 Miles Rally 2
+***************************************************************************/
+
+INPUT_PORTS_START( gtmr2 )
+	PORT_START	// IN0 - Player 1 - 100004.w <- b00000.w (cpl)
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 ) // swapped for consistency:
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 ) // button1 is usually accel.
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN1 - Player 2 - 10000c.w <- b00002.w (cpl) - for "test mode" only
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 ) // swapped for consistency:
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 ) // button1 is usually accel.
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN2 - Coins - 100014.w <- b00004.w (cpl)
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_START1	)
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_START2	)	// only in "test mode"
+	PORT_BIT_IMPULSE( 0x0400, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x0800, IP_ACTIVE_LOW, IPT_COIN2, 2 )
+	PORT_BITX( 0x1000, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_TILT	)
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_SERVICE1	)
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN	)
+
+	PORT_START	// IN3 - 100017.w <- b00006.w
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3, "IN 3-6", IP_KEY_DEFAULT, IP_JOY_NONE )	// Code at 0x002236 - Centers 270D wheel ?
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN4 - DSW from the MCU - 1016f7.b <- 206000.b
+	PORT_DIPNAME( 0x0700, 0x0700, "Communication" )
+	PORT_DIPSETTING(      0x0700, "None" )
+	PORT_DIPSETTING(      0x0600, "Machine 1" )
+	PORT_DIPSETTING(      0x0500, "Machine 2" )
+	PORT_DIPSETTING(      0x0400, "Machine 3" )
+	PORT_DIPSETTING(      0x0300, "Machine 4" )
+	/* 0x0000 to 0x0200 : "Machine 4"
+	PORT_DIPSETTING(      0x0200, "Machine 4 (0x0200)" )
+	PORT_DIPSETTING(      0x0100, "Machine 4 (0x0100)" )
+	PORT_DIPSETTING(      0x0000, "Machine 4 (0x0000)" )
+	*/
+	PORT_DIPNAME( 0x1800, 0x1800, "Controls" )
+	PORT_DIPSETTING(      0x1800, "Joystick" )
+	PORT_DIPSETTING(      0x0800, "Wheel (360)" )			// Not working correctly in race
+	PORT_DIPSETTING(      0x1000, "Wheel (270D)" )			// Not working correctly !
+	PORT_DIPSETTING(      0x0000, "Wheel (270A)" )			// Not working correctly in race
+	PORT_DIPNAME( 0x2000, 0x2000, "Pedal Function" )
+	PORT_DIPSETTING(      0x2000, "Microswitch" )
+//	PORT_DIPSETTING(      0x0000, "Potentiometer" )			// Not implemented yet
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On )  )
+	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
+
+	PORT_START	// IN5 - Wheel (270A) - 100019.b <- fffff.b
+	PORT_ANALOG ( 0x00ff, 0x0080, IPT_AD_STICK_X | IPF_CENTER, 30, 1, 0x00, 0xff )
+
+	PORT_START	// IN6 - Wheel (270D) - 100019.b <- ffffe.b
+	PORT_ANALOG ( 0x00ff, 0x0080, IPT_AD_STICK_X, 30, 1, 0x00, 0xff )
+
+	PORT_START	// IN7 - Wheel (360) - 100019.b <- ffffe.b
+	PORT_ANALOGX( 0x00ff, 0x0080, IPT_DIAL, 30, 1, 0, 0, KEYCODE_LEFT, KEYCODE_RIGHT, 0, 0 )
+
+	PORT_START	// Fake IN1 - To be pressed during boot sequence - Code at 0x000c9e
+	PORT_BITX( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON5, "IN 1-0", KEYCODE_H, IP_JOY_NONE )	// "sound test"
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON6, "IN 1-4", KEYCODE_J, IP_JOY_NONE )	// "view tiles"
+	PORT_BITX( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON7, "IN 1-5", KEYCODE_K, IP_JOY_NONE )	// "view memory"
+	PORT_BITX( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON8, "IN 1-6", KEYCODE_L, IP_JOY_NONE )	// "view sprites ?"
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+
+/***************************************************************************
 								Magical Crystal
 ***************************************************************************/
 
@@ -2310,7 +2464,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( gtmr )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 16000000)	/* ? Most likely a 68000-HC16 */
+	MDRV_CPU_ADD_TAG("gtmr", M68000, 16000000)	/* ? Most likely a 68000-HC16 */
 	MDRV_CPU_MEMORY(gtmr_readmem,gtmr_writemem)
 	MDRV_CPU_VBLANK_INT(kaneko16_interrupt,KANEKO16_INTERRUPTS_NUM)
 
@@ -2333,6 +2487,18 @@ static MACHINE_DRIVER_START( gtmr )
 	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_2x12kHz)
 MACHINE_DRIVER_END
 
+
+/***************************************************************************
+							Great 1000 Miles Rally 2
+***************************************************************************/
+
+static MACHINE_DRIVER_START( gtmr2 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(gtmr)
+	MDRV_CPU_MODIFY("gtmr")
+	MDRV_CPU_MEMORY(gtmr2_readmem,gtmr_writemem)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 								Magical Crystal
@@ -2893,40 +3059,101 @@ ROM_END
 
 						Great 1000 Miles Rally 2
 
-GMR2U48	1M		OKI6295: 00000-3ffff + chunks of 0x10000 with headers
+Bootup displays "TB06MM2EX 1000 Miglia 2"
+                "Master Up 95-04-04 19:39:01"
 
-GMR2U49	2M		sprites
-GMR2U50	2M		sprites
-GMR2U51	2M		sprites - FIRST AND SECOND HALF IDENTICAL
+Top board
+---------
+PCB ID : M201F00138  KANEKO AX-SYSTEM BOARD
+CPU    : TMP68HC000N-16 (68000)
+SOUND  : Oki M6295 (x2)
+OSC    : 27.000MHz, 16.000MHz, 20.000MHz, 33.3330MHz
+RAM    : LC3664 (28 pin SOIC, x4)
+         UT6264 (28 pin SOIC, x2)
+         LH628256 (28 pin DIP, x6)
+         D42101 (24 pin DIP, x2)
+         424260 (40 pin SOIC, x2)
+PALs   : AXOP048, AXOP049, AXOP050 (GAL16V8, near M6295's)
+         AXOP021 \
+         AXOP022  |
+         AXOP062  |
+         AXOP063  |  (18CV8     )
+         AXOP064  |  (near 68000)
+         AXOP070  |
+         AXOP071  |
+         AXOP089 /
 
-GMR2U89	2M		tiles
-GMR1U90	2M		tiles
-GMR2U90	IDENTICAL TO GMR1U90
+OTHER  : Custom chips
+                      Kaneko Japan 9448 TA (44 pin PQFP, near JAMMA connector)
+                      Kaneko VIEW2-CHIP (x2, 144 pin PQFP)
+                      Kaneko KC002 L0002 023 9339EK706 (208 pin PQFP)
+
+ROMs   : None
+
+
+Bottom board
+------------
+PCB ID : AX09S00138  KANEKO AX-SYSTEM BOARD ROM-08
+DIP    : 8 position (x1)
+RAM    : 6116 (x4)
+PALs   : COMUX4, COMUX4 (GAL16V8, near U21)
+         MMs4P067 (18CV8, near U47)
+         MMs6G095 (GAL16V8, near U94)
+         MMs4G084 (GAL16V8, near U50)
+         COMUX2, COMUX3 (GAL16V8, near U33)
+         COMUX1, MMS4P004 (18CV8, near U33)
+
+OTHER  : 93C46 EEPROM
+         KANEKO TBSOP02 454 9451MK002 (74 pin PQFP, Custom MCU?)
+
+ROMs   :  (filename is ROM Label, extension is PCB 'u' location)
 
 ***************************************************************************/
 
+/* Change to 1 if you want to use the GFX ROM from 'gtmr' to see the "alphabet"
+   (but the 3 first cars will have a wrong display) */
+#define USE_GTMR_GFX_ROM	0
+
 ROM_START( gtmr2 )
  	ROM_REGION( 0x100000, REGION_CPU1, 0 )			/* 68000 Code */
-	ROM_LOAD16_BYTE( "maincode.1", 0x000000, 0x080000, 0x00000000 )
-	ROM_LOAD16_BYTE( "maincode.2", 0x000001, 0x080000, 0x00000000 )
+	ROM_LOAD16_BYTE( "m2p0x1.u8",  0x000000, 0x080000, 0x525f6618 )
+	ROM_LOAD16_BYTE( "m2p1x1.u7",  0x000001, 0x080000, 0x914683e5 )
+
+ 	ROM_REGION( 0x020000, REGION_CPU2, 0 )			/* MCU Code? */
+	ROM_LOAD( "m2d0x0.u31",        0x000000, 0x020000, 0x2e1a06ff )
 
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
-	ROM_LOAD( "gmr2u49.bin",  0x000000, 0x200000, 0xd50f9d80 )
-	ROM_LOAD( "gmr2u50.bin",  0x200000, 0x200000, 0x39b60a83 )
-	ROM_LOAD( "gmr2u51.bin",  0x400000, 0x200000, 0xfd06b339 )
-	ROM_LOAD( "gmr2u89.bin",  0x600000, 0x200000, 0x4dc42fbb )
+	/* removing u49 from the real board gets rid of the startup text
+	   + car graphics, so its probably incomplete since the u49 we have
+	   doens't appear to contain all the needed sprites */
+	#if USE_GTMR_GFX_ROM
+	ROM_LOAD( "gmmu27.bin",  0x000000, 0x200000, 0xc0ab3efc )
+	#else
+	ROM_FILL( 0, 0x200000, 0xff )	// missing data should be in u49?
+	#endif
+	ROM_LOAD( "m2-200-0.u49",      0x200000, 0x200000, BADCRC( 0xd50f9d80 ) )	// incomplete?
+	ROM_LOAD( "m2-201-0.u50",      0x400000, 0x200000, 0x39b60a83 )
+	ROM_LOAD( "m2-202-0.u51",      0x600000, 0x200000, 0xfd06b339 )
+	ROM_LOAD16_BYTE( "m2s0x1.u32", 0x700000, 0x080000, 0x4069d6c7 )
+	ROM_LOAD16_BYTE( "m2s1x1.u33", 0x700001, 0x080000, 0xc53fe269 )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
-	ROM_LOAD( "gmr1u90.bin", 0x000000, 0x200000, 0xf4e894f2 )
+	ROM_REGION( 0x440000, REGION_GFX2, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
+	ROM_LOAD( "m2-300-0.u89",      0x000000, 0x200000, 0x4dc42fbb )
+	ROM_LOAD( "m2-301-0.u90",      0x200000, 0x200000, 0xf4e894f2 )
+	ROM_LOAD16_BYTE( "m2b0x0.u93", 0x400000, 0x020000, 0xe023d51b )
+	ROM_LOAD16_BYTE( "m2b1x0.u94", 0x400001, 0x020000, 0x03c48bdb )
 
-	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
-	ROM_LOAD( "gmr2u90.bin", 0x000000, 0x200000, 0xf4e894f2 )	// IDENTICAL to gmr1u90
+	ROM_REGION( 0x440000, REGION_GFX3, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
+	ROM_LOAD( "m2-300-0.u89",      0x000000, 0x200000, 0x4dc42fbb )
+	ROM_LOAD( "m2-301-0.u90",      0x200000, 0x200000, 0xf4e894f2 )
+	ROM_LOAD16_BYTE( "m2b0x0.u93", 0x400000, 0x020000, 0xe023d51b )
+	ROM_LOAD16_BYTE( "m2b1x0.u94", 0x400001, 0x020000, 0x03c48bdb )
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
-	ROM_LOAD( "gmr2u48.bin", 0x000000, 0x100000, 0x1 )
+	ROM_LOAD( "m2-100-0.u48",      0x000000, 0x100000, 0x5250fa45 )
 
-	ROM_REGION( 0x100000, REGION_SOUND2, 0 )	/* Samples */
-	ROM_LOAD( "samples",  0x000000, 0x100000, 0x00000000 )
+	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* Samples */
+	ROM_LOAD( "m2w1x0.u47",        0x040000, 0x040000, 0x1b0513c5 )
 ROM_END
 
 
@@ -3193,6 +3420,7 @@ GAME( 1994, gtmrusa,  gtmr,     gtmr,     gtmr,     kaneko16, ROT0,  "Kaneko", "
 
 /* Non-working games (mainly due to incomplete dumps) */
 
+GAMEX(1995, gtmr2,    0,        gtmr2,    gtmr2,    kaneko16, ROT0,  "Kaneko", "Mille Miglia 2: Great 1000 Miles Rally", GAME_NOT_WORKING )
+
 GAMEX(1992, bakubrkr, 0,        bakubrkr, bakubrkr, 0,        ROT90,      "Kaneko", "Bakuretsu Breaker",         GAME_NOT_WORKING  )
 GAMEX(1992, shogwarr, 0,        shogwarr, shogwarr, shogwarr, ROT0,       "Kaneko", "Shogun Warriors",           GAME_NOT_WORKING  )
-GAMEX(1995, gtmr2,    0,        gtmr,     gtmr,     kaneko16, ROT0,       "Kaneko", "Great 1000 Miles Rally 2",  GAME_NOT_WORKING  )

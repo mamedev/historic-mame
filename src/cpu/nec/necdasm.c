@@ -363,13 +363,28 @@ static char *addr_to_hex(UINT32 addr, int splitup) {
   return buffer;
 }
 
+/* in nec.c */
+unsigned nec_get_reg(int regnum);
+
 static UINT8 getopcode(void)
 {
-	return OP_ROM[instruction_offset++];
+	UINT8 res;
+
+	int pc_masked = (instruction_offset++)&0xfffff;
+	change_pc20(pc_masked);
+	res = OP_ROM[pc_masked];
+	change_pc20(nec_get_reg(REG_PC));
+	return res;
 }
 
 static UINT8 getbyte(void) {
-  	return OP_RAM[instruction_offset++];
+	UINT8 res;
+
+	int pc_masked = (instruction_offset++)&0xfffff;
+	change_pc20(pc_masked);
+	res = OP_RAM[pc_masked];
+	change_pc20(nec_get_reg(REG_PC));
+	return res;
 }
 
 static int modrm(void)

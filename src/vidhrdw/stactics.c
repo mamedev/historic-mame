@@ -164,7 +164,7 @@ PALETTE_INIT( stactics )
 
     for (i=0;i<16;i++)
     {
-        int bit0,bit1,bit2, bit3;
+        int bit0,bit1,bit2, bit3,r,g,b;
 
         bit0 = i & 1;
         bit1 = (i >> 1) & 1;
@@ -172,13 +172,15 @@ PALETTE_INIT( stactics )
         bit3 = (i >> 3) & 1;
 
         /* red component */
-        *(palette++) = 0xff * bit0;
+        r = 0xff * bit0;
 
         /* green component */
-        *(palette++) = 0xff * bit1 - 0xcc * bit3;
+        g = 0xff * bit1 - 0xcc * bit3;
 
         /* blue component */
-        *(palette++) = 0xff * bit2;
+        b = 0xff * bit2;
+
+		palette_set_color(i,r,g,b);
     }
 
     /* The color prom in Space Tactics is used for both   */

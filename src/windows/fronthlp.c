@@ -446,7 +446,7 @@ int frontend_help (char *gamename)
 	{
 		#ifndef MESS
 		printf("M.A.M.E. v%s - Multiple Arcade Machine Emulator\n"
-				"Copyright (C) 1997-2001 by Nicola Salmoria and the MAME Team\n\n",build_version);
+				"Copyright (C) 1997-2002 by Nicola Salmoria and the MAME Team\n\n",build_version);
 		showdisclaimer();
 		printf("Usage:  MAME gamename [options]\n\n"
 				"        MAME -list         for a brief list of supported games\n"
@@ -1185,16 +1185,21 @@ int frontend_help (char *gamename)
 			{
 				int year;
 
-				for (j = 1;j < CPU_COUNT;j++)
-					printf("\t%s",cputype_name(j));
+//				for (j = 1;j < CPU_COUNT;j++)
+//					printf("\t%s",cputype_name(j));
+				for (j = 0;j < 3;j++)
+					printf("\t%d",8<<j);
 				printf("\n");
 
-				for (year = 1980;year <= 1995;year++)
+				for (year = 1980;year <= 2000;year++)
 				{
 					int count[CPU_COUNT];
+					int count_buswidth[3];
 
 					for (j = 0;j < CPU_COUNT;j++)
 						count[j] = 0;
+					for (j = 0;j < 3;j++)
+						count_buswidth[j] = 0;
 
 					i = 0;
 					while (drivers[i])
@@ -1211,7 +1216,15 @@ int frontend_help (char *gamename)
 							{
 //								for (j = 0;j < MAX_CPU;j++)
 j = 0;	// count only the main cpu
+								{
 									count[x_cpu[j].cpu_type & ~CPU_FLAGS_MASK]++;
+									switch(cputype_databus_width(x_cpu[j].cpu_type & ~CPU_FLAGS_MASK))
+									{
+										case  8: count_buswidth[0]++; break;
+										case 16: count_buswidth[1]++; break;
+										case 32: count_buswidth[2]++; break;
+									}
+								}
 							}
 						}
 
@@ -1219,8 +1232,10 @@ j = 0;	// count only the main cpu
 					}
 
 					printf("%d",year);
-					for (j = 1;j < CPU_COUNT;j++)
-						printf("\t%d",count[j]);
+//					for (j = 1;j < CPU_COUNT;j++)
+//						printf("\t%d",count[j]);
+					for (j = 0;j < 3;j++)
+						printf("\t%d",count_buswidth[j]);
 					printf("\n");
 				}
 			}

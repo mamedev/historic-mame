@@ -7,6 +7,56 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "batman.h"
+#include "thunderj.h"
+
+
+
+/*************************************
+ *
+ *	Globals
+ *
+ *************************************/
+
+UINT8 batman_alpha_tile_bank;
+
+
+
+/*************************************
+ *
+ *	Tilemap callbacks
+ *
+ *************************************/
+
+static void get_alpha_tile_info(int tile_index)
+{
+	UINT16 data = atarigen_alpha[tile_index];
+	int code = ((data & 0x400) ? (batman_alpha_tile_bank * 0x400) : 0) + (data & 0x3ff);
+	int color = (data >> 11) & 0x0f;
+	int opaque = data & 0x8000;
+	SET_TILE_INFO(2, code, color, opaque ? TILE_IGNORE_TRANSPARENCY : 0);
+}
+
+
+static void get_playfield_tile_info(int tile_index)
+{
+	UINT16 data1 = atarigen_playfield[tile_index];
+	UINT16 data2 = atarigen_playfield_upper[tile_index] & 0xff;
+	int code = data1 & 0x7fff;
+	int color = 0x10 + (data2 & 0x0f);
+	SET_TILE_INFO(0, code, color, (data1 >> 15) & 1);
+	tile_info.priority = (data2 >> 4) & 3;
+}
+
+
+static void get_playfield2_tile_info(int tile_index)
+{
+	UINT16 data1 = atarigen_playfield2[tile_index];
+	UINT16 data2 = atarigen_playfield_upper[tile_index] >> 8;
+	int code = data1 & 0x7fff;
+	int color = data2 & 0x0f;
+	SET_TILE_INFO(0, code, color, (data1 >> 15) & 1);
+	tile_info.priority = (data2 >> 4) & 3;
+}
 
 
 
@@ -18,44 +68,6 @@
 
 VIDEO_START( batman )
 {
-	static const struct ataripf_desc pf0desc =
-	{
-		0,			/* index to which gfx system */
-		64,64,		/* size of the playfield in tiles (x,y) */
-		64,1,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-
-		0x300,		/* index of palette base */
-		0x500,		/* maximum number of colors */
-		0,			/* color XOR for shadow effect (if any) */
-		0x003f,		/* latch mask */
-		0,			/* transparent pen mask */
-
-		0x007fff,	/* tile data index mask */
-		0x4f0000,	/* tile data color mask */
-		0x008000,	/* tile data hflip mask */
-		0,			/* tile data vflip mask */
-		0x300000	/* tile data priority mask */
-	};
-
-	static const struct ataripf_desc pf1desc =
-	{
-		0,			/* index to which gfx system */
-		64,64,		/* size of the playfield in tiles (x,y) */
-		64,1,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-
-		0x200,		/* index of palette base */
-		0x500,		/* maximum number of colors */
-		0,			/* color XOR for shadow effect (if any) */
-		0x3f00,		/* latch mask */
-		0x0001,		/* transparent pen mask */
-
-		0x007fff,	/* tile data index mask */
-		0x4f0000,	/* tile data color mask */
-		0x008000,	/* tile data hflip mask */
-		0,			/* tile data vflip mask */
-		0x300000	/* tile data priority mask */
-	};
-
 	static const struct atarimo_desc modesc =
 	{
 		1,					/* index to which gfx system */
@@ -66,10 +78,10 @@ VIDEO_START( batman )
 		0,					/* render in swapped X/Y order? */
 		0,					/* does the neighbor bit affect the next object? */
 		8,					/* pixels per SLIP entry (0 for no-slip) */
-		8,					/* number of scanlines between MO updates */
+		0,					/* pixel offset for SLIPs */
 
 		0x100,				/* base palette entry */
-		0x500,				/* maximum number of colors */
+		0x100,				/* maximum number of colors */
 		0,					/* transparent pen index */
 
 		{{ 0x03ff,0,0,0 }},	/* mask for the link */
@@ -83,77 +95,36 @@ VIDEO_START( batman )
 		{{ 0,0,0,0x0007 }},	/* mask for the height, in tiles */
 		{{ 0,0x8000,0,0 }},	/* mask for the horizontal flip */
 		{{ 0 }},			/* mask for the vertical flip */
-		{{ 0,0,0x0030,0 }},	/* mask for the priority */
+		{{ 0,0,0x0070,0 }},	/* mask for the priority */
 		{{ 0 }},			/* mask for the neighbor */
 		{{ 0 }},			/* mask for absolute coordinates */
 
-		{{ 0 }},			/* mask for the ignore value */
-		0,					/* resulting value to indicate "ignore" */
-		0					/* callback routine for ignored entries */
+		{{ 0 }},			/* mask for the special value */
+		0,					/* resulting value to indicate "special" */
+		NULL				/* callback routine for special entries */
 	};
-
-	static const struct atarian_desc andesc =
-	{
-		2,			/* index to which gfx system */
-		64,32,		/* size of the alpha RAM in tiles (x,y) */
-
-		0x000,		/* index of palette base */
-		0x100,		/* maximum number of colors */
-		0,			/* mask of the palette split */
-
-		0x707ff,	/* tile data index mask */
-		0x07800,	/* tile data color mask */
-		0,			/* tile data hflip mask */
-		0x08000		/* tile data opacity mask */
-	};
-
-	UINT32 *pflookup, *anlookup;
-	int i, size;
 
 	/* initialize the playfield */
-	if (!ataripf_init(0, &pf0desc))
+	atarigen_playfield_tilemap = tilemap_create(get_playfield_tile_info, tilemap_scan_cols, TILEMAP_OPAQUE, 8,8, 64,64);
+	if (!atarigen_playfield_tilemap)
 		return 1;
 
 	/* initialize the second playfield */
-	if (!ataripf_init(1, &pf1desc))
+	atarigen_playfield2_tilemap = tilemap_create(get_playfield2_tile_info, tilemap_scan_cols, TILEMAP_TRANSPARENT, 8,8, 64,64);
+	if (!atarigen_playfield2_tilemap)
 		return 1;
+	tilemap_set_transparent_pen(atarigen_playfield2_tilemap, 0);
 
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &modesc))
 		return 1;
 
 	/* initialize the alphanumerics */
-	if (!atarian_init(0, &andesc))
+	atarigen_alpha_tilemap = tilemap_create(get_alpha_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,8, 64,32);
+	if (!atarigen_alpha_tilemap)
 		return 1;
+	tilemap_set_transparent_pen(atarigen_alpha_tilemap, 0);
 
-	/* modify the playfield 0 lookup table to handle the palette bank */
-	pflookup = ataripf_get_lookup(0, &size);
-	for (i = 0; i < size; i++)
-	{
-		int color = ATARIPF_LOOKUP_COLOR(pflookup[i]);
-		if (color & 0x10) color ^= 0x50;
-		ATARIPF_LOOKUP_SET_COLOR(pflookup[i], color);
-	}
-
-	/* modify the playfield 1 lookup table to handle the palette bank */
-	pflookup = ataripf_get_lookup(1, &size);
-	for (i = 0; i < size; i++)
-	{
-		int color = ATARIPF_LOOKUP_COLOR(pflookup[i]);
-		if (color & 0x10) color ^= 0x50;
-		ATARIPF_LOOKUP_SET_COLOR(pflookup[i], color);
-	}
-
-	/* modify the alphanumerics lookup table to handle the code bank */
-	anlookup = atarian_get_lookup(0, &size);
-	for (i = 0; i < size; i++)
-	{
-		int entry = i << ATARIAN_LOOKUP_DATABITS;
-		int code = entry & 0x3ff;
-		if (entry & 0x400)
-			code += (entry >> 16) * 0x400;
-		ATARIAN_LOOKUP_SET_CODE(anlookup[i], code);
-	}
 	return 0;
 }
 
@@ -170,143 +141,56 @@ void batman_scanline_update(int scanline)
 	/* update the scanline parameters */
 	if (scanline <= Machine->visible_area.max_y && atarivc_state.rowscroll_enable)
 	{
-		data16_t *base = &atarian_0_base[scanline / 8 * 64 + 48];
-		int i;
+		data16_t *base = &atarigen_alpha[scanline / 8 * 64 + 48];
+		int scan, i;
 
-		for (i = 0; i < 16; i++)
-		{
-			int data = base[i];
-			switch (data & 15)
+		for (scan = 0; scan < 8; scan++, scanline++)
+			for (i = 0; i < 2; i++)
 			{
-				case 9:
-					atarivc_state.mo_xscroll = (data >> 7) & 0x1ff;
-					atarimo_set_xscroll(0, atarivc_state.mo_xscroll, scanline + i/2);
-					break;
+				int data = *base++;
+				switch (data & 15)
+				{
+					case 9:
+						force_partial_update(scanline - 1);
+						atarivc_state.mo_xscroll = (data >> 7) & 0x1ff;
+						atarimo_set_xscroll(0, atarivc_state.mo_xscroll);
+						break;
 
-				case 10:
-					atarivc_state.pf1_xscroll_raw = (data >> 7) & 0x1ff;
-					atarivc_update_pf_xscrolls();
-					ataripf_set_xscroll(0, atarivc_state.pf0_xscroll, scanline + i/2);
-					ataripf_set_xscroll(1, atarivc_state.pf1_xscroll, scanline + i/2);
-					break;
+					case 10:
+						force_partial_update(scanline - 1);
+						atarivc_state.pf1_xscroll_raw = (data >> 7) & 0x1ff;
+						atarivc_update_pf_xscrolls();
+						tilemap_set_scrollx(atarigen_playfield_tilemap, 0, atarivc_state.pf0_xscroll);
+						tilemap_set_scrollx(atarigen_playfield2_tilemap, 0, atarivc_state.pf1_xscroll);
+						break;
 
-				case 11:
-					atarivc_state.pf0_xscroll_raw = (data >> 7) & 0x1ff;
-					atarivc_update_pf_xscrolls();
-					ataripf_set_xscroll(0, atarivc_state.pf0_xscroll, scanline + i/2);
-					break;
+					case 11:
+						force_partial_update(scanline - 1);
+						atarivc_state.pf0_xscroll_raw = (data >> 7) & 0x1ff;
+						atarivc_update_pf_xscrolls();
+						tilemap_set_scrollx(atarigen_playfield_tilemap, 0, atarivc_state.pf0_xscroll);
+						break;
 
-				case 13:
-					atarivc_state.mo_yscroll = (data >> 7) & 0x1ff;
-					atarimo_set_yscroll(0, atarivc_state.mo_yscroll, scanline + i/2);
-					break;
+					case 13:
+						force_partial_update(scanline - 1);
+						atarivc_state.mo_yscroll = (data >> 7) & 0x1ff;
+						atarimo_set_yscroll(0, atarivc_state.mo_yscroll);
+						break;
 
-				case 14:
-					atarivc_state.pf1_yscroll = (data >> 7) & 0x1ff;
-					ataripf_set_yscroll(1, atarivc_state.pf1_yscroll, scanline + i/2);
-					break;
+					case 14:
+						force_partial_update(scanline - 1);
+						atarivc_state.pf1_yscroll = (data >> 7) & 0x1ff;
+						tilemap_set_scrolly(atarigen_playfield2_tilemap, 0, atarivc_state.pf1_yscroll);
+						break;
 
-				case 15:
-					atarivc_state.pf0_yscroll = (data >> 7) & 0x1ff;
-					atarimo_set_yscroll(0, atarivc_state.pf0_yscroll, scanline + i/2);
-					break;
+					case 15:
+						force_partial_update(scanline - 1);
+						atarivc_state.pf0_yscroll = (data >> 7) & 0x1ff;
+						tilemap_set_scrolly(atarigen_playfield_tilemap, 0, atarivc_state.pf0_yscroll);
+						break;
+				}
 			}
-
-		}
 	}
-}
-
-
-
-/*************************************
- *
- *	Overrendering
- *
- *************************************/
-
-static const UINT16 transparency_mask[4] =
-{
-	0xffff,
-	0xff01,
-	0xff01,
-	0x0001
-};
-
-static int overrender0_callback(struct ataripf_overrender_data *data, int state)
-{
-	/* we need to check tile-by-tile, so always return OVERRENDER_SOME */
-	if (state == OVERRENDER_BEGIN)
-	{
-		/* do nothing if the MO priority is 3 */
-		if (data->mopriority == 3)
-			return OVERRENDER_NONE;
-
-		/* if the MO priority is 0 and the color is 0, overrender pen 1 */
-		if (data->mopriority == 0 && (data->mocolor & 0x0f) == 0)
-		{
-			data->drawmode = TRANSPARENCY_NONE;
-			data->drawpens = 0;
-			data->maskpens = ~0x0002;
-			return OVERRENDER_ALL;
-		}
-
-		/* by default, draw anywhere the MO pen was non-zero */
-		data->drawmode = TRANSPARENCY_PENS;
-		data->maskpens = 0x0001;
-		return OVERRENDER_SOME;
-	}
-
-	/* handle a query */
-	else if (state == OVERRENDER_QUERY)
-	{
-		/* if the priority is too low, don't bother */
-		if (data->pfpriority <= data->mopriority)
-			return OVERRENDER_NO;
-
-		/* otherwise, look it up */
-		data->drawpens = transparency_mask[data->pfpriority];
-		return (data->drawpens != 0xffff) ? OVERRENDER_YES : OVERRENDER_NO;
-	}
-	return 0;
-}
-
-
-static int overrender1_callback(struct ataripf_overrender_data *data, int state)
-{
-	/* we need to check tile-by-tile, so always return OVERRENDER_SOME */
-	if (state == OVERRENDER_BEGIN)
-	{
-		/* do nothing if the MO priority is 3 */
-		if (data->mopriority == 3)
-			return OVERRENDER_NONE;
-
-		/* if the MO priority is 0 and the color is 0, overrender pen 1 */
-		if (data->mopriority == 0 && (data->mocolor & 0x0f) == 0)
-		{
-			data->drawmode = TRANSPARENCY_NONE;
-			data->drawpens = 0;
-			data->maskpens = ~0x80000002;
-			return OVERRENDER_ALL;
-		}
-
-		/* by default, draw anywhere the MO pen was non-zero */
-		data->drawmode = TRANSPARENCY_PENS;
-		data->maskpens = 0x0001;
-		return OVERRENDER_SOME;
-	}
-
-	/* handle a query */
-	else if (state == OVERRENDER_QUERY)
-	{
-		/* if the priority is too low, don't bother */
-		if (data->pfpriority <= data->mopriority)
-			return OVERRENDER_NO;
-
-		/* otherwise, look it up */
-		data->drawpens = transparency_mask[data->pfpriority] | 0x0001;
-		return (data->drawpens != 0xffff) ? OVERRENDER_YES : OVERRENDER_NO;
-	}
-	return 0;
 }
 
 
@@ -319,9 +203,116 @@ static int overrender1_callback(struct ataripf_overrender_data *data, int state)
 
 VIDEO_UPDATE( batman )
 {
-	/* draw the layers */
-	ataripf_render(0, bitmap, cliprect);
-	ataripf_render(1, bitmap, cliprect);
-	atarimo_render(0, bitmap, cliprect, overrender0_callback, overrender1_callback);
-	atarian_render(0, bitmap, cliprect);
+	struct atarimo_rect_list rectlist;
+	struct mame_bitmap *mobitmap;
+	int x, y, r;
+
+	/* draw the playfield */
+	fillbitmap(priority_bitmap, 0, cliprect);
+	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 0, 0x00);
+	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 1, 0x01);
+	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 2, 0x02);
+	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 3, 0x03);
+	tilemap_draw(bitmap, cliprect, atarigen_playfield2_tilemap, 0, 0x80);
+	tilemap_draw(bitmap, cliprect, atarigen_playfield2_tilemap, 1, 0x84);
+	tilemap_draw(bitmap, cliprect, atarigen_playfield2_tilemap, 2, 0x88);
+	tilemap_draw(bitmap, cliprect, atarigen_playfield2_tilemap, 3, 0x8c);
+	
+	/* draw and merge the MO */
+	mobitmap = atarimo_render(0, cliprect, &rectlist);
+	for (r = 0; r < rectlist.numrects; r++, rectlist.rect++)
+		for (y = rectlist.rect->min_y; y <= rectlist.rect->max_y; y++)
+		{
+			UINT16 *mo = (UINT16 *)mobitmap->base + mobitmap->rowpixels * y;
+			UINT16 *pf = (UINT16 *)bitmap->base + bitmap->rowpixels * y;
+			UINT8 *pri = (UINT8 *)priority_bitmap->base + priority_bitmap->rowpixels * y;
+			for (x = rectlist.rect->min_x; x <= rectlist.rect->max_x; x++)
+				if (mo[x])
+				{
+					/* verified on real hardware:
+					
+						for all MO colors, MO priority 0:
+							obscured by low fg playfield pens priority 1-3
+							obscured by high fg playfield pens priority 3 only
+							obscured by bg playfield priority 3 only
+
+						for all MO colors, MO priority 1:
+							obscured by low fg playfield pens priority 2-3
+							obscured by high fg playfield pens priority 3 only
+							obscured by bg playfield priority 3 only
+
+						for all MO colors, MO priority 2-3:
+							obscured by low fg playfield pens priority 3 only
+							obscured by high fg playfield pens priority 3 only
+							obscured by bg playfield priority 3 only
+					*/
+					int mopriority = mo[x] >> ATARIMO_PRIORITY_SHIFT;
+					
+					/* upper bit of MO priority signals special rendering and doesn't draw anything */
+					if (mopriority & 4)
+						continue;
+
+					/* foreground playfield case */
+					if (pri[x] & 0x80)
+					{
+						int pfpriority = (pri[x] >> 2) & 3;
+
+						/* playfield priority 3 always wins */
+						if (pfpriority == 3)
+							;
+						
+						/* priority is consistent for upper pens in playfield */
+						else if (pf[x] & 0x08)
+							pf[x] = mo[x] & ATARIMO_DATA_MASK;
+						
+						/* otherwise, we need to compare */
+						else if (mopriority >= pfpriority)
+							pf[x] = mo[x] & ATARIMO_DATA_MASK;
+					}
+					
+					/* background playfield case */
+					else
+					{
+						int pfpriority = pri[x] & 3;
+
+						/* playfield priority 3 always wins */
+						if (pfpriority == 3)
+							;
+						
+						/* otherwise, MOs get shown */
+						else
+							pf[x] = mo[x] & ATARIMO_DATA_MASK;
+					}
+					
+					/* don't erase yet -- we need to make another pass later */
+				}
+		}
+	
+	/* add the alpha on top */
+	tilemap_draw(bitmap, cliprect, atarigen_alpha_tilemap, 0, 0);
+
+	/* now go back and process the upper bit of MO priority */
+	rectlist.rect -= rectlist.numrects;
+	for (r = 0; r < rectlist.numrects; r++, rectlist.rect++)
+		for (y = rectlist.rect->min_y; y <= rectlist.rect->max_y; y++)
+		{
+			UINT16 *mo = (UINT16 *)mobitmap->base + mobitmap->rowpixels * y;
+			UINT16 *pf = (UINT16 *)bitmap->base + bitmap->rowpixels * y;
+			for (x = rectlist.rect->min_x; x <= rectlist.rect->max_x; x++)
+				if (mo[x])
+				{
+					int mopriority = mo[x] >> ATARIMO_PRIORITY_SHIFT;
+					
+					/* upper bit of MO priority might mean palette kludges */
+					if (mopriority & 4)
+					{
+						/* if bit 2 is set, start setting high palette bits */
+						if (mo[x] & 2)
+							thunderj_mark_high_palette(bitmap, pf, mo, x, y);
+					}
+					
+					/* erase behind ourselves */
+					mo[x] = 0;
+				}
+		}
 }

@@ -398,7 +398,7 @@ static struct YM3526interface ym3526_interface =
 {
 	1,			/* 1 chip (no more supported) */
 	3600000,	/* 3.6 MHz ? */
-	{ 60 },		/* (not supported) */
+	{ 100 },		/* (not supported) */
 	{ irqhandler },
 };
 

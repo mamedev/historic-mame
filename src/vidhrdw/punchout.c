@@ -65,40 +65,39 @@ static struct rectangle backgroundvisiblearea =
   bit 0 -- 2  kohm resistor -- inverter  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-static void convert_palette(unsigned char *palette,const unsigned char *color_prom)
+static void convert_palette(const unsigned char *color_prom)
 {
 	int i;
 
 
 	for (i = 0;i < 1024;i++)
 	{
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
 
 		bit0 = (color_prom[0] >> 0) & 0x01;
 		bit1 = (color_prom[0] >> 1) & 0x01;
 		bit2 = (color_prom[0] >> 2) & 0x01;
 		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 255 - (0x10 * bit0 + 0x21 * bit1 + 0x46 * bit2 + 0x88 * bit3);
+		r = 255 - (0x10 * bit0 + 0x21 * bit1 + 0x46 * bit2 + 0x88 * bit3);
 		bit0 = (color_prom[1024] >> 0) & 0x01;
 		bit1 = (color_prom[1024] >> 1) & 0x01;
 		bit2 = (color_prom[1024] >> 2) & 0x01;
 		bit3 = (color_prom[1024] >> 3) & 0x01;
-		*(palette++) = 255 - (0x10 * bit0 + 0x21 * bit1 + 0x46 * bit2 + 0x88 * bit3);
+		g = 255 - (0x10 * bit0 + 0x21 * bit1 + 0x46 * bit2 + 0x88 * bit3);
 		bit0 = (color_prom[2*1024] >> 0) & 0x01;
 		bit1 = (color_prom[2*1024] >> 1) & 0x01;
 		bit2 = (color_prom[2*1024] >> 2) & 0x01;
 		bit3 = (color_prom[2*1024] >> 3) & 0x01;
-		*(palette++) = 255 - (0x10 * bit0 + 0x21 * bit1 + 0x46 * bit2 + 0x88 * bit3);
+		b = 255 - (0x10 * bit0 + 0x21 * bit1 + 0x46 * bit2 + 0x88 * bit3);
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
 	/* reserve the last color for the transparent pen (none of the game colors has */
 	/* these RGB components) */
-	*(palette++) = 240;
-	*(palette++) = 240;
-	*(palette++) = 240;
+	palette_set_color(1024,240,240,240);
 }
 
 
@@ -112,7 +111,7 @@ PALETTE_INIT( punchout )
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + (offs)])
 
 
-	convert_palette(palette,color_prom);
+	convert_palette(color_prom);
 
 
 	/* top monitor chars */
@@ -145,7 +144,7 @@ PALETTE_INIT( armwrest )
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + (offs)])
 
 
-	convert_palette(palette,color_prom);
+	convert_palette(color_prom);
 
 
 	/* top monitor / bottom monitor backround chars */

@@ -42,7 +42,7 @@ VIDEO_START( arcadecl )
 		0,					/* render in swapped X/Y order? */
 		0,					/* does the neighbor bit affect the next object? */
 		0,					/* pixels per SLIP entry (0 for no-slip) */
-		8,					/* number of scanlines between MO updates */
+		0,					/* pixel offset for SLIPs */
 
 		0x100,				/* base palette entry */
 		0x100,				/* maximum number of colors */
@@ -63,9 +63,9 @@ VIDEO_START( arcadecl )
 		{{ 0 }},			/* mask for the neighbor */
 		{{ 0 }},			/* mask for absolute coordinates */
 
-		{{ 0 }},			/* mask for the ignore value */
-		0,					/* resulting value to indicate "ignore" */
-		0,					/* callback routine for ignored entries */
+		{{ 0 }},			/* mask for the special value */
+		0,					/* resulting value to indicate "special" */
+		0,					/* callback routine for special entries */
 	};
 
 	/* initialize the playfield */
@@ -77,8 +77,8 @@ VIDEO_START( arcadecl )
 		return 1;
 
 	/* set the intial scroll offset */
-	atarimo_set_xscroll(0, -4, 0);
-	atarimo_set_yscroll(0, 0x110, 0);
+	atarimo_set_xscroll(0, -4);
+	atarimo_set_yscroll(0, 0x110);
 	has_mo = (Machine->gfx[0]->total_elements > 10);
 	return 0;
 }
@@ -93,8 +93,32 @@ VIDEO_START( arcadecl )
 
 VIDEO_UPDATE( arcadecl )
 {
-	/* draw the layers */
+	/* draw the playfield */
 	rampart_bitmap_render(bitmap, cliprect);
+
+	/* draw and merge the MO */
 	if (has_mo)
-		atarimo_render(0, bitmap, cliprect, NULL, NULL);
+	{
+		struct atarimo_rect_list rectlist;
+		struct mame_bitmap *mobitmap;
+		int x, y, r;
+
+		mobitmap = atarimo_render(0, cliprect, &rectlist);
+		for (r = 0; r < rectlist.numrects; r++, rectlist.rect++)
+			for (y = rectlist.rect->min_y; y <= rectlist.rect->max_y; y++)
+			{
+				UINT16 *mo = (UINT16 *)mobitmap->base + mobitmap->rowpixels * y;
+				UINT16 *pf = (UINT16 *)bitmap->base + bitmap->rowpixels * y;
+				for (x = rectlist.rect->min_x; x <= rectlist.rect->max_x; x++)
+					if (mo[x])
+					{
+						/* not yet verified
+						*/
+						pf[x] = mo[x];
+						
+						/* erase behind ourselves */
+						mo[x] = 0;
+					}
+			}
+	}
 }

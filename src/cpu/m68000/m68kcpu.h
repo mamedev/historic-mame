@@ -723,6 +723,12 @@
 #define m68ki_write_16(A, V) m68ki_write_16_fc(A, FLAG_S | FUNCTION_CODE_USER_DATA, V)
 #define m68ki_write_32(A, V) m68ki_write_32_fc(A, FLAG_S | FUNCTION_CODE_USER_DATA, V)
 
+#if M68K_SIMULATE_PD_WRITES
+#define m68ki_write_32_pd(A, V) m68ki_write_32_pd_fc(A, FLAG_S | FUNCTION_CODE_USER_DATA, V)
+#else
+#define m68ki_write_32_pd(A, V) m68ki_write_32_fc(A, FLAG_S | FUNCTION_CODE_USER_DATA, V)
+#endif
+
 /* map read immediate 8 to read immediate 16 */
 #define m68ki_read_imm_8() MASK_OUT_ABOVE_8(m68ki_read_imm_16())
 
@@ -826,6 +832,7 @@ INLINE uint m68ki_read_32_fc (uint address, uint fc);
 INLINE void m68ki_write_8_fc (uint address, uint fc, uint value);
 INLINE void m68ki_write_16_fc(uint address, uint fc, uint value);
 INLINE void m68ki_write_32_fc(uint address, uint fc, uint value);
+INLINE void m68ki_write_32_pd_fc(uint address, uint fc, uint value);
 
 /* Indexed and PC-relative ea fetching */
 INLINE uint m68ki_get_ea_pcdi(void);
@@ -1034,6 +1041,14 @@ INLINE void m68ki_write_32_fc(uint address, uint fc, uint value)
 	m68k_write_memory_32(ADDRESS_68K(address), value);
 }
 
+#if M68K_SIMULATE_PD_WRITES
+INLINE void m68ki_write_32_pd_fc(uint address, uint fc, uint value)
+{
+	m68ki_set_fc(fc); /* auto-disable (see m68kcpu.h) */
+	m68ki_check_address_error(address); /* auto-disable (see m68kcpu.h) */
+	m68k_write_memory_32_pd(ADDRESS_68K(address), value);
+}
+#endif
 
 
 /* --------------------- Effective Address Calculation -------------------- */
@@ -1703,7 +1718,7 @@ INLINE void m68ki_exception_trace(void)
 INLINE void m68ki_exception_privilege_violation(void)
 {
 	uint sr = m68ki_init_exception();
-	m68ki_stack_frame_0000(REG_PC, sr, EXCEPTION_PRIVILEGE_VIOLATION);
+	m68ki_stack_frame_0000(REG_PPC, sr, EXCEPTION_PRIVILEGE_VIOLATION);
 	m68ki_jump_vector(EXCEPTION_PRIVILEGE_VIOLATION);
 
 	/* Use up some clock cycles and undo the instruction's cycles */
@@ -1721,7 +1736,7 @@ INLINE void m68ki_exception_1010(void)
 #endif
 
 	sr = m68ki_init_exception();
-	m68ki_stack_frame_0000(REG_PC-2, sr, EXCEPTION_1010);
+	m68ki_stack_frame_0000(REG_PPC, sr, EXCEPTION_1010);
 	m68ki_jump_vector(EXCEPTION_1010);
 
 	/* Use up some clock cycles and undo the instruction's cycles */
@@ -1740,7 +1755,7 @@ INLINE void m68ki_exception_1111(void)
 #endif
 
 	sr = m68ki_init_exception();
-	m68ki_stack_frame_0000(REG_PC-2, sr, EXCEPTION_1111);
+	m68ki_stack_frame_0000(REG_PPC, sr, EXCEPTION_1111);
 	m68ki_jump_vector(EXCEPTION_1111);
 
 	/* Use up some clock cycles and undo the instruction's cycles */
@@ -1757,7 +1772,7 @@ INLINE void m68ki_exception_illegal(void)
 				 m68ki_disassemble_quick(ADDRESS_68K(REG_PPC))));
 
 	sr = m68ki_init_exception();
-	m68ki_stack_frame_0000(REG_PC, sr, EXCEPTION_ILLEGAL_INSTRUCTION);
+	m68ki_stack_frame_0000(REG_PPC, sr, EXCEPTION_ILLEGAL_INSTRUCTION);
 	m68ki_jump_vector(EXCEPTION_ILLEGAL_INSTRUCTION);
 
 	/* Use up some clock cycles and undo the instruction's cycles */

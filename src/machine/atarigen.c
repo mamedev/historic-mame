@@ -27,16 +27,32 @@
 	GLOBAL VARIABLES
 ##########################################################################*/
 
-int 				atarigen_scanline_int_state;
-int 				atarigen_sound_int_state;
-int 				atarigen_video_int_state;
+UINT8 				atarigen_scanline_int_state;
+UINT8 				atarigen_sound_int_state;
+UINT8 				atarigen_video_int_state;
 
 const data16_t *	atarigen_eeprom_default;
 data16_t *			atarigen_eeprom;
 size_t 				atarigen_eeprom_size;
 
-int 				atarigen_cpu_to_sound_ready;
-int 				atarigen_sound_to_cpu_ready;
+UINT8 				atarigen_cpu_to_sound_ready;
+UINT8 				atarigen_sound_to_cpu_ready;
+
+data16_t *			atarigen_playfield;
+data16_t *			atarigen_playfield2;
+data16_t *			atarigen_playfield_upper;
+data16_t *			atarigen_alpha;
+data16_t *			atarigen_alpha2;
+data16_t *			atarigen_xscroll;
+data16_t *			atarigen_yscroll;
+
+data32_t *			atarigen_playfield32;
+data32_t *			atarigen_alpha32;
+
+struct tilemap *	atarigen_playfield_tilemap;
+struct tilemap *	atarigen_playfield2_tilemap;
+struct tilemap *	atarigen_alpha_tilemap;
+struct tilemap *	atarigen_alpha2_tilemap;
 
 data16_t *			atarivc_data;
 data16_t *			atarivc_eof_data;
@@ -74,6 +90,10 @@ static int 			last_scanline;
 
 static int 			actual_vc_latch0;
 static int 			actual_vc_latch1;
+static UINT8		atarivc_playfields;
+
+static int			playfield_latch;
+static int			playfield2_latch;
 
 
 
@@ -935,10 +955,11 @@ static void atarivc_eof_update(int param)
 	atarivc_reset: Initializes the video controller.
 ---------------------------------------------------------------*/
 
-void atarivc_reset(data16_t *eof_data)
+void atarivc_reset(data16_t *eof_data, int playfields)
 {
 	/* this allows us to manually reset eof_data to NULL if it's not used */
 	atarivc_eof_data = eof_data;
+	atarivc_playfields = playfields;
 
 	/* clear the RAM we use */
 	memset(atarivc_data, 0, 0x40);
@@ -969,12 +990,17 @@ void atarivc_update(const data16_t *data)
 			atarivc_common_w(i, data[i]);
 
 	/* update the scroll positions */
-	atarimo_set_xscroll(0, atarivc_state.mo_xscroll, 0);
-	ataripf_set_xscroll(0, atarivc_state.pf0_xscroll, 0);
-	ataripf_set_xscroll(1, atarivc_state.pf1_xscroll, 0);
-	atarimo_set_yscroll(0, atarivc_state.mo_yscroll, 0);
-	ataripf_set_yscroll(0, atarivc_state.pf0_yscroll, 0);
-	ataripf_set_yscroll(1, atarivc_state.pf1_yscroll, 0);
+	atarimo_set_xscroll(0, atarivc_state.mo_xscroll);
+	atarimo_set_yscroll(0, atarivc_state.mo_yscroll);
+
+	tilemap_set_scrollx(atarigen_playfield_tilemap, 0, atarivc_state.pf0_xscroll);
+	tilemap_set_scrolly(atarigen_playfield_tilemap, 0, atarivc_state.pf0_yscroll);
+
+	if (atarivc_playfields > 1)
+	{
+		tilemap_set_scrollx(atarigen_playfield2_tilemap, 0, atarivc_state.pf1_xscroll);
+		tilemap_set_scrolly(atarigen_playfield2_tilemap, 0, atarivc_state.pf1_yscroll);
+	}
 
 	/* use this for debugging the video controller values */
 #if 0
@@ -1038,14 +1064,18 @@ static void atarivc_common_w(offs_t offset, data16_t newword)
 		case 0x0a:
 
 			/* reset the latches when disabled */
-			ataripf_set_latch_lo((newword & 0x0080) ? actual_vc_latch0 : -1);
-			ataripf_set_latch_hi((newword & 0x0080) ? actual_vc_latch1 : -1);
+			atarigen_set_playfield_latch((newword & 0x0080) ? actual_vc_latch0 : -1);
+			atarigen_set_playfield2_latch((newword & 0x0080) ? actual_vc_latch1 : -1);
 
 			/* check for rowscroll enable */
 			atarivc_state.rowscroll_enable = (newword & 0x2000) >> 13;
 
 			/* check for palette banking */
-			atarivc_state.palette_bank = ((newword & 0x0400) >> 10) ^ 1;
+			if (atarivc_state.palette_bank != (((newword & 0x0400) >> 10) ^ 1))
+			{
+				force_partial_update(cpu_getscanline());
+				atarivc_state.palette_bank = ((newword & 0x0400) >> 10) ^ 1;
+			}
 			break;
 
 		/* indexed parameters */
@@ -1086,16 +1116,16 @@ static void atarivc_common_w(offs_t offset, data16_t newword)
 		case 0x1c:
 			actual_vc_latch0 = -1;
 			actual_vc_latch1 = newword;
-			ataripf_set_latch_lo((atarivc_data[0x0a] & 0x80) ? actual_vc_latch0 : -1);
-			ataripf_set_latch_hi((atarivc_data[0x0a] & 0x80) ? actual_vc_latch1 : -1);
+			atarigen_set_playfield_latch((atarivc_data[0x0a] & 0x80) ? actual_vc_latch0 : -1);
+			atarigen_set_playfield2_latch((atarivc_data[0x0a] & 0x80) ? actual_vc_latch1 : -1);
 			break;
 
 		/* latch 2 value */
 		case 0x1d:
 			actual_vc_latch0 = newword;
 			actual_vc_latch1 = -1;
-			ataripf_set_latch_lo((atarivc_data[0x0a] & 0x80) ? actual_vc_latch0 : -1);
-			ataripf_set_latch_hi((atarivc_data[0x0a] & 0x80) ? actual_vc_latch1 : -1);
+			atarigen_set_playfield_latch((atarivc_data[0x0a] & 0x80) ? actual_vc_latch0 : -1);
+			atarigen_set_playfield2_latch((atarivc_data[0x0a] & 0x80) ? actual_vc_latch1 : -1);
 			break;
 
 		/* scanline IRQ ack here */
@@ -1137,6 +1167,173 @@ READ16_HANDLER( atarivc_r )
 	else
 		return atarivc_data[offset];
 }
+
+
+
+/*##########################################################################
+	PLAYFIELD/ALPHA MAP HELPERS
+##########################################################################*/
+
+/*---------------------------------------------------------------
+	atarigen_alpha_w: Generic write handler for alpha RAM.
+---------------------------------------------------------------*/
+
+WRITE16_HANDLER( atarigen_alpha_w )
+{
+	COMBINE_DATA(&atarigen_alpha[offset]);
+	tilemap_mark_tile_dirty(atarigen_alpha_tilemap, offset);
+}
+
+WRITE32_HANDLER( atarigen_alpha32_w )
+{
+	COMBINE_DATA(&atarigen_alpha32[offset]);
+	if ((mem_mask & 0xffff0000) != 0xffff0000)
+		tilemap_mark_tile_dirty(atarigen_alpha_tilemap, offset * 2);
+	if ((mem_mask & 0x0000ffff) != 0x0000ffff)
+		tilemap_mark_tile_dirty(atarigen_alpha_tilemap, offset * 2 + 1);
+}
+
+WRITE16_HANDLER( atarigen_alpha2_w )
+{
+	COMBINE_DATA(&atarigen_alpha2[offset]);
+	tilemap_mark_tile_dirty(atarigen_alpha2_tilemap, offset);
+}
+
+
+
+/*---------------------------------------------------------------
+	atarigen_set_playfield_latch: Sets the latch for the latched
+	playfield handlers below.
+---------------------------------------------------------------*/
+
+void atarigen_set_playfield_latch(int data)
+{
+	playfield_latch = data;
+}
+
+void atarigen_set_playfield2_latch(int data)
+{
+	playfield2_latch = data;
+}
+
+
+
+/*---------------------------------------------------------------
+	atarigen_playfield_w: Generic write handler for PF RAM.
+---------------------------------------------------------------*/
+
+WRITE16_HANDLER( atarigen_playfield_w )
+{
+	COMBINE_DATA(&atarigen_playfield[offset]);
+	tilemap_mark_tile_dirty(atarigen_playfield_tilemap, offset);
+}
+
+WRITE32_HANDLER( atarigen_playfield32_w )
+{
+	COMBINE_DATA(&atarigen_playfield32[offset]);
+	if ((mem_mask & 0xffff0000) != 0xffff0000)
+		tilemap_mark_tile_dirty(atarigen_playfield_tilemap, offset * 2);
+	if ((mem_mask & 0x0000ffff) != 0x0000ffff)
+		tilemap_mark_tile_dirty(atarigen_playfield_tilemap, offset * 2 + 1);
+}
+
+WRITE16_HANDLER( atarigen_playfield2_w )
+{
+	COMBINE_DATA(&atarigen_playfield2[offset]);
+	tilemap_mark_tile_dirty(atarigen_playfield2_tilemap, offset);
+}
+
+
+
+/*---------------------------------------------------------------
+	atarigen_playfield_large_w: Generic write handler for
+	large (2-word) playfield RAM.
+---------------------------------------------------------------*/
+
+WRITE16_HANDLER( atarigen_playfield_large_w )
+{
+	COMBINE_DATA(&atarigen_playfield[offset]);
+	tilemap_mark_tile_dirty(atarigen_playfield_tilemap, offset / 2);
+}
+
+
+
+/*---------------------------------------------------------------
+	atarigen_playfield_upper_w: Generic write handler for
+	upper word of split playfield RAM.
+---------------------------------------------------------------*/
+
+WRITE16_HANDLER( atarigen_playfield_upper_w )
+{
+	COMBINE_DATA(&atarigen_playfield_upper[offset]);
+	tilemap_mark_tile_dirty(atarigen_playfield_tilemap, offset);
+}
+
+
+
+/*---------------------------------------------------------------
+	atarigen_playfield_dual_upper_w: Generic write handler for
+	upper word of split dual playfield RAM.
+---------------------------------------------------------------*/
+
+WRITE16_HANDLER( atarigen_playfield_dual_upper_w )
+{
+	COMBINE_DATA(&atarigen_playfield_upper[offset]);
+	tilemap_mark_tile_dirty(atarigen_playfield_tilemap, offset);
+	tilemap_mark_tile_dirty(atarigen_playfield2_tilemap, offset);
+}
+
+
+
+/*---------------------------------------------------------------
+	atarigen_playfield_latched_lsb_w: Generic write handler for
+	lower word of playfield RAM with a latch in the LSB of the
+	upper word.
+---------------------------------------------------------------*/
+
+WRITE16_HANDLER( atarigen_playfield_latched_lsb_w )
+{
+	COMBINE_DATA(&atarigen_playfield[offset]);
+	tilemap_mark_tile_dirty(atarigen_playfield_tilemap, offset);
+	
+	if (playfield_latch != -1)
+		atarigen_playfield_upper[offset] = (atarigen_playfield_upper[offset] & ~0x00ff) | (playfield_latch & 0x00ff);
+}
+
+
+
+/*---------------------------------------------------------------
+	atarigen_playfield_latched_lsb_w: Generic write handler for
+	lower word of playfield RAM with a latch in the MSB of the
+	upper word.
+---------------------------------------------------------------*/
+
+WRITE16_HANDLER( atarigen_playfield_latched_msb_w )
+{
+	COMBINE_DATA(&atarigen_playfield[offset]);
+	tilemap_mark_tile_dirty(atarigen_playfield_tilemap, offset);
+	
+	if (playfield_latch != -1)
+		atarigen_playfield_upper[offset] = (atarigen_playfield_upper[offset] & ~0xff00) | (playfield_latch & 0xff00);
+}
+
+
+
+/*---------------------------------------------------------------
+	atarigen_playfield_latched_lsb_w: Generic write handler for
+	lower word of second playfield RAM with a latch in the MSB 
+	of the upper word.
+---------------------------------------------------------------*/
+
+WRITE16_HANDLER( atarigen_playfield2_latched_msb_w )
+{
+	COMBINE_DATA(&atarigen_playfield2[offset]);
+	tilemap_mark_tile_dirty(atarigen_playfield2_tilemap, offset);
+	
+	if (playfield2_latch != -1)
+		atarigen_playfield_upper[offset] = (atarigen_playfield_upper[offset] & ~0xff00) | (playfield2_latch & 0xff00);
+}
+
 
 
 
@@ -1289,7 +1486,7 @@ static void unhalt_cpu(int param)
 ##########################################################################*/
 
 /*---------------------------------------------------------------
-	atarigen_invert_region: Inverts the bits in a region.
+	atarigen_swap_mem: Inverts the bits in a region.
 ---------------------------------------------------------------*/
 
 void atarigen_swap_mem(void *ptr1, void *ptr2, int bytes)
@@ -1303,3 +1500,46 @@ void atarigen_swap_mem(void *ptr1, void *ptr2, int bytes)
 		*p2++ = temp;
 	}
 }
+
+
+/*---------------------------------------------------------------
+	atarigen_blend_gfx: Takes two GFXElements and blends their
+	data together to form one. Then frees the second.
+---------------------------------------------------------------*/
+
+void atarigen_blend_gfx(int gfx0, int gfx1, int mask0, int mask1)
+{
+	struct GfxElement *gx0 = Machine->gfx[gfx0];
+	struct GfxElement *gx1 = Machine->gfx[gfx1];
+	int c, x, y;
+
+	/* loop over elements */
+	for (c = 0; c < gx0->total_elements; c++)
+	{
+		UINT8 *c0base = gx0->gfxdata + gx0->char_modulo * c;
+		UINT8 *c1base = gx1->gfxdata + gx1->char_modulo * c;
+		UINT32 usage = 0;
+
+		/* loop over height */
+		for (y = 0; y < gx0->height; y++)
+		{
+			UINT8 *c0 = c0base, *c1 = c1base;
+
+			for (x = 0; x < gx0->width; x++, c0++, c1++)
+			{
+				*c0 = (*c0 & mask0) | (*c1 & mask1);
+				usage |= 1 << *c0;
+			}
+			c0base += gx0->line_modulo;
+			c1base += gx1->line_modulo;
+			if (gx0->pen_usage)
+				gx0->pen_usage[c] = usage;
+		}
+	}
+
+	/* free the second graphics element */
+	freegfx(gx1);
+	Machine->gfx[gfx1] = NULL;
+}
+
+

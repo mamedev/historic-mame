@@ -272,15 +272,10 @@ static struct GfxDecodeInfo flyball_gfx_decode_info[] =
 
 PALETTE_INIT( flyball )
 {
-	static UINT8 palette_source[] =
-	{
-		0x3F, 0x3F, 0x3F,   /* tiles, ball */
-		0xFF, 0xFF, 0xFF,
-		0xFF ,0xFF, 0xFF,   /* sprites */
-		0x00, 0x00, 0x00
-	};
-
-	memcpy(palette, palette_source, sizeof palette_source);
+	palette_set_color(0, 0x3F, 0x3F, 0x3F);  /* tiles, ball */
+	palette_set_color(1, 0xFF, 0xFF, 0xFF);
+	palette_set_color(2, 0xFF ,0xFF, 0xFF);  /* sprites */
+	palette_set_color(3, 0x00, 0x00, 0x00);
 }
 
 

@@ -390,7 +390,7 @@ static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip */
 	3000000,	/* 3.000000 MHz (Should be accurate) */
-	{ 45 },
+	{ 90 },
 	{ sound_irq },
 };
 

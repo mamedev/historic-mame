@@ -217,21 +217,21 @@ void snk_sound_callback1_w( int state ){ /* ? */
 static struct YM3526interface ym3526_interface = {
 	1,			/* number of chips */
 	4000000,	/* 4 MHz */
-	{ 50 },		/* mixing level */
+	{ 100 },		/* mixing level */
 	{ snk_sound_callback0_w } /* ? */
 };
 
 static struct YM3526interface ym3526_ym3526_interface = {
 	2,			/* number of chips */
 	4000000,	/* 4 MHz */
-	{ 50,50 },	/* mixing level */
+	{ 100,100 },	/* mixing level */
 	{ snk_sound_callback0_w, snk_sound_callback1_w } /* ? */
 };
 
 static struct Y8950interface y8950_interface = {
 	1,			/* number of chips */
 	4000000,	/* 4 MHz */
-	{ 50 },		/* mixing level */
+	{ 100 },		/* mixing level */
 	{ snk_sound_callback1_w }, /* ? */
 	{ REGION_SOUND1 }	/* memory region */
 };
@@ -239,7 +239,7 @@ static struct Y8950interface y8950_interface = {
 static struct YM3812interface ym3812_interface = {
 	1,			/* number of chips */
 	4000000,	/* 4 MHz */
-	{ 50,50 },	/* mixing level */
+	{ 100,100 },	/* mixing level */
 	{ snk_sound_callback0_w } /* ? */
 };
 
@@ -252,7 +252,7 @@ static struct YM3812interface ym3812_interface = {
 static struct Y8950interface ym3526_y8950_interface = {
 	2,			/* number of chips */
 	4000000,	/* 4 MHz */
-	{ 50, 50 },		/* mixing level */
+	{ 100, 100 },		/* mixing level */
 	{ snk_sound_callback0_w, snk_sound_callback1_w }, /* ? */
 	{ REGION_SOUND1, REGION_SOUND1 }
 };
@@ -1279,6 +1279,36 @@ ROM_START( fitegolf )
 	ROM_LOAD( "gu9",   0x00000, 0x8000, 0xd4957ec5 )
 	ROM_LOAD( "gu10",  0x08000, 0x8000, 0xb3acdac2 )
 	ROM_LOAD( "gu11",  0x10000, 0x8000, 0xb99cf73b )
+ROM_END
+
+ROM_START( fitegol2 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for cpuA code */
+	ROM_LOAD( "np45.128", 0x0000, 0x4000, 0x16e8e763 )
+	ROM_LOAD( "mn45.256", 0x4000, 0x8000, 0xa4fa09d5 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for cpuB code */
+	ROM_LOAD( "gu6",    0x0000, 0x4000, 0x2b9978c5 )	// NP8.256
+	ROM_LOAD( "gu5",    0x4000, 0x8000, 0xea3d138c )	// MN8.256
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for sound code */
+	ROM_LOAD( "gu3",    0x0000, 0x4000, 0x811b87d7 )	// FG67.256
+	ROM_LOAD( "gu4",    0x4000, 0x8000, 0x2d998e2b )	// K67.256
+
+	ROM_REGION( 0x0c00, REGION_PROMS, 0 )
+	ROM_LOAD( "82s137.2c",  0x00000, 0x00400, 0x6e4c7836 )
+	ROM_LOAD( "82s137.1b",  0x00400, 0x00400, 0x29e7986f )
+	ROM_LOAD( "82s137.1c",  0x00800, 0x00400, 0x27ba9ff9 )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE ) /* characters */
+	ROM_LOAD( "gu8",   0x0000, 0x4000, 0xf1628dcf )		// D2.128
+
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "gu7",  0x0000, 0x8000, 0x4655f94e )		// BC2.256
+
+	ROM_REGION( 0x18000, REGION_GFX3, ROMREGION_DISPOSE ) /* sprites */
+	ROM_LOAD( "gu9",   0x00000, 0x8000, 0xd4957ec5 )	// P2.256
+	ROM_LOAD( "gu10",  0x08000, 0x8000, 0xb3acdac2 )	// R2.256
+	ROM_LOAD( "gu11",  0x10000, 0x8000, 0xb99cf73b )	// S2.256
 ROM_END
 
 /***********************************************************************/
@@ -3403,7 +3433,8 @@ static DRIVER_INIT( psychos ){
 GAMEX( 1985, tnk3,     0,        tnk3,     tnk3,     tnk3,     ROT270, "SNK", "TNK III (US?)", GAME_NO_COCKTAIL )
 GAMEX( 1985, tnk3j,    tnk3,     tnk3,     tnk3,     tnk3,     ROT270, "SNK", "Tank (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1986, athena,   0,        athena,   athena,   athena,   ROT0,   "SNK", "Athena", GAME_NO_COCKTAIL )
-GAMEX( 1988, fitegolf, 0,        athena,   fitegolf, fitegolf, ROT0,   "SNK", "Fighting Golf", GAME_NO_COCKTAIL )
+GAMEX( 1988, fitegolf, 0,        athena,   fitegolf, fitegolf, ROT0,   "SNK", "Fighting Golf (set 1)", GAME_NO_COCKTAIL )
+GAMEX( 1988, fitegol2, fitegolf, athena,   fitegolf, fitegolf, ROT0,   "SNK", "Fighting Golf (set 2)", GAME_NO_COCKTAIL )
 GAMEX( 1986, ikari,    0,        ikari,    ikari,    ikari,    ROT270, "SNK", "Ikari Warriors (US)", GAME_NO_COCKTAIL )
 GAMEX( 1986, ikarijp,  ikari,    ikari,    ikarijp,  ikarijp,  ROT270, "SNK", "Ikari Warriors (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1986, ikarijpb, ikari,    ikari,    ikarijp,  ikarijpb, ROT270, "bootleg", "Ikari Warriors (Japan bootleg)", GAME_NO_COCKTAIL )

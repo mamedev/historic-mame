@@ -29,14 +29,6 @@
  *
  *************************************/
 
-static unsigned char palette_source[] =
-{
-	0x00,0x00,0x00, /* BLACK - modified on video invert */
-	0xff,0xff,0xff, /* WHITE - modified on video invert */
-	0x00,0x00,0x00, /* BLACK - modified on video invert */
-	0xff,0xff,0xff, /* WHITE - modified on video invert*/
-};
-
 static unsigned short colortable_source[] =
 {
 	0x00, 0x01,		/* Right screen */
@@ -45,7 +37,10 @@ static unsigned short colortable_source[] =
 
 static PALETTE_INIT( subs )
 {
-	memcpy(palette,palette_source,sizeof(palette_source));
+	palette_set_color(0,0x00,0x00,0x00); /* BLACK - modified on video invert */
+	palette_set_color(1,0xff,0xff,0xff); /* WHITE - modified on video invert */
+	palette_set_color(2,0x00,0x00,0x00); /* BLACK - modified on video invert */
+	palette_set_color(3,0xff,0xff,0xff); /* WHITE - modified on video invert*/
 	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 
@@ -213,7 +208,7 @@ static MACHINE_DRIVER_START( subs )
 	MDRV_SCREEN_SIZE(64*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 64*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(sizeof(palette_source) / sizeof(palette_source[0]) / 3)
+	MDRV_PALETTE_LENGTH(4)
 	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
 	
 	MDRV_PALETTE_INIT(subs)

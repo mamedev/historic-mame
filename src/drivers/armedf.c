@@ -576,7 +576,7 @@ static struct YM3812interface ym3812_interface =
 {
 	1,				/* 1 chip (no more supported) */
 	4000000,        /* 4 MHz */
-	{ 255 }         /* (not supported) */
+	{ 50 }         /* (not supported) */
 };
 
 static struct DACinterface dac_interface =

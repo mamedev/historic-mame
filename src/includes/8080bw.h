@@ -89,6 +89,7 @@ DRIVER_INIT( helifire );
 DRIVER_INIT( phantom2 );
 DRIVER_INIT( boothill );
 DRIVER_INIT( gunfight );
+DRIVER_INIT( bandido );
 
 void c8080bw_flip_screen_w(int data);
 void c8080bw_screen_red_w(int data);

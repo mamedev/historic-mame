@@ -500,7 +500,7 @@ static struct YM3812interface fuuki16_ym3812_intf =
 {
 	1,
 	4000000,		/* ? */
-	{ 15 },
+	{ 30 },
 	{ soundirq },	/* IRQ Line */
 };
 

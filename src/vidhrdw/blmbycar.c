@@ -185,7 +185,7 @@ static void blmbycar_draw_sprites(struct mame_bitmap *bitmap, const struct recta
 	data16_t *source, *finish;
 
 	source = spriteram16 + 0x6/2;				// !
-	finish = spriteram16 + spriteram_size/2;
+	finish = spriteram16 + spriteram_size/2 - 8/2;
 
 	/* Find "the end of sprites" marker */
 

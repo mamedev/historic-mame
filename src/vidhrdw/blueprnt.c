@@ -37,9 +37,10 @@ PALETTE_INIT( blueprnt )
 
 	for (i = 0;i < 16;i++)
 	{
-		(*palette++) = ((i >> 0) & 1) * ((i & 0x08) ? 0xbf : 0xff);
-		(*palette++) = ((i >> 2) & 1) * ((i & 0x08) ? 0xbf : 0xff);
-		(*palette++) = ((i >> 1) & 1) * ((i & 0x08) ? 0xbf : 0xff);
+		int r = ((i >> 0) & 1) * ((i & 0x08) ? 0xbf : 0xff);
+		int g = ((i >> 2) & 1) * ((i & 0x08) ? 0xbf : 0xff);
+		int b = ((i >> 1) & 1) * ((i & 0x08) ? 0xbf : 0xff);
+		palette_set_color(i,r,g,b);
 	}
 
 

@@ -4,35 +4,35 @@
 #define YM_DELTAT_SHIFT    (16)
 
 /* adpcm type A and type B struct */
-typedef struct deltat_adpcm_state {
+typedef struct deltat_adpcm_state {     //AT: rearranged and tigntened structure
 	UINT8 *memory;
-	int memory_size;
+	UINT8 *arrivedFlagPtr;          /* pointer of arrived end address flag */
+	INT32 *output_pointer;          /* pointer of output pointers   */
+	INT32 *pan;			/* pan : &output_pointer[pan]   */
 	double freqbase;
-	INT32 *output_pointer; /* pointer of output pointers */
+	int memory_size;
 	int output_range;
-
-	UINT8 reg[16];			/* adpcm registers		*/
-	UINT8 portstate;		/* port status	: stop==0*/
-	int portshift;			/* address shift bits	*/
-	UINT8 now_data;			/* current rom data		*/
+	int portshift;			/* address shift bits	        */
 	UINT32 now_addr;		/* current address		*/
 	UINT32 now_step;		/* currect step			*/
-	UINT32 step;			/* step					*/
+	UINT32 step;			/* step				*/
 	UINT32 start;			/* start address		*/
-	UINT32 end;				/* end address			*/
+	UINT32 end;			/* end address			*/
 	UINT32 delta;			/* delta scale			*/
 	INT32 volume;			/* current volume		*/
-	INT32 *pan;				/* pan : &output_pointer[pan] */
-	INT32 acc;				/* shift Measurement value */
+	INT32 acc;			/* shift Measurement value      */
 	INT32 adpcmd;			/* next Forecast		*/
 	INT32 adpcml;			/* current value		*/
 	/* leveling and re-sampling state for DELTA-T */
-	INT32 volume_w_step;    /* volume with step rate */
-	INT32 next_leveling;    /* leveling value        */
-	INT32 resample_step;    /* step of re-sampling   */
+	INT32 volume_w_step;            /* volume with step rate        */
+	INT32 next_leveling;            /* leveling value               */
+	INT32 resample_step;            /* step of re-sampling          */
 	/* external flag controll (for YM2610) */
-	UINT8 flagMask;			/* arrived flag mask	*/
-	UINT8 *arrivedFlagPtr;  /* pointer of arrived end address flag */
+	UINT8 reg[16];			/* adpcm registers		*/
+	UINT8 flagMask;			/* arrived flag mask            */
+	UINT8 now_data;			/* current rom data		*/
+	UINT8 portstate;		/* port status	: stop==0       */
+	UINT8 eos;      		//AT: added EOS flag
 }YM_DELTAT;
 
 /* static state */

@@ -1,7 +1,7 @@
 /*****************************************************************************
  *
  *	 upd7810.c
- *	 Portable uPD7810/11, 7810H/11H, 78C10/C11/C14 emulator V0.2
+ *	 Portable uPD7810/11, 7810H/11H, 78C10/C11/C14 emulator V0.3
  *
  *	 Copyright (c) 2001 Juergen Buchmueller, all rights reserved.
  *
@@ -21,6 +21,20 @@
  *	"NEC Electronics User's Manual, April 1987"
  *
  *****************************************************************************/
+/* PeT around 19 February 2002
+  type selection/gamemaster support added
+  gamemaster init hack? added
+  ORAX added
+  jre negativ fixed
+  prefixed opcodes skipping fixed
+  interrupts fixed and improved
+  sub(and related)/add/daa flags fixed
+  mvi ports,... fixed
+  rll, rlr, drll, drlr fixed
+  rets fixed
+  l0, l1 skipping fixed
+  calt fixed
+*/
 
 #include <stdio.h>
 #include "driver.h"
@@ -28,87 +42,19 @@
 #include "mamedbg.h"
 #include "upd7810.h"
 
-typedef struct {
-	PAIR	ppc;	/* previous program counter */
-	PAIR	pc; 	/* program counter */
-	PAIR	sp; 	/* stack pointer */
-	UINT8	op; 	/* opcode */
-	UINT8	op2;	/* opcode part 2 */
-	UINT8	iff;	/* interrupt enable flip flop */
-	UINT8	psw;	/* processor status word */
-	PAIR	ea; 	/* extended accumulator */
-	PAIR	va; 	/* accumulator + vector register */
-	PAIR	bc; 	/* 8bit B and C registers / 16bit BC register */
-	PAIR	de; 	/* 8bit D and E registers / 16bit DE register */
-	PAIR	hl; 	/* 8bit H and L registers / 16bit HL register */
-	PAIR	ea2;	/* alternate register set */
-	PAIR	va2;
-	PAIR	bc2;
-	PAIR	de2;
-	PAIR	hl2;
-	PAIR	cnt;	/* 8 bit timer counter */
-	PAIR	tm; 	/* 8 bit timer 0/1 comparator inputs */
-	PAIR	ecnt;	/* timer counter register / capture register */
-	PAIR	etm;	/* timer 0/1 comparator inputs */
-	UINT8	ma; 	/* port A input or output mask */
-	UINT8	mb; 	/* port B input or output mask */
-	UINT8	mcc;	/* port C control/port select */
-	UINT8	mc; 	/* port C input or output mask */
-	UINT8	mm; 	/* memory mapping */
-	UINT8	mf; 	/* port F input or output mask */
-	UINT8	tmm;	/* timer 0 and timer 1 operating parameters */
-	UINT8	etmm;	/* 16-bit multifunction timer/event counter */
-	UINT8	eom;	/* 16-bit timer/event counter output control */
-	UINT8	sml;	/* serial interface parameters low */
-	UINT8	smh;	/* -"- high */
-	UINT8	anm;	/* analog to digital converter operating parameters */
-	UINT8	mkl;	/* interrupt mask low */
-	UINT8	mkh;	/* -"- high */
-	UINT8	zcm;	/* bias circuitry for ac zero-cross detection */
-	UINT8	pa_in;	/* port A,B,C,D,F inputs */
-	UINT8	pb_in;
-	UINT8	pc_in;
-	UINT8	pd_in;
-	UINT8	pf_in;
-	UINT8	pa_out; /* port A,B,C,D,F outputs */
-	UINT8	pb_out;
-	UINT8	pc_out;
-	UINT8	pd_out;
-	UINT8	pf_out;
-	UINT8	cr0;	/* analog digital conversion register 0 */
-	UINT8	cr1;	/* analog digital conversion register 1 */
-	UINT8	cr2;	/* analog digital conversion register 2 */
-	UINT8	cr3;	/* analog digital conversion register 3 */
-	UINT8	txb;	/* transmitter buffer */
-	UINT8	rxb;	/* receiver buffer */
-	UINT8	txd;	/* port C control line states */
-	UINT8	rxd;
-	UINT8	sck;
-	UINT8	ti;
-	UINT8	to;
-	UINT8	ci;
-	UINT8	co0;
-	UINT8	co1;
-	UINT16	irr;	/* interrupt request register */
-	UINT16	itf;	/* interrupt test flag register */
+#ifdef RUNTIME_LOADER
+#define upd7810_ICount upd7810_icount
+struct cpu_interface upd7810_interface=
+CPU0(UPD7810,  upd7810,  2,  0,1.00,UPD7810_INT_NONE,  UPD7810_INTF1,  UPD7810_INTNMI, 8, 16,	  0,16,LE,1, 4	);
 
-/* internal helper variables */
-	UINT16	txs;	/* transmitter shift register */
-	UINT16	rxs;	/* receiver shift register */
-	UINT8	txcnt;	/* transmitter shift register bit count */
-	UINT8	rxcnt;	/* receiver shift register bit count */
-	UINT8	txbuf;	/* transmitter buffer was written */
-	INT32	ovc0;	/* overflow counter for timer 0 (for clock div 12/384) */
-	INT32	ovc1;	/* overflow counter for timer 0 (for clock div 12/384) */
-	INT32	ovce;	/* overflow counter for ecnt */
-	INT32	ovcf;	/* overflow counter for fixed clock div 3 mode */
-	INT32	ovcs;	/* overflow counter for serial I/O */
-	UINT8	edges;	/* rising/falling edge flag for serial I/O */
-	int (*io_callback)(int ioline, int state);
-	int (*irq_callback)(int irqline);
-}	UPD7810;
+extern void upd7810_runtime_loader_init(void)
+{
+	cpuintf[CPU_UPD7810]=upd7810_interface;
+}
+#endif
 
-static UPD7810 upd7810;
+
+UPD7810 upd7810;
 int upd7810_icount;
 
 /* Layout of the registers in the debugger */
@@ -261,24 +207,26 @@ struct opcode_s {
 #define WM(A,V) 	cpu_writemem16(A,V)
 
 #define ZHC_ADD(after,before,carry) 	\
-	if (0 == after) 					\
-		PSW = (PSW & ~C) | Z | carry;	\
+	if (after == 0) PSW |= Z; else PSW &= ~Z; \
+	if (after == before) \
+		PSW = (PSW&~CY) | (carry); \
 	else if (after < before)			\
-		PSW = (PSW & ~Z) | CY;			\
+		PSW |= CY;			\
 	else								\
-		PSW &= ~(Z | CY);				\
+		PSW &= ~CY;				\
 	if ((after & 15) < (before & 15))	\
 		PSW |= HC;						\
 	else								\
 		PSW &= ~HC; 					\
 
 #define ZHC_SUB(after,before,carry) 	\
-	if (0 == after) 					\
-		PSW = (PSW & ~C) | Z | carry;	\
+	if (after == 0) PSW |= Z; else PSW &= ~Z; \
+	if (before == after) 					\
+		PSW = (PSW & ~CY) | (carry);	\
 	else if (after > before)			\
-		PSW = (PSW & ~Z) | CY;			\
+		PSW |= CY;			\
 	else								\
-		PSW &= ~(Z | CY);				\
+		PSW &= ~CY;				\
 	if ((after & 15) > (before & 15))	\
 		PSW |= HC;						\
 	else								\
@@ -359,7 +307,7 @@ static data8_t RP(offs_t port)
 		}
 		break;
 	default:
-		logerror("uPD7810 internal error: WP() called with invalid port number\n");
+		logerror("uPD7810 internal error: RP() called with invalid port number\n");
 	}
 	return data;
 }
@@ -450,34 +398,67 @@ static void upd7810_take_irq(void)
 	/* check the interrupts in priority sequence */
 	if ((IRR & INTFT0)	&& 0 == (MKL & 0x02))
 	{
+	    switch (upd7810.config.type) {
+	    case TYPE_7810_GAMEMASTER:
+		vector = 0xff2a;
+		break;
+	    default:
 		vector = 0x0008;
+	}
+	    if (!((IRR & INTFT1)	&& 0 == (MKL & 0x04)))
+		IRR&=~INTFT0;
 	}
 	else
 	if ((IRR & INTFT1)	&& 0 == (MKL & 0x04))
 	{
+	    switch (upd7810.config.type) {
+	    case TYPE_7810_GAMEMASTER:
+		vector = 0xff2a;
+		break;
+	    default:
 		vector = 0x0008;
+	}
+	    IRR&=~INTFT1;
 	}
 	else
 	if ((IRR & INTF1)	&& 0 == (MKL & 0x08))
 	{
 		irqline = UPD7810_INTF1;
 		vector = 0x0010;
+		if (!((IRR & INTF2)	&& 0 == (MKL & 0x10)))
+		    IRR&=~INTF1;
 	}
 	else
 	if ((IRR & INTF2)	&& 0 == (MKL & 0x10))
 	{
 		irqline = UPD7810_INTF2;
 		vector = 0x0010;
+		IRR&=~INTF2;
 	}
 	else
 	if ((IRR & INTFE0)	&& 0 == (MKL & 0x20))
 	{
+	    switch (upd7810.config.type) {
+	    case TYPE_7810_GAMEMASTER:
+		vector = 0xff2d;
+		break;
+	    default:
 		vector = 0x0018;
+	}
+	    if (!((IRR & INTFE1)	&& 0 == (MKL & 0x40)))
+		IRR&=~INTFE0;
 	}
 	else
 	if ((IRR & INTFE1)	&& 0 == (MKL & 0x40))
 	{
+	    switch (upd7810.config.type) {
+	    case TYPE_7810_GAMEMASTER:
+		vector = 0xff2d;
+		break;
+	    default:
 		vector = 0x0018;
+	}
+	    IRR&=~INTFE1;
 	}
 	else
 	if ((IRR & INTFEIN) && 0 == (MKL & 0x80))
@@ -511,6 +492,7 @@ static void upd7810_take_irq(void)
 		SP--;
 		WM( SP, PCL );
 		IFF = 0;
+		PSW &= ~(SK|L0|L1);
 		PC = vector;
 		change_pc16( PCD );
 	}
@@ -564,8 +546,8 @@ static void upd7810_sio_output(void)
 	if (upd7810.txcnt > 0)
 	{
 		TXD = upd7810.txs & 1;
-		if (upd7810.io_callback)
-			(*upd7810.io_callback)(UPD7810_TXD,TXD);
+		if (upd7810.config.io_callback)
+			(*upd7810.config.io_callback)(UPD7810_TXD,TXD);
 		upd7810.txs >>= 1;
 		upd7810.txcnt--;
 		if (0 == upd7810.txcnt)
@@ -663,8 +645,8 @@ static void upd7810_sio_input(void)
 	/* sample next bit? */
 	if (upd7810.rxcnt > 0)
 	{
-		if (upd7810.io_callback)
-			RXD = (*upd7810.io_callback)(UPD7810_RXD,RXD);
+		if (upd7810.config.io_callback)
+			RXD = (*upd7810.config.io_callback)(UPD7810_RXD,RXD);
 		upd7810.rxs = (upd7810.rxs >> 1) | ((UINT16)RXD << 15);
 		upd7810.rxcnt--;
 		if (0 == upd7810.rxcnt)
@@ -865,8 +847,8 @@ static void upd7810_timers(int cycles)
 					if (0x00 == (TMM & 0x03))
 					{
 						TO ^= 1;
-						if (upd7810.io_callback)
-							(*upd7810.io_callback)(UPD7810_TO,TO);
+						if (upd7810.config.io_callback)
+							(*upd7810.config.io_callback)(UPD7810_TO,TO);
 					}
 					/* timer 1 chained with timer 0 ? */
 					if ((TMM & 0xe0) == 0x60)
@@ -880,8 +862,8 @@ static void upd7810_timers(int cycles)
 							if (0x01 == (TMM & 0x03))
 							{
 								TO ^= 1;
-								if (upd7810.io_callback)
-									(*upd7810.io_callback)(UPD7810_TO,TO);
+								if (upd7810.config.io_callback)
+									(*upd7810.config.io_callback)(UPD7810_TO,TO);
 							}
 						}
 					}
@@ -902,8 +884,8 @@ static void upd7810_timers(int cycles)
 					if (0x00 == (TMM & 0x03))
 					{
 						TO ^= 1;
-						if (upd7810.io_callback)
-							(*upd7810.io_callback)(UPD7810_TO,TO);
+						if (upd7810.config.io_callback)
+							(*upd7810.config.io_callback)(UPD7810_TO,TO);
 					}
 					/* timer 1 chained with timer 0 ? */
 					if ((TMM & 0xe0) == 0x60)
@@ -917,8 +899,8 @@ static void upd7810_timers(int cycles)
 							if (0x01 == (TMM & 0x03))
 							{
 								TO ^= 1;
-								if (upd7810.io_callback)
-									(*upd7810.io_callback)(UPD7810_TO,TO);
+								if (upd7810.config.io_callback)
+									(*upd7810.config.io_callback)(UPD7810_TO,TO);
 							}
 						}
 					}
@@ -953,8 +935,8 @@ static void upd7810_timers(int cycles)
 					if (0x01 == (TMM & 0x03))
 					{
 						TO ^= 1;
-						if (upd7810.io_callback)
-							(*upd7810.io_callback)(UPD7810_TO,TO);
+						if (upd7810.config.io_callback)
+							(*upd7810.config.io_callback)(UPD7810_TO,TO);
 					}
 				}
 			}
@@ -973,8 +955,8 @@ static void upd7810_timers(int cycles)
 					if (0x01 == (TMM & 0x03))
 					{
 						TO ^= 1;
-						if (upd7810.io_callback)
-							(*upd7810.io_callback)(UPD7810_TO,TO);
+						if (upd7810.config.io_callback)
+							(*upd7810.config.io_callback)(UPD7810_TO,TO);
 					}
 				}
 			}
@@ -994,8 +976,8 @@ static void upd7810_timers(int cycles)
 		while (OVCF >= 3)
 		{
 			TO ^= 1;
-			if (upd7810.io_callback)
-				(*upd7810.io_callback)(UPD7810_TO,TO);
+			if (upd7810.config.io_callback)
+				(*upd7810.config.io_callback)(UPD7810_TO,TO);
 			OVCF -= 3;
 		}
 	}
@@ -1247,13 +1229,25 @@ void upd7810_init(void)
 void upd7810_reset (void *param)
 {
 	memset(&upd7810, 0, sizeof(upd7810));
+	upd7810.config = *(UPD7810_CONFIG*) param;
 	ETMM = 0xff;
 	TMM = 0xff;
 	MA = 0xff;
 	MB = 0xff;
+	switch (upd7810.config.type) {
+	case TYPE_7810_GAMEMASTER:
+	    // needed for lcd screen/ram selection; might be internal in cpu and therefor not needed; 0x10 written in some games
+	    MC = 0xff&~0x7;
+	    WP( UPD7810_PORTC, 1 ); //hyper space
+	    PCD=0x8000;
+	    break;
+	default:
 	MC = 0xff;
+	}
 	MF = 0xff;
-	upd7810.io_callback = (upd7810_io_callback) param;
+	// gamemaster falling block "and"s to enable interrupts
+	MKL = 0xff;
+	MKH = 0xff; //?
 }
 
 void upd7810_exit (void)
@@ -1295,31 +1289,31 @@ int upd7810_execute (int cycles)
 				{
 				case 0x48:
 					cc = op48[OP2].cycles_skip;
-					PC += op48[OP].oplen - 2;
+					PC += op48[OP2].oplen - 2;
 					break;
 				case 0x4c:
 					cc = op4C[OP2].cycles_skip;
-					PC += op4C[OP].oplen - 2;
+					PC += op4C[OP2].oplen - 2;
 					break;
 				case 0x4d:
 					cc = op4D[OP2].cycles_skip;
-					PC += op4D[OP].oplen - 2;
+					PC += op4D[OP2].oplen - 2;
 					break;
 				case 0x60:
 					cc = op60[OP2].cycles_skip;
-					PC += op60[OP].oplen - 2;
+					PC += op60[OP2].oplen - 2;
 					break;
 				case 0x64:
 					cc = op64[OP2].cycles_skip;
-					PC += op64[OP].oplen - 2;
+					PC += op64[OP2].oplen - 2;
 					break;
 				case 0x70:
 					cc = op70[OP2].cycles_skip;
-					PC += op70[OP].oplen - 2;
+					PC += op70[OP2].oplen - 2;
 					break;
 				case 0x74:
 					cc = op74[OP2].cycles_skip;
-					PC += op74[OP].oplen - 2;
+					PC += op74[OP2].oplen - 2;
 					break;
 				default:
 					logerror("uPD7810 internal error: check cycle counts for main\n"); exit(1); break;
@@ -1518,6 +1512,10 @@ void upd7810_set_irq_line(int irqline, int state)
 		else
 		if (irqline == UPD7810_INTF2)
 			IRR |= INTF2;
+		// gamemaster hack
+		else
+		if (irqline == UPD7810_INTFE1)
+			IRR |= INTFE1;
 		else
 			logerror("upd7810_set_irq_line invalid irq line #%d\n", irqline);
 	}
@@ -1551,8 +1549,8 @@ const char *upd7810_info(void *context, int regnum)
 		case CPU_INFO_REG+UPD7810_BC:	sprintf(buffer[which], "BC  :%04X", r->bc.w.l); break;
 		case CPU_INFO_REG+UPD7810_DE:	sprintf(buffer[which], "DE  :%04X", r->de.w.l); break;
 		case CPU_INFO_REG+UPD7810_HL:	sprintf(buffer[which], "HL  :%04X", r->hl.w.l); break;
-		case CPU_INFO_REG+UPD7810_A2:	sprintf(buffer[which], "A'  :%02X", r->va2.b.h); break;
-		case CPU_INFO_REG+UPD7810_V2:	sprintf(buffer[which], "V'  :%02X", r->va2.b.l); break;
+		case CPU_INFO_REG+UPD7810_A2:	sprintf(buffer[which], "A'  :%02X", r->va2.b.l); break;
+		case CPU_INFO_REG+UPD7810_V2:	sprintf(buffer[which], "V'  :%02X", r->va2.b.h); break;
 		case CPU_INFO_REG+UPD7810_EA2:	sprintf(buffer[which], "EA' :%04X", r->ea2.w.l); break;
 		case CPU_INFO_REG+UPD7810_BC2:	sprintf(buffer[which], "BC' :%04X", r->bc2.w.l); break;
 		case CPU_INFO_REG+UPD7810_DE2:	sprintf(buffer[which], "DE' :%04X", r->de2.w.l); break;
@@ -1603,9 +1601,12 @@ const char *upd7810_info(void *context, int regnum)
 				r->psw & 0x04 ? "L0":"--",
 				r->psw & 0x01 ? "CY":"--");
 			break;
-		case CPU_INFO_NAME: return "uPD7810";
+		case CPU_INFO_NAME:
+		    switch (upd7810.config.type) {
+		    default: return "uPD7810";
+		    }
 		case CPU_INFO_FAMILY: return "NEC uPD7810";
-		case CPU_INFO_VERSION: return "0.2";
+		case CPU_INFO_VERSION: return "0.3";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (c) 2001 Juergen Buchmueller, all rights reserved.";
 		case CPU_INFO_REG_LAYOUT: return (const char*)upd7810_reg_layout;

@@ -43,24 +43,20 @@ VIDEO_START( kchamp1p ) {
 ***************************************************************************/
 PALETTE_INIT( kchamp )
 {
-        int i, red, green, blue;
-        #define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-        #define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+	int i, red, green, blue;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-                red = color_prom[i];
-                green = color_prom[Machine->drv->total_colors+i];
-                blue = color_prom[2*Machine->drv->total_colors+i];
+		red = color_prom[i];
+		green = color_prom[Machine->drv->total_colors+i];
+		blue = color_prom[2*Machine->drv->total_colors+i];
 
+		palette_set_color(i,red*0x11,green*0x11,blue*0x11);
 
-                *(palette++) = red*0x11;
-                *(palette++) = green*0x11;
-                *(palette++) = blue*0x11;
-
-
-                *(colortable++) = i;
+		*(colortable++) = i;
 	}
 
 }

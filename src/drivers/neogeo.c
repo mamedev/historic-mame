@@ -2122,7 +2122,7 @@ ROM_END
 
 ROM_START( janshin )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
-	ROM_LOAD16_WORD_SWAP( "jans-p1.bin", 0x000000, 0x100000, 0x7514cb7a )
+	ROM_LOAD16_WORD_SWAP( "048-p1.bin", 0x000000, 0x100000, 0x7514cb7a )
 
 	NEO_SFIX_128K( "048-s1.bin", 0x8285b25a )
 
@@ -3880,10 +3880,10 @@ ROM_START( irrmaze )
 	/* special BIOS with trackball support */
 	ROM_LOAD16_WORD_SWAP( "236-bios.bin", 0x00000, 0x020000, 0x853e6b96 )
 	ROM_REGION( 0x40000, REGION_CPU2, 0 )
-	ROM_LOAD( "ng-sm1.bin", 0x00000, 0x20000, 0x97cf998b )  /* we don't use the BIOS anyway... */
+	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )  /* we don't use the BIOS anyway... */
 	ROM_LOAD( "236-m1.bin",  0x00000, 0x20000, 0x880a1abd )  /* so overwrite it with the real thing */
 	ROM_REGION( 0x10000, REGION_GFX4, 0 )
-	ROM_LOAD( "ng-lo.bin", 0x00000, 0x10000, 0xe09e253c )  /* Y zoom control */
+	ROM_LOAD( "ng-lo.rom", 0x00000, 0x10000, 0xe09e253c )  /* Y zoom control */
 
 	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "236-v1.bin", 0x000000, 0x200000, 0x5f89c3b4 )
@@ -4728,6 +4728,29 @@ ROM_START( kof2000n ) /* Original Version, Encrypted Sound + GFX Roms */
 	ROM_LOAD16_BYTE( "257-c8.bin",   0x3000001, 0x800000, 0xb1afa60b ) /* Plane 2,3 */
 ROM_END
 
+ROM_START( bangbead )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "259-p1.bin", 0x100000, 0x100000, 0x88a37f8b )
+	ROM_CONTINUE(                       0x000000, 0x100000 )
+
+	NEO_SFIX_128K( "259-s1.bin", 0xbb50fb2d )
+
+	NEO_BIOS_SOUND_128K( "259-m1.bin", 0x85668ee9 )
+
+	ROM_REGION( 0x500000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "259-v1.bin", 0x000000, 0x200000, 0xe97b9385 )
+	ROM_LOAD( "259-v2.bin", 0x200000, 0x200000, 0xb0cbd70a )
+	ROM_LOAD( "259-v3.bin", 0x400000, 0x100000, 0x97528fe9 )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x600000, REGION_GFX3, 0 )
+	ROM_LOAD16_BYTE( "259-c1.bin", 0x000000, 0x200000, 0xe3919e44 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "259-c2.bin", 0x000001, 0x200000, 0xbaf5a320 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "259-c3.bin", 0x400000, 0x100000, 0xc8e52157 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "259-c4.bin", 0x400001, 0x100000, 0x69fa8e60 ) /* Plane 2,3 */
+ROM_END
+
 ROM_START( nitd ) /* Original Version - Encrypted GFX */
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "260-p1.bin", 0x000000, 0x080000, 0x61361082 )
@@ -5259,3 +5282,4 @@ GAME( 1998, breakrev, breakers, neogeo, neogeo,  neogeo,   ROT0, "Visco", "Break
 GAME( 1998, flipshot, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Visco", "Battle Flip Shot" )
 GAME( 1999, ctomaday, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Visco", "Captain Tomaday" )
 GAME( 1999, ganryu,   neogeo,   neogeo, neogeo,  ganryu,   ROT0, "Visco", "Musashi Ganryuuki" )	/* Encrypted GFX */
+GAME( 2000, bangbead, neogeo,   raster, neogeo,  neogeo,   ROT0, "Visco", "Bang Bead (prototype)" )

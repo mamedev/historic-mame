@@ -77,19 +77,20 @@ PALETTE_INIT( naughtyb )
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1;
+		int bit0,bit1,r,g,b;
 
 
 		bit0 = (color_prom[0] >> 0) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
-		*(palette++) = 0x55 * bit0 + 0xaa * bit1;
+		r = 0x55 * bit0 + 0xaa * bit1;
 		bit0 = (color_prom[0] >> 2) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
-		*(palette++) = 0x55 * bit0 + 0xaa * bit1;
+		g = 0x55 * bit0 + 0xaa * bit1;
 		bit0 = (color_prom[0] >> 1) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
-		*(palette++) = 0x55 * bit0 + 0xaa * bit1;
+		b = 0x55 * bit0 + 0xaa * bit1;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 

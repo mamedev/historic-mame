@@ -64,9 +64,9 @@ static MACHINE_INIT( blstroid )
  *
  *************************************/
 
-static READ16_HANDLER( special_port2_r )
+static READ16_HANDLER( inputs_r )
 {
-	int temp = readinputport(2);
+	int temp = readinputport(2 + (offset & 1));
 	if (atarigen_cpu_to_sound_ready) temp ^= 0x0040;
 	if (atarigen_get_hblank()) temp ^= 0x0010;
 	return temp;
@@ -85,8 +85,7 @@ static MEMORY_READ16_START( main_readmem )
 	{ 0xff9400, 0xff9401, atarigen_sound_r },
 	{ 0xff9800, 0xff9801, input_port_0_word_r },
 	{ 0xff9804, 0xff9805, input_port_1_word_r },
-	{ 0xff9c00, 0xff9c01, special_port2_r },
-	{ 0xff9c02, 0xff9c03, input_port_3_word_r },
+	{ 0xff9c00, 0xff9cff, inputs_r },
 	{ 0xffa000, 0xffa3ff, MRA16_RAM },
 	{ 0xffb000, 0xffb3ff, atarigen_eeprom_r },
 	{ 0xffc000, 0xffffff, MRA16_RAM },
@@ -105,7 +104,7 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ 0xff8e00, 0xff8e01, atarigen_halt_until_hblank_0_w },
 	{ 0xffa000, 0xffa3ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
 	{ 0xffb000, 0xffb3ff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0xffc000, 0xffcfff, ataripf_0_simple_w, &ataripf_0_base },
+	{ 0xffc000, 0xffcfff, atarigen_playfield_w, &atarigen_playfield },
 	{ 0xffd000, 0xffdfff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
 	{ 0xffe000, 0xffffff, MWA16_RAM },
 MEMORY_END
@@ -132,7 +131,7 @@ INPUT_PORTS_START( blstroid )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
-	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_SPECIAL )
 	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
@@ -143,7 +142,11 @@ INPUT_PORTS_START( blstroid )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
-	PORT_BIT( 0xfff0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_SPECIAL )
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	JSA_I_PORT	/* audio board port */
 INPUT_PORTS_END

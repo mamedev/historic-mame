@@ -106,7 +106,7 @@ static MEMORY_READ_START( readmem )
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x2000, videoram_w, &videoram, &videoram_size },
+	{ 0x0000, 0x1fff, videoram_w, &videoram, &videoram_size },
 	{ 0x2000, 0x37ff, MWA_RAM },
 	{ 0x2700, 0x27ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x2f00, 0x2fff, MWA_RAM, &spriteram_2 },

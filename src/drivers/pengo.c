@@ -6,7 +6,7 @@
 
     Games supported:
 		* Pengo
-	
+
 	Known issues:
 		* none
 
@@ -265,17 +265,17 @@ static struct namco_interface namco_interface =
 
 static MACHINE_DRIVER_START( pengo )
 
-	/* basic machine hardware */	
+	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3020000)		/* The correct speed is 3.072 MHz, but 3.020 gives a more */
 									/* accurate emulation speed (time for two attract mode */
 									/* cycles after power up, until the high score list appears */
 									/* for the second time: 3'39") */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
-	
+
 	MDRV_FRAMES_PER_SECOND(60.606060)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(36*8, 28*8)
@@ -283,11 +283,11 @@ static MACHINE_DRIVER_START( pengo )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32)
 	MDRV_COLORTABLE_LENGTH(4*64)
-	
+
 	MDRV_PALETTE_INIT(pengo)
 	MDRV_VIDEO_START(pengo)
 	MDRV_VIDEO_UPDATE(pengo)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ADD(NAMCO, namco_interface)
 MACHINE_DRIVER_END
@@ -367,6 +367,31 @@ ROM_START( pengo2u )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ic92",         0x0000, 0x2000, 0xd7eec6cd )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic105",        0x0000, 0x2000, 0x5bfd26e9 )
+
+	ROM_REGION( 0x0420, REGION_PROMS, 0 )
+	ROM_LOAD( "pr1633.078",   0x0000, 0x0020, 0x3a5844ec )
+	ROM_LOAD( "pr1634.088",   0x0020, 0x0400, 0x766b139b )
+
+	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
+	ROM_LOAD( "pr1635.051",   0x0000, 0x0100, 0xc29dea27 )
+	ROM_LOAD( "pr1636.070",   0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+ROM_END
+
+
+ROM_START( pengob )
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "1",            0x0000, 0x2000, 0xe04064db )
+	ROM_LOAD( "2",            0x2000, 0x2000, 0x75752424 )
+	ROM_LOAD( "021_pn03.bin", 0x4000, 0x1000, 0x7824e3ef )	// 3 (1/2)
+	ROM_LOAD( "020_pn07.bin", 0x5000, 0x1000, 0x377b9663 )	// 3 (2/2)
+	ROM_LOAD( "032_pn04.bin", 0x6000, 0x1000, 0xbfde44c1 )	// 4 (1/2)
+	ROM_LOAD( "031_pn08.bin", 0x7000, 0x1000, 0x64e8c30d )	// 4 (2/2)
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "5",            0x0000, 0x2000, 0x1232437b )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "ic105",        0x0000, 0x2000, 0x5bfd26e9 )
@@ -507,4 +532,5 @@ static DRIVER_INIT( penta )
 GAME( 1982, pengo,   0,     pengo, pengo, pengo, ROT90, "Sega", "Pengo (set 1)" )
 GAME( 1982, pengo2,  pengo, pengo, pengo, pengo, ROT90, "Sega", "Pengo (set 2)" )
 GAME( 1982, pengo2u, pengo, pengo, pengo, 0,     ROT90, "Sega", "Pengo (set 2 not encrypted)" )
+GAME( 1982, pengob,  pengo, pengo, pengo, penta, ROT90, "bootleg", "Pengo (bootleg)" )
 GAME( 1982, penta,   pengo, pengo, pengo, penta, ROT90, "bootleg", "Penta" )

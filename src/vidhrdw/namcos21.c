@@ -42,10 +42,10 @@ To do:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "namcos2.h"
-#include "namcos21.h"
+#include "namcoic.h"
 #include <math.h>
 
-#define MAX_SURFACE 512
+#define MAX_SURFACE 64
 #define MAX_VERTEX	64
 struct vertex
 {
@@ -61,6 +61,116 @@ static void draw_pixel( struct mame_bitmap *bitmap, int sx, int sy, int color )
 
 #define kScreenWidth	62*8
 #define kScreenHeight	60*8
+
+
+static void
+draw_tri( struct mame_bitmap *pBitmap, struct vertex pVertex[3], UINT16 pen )
+{
+	INT32 xshort,xlong,dxdyshort,dxdylong;
+	INT32 sy,bottom,clip,sx,width,height;
+	int iTop, iMid, iBot, i, iTemp;
+	UINT16 *pDest;
+
+	iTop = 0;
+	iMid = 1;
+	iBot = 2;
+	for( i=0; i<2; i++ )
+	{
+		if( pVertex[iMid].ypos < pVertex[iTop].ypos )
+		{
+			iTemp = iMid;
+			iMid = iTop;
+			iTop = iTemp;
+		}
+		if( pVertex[iBot].ypos < pVertex[iMid].ypos )
+		{
+			iTemp = iMid;
+			iMid = iBot;
+			iBot = iTemp;
+		}
+	}
+
+	xshort = xlong = pVertex[iTop].xpos<<16;
+	sy = pVertex[iTop].ypos;
+	height = pVertex[iBot].ypos-sy;
+	if( height == 0 )
+	{
+		dxdylong = 0;
+	}
+	else
+	{
+		dxdylong = ((pVertex[iBot].xpos<<16) - xlong)/height;
+	}
+	i = iMid;
+	for(;;)
+	{
+		bottom = pVertex[i].ypos;
+		height = bottom - sy;
+		if( height == 0 )
+		{
+			dxdyshort = 0;
+		}
+		else
+		{
+			dxdyshort = ((pVertex[i].xpos<<16) - xshort)/height;
+		}
+		if( sy<0 )
+		{
+			clip = -sy;
+			if( clip>bottom-sy )
+			{
+				clip = bottom-sy;
+			}
+			xshort += dxdyshort*clip;
+			xlong += dxdylong*clip;
+			sy+=clip;
+		}
+		if( bottom>pBitmap->height )
+		{
+			bottom = pBitmap->height;
+		}
+		while( sy<bottom )
+		{
+			if( xshort<xlong )
+			{
+				sx = xshort>>16;
+				width = (xlong-xshort)>>16;
+			}
+			else
+			{
+				sx = xlong>>16;
+				width = (xshort-xlong)>>16;
+			}
+			if( sx<0 )
+			{
+				width += sx;
+				sx = 0;
+			}
+			if( sx+width>pBitmap->width )
+			{
+				width = pBitmap->width-sx;
+			}
+			pDest = sx+(UINT16*)pBitmap->line[sy];
+			while( width>0 )
+			{
+				*pDest++ = pen;
+				width--;
+			}
+			xshort += dxdyshort;
+			xlong += dxdylong;
+			sy++;
+		} /* while( sy<bottom ) */
+		if( i==iMid )
+		{
+			i = iBot;
+		}
+		else
+		{
+			break;
+		}
+	}
+}
+
 static int onscreen( int x,int y )
 {
 	return x>=0 && y>=0 && x<kScreenWidth && y<kScreenHeight;
@@ -294,6 +404,23 @@ Camera Attributes
 		}
 
 		code	= 1 + (UINT16)pDSPRAM[i+0x1];
+		/* The first table entry doesn't reference a polyobject.
+		 * Rather, it contains the first address beyond the polyobject lookup table.
+		 * This address in turn contains a linked list (header information?)
+		 *	In Starblade:
+		 *		000000:	0018e3
+		 *		0018e3:	0048cd 0048cf 0048d1 0048d3 ------
+		 *		0048cd:	000001 000000
+		 *		0048cf:	000001 000001
+		 *		0048d1:	000001 000002
+		 *		0048d3:	000001 000003
+		 */
+		if( code >= pPointData[0] )
+		{
+			/* out of range */
+			continue;
+		}
+
 		depth	= pDSPRAM[i+0x2]; /* always zero? */
 
 		xpos0	= pDSPRAM[i+0x3];
@@ -350,7 +477,7 @@ Camera Attributes
 
 		multiply_matrix(M,camera_matrix);
 
-		MasterAddr = pPointData[code/*&0x7ff*/];
+		MasterAddr = pPointData[code];
 		if( MasterAddr>=0x400000/4 || MasterAddr == 0 )
 		{
 			logerror( "bad code\n" );
@@ -368,7 +495,7 @@ Camera Attributes
 
 			NumWords	= pPointData[SubAddr++];
 			unk 		= pPointData[SubAddr++];
-			VertexCount	= pPointData[SubAddr++];
+			VertexCount	= pPointData[SubAddr++]&0xff;
 			unk2		= pPointData[SubAddr++];
 
 			if( bDebug ) logerror( "NumWords=%08x; unk1=%08x; unk2=%08x; VertexCount=%d\n",
@@ -376,15 +503,15 @@ Camera Attributes
 
 			if( VertexCount>MAX_VERTEX )
 			{
-				logerror( "Max Vertex exceeded(%d)\n", VertexCount );
+				logerror( "Max Vertex exceeded(%d) %08x;%08x\n", code,MasterAddr,SubAddr);
 				return;
 			}
 
 			for( count=0; count<VertexCount; count++ )
 			{
-				x = pPointData[SubAddr++];
-				y = pPointData[SubAddr++];
-				z = pPointData[SubAddr++];
+				x = (INT16)(pPointData[SubAddr++]&0xffff);
+				y = (INT16)(pPointData[SubAddr++]&0xffff);
+				z = (INT16)(pPointData[SubAddr++]&0xffff);
 				if( bDebug ) logerror( "Vertex#%d: (%d,%d,%d)\n", count,x,y,z );
 
 				pVertex = &vertex[count];
@@ -406,7 +533,7 @@ Camera Attributes
 
 			} /* next vertex */
 
-			SurfaceCount = pPointData[SubAddr++];
+			SurfaceCount = pPointData[SubAddr++]&0xff;
 			if( SurfaceCount>MAX_SURFACE )
 			{
 				logerror( "Max Surface exceeded(%d)\n", SurfaceCount );
@@ -417,11 +544,11 @@ Camera Attributes
 				if( bDebug ) logerror( "Surface#%d: ",count );
 				if( SubAddr>=0x400000/4 ) return;
 
-				vi[0] = pPointData[SubAddr++];
-				vi[1] = pPointData[SubAddr++];
-				vi[2] = pPointData[SubAddr++];
-				vi[3] = pPointData[SubAddr++];
-				color = pPointData[SubAddr++]; /* ignore for now */
+				vi[0] = pPointData[SubAddr++]&0xff;
+				vi[1] = pPointData[SubAddr++]&0xff;
+				vi[2] = pPointData[SubAddr++]&0xff;
+				vi[3] = pPointData[SubAddr++]&0xff;
+				color = pPointData[SubAddr++]&0xff; /* ignore for now */
 				if( bDebug ) logerror( "%d,%d,%d,%d; color=%d\n", vi[0],vi[1],vi[2],vi[3],color );
 				draw_quad( bitmap,vertex,vi,Machine->pens[0x1000]/*color*/ );
 			} /* next surface */
@@ -429,10 +556,19 @@ Camera Attributes
 	} /* next object */
 } /* draw_polygons */
 
+static int objcode2tile( int code )
+{
+	return code;
+}
+
 VIDEO_START( namcos21 )
 {
-/*
-	int i;
+	namco_obj_init(
+		0,		/* gfx bank */
+		0xf,	/* reverse palette mapping */
+		objcode2tile );
+
+	/*	int i;
 	UINT32 *pMem;
 
 	pMem = (UINT32 *)memory_region(REGION_USER2);
@@ -441,182 +577,21 @@ VIDEO_START( namcos21 )
 		if( (i&0xf)==0 ) logerror( "\n%08x: ", i );
 		logerror( "%06x ", pMem[i]&0xffffff );
 	}
-*/
+	*/
 	return 0;
-}
-
-static void draw_sprite( int page, struct mame_bitmap *bitmap, const data16_t *pSource )
-{
-	INT16 hpos,vpos;
-	data16_t hsize,vsize;
-	data16_t palette;
-	data16_t linkno;
-	data16_t offset;
-	data16_t format;
-
-	int tile_index;
-	int num_cols,num_rows;
-	int dx,dy;
-
-	int row,col;
-	int sx,sy,tile;
-	int flipx,flipy;
-	UINT32 zoomx, zoomy;
-	int tile_screen_width;
-	int tile_screen_height;
-
-	const data16_t *spriteformat16 = &spriteram16[0x4000/2];
-	const data16_t *spritetile16 = &spriteram16[0x8000/2];
-
-	linkno		= pSource[0]; /* LINKNO */
-	offset		= pSource[1]; /* OFFSET */
-	hpos		= pSource[2]; /* HPOS */
-	vpos		= pSource[3]; /* VPOS */
-	hsize		= pSource[4]; /* HSIZE		max 0x3ff pixels */
-	vsize		= pSource[5]; /* VSIZE		max 0x3ff pixels */
-	palette		= pSource[6]; /* PALETTE	max 0xf */
-
-
-	/* hack; adjust global sprite positions */
-	if( namcos21_gametype == NAMCOS21_CYBERSLED )
-	{
-		hpos -= 256+8+8;
-		vpos -= 2+32;
-	}
-	else if( namcos21_gametype == NAMCOS21_AIRCOMBAT )
-	{
-		vpos -= 34;
-		hpos -= 2;
-	}
-	else
-	{
-		/* Starblade */
-		if( page )
-		{
-			hpos -= 128;
-			vpos -= 64;
-		}
-	}
-
-	tile_index		= spriteformat16[linkno*4+0];
-	format			= spriteformat16[linkno*4+1];
-	dx				= spriteformat16[linkno*4+2];
-	dy				= spriteformat16[linkno*4+3];
-	num_cols		= (format>>4)&0xf;
-	num_rows		= (format)&0xf;
-
-	if( num_cols == 0 ) num_cols = 0x10;
-	flipx = (hsize&0x8000)?1:0;
-	hsize &= 0x1ff;
-	if( hsize == 0 ) return;
-	zoomx = (hsize<<16)/(num_cols*16);
-	tile_screen_width = (zoomx*16+0x8000)>>16;
-	dx = (dx*zoomx+0x8000)>>16;
-	if( flipx )
-	{
-		hpos += dx;
-		hpos -= tile_screen_width;
-		tile_screen_width = -tile_screen_width;
-	}
-	else
-	{
-		hpos -= dx;
-	}
-
-	if( num_rows == 0 ) num_rows = 0x10;
-	flipy = (vsize&0x8000)?1:0;
-	vsize&=0x1ff;
-	if( vsize == 0 ) return;
-	zoomy = (vsize<<16)/(num_rows*16);
-	tile_screen_height = (zoomy*16+0x8000)>>16;
-	dy = (dy*zoomy+0x8000)>>16;
-	if( flipy )
-	{
-		vpos += dy;
-		vpos -= tile_screen_height;
-		tile_screen_height = -tile_screen_height;
-	}
-	else
-	{
-		vpos -= dy;
-	}
-
-	for( row=0; row<num_rows; row++ )
-	{
-		sy = row*tile_screen_height + vpos;
-		for( col=0; col<num_cols; col++ )
-		{
-			tile = spritetile16[tile_index++];
-			if( (tile&0x8000)==0 )
-			{
-				sx = col*tile_screen_width + hpos;
-
-				drawgfxzoom(bitmap,Machine->gfx[0],
-					tile + offset,
-					0x10 + 0xf - (palette&0xf),
-					flipx,flipy,
-					sx,sy,
-					&Machine->visible_area,
-					TRANSPARENCY_PEN,0xff,
-					zoomx, zoomy );
-			}
-		}
-	}
-}
-
-static void draw_sprites( struct mame_bitmap *bitmap )
-{
-	data16_t *spritelist16;
-	data16_t which;
-	int i;
-	int count;
-
-	/* sprite list#1 */
-	spritelist16 = &spriteram16[0x2000/2];
-	/* count the sprites */
-	count = 0;
-	for( i=0; i<256; i++ )
-	{
-		which = spritelist16[i];
-		count++;
-		if( which&0x100 ) break;
-	}
-	/* draw the sprites */
-	for( i=count-1; i>=0; i-- )
-	{
-		which = spritelist16[count-i-1];
-		draw_sprite( 0, bitmap, &spriteram16[(which&0xff)*8] );
-	}
-
-	/* sprite list#2 */
-	spritelist16 = &spriteram16[0x14000/2];
-	/* count the sprites */
-	count = 0;
-	for( i=0; i<256; i++ )
-	{
-		which = spritelist16[i];
-		count++;
-		if( which&0x100 ) break;
-	}
-	/* draw the sprites */
-	for( i=count-1; i>=0; i-- )
-	{
-		which = spritelist16[count-i-1];
-		draw_sprite( 1, bitmap, &spriteram16[(which&0xff)*8 + 0x10000/2] );
-	}
 }
 
 VIDEO_UPDATE( namcos21_default )
 {
-	int i;
+	int i,pri;
 	data16_t data1,data2;
 	int r,g,b;
 
 	/* stuff the palette */
 	for( i=0; i<NAMCOS21_NUM_COLORS; i++ )
 	{
-		data1 = spriteram16[0x40000/2+i];
-		data2 = spriteram16[0x50000/2+i];
+		data1 = paletteram16[0x00000/2+i];
+		data2 = paletteram16[0x10000/2+i];
 
 		r = data1>>8;
 		g = data1&0xff;
@@ -628,7 +603,21 @@ VIDEO_UPDATE( namcos21_default )
 	/* paint background */
 	fillbitmap( bitmap,Machine->pens[0xff],NULL );
 
-	draw_sprites( bitmap );
+	for( pri=0; pri<8; pri++ )
+	{
+		namco_obj_draw( bitmap,pri );
+	}
 
 	draw_polygons( bitmap );
+
+	if(0){
+		struct vertex Pt[3];
+		Pt[0].xpos = 64;
+		Pt[0].ypos = 0;
+		Pt[1].xpos = 128;
+		Pt[1].ypos = 64;
+		Pt[2].xpos = 0;
+		Pt[2].ypos = 128;
+		draw_tri( bitmap, Pt, Machine->pens[0x1004] );
+	}
 }

@@ -72,15 +72,10 @@
 #include "cpu/i8039/i8039.h"
 
 
-static unsigned char c8080bw_palette[] =
-{
-	0x00,0x00,0x00, /* black */
-	0xff,0xff,0xff, /* white */
-};
-
 static PALETTE_INIT( 8080bw )
 {
-	memcpy(palette,c8080bw_palette,sizeof(c8080bw_palette));
+	palette_set_color(0,0x00,0x00,0x00); /* black */
+	palette_set_color(1,0xff,0xff,0xff); /* white */
 }
 
 
@@ -2139,16 +2134,11 @@ INPUT_PORTS_END
 /*                                                     */
 /*******************************************************/
 
-static unsigned char phantom2_palette[] =
-{
-	0x00,0x00,0x00, /* black */
-	0xff,0xff,0xff, /* white */
-	0xc0,0xc0,0xc0, /* grey */
-};
-
 static PALETTE_INIT( phantom2 )
 {
-	memcpy(palette,phantom2_palette,sizeof(phantom2_palette));
+	palette_set_color(0,0x00,0x00,0x00); /* black */
+	palette_set_color(1,0xff,0xff,0xff); /* white */
+	palette_set_color(2,0xc0,0xc0,0xc0); /* grey */
 }
 
 
@@ -3487,6 +3477,16 @@ ROM_START( clowns )
 	ROM_LOAD( "c2.cpu",       0x1400, 0x0400, 0x154d129a )
 ROM_END
 
+ROM_START( clowns1 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "clownsv1.h",   0x0000, 0x0400, 0x5560c951 )
+	ROM_LOAD( "clownsv1.g",   0x0400, 0x0400, 0x6a571d66 )
+	ROM_LOAD( "clownsv1.f",   0x0800, 0x0400, 0xa2d56cea )
+	ROM_LOAD( "clownsv1.e",   0x0c00, 0x0400, 0xbbd606f6 )
+	ROM_LOAD( "clownsv1.d",   0x1000, 0x0400, 0x37b6ff0e )
+	ROM_LOAD( "clownsv1.c",   0x1400, 0x0400, 0x12968e52 )
+ROM_END
+
 ROM_START( gmissile )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "gm_623.h",     0x0000, 0x0800, 0xa3ebb792 )
@@ -3880,7 +3880,8 @@ ROM_END
 /* 622 */ GAMEX(1977, lagunar,  0,        280zzzap, lagunar,  8080bw,   ROT90,  "Midway", "Laguna Racer", GAME_NO_SOUND )
 /* 623 */ GAMEX(1977, gmissile, 0,        m4,       gmissile, 8080bw,   ROT0,   "Midway", "Guided Missile", GAME_NO_SOUND )
 /* 626 */ GAMEX(1977, m4,       0,        m4,       m4,       8080bw,   ROT0,   "Midway", "M-4", GAME_NO_SOUND )
-/* 630 */ GAMEX(1978, clowns,   0,        clowns,   clowns,   8080bw,   ROT0,   "Midway", "Clowns", GAME_NO_SOUND )
+/* 630 */ GAMEX(1978, clowns,   0,        clowns,   clowns,   8080bw,   ROT0,   "Midway", "Clowns (rev. 2)", GAME_NO_SOUND )
+/* 630 */ GAMEX(1978, clowns1,  clowns,   clowns,   clowns,   8080bw,   ROT0,   "Midway", "Clowns (rev. 1)", GAME_NO_SOUND )
 /* 640    																		"Midway", "Space Walk" */
 /* 642 */ GAMEX(1978, einnings, 0,        m4,       einnings, 8080bw,	ROT0,   "Midway", "Extra Inning", GAME_NO_SOUND )
 /* 643 */ GAMEX(1978, shuffle,  0,        shuffle,  shuffle,  8080bw,	ROT90,  "Midway", "Shuffleboard", GAME_NO_SOUND )
@@ -3918,7 +3919,7 @@ ROM_END
 /* Nintendo games */
 
 		  GAMEX(1980, sheriff,  0,        sheriff,  sheriff,  8080bw,	ROT270, "Nintendo", "Sheriff", GAME_IMPERFECT_SOUND )
-		  GAMEX(1980, bandido,  sheriff,  sheriff,  bandido,  8080bw,	ROT270, "Exidy", "Bandido", GAME_IMPERFECT_SOUND )
+		  GAMEX(1980, bandido,  sheriff,  sheriff,  bandido,  bandido,	ROT270, "Exidy", "Bandido", GAME_IMPERFECT_SOUND )
 		  GAMEX(1980, helifire, 0,        helifire, helifire, helifire,	ROT270, "Nintendo", "HeliFire (revision B)", GAME_NO_SOUND )
 		  GAMEX(1980, helifira, helifire, helifire, helifire, helifire,	ROT270, "Nintendo", "HeliFire (revision A)", GAME_NO_SOUND )
 		  GAMEX(1980, spacefev, 0,        sheriff,  spacefev, 8080bw,	ROT270, "Nintendo", "Space Fever (color)", GAME_IMPERFECT_SOUND )

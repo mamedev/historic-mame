@@ -1507,6 +1507,34 @@ ROM_START( bublbob2 )
  	ROM_LOAD16_BYTE("d90.05", 0xc00000, 0x200000, 0xc192331f )
 ROM_END
 
+ROM_START( bubsympe )
+	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
+ 	ROM_LOAD32_BYTE("d90.12", 0x000000, 0x40000, 0x9e523996 )
+	ROM_LOAD32_BYTE("d90.11", 0x000001, 0x40000, 0xedfdbb7f )
+	ROM_LOAD32_BYTE("d90.10", 0x000002, 0x40000, 0x8e957d3d )
+	ROM_LOAD32_BYTE("d90.16", 0x000003, 0x40000, 0xd12ef19b )
+
+	ROM_REGION(0x400000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
+	ROM_LOAD16_BYTE("d90.03", 0x000000, 0x100000, 0x6fa894a1 )
+	ROM_LOAD16_BYTE("d90.02", 0x000001, 0x100000, 0x5ab04ca2 )
+	ROM_LOAD       ("d90.01", 0x300000, 0x100000, 0x8aedb9e5 )
+	ROM_FILL       (          0x200000, 0x100000, 0 )
+
+	ROM_REGION(0x400000, REGION_GFX2 , ROMREGION_DISPOSE) /* Tiles */
+	ROM_LOAD16_BYTE("d90.08", 0x000000, 0x100000, 0x25a4fb2c )
+	ROM_LOAD16_BYTE("d90.07", 0x000001, 0x100000, 0xb436b42d )
+	ROM_LOAD       ("d90.06", 0x300000, 0x100000, 0x166a72b8 )
+	ROM_FILL       (          0x200000, 0x100000, 0 )
+
+	ROM_REGION(0x180000, REGION_CPU2, 0)	/* sound CPU */
+	ROM_LOAD16_BYTE("d90.13", 0x100000, 0x40000, 0x6762bd90 )
+	ROM_LOAD16_BYTE("d90.14", 0x100001, 0x40000, 0x8e33357e )
+
+	ROM_REGION16_BE( 0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00  )
+	ROM_LOAD16_BYTE("d90.04", 0x000000, 0x200000, 0xfeee5fda )
+ 	ROM_LOAD16_BYTE("d90.05", 0xc00000, 0x200000, 0xc192331f )
+ROM_END
+
 ROM_START( bubsymph )
 	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
  	ROM_LOAD32_BYTE("d90.12", 0x000000, 0x40000, 0x9e523996 )
@@ -1715,6 +1743,34 @@ ROM_START( qtheater )
 	ROM_REGION16_BE(0xa00000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE("d95-03.38", 0x000000, 0x200000, 0x4149ea67 )
 	ROM_LOAD16_BYTE("d95-04.41", 0x400000, 0x200000, 0xe9049d16 )
+ROM_END
+
+ROM_START( spcinv95 )
+	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
+ 	ROM_LOAD32_BYTE("e06.14",     0x000000, 0x20000, 0x71ba7f00 )
+	ROM_LOAD32_BYTE("e06.13",     0x000001, 0x20000, 0xf506ba4b )
+	ROM_LOAD32_BYTE("e06.12",     0x000002, 0x20000, 0x06cbd72b )
+	ROM_LOAD32_BYTE("e06-15.u17", 0x000003, 0x20000, 0xa6ec0103 )
+
+	ROM_REGION(0x400000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
+	ROM_LOAD16_BYTE("e06.03", 0x000000, 0x100000, 0xa24070ef )
+	ROM_LOAD16_BYTE("e06.02", 0x000001, 0x100000, 0x8f646dea )
+	ROM_LOAD       ("e06.01", 0x300000, 0x100000, 0x51721b15 )
+	ROM_FILL       (          0x200000, 0x100000, 0 )
+
+	ROM_REGION(0x400000, REGION_GFX2 , ROMREGION_DISPOSE) /* Tiles */
+	ROM_LOAD16_BYTE("e06.08", 0x000000, 0x100000, 0x72ae2fbf )
+	ROM_LOAD16_BYTE("e06.07", 0x000001, 0x100000, 0x4b02e8f5 )
+	ROM_LOAD       ("e06.06", 0x300000, 0x100000, 0x9380db3c )
+	ROM_FILL       (          0x200000, 0x100000, 0 )
+
+	ROM_REGION(0x180000, REGION_CPU2, 0)	/* 68000 sound CPU */
+	ROM_LOAD16_BYTE("e06.09", 0x100000, 0x40000, 0x9bcafc87 )
+	ROM_LOAD16_BYTE("e06.10", 0x100001, 0x40000, 0xb752b61f )
+
+	ROM_REGION16_BE( 0xa00000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE("e06.04", 0x000000, 0x200000, 0x1dac29df )
+ 	ROM_LOAD16_BYTE("e06.05", 0x400000, 0x200000, 0xf370ff15 )
 ROM_END
 
 ROM_START( akkanvdr )
@@ -2893,8 +2949,9 @@ GAME( 1994, dankuga,  kaiserkn, f3, kn, kaiserkn, ROT0,   "Taito Corporation",  
 GAME( 1994, dariusg,  0,        f3, f3, dariusg,  ROT0,   "Taito Corporation",         "Darius Gaiden - Silver Hawk" )
 GAME( 1994, dariusgx, dariusg,  f3, f3, dariusg,  ROT0,   "Taito Corporation",         "Darius Gaiden - Silver Hawk (Extra Version) [Official Hack]" )
 GAME( 1994, bublbob2, 0,        f3, f3, bubsymph, ROT0,   "Taito Corporation Japan",   "Bubble Bobble 2 (World)" )
-GAME( 1994, bubsymph, bublbob2, f3, f3, bubsymph, ROT0,   "Taito Corporation",         "Bubble Symphony (Japan)" )
+GAME( 1994, bubsympe, bublbob2, f3, f3, bubsymph, ROT0,   "Taito Corporation Japan",   "Bubble Symphony (Europe)" )
 GAME( 1994, bubsympu, bublbob2, f3, f3, bubsymph, ROT0,   "Taito America Corporation", "Bubble Symphony (US)" )
+GAME( 1994, bubsymph, bublbob2, f3, f3, bubsymph, ROT0,   "Taito Corporation",         "Bubble Symphony (Japan)" )
 GAME( 1994, spcinvdj, spacedx,  f3, f3, spcinvdj, ROT0,   "Taito Corporation",         "Space Invaders DX (Japan F3 version)" )
 GAME( 1994, pwrgoal,  0,        f3, f3, hthero95, ROT0,   "Taito Corporation Japan",   "Power Goal (World)" )
 GAME( 1994, hthero95, pwrgoal,  f3, f3, hthero95, ROT0,   "Taito Corporation",         "Hat Trick Hero '95 (Japan)" )
@@ -2904,8 +2961,8 @@ GAME( 1994, elvactr,  0,        f3, f3, elvactr,  ROT0,   "Taito Corporation Jap
 GAME( 1994, elvactrj, elvactr,  f3, f3, elvactr,  ROT0,   "Taito Corporation",         "Elevator Action Returns (Japan)" )
 GAME( 1994, elvact2u, elvactr,  f3, f3, elvactr,  ROT0,   "Taito America Corporation", "Elevator Action 2 (US)" )
 /* There is also a prototype Elevator Action 2 (US) pcb with the graphics in a different rom format (same program code) */
-GAME( 1995, akkanvdr, 0,        f3, f3, spcinv95, ROT270, "Taito Corporation",         "Akkanvader (Japan)" )
-/* Space Invaders '95 - Attack Of The Lunar Loonies */
+GAME( 1995, spcinv95, 0,        f3, f3, spcinv95, ROT270, "Taito America Corporation", "Space Invaders '95 - Attack Of The Lunar Loonies (US)" )
+GAME( 1995, akkanvdr, spcinv95, f3, f3, spcinv95, ROT270, "Taito Corporation",         "Akkanvader (Japan)" )
 GAME( 1995, twinqix,  0,        f3, f3, twinqix,  ROT0,   "Taito America Corporation", "Twin Qix (US Prototype)" )
 GAME( 1995, gekirido, 0,        f3, f3, gekirido, ROT270, "Taito Corporation",         "Gekirindan (Japan)" )
 GAME( 1995, quizhuhu, 0,        f3, f3, quizhuhu, ROT0,   "Taito Corporation",         "Moriguchi Hiroko no Quiz de Hyuuhyuu (Japan)" )

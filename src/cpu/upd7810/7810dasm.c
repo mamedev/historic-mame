@@ -134,6 +134,7 @@ enum
 	ONIW,
 	ORA,
 	ORAW,
+	ORAX,
 	ORI,
 	ORIW,
 	POP,
@@ -298,6 +299,7 @@ static const char* token[] =
 	"ONIW",
 	"ORA",
 	"ORAW",
+	"ORAX",
 	"ORI",
 	"ORIW",
 	"POP",
@@ -1892,13 +1894,13 @@ static struct dasm_s  dasm70[256] =
 	{XRAX,"(DE-)",   2,11}, /* 96: 0111 0000 1001 0110                      */
 	{XRAX,"(HL-)",   2,11}, /* 97: 0111 0000 1001 0111                      */
 	{illegal,0, 	 2, 8}, /* 98: 0111 0000 1001 1000						*/
-	{illegal,0, 	 2, 8}, /* 99: 0111 0000 1001 1001						*/
-	{illegal,0, 	 2, 8}, /* 9a: 0111 0000 1001 1010						*/
-	{illegal,0, 	 2, 8}, /* 9b: 0111 0000 1001 1011						*/
-	{illegal,0, 	 2, 8}, /* 9c: 0111 0000 1001 1100						*/
-	{illegal,0, 	 2, 8}, /* 9d: 0111 0000 1001 1101						*/
-	{illegal,0, 	 2, 8}, /* 9e: 0111 0000 1001 1110						*/
-	{illegal,0, 	 2, 8}, /* 9f: 0111 0000 1001 1111						*/
+	{ORAX,"(BC)", 	 2, 8}, /* 99: 0111 0000 1001 1001						*/
+	{ORAX,"(DE)", 	 2, 8}, /* 9a: 0111 0000 1001 1010						*/
+	{ORAX,"(HL)", 	 2, 8}, /* 9b: 0111 0000 1001 1011						*/
+	{ORAX,"(DE+)", 	 2, 8}, /* 9c: 0111 0000 1001 1100						*/
+	{ORAX,"(HL+)", 	 2, 8}, /* 9d: 0111 0000 1001 1101						*/
+	{ORAX,"(DE-)", 	 2, 8}, /* 9e: 0111 0000 1001 1110						*/
+	{ORAX,"(HL-)", 	 2, 8}, /* 9f: 0111 0000 1001 1111						*/
 
 	{illegal,0, 	 2,11}, /* a0: 0111 0000 1010 0000						*/
 	{ADDNCX,"(BC)",  2,11}, /* a1: 0111 0000 1010 0001                      */
@@ -2606,14 +2608,14 @@ unsigned Dasm7810( char *buffer, unsigned pc )
 				break;
 			case 'd':   /* JRE address */
 				op2 = cpu_readop(pc++);
-				offset = (op & 1) ? - op2 : + op2;
+				offset = (op & 1) ? -(256 - op2): + op2;
 				symbol = set_ea_info(0, pc - 2, offset + 2, EA_REL_PC);
 				buffer += sprintf(buffer, "%s", symbol);
 				break;
 			case 't':   /* CALT address */
 				ea = 0x80 + 2 * (op & 0x1f);
 				symbol = set_ea_info(0, ea, EA_DEFAULT, EA_ABS_PC);
-				buffer += sprintf(buffer, "%s", symbol);
+				buffer += sprintf(buffer, "(%s)", symbol);
 				break;
 			case 'f':   /* CALF address */
 				op2 = cpu_readop(pc++);

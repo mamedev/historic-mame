@@ -1747,7 +1747,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 			&& transparency != TRANSPARENCY_PENS && transparency != TRANSPARENCY_COLOR
 			&& transparency != TRANSPARENCY_PEN_TABLE && transparency != TRANSPARENCY_PEN_TABLE_RAW
 			&& transparency != TRANSPARENCY_BLEND_RAW && transparency != TRANSPARENCY_ALPHAONE
-			&& transparency != TRANSPARENCY_ALPHA)
+			&& transparency != TRANSPARENCY_ALPHA && transparency != TRANSPARENCY_NONE)
 	{
 		usrintf_showmessage("drawgfxzoom unsupported trans %02x",transparency);
 		return;
@@ -1936,6 +1936,90 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 				if( ex>sx )
 				{ /* skip if inner loop doesn't draw anything */
 					int y;
+
+					/* case 0: TRANSPARENCY_NONE */
+					if (transparency == TRANSPARENCY_NONE)
+					{
+						if (pri_buffer)
+						{
+							if (gfx->flags & GFX_PACKED)
+							{
+								for( y=sy; y<ey; y++ )
+								{
+									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT8 *dest = dest_bmp->line[y];
+									UINT8 *pri = pri_buffer->line[y];
+
+									int x, x_index = x_index_base;
+									for( x=sx; x<ex; x++ )
+									{
+										if (((1 << pri[x]) & pri_mask) == 0)
+											dest[x] = pal[(source[x_index>>17] >> ((x_index & 0x10000) >> 14)) & 0x0f];
+										pri[x] = 31;
+										x_index += dx;
+									}
+
+									y_index += dy;
+								}
+							}
+							else
+							{
+								for( y=sy; y<ey; y++ )
+								{
+									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT8 *dest = dest_bmp->line[y];
+									UINT8 *pri = pri_buffer->line[y];
+
+									int x, x_index = x_index_base;
+									for( x=sx; x<ex; x++ )
+									{
+										if (((1 << pri[x]) & pri_mask) == 0)
+											dest[x] = pal[source[x_index>>16]];
+										x_index += dx;
+									}
+
+									y_index += dy;
+								}
+							}
+						}
+						else
+						{
+							if (gfx->flags & GFX_PACKED)
+							{
+								for( y=sy; y<ey; y++ )
+								{
+									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT8 *dest = dest_bmp->line[y];
+
+									int x, x_index = x_index_base;
+									for( x=sx; x<ex; x++ )
+									{
+										dest[x] = pal[(source[x_index>>17] >> ((x_index & 0x10000) >> 14)) & 0x0f];
+										x_index += dx;
+									}
+
+									y_index += dy;
+								}
+							}
+							else
+							{
+								for( y=sy; y<ey; y++ )
+								{
+									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT8 *dest = dest_bmp->line[y];
+
+									int x, x_index = x_index_base;
+									for( x=sx; x<ex; x++ )
+									{
+										dest[x] = pal[source[x_index>>16]];
+										x_index += dx;
+									}
+
+									y_index += dy;
+								}
+							}
+						}
+					}
 
 					/* case 1: TRANSPARENCY_PEN */
 					if (transparency == TRANSPARENCY_PEN)
@@ -2444,6 +2528,91 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 				if( ex>sx )
 				{ /* skip if inner loop doesn't draw anything */
 					int y;
+
+					/* case 0: TRANSPARENCY_NONE */
+					if (transparency == TRANSPARENCY_NONE)
+					{
+						if (pri_buffer)
+						{
+							if (gfx->flags & GFX_PACKED)
+							{
+								for( y=sy; y<ey; y++ )
+								{
+									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+									UINT8 *pri = pri_buffer->line[y];
+
+									int x, x_index = x_index_base;
+									for( x=sx; x<ex; x++ )
+									{
+										if (((1 << pri[x]) & pri_mask) == 0)
+											dest[x] = pal[(source[x_index>>17] >> ((x_index & 0x10000) >> 14)) & 0x0f];
+										pri[x] = 31;
+										x_index += dx;
+									}
+
+									y_index += dy;
+								}
+							}
+							else
+							{
+								for( y=sy; y<ey; y++ )
+								{
+									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+									UINT8 *pri = pri_buffer->line[y];
+
+									int x, x_index = x_index_base;
+									for( x=sx; x<ex; x++ )
+									{
+										if (((1 << pri[x]) & pri_mask) == 0)
+											dest[x] = pal[source[x_index>>16]];
+										pri[x] = 31;
+										x_index += dx;
+									}
+
+									y_index += dy;
+								}
+							}
+						}
+						else
+						{
+							if (gfx->flags & GFX_PACKED)
+							{
+								for( y=sy; y<ey; y++ )
+								{
+									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+
+									int x, x_index = x_index_base;
+									for( x=sx; x<ex; x++ )
+									{
+										dest[x] = pal[(source[x_index>>17] >> ((x_index & 0x10000) >> 14)) & 0x0f];
+										x_index += dx;
+									}
+
+									y_index += dy;
+								}
+							}
+							else
+							{
+								for( y=sy; y<ey; y++ )
+								{
+									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+
+									int x, x_index = x_index_base;
+									for( x=sx; x<ex; x++ )
+									{
+										dest[x] = pal[source[x_index>>16]];
+										x_index += dx;
+									}
+
+									y_index += dy;
+								}
+							}
+						}
+					}
 
 					/* case 1: TRANSPARENCY_PEN */
 					if (transparency == TRANSPARENCY_PEN)
@@ -3055,6 +3224,48 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 				if( ex>sx )
 				{ /* skip if inner loop doesn't draw anything */
 					int y;
+
+					/* case 0: TRANSPARENCY_NONE */
+					if (transparency == TRANSPARENCY_NONE)
+					{
+						if (pri_buffer)
+						{
+							for( y=sy; y<ey; y++ )
+							{
+								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
+								UINT8 *pri = pri_buffer->line[y];
+
+								int x, x_index = x_index_base;
+								for( x=sx; x<ex; x++ )
+								{
+									if (((1 << pri[x]) & pri_mask) == 0)
+										dest[x] = pal[source[x_index>>16]];
+									pri[x] = 31;
+									x_index += dx;
+								}
+
+								y_index += dy;
+							}
+						}
+						else
+						{
+							for( y=sy; y<ey; y++ )
+							{
+								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
+
+								int x, x_index = x_index_base;
+								for( x=sx; x<ex; x++ )
+								{
+									dest[x] = pal[source[x_index>>16]];
+									x_index += dx;
+								}
+
+								y_index += dy;
+							}
+						}
+					}
 
 					/* case 1: TRANSPARENCY_PEN */
 					if (transparency == TRANSPARENCY_PEN)

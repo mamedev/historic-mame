@@ -1971,7 +1971,7 @@ static UINT8 TRANSP(HandleTransparencyBitmask)(struct tilemap *tilemap, UINT32 x
 	struct mame_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
 	int pitch = tile_width + tile_info.skip;
 	PAL_INIT;
-	UINT32 *pPenToPixel = tilemap->pPenToPixel[flags&(TILE_SWAPXY|TILE_FLIPY|TILE_FLIPX)];
+	UINT32 *pPenToPixel;
 	const UINT8 *pPenData = tile_info.pen_data;
 	const UINT8 *pSource;
 	UINT32 code_transparent = tile_info.priority;
@@ -1984,13 +1984,15 @@ static UINT8 TRANSP(HandleTransparencyBitmask)(struct tilemap *tilemap, UINT32 x
 	UINT32 y;
 	UINT32 pen;
 	UINT8 *pBitmask = tile_info.mask_data;
-	UINT32 bitoffs = 0;
+	UINT32 bitoffs;
 	int bWhollyOpaque;
 	int bWhollyTransparent;
 	int bDontIgnoreTransparency = !(flags&TILE_IGNORE_TRANSPARENCY);
 
 	bWhollyOpaque = 1;
 	bWhollyTransparent = 1;
+
+	pPenToPixel = tilemap->pPenToPixel[flags&(TILE_SWAPXY|TILE_FLIPY|TILE_FLIPX)];
 
 	if( flags&TILE_4BPP )
 	{
@@ -2006,34 +2008,12 @@ static UINT8 TRANSP(HandleTransparencyBitmask)(struct tilemap *tilemap, UINT32 x
 				x = x0+(yx%MAX_TILESIZE);
 				y = y0+(yx/MAX_TILESIZE);
 				*(x+(UINT16 *)pixmap->line[y]) = PAL_GET(pen);
-				if( bDontIgnoreTransparency && (pBitmask[bitoffs/8]&(0x80>>(bitoffs&7))) == 0 )
-				{
-					((UINT8 *)transparency_bitmap->line[y])[x] = code_transparent;
-					bWhollyOpaque = 0;
-				}
-				else
-				{
-					((UINT8 *)transparency_bitmap->line[y])[x] = code_opaque;
-					bWhollyTransparent = 0;
-				}
-				bitoffs++;
 
 				pen = data>>4;
 				yx = *pPenToPixel++;
 				x = x0+(yx%MAX_TILESIZE);
 				y = y0+(yx/MAX_TILESIZE);
 				*(x+(UINT16 *)pixmap->line[y]) = PAL_GET(pen);
-				if( bDontIgnoreTransparency && (pBitmask[bitoffs/8]&(0x80>>(bitoffs&7))) == 0 )
-				{
-					((UINT8 *)transparency_bitmap->line[y])[x] = code_transparent;
-					bWhollyOpaque = 0;
-				}
-				else
-				{
-					((UINT8 *)transparency_bitmap->line[y])[x] = code_opaque;
-					bWhollyTransparent = 0;
-				}
-				bitoffs++;
 			}
 			pPenData += pitch/2;
 		}
@@ -2050,21 +2030,39 @@ static UINT8 TRANSP(HandleTransparencyBitmask)(struct tilemap *tilemap, UINT32 x
 				x = x0+(yx%MAX_TILESIZE);
 				y = y0+(yx/MAX_TILESIZE);
 				*(x+(UINT16 *)pixmap->line[y]) = PAL_GET(pen);
-				if( bDontIgnoreTransparency && (pBitmask[bitoffs/8]&(0x80>>(bitoffs&7))) == 0 )
-				{
-					((UINT8 *)transparency_bitmap->line[y])[x] = code_transparent;
-					bWhollyOpaque = 0;
-				}
-				else
-				{
-					((UINT8 *)transparency_bitmap->line[y])[x] = code_opaque;
-					bWhollyTransparent = 0;
-				}
-				bitoffs++;
 			}
 			pPenData += pitch;
 		}
 	}
+
+	if( Machine->orientation & ORIENTATION_SWAP_XY )
+	{
+		flags ^= TILE_SWAPXY;
+	}
+
+	pPenToPixel = tilemap->pPenToPixel[flags&(TILE_SWAPXY|TILE_FLIPY|TILE_FLIPX)];
+	bitoffs = 0;
+	for( ty=tile_height; ty!=0; ty-- )
+	{
+		for( tx=tile_width; tx!=0; tx-- )
+		{
+			yx = *pPenToPixel++;
+			x = x0+(yx%MAX_TILESIZE);
+			y = y0+(yx/MAX_TILESIZE);
+			if( bDontIgnoreTransparency && (pBitmask[bitoffs/8]&(0x80>>(bitoffs&7))) == 0 )
+			{
+				((UINT8 *)transparency_bitmap->line[y])[x] = code_transparent;
+				bWhollyOpaque = 0;
+			}
+			else
+			{
+				((UINT8 *)transparency_bitmap->line[y])[x] = code_opaque;
+				bWhollyTransparent = 0;
+			}
+			bitoffs++;
+		}
+	}
+
 	return (bWhollyOpaque || bWhollyTransparent)?0:TILE_FLAG_FG_OPAQUE;
 }
 

@@ -227,12 +227,11 @@ INPUT_PORTS_START( brkthru )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, "Upright 1 Player" )
+	PORT_DIPSETTING(    0x40, "Upright 2 Players" )
+//	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )		// "Cocktail 1 Player" - IMPOSSIBLE !
+	PORT_DIPSETTING(    0xc0, DEF_STR( Cocktail ) )		// "Cocktail 2 Players"
 INPUT_PORTS_END
 
 INPUT_PORTS_START( brkthruj )
@@ -269,9 +268,6 @@ INPUT_PORTS_START( brkthruj )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
-//	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
-//	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-//	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
 	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN1, 2 )
 	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN2, 2 )
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1, 2 )
@@ -293,12 +289,11 @@ INPUT_PORTS_START( brkthruj )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, "Upright 1 Player" )
+	PORT_DIPSETTING(    0x40, "Upright 2 Players" )
+//	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )		// "Cocktail 1 Player" - IMPOSSIBLE !
+	PORT_DIPSETTING(    0xc0, DEF_STR( Cocktail ) )		// "Cocktail 2 Players"
 INPUT_PORTS_END
 
 INPUT_PORTS_START( darwin )
@@ -453,7 +448,7 @@ static struct YM3526interface ym3526_interface =
 {
 	1,			/* 1 chip */
 	3000000,	/* 3 MHz? */
-	{ 50 },		/* volume */
+	{ 100 },		/* volume */
 	{ irqhandler },
 };
 

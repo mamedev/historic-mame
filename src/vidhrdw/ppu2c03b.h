@@ -37,7 +37,7 @@ struct ppu2c03b_interface
 };
 
 /* routines */
-void ppu2c03b_init_palette( unsigned char *palette );
+void ppu2c03b_init_palette( int first_entry );
 int ppu2c03b_init( struct ppu2c03b_interface *interface );
 
 void ppu2c03b_reset( int num, int scan_scale );

@@ -18,15 +18,9 @@ PALETTE_INIT( buggychl )
 {
 	int i;
 
-	palette += 3*128;	/* first 128 colors are for the game */
-
 	/* arbitrary blue shading for the sky */
 	for (i = 0;i < 128;i++)
-	{
-		*(palette++) = 0;
-		*(palette++) = i;
-		*(palette++) = 2*i;
-	}
+		palette_set_color(i+128,0,i,2*i);
 }
 
 

@@ -111,7 +111,7 @@ static void scanline_callback( int num );
  *	PPU Palette Initialization
  *
  *************************************/
-void ppu2c03b_init_palette( unsigned char *palette ) {
+void ppu2c03b_init_palette( int first_entry ) {
 
 #ifndef M_PI
 #define M_PI 			(3.14159265358979323846L)
@@ -198,9 +198,7 @@ void ppu2c03b_init_palette( unsigned char *palette ) {
 				B = 255;
 
 			/* Round, and set the value */
-			*palette++ = floor(R+.5);
-			*palette++ = floor(G+.5);
-			*palette++ = floor(B+.5);
+			palette_set_color(first_entry++, floor(R+.5), floor(G+.5), floor(B+.5));
 		}
 	}
 
@@ -1217,7 +1215,7 @@ int ppu2c03b_get_pixel( int num, int x, int y )
 	if ( y >= VISIBLE_SCREEN_HEIGHT )
 		y = VISIBLE_SCREEN_HEIGHT - 1;
 
-	return ((UINT8 *)chips[num].bitmap->line[y])[x];
+	return read_pixel(chips[num].bitmap, x, y);
 }
 
 int ppu2c03b_get_colorbase( int num )

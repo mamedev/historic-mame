@@ -159,7 +159,7 @@ static READ_HANDLER( wacko_trackball_r )
  *	Two Tigers Yoke input ports
  *
  *************************************/
- 
+
 static READ_HANDLER( twotigra_yoke1_r )
 {
 	int p1_yoke = readinputport(6);
@@ -584,22 +584,22 @@ static MACHINE_DRIVER_START( mcr2 )
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_PORTS(readport,writeport)
 	MDRV_CPU_VBLANK_INT(mcr_interrupt,2)
-	
+
 	MDRV_FRAMES_PER_SECOND(30)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_30HZ_VBLANK_DURATION)
 	MDRV_MACHINE_INIT(mcr)
 	MDRV_NVRAM_HANDLER(generic_0fill)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(32*16, 30*16)
 	MDRV_VISIBLE_AREA(0*16, 32*16-1, 0*16, 30*16-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(64)
-	
+
 	MDRV_VIDEO_START(mcr12)
 	MDRV_VIDEO_UPDATE(mcr2)
-	
+
 	/* sound hardware */
 	MDRV_IMPORT_FROM(mcr_ssio)
 MACHINE_DRIVER_END
@@ -647,6 +647,9 @@ ROM_START( shollow )
 	ROM_LOAD( "sh-fg.01",     0x02000, 0x2000, 0xba1a38b4 )
 	ROM_LOAD( "sh-fg.02",     0x04000, 0x2000, 0x6b57f6da )
 	ROM_LOAD( "sh-fg.03",     0x06000, 0x2000, 0x37ea9d07 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )
 ROM_END
 
 
@@ -673,6 +676,9 @@ ROM_START( shollow2 )
 	ROM_LOAD( "sh-fg.01",     0x02000, 0x2000, 0xba1a38b4 )
 	ROM_LOAD( "sh-fg.02",     0x04000, 0x2000, 0x6b57f6da )
 	ROM_LOAD( "sh-fg.03",     0x06000, 0x2000, 0x37ea9d07 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )
 ROM_END
 
 
@@ -699,6 +705,9 @@ ROM_START( tron )
 	ROM_LOAD( "vg_2.bin",     0x02000, 0x2000, 0x58ee14d3 )
 	ROM_LOAD( "vg_1.bin",     0x04000, 0x2000, 0x3329f9d4 )
 	ROM_LOAD( "vg_0.bin",     0x06000, 0x2000, 0x9743f873 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.d12",   0x0000, 0x0020, 0xe1281ee9 )
 ROM_END
 
 
@@ -725,6 +734,9 @@ ROM_START( tron2 )
 	ROM_LOAD( "vg_2.bin",     0x02000, 0x2000, 0x58ee14d3 )
 	ROM_LOAD( "vg_1.bin",     0x04000, 0x2000, 0x3329f9d4 )
 	ROM_LOAD( "vg_0.bin",     0x06000, 0x2000, 0x9743f873 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.d12",   0x0000, 0x0020, 0xe1281ee9 )
 ROM_END
 
 
@@ -750,6 +762,9 @@ ROM_START( kroozr )
 	ROM_LOAD( "kozmkvid.1d",  0x02000, 0x2000, 0x4e23b35b )
 	ROM_LOAD( "kozmkvid.1b",  0x04000, 0x2000, 0xc6041ba7 )
 	ROM_LOAD( "kozmkvid.1a",  0x06000, 0x2000, 0xb57fb0ff )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 
@@ -775,6 +790,9 @@ ROM_START( domino )
 	ROM_LOAD( "dmanfg1.bin",  0x02000, 0x2000, 0x16aa4b9b )
 	ROM_LOAD( "dmanfg2.bin",  0x04000, 0x2000, 0x4a8e76b8 )
 	ROM_LOAD( "dmanfg3.bin",  0x06000, 0x2000, 0x1f39257e )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 
@@ -799,6 +817,9 @@ ROM_START( wacko )
 	ROM_LOAD( "wackovid.1d",  0x02000, 0x2000, 0xa02f1672 )
 	ROM_LOAD( "wackovid.1b",  0x04000, 0x2000, 0x7d899790 )
 	ROM_LOAD( "wackovid.1a",  0x06000, 0x2000, 0x080be3ad )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 
@@ -823,6 +844,9 @@ ROM_START( twotiger )
 	ROM_LOAD( "2tgrfg1.bin",  0x02000, 0x2000, 0xfbcaffa5 )
 	ROM_LOAD( "2tgrfg2.bin",  0x04000, 0x2000, 0x08e3e1a6 )
 	ROM_LOAD( "2tgrfg3.bin",  0x06000, 0x2000, 0x9b22697b )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 
@@ -847,6 +871,9 @@ ROM_START( twotigra )
 	ROM_LOAD( "vid_c1",  0x02000, 0x2000, 0x62ed737b )
 	ROM_LOAD( "vid_b1",  0x04000, 0x2000, 0x0939921e )
 	ROM_LOAD( "vid_a1",  0x06000, 0x2000, 0xef515824 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 
@@ -877,6 +904,9 @@ ROM_START( journey )
 	ROM_LOAD( "a4",           0x0a000, 0x2000, 0x765876a7 )
 	ROM_LOAD( "a1",           0x0c000, 0x2000, 0x4af986f8 )
 	ROM_LOAD( "a2",           0x0e000, 0x2000, 0xb30cd2a7 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 
@@ -936,7 +966,7 @@ static DRIVER_INIT( twotigra )
 	install_port_write_handler(0, 0x00, 0x00, mcr_control_port_w);
 	install_port_read_handler(0, 0x01, 0x01, twotigra_yoke2_r);
 	install_port_read_handler(0, 0x02, 0x02, twotigra_yoke1_r);
-	
+
 	install_mem_read_handler(0, 0xf800, 0xffff, twotigra_videoram_r);
 	install_mem_write_handler(0, 0xf800, 0xffff, twotigra_videoram_w);
 

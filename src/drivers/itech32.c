@@ -7,23 +7,21 @@
 
     Games supported:
 		* Time Killers (2 sets)
-		* Bloodstorm (3 sets)
+		* Bloodstorm (4 sets)
 		* Hard Yardage (2 sets)
 		* Pairs
 		* Driver's Edge (not working)
-		* Shuffleshot
+		* World Class Bowling
 		* Street Fighter: The Movie (3 sets)
+		* Shuffleshot
 
 	Games not supported because IT is still selling them:
-		* World Class Bowling
 		* Golden Tee 3D Golf
 		* Golden Tee Golf '97 (2 sets)
 		* Golden Tee Golf '98
 		* Golden Tee Golf '99
 		* Golden Tee Golf 2K
-
-	Games that might use this hardware, but have no known (good) dumps:
-		* Dyno-Bop
+		* Golden Tee Golf Classic
 
 ****************************************************************************
 
@@ -290,6 +288,12 @@ static READ32_HANDLER( trackball32_4bit_p2_r )
  *	Protection?
  *
  *************************************/
+
+static READ16_HANDLER( wcbowl_prot_result_r )
+{
+	return main_ram[0x111d/2];
+}
+
 
 static READ32_HANDLER( itech020_prot_result_r )
 {
@@ -841,9 +845,9 @@ INPUT_PORTS_START( timekill )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_SPECIAL )
-	PORT_DIPNAME( 0x0010, 0x0000, DEF_STR( Unknown ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0010, DEF_STR( On ))
+	PORT_DIPNAME( 0x0010, 0x0000, "Video Sync" )
+	PORT_DIPSETTING(      0x0000, "-" )
+	PORT_DIPSETTING(      0x0010, "+" )
 	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Flip_Screen ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0020, DEF_STR( On ))
@@ -888,9 +892,9 @@ INPUT_PORTS_START( bloodstm )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_SPECIAL )
-	PORT_DIPNAME( 0x0010, 0x0000, DEF_STR( Unknown ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0010, DEF_STR( On ))
+	PORT_DIPNAME( 0x0010, 0x0000, "Video Sync" )
+	PORT_DIPSETTING(      0x0000, "-" )
+	PORT_DIPSETTING(      0x0010, "+" )
 	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Flip_Screen ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0020, DEF_STR( On ))
@@ -958,15 +962,14 @@ INPUT_PORTS_START( hardyard )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_SPECIAL )
-	PORT_DIPNAME( 0x0010, 0x0000, DEF_STR( Unknown ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0010, DEF_STR( On ))
-	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Unknown ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0020, DEF_STR( On ))
-	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0040, DEF_STR( On ))
+	PORT_DIPNAME( 0x0010, 0x0000, "Video Sync" )
+	PORT_DIPSETTING(      0x0000, "-" )
+	PORT_DIPSETTING(      0x0010, "+" )
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Cabinet ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ))
+	PORT_DIPNAME( 0x0040, 0x0000, "Players" )
+	PORT_DIPSETTING(      0x0000, "4" )
+	PORT_DIPSETTING(      0x0040, "2" )
 	PORT_DIPNAME( 0x0080, 0x0000, "Force Test Mode" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ))
@@ -1008,9 +1011,9 @@ INPUT_PORTS_START( pairs )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_SPECIAL )
-	PORT_DIPNAME( 0x0010, 0x0000, DEF_STR( Unknown ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0010, DEF_STR( On ))
+	PORT_DIPNAME( 0x0010, 0x0000, "Video Sync" )
+	PORT_DIPSETTING(      0x0000, "-" )
+	PORT_DIPSETTING(      0x0010, "+" )
 	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Flip_Screen ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0020, DEF_STR( On ))
@@ -1023,6 +1026,60 @@ INPUT_PORTS_START( pairs )
 
 	PORT_START	/* 780000 */
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( wcbowl )
+	PORT_START	/* 080000 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+
+	PORT_START	/* 100000 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+
+	PORT_START	/* 180000 */
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 200000 */
+	PORT_BIT( 0x00ff, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* 280000 */
+	PORT_SERVICE_NO_TOGGLE( 0x0001, IP_ACTIVE_LOW )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_SPECIAL )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Cabinet ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ))
+	PORT_DIPSETTING(      0x0020, DEF_STR( Cocktail ))
+	PORT_DIPNAME( 0x0040, 0x0000, "Unknown1" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0040, DEF_STR( On ))
+	PORT_DIPNAME( 0x0080, 0x0000, "Unknown2" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0080, DEF_STR( On ))
+
+	PORT_START	/* 780000 */
+	PORT_BIT( 0x00ff, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* analog */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1 | IPF_REVERSE, 25, 32, 0, 255 )
+
+	PORT_START	/* analog */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER1, 25, 32, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -1072,15 +1129,15 @@ INPUT_PORTS_START( drivedge )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_SPECIAL )
-	PORT_DIPNAME( 0x0010, 0x0000, DEF_STR( Unknown ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0010, DEF_STR( On ))
-	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Flip_Screen ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0020, DEF_STR( On ))
-	PORT_DIPNAME( 0x0040, 0x0000, "Violence" )
-	PORT_DIPSETTING(      0x0040, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0070, 0x0000, "Network Number" )
+	PORT_DIPSETTING(      0x0000, "1" )
+	PORT_DIPSETTING(      0x0010, "2" )
+	PORT_DIPSETTING(      0x0020, "3" )
+	PORT_DIPSETTING(      0x0030, "4" )
+	PORT_DIPSETTING(      0x0040, "5" )
+	PORT_DIPSETTING(      0x0050, "6" )
+	PORT_DIPSETTING(      0x0060, "7" )
+	PORT_DIPSETTING(      0x0070, "8" )
 	PORT_DIPNAME( 0x0080, 0x0000, "Force Test Mode" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ))
@@ -1280,6 +1337,16 @@ static MACHINE_DRIVER_START( pairs )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( wcbowl )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(bloodstm)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 383, 0, 254)
+MACHINE_DRIVER_END
+
+
 static MACHINE_DRIVER_START( drivedge )
 
 	/* basic machine hardware */
@@ -1287,6 +1354,7 @@ static MACHINE_DRIVER_START( drivedge )
 
 	MDRV_CPU_REPLACE("main", M68EC020, CLOCK_25MHz)
 	MDRV_CPU_MEMORY(drivedge_readmem,drivedge_writemem)
+	MDRV_CPU_VBLANK_INT(NULL,0)
 
 	MDRV_NVRAM_HANDLER(itech020)
 MACHINE_DRIVER_END
@@ -1494,6 +1562,46 @@ ROM_START( bloods21 )
 ROM_END
 
 
+ROM_START( bloods11 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+
+	ROM_REGION16_BE( 0x80000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "bld00-11.u83", 0x00000, 0x40000, 0x4fff8f9b )
+	ROM_LOAD16_BYTE( "bld01-11.u88", 0x00001, 0x40000, 0x59ce23ea )
+
+	ROM_REGION( 0x28000, REGION_CPU2, 0 )
+	ROM_LOAD( "bldsnd.u17", 0x10000, 0x18000, 0xdddeedbb )
+	ROM_CONTINUE(           0x08000, 0x08000 )
+
+	ROM_REGION( 0x880000, REGION_GFX1, 0 )
+	ROM_LOAD32_BYTE( "bsgrom0.bin",  0x000000, 0x080000, 0x4e10b8c1 )
+	ROM_LOAD32_BYTE( "bsgrom5.bin",  0x000001, 0x080000, 0x6333b6ce )
+	ROM_LOAD32_BYTE( "bsgrom10.bin", 0x000002, 0x080000, 0xa972a65c )
+	ROM_LOAD32_BYTE( "bsgrom15.bin", 0x000003, 0x080000, 0x9a8f54aa )
+	ROM_LOAD32_BYTE( "bsgrom1.bin",  0x200000, 0x080000, 0x10abf660 )
+	ROM_LOAD32_BYTE( "bsgrom6.bin",  0x200001, 0x080000, 0x06a260d5 )
+	ROM_LOAD32_BYTE( "bsgrom11.bin", 0x200002, 0x080000, 0xf2cab3c7 )
+	ROM_LOAD32_BYTE( "bsgrom16.bin", 0x200003, 0x080000, 0x403aef7b )
+	ROM_LOAD32_BYTE( "bsgrom2.bin",  0x400000, 0x080000, 0x488200b1 )
+	ROM_LOAD32_BYTE( "bsgrom7.bin",  0x400001, 0x080000, 0x5bb19727 )
+	ROM_LOAD32_BYTE( "bsgrom12.bin", 0x400002, 0x080000, 0xb10d674f )
+	ROM_LOAD32_BYTE( "bsgrom17.bin", 0x400003, 0x080000, 0x7119df7e )
+	ROM_LOAD32_BYTE( "bsgrom3.bin",  0x600000, 0x080000, 0x2378792e )
+	ROM_LOAD32_BYTE( "bsgrom8.bin",  0x600001, 0x080000, 0x3640ca2e )
+	ROM_LOAD32_BYTE( "bsgrom13.bin", 0x600002, 0x080000, 0xbd4a071d )
+	ROM_LOAD32_BYTE( "bsgrom18.bin", 0x600003, 0x080000, 0x12959bb8 )
+	ROM_FILL(                        0x800000, 0x080000, 0xff )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "enssnd2m.bin", 0x000000, 0x200000, 0x9fdc4825 )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "bssrom0.bin",  0x000000, 0x80000, 0xee4570c8 )
+	ROM_LOAD16_BYTE( "bssrom1.bin",  0x100000, 0x80000, 0xb0f32ec5 )
+	ROM_LOAD16_BYTE( "bssrom2.bin",  0x300000, 0x40000, 0x8aee1e77 )
+ROM_END
+
+
 ROM_START( hardyard )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 
@@ -1588,6 +1696,37 @@ ROM_START( pairs )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "srom0", 0x000000, 0x80000, 0x1d96c581 )
+ROM_END
+
+
+ROM_START( wcbowl )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+
+	ROM_REGION16_BE( 0x40000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "wcb.83", 0x00000, 0x20000, 0x0602c5ce )
+	ROM_LOAD16_BYTE( "wcb.88", 0x00001, 0x20000, 0x49573493 )
+
+	ROM_REGION( 0x28000, REGION_CPU2, 0 )
+	ROM_LOAD( "wcb_snd.17", 0x10000, 0x18000, 0xc14907ba )
+	ROM_CONTINUE(           0x08000, 0x08000 )
+
+	ROM_REGION( 0x880000, REGION_GFX1, 0 )
+	ROM_LOAD32_BYTE( "wcb_grm0.0", 0x000000, 0x080000, 0x5d79aaae )
+	ROM_LOAD32_BYTE( "wcb_grm0.1", 0x000001, 0x080000, 0xe26dcedb )
+	ROM_LOAD32_BYTE( "wcb_grm0.2", 0x000002, 0x080000, 0x32735875 )
+	ROM_LOAD32_BYTE( "wcb_grm0.3", 0x000003, 0x080000, 0x019d0ab8 )
+	ROM_LOAD32_BYTE( "wcb_grm1.0", 0x200000, 0x080000, 0x8bd31762 )
+	ROM_LOAD32_BYTE( "wcb_grm1.1", 0x200001, 0x080000, 0xb3f761fc )
+	ROM_LOAD32_BYTE( "wcb_grm1.2", 0x200002, 0x080000, 0xc22f44ad )
+	ROM_LOAD32_BYTE( "wcb_grm1.3", 0x200003, 0x080000, 0x036084c4 )
+	ROM_FILL(                      0x400000, 0x480000, 0xff )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "wcb_rom.0",   0x000000, 0x200000, 0x0814ab80 )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "wcb_srom.0",  0x000000, 0x080000, 0x115bcd1f )
+	ROM_LOAD16_BYTE( "wcb_srom.1",  0x100000, 0x080000, 0x87a4a4d8 )
 ROM_END
 
 
@@ -1828,6 +1967,21 @@ static DRIVER_INIT( bloodstm )
 }
 
 
+static DRIVER_INIT( wcbowl )
+{
+	init_program_rom();
+	init_sound_speedup(0x2011, 0x8f93);
+	itech32_vram_height = 1024;
+	itech32_planes = 1;
+
+	install_mem_read16_handler(0, 0x680000, 0x680001, trackball_r);
+
+	install_mem_read16_handler(0, 0x578000, 0x57ffff, MRA16_NOP);
+	install_mem_read16_handler(0, 0x680080, 0x680081, wcbowl_prot_result_r);
+	install_mem_write16_handler(0, 0x680080, 0x680081, MWA16_NOP);
+}
+
+
 static DRIVER_INIT( drivedge )
 {
 	init_program_rom();
@@ -1896,8 +2050,10 @@ GAME( 1993, hardyd10, hardyard, bloodstm, hardyard, hardyard, ROT0, "Strata/Incr
 GAME( 1994, bloodstm, 0,        bloodstm, bloodstm, bloodstm, ROT0, "Strata/Incredible Technologies", "Blood Storm (v2.22)" )
 GAME( 1994, bloods22, bloodstm, bloodstm, bloodstm, bloodstm, ROT0, "Strata/Incredible Technologies", "Blood Storm (v2.20)" )
 GAME( 1994, bloods21, bloodstm, bloodstm, bloodstm, bloodstm, ROT0, "Strata/Incredible Technologies", "Blood Storm (v2.10)" )
+GAME( 1994, bloods11, bloodstm, bloodstm, bloodstm, bloodstm, ROT0, "Strata/Incredible Technologies", "Blood Storm (v1.10)" )
 GAME( 1994, pairs,    0,        pairs,    pairs,    bloodstm, ROT0, "Strata/Incredible Technologies", "Pairs" )
 GAMEX(1994, drivedge, 0,        drivedge, drivedge, drivedge, ROT0, "Strata/Incredible Technologies", "Driver's Edge", GAME_NOT_WORKING )
+GAME( 1995, wcbowl,   0,        wcbowl,   wcbowl,   wcbowl,   ROT0, "Incredible Technologies", "World Class Bowling (v1.2)" )
 GAME( 1995, sftm,     0,        sftm,     sftm,     sftm,     ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.12)" )
 GAME( 1995, sftm110,  sftm,     sftm,     sftm,     sftm110,  ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.10)" )
 GAME( 1995, sftmj,    sftm,     sftm,     sftm,     sftm,     ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.12N, Japan)" )

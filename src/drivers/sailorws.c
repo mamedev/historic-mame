@@ -3807,13 +3807,13 @@ static struct YM3812interface ym3812_interface =
 {
 	1,				/* 1 chip */
 	4000000,			/* 4.00 MHz */
-	{ 35 }
+	{ 100 }
 };
 
 static struct DACinterface dac_interface =
 {
 	2,				/* 2 channels */
-	{ 50, 75 },
+	{ 35, 55 },
 };
 
 

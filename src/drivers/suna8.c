@@ -1606,7 +1606,7 @@ static struct YM3812interface hardhead_ym3812_interface =
 {
 	1,
 	4000000,	/* ? */
-	{ 50 },
+	{ 100 },
 	{  0 },		/* IRQ Line */
 };
 
@@ -1719,7 +1719,7 @@ static struct YM3812interface brickzn_ym3812_interface =
 {
 	1,
 	4000000,	/* ? */
-	{ 33 },
+	{ 66 },
 	{ soundirq },	/* IRQ Line */
 };
 
@@ -1850,7 +1850,7 @@ static struct YM3812interface starfigh_ym3812_interface =
 {
 	1,
 	4000000,	/* ? */
-	{ 50 },
+	{ 100 },
 	{  0 },
 };
 
@@ -2130,7 +2130,7 @@ ROM_END
 
 ROM_START( srangerw )
 	ROM_REGION( 0x48000, REGION_CPU1, 0 )		/* Main Z80 Code */
-	ROM_LOAD( "1",  0x00000, 0x8000, 0x2287d3fc )	// 88,2,28
+	ROM_LOAD( "w1", 0x00000, 0x8000, 0x2287d3fc )	// 88,2,28
 	ROM_LOAD( "2",  0x10000, 0x8000, 0xff65af29 )
 	ROM_LOAD( "3",  0x18000, 0x8000, 0x64e09436 )
 	ROM_LOAD( "r4", 0x30000, 0x8000, 0x4346fae6 )
@@ -2145,14 +2145,14 @@ ROM_START( srangerw )
 	ROM_LOAD( "15", 0x0000, 0x8000, 0x28c2c87e )
 
 	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )	/* Sprites */
-	ROM_LOAD( "6",  0x00000, 0x8000, 0x312ecda6 )
-	ROM_LOAD( "7",  0x08000, 0x8000, 0x9f35dbfa )
-	ROM_LOAD( "8",  0x10000, 0x8000, 0xf400db89 )
-	ROM_LOAD( "9",  0x18000, 0x8000, 0xfa2a11ea )
-	ROM_LOAD( "10", 0x20000, 0x8000, 0x8731abc6 )
-	ROM_LOAD( "11", 0x28000, 0x8000, 0x19037a7b )
-	ROM_LOAD( "12", 0x30000, 0x8000, 0xc59c0ec7 )
-	ROM_LOAD( "13", 0x38000, 0x8000, 0x9809fee8 )
+	ROM_LOAD( "w6",  0x00000, 0x8000, 0x312ecda6 )
+	ROM_LOAD( "7",   0x08000, 0x8000, 0x9f35dbfa )
+	ROM_LOAD( "8",   0x10000, 0x8000, 0xf400db89 )
+	ROM_LOAD( "9",   0x18000, 0x8000, 0xfa2a11ea )
+	ROM_LOAD( "w10", 0x20000, 0x8000, 0x8731abc6 )
+	ROM_LOAD( "11",  0x28000, 0x8000, 0x19037a7b )
+	ROM_LOAD( "12",  0x30000, 0x8000, 0xc59c0ec7 )
+	ROM_LOAD( "13",  0x38000, 0x8000, 0x9809fee8 )
 ROM_END
 
 
@@ -2319,40 +2319,40 @@ ROM_END
 
 ROM_START( starfigh )
 	ROM_REGION( 0x50000 * 2, REGION_CPU1, 0 )		/* Main Z80 Code */
-	ROM_LOAD( "suna3.bin", 0x00000, 0x08000, 0xf93802c6 )	// V.1
-	ROM_RELOAD(            0x50000, 0x08000             )
-	ROM_LOAD( "suna2.bin", 0x10000, 0x10000, 0xfcfcf08a )
-	ROM_RELOAD(            0x60000, 0x10000             )
-	ROM_LOAD( "suna1.bin", 0x20000, 0x10000, 0x6935fcdb )
-	ROM_RELOAD(            0x70000, 0x10000             )
-	ROM_LOAD( "suna5.bin", 0x30000, 0x10000, 0x50c072a4 )	// 0xxxxxxxxxxxxxxx = 0xFF (ROM Test: OK)
-	ROM_RELOAD(            0x80000, 0x10000             )
-	ROM_LOAD( "suna4.bin", 0x40000, 0x10000, 0x3fe3c714 )	// clear text here
-	ROM_RELOAD(            0x90000, 0x10000             )
+	ROM_LOAD( "starfgtr.l1", 0x00000, 0x08000, 0xf93802c6 )	// V.1
+	ROM_RELOAD(              0x50000, 0x08000             )
+	ROM_LOAD( "starfgtr.j1", 0x10000, 0x10000, 0xfcfcf08a )
+	ROM_RELOAD(              0x60000, 0x10000             )
+	ROM_LOAD( "starfgtr.i1", 0x20000, 0x10000, 0x6935fcdb )
+	ROM_RELOAD(              0x70000, 0x10000             )
+	ROM_LOAD( "starfgtr.l3", 0x30000, 0x10000, 0x50c072a4 )	// 0xxxxxxxxxxxxxxx = 0xFF (ROM Test: OK)
+	ROM_RELOAD(              0x80000, 0x10000             )
+	ROM_LOAD( "starfgtr.j3", 0x40000, 0x10000, 0x3fe3c714 )	// clear text here
+	ROM_RELOAD(              0x90000, 0x10000             )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Music Z80 Code */
-	ROM_LOAD( "suna14.bin", 0x0000, 0x8000, 0xae3b0691 )
+	ROM_LOAD( "starfgtr.m8", 0x0000, 0x8000, 0xae3b0691 )
 
 	ROM_REGION( 0x8000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
-	ROM_LOAD( "suna15.bin", 0x0000, 0x8000, 0xfa510e94 )
+	ROM_LOAD( "starfgtr.q10", 0x0000, 0x8000, 0xfa510e94 )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )	/* Sprites */
-	ROM_LOAD( "suna9.bin",  0x00000, 0x10000, 0x54c0ca3d )
-	ROM_RELOAD(             0x20000, 0x10000             )
-	ROM_LOAD( "suna8.bin",  0x10000, 0x10000, 0x4313ba40 )
-	ROM_RELOAD(             0x30000, 0x10000             )
-	ROM_LOAD( "suna7.bin",  0x40000, 0x10000, 0xad8d0f21 )
-	ROM_RELOAD(             0x60000, 0x10000             )
-	ROM_LOAD( "suna6.bin",  0x50000, 0x10000, 0x6d8f74c8 )
-	ROM_RELOAD(             0x70000, 0x10000             )
-	ROM_LOAD( "suna13.bin", 0x80000, 0x10000, 0xceff00ff )
-	ROM_RELOAD(             0xa0000, 0x10000             )
-	ROM_LOAD( "suna12.bin", 0x90000, 0x10000, 0x7aaa358a )
-	ROM_RELOAD(             0xb0000, 0x10000             )
-	ROM_LOAD( "suna11.bin", 0xc0000, 0x10000, 0x47d6049c )
-	ROM_RELOAD(             0xe0000, 0x10000             )
-	ROM_LOAD( "suna10.bin", 0xd0000, 0x10000, 0x4a33f6f3 )
-	ROM_RELOAD(             0xf0000, 0x10000             )
+	ROM_LOAD( "starfgtr.e4", 0x00000, 0x10000, 0x54c0ca3d )
+	ROM_RELOAD(              0x20000, 0x10000             )
+	ROM_LOAD( "starfgtr.d4", 0x10000, 0x10000, 0x4313ba40 )
+	ROM_RELOAD(              0x30000, 0x10000             )
+	ROM_LOAD( "starfgtr.b4", 0x40000, 0x10000, 0xad8d0f21 )
+	ROM_RELOAD(              0x60000, 0x10000             )
+	ROM_LOAD( "starfgtr.a4", 0x50000, 0x10000, 0x6d8f74c8 )
+	ROM_RELOAD(              0x70000, 0x10000             )
+	ROM_LOAD( "starfgtr.e6", 0x80000, 0x10000, 0xceff00ff )
+	ROM_RELOAD(              0xa0000, 0x10000             )
+	ROM_LOAD( "starfgtr.d6", 0x90000, 0x10000, 0x7aaa358a )
+	ROM_RELOAD(              0xb0000, 0x10000             )
+	ROM_LOAD( "starfgtr.b6", 0xc0000, 0x10000, 0x47d6049c )
+	ROM_RELOAD(              0xe0000, 0x10000             )
+	ROM_LOAD( "starfgtr.a6", 0xd0000, 0x10000, 0x4a33f6f3 )
+	ROM_RELOAD(              0xf0000, 0x10000             )
 
 	ROM_REGION( 0x0200 * 2, REGION_USER1, 0 )	/* Palette RAM Banks */
 	ROM_REGION( 0x2000 * 2, REGION_USER2, 0 )	/* Sprite  RAM Banks */
@@ -2368,14 +2368,14 @@ ROM_END
 ***************************************************************************/
 
 /* Working Games */
-GAMEX( 1988, rranger,  0,        rranger,  rranger,  0,        ROT0,  "SunA", "Rough Ranger (v2.0, Sharp Image license)", GAME_IMPERFECT_SOUND )
+GAMEX( 1988, rranger,  0,        rranger,  rranger,  0,        ROT0,  "SunA (Sharp Image license)", "Rough Ranger (v2.0)", GAME_IMPERFECT_SOUND )
 GAMEX( 1988, hardhead, 0,        hardhead, hardhead, hardhead, ROT0,  "SunA", "Hard Head",           GAME_IMPERFECT_SOUND )
-GAMEX( 1988, hardhedb, hardhead, hardhead, hardhead, hardhedb, ROT0,  "SunA", "Hard Head (Bootleg)", GAME_IMPERFECT_SOUND )
+GAMEX( 1988, hardhedb, hardhead, hardhead, hardhead, hardhedb, ROT0,  "bootleg", "Hard Head (bootleg)", GAME_IMPERFECT_SOUND )
 
 /* Non Working Games */
-GAMEX( 1988, sranger,  rranger,  rranger,  rranger,	0,         ROT0,  "SunA", "Super Ranger (v2.0)",         GAME_NOT_WORKING )
-GAMEX( 1988, srangerb, rranger,  rranger,  rranger,	0,         ROT0,  "SunA", "Super Ranger (NIWA Bootleg)", GAME_NOT_WORKING )
-GAMEX( 1988, srangerw, rranger,  rranger,  rranger,	0,         ROT0,  "SunA", "Super Ranger (WDK License)",  GAME_NOT_WORKING )
+GAMEX( 1988, sranger,  rranger,  rranger,  rranger,	0,         ROT0,  "SunA", "Super Ranger (v2.0)",    GAME_NOT_WORKING )
+GAMEX( 1988, srangerb, rranger,  rranger,  rranger,	0,         ROT0,  "bootleg", "Super Ranger (bootleg)", GAME_NOT_WORKING )
+GAMEX( 1988, srangerw, rranger,  rranger,  rranger,	0,         ROT0,  "SunA (WDK license)", "Super Ranger (WDK)",  GAME_NOT_WORKING )
 GAMEX( 1990, starfigh, 0,        starfigh, hardhea2, starfigh, ROT90, "SunA", "Star Fighter (v1)",   GAME_NOT_WORKING )
 GAMEX( 1991, hardhea2, 0,        hardhea2, hardhea2, hardhea2, ROT0,  "SunA", "Hard Head 2 (v2.0)",  GAME_NOT_WORKING )
 GAMEX( 1992, brickzn,  0,        brickzn,  brickzn,  brickzn3, ROT90, "SunA", "Brick Zone (v5.0)",   GAME_NOT_WORKING )

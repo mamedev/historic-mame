@@ -374,11 +374,11 @@ ROM_START( shootout )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "gb08.k10",       0x0000, 0x0100, 0x509c65b6 )
-	ROM_LOAD( "gb09.k6",        0x0100, 0x0100, 0xaa090565 )    /* unknown */
+	ROM_LOAD( "gb09.k6",        0x0100, 0x0100, 0xaa090565 )	/* priority encoder? (not used) */
 ROM_END
 
 ROM_START( shootouj )
-	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 2 * 128k for code  */
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 128k for code  */
 	ROM_LOAD( "cg02.bin",    0x08000, 0x8000, 0x8fc5d632 )
 	ROM_LOAD( "cg00.bin",    0x10000, 0x8000, 0xef6ced1e )
 	ROM_LOAD( "cg01.bin",    0x18000, 0x4000, 0x74cf11ca )
@@ -399,11 +399,11 @@ ROM_START( shootouj )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "gb08.k10",       0x0000, 0x0100, 0x509c65b6 )
-	ROM_LOAD( "gb09.k6",        0x0100, 0x0100, 0xaa090565 )    /* unknown */
+	ROM_LOAD( "gb09.k6",        0x0100, 0x0100, 0xaa090565 )	/* priority encoder? (not used) */
 ROM_END
 
 ROM_START( shootoub )
-	ROM_REGION( 2 * 0x20000, REGION_CPU1, 0 )	/* 128k for code  */
+	ROM_REGION( 2*0x20000, REGION_CPU1, 0 )	/* 128k for code + 128k for decrypted opcodes */
 	ROM_LOAD( "shootout.006", 0x08000, 0x8000, 0x2c054888 )
 	ROM_LOAD( "shootout.008", 0x10000, 0x8000, 0x9651b656 )
 	ROM_LOAD( "cg01.bin",     0x18000, 0x4000, 0x74cf11ca )
@@ -422,10 +422,12 @@ ROM_START( shootoub )
 	ROM_CONTINUE(				0x02000, 0x2000 )
 	ROM_CONTINUE(				0x06000, 0x2000 )
 
-	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "gb08.k10",       0x0000, 0x0100, 0x509c65b6 )
-	ROM_LOAD( "gb09.k6",        0x0100, 0x0100, 0xaa090565 )    /* unknown */
+	ROM_LOAD( "gb09.k6",        0x0100, 0x0100, 0xaa090565 )	/* priority encoder? (not used) */
+	ROM_LOAD( "shootclr.003",   0x0200, 0x0020, 0x6b0c2942 )	/* opcode decrypt table (bootleg only) */
 ROM_END
+
 
 static DRIVER_INIT( shootout )
 {
@@ -438,6 +440,7 @@ static DRIVER_INIT( shootout )
 	for (A = 0;A < diff;A++)
 		rom[A+diff] = (rom[A] & 0x9f) | ((rom[A] & 0x40) >> 1) | ((rom[A] & 0x20) << 1);
 }
+
 
 GAMEX( 1985, shootout, 0,		 shootout, shootout, shootout, ROT0, "Data East USA", "Shoot Out (US)", GAME_NO_COCKTAIL )
 GAMEX( 1985, shootouj, shootout, shootouj, shootout, 0, 	   ROT0, "Data East USA", "Shoot Out (Japan)", GAME_NO_COCKTAIL )

@@ -439,11 +439,11 @@ static struct GfxDecodeInfo tokib_gfxdecodeinfo[] =
 SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4,8000,REGION_SOUND1);
 
 
-static struct YM3526interface ym3812_tokib_interface =
+static struct YM3812interface ym3812_tokib_interface =
 {
 	1,			/* 1 chip (no more supported) */
 	3600000,	/* 3.600000 MHz ? (partially supported) */
-	{ 60 }		/* (not supported) */
+	{ 100 }		/* (not supported) */
 };
 
 static struct MSM5205interface msm5205_interface =
@@ -452,7 +452,7 @@ static struct MSM5205interface msm5205_interface =
 	384000, 			/* 384KHz			  */
 	{ toki_adpcm_int },/* interrupt function */
 	{ MSM5205_S96_4B },	/* 4KHz 			  */
-	{ 60 }
+	{ 50 }
 };
 
 

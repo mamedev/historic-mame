@@ -27,14 +27,6 @@ static UINT8 firetrk_steer1, firetrk_steer2;
  *
  *************************************/
 
-static unsigned char palette_source[] =
-{
-	0x00,0x00,0x00,
-	0x55,0x55,0x55,
-	0xaa,0xaa,0xaa,
-	0xff,0xff,0xff
-};
-
 static unsigned short colortable_source[] =
 {
 	0x00, 0x00,
@@ -49,7 +41,10 @@ static unsigned short colortable_source[] =
 
 static PALETTE_INIT( firetrk )
 {
-	memcpy(palette,palette_source,sizeof(palette_source));
+	palette_set_color(0,0x00,0x00,0x00);
+	palette_set_color(1,0x55,0x55,0x55);
+	palette_set_color(2,0xaa,0xaa,0xaa);
+	palette_set_color(3,0xff,0xff,0xff);
 	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 
@@ -658,7 +653,7 @@ DISCRETE_SOUND_END
 
 static MACHINE_DRIVER_START( firetrk )
 
-	/* basic machine hardware */	
+	/* basic machine hardware */
 	MDRV_CPU_ADD(M6808,1000000)		/* 1MHz during normal operation */
 									/* 750Khz during self-test sequence */
 	MDRV_CPU_MEMORY(firetrk_readmem,firetrk_writemem)
@@ -672,9 +667,9 @@ static MACHINE_DRIVER_START( firetrk )
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(firetrk_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(sizeof(palette_source)/3)
+	MDRV_PALETTE_LENGTH(4)
 	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source)/2)
-	
+
 	MDRV_PALETTE_INIT(firetrk)
 	MDRV_VIDEO_START(firetrk)
 	MDRV_VIDEO_UPDATE(firetrk)
@@ -712,6 +707,9 @@ ROM_START( firetrk )
 
 	ROM_REGION( 0x400, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD( "32831-01.p7", 0x000, 0x400, 0xbb8d144f ) /* Cab */
+
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
+	ROM_LOAD( "9114-01.bin", 0x0000, 0x0100, 0xb8094b4c )	/* sync (not used) */
 ROM_END
 
 

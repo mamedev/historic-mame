@@ -21,6 +21,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
+#include "vidhrdw/atarirle.h"
 #include "atarig1.h"
 
 
@@ -69,6 +70,20 @@ static MACHINE_INIT( atarig1 )
 	atarigen_interrupt_reset(update_interrupts);
 	atarigen_scanline_timer_reset(atarig1_scanline_update, 8);
 	atarijsa_reset();
+}
+
+
+
+/*************************************
+ *
+ *	Sprite control latch
+ *
+ *************************************/
+
+static WRITE16_HANDLER( mo_control_w )
+{
+	if (ACCESSING_LSB)
+		atarirle_control_w(0, data & 7);
 }
 
 
@@ -199,15 +214,15 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ 0xf88000, 0xf8ffff, atarigen_eeprom_enable_w },
 	{ 0xf90000, 0xf90001, atarigen_sound_upper_w },
 	{ 0xf98000, 0xf98001, atarigen_sound_reset_w },
-	{ 0xfa0000, 0xfa0001, atarig1_mo_control_w },
+	{ 0xfa0000, 0xfa0001, mo_control_w },
 	{ 0xfb0000, 0xfb0001, atarigen_video_int_ack_w },
 	{ 0xfc8000, 0xfc8007, a2d_select_w },
 	{ 0xfd8000, 0xfdffff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0xfe8000, 0xfe89ff, atarigen_666_paletteram_w, &paletteram16 },
 	{ 0xff0000, 0xff0fff, atarirle_0_spriteram_w, &atarirle_0_spriteram },
 	{ 0xff1000, 0xff3fff, MWA16_RAM },
-	{ 0xff4000, 0xff5fff, ataripf_0_simple_w, &ataripf_0_base },
-	{ 0xff6000, 0xff6fff, atarian_0_vram_w, &atarian_0_base },
+	{ 0xff4000, 0xff5fff, atarigen_playfield_w, &atarigen_playfield },
+	{ 0xff6000, 0xff6fff, atarigen_alpha_w, &atarigen_alpha },
 	{ 0xff7000, 0xffffff, MWA16_RAM },
 MEMORY_END
 
@@ -371,6 +386,7 @@ static MACHINE_DRIVER_START( atarig1 )
 	MDRV_PALETTE_LENGTH(1280)
 	
 	MDRV_VIDEO_START(atarig1)
+	MDRV_VIDEO_EOF(atarirle)
 	MDRV_VIDEO_UPDATE(atarig1)
 	
 	/* sound hardware */

@@ -34,17 +34,18 @@ PALETTE_INIT( crbaloon )
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int intensity;
+		int intensity,r,g,b;
 
 
 		intensity = (~i & 0x08) ? 0xff : 0x55;
 
 		/* red component */
-		*(palette++) = intensity * ((~i >> 0) & 1);
+		r = intensity * ((~i >> 0) & 1);
 		/* green component */
-		*(palette++) = intensity * ((~i >> 1) & 1);
+		g = intensity * ((~i >> 1) & 1);
 		/* blue component */
-		*(palette++) = intensity * ((~i >> 2) & 1);
+		b = intensity * ((~i >> 2) & 1);
+		palette_set_color(i,r,g,b);
 	}
 
 	for (i = 0;i < TOTAL_COLORS(0);i += 2)

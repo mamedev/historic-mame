@@ -627,14 +627,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }					 /* end of array */
 };
 
-/* some colors for the frontend */
-static unsigned char palette_source[] =
-{
-/*	Red Green Blue */
-	0x00,0x00,0x00, 	/* black */
-	0xb0,0xb0,0xb0, 	/* white */
-	0xff,0xff,0xff		/* bright white */
-};
 static unsigned short colortable_source[] =
 {
 	 1, 0,
@@ -642,7 +634,9 @@ static unsigned short colortable_source[] =
 };
 static PALETTE_INIT( lazercmd )
 {
-	memcpy(palette,palette_source,sizeof(palette_source));
+	palette_set_color(0,0x00,0x00,0x00); 	/* black */
+	palette_set_color(1,0xb0,0xb0,0xb0); 	/* white */
+	palette_set_color(2,0xff,0xff,0xff);	/* bright white */
 	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 

@@ -19,8 +19,7 @@
  *   gamma (is already osd_)
  *   sound (enable/disable sound)
  *   volume
- * - rename	options.use_emulated_ym3812 to options_use_real_ym3812;
- * - get rid of #ifdef MESS's by providing appropriate hooks
+  * - get rid of #ifdef MESS's by providing appropriate hooks
  */
 
 #include <stdarg.h>
@@ -55,7 +54,7 @@ static int readconfig;
 static int createconfig;
 extern int verbose;
 
-static struct rc_struct *rc;
+struct rc_struct *rc;
 
 /* fix me - need to have the core call osd_set_gamma with this value */
 /* instead of relying on the name of an osd variable */
@@ -355,9 +354,6 @@ int cli_frontend_init (int argc, char **argv)
 
 	/* clear all core options */
 	memset(&options,0,sizeof(options));
-
-	/* directly define these */
-	options.use_emulated_ym3812 = 1;
 
 	/* create the rc object */
 	if (!(rc = rc_create()))

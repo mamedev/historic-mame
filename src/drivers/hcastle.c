@@ -284,7 +284,7 @@ static struct YM3812interface ym3812_interface =
 {
 	1,
 	3579545,
-	{ 35 },
+	{ 70 },
 	{ irqhandler },
 };
 

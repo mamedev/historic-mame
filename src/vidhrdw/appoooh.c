@@ -58,7 +58,6 @@ PALETTE_INIT( appoooh )
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
 		palette_set_color(i,r,g,b);
-
 		color_prom++;
 	}
 

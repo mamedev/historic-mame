@@ -900,6 +900,25 @@ static int vh_open(void)
 				}
 			}
 
+			/* some games increment on partial tile boundaries; to handle this without reading */
+			/* past the end of the region, we may need to truncate the count */
+			/* an example is the games in metro.c */
+			if (glcopy.planeoffset[0] == GFX_RAW)
+			{
+				int region = Machine->drv->gfxdecodeinfo[i].memory_region;
+				UINT8 *base = memory_region(region) + Machine->drv->gfxdecodeinfo[i].start;
+				UINT8 *end = memory_region(region) + memory_region_length(region);
+				while (glcopy.total > 0)
+				{
+					UINT8 *elementbase = base + (glcopy.total - 1) * glcopy.charincrement / 8;
+					UINT8 *lastpixelbase = elementbase + glcopy.height * glcopy.yoffset[0] / 8 - 1;
+					if (lastpixelbase < end)
+						break;
+					glcopy.total--;
+				}
+			}
+
+
 			if ((Machine->gfx[i] = decodegfx(memory_region(Machine->drv->gfxdecodeinfo[i].memory_region)
 					+ Machine->drv->gfxdecodeinfo[i].start,
 					&glcopy)) == 0)

@@ -9,7 +9,11 @@
 #else
 #ifndef WIN32
 #   include <dirent.h>
-#   include <sys/errno.h>
+#   ifdef __sgi
+#      include <errno.h>
+#   else
+#      include <sys/errno.h>
+#   endif
 #else
 #    include "dirent.h"
 #endif
@@ -640,7 +644,8 @@ int CLIB_DECL main(int argc,char **argv)
 						{
 							for (j = 0;j < found[1];j++)
 							{
-								if (matchscore[i][j][mode1][mode2] > bestscore)
+								if (matchscore[i][j][mode1][mode2] > bestscore
+									|| (matchscore[i][j][mode1][mode2] == 1.0 && mode2 == 0 && bestmode2 > 0))
 								{
 									bestscore = matchscore[i][j][mode1][mode2];
 									besti = i;

@@ -1939,7 +1939,7 @@ static struct YM3526interface ym3526_interface =
 {
 	1,			/* 1 chip */
 	3000000,	/* 3 MHz */
-	{ 35 },
+	{ 70 },
 	{ irqhandler },
 };
 
@@ -1947,7 +1947,7 @@ static struct YM3526interface oscar_ym3526_interface =
 {
 	1,			/* 1 chip */
 	3000000,	/* 3 MHz */
-	{ 35 },
+	{ 70 },
 	{ oscar_irqhandler },
 };
 
@@ -1955,7 +1955,7 @@ static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip */
 	3000000,	/* 3 MHz */
-	{ 35 },
+	{ 70 },
 	{ irqhandler },
 };
 

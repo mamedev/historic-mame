@@ -65,7 +65,7 @@ static void update_interrupts(void)
 static MACHINE_INIT( relief )
 {
 	atarigen_eeprom_reset();
-	atarivc_reset(atarivc_eof_data);
+	atarivc_reset(atarivc_eof_data, 2);
 	atarigen_interrupt_reset(update_interrupts);
 
 	OKIM6295_set_bank_base(0, 0);
@@ -197,9 +197,9 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ 0x3effc0, 0x3effff, atarivc_w, &atarivc_data },
 	{ 0xfe0000, 0xfe0fff, atarigen_666_paletteram_w, &paletteram16 },
 	{ 0xfeffc0, 0xfeffff, atarivc_w },
-	{ 0xff0000, 0xff1fff, ataripf_1_latched_w, &ataripf_1_base },
-	{ 0xff2000, 0xff3fff, ataripf_0_latched_w, &ataripf_0_base },
-	{ 0xff4000, 0xff5fff, ataripf_01_upper_lsb_msb_w, &ataripf_0_upper },
+	{ 0xff0000, 0xff1fff, atarigen_playfield2_latched_msb_w, &atarigen_playfield2 },
+	{ 0xff2000, 0xff3fff, atarigen_playfield_latched_lsb_w, &atarigen_playfield },
+	{ 0xff4000, 0xff5fff, atarigen_playfield_dual_upper_w, &atarigen_playfield_upper },
 	{ 0xff6000, 0xff67ff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
 	{ 0xff6800, 0xff8eff, MWA16_RAM },
 	{ 0xff8f00, 0xff8f7f, MWA16_RAM, &atarivc_eof_data },
@@ -224,21 +224,21 @@ INPUT_PORTS_START( relief )
 	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
 	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
-	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
-	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
-	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1 )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 )
 
 	PORT_START	/* 260002 */
 	PORT_BIT(  0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
-	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_START3 )
 	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
-	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
-	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
-	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
 
 	PORT_START	/* 260010 */
 	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_UNUSED )

@@ -555,8 +555,7 @@ reverse:
 			{
 				/* fetch two samples */
 				INT32 val1 = base[accum >> 11];
-				INT32 val2 = base[(accum >> 11) + 1];
-				accum = (accum + freqcount) & accum_mask;
+				INT32 val2 = base[((accum + (1 << 11)) & accum_mask) >> 11];
 
 				/* decompress u-law */
 				val1 = ulaw_lookup[val1 >> (16 - ULAW_MAXBITS)];
@@ -564,6 +563,7 @@ reverse:
 
 				/* interpolate */
 				val1 = interpolate(val1, val2, accum);
+				accum = (accum + freqcount) & accum_mask;
 
 				/* apply filters */
 				apply_filters(voice, val1);
@@ -593,8 +593,7 @@ reverse:
 			{
 				/* fetch two samples */
 				INT32 val1 = base[accum >> 11];
-				INT32 val2 = base[(accum >> 11) + 1];
-				accum = (accum - freqcount) & accum_mask;
+				INT32 val2 = base[((accum + (1 << 11)) & accum_mask) >> 11];
 
 				/* decompress u-law */
 				val1 = ulaw_lookup[val1 >> (16 - ULAW_MAXBITS)];
@@ -602,6 +601,7 @@ reverse:
 
 				/* interpolate */
 				val1 = interpolate(val1, val2, accum);
+				accum = (accum - freqcount) & accum_mask;
 
 				/* apply filters */
 				apply_filters(voice, val1);
@@ -661,11 +661,11 @@ reverse:
 			{
 				/* fetch two samples */
 				INT32 val1 = (INT16)base[accum >> 11];
-				INT32 val2 = (INT16)base[(accum >> 11) + 1];
-				accum = (accum + freqcount) & accum_mask;
+				INT32 val2 = (INT16)base[((accum + (1 << 11)) & accum_mask) >> 11];
 
 				/* interpolate */
 				val1 = interpolate(val1, val2, accum);
+				accum = (accum + freqcount) & accum_mask;
 
 				/* apply filters */
 				apply_filters(voice, val1);
@@ -695,11 +695,11 @@ reverse:
 			{
 				/* fetch two samples */
 				INT32 val1 = (INT16)base[accum >> 11];
-				INT32 val2 = (INT16)base[(accum >> 11) + 1];
-				accum = (accum - freqcount) & accum_mask;
+				INT32 val2 = (INT16)base[((accum + (1 << 11)) & accum_mask) >> 11];
 
 				/* interpolate */
 				val1 = interpolate(val1, val2, accum);
+				accum = (accum - freqcount) & accum_mask;
 
 				/* apply filters */
 				apply_filters(voice, val1);

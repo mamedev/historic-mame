@@ -830,9 +830,8 @@ ROM_START( digdug2o )
 	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "d21-5.5b",	0x0000, 0x0020, 0x9b169db5 ) /* palette */
 	ROM_LOAD( "d21-6.4c",	0x0020, 0x0100, 0x55a88695 ) /* characters */
-	ROM_LOAD( "d21-7.5k",	0x0120, 0x0100, 0x9c55feda ) /* sprites */
-/*	ROM_LOAD( "d2x-7.5k",	0x0120, 0x0100, 0x1525a4d1 ) but dump ? */
-	/* Can't see the difference on screen, but CRC differs. */
+	ROM_LOAD( "d2x-7.5k",	0x0120, 0x0100, 0x1525a4d1 ) /* sprites */
+	/* the sprite lookup table is different from the other set, could be a bad dump */
 
 	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
 	ROM_LOAD( "d21-3.3m",	0x0000, 0x0100, 0xe0074ee2 )

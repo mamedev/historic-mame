@@ -53,7 +53,7 @@ static void update_interrupts(void)
 static MACHINE_INIT( shuuz )
 {
 	atarigen_eeprom_reset();
-	atarivc_reset(atarivc_eof_data);
+	atarivc_reset(atarivc_eof_data, 1);
 	atarigen_interrupt_reset(update_interrupts);
 }
 
@@ -160,10 +160,10 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ 0x107000, 0x107007, MWA16_NOP },
 	{ 0x3e0000, 0x3e087f, atarigen_666_paletteram_w, &paletteram16 },
 	{ 0x3effc0, 0x3effff, atarivc_w, &atarivc_data },
-	{ 0x3f4000, 0x3f5eff, ataripf_0_latched_w, &ataripf_0_base },
+	{ 0x3f4000, 0x3f5eff, atarigen_playfield_latched_msb_w, &atarigen_playfield },
 	{ 0x3f5f00, 0x3f5f7f, MWA16_RAM, &atarivc_eof_data },
 	{ 0x3f5f80, 0x3f5fff, atarimo_0_slipram_w, &atarimo_0_slipram },
-	{ 0x3f6000, 0x3f7fff, ataripf_0_upper_msb_w, &ataripf_0_upper },
+	{ 0x3f6000, 0x3f7fff, atarigen_playfield_upper_w, &atarigen_playfield_upper },
 	{ 0x3f8000, 0x3fcfff, MWA16_RAM },
 	{ 0x3fd000, 0x3fd3ff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
 	{ 0x3fd400, 0x3fffff, MWA16_RAM },

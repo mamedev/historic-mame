@@ -408,18 +408,18 @@ READ_HANDLER( herbiedk_port1_r )
 }
 
 static PORT_WRITE_START( hunchbkd_writeport )
-	{ 0x101, 0x101, hunchbkd_data_w },
+	{ S2650_DATA_PORT, S2650_DATA_PORT, hunchbkd_data_w },
 PORT_END
 
 static PORT_READ_START( hunchbkd_readport )
 	{ 0x00, 0x00, hunchbkd_port0_r },
 	{ 0x01, 0x01, hunchbkd_port1_r },
-    { S2650_SENSE_PORT, S2650_SENSE_PORT, input_port_4_r },
+	{ S2650_SENSE_PORT, S2650_SENSE_PORT, input_port_4_r },
 PORT_END
 
 static PORT_READ_START( herbiedk_readport )
 	{ 0x01, 0x01, herbiedk_port1_r },
-    { S2650_SENSE_PORT, S2650_SENSE_PORT, input_port_4_r },
+	{ S2650_SENSE_PORT, S2650_SENSE_PORT, input_port_4_r },
 PORT_END
 
 static MEMORY_READ_START( readmem_sound )
@@ -576,7 +576,7 @@ INPUT_PORTS_START( dkong )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* status from sound cpu */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* status from sound cpu */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
 
 	PORT_START      /* DSW0 */
@@ -675,7 +675,7 @@ INPUT_PORTS_START( dkong3 )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( hunchbdk )
+INPUT_PORTS_START( hunchbkd )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -705,7 +705,7 @@ INPUT_PORTS_START( hunchbdk )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* status from sound cpu */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* status from sound cpu */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
 
 	PORT_START      /* DSW0 */
@@ -733,7 +733,7 @@ INPUT_PORTS_START( hunchbdk )
 	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
-    PORT_START /* Sense */
+	PORT_START /* Sense */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 INPUT_PORTS_END
 
@@ -767,7 +767,7 @@ INPUT_PORTS_START( herbiedk )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* status from sound cpu */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* status from sound cpu */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
 
 	PORT_START      /* DSW0 */
@@ -796,8 +796,74 @@ INPUT_PORTS_START( herbiedk )
 	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
-    PORT_START /* Sense */
+	PORT_START /* Sense */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+INPUT_PORTS_END
+
+/* Notes :
+     - you ALWAYS get an extra life at 150000 points.
+     - having more than 6 lives will reset the game.
+*/
+INPUT_PORTS_START( herodk )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* status from sound cpu */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPNAME( 0x0c, 0x00, "Difficulty?" )		// Stored at 0x1c99
+	PORT_DIPSETTING(    0x00, "0" )
+	PORT_DIPSETTING(    0x04, "1" )
+	PORT_DIPSETTING(    0x08, "2" )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPNAME( 0x70, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+
+	PORT_START /* Sense */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 INPUT_PORTS_END
 
 
@@ -983,7 +1049,7 @@ static INTERRUPT_GEN( hunchbkd_interrupt )
 static MACHINE_DRIVER_START( hunchbkd )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(S2650, 3072000)
+	MDRV_CPU_ADD(S2650, 3072000/4)	/* ??? */
 	MDRV_CPU_MEMORY(hunchbkd_readmem,hunchbkd_writemem)
 	MDRV_CPU_PORTS(hunchbkd_readport,hunchbkd_writeport)
 	MDRV_CPU_VBLANK_INT(hunchbkd_interrupt,1)
@@ -1015,7 +1081,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( herbiedk )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(S2650, 3072000)
+	MDRV_CPU_ADD(S2650, 3072000/4)	/* ??? */
 	MDRV_CPU_MEMORY(hunchbkd_readmem,hunchbkd_writemem)
 	MDRV_CPU_PORTS(herbiedk_readport,hunchbkd_writeport)
 
@@ -1541,10 +1607,11 @@ ROM_START( hunchbkd )
 	ROM_LOAD( "hb.7e",        0x1000, 0x0800, 0xf845e8ca )
 	ROM_LOAD( "hb.7f",        0x1800, 0x0800, 0x52d20fea )
 
-	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_REGION( 0x0500, REGION_PROMS, 0 )
 	ROM_LOAD( "hbprom.2e",    0x0000, 0x0100, 0x37aab98f )	/* palette low 4 bits (inverted) */
 	ROM_LOAD( "hbprom.2f",    0x0100, 0x0100, 0x845b8dcc )	/* palette high 4 bits (inverted) */
 	ROM_LOAD( "hbprom.2n",    0x0200, 0x0100, 0xdff9070a )	/* character color codes on a per-column basis */
+	ROM_LOAD( "82s147.prm",   0x0300, 0x0200, 0x46e5bc92 )	/* unknown */
 ROM_END
 
 ROM_START( herbiedk )
@@ -1567,23 +1634,26 @@ ROM_START( herbiedk )
 	ROM_LOAD( "7e.clk",        0x1000, 0x0800, 0x2f7e65fa )
 	ROM_LOAD( "7f.clk",        0x1800, 0x0800, 0xad32d5ae )
 
-	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_REGION( 0x0500, REGION_PROMS, 0 )
 	ROM_LOAD( "74s287.2k",     0x0000, 0x0100, 0x7dc0a381 ) /* palette high 4 bits (inverted) */
 	ROM_LOAD( "74s287.2j",     0x0100, 0x0100, 0x0a440c00 ) /* palette low 4 bits (inverted) */
 	ROM_LOAD( "74s287.vid",    0x0200, 0x0100, 0x5a3446cc ) /* character color codes on a per-column basis */
+	ROM_LOAD( "82s147.hh",     0x0300, 0x0200, 0x46e5bc92 )	/* unknown */
 ROM_END
 
-ROM_START( herocast )
+ROM_START( herodk )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	/* the loading addresses are most likely wrong */
-	/* the ROMs are probably not contiguous. */
-	/* For example there's a table which suddenly stops at */
-	/* 1dff and resumes at 3e00 */
-	ROM_LOAD( "red-dot.rgt",  0x0000, 0x2000, 0x9c4af229 )	/* encrypted */
-	ROM_LOAD( "wht-dot.lft",  0x2000, 0x2000, 0xc10f9235 )	/* encrypted */
-	/* space for diagnostic ROM */
-	ROM_LOAD( "2532.3f",      0x4000, 0x1000, 0x553b89bb )	/* ??? contains unencrypted */
-													/* code mapped at 3000 */
+	ROM_LOAD( "red-dot.rgt",  0x0c00, 0x0400, 0x9c4af229 )	/* encrypted */
+	ROM_CONTINUE(             0x0800, 0x0400 )
+	ROM_CONTINUE(             0x0400, 0x0400 )
+	ROM_CONTINUE(             0x0000, 0x0400 )
+	ROM_CONTINUE(             0x2000, 0x0e00 )
+	ROM_CONTINUE(             0x6e00, 0x0200 )
+	ROM_LOAD( "wht-dot.lft",  0x4000, 0x1000, 0xc10f9235 )	/* encrypted */
+	ROM_CONTINUE(             0x6000, 0x0e00 )
+	ROM_CONTINUE(             0x2e00, 0x0200 )
+
+//	ROM_LOAD( "2532.3f",      0x4000, 0x1000, 0x553b89bb )	/* ??? contains Z80 code mapped at 3000 */
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
 	ROM_LOAD( "silver.3h",    0x0000, 0x0800, 0x67863ce9 )
@@ -1599,28 +1669,59 @@ ROM_START( herocast )
 	ROM_LOAD( "violet.7f",    0x1800, 0x0800, 0xca020685 )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "82s126.2e",    0x0000, 0x0100, 0x463dc7ad )	/* palette low 4 bits (inverted) */
-	ROM_LOAD( "82s126.2f",    0x0100, 0x0100, 0x47ba0042 )	/* palette high 4 bits (inverted) */
+	ROM_LOAD( "82s129.2e",    0x0000, 0x0100, 0xda4b47e6 )	/* palette low 4 bits (inverted) */
+	ROM_LOAD( "82s129.2f",    0x0100, 0x0100, 0x96e213a4 )	/* palette high 4 bits (inverted) */
+	ROM_LOAD( "82s126.2n",    0x0200, 0x0100, 0x37aece4b )	/* character color codes on a per-column basis */
+ROM_END
+
+ROM_START( herodku )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "2764.8h",      0x0c00, 0x0400, 0x989ce053 )
+	ROM_CONTINUE(             0x0800, 0x0400 )
+	ROM_CONTINUE(             0x0400, 0x0400 )
+	ROM_CONTINUE(             0x0000, 0x0400 )
+	ROM_CONTINUE(             0x2000, 0x1000 )
+	ROM_LOAD( "2764.8f",      0x4000, 0x1000, 0x835e0074 )
+	ROM_CONTINUE(             0x6000, 0x1000 )
+
+	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
+	ROM_LOAD( "2716.3h",      0x0000, 0x0800, 0xcaf57bef )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "pnk.3n",       0x0000, 0x0800, 0x574dfd7a )
+	ROM_LOAD( "blk.3p",       0x0800, 0x0800, 0x16f7c040 )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "gold.7c",      0x0000, 0x0800, 0x5f5282ed )
+	ROM_LOAD( "orange.7d",    0x0800, 0x0800, 0x075d99f5 )
+	ROM_LOAD( "yellow.7e",    0x1000, 0x0800, 0xf6272e96 )
+	ROM_LOAD( "violet.7f",    0x1800, 0x0800, 0xca020685 )
+
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_LOAD( "82s129.2e",    0x0000, 0x0100, 0xda4b47e6 )	/* palette low 4 bits (inverted) */
+	ROM_LOAD( "82s129.2f",    0x0100, 0x0100, 0x96e213a4 )	/* palette high 4 bits (inverted) */
 	ROM_LOAD( "82s126.2n",    0x0200, 0x0100, 0x37aece4b )	/* character color codes on a per-column basis */
 ROM_END
 
 
-static DRIVER_INIT( herocast )
+static DRIVER_INIT( herodk )
 {
 	int A;
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	UINT8 *rom = memory_region(REGION_CPU1);
 
 
-	/* swap data lines D3 and D4, this fixes the text but nothing more. */
-	for (A = 0;A < 0x4000;A++)
+	/* swap data lines D3 and D4 */
+	for (A = 0;A < 0x8000;A++)
 	{
-		int v;
+		if ((A & 0x1000) == 0)
+		{
+			int v;
 
-		v = RAM[A];
-		RAM[A] = (v & 0xe7) | ((v & 0x10) >> 1) | ((v & 0x08) << 1);
+			v = rom[A];
+			rom[A] = (v & 0xe7) | ((v & 0x10) >> 1) | ((v & 0x08) << 1);
+		}
 	}
 }
-
 
 
 static DRIVER_INIT( radarscp )
@@ -1653,7 +1754,9 @@ GAME( 1982, dkngjnrb, dkongjr,  dkongjr,  dkong,    0,        ROT90, "Nintendo o
 GAME( 1983, dkong3,   0,        dkong3,   dkong3,   0,        ROT90, "Nintendo of America", "Donkey Kong 3 (US)" )
 GAME( 1983, dkong3j,  dkong3,   dkong3,   dkong3,   0,        ROT90, "Nintendo", "Donkey Kong 3 (Japan)" )
 
-GAME( 1984, herbiedk, huncholy, herbiedk, herbiedk, 0,        ROT90, "Seatongrove Ltd", "Herbie at the Olympics (DK conversion)")
+GAME( 1984, herbiedk, huncholy, herbiedk, herbiedk, 0,        ROT90, "CVS", "Herbie at the Olympics (DK conversion)")
 
-GAMEX(1983, hunchbkd, hunchbak, hunchbkd, hunchbdk, 0,        ROT90, "Century Electronics", "Hunchback (DK conversion)", GAME_WRONG_COLORS )
-GAMEX(1984, herocast, 0,        dkong,    dkong,    herocast, ROT90, "Seatongrove Ltd (Crown license)", "herocast", GAME_NOT_WORKING )
+GAMEX(1983, hunchbkd, hunchbak, hunchbkd, hunchbkd, 0,        ROT90, "Century Electronics", "Hunchback (DK conversion)", GAME_WRONG_COLORS | GAME_NOT_WORKING )
+
+GAME( 1984, herodk,   hero,     hunchbkd, herodk,   herodk,   ROT90, "Seatongrove Ltd (Crown license)", "Hero in the Castle of Doom (DK conversion)" )
+GAME( 1984, herodku,  hero,     hunchbkd, herodk,   0,        ROT90, "Seatongrove Ltd (Crown license)", "Hero in the Castle of Doom (DK conversion not encrypted)" )

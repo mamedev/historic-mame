@@ -138,7 +138,7 @@ PALETTE_INIT( wwjgtin )
 {
 	int color, pen;
 
-	palette_init_lasso(palette,colortable,color_prom);
+	palette_init_lasso(colortable,color_prom);
 
 	for( color = 0; color < 0x10; color++ )
 		for( pen = 0; pen < 16; pen++ )

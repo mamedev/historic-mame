@@ -3225,14 +3225,16 @@ INPUT_PORTS_START( twineagl )
 	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 
 	PORT_START	// IN3 - 2 DSWs - $600001 & 3.b
-	PORT_DIPNAME( 0x0001, 0x0001, "Unknown 1-0*" )	// this is merged with 2-6!
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4001, 0x4001, "Copyright" )		// Always "Seta" if sim. players = 1
+	PORT_DIPSETTING(      0x4001, "Seta (Taito license)" )
+	PORT_DIPSETTING(      0x0001, "Taito" )
+	PORT_DIPSETTING(      0x4000, "Taito America" )
+	PORT_DIPSETTING(      0x0000, "Taito America (Romstar license)" )
 	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_SERVICE( 0x0004, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x0008, 0x0000, DEF_STR( Cabinet ) )
+	PORT_DIPNAME( 0x0008, 0x0000, DEF_STR( Cabinet ) )	// Only if simultaneous players = 1
 	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ) )
 	PORT_DIPSETTING(      0x0008, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Coin_A ) )
@@ -3245,13 +3247,12 @@ INPUT_PORTS_START( twineagl )
 	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( 1C_2C ) )
-
-	PORT_DIPNAME( 0x0300, 0x0100, DEF_STR( Difficulty ) )
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x0300, "Normal"  )
 	PORT_DIPSETTING(      0x0200, "Easy"    )
 	PORT_DIPSETTING(      0x0100, "Hard"    )
 	PORT_DIPSETTING(      0x0000, "Hardest" )
-	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Bonus_Life ) )
+	PORT_DIPNAME( 0x0c00, 0x0000, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(      0x0c00, "Never" )
 	PORT_DIPSETTING(      0x0800, "500K Only" )
 	PORT_DIPSETTING(      0x0400, "1000K Only" )
@@ -3261,12 +3262,15 @@ INPUT_PORTS_START( twineagl )
 	PORT_DIPSETTING(      0x0000, "2" )
 	PORT_DIPSETTING(      0x3000, "3" )
 	PORT_DIPSETTING(      0x2000, "5" )
-	PORT_DIPNAME( 0x4000, 0x4000, "?Continue Mode?" )
-	PORT_DIPSETTING(      0x4000, "1" )
-	PORT_DIPSETTING(      0x0000, "2" )
 	PORT_DIPNAME( 0x8000, 0x8000, "Coinage Type" )	// not supported
 	PORT_DIPSETTING(      0x8000, "1" )
 	PORT_DIPSETTING(      0x0000, "2" )
+
+	/* Fake Dip Switch to determine maximum numbers of simultaneous players */
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x00, "Max. simultaneous players" )
+	PORT_DIPSETTING(	0x00, "1" )
+	PORT_DIPSETTING(	0x01, "2" )
 INPUT_PORTS_END
 
 
@@ -4568,7 +4572,7 @@ static struct YM2203interface tndrcade_ym2203_interface =
 {
 	1,
 	2000000,		/* ? */
-	{ YM2203_VOL(50,50) },
+	{ YM2203_VOL(35,35) },
 	{ dsw1_r },		/* input A: DSW 1 */
 	{ dsw2_r },		/* input B: DSW 2 */
 	{ 0 },
@@ -4580,7 +4584,7 @@ static struct YM3812interface ym3812_interface =
 {
 	1,
 	4000000,	/* ? */
-	{ 80,80 },	/* mixing level */
+	{ 100,100 },	/* mixing level */
 //	{ irq_handler },
 };
 
@@ -6158,13 +6162,31 @@ READ16_HANDLER( twineagl_protection_r )
 	return 0;
 }
 
+/* Extra RAM ? Check code at 0x00ba90 */
+READ16_HANDLER( twineagl_200100_r )
+{
+	const data16_t data[8] =
+	{
+		0x004d,0x0054,0x0058,0x0044,0x0041,0x0059,0x004f,0x004e
+	};
+
+	if (readinputport(4) & 1)
+		return (data[offset]);
+
+	return 0;
+}
+
 DRIVER_INIT( twineagl )
 {
 	int i;
 	unsigned char *RAM = memory_region(REGION_GFX2);	// Layer
 
 	/* Protection? */
-	install_mem_read16_handler(0, 0x800000, 0x8000ff, twineagl_protection_r);
+	install_mem_read16_handler (0, 0x800000, 0x8000ff, twineagl_protection_r);
+
+	/* This allows 2 simultaneous players and the use of the "Copyright" Dip Switch. */
+	install_mem_read16_handler (0, 0x200100, 0x20010f, twineagl_200100_r);
+
 
 #if 1
 	// waterfalls: tiles 3e00-3fff must be a copy of 2e00-2fff ??
@@ -6455,7 +6477,7 @@ ROM_END
 
 GAMEX( 1987, tndrcade, 0,        tndrcade, tndrcade, 0,        ROT270, "[Seta] (Taito license)", "Thundercade / Twin Formation",   GAME_IMPERFECT_SOUND ) // Title/License: DSW
 GAMEX( 1987, tndrcadj, tndrcade, tndrcade, tndrcadj, 0,        ROT270, "[Seta] (Taito license)", "Tokusyu Butai UAG (Japan)",      GAME_IMPERFECT_SOUND ) // License: DSW
-GAMEX( 1988, twineagl, 0,        twineagl, twineagl, twineagl, ROT270, "Seta (Taito license)",   "Twin Eagle - Revenge Joe's Brother (Japan)", GAME_IMPERFECT_SOUND )
+GAMEX( 1988, twineagl, 0,        twineagl, twineagl, twineagl, ROT270, "Seta / Taito",   "Twin Eagle - Revenge Joe's Brother",     GAME_IMPERFECT_SOUND ) // Country/License: DSW
 GAMEX( 1989, calibr50, 0,        calibr50, calibr50, 0,        ROT270, "Athena / Seta",          "Caliber 50",                     GAME_IMPERFECT_SOUND ) // Country/License: DSW
 GAMEX( 1989, drgnunit, 0,        drgnunit, drgnunit, 0,        ROT0,   "Seta",                   "Dragon Unit / Castle of Dragon", GAME_IMPERFECT_SOUND )
 GAMEX( 1989, downtown, 0,        downtown, downtown, downtown, ROT270, "Seta",                   "DownTown",                       GAME_IMPERFECT_SOUND ) // Country/License: DSW

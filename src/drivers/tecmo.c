@@ -555,7 +555,7 @@ static struct YM3526interface ym3812_interface =
 {
 	1,			/* 1 chip */
 	4000000,	/* 4 MHz */
-	{ 80 },		/* volume */
+	{ 100 },		/* volume */
 	{ irqhandler }
 };
 
@@ -565,7 +565,7 @@ static struct MSM5205interface msm5205_interface =
 	384000,				/* 384KHz             */
 	{ tecmo_adpcm_int },/* interrupt function */
 	{ MSM5205_S48_4B },	/* 8KHz               */
-	{ 80 }				/* volume */
+	{ 50 }				/* volume */
 };
 
 

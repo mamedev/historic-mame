@@ -30,14 +30,6 @@ static data8_t *mirror_ram;
  *
  *************************************/
 
-static unsigned char palette_source[] =
-{
-	0x00,0x00,0x00, /* BLACK */
-	0xff,0xff,0xff, /* WHITE */
-	0x80,0x80,0x80, /* LT GREY */
-	0x55,0x55,0x55, /* DK GREY */
-};
-
 static unsigned short colortable_source[] =
 {
 	0x02, 0x01,
@@ -48,7 +40,10 @@ static unsigned short colortable_source[] =
 
 static PALETTE_INIT( ultratnk )
 {
-	memcpy(palette,palette_source,sizeof(palette_source));
+	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
+	palette_set_color(1,0xff,0xff,0xff); /* WHITE */
+	palette_set_color(2,0x80,0x80,0x80); /* LT GREY */
+	palette_set_color(3,0x55,0x55,0x55); /* DK GREY */
 	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 
@@ -450,7 +445,7 @@ static MACHINE_DRIVER_START( ultratnk )
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(sizeof(palette_source)/3)
+	MDRV_PALETTE_LENGTH(4)
 	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source)/sizeof(unsigned short))
 
 	MDRV_PALETTE_INIT(ultratnk)

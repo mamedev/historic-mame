@@ -2224,9 +2224,9 @@ INPUT_PORTS_START( ladykill )
 	PORT_DIPSETTING(      0x000c, "Normal" )
 	PORT_DIPSETTING(      0x0004, "Hard" )
 	PORT_DIPSETTING(      0x0000, "Very Hard" )
-	PORT_DIPNAME( 0x0010, 0x0010, "Nudity" )
-	PORT_DIPSETTING( 0x0010, "Partial" )
-	PORT_DIPSETTING( 0x0000, "Full" )
+	PORT_DIPNAME( 0x0010, 0x0000, "Nudity" )
+	PORT_DIPSETTING(      0x0010, "Partial" )
+	PORT_DIPSETTING(      0x0000, "Full" )
 	PORT_SERVICE( 0x0020, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x0040, 0x0040, "Allow Continue" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
@@ -3115,6 +3115,17 @@ static MACHINE_DRIVER_START( bangball )
 MACHINE_DRIVER_END
 
 
+#ifdef TEST_SOUND
+
+UPD7810_CONFIG metro_cpu_config =
+{
+    TYPE_7810,
+    metro_io_callback
+};
+
+#endif
+
+
 static MACHINE_DRIVER_START( daitorid )
 
 	/* basic machine hardware */
@@ -3124,7 +3135,7 @@ static MACHINE_DRIVER_START( daitorid )
 
 #ifdef TEST_SOUND
 	MDRV_CPU_ADD(UPD7810, 12000000)
-	MDRV_CPU_CONFIG((void *)metro_io_callback)
+	MDRV_CPU_CONFIG(metro_cpu_config)
 	MDRV_CPU_MEMORY(upd7810_readmem,upd7810_writemem)
 	MDRV_CPU_PORTS(upd7810_readport,upd7810_writeport)
 #endif
@@ -3148,7 +3159,7 @@ static MACHINE_DRIVER_START( daitorid )
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 #ifdef TEST_SOUND
 	MDRV_SOUND_ADD(YM2151, daitorid_ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_8kHz) /* wrong */
 #endif
 MACHINE_DRIVER_END
 
@@ -4581,8 +4592,8 @@ GAMEX( 1992, karatour, 0,        karatour, karatour, karatour, ROT0,   "Mitchell
 GAMEX( 1992, pangpoms, 0,        pangpoms, pangpoms, metro,    ROT0,   "Metro",                      "Pang Poms",                       GAME_NO_SOUND )
 GAMEX( 1992, pangpomm, pangpoms, pangpoms, pangpoms, metro,    ROT0,   "Metro (Mitchell license)",   "Pang Poms (Mitchell)",            GAME_NO_SOUND )
 GAMEX( 1992, skyalert, 0,        skyalert, skyalert, metro,    ROT270, "Metro",                      "Sky Alert",                       GAME_NO_SOUND )
-GAMEX( 1993?,ladykill, 0,        karatour, ladykill, karatour, ROT90,  "Yanyaka (Mitchell license)", "Lady Killer",                     GAME_NO_SOUND )
-GAMEX( 1993?,moegonta, ladykill, karatour, moegonta, karatour, ROT90,  "Yanyaka",                    "Moeyo Gonta!! (Japan)",           GAME_NO_SOUND )
+GAMEX( 1993?,ladykill, 0,        karatour, ladykill, karatour, ROT90,  "Yanyaka (Mitchell license)", "Lady Killer",                     GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1993?,moegonta, ladykill, karatour, moegonta, karatour, ROT90,  "Yanyaka",                    "Moeyo Gonta!! (Japan)",           GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1993, poitto,   0,        poitto,   poitto,   metro,    ROT0,   "Metro / Able Corp.",         "Poitto!",                         GAME_NO_SOUND )
 GAMEX( 1994, dharma,   0,        dharma,   dharma,   metro,    ROT0,   "Metro",                      "Dharma Doujou",                   GAME_NO_SOUND )
 GAMEX( 1994, lastfort, 0,        lastfort, lastfort, metro,    ROT0,   "Metro",                      "Last Fortress - Toride",          GAME_NO_SOUND )
@@ -4592,11 +4603,11 @@ GAMEX( 1995, daitorid, 0,        daitorid, daitorid, metro,    ROT0,   "Metro", 
 GAME ( 1995, dokyusei, 0,        dokyusei, dokyusei, gakusai,  ROT0,   "Make Software / Elf / Media Trading", "Mahjong Doukyuusei"                    )
 GAME ( 1995, dokyusp,  0,        dokyusp,  gakusai,  gakusai,  ROT0,   "Make Software / Elf / Media Trading", "Mahjong Doukyuusei Special"            )
 GAMEX( 1995, pururun,  0,        pururun,  pururun,  metro,    ROT0,   "Metro / Banpresto",          "Pururun",                         GAME_NO_SOUND )
-GAMEX( 1995, puzzli,   0,        daitorid, puzzli,   metro,    ROT0,   "Metro / Banpresto",          "Puzzli",                          GAME_NO_SOUND )
+GAMEX( 1995, puzzli,   0,        daitorid, puzzli,   metro,    ROT0,   "Metro / Banpresto",          "Puzzli",                          GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, balcube,  0,        balcube,  balcube,  balcube,  ROT0,   "Metro",                      "Bal Cube",                        GAME_NO_SOUND )
 GAMEX( 1996, bangball, 0,        bangball, bangball, balcube,  ROT0,   "Banpresto / Kunihiko Tashiro+Goodhouse", "Bang Bang Ball (v1.05)", GAME_NO_SOUND )
 GAMEX( 1996, mouja,    0,        mouja,    mouja,    mouja,    ROT0,   "Etona",                      "Mouja (Japan)",                   GAME_NO_COCKTAIL )
-GAME ( 1997, gakusai,  0,        gakusai,  gakusai,  gakusai,  ROT0,   "MakeSoft",                   "Mahjong Gakuensai (Japan)"                      )
+GAMEX( 1997, gakusai,  0,        gakusai,  gakusai,  gakusai,  ROT0,   "MakeSoft",                   "Mahjong Gakuensai (Japan)",       GAME_IMPERFECT_GRAPHICS )
 GAME ( 1998, gakusai2, 0,        gakusai2, gakusai,  gakusai,  ROT0,   "MakeSoft",                   "Mahjong Gakuensai 2 (Japan)"                    )
 
 GAMEX( 1994, blzntrnd, 0,        blzntrnd, blzntrnd, blzntrnd, ROT0,   "Human Amusement",            "Blazing Tornado",                 GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )

@@ -33,7 +33,7 @@ static struct mame_bitmap *tmpbitmap1;
   bit 0 -- 390 ohm resistor  -- BLUE
 
 ***************************************************************************/
-static void convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom,
+static void convert_color_prom(unsigned short *colortable,const unsigned char *color_prom,
 		int priority)
 {
 	int i,j;
@@ -43,37 +43,34 @@ static void convert_color_prom(unsigned char *palette, unsigned short *colortabl
 
 	for (i = 0;i < 256;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = (*color_prom >> 5) & 0x01;
 		bit1 = (*color_prom >> 6) & 0x01;
 		bit2 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x23 * bit0 + 0x4b * bit1 + 0x91 * bit2;
+		r = 0x23 * bit0 + 0x4b * bit1 + 0x91 * bit2;
 		/* green component */
 		bit0 = (*color_prom >> 2) & 0x01;
 		bit1 = (*color_prom >> 3) & 0x01;
 		bit2 = (*color_prom >> 4) & 0x01;
-		*(palette++) = 0x23 * bit0 + 0x4b * bit1 + 0x91 * bit2;
+		g = 0x23 * bit0 + 0x4b * bit1 + 0x91 * bit2;
 		/* blue component */
 		bit0 = 0;
 		bit1 = (*color_prom >> 0) & 0x01;
 		bit2 = (*color_prom >> 1) & 0x01;
-		*(palette++) = 0x23 * bit0 + 0x4b * bit1 + 0x91 * bit2;
+		b = 0x23 * bit0 + 0x4b * bit1 + 0x91 * bit2;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
 	/* reserve one color for the transparent pen (none of the game colors can have */
 	/* these RGB components) */
-	*(palette++) = 1;
-	*(palette++) = 1;
-	*(palette++) = 1;
+	palette_set_color(256,1,1,1);
 	/* and the last color for the sprite covering pen */
-	*(palette++) = 2;
-	*(palette++) = 2;
-	*(palette++) = 2;
+	palette_set_color(257,2,2,2);
 
 
 	/* characters */
@@ -140,12 +137,12 @@ static void convert_color_prom(unsigned char *palette, unsigned short *colortabl
 
 PALETTE_INIT( docastle )
 {
-	convert_color_prom(palette,colortable,color_prom,0);
+	convert_color_prom(colortable,color_prom,0);
 }
 
 PALETTE_INIT( dorunrun )
 {
-	convert_color_prom(palette,colortable,color_prom,1);
+	convert_color_prom(colortable,color_prom,1);
 }
 
 

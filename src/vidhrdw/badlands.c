@@ -11,31 +11,38 @@
 
 /*************************************
  *
+ *	Local variables
+ *
+ *************************************/
+
+static UINT8 playfield_tile_bank;
+
+
+
+/*************************************
+ *
+ *	Tilemap callbacks
+ *
+ *************************************/
+
+static void get_playfield_tile_info(int tile_index)
+{
+	UINT16 data = atarigen_playfield[tile_index];
+	int code = (data & 0x1fff) + ((data & 0x1000) ? (playfield_tile_bank << 12) : 0);
+	int color = (data >> 13) & 0x07;
+	SET_TILE_INFO(0, code, color, 0);
+}
+
+
+
+/*************************************
+ *
  *	Generic video system start
  *
  *************************************/
 
 VIDEO_START( badlands )
 {
-	static const struct ataripf_desc pfdesc =
-	{
-		0,			/* index to which gfx system */
-		64,32,		/* size of the playfield in tiles (x,y) */
-		1,64,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-
-		0x00,		/* index of palette base */
-		0x80,		/* maximum number of colors */
-		0,			/* color XOR for shadow effect (if any) */
-		0,			/* latch mask */
-		0,			/* transparent pen mask */
-
-		0x11fff,	/* tile data index mask */
-		0x0e000,	/* tile data color mask */
-		0,			/* tile data hflip mask */
-		0,			/* tile data vflip mask */
-		0			/* tile data priority mask */
-	};
-
 	static const struct atarimo_desc modesc =
 	{
 		1,					/* index to which gfx system */
@@ -46,7 +53,7 @@ VIDEO_START( badlands )
 		0,					/* render in swapped X/Y order? */
 		0,					/* does the neighbor bit affect the next object? */
 		0,					/* pixels per SLIP entry (0 for no-slip) */
-		8,					/* number of scanlines between MO updates */
+		0,					/* pixel offset for SLIPs */
 
 		0x80,				/* base palette entry */
 		0x80,				/* maximum number of colors */
@@ -67,32 +74,19 @@ VIDEO_START( badlands )
 		{{ 0 }},			/* mask for the neighbor */
 		{{ 0 }},			/* mask for absolute coordinates */
 
-		{{ 0 }},			/* mask for the ignore value */
-		0,					/* resulting value to indicate "ignore" */
-		0					/* callback routine for ignored entries */
+		{{ 0 }},			/* mask for the special value */
+		0,					/* resulting value to indicate "special" */
+		0					/* callback routine for special entries */
 	};
 
-	UINT32 *pflookup;
-	int i, size;
-
 	/* initialize the playfield */
-	if (!ataripf_init(0, &pfdesc))
+	atarigen_playfield_tilemap = tilemap_create(get_playfield_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 64,32);
+	if (!atarigen_playfield_tilemap)
 		return 1;
 
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &modesc))
 		return 1;
-
-	/* modify the code bits in the playfield lookup to handle our banking */
-	pflookup = ataripf_get_lookup(0, &size);
-	for (i = 0; i < size; i++)
-	{
-		int entry = i << ATARIPF_LOOKUP_DATABITS;
-		int code = entry & 0xfff;
-		if (entry & 0x1000)
-			code += 0x1000 + ((entry & 0x10000) >> 4);
-		ATARIPF_LOOKUP_SET_CODE(pflookup[i], code);
-	}
 
 	return 0;
 }
@@ -108,33 +102,12 @@ VIDEO_START( badlands )
 WRITE16_HANDLER( badlands_pf_bank_w )
 {
 	if (ACCESSING_LSB)
-		ataripf_set_bankbits(0, (data & 1) << 16, cpu_getscanline() + 1);
-}
-
-
-
-/*************************************
- *
- *	Overrendering
- *
- *************************************/
-
-static int overrender_callback(struct ataripf_overrender_data *data, int state)
-{
-	/* we're all or nothing, so just handle the BEGIN message */
-	if (state == OVERRENDER_BEGIN)
-	{
-		/* if the priority is 1, we don't need to overrender */
-		if (data->mopriority == 1)
-			return OVERRENDER_NONE;
-
-		/* by default, draw anywhere the MO is non-zero */
-		data->drawmode = TRANSPARENCY_PENS;
-		data->drawpens = 0x00ff;
-		data->maskpens = 0x0001;
-		return OVERRENDER_ALL;
-	}
-	return 0;
+		if (playfield_tile_bank != (data & 1))
+		{
+			force_partial_update(cpu_getscanline());
+			playfield_tile_bank = data & 1;
+			tilemap_mark_all_tiles_dirty(atarigen_playfield_tilemap);
+		}
 }
 
 
@@ -147,7 +120,30 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 
 VIDEO_UPDATE( badlands )
 {
-	/* draw the layers */
-	ataripf_render(0, bitmap, cliprect);
-	atarimo_render(0, bitmap, cliprect, overrender_callback, NULL);
+	struct atarimo_rect_list rectlist;
+	struct mame_bitmap *mobitmap;
+	int x, y, r;
+
+	/* draw the playfield */
+	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 0, 0);
+
+	/* draw and merge the MO */
+	mobitmap = atarimo_render(0, cliprect, &rectlist);
+	for (r = 0; r < rectlist.numrects; r++, rectlist.rect++)
+		for (y = rectlist.rect->min_y; y <= rectlist.rect->max_y; y++)
+		{
+			UINT16 *mo = (UINT16 *)mobitmap->base + mobitmap->rowpixels * y;
+			UINT16 *pf = (UINT16 *)bitmap->base + bitmap->rowpixels * y;
+			for (x = rectlist.rect->min_x; x <= rectlist.rect->max_x; x++)
+				if (mo[x])
+				{
+					/* not yet verified
+					*/
+					if ((mo[x] & ATARIMO_PRIORITY_MASK) || !(pf[x] & 8))
+						pf[x] = mo[x] & ATARIMO_DATA_MASK;
+					
+					/* erase behind ourselves */
+					mo[x] = 0;
+				}
+		}
 }

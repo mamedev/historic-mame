@@ -1,5 +1,21 @@
 /* namcona1.h */
 
+enum
+{
+	NAMCO_CGANGPZL,
+	NAMCO_EMERALDA,
+	NAMCO_KNCKHEAD,
+	NAMCO_BKRTMAQ,
+	NAMCO_EXBANIA,
+	NAMCO_QUIZTOU,
+	NAMCO_SWCOURT,
+	NAMCO_TINKLPIT,
+	NAMCO_NUMANATH,
+	NAMCO_FA
+};
+
+extern int namcona1_gametype;
+
 #define NA1_NVRAM_SIZE (0x800)
 
 extern data16_t *namcona1_workram;

@@ -33,14 +33,6 @@
  *
  *************************************/
 
-static unsigned char palette_source[] =
-{
-	0x00,0x00,0x00, /* BLACK */
-	0x80,0x80,0x80, /* LIGHT GREY */
-	0x50,0x50,0x50, /* DARK GREY */
-	0xff,0xff,0xff, /* WHITE */
-};
-
 static unsigned short colortable_source[] =
 {
 	/* Playfield */
@@ -131,7 +123,10 @@ static unsigned short colortable_source[] =
 
 static PALETTE_INIT( bsktball )
 {
-	memcpy(palette,palette_source,sizeof(palette_source));
+	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
+	palette_set_color(1,0x80,0x80,0x80); /* LIGHT GREY */
+	palette_set_color(2,0x50,0x50,0x50); /* DARK GREY */
+	palette_set_color(3,0xff,0xff,0xff); /* WHITE */
 	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 
@@ -407,7 +402,7 @@ static MACHINE_DRIVER_START( bsktball )
 	MDRV_SCREEN_SIZE(32*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(sizeof(palette_source) / sizeof(palette_source[0]) / 3)
+	MDRV_PALETTE_LENGTH(4)
 	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
 	
 	MDRV_PALETTE_INIT(bsktball)

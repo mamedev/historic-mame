@@ -61,7 +61,7 @@ static struct YM3812interface ym3812_interface =					\
 {																	\
 	1,																\
 	freq1,															\
-	{ 50 },															\
+	{ 100 },														\
 	{ seibu_ym3812_irqhandler },									\
 };																	\
 																	\

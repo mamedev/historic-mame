@@ -433,7 +433,7 @@ static struct YM3812interface yunsung8_ym3812_interface =
 {
 	1,
 	4000000,	/* ? */
-	{ 50 },
+	{ 100 },
 	{  0 },
 };
 

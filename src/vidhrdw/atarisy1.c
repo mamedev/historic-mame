@@ -35,18 +35,25 @@
 
 /*************************************
  *
+ *	Globals we own
+ *
+ *************************************/
+
+data16_t *atarisy1_bankselect;
+
+
+
+/*************************************
+ *
  *	Statics
  *
  *************************************/
 
-/* temporary bitmap */
-static struct mame_bitmap *trans_bitmap_pf;
-static struct mame_bitmap *trans_bitmap_mo;
-static struct mame_bitmap *priority_copy;
-
 /* playfield parameters */
-static data16_t priority_pens;
-static data16_t bankselect;
+static UINT16 playfield_lookup[256];
+static UINT8 playfield_tile_bank;
+static data16_t playfield_priority_pens;
+static void *yscroll_reset_timer;
 
 /* INT3 tracking */
 static int next_timer_scanline;
@@ -55,6 +62,7 @@ static void *int3off_timer;
 
 /* graphics bank tracking */
 static UINT8 bank_gfx[3][8];
+static UINT8 bank_color_shift[MAX_GFX_ELEMENTS];
 
 /* basic form of a graphics bank */
 static struct GfxLayout objlayout =
@@ -81,6 +89,35 @@ static int decode_gfx(UINT16 *pflookup, UINT16 *molookup);
 static int get_bank(UINT8 prom1, UINT8 prom2, int bpp);
 static void int3_callback(int scanline);
 static void int3off_callback(int param);
+static void reset_yscroll_callback(int param);
+
+
+
+/*************************************
+ *
+ *	Tilemap callbacks
+ *
+ *************************************/
+
+static void get_alpha_tile_info(int tile_index)
+{
+	UINT16 data = atarigen_alpha[tile_index];
+	int code = data & 0x3ff;
+	int color = (data >> 10) & 0x07;
+	int opaque = data & 0x2000;
+	SET_TILE_INFO(0, code, color, opaque ? TILE_IGNORE_TRANSPARENCY : 0);
+}
+
+
+static void get_playfield_tile_info(int tile_index)
+{
+	UINT16 data = atarigen_playfield[tile_index];
+	UINT16 lookup = playfield_lookup[((data >> 8) & 0x7f) | (playfield_tile_bank << 7)];
+	int gfxindex = (lookup >> 8) & 15;
+	int code = ((lookup & 0xff) << 8) | (data & 0xff);
+	int color = 0x20 + (((lookup >> 12) & 15) << bank_color_shift[gfxindex]);
+	SET_TILE_INFO(gfxindex, code, color, (data >> 15) & 1);
+}
 
 
 
@@ -92,25 +129,6 @@ static void int3off_callback(int param);
 
 VIDEO_START( atarisy1 )
 {
-	static const struct ataripf_desc pfdesc =
-	{
-		0,			/* index to which gfx system */
-		64,64,		/* size of the playfield in tiles (x,y) */
-		1,64,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-
-		0x200,		/* index of palette base */
-		0x100,		/* maximum number of colors */
-		0,			/* color XOR for shadow effect (if any) */
-		0,			/* latch mask */
-		0,			/* transparent pen mask */
-
-		0x17fff,	/* tile data index mask */
-		0,			/* tile data color mask */
-		0x08000,	/* tile data hflip mask */
-		0,			/* tile data vflip mask */
-		0			/* tile data priority mask */
-	};
-
 	static const struct atarimo_desc modesc =
 	{
 		0,					/* index to which gfx system */
@@ -121,7 +139,7 @@ VIDEO_START( atarisy1 )
 		0,					/* render in swapped X/Y order? */
 		0,					/* does the neighbor bit affect the next object? */
 		0,					/* pixels per SLIP entry (0 for no-slip) */
-		8,					/* number of scanlines between MO updates */
+		0,					/* pixel offset for SLIPs */
 
 		0x100,				/* base palette entry */
 		0x100,				/* maximum number of colors */
@@ -142,75 +160,34 @@ VIDEO_START( atarisy1 )
 		{{ 0 }},			/* mask for the neighbor */
 		{{ 0 }},			/* mask for absolute coordinates */
 
-		{{ 0,0xffff,0,0 }},	/* mask for the ignore value */
-		0xffff,				/* resulting value to indicate "ignore" */
-		0					/* callback routine for ignored entries */
+		{{ 0,0xffff,0,0 }},	/* mask for the special value */
+		0xffff,				/* resulting value to indicate "special" */
+		0					/* callback routine for special entries */
 	};
 
-	static const struct atarian_desc andesc =
-	{
-		0,			/* index to which gfx system */
-		64,32,		/* size of the alpha RAM in tiles (x,y) */
-
-		0x000,		/* index of palette base */
-		0x100,		/* maximum number of colors */
-		0,			/* mask of the palette split */
-
-		0x03ff,		/* tile data index mask */
-		0x1c00,		/* tile data color mask */
-		0,			/* tile data hflip mask */
-		0x2000		/* tile data opacity mask */
-	};
-
-	UINT16 pftable[256], motable[256];
-	UINT32 *pflookup;
+	UINT16 motable[256];
 	UINT16 *codelookup;
 	UINT8 *colorlookup, *gfxlookup;
 	int i, size;
 
-	/* allocate the temp bitmap #1 */
-	trans_bitmap_pf = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 8);
-	if (!trans_bitmap_pf)
-		return 1;
-
-	/* allocate the temp bitmap #2 */
-	trans_bitmap_mo = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 8);
-	if (!trans_bitmap_mo)
-		return 1;
-
-	/* allocate the priority copy bitmap */
-	priority_copy = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 8);
-	if (!priority_copy)
-		return 1;
-
 	/* first decode the graphics */
-	if (!decode_gfx(pftable, motable))
-		return 1;
-
-	/* initialize the alphanumerics */
-	if (!atarian_init(0, &andesc))
+	if (!decode_gfx(playfield_lookup, motable))
 		return 1;
 
 	/* initialize the playfield */
-	if (!ataripf_init(0, &pfdesc))
+	atarigen_playfield_tilemap = tilemap_create(get_playfield_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 64,64);
+	if (!atarigen_playfield_tilemap)
 		return 1;
 
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &modesc))
 		return 1;
 
-	/* modify the playfield lookup table */
-	pflookup = ataripf_get_lookup(0, &size);
-	for (i = 0; i < size; i++)
-	{
-		int entry = (i << ATARIPF_LOOKUP_DATABITS) >> 8;
-		int table = pftable[(entry & 0x7f) | ((entry >> 1) & 0x80)];
-		int hflip = ATARIPF_LOOKUP_HFLIP(pflookup[i]);
-		int code = (table & 0xff) << 8;
-		int color = (table >> 12) & 15;
-		int gfx = (table >> 8) & 15;
-		pflookup[i] = ATARIPF_LOOKUP_ENTRY(gfx, code, color, hflip, 0, 0);
-	}
+	/* initialize the alphanumerics */
+	atarigen_alpha_tilemap = tilemap_create(get_alpha_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,8, 64,32);
+	if (!atarigen_alpha_tilemap)
+		return 1;
+	tilemap_set_transparent_pen(atarigen_alpha_tilemap, 0);
 
 	/* modify the motion object code lookup */
 	codelookup = atarimo_get_code_lookup(0, &size);
@@ -222,15 +199,16 @@ VIDEO_START( atarisy1 )
 	gfxlookup = atarimo_get_gfx_lookup(0, &size);
 	for (i = 0; i < size; i++)
 	{
-		colorlookup[i] = (motable[i] >> 12) & 15;
+		colorlookup[i] = ((motable[i] >> 12) & 15) << 1;
 		gfxlookup[i] = (motable[i] >> 8) & 15;
 	}
 
 	/* reset the statics */
-	atarimo_set_yscroll(0, 256, 0);
+	atarimo_set_yscroll(0, 256);
 	next_timer_scanline = -1;
 	scanline_timer = timer_alloc(int3_callback);
 	int3off_timer = timer_alloc(int3off_callback);
+	yscroll_reset_timer = timer_alloc(reset_yscroll_callback);
 	return 0;
 }
 
@@ -242,28 +220,40 @@ VIDEO_START( atarisy1 )
  *
  *************************************/
 
-WRITE16_HANDLER( atarisys1_bankselect_w )
+WRITE16_HANDLER( atarisy1_bankselect_w )
 {
-	int oldselect = bankselect, diff;
+	data16_t oldselect = *atarisy1_bankselect;
+	data16_t newselect = oldselect, diff;
 	int scanline = cpu_getscanline();
 
 	/* update memory */
-	COMBINE_DATA(&bankselect);
-	diff = oldselect ^ bankselect;
+	COMBINE_DATA(&newselect);
+	diff = oldselect ^ newselect;
 
 	/* sound CPU reset */
 	if (diff & 0x0080)
 	{
-		cpu_set_reset_line(1, (bankselect & 0x0080) ? CLEAR_LINE : ASSERT_LINE);
-		if (!(bankselect & 0x0080)) atarigen_sound_reset();
+		cpu_set_reset_line(1, (newselect & 0x0080) ? CLEAR_LINE : ASSERT_LINE);
+		if (!(newselect & 0x0080)) atarigen_sound_reset();
 	}
+	
+	/* if MO or playfield banks change, force a partial update */
+	if (diff & 0x003c)
+		force_partial_update(scanline);
 
 	/* motion object bank select */
-	atarimo_set_bank(0, (bankselect >> 3) & 7, scanline + 1);
+	atarimo_set_bank(0, (newselect >> 3) & 7);
 	update_timers(scanline);
 
 	/* playfield bank select */
-	ataripf_set_bankbits(0, (bankselect & 0x04) << 14, scanline + 1);
+	if (diff & 0x0004)
+	{
+		playfield_tile_bank = (newselect >> 2) & 1;
+		tilemap_mark_all_tiles_dirty(atarigen_playfield_tilemap);
+	}
+	
+	/* stash the new value */
+	*atarisy1_bankselect = newselect;
 }
 
 
@@ -274,9 +264,16 @@ WRITE16_HANDLER( atarisys1_bankselect_w )
  *
  *************************************/
 
-WRITE16_HANDLER( atarisys1_priority_w )
+WRITE16_HANDLER( atarisy1_priority_w )
 {
-	COMBINE_DATA(&priority_pens);
+	data16_t oldpens = playfield_priority_pens;
+	data16_t newpens = oldpens;
+	
+	/* force a partial update in case this changes mid-screen */
+	COMBINE_DATA(&newpens);
+	if (oldpens != newpens)
+		force_partial_update(cpu_getscanline());
+	playfield_priority_pens = newpens;
 }
 
 
@@ -287,12 +284,21 @@ WRITE16_HANDLER( atarisys1_priority_w )
  *
  *************************************/
 
-WRITE16_HANDLER( atarisys1_hscroll_w )
+WRITE16_HANDLER( atarisy1_xscroll_w )
 {
-	int oldscroll = ataripf_get_xscroll(0);
-	int newscroll = oldscroll;
+	data16_t oldscroll = *atarigen_xscroll;
+	data16_t newscroll = oldscroll;
+	
+	/* force a partial update in case this changes mid-screen */
 	COMBINE_DATA(&newscroll);
-	ataripf_set_xscroll(0, newscroll & 0x1ff, cpu_getscanline() + 1);
+	if (oldscroll != newscroll)
+		force_partial_update(cpu_getscanline());
+
+	/* set the new scroll value */
+	tilemap_set_scrollx(atarigen_playfield_tilemap, 0, newscroll);
+
+	/* update the data */
+	*atarigen_xscroll = newscroll;
 }
 
 
@@ -303,18 +309,36 @@ WRITE16_HANDLER( atarisys1_hscroll_w )
  *
  *************************************/
 
-WRITE16_HANDLER( atarisys1_vscroll_w )
+static void reset_yscroll_callback(int newscroll)
 {
-	int scanline = cpu_getscanline() + 1;
-	int oldscroll = ataripf_get_yscroll(0);
-	int newscroll = oldscroll;
+	tilemap_set_scrolly(atarigen_playfield_tilemap, 0, newscroll);
+}
 
+
+WRITE16_HANDLER( atarisy1_yscroll_w )
+{
+	data16_t oldscroll = *atarigen_yscroll;
+	data16_t newscroll = oldscroll;
+	int scanline = cpu_getscanline();
+	int adjusted_scroll;
+
+	/* force a partial update in case this changes mid-screen */
 	COMBINE_DATA(&newscroll);
+	force_partial_update(scanline);
 
 	/* because this latches a new value into the scroll base,
 	   we need to adjust for the scanline */
-	if (scanline <= Machine->visible_area.max_y) newscroll -= scanline;
-	ataripf_set_yscroll(0, newscroll & 0x1ff, scanline);
+	adjusted_scroll = newscroll;
+	if (scanline <= Machine->visible_area.max_y)
+		adjusted_scroll -= (scanline + 1);
+	tilemap_set_scrolly(atarigen_playfield_tilemap, 0, adjusted_scroll);
+	
+	/* but since we've adjusted it, we must reset it to the normal value
+	   once we hit scanline 0 again */
+	timer_adjust(yscroll_reset_timer, cpu_getscanlinetime(0), newscroll, 0);
+
+	/* update the data */
+	*atarigen_yscroll = newscroll;
 }
 
 
@@ -325,7 +349,7 @@ WRITE16_HANDLER( atarisys1_vscroll_w )
  *
  *************************************/
 
-WRITE16_HANDLER( atarisys1_spriteram_w )
+WRITE16_HANDLER( atarisy1_spriteram_w )
 {
 	int oldword = atarimo_0_spriteram[offset];
 	int newword = oldword;
@@ -384,7 +408,7 @@ static void int3_callback(int scanline)
  *
  *************************************/
 
-READ16_HANDLER( atarisys1_int3state_r )
+READ16_HANDLER( atarisy1_int3state_r )
 {
 	return atarigen_scanline_int_state ? 0x0080 : 0x0000;
 }
@@ -458,155 +482,52 @@ static void update_timers(int scanline)
 
 /*************************************
  *
- *	Overrender callback
- *
- *************************************/
-
-enum
-{
-	OVER_PRIORITYPENS,	/* playfield pen priority (MO is low priority, priority pens is non-zero) */
-	OVER_SIMPLEPF,		/* simple playfield priority (MO is high priority, pens 0 or 1 only */
-	OVER_TRANSLUCENT	/* complex playfield priority (MO is high priority, pens 2-15 */
-};
-
-static int overrender_callback(struct ataripf_overrender_data *data, int state)
-{
-	static struct mame_bitmap *real_dest;
-	static UINT8 priority_type;
-
-	/* Rendering for the high-priority case here is tricky         */
-	/* If the priority bit is set for an MO, then the MO/playfield */
-	/* interaction is altered. Anywhere the MO pen is 1, the       */
-	/* playfield gets priority. Anywhere the MO pen is 2-15, the   */
-	/* color is determined via the translucency color map at 0x300 */
-
-	/* handle the startup case */
-	if (state == OVERRENDER_BEGIN)
-	{
-		/* low priority case */
-		if (!data->mopriority)
-		{
-			/* if there are no priority pens, do nothing */
-			if (!priority_pens)
-				return OVERRENDER_NONE;
-
-			/* otherwise, we need to handle it tile-by-tile */
-			data->drawmode = TRANSPARENCY_PENS;
-			data->drawpens = ~priority_pens;
-			data->maskpens = 0x0001;
-			priority_type = OVER_PRIORITYPENS;
-			return OVERRENDER_SOME;
-		}
-
-		/* translucent case: here we end up blending the low 4 bits of the MO */
-		/* with the low 4 bits of the playfield and reading from the 256 palette */
-		/* entries at 0x300. Since we already have a raw copy of the MO in the */
-		/* priority buffer, we just need to blend the raw playfield bits into it */
-		/* and then copy the result through the color table */
-		else
-		{
-			/* special case: if all the MO pens are 0 or 1, we just need to  */
-			/* handle the high priority playfield case, with no translucency */
-			if (!(data->mousage & ~3))
-			{
-				data->drawmode = TRANSPARENCY_NONE;
-				data->drawpens = 0;
-				data->maskpens = ~0x0002;
-				priority_type = OVER_SIMPLEPF;
-				return OVERRENDER_ALL;
-			}
-
-			/* save the real destination bitmap for later, and replace it */
-			/* with the transparency bitmap */
-			real_dest = data->bitmap;
-			data->bitmap = trans_bitmap_pf;
-
-			/* draw in raw pens to the playfield translucency bitmap */
-			data->drawmode = TRANSPARENCY_NONE_RAW;
-			data->drawpens = 0;
-			data->maskpens = 0;
-
-			/* and then handle it tile-by-tile */
-			priority_type = OVER_TRANSLUCENT;
-			return OVERRENDER_SOME;
-		}
-	}
-
-	/* handle queries */
-	else if (state == OVERRENDER_QUERY)
-	{
-		/* priority pens case */
-		if (priority_type == OVER_PRIORITYPENS)
-			return data->pfcolor ? OVERRENDER_NO : OVERRENDER_YES;
-
-		/* translucent case */
-		data->pfcolor <<= ATARIPF_BASE_GRANULARITY_SHIFT;
-		return OVERRENDER_YES;
-	}
-
-	/* handle the final overdrawing (translucent case only) */
-	else if (state == OVERRENDER_FINISH)
-	{
-		struct GfxElement dummygfx;
-
-		/* bail if this isn't the translucent case */
-		if (priority_type != OVER_TRANSLUCENT)
-			return 0;
-
-		/* if we require both translucency and simple PF priority, save a copy of the priority bitmap */
-		if (data->mousage & 0x0002)
-			copybitmap(priority_copy, priority_bitmap, 0, 0, 0, 0, &data->clip, TRANSPARENCY_NONE, 0);
-
-		/* first copy the raw pens from the priority map into our translucency bitmap */
-		copybitmap(trans_bitmap_mo, priority_bitmap, 0, 0, 0, 0, &data->clip, TRANSPARENCY_NONE, 0);
-
-		/* now blend in the playfield */
-		copybitmap(trans_bitmap_mo, trans_bitmap_pf, 0, 0, 0, 0, &data->clip, TRANSPARENCY_BLEND_RAW, 4);
-
-		/* make a dummy GfxElement to draw from; we can't use copybitmap because */
-		/* it assumes that the source and dest are the same depth */
-		dummygfx.width = data->clip.max_x - data->clip.min_x + 1;
-		dummygfx.height = data->clip.max_y - data->clip.min_y + 1;
-		dummygfx.total_elements = 1;
-		dummygfx.color_granularity = 1;
-		dummygfx.colortable = &Machine->remapped_colortable[0x300];
-		dummygfx.total_colors = 1;
-		dummygfx.pen_usage = NULL;
-		dummygfx.gfxdata = ((UINT8 *)trans_bitmap_mo->line[data->clip.min_y])+data->clip.min_x;
-		dummygfx.line_modulo = ((UINT8 *)trans_bitmap_mo->line[1]) - ((UINT8 *)trans_bitmap_mo->line[0]);
-		dummygfx.char_modulo = 0;
-		dummygfx.flags = 0;
-		mdrawgfx(real_dest, &dummygfx, 0, 0, 0, 0,
-				data->clip.min_x, data->clip.min_y, &data->clip, TRANSPARENCY_NONE, 0, 0x0003);
-
-		/* if we also need to handle straight playfield priority, do that */
-		if (data->mousage & 0x0002)
-		{
-			copybitmap(priority_bitmap, priority_copy, 0, 0, 0, 0, &data->clip, TRANSPARENCY_NONE, 0);
-			dummygfx.colortable = &Machine->remapped_colortable[0x200];
-			dummygfx.gfxdata = ((UINT8 *)trans_bitmap_pf->line[data->clip.min_y])+data->clip.min_x;
-			dummygfx.line_modulo = ((UINT8 *)trans_bitmap_pf->line[1]) - ((UINT8 *)trans_bitmap_pf->line[0]);
-			mdrawgfx(real_dest, &dummygfx, 0, 0, 0, 0,
-					data->clip.min_x, data->clip.min_y, &data->clip, TRANSPARENCY_NONE, 0, ~0x0002);
-		}
-	}
-	return 0;
-}
-
-
-
-/*************************************
- *
  *	Main refresh
  *
  *************************************/
 
 VIDEO_UPDATE( atarisy1 )
 {
-	/* draw the layers */
-	ataripf_render(0, bitmap, cliprect);
-	atarimo_render(0, bitmap, cliprect, overrender_callback, NULL);
-	atarian_render(0, bitmap, cliprect);
+	struct atarimo_rect_list rectlist;
+	struct mame_bitmap *mobitmap;
+	int x, y, r;
+
+	/* draw the playfield */
+	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 0, 0);
+
+	/* draw and merge the MO */
+	mobitmap = atarimo_render(0, cliprect, &rectlist);
+	for (r = 0; r < rectlist.numrects; r++, rectlist.rect++)
+		for (y = rectlist.rect->min_y; y <= rectlist.rect->max_y; y++)
+		{
+			UINT16 *mo = (UINT16 *)mobitmap->base + mobitmap->rowpixels * y;
+			UINT16 *pf = (UINT16 *)bitmap->base + bitmap->rowpixels * y;
+			for (x = rectlist.rect->min_x; x <= rectlist.rect->max_x; x++)
+				if (mo[x])
+				{
+					/* high priority MO? */
+					if (mo[x] & ATARIMO_PRIORITY_MASK)
+					{
+						/* only gets priority if MO pen is not 1 */
+						if ((mo[x] & 0x0f) != 1)
+							pf[x] = 0x300 + ((pf[x] & 0x0f) << 4) + (mo[x] & 0x0f);
+					}
+					
+					/* low priority */
+					else
+					{
+						/* priority pens for playfield color 0 */
+						if ((pf[x] & 0xf0) != 0 || !(playfield_priority_pens & (1 << (pf[x] & 0x0f))))
+							pf[x] = mo[x];
+					}
+					
+					/* erase behind ourselves */
+					mo[x] = 0;
+				}
+		}
+
+	/* add the alpha on top */
+	tilemap_draw(bitmap, cliprect, atarigen_alpha_tilemap, 0, 0);
 }
 
 
@@ -735,7 +656,9 @@ static int get_bank(UINT8 prom1, UINT8 prom2, int bpp)
 
 	/* set the color information */
 	Machine->gfx[gfx_index]->colortable = &Machine->remapped_colortable[256];
-	Machine->gfx[gfx_index]->total_colors = 48 >> (bpp - 4);
+	Machine->gfx[gfx_index]->color_granularity = 8;
+	Machine->gfx[gfx_index]->total_colors = 0x40;
+	bank_color_shift[gfx_index] = bpp - 3;
 
 	/* set the entry and return it */
 	return bank_gfx[bpp - 4][bank_index] = gfx_index;

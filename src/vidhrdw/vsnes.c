@@ -7,13 +7,13 @@ extern int vsnes_gun_controller;
 
 PALETTE_INIT( vsnes )
 {
-	ppu2c03b_init_palette( palette );
+	ppu2c03b_init_palette( 0 );
 }
 
 PALETTE_INIT( vsdual )
 {
-	ppu2c03b_init_palette( palette );
-	ppu2c03b_init_palette( &palette[3*64] );
+	ppu2c03b_init_palette( 0 );
+	ppu2c03b_init_palette( 64 );
 }
 
 static void ppu_irq( int num )

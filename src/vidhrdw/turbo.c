@@ -59,7 +59,7 @@ PALETTE_INIT( turbo )
 
 	for (i = 0; i < 512; i++, color_prom++)
 	{
-		int bit0, bit1, bit2;
+		int bit0, bit1, bit2, r, g, b;
 
 		/* bits 4,5,6 of the index are inverted before being used as addresses */
 		/* to save ourselves lots of trouble, we will undo the inversion when */
@@ -70,41 +70,31 @@ PALETTE_INIT( turbo )
 		bit0 = (*color_prom >> 0) & 1;
 		bit1 = (*color_prom >> 1) & 1;
 		bit2 = (*color_prom >> 2) & 1;
-		palette[adjusted_index * 3 + 0] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
 		/* green component */
 		bit0 = (*color_prom >> 3) & 1;
 		bit1 = (*color_prom >> 4) & 1;
 		bit2 = (*color_prom >> 5) & 1;
-		palette[adjusted_index * 3 + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
 		/* blue component */
 		bit0 = 0;
 		bit1 = (*color_prom >> 6) & 1;
 		bit2 = (*color_prom >> 7) & 1;
-		palette[adjusted_index * 3 + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		palette_set_color(adjusted_index,r,g,b);
 	}
 
 	/* LED segments colors: black and red */
-	palette[512 * 3 + 0] = 0x00;
-	palette[512 * 3 + 1] = 0x00;
-	palette[512 * 3 + 2] = 0x00;
-	palette[513 * 3 + 0] = 0xff;
-	palette[513 * 3 + 1] = 0x00;
-	palette[513 * 3 + 2] = 0x00;
+	palette_set_color(512+0,0x00,0x00,0x00);
+	palette_set_color(512+1,0xff,0x00,0x00);
 	/* Tachometer colors: Led colors + yellow and green */
-	palette[514 * 3 + 0] = 0x00;
-	palette[514 * 3 + 1] = 0x00;
-	palette[514 * 3 + 2] = 0x00;
-	palette[515 * 3 + 0] = 0xff;
-	palette[515 * 3 + 1] = 0xff;
-	palette[515 * 3 + 2] = 0x00;
-	palette[516 * 3 + 0] = 0x00;
-	palette[516 * 3 + 1] = 0x00;
-	palette[516 * 3 + 2] = 0x00;
-	palette[517 * 3 + 0] = 0x00;
-	palette[517 * 3 + 1] = 0xff;
-	palette[517 * 3 + 2] = 0x00;
+	palette_set_color(512+2+0,0x00,0x00,0x00);
+	palette_set_color(512+2+1,0xff,0xff,0x00);
+	palette_set_color(512+2+2,0x00,0x00,0x00);
+	palette_set_color(512+2+3,0x00,0xff,0x00);
 }
 
 
@@ -115,34 +105,32 @@ PALETTE_INIT( subroc3d )
 	/* Subroc3D uses a common final color PROM with 512 entries */
 	for (i = 0; i < 512; i++, color_prom++)
 	{
-		int bit0, bit1, bit2;
+		int bit0, bit1, bit2, r, g, b;
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 1;
 		bit1 = (*color_prom >> 1) & 1;
 		bit2 = (*color_prom >> 2) & 1;
-		*palette++ = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
 		/* green component */
 		bit0 = (*color_prom >> 3) & 1;
 		bit1 = (*color_prom >> 4) & 1;
 		bit2 = (*color_prom >> 5) & 1;
-		*palette++ = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
 		/* blue component */
 		bit0 = 0;
 		bit1 = (*color_prom >> 6) & 1;
 		bit2 = (*color_prom >> 7) & 1;
-		*palette++ = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		palette_set_color(i,r,g,b);
 	}
 
 	/* LED segments colors: black and red */
-	*palette++ = 0x00;
-	*palette++ = 0x00;
-	*palette++ = 0x00;
-	*palette++ = 0xff;
-	*palette++ = 0x00;
-	*palette++ = 0x00;
+	palette_set_color(512+0,0x00,0x00,0x00);
+	palette_set_color(512+1,0xff,0x00,0x00);
 }
 
 
@@ -153,83 +141,85 @@ PALETTE_INIT( buckrog )
 	/* Buck Rogers uses 1024 entries for the sprite color PROM */
 	for (i = 0; i < 1024; i++, color_prom++)
 	{
-		int bit0, bit1, bit2;
+		int bit0, bit1, bit2, r, g, b;
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 1;
 		bit1 = (*color_prom >> 1) & 1;
 		bit2 = (*color_prom >> 2) & 1;
-		*palette++ = 34 * bit0 + 68 * bit1 + 137 * bit2;
+		r = 34 * bit0 + 68 * bit1 + 137 * bit2;
 
 		/* green component */
 		bit0 = (*color_prom >> 3) & 1;
 		bit1 = (*color_prom >> 4) & 1;
 		bit2 = (*color_prom >> 5) & 1;
-		*palette++ = 34 * bit0 + 68 * bit1 + 137 * bit2;
+		g = 34 * bit0 + 68 * bit1 + 137 * bit2;
 
 		/* blue component */
 		bit0 = 0;
 		bit1 = (*color_prom >> 6) & 1;
 		bit2 = (*color_prom >> 7) & 1;
-		*palette++ = 34 * bit0 + 68 * bit1 + 137 * bit2;
+		b = 34 * bit0 + 68 * bit1 + 137 * bit2;
+
+		palette_set_color(i,r,g,b);
 	}
 
 	/* then another 512 entries for the character color PROM */
 	for (i = 0; i < 512; i++, color_prom++)
 	{
-		int bit0, bit1, bit2;
+		int bit0, bit1, bit2, r, g, b;
 
 		/* red component */
 		bit0 = 
 		bit1 = (*color_prom >> 0) & 1;
 		bit2 = (*color_prom >> 1) & 1;
-		*palette++ = 34 * bit0 + 68 * bit1 + 137 * bit2;
+		r = 34 * bit0 + 68 * bit1 + 137 * bit2;
 
 		/* green component */
 		bit0 = 
 		bit1 = (*color_prom >> 2) & 1;
 		bit2 = (*color_prom >> 3) & 1;
-		*palette++ = 34 * bit0 + 68 * bit1 + 137 * bit2;
+		g = 34 * bit0 + 68 * bit1 + 137 * bit2;
 
 		/* blue component */
 		bit0 = 0;
 		bit1 = (*color_prom >> 4) & 1;
 		bit2 = (*color_prom >> 5) & 1;
-		*palette++ = 34 * bit0 + 68 * bit1 + 137 * bit2;
+		b = 34 * bit0 + 68 * bit1 + 137 * bit2;
+
+		palette_set_color(i+1024,r,g,b);
 	}
 
 	/* finally, the gradient foreground gets its own set of 256 colors */
 	for (i = 0; i < 256; i++)
 	{
-		int bit0, bit1, bit2, bit3;
+		int bit0, bit1, bit2, bit3, r, g, b;
 
 		/* red component */
 		bit0 = 0;
 		bit1 = 0;
 		bit2 = (i >> 0) & 1;
-		*palette++ = 34 * bit0 + 68 * bit1 + 137 * bit2;
+		r = 34 * bit0 + 68 * bit1 + 137 * bit2;
 
 		/* green component */
 		bit0 = (i >> 1) & 1;
 		bit1 = (i >> 2) & 1;
 		bit2 = (i >> 3) & 1;
-		*palette++ = 34 * bit0 + 68 * bit1 + 137 * bit2;
+		g = 34 * bit0 + 68 * bit1 + 137 * bit2;
 
 		/* blue component */
 		bit0 = (i >> 4) & 1;
 		bit1 = (i >> 5) & 1;
 		bit2 = (i >> 6) & 1;
 		bit3 = (i >> 7) & 1;
-		*palette++ = 16 * bit0 + 34 * bit1 + 68 * bit2 + 137 * bit3;
+		b = 16 * bit0 + 34 * bit1 + 68 * bit2 + 137 * bit3;
+
+		palette_set_color(i+1024+512,r,g,b);
 	}
 
 	/* LED segments colors: black and red */
-	*palette++ = 0x00;
-	*palette++ = 0x00;
-	*palette++ = 0x00;
-	*palette++ = 0xff;
-	*palette++ = 0x00;
-	*palette++ = 0x00;
+	palette_set_color(1024+512+256+0,0x00,0x00,0x00);
+	palette_set_color(1024+512+256+1,0xff,0x00,0x00);
 }
 
 

@@ -1548,11 +1548,11 @@ static int process_rom_entries(struct rom_load_data *romdata, const struct RomMo
 
 					/* handle flag inheritance */
 					if (!ROM_INHERITSFLAGS(&modified_romp))
-						lastflags = modified_romp._length & ROM_INHERITEDFLAGS;
+						lastflags = modified_romp._flags;
 					else
-						modified_romp._length = (modified_romp._length & ~ROM_INHERITEDFLAGS) | lastflags;
+						modified_romp._flags = (modified_romp._flags & ~ROM_INHERITEDFLAGS) | lastflags;
 
-					explength += UNCOMPACT_LENGTH(modified_romp._length);
+					explength += ROM_GETLENGTH(&modified_romp);
 
                     /* attempt to read using the modified entry */
 					readresult = read_rom_data(romdata, &modified_romp);

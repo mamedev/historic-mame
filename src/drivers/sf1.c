@@ -765,7 +765,7 @@ INPUT_PORTS_END
 static struct GfxLayout char_layout =
 {
 	8,8,
-	1024,
+	RGN_FRAC(1,1),
 	2,
 	{ 4, 0 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
@@ -773,38 +773,12 @@ static struct GfxLayout char_layout =
 	16*8
 };
 
-static struct GfxLayout sprite_layoutb =
+static struct GfxLayout sprite_layout =
 {
 	16,16,
-	4096,
+	RGN_FRAC(1,2),
 	4,
-	{ 4, 0, 4096*64*8+4, 4096*64*8 },
-	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
-			16*16+0, 16*16+1, 16*16+2, 16*16+3, 16*16+8+0, 16*16+8+1, 16*16+8+2, 16*16+8+3 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8
-};
-
-static struct GfxLayout sprite_layoutm =
-{
-	16,16,
-	8192,
-	4,
-	{ 4, 0, 8192*64*8+4, 8192*64*8 },
-	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
-			16*16+0, 16*16+1, 16*16+2, 16*16+3, 16*16+8+0, 16*16+8+1, 16*16+8+2, 16*16+8+3 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8
-};
-
-static struct GfxLayout sprite_layouts =
-{
-	16,16,
-	14336,
-	4,
-	{ 4, 0, 14336*64*8+4, 14336*64*8 },
+	{ 4, 0, RGN_FRAC(1,2)+4, RGN_FRAC(1,2) },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
 			16*16+0, 16*16+1, 16*16+2, 16*16+3, 16*16+8+0, 16*16+8+1, 16*16+8+2, 16*16+8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
@@ -815,10 +789,10 @@ static struct GfxLayout sprite_layouts =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &sprite_layoutb,   0, 16 },
-	{ REGION_GFX2, 0, &sprite_layoutm, 256, 16 },
-	{ REGION_GFX3, 0, &sprite_layouts, 512, 16 },
-	{ REGION_GFX4, 0, &char_layout,    768, 16 },
+	{ REGION_GFX1, 0, &sprite_layout,   0, 16 },
+	{ REGION_GFX2, 0, &sprite_layout, 256, 16 },
+	{ REGION_GFX3, 0, &sprite_layout, 512, 16 },
+	{ REGION_GFX4, 0, &char_layout,   768, 16 },
 	{ -1 }
 };
 
@@ -849,7 +823,7 @@ static struct MSM5205interface msm5205_interface =
 static MACHINE_DRIVER_START( sf1 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz ? (xtal is 16MHz) */
+	MDRV_CPU_ADD_TAG("main", M68000, 8000000)	/* 8 MHz ? (xtal is 16MHz) */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
@@ -886,74 +860,27 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( sf1us )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz ? (xtal is 16MHz) */
+	MDRV_IMPORT_FROM(sf1)
+	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(readmemus,writemem)
-	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
-
-	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? xtal is 3.579545MHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-								/* NMIs are caused by the main CPU */
-	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? xtal is 3.579545MHz */
-	MDRV_CPU_MEMORY(sound2_readmem,sound2_writemem)
-	MDRV_CPU_PORTS(sound2_readport,sound2_writeport)
-	MDRV_CPU_PERIODIC_INT(irq0_line_hold,8000)
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(64*8, 32*8)
-	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 2*8, 30*8-1 )
-	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(1024)
-
-	MDRV_VIDEO_START(sf1)
-	MDRV_VIDEO_UPDATE(sf1)
-
-	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
 MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( sf1jp )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz ? (xtal is 16MHz) */
+	MDRV_IMPORT_FROM(sf1)
+	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(readmemjp,writemem)
-	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+MACHINE_DRIVER_END
 
-	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? xtal is 3.579545MHz */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-								/* NMIs are caused by the main CPU */
-	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? xtal is 3.579545MHz */
-	MDRV_CPU_MEMORY(sound2_readmem,sound2_writemem)
-	MDRV_CPU_PORTS(sound2_readport,sound2_writeport)
-	MDRV_CPU_PERIODIC_INT(irq0_line_hold,8000)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+static MACHINE_DRIVER_START( sf1p )
 
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(64*8, 32*8)
-	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 2*8, 30*8-1 )
-	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(1024)
-
-	MDRV_VIDEO_START(sf1)
-	MDRV_VIDEO_UPDATE(sf1)
-
-	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(sf1)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 MACHINE_DRIVER_END
 
 
@@ -1149,8 +1076,66 @@ ROM_START( sf1jp )
 	ROM_LOAD( "mmi-7603.13h", 0x0300, 0x0020, 0x06bcda53 )	/* unknown */
 ROM_END
 
+ROM_START( sf1p )
+	ROM_REGION( 0x60000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE("prg8.2a", 0x00000, 0x20000, 0xd48d06a3 )
+	ROM_LOAD16_BYTE("prg0.2c", 0x00001, 0x20000, 0xe8606c1a )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the music CPU */
+	ROM_LOAD( "sound.9j", 0x0000, 0x8000, 0x43cd32ae )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 256k for the samples CPU */
+	ROM_LOAD( "voice.1g", 0x00000, 0x10000, 0x3f23c180 )
+
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "bkchr.2k", 0x000000, 0x020000, 0xe4d47aca ) /* Background b planes 0-1*/
+	ROM_LOAD( "bkchr.1k", 0x020000, 0x020000, 0x5a1cbc1b )
+	ROM_LOAD( "bkchr.4k", 0x040000, 0x020000, 0xc351bd48 ) /* planes 2-3 */
+	ROM_LOAD( "bkchr.3k", 0x060000, 0x020000, 0x6bb2b050 )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "mchr.1d", 0x000000, 0x020000, 0xab06a60b )	/* Background m planes 0-1 */
+	ROM_LOAD( "mchr.1e", 0x020000, 0x020000, 0xd221387d )
+	ROM_LOAD( "mchr.1g", 0x040000, 0x020000, 0x1e4c1712 )
+	ROM_LOAD( "mchr.1h", 0x060000, 0x020000, 0xa381f529 )
+	ROM_LOAD( "mchr.2d", 0x080000, 0x020000, 0xe52303c4 ) /* planes 2-3 */
+	ROM_LOAD( "mchr.2e", 0x0a0000, 0x020000, 0x23b9a6a1 )
+	ROM_LOAD( "mchr.2g", 0x0c0000, 0x020000, 0x1283ac09 )
+	ROM_LOAD( "mchr.2h", 0x0e0000, 0x020000, 0xcc6bf05c )
+
+	ROM_REGION( 0xc0000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "b1m.bin", 0x000000, 0x010000, 0x64758232 ) /* Sprites planes 1-2 */
+	ROM_LOAD( "b2m.bin", 0x010000, 0x010000, 0xd958f5ad )
+	ROM_LOAD( "b1k.bin", 0x020000, 0x010000, 0xe766f5fe )
+	ROM_LOAD( "b2k.bin", 0x030000, 0x010000, 0xe71572d3 )
+	ROM_LOAD( "b1h.bin", 0x040000, 0x010000, 0x8494f38c )
+	ROM_LOAD( "b2h.bin", 0x050000, 0x010000, 0x1fc5f049 )
+	ROM_LOAD( "b3m.bin", 0x060000, 0x010000, 0xd136802e ) /* planes 2-3 */
+	ROM_LOAD( "b4m.bin", 0x070000, 0x010000, 0xb4fa85d3 )
+	ROM_LOAD( "b3k.bin", 0x080000, 0x010000, 0x40e11cc8 )
+	ROM_LOAD( "b4k.bin", 0x090000, 0x010000, 0x5ca9716e )
+	ROM_LOAD( "b3h.bin", 0x0a0000, 0x010000, 0x8c3d9173 )
+	ROM_LOAD( "b4h.bin", 0x0b0000, 0x010000, 0xa2df66f8 )
+
+	ROM_REGION( 0x004000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_LOAD( "vram.4d", 0x000000, 0x004000, 0xbfadfb32 ) /* Characters planes 1-2 */
+
+	ROM_REGION( 0x40000, REGION_GFX5, 0 )	/* background tilemaps */
+	ROM_LOAD( "bks1j10.5h", 0x000000, 0x010000, 0x4934aacd )
+	ROM_LOAD( "bks1j18.3h", 0x010000, 0x010000, 0x551ffc88 )
+	ROM_LOAD( "ms1j10.3g",  0x020000, 0x010000, 0xf92958b8 )
+	ROM_LOAD( "ms1j18.5g",  0x030000, 0x010000, 0x89e35dc1 )
+
+	ROM_REGION( 0x0320, REGION_PROMS, 0 )
+	ROM_LOAD( "sfb05.bin",    0x0000, 0x0100, 0x864199ad )	/* unknown */
+	ROM_LOAD( "sfb00.bin",    0x0100, 0x0100, 0xbd3f8c5d )	/* unknown */
+	ROM_LOAD( "mb7114h.12j",  0x0200, 0x0100, 0x4c734b64 )	/* unknown */
+	ROM_LOAD( "mmi-7603.13h", 0x0300, 0x0020, 0x06bcda53 )	/* unknown */
+ROM_END
+
 
 
 GAME( 1987, sf1,   0,   sf1,   sf1,   0, ROT0, "Capcom", "Street Fighter (World)" )
 GAME( 1987, sf1us, sf1, sf1us, sf1us, 0, ROT0, "Capcom", "Street Fighter (US)" )
 GAME( 1987, sf1jp, sf1, sf1jp, sf1jp, 0, ROT0, "Capcom", "Street Fighter (Japan)" )
+GAME( 1987, sf1p,  sf1, sf1p,  sf1,   0, ROT0, "Capcom", "Street Fighter (prototype)" )

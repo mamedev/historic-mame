@@ -299,7 +299,7 @@ static struct YM3812interface esd16_ym3812_intf =
 {
 	1,
 	4000000,	/* ? */
-	{ 20 },
+	{ 40 },
 	{  0 },		/* IRQ Line */
 };
 

@@ -14,7 +14,6 @@ TODO: - background is misplaced in wbmlju
 	  - remove patch in noboranb if possible and fully understand the
 	    ports involved in the protection
 
-
 ******************************************************************************/
 
 #include "driver.h"
@@ -177,6 +176,19 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xe800, 0xeeff, MWA_RAM, &system1_videoram, &system1_videoram_size },
 	{ 0xefbd, 0xefbd, MWA_RAM, &system1_scroll_y },
 	{ 0xeffc, 0xeffd, MWA_RAM, &system1_scroll_x },
+	{ 0xf000, 0xf3ff, system1_background_collisionram_w, &system1_background_collisionram },
+	{ 0xf800, 0xfbff, system1_sprites_collisionram_w, &system1_sprites_collisionram },
+MEMORY_END
+
+static MEMORY_WRITE_START( blockgal_writemem )
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xcfff, MWA_RAMROM },
+	{ 0xd000, 0xd1ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xd800, 0xddff, system1_paletteram_w, &paletteram },
+	{ 0xe800, 0xeeff, system1_backgroundram_w, &system1_backgroundram, &system1_backgroundram_size },
+	{ 0xe000, 0xe6ff, MWA_RAM, &system1_videoram, &system1_videoram_size },
+	{ 0xe7bd, 0xe7bd, MWA_RAM, &system1_scroll_y },	// ???
+	{ 0xe7c0, 0xe7c1, MWA_RAM, &system1_scroll_x },
 	{ 0xf000, 0xf3ff, system1_background_collisionram_w, &system1_background_collisionram },
 	{ 0xf800, 0xfbff, system1_sprites_collisionram_w, &system1_sprites_collisionram },
 MEMORY_END
@@ -2135,7 +2147,7 @@ static struct SN76496interface sn76496_interface =
 static MACHINE_DRIVER_START( system1 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 3600000)	/* should be 4 MHz but that value makes the Pitfall II title screen disappear */
+	MDRV_CPU_ADD_TAG("main", Z80, 3600000)	/* should be 4 MHz but that value makes the Pitfall II title screen disappear */
 //	MDRV_CPU_ADD(Z80, 4000000)	/* My Hero has 2 OSCs 8 & 20 MHz (Cabbe Info) */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_PORTS(readport,writeport)
@@ -2376,6 +2388,17 @@ static MACHINE_DRIVER_START( noboranb )
 	/* sound hardware */
 	MDRV_SOUND_ADD(SN76496, sn76496_interface)
 MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( blockgal )
+
+	MDRV_IMPORT_FROM(system1)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem,blockgal_writemem)
+
+	MDRV_VIDEO_UPDATE(blockgal)
+
+MACHINE_DRIVER_END
+
 
 /***************************************************************************
 
@@ -3399,9 +3422,9 @@ ROM_START( brain )
 	/* 18000-1ffff empty */
 
 	ROM_REGION( 0x0400, REGION_PROMS, 0 )
-	ROM_LOAD( "prom.3",       0x0000, 0x0100, 0x00000000 ) /* palette red component */
-	ROM_LOAD( "prom.2",       0x0100, 0x0100, 0x00000000 ) /* palette green component */
-	ROM_LOAD( "prom.1",       0x0200, 0x0100, 0x00000000 ) /* palette blue component */
+	ROM_LOAD( "bprom.3",      0x0000, 0x0100, BADCRC( 0x8eee0f72 ) ) /* palette red component */
+	ROM_LOAD( "bprom.2",      0x0100, 0x0100, BADCRC( 0x3e7babd7 ) ) /* palette green component */
+	ROM_LOAD( "bprom.1",      0x0200, 0x0100, BADCRC( 0x371c44a6 ) ) /* palette blue component */
 	ROM_LOAD( "pr5317.76",    0x0300, 0x0100, 0x648350b8 ) /* timing? (not used) */
 ROM_END
 
@@ -4038,7 +4061,7 @@ static DRIVER_INIT( hvymetal )	{ hvymetal_decode(); }
 static DRIVER_INIT( myheroj )	{ myheroj_decode(); }
 static DRIVER_INIT( 4dwarrio )	{ fdwarrio_decode(); }
 static DRIVER_INIT( wboy )		{ astrofl_decode(); }
-static DRIVER_INIT( wboy2 )	{ wboy2_decode(); }
+static DRIVER_INIT( wboy2 )		{ wboy2_decode(); }
 static DRIVER_INIT( gardia )	{ gardia_decode(); }
 
 DRIVER_INIT( myherok )
@@ -4164,8 +4187,8 @@ GAME( 1986, wbdeluxe, wboy,     system1,  wbdeluxe, 0,        ROT0,   "Sega (Esc
 GAMEX(1986, gardia,   0,        brain,    wboy,     gardia,   ROT270, "Sega / Coreland", "Gardia", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX(1986, gardiab,  gardia,   brain,    wboy,     gardia,   ROT270, "bootleg", "Gardia (bootleg)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAME( 1986, noboranb, 0,        noboranb, noboranb, noboranb, ROT270, "bootleg", "Noboranka (Japan)" )
-GAMEX(1987, blockgal, 0,        system1,  blockgal, 0,        ROT90,  "Sega / Vic Tokai", "Block Gal", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX(1987, blckgalb, blockgal, system1,  blockgal, bootleg,  ROT90,  "bootleg", "Block Gal (bootleg)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX(1987, blockgal, 0,        blockgal, blockgal, 0,        ROT90,  "Sega / Vic Tokai", "Block Gal", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX(1987, blckgalb, blockgal, blockgal, blockgal, bootleg,  ROT90,  "bootleg", "Block Gal (bootleg)", GAME_NO_COCKTAIL )
 GAMEX(1987, tokisens, 0,        wbml,     tokisens, 0,        ROT90,  "Sega", "Toki no Senshi - Chrono Soldier", GAME_NO_COCKTAIL )
 GAMEX(1987, wbml,     0,        wbml,     wbml,     0,        ROT0,   "Sega / Westone", "Wonder Boy in Monster Land (Japan New Ver.)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX(1987, wbmljo,   wbml,     wbml,     wbml,     0,        ROT0,   "Sega / Westone", "Wonder Boy in Monster Land (Japan Old Ver.)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )

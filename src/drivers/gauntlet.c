@@ -430,14 +430,14 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ 0x803140, 0x803141, atarigen_video_int_ack_w },
 	{ 0x803150, 0x803151, atarigen_eeprom_enable_w },
 	{ 0x803170, 0x803171, atarigen_sound_w },
-	{ 0x900000, 0x901fff, ataripf_0_simple_w, &ataripf_0_base },
+	{ 0x900000, 0x901fff, atarigen_playfield_w, &atarigen_playfield },
 	{ 0x902000, 0x903fff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
 	{ 0x904000, 0x904fff, MWA16_RAM },
-	{ 0x905f6e, 0x905f6f, gauntlet_yscroll_w, &gauntlet_yscroll },
-	{ 0x905000, 0x905f7f, atarian_0_vram_w, &atarian_0_base },
+	{ 0x905f6e, 0x905f6f, gauntlet_yscroll_w, &atarigen_yscroll },
+	{ 0x905000, 0x905f7f, atarigen_alpha_w, &atarigen_alpha },
 	{ 0x905f80, 0x905fff, atarimo_0_slipram_w, &atarimo_0_slipram },
 	{ 0x910000, 0x9107ff, paletteram16_IIIIRRRRGGGGBBBB_word_w, &paletteram16 },
-	{ 0x930000, 0x930001, gauntlet_xscroll_w },
+	{ 0x930000, 0x930001, gauntlet_xscroll_w, &atarigen_xscroll },
 MEMORY_END
 
 

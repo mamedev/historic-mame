@@ -3,7 +3,6 @@
 
 #include "osd_cpu.h"
 #include "inptport.h"
-#include "palette.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -103,7 +102,7 @@ void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y);
 */
 int osd_allocate_colors(unsigned int totalcolors,
 		const UINT8 *palette,UINT32 *rgb_components,
-		const UINT8 *debug_palette,pen_t *debug_pens);
+		const UINT8 *debug_palette,UINT32 *debug_pens);
 void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue);
 
 void osd_mark_dirty(int xmin,int ymin,int xmax,int ymax);
@@ -195,10 +194,6 @@ void osd_set_mastervolume(int attenuation);
 int osd_get_mastervolume(void);
 
 void osd_sound_enable(int enable);
-
-/* direct access to the Sound Blaster OPL chip */
-void osd_opl_control(int chip,int reg);
-void osd_opl_write(int chip,int data);
 
 
 /******************************************************************************
@@ -321,6 +316,7 @@ enum
 	OSD_FILETYPE_HISTORY,
 	OSD_FILETYPE_CHEAT,
 	OSD_FILETYPE_LANGUAGE,
+	OSD_FILETYPE_CTRLR,
 	OSD_FILETYPE_end /* dummy last entry */
 };
 

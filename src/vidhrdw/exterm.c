@@ -25,8 +25,6 @@ PALETTE_INIT( exterm )
 {
 	int i;
 
-	palette += 3*4096;	/* first 4096 colors are dynamic */
-
 	/* initialize 555 RGB lookup */
 	for (i = 0; i < 32768; i++)
 	{
@@ -36,9 +34,11 @@ PALETTE_INIT( exterm )
 		g = (i >>  5) & 0x1f;
 		b = (i >>  0) & 0x1f;
 
-		(*palette++) = (r << 3) | (r >> 2);
-		(*palette++) = (g << 3) | (g >> 2);
-		(*palette++) = (b << 3) | (b >> 2);
+		r = (r << 3) | (r >> 2);
+		g = (g << 3) | (g >> 2);
+		b = (b << 3) | (b >> 2);
+		
+		palette_set_color(i+4096,r,g,b);
 	}
 }
 

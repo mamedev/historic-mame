@@ -22,6 +22,8 @@ static int spriteram_words;
 
 static struct tilemap *background, *foreground;
 
+static unsigned char *blank_characterdata; /* pseudo character */
+
 /* gfxram dirty flags */
 static unsigned char *char_dirty;	/* 2048 chars */
 
@@ -40,9 +42,15 @@ static void get_bg_tile_info( int offs )
 	code = nemesis_videoram1f[offs];
 	color = nemesis_videoram2f[offs];
 	flags = 0;
-	if( color & 0x80 ) flags |= TILE_FLIPX;
-	if( code & 0x800 ) flags |= TILE_FLIPY;
-	SET_TILE_INFO( 0, code&0x7ff, color&0x7f, flags );
+	if ( color & 0x80)  flags |= TILE_FLIPX;
+	if ( code & 0x0800) flags |= TILE_FLIPY;
+	if ((~code & 0x2000) || ((code & 0xc000) == 0x4000))
+		 flags |= TILE_IGNORE_TRANSPARENCY;
+	if (code & 0xf800) {
+		SET_TILE_INFO( 0, code&0x7ff, color&0x7f, flags );
+	} else {
+		SET_TILE_INFO( 0, 0x800, 0x00, 0 );
+	}
 	tile_info.priority = (code & 0x1000)>>12;
 }
 
@@ -52,10 +60,19 @@ static void get_fg_tile_info( int offs )
 	code = nemesis_videoram1b[offs];
 	color = nemesis_videoram2b[offs];
 	flags = 0;
-	if( color & 0x80 ) flags |= TILE_FLIPX;
-	if( code & 0x800 ) flags |= TILE_FLIPY;
-	SET_TILE_INFO( 0, code&0x7ff, color&0x7f, flags );
-	tile_info.priority = (code & 0x1000)>>12;
+	if ( color & 0x80)  flags |= TILE_FLIPX;
+	if ( code & 0x0800) flags |= TILE_FLIPY;
+	if ((~code & 0x2000) || ((code & 0xc000) == 0x4000))
+		 flags |= TILE_IGNORE_TRANSPARENCY;
+	if (code & 0xf800) {
+		SET_TILE_INFO( 0, code&0x7ff, color&0x7f, flags );
+	} else {
+		SET_TILE_INFO( 0, 0x800, 0x00, 0 );
+	}
+	if (((nemesis_videoram1f[offs] & 0x5000) == 0x4000) && (code & 0x2000))
+		tile_info.priority = 0;
+	else
+		tile_info.priority = (code & 0x1000)>>12;
 }
 
 WRITE16_HANDLER( nemesis_palette_word_w )
@@ -277,6 +294,14 @@ VIDEO_START( nemesis )
 
 	memset(nemesis_characterram,0,nemesis_characterram_size);
 
+
+	blank_characterdata = auto_malloc(32*8/8*(2048+1));
+	if (!blank_characterdata)
+		return 1;
+	memset(blank_characterdata,0x00,32*8/8*(2048+1));
+	decodechar(Machine->gfx[0],0x800,(unsigned char *)blank_characterdata,
+					Machine->drv->gfxdecodeinfo[0].gfxlayout);
+
 	return 0;
 }
 
@@ -377,7 +402,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 						flipx,flipy,
 						sx,sy,
 						cliprect,TRANSPARENCY_PEN,0,
-						zoom,zoom );
+						zoom,zoom);
 				}
 			} /* if sprite */
 		} /* for loop */
@@ -527,7 +552,7 @@ VIDEO_UPDATE( nemesis )
 
 	update_gfx();
 
-	fillbitmap(bitmap,Machine->pens[paletteram16[0x00] & 0x7ff],cliprect);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	tilemap_set_scrolly( background, 0, (nemesis_yscroll[0x180] & 0xff) );
 	for (offs = 0;offs < 256;offs++)
@@ -553,6 +578,8 @@ VIDEO_UPDATE( twinbee )
 	int offs;
 
 	update_gfx();
+
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	tilemap_set_scrolly( background, 0, (nemesis_yscroll[0x180] & 0xff) );
 	for (offs = 0;offs < 256;offs++)
@@ -592,7 +619,7 @@ VIDEO_UPDATE( salamand )
 
 	update_gfx();
 
-	fillbitmap(bitmap,Machine->pens[paletteram16[0x00] & 0x7ff],cliprect);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	clip.min_x = 0;
 	clip.max_x = 255;
@@ -622,7 +649,6 @@ VIDEO_UPDATE( salamand )
 			((nemesis_xscroll1[0x100 + offs] & 1) << 8)) );
 
 		tilemap_draw(bitmap,&clip,foreground,0,0);
-
 		tilemap_draw(bitmap,&clip,background,0,0);
 	}
 
@@ -642,7 +668,6 @@ VIDEO_UPDATE( salamand )
 			((nemesis_xscroll1[0x100 + offs] & 1) << 8)) );
 
 		tilemap_draw(bitmap,&clip,foreground,1,0);
-
 		tilemap_draw(bitmap,&clip,background,1,0);
 	}
 }

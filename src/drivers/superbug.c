@@ -336,14 +336,6 @@ static struct GfxDecodeInfo superbug_gfx_decode_info[] =
 
 static PALETTE_INIT( superbug )
 {
-	static UINT8 palette_source[] =
-	{
-		0x00, 0x00, 0x00,
-		0xFF, 0xFF, 0xFF,
-		0xFF, 0xFF, 0xFF,
-		0x00, 0x00, 0x00
-	};
-
 	int i;
 
 	/* set up palette for the tilemap */
@@ -363,12 +355,15 @@ static PALETTE_INIT( superbug )
 			color ^= 0xFF;
 		}
 
-		palette[3 * i + 0] = palette[3 * i + 1] = palette[3 * i + 2] = color;
+		palette_set_color(i, color, color, color);
 	}
 
 	/* set up palette for alpha numerics and sprites */
 
-	memcpy(palette + 3 * i, palette_source, sizeof palette_source);
+	palette_set_color(64+0, 0x00, 0x00, 0x00);
+	palette_set_color(64+1, 0xFF, 0xFF, 0xFF);
+	palette_set_color(64+2, 0xFF, 0xFF, 0xFF);
+	palette_set_color(64+3, 0x00, 0x00, 0x00);
 }
 
 

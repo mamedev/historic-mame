@@ -20,7 +20,7 @@ static int char_palette = 0;
 
 PALETTE_INIT( cheekyms )
 {
-	int i,j,bit;
+	int i,j,bit,r,g,b;
 
 	for (i = 0; i < 3; i++)
 	{
@@ -31,14 +31,15 @@ PALETTE_INIT( cheekyms )
 		{
 			/* red component */
 			bit = (color_prom[0] >> 0) & 0x01;
-			*(palette++) = 0xff * bit;
+			r = 0xff * bit;
 			/* green component */
 			bit = (color_prom[0] >> 1) & 0x01;
-			*(palette++) = 0xff * bit;
+			g = 0xff * bit;
 			/* blue component */
 			bit = (color_prom[0] >> 2) & 0x01;
-			*(palette++) = 0xff * bit;
+			b = 0xff * bit;
 
+			palette_set_color(((i*2)*Machine->drv->total_colors/6)+j,r,g,b);
 			color_prom++;
 		}
 
@@ -49,14 +50,15 @@ PALETTE_INIT( cheekyms )
 		{
 			/* red component */
 			bit = (color_prom[0] >> 4) & 0x01;
-			*(palette++) = 0xff * bit;
+			r = 0xff * bit;
 			/* green component */
 			bit = (color_prom[0] >> 5) & 0x01;
-			*(palette++) = 0xff * bit;
+			g = 0xff * bit;
 			/* blue component */
 			bit = (color_prom[0] >> 6) & 0x01;
-			*(palette++) = 0xff * bit;
+			b = 0xff * bit;
 
+			palette_set_color(((i*2+1)*Machine->drv->total_colors/6)+j,r,g,b);
 			color_prom++;
 		}
 	}

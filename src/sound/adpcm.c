@@ -163,7 +163,7 @@ static void generate_adpcm(struct ADPCMVoice *voice, INT16 *buffer, int samples)
 			samples--;
 
 			/* next! */
-			if (++sample > count)
+			if (++sample >= count)
 			{
 				voice->playing = 0;
 				break;

@@ -149,19 +149,14 @@ INPUT_PORTS_START( sinvader )
 
 INPUT_PORTS_END
 
-static unsigned char tinvader_palette[] =
-{
-	0x00,0x00,0x00, /* BLACK */
-	0xff,0xff,0xff, /* WHITE */
-	0x20,0xff,0x20, /* GREEN */
-	0xff,0x20,0xff, /* PURPLE */
-};
-
 static PALETTE_INIT( zac2650 )
 {
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
-	memcpy(palette,tinvader_palette,sizeof(tinvader_palette));
+	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
+	palette_set_color(1,0xff,0xff,0xff); /* WHITE */
+	palette_set_color(2,0x20,0xff,0x20); /* GREEN */
+	palette_set_color(3,0xff,0x20,0xff); /* PURPLE */
 
 	COLOR(0,0) = 0;		/* Game uses first two only */
 	COLOR(0,1) = 1;

@@ -40,7 +40,7 @@ PALETTE_INIT( kingobox )
 
 	for (i = 0;i < 256;i++)
 	{
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
 
 		/* red component */
@@ -48,20 +48,21 @@ PALETTE_INIT( kingobox )
 		bit1 = (color_prom[0] >> 1) & 0x01;
 		bit2 = (color_prom[0] >> 2) & 0x01;
 		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 0x10 * bit0 + 0x21 * bit1 + 0x45 * bit2 + 0x89 * bit3;
+		r = 0x10 * bit0 + 0x21 * bit1 + 0x45 * bit2 + 0x89 * bit3;
 		/* green component */
 		bit0 = (color_prom[256] >> 0) & 0x01;
 		bit1 = (color_prom[256] >> 1) & 0x01;
 		bit2 = (color_prom[256] >> 2) & 0x01;
 		bit3 = (color_prom[256] >> 3) & 0x01;
-		*(palette++) = 0x10 * bit0 + 0x21 * bit1 + 0x45 * bit2 + 0x89 * bit3;
+		g = 0x10 * bit0 + 0x21 * bit1 + 0x45 * bit2 + 0x89 * bit3;
 		/* blue component */
 		bit0 = (color_prom[2*256] >> 0) & 0x01;
 		bit1 = (color_prom[2*256] >> 1) & 0x01;
 		bit2 = (color_prom[2*256] >> 2) & 0x01;
 		bit3 = (color_prom[2*256] >> 3) & 0x01;
-		*(palette++) = 0x10 * bit0 + 0x21 * bit1 + 0x45 * bit2 + 0x89 * bit3;
+		b = 0x10 * bit0 + 0x21 * bit1 + 0x45 * bit2 + 0x89 * bit3;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -70,11 +71,12 @@ PALETTE_INIT( kingobox )
 	for (i = 0;i < 8;i++)
 	{
 		/* red component */
-		*(palette++) = 0xff * ((i >> 2) & 0x01);
+		int r = 0xff * ((i >> 2) & 0x01);
 		/* green component */
-		*(palette++) = 0xff * ((i >> 1) & 0x01);
+		int g = 0xff * ((i >> 1) & 0x01);
 		/* blue component */
-		*(palette++) = 0xff * ((i >> 0) & 0x01);
+		int b = 0xff * ((i >> 0) & 0x01);
+		palette_set_color(i+256,r,g,b);
 	}
 
 	for (i = 0;i < TOTAL_COLORS(0)/2;i++)
@@ -95,7 +97,7 @@ PALETTE_INIT( ringking )
 
 	for (i = 0;i < 256;i++)
 	{
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
 
 		/* red component */
@@ -103,20 +105,21 @@ PALETTE_INIT( ringking )
 		bit1 = (color_prom[0] >> 5) & 0x01;
 		bit2 = (color_prom[0] >> 6) & 0x01;
 		bit3 = (color_prom[0] >> 7) & 0x01;
-		*(palette++) = 0x10 * bit0 + 0x21 * bit1 + 0x45 * bit2 + 0x89 * bit3;
+		r = 0x10 * bit0 + 0x21 * bit1 + 0x45 * bit2 + 0x89 * bit3;
 		/* green component */
 		bit0 = (color_prom[0] >> 0) & 0x01;
 		bit1 = (color_prom[0] >> 1) & 0x01;
 		bit2 = (color_prom[0] >> 2) & 0x01;
 		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 0x10 * bit0 + 0x21 * bit1 + 0x45 * bit2 + 0x89 * bit3;
+		g = 0x10 * bit0 + 0x21 * bit1 + 0x45 * bit2 + 0x89 * bit3;
 		/* blue component */
 		bit0 = (color_prom[256] >> 0) & 0x01;
 		bit1 = (color_prom[256] >> 1) & 0x01;
 		bit2 = (color_prom[256] >> 2) & 0x01;
 		bit3 = (color_prom[256] >> 3) & 0x01;
-		*(palette++) = 0x10 * bit0 + 0x21 * bit1 + 0x45 * bit2 + 0x89 * bit3;
+		b = 0x10 * bit0 + 0x21 * bit1 + 0x45 * bit2 + 0x89 * bit3;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -125,11 +128,12 @@ PALETTE_INIT( ringking )
 	for (i = 0;i < 8;i++)
 	{
 		/* red component */
-		*(palette++) = 0xff * ((i >> 2) & 0x01);
+		int r = 0xff * ((i >> 2) & 0x01);
 		/* green component */
-		*(palette++) = 0xff * ((i >> 1) & 0x01);
+		int g = 0xff * ((i >> 1) & 0x01);
 		/* blue component */
-		*(palette++) = 0xff * ((i >> 0) & 0x01);
+		int b = 0xff * ((i >> 0) & 0x01);
+		palette_set_color(i+256,r,g,b);
 	}
 
 	for (i = 0;i < TOTAL_COLORS(0)/2;i++)
