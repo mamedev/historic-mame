@@ -155,4 +155,3 @@ void bogeyman_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
     }
 }
-

@@ -8,7 +8,7 @@ VPATH=src $(wildcard src/cpu/*)
 EMULATOR_EXE = mame.exe
 
 # uncomment next line to include the debugger
-# DEBUG = 1
+DEBUG = 1
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1
@@ -661,7 +661,7 @@ CFLAGS = -Isrc -Isrc/msdos -Iobj/cpu/m68000 -Isrc/cpu/m68000 \
 	-O0 -pedantic -Wall -Werror -Wno-unused -g
 else
 CFLAGS = -Isrc -Isrc/msdos -Iobj/cpu/m68000 -Isrc/cpu/m68000 \
-	-fomit-frame-pointer -O3 -mcpu=pentium \
+	-fomit-frame-pointer -O3 -mcpu=k6 \
 	-Werror -Wall -Wno-sign-compare -Wunused \
 	-Wpointer-arith -Wbad-function-cast -Wcast-align -Waggregate-return \
 	-pedantic \
@@ -1180,7 +1180,7 @@ obj/upl.a: \
 
 obj/tms.a: \
          obj/machine/exterm.o obj/vidhrdw/exterm.o obj/drivers/exterm.o \
-         obj/machine/smashtv.o obj/vidhrdw/smashtv.o obj/sndhrdw/smashtv.o obj/drivers/smashtv.o \
+         obj/machine/smashtv.o obj/vidhrdw/smashtv.o obj/drivers/smashtv.o \
 
 obj/cinemar.a: \
          obj/vidhrdw/jack.o obj/drivers/jack.o \

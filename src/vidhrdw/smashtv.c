@@ -12,28 +12,29 @@ void wms_stateload(void);
 void wms_statesave(void);
 void wms_update_partial(int scanline);
 
-unsigned short *wms_videoram;
-int wms_videoram_size = 0x80000;
+UINT16 *wms_videoram;
+INT32 wms_videoram_size = 0x80000;
 
 /* Variables in machine/smashtv.c */
-extern unsigned char *wms_cmos_ram;
-extern unsigned int wms_autoerase_enable;
-extern unsigned int wms_dma_pal_word;
+extern UINT8 *wms_cmos_ram;
+extern UINT8 wms_autoerase_enable;
+extern UINT8 wms_autoerase_reset;
+extern UINT32 wms_dma_pal_word;
 
 static int last_update_scanline;
-static int update_status;
+static UINT8 update_status;
 
 static UINT32 current_offset;
 static int current_rowbytes;
 
 void wms_vram_w(int offset, int data)
 {
-	unsigned int tempw,tempwb;
-	unsigned short tempwordhi;
-	unsigned short tempwordlo;
-	unsigned short datalo;
-	unsigned short datahi;
-	unsigned int mask;
+	UINT32 tempw,tempwb;
+	UINT16 tempwordhi;
+	UINT16 tempwordlo;
+	UINT16 datalo;
+	UINT16 datahi;
+	UINT32 mask;
 
 	/* first vram data */
 	tempwordhi = wms_videoram[offset+1];
@@ -48,9 +49,9 @@ void wms_vram_w(int offset, int data)
 	/* now palette data */
 	tempwordhi = wms_videoram[offset+1];
 	tempwordlo = wms_videoram[offset];
-	mask = (~(((unsigned int) data)>>16))|0xffff0000;
+	mask = (~(((UINT32) data)>>16))|0xffff0000;
 	data = ((data&0xffff0000) | wms_dma_pal_word) & mask;
-	tempw = (((unsigned short) (wms_videoram[offset]&0xff00))>>8) + (wms_videoram[offset+1]&0xff00);
+	tempw = (((UINT16) (wms_videoram[offset]&0xff00))>>8) + (wms_videoram[offset+1]&0xff00);
 	tempwb = COMBINE_WORD(tempw,data);
 	datalo = tempwb&0x00ff;
 	datahi = (tempwb&0xff00)>>8;
@@ -60,11 +61,11 @@ void wms_vram_w(int offset, int data)
 
 void wms_objpalram_w(int offset, int data)
 {
-	unsigned int tempw,tempwb;
-	unsigned short tempwordhi;
-	unsigned short tempwordlo;
-	unsigned short datalo;
-	unsigned short datahi;
+	UINT32 tempw,tempwb;
+	UINT16 tempwordhi;
+	UINT16 tempwordlo;
+	UINT16 datalo;
+	UINT16 datahi;
 
 	tempwordhi = wms_videoram[offset+1];
 	tempwordlo = wms_videoram[offset];
@@ -217,7 +218,7 @@ void wms_update_partial(int scanline)
 
 			/* handle the autoerase */
 			if (wms_autoerase_enable)
-				memcpy(src, &wms_videoram[510 * 512], width * sizeof(UINT16));
+				memcpy(&wms_videoram[offset], &wms_videoram[510 * 512], width * sizeof(UINT16));
 
 			/* point to the next row */
 			offset = (offset + 512) & 0x3ffff;
@@ -255,8 +256,9 @@ void wms_vh_eof(void)
 			update_status--;
 	}
 
-	/* regardless, turn off the autoerase (NARC needs this) */
-	wms_autoerase_enable = 0;
+	/* turn off the autoerase (NARC needs this) */
+	if (wms_autoerase_reset)
+		wms_autoerase_enable = 0;
 }
 
 void wms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)

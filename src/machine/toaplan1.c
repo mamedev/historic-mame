@@ -28,7 +28,7 @@ static int unk;
 static int credits;
 static int latch;
 
-unsigned char *toaplan1_sharedram;
+extern unsigned char *toaplan1_sharedram;
 
 
 

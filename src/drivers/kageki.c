@@ -12,8 +12,8 @@ Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/11/06
 
 
 /* prototypes for functions in ../machine/tnzs.c */
-unsigned char *tnzs_objram, *tnzs_workram;
-unsigned char *tnzs_vdcram, *tnzs_scrollram;
+extern unsigned char *tnzs_objram, *tnzs_workram;
+extern unsigned char *tnzs_vdcram, *tnzs_scrollram;
 int tnzs_workram_r(int offset);
 void tnzs_workram_w(int offset, int data);
 void tnzs_bankswitch_w(int offset, int data);

@@ -361,12 +361,12 @@ int namcos2_vh_start(void)
 #endif
 
 	/* Initialise the tilemaps */
-	if((namcos2_tilemap0=tilemap_create(namcos2_tilemap0_get_info,TILEMAP_BITMASK,8,8,64,64))==NULL) return 0;
-	if((namcos2_tilemap1=tilemap_create(namcos2_tilemap1_get_info,TILEMAP_BITMASK,8,8,64,64))==NULL) return 0;
-	if((namcos2_tilemap2=tilemap_create(namcos2_tilemap2_get_info,TILEMAP_BITMASK,8,8,64,64))==NULL) return 0;
-	if((namcos2_tilemap3=tilemap_create(namcos2_tilemap3_get_info,TILEMAP_BITMASK,8,8,64,64))==NULL) return 0;
-	if((namcos2_tilemap4=tilemap_create(namcos2_tilemap4_get_info,TILEMAP_BITMASK,8,8,36,28))==NULL) return 0;
-	if((namcos2_tilemap5=tilemap_create(namcos2_tilemap5_get_info,TILEMAP_BITMASK,8,8,36,28))==NULL) return 0;
+	if((namcos2_tilemap0=tilemap_create(namcos2_tilemap0_get_info,TILEMAP_BITMASK,8,8,64,64))==NULL) return 1;
+	if((namcos2_tilemap1=tilemap_create(namcos2_tilemap1_get_info,TILEMAP_BITMASK,8,8,64,64))==NULL) return 1;
+	if((namcos2_tilemap2=tilemap_create(namcos2_tilemap2_get_info,TILEMAP_BITMASK,8,8,64,64))==NULL) return 1;
+	if((namcos2_tilemap3=tilemap_create(namcos2_tilemap3_get_info,TILEMAP_BITMASK,8,8,64,64))==NULL) return 1;
+	if((namcos2_tilemap4=tilemap_create(namcos2_tilemap4_get_info,TILEMAP_BITMASK,8,8,36,28))==NULL) return 1;
+	if((namcos2_tilemap5=tilemap_create(namcos2_tilemap5_get_info,TILEMAP_BITMASK,8,8,36,28))==NULL) return 1;
 
 	/* Setup fixed planes */
 	tilemap_set_scrollx( namcos2_tilemap4, 0, 0 );

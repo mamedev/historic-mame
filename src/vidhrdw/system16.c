@@ -2387,7 +2387,6 @@ static void render_grv2(struct osd_bitmap *bitmap,int priority)
 							bitmap->line[xoff+j*dx][ypos] = colors[*source2];
 						source++;
 						source2++;
-						line+=dx;
 					}
 				}
 			}

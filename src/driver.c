@@ -2218,6 +2218,7 @@ V1.2   May 27,1999
 
 	/* Williams/Midway TMS34010 games */
 	DRIVER( narc )		/* (c) 1988 Williams */
+TESTDRIVER( narc3 )		/* (c) 1988 Williams */
 	DRIVER( trog )		/* (c) 1990 Midway */
 	DRIVER( trog3 )		/* (c) 1990 Midway */
 	DRIVER( trogp )		/* (c) 1990 Midway */

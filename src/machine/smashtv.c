@@ -26,13 +26,9 @@
 #define GFX_ROM	     cpu_bankbase[8]
 #define SCRATCH_RAM	 cpu_bankbase[2]
 
-static unsigned char *gfxrombackup;
-
-void narc_sound_w (int offset,int data);
-void mk_sound_w (int offset,int data);
-void smashtv_sound_w (int offset,int data);
-void trog_sound_w (int offset,int data);
-void nbajam_sound_w (int offset,int data);
+static void narc_sound_w (int offset,int data);
+static void adpcm_sound_w (int offset,int data);
+static void cvsd_sound_w (int offset,int data);
 
 void wms_vram_w(int offset, int data);
 void wms_objpalram_w(int offset, int data);
@@ -40,58 +36,61 @@ int wms_vram_r(int offset);
 int wms_objpalram_r(int offset);
 void wms_update_partial(int scanline);
 
-extern unsigned short *wms_videoram;
+static UINT8 *gfxrombackup;
 
-unsigned char *wms_cmos_ram;
-int wms_bank2_size;
-extern            int wms_videoram_size;
-                  int wms_code_rom_size;
-                  int wms_gfx_rom_size;
-extern unsigned   int wms_rom_loaded;
-static unsigned   int wms_cmos_page = 0;
-                  int wms_objpalram_select = 0;
-       unsigned   int wms_autoerase_enable = 0;
+extern UINT16 *wms_videoram;
 
-static unsigned int wms_dma_rows=0;
-static          int wms_dma_write_rows=0;
-static unsigned int wms_dma_cols=0;
-static unsigned int wms_dma_bank=0;
-static unsigned int wms_dma_subbank=0;
-static unsigned int wms_dma_x=0;
-static unsigned int wms_dma_y=0;
-       unsigned int wms_dma_pal=0;
-       unsigned int wms_dma_pal_word=0;
-static unsigned int wms_dma_dst=0;
-static unsigned int wms_dma_stat=0;
-static unsigned int wms_dma_fgcol=0;
-static        short wms_dma_woffset=0;
+       UINT8 *wms_cmos_ram;
+       INT32  wms_bank2_size;
+extern INT32  wms_videoram_size;
+       int    wms_code_rom_size;
+       int    wms_gfx_rom_size;
+extern UINT8  wms_rom_loaded;
+static UINT32 wms_cmos_page = 0;
+       INT32  wms_objpalram_select = 0;
+       UINT8  wms_autoerase_enable = 0;
+       UINT8  wms_autoerase_reset = 0;
 
-static unsigned short wms_dma_preskip=0;
-static unsigned short wms_dma_postskip=0;
+static UINT32 wms_dma_rows=0;
+static INT32  wms_dma_write_rows=0;
+static UINT32 wms_dma_cols=0;
+static UINT32 wms_dma_bank=0;
+static UINT32 wms_dma_subbank=0;
+static UINT32 wms_dma_x=0;
+static UINT32 wms_dma_y=0;
+       UINT32 wms_dma_pal=0;
+       UINT32 wms_dma_pal_word=0;
+static UINT32 wms_dma_dst=0;
+static UINT32 wms_dma_stat=0;
+static UINT32 wms_dma_fgcol=0;
+static INT16  wms_dma_woffset=0;
 
-static unsigned int wms_dma_temp=0;
+static UINT16 wms_dma_preskip=0;
+static UINT16 wms_dma_postskip=0;
 
-static unsigned int wms_dma_8pos=0;  /* are we not on a byte boundary? */
-static unsigned int wms_dma_preclip=0;
-static unsigned int wms_dma_postclip=0;
+static UINT32 wms_dma_temp=0;
 
-static unsigned short wms_unk1=0;
-static unsigned short wms_unk2=0;
-static unsigned short wms_sysreg2=0;
+static UINT32 wms_dma_8pos=0;  /* are we not on a byte boundary? */
+static UINT32 wms_dma_preclip=0;
+static UINT32 wms_dma_postclip=0;
 
-static unsigned int wms_dma_14=0;
-static unsigned int wms_dma_16=0;
-static unsigned int wms_dma_tclip=0;
-static unsigned int wms_dma_bclip=0;
-static unsigned int wms_dma_1c=0;
-static unsigned int wms_dma_1e=0;
+static UINT16 wms_unk1=0;
+static UINT16 wms_unk2=0;
+static UINT16 wms_sysreg2=0;
 
-static unsigned int smashtv_cmos_w_enable=1;
+static UINT32 wms_dma_14=0;
+static UINT32 wms_dma_16=0;
+static UINT32 wms_dma_tclip=0;
+static UINT32 wms_dma_bclip=0;
+static UINT32 wms_dma_1c=0;
+static UINT32 wms_dma_1e=0;
 
-static unsigned int wms_protect_s=0xffffffff; /* never gets here */
-static unsigned int wms_protect_d=0xffffffff;
+static UINT32 smashtv_cmos_w_enable=1;
 
-static unsigned int term2_analog_select = 0;
+static UINT32 wms_protect_s=0xffffffff; /* never gets here */
+static UINT32 wms_protect_d=0xffffffff;
+
+static UINT32 term2_analog_select = 0;
 
 static int narc_input_r (int offset)
 {
@@ -203,7 +202,7 @@ static void term2_sound_w (int offset,int data)
 		term2_analog_select = (data >> 0x0c) & 0x03;
 	}
 
-	mk_sound_w(offset, data);
+	adpcm_sound_w(offset, data);
 }
 
 static int irq_callback(int irqline)
@@ -324,10 +323,10 @@ int wms_dma_r(int offset)
 
 void wms_dma_w(int offset, int data)
 {
-	unsigned int i, j, pal, write_data, line_skip, dma_skip=0;
+	UINT32 i, j, pal, write_data, line_skip, dma_skip=0;
 	int write_cols;
-	unsigned char *rda;
-	unsigned short *wrva;
+	UINT8 *rda;
+	UINT16 *wrva;
 
 	switch (offset)
 	{
@@ -869,10 +868,10 @@ void wms_dma2_w(int offset, int data)
 	 * --> approximately 2 cycles per pixel
 	 */
 
-	unsigned int i, pal, write_data=0, line_skip, dma_skip=0;
+	UINT32 i, pal, write_data=0, line_skip, dma_skip=0;
 	int j, write_cols, write_cols_do;
-	unsigned char *rda;
-	unsigned short *wrva, *wrvatop, *wrvabot;
+	UINT8 *rda;
+	UINT16 *wrva, *wrvatop, *wrvabot;
 
 	switch (offset)
 	{
@@ -1101,14 +1100,14 @@ void wms_dma2_w(int offset, int data)
 	}
 }
 
-void wms_to_shiftreg(unsigned int address, unsigned short* shiftreg)
+void wms_to_shiftreg(UINT32 address, UINT16* shiftreg)
 {
-	memcpy(shiftreg, &wms_videoram[address>>3], 2*512*sizeof(unsigned short));
+	memcpy(shiftreg, &wms_videoram[address>>3], 2*512*sizeof(UINT16));
 }
 
-void wms_from_shiftreg(unsigned int address, unsigned short* shiftreg)
+void wms_from_shiftreg(UINT32 address, UINT16* shiftreg)
 {
-	memcpy(&wms_videoram[address>>3], shiftreg, 2*512*sizeof(unsigned short));
+	memcpy(&wms_videoram[address>>3], shiftreg, 2*512*sizeof(UINT16));
 }
 
 void wms_01c00060_w(int offset, int data) /* protection and more */
@@ -1208,7 +1207,7 @@ void wms_sysreg2_w(int offset, int data)
 
 void wms_unk1_w(int offset, int data)
 {
-//	char buf[80];
+//	INT8 buf[80];
 	wms_unk1 = data;
 	if (data == 0x4472)
 	{
@@ -1259,7 +1258,7 @@ void wms_unk1_w(int offset, int data)
 extern int debug_key_pressed;
 void wms_unk2_w(int offset, int data)
 {
-//	char buf[80];
+//	INT8 buf[80];
 	if (offset==2)
 	{
 		wms_unk2 = data;
@@ -1888,33 +1887,6 @@ static int nbajam_speedup_r(int offset)
 	}
 }
 
-static int narc_music_speedup_r (int offset)
-{
-	unsigned char a, b;
-	a = Machine->memory_region[Machine->drv->cpu[1].memory_region][0x0228];
-	b = Machine->memory_region[Machine->drv->cpu[1].memory_region][0x0226];
-	if ((a==b)&&(cpu_get_pc()==0xc786)) cpu_spinuntil_int();
-	return a;
-}
-static int narc_digitizer_speedup_r (int offset)
-{
-	unsigned char a, b;
-	a = Machine->memory_region[Machine->drv->cpu[2].memory_region][0x0228];
-	b = Machine->memory_region[Machine->drv->cpu[2].memory_region][0x0226];
-	if ((a==b)&&(cpu_get_pc()==0xc786)) cpu_spinuntil_int();
-	return a;
-}
-static int mk_sound_speedup_r (int offset)
-{
-	unsigned char a, b;
-	a = Machine->memory_region[Machine->drv->cpu[1].memory_region][0x0218];
-	b = Machine->memory_region[Machine->drv->cpu[1].memory_region][0x0216];
-	if ((a==b)&&(cpu_get_pc()==0xf579)) cpu_spinuntil_int(); /* MK */
-	if ((a==b)&&(cpu_get_pc()==0xf5db)) cpu_spinuntil_int(); /* totcarn */
-	if ((a==b)&&(cpu_get_pc()==0xf5d2)) cpu_spinuntil_int(); /* term2 */
-	return a;
-}
-
 static void remove_access_errors(void)
 {
 	/* get rid of unmapped access errors during tests */
@@ -1928,8 +1900,8 @@ static void remove_access_errors(void)
 static void load_gfx_roms_4bit(void)
 {
 	int i;
-	unsigned char d1,d2,d3,d4;
-	unsigned char *mem_rom;
+	UINT8 d1,d2,d3,d4;
+	UINT8 *mem_rom;
 	memset(GFX_ROM,0,wms_gfx_rom_size);
 	mem_rom = Machine->memory_region[1];
 	/* load the graphics ROMs -- quadruples 2 bits each */
@@ -1947,8 +1919,8 @@ static void load_gfx_roms_4bit(void)
 static void load_gfx_roms_6bit(void)
 {
 	int i;
-	unsigned char d1,d2,d3,d4,d5,d6;
-	unsigned char *mem_rom;
+	UINT8 d1,d2,d3,d4,d5,d6;
+	UINT8 *mem_rom;
 	memset(GFX_ROM,0,wms_gfx_rom_size);
 	mem_rom = Machine->memory_region[1];
 	/* load the graphics ROMs -- quadruples 2 bits each */
@@ -1968,8 +1940,8 @@ static void load_gfx_roms_6bit(void)
 static void load_gfx_roms_8bit(void)
 {
 	int i;
-	unsigned char d1,d2;
-	unsigned char *mem_rom;
+	UINT8 d1,d2;
+	UINT8 *mem_rom;
 	memset(GFX_ROM,0,wms_gfx_rom_size);
 	mem_rom = Machine->memory_region[1];
 	/* load the graphics ROMs -- quadruples */
@@ -1977,10 +1949,10 @@ static void load_gfx_roms_8bit(void)
 	{
 		d1 = mem_rom[					  i/4];
 		d2 = mem_rom[  wms_gfx_rom_size/4+i/4];
-		WRITE_WORD(&GFX_ROM[i  ],(unsigned int)((unsigned int)(d1) | ((unsigned int)(d2)<<8)));
+		WRITE_WORD(&GFX_ROM[i  ],(UINT32)((UINT32)(d1) | ((UINT32)(d2)<<8)));
 		d1 = mem_rom[2*wms_gfx_rom_size/4+i/4];
 		d2 = mem_rom[3*wms_gfx_rom_size/4+i/4];
-		WRITE_WORD(&GFX_ROM[i+2],(unsigned int)((unsigned int)(d1) | ((unsigned int)(d2)<<8)));
+		WRITE_WORD(&GFX_ROM[i+2],(UINT32)((UINT32)(d1) | ((UINT32)(d2)<<8)));
 	}
 	free(Machine->memory_region[1]);
 	Machine->memory_region[1] = 0;
@@ -1997,7 +1969,7 @@ static void load_adpcm_roms_512k(void)
 
 static void wms_modify_pen(int i, int rgb)
 {
-	extern unsigned short *shrinked_pens;
+	extern UINT16 *shrinked_pens;
 
 #define rgbpenindex(r,g,b) ((Machine->scrbitmap->depth==16) ? ((((r)>>3)<<10)+(((g)>>3)<<5)+((b)>>3)) : ((((r)>>5)<<5)+(((g)>>5)<<2)+((b)>>6)))
 
@@ -2139,10 +2111,9 @@ void narc_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x0101b300), TOBYTE(0x0101b31f), narc_speedup_r);
-//	install_mem_read_handler(1, 0x0228, 0x0228, narc_music_speedup_r);
-//	install_mem_read_handler(2, 0x0228, 0x0228, narc_digitizer_speedup_r);
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+	wms_autoerase_reset = 1;
 }
 void trog_driver_init(void)
 {
@@ -2152,6 +2123,7 @@ void trog_driver_init(void)
 	wms_protect_d = 0xffe47af0;
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+	wms_autoerase_reset = 0;
 
 	/* expand the sound ROMs */
 	memcpy(&Machine->memory_region[2][0x20000], &Machine->memory_region[2][0x10000], 0x10000);
@@ -2166,6 +2138,7 @@ void trog3_driver_init(void)
 	wms_protect_d = 0xffe47b20;
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+	wms_autoerase_reset = 0;
 
 	/* expand the sound ROMs */
 	memcpy(&Machine->memory_region[2][0x20000], &Machine->memory_region[2][0x10000], 0x10000);
@@ -2178,6 +2151,7 @@ void trogp_driver_init(void)
 	install_mem_read_handler(0, TOBYTE(0x010a1ee0), TOBYTE(0x010a1eff), trogp_speedup_r);
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+	wms_autoerase_reset = 0;
 
 	/* expand the sound ROMs */
 	memcpy(&Machine->memory_region[2][0x20000], &Machine->memory_region[2][0x10000], 0x10000);
@@ -2190,6 +2164,7 @@ void smashtv_driver_init(void)
 	install_mem_read_handler(0, TOBYTE(0x01086760), TOBYTE(0x0108677f), smashtv_speedup_r);
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x01000000));
+	wms_autoerase_reset = 0;
 
 	/* expand the sound ROMs */
 	memcpy(&Machine->memory_region[2][0x20000], &Machine->memory_region[2][0x10000], 0x10000);
@@ -2202,6 +2177,7 @@ void smashtv4_driver_init(void)
 	install_mem_read_handler(0, TOBYTE(0x01086780), TOBYTE(0x0108679f), smashtv4_speedup_r);
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x01000000));
+	wms_autoerase_reset = 0;
 
 	/* expand the sound ROMs */
 	memcpy(&Machine->memory_region[2][0x20000], &Machine->memory_region[2][0x10000], 0x10000);
@@ -2216,6 +2192,7 @@ void hiimpact_driver_init(void)
 	wms_protect_d = 0xffe77ad0;
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+	wms_autoerase_reset = 0;
 }
 void shimpact_driver_init(void)
 {
@@ -2225,6 +2202,7 @@ void shimpact_driver_init(void)
 	wms_protect_d = 0xffe078f0;
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+	wms_autoerase_reset = 0;
 }
 void strkforc_driver_init(void)
 {
@@ -2234,6 +2212,7 @@ void strkforc_driver_init(void)
 	wms_protect_d = 0xffe4c1d0;
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+	wms_autoerase_reset = 0;
 
 	/* expand the sound ROMs */
 	memcpy(&Machine->memory_region[2][0x20000], &Machine->memory_region[2][0x10000], 0x10000);
@@ -2244,67 +2223,70 @@ void mk_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x0104f040), TOBYTE(0x0104f05f), mk_speedup_r);
-//	install_mem_read_handler(1, 0x0218, 0x0218, mk_sound_speedup_r);
 	wms_protect_s = 0xffc98930;
 	wms_protect_d = 0xffc987f0;
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+	wms_autoerase_reset = 0;
 }
 void mkla1_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x0104f000), TOBYTE(0x0104f01f), mkla1_speedup_r);
-//	install_mem_read_handler(1, 0x0218, 0x0218, mk_sound_speedup_r);
 	wms_protect_s = 0xffc96e20;
 	wms_protect_d = 0xffc96ce0;
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+	wms_autoerase_reset = 0;
 }
 void mkla2_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x0104f020), TOBYTE(0x0104f03f), mkla2_speedup_r);
-//	install_mem_read_handler(1, 0x0218, 0x0218, mk_sound_speedup_r);
 	wms_protect_s = 0xffc96d00;
 	wms_protect_d = 0xffc96bc0;
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+	wms_autoerase_reset = 0;
 }
 void term2_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x010aa040), TOBYTE(0x010aa05f), term2_speedup_r);
-//	install_mem_read_handler(1, 0x0218, 0x0218, mk_sound_speedup_r);
 	wms_protect_s = 0xffd64f30;
 	wms_protect_d = 0xffd64de0;
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+	wms_autoerase_reset = 0;
 }
 void totcarn_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x0107dde0), TOBYTE(0x0107ddff), totcarn_speedup_r);
-//	install_mem_read_handler(1, 0x0218, 0x0218, mk_sound_speedup_r);
 	wms_protect_s = 0xffd1fd30;
 	wms_protect_d = 0xffd1fbf0;
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+	wms_autoerase_reset = 0;
 }
 void totcarnp_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x0107dde0), TOBYTE(0x0107ddff), totcarn_speedup_r);
-//	install_mem_read_handler(1, 0x0218, 0x0218, mk_sound_speedup_r);
 	wms_protect_s = 0xffd1edd0;
 	wms_protect_d = 0xffd1ec90;
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+	wms_autoerase_reset = 0;
 }
 void mk2_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x01068e60), TOBYTE(0x01068e7f), mk2_speedup_r);
+
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+	wms_autoerase_reset = 0;
+
 	cpu_bankbase[7] = &(GFX_ROM[0x800000]);
 	install_mem_read_handler(0, TOBYTE(0x04000000), TOBYTE(0x05ffffff), MRA_BANK7);
 }
@@ -2312,7 +2294,10 @@ void mk2r14_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x01068de0), TOBYTE(0x01068dff), mk2r14_speedup_r);
+
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+	wms_autoerase_reset = 0;
+
 	cpu_bankbase[7] = &(GFX_ROM[0x800000]);
 	install_mem_read_handler(0, TOBYTE(0x04000000), TOBYTE(0x05ffffff), MRA_BANK7);
 }
@@ -2320,7 +2305,10 @@ void nbajam_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x010754c0), TOBYTE(0x010754df), nbajam_speedup_r);
+
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+	wms_autoerase_reset = 0;
+
 	install_mem_read_handler(0, TOBYTE(0x04000000), TOBYTE(0x05ffffff), MRA_BANK8);
 }
 
@@ -2387,7 +2375,7 @@ void smashtv_init_machine(void)
 	pia_unconfig();
 	williams_cvsd_init(1, 0);
 	pia_reset();
-	install_mem_write_handler(0, TOBYTE(0x01e00000), TOBYTE(0x01e0001f), smashtv_sound_w);
+	install_mem_write_handler(0, TOBYTE(0x01e00000), TOBYTE(0x01e0001f), cvsd_sound_w);
 }
 void mk_init_machine(void)
 {
@@ -2415,7 +2403,7 @@ void mk_init_machine(void)
 
 	/* set up sound board */
 	williams_adpcm_init(1);
-	install_mem_write_handler(0, TOBYTE(0x01e00000), TOBYTE(0x01e0001f), mk_sound_w);
+	install_mem_write_handler(0, TOBYTE(0x01e00000), TOBYTE(0x01e0001f), adpcm_sound_w);
 }
 void term2_init_machine(void)
 {
@@ -2462,7 +2450,7 @@ void trog_init_machine(void)
 	williams_cvsd_init(1, 0);
 	pia_reset();
 	/* fix sound (hack) */
-	install_mem_write_handler(0, TOBYTE(0x01e00000), TOBYTE(0x01e0001f), trog_sound_w);
+	install_mem_write_handler(0, TOBYTE(0x01e00000), TOBYTE(0x01e0001f), cvsd_sound_w);
 }
 void mk2_init_machine(void)
 {
@@ -2510,6 +2498,27 @@ void nbajam_init_machine(void)
 
 	/* set up sound board */
 	williams_adpcm_init(1);
-	install_mem_write_handler(0, TOBYTE(0x01d01020), TOBYTE(0x01d0103f), nbajam_sound_w);
+	install_mem_write_handler(0, TOBYTE(0x01d01020), TOBYTE(0x01d0103f), adpcm_sound_w);
+}
+
+void cvsd_sound_w(int offset, int data)
+{
+	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: ", cpu_get_pc());
+	if (errorlog) fprintf(errorlog, "sound write %x\n", data);
+	williams_cvsd_data_w(0, (data & 0xff) | ((data & 0x200) >> 1));
+}
+
+void adpcm_sound_w(int offset, int data)
+{
+//	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: ", cpu_get_pc());
+//	if (errorlog) fprintf(errorlog, "sound write %x\n", data);
+	williams_adpcm_data_w(0, data);
+}
+
+void narc_sound_w(int offset, int data)
+{
+//	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: ", cpu_get_pc());
+//	if (errorlog) fprintf(errorlog, "sound write %x\n", data);
+	williams_narc_data_w(0, data);
 }
 

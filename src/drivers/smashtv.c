@@ -83,16 +83,15 @@
 #define TMS34010_CLOCK_DIVIDER		8
 
 /* Variables in vidhrdw/smashtv.c */
-extern unsigned char *wms_videoram;
-extern           int wms_videoram_size;
+extern UINT16 *wms_videoram;
+extern INT32   wms_videoram_size;
 
 /* Variables in machine/smashtv.c */
-extern unsigned char *wms_cmos_ram;
-extern           int wms_bank2_size;
-static           int wms_bank4_size;
-extern           int wms_code_rom_size;
-extern           int wms_gfx_rom_size;
-static           int wms_paletteram_size;
+extern UINT8 *wms_cmos_ram;
+extern INT32  wms_bank2_size;
+static int    wms_bank4_size;
+extern int    wms_code_rom_size;
+extern int    wms_gfx_rom_size;
 
 /* Functions in vidhrdw/smashtv.c */
 int wms_vh_start(void);
@@ -135,9 +134,6 @@ void wms_dma2_w(int offset, int data);
 
 int wms_input_r (int offset);
 
-void narc_music_bank_select_w (int offset,int data);
-void narc_digitizer_bank_select_w (int offset,int data);
-
 void narc_driver_init(void);
 void smashtv_driver_init(void);
 void smashtv4_driver_init(void);
@@ -163,7 +159,7 @@ int  narc_DAC_r(int offset);
 void narc_slave_DAC_w (int offset,int data);
 void narc_slave_cmd_w (int offset,int data);
 
-unsigned int wms_rom_loaded;
+UINT8 wms_rom_loaded;
 
 /* This just causes the init_machine to copy the images again */
 static void wms_decode(void)
@@ -194,9 +190,9 @@ static struct MemoryWriteAddress smashtv_writemem[] =
 	{ TOBYTE(0x00000000), TOBYTE(0x001fffff), wms_vram_w }, /* VRAM */
 	{ TOBYTE(0x01000000), TOBYTE(0x010fffff), MWA_BANK2 }, /* RAM */
 	{ TOBYTE(0x01400000), TOBYTE(0x0140ffff), wms_cmos_w }, /* CMOS RAM */
-/*	{ TOBYTE(0x0181f000), TOBYTE(0x0181ffff), paletteram_xRRRRRGGGGGBBBBB_word_w, 0, &wms_paletteram_size }, */
-/*	{ TOBYTE(0x01810000), TOBYTE(0x0181ffff), paletteram_xRRRRRGGGGGBBBBB_word_w, 0, &wms_paletteram_size }, */
-/*	{ TOBYTE(0x01800000), TOBYTE(0x0181ffff), paletteram_xRRRRRGGGGGBBBBB_word_w, 0, &wms_paletteram_size }, */
+/*	{ TOBYTE(0x0181f000), TOBYTE(0x0181ffff), paletteram_xRRRRRGGGGGBBBBB_word_w, 0 }, */
+/*	{ TOBYTE(0x01810000), TOBYTE(0x0181ffff), paletteram_xRRRRRGGGGGBBBBB_word_w, 0 }, */
+/*	{ TOBYTE(0x01800000), TOBYTE(0x0181ffff), paletteram_xRRRRRGGGGGBBBBB_word_w, 0 }, */
 	{ TOBYTE(0x01800000), TOBYTE(0x019fffff), MWA_BANK4 }, /* RAM */
 	{ TOBYTE(0x01a00000), TOBYTE(0x01a0009f), wms_dma_w },
 	{ TOBYTE(0x01a80000), TOBYTE(0x01a8009f), wms_dma_w },
@@ -237,7 +233,7 @@ static struct MemoryWriteAddress mk2_writemem[] =
 	{ TOBYTE(0x01400000), TOBYTE(0x0141ffff), wms_cmos_w }, /* ??? */
 //	{ TOBYTE(0x01480000), TOBYTE(0x0148001f), MWA_NOP },  /* w from ffa4d3a0 (mk2) */
 //	{ TOBYTE(0x014fffe0), TOBYTE(0x014fffff), MWA_NOP }, /* w from ff9daed0 (nbajam) */
-//	{ TOBYTE(0x01800000), TOBYTE(0x0181ffff), paletteram_xRRRRRGGGGGBBBBB_word_w, 0, &wms_paletteram_size },
+//	{ TOBYTE(0x01800000), TOBYTE(0x0181ffff), paletteram_xRRRRRGGGGGBBBBB_word_w, 0 },
 	{ TOBYTE(0x01800000), TOBYTE(0x019fffff), MWA_BANK4 }, /* RAM */
 	{ TOBYTE(0x01a80000), TOBYTE(0x01a800ff), wms_dma2_w },
 	{ TOBYTE(0x01b00000), TOBYTE(0x01b0001f), wms_unk1_w }, /* sysreg (mk2) */
@@ -1387,7 +1383,6 @@ static void hisave (void)
 
 void wms_stateload(void)
 {
-	int i;
 	void *f;
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_STATE,0)) != 0)
 	{
@@ -1398,11 +1393,6 @@ void wms_stateload(void)
 		//osd_fread(f,cpu_bankbase[4],wms_bank4_size);
 		osd_fread(f,wms_cmos_ram,0x8000);
 		osd_fread(f,cpu_bankbase[8],wms_gfx_rom_size);
-		osd_fread(f,paletteram,wms_paletteram_size);
-		for (i=0;i<wms_paletteram_size;i+=2)
-		{
-			paletteram_xRRRRRGGGGGBBBBB_word_w(i,READ_WORD(&paletteram[i]));
-		}
 		if (errorlog) fprintf(errorlog,"State loaded\n");
 		osd_fclose(f);
 	}
@@ -1420,7 +1410,6 @@ void wms_statesave(void)
 		//osd_fwrite(f,cpu_bankbase[4],wms_bank4_size);
 		osd_fwrite(f,wms_cmos_ram,0x8000);
 		osd_fwrite(f,cpu_bankbase[8],wms_gfx_rom_size);
-		osd_fwrite(f,paletteram,wms_paletteram_size);
 		if (errorlog) fprintf(errorlog,"State saved\n");
 		osd_fclose(f);
 	}
@@ -1438,6 +1427,91 @@ ROM_START( narc )
 	ROM_LOAD_EVEN( "u24",  0x80000, 0x20000, 0xaa0d3082 )  /* odd  */
 	ROM_LOAD_ODD ( "u41",  0xc0000, 0x20000, 0x3903191f )  /* even */
 	ROM_LOAD_EVEN( "u23",  0xc0000, 0x20000, 0x7a316582 )  /* odd  */
+
+	ROM_REGION(0x800000)      /* graphics (mapped as code) */
+	ROM_LOAD ( "u94",  0x000000, 0x10000, 0xca3194e4 )  /* even */
+	ROM_LOAD ( "u76",  0x200000, 0x10000, 0x1cd897f4 )  /* odd  */
+	ROM_LOAD ( "u93",  0x010000, 0x10000, 0x0ed7f7f5 )  /* even */
+	ROM_LOAD ( "u75",  0x210000, 0x10000, 0x78abfa01 )  /* odd  */
+	ROM_LOAD ( "u92",  0x020000, 0x10000, 0x40d2fc66 )  /* even */
+	ROM_LOAD ( "u74",  0x220000, 0x10000, 0x66d2a234 )  /* odd  */
+	ROM_LOAD ( "u91",  0x030000, 0x10000, 0xf39325e0 )  /* even */
+	ROM_LOAD ( "u73",  0x230000, 0x10000, 0xefa5cd4e )  /* odd  */
+	ROM_LOAD ( "u90",  0x040000, 0x10000, 0x0132aefa )  /* even */
+	ROM_LOAD ( "u72",  0x240000, 0x10000, 0x70638eb5 )  /* odd  */
+	ROM_LOAD ( "u89",  0x050000, 0x10000, 0xf7260c9e )  /* even */
+	ROM_LOAD ( "u71",  0x250000, 0x10000, 0x61226883 )  /* odd  */
+	ROM_LOAD ( "u88",  0x060000, 0x10000, 0xedc19f42 )  /* even */
+	ROM_LOAD ( "u70",  0x260000, 0x10000, 0xc808849f )  /* odd  */
+	ROM_LOAD ( "u87",  0x070000, 0x10000, 0xd9b42ff9 )  /* even */
+	ROM_LOAD ( "u69",  0x270000, 0x10000, 0xe7f9c34f )  /* odd  */
+	ROM_LOAD ( "u86",  0x080000, 0x10000, 0xaf7daad3 )  /* even */
+	ROM_LOAD ( "u68",  0x280000, 0x10000, 0x88a634d5 )  /* odd  */
+	ROM_LOAD ( "u85",  0x090000, 0x10000, 0x095fae6b )  /* even */
+	ROM_LOAD ( "u67",  0x290000, 0x10000, 0x4ab8b69e )  /* odd  */
+	ROM_LOAD ( "u84",  0x0a0000, 0x10000, 0x3fdf2057 )  /* even */
+	ROM_LOAD ( "u66",  0x2a0000, 0x10000, 0xe1da4b25 )  /* odd  */
+	ROM_LOAD ( "u83",  0x0b0000, 0x10000, 0xf2d27c9f )  /* even */
+	ROM_LOAD ( "u65",  0x2b0000, 0x10000, 0x6df0d125 )  /* odd  */
+	ROM_LOAD ( "u82",  0x0c0000, 0x10000, 0x962ce47c )  /* even */
+	ROM_LOAD ( "u64",  0x2c0000, 0x10000, 0xabab1b16 )  /* odd  */
+	ROM_LOAD ( "u81",  0x0d0000, 0x10000, 0x00fe59ec )  /* even */
+	ROM_LOAD ( "u63",  0x2d0000, 0x10000, 0x80602f31 )  /* odd  */
+	ROM_LOAD ( "u80",  0x0e0000, 0x10000, 0x147ba8e9 )  /* even */
+	ROM_LOAD ( "u62",  0x2e0000, 0x10000, 0xc2a476d1 )  /* odd  */
+
+	ROM_LOAD ( "u58",  0x400000, 0x10000, 0x8a7501e3 )  /* even */
+	ROM_LOAD ( "u40",  0x600000, 0x10000, 0x7fcaebc7 )  /* odd  */
+	ROM_LOAD ( "u57",  0x410000, 0x10000, 0xa504735f )  /* even */
+	ROM_LOAD ( "u39",  0x610000, 0x10000, 0x7db5cf52 )  /* odd  */
+	ROM_LOAD ( "u56",  0x420000, 0x10000, 0x55f8cca7 )  /* even */
+	ROM_LOAD ( "u38",  0x620000, 0x10000, 0x3f9f3ef7 )  /* odd  */
+	ROM_LOAD ( "u55",  0x430000, 0x10000, 0xd3c932c1 )  /* even */
+	ROM_LOAD ( "u37",  0x630000, 0x10000, 0xed81826c )  /* odd  */
+	ROM_LOAD ( "u54",  0x440000, 0x10000, 0xc7f4134b )  /* even */
+	ROM_LOAD ( "u36",  0x640000, 0x10000, 0xe5d855c0 )  /* odd  */
+	ROM_LOAD ( "u53",  0x450000, 0x10000, 0x6be4da56 )  /* even */
+	ROM_LOAD ( "u35",  0x650000, 0x10000, 0x3a7b1329 )  /* odd  */
+	ROM_LOAD ( "u52",  0x460000, 0x10000, 0x1ea36a4a )  /* even */
+	ROM_LOAD ( "u34",  0x660000, 0x10000, 0xfe982b0e )  /* odd  */
+	ROM_LOAD ( "u51",  0x470000, 0x10000, 0x9d4b0324 )  /* even */
+	ROM_LOAD ( "u33",  0x670000, 0x10000, 0x6bc7eb0f )  /* odd  */
+	ROM_LOAD ( "u50",  0x480000, 0x10000, 0x6f9f0c26 )  /* even */
+	ROM_LOAD ( "u32",  0x680000, 0x10000, 0x5875a6d3 )  /* odd  */
+	ROM_LOAD ( "u49",  0x490000, 0x10000, 0x80386fce )  /* even */
+	ROM_LOAD ( "u31",  0x690000, 0x10000, 0x2fa4b8e5 )  /* odd  */
+	ROM_LOAD ( "u48",  0x4a0000, 0x10000, 0x05c16185 )  /* even */
+	ROM_LOAD ( "u30",  0x6a0000, 0x10000, 0x7e4bb8ee )  /* odd  */
+	ROM_LOAD ( "u47",  0x4b0000, 0x10000, 0x4c0151f1 )  /* even */
+	ROM_LOAD ( "u29",  0x6b0000, 0x10000, 0x45136fd9 )  /* odd  */
+	ROM_LOAD ( "u46",  0x4c0000, 0x10000, 0x5670bfcb )  /* even */
+	ROM_LOAD ( "u28",  0x6c0000, 0x10000, 0xd6cdac24 )  /* odd  */
+	ROM_LOAD ( "u45",  0x4d0000, 0x10000, 0x27f10d98 )  /* even */
+	ROM_LOAD ( "u27",  0x6d0000, 0x10000, 0x4d33bbec )  /* odd  */
+	ROM_LOAD ( "u44",  0x4e0000, 0x10000, 0x93b8eaa4 )  /* even */
+	ROM_LOAD ( "u26",  0x6e0000, 0x10000, 0xcb19f784 )  /* odd  */
+
+	ROM_REGION(0x30000)     /* sound CPU */
+	ROM_LOAD ( "u4-snd", 0x10000, 0x10000, 0x450a591a )
+	ROM_LOAD ( "u5-snd", 0x20000, 0x10000, 0xe551e5e3 )
+
+	ROM_REGION(0x50000)     /* slave sound CPU */
+	ROM_LOAD ( "u35-snd", 0x10000, 0x10000, 0x81295892 )
+	ROM_LOAD ( "u36-snd", 0x20000, 0x10000, 0x16cdbb13 )
+	ROM_LOAD ( "u37-snd", 0x30000, 0x10000, 0x29dbeffd )
+	ROM_LOAD ( "u38-snd", 0x40000, 0x10000, 0x09b03b80 )
+ROM_END
+
+ROM_START( narc3 )
+	ROM_REGION(0x100000)     /*34010 code */
+	ROM_LOAD_ODD ( "narcrev3.u78",  0x80000, 0x10000, 0x388581b0 )  /* even */
+	ROM_LOAD_EVEN( "narcrev3.u60",  0x80000, 0x10000, 0xf273bc04 )  /* odd  */
+	ROM_LOAD_ODD ( "narcrev3.u77",  0xa0000, 0x10000, 0xbdafaccc )  /* even */
+	ROM_LOAD_EVEN( "narcrev3.u59",  0xa0000, 0x10000, 0x96314a99 )  /* odd  */
+	ROM_LOAD_ODD ( "narcrev3.u42",  0xc0000, 0x10000, 0x56aebc81 )  /* even */
+	ROM_LOAD_EVEN( "narcrev3.u24",  0xc0000, 0x10000, 0x11d7e143 )  /* odd  */
+	ROM_LOAD_ODD ( "narcrev3.u41",  0xe0000, 0x10000, 0x6142fab7 )  /* even */
+	ROM_LOAD_EVEN( "narcrev3.u23",  0xe0000, 0x10000, 0x98cdd178 )  /* odd  */
 
 	ROM_REGION(0x800000)      /* graphics (mapped as code) */
 	ROM_LOAD ( "u94",  0x000000, 0x10000, 0xca3194e4 )  /* even */
@@ -2110,525 +2184,74 @@ ROM_END
 
 #define BASE_CREDITS  "Alex Pasadyn\nZsolt Vasvari\nKurt Mahan (hardware info)"
 
-struct GameDriver narc_driver =
-{
-	__FILE__,
-	0,
-	"narc",
-	"Narc (rev 7.00)",
-	"1988",
-	"Williams",
-	BASE_CREDITS,
-	GAME_REQUIRES_16BIT,
-	&narc_machine_driver,
-	narc_driver_init,
-
-	narc_rom,
-	wms_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	narc_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver trog_driver =
-{
-	__FILE__,
-	0,
-	"trog",
-	"Trog (rev LA4 03/11/91)",
-	"1990",
-	"Midway",
-	BASE_CREDITS,
-	GAME_REQUIRES_16BIT,
-	&trog_machine_driver,
-	trog_driver_init,
-
-	trog_rom,
-	wms_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	trog_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver trog3_driver =
-{
-	__FILE__,
-	&trog_driver,
-	"trog3",
-	"Trog (rev LA3 02/14/91)",
-	"1990",
-	"Midway",
-	BASE_CREDITS,
-	GAME_REQUIRES_16BIT,
-	&trog_machine_driver,
-	trog3_driver_init,
-
-	trog3_rom,
-	wms_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	trog_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver trogp_driver =
-{
-	__FILE__,
-	&trog_driver,
-	"trogp",
-	"Trog (prototype, rev 4.00 07/27/90)",
-	"1990",
-	"Midway",
-	BASE_CREDITS,
-	GAME_REQUIRES_16BIT,
-	&trog_machine_driver,
-	trogp_driver_init,
-
-	trogp_rom,
-	wms_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	trog_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver smashtv_driver =
-{
-	__FILE__,
-	0,
-	"smashtv",
-	"Smash T.V. (rev 8.00)",
-	"1990",
-	"Williams",
-	BASE_CREDITS,
-	GAME_REQUIRES_16BIT,
-	&smashtv_machine_driver,
-	smashtv_driver_init,
-
-	smashtv_rom,
-	wms_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	smashtv_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver smashtv6_driver =
-{
-	__FILE__,
-	&smashtv_driver,
-	"smashtv6",
-	"Smash T.V. (rev 6.00)",
-	"1990",
-	"Williams",
-	BASE_CREDITS,
-	GAME_REQUIRES_16BIT,
-	&smashtv_machine_driver,
-	smashtv_driver_init,
-
-	smashtv6_rom,
-	wms_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	smashtv_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver smashtv5_driver =
-{
-	__FILE__,
-	&smashtv_driver,
-	"smashtv5",
-	"Smash T.V. (rev 5.00)",
-	"1990",
-	"Williams",
-	BASE_CREDITS,
-	GAME_REQUIRES_16BIT,
-	&smashtv_machine_driver,
-	smashtv_driver_init,
-
-	smashtv5_rom,
-	wms_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	smashtv_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver smashtv4_driver =
-{
-	__FILE__,
-	&smashtv_driver,
-	"smashtv4",
-	"Smash T.V. (rev 4.00)",
-	"1990",
-	"Williams",
-	BASE_CREDITS,
-	GAME_REQUIRES_16BIT,
-	&smashtv_machine_driver,
-	smashtv4_driver_init,
-
-	smashtv4_rom,
-	wms_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	smashtv_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver hiimpact_driver =
-{
-	__FILE__,
-	0,
-	"hiimpact",
-	"High Impact Football (rev LA3 12/27/90)",
-	"1990",
-	"Williams",
-	BASE_CREDITS,
-	GAME_REQUIRES_16BIT,
-	&smashtv_machine_driver,
-	hiimpact_driver_init,
-
-	hiimpact_rom,
-	wms_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	trog_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver shimpact_driver =
-{
-	__FILE__,
-	0,
-	"shimpact",
-	"Super High Impact (rev LA1 09/30/91)",
-	"1991",
-	"Midway",
-	BASE_CREDITS,
-	GAME_REQUIRES_16BIT | GAME_NOT_WORKING,
-	&smashtv_machine_driver,
-	shimpact_driver_init,
-
-	shimpact_rom,
-	wms_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	trog_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver strkforc_driver =
-{
-	__FILE__,
-	0,
-	"strkforc",
-	"Strike Force (rev 1 02/25/91)",
-	"1991",
-	"Midway",
-	BASE_CREDITS,
-	GAME_REQUIRES_16BIT,
-	&trog_machine_driver,
-	strkforc_driver_init,
-
-	strkforc_rom,
-	wms_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	strkforc_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver mk_driver =
-{
-	__FILE__,
-	0,
-	"mk",
-	"Mortal Kombat (rev 3.0 08/31/92)",
-	"1992",
-	"Midway",
-	BASE_CREDITS,
-	GAME_REQUIRES_16BIT,
-	&mk_machine_driver,
-	mk_driver_init,
-
-	mk_rom,
-	wms_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	mk_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-struct GameDriver mkla1_driver =
-{
-	__FILE__,
-	&mk_driver,
-	"mkla1",
-	"Mortal Kombat (rev 1.0 08/08/92)",
-	"1992",
-	"Midway",
-	BASE_CREDITS,
-	GAME_REQUIRES_16BIT,
-	&mk_machine_driver,
-	mkla1_driver_init,
-
-	mkla1_rom,
-	wms_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	mk_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-struct GameDriver mkla2_driver =
-{
-	__FILE__,
-	&mk_driver,
-	"mkla2",
-	"Mortal Kombat (rev 2.0 08/18/92)",
-	"1992",
-	"Midway",
-	BASE_CREDITS,
-	GAME_REQUIRES_16BIT,
-	&mk_machine_driver,
-	mkla2_driver_init,
-
-	mkla2_rom,
-	wms_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	mk_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver term2_driver =
-{
-	__FILE__,
-	0,
-	"term2",
-	"Terminator 2 - Judgment Day (rev LA3 03/27/92)",
-	"1991",
-	"Midway",
-	BASE_CREDITS,
-	GAME_REQUIRES_16BIT,
-	&term2_machine_driver,
-	term2_driver_init,
-
-	term2_rom,
-	wms_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	term2_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver totcarn_driver =
-{
-	__FILE__,
-	0,
-	"totcarn",
-	"Total Carnage (rev LA1 03/10/92)",
-	"1992",
-	"Midway",
-	BASE_CREDITS,
-	GAME_REQUIRES_16BIT,
-	&mk_machine_driver,
-	totcarn_driver_init,
-
-	totcarn_rom,
-	wms_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	totcarn_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver totcarnp_driver =
-{
-	__FILE__,
-	&totcarn_driver,
-	"totcarnp",
-	"Total Carnage (prototype, rev 1.0 01/25/92)",
-	"1992",
-	"Midway",
-	BASE_CREDITS,
-	GAME_REQUIRES_16BIT,
-	&mk_machine_driver,
-	totcarnp_driver_init,
-
-	totcarnp_rom,
-	wms_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	totcarn_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver mk2_driver =
-{
-	__FILE__,
-	0,
-	"mk2",
-	"Mortal Kombat II (rev L3.1)",
-	"1993",
-	"Midway",
-	BASE_CREDITS,
-	GAME_REQUIRES_16BIT | GAME_NOT_WORKING,
-	&mk2_machine_driver,
-	mk2_driver_init,
-
-	mk2_rom,
-	wms_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	mk2_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver mk2r32_driver =
-{
-	__FILE__,
-	&mk2_driver,
-	"mk2r32",
-	"Mortal Kombat II (rev L3.2 (European))",
-	"1993",
-	"Midway",
-	BASE_CREDITS,
-	GAME_REQUIRES_16BIT | GAME_NOT_WORKING,
-	&mk2_machine_driver,
-	mk2_driver_init,
-
-	mk2r32_rom,
-	wms_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	mk2_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver mk2r14_driver =
-{
-	__FILE__,
-	&mk2_driver,
-	"mk2r14",
-	"Mortal Kombat II (rev L1.4)",
-	"1993",
-	"Midway",
-	BASE_CREDITS,
-	GAME_REQUIRES_16BIT | GAME_NOT_WORKING,
-	&mk2_machine_driver,
-	mk2r14_driver_init,
-
-	mk2r14_rom,
-	wms_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	mk2_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver nbajam_driver =
-{
-	__FILE__,
-	0,
-	"nbajam",
-	"NBA Jam",
-	"1993",
-	"Midway",
-	BASE_CREDITS,
-	GAME_REQUIRES_16BIT | GAME_NOT_WORKING,
-	&nbajam_machine_driver,
-	nbajam_driver_init,
-
-	nbajam_rom,
-	wms_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	nbajam_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
+#define BASE_DRIVER(game, machine, init, inputs, year, company, fullname, clone, flags) \
+	struct GameDriver game##_driver =				\
+	{												\
+		__FILE__,									\
+		clone,										\
+		#game,										\
+		fullname,									\
+		#year,										\
+		company,									\
+		BASE_CREDITS,								\
+		GAME_REQUIRES_16BIT | (flags),				\
+		&machine##_machine_driver,					\
+		init##_driver_init,							\
+													\
+		game##_rom,									\
+		wms_decode, 0,								\
+		0,											\
+		0,	/* sound_prom */						\
+													\
+		inputs##_input_ports,						\
+													\
+		0, 0, 0,   /* colors, palette, colortable */\
+		ORIENTATION_DEFAULT,						\
+		hiload, hisave								\
+	};
+
+#define GAME_DRIVER(game, machine, init, inputs, year, company, fullname) \
+		BASE_DRIVER(game, machine, init, inputs, year, company, fullname, 0, 0)
+
+#define BROKEN_DRIVER(game, machine, init, inputs, year, company, fullname) \
+		BASE_DRIVER(game, machine, init, inputs, year, company, fullname, 0, GAME_NOT_WORKING)
+
+#define CLONE_DRIVER(game, machine, init, inputs, year, company, fullname, clone) \
+		BASE_DRIVER(game, machine, init, inputs, year, company, fullname, &clone##_driver, 0)
+
+#define BROKEN_CLONE(game, machine, init, inputs, year, company, fullname, clone) \
+		BASE_DRIVER(game, machine, init, inputs, year, company, fullname, &clone##_driver, GAME_NOT_WORKING)
+
+
+GAME_DRIVER  (narc,     narc,    narc,     narc,     1988, "Williams", "Narc (rev 7.00)")
+CLONE_DRIVER (narc3,    narc,    narc,     narc,     1988, "Williams", "Narc (rev 3.00)", narc)
+
+GAME_DRIVER  (smashtv,  smashtv, smashtv,  smashtv,  1990, "Williams", "Smash T.V. (rev 8.00)")
+CLONE_DRIVER (smashtv6, smashtv, smashtv,  smashtv,  1990, "Williams", "Smash T.V. (rev 6.00)", smashtv)
+CLONE_DRIVER (smashtv5, smashtv, smashtv,  smashtv,  1990, "Williams", "Smash T.V. (rev 5.00)", smashtv)
+CLONE_DRIVER (smashtv4, smashtv, smashtv4, smashtv,  1990, "Williams", "Smash T.V. (rev 4.00)", smashtv)
+
+GAME_DRIVER  (hiimpact, smashtv, hiimpact, trog,     1990, "Williams", "High Impact Football (rev LA3 12/27/90)")
+
+BROKEN_DRIVER(shimpact, smashtv, shimpact, trog,     1991, "Williams", "Super High Impact (rev LA1 09/30/91)")
+
+GAME_DRIVER  (trog,     trog,    trog,     trog,     1990, "Midway",   "Trog (rev LA4 03/11/91)")
+CLONE_DRIVER (trog3,    trog,    trog3,    trog,     1990, "Midway",   "Trog (rev LA3 02/14/91)", trog)
+CLONE_DRIVER (trogp,    trog,    trogp,    trog,     1990, "Midway",   "Trog (prototype, rev 4.00 07/27/90)", trog)
+
+GAME_DRIVER  (strkforc, trog,    strkforc, strkforc, 1991, "Midway",   "Strike Force (rev 1 02/25/91)")
+
+GAME_DRIVER  (mk,       mk,      mk,       mk,       1992, "Midway",   "Mortal Kombat (rev 3.0 08/31/92)")
+CLONE_DRIVER (mkla1,    mk,      mkla1,    mk,       1992, "Midway",   "Mortal Kombat (rev 1.0 08/08/92)", mk)
+CLONE_DRIVER (mkla2,    mk,      mkla2,    mk,       1992, "Midway",   "Mortal Kombat (rev 2.0 08/18/92)", mk)
+
+GAME_DRIVER  (term2,    term2,   term2,    term2,    1991, "Midway",   "Terminator 2 - Judgment Day (rev LA3 03/27/92)")
+
+GAME_DRIVER  (totcarn,  mk,      totcarn,  totcarn,  1992, "Midway",   "Total Carnage (rev LA1 03/10/92)")
+CLONE_DRIVER (totcarnp, mk,      totcarnp, totcarn,  1992, "Midway",   "Total Carnage (prototype, rev 1.0 01/25/92)", totcarn)
+
+BROKEN_DRIVER(mk2,      mk2,     mk2,      mk2,      1993, "Midway",   "Mortal Kombat II (rev L3.1)")
+BROKEN_CLONE (mk2r32,   mk2,     mk2,      mk2,      1993, "Midway",   "Mortal Kombat II (rev L3.2 (European))", mk2)
+BROKEN_CLONE (mk2r14,   mk2,     mk2r14,   mk2,      1993, "Midway",   "Mortal Kombat II (rev L1.4)", mk2)
+
+BROKEN_DRIVER(nbajam,   nbajam,  nbajam,   nbajam,   1993, "Midway",   "NBA Jam")

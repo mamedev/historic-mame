@@ -982,4 +982,3 @@ struct GameDriver karatevs_driver =
 
 	kchampvs_hiload, kchampvs_hisave
 };
-

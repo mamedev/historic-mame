@@ -213,13 +213,13 @@ extern int namcos2_68k_protect;
 #define NAMCOS2_C148_VBLANKIRQ  7
 
 
-int  namcos2_68k_master_C148[32];
+extern int  namcos2_68k_master_C148[32];
 void namcos2_68k_master_C148_w( int offset, int data );
 int  namcos2_68k_master_C148_r( int offset );
 int  namcos2_68k_master_vblank( void );
 void namcos2_68k_master_posirq( int moog );
 
-int  namcos2_68k_slave_C148[32];
+extern int  namcos2_68k_slave_C148[32];
 void namcos2_68k_slave_C148_w( int offset, int data );
 int  namcos2_68k_slave_C148_r( int offset );
 int  namcos2_68k_slave_vblank(void);
@@ -266,7 +266,7 @@ extern unsigned char namcos2_68k_roz_ctrl[];
 
 void namcos2_68k_roz_ram_w( int offset, int data );
 int  namcos2_68k_roz_ram_r( int offset );
-int  namcos2_68k_roz_ram_size;
+extern int  namcos2_68k_roz_ram_size;
 extern unsigned char *namcos2_68k_roz_ram;
 
 

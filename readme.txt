@@ -80,13 +80,22 @@ VII. Derivative Works
    discouraged: MAME is a project continuously evolving, and you should, in
    your best interest, submit your contributions to the development team, so
    that they are integrated in the main distribution.
-   There are a certain number of drivers in the source which are disabled in
-   the official distribution. Enabling them is NOT considered a derivative
-   work, and distribution of executables with those drivers enabled is strictly
-   forbidden.
+   There are some trivial modifications to the source code that anybody could
+   do, but go against the spirit of the project. They are NOT considered a
+   derivative work, and distribution of executables with them applied is
+   strictly forbidden. Such changes include, but are not limited to:
+   - enabling games that are disabled
+   - changing the ROM verification commands so that they report missing games
+   - removing the startup information screens
    If you make a derivative work, you are not allowed to call it MAME. You must
-   use a different name to make clear that it isn't an official distribution
-   from the MAME team.
+   use a different name to make clear that it is a MAME derivative, but it isn't
+   an official distribution from the MAME team. Simply calling it MAME followed
+   or preceded by a punctuation (e.g. MAME+) will not be enough. The name must
+   be clearly distinct, e.g. REMAME. The version number must also match the one
+   of the official MAME you derived your version from. You are not allowed to
+   change the version number or add substeps.
+   In any case, if the official MAME project coordinator asks you to stop
+   distributing a derivative work, you must comply.
 
 
 How to Contact Us

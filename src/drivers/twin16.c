@@ -732,7 +732,7 @@ ROM_END
 
 ROM_START( cuebrick )
 	ROM_REGION( 0x10000 ) /* Z80 code (sound CPU) */
-	ROM_LOAD( "903-d03.10a",	0x00000,  0x4000, 0x0a404411 )
+	ROM_LOAD( "903-d03.10a",	0x00000,  0x8000, 0x455e855a )
 
 	ROM_REGION( 0x20000 ) // missing?
 	ROM_REGION( 0x20000 ) // missing?
@@ -1588,7 +1588,7 @@ struct GameDriver cuebrick_driver =  {
 	"1989",
 	"Konami",
 	CREDITS,
-	GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
+	GAME_REQUIRES_16BIT,
 	&machine_driver,
 	0,
 	cuebrick_rom,
