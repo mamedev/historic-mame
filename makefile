@@ -629,8 +629,9 @@ DRVLIBS = obj/pacman.a obj/galaxian.a obj/scramble.a \
          obj/phoenix.a obj/namco.a obj/univers.a obj/nintendo.a \
          obj/midw8080.a obj/midwz80.a obj/meadows.a obj/astrocde.a \
          obj/mcr.a obj/irem.a obj/gottlieb.a obj/oldtaito.a \
-         obj/qixtaito.a obj/taito.a obj/taito2.a obj/williams.a \
-         obj/capcom.a obj/capbowl.a obj/gremlin.a obj/vicdual.a \
+         obj/qixtaito.a obj/taito.a obj/taito2.a obj/toaplan.a \
+		 obj/williams.a obj/gremlin.a obj/vicdual.a \
+         obj/capcom.a obj/capbowl.a obj/leland.a \
          obj/segav.a obj/segar.a obj/zaxxon.a obj/system1.a \
          obj/sega.a obj/system16.a obj/btime.a obj/dataeast.a obj/dec8.a \
          obj/dec0.a obj/tehkan.a obj/konami.a obj/nemesis.a \
@@ -641,7 +642,7 @@ DRVLIBS = obj/pacman.a obj/galaxian.a obj/scramble.a \
          obj/berzerk.a obj/gameplan.a obj/stratvox.a obj/zaccaria.a \
          obj/upl.a obj/tms.a obj/cinemar.a obj/cinemav.a obj/thepit.a \
          obj/valadon.a obj/seibu.a obj/jaleco.a obj/visco.a \
-         obj/toaplan.a obj/leland.a obj/tad.a obj/orca.a obj/other.a \
+         obj/tad.a obj/orca.a obj/other.a \
 
 NEOLIBS = obj/neogeo.a \
 
@@ -832,13 +833,18 @@ obj/taito2.a: \
          obj/machine/rainbow.o obj/drivers/rainbow.o \
          obj/machine/arkanoid.o obj/vidhrdw/arkanoid.o obj/drivers/arkanoid.o \
          obj/vidhrdw/superqix.o obj/drivers/superqix.o \
-         obj/machine/twincobr.o obj/vidhrdw/twincobr.o obj/drivers/twincobr.o \
          obj/machine/tnzs.o obj/vidhrdw/tnzs.o obj/drivers/tnzs.o \
-         obj/machine/slapfght.o obj/vidhrdw/slapfght.o obj/drivers/slapfght.o \
          obj/vidhrdw/superman.o obj/drivers/superman.o obj/machine/cchip.o \
          obj/drivers/lkage.o obj/vidhrdw/lkage.o \
          obj/vidhrdw/taitof2.o obj/drivers/taitof2.o \
          obj/vidhrdw/ssi.o obj/drivers/ssi.o \
+
+obj/toaplan.a: \
+         obj/machine/slapfght.o obj/vidhrdw/slapfght.o obj/drivers/slapfght.o \
+         obj/machine/twincobr.o obj/vidhrdw/twincobr.o \
+         obj/drivers/twincobr.o obj/drivers/wardner.o \
+         obj/vidhrdw/toaplan1.o obj/drivers/zerowing.o \
+         obj/vidhrdw/snowbros.o obj/drivers/snowbros.o \
 
 obj/williams.a: \
          obj/machine/williams.o obj/vidhrdw/williams.o obj/drivers/williams.o \
@@ -1113,10 +1119,6 @@ obj/jaleco.a: \
 
 obj/visco.a: \
          obj/vidhrdw/aerofgt.o obj/drivers/aerofgt.o \
-
-obj/toaplan.a: \
-         obj/vidhrdw/toaplan1.o obj/drivers/zerowing.o \
-         obj/vidhrdw/snowbros.o obj/drivers/snowbros.o \
 
 obj/leland.a: \
          obj/vidhrdw/leland.o obj/drivers/leland.o \

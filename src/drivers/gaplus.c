@@ -501,7 +501,7 @@ static struct namco_interface namco_interface =
 static struct Samplesinterface samples_interface =
 {
 	1,	/* one channel */
-	100	/* volume */
+	80	/* volume */
 };
 
 static const char *gaplus_sample_names[] =

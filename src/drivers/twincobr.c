@@ -4,6 +4,11 @@ Supported games:
 	Twin Cobra (USA license)
 	Kyukyoku Tiger (Japan license)
 
+	Flying Shark (World)
+	Sky Shark (USA license)
+	Hishou Zame (Flying Shark Japan license)
+	Flying Shark bootleg (USA license)
+
 Difference between Twin Cobra and Kyukyoko Tiger:
 	T.C. supports two simultaneous players.
 	K.T. supports two players, but only one at a time.
@@ -24,21 +29,25 @@ Difference between Twin Cobra and Kyukyoko Tiger:
 	K.T. Due to this difference in continue sequence, Kyukyoko Tiger is MUCH
 		 harder, challenging, and nearly impossible to complete !
 
-68000:
+68000: Main CPU
 
-00000-2ffff ROM
+00000-1FFFF ROM for Flying Shark
+00000-2FFFF ROM for Twin Cobra
 30000-33fff RAM shared with TMS320C10NL-14 protection microcontroller
-40000-40fff RAM sprite character display properties (co-ordinates, character, color - etc)
+40000-40fff RAM sprite display properties (co-ordinates, character, color - etc)
 50000-50dff Palette RAM
 7a000-7abff RAM shared with Z80; 16-bit on this side, 8-bit on Z80 side
 
 read:
-78000		Player 1 Joystick and Buttons input port  (Flying shark)
-78002		Player 2 Joystick and Buttons input port  (Flying shark)
+78001		DSW1 (Flying Shark)
+78003		DSW2 (Flying Shark)
 
-78004		Player 1 Joystick and Buttons input port  (Twin Cobra)
-78006		Player 2 Joystick and Buttons input port  (Twin Cobra)
-78009		bit 7 vblank
+78005		Player 1 Joystick and Buttons input port
+78007		Player 2 Joystick and Buttons input port
+78009		bit 7 vblank, coin and control/service inputs (Flying shark)
+				Flying Shark implements Tilt as 'freeze system' and also has
+				a reset button, but its not implelemted here (not needed)
+
 7e000-7e005 read data from video RAM (see below)
 
 write:
@@ -56,7 +65,10 @@ write:
 74004-74005 offset in character page to write character (7e004)
 
 76000-76003 as above but for another layer maybe ??? (Not used here)
-7800a		see 7800c, except this activates INT line for Flying shark.
+7800a		This activates INT line for Flying shark. (Not via 7800C)
+			00		Activate INTerrupt line to the TMS320C10 DSP.
+			01		Inhibit  INTerrupt line to the TMS320C10 DSP.
+
 7800c		Control register (Byte write access).
 			bits 7-4 always 0
 			bits 3-1 select the control signal to drive.
@@ -72,8 +84,8 @@ write:
 			09		Switch to background layer ram bank 1
 			0A		Switch to foreground layer rom bank 0
 			0B		Switch to foreground layer rom bank 1
-			0C		Activate INTerrupt line to the TMS320C10 DSP.
-			0D		Inhibit  INTerrupt line to the TMS320C10 DSP.
+			0C		Activate INTerrupt line to the TMS320C10 DSP  (Twin Cobra)
+			0D		Inhibit  INTerrupt line to the TMS320C10 DSP  (Twin Cobra)
 			0E		Turn screen off
 			0F		Turn screen on
 
@@ -81,26 +93,43 @@ write:
 7e002-7e003 data to write in bg video RAM (72004)
 7e004-7e005 data to write in fg video RAM (74004)
 
-Z80:
+Z80: Sound CPU
 0000-7fff ROM
 8000-87ff shared with 68000; 8-bit on this side, 16-bit on 68000 side
 
 in:
 00		  YM3812 status
-10		  Coin inputs and control/service inputs
-40		  DSW1
-50		  DSW2
+10		  Coin inputs and control/service inputs (Twin Cobra)
+40		  DSW1 (Twin Cobra)
+50		  DSW2 (Twin Cobra)
 
 out:
 00		  YM3812 control
 01		  YM3812 data
-20		  ????
-
+20		  Coin counters / Coin lockouts
 
 TMS320C10 DSP: Harvard type architecture. RAM and ROM on seperate data buses.
 0000-07ff ROM (words)
 0000-0090 Internal RAM (words).	Moved to 8000-8120 for MAME compatibility.
 								View this memory in the debugger at 4000h
+
+in:
+01		  data read from addressed 68K address space (Main RAM/Sprite RAM)
+
+out:
+00		  address of 68K to read/write to
+01		  data to write to addressed 68K address space (Main RAM/Sprite RAM)
+03		  bit 15 goes to BIO line of TMS320C10. BIO is a polled input line.
+
+
+MCUs used with this hardware: (TMS320C10 in custom Toaplan/Taito disguise)
+
+Twin Cobra					Sky Shark					Wardner
+D70016U						D70012U  					D70012U
+GXC-04						GXC-02						GXC-02
+MCU (delta) 74000			MCU 71400					MCU (delta) 71900
+
+
 
 68K writes the following to $30000 to tell DSP to do the following:
 Twin  Kyukyoku
@@ -116,47 +145,72 @@ Cobra Tiger
 0A		04	 read hero position and send enemy to it ?		from 68K PC:23B58
 
 03		0A	\
-09		03	 \ These functions within the DSPs never seem to be called ????
+09		03	 \ These functions within the DSP never seem to be called ????
 0B		05	 /
 0C		06	/
+
+68K writes the following to $30004 to tell DSP to do the following:
+Flying	Hishou
+Shark	Zame
+00		00	 do nothing
+03		0B	 Write sprite to sprite RAM
+05		01	 Get angle
+06		02	 Rotate towards direction
+09		05	 Check collision between 2 spheres!??
+0A		06	 Polar coordinates add
+0B		07	 run self test, and report DSP ROM checksum
+
+01		09	\
+02		0A	 \
+04		08	  > These functions within the DSP never seem to be called ????
+07		03	 /
+08		04	/
 *****************************************************************************/
+
+
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/M68000/M68000.h"
 
 /**************** Video stuff ******************/
-int twincobr_60000_r(int offset);
-void twincobr_60000_w(int offset,int data);
-void twincobr_70004_w(int offset,int data);
-int twincobr_7e000_r(int offset);
-void twincobr_7e000_w(int offset,int data);
-void twincobr_72004_w(int offset,int data);
-int twincobr_7e002_r(int offset);
-void twincobr_7e002_w(int offset,int data);
-void twincobr_74004_w(int offset,int data);
-int twincobr_7e004_r(int offset);
-void twincobr_7e004_w(int offset,int data);
-void twincobr_76004_w(int offset,int data);
+int  twincobr_crtc_r(int offset);
+void twincobr_crtc_w(int offset,int data);
+
 void twincobr_txscroll_w(int offset,int data);
 void twincobr_bgscroll_w(int offset,int data);
 void twincobr_fgscroll_w(int offset,int data);
-int twincobr_vh_start(void);
+void twincobr_exscroll_w(int offset,int data);
+void twincobr_txoffs_w(int offset,int data);
+void twincobr_bgoffs_w(int offset,int data);
+void twincobr_fgoffs_w(int offset,int data);
+int  twincobr_txram_r(int offset);
+int  twincobr_bgram_r(int offset);
+int  twincobr_fgram_r(int offset);
+void twincobr_txram_w(int offset,int data);
+void twincobr_bgram_w(int offset,int data);
+void twincobr_fgram_w(int offset,int data);
+
+int  twincobr_vh_start(void);
 void twincobr_vh_stop(void);
 void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
+
+
 /**************** Machine stuff ******************/
-int twincobr_dsp_in(int offset);
+void fsharkbt_reset_8741_mcu(void);
+int  fsharkbt_dsp_in(int offset);
+void fshark_coin_dsp_w(int offset,int data);
+int  twincobr_dsp_in(int offset);
 void twincobr_dsp_out(int fnction,int data);
-int twincobr_68k_dsp_r(int offset);
+int  twincobr_68k_dsp_r(int offset);
 void twincobr_68k_dsp_w(int offset,int data);
-int twincobr_7800c_r(int offset);
+int  twincobr_7800c_r(int offset);
 void twincobr_7800c_w(int offset,int data);
-int twincobr_sharedram_r(int offset);
+int  twincobr_sharedram_r(int offset);
 void twincobr_sharedram_w(int offset,int data);
 
 extern unsigned char *twincobr_68k_dsp_ram;
-extern unsigned char *twincobr_7800c;
 extern unsigned char *twincobr_sharedram;
 extern int intenable;
 
@@ -164,7 +218,22 @@ extern int intenable;
 
 int twincobr_input_r(int offset)
 {
-	return readinputport(1 + offset / 2);
+	return readinputport(1 + (offset / 2));
+}
+
+int fshark_DSW_input_r(int offset)
+{
+	return readinputport(4 + (offset / 2));
+}
+
+int vblank_fshark_input_r(int offset)
+{
+	/* VBlank for both Twin Cobra and Flying Shark. */
+	/* Also coin, start and system switches for Flying Shark */
+	int read_two_ports = 0;
+	read_two_ports = readinputport(0);
+	read_two_ports |= readinputport(3);
+	return read_two_ports;
 }
 
 int twincobr_interrupt(void)
@@ -182,16 +251,15 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x030000, 0x033fff, twincobr_68k_dsp_r, &twincobr_68k_dsp_ram },	/* 68K and DSP shared RAM */
 	{ 0x040000, 0x040fff, MRA_BANK1 },				/* sprite ram data */
 	{ 0x050000, 0x050dff, paletteram_word_r },
-	{ 0x060000, 0x060003, twincobr_60000_r },
-/*	{ 0x078000, 0x078003, twincobr_input_r }, */	/* Flying Shark - fshark */
-	{ 0x078004, 0x078007, twincobr_input_r },
-	{ 0x078008, 0x07800b, input_port_0_r }, 		/* vblank??? */
-	{ 0x07800c, 0x07800f, twincobr_7800c_r, &twincobr_7800c },
+	{ 0x078000, 0x078003, fshark_DSW_input_r },		/* Flying Shark - DSW1 & 2 */
+	{ 0x078004, 0x078007, twincobr_input_r },		/* Joystick inputs */
+	{ 0x078008, 0x078009, vblank_fshark_input_r },  /* vblank & FShark coin/start */
 	{ 0x07a000, 0x07abff, twincobr_sharedram_r },	/* 16-bit on 68000 side, 8-bit on Z80 side */
-	{ 0x07e000, 0x07e001, twincobr_7e000_r },		/* data from text video RAM */
-	{ 0x07e002, 0x07e003, twincobr_7e002_r },		/* data from bg video RAM */
-	{ 0x07e004, 0x07e005, twincobr_7e004_r },		/* data from fg video RAM */
-	{ -1 }	/* end of table */
+	{ 0x07e000, 0x07e001, twincobr_txram_r },		/* data from text video RAM */
+	{ 0x07e002, 0x07e003, twincobr_bgram_r },		/* data from bg video RAM */
+	{ 0x07e004, 0x07e005, twincobr_fgram_r },		/* data from fg video RAM */
+	{ 0x080000, 0x0bffff, MRA_ROM },
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
@@ -200,20 +268,21 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x030000, 0x033fff, twincobr_68k_dsp_w, &twincobr_68k_dsp_ram },	/* 68K and DSP shared RAM */
 	{ 0x040000, 0x040fff, MWA_BANK1, &spriteram, &spriteram_size },		/* sprite ram data */
 	{ 0x050000, 0x050dff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
-	{ 0x060000, 0x060003, twincobr_60000_w },		/* 6845 CRT controller */
-	{ 0x070000, 0x070003, twincobr_txscroll_w },	/* scroll */
-	{ 0x070004, 0x070005, twincobr_70004_w },		/* offset in text video RAM */
-	{ 0x072000, 0x072003, twincobr_bgscroll_w },	/* scroll */
-	{ 0x072004, 0x072005, twincobr_72004_w },		/* offset in bg video RAM */
-	{ 0x074000, 0x074003, twincobr_fgscroll_w },	/* scroll */
-	{ 0x074004, 0x074005, twincobr_74004_w },		/* offset in fg video RAM */
-	{ 0x076000, 0x076004, twincobr_76004_w },       /* ???? */
-/*	{ 0x078008, 0x07800b, twincobr_7800c_w }, */	/* Flying Shark - fshark */
-	{ 0x07800c, 0x07800f, twincobr_7800c_w, &twincobr_7800c },
-	{ 0x07a000, 0x07abff, twincobr_sharedram_w },	/* 16-bit on 68000 side, 8-bit on Z80 side */
-	{ 0x07e000, 0x07e001, twincobr_7e000_w },		/* data for text video RAM */
-	{ 0x07e002, 0x07e003, twincobr_7e002_w },		/* data for bg video RAM */
-	{ 0x07e004, 0x07e005, twincobr_7e004_w },		/* data for fg video RAM */
+	{ 0x060000, 0x060003, twincobr_crtc_w },		/* 6845 CRT controller */
+	{ 0x070000, 0x070003, twincobr_txscroll_w },	/* text layer scroll */
+	{ 0x070004, 0x070005, twincobr_txoffs_w },		/* offset in text video RAM */
+	{ 0x072000, 0x072003, twincobr_bgscroll_w },	/* bg layer scroll */
+	{ 0x072004, 0x072005, twincobr_bgoffs_w },		/* offset in bg video RAM */
+	{ 0x074000, 0x074003, twincobr_fgscroll_w },	/* fg layer scroll */
+	{ 0x074004, 0x074005, twincobr_fgoffs_w },		/* offset in fg video RAM */
+	{ 0x076000, 0x076003, twincobr_exscroll_w },	/* Spare layer scroll */
+	{ 0x07800a, 0x07800b, fshark_coin_dsp_w },		/* Flying Shark DSP Comms & coin stuff */
+	{ 0x07800c, 0x07800d, twincobr_7800c_w },		/* Twin Cobra DSP Comms & system control */
+	{ 0x07a000, 0x07afff, twincobr_sharedram_w },	/* 16-bit on 68000 side, 8-bit on Z80 side */
+	{ 0x07e000, 0x07e001, twincobr_txram_w },		/* data for text video RAM */
+	{ 0x07e002, 0x07e003, twincobr_bgram_w },		/* data for bg video RAM */
+	{ 0x07e004, 0x07e005, twincobr_fgram_w },		/* data for fg video RAM */
+	{ 0x080000, 0x0bffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -244,12 +313,13 @@ static struct IOWritePort sound_writeport[] =
 {
 	{ 0x00, 0x00, YM3812_control_port_0_w },
 	{ 0x01, 0x01, YM3812_write_port_0_w },
+	{ 0x20, 0x20, fshark_coin_dsp_w },		/* Twin Cobra coin count-lockout */
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryReadAddress DSP_readmem[] =
 {
-	{ 0x0000, 0x0fff, MRA_ROM },
+	{ 0x0000, 0x1fff, MRA_ROM },	/* Really 0x0fff, Flying Shark bootleg requires this for ROM load */
 	{ 0x8000, 0x811F, MRA_RAM },	/* The real DSP has this at address 0 */
 									/* View this at 4000h in the debugger */
 	{ -1 }	/* end of table */
@@ -257,7 +327,7 @@ static struct MemoryReadAddress DSP_readmem[] =
 
 static struct MemoryWriteAddress DSP_writemem[] =
 {
-	{ 0x0000, 0x0fff, MWA_ROM },
+	{ 0x0000, 0x1fff, MWA_ROM },	/* Really 0x0fff, Flying Shark bootleg requires this for ROM load */
 	{ 0x8000, 0x811F, MWA_RAM },	/* The real DSP has this at address 0 */
 									/* View this at 4000h in the debugger */
 	{ -1 }	/* end of table */
@@ -265,19 +335,21 @@ static struct MemoryWriteAddress DSP_writemem[] =
 
 static struct IOReadPort DSP_readport[] =
 {
-	{ 0x0000, 0x0001, twincobr_dsp_in },
+	{ 0x01, 0x01, twincobr_dsp_in },
+	{ 0x02, 0x02, fsharkbt_dsp_in },
 	{ -1 }	/* end of table */
 };
+
 static struct IOWritePort DSP_writeport[] =
 {
-	{ 0x0000,  0x0003, twincobr_dsp_out },
+	{ 0x00, 0x03, twincobr_dsp_out },
 	{ -1 }	/* end of table */
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( twincobr_input_ports )
 	PORT_START
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )     /* ? could be wrong */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
@@ -300,68 +372,68 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )
 	PORT_DIPNAME( 0x04, 0x00, "Cross Hatch Pattern" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START		/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, "Cross Hatch Pattern" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x30, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(	0xc0, DEF_STR( 1C_6C ) )
 
 	PORT_START		/* DSW2 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x01, "Easy" )
-	PORT_DIPSETTING(    0x00, "Normal" )
-	PORT_DIPSETTING(    0x02, "Hard" )
-	PORT_DIPSETTING(    0x03, "Hardest" )
+	PORT_DIPSETTING(	0x01, "Easy" )
+	PORT_DIPSETTING(	0x00, "Normal" )
+	PORT_DIPSETTING(	0x02, "Hard" )
+	PORT_DIPSETTING(	0x03, "Hardest" )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "50K, then every 150K" )
-	PORT_DIPSETTING(    0x04, "70K, then every 200K" )
-	PORT_DIPSETTING(    0x08, "50000" )
-	PORT_DIPSETTING(    0x0c, "100000" )
+	PORT_DIPSETTING(	0x00, "50K, then every 150K" )
+	PORT_DIPSETTING(	0x04, "70K, then every 200K" )
+	PORT_DIPSETTING(	0x08, "50000" )
+	PORT_DIPSETTING(	0x0c, "100000" )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x30, "2" )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x20, "4" )
-	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPSETTING(	0x30, "2" )
+	PORT_DIPSETTING(	0x00, "3" )
+	PORT_DIPSETTING(	0x20, "4" )
+	PORT_DIPSETTING(	0x10, "5" )
 	PORT_DIPNAME( 0x40, 0x00, "Show DIP SW Settings" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( ktiger_input_ports )
+INPUT_PORTS_START( twincobu_input_ports )
 	PORT_START
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )     /* ? could be wrong */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
@@ -384,63 +456,394 @@ INPUT_PORTS_START( ktiger_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )
 	PORT_DIPNAME( 0x04, 0x00, "Cross Hatch Pattern" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START		/* DSW1 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, "Cross Hatch Pattern" )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x30, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0xc0, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( 1C_2C ) )
+
+	PORT_START		/* DSW2 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(	0x01, "Easy" )
+	PORT_DIPSETTING(	0x00, "Normal" )
+	PORT_DIPSETTING(	0x02, "Hard" )
+	PORT_DIPSETTING(	0x03, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(	0x00, "50K, then every 150K" )
+	PORT_DIPSETTING(	0x04, "70K, then every 200K" )
+	PORT_DIPSETTING(	0x08, "50000" )
+	PORT_DIPSETTING(	0x0c, "100000" )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(	0x30, "2" )
+	PORT_DIPSETTING(	0x00, "3" )
+	PORT_DIPSETTING(	0x20, "4" )
+	PORT_DIPSETTING(	0x10, "5" )
+	PORT_DIPNAME( 0x40, 0x00, "Show DIP SW Settings" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( ktiger_input_ports )
+	PORT_START
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )
+	PORT_DIPNAME( 0x04, 0x00, "Cross Hatch Pattern" )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START		/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, "Cross Hatch Pattern" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x30, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0xc0, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( 1C_2C ) )
 
 	PORT_START		/* DSW2 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x01, "Easy" )
-	PORT_DIPSETTING(    0x00, "Normal" )
-	PORT_DIPSETTING(    0x02, "Hard" )
-	PORT_DIPSETTING(    0x03, "Hardest" )
+	PORT_DIPSETTING(	0x01, "Easy" )
+	PORT_DIPSETTING(	0x00, "Normal" )
+	PORT_DIPSETTING(	0x02, "Hard" )
+	PORT_DIPSETTING(	0x03, "Hardest" )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "70K, then every 200K" )
-	PORT_DIPSETTING(    0x04, "50K, then every 150K" )
-	PORT_DIPSETTING(    0x08, "100000" )
-	PORT_DIPSETTING(    0x0c, "No Extend" )
+	PORT_DIPSETTING(	0x00, "70K, then every 200K" )
+	PORT_DIPSETTING(	0x04, "50K, then every 150K" )
+	PORT_DIPSETTING(	0x08, "100000" )
+	PORT_DIPSETTING(	0x0c, "No Extend" )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x30, "2" )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x20, "4" )
-	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPSETTING(	0x30, "2" )
+	PORT_DIPSETTING(	0x00, "3" )
+	PORT_DIPSETTING(	0x20, "4" )
+	PORT_DIPSETTING(	0x10, "5" )
 	PORT_DIPNAME( 0x40, 0x00, "Show DIP SW Settings" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( fshark_input_ports )
+	PORT_START
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )		/* FS tilt causes freeze */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* FS reset button */
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START		/* DSW1 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, "Cross Hatch Pattern" )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(	0x30, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(	0xc0, DEF_STR( 1C_6C ) )
+
+	PORT_START		/* DSW2 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(	0x01, "Easy" )
+	PORT_DIPSETTING(	0x00, "Normal" )
+	PORT_DIPSETTING(	0x02, "Hard" )
+	PORT_DIPSETTING(	0x03, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(	0x00, "50K, then every 150K" )
+	PORT_DIPSETTING(	0x04, "70K, then every 200K" )
+	PORT_DIPSETTING(	0x08, "50000" )
+	PORT_DIPSETTING(	0x0c, "100000" )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(	0x30, "2" )
+	PORT_DIPSETTING(	0x00, "3" )
+	PORT_DIPSETTING(	0x20, "1" )
+	PORT_DIPSETTING(	0x10, "5" )
+	PORT_DIPNAME( 0x40, 0x00, "Show DIP SW Settings" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( skyshark_input_ports )
+	PORT_START
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )		/* FS tilt causes freeze */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* FS reset button */
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START		/* DSW1 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, "Cross Hatch Pattern" )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x30, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0xc0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( 1C_2C ) )
+
+	PORT_START		/* DSW2 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(	0x01, "Easy" )
+	PORT_DIPSETTING(	0x00, "Normal" )
+	PORT_DIPSETTING(	0x02, "Hard" )
+	PORT_DIPSETTING(	0x03, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(	0x00, "50K, then every 150K" )
+	PORT_DIPSETTING(	0x04, "70K, then every 200K" )
+	PORT_DIPSETTING(	0x08, "50000" )
+	PORT_DIPSETTING(	0x0c, "100000" )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(	0x30, "2" )
+	PORT_DIPSETTING(	0x00, "3" )
+	PORT_DIPSETTING(	0x20, "1" )
+	PORT_DIPSETTING(	0x10, "5" )
+	PORT_DIPNAME( 0x40, 0x00, "Show DIP SW Settings" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( hishouza_input_ports )
+	PORT_START
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )		/* FS tilt causes freeze */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* FS reset button */
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START		/* DSW1 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, "Cross Hatch Pattern" )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x30, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0xc0, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( 1C_2C ) )
+
+	PORT_START		/* DSW2 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(	0x01, "Easy" )
+	PORT_DIPSETTING(	0x00, "Normal" )
+	PORT_DIPSETTING(	0x02, "Hard" )
+	PORT_DIPSETTING(	0x03, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(	0x00, "50K, then every 150K" )
+	PORT_DIPSETTING(	0x04, "70K, then every 200K" )
+	PORT_DIPSETTING(	0x08, "50000" )
+	PORT_DIPSETTING(	0x0c, "100000" )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(	0x30, "2" )
+	PORT_DIPSETTING(	0x00, "3" )
+	PORT_DIPSETTING(	0x20, "1" )
+	PORT_DIPSETTING(	0x10, "5" )
+	PORT_DIPNAME( 0x40, 0x00, "Show DIP SW Settings" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
 
@@ -522,35 +925,35 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M68000,
-			7000000,			/* 7 MHz */
+			28000000/4,			/* 7.0 MHz - Main board Crystal is 28Mhz */
 			0,
 			readmem,writemem,0,0,
 			twincobr_interrupt,1
 		},
 		{
 			CPU_Z80,
-			3500000,			/* 3.5 MHz  */
+			28000000/8,			/* 3.5 MHz */
 			2,					/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
 		},
 		{
 			CPU_TMS320C10,
-			3500000,			/* 3.5 MHz  */
+			28000000/8,			/* 3.5 MHz */
 			3,					/* memory region #3 */
 			DSP_readmem,DSP_writemem,DSP_readport,DSP_writeport,
 			ignore_interrupt,0	/* IRQs are caused by 68000 */
 		},
 	},
 	56, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	100,    /* 100 CPU slices per frame */
-	0,
+	10,								/* 10 CPU slices per frame */
+	fsharkbt_reset_8741_mcu,		/* Reset fshark bootleg 8741 MCU data */
 
 	/* video hardware */
 	64*8, 32*8, { 0*8, 40*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
 	1792, 1792,
-	0,
+	0,	/* No color PROM decode */
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
@@ -570,7 +973,6 @@ static struct MachineDriver machine_driver =
 
 
 
-
 /***************************************************************************
 
   Game driver(s)
@@ -579,104 +981,252 @@ static struct MachineDriver machine_driver =
 
 ROM_START( twincobr_rom )
 	ROM_REGION(0x30000)		/* 3*64k for code */
-	ROM_LOAD_EVEN( "tc16",         0x00000, 0x10000, 0x07f64d13 )
-	ROM_LOAD_ODD ( "tc14",         0x00000, 0x10000, 0x41be6978 )
-	ROM_LOAD_EVEN( "tc15",         0x20000, 0x08000, 0x3a646618 )
-	ROM_LOAD_ODD ( "tc13",         0x20000, 0x08000, 0xd7d1e317 )
+	ROM_LOAD_EVEN( "tc16",		0x00000, 0x10000, 0x07f64d13 )
+	ROM_LOAD_ODD ( "tc14",		0x00000, 0x10000, 0x41be6978 )
+	ROM_LOAD_EVEN( "tc15",		0x20000, 0x08000, 0x3a646618 )
+	ROM_LOAD_ODD ( "tc13",		0x20000, 0x08000, 0xd7d1e317 )
 
 	ROM_REGION_DISPOSE(0xac000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tc11",         0x00000, 0x04000, 0x0a254133 )	/* chars */
-	ROM_LOAD( "tc03",         0x04000, 0x04000, 0xe9e2d4b1 )
-	ROM_LOAD( "tc04",         0x08000, 0x04000, 0xa599d845 )
-	ROM_LOAD( "tc01",         0x0c000, 0x10000, 0x15b3991d )	/* fg tiles */
-	ROM_LOAD( "tc02",         0x1c000, 0x10000, 0xd9e2e55d )
-	ROM_LOAD( "tc06",         0x2c000, 0x10000, 0x13daeac8 )
-	ROM_LOAD( "tc05",         0x3c000, 0x10000, 0x8cc79357 )
-	ROM_LOAD( "tc07",         0x4c000, 0x08000, 0xb5d48389 )	/* bg tiles */
-	ROM_LOAD( "tc08",         0x54000, 0x08000, 0x97f20fdc )
-	ROM_LOAD( "tc09",         0x5c000, 0x08000, 0x170c01db )
-	ROM_LOAD( "tc10",         0x64000, 0x08000, 0x44f5accd )
-	ROM_LOAD( "tc20",         0x6c000, 0x10000, 0xcb4092b8 )	/* sprites */
-	ROM_LOAD( "tc19",         0x7c000, 0x10000, 0x9cb8675e )
-	ROM_LOAD( "tc18",         0x8c000, 0x10000, 0x806fb374 )
-	ROM_LOAD( "tc17",         0x9c000, 0x10000, 0x4264bff8 )
+	ROM_LOAD( "tc11",			0x00000, 0x04000, 0x0a254133 )	/* chars */
+	ROM_LOAD( "tc03",			0x04000, 0x04000, 0xe9e2d4b1 )
+	ROM_LOAD( "tc04",			0x08000, 0x04000, 0xa599d845 )
+	ROM_LOAD( "tc01",			0x0c000, 0x10000, 0x15b3991d )	/* fg tiles */
+	ROM_LOAD( "tc02",			0x1c000, 0x10000, 0xd9e2e55d )
+	ROM_LOAD( "tc06",			0x2c000, 0x10000, 0x13daeac8 )
+	ROM_LOAD( "tc05",			0x3c000, 0x10000, 0x8cc79357 )
+	ROM_LOAD( "tc07",			0x4c000, 0x08000, 0xb5d48389 )	/* bg tiles */
+	ROM_LOAD( "tc08",			0x54000, 0x08000, 0x97f20fdc )
+	ROM_LOAD( "tc09",			0x5c000, 0x08000, 0x170c01db )
+	ROM_LOAD( "tc10",			0x64000, 0x08000, 0x44f5accd )
+	ROM_LOAD( "tc20",			0x6c000, 0x10000, 0xcb4092b8 )	/* sprites */
+	ROM_LOAD( "tc19",			0x7c000, 0x10000, 0x9cb8675e )
+	ROM_LOAD( "tc18",			0x8c000, 0x10000, 0x806fb374 )
+	ROM_LOAD( "tc17",			0x9c000, 0x10000, 0x4264bff8 )
 
 	ROM_REGION(0x10000)		/* 32k for second CPU */
-	ROM_LOAD( "tc12",         0x00000, 0x08000, 0xe37b3c44 )	/* slightly different from the other two sets */
+	ROM_LOAD( "tc12",			0x00000, 0x08000, 0xe37b3c44 )	/* slightly different from the other two sets */
 
 	ROM_REGION(0x10000)		/* 4k for TI TMS320C10NL-14 Microcontroller */
-	ROM_LOAD_EVEN( "tc1b",    0x0000, 0x0800, 0x1757cc33 )
-	ROM_LOAD_ODD ( "tc2a",    0x0000, 0x0800, 0xd6d878c9 )
+	ROM_LOAD_EVEN( "tc1b",		0x0000, 0x0800, 0x1757cc33 )
+	ROM_LOAD_ODD ( "tc2a",		0x0000, 0x0800, 0xd6d878c9 )
 ROM_END
 
 ROM_START( twincobu_rom )
 	ROM_REGION(0x30000)		/* 3*64k for code */
-	ROM_LOAD_EVEN( "tc16",         0x00000, 0x10000, 0x07f64d13 )
-	ROM_LOAD_ODD ( "tc14",         0x00000, 0x10000, 0x41be6978 )
-	ROM_LOAD_EVEN( "tcbra26.bin",  0x20000, 0x08000, 0xbdd00ba4 )
-	ROM_LOAD_ODD ( "tcbra27.bin",  0x20000, 0x08000, 0xed600907 )
+	ROM_LOAD_EVEN( "tc16",			0x00000, 0x10000, 0x07f64d13 )
+	ROM_LOAD_ODD ( "tc14",			0x00000, 0x10000, 0x41be6978 )
+	ROM_LOAD_EVEN( "tcbra26.bin",	0x20000, 0x08000, 0xbdd00ba4 )
+	ROM_LOAD_ODD ( "tcbra27.bin",	0x20000, 0x08000, 0xed600907 )
 
-	ROM_REGION_DISPOSE(0xac000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tc11",         0x00000, 0x04000, 0x0a254133 )	/* chars */
-	ROM_LOAD( "tc03",         0x04000, 0x04000, 0xe9e2d4b1 )
-	ROM_LOAD( "tc04",         0x08000, 0x04000, 0xa599d845 )
-	ROM_LOAD( "tc01",         0x0c000, 0x10000, 0x15b3991d )	/* fg tiles */
-	ROM_LOAD( "tc02",         0x1c000, 0x10000, 0xd9e2e55d )
-	ROM_LOAD( "tc06",         0x2c000, 0x10000, 0x13daeac8 )
-	ROM_LOAD( "tc05",         0x3c000, 0x10000, 0x8cc79357 )
-	ROM_LOAD( "tc07",         0x4c000, 0x08000, 0xb5d48389 )	/* bg tiles */
-	ROM_LOAD( "tc08",         0x54000, 0x08000, 0x97f20fdc )
-	ROM_LOAD( "tc09",         0x5c000, 0x08000, 0x170c01db )
-	ROM_LOAD( "tc10",         0x64000, 0x08000, 0x44f5accd )
-	ROM_LOAD( "tc20",         0x6c000, 0x10000, 0xcb4092b8 )	/* sprites */
-	ROM_LOAD( "tc19",         0x7c000, 0x10000, 0x9cb8675e )
-	ROM_LOAD( "tc18",         0x8c000, 0x10000, 0x806fb374 )
-	ROM_LOAD( "tc17",         0x9c000, 0x10000, 0x4264bff8 )
+	ROM_REGION_DISPOSE(0xac000)	/* temporary space for graphics */
+	ROM_LOAD( "tc11",			0x00000, 0x04000, 0x0a254133 )	/* chars */
+	ROM_LOAD( "tc03",			0x04000, 0x04000, 0xe9e2d4b1 )
+	ROM_LOAD( "tc04",			0x08000, 0x04000, 0xa599d845 )
+	ROM_LOAD( "tc01",			0x0c000, 0x10000, 0x15b3991d )	/* fg tiles */
+	ROM_LOAD( "tc02",			0x1c000, 0x10000, 0xd9e2e55d )
+	ROM_LOAD( "tc06",			0x2c000, 0x10000, 0x13daeac8 )
+	ROM_LOAD( "tc05",			0x3c000, 0x10000, 0x8cc79357 )
+	ROM_LOAD( "tc07",			0x4c000, 0x08000, 0xb5d48389 )	/* bg tiles */
+	ROM_LOAD( "tc08",			0x54000, 0x08000, 0x97f20fdc )
+	ROM_LOAD( "tc09",			0x5c000, 0x08000, 0x170c01db )
+	ROM_LOAD( "tc10",			0x64000, 0x08000, 0x44f5accd )
+	ROM_LOAD( "tc20",			0x6c000, 0x10000, 0xcb4092b8 )	/* sprites */
+	ROM_LOAD( "tc19",			0x7c000, 0x10000, 0x9cb8675e )
+	ROM_LOAD( "tc18",			0x8c000, 0x10000, 0x806fb374 )
+	ROM_LOAD( "tc17",			0x9c000, 0x10000, 0x4264bff8 )
 
 	ROM_REGION(0x10000)		/* 32k for second CPU */
-	ROM_LOAD( "b30-05",       0x00000, 0x08000, 0x1a8f1e10 )
+	ROM_LOAD( "b30-05",				0x00000, 0x08000, 0x1a8f1e10 )
 
 	ROM_REGION(0x10000)		/* 4k for TI TMS320C10NL-14 Microcontroller */
-	ROM_LOAD_EVEN( "dsp_22.bin",    0x0000, 0x0800, 0x79389a71 )
-	ROM_LOAD_ODD ( "dsp_21.bin",    0x0000, 0x0800, 0x2d135376 )
+	ROM_LOAD_EVEN( "dsp_22.bin",	0x0000, 0x0800, 0x79389a71 )
+	ROM_LOAD_ODD ( "dsp_21.bin",	0x0000, 0x0800, 0x2d135376 )
 ROM_END
 
 ROM_START( ktiger_rom )
 	ROM_REGION(0x30000)		/* 3*64k for code */
-	ROM_LOAD_EVEN( "tc16",    0x00000, 0x10000, 0x07f64d13 )
-	ROM_LOAD_ODD ( "tc14",    0x00000, 0x10000, 0x41be6978 )
-	ROM_LOAD_EVEN( "b30-02",  0x20000, 0x08000, 0x1d63e9c4 )
-	ROM_LOAD_ODD ( "b30-04",  0x20000, 0x08000, 0x03957a30 )
+	ROM_LOAD_EVEN( "tc16",		0x00000, 0x10000, 0x07f64d13 )
+	ROM_LOAD_ODD ( "tc14",		0x00000, 0x10000, 0x41be6978 )
+	ROM_LOAD_EVEN( "b30-02",	0x20000, 0x08000, 0x1d63e9c4 )
+	ROM_LOAD_ODD ( "b30-04",	0x20000, 0x08000, 0x03957a30 )
 
-	ROM_REGION_DISPOSE(0xac000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tc11",         0x00000, 0x04000, 0x0a254133 )	/* chars */
-	ROM_LOAD( "tc03",         0x04000, 0x04000, 0xe9e2d4b1 )
-	ROM_LOAD( "tc04",         0x08000, 0x04000, 0xa599d845 )
-	ROM_LOAD( "tc01",         0x0c000, 0x10000, 0x15b3991d )	/* fg tiles */
-	ROM_LOAD( "tc02",         0x1c000, 0x10000, 0xd9e2e55d )
-	ROM_LOAD( "tc06",         0x2c000, 0x10000, 0x13daeac8 )
-	ROM_LOAD( "tc05",         0x3c000, 0x10000, 0x8cc79357 )
-	ROM_LOAD( "tc07",         0x4c000, 0x08000, 0xb5d48389 )	/* bg tiles */
-	ROM_LOAD( "tc08",         0x54000, 0x08000, 0x97f20fdc )
-	ROM_LOAD( "tc09",         0x5c000, 0x08000, 0x170c01db )
-	ROM_LOAD( "tc10",         0x64000, 0x08000, 0x44f5accd )
-	ROM_LOAD( "tc20",         0x6c000, 0x10000, 0xcb4092b8 )	/* sprites */
-	ROM_LOAD( "tc19",         0x7c000, 0x10000, 0x9cb8675e )
-	ROM_LOAD( "tc18",         0x8c000, 0x10000, 0x806fb374 )
-	ROM_LOAD( "tc17",         0x9c000, 0x10000, 0x4264bff8 )
+	ROM_REGION_DISPOSE(0xac000)	/* temporary space for graphics */
+	ROM_LOAD( "tc11",			0x00000, 0x04000, 0x0a254133 )	/* chars */
+	ROM_LOAD( "tc03",			0x04000, 0x04000, 0xe9e2d4b1 )
+	ROM_LOAD( "tc04",			0x08000, 0x04000, 0xa599d845 )
+	ROM_LOAD( "tc01",			0x0c000, 0x10000, 0x15b3991d )	/* fg tiles */
+	ROM_LOAD( "tc02",			0x1c000, 0x10000, 0xd9e2e55d )
+	ROM_LOAD( "tc06",			0x2c000, 0x10000, 0x13daeac8 )
+	ROM_LOAD( "tc05",			0x3c000, 0x10000, 0x8cc79357 )
+	ROM_LOAD( "tc07",			0x4c000, 0x08000, 0xb5d48389 )	/* bg tiles */
+	ROM_LOAD( "tc08",			0x54000, 0x08000, 0x97f20fdc )
+	ROM_LOAD( "tc09",			0x5c000, 0x08000, 0x170c01db )
+	ROM_LOAD( "tc10",			0x64000, 0x08000, 0x44f5accd )
+	ROM_LOAD( "tc20",			0x6c000, 0x10000, 0xcb4092b8 )	/* sprites */
+	ROM_LOAD( "tc19",			0x7c000, 0x10000, 0x9cb8675e )
+	ROM_LOAD( "tc18",			0x8c000, 0x10000, 0x806fb374 )
+	ROM_LOAD( "tc17",			0x9c000, 0x10000, 0x4264bff8 )
 
 	ROM_REGION(0x10000)		/* 32k for second CPU */
-	ROM_LOAD( "b30-05",       0x00000, 0x08000, 0x1a8f1e10 )
+	ROM_LOAD( "b30-05",			0x00000, 0x08000, 0x1a8f1e10 )
 
 	ROM_REGION(0x10000)		/* 4k for TI TMS320C10NL-14 Microcontroller */
-	ROM_LOAD_EVEN( "dsp-22",    0x0000, 0x0800, 0x00000000 )
-	ROM_LOAD_ODD ( "dsp-21",    0x0000, 0x0800, 0x00000000 )
+	ROM_LOAD_EVEN( "dsp-22",	0x0000, 0x0800, 0x00000000 )
+	ROM_LOAD_ODD ( "dsp-21",	0x0000, 0x0800, 0x00000000 )
+ROM_END
+
+ROM_START( fshark_rom )
+	ROM_REGION(0x20000)		/* 2*64k for code */
+	ROM_LOAD_EVEN( "b02_18-1.rom",	0x00000, 0x10000, 0x04739e02 )
+	ROM_LOAD_ODD ( "b02_17-1.rom",	0x00000, 0x10000, 0xfd6ef7a8 )
+
+	ROM_REGION_DISPOSE(0xac000)		/* temporary space for graphics */
+	ROM_LOAD( "b02_07-1.rom",	0x00000, 0x04000, 0xe669f80e )	/* chars */
+	ROM_LOAD( "b02_06-1.rom",	0x04000, 0x04000, 0x5e53ae47 )
+	ROM_LOAD( "b02_05-1.rom",	0x08000, 0x04000, 0xa8b05bd0 )
+	ROM_LOAD( "b02_12.rom",		0x0c000, 0x08000, 0x733b9997 )	/* fg tiles */
+		/* 14000-1bfff not used */
+	ROM_LOAD( "b02_15.rom",		0x1c000, 0x08000, 0x8b70ef32 )
+		/* 24000-2bfff not used */
+	ROM_LOAD( "b02_14.rom",		0x2c000, 0x08000, 0xf711ba7d )
+		/* 34000-3bfff not used */
+	ROM_LOAD( "b02_13.rom",		0x3c000, 0x08000, 0x62532cd3 )
+		/* 44000-4bfff not used */
+	ROM_LOAD( "b02_08.rom",		0x4c000, 0x08000, 0xef0cf49c )	/* bg tiles */
+	ROM_LOAD( "b02_11.rom",		0x54000, 0x08000, 0xf5799422 )
+	ROM_LOAD( "b02_10.rom",		0x5c000, 0x08000, 0x4bd099ff )
+	ROM_LOAD( "b02_09.rom",		0x64000, 0x08000, 0x230f1582 )
+	ROM_LOAD( "b02_01.512",		0x6c000, 0x10000, 0x2234b424 )	/* sprites */
+	ROM_LOAD( "b02_02.512",		0x7c000, 0x10000, 0x30d4c9a8 )
+	ROM_LOAD( "b02_03.512",		0x8c000, 0x10000, 0x64f3d88f )
+	ROM_LOAD( "b02_04.512",		0x9c000, 0x10000, 0x3b23a9fc )
+
+	ROM_REGION(0x10000)		/* 64k for second CPU */
+	ROM_LOAD( "b02_16.rom",		0x0000, 0x8000, 0xcdd1a153 )
+
+	ROM_REGION(0x10000)		/* 4k for TI TMS320C10NL-14 Microcontroller */
+	ROM_LOAD_EVEN( "dsp.lsb",	0x0000, 0x0800, 0x00000000 )
+	ROM_LOAD_ODD ( "dsp.msb",	0x0000, 0x0800, 0x00000000 )
+ROM_END
+
+ROM_START( skyshark_rom )
+	ROM_REGION(0x20000)		/* 2*64k for code */
+	ROM_LOAD_EVEN( "18-2",		0x00000, 0x10000, 0x888e90f3 )
+	ROM_LOAD_ODD ( "17-2",		0x00000, 0x10000, 0x066d67be )
+
+	ROM_REGION_DISPOSE(0xac000)		/* temporary space for graphics */
+    ROM_LOAD( "7-2",            0x00000, 0x04000, 0xaf48c4e6 )  /* chars */
+	ROM_LOAD( "6-2",			0x04000, 0x04000, 0x9a29a862 )
+    ROM_LOAD( "5-2",            0x08000, 0x04000, 0xfb7cad55 )
+	ROM_LOAD( "b02_12.rom",		0x0c000, 0x08000, 0x733b9997 )	/* fg tiles */
+		/* 14000-1bfff not used */
+	ROM_LOAD( "b02_15.rom",		0x1c000, 0x08000, 0x8b70ef32 )
+		/* 24000-2bfff not used */
+	ROM_LOAD( "b02_14.rom",		0x2c000, 0x08000, 0xf711ba7d )
+		/* 34000-3bfff not used */
+	ROM_LOAD( "b02_13.rom",		0x3c000, 0x08000, 0x62532cd3 )
+		/* 44000-4bfff not used */
+	ROM_LOAD( "b02_08.rom",		0x4c000, 0x08000, 0xef0cf49c )	/* bg tiles */
+	ROM_LOAD( "b02_11.rom",		0x54000, 0x08000, 0xf5799422 )
+	ROM_LOAD( "b02_10.rom",		0x5c000, 0x08000, 0x4bd099ff )
+	ROM_LOAD( "b02_09.rom",		0x64000, 0x08000, 0x230f1582 )
+	ROM_LOAD( "b02_01.512",		0x6c000, 0x10000, 0x2234b424 )	/* sprites */
+	ROM_LOAD( "b02_02.512",		0x7c000, 0x10000, 0x30d4c9a8 )
+	ROM_LOAD( "b02_03.512",		0x8c000, 0x10000, 0x64f3d88f )
+	ROM_LOAD( "b02_04.512",		0x9c000, 0x10000, 0x3b23a9fc )
+
+	ROM_REGION(0x10000)		/* 64k for second CPU */
+	ROM_LOAD( "b02_16.rom",		0x0000, 0x8000, 0xcdd1a153 )
+
+	ROM_REGION(0x10000)		/* 4k for TI TMS320C10NL-14 Microcontroller */
+	ROM_LOAD_EVEN( "dsp.lsb",	0x0000, 0x0800, 0x00000000 )
+	ROM_LOAD_ODD ( "dsp.msb",	0x0000, 0x0800, 0x00000000 )
+ROM_END
+
+ROM_START( hishouza_rom )
+	ROM_REGION(0x20000)		/* 2*64k for code */
+	ROM_LOAD_EVEN( "b02-18.rom",	0x00000, 0x10000, 0x4444bb94 )
+	ROM_LOAD_ODD ( "b02-17.rom",	0x00000, 0x10000, 0xcdac7228 )
+
+	ROM_REGION_DISPOSE(0xac000)		/* temporary space for graphics */
+    ROM_LOAD( "b02-07.rom",     0x00000, 0x04000, 0xc13a775e )  /* chars */
+    ROM_LOAD( "b02-06.rom",     0x04000, 0x04000, 0xad5f1371 )
+    ROM_LOAD( "b02-05.rom",     0x08000, 0x04000, 0x85a7bff6 )
+	ROM_LOAD( "b02_12.rom",		0x0c000, 0x08000, 0x733b9997 )	/* fg tiles */
+		/* 14000-1bfff not used */
+	ROM_LOAD( "b02_15.rom",		0x1c000, 0x08000, 0x8b70ef32 )
+		/* 24000-2bfff not used */
+	ROM_LOAD( "b02_14.rom",		0x2c000, 0x08000, 0xf711ba7d )
+		/* 34000-3bfff not used */
+	ROM_LOAD( "b02_13.rom",		0x3c000, 0x08000, 0x62532cd3 )
+		/* 44000-4bfff not used */
+	ROM_LOAD( "b02_08.rom",		0x4c000, 0x08000, 0xef0cf49c )	/* bg tiles */
+	ROM_LOAD( "b02_11.rom",		0x54000, 0x08000, 0xf5799422 )
+	ROM_LOAD( "b02_10.rom",		0x5c000, 0x08000, 0x4bd099ff )
+	ROM_LOAD( "b02_09.rom",		0x64000, 0x08000, 0x230f1582 )
+	ROM_LOAD( "b02_01.512",		0x6c000, 0x10000, 0x2234b424 )	/* sprites */
+	ROM_LOAD( "b02_02.512",		0x7c000, 0x10000, 0x30d4c9a8 )
+	ROM_LOAD( "b02_03.512",		0x8c000, 0x10000, 0x64f3d88f )
+	ROM_LOAD( "b02_04.512",		0x9c000, 0x10000, 0x3b23a9fc )
+
+	ROM_REGION(0x10000)		/* 64k for second CPU */
+	ROM_LOAD( "b02_16.rom",		0x0000, 0x8000, 0xcdd1a153 )
+
+	ROM_REGION(0x10000)		/* 4k for TI TMS320C10NL-14 Microcontroller */
+	ROM_LOAD_ODD ( "dsp-a1.bpr",	0x0000, 0x0400, 0x45d4d1b1 )
+	ROM_LOAD_EVEN( "dsp-a2.bpr",	0x0000, 0x0400, 0xedd227fa )
+	ROM_LOAD_ODD ( "dsp-a3.bpr",	0x0800, 0x0400, 0xdf88e79b )
+	ROM_LOAD_EVEN( "dsp-a4.bpr",	0x0800, 0x0400, 0xa2094a7f )
+	ROM_LOAD_ODD ( "dsp-b5.bpr",	0x1000, 0x0400, 0x85ca5d47 )
+	ROM_LOAD_EVEN( "dsp-b6.bpr",	0x1000, 0x0400, 0x81816b2c )
+	ROM_LOAD_ODD ( "dsp-b7.bpr",	0x1800, 0x0400, 0xe87540cd )
+	ROM_LOAD_EVEN( "dsp-b8.bpr",	0x1800, 0x0400, 0xd3c16c5c )
+ROM_END
+
+ROM_START( fsharkbt_rom )
+	ROM_REGION(0x20000)		/* 2*64k for code */
+	ROM_LOAD_EVEN( "r18",		0x00000, 0x10000, 0xef30f563 )
+	ROM_LOAD_ODD ( "r17",		0x00000, 0x10000, 0x0e18d25f )
+
+	ROM_REGION_DISPOSE(0xac000)		/* temporary space for graphics */
+	ROM_LOAD( "b02_07-1.rom",	0x00000, 0x04000, 0xe669f80e )	/* chars */
+	ROM_LOAD( "b02_06-1.rom",	0x04000, 0x04000, 0x5e53ae47 )
+	ROM_LOAD( "b02_05-1.rom",	0x08000, 0x04000, 0xa8b05bd0 )
+	ROM_LOAD( "b02_12.rom",		0x0c000, 0x08000, 0x733b9997 )	/* fg tiles */
+		/* 14000-1bfff not used */
+	ROM_LOAD( "b02_15.rom",		0x1c000, 0x08000, 0x8b70ef32 )
+		/* 24000-2bfff not used */
+	ROM_LOAD( "b02_14.rom",		0x2c000, 0x08000, 0xf711ba7d )
+		/* 34000-3bfff not used */
+	ROM_LOAD( "b02_13.rom",		0x3c000, 0x08000, 0x62532cd3 )
+		/* 44000-4bfff not used */
+	ROM_LOAD( "b02_08.rom",		0x4c000, 0x08000, 0xef0cf49c )	/* bg tiles */
+	ROM_LOAD( "b02_11.rom",		0x54000, 0x08000, 0xf5799422 )
+	ROM_LOAD( "b02_10.rom",		0x5c000, 0x08000, 0x4bd099ff )
+	ROM_LOAD( "b02_09.rom",		0x64000, 0x08000, 0x230f1582 )
+	ROM_LOAD( "b02_01.512",		0x6c000, 0x10000, 0x2234b424 )	/* sprites */
+	ROM_LOAD( "b02_02.512",		0x7c000, 0x10000, 0x30d4c9a8 )
+	ROM_LOAD( "b02_03.512",		0x8c000, 0x10000, 0x64f3d88f )
+	ROM_LOAD( "b02_04.512",		0x9c000, 0x10000, 0x3b23a9fc )
+
+	ROM_REGION(0x10000)		/* 64k for second CPU */
+	ROM_LOAD( "b02_16.rom",		0x0000, 0x8000, 0xcdd1a153 )
+
+	ROM_REGION(0x10000)		/* 4k for TI TMS320C10NL-14 Microcontroller */
+	ROM_LOAD_ODD ( "mcu-1.bpr",		0x0000, 0x0400, 0x45d4d1b1 )
+	ROM_LOAD_EVEN( "mcu-2.bpr",		0x0000, 0x0400, 0x651336d1 )
+	ROM_LOAD_ODD ( "mcu-3.bpr",		0x0800, 0x0400, 0xdf88e79b )
+	ROM_LOAD_EVEN( "mcu-4.bpr",		0x0800, 0x0400, 0xa2094a7f )
+	ROM_LOAD_ODD ( "mcu-5.bpr",		0x1000, 0x0400, 0xf97a58da )
+	ROM_LOAD_EVEN( "mcu-6.bpr",		0x1000, 0x0400, 0xffcc422d )
+	ROM_LOAD_ODD ( "mcu-7.bpr",		0x1800, 0x0400, 0x0cd30d49 )
+	ROM_LOAD_EVEN( "mcu-8.bpr",		0x1800, 0x0400, 0x3379bbff )
 ROM_END
 
 
 static void twincobr_decode(void)
 {
-  /* TMS320C10 roms have their address lines A0 and A1 swapped. Decode it. */
+	/* TMS320C10 roms have address lines A0 and A1 swapped. Decode it. */
 	int A;
 	unsigned char D1;
 	unsigned char D2;
@@ -694,14 +1244,46 @@ static void twincobr_decode(void)
 	}
 }
 
+
+static void fsharkbt_decode(void)
+{
+	/* TMS320C10 code resides in nibble PROMS. Convert code to bytes. */
+	int A;
+	unsigned char datamsb;
+	unsigned char datalsb;
+	unsigned char *DSP_ROMS;
+
+	DSP_ROMS = Machine->memory_region[Machine->drv->cpu[2].memory_region];
+
+	for (A = 0;A < 0x0800;A+=2) {
+		datamsb  = DSP_ROMS[(A+0x0000)] << 4;
+		datamsb |= DSP_ROMS[(A+0x0001)];
+		datalsb  = DSP_ROMS[(A+0x0800)] << 4;
+		datalsb |= DSP_ROMS[(A+0x0801)];
+		DSP_ROMS[(A+0x0000)] = datamsb;
+		DSP_ROMS[(A+0x0001)] = datalsb;
+		datamsb  = DSP_ROMS[(A+0x1000)] << 4;
+		datamsb |= DSP_ROMS[(A+0x1001)];
+		datalsb  = DSP_ROMS[(A+0x1800)] << 4;
+		datalsb |= DSP_ROMS[(A+0x1801)];
+		DSP_ROMS[(A+0x0800)] = datamsb;
+		DSP_ROMS[(A+0x0801)] = datalsb;
+	}
+	for (A = 0x1000;A < 0x2000;A++) {
+		DSP_ROMS[A] = 00;
+	}
+}
+
+
+
 struct GameDriver twincobr_driver =
 {
 	__FILE__,
 	0,
 	"twincobr",
-	"Twin Cobra (Taito)",
+	"Twin Cobra (World)",
 	"1987",
-	"Taito",
+	"Taito Corporation",
 	"Quench\nNicola Salmoria",
 	0,
 	&machine_driver,
@@ -710,7 +1292,7 @@ struct GameDriver twincobr_driver =
 	twincobr_decode, 0,
 	0,
 	0,
-	input_ports,
+	twincobr_input_ports,
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	0, 0
@@ -721,9 +1303,9 @@ struct GameDriver twincobu_driver =
 	__FILE__,
 	&twincobr_driver,
 	"twincobu",
-	"Twin Cobra (Romstar)",
+	"Twin Cobra (US)",
 	"1987",
-	"Taito of America (Romstar license)",
+	"Taito America Corporation (Romstar license)",
 	"Quench\nNicola Salmoria",
 	0,
 	&machine_driver,
@@ -732,7 +1314,7 @@ struct GameDriver twincobu_driver =
 	0, 0,
 	0,
 	0,
-	input_ports,
+	twincobu_input_ports,
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	0, 0
@@ -743,10 +1325,10 @@ struct GameDriver ktiger_driver =
 	__FILE__,
 	&twincobr_driver,
 	"ktiger",
-	"Kyukyoku Tiger",
+	"Kyukyoku Tiger (Japan)",
 	"1987",
-	"Taito",
-	"Quench\nNicola Salmoria\nCarl-Henrik Skarstedt (Hardware Advice)",
+	"Taito Corporation",
+	"Quench\nNicola Salmoria\nCarl-Henrik (HW Advice)",
 	0,
 	&machine_driver,
 	0,
@@ -755,6 +1337,94 @@ struct GameDriver ktiger_driver =
 	0,
 	0,
 	ktiger_input_ports,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+	0, 0
+};
+
+struct GameDriver fshark_driver =
+{
+	__FILE__,
+	0,
+	"fshark",
+	"Flying Shark (World)",
+	"1987",
+	"Taito Corporation",
+	"Quench\nNicola Salmoria\nCarl-Henrik Starstedt - DSC (HW info)\nMagnus Danielsson - DSC (HW info)\nRuben Panossian (HW info)",
+	0,
+	&machine_driver,
+	0,
+	fshark_rom,
+	0, 0,
+	0,
+	0,
+	fshark_input_ports,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+	0, 0
+};
+
+struct GameDriver skyshark_driver =
+{
+	__FILE__,
+	&fshark_driver,
+	"skyshark",
+	"Sky Shark (US)",
+	"1987",
+	"Taito America Corporation (Romstar license)",
+	"Quench\nNicola Salmoria\nCarl-Henrik Starstedt - DSC (HW info)\nMagnus Danielsson - DSC (HW info)\nRuben Panossian (HW info)",
+	0,
+	&machine_driver,
+	0,
+	skyshark_rom,
+	0, 0,
+	0,
+	0,
+	skyshark_input_ports,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+	0, 0
+};
+
+struct GameDriver hishouza_driver =
+{
+	__FILE__,
+	&fshark_driver,
+	"hishouza",
+	"Hishou Zame (Japan)",
+	"1987",
+	"Taito Corporation",
+	"Quench\nNicola Salmoria\nCarl-Henrik Starstedt - DSC (HW info)\nMagnus Danielsson - DSC (HW info)\nRuben Panossian (HW info)",
+	0,
+	&machine_driver,
+	0,
+	hishouza_rom,
+	fsharkbt_decode, 0,
+	0,
+	0,
+	hishouza_input_ports,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+	0, 0
+};
+
+struct GameDriver fsharkbt_driver =
+{
+	__FILE__,
+	&fshark_driver,
+	"fsharkbt",
+	"Flying Shark (bootleg)",
+	"1987",
+	"bootleg",
+	"Quench\nNicola Salmoria\nCarl-Henrik Starstedt - DSC (HW info)\nMagnus Danielsson - DSC (HW info)\nRuben Panossian (HW info)",
+	0,
+	&machine_driver,
+	0,
+	fsharkbt_rom,
+	fsharkbt_decode, 0,
+	0,
+	0,
+	skyshark_input_ports,
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	0, 0

@@ -281,7 +281,7 @@ struct GameDriver
 	const char *description;
 	const char *year;
 	const char *manufacturer;
-	const char *credits;
+	const char *obsolete;
 	int flags;	/* see defines below */
 	const struct MachineDriver *drv;
 	void (*driver_init)(void);	/* optional function to be called during initialization */
@@ -292,8 +292,8 @@ struct GameDriver
 	void (*rom_decode)(void);		/* used to decrypt the ROMs after loading them */
 	void (*opcode_decode)(void);	/* used to decrypt the CPU opcodes in the ROMs, */
 									/* if the encryption is different from the above. */
-	const char **samplenames;	/* optional array of names of samples to load. */
-						/* drivers can retrieve them in Machine->samples */
+	const char **samplenames;		/* optional array of names of samples to load. */
+									/* drivers can retrieve them in Machine->samples */
 	const unsigned char *sound_prom;
 
 	struct InputPort *input_ports;

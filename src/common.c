@@ -119,8 +119,8 @@ int readroms(void)
 {
 	int region;
 	const struct RomModule *romp;
-	int checksumwarning = 0;
-	int lengthwarning = 0;
+	int warning = 0;
+	int fatalerror = 0;
 	int total_roms,current_rom;
 	char buf[4096] = "";
 
@@ -274,9 +274,6 @@ int readroms(void)
 						if (osd_fread(f,temp,length) != length)
 						{
 							printf("Unable to read ROM %s\n",name);
-							free(temp);
-							osd_fclose(f);
-							goto printromlist;
 						}
 
 						/* ROM_LOAD_NIB_LOW and ROM_LOAD_NIB_HIGH */
@@ -313,8 +310,6 @@ int readroms(void)
 						if (osd_fread_scatter(f,c,length,2) != length)
 						{
 							printf("Unable to read ROM %s\n",name);
-							osd_fclose(f);
-							goto printromlist;
 						}
 					}
 					else
@@ -348,12 +343,12 @@ int readroms(void)
 				{
 					sprintf (&buf[strlen(buf)], "%-12s WRONG LENGTH (expected: %08x found: %08x)\n",
 							name,explength,osd_fsize(f));
-					lengthwarning++;
+					warning = 1;
 				}
 
 				if (expchecksum != osd_fcrc (f))
 				{
-					checksumwarning++;
+					warning = 1;
 					if (expchecksum)
 						sprintf(&buf[strlen(buf)], "%-12s WRONG CRC (expected: %08x found: %08x)\n",
 								name,expchecksum,osd_fcrc(f));
@@ -368,28 +363,24 @@ int readroms(void)
 				/* allow for a NO GOOD DUMP KNOWN rom to be missing */
 				if (expchecksum == 0)
 				{
-					sprintf (&buf[strlen(buf)], "%-12s NOT FOUND (NO GOOD DUMP KNOWN)\n",
-							name);
-					lengthwarning++;
-
-					do
-					{
-						int i;
-
-						/* fill space with random data */
-						for (i = 0;i < (romp->length & ~ROMFLAG_MASK);i++)
-							Machine->memory_region[region][romp->offset + i] = rand();
-						romp++;
-					} while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
+					sprintf (&buf[strlen(buf)], "%-12s NOT FOUND (NO GOOD DUMP KNOWN)\n",name);
+					warning = 1;
 				}
 				else
 				{
-					if (options.gui_host)
-						printf("Unable to open ROM %s. Your ROM set is incomplete or corrupt.\n", name);
-					else
-						fprintf(stderr, "Unable to open ROM %s\n",name);
-					goto printromlist;
+					sprintf (&buf[strlen(buf)], "%-12s NOT FOUND\n",name);
+					fatalerror = 1;
 				}
+
+				do
+				{
+					int i;
+
+					/* fill space with random data */
+					for (i = 0;i < (romp->length & ~ROMFLAG_MASK);i++)
+						Machine->memory_region[region][romp->offset + i] = rand();
+					romp++;
+				} while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
 			}
 		}
 
@@ -399,9 +390,12 @@ int readroms(void)
 	/* final status display */
 	osd_display_loading_rom_message(0,current_rom,total_roms);
 
-	if ((checksumwarning > 0) || (lengthwarning > 0))
+	if (warning || fatalerror)
 	{
-		strcat (buf, "WARNING: the game might not run correctly.\n");
+		if (fatalerror)
+			strcat (buf, "ERROR: required files are missing, the game cannot be run.\n");
+		else
+			strcat (buf, "WARNING: the game might not run correctly.\n");
 		printf ("%s", buf);
 
 		if (!options.gui_host)
@@ -411,23 +405,9 @@ int readroms(void)
 		}
 	}
 
-	return 0;
+	if (fatalerror) return 1;
+	else return 0;
 
-
-printromlist:
-
-	/* final status display */
-	osd_display_loading_rom_message(0,current_rom,total_roms);
-
-	if (!options.gui_host)
-	{
-		printf("\n");
-		showdisclaimer();
-		printf("Press return to continue\n");
-		getchar();
-
-		printromlist(Machine->gamedrv->rom,Machine->gamedrv->name);
-	}
 
 getout:
 	/* final status display */

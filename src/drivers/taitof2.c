@@ -1055,10 +1055,50 @@ static struct MachineDriver megab_machine_driver =
 
 ROM_START( liquidk_rom )
 	ROM_REGION(0x80000)     /* 512k for 68000 code */
-	ROM_LOAD_EVEN( "lq09.bin", 0x00000, 0x20000, 0x6ae09eb9 )
-	ROM_LOAD_ODD ( "lq11.bin", 0x00000, 0x20000, 0x42d2be6e )
-	ROM_LOAD_EVEN( "lq10.bin", 0x40000, 0x20000, 0x50bef2e0 )
-	ROM_LOAD_ODD ( "lq12.bin", 0x40000, 0x20000, 0xcb16bad5 )
+	ROM_LOAD_EVEN( "lq09.bin",  0x00000, 0x20000, 0x6ae09eb9 )
+	ROM_LOAD_ODD ( "lq11.bin",  0x00000, 0x20000, 0x42d2be6e )
+	ROM_LOAD_EVEN( "lq10.bin",  0x40000, 0x20000, 0x50bef2e0 )
+	ROM_LOAD_ODD ( "lq12.bin",  0x40000, 0x20000, 0xcb16bad5 )
+
+	ROM_REGION_DISPOSE(0x300000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "lk_scr.bin",  0x000000, 0x080000, 0xc3364f9b )
+	ROM_LOAD( "lk_obj0.bin", 0x100000, 0x080000, 0x67cc3163 )
+	ROM_LOAD( "lk_obj1.bin", 0x180000, 0x080000, 0xd2400710 )
+
+	ROM_REGION(0x1c000)      /* sound cpu */
+	ROM_LOAD( "lq08.bin",    0x00000, 0x04000, 0x413c310c )
+	ROM_CONTINUE(            0x10000, 0x0c000 ) /* banked stuff */
+
+	ROM_REGION(0x80000)      /* ADPCM samples */
+	ROM_LOAD( "lk_snd.bin",  0x00000, 0x80000, 0x474d45a4 )
+ROM_END
+
+ROM_START( liquidku_rom )
+	ROM_REGION(0x80000)     /* 512k for 68000 code */
+	ROM_LOAD_EVEN( "lq09.bin",  0x00000, 0x20000, 0x6ae09eb9 )
+	ROM_LOAD_ODD ( "lq11.bin",  0x00000, 0x20000, 0x42d2be6e )
+	ROM_LOAD_EVEN( "lq10.bin",  0x40000, 0x20000, 0x50bef2e0 )
+	ROM_LOAD_ODD ( "lqu12.bin", 0x40000, 0x20000, 0xbc118a43 )
+
+	ROM_REGION_DISPOSE(0x300000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "lk_scr.bin",  0x000000, 0x080000, 0xc3364f9b )
+	ROM_LOAD( "lk_obj0.bin", 0x100000, 0x080000, 0x67cc3163 )
+	ROM_LOAD( "lk_obj1.bin", 0x180000, 0x080000, 0xd2400710 )
+
+	ROM_REGION(0x1c000)      /* sound cpu */
+	ROM_LOAD( "lq08.bin",    0x00000, 0x04000, 0x413c310c )
+	ROM_CONTINUE(            0x10000, 0x0c000 ) /* banked stuff */
+
+	ROM_REGION(0x80000)      /* ADPCM samples */
+	ROM_LOAD( "lk_snd.bin",  0x00000, 0x80000, 0x474d45a4 )
+ROM_END
+
+ROM_START( mizubaku_rom )
+	ROM_REGION(0x80000)     /* 512k for 68000 code */
+	ROM_LOAD_EVEN( "lq09.bin",  0x00000, 0x20000, 0x6ae09eb9 )
+	ROM_LOAD_ODD ( "lq11.bin",  0x00000, 0x20000, 0x42d2be6e )
+	ROM_LOAD_EVEN( "lq10.bin",  0x40000, 0x20000, 0x50bef2e0 )
+	ROM_LOAD_ODD ( "c49-13",    0x40000, 0x20000, 0x2518dbf9 )
 
 	ROM_REGION_DISPOSE(0x300000)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "lk_scr.bin",  0x000000, 0x080000, 0xc3364f9b )
@@ -1107,15 +1147,65 @@ struct GameDriver liquidk_driver =
 	__FILE__,
 	0,
 	"liquidk",
-	"Liquid Kids",
+	"Liquid Kids (World)",
 	"1990",
-	"Taito",
+	"Taito Corporation Japan",
 	"Brad Oliver\nAndrew Prime\nErnesto Corvi (sound)",
 	0,
 	&liquidk_machine_driver,
 	0,
 
 	liquidk_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	liquidk_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_180,
+	liquidk_hiload, liquidk_hisave
+};
+
+struct GameDriver liquidku_driver =
+{
+	__FILE__,
+	&liquidk_driver,
+	"liquidku",
+	"Liquid Kids (US)",
+	"1990",
+	"Taito America Corporation",
+	"Brad Oliver\nAndrew Prime\nErnesto Corvi (sound)",
+	0,
+	&liquidk_machine_driver,
+	0,
+
+	liquidku_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	liquidk_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_180,
+	liquidk_hiload, liquidk_hisave
+};
+
+struct GameDriver mizubaku_driver =
+{
+	__FILE__,
+	&liquidk_driver,
+	"mizubaku",
+	"Mizubaku Daibouken (Japan)",
+	"1990",
+	"Taito Corporation",
+	"Brad Oliver\nAndrew Prime\nErnesto Corvi (sound)",
+	0,
+	&liquidk_machine_driver,
+	0,
+
+	mizubaku_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
@@ -1234,9 +1324,9 @@ struct GameDriver growl_driver =
 	__FILE__,
 	0,
 	"growl",
-	"Growl",
+	"Growl (World)",
 	"1990",
-	"Taito",
+	"Taito Corporation Japan",
 	"Brad Oliver\nAndrew Prime\nErnesto Corvi (sound)",
 	0,
 	&growl_machine_driver,

@@ -17,7 +17,6 @@ unsigned char *pang_colorram;
 static unsigned char *pang_objram;           /* Sprite RAM */
 
 static struct tilemap *bg_tilemap;
-static int bgon,objon;
 static int flipscreen;
 
 /* Declarations */
@@ -142,11 +141,10 @@ if (errorlog) fprintf(errorlog,"PC %04x: pang_gfxctrl_w %02x\n",cpu_get_pc(),dat
 	/* bit 5 is palette RAM bank selector (doesn't apply to mgakuen) */
 	paletteram_bank = data & 0x20;
 
-	/* bit 6 is background enable? Not sure */
-	bgon = data & 0x40;
-
-	/* bit 7 is sprites enable? Not sure */
-	objon = data & 0x80;
+	/* bits 6 and 7 are unknown, used in several places. At first I thought */
+	/* they were bg and sprites enable, but this screws up spang (screen flickers */
+	/* every time you pop a bubble). However, not using them as enable bits screws */
+	/* up marukin - you can see partially built up screens during attract mode. */
 }
 
 void pang_paletteram_w(int offset,int data)
@@ -302,8 +300,7 @@ void pang_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 
-	if (objon)
-		mark_sprites_palette();
+	mark_sprites_palette();
 
 	/* the following is required to make the colored background work */
 	for (i = 15;i < Machine->drv->total_colors;i += 16)
@@ -314,10 +311,7 @@ void pang_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_render(ALL_TILEMAPS);
 
-	if (bgon)
-		tilemap_draw(bitmap,bg_tilemap,0);
-	else
-		fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+	tilemap_draw(bitmap,bg_tilemap,0);
 
-	if (objon) draw_sprites(bitmap);
+	draw_sprites(bitmap);
 }

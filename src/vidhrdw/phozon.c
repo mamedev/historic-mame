@@ -205,12 +205,14 @@ void phozon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					break;
 
 				default:
+#ifdef MAME_DEBUG
 {
 char buf[40];
 sprintf(buf,"%02x",spriteram_3[offs] & 0x3c);
 usrintf_showmessage(buf);
-					phozon_draw_sprite(bitmap,rand(),color,flipx,flipy,x,y);
 }
+#endif
+					phozon_draw_sprite(bitmap,rand(),color,flipx,flipy,x,y);
 					break;
 			}
 		}

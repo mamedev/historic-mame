@@ -12,37 +12,30 @@
 
 #define VEC_SHIFT 16
 
-
-int sdwGameXSize;
-int sdwGameYSize;
-int sdwXOffset;
-int sdwYOffset;
-
-static int lastx, lasty;
-static int inited = 0;
-static struct artwork *backdrop;
-static struct artwork *overlay;
-
-static int vgColor;
-
-void CinemaVectorData (int fromx, int fromy, int tox, int toy, int color)
-{
-	if (!inited)
-	{
-		vector_clear_list ();
-		inited = 1;
-	}
-	if (fromx != lastx || fromx != lasty)
-		vector_add_point (fromx << VEC_SHIFT, fromy << VEC_SHIFT, 0, 0);
-	vector_add_point (tox << VEC_SHIFT, toy << VEC_SHIFT, vgColor, color * 12);
-	lastx = tox;
-	lasty = toy;
-}
-
 #define RED   0x04
 #define GREEN 0x02
 #define BLUE  0x01
 #define WHITE RED|GREEN|BLUE
+
+static int color_display;
+static struct artwork *backdrop;
+static struct artwork *overlay;
+
+void CinemaVectorData (int fromx, int fromy, int tox, int toy, int color)
+{
+    static int lastx, lasty;
+
+	if (fromx != lastx || fromx != lasty)
+		vector_add_point (fromx << VEC_SHIFT, fromy << VEC_SHIFT, 0, 0);
+
+    if (color_display)
+        vector_add_point (tox << VEC_SHIFT, toy << VEC_SHIFT, color & 0x07, color & 0x08 ? 0x80: 0x40);
+    else
+        vector_add_point (tox << VEC_SHIFT, toy << VEC_SHIFT, WHITE, color * 12);
+
+	lastx = tox;
+	lasty = toy;
+}
 
 static void shade_fill (unsigned char *palette, int rgb, int start_index, int end_index, int start_inten, int end_inten)
 {
@@ -118,16 +111,14 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 		palette[3*i+2] = (i & BLUE ) ? 0xff : 0;
 	}
 
-	vgColor = WHITE;
-
 	shade_fill (palette, WHITE, 8, 23, 0, 255);
 
 	/* fill the rest of the 256 color entries depending on the game */
 	switch (color_prom[0] & 0x0f)
 	{
 		case  CCPU_MONITOR_BILEV:
-		case  CCPU_MONITOR_16COL:
-
+		case  CCPU_MONITOR_16LEV:
+            color_display = FALSE;
 			sprintf (filename, "%s.png", Machine->gamedrv->name );
 			/* Attempt to load overlay if requested */
 			if (color_prom[0] & 0x80)
@@ -164,12 +155,8 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 			}
 			break;
 
-		case  CCPU_MONITOR_64COL:
-			shade_fill (palette, RED  ,     8, 128+4, 1, 254);
-			shade_fill (palette, GREEN, 128+5, 254  , 1, 254);
-			break;
-
 		case  CCPU_MONITOR_WOWCOL:
+            color_display = TRUE;
 			/* TODO: support real color */
 			/* put in 40 shades for red, blue and magenta */
 			shade_fill (palette, RED       ,   8,  47, 10, 250);
@@ -211,7 +198,6 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 int cinemat_vh_start (void)
 {
 	vector_set_shift (VEC_SHIFT);
-	inited = 1;
 	if (backdrop) backdrop_refresh (backdrop);
 	if (overlay) overlay_remap (overlay);
 	return vector_vh_start();
@@ -223,20 +209,22 @@ void cinemat_vh_stop (void)
 	if (backdrop) artwork_free (backdrop);
 	if (overlay) artwork_free (overlay);
 	vector_vh_stop();
-	inited = 0;
 }
-
 
 void cinemat_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
-	if (inited || full_refresh)
-	{
-		if (backdrop)
-			vector_vh_update_backdrop(bitmap, backdrop, full_refresh);
-		if (overlay)
-			vector_vh_update_overlay(bitmap, overlay, full_refresh);
-		else
-			vector_vh_update(bitmap, full_refresh);
-		inited = 0;
-	}
+    if (backdrop)
+        vector_vh_update_backdrop(bitmap, backdrop, full_refresh);
+    if (overlay)
+        vector_vh_update_overlay(bitmap, overlay, full_refresh);
+    else
+        vector_vh_update(bitmap, full_refresh);
+    vector_clear_list ();
+}
+
+int cinemat_clear_list(void)
+{
+    if (osd_skip_this_frame())
+        vector_clear_list ();
+    return ignore_interrupt();
 }

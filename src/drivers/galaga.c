@@ -384,7 +384,7 @@ static struct namco_interface namco_interface =
 static struct Samplesinterface samples_interface =
 {
 	1,	/* one channel */
-	100	/* volume */
+	80	/* volume */
 };
 
 
@@ -662,7 +662,7 @@ ROM_END
 static const char *galaga_sample_names[] =
 {
 	"*galaga",
-	"BANG.wav",
+	"bang.wav",
 	0       /* end of array */
 };
 

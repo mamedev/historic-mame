@@ -1,30 +1,31 @@
+#include "TwkUser.h"
 /* monitor types */
 #include "monitors.h"
 
 /* generic VGA CRTC register indexes */
-#define HZ_DISPLAY_TOTAL  0x00
-#define	HZ_DISPLAY_END    0x01
-#define	CRTC_OVERFLOW     0x07
-#define	VT_DISPLAY_END    0x12
-#define	MEM_OFFSET        0x13
+#define	HZ_DISPLAY_TOTAL	0x00
+#define	HZ_DISPLAY_END		0x01
+#define	CRTC_OVERFLOW		0x07
+#define	VT_DISPLAY_END		0x12
+#define	MEM_OFFSET			0x13
 
 /* indices into our register array */
-#define	CLOCK_INDEX             0
-#define	H_TOTAL_INDEX           1
-#define	H_DISPLAY_INDEX         2
-#define	H_BLANKING_START_INDEX  3
-#define	H_BLANKING_END_INDEX    4
-#define	H_RETRACE_START_INDEX   5
-#define	H_RETRACE_END_INDEX     6
-#define OVERFLOW_INDEX			8
-#define V_TOTAL_INDEX			9
+#define	CLOCK_INDEX				0
+#define	H_TOTAL_INDEX			1
+#define	H_DISPLAY_INDEX			2
+#define	H_BLANKING_START_INDEX	3
+#define	H_BLANKING_END_INDEX	4
+#define	H_RETRACE_START_INDEX	5
+#define	H_RETRACE_END_INDEX		6
+#define	V_TOTAL_INDEX			7
+#define	OVERFLOW_INDEX			8
 #define	MAXIMUM_SCANLINE_INDEX	10
-#define V_RETRACE_START_INDEX	11
-#define V_RETRACE_END_INDEX		12
-#define V_END_INDEX				13
-#define	MEM_OFFSET_INDEX        14
-#define V_BLANKING_START_INDEX	16
-#define V_BLANKING_END_INDEX	17
+#define	V_RETRACE_START_INDEX	11
+#define	V_RETRACE_END_INDEX		12
+#define	V_END_INDEX				13
+#define	MEM_OFFSET_INDEX		14
+#define	V_BLANKING_START_INDEX	16
+#define	V_BLANKING_END_INDEX	17
 
 
 

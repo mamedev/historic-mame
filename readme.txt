@@ -88,6 +88,9 @@ The official MAME home page is http://mame.retrogames.com/. You can always
 find the latest release there, including beta versions and information on
 things being worked on.
 
+If you have bugs to report, check the MAME Testing Project at
+http://zan.emuunlim.com/mametesters/
+
 Here are some of the people contributing to MAME. If you have comments,
 suggestions or bug reports about an existing driver, check the driver's Credits
 section to find who has worked on it, and send comments to that person. If you
@@ -101,7 +104,7 @@ Nicola Salmoria    MC6489@mclink.it
 Mike Balfour       mab22@po.cwru.edu
 Aaron Giles        agiles@sirius.com
 Chris Moore        chris.moore@writeme.com
-Brad Oliver        bradman@primenet.com
+Brad Oliver        bradman@pobox.com
 Andrew Scott       ascott@utkux.utcc.utk.edu
 Zsolt Vasvari      vaszs01@banet.net
 
@@ -140,6 +143,7 @@ on in MAME.
 
 Z80 emulator Copyright (c) 1998 Juergen Buchmueller, all rights reserved.
 M6502 emulator Copyright (c) 1998 Juergen Buchmueller, all rights reserved.
+Hu6280 Copyright (c) 1999 Bryan McPhail, mish@tendril.force9.net
 I86 emulator by David Hedley, modified by Fabrice Frances (frances@ensica.fr)
 M6809 emulator by John Butler, based on L.C. Benschop's 6809 Simulator V09.
 M6808 based on L.C. Benschop's 6809 Simulator V09.
@@ -150,6 +154,8 @@ T-11 emulator Copyright (C) Aaron Giles 1998
 TMS34010 emulator by Alex Pasadyn and Zsolt Vasvari.
 TMS9900 emulator by Andy Jones, based on original code by Ton Brouwer.
 Cinematronics CPU emulator by Jeff Mitchell, Zonn Moore, Neil Bradley.
+Atari AVG/DVG emulation based on VECSIM by Hedley Rainnie, Eric Smith and
+Al Kossow.
 
 TMS5220 emulator by Frank Palazzolo.
 AY-3-8910 emulation based on various code snippets by Ville Hallik,

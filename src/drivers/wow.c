@@ -738,7 +738,7 @@ static struct MachineDriver robby_machine_driver =
 	0,
 
 	/* video hardware */
-	320, 204, { 1, 320-1, 0, 204-1 },
+	320, 204, { 0, 320-1, 0, 204-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
 	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
@@ -884,7 +884,7 @@ static const char *gorf_sample_names[] =
  "you.wav","you.wav","you.wav","you.wav","your.wav","your.wav","yourself.wav",
  "s.wav","for.wav","for.wav","will.wav","Gorph.wav",
 // Missing Samples
- "coin", "attack.wav","bite.wav","conquer.wav","devour.wav","dust.wav",
+ "coin.wav", "attack.wav","bite.wav","conquer.wav","devour.wav","dust.wav",
  "galaxy.wav","got.wav","power.wav","try.wav","supreme.wav","all.wav",
  "hail.wav","emperor.wav",
  0
@@ -1419,7 +1419,7 @@ static struct MachineDriver seawolf_machine_driver =
 	0,
 
 	/* video hardware */
-	320, 204, { 1, 320-1, 0, 204-1 },
+	320, 204, { 0, 320-1, 0, 204-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
 	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
@@ -1621,7 +1621,7 @@ static struct MachineDriver ebases_machine_driver =
 	0,
 
 	/* video hardware */
-	320, 210, { 1, 320-1, 0, 192-1 },
+	320, 210, { 0, 320-1, 0, 192-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
 	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,

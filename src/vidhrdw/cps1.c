@@ -91,6 +91,7 @@
   knights
   * garbage characters left on screen during boot and under INSERT COIN
     (patched out in cps1_render_scroll1()).
+  * sprite/background sync problem in intro when sword hits the ground.
 
   qad
   * in attract mode, "Dragons" is missing from the title screen, only
@@ -411,7 +412,7 @@ const int cps1_scroll3_palette=32+32+32;
 const int cps1_scroll1_size=0x4000;
 const int cps1_scroll2_size=0x4000;
 const int cps1_scroll3_size=0x4000;
-const int cps1_obj_size    =0x4000;
+const int cps1_obj_size    =0x0800;
 const int cps1_other_size  =0x4000;
 const int cps1_palette_size=cps1_palette_entries*32; /* Size of palette RAM */
 static int cps1_flip_screen;    /* Flip screen on / off */

@@ -141,28 +141,28 @@ int gauntlet_vh_start(void)
 		8, 8,				/* width/height of each tile */
 		64, 64				/* number of tiles in each direction */
 	};
-	
+
 	int i;
-	
+
 	/* reset statics */
 	memset(&pf_state, 0, sizeof(pf_state));
 	playfield_color_base = vindctr2_screen_refresh ? 0x10 : 0x18;
-	
+
 	/* initialize the shading colors */
 	for (i = 0; i < 32; i++)
 		palette_change_color(i + 1024, i * 128 / 31, i * 128 / 31, i * 128 / 31);
-	
+
 	/* initialize the playfield */
 	if (atarigen_pf_init(&pf_desc))
 		return 1;
-	
+
 	/* initialize the motion objects */
 	if (atarigen_mo_init(&mo_desc))
 	{
 		atarigen_pf_free();
 		return 1;
 	}
-	
+
 	return 0;
 }
 
@@ -306,7 +306,7 @@ void gauntlet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				int data = READ_WORD(&atarigen_alpharam[offs * 2]);
 				int code = data & 0x3ff;
 				int opaque = data & 0x8000;
-				
+
 				if (code || opaque)
 				{
 					int color = ((data >> 10) & 0xf) | ((data >> 9) & 0x20);
@@ -399,7 +399,7 @@ static const unsigned char *update_palette(unsigned char *shade_table)
 
 	/* recalc */
 	result = palette_recalc();
-	
+
 	/* build the shading lookup table */
 	if (vindctr2_screen_refresh)
 	{
@@ -413,7 +413,7 @@ static const unsigned char *update_palette(unsigned char *shade_table)
 			shade_table[i] = Machine->pens[1024 + y];
 		}
 	}
-	
+
 	return result;
 }
 
@@ -431,7 +431,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 	unsigned short *colormap = (unsigned short *)param;
 	int bank = state->param[0];
 	int x, y;
-	
+
 	for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 63)
 		for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 63)
 		{
@@ -440,7 +440,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 			int code = bank * 0x1000 + ((data & 0xfff) ^ 0x800);
 			int color = playfield_color_base + ((data >> 12) & 7);
 			colormap[color + 0] |= usage[code];
-			
+
 			/* also mark unvisited tiles dirty */
 			if (!atarigen_pf_visit[offs]) atarigen_pf_dirty[offs] = 0xff;
 		}
@@ -467,17 +467,17 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 		{
 			int offs = x * 64 + y;
 			int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
-			
+
 			if (atarigen_pf_dirty[offs] != bank)
 			{
 				int color = playfield_color_base + ((data >> 12) & 7);
 				int code = bank * 0x1000 + ((data & 0xfff) ^ 0x800);
 				int hflip = data & 0x8000;
-				
+
 				drawgfx(atarigen_pf_bitmap, gfx, code, color, hflip, 0, 8 * x, 8 * y, 0, TRANSPARENCY_NONE, 0);
 				atarigen_pf_dirty[offs] = bank;
 			}
-			
+
 			/* track the tiles we've visited */
 			atarigen_pf_visit[offs] = 1;
 		}
@@ -495,7 +495,7 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
  *		Motion object palette
  *
  *************************************/
- 
+
 static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param)
 {
 	const unsigned int *usage = Machine->gfx[0]->pen_usage;
@@ -538,7 +538,7 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 	int vsize = (data[2] & 7) + 1;
 	int xpos = -pf_state.hscroll + (data[1] >> 7);
 	int xadv;
-	
+
 	/* adjust for height */
 	ypos -= vsize * 8;
 

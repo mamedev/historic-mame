@@ -59,20 +59,16 @@ void starwars_out_w (int offset, int data)
 			osd_led_w (1, data >> 7);
 			break;
 		case 4:
-			if (errorlog) fprintf (errorlog, "bank_switch_w, %02x\n", data);
+//			if (errorlog) fprintf (errorlog, "bank_switch_w, %02x\n", data);
 			if (data & 0x80)
 			{
-				cpu_setbank (1, &RAM[0x10000])
-				cpu_setbank (2, &RAM[0x1c000])
-				cpu_setbank (3, &RAM[0x1e000])
-				cpu_setbank (4, &RAM[0x12000])
+				cpu_setbank(1,&RAM[0x10000])
+				cpu_setbank(2,&RAM[0x1c000])
 			}
 			else
 			{
-				cpu_setbank (1, &RAM[0x06000]);
-				cpu_setbank (2, &RAM[0x0a000]);
-				cpu_setbank (3, &RAM[0x0c000]);
-				cpu_setbank (4, &RAM[0x0e000]);
+				cpu_setbank(1,&RAM[0x06000]);
+				cpu_setbank(2,&RAM[0x0a000]);
 			}
 			break;
 		case 5:
@@ -120,14 +116,15 @@ static int empire_setopbase (int pc)
 
 	if ((pc & 0xe000) == 0x8000)
 	{
-		if (errorlog) fprintf (errorlog, "      new pc inside of slapstic region: %04x (prev = %04x)\n", pc, prevpc);
+//		if (errorlog) fprintf (errorlog, "      new pc inside of slapstic region: %04x (prev = %04x)\n", pc, prevpc);
 		bank = slapstic_tweak ((pc) & 0x1fff);
 	}
 	else if ((prevpc & 0xe000) == 0x8000)
-	{
-		if (errorlog) fprintf (errorlog, "      old pc inside of slapstic region: %04x (new = %04x)\n", prevpc, pc);
-		bank = slapstic_tweak ((prevpc) & 0x1fff);
-	}
+ {
+//  if (errorlog) fprintf (errorlog, "      old pc inside of slapstic region: %04x (new = %04x)\n", prevpc, pc);
+if (prevpc != 0x8080 && prevpc != 0x8090 && prevpc != 0x80a0 && prevpc !=0x80b0)
+  bank = slapstic_tweak ((prevpc) & 0x1fff);
+ }
 
 	return pc;
 }
@@ -158,14 +155,14 @@ int empire_slapstic_r (int offset)
 
 	int bank = (slapstic_tweak (offset) * 0x2000);
 	val = atarigen_slapstic[bank + (offset & 0x1fff)];
-	if (errorlog) fprintf (errorlog, "slapstic_r, %04x: %02x\n", 0x8000 + offset, val);
+//	if (errorlog) fprintf (errorlog, "slapstic_r, %04x: %02x\n", 0x8000 + offset, val);
 	return val;
 }
 
 
 void empire_slapstic_w (int offset, int data)
 {
-	if (errorlog) fprintf (errorlog, "esb slapstic tweak via write\n");
+//	if (errorlog) fprintf (errorlog, "esb slapstic tweak via write\n");
 	slapstic_tweak (offset);
 }
 
@@ -174,12 +171,6 @@ static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x2fff, MRA_RAM, &vectorram, &vectorram_size },   /* vector_ram */
 	{ 0x3000, 0x3fff, MRA_ROM },		/* vector_rom */
-/*	{ 0x4800, 0x4fff, MRA_RAM }, */		/* cpu_ram */
-/*	{ 0x5000, 0x5fff, MRA_RAM }, */		/* (math_ram_r) math_ram */
-/*	{ 0x0000, 0x3fff, MRA_RAM, &vectorram}, *//* Vector RAM and ROM */
-	{ 0x4800, 0x5fff, MRA_RAM },		/* CPU and Math RAM */
-	{ 0x6000, 0x7fff, MRA_BANK1 },	    /* banked ROM */
-	{ 0x8000, 0xffff, MRA_ROM },		/* rest of main_rom */
 	{ 0x4300, 0x431f, input_port_0_r }, /* Memory mapped input port 0 */
 	{ 0x4320, 0x433f, starwars_input_bank_1_r }, /* Memory mapped input port 1 */
 	{ 0x4340, 0x435f, input_port_2_r },	/* DIP switches bank 0 */
@@ -191,6 +182,11 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x4700, 0x4700, reh },
 	{ 0x4701, 0x4701, rel },
 	{ 0x4703, 0x4703, prng },			/* pseudo random number generator */
+/*	{ 0x4800, 0x4fff, MRA_RAM }, */		/* cpu_ram */
+/*	{ 0x5000, 0x5fff, MRA_RAM }, */		/* (math_ram_r) math_ram */
+	{ 0x4800, 0x5fff, MRA_RAM },		/* CPU and Math RAM */
+	{ 0x6000, 0x7fff, MRA_BANK1 },	    /* banked ROM */
+	{ 0x8000, 0xffff, MRA_ROM },		/* rest of main_rom */
 	{ -1 }	/* end of table */
 };
 
@@ -198,15 +194,12 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryReadAddress readmem2[] =
 {
 	{ 0x0800, 0x0fff, starwars_sin_r },		/* SIN Read */
-
 	{ 0x1000, 0x107f, MRA_RAM },	/* 6532 RAM */
 	{ 0x1080, 0x109f, starwars_m6532_r },
-
 	{ 0x2000, 0x27ff, MRA_RAM },	/* program RAM */
 	{ 0x4000, 0xbfff, MRA_ROM },	/* sound roms */
 	{ 0xc000, 0xffff, MRA_ROM },	/* load last rom twice */
 									/* for proper int vec operation */
-
 	{ -1 }  /* end of table */
 };
 
@@ -271,9 +264,8 @@ static struct MemoryReadAddress empire_readmem[] =
 /*	{ 0x5000, 0x5fff, MRA_RAM }, */		/* (math_ram_r) math_ram */
 	{ 0x6000, 0x7fff, MRA_BANK1 },	    /* banked ROM */
 	{ 0x8000, 0x9fff, empire_slapstic_r, &slapstic_area },
-	{ 0xa000, 0xbfff, MRA_BANK2 },		/* banked ROM */
-	{ 0xc000, 0xdfff, MRA_BANK3 },		/* rest of main_rom */
-	{ 0xe000, 0xffff, MRA_BANK4 },		/* banked ROM */
+	{ 0xa000, 0xffff, MRA_BANK2 },		/* banked ROM */
+
 	/* Dummy entry to set up the slapstic */
 	{ 0x14000, 0x1bfff, MRA_NOP, &atarigen_slapstic },
 	{ -1 }	/* end of table */
@@ -283,11 +275,6 @@ static struct MemoryWriteAddress empire_writemem[] =
 {
 	{ 0x0000, 0x2fff, MWA_RAM, &vectorram }, /* vector_ram */
 	{ 0x3000, 0x3fff, MWA_ROM },		/* vector_rom */
-/*	{ 0x4800, 0x4fff, MWA_RAM }, */		/* cpu_ram */
-/*	{ 0x5000, 0x5fff, MWA_RAM }, */		/* (math_ram_w) math_ram */
-	{ 0x4800, 0x5fff, MWA_RAM },		/* CPU and Math RAM */
-	{ 0x8000, 0x9fff, empire_slapstic_w },		/* slapstic write */
-//	{ 0x6000, 0xffff, MWA_ROM },		/* main_rom */
 	{ 0x4400, 0x4400, starwars_main_wr_w },
 	{ 0x4500, 0x45ff, MWA_RAM },		/* nov_ram */
 	{ 0x4600, 0x461f, avgdvg_go },
@@ -299,63 +286,163 @@ static struct MemoryWriteAddress empire_writemem[] =
 	{ 0x46c0, 0x46c2, starwars_control_w },	/* Selects which a-d control port (0-3) will be read */
 	{ 0x46e0, 0x46e0, starwars_soundrst },
 	{ 0x4700, 0x4707, swmathbx },
+/*	{ 0x4800, 0x4fff, MWA_RAM }, */		/* cpu_ram */
+/*	{ 0x5000, 0x5fff, MWA_RAM }, */		/* (math_ram_w) math_ram */
+	{ 0x4800, 0x5fff, MWA_RAM },		/* CPU and Math RAM */
+	{ 0x8000, 0x9fff, empire_slapstic_w },		/* slapstic write */
+	{ 0x6000, 0xffff, MWA_ROM },		/* main_rom */
 	{ -1 }	/* end of table */
 };
 
 INPUT_PORTS_START( input_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN2)
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN1)
-	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_COIN3)
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED)
-	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_START2)
-	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_START1)
+	PORT_BITX( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING( 0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
+	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
 	PORT_START	/* IN1 */
-	PORT_BIT ( 0x03, IP_ACTIVE_HIGH, IPT_UNUSED)
+	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", OSD_KEY_F1, IP_JOY_NONE )
-	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED)
-	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2)
-	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1)
+	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	/* Bit 6 is MATH_RUN - see machine/starwars.c */
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED)
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
 	/* Bit 7 is VG_HALT - see machine/starwars.c */
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED)
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME(0x03, 0x00, "Shields" )
-	PORT_DIPSETTING (   0x00, "6" )
-	PORT_DIPSETTING (   0x01, "7" )
-	PORT_DIPSETTING (   0x02, "8" )
-	PORT_DIPSETTING (   0x03, "9" )
-	PORT_DIPNAME(0x0c, 0x04, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING (   0x00, "Easy" )
-	PORT_DIPSETTING (   0x04, "Moderate" )
-	PORT_DIPSETTING (   0x08, "Hard" )
-	PORT_DIPSETTING (   0x0c, "Hardest" )
+	PORT_DIPNAME(0x03, 0x00, "Starting Shields" )
+	PORT_DIPSETTING (  0x00, "6" )
+	PORT_DIPSETTING (  0x01, "7" )
+	PORT_DIPSETTING (  0x02, "8" )
+	PORT_DIPSETTING (  0x03, "9" )
+	PORT_DIPNAME(0x0c, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING (  0x00, "Easy" )
+	PORT_DIPSETTING (  0x04, "Moderate" )
+	PORT_DIPSETTING (  0x08, "Hard" )
+	PORT_DIPSETTING (  0x0c, "Hardest" )
 	PORT_DIPNAME(0x30, 0x00, "Bonus Shields" )
-	PORT_DIPSETTING (   0x00, "0" )
-	PORT_DIPSETTING (   0x10, "1" )
-	PORT_DIPSETTING (   0x20, "2" )
-	PORT_DIPSETTING (   0x30, "3" )
-	PORT_DIPNAME(0x40, 0x00, "Attract Music" )
-	PORT_DIPSETTING (   0x00, DEF_STR( On ) )
-	PORT_DIPSETTING (   0x40, DEF_STR( Off ) )
-	PORT_DIPNAME(0x80, 0x80, "Game Mode" )
-	PORT_DIPSETTING (   0x00, "Freeze" )
-	PORT_DIPSETTING (   0x80, "Normal" )
+	PORT_DIPSETTING (  0x00, "0" )
+	PORT_DIPSETTING (  0x10, "1" )
+	PORT_DIPSETTING (  0x20, "2" )
+	PORT_DIPSETTING (  0x30, "3" )
+	PORT_DIPNAME(0x40, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING (  0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING (  0x00, DEF_STR( On ) )
+	PORT_DIPNAME(0x80, 0x80, "Freeze" )
+	PORT_DIPSETTING (  0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING (  0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME(0x03, 0x02, "Credits/Coin" )
-	PORT_DIPSETTING (   0x00, DEF_STR( Free_Play ) )
-	PORT_DIPSETTING (   0x01, "2" )
-	PORT_DIPSETTING (   0x02, "1" )
-	PORT_DIPSETTING (   0x03, "1/2" )
-	PORT_BIT ( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN)
+	PORT_DIPNAME(0x03, 0x02, DEF_STR( Coinage ) )
+	PORT_DIPSETTING (  0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING (  0x02, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING (  0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING (  0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME(0x0c, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING (  0x00, "*1" )
+	PORT_DIPSETTING (  0x04, "*4" )
+	PORT_DIPSETTING (  0x08, "*5" )
+	PORT_DIPSETTING (  0x0c, "*6" )
+	PORT_DIPNAME(0x10, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING (  0x00, "*1" )
+	PORT_DIPSETTING (  0x10, "*2" )
+	PORT_DIPNAME(0xe0, 0x00, "Bonus Coinage" )
+	PORT_DIPSETTING (  0x20, "2 gives 1" )
+	PORT_DIPSETTING (  0x60, "4 gives 2" )
+	PORT_DIPSETTING (  0xa0, "3 gives 1" )
+	PORT_DIPSETTING (  0x40, "4 gives 1" )
+	PORT_DIPSETTING (  0x80, "5 gives 1" )
+	PORT_DIPSETTING (  0x00, "None" )
+/* 0xc0 and 0xe0 None */
+
+	PORT_START	/* IN4 */
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 30, 0, 0, 255 )
+
+	PORT_START	/* IN5 */
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 30, 0, 0, 255 )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( empire_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BITX( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING( 0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
+	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", OSD_KEY_F1, IP_JOY_NONE )
+	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	/* Bit 6 is MATH_RUN - see machine/starwars.c */
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	/* Bit 7 is VG_HALT - see machine/starwars.c */
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME(0x03, 0x03, "Starting Shields" )
+	PORT_DIPSETTING (  0x01, "2" )
+	PORT_DIPSETTING (  0x00, "3" )
+	PORT_DIPSETTING (  0x03, "4" )
+	PORT_DIPSETTING (  0x02, "5" )
+	PORT_DIPNAME(0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING (  0x08, "Easy" )
+	PORT_DIPSETTING (  0x0c, "Moderate" )
+	PORT_DIPSETTING (  0x00, "Hard" )
+	PORT_DIPSETTING (  0x04, "Hardest" )
+	PORT_DIPNAME(0x30, 0x30, "Jedi-Letter Mode" )
+	PORT_DIPSETTING (  0x00, "Level Only" )
+	PORT_DIPSETTING (  0x10, "Level" )
+	PORT_DIPSETTING (  0x20, "Increment Only" )
+	PORT_DIPSETTING (  0x30, "Increment" )
+	PORT_DIPNAME(0x40, 0x40, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING (  0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING (  0x40, DEF_STR( On ) )
+	PORT_DIPNAME(0x80, 0x80, "Freeze" )
+	PORT_DIPSETTING (  0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING (  0x00, DEF_STR( On ) )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME(0x03, 0x02, DEF_STR( Coinage ) )
+	PORT_DIPSETTING (  0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING (  0x02, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING (  0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING (  0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME(0x0c, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING (  0x00, "*1" )
+	PORT_DIPSETTING (  0x04, "*4" )
+	PORT_DIPSETTING (  0x08, "*5" )
+	PORT_DIPSETTING (  0x0c, "*6" )
+	PORT_DIPNAME(0x10, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING (  0x00, "*1" )
+	PORT_DIPSETTING (  0x10, "*2" )
+	PORT_DIPNAME(0xe0, 0xe0, "Bonus Coinage" )
+	PORT_DIPSETTING (  0x20, "2 gives 1" )
+	PORT_DIPSETTING (  0x60, "4 gives 2" )
+	PORT_DIPSETTING (  0xa0, "3 gives 1" )
+	PORT_DIPSETTING (  0x40, "4 gives 1" )
+	PORT_DIPSETTING (  0x80, "5 gives 1" )
+	PORT_DIPSETTING (  0xe0, "None" )
+/* 0xc0 and 0x00 None */
 
 	PORT_START	/* IN4 */
 	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 30, 0, 0, 255 )
@@ -531,7 +618,7 @@ static struct MachineDriver empire_machine_driver =
 
 ***************************************************************************/
 
-ROM_START (starwar1_rom)
+ROM_START( starwar1_rom )
 	ROM_REGION(0x12000)     /* 2 64k ROM spaces */
 	ROM_LOAD( "136021.105",   0x3000, 0x1000, 0x538e7d2f ) /* 3000-3fff is 4k vector rom */
 	ROM_LOAD( "136021.114",   0x6000, 0x2000, 0xe75ff867 )   /* ROM 0 bank pages 0 and 1 */
@@ -556,12 +643,12 @@ ROM_START (starwar1_rom)
 	/* Sound ROMS */
 	ROM_REGION(0x10000)     /* Really only 32k, but it looks like 64K */
 	ROM_LOAD( "136021.107",   0x4000, 0x2000, 0xdbf3aea2 ) /* Sound ROM 0 */
-	ROM_RELOAD(               0xc000,0x2000) /* Copied again for */
+	ROM_RELOAD(               0xc000, 0x2000 ) /* Copied again for */
 	ROM_LOAD( "136021.208",   0x6000, 0x2000, 0xe38070a8 ) /* Sound ROM 0 */
-	ROM_RELOAD(               0xe000,0x2000) /* proper int vecs */
+	ROM_RELOAD(               0xe000, 0x2000 ) /* proper int vecs */
 ROM_END
 
-ROM_START (starwars_rom)
+ROM_START( starwars_rom )
 	ROM_REGION(0x12000)     /* 2 64k ROM spaces */
 	ROM_LOAD( "136021.105",   0x3000, 0x1000, 0x538e7d2f ) /* 3000-3fff is 4k vector rom */
 	ROM_LOAD( "136021.214",   0x6000, 0x2000, 0x04f1876e )   /* ROM 0 bank pages 0 and 1 */
@@ -586,27 +673,24 @@ ROM_START (starwars_rom)
 	/* Sound ROMS */
 	ROM_REGION(0x10000)     /* Really only 32k, but it looks like 64K */
 	ROM_LOAD( "136021.107",   0x4000, 0x2000, 0xdbf3aea2 ) /* Sound ROM 0 */
-	ROM_RELOAD(               0xc000,0x2000) /* Copied again for */
+	ROM_RELOAD(               0xc000, 0x2000 ) /* Copied again for */
 	ROM_LOAD( "136021.208",   0x6000, 0x2000, 0xe38070a8 ) /* Sound ROM 0 */
-	ROM_RELOAD(               0xe000,0x2000) /* proper int vecs */
+	ROM_RELOAD(               0xe000, 0x2000 ) /* proper int vecs */
 ROM_END
 
-/* ****************** EMPIRE *********************************** */
-ROM_START (empire_rom)
-
-	ROM_REGION(0x20000)     /* 64k for code and a buttload for the banked ROMs */
-
+ROM_START( empire_rom )
+	ROM_REGION(0x22000)     /* 64k for code and a buttload for the banked ROMs */
 	ROM_LOAD( "136031.111",   0x03000, 0x1000, 0xb1f9bd12 )    /* 3000-3fff is 4k vector rom */
-
-	ROM_LOAD( "136031.101",   0x06000, 0x2000, 0xef1e3ae5 ) /* good */
+	ROM_LOAD( "136031.101",   0x06000, 0x2000, 0xef1e3ae5 )
 	ROM_CONTINUE(             0x10000, 0x2000 )
 	/* $8000 - $9fff : slapstic page */
-	ROM_LOAD( "136031.102",   0x0a000, 0x2000, 0x62ce5c12 ) /* good */
+	ROM_LOAD( "136031.102",   0x0a000, 0x2000, 0x62ce5c12 )
 	ROM_CONTINUE(             0x1c000, 0x2000 )
-	ROM_LOAD( "136031.203",   0x0c000, 0x2000, 0x27b0889b ) /* good */
+	ROM_LOAD( "136031.203",   0x0c000, 0x2000, 0x27b0889b )
 	ROM_CONTINUE(             0x1e000, 0x2000 )
-	ROM_LOAD( "136031.104",   0x0e000, 0x2000, 0xfd5c725e ) /* good */
-	ROM_CONTINUE(             0x12000, 0x2000 )
+	ROM_LOAD( "136031.104",   0x0e000, 0x2000, 0xfd5c725e )
+	ROM_CONTINUE(             0x20000, 0x2000 )
+
 	ROM_LOAD( "136031.105",   0x14000, 0x4000, 0xea9e4dce ) /* slapstic 0, 1 */
 	ROM_LOAD( "136031.106",   0x18000, 0x4000, 0x76d07f59 ) /* slapstic 2, 3 */
 
@@ -625,9 +709,9 @@ ROM_START (empire_rom)
 	/* Sound ROMS */
 	ROM_REGION(0x10000)
 	ROM_LOAD( "136031.113",   0x4000, 0x2000, 0x24ae3815 ) /* Sound ROM 0 */
-	ROM_CONTINUE(             0xc000, 0x2000) /* Copied again for */
+	ROM_CONTINUE(             0xc000, 0x2000 ) /* Copied again for */
 	ROM_LOAD( "136031.112",   0x6000, 0x2000, 0xca72d341 ) /* Sound ROM 1 */
-	ROM_CONTINUE(             0xe000, 0x2000) /* proper int vecs */
+	ROM_CONTINUE(             0xe000, 0x2000 ) /* proper int vecs */
 ROM_END
 
 
@@ -723,7 +807,7 @@ struct GameDriver empire_driver =
 	"1985",
 	"Atari Games",
 	"Steve Baines (MAME driver)\nBrad Oliver (MAME driver)\nFrank Palazzolo (MAME driver)\n"VECTOR_TEAM,
-	GAME_NOT_WORKING,
+	0,
 	&empire_machine_driver,
 	0,
 
@@ -732,7 +816,7 @@ struct GameDriver empire_driver =
 	0,     /* Sample Array (optional) */
 	0,	/* sound_prom */
 
-	input_ports,
+	empire_input_ports,
 	color_prom, /* Colour PROM */
 	0,          /* palette */
 	0,          /* colourtable */

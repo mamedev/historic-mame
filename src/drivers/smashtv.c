@@ -445,9 +445,9 @@ INPUT_PORTS_START( trog_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START	    /* DS1 */
-	PORT_DIPNAME( 0x80, 0x80, "Control" )
-	PORT_DIPSETTING(    0x80, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x40, 0x40, "Coinage Select" )
 	PORT_DIPSETTING(    0x40, "Dipswitch Coinage" )
 	PORT_DIPSETTING(    0x00, "CMOS Coinage" )

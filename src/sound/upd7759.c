@@ -132,7 +132,6 @@ struct UPD7759voice
 {
 	int playing;            /* 1 if we are actively playing */
 	unsigned char *base;    /* pointer to the base memory location */
-	unsigned char *stream;  /* input stream data (if any) */
 	int mask;               /* mask to keep us within the buffer */
 	int sample; 			/* current sample number (sample data in slave mode) */
 	int freq;				/* current sample playback freq */
@@ -338,14 +337,6 @@ int UPD7759_sh_start (const struct MachineSound *msound)
 
 void UPD7759_sh_stop (void)
 {
-	int i;
-
-    /* free any output and streaming buffers */
-	for (i = 0; i < upd7759_intf->num; i++) {
-		if (updadpcm[i].stream)
-			free (updadpcm[i].stream);
-		updadpcm[i].stream = 0;
-	}
 }
 
 
@@ -420,22 +411,12 @@ static void UPD7759_update (int chip, void *buffer, int left)
 					/* next! */
 					if( ++voice->sample > voice->count )
 					{
-						/* if we're not streaming, fill with silence and stop */
-						if( voice->base != voice->stream )
+						while (left-- > 0)
 						{
-							while (left-- > 0)
-							{
-								*sample++ = voice->signal;
-								voice->signal = FALL_OFF(voice->signal);
-							}
-							voice->playing = 0;
+							*sample++ = voice->signal;
+							voice->signal = FALL_OFF(voice->signal);
 						}
-						else
-						{
-							/* if we are streaming, pad with the last voice->sample */
-							while( left-- > 0 )
-								*sample++ = voice->signal;
-						}
+						voice->playing = 0;
 						break;
 					}
 				}

@@ -27,6 +27,7 @@ void digdig_init_machine(void)
 {
 	credits = 0;
 	nmi_timer = 0;
+	interrupt_enable_1 = interrupt_enable_2 = interrupt_enable_3 = 0;
 	digdug_halt_w (0, 0);
 }
 

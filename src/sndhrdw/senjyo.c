@@ -56,7 +56,7 @@ int senjyo_sh_start(const struct MachineSound *msound)
     int i;
 
 
-	channel = mixer_allocate_channel(30);
+	channel = mixer_allocate_channel(15);
 	mixer_set_name(channel,"Tone");
 
 	/* z80 ctc init */

@@ -123,6 +123,16 @@ void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
+static int rotary_0_r(int offset)
+{
+	return (1 << (readinputport(6) * 8 / 256)) ^ 0xff;
+}
+
+static int rotary_1_r(int offset)
+{
+	return (1 << (readinputport(7) * 8 / 256)) ^ 0xff;
+}
+
 static unsigned char intenable;
 
 void jackal_interrupt_enable_w(int offset,int data)
@@ -145,6 +155,8 @@ static struct MemoryReadAddress jackal_readmem[] =
 	{ 0x0011, 0x0011, input_port_1_r },
 	{ 0x0012, 0x0012, input_port_2_r },
 	{ 0x0013, 0x0013, input_port_3_r },
+	{ 0x0014, 0x0014, rotary_0_r },
+	{ 0x0015, 0x0015, rotary_1_r },
 	{ 0x0018, 0x0018, input_port_4_r },
 	{ 0x0020, 0x005f, jackal_zram_r },	/* MAIN   Z RAM,SUB    Z RAM */
 	{ 0x0060, 0x1fff, jackal_commonram_r },	/* M COMMON RAM,S COMMON RAM */
@@ -296,6 +308,13 @@ INPUT_PORTS_START( jackal_input_ports )
 	PORT_DIPNAME( 0x08, 0x00, "Sound Adj" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+
+	/* the rotary controls work in topgunbl only */
+	PORT_START	/* player 1 8-way rotary control - converted in rotary_0_r() */
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL, 25, 10, 0, 0, 0, OSD_KEY_Z, OSD_KEY_X, 0, 0 )
+
+	PORT_START	/* player 2 8-way rotary control - converted in rotary_1_r() */
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_PLAYER2, 25, 10, 0, 0, 0, OSD_KEY_N, OSD_KEY_M, 0, 0 )
 INPUT_PORTS_END
 
 

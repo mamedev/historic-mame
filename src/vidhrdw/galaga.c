@@ -296,7 +296,7 @@ void galaga_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			else if (spriteram_3[offs] & 8)	/* double width */
 			{
 				drawgfx(bitmap,Machine->gfx[1],
-						code+2,color,flipx,flipy,sx,sy+sfa,
+						code+2,color,flipx,flipy,sx,sy-sfa,
 						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
 				drawgfx(bitmap,Machine->gfx[1],
 						code,color,flipx,flipy,sx,sy-sfb,

@@ -53,7 +53,10 @@ static void FMTimerInit( void )
 	int i;
 
 	for( i = 0 ; i < MAX_2203 ; i++ )
+	{
 		Timer[i][0] = Timer[i][1] = 0;
+		syncTime[i] = 0.0;
+	}
 }
 
 

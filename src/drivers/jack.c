@@ -608,7 +608,7 @@ ROM_START( freeze_rom )
 	ROM_LOAD( "freeze.5a",    0x0000, 0x1000, 0x6c8a98a0 )
 	ROM_LOAD( "freeze.3a",    0x1000, 0x1000, 0x6d2125e4 )
 	ROM_LOAD( "freeze.1a",    0x2000, 0x1000, 0x3a7f2fa9 )
-	ROM_LOAD( "freeze.2a",    0x3000, 0x1000, 0x2323b33f )
+	ROM_LOAD( "freeze.2a",    0x3000, 0x1000, 0xdd70ddd6 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "freeze.a1",    0x0000, 0x1000, 0x7771f5b9 )

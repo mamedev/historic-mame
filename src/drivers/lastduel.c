@@ -773,7 +773,7 @@ ROM_START( madgear_rom )
 	ROM_LOAD_ODD ( "mg_01.rom",    0x40000, 0x20000, 0x1cea2af0 )
 
 	ROM_REGION_DISPOSE(0x148000) /* temporary space for graphics */
-	ROM_LOAD( "gfx",          0x000000, 0x40000, 0x00000000 )	/* No tile roms :( :( */
+	ROM_LOAD( "gfx1",         0x000000, 0x40000, 0x00000000 )	/* No tile roms :( :( */
 	ROM_LOAD( "mg_m11.rom",   0x040000, 0x10000, 0xee319a64 )	/* Interleaved sprites */
 	ROM_LOAD( "mg_m07.rom",   0x050000, 0x10000, 0xe5c0b211 )
 	ROM_LOAD( "mg_m12.rom",   0x060000, 0x10000, 0x887ef120 )
@@ -783,7 +783,7 @@ ROM_START( madgear_rom )
 	ROM_LOAD( "mg_m14.rom",   0x0a0000, 0x10000, 0x21e5424c )
 	ROM_LOAD( "mg_m10.rom",   0x0b0000, 0x10000, 0xb64afb54 )
 	ROM_LOAD( "mg_06.rom",    0x0c0000, 0x08000, 0x382ee59b )	/* 8x8 text */
-	ROM_LOAD( "gfx",          0x0c8000, 0x80000, 0x00000000 )	/* No tile roms :( :( */
+	ROM_LOAD( "gfx1",         0x0c8000, 0x80000, 0x00000000 )	/* No tile roms :( :( */
 
 	ROM_REGION( 0x18000 ) /* audio CPU */
 	ROM_LOAD( "mg_05.rom",    0x00000,  0x08000, 0x2fbfc945 )
@@ -802,7 +802,7 @@ ROM_START( ledstorm_rom )
 	ROM_LOAD_ODD ( "mg_01.rom", 0x40000, 0x20000, 0x1cea2af0 )
 
 	ROM_REGION_DISPOSE(0x148000) /* temporary space for graphics */
-	ROM_LOAD( "gfx",          0x000000, 0x40000, 0x00000000 )	/* No tile roms :( :( */
+	ROM_LOAD( "gfx1",         0x000000, 0x40000, 0x00000000 )	/* No tile roms :( :( */
 	ROM_LOAD( "mg_m11.rom",   0x040000, 0x10000, 0xee319a64 )	/* Interleaved sprites */
 	ROM_LOAD( "07",           0x050000, 0x10000, 0x7152b212 )
 	ROM_LOAD( "mg_m12.rom",   0x060000, 0x10000, 0x887ef120 )
@@ -812,7 +812,7 @@ ROM_START( ledstorm_rom )
 	ROM_LOAD( "mg_m14.rom",   0x0a0000, 0x10000, 0x21e5424c )
 	ROM_LOAD( "10",           0x0b0000, 0x10000, 0x6db7ca64 )
 	ROM_LOAD( "06",           0x0c0000, 0x08000, 0x54bfdc02 )	/* 8x8 text */
-	ROM_LOAD( "gfx",          0x0c8000, 0x80000, 0x00000000 )	/* No tile roms :( :( */
+	ROM_LOAD( "gfx1",         0x0c8000, 0x80000, 0x00000000 )	/* No tile roms :( :( */
 
 	ROM_REGION( 0x18000 ) /* audio CPU */
 	ROM_LOAD( "mg_05.rom",    0x00000,  0x08000, 0x2fbfc945 )

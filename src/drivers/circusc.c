@@ -313,9 +313,9 @@ ROM_START( circusc_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "s05",          0x6000, 0x2000, 0x48feafcf )
 	ROM_LOAD( "q04",          0x8000, 0x2000, 0xc283b887 )
-	ROM_LOAD( "q03",          0xA000, 0x2000, 0xe90c0e86 )
-	ROM_LOAD( "q02",          0xC000, 0x2000, 0x4d847dc6 )
-	ROM_LOAD( "q01",          0xE000, 0x2000, 0x18c20adf )
+	ROM_LOAD( "q03",          0xa000, 0x2000, 0xe90c0e86 )
+	ROM_LOAD( "q02",          0xc000, 0x2000, 0x4d847dc6 )
+	ROM_LOAD( "q01",          0xe000, 0x2000, 0x18c20adf )
 
 	ROM_REGION_DISPOSE(0x10000)    /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "a04_j12.bin",  0x0000, 0x2000, 0x56e5b408 )
@@ -341,9 +341,9 @@ ROM_START( circusc2_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "h03_r05.bin",  0x6000, 0x2000, 0xed52c60f )
 	ROM_LOAD( "h04_n04.bin",  0x8000, 0x2000, 0xfcc99e33 )
-	ROM_LOAD( "h05_n03.bin",  0xA000, 0x2000, 0x5ef5b3b5 )
-	ROM_LOAD( "h06_n02.bin",  0xC000, 0x2000, 0xa5a5e796 )
-	ROM_LOAD( "h07_n01.bin",  0xE000, 0x2000, 0x70d26721 )
+	ROM_LOAD( "h05_n03.bin",  0xa000, 0x2000, 0x5ef5b3b5 )
+	ROM_LOAD( "h06_n02.bin",  0xc000, 0x2000, 0xa5a5e796 )
+	ROM_LOAD( "h07_n01.bin",  0xe000, 0x2000, 0x70d26721 )
 
 	ROM_REGION_DISPOSE(0x10000)    /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "a04_j12.bin",  0x0000, 0x2000, 0x56e5b408 )
@@ -369,9 +369,9 @@ ROM_START( circuscc_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "p05",          0x6000, 0x2000, 0x7ca74494 )
 	ROM_LOAD( "p04",          0x8000, 0x2000, 0xdd0c0ee7 )
-	ROM_LOAD( "p03",          0xA000, 0x2000, 0x190247af )
-	ROM_LOAD( "p02",          0xC000, 0x2000, 0x7e63725e )
-	ROM_LOAD( "p01",          0xE000, 0x2000, 0xeedaa5b2 )
+	ROM_LOAD( "p03",          0xa000, 0x2000, 0x190247af )
+	ROM_LOAD( "p02",          0xc000, 0x2000, 0x7e63725e )
+	ROM_LOAD( "p01",          0xe000, 0x2000, 0xeedaa5b2 )
 
 	ROM_REGION_DISPOSE(0x10000)    /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "a04_j12.bin",  0x0000, 0x2000, 0x56e5b408 )

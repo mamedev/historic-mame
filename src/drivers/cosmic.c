@@ -729,21 +729,21 @@ static struct MemoryWriteAddress cosmicguerilla_writemem[] =
 static const char *cosmicguerilla_sample_names[] =
 {
 	"*cosmicg",
-	"CG_M0.wav",	/* 8 Different pitches of March Sound */
-	"CG_M1.wav",
-	"CG_M2.wav",
-	"CG_M3.wav",
-	"CG_M4.wav",
-	"CG_M5.wav",
-	"CG_M6.wav",
-	"CG_M7.wav",
-	"CG_ATT.wav",	/* Killer Attack */
-	"CG_CHNC.wav",	/* Bonus Chance  */
-	"CG_GOTB.wav",	/* Got Bonus - have not got correct sound for */
-	"CG_DEST.wav",	/* Gun Destroy */
-	"CG_GUN.wav",	/* Gun Shot */
-	"CG_GOTM.wav",	/* Got Monster */
-	"CG_EXT.wav",	/* Coin Extend */
+	"cg_m0.wav",	/* 8 Different pitches of March Sound */
+	"cg_m1.wav",
+	"cg_m2.wav",
+	"cg_m3.wav",
+	"cg_m4.wav",
+	"cg_m5.wav",
+	"cg_m6.wav",
+	"cg_m7.wav",
+	"cg_att.wav",	/* Killer Attack */
+	"cg_chnc.wav",	/* Bonus Chance  */
+	"cg_gotb.wav",	/* Got Bonus - have not got correct sound for */
+	"cg_dest.wav",	/* Gun Destroy */
+	"cg_gun.wav",	/* Gun Shot */
+	"cg_gotm.wav",	/* Got Monster */
+	"cg_ext.wav",	/* Coin Extend */
 	0       /* end of array */
 };
 
@@ -1434,7 +1434,7 @@ INPUT_PORTS_START( devzone_input_ports )
 	PORT_DIPSETTING(    0x02, "6000" )
 	PORT_DIPSETTING(    0x03, "8000" )
 	PORT_DIPSETTING(    0x00, "None" )
-	PORT_DIPNAME( 0x0c, 0x0c, IP_NAME_DEFAULT )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x0c, "Use Coin A & B" )
 	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )

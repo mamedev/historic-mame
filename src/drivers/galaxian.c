@@ -1430,7 +1430,7 @@ ROM_START( pisces_rom )
 	ROM_LOAD( "6331-1j.86",   0x0000, 0x0020, 0x24652bc4 ) /* very close to Galaxian */
 ROM_END
 
-ROM_START( japirem_rom )
+ROM_START( gteikoku_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "f07_1a.bin",   0x0000, 0x0800, 0xd975af10 )
 	ROM_LOAD( "h07_2a.bin",   0x0800, 0x0800, 0xb2ed14c3 )
@@ -2336,11 +2336,11 @@ struct GameDriver pisces_driver =
 	pisces_hiload, pisces_hisave
 };
 
-struct GameDriver japirem_driver =
+struct GameDriver gteikoku_driver =
 {
 	__FILE__,
 	0,
-	"japirem",
+	"gteikoku",
 	"Gingateikoku No Gyakushu",
 	"1980",
 	"Irem",
@@ -2349,7 +2349,7 @@ struct GameDriver japirem_driver =
 	&pisces_machine_driver,
 	pisces_driver_init,
 
-	japirem_rom,
+	gteikoku_rom,
 	0, 0,
 	mooncrst_sample_names,
 	0,	/* sound_prom */
@@ -2365,7 +2365,7 @@ struct GameDriver japirem_driver =
 struct GameDriver uniwars_driver =
 {
 	__FILE__,
-	&japirem_driver,
+	&gteikoku_driver,
 	"uniwars",
 	"Uniwars",
 	"1980",
@@ -2391,7 +2391,7 @@ struct GameDriver uniwars_driver =
 struct GameDriver spacbatt_driver =
 {
 	__FILE__,
-	&japirem_driver,
+	&gteikoku_driver,
 	"spacbatt",
 	"Space Battle",
 	"1980",

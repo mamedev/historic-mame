@@ -211,9 +211,9 @@ int getVtEndDisplay()
 void center15KHz(Register *pReg)
 {
 	int hrt, vrt_start, temp, vert_total, vert_display, center, hrt_start;
+	int vblnk_start,vrt,vblnk;
 	int hblnk = 3;
-	int vblnk = 2;
-	int vrt = 2;
+
 
 /* check for empty array */
 	if (!pReg)
@@ -237,38 +237,43 @@ void center15KHz(Register *pReg)
 	hrt_start += center;
 /* make sure it's legal */
 	if (hrt_start <= pReg[H_DISPLAY_INDEX].value)
-		hrt_start= pReg[H_DISPLAY_INDEX].value + 1;
+		hrt_start = pReg[H_DISPLAY_INDEX].value + 1;
 
 	pReg[H_RETRACE_START_INDEX].value = hrt_start;
 	temp = hrt_start + hrt;
-/* make sure it's legal */
-	if (temp > pReg[H_TOTAL_INDEX].value + 4)
-		temp = pReg[H_TOTAL_INDEX].value + 4;
 	pReg[H_RETRACE_END_INDEX].value = temp&0x1f;
 
  /* set the hz blanking */
-	pReg[H_BLANKING_START_INDEX].value = hrt_start;
-	temp += hblnk;
-/* make sure it's legal */
-	if (temp > pReg[H_TOTAL_INDEX].value + 4)
-		temp = pReg[H_TOTAL_INDEX].value + 4;
+	temp = pReg[H_DISPLAY_INDEX].value;
+   	pReg[H_BLANKING_START_INDEX].value = temp;
+   	temp += hblnk;
+   	pReg[H_BLANKING_END_INDEX].value = (temp&0x1f) | 0x80;
 
-	pReg[H_BLANKING_END_INDEX].value = (temp&0x1f)|0x80;
 
-/* set the vt retrace */
+/* get the vt retrace */
 	vrt_start = pReg[V_RETRACE_START_INDEX].value | ((pReg[OVERFLOW_INDEX].value & 0x04) << 6) |
 				((pReg[OVERFLOW_INDEX].value & 0x80) << 2);
+
+/* get the width of it */
+	temp = vrt_start & ~0x0f;
+	temp |=	(pReg[V_RETRACE_END_INDEX].value & 0x0f);
+
+	vrt = temp - vrt_start;
+
+
+/* set the new retrace start */
 	vrt_start += center_y;
 /* check it's legal, get the display line count */
 	vert_display = (pReg[V_END_INDEX].value | ((pReg[OVERFLOW_INDEX].value & 0x02) << 7) |
 				((pReg[OVERFLOW_INDEX].value & 0x40) << 3)) + 1;
 
 	if (vrt_start < vert_display)
-		vrt_start= vert_display;
+		vrt_start = vert_display;
 
 /* and get the vertical line count */
 	vert_total = pReg[V_TOTAL_INDEX].value | ((pReg[OVERFLOW_INDEX].value & 0x01) << 8) |
 				((pReg[OVERFLOW_INDEX].value & 0x20) << 4);
+
 
 
 	pReg[V_RETRACE_START_INDEX].value = (vrt_start & 0xff);
@@ -277,23 +282,44 @@ void center15KHz(Register *pReg)
 	pReg[OVERFLOW_INDEX].value |= ((vrt_start & 0x200) >> 2);
 	temp = vrt_start + vrt;
 
+
 	if (temp > vert_total)
 		temp = vert_total;
+
 
 	pReg[V_RETRACE_END_INDEX].value &= ~0x0f;
 	pReg[V_RETRACE_END_INDEX].value |= (temp & 0x0f);
 
- /* set the vt blanking */
-	pReg[V_BLANKING_START_INDEX].value = (vrt_start & 0xff);
+/* get the start of vt blanking */
+	vblnk_start = pReg[V_BLANKING_START_INDEX].value | ((pReg[OVERFLOW_INDEX].value & 0x08) << 5) |
+					((pReg[MAXIMUM_SCANLINE_INDEX].value & 0x20) << 4);
+
+/* and the end */
+	temp = vblnk_start & ~0xff;
+	temp |= pReg[V_BLANKING_END_INDEX].value;
+
+/* get the width */
+	vblnk = temp - vblnk_start;
+/* get the new value */
+	vblnk_start += center_y;
+/* check it's legal */
+	if (vblnk_start < vert_display)
+		vblnk_start = vert_display;
+	if (vblnk_start > vert_total)
+		vblnk_start = vert_total;
+
+/* set vblank start */
+	pReg[V_BLANKING_START_INDEX].value = (vblnk_start & 0xff);
 	pReg[OVERFLOW_INDEX].value &= ~0x08;
-	pReg[OVERFLOW_INDEX].value |= ((vrt_start & 0x100) >> 5);
+	pReg[OVERFLOW_INDEX].value |= ((vblnk_start & 0x100) >> 5);
 	pReg[MAXIMUM_SCANLINE_INDEX].value &= ~0x20;
-	pReg[MAXIMUM_SCANLINE_INDEX].value |= ((vrt_start &0x200) >> 4);
-	temp = vrt_start + vblnk;
+	pReg[MAXIMUM_SCANLINE_INDEX].value |= ((vblnk_start &0x200) >> 4);
+/* set the vblank end */
+	temp = vblnk_start + vblnk;
+/* check it's legal */
 	if (temp > vert_total)
 		temp = vert_total;
 	pReg[V_BLANKING_END_INDEX].value = (temp & 0xff);
-
 }
 
 int sup_15Khz_res(int width,int height)

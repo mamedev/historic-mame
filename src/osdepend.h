@@ -248,7 +248,7 @@ struct osd_bitmap
 
 int osd_init(void);
 void osd_exit(void);
-/* VERY IMPORTANT: the function must allocate also a "safety area" 8 pixels wide all */
+/* VERY IMPORTANT: the function must allocate also a "safety area" 16 pixels wide all */
 /* around the bitmap. This is required because, for performance reasons, some graphic */
 /* routines don't clip at boundaries of the bitmap. */
 struct osd_bitmap *osd_new_bitmap(int width,int height,int depth);	/* ASG 980209 */

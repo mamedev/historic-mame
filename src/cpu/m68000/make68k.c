@@ -473,61 +473,62 @@ void SavePreviousPC(void)
 void Completed(void)
 {
 
-	/* Flag Processing to be finished off ? */
+ /* Flag Processing to be finished off ? */
 
-	if (FlagProcess > 0)
+ if (FlagProcess > 0)
     {
-		fprintf(fp, "\t\t pop   EDX\n");
+  fprintf(fp, "\t\t pop   EDX\n");
 
         if (FlagProcess == 2)
-			fprintf(fp, "\t\t mov   [%s],edx\n",REG_X);
+   fprintf(fp, "\t\t mov   [%s],edx\n",REG_X);
 
         FlagProcess = 0;
     }
 
-	/* Use assembler timing routines */
+ /* Use assembler timing routines */
 
-	if (TimingCycles != 0)
-	{
-		if (TimingCycles > 127)
-			fprintf(fp, "\t\t sub   dword [%s],%d\n",ICOUNT,TimingCycles);
-		else
+ if (TimingCycles != 0)
+ {
+  if (TimingCycles > 127)
+   fprintf(fp, "\t\t sub   dword [%s],%d\n",ICOUNT,TimingCycles);
+  else
         {
-        	if (TimingCycles != -1)
-				fprintf(fp, "\t\t sub   dword [%s],byte %d\n",ICOUNT,TimingCycles);
+         if (TimingCycles != -1)
+    fprintf(fp, "\t\t sub   dword [%s],byte %d\n",ICOUNT,TimingCycles);
+
         }
-	}
-	else
-	{
-		fprintf(fp, "\t\t or    dword [%s],0\n",ICOUNT);
-	}
+  fprintf(fp, "\t\t js    near MainExit\n\n");
+ }
+ else
+ {
+  fprintf(fp, "\t\t or    dword [%s],byte 0\n",ICOUNT);
+        fprintf(fp, "\t\t jle   near MainExit\n\n");
+ }
 
-	fprintf(fp, "\t\t js    near MainExit\n\n");
+ #ifdef MAME_DEBUG
 
-	#ifdef MAME_DEBUG
+     /* Check for Debug Active */
 
-    	/* Check for Debug Active */
+  fprintf(fp, "\n\t\t or    dword [_mame_debug],byte 0\n");
+  fprintf(fp, "\t\t jnz   near MainExit\n\n");
 
-		fprintf(fp, "\n\t\t or    dword [_mame_debug],0\n");
-		fprintf(fp, "\t\t jnz   near MainExit\n\n");
-
-	#endif
+ #endif
 
     if (CheckInterrupt)
     {
-		fprintf(fp,"; Check for Interrupt waiting\n\n");
-		fprintf(fp,"\t\t test  byte [%s],07H\n",REG_IRQ);
-		fprintf(fp,"\t\t jne   near interrupt\n\n");
+  fprintf(fp,"; Check for Interrupt waiting\n\n");
+  fprintf(fp,"\t\t test  byte [%s],07H\n",REG_IRQ);
+  fprintf(fp,"\t\t jne   near interrupt\n\n");
     }
 
     #ifdef STALLCHECK
-		fprintf(fp, "\t\t xor   ecx,ecx\t\t; Avoid Stall\n");
-    	fprintf(fp, "\t\t mov   cx,[esi+ebp]\n");
+  fprintf(fp, "\t\t xor   ecx,ecx\t\t; Avoid Stall\n");
+     fprintf(fp, "\t\t mov   cx,[esi+ebp]\n");
     #else
-    	fprintf(fp, "\t\t movzx ecx,word [esi+ebp]\n");
+     fprintf(fp, "\t\t movzx ecx,word [esi+ebp]\n");
     #endif
 
-	fprintf(fp, "\t\t jmp   [OPCODETABLE+ecx*4]\n\n");
+ fprintf(fp, "\t\t jmp   [OPCODETABLE+ecx*4]\n\n");
 }
 
 /*

@@ -149,6 +149,7 @@ to list them.
 | Dead Eye             |  Yes   |Overlay |  Yes   |  Yes   |  Yes   | deadeye  |
 | Defend the Terra Atta|  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | redufo   |
 | Defender             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | defender |
+| Demon's World        |  Yes   |  Yes   |  Yes   |   No   |   No   | demonwld |
 | Demolition Derby     |  Yes   |  Yes   |  Yes   |   No   |   No   | destderb |
 | Depth Charge         |  Yes   |  b/w   |   No   |   No   |   No   | depthch  |
 | Devastators          |   No   |  Yes   |   No   |   No   |   No   | devstors |
@@ -178,7 +179,7 @@ to list them.
 | Electric Yo-Yo,The   |  Yes   |  Yes   |  Yes   |  Yes   |   No   | elecyoyo |
 | Elevator Action      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | elevator |
 | Eliminator           |  Yes   | Close  | Yes(1) |  Yes   |   No   | elim2    |
-| Empire Strikes Back,The  No   |  Yes   |  Yes   |   No   |   No   | empire   |
+| Empire Strikes Back,The Yes   |  Yes   |  Yes   |   No   |   No   | empire   |
 | End,The              |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | theend   |
 | Escape from the Planet  Yes   |  Yes   |  Yes   |  Yes   |   No   | eprom    |
 | Espial               |  Yes   |  Yes?  |  Yes   |   No   |   No   | espial   |
@@ -201,6 +202,7 @@ to list them.
 | Flash Point          |   No   |  Yes   |   No   |   No   |   No   | fpointbl |
 | Flicky               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | flicky   |
 | Fly Boy              |  Yes   |   No   |  Yes   |  Yes   |  Yes   | flyboy   |
+| Flying Shark         |  Yes   |  Yes   |  Yes   |   No   |  Yes   | fshark   |
 | Food Fight           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | foodf    |
 | Formation Z          |   No   |   No   |  Yes   |   No   |   No   | formatz  |
 | Freeze               |  Yes   |  Yes?  |  Yes   |   No   |   No   | freeze   |
@@ -390,7 +392,7 @@ to list them.
 | Nemesis              |  Yes   |  Yes   |Partial |  Yes   |   No   | nemesis  |
 | Nemo                 |  Yes   |  Yes   |  Yes   |   No   |   No   | nemo     |
 | New Rally X          |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | nrallyx  |
-| New Sinbad 7         |  Yes   |  Yes   |  Yes   |   No   |   No   | newsin7  |
+| New Sinbad 7         |  Yes   |   No   |  Yes   |   No   |   No   | newsin7  |
 | New Zealand Story    |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | tnzs     |
 | Nibbler              |  Yes   |  Yes   |Partial |  Yes   |  Yes   | nibbler  |
 | Night Driver         |  Yes   |  b/w   |   No   |   No   |   No   | nitedrvr |
@@ -401,7 +403,7 @@ to list them.
 | Omega Race           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | omegrace |
 | Out Zone             |  Yes   |  Yes   |  Yes   |   No   |   No   | outzone  |
 | P-47                 |  Yes   |  Yes   |  Yes   |   No   |   No   | p47      |
-| P.O.W.               |  Yes   |  Yes   |Partial |   No   |   No   | pow      |
+| P.O.W.               |  Yes   |  Yes   |  Yes   |   No   |   No   | pow      |
 | Pac & Pal            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | pacnpal  |
 | Pac Man              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pacman   |
 | Pac Man Plus         |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pacplus  |
@@ -452,6 +454,7 @@ to list them.
 | Radar Scope          |  Yes   |  Yes?  |Partial |  Yes   |   No   | radarscp |
 | Radical Radial       |   No   |  Yes   |  Yes   |   No   |   No   | radrad   |
 | Rainbow Islands      |  Yes   |  Yes   |  Yes   |   No   |   No   | rainbow  |
+| Rally Bike           |  Yes   |  Yes   |  Yes   |   No   |   No   | rallybik |
 | Rally X              |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | rallyx   |
 | Rampage              |  Yes   |  Yes   |  Yes   |   No   |   No   | rampage  |
 | Rampart              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | rampart  |
@@ -485,6 +488,7 @@ to list them.
 | Safari               |  Yes   |  b/w   |   No   |   No   |  n/a   | safari   |
 | Salamander           |  Yes   |  Yes   |Partial |   No   |   No   | salamand |
 | Samurai              |  Yes   |  Yes?  |   No   |   No   |   No   | samurai  |
+| SAR - Search and Rescue Yes   |  Yes   |  Yes   |   No   |   No   | searchar |
 | Sarge                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | sarge    |
 | Sasuke vs. Commander |  Yes   |   No   |   No   |   No   |  Yes   | sasuke   |
 | Satan of Saturn      |  Yes   |  Yes?  |Partial |   No   |  Yes   | satansat |
@@ -559,6 +563,7 @@ to list them.
 | Stratovox            |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | stratvox |
 | Street Fighter       |  Yes   |  Yes   |Partial |   No   |   No   | sf1      |
 | Street Fighter 2     |  Yes   |  Yes   |  Yes   |   No   |   No   | sf2      |
+| Street Smart         |  Yes   |  Yes   |  Yes   |   No   |   No   | streetsm |
 | Strider              |  Yes   |  Yes   |  Yes   |   No   |   No   | strider  |
 | Strike Force         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | strkforc |
 | Subs                 |  Yes   |  b/w   |   No   |  n/a   |  n/a   | subs     |
@@ -577,7 +582,7 @@ to list them.
 | Super Pang           |  Yes   |  Yes   |Partial |  Yes   |  Yes   | spang    |
 | Super Punch Out      |  Yes   |  Yes   |Partial |  Yes   |  n/a   | spnchout |
 | Super Qix            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | superqix |
-| Super Real Darwin    |  Yes   |  Yes   |  Yes   |  Yes   |   No   | srdarwin |
+| Super Real Darwin    |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | srdarwin |
 | Super Space Invaders |  Yes   |  Yes   |   No   |   No   |   No   | ssi      |
 | Super Sprint         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | ssprint  |
 | Super Zaxxon         |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | szaxxon  |
@@ -635,11 +640,11 @@ to list them.
 | Turtle Ship          |  Yes   |  Yes   |  Yes   |   No   |   NO   | turtship |
 | Turtles              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | turtles  |
 | Tutankham            |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | tutankhm |
-| Twin Cobra           |  Yes   |  Yes   |  Yes   |   No   |   No   | twincobr |
+| Twin Cobra           |  Yes   |  Yes   |  Yes   |   No   |  Yes   | twincobr |
 | TwinBee              |  Yes   |  Yes   |Partial |   No   |   No   | twinbee  |
 | Two Tigers           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | twotiger |
 | UN Squadron          |  Yes   |  Yes   |  Yes   |   No   |   No   | unsquad  |
-| Ufo Robo Dangar      |  Yes   |  Yes   |  Yes   |   No   |  Yes   | dangar   |
+| Ufo Robo Dangar      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | dangar   |
 | Ufo Senshi Yohko Chan|   No   |  Yes   |  Yes   |   No   |   No   | ufosensi |
 | Up'n Down            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | upndown  |
 | Us vs Them           |Partial.|  Yes   |  Yes   |  Yes   |  n/a   | usvsthem |
@@ -658,6 +663,7 @@ to list them.
 | Wacko                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | wacko    |
 | Wanted               |  Yes   |   No   |  Yes   |  Yes   |  Yes   | wanted   |
 | War of the Bugs      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | warofbug |
+| Wardners Forest      |  Yes   |  Yes   |  Yes   |   No   |  Yes   | wardner  |
 | Warlords             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | warlord  |
 | Warp Warp            |  Yes   |  Yes   |   No   |  Yes   |   No   | warpwarp |
 | Water Ski            |  Yes   |  Yes   |  Yes   |   No   |  Yes   | waterski |
@@ -1652,6 +1658,9 @@ Jackal ("jackal")
 Clones supported:
   Top Gunner ("topgunr")
   bootleg Top Gunner ("topgunbl")
+
+topgunbl also allows to rotate the gun turret with a rotary switch. This
+feature is not available in the two original sets.
 
 Known issues:
 - The high score table colors are probably not correct (all lines are white).
@@ -2759,9 +2768,11 @@ Known issues:
 
 Star Wars ("starwars")
 ======================
+The dip switches only have effect when the EEPROM is invalid (that is, when
+there is no starwars.hi file). Afterwards, settings can be changed in the
+service menu.
+
 Known issues:
-- Dip switches not functional, but you can change game settings through
-  the self test menus.
 - Sometimes, after the TIE level, instead of zooming into the Death Star the
   game sits there endlessly.
 

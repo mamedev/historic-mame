@@ -69,15 +69,18 @@ static int cps1_player_input_r(int offset)
 
 static void cps1_coinctrl_w(int offset,int data)
 {
+	if ((data & 0xff000000) == 0)
+	{
 {
 	char baf[40];
 	sprintf(baf,"%04x",data);
 //	usrintf_showmessage(baf);
 }
-	coin_lockout_w(0,~data & 0x0400);
-	coin_lockout_w(1,~data & 0x0800);
-	coin_counter_w(0,data & 0x0100);
-	coin_counter_w(1,data & 0x0200);
+		coin_lockout_w(0,~data & 0x0400);
+		coin_lockout_w(1,~data & 0x0800);
+		coin_counter_w(0,data & 0x0100);
+		coin_counter_w(1,data & 0x0200);
+	}
 }
 
 static int cps1_interrupt(void)
@@ -421,15 +424,15 @@ INPUT_PORTS_START( ghouls_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
 	PORT_START      /* DSWB */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x04, "Easier" )
+	PORT_DIPSETTING(    0x05, "Very Easy" )
+	PORT_DIPSETTING(    0x06, "Easy" )
+	PORT_DIPSETTING(    0x07, "Normal" )
+	PORT_DIPSETTING(    0x03, "Difficult" )
+	PORT_DIPSETTING(    0x02, "Hard" )
+	PORT_DIPSETTING(    0x01, "Very Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
@@ -5780,7 +5783,7 @@ GAME_DRIVER_QSOUND      (dino,              "Cadillacs and Dinosaurs (World)", "
 GAME_DRIVER_QSOUND_CLONE(dinoj,dino,        "Cadillacs Kyouryuu-Shinseiki (Japan)", "1993","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_QSOUND      (punisher,          "Punisher (World)",                "1993","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_QSOUND_CLONE(punishrj,punisher, "Punisher (Japan)",                "1993","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVER      (pnickj,            "Pnickies (Japan)",                  "1994","Capcom (Compile license)",ORIENTATION_DEFAULT)
+GAME_DRIVER      (pnickj,            "Pnickies (Japan)",                  "1994","Capcom (licensed from Compile)",ORIENTATION_DEFAULT)
 GAME_DRIVER      (qad,               "Quiz & Dragons (US)",               "1992","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONEI(qadj,    qad,      "Quiz & Dragons (Japan)",            "1994","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER      (qtono2,            "Quiz Tonosama no Yabou 2 Zenkoku-ban (Japan)","1995","Capcom",ORIENTATION_DEFAULT)
@@ -5935,13 +5938,6 @@ static void pang3_decode(void)
 		if (~src & 0x80) dst ^= 0x88;
 		WRITE_WORD(&RAM[A],dst);
 	}
-
-#if 0
-	/* patch out EEPROM test */
-	WRITE_WORD(&RAM[0x20de2], 0x4e71);
-	WRITE_WORD(&RAM[0x20de4], 0x4e71);
-	WRITE_WORD(&RAM[0x20de6], 0x4e71);
-#endif
 }
 
 struct GameDriver pang3_driver =

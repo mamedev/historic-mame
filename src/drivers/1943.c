@@ -361,7 +361,7 @@ ROM_START( c1943_rom )
 	ROM_LOAD( "1943.23",      0x8000, 0x8000, 0xa52aecbd )	/* back background */
 ROM_END
 
-ROM_START( c1943jap_rom )
+ROM_START( c1943j_rom )
 	ROM_REGION(0x30000)	/* 64k for code + 128k for the banked ROMs images */
 	ROM_LOAD( "1943jap.001",  0x00000, 0x08000, 0xf6935937 )
 	ROM_LOAD( "1943jap.002",  0x10000, 0x10000, 0xaf971575 )
@@ -610,11 +610,11 @@ struct GameDriver c1943_driver =
 	c1943_hiload, c1943_hisave
 };
 
-struct GameDriver c1943jap_driver =
+struct GameDriver c1943j_driver =
 {
 	__FILE__,
 	&c1943_driver,
-	"1943jap",
+	"1943j",
 	"1943 - The Battle of Midway (Japan)",
 	"1987",
 	"Capcom",
@@ -623,7 +623,7 @@ struct GameDriver c1943jap_driver =
 	&machine_driver,
 	0,
 
-	c1943jap_rom,
+	c1943j_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

@@ -38,27 +38,27 @@ int  atetris_slapstic_r(int offset);
 
 static struct MemoryReadAddress readmem[] =
 {
-        { 0x0000, 0x20ff, MRA_RAM },
-        { 0x2400, 0x25ff, MRA_RAM },
-        { 0x2800, 0x280f, pokey1_r },
-        { 0x2810, 0x281f, pokey2_r },
-        { 0x4000, 0x7fff, atetris_slapstic_r },
-        { 0x8000, 0xffff, MRA_ROM },
+	{ 0x0000, 0x20ff, MRA_RAM },
+	{ 0x2400, 0x25ff, MRA_RAM },
+	{ 0x2800, 0x280f, pokey1_r },
+	{ 0x2810, 0x281f, pokey2_r },
+	{ 0x4000, 0x7fff, atetris_slapstic_r },
+	{ 0x8000, 0xffff, MRA_ROM },
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-        { 0x0000, 0x0fff, MWA_RAM },
-        { 0x1000, 0x1fff, videoram_w, &videoram, &videoram_size },
-        { 0x2000, 0x20ff, paletteram_RRRGGGBB_w, &paletteram },
-        { 0x2400, 0x25ff, MWA_RAM },
-        { 0x2800, 0x280f, pokey1_w },
-        { 0x2810, 0x281f, pokey2_w },
-        { 0x3000, 0x3000, watchdog_reset_w },
-        { 0x3400, 0x3400, MWA_NOP },  // EEPROM enable
-        { 0x3800, 0x3800, MWA_NOP },  // ???
-        { 0x3c00, 0x3c00, MWA_NOP },  // ???
-        { -1 }  /* end of table */
+	{ 0x0000, 0x0fff, MWA_RAM },
+	{ 0x1000, 0x1fff, videoram_w, &videoram, &videoram_size },
+	{ 0x2000, 0x20ff, paletteram_RRRGGGBB_w, &paletteram },
+	{ 0x2400, 0x25ff, MWA_RAM },
+	{ 0x2800, 0x280f, pokey1_w },
+	{ 0x2810, 0x281f, pokey2_w },
+	{ 0x3000, 0x3000, watchdog_reset_w },
+	{ 0x3400, 0x3400, MWA_NOP },  // EEPROM enable
+	{ 0x3800, 0x3800, MWA_NOP },  // ???
+	{ 0x3c00, 0x3c00, MWA_NOP },  // ???
+	{ -1 }  /* end of table */
 };
 
 
@@ -203,6 +203,7 @@ static struct MachineDriver machine_driver =
   Game driver(s)
 
 ***************************************************************************/
+
 ROM_START( atetris_rom )
 	ROM_REGION(0x14000)     /* 80k for code */
 	ROM_LOAD( "1100.45f",     0x0000, 0x10000, 0x2acbdb09 )

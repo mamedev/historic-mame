@@ -35,6 +35,8 @@
 
 extern unsigned char *arkanoid_stat;
 
+void arkanoid_init_machine(void);
+
 void arkanoid_d008_w(int offset,int data);
 void arkanoid_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void arkanoid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -265,7 +267,7 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chips */
 	1500000,	/* 1.5 MHz ???? */
-	{ 50 },
+	{ 33 },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ input_port_4_r },
@@ -296,7 +298,7 @@ static struct MachineDriver machine_driver =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100, /* 100 CPU slices per second to synchronize between the MCU and the main CPU */
-	0,
+	arkanoid_init_machine,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },

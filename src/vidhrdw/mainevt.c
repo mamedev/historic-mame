@@ -97,6 +97,12 @@ int mainevt_vh_start(void)
 	memset(dirty_b,1,videoram_size);
 	memset(dirty_f,1,videoram_size);
 
+	/* foreground transparency */
+	palette_used_colors[4*16] = PALETTE_COLOR_TRANSPARENT;
+	palette_used_colors[5*16] = PALETTE_COLOR_TRANSPARENT;
+	palette_used_colors[6*16] = PALETTE_COLOR_TRANSPARENT;
+	palette_used_colors[7*16] = PALETTE_COLOR_TRANSPARENT;
+
 	return 0;
 }
 
@@ -212,7 +218,10 @@ void mainevt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		color=mainevt_bg_attr_ram[offs]>>6;
 
 		drawgfx(back_bitmap,Machine->gfx[0],
-				tile+bank,color+8,fx,0,8*mx,8*my,
+				tile+bank,
+				color+8,
+				fx,0,
+				8*mx,8*my,
 				0,TRANSPARENCY_NONE,0);
 	}
 	dirty_bg_video = 0;
@@ -244,7 +253,10 @@ NO_BACK_DRAW:
 		bank=((((mainevt_fg_attr_ram[offs]>>1)&0x1e)+(mainevt_fg_attr_ram[offs]&0x1))*0x100);
 
 		drawgfx(front_bitmap,Machine->gfx[0],
-				tile+bank,color+4,fx,0,8*mx,8*my,
+				tile+bank,
+				color+4,
+				fx,0,
+				8*mx,8*my,
 				0,TRANSPARENCY_NONE,0);
 	}
 	dirty_fg_video=0;
@@ -253,7 +265,7 @@ NO_FORE_DRAW:
 
 	scrolly = -*fg_scrolly;
 	scrollx=-((*fg_scrollx_hi<<8)+*fg_scrollx_lo)+6;
-	copyscrollbitmap(bitmap,front_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+	copyscrollbitmap(bitmap,front_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
 	/* Render sprites foreground sprites */
 	mainevt_vh_drawsprites(bitmap,0);
@@ -276,7 +288,10 @@ NO_FORE_DRAW:
     	color=mainevt_attr_ram[offs]>>6;
 
 		drawgfx(bitmap,Machine->gfx[0],
-    			tile+bank,color,fx,0,mx*8,my*8,
+    			tile+bank,
+				color,
+				fx,0,
+				mx*8,my*8,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
   	}
 }

@@ -60,12 +60,12 @@ void combatsc_bankselect_w( int offset, int data ){
 	}
 }
 
-void combatsc_init_machine( void ){
+void combatsc_init_machine( void )
+{
 	unsigned char *MEM = Machine->memory_region[0];
 
 	/* Set optimization flags for M6809 */
 	m6809_Flags = M6809_FAST_NONE;
-	errorlog = fopen ("combatsc.dmp", "w+b");
 
 	memcpy( &MEM[0x8000], &MEM[0x18000], 0x8000 ); /* map upper half of ROM */
 

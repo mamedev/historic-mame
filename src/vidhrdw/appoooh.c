@@ -190,6 +190,7 @@ static void appoooh_draw_sprites(struct osd_bitmap *dest_bmp,
 		int sx    = sprite[offs+3];
 		int flipx = sprite[offs+1]&0x01;
 
+		if(sx>=248) sx -= 256;
 
 		if (flipscreen)
 		{

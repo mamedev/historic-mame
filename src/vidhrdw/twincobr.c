@@ -1,8 +1,14 @@
 /***************************************************************************
-
   vidhrdw.c
 
-  Functions to emulate the video hardware of the machine.
+  Functions to emulate the video hardware of these machines.
+  Video is 30x40 tiles. (200x320 for Twin Cobra/Flying shark)
+  Video is 40x30 tiles. (320x200 for Wardner)
+
+  Video has 3 scrolling tile layers (Background, Foreground and Text) and
+  Sprites that have 4 (5?) priorities. Lowest priority is "Off".
+  Wardner has an unusual sprite priority in the shop scenes, whereby a
+  middle level priority Sprite appears over a high priority Sprite ?
 
 ***************************************************************************/
 
@@ -13,22 +19,64 @@
 
 static unsigned char *twincobr_bgvideoram;
 static unsigned char *twincobr_fgvideoram;
+
+int wardner_sprite_hack = 0;	/* Required for weird sprite priority in wardner  */
+								/* when hero is in shop. Hero should cover shop owner */
+
 static int twincobr_bgvideoram_size,twincobr_fgvideoram_size;
-static unsigned char txscroll[4],bgscroll[4],fgscroll[4];
+static int txscrollx = 0;
+static int txscrolly = 0;
+static int fgscrollx = 0;
+static int fgscrolly = 0;
+static int bgscrollx = 0;
+static int bgscrolly = 0;
 int twincobr_fg_rom_bank = 0;
 int twincobr_bg_ram_bank = 0;
-int twincobr_display_on = 0;
-int twincobr_flip_screen = 0;     /* not implemented properly yet */
-static int charoffs;
-static int bgoffs;
-static int fgoffs;
+int twincobr_display_on = 1;
+int twincobr_flip_screen = 0;
+int twincobr_flip_x_base = 0x37;	/* value to 0 the X scroll offsets (non-flip) */
+int twincobr_flip_y_base = 0x1e;	/* value to 0 the Y scroll offsets (non-flip) */
+
+static int txoffs = 0;
+static int bgoffs = 0;
+static int fgoffs = 0;
+static int scroll_x = 0;
+static int scroll_y = 0;
+
+static int vidbaseaddr = 0;
+static int scroll_realign_x = 0;
+
+/************************* Warnder variables *******************************/
+
+static int tx_offset_lsb = 0;
+static int tx_offset_msb = 0;
+static int bg_offset_lsb = 0;
+static int bg_offset_msb = 0;
+static int fg_offset_lsb = 0;
+static int fg_offset_msb = 0;
+static int tx_scrollx_lsb = 0;
+static int tx_scrollx_msb = 0;
+static int tx_scrolly_lsb = 0;
+static int tx_scrolly_msb = 0;
+static int bg_scrollx_lsb = 0;
+static int bg_scrollx_msb = 0;
+static int bg_scrolly_lsb = 0;
+static int bg_scrolly_msb = 0;
+static int fg_scrollx_lsb = 0;
+static int fg_scrollx_msb = 0;
+static int fg_scrolly_lsb = 0;
+static int fg_scrolly_msb = 0;
+static int tx_data_msb = 0;
+static int bg_data_msb = 0;
+static int fg_data_msb = 0;
+
 
 
 int twincobr_vh_start(void)
 {
 	/* the video RAM is accessed via ports, it's not memory mapped */
 	videoram_size = 0x1000;
-	twincobr_bgvideoram_size = 0x4000;
+	twincobr_bgvideoram_size = 0x4000;	/* banked two times 0x2000 */
 	twincobr_fgvideoram_size = 0x2000;
 
 	if ((videoram = malloc(videoram_size)) == 0)
@@ -80,104 +128,208 @@ void twincobr_vh_stop(void)
 	free(videoram);
 }
 
-int twincobr_60000_r(int offset)
+
+int twincobr_crtc_r(int offset)
 {
-	int temp6000x;
-	temp6000x = crtc6845_register_r(offset);
-	if (errorlog) fprintf(errorlog,"PC - read %04x to 6000%01x\n",temp6000x,offset);
-	return temp6000x;
+	return crtc6845_register_r(offset);
 }
 
-void twincobr_60000_w(int offset,int data)
+void twincobr_crtc_w(int offset,int data)
 {
 	if (offset == 0) crtc6845_address_w(offset, data);
 	if (offset == 2) crtc6845_register_w(offset, data);
 }
 
-void twincobr_70004_w(int offset,int data)
+void twincobr_txoffs_w(int offset,int data)
 {
-   charoffs = (2 * data) % videoram_size;
+	txoffs = (2 * data) % videoram_size;
 }
-int twincobr_7e000_r(int offset)
+int twincobr_txram_r(int offset)
 {
-	return READ_WORD(&videoram[charoffs]);
+	return READ_WORD(&videoram[txoffs]);
 }
-void twincobr_7e000_w(int offset,int data)
+void twincobr_txram_w(int offset,int data)
 {
-	WRITE_WORD(&videoram[charoffs],data);
+	WRITE_WORD(&videoram[txoffs],data);
 }
 
-void twincobr_72004_w(int offset,int data)
+void twincobr_bgoffs_w(int offset,int data)
 {
 	bgoffs = (2 * data) % (twincobr_bgvideoram_size >> 1);
 }
-int twincobr_7e002_r(int offset)
+int twincobr_bgram_r(int offset)
 {
 	return READ_WORD(&twincobr_bgvideoram[bgoffs+twincobr_bg_ram_bank]);
 }
-void twincobr_7e002_w(int offset,int data)
+void twincobr_bgram_w(int offset,int data)
 {
 	WRITE_WORD(&twincobr_bgvideoram[bgoffs+twincobr_bg_ram_bank],data);
 	dirtybuffer[bgoffs / 2] = 1;
 }
 
-void twincobr_74004_w(int offset,int data)
+void twincobr_fgoffs_w(int offset,int data)
 {
 	fgoffs = (2 * data) % twincobr_fgvideoram_size;
 }
-int twincobr_7e004_r(int offset)
+int twincobr_fgram_r(int offset)
 {
 	return READ_WORD(&twincobr_fgvideoram[fgoffs]);
 }
-void twincobr_7e004_w(int offset,int data)
+void twincobr_fgram_w(int offset,int data)
 {
 	WRITE_WORD(&twincobr_fgvideoram[fgoffs],data);
-}
-
-void twincobr_76004_w(int offset,int data)
-{
-	if (errorlog) fprintf(errorlog,"PC - write %04x to %06x\n",data,offset + 0x76000);
 }
 
 
 void twincobr_txscroll_w(int offset,int data)
 {
-	WRITE_WORD(&txscroll[offset],data);
+	if (offset == 0) txscrollx = data;
+	else txscrolly = data;
 }
 
 void twincobr_bgscroll_w(int offset,int data)
 {
-	WRITE_WORD(&bgscroll[offset],data);
+	if (offset == 0) bgscrollx = data;
+	else bgscrolly = data;
 }
 
 void twincobr_fgscroll_w(int offset,int data)
 {
-	WRITE_WORD(&fgscroll[offset],data);
+	if (offset == 0) fgscrollx = data;
+	else fgscrolly = data;
 }
+
+void twincobr_exscroll_w(int offset,int data)	/* Extra unused video layer */
+{
+	if (errorlog) {
+		if (offset == 0) fprintf(errorlog,"PC - write %04x to extra video layer Y scroll register\n",data);
+		else fprintf(errorlog,"PC - write %04x to extra video layer scroll X register\n",data);
+	}
+}
+
+/******************** Wardner interface to this hardware ********************/
+void wardner_txlayer_w(int offset, int data)
+{
+	if (offset == 0) tx_offset_lsb = data;
+	if (offset == 1) tx_offset_msb = (data << 8);
+	twincobr_txoffs_w(0,tx_offset_msb | tx_offset_lsb);
+}
+void wardner_bglayer_w(int offset, int data)
+{
+	if (offset == 0) bg_offset_lsb = data;
+	if (offset == 1) bg_offset_msb = (data<<8);
+	twincobr_bgoffs_w(0,bg_offset_msb | bg_offset_lsb);
+}
+void wardner_fglayer_w(int offset, int data)
+{
+	if (offset == 0) fg_offset_lsb = data;
+	if (offset == 1) fg_offset_msb = (data<<8);
+	twincobr_fgoffs_w(0,fg_offset_msb | fg_offset_lsb);
+}
+
+void wardner_txscroll_w(int offset, int data)
+{
+	if (offset & 2) {
+		if (offset == 2) tx_scrollx_lsb = data;
+		if (offset == 3) tx_scrollx_msb = (data<<8);
+		twincobr_txscroll_w(2,tx_scrollx_msb | tx_scrollx_lsb);
+	}
+	else
+	{
+		if (offset == 0) tx_scrolly_lsb = data;
+		if (offset == 1) tx_scrolly_msb = (data<<8);
+		twincobr_txscroll_w(0,tx_scrolly_msb | tx_scrolly_lsb);
+	}
+}
+void wardner_bgscroll_w(int offset, int data)
+{
+	if (offset & 2) {
+		if (offset == 2) bg_scrollx_lsb = data;
+		if (offset == 3) bg_scrollx_msb = (data<<8);
+		twincobr_bgscroll_w(2,bg_scrollx_msb | bg_scrollx_lsb);
+	}
+	else
+	{
+		if (offset == 0) bg_scrolly_lsb = data;
+		if (offset == 1) bg_scrolly_msb = (data<<8);
+		twincobr_bgscroll_w(0,bg_scrolly_msb | bg_scrolly_lsb);
+	}
+}
+void wardner_fgscroll_w(int offset, int data)
+{
+	if (offset & 2) {
+		if (offset == 2) fg_scrollx_lsb = data;
+		if (offset == 3) fg_scrollx_msb = (data<<8);
+		twincobr_fgscroll_w(2,fg_scrollx_msb | fg_scrollx_lsb);
+	}
+	else
+	{
+		if (offset == 0) fg_scrolly_lsb = data;
+		if (offset == 1) fg_scrolly_msb = (data<<8);
+		twincobr_fgscroll_w(0,fg_scrolly_msb | fg_scrolly_lsb);
+	}
+}
+
+int wardner_videoram_r(int offset)
+{
+	int memdata = 0;
+	switch (offset) {
+		case 0: memdata =  twincobr_txram_r(0) & 0x00ff; break;
+		case 1: memdata = (twincobr_txram_r(0) & 0xff00) >> 8; break;
+		case 2: memdata =  twincobr_bgram_r(0) & 0x00ff; break;
+		case 3: memdata = (twincobr_bgram_r(0) & 0xff00) >> 8; break;
+		case 4: memdata =  twincobr_fgram_r(0) & 0x00ff; break;
+		case 5: memdata = (twincobr_fgram_r(0) & 0xff00) >> 8; break;
+	}
+	return memdata;
+}
+
+void wardner_videoram_w(int offset, int data)
+{
+	int memdata = 0;
+	switch (offset) {
+		case 0: memdata = twincobr_txram_r(0) & 0xff00;
+				memdata |= data;
+				twincobr_txram_w(0,memdata); break;
+		case 1: memdata = twincobr_txram_r(0) & 0x00ff;
+				memdata |= (data << 8);
+				twincobr_txram_w(0,memdata); break;
+		case 2: memdata = twincobr_bgram_r(0) & 0xff00;
+				memdata |= data;
+				twincobr_bgram_w(0,memdata); break;
+		case 3: memdata = twincobr_bgram_r(0) & 0x00ff;
+				memdata |= (data << 8);
+				twincobr_bgram_w(0,memdata); break;
+		case 4: memdata = twincobr_fgram_r(0) & 0xff00;
+				memdata |= data;
+				twincobr_fgram_w(0,memdata); break;
+		case 5: memdata = twincobr_fgram_r(0) & 0x00ff;
+				memdata |= (data << 8);
+				twincobr_fgram_w(0,memdata); break;
+	}
+}
+
 
 
 
 void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-  int offs;
+  static int offs,code,tile,color,sprite,i,pal_base;
+  static int colmask[64];
+
   if (twincobr_display_on) {
-  palette_init_used_colors();
-
+	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
 	{
-	int color,code,i;
-	int colmask[64];
-	int pal_base;
-
-
 	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
 
 	for (color = 0;color < 16;color++) colmask[color] = 0;
 
 	for (offs = (twincobr_bgvideoram_size >> 1) - 2;offs >= 0;offs -= 2)
 	{
-		code = READ_WORD(&twincobr_bgvideoram[offs+twincobr_bg_ram_bank]) & 0x0fff;
-		color = (READ_WORD(&twincobr_bgvideoram[offs+twincobr_bg_ram_bank]) & 0xf000) >> 12;
-		colmask[color] |= Machine->gfx[2]->pen_usage[code];
+		code  = READ_WORD(&twincobr_bgvideoram[(offs+twincobr_bg_ram_bank)]);
+		tile  = (code & 0x0fff);
+		color = (code & 0xf000) >> 12;
+		colmask[color] |= Machine->gfx[2]->pen_usage[tile];
 	}
 
 	for (color = 0;color < 16;color++)
@@ -194,11 +346,25 @@ void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	for (color = 0;color < 16;color++) colmask[color] = 0;
 
-	for (offs = twincobr_fgvideoram_size - 2;offs >= 0;offs -= 2)
+	scroll_x = (twincobr_flip_x_base + fgscrollx) & 0x01ff;
+	scroll_y = (twincobr_flip_y_base + fgscrolly) & 0x01ff;
+	vidbaseaddr = ((scroll_y>>3)*64) + (scroll_x>>3);
+	scroll_realign_x = scroll_x >> 3;
+	for (offs = (31*41)-1; offs >= 0; offs-- )
 	{
-		code = (READ_WORD(&twincobr_fgvideoram[offs]) & 0x0fff) | twincobr_fg_rom_bank;
-		color = (READ_WORD(&twincobr_fgvideoram[offs]) & 0xf000) >> 12;
-		colmask[color] |= Machine->gfx[1]->pen_usage[code];
+		unsigned char sx,sy;
+		unsigned short int vidramaddr = 0;
+
+		sx = offs % 41;
+		sy = offs / 41;
+		vidramaddr = ((vidbaseaddr + (sy*64) + sx) * 2);
+
+		if ((scroll_realign_x + sx) > 63) vidramaddr -= 128;
+
+		code  = READ_WORD(&twincobr_fgvideoram[(vidramaddr & 0x1fff)]);
+		tile  = (code & 0x0fff) | twincobr_fg_rom_bank;
+		color = (code & 0xf000) >> 12;
+		colmask[color] |= Machine->gfx[1]->pen_usage[tile];
 	}
 
 	for (color = 0;color < 16;color++)
@@ -219,9 +385,13 @@ void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	for (offs = 0;offs < spriteram_size;offs += 8)
 	{
-		code = READ_WORD(&spriteram[offs]) & 0x7ff;
-		color = READ_WORD(&spriteram[offs + 2]) & 0x3f;
-		colmask[color] |= Machine->gfx[3]->pen_usage[code];
+		int sy;
+		sy = READ_WORD(&spriteram[offs + 6]);
+		if (sy != 0x8000) {					/* Is sprite is turned off ? */
+			sprite = READ_WORD(&spriteram[offs]) & 0x7ff;
+			color = READ_WORD(&spriteram[offs + 2]) & 0x3f;
+			colmask[color] |= Machine->gfx[3]->pen_usage[sprite];
+		}
 	}
 
 	for (color = 0;color < 64;color++)
@@ -240,12 +410,27 @@ void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	for (color = 0;color < 32;color++) colmask[color] = 0;
 
-	for (offs = videoram_size - 2;offs >= 0;offs -= 2)
+
+	scroll_x = (twincobr_flip_x_base + txscrollx) & 0x01ff;
+	scroll_y = (twincobr_flip_y_base + txscrolly) & 0x00ff;
+	vidbaseaddr = ((scroll_y>>3)*64) + (scroll_x>>3);
+	scroll_realign_x = scroll_x>>3;
+	for (offs = (31*41)-1; offs >= 0; offs-- )
 	{
-		code = READ_WORD(&videoram[offs]) & 0x07ff;
-		color = (READ_WORD(&videoram[offs]) & 0xf800) >> 11;
-		colmask[color] |= Machine->gfx[0]->pen_usage[code];
+		unsigned char sx,sy;
+		unsigned short int vidramaddr = 0;
+
+		sx = offs % 41;
+		sy = offs / 41;
+
+		vidramaddr = (vidbaseaddr + (sy*64) + sx) * 2;
+		if ((scroll_realign_x + sx) > 63) vidramaddr -= 128;
+		code = READ_WORD(&videoram[(vidramaddr & 0x0fff)]);
+		tile  = (code & 0x07ff);
+		color = (code & 0xf800) >> 11;
+		colmask[color] |= Machine->gfx[0]->pen_usage[tile];
 	}
+
 
 	for (color = 0;color < 32;color++)
 	{
@@ -263,8 +448,7 @@ void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		memset(dirtybuffer,1,twincobr_bgvideoram_size >> 1);
 	}
-    }
-
+	}
 
 
 	/* draw the background */
@@ -272,19 +456,19 @@ void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		if (dirtybuffer[offs / 2])
 		{
-			int sx,sy,code,color;
-
+			int sx,sy;
 
 			dirtybuffer[offs / 2] = 0;
 
 			sx = (offs/2) % 64;
 			sy = (offs/2) / 64;
 
-			code = READ_WORD(&twincobr_bgvideoram[offs+twincobr_bg_ram_bank]) & 0x0fff;
-			color = (READ_WORD(&twincobr_bgvideoram[offs+twincobr_bg_ram_bank]) & 0xf000) >> 12;
-
+			code = READ_WORD(&twincobr_bgvideoram[offs+twincobr_bg_ram_bank]);
+			tile  = (code & 0x0fff);
+			color = (code & 0xf000) >> 12;
+			if (twincobr_flip_screen) { sx=63-sx; sy=63-sy; }
 			drawgfx(tmpbitmap,Machine->gfx[2],
-				code,
+				tile,
 				color,
 				twincobr_flip_screen,twincobr_flip_screen,
 				8*sx,8*sy,
@@ -294,136 +478,180 @@ void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* copy the background graphics */
 	{
-		int scrollx,scrolly;
-
-
-		scrollx = 0x1c9 - READ_WORD(&bgscroll[0]);
-		scrolly = - 0x1e - READ_WORD(&bgscroll[2]);
-
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		if (twincobr_flip_screen) {
+			scroll_x = (twincobr_flip_x_base + bgscrollx + 0x141) & 0x1ff;
+			scroll_y = (twincobr_flip_y_base + bgscrolly + 0xf1) & 0x1ff;
+		}
+		else {
+			scroll_x = (0x1c9 - bgscrollx) & 0x1ff;
+			scroll_y = (- 0x1e - bgscrolly) & 0x1ff;
+		}
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll_x,1,&scroll_y,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
-	/* draw the sprites in low priority (tanks under roofs) */
+
+	/* draw the sprites in low priority (Twin Cobra tanks under roofs) */
 	for (offs = 0;offs < spriteram_size;offs += 8)
 	{
-		int code,color,attribute,sx,sy,flipx,flipy;
+		int attribute,sx,sy,flipx,flipy;
 
 		attribute = READ_WORD(&spriteram[offs + 2]);
-		if ((attribute & 0x0c00) == 0x0400) {       /* low priority */
-		    code = READ_WORD(&spriteram[offs]) & 0x7ff;
-		    color = attribute & 0x3f;
-		    sx = READ_WORD(&spriteram[offs + 4]) >> 7;
-		    sy = READ_WORD(&spriteram[offs + 6]) >> 7;
-		    flipx = attribute & 0x100;
-		    if (flipx) sx -= 15;
-		    flipy = attribute & 0x200;
-
-		    drawgfx(bitmap,Machine->gfx[3],
-				code,
-				color,
-				flipx,flipy,
-				sx-32,sy-16,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		if ((attribute & 0x0c00) == 0x0400) {	/* low priority */
+			sy = READ_WORD(&spriteram[offs + 6]) >> 7;
+			if (sy != 0x0100) {		/* sx = 0x01a0 or 0x0040*/
+				sprite = READ_WORD(&spriteram[offs]) & 0x7ff;
+				color  = attribute & 0x3f;
+				sx = READ_WORD(&spriteram[offs + 4]) >> 7;
+				flipx = attribute & 0x100;
+				if (flipx) sx -= 14;		/* should really be 15 */
+				flipy = attribute & 0x200;
+				drawgfx(bitmap,Machine->gfx[3],
+					sprite,
+					color,
+					flipx,flipy,
+					sx-32,sy-16,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			}
 		}
 	}
 
 
 	/* draw the foreground */
-	for (offs = twincobr_fgvideoram_size - 2;offs >= 0;offs -= 2)
+	scroll_x = (twincobr_flip_x_base + fgscrollx) & 0x01ff;
+	scroll_y = (twincobr_flip_y_base + fgscrolly) & 0x01ff;
+	vidbaseaddr = ((scroll_y>>3)*64) + (scroll_x>>3);
+	scroll_realign_x = scroll_x >> 3;		/* realign video ram pointer */
+	for (offs = (31*41)-1; offs >= 0; offs-- )
 	{
-		int sx,sy,code,color;
-		int scrollx,scrolly;
+		int xpos,ypos;
+		unsigned char sx,sy;
+		unsigned short int vidramaddr = 0;
 
+		sx = offs % 41;
+		sy = offs / 41;
 
-		sx = (offs/2) % 64;
-		sy = (offs/2) / 64;
+		vidramaddr = ((vidbaseaddr + (sy*64) + sx) * 2);
+		if ((scroll_realign_x + sx) > 63) vidramaddr -= 128;
 
-		scrollx = 0x1c9 - READ_WORD(&fgscroll[0]);
-		scrolly = - 0x1e - READ_WORD(&fgscroll[2]);
-
-		code = (READ_WORD(&twincobr_fgvideoram[offs]) & 0x0fff) | twincobr_fg_rom_bank;
-		color = (READ_WORD(&twincobr_fgvideoram[offs]) & 0xf000) >> 12;
-
+		code  = READ_WORD(&twincobr_fgvideoram[(vidramaddr & 0x1fff)]);
+		tile  = (code & 0x0fff) | twincobr_fg_rom_bank;
+		color = (code & 0xf000) >> 12;
+		if (twincobr_flip_screen) { sx=40-sx; sy=30-sy; xpos=(sx*8) - (7-(scroll_x&7)); ypos=(sy*8) - (7-(scroll_y&7)); }
+		else { xpos=(sx*8) - (scroll_x&7); ypos=(sy*8) - (scroll_y&7); }
 		drawgfx(bitmap,Machine->gfx[1],
-				code,
-				color,
-				twincobr_flip_screen,twincobr_flip_screen,
-				((8*sx + scrollx + 8) & 0x1ff) - 8,((8*sy + scrolly + 8) & 0x1ff) - 8,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			tile,
+			color,
+			twincobr_flip_screen,twincobr_flip_screen,
+			xpos,ypos,
+			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 
+/*********  Begin ugly sprite hack for Wardner when hero is in shop *********/
+	if ((wardner_sprite_hack) && (fgscrollx != bgscrollx)) {	/* Wardner ? */
+		if ((fgscrollx==0x1c9) || (twincobr_flip_screen && (fgscrollx==0x17a))) {	/* in the shop ? */
+			int wardner_hack = READ_WORD(&spriteram[0x0b04]);
+		/* sprite position 0x6300 to 0x8700 -- hero on shop keeper (normal) */
+		/* sprite position 0x3900 to 0x5e00 -- hero on shop keeper (flip) */
+			if ((wardner_hack > 0x3900) && (wardner_hack < 0x8700)) {	/* hero at shop keeper ? */
+					wardner_hack = READ_WORD(&spriteram[0x0b02]);
+					wardner_hack |= 0x0400;			/* make hero top priority */
+					WRITE_WORD(&spriteram[0x0b02],wardner_hack);
+					wardner_hack = READ_WORD(&spriteram[0x0b0a]);
+					wardner_hack |= 0x0400;
+					WRITE_WORD(&spriteram[0x0b0a],wardner_hack);
+					wardner_hack = READ_WORD(&spriteram[0x0b12]);
+					wardner_hack |= 0x0400;
+					WRITE_WORD(&spriteram[0x0b12],wardner_hack);
+					wardner_hack = READ_WORD(&spriteram[0x0b1a]);
+					wardner_hack |= 0x0400;
+					WRITE_WORD(&spriteram[0x0b1a],wardner_hack);
+			}
+		}
+	}
+/**********  End ugly sprite hack for Wardner when hero is in shop **********/
 
 	/* draw the sprites in normal priority, underneath front layer */
 	for (offs = 0;offs < spriteram_size;offs += 8)
 	{
-		int code,color,attribute,sx,sy,flipx,flipy;
+		int attribute,sx,sy,flipx,flipy;
 
 		attribute = READ_WORD(&spriteram[offs + 2]);
-		if ((attribute & 0x0c00) == 0x0800) {    /* normal priority */
-		    code = READ_WORD(&spriteram[offs]) & 0x7ff;
-		    color = attribute & 0x3f;
-		    sx = READ_WORD(&spriteram[offs + 4]) >> 7;
-		    sy = READ_WORD(&spriteram[offs + 6]) >> 7;
-		    flipx = attribute & 0x100;
-		    if (flipx) sx -= 15;
-		    flipy = attribute & 0x200;
-
-		    drawgfx(bitmap,Machine->gfx[3],
-				code,
-				color,
-				flipx,flipy,
-				sx-32,sy-16,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		if ((attribute & 0x0c00) == 0x0800) {	/* normal priority */
+			sy = READ_WORD(&spriteram[offs + 6]) >> 7;
+			if (sy != 0x0100) {		/* sx = 0x01a0 or 0x0040*/
+				sprite = READ_WORD(&spriteram[offs]) & 0x7ff;
+				color  = attribute & 0x3f;
+				sx = READ_WORD(&spriteram[offs + 4]) >> 7;
+				flipx = attribute & 0x100;
+				if (flipx) sx -= 14;		/* should really be 15 */
+				flipy = attribute & 0x200;
+				drawgfx(bitmap,Machine->gfx[3],
+					sprite,
+					color,
+					flipx,flipy,
+					sx-32,sy-16,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			}
 		}
 	}
 
 
-	/* draw the front layer */
-	for (offs = videoram_size - 2;offs >= 0;offs -= 2)
+
+	/* draw the top layer */
+	scroll_x = (twincobr_flip_x_base + txscrollx) & 0x01ff;
+	scroll_y = (twincobr_flip_y_base + txscrolly) & 0x00ff;
+	vidbaseaddr = ((scroll_y>>3)*64) + (scroll_x>>3);
+	scroll_realign_x = scroll_x >> 3;
+	for (offs = (31*41)-1; offs >= 0; offs-- )
 	{
-		int sx,sy,code,color;
-		int scrollx,scrolly;
+		int xpos,ypos;
+		unsigned char sx,sy;
+		unsigned short int vidramaddr = 0;
 
+		sx = offs % 41;
+		sy = offs / 41;
 
-		sx = (offs/2) % 64;
-		sy = (offs/2) / 64;
+		vidramaddr = (vidbaseaddr + (sy*64) + sx) * 2;
+		if ((scroll_realign_x + sx) > 63) vidramaddr -=128;
 
-		scrollx = 0x01c9 - READ_WORD(&txscroll[0]);
-		scrolly = -0x1e - READ_WORD(&txscroll[2]);
-
-		code = READ_WORD(&videoram[offs]) & 0x07ff;
-		color = (READ_WORD(&videoram[offs]) & 0xf800) >> 11;
-
+		code  = READ_WORD(&videoram[(vidramaddr & 0x0fff)]);
+		tile  = (code & 0x07ff);
+		color = (code & 0xf800) >> 11;
+		if (twincobr_flip_screen) { sx=40-sx; sy=30-sy; xpos=(sx*8) - (7-(scroll_x&7)); ypos=(sy*8) - (7-(scroll_y&7)); }
+		else { xpos=(sx*8) - (scroll_x&7); ypos=(sy*8) - (scroll_y&7); }
 		drawgfx(bitmap,Machine->gfx[0],
-				code,
-				color,
-				twincobr_flip_screen,twincobr_flip_screen,
-				((8*sx + scrollx + 8) & 0x1ff) - 8,((8*sy + scrolly + 8) & 0xff) - 8,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			tile,
+			color,
+			twincobr_flip_screen,twincobr_flip_screen,
+			xpos,ypos,
+			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
+
 
 	/* draw the sprites on the very top layer (title screen only) */
 	for (offs = 0;offs < spriteram_size;offs += 8)
 	{
-		int code,color,attribute,sx,sy,flipx,flipy;
+		int attribute,sx,sy,flipx,flipy;
 
 		attribute = READ_WORD(&spriteram[offs + 2]);
-		if ((attribute & 0x0c00) == 0x0c00) {   /* highest priority */
-		    code = READ_WORD(&spriteram[offs]) & 0x7ff;
-		    color = attribute & 0x3f;
-		    sx = READ_WORD(&spriteram[offs + 4]) >> 7;
-		    sy = READ_WORD(&spriteram[offs + 6]) >> 7;
-		    flipx = attribute & 0x100;
-		    if (flipx) sx -= 15;
-		    flipy = attribute & 0x200;
-
-		    drawgfx(bitmap,Machine->gfx[3],
-				code,
-				color,
-				flipx,flipy,
-				sx-32,sy-16,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		if ((attribute & 0x0c00) == 0x0c00) {	/* highest priority */
+			sy = READ_WORD(&spriteram[offs + 6]) >> 7;
+			if (sy != 0x0100) {		/* sx = 0x01a0 or 0x0040*/
+				sprite = READ_WORD(&spriteram[offs]) & 0x7ff;
+				color  = attribute & 0x3f;
+				sx = READ_WORD(&spriteram[offs + 4]) >> 7;
+				flipx = attribute & 0x100;
+				if (flipx) sx -= 14;		/* should really be 15 */
+				flipy = attribute & 0x200;
+				drawgfx(bitmap,Machine->gfx[3],
+					sprite,
+					color,
+					flipx,flipy,
+					sx-32,sy-16,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			}
 		}
 	}
   }
 }
+

@@ -25,7 +25,7 @@
 #include "palette.h"
 #include "vidhrdw/generic.h"
 
-#define VIDEORAM1_SIZE	0x800   /* size in bytes - sprite ram */
+#define VIDEORAM1_SIZE	0x1000   /* size in bytes - sprite ram */
 #define VIDEORAM2_SIZE	0x100   /* size in bytes - sprite size ram */
 #define VIDEORAM3_SIZE	0x4000  /* size in bytes - tile ram */
 
@@ -41,6 +41,7 @@ int colorram2_size;
 
 unsigned int scrollregs[8] ;
 unsigned int vblank ;
+unsigned int demonwld_c ;
 unsigned int framedone  ;
 unsigned int num_tiles ;
 
@@ -111,6 +112,16 @@ void toaplan1_vh_stop(void)
 int vblank_r(int offset)
 {
 	return vblank ^= 1;
+}
+
+int demonwld_r(int offset)
+{
+   demonwld_c++ ;
+   if (demonwld_c & 4 )
+   	return 0x76;
+   else
+       return 0 ;
+
 }
 
 int framedone_r(int offset)
@@ -234,6 +245,16 @@ if ((video_ofs3 & (VIDEORAM3_SIZE-1))*4 + offset >= VIDEORAM3_SIZE*4)
 int toaplan1_videoram3_r(int offset)
 {
 	return READ_WORD (&toaplan1_videoram3[(video_ofs3 & (VIDEORAM3_SIZE-1))*4 + offset]);
+}
+
+int rallybik_videoram1_r(int offset)
+{
+	return READ_WORD(&toaplan1_videoram1[offset]);
+}
+
+void rallybik_videoram1_w(int offset, int data)
+{
+   WRITE_WORD(&toaplan1_videoram1[offset],data);
 }
 
 int scrollregs_r(int offset)
@@ -369,7 +390,7 @@ static void toaplan1_find_tiles(int xoffs,int yoffs)
 		     	{
    			i = ((sy+offsety)&0x3f)*256 + ((sx+offsetx)&0x3f)*4 ;
 				tattr = READ_WORD(&t_info[i]);
-				if ( tattr & 0xf000 )
+				if (tattr & 0xf000)
 			    	{
 					priority = tattr >> 12 ;
 					tinfo = (tile_struct *)&(tile_list[priority][tile_count[priority]]) ;
@@ -389,7 +410,76 @@ static void toaplan1_find_tiles(int xoffs,int yoffs)
 						tile_list[priority] = temp_list ;
    					}
 	    			}
-		    	}
+               }
+   		}
+   	}
+}
+
+static void rallybik_find_tiles(void)
+{
+	int priority;
+	int layer;
+	int width;
+	tile_struct *tinfo;
+	unsigned char *t_info;
+
+	for ( priority = 0 ; priority < 16 ; priority++ )
+   	{
+		tile_count[priority]=0;
+	    }
+
+	for ( layer = 3 ; layer >= 0 ; layer-- )
+   	{
+		int scrolly,scrollx,offsetx,offsety;
+		int sx,sy,tattr;
+		int i;
+
+		t_info = (toaplan1_videoram3+layer * VIDEORAM3_SIZE);
+		scrollx = scrollregs[layer*2];
+		scrolly = scrollregs[(layer*2)+1];
+
+		scrollx >>= 7 ;
+		scrollx += 43 ;
+       if ( layer == 0 ) scrollx += 3 ;
+       if ( layer == 1 ) scrollx += 1 ;
+       if ( layer == 3 ) scrollx -= 4 ;
+		offsetx = scrollx / 8 ;
+
+		scrolly >>= 7 ;
+		scrolly += 21 ;
+		offsety = scrolly / 8 ;
+
+		for ( sy = 0 ; sy < 32 ; sy++ )
+	    	{
+			for ( sx = 0 ; sx <= 40 ; sx++ )
+		     	{
+   			i = ((sy+offsety)&0x3f)*256 + ((sx+offsetx)&0x3f)*4 ;
+				tattr = READ_WORD(&t_info[i]);
+				priority = tattr >> 12 ;
+				if (priority)
+			    	{
+					tinfo = (tile_struct *)&(tile_list[priority][tile_count[priority]]) ;
+					tinfo->tile_num = READ_WORD(&t_info[i+2]) ;
+
+                   if ( !(tinfo->tile_num & 0x8000) )
+                       {
+                       tinfo->tile_num &= 0x3fff ;
+  					    tinfo->color = tattr & 0x3f ;
+    				    tinfo->xpos = (sx*8)-(scrollx&0x7) ;
+	    			    tinfo->ypos = (sy*8)-(scrolly&0x7) ;
+		    		    tile_count[priority]++ ;
+			    	    if(tile_count[priority]==max_list_size[priority])
+			        	    {
+  						    /*reallocate tile_list[priority] to larger size */
+    					    temp_list=(tile_struct *)malloc(sizeof(tile_struct)*(max_list_size[priority]+512)) ;
+	    				    memcpy(temp_list,tile_list[priority],sizeof(tile_struct)*max_list_size[priority]);
+		    			    max_list_size[priority]+=512;
+			    		    free(tile_list[priority]);
+				    	    tile_list[priority] = temp_list ;
+  					        }
+	    			    }
+                   }
+               }
    		}
    	}
 }
@@ -454,6 +544,58 @@ static void toaplan1_find_sprites (void)
 
 }
 
+static void rallybik_find_sprites (void)
+{
+	int sprite;
+	unsigned char *s_info,*s_size;
+	int tattr;
+	int sx,sy,dx,dy,s_sizex,s_sizey,tchar;
+	int sprite_size_ptr;
+	int priority;
+	tile_struct *tinfo;
+
+	s_info = (toaplan1_videoram1) ;	/* start of sprite ram */
+
+	for ( sprite = 0 ; sprite < 512 ; sprite++ )
+	    {
+		tattr = READ_WORD(&s_info[2]);
+		if ( tattr )	/* no need to render hidden sprites */
+		    {
+			sx=READ_WORD(&s_info[4]);
+			sx >>= 7 ;
+           sx &= 0x1ff ;
+			if ( sx > 416 ) sx -= 512 ;
+
+			sy=READ_WORD(&s_info[6]);
+			sy >>= 7 ;
+           sy &= 0x1ff ;
+			if ( sy > 416 ) sy -= 512 ;
+
+			priority = (tattr>>8) & 0xf ;
+			tchar = READ_WORD(&s_info[0]);
+    		tinfo = (tile_struct *)&(tile_list[priority][tile_count[priority]]) ;
+		    tinfo->tile_num = tchar & 0x7fff ;
+//		    tinfo->color = 0x80 | (tattr>>12) ;
+           tinfo->color = 0x80 | (tattr&0x3f) ;
+           if ( tattr & 0xf000 ) tinfo->color |= 0x40 ;
+		    tinfo->xpos = sx-31 ;
+		    tinfo->ypos = sy-16 ;
+		    tile_count[priority]++ ;
+		    if(tile_count[priority]==max_list_size[priority])
+		        {
+			    /*reallocate tile_list[priority] to larger size */
+			    temp_list=(tile_struct *)malloc(sizeof(tile_struct)*(max_list_size[priority]+512)) ;
+			    memcpy(temp_list,tile_list[priority],sizeof(tile_struct)*max_list_size[priority]);
+			    max_list_size[priority]+=512;
+			    free(tile_list[priority]);
+			    tile_list[priority] = temp_list ;
+		        }
+	        }  // if tattr
+       s_info += 8 ;
+       } // for sprite
+
+}
+
 static void toaplan1_render (struct osd_bitmap *bitmap)
 {
 	int i,sx,sy,tx,ty,c,b;
@@ -468,10 +610,10 @@ static void toaplan1_render (struct osd_bitmap *bitmap)
 		tinfo = (tile_struct *)&(tile_list[priority][0]) ;
 		for ( i = 0 ; i < tile_count[priority] ; i++ )	/* draw only tiles in list */
    		{
-		    drawgfx(bitmap,Machine->gfx[tinfo->color>>7], 	/* bit 7 set for sprites */
+		    drawgfx(bitmap,Machine->gfx[(tinfo->color>>7)&1], 	/* bit 7 set for sprites */
 			    tinfo->tile_num,
 	   			tinfo->color&0x3f, 			/* bit 7 not for colour */
-   			0,0,
+   			(tinfo->color&0x40),0,
 	    		tinfo->xpos,tinfo->ypos,
 		    	&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			tinfo++ ;
@@ -484,6 +626,16 @@ void toaplan1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* discover what data will be drawn */
 	toaplan1_find_tiles(tiles_offsetx,tiles_offsety);
 	toaplan1_find_sprites();
+
+	toaplan1_update_palette();
+	toaplan1_render(bitmap);
+}
+
+void rallybik_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	/* discover what data will be drawn */
+	rallybik_find_tiles();
+	rallybik_find_sprites();
 
 	toaplan1_update_palette();
 	toaplan1_render(bitmap);

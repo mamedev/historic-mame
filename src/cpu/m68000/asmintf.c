@@ -112,38 +112,39 @@ int m68000_execute(int cycles)
 #ifdef MAME_DEBUG
     do
     {
-		#ifdef TRACE68K 							/* Trace */
-
-        skiptrace++;
-
-        if ((skiptrace > 0) && (errorlog))
-        {
-			int mycount, areg, dreg;
-
-            areg = dreg = 0;
-	        for (mycount=7;mycount>=0;mycount--)
-            {
-            	areg = areg + regs.a[mycount];
-                dreg = dreg + regs.d[mycount];
-            }
-
-           	fprintf(errorlog,"=> %8x %8x ",areg,dreg);
-			fprintf(errorlog,"%6x %4x %d\n",regs.pc,regs.sr & 0x271F,m68000_ICount);
-        }
-		#endif
-
 		if (mame_debug)
         {
-        	int StartCycle = m68000_ICount;
+			#ifdef TRACE68K
+
+			int StartCycle = m68000_ICount;
+
+            skiptrace++;
+
+            if ((skiptrace > 0) && (errorlog))
+            {
+			    int mycount, areg, dreg;
+
+                areg = dreg = 0;
+	            for (mycount=7;mycount>=0;mycount--)
+                {
+            	    areg = areg + regs.a[mycount];
+                    dreg = dreg + regs.d[mycount];
+                }
+
+           	    fprintf(errorlog,"=> %8x %8x ",areg,dreg);
+			    fprintf(errorlog,"%6x %4x %d\n",regs.pc,regs.sr & 0x271F,m68000_ICount);
+            }
+            #endif
 
 			MAME_Debug();
-
             M68KRUN();
 
-            if (regs.IRQ_level & 0x80)
+            #ifdef TRACE68K
+            if ((regs.IRQ_level & 0x80) || (cpu_getstatus(cpu_getactivecpu()) == 0))
     			m68000_ICount = 0;
             else
 				m68000_ICount = StartCycle - 12;
+            #endif
         }
         else
 			M68KRUN();

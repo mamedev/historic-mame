@@ -1390,8 +1390,8 @@ INPUT_PORTS_START( lastmiss_input_ports )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, "Cabinet?" )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x80, "Cocktail" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
 	PORT_START	/* Dip switch bank 2 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
@@ -2355,7 +2355,7 @@ ROM_START( ghostb3_rom )
 	ROM_LOAD( "dz20a.11d", 0x0400, 0x0400, 0xd8fe2d99 )
 ROM_END
 
-ROM_START( mazeh_rom )
+ROM_START( meikyuh_rom )
 	ROM_REGION(0x40000)
  	ROM_LOAD( "dw-01.rom", 0x08000, 0x08000, 0x87610c39 )
  	ROM_LOAD( "dw-02.rom", 0x10000, 0x10000, 0x40c9b0b8 )
@@ -2453,7 +2453,7 @@ ROM_START( gondo_rom )
 	ROM_LOAD( "dt-05.256", 0x8000, 0x8000, 0xec08aa29 )
 ROM_END
 
-ROM_START( mekyosen_rom )
+ROM_START( makyosen_rom )
 	ROM_REGION(0x40000)
  	ROM_LOAD( "ds00",      0x08000, 0x08000, 0x33bb16fe )
  	ROM_LOAD( "dt-01.512", 0x10000, 0x10000, 0xc39bb877 )
@@ -2705,7 +2705,7 @@ static void deco222_decode(void)
 		ROM[A] = (RAM[A] & 0x9f) | ((RAM[A] & 0x20) << 1) | ((RAM[A] & 0x40) >> 1);
 }
 
-static void mazeh_patch(void)
+static void meikyuh_patch(void)
 {
 	/* Blank out garbage in colour prom to avoid colour overflow */
 	unsigned char *RAM = Machine->memory_region[3];
@@ -2715,7 +2715,7 @@ static void mazeh_patch(void)
 static void ghostb_decode(void)
 {
 	deco222_decode();
-	mazeh_patch();
+	meikyuh_patch();
 }
 
 /******************************************************************************/
@@ -2739,8 +2739,8 @@ HI_SAVE(ghostb,  Machine->memory_region[0],0x01C0,118)
 HI_SAVE(ghostb3, Machine->memory_region[0],0x0DA0,118)
 HI_SAVE(srdarwin,Machine->memory_region[0],0x1342,70)
 HI_SAVE(gondo,   Machine->memory_region[0],0x1532,72)
-HI_SAVE(mekyo,   Machine->memory_region[0],0x14f9,72)
-HI_SAVE(mazeh,   Machine->memory_region[0],0x0190,80)
+HI_SAVE(makyo,   Machine->memory_region[0],0x14f9,72)
+HI_SAVE(meikyuh, Machine->memory_region[0],0x0190,80)
 HI_SAVE(oscar,   dec8_shared_ram,0x075A,70)
 HI_SAVE(lastmiss,dec8_shared_ram,0x09aa,60)
 HI_SAVE(shackled,dec8_shared_ram,0x0108,40)
@@ -2787,7 +2787,7 @@ static int ghostb_hiload(void)
 	else return 0;  /* we can't load the hi scores yet */
 }
 
-static int mazeh_hiload(void)
+static int meikyuh_hiload(void)
 {
 	void *f;
 	unsigned char *RAM = Machine->memory_region[0];
@@ -2916,7 +2916,7 @@ static int gondo_hiload(void)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
-static int mekyo_hiload(void)
+static int makyo_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	/* check if the hi score table has already been initialized */
@@ -3103,11 +3103,11 @@ struct GameDriver ghostb3_driver =
 	ghostb3_hiload, ghostb3_hisave
 };
 
-struct GameDriver mazeh_driver =
+struct GameDriver meikyuh_driver =
 {
 	__FILE__,
 	&ghostb_driver,
-	"mazeh",
+	"meikyuh",
 	"Meikyuu Hunter G (Japan)",
 	"1987",
 	"Data East Corporation",
@@ -3116,8 +3116,8 @@ struct GameDriver mazeh_driver =
 	&ghostb_machine_driver,
 	0,
 
-	mazeh_rom,
-	mazeh_patch, 0,
+	meikyuh_rom,
+	meikyuh_patch, 0,
 	0,
 	0,
 
@@ -3126,7 +3126,7 @@ struct GameDriver mazeh_driver =
 	PROM_MEMORY_REGION(3), 0, 0,
 	ORIENTATION_DEFAULT,
 
-	mazeh_hiload, mazeh_hisave
+	meikyuh_hiload, meikyuh_hisave
 };
 
 struct GameDriver srdarwin_driver =
@@ -3181,11 +3181,11 @@ struct GameDriver gondo_driver =
 	gondo_hiload, gondo_hisave
 };
 
-struct GameDriver mekyosen_driver =
+struct GameDriver makyosen_driver =
 {
 	__FILE__,
 	&gondo_driver,
-	"mekyosen",
+	"makyosen",
 	"Makyou Senshi (Japan)",
 	"1987",
 	"Data East Corporation",
@@ -3194,7 +3194,7 @@ struct GameDriver mekyosen_driver =
 	&gondo_machine_driver,
 	0,
 
-	mekyosen_rom,
+	makyosen_rom,
 	0, 0,
 	0,
 	0,
@@ -3204,7 +3204,7 @@ struct GameDriver mekyosen_driver =
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	mekyo_hiload, mekyo_hisave
+	makyo_hiload, makyo_hisave
 };
 
 struct GameDriver oscar_driver =

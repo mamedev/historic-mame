@@ -17,24 +17,19 @@ extern struct GameDriver wotw_driver;
 extern struct GameDriver warrior_driver;
 extern struct GameDriver starhawk_driver;
 extern struct GameDriver solarq_driver;
+extern struct GameDriver demon_driver;
+extern struct GameDriver tgunner_driver;
+extern struct GameDriver boxingb_driver;
 
 Don't work due to bug in the input handling
 
-extern struct GameDriver tgunner_driver;
-extern struct GameDriver boxingb_driver;
 extern struct GameDriver speedfrk_driver;
 extern struct GameDriver sundance_driver;
 
-Doesn't work due to possible CPU bug
-
-extern struct GameDriver demon_driver;
-
 to do:
 
-* Fix Tailgunner/Boxing Bugs controls
 * Fix Speed Freak controls
 * Fix Sundance controls
-* Find out why Demon is broken
 
 ***************************************************************************/
 
@@ -49,11 +44,13 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 int cinemat_vh_start (void);
 void cinemat_vh_stop (void);
 void cinemat_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+int cinemat_clear_list(void);
 
 static int cinemat_readport (int offset);
 static void cinemat_writeport (int offset, int data);
 
 static int speedfrk_readports (int offset);
+static int boxingb_readports (int offset);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -86,6 +83,12 @@ static struct IOReadPort speedfrk_readport[] =
 	{ -1 }  /* end of table */
 };
 
+static struct IOReadPort boxingb_readport[] =
+{
+	{ 0, CCPU_PORT_MAX, boxingb_readports },
+	{ -1 }  /* end of table */
+};
+
 
 
 
@@ -105,10 +108,10 @@ static int cinemat_readport (int offset)
 			return cinemat_outputs;
 
 		case CCPU_PORT_IN_JOYSTICKX:
-			return readinputport (3) << 2;
+			return readinputport (3);
 
 		case CCPU_PORT_IN_JOYSTICKY:
-			return readinputport (4) << 2;
+			return readinputport (4);
 	}
 
 	return 0;
@@ -164,7 +167,7 @@ static struct MachineDriver driver##_machine_driver = \
 			5000000, \
 			0, \
 			readmem,writemem,readport,writeport, \
-			ignore_interrupt,1 \
+			cinemat_clear_list, 1 \
 		} \
 	}, \
 	38, 0,	/* frames per second, vblank duration (vector game, so no vblank) */ \
@@ -203,7 +206,7 @@ static struct MachineDriver driver##_machine_driver = \
 			5000000, \
 			0, \
 			readmem,writemem,driver##_readport,writeport, \
-			ignore_interrupt,1 \
+			cinemat_clear_list, 1 \
 		} \
 	}, \
 	38, 0,	/* frames per second, vblank duration (vector game, so no vblank) */ \
@@ -287,11 +290,6 @@ static unsigned char color_prom_bilevel_sc[] = { CCPU_MONITOR_BILEV | 0xa0 , 1};
 static unsigned char color_prom_bilevel_sd[] = { CCPU_MONITOR_BILEV | 0xa0 , 2};
 static unsigned char color_prom_bilevel_tg[] = { CCPU_MONITOR_BILEV | 0xa0 , 3};
 static unsigned char color_prom_bilevel_sq[] = { CCPU_MONITOR_BILEV | 0xa0 , 4};
-
-static unsigned char color_prom_16color[] = { CCPU_MONITOR_16COL };
-
-static unsigned char color_prom_64color[] = { CCPU_MONITOR_64COL };
-
 static unsigned char color_prom_wotw[] = { CCPU_MONITOR_WOWCOL };
 
 
@@ -336,7 +334,7 @@ INPUT_PORTS_START ( spacewar_input_ports )
 	PORT_DIPSETTING( SW2ON |SW1ON,  "2:00/coin" )
 	PORT_DIPSETTING( SW2ON |SW1OFF, "3:00/coin" )
 	PORT_DIPSETTING( SW2OFF|SW1ON,  "4:00/coin" )
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT ( 0x08, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT ( 0x04, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )
@@ -766,10 +764,10 @@ INPUT_PORTS_START ( tgunner_input_ports )
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW,  IPT_UNUSED )
 
 	PORT_START /* joystick X */
-	PORT_ANALOG ( 0x6ff, 0x300, IPT_AD_STICK_X, 100, 10, 0, 0, 0x620 )
+	PORT_ANALOG ( 0xfff, 0x800, IPT_AD_STICK_X, 100, 50, 0, 0x200, 0xe00 )
 
 	PORT_START /* joystick Y */
-	PORT_ANALOG ( 0x6ff, 0x300, IPT_AD_STICK_Y, 100, 10, 0, 0, 0x620 )
+	PORT_ANALOG ( 0xfff, 0x800, IPT_AD_STICK_Y, 100, 50, 0, 0x200, 0xe00 )
 INPUT_PORTS_END
 
 
@@ -807,7 +805,7 @@ struct GameDriver tgunner_driver =
 	"Cinematronics",
 	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	GAME_NOT_WORKING,
+	0,
 	&tgunner_machine_driver,
 	0,
 
@@ -1035,7 +1033,7 @@ INPUT_PORTS_START ( speedfrk_input_ports )
 	PORT_START /* inputs low */
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW,  IPT_START1 )
 	PORT_BIT ( 0x70, IP_ACTIVE_LOW,  IPT_UNUSED ) /* actually the gear shift, see fake below */
-	PORT_ANALOG ( 0x0f, 0x00, IPT_DIAL, 25, 10, 0, 0x03, 0x0a )
+	PORT_ANALOG ( 0x0f, 0x08, IPT_DIAL, 25, 1, 0, 0x03, 0x0a )
 
 	PORT_START /* joystick X */
 	PORT_BIT ( 0xff, IP_ACTIVE_LOW,  IPT_UNUSED )
@@ -1172,7 +1170,7 @@ static const char *sundance_sample_names[] =
 
 void sundance_init_machine (void)
 {
-	ccpu_Config (1, CCPU_MEMSIZE_8K, CCPU_MONITOR_16COL);
+	ccpu_Config (1, CCPU_MEMSIZE_8K, CCPU_MONITOR_16LEV);
 }
 
 
@@ -1472,11 +1470,9 @@ INPUT_PORTS_START ( solarq_input_ports )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW,  IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_PLAYER1 )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW,  IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER1 )
 	PORT_BIT ( 0x08, IP_ACTIVE_LOW,  IPT_START1 ) /* also hyperspace */
-	PORT_BIT ( 0x08, IP_ACTIVE_LOW,  IPT_BUTTON3 )	/* alias for hyperspace */
 	PORT_BIT ( 0x04, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW,  IPT_START2 ) /* also nova */
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON4 ) /* alias for nova */
 
 	PORT_START /* joystick X */
 	PORT_BIT ( 0xff, IP_ACTIVE_LOW,  IPT_UNUSED )
@@ -1503,7 +1499,6 @@ static const char *solarq_sample_names[] =
 
 void solarq_init_machine (void)
 {
-//	ccpu_Config (1, CCPU_MEMSIZE_16K, CCPU_MONITOR_64COL);
 	ccpu_Config (1, CCPU_MEMSIZE_16K, CCPU_MONITOR_BILEV);
 }
 
@@ -1531,7 +1526,6 @@ struct GameDriver solarq_driver =
 
 	solarq_input_ports,
 
-/*	color_prom_64color, 0, 0, */
 	color_prom_bilevel_sq, 0, 0,
 	ORIENTATION_ROTATE_180,
 
@@ -1634,7 +1628,7 @@ struct GameDriver demon_driver =
 	"Rock-Ola",
 	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	GAME_NOT_WORKING,
+	0,
 	&demon_machine_driver,
 	0,
 
@@ -1738,7 +1732,7 @@ struct GameDriver wotw_driver =
 	"Cinematronics",
 	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	0,
+	GAME_IMPERFECT_COLORS,
 	&wotw_machine_driver,
 	0,
 
@@ -1762,6 +1756,30 @@ struct GameDriver wotw_driver =
   Boxing Bugs
 
 ***************************************************************************/
+
+static int boxingb_in1_r(int offset)
+{
+    int dial = input_port_1_r(0) & 0xf0;
+    dial = ((dial & 0xe0) >> 1) | ((dial & 0x10) << 3);
+	return dial;
+}
+
+static int boxingb_readports (int offset)
+{
+	switch (offset)
+	{
+		case CCPU_PORT_IOSWITCHES:
+			return readinputport (0);
+
+		case CCPU_PORT_IOINPUTS:
+			return (boxingb_in1_r(0) << 8) + readinputport (2);
+
+		case CCPU_PORT_IOOUTPUTS:
+			return cinemat_outputs;
+	}
+
+	return 0;
+}
 
 INPUT_PORTS_START ( boxingb_input_ports )
 	PORT_START /* switches */
@@ -1788,10 +1806,7 @@ INPUT_PORTS_START ( boxingb_input_ports )
 	PORT_DIPSETTING( SW2OFF|SW1ON,  DEF_STR( 2C_3C ) )
 
 	PORT_START /* inputs high */
-	PORT_BIT ( 0x80, IP_ACTIVE_LOW,  IPT_UNUSED )
-	PORT_BIT ( 0x40, IP_ACTIVE_LOW,  IPT_UNUSED )
-	PORT_BIT ( 0x20, IP_ACTIVE_LOW,  IPT_UNUSED )
-	PORT_BIT ( 0x10, IP_ACTIVE_LOW,  IPT_UNUSED )
+	PORT_ANALOG ( 0xf0, 0x80, IPT_DIAL, 100, 10, 0, 0x0f, 0xff )
 	PORT_BIT ( 0x08, IP_ACTIVE_LOW,  IPT_UNUSED )
 	PORT_BIT ( 0x04, IP_ACTIVE_LOW,  IPT_UNUSED )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW,  IPT_UNUSED )
@@ -1809,11 +1824,6 @@ INPUT_PORTS_START ( boxingb_input_ports )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER2 )
 
-	PORT_START /* joystick X */
-	PORT_ANALOG ( 0xff, 0x7f, IPT_AD_STICK_X, 100, 10, 0, 0, 255 )
-
-	PORT_START /* joystick Y */
-	PORT_ANALOG ( 0xff, 0x7f, IPT_AD_STICK_Y, 100, 10, 0, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -1842,7 +1852,7 @@ void boxingb_init_machine (void)
 }
 
 
-CINEMA_MACHINE (boxingb, 0, 0, 1024, 768)
+CINEMA_MACHINEX (boxingb, 0, 0, 1024, 768)
 
 
 struct GameDriver boxingb_driver =
@@ -1855,7 +1865,7 @@ struct GameDriver boxingb_driver =
 	"Cinematronics",
 	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	GAME_NOT_WORKING,
+	GAME_IMPERFECT_COLORS,
 	&boxingb_machine_driver,
 	0,
 

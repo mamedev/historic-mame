@@ -69,11 +69,21 @@ static int track0[2],track1[2];
 
 static int tehkanwc_track_0_r(int offset)
 {
+	int joy;
+
+	joy = readinputport(10) >> (2*offset);
+	if (joy & 1) return -63;
+	if (joy & 2) return 63;
 	return readinputport(3 + offset) - track0[offset];
 }
 
 static int tehkanwc_track_1_r(int offset)
 {
+	int joy;
+
+	joy = readinputport(10) >> (4+2*offset);
+	if (joy & 1) return -63;
+	if (joy & 2) return 63;
 	return readinputport(6 + offset) - track1[offset];
 }
 
@@ -281,7 +291,7 @@ static struct IOWritePort sound_writeport[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( tehkanwc_input_ports )
 	PORT_START /* DSW1 - Active LOW */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING (   0x01, DEF_STR( 2C_1C ) )
@@ -365,19 +375,19 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING (   0x00, DEF_STR( Off ) )
 
 	PORT_START /* IN0 - X AXIS */
-	PORT_ANALOG( 0xff, 0x80, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 63, 63, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x80, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 0, 63, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
 
 	PORT_START /* IN0 - Y AXIS */
-	PORT_ANALOG( 0xff, 0x80, IPT_TRACKBALL_Y | IPF_PLAYER1, 100, 63, 63, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x80, IPT_TRACKBALL_Y | IPF_PLAYER1, 100, 0, 63, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
 
 	PORT_START /* IN0 - BUTTON */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 
 	PORT_START /* IN1 - X AXIS */
-	PORT_ANALOG( 0xff, 0x80, IPT_TRACKBALL_X | IPF_PLAYER2, 100, 63, 63, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x80, IPT_TRACKBALL_X | IPF_PLAYER2, 100, 0, 63, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
 
 	PORT_START /* IN1 - Y AXIS */
-	PORT_ANALOG( 0xff, 0x80, IPT_TRACKBALL_Y | IPF_PLAYER2, 100, 63, 63, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x80, IPT_TRACKBALL_Y | IPF_PLAYER2, 100, 0, 63, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
 
 	PORT_START /* IN1 - BUTTON */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
@@ -387,6 +397,16 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START	/* fake port to emulate trackballs with keyboard */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
 INPUT_PORTS_END
 
 
@@ -496,6 +516,9 @@ INPUT_PORTS_START( gridiron_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START	/* no fake port here */
+	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -557,6 +580,9 @@ INPUT_PORTS_START( teedoff_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START	/* no fake port here */
+	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -821,7 +847,7 @@ struct GameDriver tehkanwc_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	tehkanwc_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

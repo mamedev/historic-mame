@@ -366,7 +366,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	4000000,	/* 4 MHz ? */
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
 	{ rastan_irq_handler },
 	{ rastan_bankswitch_w }
 };
@@ -418,7 +418,7 @@ static struct MachineDriver machine_driver =
 	rastan_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
+	0,0,0,0,
 	{
 		{
 			SOUND_YM2151_ALT,
@@ -610,9 +610,9 @@ struct GameDriver rastan_driver =
 	__FILE__,
 	0,
 	"rastan",
-	"Rastan (World?)",
+	"Rastan (World)",
 	"1987",
-	"Taito Japan",
+	"Taito Corporation Japan",
 	"Jarek Burczynski",
 	0,
 	&machine_driver,
@@ -638,7 +638,7 @@ struct GameDriver rastanu_driver =
 	"rastanu",
 	"Rastan (US set 1)",
 	"1987",
-	"Taito America",
+	"Taito America Corporation",
 	"Jarek Burczynski",
 	0,
 	&machine_driver,
@@ -663,7 +663,7 @@ struct GameDriver rastanu2_driver =
 	"rastanu2",
 	"Rastan (US set 2)",
 	"1987",
-	"Taito America",
+	"Taito America Corporation",
 	"Jarek Burczynski",
 	0,
 	&machine_driver,
@@ -688,7 +688,7 @@ struct GameDriver rastsaga_driver =
 	"rastsaga",
 	"Rastan Saga (Japan)",
 	"1987",
-	"Taito",
+	"Taito Corporation",
 	"Jarek Burczynski",
 	0,
 	&machine_driver,
@@ -761,7 +761,7 @@ static struct YM2151interface ym2151_interface_mus =
 {
 	1,			/* 1 chip */
 	4000000,	/* 4 MHz ? */
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
 	{ rastan_irq_mus_handler }
 };
 
@@ -794,7 +794,7 @@ static struct MachineDriver rastmu_driver =
 	rastan_vhmus_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
+	0,0,0,0,
 	{
 		{
 //			SOUND_YM2151_ALT,
@@ -905,7 +905,7 @@ static struct YM2151interface ymcym_2151_interface =
 {
 	1,			/* 1 chip */
 	4000000,	/* 4 MHz ? */
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
 	{ ymcym_2151_irq_handler }
 };
 
@@ -960,7 +960,7 @@ static struct MachineDriver ymcym_driver =
 	ymcym_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
+	0,0,0,0,
 	{
 		{
 			SOUND_YM2151_ALT,

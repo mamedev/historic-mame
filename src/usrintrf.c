@@ -845,13 +845,16 @@ static void showcharset(void)
 	int trueorientation;
 	int changed;
 	int game_is_neogeo=0;
-	unsigned char *orig_used_colors;
+	unsigned char *orig_used_colors=0;
 
 
-	orig_used_colors = malloc(Machine->drv->total_colors * sizeof(unsigned char));
-	if (!orig_used_colors) return;
+	if (palette_used_colors)
+	{
+		orig_used_colors = malloc(Machine->drv->total_colors * sizeof(unsigned char));
+		if (!orig_used_colors) return;
 
-	memcpy(orig_used_colors,palette_used_colors,Machine->drv->total_colors * sizeof(unsigned char));
+		memcpy(orig_used_colors,palette_used_colors,Machine->drv->total_colors * sizeof(unsigned char));
+	}
 
 #ifndef NEOFREE
 #ifndef TINY_COMPILE
@@ -901,14 +904,23 @@ static void showcharset(void)
 			{
 				if (bank >= 0)
 				{
+					extern unsigned short *game_colortable;	/* in palette.c */
+					int table_offs;
+
 					/* hack: force the display into standard orientation to avoid */
 					/* rotating the user interface */
 					trueorientation = Machine->orientation;
 					Machine->orientation = Machine->ui_orientation;
 
-					memset(palette_used_colors,PALETTE_COLOR_TRANSPARENT,Machine->drv->total_colors * sizeof(unsigned char));
-					memset(palette_used_colors+Machine->gfx[bank]->color_granularity*color,PALETTE_COLOR_USED,Machine->gfx[bank]->color_granularity * sizeof(unsigned char));
-					palette_recalc();
+					if (palette_used_colors)
+					{
+						memset(palette_used_colors,PALETTE_COLOR_TRANSPARENT,Machine->drv->total_colors * sizeof(unsigned char));
+						table_offs = Machine->gfx[bank]->colortable - Machine->colortable
+								+ Machine->gfx[bank]->color_granularity * color;
+						for (i = 0;i < Machine->gfx[bank]->color_granularity;i++)
+							palette_used_colors[game_colortable[table_offs + i]] = PALETTE_COLOR_USED;
+						palette_recalc();
+					}
 
 					for (i = 0; i+firstdrawn < Machine->gfx[bank]->total_elements && i<cpx*cpy; i++)
 					{
@@ -930,9 +942,12 @@ static void showcharset(void)
 
 					colors = Machine->drv->total_colors - 256 * palpage;
 					if (colors > 256) colors = 256;
-					memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
-					memset(palette_used_colors+256*palpage,PALETTE_COLOR_USED,colors * sizeof(unsigned char));
-					palette_recalc();
+					if (palette_used_colors)
+					{
+						memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+						memset(palette_used_colors+256*palpage,PALETTE_COLOR_USED,colors * sizeof(unsigned char));
+						palette_recalc();
+					}
 
 					for (i = 0;i < 16;i++)
 					{
@@ -979,9 +994,12 @@ static void showcharset(void)
 				clip.min_y = Machine->uiymin;
 				clip.max_y = Machine->uiymin + Machine->uiheight - 1;
 
-				memset(palette_used_colors,PALETTE_COLOR_TRANSPARENT,Machine->drv->total_colors * sizeof(unsigned char));
-				memset(palette_used_colors+Machine->gfx[bank]->color_granularity*color,PALETTE_COLOR_USED,Machine->gfx[bank]->color_granularity * sizeof(unsigned char));
-				palette_recalc();
+				if (palette_used_colors)
+				{
+					memset(palette_used_colors,PALETTE_COLOR_TRANSPARENT,Machine->drv->total_colors * sizeof(unsigned char));
+					memset(palette_used_colors+Machine->gfx[bank]->color_granularity*color,PALETTE_COLOR_USED,Machine->gfx[bank]->color_granularity * sizeof(unsigned char));
+					palette_recalc();
+				}
 
 				for (i = 0; i+firstdrawn < no_of_tiles && i<cpx*cpy; i++)
 				{
@@ -1121,12 +1139,15 @@ static void showcharset(void)
 	/* clear the screen before returning */
 	osd_clearbitmap(Machine->scrbitmap);
 
-	/* this should force a full refresh by the video driver */
-	memset(palette_used_colors,PALETTE_COLOR_TRANSPARENT,Machine->drv->total_colors * sizeof(unsigned char));
-	palette_recalc();
-	/* restore the game used colors array */
-	memcpy(palette_used_colors,orig_used_colors,Machine->drv->total_colors * sizeof(unsigned char));
-	free(orig_used_colors);
+	if (palette_used_colors)
+	{
+		/* this should force a full refresh by the video driver */
+		memset(palette_used_colors,PALETTE_COLOR_TRANSPARENT,Machine->drv->total_colors * sizeof(unsigned char));
+		palette_recalc();
+		/* restore the game used colors array */
+		memcpy(palette_used_colors,orig_used_colors,Machine->drv->total_colors * sizeof(unsigned char));
+		free(orig_used_colors);
+	}
 
 	return;
 }
@@ -2248,7 +2269,7 @@ int showcopyright(void)
 			"is forbidden by copyright law.\n\n"
 			"IF YOU ARE NOT LEGALLY ENTITLED TO PLAY \"%s\" ON THIS EMULATOR, "
 			"PRESS ESC.\n\n"
-			"Otherwise, press OK to continue",
+			"Otherwise, type OK to continue",
 			Machine->gamedrv->description);
 	displaymessagewindow(buf);
 
@@ -2260,10 +2281,14 @@ int showcopyright(void)
 				osd_key_pressed_memory(OSD_KEY_CANCEL))
 			return 1;
 		if (osd_key_pressed_memory(OSD_KEY_O) ||
-				osd_key_pressed_memory(OSD_KEY_UI_LEFT))
+				osd_key_pressed_memory(OSD_KEY_UI_LEFT) ||
+				osd_key_pressed_memory(input_port_type_key(IPT_JOYSTICK_LEFT)) ||
+				osd_joy_pressed(input_port_type_joy(IPT_JOYSTICK_LEFT)))
 			done = 1;
 		if (done == 1 && (osd_key_pressed_memory(OSD_KEY_K) ||
-				osd_key_pressed_memory(OSD_KEY_UI_RIGHT)))
+				osd_key_pressed_memory(OSD_KEY_UI_RIGHT) ||
+				osd_key_pressed_memory(input_port_type_key(IPT_JOYSTICK_RIGHT)) ||
+				osd_joy_pressed(input_port_type_joy(IPT_JOYSTICK_RIGHT))))
 			done = 2;
 	} while (done < 2);
 
@@ -2271,62 +2296,6 @@ int showcopyright(void)
 	osd_update_video_and_audio();
 
 	return 0;
-}
-
-static int displaycredits(int selected)
-{
-	char buf[2048];
-	int sel;
-
-
-	sel = selected - 1;
-
-	sprintf(buf,"The following people\ncontributed to this driver:\n\n%s",Machine->gamedrv->credits);
-
-	if (sel == -1)
-	{
-		/* startup info, ask for any key */
-		strcat(buf,"\n\tPress any key");
-
-		displaymessagewindow(buf);
-
-		sel = 0;
-		if (osd_key_pressed_memory (OSD_KEY_ANY))
-			sel = -1;
-	}
-	else
-	{
-		/* menu system, use the normal menu keys */
-		strcat(buf,"\n\t\x1a Return to Main Menu \x1b");
-
-		displaymessagewindow(buf);
-
-		if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
-			sel = -1;
-
-		if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
-			sel = -1;
-
-		if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
-			sel = -2;
-	}
-
-	if (sel == -1 || sel == -2)
-	{
-		/* tell updatescreen() to clean after us */
-		need_to_clear_bitmap = 1;
-	}
-
-	return sel + 1;
-}
-
-void showcredits(void)
-{
-	while (displaycredits(0) == 1)
-		osd_update_video_and_audio();
-
-	osd_clearbitmap(Machine->scrbitmap);
-	osd_update_video_and_audio();
 }
 
 static int displaygameinfo(int selected)
@@ -2537,10 +2506,14 @@ int showgamewarnings(void)
 					osd_key_pressed_memory(OSD_KEY_CANCEL))
 				return 1;
 			if (osd_key_pressed_memory(OSD_KEY_O) ||
-					osd_key_pressed_memory(OSD_KEY_UI_LEFT))
+					osd_key_pressed_memory(OSD_KEY_UI_LEFT) ||
+					osd_key_pressed_memory(input_port_type_key(IPT_JOYSTICK_LEFT)) ||
+					osd_joy_pressed(input_port_type_joy(IPT_JOYSTICK_LEFT)))
 				done = 1;
 			if (done == 1 && (osd_key_pressed_memory(OSD_KEY_K) ||
-					osd_key_pressed_memory(OSD_KEY_UI_RIGHT)))
+					osd_key_pressed_memory(OSD_KEY_UI_RIGHT) ||
+					osd_key_pressed_memory(input_port_type_key(IPT_JOYSTICK_RIGHT)) ||
+					osd_joy_pressed(input_port_type_joy(IPT_JOYSTICK_RIGHT))))
 				done = 2;
 		} while (done < 2);
 	}
@@ -2925,7 +2898,7 @@ int	memcard_menu(int selection)
 
 
 enum { UI_SWITCH = 0,UI_DEFKEY,UI_DEFJOY,UI_KEY,UI_JOY,UI_ANALOG,UI_CALIBRATE,
-		UI_STATS,UI_CREDITS,UI_GAMEINFO,UI_HISTORY,
+		UI_STATS,UI_GAMEINFO,UI_HISTORY,
 		UI_CHEAT,UI_RESET,UI_MEMCARD,UI_EXIT };
 
 #define MAX_SETUPMENU_ITEMS 20
@@ -2973,7 +2946,6 @@ static void setup_menu_init(void)
 	}
 
 	menu_item[menu_total] = "Bookkeeping Info"; menu_action[menu_total++] = UI_STATS;
-	menu_item[menu_total] = "Credits"; menu_action[menu_total++] = UI_CREDITS;
 	menu_item[menu_total] = "Game Information"; menu_action[menu_total++] = UI_GAMEINFO;
 	menu_item[menu_total] = "Game History"; menu_action[menu_total++] = UI_HISTORY;
 
@@ -3102,17 +3074,6 @@ static int setup_menu(int selected)
 					sel = (sel & 0xff) | (res << 8);
 				break;
 
-			case UI_CREDITS:
-				res = displaycredits(sel >> 8);
-				if (res == -1)
-				{
-					menu_lastselected = sel;
-					sel = -1;
-				}
-				else
-					sel = (sel & 0xff) | (res << 8);
-				break;
-
 			case UI_GAMEINFO:
 				res = displaygameinfo(sel >> 8);
 				if (res == -1)
@@ -3183,7 +3144,6 @@ sel = sel & 0xff;
 			case UI_ANALOG:
 			case UI_CALIBRATE:
 			case UI_STATS:
-			case UI_CREDITS:
 			case UI_GAMEINFO:
 			case UI_HISTORY:
 			case UI_CHEAT:

@@ -245,7 +245,7 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	2000000,	/* 2 MHz */
-	{ 50 },
+	{ 40 },
 	AY8910_DEFAULT_GAIN,
 	{ popeye_portA_r },
 	{ 0 },

@@ -95,7 +95,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x700000, 0x701dff, snowbros_spriteram_w, &snowbros_spriteram, &videoram_size },
 	{ 0x800000, 0x800001, MWA_NOP },	/* IRQ 4 acknowledge? */
 	{ 0x900000, 0x900001, MWA_NOP },	/* IRQ 3 acknowledge? */
-	{ 0xA00000, 0xA00001, MWA_NOP },	/* IRQ 2 acknowledge? */
+	{ 0xa00000, 0xa00001, MWA_NOP },	/* IRQ 2 acknowledge? */
 	{ -1 }  /* end of table */
 };
 

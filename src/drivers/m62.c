@@ -6,7 +6,7 @@ There's two crystals on Kid Kiki. 24.00 MHz and 3.579545 MHz for sound
 
 TODO:
 - In kungfum, the top portion of the screen should have priority over sprites.
-  The was implemented before I merged the driver with this one.
+  This was implemented before I merged the driver with this one.
 
 **************************************************************************/
 

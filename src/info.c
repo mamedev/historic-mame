@@ -111,7 +111,8 @@ static void print_game_switch(FILE* out, const struct GameDriver* game) {
 
 			fprintf(out, L2E L1N);
 		}
-		++input;
+		else
+			++input;
 	}
 }
 
@@ -267,7 +268,7 @@ static void print_game_rom(FILE* out, const struct GameDriver* game) {
 				rom++;
 			} while (rom->length && (rom->name == 0 || rom->name == (char *)-1));
 
-			if(game->clone_of)
+			if(game->clone_of && crc)
 			{
 				p_rom = game->clone_of->rom;
 				while( !in_parent && (p_rom->name || p_rom->offset || p_rom->length) )
@@ -497,10 +498,6 @@ static void print_game_driver(FILE* out, const struct GameDriver* game) {
 		fprintf(out, L2P "colordeep 16" L2N);
 	else
 		fprintf(out, L2P "colordeep 8" L2N);
-
-	fprintf(out, L2P "credits ");
-	print_c_string(out, game->credits );
-	fprintf(out, "%s", L2N);
 
 	fprintf(out, L2E L1N);
 }

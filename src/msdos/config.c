@@ -379,7 +379,7 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	soundcard           = get_int  ("config", "soundcard",  NULL, -1);
 	options.use_emulated_ym3812 = !get_bool ("config", "ym3812opl",  NULL,  1);
 	options.samplerate = get_int  ("config", "samplerate", "sr", 22050);
-	options.samplebits = get_int  ("config", "samplebits", "sb", 16);
+	options.samplebits = get_int  ("config", "samplebits", "sb", 8);
 	usestereo           = get_bool ("config", "stereo",  NULL,  1);
 	attenuation         = get_int  ("config", "volume",  NULL,  0);
 
@@ -435,7 +435,7 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	/* 320x240 modes */
 	tw320x240ns_h		= get_int ("tweaked", "320x240ns_h",	NULL, 0x5f);
 	tw320x240ns_v		= get_int ("tweaked", "320x240ns_v",    NULL, 0x0b);
-	tw320x240sc_h		= get_int ("tweaked", "320x240sc_h",    NULL, 0x5e);
+	tw320x240sc_h		= get_int ("tweaked", "320x240sc_h",    NULL, 0x5f);
 	tw320x240sc_v		= get_int ("tweaked", "320x240sc_v",    NULL, 0x07);
 	/* 336x240 modes */
 	tw336x240ns_h		= get_int ("tweaked", "336x240ns_h",	NULL, 0x5f);

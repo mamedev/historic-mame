@@ -349,7 +349,7 @@ INPUT_PORTS_START( gng_input_ports )
 INPUT_PORTS_END
 
 /* identical to gng, but the "unknown" dip switch is Invulnerability */
-INPUT_PORTS_START( gngjap_input_ports )
+INPUT_PORTS_START( makaimur_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -656,6 +656,33 @@ ROM_START( gng_rom )
 	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
 ROM_END
 
+ROM_START( gnga_rom )
+	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
+	ROM_LOAD( "gng.n9",       0x08000, 0x4000, 0xb6b91cfb )
+	ROM_LOAD( "gng.n8",       0x0c000, 0x4000, 0xa5cfa928 )
+	ROM_LOAD( "gng.n10",      0x04000, 0x4000, 0x60343188 )
+	ROM_LOAD( "gng.n13",      0x10000, 0x4000, 0xfd9a8dda )
+	ROM_LOAD( "gng.n12",      0x14000, 0x4000, 0x13cf6238 )
+
+	ROM_REGION_DISPOSE(0x34000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gg1.bin",      0x00000, 0x4000, 0xecfccf07 )	/* characters */
+	ROM_LOAD( "gg11.bin",     0x04000, 0x4000, 0xddd56fa9 )	/* tiles 0-1 Plane 1*/
+	ROM_LOAD( "gg10.bin",     0x08000, 0x4000, 0x7302529d )	/* tiles 2-3 Plane 1*/
+	ROM_LOAD( "gg9.bin",      0x0c000, 0x4000, 0x20035bda )	/* tiles 0-1 Plane 2*/
+	ROM_LOAD( "gg8.bin",      0x10000, 0x4000, 0xf12ba271 )	/* tiles 2-3 Plane 2*/
+	ROM_LOAD( "gg7.bin",      0x14000, 0x4000, 0xe525207d )	/* tiles 0-1 Plane 3*/
+	ROM_LOAD( "gg6.bin",      0x18000, 0x4000, 0x2d77e9b2 )	/* tiles 2-3 Plane 3*/
+	ROM_LOAD( "gg17.bin",     0x1c000, 0x4000, 0x93e50a8f )	/* sprites 0 Plane 1-2 */
+	ROM_LOAD( "gg16.bin",     0x20000, 0x4000, 0x06d7e5ca )	/* sprites 1 Plane 1-2 */
+	ROM_LOAD( "gg15.bin",     0x24000, 0x4000, 0xbc1fe02d )	/* sprites 2 Plane 1-2 */
+	ROM_LOAD( "gg14.bin",     0x28000, 0x4000, 0x6aaf12f9 )	/* sprites 0 Plane 3-4 */
+	ROM_LOAD( "gg13.bin",     0x2c000, 0x4000, 0xe80c3fca )	/* sprites 1 Plane 3-4 */
+	ROM_LOAD( "gg12.bin",     0x30000, 0x4000, 0x7780a925 )	/* sprites 2 Plane 3-4 */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
+ROM_END
+
 ROM_START( gngt_rom )
 	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
 	ROM_LOAD( "mm03",         0x08000, 0x8000, 0xfb040b42 )
@@ -681,34 +708,7 @@ ROM_START( gngt_rom )
 	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
 ROM_END
 
-ROM_START( gngcross_rom )
-	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
-	ROM_LOAD( "gng.n9",       0x08000, 0x4000, 0xb6b91cfb )
-	ROM_LOAD( "gng.n8",       0x0c000, 0x4000, 0xa5cfa928 )
-	ROM_LOAD( "gng.n10",      0x04000, 0x4000, 0x60343188 )
-	ROM_LOAD( "gng.n13",      0x10000, 0x4000, 0xfd9a8dda )
-	ROM_LOAD( "gng.n12",      0x14000, 0x4000, 0x13cf6238 )
-
-	ROM_REGION_DISPOSE(0x34000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gg1.bin",      0x00000, 0x4000, 0xecfccf07 )	/* characters */
-	ROM_LOAD( "gg11.bin",     0x04000, 0x4000, 0xddd56fa9 )	/* tiles 0-1 Plane 1*/
-	ROM_LOAD( "gg10.bin",     0x08000, 0x4000, 0x7302529d )	/* tiles 2-3 Plane 1*/
-	ROM_LOAD( "gg9.bin",      0x0c000, 0x4000, 0x20035bda )	/* tiles 0-1 Plane 2*/
-	ROM_LOAD( "gg8.bin",      0x10000, 0x4000, 0xf12ba271 )	/* tiles 2-3 Plane 2*/
-	ROM_LOAD( "gg7.bin",      0x14000, 0x4000, 0xe525207d )	/* tiles 0-1 Plane 3*/
-	ROM_LOAD( "gg6.bin",      0x18000, 0x4000, 0x2d77e9b2 )	/* tiles 2-3 Plane 3*/
-	ROM_LOAD( "gng13.n4",     0x1c000, 0x4000, 0x4613afdc )	/* sprites 0 Plane 1-2 */
-	ROM_LOAD( "gg16.bin",     0x20000, 0x4000, 0x06d7e5ca )	/* sprites 1 Plane 1-2 */
-	ROM_LOAD( "gg15.bin",     0x24000, 0x4000, 0xbc1fe02d )	/* sprites 2 Plane 1-2 */
-	ROM_LOAD( "gng16.l4",     0x28000, 0x4000, 0x608d68d5 )	/* sprites 0 Plane 3-4 */
-	ROM_LOAD( "gg13.bin",     0x2c000, 0x4000, 0xe80c3fca )	/* sprites 1 Plane 3-4 */
-	ROM_LOAD( "gg12.bin",     0x30000, 0x4000, 0x7780a925 )	/* sprites 2 Plane 3-4 */
-
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
-ROM_END
-
-ROM_START( gngjap_rom )
+ROM_START( makaimur_rom )
 	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
 	ROM_LOAD( "8n.rom",       0x08000, 0x8000, 0x9612d66c )
 	ROM_LOAD( "10n.rom",      0x04000, 0x4000, 0x81e567e0 )	/* 4000-5fff is page 0 */
@@ -722,10 +722,60 @@ ROM_START( gngjap_rom )
 	ROM_LOAD( "gg8.bin",      0x10000, 0x4000, 0xf12ba271 )	/* tiles 2-3 Plane 2*/
 	ROM_LOAD( "gg7.bin",      0x14000, 0x4000, 0xe525207d )	/* tiles 0-1 Plane 3*/
 	ROM_LOAD( "gg6.bin",      0x18000, 0x4000, 0x2d77e9b2 )	/* tiles 2-3 Plane 3*/
-	ROM_LOAD( "gg17.bin",     0x1c000, 0x4000, 0x93e50a8f )	/* sprites 0 Plane 1-2 */
+	ROM_LOAD( "gng13.n4",     0x1c000, 0x4000, 0x4613afdc )	/* sprites 0 Plane 1-2 */
 	ROM_LOAD( "gg16.bin",     0x20000, 0x4000, 0x06d7e5ca )	/* sprites 1 Plane 1-2 */
 	ROM_LOAD( "gg15.bin",     0x24000, 0x4000, 0xbc1fe02d )	/* sprites 2 Plane 1-2 */
-	ROM_LOAD( "gg14.bin",     0x28000, 0x4000, 0x6aaf12f9 )	/* sprites 0 Plane 3-4 */
+	ROM_LOAD( "gng16.l4",     0x28000, 0x4000, 0x608d68d5 )		/* sprites 0 Plane 3-4 */
+	ROM_LOAD( "gg13.bin",     0x2c000, 0x4000, 0xe80c3fca )	/* sprites 1 Plane 3-4 */
+	ROM_LOAD( "gg12.bin",     0x30000, 0x4000, 0x7780a925 )	/* sprites 2 Plane 3-4 */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
+ROM_END
+
+ROM_START( makaimuc_rom )
+	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
+	ROM_LOAD( "mj03c.bin",       0x08000, 0x8000, 0xd343332d )
+	ROM_LOAD( "mj04c.bin",      0x04000, 0x4000, 0x1294edb1 )	/* 4000-5fff is page 0 */
+	ROM_LOAD( "mj05c.bin",      0x10000, 0x8000, 0x535342c2 )	/* page 1, 2, 3 and 4 */
+
+	ROM_REGION_DISPOSE(0x34000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gg1.bin",      0x00000, 0x4000, 0xecfccf07 )	/* characters */
+	ROM_LOAD( "gg11.bin",     0x04000, 0x4000, 0xddd56fa9 )	/* tiles 0-1 Plane 1*/
+	ROM_LOAD( "gg10.bin",     0x08000, 0x4000, 0x7302529d )	/* tiles 2-3 Plane 1*/
+	ROM_LOAD( "gg9.bin",      0x0c000, 0x4000, 0x20035bda )	/* tiles 0-1 Plane 2*/
+	ROM_LOAD( "gg8.bin",      0x10000, 0x4000, 0xf12ba271 )	/* tiles 2-3 Plane 2*/
+	ROM_LOAD( "gg7.bin",      0x14000, 0x4000, 0xe525207d )	/* tiles 0-1 Plane 3*/
+	ROM_LOAD( "gg6.bin",      0x18000, 0x4000, 0x2d77e9b2 )	/* tiles 2-3 Plane 3*/
+	ROM_LOAD( "gng13.n4",     0x1c000, 0x4000, 0x4613afdc )	/* sprites 0 Plane 1-2 */
+	ROM_LOAD( "gg16.bin",     0x20000, 0x4000, 0x06d7e5ca )	/* sprites 1 Plane 1-2 */
+	ROM_LOAD( "gg15.bin",     0x24000, 0x4000, 0xbc1fe02d )	/* sprites 2 Plane 1-2 */
+	ROM_LOAD( "gng16.l4",     0x28000, 0x4000, 0x608d68d5 )		/* sprites 0 Plane 3-4 */
+	ROM_LOAD( "gg13.bin",     0x2c000, 0x4000, 0xe80c3fca )	/* sprites 1 Plane 3-4 */
+	ROM_LOAD( "gg12.bin",     0x30000, 0x4000, 0x7780a925 )	/* sprites 2 Plane 3-4 */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
+ROM_END
+
+ROM_START( makaimug_rom )
+	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
+	ROM_LOAD( "mj03g.bin",       0x08000, 0x8000, 0x61b043bb )
+	ROM_LOAD( "mj04g.bin",      0x04000, 0x4000, 0x757c94d3 )	/* 4000-5fff is page 0 */
+	ROM_LOAD( "mj05g.bin",      0x10000, 0x8000, 0xf2fdccf5 )	/* page 1, 2, 3 and 4 */
+
+	ROM_REGION_DISPOSE(0x34000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gg1.bin",      0x00000, 0x4000, 0xecfccf07 )	/* characters */
+	ROM_LOAD( "gg11.bin",     0x04000, 0x4000, 0xddd56fa9 )	/* tiles 0-1 Plane 1*/
+	ROM_LOAD( "gg10.bin",     0x08000, 0x4000, 0x7302529d )	/* tiles 2-3 Plane 1*/
+	ROM_LOAD( "gg9.bin",      0x0c000, 0x4000, 0x20035bda )	/* tiles 0-1 Plane 2*/
+	ROM_LOAD( "gg8.bin",      0x10000, 0x4000, 0xf12ba271 )	/* tiles 2-3 Plane 2*/
+	ROM_LOAD( "gg7.bin",      0x14000, 0x4000, 0xe525207d )	/* tiles 0-1 Plane 3*/
+	ROM_LOAD( "gg6.bin",      0x18000, 0x4000, 0x2d77e9b2 )	/* tiles 2-3 Plane 3*/
+	ROM_LOAD( "gng13.n4",     0x1c000, 0x4000, 0x4613afdc )	/* sprites 0 Plane 1-2 */
+	ROM_LOAD( "gg16.bin",     0x20000, 0x4000, 0x06d7e5ca )	/* sprites 1 Plane 1-2 */
+	ROM_LOAD( "gg15.bin",     0x24000, 0x4000, 0xbc1fe02d )	/* sprites 2 Plane 1-2 */
+	ROM_LOAD( "gng16.l4",     0x28000, 0x4000, 0x608d68d5 )	/* sprites 0 Plane 3-4 */
 	ROM_LOAD( "gg13.bin",     0x2c000, 0x4000, 0xe80c3fca )	/* sprites 1 Plane 3-4 */
 	ROM_LOAD( "gg12.bin",     0x30000, 0x4000, 0x7780a925 )	/* sprites 2 Plane 3-4 */
 
@@ -856,7 +906,7 @@ struct GameDriver gng_driver =
 	__FILE__,
 	0,
 	"gng",
-	"Ghosts'n Goblins (World?)",
+	"Ghosts'n Goblins (World? set 1)",
 	"1985",
 	"Capcom",
 	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nGabrio Secco\nMarco Cassili",
@@ -865,6 +915,32 @@ struct GameDriver gng_driver =
 	0,
 
 	gng_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	gng_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	gng_hiload, gng_hisave
+};
+
+struct GameDriver gnga_driver =
+{
+	__FILE__,
+	&gng_driver,
+	"gnga",
+	"Ghosts'n Goblins (World? set 2)",
+	"1985",
+	"Capcom",
+	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nGabrio Secco\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	gnga_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
@@ -903,37 +979,11 @@ struct GameDriver gngt_driver =
 	gng_hiload, gng_hisave
 };
 
-struct GameDriver gngcross_driver =
+struct GameDriver makaimur_driver =
 {
 	__FILE__,
 	&gng_driver,
-	"gngcross",
-	"Ghosts'n Goblins (Cross)",
-	"1985",
-	"Capcom",
-	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nGabrio Secco\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	gngcross_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	gng_input_ports,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	gng_hiload, gng_hisave
-};
-
-struct GameDriver gngjap_driver =
-{
-	__FILE__,
-	&gng_driver,
-	"gngjap",
+	"makaimur",
 	"Makai-Mura",
 	"1985",
 	"Capcom",
@@ -942,12 +992,64 @@ struct GameDriver gngjap_driver =
 	&machine_driver,
 	0,
 
-	gngjap_rom,
+	makaimur_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	gngjap_input_ports,
+	makaimur_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	gng_hiload, gng_hisave
+};
+
+struct GameDriver makaimuc_driver =
+{
+	__FILE__,
+	&gng_driver,
+	"makaimuc",
+	"Makai-Mura (Revision C)",
+	"1985",
+	"Capcom",
+	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nGabrio Secco\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	makaimuc_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	makaimur_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	gng_hiload, gng_hisave
+};
+
+struct GameDriver makaimug_driver =
+{
+	__FILE__,
+	&gng_driver,
+	"makaimug",
+	"Makai-Mura (Revision G)",
+	"1985",
+	"Capcom",
+	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nGabrio Secco\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	makaimug_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	makaimur_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

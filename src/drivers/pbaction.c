@@ -19,6 +19,9 @@ e606      watchdog reset????
 
 write:
 e600      interrupt enable
+e604      flip screen
+e606      bg scroll? not sure
+e800      command for the sound CPU
 
 ***************************************************************************/
 
@@ -31,6 +34,7 @@ extern unsigned char *pbaction_videoram2,*pbaction_colorram2;
 void pbaction_videoram2_w(int offset,int data);
 void pbaction_colorram2_w(int offset,int data);
 void pbaction_flipscreen_w(int offset,int data);
+void pbaction_scroll_w(int offset,int data);
 int pbaction_vh_start(void);
 void pbaction_vh_stop(void);
 
@@ -72,6 +76,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xe400, 0xe5ff, paletteram_xxxxBBBBGGGGRRRR_w, &paletteram },
 	{ 0xe600, 0xe600, interrupt_enable_w },
 	{ 0xe604, 0xe604, pbaction_flipscreen_w },
+	{ 0xe606, 0xe606, pbaction_scroll_w },
 	{ 0xe800, 0xe800, pbaction_sh_command_w },
 	{ -1 }  /* end of table */
 };
@@ -296,7 +301,7 @@ static struct MachineDriver machine_driver =
 	256, 256,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	pbaction_vh_start,
 	pbaction_vh_stop,

@@ -604,7 +604,7 @@ static void cclimber_decode(void)
 	}
 }
 
-ROM_START( ccjap_rom )
+ROM_START( cclimbrj_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "cc11j.bin",    0x0000, 0x1000, 0x89783959 )
 	ROM_LOAD( "cc10j.bin",    0x1000, 0x1000, 0x14eda506 )
@@ -694,7 +694,7 @@ ROM_START( ccboot2_rom )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
-static void ccjap_decode(void)
+static void cclimbrj_decode(void)
 {
 /*
 	translation mask is layed out like this:
@@ -1151,11 +1151,11 @@ struct GameDriver cclimber_driver =
 	cclimber_hiload, cclimber_hisave
 };
 
-struct GameDriver ccjap_driver =
+struct GameDriver cclimbrj_driver =
 {
 	__FILE__,
 	&cclimber_driver,
-	"ccjap",
+	"cclimbrj",
 	"Crazy Climber (Japan)",
 	"1980",
 	"Nichibutsu",
@@ -1164,8 +1164,8 @@ struct GameDriver ccjap_driver =
 	&machine_driver,
 	0,
 
-	ccjap_rom,
-	0, ccjap_decode,
+	cclimbrj_rom,
+	0, cclimbrj_decode,
 	0,
 	0,      /* sound_prom */
 
@@ -1191,7 +1191,7 @@ struct GameDriver ccboot_driver =
 	0,
 
 	ccboot_rom,
-	0, ccjap_decode,
+	0, cclimbrj_decode,
 	0,
 	0,      /* sound_prom */
 
@@ -1217,7 +1217,7 @@ struct GameDriver ccboot2_driver =
 	0,
 
 	ccboot2_rom,
-	0, ccjap_decode,
+	0, cclimbrj_decode,
 	0,
 	0,      /* sound_prom */
 

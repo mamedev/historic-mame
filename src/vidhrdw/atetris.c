@@ -13,15 +13,15 @@
 //#define LOG_SLAPSTICK
 
 
+#define BANK0 0x10000
+#define BANK1 0x4000
+
 static int slapstic_primed   = 0;
-static int slapstic_bank     = 0x4000;
+static int slapstic_bank     = BANK0;
 static int slapstic_nextbank = -1;
 static int slapstic_75xxcnt  = 0;
 static int slapstic_last60xx = 0;
 static int slapstic_last75xx = 0;
-
-#define BANK1 0x4000;
-#define BANK2 0x10000;
 
 // I'm not sure if the information here is sufficient to figure how to the
 // Slapstic chip really works in this game, because BANK1 seem to be only
@@ -30,7 +30,7 @@ static int slapstic_last75xx = 0;
 // But it seems like that reading 6090 twice in a row can select either bank.
 // The main difference between the 2 cases is that when BANK1 is selected,
 // there are 2 LD A,75XXh instructions between the 6090 reads, while when
-// BANK2 gets selected, there are 3.
+// BANK0 gets selected, there are 3.
 
 
 int atetris_slapstic_r(int offset)
@@ -66,9 +66,9 @@ int atetris_slapstic_r(int offset)
             {
             case 0x80:
                 {
-                    slapstic_nextbank = BANK2;
+                    slapstic_nextbank = BANK0;
 #ifdef LOG_SLAPSTICK
-                    if (errorlog) fprintf(errorlog, "Selecting Bank 2 at %04X\n", cpu_get_pc());
+                    if (errorlog) fprintf(errorlog, "Selecting Bank 0 at %04X\n", cpu_get_pc());
 #endif
                 }
                 break;
@@ -84,9 +84,9 @@ int atetris_slapstic_r(int offset)
                 }
                 else
                 {
-                    slapstic_nextbank = BANK2;
+                    slapstic_nextbank = BANK0;
 #ifdef LOG_SLAPSTICK
-                    if (errorlog) fprintf(errorlog, "Selecting Bank 2 at %04X\n", cpu_get_pc());
+                    if (errorlog) fprintf(errorlog, "Selecting Bank 0 at %04X\n", cpu_get_pc());
 #endif
                 }
                 break;
@@ -101,9 +101,9 @@ int atetris_slapstic_r(int offset)
                 }
                 else
                 {
-                    slapstic_nextbank = BANK2;
+                    slapstic_nextbank = BANK0;
 #ifdef LOG_SLAPSTICK
-                    if (errorlog) fprintf(errorlog, "Selecting Bank 2 at %04X\n", cpu_get_pc());
+                    if (errorlog) fprintf(errorlog, "Selecting Bank 0 at %04X\n", cpu_get_pc());
 #endif
                 }
                 break;
@@ -119,9 +119,9 @@ int atetris_slapstic_r(int offset)
                 }
                 else
                 {
-                    slapstic_nextbank = BANK2;
+                    slapstic_nextbank = BANK0;
 #ifdef LOG_SLAPSTICK
-                    if (errorlog) fprintf(errorlog, "Selecting Bank 2 at %04X\n", cpu_get_pc());
+                    if (errorlog) fprintf(errorlog, "Selecting Bank 0 at %04X\n", cpu_get_pc());
 #endif
                 }
                 break;

@@ -886,29 +886,75 @@ ROM_START( indytemp_rom )
 	ROM_LOAD( "136036.151",   0x200, 0x200, 0x7daf351f )  /* color */
 
 	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "136036.135",   0x00000, 0x08000, 0x07593e5e )  /* bank 1, plane 0 */
-	ROM_LOAD( "136036.139",   0x08000, 0x08000, 0xbcb3b517 )  /* bank 1, plane 1 */
-	ROM_LOAD( "136036.143",   0x10000, 0x08000, 0x4ca6704c )  /* bank 1, plane 2 */
-	ROM_LOAD( "136036.147",   0x18000, 0x08000, 0x12b2673e )  /* bank 1, plane 3 */
+	ROM_LOAD( "136036.135",   0x00000, 0x08000, 0xffa8749c )  /* bank 1, plane 0 */
+	ROM_LOAD( "136036.139",   0x08000, 0x08000, 0xb682bfca )  /* bank 1, plane 1 */
+	ROM_LOAD( "136036.143",   0x10000, 0x08000, 0x7697da26 )  /* bank 1, plane 2 */
+	ROM_LOAD( "136036.147",   0x18000, 0x08000, 0x4e9d664c )  /* bank 1, plane 3 */
 
-	ROM_LOAD( "136036.136",   0x30000, 0x08000, 0xb2732404 )  /* bank 2, plane 0 */
-	ROM_LOAD( "136036.140",   0x38000, 0x08000, 0x9b00f1a2 )  /* bank 2, plane 1 */
-	ROM_LOAD( "136036.144",   0x40000, 0x08000, 0xb3d095dc )  /* bank 2, plane 2 */
-	ROM_LOAD( "136036.148",   0x48000, 0x08000, 0x3980416e )  /* bank 2, plane 3 */
+	ROM_LOAD( "136036.136",   0x30000, 0x08000, 0xb2b403aa )  /* bank 2, plane 0 */
+	ROM_LOAD( "136036.140",   0x38000, 0x08000, 0xec0c19ca )  /* bank 2, plane 1 */
+	ROM_LOAD( "136036.144",   0x40000, 0x08000, 0x4407df98 )  /* bank 2, plane 2 */
+	ROM_LOAD( "136036.148",   0x48000, 0x08000, 0x70dce06d )  /* bank 2, plane 3 */
 
-	ROM_LOAD( "136036.137",   0x60000, 0x08000, 0xd3e2b325 )  /* bank 3, plane 0 */
-	ROM_LOAD( "136036.141",   0x68000, 0x08000, 0x83166acb )  /* bank 3, plane 1 */
-	ROM_LOAD( "136036.145",   0x70000, 0x08000, 0x7897cde6 )  /* bank 3, plane 2 */
+	ROM_LOAD( "136036.137",   0x60000, 0x08000, 0x3f352547 )  /* bank 3, plane 0 */
+	ROM_LOAD( "136036.141",   0x68000, 0x08000, 0x9cbdffd0 )  /* bank 3, plane 1 */
+	ROM_LOAD( "136036.145",   0x70000, 0x08000, 0xe828e64b )  /* bank 3, plane 2 */
 	ROM_LOAD( "136036.149",   0x78000, 0x08000, 0x81503a23 )  /* bank 3, plane 3 */
 
-	ROM_LOAD( "136036.138",   0x90000, 0x08000, 0x00a2c186 )  /* bank 4, plane 0 */
+	ROM_LOAD( "136036.138",   0x90000, 0x08000, 0x48c4d79d )  /* bank 4, plane 0 */
 	ROM_LOAD( "136036.142",   0x98000, 0x08000, 0x7faae75f )  /* bank 4, plane 1 */
-	ROM_LOAD( "136036.146",   0xa0000, 0x08000, 0x96f69b50 )  /* bank 4, plane 2 */
-	ROM_LOAD( "136036.150",   0xa8000, 0x08000, 0x62a4a20e )  /* bank 4, plane 3 */
+	ROM_LOAD( "136036.146",   0xa0000, 0x08000, 0x8ae5a7b5 )  /* bank 4, plane 2 */
+	ROM_LOAD( "136036.150",   0xa8000, 0x08000, 0xa10c4bd9 )  /* bank 4, plane 3 */
 ROM_END
 
-
 ROM_START( indytem2_rom )
+	ROM_REGION(0x88000)	/* 8.5*64k for 68000 code & slapstic ROM */
+	ROM_LOAD_EVEN( "136032.205",   0x00000, 0x04000, 0x88d0be26 )
+	ROM_LOAD_ODD ( "136032.206",   0x00000, 0x04000, 0x3c79ef05 )
+	ROM_LOAD_EVEN( "136036.470",   0x10000, 0x08000, 0x7fac1dd8 )
+	ROM_LOAD_ODD ( "136036.471",   0x10000, 0x08000, 0xe93272fb )
+	ROM_LOAD_EVEN( "136036.434",   0x20000, 0x08000, 0x802495fd )
+	ROM_LOAD_ODD ( "136036.433",   0x20000, 0x08000, 0x3a914e5c )
+	ROM_LOAD_EVEN( "136036.456",   0x30000, 0x04000, 0xec146b09 )
+	ROM_LOAD_ODD ( "136036.457",   0x30000, 0x04000, 0x6628de01 )
+	ROM_LOAD_EVEN( "136036.358",   0x80000, 0x04000, 0xd9351106 )
+	ROM_LOAD_ODD ( "136036.359",   0x80000, 0x04000, 0xe731caea )
+
+	ROM_REGION(0x10000)	/* 64k for 6502 code */
+	ROM_LOAD( "136036.153",   0x4000, 0x4000, 0x95294641 )
+	ROM_LOAD( "136036.154",   0x8000, 0x4000, 0xcbfc6adb )
+	ROM_LOAD( "136036.155",   0xc000, 0x4000, 0x4c8233ac )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
+
+	ROM_REGION_DISPOSE(0x400)	/* temporary space for graphics mapping PROMs */
+	ROM_LOAD( "136036.152",   0x000, 0x200, 0x4f96e57c )  /* remap */
+	ROM_LOAD( "136036.151",   0x200, 0x200, 0x7daf351f )  /* color */
+
+	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "136036.135",   0x00000, 0x08000, 0xffa8749c )  /* bank 1, plane 0 */
+	ROM_LOAD( "136036.139",   0x08000, 0x08000, 0xb682bfca )  /* bank 1, plane 1 */
+	ROM_LOAD( "136036.143",   0x10000, 0x08000, 0x7697da26 )  /* bank 1, plane 2 */
+	ROM_LOAD( "136036.147",   0x18000, 0x08000, 0x4e9d664c )  /* bank 1, plane 3 */
+
+	ROM_LOAD( "136036.136",   0x30000, 0x08000, 0xb2b403aa )  /* bank 2, plane 0 */
+	ROM_LOAD( "136036.140",   0x38000, 0x08000, 0xec0c19ca )  /* bank 2, plane 1 */
+	ROM_LOAD( "136036.144",   0x40000, 0x08000, 0x4407df98 )  /* bank 2, plane 2 */
+	ROM_LOAD( "136036.148",   0x48000, 0x08000, 0x70dce06d )  /* bank 2, plane 3 */
+
+	ROM_LOAD( "136036.137",   0x60000, 0x08000, 0x3f352547 )  /* bank 3, plane 0 */
+	ROM_LOAD( "136036.141",   0x68000, 0x08000, 0x9cbdffd0 )  /* bank 3, plane 1 */
+	ROM_LOAD( "136036.145",   0x70000, 0x08000, 0xe828e64b )  /* bank 3, plane 2 */
+	ROM_LOAD( "136036.149",   0x78000, 0x08000, 0x81503a23 )  /* bank 3, plane 3 */
+
+	ROM_LOAD( "136036.138",   0x90000, 0x08000, 0x48c4d79d )  /* bank 4, plane 0 */
+	ROM_LOAD( "136036.142",   0x98000, 0x08000, 0x7faae75f )  /* bank 4, plane 1 */
+	ROM_LOAD( "136036.146",   0xa0000, 0x08000, 0x8ae5a7b5 )  /* bank 4, plane 2 */
+	ROM_LOAD( "136036.150",   0xa8000, 0x08000, 0xa10c4bd9 )  /* bank 4, plane 3 */
+ROM_END
+
+ROM_START( indytem3_rom )
 	ROM_REGION(0x88000)	/* 8.5*64k for 68000 code & slapstic ROM */
 	ROM_LOAD_EVEN( "136032.205",   0x00000, 0x04000, 0x88d0be26 )
 	ROM_LOAD_ODD ( "136032.206",   0x00000, 0x04000, 0x3c79ef05 )
@@ -934,25 +980,25 @@ ROM_START( indytem2_rom )
 	ROM_LOAD( "136036.151",   0x200, 0x200, 0x7daf351f )  /* color */
 
 	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "136036.135",   0x00000, 0x08000, 0x07593e5e )  /* bank 1, plane 0 */
-	ROM_LOAD( "136036.139",   0x08000, 0x08000, 0xbcb3b517 )  /* bank 1, plane 1 */
-	ROM_LOAD( "136036.143",   0x10000, 0x08000, 0x4ca6704c )  /* bank 1, plane 2 */
-	ROM_LOAD( "136036.147",   0x18000, 0x08000, 0x12b2673e )  /* bank 1, plane 3 */
+	ROM_LOAD( "136036.135",   0x00000, 0x08000, 0xffa8749c )  /* bank 1, plane 0 */
+	ROM_LOAD( "136036.139",   0x08000, 0x08000, 0xb682bfca )  /* bank 1, plane 1 */
+	ROM_LOAD( "136036.143",   0x10000, 0x08000, 0x7697da26 )  /* bank 1, plane 2 */
+	ROM_LOAD( "136036.147",   0x18000, 0x08000, 0x4e9d664c )  /* bank 1, plane 3 */
 
-	ROM_LOAD( "136036.136",   0x30000, 0x08000, 0xb2732404 )  /* bank 2, plane 0 */
-	ROM_LOAD( "136036.140",   0x38000, 0x08000, 0x9b00f1a2 )  /* bank 2, plane 1 */
-	ROM_LOAD( "136036.144",   0x40000, 0x08000, 0xb3d095dc )  /* bank 2, plane 2 */
-	ROM_LOAD( "136036.148",   0x48000, 0x08000, 0x3980416e )  /* bank 2, plane 3 */
+	ROM_LOAD( "136036.136",   0x30000, 0x08000, 0xb2b403aa )  /* bank 2, plane 0 */
+	ROM_LOAD( "136036.140",   0x38000, 0x08000, 0xec0c19ca )  /* bank 2, plane 1 */
+	ROM_LOAD( "136036.144",   0x40000, 0x08000, 0x4407df98 )  /* bank 2, plane 2 */
+	ROM_LOAD( "136036.148",   0x48000, 0x08000, 0x70dce06d )  /* bank 2, plane 3 */
 
-	ROM_LOAD( "136036.137",   0x60000, 0x08000, 0xd3e2b325 )  /* bank 3, plane 0 */
-	ROM_LOAD( "136036.141",   0x68000, 0x08000, 0x83166acb )  /* bank 3, plane 1 */
-	ROM_LOAD( "136036.145",   0x70000, 0x08000, 0x7897cde6 )  /* bank 3, plane 2 */
+	ROM_LOAD( "136036.137",   0x60000, 0x08000, 0x3f352547 )  /* bank 3, plane 0 */
+	ROM_LOAD( "136036.141",   0x68000, 0x08000, 0x9cbdffd0 )  /* bank 3, plane 1 */
+	ROM_LOAD( "136036.145",   0x70000, 0x08000, 0xe828e64b )  /* bank 3, plane 2 */
 	ROM_LOAD( "136036.149",   0x78000, 0x08000, 0x81503a23 )  /* bank 3, plane 3 */
 
-	ROM_LOAD( "136036.138",   0x90000, 0x08000, 0x00a2c186 )  /* bank 4, plane 0 */
+	ROM_LOAD( "136036.138",   0x90000, 0x08000, 0x48c4d79d )  /* bank 4, plane 0 */
 	ROM_LOAD( "136036.142",   0x98000, 0x08000, 0x7faae75f )  /* bank 4, plane 1 */
-	ROM_LOAD( "136036.146",   0xa0000, 0x08000, 0x96f69b50 )  /* bank 4, plane 2 */
-	ROM_LOAD( "136036.150",   0xa8000, 0x08000, 0x62a4a20e )  /* bank 4, plane 3 */
+	ROM_LOAD( "136036.146",   0xa0000, 0x08000, 0x8ae5a7b5 )  /* bank 4, plane 2 */
+	ROM_LOAD( "136036.150",   0xa8000, 0x08000, 0xa10c4bd9 )  /* bank 4, plane 3 */
 ROM_END
 
 
@@ -1220,7 +1266,6 @@ struct GameDriver indytemp_driver =
 	atarigen_hiload, atarigen_hisave
 };
 
-
 struct GameDriver indytem2_driver =
 {
 	__FILE__,
@@ -1235,6 +1280,32 @@ struct GameDriver indytem2_driver =
 	indytemp_init,
 
 	indytem2_rom,
+	rom_decode,
+	0,
+	0,
+	0,	/* sound_prom */
+
+	indytemp_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	atarigen_hiload, atarigen_hisave
+};
+
+struct GameDriver indytem3_driver =
+{
+	__FILE__,
+	&indytemp_driver,
+	"indytem3",
+	"Indiana Jones and the Temple of Doom (set 3)",
+	"1985",
+	"Atari Games",
+	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
+	0,
+	&machine_driver,
+	indytemp_init,
+
+	indytem3_rom,
 	rom_decode,
 	0,
 	0,

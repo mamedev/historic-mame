@@ -23,6 +23,12 @@ unsigned char *arkanoid_stat;
 
 FILE *thelog;
 
+void arkanoid_init_machine (void)
+{
+	fromz80 = toz80 = z80write = m68705write = 0;
+	stickybits = 0;
+}
+
 int arkanoid_Z80_mcu_r (int value)
 {
 #if MCU_DEBUG

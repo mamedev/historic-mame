@@ -1636,7 +1636,7 @@ static struct SN76496interface sn76496_interface =
 {
 	2,		/* 2 chips */
 	2000000,	/* 8 MHz / 4 ?*/
-	{ 60, 60 }
+	{ 50, 50 }
 };
 
 

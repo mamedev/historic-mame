@@ -318,7 +318,7 @@ static struct namco_interface namco_interface =
 static struct Samplesinterface samples_interface =
 {
 	1,	/* 1 channel */
-	100	/* volume */
+	80	/* volume */
 };
 
 
@@ -432,7 +432,7 @@ ROM_END
 static const char *rallyx_sample_names[] =
 {
 	"*rallyx",
-	"BANG.wav",
+	"bang.wav",
 	0	/* end of array */
 };
 

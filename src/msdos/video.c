@@ -69,6 +69,8 @@ void blitscreen_dirty1_vesa_3x_2x_8bpp(void);
 void blitscreen_dirty1_vesa_3x_2xs_8bpp(void);
 void blitscreen_dirty1_vesa_3x_3x_8bpp(void);
 void blitscreen_dirty1_vesa_3x_3xs_8bpp(void);
+void blitscreen_dirty1_vesa_4x_2x_8bpp(void);
+void blitscreen_dirty1_vesa_4x_2xs_8bpp(void);
 void blitscreen_dirty1_vesa_4x_3x_8bpp(void);
 void blitscreen_dirty1_vesa_4x_3xs_8bpp(void);
 
@@ -93,6 +95,8 @@ void blitscreen_dirty0_vesa_3x_2x_8bpp(void);
 void blitscreen_dirty0_vesa_3x_2xs_8bpp(void);
 void blitscreen_dirty0_vesa_3x_3x_8bpp(void);
 void blitscreen_dirty0_vesa_3x_3xs_8bpp(void);
+void blitscreen_dirty0_vesa_4x_2x_8bpp(void);
+void blitscreen_dirty0_vesa_4x_2xs_8bpp(void);
 void blitscreen_dirty0_vesa_4x_3x_8bpp(void);
 void blitscreen_dirty0_vesa_4x_3xs_8bpp(void);
 
@@ -105,7 +109,10 @@ void blitscreen_dirty0_vesa_2x_2xs_16bpp(void);
 static void update_screen_dummy(void);
 void (*update_screen)(void) = update_screen_dummy;
 
-static void (*updaters8[4][3][2][2])(void) =
+#define MAX_X_MULTIPLY 4
+#define MAX_Y_MULTIPLY 3
+
+static void (*updaters8[MAX_X_MULTIPLY][MAX_Y_MULTIPLY][2][2])(void) =
 {			/* 1 x 1 */
 	{	{	{ blitscreen_dirty0_vesa_1x_1x_8bpp, blitscreen_dirty1_vesa_1x_1x_8bpp },
 			{ blitscreen_dirty0_vesa_1x_1x_8bpp, blitscreen_dirty1_vesa_1x_1x_8bpp }
@@ -140,8 +147,8 @@ static void (*updaters8[4][3][2][2])(void) =
 	{	{	{ update_screen_dummy, update_screen_dummy },
 			{ update_screen_dummy, update_screen_dummy }
 		},	/* 4 x 2 */
-		{	{ update_screen_dummy, update_screen_dummy },
-			{ update_screen_dummy, update_screen_dummy }
+		{	{ blitscreen_dirty0_vesa_4x_2x_8bpp,  blitscreen_dirty1_vesa_4x_2x_8bpp },
+			{ blitscreen_dirty0_vesa_4x_2xs_8bpp, blitscreen_dirty1_vesa_4x_2xs_8bpp }
 		},	/* 4 x 3 */
 		{	{ blitscreen_dirty0_vesa_4x_3x_8bpp,  blitscreen_dirty1_vesa_4x_3x_8bpp },
 			{ blitscreen_dirty0_vesa_4x_3xs_8bpp, blitscreen_dirty1_vesa_4x_3xs_8bpp }
@@ -149,7 +156,7 @@ static void (*updaters8[4][3][2][2])(void) =
 	}
 };
 
-static void (*updaters16[4][3][2][2])(void) =
+static void (*updaters16[MAX_X_MULTIPLY][MAX_Y_MULTIPLY][2][2])(void) =
 {			/* 1 x 1 */
 	{	{	{ blitscreen_dirty0_vesa_1x_1x_16bpp, blitscreen_dirty1_vesa_1x_1x_16bpp },
 			{ blitscreen_dirty0_vesa_1x_1x_16bpp, blitscreen_dirty1_vesa_1x_1x_16bpp }
@@ -343,7 +350,7 @@ struct vga_15KHz_tweak arcade_tweaked[] = {
 
 /* Create a bitmap. Also calls osd_clearbitmap() to appropriately initialize */
 /* it to the background color. */
-/* VERY IMPORTANT: the function must allocate also a "safety area" 8 pixels wide all */
+/* VERY IMPORTANT: the function must allocate also a "safety area" 16 pixels wide all */
 /* around the bitmap. This is required because, for performance reasons, some graphic */
 /* routines don't clip at boundaries of the bitmap. */
 
@@ -368,7 +375,7 @@ struct osd_bitmap *osd_new_bitmap(int width,int height,int depth)       /* ASG 9
 		int safety;
 
 
-		if (width > 64) safety = 8;
+		if (width > 64) safety = 16;
 		else safety = 0;        /* don't create the safety area for GfxElement bitmaps */
 
 		if (depth != 8 && depth != 16) depth = 8;
@@ -652,7 +659,11 @@ static void select_display_mode(void)
 				/* leave the loop on match */
 
 if (gfx_width == 320 && gfx_height == 240 && scanlines == 0)
+{
 	use_vesa = 1;
+	gfx_width = 0;
+	gfx_height = 0;
+}
 				break;
 			}
 		}
@@ -798,25 +809,25 @@ static void adjust_display(int xmin, int ymin, int xmax, int ymax)
 
 		if (stretch)
 		{
-			if ((Machine->orientation & ORIENTATION_SWAP_XY) ||
-					(Machine->drv->video_attributes & VIDEO_DUAL_MONITOR))
+			while ((xmultiply+1) * viswidth <= gfx_width &&
+					(ymultiply+1) * visheight <= gfx_height)
 			{
-				/* maintain aspect ratio for vertical games or dual monitor games */
-				while ((xmultiply+1) * viswidth <= gfx_width &&
-						(ymultiply+1) * visheight <= gfx_height)
-				{
-					xmultiply++;
-					ymultiply++;
-				}
+				xmultiply++;
+				ymultiply++;
 			}
-			else
+
+			if (!(Machine->orientation & ORIENTATION_SWAP_XY) &&
+					!(Machine->drv->video_attributes & VIDEO_DUAL_MONITOR))
 			{
-				/* stretch the other games as much as possible */
-				xmultiply = gfx_width / viswidth;
-				ymultiply = gfx_height / visheight;
+				/* horizontal, non dual monitor games may be further stretched horizontally */
+				if ((xmultiply+1) * viswidth <= gfx_width)
+					xmultiply++;
 			}
 		}
 	}
+
+	if (xmultiply > MAX_X_MULTIPLY) xmultiply = MAX_X_MULTIPLY;
+	if (ymultiply > MAX_Y_MULTIPLY) ymultiply = MAX_Y_MULTIPLY;
 
 	gfx_display_lines = visheight;
 	gfx_display_columns = viswidth;
@@ -869,9 +880,10 @@ static void adjust_display(int xmin, int ymin, int xmax, int ymax)
 				"gfx_width = %d gfx_height = %d\n"
 				"xmin %d ymin %d xmax %d ymax %d\n"
 				"skiplines %d skipcolumns %d\n"
-				"gfx_display_lines %d gfx_display_columns %d\n",
+				"gfx_display_lines %d gfx_display_columns %d\n"
+				"xmultiply %d ymultiply %d\n",
 				gfx_width,gfx_height,
-				xmin, ymin, xmax, ymax, skiplines, skipcolumns,gfx_display_lines,gfx_display_columns);
+				xmin, ymin, xmax, ymax, skiplines, skipcolumns,gfx_display_lines,gfx_display_columns,xmultiply,ymultiply);
 
 	set_ui_visarea (skipcolumns, skiplines, skipcolumns+gfx_display_columns-1, skiplines+gfx_display_lines-1);
 }
@@ -1112,7 +1124,7 @@ int osd_set_display(int width,int height, int attributes)
 		center15KHz (reg);
 	}
 
-	if (use_vesa != 1)
+	if (use_vesa != 1 && use_tweaked == 1)
 	{
 		/* setup tweaked modes */
 		/* handle special noscanlines 256x256 57Hz tweaked mode */
@@ -2101,7 +2113,7 @@ void osd_update_video_and_audio(void)
 
 			divdr = 100 * FRAMESKIP_LEVELS;
 			fps = (Machine->drv->frames_per_second * (FRAMESKIP_LEVELS - frameskip) * speed + (divdr / 2)) / divdr;
-			sprintf(buf,"%s%2d %3d%%(%2d/%d fps)",autoframeskip?"autofskp":"fskp",frameskip,speed,fps,Machine->drv->frames_per_second);
+			sprintf(buf,"%s%2d%4d%%%4d/%d fps",autoframeskip?"auto":"fskp",frameskip,speed,fps,Machine->drv->frames_per_second);
 			ui_text(buf,Machine->uiwidth-strlen(buf)*Machine->uifontwidth,0);
 			if (vector_game)
 			{

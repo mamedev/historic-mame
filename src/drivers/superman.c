@@ -15,8 +15,8 @@ CPU 1 : 68000, uses irq 6
 0xb00000 - 0xb00fff : palette RAM, words in the format xRRRRRGGGGGBBBBB
 0xc00000 ??
 0xd00000 - 0xd007ff : video attribute RAM
-	0000 - 03ff : sprite y coordinate
-	0400 - 07ff : tile x & y scroll
+    0000 - 03ff : sprite y coordinate
+    0400 - 07ff : tile x & y scroll
 0xe00000 - 0xe00fff : object RAM
     0000 - 03ff : sprite number (bit mask 0x3fff)
                   sprite y flip (bit mask 0x4000)
@@ -156,13 +156,13 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 INPUT_PORTS_START( superman_input_ports )
 	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Test Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
@@ -180,7 +180,7 @@ INPUT_PORTS_START( superman_input_ports )
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
@@ -191,15 +191,15 @@ INPUT_PORTS_START( superman_input_ports )
 
 	PORT_START /* DSW c */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x03, "Norm")
-	PORT_DIPSETTING(    0x02, "Easy")
-	PORT_DIPSETTING(    0x01, "Hard")
-	PORT_DIPSETTING(    0x00, "Very Hard")
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x03, "Normal" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Very Hard" )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x0c, "50k 150k")
-	PORT_DIPSETTING(    0x0a, "Bonus 2??")
-	PORT_DIPSETTING(    0x08, "Bonus 3??")
-	PORT_DIPSETTING(    0x00, "Bonus 4??")
+	PORT_DIPSETTING(    0x0c, "50k and every 150k" )
+	PORT_DIPSETTING(    0x04, "Bonus 2??" )
+	PORT_DIPSETTING(    0x08, "Bonus 3??" )
+	PORT_DIPSETTING(    0x00, "Bonus 4??" )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -207,15 +207,16 @@ INPUT_PORTS_START( superman_input_ports )
 
 	PORT_START /* DSW D */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x03, "3")
-	PORT_DIPSETTING(    0x02, "2")
-	PORT_DIPSETTING(    0x01, "4")
-	PORT_DIPSETTING(    0x00, "5")
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, "1")
-	PORT_DIPSETTING(    0x04, "2")
-	PORT_DIPSETTING(    0x08, "3")
-	PORT_DIPSETTING(    0x0c, "4")
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -389,10 +390,10 @@ static void hisave(void)
 
 ROM_START( superman_rom )
 	ROM_REGION(0x80000)     /* 512k for 68000 code */
-	ROM_LOAD_EVEN  ( "a10_09.bin",   0x00000, 0x20000, 0x640f1d58 )
-	ROM_LOAD_ODD   ( "a05_07.bin",   0x00000, 0x20000, 0xfddb9953 )
-	ROM_LOAD_EVEN  ( "a08_08.bin",   0x40000, 0x20000, 0x79fc028e )
-	ROM_LOAD_ODD   ( "a03_13.bin",   0x40000, 0x20000, 0x9f446a44 )
+	ROM_LOAD_EVEN( "a10_09.bin", 0x00000, 0x20000, 0x640f1d58 )
+	ROM_LOAD_ODD ( "a05_07.bin", 0x00000, 0x20000, 0xfddb9953 )
+	ROM_LOAD_EVEN( "a08_08.bin", 0x40000, 0x20000, 0x79fc028e )
+	ROM_LOAD_ODD ( "a03_13.bin", 0x40000, 0x20000, 0x9f446a44 )
 
 	ROM_REGION_DISPOSE(0x200000)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "f01_14.bin", 0x000000, 0x80000, 0x89368c3e ) /* Plane 0, 1 */
@@ -401,8 +402,8 @@ ROM_START( superman_rom )
 	ROM_LOAD( "k01_17.bin", 0x180000, 0x80000, 0xc34f27e0 )
 
 	ROM_REGION(0x1c000)     /* 64k for Z80 code */
-	ROM_LOAD( "d18_10.bin", 0x00000, 0x04000, 0x6efe79e8 )
-	ROM_CONTINUE(			0x10000, 0x0c000 ) /* banked stuff */
+	ROM_LOAD( "d18_10.bin", 0x00000, 0x4000, 0x6efe79e8 )
+	ROM_CONTINUE(           0x10000, 0xc000 ) /* banked stuff */
 
 	ROM_REGION(0x80000)     /* adpcm samples */
 	ROM_LOAD( "e18_01.bin", 0x00000, 0x80000, 0x3cf99786 )

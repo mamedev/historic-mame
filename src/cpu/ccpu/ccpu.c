@@ -251,7 +251,7 @@ const char *ccpu_info(void *context, int regnum)
         case CPU_INFO_REG+CCPU_CSTATE: sprintf(buffer[which], "S:%X", r->eCState); break;
 		case CPU_INFO_REG+CCPU_A: sprintf(buffer[which], "A:%03X", r->eRegA); break;
 		case CPU_INFO_REG+CCPU_B: sprintf(buffer[which], "B:%03X", r->eRegB); break;
-		case CPU_INFO_REG+CCPU_I: sprintf(buffer[which], "I:%03X", r->eRegI << 1); break;
+		case CPU_INFO_REG+CCPU_I: sprintf(buffer[which], "I:%03X", r->eRegI); break;
         case CPU_INFO_REG+CCPU_P: sprintf(buffer[which], "P:%X", r->eRegP); break;
 		case CPU_INFO_REG+CCPU_J: sprintf(buffer[which], "J:%03X", r->eRegJ); break;
 		case CPU_INFO_REG+CCPU_ACC: sprintf(buffer[which], "ACC:%03X", r->accVal); break;
@@ -453,7 +453,7 @@ void ccpu_SetInputs(int inputs, int switches)
  * Use 0xF000 so as to keep the current page, since it may well
  * have been changed with JPP.
  */
-#define JMP() register_PC = (register_PC & 0xF000) + register_J
+#define JMP() register_PC = ((register_PC - 1) & 0xF000) + register_J; ccpu_ICount -= 2
 
 /* Declare needed macros */
 #ifdef macintosh
@@ -475,7 +475,6 @@ void ccpu_SetInputs(int inputs, int switches)
 #define SETFC(val)    (flag_C = val)
 #define GETFC()       ((flag_C >> 8) & 0xFF)
 
-static int elapsedTicks = 0;
 static int bailOut = FALSE;
 
 /* C-CPU context information begins --  */
@@ -498,6 +497,7 @@ static CINEWORD cmp_new = 0;     /* new accumulator value */
 static CINEBYTE acc_a0 = 0;      /* bit0 of A-reg at last accumulator access */
 
 static CINESTATE state = state_A;/* C-CPU state machine current state */
+
 static CINEWORD  ram[256];       /* C-CPU ram (for all pages) */
 
 static int ccpu_jmi_dip = 0;     /* as set by cineSetJMI */
@@ -554,8 +554,8 @@ CINELONG cineExec (CINELONG cycles)
 
 		opcode = CCPU_FETCH (register_PC++);
 		state = (*cineops[state][opcode]) (opcode);
+        ccpu_ICount -= ccpu_cycles[opcode];
 
-        ccpu_ICount --;
 
 		/*
 		 * the opcode code has set a state and done mischief with flags and
@@ -563,7 +563,7 @@ CINELONG cineExec (CINELONG cycles)
 		 * opcode.
 		 */
 		if (bailOut)
-//			ccpu_ICount = 0;
+/*			ccpu_ICount = 0; */
 			ccpu_ICount -= 100;
 	}
 	while (ccpu_ICount > 0);
@@ -620,12 +620,10 @@ CINESTATE opINP_B_AA (int opcode)
 
 CINESTATE opOUTsnd_A (int opcode)
 {
-	CINEBYTE temp_byte = 0x01 << (opcode & 0x07);
-
 	if (!(register_A & 0x01))
-		CCPU_WRITEPORT (CCPU_PORT_IOOUTPUTS, CCPU_READPORT (CCPU_PORT_IOOUTPUTS) | temp_byte);
+		CCPU_WRITEPORT (CCPU_PORT_IOOUTPUTS, CCPU_READPORT (CCPU_PORT_IOOUTPUTS) | (0x01 << (opcode & 0x07)));
 	else
-		CCPU_WRITEPORT (CCPU_PORT_IOOUTPUTS, CCPU_READPORT (CCPU_PORT_IOOUTPUTS) & ~temp_byte);
+		CCPU_WRITEPORT (CCPU_PORT_IOOUTPUTS, CCPU_READPORT (CCPU_PORT_IOOUTPUTS) & ~(0x01 << (opcode & 0x07)));
 
 	if ((opcode & 0x07) == 0x05)
 	{
@@ -637,24 +635,20 @@ CINESTATE opOUTsnd_A (int opcode)
 
 CINESTATE opOUTbi_A_A (int opcode)
 {
-	CINEBYTE temp_byte = opcode & 0x07;
-
-	if (temp_byte - 0x06)
+	if ((opcode & 0x07) != 6)
 		return opOUTsnd_A (opcode);
 
-	vgColour = ((register_A & 0x01) << 3) | 0x07;
+	vgColour = register_A & 0x01 ? 0x0f: 0x07;
 
 	return state_A;
 }
 
 CINESTATE opOUT16_A_A (int opcode)
 {
-	CINEBYTE temp_byte = opcode & 0x07;
-
-	if (temp_byte - 0x06)
+	if ((opcode & 0x07) != 6)
 		return opOUTsnd_A (opcode);
 
-	if ((register_A & 0xFF) != 1)
+	if ((register_A & 0x1) != 1)
 	{
 		vgColour = FromX & 0x0F;
 
@@ -672,52 +666,22 @@ CINESTATE opOUT64_A_A (int opcode)
 
 CINESTATE opOUTWW_A_A (int opcode)
 {
-	CINEBYTE temp_byte = opcode & 0x07;
-
-	if (temp_byte - 0x06)
+	if ((opcode & 0x07) != 6)
 		return opOUTsnd_A (opcode);
 
-	if ((register_A & 0xFF) == 1)
+	if ((register_A & 0x1) == 1)
 	{
-		CINEWORD temp_word = ~FromX & 0x0FFF, temp_word_2;
-
+		CINEWORD temp_word = ~FromX & 0x0FFF;
 		if (!temp_word)   /* black */
 			vgColour = 0;
 		else
-		{              /* non-black */
+		{   /* non-black */
 			if (temp_word & 0x0888)
-			{
 				/* bright */
-
-				temp_word_2 = ((temp_word << 4) & 0x8000) >> 15;
-				temp_byte = (temp_byte << 1) + temp_word_2;
-
-				temp_word_2 = ((temp_word << 3) & 0x8000) >> 15;
-				temp_byte = (temp_byte << 1) + temp_word_2;
-
-				temp_word_2 = ((temp_word << 3) & 0x8000) >> 15;
-				temp_byte = (temp_byte << 1) + temp_word_2;
-
-				vgColour = (temp_byte & 0x07) + 7;
-			}
+				vgColour = ((temp_word >> 1) & 0x04) | ((temp_word >> 6) & 0x02) | ((temp_word >> 11) & 0x01) | 0x08;
 			else if (temp_word & 0x0444)
-			{
 				/* dim bits */
-
-				temp_word_2 = ((temp_word << 5) & 0x8000) >> 15;
-				temp_byte = (temp_byte << 1) + temp_word_2;
-
-				temp_word_2 = ((temp_word << 3) & 0x8000) >> 15;
-				temp_byte = (temp_byte << 1) + temp_word_2;
-
-				temp_word_2 = ((temp_word << 3) & 0x8000) >> 15;
-				temp_byte = (temp_byte << 1) + temp_word_2;
-
-				vgColour = (temp_byte & 0x07);
-			}
-			else
-				/* dim white */
-				vgColour = 0x0F;
+				vgColour = (temp_word & 0x04) | ((temp_word >> 5) & 0x02) | ((temp_word >> 10) & 0x01);
 		}
 	} /* colour change? == 1 */
 
@@ -1322,7 +1286,7 @@ CINESTATE opXLT_A_AA (int opcode)
 	 * 		NOTE! Next opcode is *IGNORED!* because of a twisted side-effect
 	 */
 
-	cmp_new = CCPU_FETCH ((register_PC & 0xF000) + register_A);   /* store new acc value */
+	cmp_new = CCPU_FETCH (((register_PC - 1) & 0xF000) + register_A);   /* store new acc value */
 	SETA0 (register_A);           /* store bit0 */
 	SETFC (register_A);
 	cmp_old = register_A;           /* back up acc */
@@ -1335,7 +1299,7 @@ CINESTATE opXLT_A_AA (int opcode)
 
 CINESTATE opXLT_B_AA (int opcode)
 {
-	cmp_new = CCPU_FETCH ((register_PC & 0xF000) + register_B);   /* store new acc value */
+	cmp_new = CCPU_FETCH (((register_PC - 1) & 0xF000) + register_B);   /* store new acc value */
 	SETA0 (register_A);           /* store bit0 */
 	SETFC (register_A);
 	cmp_old = register_B;           /* back up acc */
@@ -1705,14 +1669,16 @@ CINESTATE opJMP_B_BB (int opcode)
 
 CINESTATE opJEI_A_A (int opcode)
 {
+	if (FromX & 0x800)
+		FromX |= 0xF000;
 	if (!(CCPU_READPORT (CCPU_PORT_IOOUTPUTS) & 0x80))
 	{
-		if ((FromX - CCPU_READPORT (CCPU_PORT_IN_JOYSTICKY)) > 0)
+		if ((CCPU_READPORT (CCPU_PORT_IN_JOYSTICKY) - (CINESWORD)FromX) < 0x800)
 			JMP();
 	}
 	else
 	{
-		if ((FromX - CCPU_READPORT (CCPU_PORT_IN_JOYSTICKX)) > 0)
+		if ((CCPU_READPORT (CCPU_PORT_IN_JOYSTICKX) - (CINESWORD)FromX) < 0x800)
 			JMP();
 	}
 
@@ -1721,14 +1687,16 @@ CINESTATE opJEI_A_A (int opcode)
 
 CINESTATE opJEI_B_BB (int opcode)
 {
+	if (FromX & 0x800)
+		FromX |= 0xF000;
 	if (!(CCPU_READPORT (CCPU_PORT_IOOUTPUTS) & 0x80))
 	{
-		if ((FromX - CCPU_READPORT (CCPU_PORT_IN_JOYSTICKY)) > 0)
+		if ((CCPU_READPORT (CCPU_PORT_IN_JOYSTICKY) - (CINESWORD)FromX) < 0x800)
 			JMP();
 	}
 	else
 	{
-		if ((FromX - CCPU_READPORT (CCPU_PORT_IN_JOYSTICKX)) > 0)
+		if ((CCPU_READPORT (CCPU_PORT_IN_JOYSTICKX) - (CINESWORD)FromX) < 0x800)
 			JMP();
 	}
 
@@ -1737,14 +1705,16 @@ CINESTATE opJEI_B_BB (int opcode)
 
 CINESTATE opJEI_A_B (int opcode)
 {
+	if (FromX & 0x800)
+		FromX |= 0xF000;
 	if (!(CCPU_READPORT (CCPU_PORT_IOOUTPUTS) & 0x80))
 	{
-		if ((FromX - CCPU_READPORT (CCPU_PORT_IN_JOYSTICKY)) > 0)
+		if ((CCPU_READPORT (CCPU_PORT_IN_JOYSTICKY) - (CINESWORD)FromX) < 0x800)
 			JMP();
 	}
 	else
 	{
-		if ((FromX - CCPU_READPORT (CCPU_PORT_IN_JOYSTICKX)) > 0)
+		if ((CCPU_READPORT (CCPU_PORT_IN_JOYSTICKX) - (CINESWORD)FromX) < 0x800)
 			JMP();
 	}
 
@@ -2232,7 +2202,7 @@ CINESTATE tJMI_A_B (int opcode)
 
 CINESTATE tJMI_A_A (int opcode)
 {
-	return (ccpu_jmi_dip) ? opJMI_A_A (opcode) : opJEI_AA_B (opcode);
+	return (ccpu_jmi_dip) ? opJMI_A_A (opcode) : opJEI_A_A (opcode);
 }
 
 CINESTATE tJMI_AA_B (int opcode)
@@ -2272,9 +2242,9 @@ CINESTATE tOUT_A_A (int opcode)
 {
 	switch (ccpu_monitor)
 	{
-		case CCPU_MONITOR_16COL:
+		case CCPU_MONITOR_16LEV:
 			return opOUT16_A_A (opcode);
-		case CCPU_MONITOR_64COL:
+		case CCPU_MONITOR_64LEV:
 			return opOUT64_A_A (opcode);
 		case CCPU_MONITOR_WOWCOL:
 			return opOUTWW_A_A (opcode);
@@ -2287,9 +2257,9 @@ CINESTATE tOUT_B_BB (int opcode)
 {
 	switch (ccpu_monitor)
 	{
-		case CCPU_MONITOR_16COL:
+		case CCPU_MONITOR_16LEV:
 			return opOUT16_B_BB (opcode);
-		case CCPU_MONITOR_64COL:
+		case CCPU_MONITOR_64LEV:
 			return opOUT64_B_BB (opcode);
 		case CCPU_MONITOR_WOWCOL:
 			return opOUTWW_B_BB (opcode);
@@ -2415,20 +2385,3 @@ void cGetContext(CONTEXTCCPU *c)
 	c -> eRegP = register_P;
 	c -> eCState = state;
 }
-
-CINELONG cineGetElapsedTicks (int clear)
-{
-	CINELONG temp;
-
-	temp = elapsedTicks;
-	if (clear)
-		elapsedTicks = 0;
-
-	return temp;
-}
-
-void cineReleaseTimeslice (void)
-{
-	bailOut = TRUE;
-}
-

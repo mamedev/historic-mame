@@ -123,7 +123,7 @@ typedef CINESTATE (*opcode_func)(int);
 #define opVDR_AA_A opVDR_A_A
 #define opVDR_BB_A opVDR_A_A
 #define tOUT_AA_A tOUT_A_A
-#define tOUT_BB_A tOUT_A_A
+#define tOUT_BB_A tOUT_B_BB
 #define tJMI_B_BB2 tJMI_B_BB1
 #define tJPP_AA_B tJPP_A_B
 #define tJPP_BB_B tJPP_A_B
@@ -237,6 +237,28 @@ static CINESTATE tOUT_A_A (int opcode);
 static CINESTATE tOUT_B_BB (int opcode);
 
 
+
+/* Opcode cycle counts according to Zonn's cineinst.txt */
+static UINT8 ccpu_cycles[] =
+{
+	/*    0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F */
+  /*0*/	  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, /* LDA */
+  /*1*/	  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, /* INP */
+  /*2*/	  3,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, /* ADD */
+  /*3*/	  3,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, /* SUB */
+  /*4*/	  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3, /* LDJ */
+  /*5*/	  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2, /* Jumps: 2 extra cycles if jump made */
+  /*6*/	  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3, /* ADD */
+  /*7*/	  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3, /* SUB */
+  /*8*/	  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, /* LDP */
+  /*9*/	  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, /* OUT */
+  /*A*/	  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3, /* LDA */
+  /*B*/	  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3, /* CMP */
+  /*C*/	  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3, /* LDI */
+  /*D*/	  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2, /* STA */
+  /*E*/	  1,  2,  7,  2,  0,  0,  2,  2,  2,  2,  2,  1,  1,  1,  1,  1, /* LTT and WAI have special timing */
+  /*F*/	  1,  2,  7,  2,  0,  0,  2,  2,  2,  2,  2,  1,  1,  1,  1,  1  /* same as E */
+};
 
 /* the main opcode table */
 static opcode_func cineops[4][256] =

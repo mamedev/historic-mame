@@ -417,7 +417,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	7159160/2,
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(48,MIXER_PAN_LEFT,48,MIXER_PAN_RIGHT) },
 	{ 0 }
 };
 
@@ -426,7 +426,7 @@ static struct POKEYinterface pokey_interface =
 {
 	1,			/* 1 chip */
 	7159160/4,
-	{ 40 },
+	{ 32 },
 	POKEY_DEFAULT_GAIN,
 	NO_CLIP
 };
@@ -435,7 +435,7 @@ static struct POKEYinterface pokey_interface =
 static struct TMS5220interface tms5220_interface =
 {
 	640000,     /* clock speed (80*samplerate) */
-	100,        /* volume */
+	80,         /* volume */
 	0           /* irq handler */
 };
 
@@ -803,7 +803,7 @@ void gauntlet_init(void)
 	install_mem_read_handler(0, 0x904002, 0x904003, gauntlet_68010_speedup_r);
 
 	/* display messages */
-	atarigen_show_slapstic_message();
+/*	atarigen_show_slapstic_message(); -- no known slapstic problems */
 	atarigen_show_sound_message();
 }
 
@@ -822,7 +822,7 @@ void gaunt2p_init(void)
 	install_mem_read_handler(0, 0x904002, 0x904003, gauntlet_68010_speedup_r);
 
 	/* display messages */
-	atarigen_show_slapstic_message();
+/*	atarigen_show_slapstic_message(); -- no known slapstic problems */
 	atarigen_show_sound_message();
 }
 
@@ -841,7 +841,7 @@ void gauntlet2_init(void)
 	install_mem_read_handler(0, 0x904002, 0x904003, gauntlet_68010_speedup_r);
 
 	/* display messages */
-	atarigen_show_slapstic_message();
+/*	atarigen_show_slapstic_message(); -- no known slapstic problems */
 	atarigen_show_sound_message();
 }
 

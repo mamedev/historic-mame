@@ -103,7 +103,11 @@ char ipdn_defaultstrings[][MAX_DEFSTR_LEN] =
 
 struct ipd inputport_defaults[] =
 {
+#ifdef macintosh
+	{ IPT_UI_PAUSE, "Pause", OSD_KEY_ESC, 0 },
+#else
 	{ IPT_UI_PAUSE, "Pause", OSD_KEY_P, 0 },
+#endif
 
 	{ IPT_COIN1,  "Coin A",          OSD_KEY_3, 0 },
 	{ IPT_COIN2,  "Coin B",          OSD_KEY_4, 0 },
@@ -1117,15 +1121,6 @@ void update_analog_port(int port)
 	}
 
 	input_analog_current_value[port]=current;
-
-	if (playback)
-		readword(playback,&input_port_value[port]);
-	else if (record)
-		writeword(record,input_port_value[port]);
-#ifdef MAME_NET
-	if ( net_active() && (default_player != NET_SPECTATOR) )
-		net_analog_sync((unsigned char *) input_port_value, port, analog_player_port, default_player);
-#endif /* MAME_NET */
 }
 
 void scale_analog_port(int port)
@@ -1142,6 +1137,15 @@ void scale_analog_port(int port)
 
 	input_port_value[port] &= ~in->mask;
 	input_port_value[port] |= (current * sensitivity / 100) & in->mask;
+
+	if (playback)
+		readword(playback,&input_port_value[port]);
+	if (record)
+		writeword(record,input_port_value[port]);
+#ifdef MAME_NET
+	if ( net_active() && (default_player != NET_SPECTATOR) )
+		net_analog_sync((unsigned char *) input_port_value, port, analog_player_port, default_player);
+#endif /* MAME_NET */
 }
 
 
@@ -1445,7 +1449,7 @@ if (errorlog && IP_GET_IMPULSE(in) == 0)
 		for (i = 0; i < MAX_INPUT_PORTS; i ++)
 			readword(playback,&input_port_value[i]);
 	}
-	else if (record)
+	if (record)
 	{
 		int i;
 

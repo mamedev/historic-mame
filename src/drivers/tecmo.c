@@ -649,25 +649,28 @@ static struct GfxDecodeInfo rygar_gfxdecodeinfo[] =
 static struct YM3526interface rygar_ym3812_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3600000,	/* 3.6 MHz ? (hand tuned) */
+	4000000,	/* 4 MHz ? */
 	{ 255 }		/* (not supported) */
 };
 
 static struct YM3526interface ym3812_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3600000,	/* 3.6 MHz ? (hand tuned) */
+	4000000,	/* 4 MHz ? */
 	{ 255 }		/* (not supported) */
 };
 
+/* ADPCM chip is a MSM5205 @ 400kHz */
 static struct ADPCMinterface adpcm_interface =
 {
 	1,			/* 1 channel */
-	8000,       /* 8000Hz playback */
+	8333,       /* 8000Hz playback */
 	3,			/* memory region 3 */
 	0,			/* init function */
 	{ 255 }
 };
+
+
 
 static struct MachineDriver silkworm_machine_driver =
 {
@@ -1198,7 +1201,7 @@ struct GameDriver rygarj_driver =
 	__FILE__,
 	&rygar_driver,
 	"rygarj",
-	"Rygar (Japan)",
+	"Argus no Senshi (Japan)",
 	"1986",
 	"Tecmo",
 	"Nicola Salmoria\nErnesto Corvi (ADPCM sound)",

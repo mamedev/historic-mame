@@ -327,18 +327,11 @@ static const unsigned char *neogeo_palette(void)
 
 			/* Get new zoom for this column */
 			zx = (t3 >> 8) & 0x0f;
-if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))		 // Gururin Bodge fix
-	zx=0xf;
 			sy = oy;
 		} else {	/* nope it is a new block */
 			/* Sprite scaling */
 			zx = (t3 >> 8) & 0x0f;
 			rzy = t3 & 0xff;
-if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))			// Gururin Bodge fix
-{
-	zx=0xf;
-	rzy=0xff;
-}
 
 			sx = (t2 >> 7);
 			if ( sx >= 0x1F0 )
@@ -351,7 +344,7 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))			// Gururin Bodge fix
 												/* Alpha Mission II uses 0x3f */
 			else fullmode = 0;
 
-			sy = 0x1F0 - (t1 >> 7);
+			sy = 0x200 - (t1 >> 7);
 			if (sy > 0x100) sy -= 0x200;
 			if (fullmode == 2 || (fullmode == 1 && rzy == 0xff))
 			{
@@ -361,6 +354,7 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))			// Gururin Bodge fix
 
 		  	if(my==0x21) my=0x20;
 			else if(rzy!=0xff && my!=0)
+			/* TODO: this is most likely wrong */
 				my=((my*16*256)/(rzy+1) + 15)/16;
 
 			if(my>0x20) my=0x20;
@@ -384,7 +378,7 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))			// Gururin Bodge fix
 		}
 		else rzx=16;
 
-		if(sx>311) continue;
+		if(sx>=320) continue;
 
 		/* Setup y zoom */
 		if(rzy==255)
@@ -410,7 +404,7 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))			// Gururin Bodge fix
 
 			if (fullmode == 2 || (fullmode == 1 && rzy == 0xff))
 			{
-				if (sy >= 224) sy -= 2 * (rzy + 1);
+				if (sy >= 256) sy -= 2 * (rzy + 1);
 			}
 			else if (fullmode == 1)
 			{
@@ -431,7 +425,7 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))			// Gururin Bodge fix
 
 			if ( (tileatr>>8) != 0) // crap below zoomed sprite in nam1975 fix??
 									// it breaks OverTop radar so it can't be right
-			if (sy<224)
+			if (sy<256)
 			{
 				tileatr=tileatr>>8;
 				tileno %= no_of_tiles;
@@ -529,6 +523,15 @@ void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx, /* AJP */
 
 	char *l_y_skip;
 
+
+	/* Mish/AJP - Most clipping is done in main loop */
+	oy = sy;
+  	ey = sy + zy -1; 	/* Clip for size of zoomed object */
+
+	if (sy < clip->min_y) sy = clip->min_y;
+	if (ey >= clip->max_y) ey = clip->max_y;
+	if (sx <= -16) return;
+
 	/* Safety feature */
 	code=code%no_of_tiles;
 
@@ -543,15 +546,6 @@ void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx, /* AJP */
 		 l_y_skip=full_y_skip;
 	else
 		 l_y_skip=dda_y_skip;
-
-
-	/* Mish/AJP - Most clipping is done in main loop */
-	oy=sy;
-  	ey = sy + zy -1; 	/* Clip for size of zoomed object */
-
-	if (sx <= -8) return;
-	if (sy < clip->min_y) sy = clip->min_y;
-	if (ey >= clip->max_y) ey = clip->max_y;
 
 	if (flipy)	/* Y flip */
 	{
@@ -714,6 +708,15 @@ void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx, /* AJP *
 
 	char *l_y_skip;
 
+
+	/* Mish/AJP - Most clipping is done in main loop */
+	oy = sy;
+  	ey = sy + zy -1; 	/* Clip for size of zoomed object */
+
+	if (sy < clip->min_y) sy = clip->min_y;
+	if (ey >= clip->max_y) ey = clip->max_y;
+	if (sx <= -16) return;
+
 	/* Safety feature */
 	code=code%no_of_tiles;
 
@@ -728,15 +731,6 @@ void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx, /* AJP *
 		 l_y_skip=full_y_skip;
 	else
 		 l_y_skip=dda_y_skip;
-
-
-	/* Mish/AJP - Most clipping is done in main loop */
-	oy=sy;
-  	ey = sy + zy -1; 	/* Clip for size of zoomed object */
-
-	if (sx <= -8) return;
-	if (sy < clip->min_y) sy = clip->min_y;
-	if (ey >= clip->max_y) ey = clip->max_y;
 
 	if (flipy)	/* Y flip */
 	{
@@ -960,18 +954,11 @@ if (!dotiles) { 					/* debug */
 
 			/* Get new zoom for this column */
 			zx = (t3 >> 8) & 0x0f;
-if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))		 // Gururin Bodge fix
-	zx=0xf;
 			sy = oy;
 		} else {	/* nope it is a new block */
 			/* Sprite scaling */
 			zx = (t3 >> 8) & 0x0f;
 			rzy = t3 & 0xff;
-if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))		 // Gururin Bodge fix
-{
-	zx=0xf;
-	rzy=0xff;
-}
 
 			sx = (t2 >> 7);
 			if ( sx >= 0x1F0 )
@@ -984,7 +971,7 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))		 // Gururin Bodge fix
 												/* Alpha Mission II uses 0x3f */
 			else fullmode = 0;
 
-			sy = 0x1F0 - (t1 >> 7);
+			sy = 0x200 - (t1 >> 7);
 			if (sy > 0x100) sy -= 0x200;
 			if (fullmode == 2 || (fullmode == 1 && rzy == 0xff))
 			{
@@ -994,6 +981,7 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))		 // Gururin Bodge fix
 
 		  	if(my==0x21) my=0x20;
 			else if(rzy!=0xff && my!=0)
+			/* TODO: this is most likely wrong */
 				my=((my*16*256)/(rzy+1) + 15)/16;
 
 			if(my>0x20) my=0x20;
@@ -1019,7 +1007,7 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))		 // Gururin Bodge fix
 		}
 		else rzx=16;
 
-		if(sx>311) continue;
+		if(sx>=320) continue;
 
 		/* Setup y zoom */
 		if(rzy==255)
@@ -1045,7 +1033,7 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))		 // Gururin Bodge fix
 
 			if (fullmode == 2 || (fullmode == 1 && rzy == 0xff))
 			{
-				if (sy >= 224) sy -= 2 * (rzy + 1);
+				if (sy >= 256) sy -= 2 * (rzy + 1);
 			}
 			else if (fullmode == 1)
 			{
@@ -1073,7 +1061,7 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))		 // Gururin Bodge fix
 
 			if ( (tileatr>>8) != 0) // crap below zoomed sprite in nam1975 fix??
 									// it breaks OverTop radar so it can't be right
-			if (sy<224)
+			if (sy+15 >= clip->min_y && sy <= clip->max_y)
 			{
 				if (Machine->scrbitmap->depth == 16)
 					NeoMVSDrawGfx16(line,
@@ -1106,8 +1094,8 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))		 // Gururin Bodge fix
 	pen_usage=gfx->pen_usage;
 
 	/* Character foreground */
- 	for (y=2;y<30;y++) {
- 		for (x=1;x<39;x++) {
+ 	for (y=0;y<32;y++) {
+ 		for (x=0;x<40;x++) {
 
   			int byte1 = (READ_WORD( &vidram[0xE000 + 2*y + x*64] ));
   			int byte2 = byte1 >> 12;
@@ -1120,7 +1108,7 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))		 // Gururin Bodge fix
   				byte1,
   				byte2,
   				0,0,
-  				x*8,(y-2)*8,
+  				x*8,y*8,
   				clip,
   				TRANSPARENCY_PEN,
   				0);
@@ -1149,7 +1137,7 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))		 // Gururin Bodge fix
 					tileno,
 					tileatr >> 8,
 					tileatr & 0x01,tileatr & 0x02,
-					x*16,(y-screen_yoffs)*16,16,16,
+					x*16,(y-screen_yoffs+1)*16,16,16,
 					&Machine->drv->visible_area
 				 );
 
@@ -1210,7 +1198,7 @@ for (i = 0;i < 8;i+=2)
 	sprintf(mybuf,"%04X",READ_WORD(&vidram[0x10002]));
 	for (j = 0;j < 4;j++)
 		drawgfx(mybitmap,Machine->uifont,mybuf[j],DT_COLOR_WHITE,0,0,8*j+4*8,8*7,0,TRANSPARENCY_NONE,0);
-	sprintf(mybuf,"%04X",0x1f0-(READ_WORD(&vidram[0x10402])>>7));
+	sprintf(mybuf,"%04X",0x200-(READ_WORD(&vidram[0x10402])>>7));
 	for (j = 0;j < 4;j++)
 		drawgfx(mybitmap,Machine->uifont,mybuf[j],DT_COLOR_WHITE,0,0,8*j+10*8,8*7,0,TRANSPARENCY_NONE,0);
 	sprintf(mybuf,"%04X",READ_WORD(&vidram[0x10802])>> 7);
@@ -1241,6 +1229,9 @@ void neogeo_vh_raster_partial_refresh(struct osd_bitmap *bitmap,int current_line
 {
 	struct rectangle clip;
 
+	if (current_line < next_update_first_line)
+		next_update_first_line = 0;
+
 	clip.min_x = Machine->drv->visible_area.min_x;
 	clip.max_x = Machine->drv->visible_area.max_x;
 	clip.min_y = next_update_first_line;
@@ -1261,22 +1252,4 @@ if (errorlog) fprintf(errorlog,"refresh %d-%d\n",clip.min_y,clip.max_y);
 
 void neogeo_vh_raster_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	struct rectangle clip;
-
-	clip.min_x = Machine->drv->visible_area.min_x;
-	clip.max_x = Machine->drv->visible_area.max_x;
-	clip.min_y = next_update_first_line;
-	clip.max_y = Machine->drv->visible_area.max_y;
-	if (clip.min_y < Machine->drv->visible_area.min_y)
-		clip.min_y = Machine->drv->visible_area.min_y;
-	if (clip.max_y > Machine->drv->visible_area.max_y)
-		clip.max_y = Machine->drv->visible_area.max_y;
-
-	if (clip.max_y >= clip.min_y)
-	{
-if (errorlog) fprintf(errorlog,"REFRESH %d-%d\n",clip.min_y,clip.max_y);
-		screenrefresh(bitmap,&clip);
-	}
-
-	next_update_first_line = 0;
 }

@@ -158,6 +158,8 @@ void z80ctc_reset (int which)
 	{
 		ctc->mode[i] = RESET_ACTIVE;
 		ctc->tconst[i] = 0x100;
+		if (ctc->timer[i])
+			timer_remove (ctc->timer[i]);
 		ctc->timer[i] = NULL;
 		ctc->int_state[i] = 0;
 	}

@@ -37,7 +37,6 @@ write:
     bit 7   = ?
 05  horizontal scroll ??
 
-
 Credits:
 - Tatsuyuki Satoh: MAME driver
 
@@ -243,7 +242,7 @@ static struct MSM5205interface msm5205_interface =
 	384000,				/* 384KHz             */
 	{ appoooh_adpcm_int },/* interrupt function */
 	{ MSM5205_S64_4B },	/* 6KHz               */
-	{ 100 }
+	{ 50 }
 };
 
 
@@ -265,7 +264,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 1*8, 29*8-1 },
 	gfxdecodeinfo,
 	32, 32*8+32*8, /* total colors,color_table_len */
 	appoooh_vh_convert_color_prom,

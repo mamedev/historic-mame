@@ -468,12 +468,11 @@ INPUT_PORTS_START( dangarb_input_ports )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x00, "6" )
-	PORT_DIPNAME( 0x04, 0x04, "First Bonus" )
-	PORT_DIPSETTING(    0x04, "20000" )
-	PORT_DIPSETTING(    0x00, "50000" )
-	PORT_DIPNAME( 0x08, 0x08, "Second Bonus" )
-	PORT_DIPSETTING(    0x08, "60000 after first" )
-	PORT_DIPSETTING(    0x00, "90000 after first" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x0c, "20000 and every 60000" )
+	PORT_DIPSETTING(    0x04, "20000 and every 90000" )
+	PORT_DIPSETTING(    0x08, "50000 and every 60000" )
+	PORT_DIPSETTING(    0x00, "50000 and every 90000" )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
@@ -831,7 +830,42 @@ static void galivan_hisave(void)
 	}
 }
 
+/****  Ufo Robo Dangar high score save routine - RJF (June 19, 1999)  ****/
+static int dangar_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
+	/* check if the hi score table has already been initialized */
+        if (memcmp(&RAM[0xe209], "\x00\x01\x50", 3) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+                        osd_fread(f,&RAM[0xe209], 10*13);        /* HS table */
+
+                        RAM[0xe394] = RAM[0xe27e];      /* update high score */
+                        RAM[0xe395] = RAM[0xe27f];      /* on top of screen */
+                        RAM[0xe396] = RAM[0xe280];
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void dangar_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f, &RAM[0xe209], 10*13);
+		osd_fclose(f);
+	}
+}
 
 struct GameDriver galivan_driver =
 {
@@ -908,7 +942,7 @@ struct GameDriver dangar_driver =
 	PROM_MEMORY_REGION(3), 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	0, 0
+        dangar_hiload, dangar_hisave
 };
 
 struct GameDriver dangar2_driver =
@@ -934,7 +968,7 @@ struct GameDriver dangar2_driver =
 	PROM_MEMORY_REGION(3), 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	0, 0
+        dangar_hiload, dangar_hisave
 };
 
 struct GameDriver dangarb_driver =
@@ -960,5 +994,5 @@ struct GameDriver dangarb_driver =
 	PROM_MEMORY_REGION(3), 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	0, 0
+        dangar_hiload, dangar_hisave
 };

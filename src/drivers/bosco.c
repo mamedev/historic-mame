@@ -614,9 +614,9 @@ ROM_END
 static const char *bosco_sample_names[] =
 {
 	"*bosco",
-	"MIDBANG.wav",
-	"BIGBANG.wav",
-	"SHOT.wav",
+	"midbang.wav",
+	"bigbang.wav",
+	"shot.wav",
 	0	/* end of array */
 };
 

@@ -154,11 +154,11 @@ static int snk_read_joy( int which ){
 	int result = readinputport(which+1);
 
 	if( dial_type==DIAL_BOOTLEG ){
-		static int dial_8[8]   = { 0xF0,0x30,0x10,0x50,0x40,0xC0,0x80,0xA0 };
+		static int dial_8[8]   = { 0xf0,0x30,0x10,0x50,0x40,0xc0,0x80,0xa0 };
 		result |= dial_8[readinputport(which+7) * 8 / 256];
 	}
 	else if( dial_type==DIAL_NORMAL ){
-		static int dial_12[12] = { 0xB0,0xA0,0x90,0x80,0x70,0x60,0x50,0x40,0x30,0x20,0x10,0x00 };
+		static int dial_12[12] = { 0xb0,0xa0,0x90,0x80,0x70,0x60,0x50,0x40,0x30,0x20,0x10,0x00 };
 		result |= dial_12[readinputport(which+7) * 12 / 256];
 	}
 
@@ -565,7 +565,7 @@ PORT_START \
 
 INPUT_PORTS_START( ikarius_input_ports )
 PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN ) 	/* sound related ??? */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* sound related ??? */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -579,14 +579,14 @@ BUTTONS
 
 PORT_START /* DSW 1 */
 	PORT_DIPNAME( 0x01, 0x01, "Allow killing each other" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, "Bonus Occurance" )
 	PORT_DIPSETTING(    0x04, "1st & every 2nd" )
-	PORT_DIPSETTING(    0x00, "Only" )
+	PORT_DIPSETTING(    0x00, "1st & 2nd only" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
@@ -612,8 +612,11 @@ PORT_START /* DSW 2 */
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+
+PORT_START
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 ROTARY
 
@@ -637,14 +640,14 @@ BUTTONS
 
 PORT_START /* DSW 1 */
 	PORT_DIPNAME( 0x01, 0x01, "Allow killing each other" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, "Bonus Occurance" )
 	PORT_DIPSETTING(    0x04, "1st & every 2nd" )
-	PORT_DIPSETTING(    0x00, "Only" )
+	PORT_DIPSETTING(    0x00, "1st & 2nd only" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
@@ -672,6 +675,9 @@ PORT_START /* DSW 2 */
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+PORT_START
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 ROTARY
 
@@ -702,7 +708,7 @@ PORT_START /* DSW 1 */
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, "Bonus Occurance" )
 	PORT_DIPSETTING(    0x04, "1st & every 2nd" )
-	PORT_DIPSETTING(    0x00, "Only" )
+	PORT_DIPSETTING(    0x00, "1st & 2nd only" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
@@ -725,11 +731,14 @@ PORT_START /* DSW 2 */
 	PORT_DIPSETTING(    0x10, "100k 200k" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPNAME( 0x40 ,0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+PORT_START
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 ROTARY
 
@@ -753,14 +762,14 @@ BUTTONS
 
 PORT_START /* DSW 1 */
 	PORT_DIPNAME( 0x01, 0x01, "Allow Continue" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, "Bonus Occurance" )
 	PORT_DIPSETTING(    0x04, "1st & every 2nd" )
-	PORT_DIPSETTING(    0x00, "Only" )
+	PORT_DIPSETTING(    0x00, "1s7 & 2nd only" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
@@ -789,6 +798,9 @@ PORT_START /* DSW 2 */
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+PORT_START
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 ROTARY
 
@@ -842,7 +854,7 @@ PORT_START	/* DSW1 */
 	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x04, 0x04, "Bonus Occourance" )
 	PORT_DIPSETTING(    0x04, "1st & every 2nd" )
-	PORT_DIPSETTING(    0x00, "Only" )
+	PORT_DIPSETTING(    0x00, "1st & 2nd only" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
@@ -872,8 +884,6 @@ PORT_START /* DSW2 */
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
-
-
 
 
 INPUT_PORTS_START( tnk3_input_ports )
@@ -922,7 +932,7 @@ PORT_START
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_BITX( 0x01,    0x01, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Walk everywhere", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
@@ -948,7 +958,7 @@ PORT_START	/* DSW1 */
 PORT_START	/* DSW2 */
 	PORT_DIPNAME( 0x01, 0x01, "Bonus Occurance" )
 	PORT_DIPSETTING(    0x01, "1st & every 2nd" )
-	PORT_DIPSETTING(    0x00, "Only" )
+	PORT_DIPSETTING(    0x00, "1st & 2nd only" )
 	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x06, "Easy?" )
 	PORT_DIPSETTING(    0x04, "Normal?" )
@@ -966,8 +976,8 @@ PORT_START	/* DSW2 */
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 
 ROTARY
 
@@ -1001,7 +1011,7 @@ PORT_START  /* DSW 1 */
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, "Bonus Occurrance?" )
 	PORT_DIPSETTING(    0x00, "1st & every 2nd?" )
-	PORT_DIPSETTING(    0x04, "Only?" )
+	PORT_DIPSETTING(    0x04, "1st & 2nd only?" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
@@ -1025,9 +1035,9 @@ PORT_START  /* DSW 2 */
 	PORT_DIPSETTING(    0x10, "100k 200k?" )
 	PORT_DIPSETTING(    0x00, "None?" )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
-	PORT_DIPNAME( 0x80, 0x80, "Unuknown" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
@@ -1071,7 +1081,7 @@ PORT_START  /* DSW 1 */
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, "Bonus Occurrance" )
 	PORT_DIPSETTING(    0x00, "1st & every 2nd" )
-	PORT_DIPSETTING(    0x04, "Only" )
+	PORT_DIPSETTING(    0x04, "1st & 2nd only" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
@@ -1095,8 +1105,8 @@ PORT_START  /* DSW 2 */
 	PORT_DIPSETTING(    0x10, "100K 200K" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1142,8 +1152,8 @@ PORT_START
 
 PORT_START
 	PORT_DIPNAME( 0x01, 0x01, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
@@ -1167,8 +1177,8 @@ PORT_START
 
 PORT_START
 	PORT_DIPNAME( 0x01, 0x01, "Bonus Occurrance" )
-	PORT_DIPSETTING(    0x01, "1st and every 2nd" )
-	PORT_DIPSETTING(    0x00, "Only" )
+	PORT_DIPSETTING(    0x01, "1st & every 2nd" )
+	PORT_DIPSETTING(    0x00, "1st & 2nd only" )
 	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x06, "Easy" )
 	PORT_DIPSETTING(    0x04, "Normal" )
@@ -1177,10 +1187,10 @@ PORT_START
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, "Cheat of some kind" )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Flip Screen" )
+	PORT_BITX( 0x10,    0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Cheat of some kind", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0xc0, 0xc0, "Start Area" )
@@ -1196,7 +1206,7 @@ PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* sound related */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* Reset */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE )
+	PORT_BITX(0x08, 0x08, IPT_SERVICE, DEF_STR( Service_Mode), OSD_KEY_F2, IP_JOY_NONE )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
@@ -1235,33 +1245,33 @@ PORT_START  /* DSW 1 */
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x04, 0x04, "Bonus Occourrance?" )
-	PORT_DIPSETTING(    0x00, "1st & every 2nd?" )
-	PORT_DIPSETTING(    0x04, "Only?" )
+	PORT_DIPNAME( 0x04, 0x04, "Bonus Occourrance" )
+	PORT_DIPSETTING(    0x00, "1st & every 2nd" )
+	PORT_DIPSETTING(    0x04, "1st & 2nd only" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
 COINAGE
 
 PORT_START  /* DSW 2 */
-	PORT_DIPNAME( 0x03, 0x03, "Difficulty?" )
-	PORT_DIPSETTING(    0x02, "Easy?" )
-	PORT_DIPSETTING(    0x03, "Normal?" )
-	PORT_DIPSETTING(    0x01, "Hard?" )
-	PORT_DIPSETTING(    0x00, "Very Hard?" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x03, "Normal" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Very Hard" )
 	PORT_DIPNAME( 0x0c, 0x0c, "Game Mode" )
-	PORT_DIPSETTING(    0x0c, "Normal" )
-	PORT_DIPSETTING(    0x08, "Demo Sounds On" )
+	PORT_DIPSETTING(    0x08, "Normal" )
+	PORT_DIPSETTING(    0x0c, "Demo Sounds On" )
 	PORT_DIPSETTING(    0x00, "Freeze" )
 	PORT_BITX( 0,       0x04, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPNAME( 0x30, 0x30, "Bonus Life?" )
-	PORT_DIPSETTING(    0x10, "50k 100k?" )
-	PORT_DIPSETTING(    0x20, "75k 140k?" )
-	PORT_DIPSETTING(    0x30, "100k 200k?" )
-	PORT_DIPSETTING(    0x00, "None?" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x30, "50k 100k" )
+	PORT_DIPSETTING(    0x20, "75k 150k" )
+	PORT_DIPSETTING(    0x10, "100k 200k" )
+	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
 	PORT_BITX( 0x80,    0x80, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability" , IP_KEY_NONE ,IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1310,8 +1320,8 @@ PORT_START	/* DSW1 */
 	PORT_DIPSETTING(    0x01, "Coin Up" )
 	PORT_DIPSETTING(    0x00, "Standard" )
 	PORT_DIPNAME( 0x02, 0x02, "Flip Screen?" )
-	PORT_DIPSETTING(    0x00, "Yes" )
-	PORT_DIPSETTING(    0x02, "No" )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x04, 0x04, "Bonus" )
 	PORT_DIPSETTING(    0x04, "Every" )
 	PORT_DIPSETTING(    0x00, "Only" )

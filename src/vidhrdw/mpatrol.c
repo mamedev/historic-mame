@@ -476,7 +476,7 @@ void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			flipx = !flipx;
 			flipy = !flipy;
 			sx = 240 - sx;
-			sy = 240 - sy;
+			sy = 242 - sy;
 		}
 
 		drawgfx(bitmap,Machine->gfx[1],
@@ -499,7 +499,7 @@ void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			flipx = !flipx;
 			flipy = !flipy;
 			sx = 240 - sx;
-			sy = 240 - sy;
+			sy = 242 - sy;
 		}
 
 		drawgfx(bitmap,Machine->gfx[1],

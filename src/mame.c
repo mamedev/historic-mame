@@ -449,7 +449,6 @@ int run_machine(void)
 						/* been displayed. */
 						if (showcopyright()) goto userquit;
 					}
-					showcredits();
 				}
 
 				if (showgamewarnings() == 0)  /* show info about incorrect behaviour (wrong colors etc.) */

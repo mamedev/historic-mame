@@ -77,8 +77,8 @@ void ccpu_SetInputs(int inputs, int switches);
 #define CCPU_MEMSIZE_32K       	3
 
 #define CCPU_MONITOR_BILEV  	0
-#define CCPU_MONITOR_16COL  	1
-#define CCPU_MONITOR_64COL  	2
+#define CCPU_MONITOR_16LEV  	1
+#define CCPU_MONITOR_64LEV  	2
 #define CCPU_MONITOR_WOWCOL 	3
 
 /* nicer config function */
@@ -112,12 +112,12 @@ typedef enum
 	state_BB
 } CINESTATE;                              /* current state */
 
-// NOTE: These MUST be in this order!
+/* NOTE: These MUST be in this order! */
 
 struct scCpuStruct
 {
-	CINEWORD	accVal;				// CCPU Accumulator value
-	CINEWORD	cmpVal;				// Comparison value
+	CINEWORD	accVal;				/* CCPU Accumulator value */
+	CINEWORD	cmpVal;				/* Comparison value */
 	CINEBYTE	pa0;
 	CINEBYTE	cFlag;
 	CINEWORD	eRegPC;

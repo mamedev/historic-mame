@@ -10,6 +10,8 @@ unsigned char *neogeo_sram;
 static int sram_locked;
 static int sram_protection_hack;
 
+extern int neogeo_has_trackball;
+
 /* MARTINEZ.F 990209 Calendar */
 extern int seconds;
 extern int minutes;
@@ -37,8 +39,6 @@ void		neogeo_memcard_eject(void);
 int		neogeo_memcard_create(int);
 
 
-
-int neogeo_game_fix;
 
 static void neogeo_custom_memory(void);
 
@@ -141,6 +141,7 @@ void neogeo_onetime_init_machine(void)
 	if (READ_WORD(&RAM[0x11b00]) == 0x4eba)
 	{
 		/* standard bios */
+		neogeo_has_trackball = 0;
 
 		/* Remove memory check for now */
 		WRITE_WORD(&RAM[0x11b00],0x4e71);
@@ -162,7 +163,9 @@ void neogeo_onetime_init_machine(void)
 	else
 	{
 		/* special bios with trackball support */
-		/* NOTE: check the memcard manager patch in neogeo_init_machine(), */
+		neogeo_has_trackball = 1;
+
+		/* TODO: check the memcard manager patch in neogeo_init_machine(), */
 		/* it probably has to be moved as well */
 
 		/* Remove memory check for now */
@@ -342,6 +345,11 @@ static int bakatono_cycle_r(int offset)
 NEO_CYCLE_R(quizkof,0x0450,0,           READ_WORD(&neogeo_ram[0x4464]))
 NEO_CYCLE_R(quizdais,   0x0730,0,       READ_WORD(&neogeo_ram[0x59f2]))
 NEO_CYCLE_R(quizdai2,   0x1afa,0xffff,  READ_WORD(&neogeo_ram[0x0960]))
+NEO_CYCLE_R(popbounc,   0x1196,0xffff,  READ_WORD(&neogeo_ram[0x1008]))
+NEO_CYCLE_R(sdodgeb,    0xc22e,0,       READ_WORD(&neogeo_ram[0x1104]))
+NEO_CYCLE_R(shocktr2,   0xf410,0,       READ_WORD(&neogeo_ram[0x8348]))
+NEO_CYCLE_R(figfever,   0x20c60,0,      READ_WORD(&neogeo_ram[0x8100]))
+NEO_CYCLE_R(irrmaze,    0x104e,0,       READ_WORD(&neogeo_ram[0x4b6e]))
 
 /******************************************************************************/
 /* Routines to speed up the sound processor AVDB 24-10-1998		      */
@@ -513,6 +521,11 @@ if (errorlog) fprintf(errorlog,"unknown protection write at pc %06x, offset %08x
 	}
 }
 
+static int popbounc_sfix_r(int offset)
+{
+        if (cpu_get_pc()==0x6b10) {return 0;}
+        return READ_WORD(&neogeo_ram[0x4fbc]);
+}
 
 static void neogeo_custom_memory(void)
 {
@@ -631,8 +644,12 @@ static void neogeo_custom_memory(void)
 	if (!strcmp(Machine->gamedrv->name,"quizkof"))  install_mem_read_handler(0, 0x104464, 0x104465, quizkof_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"quizdais")) install_mem_read_handler(0, 0x1059f2, 0x1059f3, quizdais_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"quizdai2")) install_mem_read_handler(0, 0x100960, 0x100961, quizdai2_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"popbounc")) install_mem_read_handler(0, 0x101008, 0x101009, popbounc_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"sdodgeb"))  install_mem_read_handler(0, 0x101104, 0x101105, sdodgeb_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"shocktr2")) install_mem_read_handler(0, 0x108348, 0x108349, shocktr2_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"figfever")) install_mem_read_handler(0, 0x108100, 0x108101, figfever_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"irrmaze"))  install_mem_read_handler(0, 0x104b6e, 0x104b6f, irrmaze_cycle_r);
 
-//	if (!strcmp(Machine->gamedrv->name,"")) install_mem_read_handler(0, 0x10, 0x10, _cycle_r);
 #endif
 
 	/* AVDB cpu spins based on sound processor status */
@@ -655,17 +672,23 @@ static void neogeo_custom_memory(void)
 //	if (!strcmp(Machine->gamedrv->name,"gpilots")) install_mem_read_handler(1, 0xfe46, 0xfe46, cycle_v15_sr);
 
 	/* kludges */
-	neogeo_game_fix=-1;
-	if (!strcmp(Machine->gamedrv->name,"blazstar")) neogeo_game_fix=0;
-	if (!strcmp(Machine->gamedrv->name,"gowcaizr")) neogeo_game_fix=1;
-	if (!strcmp(Machine->gamedrv->name,"rbff2"))   neogeo_game_fix=2;
-	if (!strcmp(Machine->gamedrv->name,"samsho3")) neogeo_game_fix=3;
-	if (!strcmp(Machine->gamedrv->name,"overtop")) neogeo_game_fix=4;
-	if (!strcmp(Machine->gamedrv->name,"kof97")) neogeo_game_fix=5;
-	if (!strcmp(Machine->gamedrv->name,"miexchng")) neogeo_game_fix=6;
-	if (!strcmp(Machine->gamedrv->name,"gururin")) neogeo_game_fix=7;
-	if (!strcmp(Machine->gamedrv->name,"ncommand")) neogeo_game_fix=8;
-	if (!strcmp(Machine->gamedrv->name,"kof98")) neogeo_game_fix=9;
+
+	if (!strcmp(Machine->gamedrv->name,"gururin"))
+	{
+		/* Fix a really weird problem. The game clears the video RAM but goes */
+		/* beyond the tile RAM, corrupting the zoom control RAM. After that it */
+		/* initializes the control RAM, but then corrupts it again! */
+		unsigned char *RAM = Machine->memory_region[MEM_CPU0];
+		WRITE_WORD(&RAM[0x1328],0x4e71);
+		WRITE_WORD(&RAM[0x132a],0x4e71);
+		WRITE_WORD(&RAM[0x132c],0x4e71);
+		WRITE_WORD(&RAM[0x132e],0x4e71);
+	}
+
+	if (!Machine->sample_rate &&
+			!strcmp(Machine->gamedrv->name,"popbounc"))
+	/* the game hangs after a while without this patch */
+		install_mem_read_handler(0, 0x104fbc, 0x104fbd, popbounc_sfix_r);
 
 	/* hacks to make the games which do protection checks run in arcade mode */
 	/* we write protect a SRAM location so it cannot be set to 1 */
@@ -724,6 +747,36 @@ static void neogeo_custom_memory(void)
 		unsigned char *RAM = Machine->memory_region[MEM_CPU0];
 		WRITE_WORD(&RAM[0x0000],0x0010);
 	}
+
+#if I_SWEAR_I_WILL_NOT_DISTRIBUTE_A_MODIFIED_BINARY
+	if (!strcmp(Machine->gamedrv->name,"mslugx"))
+	{
+		/* patch out protection checks */
+		int i;
+		unsigned char *RAM = Machine->memory_region[MEM_CPU0];
+
+		for (i = 0;i < 0x100000;i+=2)
+		{
+			if (READ_WORD(&RAM[i+0]) == 0x0243 &&
+				READ_WORD(&RAM[i+2]) == 0x0001 &&	/* andi.w  #$1, D3 */
+				READ_WORD(&RAM[i+4]) == 0x6600)		/* bne xxxx */
+			{
+				WRITE_WORD(&RAM[i+4],0x4e71);
+				WRITE_WORD(&RAM[i+6],0x4e71);
+			}
+		}
+
+		WRITE_WORD(&RAM[0x3bdc],0x4e71);
+		WRITE_WORD(&RAM[0x3bde],0x4e71);
+		WRITE_WORD(&RAM[0x3be0],0x4e71);
+		WRITE_WORD(&RAM[0x3c0c],0x4e71);
+		WRITE_WORD(&RAM[0x3c0e],0x4e71);
+		WRITE_WORD(&RAM[0x3c10],0x4e71);
+
+		WRITE_WORD(&RAM[0x3c36],0x4e71);
+		WRITE_WORD(&RAM[0x3c38],0x4e71);
+	}
+#endif
 }
 
 

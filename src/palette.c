@@ -123,7 +123,7 @@ static int *pen_visiblecount,*pen_cachedcount;
 static unsigned char *just_remapped;	/* colors which have been remapped in this frame, */
 										/* returned by palette_recalc() */
 
-static unsigned short *game_colortable;	/* lookup table as set up by the driver */
+unsigned short *game_colortable;	/* lookup table as set up by the driver */
 static unsigned char shrinked_palette[3 * 256];
 unsigned short *shrinked_pens;
 static unsigned short *palette_map;	/* map indexes from game_palette to shrinked_palette */

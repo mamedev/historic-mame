@@ -48,26 +48,26 @@ static int ripcord_IN2_r (int offset)
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x0000, 0x01FF, MRA_RAM },
-	{ 0x4000, 0x43FF, MRA_RAM },
+	{ 0x0000, 0x01ff, MRA_RAM },
 	{ 0x1000, 0x1fff, MRA_ROM },
-	{ 0xf000, 0xffff, MRA_ROM },
+	{ 0x4000, 0x43ff, MRA_RAM },
+	{ 0xa000, 0xa000, input_port_0_r },
+	{ 0xc000, 0xc000, input_port_1_r }, /* DSW */
 //	{ 0xd000, 0xd000, input_port_2_r },
 	{ 0xd000, 0xd000, ripcord_IN2_r },
-	{ 0xA000, 0xA000, input_port_0_r },
-	{ 0xC000, 0xC000, input_port_1_r }, /* DSW */
+	{ 0xf000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x01ff, MWA_RAM },
-	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
+	{ 0x1000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x2000, circus_clown_x_w },
 	{ 0x3000, 0x3000, circus_clown_y_w },
+	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
 	{ 0x8000, 0x8000, circus_clown_z_w },
-	{ 0x1000, 0x1fff, MWA_ROM },
-	{ 0xF000, 0xFFFF, MWA_ROM },
+	{ 0xf000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
 

@@ -177,7 +177,7 @@ static void init_machine(void)
 	cpu_setOPbaseoverride(opbase_override);
 
 	/* display messages */
-	atarigen_show_slapstic_message();
+/*	atarigen_show_slapstic_message(); -- no known slapstic problems */
 }
 
 

@@ -263,6 +263,7 @@ void swmathbx(int offset, int data)
 
       case 4: /* dvsrh */
         DIVISOR = ((DIVISOR & 0x00ff) | (data<<8));
+		break;
 
       case 5: /* dvsrl */
 
@@ -274,10 +275,10 @@ void swmathbx(int offset, int data)
 
         DIVISOR = ((DIVISOR & 0xff00) | (data));
 
-        if(DIVISOR!=0)
-            RESULT = (int)(((long)DIVIDEND<<14)/(long)DIVISOR);
-        else
-            RESULT = (int)-1;
+		if (DIVIDEND >= 2*DIVISOR)
+			RESULT = 0x7fff;
+		else
+			RESULT = (int)((((long)DIVIDEND<<14)/(long)DIVISOR));
         break;
 
       case 6: /* dvddh */

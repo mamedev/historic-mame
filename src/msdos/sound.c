@@ -23,6 +23,14 @@ int attenuation = 0;
 AUDIOINFO info;
 AUDIOCAPS caps;
 
+static int stream_playing[MIXER_MAX_CHANNELS];
+static void *stream_cache_data[MIXER_MAX_CHANNELS];
+static int stream_cache_len[MIXER_MAX_CHANNELS];
+static int stream_cache_freq[MIXER_MAX_CHANNELS];
+static int stream_cache_volume[MIXER_MAX_CHANNELS];
+static int stream_cache_pan[MIXER_MAX_CHANNELS];
+static int stream_cache_bits[MIXER_MAX_CHANNELS];
+
 
 int msdos_init_seal (void)
 {
@@ -114,6 +122,14 @@ int msdos_init_sound(void)
 		ASetVoicePanning(hVoice[i],128);
 
 		lpWave[i] = 0;
+
+		stream_playing[i] = 0;
+		stream_cache_data[0] = 0;
+		stream_cache_len[0] = 0;
+		stream_cache_freq[0] = 0;
+		stream_cache_volume[0] = 0;
+		stream_cache_pan[0] = 0;
+		stream_cache_bits[0] = 0;
 	}
 
 	/* update the Machine structure to reflect the actual sample rate */
@@ -312,19 +328,12 @@ void osd_play_sample_16(int channel,signed short *data,int len,int freq,int volu
 }
 
 
-static void *stream_cache_data[MIXER_MAX_CHANNELS];
-static int stream_cache_len[MIXER_MAX_CHANNELS];
-static int stream_cache_freq[MIXER_MAX_CHANNELS];
-static int stream_cache_volume[MIXER_MAX_CHANNELS];
-static int stream_cache_pan[MIXER_MAX_CHANNELS];
-static int stream_cache_bits[MIXER_MAX_CHANNELS];
-static int streams_playing;
 #define NUM_BUFFERS 3	/* raising this number should improve performance with frameskip, */
 						/* but also increases the latency. */
+static int streams_are_playing;
 
 static int playstreamedsample(int channel,signed char *data,int len,int freq,int volume,int pan,int bits)
 {
-	static int playing[MIXER_MAX_CHANNELS];
 	static int c[MIXER_MAX_CHANNELS];
 
 
@@ -336,7 +345,7 @@ static int playstreamedsample(int channel,signed char *data,int len,int freq,int
 
 	if (Machine->sample_rate == 0 || channel >= MIXER_MAX_CHANNELS) return 1;
 
-	if (!playing[channel])
+	if (!stream_playing[channel])
 	{
 		if (lpWave[channel])
 		{
@@ -371,10 +380,10 @@ static int playstreamedsample(int channel,signed char *data,int len,int freq,int
 	/* need to cast to double because freq*nominal_sample_rate can exceed the size of an int */
 		ASetVoiceFrequency(hVoice[channel],(double)freq*nominal_sample_rate/Machine->sample_rate);
 		AStartVoice(hVoice[channel]);
-		playing[channel] = 1;
+		stream_playing[channel] = 1;
 		c[channel] = 1;
 
-		streams_playing = 1;
+		streams_are_playing = 1;
 	}
 	else
 	{
@@ -393,7 +402,7 @@ static int playstreamedsample(int channel,signed char *data,int len,int freq,int
 		AWriteAudioData(lpWave[channel],len*c[channel],len);
 		c[channel] = (c[channel]+1) % NUM_BUFFERS;
 
-		streams_playing = 1;
+		streams_are_playing = 1;
 	}
 
 
@@ -483,7 +492,7 @@ static int update_streams(void)
 	int res = 1;
 
 
-	streams_playing = 0;
+	streams_are_playing = 0;
 
 	for (channel = 0;channel < MIXER_MAX_CHANNELS;channel++)
 	{
@@ -519,7 +528,7 @@ int msdos_update_audio(void)
 		AUpdateAudioEx(Machine->sample_rate / Machine->drv->frames_per_second);
 	osd_profiler(OSD_PROFILE_END);
 
-	return streams_playing;
+	return streams_are_playing;
 }
 
 
@@ -533,6 +542,9 @@ void osd_set_mastervolume(int _attenuation)
 {
 	float volume;
 
+
+	if (_attenuation > 0) _attenuation = 0;
+	if (_attenuation < -32) _attenuation = -32;
 
 	attenuation = _attenuation;
 

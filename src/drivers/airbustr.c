@@ -192,7 +192,7 @@ unsigned char *devram, *sharedram;
 int soundlatch_status, soundlatch2_status;
 
 /* Variables that vidhrdw has access to */
-unsigned char *spriteram;
+extern unsigned char *spriteram;
 int flipscreen;
 
 /* Variables defined in vidhrdw */

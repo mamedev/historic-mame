@@ -641,7 +641,7 @@ struct GameDriver digdugat_driver =
 {
 	__FILE__,
 	&digdug_driver,
-	"digdug",
+	"digdugat",
 	"Dig Dug (Atari)",
 	"1982",
 	"[Namco] (Atari license)",

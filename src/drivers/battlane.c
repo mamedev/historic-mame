@@ -64,8 +64,8 @@ int cpu1_command_r(int offset)
 static struct MemoryReadAddress cpu1_readmem[] =
 {
 	{ 0x0000, 0x0fff, battlane_shared_ram_r },
-    { 0x1000, 0x17ff, MRA_RAM }, /* Tile RAM  */
-    { 0x1800, 0x18ff, MRA_RAM },
+	{ 0x1000, 0x17ff, MRA_RAM }, /* Tile RAM  */
+	{ 0x1800, 0x18ff, MRA_RAM },
 	{ 0x1c00, 0x1c00, input_port_0_r },
 	{ 0x1c01, 0x1c01, input_port_1_r },
 	{ 0x1c02, 0x1c02, input_port_2_r },
@@ -79,13 +79,13 @@ static struct MemoryReadAddress cpu1_readmem[] =
 static struct MemoryWriteAddress cpu1_writemem[] =
 {
 	{ 0x0000, 0x0fff, battlane_shared_ram_w },
-    { 0x1000, 0x17ff, MWA_RAM },  /* Tile RAM  */
-    { 0x1800, 0x18ff, MWA_RAM, &battlane_spriteram, &battlane_spriteram_size},
-    { 0x1c00, 0x1c00, battlane_video_ctrl_w },
+	{ 0x1000, 0x17ff, MWA_RAM },  /* Tile RAM  */
+	{ 0x1800, 0x18ff, MWA_RAM, &battlane_spriteram, &battlane_spriteram_size},
+	{ 0x1c00, 0x1c00, battlane_video_ctrl_w },
 	{ 0x1c03, 0x1c03, cpu1_command_w },
 	{ 0x1c04, 0x1c04, YM3526_control_port_0_w },
 	{ 0x1c05, 0x1c05, YM3526_write_port_0_w },
-    { 0x1e00, 0x1e3f, MWA_RAM }, /* Palette ??? */
+	{ 0x1e00, 0x1e3f, MWA_RAM }, /* Palette ??? */
 	{ 0x2000, 0x3fff, battlane_bitmap_w, &battlane_bitmap, &battlane_bitmap_size },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -105,8 +105,8 @@ static struct MemoryReadAddress cpu2_readmem[] =
 static struct MemoryWriteAddress cpu2_writemem[] =
 {
 	{ 0x0000, 0x0fff, battlane_shared_ram_w },
-//        { 0x1c00, 0x1c00, battlane_video_ctrl_w },
-//        { 0x2000, 0x3fff, battlane_bitmap_w, &battlane_bitmap, &battlane_bitmap_size },
+//	{ 0x1c00, 0x1c00, battlane_video_ctrl_w },
+//	{ 0x2000, 0x3fff, battlane_bitmap_w, &battlane_bitmap, &battlane_bitmap_size },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -216,9 +216,9 @@ INPUT_PORTS_START( input_ports )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
@@ -226,56 +226,51 @@ INPUT_PORTS_START( input_ports )
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
 	PORT_START      /* DSW1 */
-    PORT_DIPNAME( 0x03, 0x03, "COIN1" )
-	PORT_DIPSETTING(    0x00, "2 coins 1 credit" )
-	PORT_DIPSETTING(    0x01, "1 coin 3 credits" )
-	PORT_DIPSETTING(    0x02, "1 coin 2 credits" )
-	PORT_DIPSETTING(    0x03, "1 coin 1 credit"  )
-
-    PORT_DIPNAME( 0x0c, 0x0c, "COIN2" )
-	PORT_DIPSETTING(    0x00, "2 coins 1 credit" )
-	PORT_DIPSETTING(    0x04, "1 coin 3 credits" )
-	PORT_DIPSETTING(    0x08, "1 coin 2 credits" )
-	PORT_DIPSETTING(    0x0c, "1 coin 1 credit"  )
-
-    PORT_DIPNAME( 0x10, 0x10, "Attract Sound" )
-	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPSETTING(    0x00, "Off"  )
-
-    PORT_DIPNAME( 0x20, 0x00, "Game style" )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x20, "Table"  )
-
-    PORT_DIPNAME( 0xc0, 0x80, "Game style" )
-	PORT_DIPSETTING(    0x00, "Very difficult" )
-	PORT_DIPSETTING(    0x40, "Difficult"  )
-	PORT_DIPSETTING(    0x80, "Normal" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C )  )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0xc0, 0x80, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0xc0, "Easy"  )
+	PORT_DIPSETTING(    0x80, "Normal" )
+	PORT_DIPSETTING(    0x40, "Hard"  )
+	PORT_DIPSETTING(    0x00, "Very Hard" )
 
 	PORT_START      /* DSW2 */
-    PORT_DIPNAME( 0x03, 0x03, "Players per game" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPSETTING(    0x01, "5" )
-	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x03, "3" )
-
-    PORT_DIPNAME( 0x0c, 0x0c, "Bonus Level" )
-	PORT_DIPSETTING(    0x00, "No Bonus" )
-	PORT_DIPSETTING(    0x04, "20,000 & Every 90,000" )
-	PORT_DIPSETTING(    0x08, "20,000 & Every 70,000" )
-	PORT_DIPSETTING(    0x0c, "20,000 & Every 50,000" )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_BITX(0,        0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x0c, "20k & every 50k" )
+	PORT_DIPSETTING(    0x08, "20k & every 70k" )
+	PORT_DIPSETTING(    0x04, "20k & every 90k" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
 INPUT_PORTS_END
 
 static struct GfxLayout spritelayout =
@@ -400,67 +395,67 @@ static struct MachineDriver machine_driver =
 ROM_START( battlane_rom )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
 	/* first half of da00-5 will be copied at 0x4000-0x7fff */
-	ROM_LOAD( "da01-5",       0x8000, 0x8000, 0x7a6c3f02 )
+	ROM_LOAD( "da01-5",    0x8000, 0x8000, 0x7a6c3f02 )
 
 	ROM_REGION_DISPOSE(0x24000)     /* temporary space for graphics */
-	ROM_LOAD( "da05",         0x00000, 0x8000, 0x834829d4 ) /* Sprites Plane 1+2 */
-	ROM_LOAD( "da04",         0x08000, 0x8000, 0xf083fd4c ) /* Sprites Plane 3+4 */
-	ROM_LOAD( "da03",         0x10000, 0x8000, 0xcf187f25 ) /* Sprites Plane 5+6 */
+	ROM_LOAD( "da05",      0x00000, 0x8000, 0x834829d4 ) /* Sprites Plane 1+2 */
+	ROM_LOAD( "da04",      0x08000, 0x8000, 0xf083fd4c ) /* Sprites Plane 3+4 */
+	ROM_LOAD( "da03",      0x10000, 0x8000, 0xcf187f25 ) /* Sprites Plane 5+6 */
 
-	ROM_LOAD( "da06",         0x18000, 0x8000, 0x9c6a51b3 ) /* Tiles*/
-	ROM_LOAD( "da07",         0x20000, 0x4000, 0x56df4077 ) /* Tiles*/
+	ROM_LOAD( "da06",      0x18000, 0x8000, 0x9c6a51b3 ) /* Tiles*/
+	ROM_LOAD( "da07",      0x20000, 0x4000, 0x56df4077 ) /* Tiles*/
 
 	ROM_REGION(0x10000)     /* 64K for slave CPU */
-	ROM_LOAD( "da00-5",       0x0000, 0x8000, 0x85b4ed73 )	/* ...second half goes here */
-	ROM_LOAD( "da02-2",       0x8000, 0x8000, 0x69d8dafe )
+	ROM_LOAD( "da00-5",    0x00000, 0x8000, 0x85b4ed73 )	/* ...second half goes here */
+	ROM_LOAD( "da02-2",    0x08000, 0x8000, 0x69d8dafe )
 
 	ROM_REGION(0x0040)     /* PROMs (function unknown) */
-	ROM_LOAD( "82s123.7h",    0x0000, 0x0020, 0xb9933663 )
-	ROM_LOAD( "82s123.9n",    0x0020, 0x0020, 0x06491e53 )
+	ROM_LOAD( "82s123.7h", 0x00000, 0x0020, 0xb9933663 )
+	ROM_LOAD( "82s123.9n", 0x00020, 0x0020, 0x06491e53 )
 ROM_END
 
 ROM_START( battlan2_rom )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
 	/* first half of da00-3 will be copied at 0x4000-0x7fff */
-	ROM_LOAD( "da01-3",       0x8000, 0x8000, 0xd9e40800 )
+	ROM_LOAD( "da01-3",    0x8000, 0x8000, 0xd9e40800 )
 
 	ROM_REGION_DISPOSE(0x24000)     /* temporary space for graphics */
-	ROM_LOAD( "da05",         0x00000, 0x8000, 0x834829d4 ) /* Sprites Plane 1+2 */
-	ROM_LOAD( "da04",         0x08000, 0x8000, 0xf083fd4c ) /* Sprites Plane 3+4 */
-	ROM_LOAD( "da03",         0x10000, 0x8000, 0xcf187f25 ) /* Sprites Plane 5+6 */
+	ROM_LOAD( "da05",      0x00000, 0x8000, 0x834829d4 ) /* Sprites Plane 1+2 */
+	ROM_LOAD( "da04",      0x08000, 0x8000, 0xf083fd4c ) /* Sprites Plane 3+4 */
+	ROM_LOAD( "da03",      0x10000, 0x8000, 0xcf187f25 ) /* Sprites Plane 5+6 */
 
-	ROM_LOAD( "da06",         0x18000, 0x8000, 0x9c6a51b3 ) /* Tiles*/
-	ROM_LOAD( "da07",         0x20000, 0x4000, 0x56df4077 ) /* Tiles*/
+	ROM_LOAD( "da06",      0x18000, 0x8000, 0x9c6a51b3 ) /* Tiles*/
+	ROM_LOAD( "da07",      0x20000, 0x4000, 0x56df4077 ) /* Tiles*/
 
 	ROM_REGION(0x10000)     /* 64K for slave CPU */
-	ROM_LOAD( "da00-3",       0x0000, 0x8000, 0x7a0a5d58 )
-	ROM_LOAD( "da02-2",       0x8000, 0x8000, 0x69d8dafe )
+	ROM_LOAD( "da00-3",    0x00000, 0x8000, 0x7a0a5d58 )
+	ROM_LOAD( "da02-2",    0x08000, 0x8000, 0x69d8dafe )
 
 	ROM_REGION(0x0040)     /* PROMs (function unknown) */
-	ROM_LOAD( "82s123.7h",    0x0000, 0x0020, 0xb9933663 )
-	ROM_LOAD( "82s123.9n",    0x0020, 0x0020, 0x06491e53 )
+	ROM_LOAD( "82s123.7h", 0x00000, 0x0020, 0xb9933663 )
+	ROM_LOAD( "82s123.9n", 0x00020, 0x0020, 0x06491e53 )
 ROM_END
 
 ROM_START( battlan3_rom )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
 	/* first half of bl_04.rom will be copied at 0x4000-0x7fff */
-	ROM_LOAD( "bl_05.rom",    0x8000, 0x8000, 0x001c4bbe )
+	ROM_LOAD( "bl_05.rom", 0x8000, 0x8000, 0x001c4bbe )
 
 	ROM_REGION_DISPOSE(0x24000)     /* temporary space for graphics */
-	ROM_LOAD( "da05",         0x00000, 0x8000, 0x834829d4 ) /* Sprites Plane 1+2 */
-	ROM_LOAD( "da04",         0x08000, 0x8000, 0xf083fd4c ) /* Sprites Plane 3+4 */
-	ROM_LOAD( "da03",         0x10000, 0x8000, 0xcf187f25 ) /* Sprites Plane 5+6 */
+	ROM_LOAD( "da05",      0x00000, 0x8000, 0x834829d4 ) /* Sprites Plane 1+2 */
+	ROM_LOAD( "da04",      0x08000, 0x8000, 0xf083fd4c ) /* Sprites Plane 3+4 */
+	ROM_LOAD( "da03",      0x10000, 0x8000, 0xcf187f25 ) /* Sprites Plane 5+6 */
 
-	ROM_LOAD( "da06",         0x18000, 0x8000, 0x9c6a51b3 ) /* Tiles*/
-	ROM_LOAD( "da07",         0x20000, 0x4000, 0x56df4077 ) /* Tiles*/
+	ROM_LOAD( "da06",      0x18000, 0x8000, 0x9c6a51b3 ) /* Tiles*/
+	ROM_LOAD( "da07",      0x20000, 0x4000, 0x56df4077 ) /* Tiles*/
 
 	ROM_REGION(0x10000)     /* 64K for slave CPU */
-	ROM_LOAD( "bl_04.rom",    0x0000, 0x8000, 0x5681564c )	/* ...second half goes here */
-	ROM_LOAD( "da02-2",       0x8000, 0x8000, 0x69d8dafe )
+	ROM_LOAD( "bl_04.rom", 0x00000, 0x8000, 0x5681564c )	/* ...second half goes here */
+	ROM_LOAD( "da02-2",    0x08000, 0x8000, 0x69d8dafe )
 
 	ROM_REGION(0x0040)     /* PROMs (function unknown) */
-	ROM_LOAD( "82s123.7h",    0x0000, 0x0020, 0xb9933663 )
-	ROM_LOAD( "82s123.9n",    0x0020, 0x0020, 0x06491e53 )
+	ROM_LOAD( "82s123.7h", 0x00000, 0x0020, 0xb9933663 )
+	ROM_LOAD( "82s123.9n", 0x00020, 0x0020, 0x06491e53 )
 ROM_END
 
 
