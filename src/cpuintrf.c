@@ -158,7 +158,9 @@
 #if (HAS_SPC700)
 #include "cpu/spc700/spc700.h"
 #endif
-
+#if (HAS_E132XS)
+#include "cpu/e132xs/e132xs.h"
+#endif
 
 #ifdef MESS
 
@@ -661,6 +663,9 @@ const struct cpu_interface cpuintrf[] =
 #endif
 #if (HAS_SPC700)
 	CPU0(SPC700,   spc700,	 0,  0,1.00, 8, 16,	  0,16,LE,1, 3	),
+#endif
+#if (HAS_E132XS)
+	CPU0(E132XS,   e132xs, 	 1,0,1.00, 32, 32bedw,	  0,32,BE,2, 6	),
 #endif
 
 #ifdef MESS

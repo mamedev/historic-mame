@@ -131,7 +131,7 @@ WRITE_HANDLER( bwing_scrollreg_w )
 
 WRITE_HANDLER( bwing_paletteram_w )
 {
-	const float rgb[4][3]={{0.85,1.00,1.00},{0.90,1.00,1.00},{0.80,1.00,1.00},{0.75,0.90,1.10}};
+	const float rgb[4][3]={{0.85,0.95,1.00},{0.90,1.00,1.00},{0.80,1.00,1.00},{0.75,0.90,1.10}};
 	int r, g, b, i;
 
 	paletteram[offset] = data;
@@ -170,24 +170,24 @@ WRITE_HANDLER( bwing_paletteram_w )
 	tile_info.pal_data = &GFX->colortable[(COLOR) << 3]; \
 	tile_info.pen_usage = GFX->pen_usage[(CODE)]; }
 
-static void get_fgtileinfo(int i)
+INLINE void get_fgtileinfo(int i)
 {
 	unsigned code = fgdata[i];
 	BW_SET_TILE_INFO(fgfx, code & (BW_NTILES-1), code >> 7)
 }
 
-static void get_bgtileinfo(int i)
+INLINE void get_bgtileinfo(int i)
 {
 	unsigned code = bgdata[i];
 	BW_SET_TILE_INFO(bgfx, code & (BW_NTILES-1), code >> 7)
 }
 
-static void get_charinfo(int i)
+INLINE void get_charinfo(int i)
 {
 	SET_TILE_INFO(0, videoram[i], 0, 0)
 }
 
-static UINT32 bwing_scan_cols(UINT32 col, UINT32 row, UINT32 nc, UINT32 nr)
+INLINE UINT32 bwing_scan_cols(UINT32 col, UINT32 row, UINT32 nc, UINT32 nr)
 {
 	return((col<<6) + row);
 }
@@ -297,7 +297,7 @@ VIDEO_UPDATE( bwing )
 	bwing_drawsprites(bitmap, cliprect, buffered_spriteram, 1);
 
 	// draw text layer
-	//if (mapmask & 4)
+//	if (mapmask & 4)
 	{
 		tilemap_set_flip(charmap, mapflip);
 		tilemap_draw(bitmap, cliprect, charmap, 0, 0);

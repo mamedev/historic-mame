@@ -210,7 +210,7 @@ static struct x_offset game_offsets[] =
 	{ "gundhara", {  0,  0 }, {  0,  0 } },	// unknown, flip screen not supported?
 	{ "zombraid", {  0,  0 }, { -2, -2 } },	// correct for normal, flip screen not working yet
 	{ "madshark", {  0,  0 }, {  0,  0 } },	// unknown (wrong when flipped, but along y)
-	{ "utoukond", {  0,  0 }, {  0,  0 } },	// unknown (wrong when flipped, but along y)
+	{ "utoukond", {  0,  0 }, { -2,  0 } }, // unknown (wrong when flipped, but along y)
 	{ NULL }
 };
 

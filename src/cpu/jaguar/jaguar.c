@@ -1315,15 +1315,18 @@ void normi_rn_rn(void)
 {
 	UINT32 r1 = jaguar.r[(jaguar.op >> 5) & 31];
 	UINT32 res = 0;
-	while ((r1 & 0xffc00000) == 0)
+	if (r1 != 0)
 	{
-		r1 <<= 1;
-		res--;
-	}
-	while ((r1 & 0xff800000) != 0)
-	{
-		r1 >>= 1;
-		res++;
+		while ((r1 & 0xffc00000) == 0)
+		{
+			r1 <<= 1;
+			res--;
+		}
+		while ((r1 & 0xff800000) != 0)
+		{
+			r1 >>= 1;
+			res++;
+		}
 	}
 	jaguar.r[jaguar.op & 31] = res;
 	CLR_ZN; SET_ZN(res);

@@ -477,6 +477,16 @@ static void (*bitmap16[8])(INT32, INT32, data32_t *, INT32) =
 
 
 
+INLINE UINT8 lookup_pixel(const data32_t *src, int i, int pitch, int depth)
+{
+	int ppl			= 32 / depth;
+	data32_t data	= src[((i & ppl) / ppl) + ((i / (ppl*2)) * 2 * pitch)];
+	UINT8 pix		= (data >> ((~i & (ppl-1)) * depth)) & ((1 << depth) - 1);
+	return pix;
+}
+
+
+
 /*************************************
  *
  *	Standard bitmap processor
@@ -532,10 +542,6 @@ static data32_t *process_bitmap(data32_t *objdata, int vc, int logit)
 		UINT8 firstpix = ((upper2 >> 17) & 0x1f) >> depthlog;
 		int i, dxpos = (flags & 1) ? -1 : 1;
 
-		/* only handle pitch=0 for now */
-		if (pitch != 1)
-			logerror("Unhandled pitch = %d\n", pitch);
-
 		/* preadjust for firstpix */
 		xpos += firstpix * dxpos;
 
@@ -553,7 +559,7 @@ static data32_t *process_bitmap(data32_t *objdata, int vc, int logit)
 				{
 					for (i = firstpix; i < iwidth; i++)
 					{
-						UINT8 pix = (src[i / 32] >> (~i & 31)) & 0x01;
+						UINT8 pix = lookup_pixel(src, i, pitch, 1);
 
 						if (xpos >= 0 && xpos < 360 && (pix || !(flags & 4)))
 							scanline[xpos] = clut[BYTE_XOR_BE(pix)];
@@ -566,7 +572,7 @@ static data32_t *process_bitmap(data32_t *objdata, int vc, int logit)
 				{
 					for (i = firstpix; i < iwidth; i++)
 					{
-						UINT8 pix = (src[i / 32] >> (~i & 31)) & 0x01;
+						UINT8 pix = lookup_pixel(src, i, pitch, 1);
 
 						if (xpos >= 0 && xpos < 360 && (pix || !(flags & 4)))
 							BLEND(scanline[xpos], clut[BYTE_XOR_BE(pix)]);
@@ -587,7 +593,7 @@ static data32_t *process_bitmap(data32_t *objdata, int vc, int logit)
 				{
 					for (i = firstpix; i < iwidth; i++)
 					{
-						UINT8 pix = (src[i / 16] >> ((~i & 15) * 2)) & 0x03;
+						UINT8 pix = lookup_pixel(src, i, pitch, 2);
 
 						if (xpos >= 0 && xpos < 360 && (pix || !(flags & 4)))
 							scanline[xpos] = clut[BYTE_XOR_BE(pix)];
@@ -600,7 +606,7 @@ static data32_t *process_bitmap(data32_t *objdata, int vc, int logit)
 				{
 					for (i = firstpix; i < iwidth; i++)
 					{
-						UINT8 pix = (src[i / 16] >> ((~i & 15) * 2)) & 0x03;
+						UINT8 pix = lookup_pixel(src, i, pitch, 2);
 
 						if (xpos >= 0 && xpos < 360 && (pix || !(flags & 4)))
 							BLEND(scanline[xpos], clut[BYTE_XOR_BE(pix)]);
@@ -612,18 +618,30 @@ static data32_t *process_bitmap(data32_t *objdata, int vc, int logit)
 
 			/* 4bpp case */
 			case 2:
+				/* only handle pitch=1 for now */
+				if (pitch != 1)
+					logerror("Unhandled pitch = %d\n", pitch);
+
 				clutbase = (UINT16 *)jaguar_gpu_clut + (_index & 0xf0);
 				(*bitmap4[flags & 7])(firstpix, iwidth, src, xpos);
 				break;
 
 			/* 8bpp case */
 			case 3:
+				/* only handle pitch=1 for now */
+				if (pitch != 1)
+					logerror("Unhandled pitch = %d\n", pitch);
+
 				clutbase = (UINT16 *)jaguar_gpu_clut;
 				(*bitmap8[flags & 7])(firstpix, iwidth, src, xpos);
 				break;
 
 			/* 16bpp case */
 			case 4:
+				/* only handle pitch=1 for now */
+				if (pitch != 1)
+					logerror("Unhandled pitch = %d\n", pitch);
+
 				(*bitmap16[flags & 7])(firstpix, iwidth, src, xpos);
 				break;
 
@@ -832,8 +850,9 @@ static data32_t *process_branch(data32_t *objdata, int vc, int logit)
 
 #ifndef MESS
 	if ((ypos & 1) && ypos != 0x7ff)
-		fprintf(stderr, "        branch cc=%d ypos=%X link=%06X - ", cc, ypos, link << 3);
+		fprintf(stderr, "        branch cc=%d ypos=%X link=%06X - \n", cc, ypos, link << 3);
 #endif
+
 	switch (cc)
 	{
 		/* 0: branch if ypos == vc or ypos == 0x7ff */

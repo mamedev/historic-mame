@@ -31,6 +31,7 @@ int K007420_vh_start(int gfxnum, void (*callback)(int *code,int *color));
 READ_HANDLER( K007420_r );
 WRITE_HANDLER( K007420_w );
 void K007420_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect);
+void K007420_set_banklimit(int limit);
 
 
 /*
@@ -122,6 +123,7 @@ READ16_HANDLER( K053244_word_r );
 WRITE16_HANDLER( K053244_word_w );
 void K053244_bankselect(int bank);	/* used by TMNT2, Asterix and Premier Soccer for ROM testing */
 void K053245_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect);
+void K053245_clear_buffer(void);
 
 #define K055673_LAYOUT_GX  0
 #define K055673_LAYOUT_RNG 1
@@ -157,7 +159,7 @@ void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 int K053247_read_register(int regnum);
 void K053247_set_SpriteOffset(int offsx, int offsy);
 void K053247_wraparound_enable(int status);
-void K053247_set_z_rejection(int zcode);
+void K05324x_set_z_rejection(int zcode); // common to K053245/6/7
 void K053247_export_config(data16_t **ram, struct GfxElement **gfx, void **callback, int *dx, int *dy);
 
 READ_HANDLER( K053246_r );
@@ -439,3 +441,5 @@ READ16_HANDLER( K054338_word_r );		// CLTC
 READ32_HANDLER( K056832_long_r );		// VACSET
 READ32_HANDLER( K053247_reg_long_r );	// OBJSET2
 READ32_HANDLER( K055555_long_r );		// PCU2
+
+READ16_HANDLER( K053244_reg_word_r );	// OBJSET0

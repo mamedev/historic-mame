@@ -502,7 +502,6 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( roadf )
 	MDRV_IMPORT_FROM(hyperspt)
-	MDRV_ASPECT_RATIO(3, 4)
 	MDRV_CPU_MEMORY(roadf_readmem, writemem)
 	MDRV_GFXDECODE(roadf_gfxdecodeinfo)
 	MDRV_VIDEO_START(roadf)

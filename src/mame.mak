@@ -87,6 +87,7 @@ CPUS+=PIC16C57@
 #CPUS+=PIC16C58@
 CPUS+=G65816@
 CPUS+=SPC700@
+CPUS+=E132XS@
 
 # uncomment the following lines to include a sound core
 SOUNDS+=CUSTOM@
@@ -256,6 +257,7 @@ $(OBJ)/univers.a: \
 
 $(OBJ)/nintendo.a: \
 	$(OBJ)/vidhrdw/dkong.o $(OBJ)/sndhrdw/dkong.o $(OBJ)/drivers/dkong.o \
+	$(OBJ)/machine/strtheat.o \
 	$(OBJ)/vidhrdw/mario.o $(OBJ)/sndhrdw/mario.o $(OBJ)/drivers/mario.o \
 	$(OBJ)/vidhrdw/popeye.o $(OBJ)/drivers/popeye.o \
 	$(OBJ)/vidhrdw/punchout.o $(OBJ)/drivers/punchout.o \
@@ -444,7 +446,7 @@ $(OBJ)/sega.a: \
 	$(OBJ)/vidhrdw/segaic24.o \
 	$(OBJ)/drivers/system32.o $(OBJ)/drivers/multi32.o $(OBJ)/vidhrdw/system32.o \
 	$(OBJ)/vidhrdw/segac2.o $(OBJ)/drivers/segac2.o \
-	$(OBJ)/drivers/stv.o \
+	$(OBJ)/drivers/stv.o $(OBJ)/vidhrdw/stvvdp1.o $(OBJ)/vidhrdw/stvvdp2.o \
 
 $(OBJ)/deniam.a: \
 	$(OBJ)/vidhrdw/deniam.o $(OBJ)/drivers/deniam.o \
@@ -575,6 +577,7 @@ $(OBJ)/konami.a: \
 	$(OBJ)/vidhrdw/dbz2.o $(OBJ)/drivers/dbz2.o \
 	$(OBJ)/machine/konamigx.o $(OBJ)/vidhrdw/konamigx.o $(OBJ)/drivers/konamigx.o \
 	$(OBJ)/vidhrdw/plygonet.o $(OBJ)/drivers/plygonet.o \
+	$(OBJ)/drivers/mogura.o \
 
 $(OBJ)/exidy.a: \
 	$(OBJ)/machine/carpolo.o $(OBJ)/vidhrdw/carpolo.o $(OBJ)/drivers/carpolo.o \
@@ -602,6 +605,7 @@ $(OBJ)/atari.a: \
 	$(OBJ)/vidhrdw/flyball.o $(OBJ)/drivers/flyball.o \
 	$(OBJ)/vidhrdw/sprint2.o $(OBJ)/drivers/sprint2.o \
 	$(OBJ)/vidhrdw/sprint4.o $(OBJ)/drivers/sprint4.o \
+	$(OBJ)/vidhrdw/sprint8.o $(OBJ)/drivers/sprint8.o \
 	$(OBJ)/vidhrdw/nitedrvr.o $(OBJ)/machine/nitedrvr.o $(OBJ)/drivers/nitedrvr.o \
 	$(OBJ)/machine/dominos.o \
 	$(OBJ)/vidhrdw/triplhnt.o $(OBJ)/drivers/triplhnt.o \
@@ -849,6 +853,7 @@ $(OBJ)/neogeo.a: \
 
 $(OBJ)/seta.a: \
 	$(OBJ)/vidhrdw/hanaawas.o $(OBJ)/drivers/hanaawas.o \
+	$(OBJ)/vidhrdw/speedatk.o $(OBJ)/drivers/speedatk.o \
 	$(OBJ)/vidhrdw/srmp2.o $(OBJ)/drivers/srmp2.o \
 	$(OBJ)/vidhrdw/seta.o $(OBJ)/drivers/seta.o \
 	$(OBJ)/vidhrdw/seta2.o $(OBJ)/drivers/seta2.o \
@@ -918,7 +923,8 @@ $(OBJ)/zilec.a: \
 	$(OBJ)/vidhrdw/blueprnt.o $(OBJ)/drivers/blueprnt.o \
 
 $(OBJ)/fuuki.a: \
-	$(OBJ)/vidhrdw/fuuki16.o $(OBJ)/drivers/fuuki16.o \
+	$(OBJ)/vidhrdw/fuukifg2.o $(OBJ)/drivers/fuukifg2.o \
+	$(OBJ)/vidhrdw/fuukifg3.o $(OBJ)/drivers/fuukifg3.o \
 
 $(OBJ)/unico.a: \
 	$(OBJ)/vidhrdw/drgnmst.o $(OBJ)/drivers/drgnmst.o \
@@ -1054,6 +1060,8 @@ $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/portrait.o $(OBJ)/drivers/portrait.o \
 	$(OBJ)/drivers/enigma2.o \
 	$(OBJ)/drivers/ltcasino.o \
+	$(OBJ)/drivers/vamphalf.o \
+	$(OBJ)/drivers/strvmstr.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

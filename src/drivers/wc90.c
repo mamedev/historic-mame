@@ -8,9 +8,7 @@ Ernesto Corvi
 TODO:
 - Dip switches mapping is not complete. ( Anyone has the manual handy? )
 - Missing drums, they might be internal to the YM2608.
-- wc90t has wrong graphics. Different hardware? It is also missing the color
-  bars on startup.
-
+- Hook up trackball controls in wc90t.
 
 CPU #1 : Handles background & foreground tiles, controllers, dipswitches.
 CPU #2 : Handles sprites and palette
@@ -24,7 +22,7 @@ CPU #1
 a000-a800 Color Ram for background #1 tiles
 a800-b000 Video Ram for background #1 tiles
 c000-c800 Color Ram for background #2 tiles
-c800-c000 Video Ram for background #2 tiles
+c800-d000 Video Ram for background #2 tiles
 e000-e800 Color Ram for foreground tiles
 e800-f000 Video Ram for foreground tiles
 f800-fc00 Common Ram with CPU #2
@@ -45,6 +43,12 @@ CPU #3
 0000-0xc000 ROM
 ???????????
 
+
+To enter into input test mode:
+-keep pressed one of the start buttons during P.O.S.T.(in wc90 & wc90a).
+-keep pressed both start buttons during P.O.S.T. until the cross hatch test fade out(in wc90t).
+Press one of the start buttons to exit.
+
 */
 
 #include "driver.h"
@@ -64,6 +68,7 @@ extern data8_t *wc90_scroll1ylo, *wc90_scroll1yhi;
 extern data8_t *wc90_scroll2ylo, *wc90_scroll2yhi;
 
 VIDEO_START( wc90 );
+VIDEO_START( wc90t );
 WRITE_HANDLER( wc90_fgvideoram_w );
 WRITE_HANDLER( wc90_bgvideoram_w );
 WRITE_HANDLER( wc90_txvideoram_w );
@@ -381,7 +386,11 @@ static MACHINE_DRIVER_START( wc90 )
 	MDRV_SOUND_ADD(YM2608, ym2608_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( wc90t )
 
+	MDRV_IMPORT_FROM( wc90 )
+	MDRV_VIDEO_START( wc90t )
+MACHINE_DRIVER_END
 
 ROM_START( wc90 )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 128k for code */
@@ -486,4 +495,4 @@ ROM_END
 
 GAMEX( 1989, wc90,  0,    wc90, wc90, 0, ROT0, "Tecmo", "Tecmo World Cup '90 (set 1)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1989, wc90a, wc90, wc90, wc90, 0, ROT0, "Tecmo", "Tecmo World Cup '90 (set 2)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1989, wc90t, wc90, wc90, wc90, 0, ROT0, "Tecmo", "Tecmo World Cup '90 (trackball)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1989, wc90t, wc90, wc90t,wc90, 0, ROT0, "Tecmo", "Tecmo World Cup '90 (trackball)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )

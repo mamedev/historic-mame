@@ -162,6 +162,11 @@
 
 	- Diggerman (???, 2000) - Not A Real Arcade Game .. Will Not Be Supported.
 
+	VIEWPOINT CRASH
+
+	"Viewpoint resets under the ASM core due to nested IRQ1."
+
+
 =============================================================================
 
 Points to note, known and proven information deleted from this map:

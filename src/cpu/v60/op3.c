@@ -306,6 +306,7 @@ UINT32 opTRAP(void)
 
 UINT32 opRETIU(void) /* TRUSTED */
 {
+	UINT32 tempPSW;
 	modAdd=PC + 1;
 	modDim=1;
 
@@ -319,11 +320,13 @@ UINT32 opRETIU(void) /* TRUSTED */
 	SP += 4;
 	ChangePC(PC);
 
-	v60WritePSW(MemRead32(SP));
+	tempPSW=MemRead32(SP);
 	SP += 4;
 
 	// Destroy stack frame
 	SP += amOut;
+	
+	v60WritePSW(tempPSW);
 
 	logWrite(0, "INTERRUPT: Exiting PC: %x, SP: %x\n", PC, SP);
 

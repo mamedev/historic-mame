@@ -8,7 +8,6 @@ High Voltage      (c) 1985 Alpha Denshi Co.
 
 drivers by Acho A. Tang
 
-
 Stephh's notes (based on the games M68000 code and some tests) :
 
 0) all games
@@ -83,15 +82,10 @@ TO DO :
   - support screen flipping in 'equites' and 'splndrbt'.
 
 
-Revisions:
-
-xx-xx-2002 (trial release)
-
-
 Hardware Deficiencies
 ---------------------
 
-- Lack of 8303/8404 tech info. All MCU results are wild guesses.
+- Lack of 8303/8404 tech info. All MCU results are guessed.
 
   equites_8404rule(unsigned pc, int offset, int data) details:
 
@@ -99,15 +93,19 @@ Hardware Deficiencies
 	offset: 8404 memory offset(in bytes) from where MCU data is read
 	  data: fake byte-value to return (negative numbers trigger special conditions)
 
-- Bull Fighter's RGB PROMs need redump. (make-up's included *inaccurate*)
-- The Koukouyakyuh's epr-6706.bin needs redump. (fixed ROM included)
+The following ROMs need redump:
+
+- Bull Fighter's RGB PROMs (the ones in use are fake make-up's)
+- The Koukouyakyuh's epr-6706.bin (the one in use is patched)
 
 
 Emulation Deficiencies
 ----------------------
 
-- Equites has a one-frame sprite lag in either the X or Y direction depends on interrupt timing.
-- High Voltage and Splendor Blast have unexplanable sprite gaps that require verification.
+- Equites has sprite lag in the post-rotate X direction depends on interrupt timing.
+- Scale factors in High Voltage and Splendor Blast are inaccurate. Actual values are believed
+  to be in the three unknown ROM s3.8l, 1.9j and 4.7m but the equations are unknown.
+
 - MSM5232 clock speed and capacitor values are not known.
 - There seems to be a rheostat on Equites' soundboard to adjust the MSM5232's music pitch.
 - It hasn't been confirmed whether music tempos are the same across all games.
@@ -116,19 +114,18 @@ Emulation Deficiencies
 * Special Thanks to:
 
   Jarek Burczynski for a superb MSM5232 emulation
-  The Equites WIP webmasters(Maccy? Lone Wolf?) for all the vital screenshots and sound clips
+  The Equites WIP webmasters for the vital screenshots and sound clips
   Yasuhiro Ogawa for the correct Equites ROM information
 
 
-Other unemulated Alpha Denshi games that may use similar hardware:
+Other unemulated Alpha Denshi and SNK games that may use similar hardware:
 -----------------------------------------------------------
-Year Genre Name             Japanese Name
+Maker        Year Genre Name             Japanese Name
 -----------------------------------------------------------
-1984 (SPT) Champion Croquet チャンピオンクロッケー
-1985 (SPT) Exciting Soccer2 エキサイティングサッカー2
-1985 (???) Tune Pit(?)      チェーンピット
-1985 (MAJ) Perfect Janputer パーフェクトジャンピューター
-
+Alpha Denshi 1984 (SPT) Champion Croquet チャンピオンクロッケー
+Alpha Denshi 1985 (???) Tune Pit(?)      チェーンピット
+Alpha Denshi 1985 (MAJ) Perfect Janputer パーフェクトジャンピューター
+SNK/Eastern  1985 (ACT) Gekisoh          激走
 
 *******************************************************************************/
 // Directives
@@ -137,7 +134,7 @@ Year Genre Name             Japanese Name
 #include "vidhrdw/generic.h"
 
 #define HVOLTAGE_HACK	0
-#define EASY_TEST_MODE	0
+#define EASY_TEST_MODE	1
 
 // Equites Hardware
 #define BMPAD 8
@@ -257,9 +254,9 @@ static INTERRUPT_GEN( equites_interrupt )
 static INTERRUPT_GEN( splndrbt_interrupt )
 {
 	if (cpu_getiloops())
-		cpu_set_irq_line(0, 1, HOLD_LINE);
-	else
 		cpu_set_irq_line(0, 2, HOLD_LINE);
+	else
+		cpu_set_irq_line(0, 1, HOLD_LINE);
 }
 
 /******************************************************************************/
@@ -713,10 +710,10 @@ static MACHINE_DRIVER_START( equites )
 	MDRV_CPU_VBLANK_INT(equites_interrupt, 2)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_VBLANK_DURATION(600)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
 	MDRV_SCREEN_SIZE(256 +BMPAD*2, 256 +BMPAD*2)
 	MDRV_VISIBLE_AREA(0 +BMPAD, 256-1 +BMPAD, 24 +BMPAD, 232-1 +BMPAD)
 	MDRV_PALETTE_LENGTH(256)
@@ -740,11 +737,11 @@ static MACHINE_DRIVER_START( splndrbt )
 	MDRV_CPU_VBLANK_INT(splndrbt_interrupt, 2)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_VBLANK_DURATION(600)
 	MDRV_MACHINE_INIT(splndrbt)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
 	MDRV_SCREEN_SIZE(256, 256)
 	MDRV_VISIBLE_AREA(0, 256-1, 64, 256-1)
 	MDRV_PALETTE_LENGTH(256)
@@ -1298,4 +1295,3 @@ GAMEX( 1985, splndrbt, 0,        splndrbt, splndrbt, splndrbt, ROT0,  "Alpha Den
 GAMEX( 1985, hvoltage, 0,        splndrbt, hvoltage, hvoltage, ROT0,  "Alpha Denshi Co.", "High Voltage", GAME_UNEMULATED_PROTECTION )
 
 /******************************************************************************/
-

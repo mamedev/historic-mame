@@ -160,6 +160,7 @@ DRIVER_INIT( mrkougb );
 DRIVER_INIT( mimonkey );
 DRIVER_INIT( sfx );
 DRIVER_INIT( gmgalax );
+DRIVER_INIT( ladybugg );
 
 MACHINE_INIT( scramble );
 MACHINE_INIT( sfx );

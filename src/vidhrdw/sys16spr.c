@@ -39,6 +39,7 @@ int sys16_sprite_shinobi( struct sys16_sprite_attributes *sprite, const UINT16 *
 	6	------ZZ	ZZZZZZZZ	zoomy: (defaults to zoomx)
 	7	--------	--------
 */
+	extern int sys16_wwfix; //*
 	UINT16 ypos = source[0];
 	UINT16 width = source[2];
 	int top = ypos&0xff;
@@ -63,7 +64,7 @@ int sys16_sprite_shinobi( struct sys16_sprite_attributes *sprite, const UINT16 *
 		sprite->zoomx = zoomx;
 		sprite->zoomy = zoomy;
 		sprite->pitch = source[2]&0xff;
-		sprite->gfx = 2*(source[3] + sys16_obj_bank[(attributes>>8)&0xf]*0x10000);
+		sprite->gfx = ( source[3] + (sys16_obj_bank[(attributes>>8)&0xf]<<(16+sys16_wwfix)) ) << 1; //*
 	}
 	return 0;
 }
@@ -109,9 +110,9 @@ int sys16_sprite_passshot( struct sys16_sprite_attributes *sprite, const UINT16 
 		if( sprite->flags&SYS16_SPR_FLIPX ){
 			bank = (bank-1) & 0xf; /* ? */
 		}
-		sprite->gfx = (number*4 + (sys16_obj_bank[bank] << 17))/2;
+		sprite->gfx = ((number-(short)width)*4 + (sys16_obj_bank[bank] << 17))/2; //*
 		sprite->x = xpos;
-		sprite->y = top+2;
+		sprite->y = top+2; //*
 		sprite->zoomx = sprite->zoomy = zoom;
 	}
 	return 0;
@@ -194,7 +195,7 @@ int sys16_sprite_fantzone( struct sys16_sprite_attributes *sprite, const UINT16 
 			sprite->flags ^= SYS16_SPR_FLIPX;
 		}
 		sprite->screen_height = bottom-top;
-		top++; bottom++;
+		//top++; bottom++;
 		sprite->x = source[1] + sys16_sprxoffset;
 		if( sprite->x > 0x140 ) sprite->x -= 0x200;
 		sprite->y = top;
@@ -248,8 +249,8 @@ int sys16_sprite_quartet2( struct sys16_sprite_attributes *sprite, const UINT16 
 			}
 			gfx = tsource[3]*4;
 			width = tsource[2];
-			top++;
-			bottom++;
+			//top++;
+			//bottom++;
 			sprite->x = source[1] + sys16_sprxoffset;
 			if(sprite->x > 0x140) sprite->x-=0x200;
 			sprite->y = top;
@@ -347,9 +348,9 @@ int sys16_sprite_sharrier( struct sys16_sprite_attributes *sprite, const UINT16 
 #endif
 		sprite->x = ((source[1] & 0x3ff) + sys16_sprxoffset);
 		if(sprite->x >= 0x200) sprite->x-=0x200;
-		sprite->y = top+1;
+		sprite->y = top;
 		sprite->priority = 0;
-		sprite->screen_height = bottom-top-1;
+		sprite->screen_height = bottom-top;
 		sprite->pitch = (source[2]&0x7f)*2;
 		sprite->flags = SYS16_SPR_VISIBLE;
 		if( source[3]&0x8000 ) sprite->flags |= SYS16_SPR_FLIPX;
@@ -398,7 +399,7 @@ int sys16_sprite_outrun( struct sys16_sprite_attributes *sprite, const UINT16 *s
 		sprite->y = source[0]&0xff;
 		sprite->priority = 3;
 		sprite->color = 0x80 + (source[5]&0x7f);
-		sprite->screen_height = (source[5]>>8)-1;
+		sprite->screen_height = (source[5]>>8);
 		sprite->pitch = (source[2]>>8)&0xfe; /* 32 bit sprites */
 		if( (source[4]&0x4000)==0 ) sprite->flags |= SYS16_SPR_FLIPX;
 		if( (source[4]&0x2000)==0 ) sprite->flags |= SYS16_SPR_DRAW_TO_LEFT;
@@ -449,7 +450,7 @@ int sys16_sprite_aburner( struct sys16_sprite_attributes *sprite, const UINT16 *
 		sprite->y = source[0]&0xff;
 		sprite->priority = 0;
 		sprite->color = source[6]&0xff;
-		sprite->screen_height = (source[5]&0xff)-1;
+		sprite->screen_height = (source[5]&0xff);
 		sprite->pitch = (source[2]>>8)&0xfe; /* 32 bit sprites */
 		if( (source[4]&0x4000)==0 ) sprite->flags |= SYS16_SPR_FLIPX;
 		if( (source[4]&0x2000)==0 ) sprite->flags |= SYS16_SPR_DRAW_TO_LEFT;

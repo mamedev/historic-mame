@@ -2848,11 +2848,8 @@ void sh2_set_reg (int regnum, unsigned val)
 	{
 	case SH2_PC:
 	case REG_PC:
-		if (sh2.delay)
-		{
-			sh2.pc = val;
-			sh2.delay = 0;
-		}
+		sh2.pc = val;
+		sh2.delay = 0;
 		break;
 	case REG_SP:   sh2.r[15] = val;    break;
 	case SH2_PR:   sh2.pr = val;	   break;

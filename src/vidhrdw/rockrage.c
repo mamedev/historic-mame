@@ -41,7 +41,7 @@ static void tile_callback(int layer, int bank, int *code, int *color)
 
 static void sprite_callback(int *code,int *color)
 {
-	*code |= ((*color & 0x40) << 2) | ((*color & 0x80) << 1)*(rockrage_vreg << 1);
+	*code |= ((*color & 0x40) << 2) | ((*color & 0x80) << 1)*((rockrage_vreg & 0x03) << 1);
 	*code = (*code << 2) | ((*color & 0x30) >> 4);
 	*color = 0;
 }
@@ -75,6 +75,8 @@ VIDEO_START( rockrage )
 
 	if (K007420_vh_start(1,sprite_callback))
 		return 1;
+
+	K007420_set_banklimit(0x3ff); // bladestl and battlnts may also need this
 
 	return 0;
 }

@@ -1785,7 +1785,7 @@ ROM_START( sdtennis )
 	ROM_LOAD( "ao_07.12c",  0xc000, 0x2000, CRC(064888db) SHA1(f7bb728ab3408bb553191d9e131a441db1b39666) )
 	ROM_LOAD( "ao_06.12d",  0xe000, 0x2000, CRC(413c984c) SHA1(1431df4db52d621ba39fd47dbd49da103b5c0bcf) )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
+	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU + 64k for decrypted opcodes */
 	ROM_LOAD( "ao_05.6c",    0xf000, 0x1000, CRC(46833e38) SHA1(420831149a566199d6a3c74ef3df0687b4ddcbe4) )
 
 	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -1797,6 +1797,19 @@ ROM_START( sdtennis )
 	ROM_LOAD( "ao_03.10e",   0x0000, 0x1000, CRC(1977db9b) SHA1(d175974967fdeb608df668089fa2a14b2d1609e6) )
 	ROM_LOAD( "ao_04.10f",   0x1000, 0x1000, CRC(921952af) SHA1(4e9248f3493a5f4651278f27c11f507571242317) )
 ROM_END
+
+static void decrypt_C10707_cpu(int cpu, int region)
+{
+	int A;
+	unsigned char *rom = memory_region(region);
+	int diff = memory_region_length(region) / 2;
+
+	memory_set_opcode_base(cpu,rom+diff);
+
+	/* Swap bits 5 & 6 for opcodes */
+	for (A = 0;A < 0x10000;A++)
+		rom[A+diff] = swap_bits_5_6(rom[A]);
+}
 
 static READ_HANDLER( wtennis_reset_hack_r )
 {
@@ -1840,15 +1853,7 @@ static DRIVER_INIT( zoar )
 
 static DRIVER_INIT( lnc )
 {
-	int A;
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
-
-	memory_set_opcode_base(0,rom+diff);
-
-	/* Swap bits 5 & 6 for opcodes */
-	for (A = 0;A < 0x10000;A++)
-		rom[A+diff] = swap_bits_5_6(rom[A]);
+	decrypt_C10707_cpu(0, REGION_CPU1);
 }
 
 static DRIVER_INIT( wtennis )
@@ -1857,6 +1862,11 @@ static DRIVER_INIT( wtennis )
 	init_lnc();
 }
 
+static DRIVER_INIT( sdtennis )
+{
+	decrypt_C10707_cpu(0, REGION_CPU1);
+	decrypt_C10707_cpu(1, REGION_CPU2);
+}
 
 
 GAME( 1982, btime,    0,       btime,    btime,    btime,   ROT270, "Data East Corporation", "Burger Time (Data East set 1)" )
@@ -1872,4 +1882,4 @@ GAME( 1982, caractn,  brubber, bnj,      bnj,      lnc,     ROT270, "bootleg", "
 GAME( 1982, zoar,     0,       zoar,     zoar,     zoar,    ROT270, "Data East USA", "Zoar" )
 GAME( 1982, disco,    0,       disco,    disco,    btime,   ROT270, "Data East", "Disco No.1" )
 GAME( 1982, discof,   disco,   disco,    disco,    btime,   ROT270, "Data East", "Disco No.1 (Rev.F)" )
-GAME( 1983, sdtennis, 0,       bnj,      sdtennis, lnc,     ROT270, "Data East Corporation", "Super Doubles Tennis" )
+GAME( 1983, sdtennis, 0,       bnj,      sdtennis, sdtennis,ROT270, "Data East Corporation", "Super Doubles Tennis" )

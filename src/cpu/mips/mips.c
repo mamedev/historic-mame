@@ -205,8 +205,8 @@ static UINT32 mips_mtc0_writemask[]=
 #define GTELOG( a ) logerror( "%08x: GTE: %08x " a "\n", mipscpu.pc, INS_COFUN( mipscpu.op ) ); /* usrintf_showmessage_secs( 1, "GTE" ); */
 #define GTELOGX( a, ... ) logerror( "%08x: GTE: %08x " a "\n", mipscpu.pc, INS_COFUN( mipscpu.op ), ## __VA_ARGS__ ); /* usrintf_showmessage_secs( 1, "GTE" ); */
 #else
-#define GTELOG( a )
-#define GTELOGX( a, ... )
+INLINE void GTELOG(const char *a) {}
+INLINE void GTELOGX(const char *a, ...) {}
 #endif
 
 static UINT32 getcp2dr( int n_reg );

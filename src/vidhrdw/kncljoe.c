@@ -11,6 +11,7 @@ static struct tilemap *bg_tilemap;
 static int tile_bank,sprite_bank;
 static int flipscreen;
 
+UINT8 *kncljoe_scrollregs;
 
 /***************************************************************************
 
@@ -120,6 +121,9 @@ VIDEO_START( kncljoe )
 		return 1;
 
 	tilemap_set_scroll_rows(bg_tilemap,4);
+
+	tile_bank = sprite_bank = flipscreen = 0;
+
 	return 0;
 }
 
@@ -142,37 +146,59 @@ WRITE_HANDLER( kncljoe_videoram_w )
 
 WRITE_HANDLER( kncljoe_control_w )
 {
-/*	0x01	screen flip
-	0x02	coin counter#1
-	0x04	sprite bank
-	0x10	character bank
-	0x20	coin counter#2
-*/
-	/* coin counters:
-		reset when IN0 - Coin 1 goes low (active)
-		set after IN0 - Coin 1 goes high AND the credit has been added
-	*/
+	int i;
 
-	flipscreen = data & 0x01;
-	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? TILEMAP_FLIPX : TILEMAP_FLIPY);
-
-	coin_counter_w(0,data & 0x02);
-	coin_counter_w(1,data & 0x20);
-
-	if (tile_bank != ((data & 0x10) >> 4))
+	switch(offset)
 	{
-		tile_bank = (data & 0x10) >> 4;
-		tilemap_mark_all_tiles_dirty(bg_tilemap);
-	}
+		/*
+			0x01	screen flip
+			0x02	coin counter#1
+			0x04	sprite bank
+			0x10	character bank
+			0x20	coin counter#2
 
-	sprite_bank = (data & 0x04) >> 2;
+			reset when IN0 - Coin 1 goes low (active)
+			set after IN0 - Coin 1 goes high AND the credit has been added
+		*/
+		case 0:
+			flipscreen = data & 0x01;
+			tilemap_set_flip(ALL_TILEMAPS,flipscreen ? TILEMAP_FLIPX : TILEMAP_FLIPY);
+
+			coin_counter_w(0,data & 0x02);
+			coin_counter_w(1,data & 0x20);
+
+			i = (data & 0x10) >> 4;
+			if (tile_bank != i)
+			{
+				tile_bank = i;
+				tilemap_mark_all_tiles_dirty(bg_tilemap);
+			}
+
+			i = (data & 0x04) >> 2;
+			if (sprite_bank != i)
+			{
+				sprite_bank = i;
+				memset(memory_region(REGION_CPU1)+0xf100, 0, 0x180);
+			}
+		break;
+		case 1:
+			// ???
+		break;
+		case 2:
+			// ???
+		break;
+	}
 }
 
 WRITE_HANDLER( kncljoe_scroll_w )
 {
-	tilemap_set_scrollx(bg_tilemap,0,data);
-	tilemap_set_scrollx(bg_tilemap,1,data);
-	tilemap_set_scrollx(bg_tilemap,2,data);
+	int scrollx;
+
+	kncljoe_scrollregs[offset] = data;
+	scrollx = kncljoe_scrollregs[0] | kncljoe_scrollregs[1]<<8;
+	tilemap_set_scrollx(bg_tilemap,0,scrollx);
+	tilemap_set_scrollx(bg_tilemap,1,scrollx);
+	tilemap_set_scrollx(bg_tilemap,2,scrollx);
 	tilemap_set_scrollx(bg_tilemap,3,0);
 }
 
@@ -188,7 +214,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 {
 	struct rectangle clip = *cliprect;
 	const struct GfxElement *gfx = Machine->gfx[1 + sprite_bank];
-	int offs;
+	int i, j, pribase[4]={0x0180, 0x0080, 0x0100, 0x0000};
 
 	/* score covers sprites */
 	if (flipscreen)
@@ -202,8 +228,10 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 			clip.min_y = Machine->visible_area.min_y + 64;
 	}
 
-	for (offs = spriteram_size;offs >= 0;offs -= 4)
+	for (i=0; i<4; i++)
+	for (j=0x7c; j>=0; j-=4)
 	{
+		int offs = pribase[i] + j;
 		int sy = spriteram[offs];
 		int sx = spriteram[offs+3];
 		int code = spriteram[offs+2];
@@ -211,6 +239,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 		int flipx = attr & 0x40;
 		int flipy = !(attr & 0x80);
 		int color = attr & 0x0f;
+
 		if (attr & 0x10) code += 512;
 		if (attr & 0x20) code += 256;
 
@@ -221,6 +250,8 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 			sx = 240 - sx;
 			sy = 240 - sy;
 		}
+
+		if (sx >= 256-8) sx -= 256;
 
 		drawgfx(bitmap,gfx,
 				code,

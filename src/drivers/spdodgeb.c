@@ -5,14 +5,15 @@ Super Dodgeball / Nekketsu Koukou Dodgeball Bu
 briver by Paul Hampson and Nicola Salmoria
 
 TODO:
-- sprite lag
-- rowscroll
+- sprite lag (the real game has quite a bit of lag too)
+- rowscroll (not used expect for status display)
+- double-tap tolerance
 
 Notes:
 - there's probably a 63701 on the board, used for protection. It is checked
   on startup and then just used to read the input ports. It doesn't return
   the ports verbatim, it adds further processing, setting flags when the
-  player double-taps in one direction to run.
+  player double-taps in one direction to run.(updated to edge-triggering)
 
 ***************************************************************************/
 
@@ -97,6 +98,7 @@ static void spd_adpcm_int(int chip)
 static int mcu63701_command;
 static int inputs[4];
 
+#if 0	// default - more sensitive (state change and timing measured on real board?)
 static void mcu63705_update_inputs(void)
 {
 	static int running[2],jumped[2];
@@ -161,6 +163,67 @@ static void mcu63705_update_inputs(void)
 	inputs[2] = running[0] | buttons[0];
 	inputs[3] = running[1] | buttons[1];
 }
+#else	// alternate - less sensitive
+static void mcu63705_update_inputs(void)
+{
+#define DBLTAP_TOLERANCE 5
+
+#define R 0x01
+#define L 0x02
+#define A 0x10
+#define D 0x20
+
+	static UINT8 tapc[4] = {0,0,0,0};	// R1, R2, L1, L2
+	static UINT8 last_port[2] = {0,0};
+	static UINT8 last_dash[2] = {0,0};
+	UINT8 curr_port[2];
+	UINT8 curr_dash[2];
+	int p;
+
+	for (p=0; p<=1; p++)
+	{
+		curr_port[p] = readinputport(p+2);
+		curr_dash[p] = 0;
+
+		if (curr_port[p] & R)
+		{
+			if (!(last_port[p] & R))
+			{
+				if (tapc[p]) curr_dash[p] |= R; else tapc[p] = DBLTAP_TOLERANCE;
+			}
+			else if (last_dash[p] & R) curr_dash[p] |= R;
+		}
+		else if (curr_port[p] & L)
+		{
+			if (!(last_port[p] & L))
+			{
+				if (tapc[p+2]) curr_dash[p] |= L; else tapc[p+2] = DBLTAP_TOLERANCE;
+			}
+			else if (last_dash[p] & L) curr_dash[p] |= L;
+		}
+
+		if (curr_port[p] & A && !(last_port[p] & A)) curr_dash[p] |= A;
+		if (curr_port[p] & D && !(last_port[p] & D)) curr_dash[p] |= D;
+
+		last_port[p] = curr_port[p];
+		last_dash[p] = curr_dash[p];
+
+		if (tapc[p  ]) tapc[p  ]--;
+		if (tapc[p+2]) tapc[p+2]--;
+	}
+
+	inputs[0] = curr_port[0] & 0xcf;
+	inputs[1] = curr_port[1] & 0x0f;
+	inputs[2] = curr_dash[0];
+	inputs[3] = curr_dash[1];
+
+#undef DBLTAP_TOLERANCE
+#undef R
+#undef L
+#undef A
+#undef D
+}
+#endif
 
 static READ_HANDLER( mcu63701_r )
 {
@@ -375,14 +438,14 @@ static MACHINE_DRIVER_START( spdodgeb )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,12000000/6)	/* 2MHz ? */
 	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(spdodgeb_interrupt,34)	/* 1 IRQ every 8 visible scanlines, plus NMI for vblank */
+	MDRV_CPU_VBLANK_INT(spdodgeb_interrupt,33)	/* 1 IRQ every 8 visible scanlines, plus NMI for vblank */
 
 	MDRV_CPU_ADD(M6809,12000000/6)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 2MHz ? */
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -460,8 +523,8 @@ ROM_START( nkdodgeb )
 	ROM_LOAD( "22j7-0.82",    0x10000, 0x10000, CRC(2fa1de21) SHA1(e8c7af6057b64ecadd3473b82abd8e9f873082fd) )
 
 	ROM_REGION( 0x0800, REGION_PROMS, 0 )	/* color PROMs */
-	ROM_LOAD( "mb7132e.158",  0x0000, 0x0400, CRC(7e623722) SHA1(e1fe60533237bd0aba5c8de9775df620ed5227c0) )
-	ROM_LOAD( "mb7122e.159",  0x0400, 0x0400, CRC(69706e8d) SHA1(778ee88ff566aa38c80e0e61bb3fe8458f0e9450) )
+	ROM_LOAD( "27s191.bin",  0x0000, 0x0800, CRC(317e42ea) SHA1(59caacc02fb7fb11604bd177f790fd68830ca7c1) )
+	ROM_LOAD( "82s137.bin",  0x0400, 0x0400, CRC(6059f401) SHA1(280b1bda3a55f2d8c2fd4552c4dcec7100f0170f) )
 ROM_END
 
 

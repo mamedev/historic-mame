@@ -95,7 +95,8 @@ static WRITE_HANDLER( sgladiat_soundlatch_w )
 	soundlatch_w( offset, data );
 
 	/* trigger NMI on sound CPU */
-	cpu_set_nmi_line(2, ASSERT_LINE);
+//	cpu_set_nmi_line(2, PULSE_LINE);
+	cpu_set_nmi_line(2, PULSE_LINE);	// safer because NMI can be lost in rare occations
 }
 
 static READ_HANDLER( sgladiat_soundlatch_r )
@@ -106,7 +107,7 @@ static READ_HANDLER( sgladiat_soundlatch_r )
 
 static READ_HANDLER( sgladiat_sound_nmi_ack_r )
 {
-	cpu_set_nmi_line(2, CLEAR_LINE);
+//	cpu_set_nmi_line(2, CLEAR_LINE);
 	return 0;
 }
 

@@ -101,14 +101,14 @@ static int lastscroll;
 
 INTERRUPT_GEN( spdodgeb_interrupt )
 {
-	int line = 33 - cpu_getiloops();
+	int iloop = cpu_getiloops();
 
-	if (line < 30)
+	if (iloop > 1 && iloop < 32)
 	{
-		scrollx[line] = lastscroll;
+		scrollx[31-iloop] = lastscroll;
 		cpu_set_irq_line(0, M6502_IRQ_LINE, HOLD_LINE);
 	}
-	else if (line == 30)	/* vblank */
+	else if (!iloop)
 		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 }
 
@@ -170,22 +170,21 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 
 	src = spriteram;
 
-/*	240-Y    S|X|CLR|WCH WHICH    240-X
+/*	240-SY   Z|F|CLR|WCH WHICH    SX
 	xxxxxxxx x|x|xxx|xxx xxxxxxxx xxxxxxxx
 */
-
-
 	for (i = 0;i < spriteram_size;i += 4)
 	{
 		int attr = src[i+1];
 		int which = src[i+2]+((attr & 0x07)<<8);
-		int sx = ((src[i+3] + 8) & 0xff) - 8;
+		int sx = src[i+3];
 		int sy = 240 - src[i];
 		int size = (attr & 0x80) >> 7;
 		int color = (attr & 0x38) >> 3;
 		int flipx = ~attr & 0x40;
 		int flipy = 0;
 		int dy = -16;
+		int cy;
 
 		if (flip_screen)
 		{
@@ -196,14 +195,20 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 			dy = -dy;
 		}
 
+		if (sx < -8) sx += 256; else if (sx > 248) sx -= 256;
+
 		switch (size)
 		{
 			case 0: /* normal */
+			if (sy < -8) sy += 256; else if (sy > 248) sy -= 256;
 			DRAW_SPRITE(0,sx,sy);
 			break;
 
 			case 1: /* double y */
-			DRAW_SPRITE(0,sx,sy + dy);
+			if (flip_screen) { if (sy > 240) sy -= 256; } else { if (sy < 0) sy += 256; }
+			cy = sy + dy;
+			which &= ~1;
+			DRAW_SPRITE(0,sx,cy);
 			DRAW_SPRITE(1,sx,sy);
 			break;
 		}

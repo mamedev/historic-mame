@@ -11,8 +11,14 @@ games, and the video hardware is pretty much like Irem games too. The only
 strange thing is that the screen is flipped vertically.
 
 TODO:
-- you can't play anymore after you die
-- lots of unknown dipswitches
+- sprite vs. sprite priority especially on ground level
+
+Updates:
+- you can't play anymore after you die(clock speed too low, check XTAL)
+- scrolling in bike levels(scroll register overflow)
+- sprites disappearing at left screen edge(bad clipping)
+- artifacts in stage 3 and others(clear sprite mem at bank switch?)
+(081503AT)
 
 ***************************************************************************/
 
@@ -23,13 +29,13 @@ TODO:
 
 
 /* from vidhrdw */
-VIDEO_START( kncljoe );
-PALETTE_INIT( kncljoe );
-VIDEO_UPDATE( kncljoe );
-WRITE_HANDLER(kncljoe_videoram_w);
-WRITE_HANDLER(kncljoe_control_w);
-WRITE_HANDLER(kncljoe_scroll_w);
-
+extern VIDEO_START( kncljoe );
+extern PALETTE_INIT( kncljoe );
+extern VIDEO_UPDATE( kncljoe );
+extern WRITE_HANDLER(kncljoe_videoram_w);
+extern WRITE_HANDLER(kncljoe_control_w);
+extern WRITE_HANDLER(kncljoe_scroll_w);
+extern UINT8 *kncljoe_scrollregs;
 
 
 static MEMORY_READ_START( readmem )
@@ -40,6 +46,8 @@ static MEMORY_READ_START( readmem )
 	{ 0xd802, 0xd802, input_port_2_r }, /* IN 2 */
 	{ 0xd803, 0xd803, input_port_3_r },	/* DSW A */
 	{ 0xd804, 0xd804, input_port_4_r },	/* DSW B */
+	{ 0xd807, 0xd807, MRA_NOP },		/* unknown read */
+	{ 0xd817, 0xd817, MRA_NOP },		/* unknown read */
 	{ 0xe800, 0xefff, MRA_RAM },		/* spriteram */
 	{ 0xf000, 0xffff, MRA_RAM },
 MEMORY_END
@@ -47,9 +55,9 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, kncljoe_videoram_w, &videoram },
-	{ 0xd000, 0xd000, kncljoe_scroll_w },
+	{ 0xd000, 0xd001, kncljoe_scroll_w, &kncljoe_scrollregs },
 	{ 0xd800, 0xd800, irem_sound_cmd_w },
-	{ 0xd801, 0xd801, kncljoe_control_w },
+	{ 0xd801, 0xd803, kncljoe_control_w },
 	{ 0xe800, 0xefff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xf000, 0xffff, MWA_RAM },
 MEMORY_END
@@ -60,8 +68,8 @@ INPUT_PORTS_START( kncljoe )
 	PORT_START	/* IN 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_LOW, IPT_COIN1, 4 )
-	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_COIN2, 4 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -174,16 +182,16 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( kncljoe )
 
 	/* basic machine hardware */
-//	MDRV_CPU_ADD(Z80, 4000000) /* ? MHz */
-	MDRV_CPU_ADD(Z80, 6000000) /* with this value, the game doesn't hang ! */
+//	MDRV_CPU_ADD(Z80, 4000000) /* 4 MHz */
+	MDRV_CPU_ADD(Z80, 5500000) /* 4 MHz is too low. The game loop never finishes a frame in time. */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_VBLANK_DURATION(1500)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(1*8, 31*8-1, 0*8, 32*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)

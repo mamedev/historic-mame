@@ -3061,30 +3061,66 @@ DRIVER_INIT( berlwall )
 	U19         "
 	U18         "
 
+Bakuretsu Breaker
+Kaneko, 1992
+
+PCB Layout
+----------
+
+ZOOFC-02
+|------------------------------------------|
+| PAL    TS020.U33                PAL      |
+| 6264                            6264     |
+| 6264    VIEW2-CHIP              6264     |
+| 4464 4464           VIEW2-CHIP  TS010.U4 |
+| 4464 4464                                |
+| 4464 4464                       699206P  |
+|                         5116    (QFP44)  |
+|                                          |
+|         TS002J.U36 MUX2-CHIP    699205P  |
+|VU-002   TS001J.U37      5116    (QFP44) J|
+|(QFP160) TS000J.U38                      A|
+|                   62256 TS100J.U18      M|
+|        6116 6116  62256 TS101J.U19      M|
+|        PAL                     PAL      A|
+|16MHz   PAL  PAL  TMP68HC000N-12          |
+|12MHz        PAL                IU-001    |
+|   VU-001                      (QFP44)    |
+|   (QFP48)  YM2149      PAL               |
+|93C46       YM2149  TS030.U5  M6295       |
+|    DSW1(4)                               |
+|------------------------------------------|
+
+Notes:
+       68000 clock: 12.000MHz
+      YM2149 clock: 2.000MHz
+       M6295 clock: 2.000MHz, sample rate = clock /132
+             VSync: 59Hz
+             HSync: 15.68kHz
+
+
 ***************************************************************************/
 
 ROM_START( bakubrkr )
  	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* 68000 Code */
-	ROM_LOAD16_BYTE( "u18", 0x000000, 0x040000, CRC(8cc0a4fd) )
-	ROM_LOAD16_BYTE( "u19", 0x000001, 0x040000, CRC(aea92195) )
+	ROM_LOAD16_BYTE( "ts100j.u18", 0x000000, 0x040000, CRC(8cc0a4fd) )
+	ROM_LOAD16_BYTE( "ts101j.u19", 0x000001, 0x040000, CRC(aea92195) )
 
 	ROM_REGION( 0x240000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
-	ROM_LOAD( "u37",  0x000000, 0x080000, CRC(70b66e7e) )
+	ROM_LOAD( "ts001j.u37",  0x000000, 0x080000, CRC(70b66e7e) )
 	ROM_RELOAD(       0x100000, 0x080000             )
-	ROM_LOAD( "u38",  0x080000, 0x080000, CRC(a7a94143) )
+	ROM_LOAD( "ts000j.u38",  0x080000, 0x080000, CRC(a7a94143) )
 	ROM_RELOAD(       0x180000, 0x080000             )
-	ROM_LOAD( "u36",  0x200000, 0x040000, CRC(611271e6) )
+	ROM_LOAD( "ts002j.u36",  0x200000, 0x040000, CRC(611271e6) )
 
-	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )	/* Tiles */
-	ROM_LOAD( "layer1", 0x000000, 0x040000, NO_DUMP )
-	ROM_FILL(           0x000000, 0x040000, 0x00 )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Tiles */
+	ROM_LOAD( "ts010.u4", 0x000000, 0x100000,  CRC(df935324) SHA1(73b7aff8800a4e88a47ad426190b73dabdfbf142) )
 
-	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )	/* Tiles */
-	ROM_LOAD( "layer2", 0x000000, 0x040000, NO_DUMP )
-	ROM_FILL(           0x000000, 0x040000, 0x00 )
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* Tiles */
+	ROM_LOAD( "ts020.u33", 0x000000, 0x100000, CRC(eb58c35d) SHA1(762c5219de6f729a0fc1df90fce09cdf711c2a1e) )
 
-	ROM_REGION( 0x040000, REGION_SOUND1, 0 )	/* Samples */
-	ROM_LOAD( "samples", 0x000000, 0x040000, NO_DUMP )
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "ts030.u5", 0x000000, 0x100000, CRC(1d68e9d1) SHA1(aaa64a8e8d7cd7f91d2be346fafb9d1f29b40eda) )
 ROM_END
 
 

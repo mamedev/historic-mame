@@ -610,7 +610,7 @@ static UINT64 get_file_size(const char *file)
 
 	/* attempt to open the file */
 	handle = CreateFile(file, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
-	if (file == INVALID_HANDLE_VALUE)
+	if (handle == INVALID_HANDLE_VALUE)
 		return 0;
 
 	/* get the file size */

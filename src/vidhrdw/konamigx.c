@@ -11,43 +11,37 @@
 #include "vidhrdw/konamiic.h"
 #include "machine/konamigx.h"
 
-/*
-> the color DAC has a 8 bits r/g/b and a 8bits brightness
-> but there is 1 ram per color channel for the palette and no ram for brightness
-> I guess you have a global brightness control in the '338 ?
-> hmmm, to add insult to injury, the 5x5 has inputs for 4 tilemaps and 3 sprite-ish thingies
-> but only 2 of the spriteish thingies are actually connected
-> one is the output
-> it outputs a spriteish thingy, probably so that you can cascade them
-> specifically, you have 4 10bpp tilemaps inputs
-> 2 8bpp color, 8bpp priority, 2 mix, 2 bri, 2 shadow inputs
-         and one 17bpp, 8bpp pri, 2 mix and 2 bri that goes to the rom board
-> one of the two pure sprite ones is grounded
-> and you have a 17bpp, 8 pri, 1 dot on, 2 mix, 2 bri, 2 shadow output
-> I guess the dot on tells the 338 when to insert its own background color
-> the 338 gets in 13 of the color bits, and all the meta
-> I guess in case of blending the 5x5 outputs more than one color per pixel
-
-> pasc4 = 56540
-> the structure seems to be psac2-vram-h/c/rom-psac4 in that order
-> the psac 2 computing the coordinates
-> ok, the psac2 output 2 11 bits coordinates
-> bits 4-11 of each plus a double buffering bit lookup in 3 8bits rams to the get 24 bits data
-> the top 8 bits are weird, the bottom 16 are directly an address, once you shift in the 8 remaining bits
-> i.e., it's 16x16 tiles
-> in fact the top 8 are xored with the bottom 8 bits, i.e. they fuzz the coordinates
-> oh no, they don't fuzz
-> they're flipx/y
-
-*/
-
 static int layer_colorbase[4];
 static int gx_tilebanks[8], gx_oldbanks[8];
 static int gx_invertlayersBC;
-static int gx_tilemode;
-
+static int gx_tilemode, gx_rozenable, psac_colorbase, last_psac_colorbase;
+static struct tilemap *gx_psac_tilemap;
+extern data32_t *gx_psacram, *gx_subpaletteram32;
 
 static void (*game_tile_callback)(int, int *, int *);
+
+static void get_gx_psac_tile_info(int tile_index)
+{
+	int tileno, colour, flipx;
+	data16_t *map16 = (data16_t *)gx_psacram;
+
+	tileno = map16[tile_index*2+1] & 0x3fff;
+	colour = (psac_colorbase << 4);
+	flipx = 0;
+
+	SET_TILE_INFO(0, tileno, colour, TILE_FLIPYX(flipx))
+}
+
+static void get_gx_psac3_tile_info(int tile_index)
+{
+	int tileno, colour;
+	unsigned char *tmap = memory_region(REGION_GFX4);
+
+	tileno = tmap[tile_index*2] | ((tmap[(tile_index*2)+1] & 0x3f)<<8);
+	colour = (psac_colorbase << 4);
+
+	SET_TILE_INFO(0, tileno, colour, 0)
+}
 
 static void konamigx_type2_tile_callback(int layer, int *code, int *color)
 {
@@ -147,6 +141,8 @@ static int _gxcommoninit(void)
 		return 1;
 	}
 
+	gx_rozenable = 0;
+
 	return _gxcommoninitnosprites();
 }
 
@@ -194,6 +190,23 @@ VIDEO_START(konamigx_5bpp)
 	{
 		K053247GP_set_SpriteOffset(-42, -23);
 	}
+
+	return 0;
+}
+
+VIDEO_START(winspike)
+{
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_8, 0, NULL, konamigx_alpha_tile_callback))
+	{
+		return 1;
+	}
+
+	if (K055673_vh_start(REGION_GFX2, K055673_LAYOUT_LE2, -42, -23, konamigx_le2_sprite_callback))
+	{
+		return 1;
+	}
+
+	if (_gxcommoninitnosprites()) return 1;
 
 	return 0;
 }
@@ -258,6 +271,42 @@ VIDEO_START(konamigx_6bpp)
 	return 0;
 }
 
+VIDEO_START(konamigx_type3)
+{
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_6, 0, NULL, konamigx_type2_tile_callback))
+	{
+		return 1;
+	}
+
+	if (_gxcommoninit()) return 1;
+
+	gx_psac_tilemap = tilemap_create(get_gx_psac3_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16, 16, 256, 1024);
+	gx_rozenable = 1;
+
+	K053936_wraparound_enable(0, 0);
+	K053936GP_set_offset(0, 0, 0);
+
+	return 0;
+}
+
+VIDEO_START(konamigx_type4)
+{
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_8, 0, NULL, konamigx_type2_tile_callback))
+	{
+		return 1;
+	}
+
+	if (_gxcommoninit()) return 1;
+
+	gx_psac_tilemap = tilemap_create(get_gx_psac_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16, 16, 128, 128);
+	gx_rozenable = 1;
+
+	K053936_wraparound_enable(0, 0);
+	K053936GP_set_offset(0, 0, 0);
+
+	return 0;
+}
+
 VIDEO_START(konamigx_6bpp_2)
 {
 	if (K056832_vh_start(REGION_GFX1, K056832_BPP_6, 1, NULL, konamigx_type2_tile_callback))
@@ -304,9 +353,34 @@ VIDEO_START(konamigx_type1)
 		K056832_set_LayerOffset(3,  3+1, 0);
 	}
 
+	gx_rozenable = 1;
+
 	return 0;
 }
 
+VIDEO_START(racinfrc)
+{
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_6, 0, NULL, konamigx_type2_tile_callback))
+	{
+		return 1;
+	}
+
+	if (K055673_vh_start(REGION_GFX2, K055673_LAYOUT_GX, -53, -23, konamigx_type2_sprite_callback))
+	{
+		return 1;
+	}
+
+	if (_gxcommoninitnosprites()) return 1;
+
+	K056832_set_LayerOffset(0, -2+1, 0);
+	K056832_set_LayerOffset(1,  -64, 0);	// something very wrong here...
+	K056832_set_LayerOffset(2,  2+1, 0);
+	K056832_set_LayerOffset(3,  3+1, 0);
+
+	gx_rozenable = 1;
+
+	return 0;
+}
 
 VIDEO_UPDATE(konamigx)
 {
@@ -342,6 +416,18 @@ VIDEO_UPDATE(konamigx)
 		// K056832 does all the tracking in mode 1 for accuracy (Twinbee needs this)
 	}
 
+	// sub2 is PSAC colorbase on GX
+	if (gx_rozenable)
+	{
+		last_psac_colorbase = psac_colorbase;
+		psac_colorbase = K055555_get_palette_index(6);
+
+		if (psac_colorbase != last_psac_colorbase)
+		{
+			tilemap_mark_all_tiles_dirty(gx_psac_tilemap);
+		}
+	}
+
 	if (dirty) K056832_MarkAllTilemapsDirty();
 
 	if (konamigx_cfgport >= 0)
@@ -374,7 +460,10 @@ VIDEO_UPDATE(konamigx)
 	}
 	else blendmode = 0;
 
-	konamigx_mixer(bitmap, cliprect, 0, 0, 0, 0, blendmode);
+	if (gx_rozenable)
+		konamigx_mixer(bitmap, cliprect, 0, 0, gx_psac_tilemap, GXSUB_8BPP, blendmode);
+	else
+		konamigx_mixer(bitmap, cliprect, 0, 0, 0, 0, blendmode);
 
 	if( gx_invertlayersBC )
 	{
@@ -397,6 +486,51 @@ WRITE32_HANDLER( konamigx_palette_w )
 	palette_set_color(offset,r,g,b);
 }
 
+WRITE32_HANDLER( konamigx_palette2_w )
+{
+	int r,g,b;
+
+	COMBINE_DATA(&gx_subpaletteram32[offset]);
+
+	offset += (0x8000/4);
+
+	COMBINE_DATA(&paletteram32[offset]);
+
+ 	r = (paletteram32[offset] >>16) & 0xff;
+	g = (paletteram32[offset] >> 8) & 0xff;
+	b = (paletteram32[offset] >> 0) & 0xff;
+
+	palette_set_color(offset,r,g,b);
+}
+
+// main monitor for type 3
+WRITE32_HANDLER( konamigx_555_palette_w )
+{
+	COMBINE_DATA(&paletteram32[offset]);
+
+	paletteram16 = (data16_t *)paletteram32;
+	if (ACCESSING_MSW32)
+		paletteram16_xRRRRRGGGGGBBBBB_word_w(offset*2, data >> 16, mem_mask >> 16);
+	if (ACCESSING_LSW32)
+		paletteram16_xRRRRRGGGGGBBBBB_word_w(offset*2+1, data, mem_mask);
+}
+
+// sub monitor for type 3
+WRITE32_HANDLER( konamigx_555_palette2_w )
+{
+	COMBINE_DATA(&gx_subpaletteram32[offset]);
+
+	offset += (0x4000/4);
+
+	COMBINE_DATA(&paletteram32[offset]);
+	
+	paletteram16 = (data16_t *)paletteram32;
+	if (ACCESSING_MSW32)
+		paletteram16_xRRRRRGGGGGBBBBB_word_w(offset*2, data >> 16, mem_mask >> 16);
+	if (ACCESSING_LSW32)
+		paletteram16_xRRRRRGGGGGBBBBB_word_w(offset*2+1, data, mem_mask);
+}
+
 WRITE32_HANDLER( konamigx_tilebank_w )
 {
 	if (!(mem_mask & 0xff000000))
@@ -408,3 +542,11 @@ WRITE32_HANDLER( konamigx_tilebank_w )
 	if (!(mem_mask & 0xff))
 		gx_tilebanks[offset*4+3] = data&0xff;
 }
+
+WRITE32_HANDLER( konamigx_psacmap_w )
+{
+	COMBINE_DATA(&gx_psacram[offset]);
+
+	tilemap_mark_tile_dirty(gx_psac_tilemap, offset);
+}
+

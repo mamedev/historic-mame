@@ -96,7 +96,7 @@ typedef struct
 // v60 Register Inside (Hm... It's not a pentium inside :-))) )
 struct v60info {
 	struct cpu_info info;
-	UINT32 reg[58];
+	UINT32 reg[68];
 	Flags flags;
 	int irq_line;
 	int nmi_line;
@@ -148,8 +148,7 @@ int v60_ICount;
 
 #define PC		v60.reg[32]
 #define PSW		v60.reg[33]
-#define TR		v60.reg[34]
-#define PIR		v60.reg[35]
+
 #define PPC		v60.PPC
 
 // Privileged registers
@@ -159,25 +158,29 @@ int v60_ICount;
 #define L2SP	v60.reg[39]
 #define L3SP	v60.reg[40]
 #define SBR		v60.reg[41]
-#define SYCW	v60.reg[42]
-#define TKCW	v60.reg[43]
-#define PSW2	v60.reg[44]
-#define ATBR0	v60.reg[45]
-#define ATLR0	v60.reg[46]
-#define ATBR1	v60.reg[47]
-#define ATLR1	v60.reg[48]
-#define ATBR2	v60.reg[49]
-#define ATLR2	v60.reg[50]
-#define ATBR3	v60.reg[51]
-#define ATLR3	v60.reg[52]
-#define TRMODE	v60.reg[53]
-#define ADTR0	v60.reg[54]
-#define ADTR1	v60.reg[55]
-#define ADTMR0	v60.reg[56]
-#define ADTMR1	v60.reg[57]
+#define TR		v60.reg[42]
+#define SYCW	v60.reg[43]
+#define TKCW	v60.reg[44]
+#define PIR		v60.reg[45]
+//10-14 reserved
+#define PSW2	v60.reg[51]
+#define ATBR0	v60.reg[52]
+#define ATLR0	v60.reg[53]
+#define ATBR1	v60.reg[54]
+#define ATLR1	v60.reg[55]
+#define ATBR2	v60.reg[56]
+#define ATLR2	v60.reg[57]
+#define ATBR3	v60.reg[58]
+#define ATLR3	v60.reg[59]
+#define TRMODE v60.reg[60]
+#define ADTR0	v60.reg[61]
+#define ADTR1	v60.reg[62]
+#define ADTMR0	v60.reg[63]
+#define ADTMR1	v60.reg[64]
+//29-31 reserved
 
 // Register names
-const char *v60_reg_names[58] = {
+const char *v60_reg_names[68] = {
 	"R0", "R1", "R2", "R3",
 	"R4", "R5", "R6", "R7",
 	"R8", "R9", "R10", "R11",
@@ -186,13 +189,15 @@ const char *v60_reg_names[58] = {
 	"R20", "R21", "R22", "R23",
 	"R24", "R25", "R26", "R27",
 	"R28", "AP", "FP", "SP",
-	"PC", "PSW", "TR", "PIR",
+	"PC", "PSW","Unk","Unk",
 	"ISP", "L0SP", "L1SP", "L2SP",
-	"L3SP", "SBR", "SYCW", "TKCW",
-	"PSW2", "ATBR0", "ATLR0", "ATBR1",
-	"ATLR1", "ATBR2", "ATLR2", "ATBR3",
-	"ATLR3", "TRMODE", "ADTR0", "ADTR1",
-	"ADTMR0", "ADTMR1"
+	"L3SP", "SBR","TR","SYCW", 
+	"TKCW", "PIR", "Reserved","Reserved",
+	"Reserved","Reserved","Reserved","PSW2",
+	"ATBR0", "ATLR0", "ATBR1", "ATLR1",
+	"ATBR2", "ATLR2", "ATBR3", "ATLR3",
+	"TRMODE", "ADTR0", "ADTR1","ADTMR0",
+	"ADTMR1","Reserved","Reserved","Reserved"
 };
 
 // Defines...
@@ -315,7 +320,7 @@ static void base_init(const char *type)
 	v60.irq_line = CLEAR_LINE;
 	v60.nmi_line = CLEAR_LINE;
 
-	state_save_register_UINT32(type, cpu, "reg",       v60.reg, 58);
+	state_save_register_UINT32(type, cpu, "reg",       v60.reg, 68);
 	state_save_register_int   (type, cpu, "irq_line", &v60.irq_line);
 	state_save_register_int   (type, cpu, "nmi_line", &v60.nmi_line);
 	state_save_register_UINT32(type, cpu, "ppc",      &PPC, 1);
@@ -361,11 +366,13 @@ void v60_exit(void)
 
 static void v60_do_irq(int vector)
 {
+	UINT32 tempPSW;
 	UPDATEPSW();
-
+	tempPSW=PSW;
+	v60WritePSW(PSW|((1<<28)));	
 	// Push PC and PSW onto the stack
 	SP-=4;
-	MemWrite32(SP, PSW);
+	MemWrite32(SP, tempPSW);
 	SP-=4;
 	MemWrite32(SP, PC);
 

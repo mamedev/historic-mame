@@ -15,7 +15,25 @@ TODO:
 - hook up sound in bootleg (the current sound is a hack, making use of the
   Konami ROMset)
 - understand how the trackball really works
-- YM2203 pitch is wrong. Fixing it screws up the tempo (update:08/07/03AT).
+- YM2203 pitch is wrong. Fixing it screws up the tempo.
+
+  Update: 3MHz(24MHz/8) is the more appropriate clock speed for the 2203.
+  It gives the correct pitch(ear subjective) compared to the official
+  soundtrack albeit the music plays slow by about 10%.
+
+  Execution timing of the Z80 is important because it maintains music tempo
+  by polling the 2203's second timer. Even when working alone with no
+  context-switch the chip shouldn't be running at 1.5MHz otherwise it won't
+  keep the right pace. Similar Konmai games from the same period(mainevt,
+  battlnts, flkatck...etc.) all have a 3.579545MHz Z80 for sound.
+
+  In spite of adjusting clock speed polling is deemed inaccurate when
+  interleaving is taken into account. A high resolution timer around the
+  poll loop is probably the best bet. The driver sets its timer manually
+  because strange enough, interleaving doesn't occur immediately when
+  cpu_boost_interleave() is called. Speculations are TIME_NOWs could have
+  been used as the timer durations to force instant triggering.
+
 
 Credits:
 
@@ -101,8 +119,6 @@ e000-e001	YM2203
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
-
-#define YM2203_CLOCK 2500000
 
 extern unsigned char* banked_area;
 
@@ -214,45 +230,29 @@ static WRITE_HANDLER( combasc_portA_w )
 	/* unknown. always write 0 */
 }
 
-/*
-	Wrong YM2203 muisc tempo at 2.5MHz which could be caused by a slight
-	inaccuracy in counting down timer B. The driver may use custom timer
-	routines until further testing.
-*/
-#define YM2203_FLAGB 0x02
+static mame_timer *combasc_interleave_timer;
 
-static mame_timer *combasc_timerB;
-static UINT8 combasc_2203_ctrl, combasc_2203_data, combasc_timerB_reg, combasc_timerB_status;
-
-static READ_HANDLER ( combasc_YM2203_status_port_0_r )  { return((YM2203Read(0,0)&~YM2203_FLAGB)|combasc_timerB_status); }
-static WRITE_HANDLER( combasc_YM2203_control_port_0_w ) { combasc_2203_ctrl=data; YM2203Write(0,0,data); }
-static WRITE_HANDLER( combasc_YM2203_write_port_0_w )
+static READ_HANDLER ( combasc_YM2203_status_port_0_r )
 {
-	double combasc_timerB_duration;
+	static int boost = 1;
+	int status = YM2203Read(0,0);
 
-	switch (combasc_2203_ctrl)
+	if (activecpu_get_pc() == 0x334)
 	{
-		case 0x26: combasc_timerB_reg = data; return;
-		case 0x27:
-			if (data & 0x20) combasc_timerB_status = 0; // timer reset
-			if (data & 0x02) // timer load
-			{
-				// this yields the correct tempo
-				combasc_timerB_duration = (double)(255-combasc_timerB_reg)*1024 / YM2203_CLOCK;
-				timer_adjust(combasc_timerB, combasc_timerB_duration, YM2203_FLAGB, 0);
-			}
-			data &= ~0x2a; // strip all timer B related flags
+		if (boost)
+		{
+			boost = 0;
+			timer_adjust(combasc_interleave_timer, TIME_NOW, 0, TIME_IN_CYCLES(80,1));
+		}
+		else if (status & 2)
+		{
+			boost = 1;
+			timer_adjust(combasc_interleave_timer, TIME_NOW, 0, TIME_NEVER);
+		}
 	}
-	YM2203Write(0, 1, data);
-}
 
-static void combasc_timerB_callback(int param) { combasc_timerB_status = param; }
-static void combasc_YM2203_init(void)
-{
-	combasc_timerB = timer_alloc(combasc_timerB_callback);
-	combasc_timerB_status = combasc_timerB_reg = combasc_2203_data = combasc_2203_ctrl = 0;
+	return(status);
 }
-
 
 /****************************************************************************/
 
@@ -348,8 +348,8 @@ static MEMORY_WRITE_START( combasc_writemem_sound )
 	{ 0x9000, 0x9000, combasc_play_w },			/* uPD7759 play voice */
 	{ 0xa000, 0xa000, UPD7759_0_port_w },		/* uPD7759 voice select */
 	{ 0xc000, 0xc000, combasc_voice_reset_w },	/* uPD7759 reset? */
-	{ 0xe000, 0xe000, combasc_YM2203_control_port_0_w },/* YM 2203 */
-	{ 0xe001, 0xe001, combasc_YM2203_write_port_0_w },	/* YM 2203 intercepted */
+ 	{ 0xe000, 0xe000, YM2203_control_port_0_w },/* YM 2203 */
+	{ 0xe001, 0xe001, YM2203_write_port_0_w },	/* YM 2203 */
 MEMORY_END
 
 
@@ -644,13 +644,13 @@ static struct GfxDecodeInfo combascb_gfxdecodeinfo[] =
 
 static struct YM2203interface ym2203_interface =
 {
-	1,				/* 1 chip */
-	YM2203_CLOCK,	/* the correct value is 20MHz/8=2.5MHz, which gives correct pitch but wrong tempo */
+	1,							/* 1 chip */
+	3000000,					/* 24MHz(XTAL)/8 = 3MHz */
 	{ YM2203_VOL(20,20) },
 	{ 0 },
 	{ 0 },
 	{ combasc_portA_w },
-	{ 0 },
+	{ 0 }
 };
 
 static struct UPD7759_interface upd7759_interface =
@@ -672,13 +672,13 @@ static MACHINE_DRIVER_START( combasc )
 	MDRV_CPU_MEMORY(combasc_readmem,combasc_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 1500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.5 MHz? */
+	MDRV_CPU_ADD(Z80,3579545)	/* 3.579545 MHz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(combasc_readmem_sound,combasc_writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(100)	// high interleave to keep music tempo accurate
+	MDRV_INTERLEAVE(20)
 
 	MDRV_MACHINE_INIT(combasc)
 
@@ -707,13 +707,13 @@ static MACHINE_DRIVER_START( combascb )
 	MDRV_CPU_MEMORY(combascb_readmem,combascb_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 1500000)
+	MDRV_CPU_ADD(Z80,3579545)	/* 3.579545 MHz */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(combasc_readmem_sound,combasc_writemem_sound) /* FAKE */
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(100)
+	MDRV_INTERLEAVE(20)
 
 	MDRV_MACHINE_INIT(combasc)
 
@@ -890,12 +890,22 @@ ROM_END
 
 
 
+static void combasc_init_common(void)
+{
+	combasc_interleave_timer = timer_alloc(NULL);
+}
+
+static DRIVER_INIT( combasct )
+{
+	combasc_init_common();
+}
+
 static DRIVER_INIT( combasc )
 {
 	/* joystick instead of trackball */
 	install_mem_read_handler(0,0x0404,0x0404,input_port_4_r);
 
-	combasc_YM2203_init();
+	combasc_init_common();
 }
 
 static DRIVER_INIT( combascb )
@@ -911,13 +921,13 @@ static DRIVER_INIT( combascb )
 	for (i = 0;i < memory_region_length(REGION_GFX2);i++)
 		gfx[i] = ~gfx[i];
 
-	combasc_YM2203_init();
+	combasc_init_common();
 }
 
 
 
 GAME( 1988, combasc,  0,       combasc,  combasc,  combasc,  ROT0, "Konami", "Combat School (joystick)" )
-GAME( 1987, combasct, combasc, combasc,  combasct, 0,        ROT0, "Konami", "Combat School (trackball)" )
-GAME( 1987, combascj, combasc, combasc,  combasct, 0,        ROT0, "Konami", "Combat School (Japan trackball)" )
-GAME( 1987, bootcamp, combasc, combasc,  combasct, 0,        ROT0, "Konami", "Boot Camp" )
+GAME( 1987, combasct, combasc, combasc,  combasct, combasct, ROT0, "Konami", "Combat School (trackball)" )
+GAME( 1987, combascj, combasc, combasc,  combasct, combasct, ROT0, "Konami", "Combat School (Japan trackball)" )
+GAME( 1987, bootcamp, combasc, combasc,  combasct, combasct, ROT0, "Konami", "Boot Camp" )
 GAMEX(1988, combascb, combasc, combascb, combascb, combascb, ROT0, "bootleg", "Combat School (bootleg)", GAME_IMPERFECT_COLORS )

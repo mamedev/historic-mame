@@ -1358,6 +1358,12 @@ DRIVER_INIT( billiard )
 	}
 }
 
+DRIVER_INIT( ladybugg )
+{
+/* Doesn't actually use the bank, but it mustn't have a coin lock! */
+install_mem_write_handler(0, 0x6002, 0x6002, galaxian_gfxbank_w);
+}
+
 /************************************************************
  mr kougar protected main cpu - by HIGHWAYMAN
  mr kougar contains a steel module at location S7,

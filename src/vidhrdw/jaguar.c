@@ -139,13 +139,15 @@
 #include "machine/atarigen.h"
 #include "cpu/mips/r3000.h"
 #include "cpu/m68000/m68000.h"
-#include "jaguar.h"
+#include "includes/jaguar.h"
 #include "jagblit.h"
 
 
 #define LOG_BLITS			0
 #define LOG_BAD_BLITS		0
 #define LOG_BLITTER_STATS	0
+#define LOG_BLITTER_WRITE	0
+#define LOG_UNHANDLED_BLITS	0
 
 
 // interrupts to main CPU:
@@ -588,7 +590,9 @@ WRITE32_HANDLER( jaguar_blitter_w )
 	if (offset == B_CMD)
 		blitter_run();
 
+#if LOG_BLITTER_WRITE
 	logerror("%08X:Blitter write register @ F022%02X = %08X\n", activecpu_get_previouspc(), offset * 4, data);
+#endif
 }
 
 

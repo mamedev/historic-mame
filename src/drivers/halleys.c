@@ -24,11 +24,13 @@ Halley's Comet, 1986 Taito
 	  is depressed during boot-up.
 
 
-	Thanks Phil Stroffolino and Jarek Burczynski for providing a solid foundation;
+	Special thanks to Phil Stroffolino for the creation of a solid framework,
+	Jarek Burczynski for adding sound and providing awesome hand-drawn schematics,
 	Jason MacFarlane for his continuous and selfless support. I'd never have come
 	all this way without the invaluable videos and screen shots sent by Jason.
 
 	To the Columbia crew and the forerunners who gave their lives to science and space exploration.
+	Your bravery and devotion will not be forgotten.
 
 
 CPU:	MC68B09EP Z80A(SOUND)
@@ -182,9 +184,12 @@ Video sync   6 F   Video sync                 Post   6 F   Post
 
 #define SP_2BACK     0x100
 #define SP_ALPHA     0x200
-#define BG_MONO      0x300
-#define BG_RGB       0x400
-#define PALETTE_SIZE 0x500
+#define SP_COLLD     0x300
+
+#define BG_MONO      0x400
+#define BG_RGB       0x500
+
+#define PALETTE_SIZE 0x600
 
 #define SCREEN_WIDTH        (1 << SCREEN_WIDTH_L2)
 #define SCREEN_SIZE         (SCREEN_HEIGHT << SCREEN_WIDTH_L2)
@@ -200,17 +205,16 @@ typedef UINT8  BYTE;
 typedef UINT16 WORD;
 typedef UINT32 DWORD;
 
-static BYTE collision_list[MAX_SPRITES];
-static BYTE sound_fifo[MAX_SOUNDS];
 static WORD *render_layer[MAX_LAYERS];
-static BYTE *gfx_plane02, *gfx_plane13;
+static BYTE sound_fifo[MAX_SOUNDS];
+static BYTE *gfx_plane02, *gfx_plane13, *collision_list;
 static BYTE *scrolly0, *scrollx0, *scrolly1, *scrollx1;
 static DWORD *internal_palette, *alpha_table;
 
 static BYTE *cpu1_base, *gfx1_base, *blitter_ram, *io_ram;
 static size_t blitter_ramsize, io_ramsize;
 
-static int game_id, init_success, blitter_busy, collision_count, stars_enabled, bgcolor, ffhead, fftail;
+static int game_id, init_success, blitter_busy, collision_count, stars_enabled, bgcolor, ffcount, ffhead, fftail;
 static int mVectorType, sndnmi_mask, firq_level;
 static void *blitter_reset_timer;
 
@@ -292,7 +296,7 @@ static void blit(int offset)
 	BYTE *param, *src_base;
 	WORD *dst_base;
 	int stptr, mode, color, code, y, x, h, w, src1, src2;
-	int group, status, flags, command, bank, layer, pen0, pen1;
+	int status, flags, group, command, bank, layer, pen0, pen1;
 	int yclip, xclip, src_yskip, src_xskip, dst_skip, hclip, wclip, src_dy, src_dx;
 	DWORD *pal_ptr;
 	BYTE *src1_ptr, *src2_ptr; // esi alias, ebx alias
@@ -323,20 +327,18 @@ if (0) {
 	// update sprite status
 	layer = (code>>3 & 2) | (code>>7 & 1);
 	offset >>= 4;
-	group = 0;
-	status = 0;
+	status = (stptr) ? cpu1_base[stptr] : ACTIVE;
 	flags = mode;
+	group = mode & GROUP;
 	command = code & COMMAND;
 	if (game_id == GAME_HALLEYS)
 	{
+		if (!layer) flags |= PPCD_ON;
 		if (offset >= HALLEYS_SPLIT) flags |= AD_HIGH; else
-		if (offset & 1)
-		{
-			if (offset == 0x1b) flags &= ~GROUP; // HACK: Why does engine flame belong to sprite group one???
-			if (!layer) flags |= PPCD_ON;
-			status = (stptr) ? cpu1_base[stptr] : ACTIVE;
-			memcpy(param-0x10, param, 0x10);
-		}
+		if (offset & 1) memcpy(param-0x10, param, 0x10); else group = param[0x15] & GROUP;
+
+		// HACK: force engine flame in group zero to increase collision accuracy
+		if (offset == 0x1a || offset == 0x1b) group = 0;
 	}
 	else if (offset & 1) memcpy(param-0x10, param, 0x10);
 
@@ -489,9 +491,8 @@ if (0) {
 
 		COLLISION_MODE:
 
-		// perform pixel-based collision on layer0 using the alpha blending flag as a group tag.
 		ax = 0;
-		if (flags & GROUP)
+		if (group)
 		{
 			do {
 				do {
@@ -499,7 +500,7 @@ if (0) {
 					src1_ptr += edx;
 					al |= *src2_ptr;
 					src2_ptr += edx;
-					if (al & 0xf) { dst_ptr[ecx] = (WORD)al | SP_ALPHA; }
+					if (al & 0xf) { dst_ptr[ecx] = (WORD)al | SP_COLLD; } // set collision flag on group one pixels
 				}
 				while (++ecx);
 				ecx = wclip; src1_ptr += src_dy; src2_ptr += src_dy; dst_ptr += SCREEN_WIDTH;
@@ -514,7 +515,7 @@ if (0) {
 					src1_ptr += edx;
 					al |= *src2_ptr;
 					src2_ptr += edx;
-					if (al & 0xf) { ax |= dst_ptr[ecx]; dst_ptr[ecx] = (WORD)al; }
+					if (al & 0xf) { ax |= dst_ptr[ecx]; dst_ptr[ecx] = (WORD)al; } // combine collision flags in ax
 				}
 				while (++ecx);
 				ecx = wclip; src1_ptr += src_dy; src2_ptr += src_dy; dst_ptr += SCREEN_WIDTH;
@@ -522,8 +523,8 @@ if (0) {
 			while (--hclip);
 		}
 
-		// update collision list
-		if (status & ACTIVE && ax & SP_ALPHA)
+		// update collision list if object collided with the other group
+		if (status & ACTIVE && ax & SP_COLLD)
 		{
 			collision_list[collision_count & (MAX_SPRITES-1)] = offset;
 			collision_count++;
@@ -600,22 +601,45 @@ if (0) {
 		ecx = wclip;
 		edx = src_dx;
 
-		do {
+		if (flags & PPCD_ON && !group)
+		{
+			// preserve collision flags when wiping group zero objects
 			do {
-				al = *src1_ptr;
-				ah = *src2_ptr;
-				src1_ptr += edx;
-				src2_ptr += edx;
-				if (al | ah) dst_ptr[ecx] = 0;
-			}
-			while (++ecx);
+				do {
+					al = *src1_ptr;
+					ah = *src2_ptr;
+					src1_ptr += edx;
+					src2_ptr += edx;
+					if (al | ah) dst_ptr[ecx] &= SP_COLLD;
+				}
+				while (++ecx);
 
-			ecx = wclip;
-			src1_ptr += src_dy;
-			src2_ptr += src_dy;
-			dst_ptr  += SCREEN_WIDTH;
+				ecx = wclip;
+				src1_ptr += src_dy;
+				src2_ptr += src_dy;
+				dst_ptr  += SCREEN_WIDTH;
+			}
+			while (--hclip);
 		}
-		while (--hclip);
+		else
+		{
+			do {
+				do {
+					al = *src1_ptr;
+					ah = *src2_ptr;
+					src1_ptr += edx;
+					src2_ptr += edx;
+					if (al | ah) dst_ptr[ecx] = 0;
+				}
+				while (++ecx);
+
+				ecx = wclip;
+				src1_ptr += src_dy;
+				src2_ptr += src_dy;
+				dst_ptr  += SCREEN_WIDTH;
+			}
+			while (--hclip);
+		}
 
 	} else
 
@@ -1030,45 +1054,24 @@ static READ_HANDLER( collision_id_r )
 
 static PALETTE_INIT( halleys )
 {
-/*
-	unknown prom contains:
-		00 00 00 00 c5 0b f3 17 fd cf 1f ef df bf 7f ff
-		00 00 00 00 01 61 29 26 0b f5 e2 17 57 fb cf f7
-*/
 	DWORD d, r, g, b, i, j, count;
 	DWORD *pal_ptr = internal_palette;
 
-	for (count=0; count<PALETTE_SIZE; count++)
+	for (count=0; count<1024; count++)
 	{
 		pal_ptr[count] = 0;
 		palette_set_color(count, 0, 0, 0);
 	}
 
-
 	// 00-31: palette RAM(ffc0-ffdf)
 
-	// 32-63: proms(unused?)
-	for (count=0; count<32; count++)
-	{
-		d = (DWORD)color_prom[count];
-		j = d + BG_RGB;
-		pal_ptr[count+32] = j;
-		pal_ptr[count+32+SP_2BACK] = j;
-		pal_ptr[count+32+SP_ALPHA] = j;
+	// 32-63: colors decoded through unknown PROMs
 
-		i = d>>6 & 0x03;
-		r = d>>2 & 0x0c; r |= i;  r = r<<4 | r;
-		g = d    & 0x0c; g |= i;  g = g<<4 | g;
-		b = d<<2 & 0x0c; b |= i;  b = b<<4 | b;
+	// 64-255: unused
 
-		palette_set_color(count+32, r, g, b);
-		palette_set_color(count+32+SP_2BACK, r, g, b);
-		palette_set_color(count+32+SP_ALPHA, r, g, b);
-	}
+	// 256-1023: palette mirrors
 
-	// 64-767: unused or palette mirrors
-
-	// 768-1023: gray shades
+	// 1024-1279: gray shades
 	for (i=0; i<16; i++)
 	{
 		d = (i<<6&0xc0) | (i<<2&0x30) | (i&0x0c) | (i>>2&0x03) | BG_RGB;
@@ -1082,7 +1085,7 @@ static PALETTE_INIT( halleys )
 		}
 	}
 
-	// 1024-1279: RGB
+	// 1280-1535: RGB
 	for (d=0; d<256; d++)
 	{
 		j = d + BG_RGB;
@@ -1097,6 +1100,50 @@ static PALETTE_INIT( halleys )
 	}
 }
 
+static void halleys_decode_rgb(DWORD *r, DWORD *g, DWORD *b, int addr, int data)
+{
+/*
+	proms contain:
+		00 00 00 00 c5 0b f3 17 fd cf 1f ef df bf 7f ff
+		00 00 00 00 01 61 29 26 0b f5 e2 17 57 fb cf f7
+*/
+	int latch1_273, latch2_273;
+	UINT8 *sram_189;
+	UINT8 *prom_6330;
+
+	int bit0, bit1, bit2, bit3, bit4;
+
+	// the four 16x4-bit SN74S189 SRAM chips are assumed be the game's 32-byte palette RAM
+	sram_189 = paletteram;
+
+	// each of the three 32-byte 6330 PROM is wired to an RGB component output
+	prom_6330 = memory_region(REGION_PROMS);
+
+	// latch1 holds 8 bits from the selected palette RAM address
+	latch1_273 = sram_189[addr];
+
+	// latch2 holds another 8 bits from somewhere on the data bus in a bit-swapped manner(inaccurate)
+	latch2_273 = (data>>4 & 0x0f)|(data<<1 & 0x10)|(data<<3 & 0x20)|(data<<5 & 0x40)|(data<<7 & 0x80);
+
+	// data from latch1 and 2 are combined and then decoded through PROMs to form three 8-bit tripplets
+	bit0 = latch1_273>>5 & 0x01;
+	bit1 = latch1_273>>3 & 0x02;
+
+	bit2 = latch1_273>>5 & 0x04;
+	bit3 = latch1_273>>3 & 0x08;
+	bit4 = latch2_273>>2 & 0x10;
+	*r = prom_6330[0x00 + (bit0|bit1|bit2|bit3|bit4)];
+
+	bit2 = latch1_273>>0 & 0x04;
+	bit3 = latch1_273>>0 & 0x08;
+	bit4 = latch2_273>>3 & 0x10;
+	*g = prom_6330[0x20 + (bit0|bit1|bit2|bit3|bit4)];
+
+	bit2 = latch1_273<<2 & 0x04;
+	bit3 = latch1_273<<2 & 0x08;
+	bit4 = latch2_273<<1 & 0x10;
+	*b = prom_6330[0x40 + (bit0|bit1|bit2|bit3|bit4)];
+}
 
 static WRITE_HANDLER( halleys_paletteram_IIRRGGBB_w )
 {
@@ -1109,7 +1156,9 @@ static WRITE_HANDLER( halleys_paletteram_IIRRGGBB_w )
 	pal_ptr[offset] = j;
 	pal_ptr[offset+SP_2BACK] = j;
 	pal_ptr[offset+SP_ALPHA] = j;
+	pal_ptr[offset+SP_COLLD] = j;
 
+	// 8-bit RGB format: IIRRGGBB
 	i = d>>6 & 0x03;
 	r = d>>2 & 0x0c; r |= i;  r = r<<4 | r;
 	g = d    & 0x0c; g |= i;  g = g<<4 | g;
@@ -1118,6 +1167,10 @@ static WRITE_HANDLER( halleys_paletteram_IIRRGGBB_w )
 	palette_set_color(offset, r, g, b);
 	palette_set_color(offset+SP_2BACK, r, g, b);
 	palette_set_color(offset+SP_ALPHA, r, g, b);
+	palette_set_color(offset+SP_COLLD, r, g, b);
+
+	halleys_decode_rgb(&r, &g, &b, offset, 0);
+	palette_set_color(offset+0x20, r, g, b);
 }
 
 
@@ -1507,9 +1560,11 @@ static INTERRUPT_GEN( halleys_interrupt )
 				Current implementation is quite safe although not 100% foul-proof.
 			*/
 			if (latch_delay) latch_delay--; else
-			if (fftail != ffhead)
+			if (ffcount)
 			{
-				latch_data = sound_fifo[(++fftail)&(MAX_SOUNDS-1)];
+				ffcount--;
+				latch_data = sound_fifo[fftail];
+				fftail = (fftail + 1) & (MAX_SOUNDS - 1);
 				latch_delay = (latch_data) ? 0 : 4;
 				soundlatch_w(0, latch_data);
 				cpu_set_nmi_line(1, PULSE_LINE);
@@ -1545,9 +1600,11 @@ static INTERRUPT_GEN( benberob_interrupt )
 	{
 		case 0:
 			if (latch_delay) latch_delay--; else
-			if (fftail != ffhead)
+			if (ffcount)
 			{
-				latch_data = sound_fifo[(++fftail)&(MAX_SOUNDS-1)];
+				ffcount--;
+				latch_data = sound_fifo[fftail];
+				fftail = (fftail + 1) & (MAX_SOUNDS - 1);
 				latch_delay = (latch_data) ? 0 : 4;
 				soundlatch_w(0, latch_data);
 				cpu_set_nmi_line(1, PULSE_LINE);
@@ -1590,7 +1647,12 @@ static WRITE_HANDLER( sndnmi_msk_w )
 
 static WRITE_HANDLER( soundcommand_w )
 {
-	sound_fifo[(++ffhead)&(MAX_SOUNDS-1)] = io_ram[0x8a] = data;
+	if (ffcount < MAX_SOUNDS)
+	{
+		ffcount++;
+		sound_fifo[ffhead] = io_ram[0x8a] = data;
+		ffhead = (ffhead + 1) & (MAX_SOUNDS - 1);
+	}
 }
 
 
@@ -1938,7 +2000,7 @@ static MACHINE_INIT( halleys )
 	collision_count = 0;
 	stars_enabled   = 0;
 	bgcolor         = get_black_pen();
-	ffhead = fftail = 0;
+	fftail = ffhead = ffcount = 0;
 
 	memset(io_ram, 0xff, io_ramsize);
 	memset(render_layer[0], 0, SCREEN_BYTESIZE * MAX_LAYERS);
@@ -2019,7 +2081,7 @@ ROM_START( benberob )
 	ROM_LOAD( "a26_08.91",   0x18000, 0x4000, CRC(7e63059d) SHA1(01e1e805fa2e05058ebd83aae95e26879b4a275d) )
 	ROM_LOAD( "a26_09.90",   0x1c000, 0x4000, CRC(ebd9a16c) SHA1(0230892f451cac310d5ad0d328cea0556b96157f) )
 
-	ROM_REGION( 0x0060, REGION_PROMS, ROMREGION_DISPOSE ) //COLOR (all identical!)
+	ROM_REGION( 0x0060, REGION_PROMS, 0 ) //COLOR (all identical!)
 	ROM_LOAD( "a26_13.r",    0x0000, 0x0020, CRC(ec449aee) SHA1(aa33e82b592276d5ffd540d9a73d1b48d7d4accf) )
 	ROM_LOAD( "a26_13.g",    0x0020, 0x0020, CRC(ec449aee) SHA1(aa33e82b592276d5ffd540d9a73d1b48d7d4accf) )
 	ROM_LOAD( "a26_13.b",    0x0040, 0x0020, CRC(ec449aee) SHA1(aa33e82b592276d5ffd540d9a73d1b48d7d4accf) )
@@ -2047,7 +2109,7 @@ ROM_START( halleys )
 	ROM_LOAD( "a62_07.91",   0x18000, 0x4000, CRC(64c95e8b) SHA1(4c3320a764b13a5751c0019c9fafb899ea2f908f) )
 	ROM_LOAD( "a62_05.90",   0x1c000, 0x4000, CRC(c3c877ef) SHA1(23180b106e50b7a2a230c5e9948832e5631972ae) )
 
-	ROM_REGION( 0x0060, REGION_PROMS, ROMREGION_DISPOSE ) //COLOR (all identical!)
+	ROM_REGION( 0x0060, REGION_PROMS, 0 ) //COLOR (all identical!)
 	ROM_LOAD( "a26-13.109",  0x0000, 0x0020, CRC(ec449aee) SHA1(aa33e82b592276d5ffd540d9a73d1b48d7d4accf) )
 	ROM_LOAD( "a26-13.110",  0x0020, 0x0020, CRC(ec449aee) SHA1(aa33e82b592276d5ffd540d9a73d1b48d7d4accf) )
 	ROM_LOAD( "a26-13.111",  0x0040, 0x0020, CRC(ec449aee) SHA1(aa33e82b592276d5ffd540d9a73d1b48d7d4accf) )
@@ -2075,7 +2137,7 @@ ROM_START( halleycj )
 	ROM_LOAD( "a62_07.91",   0x18000, 0x4000, CRC(64c95e8b) SHA1(4c3320a764b13a5751c0019c9fafb899ea2f908f) )
 	ROM_LOAD( "a62_05.90",   0x1c000, 0x4000, CRC(c3c877ef) SHA1(23180b106e50b7a2a230c5e9948832e5631972ae) )
 
-	ROM_REGION( 0x0060, REGION_PROMS, ROMREGION_DISPOSE ) //COLOR
+	ROM_REGION( 0x0060, REGION_PROMS, 0 ) //COLOR (all identical!)
 	ROM_LOAD( "a26-13.109",  0x0000, 0x0020, CRC(ec449aee) SHA1(aa33e82b592276d5ffd540d9a73d1b48d7d4accf) )
 	ROM_LOAD( "a26-13.110",  0x0020, 0x0020, CRC(ec449aee) SHA1(aa33e82b592276d5ffd540d9a73d1b48d7d4accf) )
 	ROM_LOAD( "a26-13.111",  0x0040, 0x0020, CRC(ec449aee) SHA1(aa33e82b592276d5ffd540d9a73d1b48d7d4accf) )
@@ -2103,7 +2165,7 @@ ROM_START( halleysc )
 	ROM_LOAD( "a62_07.91",   0x18000, 0x4000, CRC(64c95e8b) SHA1(4c3320a764b13a5751c0019c9fafb899ea2f908f) )
 	ROM_LOAD( "a62_05.90",   0x1c000, 0x4000, CRC(c3c877ef) SHA1(23180b106e50b7a2a230c5e9948832e5631972ae) )
 
-	ROM_REGION( 0x0060, REGION_PROMS, ROMREGION_DISPOSE ) //COLOR
+	ROM_REGION( 0x0060, REGION_PROMS, 0 ) //COLOR (all identical!)
 	ROM_LOAD( "a26-13.109",  0x0000, 0x0020, CRC(ec449aee) SHA1(aa33e82b592276d5ffd540d9a73d1b48d7d4accf) )
 	ROM_LOAD( "a26-13.110",  0x0020, 0x0020, CRC(ec449aee) SHA1(aa33e82b592276d5ffd540d9a73d1b48d7d4accf) )
 	ROM_LOAD( "a26-13.111",  0x0040, 0x0020, CRC(ec449aee) SHA1(aa33e82b592276d5ffd540d9a73d1b48d7d4accf) )
@@ -2141,6 +2203,10 @@ static int init_common(void)
 
 	// allocate memory for internal palette
 	if (!(internal_palette = auto_malloc(sizeof(DWORD) * PALETTE_SIZE))) return(0);
+
+
+	// allocate memory for hardware collision list
+	if (!(collision_list = auto_malloc(MAX_SPRITES))) return(0);;
 
 
 	// decrypt main program ROM

@@ -6,21 +6,18 @@ Zaviga   (c) 1984 Data East Corporation
 drivers by Acho A. Tang
 
 
-JAN-2003
+JUL-2003
 
-- The sprite coordinate system is twice as big as the visible area. Faulty
-  sprite warpings are mostly programming bugs in the original games.
+Known issues:
 
-- The ambient sound in both games may stop when an effect is played at a bad
-  time during air-ground transitions. The sound latch did not get overwritten,
-  and a similar problem is also found in HAL21. If it's not an IRQ issue
-  there's probably a glitch in the AY8510 core.
+- The main program is responsible for sprite clipping but occational
+  glitches can be seen at the top and bottom screen edges. (post rotate)
 
-- The foreground layer sometimes flickers which may suggest the CPUs are getting
-  out of sync. Set MDRV_INTERLEAVE() to a higher value if neccessary. The char
-  layer has an unknown attribute bit then again requires verification.
+- B-Wings bosses sometimes flicker. (sync issue)
 
-- Zaviga's DIPs have not been checked because the manual is unavailable.
+- The text layer has an unknown attribute. (needs verification)
+
+- Zaviga's DIPs are incomplete. (manual missing)
 
 *****************************************************************************/
 // Directives
@@ -32,6 +29,8 @@ JAN-2003
 
 #define BW_DEBUG 0
 #define BW_CHEAT 0
+
+#define MAX_SOUNDS 16
 
 //****************************************************************************
 // Imports
@@ -50,24 +49,44 @@ extern VIDEO_UPDATE( bwing );
 //****************************************************************************
 // Local Vars
 
+static data8_t sound_fifo[MAX_SOUNDS];
 static data8_t *bwp123_membase[3], *bwp3_rombase;
 static data8_t *bwp1_sharedram1, *bwp2_sharedram1;
 static size_t bwp3_romsize;
-static int bwp3_nmimask, bwp3_u8F_d;
+static int bwp3_nmimask, bwp3_u8F_d, ffcount, ffhead, fftail;
 
 //****************************************************************************
 // Interrupt Handlers
 
 INTERRUPT_GEN ( bwp1_interrupt )
 {
-	static int coin=0;
+	static int coin = 0;
+	data8_t latch_data;
 
-	if (~readinputport(4) & 0x03)
-		{ if (!coin) { coin = 1; cpu_set_nmi_line(0, ASSERT_LINE); } }
-	else
-		coin = 0;
+	switch (cpu_getiloops())
+	{
+		case 0:
+			if (ffcount)
+			{
+				ffcount--;
+				latch_data = sound_fifo[fftail];
+				fftail = (fftail + 1) & (MAX_SOUNDS - 1);
+				soundlatch_w(0, latch_data);
+				cpu_set_irq_line(2, DECO16_IRQ_LINE, HOLD_LINE); // SNDREQ
+			}
+		break;
 
-	if (readinputport(5)) cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
+		case 1:
+			if (~readinputport(4) & 0x03)
+				{ if (!coin) { coin = 1; cpu_set_nmi_line(0, ASSERT_LINE); } }
+			else
+				coin = 0;
+		break;
+
+		case 2:
+			if (readinputport(5)) cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
+		break;
+	}
 }
 
 
@@ -118,9 +137,11 @@ static WRITE_HANDLER( bwp1_ctrl_w )
 			if (data == 0x80) // protection trick to screw CPU1 & 3
 				cpu_set_nmi_line(1, ASSERT_LINE); // SNMI
 			else
+			if (ffcount < MAX_SOUNDS)
 			{
-				soundlatch_w(0, data);
-				cpu_set_irq_line(2, DECO16_IRQ_LINE, HOLD_LINE); // SNDREQ
+				ffcount++;
+				sound_fifo[ffhead] = data;
+				ffhead = (ffhead + 1) & (MAX_SOUNDS - 1);
 			}
 		break;
 
@@ -316,7 +337,7 @@ INPUT_PORTS_START( bwing )
 
 	PORT_START // a matter of taste
 	PORT_DIPNAME( 0x07, 0x00, "RGB" )
-	PORT_DIPSETTING(    0x00, "Normal" )
+	PORT_DIPSETTING(    0x00, "Default" )
 	PORT_DIPSETTING(    0x01, "More Red" )
 	PORT_DIPSETTING(    0x02, "More Green" )
 	PORT_DIPSETTING(    0x03, "More Blue" )
@@ -362,6 +383,13 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 //****************************************************************************
 // Hardware Definitions
 
+MACHINE_INIT( bwing )
+{
+	bwp3_nmimask = 0;
+	fftail = ffhead = ffcount = 0;
+}
+
+
 static struct AY8910interface ay8910_interface =
 {
 	2,
@@ -385,11 +413,11 @@ static MACHINE_DRIVER_START( bwing )
 	// basic machine hardware
 	MDRV_CPU_ADD(M6809, 2000000)
 	MDRV_CPU_MEMORY(bwp1_readmem, bwp1_writemem)
-	MDRV_CPU_VBLANK_INT(bwp1_interrupt, 1)
+	MDRV_CPU_VBLANK_INT(bwp1_interrupt, 3)
 
 	MDRV_CPU_ADD(M6809, 2000000)
 	MDRV_CPU_MEMORY(bwp2_readmem, bwp2_writemem)
-	MDRV_CPU_VBLANK_INT(irq1_line_assert, 1) // vblank triggers FIRQ on CPU2 by design, unused
+//	MDRV_CPU_VBLANK_INT(irq1_line_assert, 1) // vblank triggers FIRQ on CPU2 by design (unused)
 
 	MDRV_CPU_ADD(DECO16, 2000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
@@ -398,8 +426,8 @@ static MACHINE_DRIVER_START( bwing )
 	MDRV_CPU_PERIODIC_INT(bwp3_interrupt, 1000)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(600)
-	MDRV_INTERLEAVE(300)
+	MDRV_VBLANK_DURATION(600)	// must be long enough for polling
+	MDRV_INTERLEAVE(300)		// high enough?
 
 	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
@@ -600,8 +628,6 @@ static DRIVER_INIT( bwing )
 	bwp123_membase[2] = memory_region(REGION_CPU3);
 
 	fix_bwp3();
-
-	bwp3_nmimask = 0;
 }
 
 //****************************************************************************
@@ -609,7 +635,7 @@ static DRIVER_INIT( bwing )
 
 GAME ( 1984, bwing,        0, bwing, bwing, bwing, ROT90, "Data East Corporation", "B-Wings (Japan)" )
 GAME ( 1984, bwings,   bwing, bwing, bwing, bwing, ROT90, "Data East Corporation", "Battle Wings" )
-GAMEX( 1984, batwings, bwing, bwing, bwing, bwing, ROT90, "Data East Corporation", "Battle Wings (alternate)", GAME_NOT_WORKING )
+GAMEX( 1984, batwings, bwing, bwing, bwing, bwing, ROT90, "Data East Corporation", "Battle Wings (alt)", GAME_NOT_WORKING )
 
 GAME ( 1984, zaviga,       0, bwing, bwing, bwing, ROT90, "Data East Corporation", "Zaviga" )
 GAME ( 1984, zavigaj, zaviga, bwing, bwing, bwing, ROT90, "Data East Corporation", "Zaviga (Japan)" )

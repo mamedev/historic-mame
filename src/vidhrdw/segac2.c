@@ -71,6 +71,7 @@ static void drawline_sprite(int line, UINT16 *bmap, int priority, UINT8 *spriteb
        int			segac2_sp_palbase;			/* base of sprite palette */
        int			segac2_palbank;				/* global palette bank */
        UINT8		segac2_vdp_regs[32];		/* VDP registers */
+	   UINT16		scanbase;
 
 /* LOCAL */
 static UINT8 *		vdp_vram;					/* VDP video RAM */
@@ -234,6 +235,8 @@ VIDEO_START( segac2 )
 	segac2_bg_palbase = 0x000;
 	segac2_sp_palbase = 0x100;
 	segac2_palbank    = 0x000;
+	
+	scanbase = 0;
 
 	/* reset VDP */
 	internal_vblank = 1;
@@ -311,6 +314,8 @@ VIDEO_START( puckpkmn )
 	segac2_sp_palbase = 0x000;	// same palettes for sprites and bg
 	display_enable = 1;
 
+	scanbase = 0;
+
 	return 0;
 }
 
@@ -326,12 +331,31 @@ VIDEO_START( megatech )
 	segac2_sp_palbase = 0x000;	// same palettes for sprites and bg
 	display_enable = 1;
 
+
+	if (start_megatech_video_normal())
+		return 1;
+	scanbase = 192;
+
+	return 0;
+}
+
+VIDEO_START( megaplay )
+{
+	paletteram16 = auto_malloc(0x800 * sizeof(data16_t));
+
+	if (video_start_segac2())
+		return 1;
+
+	segac2_sp_palbase = 0x000;	// same palettes for sprites and bg
+	display_enable = 1;
+
+	scanbase = 0;
+
 	if (start_megatech_video_normal())
 		return 1;
 
 	return 0;
 }
-
 
 /******************************************************************************
 	VBLANK routines
@@ -390,7 +414,7 @@ VIDEO_EOF( segac2 )
 void segac2_enable_display(int enable)
 {
 	if (!internal_vblank)
-		force_partial_update(cpu_getscanline());
+		force_partial_update((cpu_getscanline()) + scanbase);
 	display_enable = enable;
 }
 
@@ -475,6 +499,49 @@ if (keyboard_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
 
 }
 
+/* megaplay, draws either Genesis or SMS (single screen display) */
+
+/* core refresh: computes the final screen */
+VIDEO_UPDATE( megaplay )
+{
+	int old_bg = segac2_bg_palbase, old_sp = segac2_sp_palbase;
+	int y;
+
+#if 0
+if (keyboard_pressed(KEYCODE_Z)) segac2_bg_palbase ^= 0x40;
+if (keyboard_pressed(KEYCODE_X)) segac2_bg_palbase ^= 0x80;
+if (keyboard_pressed(KEYCODE_C)) segac2_bg_palbase ^= 0x100;
+
+if (keyboard_pressed(KEYCODE_A)) segac2_sp_palbase ^= 0x40;
+if (keyboard_pressed(KEYCODE_S)) segac2_sp_palbase ^= 0x80;
+if (keyboard_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
+#endif
+
+#if GEN_TILEMAP_WIP
+	{
+		tilemap_mark_all_tiles_dirty (scrolla_tilemap);
+		tilemap_mark_all_tiles_dirty (scrollb_tilemap);
+		/* just so they get updated .. */
+		tilemap_draw(bitmap,cliprect,scrolla_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,scrollb_tilemap,0,0);
+	}
+#endif
+
+
+
+	/* generate the final screen - control which screen is 
+	   shown by a keystroke for now */
+	if(keyboard_pressed(KEYCODE_G))
+	{
+		for (y = cliprect->min_y; y <= cliprect->max_y; y++)
+			drawline((UINT16 *)bitmap->line[y], y);
+	}
+	else 
+		update_megatech_video_normal(bitmap, cliprect);
+	segac2_bg_palbase = old_bg;
+	segac2_sp_palbase = old_sp;
+
+}
 
 /******************************************************************************
 	VDP Read & Write Handlers
@@ -635,7 +702,7 @@ static void vdp_data_w(int data)
 			if (!internal_vblank &&
 				vdp_address >= vdp_hscrollbase &&
 				vdp_address < vdp_hscrollbase + vdp_hscrollsize)
-				force_partial_update(cpu_getscanline());
+				force_partial_update((cpu_getscanline()) + scanbase);
 
 			/* write to VRAM */
 			if (vdp_address & 1)
@@ -654,7 +721,7 @@ static void vdp_data_w(int data)
 
 			/* if the vscroll RAM is changing during screen refresh, force an update */
 			if (!internal_vblank)
-				force_partial_update(cpu_getscanline());
+				force_partial_update((cpu_getscanline()) + scanbase);
 
 			/* write to VSRAM */
 			if (vdp_address & 1)
@@ -769,7 +836,7 @@ static void vdp_register_w(int data)
 	/* these are mostly important writes; force an update if they */
 	/* are written during a screen refresh */
 	if (!internal_vblank && is_important[regnum])
-		force_partial_update(cpu_getscanline());
+		force_partial_update((cpu_getscanline())+ scanbase);
 
 	/* For quite a few of the registers its a good idea to set a couple of variable based
 	   upon the writes here */

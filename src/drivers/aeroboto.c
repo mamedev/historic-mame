@@ -14,14 +14,8 @@ TODO:
     This color will not be affected by scroll. Leftmost 8pixels are light, next
     16 pixels are dark, the next 16 pixels are light, and so on.
 
-Revision:
-
-4-18-2002 Acho A. Tang
-- bypassed protection to make the game playable
-- modified memory map and hardware settings
-- emulated remaining video registers
-- rewrote vidhrdw module to fix color, sprite positions, priority,
-  vertical scrolling, split screen, starmap...etc.
+Revisions:
+- Updated starfield according to Uki's report. (AT)
 
 *note: Holding any key at boot puts the game in MCU test. Press F3 to quit.
 
@@ -33,7 +27,7 @@ Revision:
 
 extern data8_t *aeroboto_videoram;
 extern data8_t *aeroboto_hscroll, *aeroboto_vscroll, *aeroboto_tilecolor;
-extern data8_t *aeroboto_starx, *aeroboto_stary, *aeroboto_starcolor;
+extern data8_t *aeroboto_starx, *aeroboto_stary, *aeroboto_bgcolor;
 
 VIDEO_START( aeroboto );
 VIDEO_UPDATE( aeroboto );
@@ -57,7 +51,7 @@ static READ_HANDLER( aeroboto_201_r )
 	return res[(count++)&3];
 }
 
-//AT
+
 static INTERRUPT_GEN( aeroboto_interrupt )
 {
 	if (!disable_irq)
@@ -111,7 +105,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x3003, 0x3003, MWA_RAM, &aeroboto_vscroll },
 	{ 0x3004, 0x3004, MWA_RAM, &aeroboto_starx },
 	{ 0x3005, 0x3005, MWA_RAM, &aeroboto_stary }, // usable but probably wrong
-	{ 0x3006, 0x3006, MWA_RAM, &aeroboto_starcolor },
+	{ 0x3006, 0x3006, MWA_RAM, &aeroboto_bgcolor },
 	{ 0x4000, 0xffff, MWA_ROM },
 MEMORY_END
 
@@ -189,11 +183,11 @@ INPUT_PORTS_START( formatz )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 1C_4C ) )
-	PORT_DIPNAME( 0x18, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x08, "Medium" )
-	PORT_DIPSETTING(    0x10, "Hard" )
-	PORT_DIPSETTING(    0x18, "Hardest" )
+	PORT_DIPNAME( 0x18, 0x08, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "0(Easy)" )
+	PORT_DIPSETTING(    0x08, "1(Medium)" )
+	PORT_DIPSETTING(    0x10, "2(Hard)" )
+	PORT_DIPSETTING(    0x18, "3(Hardest)" )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
@@ -217,8 +211,8 @@ static struct GfxLayout charlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8
 };
-
-/* exact star layout unknown... could be anything */
+/*
+// exact star layout unknown... could be anything
 static struct GfxLayout starlayout =
 {
 	8,8,
@@ -229,7 +223,7 @@ static struct GfxLayout starlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8
 };
-
+*/
 static struct GfxLayout spritelayout =
 {
 	8,16,
@@ -238,14 +232,14 @@ static struct GfxLayout spritelayout =
 	{ RGN_FRAC(2,3), RGN_FRAC(1,3), RGN_FRAC(0,3) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-	    8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	  8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
 	16*8
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,     0,  64 },     /* chars */
-	{ REGION_GFX2, 0, &starlayout,     0, 128 },     /* sky */
+//	{ REGION_GFX2, 0, &starlayout,     0, 128 },     /* sky */
 	{ REGION_GFX3, 0, &spritelayout,   0,   8 },
 	{ -1 } /* end of array */
 };
@@ -283,7 +277,7 @@ static MACHINE_DRIVER_START( formatz )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 30*8-1, 3*8, 30*8-1)
+	MDRV_VISIBLE_AREA(0*8, 31*8-1, 2*8, 30*8-1)
 	MDRV_PALETTE_LENGTH(256)
 
 	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
@@ -314,7 +308,7 @@ ROM_START( formatz )
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "format_z.5",   0x0000, 0x2000, CRC(ba50be57) SHA1(aa37b644e8c1944b4c0ba81164d5a52be8ab491f) )  /* characters */
 
-	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2, 0 ) // starfield data
 	ROM_LOAD( "format_z.4",   0x0000, 0x2000, CRC(910375a0) SHA1(1044e0f45ce34c15986d9ab520c0e7d08fd46dde) )  /* characters */
 
 	ROM_REGION( 0x3000, REGION_GFX3, ROMREGION_DISPOSE )
@@ -340,7 +334,7 @@ ROM_START( aeroboto )
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "aeroboto.5",   0x0000, 0x2000, CRC(32fc00f9) SHA1(fd912fe2ab0101057c15c846f0cc4259cd94b035) )  /* characters */
 
-	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2, 0 ) // starfield data
 	ROM_LOAD( "format_z.4",   0x0000, 0x2000, CRC(910375a0) SHA1(1044e0f45ce34c15986d9ab520c0e7d08fd46dde) )  /* characters */
 
 	ROM_REGION( 0x3000, REGION_GFX3, ROMREGION_DISPOSE )

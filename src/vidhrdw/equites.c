@@ -15,6 +15,9 @@ drivers by Acho A. Tang
 #include "vidhrdw/generic.h"
 
 #define BMPAD 8
+#define BMW_l2 9
+#define FP_PRECISION 20
+#define FP_HALF ((1<<(FP_PRECISION-1))-1)
 
 /******************************************************************************/
 // Imports
@@ -31,6 +34,7 @@ static int maskwidth, maskheight, maskcolor;
 static int scrollx, scrolly;
 static int bgcolor[4];
 static struct rectangle halfclip;
+static struct PRESTEP_TYPE { unsigned sy, fdx; } *prestep;
 
 /******************************************************************************/
 // Exports
@@ -61,9 +65,12 @@ static void video_init_common(void)
 			maskwidth = 16;
 		break;
 		case 0x8510:
+			scrollx = 128;
+			scrolly = 8;
+		break;
 		case 0x8511:
 			scrollx = 128;
-			scrolly = 32;
+			scrolly = 8;
 		break;
 	}
 }
@@ -183,16 +190,56 @@ static void splndrbt_video_reset(void)
 	inactivecharmap = charmap1;
 }
 
+static void splndrbt_prestep(
+	struct PRESTEP_TYPE *ps,
+	const struct rectangle *dst_clip,
+	int src_w, int src_h,
+	int dst_startw, int dst_endw)
+{
+	double DA, DB, DC, D0, D1, Dsum;
+	int i, dst_vish;
+
+	dst_vish = dst_clip->max_y - dst_clip->min_y;
+
+	DA = (double)(src_w << FP_PRECISION) * dst_vish;
+	DB = dst_endw - dst_startw;
+	DC = dst_startw * dst_vish;
+	D1 = 0;
+
+	for (i=0; i<=dst_vish; i++)
+	{
+		D0 = DA / (DB * i + DC);
+		D1 += D0;
+		ps[i].fdx = (unsigned)D0;
+	}
+
+	DA = src_w * dst_vish;
+	D0 = src_h;
+	D1 /= 1 << FP_PRECISION;
+	Dsum = 0.5;
+
+	for (i=0; i<=dst_vish; i++)
+	{
+		ps[i].sy = (unsigned)Dsum;
+		Dsum += (DA * D0) / ((DB * i + DC) * D1);
+		//logerror("dst_y=%3u src_y=%3u\n", i, ps[i].sy);
+	}
+}
+
 VIDEO_START( splndrbt )
 {
-	unsigned char *buf8ptr;
+#define BMW (1<<BMW_l2)
 
-	if (Machine->color_depth > 16) return(1);
+	unsigned char *buf8ptr;
+	int i;
+
+	if (Machine->color_depth > 16) return(-1);
 
 	halfclip = Machine->visible_area;
-	halfclip.max_y = halfclip.min_y + ((halfclip.max_y - halfclip.min_y + 1)>>1) - 1;
+	i = halfclip.max_y - halfclip.min_y + 1;
+	halfclip.max_y = halfclip.min_y + (i >> 1) - 1;
 
-	tmpbitmap = auto_bitmap_alloc(512, 512);
+	if ((tmpbitmap = auto_bitmap_alloc(BMW, BMW)) == NULL) return(-1);
 
 	charmap0 = tilemap_create(splndrbt_char0info, tilemap_scan_cols, TILEMAP_TRANSPARENT_COLOR, 8, 8, 32, 32);
 	tilemap_set_transparent_pen(charmap0, 0);
@@ -204,14 +251,17 @@ VIDEO_START( splndrbt )
 	tilemap_set_scrolldx(charmap1, 8, 8);
 	tilemap_set_scrolldy(charmap1, 32, 32);
 
-	buf8ptr = (unsigned char *)auto_malloc(videoram_size*2);
+	if ((buf8ptr = auto_malloc(videoram_size * 2)) == NULL) return(-1);
 	charram0 = (data16_t*)buf8ptr;
 	charram1 = (data16_t*)(buf8ptr + videoram_size);
 
-	dirtybuf = auto_malloc(0x800);
+	if ((dirtybuf = auto_malloc(0x800)) == NULL) return(-1);
 	memset(dirtybuf, 1, 0x800);
 
-	defcharram = videoram16 + videoram_size/2;
+	if ((prestep = (struct PRESTEP_TYPE *)auto_malloc(i * sizeof(struct PRESTEP_TYPE))) == NULL) return(-1);
+	splndrbt_prestep(prestep, &Machine->visible_area, BMW, 434, 96, 480);
+
+	defcharram = videoram16 + videoram_size / 2;
 
 	video_init_common();
 	splndrbt_video_reset();
@@ -401,114 +451,73 @@ static void splndrbt_slantcopy(
 	struct mame_bitmap *dst_bitmap,
 	const struct rectangle *dst_clip,
 	int src_x, int src_y,
-	int src_w, int src_h,
-	int dst_startw, int dst_endw)
+	unsigned src_w, unsigned src_h,
+	unsigned dst_startw, unsigned dst_endw,
+	struct PRESTEP_TYPE *ps)
 {
-#define XWARP 0x1ff
-#define YWARP 0x1ff
-#define FP_PRECISIONX 20
-#define FP_PRECISIONY 20
-#define FP_HALFX 0x7ffff
-#define FP_HALFY 0x7ffff
-//#define YASPECT 1.08320567833712832813476318053832
-#define YASPECT 1.0
+#define WARP ((1<<BMW_l2)-1)
 
-	int dst_x, dst_y;
+	data16_t *src_base, *src_ptr, *dst_ptr;
+	int src_pitch, dst_pitch, dst_wdiff, dst_visw, dst_vish;
+	int dst_curline, dst_xend, src_fsx, src_fdx, eax, ebx, ecx, edx;
 
-	data16_t *src_base;
-	double fx1, fx2, src_fsy;
-	int src_pitch, src_fw;
-	int dst_pitch, dst_wdiff, dst_curline, dst_visw, dst_vish;
-
-	data16_t *src_ptr, *dst_ptr;
-	int dst_xend, src_fsx, src_fdx, eax, ebx, ecx, edx;
-
-	src_x &= XWARP;
-	src_y &= YWARP;
-	//ebx = (src_x << FP_PRECISIONX) + (src_w << (FP_PRECISIONX - 1));
-	//ebx &= (TBMP_W << FP_PRECISIONX) - 1;
-	ebx = ( (src_x + (src_w>>1)) & XWARP ) << FP_PRECISIONX; // visually better
-	src_fw = (src_w-1) << FP_PRECISIONX; // biased to compensate precision loss
-	src_pitch = src_bitmap->rowpixels;
 	src_base = (data16_t*)src_bitmap->base;
+	src_pitch = src_bitmap->rowpixels;
+	ebx = ((src_x + (src_w>>1)) & WARP) << FP_PRECISION;
 
-	dst_x = dst_clip->min_x;
-	dst_y = dst_clip->min_y;
-	dst_visw = dst_clip->max_x - dst_x + 1;
-	dst_vish = dst_clip->max_y - dst_y + 1;
+	eax = dst_clip->min_x;
+	edx = dst_clip->min_y;
+	dst_visw = dst_clip->max_x - eax + 1;
+	dst_vish = dst_clip->max_y - edx;
 	dst_pitch = dst_bitmap->rowpixels;
-	dst_ptr = (data16_t*)dst_bitmap->base + dst_y * dst_pitch + dst_x + (dst_visw >> 1);
+	dst_ptr = (data16_t*)dst_bitmap->base + edx * dst_pitch + eax + (dst_visw >> 1);
 
-	fx1 = FP_HALFY * YASPECT;
-	src_fsy = FP_HALFY;
 	dst_wdiff = dst_endw - dst_startw;
 	dst_curline = 0;
 
 	do
 	{
-		edx = dst_wdiff;
-		eax = (int)fx1;
-		edx *= dst_curline;
-		eax >>= FP_PRECISIONY;
-		src_fsx = FP_HALFX;
-		eax += src_y;
-		ecx = 0;
-		eax &= YWARP;
-		fx1 = edx;
-		eax *= src_pitch;
-		fx1 /= dst_vish;
-		src_ptr = src_base;
-		fx2 = src_fw;
-		edx = dst_visw;
-		fx1 += dst_startw;
-		src_ptr += eax;
-		dst_xend = (int)fx1;
-		fx2 /= fx1;
-		if (dst_xend > edx) dst_xend = edx;
+		dst_xend = dst_startw + (dst_wdiff * dst_curline) / dst_vish;
+		eax = (src_y + ps[dst_curline].sy) & WARP;
+		src_fdx = ps[dst_curline].fdx;
+		src_ptr = src_base + src_pitch * eax;
+		if (dst_xend > dst_visw) dst_xend = dst_visw;
+		src_fsx = FP_HALF;
 		dst_xend >>= 1;
-		src_fsy += fx2;
-		src_fdx = (int)fx2;
+		ecx = 0;
 
 		do
 		{
 			eax = ebx - src_fsx;
 			edx = ebx + src_fsx;
 			src_fsx += src_fdx;
-			eax >>= FP_PRECISIONX;
-			edx >>= FP_PRECISIONX;
-			eax &= XWARP;
-			edx &= XWARP;
+			eax >>= FP_PRECISION;
+			edx >>= FP_PRECISION;
+			eax &= WARP;
+			edx &= WARP;
 			eax = *(src_ptr + eax);
 			edx = *(src_ptr + edx);
 			*(dst_ptr - ecx - 1) = eax;
 			*(dst_ptr + ecx) = edx;
 		}
-		while((++ecx) < dst_xend);
+		while(++ecx < dst_xend);
 
-		fx1 = src_fsy;
 		dst_ptr += dst_pitch;
-		//fx1 *= YASPECT;
 	}
-	while((++dst_curline) < dst_vish);
+	while(++dst_curline <= dst_vish);
 
-#undef Y_ASPECT
-#undef FP_HALFY
-#undef FP_HALFX
-#undef FP_PRECISIONY
-#undef FP_PRECISIONX
-#undef YWARP
-#undef XWARP
+#undef WARP
 }
 
 static void splndrbt_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *clip)
 {
 #define SPRITE_BANKBASE 3
-#define SCALE_ONE 0x10000
+#define FP_ONE 0x10000
 #define SHIFTX 0
 #define SHIFTY 0
 
-	data16_t *data_ptr;
 	struct GfxElement *gfx;
+	data16_t *data_ptr;
 	int data, sprite, fx, fy, absx, absy, sx, sy, adjy, scalex, scaley, color, i;
 
 	gfx = Machine->gfx[SPRITE_BANKBASE];
@@ -519,35 +528,28 @@ static void splndrbt_draw_sprites(struct mame_bitmap *bitmap, const struct recta
 		data = data_ptr[i];
 		if (!data) continue;
 
-		scaley = (data>>8 & 0xf) + 1;
-		sprite = data & 0x7f;
-#if 0 // style1
-		adjy = 0x10 - scaley;
-		scaley <<= 12;
-#else // style2
-		scaley = ((scaley<<5) + scaley) << 7;
-		if (scaley > SCALE_ONE) scaley = SCALE_ONE;
-		adjy = (SCALE_ONE - scaley) >> 12;
-#endif
 		fx = data & 0x2000;
 		fy = data & 0x1000;
+		sprite = data & 0x7f;
+		scaley = (data>>8 & 0x0f) + 1;
+		adjy = 0x10 - scaley;
+		scaley = (scaley << 12) + (scaley << 8) - 1;
+		if (scaley > FP_ONE) scaley = FP_ONE;
 
 		data = data_ptr[i+1];
 		sx = data & 0xff;
+		absx = (sx + SHIFTX) & 0xff;
+		if (absx >= 252) absx -= 256;
+
 		color = data>>8 & 0x1f;
+
 		data = data_ptr[i+0x80];
 		sy = data & 0xff;
-		data = data_ptr[i+0x81];
 		absy = (-sy + adjy + SHIFTY) & 0xff;
-		absx = (sx + SHIFTX) & 0xff;
-		scalex = (data & 0xf) + 1;
-		if (absx >= 252) absx -= 256;
-#if 0 // style1
+
+		data = data_ptr[i+0x81];
+		scalex = (data & 0x0f) + 1;
 		scalex <<= 12;
-#else // style2
-		scalex = ((scalex<<5) + scalex) << 7;
-		if (scalex > SCALE_ONE) scalex = SCALE_ONE;
-#endif
 
 		drawgfxzoom(bitmap,
 			gfx,
@@ -560,7 +562,7 @@ static void splndrbt_draw_sprites(struct mame_bitmap *bitmap, const struct recta
 
 #undef SHIFTY
 #undef SHIFTX
-#undef SCALE_ONE
+#undef FP_ONE
 #undef SPRITE_BANKBASE
 }
 
@@ -572,8 +574,8 @@ VIDEO_UPDATE( splndrbt )
 
 	splndrbt_slantcopy(
 		tmpbitmap, bitmap, cliprect,
-		*splndrbt_scrollx+scrollx, *splndrbt_scrolly+scrolly,
-		512, 448, 96, 480);
+		*splndrbt_scrollx + scrollx, *splndrbt_scrolly + scrolly,
+		BMW, 434, 96, 480, prestep);
 
 	tilemap_draw(bitmap, cliprect, charmap1, 0, 0);
 	splndrbt_draw_sprites(bitmap, cliprect);

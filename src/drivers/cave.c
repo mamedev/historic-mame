@@ -30,6 +30,7 @@ Year + Game			License		PCB			Tilemaps		Sprites			Other
 98	ESP Ra.De.		Atlus		ATC04		?
 98	Uo Poko			Jaleco		CV02		?
 99	Guwange			Atlus		ATC05		?
+99	Gaia Crusaders	Noise Factory ?			?
 -----------------------------------------------------------------------------------
 
 To Do:
@@ -351,6 +352,16 @@ WRITE16_HANDLER( cave_eeprom_lsb_w )
 	}
 }
 
+/*	- No eeprom or lockouts */
+WRITE16_HANDLER( gaia_coin_lsb_w )
+{
+	if ( ACCESSING_LSB )  // odd address
+	{
+		coin_counter_w(1, data & 0x0002);
+		coin_counter_w(0, data & 0x0001);
+	}
+}
+
 /*	- No coin lockouts
 	- Writing 0xcf00 shouldn't send a 1 bit to the eeprom	*/
 WRITE16_HANDLER( metmqstr_eeprom_msb_w )
@@ -627,6 +638,54 @@ MEMORY_END
 
 
 /***************************************************************************
+									Gaia Crusaders
+***************************************************************************/
+
+static MEMORY_READ16_START( gaia_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM				},	// ROM
+	{ 0x100000, 0x10ffff, MRA16_RAM				},	// RAM
+	{ 0x300002, 0x300003, cave_sound_r			},	// YMZ280
+	{ 0x400000, 0x407fff, MRA16_RAM				},	// Sprite bank 1
+	{ 0x408000, 0x40ffff, MRA16_RAM				},	// Sprite bank 2
+	{ 0x500000, 0x507fff, MRA16_RAM				},	// Layer 0
+	{ 0x508000, 0x50ffff, MRA16_RAM				},	// More Layer 0, Tested but not used?
+	{ 0x600000, 0x607fff, MRA16_RAM				},	// Layer 1
+	{ 0x608000, 0x60ffff, MRA16_RAM				},	// More Layer 1, Tested but not used?
+	{ 0x700000, 0x707fff, MRA16_RAM				},	// Layer 2
+	{ 0x708000, 0x70ffff, MRA16_RAM				},	// More Layer 2, Tested but not used?
+	{ 0x800000, 0x800007, cave_irq_cause_r		},	// IRQ Cause
+/**/{ 0x900000, 0x900005, MRA16_RAM				},	// Layer 0 Control
+/**/{ 0xa00000, 0xa00005, MRA16_RAM				},	// Layer 1 Control
+/**/{ 0xb00000, 0xb00005, MRA16_RAM				},	// Layer 2 Control
+	{ 0xc00000, 0xc0ffff, MRA16_RAM				},	// Palette
+	{ 0xd00010, 0xd00011, input_port_0_word_r	},	// Inputs
+	{ 0xd00012, 0xd00013, input_port_1_word_r	},	// Inputs
+	{ 0xd00014, 0xd00015, input_port_2_word_r	},	// DIPS
+MEMORY_END
+
+static MEMORY_WRITE16_START( gaia_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM						},	// ROM
+	{ 0x100000, 0x10ffff, MWA16_RAM						},	// RAM
+	{ 0x300000, 0x300003, cave_sound_w					},	// YMZ280
+	{ 0x400000, 0x407fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprite bank 1
+	{ 0x408000, 0x40ffff, MWA16_RAM						},	// Sprite bank 2
+	{ 0x500000, 0x507fff, cave_vram_0_w, &cave_vram_0	},	// Layer 0
+	{ 0x508000, 0x50ffff, MWA16_RAM						},	// More Layer 0, Tested but not used?
+	{ 0x600000, 0x607fff, cave_vram_1_w, &cave_vram_1	},	// Layer 1
+	{ 0x608000, 0x60ffff, MWA16_RAM						},	// More Layer 1, Tested but not used?
+	{ 0x700000, 0x707fff, cave_vram_2_w, &cave_vram_2	},	// Layer 2
+	{ 0x708000, 0x70ffff, MWA16_RAM						},	// More Layer 2, Tested but not used?
+	{ 0x800000, 0x80007f, MWA16_RAM, &cave_videoregs	},	// Video Regs
+	{ 0x900000, 0x900005, MWA16_RAM, &cave_vctrl_0		},	// Layer 0 Control
+	{ 0xa00000, 0xa00005, MWA16_RAM, &cave_vctrl_1		},	// Layer 1 Control
+	{ 0xb00000, 0xb00005, MWA16_RAM, &cave_vctrl_2		},	// Layer 2 Control
+	{ 0xc00000, 0xc0ffff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16 },	// Palette
+	{ 0xd00010, 0xd00011, gaia_coin_lsb_w				},	// Coin counter only
+	{ 0xd00014, 0xd00015, watchdog_reset16_w			},	// Watchdog?
+MEMORY_END
+
+
+/***************************************************************************
 									Guwange
 ***************************************************************************/
 
@@ -664,7 +723,7 @@ static MEMORY_WRITE16_START( guwange_writemem )
 	{ 0xc00000, 0xc0ffff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16 },	// Palette
 	{ 0xd00010, 0xd00011, cave_eeprom_lsb_w				},	// EEPROM
 //	{ 0xd00012, 0xd00013, MWA16_NOP				},	// ?
-//	{ 0xd00014, 0xd00015, MWA16_NOP				},	// ? $800068 in dfeveron ?
+//	{ 0xd00014, 0xd00015, MWA16_NOP				},	// ? $800068 in dfeveron ? probably Watchdog
 MEMORY_END
 
 
@@ -873,7 +932,7 @@ MEMORY_END
 
 
 /***************************************************************************
-								Sailorm Moon
+								Sailor Moon
 ***************************************************************************/
 
 static READ16_HANDLER( sailormn_input0_r )
@@ -1038,6 +1097,7 @@ static PORT_WRITE_START( hotdogst_sound_writeport )
 	{ 0x60, 0x60, OKIM6295_data_0_w			},	// M6295
 	{ 0x70, 0x70, hotdogst_okibank_w		},	// Samples bank
 PORT_END
+
 
 /***************************************************************************
 								Mazinger Z
@@ -1228,7 +1288,7 @@ PORT_END
 
 
 /***************************************************************************
-								Sailorm Moon
+								Sailor Moon
 ***************************************************************************/
 
 static data8_t *mirror_ram;
@@ -1359,6 +1419,93 @@ INPUT_PORTS_START( cave )
 	PORT_BIT(  0x2000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT(  0x4000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT(  0x8000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+INPUT_PORTS_END
+
+/* Gaia Crusaders, no EEPROM. Has DIPS */
+INPUT_PORTS_START( gaia )
+	PORT_START	// IN0 - Player 1 + 2
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	 | IPF_PLAYER1 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER1 )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_BUTTON4        | IPF_PLAYER1 )
+
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	 | IPF_PLAYER2 )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER2 )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_BUTTON4        | IPF_PLAYER2 )
+
+	PORT_START	// IN1 - Coins
+	PORT_BIT_IMPULSE(  0x0001, IP_ACTIVE_LOW, IPT_COIN1, 6)
+	PORT_BIT_IMPULSE(  0x0002, IP_ACTIVE_LOW, IPT_COIN2, 6)
+	PORT_BITX( 0x0004, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN2 - Dips
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0000, "Language" )
+	PORT_DIPSETTING(      0x0000, "English" )
+	PORT_DIPSETTING(      0x0004, "Japanese" )
+	PORT_DIPNAME( 0x0078, 0x0078, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(      0x0048, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0050, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0060, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0040, "2 Co./1 Cr./1 Cont." )
+	PORT_DIPSETTING(      0x0078, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0058, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x0070, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0068, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0080, 0x0000, "Allow Continue" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0100, "1" )
+	PORT_DIPSETTING(      0x0000, "2" )
+	PORT_DIPSETTING(      0x0300, "3" )
+	PORT_DIPSETTING(      0x0200, "4" )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0400, "150k/350k" )
+	PORT_DIPNAME( 0x1800, 0x1800, "Damage" )
+	PORT_DIPSETTING(      0x1800, "+0" )
+	PORT_DIPSETTING(      0x1000, "+1" )
+	PORT_DIPSETTING(      0x0800, "+2" )
+	PORT_DIPSETTING(      0x0000, "+3" )
+	PORT_DIPNAME( 0xe000, 0xe000, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0xc000, "Very Easy" )
+	PORT_DIPSETTING(      0xa000, "Easy" )
+	PORT_DIPSETTING(      0xe000, "Medium" )
+	PORT_DIPSETTING(      0x6000, "Medium Hard" )
+	PORT_DIPSETTING(      0x8000, "Hard 1" )
+	PORT_DIPSETTING(      0x2000, "Hard 2" )
+	PORT_DIPSETTING(      0x4000, "Very Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
 INPUT_PORTS_END
 
 /* Mazinger Z (has region stored in Eeprom) */
@@ -1992,6 +2139,38 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
+									Gaia Crusaders
+***************************************************************************/
+
+static MACHINE_DRIVER_START( gaia )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(gaia_readmem,gaia_writemem)
+	MDRV_CPU_VBLANK_INT(cave_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(15625/271.5)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(cave)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 224-1)
+	MDRV_GFXDECODE(esprade_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x8000)
+
+	MDRV_VIDEO_START(cave_3_layers)
+	MDRV_VIDEO_UPDATE(cave)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YMZ280B, ymz280b_intf)
+MACHINE_DRIVER_END
+
+
+/***************************************************************************
 									Guwange
 ***************************************************************************/
 
@@ -2022,7 +2201,6 @@ static MACHINE_DRIVER_START( guwange )
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YMZ280B, ymz280b_intf)
 MACHINE_DRIVER_END
-
 
 /***************************************************************************
 								Hotdog Storm
@@ -2530,6 +2708,7 @@ ROM_START( ddonpchj )
 	ROM_LOAD( "u7.bin", 0x200000, 0x200000, CRC(795b17d5) SHA1(cbfc29f1df9600c82e0fdae00edd00da5b73e14c) )
 ROM_END
 
+
 /***************************************************************************
 
 								Donpachi
@@ -2737,8 +2916,11 @@ ROM_START( espradeo )
 	ROM_LOAD( "u19.bin", 0x000000, 0x400000, CRC(f54b1cab) SHA1(34d70bb5798de85d892c062001d9ac1d6604fd9f) )
 ROM_END
 
-/*
-Gaia Crusaders
+
+/***************************************************************************
+
+								Gaia Crusaders
+
 Noise Factory, 1999
 
 PCB Layout
@@ -2772,18 +2954,19 @@ Notes:
       YMZ280B clock: 16.000MHz
       VSync        : 58Hz
       HSync        : 15.40kHz
-*/
+
+***************************************************************************/
 
 ROM_START( gaia )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "prg1.127", 0x000000, 0x080000, CRC(47b904b2) SHA1(58b9b55f59cf00f70b690a0371096e86f4d723c2) )
 	ROM_LOAD16_BYTE( "prg2.128", 0x000001, 0x080000, CRC(469b7794) SHA1(502f855c51005a866900b19c3a0a170d9ea02392) )
 
-	ROM_REGION( 0x2000000, REGION_GFX1, 0 )		/* Sprites (do not dispose) */
-	ROM_LOAD16_BYTE( "obj1.736", 0x000001, 0x400000, CRC(f4f84e5d) SHA1(8f445dd7a5c8a996939c211e5aec5742121a6e7e) )
-	ROM_LOAD16_BYTE( "obj2.738", 0x000000, 0x400000, CRC(15c2a9ce) SHA1(631eb2968395be86ef2403733e7d4ec769a013b9) )
+	ROM_REGION( 0x1000000, REGION_GFX1, 0 )  /* Sprites (do not dispose) */
+	ROM_LOAD( "obj1.736", 0x000000, 0x400000, CRC(f4f84e5d) SHA1(8f445dd7a5c8a996939c211e5aec5742121a6e7e) )
+	ROM_LOAD( "obj2.738", 0x400000, 0x400000, CRC(15c2a9ce) SHA1(631eb2968395be86ef2403733e7d4ec769a013b9) )
 
-	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
 	ROM_LOAD( "bg1.989", 0x000000, 0x400000, CRC(013a693d) SHA1(2cc5be6f47c13febed942e1c3167946efedc5f9b) )
 
 	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
@@ -3066,6 +3249,7 @@ ROM_START( nmaster )
 	ROM_LOAD( "bp947a.u37", 0x040000, 0x100000, CRC(c3077c8f) SHA1(0a76316a81b7de78279b859549eb5161a721ac71) )	// FIRST AND SECOND HALF IDENTICAL
 	ROM_CONTINUE(           0x040000, 0x100000             )
 ROM_END
+
 
 /***************************************************************************
 
@@ -3377,6 +3561,16 @@ DRIVER_INIT( esprade )
 #endif
 }
 
+DRIVER_INIT( gaia )
+{
+	/* No EEPROM */
+
+	unpack_sprites();
+	cave_spritetype = 2;	// "normal" sprites with different position handling
+	cave_kludge = 0;
+	time_vblank_irq = 2000;	/**/
+}
+
 DRIVER_INIT( guwange )
 {
 	cave_default_eeprom = cave_default_eeprom_type1;
@@ -3446,14 +3640,14 @@ DRIVER_INIT( metmqstr )
 
 DRIVER_INIT( pwrinst2 )
 {
-	cave_default_eeprom = 0;
-	cave_default_eeprom_length = 0;
-	cave_region_byte = -1;
-
 	unsigned char *buffer;
 	data8_t *src = memory_region(REGION_GFX1);
 	int len = memory_region_length(REGION_GFX1);
 	int i, j;
+
+	cave_default_eeprom = 0;
+	cave_default_eeprom_length = 0;
+	cave_region_byte = -1;
 
 	if ((buffer = malloc(len)))
 	{
@@ -3536,7 +3730,7 @@ GAME( 1995, donpachi, 0,        donpachi, cave,     ddonpach, ROT270, "Atlus/Cav
 GAME( 1995, donpachj, donpachi, donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DonPachi (Japan)"           )
 GAME( 1995, donpachk, donpachi, donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DonPachi (Korea)"           )
 GAME( 1995, metmqstr, 0,        metmqstr, metmqstr, metmqstr, ROT0,   "Banpresto/Pandorabox",                 "Metamoqester"               )
-GAME( 1995, nmaster,  metmqstr, metmqstr, metmqstr, metmqstr, ROT0,   "Banpresto/Pandorabox",                 "The Ninja Master (Japan?)"               )
+GAME( 1995, nmaster,  metmqstr, metmqstr, metmqstr, metmqstr, ROT0,   "Banpresto/Pandorabox",                 "Oni - The Ninja Master (Japan)"               )
 GAME( 1995, sailormn, 0,        sailormn, sailormn, sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22B)" ) // region in eeprom
 GAME( 1995, sailormo, sailormn, sailormn, sailormn, sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22)" ) // region in eeprom
 GAME( 1996, agallet,  0,        sailormn, sailormn, agallet,  ROT270, "Banpresto / Gazelle",                  "Air Gallet"        ) // board was taiwan, region in eeprom
@@ -3549,4 +3743,4 @@ GAME( 1998, espradej, esprade,  esprade,  cave,     esprade,  ROT270, "Atlus/Cav
 GAME( 1998, espradeo, esprade,  esprade,  cave,     esprade,  ROT270, "Atlus/Cave",                           "ESP Ra.De. (Japan Ver 1998 4/14)" )
 GAME( 1998, uopoko,   0,        uopoko,   cave,     uopoko,   ROT0,   "Cave (Jaleco license)",                "Uo Poko (Japan)"            )
 GAME( 1999, guwange,  0,        guwange,  guwange,  guwange,  ROT270, "Atlus/Cave",                           "Guwange (Japan)"            )
-GAMEX(1999, gaia,     0,        esprade,  cave,     esprade,  ROT0,   "Noise Factory",                        "Gaia Crusaders", GAME_NOT_WORKING )
+GAMEX(1999, gaia,     0,        gaia,     gaia,     gaia,     ROT0,   "Noise Factory",                        "Gaia Crusaders", GAME_IMPERFECT_SOUND ) // cuts out occasionally

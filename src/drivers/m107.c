@@ -4,6 +4,7 @@
 
 	Fire Barrel 							(c) 1993 Irem Corporation
 	Dream Soccer '94						(c) 1994 Data East Corporation
+	World PK Soccer							(c) 1995 Jaleco
 
 
 	Graphics glitches in both games.
@@ -102,34 +103,10 @@ static WRITE_HANDLER( m92_soundlatch_w )
 
 static int sound_status;
 
-#if 0
 static READ_HANDLER( m92_sound_status_r )
 {
-	if (offset == 0)
-	{
-//logerror("%06x: read sound status\n",activecpu_get_pc());
-
-/*
-
-	Gunforce waits on bit 1 (word) going high on bootup, just after
-	setting up interrupt controller.
-
-	Gunforce reads bit 2 (word) on every coin insert, doesn't seem to
-	do much though..
-
-	Ninja Batman polls this.
-
-	R-Type Leo reads it now & again..
-
-*/
-		if (Machine->sample_rate)
-			return sound_status;
-		else
-			return 0xff;
-	}
-	else return 0xff;
+	return 0xff;
 }
-#endif
 
 static READ_HANDLER( m92_soundlatch_r )
 {
@@ -183,13 +160,14 @@ MEMORY_END
 static PORT_READ_START( readport )
 	{ 0x00, 0x00, input_port_0_r }, /* Player 1 */
 	{ 0x01, 0x01, input_port_1_r }, /* Player 2 */
-	{ 0x02, 0x02, m107_port_4_r }, /* Coins */
+	{ 0x02, 0x02, m107_port_4_r },	/* Coins */
 	{ 0x03, 0x03, input_port_7_r }, /* Dip 3 */
 	{ 0x04, 0x04, input_port_6_r }, /* Dip 2 */
 	{ 0x05, 0x05, input_port_5_r }, /* Dip 1 */
 	{ 0x06, 0x06, input_port_2_r }, /* Player 3 */
 	{ 0x07, 0x07, input_port_3_r }, /* Player 4 */
-//	{ 0x08, 0x09, m92_sound_status_r },	/* answer from sound CPU */
+	{ 0x08, 0x09, m92_sound_status_r },	/* answer from sound CPU */
+	{ 0xc0, 0xc2, MRA_NOP }, /* Only wpksoc: ticket related? */
 PORT_END
 
 static PORT_WRITE_START( writeport )
@@ -314,6 +292,67 @@ INPUT_PORTS_START( dsoccr94 )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( wpksoc )
+	IREM_JOYSTICK_1_2(1)
+	IREM_JOYSTICK_1_2(2)
+	PORT_START /* not used */
+	PORT_START /* not used*/
+	IREM_COINS
+	IREM_SYSTEM_DIPSWITCH_4PLAYERS
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
@@ -599,31 +638,31 @@ ROM_END
 
 ROM_START( wpksoc )
 	ROM_REGION( 0x180000, REGION_CPU1, 0 ) /* v30 main cpu */
-	ROM_LOAD16_BYTE( "pkeurd.h0",    0x000001, 0x040000, CRC(b4917788) )
-	ROM_LOAD16_BYTE( "pkeurd.l0",    0x000000, 0x040000, CRC(03816bae) )
+	ROM_LOAD16_BYTE( "pkeurd.h0",    0x000001, 0x040000, CRC(b4917788) SHA1(673294c518eaf28354fa6a3058f9325c6d9ddde6) )
+	ROM_LOAD16_BYTE( "pkeurd.l0",    0x000000, 0x040000, CRC(03816bae) SHA1(832e2ec722b41d41626fec583fc11e9ff62cdaa0) )
 
 	ROM_REGION( 0x100000 * 2, REGION_CPU2, 0 )
-	ROM_LOAD16_BYTE( "pkos.sh0",     0x000001, 0x010000, CRC(1145998c) )
-	ROM_LOAD16_BYTE( "pkos.sl0",     0x000000, 0x010000, CRC(542ee1c7) )
+	ROM_LOAD16_BYTE( "pkos.sh0",     0x000001, 0x010000, CRC(1145998c) SHA1(cdb2a428e0f35302b81696dab02d3dd2c433f6e5) )
+	ROM_LOAD16_BYTE( "pkos.sl0",     0x000000, 0x010000, CRC(542ee1c7) SHA1(b934adeecbba17cf96b06a2b1dc1ceaebdf9ad10) )
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
-	ROM_LOAD16_BYTE( "pkos.c00", 0x000000, 0x80000, CRC(42ae3d73) )
-	ROM_LOAD16_BYTE( "pkos.c10", 0x000001, 0x80000, CRC(86acf45c) )
-	ROM_LOAD16_BYTE( "pkos.c01", 0x100000, 0x80000, CRC(b0d33f87) )
-	ROM_LOAD16_BYTE( "pkos.c11", 0x100001, 0x80000, CRC(19de7d63) )
+	ROM_LOAD16_BYTE( "pkos.c00", 0x000000, 0x80000, CRC(42ae3d73) SHA1(e4777066155c9882695ebff0412bd879b8d6f716) )
+	ROM_LOAD16_BYTE( "pkos.c10", 0x000001, 0x80000, CRC(86acf45c) SHA1(3b3d2abcf8000161a37d5e2619df529533aea47d) )
+	ROM_LOAD16_BYTE( "pkos.c01", 0x100000, 0x80000, CRC(b0d33f87) SHA1(f2c0e3a10615c6861a3f6fd82a3f066e8e264233) )
+	ROM_LOAD16_BYTE( "pkos.c11", 0x100001, 0x80000, CRC(19de7d63) SHA1(6d0633e412b47accaecc887a5c39f542eda49e81) )
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
-	ROM_LOAD16_BYTE( "pk.o00", 0x000000, 0x80000, CRC(165ce027) )
-	ROM_LOAD16_BYTE( "pk.o01", 0x000001, 0x80000, CRC(e2745147) )
-	ROM_LOAD16_BYTE( "pk.o10", 0x100000, 0x80000, CRC(6c171b73) )
-	ROM_LOAD16_BYTE( "pk.o11", 0x100001, 0x80000, CRC(471c0bf4) )
-	ROM_LOAD16_BYTE( "pk.o20", 0x200000, 0x80000, CRC(c886dad1) )
-	ROM_LOAD16_BYTE( "pk.o21", 0x200001, 0x80000, CRC(91e877ff) )
-	ROM_LOAD16_BYTE( "pk.o30", 0x300000, 0x80000, CRC(3390621c) )
-	ROM_LOAD16_BYTE( "pk.o31", 0x300001, 0x80000, CRC(4d322804) )
+	ROM_LOAD16_BYTE( "pk.o00", 0x000000, 0x80000, CRC(165ce027) SHA1(3510b323c683ade4dd7307b539072bb342b6796d) )
+	ROM_LOAD16_BYTE( "pk.o01", 0x000001, 0x80000, CRC(e2745147) SHA1(99026525449c2ca84e054a7d633c400e0e836461) )
+	ROM_LOAD16_BYTE( "pk.o10", 0x100000, 0x80000, CRC(6c171b73) SHA1(a99c9f012f21373daea08d28554cc36170f4e1fa) )
+	ROM_LOAD16_BYTE( "pk.o11", 0x100001, 0x80000, CRC(471c0bf4) SHA1(1cace5ffd5db91850662de929cb9086dc154d662) )
+	ROM_LOAD16_BYTE( "pk.o20", 0x200000, 0x80000, CRC(c886dad1) SHA1(9b58a2f108547c3f55399932a7e56031c5658737) )
+	ROM_LOAD16_BYTE( "pk.o21", 0x200001, 0x80000, CRC(91e877ff) SHA1(3df095632728ab16ab229d592ab12d3df44b2629) )
+	ROM_LOAD16_BYTE( "pk.o30", 0x300000, 0x80000, CRC(3390621c) SHA1(4138c690666f78b1c5cf83d815ed6b37239a94b4) )
+	ROM_LOAD16_BYTE( "pk.o31", 0x300001, 0x80000, CRC(4d322804) SHA1(b5e2b40e3ce83b6f97b2b57edaa79df6968d0997) )
 
 	ROM_REGION( 0x100000, REGION_SOUND1, ROMREGION_SOUNDONLY )	 /* ADPCM samples */
-	ROM_LOAD( "pk.da0",       0x000000, 0x80000, CRC(26a34cf4) )
+	ROM_LOAD( "pk.da0",       0x000000, 0x80000, CRC(26a34cf4) SHA1(a8a7cd91cdc6d644ee02ca16e7fdc8debf8f3a5f) )
 ROM_END
 
 /***************************************************************************/
@@ -687,4 +726,4 @@ static DRIVER_INIT( wpksoc )
 
 GAMEX(1993, firebarr, 0, firebarr, firebarr, firebarr, ROT270, "Irem", "Fire Barrel (Japan)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAME( 1994, dsoccr94, 0, dsoccr94, dsoccr94, dsoccr94, ROT0,   "Irem (Data East Corporation license)", "Dream Soccer '94" )
-GAMEX(1995, wpksoc,   0, firebarr, dsoccr94, wpksoc,   ROT0,   "Jaleco", "World PK Soccer", GAME_NOT_WORKING )
+GAMEX(1995, wpksoc,   0, firebarr, wpksoc,	 wpksoc,   ROT0,   "Jaleco", "World PK Soccer", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS )

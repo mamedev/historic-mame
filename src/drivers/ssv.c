@@ -31,11 +31,11 @@ STA-0001B	VISCO-001B	94	Drift Out '94							Visco
 STA-0001B	GOLF ROM	94	Eagle Shot Golf (1)						Sammy
 STA-0001B	?			94	Twin Eagle II - The Rescue Mission (2)	Seta
 STA-0001B	P1-102A		95	Mahjong Hyper Reaction					Sammy
-?			?			95	Ultra X Weapons / Ultra Keibitai (3)	Banpresto + Tsuburaya Prod.
+?			?			95	Ultra X Weapons / Ultra Keibitai 	Banpresto + Tsuburaya Prod.
 STA-0001B	VISCO-JJ1	96	Lovely Pop Mahjong Jan Jan Shimasyo		Visco
 STA-0001B	VISCO-001B	96	Storm Blade								Visco
 STA-0001B	P1-105A		96?	Meosis Magic							Sammy
-STA-0001B	?			97	Joryuu Syougi Kyoushitsu (4)			Visco
+STA-0001B	?			97	Joryuu Syougi Kyoushitsu (3)			Visco
 STA-0001B	VISCO-JJ1	97	Koi Koi Shimasyo 2						Visco
 STA-0001B	P1-112A		97	Mahjong Hyper Reaction 2				Sammy
 STA-0001B	?			97	Monster Slider							Visco / Datt
@@ -48,13 +48,8 @@ STA-0001B	SSV_SUB		01  Vasara 2								Visco
 -----------------------------------------------------------------------------------
 
 (1) Needs unimplemented v60 opcodes (ldtask,sttask)
-(2) Problems with the v60 interrupts mechanism. Protection controls the collisions (unimplemented)
-(3)	the same interrupts problem of twineag2, plus crashes on:
-		E01C64: 12 80 F4 00 00 00 01 F4 1A 00 00 ldpr #1000000, #1A
-		E01C70: 12 80 F4 FF FF 7F 00 F4 1B 00 00 ldpr #7FFFFF, #1B
-		E01C7C: 12 80 F4 FF FF FF 00 F4 1C 00 00 ldpr #FFFFFF, #1C
-	Once these issues are resolved it will work fine.
-(4) Uses an unemulated NEC V810 CPU instead of the V60.
+(2) Protection controls sprites (movements) (unimplemented)
+(3) Uses an unemulated NEC V810 CPU instead of the V60.
 
 
 Games not yet dumped:
@@ -90,6 +85,20 @@ To Do:
 				It seems that the x&y offsets in the sprite list should be apllied
 				to it (-$200,-$200) to move it off screen. But currently those offsets
 				are ignored for "tilemap" sprites. This may be related to the kludge for srmp4.
+
+- ultrax : bad gfx offsets and wrong visible area
+- twineag2 : protection controls sprite movements :
+
+	code @ $e75cdc
+
+	 W:
+	 		0x482000 - 0x482007 - values taken from obj table
+	 		0x482040 - 0x482043 - write latch ?
+
+	 R:
+	 		0x482022 - 0x482023 - result = direction ,
+	 													probably : 00 = down, 40 = left, 80 = up, c0 = right
+	 		0x482042 - 0x482043 - protection status bits ?
 
 ***************************************************************************/
 
@@ -162,12 +171,17 @@ WRITE16_HANDLER( ssv_irq_enable_w )
 	COMBINE_DATA(&irq_enable);
 }
 
+static int interrupt_ultrax;
+
 INTERRUPT_GEN( ssv_interrupt )
 {
 	if (cpu_getiloops())
 	{
-//		requested_int |= 1 << 1;	// needed by ultrax to coin up, breaks cairblad
-//		update_irq_state();
+		if(interrupt_ultrax)
+		{
+			requested_int |= 1 << 1;	// needed by ultrax to coin up, breaks cairblad
+			update_irq_state();
+		}
 	}
 	else
 	{
@@ -2682,6 +2696,7 @@ void init_ssv(void)
 								( (i & 1) ? (8 << 16) : 0 ) ;
 	ssv_enable_video(1);
 	ssv_special = 0;
+	interrupt_ultrax=0;
 }
 
 void hypreac2_init(void)
@@ -2739,10 +2754,10 @@ DRIVER_INIT( survarts )		{	init_ssv();
 DRIVER_INIT( sxyreact )		{	hypreac2_init();	// different
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xef;	}
-DRIVER_INIT( twineag2 )		{	init_ssv();
+DRIVER_INIT( twineag2 )		{	init_ssv();interrupt_ultrax=1;
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = 0;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = 0;	}
-DRIVER_INIT( ultrax )		{	init_ssv();
+DRIVER_INIT( ultrax )		{	init_ssv();interrupt_ultrax=1;
 								ssv_sprites_offsx = -8;	ssv_sprites_offsy = 0;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = 0;	}
 DRIVER_INIT( vasara2 )		{	init_ssv(); ssv_special = 2;
@@ -4165,12 +4180,11 @@ GAMEX( 2001,  vasara2a, vasara2,  ryorioh,  vasara2,  vasara2,  ROT270, "Visco",
 // Games not working properly:
 
 GAMEX( 1997,  mslider,  0,        mslider,  mslider,  mslider,  ROT0,   "Visco / Datt Japan", "Monster Slider (Japan)",                           GAME_NO_COCKTAIL ) // game logic?
-
+GAMEX( 1995,  ultrax,   0,        ultrax,   ultrax,   ultrax,   ROT270,	"Banpresto + Tsuburaya Prod.", "Ultra X Weapons / Ultra Keibitai",        GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
 //	Games not working at all:
 
 GAMEX( 1994,  eaglshot, 0,        eaglshot, eaglshot, eaglshot, ROT0,   "Sammy",   			  "Eagle Shot Golf",                                  GAME_NO_COCKTAIL | GAME_NOT_WORKING )
 GAMEX( 1994,  eaglshta, eaglshot, eaglshot, eaglshot, eaglshot, ROT0,   "Sammy",   			  "Eagle Shot Golf (alt)",                            GAME_NO_COCKTAIL | GAME_NOT_WORKING )
-GAMEX( 1994,  twineag2, 0,        twineag2, twineag2, twineag2, ROT270, "Seta",               "Twin Eagle II - The Rescue Mission",               GAME_NO_COCKTAIL | GAME_NOT_WORKING )
-GAMEX( 1995,  ultrax,   0,        ultrax,   ultrax,   ultrax,   ROT270,	"Banpresto + Tsuburaya Prod.", "Ultra X Weapons / Ultra Keibitai",        GAME_NO_COCKTAIL | GAME_NOT_WORKING )
+GAMEX( 1994,  twineag2, 0,        twineag2, twineag2, twineag2, ROT270, "Seta",               "Twin Eagle II - The Rescue Mission",               GAME_NO_COCKTAIL | GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)
 GAMEX( 1997,  jsk,      0,        janjans1, janjans1, janjans1, ROT0,   "Visco",              "Joryuu Syougi Kyoushitsu (Japan)",                 GAME_NO_COCKTAIL | GAME_NOT_WORKING )
 

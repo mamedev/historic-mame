@@ -5,35 +5,27 @@
 
   Driver provided by Paul Leaman
 
-TODO:
-- Starfield background is missing.
-- There is an additional ROM which seems to contain code for a third Z80,
-  however the board only has two. The ROM is related to the missing star
-  background. At one point, the code jumps to A000, outside of the ROM
-  address space.
-  This ROM could be something entirely different from Z80 code. In another
-  set, it consists of only the second half of the one we have here.
-- Lots of unknown PROMs.
-
 
 Change Log:
 
-FEB-2003 (AT)
+JUL-2003 AAT
 
-- added preliminary starfield emulation. Regardless of my best effort in
-  transcribing Sidearms' star circuit according to the current schematics
-  scan it still doesn't behave exactly like the arcade. Emulation is
-  performed per-pixel at logic level.
+- cleaned vidhrdw and corrected screen flipping
+
+JUN-2003 (Curt Coder)
+
+- converted driver to use tilemaps
+
+FEB-2003 AAT
+
+- added preliminary starfield emulation. circuit transcribed from
+  schematics but still not perfect.
 
 - rewrote video update and the following bugs seem to be fixed:
 
   sidearms060red:  attract mode and stage six crashing
   sidearms055gre:  strange background color
   turtship37b5yel: various graphics glitches and priority problems
-
-JUN-2003 (Curt Coder)
-
-- converted driver to use tilemaps
 
 Notes:
 
@@ -48,7 +40,6 @@ Notes:
 
 extern UINT8 *sidearms_bg_scrollx;
 extern UINT8 *sidearms_bg_scrolly;
-extern int sidearms_vidhrdw;
 
 extern WRITE_HANDLER( sidearms_videoram_w );
 extern WRITE_HANDLER( sidearms_colorram_w );
@@ -62,6 +53,7 @@ extern VIDEO_START( sidearms );
 extern VIDEO_UPDATE( sidearms );
 extern VIDEO_EOF( sidearms );
 
+int sidearms_gameid;
 
 static WRITE_HANDLER( sidearms_bankswitch_w )
 {
@@ -503,8 +495,8 @@ static void irqhandler(int irq)
 
 static struct YM2203interface ym2203_interface =
 {
-	2,                      /* 2 chips */
-	4000000,        /* 4 MHz ? (hand tuned) */
+	2,			/* 2 chips */
+	4000000,	/* 4 MHz ? (hand tuned) */
 	{ YM2203_VOL(15,25), YM2203_VOL(15,25) },
 	{ 0 },
 	{ 0 },
@@ -518,12 +510,12 @@ static struct YM2203interface ym2203_interface =
 static MACHINE_DRIVER_START( sidearms )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz (?) */
+	MDRV_CPU_ADD(Z80, 4000000) /* 4 MHz (?) */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 4 MHz (?) */
+	MDRV_CPU_ADD(Z80, 4000000) /* 4 MHz (?) */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -548,12 +540,12 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( turtship )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz (?) */
+	MDRV_CPU_ADD(Z80, 4000000) /* 4 MHz (?) */
 	MDRV_CPU_MEMORY(turtship_readmem,turtship_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 4 MHz (?) */
+	MDRV_CPU_ADD(Z80, 4000000) /* 4 MHz (?) */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -803,9 +795,9 @@ ROM_START( dygera )
 ROM_END
 
 
-static DRIVER_INIT( sidearms ) { sidearms_vidhrdw = 0; }
-static DRIVER_INIT( turtship ) { sidearms_vidhrdw = 1; }
-static DRIVER_INIT( dyger    ) { sidearms_vidhrdw = 2; }
+static DRIVER_INIT( sidearms ) { sidearms_gameid = 0; }
+static DRIVER_INIT( turtship ) { sidearms_gameid = 1; }
+static DRIVER_INIT( dyger    ) { sidearms_gameid = 2; }
 
 
 GAMEX(1986, sidearms, 0,        sidearms, sidearms, sidearms, ROT0,   "Capcom", "Side Arms - Hyper Dyne (World)", GAME_IMPERFECT_GRAPHICS )

@@ -13,10 +13,11 @@ drivers by Acho A. Tang
 
 #include "driver.h"
 #include "cpu/i8085/i8085.h"
+#include "machine/random.h"
 
 #define MCU_RTNMSB 0x80
 
-#if 0 // ** cut-and-paste to driver module **
+#if 0 // ** cut-and-pasted to driver module **
 
 // Common Hardware Start
 #define EQUITES_ADD_SOUNDBOARD7 \
@@ -247,7 +248,7 @@ void equites_8404init(void)
 
 	timer_pulse(TIME_IN_HZ(106.0), 0, equites_synth_callback); // hand tuned
 
-	seedMT(rand());
+	seedMT(mame_rand());
 }
 
 void equites_8404rule(unsigned pc, int offset, int data)
@@ -418,15 +419,15 @@ WRITE_HANDLER(equites_dac1_w)
 struct MSM5232interface equites_5232intf =
 {
 	1,
-	2119040, // OSC: 6.144Mhz (default = 2119040 Hz)
-	{ { 1.0e-6, 1.0e-6, 1.0e-6, 1.0e-6, 1.0e-6, 1.0e-6, 1.0e-6, 1.0e-6 } }, // needs verification
+	2500000, // 2.5MHz
+	{ { 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6 } }, // needs verification
 	{ 75 }
 };
 
 struct AY8910interface equites_8910intf =
 {
 	1,
-	6144000/4, // OSC: 6.144Mhz
+	6144444/4, // OSC: 6.144MHz
 	{ 50 },
 	{ 0 },
 	{ 0 },

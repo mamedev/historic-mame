@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "state.h"
 #include "machine/eeprom.h"
 #include "vidhrdw/konamiic.h"
 
@@ -9,7 +10,7 @@ static int layerpri[3];
 static int prmrsocr_sprite_bank;
 static int sorted_layer[3];
 static int dim_c,dim_v;	/* ssriders, tmnt2 */
-
+static int lastdim,lasten;
 
 static struct tilemap *roz_tilemap;
 
@@ -66,7 +67,7 @@ static void cuebrckj_tile_callback(int layer,int bank,int *code,int *color)
 	if (layer == 0)
 	{
 		*code |= ((*color & 0x01) << 8);
-		*color = layer_colorbase[layer]  + ((*color & 0x80) >> 5) + ((*color & 0x10) >> 1); 
+		*color = layer_colorbase[layer]  + ((*color & 0x80) >> 5) + ((*color & 0x10) >> 1);
 	}
 	else
 	{
@@ -264,6 +265,16 @@ VIDEO_START( lgtnfght )	/* also tmnt2, ssriders */
 		return 1;
 	if (K053245_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,lgtnfght_sprite_callback))
 		return 1;
+
+	K05324x_set_z_rejection(0);
+
+	dim_c = dim_v = lastdim = lasten = 0;
+
+	state_save_register_int  ("TMNT2", 0, "dim_c",   &dim_c);
+	state_save_register_int  ("TMNT2", 0, "dim_v",   &dim_v);
+	state_save_register_int  ("TMNT2", 0, "lastdim", &lastdim);
+	state_save_register_int  ("TMNT2", 0, "lasten",  &lasten);
+
 	return 0;
 }
 
@@ -699,8 +710,9 @@ static int glfgreat_pixel;
 
 READ16_HANDLER( glfgreat_ball_r )
 {
+#ifdef MAME_DEBUG
 usrintf_showmessage("%04x",glfgreat_pixel);
-
+#endif
 	/* if out of the ROZ layer palette range, it's in the water - return 0 */
 	if (glfgreat_pixel < 0x400 || glfgreat_pixel >= 0x500) return 0;
 	else return glfgreat_pixel & 0xff;
@@ -755,35 +767,51 @@ VIDEO_UPDATE( glfgreat )
 
 VIDEO_UPDATE( tmnt2 )
 {
-	static int lastdim;
-	int i,newdim;
-
-	video_update_lgtnfght(bitmap,cliprect);
+	double brt;
+	int i, newdim, newen, cb, ce;
 
 	newdim = dim_v | ((~dim_c & 0x10) >> 1);
-	if (newdim != lastdim)
+	newen  = (K053251_get_priority(5) && K053251_get_priority(5) != 0x3e);
+
+	if (newdim != lastdim || newen != lasten)
 	{
-		double brt = 1.0 - (1.0-PALETTE_DEFAULT_SHADOW_FACTOR)*newdim/8;
-		int cb;
-
+		brt = 1.0;
+		if (newen) brt -= (1.0-PALETTE_DEFAULT_SHADOW_FACTOR)*newdim/8;
 		lastdim = newdim;
+		lasten  = newen;
 
-		/* only affect the background and sprites, not text layer */
-		cb = layer_colorbase[sorted_layer[0]] * 16;
-		for (i = cb;i < cb + 128;i++)
-			palette_set_brightness(i,brt);
-		cb = layer_colorbase[sorted_layer[1]] * 16;
-		for (i = cb;i < cb + 128;i++)
-			palette_set_brightness(i,brt);
-		cb = sprite_colorbase * 16;
-		for (i = cb;i < cb + 512;i++)
+		/*
+			Only affect the background and sprites, not text layer.
+			Instead of dimming each layer we dim the entire palette
+			except text colors because palette bases may change
+			anytime and there's no guarantee a dimmed color will be
+			reset properly.
+		*/
+
+		// find the text layer's palette range
+		cb = layer_colorbase[sorted_layer[2]] << 4;
+		ce = cb + 128;
+
+		// dim all colors before it
+		for (i=0; i<cb; i++)
 			palette_set_brightness(i,brt);
 
+		// reset all colors in range
+		for (i=cb; i<ce; i++)
+			palette_set_brightness(i,1.0);
+
+		// dim all colors after it
+		for (i=ce; i<2048; i++)
+			palette_set_brightness(i,brt);
+
+		// toggle shadow/highlight
 		if (~dim_c & 0x10)
-			palette_set_shadow_factor(1/PALETTE_DEFAULT_SHADOW_FACTOR);
+			palette_set_shadow_mode(1);
 		else
-			palette_set_shadow_factor(PALETTE_DEFAULT_SHADOW_FACTOR);
+			palette_set_shadow_mode(0);
 	}
+
+	video_update_lgtnfght(bitmap,cliprect);
 }
 
 
@@ -813,4 +841,17 @@ VIDEO_UPDATE( thndrx2 )
 	tilemap_draw(bitmap,cliprect,K052109_tilemap[sorted_layer[2]],0,4);
 
 	K051960_sprites_draw(bitmap,cliprect,-1,-1);
+}
+
+
+
+/***************************************************************************
+
+  Housekeeping
+
+***************************************************************************/
+
+VIDEO_EOF( detatwin )
+{
+	K053245_clear_buffer();
 }

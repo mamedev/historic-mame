@@ -2,14 +2,20 @@
 #include "vidhrdw/generic.h"
 
 
+// how the starfield ROM is interpreted: 0=256x256x1 linear bitmap, 1=8x8x1x1024 tilemap
+#define STARS_LAYOUT 1
+
+// scroll speed of the stars: 1=normal, 2=half, 3=one-third...etc.(possitive integers only)
+#define SCROLL_SPEED 1
+
+
 data8_t *aeroboto_videoram;
 data8_t *aeroboto_hscroll, *aeroboto_vscroll, *aeroboto_tilecolor;
-data8_t *aeroboto_starx, *aeroboto_stary, *aeroboto_starcolor;
+data8_t *aeroboto_starx, *aeroboto_stary, *aeroboto_bgcolor;
 
-static int aeroboto_charbank;
+static int aeroboto_charbank, aeroboto_starsoff;
 
 static struct tilemap *bg_tilemap;
-
 
 /***************************************************************************
 
@@ -24,9 +30,9 @@ static void get_tile_info(int tile_index)
 			0,
 			code + (aeroboto_charbank << 8),
 			aeroboto_tilecolor[code],
-			0)
+			(aeroboto_tilecolor[code] >= 0x33) ? 0 : TILE_IGNORE_TRANSPARENCY)
 }
-
+// transparency should only affect tiles with color 0x33 or higher
 
 
 /***************************************************************************
@@ -45,6 +51,22 @@ VIDEO_START( aeroboto )
 	tilemap_set_transparent_pen(bg_tilemap,0);
 
 	tilemap_set_scroll_rows(bg_tilemap,64);
+
+	#if STARS_LAYOUT
+	{
+		data8_t *rom, *temp;
+		int i, length;
+
+		rom = memory_region(REGION_GFX2);
+		length = memory_region_length(REGION_GFX2);
+		temp = auto_malloc(length);
+		memcpy(temp, rom, length);
+
+		for (i=0; i<length; i++) rom[(i&~0xff)+(i<<5&0xe0)+(i>>3&0x1f)] = temp[i];
+
+		free(temp);
+	}
+	#endif
 
 	return 0;
 }
@@ -74,7 +96,8 @@ WRITE_HANDLER( aeroboto_3000_w )
 		aeroboto_charbank = (data & 0x02) >> 1;
 	}
 
-	/* bit 2 = star field enable? */
+	/* bit 2 = disable star field? */
+	aeroboto_starsoff = data & 0x4;
 }
 
 WRITE_HANDLER( aeroboto_videoram_w )
@@ -118,7 +141,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 			y = 240 - y;
 		}
 
-		drawgfx(bitmap, Machine->gfx[2],
+		drawgfx(bitmap, Machine->gfx[1],
 				spriteram[offs+1],
 				spriteram[offs+2] & 0x07,
 				flip_screen, flip_screen,
@@ -130,61 +153,66 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 VIDEO_UPDATE( aeroboto )
 {
-	int y;
+	static struct rectangle splitrect1 = { 0, 255, 0, 39 };
+	static struct rectangle splitrect2 = { 0, 255, 40, 255 };
+	static int sx=0, sy=0;
+	static data8_t ox=0, oy=0;
+	data8_t *src_base, *src_colptr, *src_rowptr;
+	int src_offsx, src_colmask, sky_color, star_color, x, y, i, j, pen;
 
-#if 0
-	// draw star map (total guesswork)
+	sky_color = star_color = *aeroboto_bgcolor << 2;
+
+	// the star field is supposed to be seen through tile pen 0 when active
+	if (!aeroboto_starsoff)
 	{
-		int xoffs, yoffs, xend, yend, xdisp, ydisp, i, j;
-		static unsigned int lx=0, ly=0, x,sx=0, sy=0;
-		struct GfxElement *gfx;
-		gfx = Machine->gfx[1];
+		if (star_color < 0xd0) { star_color = 0xd0; sky_color = 0; }
+		star_color += 2;
 
-		x = *aeroboto_starx;
-		i = x - lx;
-		lx = x;
-		if (i<-128) i+=0x100; else if (i>127) i-=0x100;
-		sx += i;
-		i = (sx >> 3) & 0xff;
-		xdisp = -(i & 7);
-		xoffs = i >> 3;
-		xend = xdisp + 256;
+		fillbitmap(bitmap, sky_color, cliprect);
 
-		y = *aeroboto_stary;
-		i = y - ly;
-		ly = y;
-		if (i<-128) i+=0x100; else if (i>127) i-=0x100;
-		if (*aeroboto_vscroll != 0xff) sy += i;
-		i = (sy >> 3) & 0xff;
-		j = (i >> 3) + 3;
-		ydisp = 24 -(i & 7);
-		yoffs = (j<<5) & 0x1ff;
-		yend = ydisp + 224;
+		// actual scroll speed is unknown but it can be adjusted by changing the SCROLL_SPEED constant
+		sx += (char)(*aeroboto_starx - ox);
+		ox = *aeroboto_starx;
+		x = sx / SCROLL_SPEED;
 
-		j = *aeroboto_starcolor;
+		if (*aeroboto_vscroll != 0xff) sy += (char)(*aeroboto_stary - oy);
+		oy = *aeroboto_stary;
+		y = sy / SCROLL_SPEED;
 
-		for (y=ydisp; y<yend; y+=8)
+		src_base = memory_region(REGION_GFX2);
+
+		for (i=0; i<256; i++)
 		{
-			for (x=xdisp; x<xend; xoffs++, x+=8)
+			src_offsx = (x + i) & 0xff;
+			src_colmask = 1 << (src_offsx & 7);
+			src_offsx >>= 3;
+			src_colptr = src_base + src_offsx;
+			pen = star_color + ((i + 8) >> 4 & 1);
+
+			for (j=0; j<256; j++)
 			{
-				i = yoffs + (xoffs & 0x1f);
-				drawgfx(bitmap, gfx, i, j,
-						0, 0, x, y, cliprect, TRANSPARENCY_NONE, 0);
+				src_rowptr = src_colptr + (((y + j) & 0xff) << 5 );
+				if (!((unsigned)*src_rowptr & src_colmask)) plot_pixel(bitmap, i, j, pen);
 			}
-			yoffs = (yoffs + 32) & 0x1ff;
 		}
 	}
-#endif
+	else
+	{
+		sx = ox = *aeroboto_starx;
+		sy = oy = *aeroboto_stary;
+		fillbitmap(bitmap, sky_color, cliprect);
+	}
 
 	for (y = 0;y < 64; y++)
 		tilemap_set_scrollx(bg_tilemap,y,aeroboto_hscroll[y]);
 
+	// the playfield is part of a splitscreen and should not overlap with status display
 	tilemap_set_scrolly(bg_tilemap,0,*aeroboto_vscroll);
-	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
+	tilemap_draw(bitmap,&splitrect2,bg_tilemap,0,0);
 
 	draw_sprites(bitmap,cliprect);
 
-	/* note that the same tilemap is used twice with different vertical scroll */
+	// the status display behaves more closely to a 40-line splitscreen than an overlay
 	tilemap_set_scrolly(bg_tilemap,0,0);
-	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	tilemap_draw(bitmap,&splitrect1,bg_tilemap,0,0);
 }

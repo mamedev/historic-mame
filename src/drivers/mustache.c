@@ -81,10 +81,13 @@ VIDEO_UPDATE( mustache );
 PALETTE_INIT( mustache );
 
 
+static int read_coins=0;
+
 READ_HANDLER ( mustache_coin_hack_r )
 {
-	return(offset&1	)?(input_port_5_r(0)<<5)|(input_port_5_r(0)<<7):(input_port_5_r(0)<<4);
+	return (read_coins)?((offset&1	)?(input_port_5_r(0)<<5)|(input_port_5_r(0)<<7):(input_port_5_r(0)<<4)):0;
 }
+
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
@@ -134,6 +137,7 @@ INPUT_PORTS_START( mustache )
 	PORT_START	/* IN 3 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1  )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2  )
+	PORT_BIT( 0xf9, IP_ACTIVE_LOW, IPT_UNUSED  )
 
 	PORT_START	/* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
@@ -212,12 +216,20 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+
+INTERRUPT_GEN( mustache_interrupt)
+{
+	read_coins^=1;
+	cpu_set_irq_line(0, 0, PULSE_LINE);
+}
+
+
 static MACHINE_DRIVER_START( mustache )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 18432000/4) /* maybe 12000000/3 - two xtals (18.432 and 12.xxx) near cpu*/
 	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+	MDRV_CPU_VBLANK_INT(mustache_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

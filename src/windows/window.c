@@ -211,7 +211,7 @@ INLINE int wnd_extra_width(void)
 	RECT window = { 100, 100, 200, 200 };
 	if (!win_window_mode)
 		return 0;
-	AdjustWindowRectEx(&window, WINDOW_STYLE, FALSE, WINDOW_STYLE_EX);
+	AdjustWindowRectEx(&window, WINDOW_STYLE, win_has_menu(), WINDOW_STYLE_EX);
 	return (window.right - window.left) - 100;
 }
 
@@ -226,7 +226,7 @@ INLINE int wnd_extra_height(void)
 	RECT window = { 100, 100, 200, 200 };
 	if (!win_window_mode)
 		return 0;
-	AdjustWindowRectEx(&window, WINDOW_STYLE, FALSE, WINDOW_STYLE_EX);
+	AdjustWindowRectEx(&window, WINDOW_STYLE, win_has_menu(), WINDOW_STYLE_EX);
 	return (window.bottom - window.top) - 100;
 }
 
@@ -241,7 +241,7 @@ INLINE int wnd_extra_left(void)
 	RECT window = { 100, 100, 200, 200 };
 	if (!win_window_mode)
 		return 0;
-	AdjustWindowRectEx(&window, WINDOW_STYLE, FALSE, WINDOW_STYLE_EX);
+	AdjustWindowRectEx(&window, WINDOW_STYLE, win_has_menu(), WINDOW_STYLE_EX);
 	return 100 - window.left;
 }
 
@@ -405,6 +405,7 @@ int win_init_window(void)
 {
 	static int classes_created = 0;
 	TCHAR title[256];
+	HMENU menu = NULL;
 
 	// disable win_old_scanlines if a win_blit_effect is active
 	if (win_blit_effect != 0)
@@ -450,10 +451,15 @@ int win_init_window(void)
 	sprintf(title, "MESS: %s [%s]", Machine->gamedrv->description, Machine->gamedrv->name);
 #endif
 
+#if HAS_WINDOW_MENU
+	if (win_create_menu(&menu))
+		return 1;
+#endif
+
 	// create the window, but don't show it yet
 	win_video_window = CreateWindowEx(win_window_mode ? WINDOW_STYLE_EX : FULLSCREEN_STYLE_EX,
 			TEXT("MAME"), title, win_window_mode ? WINDOW_STYLE : FULLSCREEN_STYLE,
-			20, 20, 100, 100, NULL, NULL, GetModuleHandle(NULL), NULL);
+			20, 20, 100, 100, NULL, menu, GetModuleHandle(NULL), NULL);
 	if (!win_video_window)
 		return 1;
 
@@ -615,7 +621,7 @@ void win_destroy_window(void)
 
 void win_update_cursor_state(void)
 {
-	if (win_window_mode && !win_is_mouse_captured())
+	if ((win_window_mode || win_has_menu()) && !win_is_mouse_captured())
 		while (ShowCursor(TRUE) < 0) ;
 	else
 		while (ShowCursor(FALSE) >= 0) ;
@@ -730,11 +736,13 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 	// handle a few messages
 	switch (message)
 	{
+#if !HAS_WINDOW_MENU
 		// non-client paint: punt if full screen
 		case WM_NCPAINT:
 			if (win_window_mode)
 				return DefWindowProc(wnd, message, wparam, lparam);
 			break;
+#endif /* !HAS_WINDOW_MENU */
 
 		// suspend sound and timer if we are resizing or a menu is coming up
 		case WM_ENTERMENULOOP:
@@ -755,7 +763,10 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 		{
 			PAINTSTRUCT pstruct;
 			HDC hdc = BeginPaint(wnd, &pstruct);
-			draw_video_contents(hdc, NULL, NULL, NULL, 1);
+ 			if (win_video_window)
+  				draw_video_contents(hdc, NULL, NULL, NULL, 1);
+ 			if (win_has_menu())
+ 				DrawMenuBar(win_video_window);
 			EndPaint(wnd, &pstruct);
 			break;
 		}

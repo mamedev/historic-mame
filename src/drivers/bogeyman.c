@@ -4,8 +4,6 @@
 
 	This game runs on Data East designed hardware.
 
-	Todo:  Cocktail mode
-
 	Emulation by Bryan McPhail, mish@tendril.co.uk and T.Nogi
 
 ***************************************************************************/
@@ -40,6 +38,9 @@ static WRITE_HANDLER( bogeyman_8910_latch_w )
 static WRITE_HANDLER( bogeyman_8910_control_w )
 {
 	static int last;
+
+	/* bit 0 is flipscreen */
+	flip_screen_set(data & 0x01);
 
 	/* bit 5 goes to 8910 #0 BDIR pin  */
 	if ((last & 0x20) == 0x20 && (data & 0x20) == 0x00)
@@ -306,4 +307,4 @@ ROM_END
 
 /******************************************************************************/
 
-GAMEX( 1985?, bogeyman, 0, bogeyman, bogeyman, 0, ROT0, "Technos Japan", "Bogey Manor", GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )
+GAMEX( 1985?, bogeyman, 0, bogeyman, bogeyman, 0, ROT0, "Technos Japan", "Bogey Manor", GAME_IMPERFECT_COLORS )
