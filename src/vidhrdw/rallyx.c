@@ -23,7 +23,7 @@ static unsigned char dirtybuffer1[VIDEO_RAM_SIZE];	/* keep track of modified por
 											/* to speed up video refresh */
 static unsigned char dirtybuffer2[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
 											/* to speed up video refresh */
-static struct osd_bitmap *tmpbitmap;
+static struct osd_bitmap *tmpbitmap1;
 
 
 
@@ -43,8 +43,14 @@ static struct rectangle radarvisiblearea =
 
 int rallyx_vh_start(void)
 {
-	if ((tmpbitmap = osd_create_bitmap(40*8,32*8)) == 0)
+	if (generic_vh_start() != 0)
 		return 1;
+
+	if ((tmpbitmap1 = osd_create_bitmap(32*8,32*8)) == 0)
+	{
+		generic_vh_stop();
+		return 1;
+	}
 
 	return 0;
 }
@@ -58,7 +64,8 @@ int rallyx_vh_start(void)
 ***************************************************************************/
 void rallyx_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap);
+	osd_free_bitmap(tmpbitmap1);
+	generic_vh_stop();
 }
 
 
@@ -134,7 +141,7 @@ void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = offs % 32;
 			sy = offs / 32;
 
-			drawgfx(tmpbitmap,Machine->gfx[0],
+			drawgfx(tmpbitmap1,Machine->gfx[0],
 					rallyx_videoram2[offs],
 					rallyx_colorram2[offs] & 0x1f,
 					!(rallyx_colorram2[offs] & 0x40),rallyx_colorram2[offs] & 0x80,
@@ -158,24 +165,27 @@ void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap)
 						rallyx_videoram1[offs],
 						rallyx_colorram1[offs] & 0x1f,
 						!(rallyx_colorram1[offs] & 0x40),rallyx_colorram1[offs] & 0x80,
-						8 * ((sx ^ 4) + 32),8*sy,
-						0,TRANSPARENCY_NONE,0);
+						8 * ((sx ^ 4) + 28),8*(sy-2),
+						&radarvisiblearea,TRANSPARENCY_NONE,0);
 			}
 		}
 	}
 
 
-	/* copy the character mapped graphics */
-	sx = *rallyx_scrollx - 3;
-	if (sx < 0) sx += 256;
-	sy = *rallyx_scrolly + 16;
-	if (sy >= 256) sy -= 256;
-	copybitmap(bitmap,tmpbitmap,0,0,-sx,-sy,&visiblearea,TRANSPARENCY_NONE,0);
-	copybitmap(bitmap,tmpbitmap,0,0,-sx,256-sy,&visiblearea,TRANSPARENCY_NONE,0);
-	copybitmap(bitmap,tmpbitmap,0,0,256-sx,-sy,&visiblearea,TRANSPARENCY_NONE,0);
-	copybitmap(bitmap,tmpbitmap,0,0,256-sx,256-sy,&visiblearea,TRANSPARENCY_NONE,0);
+	/* copy the temporary bitmap to the screen */
+	{
+		int scrollx,scrolly;
+
+
+		scrollx = -(*rallyx_scrollx - 3);
+		scrolly = -(*rallyx_scrolly + 16);
+
+		copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
+
+
 	/* radar */
-	copybitmap(bitmap,tmpbitmap,0,0,-32,-16,&radarvisiblearea,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&radarvisiblearea,TRANSPARENCY_NONE,0);
 
 
 	/* draw the sprites */

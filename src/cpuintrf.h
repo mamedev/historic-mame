@@ -22,6 +22,8 @@ int input_port_2_r(int offset);
 int input_port_3_r(int offset);
 int input_port_4_r(int offset);
 int input_port_5_r(int offset);
+int input_port_6_r(int offset);
+int input_port_7_r(int offset);
 void interrupt_enable_w(int offset,int data);
 void interrupt_vector_w(int offset,int data);
 int interrupt(void);

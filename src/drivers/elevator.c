@@ -12,9 +12,49 @@ d100-d17f Sprites
 read:
 8800      ?
 8801      ? the code stops until bit 0 and 1 are = 1
+d404      returns contents of background ROM, pointed by d509-d50a
+d408      IN0
+          bit 5 = jump player 1
+          bit 4 = fire player 1
+          bit 3 = up player 1
+          bit 2 = down player 1
+          bit 1 = right player 1
+          bit 0 = left player 1
+d409      IN1
+          bit 5 = jump player 2 (COCKTAIL only)
+          bit 4 = fire player 2 (COCKTAIL only)
+          bit 3 = up player 2 (COCKTAIL only)
+          bit 2 = down player 2 (COCKTAIL only)
+          bit 1 = right player 2 (COCKTAIL only)
+          bit 0 = left player 2 (COCKTAIL only)
+d40a      DSW1
+          bit 7   = cocktail / upright (0 = upright)
+          bit 6   = flip screen
+          bit 5   = ?
+          bit 3-4 = lives
+		  bit 2   = free play
+          bit 0-1 = bonus
+d40b      IN2
+          bit 7 = start 2
+          bit 6 = start 1
+d40c      COIN
+          bit 5 = tilt
+          bit 4 = coin
+d40f      DSW3
+          bit 7 = coinage (1 way/2 ways)
+          bit 6 = no hit
+          bit 5 = year display yes/no
+          bit 4 = coin display yes/no
+		  bit 2-3 ?
+		  bit 0-1 difficulty
 
 write
-d50d      ?
+d020-d03f playfield #2 column scroll
+d040-d05f playfield #1 column scroll
+d509-d50a pointer to background ROM to read from d404
+d50d      watchdog reset ?
+d50e      bootleg version: $01 -> ROM ea54.bin is mapped at 7000-7fff
+                           $81 -> ROM ea52.bin is mapped at 7000-7fff
 
 ***************************************************************************/
 
@@ -24,16 +64,19 @@ d50d      ?
 
 
 extern int elevator_init_machine(const char *gamename);
+extern int elevator_protection_r(int offset);
+extern int elevator_unknown_r(int offset);
+extern void elevatob_bankswitch_w(int offset,int data);
 
 extern unsigned char *elevator_videoram2,*elevator_videoram3;
 extern unsigned char *elevator_scroll1,*elevator_scroll2;
 extern unsigned char *elevator_attributesram;
+extern int elevator_background_r(int offset);
 extern void elevator_videoram2_w(int offset,int data);
 extern void elevator_videoram3_w(int offset,int data);
 extern int elevator_vh_start(void);
 extern void elevator_vh_stop(void);
 extern void elevator_vh_screenrefresh(struct osd_bitmap *bitmap);
-//extern void elevator_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
 
@@ -47,8 +90,10 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xd40b, 0xd40b, input_port_2_r },	/* IN2 */
 	{ 0xd40c, 0xd40c, input_port_3_r },	/* COIN */
 	{ 0xd40a, 0xd40a, input_port_4_r },	/* DSW1 */
-//	{ 0xd40f, 0xd40f, input_port_5_r },	/* DSW3 */
-	{ 0x8801, 0x8801, input_port_5_r },
+	{ 0xd40f, 0xd40f, input_port_5_r },	/* DSW3 */
+	{ 0xd404, 0xd404, elevator_background_r },
+	{ 0x8801, 0x8801, elevator_unknown_r },
+	{ 0x8800, 0x8800, elevator_protection_r },
 	{ -1 }	/* end of table */
 };
 
@@ -59,9 +104,13 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc800, 0xcbff, elevator_videoram2_w, &elevator_videoram2 },
 	{ 0xcc00, 0xcfff, elevator_videoram3_w, &elevator_videoram3 },
 	{ 0xd100, 0xd17f, MWA_RAM, &spriteram },
-	{ 0xd502, 0xd502, MWA_RAM, &elevator_scroll2 },
-	{ 0xd504, 0xd504, MWA_RAM, &elevator_scroll1 },
-{ 0xd50d, 0xd50d, MWA_RAM },
+	{ 0xd020, 0xd03f, MWA_RAM, &elevator_scroll2 },
+	{ 0xd040, 0xd05f, MWA_RAM, &elevator_scroll1 },
+	{ 0xd50d, 0xd50d, MWA_NOP },
+	{ 0xd50e, 0xd50e, elevatob_bankswitch_w },
+{ 0xd40e, 0xd40f, MWA_RAM },
+{ 0xd509, 0xd50a, MWA_RAM },
+{ 0x8800, 0x8800, MWA_NOP },
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -73,9 +122,9 @@ static struct InputPort input_ports[] =
 	{	/* IN0 */
 		0xff,
 		{ OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_DOWN, OSD_KEY_UP,
-				OSD_KEY_CONTROL, 0 , 0, 0 },
+				OSD_KEY_CONTROL, OSD_KEY_ALT, 0, 0 },
 		{ OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_DOWN, OSD_JOY_UP,
-				OSD_JOY_FIRE, 0 , 0, 0 }
+				OSD_JOY_FIRE1, OSD_JOY_FIRE2, 0, 0 }
 	},
 	{	/* IN1 */
 		0xff,
@@ -98,7 +147,7 @@ static struct InputPort input_ports[] =
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{	/* DSW3 */
-		0xff,
+		0xbc,
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
@@ -150,8 +199,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x3000, &charlayout,    0, 32 },
 	{ 1, 0x0000, &charlayout,    0, 32 },
-	{ 1, 0x1800, &spritelayout,  0, 32 },
 	{ 1, 0x4800, &spritelayout,  0, 32 },
+	{ 1, 0x1800, &spritelayout,  0, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -160,21 +209,26 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static unsigned char palette[] =
 {
 	0x00,0x00,0x00,	/* BLACK */
-
+	25,34,195,	/* BLUE */
+	25,161,153,	/* CYAN */
+	68,68,68, /* DKGRAY */
   0xff,0x00,0x00, /* RED */
+	153,153,153,	/* GRAY */
+	229,229,229, /* LTGRAY */
+	195,195,195, /* LTGRAY2 */
+	238,153,195,	/* PINK */
+	25,110,110,	/* DKCYAN */
+	195,153,110,	/* BROWN1 */
+	238,195,153,	/* BROWN2 */
+	238,238,238, /* WHITE */
+	238,110,195,	/* DKPINK */
+
   0x00,0xff,0x00, /* GREEN */
-  0x00,0x00,0xff, /* BLUE */
   0xff,0xff,0x00, /* YELLOW */
   0xff,0x00,0xff, /* MAGENTA */
-  0x00,0xff,0xff, /* CYAN */
-  0xff,0xff,0xff, /* WHITE */
-  0xE0,0xE0,0xE0, /* LTGRAY */
-  0xC0,0xC0,0xC0, /* DKGRAY */
 
 	0xe0,0xb0,0x70,	/* BROWN */
 	0xd0,0xa0,0x60,	/* BROWN0 */
-	0xc0,0x90,0x50,	/* BROWN1 */
-	0xa3,0x78,0x3a,	/* BROWN2 */
 	0x80,0x60,0x20,	/* BROWN3 */
 	0x54,0x40,0x14,	/* BROWN4 */
 
@@ -182,26 +236,23 @@ static unsigned char palette[] =
   0x00,0xa0,0x00, /* DKGREEN */
   0x00,0xe0,0x00, /* GRASSGREEN */
 
-
-
-	0xff,0xb6,0xdb,	/* PINK */
-	0x49,0xb6,0xdb,	/* DKCYAN */
 	0xff,0xb6,0x49,	/* DKORANGE */
-	0x49,0xb6,0x92,	/* DKGREEN */
 	0xff,0xb6,0x92,	/* LTORANGE */
-	0xdb,0xdb,0xdb	/* GREY */
 };
 
-enum {BLACK,RED,GREEN,BLUE,YELLOW,MAGENTA,CYAN,WHITE,LTGRAY,DKGRAY,
-       BROWN,BROWN0,BROWN1,BROWN2,BROWN3,BROWN4,
-			 LTBLUE,DKGREEN,GRASSGREEN,
+enum {BLACK,BLUE,CYAN,DKGRAY,RED,GRAY,LTGRAY,LTGRAY2,PINK,DKCYAN,
+		BROWN1,BROWN2,WHITE,DKPINK,
+
+		GREEN,YELLOW,MAGENTA,
+       BROWN,BROWN0,BROWN3,BROWN4,
+			 LTBLUE,DKGREEN,GRASSGREEN,DKORANGE,LTORANGE
             };
 
 static unsigned char colortable[] =
 {
-        0,1,2,14,4,13,6,7,
-        0,2,14,4,13,6,7,8,
-        0,14,4,13,6,7,8,7,
+        0,BLUE,CYAN,LTGRAY,GRAY,RED,LTGRAY2,DKGRAY,
+        0,PINK,DKGRAY,LTGRAY2,DKCYAN,GRAY,GRAY,10,
+        0,14,WHITE,BROWN2,DKPINK,BROWN1,DKGRAY,RED,
         0,4,13,6,7,8,17,9,
         0,13,6,7,8,7,9,2,
         0,6,7,8,7,9,2,5,
@@ -295,12 +346,46 @@ ROM_START( elevator_rom )
 	ROM_LOAD( "ea-ic4.bin",  0x3000, 0x1000 )
 	ROM_LOAD( "ea-ic5.bin",  0x4000, 0x1000 )
 	ROM_LOAD( "ea-ic6.bin",  0x5000, 0x1000 )
+
+	ROM_REGION(0x2000)	/* background graphics */
+	ROM_LOAD( "ea-ic7.bin",  0x0000, 0x1000 )
+	ROM_LOAD( "ea-ic8.bin",  0x1000, 0x1000 )
+
 #if 0
-	ROM_LOAD( "ea-ic7.bin",  0x6000, 0x1000 )
-	ROM_LOAD( "ea-ic8.bin",  0x7000, 0x1000 )
 	ROM_LOAD( "ea-ic70.bin", , 0x1000 )
 	ROM_LOAD( "ea-ic71.bin", , 0x1000 )
 	ROM_LOAD( "ee_ea10.bin", , 0x1000 )
+#endif
+ROM_END
+
+ROM_START( elevatob_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "ea69.bin", 0x0000, 0x1000 )
+	ROM_LOAD( "ea68.bin", 0x1000, 0x1000 )
+	ROM_LOAD( "ea67.bin", 0x2000, 0x1000 )
+	ROM_LOAD( "ea66.bin", 0x3000, 0x1000 )
+	ROM_LOAD( "ea65.bin", 0x4000, 0x1000 )
+	ROM_LOAD( "ea64.bin", 0x5000, 0x1000 )
+	ROM_LOAD( "ea55.bin", 0x6000, 0x1000 )
+	ROM_LOAD( "ea54.bin", 0x7000, 0x1000 )
+	ROM_LOAD( "ea54.bin", 0xe000, 0x1000 )	/* copy for my convenience */
+	ROM_LOAD( "ea52.bin", 0xf000, 0x1000 )	/* protection crack, bank switched at 7000 */
+
+	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ea01.bin",  0x0000, 0x1000 )
+	ROM_LOAD( "ea02.bin",  0x1000, 0x1000 )
+	ROM_LOAD( "ea03.bin",  0x2000, 0x1000 )
+	ROM_LOAD( "ea04.bin",  0x3000, 0x1000 )
+	ROM_LOAD( "ea05.bin",  0x4000, 0x1000 )
+	ROM_LOAD( "ea06.bin",  0x5000, 0x1000 )
+
+	ROM_REGION(0x2000)	/* background graphics */
+	ROM_LOAD( "ea07.bin",  0x0000, 0x1000 )
+	ROM_LOAD( "ea08.bin",  0x1000, 0x1000 )
+
+#if 0
+	ROM_LOAD( "ea70.bin", , 0x1000 )
+	ROM_LOAD( "ea71.bin", , 0x1000 )
 #endif
 ROM_END
 
@@ -312,6 +397,27 @@ struct GameDriver elevator_driver =
 	&machine_driver,
 
 	elevator_rom,
+	0, 0,
+	0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	{ 0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,	/* numbers */
+		0x1c,0x29,0x2e,0x30,0x1e,0x27,0x28,0x2b,0x2c,0x2c,0x21,0x1b,0x20,	/* letters */
+		0x25,0x2f,0x1a,0x2f,0x1f,0x2d,0x31,0x22,0x23,0x26,0x21,0x1d,0x12 },	/* j, k, q and z are missing */
+	0x06, 0x04,
+	8*13, 8*16, 0x00,
+
+	0, 0
+};
+
+struct GameDriver elevatob_driver =
+{
+	"elevatob",
+	&machine_driver,
+
+	elevatob_rom,
 	0, 0,
 	0,
 

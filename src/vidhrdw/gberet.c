@@ -137,7 +137,7 @@ void gberet_vh_screenrefresh(struct osd_bitmap *bitmap)
 			dirtybuffer[offs] = 0;
 
 			sx = 8 * (offs % 64);
-			sy = 8 * (offs / 64);
+			sy = 8 * (offs / 64) - 8;
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + 4 * (colorram[offs] & 0x40),
@@ -151,24 +151,13 @@ void gberet_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* copy the temporary bitmap to the screen */
 	{
-		struct rectangle clip;
+		int scroll[32];
 
 
-		clip.min_x = Machine->drv->visible_area.min_x;
-		clip.max_x = Machine->drv->visible_area.max_x;
+		for (i = 1;i < 31;i++)
+			scroll[i] = -(gberet_scroll[i+1] + 256 * gberet_scroll[i+1 + 32]);
 
-		for (i = 2;i < 32;i++)
-		{
-			int scroll;
-
-
-			scroll = gberet_scroll[i] + 256 * gberet_scroll[i + 32];
-
-			clip.min_y = 8 * i - 8;
-			clip.max_y = clip.min_y + 7;
-			copybitmap(bitmap,tmpbitmap,0,0,-scroll,-8,&clip,TRANSPARENCY_NONE,0);
-			copybitmap(bitmap,tmpbitmap,0,0,512 - scroll,-8,&clip,TRANSPARENCY_NONE,0);
-		}
+		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 

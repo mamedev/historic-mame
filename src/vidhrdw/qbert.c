@@ -19,7 +19,10 @@ unsigned char *qbert_spriteram;
 static unsigned char dirtybuffer[VIDEO_RAM_SIZE];       /* keep track of modified portions of the screen */
 static unsigned char color_to_lookup[16*16*16];
 static int qbert_fb_priority=0;
-											/* to speed up video refresh */
+
+/* to speed up video refresh */
+
+/*
 void qbert_vh_init_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
@@ -39,8 +42,8 @@ void qbert_vh_init_color_palette(unsigned char *palette, unsigned char *colortab
 
 	for (i = 0;i < 256;i++) colortable[i] = i;
 	for (i=1;i<15;i++) {
-		colortable[256+16+i]=1;	/* white */
-		colortable[256+32+i]=2; /* a yellow */
+		colortable[256+16+i]=1;
+		colortable[256+32+i]=2;
 	}
 }
 
@@ -65,11 +68,11 @@ void mplanets_vh_init_color_palette(unsigned char *palette, unsigned char *color
                 colortable[i] = i;
 
 	for (i=1;i<15;i++) {
-		colortable[256+16+i]=0xFF;	/* white */
-		colortable[256+32+i]=0x3F; /* yellow */
+		colortable[256+16+i]=0xFF;
+		colortable[256+32+i]=0x3F;
 	}
 }
-
+*/
 
 void qbert_videoram_w(int offset,int data)
 {

@@ -174,34 +174,16 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 		}
 	}
 
-	/* copy the character mapped graphics */
+
 	/* copy the temporary bitmap to the screen */
 	{
-		struct rectangle clip;
+		int scroll[32];
 
 
-		clip.min_y = Machine->drv->visible_area.min_y;
-		clip.max_y = Machine->drv->visible_area.max_y;
+		for (i = 0;i < 32;i++)
+			scroll[i] = -cclimber_column_scroll[i];
 
-		i = 0;
-		while (i < 8 * 32)
-		{
-			int cons,scroll;
-
-
-			/* count consecutive columns scrolled by the same amount */
-			scroll = cclimber_column_scroll[i / 8];
-			cons = 8;
-			while (i + cons < 8 * 32 &&	cclimber_column_scroll[(i + cons) / 8] == scroll)
-				cons += 8;
-
-			clip.min_x = i;
-			clip.max_x = i + cons - 1;
-			copybitmap(bitmap,tmpbitmap,0,0,0,-scroll,&clip,TRANSPARENCY_NONE,0);
-			copybitmap(bitmap,tmpbitmap,0,0,0,256 - scroll,&clip,TRANSPARENCY_NONE,0);
-
-			i += cons;
-		}
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 

@@ -137,25 +137,16 @@ void frogger_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* copy the temporary bitmap to the screen */
 	{
-		struct rectangle clip;
+		int scroll[32],s;
 
 
-		clip.min_x = Machine->drv->visible_area.min_x;
-		clip.max_x = Machine->drv->visible_area.max_x;
-
-		for (i = 0;i < 32 * 8;i += 8)
+		for (i = 0;i < 32;i++)
 		{
-			int scroll;
-
-
-			scroll = frogger_attributesram[2 * (i / 8)];
-			scroll = ((scroll << 4) & 0xf0) | ((scroll >> 4) & 0x0f);
-
-			clip.min_y = i;
-			clip.max_y = i + 7;
-			copybitmap(bitmap,tmpbitmap,0,0,scroll,0,&clip,TRANSPARENCY_NONE,0);
-			copybitmap(bitmap,tmpbitmap,0,0,scroll - 256,0,&clip,TRANSPARENCY_NONE,0);
+			s = frogger_attributesram[2 * i];
+			scroll[i] = ((s << 4) & 0xf0) | ((s >> 4) & 0x0f);
 		}
+
+		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 

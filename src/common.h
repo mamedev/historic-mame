@@ -108,6 +108,9 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		const struct rectangle *clip,int transparency,int transparent_color);
 void copybitmap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color);
+void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
+		int rows,int *rowscroll,int cols,int *colscroll,
+		const struct rectangle *clip,int transparency,int transparent_color);
 void clearbitmap(struct osd_bitmap *bitmap);
 int setdipswitches(void);
 void displaytext(const struct DisplayText *dt,int erase);

@@ -4,10 +4,13 @@
                     Multiple Arcade Machine Emulator
 
                   by Nicola Salmoria (MC6489@mclink.it)
-Please don't send contributions to the above address. The current maintainer
-of the project is Mirko Buffoni (mix@lim.dsi.unimi.it). Contact him if you
-have material to submit for inclusion into MAME.
+                 and Mirko Buffoni (mix@lim.dsi.unimi.it)
 
+Important note:  from now on I, Mirko, am the coordinator of project MAME.
+I created a new account address for those of you who intend to contribute to
+MAME with drivers, or bug fixes.  The address is  "mame@lim.dsi.unimi.it".
+If you have personal mails (requests or other) send them to my standard
+e-mail address.  Thank you for collaboration.
 
 Please note that many people helped with this project, either directly or
 by making source code available which I examined to write the drivers. I am
@@ -52,10 +55,10 @@ The End                        Yes          No        Yes        No
 Frogger                        Yes        Close       Yes        No
 Amidar                         Yes        Close       Yes        No
 Turtles                        Yes          No        Yes        No
-Rally X                        Yes          No         No        No
+Rally X                        Yes          No      Partial      No
 Time Pilot                     Yes          No        Yes       Yes
 Pooyan                         Yes          No        Yes       Yes
-Phoenix                        Yes        Close     Limited      No
+Phoenix                        Yes        Close     Yes (1)      No
 Pleiads                        Yes          No      Limited      No
 Space Invaders                 Yes         Yes      Yes (1)     Yes
 Carnival                       Yes        Maybe        No        No
@@ -78,8 +81,13 @@ Pepper II                   Partially       No         No        No
 Q*Bert                         Yes         Yes?    Partial (1)   No
 Mad Planets                    Yes         Yes?        No        No
 Jungle King                    Yes          No         No        No
-Elevator Action                 No          No         No       n/a
-Space Panic                    Yes          No         No        No
+Elevator Action - Original      No          No         No        No
+Elevator Action - Bootleg      Yes          No         No       n/a
+Space Panic                    Yes        Close        No       Yes
+Arabian                        Yes          No        Yes        No
+Warp Warp                       No          No         No       n/a
+Popeye - Bootleg                No          No        Yes       n/a
+1942                           Yes          No        Yes       n/a
 
 (1) Needs samples, provided in a separate archive
 
@@ -122,12 +130,14 @@ Phoenix driver provided by Brad Oliver (bradman@primenet.com), Mirko
 Mario Bros., Zaxxon, Bomb Jack, Burger Time and Donkey Kong 3 drivers provided
    by Mirko Buffoni (mix@lim.dsi.unimi.it)
 Bomb Jack sound driver by Jarek Burczynski (pbk01@ikp.atm.com.pl).
+Arabian driver provided by Jarek Burczynski (pbk01@ikp.atm.com.pl).
 Congo Bongo driver provided by Ville Laitinen (ville@sms.fi).
 Millipede driver provided by Ivan Mackintosh (ivan@rcp.co.uk).
 Donkey Kong sound emulation by Ron Fries (rfries@tcmail.frco.com).
 Vanguard driver by Brad Oliver and Mirko Buffoni, based on code by Brian
    Levine.
 Carnival driver completed by Mike Coates and Richard Davies.
+Popeye preliminar driver provided by Marc LaFontaine.
 Jump Bug driver by Richard Davies (R.Davies@dcs.hull.ac.uk) and Brad Oliver
    (bradman@primenet.com).
 Venture, Mouse Trap and Pepper II drivers by Marc Lafontaine
@@ -162,6 +172,8 @@ Thanks to Mike@Dissfulfils.co.uk for the information on the Moon Quasar
    encryption scheme.
 Space Invaders information gathered from the Space Invaders Emulator by
    Michael Strutt (mstrutt@pixie.co.za)
+Thanks to Paul Leaman (paull@phonelink.com) for exaustive documentation on
+   1942 arcade board.
 Many thanks to Jim Hernandez for the information on Wizard of Wor hardware.
 Thanks to Mike Coates (mike@dissfulfils.co.uk) for Carnival ROM placement
    indications and gfx info.
@@ -172,7 +184,7 @@ Thanks to Brad Oliver, Marc Vergoossen (marc.vergoossen@pi.net) and Richard
    Davies (R.Davies@dcs.hull.ac.uk) for help with Donky Kong Jr. colors.
 Thanks to Marc Vergoossen and Marc Lafontaine (marclaf@sympatico.ca) for
    Zaxxon colors.
-Thanks to Marc Lafontaine for Congo Bongo colors.
+Thanks to Marc Lafontaine for Congo Bongo colors and Popeye bootleg.
 Centipede information taken from Centipede emulator by Ivan Mackintosh, MageX
    0.3 by Edward Massey and memory map by Pete Rittwage.
 Info on Burger Time taken from Replay 0.01a by Kevin Brisley (kevin@isgtec.com)
@@ -192,6 +204,7 @@ Thanks to Stefano Mozzi (piu1608@cdc8g5.cdc.polimi.it) for Mario Bros. colors.
 Thanks to Matthew Hillmer (mhillmer@pop.isd.net) for Donkey Kong 3 colors.
 Thanks to Tormod Tjaberg (tormod@sn.no) and Michael Strutts for Space Invaders
    sound.
+Thanks to Shaun Stephenson (shaun@marino13.demon.co.uk) for Phoenix samples.
 
 
 Usage
@@ -1028,7 +1041,10 @@ Elevator Action ("elevator")
 
 Should run on hardware similar to Jungle King.
 
-Doesn't work.
+Set the dip switches to free play to play the game.
+
+Known issues:
+- Collision detect not yet implemented.
 
 
 
@@ -1038,3 +1054,12 @@ Space Panic ("panic")
 Arrows  Move around
 CTRL    Fire1
 ALT     Fire2
+
+
+
+Arabian ("arabian")
+-------------------
+
+Arrows  Move around
+CTRL    Kick
+F1      Enter test mode

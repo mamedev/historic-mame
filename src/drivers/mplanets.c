@@ -57,17 +57,17 @@ Sound processor (6502) memory map:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+extern int mplanets_vh_start(void);
 extern void mplanets_vh_init_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void qbert_sh_w(int offset, int data);
 extern void qbert_sh_update(void);
-extern void qbert_output(int offset, int data);
-extern unsigned char *qbert_videoram;
-extern unsigned char *qbert_paletteram;
-extern unsigned char *qbert_spriteram;
-extern void qbert_videoram_w(int offset,int data);
-extern void qbert_paletteram_w(int offset,int data);
-extern void qbert_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern void mplanets_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void gottlieb_output(int offset, int data);
+extern unsigned char *gottlieb_videoram;
+extern unsigned char *gottlieb_paletteram;
+extern unsigned char *gottlieb_spriteram;
+extern void gottlieb_videoram_w(int offset,int data);
+extern void gottlieb_paletteram_w(int offset,int data);
+extern void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -85,14 +85,14 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x2fff, MWA_RAM },
-	{ 0x3000, 0x37ff, MWA_RAM, &qbert_spriteram },
-	{ 0x3800, 0x3fff, qbert_videoram_w, &qbert_videoram },
+	{ 0x3000, 0x37ff, MWA_RAM, &gottlieb_spriteram },
+	{ 0x3800, 0x3fff, gottlieb_videoram_w, &gottlieb_videoram },
 	{ 0x4000, 0x4fff, MWA_RAM }, /* bg object ram... ? not used ? */
-	{ 0x5000, 0x57ff, qbert_paletteram_w, &qbert_paletteram },
+	{ 0x5000, 0x57ff, gottlieb_paletteram_w, &gottlieb_paletteram },
 	{ 0x5800, 0x5800, MWA_RAM },    /* watchdog timer clear */
 	{ 0x5801, 0x5801, MWA_RAM },    /* trackball: not used */
 	{ 0x5802, 0x5802, qbert_sh_w }, /* sound/speech command */
-	{ 0x5803, 0x5803, qbert_output },       /* OUT1 */
+	{ 0x5803, 0x5803, gottlieb_output },       /* OUT1 */
 	{ 0x5804, 0x5804, MWA_RAM },    /* OUT2 */
 	{ 0x6000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -107,10 +107,10 @@ static struct InputPort input_ports[] =
         },
         {       /* buttons */
                 0x80,
-                { OSD_KEY_3, OSD_KEY_4, /* one and two player start */
+                { OSD_KEY_3, OSD_KEY_4, /* coin 1 and 2 */
                   0,0,                  /* not connected ? */
                   0,0,                  /* not connected ? */
-                  OSD_KEY_ALT,          /* select */
+                  OSD_KEY_S,            /* select */
                   0 },                  /* diag mode */
                 { 0, 0, 0, 0, 0, 0, 0, 0 }
         },
@@ -127,7 +127,7 @@ static struct InputPort input_ports[] =
         {       /* joystick */
                 0x00,
                 { OSD_KEY_UP, OSD_KEY_RIGHT, OSD_KEY_DOWN, OSD_KEY_LEFT,
-                OSD_KEY_CONTROL,OSD_KEY_1,OSD_KEY_2,OSD_KEY_3},
+                OSD_KEY_CONTROL,OSD_KEY_1,OSD_KEY_2,OSD_KEY_ALT},
                 { OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_DOWN, OSD_JOY_LEFT,
 					OSD_JOY_FIRE, 0, 0, 0 }
         },
@@ -137,24 +137,6 @@ static struct InputPort input_ports[] =
 
 static struct DSW dsw[] =
 {
-/* ch... , letters are not contiguous... Here are encoded strings... */
-	{ 0, 0x08, "fcsbD qEVECr", { "cFF","cb" } },
-	{ 0, 0x01, "ArrfACr acDE qcsbD", { "cb", "cFF" } },
-/* ch... again, mame does not like not-contiguous dip switches: here is a workaround */
-	{ 0, 0x1C, "", {
-		"1 dVA\216 Fcf 1 CcSb" , "1 dVA\216 Fcf 2 CcSbq",
-		"1 dVA\216 Fcf 1 CcSb" , "1 dVA\216 Fcf 2 CcSbq",
-		"2 dVA\216q Fcf 1 CcSb", "FfEE dVA\216",
-		"2 dVA\216q Fcf 1 CcSb", "FfEE dVA\216"
-		} },
-	{ 0, 0x20, "qRSdq dEf QAaE", { "3", "5" } },
-	{ 0, 0x02, "EvrfA qRSd EtEf\216", { "10000", "12000" } },
-	{ 0, 0xC0, "DSFFSCsVr\216", { "qrAbDAfD", "EAq\216", "RAfD", "tEf\216 RAfD" } },
-/* the following switch must be connected to the IP16 line */
-	{ 1, 0x80, "rEqr acDE", {"cb", "cFF"} },
-	{ -1 }
-
-/* and the same ones in a more understandble way ...
 	{ 0, 0x08, "ROUND SELECT", { "OFF","ON" } },
 	{ 0, 0x01, "ATTRACT MODE SOUND", { "ON", "OFF" } },
 	{ 0, 0x1C, "", {
@@ -168,7 +150,6 @@ static struct DSW dsw[] =
 	{ 0, 0xC0, "DIFFICULTY", { "STANDARD", "EASY", "HARD", "VERY HARD" } },
 	{ 1, 0x80, "TEST MODE", {"ON", "OFF"} },
 	{ -1 }
-*/
 };
 
 
@@ -189,9 +170,9 @@ static struct GfxLayout spritelayout =
 	256,    /* 256 sprites */
 	4,      /* 4 bits per pixel */
 	{ 0, 0x2000*8, 0x4000*8, 0x6000*8 },
-	{ 15 * 16, 14 * 16, 13 * 16, 12 * 16, 11 * 16, 10 * 16, 9 * 16, 8 * 16,
-		7 * 16, 6 * 16, 5 * 16, 4 * 16, 3 * 16, 2 * 16, 1 * 16, 0 * 16 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
+		8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
+	{ 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0},
 	32*8    /* every sprite takes 32 consecutive bytes */
 };
 
@@ -236,9 +217,9 @@ static const struct MachineDriver machine_driver =
 	mplanets_vh_init_color_palette,
 
 	0,      /* init vh */
-	generic_vh_start,
+	mplanets_vh_start,
 	generic_vh_stop,
-	mplanets_vh_screenrefresh,
+	gottlieb_vh_screenrefresh,
 
 	/* sound hardware */
 	0,      /* samples */
@@ -265,7 +246,7 @@ ROM_START( mplanets_rom )
 	ROM_LOAD( "FG0",  0x8000, 0x2000 )       /* sprites */
 ROM_END
 
-static unsigned short mplanets_colors[]={
+static unsigned short mplanets_colors[256]={
         0x000, 0xfff, 0xff0,
 	0x005, 0x006, 0x007, 0x008, 0x009, 0x00b, 0x00f,
         0x010, 0x017, 0x019, 0x01a, 0x020, 0x028, 0x02b, 0x030,

@@ -290,6 +290,16 @@ int input_port_5_r(int offset)
 }
 
 
+int input_port_6_r(int offset)
+{
+	return readinputport(6);
+}
+
+
+int input_port_7_r(int offset)
+{
+	return readinputport(7);
+}
 
 
 /***************************************************************************

@@ -128,24 +128,13 @@ void ckong_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* copy the temporary bitmap to the screen */
 	{
-		struct rectangle clip;
+		int scroll[32];
 
 
-		clip.min_x = Machine->drv->visible_area.min_x;
-		clip.max_x = Machine->drv->visible_area.max_x;
+		for (i = 0;i < 32;i++)
+			scroll[i] = ckong_row_scroll[i];
 
-		for (i = 0;i < 32 * 8;i += 8)
-		{
-			int scroll;
-
-
-			scroll = ckong_row_scroll[i / 8];
-
-			clip.min_y = i;
-			clip.max_y = i + 7;
-			copybitmap(bitmap,tmpbitmap,0,0,scroll,0,&clip,TRANSPARENCY_NONE,0);
-			copybitmap(bitmap,tmpbitmap,0,0,scroll - 256,0,&clip,TRANSPARENCY_NONE,0);
-		}
+		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 

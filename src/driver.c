@@ -100,8 +100,11 @@ extern struct GameDriver junglek_driver;
 extern struct GameDriver jungleh_driver;
 extern struct GameDriver elevator_driver;
 extern struct GameDriver panic_driver;
+extern struct GameDriver arabian_driver;
+extern struct GameDriver reactor_driver;
 
-
+extern struct GameDriver popeyebl_driver;
+extern struct GameDriver warpwarp_driver;
 
 const struct GameDriver *drivers[] =
 {
@@ -203,5 +206,9 @@ const struct GameDriver *drivers[] =
 	&jungleh_driver,
 	&elevator_driver,
 	&panic_driver,
+        &arabian_driver,
+        &reactor_driver,
+        &popeyebl_driver,
+        &warpwarp_driver,
 	0	/* end of array */
 };

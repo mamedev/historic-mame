@@ -10,6 +10,14 @@ static int sound_changed;
 
 
 
+int rallyx_sh_start(void)
+{
+	sound_enable = 1;	/* start with sound enabled, Rally X doesn't have a sound enable register */
+	return 0;
+}
+
+
+
 void pengo_sound_enable_w(int offset,int data)
 {
 	sound_enable = data;

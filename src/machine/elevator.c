@@ -10,8 +10,16 @@
 #include "driver.h"
 
 
+
+static int bank;
+
+
+
 int elevator_init_machine(const char *gamename)
 {
+	bank = 0x00;
+
+#if 0
 	/* patch the roms to remove protection check */
 	RAM[0x33c6] = 0;
 	RAM[0x33c7] = 0;
@@ -20,5 +28,37 @@ int elevator_init_machine(const char *gamename)
 	/* remove ROM checkusm check as well */
 	RAM[0x34be] = 0xc9;
 
+
+	/* avoid lockups, but this is only a kludge which removes portions of the code */
+	RAM[0x0073] = 0xc9;
+	RAM[0x007f] = 0xc9;
+#endif
 	return 0;
+}
+
+
+
+int elevator_protection_r(int offset)
+{
+	return 0;
+}
+
+
+
+int elevator_unknown_r(int offset)
+{
+	return 0xff;
+}
+
+
+
+void elevatob_bankswitch_w(int offset,int data)
+{
+	if ((data & 0x80) != bank)
+	{
+		if (data & 0x80) memcpy(&RAM[0x7000],&RAM[0xf000],0x1000);
+		else memcpy(&RAM[0x7000],&RAM[0xe000],0x1000);
+
+		bank = data & 0x80;
+	}
 }

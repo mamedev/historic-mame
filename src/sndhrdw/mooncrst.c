@@ -6,8 +6,8 @@
 
 #define TONE_LENGTH 2000
 #define TONE_PERIOD 4
-#define NOISE_LENGTH 10000
-#define NOISE_RATE 15000
+#define NOISE_LENGTH 8000
+#define NOISE_RATE 1000
 #define WAVE_AMPLITUDE 70
 
 

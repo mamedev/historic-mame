@@ -65,16 +65,17 @@ to 22kHz)
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+extern int qbert_vh_start(void);
 extern void qbert_vh_init_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void qbert_sh_w(int offset, int data);
 extern void qbert_sh_update(void);
-extern void qbert_output(int offset, int data);
-extern unsigned char *qbert_videoram;
-extern unsigned char *qbert_paletteram;
-extern unsigned char *qbert_spriteram;
-extern void qbert_videoram_w(int offset,int data);
-extern void qbert_paletteram_w(int offset,int data);
-extern void qbert_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void gottlieb_output(int offset, int data);
+extern unsigned char *gottlieb_videoram;
+extern unsigned char *gottlieb_paletteram;
+extern unsigned char *gottlieb_spriteram;
+extern void gottlieb_videoram_w(int offset,int data);
+extern void gottlieb_paletteram_w(int offset,int data);
+extern void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -92,14 +93,14 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x2fff, MWA_RAM },
-	{ 0x3000, 0x37ff, MWA_RAM, &qbert_spriteram },
-	{ 0x3800, 0x3fff, qbert_videoram_w, &qbert_videoram },
+	{ 0x3000, 0x37ff, MWA_RAM, &gottlieb_spriteram },
+	{ 0x3800, 0x3fff, gottlieb_videoram_w, &gottlieb_videoram },
 	{ 0x4000, 0x4fff, MWA_RAM }, /* bg object ram... ? not used ? */
-	{ 0x5000, 0x57ff, qbert_paletteram_w, &qbert_paletteram },
+	{ 0x5000, 0x57ff, gottlieb_paletteram_w, &gottlieb_paletteram },
 	{ 0x5800, 0x5800, MWA_RAM },    /* watchdog timer clear */
 	{ 0x5801, 0x5801, MWA_RAM },    /* trackball: not used */
 	{ 0x5802, 0x5802, qbert_sh_w }, /* sound/speech command */
-	{ 0x5803, 0x5803, qbert_output },       /* OUT1 */
+	{ 0x5803, 0x5803, gottlieb_output },       /* OUT1 */
 	{ 0x5804, 0x5804, MWA_RAM },    /* OUT2 */
 	{ 0xa000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -219,9 +220,9 @@ static const struct MachineDriver machine_driver =
 	qbert_vh_init_color_palette,
 
 	0,      /* init vh */
-	generic_vh_start,
+	qbert_vh_start,
 	generic_vh_stop,
-	qbert_vh_screenrefresh,
+	gottlieb_vh_screenrefresh,
 
 	/* sound hardware */
 	0,      /* samples */
@@ -301,7 +302,7 @@ static const char *sample_names[] =
    complete... but that's surely better than mapping a 4*4*4 color cube
    on a 3*3*2 one ...*/
 
-static unsigned short qbert_colors[]={
+static unsigned short qbert_colors[256]={
         0x000, 0xfff, 0xff0,
         0x00f, 0x010, 0x020, 0x030, 0x039, 0x040, 0x04d,
         0x04e, 0x050, 0x060, 0x06e, 0x070, 0x07f, 0x080, 0x090,

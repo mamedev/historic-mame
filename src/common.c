@@ -851,6 +851,119 @@ void copybitmap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int fli
 
 
 
+/***************************************************************************
+
+  Copy a bitmap onto another with scroll and wraparound.
+  This function supports multiple independently scrolling rows/columns.
+  "rows" is the number of indepentently scrolling rows. "rowscroll" is an
+  array of integers telling how much to scroll each row. Same thing for
+  "cols" and "colscroll".
+  If the bitmap cannot scroll in one direction, set rows or columns to 0.
+  If the bitmap scrolls as a whole, set rows and/or cols to 1.
+  Bidirectional scrolling is supported only if the bitmap scrolls as a whole.
+
+***************************************************************************/
+void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
+		int rows,int *rowscroll,int cols,int *colscroll,
+		const struct rectangle *clip,int transparency,int transparent_color)
+{
+	if (rows == 0)
+	{
+		/* scrolling columns */
+		int col,colwidth;
+		struct rectangle myclip;
+
+
+		colwidth = src->width / cols;
+
+		myclip.min_y = clip->min_y;
+		myclip.max_y = clip->max_y;
+
+		col = 0;
+		while (col < cols)
+		{
+			int cons,scroll;
+
+
+			/* count consecutive columns scrolled by the same amount */
+			scroll = colscroll[col];
+			cons = 1;
+			while (col + cons < cols &&	colscroll[col + cons] == scroll)
+				cons++;
+
+			myclip.min_x = col * colwidth;
+			if (myclip.min_x < clip->min_x) myclip.min_x = clip->min_x;
+			myclip.max_x = (col + cons) * colwidth - 1;
+			if (myclip.max_x > clip->max_x) myclip.max_x = clip->max_x;
+
+			if (scroll < 0) scroll = src->height - (-scroll) % src->height;
+			else scroll %= src->height;
+
+			copybitmap(dest,src,0,0,0,scroll,&myclip,transparency,transparent_color);
+			copybitmap(dest,src,0,0,0,scroll - src->height,&myclip,transparency,transparent_color);
+
+			col += cons;
+		}
+	}
+	else if (cols == 0)
+	{
+		/* scrolling rows */
+		int row,rowheight;
+		struct rectangle myclip;
+
+
+		rowheight = src->height / rows;
+
+		myclip.min_x = clip->min_x;
+		myclip.max_x = clip->max_x;
+
+		row = 0;
+		while (row < rows)
+		{
+			int cons,scroll;
+
+
+			/* count consecutive rows scrolled by the same amount */
+			scroll = rowscroll[row];
+			cons = 1;
+			while (row + cons < rows &&	rowscroll[row + cons] == scroll)
+				cons++;
+
+			myclip.min_y = row * rowheight;
+			if (myclip.min_y < clip->min_y) myclip.min_y = clip->min_y;
+			myclip.max_y = (row + cons) * rowheight - 1;
+			if (myclip.max_y > clip->max_y) myclip.max_y = clip->max_y;
+
+			if (scroll < 0) scroll = src->width - (-scroll) % src->width;
+			else scroll %= src->width;
+
+			copybitmap(dest,src,0,0,scroll,0,&myclip,transparency,transparent_color);
+			copybitmap(dest,src,0,0,scroll - src->width,0,&myclip,transparency,transparent_color);
+
+			row += cons;
+		}
+	}
+	else if (rows == 1 && cols == 1)
+	{
+		/* XY scrolling playfield */
+		int scrollx,scrolly;
+
+
+		if (rowscroll[0] < 0) scrollx = src->width - (-rowscroll[0]) % src->width;
+		else scrollx = rowscroll[0] % src->width;
+
+		if (colscroll[0] < 0) scrolly = src->height - (-colscroll[0]) % src->height;
+		else scrolly = colscroll[0] % src->height;
+
+		copybitmap(dest,src,0,0,scrollx,scrolly,clip,transparency,transparent_color);
+		copybitmap(dest,src,0,0,scrollx,scrolly - src->height,clip,transparency,transparent_color);
+		copybitmap(dest,src,0,0,scrollx - src->width,scrolly,clip,transparency,transparent_color);
+		copybitmap(dest,src,0,0,scrollx - src->width,scrolly - src->height,clip,transparency,transparent_color);
+	}
+}
+
+
+
 void clearbitmap(struct osd_bitmap *bitmap)
 {
 	int i;

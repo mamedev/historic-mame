@@ -171,8 +171,14 @@ void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,256-scrollreg,&backvisiblearea,TRANSPARENCY_NONE,0);
-	copybitmap(bitmap,tmpbitmap,0,0,0,-scrollreg,&backvisiblearea,TRANSPARENCY_NONE,0);
+	{
+		int scroll;
+
+
+		scroll = -scrollreg;
+
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scroll,&backvisiblearea,TRANSPARENCY_NONE,0);
+	}
 	copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 

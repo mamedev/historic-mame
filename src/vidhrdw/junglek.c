@@ -120,8 +120,8 @@ if (osd_key_pressed(OSD_KEY_V))
 
 			dirtybuffer[offs] = 0;
 
-			sx = 8*(offs % 32);
-			sy = 8*(offs / 32);
+			sx = 8 * (offs % 32);
+			sy = 8 * (offs / 32) + 16;
 
 			drawgfx(tmpbitmap1,Machine->gfx[1+bose],
 					junglek_videoram3[offs],
@@ -163,9 +163,9 @@ else if (RAM[0xd300] == 0x08)
 
 	/* copy the first playfield */
 	scroll = *junglek_scroll1;
-	scroll = ((scroll & 0xf8) | ((scroll-1) & 7)) + 8;
-	copybitmap(bitmap,tmpbitmap1,0,0,256 - scroll,16,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-	copybitmap(bitmap,tmpbitmap1,0,0,-scroll,16,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	scroll = -(((scroll & 0xf8) | ((scroll-1) & 7)) + 8);
+	copyscrollbitmap(bitmap,tmpbitmap1,1,&scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
@@ -180,11 +180,11 @@ else if (RAM[0xd300] == 0x08)
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 
+
 	/* copy the second playfield */
 	scroll = *junglek_scroll2;
-	scroll = ((scroll & 0xf8) | ((scroll+1) & 7)) + 8;
-	copybitmap(bitmap,tmpbitmap2,0,0,256 - scroll,16,&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
-	copybitmap(bitmap,tmpbitmap2,0,0,-scroll,16,&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
+	scroll = -(((scroll & 0xf8) | ((scroll+1) & 7)) + 8);
+	copyscrollbitmap(bitmap,tmpbitmap2,1,&scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
 }
 else	/* 0x0b, 0x06 */
 {
@@ -193,15 +193,15 @@ else	/* 0x0b, 0x06 */
 
 	/* copy the first playfield */
 	scroll = *junglek_scroll1;
-	scroll = ((scroll & 0xf8) | ((scroll-1) & 7)) + 8;
-	copybitmap(bitmap,tmpbitmap1,0,0,256 - scroll,16,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-	copybitmap(bitmap,tmpbitmap1,0,0,-scroll,16,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	scroll = -(((scroll & 0xf8) | ((scroll-1) & 7)) + 8);
+	copyscrollbitmap(bitmap,tmpbitmap1,1,&scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
 
 	/* copy the second playfield */
 	scroll = *junglek_scroll2;
-	scroll = ((scroll & 0xf8) | ((scroll+1) & 7)) + 8;
-	copybitmap(bitmap,tmpbitmap2,0,0,256 - scroll,16,&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
-	copybitmap(bitmap,tmpbitmap2,0,0,-scroll,16,&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
+	scroll = -(((scroll & 0xf8) | ((scroll+1) & 7)) + 8);
+	copyscrollbitmap(bitmap,tmpbitmap2,1,&scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
+
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */

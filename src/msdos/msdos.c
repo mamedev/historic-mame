@@ -69,34 +69,34 @@ int osd_init(int argc,char **argv)
 	soundcard = -1;
 	for (i = 1;i < argc;i++)
 	{
-		if (strcmp(argv[i],"-vesa") == 0)
+		if (stricmp(argv[i],"-vesa") == 0)
 			use_vesa = 1;
-		if (strcmp(argv[i],"-vesascan") == 0)
+		if (stricmp(argv[i],"-vesascan") == 0)
 			use_vesascan = 1;
-		if (strcmp(argv[i],"-vesaskip") == 0)
+		if (stricmp(argv[i],"-vesaskip") == 0)
 		{
 			use_vesascan = 1;
 			use_vesaskip = 1;
 			i++;
 			if (i < argc) vs_skiplines = atoi(argv[i]);
 		}
-		if (strcmp(argv[i],"-soundcard") == 0)
+		if (stricmp(argv[i],"-soundcard") == 0)
 		{
 			i++;
 			if (i < argc) soundcard = atoi(argv[i]);
 		}
-		if (strcmp(argv[i],"-noscanlines") == 0)
+		if (stricmp(argv[i],"-noscanlines") == 0)
 			noscanlines = 1;
-		if (strcmp(argv[i],"-vgafreq") == 0)
+		if (stricmp(argv[i],"-vgafreq") == 0)
 		{
 			i++;
 			if (i < argc) videofreq = atoi(argv[i]);
 			if (videofreq < 0) videofreq = 0;
 			if (videofreq > 3) videofreq = 3;
 		}
-		if (strcmp(argv[i],"-vsync") == 0)
+		if (stricmp(argv[i],"-vsync") == 0)
 			video_sync = 1;
-		if (strcmp(argv[i],"-nojoy") == 0)
+		if (stricmp(argv[i],"-nojoy") == 0)
 			use_joystick = 0;
 	}
 

@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "strings.h"
 #include <time.h>
 
 
@@ -55,7 +56,7 @@ int main(int argc,char **argv)
 	log = 0;
 	for (i = 1;i < argc;i++)
 	{
-		if (strcmp(argv[i],"-log") == 0)
+		if (stricmp(argv[i],"-log") == 0)
 			log = 1;
 	}
 
@@ -100,7 +101,7 @@ int init_machine(const char *gamename,int argc,char **argv)
 	frameskip = 0;
 	for (i = 1;i < argc;i++)
 	{
-		if (strcmp(argv[i],"-frameskip") == 0)
+		if (stricmp(argv[i],"-frameskip") == 0)
 		{
 			i++;
 			if (i < argc)
@@ -113,7 +114,7 @@ int init_machine(const char *gamename,int argc,char **argv)
 	}
 
 	i = 0;
-	while (drivers[i] && strcmp(gamename,drivers[i]->name) != 0)
+	while (drivers[i] && stricmp(gamename,drivers[i]->name) != 0)
 		i++;
 
 	if (drivers[i] == 0)

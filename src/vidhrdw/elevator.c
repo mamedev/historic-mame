@@ -61,6 +61,22 @@ void elevator_vh_stop(void)
 
 
 
+int elevator_background_r(int offset)
+{
+	int offs;
+
+
+	offs = RAM[0xd509]+RAM[0xd50a]*256 - 0x6000;
+	RAM[0xd509]++;
+
+
+	if (offs >= 0 && offs < 0x2000)
+		return Machine->memory_region[2][offs];
+	else return 0;
+}
+
+
+
 void elevator_videoram2_w(int offset,int data)
 {
 	if (elevator_videoram2[offset] != data)
@@ -94,19 +110,25 @@ void elevator_videoram3_w(int offset,int data)
 ***************************************************************************/
 void elevator_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int offs;
-static int bose;
+	int offs,i;
+static int bose=1;
 if (osd_key_pressed(OSD_KEY_C))
 {
 	while (osd_key_pressed(OSD_KEY_C));
-	bose--;
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++) dirtybuffer[offs] = 1;
+	if (bose > 0)
+	{
+		bose--;
+		for (offs = 0;offs < VIDEO_RAM_SIZE;offs++) dirtybuffer[offs] = 1;
+	}
 }
 if (osd_key_pressed(OSD_KEY_V))
 {
 	while (osd_key_pressed(OSD_KEY_V));
-	bose++;
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++) dirtybuffer[offs] = 1;
+	if (bose < 1)
+	{
+		bose++;
+		for (offs = 0;offs < VIDEO_RAM_SIZE;offs++) dirtybuffer[offs] = 1;
+	}
 }
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -120,52 +142,59 @@ if (osd_key_pressed(OSD_KEY_V))
 
 			dirtybuffer[offs] = 0;
 
-			sx = 8*(offs % 32);
-			sy = 8*(offs / 32);
+			sx = 8 * (offs % 32);
+			sy = 8 * (offs / 32);
 
 			drawgfx(tmpbitmap1,Machine->gfx[bose],
 					elevator_videoram3[offs],
-2,//					elevator_attributesram[2 * sy + 1],
+1,//					elevator_attributesram[2 * sy + 1],
 					0,0,sx,sy,
 					0,TRANSPARENCY_NONE,0);
 			drawgfx(tmpbitmap2,Machine->gfx[bose],
 					elevator_videoram2[offs],
-1,//					elevator_attributesram[2 * sy + 1],
+0,//					elevator_attributesram[2 * sy + 1],
 					0,0,sx,sy,
 					0,TRANSPARENCY_NONE,0);
 		}
 	}
 
 
-{
-	int scroll;
-
-
 	/* copy the first playfield */
-	scroll = *elevator_scroll1;
-	scroll = ((scroll & 0xf8) | ((scroll-1) & 7)) + 8;
-	copybitmap(bitmap,tmpbitmap1,0,0,256 - scroll,16,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-	copybitmap(bitmap,tmpbitmap1,0,0,-scroll,16,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	{
+		int scroll[32];
+
+
+		for (i = 0;i < 32;i++)
+			scroll[i] = -elevator_scroll1[i];
+
+		copyscrollbitmap(bitmap,tmpbitmap1,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
 
 	/* copy the second playfield */
-	scroll = *elevator_scroll2;
-	scroll = ((scroll & 0xf8) | ((scroll+1) & 7)) + 8;
-	copybitmap(bitmap,tmpbitmap2,0,0,256 - scroll,16,&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
-	copybitmap(bitmap,tmpbitmap2,0,0,-scroll,16,&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
+	{
+		int scroll[32];
+
+
+		for (i = 0;i < 32;i++)
+			scroll[i] = -elevator_scroll2[i];
+
+		copyscrollbitmap(bitmap,tmpbitmap2,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
+	}
+
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
-	for (offs = 0;offs < 32*4;offs += 4)
+	for (offs = 31*4;offs >= 0;offs -= 4)
 	{
-		if (spriteram[offs + 3] != 0x3f)
-			drawgfx(bitmap,Machine->gfx[2+bose],
-					spriteram[offs + 3],
+	/* meaning of bit 2 of spriteram[offs + 2] is unknown */
+		if (spriteram[offs + 3] & 0x40)
+			drawgfx(bitmap,Machine->gfx[3],
+					spriteram[offs + 3] & 0x3f,
 					3,
 					spriteram[offs + 2] & 1,0,
-					((spriteram[offs]+8)&0xff)-8,240-spriteram[offs + 1],
+					((spriteram[offs]+13)&0xff)-15,240-spriteram[offs + 1],
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
-}
 
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
@@ -178,9 +207,9 @@ if (osd_key_pressed(OSD_KEY_V))
 		sy = 8*(offs / 32);
 
 		if (videoram[offs])
-			drawgfx(bitmap,Machine->gfx[0],
+			drawgfx(bitmap,Machine->gfx[bose],
 					videoram[offs],
-0,//					elevator_attributesram[2 * sy + 1],
+2,//					elevator_attributesram[2 * sy + 1],
 					0,0,sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}

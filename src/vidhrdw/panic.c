@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  vidhrdw.c
+  panic.c
 
   Functions to emulate the video hardware of the machine.
 
@@ -22,35 +22,131 @@ static const unsigned char Remap[64][2] = {
 {0x07,3},{0x06,3},{0x05,3},{0x04,3},{0x03,3},{0x02,3},{0x01,3},{0x00,3}, // 38
 };
 
+/*
+   Colour is via a ROM colour table, 8 screens selected by
+   location's 42FC,42FD & 42FE. 16 colour bands are used for
+   32 lines of screen. Banding is defined in array Band.
+   Memory address of each lookup table is in CLT, along
+   with a flag to indicate whether high or low nibble is
+   used for that layout.
+
+   The score screen however, uses a different system, which
+   I have'nt been able to identify, so I detect that the
+   screen is displayed using location 700C and colourmap 0
+*/
+
+static const int Band[32] = {
+    15*32,
+	15*32,
+	15*32,
+	14*32,
+	13*32,
+	13*32,
+	12*32,
+	12*32,
+	11*32,
+	11*32,
+	10*32,
+	10*32,
+	9*32,
+	9*32,
+	8*32,
+	8*32,
+	7*32,
+	7*32,
+	6*32,
+	6*32,
+	5*32,
+	5*32,
+	4*32,
+	4*32,
+	3*32,
+	3*32,
+	2*32,
+	2*32,
+	1*32,
+	1*32,
+	0*32,
+	0*32
+};
+
+static const int CLT[8][2] = {
+    {0x3800,0},{0x3a00,0},{0x3800,1},{0x3a00,1},
+    {0x3c00,0},{0x3e00,0},{0x3c00,1},{0x3e00,1}
+};
+
 unsigned char *panic_videoram;
+
+static int ColourMap;
 
 void panic_videoram_w(int offset,int data)
 {
-	if (panic_videoram[offset] != data)
+	if ((panic_videoram[offset] != data))
 	{
-		int i,x,y;
-		int col;
+	    panic_videoram[offset] = data;
 
-		panic_videoram[offset] = data;
+        // Restrict to visible area only
 
-		x = offset / 32 + 16;
-		y = 256-8 - 8 * (offset % 32);
+        if (offset > 0x3ff)
+	    {
+		    int i,x,y;
+		    int col;
+            int ColTab;
 
-		col = Machine->gfx[0]->colortable[7];	/* white */
+		    x = offset / 32 + 16;
+		    y = 256-8 - 8 * (offset % 32);
 
-		for (i = 0;i < 8;i++)
-		{
+            /* Scoring Screen override - only on colour map 0 */
 
-			if (data & 0x01) tmpbitmap->line[y][x] = col;
-			else tmpbitmap->line[y][x] = Machine->gfx[0]->colortable[0];	/* black */
+            if(RAM[0x700C] == 0x80 && ColourMap == 0)
+			{
+			    col = Machine->gfx[0]->colortable[30];   /* Green */
+            }
+            else
+            {
+	            ColTab = RAM[CLT[ColourMap][0] + Band[y / 8] + x / 8 - 2];
 
-			y++;
-			data >>= 1;
-		}
+    	        if (CLT[ColourMap][1] == 1) col = Machine->gfx[0]->colortable[20+(ColTab >> 4)];
+        	    else col = Machine->gfx[0]->colortable[20+(ColTab & 0x0F)];
+            }
+
+		    for (i = 0;i < 8;i++)
+		    {
+
+			    if (data & 0x01) tmpbitmap->line[y][x] = col;
+			    else tmpbitmap->line[y][x] = Machine->gfx[0]->colortable[0]; /* black */
+
+			    y++;
+			    data >>= 1;
+		    }
+	    }
+        else
+        {
+	        if (offset >= 0x2FC && offset <= 0x2FE) // Colour Map Registers
+    	    {
+                int x,y,col,ColTab;
+
+                ColourMap = (RAM[0x42fc]>>7) + (RAM[0x42fd]>>6) + (RAM[0x42fe]>>5);
+
+                for(x=0;x<256;x++) // Need to re-colour existing screen!
+				{
+                    for(y=0;y<256;y++)
+                    {
+                        if(tmpbitmap->line[y][x] != Machine->gfx[0]->colortable[0])
+                            {
+                                ColTab = RAM[CLT[ColourMap][0] + Band[y / 8] + x / 8 - 2];
+
+                                if (CLT[ColourMap][1] == 1) col = Machine->gfx[0]->colortable[20+(ColTab >> 4)];
+                                else col = Machine->gfx[0]->colortable[20+(ColTab & 0x0F)];
+
+                                tmpbitmap->line[y][x] = col;
+                            }
+                    }
+                }
+            }
+        }
 	}
 }
-
-
 
 /***************************************************************************
 

@@ -259,7 +259,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80,
-			1789750,	/* 1.78975 Mhz?????? */
+			1504000,	/* 1.57275 Mhz?????? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			frogger_sh_interrupt,1

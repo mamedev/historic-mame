@@ -21,7 +21,14 @@ Space Panic memory map
 6800      IN1 - See input port setup for mappings
 6802	  DSW
 6803      IN0
+42FC-42FE Colour Map Selector
+700C      Alternate colour mapping
 
+(Not Implemented)
+
+6801      Control keys for Player 2 on Cocktail table
+7000-700B Various triggers, Sound etc
+700D-700F Various triggers
 7800      80 = Flash Screen?
 
 I/O ports:
@@ -106,7 +113,6 @@ static struct DSW dsw[] =
 };
 
 
-
 /* Space Panic doesn't have character mapped */
 /* graphics, this definition is here only    */
 /* only for the dip switch menu              */
@@ -166,12 +172,13 @@ static unsigned char palette[] =
 	0x00,0xf8,0x00,   /* green  */
 	0x00,0xff,0xff,   /* cyan   */
 	0xf8,0xf8,0x00,   /* yellow */
-	0xff,0xff,0xff    /* white  */
+	0xff,0xff,0xff,   /* white  */
+	0xf8,0x94,0x44,   /* orange */
 };
 
 enum
 {
-	black, blue, red, purple, green, cyan, yellow, white
+	black, blue, red, purple, green, cyan, yellow, white, orange
 };
 
 static unsigned char colortable[] =
@@ -181,9 +188,11 @@ static unsigned char colortable[] =
 	black, red,       white,      yellow,       /* Man */
 	black, white,     white,      white,        /* Not Used? */
 	black, blue,      green,      white,        /* 2 Drop Monster */
-	black, white,     white,      white,        /* Not Used? */
-	black, white,     white,      white,        /* Not Used? */
-	black, white,     white,      white,        /* Not Used? */
+
+	black, blue,         0,          0,         /* Screen Colours */
+	0,     purple,       orange,     0,
+	0,     0,            green,      cyan,
+    0,     0,            0,          white
 };
 
 static struct MachineDriver machine_driver =
@@ -202,7 +211,6 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-//	32*8, 32*8, { 5*8, 30*8-1, 0*8, 32*8-1 },
   	32*8, 32*8, { 6*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
@@ -229,6 +237,42 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
+static int panic_hiload(const char *name)
+{
+	/* wait for default to be copied */
+	if (RAM[0x40c1] == 0x00 && RAM[0x40c2] == 0x03 && RAM[0x40c3] == 0x04)
+	{
+		FILE *f;
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+        	RAM[0x4004] = 0x01;	/* Prevent program resetting high score */
+
+			fread(&RAM[0x40C1],1,5,f);
+            fread(&RAM[0x5C00],1,12,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void panic_hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x40C1],1,5,f);
+        fwrite(&RAM[0x5C00],1,12,f);
+		fclose(f);
+	}
+}
+
 ROM_START( panic_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "spcpanic.1", 0x0000, 0x0800)         /* Code */
@@ -238,7 +282,7 @@ ROM_START( panic_rom )
 	ROM_LOAD( "spcpanic.5", 0x2000, 0x0800)
 	ROM_LOAD( "spcpanic.6", 0x2800, 0x0800)
 	ROM_LOAD( "spcpanic.7", 0x3000, 0x0800)
-    ROM_LOAD( "spcpanic.8", 0x3800, 0x0800)         /* Dunno */
+    ROM_LOAD( "spcpanic.8", 0x3800, 0x0800)         /* Colour Table */
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
 
@@ -256,7 +300,7 @@ struct GameDriver panic_driver =
 
 	panic_rom,
 	0, 0,
-	0,
+    0,
 
 	input_ports, dsw,
 
@@ -267,6 +311,6 @@ struct GameDriver panic_driver =
 	0, 3,
 	8*13, 8*16, 2,
 
-	0, 0
+	panic_hiload, panic_hisave
 };
 

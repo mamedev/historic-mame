@@ -26,21 +26,16 @@ int panic_interrupt(void)
         	    break;
 
         case 2: ans = 0x00d7;		/* RST 10h */
-
                 count=0;
                 break;
 
 //      case 3: ans = 0x00df;		/* RST 18h */
 //              break;
-//
+
 //      case 4: ans = 0x00e7;		/* RST 20h */
 //              break;
+
     };
-
-//	            Z80_GetRegs(&R);
-//	            R.IFF1 = 1;			/* enable interrupts */
-//	            Z80_SetRegs(&R);
-
 
     return ans;
 

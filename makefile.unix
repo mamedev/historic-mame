@@ -1,4 +1,4 @@
-# Makefile for MAME 0.81
+# Makefile for MAME 0.190
 # Configuration options can be found under lines marked with '***'
 
 # *** Choose your compiler. Make it ANSI-compatible (e.g. 'cc -ansi').
@@ -84,6 +84,9 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/vidhrdw/junglek.o obj/sndhrdw/junglek.o obj/drivers/junglek.o \
          obj/machine/elevator.o obj/vidhrdw/elevator.o obj/drivers/elevator.o \
          obj/machine/panic.o obj/vidhrdw/panic.o obj/drivers/panic.o \
+         obj/vidhrdw/warpwarp.o obj/drivers/warpwarp.o \
+         obj/sndhrdw/popeye.o obj/vidhrdw/popeye.o obj/drivers/popeye.o \
+         obj/vidhrdw/gottlieb.o obj/drivers/reactor.o \
          obj/Z80/Z80.o obj/M6502/M6502.o obj/I86/I86.o
 
 VPATH = src src/Z80 src/M6502 src/I86
