@@ -36,9 +36,9 @@ void gottlieb_sh_w(int offset,int data)
 		}
 
 		soundlatch_w(offset,data);
-		cpu_cause_interrupt(1,INT_IRQ);
+		cpu_cause_interrupt(1,M6502_INT_IRQ);
 		/* only the second sound board revision has the third CPU */
-		cpu_cause_interrupt(2,INT_IRQ);
+		cpu_cause_interrupt(2,M6502_INT_IRQ);
 	}
 }
 
@@ -47,7 +47,7 @@ void gottlieb_sh_w(int offset,int data)
 /* callback for the timer */
 void gottlieb_nmi_generate(int param)
 {
-	cpu_cause_interrupt(1,INT_NMI);
+	cpu_cause_interrupt(1,M6502_INT_NMI);
 }
 
 static const char *PhonemeTable[65] =
@@ -147,7 +147,7 @@ int stooges_sound_input_r(int offset)
 
 	/* bit 6 is the test switch. When 0, the CPU plays a pulsing tone. */
 
-	/* bit 7 is a ready signal from the speech chip */
+	/* bit 7 comes from the speech chip DATA REQUEST pin */
 
 	return 0xc0;
 }
@@ -189,14 +189,14 @@ void stooges_sound_control_w(int offset,int data)
 		}
 	}
 
-	/* bit 5 goes to pin 7 of the speech chip */
+	/* bit 5 goes to the speech chip DIRECT DATA TEST pin */
 
-	/* bit 6 = speech chip latch clock; high then low to make the chip read it */
+	/* bit 6 = speech chip DATA PRESENT pin; high then low to make the chip read data */
 	if ((last & 0x40) == 0x40 && (data & 0x40) == 0x00)
 	{
 	}
 
-	/* bit 7 resets the speech chip */
+	/* bit 7 goes to the speech chip RESET pin */
 
 	last = data & 0x44;
 }
@@ -204,7 +204,7 @@ void stooges_sound_control_w(int offset,int data)
 /* callback for the timer */
 void stooges_nmi_generate(int param)
 {
-	if (nmi_enable) cpu_cause_interrupt(2,INT_NMI);
+	if (nmi_enable) cpu_cause_interrupt(2,M6502_INT_NMI);
 }
 
 void stooges_sound_timer_w(int offset,int data)

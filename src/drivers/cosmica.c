@@ -189,8 +189,8 @@ static struct MachineDriver cosmicalien_machine_driver =
 	/* video hardware */
   	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	cosmicalien_gfxdecodeinfo,
-        sizeof(palette)/3,sizeof(spritelookup_prom),
-        0,
+	sizeof(palette)/3,sizeof(spritelookup_prom)/sizeof(unsigned short),
+	0,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -236,7 +236,7 @@ struct GameDriver cosmica_driver =
 	"1980",
 	"Universal",
 	"Lee Taylor",
-	0,
+	GAME_WRONG_COLORS,
 	&cosmicalien_machine_driver,
 
 	cosmicalien_rom,

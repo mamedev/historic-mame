@@ -1752,6 +1752,29 @@ ROM_START( losttomb_rom )
 	ROM_LOAD( "5h",      0x1800, 0x0800, 0xd6e32f73 )	/* will be decrypted at 0x0000-0x0fff */
 
 	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "ltprom", 0x0000, 0x0020, 0xca063056 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "5c",      0x0000, 0x0800, 0xa28e0d60 )
+	ROM_LOAD( "5d",      0x0800, 0x0800, 0x70ea19ea )
+ROM_END
+
+ROM_START( losttmbh_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "2c",     0x0000, 0x1000, 0x55248120 )
+	ROM_LOAD( "2e",     0x1000, 0x1000, 0x8d5d9663 )
+	ROM_LOAD( "2f",     0x2000, 0x1000, 0xb53e6390 )
+	ROM_LOAD( "lthard", 0x3000, 0x1000, 0x30bdb65d )
+	ROM_LOAD( "2j",     0x4000, 0x1000, 0x5d21f893 )
+	ROM_LOAD( "2l",     0x5000, 0x1000, 0x030788df )
+	ROM_LOAD( "2m",     0x6000, 0x1000, 0x24205f0e )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5f",      0x1000, 0x0800, 0x5be70b13 )	/* we load the roms at 0x1000-0x1fff, they */
+	ROM_LOAD( "5h",      0x1800, 0x0800, 0xd6e32f73 )	/* will be decrypted at 0x0000-0x0fff */
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "ltprom", 0x0000, 0x0020, 0xca063056 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "5c",      0x0000, 0x0800, 0xa28e0d60 )
@@ -2504,11 +2527,11 @@ struct GameDriver losttomb_driver =
 	__FILE__,
 	0,
 	"losttomb",
-	"Lost Tomb",
+	"Lost Tomb (easy)",
 	"1982",
 	"Stern",
 	"Nicola Salmoria\nJames R. Twine\nMirko Buffoni\nFabio Buffoni",
-	GAME_WRONG_COLORS,
+	0,
 	&machine_driver,
 
 	losttomb_rom,
@@ -2518,7 +2541,32 @@ struct GameDriver losttomb_driver =
 
 	losttomb_input_ports,
 
-	wrong_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+
+struct GameDriver losttmbh_driver =
+{
+	__FILE__,
+	&losttomb_driver,
+	"losttmbh",
+	"Lost Tomb (hard)",
+	"1982",
+	"Stern",
+	"Nicola Salmoria\nJames R. Twine\nMirko Buffoni\nFabio Buffoni",
+	0,
+	&machine_driver,
+
+	losttmbh_rom,
+	losttomb_decode, 0,
+	0,
+	0,	/* sound_prom */
+
+	losttomb_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	0, 0

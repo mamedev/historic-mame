@@ -2,10 +2,10 @@
 #define CPUINTRF_H
 
 #ifdef linux_alpha
-#define CPU_CONTEXT_SIZE 240            /* sizeof(pointer) is larger there
+#define CPU_CONTEXT_SIZE 440            /* sizeof(pointer) is larger there
                                            than on 32bit, CPG */
 #else
-#define CPU_CONTEXT_SIZE 200		/* ASG 971105 */
+#define CPU_CONTEXT_SIZE 400		/* ASG 971105 */
 #endif
 
 #include "timer.h"
@@ -52,6 +52,7 @@ void cpu_halt(int cpunum,int running);
 int  cpu_getstatus(int cpunum);
 int cpu_gettotalcpu(void);
 int cpu_getactivecpu(void);
+void cpu_setactivecpu(int cpunum);
 
 int cpu_getpc(void);
 int cpu_getpreviouspc(void);  /* -RAY- */
@@ -120,8 +121,7 @@ int interrupt(void);
 int nmi_interrupt(void);
 int ignore_interrupt(void);
 
-void cpu_getcpucontext (int, unsigned char *);
-void cpu_setcpucontext (int, const unsigned char *);
+void* cpu_getcontext (int _activecpu);
 
 /* IFDEF Z80_DAISYCHAIN */
 void cpu_setdaisychain (int cpunum, Z80_DaisyChain *daisy_chain );

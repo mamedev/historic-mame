@@ -129,9 +129,7 @@ if (errorlog) fprintf(errorlog,"PC %06x - Bank switch %02x (%02x)\n",cpu_getpc()
 void cobra_sound_w(int offset, int data)
 {
  	soundlatch_w(0,data);
-  cpu_cause_interrupt (1, INT_NMI);
-
-
+	cpu_cause_interrupt (1,M6502_INT_NMI);
 }
 
 /******************************************************************************/
@@ -389,7 +387,7 @@ void oscar_sub_int(int offset, int data)
 
 	sub_int=1;
 
- 	//cpu_cause_interrupt (1, INT_IRQ);
+ 	//cpu_cause_interrupt (1, M6502_INT_IRQ);
 }
 
 static struct MemoryWriteAddress oscar_writemem[] =

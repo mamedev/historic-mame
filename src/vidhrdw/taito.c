@@ -17,11 +17,12 @@ unsigned char *taito_scrollx1,*taito_scrollx2,*taito_scrollx3;
 unsigned char *taito_scrolly1,*taito_scrolly2,*taito_scrolly3;
 unsigned char *taito_colscrolly1,*taito_colscrolly2,*taito_colscrolly3;
 unsigned char *taito_gfxpointer;
-unsigned char *taito_colorbank,*taito_video_priority,*taito_video_enable;
+unsigned char *taito_colorbank,*taito_video_priority;
 static unsigned char *dirtybuffer2,*dirtybuffer3;
 static struct osd_bitmap *tmpbitmap2,*tmpbitmap3;
 static unsigned char dirtycharacter1[256],dirtycharacter2[256];
 static unsigned char dirtysprite1[64],dirtysprite2[64];
+static int taito_video_enable;
 static int flipscreen[2];
 
 
@@ -224,12 +225,12 @@ if (errorlog) fprintf(errorlog,"colorbank %d = %02x\n",offset,data);
 
 void taito_videoenable_w(int offset,int data)
 {
-	if (*taito_video_enable != data)
+	if (taito_video_enable != data)
 	{
 if (errorlog) fprintf(errorlog,"videoenable = %02x\n",data);
 
 
-		if ((*taito_video_enable & 3) != (data & 3))
+		if ((taito_video_enable & 3) != (data & 3))
 		{
 			flipscreen[0] = data & 1;
 			flipscreen[1] = data & 2;
@@ -239,7 +240,7 @@ if (errorlog) fprintf(errorlog,"videoenable = %02x\n",data);
 			memset(dirtybuffer3,1,videoram_size);
 		}
 
-		*taito_video_enable = data;
+		taito_video_enable = data;
 	}
 }
 
@@ -262,6 +263,25 @@ void taito_characterram_w(int offset,int data)
 
 		taito_characterram[offset] = data;
 	}
+}
+
+
+
+/***************************************************************************
+
+  As if the hardware weren't complicated enough, it also has built-in
+  collision detection.
+
+***************************************************************************/
+int taito_collision_detection_r(int offset)
+{
+	if (offset == 1 || offset == 2)
+		return 0xff;	/* simulate collision for Front Line */
+	else return 0;
+}
+
+void taito_collision_detection_w(int offset,int data)
+{
 }
 
 
@@ -323,7 +343,7 @@ static void drawsprites(struct osd_bitmap *bitmap)
 {
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
-	if (*taito_video_enable & 0x80)
+	if (taito_video_enable & 0x80)
 	{
 		int offs;
 
@@ -361,7 +381,7 @@ static void drawsprites(struct osd_bitmap *bitmap)
 
 static void drawplayfield1(struct osd_bitmap *bitmap)
 {
-	if (*taito_video_enable & 0x10)
+	if (taito_video_enable & 0x10)
 	{
 		int i,scrollx,scrolly[32];
 
@@ -389,7 +409,7 @@ static void drawplayfield1(struct osd_bitmap *bitmap)
 
 static void drawplayfield2(struct osd_bitmap *bitmap)
 {
-	if (*taito_video_enable & 0x20)
+	if (taito_video_enable & 0x20)
 	{
 		int i,scrollx,scrolly[32];
 
@@ -418,7 +438,7 @@ static void drawplayfield2(struct osd_bitmap *bitmap)
 
 static void drawplayfield3(struct osd_bitmap *bitmap)
 {
-	if (*taito_video_enable & 0x40)
+	if (taito_video_enable & 0x40)
 	{
 		int i,scrollx,scrolly[32];
 

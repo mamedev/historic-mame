@@ -658,8 +658,8 @@ static void inc_sp(void) { ++R.SP.W.l; }
 
 static void ind(void)
 {
- --R.BC.B.h;
  M_WRMEM(R.HL.D,DoIn(R.BC.B.l,R.BC.B.h));
+ --R.BC.B.h;	/* FP 080998 */
  --R.HL.W.l;
  R.AF.B.l=(R.BC.B.h)? N_FLAG:(N_FLAG|Z_FLAG);
 }
@@ -672,8 +672,8 @@ static void indr(void)
 
 static void ini(void)
 {
- --R.BC.B.h;
  M_WRMEM(R.HL.D,DoIn(R.BC.B.l,R.BC.B.h));
+ --R.BC.B.h;	/* FP 080998 */
  ++R.HL.W.l;
  R.AF.B.l=(R.BC.B.h)? N_FLAG:(N_FLAG|Z_FLAG);
 }
@@ -1001,8 +1001,8 @@ static void or_byte(void) { byte i=M_RDMEM_OPCODE(); M_OR(i); }
 
 static void outd(void)
 {
- --R.BC.B.h;
  DoOut (R.BC.B.l,R.BC.B.h,M_RDMEM(R.HL.D));
+ --R.BC.B.h;	/* FP 080998 */
  --R.HL.W.l;
  R.AF.B.l=(R.BC.B.h)? N_FLAG:(Z_FLAG|N_FLAG);
 }
@@ -1013,8 +1013,8 @@ static void otdr(void)
 }
 static void outi(void)
 {
- --R.BC.B.h;
  DoOut (R.BC.B.l,R.BC.B.h,M_RDMEM(R.HL.D));
+ --R.BC.B.h;	/* FP 080998 */
  ++R.HL.W.l;
  R.AF.B.l=(R.BC.B.h)? N_FLAG:(Z_FLAG|N_FLAG);
 }
@@ -2335,7 +2335,7 @@ void Z80_Reset (void)
  memset (&R,0,sizeof(Z80_Regs));
  change_pc(R.PC.D);	/* TS 971002 */
  R.SP.D=0xF000;
- R.R=rand();
+ R.R=0;	/* NS 980828 */
 /* Z80_ICount=Z80_IPeriod;*/  /* NS 970904 */
 Z80_Clear_Pending_Interrupts();	/* NS 970904 */
 #ifdef Z80_DAISYCHAIN

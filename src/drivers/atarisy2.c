@@ -274,7 +274,7 @@ static struct MemoryWriteAddress atarisys2_sound_writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( paperboy_ports )
+INPUT_PORTS_START( paperboy_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -329,7 +329,7 @@ INPUT_PORTS_START( paperboy_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( apb_ports )
+INPUT_PORTS_START( apb_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_COIN1  )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_COIN2  )
@@ -383,7 +383,7 @@ INPUT_PORTS_START( apb_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( a720_ports )
+INPUT_PORTS_START( a720_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -438,7 +438,7 @@ INPUT_PORTS_START( a720_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( ssprint_ports )
+INPUT_PORTS_START( ssprint_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -494,7 +494,7 @@ INPUT_PORTS_START( ssprint_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( csprint_ports )
+INPUT_PORTS_START( csprint_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -1065,7 +1065,7 @@ ROM_START( apb_rom )
 	ROM_RELOAD(       0x048000, 0x08000 )
 	ROM_LOAD( "1119", 0x050000, 0x10000, 0xb2e7006b ) // VID D/E6   27512     1119      D585
 	ROM_LOAD( "1121", 0x060000, 0x10000, 0x037dde9b ) // VID D/E7   27512     1121      4A17
-	ROM_LOAD( "1123", 0x070000, 0x10000, 0x4869317b ) // VID C/D7   27512     1123      C2D0
+	ROM_LOAD( "1123", 0x070000, 0x10000, 0x22f01608 ) // VID C/D7   27512     1123      C2D0
 
 	ROM_LOAD( "1101", 0x080000, 0x10000, 0xd17523df ) // VID T5     27512     1101      98E0
 	ROM_LOAD( "1102", 0x090000, 0x10000, 0x8cd6d942 ) // VID S5     27512     1102      9153
@@ -1093,6 +1093,54 @@ ROM_START( apb_rom )
 	ROM_LOAD( "4136", 0x0c000, 0x04000, 0xe8bf76d3 ) // CPU C/D2   27128     4136      6DFF
 ROM_END
 
+ROM_START( apb2_rom )
+	ROM_REGION(0x90000)     /* 9 * 64k T11 code */
+	ROM_LOAD_ODD ( "2126", 0x08000, 0x04000, 0xb7fa1c14 ) // CPU L/M7   27128     2126      4100
+	ROM_LOAD_EVEN( "2127", 0x08000, 0x04000, 0x4b4b3b9f ) // CPU M/N7   27128     2127      2D00
+	ROM_LOAD_ODD ( "4128", 0x10000, 0x10000, 0x28adc953 ) // CPU F/H6   27512     5128      D700
+	ROM_LOAD_EVEN( "4129", 0x10000, 0x10000, 0x0b42c84e ) // CPU M/N6   27512     5129      1000
+	ROM_LOAD_ODD ( "1130", 0x30000, 0x10000, 0x3e4168e3 ) // CPU H/J6   27512     1130      5E87
+	ROM_LOAD_EVEN( "1131", 0x30000, 0x10000, 0x525bc559 ) // CPU P6     27512     1131      0E98
+	ROM_LOAD_ODD ( "1132", 0x70000, 0x10000, 0xb35ea8a2 ) // CPU L/M6   27512     1132      7DC4
+	ROM_LOAD_EVEN( "1133", 0x70000, 0x10000, 0x53bad6fa ) // CPU S6     27512     1133      65CC
+
+	ROM_REGION(0x184000)
+	ROM_LOAD( "1118", 0x000000, 0x08000, 0x0df6a9ec ) // VID A5     27256     1118      2121
+	ROM_RELOAD(       0x008000, 0x08000 )
+	ROM_LOAD( "1120", 0x010000, 0x10000, 0x7ff500eb ) // VID B6     27512     1120      1D97
+	ROM_LOAD( "1122", 0x020000, 0x10000, 0x2b9a003a ) // VID A7     27512     1122      2F6A
+	ROM_LOAD( "1124", 0x030000, 0x10000, 0xc15920c7 ) // VID B7     27512     1124      7E4D
+	ROM_LOAD( "1117", 0x040000, 0x08000, 0xc998097e ) // VID C5     27256     1117      B247
+	ROM_RELOAD(       0x048000, 0x08000 )
+	ROM_LOAD( "1119", 0x050000, 0x10000, 0xb2e7006b ) // VID D/E6   27512     1119      D585
+	ROM_LOAD( "1121", 0x060000, 0x10000, 0x037dde9b ) // VID D/E7   27512     1121      4A17
+	ROM_LOAD( "1123", 0x070000, 0x10000, 0x22f01608 ) // VID C/D7   27512     1123      C2D0
+
+	ROM_LOAD( "1101", 0x080000, 0x10000, 0xd17523df ) // VID T5     27512     1101      98E0
+	ROM_LOAD( "1102", 0x090000, 0x10000, 0x8cd6d942 ) // VID S5     27512     1102      9153
+	ROM_LOAD( "1103", 0x0a0000, 0x10000, 0x0afde6df ) // VID P/R5   27512     1103      DA71
+	ROM_LOAD( "1104", 0x0b0000, 0x10000, 0xdc198f47 ) // VID N5     27512     1104      2DEC
+	ROM_LOAD( "1109", 0x0c0000, 0x10000, 0x4c1f7eb1 ) // VID M5     27512     1109      22F5
+	ROM_LOAD( "1110", 0x0d0000, 0x10000, 0xd3477a8f ) // VID L/K5   27512     1110      2B09
+	ROM_LOAD( "1111", 0x0e0000, 0x10000, 0xe4935b6b ) // VID J/K5   27512     1111      78C2
+	ROM_LOAD( "1112", 0x0f0000, 0x10000, 0x820f0435 ) // VID H/J5   27512     1112      593B
+
+	ROM_LOAD( "1105", 0x100000, 0x10000, 0x2a03b7d9 ) // VID T6     27512     1105      E44E
+	ROM_LOAD( "1106", 0x110000, 0x10000, 0x79a64a30 ) // VID S6     27512     1106      7634
+	ROM_LOAD( "1107", 0x120000, 0x10000, 0xdd57c973 ) // VID P/R6   27512     1107      ECD0
+	ROM_LOAD( "1108", 0x130000, 0x10000, 0x3f258b31 ) // VID N6     27512     1108      C522
+	ROM_LOAD( "1113", 0x140000, 0x10000, 0x589812d0 ) // VID M6     27512     1113      D6D6
+	ROM_LOAD( "1114", 0x150000, 0x10000, 0x9aecb5ac ) // VID K/L6   27512     1114      A023
+	ROM_LOAD( "1115", 0x160000, 0x10000, 0x0e3f5ea5 ) // VID J/K6   27512     1115      4AA3
+	ROM_LOAD( "1116", 0x170000, 0x10000, 0xe88d9225 ) // VID H/J6   27512     1116      6BEB
+
+	ROM_LOAD( "1125", 0x180000, 0x04000, 0x5ac1b7f5 ) // VID T4     27128     1125      B722
+
+	ROM_REGION(0x10000)     /* 64k for 6502 code */
+	ROM_LOAD( "5134", 0x04000, 0x04000, 0x0982af9a ) // CPU A2     27128     4134      B7FF
+	ROM_LOAD( "5135", 0x08000, 0x04000, 0xfda9fc39 ) // CPU B/C2   27128     4135      66FF
+	ROM_LOAD( "5136", 0x0c000, 0x04000, 0x67ce5336 ) // CPU C/D2   27128     4136      6DFF
+ROM_END
 
 ROM_START( a720_rom )
 	ROM_REGION(0x90000)     /* 9 * 64k T11 code */
@@ -1423,20 +1471,19 @@ struct GameDriver paperboy_driver =
 	0,
 	0,	/* sound_prom */
 
-	paperboy_ports,
+	paperboy_input_ports,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	paperboy_hiload, atarigen_hisave
 };
 
-
 struct GameDriver apb_driver =
 {
 	__FILE__,
 	0,
 	"apb",
-	"APB",
+	"APB (set 1)",
 	"1987",
 	"Atari Games",
 	"Juergen Buchmueller (MAME driver)\nAaron Giles (MAME driver)\nMike Balfour (hardware info)",
@@ -1449,13 +1496,37 @@ struct GameDriver apb_driver =
 	0,
 	0,	/* sound_prom */
 
-	apb_ports,
+	apb_input_ports,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_270,
 	atarigen_hiload, atarigen_hisave
 };
 
+struct GameDriver apb2_driver =
+{
+	__FILE__,
+	&apb_driver,
+	"apb2",
+	"APB (set 2)",
+	"1987",
+	"Atari Games",
+	"Juergen Buchmueller (MAME driver)\nAaron Giles (MAME driver)\nMike Balfour (hardware info)",
+	GAME_NOT_WORKING,
+	&apb_machine_driver,
+
+	apb2_rom,
+	apb_rom_decode,
+	0,
+	0,
+	0,	/* sound_prom */
+
+	apb_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_270,
+	atarigen_hiload, atarigen_hisave
+};
 
 struct GameDriver a720_driver =
 {
@@ -1475,7 +1546,7 @@ struct GameDriver a720_driver =
 	0,
 	0,	/* sound_prom */
 
-	a720_ports,
+	a720_input_ports,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -1501,7 +1572,7 @@ struct GameDriver ssprint_driver =
 	0,
 	0,	/* sound_prom */
 
-	ssprint_ports,
+	ssprint_input_ports,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -1527,7 +1598,7 @@ struct GameDriver csprint_driver =
 	0,
 	0,	/* sound_prom */
 
-	csprint_ports,
+	csprint_input_ports,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

@@ -6,6 +6,7 @@
 static tAuditRecord *gAudits = NULL;
 static tMissingSample *gMissingSamples = NULL;
 
+
 /* returns nonzero on error */
 static int CalcCheckSum (void *f, const struct RomModule *romp, tAuditRecord *aud)
 {
@@ -33,7 +34,7 @@ static int CalcCheckSum (void *f, const struct RomModule *romp, tAuditRecord *au
 				return 1;
 			}
 
-			for (i = 0;i < length;i+=2)
+			for (i = 0;i < (length & ~1);i += 2)
 			{
 				j = 256 * temp[i] + temp[i+1];
 				sum += j;
@@ -51,10 +52,11 @@ static int CalcCheckSum (void *f, const struct RomModule *romp, tAuditRecord *au
 }
 
 
+/* JB 980803 - modified to use CRC-32 if crc is non-zero. */
 /* Fills in an audit record for each rom in the romset. Sets 'audit' to
    point to the list of audit records. Returns total number of roms
    in the romset (same as number of audit records), 0 if romset missing. */
-int AuditRomSet (int game, tAuditRecord **audit)
+int AuditRomSet (int game, tAuditRecord **audit, int crc)
 {
 	void *f;
 	const struct RomModule *romp;
@@ -63,6 +65,7 @@ int AuditRomSet (int game, tAuditRecord **audit)
 
 	int count = 0;
 	tAuditRecord *aud;
+	int	err;
 
 	if (!gAudits)
 		gAudits = (tAuditRecord *)malloc (AUD_MAX_ROMS * sizeof (tAuditRecord));
@@ -100,34 +103,59 @@ int AuditRomSet (int game, tAuditRecord **audit)
 			name = romp->name;
 			strcpy (aud->rom, name);
 			aud->length = romp->length & ~ROMFLAG_MASK;
-			aud->expchecksum = romp->checksum;
 			aud->checksum = 0;
 			count++;
 
-			/* look if we can open it */
-			f = osd_fopen (gamedrv->name, name, OSD_FILETYPE_ROM, 0);
-			if (f == 0 && gamedrv->clone_of)
+			if (crc)
 			{
-				/* if the game is a clone, try loading the ROM from the main version */
-				f = osd_fopen (gamedrv->clone_of->name, name, OSD_FILETYPE_ROM, 0);
-			}
+				aud->expchecksum = romp->crc;
 
-			if (!f)
-				aud->status = AUD_ROM_NOT_FOUND;
-			else
-			{
-				aud->length = romp->length & ~ROMFLAG_MASK;
-				if (!CalcCheckSum (f, romp, aud))
+				/* obtain CRC-32 of ROM file */
+				err = osd_fchecksum (gamedrv->name, name, &aud->checksum);
+				if (err && gamedrv->clone_of)
+				{
+					/* if the game is a clone, try the parent */
+					err = osd_fchecksum (gamedrv->clone_of->name, name, &aud->checksum);
+				}
+
+				if (err)
+					aud->status = AUD_ROM_NOT_FOUND;
+				else
 				{
 					if (aud->checksum != aud->expchecksum)
 						aud->status = AUD_BAD_CHECKSUM;
 					else
 						aud->status = AUD_ROM_GOOD;
 				}
+			}
+			else
+			{
+				aud->expchecksum = romp->checksum;
 
-				osd_fclose (f);
+				/* look if we can open it */
+				f = osd_fopen (gamedrv->name, name, OSD_FILETYPE_ROM, 0);
+				if (f == 0 && gamedrv->clone_of)
+				{
+					/* if the game is a clone, try loading the ROM from the main version */
+					f = osd_fopen (gamedrv->clone_of->name, name, OSD_FILETYPE_ROM, 0);
+				}
+
+				if (!f)
+					aud->status = AUD_ROM_NOT_FOUND;
+				else
+				{
+					if (!CalcCheckSum (f, romp, aud))
+					{
+						if (aud->checksum != aud->expchecksum)
+							aud->status = AUD_BAD_CHECKSUM;
+						else
+							aud->status = AUD_ROM_GOOD;
+					}
+					osd_fclose (f);
+				}
 			}
 
+			/* go to next entry, skipping ROM_CONTINUE and ROM_RELOAD */
 			do
 			{
 				romp++;
@@ -144,13 +172,13 @@ int AuditRomSet (int game, tAuditRecord **audit)
 
 /* Generic function for evaluating a romset. Some platforms may wish to
    call AuditRomSet() instead and implement their own reporting (like MacMAME). */
-int VerifyRomSet (int game, verify_printf_proc verify_printf)
+int VerifyRomSet (int game, verify_printf_proc verify_printf, int crc)
 {
 	tAuditRecord	*aud;
 	int				count;
 	int				badarchive = 0;
 
-	if ((count = AuditRomSet (game, &aud)) == 0)
+	if ((count = AuditRomSet (game, &aud, crc)) == 0)
 		return NOTFOUND;
 
 	while (count--)
@@ -158,12 +186,12 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 		switch (aud->status)
 		{
 			case AUD_ROM_NOT_FOUND:
-				verify_printf ("%-10s: %-12s %5d bytes   %08x NOT FOUND\n",
+				verify_printf ("%-8s: %-12s %7d bytes %08x NOT FOUND\n",
 					drivers[game]->name, aud->rom, aud->length, aud->expchecksum);
 				badarchive = 1;
 				break;
 			case AUD_BAD_CHECKSUM:
-				verify_printf ("%-10s: %-12s %5d bytes   %08x INCORRECT CHECKSUM %08x\n",
+				verify_printf ("%-8s: %-12s %7d bytes %08x INCORRECT CHECKSUM %08x\n",
 					drivers[game]->name, aud->rom, aud->length, aud->expchecksum, aud->checksum);
 				badarchive = 1;
 				break;
@@ -278,7 +306,7 @@ int VerifySampleSet (int game, verify_printf_proc verify_printf)
 	/* list missing samples */
 	while (count--)
 	{
-		verify_printf ("%-10s: %s NOT FOUND\n", drivers[game]->name, aud->name);
+		verify_printf ("%-8s: %s NOT FOUND\n", drivers[game]->name, aud->name);
 		aud++;
 	}
 

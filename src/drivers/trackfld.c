@@ -394,6 +394,44 @@ ROM_START( hyprolym_rom )
 	ROM_LOAD( "c9_d15.bin", 0x0000, 0x2000, 0xbaaab302 )
 ROM_END
 
+ROM_START( hyprolyb_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "a1.1",         0x6000, 0x2000, 0x26ce1b96 )
+	ROM_LOAD( "hyprolym.a02", 0x8000, 0x2000, 0x05052d7f )
+	ROM_LOAD( "a3.3",         0xA000, 0x2000, 0x0e8be755 )
+	ROM_LOAD( "hyprolym.a04", 0xC000, 0x2000, 0x1af45818 )
+	ROM_LOAD( "hyprolym.a05", 0xE000, 0x2000, 0x29a7d3c1 )
+
+	ROM_REGION(0xe000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "hyprolym.h16", 0x0000, 0x2000, 0xddca2c0c )
+	ROM_LOAD( "hyprolym.h15", 0x2000, 0x2000, 0x9b4721b5 )
+	ROM_LOAD( "h14_e10.bin",  0x4000, 0x2000, 0x36c0fa04 )
+
+	ROM_LOAD( "c11_d06.bin",  0x6000, 0x2000, 0xca2da5bd )
+	ROM_LOAD( "c12_d07.bin",  0x8000, 0x2000, 0x9a7b57d9 )
+	ROM_LOAD( "c13_d08.bin",  0xa000, 0x2000, 0xed0cac48 )
+	ROM_LOAD( "c14_d09.bin",  0xc000, 0x2000, 0x0e569456 )
+
+	ROM_REGION(0x0220)    /* color/lookup proms */
+	ROM_LOAD( "tfprom.1", 0x0000, 0x0020, 0x858033e0 ) /* palette */
+	ROM_LOAD( "tfprom.3", 0x0020, 0x0100, 0xaafe0604 ) /* sprite lookup table */
+	ROM_LOAD( "tfprom.2", 0x0120, 0x0100, 0x903f0603 ) /* char lookup table */
+
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "c2_d13.bin", 0x0000, 0x2000, 0x6244bd30 )
+
+	ROM_REGION(0x10000)	/*  64k for speech rom    */
+	ROM_LOAD( "c9_d15.bin", 0x0000, 0x2000, 0xbaaab302 )
+
+	/* David Winter - 30/7/98 : Note concerning sound emulation
+	Since the sounds are same than the original Hyper Olympic hardware,
+	we can bypass the emulation of the ADPCM samples (contained in the
+	2764.1, 2764.2, 2764.3 and 2764.4 ROMs of this bootleg ROM set).
+	This is why it is possible to emulate the sound from the original
+	audio CPU and speeh ROMs, instead of the bootleg ADPCM ROMs...
+	*/
+ROM_END
+
 
 
 static void trackfld_decode(void)
@@ -536,6 +574,37 @@ struct GameDriver hyprolym_driver =
 	&machine_driver,
 
 	hyprolym_rom,
+	0, trackfld_decode,
+	trackfld_sample_names,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+/*
+This driver is made using the Hyper Olympic driver. Note that
+the sound hardware of this bootleg system is a bit different,
+but it does not matter since the sounds are same. Just to
+speed up emulation...
+*/
+struct GameDriver hyprolyb_driver =
+{
+	__FILE__,
+	&trackfld_driver,
+	"hyprolyb",
+	"Hyper Olympic (bootleg)",
+	"1983",
+	"bootleg",
+	"Chris Hardy (MAME driver)\nTim Lindquist (color info)\nTatsuyuki Satoh(speech sound)",
+	0,
+	&machine_driver,
+
+	hyprolyb_rom,
 	0, trackfld_decode,
 	trackfld_sample_names,
 	0,	/* sound_prom */

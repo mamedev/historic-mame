@@ -39,6 +39,7 @@
 #include "M6805/m6805.h"
 #include "M6809/m6809.h"
 #include "M68000/M68000.h"
+#include "TMS34010/tms34010.h"
 #include "S2650/s2650.h" /* HJB 110698 */
 #include "t11/t11.h"    /* ASG 030598 */
 
@@ -49,6 +50,7 @@ int Dasm6805 (unsigned char *base, char *buf, int pc);	/* JB 980214 */
 int Dasm6809 (char *buffer, int pc);
 int Dasm68000 (unsigned char *pBase, char *buffer, int pc);
 int DasmT11 (unsigned char *pBase, char *buffer, int pc);	/* ASG 030598 */
+int Dasm34010 (unsigned char *pBase, char *buffer, int pc);
 
 /* JB 980214 */
 void asg_2650Trace(unsigned char *RAM, int PC);
@@ -64,6 +66,7 @@ void asg_68000Trace(unsigned char *RAM, int PC);
 void asg_8085Trace(unsigned char *RAM, int PC);
 void asg_8039Trace(unsigned char *RAM, int PC);
 void asg_T11Trace(unsigned char *RAM, int PC);	/* ASG 030598 */
+void asg_34010Trace(unsigned char *RAM, int PC); /* AJP 080298 */
 extern int traceon;
 
 extern int CurrentVolume;
@@ -91,6 +94,7 @@ static unsigned char MemWindowBackup[0x100*2];	/* Enough to backup 2 windows */
 
 static void DrawDebugScreen8 (int TextCol, int LineCol);
 static void DrawDebugScreen16 (int TextCol, int LineCol);
+static void DrawDebugScreen32 (int TextCol, int LineCol);
 
 int DummyDasm(char *S, int PC){	return (1); }
 int DummyCC = 0;
@@ -107,6 +111,7 @@ int TempDasm8039 (char *buffer, int pc)  { return (Dasm8039 (buffer, &ROM[pc]));
 int TempDasmT11 (char *buffer, int pc){ return (DasmT11 (&ROM[pc], buffer, pc));}	/* ASG 030598 */
 int TempDasmZ80 (char *buffer, int pc)  { return (DasmZ80 (buffer, pc)); }
 int TempDasm2650 (char *buffer, int pc) { return (Dasm2650 (buffer, pc)); }
+int TempDasm34010 (char *buffer, int pc){ return (Dasm34010 (&OP_ROM[((unsigned int) pc)>>3], buffer, pc));}
 
 /* JB 980214 */
 void TempZ80Trace (int PC) { asg_Z80Trace (ROM, PC); }
@@ -119,6 +124,7 @@ void Temp8085Trace (int PC) { asg_8085Trace (ROM, PC); }
 void Temp2650Trace (int PC) { asg_2650Trace (ROM, PC); } /* HJB 110698 */
 void Temp8039Trace (int PC) { asg_8039Trace (ROM, PC); } /* AM 200698 */
 void TempT11Trace (int PC) { asg_T11Trace (ROM, PC); }  /* ASG 030598 */
+void Temp34010Trace (int PC) { asg_34010Trace (OP_ROM, PC); }  /* AJP 080298 */
 
 /* Commands functions */
 static int ModifyRegisters(char *param);
@@ -141,7 +147,7 @@ static void DrawMemWindow (int Base, int Col, int Offset, int DisplayASCII);	/* 
 static int  GetNumber (int X, int Y, int Col);
 static int  ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int BaseAdd, int *DisplayASCII);	/* MB 980103 */
 static int  debug_draw_disasm (int pc);
-static int  debug_dasm_line (int, char *);
+static int  debug_dasm_line (int, char *, int);
 static void debug_draw_flags (void);
 static void debug_draw_registers (void);
 
@@ -185,12 +191,12 @@ typedef struct
 	int		AlignUnit;			/* CM 980428 */
 	int		*SPReg;
 	int		SPSize;
-	tRegdef	RegList[32];
+	tRegdef	RegList[48];
 } tDebugCpuInfo;
 
 typedef struct
 {
-	tRegdef RegList[32];
+	tRegdef RegList[48];
 } tBackupReg;
 
 
@@ -266,15 +272,15 @@ static tBackupReg BackupRegisters[] =
 	/* #define CPU_M6502  3 */
 	{
 		{
-			{ "A", (int *)&((M6502 *)bckrgs)->A, 1, 2, 1 },	/* JB 980103 */
-			{ "X", (int *)&((M6502 *)bckrgs)->X, 1, 7, 1 },
-			{ "Y", (int *)&((M6502 *)bckrgs)->Y, 1, 12, 1 },
-			{ "S", (int *)&((M6502 *)bckrgs)->S, 1, 17, 1 },
-			{ "PC", (int *)&((M6502 *)bckrgs)->PC.W, 2, 22, 1 },
+			{ "A", (int *)&((M6502_Regs *)bckrgs)->A, 1, 2, 1 },
+			{ "X", (int *)&((M6502_Regs *)bckrgs)->X, 1, 7, 1 },
+			{ "Y", (int *)&((M6502_Regs *)bckrgs)->Y, 1, 12, 1 },
+			{ "S", (int *)&((M6502_Regs *)bckrgs)->SP.D, 1, 17, 1 },
+			{ "PC", (int *)&((M6502_Regs *)bckrgs)->PC.W.l, 2, 22, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
-	},
-	/* #define CPU_I86    4 */
+    },
+    /* #define CPU_I86    4 */
 	{
 		{
 			{ "IP", (int *)&((i86_Regs *)bckrgs)->ip, 4, 2, 1 },
@@ -398,6 +404,44 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
+	/* #define CPU_TMS34010 12 */
+	{
+		{
+			{ "PC", (int *)&((TMS34010_Regs *)bckrgs)->pc, 4, 2, 3 },
+			{ "SP", (int *)&((TMS34010_Regs *)bckrgs)->Aregs[15], 4, 55, 1 },
+			{ "A0", (int *)&((TMS34010_Regs *)bckrgs)->Aregs[0], 4, 55, 3 },
+			{ "A1", (int *)&((TMS34010_Regs *)bckrgs)->Aregs[1], 4, 55, 4 },
+			{ "A2", (int *)&((TMS34010_Regs *)bckrgs)->Aregs[2], 4, 55, 5 },
+			{ "A3", (int *)&((TMS34010_Regs *)bckrgs)->Aregs[3], 4, 55, 6 },
+			{ "A4", (int *)&((TMS34010_Regs *)bckrgs)->Aregs[4], 4, 55, 7 },
+			{ "A5", (int *)&((TMS34010_Regs *)bckrgs)->Aregs[5], 4, 55, 8 },
+			{ "A6", (int *)&((TMS34010_Regs *)bckrgs)->Aregs[6], 4, 55, 9 },
+			{ "A7", (int *)&((TMS34010_Regs *)bckrgs)->Aregs[7], 4, 55, 10 },
+			{ "A8", (int *)&((TMS34010_Regs *)bckrgs)->Aregs[8], 4, 55, 11 },
+			{ "A9", (int *)&((TMS34010_Regs *)bckrgs)->Aregs[9], 4, 55, 12 },
+			{ "A10", (int *)&((TMS34010_Regs *)bckrgs)->Aregs[10], 4, 54, 13 },
+			{ "A11", (int *)&((TMS34010_Regs *)bckrgs)->Aregs[11], 4, 54, 14 },
+			{ "A12", (int *)&((TMS34010_Regs *)bckrgs)->Aregs[12], 4, 54, 15 },
+			{ "A13", (int *)&((TMS34010_Regs *)bckrgs)->Aregs[13], 4, 54, 16 },
+			{ "A14", (int *)&((TMS34010_Regs *)bckrgs)->Aregs[14], 4, 54, 17 },
+			{ "B0", (int *)&((TMS34010_Regs *)bckrgs)->Bregs[0], 4, 68, 3 },
+			{ "B1", (int *)&((TMS34010_Regs *)bckrgs)->Bregs[1], 4, 68, 4 },
+			{ "B2", (int *)&((TMS34010_Regs *)bckrgs)->Bregs[2], 4, 68, 5 },
+			{ "B3", (int *)&((TMS34010_Regs *)bckrgs)->Bregs[3], 4, 68, 6 },
+			{ "B4", (int *)&((TMS34010_Regs *)bckrgs)->Bregs[4], 4, 68, 7 },
+			{ "B5", (int *)&((TMS34010_Regs *)bckrgs)->Bregs[5], 4, 68, 8 },
+			{ "B6", (int *)&((TMS34010_Regs *)bckrgs)->Bregs[6], 4, 68, 9 },
+			{ "B7", (int *)&((TMS34010_Regs *)bckrgs)->Bregs[7], 4, 68, 10 },
+			{ "B8", (int *)&((TMS34010_Regs *)bckrgs)->Bregs[8], 4, 68, 11 },
+			{ "B9", (int *)&((TMS34010_Regs *)bckrgs)->Bregs[9], 4, 68, 12 },
+			{ "B10", (int *)&((TMS34010_Regs *)bckrgs)->Bregs[10], 4, 67, 13 },
+			{ "B11", (int *)&((TMS34010_Regs *)bckrgs)->Bregs[11], 4, 67, 14 },
+			{ "B12", (int *)&((TMS34010_Regs *)bckrgs)->Bregs[12], 4, 67, 15 },
+			{ "B13", (int *)&((TMS34010_Regs *)bckrgs)->Bregs[13], 4, 67, 16 },
+			{ "B14", (int *)&((TMS34010_Regs *)bckrgs)->Bregs[14], 4, 67, 17 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+	},
 };
 
 
@@ -467,21 +511,21 @@ static tDebugCpuInfo DebugInfo[] =
 		"6502", 14,
 		DrawDebugScreen8,
 		Dasm6502, Temp6502Trace, 15, 8,
-		"NVRBDIZC", (int *)&((M6502 *)rgs)->P, 8,
+		"NVRBDIZC", (int *)&((M6502_Regs *)rgs)->P, 8,
 		"%04X:", 0xffff,
 		25, 31, 77, 16,
-		3, 1,					/* CM 980428 */
-		(int *)&((M6502 *)rgs)->S, 1,
+		3, 1,
+		(int *)&((M6502_Regs *)rgs)->SP.B.l, 1,
 		{
-			{ "A", (int *)&((M6502 *)rgs)->A, 1, 2, 1 },	/* JB 980103 */
-			{ "X", (int *)&((M6502 *)rgs)->X, 1, 7, 1 },
-			{ "Y", (int *)&((M6502 *)rgs)->Y, 1, 12, 1 },
-			{ "S", (int *)&((M6502 *)rgs)->S, 1, 17, 1 },
-			{ "PC", (int *)&((M6502 *)rgs)->PC.W, 2, 22, 1 },
+			{ "A", (int *)&((M6502_Regs *)rgs)->A, 1, 2, 1 },
+			{ "X", (int *)&((M6502_Regs *)rgs)->X, 1, 7, 1 },
+			{ "Y", (int *)&((M6502_Regs *)rgs)->Y, 1, 12, 1 },
+			{ "S", (int *)&((M6502_Regs *)rgs)->SP.B.l, 1, 17, 1 },
+			{ "PC", (int *)&((M6502_Regs *)rgs)->PC.W.l, 2, 22, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_I86    4 */
+    /* #define CPU_I86    4 */
 	{
 		"I86", 21,
 		DrawDebugScreen16,
@@ -666,6 +710,53 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "r1", (int *)&((S2650_Regs *)rgs)->reg[4], 1, 61, 1 },
 			{ "r2", (int *)&((S2650_Regs *)rgs)->reg[5], 1, 67, 1 },
 			{ "r3", (int *)&((S2650_Regs *)rgs)->reg[6], 1, 73, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+	},
+	/* #define CPU_TMS34010 12 */
+	{
+		"34010", 21,
+		DrawDebugScreen32,
+		TempDasm34010, Temp34010Trace, 20, 11,
+		"NCZV..P...I.........EFFFFFEFFFFF", (int *)&((TMS34010_Regs *)rgs)->st, 32,
+		"%08.8X:     ", 0xffffffff,
+		32, 41, 52, 4,
+		0x50,						/* max inst length */
+		0x10,						/* instructions are evenly aligned */
+		(int *)&((TMS34010_Regs *)rgs)->Aregs[15], 4,
+		{
+			{ "PC", (int *)&((TMS34010_Regs *)rgs)->pc, 4, 2, 3 },
+			{ "SP", (int *)&((TMS34010_Regs *)rgs)->Aregs[15], 4, 55, 1 },
+			{ "A0", (int *)&((TMS34010_Regs *)rgs)->Aregs[0], 4, 55, 4 },
+			{ "A1", (int *)&((TMS34010_Regs *)rgs)->Aregs[1], 4, 55, 5 },
+			{ "A2", (int *)&((TMS34010_Regs *)rgs)->Aregs[2], 4, 55, 6 },
+			{ "A3", (int *)&((TMS34010_Regs *)rgs)->Aregs[3], 4, 55, 7 },
+			{ "A4", (int *)&((TMS34010_Regs *)rgs)->Aregs[4], 4, 55, 8 },
+			{ "A5", (int *)&((TMS34010_Regs *)rgs)->Aregs[5], 4, 55, 9 },
+			{ "A6", (int *)&((TMS34010_Regs *)rgs)->Aregs[6], 4, 55, 10 },
+			{ "A7", (int *)&((TMS34010_Regs *)rgs)->Aregs[7], 4, 55, 11 },
+			{ "A8", (int *)&((TMS34010_Regs *)rgs)->Aregs[8], 4, 55, 12 },
+			{ "A9", (int *)&((TMS34010_Regs *)rgs)->Aregs[9], 4, 55, 13 },
+			{ "A10", (int *)&((TMS34010_Regs *)rgs)->Aregs[10], 4, 54, 14 },
+			{ "A11", (int *)&((TMS34010_Regs *)rgs)->Aregs[11], 4, 54, 15 },
+			{ "A12", (int *)&((TMS34010_Regs *)rgs)->Aregs[12], 4, 54, 16 },
+			{ "A13", (int *)&((TMS34010_Regs *)rgs)->Aregs[13], 4, 54, 17 },
+			{ "A14", (int *)&((TMS34010_Regs *)rgs)->Aregs[14], 4, 54, 18 },
+			{ "B0", (int *)&((TMS34010_Regs *)rgs)->Bregs[0], 4, 68, 4 },
+			{ "B1", (int *)&((TMS34010_Regs *)rgs)->Bregs[1], 4, 68, 5 },
+			{ "B2", (int *)&((TMS34010_Regs *)rgs)->Bregs[2], 4, 68, 6 },
+			{ "B3", (int *)&((TMS34010_Regs *)rgs)->Bregs[3], 4, 68, 7 },
+			{ "B4", (int *)&((TMS34010_Regs *)rgs)->Bregs[4], 4, 68, 8 },
+			{ "B5", (int *)&((TMS34010_Regs *)rgs)->Bregs[5], 4, 68, 9 },
+			{ "B6", (int *)&((TMS34010_Regs *)rgs)->Bregs[6], 4, 68, 10 },
+			{ "B7", (int *)&((TMS34010_Regs *)rgs)->Bregs[7], 4, 68, 11 },
+			{ "B8", (int *)&((TMS34010_Regs *)rgs)->Bregs[8], 4, 68, 12 },
+			{ "B9", (int *)&((TMS34010_Regs *)rgs)->Bregs[9], 4, 68, 13 },
+			{ "B10", (int *)&((TMS34010_Regs *)rgs)->Bregs[10], 4, 67, 14 },
+			{ "B11", (int *)&((TMS34010_Regs *)rgs)->Bregs[11], 4, 67, 15 },
+			{ "B12", (int *)&((TMS34010_Regs *)rgs)->Bregs[12], 4, 67, 16 },
+			{ "B13", (int *)&((TMS34010_Regs *)rgs)->Bregs[13], 4, 67, 17 },
+			{ "B14", (int *)&((TMS34010_Regs *)rgs)->Bregs[14], 4, 67, 18 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},

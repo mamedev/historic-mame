@@ -283,6 +283,15 @@ extern void inflate_FLUSH (unsigned char *buffer, unsigned long n);
 
 #define Trace(x)
 
+/* JB 980823 - fix name collisions with zlib */
+#define inflate			mame_inflate
+#define inflate_codes	mame_inflate_codes
+#define inflate_stored	mame_inflate_stored
+#define inflate_fixed	mame_inflate_fixed
+#define inflate_dynamic	mame_inflate_dynamic
+#define inflate_block	mame_inflate_block
+#define huft_build		mame_huft_build
+#define huft_free		mame_huft_free
 
 
 /*---------------------------------------------------------------------------*/

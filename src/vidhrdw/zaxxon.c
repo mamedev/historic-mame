@@ -411,7 +411,7 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					drawgfx(bitmap,Machine->gfx[2],
 						spriteram[offs+1] & 0x7f,
 						spriteram[offs+2] & 0x3f,
-						spriteram[offs+1] & 0x80,spriteram[offs+1] & 0x80,
+						spriteram[offs+1] & 0x80,spriteram[offs+1] & 0x80,	/* ?? */
 						((spriteram[offs+3] + 16) & 0xff) - 32,255 - spriteram[offs] - 16,
 						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			}
@@ -428,7 +428,7 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					drawgfx(bitmap,Machine->gfx[2],
 						spriteram[offs+1] & 0x3f,
 						spriteram[offs+2] & 0x3f,
-						spriteram[offs+1] & 0x80,spriteram[offs+1] & 0x80,	/* ?? */
+						spriteram[offs+1] & 0x40,spriteram[offs+1] & 0x80,
 						((spriteram[offs+3] + 16) & 0xff) - 32,255 - spriteram[offs] - 16,
 						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			}

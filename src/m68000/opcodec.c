@@ -962,9 +962,9 @@ void op_c100(void) /* ABCD */
 	UWORD newv;
 	if (newv_lo > 9) { newv_lo +=6; }
 	newv = newv_hi + newv_lo;
-	regs.d[dstreg].B.l = newv;
 	CFLG = regs.x = (newv & 0x1F0) > 0x90;
 	if (CFLG) newv += 0x60;
+	regs.d[dstreg].B.l = newv;
 	if (((BYTE)(newv)) != 0) ZFLG = 0;
 	NFLG = ((BYTE)(newv)) < 0;
 {	int flgs = ((BYTE)(src)) < 0;
@@ -986,7 +986,8 @@ void op_c108(void) /* ABCD */
 	UWORD newv_hi = (src & 0xF0) + (dst & 0xF0);
 	UWORD newv;
 	if (newv_lo > 9) { newv_lo +=6; }
-	newv = newv_hi + newv_lo;	CFLG = regs.x = (newv & 0x1F0) > 0x90;
+	newv = newv_hi + newv_lo;
+	CFLG = regs.x = (newv & 0x1F0) > 0x90;
 	if (CFLG) newv += 0x60;
 	if (((BYTE)(newv)) != 0) ZFLG = 0;
 	NFLG = ((BYTE)(newv)) < 0;

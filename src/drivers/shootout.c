@@ -58,7 +58,7 @@ static void shootout_bankswitch_w( int offset, int v ) {
 
 static void sound_cpu_command_w( int offset, int v ) {
 	soundlatch_w( offset, v );
-	cpu_cause_interrupt( 1, INT_NMI );
+	cpu_cause_interrupt( 1, M6502_INT_NMI );
 }
 
 /* stub for reading input ports as active low (makes building ports much easier) */

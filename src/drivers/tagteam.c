@@ -35,7 +35,7 @@ void tagteam_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
 static void sound_command_w(int offset,int data)
 {
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(1,INT_IRQ);
+	cpu_cause_interrupt(1,M6502_INT_IRQ);
 }
 
 

@@ -591,7 +591,7 @@ struct GameDriver frogsega_driver =
 	hiload, hisave
 };
 
-/* this version runs on modiifed Moon Cresta hardware */
+/* this version runs on modified Moon Cresta hardware */
 struct GameDriver frogger2_driver =
 {
 	__FILE__,

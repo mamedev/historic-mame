@@ -13,7 +13,12 @@
 #include "driver.h"
 #include "psg.h"
 
-
+/* Self Update Customize */
+/* minimum update step */
+#define MIN_UPDATE 10
+/* Get Update Point */
+#define SELF_UPDATE
+#define GetUpdatePos() cpu_scalebyfcount(AYBufSize)
 
 #ifdef SIGNED_SAMPLES
 	#define MAX_OUTPUT 0x7fff
@@ -25,6 +30,7 @@
 
 struct AY8910
 {
+	int addr;
 	unsigned char Regs[16];
 	void *Buf;			/* sound buffer */
 	int bufp;				/* update buffer point */
@@ -109,40 +115,13 @@ void AYShutdown()
 	AYBufSize = 0;
 }
 
-/*
-** reset all chip registers.
-*/
-void AYResetChip(int num)
-{
-	int i;
-	struct AY8910 *PSG = &AYPSG[num];
 
 
-	PSG->RNG = 1;
-	PSG->OutputA = 0;
-	PSG->OutputB = 0;
-	PSG->OutputC = 0;
-	PSG->OutputN = 0xff;
-
-	PSG->bufp = 0;
-	for (i = 0;i < AY_PORTA;i++)
-		AYWriteReg(num,i,0);
-}
-
-/* write a register on AY8910 chip number 'n' */
-void AYWriteReg(int n, int r, int v)
+void _AYWriteReg(int n, int r, int v)
 {
 	struct AY8910 *PSG = &AYPSG[n];
 	int old;
 
-
-	if (n >= AYNumChips)
-	{
-if (errorlog) fprintf(errorlog,"error: write to 8910 #%d, allocated only %d\n",n,AYNumChips);
-		return;
-	}
-
-	if (r > 15) return;
 
 	PSG->Regs[r] = v;
 
@@ -278,6 +257,56 @@ if (errorlog) fprintf(errorlog,"warning: write to 8910 #%d Port B set as input\n
 }
 
 
+/* write a register on AY8910 chip number 'n' */
+void AYWriteReg(int n, int r, int v)
+{
+	struct AY8910 *PSG = &AYPSG[n];
+
+
+	if (n >= AYNumChips)
+	{
+if (errorlog) fprintf(errorlog,"error: write to 8910 #%d, allocated only %d\n",n,AYNumChips);
+		return;
+	}
+
+	if (r > 15) return;
+#ifdef SELF_UPDATE
+	if( r < 14 )
+	{
+		/* self update */
+		int pos = GetUpdatePos();
+		if( pos > AYBufSize ) pos = AYBufSize;
+		if( PSG->bufp+MIN_UPDATE <= pos )
+			AYUpdateOne(n,pos);
+	}
+#endif
+
+	_AYWriteReg(n,r,v);
+}
+
+/*
+** reset all chip registers.
+*/
+void AYResetChip(int num)
+{
+	int i;
+	struct AY8910 *PSG = &AYPSG[num];
+
+	PSG->addr = 0;
+	PSG->RNG = 1;
+	PSG->OutputA = 0;
+	PSG->OutputB = 0;
+	PSG->OutputC = 0;
+	PSG->OutputN = 0xff;
+
+	PSG->bufp = 0;
+	for (i = 0;i < AY_PORTA;i++)
+		_AYWriteReg(num,i,0);	/* AYWriteReg() uses the timer system; we cannot */
+								/* call it at this time because the timer system */
+								/* has not been initialized. */
+}
+
+
 
 unsigned char AYReadReg(int n, int r)
 {
@@ -308,7 +337,32 @@ if (errorlog) fprintf(errorlog,"warning: read from 8910 #%d Port B set as output
 	return PSG->Regs[r];
 }
 
+void AY8910Write(int n, int a, int v)
+{
+	struct AY8910 *PSG = &AYPSG[n];
 
+	if( !(a&1) )
+	{	/* Reister port */
+		PSG->addr = v & 0x0f;
+	}
+	else
+	{	/* Data port */
+		/* update check */
+		AYWriteReg(n,PSG->addr,v);
+	}
+}
+
+int AY8910Read(int n, int a)
+{
+	struct AY8910 *PSG = &AYPSG[n];
+
+	if( !(a&1) )
+	{	/* Reister port */
+		return 0;
+	}
+	/* Data port */
+	return AYReadReg(n,PSG->addr);
+}
 
 void AYUpdateOne(int chip,int endp)
 {

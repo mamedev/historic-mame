@@ -52,6 +52,7 @@ unsigned char *pal_bank1;		/* 0x100*16 2 byte palette entries */
 unsigned char *pal_bank2;		/* 0x100*16 2 byte palette entries */
 int palno = 0;				/* start off in palettebank 0 */
 
+static int can_bank_sprites;
 
 int neo_unknown[32]; //debug
 void neo_unknown1(int offset, int data) {WRITE_WORD(&neo_unknown[0],data);}
@@ -155,6 +156,7 @@ void neogeo_vh_stop(void) {
 		free (vidram);
 		vidram = 0;
 	}
+
 }
 
 int neogeo_vh_start(void) {
@@ -182,6 +184,12 @@ int neogeo_vh_start(void) {
 
     /* Unconfirmed, but works with SNK intro screen */
 	palette_transparent_color = 4095;
+
+	/* The sprite number will be masked to the total */
+	if (Machine->drv->gfxdecodeinfo[1].gfxlayout->total >= 0x10000)
+		can_bank_sprites = 1;
+	else
+		can_bank_sprites = 0;
 
 	return 0;
 }
@@ -258,7 +266,7 @@ INLINE void write_dword(int *address, int data)
 
 static void Neodrawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,int zx,int zy,
-		const struct rectangle *clip,int transparency,int transparent_color,int dirty)
+		const struct rectangle *clip)
 {
 	int ox,oy,ex,ey,y,start,dy;
 	const unsigned char *sd;
@@ -268,110 +276,26 @@ static void Neodrawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	int trans4,col4;
 	struct rectangle myclip;
 
+	int transparency = TRANSPARENCY_PEN;
+	int transparent_color = 0;
 
 	if (!gfx) return;
 
 	code %= gfx->total_elements;
 	color %= gfx->total_colors;
 
-	/* if necessary, remap the transparent color */
-	if (transparency == TRANSPARENCY_COLOR)
-		transparent_color = Machine->pens[transparent_color];
-
 	if (gfx->pen_usage)
 	{
 		int transmask;
 
-
-		transmask = 0;
-
-		if (transparency == TRANSPARENCY_PEN)
-		{
-			transmask = 1 << transparent_color;
-		}
-		else if (transparency == TRANSPARENCY_PENS)
-		{
-			transmask = transparent_color;
-		}
-		else if (transparency == TRANSPARENCY_COLOR && gfx->colortable)
-		{
-			int i;
-			const unsigned short *paldata;
-
-
-			paldata = &gfx->colortable[gfx->color_granularity * color];
-
-			for (i = gfx->color_granularity - 1;i >= 0;i--)
-			{
-				if (paldata[i] == transparent_color)
-					transmask |= 1 << i;
-			}
-		}
+		transmask = 1 << transparent_color;
 
 		if ((gfx->pen_usage[code] & ~transmask) == 0)
 			/* character is totally transparent, no need to draw */
 			return;
-		else if ((gfx->pen_usage[code] & transmask) == 0 && transparency != TRANSPARENCY_THROUGH)
+		else if ((gfx->pen_usage[code] & transmask) == 0)
 			/* character is totally opaque, can disable transparency */
 			transparency = TRANSPARENCY_NONE;
-	}
-
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int temp;
-
-		temp = sx;
-		sx = sy;
-		sy = temp;
-
-		temp = flipx;
-		flipx = flipy;
-		flipy = temp;
-
-		if (clip)
-		{
-			/* clip and myclip might be the same, so we need a temporary storage */
-			temp = clip->min_x;
-			myclip.min_x = clip->min_y;
-			myclip.min_y = temp;
-			temp = clip->max_x;
-			myclip.max_x = clip->max_y;
-			myclip.max_y = temp;
-			clip = &myclip;
-		}
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-	{
-		sx = dest->width - zx /*gfx->width*/ - sx;
-		if (clip)
-		{
-			int temp;
-
-
-			/* clip and myclip might be the same, so we need a temporary storage */
-			temp = clip->min_x;
-			myclip.min_x = dest->width-1 - clip->max_x;
-			myclip.max_x = dest->width-1 - temp;
-			myclip.min_y = clip->min_y;
-			myclip.max_y = clip->max_y;
-			clip = &myclip;
-		}
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-	{
-		sy = dest->height - zy /*gfx->height*/ - sy;
-		if (clip)
-		{
-			int temp;
-
-			myclip.min_x = clip->min_x;
-			myclip.max_x = clip->max_x;
-			/* clip and myclip might be the same, so we need a temporary storage */
-			temp = clip->min_y;
-			myclip.min_y = dest->height-1 - clip->max_y;
-			myclip.max_y = dest->height-1 - temp;
-			clip = &myclip;
-		}
 	}
 
 	/* check bounds */
@@ -391,8 +315,7 @@ static void Neodrawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	if (clip && ey > clip->max_y) ey = clip->max_y;
 	if (sy > ey) return;
 
-	if (dirty)
-		osd_mark_dirty (sx,sy,ex,ey,0);	/* ASG 971011 */
+	osd_mark_dirty (sx,sy,ex,ey,0);	/* ASG 971011 */
 
 	/* start = code * zy *gfx->height*; */
 	if (flipy)	/* Y flop */
@@ -407,7 +330,6 @@ static void Neodrawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	}
 
 
-	if (gfx->colortable)	/* remap colors */
 	{
 		const unsigned short *paldata;	/* ASG 980209 */
 
@@ -529,302 +451,8 @@ static void Neodrawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 					}
 				}
 				break;
-
-			case TRANSPARENCY_PENS:
-				trans4 = transparent_color * 0x01010101;
-#define PEN_IS_OPAQUE ((1<<col)&transparent_color) == 0
-
-				if (flipx) /* X flip */
-				{
-					for (y = sy;y <= ey;y++)
-					{
-						bm  = dest->line[y];
-						bme = bm + ex;
-						sd4 = (int *)(gfx->gfxdata->line[start] + zx /*gfx->width*/ -1 - (sx-ox) -3);
-						for( bm += sx ; bm <= bme-3 ; bm+=4 )
-						{
-							if ((col4=read_dword(sd4)) != trans4)
-							{
-								col = (col4>>24)&0xff;
-								if (PEN_IS_OPAQUE) bm[BL0] = paldata[col];
-								col = (col4>>16)&0xff;
-								if (PEN_IS_OPAQUE) bm[BL1] = paldata[col];
-								col = (col4>>8)&0xff;
-								if (PEN_IS_OPAQUE) bm[BL2] = paldata[col];
-								col = col4&0xff;
-								if (PEN_IS_OPAQUE) bm[BL3] = paldata[col];
-							}
-							sd4--;
-						}
-						sd = (unsigned char *)sd4+3;
-						for( ; bm <= bme ; bm++ )
-						{
-							col = *(sd--);
-							if (PEN_IS_OPAQUE) *bm = paldata[col];
-						}
-						start+=dy;
-					}
-				}
-				else /* normal */
-				{
-					for (y = sy;y <= ey;y++)
-					{
-						bm  = dest->line[y];
-						bme = bm + ex;
-						sd4 = (int *)(gfx->gfxdata->line[start] + (sx-ox));
-						for( bm += sx ; bm <= bme-3 ; bm+=4 )
-						{
-							if ((col4=read_dword(sd4)) != trans4)
-							{
-								col = col4&0xff;
-								if (PEN_IS_OPAQUE) bm[BL0] = paldata[col];
-								col = (col4>>8)&0xff;
-								if (PEN_IS_OPAQUE) bm[BL1] = paldata[col];
-								col = (col4>>16)&0xff;
-								if (PEN_IS_OPAQUE) bm[BL2] = paldata[col];
-								col = (col4>>24)&0xff;
-								if (PEN_IS_OPAQUE) bm[BL3] = paldata[col];
-							}
-							sd4++;
-						}
-						sd = (unsigned char *)sd4;
-						for( ; bm <= bme ; bm++ )
-						{
-							col = *(sd++);
-							if (PEN_IS_OPAQUE) *bm = paldata[col];
-						}
-						start+=dy;
-					}
-				}
-				break;
-
-			case TRANSPARENCY_COLOR:
-				if (flipx)	/* X flip */
-				{
-					for (y = sy;y <= ey;y++)
-					{
-						bm  = dest->line[y];
-						bme = bm + ex;
-						sd = gfx->gfxdata->line[start] + zx /*gfx->width*/ -1 - (sx-ox);
-						for( bm += sx ; bm <= bme ; bm++ )
-						{
-							col = paldata[*(sd--)];
-							if (col != transparent_color) *bm = col;
-						}
-						start+=dy;
-					}
-				}
-				else		/* normal */
-				{
-					for (y = sy;y <= ey;y++)
-					{
-						bm  = dest->line[y];
-						bme = bm + ex;
-						sd = gfx->gfxdata->line[start] + (sx-ox);
-						for( bm += sx ; bm <= bme ; bm++ )
-						{
-							col = paldata[*(sd++)];
-							if (col != transparent_color) *bm = col;
-						}
-						start+=dy;
-					}
-				}
-				break;
-
-			case TRANSPARENCY_THROUGH:
-				if (flipx)	/* X flip */
-				{
-					for (y = sy;y <= ey;y++)
-					{
-						bm  = dest->line[y];
-						bme = bm + ex;
-						sd = gfx->gfxdata->line[start] + zx /*gfx->width*/ -1 - (sx-ox);
-						for( bm += sx ; bm <= bme ; bm++ )
-						{
-							if (*bm == transparent_color)
-								*bm = paldata[*sd];
-							sd--;
-						}
-						start+=dy;
-					}
-				}
-				else		/* normal */
-				{
-					for (y = sy;y <= ey;y++)
-					{
-						bm  = dest->line[y];
-						bme = bm + ex;
-						sd = gfx->gfxdata->line[start] + (sx-ox);
-						for( bm += sx ; bm <= bme ; bm++ )
-						{
-							if (*bm == transparent_color)
-								*bm = paldata[*sd];
-							sd++;
-						}
-						start+=dy;
-					}
-				}
-				break;
+			}
 		}
-	}
-	else  /* Cut from here down? */
-	{
-		switch (transparency)
-		{
-			case TRANSPARENCY_NONE:		/* do a verbatim copy (faster) */
-				if (flipx)	/* X flip */
-				{
-					for (y = sy;y <= ey;y++)
-					{
-						bm  = dest->line[y];
-						bme = bm + ex;
-						sd = gfx->gfxdata->line[start] + zx /*gfx->width*/ -1 - (sx-ox);
-						for( bm += sx ; bm <= bme-7 ; bm+=8 )
-						{
-							sd-=8;
-							bm[0] = sd[8];
-							bm[1] = sd[7];
-							bm[2] = sd[6];
-							bm[3] = sd[5];
-							bm[4] = sd[4];
-							bm[5] = sd[3];
-							bm[6] = sd[2];
-							bm[7] = sd[1];
-						}
-						for( ; bm <= bme ; bm++ )
-							*bm = *(sd--);
-						start+=dy;
-					}
-				}
-				else		/* normal */
-				{
-					for (y = sy;y <= ey;y++)
-					{
-						bm = dest->line[y] + sx;
-						sd = gfx->gfxdata->line[start] + (sx-ox);
-						memcpy(bm,sd,ex-sx+1);
-						start+=dy;
-					}
-				}
-				break;
-
-			case TRANSPARENCY_PEN:
-			case TRANSPARENCY_COLOR:
-				trans4 = transparent_color * 0x01010101;
-
-				if (flipx)	/* X flip */
-				{
-					for (y = sy;y <= ey;y++)
-					{
-						bm  = dest->line[y];
-						bme = bm + ex;
-						sd4 = (int *)(gfx->gfxdata->line[start] + gfx->width -1 - (sx-ox) - 3);
-						for( bm += sx ; bm <= bme-3 ; bm+=4 )
-						{
-							if( (col4=read_dword(sd4)) != trans4 )
-							{
-								col = (col4>>24)&0xff;
-								if (col != transparent_color) bm[BL0] = col;
-								col = (col4>>16)&0xff;
-								if (col != transparent_color) bm[BL1] = col;
-								col = (col4>>8)&0xff;
-								if (col != transparent_color) bm[BL2] = col;
-								col = col4&0xff;
-								if (col != transparent_color) bm[BL3] = col;
-							}
-							sd4--;
-						}
-						sd = (unsigned char *)sd4+3;
-						for( ; bm <= bme ; bm++ )
-						{
-							col = *(sd--);
-							if (col != transparent_color) *bm = col;
-						}
-						start+=dy;
-					}
-				}
-				else	/* normal */
-				{
-					int xod4;
-
-					for (y = sy;y <= ey;y++)
-					{
-						bm = dest->line[y];
-						bme = bm + ex;
-						sd4 = (int *)(gfx->gfxdata->line[start] + (sx-ox));
-						bm += sx;
-						while( bm <= bme-3 )
-						{
-							/* bypass loop */
-							while( bm <= bme-3 && read_dword(sd4) == trans4 )
-							{ sd4++; bm+=4; }
-							/* drawing loop */
-							while( bm <= bme-3 && (col4=read_dword(sd4)) != trans4 )
-							{
-								xod4 = col4^trans4;
-								if( (xod4&0x000000ff) && (xod4&0x0000ff00) &&
-								    (xod4&0x00ff0000) && (xod4&0xff000000) )
-								{
-									write_dword((int *)bm,col4);
-								}
-								else
-								{
-									if(xod4&0x000000ff) bm[BL0] = col4;
-									if(xod4&0x0000ff00) bm[BL1] = col4>>8;
-									if(xod4&0x00ff0000) bm[BL2] = col4>>16;
-									if(xod4&0xff000000) bm[BL3] = col4>>24;
-								}
-								sd4++;
-								bm+=4;
-							}
-						}
-						sd = (unsigned char *)sd4;
-						for( ; bm <= bme ; bm++ )
-						{
-							col = *(sd++);
-							if (col != transparent_color) *bm = col;
-						}
-						start+=dy;
-					}
-				}
-				break;
-
-			case TRANSPARENCY_THROUGH:
-				if (flipx)	/* X flip */
-				{
-					for (y = sy;y <= ey;y++)
-					{
-						bm = dest->line[y];
-						bme = bm + ex;
-						sd = gfx->gfxdata->line[start] + zx /*gfx->width*/-1 - (sx-ox);
-						for( bm = bm+sx ; bm <= bme ; bm++ )
-						{
-							if (*bm == transparent_color)
-								*bm = *sd;
-							sd--;
-						}
-						start+=dy;
-					}
-				}
-				else		/* normal */
-				{
-					for (y = sy;y <= ey;y++)
-					{
-						bm = dest->line[y];
-						bme = bm + ex;
-						sd = gfx->gfxdata->line[start] + (sx-ox);
-						for( bm = bm+sx ; bm <= bme ; bm++ )
-						{
-							if (*bm == transparent_color)
-								*bm = *sd;
-							sd++;
-						}
-						start+=dy;
-					}
-				}
-				break;
-		}
-	}
 }
 
 
@@ -833,7 +461,8 @@ int dotiles = 0;
 int screen_offs = 0x0000;
 /* end debug */
 
-void neogeo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh) {
+void neogeo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
 	int x,y;
 	int sx =0;
 	int sy =0;
@@ -860,8 +489,10 @@ void neogeo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh) {
 	/* character foreground */
 	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
 	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (y=2;y<30;y++) {
-		for (x=0;x<40;x++) {
+	for (y=2;y<30;y++)
+	{
+		for (x=0;x<40;x++)
+		{
 			code = (READ_WORD( &vidram[0xE000 + 2*y + x*64] ) & 0xfff);
 			color = ((READ_WORD( &vidram[0xE000 + 2*y + x*64] ) & 0xf000) >> 12);
 
@@ -882,7 +513,8 @@ void neogeo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh) {
     /* Tiles */
     pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
 	for (color = 0;color < 256;color++) colmask[color] = 0;
-	for (count=0;count<384;count++) {
+	for (count=0;count<384;count++)
+	{
 		int t1 = READ_WORD( &vidram[0x10400 + (count << 1)] );
 
 		if (! (t1 & 0x40))
@@ -890,7 +522,8 @@ void neogeo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh) {
 
 		offs = count<<7;
 
-		for (y=0;y < my;y++) {
+		for (y=0;y < my;y++)
+		{
 			code  = READ_WORD(&vidram[offs + 4*y]);
 			color = (READ_WORD(&vidram[offs + 4*y+2]))>>8;
 
@@ -917,7 +550,8 @@ void neogeo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh) {
 
 	if (!dotiles) { 					/* debug */
 
-	for (count=0;count<384;count++) {
+	for (count=0;count<384;count++)
+	{
 		int t3 = READ_WORD( &vidram[0x10000 + (count << 1)] );
 		int t1 = READ_WORD( &vidram[0x10400 + (count << 1)] );
 		int t2 = READ_WORD( &vidram[0x10800 + (count << 1)] );
@@ -949,32 +583,49 @@ void neogeo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh) {
 		offs = count<<7;
 
         /* my holds the number of tiles in each vertical multisprite block */
-		for (y=0;y < my ;y++) {
+		for (y=0;y < my ;y++)
+		{
 			int tileno  = READ_WORD(&vidram[offs + 4*y]);
 			int tileatr = READ_WORD(&vidram[offs + 4*y+2]);
+
+			if (can_bank_sprites)
+				if (tileatr & 0x10) tileno += 0x10000;
 
             /* Zoom - at first this seemed like line skipping on each 16 by 16 block,
             BUT, it looks like the skip should be applyed over the WHOLE tile strip,
             for ZY at least...  (zx to come :) */
-            if (zy!=0xf || zx!=0xf) {
+            if (zy!=0xf || zx!=0xf)
+            {
 
             	/* Dont draw if zero? */
             	if (zy && zx)
-               Neodrawgfx(bitmap,
-					Machine->gfx[1],
-					tileno,
-					tileatr >> 8,
-					tileatr & 0x01,tileatr & 0x02,
-					sx,sy,zx+1,zy+1,
-					&Machine->drv->visible_area,
-					TRANSPARENCY_PEN,
-				 	0,
-                    1
-                 );
+            	{
+            		if ((tileatr & 0xfc) && errorlog)
+            			fprintf (errorlog, "tileatr: %04x\n", tileatr & 0xff);
 
+#if 0
+					Neodrawgfx(bitmap,
+						Machine->gfx[1],
+						tileno,
+						tileatr >> 8,
+						tileatr & 0x01,tileatr & 0x02,
+						sx,sy,zx+1,zy+1,
+						&Machine->drv->visible_area);
+#else
+					drawgfxzoom(bitmap,
+						Machine->gfx[1],
+						tileno,
+						tileatr >> 8,
+						tileatr & 0x01,tileatr & 0x02,
+						sx,sy,
+						&Machine->drv->visible_area, TRANSPARENCY_PEN, 0, (zx+1) << 12, (zy+1) << 12);
+#endif
+				}
             }
-            else
-			if (y != 0x20) { 	/* fixes a bug in sidekicks */
+            else if (y != 0x20)	/* fixes a bug in sidekicks */
+			{
+           		if ((tileatr & 0xfc) && errorlog)
+           			fprintf (errorlog, "tileatr: %04x\n", tileatr & 0xff);
 
 				drawgfx(bitmap,
 					Machine->gfx[1],
@@ -982,9 +633,7 @@ void neogeo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh) {
 					tileatr >> 8,
 					tileatr & 0x01,tileatr & 0x02,
 					sx,sy,
-					&Machine->drv->visible_area,
-					TRANSPARENCY_PEN,
-					0);
+					&Machine->drv->visible_area, TRANSPARENCY_PEN, 0);
 			}
 
 			sy += (zy + 1);

@@ -72,7 +72,7 @@ void karnov_c_write(int offset, int data)
 
 		case 2: /* Sound CPU in byte 3 */
 			soundlatch_w(0,data&0xff);
-			cpu_cause_interrupt (1, INT_NMI);
+			cpu_cause_interrupt (1, M6502_INT_NMI);
 			break;
 
 		case 4: /* ?? */

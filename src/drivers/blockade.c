@@ -1,6 +1,6 @@
 /****************************************************************************
 
-Blockade/Comotion/Blasto Memory MAP
+Blockade/Comotion/Blasto/Hustle Memory MAP
 Frank Palazzolo (palazzol@home.com)
 
 CPU - Intel 8080A
@@ -8,12 +8,12 @@ CPU - Intel 8080A
 Memory Address              (Upper/Lower)
 
 0xxx 00aa aaaa aaaa     ROM     U2/U3    R       1K for Blockade/Comotion/Blasto
-0xxx 01aa aaaa aaaa     ROM     U4/U5    R       1K for Comotion/Blasto Only
-xxx1 xxxa aaaa aaaa     RAM              R/W     256 bytes
+0xxx 01aa aaaa aaaa     ROM     U4/U5    R       1K for Comotion/Blasto/Hustle Only
+xxx1 xxxx aaaa aaaa     RAM              R/W     256 bytes
 1xx0 xxaa aaaa aaaa    VRAM                      1K playfield
 
                     SPRITE ROM  U29/U43          256 bytes for Blockade/Comotion
-                                                 512 for Blasto
+                                                 512 for Blasto/Hustle
 
 Ports    In            Out
 1        Controls      bit 7 = Coin Latch Reset
@@ -24,14 +24,16 @@ Ports    In            Out
 
 
 Notes:  Blockade/Comotion support is complete with the exception of
-        the square wave "music".  I have not created a sample for
-        the noise generator, but any BOOM sound will do for now. :)
+        the square wave generator.  I have not created a sample for
+        the noise generator, but any BOOM sound will do for now.
 
-        Blasto Support is preliminary.  I'm using the same sample support
-        for the noise generator.  The functions of some of the input pins
-        are a mystery.  Maybe they can slow it down, because it seems
-        way too fast.  There appears to be more sophisticated music in
-        this game, although it's not supported.
+        Blasto Support is preliminary.  This game is way too fast,
+		And I think I know why.  Accesses to VRAM outside of the VBLANK
+		interval should cause the 8080 to halt until the VBLANK interval
+		starts again.  This form of speed throuttling is not implemented.
+
+		(Specifically, I believe this is the access to $E000 from
+		program ROM location $40F6)
 
 ****************************************************************************/
 
@@ -320,21 +322,17 @@ INPUT_PORTS_START( blasto_input_ports )
     PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
     PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 
-    PORT_DIPNAME ( 0x08, 0x08, "Unknown1", IP_KEY_NONE )
-    PORT_DIPSETTING ( 0x00, "Off" )
-    PORT_DIPSETTING ( 0x08, "On" )
-    PORT_DIPNAME ( 0x04, 0x04, "Unknown2", IP_KEY_NONE )
+    PORT_DIPNAME ( 0x08, 0x08, "Game Time", IP_KEY_NONE )
+    PORT_DIPSETTING ( 0x00, "70 Secs" )
+    PORT_DIPSETTING ( 0x08, "90 Secs" )
+    PORT_DIPNAME ( 0x04, 0x04, "Boom Switch", IP_KEY_NONE )
     PORT_DIPSETTING ( 0x00, "Off" )
     PORT_DIPSETTING ( 0x04, "On" )
-
-/* These two can suspend the game */
-/* at when coining up...?         */
-    PORT_DIPNAME ( 0x02, 0x02, "Unknown3", IP_KEY_NONE )
-    PORT_DIPSETTING ( 0x00, "Off" )
-    PORT_DIPSETTING ( 0x02, "On" )
-    PORT_DIPNAME ( 0x01, 0x01, "Unknown4", IP_KEY_NONE )
-    PORT_DIPSETTING ( 0x00, "Off" )
-    PORT_DIPSETTING ( 0x01, "On" )
+    PORT_DIPNAME ( 0x03, 0x03, "Coins", IP_KEY_NONE )
+    PORT_DIPSETTING ( 0x00, "4 Coins" )
+    PORT_DIPSETTING ( 0x01, "3 Coins" )
+    PORT_DIPSETTING ( 0x02, "2 Coins" )
+    PORT_DIPSETTING ( 0x03, "1 Coin" )
 
     PORT_START  /* IN1 */
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
@@ -357,6 +355,50 @@ INPUT_PORTS_START( blasto_input_ports )
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT | IPF_4WAY )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_4WAY )
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_4WAY )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( hustle_input_ports )
+    PORT_START  /* IN0 */
+    PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
+              "Coin", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+                                /* this is really used for the coin latch,  */
+                                /* see blockade_interrupt()                 */
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+    PORT_DIPNAME ( 0x04, 0x04, "Game Time", IP_KEY_NONE )
+    PORT_DIPSETTING ( 0x00, "1.5 mins" )
+    PORT_DIPSETTING ( 0x04, "2 mins" )
+    PORT_DIPNAME ( 0x03, 0x03, "Coins", IP_KEY_NONE )
+    PORT_DIPSETTING ( 0x00, "4 Coins" )
+    PORT_DIPSETTING ( 0x01, "3 Coins" )
+	PORT_DIPSETTING ( 0x02, "2 Coins" )
+	PORT_DIPSETTING ( 0x03, "1 Coin" )
+
+    PORT_START  /* IN1 */
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_PLAYER1 )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_PLAYER1 )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER1 )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_PLAYER1 )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_PLAYER2 )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_PLAYER2 )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER2 )
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_PLAYER2 )
+
+    PORT_START  /* IN2 */
+	PORT_DIPNAME ( 0xf1, 0xf0, "Free Game", IP_KEY_NONE )
+	PORT_DIPSETTING ( 0x71, "11000" )
+    PORT_DIPSETTING ( 0xb1, "13000" )
+	PORT_DIPSETTING ( 0xd1, "15000" )
+	PORT_DIPSETTING ( 0xe1, "17000" )
+    PORT_DIPSETTING ( 0xf0, "Disabled" )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+
+
+
 INPUT_PORTS_END
 
 static unsigned char palette[] =
@@ -426,7 +468,7 @@ static struct MachineDriver blockade_machine_driver =
     /* video hardware */
     32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
     gfxdecodeinfo,
-    sizeof(palette)/3,sizeof(colortable)/sizeof(short),
+    sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
     0,
 
     VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
@@ -464,7 +506,7 @@ static struct MachineDriver comotion_machine_driver =
     /* video hardware */
     32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
     gfxdecodeinfo,
-    sizeof(palette)/3,sizeof(colortable),
+    sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
     0,
 
     VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
@@ -502,7 +544,7 @@ static struct MachineDriver blasto_machine_driver =
     /* video hardware */
     32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
     gfxdecodeinfo,
-    sizeof(palette)/3,sizeof(colortable),
+    sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
     0,
 
     VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
@@ -568,6 +610,21 @@ ROM_START( blasto_rom )
     ROM_REGION(0x400)  /* temporary space for graphics (disposed after conversion) */
     ROM_LOAD( "blasto.u29", 0x0000, 0x0200, 0xfd1c0904 )
     ROM_LOAD( "blasto.u43", 0x0200, 0x0200, 0xc00f0b05 )
+ROM_END
+
+ROM_START( hustle_rom )
+    ROM_REGION(0x10000) /* 64k for code */
+    /* Note: These are being loaded into a bogus location, */
+    /*       They are nibble wide rom images which will be */
+    /*       merged and loaded into the proper place by    */
+    /*       comotion_rom_init()                           */
+    ROM_LOAD( "3160016.u2",    0x1000, 0x0400, 0x33200108 )
+    ROM_LOAD( "3160017.u3",    0x1400, 0x0400, 0xf456010c )
+    ROM_LOAD( "3160018.u4",    0x1800, 0x0400, 0x50540300 )
+    ROM_LOAD( "3160019.u5",    0x1c00, 0x0400, 0xeb7b0d05 )
+    ROM_REGION(0x400)  /* temporary space for graphics (disposed after conversion) */
+    ROM_LOAD( "3160020.u29", 0x0000, 0x0200, 0xeaf60700 )
+    ROM_LOAD( "3160021.u43", 0x0200, 0x0200, 0x6e1c0808 )
 ROM_END
 
 static const char *blockade_sample_name[] =
@@ -654,3 +711,30 @@ struct GameDriver blasto_driver =
     ORIENTATION_DEFAULT,
     0, 0
 };
+
+struct GameDriver hustle_driver =
+{
+	__FILE__,
+	0,
+    "hustle",
+    "Hustle",
+	"1977",
+	"Gremlin",
+    "Frank Palazzolo",
+	0,
+    &blasto_machine_driver,
+
+    hustle_rom,
+    comotion_init,
+    0,
+    blockade_sample_name,
+    0,  /* sound_prom */
+
+    hustle_input_ports,
+
+    0, palette, colortable,
+
+    ORIENTATION_DEFAULT,
+    0, 0
+};
+

@@ -13,15 +13,16 @@
 
 struct RomModule
 {
-	const char *name;	/* name of the file to load */
-	unsigned int offset;			/* offset to load it to */
-	unsigned int length;			/* length of the file */
+	const char *name;			/* name of the file to load */
+	unsigned int offset;		/* offset to load it to */
+	unsigned int length;		/* length of the file */
 	unsigned int checksum;		/* our custom checksum */
+	unsigned int crc;			/* standard CRC-32 checksum */
 };
 
 /* there are some special cases for the above. name, offset and size all set to 0 */
 /* mark the end of the aray. If name is 0 and the others aren't, that means "continue */
-/* reading the previous from from this address". If length is 0 and offset is not 0, */
+/* reading the previous rom from this address". If length is 0 and offset is not 0, */
 /* that marks the start of a new memory region. Confused? Well, don't worry, just use */
 /* the macros below. */
 
@@ -34,25 +35,43 @@ struct RomModule
 /* start of table */
 #define ROM_START(name) static struct RomModule name[] = {
 /* start of memory region */
-#define ROM_REGION(length) { 0, length, 0, 0 },
+#define ROM_REGION(length) { 0, length, 0, 0, 0 },
 /* start of disposable memory region */
-#define ROM_REGION_DISPOSE(length) { 0, length | ROMFLAG_DISPOSE, 0, 0 },
-/* ROM to load */
-#define ROM_LOAD(name,offset,length,checksum) { name, offset, length, checksum },
-/* continue loading the previous ROM to a new address */
-#define ROM_CONTINUE(offset,length) { 0, offset, length, 0 },
-/* restart loading the previous ROM to a new address */
-#define ROM_RELOAD(offset,length) { (char *)-1, offset, length, 0 },
+#define ROM_REGION_DISPOSE(length) { 0, length | ROMFLAG_DISPOSE, 0, 0, 0 },
 
-/* The following ones are for code ONLY - don't use for graphics data!!! */
-/* load the ROM at even/odd addresses. Useful with 16 bit games */
-#define ROM_LOAD_EVEN(name,offset,length,checksum) { name, offset & ~1, length | ROMFLAG_ALTERNATE, checksum },
-#define ROM_LOAD_ODD(name,offset,length,checksum)  { name, offset |  1, length | ROMFLAG_ALTERNATE, checksum },
-/* load the ROM at even/odd addresses. Useful with 16 bit games */
-#define ROM_LOAD_WIDE(name,offset,length,checksum) { name, offset, length | ROMFLAG_WIDE, checksum },
-#define ROM_LOAD_WIDE_SWAP(name,offset,length,checksum) { name, offset, length | ROMFLAG_WIDE | ROMFLAG_SWAP, checksum },
+#ifdef CRCS_ADDED
+	/* ROM to load */
+	#define ROM_LOAD(name,offset,length,crc,checksum) { name, offset, length, checksum, crc },
+#else
+	/* ROM to load */
+	#define ROM_LOAD(name,offset,length,checksum) { name, offset, length, checksum, 0 },
+#endif
+
+/* continue loading the previous ROM to a new address */
+#define ROM_CONTINUE(offset,length) { 0, offset, length, 0, 0 },
+/* restart loading the previous ROM to a new address */
+#define ROM_RELOAD(offset,length) { (char *)-1, offset, length, 0, 0 },
+
+#ifdef CRCS_ADDED
+	/* The following ones are for code ONLY - don't use for graphics data!!! */
+	/* load the ROM at even/odd addresses. Useful with 16 bit games */
+	#define ROM_LOAD_EVEN(name,offset,length,crc,checksum) { name, offset & ~1, length | ROMFLAG_ALTERNATE, checksum, crc },
+	#define ROM_LOAD_ODD(name,offset,length,crc,checksum)  { name, offset |  1, length | ROMFLAG_ALTERNATE, checksum, crc },
+	/* load the ROM at even/odd addresses. Useful with 16 bit games */
+	#define ROM_LOAD_WIDE(name,offset,length,crc,checksum) { name, offset, length | ROMFLAG_WIDE, checksum, crc },
+	#define ROM_LOAD_WIDE_SWAP(name,offset,length,crc,checksum) { name, offset, length | ROMFLAG_WIDE | ROMFLAG_SWAP, checksum, crc },
+#else
+	/* The following ones are for code ONLY - don't use for graphics data!!! */
+	/* load the ROM at even/odd addresses. Useful with 16 bit games */
+	#define ROM_LOAD_EVEN(name,offset,length,checksum) { name, offset & ~1, length | ROMFLAG_ALTERNATE, checksum, 0 },
+	#define ROM_LOAD_ODD(name,offset,length,checksum)  { name, offset |  1, length | ROMFLAG_ALTERNATE, checksum, 0 },
+	/* load the ROM at even/odd addresses. Useful with 16 bit games */
+	#define ROM_LOAD_WIDE(name,offset,length,checksum) { name, offset, length | ROMFLAG_WIDE, checksum, 0 },
+	#define ROM_LOAD_WIDE_SWAP(name,offset,length,checksum) { name, offset, length | ROMFLAG_WIDE | ROMFLAG_SWAP, checksum, 0 },
+#endif
+
 /* end of table */
-#define ROM_END { 0, 0, 0, 0 } };
+#define ROM_END { 0, 0, 0, 0, 0 } };
 
 
 

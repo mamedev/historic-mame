@@ -52,6 +52,14 @@
 #include <string.h>
 #include <assert.h>
 
+#define WIN32_CPU_READMEM16   "cpu_readmem16@4"
+#define WIN32_CPU_WRITEMEM16  "cpu_writemem16@8"
+#define WIN32_FIRST_REG "ecx"
+#define WIN32_SECOND_REG "edx"
+
+#define CPU_READMEM16   "cpu_readmem16"
+#define CPU_WRITEMEM16  "cpu_writemem16"
+
 #define	VERSION 	"1.0"
 
 #define TRUE            0xffff
@@ -66,6 +74,7 @@
 #define CPU_M6803	2|CPU_M6808
 #define CPU_HD63701	4|CPU_M6803|CPU_M6808
 
+#define basename m6808_basename
 
 FILE *fp = NULL;
 char string[150];
@@ -76,12 +85,16 @@ char fGetContext[150];
 char fSetContext[150];
 char fReset[150];
 char fExec[150];
+char function_prefix[2];
+char cpu_read[50];
+char cpu_write[50];
 UINT32 dwGlobalLabel = 0;
 UINT32 dwAnotherLabel = 0;
 UINT8 bUseStack = FALSE;			// Use stack calling conventions
 UINT8 bZeroDirect = FALSE;			// Zero page direct
 UINT8 bSingleStep = FALSE;			// Here if we want to single step the CPU
 UINT8 bMameFormat = FALSE;			// Here if we want to support MAME interface
+UINT8 bVC5Format = FALSE;          // Here if we want to support MSVC++ 5.0
 UINT8 bCPUFlag = CPU_M6808;				// If we want to support extra instructions
 UINT32 dwLoop = 0;
 
@@ -810,17 +823,31 @@ void ReadMemoryByteHandler()
 	}
 	else
 	{
-		fprintf(fp, "		mov	eax, edx	; Get our desired address reg\n");
-		fprintf(fp, "		mov	edx, edi	; Pointer to the structure\n");
-	}
+        if (bVC5Format)
+        {
+            fprintf(fp, "       mov %s, edx    ; Get our desired address reg\n",
+                WIN32_FIRST_REG);
+        }
+        else
+        {
+            fprintf(fp, "       mov eax, edx    ; Get our desired address reg\n");
+        }
+        fprintf(fp, "       mov edx, edi    ; Pointer to the structure\n");
+    }
 
 	if (FALSE == bMameFormat)
 	fprintf(fp, "		call	dword [edi + 8]	; Go call our handler\n");
 	else
-	fprintf(fp, "		call	_cpu_readmem16	; Go call our handler\n");
+    fprintf(fp, "       call    %s%s  ; Go call our handler\n",
+        function_prefix,cpu_read);
 
-	if (bUseStack)
-		fprintf(fp, "		add	esp, 8	; Get the junk off the stack\n");
+    if (bUseStack)
+    {
+        if (bVC5Format) /* __stdcall cleans the stack, __cdecl does not */
+            fprintf(fp, "       add esp, 4  ; Get the junk off the stack\n");
+        else
+            fprintf(fp, "       add esp, 8  ; Get the junk off the stack\n");
+    }
 
 	fprintf(fp, "		xor	ebx, ebx	; Zero B\n");
 	fprintf(fp, "		xor	ecx, ecx	; Zero index\n");
@@ -946,24 +973,48 @@ void WriteMemoryByteHandler()
 	fprintf(fp, "		push	edi	; Save our structure address\n");
 
 	if (FALSE != bMameFormat) fprintf(fp, "		and	eax, dword 0ffh\n");
-	if (bUseStack)
+    if (bVC5Format && bUseStack)
+    {
+        fprintf(fp, "       push    edx ; And our desired address\n");
+    }
+    if (bUseStack)
 		fprintf(fp, "		push	eax	; Data to write\n");
 
-	fprintf(fp, "		push	edx	; And our desired address\n");
+    fprintf(fp, "       push    edx ; And our desired address\n");
 
 	if (FALSE == bUseStack)
 	{
-		fprintf(fp, "		xchg	eax, edx ; Swap address/data around\n");
-		fprintf(fp, "		mov	ebx, edi	; Our MemoryWriteByte structure address\n");
-	}
+        if (bVC5Format)
+        {
+            fprintf(fp, "       xchg    eax, edx ; Swap address/data around\n");
+            fprintf(fp, "       mov    %s, eax ; Swap address/data around\n",
+                WIN32_FIRST_REG);
+        }
+        else
+        {
+            fprintf(fp, "       xchg    eax, edx ; Swap address/data around\n");
+            fprintf(fp, "       mov ebx, edi    ; Our MemoryWriteByte structure address\n");
+        }
+    }
 	if (FALSE == bMameFormat)
 	fprintf(fp, "		call	dword [edi + 8]	; Go call our handler\n");
 	else
-	fprintf(fp, "		call	_cpu_writemem16	; Go call our handler\n");
-	fprintf(fp, "		pop	edx	; Restore our address\n");
+    fprintf(fp, "       call    %s%s ; Go call our handler\n",
+        function_prefix,cpu_write);
 
-	if (bUseStack)
-		fprintf(fp, "		pop	eax	; Restore our data written\n");
+    if (!(bVC5Format && bUseStack))
+    {
+        fprintf(fp, "       pop edx ; Restore our address\n");
+    }
+
+    if (bUseStack && !bVC5Format)
+        fprintf(fp, "       pop eax ; Restore our data written\n");
+
+    if (bUseStack && bVC5Format)
+    {
+        fprintf(fp, "       pop edx ; Restore our address\n");
+    }
+
 
 	fprintf(fp, "		pop	edi	; Save our structure address\n");
 
@@ -3186,8 +3237,8 @@ DataSegment()
 		fprintf(fp, "_%saf	dw	0	; A register and flags\n", basename);
 		fprintf(fp, "wNewPC	dw	0	; temporary PC for interrupts\n", basename);
 	        fprintf(fp, "extern		_OP_RAM\n");
-		fprintf(fp, "extern		_cpu_readmem16\n");
-		fprintf(fp, "extern		_cpu_writemem16\n");
+        fprintf(fp, "extern     %s%s\n",function_prefix,cpu_read);
+        fprintf(fp, "extern     %s%s\n",function_prefix,cpu_write);
 	}
 	Alignment();
 
@@ -3347,16 +3398,22 @@ ExecCode()
 {
 	fprintf(fp, "		global	_%s%s\n", basename, fExec);
 	fprintf(fp, "		global	%s%s_\n", basename, fExec);
+    fprintf(fp, "       global  %s%s%s@4\n", function_prefix, basename, fExec);
 
 	sprintf(procname, "%s%s_", basename, fExec);
 	ProcBegin(0xffffffff);
 
 	fprintf(fp, "_%s%s:\n", basename, fExec);
+    fprintf(fp, "%s%s%s@4:\n", function_prefix, basename, fExec);
 
 	if (bUseStack)
 		fprintf(fp, "		mov	eax, [esp+4]	; Get our execution cycle count\n");
-
-	fprintf(fp, "		push	ebx			; Save all registers we use\n");
+    else if (bVC5Format)
+    {
+        fprintf(fp, "       mov eax, %s         ; Get our execution cycle count\n",
+            WIN32_FIRST_REG);
+    }
+    fprintf(fp, "       push    ebx         ; Save all registers we use\n");
 	fprintf(fp, "		push	ecx\n");
 	fprintf(fp, "		push	edx\n");
 	fprintf(fp, "		push	ebp\n");
@@ -3588,13 +3645,23 @@ CauseIntCode()
 {
 	fprintf(fp, "		global	_%s_Cause_Interrupt\n", basename);
 	fprintf(fp, "		global	%s_Cause_Interrupt_\n", basename);
+    fprintf(fp, "       global  %s%s_Cause_Interrupt@4\n", function_prefix,basename);
 
 	sprintf(procname, "%s_Cause_Interrupt_", basename);
 	ProcBegin(0xffffffff);
 	fprintf(fp, "_%s_Cause_Interrupt:\n", basename);
+    fprintf(fp, "%s%s_Cause_Interrupt@4:\n", function_prefix, basename);
 
-	fprintf(fp, "		mov	eax, [esp+4]	; Get our interrupt type mask\n");
-        fprintf(fp, "		or	[ds:_%sirqPending], eax\n", basename);
+    if (bUseStack)
+    {
+        fprintf(fp, "       mov eax, [esp+4]    ; Get our interrupt type mask\n");
+    }
+    else if (bVC5Format)
+    {
+        fprintf(fp, "       mov eax, %s         ; Get our interrupt type mask\n",
+            WIN32_FIRST_REG);
+    }
+        fprintf(fp, "       or  [ds:_%sirqPending], eax\n", basename);
 	fprintf(fp, "		test	[ds:_%sirqPending], dword M6808_WAI	; are we waiting?\n", basename);
         fprintf(fp, "		jz	LeaveCauseInt	; Nope - skip out\n");
 	fprintf(fp, "		test	[ds:_%sirqPending], dword M6808_INT_NMI	; NMI?\n", basename);
@@ -3613,10 +3680,12 @@ ClearIntsCode()
 {
 	fprintf(fp, "		global	_%s_Clear_Pending_Interrupts\n", basename);
 	fprintf(fp, "		global	%s_Clear_Pending_Interrupts_\n", basename);
+    fprintf(fp, "       global  %s%s_Clear_Pending_Interrupts@0\n", function_prefix, basename);
 
 	sprintf(procname, "%s_Clear_Pending_Interrupts_", basename);
 	ProcBegin(0xffffffff);
 	fprintf(fp, "_%s_Clear_Pending_Interrupts:\n", basename);
+    fprintf(fp, "%s%s_Clear_Pending_Interrupts@0:\n", function_prefix, basename);
 
         fprintf(fp, "		and	[ds:_%sirqPending], dword ~( M6808_INT_IRQ | M6808_INT_NMI | M6808_INT_OCI )\n", basename);
 	fprintf(fp, "		ret\n");
@@ -3772,10 +3841,12 @@ ResetCode()
 {
 	fprintf(fp, "		global	_%s%s\n", basename, fReset);
 	fprintf(fp, "		global	%s%s_\n", basename, fReset);
+    fprintf(fp, "       global  %s%s%s@0\n", function_prefix, basename, fReset);
 
 	sprintf(procname, "%s%s_", basename, fReset);
 	ProcBegin(0xffffffff);
-	fprintf(fp, "_%s%s:\n", basename, fReset);
+    fprintf(fp, "_%s%s:\n", basename, fReset);
+    fprintf(fp, "%s%s%s@0:\n", function_prefix, basename, fReset);
 
 	fprintf(fp, "		push	ebp	; Save our important register\n");
 	if (FALSE != bMameFormat)
@@ -3809,15 +3880,21 @@ SetContextCode()
 {
 	fprintf(fp, "		global	_%s%s\n", basename, fSetContext);
 	fprintf(fp, "		global	%s%s_\n", basename, fSetContext);
+    fprintf(fp, "       global  %s%s%s@4\n", function_prefix, basename, fSetContext);
 
 	sprintf(procname, "%s%s_", basename, fSetContext);
 	ProcBegin(0xffffffff);
 	fprintf(fp, "_%s%s:\n", basename, fSetContext);
+    fprintf(fp, "%s%s%s@4:\n", function_prefix, basename, fSetContext);
 
 	if (bUseStack)
 		fprintf(fp, "		mov	eax, [esp+4]	; Get our context address\n");
-
-	fprintf(fp, "		push	esi		; Save registers we use\n");
+    else if (bVC5Format)
+    {
+        fprintf(fp, "       mov eax, %s        ; Get our context address\n",
+            WIN32_FIRST_REG);
+    }
+    fprintf(fp, "       push    esi     ; Save registers we use\n");
 	fprintf(fp, "		push	edi\n");
 	fprintf(fp, "		push	ecx\n");
 	fprintf(fp, "		mov     ecx, _%scontextEnd - _%scontextBegin\n", basename, basename);
@@ -3873,14 +3950,20 @@ GetContextCode()
 {
 	fprintf(fp, "		global	_%s%s\n", basename, fGetContext);
 	fprintf(fp, "		global	%s%s_\n", basename, fGetContext);
+    fprintf(fp, "       global  %s%s%s@4\n", function_prefix, basename, fGetContext);
 
 	sprintf(procname, "%s%s_", basename, fGetContext);
 	ProcBegin(0xffffffff);
 	fprintf(fp, "_%s%s:\n", basename, fGetContext);
+    fprintf(fp, "%s%s%s@4:\n", function_prefix, basename, fGetContext);
 
 	if (bUseStack)
 		fprintf(fp, "		mov	eax, [esp+4]	; Get our context address\n");
-
+    else if (bVC5Format)
+    {
+        fprintf(fp, "       mov eax, %s          ; Get our context address\n",
+            WIN32_FIRST_REG);
+    }
 	fprintf(fp, "		push	esi		; Save registers we use\n");
 	fprintf(fp, "		push	edi\n");
 	fprintf(fp, "		push	ecx\n");
@@ -3912,10 +3995,12 @@ GetPCCode()
 {
 	fprintf(fp, "		global	_%s_GetPC\n", basename);
 	fprintf(fp, "		global	%s_GetPC_\n", basename);
+    fprintf(fp, "       global  %s%s_GetPC@0\n", function_prefix, basename);
 
 	sprintf(procname, "%s_GetPC_", basename);
 	ProcBegin(0xffffffff);
 	fprintf(fp, "_%s_GetPC:\n", basename);
+    fprintf(fp, "%s%s_GetPC@0:\n", function_prefix, basename);
 	fprintf(fp, "		xor     eax, eax\n");
 	fprintf(fp, "		mov     ax, [ds:_%spc]\n", basename);
 	fprintf(fp, "		ret\n");
@@ -3966,8 +4051,9 @@ main(int argc, char **argv)
 		printf("Usage: %s outfile [option1] [option2] ....\n", argv[0]);
 		printf("\n  -ss - Create m6808 to execute one instruction per m6808exec()\n");
 		printf("  -s  - Stack calling conventions (DJGPP, MSVC, Borland)\n");
-		printf("  -m  - Make adjustments for MAME\n");
-		printf("  -3  - Support M6803 instructions\n");
+        printf("  -m  - Make adjustments for MAME\n");
+        printf("  -w  - Win32 MSVC++ 5.0 support\n");
+        printf("  -3  - Support M6803 instructions\n");
 		printf("  -h  - Support HD63701 instructions\n");
 		exit(1);
 	}
@@ -3977,8 +4063,12 @@ main(int argc, char **argv)
 	strcpy(fSetContext, "SetContext");
 	strcpy(fReset, "reset");
 	strcpy(fExec, "exec");
-	bCPUFlag = CPU_M6808;
+    bCPUFlag = CPU_M6808;
+    strcpy(function_prefix,"_");
+    *cpu_read = '\0';
+    *cpu_write = '\0';
 	dwLoop = 1;
+
 
 	while (dwLoop < argc)
 	{
@@ -3989,8 +4079,7 @@ main(int argc, char **argv)
 		if (strcmp("-m", argv[dwLoop]) == 0 || strcmp("-M", argv[dwLoop]) == 0)
 		{
 		        bMameFormat = 1;
-			bUseStack = 1;
-			strcpy(vcyclesRemaining, "_m6808_ICount");
+            strcpy(vcyclesRemaining, "_m6808_ICount");
 			strcpy(fGetContext, "_GetRegs");
 			strcpy(fSetContext, "_SetRegs");
 			strcpy(fReset, "_reset");
@@ -3998,10 +4087,29 @@ main(int argc, char **argv)
 		}
 		if (strcmp("-3", argv[dwLoop]) == 0)
 		        bCPUFlag |= CPU_M6803;
-		if (strcmp("-h", argv[dwLoop]) == 0 || strcmp("-H", argv[dwLoop]) == 0)
+        if (strcmp("-w", argv[dwLoop]) == 0)
+        {
+            bVC5Format = 1;
+        }
+
+        if (strcmp("-h", argv[dwLoop]) == 0 || strcmp("-H", argv[dwLoop]) == 0)
 		        bCPUFlag |= CPU_HD63701;
 		dwLoop++;
 	}
+    if (bMameFormat && !bVC5Format) bUseStack = 1;
+    if (bVC5Format && !bUseStack) strcpy(function_prefix,"@");
+    if (bVC5Format)
+    {
+        strcpy(cpu_read,WIN32_CPU_READMEM16);
+        strcpy(cpu_write,WIN32_CPU_WRITEMEM16);
+    }
+    else
+    {
+        strcpy(cpu_read,CPU_READMEM16);
+        strcpy(cpu_write,CPU_WRITEMEM16);
+    }
+
+
 
 	strcpy(basename, "m6808");
 

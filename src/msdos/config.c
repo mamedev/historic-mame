@@ -12,6 +12,9 @@
 /* from main() */
 extern int ignorecfg;
 
+/* from vector.h */
+extern int translucency;
+
 /* from video.c */
 extern int scanlines, use_double, video_sync, antialias, ntsc;
 extern int vgafreq, always_synced, color_depth, skiplines, skipcolumns;
@@ -252,6 +255,7 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	video_sync  = get_bool   ("config", "vsync",        NULL,  0);
 	antialias   = get_bool   ("config", "antialias",    NULL,  1);
 	_vesa       = get_bool   ("config", "vesa",         NULL,  0);
+	translucency = get_bool    ("config", "translucency", NULL, 1);
 	vesamode	= get_string ("config", "vesamode",		NULL,  "vesa2l");
 	ntsc        = get_bool   ("config", "ntsc",         NULL,  0);
 	vgafreq     = get_int    ("config", "vgafreq",      NULL,  -1);

@@ -8,7 +8,11 @@
 
 #include "driver.h"
 
-/*#define MEM_DUMP*/
+/* #define MEM_DUMP */
+
+#ifdef MEM_DUMP
+static void mem_dump( void );
+#endif
 
 /* Convenience macros - not in cpuintrf.h because they shouldn't be used by everyone */
 #define MEMORY_READ(index,offset)       ((*cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].memory_read)(offset))
@@ -24,6 +28,7 @@
 	#define BYTE_XOR_BE(a) ((a) ^ 1)
 	#define BYTE_XOR_LE(a) (a)
 	#define BIG_DWORD_BE(x) (((x) >> 16) + ((x) << 16))
+	#define BIG_DWORD_LE(x) (x)
  	/* GSL 980224 Shift values for bytes within a word, used by the misaligned word load/store code */
 	#define SHIFT0 16
 	#define SHIFT1 24
@@ -33,6 +38,7 @@
 	#define BYTE_XOR_BE(a) (a)
 	#define BYTE_XOR_LE(a) ((a) ^ 1)
 	#define BIG_DWORD_BE(x) (x)
+	#define BIG_DWORD_LE(x) (((x) >> 16) + ((x) << 16))
 	/* GSL 980224 Shift values for bytes within a word, used by the misaligned word load/store code */
 	#define SHIFT0 24
 	#define SHIFT1 16
@@ -188,7 +194,12 @@ int mrh_error(int address)
 /* 24-bit address spaces are sparse, so we can't just return RAM[address] */
 int mrh_error_sparse(int address)
 {
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %06x: warning - read unmapped memory address %06x\n",cpu_getactivecpu(),cpu_getpc(),address);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - read unmapped memory address %08x\n",cpu_getactivecpu(),cpu_getpc(),address);
+	return 0;
+}
+int mrh_error_sparse_bit(int address)
+{
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - read unmapped memory bit addr %08x\n",cpu_getactivecpu(),cpu_getpc(),address<<3);
 	return 0;
 }
 int mrh_nop(int address)
@@ -214,7 +225,11 @@ void mwh_error(int address,int data)
 /* 24-bit address spaces are sparse, so we can't just write to RAM[address] */
 void mwh_error_sparse(int address,int data)
 {
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %06x: warning - write %02x to unmapped memory address %06x\n",cpu_getactivecpu(),cpu_getpc(),data,address);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - write %02x to unmapped memory address %08x\n",cpu_getactivecpu(),cpu_getpc(),data,address);
+}
+void mwh_error_sparse_bit(int address,int data)
+{
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - write %02x to unmapped memory bit addr %08x\n",cpu_getactivecpu(),cpu_getpc(),data,address<<3);
 }
 void mwh_rom(int address,int data)
 {
@@ -273,18 +288,18 @@ static void set_element( int cpu , MHELE *celement , int sp , int ep , MHELE typ
 	int ss,sb,eb,ee;
 
 #ifdef MEM_DUMP
-	if (errorlog) fprintf(errorlog,"set_element %6X-%6X = %2X\n",sp,ep,type);
+	if (errorlog) fprintf(errorlog,"set_element %8X-%8X = %2X\n",sp,ep,type);
 #endif
-	if( sp > ep ) return;
+	if( (unsigned int) sp > (unsigned int) ep ) return;
 	do{
 		mask  = mhmask[cpu][edepth];
 		shift = mhshift[cpu][edepth];
 
 		/* center element */
-		ss = sp >> shift;
-		sb = sp ? ((sp-1) >> shift) + 1 : 0;
-		eb = ((ep+1) >> shift) - 1;
-		ee = ep >> shift;
+		ss = (unsigned int) sp >> shift;
+		sb = (unsigned int) sp ? ((unsigned int) (sp-1) >> shift) + 1 : 0;
+		eb = ((unsigned int) (ep+1) >> shift) - 1;
+		ee = (unsigned int) ep >> shift;
 
 		if( sb <= eb )
 		{
@@ -522,6 +537,11 @@ int initmemoryhandlers(void)
 		{
 			memoryreadhandler[HT_NON] = mrh_error_sparse;
 			memorywritehandler[HT_NON] = mwh_error_sparse;
+			if ((Machine->drv->cpu[cpu].cpu_type & ~CPU_FLAGS_MASK)==CPU_TMS34010)
+			{
+				memoryreadhandler[HT_NON] = mrh_error_sparse_bit;
+				memorywritehandler[HT_NON] = mwh_error_sparse_bit;
+			}
 		}
 
 	for( cpu = 0 ; cpu < cpu_gettotalcpu() ; cpu++ )
@@ -621,7 +641,7 @@ int initmemoryhandlers(void)
 				hardware = HT_NOP;
 				break;
 			default:
-				/* create newer haraware handler */
+				/* create newer hardware handler */
 				if( rdhard_max == MH_HARDMAX )
 				{
 					if (errorlog)
@@ -638,7 +658,8 @@ int initmemoryhandlers(void)
 			}
 			/* hardware element table make */
 			set_element( cpu , cur_mr_element[cpu] ,
-				mra->start >> abitsmin , mra->end >> abitsmin ,
+				(((unsigned int) mra->start) >> abitsmin) ,
+				(((unsigned int) mra->end) >> abitsmin) ,
 				hardware , readhardware , &rdelement_max );
 			mra--;
 		}
@@ -651,6 +672,11 @@ int initmemoryhandlers(void)
 		while (mwa >= memorywrite)
 		{
 			void (*handler)(int,int) = mwa->handler;
+#ifdef SGI_FIX_MWA_NOP
+			if ((FPTR)handler == (FPTR)MWA_NOP) {
+				hardware = HT_NOP;
+			} else {
+#endif
 			switch( (FPTR)handler )
 			{
 			case (FPTR)MWA_RAM:
@@ -706,7 +732,7 @@ int initmemoryhandlers(void)
 				hardware = HT_ROM;
 				break;
 			default:
-				/* create newer haraware handler */
+				/* create newer hardware handler */
 				if( wrhard_max == MH_HARDMAX ){
 					if (errorlog)
 					 fprintf(errorlog,"write memory hardware pattern over !\n");
@@ -718,9 +744,13 @@ int initmemoryhandlers(void)
 					memorywriteoffset[hardware]  = mwa->start;
 				}
 			}
+#ifdef SGI_FIX_MWA_NOP
+			}
+#endif
 			/* hardware element table make */
 			set_element( cpu , cur_mw_element[cpu] ,
-				mwa->start >> abitsmin , mwa->end >> abitsmin ,
+				(int) (((unsigned int) mwa->start) >> abitsmin) ,
+				(int) (((unsigned int) mwa->end) >> abitsmin) ,
 				hardware , (MHELE *)writehardware , &wrelement_max );
 			mwa--;
 		}
@@ -906,6 +936,7 @@ int cpu_readmem24 (int address)
 
 int cpu_readmem24_word (int address)
 {
+	/* should only be called on even byte addresses */
 	MHELE hw;
 
 	/* 1st element link */
@@ -925,39 +956,17 @@ int cpu_readmem24_word (int address)
 
 int cpu_readmem24_dword (int address)
 {
+	/* should only be called on even byte addresses */
 	unsigned int val;
 	MHELE hw;
 
-	/* 1st element link */
-	hw = cur_mrhard[address >> (ABITS2_24 + ABITS_MIN_24)];
-	if (hw <= HT_BANKMAX)
+	if (!(address&0x02))  /* words might not have same handler - AJP 980816 */
 	{
-	  	#ifdef ACORN /* GSL 980224 misaligned dword load case */
-		if (address & 3)
-		{
-			unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
-			return ((*addressbase)<<SHIFT0) + (*(addressbase+1)<<SHIFT1) + (*(addressbase+2)<<SHIFT2) + (*(addressbase+3)<<SHIFT3);
-		}
-		else
-		{
-			val = *(unsigned int *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
-			return BIG_DWORD_BE(val);
-		}
-
-		#else
-
-		val = *(unsigned int *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
-		return BIG_DWORD_BE(val);
-		#endif
-
-	}
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_24) & MHMASK(ABITS2_24))];
+		/* 1st element link */
+		hw = cur_mrhard[address >> (ABITS2_24 + ABITS_MIN_24)];
 		if (hw <= HT_BANKMAX)
 		{
-		  	#ifdef ACORN
+		  	#ifdef ACORN /* GSL 980224 misaligned dword load case */
 			if (address & 3)
 			{
 				unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
@@ -976,13 +985,161 @@ int cpu_readmem24_dword (int address)
 			#endif
 
 		}
+		if (hw >= MH_HARDMAX)
+		{
+			/* 2nd element link */
+			hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_24) & MHMASK(ABITS2_24))];
+			if (hw <= HT_BANKMAX)
+			{
+			  	#ifdef ACORN
+				if (address & 3)
+				{
+					unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
+					return ((*addressbase)<<SHIFT0) + (*(addressbase+1)<<SHIFT1) + (*(addressbase+2)<<SHIFT2) + (*(addressbase+3)<<SHIFT3);
+				}
+				else
+				{
+					val = *(unsigned int *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
+					return BIG_DWORD_BE(val);
+				}
+
+				#else
+
+				val = *(unsigned int *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
+				return BIG_DWORD_BE(val);
+				#endif
+
+			}
+		}
+
+		/* fallback to handler */
+		address -= memoryreadoffset[hw];
+		return (memoryreadhandler[hw](address) << 16) + (memoryreadhandler[hw](address + 2) & 0xffff);
+	}
+	else
+	{
+		return (((cpu_readmem24_word(address)) << 16) + ((cpu_readmem24_word(address + 2))&0xffff));
+	}
+}
+
+/*
+ *
+ * This is for the TMS34010
+ * When writing a dword 0x12345678, the bytes get written as
+ * 0x78, 0x56, 0x34, 0x12
+ *
+ * So, a read from an even byte gives the low 8 bits of a word
+ */
+int cpu_readmem29 (int address)  /* AJP 980803 */
+{
+	unsigned int shift, data;
+	MHELE hw;
+
+	/* 1st element link */
+	hw = cur_mrhard[(unsigned int) address >> (ABITS2_29 + ABITS_MIN_29)];
+	if (hw <= HT_BANKMAX) return cpu_bankbase[hw][BYTE_XOR_LE (address - memoryreadoffset[hw])];
+	if (hw >= MH_HARDMAX)
+	{
+		/* 2nd element link */
+		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + (((unsigned int) address >> ABITS_MIN_29) & MHMASK(ABITS2_29))];
+		if (hw <= HT_BANKMAX) return cpu_bankbase[hw][BYTE_XOR_LE (address - memoryreadoffset[hw])];
 	}
 
 	/* fallback to handler */
-	address -= memoryreadoffset[hw];
-	return (memoryreadhandler[hw](address) << 16) + (memoryreadhandler[hw](address + 2) & 0xffff);
+	shift = (((unsigned int) address) & 1) << 3;
+	address &= ~1;
+	data = memoryreadhandler[hw](address - memoryreadoffset[hw]);
+	return (data >> shift) & 0xff;
 }
 
+
+int cpu_readmem29_word (int address)  /* AJP 980803 */
+{
+	/* should only be called on even byte addresses */
+	MHELE hw;
+
+	/* 1st element link */
+	hw = cur_mrhard[(unsigned int) address >> (ABITS2_29 + ABITS_MIN_29)];
+	if (hw <= HT_BANKMAX) return READ_WORD (&cpu_bankbase[hw][address - memoryreadoffset[hw]]);
+	if (hw >= MH_HARDMAX)
+	{
+		/* 2nd element link */
+		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + (((unsigned int) address >> ABITS_MIN_29) & MHMASK(ABITS2_29))];
+		if (hw <= HT_BANKMAX) return READ_WORD (&cpu_bankbase[hw][address - memoryreadoffset[hw]]);
+	}
+
+	/* fallback to handler */
+	return memoryreadhandler[hw](address - memoryreadoffset[hw]);
+}
+
+
+int cpu_readmem29_dword (int address)  /* AJP 980803 */
+{
+	/* should only be called on even byte addresses */
+	unsigned int val;
+	MHELE hw;
+
+	if (!(address&0x02))  /* words might not have same handler - AJP 980816 */
+	{
+		/* 1st element link */
+		hw = cur_mrhard[(unsigned int) address >> (ABITS2_29 + ABITS_MIN_29)];
+		if (hw <= HT_BANKMAX)
+		{
+		  	#ifdef ACORN /* GSL 980224 misaligned dword load case */
+			if (address & 3)
+			{
+				unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
+				return ((*addressbase)<<SHIFT0) + (*(addressbase+1)<<SHIFT1) + (*(addressbase+2)<<SHIFT2) + (*(addressbase+3)<<SHIFT3);
+			}
+			else
+			{
+				val = *(unsigned int *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
+				return BIG_DWORD_LE(val);
+			}
+
+			#else
+
+			val = *(unsigned int *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
+			return BIG_DWORD_LE(val);
+			#endif
+
+		}
+		if (hw >= MH_HARDMAX)
+		{
+			/* 2nd element link */
+			hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + (((unsigned int) address >> ABITS_MIN_29) & MHMASK(ABITS2_29))];
+			if (hw <= HT_BANKMAX)
+			{
+			  	#ifdef ACORN
+				if (address & 3)
+				{
+					unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
+					return ((*addressbase)<<SHIFT0) + (*(addressbase+1)<<SHIFT1) + (*(addressbase+2)<<SHIFT2) + (*(addressbase+3)<<SHIFT3);
+				}
+				else
+				{
+					val = *(unsigned int *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
+					return BIG_DWORD_LE(val);
+				}
+
+				#else
+
+				val = *(unsigned int *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
+				return BIG_DWORD_LE(val);
+				#endif
+
+			}
+		}
+
+		/* fallback to handler */
+		address -= memoryreadoffset[hw];
+		return (memoryreadhandler[hw]((unsigned int) address) & 0xffff) + (memoryreadhandler[hw]((unsigned int) address + 2) <<16);
+	}
+	else
+	{
+		return (((cpu_readmem29_word(address)) & 0xffff) + ((cpu_readmem29_word((address + 2)&0x1fffffff)) <<16));
+	}
+}
 
 /***************************************************************************
 
@@ -1141,6 +1298,7 @@ void cpu_writemem24 (int address, int data)
 
 void cpu_writemem24_word (int address, int data)
 {
+	/* should only be called on even byte addresses */
 	MHELE hw;
 
 	/* 1st element link */
@@ -1168,44 +1326,16 @@ void cpu_writemem24_word (int address, int data)
 
 void cpu_writemem24_dword (int address, int data)
 {
+	/* should only be called on even byte addresses */
 	MHELE hw;
 
-	/* 1st element link */
-	hw = cur_mwhard[address >> (ABITS2_24 + ABITS_MIN_24)];
-	if (hw <= HT_BANKMAX)
+	if (!(address&0x02))  /* words might not have same handler - AJP 980816 */
 	{
-	  	#ifdef ACORN /* GSL 980224 misaligned dword store case */
-		if (address & 3)
-		{
-			unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memorywriteoffset[hw]];
-			*addressbase = data >> SHIFT0;
-			*(addressbase+1) = data >> SHIFT1;
-			*(addressbase+2) = data >> SHIFT2;
-			*(addressbase+3) = data >> SHIFT3;
-			return;
-		}
-		else
-		{
-			data = BIG_DWORD_BE ((unsigned int)data);
-			*(unsigned int *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
-			return;
-		}
-
-		#else
-
-		data = BIG_DWORD_BE ((unsigned int)data);
-		*(unsigned int *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
-		return;
-		#endif
-
-	}
-	if (hw >= MH_HARDMAX)
-	{
-		/* 2nd element link */
-		hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_24) & MHMASK(ABITS2_24))];
+		/* 1st element link */
+		hw = cur_mwhard[address >> (ABITS2_24 + ABITS_MIN_24)];
 		if (hw <= HT_BANKMAX)
 		{
-		  	#ifdef ACORN
+		  	#ifdef ACORN /* GSL 980224 misaligned dword store case */
 			if (address & 3)
 			{
 				unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memorywriteoffset[hw]];
@@ -1230,14 +1360,216 @@ void cpu_writemem24_dword (int address, int data)
 			#endif
 
 		}
+		if (hw >= MH_HARDMAX)
+		{
+			/* 2nd element link */
+			hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_24) & MHMASK(ABITS2_24))];
+			if (hw <= HT_BANKMAX)
+			{
+			  	#ifdef ACORN
+				if (address & 3)
+				{
+					unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memorywriteoffset[hw]];
+					*addressbase = data >> SHIFT0;
+					*(addressbase+1) = data >> SHIFT1;
+					*(addressbase+2) = data >> SHIFT2;
+					*(addressbase+3) = data >> SHIFT3;
+					return;
+				}
+				else
+				{
+					data = BIG_DWORD_BE ((unsigned int)data);
+					*(unsigned int *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
+					return;
+				}
+
+				#else
+
+				data = BIG_DWORD_BE ((unsigned int)data);
+				*(unsigned int *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
+				return;
+				#endif
+
+			}
+		}
+
+		/* fallback to handler */
+		address -= memorywriteoffset[hw];
+		memorywritehandler[hw](address, (data >> 16) & 0xffff);
+		memorywritehandler[hw](address + 2, data & 0xffff);
+	}
+	else
+	{
+		cpu_writemem24_word(address, (data >> 16) &0xffff);
+		cpu_writemem24_word(address + 2, data & 0xffff);
+	}
+}
+
+void cpu_writemem29 (int address, int data)  /* AJP 980803 */
+{
+	unsigned int shift;
+	MHELE hw;
+
+	/* 1st element link */
+	hw = cur_mwhard[(unsigned int) address >> (ABITS2_29 + ABITS_MIN_29)];
+	if (hw <= HT_BANKMAX)
+	{
+		cpu_bankbase[hw][BYTE_XOR_LE (address - memorywriteoffset[hw])] = data;
+		return;
+	}
+	if (hw >= MH_HARDMAX)
+	{
+		/* 2nd element link */
+		hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + (((unsigned int) address >> ABITS_MIN_29) & MHMASK(ABITS2_29))];
+		if (hw <= HT_BANKMAX)
+		{
+			cpu_bankbase[hw][BYTE_XOR_LE (address - memorywriteoffset[hw])] = data;
+			return;
+		}
 	}
 
 	/* fallback to handler */
-	address -= memorywriteoffset[hw];
-	memorywritehandler[hw](address, (data >> 16) & 0xffff);
-	memorywritehandler[hw](address + 2, data & 0xffff);
+	shift = (((unsigned int) address) & 1) << 3;
+	address &= ~1;
+	memorywritehandler[hw](address - memorywriteoffset[hw], (0xff000000 >> shift) | ((data & 0xff) << shift));
 }
 
+
+void cpu_writemem29_word (int address, int data)  /* AJP 980803 */
+{
+	/* should only be called on even byte addresses */
+	MHELE hw;
+
+	/* 1st element link */
+	hw = cur_mwhard[(unsigned int) address >> (ABITS2_29 + ABITS_MIN_29)];
+	if (hw <= HT_BANKMAX)
+	{
+		WRITE_WORD (&cpu_bankbase[hw][address - memorywriteoffset[hw]], data);
+		return;
+	}
+	if (hw >= MH_HARDMAX)
+	{
+		/* 2nd element link */
+		hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + (((unsigned int) address >> ABITS_MIN_29) & MHMASK(ABITS2_29))];
+		if (hw <= HT_BANKMAX)
+		{
+			WRITE_WORD (&cpu_bankbase[hw][address - memorywriteoffset[hw]], data);
+			return;
+		}
+	}
+
+	/* fallback to handler */
+	memorywritehandler[hw](address - memorywriteoffset[hw], data & 0xffff);
+}
+
+void cpu_writemem29_word_masked (int address, int data)  /* AJP 980803 */
+{
+	/* should only be called on even byte addresses */
+	/* data is (mask<<16) + data_word */
+	MHELE hw;
+
+	/* 1st element link */
+	hw = cur_mwhard[(unsigned int) address >> (ABITS2_29 + ABITS_MIN_29)];
+	if (hw <= HT_BANKMAX)
+	{
+		COMBINE_WORD_MEM (&cpu_bankbase[hw][address - memorywriteoffset[hw]], data);
+		return;
+	}
+	if (hw >= MH_HARDMAX)
+	{
+		/* 2nd element link */
+		hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + (((unsigned int) address >> ABITS_MIN_29) & MHMASK(ABITS2_29))];
+		if (hw <= HT_BANKMAX)
+		{
+			COMBINE_WORD_MEM (&cpu_bankbase[hw][address - memorywriteoffset[hw]], data);
+			return;
+		}
+	}
+
+	/* fallback to handler */
+	memorywritehandler[hw](address - memorywriteoffset[hw], data);
+}
+
+void cpu_writemem29_dword (int address, int data)  /* AJP 980803 */
+{
+	/* should only be called on even byte addresses */
+	MHELE hw;
+
+	if (!(address&0x02))  /* words might not have same handler - AJP 980816 */
+	{
+		/* 1st element link */
+		hw = cur_mwhard[(unsigned int) address >> (ABITS2_29 + ABITS_MIN_29)];
+		if (hw <= HT_BANKMAX)
+		{
+		  	#ifdef ACORN /* GSL 980224 misaligned dword store case */
+			if (address & 3)
+			{
+				unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memorywriteoffset[hw]];
+				*addressbase = data >> SHIFT0;
+				*(addressbase+1) = data >> SHIFT1;
+				*(addressbase+2) = data >> SHIFT2;
+				*(addressbase+3) = data >> SHIFT3;
+				return;
+			}
+			else
+			{
+				data = BIG_DWORD_LE ((unsigned int)data);
+				*(unsigned int *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
+				return;
+			}
+
+			#else
+
+			data = BIG_DWORD_LE ((unsigned int)data);
+			*(unsigned int *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
+			return;
+			#endif
+
+		}
+		if (hw >= MH_HARDMAX)
+		{
+			/* 2nd element link */
+			hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + (((unsigned int) address >> ABITS_MIN_29) & MHMASK(ABITS2_29))];
+			if (hw <= HT_BANKMAX)
+			{
+			  	#ifdef ACORN  /* this may be wrong */
+				if (address & 3)
+				{
+					unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memorywriteoffset[hw]];
+					*addressbase = data >> SHIFT0;
+					*(addressbase+1) = data >> SHIFT1;
+					*(addressbase+2) = data >> SHIFT2;
+					*(addressbase+3) = data >> SHIFT3;
+					return;
+				}
+				else
+				{
+					data = BIG_DWORD_LE ((unsigned int)data);
+					*(unsigned int *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
+					return;
+				}
+
+				#else
+
+				data = BIG_DWORD_LE ((unsigned int)data);
+				*(unsigned int *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
+				return;
+				#endif
+
+			}
+		}
+
+		/* fallback to handler */
+		address -= memorywriteoffset[hw];
+		memorywritehandler[hw](address, data & 0xffff);
+		memorywritehandler[hw](address + 2, (data >> 16) & 0xffff);
+	}
+	else
+	{
+		cpu_writemem29_word(address, data & 0xffff);
+		cpu_writemem29_word((address + 2)&0x1fffffff, (data >> 16) &0xffff);
+	}
+}
 
 /***************************************************************************
 
@@ -1595,6 +1927,49 @@ void cpu_setOPbase24 (int pc)
 }
 
 
+void cpu_setOPbase29 (int pc)    /* AJP 980803 */
+{
+	MHELE hw;
+
+	pc = ((unsigned int) pc)>>3;
+
+	/* ASG 970206 -- allow overrides */
+	if (setOPbasefunc)
+	{
+		pc = setOPbasefunc (pc);
+		if (pc == -1)
+			return;
+	}
+
+	/* 1st element link */
+	hw = cur_mrhard[((unsigned int) pc) >> (ABITS2_29 + ABITS_MIN_29)];
+	if (hw >= MH_HARDMAX)
+	{
+		/* 2nd element link */
+		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((((unsigned int) pc) >> ABITS_MIN_29) & MHMASK(ABITS2_29))];
+	}
+	ophw = hw;
+
+	if (!hw)
+	{
+		/* memory direct */
+		OP_RAM = RAM;
+		OP_ROM = ROM;
+		return;
+	}
+
+	if (hw <= HT_BANKMAX)
+	{
+		/* banked memory select */
+		OP_RAM = cpu_bankbase[hw] - memoryreadoffset[hw];
+		if (RAM == ROM) OP_ROM = OP_RAM;
+		return;
+	}
+
+	/* do not support on callbank memory reasion */
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",cpu_getactivecpu(),cpu_getpc());
+}
+
 
 #ifdef MEM_DUMP
 static void mem_dump( void )
@@ -1625,13 +2000,13 @@ static void mem_dump( void )
 			if( nhw != hw )
 			{
 				if( addr )
-	fprintf(temp,"  %06x(%06x) - %06x = %02x\n",naddr,memoryreadoffset[nhw],addr-1,nhw);
+	fprintf(temp,"  %08x(%08x) - %08x = %02x\n",naddr,memoryreadoffset[nhw],addr-1,nhw);
 				nhw = hw;
 				naddr = addr;
 			}
 			addr++;
 		}
-		fprintf(temp,"  %06x(%06x) - %06x = %02x\n",naddr,memoryreadoffset[nhw],addr-1,nhw);
+		fprintf(temp,"  %08x(%08x) - %08x = %02x\n",naddr,memoryreadoffset[nhw],addr-1,nhw);
 
 		fprintf(temp,"cpu %d write memory \n",cpu);
 		naddr = 0;
@@ -1648,13 +2023,13 @@ static void mem_dump( void )
 			if( nhw != hw )
 			{
 				if( addr )
-	fprintf(temp,"  %06x(%06x) - %06x = %02x\n",naddr,memorywriteoffset[nhw],addr-1,nhw);
+	fprintf(temp,"  %08x(%08x) - %08x = %02x\n",naddr,memorywriteoffset[nhw],addr-1,nhw);
 				nhw = hw;
 				naddr = addr;
 			}
 			addr++;
 		}
-	fprintf(temp,"  %06x(%06x) - %06x = %02x\n",naddr,memorywriteoffset[nhw],addr-1,nhw);
+	fprintf(temp,"  %08x(%08x) - %08x = %02x\n",naddr,memorywriteoffset[nhw],addr-1,nhw);
 	}
 	fclose(temp);
 }

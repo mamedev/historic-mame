@@ -109,9 +109,16 @@ extern struct ExtMemory ext_memory[MAX_EXT_MEMORY];
 
 /* memory element block size */
 #define MH_SBITS    8			/* sub element bank size */
-#define MH_PBITS    8			/* port   current element size */
-#define MH_ELEMAX  64			/* sub elements       limit */
+#define MH_PBITS    8			/* port current element size */
+#define MH_ELEMAX  64			/* sub elements limit */
 #define MH_HARDMAX 64			/* hardware functions limit */
+
+
+/* 29 bits address (dword access)     AJP 980803 */
+#define ABITS1_29    19
+#define ABITS2_29     8
+#define ABITS3_29     0
+#define ABITS_MIN_29  2      /* minimum memory block is 4 bytes */
 
 /* 24 bits address (word access) */
 #define ABITS1_24    15
@@ -153,6 +160,7 @@ void cpu_setOPbase16(int pc);
 void cpu_setOPbase16lew(int pc);
 void cpu_setOPbase20(int pc);
 void cpu_setOPbase24(int pc);
+void cpu_setOPbase29(int pc);  /* AJP 980803 */
 void cpu_setOPbaseoverride (int (*f)(int));
 
 /* ----- memory setup function ----- */
@@ -170,6 +178,9 @@ int cpu_readmem20(int address);
 int cpu_readmem24(int address);
 int cpu_readmem24_word(int address);
 int cpu_readmem24_dword(int address);
+int cpu_readmem29(int address);        /* AJP 980803 */
+int cpu_readmem29_word(int address);   /* AJP 980803 */
+int cpu_readmem29_dword(int address);  /* AJP 980803 */
 void cpu_writemem16(int address,int data);
 void cpu_writemem16lew(int address,int data);
 void cpu_writemem16lew_word(int address,int data);
@@ -177,6 +188,10 @@ void cpu_writemem20(int address,int data);
 void cpu_writemem24(int address,int data);
 void cpu_writemem24_word(int address,int data);
 void cpu_writemem24_dword(int address,int data);
+void cpu_writemem29(int address,int data);        /* AJP 980803 */
+void cpu_writemem29_word(int address,int data);   /* AJP 980803 */
+void cpu_writemem29_word_masked(int address,int data);   /* AJP 980816 */
+void cpu_writemem29_dword(int address,int data);  /* AJP 980803 */
 
 /* ----- 16-bit memory access macros ----- */
 
@@ -208,6 +223,7 @@ extern void cpu_setbankhandler_w(int bank,void (*handler)(int,int) );
 #define change_pc16lew(pc) {if(cur_mrhard[(pc)>>(ABITS2_16LEW+ABITS_MIN_16LEW)]!=ophw)cpu_setOPbase16lew(pc);}
 #define change_pc20(pc) {if(cur_mrhard[(pc)>>(ABITS2_20+ABITS_MIN_20)]!=ophw)cpu_setOPbase20(pc);}
 #define change_pc24(pc) {if(cur_mrhard[(pc)>>(ABITS2_24+ABITS_MIN_24)]!=ophw)cpu_setOPbase24(pc);}
+#define change_pc29(pc) {if(cur_mrhard[((unsigned int)pc)>>(ABITS2_29+ABITS_MIN_29+3)]!=ophw)cpu_setOPbase29(pc);}
 
 #define change_pc change_pc16
 

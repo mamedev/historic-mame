@@ -68,6 +68,7 @@ int frontend_help (int argc, char **argv)
 	int listclones = 1;
 	int verify = 0;
 	int help = 1;    /* by default is TRUE */
+	int crc = 0;
 	char gamename[9];
 	extern struct GameDriver neogeo_bios;
 
@@ -113,6 +114,7 @@ int frontend_help (int argc, char **argv)
 			if (!stricmp(argv[i],"-listsamples")) list = 5;
 			if (!stricmp(argv[i],"-verifyroms")) verify = 1;
 			if (!stricmp(argv[i],"-verifysamples")) verify = 2;
+			if (!stricmp(argv[i],"-crc")) crc = 1;
 		}
 	}
 
@@ -282,6 +284,7 @@ int frontend_help (int argc, char **argv)
                         case CPU_M68000:printf("M68000  "); break;
                         case CPU_T11   :printf("T-11    "); break;
 						case CPU_S2650 :printf("S2650   "); break;
+						case CPU_TMS34010 :printf("TMS34010"); break;
 
                         case CPU_Z80   |CPU_AUDIO_CPU: printf("[Z80]   "); break; /* Brackets mean that the cpu is only needed for sound. In cpu flags, 0x8000 means it */
                         case CPU_8085A |CPU_AUDIO_CPU: printf("[I8085] "); break;
@@ -294,6 +297,7 @@ int frontend_help (int argc, char **argv)
                         case CPU_M68000|CPU_AUDIO_CPU: printf("[M68000]"); break;
                         case CPU_T11   |CPU_AUDIO_CPU: printf("[T-11]  "); break;
 						case CPU_S2650 |CPU_AUDIO_CPU: printf("[S2650] "); break;
+						case CPU_TMS34010 |CPU_AUDIO_CPU: printf("[TMS34010] "); break;
                     }
                 }
 
@@ -356,7 +360,7 @@ int frontend_help (int argc, char **argv)
 			{
 				if ((listclones || drivers[i]->clone_of == 0 || drivers[i]->clone_of == &neogeo_bios) &&
 						!strwildcmp(gamename, drivers[i]->description))
-					printf("%-5s%-32s %s\n",drivers[i]->year,drivers[i]->manufacturer,drivers[i]->description);
+					printf("%-5s%-36s %s\n",drivers[i]->year,drivers[i]->manufacturer,drivers[i]->description);
 				i++;
 			}
 			return 0;
@@ -396,6 +400,15 @@ int frontend_help (int argc, char **argv)
 		int correct = 0;
 		int incorrect = 0;
 		int res = 0;
+		int total;
+
+		total = 0;
+		for (i = 0; drivers[i]; i++)
+		{
+			if (!strwildcmp(gamename, drivers[i]->name))
+				total++;
+		}
+
 		for (i = 0; drivers[i]; i++)
 		{
 			if (strwildcmp(gamename, drivers[i]->name))
@@ -417,7 +430,7 @@ int frontend_help (int argc, char **argv)
 
 			if (verify == 1)
 			{
-				res = VerifyRomSet (i,(verify_printf_proc)printf);
+				res = VerifyRomSet (i,(verify_printf_proc)printf, crc);
 				if (res)
 					printf ("romset %s ", drivers[i]->name);
 			}
@@ -444,6 +457,8 @@ int frontend_help (int argc, char **argv)
 				correct++;
 			if (res)
 				err = res;
+
+			fprintf(stderr,"%d%%\r",100 * (correct+incorrect) / total);
 		}
 
 		if (correct+incorrect == 0)

@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "unzip.h"
 #include <sys/stat.h>
 #include <allegro.h>
 #include <unistd.h>
@@ -33,10 +34,8 @@ typedef struct
 	eFileType		type;
 } FakeFileHandle;
 
-/* JB 980123 */
-int /* error */ load_zipped_file (const char *zipfile,
-										 const char *filename,
-										 unsigned char **buf, int *length);
+
+extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
 
 
 /* helper function which decomposes a path list into a vector of paths */
@@ -351,3 +350,117 @@ void osd_fclose(void *file)
 	}
 	free(f);
 }
+
+/* JB 980803 */
+int osd_fchecksum (const char *game, const char *filename, int *sum)
+{
+	char name[100];
+	char *dirname;
+	char *gamename;
+
+	int  indx;
+	struct stat stat_buffer;
+	FILE *f = NULL;
+	int found = 0;
+	int err = 0;
+
+	gamename = (char *)game;
+
+	/* Support "-romdir" yuck. */
+	if (alternate_name)
+		gamename = alternate_name;
+
+	indx = osd_faccess (gamename, OSD_FILETYPE_ROM);
+
+	while (indx && !f && !found)
+	{
+		dirname = rompathv[indx-1];
+
+		sprintf(name,"%s/%s/%s",dirname,gamename,filename);
+		f = fopen(name,"rb");
+		if (f == 0)
+		{
+			/* try with a .zip extension */
+			sprintf(name,"%s/%s.zip", dirname, gamename);
+			f = fopen(name, "rb");
+			stat(name, &stat_buffer);
+			if ((stat_buffer.st_mode & S_IFDIR))
+			{
+				/* it's a directory */
+				fclose(f);
+				f = 0;
+			}
+			if (f)
+			{
+				fclose(f);
+				if (checksum_zipped_file (name, filename, sum))
+					f = 0;
+				else
+					found = 1;
+			}
+		}
+		if (f == 0)
+		{
+			/* try with a .zip directory (if ZipMagic is installed) */
+			sprintf(name,"%s/%s.zip/%s",dirname,gamename,filename);
+			f = fopen(name,"rb");
+		}
+		if (f == 0)
+		{
+			/* try with a .zif directory (if ZipFolders is installed) */
+			sprintf(name,"%s/%s.zif/%s",dirname,gamename,filename);
+			f = fopen(name,"rb");
+		}
+
+		/* check next path entry */
+		if (f == 0)
+			indx = osd_faccess (NULL, OSD_FILETYPE_ROM);
+		else
+		{
+			if (!found)
+			{
+				int	length, rd;
+				unsigned char *data = NULL;
+
+				found = 1;
+
+				/* determine length of file */
+				err = fseek (f, 0L, SEEK_END);
+				if (err==0)
+				{
+					length = ftell (f);
+					if (length == -1L)
+						err = -1;
+				}
+				if (err==0)
+				{
+					/* allocate space for entire file */
+					data = malloc (length);
+					if (data == NULL)
+						err = -1;
+				}
+				if (err==0)
+				{
+					/* read entire file into memory */
+					fseek (f, 0L, SEEK_SET);
+					rd = fread (data, sizeof (unsigned char), length, f);
+					if (rd != length)
+						err = -1;
+				}
+				if (err==0)
+					*sum = crc32 (0L, data, length);
+
+				if (data)
+					free (data);
+
+				fclose (f);
+			}
+		}
+	}
+
+	if (err || !found)
+		return -1;
+	else
+		return 0;
+}
+

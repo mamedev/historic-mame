@@ -783,12 +783,7 @@ ROM_START( gladiatr_rom )
 	ROM_REGION( 0x24600 )	/* Load all ADPCM samples into seperate region */
 	ROM_LOAD( "QB0-18", 0x00000, 0x8000, 0x9437974d )
 	ROM_LOAD( "QB0-19", 0x08000, 0x8000, 0xa31d0a5f )
-	ROM_LOAD( "QB0-20", 0x10000, 0x8000, 0x2a520500 )
-
-	/*Manually combine samples: lgzaid - p1 with lgzaid p2!*/
-	ROM_RELOAD  ( 0x20000, 0x1d00 )			  /*Get to begginning Part 1*/
-	ROM_CONTINUE( 0x20000, 0x2300 )			  /*Load Part 1*/
-	ROM_LOAD( "QB0-19", 0x22300, 0x2300, 0xab55148f ) /*Load Part 2*/
+	ROM_LOAD( "QB0-20", 0x10000, 0x8000, 0x8af2da92 )
 ROM_END
 
 ROM_START( ogonsiro_rom )
@@ -824,13 +819,7 @@ ROM_START( ogonsiro_rom )
 	ROM_REGION( 0x24600 )	/* Load all ADPCM samples into seperate region */
 	ROM_LOAD( "QB0-18", 0x00000, 0x8000, 0x9437974d )
 	ROM_LOAD( "QB0-19", 0x08000, 0x8000, 0xa31d0a5f )
-	ROM_LOAD( "QB0-20", 0x10000, 0x8000, 0x2a520500 )
-
-	/*Manually combine samples: lgzaid - p1 with lgzaid p2!*/
-	ROM_RELOAD  ( 0x20000, 0x1d00 )			  /*Get to begginning Part 1*/
-	ROM_CONTINUE( 0x20000, 0x2300 )			  /*Load Part 1*/
-	ROM_LOAD( "QB0-19", 0x22300, 0x2300, 0xab55148f ) /*Load Part 2*/
-
+	ROM_LOAD( "QB0-20", 0x10000, 0x8000, 0x8af2da92 )
 ROM_END
 
 ROM_START( gcastle_rom )
@@ -866,14 +855,17 @@ ROM_START( gcastle_rom )
 	ROM_REGION( 0x24600 )	/* Load all ADPCM samples into seperate region */
 	ROM_LOAD( "QB0-18", 0x00000, 0x8000, 0x9437974d )
 	ROM_LOAD( "QB0-19", 0x08000, 0x8000, 0xa31d0a5f )
-	ROM_LOAD( "QB0-20", 0x10000, 0x8000, 0x2a520500 )
-
-	/*Manually combine samples: lgzaid - p1 with lgzaid p2!*/
-	ROM_RELOAD  ( 0x20000, 0x1d00 )			  /*Get to begginning Part 1*/
-	ROM_CONTINUE( 0x20000, 0x2300 )			  /*Load Part 1*/
-	ROM_LOAD( "QB0-19", 0x22300, 0x2300, 0xab55148f ) /*Load Part 2*/
-
+	ROM_LOAD( "QB0-20", 0x10000, 0x8000, 0x8af2da92 )
 ROM_END
+
+/*Manually combine samples: lgzaid - p1 with lgzaid p2!*/
+static void gladiatr_decode(void)
+{
+	unsigned char *RAM = Machine->memory_region[4];
+
+	memcpy (&RAM[0x20000], &RAM[0x11d00], 0x2300);	/* copy Part 1 */
+	memcpy (&RAM[0x22300], &RAM[0x8000], 0x2300);	/* copy Part 2 */
+}
 
 /*************************/
 /* Gladiator Samples	 */
@@ -965,7 +957,7 @@ struct GameDriver gladiatr_driver =
 	&machine_driver,
 
 	gladiatr_rom,
-	0,
+	gladiatr_decode,
 	0,
 //	0,
 //	0,
@@ -992,7 +984,7 @@ struct GameDriver ogonsiro_driver =
 	&machine_driver,
 
 	ogonsiro_rom,
-	0,
+	gladiatr_decode,
 	0,
 //	0,
 //	0,
@@ -1019,7 +1011,7 @@ struct GameDriver gcastle_driver =
 	&machine_driver,
 
 	gcastle_rom,
-	0,
+	gladiatr_decode,
 	0,
 //	0,
 //	0,

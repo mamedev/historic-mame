@@ -109,7 +109,7 @@ int gauntlet_interrupt(void)
 
 int gauntlet_sound_interrupt(void)
 {
-	return INT_IRQ;
+	return M6502_INT_IRQ;
 }
 
 

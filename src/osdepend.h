@@ -132,18 +132,37 @@ struct osd_bitmap
 
 #define OSD_MAX_KEY         115
 
-/* ASG 980730: these are pseudo-keys that the os-dependent code can map to whatever they see fit */
+/* 116 - 119 */
 
-#define OSD_KEY_FAST_EXIT		(OSD_MAX_KEY+1)
-#define OSD_KEY_RESET_MACHINE	(OSD_MAX_KEY+2)
-#define OSD_KEY_VOLUME_DOWN		(OSD_MAX_KEY+3)
-#define OSD_KEY_VOLUME_UP		(OSD_MAX_KEY+4)
-#define OSD_KEY_PAUSE			(OSD_MAX_KEY+5)
-#define OSD_KEY_UNPAUSE			(OSD_MAX_KEY+6)
-#define OSD_KEY_CONFIGURE		(OSD_MAX_KEY+7)
-#define OSD_KEY_SHOW_GFX		(OSD_MAX_KEY+8)
+/* The following are defined in Allegro */
+/* 120 KEY_RCONTROL */
+/* 121 KEY_ALTGR */
+/* 122 KEY_SLASH2 */
+/* 123 KEY_PAUSE */
 
+/*
+ * ASG 980730: these are pseudo-keys that the os-dependent code can
+ * map to whatever they see fit
+ * HJB 980812: added some more names and used higher values because
+ * there were some clashes with Allegro's scancodes (see above)
+ */
+#define OSD_KEY_FAST_EXIT		128
+#define OSD_KEY_RESET_MACHINE	129
+#define OSD_KEY_VOLUME_DOWN 	130
+#define OSD_KEY_VOLUME_UP		131
+#define OSD_KEY_GAMMA_DOWN		132
+#define OSD_KEY_GAMMA_UP		133
+#define OSD_KEY_PAUSE			134
+#define OSD_KEY_UNPAUSE 		135
+#define OSD_KEY_CONFIGURE		136
+#define OSD_KEY_SHOW_GFX		137
+#define OSD_KEY_JOY_CALIBRATE	138
+#define OSD_KEY_FRAMESKIP		139
+#define OSD_KEY_THROTTLE		140
+#define OSD_KEY_SHOW_FPS		141
+#define OSD_KEY_SNAPSHOT		142
 
+#define OSD_MAX_PSEUDO			142
 
 #define OSD_JOY_LEFT    1
 #define OSD_JOY_RIGHT   2
@@ -238,6 +257,8 @@ void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char
 void osd_mark_dirty(int xmin, int ymin, int xmax, int ymax, int ui);    /* ASG 971011 */
 int osd_skip_this_frame(int recommend);
 void osd_update_display(void);
+void osd_on_screen_display(const char *text,int percentage);
+
 void osd_update_audio(void);
 void osd_play_sample(int channel,signed char *data,int len,int freq,int volume,int loop);
 void osd_play_sample_16(int channel,signed short *data,int len,int freq,int volume,int loop);
@@ -282,6 +303,7 @@ int osd_fread (void *file,void *buffer,int length);
 int osd_fwrite (void *file,const void *buffer,int length);
 int osd_fseek (void *file,int offset,int whence);
 void osd_fclose (void *file);
+int osd_fchecksum (const char *gamename, const char *filename, int *sum);
 
 /* control keyboard leds or other indicators */
 void osd_led_w(int led,int on);

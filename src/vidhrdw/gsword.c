@@ -227,7 +227,7 @@ void render_sprites(struct osd_bitmap *bitmap)
 }
 
 
-void gsword_vh_screenrefresh(struct osd_bitmap *bitmap)
+void gsword_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int scrollx=0,scrolly;
 

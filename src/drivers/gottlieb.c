@@ -119,8 +119,7 @@ doesn't seem to serve any purpose...(?)
 
 
 In the later revision of the sound board, used from M.A.C.H. 3 onwards, there
-are two 6502, two 8910, a DAC and a different speech chip. The details of the
-board are not known yet.
+are two 6502, two 8910, a DAC and a GI SP-0250 speech chip.
 
 
 Video timings:
@@ -499,7 +498,7 @@ struct MemoryWriteAddress stooges_sound2_writemem[] =
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x2000, 0x2000, MWA_NOP },	/* speech chip. The game sends strings */
 									/* of 15 bytes (clocked by 4000). The chip also */
-									/* checks a ready bit in 6000. */
+									/* checks a DATA REQUEST bit in 6000. */
 	{ 0x4000, 0x4000, stooges_sound_control_w },
 	{ 0x8000, 0x8000, stooges_8910_latch_w },
 	{ 0xa000, 0xa000, stooges_sound_timer_w },	/* the timer generates NMIs */
@@ -1132,7 +1131,7 @@ static struct AY8910interface ay8910_interface =
 *
 *  There are two versions of the machine driver,
 *  one for revision 1 sound board (1x6502 + DAC + Votrax),
-*  one for revision 2 (2x6502 + DAC + GI speech chip + 2x8910).
+*  one for revision 2 (2x6502 + DAC + GI SP-0250 speech chip + 2x8910).
 *  They are identical apart form the sound CPU subsections.
 *
 ********************************************************************/

@@ -61,7 +61,7 @@ void redalert_soundlatch_w(int offset, int data)
 
 	/* Bit D7 is also connected to the NMI input of the CPU */
 	if ((data & 0x80)!=0x80)
-		cpu_cause_interrupt(1,INT_NMI);
+		cpu_cause_interrupt(1,M6502_INT_NMI);
 }
 
 int redalert_AY8910_A_r(int offset)

@@ -18,7 +18,7 @@
 
 #define MAX_PIXELS 200000  /* Maximum of pixels we can remember */
 
-#define TRANSLUCENCY 1	/* translucent vectors  */
+int translucency;  /* translucent vectors  */
 
 extern unsigned char *vectorram;
 extern int vectorram_size;

@@ -35,6 +35,9 @@ static PALETTE adjusted_palette;
 static unsigned char dirtycolor[256];
 static int dirtypalette;
 
+static char on_screen_display_text[80];
+static int on_screen_display_timer;
+
 int vesa;
 int ntsc;
 int vgafreq;
@@ -973,10 +976,12 @@ void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char
 }
 
 /* Writes messages in the middle of the screen. */
-void my_textout (char *buf)
+void my_textout(char *buf)
 {
 	int trueorientation,l,x,y,i;
 
+
+	pick_uifont_colors();
 
 	/* hack: force the display into standard orientation to avoid */
 	/* rotating the text */
@@ -985,7 +990,7 @@ void my_textout (char *buf)
 
 	l = strlen(buf);
 	x = (gfx_display_columns - Machine->uifont->width * l) / 2;
-	y = (gfx_display_lines   - Machine->uifont->height) / 2;
+	y = (gfx_display_lines   - Machine->uifont->height) * 9 / 10;
 	for (i = 0;i < l;i++)
 		drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],DT_COLOR_WHITE,0,0,
 				x + i*Machine->uifont->width + skipcolumns,
@@ -1374,8 +1379,8 @@ void osd_update_display(void)
 {
 	int i;
 	static float gamma_update = 0.00;
-	static int showgammatemp;
-	static int showfps,showfpstemp,f8pressed,f10pressed,f11pressed;
+	static int showfps,showfpstemp;
+	static int frameskip_pressed,throttle_pressed,show_fps_pressed;
 	uclock_t curr;
 	#define MEMORY 10
 	static uclock_t prev[MEMORY];
@@ -1391,24 +1396,24 @@ void osd_update_display(void)
 		pan_display();
 
 
-	if (osd_key_pressed(OSD_KEY_F8))
+	if (osd_key_pressed(OSD_KEY_FRAMESKIP))
 	{
-		if (f8pressed == 0)
+		if (frameskip_pressed == 0)
 		{
 			frameskip = (frameskip + 1) % 4;
-			showfpstemp = 50;
+			showfpstemp = 2*Machine->drv->frames_per_second;
 
 			/* reset the frame counter every time the frameskip key is pressed, so */
 			/* we'll measure the average FPS on a consistent status. */
 			frames_displayed = 0;
 		}
-		f8pressed = 1;
+		frameskip_pressed = 1;
 	}
-	else f8pressed = 0;
+	else frameskip_pressed = 0;
 
-	if (osd_key_pressed(OSD_KEY_F10))
+	if (osd_key_pressed(OSD_KEY_THROTTLE))
 	{
-		if (f10pressed == 0)
+		if (throttle_pressed == 0)
 		{
 			throttle ^= 1;
 
@@ -1416,13 +1421,13 @@ void osd_update_display(void)
 			/* we'll measure the average FPS on a consistent status. */
 			frames_displayed = 0;
 		}
-		f10pressed = 1;
+		throttle_pressed = 1;
 	}
-	else f10pressed = 0;
+	else throttle_pressed = 0;
 
-	if (osd_key_pressed(OSD_KEY_F11))
+	if (osd_key_pressed(OSD_KEY_SHOW_FPS))
 	{
-		if (f11pressed == 0)
+		if (show_fps_pressed == 0)
 		{
 			showfps ^= 1;
 			if (showfps == 0)
@@ -1430,9 +1435,9 @@ void osd_update_display(void)
 				need_to_clear_bitmap = 1;
 			}
 		}
-		f11pressed = 1;
+		show_fps_pressed = 1;
 	}
-	else f11pressed = 0;
+	else show_fps_pressed = 0;
 
 	if (showfpstemp)         /* MAURY_BEGIN: nuove opzioni */
 	{
@@ -1508,6 +1513,8 @@ void osd_update_display(void)
 		char buf[30];
 
 
+		pick_uifont_colors();
+
 		/* hack: force the display into standard orientation to avoid */
 		/* rotating the text */
 		trueorientation = Machine->orientation;
@@ -1530,27 +1537,29 @@ void osd_update_display(void)
 	}
 
 
-	if (osd_key_pressed(OSD_KEY_F7))
+	if (osd_key_pressed(OSD_KEY_JOY_CALIBRATE))
 		joy_calibration();
 
 
 	if (scrbitmap->depth == 8)
 	{
-		if (osd_key_pressed(OSD_KEY_LSHIFT) &&
-				(osd_key_pressed(OSD_KEY_PLUS_PAD) || osd_key_pressed(OSD_KEY_MINUS_PAD)))
+		if (osd_key_pressed(OSD_KEY_GAMMA_DOWN) || osd_key_pressed(OSD_KEY_GAMMA_UP))
 		{
+			char buf[20];
+
+
 			for (i = 0;i < 256;i++) dirtycolor[i] = 1;
 			dirtypalette = 1;
 
-			if (osd_key_pressed(OSD_KEY_MINUS_PAD)) gamma_update -= 0.02;
-			if (osd_key_pressed(OSD_KEY_PLUS_PAD)) gamma_update += 0.02;
+			if (osd_key_pressed(OSD_KEY_GAMMA_DOWN)) gamma_update -= 0.02;
+			if (osd_key_pressed(OSD_KEY_GAMMA_UP)) gamma_update += 0.02;
 
-			if (gamma_update < -0.09)
+			if (gamma_update <= -0.10)
 			{
 				gamma_update = 0.00;
 				gamma_correction -= 0.10;
 			}
-			if (gamma_update > 0.09)
+			if (gamma_update >= 0.10)
 			{
 				gamma_update = 0.00;
 				gamma_correction += 0.10;
@@ -1559,23 +1568,12 @@ void osd_update_display(void)
 			if (gamma_correction < 0.2) gamma_correction = 0.2;
 			if (gamma_correction > 3.0) gamma_correction = 3.0;
 
-			showgammatemp = Machine->drv->frames_per_second;
+			sprintf(buf,"GAM %1.1f",gamma_correction);
+			osd_on_screen_display(buf,100*(gamma_correction-0.2)/(3.0-0.2));
 		}
+		else
+			gamma_update = 0.00;
 
-		if (showgammatemp > 0)
-		{
-			if (--showgammatemp)
-			{
-				char buf[20];
-
-				sprintf(buf,"Gamma = %1.1f",gamma_correction);
-				my_textout(buf);
-			}
-			else
-			{
-				need_to_clear_bitmap = 1;
-			}
-		}
 
 		if (dirtypalette)
 		{
@@ -1633,6 +1631,19 @@ void osd_update_display(void)
 	}
 
 
+	if (on_screen_display_timer > 0)
+	{
+		on_screen_display_timer -= (frameskip+1);
+		if (on_screen_display_timer > 0)
+			my_textout(on_screen_display_text);
+		else
+		{
+			on_screen_display_timer = 0;
+			need_to_clear_bitmap = 1;
+		}
+	}
+
+
 	/* copy the bitmap to screen memory */
 	update_screen();
 
@@ -1649,11 +1660,39 @@ void osd_update_display(void)
 	if (need_to_clear_bitmap)
 		osd_clearbitmap(scrbitmap);
 
-	/* if the user pressed F12, save a snapshot of the screen. */
-	if (osd_key_pressed(OSD_KEY_F12))
+	/* if the user pressed the KEY_SNAPSHOT, save a snapshot of the screen. */
+	if (osd_key_pressed(OSD_KEY_SNAPSHOT))
 	{
 		save_screen();
-		/* wait for the user to release F12 */
-		while (osd_key_pressed(OSD_KEY_F12));
+		/* wait for the user to release the key */
+		while (osd_key_pressed(OSD_KEY_SNAPSHOT));
 	}
+}
+
+
+
+void osd_on_screen_display(const char *text,int percentage)
+{
+	int i,j,start,avail,cutoff;
+
+
+	on_screen_display_timer = 2*Machine->drv->frames_per_second;
+
+	strcpy(on_screen_display_text,text);
+	strcat(on_screen_display_text," ");
+
+	start = strlen(on_screen_display_text);
+	avail = (gfx_display_columns / Machine->uifont->width) * 9 / 10;
+	avail -= start;
+	cutoff = 8 * avail * percentage / 100;
+	for (i = 0;i < avail;i++)
+	{
+		if (8 * i >= cutoff)
+			on_screen_display_text[start + i] = ' ';
+		else if (8 * (i + 1) <= cutoff)
+			on_screen_display_text[start + i] = 8;
+		else
+			on_screen_display_text[start + i] = cutoff - 8 * i;
+	}
+	on_screen_display_text[start + avail] = 0;	/* nul terminate */
 }

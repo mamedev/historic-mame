@@ -229,8 +229,12 @@ if (errorlog) fprintf(errorlog,"%04x: 68705 write %02x to address %04x\n",cpu_ge
 	{
 		if (address == 0xd408)
 			portA_in = input_port_0_r(0);
+		else if (address == 0xd409)
+			portA_in = input_port_1_r(0);
 		else if (address == 0xd40c)
 			portA_in = input_port_3_r(0);
+		else if (address == 0xd40d)
+			portA_in = input_port_4_r(0);
 		else
 			portA_in = Machine->memory_region[0][address];
 if (errorlog) fprintf(errorlog,"%04x: 68705 read %02x from address %04x\n",cpu_getpc(),portA_in,address);

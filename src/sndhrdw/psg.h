@@ -43,6 +43,8 @@ void AYWriteReg(int n, int r, int v);
 */
 unsigned char AYReadReg(int n, int r);
 
+void AY8910Write(int n, int a, int v);
+int AY8910Read(int n, int a);
 
 /*
 ** set clockrate for one

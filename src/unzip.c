@@ -14,8 +14,14 @@
 #include <stdarg.h>
 #include "types.h"
 #include "osdepend.h"
+#include "unzip.h"
 
-#define BUFSIZE	0x2000
+#ifdef WIN32
+#define BUFSIZE	0xC000
+#else
+#define BUFSIZE 0x2000
+#endif
+
 
 typedef struct
 {
@@ -117,15 +123,12 @@ typedef struct
 #define ZIPOFST		0x2a
 #define ZIPCFN		0x2e
 
-/* public functions */
-int /* error */ load_zipped_file (const char *zipfile, const char *filename,
-	unsigned char **buf, int *length);
 
 /* private functions */
 static int read_local_file_header (FILE *fp, const t_central_dir_ent *cd, t_local_file_hdr *lfh);
 
 static int find_matching_cd_entry (FILE *fp, char *match,
-	t_end_of_cent_dir *ecd, t_central_dir_ent *cd);
+	t_end_of_cent_dir *ecd, t_central_dir_ent *cd, int cached);
 static int compare_filename (char *filename, char *match);
 static void read_central_dir_entry (char *buf, t_central_dir_ent *cd);
 
@@ -143,18 +146,31 @@ static debug_print_central_dir_entry (t_central_dir_ent *cd);
 static debug_print_end_central_dir (t_end_of_cent_dir *ecd);
 #endif
 
+/* private globals */
 static long	gZipLen;				/* length of zipfile */
 static char input_buffer[BUFSIZE];	/* small input buffer */
-
-/* JB 980519 */
-extern FILE *errorlog;				/* MAME's errorlog */
-int	gUnzipQuiet = 1;					/* flag controls error messages */
 static char *gZipfileName;			/* store pointer to basename of zipfile globally */
+
+/* the following globals allow checksum_zipped_file() to cache the input_buffer and ecd */
+static unsigned int cached_zip;			/* CRC-32 hash of path to zipfile that is "cached" */
+static t_end_of_cent_dir cached_ecd;	/* cached end-of-central-dir */
+
+
+/* external functions */
+extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
+
+
+/* external globals */
+extern FILE *errorlog;				/* MAME's errorlog */
+
+
+/* public globals */
+int	gUnzipQuiet = 1;				/* flag controls error messages */
 
 /*----------------------------------
         inflate.c support
 ----------------------------------*/
-extern int inflate (void);
+extern int mame_inflate (void);
 
 unsigned char *slide;			/* 32K sliding window for inflate.c */
 unsigned char *g_nextbyte;		/* pointer to next byte of input */
@@ -165,12 +181,11 @@ void inflate_FLUSH (unsigned char *buffer, unsigned long n)
 	memcpy (g_outbuf, buffer, n);
 	g_outbuf += n;
 }
-
 /*----------------------------------
      end of inflate.c support
 ----------------------------------*/
 
-/* JB 980519 */
+
 static char * get_zipfile_basename (const char *zipfile)
 {
 	char		*token, *s;
@@ -185,7 +200,7 @@ static char * get_zipfile_basename (const char *zipfile)
 	return s;
 }
 
-/* JB 980519 */
+
 static void errormsg (char *fmt, ...)
 {
 	va_list	arg_ptr;
@@ -208,21 +223,88 @@ static void errormsg (char *fmt, ...)
 }
 
 
-
 /*	Pass the path to the zipfile and the name of the file within the zipfile.
-	buf will be set to point to the uncompressed image of that zipped file.
-	length will be set to the length of the uncompressed data. */
-int /* error */ load_zipped_file (const char *zipfile, const char *filename,
-	unsigned char **buf, int *length)
+	sum will be set to the CRC-32 of that zipped file. */
+int /* error */ checksum_zipped_file (const char *zipfile, const char *filename, int *sum)
 {
 	FILE 				*fp = NULL;
 	t_end_of_cent_dir	ecd;
 	t_central_dir_ent	cd;
-	t_local_file_hdr	lfh;
-	unsigned char		*inbuf = 0, *outbuf = 0;
-
 	char				filenameUpper[32], *p;
 	int 				err;
+	unsigned int		temp_hash;
+	int					cached;
+
+	if ( (temp_hash = crc32 (0L, (const unsigned char *)zipfile, strlen (zipfile))) != cached_zip)
+	{
+		cached = 0;			/* this zipfile is not cached */
+		cached_zip = 0;		/* "flush" cache */
+
+		/* store pointer to zipfile name globally for error messages */
+		gZipfileName = get_zipfile_basename (zipfile);
+
+		/* open zipfile for binary read */
+		if ((fp = fopen (zipfile, "rb")) != NULL)
+		{
+			/* determine length of zip file */
+			err = get_file_length (fp, &gZipLen);
+			if (err!=0)
+			{
+				errormsg ("Error in zipfile %s: get_file_length() failed\n", gZipfileName);
+				goto bail;
+			}
+
+			/* read end-of-central-directory */
+			err = read_end_of_cent_dir (fp, &ecd);
+			if (err!=0)
+			{
+				errormsg ("Error reading 'end of central directory' in zipfile %s\n", gZipfileName);
+				goto bail;
+			}
+		}
+		else
+		{
+			errormsg ("Could not open zipfile %s\n", zipfile);
+			err = -1;
+			goto bail;
+		}
+
+		cached_ecd = ecd;		/* cache ecd for possible use next time */
+		cached_zip = temp_hash; /* this zipfile is now cached */
+	}
+	else
+	{
+		/* input_buffer will still contain cd for this zipfile */
+		ecd = cached_ecd;		/* restore cached ecd */
+		cached = 1;				/* this zipfile is in cache */
+	}
+
+	/* find matching file in central directory (force upper case) */
+	for (p=filenameUpper; (*p++ = toupper(*filename++)) != '\0';){};
+
+	err = find_matching_cd_entry (fp, filenameUpper, &ecd, &cd, cached);
+	if (err!=0)
+	{
+		errormsg ("Could not find %s in zipfile %s\n", filenameUpper, gZipfileName);
+		goto bail;
+	}
+
+	*sum = cd.crc32;
+
+bail:
+	if (fp) fclose (fp);
+	return err;
+}
+
+
+/* Check to see if a file is in the given zipfile */
+int /* error */ stat_zipped_file (const char *zipfile, const char *filename)
+{
+	FILE 				*fp = NULL;
+	t_end_of_cent_dir	ecd;
+	t_central_dir_ent	cd;
+	char				filenameUpper[32], *p;
+	int 				err = 1;
 
 	/* store pointer to zipfile name globally for error messages */
 	gZipfileName = get_zipfile_basename (zipfile);
@@ -259,7 +341,73 @@ int /* error */ load_zipped_file (const char *zipfile, const char *filename,
 		/* find matching file in central directory (force upper case) */
 		for (p=filenameUpper; (*p++ = toupper(*filename++)) != '\0';){};
 
-		err = find_matching_cd_entry (fp, filenameUpper, &ecd, &cd);
+		err = find_matching_cd_entry (fp, filenameUpper, &ecd, &cd, 0);
+		if (err!=0)
+		{
+			errormsg ("Could not find %s in zipfile %s\n", filenameUpper, gZipfileName);
+			goto bail;
+		}
+    }
+bail:
+	if (fp) fclose (fp);
+	return err;
+}
+
+
+/*	Pass the path to the zipfile and the name of the file within the zipfile.
+	buf will be set to point to the uncompressed image of that zipped file.
+	length will be set to the length of the uncompressed data. */
+int /* error */ load_zipped_file (const char *zipfile, const char *filename,
+	unsigned char **buf, int *length)
+{
+	FILE 				*fp = NULL;
+	t_end_of_cent_dir	ecd;
+	t_central_dir_ent	cd;
+	t_local_file_hdr	lfh;
+	unsigned char		*inbuf = 0, *outbuf = 0;
+
+	char				filenameUpper[32], *p;
+	int 				err;
+
+	/* "flush" the checksum_zipped_file() cache */
+	cached_zip = 0;
+
+	/* store pointer to zipfile name globally for error messages */
+	gZipfileName = get_zipfile_basename (zipfile);
+
+	/* open zipfile for binary read */
+	if ((fp = fopen (zipfile, "rb")) != NULL)
+	{
+		/* determine length of zip file */
+		err = get_file_length (fp, &gZipLen);
+		if (err!=0)
+		{
+			errormsg ("Error in zipfile %s: get_file_length() failed\n", gZipfileName);
+			goto bail;
+		}
+
+		/* read end-of-central-directory */
+		err = read_end_of_cent_dir (fp, &ecd);
+		if (err!=0)
+		{
+			errormsg ("Error reading 'end of central directory' in zipfile %s\n", gZipfileName);
+			goto bail;
+		}
+
+		/* verify that we can work with this zipfile (no disk spanning allowed) */
+		if ((ecd.number_of_this_disk != ecd.number_of_disk_start_cent_dir) ||
+			(ecd.total_entries_cent_dir_this_disk != ecd.total_entries_cent_dir) ||
+			(ecd.total_entries_cent_dir < 1))
+		{
+			err = -1;
+			errormsg ("Unsupported zipfile %s: zipfile cannot span disks\n", gZipfileName);
+			goto bail;
+		}
+
+		/* find matching file in central directory (force upper case) */
+		for (p=filenameUpper; (*p++ = toupper(*filename++)) != '\0';){};
+
+		err = find_matching_cd_entry (fp, filenameUpper, &ecd, &cd, 0);
 		if (err!=0)
 		{
 			errormsg ("Could not find %s in zipfile %s\n", filenameUpper, gZipfileName);
@@ -320,7 +468,7 @@ int /* error */ load_zipped_file (const char *zipfile, const char *filename,
 			/* inflate the compressed file (now in memory) */
 			if (err==0)
 			{
-				err = inflate ();
+				err = mame_inflate ();
 				if (err!=0)
 				{
 					errormsg ("Error %d inflating compressed file from zipfile %s\n",
@@ -464,33 +612,38 @@ static debug_print_local_file_hdr (const t_local_file_hdr *lfh)
 
 /* Known issue: central dir must be < BUFSIZE bytes */
 static int find_matching_cd_entry (FILE *fp, char *match,
-	t_end_of_cent_dir *ecd, t_central_dir_ent *cd)
+	t_end_of_cent_dir *ecd, t_central_dir_ent *cd, int cached)
 {
-	int		i, j, found = 0, err;
+	int		i, j, found = 0, err = 0;
 	long	count, read;
 	char 	*p;
 
-	/* we'll read the entire central directory or BUFSIZE bytes, whichever is smaller */
-	if (ecd->size_of_cent_dir > BUFSIZE)
-		count = BUFSIZE;
-	else
-		count = ecd->size_of_cent_dir;
 
-	/* read from start of central directory */
-	err = fseek (fp, ecd->offset_to_start_of_cent_dir, SEEK_SET);
-	if (err==0)
+	/* can we skip filling the input buffer because it is cached? */
+	if (!cached)
 	{
-		read = fread (input_buffer, sizeof (unsigned char), count, fp);
-		if (read!=count)
+		/* we'll read the entire central directory or BUFSIZE bytes, whichever is smaller */
+		if (ecd->size_of_cent_dir > BUFSIZE)
+			count = BUFSIZE;
+		else
+			count = ecd->size_of_cent_dir;
+
+		/* read from start of central directory */
+		err = fseek (fp, ecd->offset_to_start_of_cent_dir, SEEK_SET);
+		if (err==0)
 		{
-			errormsg ("Error in zipfile %s: couldn't read %ld bytes from central directory\n",
-				gZipfileName, count);
-			err = -1;
+			read = fread (input_buffer, sizeof (unsigned char), count, fp);
+			if (read!=count)
+			{
+				errormsg ("Error in zipfile %s: couldn't read %ld bytes from central directory\n",
+					gZipfileName, count);
+				err = -1;
+			}
 		}
+		else
+			errormsg ("Error in zipfile %s: couldn't fseek to start of central directory\n",
+				gZipfileName);
 	}
-	else
-		errormsg ("Error in zipfile %s: couldn't fseek to start of central directory\n",
-			gZipfileName);
 
 	if (err==0)
 	{

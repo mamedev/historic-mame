@@ -117,24 +117,26 @@ void solomon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		if (dirtybuffer2[offs])
 		{
-			int sx,sy,flipx;
+			int sx,sy,flipx,flipy;
 
 
 			dirtybuffer2[offs] = 0;
 			sx = offs % 32;
 			sy = offs / 32;
 			flipx = solomon_bgcolorram[offs] & 0x80;
+			flipy = solomon_bgcolorram[offs] & 0x08;
 			if (flipscreen)
 			{
 				sx = 31 - sx;
 				sy = 31 - sy;
 				flipx = !flipx;
+				flipy = !flipy;
 			}
 
 			drawgfx(tmpbitmap2,Machine->gfx[1],
 					solomon_bgvideoram[offs] + 256 * (solomon_bgcolorram[offs] & 0x07),
 					((solomon_bgcolorram[offs] & 0x70) >> 4),
-					flipx,flipscreen,
+					flipx,flipy,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}

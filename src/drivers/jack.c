@@ -30,10 +30,6 @@ I/O
 
 The 2 ay-8910 read ports are responsible for reading the sound commands.
 
-Known problems:
-	* Should the beans in Jack change color when you die?
-	* Sound is hosed in Zzyzzyxx
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -476,6 +472,28 @@ ROM_START( zzyzzyxx_rom )
 	ROM_LOAD( "zzyzzyxx.j", 0x1000, 0x1000, 0x9528cac6 )
 ROM_END
 
+ROM_START( brix_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "a", 0x0000, 0x1000, 0xf881308d )
+	ROM_LOAD( "b", 0x1000, 0x1000, 0xae73b2e9 )
+	ROM_LOAD( "c", 0x2000, 0x1000, 0xb7507550 )
+	ROM_LOAD( "d", 0x3000, 0x1000, 0x0eb89a74 )
+	ROM_LOAD( "e", 0xc000, 0x1000, 0x6b982794 )
+	ROM_LOAD( "f", 0xd000, 0x1000, 0x8bbc8d54 )
+	ROM_LOAD( "g", 0xe000, 0x1000, 0x54139c1b )
+	ROM_LOAD( "h", 0xf000, 0x1000, 0xb94c6fbc )
+
+	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "n",           0x0000, 0x1000, 0x56dae3d2 )
+	ROM_LOAD( "zzyzzyxx.m",  0x1000, 0x1000, 0x4ce32bef )
+	ROM_LOAD( "k",           0x2000, 0x1000, 0xbce4ba0e )
+	ROM_LOAD( "zzyzzyxx.l",  0x3000, 0x1000, 0x01b59d21 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "zzyzzyxx.i", 0x0000, 0x1000, 0xc28b4aff )
+	ROM_LOAD( "zzyzzyxx.j", 0x1000, 0x1000, 0x9528cac6 )
+ROM_END
+
 
 
 static int hiload(void)
@@ -592,6 +610,31 @@ struct GameDriver zzyzzyxx_driver =
 	&zzyzzyxx_machine_driver,
 
 	zzyzzyxx_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	zzyzzyxx_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	zzyzzyxx_hiload, zzyzzyxx_hisave
+};
+
+struct GameDriver brix_driver =
+{
+	__FILE__,
+	&zzyzzyxx_driver,
+	"brix",
+	"Brix",
+	"1982",
+	"Cinematronics",
+	"Brad Oliver",
+	0,
+	&zzyzzyxx_machine_driver,
+
+	brix_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

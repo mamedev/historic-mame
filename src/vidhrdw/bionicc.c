@@ -253,7 +253,7 @@ INLINE void bionicc_draw_text( struct osd_bitmap *bitmap )
 	}
 }
 
-void bionicc_vh_screenrefresh(struct osd_bitmap *bitmap)
+void bionicc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	bionicc_refresh_palette();
 	fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);

@@ -121,6 +121,22 @@ extern int targ_sh_start(void);
 extern void targ_sh_stop(void);
 
 
+
+static struct MemoryReadAddress sidetrac_readmem[] =
+{
+	{ 0x0000, 0x03ff, MRA_RAM },
+	{ 0x0800, 0x3fff, MRA_ROM }, /* Targ, Spectar only */
+	{ 0x4000, 0x43ff, MRA_RAM },
+	{ 0x4800, 0x4fff, MRA_ROM },
+	{ 0x5100, 0x5100, input_port_0_r }, /* DSW */
+	{ 0x5101, 0x5101, input_port_1_r }, /* IN0 */
+	{ 0x5103, 0x5103, exidy_input_port_2_r, &exidy_collision }, /* IN1 */
+	{ 0x5105, 0x5105, input_port_4_r }, /* IN3 - Targ, Spectar only */
+	{ 0x5213, 0x5213, input_port_3_r }, 	/* IN2 */
+	{ 0x8000, 0xffff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x03ff, MRA_RAM },
@@ -249,6 +265,159 @@ static struct MemoryWriteAddress sound_writemem[] =
 Input Ports
 ***************************************************************************/
 
+INPUT_PORTS_START( sidetrac_input_ports )
+	PORT_START		/* DSW0 */
+	PORT_DIPNAME(0x03, 0x00, "Trains", IP_KEY_NONE )
+	PORT_DIPSETTING( 0x00, "01")
+	PORT_DIPSETTING( 0x01, "02")
+	PORT_DIPSETTING( 0x02, "03")
+	PORT_DIPSETTING( 0x03, "04")
+	PORT_DIPNAME( 0x0c, 0x04, "Coinage", IP_KEY_NONE )
+    PORT_DIPSETTING(    0x00, "1C / 2P" )
+	PORT_DIPSETTING(	0x04, "1C / 1P" )
+	PORT_DIPSETTING(	0x08, "2C / 1P" )
+	PORT_DIPSETTING(    0x0c, "2C / 1P")
+	PORT_DIPNAME(0x10, 0x10, "Top Score Award", IP_KEY_NONE )
+	PORT_DIPSETTING(   0x00, "Off" )
+    PORT_DIPSETTING(   0x10, "On" )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0xFF, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( targ_input_ports )
+	PORT_START		/* DSW0 */
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN2 ) /* upright/cocktail switch? */
+	PORT_DIPNAME( 0x02, 0x00, "P Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(	0x00, "10P/1 C 50P Coin/6 Cs" )
+	PORT_DIPSETTING(	0x02, "2x10P/1 C 50P Coin/3 Cs" )
+	PORT_DIPNAME( 0x04, 0x00, "Top Score Award", IP_KEY_NONE )
+	PORT_DIPSETTING(	0x00, "Credit" )
+	PORT_DIPSETTING(	0x04, "Extended Play" )
+	PORT_DIPNAME( 0x18, 0x08, "Q Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(	0x10, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(	0x08, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(	0x00, "1C/1C (no display)" )
+	PORT_DIPSETTING(	0x18, "1 Coin/2 Credits" )
+	PORT_DIPNAME( 0x60, 0x40, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(	0x60, "2" )
+	PORT_DIPSETTING(	0x40, "3" )
+	PORT_DIPSETTING(	0x20, "4" )
+	PORT_DIPSETTING(	0x00, "5" )
+	PORT_DIPNAME( 0x80, 0x80, "Currency", IP_KEY_NONE )
+	PORT_DIPSETTING(	0x80, "Quarters" )
+	PORT_DIPSETTING(	0x00, "Pence" )
+
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x7F, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x1f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0xFF, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	  | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+/* identical to Targ, the only difference is the additional Language dip switch */
+INPUT_PORTS_START( spectar_input_ports )
+	PORT_START		/* DSW0 */
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN2 ) /* upright/cocktail switch? */
+	PORT_DIPNAME( 0x02, 0x00, "P Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(	0x00, "10P/1 C 50P Coin/6 Cs" )
+	PORT_DIPSETTING(	0x02, "2x10P/1 C 50P Coin/3 Cs" )
+	PORT_DIPNAME( 0x04, 0x00, "Top Score Award", IP_KEY_NONE )
+	PORT_DIPSETTING(	0x00, "Credit" )
+	PORT_DIPSETTING(	0x04, "Extended Play" )
+	PORT_DIPNAME( 0x18, 0x08, "Q Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(	0x10, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(	0x08, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(	0x00, "1C/1C (no display)" )
+	PORT_DIPSETTING(	0x18, "1 Coin/2 Credits" )
+	PORT_DIPNAME( 0x60, 0x40, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(	0x60, "2" )
+	PORT_DIPSETTING(	0x40, "3" )
+	PORT_DIPSETTING(	0x20, "4" )
+	PORT_DIPSETTING(	0x00, "5" )
+	PORT_DIPNAME( 0x80, 0x80, "Currency", IP_KEY_NONE )
+	PORT_DIPSETTING(	0x80, "Quarters" )
+	PORT_DIPSETTING(	0x00, "Pence" )
+
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x7F, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x03, 0x00, "Language", IP_KEY_NONE )
+	PORT_DIPSETTING(	0x00, "English" )
+	PORT_DIPSETTING(	0x01, "French" )
+	PORT_DIPSETTING(	0x02, "German" )
+	PORT_DIPSETTING(	0x03, "Spanish" )
+	PORT_BIT( 0x1c, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0xFF, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	  | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
 INPUT_PORTS_START( mtrap_input_ports )
 	PORT_START	/* DSW0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -366,11 +535,7 @@ INPUT_PORTS_START( venture_input_ports )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
 INPUT_PORTS_END
-
-
-
 
 INPUT_PORTS_START( pepper2_input_ports )
 	PORT_START		/* DSW */
@@ -424,111 +589,7 @@ INPUT_PORTS_START( pepper2_input_ports )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
 INPUT_PORTS_END
-
-
-INPUT_PORTS_START( targ_input_ports )
-	PORT_START		/* DSW0 */
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN2 ) /* upright/cocktail switch? */
-	PORT_DIPNAME( 0x02, 0x00, "P Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(	0x00, "10P/1 C 50P Coin/6 Cs" )
-	PORT_DIPSETTING(	0x02, "2x10P/1 C 50P Coin/3 Cs" )
-	PORT_DIPNAME( 0x04, 0x00, "Top Score Award", IP_KEY_NONE )
-	PORT_DIPSETTING(	0x00, "Credit" )
-	PORT_DIPSETTING(	0x04, "Extended Play" )
-	PORT_DIPNAME( 0x18, 0x08, "Q Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(	0x10, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(	0x08, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(	0x00, "1C/1C (no display)" )
-	PORT_DIPSETTING(	0x18, "1 Coin/2 Credits" )
-	PORT_DIPNAME( 0x60, 0x40, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING(	0x60, "2" )
-	PORT_DIPSETTING(	0x40, "3" )
-	PORT_DIPSETTING(	0x20, "4" )
-	PORT_DIPSETTING(	0x00, "5" )
-	PORT_DIPNAME( 0x80, 0x80, "Currency", IP_KEY_NONE )
-	PORT_DIPSETTING(	0x80, "Quarters" )
-	PORT_DIPSETTING(	0x00, "Pence" )
-
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x7F, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
-
-	PORT_START	/* IN1 */
-	PORT_BIT( 0x1f, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START	/* IN2 */
-	PORT_BIT( 0xFF, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START	/* IN3 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	  | IPF_4WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-INPUT_PORTS_END
-
-/* identical to Targ, the only difference is the additional Language dip switch */
-INPUT_PORTS_START( spectar_input_ports )
-	PORT_START		/* DSW0 */
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN2 ) /* upright/cocktail switch? */
-	PORT_DIPNAME( 0x02, 0x00, "P Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(	0x00, "10P/1 C 50P Coin/6 Cs" )
-	PORT_DIPSETTING(	0x02, "2x10P/1 C 50P Coin/3 Cs" )
-	PORT_DIPNAME( 0x04, 0x00, "Top Score Award", IP_KEY_NONE )
-	PORT_DIPSETTING(	0x00, "Credit" )
-	PORT_DIPSETTING(	0x04, "Extended Play" )
-	PORT_DIPNAME( 0x18, 0x08, "Q Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(	0x10, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(	0x08, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(	0x00, "1C/1C (no display)" )
-	PORT_DIPSETTING(	0x18, "1 Coin/2 Credits" )
-	PORT_DIPNAME( 0x60, 0x40, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING(	0x60, "2" )
-	PORT_DIPSETTING(	0x40, "3" )
-	PORT_DIPSETTING(	0x20, "4" )
-	PORT_DIPSETTING(	0x00, "5" )
-	PORT_DIPNAME( 0x80, 0x80, "Currency", IP_KEY_NONE )
-	PORT_DIPSETTING(	0x80, "Quarters" )
-	PORT_DIPSETTING(	0x00, "Pence" )
-
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x7F, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
-
-	PORT_START	/* IN1 */
-	PORT_DIPNAME( 0x03, 0x00, "Language", IP_KEY_NONE )
-	PORT_DIPSETTING(	0x00, "English" )
-	PORT_DIPSETTING(	0x01, "French" )
-	PORT_DIPSETTING(	0x02, "German" )
-	PORT_DIPSETTING(	0x03, "Spanish" )
-	PORT_BIT( 0x1c, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START	/* IN2 */
-	PORT_BIT( 0xFF, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START	/* IN3 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	  | IPF_4WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-INPUT_PORTS_END
-
-
 
 INPUT_PORTS_START( fax_input_ports )
 	PORT_START		/* DSW */
@@ -671,7 +732,37 @@ static struct GfxDecodeInfo targ_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+
+
 /* Arbitrary starting colors, modified by the game */
+
+static unsigned char sidetrac_palette[] =
+{
+	0x00,0x00,0x00,   /* BACKGND */
+	0x00,0x00,0x00,   /* CSPACE0 */
+	0x00,0xff,0x00,   /* CSPACE1 */
+	0xff,0xff,0xff,   /* CSPACE2 */
+	0xff,0xff,0xff,   /* CSPACE3 */
+	0xff,0x00,0xff,   /* 5LINES (unused?) */
+	0xff,0xff,0x00,   /* 5MO2VID  */
+	0xff,0xff,0xff	  /* 5MO1VID  */
+};
+
+static unsigned short sidetrac_colortable[] =
+{
+	/* one-bit characters */
+	0, 4,  /* chars 0x00-0x3F */
+	0, 3,  /* chars 0x40-0x7F */
+	0, 2,  /* chars 0x80-0xBF */
+	0, 1,  /* chars 0xC0-0xFF */
+
+	/* Motion Object 1 */
+	0, 7,
+
+	/* Motion Object 2 */
+	0, 6,
+
+};
 
 static unsigned char palette[] =
 {
@@ -787,6 +878,44 @@ static struct DACinterface targ_DAC_interface =
 	{  1,  1 }
 };
 
+
+
+static struct MachineDriver sidetrac_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			705562,        /* 11.289MHz / 16 */
+			0,
+			sidetrac_readmem,writemem,0,0,
+			interrupt,1
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
+	exidy_init_machine,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
+	gfxdecodeinfo,
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
+	0,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	exidy_vh_start,
+	exidy_vh_stop,
+	exidy_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	0,
+	0,
+
+};
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -871,8 +1000,6 @@ static struct MachineDriver venture_machine_driver =
 	0,
 	0
 };
-
-
 
 static struct MachineDriver pepper2_machine_driver =
 {
@@ -1012,6 +1139,62 @@ static struct MachineDriver fax_machine_driver =
   Game ROMs
 ***************************************************************************/
 
+ROM_START( sidetrac_rom )
+	ROM_REGION(0x10000) /* 64k for code */
+	ROM_LOAD( "STL8A-1", 0x2800, 0x0800, 0xd2c9802d )
+	ROM_LOAD( "STL7A-2", 0x3000, 0x0800, 0x56e5fcc9 )
+	ROM_LOAD( "STL6A-2", 0x3800, 0x0800, 0xeb09e8cb )
+	ROM_LOAD( "STL9C-1", 0x4800, 0x0400, 0x94f0b2c0 ) /* prom instead of ram chr gen*/
+	ROM_RELOAD(          0xf800, 0x0800 ) /* for the reset/interrupt vectors */
+
+	ROM_REGION(0x0800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "STL11D", 0x0000, 0x0200, 0xbf5f87a3 )
+ROM_END
+
+ROM_START( targ_rom )
+	ROM_REGION(0x10000) /* 64k for code */
+	ROM_LOAD( "targ10a1", 0x1800, 0x0800, 0x2ef6836a )
+	ROM_LOAD( "targ09a1", 0x2000, 0x0800, 0x98556db9 )
+	ROM_LOAD( "targ08a1", 0x2800, 0x0800, 0xb8a37e39 )
+	ROM_LOAD( "targ07a4", 0x3000, 0x0800, 0x9bdfac7b )
+	ROM_LOAD( "targ06a3", 0x3800, 0x0800, 0x84a5a66f )
+	ROM_RELOAD(           0xf800, 0x0800 ) /* for the reset/interrupt vectors */
+
+	ROM_REGION(0x0800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "targ11d1", 0x0000, 0x0400, 0x3f892727 )
+ROM_END
+
+ROM_START( spectar_rom )
+	ROM_REGION(0x10000) /* 64k for code */
+	ROM_LOAD( "SPL11A-3", 0x1000, 0x0800, 0xe657c991 )
+	ROM_LOAD( "SPL10A-2", 0x1800, 0x0800, 0x69936ad1 )
+	ROM_LOAD( "SPL9A-3",  0x2000, 0x0800, 0xe761706d )
+	ROM_LOAD( "SPL8A-2",  0x2800, 0x0800, 0x91ee5806 )
+	ROM_LOAD( "SPL7A-2",  0x3000, 0x0800, 0xb0ad1f17 )
+	ROM_LOAD( "SPL6A-2",  0x3800, 0x0800, 0xa37e3df6 )
+	ROM_RELOAD(           0xf800, 0x0800 )	/* for the reset/interrupt vectors */
+
+	ROM_REGION(0x0800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "HRL11D-2", 0x0000, 0x0400, 0x7d2aa084 )	/* this is actually not used (all FF) */
+	ROM_CONTINUE(         0x0000, 0x0400 )	/* overwrite with the real one */
+ROM_END
+
+ROM_START( spectar1_rom )
+	ROM_REGION(0x10000) /* 64k for code */
+	ROM_LOAD( "spl12a1", 0x0800, 0x0800, 0xefa4d9f2 )
+	ROM_LOAD( "spl11a1", 0x1000, 0x0800, 0xe39df787 )
+	ROM_LOAD( "spl10a1", 0x1800, 0x0800, 0x266a1f3c )
+	ROM_LOAD( "spl9a1",  0x2000, 0x0800, 0x720689a0 )
+	ROM_LOAD( "spl8a1",  0x2800, 0x0800, 0x3c62f338 )
+	ROM_LOAD( "spl7a1",  0x3000, 0x0800, 0x024dbb5f )
+	ROM_LOAD( "spl6a1",  0x3800, 0x0800, 0x408e5a4e )
+	ROM_RELOAD(          0xf800, 0x0800 )	/* for the reset/interrupt vectors */
+
+	ROM_REGION(0x0800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "HRL11D-2", 0x0000, 0x0400, 0x7d2aa084 )	/* this is actually not used (all FF) */
+	ROM_CONTINUE(         0x0000, 0x0400 )	/* overwrite with the real one */
+ROM_END
+
 ROM_START( mtrap_rom )
 	ROM_REGION(0x10000) /* 64k for code */
 	ROM_LOAD( "mtl11a.bin", 0xA000, 0x1000, 0xb4e109f7 )
@@ -1028,9 +1211,8 @@ ROM_START( mtrap_rom )
 	ROM_LOAD( "mta5a.bin", 0x6800, 0x0800, 0xdc40685a )
 	ROM_LOAD( "mta6a.bin", 0x7000, 0x0800, 0x250b2f5f )
 	ROM_LOAD( "mta7a.bin", 0x7800, 0x0800, 0x3ba2700a )
-	ROM_RELOAD( 	0xF800, 0x0800 )
+	ROM_RELOAD(            0xf800, 0x0800 )
 ROM_END
-
 
 ROM_START( venture_rom )
 	ROM_REGION(0x10000) /* 64k for code */
@@ -1052,7 +1234,7 @@ ROM_START( venture_rom )
 	ROM_LOAD( "5a-ac", 0x6800, 0x0800, 0xee5c9752 )
 	ROM_LOAD( "6a-ac", 0x7000, 0x0800, 0x9559adbb )
 	ROM_LOAD( "7a-ac", 0x7800, 0x0800, 0x9c5601b0 )
-	ROM_RELOAD( 0xF800, 0x0800 )
+	ROM_RELOAD(        0xF800, 0x0800 )
 ROM_END
 
 ROM_START( venture2_rom )
@@ -1075,7 +1257,30 @@ ROM_START( venture2_rom )
 	ROM_LOAD( "5a-ac", 0x6800, 0x0800, 0xee5c9752 )
 	ROM_LOAD( "6a-ac", 0x7000, 0x0800, 0x9559adbb )
 	ROM_LOAD( "7a-ac", 0x7800, 0x0800, 0x9c5601b0 )
-	ROM_RELOAD( 	  0xF800, 0x0800 )
+	ROM_RELOAD(        0xF800, 0x0800 )
+ROM_END
+
+ROM_START( venture4_rom )
+	ROM_REGION(0x10000) /* 64k for code */
+	ROM_LOAD( "VEL13A-4", 0x8000, 0x1000, 0xe85663c2 )
+	ROM_LOAD( "VEL12A-4", 0x9000, 0x1000, 0x105af728 )
+	ROM_LOAD( "VEL11A-4", 0xA000, 0x1000, 0x462e3420 )
+	ROM_LOAD( "VEL10A-4", 0xB000, 0x1000, 0x0396870c )
+	ROM_LOAD( "VEL9A-4",  0xC000, 0x1000, 0xd51eecee )
+	ROM_LOAD( "VEL8A-4",  0xD000, 0x1000, 0xee6528b1 )
+	ROM_LOAD( "VEL7A-4",  0xE000, 0x1000, 0xea06043a )
+	ROM_LOAD( "VEL6A-4",  0xF000, 0x1000, 0x450424f6 )
+
+	ROM_REGION(0x0800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "VEL11D-2", 0x0000, 0x0800, 0x4e34ad82 )
+
+	ROM_REGION(0x10000) /* 64k for audio */
+	ROM_LOAD( "VEA3A-2", 0x5800, 0x0800, 0x98d4ba30 )
+	ROM_LOAD( "4a-ac",   0x6000, 0x0800, 0x9bd6ad80 )
+	ROM_LOAD( "5a-ac",   0x6800, 0x0800, 0xee5c9752 )
+	ROM_LOAD( "6a-ac",   0x7000, 0x0800, 0x9559adbb )
+	ROM_LOAD( "7a-ac",   0x7800, 0x0800, 0x9c5601b0 )
+	ROM_RELOAD(          0xF800, 0x0800 )
 ROM_END
 
 ROM_START( pepper2_rom )
@@ -1095,7 +1300,7 @@ ROM_START( pepper2_rom )
 	ROM_LOAD( "audio_5a", 0x6800, 0x0800, 0x96de524a )
 	ROM_LOAD( "audio_6a", 0x7000, 0x0800, 0xf2685a2c )
 	ROM_LOAD( "audio_7a", 0x7800, 0x0800, 0xe5a6f8ec )
-	ROM_RELOAD(    0xF800, 0x0800 )
+	ROM_RELOAD(           0xF800, 0x0800 )
 ROM_END
 
 ROM_START( hardhat_rom )
@@ -1115,35 +1320,6 @@ ROM_START( hardhat_rom )
 	ROM_LOAD( "HHA-1.6A", 0x7000, 0x0800, 0xeebb3ca3 )
 	ROM_LOAD( "HHA-1.7A", 0x7800, 0x0800, 0xf2510c27 )
 	ROM_RELOAD(           0xF800, 0x0800 )
-ROM_END
-
-ROM_START( targ_rom )
-	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "targ10a1", 0x1800, 0x0800, 0x2ef6836a )
-	ROM_LOAD( "targ09a1", 0x2000, 0x0800, 0x98556db9 )
-	ROM_LOAD( "targ08a1", 0x2800, 0x0800, 0xb8a37e39 )
-	ROM_LOAD( "targ07a4", 0x3000, 0x0800, 0x9bdfac7b )
-	ROM_LOAD( "targ06a3", 0x3800, 0x0800, 0x84a5a66f )
-	ROM_RELOAD(    0xf800, 0x0800 ) /* for the reset/interrupt vectors */
-
-	ROM_REGION(0x0800)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "targ11d1", 0x0000, 0x0400, 0x3f892727 )
-ROM_END
-
-ROM_START( spectar_rom )
-	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "spl12a1", 0x0800, 0x0800, 0xefa4d9f2 )
-	ROM_LOAD( "spl11a1", 0x1000, 0x0800, 0xe39df787 )
-	ROM_LOAD( "spl10a1", 0x1800, 0x0800, 0x266a1f3c )
-	ROM_LOAD( "spl9a1",  0x2000, 0x0800, 0x720689a0 )
-	ROM_LOAD( "spl8a1",  0x2800, 0x0800, 0x3c62f338 )
-	ROM_LOAD( "spl7a1",  0x3000, 0x0800, 0x024dbb5f )
-	ROM_LOAD( "spl6a1",  0x3800, 0x0800, 0x408e5a4e )
-	ROM_RELOAD(   0xf800, 0x0800 )	/* for the reset/interrupt vectors */
-
-	ROM_REGION(0x0800)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "splaud",  0x0000, 0x0400, 0x7d2aa084 )	/* this is actually not used (all FF) */
-	ROM_CONTINUE(	0x0000, 0x0400 )	/* overwrite with the real one */
 ROM_END
 
 ROM_START( fax_rom )
@@ -1185,12 +1361,12 @@ ROM_START( fax_rom )
 
 	ROM_REGION(0x0800)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "fxl1-11d.32", 0x0000, 0x0800, 0xba2a0000 )
-	ROM_CONTINUE(	0x0000, 0x0800 )	/* overwrite with the real one - should be a 2716? */
+	ROM_CONTINUE(            0x0000, 0x0800 )	/* overwrite with the real one - should be a 2716? */
 
 	ROM_REGION(0x10000) /* 64k for audio */
 	ROM_LOAD( "fxa2-6a.16", 0x7000, 0x0800, 0xf567778f )
 	ROM_LOAD( "fxa2-7a.16", 0x7800, 0x0800, 0x653e9794 )
-	ROM_RELOAD( 			0xF800, 0x0800 )
+	ROM_RELOAD(             0xF800, 0x0800 )
 ROM_END
 
 
@@ -1375,6 +1551,110 @@ static void fax_hisave(void)
 Game Driver
 ***************************************************************************/
 
+struct GameDriver sidetrac_driver =
+{
+	__FILE__,
+	0,
+	"sidetrac",
+	"Side Track",
+	"1979",
+	"Exidy",
+	"Marc LaFontaine\nBrian Levine\nMike Balfour",
+	0,
+	&sidetrac_machine_driver,
+
+	sidetrac_rom,
+	0, 0,
+	0,
+	0,
+
+	sidetrac_input_ports,
+
+	0, sidetrac_palette, sidetrac_colortable,
+
+	ORIENTATION_DEFAULT,
+
+	0,0
+};
+
+struct GameDriver targ_driver =
+{
+	__FILE__,
+	0,
+	"targ",
+	"Targ",
+	"1980",
+	"Exidy",
+	"Neil Bradley (hardware info)\nDan Boris (adaptation of Venture driver)",
+	0,
+	&targ_machine_driver,
+
+	targ_rom,
+	0, 0,
+	targ_sample_names,
+	0,
+
+	targ_input_ports,
+
+	0, targ_palette, colortable,
+
+	ORIENTATION_DEFAULT,
+
+	targ_hiload,targ_hisave
+};
+
+struct GameDriver spectar_driver =
+{
+	__FILE__,
+	0,
+	"spectar",
+	"Spectar (revision 3)",
+	"1980",
+	"Exidy",
+	"Neil Bradley (hardware info)\nDan Boris (adaptation of Venture driver)",
+	0,
+	&targ_machine_driver,
+
+	spectar_rom,
+	0, 0,
+	targ_sample_names,
+	0,
+
+	spectar_input_ports,
+
+	0, spectar_palette, colortable,
+
+	ORIENTATION_DEFAULT,
+
+	targ_hiload,targ_hisave
+};
+
+struct GameDriver spectar1_driver =
+{
+	__FILE__,
+	&spectar_driver,
+	"spectar1",
+	"Spectar (revision 1?)",
+	"1980",
+	"Exidy",
+	"Neil Bradley (hardware info)\nDan Boris (adaptation of Venture driver)",
+	0,
+	&targ_machine_driver,
+
+	spectar1_rom,
+	0, 0,
+	targ_sample_names,
+	0,
+
+	spectar_input_ports,
+
+	0, spectar_palette, colortable,
+
+	ORIENTATION_DEFAULT,
+
+	targ_hiload,targ_hisave
+};
+
 struct GameDriver mtrap_driver =
 {
 	__FILE__,
@@ -1399,7 +1679,6 @@ struct GameDriver mtrap_driver =
 
 	mtrap_hiload,mtrap_hisave
 };
-
 
 struct GameDriver venture_driver =
 {
@@ -1439,6 +1718,31 @@ struct GameDriver venture2_driver =
 	&venture_machine_driver,
 
 	venture2_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	venture_input_ports,
+
+	0, palette, colortable,
+	ORIENTATION_DEFAULT,
+
+	venture_hiload,venture_hisave
+};
+
+struct GameDriver venture4_driver =
+{
+	__FILE__,
+	&venture_driver,
+	"venture4",
+	"Venture (version 4)",
+	"1981",
+	"Exidy",
+	"Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)",
+	0,
+	&venture_machine_driver,
+
+	venture4_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
@@ -1499,58 +1803,6 @@ struct GameDriver hardhat_driver =
 	ORIENTATION_DEFAULT,
 
 	0, 0
-};
-
-struct GameDriver targ_driver =
-{
-	__FILE__,
-	0,
-	"targ",
-	"Targ",
-	"1980",
-	"Exidy",
-	"Neil Bradley (hardware info)\nDan Boris (adaptation of Venture driver)",
-	0,
-	&targ_machine_driver,
-
-	targ_rom,
-	0, 0,
-	targ_sample_names,
-	0,
-
-	targ_input_ports,
-
-	0, targ_palette, colortable,
-
-	ORIENTATION_DEFAULT,
-
-	targ_hiload,targ_hisave
-};
-
-struct GameDriver spectar_driver =
-{
-	__FILE__,
-	0,
-	"spectar",
-	"Spectar",
-	"1980",
-	"Exidy",
-	"Neil Bradley (hardware info)\nDan Boris (adaptation of Venture driver)",
-	0,
-	&targ_machine_driver,
-
-	spectar_rom,
-	0, 0,
-	targ_sample_names,
-	0,
-
-	spectar_input_ports,
-
-	0, spectar_palette, colortable,
-
-	ORIENTATION_DEFAULT,
-
-	targ_hiload,targ_hisave
 };
 
 struct GameDriver fax_driver =

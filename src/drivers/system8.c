@@ -3,6 +3,8 @@
 Up'n Down, Mister Viking, Flicky, S.W.A.T., Water Match and Bull Fight are known
 to run on IDENTICAL hardware (they were sold by Bally-Midway as ROM swaps).
 
+TODO: fix priority in Teddy Boy Blues woman bonus screen.
+
 ******************************************************************************/
 
 #include "driver.h"
@@ -11,9 +13,16 @@ to run on IDENTICAL hardware (they were sold by Bally-Midway as ROM swaps).
 /* in machine/segacrpt.c */
 void mrviking_decode(void);
 void flicky_decode(void);
+void bullfgtj_decode(void);
+void nprinces_decode(void);
 void seganinj_decode(void);
 void imsorry_decode(void);
 void teddybb_decode(void);
+void myheroj_decode(void);
+void wboy_decode(void);
+void fdwarrio_decode(void);
+void blockgal_decode(void);
+
 
 
 static void system8_init_machine(void)
@@ -134,51 +143,51 @@ static struct MemoryWriteAddress choplift_writemem[] =
 
 static struct IOReadPort readport[] =
 {
-	{ 0x0000, 0x0000, input_port_0_r },	/* joy1 */
-	{ 0x0004, 0x0004, input_port_1_r },	/* joy2 */
-	{ 0x0008, 0x0008, input_port_2_r },	/* coin,start */
-	{ 0x000c, 0x000c, input_port_3_r },	/* DIP2 */
-	{ 0x000d, 0x000d, input_port_4_r },	/* DIP1 some games read it from here... */
-	{ 0x0010, 0x0010, input_port_4_r },	/* DIP1 ... and some others from here */
-										/* but there are games which check BOTH! */
-	{ 0x0015, 0x0015, system8_videomode_r },
-	{ 0x0019, 0x0019, system8_videomode_r },	/* mirror address */
+	{ 0x00, 0x00, input_port_0_r },	/* joy1 */
+	{ 0x04, 0x04, input_port_1_r },	/* joy2 */
+	{ 0x08, 0x08, input_port_2_r },	/* coin,start */
+	{ 0x0c, 0x0c, input_port_3_r },	/* DIP2 */
+	{ 0x0d, 0x0d, input_port_4_r },	/* DIP1 some games read it from here... */
+	{ 0x10, 0x10, input_port_4_r },	/* DIP1 ... and some others from here */
+									/* but there are games which check BOTH! */
+	{ 0x15, 0x15, system8_videomode_r },
+	{ 0x19, 0x19, system8_videomode_r },	/* mirror address */
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort writeport[] =
 {
-	{ 0x0014, 0x0014, system8_soundport_w },	/* sound commands */
-	{ 0x0015, 0x0015, system8_videomode_w },	/* video control and (in some games) bank switching */
-	{ 0x0018, 0x0018, system8_soundport_w },	/* mirror address */
-	{ 0x0019, 0x0019, system8_videomode_w },	/* mirror address */
+	{ 0x14, 0x14, system8_soundport_w },	/* sound commands */
+	{ 0x15, 0x15, system8_videomode_w },	/* video control and (in some games) bank switching */
+	{ 0x18, 0x18, system8_soundport_w },	/* mirror address */
+	{ 0x19, 0x19, system8_videomode_w },	/* mirror address */
 	{ -1 }	/* end of table */
 };
 
 static struct IOReadPort wbml_readport[] =
 {
-	{ 0x0000, 0x0000, input_port_0_r },	/* joy1 */
-	{ 0x0004, 0x0004, input_port_1_r },	/* joy2 */
-	{ 0x0008, 0x0008, input_port_2_r },	/* coin,start */
-	{ 0x000c, 0x000c, input_port_3_r },	/* DIP2 */
-	{ 0x000d, 0x000d, input_port_4_r },	/* DIP1 */
-	{ 0x0015, 0x0015, system8_videomode_r },
-	{ 0x0016, 0x0016, wbml_bg_bankselect_r },
+	{ 0x00, 0x00, input_port_0_r },	/* joy1 */
+	{ 0x04, 0x04, input_port_1_r },	/* joy2 */
+	{ 0x08, 0x08, input_port_2_r },	/* coin,start */
+	{ 0x0c, 0x0c, input_port_3_r },	/* DIP2 */
+	{ 0x0d, 0x0d, input_port_4_r },	/* DIP1 */
+	{ 0x15, 0x15, system8_videomode_r },
+	{ 0x16, 0x16, wbml_bg_bankselect_r },
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort wbml_writeport[] =
 {
-	{ 0x0014, 0x0014, system8_soundport_w },	/* sound commands */
-	{ 0x0015, 0x0015, wbml_bankswitch_w },
-	{ 0x0016, 0x0016, wbml_bg_bankselect_w },
+	{ 0x14, 0x14, system8_soundport_w },	/* sound commands */
+	{ 0x15, 0x15, wbml_bankswitch_w },
+	{ 0x16, 0x16, wbml_bg_bankselect_w },
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort choplift_writeport[] =
 {
-	{ 0x0014, 0x0014, system8_soundport_w },	/* sound commands */
-	{ 0x0015, 0x0015, choplift_bankswitch_w },
+	{ 0x14, 0x14, system8_soundport_w },	/* sound commands */
+	{ 0x15, 0x15, choplift_bankswitch_w },
 	{ -1 }	/* end of table */
 };
 
@@ -507,6 +516,58 @@ INPUT_PORTS_START( flicky_input_ports )
 	PORT_DIPSETTING(    0x00, "Hardest?" )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( bullfgtj_input_ports )
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+
+	PORT_START	/* IN0 */
+	IN0_PORT
+
+	PORT_START      /* DSW1 */
+	DSW1_PORT
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x01, "Cocktail" )
+	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x04, "5" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPNAME( 0x30, 0x30, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x30, "30000" )
+	PORT_DIPSETTING(    0x20, "50000" )
+	PORT_DIPSETTING(    0x10, "70000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
+
 INPUT_PORTS_START( pitfall2_input_ports )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -539,21 +600,21 @@ INPUT_PORTS_START( pitfall2_input_ports )
 	PORT_DIPSETTING(    0x00, "Upright" )
 	PORT_DIPSETTING(    0x01, "Cocktail" )
 	PORT_DIPNAME( 0x06, 0x06, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x06, "3")
+	PORT_DIPSETTING(    0x06, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
 	PORT_DIPNAME( 0x18, 0x18, "Starting Stage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x18, "1")
+	PORT_DIPSETTING(    0x18, "1" )
 	PORT_DIPSETTING(    0x10, "2" )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPNAME( 0x20, 0x00, "Allow Continue", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "No")
-	PORT_DIPSETTING(    0x00, "Yes")
+	PORT_DIPSETTING(    0x20, "No" )
+	PORT_DIPSETTING(    0x00, "Yes" )
 	PORT_DIPNAME( 0x40, 0x40, "Time", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "3 minutes" )
-	PORT_DIPSETTING(    0x00, "2 minutes" )
+	PORT_DIPSETTING(    0x00, "2 Minutes" )
+	PORT_DIPSETTING(    0x40, "3 Minutes" )
 	PORT_DIPNAME( 0x80, 0x00, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
@@ -593,20 +654,20 @@ INPUT_PORTS_START( seganinj_input_ports )
 	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x0C, 0x0C, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x0C, "3" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x04, "5" )
 	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x10, 0x00, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x00, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "20k 70k 120k 170k" )
+	PORT_DIPSETTING(    0x00, "60k 100k 160k 200k" )
+	PORT_DIPNAME( 0x20, 0x00, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "No" )
+	PORT_DIPSETTING(    0x00, "Yes" )
+	PORT_DIPNAME( 0x40, 0x40, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_DIPNAME( 0x80, 0x00, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
@@ -719,8 +780,8 @@ INPUT_PORTS_END
 INPUT_PORTS_START( myhero_input_ports )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
@@ -729,8 +790,8 @@ INPUT_PORTS_START( myhero_input_ports )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
@@ -769,7 +830,60 @@ INPUT_PORTS_START( myhero_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( wbdeluxe_input_ports )
+INPUT_PORTS_START( fdwarrio_input_ports )
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+
+	PORT_START	/* IN0 */
+	IN0_PORT
+
+	PORT_START      /* DSW1 */
+	DSW1_PORT
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x01, "Cocktail" )
+	PORT_DIPNAME( 0x06, 0x06, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x06, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( wboy_input_ports )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Has to be 0 otherwise the game resets */
 												/* if you die after level 1. */
@@ -823,6 +937,83 @@ INPUT_PORTS_START( wbdeluxe_input_ports )
 	PORT_DIPSETTING(    0x80, "Fast" )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( wboyu_input_ports )
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* In WBDeluxe, has to be 0 otherwise */
+												/* the game resets if you die after level 1. */
+												/* Don't know if it's the same in WBoy. */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* down - unused */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* up - unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* down - unused */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* up - unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+
+	PORT_START	/* IN0 */
+	IN0_PORT
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x01, "Cocktail" )
+	PORT_DIPNAME( 0x06, 0x06, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x06, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x07, 0x07, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "4 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x06, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x01, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x07, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x03, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x02, "2 Coins/2 Credits" )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x10, "Yes" )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Mode", IP_KEY_NONE )
+	PORT_DIPSETTING(    0xc0, "Normal Game" )
+	PORT_DIPSETTING(    0x80, "Free Play" )
+	PORT_DIPSETTING(    0x40, "Test Mode" )
+	PORT_DIPSETTING(    0x00, "Endless Game" )
+INPUT_PORTS_END
+
 INPUT_PORTS_START( choplift_input_ports )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -855,7 +1046,7 @@ INPUT_PORTS_START( choplift_input_ports )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x0c, "3")
+	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x08, "2" )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
@@ -863,8 +1054,8 @@ INPUT_PORTS_START( choplift_input_ports )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x20, 0x00, "Bonus Life", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "20000,70000,...")
-	PORT_DIPSETTING(    0x20, "50000,100000,...")
+	PORT_DIPSETTING(    0x00, "20000 70000" )
+	PORT_DIPSETTING(    0x20, "50000 100000" )
 	PORT_DIPNAME( 0x40, 0x00, "Difficulty", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x40, "Hard" )
@@ -912,12 +1103,12 @@ INPUT_PORTS_START( wbml_input_ports )
 	PORT_DIPSETTING(    0x0c, "4" )
 	PORT_DIPSETTING(    0x08, "5" )
 /*	PORT_DIPSETTING(    0x00, "4" ) */
-	PORT_DIPNAME( 0x10, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x00, "Unknown (Difficulty?)", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x00, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Test Mode", IP_KEY_NONE, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
@@ -1224,7 +1415,7 @@ static struct MachineDriver wbml_machine_driver =
 ***************************************************************************/
 
 ROM_START( starjack_rom )
-	ROM_REGION(0x10000)		/* 64k for code */
+	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "5320B", 0x0000, 0x2000, 0x17306628 )
 	ROM_LOAD( "5321A", 0x2000, 0x2000, 0xeb13729b )
 	ROM_LOAD( "5322A", 0x4000, 0x2000, 0x20a44092 )
@@ -1232,7 +1423,7 @@ ROM_START( starjack_rom )
 	ROM_LOAD( "5324",  0x8000, 0x2000, 0xa5b12405 )
 	ROM_LOAD( "5325",  0xa000, 0x2000, 0x1110e8e0 )
 
-	ROM_REGION(0xC000) 		/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "5331", 0x0000, 0x2000, 0x4f2c7db0 )
 	ROM_LOAD( "5330", 0x2000, 0x2000, 0x8a282108 )
 	ROM_LOAD( "5329", 0x4000, 0x2000, 0xa43fd3fd )
@@ -1244,12 +1435,12 @@ ROM_START( starjack_rom )
 	ROM_LOAD( "5318", 0x0000, 0x4000, 0x6086ba1c )
 	ROM_LOAD( "5319", 0x4000, 0x4000, 0x2e80bddc )
 
-	ROM_REGION(0x10000) 		/* 64k for sound cpu */
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "5332", 0x0000, 0x2000, 0x6281a187 )
 ROM_END
 
 ROM_START( starjacs_rom )
-	ROM_REGION(0x10000)		/* 64k for code */
+	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "SJA1IC29", 0x0000, 0x2000, 0x7e425e80 )
 	ROM_LOAD( "SJA1IC30", 0x2000, 0x2000, 0xbf736f7d )
 	ROM_LOAD( "SJA1IC31", 0x4000, 0x2000, 0x5a73537f )
@@ -1257,7 +1448,7 @@ ROM_START( starjacs_rom )
 	ROM_LOAD( "SJA1IC33", 0x8000, 0x2000, 0xb55a3b02 )
 	ROM_LOAD( "SJA1IC34", 0xa000, 0x2000, 0x81dd84e7 )
 
-	ROM_REGION(0xC000) 		/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "5331",     0x0000, 0x2000, 0x4f2c7db0 )
 	ROM_LOAD( "SJA1IC65", 0x2000, 0x2000, 0x8e282508 )
 	ROM_LOAD( "5329",     0x4000, 0x2000, 0xa43fd3fd )
@@ -1272,12 +1463,12 @@ ROM_START( starjacs_rom )
 	ROM_LOAD( "5318", 0x0000, 0x4000, 0x6086ba1c )
 	ROM_LOAD( "5319", 0x4000, 0x4000, 0x2e80bddc )
 
-	ROM_REGION(0x10000) 		/* 64k for sound cpu */
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "5332", 0x0000, 0x2000, 0x6281a187 )
 ROM_END
 
 ROM_START( upndown_rom )
-	ROM_REGION(0x10000)		/* 64k for code */
+	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "UPND5679.BIN", 0x0000, 0x2000, 0xf4bca48a )
 	ROM_LOAD( "UPND5680.BIN", 0x2000, 0x2000, 0xa24d61c1 )
 	ROM_LOAD( "UPND5681.BIN", 0x4000, 0x2000, 0x3aa82e56 )
@@ -1285,7 +1476,7 @@ ROM_START( upndown_rom )
 	ROM_LOAD( "UPND5683.BIN", 0x8000, 0x2000, 0x14e87170 )
 	ROM_LOAD( "UPND5684.BIN", 0xA000, 0x2000, 0xdfbc8d48 )
 
-	ROM_REGION(0xC000) 		/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "UPND5527.BIN", 0x0000, 0x2000, 0x0caa0934 )
 	ROM_LOAD( "UPND5526.BIN", 0x2000, 0x2000, 0x377bebb9 )
 	ROM_LOAD( "UPND5525.BIN", 0x4000, 0x2000, 0x0bf84b26 )
@@ -1297,20 +1488,20 @@ ROM_START( upndown_rom )
 	ROM_LOAD( "UPND5514.BIN", 0x0000, 0x4000, 0x953bcab7 )
 	ROM_LOAD( "UPND5515.BIN", 0x4000, 0x4000, 0xb93737a3 )
 
-	ROM_REGION(0x10000) 		/* 64k for sound cpu */
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "UPND5528.BIN", 0x0000, 0x2000, 0x058ca4a2 )
 ROM_END
 
 ROM_START( mrviking_rom )
-	ROM_REGION(0x10000)		/* 64k for code */
-	ROM_LOAD( "VEPR5873", 0x0000, 0x2000, 0x09ac75ec )
-	ROM_LOAD( "VEPR5874", 0x2000, 0x2000, 0x29dd566b )
-	ROM_LOAD( "VEPR5975", 0x4000, 0x2000, 0x3129e8e5 )
-	ROM_LOAD( "VEPR5876", 0x6000, 0x2000, 0x1cc75bf1 )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "VEPR5873", 0x0000, 0x2000, 0x09ac75ec )	/* encrypted */
+	ROM_LOAD( "VEPR5874", 0x2000, 0x2000, 0x29dd566b )	/* encrypted */
+	ROM_LOAD( "VEPR5975", 0x4000, 0x2000, 0x3129e8e5 )	/* encrypted */
+	ROM_LOAD( "VEPR5876", 0x6000, 0x2000, 0x1cc75bf1 )	/* encrypted */
 	ROM_LOAD( "VEPR5755", 0x8000, 0x2000, 0x724cbf9c )
 	ROM_LOAD( "VEPR5756", 0xa000, 0x2000, 0x1150cffc )
 
-	ROM_REGION(0xC000) 		/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "VEPR5762", 0x0000, 0x2000, 0xea1613ce )
 	ROM_LOAD( "VEPR5761", 0x2000, 0x2000, 0x8fea105a )
 	ROM_LOAD( "VEPR5760", 0x4000, 0x2000, 0x1d49c9fb )
@@ -1322,16 +1513,16 @@ ROM_START( mrviking_rom )
 	ROM_LOAD( "VIEPR574", 0x0000, 0x4000, 0xcbfc40b2 )
 	ROM_LOAD( "VEPR5750", 0x4000, 0x4000, 0xf392a85c )
 
-	ROM_REGION(0x10000) 		/* 64k for sound cpu */
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "VEPR5763", 0x0000, 0x2000, 0x8e6f1da3 )
 ROM_END
 
 ROM_START( flicky_rom )
-	ROM_REGION(0x10000)		/* 64k for code */
+	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "EPR5978", 0x0000, 0x4000, 0x54f40c56 )	/* encrypted */
 	ROM_LOAD( "EPR5979", 0x4000, 0x4000, 0x2cbebf9a )	/* encrypted */
 
-	ROM_REGION(0xC000) 		/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "EPR6001", 0x0000, 0x4000, 0x933e3ed6 )
 	ROM_LOAD( "EPR6000", 0x4000, 0x4000, 0x9b3e5b02 )
 	ROM_LOAD( "EPR5999", 0x8000, 0x4000, 0x91f438f4 )
@@ -1340,39 +1531,81 @@ ROM_START( flicky_rom )
 	ROM_LOAD( "EPR5855", 0x0000, 0x4000, 0x55f40962 )
 	ROM_LOAD( "EPR5856", 0x4000, 0x4000, 0xae813df9 )
 
-	ROM_REGION(0x10000) 		/* 64k for sound cpu */
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "EPR5869", 0x0000, 0x2000, 0x9e237d9b )
 ROM_END
 
+ROM_START( flicky2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "f_9",  0x0000, 0x2000, 0x3433eb99 )	/* encrypted */
+	ROM_LOAD( "f_10", 0x2000, 0x2000, 0x152b3063 )	/* encrypted */
+	ROM_LOAD( "f_11", 0x4000, 0x2000, 0xfb0cfdb2 )	/* encrypted */
+	ROM_LOAD( "f_12", 0x6000, 0x2000, 0x6f1a9a42 )	/* encrypted */
+
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "EPR6001", 0x0000, 0x4000, 0x933e3ed6 )
+	ROM_LOAD( "EPR6000", 0x4000, 0x4000, 0x9b3e5b02 )
+	ROM_LOAD( "EPR5999", 0x8000, 0x4000, 0x91f438f4 )
+
+	ROM_REGION(0x8000)	/* 32k for sprites data */
+	ROM_LOAD( "EPR5855", 0x0000, 0x4000, 0x55f40962 )
+	ROM_LOAD( "EPR5856", 0x4000, 0x4000, 0xae813df9 )
+
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_LOAD( "EPR5869", 0x0000, 0x2000, 0x9e237d9b )
+ROM_END
+
+ROM_START( bullfgtj_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "6071", 0x0000, 0x4000, 0x962feedd )	/* encrypted */
+	ROM_LOAD( "6072", 0x4000, 0x4000, 0x98bc6886 )	/* encrypted */
+	ROM_LOAD( "6073", 0x8000, 0x4000, 0xceb85852 )
+
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "6089", 0x0000, 0x2000, 0xb9c37229 )
+	ROM_LOAD( "6088", 0x2000, 0x2000, 0x785953d3 )
+	ROM_LOAD( "6087", 0x4000, 0x2000, 0x63b24558 )
+	ROM_LOAD( "6086", 0x6000, 0x2000, 0xe98f0681 )
+	ROM_LOAD( "6085", 0x8000, 0x2000, 0x2e64d932 )
+	ROM_LOAD( "6084", 0xA000, 0x2000, 0x936ea324 )
+
+	ROM_REGION(0x8000)	/* 32k for sprites data */
+	ROM_LOAD( "6069", 0x0000, 0x4000, 0x63318d9f )
+	ROM_LOAD( "6070", 0x4000, 0x4000, 0xc415c0a7 )
+
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_LOAD( "6077", 0x0000, 0x2000, 0xb1141920 )
+ROM_END
+
 ROM_START( pitfall2_rom )
-	ROM_REGION(0x10000)		/* 64k for code */
+	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "EPR6623" , 0x0000, 0x4000, 0xf9cbca17 )
 	ROM_LOAD( "EPR6624A", 0x4000, 0x4000, 0xec525d6e )
 	ROM_LOAD( "EPR6625" , 0x8000, 0x4000, 0x3eb82172 )
 
-	ROM_REGION(0xC000) 		/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "EPR6474A", 0x0000, 0x2000, 0x2516b784 )
-	ROM_LOAD( "EPR6473" , 0x2000, 0x2000, 0x9b50df0c )
+	ROM_LOAD( "EPR6473",  0x2000, 0x2000, 0x9b50df0c )
 	ROM_LOAD( "EPR6472A", 0x4000, 0x2000, 0x352e5484 )
 	ROM_LOAD( "EPR6471A", 0x6000, 0x2000, 0x7649c70f )
 	ROM_LOAD( "EPR6470A", 0x8000, 0x2000, 0xa1bfc31d )
 	ROM_LOAD( "EPR6469A", 0xa000, 0x2000, 0x680bebef )
 
 	ROM_REGION(0x8000)	/* 32k for sprites data */
-	ROM_LOAD( "EPR6454A" , 0x0000, 0x4000, 0x460b8fe3 )
-	ROM_LOAD( "EPR6455"  , 0x4000, 0x4000, 0x83827770 )
+	ROM_LOAD( "EPR6454A", 0x0000, 0x4000, 0x460b8fe3 )
+	ROM_LOAD( "EPR6455",  0x4000, 0x4000, 0x83827770 )
 
-	ROM_REGION(0x10000)		/* 64k for sound cpu */
-	ROM_LOAD( "EPR6462"  , 0x0000, 0x2000, 0x0ecd1add )
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_LOAD( "EPR6462", 0x0000, 0x2000, 0x0ecd1add )
 ROM_END
 
 ROM_START( seganinj_rom )
-	ROM_REGION(0x10000)		/* 64k for code */
-	ROM_LOAD( "ic116.bin", 0x0000, 0x4000, 0x5d7df5a9 )
-	ROM_LOAD( "ic109.bin", 0x4000, 0x4000, 0xd54cf260 )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "ic116.bin", 0x0000, 0x4000, 0x5d7df5a9 )	/* encrypted */
+	ROM_LOAD( "ic109.bin", 0x4000, 0x4000, 0xd54cf260 )	/* encrypted */
 	ROM_LOAD( "7151.96",   0x8000, 0x4000, 0x51e6fc7e )
 
-	ROM_REGION(0xC000) 		/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "6593.62", 0x0000, 0x2000, 0xc6859747 )
 	ROM_LOAD( "6592.61", 0x2000, 0x2000, 0xb3e748af )
 	ROM_LOAD( "6591.64", 0x4000, 0x2000, 0xc0e0f1a2 )
@@ -1384,19 +1617,19 @@ ROM_START( seganinj_rom )
 	ROM_LOAD( "6546.117", 0x0000, 0x4000, 0x111f4dd1 )
 	ROM_LOAD( "6548.04",  0x4000, 0x4000, 0x75cd29ef )
 	ROM_LOAD( "6547.110", 0x8000, 0x4000, 0xe45abeae )
-	ROM_LOAD( "6549.05",  0xC000, 0x4000, 0x640faed7 )
+	ROM_LOAD( "6549.05",  0xc000, 0x4000, 0x640faed7 )
 
-	ROM_REGION(0x10000) 		/* 64k for sound cpu */
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "6559.120", 0x0000, 0x2000, 0x1b6c3eb6 )
 ROM_END
 
 ROM_START( seganinu_rom )
-	ROM_REGION(0x10000)		/* 64k for code */
+	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "7149.116", 0x0000, 0x4000, 0x94ccb6ae )
 	ROM_LOAD( "7150.109", 0x4000, 0x4000, 0x5699ffdd )
 	ROM_LOAD( "7151.96",  0x8000, 0x4000, 0x51e6fc7e )
 
-	ROM_REGION(0xC000) 		/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "6593.62", 0x0000, 0x2000, 0xc6859747 )
 	ROM_LOAD( "6592.61", 0x2000, 0x2000, 0xb3e748af )
 	ROM_LOAD( "6591.64", 0x4000, 0x2000, 0xc0e0f1a2 )
@@ -1408,40 +1641,67 @@ ROM_START( seganinu_rom )
 	ROM_LOAD( "6546.117", 0x0000, 0x4000, 0x111f4dd1 )
 	ROM_LOAD( "6548.04",  0x4000, 0x4000, 0x75cd29ef )
 	ROM_LOAD( "6547.110", 0x8000, 0x4000, 0xe45abeae )
-	ROM_LOAD( "6549.05",  0xC000, 0x4000, 0x640faed7 )
+	ROM_LOAD( "6549.05",  0xc000, 0x4000, 0x640faed7 )
 
-	ROM_REGION(0x10000) 		/* 64k for sound cpu */
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "6559.120", 0x0000, 0x2000, 0x1b6c3eb6 )
 ROM_END
 
 ROM_START( nprinces_rom )
-	ROM_REGION(0x10000)		/* 64k for code */
-	ROM_LOAD( "nprinces.001", 0x0000, 0x4000, 0xc5d77061 )	/* encrypted */
-	ROM_LOAD( "nprinces.002", 0x4000, 0x4000, 0xdbaf37b9 )	/* encrypted */
-	ROM_LOAD( "7151.96",      0x8000, 0x4000, 0x51e6fc7e )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "EPR6550.116", 0x0000, 0x4000, 0x60474411 )	/* encrypted */
+	ROM_LOAD( "EPR6551.109", 0x4000, 0x4000, 0xc347bfb1 )	/* encrypted */
+	ROM_LOAD( "7151.96",     0x8000, 0x4000, 0x51e6fc7e )
 
-	ROM_REGION(0xC000) 		/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "nprinces.011", 0x0000, 0x4000, 0x7b934bad )
-	ROM_LOAD( "nprinces.010", 0x4000, 0x4000, 0x74b9f50f )
-	ROM_LOAD( "nprinces.009", 0x8000, 0x4000, 0xa81465ce )
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "6593.62",    0x0000, 0x2000, 0xc6859747 )
+	ROM_LOAD( "EPR6557.61", 0x2000, 0x2000, 0xb50edcea )
+	ROM_LOAD( "6591.64",    0x4000, 0x2000, 0xc0e0f1a2 )
+	ROM_LOAD( "EPR6555.63", 0x6000, 0x2000, 0xb3d904ad )
+	ROM_LOAD( "6589.66",    0x8000, 0x2000, 0x90532037 )
+	ROM_LOAD( "EPR6553.65", 0xA000, 0x2000, 0x17c145f9 )
 
 	ROM_REGION(0x10000)	/* 64k for sprites data */
 	ROM_LOAD( "6546.117", 0x0000, 0x4000, 0x111f4dd1 )
 	ROM_LOAD( "6548.04",  0x4000, 0x4000, 0x75cd29ef )
 	ROM_LOAD( "6547.110", 0x8000, 0x4000, 0xe45abeae )
-	ROM_LOAD( "6549.05",  0xC000, 0x4000, 0x640faed7 )
+	ROM_LOAD( "6549.05",  0xc000, 0x4000, 0x640faed7 )
 
-	ROM_REGION(0x10000) 		/* 64k for sound cpu */
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_LOAD( "6559.120", 0x0000, 0x2000, 0x1b6c3eb6 )
+ROM_END
+
+ROM_START( nprinceb_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "nprinces.001", 0x0000, 0x4000, 0xc5d77061 )	/* encrypted */
+	ROM_LOAD( "nprinces.002", 0x4000, 0x4000, 0xdbaf37b9 )	/* encrypted */
+	ROM_LOAD( "7151.96",      0x8000, 0x4000, 0x51e6fc7e )
+
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "6593.62",    0x0000, 0x2000, 0xc6859747 )
+	ROM_LOAD( "EPR6557.61", 0x2000, 0x2000, 0xb50edcea )
+	ROM_LOAD( "6591.64",    0x4000, 0x2000, 0xc0e0f1a2 )
+	ROM_LOAD( "EPR6555.63", 0x6000, 0x2000, 0xb3d904ad )
+	ROM_LOAD( "6589.66",    0x8000, 0x2000, 0x90532037 )
+	ROM_LOAD( "EPR6553.65", 0xA000, 0x2000, 0x17c145f9 )
+
+	ROM_REGION(0x10000)	/* 64k for sprites data */
+	ROM_LOAD( "6546.117", 0x0000, 0x4000, 0x111f4dd1 )
+	ROM_LOAD( "6548.04",  0x4000, 0x4000, 0x75cd29ef )
+	ROM_LOAD( "6547.110", 0x8000, 0x4000, 0xe45abeae )
+	ROM_LOAD( "6549.05",  0xc000, 0x4000, 0x640faed7 )
+
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "6559.120", 0x0000, 0x2000, 0x1b6c3eb6 )
 ROM_END
 
 ROM_START( imsorry_rom )
-	ROM_REGION(0x10000)		/* 64k for code */
+	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "EPR6676.116", 0x0000, 0x4000, 0x2fbc048a )	/* encrypted */
 	ROM_LOAD( "EPR6677.109", 0x4000, 0x4000, 0xf469b72f )	/* encrypted */
 	ROM_LOAD( "EPR6678.96",  0x8000, 0x4000, 0xa0d133c9 )
 
-	ROM_REGION(0xC000) 		/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "EPR6684.U62", 0x0000, 0x2000, 0x187fed0f )
 	ROM_LOAD( "EPR6683.U61", 0x2000, 0x2000, 0xb8bc525c )
 	ROM_LOAD( "EPR6682.U64", 0x4000, 0x2000, 0xe2a11725 )
@@ -1453,17 +1713,39 @@ ROM_START( imsorry_rom )
 	ROM_LOAD( "EPR66XX.117", 0x0000, 0x4000, 0x74bbf555 )
 	ROM_LOAD( "EPR66XX.U04", 0x4000, 0x4000, 0x0d3cb5da )
 
-	ROM_REGION(0x10000) 		/* 64k for sound cpu */
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_LOAD( "EPR6656.113", 0x0000, 0x2000, 0x50a6ee34 )
+ROM_END
+
+ROM_START( imsorryj_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "6647.116", 0x0000, 0x4000, 0xc09620e6 )	/* encrypted */
+	ROM_LOAD( "6648.109", 0x4000, 0x4000, 0x92b8ab6c )	/* encrypted */
+	ROM_LOAD( "6649.96",  0x8000, 0x4000, 0x20ce0e08 )
+
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "6655.62", 0x0000, 0x2000, 0x64084486 )
+	ROM_LOAD( "6654.61", 0x2000, 0x2000, 0x356ddad7 )
+	ROM_LOAD( "6653.64", 0x4000, 0x2000, 0xe49dfdc5 )
+	ROM_LOAD( "6652.63", 0x6000, 0x2000, 0xe01d697d )
+	ROM_LOAD( "6651.66", 0x8000, 0x2000, 0x88b2da3e )
+	ROM_LOAD( "6650.65", 0xA000, 0x2000, 0x3dbe9502 )
+
+	ROM_REGION(0x8000)	/* 32k for sprites data */
+	ROM_LOAD( "EPR66XX.117", 0x0000, 0x4000, 0x74bbf555 )
+	ROM_LOAD( "EPR66XX.U04", 0x4000, 0x4000, 0x0d3cb5da )
+
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "EPR6656.113", 0x0000, 0x2000, 0x50a6ee34 )
 ROM_END
 
 ROM_START( teddybb_rom )
-	ROM_REGION(0x10000)		/* 64k for code */
+	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "6768.116", 0x0000, 0x4000, 0x3cf801d6 )	/* encrypted */
 	ROM_LOAD( "6769.109", 0x4000, 0x4000, 0x81ca459c )	/* encrypted */
 	ROM_LOAD( "6770.96",  0x8000, 0x4000, 0xb23d4b9b )
 
-	ROM_REGION(0xC000) 		/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "6776.62", 0x0000, 0x2000, 0x49ceeb9a )
 	ROM_LOAD( "6775.61", 0x2000, 0x2000, 0xa1971e53 )
 	ROM_LOAD( "6774.64", 0x4000, 0x2000, 0xa18e5f9c )
@@ -1475,19 +1757,19 @@ ROM_START( teddybb_rom )
 	ROM_LOAD( "6735.117", 0x0000, 0x4000, 0x80439145 )
 	ROM_LOAD( "6737.004", 0x4000, 0x4000, 0x1db4d610 )
 	ROM_LOAD( "6736.110", 0x8000, 0x4000, 0x8759c703 )
-	ROM_LOAD( "6738.005", 0xC000, 0x4000, 0x57a9291d )
+	ROM_LOAD( "6738.005", 0xc000, 0x4000, 0x57a9291d )
 
-	ROM_REGION(0x10000) 		/* 64k for sound cpu */
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "6748.120", 0x0000, 0x2000, 0xe5fa8a54 )
 ROM_END
 
 ROM_START( myhero_rom )
-	ROM_REGION(0x10000)		/* 64k for code */
+	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "EPR6963B.116", 0x0000, 0x4000, 0x7a64afc6 )
 	ROM_LOAD( "EPR6964A.109", 0x4000, 0x4000, 0xffc41534 )
 	ROM_LOAD( "EPR6965.96",   0x8000, 0x4000, 0x0dd388ef )
 
-	ROM_REGION(0xC000) 		/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "EPR6966.U62", 0x0000, 0x2000, 0x6917061f )
 	ROM_LOAD( "EPR6961.U61", 0x2000, 0x2000, 0x3b22387e )
 	ROM_LOAD( "EPR6960.U64", 0x4000, 0x2000, 0xe2befe90 )
@@ -1499,14 +1781,136 @@ ROM_START( myhero_rom )
 	ROM_LOAD( "EPR6921.117", 0x0000, 0x4000, 0x8fbbe309 )
 	ROM_LOAD( "EPR6923.U04", 0x4000, 0x4000, 0x475b7a49 )
 	ROM_LOAD( "EPR6922.110", 0x8000, 0x4000, 0xb0224d0a )
-	ROM_LOAD( "EPR6924.U05", 0xC000, 0x4000, 0x18f73c5d )
+	ROM_LOAD( "EPR6924.U05", 0xc000, 0x4000, 0x18f73c5d )
 
-	ROM_REGION(0x10000) 		/* 64k for sound cpu */
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "EPR69XX.120", 0x0000, 0x2000, 0x49f0862c )
 ROM_END
 
+ROM_START( myheroj_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	/* all the three program ROMs have bits 0-1 swapped */
+	/* when decoded, 07 is identical to the unencrypted one. The other */
+	/* two are different. */
+	ROM_LOAD( "ry-11.rom", 0x0000, 0x4000, 0x6077b465 )	/* encrypted */
+	ROM_LOAD( "ry-09.rom", 0x4000, 0x4000, 0x1f450dc5 )	/* encrypted */
+	ROM_LOAD( "ry-07.rom", 0x8000, 0x4000, 0x208b88ef )
+
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	/* all three gfx ROMs have address lines A4 and A5 swapped, also #1 and #3 */
+	/* have data lines D0 and D6 swapped, while #2 has data lines D1 and D5 swapped. */
+	ROM_LOAD( "ry-04.rom", 0x0000, 0x4000, 0x9ed25b08 )
+	ROM_LOAD( "ry-03.rom", 0x4000, 0x4000, 0x5c509e4e )
+	ROM_LOAD( "ry-02.rom", 0x8000, 0x4000, 0x5b22fdb8 )
+
+	ROM_REGION(0x10000)	/* 64k for sprites data */
+	ROM_LOAD( "EPR6921.117", 0x0000, 0x4000, 0x8fbbe309 )
+	ROM_LOAD( "EPR6923.U04", 0x4000, 0x4000, 0x475b7a49 )
+	ROM_LOAD( "EPR6922.110", 0x8000, 0x4000, 0xb0224d0a )
+	ROM_LOAD( "EPR6924.U05", 0xc000, 0x4000, 0x18f73c5d )
+
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_LOAD( "ry-01.rom", 0x0000, 0x2000, 0x939e9d86 )
+ROM_END
+
+ROM_START( fdwarrio_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "4d.116", 0x0000, 0x4000, 0x8261e97f )	/* encrypted */
+	ROM_LOAD( "4d.109", 0x4000, 0x4000, 0xa0d7938d )	/* encrypted */
+	ROM_LOAD( "4d.96",  0x8000, 0x4000, 0xf3ddce83 )
+
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "4d.62", 0x0000, 0x2000, 0x0428bda8 )
+	ROM_LOAD( "4d.61", 0x2000, 0x2000, 0x3dee387e )
+	ROM_LOAD( "4d.64", 0x4000, 0x2000, 0x43c0a3a6 )
+	ROM_LOAD( "4d.63", 0x6000, 0x2000, 0xa9ada417 )
+	ROM_LOAD( "4d.66", 0x8000, 0x2000, 0x2853676f )
+	ROM_LOAD( "4d.65", 0xA000, 0x2000, 0x11c3b5e9 )
+
+	ROM_REGION(0x10000)	/* 64k for sprites data */
+	ROM_LOAD( "4d.117", 0x0000, 0x4000, 0x0247b191 )
+	ROM_LOAD( "4d.04",  0x4000, 0x4000, 0xd8f9a681 )
+	ROM_LOAD( "4d.110", 0x8000, 0x4000, 0xa789e6d1 )
+	ROM_LOAD( "4d.05",  0xc000, 0x4000, 0x412f7991 )
+
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_LOAD( "4d.120", 0x0000, 0x2000, 0x81a67906 )
+ROM_END
+
+ROM_START( wboy_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "b-1.bin", 0x0000, 0x4000, 0x91dcaa98 )
+	ROM_LOAD( "b-2.bin", 0x4000, 0x4000, 0xa584a3e6 )
+	ROM_LOAD( "b-3.bin", 0x8000, 0x4000, 0xfc09e47f )
+
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "IC062_97.BIN", 0x0000, 0x2000, 0xfc185d64 )
+	ROM_LOAD( "IC061_96.BIN", 0x2000, 0x2000, 0x1ccca0e4 )
+	ROM_LOAD( "IC064_95.BIN", 0x4000, 0x2000, 0xfe09faaf )
+	ROM_LOAD( "IC063_94.BIN", 0x6000, 0x2000, 0x1605383f )
+	ROM_LOAD( "IC066_93.BIN", 0x8000, 0x2000, 0xd1dd427b )
+	ROM_LOAD( "IC065_92.BIN", 0xA000, 0x2000, 0xebb3ae77 )
+
+	ROM_REGION(0x10000)	/* 64k for sprites data */
+	ROM_LOAD( "wb_4", 0x0000, 0x4000, 0x52dcb9e2 )
+	ROM_LOAD( "wb_6", 0x4000, 0x4000, 0x0833e9fd )
+	ROM_LOAD( "wb_5", 0x8000, 0x4000, 0x556d3fa9 )
+	ROM_LOAD( "wb_7", 0xc000, 0x4000, 0x744aca0e )
+
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_LOAD( "IC120_98.BIN", 0x0000, 0x2000, 0xb6d5585b )
+ROM_END
+
+ROM_START( wboy2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "wb_1", 0x0000, 0x4000, 0x7820981c )
+	ROM_LOAD( "wb_2", 0x4000, 0x4000, 0x0e7ab2c0 )
+	ROM_LOAD( "wb_3", 0x8000, 0x4000, 0xca3d2dd5 )
+
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "IC062_97.BIN", 0x0000, 0x2000, 0xfc185d64 )
+	ROM_LOAD( "IC061_96.BIN", 0x2000, 0x2000, 0x1ccca0e4 )
+	ROM_LOAD( "IC064_95.BIN", 0x4000, 0x2000, 0xfe09faaf )
+	ROM_LOAD( "IC063_94.BIN", 0x6000, 0x2000, 0x1605383f )
+	ROM_LOAD( "IC066_93.BIN", 0x8000, 0x2000, 0xd1dd427b )
+	ROM_LOAD( "IC065_92.BIN", 0xA000, 0x2000, 0xebb3ae77 )
+
+	ROM_REGION(0x10000)	/* 64k for sprites data */
+	ROM_LOAD( "wb_4", 0x0000, 0x4000, 0x52dcb9e2 )
+	ROM_LOAD( "wb_6", 0x4000, 0x4000, 0x0833e9fd )
+	ROM_LOAD( "wb_5", 0x8000, 0x4000, 0x556d3fa9 )
+	ROM_LOAD( "wb_7", 0xc000, 0x4000, 0x744aca0e )
+
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_LOAD( "IC120_98.BIN", 0x0000, 0x2000, 0xb6d5585b )
+ROM_END
+
+ROM_START( wboyu_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "IC116_89.BIN", 0x0000, 0x4000, 0x508e75d4 )
+	ROM_LOAD( "IC109_90.BIN", 0x4000, 0x4000, 0xf938a950 )
+	ROM_LOAD( "IC096_91.BIN", 0x8000, 0x4000, 0x56aa06ca )
+
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "IC062_97.BIN", 0x0000, 0x2000, 0xfc185d64 )
+	ROM_LOAD( "IC061_96.BIN", 0x2000, 0x2000, 0x1ccca0e4 )
+	ROM_LOAD( "IC064_95.BIN", 0x4000, 0x2000, 0xfe09faaf )
+	ROM_LOAD( "IC063_94.BIN", 0x6000, 0x2000, 0x1605383f )
+	ROM_LOAD( "IC066_93.BIN", 0x8000, 0x2000, 0xd1dd427b )
+	ROM_LOAD( "IC065_92.BIN", 0xA000, 0x2000, 0xebb3ae77 )
+
+	ROM_REGION(0x10000)	/* 64k for sprites data */
+	ROM_LOAD( "IC117_85.BIN", 0x0000, 0x4000, 0xfca06cf0 )
+	ROM_LOAD( "IC004_87.BIN", 0x4000, 0x4000, 0x37267b00 )
+	ROM_LOAD( "IC110_86.BIN", 0x8000, 0x4000, 0x2d6b5bab )
+	ROM_LOAD( "IC005_88.BIN", 0xc000, 0x4000, 0x43b5917d )
+
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_LOAD( "IC120_98.BIN", 0x0000, 0x2000, 0xb6d5585b )
+ROM_END
+
 ROM_START( wbdeluxe_rom )
-	ROM_REGION(0x10000)		/* 64k for code */
+	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "WBD1.BIN", 0x0000, 0x2000, 0xfc881b62 )
 	ROM_LOAD( "WBD2.BIN", 0x2000, 0x2000, 0x620b2985 )
 	ROM_LOAD( "WBD3.BIN", 0x4000, 0x2000, 0x16949c5e )
@@ -1514,19 +1918,46 @@ ROM_START( wbdeluxe_rom )
 	ROM_LOAD( "WBD5.BIN", 0x8000, 0x2000, 0xbb73e2a9 )
 	ROM_LOAD( "WBD6.BIN", 0xA000, 0x2000, 0xc57f0e3b )
 
-	ROM_REGION(0xC000) 		/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "WB.008", 0x0000, 0x4000, 0x18e4fd80 )
-	ROM_LOAD( "WB.007", 0x4000, 0x4000, 0x140ec290 )
-	ROM_LOAD( "WB.006", 0x8000, 0x4000, 0xbd90ec0c )
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "IC062_97.BIN", 0x0000, 0x2000, 0xfc185d64 )
+	ROM_LOAD( "IC061_96.BIN", 0x2000, 0x2000, 0x1ccca0e4 )
+	ROM_LOAD( "IC064_95.BIN", 0x4000, 0x2000, 0xfe09faaf )
+	ROM_LOAD( "IC063_94.BIN", 0x6000, 0x2000, 0x1605383f )
+	ROM_LOAD( "IC066_93.BIN", 0x8000, 0x2000, 0xd1dd427b )
+	ROM_LOAD( "IC065_92.BIN", 0xA000, 0x2000, 0xebb3ae77 )
 
 	ROM_REGION(0x10000)	/* 64k for sprites data */
-	ROM_LOAD( "WB.004", 0x0000, 0x4000, 0xa849864b )
-	ROM_CONTINUE(       0x8000, 0x4000 )
-	ROM_LOAD( "WB.005", 0x4000, 0x4000, 0x7c7d23f3 )
-	ROM_CONTINUE(       0xC000, 0x4000 )
+	ROM_LOAD( "wb_4", 0x0000, 0x4000, 0x52dcb9e2 )
+	ROM_LOAD( "wb_6", 0x4000, 0x4000, 0x0833e9fd )
+	ROM_LOAD( "wb_5", 0x8000, 0x4000, 0x556d3fa9 )
+	ROM_LOAD( "wb_7", 0xc000, 0x4000, 0x744aca0e )
 
-	ROM_REGION(0x10000) 		/* 64k for sound cpu */
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "WB.009", 0x0000, 0x2000, 0xb2d5545b )
+ROM_END
+
+ROM_START( blockgal_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "bg.116", 0x0000, 0x4000, 0xd9f83d2c )	/* encrypted */
+	ROM_LOAD( "bg.109", 0x4000, 0x4000, 0x59967640 )	/* encrypted */
+	ROM_LOAD( "bg.96",  0x8000, 0x4000, 0x0dd388ef )
+
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "bg.62", 0x0000, 0x2000, 0xd5026988 )
+	ROM_LOAD( "bg.61", 0x2000, 0x2000, 0x8b9b42c7 )
+	ROM_LOAD( "bg.64", 0x4000, 0x2000, 0x9cd3875b )
+	ROM_LOAD( "bg.63", 0x6000, 0x2000, 0x226375d7 )
+	ROM_LOAD( "bg.66", 0x8000, 0x2000, 0x74b15211 )
+	ROM_LOAD( "bg.65", 0xA000, 0x2000, 0xd59b48c3 )
+
+	ROM_REGION(0x10000)	/* 64k for sprites data */
+	ROM_LOAD( "bg.117", 0x0000, 0x4000, 0xca3fb861 )
+	ROM_LOAD( "bg.04",  0x4000, 0x4000, 0xf6589fc8 )
+	ROM_LOAD( "bg.110", 0x8000, 0x4000, 0x11d569a3 )
+	ROM_LOAD( "bg.05",  0xc000, 0x4000, 0xe813a0e9 )
+
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_LOAD( "bg.120", 0x0000, 0x2000, 0x3dc04530 )
 ROM_END
 
 ROM_START( chplft_rom )
@@ -1535,7 +1966,7 @@ ROM_START( chplft_rom )
 	ROM_LOAD( "7125.91", 0x10000, 0x8000, 0x56d3a903 )
 	ROM_LOAD( "7126.92", 0x18000, 0x8000, 0x2f4c41fa )
 
-	ROM_REGION(0x18000) 	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0x18000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "7127.4", 0x00000, 0x8000, 0x684454da )
 	ROM_LOAD( "7128.5", 0x08000, 0x8000, 0x60640aac )
 	ROM_LOAD( "7129.6", 0x10000, 0x8000, 0x0e274493 )
@@ -1546,12 +1977,12 @@ ROM_START( chplft_rom )
 	ROM_LOAD( "7123.89", 0x10000, 0x8000, 0x23911e63 )
 	ROM_LOAD( "7122.88", 0x18000, 0x8000, 0x087b75e1 )
 
-	ROM_REGION(0x0300)		/* color proms */
+	ROM_REGION(0x0300)	/* color proms */
 	ROM_LOAD( "pr7119.20", 0x0000, 0x0100, 0xd3a30307 ) /* palette red component */
 	ROM_LOAD( "pr7118.14", 0x0100, 0x0100, 0xb8d9080f ) /* palette green component */
 	ROM_LOAD( "pr7117.8",  0x0200, 0x0100, 0xfafd090d ) /* palette blue component */
 
-	ROM_REGION(0x10000)   /* 64k for sound cpu */
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "7130.126", 0x0000, 0x8000, 0xf3ed7509 )
 ROM_END
 
@@ -1561,7 +1992,7 @@ ROM_START( chplftb_rom )
 	ROM_LOAD( "7153.91", 0x10000, 0x8000, 0xb6d3a903 )
 	ROM_LOAD( "7154.92", 0x18000, 0x8000, 0x0c4c50fa )
 
-	ROM_REGION(0x18000) 	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0x18000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "7127.4", 0x00000, 0x8000, 0x684454da )
 	ROM_LOAD( "7128.5", 0x08000, 0x8000, 0x60640aac )
 	ROM_LOAD( "7129.6", 0x10000, 0x8000, 0x0e274493 )
@@ -1572,12 +2003,12 @@ ROM_START( chplftb_rom )
 	ROM_LOAD( "7123.89", 0x10000, 0x8000, 0x23911e63 )
 	ROM_LOAD( "7122.88", 0x18000, 0x8000, 0x087b75e1 )
 
-	ROM_REGION(0x0300)		/* color proms */
+	ROM_REGION(0x0300)	/* color proms */
 	ROM_LOAD( "pr7119.20", 0x0000, 0x0100, 0xd3a30307 ) /* palette red component */
 	ROM_LOAD( "pr7118.14", 0x0100, 0x0100, 0xb8d9080f ) /* palette green component */
 	ROM_LOAD( "pr7117.8",  0x0200, 0x0100, 0xfafd090d ) /* palette blue component */
 
-	ROM_REGION(0x10000)   /* 64k for sound cpu */
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "7130.126", 0x0000, 0x8000, 0xf3ed7509 )
 ROM_END
 
@@ -1587,7 +2018,7 @@ ROM_START( chplftbl_rom )
 	ROM_LOAD( "7125.91",   0x10000, 0x8000, 0x56d3a903 )
 	ROM_LOAD( "7126.92",   0x18000, 0x8000, 0x2f4c41fa )
 
-	ROM_REGION(0x18000) 	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0x18000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "7127.4", 0x00000, 0x8000, 0x684454da )
 	ROM_LOAD( "7128.5", 0x08000, 0x8000, 0x60640aac )
 	ROM_LOAD( "7129.6", 0x10000, 0x8000, 0x0e274493 )
@@ -1598,17 +2029,17 @@ ROM_START( chplftbl_rom )
 	ROM_LOAD( "7123.89", 0x10000, 0x8000, 0x23911e63 )
 	ROM_LOAD( "7122.88", 0x18000, 0x8000, 0x087b75e1 )
 
-	ROM_REGION(0x0300)		/* color proms */
+	ROM_REGION(0x0300)	/* color proms */
 	ROM_LOAD( "pr7119.20", 0x0000, 0x0100, 0xd3a30307 ) /* palette red component */
 	ROM_LOAD( "pr7118.14", 0x0100, 0x0100, 0xb8d9080f ) /* palette green component */
 	ROM_LOAD( "pr7117.8",  0x0200, 0x0100, 0xfafd090d ) /* palette blue component */
 
-	ROM_REGION(0x10000)   /* 64k for sound cpu */
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "7130.126", 0x0000, 0x8000, 0xf3ed7509 )
 ROM_END
 
 ROM_START( wbml_rom )
-	ROM_REGION(0x40000)		/* 256k for code */
+	ROM_REGION(0x40000)	/* 256k for code */
 	ROM_LOAD( "WBML.01", 0x20000, 0x8000, 0xa5329b82 )	/* Unencrypted opcodes */
 	ROM_CONTINUE(        0x00000, 0x8000 )              /* Now load the operands in RAM */
 	ROM_LOAD( "WBML.02", 0x30000, 0x8000, 0xcdafb89f )	/* Unencrypted opcodes */
@@ -1616,7 +2047,7 @@ ROM_START( wbml_rom )
 	ROM_LOAD( "WBML.03", 0x38000, 0x8000, 0x31cd6733 )	/* Unencrypted opcodes */
 	ROM_CONTINUE(        0x18000, 0x8000 )
 
-	ROM_REGION(0x18000) 	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0x18000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "WBML.08", 0x00000, 0x8000, 0xef89ac27 )
 	ROM_LOAD( "WBML.09", 0x08000, 0x8000, 0x60a6011e )
 	ROM_LOAD( "WBML.10", 0x10000, 0x8000, 0x563078ba )
@@ -1627,12 +2058,12 @@ ROM_START( wbml_rom )
 	ROM_LOAD( "WBML.07", 0x10000, 0x8000, 0xf3a6277a )
 	ROM_LOAD( "WBML.06", 0x18000, 0x8000, 0x387db381 )
 
-	ROM_REGION(0x0300)		/* color proms */
+	ROM_REGION(0x0300)	/* color proms */
 	ROM_LOAD( "prom3.bin", 0x0000, 0x0100, 0xbbbe0406 )
 	ROM_LOAD( "prom2.bin", 0x0100, 0x0100, 0x6261050f )
 	ROM_LOAD( "prom1.bin", 0x0200, 0x0100, 0xb0bd0401 )
 
-	ROM_REGION(0x10000)		/* 64k for sound cpu */
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "WBML.11", 0x0000, 0x8000, 0x8057f681 )
 ROM_END
 
@@ -1996,7 +2427,7 @@ struct GameDriver flicky_driver =
 	__FILE__,
 	0,
 	"flicky",
-	"Flicky",
+	"Flicky (set 1)",
 	"1984",
 	"Sega",
 	"Jarek Parchanski\nNicola Salmoria\nMirko Buffoni\nRoberto Ventura (hardware info)",
@@ -2009,6 +2440,54 @@ struct GameDriver flicky_driver =
 	0,
 
 	flicky_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	0, 0
+};
+
+struct GameDriver flicky2_driver =
+{
+	__FILE__,
+	&flicky_driver,
+	"flicky2",
+	"Flicky (set 2)",
+	"1984",
+	"Sega",
+	"Jarek Parchanski\nNicola Salmoria\nMirko Buffoni\nRoberto Ventura (hardware info)",
+	0,
+	&system8_machine_driver,
+
+	flicky2_rom,
+	0, flicky_decode,		/* ROM decode and opcode decode functions */
+	0,      				/* Sample names */
+	0,
+
+	flicky_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	0, 0
+};
+
+struct GameDriver bullfgtj_driver =
+{
+	__FILE__,
+	0,
+	"bullfgtj",
+	"Bull Fight (Japan)",
+	"1984",
+	"Sega / Coreland",
+	"Jarek Parchanski\nNicola Salmoria\nMirko Buffoni\nRoberto Ventura (hardware info)",
+	0,
+	&system8_machine_driver,
+
+	bullfgtj_rom,
+	0, bullfgtj_decode,		/* ROM decode and opcode decode functions */
+	0,      				/* Sample names */
+	0,
+
+	bullfgtj_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -2100,6 +2579,30 @@ struct GameDriver nprinces_driver =
 	&system8_machine_driver,
 
 	nprinces_rom,
+	0, nprinces_decode,		/* ROM decode and opcode decode functions */
+	0,      				/* Sample names */
+	0,
+
+	seganinj_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	seganinj_hiload, seganinj_hisave
+};
+
+struct GameDriver nprinceb_driver =
+{
+	__FILE__,
+	&seganinj_driver,
+	"nprinceb",
+	"Ninja Princess (bootleg)",
+	"1985",
+	"bootleg?",
+	"Jarek Parchanski\nNicola Salmoria\nMirko Buffoni\nRoberto Ventura (hardware info)",
+	0,
+	&system8_machine_driver,
+
+	nprinceb_rom,
 	0, flicky_decode,		/* ROM decode and opcode decode functions */
 	0,      				/* Sample names */
 	0,
@@ -2116,7 +2619,7 @@ struct GameDriver imsorry_driver =
 	__FILE__,
 	0,
 	"imsorry",
-	"I'm Sorry",
+	"I'm Sorry (US)",
 	"1985",
 	"Coreland / Sega",
 	"Jarek Parchanski\nNicola Salmoria\nMirko Buffoni\nRoberto Ventura (hardware info)",
@@ -2124,6 +2627,30 @@ struct GameDriver imsorry_driver =
 	&system8_machine_driver,
 
 	imsorry_rom,
+	0, imsorry_decode,		/* ROM decode and opcode decode functions */
+	0,      				/* Sample names */
+	0,
+
+	imsorry_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	0, 0
+};
+
+struct GameDriver imsorryj_driver =
+{
+	__FILE__,
+	&imsorry_driver,
+	"imsorryj",
+	"I'm Sorry (Japan)",
+	"1985",
+	"Coreland / Sega",
+	"Jarek Parchanski\nNicola Salmoria\nMirko Buffoni\nRoberto Ventura (hardware info)",
+	0,
+	&system8_machine_driver,
+
+	imsorryj_rom,
 	0, imsorry_decode,		/* ROM decode and opcode decode functions */
 	0,      				/* Sample names */
 	0,
@@ -2183,10 +2710,130 @@ struct GameDriver myhero_driver =
 	myhero_hiload, myhero_hisave
 };
 
-struct GameDriver wbdeluxe_driver =
+struct GameDriver myheroj_driver =
+{
+	__FILE__,
+	&myhero_driver,
+	"myheroj",
+	"Seishun Scandal",
+	"1985",
+	"Coreland / Sega",
+	"Jarek Parchanski\nNicola Salmoria\nMirko Buffoni\nRoberto Ventura (hardware info)",
+	0,
+	&system8_machine_driver,
+
+	myheroj_rom,
+	0, myheroj_decode,		/* ROM decode and opcode decode functions */
+	0,      				/* Sample names */
+	0,
+
+	myhero_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	myhero_hiload, myhero_hisave
+};
+
+struct GameDriver fdwarrio_driver =
 {
 	__FILE__,
 	0,
+	"4dwarrio",
+	"4D Warriors",
+	"1985",
+	"Coreland / Sega",
+	"Jarek Parchanski\nNicola Salmoria\nMirko Buffoni\nRoberto Ventura (hardware info)",
+	0,
+	&system8_machine_driver,
+
+	fdwarrio_rom,
+	0, fdwarrio_decode,		/* ROM decode and opcode decode functions */
+	0,      				/* Sample names */
+	0,
+
+	fdwarrio_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	0, 0
+};
+
+struct GameDriver wboy_driver =
+{
+	__FILE__,
+	0,
+	"wboy",
+	"Wonder Boy (set 1)",
+	"1986",
+	"Sega (Escape license)",
+	"Jarek Parchanski\nNicola Salmoria\nMirko Buffoni\nRoberto Ventura (hardware info)",
+	0,
+	&system8_machine_driver,
+
+	wboy_rom,
+	0, wboy_decode,			/* ROM decode and opcode decode functions */
+	0,      				/* Sample names */
+	0,
+
+	wboy_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	0, 0
+};
+
+struct GameDriver wboy2_driver =
+{
+	__FILE__,
+	&wboy_driver,
+	"wboy2",
+	"Wonder Boy (set 2)",
+	"1986",
+	"Sega (Escape license)",
+	"Jarek Parchanski\nNicola Salmoria\nMirko Buffoni\nRoberto Ventura (hardware info)",
+	0,
+	&system8_machine_driver,
+
+	wboy2_rom,
+	0, wboy_decode,			/* ROM decode and opcode decode functions */
+	0,      				/* Sample names */
+	0,
+
+	wboy_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	0, 0
+};
+
+struct GameDriver wboyu_driver =
+{
+	__FILE__,
+	&wboy_driver,
+	"wboyu",
+	"Wonder Boy (not encrypted)",
+	"1986",
+	"Sega (Escape license)",
+	"Jarek Parchanski\nNicola Salmoria\nMirko Buffoni\nRoberto Ventura (hardware info)",
+	0,
+	&system8_machine_driver,
+
+	wboyu_rom,
+	0, 0,   				/* ROM decode and opcode decode functions */
+	0,      				/* Sample names */
+	0,
+
+	wboyu_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	0, 0
+};
+
+struct GameDriver wbdeluxe_driver =
+{
+	__FILE__,
+	&wboy_driver,
 	"wbdeluxe",
 	"Wonder Boy Deluxe",
 	"1986",
@@ -2200,11 +2847,36 @@ struct GameDriver wbdeluxe_driver =
 	0,      				/* Sample names */
 	0,
 
-	wbdeluxe_input_ports,
+	wboy_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	wbdeluxe_hiload, wbdeluxe_hisave
+};
+
+/* This one is encrypted with an algorithm different from the others */
+struct GameDriver blockgal_driver =
+{
+	__FILE__,
+	0,
+	"blockgal",
+	"Block Gal",
+	"????",
+	"????",
+	"Jarek Parchanski\nNicola Salmoria\nMirko Buffoni\nRoberto Ventura (hardware info)",
+	GAME_NOT_WORKING,
+	&system8_machine_driver,
+
+	blockgal_rom,
+	0, blockgal_decode,		/* ROM decode and opcode decode functions */
+	0,      				/* Sample names */
+	0,
+
+	wboy_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+	0, 0
 };
 
 struct GameDriver chplft_driver =
@@ -2301,4 +2973,59 @@ struct GameDriver wbml_driver =
 	PROM_MEMORY_REGION(3), 0, 0,
 	ORIENTATION_DEFAULT,
 	wbml_hiload, wbml_hisave
+};
+
+
+
+
+/* This is not a System 8 game, I just temporarily placed it here to decode it. */
+
+/* in machine/segacrpt.c */
+void sinbad_decode(void);
+
+ROM_START( sinbad_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "EPR5393.ROM", 0x0000, 0x2000, 0xbc7aa442 )
+	ROM_LOAD( "EPR5394.ROM", 0x2000, 0x2000, 0x13a72227 )
+	ROM_LOAD( "EPR5395.ROM", 0x4000, 0x2000, 0x850c38d8 )
+	ROM_LOAD( "EPR5396.ROM", 0x6000, 0x2000, 0x7ba71027 )
+
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "EPR5428.ROM", 0x0000, 0x2000, 0x6dc5cdd5 )
+	ROM_LOAD( "EPR5429.ROM", 0x2000, 0x2000, 0xbf2066d6 )	/* this is a bad read */
+
+	ROM_REGION(0x8000)	/* 32k for sprites data */
+	ROM_LOAD( "EPR5397.ROM", 0x0000, 0x2000, 0xfbb91de1 )
+	ROM_LOAD( "EPR5398.ROM", 0x2000, 0x2000, 0x408ecba6 )
+	ROM_LOAD( "EPR5424.ROM", 0x0000, 0x2000, 0xfa40763e )
+	ROM_LOAD( "EPR5425.ROM", 0x2000, 0x2000, 0xd03905cf )
+	ROM_LOAD( "EPR5426.ROM", 0x4000, 0x2000, 0xc23f6889 )
+	ROM_LOAD( "EPR5427.ROM", 0x6000, 0x2000, 0x7a13e61b )
+
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_LOAD( "EPR5400.ROM", 0x0000, 0x2000, 0xb660df5c )
+ROM_END
+
+struct GameDriver sinbad_driver =
+{
+	__FILE__,
+	0,
+	"sinbad",
+	"Sinbad Mystery",
+	"????",
+	"?????",
+	"Jarek Parchanski\nNicola Salmoria\nMirko Buffoni\nRoberto Ventura (hardware info)",
+	0,
+	&system8_machine_driver,
+
+	sinbad_rom,
+	0, sinbad_decode,		/* ROM decode and opcode decode functions */
+	0,      				/* Sample names */
+	0,
+
+	upndown_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+	0, 0
 };

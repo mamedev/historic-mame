@@ -82,18 +82,19 @@
 static int MEM1 = MEM1DEFAULT;	/* JB 971210 */
 static int MEM2 = MEM2DEFAULT;	/* JB 971210 */
 
-extern int debug_key_pressed;	/* JB 980505 */
+/* you can set this to non-zero in driver code to force entry to debugger */
+int debug_key_pressed;	/* JB 980505 */
 
 /* globals */
 static int              BreakPoint[5] = { -1, -1, -1, -1, -1 };
 static int              TempBreakPoint = -1;	/* MB 980103 */
 static int				CPUBreakPoint = -1;		/* MB 980121 */
-static int              CurrentPC = -1;
-static int              CursorPC = -1;		/* MB 980103 */
-static int				NextPC = -1;
-static int				PreviousSP = 0;
-static int              StartAddress = -1;
-static int              EndAddress = -1;	/* MB 980103 */
+static unsigned int              CurrentPC = -1;
+static unsigned int              CursorPC = -1;		/* MB 980103 */
+static unsigned int				NextPC = -1;
+static unsigned int				PreviousSP = 0;
+static unsigned int              StartAddress = -1;
+static unsigned int              EndAddress = -1;	/* MB 980103 */
 static int              activecpu, cputype, PreviousCPUType;
 static int              DisplayASCII[2] = { FALSE, FALSE };	/* MB 980103 */
 static int				InDebug=FALSE;
@@ -199,6 +200,56 @@ static void DrawDebugScreen16 (int TextCol, int LineCol)	/* MB 980103 */
 	ScreenPutString("ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ", LineCol, 0, 24);
 }
 
+static void DrawDebugScreen32 (int TextCol, int LineCol)	/* AJP 980803 */
+{
+	int		y;
+
+	ScreenClear();
+	ScreenPutString("ษออ                    ออออออออออออออออออออออออออออออออออออออออออออออออออออออออป", LineCol, 0, 0);
+	ScreenPutString("Flags and Registers", TextCol, 4, 0);
+	ScreenPutString("บ", LineCol, 0, 1);
+	ScreenPutString("บ", LineCol, 79, 1);
+	ScreenPutString("ฬออ    ออออออออออออหออ     ออออหอ          ออออออออออป                         บ", LineCol, 0, 2);
+	ScreenPutString("PC", TextCol, 4, 2);
+	ScreenPutString("CPU", TextCol, 23, 2);
+	ScreenPutString("Memory 1", TextCol, 34, 2);
+	ScreenPutString("บ", LineCol, 0, 3);
+	ScreenPutString("บ", LineCol, 19, 3);
+	ScreenPutString("บ", LineCol, 31, 3);
+	ScreenPutString("บ", LineCol, 53, 3);
+	ScreenPutString("บ", LineCol, 79, 3);
+	ScreenPutString("ฬออ      ออออออออออสอออออออออออน", LineCol, 0, 4);
+	ScreenPutString("บ", LineCol, 53, 4);
+	ScreenPutString("Code", TextCol, 4, 4);
+	ScreenPutString("บ", LineCol, 79, 4);
+	for (y = 5; y < 11; y++)
+	{
+		ScreenPutString("บ", LineCol, 0, y);
+		ScreenPutString("บ", LineCol, 31, y);
+		ScreenPutString("บ", LineCol, 53, y);
+		ScreenPutString("บ", LineCol, 79, y);
+	}
+	ScreenPutString("บ", LineCol, 0, 11);
+	ScreenPutString("ฬอ          ออออออออออน", LineCol, 31, 11);
+	ScreenPutString("บ", LineCol, 79, 11);
+	ScreenPutString("Memory 2", TextCol, 34, 11);
+	for (y = 12; y < 20; y++)
+	{
+		ScreenPutString("บ", LineCol, 0, y);
+		ScreenPutString("บ", LineCol, 31, y);
+		ScreenPutString("บ", LineCol, 53, y);
+		ScreenPutString("บ", LineCol, 79, y);
+	}
+	ScreenPutString("ฬออ         อออออออออออออออออออสอออออออออออออออออออออสอออออออออออออออออออออออออน", LineCol, 0, 20);
+	ScreenPutString("Command", TextCol, 4, 20);
+	for (y = 21; y < 24; y++)
+	{
+		ScreenPutString("บ", LineCol, 0, y);
+		ScreenPutString("บ", LineCol, 79, y);
+	}
+	ScreenPutString("ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ", LineCol, 0, 24);
+}
+
 /* Draw the Memory dump windows */
 static void DrawMemWindow (int Base, int Col, int Offset, int _DisplayASCII)	/* JB 971210 */
 {
@@ -229,7 +280,8 @@ static void DrawMemWindow (int Base, int Col, int Offset, int _DisplayASCII)	/* 
 			ScreenPutString(S, ((value == oldValue)?Col:CHANGES_COLOUR), DebugInfo[cputype].MemWindowDataX +
 					(X * 3), Y + Offset);
 			MemWindowBackup[Y * DebugInfo[cputype].MemWindowNumBytes + X + which] = value;
-			if (Base > DebugInfo[cputype].AddMask || Base < 0)
+			/* AJP 980803 */
+			if (Base > (unsigned int) DebugInfo[cputype].AddMask || Base < 0)
 				Base = 0x000000;
 		}
 	}
@@ -469,7 +521,7 @@ static int DasmToFile(char *param)
 	int	i,nCorrectParams = 0, rv = 0;
 	char s1[128], s2[20], s3[20];
 	char *pr = param;
-	int  pc, old_pc, tmp;
+	unsigned int  pc, old_pc, tmp;
 
 	while ((pr[0] == ' ') && (pr[0] != '\0')) pr++;
 	i = strlen(pr);
@@ -480,7 +532,6 @@ static int DasmToFile(char *param)
 	{
 		unsigned long StartAd = GetAddress(cputype,s2);
 		unsigned long EndAd = GetAddress(cputype,s3);
-
 		if ((f = fopen(s1, "w")) == NULL)
 		{
 			if (errorlog) fprintf(errorlog, "Error while creating DASM file:  %s\n", s1);
@@ -488,18 +539,29 @@ static int DasmToFile(char *param)
 		}
 
 		pc = StartAd;
-		while (pc < EndAd)
+		while ((pc < EndAd)&&(pc >= StartAd))
 		{
 			sprintf(s1, DebugInfo[cputype].AddPrint, pc);
-			s1[7] = 0;
+			s1[9] = 0;
 			fprintf(f, "%s", s1);
 			old_pc = pc;
-			pc += debug_dasm_line (pc, s1);
+			pc += debug_dasm_line (pc, s1, 0);
 
+			if (cputype==CPU_TMS34010)
+			{
+				pc>>=3;old_pc>>=3;
+			}
+
+			/* broken for TMS34010 if you dasm to 0xffffffff */
 			for (tmp = old_pc; tmp < pc; tmp++)
 				fprintf(f, " %02x",	cpuintf[cputype].memory_read(tmp & DebugInfo[cputype].AddMask));
 
-			fprintf(f, " %*s ",	3 * (old_pc + DebugInfo[cputype].MaxInstLen - pc), "");
+			if (cputype==CPU_TMS34010)
+			{
+				fprintf(f, " %*s ",	3 * (old_pc + (DebugInfo[cputype].MaxInstLen>>3) - pc), "");
+				pc<<=3;old_pc<<=3;
+			}
+			else fprintf(f, " %*s ",	3 * (old_pc + DebugInfo[cputype].MaxInstLen - pc), "");
 
 			fprintf(f, "%s\n", s1);
 		}
@@ -1096,7 +1158,7 @@ static int ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int Base
 			Base -= row_bytes;	/* JB 971210 */
 			Scroll = TRUE;
 		}
-		if ((Base < 0) || Base > (DebugInfo[cputype].AddMask -
+		if ((Base < 0) || Base > (unsigned int) (DebugInfo[cputype].AddMask -
 			 (YMax-YMin) * DebugInfo[cputype].MemWindowNumBytes))
 		{
 			Base = Add = 0;
@@ -1143,26 +1205,26 @@ static int debug_draw_disasm (int pc)
 		sprintf(s, fmt, pc);
 				s[DebugInfo[cputype].DasmStartX+DebugInfo[cputype].DasmLineLen-1] = '\0';	/* MB 980103 */
 		ScreenPutString (s, Colour, 1, i + 5);
-		pc += debug_dasm_line (pc, s);
+		pc += debug_dasm_line (pc, s, 1);
 		ScreenPutString (s, Colour, DebugInfo[cputype].DasmStartX, i + 5);
 	}
 		return pc;
 }
 
-static int debug_dasm_line (int pc, char *s)
+static int debug_dasm_line (int pc, char *s, int truncate)
 {
 	int		offset = 0;
 
 	s[0] = '\0';
 	offset = DebugInfo[cputype].Dasm(s, pc);
-	s[DebugInfo[cputype].DasmLineLen] = '\0';
+	if (truncate) s[DebugInfo[cputype].DasmLineLen] = '\0';
 	return (offset);	/* MB 980103 */
 }
 
 
 static void debug_draw_flags (void)
 {
-	char	Flags[17], s[17];
+	char	Flags[33], s[33];
 	int		i, cc;
 	int		flag_size = 8;
 
@@ -1176,15 +1238,23 @@ static void debug_draw_flags (void)
 		for (i=0; i<8; i++, cc <<= 1)
 			s[i] = cc & 0x80 ? Flags[i] : '.';
 	}
-	else
+	else if (flag_size==16)
 	{
 		cc = *(word *)DebugInfo[cputype].CC;	/* JB 980103 */
 		/* this is probably wrong for little endian machines */
 		for (i=0; i<16; i++, cc <<= 1)
 			s[i] = cc & 0x8000 ? Flags[i] : '.';
 	}
+	else
+	{
+		cc = *(int *)DebugInfo[cputype].CC;	/* JB 980103 */
+		/* this is probably wrong for little endian machines */
+		for (i=0; i<flag_size; i++, cc <<= 1)
+			s[i] = cc & 0x80000000 ? Flags[i] : '.';
+	}
 	s[flag_size]='\0';	/* JB 971210 */
-	ScreenPutString (s, FLAG_COLOUR, 2, 3);
+	if (flag_size<=16) ScreenPutString (s, FLAG_COLOUR, 2, 3);
+	else ScreenPutString (s, FLAG_COLOUR, 2, 1);
 }
 
 static void debug_draw_registers (void)
@@ -1531,6 +1601,19 @@ static int GetSPValue(int _cputype)
 }
 
 
+/* JB 980828 */
+static void update_debug_key (void)
+{
+	static int	delay = 0;
+
+	if (++delay == 0x7fff)
+	{
+		delay = 0;
+		debug_key_pressed = osd_key_pressed (OSD_KEY_TILDE);
+	}
+}
+
+
 /*** Single-step debugger ****************************/
 /*** This function should exist if DEBUG is        ***/
 /*** #defined. Call from the CPU's Execute function***/
@@ -1545,6 +1628,8 @@ void MAME_Debug (void)
 	static int		DebugTrace = FALSE;
 	static int		FirstTime = TRUE;
 	int				Key;
+
+	update_debug_key ();
 
 	if (DebugFast)
 	{
@@ -1669,7 +1754,7 @@ void MAME_Debug (void)
 		if (!DebugTrace)
 		{
 			char	S[128];
-			int		TempAddress;
+			unsigned int		TempAddress;
 			int		Line;
 
 			//Key = osd_read_keyrepeat ();
@@ -1767,7 +1852,7 @@ void MAME_Debug (void)
 
 					case OSD_KEY_F10:	/* MB 980207 */
 						ResetCommandLine = 1;
-						NextPC = CurrentPC + debug_dasm_line(CurrentPC,S);
+						NextPC = CurrentPC + debug_dasm_line(CurrentPC,S, 1);
 						PreviousSP = GetSPValue(cputype);
 						Step = TRUE;
 						break;
@@ -1788,22 +1873,23 @@ void MAME_Debug (void)
 					case OSD_KEY_LEFT:		/* Move Cursor back one alignment unit */
 											/* CM 980428 */
 						ResetCommandLine = 1;
+						TempAddress = StartAddress;
 						StartAddress = CursorPC -= DebugInfo[cputype].AlignUnit;
-						if (StartAddress < 0) StartAddress = 0;
+						if (StartAddress > TempAddress) StartAddress = 0;
 						EndAddress = debug_draw_disasm (StartAddress);
 						break;
 #endif /* ALLOW_LEFT_AND_RIGHT_IN_DASM_WINDOW */
 
 					case OSD_KEY_UP:		/* Scroll disassembly up a line */
 						ResetCommandLine = 1;
-						if ((CursorPC >= StartAddress+debug_dasm_line(StartAddress,S)) &&
+						if ((CursorPC >= StartAddress+debug_dasm_line(StartAddress,S,1)) &&
 							(CursorPC < EndAddress))	/* MB 980103 */
 						{
 							int previous = StartAddress;
 							int tmp = StartAddress;
 							while (tmp < EndAddress)
 							{
-								tmp += debug_dasm_line(previous,S);
+								tmp += debug_dasm_line(previous,S,1);
 								if (tmp == CursorPC)
 								{
 									CursorPC = previous;
@@ -1824,14 +1910,14 @@ void MAME_Debug (void)
 							 * previous guess was wrong.
 							 */
 							TempAddress = StartAddress - DebugInfo[cputype].MaxInstLen;
-							if (TempAddress < 0) TempAddress = 0; /* CM 980428 */
+							if (TempAddress > StartAddress) TempAddress = 0; /* CM 980428 */
 
 							for (TempAddress = (TempAddress > 0) ? TempAddress : 0;
 								 TempAddress < StartAddress; /* CM 980428 */
 								 TempAddress += DebugInfo[cputype].AlignUnit)
 							  {
 								  if ((TempAddress +
-									  debug_dasm_line (TempAddress, S)) ==
+									  debug_dasm_line (TempAddress, S, 1)) ==
 										  StartAddress)
 									  break;
 							  }
@@ -1856,12 +1942,12 @@ void MAME_Debug (void)
 						TempAddress = StartAddress -
 							DebugInfo[cputype].MaxInstLen * 16;
 
-						if (TempAddress < 0) TempAddress = 0;
+						if (TempAddress > StartAddress) TempAddress = 0;
 
 						for (Line = 0; TempAddress < StartAddress; Line++)
 						{
 							TempAddresses[Line % 16] = TempAddress;
-							TempAddress += debug_dasm_line(TempAddress, S);
+							TempAddress += debug_dasm_line(TempAddress, S, 1);
 						}
 
 						/* If this ever happens, it's because our
@@ -1895,9 +1981,9 @@ void MAME_Debug (void)
 
 					case OSD_KEY_DOWN:		/* Scroll disassembly down a line */
 						ResetCommandLine = 1;
-						CursorPC += debug_dasm_line (CursorPC, S);	/* MB 980103 */
+						CursorPC += debug_dasm_line (CursorPC, S, 1);	/* MB 980103 */
 						if (CursorPC >= EndAddress)
-							  StartAddress += debug_dasm_line(StartAddress, S);
+							  StartAddress += debug_dasm_line(StartAddress, S, 1);
 						EndAddress = debug_draw_disasm (StartAddress);
 						break;
 
@@ -1905,8 +1991,8 @@ void MAME_Debug (void)
 						ResetCommandLine = 1;
 						for (Line = 0; Line < 15; Line++)	/* MB 980103 */
 						{
-							StartAddress += debug_dasm_line(StartAddress,S);
-							CursorPC += debug_dasm_line(CursorPC,S);
+							StartAddress += debug_dasm_line(StartAddress,S,1);
+							CursorPC += debug_dasm_line(CursorPC,S,1);
 						}
 						EndAddress = debug_draw_disasm (StartAddress);
 						break;

@@ -82,7 +82,7 @@ int  leprechn_0805_r(int offset);
 void leprechn_sh_w(int offset, int data)
 {
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(1,INT_IRQ);
+	cpu_cause_interrupt(1,M6502_INT_IRQ);
 }
 
 

@@ -113,12 +113,12 @@ THESE ARE NOT SUPPORT ADDRESSES. Support questions sent to these addresses
 *will* be ignored. Please understand that this is a *free* project, mostly
 targeted at experienced users. We don't have the resources to provide end user
 support. Basically, if you can't get the emulator to work, you are on your own.
-First of all, read the docs carefully and check the FAQ at
-http://www.crcwnet.com/~no-sleep/newic/mamefaq.htm. If you still can't find an
-answer to your question, try checking the beginner's sections that many
-emulation pages have (e.g. http://www.crcwnet.com/~no-sleep/newic/), or ask on
-the appropriate Usenet newsgroups (e.g. comp.emulators.misc) or on the
-emulation message boards (e.g. http://www.escape.com/~ego/dvgc/mame/).
+First of all, read the docs carefully. If you still can't find an answer to
+your question, try checking the beginner's sections that many emulation pages
+have, or ask on the appropriate Usenet newsgroups (e.g. comp.emulators.misc) or
+on the emulation message boards (e.g. http://www.escape.com/~ego/dvgc/mame/).
+For help in compiling MAME, check this page:
+http://seagate.cns.net.au/~ben/emu/compilemame.html
 
 Also, DO NOT SEND REQUESTS FOR NEW GAMES TO ADD, unless you have some original
 info on the game hardware or, even better, own the board and have the technical
@@ -141,9 +141,7 @@ on in MAME.
 Z80Em Portable Zilog Z80 Emulator Copyright (C) Marcel de Kogel 1996,1997
    Note: the version used in MAME is slightly modified. You can find the
    original version at http://www.komkon.org/~dekogel/misc.html.
-M6502 Emulator Copyright (C) Marat Fayzullin, Alex Krasivsky 1996
-   Note: the version used in MAME is slightly modified. You can find the
-   original version at http://freeflight.com/fms/.
+M6502 emulator by Juergen Buchmueller.
 I86 emulator by David Hedley, modified by Fabrice Frances (frances@ensica.fr)
 M6809 emulator by John Butler, based on L.C. Benschop's 6809 Simulator V09.
 M6808 based on L.C. Benschop's 6809 Simulator V09.
@@ -345,6 +343,8 @@ options:
               range of 1.00 through 16.00.
 -flicker n    make the vectors flicker. n is an optional argument, a float in
               the range 0.00 - 100.00 (0=none 100=maximum).
+-translucency/-notranslucency (default: -translucency)
+              enables or disables vector translucency.
 -cheat        Cheats like the speedup in Pac Man or the level skip in many
               other games are disabled by default. Use this switch to turn
               them on.

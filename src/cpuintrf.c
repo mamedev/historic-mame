@@ -19,6 +19,7 @@
 #include "M68000/M68000.h"
 #include "S2650/s2650.h"
 #include "T11/t11.h"
+#include "TMS34010/tms34010.h"
 #include "I86/I86intrf.h"
 #include "timer.h"
 
@@ -98,19 +99,8 @@ static double cpu_computerate (int value);
 static void cpu_inittimers (void);
 
 
-
-/* interfaces to the 6502 so that it looks like the other CPUs */
-static void m6502_SetRegs(M6502 *Regs);
-static void m6502_GetRegs(M6502 *Regs);
-static unsigned m6502_GetPC(void);
-static void m6502_Reset(void);
-static int m6502_Execute(int cycles);
-static void m6502_Cause_Interrupt(int type);
-static void m6502_Clear_Pending_Interrupts(void);
-static int dummy_icount;
-
 /* dummy interfaces for non-CPUs */
-static M6502 Current6502;
+static int dummy_icount;
 static void Dummy_SetRegs(void *Regs);
 static void Dummy_GetRegs(void *Regs);
 static unsigned Dummy_GetPC(void);
@@ -183,24 +173,24 @@ struct cpu_interface cpuintf[] =
 		16,                                 /* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16    /* Address bits, for the memory system */
 	},
-	/* #define CPU_M6502  3 */
+    /* #define CPU_M6502  3 */
 	{
-		m6502_Reset,                       /* Reset CPU */
-		m6502_Execute,                     /* Execute a number of cycles */
-		(void (*)(void *))m6502_SetRegs,             /* Set the contents of the registers */
-		(void (*)(void *))m6502_GetRegs,             /* Get the contents of the registers */
-		m6502_GetPC,                       /* Return the current PC */
-		m6502_Cause_Interrupt,             /* Generate an interrupt */
-		m6502_Clear_Pending_Interrupts,    /* Clear pending interrupts */
-		&Current6502.ICount,               /* Pointer to the instruction count */
-		INT_NONE,INT_IRQ,INT_NMI,          /* Interrupt types: none, IRQ, NMI */
+ 		M6502_Reset,					   /* Reset CPU */
+ 		M6502_Execute,					   /* Execute a number of cycles */
+ 		(void (*)(void *))M6502_SetRegs,   /* Set the contents of the registers */
+ 		(void (*)(void *))M6502_GetRegs,   /* Get the contents of the registers */
+ 		M6502_GetPC,					   /* Return the current PC */
+ 		M6502_Cause_Interrupt,			   /* Generate an interrupt */
+ 		M6502_Clear_Pending_Interrupts,    /* Clear pending interrupts */
+ 		&M6502_ICount,					   /* Pointer to the instruction count */
+ 		M6502_INT_NONE,M6502_INT_IRQ,M6502_INT_NMI, /* Interrupt types: none, IRQ, NMI */
 		cpu_readmem16,                     /* Memory read */
 		cpu_writemem16,                    /* Memory write */
 		cpu_setOPbase16,                   /* Update CPU opcode base */
 		16,                                /* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16   /* Address bits, for the memory system */
 	},
-	/* #define CPU_I86    4 */
+    /* #define CPU_I86    4 */
 	{
 		i86_Reset,                         /* Reset CPU */
 		i86_Execute,                       /* Execute a number of cycles */
@@ -335,7 +325,24 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16,                    /* Update CPU opcode base */
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
-	}
+	},
+	/* #define CPU_TMS34010 12 */
+	{
+		TMS34010_Reset,                     /* Reset CPU */
+		TMS34010_Execute,                   /* Execute a number of cycles */
+		(void (*)(void *))TMS34010_SetRegs,           /* Set the contents of the registers */
+		(void (*)(void *))TMS34010_GetRegs,           /* Get the contents of the registers */
+		(unsigned int (*)(void))TMS34010_GetPC,             /* Return the current PC */
+		TMS34010_Cause_Interrupt,           /* Generate an interrupt */
+		TMS34010_Clear_Pending_Interrupts,  /* Clear pending interrupts */
+		&TMS34010_ICount,                   /* Pointer to the instruction count */
+		TMS34010_INT_NONE,-1,-1,            /* Interrupt types: none, IRQ, NMI */
+		cpu_readmem29,                     /* Memory read */
+		cpu_writemem29,                    /* Memory write */
+		cpu_setOPbase29,                   /* Update CPU opcode base */
+		29,                                /* CPU address bits */
+		ABITS1_29,ABITS2_29,ABITS_MIN_29   /* Address bits, for the memory system */
+	},
 };
 
 /* Convenience macros - not in cpuintrf.h because they shouldn't be used by everyone */
@@ -590,6 +597,11 @@ int cpu_getactivecpu(void)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
 	return cpunum;
+}
+
+void cpu_setactivecpu(int cpunum)
+{
+	activecpu = cpunum;
 }
 
 int cpu_gettotalcpu(void)
@@ -1374,18 +1386,11 @@ static void cpu_inittimers (void)
 
 
 
-#ifdef MAME_DEBUG
 /* JB 971019 */
-void cpu_getcontext (int _activecpu, unsigned char *buf)
+void* cpu_getcontext (int _activecpu)
 {
-    memcpy (buf, cpu[_activecpu].context, CPU_CONTEXT_SIZE);
+	return cpu[_activecpu].context;
 }
-
-void cpu_setcontext (int _activecpu, const unsigned char *buf)
-{
-    memcpy (cpu[_activecpu].context, buf, CPU_CONTEXT_SIZE);
-}
-#endif
 
 
 #ifdef Z80_DAISYCHAIN
@@ -1413,37 +1418,6 @@ void Z80_Retn (void)
 {
 }
 
-
-
-/* interfaces to the 6502 so that it looks like the other CPUs */
-static void m6502_SetRegs(M6502 *Regs)
-{
-	Current6502 = *Regs;
-}
-static void m6502_GetRegs(M6502 *Regs)
-{
-	*Regs = Current6502;
-}
-static unsigned m6502_GetPC(void)
-{
-	return Current6502.PC.W;
-}
-static void m6502_Reset(void)
-{
-	Reset6502 (&Current6502);
-}
-static int m6502_Execute(int cycles)
-{
-	return Run6502 (&Current6502, cycles);
-}
-static void m6502_Cause_Interrupt(int type)
-{
-	M6502_Cause_Interrupt (&Current6502, type);
-}
-static void m6502_Clear_Pending_Interrupts(void)
-{
-	M6502_Clear_Pending_Interrupts (&Current6502);
-}
 
 
 /* dummy interfaces for non-CPUs */

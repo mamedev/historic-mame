@@ -197,6 +197,7 @@ struct MachineCPU
 #define CPU_M68000 9
 #define CPU_T11    10	/* ASG 030598 */
 #define CPU_S2650  11	/* HJB 070598 */
+#define CPU_TMS34010  12	/* AJP 080398 */
 
 /* set this if the CPU is used as a slave for audio. It will not be emulated if */
 /* sound is disabled, therefore speeding up a lot the emulation. */

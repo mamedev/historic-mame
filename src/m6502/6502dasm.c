@@ -1,235 +1,291 @@
-/** M6502: portable 6502 emulator ****************************/
-/**                                                         **/
-/**                         Debug.c                         **/
-/**                                                         **/
-/** This file contains the built-in debugging routine for   **/
-/** the 6502 emulator which is called on each 6502 step     **/
-/** when Trap!=0.                                           **/
-/**                                                         **/
-/** Copyright (C) Marat Fayzullin 1996                      **/
-/**               Alex Krasivsky  1996                      **/
-/**     You are not allowed to distribute this software     **/
-/**     commercially. Please, notify me, if you make any    **/
-/**     changes to this file.                               **/
-/*************************************************************/
+/*****************************************************************************
+ *
+ *	 6502dasm.c
+ *	 6502/65c02/6510 disassembler
+ *
+ *	 Copyright (c) 1998 Juergen Buchmueller, all rights reserved.
+ *
+ *	 - This source code is released as freeware for non-commercial purposes.
+ *	 - You are free to use and redistribute this code in modified or
+ *	   unmodified form, provided you list me in the credits.
+ *	 - If you modify this source code, you must add a notice to each modified
+ *	   source file that it has been changed.  If you're a nice person, you
+ *	   will clearly mark each change too.  :)
+ *	 - If you wish to use this for commercial purposes, please contact me at
+ *	   pullmoll@t-online.de
+ *	 - The author of this copywritten work reserves the right to change the
+ *     terms of its usage and license at any time, including retroactively
+ *   - This entire notice must remain in the source code.
+ *
+ *****************************************************************************/
+
 #include <stdio.h>
+#include "memory.h"
 
-#if defined (DEBUG) || defined (MAME_DEBUG)
+#define RDOP(A) cpu_readop(A)
+#define RDBYTE(A) cpu_readop_arg(A)
+#define RDWORD(A) cpu_readop_arg(A)+(cpu_readop_arg((A+1) & 0xffff) << 8)
 
-#include "M6502.h"
-#include <string.h>
-#include <ctype.h>
-
-#define RDWORD(A) (Op6502(A+1)*256+Op6502(A))
-
-enum Addressing_Modes { Ac=0,Il,Im,Ab,Zp,Zx,Zy,Ax,Ay,Rl,Ix,Iy,In,No };
-
-static char *mn[]=
-{
-  "adc ","and ","asl ","bcc ","bcs ","beq ","bit ","bmi ",
-  "bne ","bpl ","brk","bvc ","bvs ","clc","cld","cli",
-  "clv","cmp ","cpx ","cpy ","dec ","dex","dey","inx",
-  "iny","eor ","inc ","jmp ","jsr ","lda ","nop ","ldx ",
-  "ldy ","lsr ","ora ","pha","php","pla","plp","rol ",
-  "ror ","rti","rts","sbc ","sta ","stx ","sty ","sec ",
-  "sed","sei","tax","tay","txa","tya","tsx","txs"
+enum addr_mode {
+	_non=0, 	 /* no additional arguments */
+	_acc,		 /* accumulator */
+	_imp,		 /* implicit */
+	_imm,		 /* immediate */
+	_abs,		 /* absolute */
+	_zpg,		 /* zero page */
+	_zpx,		 /* zero page + X */
+	_zpy,		 /* zero page + Y */
+	_zpi,		 /* zero page indirect (65c02) */
+	_abx,		 /* absolute + X */
+	_aby,		 /* absolute + Y */
+	_rel,		 /* relative */
+	_idx,		 /* zero page pre indexed */
+	_idy,		 /* zero page post indexed */
+	_ind,		 /* indirect */
+	_iax		 /* indirect + X (65c02 jmp) */
 };
 
-static byte ad[512]=
-{
-  10,Il, 34,Ix, No,No, No,No, No,No, 34,Zp,  2,Zp, No,No,
-  36,Il, 34,Im,  2,Ac, No,No, No,No, 34,Ab,  2,Ab, No,No,
-   9,Rl, 34,Iy, No,No, No,No, No,No, 34,Zx,  2,Zx, No,No,
-  13,Il, 34,Ay, No,No, No,No, No,No, 34,Ax,  2,Ax, No,No,
-  28,Ab,  1,Ix, No,No, No,No,  6,Zp,  1,Zp, 39,Zp, No,No,
-  38,Il,  1,Im, 39,Ac, No,No,  6,Ab,  1,Ab, 39,Ab, No,No,
-   7,Rl,  1,Iy, No,No, No,No, No,No,  1,Zx, 39,Zx, No,No,
-  47,Il,  1,Ay, No,No, No,No, No,No,  1,Ax, 39,Ax, No,No,
-  41,Il, 25,Ix, No,No, No,No, No,No, 25,Zp, 33,Zp, No,No,
-  35,Il, 25,Im, 33,Ac, No,No, 27,Ab, 25,Ab, 33,Ab, No,No,
-  11,Rl, 25,Iy, No,No, No,No, No,No, 25,Zx, 33,Zx, No,No,
-  15,Il, 25,Ay, No,No, No,No, No,No, 25,Ax, 33,Ax, No,No,
-  42,Il,  0,Ix, No,No, No,No, No,No,  0,Zp, 40,Zp, No,No,
-  37,Il,  0,Im, 40,Ac, No,No, 27,In,  0,Ab, 40,Ab, No,No,
-  12,Rl,  0,Iy, No,No, No,No, No,No,  0,Zx, 40,Zx, No,No,
-  49,Il,  0,Ay, No,No, No,No, No,No,  0,Ax, 40,Ax, No,No,
-  No,No, 44,Ix, No,No, No,No, 46,Zp, 44,Zp, 45,Zp, No,No,
-  22,Il, No,No, 52,Il, No,No, 46,Ab, 44,Ab, 45,Ab, No,No,
-   3,Rl, 44,Iy, No,No, No,No, 46,Zx, 44,Zx, 45,Zy, No,No,
-  53,Il, 44,Ay, 55,Il, No,No, No,No, 44,Ax, No,No, No,No,
-  32,Im, 29,Ix, 31,Im, No,No, 32,Zp, 29,Zp, 31,Zp, No,No,
-  51,Il, 29,Im, 50,Il, No,No, 32,Ab, 29,Ab, 31,Ab, No,No,
-   4,Rl, 29,Iy, No,No, No,No, 32,Zx, 29,Zx, 31,Zy, No,No,
-  16,Il, 29,Ay, 54,Il, No,No, 32,Ax, 29,Ax, 31,Ay, No,No,
-  19,Im, 17,Ix, No,No, No,No, 19,Zp, 17,Zp, 20,Zp, No,No,
-  24,Il, 17,Im, 21,Il, No,No, 19,Ab, 17,Ab, 20,Ab, No,No,
-   8,Rl, 17,Iy, No,No, No,No, No,No, 17,Zx, 20,Zx, No,No,
-  14,Il, 17,Ay, No,No, No,No, No,No, 17,Ax, 20,Ax, No,No,
-  18,Im, 43,Ix, No,No, No,No, 18,Zp, 43,Zp, 26,Zp, No,No,
-  23,Il, 43,Im, 30,Il, No,No, 18,Ab, 43,Ab, 26,Ab, No,No,
-   5,Rl, 43,Iy, No,No, No,No, No,No, 43,Zx, 26,Zx, No,No,
-  48,Il, 43,Ay, No,No, No,No, No,No, 43,Ax, 26,Ax, No,No
+enum opcodes {
+	_adc=0,_and,  _asl,  _bcc,	_bcs,  _beq,  _bit,  _bmi,
+	_bne,  _bpl,  _brk,  _bvc,	_bvs,  _clc,  _cld,  _cli,
+	_clv,  _cmp,  _cpx,  _cpy,	_dec,  _dex,  _dey,  _eor,
+	_inc,  _inx,  _iny,  _jmp,	_jsr,  _lda,  _ldx,  _ldy,
+	_lsr,  _nop,  _ora,  _pha,	_php,  _pla,  _plp,  _rol,
+	_ror,  _rti,  _rts,  _sbc,	_sec,  _sed,  _sei,  _sta,
+	_stx,  _sty,  _tax,  _tay,	_tsx,  _txa,  _txs,  _tya,
+	_ill,
+/* 65c02 (only) mnemonics */
+	_bra,  _stz,  _trb,  _tsb,
+/* 6510 + 65c02 mnemonics */
+	_anc,  _asr,  _ast,  _arr,	_asx,  _axa,  _dcp,  _dea,
+	_dop,  _ina,  _isc,  _lax,	_phx,  _phy,  _plx,  _ply,
+	_rla,  _rra,  _sax,  _slo,	_sre,  _sah,  _say,  _ssh,
+	_sxh,  _syh,  _top
 };
 
-/** Dasm6502() ****************************************************/
-/** This function will disassemble a single command and      **/
-/** return the number of bytes disassembled.                 **/
-/**************************************************************/
-int Dasm6502(char *S,word A)
+
+static const char *token[]=
 {
-  byte J;
-  word B,OP,TO;
+	"adc", "and", "asl", "bcc", "bcs", "beq", "bit", "bmi",
+	"bne", "bpl", "brk", "bvc", "bvs", "clc", "cld", "cli",
+	"clv", "cmp", "cpx", "cpy", "dec", "dex", "dey", "eor",
+	"inc", "inx", "iny", "jmp", "jsr", "lda", "ldx", "ldy",
+	"lsr", "nop", "ora", "pha", "php", "pla", "plp", "rol",
+	"ror", "rti", "rts", "sbc", "sec", "sed", "sei", "sta",
+	"stx", "sty", "tax", "tay", "tsx", "txa", "txs", "tya",
+	"ill",
+/* 65c02 mnemonics */
+	"bra", "stz", "trb", "tsb",
+/* 6510 mnemonics */
+	"anc", "asr", "ast", "arr", "asx", "axa", "dcp", "dea",
+	"dop", "ina", "isc", "lax", "phx", "phy", "plx", "ply",
+	"rla", "rra", "sax", "slo", "sre", "sah", "say", "ssh",
+	"sxh", "syh", "top"
+};
 
-  B=A;OP=Op6502_1(B++)*2;
+static const unsigned char op6502[512]=
+{
+  _brk,_imp, _ora,_idx, _ill,_non, _ill,_non, _ill,_non, _ora,_zpg, _asl,_zpg, _ill,_non, /* 00 */
+  _php,_imp, _ora,_imm, _asl,_acc, _ill,_non, _ill,_non, _ora,_abs, _asl,_abs, _ill,_non,
+  _bpl,_rel, _ora,_idy, _ill,_non, _ill,_non, _ill,_non, _ora,_zpx, _asl,_zpx, _ill,_non, /* 10 */
+  _clc,_imp, _ora,_aby, _ill,_non, _ill,_non, _ill,_non, _ora,_abx, _asl,_abx, _ill,_non,
+  _jsr,_abs, _and,_idx, _ill,_non, _ill,_non, _bit,_zpg, _and,_zpg, _rol,_zpg, _ill,_non, /* 20 */
+  _plp,_imp, _and,_imm, _rol,_acc, _ill,_non, _bit,_abs, _and,_abs, _rol,_abs, _ill,_non,
+  _bmi,_rel, _and,_idy, _ill,_non, _ill,_non, _ill,_non, _and,_zpx, _rol,_zpx, _ill,_non, /* 30 */
+  _sec,_imp, _and,_aby, _ill,_non, _ill,_non, _ill,_non, _and,_abx, _rol,_abx, _ill,_non,
+  _rti,_imp, _eor,_idx, _ill,_non, _ill,_non, _ill,_non, _eor,_zpg, _lsr,_zpg, _ill,_non, /* 40 */
+  _pha,_imp, _eor,_imm, _lsr,_acc, _ill,_non, _jmp,_abs, _eor,_abs, _lsr,_abs, _ill,_non,
+  _bvc,_rel, _eor,_idy, _ill,_non, _ill,_non, _ill,_non, _eor,_zpx, _lsr,_zpx, _ill,_non, /* 50 */
+  _cli,_imp, _eor,_aby, _ill,_non, _ill,_non, _ill,_non, _eor,_abx, _lsr,_abx, _ill,_non,
+  _rts,_imp, _adc,_idx, _ill,_non, _ill,_non, _ill,_non, _adc,_zpg, _ror,_zpg, _ill,_non, /* 60 */
+  _pla,_imp, _adc,_imm, _ror,_acc, _ill,_non, _jmp,_ind, _adc,_abs, _ror,_abs, _ill,_non,
+  _bvs,_rel, _adc,_idy, _ill,_non, _ill,_non, _ill,_non, _adc,_zpx, _ror,_zpx, _ill,_non, /* 70 */
+  _sei,_imp, _adc,_aby, _ill,_non, _ill,_non, _ill,_non, _adc,_abx, _ror,_abx, _ill,_non,
+  _ill,_non, _sta,_idx, _ill,_non, _ill,_non, _sty,_zpg, _sta,_zpg, _stx,_zpg, _ill,_non, /* 80 */
+  _dey,_imp, _ill,_non, _txa,_imp, _ill,_non, _sty,_abs, _sta,_abs, _stx,_abs, _ill,_non,
+  _bcc,_rel, _sta,_idy, _ill,_non, _ill,_non, _sty,_zpx, _sta,_zpx, _stx,_zpy, _ill,_non, /* 90 */
+  _tya,_imp, _sta,_aby, _txs,_imp, _ill,_non, _ill,_non, _sta,_abx, _ill,_non, _ill,_non,
+  _ldy,_imm, _lda,_idx, _ldx,_imm, _ill,_non, _ldy,_zpg, _lda,_zpg, _ldx,_zpg, _ill,_non, /* a0 */
+  _tay,_imp, _lda,_imm, _tax,_imp, _ill,_non, _ldy,_abs, _lda,_abs, _ldx,_abs, _ill,_non,
+  _bcs,_rel, _lda,_idy, _ill,_non, _ill,_non, _ldy,_zpx, _lda,_zpx, _ldx,_zpy, _ill,_non, /* b0 */
+  _clv,_imp, _lda,_aby, _tsx,_imp, _ill,_non, _ldy,_abx, _lda,_abx, _ldx,_aby, _ill,_non,
+  _cpy,_imm, _cmp,_idx, _ill,_non, _ill,_non, _cpy,_zpg, _cmp,_zpg, _dec,_zpg, _ill,_non, /* c0 */
+  _iny,_imp, _cmp,_imm, _dex,_imp, _ill,_non, _cpy,_abs, _cmp,_abs, _dec,_abs, _ill,_non,
+  _bne,_rel, _cmp,_idy, _ill,_non, _ill,_non, _ill,_non, _cmp,_zpx, _dec,_zpx, _ill,_non, /* d0 */
+  _cld,_imp, _cmp,_aby, _ill,_non, _ill,_non, _ill,_non, _cmp,_abx, _dec,_abx, _ill,_non,
+  _cpx,_imm, _sbc,_idx, _ill,_non, _ill,_non, _cpx,_zpg, _sbc,_zpg, _inc,_zpg, _ill,_non, /* e0 */
+  _inx,_imp, _sbc,_imm, _nop,_imp, _ill,_non, _cpx,_abs, _sbc,_abs, _inc,_abs, _ill,_non,
+  _beq,_rel, _sbc,_idy, _ill,_non, _ill,_non, _ill,_non, _sbc,_zpx, _inc,_zpx, _ill,_non, /* f0 */
+  _sed,_imp, _sbc,_aby, _ill,_non, _ill,_non, _ill,_non, _sbc,_abx, _inc,_abx, _ill,_non
+};
 
-  switch(ad[OP+1])
-  {
-    case Ac: sprintf(S,"%s a",mn[ad[OP]]);break;
-    case Il: sprintf(S,"%s",mn[ad[OP]]);break;
+static const unsigned char op65c02[512]=
+{
+  _brk,_imp, _ora,_idx, _ill,_non, _ill,_non, _tsb,_zpg, _ora,_zpg, _asl,_zpg, _ill,_non, /* 00 */
+  _php,_imp, _ora,_imm, _asl,_acc, _ill,_non, _tsb,_abs, _ora,_abs, _asl,_abs, _ill,_non,
+  _bpl,_rel, _ora,_idy, _ora,_zpi, _ill,_non, _trb,_zpg, _ora,_zpx, _asl,_zpx, _ill,_non, /* 10 */
+  _clc,_imp, _ora,_aby, _ina,_imp, _ill,_non, _tsb,_abs, _ora,_abx, _asl,_abx, _ill,_non,
+  _jsr,_abs, _and,_idx, _ill,_non, _ill,_non, _bit,_zpg, _and,_zpg, _rol,_zpg, _ill,_non, /* 20 */
+  _plp,_imp, _and,_imm, _rol,_acc, _ill,_non, _bit,_abs, _and,_abs, _rol,_abs, _ill,_non,
+  _bmi,_rel, _and,_idy, _and,_zpi, _ill,_non, _bit,_zpx, _and,_zpx, _rol,_zpx, _ill,_non, /* 30 */
+  _sec,_imp, _and,_aby, _dea,_imp, _ill,_non, _bit,_abx, _and,_abx, _rol,_abx, _ill,_non,
+  _rti,_imp, _eor,_idx, _ill,_non, _ill,_non, _ill,_non, _eor,_zpg, _lsr,_zpg, _ill,_non, /* 40 */
+  _pha,_imp, _eor,_imm, _lsr,_acc, _ill,_non, _jmp,_abs, _eor,_abs, _lsr,_abs, _ill,_non,
+  _bvc,_rel, _eor,_idy, _eor,_zpi, _ill,_non, _ill,_non, _eor,_zpx, _lsr,_zpx, _ill,_non, /* 50 */
+  _cli,_imp, _eor,_aby, _phy,_imp, _ill,_non, _ill,_non, _eor,_abx, _lsr,_abx, _ill,_non,
+  _rts,_imp, _adc,_idx, _ill,_non, _ill,_non, _stz,_zpg, _adc,_zpg, _ror,_zpg, _ill,_non, /* 60 */
+  _pla,_imp, _adc,_imm, _ror,_acc, _ill,_non, _jmp,_ind, _adc,_abs, _ror,_abs, _ill,_non,
+  _bvs,_rel, _adc,_idy, _adc,_zpi, _ill,_non, _stz,_zpx, _adc,_zpx, _ror,_zpx, _ill,_non, /* 70 */
+  _sei,_imp, _adc,_aby, _ply,_imp, _ill,_non, _jmp,_iax, _adc,_abx, _ror,_abx, _ill,_non,
+  _bra,_rel, _sta,_idx, _ill,_non, _ill,_non, _sty,_zpg, _sta,_zpg, _stx,_zpg, _ill,_non, /* 80 */
+  _dey,_imp, _bit,_imm, _txa,_imp, _ill,_non, _sty,_abs, _sta,_abs, _stx,_abs, _ill,_non,
+  _bcc,_rel, _sta,_idy, _sta,_zpi, _ill,_non, _sty,_zpx, _sta,_zpx, _stx,_zpy, _ill,_non, /* 90 */
+  _tya,_imp, _sta,_aby, _txs,_imp, _ill,_non, _stz,_abs, _sta,_abx, _ill,_non, _ill,_non,
+  _ldy,_imm, _lda,_idx, _ldx,_imm, _ill,_non, _ldy,_zpg, _lda,_zpg, _ldx,_zpg, _ill,_non, /* a0 */
+  _tay,_imp, _lda,_imm, _tax,_imp, _ill,_non, _ldy,_abs, _lda,_abs, _ldx,_abs, _ill,_non,
+  _bcs,_rel, _lda,_idy, _lda,_zpi, _ill,_non, _ldy,_zpx, _lda,_zpx, _ldx,_zpy, _ill,_non, /* b0 */
+  _clv,_imp, _lda,_aby, _tsx,_imp, _ill,_non, _ldy,_abx, _lda,_abx, _ldx,_aby, _ill,_non,
+  _cpy,_imm, _cmp,_idx, _ill,_non, _ill,_non, _cpy,_zpg, _cmp,_zpg, _dec,_zpg, _ill,_non, /* c0 */
+  _iny,_imp, _cmp,_imm, _dex,_imp, _ill,_non, _cpy,_abs, _cmp,_abs, _dec,_abs, _ill,_non,
+  _bne,_rel, _cmp,_idy, _cmp,_zpi, _ill,_non, _ill,_non, _cmp,_zpx, _dec,_zpx, _ill,_non, /* d0 */
+  _cld,_imp, _cmp,_aby, _phx,_imp, _ill,_non, _ill,_non, _cmp,_abx, _dec,_abx, _ill,_non,
+  _cpx,_imm, _sbc,_idx, _ill,_non, _ill,_non, _cpx,_zpg, _sbc,_zpg, _inc,_zpg, _ill,_non, /* e0 */
+  _inx,_imp, _sbc,_imm, _nop,_imp, _ill,_non, _cpx,_abs, _sbc,_abs, _inc,_abs, _ill,_non,
+  _beq,_rel, _sbc,_idy, _sbc,_zpi, _ill,_non, _ill,_non, _sbc,_zpx, _inc,_zpx, _ill,_non, /* f0 */
+  _sed,_imp, _sbc,_aby, _plx,_imp, _ill,_non, _ill,_non, _sbc,_abx, _inc,_abx, _ill,_non
+};
 
-    case Rl: J=Op6502(B++);TO=A+2+((J<0x80)? J:(J-256));
-             sprintf(S,"%s $%04X",mn[ad[OP]],TO);break;
+static const unsigned char op6510[512]=
+{
+  _brk,_imp, _ora,_idx, _ill,_non, _slo,_idx, _dop,_imp, _ora,_zpg, _asl,_zpg, _slo,_zpg, /* 00 */
+  _php,_imp, _ora,_imm, _asl,_acc, _anc,_imm, _top,_imp, _ora,_abs, _asl,_abs, _slo,_abs,
+  _bpl,_rel, _ora,_idy, _nop,_imp, _slo,_idy, _dop,_imp, _ora,_zpx, _asl,_zpx, _slo,_zpx, /* 10 */
+  _clc,_imp, _ora,_aby, _ill,_non, _slo,_aby, _top,_imp, _ora,_abx, _asl,_abx, _slo,_abx,
+  _jsr,_abs, _and,_idx, _ill,_non, _rla,_idx, _bit,_zpg, _and,_zpg, _rol,_zpg, _rla,_zpg, /* 20 */
+  _plp,_imp, _and,_imm, _rol,_acc, _anc,_imm, _bit,_abs, _and,_abs, _rol,_abs, _rla,_abs,
+  _bmi,_rel, _and,_idy, _ill,_non, _rla,_idy, _dop,_imp, _and,_zpx, _rol,_zpx, _rla,_zpx, /* 30 */
+  _sec,_imp, _and,_aby, _nop,_imp, _rla,_aby, _top,_imp, _and,_abx, _rol,_abx, _rla,_abx,
+  _rti,_imp, _eor,_idx, _ill,_non, _sre,_idx, _dop,_imp, _eor,_zpg, _lsr,_zpg, _sre,_zpg, /* 40 */
+  _pha,_imp, _eor,_imm, _lsr,_acc, _asr,_imm, _jmp,_abs, _eor,_abs, _lsr,_abs, _sre,_abs,
+  _bvc,_rel, _eor,_idy, _ill,_non, _sre,_idy, _dop,_imp, _eor,_zpx, _lsr,_zpx, _sre,_zpx, /* 50 */
+  _cli,_imp, _eor,_aby, _nop,_imp, _sre,_aby, _top,_imp, _eor,_abx, _lsr,_abx, _sre,_abx,
+  _rts,_imp, _adc,_idx, _ill,_non, _rra,_idx, _dop,_imp, _adc,_zpg, _ror,_zpg, _rra,_zpg, /* 60 */
+  _pla,_imp, _adc,_imm, _ror,_acc, _arr,_imm, _jmp,_ind, _adc,_abs, _ror,_abs, _rra,_abs,
+  _bvs,_rel, _adc,_idy, _ill,_non, _rra,_idy, _dop,_imp, _adc,_zpx, _ror,_zpx, _rra,_zpx, /* 70 */
+  _sei,_imp, _adc,_aby, _nop,_imp, _rra,_aby, _top,_imp, _adc,_abx, _ror,_abx, _rra,_abx,
+  _dop,_imp, _sta,_idx, _dop,_imp, _sax,_idx, _sty,_zpg, _sta,_zpg, _stx,_zpg, _sax,_zpg, /* 80 */
+  _dey,_imp, _dop,_imp, _txa,_imp, _axa,_imm, _sty,_abs, _sta,_abs, _stx,_abs, _sax,_abs,
+  _bcc,_rel, _sta,_idy, _ill,_non, _say,_idy, _sty,_zpx, _sta,_zpx, _stx,_zpy, _sax,_zpx, /* 90 */
+  _tya,_imp, _sta,_aby, _txs,_imp, _ssh,_aby, _syh,_abx, _sta,_abx, _ill,_non, _sah,_aby,
+  _ldy,_imm, _lda,_idx, _ldx,_imm, _lax,_idx, _ldy,_zpg, _lda,_zpg, _ldx,_zpg, _lax,_zpg, /* a0 */
+  _tay,_imp, _lda,_imm, _tax,_imp, _lax,_imm, _ldy,_abs, _lda,_abs, _ldx,_abs, _lax,_abs,
+  _bcs,_rel, _lda,_idy, _ill,_non, _lax,_idy, _ldy,_zpx, _lda,_zpx, _ldx,_zpy, _lax,_zpx, /* b0 */
+  _clv,_imp, _lda,_aby, _tsx,_imp, _ast,_aby, _ldy,_abx, _lda,_abx, _ldx,_aby, _lax,_abx,
+  _cpy,_imm, _cmp,_idx, _dop,_imp, _dcp,_idx, _cpy,_zpg, _cmp,_zpg, _dec,_zpg, _dcp,_zpg, /* c0 */
+  _iny,_imp, _cmp,_imm, _dex,_imp, _asx,_imm, _cpy,_abs, _cmp,_abs, _dec,_abs, _dcp,_abs,
+  _bne,_rel, _cmp,_idy, _ill,_non, _dcp,_idy, _dop,_imp, _cmp,_zpx, _dec,_zpx, _dcp,_zpx, /* d0 */
+  _cld,_imp, _cmp,_aby, _nop,_imp, _dcp,_aby, _top,_imp, _cmp,_abx, _dec,_abx, _dcp,_abx,
+  _cpx,_imm, _sbc,_idx, _dop,_imp, _isc,_idx, _cpx,_zpg, _sbc,_zpg, _inc,_zpg, _isc,_zpg, /* e0 */
+  _inx,_imp, _sbc,_imm, _nop,_imp, _sbc,_imm, _cpx,_abs, _sbc,_abs, _inc,_abs, _isc,_abs,
+  _beq,_rel, _sbc,_idy, _ill,_non, _isc,_idy, _dop,_imp, _sbc,_zpx, _inc,_zpx, _isc,_zpx, /* f0 */
+  _sed,_imp, _sbc,_aby, _nop,_imp, _isc,_aby, _top,_imp, _sbc,_abx, _inc,_abx, _isc,_abx
+};
 
-    case Im: sprintf(S,"%s #$%02X",mn[ad[OP]],Op6502(B++));break;
-    case Zp: sprintf(S,"%s $%02X",mn[ad[OP]],Op6502(B++));break;
-    case Zx: sprintf(S,"%s $%02X,x",mn[ad[OP]],Op6502(B++));break;
-    case Zy: sprintf(S,"%s $%02X,y",mn[ad[OP]],Op6502(B++));break;
-    case Ix: sprintf(S,"%s ($%02X,x)",mn[ad[OP]],Op6502(B++));break;
-    case Iy: sprintf(S,"%s ($%02X),y",mn[ad[OP]],Op6502(B++));break;
+/*****************************************************************************
+ *	Disassemble a single command and return the number of bytes it uses.
+ *****************************************************************************/
+int Dasm6502(char *buffer, int pc)
+{
+extern int M6502_Type;
+int PC, OP, opc, arg;
 
-    case Ab: sprintf(S,"%s $%04X",mn[ad[OP]],RDWORD(B));B+=2;break;
-    case Ax: sprintf(S,"%s $%04X,x",mn[ad[OP]],RDWORD(B));B+=2;break;
-    case Ay: sprintf(S,"%s $%04X,y",mn[ad[OP]],RDWORD(B));B+=2;break;
-    case In: sprintf(S,"%s ($%04X)",mn[ad[OP]],RDWORD(B));B+=2;break;
+	PC = pc;
+	OP = RDOP(PC++) << 1;
 
-    default: sprintf(S,".db $%02X; <Invalid OPcode>",OP/2);
-  }
-  return (word)(B-A);
+	switch (M6502_Type)
+	{
+		case 1:
+			opc =op65c02[OP];
+            arg = op65c02[OP+1];
+			break;
+		case 2:
+			opc =op6510[OP];
+            arg = op6510[OP+1];
+            break;
+		default:
+			opc =op6502[OP];
+            arg = op6502[OP+1];
+            break;
+	}
+
+	switch(arg)
+	{
+		case _acc:
+			sprintf(buffer,"%-5sa", token[opc]);
+			break;
+
+		case _imp:
+			sprintf(buffer,"%s", token[opc]);
+			break;
+
+		case _rel:
+			sprintf(buffer,"%-5s$%04X", token[opc], (PC + 1 + (signed char)RDBYTE(PC)) & 0xffff);
+			PC+=1;
+			break;
+
+		case _imm:
+			sprintf(buffer,"%-5s#$%02X", token[opc], RDBYTE(PC));
+			PC+=1;
+			break;
+		case _zpg:
+			sprintf(buffer,"%-5s$%02X", token[opc], RDBYTE(PC));
+			PC+=1;
+			break;
+		case _zpx:
+			sprintf(buffer,"%-5s$%02X,x", token[opc], RDBYTE(PC));
+			PC+=1;
+			break;
+		case _zpy:
+			sprintf(buffer,"%-5s$%02X,y", token[opc], RDBYTE(PC));
+			PC+=1;
+			break;
+		case _idx:
+			sprintf(buffer,"%-5s($%02X,x)", token[opc], RDBYTE(PC));
+			PC+=1;
+			break;
+		case _idy:
+			sprintf(buffer,"%-5s($%02X),y", token[opc], RDBYTE(PC));
+			PC+=1;
+			break;
+		case _zpi:
+			sprintf(buffer,"%-5s($%02X)", token[opc], RDBYTE(PC));
+            PC+=1;
+            break;
+
+		case _abs:
+			sprintf(buffer,"%-5s$%04X", token[opc], RDWORD(PC));
+			PC+=2;
+			break;
+		case _abx:
+			sprintf(buffer,"%-5s$%04X,x", token[opc], RDWORD(PC));
+			PC+=2;
+			break;
+		case _aby:
+			sprintf(buffer,"%-5s$%04X,y", token[opc], RDWORD(PC));
+			PC+=2;
+			break;
+		case _ind:
+			sprintf(buffer,"%-5s($%04X)", token[opc], RDWORD(PC));
+			PC+=2;
+			break;
+		case _iax:
+			sprintf(buffer,"%-5s($%04X),X", token[opc], RDWORD(PC));
+			PC+=2;
+            break;
+
+		default:
+			sprintf(buffer,"%-5s$%02X", token[opc], OP >> 1);
+	}
+	return PC - pc;
 }
 
-/** Debug6502() **********************************************/
-/** This function should exist if DEBUG is #defined. When   **/
-/** Trace!=0, it is called after each command executed by   **/
-/** the CPU, and given the 6502 registers. Emulation exits  **/
-/** if Debug6502() returns 0.                               **/
-/*************************************************************/
-byte Debug6502(M6502 *R)
-{
-  static char FA[8]="NVRBDIZC";
-  char S[128];
-  byte F;
-  int J,I;
-
-  Dasm6502(S,R->PC.W);
-
-  printf
-  (
-    "A:%02X  P:%02X  X:%02X  Y:%02X  S:%04X  PC:%04X  Flags:[",
-    R->A,R->P,R->X,R->Y,R->S+0x0100,R->PC.W
-  );
-
-  for(J=0,F=R->P;J<8;J++,F<<=1)
-    printf("%c",F&0x80? FA[J]:'.');
-  puts("]");
-
-  printf
-  (
-    "AT PC: [%02X - %s]   AT SP: [%02X %02X %02X]\n",
-    Op6502(R->PC.W),S,
-    Op6502(0x0100+(byte)(R->S+1)),
-    Op6502(0x0100+(byte)(R->S+2)),
-    Op6502(0x0100+(byte)(R->S+3))
-  );
-
-  while(1)
-  {
-    printf("\n[Command,'?']-> ");
-    fflush(stdout);fflush(stdin);
-
-    fgets(S,50,stdin);
-    for(J=0;S[J]>=' ';J++)
-      S[J]=toupper(S[J]);
-    S[J]='\0';
-
-    switch(S[0])
-    {
-      case 'H':
-      case '?':
-        puts("\n***** Built-in 6502 Debugger Commands *****");
-        puts("<CR>       : Break at the next instruction");
-        puts("= <addr>   : Break at addr");
-        puts("+ <offset> : Break at PC + offset");
-        puts("c          : Continue without break");
-        puts("j <addr>   : Continue from addr");
-        puts("m <addr>   : Memory dump at addr");
-        puts("d <addr>   : Disassembly at addr");
-        puts("v          : Show interrupt vectors");
-        puts("?,h        : Show this help text");
-        puts("q          : Exit 6502 emulation");
-        break;
-
-      case '\0': return(1);
-      case '=':  if(strlen(S)>=2)
-                 { sscanf(S+1,"%hX",&(R->Trap));R->Trace=0;return(1); }
-                 break;
-      case '+':  if(strlen(S)>=2)
-                 {
-                   sscanf(S+1,"%hX",&(R->Trap));
-                   R->Trap+=R->PC.W;R->Trace=0;
-                   return(1);
-                 }
-                 break;
-      case 'J':  if(strlen(S)>=2)
-                 { sscanf(S+1,"%hX",&(R->PC.W));R->Trace=0;return(1); }
-                 break;
-      case 'C':  R->Trap=0xFFFF;R->Trace=0;return(1);
-      case 'Q':  return(0);
-
-      case 'V':
-        puts("\n6502 Interrupt Vectors:");
-        printf("[$FFFC] INIT: $%04X\n",Op6502(0xFFFC)+256*Op6502(0xFFFD));
-        printf("[$FFFE] IRQ:  $%04X\n",Op6502(0xFFFE)+256*Op6502(0xFFFF));
-        printf("[$FFFA] NMI:  $%04X\n",Op6502(0xFFFA)+256*Op6502(0xFFFB));
-        break;
-
-      case 'M':
-        {
-          word Addr;
-
-          if(strlen(S)>1) sscanf(S+1,"%hX",&Addr); else Addr=R->PC.W;
-          puts("");
-          for(J=0;J<16;J++)
-          {
-            printf("%04X: ",Addr);
-            for(I=0;I<16;I++,Addr++)
-              printf("%02X ",Op6502(Addr));
-            printf(" | ");Addr-=16;
-            for(I=0;I<16;I++,Addr++)
-              putchar(isprint(Op6502(Addr))? Op6502(Addr):'.');
-            puts("");
-          }
-        }
-        break;
-
-      case 'D':
-        {
-          word Addr;
-
-          if(strlen(S)>1) sscanf(S+1,"%hX",&Addr); else Addr=R->PC.W;
-          puts("");
-          for(J=0;J<16;J++)
-          {
-            printf("%04X: ",Addr);
-            Addr+=Dasm6502(S,Addr);
-            puts(S);
-          }
-        }
-        break;
-    }
-  }
-
-  /* Continue with emulation */
-  return(1);
-}
-
-#endif /* DEBUG */

@@ -358,7 +358,7 @@ struct GameDriver friskyt_driver =
 	"friskyt",
 	"Frisky Tom",
 	"1981",
-	"Nihon Bussan",
+	"Nichibutsu",
 	"Mirko Buffoni\nNicola Salmoria",
 	GAME_NOT_WORKING,
 	&machine_driver,

@@ -11,7 +11,7 @@ e800-efff Character generator RAM
 
 I/O ports:
 
-The memory map is the same for alla games, but the I/O ports change. The
+The memory map is the same for many games, but the I/O ports change. The
 following ones are for Carnival, and apply to many other games as well.
 
 read:
@@ -89,6 +89,24 @@ void carnival_music_port_1_w( int offset, int data );
 void carnival_music_port_2_w( int offset, int data );
 
 
+static int protection_data;
+
+void samurai_protection_w(int offset,int data)
+{
+	protection_data = data;
+}
+
+int samurai_input_r(int offset)
+{
+	int answer = 0;
+
+	if (protection_data == 0xab) answer = 0x02;
+	else if (protection_data == 0x1d) answer = 0x0c;
+
+	return (readinputport(1 + offset) & 0xfd) | ((answer >> offset) & 0x02);
+}
+
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -100,6 +118,7 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
+	{ 0x7f00, 0x7f00, samurai_protection_w },	/* Samurai only */
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xe000, 0xe3ff, videoram_w, &videoram, &videoram_size },
 	{ 0xe400, 0xe7ff, MWA_RAM },
@@ -135,6 +154,13 @@ static struct IOReadPort readport_4ports[] =
 	{ 0x01, 0x01, input_port_1_r },
 	{ 0x02, 0x02, input_port_2_r },
 	{ 0x03, 0x03, input_port_3_r },
+	{ -1 }  /* end of table */
+};
+
+static struct IOReadPort readport_samuraiports[] =
+{
+	{ 0x00, 0x00, input_port_0_r },
+	{ 0x01, 0x03, samurai_input_r },	/* bit 1 of these ports returns a protection code */
 	{ -1 }  /* end of table */
 };
 
@@ -213,6 +239,31 @@ INPUT_PORTS_START( safari_input_ports )
 	PORT_DIPSETTING (   0x20, "2 Coins/1 Credit" )
 	PORT_DIPSETTING (   0x30, "1 Coin/1 Credit" )
     PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE | IPF_RESETCPU, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 30 )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( frogs_input_ports )
+	PORT_START	/* IN0 */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown", IP_KEY_NONE )	/* maybe Demo Sounds */
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Allow Free Game", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x10, "Yes" )
+	PORT_DIPNAME( 0x20, 0x20, "Time", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "60" )
+	PORT_DIPSETTING(    0x20, "90" )
+	PORT_DIPNAME( 0x40, 0x40, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x40, "1 Coin/1 Credit" )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
+    PORT_BIT( 0x7e, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE | IPF_RESETCPU, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 30 )
 INPUT_PORTS_END
 
@@ -319,6 +370,56 @@ INPUT_PORTS_START ( invho2_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE | IPF_RESETCPU, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 30 )
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_TOGGLE, "Game Select", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START ( samurai_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_DIPNAME( 0x04, 0x04, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_BITX(    0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection, see samurai_input_r() */
+	PORT_DIPNAME( 0x04, 0x00, "Unknown", IP_KEY_NONE )	/* unknown, but used */
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK )	/* seems to be on port 2 instead */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection, see samurai_input_r() */
+	PORT_DIPNAME( 0x04, 0x00, "Unused", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK )	/* either vblank, or a timer. In the */
+												/* Carnival schematics, it's a timer. */
+//	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* timer */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection, see samurai_input_r() */
+	PORT_DIPNAME( 0x04, 0x00, "Unused", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE | IPF_RESETCPU, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 30 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
@@ -437,7 +538,6 @@ INPUT_PORTS_START ( tranqgun_input_ports )
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x04, 0x00, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x04, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
@@ -676,6 +776,7 @@ MACHINEDRIVER( vicdual_2Aports_machine_driver, 2Aports )
 MACHINEDRIVER( vicdual_2Bports_machine_driver, 2Bports )
 MACHINEDRIVER( vicdual_3ports_machine_driver, 3ports )
 MACHINEDRIVER( vicdual_4ports_machine_driver, 4ports )
+MACHINEDRIVER( samurai_machine_driver, samuraiports )	/* this game has a simple protection */
 
 
 static struct AY8910interface ay8910_interface =
@@ -773,6 +874,19 @@ ROM_START( safari_rom )
 	ROM_LOAD( "3160057.u39", 0x2400, 0x0400, 0x36529468 )
 ROM_END
 
+ROM_START( frogs_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "119a.u48", 0x0000, 0x0400, 0xc97f5dbb )
+	ROM_RELOAD(           0x4000, 0x0400 )
+	ROM_LOAD( "118a.u47", 0x4400, 0x0400, 0xbf0fc761 )
+	ROM_LOAD( "117a.u46", 0x4800, 0x0400, 0xc66ef1ae )
+	ROM_LOAD( "116b.u45", 0x4c00, 0x0400, 0x72b7e385 )
+	ROM_LOAD( "115a.u44", 0x5000, 0x0400, 0xbed07bee )
+	ROM_LOAD( "114a.u43", 0x5400, 0x0400, 0x67ed7de3 )
+	ROM_LOAD( "113a.u42", 0x5800, 0x0400, 0x5ddd05db )
+	ROM_LOAD( "112a.u41", 0x5c00, 0x0400, 0x9a8c25d4 )
+ROM_END
+
 ROM_START( sspaceat_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "139.u27", 0x0000, 0x0400, 0xc3bde565 )
@@ -817,6 +931,25 @@ ROM_START( invho2_rom )
 	ROM_LOAD( "284b.u3",  0x7400, 0x0400, 0x53f1cd8b )
 	ROM_LOAD( "285b.u2",  0x7800, 0x0400, 0x58a0fe0e )
 	ROM_LOAD( "286b.u1",  0x7C00, 0x0400, 0x8460e06c )
+ROM_END
+
+ROM_START( samurai_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "epr289.u33", 0x0000, 0x0400, 0xcca8599a )
+	ROM_RELOAD(             0x4000, 0x0400 )
+	ROM_LOAD( "epr290.u32", 0x4400, 0x0400, 0x127e7fba )
+	ROM_LOAD( "epr291.u31", 0x4800, 0x0400, 0xf50158f1 )
+	ROM_LOAD( "epr292.u30", 0x4c00, 0x0400, 0xf877166f )
+	ROM_LOAD( "epr366.u29", 0x5000, 0x0400, 0x3ec67476 )
+	ROM_LOAD( "epr355.u28", 0x5400, 0x0400, 0x49ab7dab )
+	ROM_LOAD( "epr367.u27", 0x5800, 0x0400, 0x6df6c5b2 )
+	ROM_LOAD( "epr368.u26", 0x5c00, 0x0400, 0x923de237 )
+	ROM_LOAD( "epr369.u8",  0x6000, 0x0400, 0x6dfd6e8b )
+	ROM_LOAD( "epr370.u7",  0x6400, 0x0400, 0xa5788dba )
+	ROM_LOAD( "epr299.u6",  0x6800, 0x0400, 0xb2fed46a )
+	ROM_LOAD( "epr371.u5",  0x6c00, 0x0400, 0xce8e7b6c )
+	ROM_LOAD( "epr301.u4",  0x7000, 0x0400, 0x938ef5c6 )
+	ROM_LOAD( "epr372.u3",  0x7400, 0x0400, 0xbac246f2 )
 ROM_END
 
 ROM_START( invinco_rom )
@@ -946,16 +1079,9 @@ ROM_END
 
 
 
-static unsigned char depthch_color_prom[] =
+static unsigned char bw_color_prom[] =
 {
-	/* Depth Charge is a b/w game, here is the PROM for Head On */
-	0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,
-	0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,
-};
-
-static unsigned char safari_color_prom[] =
-{
-	/* Safari is a b/w game, here is the PROM for Head On */
+	/* for b/w games, let's use the Head On PROM */
 	0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,
 	0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,
 };
@@ -990,6 +1116,13 @@ static unsigned char invho2_color_prom[] =
 	/* (bit 4 always 0). This seems to be a better read. */
 	0xF1,0xB1,0x71,0xF1,0xF1,0xF1,0xF1,0xF1,0x91,0xF1,0x31,0xF1,0x51,0xB1,0x91,0xB1,
 	0xD1,0xB1,0x31,0x51,0xF1,0xB1,0x71,0x91,0xF1,0xF1,0xF1,0xF1,0xF1,0xF1,0xF1,0xF1
+};
+
+static unsigned char samurai_color_prom[] =
+{
+	/* PR55.CLR: palette */
+	0xE0,0xE0,0x84,0x80,0xE0,0xA0,0x60,0x40,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,
+	0x00,0x40,0xA0,0x00,0x00,0x00,0x00,0x00,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80
 };
 
 static unsigned char invinco_color_prom[] =
@@ -1118,7 +1251,7 @@ struct GameDriver depthch_driver =
 
 	depthch_input_ports,
 
-	depthch_color_prom, 0, 0,
+	bw_color_prom, 0, 0,
 
 	ORIENTATION_DEFAULT,
 
@@ -1144,7 +1277,33 @@ struct GameDriver safari_driver =
 
 	safari_input_ports,
 
-	safari_color_prom, 0, 0,
+	bw_color_prom, 0, 0,
+
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+struct GameDriver frogs_driver =
+{
+	__FILE__,
+	0,
+	"frogs",
+	"Frogs",
+	"1978",
+	"Gremlin",
+	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
+	0,
+	&vicdual_2Aports_machine_driver,
+
+	frogs_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	frogs_input_ports,
+
+	bw_color_prom, 0, 0,
 
 	ORIENTATION_DEFAULT,
 
@@ -1226,6 +1385,32 @@ struct GameDriver invho2_driver =
 	invho2_input_ports,
 
 	invho2_color_prom, 0, 0,
+
+	ORIENTATION_ROTATE_270,
+
+	0, 0
+};
+
+struct GameDriver samurai_driver =
+{
+	__FILE__,
+	0,
+	"samurai",
+	"Samurai",
+	"1980",
+	"Sega",
+	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
+	0,
+	&samurai_machine_driver,
+
+	samurai_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	samurai_input_ports,
+
+	samurai_color_prom, 0, 0,
 
 	ORIENTATION_ROTATE_270,
 

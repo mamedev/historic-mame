@@ -17,7 +17,7 @@
   Notes:
 	Missing scroll field in Hippodrome
 	Hippodrome can crash if you fight 'Serpent' enemy
-    Midnight Resistance:
+  Midnight Resistance:
 	The final sequence is wrong (missing front layer which should hide the
 	sun until the grass field scrolls in place).
 	At the end you are asked to enter your name using black letters on black
@@ -25,6 +25,7 @@
 
   Thanks to Gouky & Richard Bush for information along the way, especially
   Gouky's patch for Bad Dudes & YM3812 information!
+	Thanks to JC Alexander for fix to Robocop ending!
 
 Cheats:
 
@@ -41,11 +42,9 @@ Mid res: bpx at c02 for level check, can go straight to credits.
          Put PC to 0xa1e in game to trigger continue screen
 
 To do:
-  Robocop end still doesnt work - all colours & playfields set to 0?!!?
-  (Could be a 'feature' of the bootleg set...)
   Sprite/background priority in boat stage of Sly Spy & forest level of Bad
     Dudes, current drivers MAY be correct (Sly Spy is certainly wrong), we
-	need real boards to check against.
+    need real boards to check against.
 
   No sound in Sly Spy or MidRes (what processor is it?!)
 
@@ -125,7 +124,7 @@ static void dec0_30c010_w(int offset,int data)
 
 		case 4:
 			soundlatch_w(0,data & 0xff);
-			cpu_cause_interrupt(1,INT_NMI);
+			cpu_cause_interrupt(1,M6502_INT_NMI);
 			break;
 
 		case 6: /* Heavy Barrel Intel 8751 microcontroller - unknown for other games */
@@ -154,14 +153,14 @@ static void slyspy_control_w(int offset, int data)
 
     switch (offset) {
     	case 0:
-			if (sound>0x2d) ADPCM_trigger(0,sound);
-            break;
-        case 2:
+				if (sound>0x2d) ADPCM_trigger(0,sound);
+				break;
+			case 2:
 			/* This is set to 0x80 in the boat level, so could be sprite/playfield
 				priority - it fits for all cases except boat level where this is
                 also 0x80 :( */
-        	dec0_unknown2=data;
-            break;
+				dec0_unknown2=data;
+				break;
     }
 }
 
@@ -220,9 +219,7 @@ static struct MemoryWriteAddress dec0_writemem[] =
 static struct MemoryReadAddress robocop_readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x242a00, 0x242bff, MRA_BANK3 },	/* ?? used during attract mode */
-	{ 0x243200, 0x2433ff, MRA_BANK4 },	/* ?? used during attract mode */
-	{ 0x243800, 0x243813, MRA_BANK5 },	/* ?? needed for the pictures at the beginning of the game to work */
+	{ 0x242800, 0x243fff, MRA_BANK3 }, /* Used for attract mode, pictures at beginning & ending */
 	{ 0x244000, 0x245fff, dec0_pf1_data_r },
 	{ 0x30c000, 0x30c00b, dec0_controls_read },
 	{ 0xff8000, 0xffbfff, MRA_BANK1 }, /* Main ram */
@@ -238,9 +235,7 @@ static struct MemoryWriteAddress robocop_writemem[] =
 	{ 0x240010, 0x240017, dec0_pf1_control_1_w },
 	{ 0x242000, 0x24207f, dec0_pf1_colscroll_w, &dec0_pf1_colscroll },
 	{ 0x242400, 0x2427ff, dec0_pf1_rowscroll_w, &dec0_pf1_rowscroll },
-	{ 0x242a00, 0x242bff, MWA_BANK3 },	/* ?? used during attract mode */
-	{ 0x243200, 0x2433ff, MWA_BANK4 },	/* ?? used during attract mode */
-	{ 0x243800, 0x243813, MWA_BANK5 },	/* ?? needed for the pictures at the beginning of the game to work */
+	{ 0x242800, 0x243fff, MWA_BANK3 }, /* Used for attract mode, pictures at beginning & ending */
 	{ 0x244000, 0x245fff, dec0_pf1_data_w, &dec0_pf1_data },
 
 	{ 0x246000, 0x246007, dec0_pf2_control_0_w },	/* first tile layer */
@@ -945,7 +940,7 @@ static struct GfxDecodeInfo midres_gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	1,
-	1250000,	/* 1.25 MHz */
+	1500000,	/* 1.50 MHz */
 	{ YM2203_VOL(140,255) },
 	{ 0 },
 	{ 0 },
@@ -1795,7 +1790,7 @@ static void hippo_decode(void)
 {
 	unsigned char *MYRAM = Machine->memory_region[4];
 	int i,newword;
-//	unsigned char *OUT = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+/*	unsigned char *OUT = Machine->memory_region[Machine->drv->cpu[0].memory_region];*/
 
 	/* Read each byte, decrypt it, and make it a word so core can read it */
 	for (i=0x00000; i<0x10000; i=i+2) {
@@ -1815,9 +1810,9 @@ static void hippo_decode(void)
 
 	    newword=((MYRAM[i])<<8) + MYRAM[i+1];
 
-        /* Write it to ??  A MRA_BANK probably */
-//	    WRITE_WORD (&ROM[i],newword);
-//	    WRITE_WORD (&OUT[i],newword);
+      /* Write it to ??  A MRA_BANK probably
+	    WRITE_WORD (&ROM[i],newword);
+	    WRITE_WORD (&OUT[i],newword);*/
 	}
 }
 
@@ -2121,4 +2116,3 @@ struct GameDriver midres_driver =
 	ORIENTATION_DEFAULT,
 	0, 0
 };
-

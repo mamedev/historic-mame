@@ -17,7 +17,7 @@ unsigned char *goldstar_scroll1, *goldstar_scroll2, *goldstar_scroll3;
 
 static unsigned char *dirtybuffer1, *dirtybuffer2, *dirtybuffer3;
 static struct osd_bitmap *tmpbitmap1, *tmpbitmap2, *tmpbitmap3;
-static int bgbank;
+static int bgcolor;
 
 
 
@@ -106,10 +106,10 @@ void goldstar_fa00_w(int offset,int data)
 {
 	/* bit 1 toggles continuously - might be irq enable or watchdog reset */
 
-	/* bit 2 selects background gfx bank (I think) */
-	if (bgbank != ((data & 0x04) >> 2))
+	/* bit 2 selects background gfx color (I think) */
+	if (bgcolor != ((data & 0x04) >> 2))
 	{
-		bgbank = (data & 0x04) >> 2;
+		bgcolor = (data & 0x04) >> 2;
 		memset(dirtybuffer1,1,goldstar_video_size);
 		memset(dirtybuffer2,1,goldstar_video_size);
 		memset(dirtybuffer3,1,goldstar_video_size);
@@ -172,17 +172,13 @@ void goldstar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		int sy = offs / 64;
 
 
-	/* TODO: there must be a way to select the gfx color; there seem to */
-	/* be only 2 color combinations, and the only difference is the */
-	/* background color. There are also two gfx banks, the only difference */
-	/* is again the background color. */
 		if (dirtybuffer1[offs])
 		{
 			dirtybuffer1[offs] = 0;
 
-			drawgfx(tmpbitmap1, Machine->gfx[1 + bgbank],
+			drawgfx(tmpbitmap1,Machine->gfx[1],
 					goldstar_video1[offs],
-					0,
+					bgcolor,
 					0,0,
 					sx*8,sy*32,
 					0,TRANSPARENCY_NONE,0);
@@ -192,9 +188,9 @@ void goldstar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			dirtybuffer2[offs] = 0;
 
-			drawgfx(tmpbitmap2, Machine->gfx[1 + bgbank],
+			drawgfx(tmpbitmap2,Machine->gfx[1],
 					goldstar_video2[offs],
-					0,
+					bgcolor,
 					0,0,
 					sx*8,sy*32,
 					0,TRANSPARENCY_NONE,0);
@@ -204,9 +200,9 @@ void goldstar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			dirtybuffer3[offs] = 0;
 
-			drawgfx(tmpbitmap3, Machine->gfx[1 + bgbank],
+			drawgfx(tmpbitmap3,Machine->gfx[1],
 					goldstar_video3[offs],
-					0,
+					bgcolor,
 					0,0,
 					sx*8,sy*32,
 					0,TRANSPARENCY_NONE,0);

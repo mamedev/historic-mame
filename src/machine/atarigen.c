@@ -193,7 +193,7 @@ static void atarigen_delayed_sound_w (int param)
 
 	atarigen_cpu_to_sound = param;
 	atarigen_cpu_to_sound_ready = 1;
-	cpu_cause_interrupt (1, INT_NMI);
+	cpu_cause_interrupt (1, M6502_INT_NMI);
 
 	/* allocate a high frequency timer until a response is generated */
 	/* the main CPU is *very* sensistive to the timing of the response */

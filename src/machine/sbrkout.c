@@ -60,7 +60,7 @@ int sbrkout_select2(int offset)
 void sbrkout_irq_w(int offset, int data)
 {
         /* generate irq */
-        cpu_cause_interrupt(0,INT_IRQ);
+        cpu_cause_interrupt(0,M6502_INT_IRQ);
 }
 
 

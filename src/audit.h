@@ -14,7 +14,7 @@
 #define AUD_MEM_ERROR		3
 #define AUD_LENGTH_MISMATCH	4
 
-#define AUD_MAX_ROMS		50	/* maximum roms in a single romset */
+#define AUD_MAX_ROMS		100	/* maximum roms in a single romset */
 #define AUD_MAX_SAMPLES		100	/* maximum samples per driver */
 
 typedef struct
@@ -33,8 +33,8 @@ typedef struct
 
 typedef void (*verify_printf_proc)(char *fmt,...);
 
-int AuditRomSet (int game, tAuditRecord **audit);
-int VerifyRomSet(int game,verify_printf_proc verify_printf);
+int AuditRomSet (int game, tAuditRecord **audit, int crc);
+int VerifyRomSet(int game,verify_printf_proc verify_printf, int crc);
 int AuditSampleSet (int game, tMissingSample **audit);
 int VerifySampleSet(int game,verify_printf_proc verify_printf);
 

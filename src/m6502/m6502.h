@@ -1,148 +1,135 @@
-/** M6502: portable 6502 emulator ****************************/
-/**                                                         **/
-/**                         M6502.h                         **/
-/**                                                         **/
-/** This file contains declarations relevant to emulation   **/
-/** of 6502 CPU.                                            **/
-/**                                                         **/
-/** Copyright (C) Marat Fayzullin 1996                      **/
-/**               Alex Krasivsky  1996                      **/
-/**     You are not allowed to distribute this software     **/
-/**     commercially. Please, notify me, if you make any    **/
-/**     changes to this file.                               **/
-/*************************************************************/
-#ifndef M6502_H
-#define M6502_H
+/*****************************************************************************
+ *
+ *	 m6502.h
+ *	 Portable 6502/65c02/6510 emulator interface
+ *
+ *	 Copyright (c) 1998 Juergen Buchmueller, all rights reserved.
+ *
+ *	 - This source code is released as freeware for non-commercial purposes.
+ *	 - You are free to use and redistribute this code in modified or
+ *	   unmodified form, provided you list me in the credits.
+ *	 - If you modify this source code, you must add a notice to each modified
+ *	   source file that it has been changed.  If you're a nice person, you
+ *	   will clearly mark each change too.  :)
+ *	 - If you wish to use this for commercial purposes, please contact me at
+ *	   pullmoll@t-online.de
+ *	 - The author of this copywritten work reserves the right to change the
+ *     terms of its usage and license at any time, including retroactively
+ *   - This entire notice must remain in the source code.
+ *
+ *****************************************************************************/
 
-#include "memory.h"
+#ifndef _M6502_H
+#define _M6502_H
 
-                               /* Compilation options:       */
-/* #define FAST_RDOP */        /* Separate Op6502()/Rd6502() */
-/* #define DEBUG */            /* Compile debugging version  */
-/* #define LSB_FIRST */        /* Compile for low-endian CPU */
+/****************************************************************************
+ * sizeof(byte)=1, sizeof(word)=2, sizeof(dword)>=4
+ ****************************************************************************/
+#include "types.h"
 
-                               /* Loop6502() returns:        */
-#define INT_NONE  0            /* No interrupt required      */
-#define INT_IRQ	  1            /* Standard IRQ interrupt     */
-#define INT_NMI	  2            /* Non-maskable interrupt     */
-#define INT_QUIT  3            /* Exit the emulation         */
-
-                               /* 6502 status flags:         */
-#define	C_FLAG	  0x01         /* 1: Carry occured           */
-#define	Z_FLAG	  0x02         /* 1: Result is zero          */
-#define	I_FLAG	  0x04         /* 1: Interrupts disabled     */
-#define	D_FLAG	  0x08         /* 1: Decimal mode            */
-#define	B_FLAG	  0x10         /* Break [0 on stk after int] */
-#define	R_FLAG	  0x20         /* Always 1                   */
-#define	V_FLAG	  0x40         /* 1: Overflow occured        */
-#define	N_FLAG	  0x80         /* 1: Result is negative      */
-
-/** Simple Datatypes *****************************************/
-/** NOTICE: sizeof(byte)=1 and sizeof(word)=2               **/
-/*************************************************************/
-#include "types.h"	/* -NS- */
-
-/** Structured Datatypes *************************************/
-/** NOTICE: #define LSB_FIRST for machines where least      **/
-/**         signifcant byte goes first.                     **/
-/*************************************************************/
-typedef union
-{
-#ifdef LSB_FIRST
-  struct { byte l,h; } B;
-#else
-  struct { byte h,l; } B;
+#ifndef INLINE
+#define INLINE static inline
 #endif
-  word W;
-} pair;
 
+#define SUPP65C02	1		/* set to 1 to support the 65C02 opcodes */
+#define SUPP6510	1		/* set to 1 to support the 6510 opcodes */
+
+#define M6502_PLAIN 0		/* set M6502_Type to this for a plain 6502 emulation */
+
+#ifdef  SUPP65C02
+#define M6502_65C02 1		/* set M6502_Type to this for a 65C02 emulation */
+#endif
+
+#ifdef  SUPP6510
+#define M6502_6510	2		/* set M6502_Type to this for a 6510 emulation */
+#endif
+
+#define FAST_MEMORY 1		/* set to 1 to test cur_mrhard/wmhard to avoid calls */
+
+#define LAZY_FLAGS	1		/* set to 1 to use Bernd's idea for N and Z flags */
+
+/****************************************************************************
+ * Define a 6502 word. Upper bytes are always zero
+ ****************************************************************************/
+typedef 	union {
+#ifdef __128BIT__
+ #ifdef LSB_FIRST
+   struct { byte l,h,h2,h3,h4,h5,h6,h7,h8,h9,h10,h11,h12,h13,h14,h15; } B;
+   struct { word l,h,h2,h3,h4,h5,h6,h7; } W;
+   dword D;
+ #else
+   struct { byte h15,h14,h13,h12,h11,h10,h9,h8,h7,h6,h5,h4,h3,h2,h,l; } B;
+   struct { word h7,h6,h5,h4,h3,h2,h,l; } W;
+   dword D;
+ #endif
+#elif __64BIT__
+ #ifdef LSB_FIRST
+   struct { byte l,h,h2,h3,h4,h5,h6,h7; } B;
+   struct { word l,h,h2,h3; } W;
+   dword D;
+ #else
+   struct { byte h7,h6,h5,h4,h3,h2,h,l; } B;
+   struct { word h3,h2,h,l; } W;
+   dword D;
+ #endif
+#else
+ #ifdef LSB_FIRST
+   struct { byte l,h,h2,h3; } B;
+   struct { word l,h; } W;
+   dword D;
+ #else
+   struct { byte h3,h2,h,l; } B;
+   struct { word h,l; } W;
+   dword D;
+ #endif
+#endif
+}	m6502_pair;
+
+/****************************************************************************
+ *** End of machine dependent definitions								  ***
+ ****************************************************************************/
+
+/****************************************************************************
+ * The 6502 registers. HALT is set to 1 when the CPU is halted (6502c)
+ ****************************************************************************/
 typedef struct
 {
-  byte A,P,X,Y,S;     /* CPU registers and program counter   */
-  pair PC;
+	m6502_pair PC;					/* program counter */
+    m6502_pair SP;                  /* stack pointer (always 100 - 1FF) */
+	m6502_pair ZP;					/* zero page address */
+    m6502_pair EA;                  /* effective address */
+    int A;                          /* Accumulator */
+	int X;							/* X index register */
+	int Y;							/* Y index register */
+	int P;							/* Processor status */
+    int HALT;                       /* nonzero if the CPU is halted */
+	int pending_irq;				/* nonzero if an IRQ is pending */
+	int pending_nmi;				/* nonzero if a NMI is pending */
+	int after_cli;					/* pending IRQ and last insn cleared I */
+#if LAZY_FLAGS
+	int NZ; 						/* last value (lazy N and Z flag) */
+#endif
+}   M6502_Regs;
 
-/*  int IPeriod  NS 970927 */
- int ICount; /* Set IPeriod to number of CPU cycles */
-                      /* between calls to Loop6502()         */
-/*  byte IRequest; */     /* Set to the INT_IRQ when pending IRQ */
-byte pending_irq;	/* NS 970904 */
-byte pending_nmi;	/* NS 970904 */
-  byte AfterCLI;      /* Private, don't touch                */
-/*  int IBackup; */ /* NS 970904 */       /* Private, don't touch                */
-  void *User;         /* Arbitrary user data (ID,RAM*,etc.)  */
-  byte TrapBadOps;    /* Set to 1 to warn of illegal opcodes */
-  word Trap;          /* Set Trap to address to trace from   */
-  byte Trace;         /* Set Trace=1 to start tracing        */
-} M6502;
+#define M6502_INT_NONE	0
+#define M6502_INT_IRQ	1
+#define M6502_INT_NMI	2
 
-/** Reset6502() **********************************************/
-/** This function can be used to reset the registers before **/
-/** starting execution with Run6502(). It sets registers to **/
-/** their initial values.                                   **/
-/*************************************************************/
-void Reset6502(register M6502 *R);
+#define M6502_NMI_VEC	0xfffa
+#define M6502_RST_VEC	0xfffc
+#define M6502_IRQ_VEC	0xfffe
 
-/** Exec6502() ***********************************************/
-/** This function will execute a single 6502 opcode. It     **/
-/** will then return next PC, and current register values   **/
-/** in R.                                                   **/
-/*************************************************************/
-word Exec6502(register M6502 *R);
+extern int M6502_ICount;                /* cycle count */
+extern int M6502_Type;					/* CPU subtype */
 
-/** Int6502() ************************************************/
-/** This function will generate interrupt of a given type.  **/
-/** INT_NMI will cause a non-maskable interrupt. INT_IRQ    **/
-/** will cause a normal interrupt, unless I_FLAG set in R.  **/
-/*************************************************************/
-/*void Int6502(register M6502 *R,register byte Type);*/	/* NS 970904 */
+unsigned M6502_GetPC (void);			/* Get program counter */
+void M6502_GetRegs (M6502_Regs *Regs);	/* Get registers */
+void M6502_SetRegs (M6502_Regs *Regs);	/* Set registers */
+void M6502_Reset (void);				/* Reset registers to the initial values */
+int  M6502_Execute(int cycles); 		/* Execute cycles - returns number of cycles actually run */
+void M6502_Cause_Interrupt(int type);
+void M6502_Clear_Pending_Interrupts(void);
 
-/** Run6502() ************************************************/
-/** This function will run 6502 code until Loop6502() call  **/
-/** returns INT_QUIT. It will return the PC at which        **/
-/** emulation stopped, and current register values in R.    **/
-/*************************************************************/
-word Run6502(register M6502 *R,int cycles);	/* NS 970904 */
-
-/** Rd6502()/Wr6502/Op6502() *********************************/
-/** These functions are called when access to RAM occurs.   **/
-/** They allow to control memory access. Op6502 is the same **/
-/** as Rd6502, but used to read *opcodes* only, when many   **/
-/** checks can be skipped to make it fast. It is only       **/
-/** required if there is a #define FAST_RDOP.               **/
-/************************************ TO BE WRITTEN BY USER **/
-/*void Wr6502(register word Addr,register byte Value);*/
-/* ASG 971005 -- changed to cpu_readmem16/cpu_writemem16 */
-#define Wr6502(A,V) (cpu_writemem16(A,V))
-/*byte Rd6502(register word Addr);*/
-#define Rd6502(A) ((unsigned)cpu_readmem16(A))
-/*byte Op6502(register word Addr);*/
-#define FAST_RDOP
-/* ASG 971210 -- added this macro for 0-page read accesses */
-#define Zr6502(A) ((unsigned)cpu_readmem16(A))
-#define Op6502(A) ((unsigned)cpu_readop_arg(A))
-#define Op6502_1(A) ((unsigned)cpu_readop(A))
-
-/** Debug6502() **********************************************/
-/** This function should exist if DEBUG is #defined. When   **/
-/** Trace!=0, it is called after each command executed by   **/
-/** the CPU, and given the 6502 registers. Emulation exits  **/
-/** if Debug6502() returns 0.                               **/
-/*************************************************************/
-byte Debug6502(register M6502 *R);
-
-/** Loop6502() ***********************************************/
-/** 6502 emulation calls this function periodically to      **/
-/** check if the system hardware requires any interrupts.   **/
-/** This function must return one of following values:      **/
-/** INT_NONE, INT_IRQ, INT_NMI, or INT_QUIT to exit the     **/
-/** emulation loop.                                         **/
-/************************************ TO BE WRITTEN BY USER **/
-/*byte Loop6502(register M6502 *R);*/
-int cpu_interrupt(void);
-#define Loop6502(R) ((byte)cpu_interrupt())
-
-void M6502_Cause_Interrupt(M6502 *R,int type);	/* NS 970904 */
-void M6502_Clear_Pending_Interrupts(M6502 *R);	/* NS 970904 */
+#endif /* _M6502_H */
 
 
-#endif /* M6502_H */

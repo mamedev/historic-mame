@@ -2,57 +2,58 @@
 
 static unsigned char *biosbank;
 static unsigned char *memcard;
-static unsigned char *rambank;
-static int    onlyonce=1;
+unsigned char *rambank;
+unsigned char *rambank2;
 
-void neogeo_init_machine(void) {
+extern int neogeo_rom_loaded;
+
+void neogeo_init_machine (void)
+{
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-	if (onlyonce) {
 #ifdef LSB_FIRST
 		/* skip tests, start game */
    //     WRITE_WORD(&RAM[4],0);
    //     WRITE_WORD(&RAM[4],0x122);
 
-   		RAM[0x4] = 0x00;
-		RAM[0x5] = 0x00;
-		RAM[0x6] = 0x22;
-		RAM[0x7] = 0x01;
+   	RAM[0x4] = 0x00;
+	RAM[0x5] = 0x00;
+	RAM[0x6] = 0x22;
+	RAM[0x7] = 0x01;
 #else
-   	 	RAM[0x04] = 0x00;
-		RAM[0x05] = 0x00;
-		RAM[0x06] = 0x01;
-		RAM[0x07] = 0x22;
+   	RAM[0x04] = 0x00;
+	RAM[0x05] = 0x00;
+	RAM[0x06] = 0x01;
+	RAM[0x07] = 0x22;
 #endif
 
-		/* allocate the biosbank */
-		if (!biosbank)
-			biosbank = calloc(0x20000, 1);
+	/* allocate and clear the RAM banks */
+	if (!rambank)
+		rambank = malloc (0x10000);
+	memset (rambank, 0, 0x10000);
 
-		bcopy(&(RAM[0x100000]),biosbank,0x20000);
-		cpu_setbank(1,biosbank);
+	if (!rambank2)
+		rambank2 = malloc (0x10000);
+	memset (rambank2, 0, 0x10000);
 
-		/* Clear RAM */
-		memset(&(RAM[0x100000]),0,0x10000);
+	/* If the ROM has already been loaded, skip this code */
+	if (neogeo_rom_loaded) return;
 
-		if (!memcard)
-			memcard = calloc (0x1000, 1);
+	cpu_setbank (1, rambank);
+	cpu_setbank (2, rambank2);
 
-		/* point to the memcard bank */
-		cpu_setbank (2, memcard);
+	/* Set the biosbank */
+	cpu_setbank (3, Machine->memory_region[2]);
 
-		if (!rambank)
-			rambank = calloc (0x10000, 1);
+	/* Set the 2nd ROM bank */
+	cpu_setbank (4, &RAM[0x100000]);
 
-		/* point to the second rambank bank */
-		cpu_setbank (3, rambank);
-		onlyonce = 0;
+	/* Allocate and point to the memcard - bank 5 */
+	if (!memcard)
+		memcard = calloc (0x1000, 1);
 
-        /* If we have a large rom-set, the 2nd half is mapped here */
-        // if (big_romset??) How do I check if the area is used??
-        cpu_setbank(4,&RAM[0x120000]);
+	cpu_setbank (5, memcard);
 
-
-	}
+	/* Set this flag so that machine resets, etc. don't run this code again */
+	neogeo_rom_loaded = 1;
 }
-

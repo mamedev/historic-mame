@@ -90,7 +90,12 @@ void sega_generate_vector_list (void)
 
 				color = attrib & 0x7e;
 				if ((attrib & 1) && color)
-					intensity = 0xa0; /* leave room for translucency */
+				{
+					if (translucency)
+						intensity = 0xa0; /* leave room for translucency */
+					else
+						intensity = 0xff;
+				}
 				else
 					intensity = 0;
 				vector_add_point ( currentX, currentY, color, intensity );

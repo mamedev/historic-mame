@@ -116,7 +116,7 @@ if (errorlog) fprintf(errorlog,"PC:%04x write %02x to 8751\n",cpu_getpc(),data);
 static void firetrap_sound_command_w(int offset,int data)
 {
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(1,INT_NMI);
+	cpu_cause_interrupt(1,M6502_INT_NMI);
 }
 
 static void firetrap_sound_2400_w(int offset,int data)
@@ -141,7 +141,7 @@ void firetrap_adpcm_int (int data)
 
 	toggle = 1 - toggle;
 	if (firetrap_irq_enable && toggle)
-		cpu_cause_interrupt (1, INT_IRQ);
+		cpu_cause_interrupt (1, M6502_INT_IRQ);
 }
 
 void firetrap_adpcm_data_w (int offset, int data)

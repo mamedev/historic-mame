@@ -621,7 +621,7 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	1620000,	/* 1.62 MHz */
-	{ 255 },
+	{ 0x30ff },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -1292,7 +1292,7 @@ struct GameDriver mooncrst_driver =
 	"mooncrst",
 	"Moon Cresta (Nichibutsu)",
 	"1980",
-	"Nihon Bussan",
+	"Nichibutsu",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
 	&mooncrst_machine_driver,

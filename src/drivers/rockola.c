@@ -1,4 +1,5 @@
 /***************************************************************************
+
 Note: This driver has been revised to use the sound driver.
 Sound ROMS sk4_ic51.bin and sk4_ic52.bin are loaded...but don't have
 the right checksums.
@@ -254,6 +255,56 @@ static int rockola_interrupt(void)
 
 
 
+/* Derived from Zarzon. Might not reflect the actual hardware. */
+INPUT_PORTS_START( sasuke_input_ports )
+    PORT_START  /* IN0 */
+    PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+    PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+    PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+    PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START1 )
+    PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START2 )
+
+	PORT_START	/* IN1 */
+    PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+    PORT_BIT( 0x7C, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+    PORT_START  /* DSW */
+	PORT_DIPNAME( 0x01, 0x01, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Upright")
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME (0x02, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING (   0x02, "1 Coin/2 Credits" )
+	PORT_DIPNAME (0x04, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Off" )
+	PORT_DIPSETTING (   0x04, "On" )
+	PORT_DIPNAME (0x08, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Off" )
+	PORT_DIPSETTING (   0x08, "On" )
+	PORT_DIPNAME (0x30, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "3" )
+	PORT_DIPSETTING (   0x10, "4" )
+	PORT_DIPSETTING (   0x20, "5" )
+	/* 0x30 gives 3 again */
+	PORT_DIPNAME (0x40, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Off" )
+	PORT_DIPSETTING (   0x40, "On" )
+	PORT_DIPNAME (0x80, 0x00, "RAM Test", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Off" )
+	PORT_DIPSETTING (   0x80, "On" )
+
+    PORT_START  /* IN2 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+    PORT_BIT( 0x0e, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* connected to a counter - random number generator? */
+INPUT_PORTS_END
+
 INPUT_PORTS_START( satansat_input_ports )
     PORT_START  /* IN0 */
     PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
@@ -291,7 +342,7 @@ INPUT_PORTS_START( satansat_input_ports )
 	PORT_DIPNAME (0x40, 0x00, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING (   0x00, "Off" )
 	PORT_DIPSETTING (   0x40, "On" )
-	PORT_DIPNAME (0x80, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME (0x80, 0x00, "RAM Test", IP_KEY_NONE )
 	PORT_DIPSETTING (   0x00, "Off" )
 	PORT_DIPSETTING (   0x80, "On" )
 
@@ -777,6 +828,31 @@ static struct MachineDriver pballoon_machine_driver =
 
 ***************************************************************************/
 
+ROM_START( sasuke_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "SC1",  0x4000, 0x0800, 0x12a881a4 )
+	ROM_LOAD( "SC2",  0x4800, 0x0800, 0xa1946562 )
+	ROM_LOAD( "SC3",  0x5000, 0x0800, 0x254da44f )
+	ROM_LOAD( "SC4",  0x5800, 0x0800, 0x4d01ee7b )
+	ROM_LOAD( "SC5",  0x6000, 0x0800, 0x5ec9b25f )
+	ROM_LOAD( "SC6",  0x6800, 0x0800, 0xbe8bec87 )
+	ROM_LOAD( "SC7",  0x7000, 0x0800, 0xb1e635b6 )
+	ROM_LOAD( "SC8",  0x7800, 0x0800, 0x87741232 )
+	ROM_RELOAD(       0xf800, 0x0800 ) /* for the reset/interrupt vectors */
+	ROM_LOAD( "SC9",  0x8000, 0x0800, 0xa77bfbd5 )
+	ROM_LOAD( "SC10", 0x8800, 0x0800, 0x2f630cfd )
+	ROM_LOAD( "SC11", 0x9000, 0x0800, 0x082d1239 )
+
+	ROM_REGION(0x1000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "MCS_C", 0x0000, 0x0800, 0x84b9646f )
+	ROM_LOAD( "MCS_D", 0x0800, 0x0800, 0x4b6bdedf )
+
+	ROM_REGION(0x0020)  /* color prom */
+	/* missing! */
+
+	/* no sound ROMs - the sound section is entirely analog */
+ROM_END
+
 ROM_START( satansat_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "SS1",  0x4000, 0x0800, 0x48ea6052 )
@@ -797,7 +873,7 @@ ROM_START( satansat_rom )
 	ROM_LOAD( "SS15", 0x0800, 0x0800, 0x2364fe46 )
 
 	ROM_REGION(0x0020)  /* color prom */
-	ROM_LOAD( "clr.bpr", 0x0000, 0x0020, 0xaf0225fc )
+	ROM_LOAD( "zarz138.03", 0x0000, 0x0020, 0xaf0225fc )
 
     ROM_REGION(0x1000)  /* sound data for Vanguard-style audio section */
 	ROM_LOAD( "SS12", 0x0000, 0x0800, 0xc7de2350 )
@@ -910,8 +986,8 @@ ROM_START( pballoon_rom )
 	ROM_LOAD( "sk8_ic51.bin", 0x1000, 0x1000, 0xd40a2fd2 )
 
 	ROM_REGION(0x0040)  /* color proms */
-	ROM_LOAD( "sk8_ic7.bin", 0x0000, 0x0020, 0x30f59d2d ) /* foreground colors */
-	ROM_LOAD( "sk8_ic6.bin", 0x0020, 0x0020, 0x1002e070 ) /* background colors */
+	ROM_LOAD( "sk8_ic7.bin", 0x0000, 0x0020, 0x43259b2d ) /* foreground colors */
+	ROM_LOAD( "sk8_ic6.bin", 0x0020, 0x0020, 0x6fc0b0ca ) /* background colors */
 
 	ROM_REGION(0x1800)  /* space for the sound ROMs */
 	ROM_LOAD( "sk7_ic51.bin", 0x0000, 0x0800, 0xecf5012f )  /* sound ROM 1 */
@@ -970,6 +1046,15 @@ ROM_START( nibblera_rom )
 	ROM_LOAD( "G960-45.53", 0x0000, 0x0800, 0xaafe2944 )
 	ROM_LOAD( "G960-44.52", 0x0800, 0x0800, 0x9ad646f8 )
 ROM_END
+
+
+
+static unsigned char wrong_color_prom[] =
+{
+	/* this is the Zarzon one */
+	0x00,0xF8,0x02,0xFF,0xF8,0x27,0xC0,0xF8,0xC0,0x80,0x07,0x07,0xFF,0xF8,0x3F,0xFF,
+	0x00,0xF8,0x02,0xFF,0xC0,0xC0,0x80,0x26,0x38,0xA0,0xA0,0x04,0x07,0xC6,0xC5,0x27,
+};
 
 
 
@@ -1086,27 +1171,52 @@ static void nibbler_hisave(void)
 
 
 
-struct GameDriver satansat_driver =
+struct GameDriver sasuke_driver =
 {
 	__FILE__,
 	0,
-    "satansat",
-    "Satan of Saturn",
-	"1981",
+	"sasuke",
+	"Sasuke vs. Commander",
+	"1980",
 	"SNK",
-    "Dan Boris\nTheo Philips",
-	0,
+	"Dan Boris\nTheo Philips",
+	GAME_WRONG_COLORS,
 	&satansat_machine_driver,
 
-    satansat_rom,
+	sasuke_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-    satansat_input_ports,
+	sasuke_input_ports,
 
-    PROM_MEMORY_REGION(2),0,0,
-    ORIENTATION_ROTATE_90,
+	wrong_color_prom,0,0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+
+struct GameDriver satansat_driver =
+{
+	__FILE__,
+	0,
+	"satansat",
+	"Satan of Saturn",
+	"1981",
+	"SNK",
+	"Dan Boris\nTheo Philips",
+	0,
+	&satansat_machine_driver,
+
+	satansat_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	satansat_input_ports,
+
+	PROM_MEMORY_REGION(2),0,0,
+	ORIENTATION_ROTATE_90,
 
 	0, 0
 };
@@ -1115,23 +1225,23 @@ struct GameDriver zarzon_driver =
 {
 	__FILE__,
 	&satansat_driver,
-    "zarzon",
-    "Zarzon",
+	"zarzon",
+	"Zarzon",
 	"1981",
 	"[SNK] (Taito America license)",
-    "Dan Boris\nTheo Philips",
+	"Dan Boris\nTheo Philips",
 	0,
 	&satansat_machine_driver,
 
-    zarzon_rom,
+	zarzon_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-    satansat_input_ports,
+	satansat_input_ports,
 
-    PROM_MEMORY_REGION(2),0,0,
-    ORIENTATION_ROTATE_90,
+	PROM_MEMORY_REGION(2),0,0,
+	ORIENTATION_ROTATE_90,
 
 	0, 0
 };

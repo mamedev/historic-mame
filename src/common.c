@@ -271,7 +271,7 @@ int readroms(void)
 
 					/* calculate the checksum */
 					c = Machine->memory_region[region] + romp->offset;
-					for (i = 0;i < length;i+=2)
+					for (i = 0;i < (length & ~1);i+=2)
 					{
 						int j;
 
@@ -356,7 +356,7 @@ void printromlist(const struct RomModule *romp,const char *basename)
 {
 	printf("This is the list of the ROMs required.\n"
 			"All the ROMs must reside in a subdirectory called \"ROMS\\%s\".\n"
-			"Name             Size      Checksum\n",basename);
+			"Name              Size       Checksum\n",basename);
 	while (romp->name || romp->offset || romp->length)
 	{
 		romp++;	/* skip memory region definition */
@@ -383,7 +383,7 @@ void printromlist(const struct RomModule *romp,const char *basename)
 				romp++;
 			} while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
 
-			printf("%-12s %5d bytes   %08x\n",name,length,expchecksum);
+			printf("%-12s  %7d bytes  %08x\n",name,length,expchecksum);
 		}
 	}
 }

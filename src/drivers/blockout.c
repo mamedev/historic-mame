@@ -191,6 +191,7 @@ INPUT_PORTS_END
 
 
 
+/* handler called by the 2151 emulator when the internal timers cause an IRQ */
 static void blockout_irq_handler(void)
 {
 	cpu_cause_interrupt(1,0xff);

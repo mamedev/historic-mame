@@ -86,7 +86,7 @@ void mhavoc_gamma_w (int offset, int data)
 	gamma_rcvd=0;
 	alpha_xmtd=1;
 	alpha_data = data;
-	cpu_cause_interrupt (1, INT_NMI);
+	cpu_cause_interrupt (1, M6502_INT_NMI);
 
 	/* the sound CPU needs to reply in 250ms (according to Neil Bradley) */
 	timer_set (TIME_IN_USEC(250), 0, 0);

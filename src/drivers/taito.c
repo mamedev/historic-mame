@@ -20,6 +20,18 @@ read:
 8801      68705 status read
             bit 0 = the 68705 has read data from the Z80
             bit 1 = the 68705 has written data for the Z80
+d400-d403 hardware collision detection registers
+          d400 ?
+          d401 ?
+          d402 ?
+          d403 bit0 = obj/pf1
+               bit1 = obj/pf2
+               bit2 = obj/pf3
+               bit3 = pf1/pf2
+               bit4 = pf1/pf3
+               bit5 = pf2/pf3
+               bit6 = nc
+               bit7 = nc
 d404      returns contents of graphic ROM, pointed by d509-d50a
 d408      IN0
           bit 5 = jump player 1
@@ -56,23 +68,11 @@ d40b      IN2 - can come from a ROM or PAL chip
 d40c      COIN
           bit 5 = tilt
           bit 4 = coin
+d40d      another input port (use in Front Line for player 2 dial)
 d40f      8910 #0 read
             port A DSW2
-              coins per play
             port B DSW3
-			elevator:
-              bit 7 = coinage (1 way/2 ways)
-              bit 6 = no hit
-              bit 5 = year display yes/no
-              bit 4 = coin display yes/no
-              bit 2-3 ?
-              bit 0-1 difficulty
-			jungle:
-              bit 7 = coinage (1 way/2 ways)
-              bit 6 = infinite lives
-              bit 5 = year display yes/no
-              bit 2-4 ?
-              bit 0-1 bonus  none /10000 / 20000 /30000
+
 write
 8800      68705 data write
 d000-d01f front playfield column scroll
@@ -101,6 +101,7 @@ d506      bits 0-2 = front playfield color code
 d507      bits 0-2 = back playfield color code
           bit 3 = back playfield character bank
           bits 4-5 = sprite color bank (1 bank = 2 color codes)
+d508      clear hardware collision detection registers
 d509-d50a pointer to graphic ROM to read from d404
 d50b      command for the audio CPU
 d50d      watchdog reset
@@ -108,7 +109,11 @@ d50e      bit 7 = ROM bank selector
 d50f      can go to a ROM or PAL; the result is read from d40b
 d600      bit 0 horizontal screen flip
           bit 1 vertical screen flip
-          bit 2 ? sprite related, called OBJEX
+          bit 2 ? sprite related, called OBJEX. It looks like there are 256
+                  bytes of sprite RAM, but only 128 can be acessed by the video
+                  hardware at a time. This select the high or low bank. The CPU
+                  can access all the memory linearly. I don't know if this is
+                  ever used.
           bit 3 n.c.
 		  bit 4 front playfield enable
 		  bit 5 middle playfield enable
@@ -164,7 +169,7 @@ extern unsigned char *taito_scrollx1,*taito_scrollx2,*taito_scrollx3;
 extern unsigned char *taito_scrolly1,*taito_scrolly2,*taito_scrolly3;
 extern unsigned char *taito_colscrolly1,*taito_colscrolly2,*taito_colscrolly3;
 extern unsigned char *taito_gfxpointer;
-extern unsigned char *taito_colorbank,*taito_video_priority,*taito_video_enable;
+extern unsigned char *taito_colorbank,*taito_video_priority;
 void taito_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int taito_gfxrom_r(int offset);
 void taito_videoram2_w(int offset,int data);
@@ -173,6 +178,8 @@ void taito_paletteram_w(int offset,int data);
 void taito_colorbank_w(int offset,int data);
 void taito_videoenable_w(int offset,int data);
 void taito_characterram_w(int offset,int data);
+int taito_collision_detection_r(int offset);
+void taito_collision_detection_w(int offset,int data);
 int taito_vh_start(void);
 void taito_vh_stop(void);
 void taito_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -202,12 +209,15 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x8800, 0x8800, taito_fake_data_r },
 	{ 0x8801, 0x8801, taito_fake_status_r },
 	{ 0xc400, 0xcfff, MRA_RAM },
+	{ 0xd100, 0xd17f, MRA_RAM },
+	{ 0xd400, 0xd403, taito_collision_detection_r },
 	{ 0xd404, 0xd404, taito_gfxrom_r },
 	{ 0xd408, 0xd408, input_port_0_r },	/* IN0 */
 	{ 0xd409, 0xd409, input_port_1_r },	/* IN1 */
-	{ 0xd40a, 0xd40a, input_port_4_r },	/* DSW1 */
+	{ 0xd40a, 0xd40a, input_port_5_r },	/* DSW1 */
 	{ 0xd40b, 0xd40b, input_port_2_r },	/* IN2 */
 	{ 0xd40c, 0xd40c, input_port_3_r },	/* Service */
+	{ 0xd40d, 0xd40d, input_port_4_r },
 	{ 0xd40f, 0xd40f, AY8910_read_port_0_r },	/* DSW2 and DSW3 */
 	{ 0xe000, 0xefff, MRA_ROM },
 	{ -1 }	/* end of table */
@@ -237,11 +247,12 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd504, 0xd504, MWA_RAM, &taito_scrollx3 },
 	{ 0xd505, 0xd505, MWA_RAM, &taito_scrolly3 },
 	{ 0xd506, 0xd507, taito_colorbank_w, &taito_colorbank },
+	{ 0xd508, 0xd508, taito_collision_detection_w },
 	{ 0xd509, 0xd50a, MWA_RAM, &taito_gfxpointer },
 	{ 0xd50b, 0xd50b, taito_soundcommand_w },
 	{ 0xd50d, 0xd50d, watchdog_reset_w },
 	{ 0xd50e, 0xd50e, taito_bankswitch_w },
-	{ 0xd600, 0xd600, taito_videoenable_w, &taito_video_enable },
+	{ 0xd600, 0xd600, taito_videoenable_w },
 	{ 0xe000, 0xefff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -255,12 +266,15 @@ static struct MemoryReadAddress mcu_readmem[] =
 	{ 0x8800, 0x8800, taito_mcu_data_r },
 	{ 0x8801, 0x8801, taito_mcu_status_r },
 	{ 0xc400, 0xcfff, MRA_RAM },
+	{ 0xd100, 0xd17f, MRA_RAM },
+	{ 0xd400, 0xd403, taito_collision_detection_r },
 	{ 0xd404, 0xd404, taito_gfxrom_r },
 	{ 0xd408, 0xd408, input_port_0_r },	/* IN0 */
 	{ 0xd409, 0xd409, input_port_1_r },	/* IN1 */
-	{ 0xd40a, 0xd40a, input_port_4_r },	/* DSW1 */
+	{ 0xd40a, 0xd40a, input_port_5_r },	/* DSW1 */
 	{ 0xd40b, 0xd40b, input_port_2_r },	/* IN2 */
 	{ 0xd40c, 0xd40c, input_port_3_r },	/* Service */
+	{ 0xd40d, 0xd40d, input_port_4_r },
 	{ 0xd40f, 0xd40f, AY8910_read_port_0_r },	/* DSW2 and DSW3 */
 	{ 0xe000, 0xefff, MRA_ROM },
 	{ -1 }	/* end of table */
@@ -290,11 +304,12 @@ static struct MemoryWriteAddress mcu_writemem[] =
 	{ 0xd504, 0xd504, MWA_RAM, &taito_scrollx3 },
 	{ 0xd505, 0xd505, MWA_RAM, &taito_scrolly3 },
 	{ 0xd506, 0xd507, taito_colorbank_w, &taito_colorbank },
+	{ 0xd508, 0xd508, taito_collision_detection_w },
 	{ 0xd509, 0xd50a, MWA_RAM, &taito_gfxpointer },
 	{ 0xd50b, 0xd50b, taito_soundcommand_w },
 	{ 0xd50d, 0xd50d, watchdog_reset_w },
 	{ 0xd50e, 0xd50e, taito_bankswitch_w },
-	{ 0xd600, 0xd600, taito_videoenable_w, &taito_video_enable },
+	{ 0xd600, 0xd600, taito_videoenable_w },
 	{ 0xe000, 0xefff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -388,6 +403,9 @@ INPUT_PORTS_START( elevator_input_ports )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, "Bonus Life", IP_KEY_NONE )
@@ -517,6 +535,9 @@ INPUT_PORTS_START( junglek_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
+	PORT_START
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, "Finish Bonus", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x03, "None" )
@@ -605,20 +626,20 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( frontlin_input_ports )
 	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -635,14 +656,21 @@ INPUT_PORTS_START( frontlin_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START      /* Service */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, "Bonus Life", IP_KEY_NONE )
@@ -731,6 +759,140 @@ INPUT_PORTS_START( frontlin_input_ports )
 	PORT_DIPSETTING(    0x00, "A only" )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( tinstar_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START      /* Service */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Bonus Life?", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "10000?" )
+	PORT_DIPSETTING(    0x02, "20000?" )
+	PORT_DIPSETTING(    0x01, "30000?" )
+	PORT_DIPSETTING(    0x00, "50000?" )
+	PORT_DIPNAME( 0x04, 0x04, "Free Play", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x18, 0x10, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x18, "2" )
+	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPNAME( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x80, "Cocktail" )
+
+	PORT_START      /* DSW2 Coinage */
+	PORT_DIPNAME( 0x0f, 0x00, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0f, "9 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0e, "8 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0d, "7 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0c, "6 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0b, "5 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0a, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x09, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x03, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x05, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x06, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x07, "1 Coin/8 Credits" )
+	PORT_DIPNAME( 0xf0, 0x00, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0xf0, "9 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xe0, "8 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xd0, "7 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "6 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xb0, "5 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xa0, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x90, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x10, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x20, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x30, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x40, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x50, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x60, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x70, "1 Coin/8 Credits" )
+
+	PORT_START      /* DSW3 */
+	PORT_DIPNAME( 0x01, 0x01, "Unknown DSW C 1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown DSW C 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown DSW C 3", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown DSW C 4", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Coinage Display", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Coins/Credits" )
+	PORT_DIPSETTING(    0x00, "Insert Coin" )
+	PORT_DIPNAME( 0x20, 0x20, "Year Display", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x20, "Yes" )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "A and B" )
+	PORT_DIPSETTING(    0x00, "A only" )
+INPUT_PORTS_END
 
 INPUT_PORTS_START( spaceskr_input_ports )
 	PORT_START      /* IN0 */
@@ -772,6 +934,9 @@ INPUT_PORTS_START( spaceskr_input_ports )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, "Unknown", IP_KEY_NONE )
@@ -904,8 +1069,8 @@ static struct AY8910interface ay8910_interface =
 	4,	/* 4 chips */
 	6000000/4,	/* 1.5 MHz */
 	{ 255, 255, 255, 0x20ff },
-	{ input_port_5_r, 0, 0, 0 },		/* port Aread */
-	{ input_port_6_r, 0, 0, 0 },		/* port Bread */
+	{ input_port_6_r, 0, 0, 0 },		/* port Aread */
+	{ input_port_7_r, 0, 0, 0 },		/* port Bread */
 	{ 0, taito_digital_out, 0, 0 },		/* port Awrite */
 	{ 0, 0, 0, taito_sndnmi_msk }	/* port Bwrite */
 };
@@ -1584,7 +1749,7 @@ struct GameDriver frontlin_driver =
 	"1982",
 	"Taito",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)\nMarco Cassili",
-	GAME_NOT_WORKING,
+	0,
 	&mcu_machine_driver,
 
 	frontlin_rom,
@@ -1609,7 +1774,7 @@ struct GameDriver tinstar_driver =
 	"1983",
 	"Taito",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)",
-	GAME_NOT_WORKING,
+	0,
 	&mcu_machine_driver,
 
 	tinstar_rom,
@@ -1617,7 +1782,7 @@ struct GameDriver tinstar_driver =
 	0,
 	0,	/* sound_prom */
 
-	frontlin_input_ports,
+	tinstar_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

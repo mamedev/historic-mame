@@ -2063,17 +2063,17 @@ INPUT_PORTS_START( input_ports_dynwars )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSWA */
-        PORT_DIPNAME( 0xff, 0xff, "DIP A", IP_KEY_NONE )
+        PORT_DIPNAME( 0xff, 0x00, "DIP A", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0xff, "On" )
 
 	PORT_START      /* DSWB */
-        PORT_DIPNAME( 0xff, 0xff, "DIP B", IP_KEY_NONE )
+        PORT_DIPNAME( 0xff, 0x00, "DIP B", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0xff, "On" )
 
 	PORT_START      /* DSWC */
-	PORT_DIPNAME( 0xff, 0x00, "DIP C", IP_KEY_NONE )
+	PORT_DIPNAME( 0xff, 0xff, "DIP C", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0xff, "On" )
 
@@ -2195,7 +2195,7 @@ struct GameDriver dynwarsj_driver =
 	"1989",
 	"Capcom",
 	CPS1_CREDITS("Paul Leaman"),
-	GAME_NOT_WORKING,
+	0,
 	&dynwars_machine_driver,
 
 	dynwarsj_rom,
@@ -3804,7 +3804,7 @@ ROM_END
 struct GameDriver varth_driver =
 {
 	__FILE__,
-	&varth_driver,
+	0,
 	"varth",
 	"Varth",
 	"1992",

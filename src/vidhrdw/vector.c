@@ -235,8 +235,7 @@ int vector_vh_start (void)
 			osd_get_pen(j,&rgb2[0],&rgb2[1],&rgb2[2]);
 
 			for (k=0; k<3; k++)
-
-#if TRANSLUCENCY /* add gun values */
+			if (translucency) /* add gun values */
 			{
 				int tmp;
 				tmp = rgb1[k] + rgb2[k];
@@ -245,14 +244,13 @@ int vector_vh_start (void)
 				else
 					c[k] = tmp;
 			}
-#else /* choose highest gun value */
+			else /* choose highest gun value */
 			{
 				if (rgb1[k] > rgb2[k])
 					c[k] = rgb1[k];
 				else
 					c[k] = rgb2[k];
 			}
-#endif
 			Tmerge(i,j) = Tmerge(j,i) = find_color(c[0],c[1],c[2]);
 		}
 	}

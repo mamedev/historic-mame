@@ -61,36 +61,44 @@ void exidy_init_machine(void)
 		exidy_collision_mask = 0x14;
 
 		/* Disable ROM Check for quicker startup */
+#if 0
 		RAM[0xF439]=0xEA;
 		RAM[0xF43A]=0xEA;
 		RAM[0xF43B]=0xEA;
+#endif
 	}
 	else if (strcmp(Machine->gamedrv->name,"pepper2")==0)
 	{
 		exidy_collision_mask = 0x00;
 
 		/* Disable ROM Check for quicker startup */
+#if 0
 		RAM[0xF52D]=0xEA;
 		RAM[0xF52E]=0xEA;
 		RAM[0xF52F]=0xEA;
+#endif
 	}
 	else if (strcmp(Machine->gamedrv->name,"venture")==0)
 	{
 		exidy_collision_mask = 0x80;
 
 		/* Disable ROM Check for quicker startup */
+#if 0
 		RAM[0x8AF4]=0xEA;
 		RAM[0x8AF5]=0xEA;
 		RAM[0x8AF6]=0xEA;
+#endif
 	}
 	else if (strcmp(Machine->gamedrv->name,"venture2")==0)
 	{
 		exidy_collision_mask = 0x80;
 
 		/* Disable ROM Check for quicker startup */
+#if 0
 		RAM[0x8B04]=0xEA;
 		RAM[0x8B05]=0xEA;
 		RAM[0x8B06]=0xEA;
+#endif
 	}
 	else if (strcmp(Machine->gamedrv->name,"targ")==0)
 	{
@@ -114,6 +122,7 @@ void exidy_init_machine(void)
 		fax_bank_select_w(0,0);
 
 		/* Disable ROM Check for quicker startup */
+#if 0
 		RAM[0xFBFC]=0xEA;
 		RAM[0xFBFD]=0xEA;
 		RAM[0xFBFE]=0xEA;
@@ -122,6 +131,7 @@ void exidy_init_machine(void)
 		RAM[0xFC00]=0xEA;
 		RAM[0xFC01]=0xEA;
 		RAM[0xFC02]=0xEA;
+#endif
 	}
 
 }

@@ -419,8 +419,8 @@ ROM_START( yard_rom )
 	ROM_LOAD( "yard.1d", 0x0100, 0x0100, 0xe698040c ) /* chars palette high 4 bits */
 	ROM_LOAD( "yard.1f", 0x0200, 0x0020, 0x8dc7ec35 ) /* sprites palette */
 	ROM_LOAD( "yard.2h", 0x0220, 0x0100, 0xca770905 ) /* sprites lookup table */
-	ROM_LOAD( "yard.2m", 0x0320, 0x0100, 0x5ac20000 ) /* radar palette low 4 bits */
-	ROM_LOAD( "yard.2n", 0x0420, 0x0100, 0xb9940000 ) /* radar palette high 4 bits */
+	ROM_LOAD( "yard.2n", 0x0320, 0x0100, 0xb9940000 ) /* radar palette low 4 bits */
+	ROM_LOAD( "yard.2m", 0x0420, 0x0100, 0x5ac20000 ) /* radar palette high 4 bits */
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "yf-s-3b", 0x8000, 0x2000, 0xbbb87550 )		/* samples (ADPCM 4-bit) */
@@ -451,8 +451,8 @@ ROM_START( vsyard_rom )
 	ROM_LOAD( "yard.1d", 0x0100, 0x0100, 0xe698040c ) /* chars palette high 4 bits */
 	ROM_LOAD( "yard.1f", 0x0200, 0x0020, 0x8dc7ec35 ) /* sprites palette */
 	ROM_LOAD( "yard.2h", 0x0220, 0x0100, 0xca770905 ) /* sprites lookup table */
-	ROM_LOAD( "yard.2m", 0x0320, 0x0100, 0x5ac20000 ) /* radar palette low 4 bits */
-	ROM_LOAD( "yard.2n", 0x0420, 0x0100, 0xb9940000 ) /* radar palette high 4 bits */
+	ROM_LOAD( "yard.2n", 0x0320, 0x0100, 0xb9940000 ) /* radar palette low 4 bits */
+	ROM_LOAD( "yard.2m", 0x0420, 0x0100, 0x5ac20000 ) /* radar palette high 4 bits */
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "yf-s-3b", 0x8000, 0x2000, 0xbbb87550 )		/* samples (ADPCM 4-bit) */

@@ -45,76 +45,242 @@ void msdos_init_input (void)
 }
 
 
-/* check if a key is pressed. The keycode is the standard PC keyboard code, as */
-/* defined in osdepend.h. Return 0 if the key is not pressed, nonzero otherwise. */
+/*
+ * Check if a key is pressed. The keycode is the standard PC keyboard
+ * code, as defined in osdepend.h. Return 0 if the key is not pressed,
+ * nonzero otherwise. Handle pseudo keycodes.
+ */
 int osd_key_pressed(int keycode)
 {
 	if (keycode > OSD_MAX_KEY)
 	{
-		switch (keycode)
-		{
+#ifdef MESS
+        switch (keycode)
+        {
 			case OSD_KEY_FAST_EXIT:
-			case OSD_KEY_UNPAUSE:
-				return key[OSD_KEY_ESC];
+                return (key[OSD_KEY_NUMLOCK] & key[KEY_LCONTROL]);
 
-			case OSD_KEY_RESET_MACHINE:
-				return key[OSD_KEY_F3];
+            case OSD_KEY_SHOW_GFX:
+                return key[OSD_KEY_F5];
 
-			case OSD_KEY_VOLUME_DOWN:
+			case OSD_KEY_FRAMESKIP:
+                return key[OSD_KEY_F8];
+
+            case OSD_KEY_RESET_MACHINE:
+				return key[OSD_KEY_F9];
+
+			case OSD_KEY_THROTTLE:
+                return key[OSD_KEY_F10];
+
+            case OSD_KEY_SHOW_FPS:
+                return key[OSD_KEY_F11];
+
+            case OSD_KEY_CONFIGURE:
+                return key[OSD_KEY_F12];
+
+            case OSD_KEY_VOLUME_DOWN:
 				return (key[OSD_KEY_MINUS_PAD] && !key[OSD_KEY_LSHIFT]);
 
 			case OSD_KEY_VOLUME_UP:
 				return (key[OSD_KEY_PLUS_PAD] && !key[OSD_KEY_LSHIFT]);
 
-			case OSD_KEY_PAUSE:
-				return key[OSD_KEY_P];
+			case OSD_KEY_GAMMA_DOWN:
+				return (key[OSD_KEY_MINUS_PAD] && key[OSD_KEY_LSHIFT]);
 
-			case OSD_KEY_CONFIGURE:
+            case OSD_KEY_GAMMA_UP:
+                return (key[OSD_KEY_PLUS_PAD] && key[OSD_KEY_LSHIFT]);
+
+            case OSD_KEY_PAUSE:
+            case OSD_KEY_UNPAUSE:
+				return key[OSD_KEY_SCRLOCK];
+
+			case OSD_KEY_SNAPSHOT:
+				return key[KEY_PRTSCR];
+		}
+#else
+		switch (keycode)
+        {
+            case OSD_KEY_FAST_EXIT:
+				return key[OSD_KEY_ESC];
+
+            case OSD_KEY_SHOW_GFX:
+				return key[OSD_KEY_F4];
+
+			case OSD_KEY_FRAMESKIP:
+                return key[OSD_KEY_F8];
+
+			case OSD_KEY_RESET_MACHINE:
+                return key[OSD_KEY_F3];
+
+            case OSD_KEY_THROTTLE:
+                return key[OSD_KEY_F10];
+
+            case OSD_KEY_SHOW_FPS:
+                return key[OSD_KEY_F11];
+
+            case OSD_KEY_CONFIGURE:
 				return key[OSD_KEY_TAB];
 
-			case OSD_KEY_SHOW_GFX:
-				return key[OSD_KEY_F4];
-		}
-	}
+            case OSD_KEY_VOLUME_DOWN:
+				return (key[OSD_KEY_MINUS_PAD] && !key[OSD_KEY_LSHIFT]);
 
+			case OSD_KEY_VOLUME_UP:
+				return (key[OSD_KEY_PLUS_PAD] && !key[OSD_KEY_LSHIFT]);
+
+			case OSD_KEY_GAMMA_DOWN:
+				return (key[OSD_KEY_MINUS_PAD] && key[OSD_KEY_LSHIFT]);
+
+            case OSD_KEY_GAMMA_UP:
+                return (key[OSD_KEY_PLUS_PAD] && key[OSD_KEY_LSHIFT]);
+
+            case OSD_KEY_PAUSE:
+				return key[OSD_KEY_P];
+
+            case OSD_KEY_UNPAUSE:
+				return key[OSD_KEY_P];
+
+			case OSD_KEY_SNAPSHOT:
+				return key[KEY_F12];
+        }
+#endif
+    }
 	if (keycode == OSD_KEY_RCONTROL) keycode = KEY_RCONTROL;
 	if (keycode == OSD_KEY_ALTGR) keycode = KEY_ALTGR;
-
 	return key[keycode];
 }
 
-
-
-/* wait for a key press and return the keycode */
+/*
+ * Wait for a key press and return the keycode.
+ * Translate certain keys (or key combinations) back to
+ * the pseudo key values defined in osdepend.h.
+ */
 int osd_read_key(void)
 {
-	int k;
+	int res;
 
-
-	/* wait for all keys to be released */
+	/* wait for all keys to be released (including pseudo keys) */
 	do
 	{
-	      for (k = OSD_MAX_KEY;k >= 0;k--)
-	      if (osd_key_pressed(k)) break;
-	} while (k >= 0);
+		for (res = OSD_MAX_PSEUDO; res >= 0; res--)
+			if (osd_key_pressed(res))
+				break;
+	} while (res >= 0);
 
-	/* wait for a key press */
+	/* wait for a key press (including pseudo keys) */
 	do
 	{
-	      for (k = OSD_MAX_KEY;k >= 0;k--)
-	      if (osd_key_pressed(k)) break;
-	} while (k < 0);
+		for (res = OSD_MAX_PSEUDO; res >= 0; res--)
+			if (osd_key_pressed(res))
+				break;
+	} while (res < 0);
 
-	return k;
+	if (res == KEY_RCONTROL) res = OSD_KEY_RCONTROL;
+	if (res == KEY_ALTGR) res = OSD_KEY_ALTGR;
+
+	return res;
 }
 
+/* translate a scancode to a pseudo key code */
+static int key_to_pseudo_code(int k)
+{
+#ifdef MESS
+    switch (k)
+    {
+        case OSD_KEY_NUMLOCK:
+            if (key[OSD_KEY_LCONTROL])
+                return OSD_KEY_FAST_EXIT;
+            break;
 
+        case OSD_KEY_F5:
+            return OSD_KEY_SHOW_GFX;
+
+        case OSD_KEY_F8:
+            return OSD_KEY_FRAMESKIP;
+
+        case OSD_KEY_F9:
+            return OSD_KEY_RESET_MACHINE;
+
+        case OSD_KEY_F10:
+            return OSD_KEY_THROTTLE;
+
+        case OSD_KEY_F11:
+            return OSD_KEY_SHOW_FPS;
+
+        case OSD_KEY_F12:
+            return OSD_KEY_CONFIGURE;
+
+        case OSD_KEY_MINUS_PAD:
+            if (key[OSD_KEY_LSHIFT])
+                return OSD_KEY_GAMMA_DOWN;
+            return OSD_KEY_VOLUME_DOWN;
+
+        case OSD_KEY_PLUS_PAD:
+            if (key[OSD_KEY_LSHIFT])
+                return OSD_KEY_GAMMA_UP;
+            return OSD_KEY_VOLUME_UP;
+
+        case OSD_KEY_SCRLOCK:
+            return OSD_KEY_PAUSE;
+    }
+#else
+    switch (k)
+    {
+        case OSD_KEY_ESC:
+            return OSD_KEY_FAST_EXIT;
+
+        case OSD_KEY_F4:
+            return OSD_KEY_SHOW_GFX;
+
+        case OSD_KEY_F8:
+            return OSD_KEY_FRAMESKIP;
+
+        case OSD_KEY_F3:
+            return OSD_KEY_RESET_MACHINE;
+
+        case OSD_KEY_F10:
+            return OSD_KEY_THROTTLE;
+
+        case OSD_KEY_F11:
+            return OSD_KEY_SHOW_FPS;
+
+        case OSD_KEY_TAB:
+            return OSD_KEY_CONFIGURE;
+
+        case OSD_KEY_MINUS_PAD:
+            if (key[OSD_KEY_LSHIFT])
+                return OSD_KEY_GAMMA_DOWN;
+            return OSD_KEY_VOLUME_DOWN;
+
+        case OSD_KEY_PLUS_PAD:
+            if (key[OSD_KEY_LSHIFT])
+                return OSD_KEY_GAMMA_UP;
+            return OSD_KEY_VOLUME_UP;
+
+        case OSD_KEY_P:
+            return OSD_KEY_PAUSE;
+
+#endif
+    }
+    return k;
+}
 
 /* Wait for a key press and return keycode.  Support repeat */
 int osd_read_keyrepeat(void)
 {
 	int res;
 
+	clear_keybuf();
+	res = readkey() >> 8;
+
+	if (res == KEY_RCONTROL) res = OSD_KEY_RCONTROL;
+	if (res == KEY_ALTGR) res = OSD_KEY_ALTGR;
+
+	return key_to_pseudo_code(res);
+}
+
+int osd_debug_readkey(void)
+{
+	int res;
 
 	clear_keybuf();
 	res = readkey() >> 8;
@@ -126,27 +292,28 @@ int osd_read_keyrepeat(void)
 }
 
 
-int osd_debug_readkey(void)
-{
-	return osd_read_keyrepeat();
-}
-
-
 /* return the name of a key */
 const char *osd_key_name(int keycode)
 {
 	static char *keynames[] =
 	{
-		"ESC", "1", "2", "3", "4", "5", "6", "7", "8", "9",
-		"0", "MINUS", "EQUAL", "BACKSPACE", "TAB", "Q", "W", "E", "R", "T",
-		"Y", "U", "I", "O", "P", "OPENBRACE", "CLOSEBRACE", "ENTER", "LEFTCONTROL",     "A",
-		"S", "D", "F", "G", "H", "J", "K", "L", "COLON", "QUOTE",
-		"TILDE", "LEFTSHIFT", "Error", "Z", "X", "C", "V", "B", "N", "M",
-		"COMMA", ".", "SLASH", "RIGHTSHIFT", "ASTERISK", "ALT", "SPACE", "CAPSLOCK", "F1", "F2",
-		"F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "NUMLOCK",     "SCRLOCK",
-		"HOME", "UP", "PGUP", "MINUS PAD", "LEFT", "5 PAD", "RIGHT", "PLUS PAD", "END", "DOWN",
-		"PGDN", "INS", "DEL", "RIGHTCONTROL", "ALTGR", "Error", "F11", "F12"
-	};
+		"ESC", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "MINUS", "EQUAL", "BACKSPACE",
+		"TAB", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "OPENBRACE", "CLOSEBRACE", "ENTER",
+		"LEFTCONTROL", "A", "S", "D", "F", "G", "H", "J", "K", "L", "COLON", "QUOTE", "TILDE",
+		"LEFTSHIFT", "Error", "Z", "X", "C", "V", "B", "N", "M", "COMMA", ".", "SLASH", "RIGHTSHIFT",
+		"ASTERISK", "ALT", "SPACE", "CAPSLOCK", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10",
+		"NUMLOCK", "SCRLOCK", "HOME", "UP", "PGUP", "MINUS PAD",
+		"LEFT", "5 PAD", "RIGHT", "PLUS PAD", "END", "DOWN",
+		"PGDN", "INS", "DEL", "RIGHTCONTROL", "ALTGR", "Error",
+		"F11", "F12", "Error", "Error",
+		"Error", "Error", "Error", "Error", "Error",
+		"Error", "Error", "Error", "Error", "Error",
+		"1 PAD", "2 PAD", "3 PAD", "4 PAD", "Error",
+		"6 PAD", "7 PAD", "8 PAD", "9 PAD", "0 PAD",
+		". PAD", "= PAD", "/ PAD", "* PAD", "ENTER PAD",
+		"Error", "Error", "Error", "Error", "Error",
+        "Error", "Error", "PAUSE",
+    };
 	static char *nonedefined = "None";
 
 	if (keycode && keycode <= OSD_MAX_KEY) return keynames[keycode-1];

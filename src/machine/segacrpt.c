@@ -68,8 +68,9 @@
 
   Ninja Princess:
 
-  this (botleg?) board has a standard Z80 + 2 bipolar PROMs instead of the
-  custom CPU.
+  there is a (bootleg?) board which has a standard Z80 + 2 bipolar PROMs
+  instead of the custom CPU. The encryption table is different from the
+  original Ninja Princess; it is actually the same as Flicky.
 
   The first PROM is 32x8 (?) and contains the number (0..5) of the table to
   use depending on M1, A0, A4, A8, A12:
@@ -94,13 +95,13 @@
 
   data to                             XOR
   decode                             value
-                        ---
+                      A ---
   D7  --------------- 0|   |
   D3  --------------- 1|   |
-  D5  --------------- 2| P |
-            ---        | R |0 ---|>|--- D3
-  M1  --- 0| P |0 --- 3| O |1 ---|>|--- D5
-  A0  --- 1| R |1 --- 4| M |2 ---|>|--- D7
+  D5  --------------- 2| P |D
+          A --- D      | R |0 ---|>--- D3
+  M1  --- 0| P |0 --- 3| O |1 ---|>--- D5
+  A0  --- 1| R |1 --- 4| M |2 ---|>--- D7
   A4  --- 2| O |2 --- 5| 2 |3
   A8  --- 3| M |3 --- 6|   |
   A12 --- 4| 1 |4 --- 7|   |
@@ -110,21 +111,31 @@
 
   List of encrypted games currently known:
 
-  Part #   Type        Game            Comments
-  315-5010 custom CPU  Pengo           unencrypted version available
-  315-5013 custom CPU  Super Zaxxon    used Zaxxon for known plaintext attack
-  ???-???? ??????????  Mister Viking
-  315-5051 custom CPU  Flicky &
-           Z80+PROMs   Ninja Princess  used unencrypted Sega Ninja for k.p.a.
-  ???-???? ??????????  S.W.A.T.        not available yet
-  ???-???? ??????????  Water Match     not available yet
-  315-5061 epoxy block Future Spy
-  315-5065 custom CPU  Bull Fight      not available yet
-  315-5102 custom CPU  Sega Ninja      unencrypted version available
-  315-5110 custom CPU  I'm Sorry       used My Hero for k.p.a.
-  315-5115 custom CPU  TeddyBoy Blues
+ CPU Part #    Game            Comments
+  315-5010 Pengo           unencrypted version available
+  315-5013 Super Zaxxon    used Zaxxon for known plaintext attack
+  315-5018 Yamato          not decoded yet
+  315-5028 Sinbad Mystery  not decoded yet
+  ???-???? Mister Viking
+  315-5051 Flicky
+  ???-???? S.W.A.T.        not available yet
+  ???-???? Water Match     not available yet
+  315-5061 Future Spy
+  315-5065 Bull Fight
+  315-5098 Ninja Princess  used Sega Ninja for k.p.a.
+  315-5102 Sega Ninja      unencrypted version available
+  315-5110 I'm Sorry       used My Hero for k.p.a.
+  315-5115 TeddyBoy Blues
+  ???-???? My Hero         bits 0 and 1 in all ROMs swapped as well
+  ???-???? Wonder Boy
+
+  The following games use a different encryption algorithm:
+
+  ???-???? 4D Warriors     used I'm Sorry for k.p.a.
+  317-0029 Block Gal       not broken yet; packaged like System16's 68000
 
   Some text found in the ROMs:
+  Yamato         SECULITY BY M,MIZUNAGA
   Mister Viking: SECURITY BY S.KATAGI  CONTROL CHIP M140
   Flicky:        SECURITY BY S.KATAGI
 
@@ -133,7 +144,7 @@
 #include "driver.h"
 
 
-static void look_for_known_plaintext(void)
+static void lfkp(int mask)
 {
 	int A;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -143,38 +154,55 @@ static void look_for_known_plaintext(void)
 
 	for (A = 0x0000;A < 0x8000-14;A++)
 	{
-		if (	(RAM[A+0] & 0x57) == (0x21 & 0x57) &&	/* LD HL,$xxxx */
-				(RAM[A+3] & 0x57) == (0x11 & 0x57) &&	/* LD DE,$xxxx */
-				(RAM[A+6] & 0x57) == (0x01 & 0x57))		/* LD BC,$xxxx */
+		static char text[] = "INSERT COIN";
+		int i;
+
+
+		if (	(RAM[A+0] & mask) == (0x21 & mask) &&	/* LD HL,$xxxx */
+				(RAM[A+3] & mask) == (0x11 & mask) &&	/* LD DE,$xxxx */
+				(RAM[A+6] & mask) == (0x01 & mask))		/* LD BC,$xxxx */
 		{
-			if (	(RAM[A+ 9] & 0x57) == (0x36 & 0x57) &&	/* LD (HL),$xx */
-					(RAM[A+11] & 0x57) == (0xed & 0x57) &&
-					(RAM[A+12] & 0x57) == (0xb0 & 0x57))	/* LDIR */
+			if (	(RAM[A+ 9] & mask) == (0x36 & mask) &&	/* LD (HL),$xx */
+					(RAM[A+11] & mask) == (0xed & mask) &&
+					(RAM[A+12] & mask) == (0xb0 & mask))	/* LDIR */
 				fprintf(errorlog,"%04x: hl de bc (hl),xx ldir\n",A);
 
-			if (	(RAM[A+ 9] & 0x57) == (0x77 & 0x57) &&	/* LD (HL),A */
-					(RAM[A+10] & 0x57) == (0xed & 0x57) &&
-					(RAM[A+11] & 0x57) == (0xb0 & 0x57))	/* LDIR */
+			if (	(RAM[A+ 9] & mask) == (0x77 & mask) &&	/* LD (HL),A */
+					(RAM[A+10] & mask) == (0xed & mask) &&
+					(RAM[A+11] & mask) == (0xb0 & mask))	/* LDIR */
 				fprintf(errorlog,"%04x: hl de bc (hl),a ldir\n",A);
 
-			if (	(RAM[A+ 9] & 0x57) == (0xed & 0x57) &&
-					(RAM[A+10] & 0x57) == (0xb0 & 0x57))	/* LDIR */
+			if (	(RAM[A+ 9] & mask) == (0xed & mask) &&
+					(RAM[A+10] & mask) == (0xb0 & mask))	/* LDIR */
 				fprintf(errorlog,"%04x: hl de bc ldir\n",A);
 		}
 
-		if (	(RAM[A+0] & 0x57) == (0xf5 & 0x57) &&	/* PUSH AF */
-				(RAM[A+1] & 0x57) == (0xc5 & 0x57) &&	/* PUSH BC */
-				(RAM[A+2] & 0x57) == (0xd5 & 0x57) &&	/* PUSH DE */
-				(RAM[A+3] & 0x57) == (0xe5 & 0x57))		/* PUSH HL */
+		/* the following can also be PUSH IX, PUSH IY - need better checking */
+		if (	(RAM[A+0] & mask) == (0xf5 & mask) &&	/* PUSH AF */
+				(RAM[A+1] & mask) == (0xc5 & mask) &&	/* PUSH BC */
+				(RAM[A+2] & mask) == (0xd5 & mask) &&	/* PUSH DE */
+				(RAM[A+3] & mask) == (0xe5 & mask))		/* PUSH HL */
 			fprintf(errorlog,"%04x: push af bd de hl\n",A);
 
-		if (	(RAM[A+0] & 0x57) == (0xe1 & 0x57) &&	/* POP HL */
-				(RAM[A+1] & 0x57) == (0xd1 & 0x57) &&	/* POP DE */
-				(RAM[A+2] & 0x57) == (0xc1 & 0x57) &&	/* POP BC */
-				(RAM[A+3] & 0x57) == (0xf1 & 0x57))		/* POP AF */
+		if (	(RAM[A+0] & mask) == (0xe1 & mask) &&	/* POP HL */
+				(RAM[A+1] & mask) == (0xd1 & mask) &&	/* POP DE */
+				(RAM[A+2] & mask) == (0xc1 & mask) &&	/* POP BC */
+				(RAM[A+3] & mask) == (0xf1 & mask))		/* POP AF */
 			fprintf(errorlog,"%04x: pop hl de bc af\n",A);
+
+		for (i = 0;i < strlen(text);i++)
+			if ((RAM[A+i] & mask) != (text[i] & mask)) break;
+		if (i == strlen(text))
+			fprintf(errorlog,"%04x: INSERT COIN\n",A);
 	}
 }
+
+static void look_for_known_plaintext(void)
+{
+	lfkp(0x57);
+}
+
+
 
 static void sega_decode(const unsigned char xortable[32][4])
 {
@@ -184,35 +212,79 @@ static void sega_decode(const unsigned char xortable[32][4])
 
 	for (A = 0x0000;A < 0x8000;A++)
 	{
-		int i,j;
+		int row,col;
 		unsigned char src;
 
 
 		src = RAM[A];
 
 		/* pick the translation table from bits 0, 4, 8 and 12 of the address */
-		i = (A & 1) + (((A >> 4) & 1) << 1) + (((A >> 8) & 1) << 2) + (((A >> 12) & 1) << 3);
+		row = (A & 1) + (((A >> 4) & 1) << 1) + (((A >> 8) & 1) << 2) + (((A >> 12) & 1) << 3);
 
 		/* pick the offset in the table from bits 3 and 5 of the source data */
-		j = ((src >> 3) & 1) + (((src >> 5) & 1) << 1);
+		col = ((src >> 3) & 1) + (((src >> 5) & 1) << 1);
 		/* the bottom half of the translation table is the mirror image of the top */
-		if (src & 0x80) j = 3 - j;
+		if (src & 0x80) col = 3 - col;
 
-		/* decode the ROM data */
-		RAM[A] = src ^ xortable[2*i+1][j];
+		/* decode the opcodes */
+		ROM[A] = src ^ xortable[2*row][col];
 
-		/* now decode the opcodes */
-		ROM[A] = src ^ xortable[2*i][j];
+		/* decode the data */
+		RAM[A] = src ^ xortable[2*row+1][col];
 
-		if (xortable[2*i+1][j] == 0xff)	/* table incomplete! (for development) */
-			RAM[A] = 0xee;
-		if (xortable[2*i][j] == 0xff)	/* table incomplete! (for development) */
+		if (xortable[2*row][col] == 0xff)	/* table incomplete! (for development) */
 			ROM[A] = 0x00;
+		if (xortable[2*row+1][col] == 0xff)	/* table incomplete! (for development) */
+			RAM[A] = 0xee;
 	}
 
-	/* copy the non encrypted part of the ROMs (if any) */
+	/* copy the opcodes from the not encrypted part of the ROMs */
 	for (A = 0x8000;A < 0x10000;A++)
 		ROM[A] = RAM[A];
+}
+
+
+
+void myheroj_unmangle(void)
+{
+	int A;
+	unsigned char *RAM;
+
+	/* additionally to the usual protection, all the program ROMs have data lines */
+	/* D0 and D1 swapped. */
+	RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	for (A = 0;A < 0xc000;A++)
+		RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
+
+	/* the tile gfx ROMs are mangled as well: */
+	RAM = Machine->memory_region[1];
+
+	/* the first ROM has data lines D0 and D6 swapped. */
+	for (A = 0x0000;A < 0x4000;A++)
+		RAM[A] = (RAM[A] & 0xbe) | ((RAM[A] & 0x01) << 6) | ((RAM[A] & 0x40) >> 6);
+
+	/* the second ROM has data lines D1 and D5 swapped. */
+	for (A = 0x4000;A < 0x8000;A++)
+		RAM[A] = (RAM[A] & 0xdd) | ((RAM[A] & 0x02) << 4) | ((RAM[A] & 0x20) >> 4);
+
+	/* the third ROM has data lines D0 and D6 swapped. */
+	for (A = 0x8000;A < 0xc000;A++)
+		RAM[A] = (RAM[A] & 0xbe) | ((RAM[A] & 0x01) << 6) | ((RAM[A] & 0x40) >> 6);
+
+	/* also, all three ROMs have address lines A4 and A5 swapped. */
+	for (A = 0;A < 0xc000;A++)
+	{
+		int A1;
+		unsigned char temp;
+
+		A1 = (A & 0xffcf) | ((A & 0x0010) << 1) | ((A & 0x0020) >> 1);
+		if (A < A1)
+		{
+			temp = RAM[A];
+			RAM[A] = RAM[A1];
+			RAM[A1] = temp;
+		}
+	}
 }
 
 
@@ -270,6 +342,35 @@ void szaxxon_decode(void)
 	};
 
 
+	sega_decode(xortable);
+}
+
+
+void sinbad_decode(void)
+{
+	static const unsigned char xortable[32][4] =
+	{
+		/*       opcode                   data                     address      */
+		/*  A    B    C    D         A    B    C    D                           */
+		{ 0x28,0xa0,0x28,0xa0 }, { 0xff,0xff,0xff,0x28 },	/* ...0...0...0...0 */
+		{ 0xa8,0xa8,0xa8,0xa8 }, { 0x00,0xff,0xff,0xff },	/* ...0...0...0...1 */
+		{ 0xa8,0xa8,0xa8,0xa8 }, { 0x00,0xff,0xff,0xff },	/* ...0...0...1...0 */
+		{ 0x28,0xa0,0x28,0xa0 }, { 0xff,0x88,0xff,0x28 },	/* ...0...0...1...1 */
+		{ 0xff,0xff,0xff,0xff }, { 0xff,0xff,0xff,0xff },	/* ...0...1...0...0 */
+		{ 0xff,0xff,0xff,0xff }, { 0xff,0xff,0xff,0xff },	/* ...0...1...0...1 */
+		{ 0xff,0xff,0xff,0xff }, { 0xff,0xff,0xff,0xff },	/* ...0...1...1...0 */
+		{ 0xff,0xff,0xff,0xff }, { 0xff,0xff,0xff,0xff },	/* ...0...1...1...1 */
+		{ 0xff,0xff,0xff,0xff }, { 0xff,0xff,0xff,0x28 },	/* ...1...0...0...0 */
+		{ 0xff,0xff,0xff,0xff }, { 0xff,0xff,0xff,0x28 },	/* ...1...0...0...1 */
+		{ 0xff,0xff,0xff,0xff }, { 0x00,0xff,0xff,0xff },	/* ...1...0...1...0 */
+		{ 0xff,0xff,0xff,0xff }, { 0x00,0xff,0xff,0xff },	/* ...1...0...1...1 */
+		{ 0xff,0xff,0xff,0xff }, { 0xff,0xff,0xff,0x28 },	/* ...1...1...0...0 */
+		{ 0xff,0xff,0xff,0xff }, { 0xff,0xff,0x88,0xff },	/* ...1...1...0...1 */
+		{ 0xff,0xff,0xff,0xff }, { 0xff,0xff,0xff,0x28 },	/* ...1...1...1...0 */
+		{ 0xff,0xff,0xff,0xff }, { 0xff,0xff,0xff,0x28 }	/* ...1...1...1...1 */
+	};
+
+look_for_known_plaintext();
 	sega_decode(xortable);
 }
 
@@ -332,6 +433,35 @@ void flicky_decode(void)
 }
 
 
+void bullfgtj_decode(void)
+{
+	static const unsigned char xortable[32][4] =
+	{
+		/*       opcode                   data                     address      */
+		/*  A    B    C    D         A    B    C    D                           */
+		{ 0xa0,0xa0,0x00,0x00 }, { 0x80,0xa8,0x20,0x08 },	/* ...0...0...0...0 */
+		{ 0x20,0x20,0x20,0x20 }, { 0x20,0x20,0x20,0x20 },	/* ...0...0...0...1 */
+		{ 0xa0,0xa0,0x00,0x00 }, { 0x08,0x20,0x20,0x08 },	/* ...0...0...1...0 */
+		{ 0x88,0x00,0x88,0x00 }, { 0x88,0x00,0x88,0x00 },	/* ...0...0...1...1 */
+		{ 0xa0,0xa0,0x00,0x00 }, { 0x20,0x20,0x20,0x20 },	/* ...0...1...0...0 */
+		{ 0x28,0xa0,0x00,0x88 }, { 0x20,0x20,0x20,0x20 },	/* ...0...1...0...1 */
+		{ 0xa0,0xa0,0x00,0x00 }, { 0x08,0x20,0x20,0x08 },	/* ...0...1...1...0 */
+		{ 0x88,0x00,0x88,0x00 }, { 0x88,0x00,0x88,0x00 },	/* ...0...1...1...1 */
+		{ 0x28,0xa0,0x00,0x88 }, { 0xa0,0xa0,0x00,0x00 },	/* ...1...0...0...0 */
+		{ 0x88,0x00,0x88,0x00 }, { 0x80,0xa8,0x20,0x08 },	/* ...1...0...0...1 */
+		{ 0x28,0xa0,0x00,0x88 }, { 0x08,0x20,0x20,0x08 },	/* ...1...0...1...0 */
+		{ 0x28,0xa0,0x00,0x88 }, { 0x80,0xa8,0x20,0x08 },	/* ...1...0...1...1 */
+		{ 0x20,0x20,0x20,0x20 }, { 0x20,0x20,0x20,0x20 },	/* ...1...1...0...0 */
+		{ 0x88,0x00,0x88,0x00 }, { 0x20,0x20,0x20,0x20 },	/* ...1...1...0...1 */
+		{ 0x08,0x20,0x20,0x08 }, { 0x80,0xa8,0x20,0x08 },	/* ...1...1...1...0 */
+		{ 0x08,0x20,0x20,0x08 }, { 0x88,0x00,0x88,0x00 }	/* ...1...1...1...1 */
+	};
+
+
+	sega_decode(xortable);
+}
+
+
 void futspy_decode(void)
 {
 	static const unsigned char xortable[32][4] =
@@ -354,6 +484,35 @@ void futspy_decode(void)
 		{ 0x80,0x08,0x80,0x08 }, { 0x08,0x80,0x20,0xa8 },	/* ...1...1...0...1 */
 		{ 0x80,0x08,0x80,0x08 }, { 0x28,0x00,0x00,0x28 },	/* ...1...1...1...0 */
 		{ 0x20,0x20,0x80,0x80 }, { 0xa0,0x88,0x00,0x28 }	/* ...1...1...1...1 */
+	};
+
+
+	sega_decode(xortable);
+}
+
+
+void nprinces_decode(void)
+{
+	static const unsigned char xortable[32][4] =
+	{
+		/*       opcode                   data                     address      */
+		/*  A    B    C    D         A    B    C    D                           */
+		{ 0x08,0x80,0x20,0xa8 }, { 0xa0,0x28,0xa0,0x28 },	/* ...0...0...0...0 */
+		{ 0xa8,0xa8,0x08,0x08 }, { 0x88,0xa0,0xa0,0x88 },	/* ...0...0...0...1 */
+		{ 0x88,0x88,0x28,0x28 }, { 0x28,0x00,0x88,0xa0 },	/* ...0...0...1...0 */
+		{ 0x88,0xa0,0xa0,0x88 }, { 0x28,0x00,0x88,0xa0 },	/* ...0...0...1...1 */
+		{ 0x88,0xa0,0xa0,0x88 }, { 0xa0,0x28,0xa0,0x28 },	/* ...0...1...0...0 */
+		{ 0xa8,0xa8,0x08,0x08 }, { 0xa8,0xa8,0x08,0x08 },	/* ...0...1...0...1 */
+		{ 0x88,0x88,0x28,0x28 }, { 0x88,0xa0,0xa0,0x88 },	/* ...0...1...1...0 */
+		{ 0x88,0xa0,0xa0,0x88 }, { 0x88,0xa0,0xa0,0x88 },	/* ...0...1...1...1 */
+		{ 0xa0,0x28,0xa0,0x28 }, { 0xa0,0x28,0xa0,0x28 },	/* ...1...0...0...0 */
+		{ 0x08,0x80,0x20,0xa8 }, { 0x28,0x00,0x88,0xa0 },	/* ...1...0...0...1 */
+		{ 0x88,0xa0,0xa0,0x88 }, { 0x88,0x88,0x28,0x28 },	/* ...1...0...1...0 */
+		{ 0x88,0xa0,0xa0,0x88 }, { 0x28,0x00,0x88,0xa0 },	/* ...1...0...1...1 */
+		{ 0x88,0xa0,0xa0,0x88 }, { 0x88,0xa0,0xa0,0x88 },	/* ...1...1...0...0 */
+		{ 0x88,0xa0,0xa0,0x88 }, { 0x88,0xa0,0xa0,0x88 },	/* ...1...1...0...1 */
+		{ 0x88,0x88,0x28,0x28 }, { 0x88,0x88,0x28,0x28 },	/* ...1...1...1...0 */
+		{ 0x08,0x80,0x20,0xa8 }, { 0x28,0x00,0x88,0xa0 }	/* ...1...1...1...1 */
 	};
 
 
@@ -445,4 +604,156 @@ void teddybb_decode(void)
 
 
 	sega_decode(xortable);
+}
+
+
+void myheroj_decode(void)
+{
+	static const unsigned char xortable[32][4] =
+	{
+		/*       opcode                   data                     address      */
+		/*  A    B    C    D         A    B    C    D                           */
+		{ 0x20,0x08,0x80,0xa8 }, { 0x80,0xa8,0xa8,0x80 },	/* ...0...0...0...0 */
+		{ 0x20,0x08,0x80,0xa8 }, { 0x80,0xa8,0xa8,0x80 },	/* ...0...0...0...1 */
+		{ 0xa8,0xa8,0xa8,0xa8 }, { 0xa8,0xa8,0xa8,0xa8 },	/* ...0...0...1...0 */
+		{ 0x08,0x80,0x20,0xa8 }, { 0x80,0xa8,0xa8,0x80 },	/* ...0...0...1...1 */
+		{ 0x20,0x08,0x80,0xa8 }, { 0x28,0xa0,0x28,0xa0 },	/* ...0...1...0...0 */
+		{ 0x20,0x08,0x80,0xa8 }, { 0x08,0x80,0x20,0xa8 },	/* ...0...1...0...1 */
+		{ 0x28,0xa0,0x28,0xa0 }, { 0xa8,0xa8,0xa8,0xa8 },	/* ...0...1...1...0 */
+		{ 0x08,0x80,0x20,0xa8 }, { 0xa8,0xa8,0xa8,0xa8 },	/* ...0...1...1...1 */
+		{ 0x28,0xa0,0x28,0xa0 }, { 0x20,0x08,0x80,0xa8 },	/* ...1...0...0...0 */
+		{ 0x80,0xa8,0xa8,0x80 }, { 0x20,0x08,0x80,0xa8 },	/* ...1...0...0...1 */
+		{ 0x80,0xa8,0xa8,0x80 }, { 0x80,0xa8,0xa8,0x80 },	/* ...1...0...1...0 */
+		{ 0xa8,0xa8,0xa8,0xa8 }, { 0x80,0xa8,0xa8,0x80 },	/* ...1...0...1...1 */
+		{ 0x88,0x88,0x28,0x28 }, { 0x88,0x88,0x28,0x28 },	/* ...1...1...0...0 */
+		{ 0x88,0x88,0x28,0x28 }, { 0x08,0x80,0x20,0xa8 },	/* ...1...1...0...1 */
+		{ 0x88,0x88,0x28,0x28 }, { 0xa8,0xa8,0xa8,0xa8 },	/* ...1...1...1...0 */
+		{ 0x88,0x88,0x28,0x28 }, { 0xa8,0xa8,0xa8,0xa8 }	/* ...1...1...1...1 */
+	};
+
+	myheroj_unmangle();	/* additional address and data line swapping */
+	sega_decode(xortable);
+}
+
+
+void wboy_decode(void)
+{
+	static const unsigned char xortable[32][4] =
+	{
+		/*       opcode                   data                     address      */
+		/*  A    B    C    D         A    B    C    D                           */
+		{ 0x88,0xa0,0xa0,0x88 }, { 0xa0,0x88,0x88,0xa0 },	/* ...0...0...0...0 */
+		{ 0x88,0xa0,0xa0,0x88 }, { 0x88,0x88,0x28,0x28 },	/* ...0...0...0...1 */
+		{ 0xa0,0x88,0x88,0xa0 }, { 0x88,0xa0,0xa0,0x88 },	/* ...0...0...1...0 */
+		{ 0x88,0xa0,0xa0,0x88 }, { 0x88,0x88,0x28,0x28 },	/* ...0...0...1...1 */
+		{ 0xa0,0x88,0x88,0xa0 }, { 0x88,0x88,0x28,0x28 },	/* ...0...1...0...0 */
+		{ 0x88,0x88,0x28,0x28 }, { 0x88,0x88,0x28,0x28 },	/* ...0...1...0...1 */
+		{ 0xa0,0x88,0x88,0xa0 }, { 0x88,0x88,0x28,0x28 },	/* ...0...1...1...0 */
+		{ 0x88,0x88,0x28,0x28 }, { 0x28,0x00,0x88,0xa0 },	/* ...0...1...1...1 */
+		{ 0xa0,0x28,0x88,0x00 }, { 0x88,0xa0,0xa0,0x88 },	/* ...1...0...0...0 */
+		{ 0xa0,0x28,0x88,0x00 }, { 0x88,0xa0,0xa0,0x88 },	/* ...1...0...0...1 */
+		{ 0xa0,0x28,0x88,0x00 }, { 0x88,0xa0,0xa0,0x88 },	/* ...1...0...1...0 */
+		{ 0x88,0xa0,0xa0,0x88 }, { 0x28,0x00,0x88,0xa0 },	/* ...1...0...1...1 */
+		{ 0x28,0xa0,0x28,0xa0 }, { 0xa0,0x28,0x88,0x00 },	/* ...1...1...0...0 */
+		{ 0xa0,0x28,0x88,0x00 }, { 0x28,0xa0,0x28,0xa0 },	/* ...1...1...0...1 */
+		{ 0x28,0xa0,0x28,0xa0 }, { 0xa0,0x28,0x88,0x00 },	/* ...1...1...1...0 */
+		{ 0x28,0x00,0x88,0xa0 }, { 0x28,0xa0,0x28,0xa0 }	/* ...1...1...1...1 */
+	};
+
+
+	sega_decode(xortable);
+}
+
+
+
+/******************************************************************************
+
+  4D Warriors
+
+  This encryption is quite different from the standard one. It is still
+  a XOR scheme, but the value to use for the XOR is chosen differently, and
+  the affected bits are D0, D2, D4 and D6 instead of D3, D5 and D7.
+
+  The translation table depends on A0, A3, A6, A9, A12 and A14; however A0, A3
+  and A6 only select some fixed additional XOR, so there are only 8 really
+  different tables.
+
+  There are no separate tables for data and opcodes: the opcodes are just XORed
+  with an additional 0x40. To make it a little more complicated, however, data
+  picks its XOR value not from the line given by the address but from the one
+  below. For example if you are decoding a byte at address .1.0..1..0..1..0,
+  you pick the XOR value as if you were at address .1.0..1..0..1..1 (note that
+  I'm not talking about the rows of the xortable below, but of the "logical"
+  ones which are generated by them with the additional fixed XORs selected by
+  A0, A3 and A6).
+
+******************************************************************************/
+
+void fdwarrio_decode(void)
+{
+	static const unsigned char xortable[8+1][8] =
+	{
+		/* note how the first lines are highly repetitive, while the */
+		/* last ones get more and more unique. */
+		{ 0x00,0x00,0x14,0x14,0x14,0x14,0x00,0x00 },	/* .0.0..0..x..x..x */
+		{ 0x00,0x11,0x00,0x11,0x11,0x00,0x11,0x00 },	/* .0.0..1..x..x..x */
+		{ 0x00,0x05,0x05,0x00,0x00,0x05,0x05,0x00 },	/* .0.1..0..x..x..x */
+		{ 0x00,0x00,0x44,0x44,0x14,0x14,0x50,0x50 },	/* .0.1..1..x..x..x */
+		{ 0x00,0x00,0x14,0x14,0x50,0x50,0x44,0x44 },	/* .1.0..0..x..x..x */
+		{ 0x00,0x05,0x05,0x00,0x50,0x55,0x55,0x50 },	/* .1.0..1..x..x..x */
+		{ 0x00,0x11,0x05,0x14,0x14,0x05,0x11,0x00 },	/* .1.1..0..x..x..x */
+		{ 0x00,0x41,0x05,0x44,0x14,0x55,0x11,0x50 },	/* .1.1..1..x..x..x */
+		{ 0x00,0x11,0x05,0x14,0x50,0x41,0x55,0x44 }		/* extra line for data decode */
+	};
+	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	for (A = 0x0000;A < 0x8000;A++)
+	{
+		int row,col;
+		unsigned char src;
+
+
+		src = RAM[A];
+
+		/* pick the translation table from bits 0, 3, 6, 9, 12 and 14 of the address */
+		row = (A & 1) + (((A >> 3) & 1) << 1) + (((A >> 6) & 1) << 2)
+				+ (((A >> 9) & 1) << 3) + (((A >> 12) & 1) << 4) + (((A >> 14) & 1) << 5);
+
+		/* pick the offset in the table from bits 0, 2, 4 and 6 of the source data */
+		col = ((src >> 0) & 1) + (((src >> 2) & 1) << 1) + (((src >> 4) & 1) << 2);
+		/* the bottom half of the translation table is the mirror image of the top */
+		if (src & 0x40) col = 7 - col;
+
+		/* decode the opcodes */
+		ROM[A] = src ^ xortable[row >> 3][col] ^ 0x40;
+		if (row & 1) ROM[A] ^= 0x10;
+		if (row & 2) ROM[A] ^= 0x04;
+		if (row & 4) ROM[A] ^= 0x01;
+
+		/* decode the data */
+		row++;	/* the data XOR table is shifted by one position!!!! */
+		RAM[A] = src ^ xortable[row >> 3][col];
+		if (row & 1) RAM[A] ^= 0x10;
+		if (row & 2) RAM[A] ^= 0x04;
+		if (row & 4) RAM[A] ^= 0x01;
+	}
+
+	/* copy the opcodes from the not encrypted part of the ROMs */
+	for (A = 0x8000;A < 0x10000;A++)
+		ROM[A] = RAM[A];
+}
+
+
+
+void blockgal_decode(void)
+{
+	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* don't know what to do! */
+	for (A = 0;A < 0x10000;A++)
+		ROM[A] = RAM[A];
 }

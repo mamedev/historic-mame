@@ -47,7 +47,7 @@ static int low_input_r( int offset ) {
 
 static void sound_cpu_command_w( int offset, int v ) {
     soundlatch_w( offset, v );
-    cpu_cause_interrupt( 1, INT_NMI );
+    cpu_cause_interrupt( 1, M6502_INT_NMI );
 }
 
 static struct MemoryReadAddress readmem[] =

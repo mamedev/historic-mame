@@ -114,7 +114,7 @@ void toobin_interrupt_ack_w (int offset, int data)
 
 int toobin_sound_interrupt (void)
 {
-	return INT_IRQ;
+	return M6502_INT_IRQ;
 }
 
 

@@ -48,6 +48,7 @@ int gaiden_vh_start (void)
 		gaiden_vh_stop();
 		return 1;
 	}
+	memset(gaiden_dirty2,1,gaiden_videoram2_size / 4);
 
 	gaiden_dirty3 = malloc ( gaiden_videoram3_size/4);
 	if (!gaiden_dirty3)
@@ -55,6 +56,7 @@ int gaiden_vh_start (void)
 		gaiden_vh_stop();
 		return 1;
 	}
+	memset(gaiden_dirty3,1,gaiden_videoram3_size / 4);
 
 	/* Allocate temporary bitmaps */
  	if ((tmpbitmap2 = osd_create_bitmap(1024,512)) == 0)
@@ -233,25 +235,78 @@ void gaiden_drawsprites(struct osd_bitmap *bitmap, int priority)
 		if (sy >= 256) sy -= 512;
 		num = READ_WORD(&gaiden_spriteram[offs+2])>>4;
 		spr_pri=(READ_WORD(&gaiden_spriteram[offs])&0x0080)>>7;
-		if ( (READ_WORD(&gaiden_spriteram[offs])&0x0004) && sx>=(-31) && sx < 256 && sy < 256 && (spr_pri==priority))
+		if ((READ_WORD(&gaiden_spriteram[offs])&0x0004) && (spr_pri==priority)
+				 && sx > -64 && sx < 256 && sy > -64 && sy < 256)
 		{
 			num &= 0x7ff;
-			bank=num/0x200;
-			num&=0x1ff;
+			bank=0;
 			size = READ_WORD(&gaiden_spriteram[offs+4])&0x0003;
 			flip = READ_WORD(&gaiden_spriteram[offs])&0x0003;
 			col = ((READ_WORD(&gaiden_spriteram[offs+4])&0x00f0)>>4);
 			if (size==1)
 			{
 				num=(num<<2)+((READ_WORD(&gaiden_spriteram[offs+2])&0x000c)>>2);
-				bank+=4;
+				bank=1;
 			}
-			drawgfx(bitmap, Machine->gfx[3+bank],
-				num,
-				col,
-				flip&0x01,flip&0x02,
-				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			else if (size==0)
+			{
+				/* 8x8 not supported! */
+				num=rand();
+			}
+
+			if (size != 3)
+				drawgfx(bitmap, Machine->gfx[3+bank],
+					num,
+					col,
+					flip&0x01,flip&0x02,
+					sx,sy,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			else
+			{
+				int n1,n2,n3,n4;
+
+				switch (flip&0x03)
+				{
+					case 0:
+					default:
+						n1 = num+0;n2 = num+1;n3 = num+2;n4 = num+3;
+						break;
+					case 1:
+						n1 = num+1;n2 = num+0;n3 = num+3;n4 = num+2;
+						break;
+					case 2:
+						n1 = num+2;n2 = num+3;n3 = num+0;n4 = num+1;
+						break;
+					case 3:
+						n1 = num+3;n2 = num+2;n3 = num+1;n4 = num+0;
+						break;
+				}
+
+				drawgfx(bitmap, Machine->gfx[3+bank],
+					n1,
+					col,
+					flip&0x01,flip&0x02,
+					sx,sy,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				drawgfx(bitmap, Machine->gfx[3+bank],
+					n2,
+					col,
+					flip&0x01,flip&0x02,
+					sx+32,sy,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				drawgfx(bitmap, Machine->gfx[3+bank],
+					n3,
+					col,
+					flip&0x01,flip&0x02,
+					sx,sy+32,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				drawgfx(bitmap, Machine->gfx[3+bank],
+					n4,
+					col,
+					flip&0x01,flip&0x02,
+					sx+32,sy+32,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			}
 		}
 	}
 }
@@ -323,27 +378,29 @@ memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * siz
 	for (offs = 0; offs<0x800 ; offs += 16)
 	{
 		int sx,sy;
-		int bank,flip,size;
+		int bank,size;
 
 		sx = READ_WORD(&gaiden_spriteram[offs+8]) & 0x1ff;
 		if (sx >= 256) sx -= 512;
 		sy = READ_WORD(&gaiden_spriteram[offs+6]) & 0x1ff;
 		if (sy >= 256) sy -= 512;
 		code = READ_WORD(&gaiden_spriteram[offs+2])>>4;
-		if ( (READ_WORD(&gaiden_spriteram[offs])&0x0004) && sx>=(-31) && sx < 256 && sy < 256)
+		if ((READ_WORD(&gaiden_spriteram[offs])&0x0004) && sx > -64 && sx < 256 && sy > -64 && sy < 256)
 		{
 			code &= 0x7ff;
-			bank=code/0x200;
-			code&=0x1ff;
+			bank=0;
 			size = READ_WORD(&gaiden_spriteram[offs+4])&0x0003;
-			flip = READ_WORD(&gaiden_spriteram[offs])&0x0003;
 			color = ((READ_WORD(&gaiden_spriteram[offs+4])&0x00f0)>>4);
+#if 0
+to use this code, we must handle the size == 3 case (64x64)
 			if (size==1)
 			{
 				code=(code<<2)+((READ_WORD(&gaiden_spriteram[offs+2])&0x000c)>>2);
-				bank+=4;
+				bank=1;
 			}
 			colmask[color] |= Machine->gfx[3+bank]->pen_usage[code];
+#endif
+			colmask[color] |= 0xffff;
 		}
 	}
 

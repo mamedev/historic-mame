@@ -67,6 +67,8 @@ extern unsigned char *pengo_soundregs;
 void pengo_sound_enable_w(int offset,int data);
 void pengo_sound_w(int offset,int data);
 
+extern void pacplus_decode(void);
+
 void theglob_init_machine(void);
 int theglob_decrypt_rom(int offset);
 extern unsigned char *theglob_mem_rom;
@@ -832,10 +834,10 @@ ROM_END
 
 ROM_START( pacplus_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "pacplus.6e", 0x0000, 0x1000, 0x8200be38 )
-	ROM_LOAD( "pacplus.6f", 0x1000, 0x1000, 0xd800bc8a )
-	ROM_LOAD( "pacplus.6h", 0x2000, 0x1000, 0xd800986c )
-	ROM_LOAD( "pacplus.6j", 0x3000, 0x1000, 0xbca63c60 )
+	ROM_LOAD( "pacplus.6e", 0x0000, 0x1000, 0xaae57d89 )
+	ROM_LOAD( "pacplus.6f", 0x1000, 0x1000, 0xdc79a0cb )
+	ROM_LOAD( "pacplus.6h", 0x2000, 0x1000, 0xc1d651d4 )
+	ROM_LOAD( "pacplus.6j", 0x3000, 0x1000, 0x0a6c5cd6 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "pacplus.5e", 0x0000, 0x1000, 0xd635f515 )
@@ -987,6 +989,23 @@ ROM_START( theglob_rom )
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "glob.5e", 0x0000, 0x1000, 0x4e3f2f45 )
 	ROM_LOAD( "glob.5f", 0x1000, 0x1000, 0x5cdd1d37 )
+
+	ROM_REGION(0x0110)	/* color PROMs */
+	ROM_LOAD( "glob.7f", 0x0000, 0x0010, 0x13e9f753 )
+	ROM_LOAD( "glob.4a", 0x0010, 0x0100, 0xcd4e000a )
+
+	ROM_REGION(0x0100)	/* sound prom */
+	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e )
+ROM_END
+
+ROM_START( beastf_rom )
+	ROM_REGION(0x20000)	/* 64k for code */
+	ROM_LOAD( "bf-u2.bin", 0x0000, 0x2000, 0x941283da )
+	ROM_LOAD( "bf-u3.bin", 0x2000, 0x2000, 0xc31c1c40 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "beastf.5e", 0x0000, 0x1000, 0x093ae858 )
+	ROM_LOAD( "beastf.5f", 0x1000, 0x1000, 0x2347671b )
 
 	ROM_REGION(0x0110)	/* color PROMs */
 	ROM_LOAD( "glob.7f", 0x0000, 0x0010, 0x13e9f753 )
@@ -1505,15 +1524,15 @@ struct GameDriver pacplus_driver =
 	__FILE__,
 	0,
 	"pacplus",
-	"Pac Man with Pac Man Plus graphics",
-	"????",
-	"hack",
-	BASE_CREDITS,
+	"Pac Man Plus",
+	"1982",
+	"[Namco] (Midway license)",
+	BASE_CREDITS"\nClay Cowgill (information)\nMike Balfour (information)",
 	0,
 	&machine_driver,
 
 	pacplus_rom,
-	0, 0,
+	pacplus_decode, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -1684,11 +1703,36 @@ struct GameDriver theglob_driver =
 	"The Glob (Pac Man hardware)",
 	"1983",
 	"Epos Corporation",
-	BASE_CREDITS"\nClay Cowgill(Information)\nMike Balfour(Information)",
+	BASE_CREDITS"\nClay Cowgill (information)\nMike Balfour (information)",
 	0,
 	&theglob_machine_driver,
 
 	theglob_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	theglob_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	theglob_hiload,theglob_hisave
+};
+
+struct GameDriver beastf_driver =
+{
+	__FILE__,
+	&theglob_driver,
+	"beastf",
+	"Beastie Feastie (Pac Man hardware)",
+	"1984",
+	"Epos Corporation",
+	BASE_CREDITS"\nClay Cowgill (information)\nMike Balfour (information)",
+	0,
+	&theglob_machine_driver,
+
+	beastf_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

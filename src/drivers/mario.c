@@ -153,12 +153,12 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x6a80, 0x6fff, MWA_RAM },
 	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x7400, 0x77ff, videoram_w, &videoram, &videoram_size },
-	{ 0x7e80, 0x7e80, mario_gfxbank_w },
-	{ 0x7e83, 0x7e83, mario_palettebank_w },
-	{ 0x7e84, 0x7e84, interrupt_enable_w },
 	{ 0x7c00, 0x7c00, mario_sh1_w }, /* Mario run sample */
 	{ 0x7c80, 0x7c80, mario_sh2_w }, /* Luigi run sample */
 	{ 0x7d00, 0x7d00, MWA_RAM, &mario_scrolly },
+	{ 0x7e80, 0x7e80, mario_gfxbank_w },
+	{ 0x7e83, 0x7e83, mario_palettebank_w },
+	{ 0x7e84, 0x7e84, interrupt_enable_w },
 	{ 0x7f01, 0x7f01, mario_sh_getcoin },
 	{ 0x7f03, 0x7f03, mario_sh_crab },
 	{ 0x7f04, 0x7f04, mario_sh_turtle },
@@ -178,6 +178,7 @@ static struct MemoryWriteAddress masao_writemem[] =
 	{ 0x6a80, 0x6fff, MWA_RAM },
 	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x7400, 0x77ff, videoram_w, &videoram, &videoram_size },
+	{ 0x7d00, 0x7d00, MWA_RAM, &mario_scrolly },
 	{ 0x7e00, 0x7e00, soundlatch_w },
 	{ 0x7e80, 0x7e80, mario_gfxbank_w },
 	{ 0x7e83, 0x7e83, mario_palettebank_w },

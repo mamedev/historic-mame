@@ -142,9 +142,13 @@ int palette_transparent_color;
 int palette_start(void)
 {
 	game_palette = malloc(3 * Machine->drv->total_colors * sizeof(unsigned char));
-	game_colortable = malloc(Machine->drv->color_table_len * sizeof(unsigned short));
 	palette_map = malloc(Machine->drv->total_colors * sizeof(unsigned short));
-	Machine->colortable = malloc(Machine->drv->color_table_len * sizeof(unsigned short));
+	if (Machine->drv->color_table_len)
+	{
+		game_colortable = malloc(Machine->drv->color_table_len * sizeof(unsigned short));
+		Machine->colortable = malloc(Machine->drv->color_table_len * sizeof(unsigned short));
+	}
+	else game_colortable = Machine->colortable = 0;
 
 	/* ASG 980209 - allocate space for the pens */
 	if (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT)
@@ -174,8 +178,8 @@ int palette_start(void)
 	}
 	else palette_used_colors = old_used_colors = just_remapped = 0;
 
-	if (game_colortable == 0 || game_palette == 0 || palette_map == 0 ||
-			Machine->colortable == 0 || Machine->pens == 0)
+	if ((Machine->drv->color_table_len && (game_colortable == 0 || Machine->colortable == 0))
+			|| game_palette == 0 ||	palette_map == 0 || Machine->pens == 0)
 	{
 		palette_stop();
 		return 1;
@@ -190,10 +194,10 @@ void palette_stop(void)
 	palette_used_colors = old_used_colors = just_remapped = 0;
 	free(game_palette);
 	game_palette = 0;
-	free(game_colortable);
-	game_colortable = 0;
 	free(palette_map);
 	palette_map = 0;
+	free(game_colortable);
+	game_colortable = 0;
 	free(Machine->colortable);
 	Machine->colortable = 0;
 	free(shrinked_pens);

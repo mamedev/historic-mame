@@ -609,6 +609,38 @@ ROM_START( gyrussce_rom )
 	ROM_LOAD( "gyrussk.3a", 0x0000, 0x1000, 0x18d6bc42 )
 ROM_END
 
+ROM_START( venus_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "r1", 0x0000, 0x2000, 0xe7d207c2 )
+	ROM_LOAD( "r2", 0x2000, 0x2000, 0x80584fa2 )
+	ROM_LOAD( "r3", 0x4000, 0x2000, 0xe6d7cac1 )
+	/* the diagnostics ROM would go here */
+
+	ROM_REGION(0xa000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gyrussk.4",  0x0000, 0x2000, 0x98f88b6e )
+	ROM_LOAD( "gyrussk.6",  0x2000, 0x2000, 0x90c095a2 )
+	ROM_LOAD( "gyrussk.5",  0x4000, 0x2000, 0x2fb43a10 )
+	ROM_LOAD( "gyrussk.8",  0x6000, 0x2000, 0xe7297079 )
+	ROM_LOAD( "gyrussk.7",  0x8000, 0x2000, 0xff46ed2e )
+
+	ROM_REGION(0x0220)	/* color PROMs */
+	ROM_LOAD( "gyrussk.pr3", 0x0000, 0x0020, 0x16f96315 )	/* palette */
+	ROM_LOAD( "gyrussk.pr1", 0x0020, 0x0100, 0x0dd30001 )	/* sprite lookup table */
+	ROM_LOAD( "gyrussk.pr2", 0x0120, 0x0100, 0xddc70e0d )	/* character lookup table */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "gyrussk.1a", 0x0000, 0x2000, 0x4fa107c1 )
+	ROM_LOAD( "gyrussk.2a", 0x2000, 0x2000, 0xd20aa58c )
+	/* the diagnostics ROM would go here */
+
+	ROM_REGION(0x2000)	/* Gyruss also contains a 6809, we don't need to emulate it */
+						/* but need the data tables contained in its ROM */
+	ROM_LOAD( "gyrussk.9",  0x0000, 0x2000, 0xef92fcd8 )
+
+	ROM_REGION(0x1000)	/* 8039 */
+	ROM_LOAD( "gyrussk.3a", 0x0000, 0x1000, 0x18d6bc42 )
+ROM_END
+
 
 #ifdef USE_SAMPLES
 static const char *gyruss_sample_names[] =
@@ -710,6 +742,35 @@ struct GameDriver gyrussce_driver =
 	&machine_driver,
 
 	gyrussce_rom,
+	0, 0,
+#ifdef USE_SAMPLES
+	gyruss_sample_names,
+#else
+	0,
+#endif
+	0,	/* sound_prom */
+
+	gyrussce_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver venus_driver =
+{
+	__FILE__,
+	&gyruss_driver,
+	"venus",
+	"Venus",
+	"1983",
+	"bootleg",
+	"Mike Cuddy (hardware info)\nPete Ground (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
+	0,
+	&machine_driver,
+
+	venus_rom,
 	0, 0,
 #ifdef USE_SAMPLES
 	gyruss_sample_names,

@@ -23,6 +23,7 @@ struct DisplayText
 
 
 struct GfxElement *builduifont(void);
+void pick_uifont_colors(void);
 void displaytext(const struct DisplayText *dt,int erase);
 int showcharset(void);
 int showcopyright(void);

@@ -227,7 +227,7 @@ static struct GfxLayout charlayout =
 static struct GfxLayout tilelayout =
 {
 	8,32,    /* 8*32 characters */
-	128,    /* 128 characters */
+	256,    /* 256 tiles */
 	4,      /* 4 bits per pixel */
 	{ 0, 2, 4, 6 },
 	{ 0, 1, 1*8+0, 1*8+1, 2*8+0, 2*8+1, 3*8+0, 3*8+1 },
@@ -244,7 +244,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x00000, &charlayout,   0, 16 },
 	{ 1, 0x20000, &tilelayout, 128,  8 },
-	{ 1, 0x24000, &tilelayout, 128,  8 },
 	{ -1 } /* end of array */
 };
 

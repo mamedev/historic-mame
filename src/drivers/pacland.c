@@ -46,12 +46,7 @@ void pacland_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static void pacland_init_machine(void)
 {
-	if (pacland_timer)
-	{
-		timer_remove(pacland_timer);
-
-		pacland_timer = 0;
-	}
+	pacland_timer = 0;
 }
 
 static void pacland_halt_mcu_w( int offset, int data )

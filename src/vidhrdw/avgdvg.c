@@ -237,13 +237,11 @@ static void dvg_generate_vector_list(void)
 				currenty -= deltay;
 				dvg_vector_timer(temp);
 
-				/* ASG 080497, .ac JAN2498 */
-#if TRANSLUCENCY
-				z = z * BRIGHTNESS;
-#else
-				if (z)
-					z = (z << 4) | 0x0f;
-#endif
+				/* ASG 080497, .ac JAN2498 - V.V */
+				if (translucency)
+					z = z * BRIGHTNESS;
+				else
+					if (z) z = (z << 4) | 0x0f;
 				vector_add_point (currentx, currenty, colorram[1], z);
 
 				break;
@@ -331,12 +329,10 @@ static void dvg_generate_vector_list(void)
 				dvg_vector_timer(temp);
 
 				/* ASG 080497, .ac JAN2498 */
-#if TRANSLUCENCY
-				z = z * BRIGHTNESS;
-#else
-				if (z)
-					z = (z << 4) | 0x0f;
-#endif
+				if (translucency)
+					z = z * BRIGHTNESS;
+				else
+					if (z) z = (z << 4) | 0x0f;
 				vector_add_point (currentx, currenty, colorram[1], z);
 				break;
 
@@ -524,11 +520,10 @@ static void avg_generate_vector_list (void)
 				/* highest intensity. */
 				if (vectorEngine == USE_AVG_SWARS)
 				{
-#if TRANSLUCENCY
-					z = (statz * z) / 12;
-#else
-					z = (statz * z) >> 3;
-#endif
+					if (translucency)
+						z = (statz * z) / 12;
+					else
+						z = (statz * z) >> 3;
 					if (z > 0xff)
 						z = 0xff;
 				}
@@ -536,12 +531,10 @@ static void avg_generate_vector_list (void)
 				{
 					if (z == 2)
 						z = statz;
-#if TRANSLUCENCY
-					z = z * BRIGHTNESS;
-#else
-					if (z)
-						z = (z << 4) | 0x1f;
-#endif
+						if (translucency)
+							z = z * BRIGHTNESS;
+						else
+							if (z) z = (z << 4) | 0x1f;
 				}
 
 				deltax = x * scale;
@@ -578,23 +571,20 @@ static void avg_generate_vector_list (void)
 
 				if (vectorEngine == USE_AVG_SWARS)
 				{
-#if TRANSLUCENCY
-					z = (statz * z) / 12;
-#else
-					z = (statz * z) >> 3;
-#endif
+					if (translucency)
+						z = (statz * z) / 12;
+					else
+						z = (statz * z) >> 3;
 					if (z > 0xff) z = 0xff;
 				}
 				else
 				{
 					if (z == 2)
 						z = statz;
-#if TRANSLUCENCY
-					z = z * BRIGHTNESS;
-#else
-					if (z)
-						z = (z << 4) | 0x1f;
-#endif
+						if (translucency)
+							z = z * BRIGHTNESS;
+						else
+							if (z) z = (z << 4) | 0x1f;
 				}
 
 				deltax = x * scale;

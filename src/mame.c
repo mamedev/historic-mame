@@ -340,8 +340,9 @@ static int vh_open(void)
 
 int updatescreen(void)
 {
-	static int framecount = 0, showvoltemp = 0; /* M.Z.: new options */
+	static int framecount = 0;
 	static int need_to_clear_bitmap;
+	static int vol_update;
 #ifdef BETA_VERSION
 	static int beta_count;
 #endif
@@ -367,21 +368,31 @@ int updatescreen(void)
 	}
 
 
-	if (osd_key_pressed(OSD_KEY_VOLUME_DOWN)/* do we really need this?  && osd_key_pressed(OSD_KEY_LSHIFT) == 0*/)
+	if (osd_key_pressed(OSD_KEY_VOLUME_DOWN) || osd_key_pressed(OSD_KEY_VOLUME_UP))
 	{
-		/* decrease volume */
-		if (CurrentVolume > 0) CurrentVolume--;
-		osd_set_mastervolume(CurrentVolume);
-		showvoltemp = 50;
-	}
+		if (osd_key_pressed(OSD_KEY_VOLUME_DOWN)) vol_update -= 1;
+		if (osd_key_pressed(OSD_KEY_VOLUME_UP)) vol_update += 1;
 
-	if (osd_key_pressed(OSD_KEY_VOLUME_UP)/* do we really need this? && osd_key_pressed(OSD_KEY_LSHIFT) == 0*/)
-	{
-		/* increase volume */
-		if (CurrentVolume < 100) CurrentVolume++;
+		if (vol_update <= -5)
+		{
+			vol_update = 0;
+			CurrentVolume -= 5;
+		}
+		if (vol_update >= 5)
+		{
+			vol_update = 0;
+			CurrentVolume += 5;
+		}
+
+		if (CurrentVolume < 0) CurrentVolume = 0;
+		if (CurrentVolume > 100) CurrentVolume = 100;
+
 		osd_set_mastervolume(CurrentVolume);
-		showvoltemp = 50;
-	}                                          /* MAURY_END: new options */
+
+		osd_on_screen_display("VOL",100 * CurrentVolume / 100);
+	}
+	else
+		vol_update = 0;
 
 	if (osd_key_pressed(OSD_KEY_PAUSE)) /* pause the game */
 	{
@@ -471,36 +482,6 @@ int updatescreen(void)
 		/* This call is for the cheat, it must be called at least each frames */
 		if (nocheat == 0) DoCheat(CurrentVolume);
 
-		if (showvoltemp)
-		{                     /* volume-meter */
-			int trueorientation;
-			int i,x;
-			char volstr[25];
-
-
-			showvoltemp--;
-
-			if (showvoltemp)
-			{
-				trueorientation = Machine->orientation;
-				Machine->orientation = ORIENTATION_DEFAULT;
-
-				x = (Machine->uiwidth - 24*Machine->uifont->width)/2;
-				strcpy(volstr,"                      ");
-				for (i = 0;i < (CurrentVolume/5);i++) volstr[i+1] = '\x15';
-
-				drawgfx(Machine->scrbitmap,Machine->uifont,16,DT_COLOR_RED,0,0,x,Machine->uiheight/2+Machine->uiymin,0,TRANSPARENCY_NONE,0);
-				drawgfx(Machine->scrbitmap,Machine->uifont,17,DT_COLOR_RED,0,0,x+23*Machine->uifont->width,Machine->uiheight/2+Machine->uiymin,0,TRANSPARENCY_NONE,0);
-				for (i = 0;i < 22;i++)
-					drawgfx(Machine->scrbitmap,Machine->uifont,(unsigned int)volstr[i],DT_COLOR_WHITE,
-						0,0,x+(i+1)*Machine->uifont->width+Machine->uixmin,Machine->uiheight/2+Machine->uiymin,0,TRANSPARENCY_NONE,0);
-
-				Machine->orientation = trueorientation;
-			}
-			else
-				need_to_clear_bitmap = 1;
-		}
-
 #ifdef BETA_VERSION
 		if (beta_count < 5 * Machine->drv->frames_per_second)
 		{
@@ -512,6 +493,8 @@ int updatescreen(void)
 				int i,x;
 				char volstr[25];
 
+
+				pick_uifont_colors();
 
 				trueorientation = Machine->orientation;
 				Machine->orientation = ORIENTATION_DEFAULT;
