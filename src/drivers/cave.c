@@ -1762,7 +1762,7 @@ static struct YM2151interface ym2151_intf_4MHz =
 {
 	1,
 	16000000/4, /* ? */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(30,MIXER_PAN_LEFT,30,MIXER_PAN_RIGHT) },
 	{ irqhandler }, /* irq handler */
 	{ 0 } /* port_write */
 };

@@ -81,17 +81,12 @@ logerror("%04x: protection status read\n",activecpu_get_pc());
 
 
 /* timer callback : */
-void taitosj_mcu_real_data_r(int param)
-{
-	zaccept = 1;
-}
-
 READ_HANDLER( taitosj_mcu_data_r )
 {
 #if DEBUG_MCU
 logerror("%04x: protection read %02x\n",activecpu_get_pc(),toz80);
 #endif
-	timer_set(TIME_NOW,0,taitosj_mcu_real_data_r);
+	zaccept = 1;
 	return toz80;
 }
 
@@ -109,12 +104,14 @@ WRITE_HANDLER( taitosj_mcu_data_w )
 logerror("%04x: protection write %02x\n",activecpu_get_pc(),data);
 #endif
 	timer_set(TIME_NOW,data,taitosj_mcu_real_data_w);
+	/* temporarily boost the interleave to sync things up */
+	cpu_boost_interleave(0, TIME_IN_USEC(10));
 }
 
 READ_HANDLER( taitosj_mcu_status_r )
 {
-	/* mcu synchronization */
-	cpu_yielduntil_time (TIME_IN_USEC(5));
+	/* temporarily boost the interleave to sync things up */
+	cpu_boost_interleave(0, TIME_IN_USEC(10));
 
 	/* bit 0 = the 68705 has read data from the Z80 */
 	/* bit 1 = the 68705 has written data for the Z80 */

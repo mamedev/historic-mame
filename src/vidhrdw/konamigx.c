@@ -41,13 +41,7 @@
 
 */
 
-static int scrolld[2][4][2] = {
- 	{{ 0, 0 }, {0, 0}, {0, 0}, {0, 0}},
- 	{{ 0, 0 }, {0, 0}, {0, 0}, {0, 0}}
-};
-
-static int layer_colorbase[4];//, layers[4], layerpri[4];
-static int spr_palshift, sprite_colorbase;
+static int layer_colorbase[4];
 static int gx_tilebanks[8], gx_oldbanks[8];
 static int gx_invertlayersBC;
 static int gx_tilemode;
@@ -120,6 +114,8 @@ static int _gxcommoninitnosprites(void)
 	K054338_vh_start();
 	K055555_vh_start();
 
+	if (konamigx_mixer_init(0)) return 1;
+
 	for (i = 0; i < 8; i++)
 	{
 		gx_tilebanks[i] = gx_oldbanks[i] = 0;
@@ -162,14 +158,12 @@ VIDEO_START(konamigx_5bpp)
 	else
 		game_tile_callback = konamigx_type2_tile_callback;
 
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, scrolld, game_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, game_tile_callback))
 	{
 		return 1;
 	}
 
 	if (_gxcommoninit()) return 1;
-
-	spr_palshift = 5;
 
 	/* here are some hand tuned per game scroll offsets to go with the per game visible areas,
 	   i see no better way of doing this for now... */
@@ -182,153 +176,125 @@ VIDEO_START(konamigx_5bpp)
 
 	if (!strcmp(Machine->gamedrv->name,"puzldama"))
 	{
-		K053247_set_SpriteOffset(-46, -23);
-		konamigx_mixer_primode(4);
+		K053247GP_set_SpriteOffset(-46, -23);
+		konamigx_mixer_primode(5);
 	} else
 
 	if (!strcmp(Machine->gamedrv->name,"daiskiss"))
 	{
-		konamigx_mixer_primode(3);
+		konamigx_mixer_primode(4);
 	} else
 
 	if (!strcmp(Machine->gamedrv->name,"gokuparo") || !strcmp(Machine->gamedrv->name,"fantjour"))
  	{
-		K053247_set_SpriteOffset(-46, -23);
+		K053247GP_set_SpriteOffset(-46, -23);
 	} else
 
 	if (!strcmp(Machine->gamedrv->name,"sexyparo"))
 	{
-		K053247_set_SpriteOffset(-42, -23);
+		K053247GP_set_SpriteOffset(-42, -23);
 	}
-
-	if (konamigx_mixer_init(0)) return 1;
 
 	return 0;
 }
 
 VIDEO_START(dragoonj)
 {
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 1, scrolld, konamigx_type2_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 1, NULL, konamigx_type2_tile_callback))
 	{
 		return 1;
 	}
-
-	if (_gxcommoninitnosprites()) return 1;
 
 	if (K055673_vh_start(REGION_GFX2, K055673_LAYOUT_RNG, -53, -23, konamigx_dragoonj_sprite_callback))
 	{
 		return 1;
 	}
 
-	spr_palshift = 4;
+	if (_gxcommoninitnosprites()) return 1;
 
 	K056832_set_LayerOffset(0, -2+1, 0);
 	K056832_set_LayerOffset(1,  0+1, 0);
 	K056832_set_LayerOffset(2,  2+1, 0);
 	K056832_set_LayerOffset(3,  3+1, 0);
 
-	if (konamigx_mixer_init(0)) return 1;
-
 	return 0;
-}
-
-static void le2_sprite_callback(int *code, int *color, int *priority)
-{
-	int c = *color;
-
-	konamigx_type2_sprite_callback(code, color, priority);
-	*color = sprite_colorbase | (c & 0x001f);
 }
 
 VIDEO_START(le2)
 {
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_8, 1, scrolld, konamigx_type2_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_8, 1, NULL, konamigx_type2_tile_callback))
+	{
+		return 1;
+	}
+
+	if (K055673_vh_start(REGION_GFX2, K055673_LAYOUT_LE2, -46, -23, konamigx_le2_sprite_callback))
 	{
 		return 1;
 	}
 
 	if (_gxcommoninitnosprites()) return 1;
 
-	if (K055673_vh_start(REGION_GFX2, K055673_LAYOUT_LE2, -46, -23, le2_sprite_callback))
-	{
-		return 1;
-	}
-
-	spr_palshift = 8;
-
 	gx_invertlayersBC = 1;
-	konamigx_mixer_primode(-1); // swapped priority of layer B and C?
-
-	if (konamigx_mixer_init(0)) return 1;
+	konamigx_mixer_primode(-1); // swapped layer B and C priorities?
 
 	return 0;
 }
 
 VIDEO_START(konamigx_6bpp)
 {
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_6, 0, scrolld, konamigx_type2_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_6, 0, NULL, konamigx_type2_tile_callback))
 	{
 		return 1;
 	}
 
 	if (_gxcommoninit()) return 1;
 
-	spr_palshift = 5;
-
 	if (!strcmp(Machine->gamedrv->name,"tokkae") || !strcmp(Machine->gamedrv->name,"tkmmpzdm"))
 	{
-		K053247_set_SpriteOffset(-46, -23);
-		konamigx_mixer_primode(4);
+		K053247GP_set_SpriteOffset(-46, -23);
+		konamigx_mixer_primode(5);
 	}
-
-	if (konamigx_mixer_init(0)) return 1;
 
 	return 0;
 }
 
 VIDEO_START(konamigx_6bpp_2)
 {
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_6, 1, scrolld, konamigx_type2_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_6, 1, NULL, konamigx_type2_tile_callback))
 	{
 		return 1;
 	}
 
 	if (!strcmp(Machine->gamedrv->name,"salmndr2"))
 	{
-		if (_gxcommoninitnosprites()) return 1;
-
 		if (K055673_vh_start(REGION_GFX2, K055673_LAYOUT_GX6, -48, -23, konamigx_salmndr2_sprite_callback))
 		{
 			return 1;
 		}
+
+		if (_gxcommoninitnosprites()) return 1;
 	}
 	else
 	{
 		if (_gxcommoninit()) return 1;
 	}
 
-	spr_palshift = 5;
-
-	if (konamigx_mixer_init(0)) return 1;
-
 	return 0;
 }
 
 VIDEO_START(konamigx_type1)
 {
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, scrolld, konamigx_type2_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, konamigx_type2_tile_callback))
 	{
 		return 1;
 	}
-
-	if (_gxcommoninitnosprites()) return 1;
 
 	if (K055673_vh_start(REGION_GFX2, K055673_LAYOUT_GX6, -53, -23, konamigx_type2_sprite_callback))
 	{
 		return 1;
 	}
 
-	spr_palshift = 4;
+	if (_gxcommoninitnosprites()) return 1;
 
 	if (!strcmp(Machine->gamedrv->name,"opengolf"))
 	{
@@ -337,8 +303,6 @@ VIDEO_START(konamigx_type1)
 		K056832_set_LayerOffset(2,  2+1, 0);
 		K056832_set_LayerOffset(3,  3+1, 0);
 	}
-
-	if (konamigx_mixer_init(0)) return 1;
 
 	return 0;
 }
@@ -380,8 +344,6 @@ VIDEO_UPDATE(konamigx)
 
 	if (dirty) K056832_MarkAllTilemapsDirty();
 
-	sprite_colorbase = K055555_get_palette_index(4)<<spr_palshift;
-
 	if (konamigx_cfgport >= 0)
 	{
 		// background detail tuning
@@ -416,8 +378,8 @@ VIDEO_UPDATE(konamigx)
 
 	if( gx_invertlayersBC )
 	{
-		draw_crosshair( bitmap, readinputport( 9)*287/0xff+26, readinputport(10)*223/0xff+16, cliprect );
-		draw_crosshair( bitmap, readinputport(11)*287/0xff+26, readinputport(12)*223/0xff+16, cliprect );
+		draw_crosshair( bitmap, readinputport( 9)*287/0xff+24, readinputport(10)*223/0xff+16, cliprect );
+		draw_crosshair( bitmap, readinputport(11)*287/0xff+24, readinputport(12)*223/0xff+16, cliprect );
 	}
 }
 

@@ -25,7 +25,7 @@ static struct star stars[MAX_STARS];
 static int total_stars;
 static int galaga_gfxbank; // used by catsbee
 
-WRITE_HANDLER ( catsbee_bank_w )
+WRITE_HANDLER ( gatsbee_bank_w )
 {
 	galaga_gfxbank = data & 0x1;
 	memset (dirtybuffer, 1, videoram_size);

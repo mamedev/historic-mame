@@ -11,73 +11,70 @@
 
 static int tile_bank;
 static UINT16 *tile_data;
-#define NUM_ROWS 25
-#define NUM_COLS 40
-#define NUM_TILES (NUM_ROWS*NUM_COLS)
+static struct tilemap *bg_tilemap;
 
-PALETTE_INIT( moleattack ){
+#define TILE_SIZE	8
+#define NUM_ROWS	25
+#define NUM_COLS	40
+#define NUM_TILES	(NUM_ROWS * NUM_COLS)
+
+PALETTE_INIT( moleattack )
+{
 	int i;
-	for( i=0; i<8; i++ ){
-		int r,g,b;
-		r = (i&1)?0xff:0x00;
-		g = (i&4)?0xff:0x00;
-		b = (i&2)?0xff:0x00;
-		palette_set_color(i,r,g,b);
+	int r, g, b;
+
+	for (i = 0; i < 8; i++) {
+		r = (i & 1) ? 0xff : 0x00;
+		g = (i & 4) ? 0xff : 0x00;
+		b = (i & 2) ? 0xff : 0x00;
+		palette_set_color(i, r, g, b);
 	}
 }
 
-VIDEO_START( moleattack ){
-	tile_data = (UINT16 *)auto_malloc( NUM_TILES*sizeof(UINT16) );
+static void get_bg_tile_info(int tile_index)
+{
+	UINT16 code = tile_data[tile_index];
+	SET_TILE_INFO((code & 0x200) ? 1 : 0, code & 0x1ff, 0, 0)
+}
+
+VIDEO_START( moleattack )
+{
+	tile_data = (UINT16 *)auto_malloc(NUM_TILES * sizeof(UINT16));
+
 	if( !tile_data )
 		return 1;
-	dirtybuffer = auto_malloc( NUM_TILES );
-	if( !dirtybuffer )
+
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, TILE_SIZE, TILE_SIZE, NUM_COLS, NUM_ROWS);
+
+	if ( !bg_tilemap )
 		return 1;
-	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
-	if( !tmpbitmap )
-		return 1;
-	memset( dirtybuffer, 1, NUM_TILES );
+
 	return 0;
 }
 
-WRITE_HANDLER( moleattack_videoram_w ){
-	if( offset<NUM_TILES ){
-		if( tile_data[offset]!=data ){
-			dirtybuffer[offset] = 1;
-			tile_data[offset] = data | (tile_bank<<8);
+WRITE_HANDLER( moleattack_videoram_w )
+{
+	if (offset < NUM_TILES) {
+		if (tile_data[offset] != data) {
+			tile_data[offset] = data | (tile_bank << 8);
+			tilemap_mark_tile_dirty(bg_tilemap, offset);
 		}
-	}
-	else if( offset==0x3ff ){ /* hack!  erase screen */
-		memset( dirtybuffer, 1, NUM_TILES );
-		memset( tile_data, 0, NUM_TILES*sizeof(UINT16) );
 	}
 }
 
-WRITE_HANDLER( moleattack_tilesetselector_w ){
+WRITE_HANDLER( moleattack_tilesetselector_w )
+{
 	tile_bank = data;
+	tilemap_mark_all_tiles_dirty(bg_tilemap);
 }
 
-VIDEO_UPDATE( moleattack ){
-	int offs;
+WRITE_HANDLER( moleattack_flipscreen_w )
+{
+	flip_screen_set(data);
+}
 
-	if( get_vh_global_attribute_changed() )
-		memset( dirtybuffer, 1, NUM_TILES );
-
-	for( offs=0; offs<NUM_TILES; offs++ ){
-		if( dirtybuffer[offs] ){
-			UINT16 code = tile_data[offs];
-			drawgfx( tmpbitmap, Machine->gfx[(code&0x200)?1:0],
-				code&0x1ff,
-				0, /* color */
-				0,0, /* no flip */
-				(offs%NUM_COLS)*8, /* xpos */
-				(offs/NUM_COLS)*8, /* ypos */
-				0, /* no clip */
-				TRANSPARENCY_NONE,0 );
-
-			dirtybuffer[offs] = 0;
-		}
-	}
-
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+VIDEO_UPDATE( moleattack )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
 }

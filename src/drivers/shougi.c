@@ -68,11 +68,11 @@ mapped at:
 CUSTOM: ALPHA 8201 (42 pin DIP)
 DIPSW : 6 position (x1)
        Positions 1, 5 & 6 not used
-       
+
 	4	3	2
        ------------------------------
        OFF	OFF	OFF	1 minutes (time for the opponent to make his decision)
-       OFF	OFF	ON	2 
+       OFF	OFF	ON	2
        OFF	ON	OFF	3
        OFF	ON	ON	4
        ON	OFF	OFF	5
@@ -87,7 +87,7 @@ PROM  : Type MB7051
 
 
 **************************************************************************/
- 
+
 
 
 #include <math.h>
@@ -365,13 +365,13 @@ INPUT_PORTS_END
 
 static struct AY8910interface ay8910_interface =
 {
-	1,	
+	1,
 	10000000/8,	/* ??? */
-	{ 30,}, 
+	{ 30,},
 	{ 0 },
 	{ 0 },
 	{ 0 },
-	{ 0 } 
+	{ 0 }
 };
 
 static MACHINE_DRIVER_START( shougi )
@@ -380,7 +380,7 @@ static MACHINE_DRIVER_START( shougi )
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(shougi_vblank_nmi,1)
 
-	MDRV_CPU_ADD(Z80,10000000/4)		
+	MDRV_CPU_ADD(Z80,10000000/4)
 	MDRV_CPU_MEMORY(readmem_sub,writemem_sub)
 	MDRV_CPU_PORTS(readport_sub,0)
 	/* NMIs triggered in shougi_vblank_nmi() */
@@ -443,5 +443,5 @@ ROM_START( shougi2 )
 	ROM_LOAD( "pr.2l",   0x0000, 0x0020, CRC(cd3559ff) )
 ROM_END
 
-GAMEX( 198?, shougi,  0,        shougi,  shougi,  0, ROT0, "Alpha", "Shougi", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 198?, shougi2, shougi,   shougi,  shougi,  0, ROT0, "Alpha", "Shougi 2", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 198?, shougi,  0,        shougi,  shougi,  0, ROT0, "Alpha Denshi", "Shougi", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 198?, shougi2, shougi,   shougi,  shougi,  0, ROT0, "Alpha Denshi", "Shougi 2", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

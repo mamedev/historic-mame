@@ -11,7 +11,6 @@ todo:
 
 Colours (need proms dumping?)
 Sound (needs sound rom redumping?) - T5182 ? (Coins are also probably handled by it)
-Finish bitswaps on GFX
 In attract mode player seems to walk on black areas? is this right?
 
 ***************************************************************************/
@@ -149,7 +148,7 @@ static struct GfxLayout spritelayout =
 	RGN_FRAC(1,4),
 	4,
 	{ RGN_FRAC(0,4), RGN_FRAC(1,4),RGN_FRAC(2,4),RGN_FRAC(3,4)},
-	{STEP16(0,1)},
+	{STEP16(15,-1)},
 	{STEP16(0,16)},
 	16*16
 };
@@ -200,8 +199,8 @@ ROM_START( mustache )
 
 	ROM_REGION( 0x20000, REGION_GFX2,0 )	/* sprites */
 	ROM_LOAD( "mustache.a4", 0x00000,  0x8000, CRC(d5c3bbbf) SHA1(914e3feea54246476701f492c31bd094ad9cea10) )
-	ROM_LOAD( "mustache.a5", 0x08000,  0x8000, CRC(c975fb06) SHA1(4d166bd79e19c7cae422673de3e095ad8101e013) )
-	ROM_LOAD( "mustache.a7", 0x10000,  0x8000, CRC(e2a6012d) SHA1(4e4cd1a186870c8a88924d5bff917c6889da953d) )
+	ROM_LOAD( "mustache.a7", 0x08000,  0x8000, CRC(e2a6012d) SHA1(4e4cd1a186870c8a88924d5bff917c6889da953d) )
+	ROM_LOAD( "mustache.a5", 0x10000,  0x8000, CRC(c975fb06) SHA1(4d166bd79e19c7cae422673de3e095ad8101e013) )
 	ROM_LOAD( "mustache.a8", 0x18000,  0x8000, CRC(2e180ee4) SHA1(a5684a25c337aeb4effeda7982164d35bc190af9) )
 
 	ROM_REGION( 0x100, REGION_PROMS,0 )	/* proms ?? */
@@ -216,47 +215,47 @@ static DRIVER_INIT( mustache )
 	int i;
 
 	#define G1 (memory_region_length(REGION_GFX1)/3)
-	#define G2 (memory_region_length(REGION_GFX2)/4)
+	#define G2 (memory_region_length(REGION_GFX2)/2)
 
-	unsigned char *buf=auto_malloc(G2*4);
+	UINT8 *buf=auto_malloc(G2*2);
 
 	/* BG data lines */
 	for (i=0;i<G1; i++)
 	{
-		buf[i]=BITSWAP8(memory_region(REGION_GFX1)[i],           3,7,1,4,6,2,5,0);
-		buf[i+G1]=BITSWAP8(memory_region(REGION_GFX1)[i+G1],     4,2,3,1,7,5,0,6);
-		buf[i+G1*2]=BITSWAP8(memory_region(REGION_GFX1)[i+G1*2], 6,7,2,0,5,4,1,3); /* 7,6,2,0,5,4,1,3  ?? */
+		UINT16 w;
+
+		buf[i] = BITSWAP8(memory_region(REGION_GFX1)[i], 0,5,2,6,4,1,7,3);
+
+		w = (memory_region(REGION_GFX1)[i+G1] << 8) | memory_region(REGION_GFX1)[i+G1*2];
+		w = BITSWAP16(w, 14,1,13,5,9,2,10,6, 3,8,4,15,0,11,12,7);
+
+		buf[i+G1]   = w >> 8;
+		buf[i+G1*2] = w & 0xff;
 	}
 
 	/* BG address lines */
-	for(i=0;i<G1;i++)
-	{
-		memory_region(REGION_GFX1)[i]=     buf[BITSWAP16(i,15,14,13,2,1,0,12,11,10,9,8,7,6,5,4,3)];
-		memory_region(REGION_GFX1)[i+G1]=  buf[BITSWAP16(i,15,14,13,2,1,0,12,11,10,9,8,7,6,5,4,3)+G1];
-		memory_region(REGION_GFX1)[i+G1*2]=buf[BITSWAP16(i,15,14,13,2,1,0,12,11,10,9,8,7,6,5,4,3)+G1*2];
-	}
+	for (i = 0; i < 3*G1; i++)
+		memory_region(REGION_GFX1)[i] = buf[BITSWAP16(i,15,14,13,2,1,0,12,11,10,9,8,7,6,5,4,3)];
 
 	/* SPR data lines */
 	for (i=0;i<G2; i++)
 	{
-		buf[i]=BITSWAP8(memory_region(REGION_GFX2)[i],           1,3,5,0,7,4,2,6 );
-		buf[i+G2]=BITSWAP8(memory_region(REGION_GFX2)[i+G2],     5,2,7,4,1,3,0,6 );
-		buf[i+G2*2]=BITSWAP8(memory_region(REGION_GFX2)[i+G2*2], 1,3,5,0,7,4,2,6 );
-		buf[i+G2*3]=BITSWAP8(memory_region(REGION_GFX2)[i+G2*3], 5,2,7,4,1,3,0,6 );
+		UINT16 w;
+
+		w = (memory_region(REGION_GFX2)[i] << 8) | memory_region(REGION_GFX2)[i+G2];
+		w = BITSWAP16(w, 5,7,11,4,15,10,3,14, 9,2,13,8,1,12,0,6 );
+
+		buf[i]    = w >> 8;
+		buf[i+G2] = w & 0xff;
 	}
 
 	/* SPR address lines */
-	for(i=0;i<G2;i++)
-	{
-		memory_region(REGION_GFX2)[i]=     buf[BITSWAP16(i,15,12,11,10,9,8,7,6,5,4,13,14,3,2,1,0)];
-		memory_region(REGION_GFX2)[i+G2]=  buf[BITSWAP16(i,15,12,11,10,9,8,7,6,5,4,13,14,3,2,1,0)+G2];
-		memory_region(REGION_GFX2)[i+G2*2]=buf[BITSWAP16(i,15,12,11,10,9,8,7,6,5,4,13,14,3,2,1,0)+G2*2];
-		memory_region(REGION_GFX2)[i+G2*3]=buf[BITSWAP16(i,15,12,11,10,9,8,7,6,5,4,13,14,3,2,1,0)+G2*3];
-	}
+	for (i = 0; i < 2*G2; i++)
+		memory_region(REGION_GFX2)[i] = buf[BITSWAP24(i,23,22,21,20,19,18,17,16,15,12,11,10,9,8,7,6,5,4,13,14,3,2,1,0)];
 
 	seibu_sound_decrypt(REGION_CPU1,0x8000);
 	install_mem_read_handler( 0, 0xd400, 0xd401, mustache_coin_hack_r);
 }
 
 
-GAMEX( 1987, mustache,  0,       mustache, mustache, mustache, ROT270|ORIENTATION_FLIP_X, "March Electronics", "Mustache Boy",GAME_NO_SOUND|GAME_WRONG_COLORS|GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1987, mustache, 0, mustache, mustache, mustache, ROT90, "[Seibu Kaihatsu] (March license)", "Mustache Boy", GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )

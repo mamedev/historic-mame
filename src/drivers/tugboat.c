@@ -4,13 +4,20 @@ Tug Boat
 6502 hooked up + preliminary video by MooglyGuy
 
 TODO:
-- controls stop working in stage 2
 - verify connections of the two PIAs. I only hooked up a couple of ports but
   there are more.
 - check how the score is displayed. I'm quite sure that tugboat_score_w is
   supposed to access videoram scanning it by columns (like btime_mirrorvideoram_w),
   but the current implementation is a big kludge, and it still looks wrong.
 - colors might not be entirely accurate
+
+the problem which caused the controls not to work
+---
+There's counter at $000b, counting up from $ff to 0 or from $fe to 0 (initial value depends
+on game level). It's increased in main loop, and used for game flow control (scrolling speed , controls  etc).
+Every interrupt, when (counter&3)!=0 , there's a check for left/right inputs .
+But when init val was $ff (2nd level),  the condition 'counter&3!=0' was
+always false - counter was reloaded and incremented before interrupt occurs
 
 ****************************************************************************/
 
@@ -158,26 +165,20 @@ static struct pia6821_interface pia1_intf =
 	/*irqs   : A/B             */ 0, 0
 };
 
+static void interrupt_gen(int scanline)
+{
+	cpu_set_irq_line(0, 0, HOLD_LINE);
+	timer_set(cpu_getscanlinetime(1), 0, interrupt_gen);
+}
+
 MACHINE_INIT( tugboat )
 {
 	pia_unconfig();
 	pia_config(0, PIA_STANDARD_ORDERING, &pia0_intf);
 	pia_config(1, PIA_STANDARD_ORDERING, &pia1_intf);
 	pia_reset();
+	timer_set(cpu_getscanlinetime(1), 0, interrupt_gen);
 }
-
-INTERRUPT_GEN( tugboat_interrupt )
-{
-	if (cpu_getiloops() == 0)
-	{
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);  // vbl?
-	}
-	else
-	{
-		cpu_set_irq_line(0, 0, HOLD_LINE);  // reads inputs, drives sound?
-	}
-}
-
 
 
 static MEMORY_READ_START( tugboat_readmem )
@@ -315,7 +316,7 @@ static struct AY8910interface ay8910_interface =
 static MACHINE_DRIVER_START( tugboat )
 	MDRV_CPU_ADD_TAG("main", M6502, 2000000)	/* 2 MHz ???? */
 	MDRV_CPU_MEMORY(tugboat_readmem,tugboat_writemem)
-	MDRV_CPU_VBLANK_INT(tugboat_interrupt,2)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -370,4 +371,4 @@ ROM_END
 
 
 
-GAMEX( 1982, tugboat, 0, tugboat, tugboat, 0, ROT90, "ETM", "Tugboat", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1982, tugboat, 0, tugboat, tugboat, 0, ROT90, "ETM", "Tugboat", GAME_IMPERFECT_GRAPHICS )

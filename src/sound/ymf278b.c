@@ -6,6 +6,14 @@
 
    By R. Belmont and O. Galibert.
 
+   Copyright (c) 2002-2003 R. Belmont and O. Galibert.
+
+   This software is dual-licensed: it may be used in MAME and properly licensed
+   MAME derivatives under the terms of the MAME license.  For use outside of
+   MAME and properly licensed derivatives, it is available under the 
+   terms of the GNU Lesser General Public License (LGPL), version 2.1.
+   You may read the LGPL at http://www.gnu.org/licenses/lgpl.html
+
    Changelog:
    Sep. 8, 2002 - fixed ymf278b_compute_rate when OCT is negative (RB)
    Dec. 11, 2002 - added ability to set non-standard clock rates (RB)
@@ -13,6 +21,9 @@
 		   instruments in hotdebut).
                    Thanks to Team Japump! for MP3s from a real PCB.
 		   fixed crash if MAME is run with no sound.
+   June 4, 2003 -  Changed to dual-license with LGPL for use in OpenMSX. 
+                   OpenMSX contributed a bugfix where looped samples were
+ 		    not being addressed properly, causing pitch fluctuation.
 */
 
 #include <math.h>
@@ -444,7 +455,6 @@ static void ymf278b_C_w(int num, UINT8 reg, UINT8 data)
 
 				slot->startaddr = (p[2] | (p[1]<<8) | ((p[0]&0x3f)<<16));
 				slot->loopaddr = (p[4]<<16) | (p[3]<<24);
-				slot->loopaddr += 0x00010000U;
 				slot->endaddr = (p[6]<<16) | (p[5]<<24);
 				slot->endaddr -= 0x00010000U;
 				slot->endaddr ^= 0xffff0000U;

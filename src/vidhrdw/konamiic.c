@@ -126,7 +126,9 @@ Run and Gun         GX247*1993   68000 (TTL tilemap) 055673 053246              
 Quiz Gakumon no     GX248*1993   68000 052109 051962 053245 053244 053251        053990 (protection) 051550 - same board as TMNT2
   Susume
 Polygonet Commander GX305+1993   68020 (TTL tilemap)                             XC56156-40(3D DSP) 054009(x2) 054010(x2) 054539 (sound)
-System GX           GX300*1993   68020 056832 054156 055673 053246 055555        054338 (alpha blending) 054539(x2) (sound) 053252(*) 053936 (optional on ROM board, roz+)
+System GX (ver 1)   GX300*1993   68020 056832 054156 055673 053246 055555        054338 (alpha blending) 054539(x2) (sound) 053252(*) 053936 (optional on ROM board, roz+)
+System GX (ver 2)   GX300*1995   68020 056832 058143 055673 058142 055555        058144 (alpha blending) 058141 (sound) 053252(*) 053936 (optional on ROM board, roz+)
+Beatmania DJ Main   GX858+1996   68020 056832 058143 056766        055555        058144 (alpha blending) 058141 (sound) 053252(*)
 Tail to Nose             *1989   68000          V-System                         051316 (roz)
 F-1 Grand Prix           *1991 2x68000          V-System                         053936 (roz+)
 F-1 Grand Prix Part II   *1992 2x68000          V-System                         053936 (roz+)
@@ -143,6 +145,16 @@ Notes:
   equivalent (maybe 052109 had bugs fixed). The list always shows 052109 because
   the two are exchangeable and 052109's are found also on original boards whose
   schematics show a 051961.
+
+- Starting with the version 2 System GX mainboard, the following chip substitutions took place.  
+  All "new" chips are equivalent to their older counterparts, but are in a smaller package (and
+  presumably are made on a smaller process).  The exception is the 058141, which is equivalent
+  to 2 54539s (and yet takes less board space than even 1).
+
+  058141 = 054539 (x2) (2 sound chips in one)
+  058142 = 053246 (sprites)
+  058143 = 054156 (tiles)
+  058144 = 054338 (alpha blending)
 
 
 
@@ -1305,7 +1317,7 @@ if (keyboard_pressed(KEYCODE_D))
 	else	/* all others */
 	{
 		//num = (K007121_ctrlram[chip][0x03] & 0x40) ? 0x80 : 0x40;	/* WRONG!!! (needed by combasc)  */
-		num = 0x40; //AT: Combasc writes 70 sprites to VRAM at peak but the chip only processes the first 64.
+		num = 0x40; //* Combasc writes 70 sprites to VRAM at peak but the chip only processes the first 64.
 
 		inc = 5;
 		offs[0] = 0x00;
@@ -2435,8 +2447,10 @@ int K051960_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 		Machine->gfx[gfx_index]->total_colors = Machine->drv->total_colors / 16;
 	}
 
-if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
-	usrintf_showmessage("driver should use VIDEO_HAS_SHADOWS");
+#if VERBOSE
+	if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
+		usrintf_showmessage("driver should use VIDEO_HAS_SHADOWS");
+#endif
 
 	/* prepare shadow draw table */
 	gfx_drawmode_table[0] = DRAWMODE_NONE;
@@ -2886,8 +2900,10 @@ int K053245_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 		Machine->gfx[gfx_index]->total_colors = Machine->drv->total_colors / 16;
 	}
 
-if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
-	usrintf_showmessage("driver should use VIDEO_HAS_SHADOWS");
+#if VERBOSE
+	if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
+		usrintf_showmessage("driver should use VIDEO_HAS_SHADOWS");
+#endif
 
 	/* prepare shadow draw table */
 	gfx_drawmode_table[0] = DRAWMODE_NONE;
@@ -3273,13 +3289,22 @@ if (keyboard_pressed(KEYCODE_D))
 /*                                                                         */
 /***************************************************************************/
 
-static int K053247_memory_region, K053247_dx, K053247_dy;
+static int K053247_memory_region, K053247_dx, K053247_dy, K053247_wraparound;
 static data8_t  K053246_regs[8];
 static data16_t K053247_regs[16];
-static data16_t *K053247_ram;
+static data16_t *K053247_ram=0;
 static struct GfxElement *K053247_gfx;
 static void (*K053247_callback)(int *code,int *color,int *priority);
 static int K053246_OBJCHA_line;
+
+void K053247_export_config(data16_t **ram, struct GfxElement **gfx, void **callback, int *dx, int *dy)
+{
+	*ram = K053247_ram;
+	*gfx = K053247_gfx;
+	*callback = (void*)K053247_callback;
+	*dx = K053247_dx;
+	*dy = K053247_dy;
+}
 
 int K053246_read_register(int regnum) { return(K053246_regs[regnum]); }
 int K053247_read_register(int regnum) { return(K053247_regs[regnum]); }
@@ -3290,13 +3315,9 @@ void K053247_set_SpriteOffset(int offsx, int offsy)
 	K053247_dy = offsy;
 }
 
-void K053247_export_config(data16_t **ram, struct GfxElement **gfx, void **callback, int *dx, int *dy)
+void K053247_wraparound_enable(int status)
 {
-	*ram = K053247_ram;
-	*gfx = K053247_gfx;
-	*callback = (void*)K053247_callback;
-	*dx = K053247_dx;
-	*dy = K053247_dy;
+	K053247_wraparound = status;
 }
 
 int K053247_vh_start(int gfx_memory_region, int dx, int dy, int plane0,int plane1,int plane2,int plane3,
@@ -3348,8 +3369,10 @@ int K053247_vh_start(int gfx_memory_region, int dx, int dy, int plane0,int plane
 		Machine->gfx[gfx_index]->total_colors = Machine->drv->total_colors / 16;
 	}
 
-if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
-	usrintf_showmessage("driver should use VIDEO_HAS_SHADOWS");
+#if VERBOSE
+	if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
+		usrintf_showmessage("driver should use VIDEO_HAS_SHADOWS");
+#endif
 
 	/* prepare shadow draw table */
 	gfx_drawmode_table[0] = DRAWMODE_NONE;
@@ -3359,6 +3382,7 @@ if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
 
 	K053247_dx = dx;
 	K053247_dy = dy;
+	K053247_wraparound = 1;
 	K053247_memory_region = gfx_memory_region;
 	K053247_gfx = Machine->gfx[gfx_index];
 	K053247_callback = callback;
@@ -3499,8 +3523,10 @@ int K055673_vh_start(int gfx_memory_region, int layout, int dx, int dy, void (*c
 		Machine->gfx[gfx_index]->total_colors = Machine->drv->total_colors / 16;
 	}
 
-//if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
-//	usrintf_showmessage("driver should use VIDEO_HAS_SHADOWS");
+#if VERBOSE
+	if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
+		usrintf_showmessage("driver should use VIDEO_HAS_SHADOWS");
+#endif
 
 	/* prepare shadow draw table */
 	c = Machine->gfx[gfx_index]->color_granularity-1;
@@ -3687,7 +3713,6 @@ READ_HANDLER( K053246_r )
 	{
 		int addr;
 
-
 		addr = (K053246_regs[6] << 17) | (K053246_regs[7] << 9) | (K053246_regs[4] << 1) | ((offset & 1) ^ 1);
 		addr &= memory_region_length(K053247_memory_region)-1;
 #if VERBOSE
@@ -3707,10 +3732,6 @@ logerror("%04x: read from unknown 053246 address %x\n",activecpu_get_pc(),offset
 WRITE_HANDLER( K053246_w )
 {
 	K053246_regs[offset] = data;
-#if VERBOSE
-	if (offset == 5 && (data & 0xc8))
-		usrintf_showmessage("053246 reg 05 = %02x",data);
-#endif
 }
 
 READ16_HANDLER( K053246_word_r )
@@ -3747,6 +3768,7 @@ void K053246_set_OBJCHA_line(int state)
 
 int K053246_is_IRQ_enabled(void)
 {
+	//AT: This bit enables obj DMA rather than obj IRQ even though the two functions usually coincide.
 	return K053246_regs[5] & 0x10;
 }
 
@@ -3761,7 +3783,7 @@ int K053246_is_IRQ_enabled(void)
  *   0  | --x------------- | flip y
  *   0  | ---x------------ | flip x
  *   0  | ----xxxx-------- | sprite size (see below)
- *   0  | --------xxxxxxxx | priority order
+ *   0  | --------xxxxxxxx | zcode
  *   1  | xxxxxxxxxxxxxxxx | sprite code
  *   2  | ------xxxxxxxxxx | y position
  *   3  | ------xxxxxxxxxx | x position
@@ -3769,11 +3791,13 @@ int K053246_is_IRQ_enabled(void)
  *   5  | xxxxxxxxxxxxxxxx | zoom x (0x40 = normal, <0x40 = enlarge, >0x40 = reduce)
  *   6  | x--------------- | mirror y (top half is drawn as mirror image of the bottom)
  *   6  | -x-------------- | mirror x (right half is drawn as mirror image of the left)
- *   6  | -----x---------- | shadow
- *   6  | xxxxxxxxxxxxxxxx | "color", but depends on external connections
- *   7  | ---------------- |
+ *   6  | --xx------------ | reserved (sprites with these two bits set don't seem to be graphics data at all)
+ *   6  | ----xx---------- | shadow code: 0=off, 0x400=preset1, 0x800=preset2, 0xc00=preset3
+ *   6  | ------xx-------- | effect code: flicker, upper palette, full shadow...etc. (game dependent)
+ *   6  | --------xxxxxxxx | "color", but depends on external connections (implies priority)
+ *   7  | xxxxxxxxxxxxxxxx | game dependent
  *
- * shadow enables transparent shadows. Note that it applies to pen 0x0f ONLY.
+ * shadow enables transparent shadows. Note that it applies to the last sprite pen ONLY.
  * The rest of the sprite remains normal.
  */
 
@@ -3785,49 +3809,32 @@ void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 
 	int flipscreenx = K053246_regs[5] & 0x01;
 	int flipscreeny = K053246_regs[5] & 0x02;
-	INT16 offx = (K053246_regs[0] << 8) | K053246_regs[1];
-	INT16 offy = (K053246_regs[2] << 8) | K053246_regs[3];
+	int offx = (short)((K053246_regs[0] << 8) | K053246_regs[1]);
+	int offy = (short)((K053246_regs[2] << 8) | K053246_regs[3]);
 
-	for (offs = 0;offs < NUM_SPRITES;offs++)
-		sortedlist[offs] = -1;
+	int ox,oy,color,code,size,w,h,x,y,xa,ya,flipx,flipy,mirrorx,mirrory,shadow,zoomx,zoomy,pri;
+	int nozoom, solidpens, temp;
 
-#if 0
-	{
-		static int count=0;
-		if(++count == 5) {
-			int show = 0;
-			count = 0;
-			if (keyboard_pressed(KEYCODE_I)) {
-				K053247_dy--;
-				show = 1;
-			} else if (keyboard_pressed(KEYCODE_M)) {
-				K053247_dy++;
-				show = 1;
-			}
-			if (keyboard_pressed(KEYCODE_J)) {
-				K053247_dx--;
-				show = 1;
-			} else if (keyboard_pressed(KEYCODE_K)) {
-				K053247_dx++;
-				show = 1;
-			}
-			if (keyboard_pressed(KEYCODE_O))
-				show = 1;
-			if(show)
-				usrintf_showmessage("dx %d dy %d", K053247_dx, K053247_dy);
-		}
-	}
-#endif
-	/* prebuild a sorted table */
+	solidpens = K053247_gfx->color_granularity - 1;
+
+	/*
+		AT: This is not the correct sort method. Multiple objects can share the same Z and
+		priority value and should still be drawn and prioritized by their memory locations.
+		Fortunately it does little harm to the older games as long as they behave and add
+		the sprites in order.
+	*/
+	// Prebuild a sorted table
+	for (offs = 0;offs < NUM_SPRITES;offs++) sortedlist[offs] = -1;
 	for (offs = 0;offs < 0x800;offs += 8)
 	{
-//		if (K053247_ram[offs] & 0x8000)
-		sortedlist[K053247_ram[offs] & 0x00ff] = offs;
+		if (K053247_ram[offs] & 0x8000)
+		{
+			sortedlist[K053247_ram[offs] & 0x00ff] = offs;
+		}
 	}
 
 	for (pri_code = 0;pri_code < NUM_SPRITES;pri_code++)
 	{
-		int ox,oy,color,code,size,w,h,x,y,xa,ya,flipx,flipy,mirrorx,mirrory,shadow,zoomx,zoomy,pri;
 		/* sprites can be grouped up to 8x8. The draw order is
 			 0  1  4  5 16 17 20 21
 			 2  3  6  7 18 19 22 23
@@ -3845,16 +3852,15 @@ void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 		offs = sortedlist[pri_code];
 		if (offs == -1) continue;
 
-		if ((K053247_ram[offs] & 0x8000) == 0) continue;
-
 		code = K053247_ram[offs+1];
-		color = K053247_ram[offs+6];
+		shadow = color = K053247_ram[offs+6];
 		pri = 0;
 
 		(*K053247_callback)(&code,&color,&pri);
 
-		size = (K053247_ram[offs] & 0x0f00) >> 8;
+		temp = K053247_ram[offs];
 
+		size = (temp & 0x0f00) >> 8;
 		w = 1 << (size & 0x03);
 		h = 1 << ((size >> 2) & 0x03);
 
@@ -3870,37 +3876,67 @@ void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 		if (code & 0x20) ya += 4;
 		code &= ~0x3f;
 
+		oy = (short)K053247_ram[offs+2];
+		ox = (short)K053247_ram[offs+3];
+
+		if (K053247_wraparound)
+		{
+			offx &= 0x3ff;
+			offy &= 0x3ff;
+			oy &= 0x3ff;
+			ox &= 0x3ff;
+		}
 
 		/* zoom control:
 		   0x40 = normal scale
 		  <0x40 enlarge (0x20 = double size)
 		  >0x40 reduce (0x80 = half size)
 		*/
-		zoomy = K053247_ram[offs+4];
-		if (zoomy > 0x2000) continue;
-		if (zoomy) zoomy = (0x400000+zoomy/2) / zoomy;
-		else zoomy = 2 * 0x400000;
-		if ((K053247_ram[offs] & 0x4000) == 0)
+		y = zoomy = K053247_ram[offs+4] & 0x3ff;
+		if (zoomy) zoomy = (0x400000+(zoomy>>1)) / zoomy; else zoomy = 0x800000;
+		if (!(temp & 0x4000))
 		{
-			zoomx = K053247_ram[offs+5];
-			if (zoomx > 0x2000) continue;
-			if (zoomx) zoomx = (0x400000+zoomx/2) / zoomx;
-			else zoomx = 2 * 0x400000;
+			x = zoomx = K053247_ram[offs+5] & 0x3ff;
+			if (zoomx) zoomx = (0x400000+(zoomx>>1)) / zoomx;
+			else zoomx = 0x800000;
 		}
-		else zoomx = zoomy;
+		else { zoomx = zoomy; x = y; }
 
-		ox = K053247_ram[offs+3];
-		oy = K053247_ram[offs+2];
+		nozoom = (x == 0x40 && y == 0x40);
 
-		flipx = K053247_ram[offs] & 0x1000;
-		flipy = K053247_ram[offs] & 0x2000;
-		mirrorx = K053247_ram[offs+6] & 0x4000;
-		mirrory = K053247_ram[offs+6] & 0x8000;
-		shadow = K053247_ram[offs+6] & 0x0400;
+		flipx = temp & 0x1000;
+		flipy = temp & 0x2000;
+		mirrorx = shadow & 0x4000;
+		if (mirrorx) flipx = 0; // only applies to x mirror, proven
+		mirrory = shadow & 0x8000;
 
-		/* do not try to draw shadows if no VIDEO_HAS_SHADOWS */
-		/* This is because HAS_SHADOWS doesn't work in RGB_DIRECT mode */
-		if ((shadow) && (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))) continue;
+		if (color >= 0)
+		{
+			if (shadow &= 0x0c00)
+			{
+				if (1)//(shadow != 0x400 || K053246_read_register(5) & 0x20)
+				{
+					palette_set_shadow_mode((shadow>>10) - 1);
+				}
+				else
+				{
+					// drop the entire sprite to shadow if its shadow code is 1 and SD0EN is off (see p.48)
+					// true for Xexex/MW/GX but not sure about the older games
+					shadow = -1;
+					for (temp=1; temp<solidpens; temp++) gfx_drawmode_table[temp] = DRAWMODE_SHADOW;
+					palette_set_shadow_mode(0);
+				}
+			}
+		}
+		else if (color == -1)
+		{
+			// draw full shadow unconditionally
+			color = 0;
+			shadow = -1;
+			for (temp=1; temp<solidpens; temp++) gfx_drawmode_table[temp] = DRAWMODE_SHADOW;
+			palette_set_shadow_mode(3);
+		}
+
 
 // ************************************************************************************
 //  for Escape Kids (GX975)
@@ -3913,13 +3949,12 @@ void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 // ************************************************************************************
 		if ( K053246_regs[5] & 0x08 ) // Check only "Bit #3 is '1'?"
 		{
-			zoomx = zoomx / 2;	// Fix sprite width to HALF size
-			ox = ox / 2 + 1;	// Fix sprite draw position
+			zoomx = zoomx >> 1;	// Fix sprite width to HALF size
+			ox = (ox >> 1) + 1;	// Fix sprite draw position
 
 			if (flipscreenx)
 				ox = ox + Machine->drv->screen_width;
 		}
-
 
 
 		if (flipscreenx)
@@ -3933,17 +3968,23 @@ void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 			if (!mirrory) flipy = !flipy;
 		}
 
-#if 0	// fixes overdriv, but breaks everything else
-		ox = (K053247_dx + ox - offx) & 0xfff;
-		if (ox >= 0x800) ox -= 0x1000;
-		oy = (-(K053247_dy + oy + offy)) & 0xfff;
-		if (oy >= 0x800) oy -= 0x1000;
-#else
-		ox = (K053247_dx + ox - offx) & 0x3ff;
-		if (ox >= 0x300) ox -= 0x400;
-		oy = (-(K053247_dy + oy + offy)) & 0x3ff;
-		if (oy >= 0x280) oy -= 0x400;
-#endif
+		// apply wrapping and global offsets
+		if (K053247_wraparound)
+		{
+			ox = ( ox - offx) & 0x3ff;
+			oy = (-oy - offy) & 0x3ff;
+			if (ox >= 0x300) ox -= 0x400;
+			if (oy >= 0x280) oy -= 0x400;
+		}
+		else
+		{
+			ox =  ox - offx;
+			oy = -oy - offy;
+		}
+		ox += K053247_dx;
+		oy -= K053247_dy;
+
+		// apply global and display window offsets
 
 		/* the coordinates given are for the *center* of the sprite */
 		ox -= (zoomx * w) >> 13;
@@ -3965,7 +4006,7 @@ void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 				c = code;
 				if (mirrorx)
 				{
-					if ((flipx == 0) ^ (2*x < w))
+					if ((flipx == 0) ^ ((x<<1) < w))
 					{
 						/* mirror left/right */
 						c += xoffset[(w-1-x+xa)&7];
@@ -3985,7 +4026,7 @@ void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 				}
 				if (mirrory)
 				{
-					if ((flipy == 0) ^ (2*y >= h))
+					if ((flipy == 0) ^ ((y<<1) >= h))
 					{
 						/* mirror top/bottom */
 						c += yoffset[(h-1-y+ya)&7];
@@ -4004,7 +4045,7 @@ void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 					fy = flipy;
 				}
 
-				if (zoomx == 0x10000 && zoomy == 0x10000)
+				if (nozoom)
 				{
 					pdrawgfx(bitmap,K053247_gfx,
 							c,
@@ -4021,12 +4062,12 @@ void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 							fx,fy,
 							sx,sy,
 							cliprect,shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,0,
-							(zw << 16) / 16,(zh << 16) / 16,pri);
+							(zw << 16) >> 4,(zh << 16) >> 4,pri);
 				}
 
 				if (mirrory && h == 1)  /* Simpsons shadows */
 				{
-					if (zoomx == 0x10000 && zoomy == 0x10000)
+					if (nozoom)
 					{
 						pdrawgfx(bitmap,K053247_gfx,
 								c,
@@ -4043,25 +4084,16 @@ void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 								fx,!fy,
 								sx,sy,
 								cliprect,shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,0,
-								(zw << 16) / 16,(zh << 16) / 16,pri);
+								(zw << 16) >> 4,(zh << 16) >> 4,pri);
 					}
 				}
-			}
-		}
-	}
-#if 0
-if (keyboard_pressed(KEYCODE_D))
-{
-	FILE *fp;
-	fp=fopen("SPRITE.DMP", "w+b");
-	if (fp)
-	{
-		fwrite(K053247_ram, 0x1000, 1, fp);
-		usrintf_showmessage("saved");
-		fclose(fp);
-	}
-}
-#endif
+			} // end of X loop
+		} // end of Y loop
+
+		// reset drawmode_table
+		if (shadow == -1) for (temp=1; temp<solidpens; temp++) gfx_drawmode_table[temp] = DRAWMODE_SOURCE;
+
+	} // end of sprite-list loop
 #undef NUM_SPRITES
 }
 
@@ -4683,12 +4715,6 @@ int K053251_get_palette_index(int ci)
 
 static unsigned char K054000_ram[0x20];
 
-#if 0
-static WRITE_HANDLER( collision_w )
-{
-}
-#endif
-
 WRITE_HANDLER( K054000_w )
 {
 //logerror("%04x: write %02x to 054000 address %02x\n",activecpu_get_pc(),data,offset);
@@ -5212,6 +5238,17 @@ READ16_HANDLER( K054157_rom_word_r )
 	return K054157_rombase[addr+1] | (K054157_rombase[addr] << 8);
 }
 
+READ16_HANDLER( K054157_rom_word_8000_r )
+{
+	int addr = 0x8000*K054157_cur_rombank + 2*offset;
+
+//	usrintf_showmessage("%04x: addr %06x",activecpu_get_pc(),addr);
+
+//	printf("rd @ %x (bank %x, final %x)\n", offset*2, K054157_cur_rombank, addr);
+
+	return K054157_rombase[addr+1] | (K054157_rombase[addr] << 8);
+}
+
 WRITE16_HANDLER( K054157_ram_word_w )
 {
 	data16_t *adr = K054157_cur_rambase + offset;
@@ -5360,7 +5397,7 @@ static int K056832_SelectedPagex4096;
 static int K056832_UpdateMode;
 
 static data16_t K056832_regs[0x20];
-static data16_t K056832_regsb[4]; /* 832 ports? */
+static data16_t K056832_regsb[4]; /* extra 157/832 ports, board dependent */
 
 static int K056832_NumGfxBanks; /* depends on size of graphics ROMs */
 static int K056832_CurGfxBank;  /* cached info for K056832_regs[0x1a] */
@@ -5697,8 +5734,6 @@ int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][
 	for(i=0; i<16; i++)
 	{
 		tilemap_set_transparent_pen(K056832_tilemap[i],0);
-//		tilemap_set_scrolldx(K056832_tilemap[i], -scrolld[0][i][0], -scrolld[1][i][0]);
-//		tilemap_set_scrolldy(K056832_tilemap[i], -scrolld[0][i][1], -scrolld[1][i][1]);
 	}
 
 	K056832_UpdatePageLayout();
@@ -6103,7 +6138,7 @@ void K056832_tilemap_draw(struct mame_bitmap *bitmap, const struct rectangle *cl
 	cminy = cliprect->min_y;
 	cmaxy = cliprect->max_y;
 
-	/* flip correction registers */
+	// flip correction registers
 	if ((flipy = K056832_regs[0] & 0x20))
 	{
 		corr = K056832_regs[0x3c/2];
@@ -6129,19 +6164,19 @@ void K056832_tilemap_draw(struct mame_bitmap *bitmap, const struct rectangle *cl
 
 	switch( scrollmode )
 	{
-		case 0: /* linescroll */
+		case 0: // linescroll
 			pScrollData = &K056832_videoram[scrollbank<<12] + (K056832_LSRAMPage[layer][1]>>1);
 			line_height = 1;
 			sdat_wrapmask = 0x3ff;
 			sdat_adv = 2;
 		break;
-		case 2: /* rowscroll */
+		case 2: // rowscroll
 			pScrollData = &K056832_videoram[scrollbank<<12] + (K056832_LSRAMPage[layer][1]>>1);
 			line_height = 8;
 			sdat_wrapmask = 0x3ff;
 			sdat_adv = 16;
 		break;
-		default: /* xyscroll */
+		default: // xyscroll
 			pScrollData = ram16;
 			line_height = K056832_PAGE_HEIGHT;
 			sdat_wrapmask = 0;
@@ -6220,8 +6255,9 @@ void K056832_tilemap_draw(struct mame_bitmap *bitmap, const struct rectangle *cl
 		if (!flipy)
 			sdat_start = dy;
 		else
-			//* doesn't work well with Metamorphic Force and Martial Champion though it looks more correct
-			// sdat_start = K056832_PAGE_HEIGHT-1 - dy;
+			// AT: doesn't work with Y-flipped games, eg. Metamorphic Force and Martial Champion,
+			// although it looks more correct having -dy.
+//			sdat_start = K056832_PAGE_HEIGHT-1 -dy;
 			sdat_start = K056832_PAGE_HEIGHT-1;
 
 		if (scrollmode == 2) { sdat_start &= ~7; line_starty -= dy & 7; }
@@ -6373,7 +6409,7 @@ void K056832_set_tile_bank(int bank)
 /* K055555 5-bit-per-pixel priority encoder */
 /* This device has 48 8-bit-wide registers */
 
-static data8_t k55555_regs[64];
+static data8_t k55555_regs[128];
 
 void K055555_vh_start(void)
 {
@@ -6461,12 +6497,22 @@ int K055555_get_palette_index(int idx)
 /***************************************************************************/
 
 static data16_t k54338_regs[32];
+static int K054338_shdRGB[9];
+static int K054338_alphainverted;
+
+void K054338_export_config(int **shdRGB)
+{
+	*shdRGB = K054338_shdRGB;
+}
 
 // K054338 alpha blend / final mixer (normally used with the 55555)
 // because the implementation is vidhrdw dependant, this is just a
 // register-handling shell.
 int K054338_vh_start(void)
 {
+	memset(K054338_shdRGB, 0, sizeof(int)*9);
+	K054338_alphainverted = 0;
+
 	state_save_register_UINT16("K054338", 0, "registers", k54338_regs, 32);
 
 	return 0;
@@ -6510,6 +6556,149 @@ void K054338_fill_solid_bg(struct mame_bitmap *bitmap)
 	}
 }
 
+// Unified K054338/K055555 BG color fill
+void K054338_fill_backcolor(struct mame_bitmap *bitmap, int mode) // (see p.67)
+{
+	int clipx, clipy, clipw, cliph, i, dst_pitch;
+	int BGC_CBLK, BGC_SET;
+	UINT32 *dst_ptr, *pal_ptr;
+	register int bgcolor;
+
+	clipx = Machine->visible_area.min_x & ~3;
+	clipy = Machine->visible_area.min_y;
+	clipw = (Machine->visible_area.max_x - clipx + 4) & ~3;
+	cliph = Machine->visible_area.max_y - clipy + 1;
+
+	dst_ptr = (UINT32 *)bitmap->line[clipy];
+	dst_pitch = bitmap->rowpixels;
+	dst_ptr += clipx;
+
+	BGC_SET = 0;
+	pal_ptr = paletteram32;
+
+	if (!mode)
+	{
+		// single color output from CLTC
+		bgcolor = (int)(k54338_regs[K338_REG_BGC_R]&0xff)<<16 | (int)k54338_regs[K338_REG_BGC_GB];
+	}
+	else
+	{
+		BGC_CBLK = K055555_read_register(0);
+		BGC_SET  = K055555_read_register(1);
+		pal_ptr += BGC_CBLK << 9;
+
+		// single color output from PCU2
+		if (!(BGC_SET & 2)) { bgcolor = *pal_ptr; mode = 0; } else bgcolor = 0;
+	}
+
+	if (!mode)
+	{
+		// single color fill
+		dst_ptr += clipw;
+		i = clipw = -clipw;
+		do
+		{
+			do { dst_ptr[i] = dst_ptr[i+1] = dst_ptr[i+2] = dst_ptr[i+3] = bgcolor; } while (i += 4);
+			dst_ptr += dst_pitch;
+			i = clipw;
+		}
+		while (--cliph);
+	}
+	else
+	{
+		if (!(BGC_SET & 1))
+		{
+			// vertical gradient fill
+			pal_ptr += clipy;
+			dst_ptr += clipw;
+			bgcolor = *pal_ptr++;
+			i = clipw = -clipw;
+			do
+			{
+				do { dst_ptr[i] = dst_ptr[i+1] = dst_ptr[i+2] = dst_ptr[i+3] = bgcolor; } while (i += 4);
+				dst_ptr += dst_pitch;
+				bgcolor = *pal_ptr++;
+				i = clipw;
+			}
+			while (--cliph);
+		}
+		else
+		{
+			// horizontal gradient fill
+			pal_ptr += clipx;
+			clipw <<= 2;
+			do
+			{
+				memcpy(dst_ptr, pal_ptr, clipw);
+				dst_ptr += dst_pitch;
+			}
+			while (--cliph);
+		}
+	}
+}
+
+void K054338_update_all_shadows(void)
+{
+	int i, d;
+	int noclip = k54338_regs[K338_REG_CONTROL] & K338_CTL_CLIPSL;
+
+	for (i=0; i<9; i++)
+	{
+		d = k54338_regs[K338_REG_SHAD1R+i] & 0x1ff;
+		if (d >= 0x100) d -= 0x200;
+		K054338_shdRGB[i] = d;
+	}
+
+	palette_set_shadow_dRGB32(0, K054338_shdRGB[0], K054338_shdRGB[1], K054338_shdRGB[2], noclip);
+	palette_set_shadow_dRGB32(1, K054338_shdRGB[3], K054338_shdRGB[4], K054338_shdRGB[5], noclip);
+	palette_set_shadow_dRGB32(2, K054338_shdRGB[6], K054338_shdRGB[7], K054338_shdRGB[8], noclip);
+}
+
+// addition blending unimplemented (requires major changes to drawgfx and tilemap.c)
+int K054338_set_alpha_level(int pblend)
+{
+	int mixset, mixlv, mixpri;
+
+	if (pblend <= 0 || pblend > 3) return(255);
+
+	mixset = k54338_regs[K338_REG_PBLEND + (pblend>>1 & 1)] >> (~pblend<<3 & 8);
+	mixlv  = mixset & 0x1f;
+	if (K054338_alphainverted) mixlv = 0x1f - mixlv;
+	mixlv = mixlv<<3 | mixlv>>2;
+
+	if (!(mixset & 0x20))
+	{
+		alpha_set_level(mixlv); // source x alpha + target x (255-alpha)
+    }
+	else
+	{
+		mixpri = k54338_regs[K338_REG_CONTROL] & K338_CTL_MIXPRI;
+
+		if (!mixpri)
+		{
+			// source x alpha + target (clipped at 0xff)
+		}
+		else
+		{
+			// source + target x alpha (clipped at 0xff)
+		}
+
+		//* DUMMY
+		if (mixlv && mixlv<0xff) mixlv = 0x7f; alpha_set_level(mixlv);
+
+		#if VERBOSE
+			usrintf_showmessage("MIXSET%1d %s addition mode: %02x",pblend,(mixpri)?"dst":"src",mixset&0x1f);
+		#endif
+	}
+
+	return(mixlv);
+}
+
+void K054338_invert_alpha(int invert)
+{
+	K054338_alphainverted = invert;
+}
+
 
 
 /***************************************************************************/
@@ -6518,44 +6707,103 @@ void K054338_fill_solid_bg(struct mame_bitmap *bitmap)
 /*                                                                         */
 /***************************************************************************/
 
-static struct {
+static struct
+{
 	int chips;
-	struct {
+	struct K053250_CHIPTAG
+	{
 		data8_t regs[8];
-		unsigned char *base;
+		data8_t *base;
 		data16_t *ram, *rammax;
+		data16_t *buffer[2];
 		UINT32 rommask;
+		int page[2];
+		int frame, offsx, offsy;
 	} chip[2];
 } K053250_info;
 
+void K053250_set_LayerOffset(int chip, int offsx, int offsy)
+{
+	K053250_info.chip[chip].offsx = offsx;
+	K053250_info.chip[chip].offsy = offsy;
+}
+
+// The DMA process should be instantaneous but since rendering in MAME is performed at VIDEO_UPDATE()
+// the K053250 memory must be buffered to maintain visual integrity.
+void K053250_dma(int chip, int limiter)
+{
+	struct K053250_CHIPTAG *chip_ptr;
+	int last_frame, current_frame;
+
+	chip_ptr = &K053250_info.chip[chip];
+
+	current_frame = cpu_getcurrentframe();
+	last_frame = chip_ptr->frame;
+
+	if (limiter && current_frame == last_frame) return; // make sure we only do DMA transfer once per frame
+
+	chip_ptr->frame = current_frame;
+	memcpy(chip_ptr->buffer[chip_ptr->page[chip]], chip_ptr->ram, 0x1000);
+	chip_ptr->page[chip] ^= 1;
+}
+
+// Pixel data of the K053250 is nibble packed. It's preferable to be unpacked into byte format.
+void K053250_unpack_pixels(int region)
+{
+	UINT8 *src_ptr, *dst_ptr;
+	int hi_nibble, lo_nibble, offset;
+
+	dst_ptr = src_ptr = memory_region(region);
+	offset = memory_region_length(region) / 2 - 1;
+
+	do
+	{
+		lo_nibble = hi_nibble = src_ptr[offset];
+		hi_nibble >>= 4;
+		lo_nibble &= 0xf;
+		dst_ptr[offset*2  ] = hi_nibble;
+		dst_ptr[offset*2+1] = lo_nibble;
+	}
+	while ((--offset) >= 0);
+}
+
 int K053250_vh_start(int chips, int *region)
 {
+	data16_t *ram;
 	int chip;
+
 	K053250_info.chips = chips;
-	for(chip=0; chip < K053250_info.chips; chip++)
+
+	for(chip=0; chip<chips; chip++)
 	{
 		K053250_info.chip[chip].base = memory_region(region[chip]);
-		K053250_info.chip[chip].ram = auto_malloc(0x4000);
-		K053250_info.chip[chip].rammax = K053250_info.chip[chip].ram + 0x800;
+		if (!(ram = auto_malloc(0x6000))) return 1;
+		K053250_info.chip[chip].ram = ram;
+		K053250_info.chip[chip].rammax = ram + 0x800;
+		K053250_info.chip[chip].buffer[0] = ram + 0x2000;
+		K053250_info.chip[chip].buffer[1] = ram + 0x2800;
+		memset(ram+0x2000, 0, 0x2000);
 		K053250_info.chip[chip].rommask = memory_region_length(region[chip]);
+		K053250_info.chip[chip].page[1] = K053250_info.chip[chip].page[0] = 0;
+		K053250_info.chip[chip].offsy = K053250_info.chip[chip].offsx = 0;
+		K053250_info.chip[chip].frame = -1;
 
-		if (!K053250_info.chip[chip].ram)
-		{
-			int i;
-			for(i=0; i<chip; i++)
-				free(K053250_info.chip[i].ram);
-			return 1;
-		}
 		state_save_register_UINT16("K053250", chip, "memory",    K053250_info.chip[chip].ram,  0x800);
 		state_save_register_UINT8 ("K053250", chip, "registers", K053250_info.chip[chip].regs, 8);
 	}
+
 	return 0;
 }
 
 WRITE16_HANDLER( K053250_0_w )
 {
-	if(ACCESSING_LSB)
+	if (ACCESSING_LSB)
+	{
+		// start LVC DMA transfer at the falling edge of control register's bit1
+		if (offset == 4 && !(data & 2) && (K053250_info.chip[0].regs[4] & 2)) K053250_dma(0, 1);
+
 		K053250_info.chip[0].regs[offset] = data;
+	}
 }
 
 READ16_HANDLER( K053250_0_r )
@@ -6582,8 +6830,13 @@ READ16_HANDLER( K053250_0_rom_r )
 
 WRITE16_HANDLER( K053250_1_w )
 {
-	if(ACCESSING_LSB)
+	if (ACCESSING_LSB)
+	{
+		// start LVC DMA transfer at the falling edge of control register's bit1
+		if (offset == 4 && !(data & 2) && (K053250_info.chip[1].regs[4] & 2)) K053250_dma(1, 1);
+
 		K053250_info.chip[1].regs[offset] = data;
+	}
 }
 
 READ16_HANDLER( K053250_1_r )
@@ -6608,13 +6861,9 @@ READ16_HANDLER( K053250_1_rom_r )
 	return *(K053250_info.chip[1].base + 0x80000*K053250_info.chip[1].regs[6] + 0x800*K053250_info.chip[1].regs[7] + (offset>>1));
 }
 
-static int kc = -1;
-static int kk = 0;
-static int pmode[2] = {-1,-1};
+#if 0
 
-static int kxx = -105;
-static int kyy = 0;
-
+//* old code (for reference only)
 #define ADJUST_FOR_ORIENTATION(type, orientation, bitmapi, bitmapp, x, y)	\
 	int dy = ((type *)bitmap->line[1]) - ((type *)bitmap->line[0]);			\
 	int dyp = ((UINT8 *)bitmapp->line[1]) - ((UINT8 *)bitmapp->line[0]);	\
@@ -6820,15 +7069,18 @@ static void K053250_pdraw_scanline8(
 
 void K053250_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int chip, int colorbase, int pri)
 {
+	static int pmode[2] = {-1,-1};
+	static int kc=-1, kk=0, kxx=-105, kyy=0;
+
 	const struct rectangle area = Machine->visible_area;
 	data16_t *line;
 	int delta, dim1, dim1_max, dim2_max;
 	UINT32 mask1, mask2;
 	int sp;
 #if 1
-	int orientation = (K053250_info.chip[chip].regs[4] & 8 ? ORIENTATION_FLIP_X : 0)
-		| (K053250_info.chip[chip].regs[4] & 16 ? ORIENTATION_FLIP_Y : 0)
-		| (!!(K053250_info.chip[chip].regs[4] & 1) ? 0 : ORIENTATION_SWAP_XY);
+	int orientation = ((K053250_info.chip[chip].regs[4] &  8) ? ORIENTATION_FLIP_X : 0)
+		| ((K053250_info.chip[chip].regs[4] & 16) ? ORIENTATION_FLIP_Y : 0)
+		| ((K053250_info.chip[chip].regs[4] &  1) ? 0 : ORIENTATION_SWAP_XY);
 #else
 	int orientation = (!K053250_info.chip[chip].regs[4] & 8 ? ORIENTATION_FLIP_X : 0)
 		| (K053250_info.chip[chip].regs[4] & 16 ? ORIENTATION_FLIP_Y : 0)
@@ -7014,6 +7266,390 @@ void K053250_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, 
 	}
 }
 
+#else
+
+// utility function to render a clipped scanline vertically or horizontally
+INLINE void K053250_pdraw_scanline32(struct mame_bitmap *bitmap, pen_t *palette, UINT8 *source,
+		const struct rectangle *cliprect, int linepos, int scroll, int zoom,
+		UINT32 clipmask, UINT32 wrapmask, UINT32 orientation, int priority)
+{
+// a sixteen-bit fixed point resolution should be adequate to our application
+#define FIXPOINT_PRECISION		16
+#define FIXPOINT_PRECISION_HALF	(1<<(FIXPOINT_PRECISION-1))
+
+	int end_pixel, flip, dst_min, dst_max, dst_start, dst_length;
+
+	UINT32 src_wrapmask;
+	UINT8  *src_base;
+	int pix_data, dst_offset;
+	pen_t  *pal_base;
+	UINT8  *pri_base;
+	UINT32 *dst_base;
+	int src_fx, src_fdx;
+	int dst_adv;
+	UINT8 pri;
+
+	// flip X and flip Y also switch role when the X Y coordinates are swapped
+	if (!(orientation & ORIENTATION_SWAP_XY))
+	{
+		flip = orientation & ORIENTATION_FLIP_X;
+		dst_min = cliprect->min_x;
+		dst_max = cliprect->max_x;
+	}
+	else
+	{
+		flip = orientation & ORIENTATION_FLIP_Y;
+		dst_min = cliprect->min_y;
+		dst_max = cliprect->max_y;
+	}
+
+	if (clipmask)
+	{
+		// reject scanlines that are outside of the target bitmap's right(bottom) clip boundary
+		dst_start = -scroll;
+		if (dst_start > dst_max) return;
+
+		// calculate target length
+		dst_length = clipmask + 1;
+		if (zoom) dst_length = (dst_length << 6) / zoom;
+
+		// reject scanlines that are outside of the target bitmap's left(top) clip boundary
+		end_pixel = dst_start + dst_length - 1;
+		if (end_pixel < dst_min) return;
+
+		// clip scanline tail
+		if ((end_pixel -= dst_max) > 0) dst_length -= end_pixel;
+
+		// reject zero-length scanlines
+		if (dst_length <= 0) return;
+
+		// calculate zoom factor
+		src_fdx = zoom << (FIXPOINT_PRECISION-6);
+
+		// clip scanline head
+		end_pixel = dst_min;
+		if ((end_pixel -= dst_start) > 0)
+		{
+			// chop scanline to the correct length and move target start location to the left(top) clip boundary
+			dst_length -= end_pixel;
+			dst_start = dst_min;
+
+			// and skip the source for the left(top) clip region
+			src_fx = end_pixel * src_fdx + FIXPOINT_PRECISION_HALF;
+		}
+		else
+			// the point five bias is to ensure even distribution of stretched or shrinked pixels
+			src_fx = FIXPOINT_PRECISION_HALF;
+
+		// adjust flipped source
+		if (flip)
+		{
+			// start from the target's clipped end if the scanline is flipped
+			dst_start = dst_max + dst_min - dst_start - (dst_length-1);
+
+			// and move source start location to the opposite end
+			src_fx += (dst_length-1) * src_fdx - 1;
+			src_fdx = -src_fdx;
+		}
+	}
+	else
+	{
+		// draw wrapped scanline at virtual bitmap boundary when source clipping is off
+		dst_start = dst_min;
+		dst_length = dst_max - dst_min + 1;	// target scanline spans the entire visible area
+		src_fdx = zoom << (FIXPOINT_PRECISION-6);
+
+		// pre-advance source for the clipped region
+		if (!flip)
+			src_fx = (scroll + dst_min) * src_fdx + FIXPOINT_PRECISION_HALF;
+		else
+		{
+			src_fx = (scroll + dst_max) * src_fdx + FIXPOINT_PRECISION_HALF-1;
+			src_fdx = -src_fdx;
+		}
+	}
+
+	if (!(orientation & ORIENTATION_SWAP_XY))
+	{
+		// calculate target increment for horizontal scanlines which is exactly one
+		dst_adv = 1;
+		dst_offset = dst_length;
+		pri_base = (UINT8 *)priority_bitmap->line[linepos] + dst_start + dst_offset;
+		dst_base = (UINT32 *)bitmap->line[linepos] + dst_start + dst_length;
+	}
+	else
+	{
+		// calculate target increment for vertical scanlines which is the bitmap's pitch value
+		dst_adv = bitmap->rowpixels;
+		dst_offset= dst_length * dst_adv;
+		pri_base = (UINT8 *)priority_bitmap->line[dst_start] + linepos + dst_offset;
+		dst_base = (UINT32 *)bitmap->line[dst_start] + linepos + dst_offset;
+	}
+
+	src_base = source;
+
+	// there is no need to wrap source offsets along with source clipping
+	// so we set all bits of the clipmask to one
+	src_wrapmask = (clipmask) ? ~0 : wrapmask;
+
+	pal_base = palette;
+	pri = (UINT8)priority;
+	dst_offset = -dst_offset; // negate target offset in order to terminated draw loop at zero condition
+
+	if (pri)
+	{
+		// draw scanline and update priority bitmap
+		do
+		{
+			pix_data = src_base[(src_fx>>FIXPOINT_PRECISION) & src_wrapmask];
+			src_fx += src_fdx;
+
+			if (pix_data)
+			{
+				pix_data = pal_base[pix_data];
+				pri_base[dst_offset] = pri;
+				dst_base[dst_offset] = pix_data;
+			}
+		}
+		while (dst_offset += dst_adv);
+	}
+	else
+	{
+		// draw scanline but do not update priority bitmap
+		do
+		{
+			pix_data = src_base[(src_fx>>FIXPOINT_PRECISION) & src_wrapmask];
+			src_fx += src_fdx;
+
+			if (pix_data)
+			{
+				dst_base[dst_offset] = pal_base[pix_data];
+			}
+		}
+		while (dst_offset += dst_adv);
+	}
+
+#undef FIXPOINT_PRECISION
+#undef FIXPOINT_PRECISION_HALF
+}
+
+void K053250_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int chip, int colorbase, int flags, int priority)
+{
+	struct K053250_CHIPTAG *chip_ptr;
+	data16_t *line_ram;
+	data8_t *pix_base, *pix_ptr, *regs;
+	pen_t *pal_base, *pal_ptr;
+	UINT32 rommask, src_clipmask, src_wrapmask, dst_wrapmask;
+	int map_scrollx, map_scrolly, ctrl, orientation;
+	int dst_minx, dst_maxx, dst_miny, dst_maxy;
+	int linedata_offs, linedata_adv, line_pos, line_start, line_end, scroll_corr;
+	int color, offset, zoom, scroll, passes, i, dst_height;
+
+	chip_ptr = &K053250_info.chip[chip];				// pointer to chip parameters
+	line_ram = chip_ptr->buffer[chip_ptr->page[chip]];	// pointer to physical line RAM
+	pix_base = chip_ptr->base;							// pointer to source pixel ROM
+	rommask  = chip_ptr->rommask;						// source ROM limit
+	regs     = chip_ptr->regs;							// pointer to registers group
+
+	map_scrollx = (short)(regs[0]<<8 | regs[1]);		// signed horizontal scroll value
+	map_scrolly = (short)(regs[2]<<8 | regs[3]);		// signed vertical scroll value
+	map_scrollx -= chip_ptr->offsx;						// add user X offset to horizontal scroll
+	map_scrolly -= chip_ptr->offsy;						// add user Y offset to vertical scroll
+	ctrl = regs[4];										// register four is the main control register
+
+	// copy visible boundary values to more accessible locations
+	dst_minx  = cliprect->min_x;
+	dst_maxx  = cliprect->max_x;
+	dst_miny  = cliprect->min_y;
+	dst_maxy  = cliprect->max_y;
+
+	orientation  = 0;	// orientation defaults to no swapping and no flipping
+	dst_height   = 512;	// virtual bitmap height defaults to five hundred and twelve pixels
+	linedata_adv = 4;	// line info packets are four words(eight bytes) apart
+
+	{
+		// switch X and Y parameters when the first bit of the control register is cleared
+		if (!(ctrl & 0x01)) orientation |= ORIENTATION_SWAP_XY;
+
+		// invert X parameters when the forth bit of the control register is set
+		if   (ctrl & 0x08)  orientation |= ORIENTATION_FLIP_X;
+
+		// invert Y parameters when the fifth bit of the control register is set
+		if   (ctrl & 0x10)  orientation |= ORIENTATION_FLIP_Y;
+
+		switch (ctrl>>5) // the upper four bits of the control register select source and target dimensions
+		{
+			case 0 :
+				// Xexex: L6 galaxies
+				// Metam: L4 forest, L5 arena, L6 tower interior, final boss
+
+				// crop source offset between zero and two hundred and fifty-five inclusive,
+				// and set virtual bitmap height to two hundred and fifty-six pixels
+				src_wrapmask = src_clipmask = 0xff;
+				dst_height = 0x100;
+			break;
+			case 1 :
+				// Xexex: prologue, L7 nebulae
+
+				// the source offset is cropped to zero and five hundred and eleven inclusive
+				src_wrapmask = src_clipmask = 0x1ff;
+			break;
+			case 4 :
+				// Xexex: L1 sky and boss, L3 planet, L5 poly-face, L7 battle ship patches
+				// Metam: L1 summoning circle, L3 caves, L6 gargoyle towers
+
+				// crop source offset between zero and two hundred and fifty-five inclusive,
+				// and allow source offset to wrap back at 500 hexadecimal to minus 300 hexadecimal
+				src_wrapmask = src_clipmask = 0xff;
+				flags |= K053250_WRAP500;
+			break;
+//			case 2 : // Xexex: title
+//			case 7 : // Xexex: L4 orgainc stage
+			default:
+
+				// crop source offset between zero and one thousand and eleven inclusive,
+				// keep other dimensions to their defaults
+				src_wrapmask = src_clipmask = 0x3ff;
+			break;
+		}
+
+		// disable source clipping when the third bit of the control register is set
+		if (ctrl & 0x04) src_clipmask = 0;
+
+		if (!(orientation & ORIENTATION_SWAP_XY))	// normal orientaion with no X Y switching
+		{
+			line_start = dst_miny;			// the first scanline starts at the minimum X clip location
+			line_end   = dst_maxy;			// the last scanline ends at the maximum X clip location
+			scroll_corr = map_scrollx;		// concentrate global X scroll
+			linedata_offs = map_scrolly;	// determine where to get info for the first line
+
+			if (orientation & ORIENTATION_FLIP_X)
+			{
+				scroll_corr = -scroll_corr;	// X scroll adjustment should be negated in X flipped scenarioes
+			}
+
+			if (orientation & ORIENTATION_FLIP_Y)
+			{
+				linedata_adv = -linedata_adv;			// traverse line RAM backward in Y flipped scenarioes
+				linedata_offs += bitmap->height - 1;	// and get info for the first line from the bottom
+			}
+
+			dst_wrapmask = ~0;	// scanlines don't seem to wrap horizontally in normal orientation
+			passes = 1;			// draw scanline in a single pass
+		}
+		else  // orientaion with X and Y parameters switched
+		{
+			line_start = dst_minx;			// the first scanline starts at the minimum Y clip location
+			line_end   = dst_maxx;			// the last scanline ends at the maximum Y clip location
+			scroll_corr = map_scrolly;		// concentrate global Y scroll
+			linedata_offs = map_scrollx;	// determine where to get info for the first line
+
+			if (orientation & ORIENTATION_FLIP_Y)
+			{
+				scroll_corr = 0x100 - scroll_corr;	// apply common vertical correction
+
+				// Y correction (ref: 1st and 5th boss)
+				scroll_corr -= 2;	// apply unique vertical correction
+
+				// X correction (ref: 1st boss, seems to undo non-rotated global X offset)
+				linedata_offs -= 5;	// apply unique horizontal correction
+			}
+
+			if (orientation & ORIENTATION_FLIP_X)
+			{
+				linedata_adv = -linedata_adv;		// traverse line RAM backward in X flipped scenarioes
+				linedata_offs += bitmap->width - 1;	// and get info for the first line from the bottom
+			}
+
+			if (src_clipmask)
+			{
+				// determine target wrap boundary and draw scanline in two passes if the source is clipped
+				dst_wrapmask = dst_height - 1;
+				passes = 2;
+			}
+			else
+			{
+				// otherwise disable target wraparound and draw scanline in a single pass
+				dst_wrapmask = ~0;
+				passes = 1;
+			}
+		}
+	}
+
+	linedata_offs *= 4;								// each line info packet has four words(eight bytes)
+	linedata_offs &= 0x7ff;							// and it should wrap at the four-kilobyte boundary
+	linedata_offs += line_start * linedata_adv;		// pre-advance line info offset for the clipped region
+
+	// load physical palette base
+	pal_base = Machine->remapped_colortable + (colorbase << 4) % Machine->drv->total_colors;
+
+	// walk the target bitmap within the visible area vertically or horizontally, one line at a time
+	for (line_pos=line_start; line_pos<=line_end; linedata_offs+=linedata_adv, line_pos++)
+	{
+		linedata_offs &= 0x7ff;						// line info data wraps at the four-kilobyte boundary
+
+		color  = line_ram[linedata_offs];			// get scanline color code
+		if (color == 0xffff) continue;				// reject scanline if color code equals minus one
+
+		offset   = line_ram[linedata_offs+1];		// get first pixel offset in ROM
+		if (!(color & 0xff) && !offset) continue;	// reject scanline if both color and pixel offset are zero
+
+		// calculate physical palette location
+		// there can be thirty-two color codes and each code represents sixteen pens
+		pal_ptr = pal_base + ((color & 0x1f)<<4);
+
+		// calculate physical pixel location
+		// each offset unit represents two hundred and fifty six pixels and should wrap at ROM boundary for safty
+		pix_ptr	= pix_base + (offset<<8) % rommask;
+
+		// get scanline zoom factor
+		// For example, 0x20 doubles the length, 0x40 maintains a one-to-one length,
+		// and 0x80 halves the length. The zoom center is at the beginning of the
+		// scanline therefore it is not necessary to adjust render start position
+		zoom    = line_ram[linedata_offs+2];
+
+		scroll  = (short)line_ram[linedata_offs+3];	// get signed local scroll value for the current scanline
+
+		// scavenged from old code; improves Xexex' first level sky
+		if (flags & K053250_WRAP500 && scroll >= 0x500) scroll -= 0x800;
+
+		scroll += scroll_corr;	// apply final scroll correction
+		scroll &= dst_wrapmask;	// wraparound scroll value if necessary
+
+		// draw scanlines wrapped at virtual bitmap boundary in two passes
+		// this should not impose too much overhead due to clipping performed by the render code
+		i = passes;
+		do
+		{
+			/*
+				Parameter descriptions:
+
+				bitmap       : pointer to a MAME bitmap as the render target
+				pal_ptr      : pointer to the palette's physical location relative to the scanline
+				pix_ptr      : pointer to the physical start location of source pixels in ROM
+				cliprect     : pointer to a rectangle structue which describes the visible area of the target bitmap
+				line_pos     : scanline render position relative to the target bitmap
+				               should be a Y offset to the target bitmap in normal orientaion,
+				               or an X offset to the target bitmap if X,Y are swapped
+				scroll       : source scroll value of the scanline
+				zoom         : source zoom factor of the scanline
+				src_clipmask : source offset clip mask; source pixels with offsets beyond the scope of this mask will not be drawn
+				src_wrapmask : source offset wrap mask; wraps source offset around, no effect when src_clipmask is set
+				orientation  : flags indicating whether scanlines should be drawn horizontally, vertically, forward or backward
+				priority     : value to be written to the priority bitmap, no effect when equals zero
+			*/
+			K053250_pdraw_scanline32(bitmap, pal_ptr, pix_ptr, cliprect,
+				line_pos, scroll, zoom, src_clipmask, src_wrapmask, orientation, priority);
+
+			// shift scanline position one virtual screen upward to render the wrapped end if necessary
+			scroll -= dst_height;
+		}
+		while (--i);
+	}
+}
+
+#endif
+
 
 
 /***************************************************************************/
@@ -7024,6 +7660,11 @@ void K053250_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, 
 
 // K053252 CRT and interrupt control unit
 static data16_t K053252_regs[16];
+
+READ16_HANDLER( K053252_word_r )
+{
+	return(K053252_regs[offset]);
+}
 
 WRITE16_HANDLER( K053252_word_w )
 {
@@ -7040,11 +7681,13 @@ WRITE32_HANDLER( K053252_long_w )
 
 
 // debug handlers
-READ16_HANDLER( K053252_word_r ) { return(K053252_regs[offset]); }		// CCU
-READ16_HANDLER( K056832_word_r ) { return(K056832_regs[offset]); }		// VREG
-READ16_HANDLER( K056832_b_word_r ) { return(K056832_regsb[offset]); }	// 832 extra regs?
+READ16_HANDLER( K054157_word_r ) { return(K054157_regs[offset]); }		// VACSET (legacy)
+READ16_HANDLER( K056832_word_r ) { return(K056832_regs[offset]); }		// VACSET
+READ16_HANDLER( K056832_b_word_r ) { return(K056832_regsb[offset]); }	// VSCCS (board dependent)
+READ16_HANDLER( K053246_reg_word_r ) { return(K053246_regs[offset*2]<<8|K053246_regs[offset*2+1]); } // OBJSET1
 READ16_HANDLER( K053247_reg_word_r ) { return(K053247_regs[offset]); }	// OBJSET2
 READ16_HANDLER( K054338_word_r ) { return(k54338_regs[offset]); }		// CLTC
+READ16_HANDLER( K053251_msb_r ) { return(K053251_ram[offset]<<8); }		// PCU1
 READ16_HANDLER( K055555_word_r ) { return(k55555_regs[offset]<<8); }	// PCU2
 
 READ32_HANDLER( K056832_long_r )
@@ -7053,14 +7696,14 @@ READ32_HANDLER( K056832_long_r )
 	return (K056832_word_r(offset+1, 0xffff) | K056832_word_r(offset, 0xffff)<<16);
 }
 
-READ32_HANDLER( K055555_long_r )
-{
-	offset <<= 1;
-	return (K055555_word_r(offset+1, 0xffff) | K055555_word_r(offset, 0xffff)<<16);
-}
-
 READ32_HANDLER( K053247_reg_long_r )
 {
 	offset <<= 1;
 	return (K053247_reg_word_r(offset+1, 0xffff) | K053247_reg_word_r(offset, 0xffff)<<16);
+}
+
+READ32_HANDLER( K055555_long_r )
+{
+	offset <<= 1;
+	return (K055555_word_r(offset+1, 0xffff) | K055555_word_r(offset, 0xffff)<<16);
 }

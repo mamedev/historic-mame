@@ -1,8 +1,23 @@
 /* Super Kaneko Nova System Vidhrdw */
 
-#include "driver.h"
+/*
+TODO:
+Implement double buffering for sprites?
+We have to tell games which buffer to draw to? irrelevant to emulation
 
-extern data32_t *skns_spc_ram, *skns_tilemapA_ram, *skns_tilemapB_ram, *skns_v3slc_ram;
+Remove all debug keys
+*/
+
+/*
+Done:
+Add global sprite flip
+Tilemap flip flags were reversed
+*/
+
+#include "driver.h"
+#include "vidhrdw/generic.h"
+
+extern data32_t *skns_tilemapA_ram, *skns_tilemapB_ram, *skns_v3slc_ram;
 extern data32_t *skns_palette_ram, *skns_v3t_ram, *skns_main_ram, *skns_cache_ram;
 extern data32_t *skns_pal_regs, *skns_v3_regs, *skns_spc_regs;
 extern data32_t skns_v3t_dirty[0x4000]; // allocate this elsewhere?
@@ -213,23 +228,60 @@ static void (*blit_z[4])(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 static void skns_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
+	/*- SPR RAM Format -**
+
+	  16 bytes per sprite
+
+0x00  --ss --SS  z--- ----  jjjg g-ff  ppcc cccc
+
+	  s = y size
+	  S = x size
+	  j = joint
+	  g = group sprite is part of (if groups are enabled)
+	  f = flip
+	  p = priority
+	  c = palette
+
+0x04  ---- -aaa  aaaa aaaa  aaaa aaaa  aaaa aaaa
+
+	  a = ROM address of sprite data
+
+0x08  ZZZZ ZZ--  zzzz zz--  xxxx xxxx  xx-- ----
+
+	  Z = horizontal zoom table
+	  z = horizontal zoom subtable
+	  x = x position
+
+0x0C  ZZZZ ZZ--  zzzz zz--  yyyy yyyy  yy-- ----
+
+	  Z = vertical zoom table
+	  z = vertical zoom subtable
+	  x = y position
+
+	**- End of Comments -*/
+
 	/* sprite ram start / end is not really fixed registers change it */
 
-	data32_t *source = skns_spc_ram;
-	data32_t *finish = skns_spc_ram + 0x4000/4;
+	data32_t *source = buffered_spriteram32;
+	data32_t *finish = source + spriteram_size/4;
 
 	int group_x_offset[4];
 	int group_y_offset[4];
 	int group_enable;
 	int group_number;
+	int sprite_flip;
 	int sprite_x_scroll;
 	int sprite_y_scroll;
-	int disabled = skns_spc_regs[0x04/4] & 0x08;
-	int xsize,ysize, size, xpos=0,ypos=0, romoffset, colour=0, flip, joint;
+	int disabled = skns_spc_regs[0x04/4] & 0x08; // RWR1
+	int xsize,ysize, size, xpos=0,ypos=0, pri=0, romoffset, colour=0, xflip,yflip, joint;
+	int sx,sy;
 	int endromoffs=0;
 	UINT16 zoomx, zoomy;
 
 	group_enable    = (skns_spc_regs[0x00/4] & 0x0040) >> 6; // RWR0
+
+	/* Sengekis uses global flip */
+	sprite_flip = (skns_spc_regs[0x04/4] & 0x03); // RWR1
 
 	sprite_y_scroll = ((skns_spc_regs[0x08/4] & 0x7fc0) >> 6); // RWR2
 	sprite_x_scroll = ((skns_spc_regs[0x10/4] & 0x7fc0) >> 6); // RWR4
@@ -263,48 +315,19 @@ static void skns_drawsprites( struct mame_bitmap *bitmap, const struct rectangle
 //	if (keyboard_pressed(KEYCODE_E)) sprite_kludge_y++;
 //	if (keyboard_pressed(KEYCODE_D)) sprite_kludge_y--;
 
+	// Tilemap Pri/enables
+//	usrintf_showmessage("A: %x %x B: %x %x", skns_v3_regs[0x10/4]>>3, skns_v3_regs[0x10/4]&7, skns_v3_regs[0x34/4]>>3, skns_v3_regs[0x34/4]&7);
+
 	/* Seems that sprites are consistently off by a fixed no. of pixels in different games
 	   (Patterns emerge through Manufacturer/Date/Orientation) */
 	sprite_x_scroll += sprite_kludge_x;
 	sprite_y_scroll += sprite_kludge_y;
 
-
-	/*- SPR RAM Format -**
-
-	  16 bytes per sprite
-
-0x00  --ss --SS  z--- ----  jjjg g-ff  ppcc cccc
-
-	  s = y size
-	  S = x size
-	  j = joint
-	  g = group sprite is part of (if groups are enabled)
-	  f = flip
-	  p = priority
-	  c = palette
-
-0x04  ---- -aaa  aaaa aaaa  aaaa aaaa  aaaa aaaa
-
-	  a = ROM address of sprite data
-
-0x08  ZZZZ ZZ--  zzzz zz--  xxxx xxxx  xx-- ----
-
-	  Z = horizontal zoom table
-	  z = horizontal zoom subtable
-	  x = x position
-
-0x0C  ZZZZ ZZ--  zzzz zz--  yyyy yyyy  yy-- ----
-
-	  Z = vertical zoom table
-	  z = vertical zoom subtable
-	  x = y position
-
-	**- End of Comments -*/
-
 	if (!disabled){
 		while( source<finish )
 		{
-			flip = (source[0] & 0x00000300) >> 8;
+			xflip = (source[0] & 0x00000200) >> 9;
+			yflip = (source[0] & 0x00000100) >> 8;
 
 			ysize = (source[0] & 0x30000000) >> 28;
 			xsize = (source[0] & 0x03000000) >> 24;
@@ -341,7 +364,7 @@ static void skns_drawsprites( struct mame_bitmap *bitmap, const struct rectangle
 
 					   global offset kludged using game specific offset -pjp */
 
-					xpos += group_x_offset[group_number]; /* breaks games? */
+					xpos += group_x_offset[group_number];
 					ypos += group_y_offset[group_number];
 				}
 			}
@@ -354,14 +377,33 @@ static void skns_drawsprites( struct mame_bitmap *bitmap, const struct rectangle
 			if (xpos > 0x1ff) xpos -= 0x400;
 			if (ypos > 0x1ff) ypos -= 0x400;
 
+			/* Local sprite offset (for taking flip into account and drawing offset) */
+			sx = xpos;
+			sy = ypos;
+
+			/* Global Sprite Flip (sengekis) */
+			if (sprite_flip&2)
+			{
+				xflip ^= 1;
+				sx = Machine->visible_area.max_x+1 - sx;
+			}
+			if (sprite_flip&1)
+			{
+				yflip ^= 1;
+				sy = Machine->visible_area.max_y+1 - sy;
+			}
+
+			/* Palette linking */
 			if (!(joint & 2))
 			{
 				colour = (source[0] & 0x0000003f) >> 0;
 			}
 
+			/* Priority and Tile linking */
 			if (!(joint & 4))
 			{
 				romoffset = (source[1] & 0x07ffffff) >> 0;
+				pri = (source[0] & 0x000000c0) >> 6;
 			} else {
 				romoffset = endromoffs;
 			}
@@ -373,84 +415,83 @@ static void skns_drawsprites( struct mame_bitmap *bitmap, const struct rectangle
 
 			endromoffs = skns_rle_decode ( romoffset, size );
 
-		    if(zoomx || zoomy)
-		    {
-			    blit_z[flip](bitmap, cliprect, decodebuffer, xpos, ypos, xsize, ysize, zoomx, zoomy, colour);
-			}
-			else
+			// PriTest
+//			if(!( (keyboard_pressed(KEYCODE_Q)&&(pri==0)) || (keyboard_pressed(KEYCODE_W)&&(pri==1)) || (keyboard_pressed(KEYCODE_E)&&(pri==2)) || (keyboard_pressed(KEYCODE_D)&&(pri==3)) ))
+//			if( !(keyboard_pressed(KEYCODE_Q) && ((source[0] & 0x00800000)>>24)) )
 			{
-				if (!flip) {
-					int xx,yy;
-
-					for (xx = 0; xx<xsize; xx++)
-					{
-						for (yy = 0; yy<ysize;yy++)
-						{
-							if ((xpos+xx < (cliprect->max_x+1)) && (xpos+xx >= cliprect->min_x) && (ypos+yy < (cliprect->max_y+1)) && (ypos+yy >= cliprect->min_y))
-							{
-								int pix;
-								pix = decodebuffer[xsize*yy+xx];
-								if (pix) plot_pixel( bitmap, xpos + xx, ypos+yy, pix+ colour*256 ); // change later
-							}
-						}
-					}
-				} else if (flip==1) {
-					int xx,yy;
-					ypos -= ysize;
-
-					for (xx = 0; xx<xsize; xx++)
-					{
-						for (yy = 0; yy<ysize;yy++)
-						{
-							if ((xpos+xx < (cliprect->max_x+1)) && (xpos+xx >= cliprect->min_x) && (ypos+(ysize-1-yy) < (cliprect->max_y+1)) && (ypos+(ysize-1-yy) >= cliprect->min_y))
-							{
-								int pix;
-								pix = decodebuffer[xsize*yy+xx];
-								if (pix) plot_pixel( bitmap, xpos+xx, ypos+(ysize-1-yy), pix+ colour*256 ); // change later
-							}
-						}
-					}
-					ypos += ysize; // so linking works
-
-				} else if (flip==2) {
-					int xx,yy;
-					xpos -= xsize;
-
-					for (xx = 0; xx<xsize; xx++)
-					{
-						for (yy = 0; yy<ysize;yy++)
-						{
-							if ((xpos+(xsize-1-xx) < (cliprect->max_x+1)) && (xpos+(xsize-1-xx) >= cliprect->min_x) && (ypos+yy < (cliprect->max_y+1)) && (ypos+yy >= cliprect->min_y))
-							{
-								int pix;
-								pix = decodebuffer[xsize*yy+xx];
-								if (pix) plot_pixel( bitmap, xpos+(xsize-1-xx), ypos+yy, pix+ colour*256 ); // change later
-							}
-						}
-					}
-					xpos += xsize; // so linking works
-
-				} else if (flip==3) {
-					int xx,yy;
-					xpos -= xsize;
-					ypos -= ysize;
-
-					for (xx = 0; xx<xsize; xx++)
-					{
-						for (yy = 0; yy<ysize;yy++)
-						{
-							if ((xpos+(xsize-1-xx) < (cliprect->max_x+1)) && (xpos+(xsize-1-xx) >= cliprect->min_x) && (ypos+(ysize-1-yy) < (cliprect->max_y+1)) && (ypos+(ysize-1-yy) >= cliprect->min_y))
-							{
-								int pix;
-								pix = decodebuffer[xsize*yy+xx];
-								if (pix) plot_pixel( bitmap, xpos+(xsize-1-xx), ypos+(ysize-1-yy), pix+ colour*256 ); // change later
-							}
-						}
-					}
-					xpos += xsize; // so linking works
-					ypos += ysize; // so linking works
+				if(zoomx || zoomy)
+				{
+					blit_z[ (xflip<<1) | yflip ](bitmap, cliprect, decodebuffer, sx, sy, xsize, ysize, zoomx, zoomy, colour);
 				}
-			}
+				else
+				{
+					if (!xflip && !yflip) {
+						int xx,yy;
+
+						for (xx = 0; xx<xsize; xx++)
+						{
+							for (yy = 0; yy<ysize; yy++)
+							{
+								if ((sx+xx < (cliprect->max_x+1)) && (sx+xx >= cliprect->min_x) && (sy+yy < (cliprect->max_y+1)) && (sy+yy >= cliprect->min_y))
+								{
+									int pix;
+									pix = decodebuffer[xsize*yy+xx];
+									if (pix) plot_pixel( bitmap, sx+xx, sy+yy, pix+ colour*256 ); // change later
+								}
+							}
+						}
+					} else if (!xflip && yflip) {
+						int xx,yy;
+						sy -= ysize;
+
+						for (xx = 0; xx<xsize; xx++)
+						{
+							for (yy = 0; yy<ysize; yy++)
+							{
+								if ((sx+xx < (cliprect->max_x+1)) && (sx+xx >= cliprect->min_x) && (sy+(ysize-1-yy) < (cliprect->max_y+1)) && (sy+(ysize-1-yy) >= cliprect->min_y))
+								{
+									int pix;
+									pix = decodebuffer[xsize*yy+xx];
+									if (pix) plot_pixel( bitmap, sx+xx, sy+(ysize-1-yy), pix+ colour*256 ); // change later
+								}
+							}
+						}
+					} else if (xflip && !yflip) {
+						int xx,yy;
+						sx -= xsize;
+
+						for (xx = 0; xx<xsize; xx++)
+						{
+							for (yy = 0; yy<ysize; yy++)
+							{
+								if ((sx+(xsize-1-xx) < (cliprect->max_x+1)) && (sx+(xsize-1-xx) >= cliprect->min_x) && (sy+yy < (cliprect->max_y+1)) && (sy+yy >= cliprect->min_y))
+								{
+									int pix;
+									pix = decodebuffer[xsize*yy+xx];
+									if (pix) plot_pixel( bitmap, sx+(xsize-1-xx), sy+yy, pix+ colour*256 ); // change later
+								}
+							}
+						}
+					} else if (xflip && yflip) {
+						int xx,yy;
+						sx -= xsize;
+						sy -= ysize;
+
+						for (xx = 0; xx<xsize; xx++)
+						{
+							for (yy = 0; yy<ysize; yy++)
+							{
+								if ((sx+(xsize-1-xx) < (cliprect->max_x+1)) && (sx+(xsize-1-xx) >= cliprect->min_x) && (sy+(ysize-1-yy) < (cliprect->max_y+1)) && (sy+(ysize-1-yy) >= cliprect->min_y))
+								{
+									int pix;
+									pix = decodebuffer[xsize*yy+xx];
+									if (pix) plot_pixel( bitmap, sx+(xsize-1-xx), sy+(ysize-1-yy), pix+ colour*256 ); // change later
+								}
+							}
+						}
+					}
+				}
+		}//End PriTest
 
 		source+=4;
 		}
@@ -464,6 +505,7 @@ static void get_tilemap_A_tile_info(int tile_index)
 {
 	int code = ((skns_tilemapA_ram[tile_index] & 0x001fffff) >> 0 );
 	int colr = ((skns_tilemapA_ram[tile_index] & 0x3f000000) >> 24 );
+//	int pri  = ((skns_tilemapA_ram[tile_index] & 0x00e00000) >> 21 );
 	int depth = (skns_v3_regs[0x0c/4] & 0x0001) << 1;
 	tile_info.flags = 0;
 
@@ -475,6 +517,7 @@ static void get_tilemap_A_tile_info(int tile_index)
 			code,
 			0x40+colr,
 			tile_info.flags)
+//	tile_info.priority = pri;
 }
 
 WRITE32_HANDLER ( skns_tilemapA_w )
@@ -487,10 +530,9 @@ static void get_tilemap_B_tile_info(int tile_index)
 {
 	int code = ((skns_tilemapB_ram[tile_index] & 0x001fffff) >> 0 );
 	int colr = ((skns_tilemapB_ram[tile_index] & 0x3f000000) >> 24 );
+//	int pri  = ((skns_tilemapA_ram[tile_index] & 0x00e00000) >> 21 );
 	int depth = (skns_v3_regs[0x0c/4] & 0x0100) >> 7;
 	tile_info.flags = 0;
-
-//	if ((code > 0x3ff) && (code < 0x4000)) code &= 0x3ff;
 
 	if(skns_tilemapB_ram[tile_index] & 0x80000000) tile_info.flags |= TILE_FLIPX;
 	if(skns_tilemapB_ram[tile_index] & 0x40000000) tile_info.flags |= TILE_FLIPY;
@@ -500,6 +542,7 @@ static void get_tilemap_B_tile_info(int tile_index)
 			code,
 			0x40+colr,
 			tile_info.flags)
+//	tile_info.priority = pri;
 }
 
 WRITE32_HANDLER ( skns_tilemapB_w )
@@ -545,109 +588,106 @@ VIDEO_START(skns)
 static void supernova_draw_a( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int tran )
 {
 		int enable_a  = (skns_v3_regs[0x10/4] >> 0) & 0x0001;
-		UINT32 startx,starty;
-		int incxx,incxy,incyx,incyy;
+	UINT32 startx,starty;
+	int incxx,incxy,incyx,incyy;
 
-		if (enable_a)
-		{
-			startx = skns_v3_regs[0x1c/4];
+	if (enable_a)
+	{
+		startx = skns_v3_regs[0x1c/4];
 			incyy  = skns_v3_regs[0x30/4]; // was xx, changed for sarukani
-			incyx  = skns_v3_regs[0x2c/4];
-			starty = skns_v3_regs[0x20/4];
-			incxy  = skns_v3_regs[0x28/4];
+		incyx  = skns_v3_regs[0x2c/4];
+		starty = skns_v3_regs[0x20/4];
+		incxy  = skns_v3_regs[0x28/4];
 			incxx  = skns_v3_regs[0x24/4]; // was yy, changed for sarukani
 
-			if( (incxx == 1<<8) && !incxy & !incyx && (incyy == 1<<8) ) // No Roz, only scroll.
-			{
-				int columnscroll_a = (skns_v3_regs[0x0c/4] >> 1) & 0x0001;
-				int offs;
+		if( (incxx == 1<<8) && !incxy & !incyx && (incyy == 1<<8) ) // No Roz, only scroll.
+		{
+			int columnscroll_a = (skns_v3_regs[0x0c/4] >> 1) & 0x0001;
+			int offs;
 
-				startx >>= 8; // Lose Floating point
-				starty >>= 8;
+			startx >>= 8; // Lose Floating point
+			starty >>= 8;
 
-				if(columnscroll_a) {
-					tilemap_set_scroll_rows(skns_tilemap_A,1);
-					tilemap_set_scroll_cols(skns_tilemap_A,0x400);
+			if(columnscroll_a) {
+				tilemap_set_scroll_rows(skns_tilemap_A,1);
+				tilemap_set_scroll_cols(skns_tilemap_A,0x400);
 
-					tilemap_set_scrollx( skns_tilemap_A, 0, startx );
-					for(offs=0; offs<(0x1000/4); offs++)
-						tilemap_set_scrolly( skns_tilemap_A, offs, starty - (skns_v3slc_ram[offs]&0x3ff) );
-				}
-				else
-				{
-					tilemap_set_scroll_rows(skns_tilemap_A,0x400);
-					tilemap_set_scroll_cols(skns_tilemap_A,1);
-
-					tilemap_set_scrolly( skns_tilemap_A, 0, starty );
-					for(offs=0; offs<(0x1000/4); offs++)
-						tilemap_set_scrollx( skns_tilemap_A, offs, startx - (skns_v3slc_ram[offs]&0x3ff) );
-				}
-				tilemap_draw(bitmap,cliprect,skns_tilemap_A,tran ? 0 : TILEMAP_IGNORE_TRANSPARENCY,0);
+				tilemap_set_scrollx( skns_tilemap_A, 0, startx );
+				for(offs=0; offs<(0x1000/4); offs++)
+					tilemap_set_scrolly( skns_tilemap_A, offs, starty - (skns_v3slc_ram[offs]&0x3ff) );
 			}
 			else
 			{
-				tilemap_draw_roz(bitmap,cliprect,skns_tilemap_A,startx << 8,starty << 8,
-						incxx << 8,incxy << 8,incyx << 8,incyy << 8,
-						1,	/* wraparound */
-						tran ? 0 : TILEMAP_IGNORE_TRANSPARENCY,0);
-			}
-		}
+				tilemap_set_scroll_rows(skns_tilemap_A,0x400);
+				tilemap_set_scroll_cols(skns_tilemap_A,1);
 
+				tilemap_set_scrolly( skns_tilemap_A, 0, starty );
+				for(offs=0; offs<(0x1000/4); offs++)
+					tilemap_set_scrollx( skns_tilemap_A, offs, startx - (skns_v3slc_ram[offs]&0x3ff) );
+			}
+				tilemap_draw(bitmap,cliprect,skns_tilemap_A,tran ? 0 : TILEMAP_IGNORE_TRANSPARENCY,0);
+		}
+		else
+		{
+			tilemap_draw_roz(bitmap,cliprect,skns_tilemap_A,startx << 8,starty << 8,
+					incxx << 8,incxy << 8,incyx << 8,incyy << 8,
+					1,	/* wraparound */
+						tran ? 0 : TILEMAP_IGNORE_TRANSPARENCY,0);
+		}
+	}
 }
 
 static void supernova_draw_b( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int tran )
 {
 		int enable_b  = (skns_v3_regs[0x34/4] >> 0) & 0x0001;
-		UINT32 startx,starty;
-		int incxx,incxy,incyx,incyy;
+	UINT32 startx,starty;
+	int incxx,incxy,incyx,incyy;
 
-
-		if (enable_b)
-		{
-			startx = skns_v3_regs[0x40/4];
+	if (enable_b)
+	{
+		startx = skns_v3_regs[0x40/4];
 			incyy  = skns_v3_regs[0x54/4];
-			incyx  = skns_v3_regs[0x50/4];
-			starty = skns_v3_regs[0x44/4];
-			incxy  = skns_v3_regs[0x4c/4];
+		incyx  = skns_v3_regs[0x50/4];
+		starty = skns_v3_regs[0x44/4];
+		incxy  = skns_v3_regs[0x4c/4];
 			incxx  = skns_v3_regs[0x48/4];
 
-			if( (incxx == 1<<8) && !incxy & !incyx && (incyy == 1<<8) ) // No Roz, only scroll.
-			{
-				int columnscroll_b = (skns_v3_regs[0x0c/4] >> 9) & 0x0001;
-				int offs;
+		if( (incxx == 1<<8) && !incxy & !incyx && (incyy == 1<<8) ) // No Roz, only scroll.
+		{
+			int columnscroll_b = (skns_v3_regs[0x0c/4] >> 9) & 0x0001;
+			int offs;
 
-				startx >>= 8;
-				starty >>= 8;
+			startx >>= 8;
+			starty >>= 8;
 
-				if(columnscroll_b) {
-					tilemap_set_scroll_rows(skns_tilemap_B,1);
-					tilemap_set_scroll_cols(skns_tilemap_B,0x400);
+			if(columnscroll_b) {
+				tilemap_set_scroll_rows(skns_tilemap_B,1);
+				tilemap_set_scroll_cols(skns_tilemap_B,0x400);
 
-					tilemap_set_scrollx( skns_tilemap_B, 0, startx );
-					for(offs=0; offs<(0x1000/4); offs++)
-						tilemap_set_scrolly( skns_tilemap_B, offs, starty - (skns_v3slc_ram[offs+(0x1000/4)]&0x3ff) );
-				}
-				else
-				{
-					tilemap_set_scroll_rows(skns_tilemap_B,0x400);
-					tilemap_set_scroll_cols(skns_tilemap_B,1);
-
-					tilemap_set_scrolly( skns_tilemap_B, 0, starty );
-					for(offs=0; offs<(0x1000/4); offs++)
-						tilemap_set_scrollx( skns_tilemap_B, offs, startx - (skns_v3slc_ram[offs+(0x1000/4)]&0x3ff) );
-				}
-				tilemap_draw(bitmap,cliprect,skns_tilemap_B,tran ? 0 : TILEMAP_IGNORE_TRANSPARENCY,0);
+				tilemap_set_scrollx( skns_tilemap_B, 0, startx );
+				for(offs=0; offs<(0x1000/4); offs++)
+					tilemap_set_scrolly( skns_tilemap_B, offs, starty - (skns_v3slc_ram[offs+(0x1000/4)]&0x3ff) );
 			}
 			else
 			{
-				tilemap_draw_roz(bitmap,cliprect,skns_tilemap_B,startx << 8,starty << 8,
-						incxx << 8,incxy << 8,incyx << 8,incyy << 8,
-						1,	/* wraparound */
-						tran ? 0 : TILEMAP_IGNORE_TRANSPARENCY,0);
-			}
-		}
-}
+				tilemap_set_scroll_rows(skns_tilemap_B,0x400);
+				tilemap_set_scroll_cols(skns_tilemap_B,1);
 
+				tilemap_set_scrolly( skns_tilemap_B, 0, starty );
+				for(offs=0; offs<(0x1000/4); offs++)
+					tilemap_set_scrollx( skns_tilemap_B, offs, startx - (skns_v3slc_ram[offs+(0x1000/4)]&0x3ff) );
+			}
+				tilemap_draw(bitmap,cliprect,skns_tilemap_B,tran ? 0 : TILEMAP_IGNORE_TRANSPARENCY,0);
+		}
+		else
+		{
+			tilemap_draw_roz(bitmap,cliprect,skns_tilemap_B,startx << 8,starty << 8,
+					incxx << 8,incxy << 8,incyx << 8,incyy << 8,
+					1,	/* wraparound */
+						tran ? 0 : TILEMAP_IGNORE_TRANSPARENCY,0);
+		}
+	}
+}
 
 VIDEO_UPDATE(skns)
 {
@@ -724,7 +764,9 @@ VIDEO_UPDATE(skns)
 
 
 		/* needed until we have the per tile priorities sorted out */
-		if ((!strcmp(Machine->gamedrv->name,"sarukani")) || (!strcmp(Machine->gamedrv->name,"vblokbrk")))
+		if (!strcmp(Machine->gamedrv->name,"vblokbrk") ||
+			!strcmp(Machine->gamedrv->name,"sarukani") ||
+			!strcmp(Machine->gamedrv->name,"sengekis"))
 		{
 			supernova_pri_b = 0;
 			supernova_pri_a = 1;
@@ -740,5 +782,10 @@ VIDEO_UPDATE(skns)
 	}
 
 
-	skns_drawsprites(bitmap,cliprect);
+	skns_drawsprites(bitmap, cliprect);
+}
+
+VIDEO_EOF(skns)
+{
+	buffer_spriteram32_w(0,0,0);
 }

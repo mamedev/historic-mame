@@ -898,7 +898,6 @@ static PORT_WRITE_START( writeport_patimono )
 
 	{ 0xa0, 0xa0, sailorws_sound_w },
 	{ 0xa4, 0xa8, IOWP_NOP },
-	{ 0xa8, 0xa0, IOWP_NOP },
 	{ 0xb0, 0xb8, sailorws_inputportsel_w },
 PORT_END
 

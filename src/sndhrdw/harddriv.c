@@ -9,7 +9,8 @@
 #include "harddriv.h"
 
 
-#define CYCLES_PER_BIO		(20000000 / 20000)
+#define BIO_FREQUENCY		(1000000 / 50)
+#define CYCLES_PER_BIO		(20000000 / BIO_FREQUENCY)
 
 
 data16_t *hdsnddsp_ram;

@@ -114,7 +114,8 @@ static WRITE_HANDLER( ms_unknown_w )
 //#define USE_MCU
 
 #ifndef USE_MCU
-unsigned char mcu_val;
+static UINT8 mcu_val = 0;
+static UINT8 direction = 0;
 #endif
 
 
@@ -139,15 +140,58 @@ MCU simulation TODO:
 		 * incremented properly).*/
 		case 0x40:
 		case 0x41:
-		case 0x42:	return 0;
-		/*With this command the MCU controls a dial input,only the first    *
-		 *three bits are used.                                              */
-		case 0x02:  return (readinputport(6));
+ 		case 0x42:
+ 			return 0;
+ 		break;
+
+ 		/*With this command the MCU controls body direction  */
+ 		case 0x02:
+ 		{
+ 			//direction:
+ 			//0-left
+ 			//1-leftup
+ 			//2-up
+ 			//3-rigtup
+ 			//4-right
+ 			//5-rightdwn
+ 			//6-down
+ 			//7-leftdwn
+
+ 			UINT8 val= (readinputport(4)>>2) & 0x0f;
+ 			/* bit0 = left
+ 			   bit1 = right
+ 			   bit2 = down
+ 			   bit3 = up
+ 			*/
+ 			/* direction is encoded as:
+                         	   4
+                         	 3   5
+                         	2     6
+                         	 1   7
+                         	   0
+ 			*/
+ 			/*		 0000   0001   0010   0011      0100   0101   0110   0111     1000   1001   1010   1011   1100   1101   1110   1111 */
+ 			/*		nochange left  right nochange   down downlft dwnrght down     up     upleft uprgt  up    nochnge left   right  nochange */
+
+ 			INT8 table[16] = { -1,    2,    6,     -1,       0,   1,      7,      0,       4,     3,     5,    4,     -1,     2,     6,    -1 };
+
+ 			if (table[val] >= 0 )
+ 				direction = table[val];
+
+ 			return direction;
+ 		}
+ 		break;
+
 		/*This controls the arms when they return to the player.            */
-		case 0x07:  return 0x45;
-		default:   	return mcu_val;
+ 		case 0x07:
+ 			return 0x45;
+ 		break;
+
+ 		default:
+ 			logerror("CPU#0 read from MCU pc=%4x, mcu_val=%2x\n", activecpu_get_pc(), mcu_val );
+ 		   	return mcu_val;
+ 		break;
 	}
-	//logerror("CPU#0 read from MCU pc=%4x\n", activecpu_get_pc() );
 #endif
 }
 
@@ -434,8 +478,6 @@ INPUT_PORTS_START( msisaac )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START
-	PORT_ANALOGX( 0x07, 0x00, IPT_DIAL , 10, 5, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
 INPUT_PORTS_END
 
 

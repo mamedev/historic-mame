@@ -50,7 +50,7 @@ Note:	if MAME_DEBUG is defined, pressing:
 /* Variables that driver has access to: */
 
 int cave_spritetype;
-int	cave_row_effect_offs_y = 0;
+int	cave_row_effect_offs_y = -1;
 
 data16_t *cave_videoregs;
 
@@ -1423,7 +1423,7 @@ INLINE void cave_tilemap_draw(
 
 	offs_x	=	cave_layers_offs_x;
 	offs_y	=	cave_layers_offs_y;
-	
+
 	offs_row =  flipy ? -cave_row_effect_offs_y : cave_row_effect_offs_y;
 
 	/* An additional 8 pixel offset for layers with 8x8 tiles. Plus

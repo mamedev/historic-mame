@@ -32,6 +32,14 @@ NSC81050-102  8127 E37 and labeled No. 00363.  It's a 40-pin IC at location 4F
 on the (Seicross-) board. Looks like it is linked to the dips (and those are
 on a very small daughterboard).
 
+
+Differences in new/old version of Frisky Tom
+- The lady wears bikini in new version
+- Game config is backed up by 4.5v battery in old version
+- Old version uses larger board
+
+This info came from http://www.ne.jp/asahi/cc-sakura/akkun/old/fryski.html
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -471,7 +479,7 @@ static MACHINE_DRIVER_START( no_nvram )
 	MDRV_IMPORT_FROM(nvram)
 	MDRV_CPU_MODIFY("mcu")
 	MDRV_CPU_MEMORY(mcu_no_nvram_readmem,mcu_no_nvram_writemem)
-	
+
 	MDRV_NVRAM_HANDLER(NULL)
 MACHINE_DRIVER_END
 
@@ -499,6 +507,31 @@ ROM_START( friskyt )
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ftom.11",      0x0000, 0x1000, CRC(1ec6ff65) SHA1(aab589c89cd14549b35f4dece5d3c231033c0c1a) )
 	ROM_LOAD( "ftom.12",      0x1000, 0x1000, CRC(3b8f40b5) SHA1(08e0c1fce11ee6c507c28b0d659c5b010f2f2b6f) )
+	ROM_LOAD( "ftom.09",      0x2000, 0x1000, CRC(60642f25) SHA1(2d179a9ea99014065f578bbec4fbfbda5aead98b) )
+	ROM_LOAD( "ftom.10",      0x3000, 0x1000, CRC(07b9dcfc) SHA1(0a573065b6b08745b91fb47ce477d76be7a01750) )
+
+	ROM_REGION( 0x0040, REGION_PROMS, 0 )
+	ROM_LOAD( "ft.9c",        0x0000, 0x0020, CRC(0032167e) SHA1(9df3c7bbf6b700bfa51b8b82c45b60c10bdcd1a0) )
+	ROM_LOAD( "ft.9b",        0x0020, 0x0020, CRC(6b364e69) SHA1(abfcab884e8a50f872f862a421b8e8c5e16ff62c) )
+ROM_END
+
+ROM_START( friskyta )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "ft.01",        0x0000, 0x1000, CRC(0ea46e19) SHA1(3feb3ee882926c0efa602cf92e6879e84a6050ed) )
+	ROM_LOAD( "ft.02",        0x1000, 0x1000, CRC(4f7b8662) SHA1(400c47d7ab5f3a749dbadb2286255b969ec48348) )
+	ROM_LOAD( "ft.03",        0x2000, 0x1000, CRC(1eb1b77c) SHA1(c08d6c1f1bbe2d41b0f6336a0c53ec993556e6b4) )
+	ROM_LOAD( "ft.04",        0x3000, 0x1000, CRC(b5c5400d) SHA1(9fa87dd287457c61599214469aad095ddb5f8742) )
+	ROM_LOAD( "ft.05",        0x4000, 0x1000, CRC(b465be8a) SHA1(0b0da2c83c2362d062b12312285076956d62e4b4) )
+	ROM_LOAD( "ft.06",        0x5000, 0x1000, CRC(90141317) SHA1(d59489e4e35308858e0548d5861b1781acfc3c05) )
+	ROM_LOAD( "ft.07",        0x6000, 0x1000, CRC(0ba02b2e) SHA1(1260c16d589fca37bf58ee28a4795f4b6333d0b9) )
+	ROM_LOAD( "ft8_8.rom",    0x7000, 0x0800, CRC(10461a24) SHA1(c1f98316a4e90a2a6ef4953708b90c9546caaedd) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the protection mcu */
+	/* filled in later */
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ft.11",        0x0000, 0x1000, CRC(956d924a) SHA1(e61bf5f187932c6cb676b4120cd95fe422f6a1a6) )
+	ROM_LOAD( "ft.12",        0x1000, 0x1000, CRC(c028d3b8) SHA1(9e8768b9658f8b05ade4dd5fb2ecde4a52627bc1) )
 	ROM_LOAD( "ftom.09",      0x2000, 0x1000, CRC(60642f25) SHA1(2d179a9ea99014065f578bbec4fbfbda5aead98b) )
 	ROM_LOAD( "ftom.10",      0x3000, 0x1000, CRC(07b9dcfc) SHA1(0a573065b6b08745b91fb47ce477d76be7a01750) )
 
@@ -600,7 +633,8 @@ static DRIVER_INIT( friskyt )
 
 
 
-GAMEX( 1981, friskyt,  0,        nvram,    friskyt,  friskyt, ROT0,  "Nichibutsu", "Frisky Tom", GAME_NO_COCKTAIL )
+GAMEX( 1981, friskyt,  0,        nvram,    friskyt,  friskyt, ROT0,  "Nichibutsu", "Frisky Tom (set 1)", GAME_NO_COCKTAIL )
+GAMEX( 1981, friskyta, friskyt,  nvram,    friskyt,  friskyt, ROT0,  "Nichibutsu", "Frisky Tom (set 2)", GAME_NO_COCKTAIL )
 GAMEX( 1982, radrad,   0,        no_nvram, radrad,   friskyt, ROT0,  "Nichibutsu USA", "Radical Radial", GAME_NO_COCKTAIL )
 GAMEX( 1984, seicross, 0,        no_nvram, seicross, friskyt, ROT90, "Nichibutsu + Alice", "Seicross", GAME_NO_COCKTAIL )
 GAMEX( 1984, sectrzon, seicross, no_nvram, seicross, friskyt, ROT90, "Nichibutsu + Alice", "Sector Zone", GAME_NO_COCKTAIL )

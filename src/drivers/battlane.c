@@ -9,6 +9,12 @@
 
 ***************************************************************************/
 
+/*
+	
+	2003-06-01	Added player 2 cocktail inputs
+
+*/
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
@@ -179,7 +185,13 @@ INPUT_PORTS_START( battlane )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
     PORT_START      /* IN1 */
-    PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )     /* Unused bits */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )     /* VBLank ? */
 
 	PORT_START      /* DSW1 */

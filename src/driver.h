@@ -399,6 +399,8 @@ struct GameDriver
 	const struct GameDriver *clone_of;	/* if this is a clone, point to */
 										/* the main version of the game */
 	const char *name;
+	const struct SystemBios *bios;	/* if this system has alternate bios roms use this */
+									/* structure to list names and ROM_BIOSFLAGS. */
 	const char *description;
 	const char *year;
 	const char *manufacturer;
@@ -462,6 +464,7 @@ const struct GameDriver driver_##NAME =		\
 	__FILE__,								\
 	&driver_##PARENT,						\
 	#NAME,									\
+	system_bios_0,							\
 	FULLNAME,								\
 	#YEAR,									\
 	COMPANY,								\
@@ -479,6 +482,7 @@ const struct GameDriver driver_##NAME =		\
 	__FILE__,								\
 	&driver_##PARENT,						\
 	#NAME,									\
+	system_bios_0,							\
 	FULLNAME,								\
 	#YEAR,									\
 	COMPANY,								\
@@ -489,6 +493,41 @@ const struct GameDriver driver_##NAME =		\
 	(MONITOR)|(FLAGS)						\
 };
 
+#define GAMEB(YEAR,NAME,PARENT,BIOS,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME)	\
+extern const struct GameDriver driver_##PARENT;	\
+const struct GameDriver driver_##NAME =		\
+{											\
+	__FILE__,								\
+	&driver_##PARENT,						\
+	#NAME,									\
+	system_bios_##BIOS,						\
+	FULLNAME,								\
+	#YEAR,									\
+	COMPANY,								\
+	construct_##MACHINE,					\
+	input_ports_##INPUT,					\
+	init_##INIT,							\
+	rom_##NAME,								\
+	MONITOR									\
+};
+
+#define GAMEBX(YEAR,NAME,PARENT,BIOS,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME,FLAGS)	\
+extern const struct GameDriver driver_##PARENT;	\
+const struct GameDriver driver_##NAME =		\
+{											\
+	__FILE__,								\
+	&driver_##PARENT,						\
+	#NAME,									\
+	system_bios_##BIOS,						\
+	FULLNAME,								\
+	#YEAR,									\
+	COMPANY,								\
+	construct_##MACHINE,					\
+	input_ports_##INPUT,					\
+	init_##INIT,							\
+	rom_##NAME,								\
+	(MONITOR)|(FLAGS)						\
+};
 
 /* monitor parameters to be used with the GAME() macro */
 #define	ROT0	0
@@ -499,6 +538,8 @@ const struct GameDriver driver_##NAME =		\
 /* this allows to leave the INIT field empty in the GAME() macro call */
 #define init_0 0
 
+/* this allows to leave the BIOS field empty in the GAMEB() macro call */
+#define system_bios_0 0
 
 
 /***************************************************************************

@@ -83,7 +83,7 @@ extern int tms32010_icount;						/* T-state count */
  *	Read the state of the BIO pin
  */
 
-#define TMS32010_BIO_In (cpu_readport16bew_word(TMS32010_BIO))
+#define TMS32010_BIO_In (cpu_readport16bew_word(TMS32010_BIO<<1))
 
 
 /****************************************************************************

@@ -58,12 +58,13 @@ struct drccore *drc_init(UINT8 cpunum, struct drcconfig *config)
 	drc->cb_recompile = config->cb_recompile;
 	drc->cb_entrygen  = config->cb_entrygen;
 	drc->uses_fp      = config->uses_fp;
-
+	drc->uses_sse     = config->uses_sse;
+	
 	/* allocate cache */
-	drc->cache_base = malloc(config->cachesize);
+	drc->cache_base = malloc(config->cache_size);
 	if (!drc->cache_base)
 		return NULL;
-	drc->cache_end = drc->cache_base + config->cachesize;
+	drc->cache_end = drc->cache_base + config->cache_size;
 	drc->cache_danger = drc->cache_end - 65536;
 
 	/* compute shifts and masks */
@@ -80,7 +81,15 @@ struct drccore *drc_init(UINT8 cpunum, struct drcconfig *config)
 		return NULL;
 	memset(drc->lookup_l1, 0, sizeof(*drc->lookup_l1) * (1 << drc->l1bits));
 	memset(drc->lookup_l2_recompile, 0, sizeof(*drc->lookup_l2_recompile) * (1 << drc->l2bits));
-
+	
+	/* allocate the sequence and tentative lists */
+	drc->sequence_count_max = config->max_instructions;
+	drc->sequence_list = malloc(drc->sequence_count_max * sizeof(*drc->sequence_list));
+	drc->tentative_count_max = config->max_instructions;
+	drc->tentative_list = malloc(drc->tentative_count_max * sizeof(*drc->tentative_list));
+	if (!drc->sequence_list || !drc->tentative_list)
+		return NULL;
+	
 	/* seed the cache */
 	drc_cache_reset(drc);
 	return drc;
@@ -164,20 +173,30 @@ void drc_exit(struct drccore *drc)
 	/* free the default l2 table */
 	if (drc->lookup_l2_recompile)
 		free(drc->lookup_l2_recompile);
-
+	
+	/* free the lists */
+	if (drc->sequence_list)
+		free(drc->sequence_list);
+	if (drc->tentative_list)
+		free(drc->tentative_list);
+	
 	/* and the drc itself */
 	free(drc);
 }
 
 
 /*------------------------------------------------------------------
-	drc_register_code_at_cache_top
+	drc_begin_sequence
 ------------------------------------------------------------------*/
 
-void drc_register_code_at_cache_top(struct drccore *drc, UINT32 pc)
+void drc_begin_sequence(struct drccore *drc, UINT32 pc)
 {
 	UINT32 l1index = pc >> drc->l1shift;
 	UINT32 l2index = ((pc & drc->l2mask) * drc->l2scale) / 4;
+
+	/* reset the sequence and tentative counts */
+	drc->sequence_count = 0;
+	drc->tentative_count = 0;
 
 	/* allocate memory if necessary */
 	if (drc->lookup_l1[l1index] == drc->lookup_l2_recompile)
@@ -198,8 +217,47 @@ void drc_register_code_at_cache_top(struct drccore *drc, UINT32 pc)
 		drc->cache_top = cache_save;
 	}
 
-	/* note the current location for this instruction */
+	/* note the current location for this instruction */		
 	drc->lookup_l1[l1index][l2index] = drc->cache_top;
+}
+
+
+/*------------------------------------------------------------------
+	drc_end_sequence
+------------------------------------------------------------------*/
+
+void drc_end_sequence(struct drccore *drc)
+{
+	int i, j;
+	
+	/* fix up any internal links */
+	for (i = 0; i < drc->tentative_count; i++)
+		for (j = 0; j < drc->sequence_count; j++)
+			if (drc->tentative_list[i].pc == drc->sequence_list[j].pc)
+			{
+				UINT8 *cache_save = drc->cache_top;
+				drc->cache_top = drc->tentative_list[i].target;
+				_jmp(drc->sequence_list[j].target);
+				drc->cache_top = cache_save;
+				break;
+			}
+}
+
+
+/*------------------------------------------------------------------
+	drc_register_code_at_cache_top
+------------------------------------------------------------------*/
+
+void drc_register_code_at_cache_top(struct drccore *drc, UINT32 pc)
+{
+	struct pc_ptr_pair *pair = &drc->sequence_list[drc->sequence_count++];
+	if (drc->sequence_count > drc->sequence_count_max)
+	{
+		printf("drc_register_code_at_cache_top: too many instructions!\n");
+		exit(1);
+	}
+	pair->target = drc->cache_top;
+	pair->pc = pc;
 }
 
 
@@ -347,6 +405,24 @@ void drc_append_fixed_dispatcher(struct drccore *drc, UINT32 newpc)
 	}
 	else
 		_jmp_m32abs((UINT8 *)base + (newpc & drc->l2mask) * drc->l2scale);	// jmp	[eax+(newpc & l2mask)*l2scale]
+}
+
+
+/*------------------------------------------------------------------
+	drc_append_tentative_fixed_dispatcher
+------------------------------------------------------------------*/
+
+void drc_append_tentative_fixed_dispatcher(struct drccore *drc, UINT32 newpc)
+{
+	struct pc_ptr_pair *pair = &drc->tentative_list[drc->tentative_count++];
+	if (drc->tentative_count > drc->tentative_count_max)
+	{
+		printf("drc_append_tentative_fixed_dispatcher: too many tentative branches!\n");
+		exit(1);
+	}
+	pair->target = drc->cache_top;
+	pair->pc = newpc;
+	drc_append_fixed_dispatcher(drc, newpc);
 }
 
 

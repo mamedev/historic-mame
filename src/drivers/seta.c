@@ -6129,7 +6129,7 @@ static MACHINE_DRIVER_START( usclssic )
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD( CUSTOM, seta_sound_intf_16MHz2 )
+	MDRV_SOUND_ADD( X1_010, seta_sound_intf_16MHz2 )
 MACHINE_DRIVER_END
 
 

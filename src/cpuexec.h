@@ -18,6 +18,18 @@ extern "C" {
 #endif
 
 
+
+/*************************************
+ *
+ *	CPU cycle timing arrays
+ *
+ *************************************/
+
+extern double cycles_to_sec[];
+extern double sec_to_cycles[];
+
+
+
 /*************************************
  *
  *	CPU description for drivers
@@ -58,6 +70,7 @@ enum
 	/* the Z80 can be wired to use 16 bit addressing for I/O ports */
 	CPU_16BIT_PORT = 0x0001
 };
+
 
 
 
@@ -127,13 +140,64 @@ READ32_HANDLER( watchdog_reset32_r );
  *************************************/
 
 /* Set the logical state (ASSERT_LINE/CLEAR_LINE) of the RESET line on a CPU */
-void cpu_set_reset_line(int cpu,int state);
+void cpunum_set_reset_line(int cpunum, int state);
 
 /* Set the logical state (ASSERT_LINE/CLEAR_LINE) of the HALT line on a CPU */
-void cpu_set_halt_line(int cpu,int state);
+void cpunum_set_halt_line(int cpunum, int state);
 
-/* Returns status (1=running, 0=suspended for some reason) of a CPU */
-int cpu_getstatus(int cpunum);
+/* Backwards compatibility */
+#define cpu_set_reset_line 		cpunum_set_reset_line
+#define cpu_set_halt_line 		cpunum_set_halt_line
+
+
+
+/*************************************
+ *
+ *	CPU scheduling
+ *
+ *************************************/
+
+/* Suspension reasons */
+enum
+{
+	SUSPEND_REASON_HALT 	= 0x0001,
+	SUSPEND_REASON_RESET 	= 0x0002,
+	SUSPEND_REASON_SPIN 	= 0x0004,
+	SUSPEND_REASON_TRIGGER 	= 0x0008,
+	SUSPEND_REASON_DISABLE 	= 0x0010,
+	SUSPEND_ANY_REASON 		= ~0
+};
+
+/* Suspend the given CPU for a specific reason */
+void cpunum_suspend(int cpunum, int reason, int eatcycles);
+
+/* Suspend the given CPU for a specific reason */
+void cpunum_resume(int cpunum, int reason);
+
+/* Returns true if the given CPU is suspended for any of the given reasons */
+int cpunum_is_suspended(int cpunum, int reason);
+
+/* Aborts the timeslice for the active CPU */
+void activecpu_abort_timeslice(void);
+
+/* Returns the current local time for a CPU, relative to the current timeslice */
+double cpunum_get_localtime(int cpunum);
+
+/* Returns the current scaling factor for a CPU's clock speed */
+double cpunum_get_clockscale(int cpunum);
+
+/* Sets the current scaling factor for a CPU's clock speed */
+void cpunum_set_clockscale(int cpunum, double clockscale);
+
+/* Temporarily boosts the interleave factor */
+void cpu_boost_interleave(double timeslice_time, double boost_duration);
+
+/* Backwards compatibility */
+#define timer_suspendcpu(cpunum, suspend, reason)	do { if (suspend) cpunum_suspend(cpunum, reason, 1); else cpunum_resume(cpunum, reason); } while (0)
+#define timer_holdcpu(cpunum, suspend, reason)		do { if (suspend) cpunum_suspend(cpunum, reason, 0); else cpunum_resume(cpunum, reason); } while (0)
+#define cpu_getstatus(cpunum)						(!cpunum_is_suspended(cpunum, SUSPEND_REASON_HALT | SUSPEND_REASON_RESET | SUSPEND_REASON_DISABLE))
+#define timer_get_overclock(cpunum)					cpunum_get_clockscale(cpunum)
+#define timer_set_overclock(cpunum, overclock)		cpunum_set_clockscale(cpunum, overclock)
 
 
 
@@ -153,18 +217,20 @@ int cycles_left_to_run(void);
 UINT32 activecpu_gettotalcycles(void);
 UINT64 activecpu_gettotalcycles64(void);
 
-/* Returns the total number of CPU cycles for a given cpu */
-UINT32 cpu_gettotalcycles(int cpu);
-UINT64 cpu_gettotalcycles64(int cpu);
-
-/* Account for cycles eaten by suspended CPUs */
-void cpu_add_to_totalcycles(int cpu, int cycles);
+/* Returns the total number of CPU cycles for a given CPU */
+UINT32 cpunum_gettotalcycles(int cpunum);
+UINT64 cpunum_gettotalcycles64(int cpunum);
 
 /* Returns the number of CPU cycles before the next interrupt handler call */
 int activecpu_geticount(void);
 
 /* Scales a given value by the ratio of fcount / fperiod */
 int cpu_scalebyfcount(int value);
+
+/* Backwards compatibility */
+#define cpu_gettotalcycles cpunum_gettotalcycles
+#define cpu_gettotalcycles64 cpunum_gettotalcycles64
+
 
 
 

@@ -31,8 +31,52 @@
                         pretty sure it's not using an oki6295 like the US version, need confirmation from the person
 						that dumped the 2 player roms.
  -5) YM2151 emulation is not 100% correct - this can be heard on certain sound effects during the music.
-  *********************************************************************************************************************/
+  **********************************************************************************************************************
 
+  U.S. Championship V'Ball (Japan)
+  Technos, 1988
+
+  PCB Layout
+  ----------
+
+
+  TA-0025-P1-02 (M6100357A BEACH VOLLEY 880050B04)
+  |---------------------------------------------------------------------|
+  |          YM3014  M6295             25J1-0.47   YM2151   3.579545MHz |
+  |                1.056MHz  25J0-0.78   Z80       6116                 |
+  |                                                                     |
+  |                                                                     |
+  |                                                                     |
+  |                                                                     |
+  |    6502 25J2-2-5.124 6116                                           |
+  |                                                                     |
+  |                    2016                                     12MHz   |
+  |J                                                                    |
+  |A                                             2016  2016             |
+  |M                                                                    |
+  |M                                                                    |
+  |A                                                                    |
+  |  DSW1                              6264     25J4-0.35  25J3-0.5     |
+  |  DSW2                                                               |
+  |       25J6-0.144                                                    |
+  |       25J5-0.143 2016                                               |
+  |                       -------------------                           |
+  |25J7-0.160             |                 |                           |
+  |                       | TOSHIBA  0615   |                           |
+  |                  2016 |                 |                           |
+  |                       | T5324   TRJ-101 |                           |
+  |                       |                 |                           |
+  |-----------------------|-----------------|---------------------------|
+
+
+  Notes:
+        6502 clock: 2.000MHz
+         Z80 clock: 3.579545MHz
+      YM2151 clock: 3.579545MHz
+       M6295 clock: 1.056MHz, sample rate = 8kHz (i.e. 1056000/132)
+
+
+  *********************************************************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -430,7 +474,7 @@ static struct YM2151interface ym2151_interface =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,              /* 1 chip */
-	{ 6000 },           /* frequency (Hz) */
+	{ 1056000/132 },           /* frequency (Hz) */
 	{ REGION_SOUND1 },  /* memory region */
 	{ 20000 }
 };
@@ -449,7 +493,7 @@ static struct MSM5205interface msm5205_interface =
 static MACHINE_DRIVER_START( vball )
 
 	/* basic machine hardware */
- 	MDRV_CPU_ADD(M6502, 3579545)	/* 3.579545 MHz */
+ 	MDRV_CPU_ADD(M6502, 2000000)	/* 3.579545 MHz */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(vball_interrupt,32)	/* ??1 IRQ every 8 visible scanlines, plus NMI for vblank?? */
 
@@ -481,7 +525,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( vball2pj )
 
 	/* basic machine hardware */
- 	MDRV_CPU_ADD(M6502, 3579545)	/* 3.579545 MHz */
+ 	MDRV_CPU_ADD(M6502, 2000000)	/* 3.579545 MHz */
 	MDRV_CPU_MEMORY(vball2pj_readmem,writemem)
 	MDRV_CPU_VBLANK_INT(vball_interrupt,32)	/* ??1 IRQ every 8 visible scanlines, plus NMI for vblank?? */
 
@@ -560,6 +604,7 @@ ROM_START( vball2pj )
 	ROM_LOAD( "vball04.bin",  0x00000, 0x8000,  CRC(534dfbd9) SHA1(d0cb37caf94fa85da4ebdfe15e7a78109084bf91) )
 //	ROM_LOAD( "vball.47",  0x00000, 0x8000,  CRC(10ca79ad) SHA1(aad4a09d6745ca0b5665cb00ff7a4e08ea434068) )
 
+	/* These are from the bootleg; the original has the image data stored in a special dip rom which has not been dumped */
 	ROM_REGION(0x80000, REGION_GFX1, ROMREGION_DISPOSE )	 /* fg tiles */
 	ROM_LOAD( "vball13.bin",  0x00000, 0x10000, CRC(f26df8e1) SHA1(72186c1430d07c7fd9211245b539f05a0660bebe) ) /* 0,1,2,3 */
 	ROM_LOAD( "vball14.bin",  0x10000, 0x10000, CRC(c9798d0e) SHA1(ec156f6c7ecccaa216ce8076f75ad7627ee90945) ) /* 0,1,2,3 */
@@ -577,8 +622,10 @@ ROM_START( vball2pj )
 	ROM_LOAD( "vball05.bin",  0x30000, 0x10000, CRC(9bb95651) SHA1(ec8a481cc7f0d6e469489db7c51103446910ae80) ) /* 0,1,2,3 */
 
 	ROM_REGION(0x20000, REGION_SOUND1, 0 ) /* Sound region#1: adpcm */
-	ROM_LOAD( "vball.78a",  0x00000, 0x10000, CRC(f3e63b76) SHA1(da54d1d7d7d55b73e49991e4363bc6f46e0f70eb) )
-	ROM_LOAD( "vball.78b",  0x10000, 0x10000, CRC(7ad9d338) SHA1(3e3c270fa69bda93b03f07a54145eb5e211ec8ba) )
+	/* the following 2 were on the bootleg */
+//	ROM_LOAD( "vball.78a",  0x00000, 0x10000, CRC(f3e63b76) SHA1(da54d1d7d7d55b73e49991e4363bc6f46e0f70eb) )
+//	ROM_LOAD( "vball.78b",  0x10000, 0x10000, CRC(7ad9d338) SHA1(3e3c270fa69bda93b03f07a54145eb5e211ec8ba) )
+	ROM_LOAD( "25j0-0.78",  0x00000, 0x20000, CRC(8e04bdbf) SHA1(baafc5033c9442b83cb332c2c453c13117b31a3b) )
 
 	ROM_REGION(0x1000, REGION_PROMS, 0 )	/* color PROMs */
 	ROM_LOAD_NIB_LOW ( "vball.44",   0x0000, 0x00800, CRC(a317240f) SHA1(bd57ad516f7a8ff774276fd26b02dd34659d41ad) )
@@ -588,4 +635,4 @@ ROM_END
 
 
 GAME( 1988, vball,    0,     vball,    vball,    0, ROT0, "Technos", "U.S. Championship V'ball (set 1)" )
-GAMEX(1988, vball2pj, vball, vball2pj, vball2pj, 0, ROT0, "Technos", "U.S. Championship V'ball (Japan bootleg)", GAME_IMPERFECT_SOUND )
+GAMEX(1988, vball2pj, vball, vball2pj, vball2pj, 0, ROT0, "Technos", "U.S. Championship V'ball (Japan)", GAME_IMPERFECT_SOUND )

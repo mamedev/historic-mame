@@ -14,7 +14,7 @@
 //	PROTOTYPES
 //============================================================
 
-int win_d3d_effects_init(void);
+int win_d3d_effects_init(int attributes);
 int win_d3d_effects_init_surfaces(void);
 
 

@@ -49,6 +49,9 @@
  *    fixed handling of %.0f
  *    added test for HAVE_LONG_DOUBLE
  *
+ *  Chris Kirmse (ckirmse@yahoo.com) May 2003
+ *    fixed handling of leading zeros in the fractional part of a float.
+ *
  **************************************************************/
 
 /* #include "config.h" */
@@ -675,7 +678,15 @@ static void fmtfp (char *buffer, size_t *currlen, size_t maxlen,
    */
   if (max > 0)
   {
+    int i;
     dopr_outch (buffer, currlen, maxlen, '.');
+
+    /* print leading zeros of the fractional part */
+    for (i=0;i<max - fplace;i++)
+    {
+      dopr_outch(buffer,currlen,maxlen,'0');
+	  zpadlen--;
+    }
 
     while (fplace > 0)
       dopr_outch (buffer, currlen, maxlen, fconvert[--fplace]);
@@ -759,7 +770,7 @@ int main (void)
     NULL
   };
   double fp_nums[] = { -1.5, 134.21, 91340.2, 341.1234, 0203.9, 0.96, 0.996,
-    0.9996, 1.996, 4.136, 0};
+    0.9996, 1.996, 4.136, 1.05, 0};
   char *int_fmt[] = {
     "%-1.5d",
     "%1.5d",

@@ -16,8 +16,6 @@ to generate both 8x8 and 16x16 tiles for different tilemaps.
 
 
 TODO:
-- Sound is controlled by a pic16c57 whose ROM is missing.
-
 Big Twins:
 - The pixel bitmap might be larger than what I handle, or the vertical scroll
   register has an additional meaning. The usual scroll value is 0x7f0, the game
@@ -31,12 +29,20 @@ Big Twins:
 World Beach Volley:
 - sprite/tile priority issue during attract mode (plane should go behind palm)
 - The histogram functions don't seem to work.
+- Sound is controlled by a pic16c57 whose ROM is missing for this game.
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
+#include "cpu/pic16c5x/pic16c5x.h"
+
+
+static data16_t playmark_snd_command;
+static data16_t playmark_snd_flag;
+static data8_t playmark_oki_control;
+static data8_t playmark_oki_command;
 
 
 extern data16_t *bigtwin_bgvideoram;
@@ -64,6 +70,8 @@ static WRITE16_HANDLER( coinctrl_w )
 		coin_counter_w(0,data & 0x0100);
 		coin_counter_w(1,data & 0x0200);
 	}
+	if (data & 0xfcff)
+		logerror("Writing %04x to unknown coin control bits\n",data);
 }
 
 
@@ -134,6 +142,79 @@ static WRITE16_HANDLER( wbeachvl_coin_eeprom_w )
 }
 
 
+static WRITE16_HANDLER( playmark_snd_command_w )
+{
+	if (ACCESSING_LSB) {
+		playmark_snd_command = (data & 0xff);
+		playmark_snd_flag = 1;
+		cpu_yield();
+	}
+}
+
+static READ_HANDLER( playmark_snd_command_r )
+{
+	int data = 0;
+
+	if ((playmark_oki_control & 0x38) == 0x30) {
+		data = playmark_snd_command;
+		logerror("PortB reading %02x from the 68K\n",data);
+	}
+	else if ((playmark_oki_control & 0x38) == 0x28) {
+		data = (OKIM6295_status_0_r(0) & 0x0f);
+//		logerror("PortB reading %02x from the OKI status port\n",data);
+	}
+
+	return data;
+}
+
+static READ_HANDLER( playmark_snd_flag_r )
+{
+	if (playmark_snd_flag) {
+		playmark_snd_flag = 0;
+		return 0x00;
+	}
+
+	return 0x40;
+}
+
+
+static WRITE_HANDLER( playmark_oki_w )
+{
+	playmark_oki_command = data;
+}
+
+static WRITE_HANDLER( playmark_snd_control_w )
+{
+	/*	This port controls communications to and from the 68K, and the OKI
+		device.
+
+		bit legend
+		7w  ???  (No read or writes to Port B)
+		6r  Flag from 68K to notify the PIC that a command is coming
+		5w  Latch write data to OKI? (active low)
+		4w  Activate read signal to OKI? (active low)
+		3w  Set Port 1 to read sound to play command from 68K. (active low)
+		2w  ???  (Read Port B)
+		1   Not used
+		0   Not used
+	*/
+
+	playmark_oki_control = data;
+
+	if ((data & 0x38) == 0x18)
+	{
+//		logerror("Writing %02x to OKI1, PortC=%02x, Code=%02x\n",playmark_oki_command,playmark_oki_control,playmark_snd_command);
+		OKIM6295_data_0_w(0, playmark_oki_command);
+	}
+}
+
+
+static READ_HANDLER( PIC16C5X_T0_clk_r )
+{
+	return 0;
+}
+
+
 
 static MEMORY_READ16_START( bigtwin_readmem )
 	{ 0x000000, 0x0fffff, MRA16_ROM },
@@ -158,7 +239,7 @@ static MEMORY_WRITE16_START( bigtwin_writemem )
 	{ 0x51000c, 0x51000d, MWA16_NOP },	/* always 3? */
 	{ 0x600000, 0x67ffff, bigtwin_bgvideoram_w, &bigtwin_bgvideoram, &bigtwin_bgvideoram_size },
 	{ 0x700016, 0x700017, coinctrl_w },
-	{ 0x70001e, 0x70001f, MWA16_NOP },//sound_command_w },
+	{ 0x70001e, 0x70001f, playmark_snd_command_w },
 	{ 0x780000, 0x7807ff, bigtwin_paletteram_w, &paletteram16 },
 //	{ 0xe00000, 0xe00001, ?? written on startup
 	{ 0xff0000, 0xffffff, MWA16_RAM },
@@ -176,7 +257,7 @@ static MEMORY_READ16_START( wbeachvl_readmem )
 	{ 0x710014, 0x710015, input_port_2_word_r },
 	{ 0x710018, 0x710019, input_port_3_word_r },
 	{ 0x71001a, 0x71001b, input_port_4_word_r },
-//	{ 0x71001c, 0x71001d, ??
+//	{ 0x71001c, 0x71001d, playmark_snd_status??? },
 MEMORY_END
 
 static MEMORY_WRITE16_START( wbeachvl_writemem )
@@ -189,13 +270,39 @@ static MEMORY_WRITE16_START( wbeachvl_writemem )
 	{ 0x51000c, 0x51000d, MWA16_NOP },	/* always 3? */
 //	{ 0x700000, 0x700001, ?? written on startup
 	{ 0x710016, 0x710017, wbeachvl_coin_eeprom_w },
-	{ 0x71001e, 0x71001f, MWA16_NOP },//sound_command_w },
+	{ 0x71001e, 0x71001f, MWA16_NOP },//playmark_snd_command_w },
 	{ 0x780000, 0x780fff, paletteram16_RRRRRGGGGGBBBBBx_word_w, &paletteram16 },
 	{ 0xff0000, 0xffffff, MWA16_RAM },
 #if 0
 	{ 0x700016, 0x700017, coinctrl_w },
 #endif
 MEMORY_END
+
+
+static MEMORY_READ_START( playmark_sound_readmem )
+	{ PIC16C57_MEMORY_READ },
+		/* $000 - 07F  Internal memory mapped registers */
+		/* $000 - 7FF  Program ROM for PIC16C57. Note: code is 12bits wide */
+		/*             View the ROM at $1000 in the debugger memory windows */
+MEMORY_END
+
+static MEMORY_WRITE_START( playmark_sound_writemem )
+	{ PIC16C57_MEMORY_WRITE },
+MEMORY_END
+
+static PORT_READ_START( playmark_sound_readport )
+	{ 0x00, 0x00, IORP_NOP },				/* 4 bit port */
+	{ 0x01, 0x01, playmark_snd_command_r },
+	{ 0x02, 0x02, playmark_snd_flag_r },
+	{ PIC16C5x_T0, PIC16C5x_T0, PIC16C5X_T0_clk_r },
+PORT_END
+
+static PORT_WRITE_START( playmark_sound_writeport )
+	{ 0x00, 0x00, IOWP_NOP },				/* 4 bit port */
+	{ 0x01, 0x01, playmark_oki_w },
+	{ 0x02, 0x02, playmark_snd_control_w },
+PORT_END
+
 
 
 
@@ -456,9 +563,9 @@ static struct GfxDecodeInfo wbeachvl_gfxdecodeinfo[] =
 
 static struct OKIM6295interface okim6295_interface =
 {
-	1,					/* 1 chip */
-	{ 8000 },			/* 8000Hz frequency? */
-	{ REGION_SOUND1 },	/* memory region */
+	1,						/* 1 chip */
+	{ 32000000/32/132 },	/* 7575Hz frequency? */
+	{ REGION_SOUND1 },		/* memory region */
 	{ 100 }
 };
 
@@ -470,6 +577,10 @@ static MACHINE_DRIVER_START( bigtwin )
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz? */
 	MDRV_CPU_MEMORY(bigtwin_readmem,bigtwin_writemem)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_CPU_ADD(PIC16C57, ((32000000/8)/PIC16C5x_CLOCK_DIVIDER))	/* 4MHz ? */
+	MDRV_CPU_MEMORY(playmark_sound_readmem,playmark_sound_writemem)
+	MDRV_CPU_PORTS(playmark_sound_readport,playmark_sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -527,10 +638,11 @@ ROM_START( bigtwin )
 	ROM_LOAD16_BYTE( "2.302",        0x000000, 0x80000, CRC(e6767f60) SHA1(ec0ba1c786e6fde04601c2f3f619e3c6545f9239) )
 	ROM_LOAD16_BYTE( "3.301",        0x000001, 0x80000, CRC(5aba6990) SHA1(4f664a91819fdd27821fa607425701d83fcbd8ce) )
 
-	ROM_REGION( 0x0800, REGION_CPU2, 0 )	/* sound (16C57) */
-	/* ROM will be copied here by the init code */
+	ROM_REGION( 0x4000, REGION_CPU2, 0 )	/* sound (PIC16C57) */
+//	ROM_LOAD( "16c57hs.bin",  PIC16C57_PGM_OFFSET, 0x1000, CRC(b4c95cc3) SHA1(7fc9b141e7782aa5c17310ee06db99d884537c30) )
+	/* ROM will be copied here by the init code from REGION_USER1 */
 
-	ROM_REGION( 0x2d4c, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x3000, REGION_USER1, ROMREGION_DISPOSE )
 	ROM_LOAD( "16c57hs.015",  0x0000, 0x2d4c, CRC(c07e9375) SHA1(7a6714ab888ea6e37bc037bc7419f0998868cfce) )	/* 16C57 .HEX dump, to be converted */
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -554,8 +666,8 @@ ROM_START( wbeachvl )
 	ROM_LOAD16_BYTE( "wbv_02.bin",   0x000000, 0x40000, CRC(c7cca29e) SHA1(03af361081d688c4204a95f7f5babcc598b72c23) )
 	ROM_LOAD16_BYTE( "wbv_03.bin",   0x000001, 0x40000, CRC(db4e69d5) SHA1(119bf35a463d279ddde67ab08f6f1bab9f05cf0c) )
 
-	ROM_REGION( 0x0800, REGION_CPU2, 0 )	/* sound (missing) */
-	ROM_LOAD( "pic16c57",     0x0000, 0x0800, NO_DUMP )
+	ROM_REGION( 0x4000, REGION_CPU2, 0 )	/* sound (missing) */
+	ROM_LOAD( "pic16c57",     PIC16C57_PGM_OFFSET, 0x1000, NO_DUMP )
 
 	ROM_REGION( 0x600000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "wbv_10.bin",   0x000000, 0x80000, CRC(50680f0b) SHA1(ed76ef6ced70ba7e9558162aa94bbe9f19bbabe6) )
@@ -577,6 +689,77 @@ ROM_START( wbeachvl )
 ROM_END
 
 
+static UINT8 playmark_asciitohex(UINT8 data)
+{
+	/* Convert ASCII data to HEX */
 
-GAMEX( 1995, bigtwin,  0, bigtwin,  bigtwin,  0, ROT0, "Playmark", "Big Twin", GAME_NO_COCKTAIL | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1995, wbeachvl, 0, wbeachvl, wbeachvl, 0, ROT0, "Playmark", "World Beach Volley", GAME_NO_COCKTAIL | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+	if ((data >= 0x30) && (data < 0x3a)) data -= 0x30;
+	data &= 0xdf;			/* remove case sensitivity */
+	if ((data >= 0x41) && (data < 0x5b)) data -= 0x37;
+
+	return data;
+}
+
+
+static DRIVER_INIT( bigtwin )
+{
+	data8_t *playmark_PICROM_HEX = memory_region(REGION_USER1);
+	data8_t *playmark_PICROM = memory_region(REGION_CPU2);
+	INT32   offs, data;
+	UINT16  src_pos = 0;
+	UINT16  dst_pos = 0;
+	UINT8   data_hi, data_lo;
+
+
+	playmark_snd_flag = 0;
+
+	/**** Convert the PIC16C57 ASCII HEX dumps to pure HEX ****/
+	do
+	{
+		if ((playmark_PICROM_HEX[src_pos + 0] == ':') &&
+			(playmark_PICROM_HEX[src_pos + 1] == '1') &&
+			(playmark_PICROM_HEX[src_pos + 2] == '0'))
+			{
+			src_pos += 9;
+
+			for (offs = 0; offs < 32; offs += 2)
+			{
+				data_hi = playmark_asciitohex((playmark_PICROM_HEX[src_pos + offs + 0]));
+				data_lo = playmark_asciitohex((playmark_PICROM_HEX[src_pos + offs + 1]));
+
+				if ((data_hi <= 0x0f) && (data_lo <= 0x0f)) {
+					data = (data_hi << 4) | (data_lo << 0);
+					playmark_PICROM[PIC16C57_PGM_OFFSET + dst_pos] = data;
+					dst_pos += 1;
+				}
+			}
+			src_pos += 32;
+		}
+
+		/* Get the PIC16C57 Config register data */
+
+		if ((playmark_PICROM_HEX[src_pos + 0] == ':') &&
+			(playmark_PICROM_HEX[src_pos + 1] == '0') &&
+			(playmark_PICROM_HEX[src_pos + 2] == '2') &&
+			(playmark_PICROM_HEX[src_pos + 3] == '1'))
+			{
+			src_pos += 9;
+
+			data_hi = playmark_asciitohex((playmark_PICROM_HEX[src_pos + 0]));
+			data_lo = playmark_asciitohex((playmark_PICROM_HEX[src_pos + 1]));
+			data =  (data_hi <<  4) | (data_lo << 0);
+			data_hi = playmark_asciitohex((playmark_PICROM_HEX[src_pos + 2]));
+			data_lo = playmark_asciitohex((playmark_PICROM_HEX[src_pos + 3]));
+			data |= (data_hi << 12) | (data_lo << 8);
+
+			pic16c5x_config(data);
+			src_pos = 0x7fff;		/* Force Exit */
+		}
+		src_pos += 1;
+	} while (src_pos < 0x2d4c);		/* 0x2d4c is the size of the HEX rom loaded */
+}
+
+
+
+GAMEX( 1995, bigtwin,  0, bigtwin,  bigtwin,  bigtwin, ROT0, "Playmark", "Big Twin", GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1995, wbeachvl, 0, wbeachvl, wbeachvl, 0,       ROT0, "Playmark", "World Beach Volley", GAME_NO_COCKTAIL | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )

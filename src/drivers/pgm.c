@@ -10,10 +10,11 @@ previously mentioned systems in that respect..
 
 Resolution is 448x224, 15 bit colour
 
-Sound system is ICS WaveFront 2115 Wavetable midi syntesizer, used in some
+Sound system is ICS WaveFront 2115 Wavetable midi synthesizer, used in some
 actual sound cards (Turtle Beach)
 
-The later games would appear to be Encrypted
+Later games are encrypted.  Latest games (kov2, ddp2) include an arm7
+coprocessor with an internal rom and an encrypted external rom.
 
 Roms Contain the Following Data
 
@@ -49,13 +50,12 @@ To Do / Notes:
 sprite zooming (zoom table is contained in vidram)
 sprite masking (lower priority sprites under bg layers can mask higher ones) -? no?
 calender
-better protection emulation in orlegend
 hook up the z80 + emulate sound chip (Farfetch'd is working on this)
 optimize?
 layer enables?
 sprites use dma?
 verify some things
-other 2 interrupts - one is sound rleated *dragon world 2 uses one of them for inputs
+other 2 interrupts - one is sound related *dragon world 2 uses one of them for inputs
 the 'encryption' info came from unknown 3rd party
 see notes at bottom of driver, protection emulation by ElSemi
 
@@ -85,22 +85,121 @@ codes for the ones we have (could just be protection tho)
 */
 
 #include "driver.h"
+#include <time.h>
 
 data16_t *pgm_mainram, *pgm_bg_videoram, *pgm_tx_videoram, *pgm_videoregs, *pgm_rowscrollram;
 WRITE16_HANDLER( pgm_tx_videoram_w );
 WRITE16_HANDLER( pgm_bg_videoram_w );
 VIDEO_START( pgm );
+VIDEO_EOF( pgm );
 VIDEO_UPDATE( pgm );
 void pgm_kov_decrypt(void);
 void pgm_kovsh_decrypt(void);
 void pgm_dw2_decrypt(void);
+void pgm_djlzz_decrypt(void);
 
-READ16_HANDLER ( orlegend_kludge_r )
+READ16_HANDLER( pgm_asic3_r );
+WRITE16_HANDLER( pgm_asic3_w );
+WRITE16_HANDLER( pgm_asic3_reg_w );
+
+READ16_HANDLER (sango_protram_r);
+READ16_HANDLER (ASIC28_r16);
+WRITE16_HANDLER (ASIC28_w16);
+
+READ16_HANDLER (dw2_d80000_r );
+
+
+READ16_HANDLER ( pgm_mirror_r )
 {
-	/* the game reads from within this address range, starting at 0x820000,
-	and increasing to 0x??????, and seems to corrupt ram based on the result? */
+	return pgm_mainram[offset & 0xffff];
+}
 
-	return 0x2;
+WRITE16_HANDLER ( pgm_mirror_w )
+{
+	COMBINE_DATA(pgm_mainram+(offset & 0xffff));
+}
+
+/* Calendar Emulation */
+
+static unsigned char CalVal, CalMask, CalCom=0, CalCnt=0;
+
+static unsigned char bcd(unsigned char data)
+{
+	return ((data / 10) << 4) | (data % 10);
+}
+
+READ16_HANDLER( pgm_calendar_r )
+{
+	unsigned char calr;
+	calr = (CalVal & CalMask) ? 1 : 0;
+	CalMask <<= 1;
+	return calr;
+}
+
+WRITE16_HANDLER( pgm_calendar_w )
+{
+	static time_t ltime;
+	static struct tm *today;
+
+	// initialize the time, otherwise it crashes
+	if( !ltime )
+	{
+		time(&ltime);
+		today = localtime(&ltime);
+	}
+
+	CalCom <<= 1;
+	CalCom |= data & 1;
+	++CalCnt;
+	if(CalCnt==4)
+	{
+		CalMask = 1;
+		CalVal = 1;
+		CalCnt = 0;
+		switch(CalCom & 0xf)
+		{
+			case 1: case 3: case 5: case 7: case 9: case 0xb: case 0xd:
+				CalVal++;
+				break;
+
+			case 0:
+				CalVal=bcd(today->tm_wday); //??
+				break;
+
+			case 2:  //Hours
+				CalVal=bcd(today->tm_hour);
+				break;
+
+			case 4:  //Seconds
+				CalVal=bcd(today->tm_sec);
+				break;
+
+			case 6:  //Month
+				CalVal=bcd(today->tm_mon + 1); //?? not bcd in MVS
+				break;
+
+			case 8:
+				CalVal=0; //Controls blinking speed, maybe milliseconds
+				break;
+
+			case 0xa: //Day
+				CalVal=bcd(today->tm_mday);
+				break;
+
+			case 0xc: //Minute
+				CalVal=bcd(today->tm_min);
+				break;
+
+			case 0xe:  //Year
+				CalVal=bcd(today->tm_year % 100);
+				break;
+
+			case 0xf:  //Load Date
+				time(&ltime);
+				today = localtime(&ltime);
+				break;
+		}
+	}
 }
 
 /*** Memory Maps *************************************************************/
@@ -110,8 +209,7 @@ static MEMORY_READ16_START( pgm_readmem )
 	{ 0x100000, 0x5fffff, MRA16_BANK1 }, /* Game ROM */
 
 	{ 0x800000, 0x81ffff, MRA16_RAM }, /* Main Ram, Sprites, SRAM? */
-
-	{ 0x820000, 0x82ffff, orlegend_kludge_r }, /* protection ??? */
+	{ 0x820000, 0x8fffff, pgm_mirror_r },
 
 	{ 0x900000, 0x903fff, MRA16_RAM }, /* Backgrounds */
 	{ 0x904000, 0x905fff, MRA16_RAM }, /* Text Layer */
@@ -120,8 +218,8 @@ static MEMORY_READ16_START( pgm_readmem )
 	{ 0xb00000, 0xb0ffff, MRA16_RAM }, /* Video Regs inc. Zoom Table */
 	{ 0xc10000, 0xC1ffff, MRA16_RAM }, /* Z80 Program? */
 
-//	{ 0xc00004, 0xc00005, input_port_4_word_r }, // calender stuff?
-//	{ 0xc00006, 0xc00007, input_port_5_word_r }, // calender stuff?
+//	{ 0xc00004, 0xc00005, input_port_4_word_r }, // ?
+	{ 0xc00006, 0xc00007, pgm_calendar_r },
 
 	{ 0xC08000, 0xC08001, input_port_0_word_r }, // p1+p2 controls
 	{ 0xC08002, 0xC08003, input_port_1_word_r }, // p3+p4 controls
@@ -134,6 +232,7 @@ static MEMORY_WRITE16_START( pgm_writemem )
 	{ 0x100000, 0x5fffff, MWA16_BANK1 }, /* Game ROM */
 
 	{ 0x800000, 0x81ffff, MWA16_RAM, &pgm_mainram },
+	{ 0x820000, 0x8fffff, pgm_mirror_w },
 	{ 0x900000, 0x903fff, pgm_bg_videoram_w, &pgm_bg_videoram },
 	{ 0x904000, 0x905fff, pgm_tx_videoram_w, &pgm_tx_videoram },
 	{ 0x907000, 0x9077ff, MWA16_RAM, &pgm_rowscrollram },
@@ -151,317 +250,11 @@ static MEMORY_WRITE16_START( pgm_writemem )
 	/* 0xb03000 bg x scroll */
 	/* 0xb05000 tx y scroll */
 	/* 0xb06000 tx x scroll */
+
+	{ 0xc00006, 0xc00007, pgm_calendar_w },
+
 	{ 0xc10000, 0xC1ffff, MWA16_RAM }, // z80
 MEMORY_END
-
-/*** ASIC 3 - Protection? ****************************************************/
-
-/* this isn't right, we patch the branch instructions for now */
-
-static READ16_HANDLER( orlegnde_prot_r )
-{
-	int res;
-	res = -1;
-
-	/* Start of Boot Up */
-	if (activecpu_get_pc() == 0x145bda) res = 0x80;
-	if (activecpu_get_pc() == 0x145c00) res = 0x00; // NOT 0x80 set
-	if (activecpu_get_pc() == 0x145c28) res = 0x84;
-	if (activecpu_get_pc() == 0x145c54) res = 0x80;
-	if (activecpu_get_pc() == 0x145c80) res = 0x04;
-	if (activecpu_get_pc() == 0x145caa) res = 0x00; // NOT 0x84 set
-	if (activecpu_get_pc() == 0x145cd2) res = 0x20;
-	if (activecpu_get_pc() == 0x145cfc) res = 0x00; // NOT 0x20 set
-
-	/* region is supplied by the protection device */
-	if (activecpu_get_pc() == 0x145D8E) res = (readinputport(4) & 1) << 3;
-	if (activecpu_get_pc() == 0x145D72) res = (readinputport(4) & 2) << 6;
-
-
-	if (res != -1) logerror("%06x: prot_r %04x\n",activecpu_get_pc(),res);
-	else logerror("%06x: prot_r unknown\n",activecpu_get_pc());
-
-	if (res == -1) res = 0x00;
-
-	return res;
-}
-
-void remove_orlegend_commonprot(void)
-{
-	data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
-	mem16[0x145D48/2]=0x4e71; mem16[0x145D4a/2]=0x4e71; /* dif to others. */
-
-	mem16[0x145D02/2]=0x4e71; mem16[0x145D04/2]=0x4e71;
-	mem16[0x145CDC/2]=0x4e71; mem16[0x145CDE/2]=0x4e71;
-	mem16[0x145CB0/2]=0x4e71; mem16[0x145CB2/2]=0x4e71;
-	mem16[0x145C8A/2]=0x4e71; mem16[0x145C8C/2]=0x4e71;
-	mem16[0x145C5E/2]=0x4e71; mem16[0x145C60/2]=0x4e71;
-	mem16[0x145C32/2]=0x4e71; mem16[0x145C34/2]=0x4e71;
-	mem16[0x145C06/2]=0x4e71; mem16[0x145C08/2]=0x4e71;
-	mem16[0x145BE4/2]=0x4e71; mem16[0x145BE6/2]=0x4e71;
-}
-
-void remove_orlegend_prot(void)
-{
-	data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
-	mem16[0x146AE4/2]=0x4e71; mem16[0x146AE6/2]=0x4e71;
-	remove_orlegend_commonprot();
-}
-
-void remove_orlegnde_prot(void)
-{
-	data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
-	mem16[0x146AF4/2]=0x4e71; mem16[0x146AF6/2]=0x4e71;
-	remove_orlegend_commonprot();
-}
-
-/*** Knights of Valour / Sango Protection (from ElSemi) (ASIC28) ***/
-
-static unsigned short ASIC28KEY;
-static unsigned short ASIC28REGS[10];
-static unsigned short ASICPARAMS[256];
-static unsigned short ASIC28RCNT=0;
-static unsigned int B0TABLE[16]={2,0,1,4,3}; //maps char portraits to tables
-
-//Not sure if BATABLE is complete
-static unsigned int BATABLE[0x40]=
-	{0x00,0x29,0x2c,0x35,0x3a,0x41,0x4a,0x4e,  //0x00
-     0x57,0x5e,0x77,0x79,0x7a,0x7b,0x7c,0x7d, //0x08
-     0x7e,0x7f,0x80,0x81,0x82,0x85,0x86,0x87, //0x10
-     0x88,0x89,0x8a,0x8b,0x8c,0x8d,0x8e,0x90,  //0x18
-     0x95,0x96,0x97,0x98,0x99,0x9a,0x9b,0x9c,
-     0x9e,0xa3,0xd4,0xa9,0xaf,0xb5,0xbb,0xc1};
-
-static unsigned int E0REGS[16];
-
-
-READ16_HANDLER (sango_protram_r)
-{
-
-
-	// at offset == 4 is region (supplied by device)
-	// 0 = china
-	// 1 = taiwan
-	// 2 = japan
-	// 3 = korea
-	// 4 = hong kong
-	// 5 = world
-
-	if (offset == 4)	return readinputport(4);
-
-	// otherwise it doesn't seem to use the ram for anything important, we return 0 to avoid test mode corruption
-	// kovplus reads from offset 000e a lot ... why?
-#ifdef MAME_DEBUG
-	usrintf_showmessage ("protection ram r %04x",offset);
-#endif
-	return 0x0000;
-}
-
-READ16_HANDLER (ASIC28_r16)
-//unsigned short ASIC28_r16(unsigned int addr)
-{
-
-	unsigned int val=(ASIC28REGS[1]<<16)|(ASIC28REGS[0]);
-
-//logerror("Asic28 Read PC = %06x Command = %02x ??\n",activecpu_get_pc(), ASIC28REGS[1]);
-
-	switch(ASIC28REGS[1]&0xff)
-	{
-		case 0x99:
-			val=0x880000;
-			break;
-		case 0xd0:	//txt palette
-			val=0xa01000+(ASIC28REGS[0]<<5);
-			break;
-		case 0xdc:	//bg palette
-			val=0xa00800+(ASIC28REGS[0]<<6);
-			break;
-		case 0x9d:
-		case 0xe0:	//spr palette
-			val=0xa00000+((ASIC28REGS[0]&0x1f)<<6);
-			break;
-		case 0xc0:
-			val=0x880000;
-			break;
-		case 0xc3:	//TXT tile position Uses C0 to select column
-			{
-				val=0x904000+(ASICPARAMS[0xc0]+ASICPARAMS[0xc3]*64)*4;
-			}
-			break;
-		case 0xcb:
-			val=0x880000;
-			break;
-		case 0xe7:
-			val=0x880000;
-			break;
-		case 0xe5:
-			val=0x880000;
-			break;
-		case 0xB0:
-			val=B0TABLE[ASIC28REGS[0]&0xf];
-			break;
-		case 0xBA:
-			val=BATABLE[ASIC28REGS[0]&0x3f];
-			if(ASIC28REGS[0]>0x2f)
-			{
-//				PutMessage("Unmapped BA com, report ElSemi",60);
-				usrintf_showmessage	("Unmapped BA com %02x, contact ElSemi / MameDev", ASIC28REGS[0]);
-			}
-			break;
-		case 0xfe:	//todo
-			val=0x880000;
-			break;
-		case 0xfc:	//Adjust damage level to char experience level
-			{
-			val=(ASICPARAMS[0xfc]*ASICPARAMS[0xfe])>>6;
-			break;
-			}
-		case 0xf8:
-			val=E0REGS[ASIC28REGS[0]&0xf]&0xffffff;
-			break;
-		case 0xcc: //BG
-   			{
-   	 		int y=ASICPARAMS[0xcc];
-    		if(y&0x400)    //y is signed (probably x too and it also applies to TXT, but I've never seen it used)
-     			y=-(0x400-(y&0x3ff));
-    		val=0x900000+(((ASICPARAMS[0xcb]+(y)*64)*4)/*&0x1fff*/);
-   			}
-   			break;
-		case 0xf0:
-			{
-				val=0x00C000;
-			}
-			break;
-		case 0xb4:
-			{
-				int v2=ASIC28REGS[0]&0x0f;
-				int v1=(ASIC28REGS[0]&0x0f00)>>8;
-//				unsigned short tmp=E0REGS[v2];
-				//E0REGS[v2]=E0REGS[v1];
-				//E0REGS[v1]=tmp;
-				if(ASIC28REGS[0]==0x102)
-					E0REGS[1]=E0REGS[0];
-				else
-					E0REGS[v1]=E0REGS[v2];
-
-				val=0x880000;
-			}
-			break;
-		case 0xd6:	//???? check it
-			{
-				int v2=ASIC28REGS[0]&0xf;
-//				int v1=(ASIC28REGS[0]&0xf0)>>4;
-				E0REGS[0]=E0REGS[v2];
-				//E0REGS[v2]=0;
-				val=0x880000;
-			}
-			break;
-		default:
-			{
-				val=0x880000;
-			}
-	}
-
-//	if(addr==0x500000)
-	if(offset==0)
-	{
-		unsigned short d=val&0xffff;
-		unsigned short realkey;
-		realkey=ASIC28KEY>>8;
-		realkey|=ASIC28KEY;
-		d^=realkey;
-		return d;
-	}
-//	else if(addr==0x500002)
-	else if(offset==1)
-	{
-		unsigned short d=val>>16;
-		unsigned short realkey;
-		realkey=ASIC28KEY>>8;
-		realkey|=ASIC28KEY;
-		d^=realkey;
-		ASIC28RCNT++;
-		ASIC28RCNT&=0xf;	//16 busy states
-		if(ASIC28RCNT==0)
-		{
-			ASIC28KEY+=0x100;
-			ASIC28KEY&=0xFF00;
-		}
-		return d;
-	}
-	return 0xff;
-}
-
-WRITE16_HANDLER (ASIC28_w16)
-//void ASIC28_w16(unsigned int addr,unsigned short data)
-{
-//	if(addr==0x500000)
-	if(offset==0)
-	{
-		unsigned short realkey;
-		realkey=ASIC28KEY>>8;
-		realkey|=ASIC28KEY;
-		data^=realkey;
-		ASIC28REGS[0]=data;
-		return;
-	}
-//	if(addr==0x500002)
-	if(offset==1)
-	{
-		unsigned short realkey;
-
-		ASIC28KEY=data&0xff00;
-
-		realkey=ASIC28KEY>>8;
-		realkey|=ASIC28KEY;
-		data^=realkey;
-		ASIC28REGS[1]=data;
-//		ErrorLogMessage("ASIC28 CMD %X  PARAM %X",ASIC28REGS[1],ASIC28REGS[0]);
-		logerror("ASIC28 CMD %04x  PARAM %04x\n",ASIC28REGS[1],ASIC28REGS[0]);
-
-		ASICPARAMS[ASIC28REGS[1]&0xff]=ASIC28REGS[0];
-		if(ASIC28REGS[1]==0xE7)
-		{
-			unsigned int E0R=(ASICPARAMS[0xE7]>>12)&0xf;
-			E0REGS[E0R]&=0xffff;
-			E0REGS[E0R]|=ASIC28REGS[0]<<16;
-		}
-		if(ASIC28REGS[1]==0xE5)
-		{
-			unsigned int E0R=(ASICPARAMS[0xE7]>>12)&0xf;
-			E0REGS[E0R]&=0xff0000;
-			E0REGS[E0R]|=ASIC28REGS[0];
-		}
-		ASIC28RCNT=0;
-	}
-}
-
-/* Dragon World 2 */
-
-#define DW2BITSWAP(s,d,bs,bd)  d=((d&(~(1<<bd)))|(((s>>bs)&1)<<bd))
-//Use this handler for reading from 0xd80000-0xd80002
-READ16_HANDLER (dw2_d80000_r )
-{
-//addr&=0xff;
-// if(dw2reg<0x20) //NOT SURE!!
-	{
-		//The value at 0x80EECE is computed in the routine at 0x107c18
-		data16_t d=pgm_mainram[0xEECE/2];
-		data16_t d2=0;
-		d=(d>>8)|(d<<8);
-		DW2BITSWAP(d,d2,7 ,0);
-		DW2BITSWAP(d,d2,4 ,1);
-		DW2BITSWAP(d,d2,5 ,2);
-		DW2BITSWAP(d,d2,2 ,3);
-		DW2BITSWAP(d,d2,15,4);
-		DW2BITSWAP(d,d2,1 ,5);
-		DW2BITSWAP(d,d2,10,6);
-		DW2BITSWAP(d,d2,13,7);
-		// ... missing bitswaps here (8-15) there is not enough data to know them
-		// the code only checks the lowest 8 bytes
-		return d2;
-	}
-}
 
 
 /*** Input Ports *************************************************************/
@@ -549,107 +342,6 @@ INPUT_PORTS_START( pgm )
 	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
-/* probably not dsw related anyway
-	PORT_START
-	PORT_DIPNAME( 0x0001, 0x0001, "4" )
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0000, DEF_STR( Unknown ) )  // Freezes if off?
-	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-
-	PORT_START
-	PORT_DIPNAME( 0x0001, 0x0001, "5" )
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-*/
 	PORT_START	/* Region */
 	PORT_DIPNAME( 0x0003, 0x0000, "Region" )
 	PORT_DIPSETTING(      0x0000, "World" )
@@ -694,7 +386,6 @@ INPUT_PORTS_START( sango )
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER4 )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER4 )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER4 )
-
 	PORT_START	/* DSW */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -739,107 +430,6 @@ INPUT_PORTS_START( sango )
 	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
-/* probably not dsw related anyway
-	PORT_START
-	PORT_DIPNAME( 0x0001, 0x0001, "4" )
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0000, DEF_STR( Unknown ) )  // Freezes if off?
-	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-
-	PORT_START
-	PORT_DIPNAME( 0x0001, 0x0001, "5" )
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-*/
 	PORT_START	/* Region */
 	PORT_DIPNAME( 0x000f, 0x0005, "Region" )
 	PORT_DIPSETTING(      0x0000, "China" )
@@ -909,16 +499,17 @@ static MACHINE_DRIVER_START( pgm )
 	/* theres also a z80, program is uploaded by the 68k */
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
 	MDRV_SCREEN_SIZE(64*8, 64*8)
 	MDRV_VISIBLE_AREA(0*8, 56*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(0x1200/2)
 
 	MDRV_VIDEO_START(pgm)
+	MDRV_VIDEO_EOF(pgm)
 	MDRV_VIDEO_UPDATE(pgm)
 MACHINE_DRIVER_END
 
@@ -985,24 +576,10 @@ static DRIVER_INIT( orlegend )
 	expand_32x32x5bpp();
 	expand_colourdata();
 
-	install_mem_read16_handler(0, 0xC0400e, 0xC0400f, orlegnde_prot_r);
-	install_mem_read16_handler(0, 0x80a70e, 0x80a70f, orlegend_speedup);
-
-	remove_orlegend_prot(); /* removes  bsr 145b66 */
-}
-
-static DRIVER_INIT( orlegnde )
-{
-	unsigned char *ROM = memory_region(REGION_CPU1);
-	cpu_setbank(1,&ROM[0x100000]);
-
-	expand_32x32x5bpp();
-	expand_colourdata();
-
-	install_mem_read16_handler(0, 0xC0400e, 0xC0400f, orlegnde_prot_r);
-	install_mem_read16_handler(0, 0x80a70e, 0x80a70f, orlegend_speedup);
-
-	remove_orlegnde_prot(); /* removes  bsr 145b66 */
+	install_mem_read16_handler (0, 0xC0400e, 0xC0400f, pgm_asic3_r);
+	install_mem_write16_handler(0, 0xC04000, 0xC04001, pgm_asic3_reg_w);
+	install_mem_write16_handler(0, 0xC0400e, 0xC0400f, pgm_asic3_w);
+	install_mem_read16_handler (0, 0x80a70e, 0x80a70f, orlegend_speedup);
 }
 
 static DRIVER_INIT( dragwld2 )
@@ -1073,6 +650,25 @@ static DRIVER_INIT( kovsh )
 
  	pgm_kovsh_decrypt();
 }
+
+static DRIVER_INIT( djlzz )
+{
+	unsigned char *ROM = memory_region(REGION_CPU1);
+	cpu_setbank(1,&ROM[0x100000]);
+
+	expand_32x32x5bpp();
+	expand_colourdata();
+
+	install_mem_read16_handler(0, 0x500000, 0x500003, ASIC28_r16);
+	install_mem_write16_handler(0, 0x500000, 0x500003, ASIC28_w16);
+
+	/* 0x4f0000 - ? is actually ram shared with the protection device,
+	  the protection device provides the region code */
+	install_mem_read16_handler(0, 0x4f0000, 0x4fffff, sango_protram_r);
+
+ 	pgm_djlzz_decrypt();
+}
+
 
 /*** Rom Loading *************************************************************/
 
@@ -1342,160 +938,117 @@ ROM_START( kovsh )
 	ROM_LOAD( "m0600.rom",    0x200000, 0x400000, CRC(3ada4fd6) SHA1(4c87adb25d31cbd41f04fbffe31f7bc37173da76) )
 ROM_END
 
+ROM_START( photoy2k )
+	ROM_REGION( 0x600000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_WORD_SWAP( "pgm_p01s.rom", 0x000000, 0x020000, CRC(e42b166e) SHA1(2a9df9ec746b14b74fae48b1a438da14973702ea) )  // (BIOS)
+	ROM_LOAD16_WORD_SWAP( "v104.16m",     0x100000, 0x200000, CRC(e051070f) SHA1(a5a1a8dd7542a30632501af8d02fda07475fd9aa) )
+
+	ROM_REGION( 0x480000, REGION_GFX1, 0 ) /* 8x8 Text Tiles + 32x32 BG Tiles */
+	ROM_LOAD( "pgm_t01s.rom", 0x000000, 0x200000, CRC(1a7123a0) SHA1(cc567f577bfbf45427b54d6695b11b74f2578af3) ) // (BIOS)
+	ROM_LOAD( "t0700.rom",    0x400000, 0x080000, CRC(93943b4d) SHA1(3b439903853727d45d62c781af6073024eb3c5a3) )
+
+	ROM_REGION( 0x480000/5*8, REGION_GFX2, ROMREGION_DISPOSE ) /* Region for 32x32 BG Tiles */
+	/* 32x32 Tile Data is put here for easier Decoding */
+
+	/* all roms below need checking to see if they're the same on this board */
+	ROM_REGION( 0x1080000, REGION_GFX3, 0 ) /* Sprite Colour Data */
+	ROM_LOAD( "a0700.l",    0x0000000, 0x0400000, CRC(26a9ae9c) SHA1(c977c89db6fdf47ee260ff687b80375caeab975c) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
+	ROM_LOAD( "a0700.h",    0x0400000, 0x0400000, CRC(79bc1fc1) SHA1(a09472a9b75704c1d31ab828f92c2a5007b2b4ed) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
+	ROM_LOAD( "a0701.l",    0x0800000, 0x0400000, CRC(23607f81) SHA1(8b6dbcdce9b131370693847ed9771aa04b62711c) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
+	ROM_LOAD( "a0701.h",    0x0c00000, 0x0400000, CRC(5f2efd37) SHA1(9a5bd9751691bc085b0751b9fa8ede9eb97b1248) )
+	ROM_LOAD( "a0702.rom",  0x1000000, 0x0080000, CRC(42239e1b) SHA1(2b6d20958abf8a67ce525d5c8964b6d225ccaeda) )
+
+	ROM_REGION( 0x2000000, REGION_GFX4, 0 ) /* Sprite Colour Data */
+	/* Sprite Colour Data is Unpacked Here */
+
+	ROM_REGION( 0x1000000, REGION_GFX5, 0 ) /* Sprite Masks + Colour Indexes */
+	ROM_LOAD( "b0700.l",    0x0000000, 0x0400000, CRC(af096904) SHA1(8e86b36cc44720ece68022e409279bf9144341ba) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
+	ROM_LOAD( "b0700.h",    0x0400000, 0x0400000, CRC(6d53de26) SHA1(f3f93fd2f87adb815834ba0242b94073fbb5e333) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
+	ROM_LOAD( "cgv101.rom", 0x0800000, 0x0020000, CRC(da02ec3e) SHA1(7ee21d748c9b932f53e790a9040167f904fecefc) )
+
+	ROM_REGION( 0x280000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
+	ROM_LOAD( "pgm_m01s.rom", 0x000000, 0x200000, CRC(45ae7159) SHA1(d3ed3ff3464557fd0df6b069b2e431528b0ebfa8) ) // (BIOS)
+	ROM_LOAD( "m0700.rom",    0x200000, 0x080000, CRC(acc7afce) SHA1(ac2d344ebac336f0f363bb045dd8ea4e83d1fb50) )
+ROM_END
+
+ROM_START( ddp2 )
+	ROM_REGION( 0x500000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_WORD_SWAP( "pgm_p01s.rom", 0x000000, 0x020000, CRC(e42b166e) SHA1(2a9df9ec746b14b74fae48b1a438da14973702ea) )  // (BIOS)
+	ROM_LOAD16_WORD_SWAP( "v100.u8",    0x100000, 0x200000, CRC(0c8aa8ea) )
+
+	ROM_REGION( 0x20000, REGION_USER1, 0 ) /* ARM Data */
+	ROM_LOAD( "v100.u23", 0x000000, 0x20000, CRC(06c3dd29) )
+
+	ROM_REGION( 0xc00000, REGION_GFX1, 0 ) /* 8x8 Text Tiles + 32x32 BG Tiles */
+	ROM_LOAD( "pgm_t01s.rom", 0x000000, 0x200000, CRC(1a7123a0) SHA1(cc567f577bfbf45427b54d6695b11b74f2578af3) ) // (BIOS)
+	ROM_LOAD( "t1300.u21",    0x400000, 0x800000, CRC(e748f0cb) )
+
+	ROM_REGION( 0xc00000/5*8, REGION_GFX2, ROMREGION_DISPOSE ) /* Region for 32x32 BG Tiles */
+	/* 32x32 Tile Data is put here for easier Decoding */
+
+	ROM_REGION( 0x1000000, REGION_GFX3, 0 ) /* Sprite Colour Data */
+	ROM_LOAD( "a1300.u1",    0x0000000, 0x0800000, CRC(fc87a405) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
+	ROM_LOAD( "a1301.u2",    0x0800000, 0x0800000, CRC(0c8520da) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
+
+	ROM_REGION( 0x2000000, REGION_GFX4, 0 ) /* Sprite Colour Data */
+	/* Sprite Colour Data is Unpacked Here */
+
+	ROM_REGION( 0x0800000, REGION_GFX5, 0 ) /* Sprite Masks + Colour Indexes */
+	ROM_LOAD( "b1300.u7",    0x0000000, 0x0800000, CRC(ef646604) )
+
+	ROM_REGION( 0x600000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
+	ROM_LOAD( "pgm_m01s.rom", 0x000000, 0x200000, CRC(45ae7159) SHA1(d3ed3ff3464557fd0df6b069b2e431528b0ebfa8) ) // (BIOS)
+	ROM_LOAD( "m1300.u5",     0x200000, 0x400000, CRC(82d4015d) )
+ROM_END
+
+ROM_START( kov2plus )
+	ROM_REGION( 0x500000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_WORD_SWAP( "pgm_p01s.rom", 0x000000, 0x020000, CRC(e42b166e) SHA1(2a9df9ec746b14b74fae48b1a438da14973702ea) )  // (BIOS)
+	ROM_LOAD16_WORD_SWAP( "v204-32m.rom", 0x100000, 0x400000, CRC(583e0650) )
+
+	ROM_REGION( 0x200000, REGION_USER1, 0 ) /* ARM Data */
+	ROM_LOAD( "v200-16.rom", 0x000000, 0x200000, CRC(16a0c11f) )
+
+	ROM_REGION( 0xc00000, REGION_GFX1, 0 ) /* 8x8 Text Tiles + 32x32 BG Tiles */
+	ROM_LOAD( "pgm_t01s.rom", 0x000000, 0x200000, CRC(1a7123a0) SHA1(cc567f577bfbf45427b54d6695b11b74f2578af3) ) // (BIOS)
+	ROM_LOAD( "t1200.rom",    0x400000, 0x800000, CRC(d7e26609) )
+
+	ROM_REGION( 0xc00000/5*8, REGION_GFX2, ROMREGION_DISPOSE ) /* Region for 32x32 BG Tiles */
+	/* 32x32 Tile Data is put here for easier Decoding */
+
+	ROM_REGION( 0x2200000, REGION_GFX3, 0 ) /* Sprite Colour Data */
+	ROM_LOAD( "a1200.rom",    0x0000000, 0x0800000, CRC(ceeb81d8) )
+	ROM_LOAD( "a1201.rom",    0x0800000, 0x0800000, CRC(21063ca7) )
+	ROM_LOAD( "a1202.rom",    0x1000000, 0x0800000, CRC(4bb92fae) )
+	ROM_LOAD( "a1203.rom",    0x1800000, 0x0800000, CRC(e73cb627) )
+	ROM_LOAD( "a1204.rom",    0x2000000, 0x0200000, CRC(14b4b5bb) )
+
+	ROM_REGION( 0x4000000, REGION_GFX4, 0 ) /* Sprite Colour Data */
+	/* Sprite Colour Data is Unpacked Here */
+
+	ROM_REGION( 0x0800000, REGION_GFX5, 0 ) /* Sprite Masks + Colour Indexes */
+	ROM_LOAD( "b1200.rom",    0x0000000, 0x0800000, CRC(bed7d994) )
+
+	ROM_REGION( 0xa00000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
+	ROM_LOAD( "pgm_m01s.rom", 0x000000, 0x200000, CRC(45ae7159) SHA1(d3ed3ff3464557fd0df6b069b2e431528b0ebfa8) ) // (BIOS)
+	ROM_LOAD( "m1200.rom",    0x200000, 0x800000, CRC(b0d88720) )
+ROM_END
+
 /*** GAME ********************************************************************/
 
 GAMEX( 1997, pgm,      0,          pgm, pgm,   0,          ROT0, "IGS", "PGM (Polygame Master) System BIOS", NOT_A_DRIVER )
 
 GAMEX( 1997, orlegend, pgm,        pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 126)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND  )
-GAMEX( 1997, orlegnde, orlegend,   pgm, pgm,   orlegnde,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 112)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND  )
-GAMEX( 1997, orlegndc, orlegend,   pgm, pgm,   orlegnde,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 112, Chinese Board)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND  )
-GAMEX( 1997, dragwld2, pgm,        pgm, pgm,   dragwld2,   ROT0, "IGS", "Dragon World II (ver. 100C, China)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1997, orlegnde, orlegend,   pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 112)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND  )
+GAMEX( 1997, orlegndc, orlegend,   pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 112, Chinese Board)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND  )
+GAMEX( 1997, dragwld2, pgm,        pgm, pgm,   dragwld2,   ROT0, "IGS", "Zhong Guo Long II (ver. 100C, China)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1999, kov,      pgm,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour / Sangoku Senki (ver. 117)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND ) /* ver # provided by protection? */
 GAMEX( 1999, kov115,   kov,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour / Sangoku Senki (ver. 115)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND ) /* ver # provided by protection? */
 GAMEX( 1999, kovplus,  kov,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour Plus / Sangoku Senki Plus (ver. 119)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+
+/* not working */
+
+GAMEX( 1999, photoy2k, pgm,        pgm, sango, djlzz, 	   ROT0, "IGS", "Photo Y2K", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEX( 1999, kovsh,    kov,        pgm, sango, kovsh,	   ROT0, "IGS", "Knights of Valour Superheroes / Sangoku Senki Superheroes (ver. 322)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-
-/*
-
-ASIC3 is the orlegend protection, its not perfect as it still needs 1 of the
-patches.
-
-ASIC3 emulation:
-
-unsigned short BACKREGS1[]={'I','G', 'S', 'A', 'A', 0x7f,'A', 'A', 0x3e,'A',
-'I', 0xf9,0xa, '&', 'I','I', 'I',  '2'};
-unsigned short REGS[]=
-{0x20,0x21,0x22,0x24,0x25,0x26,0x27,0x28,0x2a,0x2b,0x2c,0x2d,0x2e,0x30,0x31,
-0x32,0x33,0x34};
-unsigned short Backup[0x100];
-unsigned short BLastReg=0;
-
-
-ASIC3Init()
-{
-  Backup[0]=0xff;
-  for(int i=0;i<0x12;++i)
-      Backup[REGS[i]]=BACKREGS1[i];
-}
-
-
-unsigned shortASIC3Read16(unsigned int addr)
-{
-  addr&=0xff;
-  if(addr==0xe)
-  {
-//   if(BLastReg==3)
-//    return 0xfc;
-//   else
-
-   if(BLastReg<0x20 || BLastReg>0x34
-     )
-     return Backup[BLastReg]*2;
-   else
-    return Backup[BLastReg];
-}
-
-void ASIC3Write16(unsigned int addr,unsigned short val)
-{
-  addr&=0xff;
-  if(addr==0)
-   BLastReg=data;
-  else if(addr==0xe)
-  {
-   if(BLastReg!=3 &&
-      (BLastReg<0x20 || BLastReg>0x34)
-     )
-    Backup[BLastReg]=data;
-  }
-}
-
-Calendar Emulation:  W: 0xc08006   R: 0xc08006
-
-static unsigned char CalVal,CalMask,CalCom=0,CalCnt=0;
-
-static unsigned char bcd(unsigned char v)
-{
- unsigned int d,u;
- d=v/10;
- u=v%10;
- return (d<<4)|u;
-}
-
-void CalWrite(char data)
-{
- static SYSTEMTIME curdate;
- CalCom<<=1;
- CalCom|=data&1;
- ++CalCnt;
- if(CalCnt==4)
- {
-  CalMask=0x1;
-  CalVal=1;
-  CalCnt=0;
-  switch(CalCom&0xf)
-  {
-   case 0:
-    CalVal=bcd(curdate.wDayOfWeek); //??
-    break;
-   case 1:
-    CalVal=2;
-    break;
-   case 2:  //Hours
-    CalVal=bcd(curdate.wHour);
-    break;
-   case 3:
-    CalVal=4;
-    break;
-   case 4:  //seconds
-    CalVal=bcd(curdate.wSecond);
-    break;
-   case 5:
-    CalVal=6;
-    break;
-   case 6:  //Month
-    CalVal=bcd(curdate.wMonth); //?? not bcd in MVS
-    break;
-   case 7:
-    CalVal=8;
-    break;
-   case 8:
-    //CalVal=bcd(curdate.wDayOfWeek);
-    CalVal=0; //Controls blinking speed, maybe milliseconds
-    break;
-   case 9:
-    CalVal=10;
-    break;
-   case 0xa: //Day
-    CalVal=bcd(curdate.wDay);
-    break;
-   case 0xb:
-    CalVal=12;
-    break;
-   case 0xc: //Minute
-    CalVal=bcd(curdate.wMinute);
-    break;
-   case 0xd:
-    CalVal=14;
-    break;
-   case 0xe:  //Year
-    CalVal=bcd(curdate.wYear%100);
-    break;
-   case 0xf:  //Load Date
-    GetLocalTime(&curdate);
-    break;
-  }
- }
-}
-
-char CalRead()
-{
- unsigned char v;
- v=(CalVal&CalMask)?1:0;
- CalMask<<=1;
- return v;
-}
-
-
-*/
-
-
+GAMEX( 2001, ddp2,     pgm,        pgm, sango, 0, 	       ROT270, "IGS", "Bee Storm - DoDonPachi II", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 2001, kov2plus, pgm,        pgm, sango, 0, 	       ROT0, "IGS", "Knights of Valour 2 Plus / Sangoku Senki 2 Plus", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

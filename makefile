@@ -20,7 +20,7 @@ endif
 # MAP = 1
 
 # uncomment next line to use Assembler 68000 engine
-X86_ASM_68000 = 1
+# X86_ASM_68000 = 1
 
 # uncomment next line to use Assembler 68020 engine
 # X86_ASM_68020 = 1
@@ -190,6 +190,10 @@ hdcomp$(EXE): $(OBJ)/hdcomp.o $(OBJ)/harddisk.o $(OBJ)/md5.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ -lz -o $@
 
+xml2info$(EXE): src/xml2info/xml2info.c
+	@echo Compiling $@...
+	$(CC) -O1 -o xml2info$(EXE) $<
+
 ifdef PERL
 $(OBJ)/cpuintrf.o: src/cpuintrf.c rules.mak
 	$(PERL) src/makelist.pl
@@ -267,3 +271,10 @@ clean68k:
 	$(RM) -r $(OBJ)/cpuintrf.o
 	$(RM) -r $(OBJ)/drivers/cps2.o
 	$(RM) -r $(OBJ)/cpu/m68000
+
+check: $(EMULATOR) xml2info$(EXE)
+	./$(EMULATOR) -listxml > $(NAME).xml
+	./xml2info < $(NAME).xml > $(NAME).lst
+	./xmllint --valid --noout $(NAME).xml
+
+

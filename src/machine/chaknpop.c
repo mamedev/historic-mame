@@ -13,9 +13,9 @@ static data8_t mcu_seed;
 static data8_t mcu_select;
 static data8_t mcu_result;
 static data8_t mcu_wait;
-static int mcu_countdown;
 
-/*  mcu data that is extracted from the real board! */
+/* mcu data that is extracted from the real board! */
+/* updated on 2st Jun 2003 */
 static data8_t mcu_data[256] = {
 	0x3a, 0xe6, 0x80, 0xc6, 0x0e, 0xdd, 0x77, 0xfd,
 	0x7e, 0xfe, 0x10, 0x38, 0x10, 0xdd, 0x7e, 0x03,
@@ -45,7 +45,7 @@ static data8_t mcu_data[256] = {
 	0x3e, 0x3a, 0x87, 0x83, 0x3c, 0x32, 0x87, 0x83,
 	0x0f, 0x0f, 0xe6, 0x07, 0xfe, 0x02, 0x20, 0x01,
 	0xaf, 0x11, 0x40, 0x98, 0x1d, 0x12, 0x1d, 0x20,
-	0x0c, 0x0f, 0x06, 0x07, 0x10, 0x21, 0x22, 0x22,
+	0xfb, 0x2a, 0x89, 0x83, 0x2b, 0x22, 0x89, 0x83,
 	0xc9, 0x3a, 0x5b, 0x81, 0xa7, 0xc0, 0x21, 0x80,
 	0x81, 0x11, 0x04, 0x00, 0x06, 0x09, 0x34, 0x19,
 	0x10, 0xfc, 0x3e, 0x01, 0x32, 0x5b, 0x81, 0xc9
@@ -62,6 +62,7 @@ static void mcu_update_seed(data8_t data)
 	mcu_seed += 0x19;
 	//logerror("New seed: 0x%02x\n", mcu_seed);
 }
+
 
 /***************************************************************************
   Memory handlers
@@ -94,21 +95,6 @@ WRITE_HANDLER( chaknpop_mcu_portA_w )
 {
 	data8_t *RAM = memory_region(REGION_CPU1);
 	data8_t mcu_command;
-
-	if (mcu_countdown)
-	{
-	data16_t counter = (RAM[0x838a] << 8) + RAM[0x8389];
-
-	counter--;
-	RAM[0x8389] = counter & 0xff;
-	RAM[0x838a] = counter >> 8;
-
-		if (!counter)
-		{
-			mcu_countdown = 0;
-			logerror("MCU count down ended\n");
-		}
-	}
 
 	mcu_command = data + mcu_seed;
 	mcu_result = 0;
@@ -164,19 +150,6 @@ WRITE_HANDLER( chaknpop_mcu_portC_w )
 	//logerror("%04x: MCU portC write 0x%02x\n", activecpu_get_pc(), data);
 }
 
-WRITE_HANDLER( mcu_countdown_w )
-{
-	data8_t *RAM = memory_region(REGION_CPU1);
-
-	RAM[0x8389] = data;
-
-	/* I don't know what is trigger. Is it needed only ending? */
-	if (activecpu_get_previouspc() == 0x3560)
-	{
-		mcu_countdown = 1;
-		logerror("MCU count down started\n");
-	}
-}
 
 /***************************************************************************
   Initialize mcu emulation
@@ -184,19 +157,14 @@ WRITE_HANDLER( mcu_countdown_w )
 
 DRIVER_INIT( chaknpop )
 {
-	/*  Count down by MCU */
-	install_mem_write_handler(0, 0x8389, 0x8389, mcu_countdown_w);
-
 	state_save_register_UINT8("chankpop", 0, "mcu_seed",    &mcu_seed,    1);
 	state_save_register_UINT8("chankpop", 0, "mcu_result",  &mcu_result,  1);
 	state_save_register_UINT8("chankpop", 0, "mcu_select",  &mcu_select,  1);
-	state_save_register_UINT8("chankpop", 0, "mcu_wait",       &mcu_wait,    1);
-	state_save_register_int(  "chankpop", 0, "mcu_countdown",  &mcu_countdown);
+	state_save_register_UINT8("chankpop", 0, "mcu_wait",    &mcu_wait,    1);
 }
 
 MACHINE_INIT( chaknpop )
 {
 	mcu_seed = MCU_INITIAL_SEED;
 	mcu_wait = 0;
-	mcu_countdown = 0;
 }

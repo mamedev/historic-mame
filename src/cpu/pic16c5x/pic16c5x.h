@@ -19,18 +19,18 @@
 
 
 /****************************************************************************
- * Use these in the memory and/or IO port address fields of your driver
- * for simplified memory and IO mapping.
- * i.e,
- *	{ PIC16C5x_T0, PIC16C5x_T0, PIC16C5X_T0_clk_r },
- *	{ PIC16C55_MEMORY_READ },
- *	{ PIC16C55_MEMORY_WRITE },
- *	{ PIC16C57_MEMORY_READ },
- *	{ PIC16C57_MEMORY_WRITE },
+ *	Use these in the memory and/or IO port address fields of your driver
+ *	for simplified memory and IO mapping.
+ *	i.e,
+ *		{ PIC16C5x_T0, PIC16C5x_T0, PIC16C5X_T0_clk_r },
+ *		{ PIC16C55_MEMORY_READ },
+ *		{ PIC16C55_MEMORY_WRITE },
+ *		{ PIC16C57_MEMORY_READ },
+ *		{ PIC16C57_MEMORY_WRITE },
  */
 
-#define PIC16C5X_DATA_OFFSET    0x000
-#define PIC16C5X_PGM_OFFSET     0x800
+#define PIC16C5X_DATA_OFFSET	0x0000
+#define PIC16C5X_PGM_OFFSET		0x1000
 
 
 
@@ -45,10 +45,11 @@
 
 
 enum {
-	PIC16C5x_PC=1, PIC16C5x_STK0, PIC16C5x_STK1, PIC16C5x_TMR0,
+	PIC16C5x_PC=1, PIC16C5x_STK0, PIC16C5x_STK1, PIC16C5x_FSR,
 	PIC16C5x_W,    PIC16C5x_ALU,  PIC16C5x_STR,  PIC16C5x_OPT,
-	PIC16C5x_FSR,  PIC16C5x_PRTA, PIC16C5x_PRTB, PIC16C5x_PRTC,
-	PIC16C5x_WDT,  PIC16C5x_TRSA, PIC16C5x_TRSB, PIC16C5x_TRSC
+	PIC16C5x_TMR0, PIC16C5x_PRTA, PIC16C5x_PRTB, PIC16C5x_PRTC,
+	PIC16C5x_WDT,  PIC16C5x_TRSA, PIC16C5x_TRSB, PIC16C5x_TRSC,
+	PIC16C5x_PSCL
 };
 
 
@@ -56,7 +57,16 @@ enum {
  *	Public Data
  */
 
-extern int pic16C5x_icount;                     /* T-state count */
+extern int pic16C5x_icount;						/* T-state count */
+
+
+/****************************************************************************
+ *	Function to configure the CONFIG register. This is actually hard-wired
+ *	during ROM programming, so should be called in the driver INIT, with
+ *	the value if known (available in HEX dumps of the ROM).
+ */
+
+void pic16c5x_config(int data);
 
 
 /****************************************************************************
@@ -134,11 +144,11 @@ extern int pic16C5x_icount;                     /* T-state count */
 
 #define PIC16C54_MEMORY_READ													\
 	  (PIC16C54_DATA_OFFSET + 0x00), (PIC16C54_DATA_OFFSET + 0x1f), MRA_RAM },	\
-	{ (PIC16C54_PGM_OFFSET + 0x000), (PIC16C54_PGM_OFFSET + 0x1ff), MRA_ROM
+	{ (PIC16C54_PGM_OFFSET + 0x000), (PIC16C54_PGM_OFFSET + ((0x1ff*2)+1)), MRA_ROM
 
 #define PIC16C54_MEMORY_WRITE											 		\
 	  (PIC16C54_DATA_OFFSET + 0x00), (PIC16C54_DATA_OFFSET + 0x1f), MWA_RAM },	\
-	{ (PIC16C54_PGM_OFFSET + 0x000), (PIC16C54_PGM_OFFSET + 0x1ff), MWA_ROM
+	{ (PIC16C54_PGM_OFFSET + 0x000), (PIC16C54_PGM_OFFSET + ((0x1ff*2)+1)), MWA_ROM
 
 extern void pic16C54_init(void);
 extern void pic16C54_reset(void *param);
@@ -172,11 +182,11 @@ extern unsigned Dasm16C5x(char *buffer, unsigned pc);
 
 #define PIC16C55_MEMORY_READ													\
 	  (PIC16C55_DATA_OFFSET + 0x00), (PIC16C55_DATA_OFFSET + 0x1f), MRA_RAM },	\
-	{ (PIC16C55_PGM_OFFSET + 0x000), (PIC16C55_PGM_OFFSET + 0x1ff), MRA_ROM
+	{ (PIC16C55_PGM_OFFSET + 0x000), (PIC16C55_PGM_OFFSET + ((0x1ff*2)+1)), MRA_ROM
 
 #define PIC16C55_MEMORY_WRITE													\
 	  (PIC16C55_DATA_OFFSET + 0x00), (PIC16C55_DATA_OFFSET + 0x1f), MWA_RAM },	\
-	{ (PIC16C55_PGM_OFFSET + 0x000), (PIC16C55_PGM_OFFSET + 0x1ff), MWA_ROM
+	{ (PIC16C55_PGM_OFFSET + 0x000), (PIC16C55_PGM_OFFSET + ((0x1ff*2)+1)), MWA_ROM
 
 extern void pic16C55_init(void);
 extern void pic16C55_reset(void *param);
@@ -210,11 +220,11 @@ extern unsigned Dasm16C5x(char *buffer, unsigned pc);
 
 #define PIC16C56_MEMORY_READ													\
 	  (PIC16C56_DATA_OFFSET + 0x00), (PIC16C56_DATA_OFFSET + 0x1f), MRA_RAM },	\
-	{ (PIC16C56_PGM_OFFSET + 0x000), (PIC16C56_PGM_OFFSET + 0x3ff), MRA_ROM
+	{ (PIC16C56_PGM_OFFSET + 0x000), (PIC16C56_PGM_OFFSET + ((0x3ff*2)+1)), MRA_ROM
 
 #define PIC16C56_MEMORY_WRITE													\
 	  (PIC16C56_DATA_OFFSET + 0x00), (PIC16C56_DATA_OFFSET + 0x1f), MWA_RAM },	\
-	{ (PIC16C56_PGM_OFFSET + 0x000), (PIC16C56_PGM_OFFSET + 0x3ff), MWA_ROM
+	{ (PIC16C56_PGM_OFFSET + 0x000), (PIC16C56_PGM_OFFSET + ((0x3ff*2)+1)), MWA_ROM
 
 extern void pic16C56_init(void);
 extern void pic16C56_reset(void *param);
@@ -251,14 +261,14 @@ extern unsigned Dasm16C5x(char *buffer, unsigned pc);
 	{ (PIC16C57_DATA_OFFSET + 0x30), (PIC16C57_DATA_OFFSET + 0x3f), MRA_RAM },	\
 	{ (PIC16C57_DATA_OFFSET + 0x50), (PIC16C57_DATA_OFFSET + 0x5f), MRA_RAM },	\
 	{ (PIC16C57_DATA_OFFSET + 0x70), (PIC16C57_DATA_OFFSET + 0x7f), MRA_RAM },	\
-	{ (PIC16C57_PGM_OFFSET + 0x000), (PIC16C57_PGM_OFFSET + 0x7ff), MRA_ROM
+	{ (PIC16C57_PGM_OFFSET + 0x000), (PIC16C57_PGM_OFFSET + ((0x7ff*2)+1)), MRA_ROM
 
 #define PIC16C57_MEMORY_WRITE													\
 	  (PIC16C57_DATA_OFFSET + 0x00), (PIC16C57_DATA_OFFSET + 0x1f), MWA_RAM },	\
 	{ (PIC16C57_DATA_OFFSET + 0x30), (PIC16C57_DATA_OFFSET + 0x3f), MWA_RAM },	\
 	{ (PIC16C57_DATA_OFFSET + 0x50), (PIC16C57_DATA_OFFSET + 0x5f), MWA_RAM },	\
 	{ (PIC16C57_DATA_OFFSET + 0x70), (PIC16C57_DATA_OFFSET + 0x7f), MWA_RAM },	\
-	{ (PIC16C57_PGM_OFFSET + 0x000), (PIC16C57_PGM_OFFSET + 0x7ff), MWA_ROM
+	{ (PIC16C57_PGM_OFFSET + 0x000), (PIC16C57_PGM_OFFSET + ((0x7ff*2)+1)), MWA_ROM
 
 extern void pic16C57_init(void);
 extern void pic16C57_reset(void *param);
@@ -295,14 +305,14 @@ extern unsigned Dasm16C5x(char *buffer, unsigned pc);
 	{ (PIC16C58_DATA_OFFSET + 0x30), (PIC16C58_DATA_OFFSET + 0x3f), MRA_RAM },	\
 	{ (PIC16C58_DATA_OFFSET + 0x50), (PIC16C58_DATA_OFFSET + 0x5f), MRA_RAM },	\
 	{ (PIC16C58_DATA_OFFSET + 0x70), (PIC16C58_DATA_OFFSET + 0x7f), MRA_RAM },	\
-	{ (PIC16C58_PGM_OFFSET + 0x000), (PIC16C58_PGM_OFFSET + 0x7ff), MRA_ROM
+	{ (PIC16C58_PGM_OFFSET + 0x000), (PIC16C58_PGM_OFFSET + ((0x7ff*2)+1)), MRA_ROM
 
 #define PIC16C58_MEMORY_WRITE													\
 	  (PIC16C58_DATA_OFFSET + 0x00), (PIC16C58_DATA_OFFSET + 0x1f), MWA_RAM },	\
 	{ (PIC16C58_DATA_OFFSET + 0x30), (PIC16C58_DATA_OFFSET + 0x3f), MWA_RAM },	\
 	{ (PIC16C58_DATA_OFFSET + 0x50), (PIC16C58_DATA_OFFSET + 0x5f), MWA_RAM },	\
 	{ (PIC16C58_DATA_OFFSET + 0x70), (PIC16C58_DATA_OFFSET + 0x7f), MWA_RAM },	\
-	{ (PIC16C58_PGM_OFFSET + 0x000), (PIC16C58_PGM_OFFSET + 0x7ff), MWA_ROM
+	{ (PIC16C58_PGM_OFFSET + 0x000), (PIC16C58_PGM_OFFSET + ((0x7ff*2)+1)), MWA_ROM
 
 extern void pic16C58_init(void);
 extern void pic16C58_reset(void *param);

@@ -14,32 +14,120 @@ Supported games:
 
 	Name		Board No	Maker			Game name
 	----------------------------------------------------------------------------
-	tekipaki	TP-020		Toaplan			Teki Paki
-	ghox		TP-021		Toaplan			Ghox
-	dogyuun		TP-022		Toaplan			Dogyuun
-	kbash		TP-023		Toaplan			Knuckle Bash
-	truxton2	TP-024		Toaplan			Truxton 2 / Tatsujin 2
-	pipibibs	TP-025		Toaplan			Pipi & Bibis
-	whoopee		TP-025		Toaplan			Whoopee
-	pipibibi	bootleg?	Toaplan			Pipi & Bibis
-	fixeight	TP-026		Toaplan			FixEight
-	grindstm	TP-027		Toaplan			Grind Stormer  (1992)
-	grindsta	TP-027		Toaplan			Grind Stormer  (1992) (older)
-	vfive		TP-027		Toaplan			V-V  (V-Five)  (1993 - Japan only)
-	batsugun	TP-030		Toaplan			Batsugun
-	batugnsp	TP-030		Toaplan			Batsugun  (Special Version)
-	snowbro2	??????		Toaplan			Snow Bros. 2 - With New Elves
+	tekipaki	TP-020		 Toaplan		Teki Paki
+	ghox		TP-021		 Toaplan		Ghox
+	dogyuun		TP-022		 Toaplan		Dogyuun
+	kbash		TP-023		 Toaplan		Knuckle Bash
+	truxton2	TP-024		 Toaplan		Truxton 2 / Tatsujin 2
+	pipibibs	TP-025		 Toaplan		Pipi & Bibis
+	whoopee		TP-025		 Toaplan		Whoopee
+	pipibibi	bootleg?	 Toaplan		Pipi & Bibis
+	fixeight	TP-026		 Toaplan		FixEight
+	grindstm	TP-027		 Toaplan		Grind Stormer  (1992)
+	grindsta	TP-027		 Toaplan		Grind Stormer  (1992) (older)
+	vfive		TP-027		 Toaplan		V-V  (V-Five)  (1993 - Japan only)
+	batsugun	TP-030		 Toaplan		Batsugun
+	batugnsp	TP-030		 Toaplan		Batsugun  (Special Version)
+	snowbro2	??????		 Toaplan		Snow Bros. 2 - With New Elves
 
-	mahoudai	RA-MA7893-01Raizing			Mahou Daisakusen
-	shippumd	??????		Raizing/8ing	Shippu Mahou Daisakusen
-	battleg		RA9503		Raizing/8ing	Battle Garegga (Type 2)
-	battlega	RA9503		Raizing/8ing	Battle Garegga
-	batrider	RA9704		Raizing/8ing	Armed Police Batrider - Rev B (Japan - Ver. Fri Feb 13 1998)
-	batridra	RA9704		Raizing/8ing	Armed Police Batrider (Japan - Ver. Mon Dec 22 1997)
-	batridrk	RA9704		Raizing/8ing	Armed Police Batrider (Korea - Ver. Fri Feb 13 1998)
-	bbakraid	ET68-V99	8ing			Battle Bakraid - unlimited version (Japan - Tue Jun 8th, 1999)
-	bbakrada	ET68-V99	8ing			Battle Bakraid (Japan - Wed Apr 7th, 1999)
+	mahoudai	RA-MA7893-01 Raizing		Mahou Daisakusen
+	shippumd	??????		 Raizing/8ing	Shippu Mahou Daisakusen
+	battleg		RA9503		 Raizing/8ing	Battle Garegga (Type 2)
+	battlega	RA9503		 Raizing/8ing	Battle Garegga
+	battlegb	RA9503		 Raizing/8ing	Battle Garegga (New Version?)
+	batrider	RA9704		 Raizing/8ing	Armed Police Batrider - Rev B (Japan - Ver. Fri Feb 13 1998)
+	batridra	RA9704		 Raizing/8ing	Armed Police Batrider (Japan - Ver. Mon Dec 22 1997)
+	batridrk	RA9704		 Raizing/8ing	Armed Police Batrider (Korea - Ver. Fri Feb 13 1998)
+	bbakraid	ET68-V99	 8ing			Battle Bakraid - unlimited version (Japan - Tue Jun 8th, 1999)
+	bbakrada	ET68-V99	 8ing			Battle Bakraid (Japan - Wed Apr 7th, 1999)
 
+
+
+ ****************************************************************************
+ * Battle Garegga and Armed Police Batrider have secret characters.			*
+ * Try to input the following commands to use them.							*
+ * ======================================================================== *
+ * Battle Garegga															*
+ *		After inserting a coin (pushing a credit button), input				*
+ *		UP  UP  DOWN  DOWN  LEFT  RIGHT  LEFT  RIGHT  A  B  C  START		*
+ *		then you can use Mahou Daisakusen characters.						*
+ *																			*
+ * ------------------------------------------------------------------------ *
+ * Armed Police Batrider													*
+ *		After inserting a coin (pushing a credit button), input				*
+ *		UP  UP  DOWN  DOWN  LEFT  RIGHT  LEFT  RIGHT  A  B  START			*
+ *		then you can use Mahou Daisakusen and Battle Garegga characters.	*
+ *																			*
+ ****************************************************************************
+
+
+ ############################################################################
+ # Battle Bakraid 'Unlimited Version' has unlocking codes to gain			#
+ # access to extra players and game features.								#
+ # Special thanks go to the 'R8ZING Shooter Tribute' page for finding		#
+ # and publishing this info.												#
+ #																			#
+ # ======================================================================== #
+ #		PLAYER SELECT: PHASE 2												#
+ # Result:	3 more fighter planes available:								#
+ # Code:	UP  UP  DOWN  DOWN  LEFT  RIGHT  LEFT  RIGHT  A  B  Start		#
+ # Conditions:																#
+ #		1. Start from the title screen										#
+ #		2. Insert Coin														#
+ #		3. Watch the 20 sec. counter and enter each part of the code right	#
+ #		   between the counting.											#
+ # Example: 12,up,11,up,10,down,9,down,8,left,7,right,6.left,5,r..			#
+ # After entering the [B] button a chime should sound. Phase 2 unlocked!	#
+ #																			#
+ # ------------------------------------------------------------------------ #
+ #		PLAYER SELECT: PHASE 3												#
+ # Result:	2 more fighter planes available:								#
+ # Code:	UP  UP  DOWN  DOWN  LEFT  RIGHT  LEFT  RIGHT  B  A  Start		#
+ # Conditions:																#
+ #		1. Start from the title screen										#
+ #		2. Insert Coin														#
+ #		3. Watch the 20 sec. counter and enter each part of the code right	#
+ #		   between the counting.											#
+ # Important: The entering of this code has to be finished before the		#
+ # counter passes 10 ! To do so, you will have to start after coin			#
+ # insertion, right before it starts to count:								#
+ # Example: up,19,up,18,down,17,down,16,left,15,right,14.left,..			#
+ # After entering the [A] button a chime should sound. Phase 3 unlocked!	#
+ #																			#
+ # ------------------------------------------------------------------------ #
+ #		TEAM EDIT: ENABLE													#
+ # Result:	Unlocks the 'team edit' feature to select a team of different	#
+ # 			ships. See selection secrets on how to enter the team edit mode.#
+ # Code:	UP  DOWN  UP  DOWN  LEFT  RIGHT  LEFT  RIGHT  A  B  Start		#
+ # Conditions:																#
+ #		1. Start from the title screen										#
+ #		2. Insert Coin														#
+ #		3. Watch the 20 sec. counter and enter each part of the code right	#
+ #		   between the counting.											#
+ # Important: This code hast to be entered so that the counter is at 0 when	#
+ # you press the final button [B]. To do so, start after second 9:			#
+ # Example: 9,up,8,down,7,up,6,down,5,left,4,right,3,left,2,right,1,A,0,B	#
+ # After entering the [B] button a chime should sound. Team edit unlocked!	#
+ #																			#
+ # ------------------------------------------------------------------------ #
+ #		SPECIAL COURSE : ENABLE												#
+ # Result:	Unlocks the boss mode, a game mode where you fight the bosses	#
+ # 			only.															#
+ # Code:	UP  DOWN  UP  DOWN  LEFT  RIGHT  LEFT  RIGHT  B  A  Start		#
+ # Conditions:																#
+ #		1. Start from the title screen										#
+ #		2. Hold [C] button													#
+ #		3. Insert Coin														#
+ #		4. Watch the 20 sec. counter and enter each part of the code right	#
+ #		   between the counting.											#
+ #		5. Release [C] button												#
+ # After entering the [A] button a chime should sound. Special course		#
+ # unlocked!																#
+ ############################################################################
+
+
+
+*************** Hardware Info ***************
 
 CPU:
  MC68000P10
@@ -110,23 +198,8 @@ To Do / Unknowns:
 	- Whoppee is currently using the sound CPU ROM (Z80) from a differnt
 		(pirate ?) version of Pipi and Bibis (Ryouta Kikaku copyright).
 		It really has a HD647180 CPU, and its internal ROM needs to be dumped.
-	- Fix top character layer.
-	- Emulate the vcount hardware correctly to avoid the Truxton 2 ROM
-		bug patch. See below int truxton2_init
+	- Fix top character text layer (implement the line position table).
 
-
- * Battle Garegga and Armed Police Batrider have secret characters.   *
- * Try to input the following commands to use them.                   *
- * ----------------------------------------------------------------   *
- * Battle Garegga                                                     *
- *   After inserting a coin (pushing a credit button), input          *
- *     UP  UP  DOWN  DOWN  LEFT  RIGHT  LEFT  RIGHT  A  B  C  START   *
- *   then you can use Mahou Daisakusen characters.                    *
- *                                                                    *
- * Armed Police Batrider                                              *
- *   After inserting a coin (pushing a credit button), input          *
- *     UP  UP  DOWN  DOWN  LEFT  RIGHT  LEFT  RIGHT  A  B  START      *
- *   then you can use Mahou Daisakusen and Battle Garegga characters. *
 
 
 *****************************************************************************/
@@ -179,6 +252,7 @@ static INT8 old_p2_paddle_h;
 static INT8 old_p2_paddle_v;
 static int current_bank = 2;			/* Z80 bank used in Battle Garegga and Batrider */
 static int raizing_Z80_busreq;
+static int bbakraid_unlimited_ver;
 
 
 /**************** Video stuff ******************/
@@ -375,6 +449,18 @@ static DRIVER_INIT( battleg )
 	/* Set Z80 bank switch */
 	cpu_setbank(1, &Z80[0x10000]);		/* Default bank is 2 */
 
+	toaplan2_sub_cpu = CPU_2_Z80;
+}
+
+static DRIVER_INIT( bbakraid )
+{
+	bbakraid_unlimited_ver = 1;
+	toaplan2_sub_cpu = CPU_2_Z80;
+}
+
+static DRIVER_INIT( bbakrada )
+{
+	bbakraid_unlimited_ver = 0;
 	toaplan2_sub_cpu = CPU_2_Z80;
 }
 
@@ -917,6 +1003,44 @@ static READ16_HANDLER( raizing_z80rom_r )
 
 /*###################### Battle Bakraid ##############################*/
 
+/* EEPROM contents with battle Bakraid Unlimited version features unlocked */
+static data8_t bbakraid_unlimited_nvram[512] = {
+	0xc2,0x49,0x00,0x07,0xa1,0x20,0x2a,0x2a,0x2a,0x90,0x90,0x90,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x06,0x1a,0x80,0x2a,0x2a,0x2a,0x94,
+	0x94,0x94,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x04,
+	0x93,0xe0,0x2a,0x2a,0x2a,0x98,0x98,0x98,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x02,0x00,0x03,0x0d,0x40,0x2a,0x2a,0x2a,0x9c,0x9c,0x9c,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x01,0x86,0xa0,0x2a,0x2a,
+	0x2a,0xa0,0xa0,0xa0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,
+	0x00,0x07,0xa1,0x20,0x2b,0x2b,0x2b,0x90,0x90,0x90,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x06,0x1a,0x80,0x2b,0x2b,0x2b,0x94,0x94,0x94,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x04,0x93,0xe0,
+	0x2b,0x2b,0x2b,0x98,0x98,0x98,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x02,0x00,0x03,0x0d,0x40,0x2b,0x2b,0x2b,0x9c,0x9c,0x9c,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x01,0x86,0xa0,0x2b,0x2b,0x2b,0xa0,
+	0xa0,0xa0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x07,
+	0xa1,0x20,0x23,0x23,0x23,0x90,0x90,0x90,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x02,0x00,0x06,0x1a,0x80,0x23,0x23,0x23,0x94,0x94,0x94,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x04,0x93,0xe0,0x23,0x23,
+	0x23,0x98,0x98,0x98,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,
+	0x00,0x03,0x0d,0x40,0x23,0x23,0x23,0x9c,0x9c,0x9c,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x01,0x86,0xa0,0x23,0x23,0x23,0xa0,0xa0,0xa0,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x07,0xa1,0x20,
+	0x3f,0x3f,0x3f,0x90,0x90,0x90,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x02,0x00,0x06,0x1a,0x80,0x3f,0x3f,0x3f,0x94,0x94,0x94,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x04,0x93,0xe0,0x3f,0x3f,0x3f,0x98,
+	0x98,0x98,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x03,
+	0x0d,0x40,0x3f,0x3f,0x3f,0x9c,0x9c,0x9c,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x02,0x00,0x01,0x86,0xa0,0x3f,0x3f,0x3f,0xa0,0xa0,0xa0,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x04,0xc2,0x49,0xc2,0x49,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x33,0xcf,0x00,0x04,0x00,0x00,0x21,0xd5,
+	0x00,0x05,0x06,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xc2,0x49
+};
+
+
+
 struct EEPROM_interface eeprom_interface_93C66 =
 {
 	/* Pin 6 of the 93C66 is connected to Gnd!
@@ -945,6 +1069,11 @@ static NVRAM_HANDLER( bbakraid )
 		EEPROM_init(&eeprom_interface_93C66);
 
 		if (file) EEPROM_load(file);
+		else
+		{
+			if (bbakraid_unlimited_ver == 1)
+				EEPROM_set_data(bbakraid_unlimited_nvram, sizeof(bbakraid_unlimited_nvram));
+		}
 	}
 }
 
@@ -1860,6 +1989,18 @@ PORT_END
 	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, button4 | player )						\
 	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
+#define  SNOWBRO2_PLAYER_INPUT( player, button3, button4 )						\
+	PORT_START																	\
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | player )	\
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | player )	\
+	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | player )	\
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | player )	\
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_BUTTON1 | player )					\
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON2 | player )					\
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, button3 )									\
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, button4 )									\
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
 #define  TOAPLAN2_SYSTEM_INPUTS						\
 	PORT_START										\
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_SERVICE1 )\
@@ -2414,7 +2555,7 @@ INPUT_PORTS_START( fixeight )
 
 	TOAPLAN2_PLAYER_INPUT( IPF_PLAYER2, IPT_UNKNOWN, IPT_UNKNOWN )
 
-	TOAPLAN2_PLAYER_INPUT( IPF_PLAYER3, IPT_START3, IPT_UNKNOWN )
+	SNOWBRO2_PLAYER_INPUT( IPF_PLAYER3, IPT_START3, IPT_UNKNOWN )
 
 	PORT_START		/* service input is a push-button marked 'Test SW' */
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_COIN3 )
@@ -2667,9 +2808,9 @@ INPUT_PORTS_START( snowbro2 )
 
 	TOAPLAN2_PLAYER_INPUT( IPF_PLAYER2, IPT_UNKNOWN, IPT_UNKNOWN )
 
-	TOAPLAN2_PLAYER_INPUT( IPF_PLAYER3, IPT_START3, IPT_UNKNOWN )
+	SNOWBRO2_PLAYER_INPUT( IPF_PLAYER3, IPT_START3, IPT_UNKNOWN )
 
-	TOAPLAN2_PLAYER_INPUT( IPF_PLAYER4, IPT_START4, IPT_UNKNOWN )
+	SNOWBRO2_PLAYER_INPUT( IPF_PLAYER4, IPT_START4, IPT_UNKNOWN )
 
 	TOAPLAN2_SYSTEM_INPUTS
 
@@ -4637,8 +4778,8 @@ GAMEX( 1992, grindstm, vfive,    vfive,    grindstm, T2_Zx80,  ROT270, "Toaplan"
 GAMEX( 1992, grindsta, vfive,    vfive,    grindstm, T2_Zx80,  ROT270, "Toaplan", "Grind Stormer (older set)", GAME_NO_SOUND )
 GAMEX( 1993, vfive,    0,        vfive,    vfive,    T2_Zx80,  ROT270, "Toaplan", "V-Five (Japan)", GAME_NO_SOUND )
 GAMEX( 1993, batsugun, 0,        batsugun, batsugun, T2_Zx80,  ROT270, "Toaplan", "Batsugun", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1993, batugnsp, batsugun, batsugun, batsugun, T2_Zx80,  ROT270, "Toaplan", "'Batsugun (Special Ver.)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAME ( 1994, snowbro2, 0,        snowbro2, snowbro2, T2_noZ80, ROT0,   "[Toaplan] Hanafram", "Snow Bros. 2 / Otenki Paradise" )
+GAMEX( 1993, batugnsp, batsugun, batsugun, batsugun, T2_Zx80,  ROT270, "Toaplan", "Batsugun (Special Ver.)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAME ( 1994, snowbro2, 0,        snowbro2, snowbro2, T2_noZ80, ROT0,   "[Toaplan] Hanafram", "Snow Bros. 2 - With New Elves / Otenki Paradise" )
 GAME ( 1993, mahoudai, 0,        mahoudai, mahoudai, T2_Z80,   ROT270, "Raizing (Able license)", "Mahou Daisakusen (Japan)" )
 GAME ( 1994, shippumd, 0,        shippumd, shippumd, T2_Z80,   ROT270, "Raizing/8ing", "Shippu Mahou Daisakusen (Japan)" )
 GAME ( 1996, battleg,  0,        battleg,  battleg,  battleg,  ROT270, "Raizing/8ing", "Battle Garegga - Type 2 (Denmark / China) (Tue Apr 2 1996)" )
@@ -4647,5 +4788,5 @@ GAME ( 1996, battlegb, battleg,  battleg,  battlegb, battleg,  ROT270, "Raizing/
 GAME ( 1998, batrider, 0,        batrider, batrider, battleg,  ROT270, "Raizing/8ing", "Armed Police Batrider (Japan, version B)" )
 GAME ( 1998, batridra, batrider, batrider, batrider, battleg,  ROT270, "Raizing/8ing", "Armed Police Batrider (Japan, version A)" )
 GAME ( 1998, batridrk, batrider, batrider, batrider, battleg,  ROT270, "Raizing/8ing", "Armed Police Batrider (Korea, version B)" )
-GAME ( 1999, bbakraid, 0,        bbakraid, bbakraid, T2_Z80,   ROT270, "8ing", "Battle Bakraid - unlimited version (Japan)")
-GAME ( 1999, bbakrada, bbakraid, bbakraid, bbakraid, T2_Z80,   ROT270, "8ing", "Battle Bakraid (Japan)")
+GAME ( 1999, bbakraid, 0,        bbakraid, bbakraid, bbakraid, ROT270, "8ing", "Battle Bakraid - unlimited version (Japan) (Tue Jun 8 1999)")
+GAME ( 1999, bbakrada, bbakraid, bbakraid, bbakraid, bbakrada, ROT270, "8ing", "Battle Bakraid (Japan) (Wed Apr 7 1999)")

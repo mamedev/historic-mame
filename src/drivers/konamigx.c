@@ -1,5 +1,4 @@
 #define GX_DEBUG     0
-#define GX_NEWROMDEF 1
 #define GX_SKIPIDLE  1
 
 /**************************************************************************
@@ -36,11 +35,11 @@
  * cc0000: Protection chip
  * d00000: 054157 ROM readback for memory test
  * d20000: sprite RAM (4k)
- * d40000: 054157/056832 tilemap generator  (VACSET)
- * d44000: tile bank selectors		    (VSCSET)
- * d48000: 053246/055673 sprite generator   (OBJSET1)
+ * d40000: 054157/056832 tilemap generator    (VACSET)
+ * d44000: tile bank selectors		          (VSCCS)
+ * d48000: 053246/055673 sprite generator     (OBJSET1)
  * d4a000: more readback for sprite generator (OBJSET2)
- * d4c000: CCU1 registers                    (CCUS1)
+ * d4c000: CCU1 registers                     (CCUS1)
  * 00: HCH			  6M/288   8M/384   12M/576	       224 256
  * 02: HCL		   HCH 	    01      01        02	  VCH  01  01
  * 04: HFPH		   HCL      7f      ff        ff	  VCL  07  20
@@ -583,7 +582,7 @@ static WRITE32_HANDLER( control_w )
   waitskip.offs = START/4;   \
   waitskip.data = DATA;      \
   waitskip.mask = MASK;      \
-  resume_trigger= 5001;      \
+  resume_trigger= 1000;      \
   install_mem_read32_handler \
   (0, (BASE+START)&~3, (BASE+END)|3, waitskip_r);}
 
@@ -640,6 +639,7 @@ static WRITE32_HANDLER( ccu_w )
 	}
 }
 
+
 static int konamigx_irq_callback(int irqline)
 {
 	switch (irqline)
@@ -651,7 +651,7 @@ static int konamigx_irq_callback(int irqline)
 		case 3: gx_rdport1_3 |= 0x8; break;
 	}
 
-	return(0);
+	return(0); // DUMMY: really don't know how to return appropriate values as in irq_line_vector[0][irqline]
 }
 
 /*
@@ -664,6 +664,9 @@ static int konamigx_irq_callback(int irqline)
 
 static void dmaend_callback(int data)
 {
+	// foul-proof (CPU0 could be deactivated while we wait)
+	if (resume_trigger && suspension_active) { suspension_active = 0; cpu_trigger(resume_trigger); }
+
 	// DMA busy flag must be cleared before triggering IRQ 3
 	gx_rdport1_3 &= ~2;
 
@@ -698,7 +701,7 @@ static void dmastart_callback(int data)
 static INTERRUPT_GEN(konamigx_vbinterrupt)
 {
 	// lift idle suspension
-	if (resume_trigger && suspension_active) { cpu_trigger(resume_trigger); suspension_active = 0; }
+	if (resume_trigger && suspension_active) { suspension_active = 0; cpu_trigger(resume_trigger); }
 
 	// IRQ 1 is the main 60hz vblank interrupt
 	if (gx_syncen & 0x20)
@@ -869,16 +872,16 @@ static WRITE32_HANDLER( gxanalog_w )
 
 static READ32_HANDLER( le2_gun_H_r )
 {
-	int p1x = readinputport(9)*287/0xff+24;
-	int p2x = readinputport(11)*287/0xff+24;
+	int p1x = readinputport(9)*287/0xff+22;
+	int p2x = readinputport(11)*287/0xff+22;
 
 	return (p1x<<16)|p2x;
 }
 
 static READ32_HANDLER( le2_gun_V_r )
 {
-	int p1y = readinputport(10)*223/0xff;
-	int p2y = readinputport(12)*223/0xff;
+	int p1y = readinputport(10)*223/0xff+1;
+	int p2y = readinputport(12)*223/0xff+1;
 
 	return (p1y<<16)|p2y;
 }
@@ -970,8 +973,8 @@ static MEMORY_WRITE32_START( writemem )
 	{ 0xcc0000, 0xcc0003, esc_w },
 	{ 0xd20000, 0xd20fff, K053247_long_w },
 	{ 0xd21000, 0xd23fff, MWA32_RAM },
-	{ 0xd40000, 0xd4003f, K056832_long_w },		// VREG
-	{ 0xd44000, 0xd4400f, konamigx_tilebank_w },// VSCSET
+	{ 0xd40000, 0xd4003f, K056832_long_w },		// VACSET
+	{ 0xd44000, 0xd4400f, konamigx_tilebank_w },// VSCCS
 	{ 0xd48000, 0xd48007, K053246_long_w },		// OBJSET1
 	{ 0xd4a010, 0xd4a01f, K053247_reg_long_w },	// OBJSET2
 	{ 0xd4c000, 0xd4c01f, ccu_w },				// CCU1(ccu_w)
@@ -1020,8 +1023,8 @@ static MEMORY_WRITE32_START( type1writemem )
 	{ 0xcc0000, 0xcc0003, esc_w },
 	{ 0xd20000, 0xd20fff, K053247_long_w },
 	{ 0xd21000, 0xd23fff, MWA32_RAM },
-	{ 0xd40000, 0xd4003f, K056832_long_w },		// VREG
-	{ 0xd44000, 0xd4400f, konamigx_tilebank_w },// VSCSET
+	{ 0xd40000, 0xd4003f, K056832_long_w },		// VACSET
+	{ 0xd44000, 0xd4400f, konamigx_tilebank_w },// VSCCS
 	{ 0xd48000, 0xd48007, K053246_long_w },		// OBJSET1
 	{ 0xd4a010, 0xd4a01f, K053247_reg_long_w },	// OBJSET2
 	{ 0xd4c000, 0xd4c01f, ccu_w },				// CCU1(ccu_w)
@@ -1252,7 +1255,7 @@ static MACHINE_DRIVER_START( konamigx )
 
 	MDRV_INTERLEAVE(32);
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(480)
+	MDRV_VBLANK_DURATION(600)
 
 	MDRV_MACHINE_INIT(konamigx)
 	MDRV_NVRAM_HANDLER(konamigx_93C46)
@@ -2113,13 +2116,13 @@ INPUT_PORTS_END
 /**********************************************************************************/
 /* BIOS and ROM maps */
 
-#define GX_BIOS ROM_LOAD("300a01", 0x000000, 128*1024, CRC(d5fa95f5) SHA1(c483aa98ff8ef40cdac359c19ad23fea5ecc1906) ) \
+#define GX_BIOS ROM_LOAD("300a01", 0x000000, 128*1024, CRC(d5fa95f5) SHA1(c483aa98ff8ef40cdac359c19ad23fea5ecc1906) )
 
 ROM_START(konamigx)
 	ROM_REGION( 0x10000, REGION_CPU1, 0)
 	GX_BIOS
 ROM_END
-/*
+
 #define SPR_WOR_DROM_LOAD(name,offset,length,crc) ROMX_LOAD(name, offset, length, crc, ROM_GROUPSIZE(2) | ROM_SKIP(5))
 #define SPR_5TH_ROM_LOAD(name,offset,length,crc)	 ROMX_LOAD(name, offset, length, crc, ROM_GROUPSIZE(1) | ROM_SKIP(5))
 
@@ -2131,19 +2134,6 @@ ROM_END
 
 #define _48_WORD_ROM_LOAD(name,offset,length,crc)	ROMX_LOAD(name, offset, length, crc, ROM_GROUPWORD | ROM_SKIP(4))
 #define _64_WORD_ROM_LOAD(name,offset,length,crc)	ROMX_LOAD(name, offset, length, crc, ROM_GROUPWORD | ROM_SKIP(6))
-*/
-#define SPR_WOR_DROM_LOAD(name,offset,length,crc) ROMX_LOAD(name, offset, length, crc, ROM_GROUPSIZE(2) | ROM_SKIP(5))
-#define SPR_5TH_ROM_LOAD(name,offset,length,crc)	 ROMX_LOAD(name, offset, length, crc, ROM_GROUPSIZE(1) | ROM_SKIP(5))
-
-#define TILE_WORD_ROM_LOAD(name,offset,length,crc) ROMX_LOAD(name, offset, length, crc, ROM_GROUPDWORD | ROM_SKIP(1))
-#define TILE_BYTE_ROM_LOAD(name,offset,length,crc) ROMX_LOAD(name, offset, length, crc, ROM_GROUPBYTE | ROM_SKIP(4))
-
-#define TILE_WORDS2_ROM_LOAD(name,offset,length,crc) ROMX_LOAD(name, offset, length, crc, ROM_GROUPDWORD | ROM_SKIP(2))
-#define TILE_BYTES2_ROM_LOAD(name,offset,length,crc) ROMX_LOAD(name, offset, length, crc, ROM_GROUPWORD | ROM_SKIP(4))
-
-#define _48_WORD_ROM_LOAD(name,offset,length,crc)	ROMX_LOAD(name, offset, length, crc, ROM_GROUPWORD | ROM_SKIP(4))
-#define _64_WORD_ROM_LOAD(name,offset,length,crc)	ROMX_LOAD(name, offset, length, crc, ROM_GROUPWORD | ROM_SKIP(6))
-
 
 
 /* Gokujou Parodius */
@@ -2211,13 +2201,8 @@ ROM_START( salmndr2 )
 	/* main program */
 	ROM_REGION( 0x300000, REGION_CPU1, 0 )
 	GX_BIOS
-#if GX_NEWROMDEF
 	ROM_LOAD32_WORD_SWAP( "521jaa02.31b", 0x200002, 512*1024, CRC(f6c3a95b) SHA1(c4ef3631eca898e5787fb2d356355da7e5d475eb) )
 	ROM_LOAD32_WORD_SWAP( "521jaa03.27b", 0x200000, 512*1024, CRC(c3be5e0a) SHA1(13bbce62c4d04a657de4594cc4d258e2468a59a4) )
-#else
-	ROM_LOAD32_WORD_SWAP( "521-a02.31b", 0x200002, 512*1024, CRC(f6c3a95b) SHA1(c4ef3631eca898e5787fb2d356355da7e5d475eb) )
-	ROM_LOAD32_WORD_SWAP( "521-a03.31b", 0x200000, 512*1024, CRC(c3be5e0a) SHA1(13bbce62c4d04a657de4594cc4d258e2468a59a4) )
-#endif
 
 	/* sound program */
 	ROM_REGION( 0x40000, REGION_CPU2, 0 )
@@ -2306,13 +2291,8 @@ ROM_START( sexyparo )
 	/* main program */
 	ROM_REGION( 0x300000, REGION_CPU1, 0 )
 	GX_BIOS
-#if GX_NEWROMDEF
 	ROM_LOAD32_WORD_SWAP( "533jaa02.31b", 0x200002, 512*1024, CRC(b8030abc) SHA1(ee0add1513f620e35583a6ec1e773f53ea27e455) )
 	ROM_LOAD32_WORD_SWAP( "533jaa03.27b", 0x200000, 512*1024, CRC(4a95e80d) SHA1(ff0aef613745c07b5891e66b6b1759e048599214) )
-#else
-	ROM_LOAD32_WORD_SWAP( "533a02.31b", 0x200002, 512*1024, CRC(b8030abc) SHA1(ee0add1513f620e35583a6ec1e773f53ea27e455) )
-	ROM_LOAD32_WORD_SWAP( "533a03.27b", 0x200000, 512*1024, CRC(4a95e80d) SHA1(ff0aef613745c07b5891e66b6b1759e048599214) )
-#endif
 
 	/* sound program */
 	ROM_REGION( 0x40000, REGION_CPU2, 0 )
@@ -2341,13 +2321,8 @@ ROM_START( rungun2 )
 	/* main program */
 	ROM_REGION( 0x600000, REGION_CPU1, 0 )
 	GX_BIOS
-#if GX_NEWROMDEF
 	ROM_LOAD32_WORD_SWAP( "505uaa02.31b", 0x200002, 512*1024, CRC(cfca23f7) )
 	ROM_LOAD32_WORD_SWAP( "505uaa03.27b", 0x200000, 512*1024, CRC(ad7f9ded) )
-#else
-	ROM_LOAD32_WORD_SWAP( "505a02", 0x200002, 512*1024, CRC(cfca23f7) )
-	ROM_LOAD32_WORD_SWAP( "505a03", 0x200000, 512*1024, CRC(ad7f9ded) )
-#endif
 
 	/* data roms */
 	ROM_LOAD32_WORD_SWAP( "505a04", 0x400000, 1024*1024, CRC(11a73f01) )
@@ -2541,13 +2516,8 @@ ROM_START( dragoonj )
 	/* main program */
 	ROM_REGION( 0x600000, REGION_CPU1, 0 )
 	GX_BIOS
-#if GX_NEWROMDEF
 	ROM_LOAD32_WORD_SWAP( "417jaa02.31b", 0x200002, 512*1024, CRC(533cbbd5) SHA1(4b7a0345ce0e503c647c7cde6f284ad0ee10f0ff) )
 	ROM_LOAD32_WORD_SWAP( "417jaa03.27b", 0x200000, 512*1024, CRC(8e1f883f) SHA1(e9f25c0fae7491c55812fda336436a2884c4d417) )
-#else
-	ROM_LOAD32_WORD_SWAP( "417a02.31b", 0x200002, 512*1024, CRC(533cbbd5) SHA1(4b7a0345ce0e503c647c7cde6f284ad0ee10f0ff) )
-	ROM_LOAD32_WORD_SWAP( "417a03.27b", 0x200000, 512*1024, CRC(8e1f883f) SHA1(e9f25c0fae7491c55812fda336436a2884c4d417) )
-#endif
 
 	/* data roms */
 	ROM_LOAD32_WORD_SWAP( "417a04.26c", 0x400002, 1024*1024, CRC(dc574747) SHA1(43cbb6a08c27bb96bb25568c3b636c44fff3e08e) )
@@ -2780,6 +2750,9 @@ ROM_END
 
 MACHINE_INIT(konamigx)
 {
+	konamigx_wrport1_0 = konamigx_wrport1_1 = 0;
+	konamigx_wrport2 = 0;
+
 /*
 	bit0  : EEPROM data(don't care)
 	bit1  : DMA busy   (cleared)
@@ -2794,6 +2767,8 @@ MACHINE_INIT(konamigx)
 
 	tms57002_init();
 
+//	cpu_set_irq_callback(0, konamigx_irq_callback);
+
 	// sound CPU initially disabled?
 	cpu_set_halt_line(1, ASSERT_LINE);
 }
@@ -2807,6 +2782,7 @@ static DRIVER_INIT(konamigx)
 	int readback = 0;
 
 	konamigx_cfgport = -1;
+
 	esc_cb = 0;
 	snd020_hack = 0;
 	resume_trigger = 0;
@@ -2815,7 +2791,6 @@ static DRIVER_INIT(konamigx)
 	state_save_register_UINT8("KonamiGX", 0, "Sound comms 1", sndto020, 16);
 	state_save_register_UINT8("KonamiGX", 0, "Sound comms 2", sndto000, 16);
 
-	cpu_set_irq_callback(0, konamigx_irq_callback);
 	dmadelay_timer = timer_alloc(dmaend_callback);
 
 	// running down the list is not a good idea but easier than maintaining individual drivers
@@ -2889,6 +2864,9 @@ static DRIVER_INIT(konamigx)
 		esc_cb = tkmmpzdm_esc;
 		readback = BPP6;
 		konamigx_cfgport = 7;
+
+		// boost voice(chip 1 channel 3-7)
+		for (int i=3; i<=7; i++) K054539_set_gain(1, i, 2.0);
 	}
 
 	else if (!strcmp(Machine->gamedrv->name, "dragoonj"))
@@ -2899,6 +2877,13 @@ static DRIVER_INIT(konamigx)
 
 		esc_cb = dragoonj_esc;
 		konamigx_cfgport = 7;
+
+		// soften percussions(chip 1 channel 0-3), boost voice(chip 1 channel 4-7)
+		for (int i=0; i<=3; i++)
+		{
+			K054539_set_gain(1, i, 0.8);
+			K054539_set_gain(1, i+4, 2.0);
+		}
 	}
 
 	else if (!strcmp(Machine->gamedrv->name, "sexyparo"))
@@ -3011,8 +2996,8 @@ GAMEX( 1995, tkmmpzdm, konamigx, konamigx_6bpp, puzldama, konamigx, ROT0, "Konam
 GAMEX( 1995, dragoonj, konamigx, dragoonj, dragoonj, konamigx, ROT0, "Konami", "Dragoon Might (Ver JAA)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, sexyparo, konamigx, konamigx, gokuparo, konamigx, ROT0, "Konami", "Sexy Parodius (Ver JAA)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, daiskiss, konamigx, konamigx, gokuparo, konamigx, ROT0, "Konami", "Daisu-Kiss (Ver JAA)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1996, tokkae,   konamigx, konamigx_6bpp, puzldama, konamigx, ROT0, "Konami", "Tokkae Puzzle-dama (Ver JAA)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1996, salmndr2, konamigx, konamigx_6bpp_2, gokuparo, konamigx, ROT0, "Konami", "Salamander 2 (JAA)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1996, tokkae,   konamigx, konamigx_6bpp, puzldama, konamigx, ROT0, "Konami", "Taisen Tokkae-dama (Ver JAA)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1996, salmndr2, konamigx, konamigx_6bpp_2, gokuparo, konamigx, ROT0, "Konami", "Salamander 2 (JAA)", GAME_IMPERFECT_GRAPHICS|GAME_UNEMULATED_PROTECTION )
 
 /* these games are unplayable due to protection */
 GAMEX( 1994, fantjour, gokuparo, konamigx, gokuparo, konamigx, ROT0, "Konami", "Fantastic Journey", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )

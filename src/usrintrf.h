@@ -49,6 +49,10 @@ void ui_show_fps_temp(double seconds);
 int onscrd_active(void);
 int setup_active(void);
 
+#if defined(__sgi) && ! defined(MESS)
+int is_game_paused(void);
+#endif
+
 void switch_ui_orientation(struct mame_bitmap *bitmap);
 void switch_debugger_orientation(struct mame_bitmap *bitmap);
 void switch_true_orientation(struct mame_bitmap *bitmap);

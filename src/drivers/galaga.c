@@ -92,7 +92,7 @@ INTERRUPT_GEN( galaga_interrupt_1 );
 INTERRUPT_GEN( galaga_interrupt_2 );
 INTERRUPT_GEN( galaga_interrupt_3 );
 MACHINE_INIT( galaga );
-WRITE_HANDLER ( catsbee_bank_w );
+WRITE_HANDLER ( gatsbee_bank_w );
 
 
 extern unsigned char *galaga_starcontrol;
@@ -658,7 +658,7 @@ ROM_END
 
 /*
 
-Catsbee (Galaga mod/bootleg)
+Gatsbee (Galaga mod/bootleg)
 
 This game runs on modified bootleg Galaga hardware (blue board with PCB numbers DG-09-02 and DG-07-02)
 
@@ -707,7 +707,7 @@ Developers:
 
 */
 
-ROM_START( catsbee )
+ROM_START( gatsbee )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "1.4b",	0x0000, 0x1000, CRC(9fb8e28b) SHA1(7171e3fb37b0d6cc8f7a023c1775080d5986de99) )
 	ROM_LOAD( "2.4c",	0x1000, 0x1000, CRC(bf6cb840) SHA1(5763140d32d35a38cdcb49e6de1fd5b07a9e8cc2) )
@@ -740,9 +740,9 @@ ROM_START( catsbee )
 	ROM_LOAD( "1d.bin",       0x0000, 0x0100, CRC(86d92b24) SHA1(6bef9102b97c83025a2cf84e89d95f2d44c3d2ed) )
 ROM_END
 
-static DRIVER_INIT (catsbee)
+static DRIVER_INIT (gatsbee)
 {
-	install_mem_write_handler(0, 0x1000, 0x1000, catsbee_bank_w);
+	install_mem_write_handler(0, 0x1000, 0x1000, gatsbee_bank_w);
 }
 
 GAMEX( 1981, galaga,   0,      galaga, galaganm, 0, ROT90, "Namco", "Galaga (Namco)", GAME_IMPERFECT_GRAPHICS )
@@ -752,4 +752,4 @@ GAMEX( 1982, gallag,   galaga, galaga, galaganm, 0, ROT90, "bootleg", "Gallag", 
 GAMEX( 1981, galagab2, galaga, galaga, galaganm, 0, ROT90, "bootleg", "Galaga (bootleg)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1984, galaga84, galaga, galaga, galaganm, 0, ROT90, "hack", "Galaga '84", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1984, nebulbee, galaga, galaga, galaganm, 0, ROT90, "hack", "Nebulous Bee", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1984, catsbee,  galaga, galaga, galaganm, catsbee, ROT90, "Uchida", "Catsbee", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1984, gatsbee,  galaga, galaga, galaganm, gatsbee, ROT90, "Uchida", "Gatsbee", GAME_IMPERFECT_GRAPHICS )

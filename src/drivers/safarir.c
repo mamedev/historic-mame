@@ -38,19 +38,32 @@ TODO:
 ****************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
 unsigned char *safarir_ram1, *safarir_ram2;
 size_t safarir_ram_size;
 
 static unsigned char *safarir_ram;
-static int safarir_scroll;
 
+static struct tilemap *bg_tilemap, *fg_tilemap;
 
 
 WRITE_HANDLER( safarir_ram_w )
 {
-	safarir_ram[offset] = data;
+	if (safarir_ram[offset] != data)
+	{
+		safarir_ram[offset] = data;
+
+		if (offset < 0x400)
+		{
+			tilemap_mark_tile_dirty(fg_tilemap, offset);
+		} 
+		else
+		{
+			tilemap_mark_tile_dirty(bg_tilemap, offset - 0x400);
+		}
+	}
 }
 
 READ_HANDLER( safarir_ram_r )
@@ -58,67 +71,55 @@ READ_HANDLER( safarir_ram_r )
 	return safarir_ram[offset];
 }
 
-
 WRITE_HANDLER( safarir_scroll_w )
 {
-	safarir_scroll = data;
+	tilemap_set_scrollx(bg_tilemap, 0, data);
 }
 
 WRITE_HANDLER( safarir_ram_bank_w )
 {
 	safarir_ram = data ? safarir_ram1 : safarir_ram2;
+	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 }
 
+static void get_bg_tile_info(int tile_index)
+{
+	int code = safarir_ram[tile_index + 0x400];
+
+	SET_TILE_INFO(0, code & 0x7f, code >> 7, 0)
+}
+
+static void get_fg_tile_info(int tile_index)
+{
+	int code = safarir_ram[tile_index];
+	int flags = (tile_index & 0x1f) ? 0 : TILE_IGNORE_TRANSPARENCY;
+
+	SET_TILE_INFO(1, code & 0x7f, code >> 7, flags)
+}
+
+VIDEO_START( safarir )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if (!bg_tilemap)
+		return 1;
+
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if (!fg_tilemap)
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+
+	return 0;
+}
 
 VIDEO_UPDATE( safarir )
-{
-	int offs;
-
-
-	for (offs = safarir_ram_size/2 - 1;offs >= 0;offs--)
-	{
-		int sx,sy;
-		UINT8 code;
-
-
-		sx = offs % 32;
-		sy = offs / 32;
-
-		code = safarir_ram[offs + safarir_ram_size/2];
-
-
-		drawgfx(bitmap,Machine->gfx[0],
-				code & 0x7f,
-				code >> 7,
-				0,0,
-				(8*sx - safarir_scroll) & 0xff,8*sy,
-				&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-
-	for (offs = safarir_ram_size/2 - 1;offs >= 0;offs--)
-	{
-		int sx,sy,transparency;
-		UINT8 code;
-
-
-		sx = offs % 32;
-		sy = offs / 32;
-
-		code = safarir_ram[offs];
-
-		transparency = (sx >= 3) ? TRANSPARENCY_PEN : TRANSPARENCY_NONE;
-
-
-		drawgfx(bitmap,Machine->gfx[1],
-				code & 0x7f,
-				code >> 7,
-				0,0,
-				8*sx,8*sy,
-				&Machine->visible_area,transparency,0);
-	}
+{	
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
 }
 
 
@@ -130,11 +131,11 @@ static unsigned short colortable_source[] =
 
 static PALETTE_INIT( safarir )
 {
-	palette_set_color(0,0x00,0x00,0x00); /* black */
-	palette_set_color(1,0x80,0x80,0x80); /* gray */
-	palette_set_color(2,0xff,0xff,0xff); /* white */
+	palette_set_color(0, 0x00, 0x00, 0x00); /* black */
+	palette_set_color(1, 0x80, 0x80, 0x80); /* gray */
+	palette_set_color(2, 0xff, 0xff, 0xff); /* white */
 
-	memcpy(colortable,colortable_source,sizeof(colortable_source));
+	memcpy(colortable, colortable_source, sizeof(colortable_source));
 }
 
 
@@ -210,13 +211,34 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-
+/* the following is copied from spaceinv */
+struct SN76477interface safarir_sn76477_interface =
+{
+	1,	/* 1 chip */
+	{ 25 },  /* mixing level   pin description		 */
+	{ 0	/* N/C */},		/*	4  noise_res		 */
+	{ 0	/* N/C */},		/*	5  filter_res		 */
+	{ 0	/* N/C */},		/*	6  filter_cap		 */
+	{ 0	/* N/C */},		/*	7  decay_res		 */
+	{ 0	/* N/C */},		/*	8  attack_decay_cap  */
+	{ RES_K(100) },		/* 10  attack_res		 */
+	{ RES_K(56)  },		/* 11  amplitude_res	 */
+	{ RES_K(10)  },		/* 12  feedback_res 	 */
+	{ 0	/* N/C */},		/* 16  vco_voltage		 */
+	{ CAP_U(0.1) },		/* 17  vco_cap			 */
+	{ RES_K(8.2) },		/* 18  vco_res			 */
+	{ 5.0		 },		/* 19  pitch_voltage	 */
+	{ RES_K(120) },		/* 20  slf_res			 */
+	{ CAP_U(1.0) },		/* 21  slf_cap			 */
+	{ 0	/* N/C */},		/* 23  oneshot_cap		 */
+	{ 0	/* N/C */}		/* 24  oneshot_res		 */
+};
 
 static MACHINE_DRIVER_START( safarir )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(8080, 3072000)	/* 3 MHz ? */								\
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_ADD(8080, 3072000)	/* 3 MHz ? */
+	MDRV_CPU_MEMORY(readmem, writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -230,9 +252,11 @@ static MACHINE_DRIVER_START( safarir )
 	MDRV_COLORTABLE_LENGTH(2*2)
 
 	MDRV_PALETTE_INIT(safarir)
+	MDRV_VIDEO_START(safarir)
 	MDRV_VIDEO_UPDATE(safarir)
 
 	/* sound hardware */
+	MDRV_SOUND_ADD(SN76477, safarir_sn76477_interface)
 MACHINE_DRIVER_END
 
 /***************************************************************************

@@ -515,7 +515,7 @@ ROM_START( lkageb3 )
 	ROM_LOAD( "a54-10.2",    0x0000, 0x0200, CRC(17dfbd14) SHA1(f8f0b6dfedd4ba108dad43ccc7697ef4ab9cbf86) )	/* unknown */
 ROM_END
 
-unsigned char mcu_val;
+static unsigned char mcu_val;
 
 /*Note:This probably uses another MCU dump,which is undumped.*/
 

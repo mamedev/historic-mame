@@ -110,17 +110,32 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 				int priority_mask = (attributes&0x08)?0x2:0;
 				int sx = (240 - source[2])&0xff;
 				int sy = (240 - source[0])&0xff;
+				int vx, vy;
 				int number = source[3] | ((attributes<<bank_bits)&0x700);
 				int flipx = (attributes & 0x04);
+				int flipy = 0;
+
+				if (flip_screen) {
+					flipx = !flipx;
+					flipy = !flipy;
+				}
 
 				if( attributes & 0x10 ){ /* double height */
 					number = number&(~1);
 					sy -= 16;
+
+					vx = sx;
+					vy = sy;
+					if (flip_screen) {
+						vx = 240 - vx;
+						vy = 240 - vy;
+					}
+
 					pdrawgfx(bitmap,gfx,
 						number,
 						0 /*color*/,
-						flipx,0 /*flipy*/,
-						sx,sy,
+						flipx,flipy,
+						vx,vy,
 						cliprect,TRANSPARENCY_PEN,0,
 						priority_mask);
 
@@ -128,11 +143,18 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 					sy += 16;
 				}
 
+				vx = sx;
+				vy = sy;
+				if (flip_screen) {
+					vx = 240 - vx;
+					vy = 240 - vy;
+				}
+
 				pdrawgfx(bitmap,gfx,
 						number,
 						0 /*color*/,
-						flipx,0 /*flipy*/,
-						sx,sy,
+						flipx,flipy,
+						vx,vy,
 						cliprect,TRANSPARENCY_PEN,0,
 						priority_mask);
 				}

@@ -953,8 +953,8 @@ static int rockclim_h=0;
 
 WRITE_HANDLER( rockclim_scroll_w )
 {
-	
-	
+
+
 	switch(offset&3)
 	{
 		case 0: rockclim_h=(rockclim_h&0xff00)|data;tilemap_set_scrollx(rockclim_tilemap , 0, rockclim_h );break;
@@ -962,7 +962,7 @@ WRITE_HANDLER( rockclim_scroll_w )
 		case 2:	rockclim_v=(rockclim_v&0xff00)|data;tilemap_set_scrolly(rockclim_tilemap , 0, rockclim_v );break;
 		case 3:	rockclim_v=(rockclim_v&0xff)|(data<<8);tilemap_set_scrolly(rockclim_tilemap , 0, rockclim_v );break;
 	}
-	
+
 }
 
 

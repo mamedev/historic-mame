@@ -60,6 +60,52 @@
 
 /*************************************
  *
+ *	Macros to help verify executing CPU
+ *
+ *************************************/
+
+#define VERIFY_EXECUTINGCPU(retval, name)					\
+	int activecpu = cpu_getexecutingcpu();					\
+	if (activecpu < 0)										\
+	{														\
+		logerror(#name "() called with no executing cpu!\n");\
+		return retval;										\
+	}
+
+#define VERIFY_EXECUTINGCPU_VOID(name)						\
+	int activecpu = cpu_getexecutingcpu();					\
+	if (activecpu < 0)										\
+	{														\
+		logerror(#name "() called with no executing cpu!\n");\
+		return;												\
+	}
+
+
+
+/*************************************
+ *
+ *	Macros to help verify CPU index
+ *
+ *************************************/
+
+#define VERIFY_CPUNUM(retval, name)							\
+	if (cpunum < 0 || cpunum >= cpu_gettotalcpu())			\
+	{														\
+		logerror(#name "() called for invalid cpu num!\n");	\
+		return retval;										\
+	}
+
+#define VERIFY_CPUNUM_VOID(name)							\
+	if (cpunum < 0 || cpunum >= cpu_gettotalcpu())			\
+	{														\
+		logerror(#name "() called for invalid cpu num!\n");	\
+		return;												\
+	}
+
+
+
+/*************************************
+ *
  *	Triggers for the timer system
  *
  *************************************/
@@ -82,12 +128,23 @@ enum
 
 struct cpuinfo
 {
+	int		suspend;				/* suspend reason mask (0 = not suspended) */
+	int		nextsuspend;			/* pending suspend reason mask */
+	int		eatcycles;				/* true if we eat cycles while suspended */
+	int		nexteatcycles;			/* pending value */
+	int		trigger;				/* pending trigger to release a trigger suspension */
+
 	int 	iloops; 				/* number of interrupts remaining this frame */
+
 	UINT64 	totalcycles;			/* total CPU cycles executed */
+	double	localtime;				/* local time, relative to the timer system's global time */
+	double	clockscale;				/* current active clock scale factor */
+	
 	int 	vblankint_countdown;	/* number of vblank callbacks left until we interrupt */
 	int 	vblankint_multiplier;	/* number of vblank callbacks per interrupt */
 	void *	vblankint_timer;		/* reference to elapsed time counter */
 	double	vblankint_period;		/* timing period of the VBLANK interrupt */
+	
 	void *	timedint_timer;			/* reference to this CPU's timer */
 	double	timedint_period; 		/* timing period of the timed interrupt */
 };
@@ -110,6 +167,7 @@ static int current_frame;
 static INT32 watchdog_counter;
 
 static int cycles_running;
+static int cycles_stolen;
 
 
 
@@ -134,6 +192,10 @@ static double timeslice_period;
 static double scanline_period;
 static double scanline_period_inv;
 
+static void *interleave_boost_timer;
+static void *interleave_boost_timer_end;
+static double perfect_interleave;
+
 
 
 /*************************************
@@ -153,10 +215,13 @@ static char *loadsave_schedule_name;
  *
  *************************************/
 
+static void cpu_timeslice(void);
 static void cpu_inittimers(void);
 static void cpu_vblankreset(void);
 static void cpu_vblankcallback(int param);
 static void cpu_updatecallback(int param);
+static void end_interleave_boost(int param);
+static void compute_perfect_interleave(void);
 
 static void handle_loadsave(void);
 
@@ -175,7 +240,7 @@ static void handle_loadsave(void);
 int cpu_init(void)
 {
 	int cpunum;
-
+	
 	/* initialize the interfaces first */
 	if (cpuintrf_init())
 		return 1;
@@ -191,11 +256,23 @@ int cpu_init(void)
 
 		/* set the save state tag */
 		state_save_set_current_tag(cpunum + 1);
+		
+		/* initialize the cpuinfo struct */
+		memset(&cpu[cpunum], 0, sizeof(cpu[cpunum]));
+		cpu[cpunum].suspend = SUSPEND_REASON_RESET;
+		cpu[cpunum].clockscale = cputype_get_interface(cputype)->overclock;
+
+		/* compute the cycle times */
+		sec_to_cycles[cpunum] = cpu[cpunum].clockscale * Machine->drv->cpu[cpunum].cpu_clock;
+		cycles_to_sec[cpunum] = 1.0 / sec_to_cycles[cpunum];
 
 		/* initialize this CPU */
 		if (cpuintrf_init_cpu(cpunum, cputype))
 			return 1;
 	}
+	
+	/* compute the perfect interleave factor */
+	compute_perfect_interleave();
 
 	/* save some stuff in tag 0 */
 	state_save_set_current_tag(0);
@@ -240,15 +317,16 @@ static void cpu_pre_run(void)
 	{
 		/* enable all CPUs (except for audio CPUs if the sound is off) */
 		if (!(Machine->drv->cpu[cpunum].cpu_flags & CPU_AUDIO_CPU) || Machine->sample_rate != 0)
-			timer_suspendcpu(cpunum, 0, SUSPEND_ANY_REASON);
+			cpunum_resume(cpunum, SUSPEND_ANY_REASON);
 		else
-			timer_suspendcpu(cpunum, 1, SUSPEND_REASON_DISABLE);
+			cpunum_suspend(cpunum, SUSPEND_REASON_DISABLE, 1);
 
 		/* reset the interrupt state */
 		cpuint_reset_cpu(cpunum);
 
 		/* reset the total number of cycles */
 		cpu[cpunum].totalcycles = 0;
+		cpu[cpunum].localtime = 0;
 	}
 
 	vblank = 0;
@@ -298,8 +376,6 @@ static void cpu_post_run(void)
 
 void cpu_run(void)
 {
-	int cpunum;
-
 #ifdef MAME_DEBUG
 	/* initialize the debugger */
 	if (mame_debug)
@@ -322,23 +398,9 @@ void cpu_run(void)
 			/* if we have a load/save scheduled, handle it */
 			if (loadsave_schedule != LOADSAVE_NONE)
 				handle_loadsave();
-
-			/* ask the timer system to schedule */
-			if (timer_schedule_cpu(&cpunum, &cycles_running))
-			{
-				int ran;
-
-				/* run for the requested number of cycles */
-				profiler_mark(PROFILER_CPU1 + cpunum);
-				ran = cpunum_execute(cpunum, cycles_running);
-				profiler_mark(PROFILER_END);
-
-				/* update based on how many cycles we really ran */
-				cpu[cpunum].totalcycles += ran;
-
-				/* update the timer with how long we actually ran */
-				timer_update_cpu(cpunum, ran);
-			}
+			
+			/* execute CPUs */
+			cpu_timeslice();
 
 			profiler_mark(PROFILER_END);
 		}
@@ -665,21 +727,21 @@ static void reset_callback(int param)
 	/* if we're asserting the line, just halt the CPU */
 	if (state == ASSERT_LINE)
 	{
-		timer_suspendcpu(cpunum, 1, SUSPEND_REASON_RESET);
+		cpunum_suspend(cpunum, SUSPEND_REASON_RESET, 1);
 		return;
 	}
 
 	/* if we're clearing the line that was previously asserted, or if we're just */
 	/* pulsing the line, reset the CPU */
-	if ((state == CLEAR_LINE && timer_iscpususpended(cpunum, SUSPEND_REASON_RESET)) || state == PULSE_LINE)
+	if ((state == CLEAR_LINE && (cpu[cpunum].suspend & SUSPEND_REASON_RESET)) || state == PULSE_LINE)
 		cpunum_reset(cpunum, Machine->drv->cpu[cpunum].reset_param, cpu_irq_callbacks[cpunum]);
 
 	/* if we're clearing the line, make sure the CPU is not halted */
-	timer_suspendcpu(cpunum, 0, SUSPEND_REASON_RESET);
+	cpunum_resume(cpunum, SUSPEND_REASON_RESET);
 }
 
 
-void cpu_set_reset_line(int cpunum, int state)
+void cpunum_set_reset_line(int cpunum, int state)
 {
 	timer_set(TIME_NOW, (cpunum & 0xff) | (state << 8), reset_callback);
 }
@@ -699,32 +761,285 @@ static void halt_callback(int param)
 
 	/* if asserting, halt the CPU */
 	if (state == ASSERT_LINE)
-		timer_suspendcpu(cpunum, 1, SUSPEND_REASON_HALT);
+		cpunum_suspend(cpunum, SUSPEND_REASON_HALT, 1);
 
 	/* if clearing, unhalt the CPU */
 	else if (state == CLEAR_LINE)
-		timer_suspendcpu(cpunum, 0, SUSPEND_REASON_HALT);
+		cpunum_resume(cpunum, SUSPEND_REASON_HALT);
 }
 
 
-void cpu_set_halt_line(int cpunum, int state)
+void cpunum_set_halt_line(int cpunum, int state)
 {
 	timer_set(TIME_NOW, (cpunum & 0xff) | (state << 8), halt_callback);
 }
 
 
 
+
+#if 0
+#pragma mark -
+#pragma mark CPU SCHEDULING
+#endif
+
 /*************************************
  *
- *	Return suspended status of CPU
+ *	Execute all the CPUs for one
+ *	timeslice
  *
  *************************************/
 
-int cpu_getstatus(int cpunum)
+static void cpu_timeslice(void)
 {
-	if (cpunum < cpu_gettotalcpu())
-		return !timer_iscpususpended(cpunum, SUSPEND_REASON_HALT | SUSPEND_REASON_RESET | SUSPEND_REASON_DISABLE);
-	return 0;
+	double target = timer_time_until_next_timer();
+	int cpunum, ran;
+	
+	LOG(("------------------\n"));
+	LOG(("cpu_timeslice: target = %.9f\n", target));
+	
+	/* process any pending suspends */
+	for (cpunum = 0; Machine->drv->cpu[cpunum].cpu_type != CPU_DUMMY; cpunum++)
+	{
+		if (cpu[cpunum].suspend != cpu[cpunum].nextsuspend)
+			LOG(("--> updated CPU%d suspend from %X to %X\n", cpunum, cpu[cpunum].suspend, cpu[cpunum].nextsuspend));
+		cpu[cpunum].suspend = cpu[cpunum].nextsuspend;
+		cpu[cpunum].eatcycles = cpu[cpunum].nexteatcycles;
+	}
+
+	/* loop over CPUs */
+	for (cpunum = 0; Machine->drv->cpu[cpunum].cpu_type != CPU_DUMMY; cpunum++)
+	{
+		/* only process if we're not suspended */
+		if (!cpu[cpunum].suspend)
+		{
+			/* compute how long to run */
+			cycles_running = TIME_TO_CYCLES(cpunum, target - cpu[cpunum].localtime);
+			LOG(("  cpu %d: %d cycles\n", cpunum, cycles_running));
+		
+			/* run for the requested number of cycles */
+			if (cycles_running > 0)
+			{
+				profiler_mark(PROFILER_CPU1 + cpunum);
+				cycles_stolen = 0;
+				ran = cpunum_execute(cpunum, cycles_running);
+				ran -= cycles_stolen;
+				profiler_mark(PROFILER_END);
+				
+				/* account for these cycles */
+				cpu[cpunum].totalcycles += ran;
+				cpu[cpunum].localtime += TIME_IN_CYCLES(ran, cpunum);
+				LOG(("         %d ran, %d total, time = %.9f\n", ran, (INT32)cpu[cpunum].totalcycles, cpu[cpunum].localtime));
+				
+				/* if the new local CPU time is less than our target, move the target up */
+				if (cpu[cpunum].localtime < target && cpu[cpunum].localtime > 0)
+				{
+					target = cpu[cpunum].localtime;
+					LOG(("         (new target)\n"));
+				}
+			}
+		}
+	}
+	
+	/* update the local times of all CPUs */
+	for (cpunum = 0; Machine->drv->cpu[cpunum].cpu_type != CPU_DUMMY; cpunum++)
+	{
+		/* if we're suspended and counting, process */
+		if (cpu[cpunum].suspend && cpu[cpunum].eatcycles && cpu[cpunum].localtime < target)
+		{
+			/* compute how long to run */
+			cycles_running = TIME_TO_CYCLES(cpunum, target - cpu[cpunum].localtime);
+			LOG(("  cpu %d: %d cycles (suspended)\n", cpunum, cycles_running));
+
+			cpu[cpunum].totalcycles += cycles_running;
+			cpu[cpunum].localtime += TIME_IN_CYCLES(cycles_running, cpunum);
+			LOG(("         %d skipped, %d total, time = %.9f\n", cycles_running, (INT32)cpu[cpunum].totalcycles, cpu[cpunum].localtime));
+		}
+		
+		/* update the suspend state */
+		if (cpu[cpunum].suspend != cpu[cpunum].nextsuspend)
+			LOG(("--> updated CPU%d suspend from %X to %X\n", cpunum, cpu[cpunum].suspend, cpu[cpunum].nextsuspend));
+		cpu[cpunum].suspend = cpu[cpunum].nextsuspend;
+		cpu[cpunum].eatcycles = cpu[cpunum].nexteatcycles;
+
+		/* adjust to be relative to the global time */
+		cpu[cpunum].localtime -= target;
+	}
+	
+	/* update the global time */
+	timer_adjust_global_time(target);
+
+	/* huh? something for the debugger */
+	#ifdef MAME_DEBUG
+	{
+		extern int debug_key_delay;
+		debug_key_delay = 0x7ffe;
+	}
+	#endif
+}
+
+
+
+/*************************************
+ *
+ *	Abort the timeslice for the 
+ *	active CPU
+ *
+ *************************************/
+
+void activecpu_abort_timeslice(void)
+{
+	int current_icount;
+	
+	VERIFY_EXECUTINGCPU_VOID(activecpu_abort_timeslice);
+	LOG(("activecpu_abort_timeslice (CPU=%d, cycles_left=%d)\n", cpu_getexecutingcpu(), activecpu_get_icount() + 1));
+	
+	/* swallow the remaining cycles */
+	current_icount = activecpu_get_icount() + 1;
+	cycles_stolen += current_icount;
+	cycles_running -= current_icount;
+	activecpu_adjust_icount(-current_icount);
+}
+
+
+
+/*************************************
+ *
+ *	Return the current local time for
+ *	a CPU, relative to the current
+ *	timeslice
+ *
+ *************************************/
+
+double cpunum_get_localtime(int cpunum)
+{
+	double result;
+	
+	VERIFY_CPUNUM(0, cpunum_get_localtime);
+
+	/* if we're active, add in the time from the current slice */
+	result = cpu[cpunum].localtime;
+	if (cpunum == cpu_getexecutingcpu())
+	{
+		int cycles = cycles_currently_ran();
+		result += TIME_IN_CYCLES(cycles, cpunum);
+	}
+	return result;
+}
+
+
+
+/*************************************
+ *
+ *	Set a suspend reason for the 
+ *	given CPU
+ *
+ *************************************/
+
+void cpunum_suspend(int cpunum, int reason, int eatcycles)
+{
+	VERIFY_CPUNUM_VOID(cpunum_suspend);
+	LOG(("cpunum_suspend (CPU=%d, r=%X, eat=%d)\n", cpunum, reason, eatcycles));
+	
+	/* set the pending suspend bits, and force a resync */
+	cpu[cpunum].nextsuspend |= reason;
+	cpu[cpunum].nexteatcycles = eatcycles;
+	if (cpu_getexecutingcpu() >= 0)
+		activecpu_abort_timeslice();
+}
+
+
+
+/*************************************
+ *
+ *	Clear a suspend reason for a 
+ *	given CPU
+ *
+ *************************************/
+
+void cpunum_resume(int cpunum, int reason)
+{
+	VERIFY_CPUNUM_VOID(cpunum_resume);
+	LOG(("cpunum_resume (CPU=%d, r=%X)\n", cpunum, reason));
+
+	/* clear the pending suspend bits, and force a resync */
+	cpu[cpunum].nextsuspend &= ~reason;
+	if (cpu_getexecutingcpu() >= 0)
+		activecpu_abort_timeslice();
+}
+
+
+
+/*************************************
+ *
+ *	Return true if a given CPU is
+ *	suspended
+ *
+ *************************************/
+
+int cpunum_is_suspended(int cpunum, int reason)
+{
+	VERIFY_CPUNUM(0, cpunum_suspend);
+	return ((cpu[cpunum].nextsuspend & reason) != 0);
+}
+
+
+
+/*************************************
+ *
+ *	Returns the current scaling factor 
+ *	for a CPU's clock speed
+ *
+ *************************************/
+
+double cpunum_get_clockscale(int cpunum)
+{
+	VERIFY_CPUNUM(1.0, cpunum_get_clockscale);
+	return cpu[cpunum].clockscale;
+}
+
+
+
+/*************************************
+ *
+ *	Sets the current scaling factor 
+ *	for a CPU's clock speed
+ *
+ *************************************/
+
+void cpunum_set_clockscale(int cpunum, double clockscale)
+{
+	VERIFY_CPUNUM_VOID(cpunum_set_clockscale);
+
+	cpu[cpunum].clockscale = clockscale;
+	sec_to_cycles[cpunum] = cpu[cpunum].clockscale * Machine->drv->cpu[cpunum].cpu_clock;
+	cycles_to_sec[cpunum] = 1.0 / sec_to_cycles[cpunum];
+
+	/* re-compute the perfect interleave factor */
+	compute_perfect_interleave();
+}
+
+
+
+/*************************************
+ *
+ *	Temporarily boosts the interleave
+ *	factor
+ *
+ *************************************/
+
+void cpu_boost_interleave(double timeslice_time, double boost_duration)
+{
+	/* if you pass 0 for the timeslice_time, it means pick something reasonable */
+	if (timeslice_time < perfect_interleave)
+		timeslice_time = perfect_interleave;
+	
+	LOG(("cpu_boost_interleave(%.9f, %.9f)\n", timeslice_time, boost_duration));
+
+	/* adjust the interleave timer */
+	timer_adjust(interleave_boost_timer, timeslice_time, 0, timeslice_time);		
+
+	/* adjust the end timer */
+	timer_adjust(interleave_boost_timer_end, boost_duration, 0, TIME_NEVER);
 }
 
 
@@ -742,7 +1057,7 @@ int cpu_getstatus(int cpunum)
 
 int cycles_currently_ran(void)
 {
-	VERIFY_ACTIVECPU(0, cycles_currently_ran);
+	VERIFY_EXECUTINGCPU(0, cycles_currently_ran);
 	return cycles_running - activecpu_get_icount();
 }
 
@@ -757,7 +1072,7 @@ int cycles_currently_ran(void)
 
 int cycles_left_to_run(void)
 {
-	VERIFY_ACTIVECPU(0, cycles_left_to_run);
+	VERIFY_EXECUTINGCPU(0, cycles_left_to_run);
 	return activecpu_get_icount();
 }
 
@@ -786,45 +1101,33 @@ int cycles_left_to_run(void)
 
 UINT32 activecpu_gettotalcycles(void)
 {
-	VERIFY_ACTIVECPU(0, cpu_gettotalcycles);
+	VERIFY_EXECUTINGCPU(0, cpu_gettotalcycles);
 	return cpu[activecpu].totalcycles + cycles_currently_ran();
 }
 
-UINT32 cpu_gettotalcycles(int _cpu)
+UINT32 cpu_gettotalcycles(int cpunum)
 {
-	if(_cpu == cpu_getactivecpu())
-		return cpu[_cpu].totalcycles + cycles_currently_ran();
+	VERIFY_CPUNUM(0, cpu_gettotalcycles);
+	if (cpunum == cpu_getexecutingcpu())
+		return cpu[cpunum].totalcycles + cycles_currently_ran();
 	else
-		return cpu[_cpu].totalcycles;
+		return cpu[cpunum].totalcycles;
 }
 
 
 UINT64 activecpu_gettotalcycles64(void)
 {
-	VERIFY_ACTIVECPU(0, cpu_gettotalcycles);
+	VERIFY_EXECUTINGCPU(0, cpu_gettotalcycles);
 	return cpu[activecpu].totalcycles + cycles_currently_ran();
 }
 
-UINT64 cpu_gettotalcycles64(int _cpu)
+UINT64 cpu_gettotalcycles64(int cpunum)
 {
-	if(_cpu == cpu_getactivecpu())
-		return cpu[_cpu].totalcycles + cycles_currently_ran();
+	VERIFY_CPUNUM(0, cpu_gettotalcycles);
+	if (cpunum == cpu_getexecutingcpu())
+		return cpu[cpunum].totalcycles + cycles_currently_ran();
 	else
-		return cpu[_cpu].totalcycles;
-}
-
-
-
-/*************************************
- *
- *	Account for cycles eaten by
- *	suspended CPUs
- *
- *************************************/
-
-void cpu_add_to_totalcycles(int _cpu, int cycles)
-{
-	cpu[_cpu].totalcycles += cycles;
+		return cpu[cpunum].totalcycles;
 }
 
 
@@ -841,7 +1144,7 @@ int activecpu_geticount(void)
 	int result;
 
 /* remove me - only used by mamedbg, m92 */
-	VERIFY_ACTIVECPU(0, cpu_geticount);
+	VERIFY_EXECUTINGCPU(0, cpu_geticount);
 	result = TIME_TO_CYCLES(activecpu, cpu[activecpu].vblankint_period - timer_timeelapsed(cpu[activecpu].vblankint_timer));
 	return (result < 0) ? 0 : result;
 }
@@ -1027,7 +1330,26 @@ int cpu_getcurrentframe(void)
 
 void cpu_trigger(int trigger)
 {
-	timer_trigger(trigger);
+	int cpunum;
+	
+	/* cause an immediate resynchronization */
+	if (cpu_getexecutingcpu() >= 0)
+		activecpu_abort_timeslice();
+
+	/* look for suspended CPUs waiting for this trigger and unsuspend them */
+	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
+	{
+		/* if this is a dummy, stop looking */
+		if (Machine->drv->cpu[cpunum].cpu_type == CPU_DUMMY)
+			break;
+
+		/* see if this is a matching trigger */
+		if (cpu[cpunum].suspend && cpu[cpunum].trigger == trigger)
+		{
+			cpunum_resume(cpunum, SUSPEND_REASON_TRIGGER);
+			cpu[cpunum].trigger = 0;
+		}
+	}
 }
 
 
@@ -1053,7 +1375,7 @@ void cpu_triggertime(double duration, int trigger)
 
 void cpu_triggerint(int cpunum)
 {
-	timer_trigger(TRIGGER_INT + cpunum);
+	cpu_trigger(TRIGGER_INT + cpunum);
 }
 
 
@@ -1066,15 +1388,29 @@ void cpu_triggerint(int cpunum)
 
 void cpu_spinuntil_trigger(int trigger)
 {
-	VERIFY_ACTIVECPU_VOID(cpu_spinuntil_trigger);
-	timer_suspendcpu_trigger(activecpu, trigger);
+	int cpunum = cpu_getexecutingcpu();
+
+	VERIFY_EXECUTINGCPU_VOID(cpu_spinuntil_trigger);
+
+	/* suspend the CPU immediately if it's not already */
+	cpunum_suspend(cpunum, SUSPEND_REASON_TRIGGER, 1);
+
+	/* set the trigger */
+	cpu[cpunum].trigger = trigger;
 }
 
 
 void cpu_yielduntil_trigger(int trigger)
 {
-	VERIFY_ACTIVECPU_VOID(cpu_yielduntil_trigger);
-	timer_holdcpu_trigger(activecpu, trigger);
+	int cpunum = cpu_getexecutingcpu();
+
+	VERIFY_EXECUTINGCPU_VOID(cpu_yielduntil_trigger);
+
+	/* suspend the CPU immediately if it's not already */
+	cpunum_suspend(cpunum, SUSPEND_REASON_TRIGGER, 0);
+
+	/* set the trigger */
+	cpu[cpunum].trigger = trigger;
 }
 
 
@@ -1088,14 +1424,14 @@ void cpu_yielduntil_trigger(int trigger)
 
 void cpu_spinuntil_int(void)
 {
-	VERIFY_ACTIVECPU_VOID(cpu_spinuntil_int);
+	VERIFY_EXECUTINGCPU_VOID(cpu_spinuntil_int);
 	cpu_spinuntil_trigger(TRIGGER_INT + activecpu);
 }
 
 
 void cpu_yielduntil_int(void)
 {
-	VERIFY_ACTIVECPU_VOID(cpu_yielduntil_int);
+	VERIFY_EXECUTINGCPU_VOID(cpu_yielduntil_int);
 	cpu_yielduntil_trigger(TRIGGER_INT + activecpu);
 }
 
@@ -1200,7 +1536,7 @@ static void cpu_vblankreset(void)
 	/* reset the cycle counters */
 	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
 	{
-		if (!timer_iscpususpended(cpunum, SUSPEND_REASON_DISABLE))
+		if (!(cpu[cpunum].suspend & SUSPEND_REASON_DISABLE))
 			cpu[cpunum].iloops = Machine->drv->cpu[cpunum].vblank_interrupts_per_frame - 1;
 		else
 			cpu[cpunum].iloops = -1;
@@ -1392,7 +1728,57 @@ static double cpu_computerate(int value)
 
 static void cpu_timeslicecallback(int param)
 {
-	timer_trigger(TRIGGER_TIMESLICE);
+	cpu_trigger(TRIGGER_TIMESLICE);
+}
+
+
+
+/*************************************
+ *
+ *	Callback to end a temporary
+ *	interleave boost
+ *
+ *************************************/
+
+static void end_interleave_boost(int param)
+{
+	timer_adjust(interleave_boost_timer, TIME_NEVER, 0, TIME_NEVER);		
+	LOG(("end_interleave_boost\n"));
+}
+
+
+
+/*************************************
+ *
+ *	Compute the "perfect" interleave
+ *	interval
+ *
+ *************************************/
+
+static void compute_perfect_interleave(void)
+{
+	double smallest = cycles_to_sec[0];
+	int cpunum;
+
+	/* start with a huge time factor and find the 2nd smallest cycle time */
+	perfect_interleave = 1.0;
+	for (cpunum = 1; Machine->drv->cpu[cpunum].cpu_type != CPU_DUMMY; cpunum++)
+	{
+		/* find the 2nd smallest cycle interval */
+		if (cycles_to_sec[cpunum] < smallest)
+		{
+			perfect_interleave = smallest;
+			smallest = cycles_to_sec[cpunum];
+		}
+		else if (cycles_to_sec[cpunum] < perfect_interleave)
+			perfect_interleave = cycles_to_sec[cpunum];
+	}
+	
+	/* adjust the final value */
+	if (perfect_interleave == 1.0)
+		perfect_interleave = cycles_to_sec[0];
+
+	LOG(("Perfect interleave = %.9f, smallest = %.9f\n", perfect_interleave, smallest));
 }
 
 
@@ -1415,6 +1801,10 @@ static void cpu_inittimers(void)
 	timeslice_period = TIME_IN_HZ(Machine->drv->frames_per_second * ipf);
 	timeslice_timer = timer_alloc(cpu_timeslicecallback);
 	timer_adjust(timeslice_timer, timeslice_period, 0, timeslice_period);
+	
+	/* allocate timers to handle interleave boosts */
+	interleave_boost_timer = timer_alloc(NULL);
+	interleave_boost_timer_end = timer_alloc(end_interleave_boost);
 
 	/*
 	 *	The following code finds all the CPUs that are interrupting in sync with the VBLANK

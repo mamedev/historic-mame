@@ -24,6 +24,7 @@
 #include "blit.h"
 #include "rc.h"
 #include "wind3d.h"
+#include "wind3dfx.h"
 
 // RGB effects pattern data
 #include "pattern.h"
@@ -48,6 +49,9 @@ extern UINT8 win_d3d_use_scanlines;
 extern UINT8 win_d3d_use_prescale;
 extern UINT8 win_d3d_use_feedback;
 
+// from wind3d.c (prescale)
+extern int win_d3d_prescalex, win_d3d_prescaley;
+
 // from wind3d.c (zoom level)
 extern int win_d3d_current_zoom;
 
@@ -71,7 +75,6 @@ static int use_effect_preset = 0;
 static int use_scanlines;
 static int use_prescale;
 static int use_feedback;
-static int use_oversaturation;
 static int use_rotate;
 static int use_pixelcounter = 0;
 
@@ -79,7 +82,6 @@ static int priority_use_effect_preset;
 static int priority_use_scanlines;
 static int priority_use_prescale;
 static int priority_use_feedback;
-static int priority_use_oversaturation;
 static int priority_use_rotate;
 static int priority_use_pixelcounter;
 
@@ -89,49 +91,53 @@ static char *d3d_rc_expert;
 static int d3d_rc_scan;
 static int d3d_rc_prescale;
 static int d3d_rc_feedback;
-static int d3d_rc_saturate;
 static int d3d_rc_rotate;
 
 struct d3d_preset_info {
 	const char *presetname;
 	int use_rgbeffect; int pattern_mode; int pattern_white_level; int pattern_black_level; int pattern_desaturation;
-	int image_white_level_adjust; int use_feedback; int use_oversaturation; int use_prescale; int use_scanlines;
+	int image_white_level_adjust; int use_feedback; int use_prescale; int use_scanlines;
 	const char *pattern_name;
 };
 
 // built-in presets
 static struct d3d_preset_info effects_preset[] =
 {
-	{ "",				0, 0, 0,	  0,	0,	  0,	0,	  0,	  0,	-1,			"none" },						//  0
+	{ "",				0, 0, 0,	  0,	0,	  0,	0,	  -1,	-1,			"none" },						//  0
 
 	// auto presets (all of these must enable the same effects)
-	{ "",				2, 0, 0,	  0,	0,	  0,	0,	  0,	  0x01,	0x00000000,	"none" },						//  1 (1 x zoom)
-	{ "",				2, 0, 0x0080, 0x20, 0x00, 0x00, 0,	  0,	  0x01,	0x008F8F8F, "4x4_rgb_pattern.i.rgb" },		//  2 (2 x zoom)
-	{ "",				2, 0, 0x00A0, 0x30, 0x00, 0x00, 0,	  0,	  0x01,	0x005F5F5F, "4x6_rgb_pattern.i.rgb" },		//  3 (3 x zoom)
-	{ "",				2, 1, 0x0080, 0x20, 0x00, 0x20, 0,	  0,	  0x01,	0x004F4F4F, "6x8_rgb_pattern.i.rgb" },		//  4 (4 x zoom)
-	{ "",				2, 1, 0x0060, 0x10, 0x48, 0x20, 0,	  0,	  0x01,	0x005F5F5F, "9x10_ellipsoid.i.rgb" },		//  5 (5 x zoom)
-	{ "",				2, 0, 0,	  0,	0,	  0,	0,	  0,	  0x01,	0x00000000,	"none" },						//  6
-	{ "",				2, 0, 0,	  0,	0,	  0,	0,	  0,	  0x01,	0x00000000,	"none" },						//  7
+	{ "",				2, 0, 0,	  0,	0,	  0,	0,	  0x24,	0x00000000,	"none" },						//  1 (1 x zoom)
+	{ "",				2, 0, 0x0080, 0x20, 0x00, 0x00, 0,	  -1,	0x008F8F8F, "4x4_rgb_pattern.i.rgb" },		//  2 (2 x zoom)
+	{ "",				2, 0, 0x00A0, 0x30, 0x00, 0x00, 0,	  -1,	0x005F5F5F, "4x6_rgb_pattern.i.rgb" },		//  3 (3 x zoom)
+	{ "",				2, 1, 0x0080, 0x20, 0x00, 0x20, 0,	  -1,	0x004F4F4F, "6x8_rgb_pattern.i.rgb" },		//  4 (4 x zoom)
+	{ "",				2, 1, 0x0060, 0x10, 0x48, 0x20, 0,	  -1,	0x005F5F5F, "9x10_ellipsoid.i.rgb" },		//  5 (5 x zoom)
+	{ "",				2, 0, 0,	  0,	0,	  0,	0,	  0x11,	0x00000000,	"none" },						//  6
+	{ "",				2, 0, 0,	  0,	0,	  0,	0,	  0x11,	0x00000000,	"none" },						//  7
 
 	// normal presets
-	{ "rgbminmask",		1, 0, 0x0100, 0x80, 0x40, 0x00, 0,	  0,	  0,	-1,			"4x6_rgb_pattern.i.rgb" },		//  8
-	{ "dotmedmask",		1, 0, 0x0100, 0x80, 0x40, 0x00, 0,	  0,	  0,	-1,			"10x6_large_dot.i.rgb" },		//  9
-	{ "rgbmedmask",		1, 0, 0x0100, 0x90, 0x80, 0x00, 0,	  0,	  0,	-1,			"12x10_large_ellipsoid.i.rgb" },// 10
-	{ "rgbmicro",		1, 0, 0x0100, 0xC0, 0x00, 0x00, 0,	  0,	  0x11,	-1,			"4x4_mame_rgbtiny.i.rgb" },		// 11
-	{ "rgbtiny",		1, 0, 0x0100, 0xC0, 0x00, 0x00, 0,	  0,	  0x11,	-1,			"8x8_mame_rgbtiny.i.rgb" },		// 12
-	{ "aperturegrille",	2, 0, 0x0030, 0x00, 0x00, 0x20, 0,	  0,	  0,	0x00BFBFBF,	"3x1_aperture_grille.i.rgb" },	// 13
-	{ "dotmedbright",	2, 0, 0x0040, 0x00, 0x00, 0x08, 0,	  0,	  0,	-1,			"10x6_large_dot.i.rgb" },		// 14
-	{ "rgbmaxbright",	2, 1, 0x00E0, 0x00, 0x40, 0x10, 0,	  0,	  0,	-1,			"18x10_large_round.i.rgb" },	// 15
+	{ "rgbminmask",		1, 0, 0x0100, 0x80, 0x40, 0x00, 0,	  0,	-1,			"4x6_rgb_pattern.i.rgb" },		//  8
+	{ "dotmedmask",		1, 0, 0x0100, 0x80, 0x40, 0x00, 0,	  0x11,	-1,			"10x6_large_dot.i.rgb" },		//  9
+	{ "rgbmedmask",		1, 0, 0x0100, 0x90, 0x80, 0x00, 0,	  0x11,	-1,			"12x10_large_ellipsoid.i.rgb" },// 10
+	{ "rgbmicro",		1, 0, 0x0100, 0xC0, 0x00, 0x00, 0,	  0x22,	-1,			"4x4_mame_rgbtiny.i.rgb" },		// 11
+	{ "rgbtiny",		1, 0, 0x0100, 0xC0, 0x00, 0x00, 0,	  0x22,	-1,			"8x8_mame_rgbtiny.i.rgb" },		// 12
+	{ "aperturegrille",	2, 0, 0x0030, 0x00, 0x00, 0x20, 0,	  -1,	0x00BFBFBF,	"3x1_aperture_grille.i.rgb" },	// 13
+	{ "dotmedbright",	2, 0, 0x0040, 0x00, 0x00, 0x08, 0,	  0x11,	-1,			"10x6_large_dot.i.rgb" },		// 14
+	{ "rgbmaxbright",	2, 1, 0x00E0, 0x00, 0x40, 0x10, 0,	  0x11,	-1,			"18x10_large_round.i.rgb" },	// 15
 
 	// presets from blit.c
-	{ "rgb16",			1, 0, 0x0100, 0xC0, 0x00, 0x00, 0,	  0,	  0x11,	-1,			"16x8_rgb_pattern.i.rgb" },		// 16
-	{ "rgb6",			1, 0, 0x0100, 0xC0, 0x00, 0x00, 0,	  0,	  0x11,	-1,			"16x6_rgb_pattern.i.rgb" },		// 17
-	{ "rgb4",			1, 0, 0x0100, 0xC0, 0x00, 0x00, 0,	  0,	  0x11,	-1,			"16x4_rgb_pattern.i.rgb" },		// 18
-	{ "rgb4v",			1, 0, 0x0100, 0xC0, 0x00, 0x00, 0,	  0,	  0x11,	-1,			"16x4_rgb_pattern.i.rgb" },		// 19
-	{ "rgb3",			1, 0, 0x0100, 0xC0, 0x00, 0x00, 0,	  0,	  0x11,	-1,			"16x3_rgb_pattern.i.rgb" },		// 20
+	{ "scan25", 		0, 0, 0x0100, 0,	0,	  0,	0,	  -1,	0x003F3F3F,	"none" },						// 16
+	{ "scan50", 		0, 0, 0x0100, 0,	0,	  0,	0,	  -1,	0x007F7F7F,	"none" },						// 17
+	{ "scan75", 		0, 0, 0x0100, 0,	0,	  0,	0,	  -1,	0x00BFBFBF,	"none" },						// 18
+	{ "scan75v", 		0, 0, 0x0100, 0,	0,	  0,	0,	  -1,	0x00BFBFBF,	"none" },						// 19
+	{ "rgb16",			1, 0, 0x0100, 0xC0, 0x00, 0x00, 0,	  0x22,	-1,			"16x8_rgb_pattern.i.rgb" },		// 20
+	{ "rgb6",			1, 0, 0x0100, 0xC0, 0x00, 0x00, 0,	  0x22,	-1,			"16x6_rgb_pattern.i.rgb" },		// 21
+	{ "rgb4",			1, 0, 0x0100, 0xC0, 0x00, 0x00, 0,	  0x22,	-1,			"16x4_rgb_pattern.i.rgb" },		// 22
+	{ "rgb4v",			1, 0, 0x0100, 0xC0, 0x00, 0x00, 0,	  0x22,	-1,			"16x4_rgb_pattern.i.rgb" },		// 23
+	{ "rgb3",			1, 0, 0x0100, 0xC0, 0x00, 0x00, 0,	  0x22,	-1,			"16x3_rgb_pattern.i.rgb" },		// 24
+	{ "sharp",			0, 0, 0,	  0,	0,	  0,	0,	  0x22,	-1,			"none" },						// 25
 
 
-	{ NULL,				0, 0, 0,	  0,	0,	  0,	0,	  0,	  0,	-1,			NULL },
+	{ NULL,				0, 0, 0,	  0,	0,	  0,	0,	  0,	-1,			NULL },
 };
 
 // the settings from -effect custom
@@ -148,15 +154,12 @@ static struct d3d_preset_info active_preset;
 
 static int win_d3d_decode_scan(struct rc_option *option, const char *arg, int priority);
 static int win_d3d_decode_feedback(struct rc_option *option, const char *arg, int priority);
-static int win_d3d_decode_saturate(struct rc_option *option, const char *arg, int priority);
 static int win_d3d_decode_prescale(struct rc_option *option, const char *arg, int priority);
 static int win_d3d_decode_rotate(struct rc_option *option, const char *arg, int priority);
 static int win_d3d_decode_custom(struct rc_option *option, const char *arg, int priority);
 static int win_d3d_decode_effect(struct rc_option *option, const char *arg, int priority);
 static int win_d3d_decode_expert(struct rc_option *option, const char *arg, int priority);
 
-int win_d3d_effects_init(void);
-int win_d3d_effects_init_surfaces(void);
 static int effects_rgb_init(void);
 static int effects_scanline_init(void);
 
@@ -173,14 +176,13 @@ struct rc_option win_d3d_opts[] =
 {
 	// name, shortname, type, dest, deflt, min, max, func, help
 	{ "Windows Direct3D 2D video options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "d3dtexmanage", NULL, rc_bool, &win_d3d_tex_manage, "1", 0, 0, NULL, "Use DirectX texture management" },
+	{ "d3dtexmanage", NULL, rc_bool, &win_d3d_tex_manage, "1", 0, 0, NULL, "use DirectX texture management" },
 	{ "d3dfilter", "flt", rc_int, &win_d3d_use_filter, "1", 0, 4, NULL, "interpolation method" },
 
-	{ "d3dprescale", NULL, rc_bool, &d3d_rc_prescale, "0", 0, 0, win_d3d_decode_prescale, "enable prescale" },
 	{ "d3dfeedback", NULL, rc_int, &d3d_rc_feedback, "0", 0, 100, win_d3d_decode_feedback, "feedback strength" },
-	{ "d3dsaturate", NULL, rc_int, &d3d_rc_saturate, "0", 0, 100, win_d3d_decode_saturate, "over-saturation strength" },
 	{ "d3dscan", NULL, rc_int, &d3d_rc_scan, "100", 0, 100, win_d3d_decode_scan, "scanline intensity" },
 	{ "d3deffectrotate", NULL, rc_bool, &d3d_rc_rotate, "1", 0, 0, win_d3d_decode_rotate, "enable rotation of effects for rotated games" },
+	{ "d3dprescale", NULL, rc_string, &d3d_rc_prescale, "auto", 0, 0, win_d3d_decode_prescale, "prescale effect" },
 	{ "d3deffect", NULL, rc_string, &d3d_rc_effect, "none", 0, 0, win_d3d_decode_effect, "specify the blitting effects" },
 	{ "d3dcustom", NULL, rc_string, &d3d_rc_custom, NULL, 0, 0, win_d3d_decode_custom, "customised blitting effects preset" },
 	{ "d3dexpert", NULL, rc_string, &d3d_rc_expert, NULL, 0, 0, win_d3d_decode_expert, "additional customised settings (undocumented)" },
@@ -212,12 +214,6 @@ static int win_d3d_decode_scan(struct rc_option *option, const char *arg, int pr
 
 			return 0;
 		}
-
-		if (priority_use_prescale <= priority)
-		{
-			priority_use_prescale = priority;
-			use_prescale |= 1;
-		}
 	}
 
 	return 0;
@@ -244,41 +240,45 @@ static int win_d3d_decode_feedback(struct rc_option *option, const char *arg, in
 	return 0;
 }
 
-static int win_d3d_decode_saturate(struct rc_option *option, const char *arg, int priority)
-{
-	option->priority = priority;
-
-	if (priority_use_oversaturation <= priority)
-	{
-		double intensity;
-
-		priority_use_oversaturation = priority;
-		sscanf(arg, "%lf", &intensity);
-		use_oversaturation = (int)(intensity * 255 / 100);
-		if (use_oversaturation < 0 || use_oversaturation >= 255)
-		{
-			use_oversaturation = 0;
-			return 0;
-		}
-	}
-
-	return 0;
-}
-
 static int win_d3d_decode_prescale(struct rc_option *option, const char *arg, int priority)
 {
 	option->priority = priority;
 
 	if (priority_use_prescale <= priority)
 	{
+		long prescale;
+
 		priority_use_prescale = priority;
-		if (d3d_rc_prescale)
+
+		// none: don't use prescale effect
+		if (!strcmp(arg, "none"))
 		{
-			use_prescale = 16 | 1;
+			use_prescale = 0x11;
+		}
+		// auto: let blitter decide
+		else if (!strcmp(arg, "auto"))
+		{
+			use_prescale = -1;
+		}
+		// full: use a strong effect
+		else if (!strcmp(arg, "full"))
+		{
+			use_prescale = 0x00;
+		}
+		// force a specific value
+		else if ((prescale = strtol(arg, NULL, 0)) != 0)
+		{
+			if (prescale < 2)
+				prescale = 2;
+			if (prescale > 8)
+				prescale = 8;
+
+			use_prescale = (prescale << 4) | prescale;
 		}
 		else
 		{
-			use_prescale = 0;
+			fprintf(stderr, "error: invalid value for d3dprescale: %s\n", arg);
+			return -1;
 		}
 	}
 
@@ -313,12 +313,11 @@ static int win_d3d_decode_custom(struct rc_option *option, const char *arg, int 
 	{
 		static char pattern_name[256];
 
-		sscanf(arg, "%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%255s",
+		sscanf(arg, "%i,%i,%i,%i,%i,%i,%i,%i,%i,%255s",
 				&custom_preset.use_rgbeffect, &custom_preset.pattern_mode,
 				&custom_preset.pattern_white_level, &custom_preset.pattern_black_level,
 				&custom_preset.pattern_desaturation, &custom_preset.image_white_level_adjust,
-				&custom_preset.use_feedback, &custom_preset.use_oversaturation,
-				&custom_preset.use_prescale, &custom_preset.use_scanlines,
+				&custom_preset.use_feedback, &custom_preset.use_prescale, &custom_preset.use_scanlines,
 				pattern_name);
 
 		if (!custom_preset.pattern_white_level || !strlen(pattern_name))
@@ -348,18 +347,7 @@ static int win_d3d_decode_effect(struct rc_option *option, const char *arg, int 
 			win_d3d_use_auto_effect = 0;
 			use_effect_preset = 0;
 		}
-#if 0
-		if (priority_use_scanlines <= priority)
-		{
-			priority_use_scanlines = priority;
-			use_scanlines = -1;
-		}
-		if (priority_use_prescale <= priority)
-		{
-			priority_use_prescale = priority;
-			use_prescale = 0;
-		}
-#endif
+
 		return 0;
 	}
 
@@ -389,49 +377,6 @@ static int win_d3d_decode_effect(struct rc_option *option, const char *arg, int 
 		return 0;
 	}
 
-	// fake the old scanline options
-	if (!strcmp(arg, "scan25"))
-	{
-		if (priority_use_scanlines <= priority)
-		{
-			priority_use_scanlines = priority;
-			use_scanlines = 25 * 255 / 100;
-			use_prescale |= 1;
-		}
-		return 0;
-	}
-	if (!strcmp(arg, "scan50"))
-	{
-		if (priority_use_scanlines <= priority)
-		{
-			priority_use_scanlines = priority;
-			use_scanlines = 50 * 255 / 100;
-		use_prescale |= 1;
-		}
-		return 0;
-	}
-	if (!strcmp(arg, "scan75") || !strcmp(arg, "scan75v"))
-	{
-		if (priority_use_scanlines <= priority)
-		{
-			priority_use_scanlines = priority;
-			use_scanlines = 75 * 255 / 100;
-			use_prescale |= 1;
-		}
-		return 0;
-	}
-
-	// fake the old sharp option
-	if (!strcmp(arg, "sharp"))
-	{
-		if (priority_use_prescale <= priority)
-		{
-			priority_use_prescale = priority;
-			use_prescale = 16 | 1;
-		}
-		return 0;
-	}
-
 	// couldn't parse the setting
 
 	return 1;
@@ -442,15 +387,7 @@ static int win_d3d_decode_expert(struct rc_option *option, const char *arg, int 
 	// ensure .ini settings will still be processed
 	option->priority = 0;
 
-	// try the regular settings first
-	if (win_d3d_decode_effect(option, arg, priority) == 0)
-		return 0;
-
-	// extra interface for normal settings
-
-	// custom preset
-	if (!strncmp(arg, "custom", 6))
-		return win_d3d_decode_custom(option, arg + 6, 0);
+	// extra interface for normal settings (takes a floating point value)
 
 	// scanlines
 	if (!strncmp(arg, "scan", 4))
@@ -459,10 +396,6 @@ static int win_d3d_decode_expert(struct rc_option *option, const char *arg, int 
 	// feedback
 	if (!strncmp(arg, "feedback", 8))
 		return win_d3d_decode_feedback(option, arg + 8, 0);
-
-	// feedback + over-saturation
-	if (!strncmp(arg, "saturate", 8))
-		return win_d3d_decode_saturate(option, arg + 8, 0);
 
 	// extra expert settings
 
@@ -489,11 +422,6 @@ static int win_d3d_decode_expert(struct rc_option *option, const char *arg, int 
 		{
 			priority_use_prescale = priority;
 			use_prescale = 0;
-		}
-		if (priority_use_oversaturation <= priority)
-		{
-			priority_use_oversaturation = priority;
-			use_oversaturation = 0;
 		}
 
 		return 0;
@@ -546,37 +474,7 @@ static int win_d3d_decode_expert(struct rc_option *option, const char *arg, int 
 		return 0;
 	}
 
-
 	// disable individual effects
-	if (!strcmp(arg, "noscan"))
-	{
-		if (priority_use_scanlines <= priority)
-		{
-			priority_use_scanlines = priority;
-			use_scanlines = -1;
-		}
-		return 0;
-	}
-	if (!strcmp(arg, "nofeedback"))
-	{
-		if (priority_use_feedback <= priority)
-		{
-			priority_use_feedback = priority;
-			priority_use_oversaturation = priority;
-			use_feedback = 0;
-			use_oversaturation = 0;
-		}
-		return 0;
-	}
-	if (!strcmp(arg, "noprescale"))
-	{
-		if (priority_use_prescale <= priority)
-		{
-			priority_use_prescale = priority;
-			use_prescale = 0;
-		}
-		return 0;
-	}
 	if (!strcmp(arg, "nopixelcounter"))
 	{
 		if (priority_use_pixelcounter <= priority)
@@ -596,6 +494,10 @@ static int win_d3d_decode_expert(struct rc_option *option, const char *arg, int 
 		return 0;
 	}
 
+	// try the regular settings
+	if (win_d3d_decode_effect(option, arg, priority) == 0)
+		return 0;
+
 	// couldn't parse the setting
 
 	return 1;
@@ -613,8 +515,7 @@ int win_d3d_effects_in_use(void)
 		use_effect_preset ||
 		use_scanlines != -1 ||
 		use_feedback ||
-		use_oversaturation ||
-		use_prescale)
+		use_prescale > 0x11)
 	{
 		return 1;
 	}
@@ -623,11 +524,12 @@ int win_d3d_effects_in_use(void)
 }
 
 
+
 //============================================================
 //	Global effects initialisation
 //============================================================
 
-int win_d3d_effects_init(void)
+int win_d3d_effects_init(int attributes)
 {
 	int scanline_intensity;
 
@@ -692,41 +594,60 @@ int win_d3d_effects_init(void)
 	// feedback
 	if (use_feedback)
 		active_preset.use_feedback = use_feedback;
-	if (use_oversaturation)
-	{
-		active_preset.use_feedback += use_oversaturation;
-		if (active_preset.use_feedback > 255)
-			active_preset.use_feedback = 255;
-		active_preset.use_oversaturation = use_oversaturation;
-	}
 
 	win_d3d_use_feedback = active_preset.use_feedback ? 1 : 0;
 
 	// set up the texture colours for the feedback effect
-	win_d3d_preprocess_tfactor = (255 - active_preset.use_feedback) + active_preset.use_oversaturation;
-	if (win_d3d_preprocess_tfactor > 255)
-		win_d3d_preprocess_tfactor = 255;
-	win_d3d_preprocess_tfactor = (active_preset.use_feedback << 24) |
-								 (win_d3d_preprocess_tfactor << 16) |
-								 (win_d3d_preprocess_tfactor <<  8) |
-								 (win_d3d_preprocess_tfactor <<  0);
-
-	// prescale
-	if (win_d3d_use_filter)
+	if (win_d3d_use_feedback)
 	{
-		win_d3d_use_prescale = use_prescale;
-		if (win_d3d_use_prescale == 0)
-		{
-			win_d3d_use_prescale = active_preset.use_prescale;
-		}
-		if (win_d3d_effects_swapxy)
-		{
-			win_d3d_use_prescale = ((win_d3d_use_prescale & 15) << 4) | ((win_d3d_use_prescale & 240) >> 4);
-		}
+		win_d3d_preprocess_tfactor = (active_preset.use_feedback		 << 24) |
+									 ((255 - active_preset.use_feedback) << 16) |
+									 ((255 - active_preset.use_feedback) <<  8) |
+									 ((255 - active_preset.use_feedback) <<  0);
 	}
 	else
 	{
+		win_d3d_preprocess_tfactor = 0xFFFFFFFF;
+	}
+
+	// prescale
+	win_d3d_prescalex = 1;
+	win_d3d_prescaley = 1;
+	win_d3d_use_prescale = 0;
+
+	if (win_d3d_use_filter)
+	{
+		int prescale = (use_prescale == -1) ? active_preset.use_prescale : use_prescale;
+
+		// auto
+		if (prescale < 0)
+		{
+			win_d3d_use_prescale = 2;
+		}
+		// full
+		else if (prescale == 0)
+		{
+			win_d3d_use_prescale = 3;
+		}
+		// force a specific size
+		else
+		{
+			win_d3d_use_prescale = 1;
+
+			win_d3d_prescalex = prescale >> 4;
+			win_d3d_prescaley = prescale & 15;
+		}
+	}
+
+	if (attributes & VIDEO_TYPE_VECTOR)
+	{
+		win_d3d_use_auto_effect = 0;
+		win_d3d_use_rgbeffect = 0;
+		win_d3d_use_scanlines = 0;
 		win_d3d_use_prescale = 0;
+
+		win_d3d_prescalex = 1;
+		win_d3d_prescaley = 1;
 	}
 
 	return 0;
@@ -847,16 +768,9 @@ static int effects_rgb_init(void)
 	}
 
 	if (!internal_pattern) {
+		FILE* fp = fopen(active_preset.pattern_name, "rb");
 		int filesize;
-		FILE* fp;
-#if 0
-		char filename[MAX_PATH];
 
-		sprintf(filename, "effects\\%s", pattern_name);
-		fp = fopen(filename, "rb");
-#else
-		fp = fopen(active_preset.pattern_name, "rb");
-#endif
 		if (fp == NULL)
 		{
 			if (verbose)

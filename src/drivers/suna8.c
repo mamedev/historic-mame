@@ -15,6 +15,7 @@ Year + Game         Game     PCB         Epoxy CPU    Notes
 ---------------------------------------------------------------------------
 88  Hard Head       KRB-14   60138-0083  S562008      Encryption + Protection
 88  Rough Ranger	K030087  ?           S562008
+89  Spark Man    	?        ?           ?            Not Working (Protection)
 90  Star Fighter    ?        ?           ?            Not Working
 91  Hard Head 2     ?        ?           T568009      Not Working
 92  Brick Zone      ?        ?           Yes          Not Working
@@ -22,8 +23,13 @@ Year + Game         Game     PCB         Epoxy CPU    Notes
 
 To Do:
 
-- Pen marking
-- Samples playing in hardhead, rranger, starfigh (AY8910 ports A&B?)
+- Samples playing in hardhead, rranger, starfigh, sparkman (AY8910 ports A&B)
+
+Notes:
+
+- sparkman: to get past the roms test screen put a watchpoint at ca40.
+  When hit, clear ca41. Most of the garbage you'll see is probably due
+  to imperfect graphics emulation (e.g. gfx banking) than protection.
 
 ***************************************************************************/
 
@@ -702,6 +708,115 @@ DRIVER_INIT( starfigh )
 
 
 /***************************************************************************
+								Spark Man
+***************************************************************************/
+
+static DRIVER_INIT( sparkman )
+{
+	data8_t	*RAM	=	memory_region(REGION_CPU1);
+	size_t	size	=	memory_region_length(REGION_CPU1)/2;
+	int i;
+
+	memory_set_opcode_base(0,RAM + size);
+
+	/* Address lines scrambling */
+	for (i = 0; i < 0x8000; i++)
+	{
+		if ((i >= 0x4000) && (i <= 0x5fff))
+			RAM[i+size] = RAM[i];
+		else
+			RAM[i+size] = RAM[BITSWAP16(i,15,14,13,12,11,10,9,7,8,6,5,4,3,2,1,0)];
+	}
+	memcpy(RAM,RAM + size,size);
+
+	/* Opcodes */
+	for (i = 0; i < 0x8000; i++)
+	{
+		int encry;
+		data8_t x = RAM[i];
+
+/*
+		0000 2fff	44	0
+		3000 37ff	40	1
+		3800 3bff	44	0
+		3c00 3fff	40	1
+		4000 63ff	44	0
+		6400 67ff	40	1
+		6800 6bff	04	0
+		6c00 7fff	44	0
+*/
+
+		switch(i & 0x7c00)
+		{
+			case 0x0000:
+			case 0x0400:
+			case 0x0800:
+			case 0x0c00:
+			case 0x1000:
+			case 0x1400:
+			case 0x1800:
+			case 0x1c00:
+			case 0x2000:
+			case 0x2400:
+			case 0x2800:
+			case 0x2c00:
+
+			case 0x3800:
+
+			case 0x4000:
+			case 0x4400:
+			case 0x4800:
+			case 0x4c00:
+			case 0x5000:
+			case 0x5400:
+			case 0x5800:
+			case 0x5c00:
+			case 0x6000:
+
+			case 0x6c00:
+			case 0x7000:
+			case 0x7400:
+			case 0x7800:
+			case 0x7c00:
+				x		^=	0x44;
+				encry	=	0;
+			break;
+
+			case 0x6800:
+				x		^=	0x04;
+				encry	=	0;
+			break;
+
+        	default:
+				x		^=	0x40;
+				encry	=	1;
+		}
+
+		switch (encry)
+		{
+			case 0:	x	=	BITSWAP8(x,5,6,7,3,4,2,1,0);	break;
+			case 1:	x	=	BITSWAP8(x,7,6,5,3,4,2,1,0);	break;
+		}
+
+		RAM[i + size] = x;
+	}
+
+	/* Data */
+	for (i = 0; i < 0x8000; i++)
+	{
+		switch (i & 0x7000)
+		{
+			case 0x3000:
+			case 0x6000:
+				break;
+
+			default:
+				RAM[i] = BITSWAP8(RAM[i] ^ 0x44,5,6,7,4,3,2,1,0);
+		}
+	}
+}
+
+/***************************************************************************
 
 
 								Protection
@@ -1141,6 +1256,96 @@ static PORT_WRITE_START( starfigh_writeport )
 PORT_END
 
 
+/***************************************************************************
+								Spark Man
+***************************************************************************/
+
+/* Probably wrong: */
+static WRITE_HANDLER( sparkman_nmi_w )
+{
+	suna8_nmi_enable = data & 0x01;
+	if (data & ~0x01) 	logerror("CPU #0 - PC %04X: unknown nmi bits: %02X\n",activecpu_get_pc(),data);
+}
+
+/*
+	7654 321-
+	---- ---0	Flip Screen
+*/
+static WRITE_HANDLER( sparkman_flipscreen_w )
+{
+	flip_screen_set(data & 0x01);
+	if (data & ~0x01) 	logerror("CPU #0 - PC %04X: unknown flipscreen bits: %02X\n",activecpu_get_pc(),data);
+}
+
+WRITE_HANDLER( sparkman_leds_w )
+{
+	set_led_status(0, data & 0x01);
+	set_led_status(1, data & 0x02);
+	coin_counter_w(0, data & 0x04);
+	if (data & ~0x07)	logerror("CPU#0  - PC %06X: unknown leds bits: %02X\n",activecpu_get_pc(),data);
+}
+
+/*
+	7654 32--
+	---- --1-	Ram Bank
+	---- ---0	Ram Bank?
+*/
+static WRITE_HANDLER( sparkman_spritebank_w )
+{
+	suna8_spritebank = (data >> 1) & 1;
+	if (data & ~0x02) 	logerror("CPU #0 - PC %04X: unknown spritebank bits: %02X\n",activecpu_get_pc(),data);
+}
+
+/*
+	7654 ----
+	---- 3210	ROM Bank
+*/
+static WRITE_HANDLER( sparkman_rombank_w )
+{
+	data8_t *RAM = memory_region(REGION_CPU1);
+	int bank = data & 0x0f;
+
+	if (data & ~0x0f) 	logerror("CPU #0 - PC %04X: unknown rom bank bits: %02X\n",activecpu_get_pc(),data);
+
+	RAM = &RAM[0x4000 * bank + 0x10000];
+
+	cpu_setbank(1, RAM);
+	suna8_rombank = data;
+}
+
+static READ_HANDLER( sparkman_c0a3_r )
+{
+	return (cpu_getcurrentframe() & 1) ? 0x80 : 0;
+}
+
+static MEMORY_READ_START( sparkman_readmem )
+	{ 0x0000, 0x7fff, MRA_ROM					},	// ROM
+	{ 0x8000, 0xbfff, MRA_BANK1					},	// Banked ROM
+	{ 0xc000, 0xc000, input_port_0_r			},	// P1 (Inputs)
+	{ 0xc001, 0xc001, input_port_1_r			},	// P2
+	{ 0xc002, 0xc002, input_port_2_r			},	// DSW 1
+	{ 0xc003, 0xc003, input_port_3_r			},	// DSW 2
+	{ 0xc080, 0xc080, input_port_4_r			},	// Buttons
+	{ 0xc0a3, 0xc0a3, sparkman_c0a3_r			},	// ???
+	{ 0xc600, 0xc7ff, paletteram_r				},	// Palette (Banked??)
+	{ 0xc800, 0xdfff, MRA_RAM					},	// RAM
+	{ 0xe000, 0xffff, suna8_banked_spriteram_r	},	// Sprites (Banked)
+MEMORY_END
+
+static MEMORY_WRITE_START( sparkman_writemem )
+	{ 0x0000, 0x7fff, MWA_ROM					},	// ROM
+	{ 0x8000, 0xbfff, MWA_ROM					},	// Banked ROM
+	{ 0xc200, 0xc200, sparkman_spritebank_w		},	// Sprite RAM Bank
+	{ 0xc280, 0xc280, sparkman_rombank_w		},	// ROM Bank (?mirrored up to c2ff?)
+	{ 0xc300, 0xc300, sparkman_flipscreen_w		},	// Flip Screen
+	{ 0xc380, 0xc380, sparkman_nmi_w			},	// ? NMI related ?
+	{ 0xc400, 0xc400, sparkman_leds_w			},	// Leds + Coin Counter
+	{ 0xc500, 0xc500, soundlatch_w				},	// To Sound CPU
+	{ 0xc600, 0xc7ff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram	},	// Palette (Banked??)
+	{ 0xc800, 0xdfff, MWA_RAM					},	// RAM
+	{ 0xe000, 0xffff, suna8_banked_spriteram_w	},	// Sprites (Banked)
+MEMORY_END
+
 
 /***************************************************************************
 
@@ -1541,6 +1746,81 @@ INPUT_PORTS_START( hardhea2 )
 
 INPUT_PORTS_END
 
+
+/***************************************************************************
+								Spark Man
+***************************************************************************/
+
+INPUT_PORTS_START( sparkman )
+
+	PORT_START	// IN0 - Player 1 - $c000
+	JOY(1)
+
+	PORT_START	// IN1 - Player 2 - $c001
+	JOY(2)
+
+	PORT_START	// IN2 - DSW 1 - $c002
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x20, "Easiest" )
+	PORT_DIPSETTING(    0x30, "Very Easy" )
+	PORT_DIPSETTING(    0x28, "Easy" )
+	PORT_DIPSETTING(    0x38, "Moderate" )
+	PORT_DIPSETTING(    0x18, "Normal" )
+	PORT_DIPSETTING(    0x10, "Harder" )
+	PORT_DIPSETTING(    0x08, "Very Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_SERVICE(       0x40, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	// IN3 - DSW 2 - $c003
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x04, 0x04, "Play Together" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x38, "10K" )
+	PORT_DIPSETTING(    0x28, "30K" )
+	PORT_DIPSETTING(    0x18, "50K, Every 50K" )
+	PORT_DIPSETTING(    0x20, "50K" )
+	PORT_DIPSETTING(    0x10, "100K, Every 50K" )
+	PORT_DIPSETTING(    0x08, "100K, Every 100K" )
+	PORT_DIPSETTING(    0x00, "200K, Every 100K" )
+	PORT_DIPSETTING(    0x30, "None" )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x80, "2" )
+	PORT_DIPSETTING(    0xc0, "3" )
+	PORT_DIPSETTING(    0x40, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+
+	PORT_START	// IN3 - Buttons - $c080
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+INPUT_PORTS_END
+
+
 /***************************************************************************
 
 
@@ -1886,6 +2166,52 @@ static MACHINE_DRIVER_START( starfigh )
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM3812, starfigh_ym3812_interface)
 	MDRV_SOUND_ADD(AY8910, starfigh_ay8910_interface)
+MACHINE_DRIVER_END
+
+
+/***************************************************************************
+								Spark Man
+***************************************************************************/
+
+static INTERRUPT_GEN( sparkman_interrupt )
+{
+	if (cpu_getiloops())
+	{
+		if (suna8_nmi_enable)	cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+	}
+	else cpu_set_irq_line(0, 0, HOLD_LINE);
+}
+
+static MACHINE_DRIVER_START( sparkman )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)					/* ? */
+	MDRV_CPU_MEMORY(sparkman_readmem,sparkman_writemem)
+	MDRV_CPU_VBLANK_INT(sparkman_interrupt,2)	/* IRQ & NMI */
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)					/* ? */
+	MDRV_CPU_MEMORY(hardhead_sound_readmem,hardhead_sound_writemem)
+	MDRV_CPU_PORTS(hardhead_sound_readport,hardhead_sound_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)	/* No NMI */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0+16, 256-16-1)
+	MDRV_GFXDECODE(suna8_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
+
+	MDRV_VIDEO_START(suna8_textdim0)
+	MDRV_VIDEO_UPDATE(suna8)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM3812, hardhead_ym3812_interface)
+	MDRV_SOUND_ADD(AY8910, hardhead_ay8910_interface)
 MACHINE_DRIVER_END
 
 
@@ -2361,6 +2687,52 @@ ROM_END
 
 /***************************************************************************
 
+								Spark Man
+
+Suna Electronics IND. CO., LTD 1989    Pinout = JAMMA
+
+***************************************************************************/
+
+ROM_START( sparkman )
+	ROM_REGION( 0x50000 * 2, REGION_CPU1, 0 )		/* Main Z80 Code */
+	ROM_LOAD( "sparkman.e7", 0x00000, 0x08000, CRC(d89c5780) SHA1(177f0ae21c00575a7eb078e86f3a790fc95211e4) )	/* "SPARK MAN MAIN PROGRAM 1989,8,12 K.H.T (SUNA ELECTRPNICS) V 2.0 SOULE KOREA" */
+	ROM_RELOAD(              0x50000, 0x08000 )
+	ROM_LOAD( "sparkman.g7", 0x10000, 0x10000, CRC(48b4a31e) SHA1(771d1f1a2ce950ce2b661a4081471e98a7a7d53e) )
+	ROM_RELOAD(              0x60000, 0x10000 )
+	ROM_LOAD( "sparkman.g8", 0x20000, 0x10000, CRC(b8a4a557) SHA1(10251b49fb44fb1e7c71fde8fe9544df29d27346) )
+	ROM_RELOAD(              0x70000, 0x10000 )
+	ROM_LOAD( "sparkman.i7", 0x30000, 0x10000, CRC(f5f38e1f) SHA1(25f0abbac1298fad1f8e7202db05e48c3598bc88) )
+	ROM_RELOAD(              0x80000, 0x10000 )
+	ROM_LOAD( "sparkman.i8", 0x40000, 0x10000,  CRC(e54eea25) SHA1(b8ea884ee1a24953b6406f2d1edf103700f542d2) )
+	ROM_RELOAD(              0x90000, 0x10000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Music Z80 Code */
+	ROM_LOAD( "sparkman.h11", 0x00000, 0x08000, CRC(06822f3d) SHA1(d30592cecbcd4dbf67e5a8d9c151d60b3232a54d) )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )	/* Sprites */
+	ROM_LOAD( "sparkman.u4", 0x00000, 0x10000, CRC(17c16ce4) SHA1(b4127e9aedab69193bef1d85e68003e225913417) )
+	ROM_LOAD( "sparkman.t1", 0x10000, 0x10000, CRC(2e474203) SHA1(a407126d92e529568129d5246f89d51330ff5d32) )
+	ROM_LOAD( "sparkman.r1", 0x20000, 0x08000, CRC(7115cfe7) SHA1(05fde6279a1edc97e79b1ff3f72b2da400a6a409) )
+	ROM_LOAD( "sparkman.u1", 0x30000, 0x10000, CRC(39dbd414) SHA1(03fe938ed1191329b6a2f7ed54c6ef69273998df) )
+
+	ROM_LOAD( "sparkman.u6", 0x40000, 0x10000, CRC(414222ea) SHA1(e05f0504c6e735c73027312a85cc55fc98728e53) )
+	ROM_LOAD( "sparkman.t2", 0x50000, 0x10000, CRC(0df5da2a) SHA1(abbd5ba22b30f17d203ecece7afafa0cbe78352c) )
+	ROM_LOAD( "sparkman.r2", 0x60000, 0x08000, CRC(6904bde2) SHA1(c426fa0c29b1874c729b981467f219c422f863aa) )
+	ROM_LOAD( "sparkman.u2", 0x70000, 0x10000, CRC(e6551db9) SHA1(bed2a9ba72895f3ba876b4e0a41c33ea8a3c5af2) )
+
+	ROM_REGION( 0x8000, REGION_SOUND1, 0 )		/* Samples */
+	ROM_LOAD( "sparkman.b10", 0x0000, 0x8000, CRC(46c7d4d8) SHA1(99f38cc044390ee4646498667ad2bf536ce91e8f) )
+
+	ROM_REGION( 0x8000, REGION_SOUND2, 0 )		/* Samples */
+	ROM_LOAD( "sprkman.b11", 0x0000, 0x8000, CRC(d6823a62) SHA1(f8ce748aa7bdc9c95799dd111fd872717e46d416) )
+
+	ROM_REGION( 0x0200 * 2, REGION_USER1, 0 )	/* Palette RAM Banks */
+	ROM_REGION( 0x2000 * 2, REGION_USER2, 0 )	/* Sprite  RAM Banks */
+ROM_END
+
+
+/***************************************************************************
+
 
 								Games Drivers
 
@@ -2373,10 +2745,12 @@ GAMEX( 1988, hardhead, 0,        hardhead, hardhead, hardhead, ROT0,  "SunA", "H
 GAMEX( 1988, hardhedb, hardhead, hardhead, hardhead, hardhedb, ROT0,  "bootleg", "Hard Head (bootleg)", GAME_IMPERFECT_SOUND )
 
 /* Non Working Games */
-GAMEX( 1988, sranger,  rranger,  rranger,  rranger,	0,         ROT0,  "SunA", "Super Ranger (v2.0)",    GAME_NOT_WORKING )
-GAMEX( 1988, srangerb, rranger,  rranger,  rranger,	0,         ROT0,  "bootleg", "Super Ranger (bootleg)", GAME_NOT_WORKING )
-GAMEX( 1988, srangerw, rranger,  rranger,  rranger,	0,         ROT0,  "SunA (WDK license)", "Super Ranger (WDK)",  GAME_NOT_WORKING )
-GAMEX( 1990, starfigh, 0,        starfigh, hardhea2, starfigh, ROT90, "SunA", "Star Fighter (v1)",   GAME_NOT_WORKING )
-GAMEX( 1991, hardhea2, 0,        hardhea2, hardhea2, hardhea2, ROT0,  "SunA", "Hard Head 2 (v2.0)",  GAME_NOT_WORKING )
-GAMEX( 1992, brickzn,  0,        brickzn,  brickzn,  brickzn3, ROT90, "SunA", "Brick Zone (v5.0)",   GAME_NOT_WORKING )
-GAMEX( 1992, brickzn3, brickzn,  brickzn,  brickzn,  brickzn3, ROT90, "SunA", "Brick Zone (v3.0)",   GAME_NOT_WORKING )
+GAMEX( 1988, sranger,  rranger, rranger,  rranger,	0,        ROT0,  "SunA",    "Super Ranger (v2.0)",           GAME_NOT_WORKING )
+GAMEX( 1988, srangerb, rranger, rranger,  rranger,	0,        ROT0,  "bootleg", "Super Ranger (bootleg)",        GAME_NOT_WORKING )
+GAMEX( 1988, srangerw, rranger, rranger,  rranger,	0,        ROT0,  "SunA (WDK license)", "Super Ranger (WDK)", GAME_NOT_WORKING )
+GAMEX( 1989, sparkman, 0,       sparkman, sparkman, sparkman, ROT0,  "SunA",    "Spark Man (v 2.0)",             GAME_NOT_WORKING )
+GAMEX( 1990, starfigh, 0,       starfigh, hardhea2, starfigh, ROT90, "SunA",    "Star Fighter (v1)",             GAME_NOT_WORKING )
+GAMEX( 1991, hardhea2, 0,       hardhea2, hardhea2, hardhea2, ROT0,  "SunA",    "Hard Head 2 (v2.0)",            GAME_NOT_WORKING )
+GAMEX( 1992, brickzn,  0,       brickzn,  brickzn,  brickzn3, ROT90, "SunA",    "Brick Zone (v5.0)",             GAME_NOT_WORKING )
+GAMEX( 1992, brickzn3, brickzn, brickzn,  brickzn,  brickzn3, ROT90, "SunA",    "Brick Zone (v3.0)",             GAME_NOT_WORKING )
+

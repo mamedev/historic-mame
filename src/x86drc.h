@@ -16,6 +16,13 @@
 **	TYPE DEFINITIONS
 **#################################################################################################*/
 
+/* PC and pointer pair */
+struct pc_ptr_pair
+{
+	UINT32		pc;
+	UINT8 *		target;
+};
+
 /* core interface structure for the drc common code */
 struct drccore
 {
@@ -42,7 +49,16 @@ struct drccore
 	UINT32 *	esiptr;					/* pointer to where the volatile data in ESI is stored */
 
 	UINT8		uses_fp;				/* true if we need the FP unit */
-	UINT16		fpcw_save;				/* saved control word */
+	UINT8		uses_sse;				/* true if we need the SSE unit */
+	UINT16		fpcw_save;				/* saved FPU control word */
+	UINT32		mcrxr_save;				/* saved SSE control word */
+	
+	struct pc_ptr_pair *sequence_list;	/* PC/pointer sets for the current instruction sequence */
+	UINT32		sequence_count;			/* number of instructions in the current sequence */
+	UINT32		sequence_count_max;		/* max number of instructions in the current sequence */
+	struct pc_ptr_pair *tentative_list;	/* PC/pointer sets for tentative branches */
+	UINT32		tentative_count;		/* number of tentative branches */
+	UINT32		tentative_count_max;	/* max number of tentative branches */
 
 	void 		(*cb_reset)(struct drccore *drc);		/* callback when the cache is reset */
 	void 		(*cb_recompile)(struct drccore *drc);	/* callback when code needs to be recompiled */
@@ -52,10 +68,12 @@ struct drccore
 /* configuration structure for the drc common code */
 struct drcconfig
 {
-	UINT32		cachesize;				/* size of cache to allocate */
+	UINT32		cache_size;				/* size of cache to allocate */
+	UINT32		max_instructions;		/* maximum instructions per sequence */
 	UINT8		address_bits;			/* number of live address bits in the PC */
 	UINT8		lsbs_to_ignore;			/* number of LSBs to ignore on the PC */
 	UINT8		uses_fp;				/* true if we need the FP unit */
+	UINT8		uses_sse;				/* true if we need the SSE unit */
 
 	UINT32 *	pcptr;					/* pointer to where the PC is stored */
 	UINT32 *	icountptr;				/* pointer to where the icount is stored */
@@ -117,6 +135,15 @@ extern const UINT8 scale_lookup[];
 #define REG_CH		5
 #define REG_DH		6
 #define REG_BH		7
+
+#define REG_XMM0	0
+#define REG_XMM1	1
+#define REG_XMM2	2
+#define REG_XMM3	3
+#define REG_XMM4	4
+#define REG_XMM5	5
+#define REG_XMM6	6
+#define REG_XMM7	7
 
 #define NO_BASE		5
 
@@ -615,6 +642,23 @@ do { OP1(0xf7); MODRM_MABS(0, addr); OP4(imm); } while (0)
 
 
 
+#define _arith_m32bd_imm_common(reg, base, disp, imm)	\
+do {												\
+	if ((INT8)(imm) == (INT32)(imm))				\
+	{												\
+		OP1(0x83); MODRM_MBD(reg, base, disp); OP1(imm);\
+	}												\
+	else											\
+	{												\
+		OP1(0x81); MODRM_MBD(reg, base, disp); OP4(imm);\
+	}												\
+} while (0)
+
+#define _add_m32bd_imm(base, disp, imm) \
+do { _arith_m32bd_imm_common(0, base, disp, imm); } while (0)
+
+
+
 #define _and_r32_m32bd(dreg, base, disp) \
 do { OP1(0x23); MODRM_MBD(dreg, base, disp); } while (0)
 
@@ -794,6 +838,10 @@ do { OP1(0xdd); MODRM_MABS(3, addr); } while (0)
 **	BRANCH EMITTERS
 **#################################################################################################*/
 
+#define _setcc_m8abs(cond, addr) \
+do { OP1(0x0f); OP1(0x90 + cond); MODRM_MABS(0, addr); } while (0)
+
+
 #define _jcc_short_link(cond, link) \
 do { OP1(0x70 + (cond)); OP1(0x00); (link)->target = drc->cache_top; (link)->size = 1; } while (0)
 
@@ -861,6 +909,105 @@ do {												\
 
 
 /*###################################################################################################
+**	SSE EMITTERS
+**#################################################################################################*/
+
+#define _movsd_r128_m64abs(reg, addr) \
+do { OP1(0xf2); OP1(0x0f); OP1(0x10); MODRM_MABS(reg, addr); } while (0)
+
+#define _movsd_m64abs_r128(addr, reg) \
+do { OP1(0xf2); OP1(0x0f); OP1(0x11); MODRM_MABS(reg, addr); } while (0)
+
+#define _movss_r128_m32abs(reg, addr) \
+do { OP1(0xf3); OP1(0x0f); OP1(0x10); MODRM_MABS(reg, addr); } while (0)
+
+#define _movss_m32abs_r128(addr, reg) \
+do { OP1(0xf3); OP1(0x0f); OP1(0x11); MODRM_MABS(reg, addr); } while (0)
+
+
+
+#define _addss_r128_m32abs(reg, addr) \
+do { OP1(0xf3); OP1(0x0f); OP1(0x58); MODRM_MABS(reg, addr); } while (0)
+
+#define _addsd_r128_m64abs(reg, addr) \
+do { OP1(0xf2); OP1(0x0f); OP1(0x58); MODRM_MABS(reg, addr); } while (0)
+
+#define _comiss_r128_m32abs(reg, addr) \
+do { OP1(0x0f); OP1(0x2f); MODRM_MABS(reg, addr); } while (0)
+
+#define _comisd_r128_m64abs(reg, addr) \
+do { OP1(0x66); OP1(0x0f); OP1(0x2f); MODRM_MABS(reg, addr); } while (0)
+
+#define _divss_r128_m32abs(reg, addr) \
+do { OP1(0xf3); OP1(0x0f); OP1(0x5e); MODRM_MABS(reg, addr); } while (0)
+
+#define _divsd_r128_m64abs(reg, addr) \
+do { OP1(0xf2); OP1(0x0f); OP1(0x5e); MODRM_MABS(reg, addr); } while (0)
+
+#define _mulss_r128_m32abs(reg, addr) \
+do { OP1(0xf3); OP1(0x0f); OP1(0x59); MODRM_MABS(reg, addr); } while (0)
+
+#define _mulsd_r128_m64abs(reg, addr) \
+do { OP1(0xf2); OP1(0x0f); OP1(0x59); MODRM_MABS(reg, addr); } while (0)
+
+#define _sqrtss_r128_m32abs(reg, addr) \
+do { OP1(0xf3); OP1(0x0f); OP1(0x51); MODRM_MABS(reg, addr); } while (0)
+
+#define _sqrtsd_r128_m64abs(reg, addr) \
+do { OP1(0xf2); OP1(0x0f); OP1(0x51); MODRM_MABS(reg, addr); } while (0)
+
+#define _subss_r128_m32abs(reg, addr) \
+do { OP1(0xf3); OP1(0x0f); OP1(0x5c); MODRM_MABS(reg, addr); } while (0)
+
+#define _subsd_r128_m64abs(reg, addr) \
+do { OP1(0xf2); OP1(0x0f); OP1(0x5c); MODRM_MABS(reg, addr); } while (0)
+
+#define _ucomiss_r128_m32abs(reg, addr) \
+do { OP1(0x0f); OP1(0x2e); MODRM_MABS(reg, addr); } while (0)
+
+#define _ucomisd_r128_m64abs(reg, addr) \
+do { OP1(0x66); OP1(0x0f); OP1(0x2e); MODRM_MABS(reg, addr); } while (0)
+
+
+
+#define _subss_r128_r128(r1, r2) \
+do { OP1(0xf3); OP1(0x0f); OP1(0x5c); MODRM_REG(r1, r2); } while (0)
+
+
+
+#define _paddq_r128_r128(r1, r2) \
+do { OP1(0x66); OP1(0x0f); OP1(0xd4); MODRM_REG(r1, r2); } while (0)
+
+#define _pand_r128_r128(r1, r2) \
+do { OP1(0x66); OP1(0x0f); OP1(0xdb); MODRM_REG(r1, r2); } while (0)
+
+#define _pandn_r128_r128(r1, r2) \
+do { OP1(0x66); OP1(0x0f); OP1(0xdf); MODRM_REG(r1, r2); } while (0)
+
+#define _por_r128_r128(r1, r2) \
+do { OP1(0x66); OP1(0x0f); OP1(0xeb); MODRM_REG(r1, r2); } while (0)
+
+#define _psllq_r128_imm(reg, imm) \
+do { OP1(0x66); OP1(0x0f); OP1(0x73); MODRM_REG(6, reg); OP1(imm); } while (0)
+
+#define _psllq_r128_r128(r1, r2) \
+do { OP1(0x66); OP1(0x0f); OP1(0xf3); MODRM_REG(r1, r2); } while (0)
+
+#define _psrlq_r128_imm(reg, imm) \
+do { OP1(0x66); OP1(0x0f); OP1(0x73); MODRM_REG(2, reg); OP1(imm); } while (0)
+
+#define _psrlq_r128_r128(r1, r2) \
+do { OP1(0x66); OP1(0x0f); OP1(0xd3); MODRM_REG(r1, r2); } while (0)
+
+#define _psubq_r128_r128(r1, r2) \
+do { OP1(0x66); OP1(0x0f); OP1(0xfb); MODRM_REG(r1, r2); } while (0)
+
+#define _pxor_r128_r128(r1, r2) \
+do { OP1(0x66); OP1(0x0f); OP1(0xef); MODRM_REG(r1, r2); } while (0)
+
+
+
+/*###################################################################################################
 **	FUNCTION PROTOTYPES
 **#################################################################################################*/
 
@@ -871,12 +1018,15 @@ void drc_execute(struct drccore *drc);
 void drc_exit(struct drccore *drc);
 
 /* code management */
+void drc_begin_sequence(struct drccore *drc, UINT32 pc);
+void drc_end_sequence(struct drccore *drc);
 void drc_register_code_at_cache_top(struct drccore *drc, UINT32 pc);
 void *drc_get_code_at_pc(struct drccore *drc, UINT32 pc);
 
 /* standard appendages */
 void drc_append_dispatcher(struct drccore *drc);
 void drc_append_fixed_dispatcher(struct drccore *drc, UINT32 newpc);
+void drc_append_tentative_fixed_dispatcher(struct drccore *drc, UINT32 newpc);
 void drc_append_call_debugger(struct drccore *drc);
 void drc_append_standard_epilogue(struct drccore *drc, INT32 cycles, INT32 pcdelta, int allow_exit);
 void drc_append_save_volatiles(struct drccore *drc);

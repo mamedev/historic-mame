@@ -520,6 +520,106 @@ INPUT_PORTS_START( spaceskr )
 	PORT_DIPSETTING(    0x00, "A only" )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( spacecr )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START      /* Service */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+
+	PORT_START
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "6" )
+	PORT_DIPSETTING(    0x08, "5" )
+	PORT_DIPSETTING(    0x10, "4" )
+	PORT_DIPSETTING(    0x18, "3" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START      /* DSW2 Coinage */
+	DSW2_PORT
+
+	PORT_START      /* DSW3 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Year Display" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x80, "A and B" )
+	PORT_DIPSETTING(    0x00, "A only" )
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( junglek )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -1970,7 +2070,7 @@ static MACHINE_DRIVER_START( mcu )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
 
-	MDRV_CPU_ADD(M68705,3000000/2)      /* xtal is 3MHz, I think it's divided by 2 internally */
+	MDRV_CPU_ADD(M68705,3000000/4)      /* xtal is 3MHz, divided by 4 internally */
 	MDRV_CPU_MEMORY(m68705_readmem,m68705_writemem)
 MACHINE_DRIVER_END
 
@@ -1981,7 +2081,7 @@ static MACHINE_DRIVER_START( kikstart )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(kikstart_readmem,kikstart_writemem)
 
-	MDRV_CPU_ADD(M68705,3000000/2)      /* xtal is 3MHz, I think it's divided by 2 internally */
+	MDRV_CPU_ADD(M68705,3000000/4)      /* xtal is 3MHz, divided by 4 internally */
 	MDRV_CPU_MEMORY(m68705_readmem,m68705_writemem)
 MACHINE_DRIVER_END
 
@@ -2018,6 +2118,37 @@ ROM_START( spaceskr )
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )      /* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, CRC(b833b5ea) SHA1(d233f1bf8a3e6cd876853ffd721b9b64c61c9047) )
 ROM_END
+
+ROM_START( spacecr )
+	ROM_REGION( 0x12000, REGION_CPU1, 0 )      /* 64k for code */
+	ROM_LOAD( "cg01.69",         0x0000, 0x1000, CRC(2fe28b71) SHA1(868b109c16fb5ebee576b90392c6ebfec37d4139) )
+	ROM_LOAD( "cg02.68",         0x1000, 0x1000, CRC(88f4f856) SHA1(f077c42e7ac865875355bcf76483fbab3d66eb38) )
+	ROM_LOAD( "cg03.67",         0x2000, 0x1000, CRC(2223319c) SHA1(4a5147473a11cb8da56de9e835dacb5b3ce9b084) )
+	ROM_LOAD( "cg04.66",         0x3000, 0x1000, CRC(4daeb8b5) SHA1(646e2d819d2727395d13a38a3560e5a71db700fa) )
+	ROM_LOAD( "cg05.65",         0x4000, 0x1000, CRC(cdc40ca0) SHA1(f79aa1a778190ee6e30d0b78643286cbf64dca45) )
+	ROM_LOAD( "cg06.64",         0x5000, 0x1000, CRC(2cc6b4c0) SHA1(e3f74fb480c265f75d0e49cd60d7cfc6e1e37eb4) )
+	ROM_LOAD( "cg07.55",         0x6000, 0x1000, CRC(e4c8780a) SHA1(49d6f3d875a83584514bea8a0f6cff175f5030f5) )
+	ROM_LOAD( "cg08.54",         0x7000, 0x1000, CRC(2c23ff4d) SHA1(8dcbd394e241587401db4199ac58138b1142a07a) )
+	ROM_LOAD( "cg09.53",         0x10000, 0x1000, CRC(3c8bb95e) SHA1(0bd2bedb7ce2176943fdb0cd640549f09b8807fa) ) /* banked at 6000 */
+	ROM_LOAD( "cg10.52",         0x11000, 0x1000, CRC(0ff17fce) SHA1(e567754b2b55489ab63ebafc5ad0cc3853d9c8a1) ) /* banked at 7000 */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )      /* 64k for the audio CPU */
+	ROM_LOAD( "cg17.70",         0x0000, 0x1000, CRC(53486204) SHA1(36d373a5bfc5cf4fda84eb8011177737ee04acdd) )
+	ROM_LOAD( "cg18.71",         0x1000, 0x1000, CRC(d1acf96c) SHA1(117a6ed2b5039bf072fb1ee59c5307ec9a2883b3) )
+	ROM_LOAD( "cg19.72",         0x2000, 0x1000, CRC(ffd27215) SHA1(c0fb2dcfcc62e694ed11bd116b992859e10de55a) )
+
+	ROM_REGION( 0x8000, REGION_GFX1, 0 )       /* graphic ROMs used at runtime */
+	ROM_LOAD( "cg11.1",         0x0000, 0x1000, CRC(1e4ae527) SHA1(cac5a16a86c53e5e85a4ce323554bb0d6173622d) )
+	ROM_LOAD( "cg12.2",         0x1000, 0x1000, CRC(aa57b616) SHA1(a004df9631dd13f083886cc76652166ee8c6da2c) )
+	ROM_LOAD( "cg13.3",         0x2000, 0x1000, CRC(945a1b69) SHA1(6e87748733ee95c2ec360e7fb3c24059ddd72468) )
+	ROM_LOAD( "cg14.4",         0x3000, 0x1000, CRC(1a29d06b) SHA1(76e866cf160bcbc353dec1d30d636c3f2f1b0ffe) )
+	ROM_LOAD( "cg15.5",         0x4000, 0x1000, CRC(656f9713) SHA1(0f1bf28d9dfa50a3098820cfbd5271bc1cdc987b) )
+	ROM_LOAD( "cg16.6",         0x5000, 0x1000, CRC(e2c0d585) SHA1(9ff848758b5b41b59eb4a48191c37d018810017e) )
+
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )      /* layer PROM */
+	ROM_LOAD( "eb16.22",      0x0000, 0x0100, CRC(b833b5ea) SHA1(d233f1bf8a3e6cd876853ffd721b9b64c61c9047) )
+ROM_END
+
 
 ROM_START( junglek )
     ROM_REGION( 0x12000, REGION_CPU1, 0 ) /* 64k for code */
@@ -2604,6 +2735,7 @@ static DRIVER_INIT( kikstart )
 }
 
 GAME( 1981, spaceskr, 0,        nomcu,    spaceskr,   0,       ROT180, "Taito Corporation", "Space Seeker" )
+GAME( 1981, spacecr,  0,        nomcu,    spacecr,    0,       ROT90,  "Taito Corporation", "Space Cruiser" )
 GAME( 1982, junglek,  0,        nomcu,    junglek,    0,       ROT0,   "Taito Corporation", "Jungle King (Japan)" )
 GAME( 1982, junglkj2, junglek,  nomcu,    junglek,    0,       ROT0,   "Taito Corporation", "Jungle King (Japan, earlier)" )
 GAME( 1982, jungleh,  junglek,  nomcu,    junglek,    0,       ROT0,   "Taito America Corporation", "Jungle Hunt (US)" )

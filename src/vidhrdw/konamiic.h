@@ -146,6 +146,7 @@ WRITE32_HANDLER( K053247_reg_long_w );
 void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect);
 int K053247_read_register(int regnum);
 void K053247_set_SpriteOffset(int offsx, int offsy);
+void K053247_wraparound_enable(int status);
 void K053247_export_config(data16_t **ram, struct GfxElement **gfx, void **callback, int *dx, int *dy);
 
 READ_HANDLER( K053246_r );
@@ -237,6 +238,7 @@ WRITE16_HANDLER( K054157_ram_word_w );
 READ16_HANDLER( K054157_ram_half_word_r );
 WRITE16_HANDLER( K054157_ram_half_word_w );
 READ16_HANDLER( K054157_rom_word_r );
+READ16_HANDLER( K054157_rom_word_8000_r );
 WRITE16_HANDLER( K054157_word_w );
 WRITE16_HANDLER( K054157_b_word_w );
 void K054157_tilemap_update(void);
@@ -343,7 +345,7 @@ int K055555_get_palette_index(int idx);
 #define K55_CTL_GRADDIR		0x01	// 0=vertical, 1=horizontal
 #define K55_CTL_GRADENABLE	0x02	// 0=BG is base color only, 1=gradient
 #define K55_CTL_FLIPPRI		0x04	// 0=standard Konami priority, 1=reverse
-#define K55_CTL_SDSEL		0x08	// 0=normal shadow timing, 1=(unable to translate)
+#define K55_CTL_SDSEL		0x08	// 0=normal shadow timing, 1=(not used by GX)
 
 /* bit masks for the input enables */
 #define K55_INP_VRAM_A		0x01
@@ -361,11 +363,16 @@ WRITE16_HANDLER( K054338_word_w ); // "CLCT" registers
 WRITE32_HANDLER( K054338_long_w );
 int K054338_read_register(int reg);
 void K054338_fill_solid_bg(struct mame_bitmap *bitmap); // solid backcolor fill
+void K054338_fill_backcolor(struct mame_bitmap *bitmap, int mode); // unified fill, 0=solid, 1=gradient
+void K054338_update_all_shadows(void);
+void K054338_invert_alpha(int invert);
+int  K054338_set_alpha_level(int pblend);
+void K054338_export_config(int **shdRGB);
 
 #define K338_REG_BGC_R		0
 #define K338_REG_BGC_GB		1
 #define K338_REG_SHAD1R		2
-#define K338_REG_BRI3		12
+#define K338_REG_BRI3		11
 #define K338_REG_PBLEND		13
 #define K338_REG_CONTROL	15
 
@@ -387,20 +394,33 @@ READ16_HANDLER( K053250_1_r );
 WRITE16_HANDLER( K053250_1_ram_w );
 READ16_HANDLER( K053250_1_ram_r );
 READ16_HANDLER( K053250_1_rom_r );
-void K053250_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int chip, int colorbase, int pri);
+
+// K053250_draw() control flags
+#define K053250_WRAP500		0x01
+#define K053250_OVERDRIVE	0x02
+
+void K053250_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int chip, int colorbase, int flags, int pri);
+void K053250_set_LayerOffset(int chip, int offsx, int offsy);
+void K053250_unpack_pixels(int region);
+void K053250_dma(int chip, int limiter);
+
 
 // K053252 CRT and interrupt control unit
-WRITE16_HANDLER( K053252_word_w ); // "CCU" registers
+READ16_HANDLER( K053252_word_r );	// CCU registers
+WRITE16_HANDLER( K053252_word_w );
 WRITE32_HANDLER( K053252_long_w );
 
 
 // debug handlers
-READ16_HANDLER( K053252_word_r ); 		// CCU
-READ16_HANDLER( K056832_word_r );		// VREG
-READ32_HANDLER( K056832_long_r );
-READ16_HANDLER( K056832_b_word_r );		// 832 ports?
+READ16_HANDLER( K054157_word_r );		// VACSET (legacy)
+READ16_HANDLER( K056832_word_r );		// VACSET
+READ16_HANDLER( K056832_b_word_r );		// VSCCS  (board dependent)
+READ16_HANDLER( K053246_reg_word_r );	// OBJSET1
 READ16_HANDLER( K053247_reg_word_r );	// OBJSET2
-READ32_HANDLER( K053247_reg_long_r );
+READ16_HANDLER( K053251_msb_r );		// PCU1
 READ16_HANDLER( K055555_word_r );		// PCU2
-READ32_HANDLER( K055555_long_r );
 READ16_HANDLER( K054338_word_r );		// CLTC
+
+READ32_HANDLER( K056832_long_r );		// VACSET
+READ32_HANDLER( K053247_reg_long_r );	// OBJSET2
+READ32_HANDLER( K055555_long_r );		// PCU2

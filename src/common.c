@@ -74,6 +74,8 @@ data8_t *generic_nvram;
 /* hard disks */
 static void *hard_disk_handle[4];
 
+/* system BIOS */
+static int system_bios;
 
 
 /***************************************************************************
@@ -1008,7 +1010,7 @@ static void handle_missing_file(struct rom_load_data *romdata, const struct RomM
 }
 
 /*-------------------------------------------------
-	dump_wrong_and_correct_checksums - dump an 
+	dump_wrong_and_correct_checksums - dump an
 	error message containing the wrong and the
 	correct checksums for a given ROM
 -------------------------------------------------*/
@@ -1019,7 +1021,7 @@ static void dump_wrong_and_correct_checksums(struct rom_load_data* romdata, cons
 	char chksum[256];
 	unsigned found_functions;
 	unsigned wrong_functions;
-	
+
 	found_functions = hash_data_used_functions(hash) & hash_data_used_functions(acthash);
 
 	hash_data_print(hash, found_functions, chksum);
@@ -1046,7 +1048,7 @@ static void dump_wrong_and_correct_checksums(struct rom_load_data* romdata, cons
 		for (i=0;i<HASH_NUM_FUNCTIONS;i++)
 			if (wrong_functions & (1<<i))
 			{
-				sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], 
+				sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)],
 					"\tInvalid %s checksum treated as 0 (check leading zeros)\n",
 					hash_function_name(1<<i));
 
@@ -1233,7 +1235,7 @@ static int open_rom_file(struct rom_load_data *romdata, const struct RomModule *
 	if (osd_display_loading_rom_message(ROM_GETNAME(romp), romdata))
        return 0;
 
-	/* Attempt reading up the chain through the parents. It automatically also 
+	/* Attempt reading up the chain through the parents. It automatically also
 	   attempts any kind of load by checksum supported by the archives. */
 	romdata->file = NULL;
 	for (drv = Machine->gamedrv; !romdata->file && drv; drv = drv->clone_of)
@@ -1502,64 +1504,64 @@ static int process_rom_entries(struct rom_load_data *romdata, const struct RomMo
 		/* handle files */
 		else if (ROMENTRY_ISFILE(romp))
 		{
-			if (!ROM_BIOSFLAGS(romp) || (ROM_BIOSFLAGS(romp) == (options.bios+1))) /* alternate bios sets */
+			if (!ROM_GETBIOSFLAGS(romp) || (ROM_GETBIOSFLAGS(romp) == (system_bios+1))) /* alternate bios sets */
 			{
-			const struct RomModule *baserom = romp;
-			int explength = 0;
+				const struct RomModule *baserom = romp;
+				int explength = 0;
 
-			/* open the file */
-			debugload("Opening ROM file: %s\n", ROM_GETNAME(romp));
-			if (!open_rom_file(romdata, romp))
-				handle_missing_file(romdata, romp);
+				/* open the file */
+				debugload("Opening ROM file: %s\n", ROM_GETNAME(romp));
+				if (!open_rom_file(romdata, romp))
+					handle_missing_file(romdata, romp);
 
-			/* loop until we run out of reloads */
-			do
-			{
-				/* loop until we run out of continues */
+				/* loop until we run out of reloads */
 				do
 				{
-					struct RomModule modified_romp = *romp++;
-					int readresult;
+					/* loop until we run out of continues */
+					do
+					{
+						struct RomModule modified_romp = *romp++;
+						int readresult;
 
-					/* handle flag inheritance */
-					if (!ROM_INHERITSFLAGS(&modified_romp))
-						lastflags = modified_romp._flags;
-					else
-						modified_romp._flags = (modified_romp._flags & ~ROM_INHERITEDFLAGS) | lastflags;
+						/* handle flag inheritance */
+						if (!ROM_INHERITSFLAGS(&modified_romp))
+							lastflags = modified_romp._flags;
+						else
+							modified_romp._flags = (modified_romp._flags & ~ROM_INHERITEDFLAGS) | lastflags;
 
-					explength += ROM_GETLENGTH(&modified_romp);
+						explength += ROM_GETLENGTH(&modified_romp);
 
-                    /* attempt to read using the modified entry */
-					readresult = read_rom_data(romdata, &modified_romp);
-					if (readresult == -1)
-						goto fatalerror;
+						/* attempt to read using the modified entry */
+						readresult = read_rom_data(romdata, &modified_romp);
+						if (readresult == -1)
+							goto fatalerror;
+					}
+					while (ROMENTRY_ISCONTINUE(romp));
+
+					/* if this was the first use of this file, verify the length and CRC */
+					if (baserom)
+					{
+						debugload("Verifying length (%X) and checksums\n", explength);
+						verify_length_and_hash(romdata, ROM_GETNAME(baserom), explength, ROM_GETHASHDATA(baserom));
+						debugload("Verify finished\n");
+					}
+
+					/* reseek to the start and clear the baserom so we don't reverify */
+					if (romdata->file)
+						mame_fseek(romdata->file, 0, SEEK_SET);
+					baserom = NULL;
+					explength = 0;
 				}
-				while (ROMENTRY_ISCONTINUE(romp));
+				while (ROMENTRY_ISRELOAD(romp));
 
-				/* if this was the first use of this file, verify the length and CRC */
-				if (baserom)
-				{
-					debugload("Verifying length (%X) and checksums\n", explength);
-					verify_length_and_hash(romdata, ROM_GETNAME(baserom), explength, ROM_GETHASHDATA(baserom));
-					debugload("Verify finished\n");
-				}
-
-				/* reseek to the start and clear the baserom so we don't reverify */
+				/* close the file */
 				if (romdata->file)
-					mame_fseek(romdata->file, 0, SEEK_SET);
-				baserom = NULL;
-				explength = 0;
+				{
+					debugload("Closing ROM file\n");
+					mame_fclose(romdata->file);
+					romdata->file = NULL;
+				}
 			}
-			while (ROMENTRY_ISRELOAD(romp));
-
-			/* close the file */
-			if (romdata->file)
-			{
-				debugload("Closing ROM file\n");
-				mame_fclose(romdata->file);
-				romdata->file = NULL;
-			}
-		}
 			else
 			{
 				romp++; /* skip over file */
@@ -1644,7 +1646,7 @@ static int process_disk_entries(struct rom_load_data *romdata, const struct RomM
 				sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s IGNORED ADDITIONAL CHECKSUM INFORMATIONS (ONLY MD5 SUPPORTED)\n",
 					filename);
 			}
-			
+
 
 			/* make the filename of the diff */
 			strcpy(filename, ROM_GETNAME(romp));
@@ -1705,6 +1707,51 @@ fatalerror:
 
 
 /*-------------------------------------------------
+	determine_bios_rom - determine system_bios
+	from SystemBios structure and options.bios
+-------------------------------------------------*/
+
+int determine_bios_rom(const struct SystemBios *bios)
+{
+	const struct SystemBios *firstbios = bios;
+
+	/* set to default */
+	int bios_no = 0;
+
+	/* Not system_bios_0 and options.bios is set  */
+	if(bios && (options.bios != NULL))
+	{
+		/* Allow -bios n to still be used */
+		while(!BIOSENTRY_ISEND(bios))
+		{
+			char bios_number[3];
+			sprintf(bios_number, "%d", bios->value);
+
+			if(!strcmp(bios_number, options.bios))
+				bios_no = bios->value;
+
+			bios++;
+		}
+
+		bios = firstbios;
+
+		/* Test for bios short names */
+		while(!BIOSENTRY_ISEND(bios))
+		{
+			if(!strcmp(bios->_name, options.bios))
+				bios_no = bios->value;
+
+			bios++;
+		}
+	}
+
+	debugload("Using System BIOS: %d\n", bios_no);
+
+	return bios_no;
+}
+
+
+/*-------------------------------------------------
 	rom_load - new, more flexible ROM
 	loading system
 -------------------------------------------------*/
@@ -1726,6 +1773,9 @@ int rom_load(const struct RomModule *romp)
 
 	/* reset the disk list */
 	memset(hard_disk_handle, 0, sizeof(hard_disk_handle));
+
+	/* determine the correct biosset to load based on options.bios string */
+	system_bios = determine_bios_rom(Machine->gamedrv->bios);
 
 	/* loop until we hit the end */
 	for (region = romp, regnum = 0; region; region = rom_next_region(region), regnum++)
@@ -1828,7 +1878,7 @@ void printromlist(const struct RomModule *romp,const char *basename)
 			const char *name = ROM_GETNAME(rom);
 			const char* hash = ROM_GETHASHDATA(rom);
 			int length = -1; /* default is for disks! */
-			
+
 			if (ROMREGION_ISROMDATA(region))
 			{
 				length = 0;
@@ -1846,7 +1896,7 @@ void printromlist(const struct RomModule *romp,const char *basename)
 			{
 				if (hash_data_has_info(hash, HASH_INFO_BAD_DUMP))
 					printf(" BAD");
-				
+
 				hash_data_print(hash, 0, buf);
 				printf(" %s", buf);
 			}

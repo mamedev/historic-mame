@@ -1,25 +1,62 @@
+#define XE_DEBUG 0
+#define XE_SKIPIDLE 1
+#define XE_DMADELAY 256
+
 /***************************************************************************
 
-Xexex
+	Xexex  (c) 1991 Konami
 
-Unemulated constant write accesses:
-Hard.Addr	RAM Addr.	Value
-d0001		80482		01
-d0003		80483		ff
-d0005		80484		00
-d0007		80485		21
-d0009		80486		00
-d000b		80487		37
-d000d		80488		01
-d0013		80489		20
-d0015		8048a		0c
-d0017		8048b		0e
-d0019		8048c		54
-d001c		8048d		00
 
-ca001		80468		00
-ca002		80469		00
-ca003		8046a		00
+Change Log
+----------
+
+(ATXXXX03)
+
+Hooked up missing memory handler, emulated object DMA, revised IRQ,
+rewrote the K053250(LVC) effect generator, ported tilemaps to the
+more complete K056832 emulation(I have no intention to rewrite the
+K054157 which is a complete subset of the K056832), corrected
+a few K054539 PCM chip misbehaviors, etc.
+
+
+The following bugs appear to be fixed:
+
+General:
+
+- game doesn't slow down
+	IRQ 5 is the "OBJDMA end interrupt" and shouldn't be triggered
+	if DMA didn't complete within the frame.
+
+	* may not be 100% correct but close to that on the Gamest video.
+	Xexex is 384x256 which suggests an 8Mhz dotclock so DMA delay can
+	range up to 256.0us. Increase XE_DMADELAY if emulation runs faster
+	than the original or overclock CPU 0 if you prefer faster gameplay.
+
+- sprite lag, dithering, flicking (DMA)
+
+- line effects go out of sync (K053250 also does DMA)
+
+- inconsistent reverb (maths bug)
+
+- lasers don't change color (IRQ masking)
+- xexex057gre_1 (delayed sfx, missing speech, Xexexj only: random 1up note)
+- xexex057gre_2 (reversed stereo)
+- xexex065gre (coin up problems)
+
+- L1: xexex067gre (tilemap boundary), misaligned bosses (swapXY)
+- L2: xexex061gre (K054157 offset)
+- L4: half the foreground missing (LVC no-wraparound)
+- L5: poly-face boss missing (coordinate masking)
+- L6: sticky galaxies (LVC scroll bug)
+- L7: misaligned ship patches (swapXY)
+
+
+Unresolved Issues:
+
+- the random 1up sound still pops up in world version (filtered temporarily)
+- mono/stereo softdip has no effect (xexex057gre_3, external logic)
+- ending graphics has wrong priority (pdrawgfx core issue, takes planning)
+- the K053250 occationally shows a one-frame glitch (probably timing related)
 
 ***************************************************************************/
 
@@ -30,13 +67,21 @@ ca003		8046a		00
 #include "vidhrdw/konamiic.h"
 #include "cpu/z80/z80.h"
 #include "machine/eeprom.h"
+#include "sound/k054539.h"
 
 VIDEO_START( xexex );
 VIDEO_UPDATE( xexex );
-void xexex_set_alpha(int on);
+extern void xexex_set_alpha(int);
 
+MACHINE_INIT( xexex );
+
+static data16_t *xexex_workram;
 static data16_t cur_control2;
 static int init_eeprom_count;
+static int cur_sound_region, xexex_strip0x1a;
+static int suspension_active, resume_trigger;
+static void *dmadelay_timer;
+
 
 static struct EEPROM_interface eeprom_interface =
 {
@@ -67,6 +112,9 @@ static NVRAM_HANDLER( xexex )
 	}
 }
 
+
+#if 0 // old code (for reference only)
+
 /* the interface with the 053247 is weird. The chip can address only 0x1000 bytes */
 /* of RAM, but they put 0x8000 there. The CPU can access them all. Address lines */
 /* A1, A5 and A6 don't go to the 053247. */
@@ -92,12 +140,61 @@ static WRITE16_HANDLER( K053247_scattered_word_w )
 	}
 }
 
-#if 0
-static READ16_HANDLER( control0_r )
-{
-	return input_port_0_r(0);
-}
 #endif
+
+
+static void xexex_objdma(int limiter)
+{
+	static int frame = -1;
+
+	int ecx, edx;
+	data16_t *esi, *edi;
+
+	ecx = frame;
+	frame = cpu_getcurrentframe();
+	if (limiter && ecx == frame) return; // make sure we only do DMA transfer once per frame
+
+	K053247_export_config(&edi, (struct GfxElement**)&esi, (void**)&esi, &ecx, &ecx);
+	esi = spriteram16;
+	edx = ecx = 256;
+	do {
+		if (*esi & 0x8000)
+		{
+			edi[0] = esi[0x0];  edi[1] = esi[0x2];
+			edi[2] = esi[0x4];  edi[3] = esi[0x6];
+			edi[4] = esi[0x8];  edi[5] = esi[0xa];
+			edi[6] = esi[0xc];  edi[7] = esi[0xe];
+			edi += 8;
+			edx--;
+		}
+		esi += 0x40;
+	}
+	while (--ecx);
+
+	if (edx) do { *edi = 0; edi += 8; } while (--edx);
+}
+
+static READ16_HANDLER( spriteram16_mirror_r )
+{
+	return(spriteram16[offset]);
+}
+
+static WRITE16_HANDLER( spriteram16_mirror_w )
+{
+	COMBINE_DATA(spriteram16+offset);
+}
+
+static READ16_HANDLER( xexex_waitskip_r )
+{
+	if (activecpu_get_pc() == 0x1158)
+	{
+		cpu_spinuntil_trigger(resume_trigger);
+		suspension_active = 1;
+	}
+
+	return(xexex_workram[0x14/2]);
+}
+
 
 static READ16_HANDLER( control1_r )
 {
@@ -123,7 +220,7 @@ static void parse_control2(void)
 	/* bit 1  is cs (active low) */
 	/* bit 2  is clock (active high) */
 	/* bit 5  is enable irq 6 */
-	/* bit 6  is enable irq 5 */
+	/* bit 6  is enable irq 5 (can't verify)*/
 	/* bit 11 is watchdog */
 
 	EEPROM_write_bit(cur_control2 & 0x01);
@@ -148,42 +245,25 @@ static WRITE16_HANDLER( control2_w )
 	parse_control2();
 }
 
-static INTERRUPT_GEN( xexex_interrupt )
-{
-	switch (cpu_getiloops())
-	{
-		case 1:
-			if (K053246_is_IRQ_enabled())
-				cpu_set_irq_line(0, 4, HOLD_LINE);
-			break;
-
-		case 0:
-			if (K053246_is_IRQ_enabled() && (cur_control2 & 0x0040))
-				cpu_set_irq_line(0, 5, HOLD_LINE);
-			break;
-
-		case 2:
-			if (K053246_is_IRQ_enabled() && (cur_control2 & 0x0020))
-				cpu_set_irq_line(0, 6, HOLD_LINE);
-			break;
-	}
-}
 
 static WRITE16_HANDLER( sound_cmd1_w )
 {
-	if(ACCESSING_LSB) {
-		data &= 0xff;
-		soundlatch_w(0, data);
-		if(!Machine->sample_rate)
-			if(data == 0xfc || data == 0xfe)
-				soundlatch3_w(0, 0x7f);
+	if(ACCESSING_LSB)
+	{
+		// anyone knows why 0x1a keeps lurking the sound queue in the world version???
+		if (xexex_strip0x1a)
+			if (soundlatch2_r(0)==1 && data==0x1a) return;
+
+		soundlatch_w(0, data & 0xff);
 	}
 }
 
 static WRITE16_HANDLER( sound_cmd2_w )
 {
-	if(ACCESSING_LSB)
+	if (ACCESSING_LSB)
+	{
 		soundlatch2_w(0, data & 0xff);
+	}
 }
 
 static WRITE16_HANDLER( sound_irq_w )
@@ -195,8 +275,6 @@ static READ16_HANDLER( sound_status_r )
 {
 	return soundlatch3_r(0);
 }
-
-static int cur_sound_region = 0;
 
 static void reset_sound_region(void)
 {
@@ -223,48 +301,99 @@ static void ym_set_mixing(double left, double right)
 	}
 }
 
+static void dmaend_callback(int data)
+{
+	if (!(cur_control2 & 0x0040)) return;
+
+	// foul-proof (CPU0 could be deactivated while we wait)
+	if (suspension_active) { suspension_active = 0; cpu_trigger(resume_trigger); }
+
+	// IRQ 5 is the "object DMA end interrupt" and shouldn't be triggered
+	// if object data isn't ready for DMA within the frame.
+	cpu_set_irq_line(0, 5, HOLD_LINE);
+}
+
+static INTERRUPT_GEN( xexex_interrupt )
+{
+	if (suspension_active) { suspension_active = 0; cpu_trigger(resume_trigger); }
+
+	switch (cpu_getiloops())
+	{
+		case 0:
+			// IRQ 6 is for test mode only
+			if (cur_control2 & 0x0020) cpu_set_irq_line(0, 6, HOLD_LINE);
+		break;
+
+		case 1:
+			// IRQ 4 is the primary VBLANK interrupt
+			cpu_set_irq_line(0, 4, HOLD_LINE);
+
+			// OBJDMA starts at the beginning of VBLANK
+			if (K053246_is_IRQ_enabled())
+			{
+				// dump sprite data and schedule DMA end interrupt
+				xexex_objdma(0);
+				timer_adjust(dmadelay_timer, TIME_IN_USEC(XE_DMADELAY), 0, 0);
+			}
+		break;
+	}
+}
+
+
 static MEMORY_READ16_START( readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x080000, 0x08ffff, MRA16_RAM },			/* Work RAM */
-	{ 0x090000, 0x097fff, K053247_scattered_word_r },	/* Sprites */
-	{ 0x098000, 0x09ffff, K053247_scattered_word_r },	/* Sprites (mirror) */
-	{ 0x0c4000, 0x0c4001, K053246_word_r },
-	{ 0x0c6000, 0x0c6fff, K053250_0_ram_r },			/* Background generator effects */
+#if XE_SKIPIDLE
+	{ 0x080014, 0x080015, xexex_waitskip_r },
+#endif
+	{ 0x080000, 0x08ffff, MRA16_RAM },
+	{ 0x090000, 0x097fff, MRA16_RAM },				// K053247 sprite RAM
+	{ 0x098000, 0x09ffff, spriteram16_mirror_r },	// K053247 sprite RAM mirror read
+	{ 0x0c4000, 0x0c4001, K053246_word_r },			// Passthrough to sprite roms
+	{ 0x0c6000, 0x0c7fff, K053250_0_ram_r },		// K053250 "road" RAM
 	{ 0x0c8000, 0x0c800f, K053250_0_r },
 	{ 0x0d6014, 0x0d6015, sound_status_r },
+	{ 0x0d6000, 0x0d601f, MRA16_RAM },
 	{ 0x0da000, 0x0da001, input_port_2_word_r },
 	{ 0x0da002, 0x0da003, input_port_3_word_r },
 	{ 0x0dc000, 0x0dc001, input_port_0_word_r },
 	{ 0x0dc002, 0x0dc003, control1_r },
 	{ 0x0de000, 0x0de001, control2_r },
 	{ 0x100000, 0x17ffff, MRA16_ROM },
-	{ 0x180000, 0x181fff, K054157_ram_word_r },		/* Graphic planes */
-	{ 0x190000, 0x191fff, K054157_rom_word_r }, 	/* Passthrough to tile roms */
+	{ 0x180000, 0x181fff, K056832_ram_word_r },
+	{ 0x182000, 0x183fff, K056832_ram_word_r },
+	{ 0x190000, 0x191fff, K056832_rom_word_r },		// Passthrough to tile roms
 	{ 0x1a0000, 0x1a1fff, K053250_0_rom_r },
 	{ 0x1b0000, 0x1b1fff, MRA16_RAM },
+#if XE_DEBUG
+	{ 0x0c0000, 0x0c003f, K056832_word_r },
+	{ 0x0c2000, 0x0c2007, K053246_reg_word_r },
+	{ 0x0ca000, 0x0ca01f, K054338_word_r },
+	{ 0x0d0000, 0x0d001f, K053252_word_r },
+#endif
 MEMORY_END
 
 static MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x080000, 0x08ffff, MWA16_RAM },
-	{ 0x090000, 0x097fff, K053247_scattered_word_w, &spriteram16 },
-		//	{ 0x098000, 0x09ffff, K053247_scattered_word_w },/* Mirror for some buggy levels */
-	{ 0x0c0000, 0x0c003f, K054157_word_w },
-	{ 0x0c2000, 0x0c2007, K053246_word_w },
-	{ 0x0c6000, 0x0c6fff, K053250_0_ram_w },
-	{ 0x0c8000, 0x0c800f, K053250_0_w },
-	{ 0x0ca000, 0x0ca01f, K054338_word_w },
-	{ 0x0cc000, 0x0cc01f, K053251_lsb_w },
-	{ 0x0d0000, 0x0d001d, MWA16_NOP },
+	{ 0x000000, 0x07ffff, MWA16_ROM },					// main ROM
+	{ 0x080000, 0x08ffff, MWA16_RAM, &xexex_workram },	// work RAM
+	{ 0x090000, 0x097fff, MWA16_RAM, &spriteram16 },	// K053247 sprite RAM
+	{ 0x098000, 0x09ffff, spriteram16_mirror_w },		// K053247 sprite RAM mirror write
+	{ 0x0c0000, 0x0c003f, K056832_word_w },				// VACSET (K054157)
+	{ 0x0c2000, 0x0c2007, K053246_word_w },				// OBJSET1
+	{ 0x0c6000, 0x0c7fff, K053250_0_ram_w },			// K053250 "road" RAM
+	{ 0x0c8000, 0x0c800f, K053250_0_w },				// background effects generator
+	{ 0x0ca000, 0x0ca01f, K054338_word_w },				// CLTC
+	{ 0x0cc000, 0x0cc01f, K053251_lsb_w },				// priority encoder
+	{ 0x0d0000, 0x0d001f, K053252_word_w },				// CCU
 	{ 0x0d4000, 0x0d4001, sound_irq_w },
 	{ 0x0d600c, 0x0d600d, sound_cmd1_w },
 	{ 0x0d600e, 0x0d600f, sound_cmd2_w },
-	{ 0x0d8000, 0x0d8007, K054157_b_word_w },
+	{ 0x0d6000, 0x0d601f, MWA16_RAM },					// sound regs fall through
+	{ 0x0d8000, 0x0d8007, MWA16_NOP },					// VSCCS
 	{ 0x0de000, 0x0de001, control2_w },
 	{ 0x100000, 0x17ffff, MWA16_ROM },
-	{ 0x180000, 0x181fff, K054157_ram_word_w },
-	{ 0x182000, 0x183fff, K054157_ram_word_w },		/* Mirror for some buggy levels */
-	{ 0x190000, 0x191fff, MWA16_ROM },
+	{ 0x180000, 0x181fff, K056832_ram_word_w }, 		// tilemap RAM
+	{ 0x182000, 0x183fff, K056832_ram_word_w }, 		// tilemap RAM mirror
+	{ 0x190000, 0x191fff, MWA16_ROM },					// tile ROM
 	{ 0x1b0000, 0x1b1fff, paletteram16_xrgb_word_w, &paletteram16 },
 MEMORY_END
 
@@ -331,7 +460,7 @@ INPUT_PORTS_END
 static struct YM2151interface ym2151_interface =
 {
 	1,
-	4000000,		/* Value found in Amuse */
+	4000000,	// 4Mhz (based on AMUSE)
 	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
 	{ 0 }
 };
@@ -348,24 +477,26 @@ static struct K054539interface k054539_interface =
 static MACHINE_DRIVER_START( xexex )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz ? (xtal is 32MHz) */
+	MDRV_CPU_ADD(M68000, 16000000)	// 16MHz (32MHz xtal)
 	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(xexex_interrupt,3)	/* ??? */
+	MDRV_CPU_VBLANK_INT(xexex_interrupt,2)
 
-	MDRV_CPU_ADD(Z80, 5000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 5 MHz in Amuse (xtal is 32MHz/19.432MHz) */
+	MDRV_CPU_ADD(Z80, 8000000)	// 8MHz (PCB only shows one 32MHz xtal, reference: www.system16.com)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 
+	MDRV_INTERLEAVE(32);
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
+	MDRV_MACHINE_INIT(xexex)
 	MDRV_NVRAM_HANDLER(xexex)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
-	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 0*8, 32*8-1 )
-	//	64*8, 64*8, { 0*8, (64-0)*8-1, 0*8, 64*8-1 },
+	MDRV_VISIBLE_AREA(40, 40+384-1, 0, 0+256-1)
+
 	MDRV_PALETTE_LENGTH(2048)
 
 	MDRV_VIDEO_START(xexex)
@@ -399,7 +530,7 @@ ROM_START( xexex )
 	ROM_LOAD( "xex_b10.rom", 0x200000, 0x100000, CRC(ee31db8d) SHA1(c41874fb8b401ea9cdd327ee6239b5925418cf7b) )
 	ROM_LOAD( "xex_b09.rom", 0x300000, 0x100000, CRC(88f072ef) SHA1(7ecc04dbcc29b715117e970cc96e11137a21b83a) )
 
-	ROM_REGION( 0x080000, REGION_GFX3, 0 )
+	ROM_REGION( 0x100000, REGION_GFX3, 0 ) // NOTE: region must be 2xROM size for unpacking
 	ROM_LOAD( "xex_b08.rom", 0x000000, 0x080000, CRC(ca816b7b) SHA1(769ce3700e41200c34adec98598c0fe371fe1e6d) )
 
 	ROM_REGION( 0x300000, REGION_SOUND1, 0 )
@@ -428,7 +559,7 @@ ROM_START( xexexj )
 	ROM_LOAD( "xex_b10.rom", 0x200000, 0x100000, CRC(ee31db8d) SHA1(c41874fb8b401ea9cdd327ee6239b5925418cf7b) )
 	ROM_LOAD( "xex_b09.rom", 0x300000, 0x100000, CRC(88f072ef) SHA1(7ecc04dbcc29b715117e970cc96e11137a21b83a) )
 
-	ROM_REGION( 0x080000, REGION_GFX3, 0 )
+	ROM_REGION( 0x100000, REGION_GFX3, 0 ) // NOTE: region must be 2xROM size for unpacking
 	ROM_LOAD( "xex_b08.rom", 0x000000, 0x080000, CRC(ca816b7b) SHA1(769ce3700e41200c34adec98598c0fe371fe1e6d) )
 
 	ROM_REGION( 0x300000, REGION_SOUND1, 0 )
@@ -436,27 +567,38 @@ ROM_START( xexexj )
 	ROM_LOAD( "xex_b07.rom", 0x200000, 0x100000, CRC(ec87fe1b) SHA1(ec9823aea5a1fc5c47c8262e15e10b28be87231c) )
 ROM_END
 
+MACHINE_INIT( xexex )
+{
+	cur_sound_region = 0;
+	suspension_active = 0;
+}
 
 static DRIVER_INIT( xexex )
 {
+	if (!strcmp(Machine->gamedrv->name, "xexex"))
+	{
+		// Invulnerability
+//		*(data16_t *)(memory_region(REGION_CPU1) + 0x648d4) = 0x4a79;
+//		*(data16_t *)(memory_region(REGION_CPU1) + 0x00008) = 0x5500;
+		xexex_strip0x1a = 1;
+	}
+
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_4(REGION_GFX2);
-
-	/* Invulnerability */
-#if 0
-	if(1 && !strcmp(Machine->gamedrv->name, "xexex")) {
-		*(data16_t *)(memory_region(REGION_CPU1) + 0x648d4) = 0x4a79;
-		*(data16_t *)(memory_region(REGION_CPU1) + 0x00008) = 0x5500;
-	}
-#endif
+	K053250_unpack_pixels(REGION_GFX3);
 
 	state_save_register_UINT16("main", 0, "control2", &cur_control2, 1);
 	state_save_register_func_postload(parse_control2);
 	state_save_register_int("main", 0, "sound region", &cur_sound_region);
 	state_save_register_func_postload(reset_sound_region);
 
-	K054539_init_stereo(1); //*
+	resume_trigger = 1000;
+
+	dmadelay_timer = timer_alloc(dmaend_callback);
+
+	K054539_init_flags(K054539_REVERSE_STEREO);
 }
+
 
 GAME( 1991, xexex,  0,     xexex, xexex, xexex, ROT0, "Konami", "Xexex (World)" )
 GAME( 1991, xexexj, xexex, xexex, xexex, xexex, ROT0, "Konami", "Xexex (Japan)" )

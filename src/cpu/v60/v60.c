@@ -435,7 +435,7 @@ int v60_execute(int cycles)
 	v60_ICount = cycles;
 	if(v60.irq_line != CLEAR_LINE)
 		v60_try_irq();
-	while(v60_ICount) {
+	while(v60_ICount >= 0) {
 		PPC = PC;
 		CALL_MAME_DEBUG;
 		v60_ICount--;

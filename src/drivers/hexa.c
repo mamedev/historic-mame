@@ -36,7 +36,9 @@ NOTES:
 
 
 
+VIDEO_START( hexa );
 VIDEO_UPDATE( hexa );
+WRITE_HANDLER( hexa_videoram_w );
 WRITE_HANDLER( hexa_d008_w );
 
 
@@ -56,7 +58,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xd001, 0xd001, AY8910_write_port_0_w },
 	{ 0xd008, 0xd008, hexa_d008_w },
 	{ 0xd010, 0xd010, watchdog_reset_w },	/* or IRQ acknowledge, or both */
-	{ 0xe000, 0xe7ff, videoram_w, &videoram, &videoram_size },
+	{ 0xe000, 0xe7ff, hexa_videoram_w, &videoram, &videoram_size },
 MEMORY_END
 
 
@@ -151,7 +153,7 @@ static MACHINE_DRIVER_START( hexa )
 	MDRV_PALETTE_LENGTH(256)
 
 	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(hexa)
 	MDRV_VIDEO_UPDATE(hexa)
 
 	/* sound hardware */

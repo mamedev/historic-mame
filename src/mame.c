@@ -1338,10 +1338,13 @@ int mame_highscore_enabled(void)
 	if (he_did_cheat != 0)
 		return 0;
 
-#ifdef MAME_NET
 	/* disable high score when playing network game */
 	/* (this forces all networked machines to start from the same state!) */
+#ifdef MAME_NET
 	if (net_active())
+		return 0;
+#elif defined XMAME_NET
+	if (osd_net_active())
 		return 0;
 #endif
 
@@ -1895,6 +1898,118 @@ static int validitychecks(void)
 							mwa++;
 						}
 					}
+
+					if (drv.cpu[cpu].port_read)
+					{
+						const struct IO_ReadPort *pra = drv.cpu[cpu].port_read;
+
+						if (!IS_MEMPORT_MARKER(pra) || (pra->end & MEMPORT_DIRECTION_MASK) != MEMPORT_DIRECTION_READ)
+						{
+							printf("%s: %s wrong PORT_READ_START\n",drivers[i]->source_file,drivers[i]->name);
+							error = 1;
+						}
+
+						switch (databus_width)
+						{
+							case 8:
+								if ((pra->end & MEMPORT_WIDTH_MASK) != MEMPORT_WIDTH_8)
+								{
+									printf("%s: %s cpu #%d uses wrong data width port handlers! (width = %d, port = %08x)\n",drivers[i]->source_file,drivers[i]->name,cpu,databus_width,pra->end);
+									error = 1;
+								}
+								break;
+							case 16:
+								if ((pra->end & MEMPORT_WIDTH_MASK) != MEMPORT_WIDTH_16)
+								{
+									printf("%s: %s cpu #%d uses wrong data width port handlers! (width = %d, port = %08x)\n",drivers[i]->source_file,drivers[i]->name,cpu,databus_width,pra->end);
+									error = 1;
+								}
+								break;
+							case 32:
+								if ((pra->end & MEMPORT_WIDTH_MASK) != MEMPORT_WIDTH_32)
+								{
+									printf("%s: %s cpu #%d uses wrong data width port handlers! (width = %d, port = %08x)\n",drivers[i]->source_file,drivers[i]->name,cpu,databus_width,pra->end);
+									error = 1;
+								}
+								break;
+						}
+
+						while (!IS_MEMPORT_END(pra))
+						{
+							if (!IS_MEMPORT_MARKER(pra))
+							{
+								if (pra->end < pra->start)
+								{
+									printf("%s: %s wrong port read handler start = %08x > end = %08x\n",drivers[i]->source_file,drivers[i]->name,pra->start,pra->end);
+									error = 1;
+								}
+								if ((pra->start & (alignunit-1)) != 0 || (pra->end & (alignunit-1)) != (alignunit-1))
+								{
+									printf("%s: %s wrong port read handler start = %08x, end = %08x ALIGN = %d\n",drivers[i]->source_file,drivers[i]->name,pra->start,pra->end,alignunit);
+									error = 1;
+								}
+							
+							}
+							pra++;
+						}
+					}
+
+					if (drv.cpu[cpu].port_write)
+					{
+						const struct IO_WritePort *pwa = drv.cpu[cpu].port_write;
+
+						if (pwa->start != MEMPORT_MARKER ||
+								(pwa->end & MEMPORT_DIRECTION_MASK) != MEMPORT_DIRECTION_WRITE)
+						{
+							printf("%s: %s wrong PORT_WRITE_START\n",drivers[i]->source_file,drivers[i]->name);
+							error = 1;
+						}
+
+						switch (databus_width)
+						{
+							case 8:
+								if ((pwa->end & MEMPORT_WIDTH_MASK) != MEMPORT_WIDTH_8)
+								{
+									printf("%s: %s cpu #%d uses wrong data width port handlers! (width = %d, port = %08x)\n",drivers[i]->source_file,drivers[i]->name,cpu,databus_width,pwa->end);
+									error = 1;
+								}
+								break;
+							case 16:
+								if ((pwa->end & MEMPORT_WIDTH_MASK) != MEMPORT_WIDTH_16)
+								{
+									printf("%s: %s cpu #%d uses wrong data width port handlers! (width = %d, port = %08x)\n",drivers[i]->source_file,drivers[i]->name,cpu,databus_width,pwa->end);
+									error = 1;
+								}
+								break;
+							case 32:
+								if ((pwa->end & MEMPORT_WIDTH_MASK) != MEMPORT_WIDTH_32)
+								{
+									printf("%s: %s cpu #%d uses wrong data width port handlers! (width = %d, port = %08x)\n",drivers[i]->source_file,drivers[i]->name,cpu,databus_width,pwa->end);
+									error = 1;
+								}
+								break;
+						}
+
+						while (!IS_MEMPORT_END(pwa))
+						{
+							if (!IS_MEMPORT_MARKER(pwa))
+							{
+								if (pwa->end < pwa->start)
+								{
+									printf("%s: %s wrong port write handler start = %08x > end = %08x\n",drivers[i]->source_file,drivers[i]->name,pwa->start,pwa->end);
+									error = 1;
+								}
+								if ((pwa->start & (alignunit-1)) != 0 || (pwa->end & (alignunit-1)) != (alignunit-1))
+								{
+									printf("%s: %s wrong port write handler start = %08x, end = %08x ALIGN = %d\n",drivers[i]->source_file,drivers[i]->name,pwa->start,pwa->end,alignunit);
+									error = 1;
+								}
+						
+							}
+							pwa++;
+						}
+					}
+
 				}
 			}
 

@@ -16,125 +16,134 @@
 #include "machine/random.h"
 #include "math.h"
 
-static struct {
-  unsigned char control;
-  unsigned char program[1024];
-  unsigned int tables[256];
-  int curpos;
-  int bytepos;
-  unsigned int tmp;
 
+static struct
+{
+	unsigned char control;
+	unsigned char program[1024];
+	unsigned int tables[256];
+	int curpos;
+	int bytepos;
+	unsigned int tmp;
 } tms57002;
+
+static int ldw = 0;
+
 
 void tms57002_init(void)
 {
-  tms57002.control = 0;
+	tms57002.control = 0;
 }
-
-int ldw = 0;
 
 static void chk_ldw(void)
 {
-  ldw = 0;
+	ldw = 0;
 }
 
 WRITE_HANDLER( tms57002_control_w )
 {
-  chk_ldw();
+	chk_ldw();
 
-  switch(tms57002.control) {
-  case 0xf8: {
-    break;
-  }
-  case 0xf0: {
-    break;
-  }
-  }
+	switch(tms57002.control)
+	{
+		case 0xf8:
+		break;
+		case 0xf0:
+		break;
+	}
 
-  tms57002.control = data;
-  switch(data) {
-  case 0xf8: // Program write
-  case 0xf0: // Table write
-    tms57002.curpos = 0;
-    tms57002.bytepos = 3;
-    tms57002.tmp = 0;
-    break;
-  case 0xf4: // Entry write
-    tms57002.curpos = -1;
-    tms57002.bytepos = 3;
-    tms57002.tmp = 0;
-    break;
-  case 0xfc: // Checksum (?) Status (?)
-    tms57002.bytepos = 3;
-    tms57002.tmp = 0;
-    break;
-  case 0xff: // Standby
-    break;
-  case 0xfe: // Irq
-/* (place ack of timer IRQ here) */
-    break;
-  default:
-    break;
-  }
+	tms57002.control = data;
 
+	switch(data)
+	{
+		case 0xf8: // Program write
+		case 0xf0: // Table write
+			tms57002.curpos = 0;
+			tms57002.bytepos = 3;
+			tms57002.tmp = 0;
+		break;
+		case 0xf4: // Entry write
+			tms57002.curpos = -1;
+			tms57002.bytepos = 3;
+			tms57002.tmp = 0;
+		break;
+		case 0xfc: // Checksum (?) Status (?)
+			tms57002.bytepos = 3;
+			tms57002.tmp = 0;
+		break;
+		case 0xff: // Standby
+		break;
+		case 0xfe: // Irq
+			/* (place ack of timer IRQ here) */
+		break;
+		default:
+		break;
+	}
 }
 
 READ_HANDLER( tms57002_status_r )
 {
-  chk_ldw();
-  return 0x01;
+	chk_ldw();
+	return 1;
 }
-
 
 WRITE_HANDLER( tms57002_data_w )
 {
-  switch(tms57002.control) {
-  case 0xf8:
-    tms57002.program[tms57002.curpos++] = data;
-    break;
-  case 0xf0:
-    tms57002.tmp |= data << (8*tms57002.bytepos);
-    tms57002.bytepos--;
-    if(tms57002.bytepos < 0) {
-      tms57002.bytepos = 3;
-      tms57002.tables[tms57002.curpos++] =  tms57002.tmp;
-      tms57002.tmp = 0;
-    }
-    break;
-  case 0xf4:
-    if(tms57002.curpos == -1)
-      tms57002.curpos = data;
-    else {
-      tms57002.tmp |= data << (8*tms57002.bytepos);
-      tms57002.bytepos--;
-      if(tms57002.bytepos < 0) {
-	tms57002.bytepos = 3;
+	switch(tms57002.control)
+	{
+		case 0xf8:
+			tms57002.program[tms57002.curpos++] = data;
+		break;
+		case 0xf0:
+			tms57002.tmp |= data << (8*tms57002.bytepos);
+			tms57002.bytepos--;
+			if (tms57002.bytepos < 0)
+			{
+				tms57002.bytepos = 3;
+				tms57002.tables[tms57002.curpos++] =  tms57002.tmp;
+				tms57002.tmp = 0;
+			}
+		break;
+		case 0xf4:
+			if (tms57002.curpos == -1)
+	  			tms57002.curpos = data;
+			else
+			{
+				tms57002.tmp |= data << (8*tms57002.bytepos);
+				tms57002.bytepos--;
 
-	tms57002.tables[tms57002.curpos] =  tms57002.tmp;
-	tms57002.tmp = 0;
-	tms57002.curpos = -1;
-      }
-    }
-    break;
-  default:
-    ldw++;
-    break;
-  }
+				if (tms57002.bytepos < 0)
+				{
+					tms57002.bytepos = 3;
+					tms57002.tables[tms57002.curpos] =  tms57002.tmp;
+					tms57002.tmp = 0;
+					tms57002.curpos = -1;
+				}
+			}
+		break;
+		default:
+			ldw++;
+		break;
+	}
 }
 
 READ_HANDLER( tms57002_data_r )
 {
-  unsigned char res;
-  chk_ldw();
-  switch(tms57002.control) {
-  case 0xfc:
-    res = tms57002.tmp >> (8*tms57002.bytepos);
-    tms57002.bytepos--;
-    if(tms57002.bytepos < 0)
-      tms57002.bytepos = 3;
-    return res;
-  }
-  return 0;
+	unsigned char res;
+
+	chk_ldw();
+
+	switch(tms57002.control)
+	{
+		case 0xfc:
+			res = tms57002.tmp >> (8*tms57002.bytepos);
+			tms57002.bytepos--;
+
+			if(tms57002.bytepos < 0) tms57002.bytepos = 3;
+		return res;
+	}
+
+	return 0;
 }
 
 
@@ -167,7 +176,7 @@ WRITE16_HANDLER( tms57002_data_word_w )
 /***************************************************************************/
 
 // Hardcoded constants and custom z-buffer
-#define GX_BMPPW     544
+#define GX_BMPPW (512+32)
 
 #if GX_DEBUG
 	#define GX_ZBUFW     512
@@ -205,26 +214,56 @@ void K053936GP_set_cliprect(int chip, int minx, int maxx, int miny, int maxy)
 	cliprect->max_y = maxy;
 }
 
+#define BLEND32_MACRO {  \
+	eax = pal_base[eax]; \
+	ebx = eax;           \
+	edx = eax;           \
+	eax >>= 8;           \
+	ebx >>= 16;          \
+	eax &= 0xff;         \
+	edx &= 0xff;         \
+	ebx = esi[ebx];      \
+	eax = esi[eax];      \
+	ebx <<= 16;          \
+	eax <<= 8;           \
+	ebx |= esi[edx];     \
+	edx = dst_ptr[ecx];  \
+	ebx |= eax;          \
+	eax = edx;           \
+	ebp = ebx;           \
+	ebx = edx;           \
+	edx >>= 8;           \
+	eax >>= 16;          \
+	edx &= 0xff;         \
+	ebx &= 0xff;         \
+	eax = edi[eax];      \
+	edx = edi[edx];      \
+	eax <<= 16;          \
+	edx <<= 8;           \
+	eax |= edi[ebx];     \
+	edx += ebp;          \
+	edx += eax;          \
+	dst_ptr[ecx] = edx; }
+
 INLINE void K053936GP_copyroz32clip( struct mame_bitmap *dst_bitmap, struct mame_bitmap *src_bitmap,
 		const struct rectangle *dst_cliprect, const struct rectangle *src_cliprect,
 		UINT32 _startx,UINT32 _starty,int _incxx,int _incxy,int _incyx,int _incyy,
 		int tilebpp, int blend, int clip )
 {
-	static int colormask[8]={0x01,0x03,0x07,0x0f,0x1f,0x3f,0x7f,0xff};
+	static int colormask[8]={1,3,7,0xf,0x1f,0x3f,0x7f,0xff};
 
-	int sy, sx;
-	UINT32 cy, cx;
+	int cy, cx;
 	register int eax, ebx, edx, ecx;
 	int src_pitch, incxy, incxx;
-	int src_minx, src_maxx, src_miny, src_maxy, cmask;
+	int src_minx, src_maxx, src_miny, src_maxy, cmask, ebp;
 	UINT16 *src_base;
-	UINT32 *palette;
+	UINT32 *pal_base;
 	const UINT8  *esi, *edi;
 	UINT32 *dst_ptr;
 
 	int tx, dst_pitch;
 	UINT32 *dst_base;
-	int starty, incyy, startx, incyx, ty;
+	int starty, incyy, startx, incyx, ty, sx, sy;
 
 	incxy = _incxy; incxx = _incxx; incyy = _incyy; incyx = _incyx;
 	starty = _starty; startx = _startx;
@@ -256,7 +295,7 @@ INLINE void K053936GP_copyroz32clip( struct mame_bitmap *dst_bitmap, struct mame
 	ecx = tx = -tx;
 
 	tilebpp = (tilebpp-1) & 7;
-	palette = Machine->remapped_colortable;
+	pal_base = Machine->remapped_colortable;
 	cmask = colormask[tilebpp];
 
 	src_pitch = src_bitmap->rowpixels;
@@ -322,8 +361,9 @@ INLINE void K053936GP_copyroz32clip( struct mame_bitmap *dst_bitmap, struct mame
 			eax = src_base[eax+ebx];
 			if (!(eax & cmask)) continue;
 
-			dst_ptr[ecx] = palette[eax];
-		} while (++ecx);
+			dst_ptr[ecx] = pal_base[eax];
+		}
+		while (++ecx);
 
 		ecx = tx;
 		dst_ptr = dst_base; dst_base += dst_pitch;
@@ -345,40 +385,10 @@ INLINE void K053936GP_copyroz32clip( struct mame_bitmap *dst_bitmap, struct mame
 
 			eax = src_base[eax+ebx];
 			if (!(eax & cmask)) continue;
-#if 1
-			eax = palette[eax];
-			ebx = eax;
-			edx = eax;
-			eax >>= 8;
-			ebx >>= 16;
-			eax &= 0xff;
-			edx &= 0xff;
-			ebx = esi[ebx];
-			eax = esi[eax];
-			ebx <<= 16;
-			eax <<= 8;
-			ebx |= esi[edx];
-			edx = dst_ptr[ecx];
-			ebx |= eax;
-			eax = edx;
-			sx  = ebx;
-			ebx = edx;
-			edx >>= 8;
-			eax >>= 16;
-			edx &= 0xff;
-			ebx &= 0xff;
-			eax = edi[eax];
-			edx = edi[edx];
-			eax <<= 16;
-			edx <<= 8;
-			eax |= edi[ebx];
-			edx += sx;
-			edx += eax;
-			dst_ptr[ecx] = edx;
-#else
-			dst_ptr[ecx] = alpha_blend32(dst_ptr[ecx], palette[eax]);
-#endif
-		} while (++ecx);
+
+			BLEND32_MACRO
+		}
+		while (++ecx);
 
 		ecx = tx;
 		dst_ptr = dst_base; dst_base += dst_pitch;
@@ -404,7 +414,7 @@ static void K053936GP_zoom_draw(int chip, data16_t *ctrl, data16_t *linectrl,
 	src_cliprect = &K053936_cliprect[chip];
 	clip = K053936_clip_enabled[chip];
 
-	if (ctrl[0x07] & 0x0040)	/* "super" mode */
+	if (ctrl[0x07] & 0x0040)    /* "super" mode */
 	{
 		my_clip.min_x = cliprect->min_x;
 		my_clip.max_x = cliprect->max_x;
@@ -433,7 +443,7 @@ static void K053936GP_zoom_draw(int chip, data16_t *ctrl, data16_t *linectrl,
 			y++;
 		}
 	}
-	else	/* "simple" mode */
+	else    /* "simple" mode */
 	{
 		startx = (INT16)(ctrl[0x00]) << 8;
 		starty = (INT16)(ctrl[0x01]) << 8;
@@ -474,21 +484,46 @@ void K053936GP_1_zoom_draw(struct mame_bitmap *bitmap, const struct rectangle *c
 /*
 	Parameter Notes
 	---------------
-	clip   : *caller must supply a pointer to target clip rectangle
-	alpha  : 0 = solid, 255 = invisible (NOT YET UNIMPLEMENTED)
-	shdmode: 0 = all-pen solid, 1 = solid pens only, 2 = shadow pens only, 3 = all-pen shadow
-	zcode  : 0 = closest, 255 = furtherst (pixel z-depth), -1 = disable depth-buffer and shadows
-	pri    : 0 = topmost, 255 = backmost (pixel priority)
+	clip    : *caller must supply a pointer to target clip rectangle
+	alpha   : 0 = invisible, 255 = solid
+	drawmode:
+		0 = all pens solid
+		1 = solid pens only
+		2 = all pens solid with alpha blending
+		3 = solid pens only with alpha blending
+		4 = shadow pens only
+		5 = all pens shadow
+	zcode   : 0 = closest, 255 = furthest (pixel z-depth), -1 = disable depth buffers and shadows
+	pri     : 0 = topmost, 255 = backmost (pixel priority)
 */
 
-INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const struct GfxElement *gfx,
+INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const struct GfxElement *gfx, const struct rectangle *cliprect,
 		unsigned int code, unsigned int color, int flipx, int flipy, int sx, int sy,
-		const struct rectangle *cliprect, int scalex, int scaley, int alpha, int shdmode, int zcode, int pri)
+		int scalex, int scaley, int alpha, int drawmode, int zcode, int pri)
 {
 #define FP     19
 #define FPONE  (1<<FP)
 #define FPHALF (1<<(FP-1))
 #define FPENT  0
+
+	// inner loop
+	UINT8  *src_ptr;
+	int src_x;
+	register int eax, ebx, edx, ecx;
+	int src_fx, src_fdx;
+	int shdpen, ebp;
+	UINT8  z8, db0, p8, db1;
+	UINT8  *ozbuf_ptr;
+	UINT8  *szbuf_ptr;
+	UINT32 *pal_base;
+	UINT32 *shd_base;
+	UINT32 *dst_ptr;
+	const UINT8  *esi, *edi;
+
+	// outter loop
+	int src_fby, src_fdy, src_fbx;
+	UINT8 *src_base;
+	int dst_w, dst_h;
 
 	// one-time
 	int nozoom, granularity;
@@ -497,41 +532,30 @@ INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const struct GfxElemen
 	int dst_skipx, dst_skipy, dst_x, dst_y, dst_lastx, dst_lasty;
 	int src_pitch, dst_pitch;
 
-	// inner loop
-	register int edx, eax, ecx;
-	UINT8  *src_ptr;
-	int src_fx, src_fdx;
-	int shdpen;
-	UINT8  z8, db0, p8, db1;
-	UINT8  *ozbuf_ptr;
-	UINT8  *szbuf_ptr;
-	UINT32 *pal_base;
-	UINT32 *shd_base;
-	UINT32 *dst_ptr;
-
-	// outter loop
-	int src_fby, src_fdy, src_fbx;
-	UINT8 *src_base;
-	int dst_w, dst_h;
 
 	// cull illegal and transparent objects
-	if (!gfx || !cliprect || !scalex || !scaley || alpha == 0xff) return;
+	if (!scalex || !scaley) return;
 
 	// find shadow pens and cull invisible shadows
-	granularity = gfx->color_granularity;
+	granularity = shdpen = gfx->color_granularity;
+	shdpen--;
 
 	if (zcode >= 0)
-	switch (shdmode)
 	{
-		case 3 : shdmode = 2; shdpen = 1; break;
-		default: shdpen = granularity-1;
+		if (drawmode == 5) { drawmode = 4; shdpen = 1; }
 	}
-	else switch (shdmode)
+	else
+		if (drawmode >= 4) return;
+
+	// alpha blend necessary?
+	if (drawmode & 2)
 	{
-		case 0 : shdpen = 0x7fffffff; break;
-		case 1 : shdpen = granularity-1; break;
-		default: return;
+		if (alpha <= 0) return;
+		if (alpha >= 255) drawmode &= ~2;
 	}
+
+	esi = alpha_cache.alphas;
+	edi = alpha_cache.alphad;
 
 	// fill internal data structure with default values
 	ozbuf_ptr  = gx_objzbuf;
@@ -553,7 +577,6 @@ INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const struct GfxElemen
 	dst_maxy  = cliprect->max_y;
 	dst_x     = sx;
 	dst_y     = sy;
-
 
 	// cull off-screen objects
 	if (dst_x > dst_maxx || dst_y > dst_maxy) return;
@@ -605,10 +628,9 @@ INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const struct GfxElemen
 	db0 = z8 = (UINT8)zcode;
 	db1 = p8 = (UINT8)pri;
 	ozbuf_ptr += eax;
-	szbuf_ptr += (eax<<1);
+	szbuf_ptr += eax << 1;
 	dst_ptr += dst_y * dst_pitch + dst_x + dst_w;
 	dst_w = -dst_w;
-
 
 	if (!nozoom) goto DRAWZOOM;
 
@@ -616,7 +638,7 @@ INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const struct GfxElemen
 	src_fdy = src_fdx * dst_w + src_pitch;
 	ecx = dst_w;
 
-	if (zcode < 0)
+	if (zcode < 0) // no shadow and z-buffering
 	{
 		do {
 			do {
@@ -633,7 +655,7 @@ INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const struct GfxElemen
 		}
 		while (--dst_h);
 	}
-	else if (shdmode == 0)
+	else if (drawmode == 0) // all pens solid
 	{
 		do {
 			do {
@@ -653,7 +675,7 @@ INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const struct GfxElemen
 		}
 		while (--dst_h);
 	}
-	else if (shdmode == 1)
+	else if (drawmode == 1) // solid pens only
 	{
 		do {
 			do {
@@ -673,7 +695,47 @@ INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const struct GfxElemen
 		}
 		while (--dst_h);
 	}
-	else if (shdmode == 2)
+	else if (drawmode == 2) // all pens solid with alpha blending
+	{
+		do {
+			do {
+				eax = *src_ptr;
+				src_ptr += src_fdx;
+				if (!eax || ozbuf_ptr[ecx] < z8) continue;
+				ozbuf_ptr[ecx] = z8;
+
+				BLEND32_MACRO
+			}
+			while (++ecx);
+
+			src_ptr += src_fdy;
+			ozbuf_ptr += GX_ZBUFW;
+			dst_ptr += GX_BMPPW;
+			ecx = dst_w;
+		}
+		while (--dst_h);
+	}
+	else if (drawmode == 3) // solid pens only with alpha blending
+	{
+		do {
+			do {
+				eax = *src_ptr;
+				src_ptr += src_fdx;
+				if (!eax || eax >= shdpen || ozbuf_ptr[ecx] < z8) continue;
+				ozbuf_ptr[ecx] = z8;
+
+				BLEND32_MACRO
+			}
+			while (++ecx);
+
+			src_ptr += src_fdy;
+			ozbuf_ptr += GX_ZBUFW;
+			dst_ptr += GX_BMPPW;
+			ecx = dst_w;
+		}
+		while (--dst_h);
+	}
+	else if (drawmode == 4) // shadow pens only
 	{
 		do {
 			do {
@@ -697,47 +759,46 @@ INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const struct GfxElemen
 	}
 	return;
 
-
 	DRAWZOOM:
 
-	ecx = src_fby; src_fby += src_fdy;
-	ecx >>= FP;    src_fx = src_fbx;
-	edx = src_fbx; src_fx += src_fdx;
-	ecx <<= 4;     src_ptr = src_base;
-	edx >>= FP;    src_ptr += ecx;
+	ecx = src_fby;   src_fby += src_fdy;
+	ecx >>= FP;      src_fx = src_fbx;
+	src_x = src_fbx; src_fx += src_fdx;
+	ecx <<= 4;       src_ptr = src_base;
+	src_x >>= FP;    src_ptr += ecx;
 	ecx = dst_w;
 
-	if (zcode < 0)
+	if (zcode < 0) // no shadow and z-buffering
 	{
 		do {
 			do {
-				eax = src_ptr[edx];
-				edx = src_fx;
+				eax = src_ptr[src_x];
+				src_x = src_fx;
 				src_fx += src_fdx;
-				edx >>= FP;
+				src_x >>= FP;
 				if (!eax || eax >= shdpen) continue;
 				dst_ptr [ecx] = pal_base[eax];
 			}
 			while (++ecx);
 
-			ecx = src_fby; src_fby += src_fdy;
+			ecx = src_fby;   src_fby += src_fdy;
 			dst_ptr += GX_BMPPW;
-			ecx >>= FP;    src_fx = src_fbx;
-			edx = src_fbx; src_fx += src_fdx;
-			ecx <<= 4;     src_ptr = src_base;
-			edx >>= FP;    src_ptr += ecx;
+			ecx >>= FP;      src_fx = src_fbx;
+			src_x = src_fbx; src_fx += src_fdx;
+			ecx <<= 4;       src_ptr = src_base;
+			src_x >>= FP;    src_ptr += ecx;
 			ecx = dst_w;
 		}
 		while (--dst_h);
 	}
-	else if (shdmode == 0)
+	else if (drawmode == 0) // all pens solid
 	{
 		do {
 			do {
-				eax = src_ptr[edx];
-				edx = src_fx;
+				eax = src_ptr[src_x];
+				src_x = src_fx;
 				src_fx += src_fdx;
-				edx >>= FP;
+				src_x >>= FP;
 				if (!eax || ozbuf_ptr[ecx] < z8) continue;
 				eax = pal_base[eax];
 				ozbuf_ptr[ecx] = z8;
@@ -745,25 +806,25 @@ INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const struct GfxElemen
 			}
 			while (++ecx);
 
-			ecx = src_fby; src_fby += src_fdy;
+			ecx = src_fby;   src_fby += src_fdy;
 			ozbuf_ptr += GX_ZBUFW;
 			dst_ptr += GX_BMPPW;
-			ecx >>= FP;    src_fx = src_fbx;
-			edx = src_fbx; src_fx += src_fdx;
-			ecx <<= 4;     src_ptr = src_base;
-			edx >>= FP;    src_ptr += ecx;
+			ecx >>= FP;      src_fx = src_fbx;
+			src_x = src_fbx; src_fx += src_fdx;
+			ecx <<= 4;       src_ptr = src_base;
+			src_x >>= FP;    src_ptr += ecx;
 			ecx = dst_w;
 		}
 		while (--dst_h);
 	}
-	else if (shdmode == 1)
+	else if (drawmode == 1) // solid pens only
 	{
 		do {
 			do {
-				eax = src_ptr[edx];
-				edx = src_fx;
+				eax = src_ptr[src_x];
+				src_x = src_fx;
 				src_fx += src_fdx;
-				edx >>= FP;
+				src_x >>= FP;
 				if (!eax || eax >= shdpen || ozbuf_ptr[ecx] < z8) continue;
 				eax = pal_base[eax];
 				ozbuf_ptr[ecx] = z8;
@@ -771,26 +832,77 @@ INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const struct GfxElemen
 			}
 			while (++ecx);
 
-			ecx = src_fby; src_fby += src_fdy;
+			ecx = src_fby;   src_fby += src_fdy;
 			ozbuf_ptr += GX_ZBUFW;
 			dst_ptr += GX_BMPPW;
-			ecx >>= FP;    src_fx = src_fbx;
-			edx = src_fbx; src_fx += src_fdx;
-			ecx <<= 4;     src_ptr = src_base;
-			edx >>= FP;    src_ptr += ecx;
+			ecx >>= FP;      src_fx = src_fbx;
+			src_x = src_fbx; src_fx += src_fdx;
+			ecx <<= 4;       src_ptr = src_base;
+			src_x >>= FP;    src_ptr += ecx;
 			ecx = dst_w;
 		}
 		while (--dst_h);
 	}
-	else if (shdmode == 2)
+	else if (drawmode == 2) // all pens solid with alpha blending
 	{
 		do {
 			do {
-				eax = src_ptr[edx];
-				edx = src_fx;
+				eax = src_ptr[src_x];
+				src_x = src_fx;
 				src_fx += src_fdx;
-				edx >>= FP;
+				src_x >>= FP;
+				if (!eax || ozbuf_ptr[ecx] < z8) continue;
+				ozbuf_ptr[ecx] = z8;
 
+				BLEND32_MACRO
+			}
+			while (++ecx);
+
+			ecx = src_fby;   src_fby += src_fdy;
+			ozbuf_ptr += GX_ZBUFW;
+			dst_ptr += GX_BMPPW;
+			ecx >>= FP;      src_fx = src_fbx;
+			src_x = src_fbx; src_fx += src_fdx;
+			ecx <<= 4;       src_ptr = src_base;
+			src_x >>= FP;    src_ptr += ecx;
+			ecx = dst_w;
+		}
+		while (--dst_h);
+	}
+	else if (drawmode == 3) // solid pens only with alpha blending
+	{
+		do {
+			do {
+				eax = src_ptr[src_x];
+				src_x = src_fx;
+				src_fx += src_fdx;
+				src_x >>= FP;
+				if (!eax || eax >= shdpen || ozbuf_ptr[ecx] < z8) continue;
+				ozbuf_ptr[ecx] = z8;
+
+				BLEND32_MACRO
+			}
+			while (++ecx);
+
+			ecx = src_fby;   src_fby += src_fdy;
+			ozbuf_ptr += GX_ZBUFW;
+			dst_ptr += GX_BMPPW;
+			ecx >>= FP;      src_fx = src_fbx;
+			src_x = src_fbx; src_fx += src_fdx;
+			ecx <<= 4;       src_ptr = src_base;
+			src_x >>= FP;    src_ptr += ecx;
+			ecx = dst_w;
+		}
+		while (--dst_h);
+	}
+	else if (drawmode == 4) // shadow pens only
+	{
+		do {
+			do {
+				eax = src_ptr[src_x];
+				src_x = src_fx;
+				src_fx += src_fdx;
+				src_x >>= FP;
 				if (eax < shdpen || szbuf_ptr[ecx*2] < z8 || szbuf_ptr[ecx*2+1] <= p8) continue;
 				eax = dst_ptr[ecx];
 				szbuf_ptr[ecx*2] = z8;
@@ -800,13 +912,13 @@ INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const struct GfxElemen
 			}
 			while (++ecx);
 
-			ecx = src_fby; src_fby += src_fdy;
+			ecx = src_fby;   src_fby += src_fdy;
 			szbuf_ptr += (GX_ZBUFW<<1);
 			dst_ptr += GX_BMPPW;
-			ecx >>= FP;    src_fx = src_fbx;
-			edx = src_fbx; src_fx += src_fdx;
-			ecx <<= 4;     src_ptr = src_base;
-			edx >>= FP;    src_ptr += ecx;
+			ecx >>= FP;      src_fx = src_fbx;
+			src_x = src_fbx; src_fx += src_fdx;
+			ecx <<= 4;       src_ptr = src_base;
+			src_x >>= FP;    src_ptr += ecx;
 			ecx = dst_w;
 		}
 		while (--dst_h);
@@ -819,144 +931,6 @@ INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const struct GfxElemen
 }
 
 
-// Combined K054338+K055555 BG color fill
-void K054338_fill_backcolor(struct mame_bitmap *bitmap, int mode) // (see p.67)
-{
-	int clipx, clipy, clipw, cliph, i, dst_pitch;
-	int BGC_CBLK, BGC_SET;
-	UINT32 *dst_ptr, *pal_ptr;
-	register int bgcolor;
-
-	clipx = Machine->visible_area.min_x & ~3;
-	clipy = Machine->visible_area.min_y;
-	clipw = (Machine->visible_area.max_x - clipx + 4) & ~3;
-	cliph = Machine->visible_area.max_y - clipy + 1;
-
-	dst_ptr = (UINT32 *)bitmap->line[clipy];
-	dst_pitch = bitmap->rowpixels;
-	dst_ptr += clipx;
-
-	BGC_CBLK = K055555_read_register(0);
-	BGC_SET = K055555_read_register(1);
-	pal_ptr = paletteram32 + (BGC_CBLK<<9);
-
-	if (!mode)
-		// single color output from CLTC
-		bgcolor = (int)(K054338_read_register(K338_REG_BGC_R)&0xff)<<16 | (UINT32)K054338_read_register(K338_REG_BGC_GB);
-	else if (!(BGC_SET & 2))
-		// single color output from PCU2
-		{ bgcolor = *pal_ptr; mode = 0; }
-	else
-		bgcolor = 0;
-
-	if (!mode)
-	{
-		// single color fill
-		dst_ptr += clipw;
-		i = clipw = -clipw;
-		do
-		{
-			do { dst_ptr[i] = dst_ptr[i+1] = dst_ptr[i+2] = dst_ptr[i+3] = bgcolor; } while (i += 4);
-			dst_ptr += dst_pitch;
-			i = clipw;
-		}
-		while (--cliph);
-	}
-	else if (!(BGC_SET & 1))
-	{
-		// vertical gradient fill
-		pal_ptr += clipy;
-		dst_ptr += clipw;
-		bgcolor = *pal_ptr++;
-		i = clipw = -clipw;
-		do
-		{
-			do { dst_ptr[i] = dst_ptr[i+1] = dst_ptr[i+2] = dst_ptr[i+3] = bgcolor; } while (i += 4);
-			dst_ptr += dst_pitch;
-			bgcolor = *pal_ptr++;
-			i = clipw;
-		}
-		while (--cliph);
-	}
-	else
-	{
-		// horizontal gradient fill
-		pal_ptr += clipx;
-		clipw <<= 2;
-		do
-		{
-			memcpy(dst_ptr, pal_ptr, clipw);
-			dst_ptr += dst_pitch;
-		}
-		while (--cliph);
-	}
-}
-
-
-static int K054338_shdRGB[9];
-
-void K054338_update_all_shadows(void)
-{
-	int i, d;
-	int noclip = K054338_read_register(K338_REG_CONTROL) & K338_CTL_CLIPSL;
-
-	for (i=0; i<9; i++)
-	{
-		d = K054338_read_register(K338_REG_SHAD1R+i) & 0x1ff;
-		if (d >= 0x100) d -= 0x200;
-		K054338_shdRGB[i] = d;
-	}
-
-	palette_set_shadow_dRGB32(0, K054338_shdRGB[0], K054338_shdRGB[1], K054338_shdRGB[2], noclip);
-	palette_set_shadow_dRGB32(1, K054338_shdRGB[3], K054338_shdRGB[4], K054338_shdRGB[5], noclip);
-	palette_set_shadow_dRGB32(2, K054338_shdRGB[6], K054338_shdRGB[7], K054338_shdRGB[8], noclip);
-}
-
-int K054338_set_alpha_level(int pblend)
-{
-	int mixset, mixlv, mixpri;
-
-	if (!pblend || pblend > 3) return(0);
-
-	mixset = K054338_read_register(K338_REG_PBLEND + (pblend>>1&1))>>(~pblend<<3&8);
-	mixlv  = 0x1f - (mixset & 0x1f);
-	mixlv  = mixlv<<3 | mixlv>>2;
-
-	if (!(mixset & 0x20))
-	// average mode (see p.72 3(a))
-	{
-		alpha_set_level(mixlv);
-	}
-	else
-	// addition mode (UNIMPLEMENTED, see p.72 3(b))
-	{
-		mixpri = K054338_read_register(K338_REG_CONTROL) & K338_CTL_MIXPRI;
-
-		if (!mixpri)
-		// multiply source by mix level and add to destination
-		{
-			#if VERBOSE
-				usrintf_showmessage("MIXSET%1d src addition mode: %02x", pblend, mixset & 0x1f);
-			#endif
-
-			alpha_set_level(mixlv); // DUMMY
-		}
-		else
-		// multiply destination by mix level and add to source
-		{
-			#if VERBOSE
-				usrintf_showmessage("MIXSET%1d dst addition mode: %02x", pblend, mixset & 0x1f);
-			#endif
-
-			mixlv = 255 - mixlv;
-			alpha_set_level(mixlv); // DUMMY
-		}
-	}
-
-	return(mixlv);
-}
-
-
 
 /***************************************************************************/
 /*                                                                         */
@@ -965,8 +939,8 @@ int K054338_set_alpha_level(int pblend)
 /***************************************************************************/
 
 // global system ports access
-data8_t  konamigx_wrport1_0=0, konamigx_wrport1_1=0;
-data16_t konamigx_wrport2=0;
+data8_t  konamigx_wrport1_0, konamigx_wrport1_1;
+data16_t konamigx_wrport2;
 
 // frequently used registers
 static int K053246_objset1;
@@ -1024,8 +998,8 @@ INLINE int K053247GX_combine_c18(int attrib) // (see p.46)
 
 	c18 = (attrib & 0xff)<<K053247_coregshift | K053247_coreg;
 
-	if (konamigx_wrport2 & 0x04) c18 &= 0x3fff; else
-	if (!(konamigx_wrport2 & 0x08)) c18 = (c18 & 0x3fff) | (attrib<<6 & 0xc000);
+	if (konamigx_wrport2 & 4) c18 &= 0x3fff; else
+	if (!(konamigx_wrport2 & 8)) c18 = (c18 & 0x3fff) | (attrib<<6 & 0xc000);
 
 	return(c18);
 }
@@ -1071,9 +1045,9 @@ void konamigx_dragoonj_sprite_callback(int *code, int *color, int *priority)
 	num = *code;
 	*code = K053247_vrcbk[num>>14] | (num & 0x3fff);
 
-	c18 = pri = *color;
-	op  = opri;
-	pri = (pri & 0x200) ? 4 : pri>>4 & 0xf;
+	c18  = pri = *color;
+	op   = opri;
+	pri  = (pri & 0x200) ? 4 : pri>>4 & 0xf;
 	op  &= oinprion;
 	pri &=~oinprion;
 	*priority = pri | op;
@@ -1098,6 +1072,23 @@ void konamigx_salmndr2_sprite_callback(int *code, int *color, int *priority)
 
 	c18 = K053247GX_combine_c18(c18);
 	*color = K055555GX_decode_objcolor(c18);
+}
+
+void konamigx_le2_sprite_callback(int *code, int *color, int *priority)
+{
+	int num, op, pri;
+
+	num = *code;
+	*code = K053247_vrcbk[num>>14] | (num & 0x3fff);
+
+	pri = *color;
+	*color &= 0x1f;
+
+	op   = opri;
+	pri &= 0xf0;
+	op  &= oinprion;
+	pri &=~oinprion;
+	*priority = pri | op;
 }
 
 int K055555GX_decode_vmixcolor(int layer, int *color) // (see p.62 7.2.6 and p.27 3.3)
@@ -1219,23 +1210,34 @@ static void gx_wipezbuf(int noshadow)
 
 static struct GX_OBJ { int order, offs, code, color; } *gx_objpool;
 static data16_t *gx_spriteram;
-static int gx_objdma, gx_primode=0;
+static int gx_objdma, gx_primode;
 
-// mirrored K053247 settings
+// mirrored K053247 and K054338 settings
 static data16_t *K053247_ram;
 static struct GfxElement *K053247_gfx;
 static void (*K053247_callback)(int *code,int *color,int *priority);
 static int K053247_dx, K053247_dy;
 
+static int *K054338_shdRGB;
+
+
+void K053247GP_set_SpriteOffset(int offsx, int offsy)
+{
+	K053247_dx = offsx;
+	K053247_dy = offsy;
+}
+
 int konamigx_mixer_init(int objdma)
 {
 	gx_objdma = 0;
+	gx_primode = 0;
 
 	gx_objzbuf = (UINT8 *)priority_bitmap->base;
 	if (!(gx_shdzbuf = auto_malloc(GX_ZBUFSIZE))) return(1);
 	if (!(gx_objpool = auto_malloc(sizeof(struct GX_OBJ) * (GX_MAX_OBJECTS)))) return(1);
 
 	K053247_export_config(&K053247_ram, &K053247_gfx, (void**)&K053247_callback, &K053247_dx, &K053247_dy);
+	K054338_export_config(&K054338_shdRGB);
 
 	if (objdma)
 	{
@@ -1245,13 +1247,16 @@ int konamigx_mixer_init(int objdma)
 	else
 		gx_spriteram = K053247_ram;
 
-	memset(K054338_shdRGB, 0, sizeof(int)*9);
-	palette_set_shadow_dRGB32(3,-96,-96,-96, 0);
+	palette_set_shadow_dRGB32(3,-80,-80,-80, 0);
+	K054338_invert_alpha(1);
 
 	return(0);
 }
 
-void konamigx_mixer_primode(int mode) { gx_primode = mode; }
+void konamigx_mixer_primode(int mode)
+{
+	gx_primode = mode;
+}
 
 void konamigx_objdma(void)
 {
@@ -1259,7 +1264,9 @@ void konamigx_objdma(void)
 }
 
 void konamigx_mixer(struct mame_bitmap *bitmap, const struct rectangle *cliprect,
-					struct tilemap *sub1, int sub1bpp, struct tilemap *sub2, int sub2bpp, int flags)
+					struct tilemap *sub1, int sub1flags,
+					struct tilemap *sub2, int sub2flags,
+					int mixerflags)
 {
 	static int xoffset[8] = { 0, 1, 4, 5, 16, 17, 20, 21 };
 	static int yoffset[8] = { 0, 2, 8, 10, 32, 34, 40, 42 };
@@ -1270,10 +1277,10 @@ void konamigx_mixer(struct mame_bitmap *bitmap, const struct rectangle *cliprect
 
 	struct GX_OBJ *objpool, *objptr;
 	int wrapsize, xwraplim, ywraplim, cltc_shdpri, prflp, disp;
-	int xa,ya,ox,oy,zw,zh,flipx,flipy,mirrorx,mirrory,zoomx,zoomy,nozoom,scalex,scaley;
+	int xa,ya,ox,oy,zw,zh,flipx,flipy,mirrorx,mirrory,zoomx,zoomy,scalex,scaley,nozoom;
 	int screenwidth, flipscreenx, flipscreeny, offx, offy;
 	int nobj, i, j, k, l, temp, temp1, temp2, temp3, temp4, count;
-	int order, offs, code, color, zcode, pri, spri, spri_min, shadow;
+	int order, offs, code, color, zcode, pri, spri, spri_min, shdprisel, shadow, alpha, drawmode;
 
 
 	// abort if object database failed to initialize
@@ -1292,17 +1299,19 @@ void konamigx_mixer(struct mame_bitmap *bitmap, const struct rectangle *cliprect
 	cltc_shdpri &= K338_CTL_SHDPRI;
 
 	// wipe z-buffer
-	if (flags & GXMIX_NOZBUF)
-		flags |= GXMIX_NOSHADOW;
+	if (mixerflags & GXMIX_NOZBUF)
+		mixerflags |= GXMIX_NOSHADOW;
 	else
-		gx_wipezbuf(flags & GXMIX_NOSHADOW);
+		gx_wipezbuf(mixerflags & GXMIX_NOSHADOW);
 
 	// cache global parameters
 	konamigx_precache_registers();
 
 	// init OBJSET1 parameters (see p.47 6.2)
-	flipscreenx = K053246_objset1 & 0x01;
-	flipscreeny = K053246_objset1 & 0x02;
+	flipscreenx = K053246_objset1 & 1;
+	flipscreeny = K053246_objset1 & 2;
+
+	// get "display window" offsets
 	offx = (K053246_read_register(0)<<8 | K053246_read_register(1)) & 0x3ff;
 	offy = (K053246_read_register(2)<<8 | K053246_read_register(3)) & 0x3ff;
 
@@ -1326,20 +1335,27 @@ void konamigx_mixer(struct mame_bitmap *bitmap, const struct rectangle *cliprect
 	prflp = K055555_read_register(K55_CONTROL) & K55_CTL_FLIPPRI;
 
 	layerpri[0] = K055555_read_register(K55_PRIINP_0);
-	if (gx_primode == -1)
-	{
-		// Lethal Enforcer hack (requires pixel color comparison)
-		layerpri[1] = K055555_read_register(K55_PRIINP_3);
-		layerpri[2] = K055555_read_register(K55_PRIINP_3) + 0x20;
-	}
-	else
-	{
-		layerpri[1] = K055555_read_register(K55_PRIINP_3);
-		layerpri[2] = K055555_read_register(K55_PRIINP_6);
-	}
+	layerpri[1] = K055555_read_register(K55_PRIINP_3);
 	layerpri[3] = K055555_read_register(K55_PRIINP_7);
 	layerpri[4] = K055555_read_register(K55_PRIINP_9);
 	layerpri[5] = K055555_read_register(K55_PRIINP_10);
+
+	if (gx_primode == -1)
+	{
+		// Lethal Enforcer hack (requires pixel color comparison)
+		layerpri[2] = K055555_read_register(K55_PRIINP_3) + 0x20;
+		shdprisel = 0x3f;
+	}
+	else
+	{
+		layerpri[2] = K055555_read_register(K55_PRIINP_6);
+		shdprisel = K055555_read_register(K55_SHD_PRI_SEL);
+	}
+
+	// SHDPRISEL filters shadows by different priority comparison methods (UNIMPLEMENTED, see detail on p.66)
+	if (!(shdprisel & 0x03)) shadowon[0] = 0;
+	if (!(shdprisel & 0x0c)) shadowon[1] = 0;
+	if (!(shdprisel & 0x30)) shadowon[2] = 0;
 
 	shdpri[0]   = K055555_read_register(K55_SHAD1_PRI);
 	shdpri[1]   = K055555_read_register(K55_SHAD2_PRI);
@@ -1348,7 +1364,7 @@ void konamigx_mixer(struct mame_bitmap *bitmap, const struct rectangle *cliprect
 	spri_min = 0;
 	shadowon[2] = shadowon[1] = shadowon[0] = 0;
 
-	if (!(flags & GXMIX_NOSHADOW))
+	if (!(mixerflags & GXMIX_NOSHADOW))
 	{
 		// only enable shadows beyond a +/-7 RGB threshold
 		for (j=0,i=0; i<3; j+=3,i++)
@@ -1357,12 +1373,6 @@ void konamigx_mixer(struct mame_bitmap *bitmap, const struct rectangle *cliprect
 			k = K054338_shdRGB[j+1]; if (k < -7 || k > 7) { shadowon[i] = 1; continue; }
 			k = K054338_shdRGB[j+2]; if (k < -7 || k > 7) { shadowon[i] = 1; }
 		}
-
-		// SHDPRISEL selects priority comparison methods (see p.66)
-		temp = K055555_read_register(K55_SHD_PRI_SEL);
-		if (!(temp & 0x03)) shadowon[0] = 0;
-		if (!(temp & 0x0c)) shadowon[1] = 0;
-		if (!(temp & 0x30)) shadowon[2] = 0;
 
 		// SHDON specifies layers on which shadows can be projected (see detail on p.65 7.2.8)
 		temp = K055555_read_register(K55_SHD_ON);
@@ -1389,34 +1399,53 @@ void konamigx_mixer(struct mame_bitmap *bitmap, const struct rectangle *cliprect
 
 	// build object database and create indices
 	objptr = objpool;
+	nobj = 0;
 
-	for (nobj=0; nobj<6; nobj++)
+	for (i=5; i>=0; i--)
 	{
-		i = layerid[5-nobj];
-
-		objptr->order = layerpri[5-nobj]<<24;
-		objptr->code  = i;
-
-		switch (i)
+		code = layerid[i];
+		switch (code)
 		{
-			// encoding: 0+ = sprites, -1 = layerA-D, -2 = ROZ1, -3 = ROZ2
-			case  4: objptr->offs = (sub1 && sub1bpp) ? -2 : -255; break;
-			case  5: objptr->offs = (sub2 && sub2bpp) ? -3 : -255; break;
-			default: objptr->offs = -1;
+			/*
+				Background layers are represented by negative offset values as follow:
+
+				0+ : normal sprites
+				-1 : tile layer A - D
+				-2 : K053936 ROZ+ layer 1
+				-3 : K053936 ROZ+ layer 2
+				-4 : K053250 LVC layer 1
+				-5 : K053250 LVC layer 2
+			*/
+			case 4 :
+				offs = -128;
+				if (sub1flags & 0xf) { if (sub1flags & GXSUB_K053250) offs = -4; else if (sub1) offs = -2; }
+			break;
+			case 5 :
+				offs = -128;
+				if (sub2flags & 0xf) { if (sub2flags & GXSUB_K053250) offs = -5; else if (sub2) offs = -3; }
+			break;
+			default: offs = -1;
 		}
 
-		objptr++;
-		objbuf[nobj] = nobj;
+		if (offs != -128)
+		{
+			objptr->order = layerpri[i]<<24;
+			objptr->code  = code;
+			objptr->offs = offs;
+			objptr++;
+
+			objbuf[nobj] = nobj;
+			nobj++;
+		}
 	}
 
 	i = j = 0xff;
 
 	for (offs=0; offs<0x800; offs+=8)
 	{
-		zcode = gx_spriteram[offs];
+		if (!(gx_spriteram[offs] & 0x8000)) continue;
 
-		if (!(zcode & 0x8000)) continue;
-		zcode &= 0xff;
+		zcode = gx_spriteram[offs] & 0xff;
 
 		// invert z-order when opset_pri is set (see p.51 OPSET PRI)
 		if (K053247_opset & 0x10) zcode = 0xff - zcode;
@@ -1427,49 +1456,79 @@ void konamigx_mixer(struct mame_bitmap *bitmap, const struct rectangle *cliprect
 
 		(*K053247_callback)(&code, &color, &pri);
 
-		spri = temp1 = 0; temp2 = -1;
-		if (color < 0)
-		{
-			if (flags & GXMIX_NOSHADOW) continue;
-			shadow = 3;
-		}
-		else if ((temp1 = k>>10 & 3))
-		{
-			temp1--;
-			spri = (K053247_opset & 0x20) ? pri : shdpri[temp1]; // (see p.51 OPSET SDSEL)
+		/*
+			shadow = shadow code
+			spri   = shadow priority
+			temp1  = add solid object
+			temp2  = solid pens draw mode
+			temp3  = add shadow object
+			temp4  = shadow pens draw mode
+		*/
+		temp4 = temp3 = temp2 = temp1 = spri = shadow = 0;
 
-			// draw sprites with shadow code 0 as full shadows if SD0EN is off (see p.48)
-			if (!temp1 && !(K053246_objset1 & 0x20))
+		if (color & K055555_FULLSHADOW)
+		{
+			shadow = 3; // use default intensity and color
+			spri = pri; // retain host priority
+			temp3 = 1; // add shadow
+			temp4 = 5; // draw full shadow
+		}
+		else
+		{
+			if ((shadow = k>>10 & 3)) // object has shadow?
 			{
-				if (!shadowon[0]) continue;
-				pri = spri;
-				shadow = 3;
+				if (shadow != 1 || K053246_objset1 & 0x20)
+				{
+					shadow--;
+					temp1 = 1; // add solid
+					temp2 = 1; // draw partial solid
+					if (shadowon[shadow])
+					{
+						temp3 = 1; // add shadow
+						temp4 = 4; // draw partial shadow
+					}
+				}
+				else
+				{
+					// drop the entire sprite to shadow if its shadow code is 1 and SD0EN is off (see p.48)
+					shadow = 0;
+					if (!shadowon[0]) continue;
+					temp3 = 1; // add shadow
+					temp4 = 5; // draw full shadow
+				}
 			}
 			else
 			{
-				if (shadowon[temp1]) temp2 = temp1;
-				temp1 = 0;
-				shadow = 1;
+				temp1 = 1; // add solid
+				temp2 = 0; // draw full solid
+			}
+
+			if (temp1)
+			{
+				// tag sprite for alpha blending
+				if (color>>K055555_MIXSHIFT & 3) temp2 |= 2;
+			}
+
+			if (temp3)
+			{
+				// determine shadow priority
+				spri = (K053247_opset & 0x20) ? pri : shdpri[shadow]; // (see p.51 OPSET SDSEL)
 			}
 		}
-		else shadow = 0;
 
-		switch (gx_primode)
+		switch (gx_primode & 0xf)
 		{
-			// Dadandarn zcode supression
+			// Dadandarn zcode suppression
 			case  1:
 				zcode = 0;
 			break;
-			// Metamorphic Force priority override
-			case  2:
-				if (temp2 >= 0) spri = shdpri[temp2];
-			break;
+
 			// Daisukiss bad shadow filter
-			case  3:
+			case  4:
 				if (k & 0x3000 || k == 0x0800) continue;
 
 			// Tokkae shadow masking (INACCURATE)
-			case  4:
+			case  5:
 				if (spri < spri_min) spri = spri_min;
 			break;
 		}
@@ -1483,29 +1542,24 @@ void konamigx_mixer(struct mame_bitmap *bitmap, const struct rectangle *cliprect
 			------------------------xxxx---- (shadow mode)
 			----------------------------xxxx (shadow code)
 		*/
-
-		temp = offs;
-		pri    <<= 24;
-		zcode  <<= 16;
-		temp   <<= 5;
-		shadow <<= 4;
-
-		order = pri | zcode | temp | shadow | temp1;
-
-		objptr->order = order;
-		objptr->offs  = offs;
-		objptr->code  = code;
-		objptr->color = color;
-		objptr++;
-
-		objbuf[nobj] = nobj;
-		nobj++;
-
-		if (temp2 >= 0)
+		if (temp1)
 		{
-			spri <<= 24;
-			order = spri | zcode | temp | 2<<4 | temp2;
+			// add objects with solid or alpha pens
+			order = pri<<24 | zcode<<16 | offs<<(8-3) | temp2<<4;
+			objptr->order = order;
+			objptr->offs  = offs;
+			objptr->code  = code;
+			objptr->color = color;
+			objptr++;
 
+			objbuf[nobj] = nobj;
+			nobj++;
+		}
+
+		if (temp3 && !(color & K055555_SKIPSHADOW) && !(mixerflags & GXMIX_NOSHADOW))
+		{
+			// add objects with shadows if enabled
+			order = spri<<24 | zcode<<16 | offs<<(8-3) | temp4<<4 | shadow;
 			objptr->order = order;
 			objptr->offs  = offs;
 			objptr->code  = code;
@@ -1551,7 +1605,7 @@ void konamigx_mixer(struct mame_bitmap *bitmap, const struct rectangle *cliprect
 		else
 		{
 			i = code<<1;
-			j = flags>>i & 3;
+			j = mixerflags>>i & 3;
 			k = 0;
 
 			switch (offs)
@@ -1560,7 +1614,7 @@ void konamigx_mixer(struct mame_bitmap *bitmap, const struct rectangle *cliprect
 				if (disp & (1<<code))
 				{
 					if (j == GXMIX_BLEND_NONE)  { temp1 = 0xff; temp2 = temp3 = 0; } else
-					if (j == GXMIX_BLEND_FORCE) { temp1 = 0x00; temp2 = flags>>(i+16); temp3 = 3; }
+					if (j == GXMIX_BLEND_FORCE) { temp1 = 0x00; temp2 = mixerflags>>(i+16); temp3 = 3; }
 					else
 					{
 						temp1 = vinmix;
@@ -1576,66 +1630,98 @@ void konamigx_mixer(struct mame_bitmap *bitmap, const struct rectangle *cliprect
 					*/
 					if (temp1!=0xff && temp2 /*&& temp3==3*/)
 					{
-			    		temp4 = K054338_set_alpha_level(temp2);
+						temp4 = K054338_set_alpha_level(temp2);
 
 						if (temp4 <= 0) continue;
 						if (temp4 < 255) k = TILEMAP_ALPHA;
 					}
 
-					if (flags & 1<<(code+12)) k |= TILE_LINE_DISABLED;
+					if (mixerflags & 1<<(code+12)) k |= TILE_LINE_DISABLED;
 
 					K056832_tilemap_draw(bitmap, cliprect, code, k, 0);
 				}
 				continue;
 				case -2:
+				case -4:
 				if (disp & K55_INP_SUB1)
 				{
 					if (j == GXMIX_BLEND_NONE)  { temp1 = 0xff; temp2 = temp3 = 0; } else
-					if (j == GXMIX_BLEND_FORCE) { temp1 = 0x00; temp2 = flags>>24; temp3 = 3; }
+					if (j == GXMIX_BLEND_FORCE) { temp1 = 0x00; temp2 = mixerflags>>24; temp3 = 3; }
 					else
 					{
 						temp1 = osinmix;
 						temp2 = osinmix>>2 & 3;
-						temp3 = osmixon>>2 & 3;
+                        temp3 = osmixon>>2 & 3;
 					}
 
 					if (temp1!=0xff && temp2 /*&& temp3==3*/)
 					{
-			    		temp4 = K054338_set_alpha_level(temp2);
+						temp4 = K054338_set_alpha_level(temp2);
 
 						if (temp4 <= 0) continue;
 						if (temp4 < 255) k = (j == GXMIX_BLEND_FAST) ? ~parity : 1;
 					}
 
-    				K053936GP_0_zoom_draw(bitmap, cliprect, sub1, sub1bpp, k);
+					l = sub1flags & 0xf;
+
+					if (offs == -2)
+						K053936GP_0_zoom_draw(bitmap, cliprect, sub1, l, k);
+					else
+						K053250_draw(bitmap, cliprect, 0, vcblk[4]<<l, 0, 0);
 				}
 				continue;
 				case -3:
+				case -5:
 				if (disp & K55_INP_SUB2)
 				{
 					if (j == GXMIX_BLEND_NONE)  { temp1 = 0xff; temp2 = temp3 = 0; } else
-					if (j == GXMIX_BLEND_FORCE) { temp1 = 0x00; temp2 = flags>>26; temp3 = 3; }
+					if (j == GXMIX_BLEND_FORCE) { temp1 = 0x00; temp2 = mixerflags>>26; temp3 = 3; }
 					else
 					{
 						temp1 = osinmix;
 						temp2 = osinmix>>4 & 3;
-						temp3 = osmixon>>4 & 3;
+                        temp3 = osmixon>>4 & 3;
 					}
 
 					if (temp1!=0xff && temp2 /*&& temp3==3*/)
 					{
-			    		temp4 = K054338_set_alpha_level(temp2);
+						temp4 = K054338_set_alpha_level(temp2);
 
 						if (temp4 <= 0) continue;
 						if (temp4 < 255) k = (j == GXMIX_BLEND_FAST) ? ~parity : 1;
 					}
 
-    				K053936GP_0_zoom_draw(bitmap, cliprect, sub2, sub2bpp, k);
+					l = sub2flags & 0xf;
+
+					if (offs == -3)
+						K053936GP_1_zoom_draw(bitmap, cliprect, sub2, l, k);
+					else
+						K053250_draw(bitmap, cliprect, 1, vcblk[5]<<l, 0, 0);
 				}
 				continue;
 			}
 			continue;
 		}
+
+		drawmode = order>>4 & 0xf;
+
+		alpha = 255;
+		if (drawmode & 2)
+		{
+			if ((alpha = color>>K055555_MIXSHIFT & 3)) alpha = K054338_set_alpha_level(alpha);
+			if (alpha <= 0) continue;
+		}
+		color &= K055555_COLORMASK;
+
+		if (drawmode >= 4) palette_set_shadow_mode(order & 0x0f);
+
+		if (!(mixerflags & GXMIX_NOZBUF))
+		{
+			zcode = order>>16 & 0xff;
+			pri = order>>24 & 0xff;
+		}
+		else
+			zcode = -1; // negative zcode values turn off z-buffering
 
 		xa = ya = 0;
 		if (code & 0x01) xa += 1;
@@ -1646,18 +1732,18 @@ void konamigx_mixer(struct mame_bitmap *bitmap, const struct rectangle *cliprect
 		if (code & 0x20) ya += 4;
 		code &= ~0x3f;
 
-		zcode = gx_spriteram[offs];
+		temp4 = gx_spriteram[offs];
+
+		// mask off the upper 6 bits of coordinate and zoom registers
 		oy = gx_spriteram[offs+2] & 0x3ff;
 		ox = gx_spriteram[offs+3] & 0x3ff;
 
-		scaley = zoomy = gx_spriteram[offs+4];
-		if (zoomy > 0x2000) continue;
+		scaley = zoomy = gx_spriteram[offs+4] & 0x3ff;
 		if (zoomy) zoomy = (0x400000+(zoomy>>1)) / zoomy;
 		else zoomy = 0x800000;
-		if (!(zcode & 0x4000))
+		if (!(temp4 & 0x4000))
 		{
-			scalex = zoomx = gx_spriteram[offs+5];
-			if (zoomx > 0x2000) continue;
+			scalex = zoomx = gx_spriteram[offs+5] & 0x3ff;
 			if (zoomx) zoomx = (0x400000+(zoomx>>1)) / zoomx;
 			else zoomx = 0x800000;
 		}
@@ -1665,16 +1751,16 @@ void konamigx_mixer(struct mame_bitmap *bitmap, const struct rectangle *cliprect
 
 		nozoom = (scalex == 0x40 && scaley == 0x40);
 
-		flipx = zcode & 0x1000;
-		flipy = zcode & 0x2000;
+		flipx = temp4 & 0x1000;
+		flipy = temp4 & 0x2000;
 
 		temp = gx_spriteram[offs+6];
 		mirrorx = temp & 0x4000;
-		if (mirrorx) flipx = 0;
+		if (mirrorx) flipx = 0; // only applies to x mirror, proven
 		mirrory = temp & 0x8000;
 
 		// for Escape Kids (GX975)
-		if ( K053246_objset1 & 0x08 ) // Check only "Bit #3 is '1'?"
+		if ( K053246_objset1 & 8 ) // Check only "Bit #3 is '1'?"
 		{
 			zoomx = zoomx>>1; // Fix sprite width to HALF size
 			ox = (ox>>1) + 1; // Fix sprite draw position
@@ -1685,6 +1771,7 @@ void konamigx_mixer(struct mame_bitmap *bitmap, const struct rectangle *cliprect
 		if (flipscreenx) { ox = -ox; if (!mirrorx) flipx = !flipx; }
 		if (flipscreeny) { oy = -oy; if (!mirrory) flipy = !flipy; }
 
+		// apply wrapping and global offsets
 		temp = wrapsize-1;
 		ox = ( ox - offx) & temp;
 		oy = (-oy - offy) & temp;
@@ -1693,26 +1780,13 @@ void konamigx_mixer(struct mame_bitmap *bitmap, const struct rectangle *cliprect
 		ox += K053247_dx;
 		oy += K053247_dy;
 
-		temp = zcode>>8 & 0x0f;
-		k = 1 << (temp & 0x03);
-		l = 1 << (temp>>2 & 0x03);
+
+		temp = temp4>>8 & 0x0f;
+		k = 1 << (temp & 3);
+		l = 1 << (temp>>2 & 3);
 
 		ox -= (zoomx * k) >> 13;
 		oy -= (zoomy * l) >> 13;
-
-		shadow = order>>4 & 0x0f;
-
-		// the priority buffer is not used when shadows are disabled
-		if (!(flags & GXMIX_NOSHADOW))
-		{
-			pri = (order>>24 & 0xff);
-			if (color < 0) { color = 0; palette_set_shadow_mode(3); } else
-			if (shadow >= 2) palette_set_shadow_mode(order & 0x0f);
-		}
-		else pri = -1;
-
-		// negative zcode values turn off z-buffering
-		zcode = (flags & GXMIX_NOZBUF) ? -1 : (order>>16 & 0xff);
 
 		// substitutes: i=x, j=y, k=w, l=h, temp=code, temp1=fx, temp2=fy, temp3=sx, temp4=sy;
 		for (j=0; j<l; j++)
@@ -1770,12 +1844,12 @@ void konamigx_mixer(struct mame_bitmap *bitmap, const struct rectangle *cliprect
 
 				if (nozoom) { scaley = scalex = 0x10000; } else { scalex = zw << 12; scaley = zh << 12; };
 
-				zdrawgfxzoom32GP(bitmap, K053247_gfx,
+				zdrawgfxzoom32GP(bitmap, K053247_gfx, cliprect,
 						temp,
 						color,
 						temp1,temp2,
 						temp3,temp4,
-						cliprect, scalex, scaley, 0, shadow, zcode, pri);
+						scalex, scaley, alpha, drawmode, zcode, pri);
 			}
 		}
 	}
@@ -1902,7 +1976,8 @@ WRITE16_HANDLER( K055550_word_w )
 						if (dx < 0) angle += 128;
 						i = (angle - 0x40) & 0xff;
 					}
-					else i = (dx > 0) ? 0xc0 : 0x40;
+					else
+						i = (dx > 0) ? 0xc0 : 0x40;
 				}
 				else
 					if (dy > 0) i = 0;
@@ -1915,7 +1990,7 @@ WRITE16_HANDLER( K055550_word_w )
 			break;
 
 			default:
-//				logerror("%06x: unknown K055550 command %02x\n", activecpu_get_pc(), data);
+//              logerror("%06x: unknown K055550 command %02x\n", activecpu_get_pc(), data);
 			break;
 		}
 	}
@@ -1960,8 +2035,7 @@ WRITE16_HANDLER( K053990_martchmp_word_w )
 					src_addr += src_skip;
 					dst_addr += dst_skip;
 				}
-				else
-				for (i=src_count; i; i--)
+				else for (i=src_count; i; i--)
 				{
 					cpu_writemem24bew_word(dst_addr, cpu_readmem24bew_word(src_addr));
 					src_addr += src_skip;
@@ -2033,7 +2107,7 @@ static UINT8 ptable[7][8] =
 	{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x10}
 };
 
-	INT32 data1, data2, i, j, vpos, hpos, voffs, hoffs, vcorr, hcorr,vmask, hmask, magicid;
+	INT32 data1, data2, i, j, vpos, hpos, voffs, hoffs, vcorr, hcorr, vmask, hmask, magicid;
 	UINT32 *src, *srcend, *obj, *objend;
 	UINT16 *dst;
 	UINT8  *zcode, *pcode;
@@ -2086,7 +2160,7 @@ if((data1=obj[0])&0x8000)   \
   i      = pcode[i];        \
   dst[6] = data1| i<<4;     \
   dst += 8;                 \
-  if (--j < 0) return;      \
+  if (!(--j)) return;       \
 }
 
 #define EXTRACT_EVEN         \
@@ -2112,7 +2186,7 @@ if((data1=obj[0])&0x80000000)\
   i      = pcode[i];         \
   dst[6] = data1 | i<<4;     \
   dst += 8;                  \
-  if (--j < 0) return;       \
+  if (!(--j)) return;        \
 }
 
 		// These suspecious looking flags might tell the ESC chip what zcode/priority combos to use.
@@ -2146,7 +2220,7 @@ if((data1=obj[0])&0x80000000)\
 		pcode = ptable[i];
 
 		dst = K053247_ram;
-		j = 0xff;
+		j = 256;
 
 		// decode Vic-Viper
 		if (srcbase[0x049c/4] & 0xffff0000)
@@ -2201,7 +2275,7 @@ if((data1=obj[0])&0x80000000)\
 		while ((src+=0x30)<srcend);
 
 		// clear residual data
-		for (; j>=0; j--) { *dst = 0; dst += 8; }
+		if (j) do { *dst = 0; dst += 8; } while (--j);
 	}
 
 #undef EXTRACT_ODD

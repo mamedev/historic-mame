@@ -32,14 +32,17 @@ READ_HANDLER( arkanoid_Z80_mcu_r )
 	return toz80;
 }
 
+static void test(int param)
+{
+	z80write = 1;
+	fromz80 = param;
+}
+
 WRITE_HANDLER( arkanoid_Z80_mcu_w )
 {
-	/* a write from the Z80 has occurred, mark it and remember the value */
-	z80write = 1;
-	fromz80 = data;
-
-	/* give up a little bit of time to let the 68705 detect the write */
-	cpu_spinuntil_trigger(700);
+	timer_set(TIME_NOW, data, test);
+	/* boost the interleave for a few usecs to make sure it is read successfully */
+	cpu_boost_interleave(0, TIME_IN_USEC(10));
 }
 
 READ_HANDLER( arkanoid_68705_portA_r )
@@ -75,9 +78,6 @@ WRITE_HANDLER( arkanoid_68705_portC_w )
 {
 	if ((ddrC & 0x04) && (~data & 0x04) && (portC_out & 0x04))
 	{
-		/* mark that the command has been seen */
-		cpu_trigger(700);
-
 		/* return the last value the Z80 wrote */
 		z80write = 0;
 		portA_in = fromz80;

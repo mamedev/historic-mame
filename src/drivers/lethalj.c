@@ -149,7 +149,7 @@ INPUT_PORTS_START( eggventr )
 	PORT_DIPNAME( 0x0c00, 0x0800, DEF_STR( Difficulty ) ) // According to info from The Gameroom
 	PORT_DIPSETTING(      0x0c00, "Very Easy" )
 	PORT_DIPSETTING(      0x0400, "Easy" )
-	PORT_DIPSETTING(      0x0800, "Meduim" )
+	PORT_DIPSETTING(      0x0800, "Medium" )
 	PORT_DIPSETTING(      0x0000, "Hard" )
 	PORT_DIPNAME( 0x1000, 0x1000, "Slot Machine" ) // Verified Correct - Unused for the Deluxe version??
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )

@@ -10,9 +10,10 @@
   - Play Girls
   - Play Girls 2
   - Cuby Bop
-
+  
   Dual processor games
   - Kuri Kinton
+  - Evil Stone
 
   Triple processor games (2 main z80, 1 sound z80)
   - Fighting hawk
@@ -204,6 +205,14 @@ static MACHINE_INIT( kurikint )
 	portf1_r = 0;
 }
 
+static MACHINE_INIT( evilston )
+{
+	machine_init();
+	porte0_r = 0;
+	porte1_r = 0;
+	portf0_r = 0;
+	portf1_r = 0;
+}
 
 static MACHINE_INIT( puzznic )
 {
@@ -960,6 +969,53 @@ static MEMORY_WRITE_START( horshoes_writemem )
 	COMMON_SINGLE_WRITE,
 	{ 0xb802, 0xb802, horshoes_bankg_w },
 	{ 0xbc00, 0xbc00, MWA_NOP },
+MEMORY_END
+
+static MEMORY_READ_START( evilston_readmem )
+	COMMON_BANKS_READ,
+	{ 0x8000, 0x9fff, MRA_RAM },
+	{ 0xa000, 0xa7ff, MRA_RAM },
+	{ 0xa800, 0xa800, input_port_0_r },	
+	{ 0xa801, 0xa801, input_port_1_r },	
+	{ 0xa802, 0xa802, input_port_2_r },
+	{ 0xa803, 0xa803, input_port_3_r },
+	{ 0xa807, 0xa807, input_port_4_r },
+MEMORY_END
+
+
+
+static WRITE_HANDLER (evilston_snd_w)
+{
+	shared_ram[0x7fe]=data&0x7f;
+	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE); 
+}
+
+
+
+
+static MEMORY_WRITE_START( evilston_writemem )
+	COMMON_BANKS_WRITE,
+	{ 0x8000, 0x9fff, MWA_RAM },
+	{ 0xa000, 0xa7ff, MWA_RAM,&shared_ram},//shared2_w },
+	{ 0xa800, 0xa800, MWA_RAM },//watchdog ?
+	{ 0xa804, 0xa804, MWA_RAM}, //coin couters/locks ?
+	
+MEMORY_END
+
+static MEMORY_READ_START( evilston_2_readmem )
+	{ 0x0000, 0xbfff, MRA_ROM },
+	{ 0xc000, 0xdfff, MRA_RAM },
+	{ 0xe000, 0xe7ff, shared_r},//shared_r },
+	{ 0xe800, 0xe800, YM2203_status_port_0_r },
+	{ 0xf000, 0xf7ff, MRA_BANK7 },
+MEMORY_END
+
+static MEMORY_WRITE_START( evilston_2_writemem )
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xdfff, MWA_RAM },
+	{ 0xe000, 0xe7ff, shared_w },
+	{ 0xe800, 0xe800, YM2203_control_port_0_w },
+	{ 0xe801, 0xe801, YM2203_write_port_0_w },
 MEMORY_END
 
 
@@ -1907,6 +1963,60 @@ INPUT_PORTS_START( cubybop )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( evilston )
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	TAITO_L_DSWA_2_4
+	TAITO_COINAGE_WORLD_8
+
+	PORT_START
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )  
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x10, "1" )
+	PORT_DIPSETTING(    0x00, "4" )
+  PORT_DIPNAME( 0xc0, 0x00, "Language" )
+  PORT_DIPSETTING(    0x00, "English" )
+  PORT_DIPSETTING(    0x80, "English" )
+  PORT_DIPSETTING(    0x40, "English" )
+  PORT_DIPSETTING(    0xc0, "Japanese" )
+	
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1  )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2  )
+
+	PORT_START 
+	
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_TILT ) 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE1 ) 
+	PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_LOW, IPT_COIN1, 4 ) 
+	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_COIN2, 4 ) 
+	
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_COCKTAIL | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_COCKTAIL | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_COCKTAIL | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL | IPF_4WAY )
+
+INPUT_PORTS_END
 
 
 
@@ -2059,6 +2169,20 @@ static struct YM2203interface ym2203_interface_double =
 	{ 0 },
 	{ 0 }
 };
+
+static struct YM2203interface ym2203_interface_evilston =
+{
+	1,			/* 1 chip */
+	3000000,	/* ??? */
+	{ YM2203_VOL(80,0) },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+
 
 static struct YM2203interface ym2203_interface_single =
 {
@@ -2263,6 +2387,39 @@ static MACHINE_DRIVER_START( cachat )
 
 	MDRV_MACHINE_INIT(cachat)
 MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( evilston )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 6000000)	
+	MDRV_CPU_MEMORY(evilston_readmem,evilston_writemem)
+	MDRV_CPU_VBLANK_INT(vbl_interrupt,3)
+
+	MDRV_CPU_ADD(Z80, 6000000)	
+	MDRV_CPU_MEMORY(evilston_2_readmem,evilston_2_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
+
+	MDRV_MACHINE_INIT(evilston)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo2)
+	MDRV_PALETTE_LENGTH(256)
+
+	MDRV_VIDEO_START(taitol)
+	MDRV_VIDEO_EOF(taitol)
+	MDRV_VIDEO_UPDATE(taitol)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM2203, ym2203_interface_evilston)
+MACHINE_DRIVER_END
+
 
 
 
@@ -2542,6 +2699,21 @@ ROM_START( plgirls2 )
 	ROM_LOAD( "cho-h.ic7",   0x80000, 0x80000, CRC(992f99b1) SHA1(c79f1014d73654740f7823812f92376d65d6b15d) )
 ROM_END
 
+ROM_START( evilston )
+	ROM_REGION( 0xb0000, REGION_CPU1, 0 )
+	ROM_LOAD( "c67-03.ic2",    0x00000, 0x20000, CRC(53419982) SHA1(ecc338e2237d26c5ff25b756d371b26b23beed1e) )
+	ROM_RELOAD(              0x10000, 0x20000 )
+	ROM_LOAD( "c67-04.ic6",    0x30000, 0x20000, CRC(55d57e19) SHA1(8815bcaafe7ee056314b4131e3fb7963854dd6ba) )
+
+	ROM_REGION( 0x80000, REGION_CPU2, 0 )
+	ROM_LOAD( "c67-05.22",   0x00000, 0x20000, CRC(94d3a642) SHA1(af20aa5bb60a45c05eb1deba23ba30e6640ca235) )
+	
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "c67-01.ic1",    0x00000, 0x80000, CRC(2f351bf4) SHA1(0fb37abf3413cd11baece1c9bbca5a51b0f28938) )
+	ROM_LOAD( "c67-02.ic5",    0x80000, 0x80000, CRC(eb4f895c) SHA1(2c902572fe5a5d4442e4dd29e8a85cb40c384140) )
+ROM_END
+
+
 
 
 // bits 7..0 => bits 0..7
@@ -2567,6 +2739,13 @@ static DRIVER_INIT( plotting )
 	}
 }
 
+static DRIVER_INIT( evilston )
+{
+	unsigned char *ROM = memory_region(REGION_CPU2);
+	ROM[0x72]=0x45;	/* reti -> retn  ('dead' loop @ $1104 )*/
+	install_mem_write_handler( 0, 0xa7fe, 0xa7fe, evilston_snd_w);
+}
+
 
 GAME( 1988, raimais,  0,        raimais,  raimais,  0,        ROT0,   "Taito Corporation", "Raimais (Japan)" )
 GAME( 1988, fhawk,    0,        fhawk,    fhawk,    0,        ROT270, "Taito Corporation", "Fighting Hawk (Japan)" )
@@ -2587,3 +2766,5 @@ GAME( 199?, cubybop,  0,        cachat,   cubybop,  0,        ROT0,   "Taito Cor
 
 GAME( 1992, plgirls,  0,        cachat,   plgirls,  0,        ROT270, "Hot-B.", "Play Girls" )
 GAME( 1993, plgirls2, 0,        cachat,   plgirls2, 0,        ROT270, "Hot-B.", "Play Girls 2" )
+
+GAME( 1990, evilston, 0,        evilston, evilston, evilston, ROT270, "Spacy Industrial, Ltd.", "Evil Stone" )

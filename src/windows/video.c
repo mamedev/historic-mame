@@ -154,12 +154,14 @@ static const int waittable[FRAMESKIP_LEVELS][FRAMESKIP_LEVELS] =
 //============================================================
 
 // prototypes
+static int decode_cleanstretch(struct rc_option *option, const char *arg, int priority);
 static int video_set_resolution(struct rc_option *option, const char *arg, int priority);
 static int decode_effect(struct rc_option *option, const char *arg, int priority);
 static int decode_aspect(struct rc_option *option, const char *arg, int priority);
 static void update_visible_area(struct mame_display *display);
 
 // internal variables
+static char *cleanstretch;
 static char *resolution;
 static char *effect;
 static char *aspect;
@@ -177,7 +179,7 @@ struct rc_option video_opts[] =
 	{ "ddraw", "dd", rc_bool, &win_use_ddraw, "1", 0, 0, NULL, "use DirectDraw for rendering" },
 	{ "direct3d", "d3d", rc_bool, &win_use_d3d, "0", 0, 0, NULL, "use Direct3D for rendering" },
 	{ "hwstretch", "hws", rc_bool, &win_dd_hw_stretch, "1", 0, 0, NULL, "(dd) stretch video using the hardware" },
-	{ "cleanstretch", "cs", rc_bool, &win_force_int_stretch, "0", 0, 0, NULL, "stretch to integer ratios, ignore game aspect ratio" },
+	{ "cleanstretch", "cs", rc_string, &cleanstretch, "auto", 0, 0, decode_cleanstretch, "stretch to integer ratios" },
 	{ "resolution", "r", rc_string, &resolution, "auto", 0, 0, video_set_resolution, "set resolution" },
 	{ "zoom", "z", rc_int, &win_gfx_zoom, "2", 1, 8, NULL, "force specific zoom level" },
 	{ "refresh", NULL, rc_int, &win_gfx_refresh, "0", 0, 0, NULL, "set specific monitor refresh rate" },
@@ -196,12 +198,55 @@ struct rc_option video_opts[] =
 	{ "sleep", NULL, rc_bool, &allow_sleep, "1", 0, 0, NULL, "allow MAME to give back time to the system when it's not needed" },
 	{ "rdtsc", NULL, rc_bool, &win_force_rdtsc, "0", 0, 0, NULL, "prefer RDTSC over QueryPerformanceCounter for timing" },
 	{ "high_priority", NULL, rc_bool, &win_high_priority, "0", 0, 0, NULL, "increase thread priority" },
-	
+
 	{ NULL, NULL, rc_link, win_d3d_opts, NULL, 0, 0, NULL, NULL },
-	
-	
+
+
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
+
+
+
+//============================================================
+//	decode_cleanstretch
+//============================================================
+
+static int decode_cleanstretch(struct rc_option *option, const char *arg, int priority)
+{
+	// none: never contrain stretching
+	if (!strcmp(arg, "none"))
+	{
+		win_force_int_stretch = FORCE_INT_STRECT_NONE;
+	}
+	// full: constrain both width and height to integer ratios
+	else if (!strcmp(arg, "full"))
+	{
+		win_force_int_stretch = FORCE_INT_STRECT_FULL;
+	}
+	// auto: let the blitter module decide when/how to constrain stretching
+	else if (!strcmp(arg, "auto"))
+	{
+		win_force_int_stretch = FORCE_INT_STRECT_AUTO;
+	}
+	// horizontal: constrain width to integer ratios (relative to game)
+	else if (!strncmp(arg, "horizontal", strlen(arg)))
+	{
+		win_force_int_stretch = FORCE_INT_STRECT_HOR;
+	}
+	// vertical: constrain height to integer ratios (relative to game)
+	else if (!strncmp(arg, "vertical", strlen(arg)))
+	{
+		win_force_int_stretch = FORCE_INT_STRECT_VER;
+	}
+	else
+	{
+		fprintf(stderr, "error: invalid value for cleanstretch: %s\n", arg);
+		return -1;
+	}
+
+	option->priority = priority;
+	return 0;
+}
 
 
 

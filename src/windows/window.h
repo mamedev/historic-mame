@@ -92,6 +92,13 @@ extern int			win_color32_bdst_shift;
 #define CONSTRAIN_INTEGER_WIDTH 1
 #define CONSTRAIN_INTEGER_HEIGHT 2
 
+// win_force_int_stretch values
+#define FORCE_INT_STRECT_NONE 0
+#define FORCE_INT_STRECT_FULL 1
+#define FORCE_INT_STRECT_AUTO 2
+#define FORCE_INT_STRECT_HOR 3
+#define FORCE_INT_STRECT_VER 4
+
 
 
 //============================================================

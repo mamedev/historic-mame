@@ -67,7 +67,7 @@ struct osd_create_params
   Orientation is the screen orientation (as defined in driver.h) which will be done
   by the core. This can be used to select thinner screen modes for vertical games
   (ORIENTATION_SWAP_XY set), or even to ask the user to rotate the monitor if it's
-  a pivot model. Note that the OS dependant code must NOT perform any rotation,
+  a pivot model. Note that the OS dependent code must NOT perform any rotation,
   this is done entirely in the core.
   Depth can be 8 or 16 for palettized modes, meaning that the core will store in the
   bitmaps logical pens which will have to be remapped through a palette at blit time,
@@ -185,7 +185,7 @@ void osd_sound_enable(int enable);
 const struct KeyboardInfo *osd_get_key_list(void);
 
 /*
-  tell whether the specified key is pressed or not. keycode is the OS dependant
+  tell whether the specified key is pressed or not. keycode is the OS dependent
   code specified in the list returned by osd_get_key_list().
 */
 int osd_is_key_pressed(int keycode);
@@ -216,7 +216,7 @@ const struct JoystickInfo *osd_get_joy_list(void);
 
 /*
   tell whether the specified joystick direction/button is pressed or not.
-  joycode is the OS dependant code specified in the list returned by
+  joycode is the OS dependent code specified in the list returned by
   osd_get_joy_list().
 */
 int osd_is_joy_pressed(int joycode);
@@ -255,7 +255,7 @@ void osd_analogjoy_read(int player,int analog_axis[MAX_ANALOG_AXES], InputCode a
 
 /*
   inptport.c defines some general purpose defaults for key and joystick bindings.
-  They may be further adjusted by the OS dependant code to better match the
+  They may be further adjusted by the OS dependent code to better match the
   available keyboard, e.g. one could map pause to the Pause key instead of P, or
   snapshot to PrtScr instead of F12. Of course the user can further change the
   settings to anything he/she likes.
@@ -354,20 +354,28 @@ cycles_t osd_profiling_ticks(void);
 /* return non-zero to abort loading */
 int osd_display_loading_rom_message(const char *name,struct rom_load_data *romdata);
 
-/* called when the game is paused/unpaused, so the OS dependant code can do special */
+/* called when the game is paused/unpaused, so the OS dependent code can do special */
 /* things like changing the title bar or darkening the display. */
-/* Note that the OS dependant code must NOT stop processing input, since the user */
+/* Note that the OS dependent code must NOT stop processing input, since the user */
 /* interface is still active while the game is paused. */
 void osd_pause(int paused);
 
 
 
-#ifdef MAME_NET
+#if defined MAME_NET || defined XMAME_NET
 /* network */
 int osd_net_init(void);
+#ifdef XMAME_NET
+int osd_net_active(void);
+#endif
 int osd_net_send(int player, unsigned char buf[], int *size);
 int osd_net_recv(int player, unsigned char buf[], int *size);
+#ifdef MAME_NET
 int osd_net_sync(void);
+#elif defined XMAME_NET
+void osd_net_sync(unsigned short input_port_values[MAX_INPUT_PORTS],
+		unsigned short input_port_defaults[MAX_INPUT_PORTS]);
+#endif
 int osd_net_input_sync(void);
 int osd_net_exit(void);
 int osd_net_add_player(void);

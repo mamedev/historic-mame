@@ -7,6 +7,8 @@ size_t timelimt_bg_videoram_size;
 /* locals */
 static int scrollx, scrolly;
 
+static struct tilemap *bg_tilemap, *fg_tilemap;
+
 /***************************************************************************
 
   Convert the color PROMs into a more useable format.
@@ -58,19 +60,31 @@ PALETTE_INIT( timelimt ) {
 
 ***************************************************************************/
 
+static void get_bg_tile_info(int tile_index)
+{
+	SET_TILE_INFO(1, timelimt_bg_videoram[tile_index], 0, 0);
+}
+
+static void get_fg_tile_info(int tile_index)
+{
+	SET_TILE_INFO(0, videoram[tile_index], 0, 0);
+}
 
 VIDEO_START( timelimt )
 {
-	dirtybuffer = 0;
-	tmpbitmap = 0;
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 64, 32);
 
-	if ( ( dirtybuffer = auto_malloc( timelimt_bg_videoram_size ) ) == 0 )
+	if (!bg_tilemap)
 		return 1;
 
-	memset( dirtybuffer, 1, timelimt_bg_videoram_size );
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
-	if ( ( tmpbitmap = auto_bitmap_alloc( 64*8, 32*8 ) ) == 0 )
+	if (!fg_tilemap)
 		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
 
 	return 0;
 }
@@ -82,6 +96,7 @@ WRITE_HANDLER( timelimt_videoram_w )
 	if (videoram[offset] != data)
 	{
 		videoram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
 	}
 }
 
@@ -90,7 +105,7 @@ WRITE_HANDLER( timelimt_bg_videoram_w )
 	if (timelimt_bg_videoram[offset] != data)
 	{
 		timelimt_bg_videoram[offset] = data;
-		dirtybuffer[offset] = 1;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
@@ -143,73 +158,6 @@ static void drawsprites( struct mame_bitmap *bitmap )
 
 /***************************************************************************
 
-	Draw the background layer
-
-***************************************************************************/
-
-static void draw_background( struct mame_bitmap *bitmap )
-{
-	int offs;
-
-	for ( offs = 0; offs < timelimt_bg_videoram_size; offs++ )
-	{
-		if ( dirtybuffer[offs] )
-		{
-			int sx, sy, code;
-
-			sx = offs % 64;
-			sy = offs / 64;
-			code = timelimt_bg_videoram[offs];
-
-			dirtybuffer[offs] = 0;
-
-			drawgfx( tmpbitmap, Machine->gfx[1],
-					code,
-					0,
-					0,0,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	{
-		int tx = -scrollx;
-		int ty = -scrolly;
-
-		copyscrollbitmap( bitmap, tmpbitmap, 1, &tx, 1, &ty, &Machine->visible_area, TRANSPARENCY_NONE, 0 );
-	}
-}
-
-/***************************************************************************
-
-	Draw the foreground layer
-
-***************************************************************************/
-
-static void draw_foreground( struct mame_bitmap *bitmap )
-{
-	int offs;
-
-	for ( offs = 0; offs < videoram_size; offs++ )
-	{
-		int sx, sy, code;
-
-		sx = offs % 32;
-		sy = offs / 32;
-
-		code = videoram[offs];
-
-		drawgfx( bitmap, Machine->gfx[0],
-				 code,
-				 0,
-				 0,0,
-				 8*sx,8*sy,
-				 0,TRANSPARENCY_PEN,0);
-	}
-}
-
-/***************************************************************************
-
   Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
@@ -218,12 +166,11 @@ static void draw_foreground( struct mame_bitmap *bitmap )
 
 VIDEO_UPDATE( timelimt )
 {
-	if ( get_vh_global_attribute_changed() )
-	{
-		memset( dirtybuffer, 1, timelimt_bg_videoram_size );
-	}
+	tilemap_set_scrollx(bg_tilemap, 0, scrollx);
+	tilemap_set_scrolly(bg_tilemap, 0, scrolly);
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
 
-	draw_background( bitmap );
 	drawsprites( bitmap );
-	draw_foreground(  bitmap );
+
+	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
 }

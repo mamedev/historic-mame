@@ -54,6 +54,7 @@ Notes:
 #include "usrintrf.h"
 #include "vidhrdw/generic.h"
 #include "neogeo.h"
+#include "state.h"
 
 static data16_t *neogeo_vidram16;
 static data16_t *neogeo_paletteram16;	/* pointer to 1 of the 2 palette banks */
@@ -116,6 +117,45 @@ static char zoomx_draw_tables[16][16] =
 
 /******************************************************************************/
 
+static void set_palettebank_on_postload(void)
+{
+	int i;
+
+	neogeo_paletteram16 = neogeo_palettebank[neogeo_palette_index];
+
+	for (i = 0; i < 0x2000 >> 1; i++)
+	{
+		data16_t newword = neogeo_paletteram16[i];
+		int r,g,b;
+
+		r = ((newword >> 7) & 0x1e) | ((newword >> 14) & 0x01);
+		g = ((newword >> 3) & 0x1e) | ((newword >> 13) & 0x01);
+		b = ((newword << 1) & 0x1e) | ((newword >> 12) & 0x01);
+
+		r = (r << 3) | (r >> 2);
+		g = (g << 3) | (g >> 2);
+		b = (b << 3) | (b >> 2);
+
+		palette_set_color(i, r, g, b);
+	}
+}
+
+static void register_savestate(void)
+{
+	state_save_register_int   ("video", 0, "neogeo_palette_index",    &neogeo_palette_index);
+	state_save_register_int   ("video", 0, "palette_swap_pending",    &palette_swap_pending);
+	state_save_register_UINT16("video", 0, "neogeo_palettebank[0]",   neogeo_palettebank[0],    0x2000/2);
+	state_save_register_UINT16("video", 0, "neogeo_palettebank[1]",   neogeo_palettebank[1],    0x2000/2);
+	state_save_register_UINT16("video", 0, "neogeo_vidram16",         neogeo_vidram16,          0x20000/2);
+	state_save_register_UINT16("video", 0, "neogeo_vidram16_modulo",  &neogeo_vidram16_modulo,  1);
+	state_save_register_UINT16("video", 0, "neogeo_vidram16_offset",  &neogeo_vidram16_offset,  1);
+	state_save_register_int   ("video", 0, "fix_bank",                &fix_bank);
+
+	state_save_register_func_postload(set_palettebank_on_postload);
+}
+
+/******************************************************************************/
+
 VIDEO_START( neogeo_mvs )
 {
 	no_of_tiles=Machine->gfx[2]->total_elements;
@@ -147,6 +187,8 @@ VIDEO_START( neogeo_mvs )
 	neogeo_vidram16_offset = 0;
 	fix_bank = 0;
 	palette_swap_pending = 0;
+
+	register_savestate();
 
 	return 0;
 }

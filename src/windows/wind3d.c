@@ -27,6 +27,9 @@
 #include "blit.h"
 #include "wind3dfx.h"
 
+// maximum prescale level
+#define MAX_PRESCALE			4
+
 
 
 //============================================================
@@ -47,6 +50,8 @@ extern UINT32 win_d3d_preprocess_tfactor;
 //============================================================
 
 #define SHOW_FLIP_TIMES 		0
+#define SHOW_MODE_SCORE 		0
+#define SHOW_PRESCALE 			0
 
 
 
@@ -75,6 +80,9 @@ UINT8 win_d3d_use_feedback;
 // zoom level
 int win_d3d_current_zoom;
 
+// prescale level
+int win_d3d_prescalex, win_d3d_prescaley;
+
 
 
 //============================================================
@@ -98,6 +106,7 @@ static LPDIRECTDRAWCLIPPER primary_clipper;
 static DDSURFACEDESC2 primary_desc;
 static DDSURFACEDESC2 blit_desc;
 static DDSURFACEDESC2 texture_desc;
+static DDSURFACEDESC2 preprocess_desc;
 static int changed_resolutions;
 static int forced_updates;
 
@@ -107,7 +116,7 @@ static LPDIRECT3DDEVICE7 d3d_device7;
 static LPDIRECTDRAWSURFACE7 texture_surface;
 static LPDIRECTDRAWSURFACE7 preprocess_surface;
 static D3DTLVERTEX preprocess_vertex[4];
-static D3DTLVERTEX2 vertex[4];
+static D3DTLVERTEX2 screen_vertex[4];
 
 // Direct3D info
 static D3DDEVICEDESC7 d3d_device_desc;
@@ -134,9 +143,12 @@ static int best_depth;
 static int best_refresh;
 
 //  misc
-static int prev_zoom;
+static int position_changed;
+static int current_prescalex, current_prescaley;
+
 
 // derived attributes
+static int video_attributes;
 static int needs_6bpp_per_gun;
 static int pixel_aspect_ratio;
 
@@ -158,8 +170,9 @@ static int restore_surfaces(void);
 static void release_surfaces(void);
 static void compute_color_masks(const DDSURFACEDESC2 *desc);
 static int render_to_blit(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update);
-static int render_and_flip(LPRECT src, LPRECT dst, int update);
-
+static int render_and_flip(LPRECT src, LPRECT dst, int update, int wait_for_lock);
+static void init_vertices_preprocess(LPRECT src);
+static void init_vertices_screen(LPRECT src, LPRECT dst);
 
 
 
@@ -354,17 +367,127 @@ static int win_d3d_test_hardware_caps(void)
 	return 0;
 }
 
+
+
 //============================================================
-//	adjust_prescale
+//	adjust prescale levels
 //============================================================
 
-void adjust_prescale(void)
+static void adjust_prescale(int width, int height)
 {
-	// disable prescale when the old effects engine is already scaling up the image
-	if (effect_min_xscale >= 2)
-		win_d3d_use_prescale &= ~240;
-	if (effect_min_yscale >= 2)
-		win_d3d_use_prescale &= ~15;
+	// if prescale is disbled just set the levels to 1
+	if (!win_d3d_use_prescale)
+	{
+		current_prescalex = current_prescaley = 1;
+#if SHOW_PRESCALE
+		fprintf(stderr, "prescale disabled\n");
+#endif
+		return;
+	}
+
+	current_prescalex = win_d3d_prescalex;
+
+	// auto
+	if (win_d3d_use_prescale == 2)
+	{
+		if (win_d3d_effects_swapxy)
+		{
+			if (win_d3d_use_scanlines)
+				current_prescalex = (int)((double)height / max_height * 0.50);
+			else
+				current_prescalex = (int)((double)height / max_height * 0.67);
+		}
+		else
+		{
+			if (win_d3d_use_scanlines)
+				current_prescalex = (int)((double)width / max_width * 0.50);
+			else
+				current_prescalex = (int)((double)width / max_width * 0.67);
+		}
+	}
+	// full
+	else if (win_d3d_use_prescale == 3)
+	{
+		if (win_d3d_effects_swapxy)
+			current_prescalex = (int)((double)height / max_height);
+		else
+			current_prescalex = (int)((double)width / max_width);
+	}
+
+	// adjust if software scaling is used
+	current_prescalex /= effect_min_xscale;
+
+	if (current_prescalex > MAX_PRESCALE)
+		current_prescalex = MAX_PRESCALE;
+	if (current_prescalex < 1)
+		current_prescalex = 1;
+
+	current_prescaley = win_d3d_prescaley;
+
+	// auto
+	if (win_d3d_use_prescale == 2)
+	{
+		if (win_d3d_effects_swapxy)
+		{
+			if (win_d3d_use_scanlines)
+				current_prescaley = (int)((double)width / max_width * 0.75);
+			else
+				current_prescaley = (int)((double)width / max_width * 0.67);
+		}
+		else
+		{
+			if (win_d3d_use_scanlines)
+				current_prescaley = (int)((double)height / max_height * 0.75);
+			else
+				current_prescaley = (int)((double)height / max_height * 0.67);
+		}
+	}
+	// full
+	else if (win_d3d_use_prescale == 3)
+	{
+		if (win_d3d_effects_swapxy)
+			current_prescaley = (int)((double)width / max_width);
+		else
+			current_prescaley = (int)((double)height / max_height);
+	}
+
+	// adjust if software scaling is used
+	current_prescaley /= effect_min_yscale;
+
+	if (current_prescaley > MAX_PRESCALE)
+		current_prescaley = MAX_PRESCALE;
+	if (current_prescaley < 1)
+		current_prescaley = 1;
+
+	// ensure the levels aren't too large
+	if (preprocess_surface)
+	{
+		if (blit_swapxy)
+		{
+			while (current_prescalex >= 1 && preprocess_desc.dwWidth < (current_prescalex * win_visible_height))
+				current_prescalex--;
+			while (current_prescaley >= 1 && preprocess_desc.dwHeight < (current_prescaley * win_visible_width))
+				current_prescaley--;
+		}
+		else
+		{
+			while (current_prescalex >= 1 && preprocess_desc.dwWidth < (current_prescalex * win_visible_width))
+				current_prescalex--;
+			while (current_prescaley >= 1 && preprocess_desc.dwHeight < (current_prescaley * win_visible_height))
+				current_prescaley--;
+		}
+	}
+
+	// if the prescale levels are 1, just disable prescale
+	if (current_prescalex == 1 && current_prescaley == 1)
+		win_d3d_use_prescale = 0;
+
+#if SHOW_PRESCALE
+	if (win_d3d_use_prescale)
+		fprintf(stderr, "prescale set to %ix%i (image size %ix%i, window size %ix%i)\n", current_prescalex, current_prescaley, max_width, max_height, width, height);
+	else
+		fprintf(stderr, "prescale disabled\n");
+#endif
 }
 
 
@@ -392,6 +515,7 @@ void win_d3d_wait_vsync(void)
 
 void win_d3d_kill(void)
 {
+	// delete the d3d device
 	if (d3d_device7 != NULL)
 		IDirect3DDevice7_Release(d3d_device7);
 	d3d_device7 = NULL;
@@ -403,11 +527,12 @@ void win_d3d_kill(void)
 	if (ddraw7 != NULL)
 		IDirectDraw7_SetCooperativeLevel(ddraw7, NULL, DDSCL_NORMAL);
 
-	// delete the core objects
+	// delete the d3d object
 	if (d3d7 != NULL)
 		IDirect3D7_Release(d3d7);
 	d3d7 = NULL;
 
+	// delete the ddraw objects
 	if (ddraw7 != NULL)
 		IDirectDraw7_Release(ddraw7);
 	ddraw7 = NULL;
@@ -436,50 +561,31 @@ int win_d3d_init(int width, int height, int depth, int attributes, double aspect
 	if (ddraw_dll7 == NULL)
 	{
 		fprintf(stderr, "Error importing ddraw.dll\n");
-		goto cant_load_ddraw_dll;
+		goto error_handling;
 	}
 	// and import the DirectDrawCreateEx function manually
 	fn_directdraw_create_ex = (type_directdraw_create_ex)GetProcAddress(ddraw_dll7, "DirectDrawCreateEx");
 	if (fn_directdraw_create_ex == NULL)
 	{
 		fprintf(stderr, "Error importing DirectDrawCreateEx() function\n");
-		goto cant_create_ddraw7;
+		goto error_handling;
 	}
 
 	result = fn_directdraw_create_ex(NULL, (void **)&ddraw7, &IID_IDirectDraw7, NULL);
 	if (result != DD_OK)
 	{
 		fprintf(stderr, "Error creating DirectDraw7: %08x\n", (UINT32)result);
-		goto cant_create_ddraw7;
+		goto error_handling;
 	}
 
 	result = IDirectDraw7_QueryInterface(ddraw7, &IID_IDirect3D7, (void **)&d3d7);
 	if (result != DD_OK)
 	{
 		fprintf(stderr, "Error creating Direct3D7: %08x\n", (UINT32)result);
-		goto cant_create_d3d7;
+		goto error_handling;
 	}
 
-	// set the graphics mode width/height to the window size
-	if (width && height && depth)
-	{
-		max_width = width;
-		max_height = height;
-		pref_depth = depth;
-		needs_6bpp_per_gun	= ((attributes & VIDEO_NEEDS_6BITS_PER_GUN) != 0);
-		pixel_aspect_ratio	= (attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK);
-	}
-	if (effect)
-	{
-		effect_min_xscale = effect->min_xscale;
-		effect_min_yscale = effect->min_yscale;
-	}
-	if (aspect)
-	{
-		aspect_ratio = aspect;
-	}
-
-	// print available video memory
+	// print initialisation message and available video memory
 	if (verbose)
 	{
 		DDSCAPS2 caps = { 0 };
@@ -496,66 +602,84 @@ int win_d3d_init(int width, int height, int depth, int attributes, double aspect
 		fprintf(stderr, "\n");
 	}
 
+	// set the graphics mode width/height to the window size
+	if (width && height && depth)
+	{
+		max_width = width;
+		max_height = height;
+		pref_depth = depth;
+
+		video_attributes = attributes;
+		needs_6bpp_per_gun	= ((attributes & VIDEO_NEEDS_6BITS_PER_GUN) != 0);
+		pixel_aspect_ratio	= (attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK);
+	}
+	if (aspect)
+	{
+		aspect_ratio = aspect;
+	}
+	if (effect)
+	{
+		effect_min_xscale = effect->min_xscale;
+		effect_min_yscale = effect->min_yscale;
+	}
+
 	// set the cooperative level
 	// for non-window modes, we will use full screen here
-	result = IDirectDraw7_SetCooperativeLevel(ddraw7, win_video_window, win_window_mode ? DDSCL_NORMAL : DDSCL_ALLOWREBOOT | DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE);
+	result = IDirectDraw7_SetCooperativeLevel(ddraw7, win_video_window, (win_window_mode ? DDSCL_NORMAL : DDSCL_ALLOWREBOOT | DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE) | DDSCL_FPUPRESERVE);
 	if (result != DD_OK)
 	{
 		fprintf(stderr, "Error setting cooperative level: %08x\n", (UINT32)result);
-		goto cant_set_coop_level;
+		goto error_handling;
 	}
 
-	// set initial zoom level
-	prev_zoom = win_d3d_current_zoom = 1;
-
 	// init the effects
-	win_d3d_effects_init();
+	win_d3d_effects_init(video_attributes);
 
 	// set contraints on window size
-	if (win_d3d_use_scanlines || win_force_int_stretch)
+	if (win_d3d_use_scanlines && win_force_int_stretch == FORCE_INT_STRECT_AUTO)
 		win_default_constraints = win_d3d_effects_swapxy ? CONSTRAIN_INTEGER_WIDTH : CONSTRAIN_INTEGER_HEIGHT;
 
 	// full screen mode: set the resolution
 	changed_resolutions = 0;
 	if (set_resolution())
-		goto cant_set_resolution;
+		goto error_handling;
 
 	// create the screen surfaces
 	if (create_surfaces())
-		goto cant_create_screen_surfaces;
+		goto error_handling;
 
 	result = IDirect3D7_CreateDevice(d3d7, &IID_IDirect3DHALDevice, back_surface, &d3d_device7);
 	if (result != DD_OK)
 	{
 		fprintf(stderr, "Error creating Direct3D7 device: %08x\n", (UINT32)result);
-		goto cant_create_d3d_device7;
+		goto error_handling;
 	}
 
 	// get device caps
 	result = IDirect3DDevice7_GetCaps(d3d_device7, &d3d_device_desc);
 
 	if (win_d3d_test_hardware_caps())
-		goto cant_get_hardware;
+		goto error_handling;
 
 	// create the blit surfaces
 	if (create_blit_surface())
-		goto cant_create_blit_surfaces;
+		goto error_handling;
 
 	// create the effects surfaces
 	if (create_effects_surfaces())
-		goto cant_create_effects_surfaces;
+		goto error_handling;
 
 	// erase all the surfaces we created
 	erase_surfaces();
 
 	// init the surfaces used for the effects
 	if (win_d3d_effects_init_surfaces())
-		goto cant_init_effects_surfaces;
+		goto error_handling;
 
 	// attempt to get the current display mode
 	result = IDirectDraw7_GetDisplayMode(ddraw7, &currmode);
 	if (result != DD_OK)
-		goto cant_set_viewport;
+		goto error_handling;
 
 	// now set up the viewport
 	viewport.dwX = 0;
@@ -565,7 +689,7 @@ int win_d3d_init(int width, int height, int depth, int attributes, double aspect
 
 	result = IDirect3DDevice7_SetViewport(d3d_device7, &viewport);
 	if (result != DD_OK)
-		goto cant_set_viewport;
+		goto error_handling;
 
 	// set some Direct3D options
 	IDirect3DDevice7_SetRenderState(d3d_device7, D3DRENDERSTATE_LIGHTING, FALSE);
@@ -587,8 +711,8 @@ int win_d3d_init(int width, int height, int depth, int attributes, double aspect
 		}
 	}
 
-	// force update of RGB effects
-	prev_zoom = -1;
+	// force update of position and RGB effects
+	position_changed = 1;
 
 	// force some updates
 	forced_updates = 5;
@@ -596,19 +720,9 @@ int win_d3d_init(int width, int height, int depth, int attributes, double aspect
 	return 0;
 
 	// error handling
-cant_set_viewport:
-cant_init_effects_surfaces:
-cant_create_blit_surfaces:
-cant_create_effects_surfaces:
-cant_get_hardware:
-cant_create_d3d_device7:
-cant_create_screen_surfaces:
-cant_set_resolution:
-cant_set_coop_level:
-cant_create_d3d7:
-cant_create_ddraw7:
-cant_load_ddraw_dll:
+error_handling:
 	win_d3d_kill();
+
 	return 1;
 }
 
@@ -657,7 +771,7 @@ static double compute_mode_score(int width, int height, int depth, int refresh)
 		{ { 0.00, 0.50, 0.75, 1.00 },	{ 0.00, 0.50, 0.75, 1.00 } }	// 32bpp source
 	};
 
-	double size_score, depth_score, refresh_score, final_score;
+	double size_score, aspect_score, depth_score, refresh_score, final_score;
 	int target_width, target_height;
 
 	// select wich depth matrix to use based on the game properties and enabled effects
@@ -676,22 +790,22 @@ static double compute_mode_score(int width, int height, int depth, int refresh)
 		target_width *= 2;
 
 	// determine the zoom level based on the number of scanlines of the game
-	if (win_keep_aspect && !win_force_int_stretch)
+	if (win_keep_aspect && win_force_int_stretch != FORCE_INT_STRECT_FULL)
 	{
 		if (blit_swapxy && win_default_constraints != CONSTRAIN_INTEGER_HEIGHT)
 		{
 			// adjust width for the desired zoom level
-			if (target_width < max_width * win_gfx_zoom)
-				target_width = max_width * win_gfx_zoom;
+			if (target_width < max_width * (win_gfx_zoom / effect_min_xscale))
+				target_width = max_width * (win_gfx_zoom / effect_min_yscale);
 
 			// match height according to the aspect ratios of the game, screen, and display mode
-			target_height = (int)((double)target_width * width / aspect_ratio / height / win_screen_aspect + 0.5);
+			target_height = (int)((double)target_width * height / aspect_ratio / width * win_screen_aspect + 0.5);
 		}
 		else
 		{
 			// adjust height for the desired zoom level
-			if (target_height < max_height * win_gfx_zoom)
-				target_height = max_height * win_gfx_zoom;
+			if (target_height < max_height * (win_gfx_zoom / effect_min_xscale))
+				target_height = max_height * (win_gfx_zoom / effect_min_yscale);
 
 			// match width according to the aspect ratios of the game, screen, and display mode
 			target_width = (int)((double)target_height * width * aspect_ratio / height / win_screen_aspect + 0.5);
@@ -701,15 +815,15 @@ static double compute_mode_score(int width, int height, int depth, int refresh)
 	else
 	{
 		// adjust width for the desired zoom level
-		if (target_width < max_width * win_gfx_zoom)
-			target_width = max_width * win_gfx_zoom;
+		if (target_width < max_width * (win_gfx_zoom / effect_min_xscale))
+			target_width = max_width * (win_gfx_zoom / effect_min_yscale);
 		// adjust height for the desired zoom level
-		if (target_height < max_height * win_gfx_zoom)
-			target_height = max_height * win_gfx_zoom;
+		if (target_height < max_height * (win_gfx_zoom / effect_min_xscale))
+			target_height = max_height * (win_gfx_zoom / effect_min_yscale);
 	}
 
-	// compute initial score based on difference between target and current
-	size_score = 1.0 / (1.0 + fabs(width - target_width) + fabs(height - target_height));
+	// compute initial score based on difference between target and current (adjusted for zoom level)
+	size_score = 1.0 / (1.0 + (fabs(width - target_width) / win_screen_aspect + fabs(height - target_height)) / win_gfx_zoom);
 
 	// if we're looking for a particular mode, make sure it matches
 	if (win_gfx_width && win_gfx_height && (width != win_gfx_width || height != win_gfx_height))
@@ -722,6 +836,14 @@ static double compute_mode_score(int width, int height, int depth, int refresh)
 	// if mode is smaller than we'd like, it only scores up to 0.1
 	if (width < target_width || height < target_height)
 		size_score *= 0.1;
+
+	// now compute the aspect ratio score
+	if (win_d3d_use_rgbeffect)
+		// strongly prefer square pixels
+		aspect_score = 1.0 / (1.0 + fabs((double)width / height - win_screen_aspect) * 10.0);
+	else
+		// mildly prefer square pixels
+		aspect_score = 1.0 / (1.0 + fabs((double)width / height - win_screen_aspect));
 
 	// next compute depth score
 	depth_score = depth_matrix[(pref_depth + 7) / 8 - 1][matrix][(depth + 7) / 8 - 1];
@@ -745,8 +867,13 @@ static double compute_mode_score(int width, int height, int depth, int refresh)
 	if ((double)refresh < Machine->drv->frames_per_second)
 		refresh_score *= 0.1;
 
-	// weight size highest, followed by depth and refresh
-	final_score = (size_score * 100.0 + depth_score * 10.0 + refresh_score) / 111.0;
+	// weight size/aspect highest, followed by depth and refresh
+	final_score = (size_score * aspect_score * 100.0 + depth_score * 10.0 + refresh_score) / 111.0;
+
+#if SHOW_MODE_SCORE
+	fprintf(stderr, "%4ix%4i: size %1.6f aspect %1.4f depth %1.1f refresh %1.4f total %1.6f\n", width, height, size_score, aspect_score, depth_score, refresh_score, final_score);
+#endif
+
 	return final_score;
 }
 
@@ -773,7 +900,7 @@ static int set_resolution(void)
 			if (result != DD_OK)
 			{
 				fprintf(stderr, "Error getting display mode: %08x\n", (UINT32)result);
-				goto cant_get_mode;
+				goto error_handling;
 			}
 
 			// force to the current width/height
@@ -792,7 +919,7 @@ static int set_resolution(void)
 		if (result != DD_OK)
 		{
 			fprintf(stderr, "Error enumerating modes: %08x\n", (UINT32)result);
-			goto cant_enumerate_modes;
+			goto error_handling;
 		}
 
 		if (verbose)
@@ -811,7 +938,7 @@ static int set_resolution(void)
 			if (result != DD_OK)
 			{
 				fprintf(stderr, "Error setting mode: %08x\n", (UINT32)result);
-				goto cant_set_mode;
+				goto error_handling;
 			}
 			changed_resolutions = 1;
 		}
@@ -822,7 +949,7 @@ static int set_resolution(void)
 	if (result != DD_OK)
 	{
 		fprintf(stderr, "Error getting display mode: %08x\n", (UINT32)result);
-		goto cant_get_mode;
+		goto error_handling;
 	}
 
 	// compute the adjusted aspect ratio
@@ -831,9 +958,8 @@ static int set_resolution(void)
 	return 0;
 
 	// error handling - non fatal in general
-cant_set_mode:
-cant_get_mode:
-cant_enumerate_modes:
+error_handling:
+
 	return 0;
 }
 
@@ -906,7 +1032,7 @@ static int create_surfaces(void)
 	{
 		if (verbose)
 			fprintf(stderr, "Error creating primary surface: %08x\n", (UINT32)result);
-		goto cant_create_primary;
+		goto error_handling;
 	}
 
 	// get a description of the primary surface
@@ -914,7 +1040,7 @@ static int create_surfaces(void)
 	if (result != DD_OK)
 	{
 		fprintf(stderr, "Error getting primary surface desc: %08x\n", (UINT32)result);
-		goto cant_get_primary_desc;
+		goto error_handling;
 	}
 
 	// print out the good stuff
@@ -957,7 +1083,7 @@ static int create_surfaces(void)
 		if (result != DD_OK)
 		{
 			fprintf(stderr, "Error creating back surface: %08x\n", (UINT32)result);
-			goto cant_get_back_surface;
+			goto error_handling;
 		}
 	}
 	// full screen mode: get the back surface
@@ -968,7 +1094,7 @@ static int create_surfaces(void)
 		if (result != DD_OK)
 		{
 			fprintf(stderr, "Error getting attached back surface: %08x\n", (UINT32)result);
-			goto cant_get_back_surface;
+			goto error_handling;
 		}
 	}
 
@@ -976,16 +1102,14 @@ static int create_surfaces(void)
 	if (win_window_mode)
 	{
 		if (create_clipper())
-			goto cant_init_clipper;
+			goto error_handling;
 	}
 
 	return 0;
 
 	// error handling
-cant_init_clipper:
-cant_get_back_surface:
-cant_get_primary_desc:
-cant_create_primary:
+error_handling:
+
 	return 1;
 }
 
@@ -1008,7 +1132,7 @@ static int create_effects_surfaces(void)
 		desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY;
 
 		// we can save video memory because we only need to partially cover the screen
-		if (!win_window_mode && win_keep_aspect)
+		if (!win_window_mode && win_keep_aspect /*&& win_force_int_stretch != FORCE_INT_STRECT_FULL*/)
 		{
 			desc.dwWidth = primary_desc.dwWidth;
 			desc.dwHeight = (int)((double)primary_desc.dwHeight / aspect_ratio * win_screen_aspect + 0.5);
@@ -1029,7 +1153,7 @@ static int create_effects_surfaces(void)
 		if (result != DD_OK)
 		{
 			fprintf(stderr, "Error creating RGB effects surface: %08x\n", (UINT32)result);
-			goto cant_get_background_surface;
+			goto error_handling;
 		}
 
 		if (verbose)
@@ -1059,7 +1183,7 @@ static int create_effects_surfaces(void)
 			if (desc.dwWidth < d3d_device_desc.dwMinTextureWidth || desc.dwHeight < d3d_device_desc.dwMinTextureHeight)
 			{
 				fprintf(stderr, "Error creating scanline surface[%d]: %08x\n", i, (UINT32)result);
-				goto cant_get_scanline_surface;
+				goto error_handling;
 			}
 
 			// create the surface
@@ -1067,7 +1191,7 @@ static int create_effects_surfaces(void)
 			if (result != DD_OK)
 			{
 				fprintf(stderr, "Error creating scanline surface[%d]: %08x\n", i, (UINT32)result);
-				goto cant_get_scanline_surface;
+				goto error_handling;
 			}
 
 			if (verbose)
@@ -1082,8 +1206,8 @@ static int create_effects_surfaces(void)
 
 	return 0;
 
-cant_get_background_surface:
-cant_get_scanline_surface:
+error_handling:
+
 	return 1;
 }
 
@@ -1097,7 +1221,7 @@ static HRESULT CALLBACK enum_textures_callback(LPDDPIXELFORMAT pixelformat, LPVO
 {
     if (pixelformat->dwFlags == DDPF_RGB && pixelformat->DUMMYUNIONNAMEN(1).dwRGBBitCount == 16)
     {
-		// use RGB:555 format if supported by the 3D hardware
+		// use RGB:555 format if supported by the 3D hardware and scaling effect
 		if (pixelformat->DUMMYUNIONNAMEN(2).dwRBitMask == 0x7C00 &&
 			pixelformat->DUMMYUNIONNAMEN(3).dwGBitMask == 0x03E0 &&
 			pixelformat->DUMMYUNIONNAMEN(4).dwBBitMask == 0x001F)
@@ -1128,12 +1252,10 @@ static HRESULT CALLBACK enum_textures_callback(LPDDPIXELFORMAT pixelformat, LPVO
 static int create_blit_surface(void)
 {
 	DDPIXELFORMAT preferred_pixelformat = { 0 };
-	DDSURFACEDESC2 desc;
 	int width, height;
 	int texture_width = 256, texture_height = 256;
 	HRESULT result;
 	int done = 0;
-	int i;
 
 	// determine the width/height of the blit surface
 	while (!done)
@@ -1141,15 +1263,11 @@ static int create_blit_surface(void)
 		done = 1;
 
 		// first compute the ideal size
-		width = (max_width * effect_min_xscale) + 16;
-		height = (max_height * effect_min_yscale) + 0;
+		width = (blit_swapxy ? max_height : max_width) * effect_min_xscale + 16;
+		height = (blit_swapxy ? max_width : max_height) * effect_min_yscale + 0;
 
-		// if it's okay, keep it
-		if (width <= primary_desc.dwWidth && height <= primary_desc.dwHeight)
-			break;
-
-		// reduce the width
-		if (width > primary_desc.dwWidth)
+		// reduce the width if needed
+		if (width > blit_swapxy ? primary_desc.dwHeight : primary_desc.dwWidth)
 		{
 			if (effect_min_xscale > 1)
 			{
@@ -1158,8 +1276,8 @@ static int create_blit_surface(void)
 			}
 		}
 
-		// reduce the height
-		if (height > primary_desc.dwHeight)
+		// reduce the height if needed
+		if (height > blit_swapxy ? primary_desc.dwWidth : primary_desc.dwHeight)
 		{
 			if (effect_min_yscale > 1)
 			{
@@ -1168,9 +1286,6 @@ static int create_blit_surface(void)
 			}
 		}
 	}
-
-	// adjust prescale settings now we know effect_min_xscale/effect_min_xscale
-	adjust_prescale();
 
 	// determine the width/height of the texture surface (assume ^2 sizes are required)
 	while (texture_width < (width - 16))
@@ -1202,53 +1317,10 @@ static int create_blit_surface(void)
 	{
 		if (verbose)
 			fprintf(stderr, "Error: required texture size too large (max: %ix%i, need %ix%i)\n", (int)d3d_device_desc.dwMaxTextureWidth, (int)d3d_device_desc.dwMaxTextureHeight, texture_width, texture_height);
-		goto cant_create_preprocess;
+		goto error_handling;
 	}
 
-	// texture used for prescale and feedback (always the same format as the primary surface)
-	if (win_d3d_use_prescale || win_d3d_use_feedback)
-	{
-		memset(&desc, 0, sizeof(DDSURFACEDESC2));
-		desc.dwSize = sizeof(DDSURFACEDESC2);
-		desc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
-		desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_3DDEVICE;
-
-		desc.dwWidth = texture_width;
-		desc.dwHeight = texture_height;
-
-		desc.dwWidth <<= (win_d3d_use_prescale >> 4);
-		desc.dwHeight <<= (win_d3d_use_prescale & 15);
-
-		if (desc.dwWidth > d3d_device_desc.dwMaxTextureWidth || desc.dwHeight > d3d_device_desc.dwMaxTextureHeight)
-		{
-			if (verbose)
-				fprintf(stderr, "Warning: required texture size too large for prescale, disabling prescale\n");
-
-			if (desc.dwWidth > d3d_device_desc.dwMaxTextureWidth)
-			{
-				desc.dwWidth = texture_width;
-				win_d3d_use_prescale &= 15;
-			}
-			if (desc.dwHeight > d3d_device_desc.dwMaxTextureHeight)
-			{
-				desc.dwHeight = texture_height;
-				win_d3d_use_prescale &= 240;
-			}
-		}
-	}
-	if (win_d3d_use_prescale || win_d3d_use_feedback)
-	{
-		// create the pre-processing surface
-		result = IDirectDraw7_CreateSurface(ddraw7, &desc, &preprocess_surface, NULL);
-		if (result != DD_OK)
-		{
-			if (verbose)
-				fprintf(stderr, "Error creating preprocess surface: %08x\n", (UINT32)result);
-			goto cant_create_preprocess;
-		}
-	}
-
-	// now make a description of our blit surface, based on the primary surface
+	// make a description of our blit surface, based on the primary surface
 	blit_desc = primary_desc;
 	blit_desc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS;
 
@@ -1273,6 +1345,7 @@ static int create_blit_surface(void)
 		blit_desc.dwWidth = width;
 		blit_desc.dwHeight = height;
 		blit_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE | DDSCAPS_VIDEOMEMORY;
+		blit_desc.ddsCaps.dwCaps2 = 0;
 	}
 
 	// then create the blit surface
@@ -1281,17 +1354,20 @@ static int create_blit_surface(void)
 	{
 		if (verbose)
 			fprintf(stderr, "Error creating blit surface: %08x\n", (UINT32)result);
-		goto cant_create_blit;
+		goto error_handling;
 	}
 
-	// make a description of our texture surface, based on the blit surface
 	texture_desc = blit_desc;
+	texture_surface = blit_surface;
+
+	// modify the description of our texture surface, based on the blit surface
 	if (!win_d3d_tex_manage)
 	{
 		// fill in the differences
-		texture_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
 		texture_desc.dwWidth = texture_width;
 		texture_desc.dwHeight = texture_height;
+		texture_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+		blit_desc.ddsCaps.dwCaps2 = 0;
 
 		// then create the texture surface
 		result = IDirectDraw7_CreateSurface(ddraw7, &texture_desc, &texture_surface, NULL);
@@ -1299,42 +1375,107 @@ static int create_blit_surface(void)
 		{
 			if (verbose)
 				fprintf(stderr, "Error creating texture surface: %08x\n", (UINT32)result);
-			goto cant_create_texture;
+			goto error_handling;
+		}
+	}
+
+	// now adjust prescale settings to that so we get the maximum
+#if SHOW_PRESCALE
+	if (win_d3d_use_prescale)
+		fprintf(stderr, "max ");
+#endif
+	adjust_prescale(primary_desc.dwWidth, primary_desc.dwHeight);
+
+	// now create texture used for prescale and feedback (always the same format as the primary surface)
+	if (win_d3d_use_prescale || win_d3d_use_feedback)
+	{
+		preprocess_desc = win_d3d_use_feedback ? primary_desc : texture_desc;
+		preprocess_desc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS;
+		preprocess_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_3DDEVICE;
+		preprocess_desc.ddsCaps.dwCaps2 = 0;
+
+		preprocess_desc.dwWidth = texture_width;
+		preprocess_desc.dwHeight = texture_height;
+
+		while (preprocess_desc.dwWidth < (width - 16) * current_prescalex)
+			preprocess_desc.dwWidth <<= 1;
+		while (preprocess_desc.dwHeight < (height - 0) * current_prescaley)
+			preprocess_desc.dwHeight <<= 1;
+
+		if (preprocess_desc.dwWidth > d3d_device_desc.dwMaxTextureWidth || preprocess_desc.dwHeight > d3d_device_desc.dwMaxTextureHeight)
+		{
+			if (verbose)
+				fprintf(stderr, "Warning: required texture size too large for prescale, disabling prescale\n");
+
+			if (preprocess_desc.dwWidth > d3d_device_desc.dwMaxTextureWidth)
+			{
+				preprocess_desc.dwWidth = texture_width;
+				win_d3d_prescalex = 1;
+			}
+			if (preprocess_desc.dwHeight > d3d_device_desc.dwMaxTextureHeight)
+			{
+				preprocess_desc.dwHeight = texture_height;
+				win_d3d_prescaley = 1;
+			}
+			if (!win_d3d_prescalex && !win_d3d_prescaley)
+				win_d3d_use_prescale = 0;
+		}
+	}
+	if (win_d3d_use_prescale || win_d3d_use_feedback)
+	{
+#if 0
+		int can_render_to_texture = 0;
+
+		// create the pre-processing surface
+		result = IDirectDraw7_CreateSurface(ddraw7, &preprocess_desc, &preprocess_surface, NULL);
+		if (result == DD_OK)
+		{
+			LPDIRECTDRAWSURFACE7 previous_target;
+			if (IDirect3DDevice7_GetRenderTarget(d3d_device7, &previous_target) == DD_OK)
+			{
+				if (IDirect3DDevice7_SetRenderTarget(d3d_device7, preprocess_surface, 0) == DD_OK)
+				{
+					can_render_to_texture = 1;
+				}
+				else
+				{
+					if (verbose)
+						fprintf(stderr, "Error: feedback or prescale effects not supported.\n");
+				}
+				IDirect3DDevice7_SetRenderTarget(d3d_device7, previous_target, 0);
+				IDirectDrawSurface7_Release(previous_target);
+			}
+		}
+		if (!can_render_to_texture)
+#else
+		// create the pre-processing surface
+		result = IDirectDraw7_CreateSurface(ddraw7, &preprocess_desc, &preprocess_surface, NULL);
+		if (result != DD_OK)
+#endif
+		{
+			if (verbose)
+				fprintf(stderr, "Error creating preprocess surface: %08x\n", (UINT32)result);
+			goto error_handling;
 		}
 	}
 
 	// get a description of the blit surface
-	result = IDirectDrawSurface7_GetSurfaceDesc(blit_surface, &blit_desc);
+	if (blit_surface != texture_surface)
+	{
+		result = IDirectDrawSurface7_GetSurfaceDesc(blit_surface, &blit_desc);
+		if (result != DD_OK)
+		{
+			fprintf(stderr, "Error getting blit surface desc: %08x\n", (UINT32)result);
+			goto error_handling;
+		}
+	}
+
+	// get a description of the texture surface
+	result = IDirectDrawSurface7_GetSurfaceDesc(texture_surface, &texture_desc);
 	if (result != DD_OK)
 	{
 		fprintf(stderr, "Error getting blit surface desc: %08x\n", (UINT32)result);
-		goto cant_get_surface_desc;
-	}
-
-	// and if we have a separate one, of the texture surface
-	if (texture_surface)
-	{
-		result = IDirectDrawSurface7_GetSurfaceDesc(texture_surface, &texture_desc);
-		if (result != DD_OK)
-		{
-			fprintf(stderr, "Error getting texture surface desc: %08x\n", (UINT32)result);
-			goto cant_get_surface_desc;
-		}
-	}
-
-	// set up the vertices (x/y position and texture coordinates will updated when rendering the image)
-	for (i = 0; i < 4; i++)
-	{
-		vertex[i].rhw = 1;
-		vertex[i].color = 0xFFFFFFFF;
-		vertex[i].specular = 0xFFFFFFFF;
-
-		if (win_d3d_use_prescale || win_d3d_use_feedback)
-		{
-			preprocess_vertex[i].rhw = 1;
-			preprocess_vertex[i].color = 0xFFFFFFFF;
-			preprocess_vertex[i].specular = 0xFFFFFFFF;
-		}
+		goto error_handling;
 	}
 
 	// blit surface color masks override the primary surface color masks
@@ -1346,15 +1487,13 @@ static int create_blit_surface(void)
 		char size[80];
 		char colour[80];
 
-		print_surface_size(blit_surface, size);
-		print_surface_colour(blit_surface, colour);
-
-		fprintf(stderr, "%s surface created: %s (%s)\n", win_d3d_tex_manage ? "Managed texture" : "Blit", size, colour);
-
-		if (texture_surface)
+		print_surface_size(texture_surface, size);
+		print_surface_colour(texture_surface, colour);
+		fprintf(stderr, "%s surface created: %s (%s)\n", (texture_desc.ddsCaps.dwCaps2 & DDSCAPS2_TEXTUREMANAGE) ? "Managed texture" : "Texture", size, colour);
+		if (blit_surface != texture_surface)
 		{
-			print_surface_size(texture_surface, size);
-			fprintf(stderr, "Texture surface created: %s\n", size);
+			print_surface_size(blit_surface, size);
+			fprintf(stderr, "Blit surface created: %s\n", size);
 		}
 		if (preprocess_surface)
 		{
@@ -1366,10 +1505,8 @@ static int create_blit_surface(void)
 	return 0;
 
 	// error handling
-cant_get_surface_desc:
-cant_create_texture:
-cant_create_blit:
-cant_create_preprocess:
+error_handling:
+
 	return 1;
 }
 
@@ -1470,19 +1607,23 @@ static void erase_surfaces(void)
 
 	blitfx.DUMMYUNIONNAMEN(5).dwFillColor = 0;
 
+	// erase the blit surface
+	if (blit_surface && blit_surface != texture_surface)
+		result = IDirectDrawSurface7_Blt(blit_surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &blitfx);
+
 	// erase the texture surface
 	if (texture_surface)
 		result = IDirectDrawSurface7_Blt(texture_surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &blitfx);
-
-	// erase the blit surface
-	if (blit_surface)
-		result = IDirectDrawSurface7_Blt(blit_surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &blitfx);
 
 	// erase the preprocess surface
 	if (preprocess_surface)
 		result = IDirectDrawSurface7_Blt(preprocess_surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &blitfx);
 
-	win_d3d_effects_init();
+	// erase the RGB effects surface
+	if (win_d3d_background_surface)
+		result = IDirectDrawSurface7_Blt(win_d3d_background_surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &blitfx);
+
+	win_d3d_effects_init_surfaces();
 
 	if (!win_window_mode)
 	{
@@ -1514,13 +1655,14 @@ static int restore_surfaces(void)
 {
 	HRESULT result;
 
-#define RESTORE_SURFACE(s) if (s) { result = IDirectDrawSurface7_Restore(s); if (result != DD_OK) { return 1; } }
+#define RESTORE_SURFACE(s) do { if (s) { result = IDirectDrawSurface7_Restore(s); if (result != DD_OK) { return 1; } } } while (0)
+
+	// restore the blit surface
+	if (blit_surface != texture_surface)
+		RESTORE_SURFACE(blit_surface);
 
 	// restore the texture surface
 	RESTORE_SURFACE(texture_surface);
-
-	// restore the blit surface
-	RESTORE_SURFACE(blit_surface);
 
 	// restore the preprocess surface
 	RESTORE_SURFACE(preprocess_surface);
@@ -1534,9 +1676,7 @@ static int restore_surfaces(void)
 
 	// restore the back surface seperately if needed
 	if (back_surface && win_window_mode)
-	{
 		RESTORE_SURFACE(back_surface);
-	}
 	// restore the primary surface
 	RESTORE_SURFACE(primary_surface);
 
@@ -1558,13 +1698,16 @@ static int restore_surfaces(void)
 static void release_surfaces(void)
 {
 
-#define RELEASE_SURFACE(s) if (s) { IDirectDrawSurface7_Release(s); s = NULL; }
+#define RELEASE_SURFACE(s) do { if (s) { IDirectDrawSurface7_Release(s); s = NULL; } } while (0)
+
+	// release the blit surface
+	if (blit_surface != texture_surface)
+		RELEASE_SURFACE(blit_surface);
+	else
+		blit_surface = NULL;
 
 	// release the texture surface
 	RELEASE_SURFACE(texture_surface);
-
-	// release the blit surface
-	RELEASE_SURFACE(blit_surface);
 
 	// release the preprocess surface
 	RELEASE_SURFACE(preprocess_surface);
@@ -1588,9 +1731,7 @@ static void release_surfaces(void)
 
 	// release the back surface seperately if needed
 	if (win_window_mode)
-	{
 		RELEASE_SURFACE(back_surface);
-	}
 	else
 		back_surface = NULL;
 
@@ -1685,7 +1826,6 @@ int win_d3d_draw(struct mame_bitmap *bitmap, const struct rectangle *bounds, voi
 		update = 1;
 	}
 
-#if 1
 	// if the surfaces are lost, restore them
 	if (IDirectDrawSurface7_IsLost(primary_surface) == DDERR_SURFACELOST)
 		restore_surfaces();
@@ -1693,11 +1833,7 @@ int win_d3d_draw(struct mame_bitmap *bitmap, const struct rectangle *bounds, voi
 	// render to the blit surface,
 	result = render_to_blit(bitmap, bounds, vector_dirty_pixels, update);
 
-
 	return result;
-#else
-	return 0;
-#endif
 }
 
 
@@ -1739,10 +1875,22 @@ static int render_to_blit(struct mame_bitmap *bitmap, const struct rectangle *bo
 {
 	int dstdepth = blit_desc.DUMMYUNIONNAMEN(4).ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
 	int wait_for_lock = lock_must_succeed(bounds, vector_dirty_pixels);
+	int blit_width, blit_height;
 	struct win_blit_params params;
 	HRESULT result;
 	RECT src, dst;
 	int dstxoffs;
+
+	if (blit_swapxy)
+	{
+		blit_width = win_visible_height;
+		blit_height = win_visible_width;
+	}
+	else
+	{
+		blit_width = win_visible_width;
+		blit_height = win_visible_height;
+	}
 
 tryagain:
 	if (win_d3d_tex_manage)
@@ -1750,8 +1898,8 @@ tryagain:
 		// we only need to lock a part of the surface
 		src.left = 0;
 		src.top = 0;
-		src.right = win_visible_width * effect_min_xscale + 16;
-		src.bottom = win_visible_height * effect_min_yscale;
+		src.right = blit_width *  effect_min_xscale + 16;
+		src.bottom = blit_height * effect_min_yscale;
 
 		// attempt to lock the blit surface
 		result = IDirectDrawSurface7_Lock(blit_surface, &src, &blit_desc, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WRITEONLY | DDLOCK_DISCARDCONTENTS | (wait_for_lock ? DDLOCK_WAIT : 0), NULL);
@@ -1800,15 +1948,15 @@ tryagain:
 
 	params.vecdirty		= vector_dirty_pixels;
 
-	params.flipx		= blit_flipx;
-	params.flipy		= blit_flipy;
-	params.swapxy		= blit_swapxy;
+	params.flipx		= 0;
+	params.flipy		= 0;
+	params.swapxy		= 0;
 
 	// adjust for more optimal bounds
 	if (bounds && !update && !vector_dirty_pixels)
 	{
-		params.dstxoffs += (bounds->min_x - win_visible_rect.left) * effect_min_xscale;
-		params.dstyoffs += (bounds->min_y - win_visible_rect.top) * effect_min_yscale;
+		params.dstxoffs += (bounds->min_x - win_visible_rect.left) * (blit_swapxy ? effect_min_yscale : effect_min_xscale);
+		params.dstyoffs += (bounds->min_y - win_visible_rect.top) * (blit_swapxy ? effect_min_xscale : effect_min_yscale);
 		params.srcxoffs += bounds->min_x - win_visible_rect.left;
 		params.srcyoffs += bounds->min_y - win_visible_rect.top;
 		params.srcwidth = bounds->max_x - bounds->min_x + 1;
@@ -1823,8 +1971,8 @@ tryagain:
 	// make the src rect
 	src.left = dstxoffs;
 	src.top = 0;
-	src.right = (dstxoffs + win_visible_width * effect_min_xscale);
-	src.bottom = (win_visible_height * effect_min_yscale);
+	src.right = dstxoffs + (blit_width * effect_min_xscale);
+	src.bottom = blit_height * effect_min_yscale;
 
 	// window mode
 	if (win_window_mode)
@@ -1853,7 +2001,7 @@ tryagain:
    }
 
 	// render and flip
-	if (!render_and_flip(&src, &dst, update))
+	if (!render_and_flip(&src, &dst, update, wait_for_lock))
 		return 0;
 
 	return 1;
@@ -1879,8 +2027,9 @@ surface_lost:
 //	render_and_flip
 //============================================================
 
-static int render_and_flip(LPRECT src, LPRECT dst, int update)
+static int render_and_flip(LPRECT src, LPRECT dst, int update, int wait_for_lock)
 {
+	static RECT prev_src, prev_dst;
 	LPDIRECTDRAWSURFACE7 texture;
 	D3DVIEWPORT7 viewport;
 	HRESULT result;
@@ -1889,16 +2038,46 @@ static int render_and_flip(LPRECT src, LPRECT dst, int update)
 	win_d3d_current_zoom = win_d3d_effects_swapxy ? (dst->right - dst->left) / win_visible_width :
 													(dst->bottom - dst->top) / win_visible_height;
 
-	if (prev_zoom != win_d3d_current_zoom)
+	// determing if the window position has changed
+	if (src->left != prev_src.left ||
+		src->right != prev_src.right ||
+		src->top != prev_src.top ||
+		src->bottom != prev_src.bottom ||
+		dst->left != prev_dst.left ||
+		dst->right != prev_dst.right ||
+		dst->top != prev_dst.top ||
+		dst->bottom != prev_dst.bottom)
 	{
-		prev_zoom = win_d3d_current_zoom;
+		position_changed = 1;
 
-		// kludge to force the -effect auto effect to the proper size
+		prev_src.left = src->left;
+		prev_src.right = src->right;
+		prev_src.top = src->top;
+		prev_src.bottom = src->bottom;
+
+		prev_dst.left = dst->left;
+		prev_dst.right = dst->right;
+		prev_dst.top = dst->top;
+		prev_dst.bottom = dst->bottom;
+	}
+
+	if (position_changed)
+	{
+		win_d3d_effects_init(0);
 		if (win_d3d_use_auto_effect)
 		{
-			win_d3d_effects_init();
 			win_d3d_effects_init_surfaces();
 		}
+
+		// adjust prescale settings to the new zoom level
+		adjust_prescale(dst->right - dst->left, dst->bottom - dst->top);
+
+		init_vertices_screen(src, dst);
+
+		if (win_d3d_use_prescale || win_d3d_use_feedback)
+			init_vertices_preprocess(src);
+
+		position_changed = 0;
 	}
 
 tryagain:
@@ -1907,15 +2086,7 @@ tryagain:
 	if (result == DDERR_SURFACELOST)
 		goto surface_lost;
 
-	if (win_d3d_tex_manage)
-	{
-		// Adjust texture coordinates to the source
-		vertex[0].tu = vertex[2].tu = (float)src->left / blit_desc.dwWidth;
-		vertex[1].tu = vertex[3].tu = (float)src->right / blit_desc.dwWidth;
-		vertex[0].tv = vertex[1].tv = (float)src->top / blit_desc.dwHeight;
-		vertex[2].tv = vertex[3].tv = (float)src->bottom / blit_desc.dwHeight;
-	}
-	else
+	if (!win_d3d_tex_manage)
 	{
 		// blit the image to the texture surface ourselves when texture management in't used
 		result = IDirectDrawSurface7_BltFast(texture_surface, 0, 0, blit_surface, src, DDBLTFAST_WAIT);
@@ -1928,87 +2099,20 @@ tryagain:
 				fprintf(stderr, "Unable to blt blit_surface to texture_surface: %08x\n", (UINT32)result);
 			return 0;
 		}
-
-		// set texture coordinates
-		vertex[0].tu = vertex[2].tu = 0;
-		vertex[1].tu = vertex[3].tu = (float)(src->right - src->left) / texture_desc.dwWidth;
-		vertex[0].tv = vertex[1].tv = 0;
-		vertex[2].tv = vertex[3].tv = (float)(src->bottom - src->top) / texture_desc.dwHeight;
 	}
 
-	// set texture coordinates for scanlines
-	if (win_d3d_effects_swapxy)
-	{
-		vertex[2].tu1 = vertex[3].tu1 = win_d3d_effects_flipx ? (float)win_visible_height : 0;
-		vertex[0].tu1 = vertex[1].tu1 = win_d3d_effects_flipx ? 0 : (float)win_visible_height;
-		vertex[2].tv1 = vertex[0].tv1 = win_d3d_effects_flipy ? (float)win_visible_width : 0;
-		vertex[3].tv1 = vertex[1].tv1 = win_d3d_effects_flipy ? 0 : (float)win_visible_width;
-	}
-	else
-	{
-		vertex[0].tu1 = vertex[2].tu1 = win_d3d_effects_flipx ? (float)win_visible_width : 0;
-		vertex[1].tu1 = vertex[3].tu1 = win_d3d_effects_flipx ? 0 : (float)win_visible_width;
-		vertex[0].tv1 = vertex[1].tv1 = win_d3d_effects_flipy ? (float)win_visible_height : 0;
-		vertex[2].tv1 = vertex[3].tv1 = win_d3d_effects_flipy ? 0 : (float)win_visible_height;
-	}
-
-	// set the vertex coordinates
-	if (win_window_mode)
-	{
-		// render to the upper left of the back surface
-		vertex[0].sx = -0.5f;									vertex[0].sy = -0.5f;
-		vertex[1].sx = -0.5f + (float)(dst->right - dst->left); vertex[1].sy = -0.5f;
-		vertex[2].sx = -0.5f;									vertex[2].sy = -0.5f + (float)(dst->bottom - dst->top);
-		vertex[3].sx = -0.5f + (float)(dst->right - dst->left); vertex[3].sy = -0.5f + (float)(dst->bottom - dst->top);
-	}
-	else
-	{
-		vertex[0].sx = -0.5f + (float)dst->left;  vertex[0].sy = -0.5f + (float)dst->top;
-		vertex[1].sx = -0.5f + (float)dst->right; vertex[1].sy = -0.5f + (float)dst->top;
-		vertex[2].sx = -0.5f + (float)dst->left;  vertex[2].sy = -0.5f + (float)dst->bottom;
-		vertex[3].sx = -0.5f + (float)dst->right; vertex[3].sy = -0.5f + (float)dst->bottom;
-	}
+	texture = texture_surface;
 
 	// determine if we need to render to the pre-process texture first
 	if (win_d3d_use_prescale || win_d3d_use_feedback)
 	{
-		RECT rect;
-
 		result = IDirect3DDevice7_SetRenderTarget(d3d_device7, preprocess_surface, 0);
-
-		// match the coordinates to the transfer method used
-		if (win_d3d_tex_manage)
-		{
-			rect.left = src->left << (win_d3d_use_prescale >> 4);
-			rect.right = src->right << (win_d3d_use_prescale >> 4);
-			rect.top = src->top << (win_d3d_use_prescale & 15);
-			rect.bottom = src->bottom << (win_d3d_use_prescale & 15);
-		}
-		else
-		{
-			rect.left = 0;
-			rect.right = (src->right - src->left) << (win_d3d_use_prescale >> 4);
-			rect.top = 0;
-			rect.bottom = (src->bottom - src->top) << (win_d3d_use_prescale & 15);
-		}
 
 		// prepare x/y coordinates
 		viewport.dwX = 0;
 		viewport.dwY = 0;
-		viewport.dwWidth = texture_desc.dwWidth << (win_d3d_use_prescale >> 4);
-		viewport.dwHeight = texture_desc.dwHeight << (win_d3d_use_prescale & 15);
-
-		// set vertex coordinates for rendering to the pre-process texture
-		preprocess_vertex[0].sx = -0.5f + rect.left;  preprocess_vertex[0].sy = -0.5f + rect.top;
-		preprocess_vertex[1].sx = -0.5f + rect.right; preprocess_vertex[1].sy = -0.5f + rect.top;
-		preprocess_vertex[2].sx = -0.5f + rect.left;  preprocess_vertex[2].sy = -0.5f + rect.bottom;
-		preprocess_vertex[3].sx = -0.5f + rect.right; preprocess_vertex[3].sy = -0.5f + rect.bottom;
-
-		// set texture coordinates
-		preprocess_vertex[0].tu = preprocess_vertex[2].tu = vertex[0].tu;
-		preprocess_vertex[1].tu = preprocess_vertex[3].tu = vertex[1].tu;
-		preprocess_vertex[0].tv = preprocess_vertex[1].tv = vertex[0].tv;
-		preprocess_vertex[2].tv = preprocess_vertex[3].tv = vertex[2].tv;
+		viewport.dwWidth = preprocess_desc.dwWidth;
+		viewport.dwHeight = preprocess_desc.dwHeight;
 
 		// set up the viewport
 		result = IDirect3DDevice7_SetViewport(d3d_device7, &viewport);
@@ -2017,12 +2121,6 @@ tryagain:
 
 		if (win_d3d_use_feedback)
 		{
-			// use the needed colour
-			preprocess_vertex[0].color = win_d3d_preprocess_tfactor;
-			preprocess_vertex[1].color = win_d3d_preprocess_tfactor;
-			preprocess_vertex[2].color = win_d3d_preprocess_tfactor;
-			preprocess_vertex[3].color = win_d3d_preprocess_tfactor;
-
 			// alpha blend the new image with the previous one
 			IDirect3DDevice7_SetRenderState(d3d_device7, D3DRENDERSTATE_SRCBLEND, D3DBLEND_ONE);
 			IDirect3DDevice7_SetRenderState(d3d_device7, D3DRENDERSTATE_DESTBLEND, D3DBLEND_SRCALPHA);
@@ -2055,7 +2153,7 @@ tryagain:
 		IDirect3DDevice7_SetTextureStageState(d3d_device7, 1, D3DTSS_COLOROP, D3DTOP_DISABLE);
 		IDirect3DDevice7_SetTextureStageState(d3d_device7, 1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
 
-		IDirect3DDevice7_SetTexture(d3d_device7, 0, win_d3d_tex_manage ? blit_surface : texture_surface);
+		IDirect3DDevice7_SetTexture(d3d_device7, 0, texture);
 
 		// now render the image using 3d hardware
 		result = IDirect3DDevice7_DrawPrimitive(d3d_device7, D3DPT_TRIANGLESTRIP, D3DFVF_TLVERTEX, (void*)preprocess_vertex, 4, 0);
@@ -2072,10 +2170,6 @@ tryagain:
 		result = IDirect3DDevice7_EndScene(d3d_device7);
 
 		texture = preprocess_surface;
-	}
-	else
-	{
-		texture = win_d3d_tex_manage ? blit_surface : texture_surface;
 	}
 
 	result = IDirect3DDevice7_SetRenderTarget(d3d_device7, back_surface, 0);
@@ -2133,6 +2227,7 @@ tryagain:
 		IDirect3DDevice7_SetTextureStageState(d3d_device7, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
 		IDirect3DDevice7_SetTextureStageState(d3d_device7, 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
 		IDirect3DDevice7_SetTextureStageState(d3d_device7, 0, D3DTSS_TEXCOORDINDEX, 0);
+		IDirect3DDevice7_SetTextureStageState(d3d_device7, 0, D3DTSS_ADDRESS, D3DTADDRESS_CLAMP);
 
 		// stage 1 isn't used
 		IDirect3DDevice7_SetTextureStageState(d3d_device7, 1, D3DTSS_COLOROP, D3DTOP_DISABLE);
@@ -2158,6 +2253,7 @@ tryagain:
 		IDirect3DDevice7_SetTextureStageState(d3d_device7, 0, D3DTSS_COLOROP, d3dtop_scanlines);
 		IDirect3DDevice7_SetTextureStageState(d3d_device7, 0, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
 		IDirect3DDevice7_SetTextureStageState(d3d_device7, 0, D3DTSS_TEXCOORDINDEX, 1);
+		IDirect3DDevice7_SetTextureStageState(d3d_device7, 0, D3DTSS_ADDRESS, D3DTADDRESS_WRAP);
 
 		// stage 1 holds the image
 		IDirect3DDevice7_SetTextureStageState(d3d_device7, 1, D3DTSS_COLORARG1, D3DTA_TEXTURE);
@@ -2165,6 +2261,7 @@ tryagain:
 		IDirect3DDevice7_SetTextureStageState(d3d_device7, 1, D3DTSS_COLOROP, D3DTOP_MODULATE);
 		IDirect3DDevice7_SetTextureStageState(d3d_device7, 1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
 		IDirect3DDevice7_SetTextureStageState(d3d_device7, 1, D3DTSS_TEXCOORDINDEX, 0);
+		IDirect3DDevice7_SetTextureStageState(d3d_device7, 1, D3DTSS_ADDRESS, D3DTADDRESS_CLAMP);
 
 		// use the best scanline texture for the current zoom level
 		IDirect3DDevice7_SetTexture(d3d_device7, 0, win_d3d_scanline_surface[win_d3d_current_zoom >= 4 ? 1 : 0]);
@@ -2172,7 +2269,7 @@ tryagain:
 	}
 
 	// now render the image using 3d hardware
-	result = IDirect3DDevice7_DrawPrimitive(d3d_device7, D3DPT_TRIANGLESTRIP, D3DFVF_TLVERTEX2, (void*)vertex, 4, 0);
+	result = IDirect3DDevice7_DrawPrimitive(d3d_device7, D3DPT_TRIANGLESTRIP, D3DFVF_TLVERTEX2, (void*)screen_vertex, 4, 0);
 	if (result != DD_OK)
 	{
 		// error, print the error and fall back
@@ -2253,9 +2350,30 @@ tryagain:
 	// blit the pattern for the RGB effects
 	if (win_d3d_use_rgbeffect)
 	{
-		RECT rect = { 0, 0, dst->right - dst->left, dst->bottom - dst->top };
+#if 1
+		if (win_d3d_use_auto_effect)
+		{
+			RECT rgb_dst;
+			RECT rgb_src = { 0, 0,
+							 win_d3d_effects_swapxy ? win_d3d_current_zoom * win_visible_width : dst->right - dst->left,
+							 win_d3d_effects_swapxy ? dst->bottom - dst->top : win_d3d_current_zoom * win_visible_height};
 
-		result = IDirectDrawSurface7_BltFast(back_surface, win_window_mode ? 0 : dst->left, win_window_mode ? 0 : dst->top, win_d3d_background_surface, &rect, DDBLTFAST_WAIT);
+			if (win_window_mode)
+			{
+				rgb_dst.left = 0; rgb_dst.top = 0;
+				rgb_dst.right = dst->right - dst->left;
+				rgb_dst.bottom = dst->bottom - dst->top;
+			}
+
+			result = IDirectDrawSurface7_Blt(back_surface, win_window_mode ? &rgb_dst : dst, win_d3d_background_surface, &rgb_src, DDBLT_ASYNC, NULL);
+		}
+		else
+#endif
+		{
+			RECT rect = { 0, 0, dst->right - dst->left, dst->bottom - dst->top };
+
+			result = IDirectDrawSurface7_BltFast(back_surface, win_window_mode ? 0 : dst->left, win_window_mode ? 0 : dst->top, win_d3d_background_surface, &rect, DDBLTFAST_WAIT);
+		}
 		if (result != DD_OK)
 		{
 			// error, print the error and fall back
@@ -2280,4 +2398,149 @@ surface_lost:
 
 	// otherwise, return failure
 	return 0;
+}
+
+
+
+//============================================================
+//	set_texture_coordinates
+//============================================================
+
+static void set_texture_coordinates(LPRECT src, int texture_width, int texture_height)
+{
+	if (win_d3d_tex_manage)
+	{
+		if (blit_swapxy)
+		{
+			screen_vertex[2].tu = screen_vertex[3].tu = (float)(!blit_flipy ? src->right : src->left) / texture_width;
+			screen_vertex[0].tu = screen_vertex[1].tu = (float)(!blit_flipy ? src->left : src->right) / texture_width;
+			screen_vertex[1].tv = screen_vertex[3].tv = (float)(!blit_flipx ? src->bottom : src->top) / texture_height;
+			screen_vertex[0].tv = screen_vertex[2].tv = (float)(!blit_flipx ? src->top : src->bottom) / texture_height;
+		}
+		else
+		{
+			screen_vertex[0].tu = screen_vertex[2].tu = (float)(blit_flipx ? src->right : src->left) / texture_width;
+			screen_vertex[1].tu = screen_vertex[3].tu = (float)(blit_flipx ? src->left : src->right) / texture_width;
+			screen_vertex[0].tv = screen_vertex[1].tv = (float)(blit_flipy ? src->bottom : src->top) / texture_height;
+			screen_vertex[2].tv = screen_vertex[3].tv = (float)(blit_flipy ? src->top : src->bottom) / texture_height;
+		}
+	}
+	else
+	{
+		if (blit_swapxy)
+		{
+			screen_vertex[2].tu = screen_vertex[3].tu = !blit_flipy ? (float)(src->right - src->left) / texture_width : 0;
+			screen_vertex[0].tu = screen_vertex[1].tu = !blit_flipy ? 0 : (float)(src->right - src->left)  / texture_width;
+			screen_vertex[1].tv = screen_vertex[3].tv = !blit_flipx ? (float)(src->bottom - src->top) / texture_height : 0;
+			screen_vertex[0].tv = screen_vertex[2].tv = !blit_flipx ? 0 : (float)(src->bottom - src->top) / texture_height;
+		}
+		else
+		{
+			screen_vertex[0].tu = screen_vertex[2].tu = blit_flipx ? (float)(src->right - src->left) / texture_width : 0;
+			screen_vertex[1].tu = screen_vertex[3].tu = blit_flipx ? 0 : (float)(src->right - src->left) / texture_width;
+			screen_vertex[0].tv = screen_vertex[1].tv = blit_flipy ? (float)(src->bottom - src->top) / texture_height : 0;
+			screen_vertex[2].tv = screen_vertex[3].tv = blit_flipy ? 0 : (float)(src->bottom - src->top) / texture_height;
+		}
+	}
+}
+
+
+
+//============================================================
+//	init_vertices_screen
+//============================================================
+
+static void init_vertices_screen(LPRECT src, LPRECT dst)
+{
+	int i;
+
+	for (i = 0; i < 4; i++)
+	{
+		screen_vertex[i].rhw = 1;
+		screen_vertex[i].color = 0xFFFFFFFF;
+		screen_vertex[i].specular = 0xFFFFFFFF;
+	}
+
+	// set the texture coordinates
+	set_texture_coordinates(src, texture_desc.dwWidth, texture_desc.dwHeight);
+
+	// set the vertex coordinates
+	if (win_window_mode)
+	{
+		// render to the upper left of the back surface
+		screen_vertex[0].sx = -0.5f;								   screen_vertex[0].sy = -0.5f;
+		screen_vertex[1].sx = -0.5f + (float)(dst->right - dst->left); screen_vertex[1].sy = -0.5f;
+		screen_vertex[2].sx = -0.5f;								   screen_vertex[2].sy = -0.5f + (float)(dst->bottom - dst->top);
+		screen_vertex[3].sx = -0.5f + (float)(dst->right - dst->left); screen_vertex[3].sy = -0.5f + (float)(dst->bottom - dst->top);
+	}
+	else
+	{
+		screen_vertex[0].sx = -0.5f + (float)dst->left;  screen_vertex[0].sy = -0.5f + (float)dst->top;
+		screen_vertex[1].sx = -0.5f + (float)dst->right; screen_vertex[1].sy = -0.5f + (float)dst->top;
+		screen_vertex[2].sx = -0.5f + (float)dst->left;  screen_vertex[2].sy = -0.5f + (float)dst->bottom;
+		screen_vertex[3].sx = -0.5f + (float)dst->right; screen_vertex[3].sy = -0.5f + (float)dst->bottom;
+	}
+
+	// set texture coordinates for scanlines
+	if (win_d3d_use_scanlines)
+	{
+		if (win_d3d_effects_swapxy)
+		{
+			screen_vertex[2].tv1 = screen_vertex[0].tv1 = win_d3d_effects_flipy ? (float)win_visible_width : 0;
+			screen_vertex[3].tv1 = screen_vertex[1].tv1 = win_d3d_effects_flipy ? 0 : (float)win_visible_width;
+			screen_vertex[2].tu1 = screen_vertex[3].tu1 = win_d3d_effects_flipx ? (float)win_visible_height : 0;
+			screen_vertex[0].tu1 = screen_vertex[1].tu1 = win_d3d_effects_flipx ? 0 : (float)win_visible_height;
+		}
+		else
+		{
+			screen_vertex[0].tu1 = screen_vertex[2].tu1 = win_d3d_effects_flipx ? (float)win_visible_width : 0;
+			screen_vertex[1].tu1 = screen_vertex[3].tu1 = win_d3d_effects_flipx ? 0 : (float)win_visible_width;
+			screen_vertex[0].tv1 = screen_vertex[1].tv1 = win_d3d_effects_flipy ? (float)win_visible_height : 0;
+			screen_vertex[2].tv1 = screen_vertex[3].tv1 = win_d3d_effects_flipy ? 0 : (float)win_visible_height;
+		}
+	}
+}
+
+
+
+//============================================================
+//	init_vertices_preprocess
+//============================================================
+
+static void init_vertices_preprocess(LPRECT src)
+{
+	RECT rect = { 0, 0, (src->right - src->left) * current_prescalex, (src->bottom - src->top) * current_prescaley };
+	int i;
+
+	for (i = 0; i < 4; i++)
+	{
+		preprocess_vertex[i].rhw = 1;
+		preprocess_vertex[i].color = win_d3d_preprocess_tfactor;
+		preprocess_vertex[i].specular = 0xFFFFFFFF;
+	}
+
+	// set the texture coordinates for the preprocess vertices
+	if (win_d3d_tex_manage)
+	{
+		preprocess_vertex[0].tu = preprocess_vertex[2].tu = (float)src->left / texture_desc.dwWidth;
+		preprocess_vertex[1].tu = preprocess_vertex[3].tu = (float)src->right / texture_desc.dwWidth;
+		preprocess_vertex[0].tv = preprocess_vertex[1].tv = (float)src->top / texture_desc.dwHeight;
+		preprocess_vertex[2].tv = preprocess_vertex[3].tv = (float)src->bottom / texture_desc.dwHeight;
+	}
+	else
+	{
+		preprocess_vertex[0].tu = preprocess_vertex[2].tu = 0;
+		preprocess_vertex[1].tu = preprocess_vertex[3].tu = (float)(src->right - src->left) / texture_desc.dwWidth;
+		preprocess_vertex[0].tv = preprocess_vertex[1].tv = 0;
+		preprocess_vertex[2].tv = preprocess_vertex[3].tv = (float)(src->bottom - src->top) / texture_desc.dwHeight;
+	}
+
+	// set the texture coordinates for the screen vertices
+	set_texture_coordinates(&rect, preprocess_desc.dwWidth, preprocess_desc.dwHeight);
+
+	// set vertex coordinates for rendering to the pre-process texture
+	preprocess_vertex[0].sx = -0.5f + rect.left;  preprocess_vertex[0].sy = -0.5f + rect.top;
+	preprocess_vertex[1].sx = -0.5f + rect.right; preprocess_vertex[1].sy = -0.5f + rect.top;
+	preprocess_vertex[2].sx = -0.5f + rect.left;  preprocess_vertex[2].sy = -0.5f + rect.bottom;
+	preprocess_vertex[3].sx = -0.5f + rect.right; preprocess_vertex[3].sy = -0.5f + rect.bottom;
 }

@@ -1,11 +1,16 @@
 /*
+  Dragonball Z
+  Banpresto, 1993
+
   Dragonball Z 2 Super Battle
   (c) 1994 Banpresto
+
+  Driver by David Haywood and R. Belmont
 
   MC68000 + Konami Xexex-era video hardware and system controller ICs
   Z80 + YM2151 + OKIM6295 for sound
 
-  DIP status: the game is playable with music and sound and proper controls/dips.
+  Status: DBZ2 is playable with music and sound and proper controls/dips.
 
   Note: game has an extremely complete test mode, it's beautiful for emulation.
         flip the DIP and check it out!
@@ -13,6 +18,39 @@
   TODO:
 	- Gfx priorities (note that it has two 053251)
 	- Self Test Fails
+	- Some offsets/colours in DBZ1
+
+PCB Layout:
+
+BP924-1  PWB250248D (note PCB is identical to DBZ2 also)
+|-------------------------------------------------------|
+| YM3014  Z80    32MHz  053252       222A05   222A07    |
+|   YM2151 5168                      222A04   222A06    |
+| 1.056kHz 5168                                         |
+|  M6295   222A10                           5864        |
+|   222A03     68000                 2018   5864 053246A|
+|J          222A11  222A12           2018               |
+|A 5864        *       *                                |
+|M 5864     62256   62256                               |
+|M                                               053247A|
+|A                                                      |
+|                                053936 053936     2018 |
+|    053251  053251                                2018 |
+|                                        CY7C128        |
+|       054157  054156  5864     CY7C128 CY7C128 CY7C128|
+|       222A01  222A02  5864     CY7C128                |
+| DSW2  DSW1            5864     CY7C128 222A08  222A09 |
+|                                           *       *   |
+|-------------------------------------------------------|
+
+Notes:
+      68k clock: 16.000MHz
+      Z80 clock: 4.000MHz
+   YM2151 clock: 4.000MHz
+    M6295 clock: 1.056MHz (sample rate = /132)
+          Vsync: 55Hz
+          Hsync: 15.36kHz
+              *: unpopulated ROM positions on DBZ
 
 */
 
@@ -34,7 +72,9 @@ WRITE16_HANDLER(dbz2_bg2_videoram_w);
 
 static int dbz2_control;
 
+VIDEO_START(dbz);
 VIDEO_START(dbz2);
+VIDEO_UPDATE(dbz);
 VIDEO_UPDATE(dbz2);
 
 static INTERRUPT_GEN(dbz2_interrupt)
@@ -113,7 +153,7 @@ static MEMORY_READ16_START( dbz2readmem )
 	{ 0x480000, 0x48ffff, MRA16_RAM },
 	{ 0x490000, 0x491fff, K054157_ram_word_r },	// '157 RAM is mirrored twice
 	{ 0x492000, 0x493fff, K054157_ram_word_r },
-//	{ 0x498000, 0x49ffff, K054157_rom_word_r },	// check code near 0xa60, this isn't standard
+	{ 0x498000, 0x49ffff, K054157_rom_word_8000_r },	// code near a60 in dbz2, subroutine at 730 in dbz
 	{ 0x4a0000, 0x4a0fff, K053247_word_r },
 	{ 0x4a1000, 0x4a3fff, MRA16_RAM },
 	{ 0x4a8000, 0x4abfff, MRA16_RAM },			// palette
@@ -125,8 +165,8 @@ static MEMORY_READ16_START( dbz2readmem )
 	{ 0x508000, 0x509fff, MRA16_RAM },
 	{ 0x510000, 0x513fff, MRA16_RAM },
 	{ 0x518000, 0x51bfff, MRA16_RAM },
-	{ 0x600000, 0x60ffff, MRA16_NOP }, 			// PSAC 1 ROM readback window
-	{ 0x700000, 0x70ffff, MRA16_NOP }, 			// PSAC 2 ROM readback window
+	{ 0x600000, 0x6fffff, MRA16_NOP }, 			// PSAC 1 ROM readback window
+	{ 0x700000, 0x7fffff, MRA16_NOP }, 			// PSAC 2 ROM readback window
 MEMORY_END
 
 static MEMORY_WRITE16_START( dbz2writemem )
@@ -278,7 +318,7 @@ INPUT_PORTS_END
 static struct YM2151interface ym2151_interface =
 {
 	1,
-	3579545,	/* total guess */
+	4000000,	/* total guess */
 	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
 	{ dbz2_sound_irq }
 };
@@ -286,7 +326,7 @@ static struct YM2151interface ym2151_interface =
 static struct OKIM6295interface m6295_interface =
 {
 	1,  /* 1 chip */
-	{ 8000 },	/* total guess by ear */
+	{ 1056000/132 },	/* confirmed */
 	{ REGION_SOUND1 },
 	{ 100 }
 };
@@ -322,12 +362,12 @@ static MACHINE_DRIVER_START( dbz2 )
 	MDRV_CPU_MEMORY(dbz2readmem,dbz2writemem)
 	MDRV_CPU_VBLANK_INT(dbz2_interrupt,2)
 
-	MDRV_CPU_ADD_TAG("sound", Z80, 3579545)
+	MDRV_CPU_ADD_TAG("sound", Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(dbz2sound_readmem, dbz2sound_writemem)
 	MDRV_CPU_PORTS(dbz2sound_readport,dbz2sound_writeport)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND(55)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
@@ -346,9 +386,56 @@ static MACHINE_DRIVER_START( dbz2 )
 	MDRV_SOUND_ADD(OKIM6295, m6295_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( dbz )
+	MDRV_IMPORT_FROM(dbz2)
+
+	MDRV_VIDEO_START(dbz)
+	MDRV_VIDEO_UPDATE(dbz)
+	MDRV_VISIBLE_AREA(34, 34+48*8-1, 0, 32*8-1 )
+MACHINE_DRIVER_END
+
 /**********************************************************************************/
 
 #define ROM_LOAD64_WORD(name,offset,length,crc)		ROMX_LOAD(name, offset, length, crc, ROM_GROUPWORD | ROM_SKIP(6))
+
+ROM_START( dbz )
+	/* main program */
+	ROM_REGION( 0x400000, REGION_CPU1, 0)
+	ROM_LOAD16_BYTE( "222a11.9e", 0x000000, 0x80000, CRC(60c7d9b2) SHA1(718ef89e89b3943845e91bedfc5c1d26229f9fe5) )
+	ROM_LOAD16_BYTE( "222a12.9f", 0x000001, 0x80000, CRC(6ebc6853) SHA1(e9b2068246228968cc6b8554215563cacaa5ba9f) )
+
+	ROM_REGION( 0x400000, REGION_USER1, 0)
+	ROM_LOAD16_BYTE( "222a11.9e", 0x000000, 0x80000, CRC(60c7d9b2) SHA1(718ef89e89b3943845e91bedfc5c1d26229f9fe5) )
+	ROM_LOAD16_BYTE( "222a12.9f", 0x000001, 0x80000, CRC(6ebc6853) SHA1(e9b2068246228968cc6b8554215563cacaa5ba9f) )
+
+	/* sound program */
+	ROM_REGION( 0x010000, REGION_CPU2, 0 )
+	ROM_LOAD("222a10.5e", 0x000000, 0x08000, CRC(1c93e30a) SHA1(8545a0ac5126b3c855e1901b186f57820699895d) )
+
+	/* tiles */
+	ROM_REGION( 0x400000, REGION_GFX1, 0)
+	ROM_LOAD( "222a01.27c", 0x000000, 0x200000, CRC(9fce4ed4) SHA1(81e19375b351ee247f066434dd595149333d73c5) )
+	ROM_LOAD( "222a02.27e", 0x200000, 0x200000, CRC(651acaa5) SHA1(33942a90fb294b5da6a48e5bfb741b31babca188) )
+
+	/* sprites */
+	ROM_REGION( 0x800000, REGION_GFX2, 0)
+	ROM_LOAD64_WORD( "222a04.3j", 0x000000, 0x200000, CRC(2533b95a) SHA1(35910836b6030130d742eae6c4bf1cdf1ff43fa4) )
+	ROM_LOAD64_WORD( "222a05.1j", 0x000002, 0x200000, CRC(731b7f93) SHA1(b676fff2ede5aa72c49fe12736cd60766462fe0b) )
+	ROM_LOAD64_WORD( "222a06.3l", 0x000004, 0x200000, CRC(97b767d3) SHA1(3d879c431586da2f88c632ab1a531b4a5ec96939) )
+	ROM_LOAD64_WORD( "222a07.1l", 0x000006, 0x200000, CRC(430bc873) SHA1(ea483195bb7f20ef3df7cfba153e5f6f8d53e5f9) )
+
+	/* K053536 PSAC-2 #1 */
+	ROM_REGION( 0x200000, REGION_GFX3, 0)
+	ROM_LOAD( "222a08.25k", 0x000000, 0x200000, CRC(6410ee1b) SHA1(2296aafd3ba25f63a12130f7b58de53e88f14e92) )
+
+	/* K053536 PSAC-2 #2 */
+	ROM_REGION( 0x200000, REGION_GFX4, 0)
+	ROM_LOAD( "222a09.25l", 0x000000, 0x200000, CRC(f7b3f070) SHA1(50ebd8cfcda292a3df5664de50f9212108d58923) )
+
+	/* sound data */
+	ROM_REGION( 0x40000, REGION_SOUND1, 0)
+	ROM_LOAD( "222a03.7c", 0x000000, 0x40000, CRC(1924467b) SHA1(57922090509bcc63b4783e8f2c5e95afd2090b87) )
+ROM_END
 
 ROM_START( dbz2 )
 	/* main program */
@@ -393,5 +480,28 @@ static DRIVER_INIT(dbz2)
 	konami_rom_deinterleave_2(REGION_GFX1);
 }
 
+static DRIVER_INIT(dbz)
+{
+	data16_t *ROM;
 
+	konami_rom_deinterleave_2(REGION_GFX1);
+
+	ROM = (data16_t *)memory_region(REGION_CPU1);
+
+	// nop out dbz1's mask rom test
+	// tile ROM test
+	ROM[0x790/2] = 0x4e71;
+	ROM[0x792/2] = 0x4e71;
+	// PSAC2 ROM test
+	ROM[0x982/2] = 0x4e71;
+	ROM[0x984/2] = 0x4e71;
+	ROM[0x986/2] = 0x4e71;
+	ROM[0x988/2] = 0x4e71;
+	ROM[0x98a/2] = 0x4e71;
+	ROM[0x98c/2] = 0x4e71;
+	ROM[0x98e/2] = 0x4e71;
+	ROM[0x990/2] = 0x4e71;
+}
+
+GAMEX( 1993, dbz,  0, dbz,  dbz2, dbz, ROT0, "Banpresto", "Dragonball Z" , GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1994, dbz2, 0, dbz2, dbz2, dbz2, ROT0, "Banpresto", "Dragonball Z 2 Super Battle" , GAME_IMPERFECT_GRAPHICS )

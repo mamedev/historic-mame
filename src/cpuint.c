@@ -313,10 +313,14 @@ void cpu_set_irq_line(int cpunum, int irqline, int state)
 
 	LOG(("cpu_set_irq_line(%d,%d,%d,%02x)\n", cpunum, irqline, state, vector));
 
-	/* set a timer to go off */
+	/* assemble all the current data into a parameter */
 	param = (cpunum & 0x0f) | ((state & 0x0f) << 4) | ((irqline & 0x7f) << 8) | (1 << 15) | (vector << 16);
-//	param = (cpunum & 0x0f) | ((state & 0x0f) << 4) | ((irqline & 0x7f) << 8);
-	timer_set(TIME_NOW, param, cpu_manualirqcallback);
+	
+	/* if this is a clear on the executing CPU, do it immediately; otherwise, use a timer */
+	if (state == CLEAR_LINE && cpunum == cpu_getexecutingcpu())
+		cpu_manualirqcallback(param);
+	else
+		timer_set(TIME_NOW, param, cpu_manualirqcallback);
 }
 
 

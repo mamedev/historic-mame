@@ -686,6 +686,41 @@ static MEMORY_WRITE_START( dkongjrm_writemem )
 MEMORY_END
 
 
+static MEMORY_READ_START( ozon1_readmem )
+	{ 0x0000, 0x2fff, MRA_ROM },
+	{ 0x4000, 0x4200, MRA_RAM },
+	{ 0x4300, 0x43ff, MRA_RAM },
+	{ 0x4800, 0x4bff, galaxian_videoram_r },
+	{ 0x5000, 0x503f, MRA_RAM },
+	{ 0x5040, 0x505f, MRA_RAM },
+	{ 0x8100, 0x8100, input_port_0_r },
+	{ 0x8101, 0x8101, input_port_1_r },
+	{ 0x8102, 0x8102, input_port_2_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( ozon1_writemem )
+	{ 0x0000, 0x2fff, MWA_ROM },
+	{ 0x4000, 0x4200, MWA_RAM },
+	{ 0x4300, 0x43ff, MWA_RAM },
+	{ 0x4800, 0x4bff, galaxian_videoram_w, &galaxian_videoram },
+	{ 0x4c18, 0x4c1f, MWA_NOP },
+	{ 0x4c38, 0x4c3f, MWA_NOP },
+	{ 0x4de0, 0x4fe0, MWA_NOP }, //writes every 0x20
+	{ 0x5000, 0x503f, galaxian_attributesram_w, &galaxian_attributesram },
+	{ 0x5040, 0x505f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
+	{ 0x5060, 0x5060, MWA_NOP }, //after this, it writes 0x4fe0 - 0x4de0
+	{ 0x6801, 0x6801, MWA_NOP }, //continuosly 0 and 1
+	{ 0x6802, 0x6802, galaxian_coin_counter_w },
+	{ 0x6806, 0x6806, MWA_NOP }, //only one 0 at reset
+	{ 0x6807, 0x6807, MWA_NOP }, //only one 0 at reset
+	{ 0x8103, 0x8103, MWA_NOP }, //only one 9b at reset
+MEMORY_END
+
+static PORT_WRITE_START( ozon1_writeport )
+	{ 0x00, 0x00, AY8910_write_port_0_w },
+	{ 0x01, 0x01, AY8910_control_port_0_w },
+PORT_END
+
 
 INPUT_PORTS_START( galaxian )
 	PORT_START      /* IN0 */
@@ -2335,7 +2370,7 @@ INPUT_PORTS_START( mshuttle )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
@@ -2345,7 +2380,7 @@ INPUT_PORTS_START( mshuttle )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP   | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
 	PORT_SERVICE( 0x40, IP_ACTIVE_HIGH )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
@@ -2842,6 +2877,61 @@ INPUT_PORTS_START( rockclim )
 
 INPUT_PORTS_END
 
+/*
+
+Game bug:
+- you can insert 99 credits 3 times consecutively, then it resets
+
+*/
+INPUT_PORTS_START( ozon1 )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, "A 1C/1C  B 2C/1C" )
+	PORT_DIPSETTING(    0x02, "A 1C-2C  B ?C/?C" ) // when you insert a coin with COIN2 it starts an infinite loop
+	PORT_DIPSETTING(    0x04, "A 1C-3C  B 3C/1C" )
+	PORT_DIPSETTING(    0x06, "A 1C-4C  B 4C/1C" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+INPUT_PORTS_END
 
 static struct GfxLayout galaxian_charlayout =
 {
@@ -3388,7 +3478,21 @@ static MACHINE_DRIVER_START( rockclim )
 
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( ozon1 )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(galaxian_base)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(ozon1_readmem,ozon1_writemem)
+	MDRV_CPU_PORTS(0,ozon1_writeport)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
+	MDRV_MACHINE_INIT(NULL)
+
+	MDRV_PALETTE_LENGTH(32)
+
+	MDRV_VIDEO_START(galaxian_plain)
+	MDRV_SOUND_ADD(AY8910, jumpbug_ay8910_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -4735,7 +4839,19 @@ ROM_START( rockclim )
 	ROM_LOAD( "lc11.f4",  0x0020, 0x0020, CRC(6a0c7d87) SHA1(140335d85c67c75b65689d4e76d29863c209cf32) )
 ROM_END
 
+ROM_START( ozon1 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
+	ROM_LOAD( "rom1.bin",     0x0000, 0x1000, CRC(54899e8b) SHA1(270af76ae4396ebda767f160535fa77c0b49726a) )
+	ROM_LOAD( "rom2.bin",     0x1000, 0x1000, CRC(3c90fbfc) SHA1(92da614dba3a644eac144bb0ed434d78a31fcb1a) )
+	ROM_LOAD( "rom3.bin",     0x2000, 0x1000, CRC(79fe313b) SHA1(ef8fd70f5669b7e7d7184eca2baaddcecb55c22d) )
 
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "rom7.bin",     0x0000, 0x0800, CRC(464285e8) SHA1(fff36b034b95050219c70cdfe05ff3bbc452b73e) )
+	ROM_LOAD( "rom8.bin",     0x0800, 0x0800, CRC(92056dcc) SHA1(b162da8701bfee465205e8f274ee494063c52c7b) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "ozon1.clr", 0x0000, 0x0020, CRC(605ea6e9) SHA1(d3471e6ef756059c2f7feb32fb8e41181cc1718e) )
+ROM_END
 
 
 GAME( 1979, galaxian, 0,        galaxian, galaxian, 0,        ROT90,  "Namco", "Galaxian (Namco set 1)" )
@@ -4803,5 +4919,5 @@ GAMEX(1981, 4in1,     0,        4in1,     4in1,     4in1,     ROT90,  "Armenia /
 GAMEX(1982, bagmanmc, bagman,   bagmanmc, bagmanmc, 0,        ROT90,  "bootleg", "Bagman (Moon Cresta hardware)", GAME_WRONG_COLORS  )
 GAMEX(1982, dkongjrm, dkongjr,  dkongjrm, dkongjrm, 0,        ROT90,  "bootleg", "Donkey Kong Jr. (Moon Cresta hardware)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 GAME( 1981, froggrmc, frogger,  froggrmc, froggrmc, froggers, ROT90,  "bootleg?", "Frogger (Moon Cresta hardware)" )
-GAME( 1981, rockclim, 0,        rockclim, rockclim, 0,				ROT180,  "Taito", "Rock Climber" )
-
+GAME( 1981, rockclim, 0,        rockclim, rockclim, 0,		  ROT180, "Taito", "Rock Climber" )
+GAME( 1983, ozon1,    0,		ozon1,    ozon1,	0,		  ROT90,  "Proma", "Ozon I" )

@@ -800,6 +800,14 @@ INLINE int cpu_getactivecpu(void)
 }
 
 
+/* return a the index of the executing CPU */
+INLINE int cpu_getexecutingcpu(void)
+{
+	extern int executingcpu;
+	return executingcpu;
+}
+
+
 /* return a the total number of registered CPUs */
 INLINE int cpu_gettotalcpu(void)
 {

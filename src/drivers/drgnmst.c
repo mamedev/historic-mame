@@ -214,9 +214,9 @@ MEMORY_END
 
 static MEMORY_READ_START( drgnmst_sound_readmem )
 	{ PIC16C55_MEMORY_READ },
-		/* $000 - 07F  Internal memory mapped registers */
-		/* $000 - 3FF  Program ROM for PIC16C55. Code is 12bits wide */
-		/*             View the ROM at $800 in the debugger memory windows */
+		/* $000 - 01F  Internal memory mapped registers */
+		/* $000 - 1FF  Program ROM for PIC16C55. Note: code is 12bits wide */
+		/*             View the ROM at $1000 in the debugger memory windows */
 MEMORY_END
 
 static MEMORY_WRITE_START( drgnmst_sound_writemem )
@@ -269,6 +269,7 @@ INPUT_PORTS_START( drgnmst )
 
 	PORT_START
 	PORT_DIPNAME( 0x0700, 0x0700, DEF_STR( Coinage ) )
+/*	PORT_DIPSETTING(      0x0300, DEF_STR( Off ) ) */
 	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(      0x0100, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(      0x0200, DEF_STR( 2C_1C ) )
@@ -288,7 +289,7 @@ INPUT_PORTS_START( drgnmst )
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR ( Free_Play ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, "Freeze" )
+	PORT_DIPNAME( 0x8000, 0x8000, "Game Pause" )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
@@ -398,7 +399,7 @@ static MACHINE_DRIVER_START( drgnmst )
 	MDRV_CPU_MEMORY(drgnmst_readmem,drgnmst_writemem)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
-	MDRV_CPU_ADD(PIC16C55, 4000000) /* Confirmed -- wrong -- missing PIC divider, being fixed */
+	MDRV_CPU_ADD(PIC16C55, ((32000000/8)/PIC16C5x_CLOCK_DIVIDER))	/* Confirmed */
 	MDRV_CPU_MEMORY(drgnmst_sound_readmem,drgnmst_sound_writemem)
 	MDRV_CPU_PORTS(drgnmst_sound_readport,drgnmst_sound_writeport)
 
@@ -426,8 +427,12 @@ ROM_START( drgnmst )
 	ROM_LOAD16_BYTE( "dm1000e", 0x00000, 0x80000, CRC(29467dac) SHA1(42ca42340ffd9b04be23853ca4e936d0528a66ee) )
 	ROM_LOAD16_BYTE( "dm1000o", 0x00001, 0x80000, CRC(ba48e9cf) SHA1(1107f927424107918bb10ff23f40c50579b23836) )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* PIC16c55 Code */
-	ROM_LOAD( "pic16c55", PIC16C55_PGM_OFFSET, 0x400, CRC(531c9f8d) SHA1(8ec180b0566f2ce1e08f0347e5ad402c73b44049) )
+	ROM_REGION( 0x4000, REGION_CPU2, 0 ) /* PIC16C55 Code */
+//	ROM_LOAD( "pic16c55", PIC16C55_PGM_OFFSET, 0x400, CRC(531c9f8d) SHA1(8ec180b0566f2ce1e08f0347e5ad402c73b44049) )
+	/* ROM will be copied here by the init code from the USER1 region */
+
+	ROM_REGION( 0x1000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_LOAD( "pic16c55.hex", 0x000, 0x0b7b, CRC(f17011e7) SHA1(8f3bd94ffb528f661eed77d89e5b772442d2f5a6) )
 
 	ROM_REGION( 0x140000, REGION_SOUND1, 0 ) /* OKI-0 Samples */
 	ROM_LOAD( "dm1001", 0x00000, 0x100000, CRC(63566f7f) SHA1(0fe6cb67a5d99cd54e46e9889ea121097756b9ef) )
@@ -455,26 +460,91 @@ ROM_START( drgnmst )
 ROM_END
 
 
+static UINT8 drgnmst_asciitohex(UINT8 data)
+{
+	/* Convert ASCII data to HEX */
+
+	if ((data >= 0x30) && (data < 0x3a)) data -= 0x30;
+	data &= 0xdf;			/* remove case sensitivity */
+	if ((data >= 0x41) && (data < 0x5b)) data -= 0x37;
+
+	return data;
+}
+
+
 static DRIVER_INIT( drgnmst )
 {
+	data8_t *drgnmst_PICROM_HEX = memory_region(REGION_USER1);
+	data8_t *drgnmst_PICROM = memory_region(REGION_CPU2);
 	data8_t *drgnmst_PCM = memory_region(REGION_SOUND1);
-	int A;
+	INT32   offs, data;
+	UINT16  src_pos = 0;
+	UINT16  dst_pos = 0;
+	UINT8   data_hi, data_lo;
+
+
+	drgnmst_snd_flag = 0;
 
 	/* Configure the OKI-0 PCM data into a MAME friendly bank format */
 	/* $00000-1ffff is the same through all banks */
 	/* $20000-3ffff in each bank is actually the switched area */
 
-	for (A = 0x1ffff; A >= 0; A--)
+	for (offs = 0x1ffff; offs >= 0; offs--)
 	{
-		drgnmst_PCM[0x120000 + A] = drgnmst_PCM[0xa0000 + A];
-		drgnmst_PCM[0x100000 + A] = drgnmst_PCM[0x00000 + A];
-		drgnmst_PCM[0x0e0000 + A] = drgnmst_PCM[0x80000 + A];
-		drgnmst_PCM[0x0c0000 + A] = drgnmst_PCM[0x00000 + A];
-		drgnmst_PCM[0x0a0000 + A] = drgnmst_PCM[0x60000 + A];
-		drgnmst_PCM[0x080000 + A] = drgnmst_PCM[0x00000 + A];
-		drgnmst_PCM[0x060000 + A] = drgnmst_PCM[0x40000 + A];
-		drgnmst_PCM[0x040000 + A] = drgnmst_PCM[0x00000 + A];
+		drgnmst_PCM[0x120000 + offs] = drgnmst_PCM[0xa0000 + offs];
+		drgnmst_PCM[0x100000 + offs] = drgnmst_PCM[0x00000 + offs];
+		drgnmst_PCM[0x0e0000 + offs] = drgnmst_PCM[0x80000 + offs];
+		drgnmst_PCM[0x0c0000 + offs] = drgnmst_PCM[0x00000 + offs];
+		drgnmst_PCM[0x0a0000 + offs] = drgnmst_PCM[0x60000 + offs];
+		drgnmst_PCM[0x080000 + offs] = drgnmst_PCM[0x00000 + offs];
+		drgnmst_PCM[0x060000 + offs] = drgnmst_PCM[0x40000 + offs];
+		drgnmst_PCM[0x040000 + offs] = drgnmst_PCM[0x00000 + offs];
 	}
+
+	/**** Convert the PIC16C55 ASCII HEX dump to pure HEX ****/
+	do
+	{
+		if ((drgnmst_PICROM_HEX[src_pos + 0] == ':') &&
+			(drgnmst_PICROM_HEX[src_pos + 1] == '1') &&
+			(drgnmst_PICROM_HEX[src_pos + 2] == '0'))
+			{
+			src_pos += 9;
+
+			for (offs = 0; offs < 32; offs += 2)
+			{
+				data_hi = drgnmst_asciitohex((drgnmst_PICROM_HEX[src_pos + offs + 0]));
+				data_lo = drgnmst_asciitohex((drgnmst_PICROM_HEX[src_pos + offs + 1]));
+
+				if ((data_hi <= 0x0f) && (data_lo <= 0x0f)) {
+					data = (data_hi << 4) | (data_lo << 0);
+					drgnmst_PICROM[PIC16C55_PGM_OFFSET + dst_pos] = data;
+					dst_pos += 1;
+				}
+			}
+			src_pos += 32;
+		}
+
+		/* Get the PIC16C55 Config register data */
+
+		if ((drgnmst_PICROM_HEX[src_pos + 0] == ':') &&
+			(drgnmst_PICROM_HEX[src_pos + 1] == '0') &&
+			(drgnmst_PICROM_HEX[src_pos + 2] == '2') &&
+			(drgnmst_PICROM_HEX[src_pos + 3] == '1'))
+			{
+			src_pos += 9;
+
+			data_hi = drgnmst_asciitohex((drgnmst_PICROM_HEX[src_pos + 0]));
+			data_lo = drgnmst_asciitohex((drgnmst_PICROM_HEX[src_pos + 1]));
+			data =  (data_hi <<  4) | (data_lo << 0);
+			data_hi = drgnmst_asciitohex((drgnmst_PICROM_HEX[src_pos + 2]));
+			data_lo = drgnmst_asciitohex((drgnmst_PICROM_HEX[src_pos + 3]));
+			data |= (data_hi << 12) | (data_lo << 8);
+
+			pic16c5x_config(data);
+			src_pos = 0x7fff;		/* Force Exit */
+		}
+		src_pos += 1;
+	} while (src_pos < 0x0b7b);		/* 0x0b7b is the size of the HEX rom loaded */
 }
 
 

@@ -742,7 +742,10 @@ WRITE16_HANDLER( hdgsp_io_w )
 		{
 			last_gsp_shiftreg = new_shiftreg;
 			if (new_shiftreg)
-				cpu_yield();
+			{
+//				cpu_yield();
+//				logerror("yield after shiftreg change\n");
+			}
 		}
 	}
 
@@ -874,17 +877,28 @@ READ16_HANDLER( hd68k_adsp_data_r )
 }
 
 
+static void deferred_adsp_data_w(int param)
+{
+	adsp_data_memory[0x1fff] = param;
+	cpu_triggerint(hdcpu_adsp);
+}
+
+
 WRITE16_HANDLER( hd68k_adsp_data_w )
 {
-	COMBINE_DATA(&adsp_data_memory[offset]);
+	data16_t newdata = adsp_data_memory[offset];
+	COMBINE_DATA(&newdata);
 
 	/* any write to $1FFF is taken to be a trigger; synchronize the CPUs */
 	if (offset == 0x1fff)
 	{
 		logerror("%06X:ADSP sync address written (%04X)\n", activecpu_get_previouspc(), data);
-		timer_set(TIME_NOW, 0, 0);
-		cpu_triggerint(hdcpu_adsp);
+		timer_set(TIME_NOW, newdata, deferred_adsp_data_w);
 	}
+
+	/* otherwise, write normally */
+	else
+		adsp_data_memory[offset] = newdata;
 }
 
 
@@ -963,6 +977,7 @@ static void deferred_adsp_bank_switch(int data)
 	}
 #endif
 	m68k_adsp_buffer_bank = data;
+	logerror("ADSP bank = %d\n", data);
 }
 
 
@@ -981,6 +996,7 @@ WRITE16_HANDLER( hd68k_adsp_control_w )
 			break;
 
 		case 3:
+			logerror("ADSP bank = %d (deferred)\n", val);
 			timer_set(TIME_NOW, val, deferred_adsp_bank_switch);
 			break;
 
@@ -988,6 +1004,7 @@ WRITE16_HANDLER( hd68k_adsp_control_w )
 			/* connected to the /BR (bus request) line; this effectively halts */
 			/* the ADSP at the next instruction boundary */
 			adsp_br = !val;
+			logerror("ADSP /BR = %d\n", !adsp_br);
 			if (adsp_br || adsp_halt)
 				cpu_set_halt_line(hdcpu_adsp, ASSERT_LINE);
 			else
@@ -1004,6 +1021,7 @@ WRITE16_HANDLER( hd68k_adsp_control_w )
 			/* connected to the /HALT line; this effectively halts */
 			/* the ADSP at the next instruction boundary */
 			adsp_halt = !val;
+			logerror("ADSP /HALT = %d\n", !adsp_halt);
 			if (adsp_br || adsp_halt)
 				cpu_set_halt_line(hdcpu_adsp, ASSERT_LINE);
 			else
@@ -1017,8 +1035,8 @@ WRITE16_HANDLER( hd68k_adsp_control_w )
 			break;
 
 		case 7:
+			logerror("ADSP reset = %d\n", val);
 			cpu_set_reset_line(hdcpu_adsp, val ? CLEAR_LINE : ASSERT_LINE);
-			cpu_yield();
 			break;
 
 		default:
@@ -1030,6 +1048,7 @@ WRITE16_HANDLER( hd68k_adsp_control_w )
 
 WRITE16_HANDLER( hd68k_adsp_irq_clear_w )
 {
+	logerror("%06X:68k clears ADSP interrupt\n", activecpu_get_previouspc());
 	adsp_irq_state = 0;
 	atarigen_update_interrupts();
 }
@@ -1040,6 +1059,7 @@ READ16_HANDLER( hd68k_adsp_irq_state_r )
 	int result = 0xfffd;
 	if (adsp_xflag) result ^= 2;
 	if (adsp_irq_state) result ^= 1;
+	logerror("%06X:68k reads ADSP interrupt state = %04x\n", activecpu_get_previouspc(), result);
 	return result;
 }
 
@@ -1186,7 +1206,6 @@ WRITE16_HANDLER( hd68k_ds3_control_w )
 				update_ds3_irq();
 			}
 			ds3_reset = val;
-			cpu_yield();
 			logerror("DS III reset = %d\n", val);
 			break;
 
@@ -1344,6 +1363,7 @@ WRITE16_HANDLER( hdds3_special_w )
 			break;
 
 		case 1:
+			logerror("%04X:ADSP sets interrupt = %d\n", activecpu_get_previouspc(), (data >> 1) & 1);
 			adsp_irq_state = (data >> 1) & 1;
 			hd68k_update_interrupts();
 			break;

@@ -17,7 +17,6 @@ ToDo:
    Idle skipping on other games + bios ..
    Fix gaps between zoomed sprites (See Gals Panic 4 continue screen and timer)
    Fix broken games
-   Remove rand() and replace with something that is deterministic within the scope of the emulation
 
 Alpha pens:
    galpanis uses them to white in/out the bg's during attract? Solid white atm.
@@ -60,8 +59,7 @@ etc.etc.
 gutsn Crash Reason
 the routine at 401d8c8 calls 40249e0 with r14 as a parameter, which points where the return pr on the stack is
 param is 60ffbc0, pr is at 60ffbcc, but 40249e0 writes more than 12 bytes
-
-should sengekis be rot90 with the sprites flipped?  scrolling is in the wrong direction at the moment
+Gutsn now works in 0.69, timing/sh2 fixes??
 
 Motherboard Layout
 ------------------
@@ -126,6 +124,7 @@ NEP-16
 
 #include "driver.h"
 #include "machine/random.h"
+#include "vidhrdw/generic.h"
 #include <time.h>
 
 #define BIOS_SKIP 1 // Skip Bios as it takes too long and doesn't complete atm.
@@ -133,7 +132,7 @@ NEP-16
 // Defined in vidhrdw
 extern void skns_sprite_kludge(int x, int y);
 
-data32_t *skns_spc_ram, *skns_tilemapA_ram, *skns_tilemapB_ram, *skns_v3slc_ram;
+data32_t *skns_tilemapA_ram, *skns_tilemapB_ram, *skns_v3slc_ram;
 data32_t *skns_palette_ram, *skns_v3t_ram, *skns_main_ram, *skns_cache_ram;
 data32_t *skns_pal_regs, *skns_v3_regs, *skns_spc_regs;
 
@@ -149,6 +148,7 @@ WRITE32_HANDLER ( skns_tilemapA_w );
 WRITE32_HANDLER ( skns_tilemapB_w );
 WRITE32_HANDLER ( skns_v3_regs_w );
 VIDEO_START(skns);
+VIDEO_EOF(skns);
 VIDEO_UPDATE(skns);
 
 /* hit.c */
@@ -320,7 +320,7 @@ READ32_HANDLER( skns_hit_r )
 	switch(adr) {
 	case 0x28:
 	case 0x2a:
-		return mame_rand();
+		return (UINT16)mame_rand();
 	case 0x00:
 	case 0x10:
 		return (UINT16)hit.x_in;
@@ -660,9 +660,13 @@ static WRITE32_HANDLER( skns_io_w )
 			if(data&0x80)
 				cpu_set_irq_line(0,0xf,CLEAR_LINE);*/
 
-			/* idle skip for sarukani, i can't find a better place to put it :-( but i think it works ok unless its making the game too fast */
-			if ((!strcmp(Machine->gamedrv->name,"sarukani")) || (!strcmp(Machine->gamedrv->name,"vblokbrk"))) if (activecpu_get_pc()==0x04013B44) cpu_spinuntil_int();
-
+			/* idle skip for vblokbrk/sarukani, i can't find a better place to put it :-( but i think it works ok unless its making the game too fast */
+			if (activecpu_get_pc()==0x04013B44)
+			{
+				if (!strcmp(Machine->gamedrv->name,"vblokbrk") ||
+					!strcmp(Machine->gamedrv->name,"sarukani"))
+					cpu_spinuntil_int();
+			}
 
 		}
 		else
@@ -726,11 +730,13 @@ static READ32_HANDLER( msm6242_r )
 /* end old driver code */
 static void palette_set_rgb_brightness (int offset, UINT8 brightness_r, UINT8 brightness_g, UINT8 brightness_b)
 {
-	int use_bright, r, g, b;
+	int use_bright, r, g, b, alpha;
 
 	b = ((skns_palette_ram[offset] >> 0  ) & 0x1f);
 	g = ((skns_palette_ram[offset] >> 5  ) & 0x1f);
 	r = ((skns_palette_ram[offset] >> 10  ) & 0x1f);
+
+	alpha = ((skns_palette_ram[offset] >> 15  ) & 0x1);
 
 	if(offset<(0x40*256)) { // 1st half is for Sprites
 		use_bright = use_spc_bright;
@@ -832,7 +838,7 @@ void skns_palette_update(void)
 static WRITE32_HANDLER ( skns_palette_ram_w )
 {
 	int r,g,b;
-	int brightness_r, brightness_g, brightness_b;
+	int brightness_r, brightness_g, brightness_b, alpha;
 	int use_bright;
 
 	COMBINE_DATA(&skns_palette_ram[offset]);
@@ -840,6 +846,8 @@ static WRITE32_HANDLER ( skns_palette_ram_w )
 	b = ((skns_palette_ram[offset] >> 0  ) & 0x1f);
 	g = ((skns_palette_ram[offset] >> 5  ) & 0x1f);
 	r = ((skns_palette_ram[offset] >> 10  ) & 0x1f);
+
+	alpha = ((skns_palette_ram[offset] >> 15  ) & 0x1);
 
 	if(offset<(0x40*256)) { // 1st half is for Sprites
 		use_bright = use_spc_bright;
@@ -927,7 +935,7 @@ static MEMORY_WRITE32_START( skns_writemem )
 	{ 0x00c00000, 0x00c00003, skns_ymz280_w }, /* ymz280_w (sound) */
 	{ 0x01000000, 0x0100000f, msm6242_w } ,
 	{ 0x01800000, 0x01800003, skns_hit2_w },
-	{ 0x02000000, 0x02003fff, MWA32_RAM, &skns_spc_ram }, /* sprite ram */
+	{ 0x02000000, 0x02003fff, MWA32_RAM, &spriteram32, &spriteram_size }, /* sprite ram */
 	{ 0x02100000, 0x0210003f, MWA32_RAM, &skns_spc_regs  }, /* sprite registers */
 	{ 0x02400000, 0x0240007f, skns_v3_regs_w, &skns_v3_regs }, /* tilemap registers */
 	{ 0x02500000, 0x02503fff, skns_tilemapA_w, &skns_tilemapA_ram }, /* tilemap A */
@@ -1002,13 +1010,14 @@ static MACHINE_DRIVER_START(skns)
 	MDRV_MACHINE_INIT(skns)
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
 	MDRV_SCREEN_SIZE(64*16,64*16)
 	MDRV_VISIBLE_AREA(0,319,0,239)
 	MDRV_PALETTE_LENGTH(32768)
 	MDRV_GFXDECODE(skns_bg_decode)
 
 	MDRV_VIDEO_START(skns)
+	MDRV_VIDEO_EOF(skns)
 	MDRV_VIDEO_UPDATE(skns)
 
 	/* sound hardware */
@@ -1028,9 +1037,27 @@ static READ32_HANDLER( bios_skip_r )
 
 /***** IDLE SKIPPING *****/
 
+static READ32_HANDLER( gutsn_speedup_r )
+{
+/*
+	0402206A: MOV.L   @($8C,PC),R5
+	0402206C: MOV.L   @($8C,PC),R1
+	0402206E: MOV.L   @R1,R2       // R1 == 600C780
+	04022070: MOV.L   @R5,R3       // R5 == 6000078
+	04022072: CMP/EQ  R2,R3
+	04022074: BT      $0402206C
+*/
+	if (activecpu_get_pc()==0x4022070)
+	{
+		if(skns_main_ram[0x00078/4] == skns_main_ram[0x0c780/4])
+			cpu_spinuntil_int();
+	}
+	return skns_main_ram[0x0c780/4];
+}
+
 static READ32_HANDLER( cyvern_speedup_r )
 {
-	if (activecpu_get_pc()==0x402EBD4) cpu_spinuntil_int();
+	if (activecpu_get_pc()==0x402ebd4) cpu_spinuntil_int();
 	return skns_main_ram[0x4d3c8/4];
 }
 
@@ -1106,6 +1133,7 @@ static DRIVER_INIT( galpani4 ) { skns_sprite_kludge(-5,-1); init_skns();  } // I
 static DRIVER_INIT( galpanis ) { skns_sprite_kludge(-5,-1); init_skns();  } // Idle Loop caught by sh-2 core
 static DRIVER_INIT( cyvern )   { skns_sprite_kludge(+0,+2); init_skns(); install_mem_read32_handler(0, 0x604d3c8, 0x604d3cb, cyvern_speedup_r );   }
 static DRIVER_INIT( galpans2 ) { skns_sprite_kludge(-1,-1); init_skns(); install_mem_read32_handler(0, 0x60fb6bc, 0x60fb6bf, galpans2_speedup_r );  }
+static DRIVER_INIT( gutsn )    { skns_sprite_kludge(+0,+0); init_skns(); install_mem_read32_handler(0, 0x600c780, 0x600c783, gutsn_speedup_r );  }
 static DRIVER_INIT( panicstr ) { skns_sprite_kludge(-1,-1); init_skns(); install_mem_read32_handler(0, 0x60f19e4, 0x60f19e7, panicstr_speedup_r );  }
 static DRIVER_INIT( senknow )  { skns_sprite_kludge(+1,+1); init_skns(); install_mem_read32_handler(0, 0x60000dc, 0x60000df, senknow_speedup_r );  }
 static DRIVER_INIT( puzzloop ) { skns_sprite_kludge(-9,-1); init_skns(); install_mem_read32_handler(0, 0x6081d38, 0x6081d3b, puzzloop_speedup_r ); }
@@ -1114,10 +1142,9 @@ static DRIVER_INIT( jjparads ) { skns_sprite_kludge(+5,+1); init_skns(); install
 static DRIVER_INIT( jjparad2 ) { skns_sprite_kludge(+5,+1); init_skns(); install_mem_read32_handler(0, 0x6000984, 0x6000987, jjparad2_speedup_r );  }
 static DRIVER_INIT( ryouran )  { skns_sprite_kludge(+5,+1); init_skns(); install_mem_read32_handler(0, 0x6000a14, 0x6000a17, ryouran_speedup_r );  }
 static DRIVER_INIT( teljan )   { skns_sprite_kludge(+5,+1); init_skns(); install_mem_read32_handler(0, 0x6002fb4, 0x6002fb7, teljan_speedup_r );  }
-
-static DRIVER_INIT( sarukani ) { skns_sprite_kludge(-1,-1); init_skns();  }
-static DRIVER_INIT( gutsn )    { skns_sprite_kludge(+0,+0); init_skns();  } // Not Working yet
 static DRIVER_INIT( sengekis ) { skns_sprite_kludge(-192,-272); init_skns(); install_mem_read32_handler(0, 0x60b7380, 0x60b7383, sengekis_speedup_r ); } // Not Working yet
+static DRIVER_INIT( sarukani ) { skns_sprite_kludge(-1,-1); init_skns();  } // Speedup is in skns_io_w()
+
 
 
 /***** ROM LOADING *****/
@@ -1131,7 +1158,7 @@ ROM_END
 
 ROM_START( cyvern )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* Japan BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
 	ROM_LOAD16_BYTE( "cvj-even.u10", 0x000000, 0x100000, CRC(802fadb4) SHA1(cbfac3a87a4863466117c61f2ecaf63d506352f6) )
@@ -1156,7 +1183,7 @@ ROM_END
 
 ROM_START( galpani4 )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* Japan BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
     ROM_LOAD16_BYTE( "gp4j1.u10",    0x000000, 0x080000, CRC(919a3893) SHA1(83b89a9e628a1f46f8a56ea512fc8ad641d5e239) )
@@ -1180,7 +1207,7 @@ ROM_END
 
 ROM_START( galpanis )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* Japan BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
     ROM_LOAD16_BYTE( "gps-e.u10",    0x000000, 0x100000, CRC(c6938c3f) SHA1(05853ee6a44a55702788a75580b04a4be45e9bcb) )
@@ -1205,7 +1232,7 @@ ROM_END
 
 ROM_START( galpans2 )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* Japan BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
     ROM_LOAD16_BYTE( "gps2j.u6",     0x000000, 0x100000, CRC(6e74005b) SHA1(a57e8307062e262c2e7a84e2c58f7dfe03fc0f78) )
@@ -1232,29 +1259,29 @@ ROM_END
 
 ROM_START( gutsn )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* Japan BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
-    ROM_LOAD16_BYTE( "gts000j0.u6"  ,0x000000, 0x080000, CRC(8ee91310) )
-    ROM_LOAD16_BYTE( "gts001j0.u4",  0x000001, 0x080000, CRC(80b8ee66) )
+    ROM_LOAD16_BYTE( "gts000j0.u6"  ,0x000000, 0x080000, CRC(8ee91310) SHA1(8dd918189fe445d79c7f028168862b852f70a6f2) )
+    ROM_LOAD16_BYTE( "gts001j0.u4",  0x000001, 0x080000, CRC(80b8ee66) SHA1(4faf5f358ceee866f09bd81e63ba3ebd21bde835) )
 
 	ROM_REGION( 0x400000, REGION_GFX1, 0 )
-    ROM_LOAD( "gts10000.u24", 0x000000, 0x400000, CRC(1959979e) )
+    ROM_LOAD( "gts10000.u24", 0x000000, 0x400000, CRC(1959979e) SHA1(92a68784664dd833ca6fcca1b15cd46b9365d081) )
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
-    ROM_LOAD( "gts20000.u16", 0x000000, 0x400000, CRC(c443aac3) )
+    ROM_LOAD( "gts20000.u16", 0x000000, 0x400000, CRC(c443aac3) SHA1(b0416a09ead26077e9276bae98d94eeb1cf86877) )
 
 	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples */
-	ROM_LOAD( "gts30000.u4", 0x000000, 0x400000, CRC(8c169141) )
+	ROM_LOAD( "gts30000.u4", 0x000000, 0x400000, CRC(8c169141) SHA1(41caea6fa644515f7417c84bdac599b13ad07e8c) )
 ROM_END
 
 ROM_START( panicstr )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* Japan BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
     ROM_LOAD16_BYTE( "ps1000j0.u10", 0x000000, 0x100000, CRC(59645f89) SHA1(8da205c6e38899d6c637941700dd7eea56011c10) )
@@ -1277,7 +1304,7 @@ ROM_END
 
 ROM_START( puzzloop )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknse1.u10", 0x000000, 0x080000, CRC(e2b9d7d1) SHA1(b530a3bb9dedc8cfafcba9f1f10277590be04a15) ) /* Europ BIOS */
+	ROM_LOAD       ( "sknse1.u10", 0x000000, 0x080000, CRC(e2b9d7d1) SHA1(b530a3bb9dedc8cfafcba9f1f10277590be04a15) ) /* Europe BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
 	ROM_LOAD16_BYTE( "puzloope.u6",  0x000000, 0x080000, CRC(273adc38) SHA1(37ca873342ba9fb9951114048a9cd255f73fe19c) )
@@ -1300,7 +1327,7 @@ ROM_END
 
 ROM_START( puzloopj )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* Japan BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
 	ROM_LOAD16_BYTE( "pl0j2u6.u10",  0x000000, 0x080000, CRC(23c3bf97) SHA1(77ea1f32bed5709a6ad5b250370f08cfe8036867) )
@@ -1325,7 +1352,7 @@ ROM_END
 
 ROM_START( jjparads )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* Japan BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
     ROM_LOAD16_BYTE( "jp1j1.u10",    0x000000, 0x080000, CRC(de2fb669) SHA1(229ff1ae0ec5bc77fc17642964e0bb0146594e86) )
@@ -1349,7 +1376,7 @@ ROM_END
 
 ROM_START( jjparad2 )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* Japan BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
     ROM_LOAD16_BYTE( "jp2000j1.u6",  0x000000, 0x080000, CRC(5d75e765) SHA1(33bcd8f929f6025b00df2ea783b13a391a28a5c3) )
@@ -1374,7 +1401,7 @@ ROM_END
 
 ROM_START( sengekis )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* Japan BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
     ROM_LOAD16_BYTE( "ss01j.u6",     0x000000, 0x080000, CRC(9efdcd5a) SHA1(66cca04d07999dc8ca0bcf19db925996b34d0390) )
@@ -1401,7 +1428,7 @@ ROM_END
 
 ROM_START( senknow )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* Japan BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
     ROM_LOAD16_BYTE( "snw000j1.u6",  0x000000, 0x080000, CRC(0d6136f6) SHA1(eedd011cfe03577bfaf386723502d03f6e5dbd8c) )
@@ -1426,7 +1453,7 @@ ROM_END
 
 ROM_START( teljan )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* Japan BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
     ROM_LOAD16_BYTE( "tel1j.u10",    0x000000, 0x080000, CRC(09b552fe) SHA1(2f315fd09eb22fa8c81faa1e926038f20daa845f) )
@@ -1450,7 +1477,7 @@ ROM_END
 
 ROM_START( ryouran )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* Japan BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
     ROM_LOAD16_BYTE( "or000j1.u10",  0x000000, 0x080000, CRC(d93aa491) SHA1(dc01707f1e80d81f28d6b685d08fc6c0d2bf7330) )
@@ -1475,7 +1502,7 @@ ROM_END
 
 ROM_START( vblokbrk )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsa1.u10", 0x000000, 0x080000, CRC(745e5212) SHA1(caba649ab2d83b2d7e007eecee0fc582c019df38) ) /* BIOS */
+	ROM_LOAD       ( "sknsa1.u10", 0x000000, 0x080000, CRC(745e5212) SHA1(caba649ab2d83b2d7e007eecee0fc582c019df38) ) /* Asia BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
     ROM_LOAD16_BYTE( "sk01a.u10",    0x000000, 0x080000, CRC(4d1be53e) SHA1(3d28b73a67530147962b8df6244af8bea2ab080f) )
@@ -1498,7 +1525,7 @@ ROM_END
 
 ROM_START( sarukani )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
-	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* BIOS */
+	ROM_LOAD       ( "sknsj1.u10",   0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* Japan BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
     ROM_LOAD16_BYTE( "sk1j1.u10",    0x000000, 0x080000, CRC(fcc131b6) SHA1(5e3e71ee1f736b6098e671e6f57b1fb313c81adb) )
@@ -1524,22 +1551,20 @@ ROM_END
 
 GAMEX( 1996, skns,     0,    skns, skns, 0,        ROT0,  "Kaneko", "Super Kaneko Nova System BIOS", NOT_A_DRIVER )
 
-/* playable */
-GAMEX( 1996, galpani4, skns,    skns, skns, galpani4, ROT0,  "Kaneko", "Gals Panic 4 (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1997, galpanis, skns,    skns, skns, galpanis, ROT0,  "Kaneko", "Gals Panic S - Extra Edition (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1998, cyvern,   skns,    skns, skns, cyvern,   ROT90, "Kaneko", "Cyvern (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1999, galpans2, skns,    skns, skns, galpans2, ROT0,  "Kaneko", "Gals Panic S2 (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1999, panicstr, skns,    skns, skns, panicstr, ROT0,  "Kaneko", "Panic Street (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1999, senknow , skns,    skns, skns, senknow,  ROT0,  "Kaneko", "Sen-Know (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1998, puzzloop, skns,    skns, skns, puzzloop, ROT0,  "Mitchell", "Puzz Loop (Europe)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1998, puzloopj, puzzloop,skns, skns, puzloopj, ROT0,  "Mitchell", "Puzz Loop (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1996, galpani4, skns,    skns, skns,     galpani4, ROT0,  "Kaneko", "Gals Panic 4 (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1997, galpanis, skns,    skns, skns,     galpanis, ROT0,  "Kaneko", "Gals Panic S - Extra Edition (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1998, cyvern,   skns,    skns, skns,     cyvern,   ROT90, "Kaneko", "Cyvern (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1999, galpans2, skns,    skns, skns,     galpans2, ROT0,  "Kaneko", "Gals Panic S2 (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1999, panicstr, skns,    skns, skns,     panicstr, ROT0,  "Kaneko", "Panic Street (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1999, senknow , skns,    skns, skns,     senknow,  ROT0,  "Kaneko / Kouyousha", "Sen-Know (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 2000, gutsn,    skns,    skns, skns,     gutsn,    ROT0,  "Kaneko / Kouyousha", "Guts'n (Japan)", GAME_IMPERFECT_GRAPHICS ) // quite fragile, started working of it's own accord in 0.69 :)
+GAMEX( 1998, puzzloop, skns,    skns, skns,     puzzloop, ROT0,  "Mitchell", "Puzz Loop (Europe)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1998, puzloopj, puzzloop,skns, skns,     puzloopj, ROT0,  "Mitchell", "Puzz Loop (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, jjparads, skns,    skns, jjparads, jjparads, ROT0,  "Electro Design", "Jan Jan Paradise", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1997, jjparad2, skns,    skns, jjparads, jjparad2, ROT0,  "Electro Design", "Jan Jan Paradise 2", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1998, ryouran , skns,    skns, skns, ryouran,  ROT0,  "Electro Design", "Otome Ryouran", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1998, ryouran , skns,    skns, skns,     ryouran,  ROT0,  "Electro Design", "Otome Ryouran", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1999, teljan  , skns,    skns, jjparads, teljan,   ROT0,  "Electro Design", "Tel Jan", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1997, sengekis, skns,    skns, skns, sengekis, ROT270,"Kaneko / Warashi", "Sengeki Striker", GAME_IMPERFECT_GRAPHICS ) // should be rot90 + flipped sprites?
-GAMEX( 1997, vblokbrk, skns,    skns, skns, sarukani, ROT0,  "Kaneko / Mediaworks", "VS Block Breaker (Asia)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1997, sarukani, vblokbrk,    skns, skns, sarukani, ROT0,  "Kaneko / Mediaworks", "Saru-Kani-Hamu-Zou (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1997, sengekis, skns,    skns, skns,     sengekis, ROT90, "Kaneko / Warashi", "Sengeki Striker (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1997, vblokbrk, skns,    skns, skns,     sarukani, ROT0,  "Kaneko / Mediaworks", "VS Block Breaker (Asia)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1997, sarukani, vblokbrk,skns, skns,     sarukani, ROT0,  "Kaneko / Mediaworks", "Saru-Kani-Hamu-Zou (Japan)", GAME_IMPERFECT_GRAPHICS )
 
-/* not playable */
-GAMEX( 2000, gutsn,    skns,    skns, skns, gutsn,    ROT0,  "Kaneko", "Guts'n (Japan)", GAME_NOT_WORKING ) // doesn't display anything (sh2?)

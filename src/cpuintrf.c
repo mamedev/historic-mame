@@ -642,19 +642,19 @@ const struct cpu_interface cpuintrf[] =
 	CPU0(DSP32C,   dsp32c,   4,  0,1.00,32,24ledw, 0,24,LE,4, 4 ),
 #endif
 #if (HAS_PIC16C54)
-	CPU3(PIC16C54,pic16C54,  0,  0,1.00,8,16lew, 0,12,LE,1, 2 ),
+	CPU3(PIC16C54,pic16C54,  0,  0,1.00,8,16lew, 0,13,LE,1, 2 ),
 #endif
 #if (HAS_PIC16C55)
-	CPU3(PIC16C55,pic16C55,  0,  0,1.00,8,16lew, 0,12,LE,1, 2 ),
+	CPU3(PIC16C55,pic16C55,  0,  0,1.00,8,16lew, 0,13,LE,1, 2 ),
 #endif
 #if (HAS_PIC16C56)
-	CPU3(PIC16C56,pic16C56,  0,  0,1.00,8,16lew, 0,12,LE,1, 2 ),
+	CPU3(PIC16C56,pic16C56,  0,  0,1.00,8,16lew, 0,13,LE,1, 2 ),
 #endif
 #if (HAS_PIC16C57)
-	CPU3(PIC16C57,pic16C57,  0,  0,1.00,8,16lew, 0,12,LE,1, 2 ),
+	CPU3(PIC16C57,pic16C57,  0,  0,1.00,8,16lew, 0,13,LE,1, 2 ),
 #endif
 #if (HAS_PIC16C58)
-	CPU3(PIC16C58,pic16C58,  0,  0,1.00,8,16lew, 0,12,LE,1, 2 ),
+	CPU3(PIC16C58,pic16C58,  0,  0,1.00,8,16lew, 0,13,LE,1, 2 ),
 #endif
 
 #ifdef MESS
@@ -730,6 +730,7 @@ UINT8 default_win_layout[] =
  *************************************/
 
 int activecpu;		/* index of active CPU (or -1) */
+int executingcpu;	/* index of executing CPU (or -1) */
 int totalcpu;		/* total number of CPUs */
 
 static struct cpuinfo cpu[MAX_CPU];
@@ -835,6 +836,10 @@ int cpuintrf_init(void)
 	/* reset the context stack */
 	memset(cpu_context_stack, -1, sizeof(cpu_context_stack));
 	cpu_context_stack_ptr = 0;
+
+	/* nothing active, nothing executing */
+	activecpu = -1;
+	executingcpu = -1;
 
 	return 0;
 }
@@ -1156,8 +1161,10 @@ int cpunum_execute(int cpunum, int cycles)
 	int ran;
 	VERIFY_CPUNUM(0, cpunum_execute);
 	cpuintrf_push_context(cpunum);
+	executingcpu = cpunum;
 	(*cpu[cpunum].intf.set_op_base)(activecpu_get_pc_byte());
 	ran = (*cpu[cpunum].intf.execute)(cycles);
+	executingcpu = -1;
 	cpuintrf_pop_context();
 	return ran;
 }

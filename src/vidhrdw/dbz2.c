@@ -1,12 +1,11 @@
 /*
+  Dragonball Z
+  (c) 1993 Banpresto
   Dragonball Z 2 Super Battle
   (c) 1994 Banpresto
 
   Video hardware emulation.
 */
-
-
-
 
 
 #include "driver.h"
@@ -21,7 +20,12 @@ static int scrolld[2][4][2] = {
  	{{ 0, 0 }, {0, 0}, {0, 0}, {0, 0}},
  	{{ 0, 0 }, {0, 0}, {0, 0}, {0, 0}}
 };
-
+/*
+static int scrolld1[2][4][2] = {
+ 	{{ 0, 0 }, {2, 0}, {4, 0}, {5, 0}},	// default '157 offsets
+ 	{{ 0, 0 }, {0, 0}, {0, 0}, {0, 0}}
+};
+*/
 static int layer_colorbase;
 static int sprite_colorbase;
 
@@ -29,7 +33,10 @@ static void dbz2_tile_callback(int layer, int *code, int *color)
 {
 	tile_info.flags = TILE_FLIPYX((*color) & 3);
 
-	*color = layer_colorbase | (((*color & 0xf0) + 0xe00 ) >> 4);
+	if (layer == 3)
+		*color = layer_colorbase | (((*color & 0xf0) + 0xe00 ) >> 4);
+	else
+		*color = layer_colorbase | (((*color & 0xf0) + 0xc00 ) >> 4);
 }
 
 static void dbz2_sprite_callback(int *code, int *color, int *priority_mask)
@@ -113,6 +120,37 @@ VIDEO_START(dbz2)
 	return 0;
 }
 
+VIDEO_START(dbz)
+{
+	K053251_vh_start();
+
+	if (K054157_vh_start(REGION_GFX1, 0, scrolld, NORMAL_PLANE_ORDER, dbz2_tile_callback))
+	{
+		return 1;
+	}
+
+	if (K053247_vh_start(REGION_GFX2, -52, 16, NORMAL_PLANE_ORDER, dbz2_sprite_callback))
+	{
+		return 1;
+	}
+
+	K053936_wraparound_enable(0, 1);
+	K053936_set_offset(0, -46+34, -16);
+
+	K053936_wraparound_enable(1, 1);
+	K053936_set_offset(1, -46+34, -16);
+
+	dbz2_bg_tilemap = tilemap_create(get_dbz2_bg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 16, 16,64,32);
+	if (!dbz2_bg_tilemap) return 1;
+
+	tilemap_set_transparent_pen(dbz2_bg_tilemap,0);
+
+	dbz2_bg2_tilemap = tilemap_create(get_dbz2_bg2_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE, 16, 16,64,32);
+	if (!dbz2_bg2_tilemap) return 1;
+
+	return 0;
+}
+
 VIDEO_UPDATE(dbz2)
 {
 	fillbitmap(priority_bitmap, 0, NULL);
@@ -128,4 +166,19 @@ VIDEO_UPDATE(dbz2)
 	K054157_tilemap_draw(bitmap, cliprect, 3, 0, 1<<0);
 }
 
+VIDEO_UPDATE(dbz)
+{
+	fillbitmap(priority_bitmap, 0, NULL);
+	fillbitmap(bitmap, get_black_pen(), &Machine->visible_area);
+
+
+	K054157_tilemap_update();
+
+	K054157_tilemap_draw(bitmap, cliprect, 3, 0, 1<<3);
+	K053936_0_zoom_draw(bitmap,cliprect,dbz2_bg2_tilemap,0,1<<2);
+	K053936_1_zoom_draw(bitmap,cliprect,dbz2_bg_tilemap,0,1<<1);
+	K054157_tilemap_draw(bitmap, cliprect, 0, 0, 1<<0);
+
+	K053247_sprites_draw(bitmap, cliprect);
+}
 

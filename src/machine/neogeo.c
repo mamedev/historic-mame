@@ -2,6 +2,7 @@
 #include "machine/pd4990a.h"
 #include "neogeo.h"
 #include "inptport.h"
+#include "state.h"
 #include <time.h>
 
 
@@ -24,9 +25,12 @@ int memcard_number=0;		/* 000...999, -1=None */
 int memcard_manager=0;		/* 0=Normal boot 1=Call memcard manager */
 UINT8 *neogeo_memcard;		/* Pointer to 2kb RAM zone */
 
+data8_t *neogeo_game_vectors;
+
 
 
 static void neogeo_custom_memory(void);
+static void neogeo_register_sub_savestate(void);
 
 
 /* This function is called on every reset */
@@ -103,7 +107,6 @@ DRIVER_INIT( neogeo )
 {
 	extern struct YM2610interface neogeo_ym2610_interface;
 	data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
-	data8_t *mem08;
 	int tileno,numtiles;
 
 	numtiles = memory_region_length(REGION_GFX3)/128;
@@ -173,22 +176,13 @@ DRIVER_INIT( neogeo )
 	cpu_setbank(3, memory_region(REGION_USER1));
 
 	/* Set the 2nd ROM bank */
-	mem16 = (data16_t *)memory_region(REGION_CPU1);
 	if (memory_region_length(REGION_CPU1) > 0x100000)
-	{
-		cpu_setbank(4, &mem16[0x100000/2]);
-	}
+		neogeo_set_cpu1_second_bank(0x100000);
 	else
-	{
-		cpu_setbank(4, &mem16[0x000000/2]);
-	}
+		neogeo_set_cpu1_second_bank(0x000000);
 
 	/* Set the sound CPU ROM banks */
-	mem08 = memory_region(REGION_CPU2);
-	cpu_setbank(5,&mem08[0x08000]);
-	cpu_setbank(6,&mem08[0x0c000]);
-	cpu_setbank(7,&mem08[0x0e000]);
-	cpu_setbank(8,&mem08[0x0f000]);
+	neogeo_init_cpu2_setbank();
 
 	/* Allocate and point to the memcard - bank 5 */
 	neogeo_memcard = auto_malloc(0x800);
@@ -264,6 +258,10 @@ DRIVER_INIT( neogeo )
 
 	/* Install custom memory handlers */
 	neogeo_custom_memory();
+
+	/* register state save */
+	neogeo_register_main_savestate();
+	neogeo_register_sub_savestate();
 }
 
 /******************************************************************************/
@@ -352,7 +350,6 @@ static READ16_HANDLER( popbounc_sfix_16_r )
 
 static WRITE16_HANDLER( kof99_bankswitch_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
 	static int bankoffset[64] =
 	{
@@ -378,14 +375,13 @@ static WRITE16_HANDLER( kof99_bankswitch_w )
 
 	bankaddress = 0x100000 + bankoffset[data];
 
-	cpu_setbank(4,&RAM[bankaddress]);
+	neogeo_set_cpu1_second_bank(bankaddress);
 }
 
 
 static WRITE16_HANDLER( garou_bankswitch_w )
 {
 	/* thanks to Razoola and Mr K for the info */
-	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
 	static int bankoffset[64] =
 	{
@@ -416,14 +412,13 @@ static WRITE16_HANDLER( garou_bankswitch_w )
 
 	bankaddress = 0x100000 + bankoffset[data];
 
-	cpu_setbank(4,&RAM[bankaddress]);
+	neogeo_set_cpu1_second_bank(bankaddress);
 }
 
 
 static WRITE16_HANDLER( garouo_bankswitch_w )
 {
 	/* thanks to Razoola and Mr K for the info */
-	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
 	static int bankoffset[64] =
 	{
@@ -456,14 +451,13 @@ static WRITE16_HANDLER( garouo_bankswitch_w )
 
 	bankaddress = 0x100000 + bankoffset[data];
 
-	cpu_setbank(4,&RAM[bankaddress]);
+	neogeo_set_cpu1_second_bank(bankaddress);
 }
 
 
 static WRITE16_HANDLER( mslug3_bankswitch_w )
 {
 	/* thanks to Razoola and Mr K for the info */
-	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
 	static int bankoffset[64] =
 	{
@@ -493,14 +487,13 @@ static WRITE16_HANDLER( mslug3_bankswitch_w )
 
 	bankaddress = 0x100000 + bankoffset[data];
 
-	cpu_setbank(4,&RAM[bankaddress]);
+	neogeo_set_cpu1_second_bank(bankaddress);
 }
 
 
 static WRITE16_HANDLER( kof2000_bankswitch_w )
 {
 	/* thanks to Razoola and Mr K for the info */
-	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
 	static int bankoffset[64] =
 	{
@@ -526,7 +519,7 @@ static WRITE16_HANDLER( kof2000_bankswitch_w )
 
 	bankaddress = 0x100000 + bankoffset[data];
 
-	cpu_setbank(4,&RAM[bankaddress]);
+	neogeo_set_cpu1_second_bank(bankaddress);
 }
 
 static READ16_HANDLER( prot_9a37_r )
@@ -605,6 +598,7 @@ static void neogeo_custom_memory(void)
 			!strcmp(Machine->gamedrv->name,"kof97") ||
 			!strcmp(Machine->gamedrv->name,"kof97a") ||
 			!strcmp(Machine->gamedrv->name,"kof98") ||
+			!strcmp(Machine->gamedrv->name,"kof98a") ||
 			!strcmp(Machine->gamedrv->name,"kof99") ||
 			!strcmp(Machine->gamedrv->name,"kof99e") ||
 			!strcmp(Machine->gamedrv->name,"kof99n") ||
@@ -872,3 +866,20 @@ int neogeo_memcard_create(int number)
 	return 0;
 }
 
+/******************************************************************************/
+
+static void neogeo_register_sub_savestate(void)
+{
+	data8_t* gamevector = memory_region(REGION_CPU1);
+
+	state_save_register_int   ("neogeo", 0, "sram_locked",             &sram_locked);
+	state_save_register_UINT16("neogeo", 0, "neogeo_ram16",            neogeo_ram16,             0x10000/2);
+	state_save_register_UINT8 ("neogeo", 0, "neogeo_memcard",          neogeo_memcard,           0x800);
+	state_save_register_UINT8 ("neogeo", 0, "gamevector",              gamevector,               0x80);
+	state_save_register_int   ("neogeo", 0, "mcd_action",              &mcd_action);
+	state_save_register_int   ("neogeo", 0, "mcd_number",              &mcd_number);
+	state_save_register_int   ("neogeo", 0, "memcard_status",          &memcard_status);
+	state_save_register_int   ("neogeo", 0, "memcard_number",          &memcard_number);
+	state_save_register_int   ("neogeo", 0, "memcard_manager",         &memcard_manager);
+	state_save_register_int   ("neogeo", 0, "prot_data",               &prot_data);
+}

@@ -160,26 +160,6 @@ static const int bgcols[16][8][3]=
  {0x70,0x70,0x70}}
 };
 
-static const int sprcols[16][3]=
-{
- {0x00,0x00,0x00},
- {0x00,0x00,0x00},
- {0x20,0x20,0x20},
- {0xff,0xff,0xff},
- {0xb0,0xb0,0xb0},
- {0x50,0x50,0x50},
- {0x60,0x60,0x60},
- {0xc0,0xc0,0xc0},
- {0x80,0x80,0x80},
- {0x90,0x90,0x90},
- {0xa0,0xa0,0xa0},
- {0x40,0x40,0x40},
- {0x70,0x70,0x70},
- {0xd0,0xd0,0xd0},
- {0xe0,0xe0,0xe0},
- {0xf0,0xf0,0xf0}
-};
-
 
 PALETTE_INIT(mustache)
 {
@@ -190,7 +170,7 @@ PALETTE_INIT(mustache)
 
 	for(j=0;j<16;j++)
 	 for(i=0;i<16;i++)
-	  palette_set_color(128+j*16+i,sprcols[i][0],sprcols[i][1],sprcols[i][2]);
+	  palette_set_color(128+j*16+i,i*0x10,i*0x10,i*0x10);
 }
 
 
@@ -205,10 +185,10 @@ WRITE_HANDLER (mustache_video_control_w)
 
 WRITE_HANDLER( mustache_scroll_w )
 {
-	tilemap_set_scrollx(bg_tilemap,0,data);
-	tilemap_set_scrollx(bg_tilemap,1,data);
-	tilemap_set_scrollx(bg_tilemap,2,data);
-	tilemap_set_scrollx(bg_tilemap,3,0);
+	tilemap_set_scrollx(bg_tilemap,0,0x100-data);
+	tilemap_set_scrollx(bg_tilemap,1,0x100-data);
+	tilemap_set_scrollx(bg_tilemap,2,0x100-data);
+	tilemap_set_scrollx(bg_tilemap,3,0x100);
 }
 
 WRITE_HANDLER( mustache_videoram_w )
@@ -220,6 +200,12 @@ WRITE_HANDLER( mustache_videoram_w )
 	}
 }
 
+
+static UINT32 scan_rows_flipx( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+{
+	/* logical (col,row) -> memory offset */
+	return row*num_cols + (num_cols-1) - col;
+}
 
 static void get_bg_tile_info(int tile_index)
 {
@@ -235,7 +221,7 @@ static void get_bg_tile_info(int tile_index)
 
 VIDEO_START( mustache )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
+	bg_tilemap = tilemap_create(get_bg_tile_info,scan_rows_flipx,TILEMAP_OPAQUE,8,8,64,32);
 	tilemap_set_scroll_rows(bg_tilemap,4);
 
 	return 0;
@@ -250,7 +236,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
 		int sy = 240-spriteram[offs];
-		int sx = spriteram[offs+3];
+		int sx = 240-spriteram[offs+3];
 		int code = spriteram[offs+2];
 		int attr = spriteram[offs+1];
 		int color = (attr & 0xf0)>>4;

@@ -114,7 +114,7 @@ Todo:
 \-How to handle the reads at port($6f)?
 \-In-depth game untested.
 */
-unsigned char mcu_val;
+static unsigned char mcu_val;
 
 static WRITE_HANDLER( mcu_data_w )
 {
@@ -126,7 +126,7 @@ static WRITE_HANDLER( mcu_data_w )
 	/* all bits of port ($02) except the MSB are connected to the command,
 	   in all cases it should return 0x5e.This one is here to avoid to get a big
    	   switch-case statement in the mcu_data_r function... */
-	if(mcu_val <= 0xff && mcu_val >= 0x80)
+	if(mcu_val >= 0x80)
 		mcu_val = 0x5e;
 }
 

@@ -33,4 +33,4 @@ COREOBJS = $(OBJ)/version.o $(OBJ)/mame.o \
 	$(OBJ)/x86drc.o \
 	$(sort $(DBGOBJS))
 
-TOOLS = romcmp$(EXE) hdcomp$(EXE)
+TOOLS = romcmp$(EXE) hdcomp$(EXE) xml2info$(EXE)

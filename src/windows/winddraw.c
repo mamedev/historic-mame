@@ -222,10 +222,6 @@ int win_ddraw_init(int width, int height, int depth, int attributes, const struc
 	if (win_dd_hw_stretch && verbose)
 		fprintf(stderr, "Hardware stretching supported\n");
 
-	// set contraints on window size
-	if (win_dd_hw_stretch && win_force_int_stretch)
-		win_default_constraints = blit_swapxy ? CONSTRAIN_INTEGER_WIDTH : CONSTRAIN_INTEGER_HEIGHT;
-
 	// set the cooperative level
 	// for non-window modes, we will use full screen here
 	result = IDirectDraw_SetCooperativeLevel(ddraw, win_video_window, win_window_mode ? DDSCL_NORMAL : DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE);

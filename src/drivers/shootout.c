@@ -23,9 +23,15 @@
 		Shoot Out (Japan) and fixes added by Bryan McPhail (mish@tendril.co.uk)
 
 	Todo:
-	- Add cocktail support.
+	- Add cocktail support to shootoub/shootouj.
 
 *******************************************************************************/
+
+/*
+	
+	2003-06-01	Added cocktail support to shootout
+
+*/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -61,6 +67,11 @@ static WRITE_HANDLER( sound_cpu_command_w )
 	cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
 }
 
+static WRITE_HANDLER( shootout_flipscreen_w )
+{
+	flip_screen_set(data);
+}
+
 /* stub for reading input ports as active low (makes building ports much easier) */
 static READ_HANDLER( low_input_r )
 {
@@ -86,7 +97,7 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x0fff, MWA_RAM },
 	{ 0x1000, 0x1000, shootout_bankswitch_w },
-	{ 0x1001, 0x1001, MWA_NOP }, /* Todo:  Flipscreen */
+	{ 0x1001, 0x1001, shootout_flipscreen_w },
 	{ 0x1002, 0x1002, shootout_coin_counter_w },
 	{ 0x1003, 0x1003, sound_cpu_command_w },
 	{ 0x1004, 0x17ff, MWA_RAM },
@@ -442,7 +453,7 @@ static DRIVER_INIT( shootout )
 }
 
 
-GAMEX( 1985, shootout, 0,		 shootout, shootout, shootout, ROT0, "Data East USA", "Shoot Out (US)", GAME_NO_COCKTAIL )
+GAME( 1985, shootout, 0,		 shootout, shootout, shootout, ROT0, "Data East USA", "Shoot Out (US)")
 GAMEX( 1985, shootouj, shootout, shootouj, shootout, 0, 	   ROT0, "Data East USA", "Shoot Out (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1985, shootoub, shootout, shootouj, shootout, shootout, ROT0, "bootleg", "Shoot Out (Korean Bootleg)", GAME_NO_COCKTAIL )
 

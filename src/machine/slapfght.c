@@ -20,7 +20,7 @@ int getstar_sh_intenabled;
 static int slapfight_status_state;
 extern unsigned char *getstar_e803;
 
-unsigned char mcu_val;
+static unsigned char mcu_val;
 
 /* Perform basic machine initialisation */
 

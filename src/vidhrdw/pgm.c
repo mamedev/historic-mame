@@ -6,6 +6,7 @@
 extern data16_t *pgm_mainram, *pgm_bg_videoram, *pgm_tx_videoram, *pgm_videoregs, *pgm_rowscrollram;
 static struct tilemap *pgm_tx_tilemap, *pgm_bg_tilemap;
 static UINT16 *sprite_bitmap;
+static data16_t *pgm_spritebufferram; // buffered spriteram
 
 /* Sprites - These are a pain! */
 
@@ -169,7 +170,7 @@ static void pgm_drawsprites(int priority)
 	   wwww wwwh hhhh hhhh
 	*/
 
-	const UINT16 *finish = pgm_mainram+0xa00;
+	const UINT16 *finish = pgm_spritebufferram+0xa00;
 	int y;
 
 	/* clear the sprite bitmap */
@@ -280,6 +281,8 @@ VIDEO_START( pgm )
 	tilemap_set_transparent_pen(pgm_bg_tilemap,31);
 	tilemap_set_scroll_rows(pgm_bg_tilemap,64*32);
 
+	pgm_spritebufferram = auto_malloc (0xa00);
+
 	sprite_bitmap		= auto_malloc((448+32+32) * 224 * sizeof(UINT16));
 	if (!sprite_bitmap) return 1;
 	return 0;
@@ -291,7 +294,7 @@ VIDEO_UPDATE( pgm )
 
 	fillbitmap(bitmap,get_black_pen(),&Machine->visible_area);
 
-	pgm_sprite_source = pgm_mainram;
+	pgm_sprite_source = pgm_spritebufferram;
 	pgm_drawsprites(1);
 
 	/* copy the sprite bitmap to the screen */
@@ -313,4 +316,10 @@ VIDEO_UPDATE( pgm )
 	tilemap_set_scrolly(pgm_tx_tilemap,0, pgm_videoregs[0x5000/2]);
 	tilemap_set_scrollx(pgm_tx_tilemap,0, pgm_videoregs[0x6000/2]); // Check
 	tilemap_draw(bitmap,cliprect,pgm_tx_tilemap,0,0);
+}
+
+VIDEO_EOF( pgm )
+{
+	/* first 0xa00 of main ram = sprites, seems to be buffered, DMA? */
+	memcpy(pgm_spritebufferram,pgm_mainram,0xa00);
 }

@@ -20,7 +20,7 @@ Year + Game			PCB				Notes
 
 Head Panic
 - Maybe the sprite code can be merged again, haven't checked yet.
-- Eeprom needs hooking up
+- Nude / Bikini pics don't show in-game, even when set in test mode?
 
 ---------------------------------------------------------------------------
 
@@ -131,22 +131,33 @@ WRITE16_HANDLER(hedpanic_platform_w)
 	tilemap_mark_tile_dirty(esdtilemap_1_16x16,offsets);
 }
 
-/* this is wrong */
-
 
 static READ16_HANDLER( esd_eeprom_r )
 {
-	return ((EEPROM_read_bit() & 0x01) << 15);
+	if (ACCESSING_MSB)
+	{
+		return ((EEPROM_read_bit() & 0x01) << 15);
+	}
+
+//	logerror("(0x%06x) unk EEPROM read: %04x\n", activecpu_get_pc(), mem_mask);
+	return 0;
 }
 
 static WRITE16_HANDLER( esd_eeprom_w )
 {
-// latch the bit
-//		EEPROM_write_bit(data & 0x0400);
+	if (ACCESSING_MSB)
+	{
+		// data line
+		EEPROM_write_bit((data & 0x0400) >> 6);
+
+		// clock line asserted.
+		EEPROM_set_clock_line((data & 0x0200) ? ASSERT_LINE : CLEAR_LINE );
+
 		// reset line asserted: reset.
-//		EEPROM_set_cs_line((data & 0x0100) ? CLEAR_LINE : ASSERT_LINE );
-		// clock line asserted: write latch or select next bit to read
-//		EEPROM_set_clock_line((data & 0x0200) ? ASSERT_LINE : CLEAR_LINE );
+		EEPROM_set_cs_line((data & 0x0100) ? CLEAR_LINE : ASSERT_LINE );
+	}
+
+//	logerror("(0x%06x) Unk EEPROM write: %04x %04x\n", activecpu_get_pc(), data, mem_mask);
 }
 
 
@@ -156,7 +167,7 @@ static MEMORY_READ16_START( hedpanic_readmem )
 	{ 0x800000, 0x800fff, MRA16_RAM },
 	{ 0xc00002, 0xc00003, input_port_0_word_r	},	// Inputs
 	{ 0xc00004, 0xc00005, input_port_1_word_r	},	//
-	{ 0xc00006, 0xc00007, esd_eeprom_r	},	//
+	{ 0xc00006, 0xc00007, esd_eeprom_r	},
 MEMORY_END
 
 static MEMORY_WRITE16_START( hedpanic_writemem )
@@ -177,8 +188,8 @@ static MEMORY_WRITE16_START( hedpanic_writemem )
 //	{ 0xc00000, 0xc00001, MWA16_RAM, &head_unknown3	},	// IRQ Ack
 //	{ 0xc00008, 0xc00009, MWA16_RAM, &head_unknown5		},	// Flip Screen + ? // not checked
 //	{ 0xc0000a, 0xc0000b, MWA16_RAM, &head_unknown4	},	// ? 2 not checked
-//	{ 0xc0000e, 0xc0000f, esd_eeprom_w  }, // ??
 	{ 0xc0000c, 0xc0000d, esd16_sound_command_w			},	// To Sound CPU // ok
+	{ 0xc0000e, 0xc0000f, esd_eeprom_w  },
 	{ 0xd00008, 0xd00009, hedpanic_platform_w },
 MEMORY_END
 
@@ -193,7 +204,7 @@ MEMORY_END
 
 static WRITE_HANDLER( esd16_sound_rombank_w )
 {
-	int bank = data & 0x7;
+	int bank = data & 0xf;
 	if (data != bank)	logerror("CPU #1 - PC %04X: unknown bank bits: %02X\n",activecpu_get_pc(),data);
 	if (bank >= 3)	bank += 1;
 	cpu_setbank(1, memory_region(REGION_CPU2) + 0x4000 * bank);
