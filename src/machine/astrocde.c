@@ -146,6 +146,30 @@ WRITE8_HANDLER( robby_nvram_w )
 	ram_write_enable = 0;
 }
 
+/* Simple for demndrgn */
+READ8_HANDLER( demndrgn_nvram_r )
+{
+	return nvram[offset];
+}
+
+WRITE8_HANDLER( demndrgn_nvram_w )
+{
+	if (offset < 0x200)
+	{
+		/* I can't seem to find the enable for now */
+
+		/*if (ram_write_enable) */
+		{
+			nvram[offset] = data;
+		}
+	}
+	else
+	{
+		nvram[offset] = data;
+	}
+	ram_write_enable = 0;
+}
+
 READ8_HANDLER( profpac_nvram_r )
 {
 	ram_write_enable = 0;
@@ -218,6 +242,20 @@ WRITE8_HANDLER( profpac_banksw_w )
 			cpu_setbank(1, memory_region(REGION_CPU1) + 0x14000);
 			cpu_setbank(2, memory_region(REGION_CPU1) + 0x18000);
 		}
+		else if (data == 0x40)
+		{
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, MRA8_BANK1);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MRA8_BANK2);
+			cpu_setbank(1, memory_region(REGION_CPU1) + 0x1c000);
+			cpu_setbank(2, memory_region(REGION_CPU1) + 0x20000);
+		}
+		else if (data == 0x60)
+		{
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, MRA8_BANK1);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MRA8_BANK2);
+			cpu_setbank(1, memory_region(REGION_CPU1) + 0x24000);
+			cpu_setbank(2, memory_region(REGION_CPU1) + 0x28000);
+		}
 		else
 		{
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, profpac_blank_r);
@@ -239,5 +277,66 @@ READ8_HANDLER( spacezap_io_r )
 WRITE8_HANDLER( ebases_io_w )
 {
 	coin_counter_w(0,data&1);
+}
+
+static UINT8 demndrgn_ad_select = 0;
+
+READ8_HANDLER( demndrgn_io_r )
+{
+	if(offset & 0x0100) coin_counter_w(0,1); else coin_counter_w(0,0);
+	if(offset & 0x0200) coin_counter_w(1,1); else coin_counter_w(1,0);
+	if(offset & 0x0400) set_led_status(0,1); else set_led_status(0,0);
+	if(offset & 0x0800) set_led_status(1,1); else set_led_status(1,0);
+	demndrgn_ad_select = offset >> 12;
+
+	if(demndrgn_ad_select > 1)
+	{
+		logerror("demndrgn_ad_select = %d\n",demndrgn_ad_select);
+	}
+	return 0;
+}
+
+READ8_HANDLER( demndrgn_move_r )
+{
+	if (demndrgn_ad_select == 0)
+		return input_port_2_r(0) ^ 0x80;
+	else if (demndrgn_ad_select == 1)
+		return input_port_3_r(0) ^ 0x80;
+	return 0;
+}
+
+/* We use a digital joystick to fake the analog input   */
+/* This is ok, because the original controler did this  */
+
+READ8_HANDLER( demndrgn_fire_x_r )
+{
+	UINT8 value = input_port_1_r(0);
+
+	if (value & 0x04)
+		return 0xff;
+
+	if (value & 0x08)
+		return 0x00;
+
+	return 0x80;
+}
+
+READ8_HANDLER( demndrgn_fire_y_r )
+{
+	UINT8 value = input_port_1_r(0);
+
+	if (value & 0x01)
+		return 0xff;
+
+	if (value & 0x02)
+		return 0x00;
+
+	return 0x80;
+}
+
+
+WRITE8_HANDLER( demndrgn_sound_w )
+{
+	logerror("Trigger sound sample 0x%02x\n",data);
 }
 

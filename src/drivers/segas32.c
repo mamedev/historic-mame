@@ -470,6 +470,7 @@ static WRITE16_HANDLER( segas32_io_w )
  ******************************************************************************/
 
 static ADDRESS_MAP_START( segas32_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
 	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM) // Low Rom (0)
 	AM_RANGE(0x100000, 0x1fffff) AM_READ(MRA16_BANK1) // Data Rom (1)
 	AM_RANGE(0x200000, 0x23ffff) AM_READ(MRA16_RAM) // work RAM
@@ -486,6 +487,7 @@ static ADDRESS_MAP_START( segas32_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( segas32_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
 	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x100000, 0x1fffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x200000, 0x23ffff) AM_WRITE(MWA16_RAM) AM_BASE(&segas32_workram)
@@ -865,7 +867,7 @@ static MACHINE_DRIVER_START( segas32 )
 	MDRV_SOUND_ADD(YM3438, 8000000)
 	MDRV_SOUND_ROUTE(0, "left", 0.40)
 	MDRV_SOUND_ROUTE(1, "right", 0.40)
-	
+
 	MDRV_SOUND_ADD(RF5C68, 9000000) /* pitch matches real board, real speed is 8 MHz */
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.55)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.55)
@@ -2814,6 +2816,19 @@ static DRIVER_INIT ( arescue )
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x800000, 0x8fffff, 0, 0, arescue_unknown_r); // protection? communication?
 }
 
+static READ16_HANDLER( f1en_unknown_read )
+{
+	return 0;
+}
+
+static DRIVER_INIT ( f1en )
+{
+	init_segas32();
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x810000, 0x810003, 0, 0, f1en_unknown_read);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x818000, 0x818003, 0, 0, f1en_unknown_read);
+}
+
+
 /******************************************************************************
  ******************************************************************************
   Game Definitions
@@ -2828,7 +2843,7 @@ GAMEX(1992, brival,   0,        segas32_hi, brival,  brival,    ROT0, "Sega"  , 
 GAMEX(1992, darkedge, 0,        segas32_hi, brival,  segas32,   ROT0, "Sega"  , "Dark Edge (World)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
 GAMEX(1992, darkedgj, darkedge, segas32_hi, brival,  segas32,   ROT0, "Sega"  , "Dark Edge (Japan)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
 GAMEX(1994, dbzvrvs,  0,        segas32_hi, svf,	 segas32,   ROT0, "Sega / Banpresto", "Dragon Ball Z V.R.V.S.", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)
-GAMEX(1991, f1en,     0,        segas32,    f1en,    segas32,   ROT0, "Sega"  , "F1 Exhaust Note", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, f1en,     0,        segas32,    f1en,    f1en,      ROT0, "Sega"  , "F1 Exhaust Note", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1993, f1lap,    0,        segas32,    f1en,    segas32,   ROT0, "Sega"  , "F1 Super Lap", GAME_NOT_WORKING )
 GAMEX(1992, ga2,      0,        segas32_ga2,ga2,     ga2,       ROT0, "Sega"  , "Golden Axe: The Revenge of Death Adder (World)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1992, ga2u,     ga2,      segas32_ga2,ga2u,    ga2,       ROT0, "Sega"  , "Golden Axe: The Revenge of Death Adder (US)", GAME_IMPERFECT_GRAPHICS )

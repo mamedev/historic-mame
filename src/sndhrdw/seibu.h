@@ -161,6 +161,9 @@ static struct YM2203interface ym2203_interface =					\
 	MDRV_SOUND_ADD(YM2203, freq)									\
 	MDRV_SOUND_CONFIG(ym2203_interface)								\
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)						\
+																	\
+	MDRV_SOUND_ADD(YM2203, freq)									\
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)						\
 
 #define SEIBU_SOUND_SYSTEM_ADPCM_INTERFACE							\
 	MDRV_SOUND_ADD(MSM5205, 384000) 								\

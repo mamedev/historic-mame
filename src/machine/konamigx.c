@@ -632,298 +632,307 @@ INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const struct GfxElemen
 	dst_ptr += dst_y * dst_pitch + dst_x + dst_w;
 	dst_w = -dst_w;
 
-	if (!nozoom) goto DRAWZOOM;
-
-	src_ptr = src_base + (src_fby<<4) + src_fbx;
-	src_fdy = src_fdx * dst_w + src_pitch;
-	ecx = dst_w;
-
-	if (zcode < 0) // no shadow and z-buffering
+	if (!nozoom)
 	{
-		do {
-			do {
-				eax = *src_ptr;
-				src_ptr += src_fdx;
-				if (!eax || eax >= shdpen) continue;
-				dst_ptr[ecx] = pal_base[eax];
-			}
-			while (++ecx);
+		ecx = src_fby;   src_fby += src_fdy;
+		ecx >>= FP;      src_fx = src_fbx;
+		src_x = src_fbx; src_fx += src_fdx;
+		ecx <<= 4;       src_ptr = src_base;
+		src_x >>= FP;    src_ptr += ecx;
+		ecx = dst_w;
 
-			src_ptr += src_fdy;
-			dst_ptr += GX_BMPPW;
-			ecx = dst_w;
+		if (zcode < 0) // no shadow and z-buffering
+		{
+			do {
+				do {
+					eax = src_ptr[src_x];
+					src_x = src_fx;
+					src_fx += src_fdx;
+					src_x >>= FP;
+					if (!eax || eax >= shdpen) continue;
+					dst_ptr [ecx] = pal_base[eax];
+				}
+				while (++ecx);
+
+				ecx = src_fby;   src_fby += src_fdy;
+				dst_ptr += GX_BMPPW;
+				ecx >>= FP;      src_fx = src_fbx;
+				src_x = src_fbx; src_fx += src_fdx;
+				ecx <<= 4;       src_ptr = src_base;
+				src_x >>= FP;    src_ptr += ecx;
+				ecx = dst_w;
+			}
+			while (--dst_h);
 		}
-		while (--dst_h);
-	}
-	else if (drawmode == 0) // all pens solid
+		else 
+		{
+			switch (drawmode)
+			{
+				case 0:	// all pens solid
+					do {
+						do {
+							eax = src_ptr[src_x];
+							src_x = src_fx;
+							src_fx += src_fdx;
+							src_x >>= FP;
+							if (!eax || ozbuf_ptr[ecx] < z8) continue;
+							eax = pal_base[eax];
+							ozbuf_ptr[ecx] = z8;
+							dst_ptr [ecx] = eax;
+						}
+						while (++ecx);
+
+						ecx = src_fby;   src_fby += src_fdy;
+						ozbuf_ptr += GX_ZBUFW;
+						dst_ptr += GX_BMPPW;
+						ecx >>= FP;      src_fx = src_fbx;
+						src_x = src_fbx; src_fx += src_fdx;
+						ecx <<= 4;       src_ptr = src_base;
+						src_x >>= FP;    src_ptr += ecx;
+						ecx = dst_w;
+					}
+					while (--dst_h);
+					break;
+
+				case 1: // solid pens only
+					do {
+						do {
+							eax = src_ptr[src_x];
+							src_x = src_fx;
+							src_fx += src_fdx;
+							src_x >>= FP;
+							if (!eax || eax >= shdpen || ozbuf_ptr[ecx] < z8) continue;
+							eax = pal_base[eax];
+							ozbuf_ptr[ecx] = z8;
+							dst_ptr [ecx] = eax;
+						}
+						while (++ecx);
+
+						ecx = src_fby;   src_fby += src_fdy;
+						ozbuf_ptr += GX_ZBUFW;
+						dst_ptr += GX_BMPPW;
+						ecx >>= FP;      src_fx = src_fbx;
+						src_x = src_fbx; src_fx += src_fdx;
+						ecx <<= 4;       src_ptr = src_base;
+						src_x >>= FP;    src_ptr += ecx;
+						ecx = dst_w;
+					}
+					while (--dst_h);
+					break;
+
+				case 2: // all pens solid with alpha blending
+					do {
+						do {
+							eax = src_ptr[src_x];
+							src_x = src_fx;
+							src_fx += src_fdx;
+							src_x >>= FP;
+							if (!eax || ozbuf_ptr[ecx] < z8) continue;
+							ozbuf_ptr[ecx] = z8;
+
+							BLEND32_MACRO
+						}
+						while (++ecx);
+
+						ecx = src_fby;   src_fby += src_fdy;
+						ozbuf_ptr += GX_ZBUFW;
+						dst_ptr += GX_BMPPW;
+						ecx >>= FP;      src_fx = src_fbx;
+						src_x = src_fbx; src_fx += src_fdx;
+						ecx <<= 4;       src_ptr = src_base;
+						src_x >>= FP;    src_ptr += ecx;
+						ecx = dst_w;
+					}
+					while (--dst_h);
+					break;
+
+				case 3: // solid pens only with alpha blending
+					do {
+						do {
+							eax = src_ptr[src_x];
+							src_x = src_fx;
+							src_fx += src_fdx;
+							src_x >>= FP;
+							if (!eax || eax >= shdpen || ozbuf_ptr[ecx] < z8) continue;
+							ozbuf_ptr[ecx] = z8;
+
+							BLEND32_MACRO
+						}
+						while (++ecx);
+
+						ecx = src_fby;   src_fby += src_fdy;
+						ozbuf_ptr += GX_ZBUFW;
+						dst_ptr += GX_BMPPW;
+						ecx >>= FP;      src_fx = src_fbx;
+						src_x = src_fbx; src_fx += src_fdx;
+						ecx <<= 4;       src_ptr = src_base;
+						src_x >>= FP;    src_ptr += ecx;
+						ecx = dst_w;
+					}
+					while (--dst_h);
+					break;
+			
+				case 4: // shadow pens only
+					do {
+						do {
+							eax = src_ptr[src_x];
+							src_x = src_fx;
+							src_fx += src_fdx;
+							src_x >>= FP;
+							if (eax < shdpen || szbuf_ptr[ecx*2] < z8 || szbuf_ptr[ecx*2+1] <= p8) continue;
+							eax = dst_ptr[ecx];
+							szbuf_ptr[ecx*2] = z8;
+							szbuf_ptr[ecx*2+1] = p8;
+							eax = (eax>>9&0x7c00) | (eax>>6&0x03e0) | (eax>>3&0x001f);
+							dst_ptr[ecx] = shd_base[eax];
+						}
+						while (++ecx);
+
+						ecx = src_fby;   src_fby += src_fdy;
+						szbuf_ptr += (GX_ZBUFW<<1);
+						dst_ptr += GX_BMPPW;
+						ecx >>= FP;      src_fx = src_fbx;
+						src_x = src_fbx; src_fx += src_fdx;
+						ecx <<= 4;       src_ptr = src_base;
+						src_x >>= FP;    src_ptr += ecx;
+						ecx = dst_w;
+					}
+					while (--dst_h);
+					break;
+			}	// switch (drawmode)
+		}	// if (zcode < 0)
+	}	// if (!nozoom)
+	else
 	{
-		do {
+		src_ptr = src_base + (src_fby<<4) + src_fbx;
+		src_fdy = src_fdx * dst_w + src_pitch;
+		ecx = dst_w;
+
+		if (zcode < 0) // no shadow and z-buffering
+		{
 			do {
-				eax = *src_ptr;
-				src_ptr += src_fdx;
-				if (!eax || ozbuf_ptr[ecx] < z8) continue;
-				eax = pal_base[eax];
-				ozbuf_ptr[ecx] = z8;
-				dst_ptr[ecx] = eax;
+				do {
+					eax = *src_ptr;
+					src_ptr += src_fdx;
+					if (!eax || eax >= shdpen) continue;
+					dst_ptr[ecx] = pal_base[eax];
+				}
+				while (++ecx);
+
+				src_ptr += src_fdy;
+				dst_ptr += GX_BMPPW;
+				ecx = dst_w;
 			}
-			while (++ecx);
-
-			src_ptr += src_fdy;
-			ozbuf_ptr += GX_ZBUFW;
-			dst_ptr += GX_BMPPW;
-			ecx = dst_w;
+			while (--dst_h);
 		}
-		while (--dst_h);
-	}
-	else if (drawmode == 1) // solid pens only
-	{
-		do {
-			do {
-				eax = *src_ptr;
-				src_ptr += src_fdx;
-				if (!eax || eax >= shdpen || ozbuf_ptr[ecx] < z8) continue;
-				eax = pal_base[eax];
-				ozbuf_ptr[ecx] = z8;
-				dst_ptr[ecx] = eax;
+		else 
+		{
+			switch (drawmode)
+			{
+				case 0: // all pens solid
+					do {
+						do {
+							eax = *src_ptr;
+							src_ptr += src_fdx;
+							if (!eax || ozbuf_ptr[ecx] < z8) continue;
+							eax = pal_base[eax];
+							ozbuf_ptr[ecx] = z8;
+							dst_ptr[ecx] = eax;
+						}
+						while (++ecx);
+
+						src_ptr += src_fdy;
+						ozbuf_ptr += GX_ZBUFW;
+						dst_ptr += GX_BMPPW;
+						ecx = dst_w;
+					}
+					while (--dst_h);
+					break;
+
+				case 1:  // solid pens only
+					do {
+						do {
+							eax = *src_ptr;
+							src_ptr += src_fdx;
+							if (!eax || eax >= shdpen || ozbuf_ptr[ecx] < z8) continue;
+							eax = pal_base[eax];
+							ozbuf_ptr[ecx] = z8;
+							dst_ptr[ecx] = eax;
+						}
+						while (++ecx);
+
+						src_ptr += src_fdy;
+						ozbuf_ptr += GX_ZBUFW;
+						dst_ptr += GX_BMPPW;
+						ecx = dst_w;
+					}
+					while (--dst_h);
+					break;
+
+				case 2: // all pens solid with alpha blending
+					do {
+						do {
+							eax = *src_ptr;
+							src_ptr += src_fdx;
+							if (!eax || ozbuf_ptr[ecx] < z8) continue;
+							ozbuf_ptr[ecx] = z8;
+
+							BLEND32_MACRO
+						}
+						while (++ecx);
+
+						src_ptr += src_fdy;
+						ozbuf_ptr += GX_ZBUFW;
+						dst_ptr += GX_BMPPW;
+						ecx = dst_w;
+					}
+					while (--dst_h);
+					break;
+
+				case 3: // solid pens only with alpha blending
+					do {
+						do {
+							eax = *src_ptr;
+							src_ptr += src_fdx;
+							if (!eax || eax >= shdpen || ozbuf_ptr[ecx] < z8) continue;
+							ozbuf_ptr[ecx] = z8;
+
+							BLEND32_MACRO
+						}
+						while (++ecx);
+
+						src_ptr += src_fdy;
+						ozbuf_ptr += GX_ZBUFW;
+						dst_ptr += GX_BMPPW;
+						ecx = dst_w;
+					}
+					while (--dst_h);
+					break;
+
+				case 4: // shadow pens only
+					do {
+						do {
+							eax = *src_ptr;
+							src_ptr += src_fdx;
+							if (eax < shdpen || szbuf_ptr[ecx*2] < z8 || szbuf_ptr[ecx*2+1] <= p8) continue;
+							eax = dst_ptr[ecx];
+							szbuf_ptr[ecx*2] = z8;
+							szbuf_ptr[ecx*2+1] = p8;
+							eax = (eax>>9&0x7c00) | (eax>>6&0x03e0) | (eax>>3&0x001f);
+							dst_ptr[ecx] = shd_base[eax];
+						}
+						while (++ecx);
+
+						src_ptr += src_fdy;
+						szbuf_ptr += (GX_ZBUFW<<1);
+						dst_ptr += GX_BMPPW;
+						ecx = dst_w;
+					}
+					while (--dst_h);
+					break;
 			}
-			while (++ecx);
-
-			src_ptr += src_fdy;
-			ozbuf_ptr += GX_ZBUFW;
-			dst_ptr += GX_BMPPW;
-			ecx = dst_w;
 		}
-		while (--dst_h);
 	}
-	else if (drawmode == 2) // all pens solid with alpha blending
-	{
-		do {
-			do {
-				eax = *src_ptr;
-				src_ptr += src_fdx;
-				if (!eax || ozbuf_ptr[ecx] < z8) continue;
-				ozbuf_ptr[ecx] = z8;
-
-				BLEND32_MACRO
-			}
-			while (++ecx);
-
-			src_ptr += src_fdy;
-			ozbuf_ptr += GX_ZBUFW;
-			dst_ptr += GX_BMPPW;
-			ecx = dst_w;
-		}
-		while (--dst_h);
-	}
-	else if (drawmode == 3) // solid pens only with alpha blending
-	{
-		do {
-			do {
-				eax = *src_ptr;
-				src_ptr += src_fdx;
-				if (!eax || eax >= shdpen || ozbuf_ptr[ecx] < z8) continue;
-				ozbuf_ptr[ecx] = z8;
-
-				BLEND32_MACRO
-			}
-			while (++ecx);
-
-			src_ptr += src_fdy;
-			ozbuf_ptr += GX_ZBUFW;
-			dst_ptr += GX_BMPPW;
-			ecx = dst_w;
-		}
-		while (--dst_h);
-	}
-	else if (drawmode == 4) // shadow pens only
-	{
-		do {
-			do {
-				eax = *src_ptr;
-				src_ptr += src_fdx;
-				if (eax < shdpen || szbuf_ptr[ecx*2] < z8 || szbuf_ptr[ecx*2+1] <= p8) continue;
-				eax = dst_ptr[ecx];
-				szbuf_ptr[ecx*2] = z8;
-				szbuf_ptr[ecx*2+1] = p8;
-				eax = (eax>>9&0x7c00) | (eax>>6&0x03e0) | (eax>>3&0x001f);
-				dst_ptr[ecx] = shd_base[eax];
-			}
-			while (++ecx);
-
-			src_ptr += src_fdy;
-			szbuf_ptr += (GX_ZBUFW<<1);
-			dst_ptr += GX_BMPPW;
-			ecx = dst_w;
-		}
-		while (--dst_h);
-	}
-	return;
-
-	DRAWZOOM:
-
-	ecx = src_fby;   src_fby += src_fdy;
-	ecx >>= FP;      src_fx = src_fbx;
-	src_x = src_fbx; src_fx += src_fdx;
-	ecx <<= 4;       src_ptr = src_base;
-	src_x >>= FP;    src_ptr += ecx;
-	ecx = dst_w;
-
-	if (zcode < 0) // no shadow and z-buffering
-	{
-		do {
-			do {
-				eax = src_ptr[src_x];
-				src_x = src_fx;
-				src_fx += src_fdx;
-				src_x >>= FP;
-				if (!eax || eax >= shdpen) continue;
-				dst_ptr [ecx] = pal_base[eax];
-			}
-			while (++ecx);
-
-			ecx = src_fby;   src_fby += src_fdy;
-			dst_ptr += GX_BMPPW;
-			ecx >>= FP;      src_fx = src_fbx;
-			src_x = src_fbx; src_fx += src_fdx;
-			ecx <<= 4;       src_ptr = src_base;
-			src_x >>= FP;    src_ptr += ecx;
-			ecx = dst_w;
-		}
-		while (--dst_h);
-	}
-	else if (drawmode == 0) // all pens solid
-	{
-		do {
-			do {
-				eax = src_ptr[src_x];
-				src_x = src_fx;
-				src_fx += src_fdx;
-				src_x >>= FP;
-				if (!eax || ozbuf_ptr[ecx] < z8) continue;
-				eax = pal_base[eax];
-				ozbuf_ptr[ecx] = z8;
-				dst_ptr [ecx] = eax;
-			}
-			while (++ecx);
-
-			ecx = src_fby;   src_fby += src_fdy;
-			ozbuf_ptr += GX_ZBUFW;
-			dst_ptr += GX_BMPPW;
-			ecx >>= FP;      src_fx = src_fbx;
-			src_x = src_fbx; src_fx += src_fdx;
-			ecx <<= 4;       src_ptr = src_base;
-			src_x >>= FP;    src_ptr += ecx;
-			ecx = dst_w;
-		}
-		while (--dst_h);
-	}
-	else if (drawmode == 1) // solid pens only
-	{
-		do {
-			do {
-				eax = src_ptr[src_x];
-				src_x = src_fx;
-				src_fx += src_fdx;
-				src_x >>= FP;
-				if (!eax || eax >= shdpen || ozbuf_ptr[ecx] < z8) continue;
-				eax = pal_base[eax];
-				ozbuf_ptr[ecx] = z8;
-				dst_ptr [ecx] = eax;
-			}
-			while (++ecx);
-
-			ecx = src_fby;   src_fby += src_fdy;
-			ozbuf_ptr += GX_ZBUFW;
-			dst_ptr += GX_BMPPW;
-			ecx >>= FP;      src_fx = src_fbx;
-			src_x = src_fbx; src_fx += src_fdx;
-			ecx <<= 4;       src_ptr = src_base;
-			src_x >>= FP;    src_ptr += ecx;
-			ecx = dst_w;
-		}
-		while (--dst_h);
-	}
-	else if (drawmode == 2) // all pens solid with alpha blending
-	{
-		do {
-			do {
-				eax = src_ptr[src_x];
-				src_x = src_fx;
-				src_fx += src_fdx;
-				src_x >>= FP;
-				if (!eax || ozbuf_ptr[ecx] < z8) continue;
-				ozbuf_ptr[ecx] = z8;
-
-				BLEND32_MACRO
-			}
-			while (++ecx);
-
-			ecx = src_fby;   src_fby += src_fdy;
-			ozbuf_ptr += GX_ZBUFW;
-			dst_ptr += GX_BMPPW;
-			ecx >>= FP;      src_fx = src_fbx;
-			src_x = src_fbx; src_fx += src_fdx;
-			ecx <<= 4;       src_ptr = src_base;
-			src_x >>= FP;    src_ptr += ecx;
-			ecx = dst_w;
-		}
-		while (--dst_h);
-	}
-	else if (drawmode == 3) // solid pens only with alpha blending
-	{
-		do {
-			do {
-				eax = src_ptr[src_x];
-				src_x = src_fx;
-				src_fx += src_fdx;
-				src_x >>= FP;
-				if (!eax || eax >= shdpen || ozbuf_ptr[ecx] < z8) continue;
-				ozbuf_ptr[ecx] = z8;
-
-				BLEND32_MACRO
-			}
-			while (++ecx);
-
-			ecx = src_fby;   src_fby += src_fdy;
-			ozbuf_ptr += GX_ZBUFW;
-			dst_ptr += GX_BMPPW;
-			ecx >>= FP;      src_fx = src_fbx;
-			src_x = src_fbx; src_fx += src_fdx;
-			ecx <<= 4;       src_ptr = src_base;
-			src_x >>= FP;    src_ptr += ecx;
-			ecx = dst_w;
-		}
-		while (--dst_h);
-	}
-	else if (drawmode == 4) // shadow pens only
-	{
-		do {
-			do {
-				eax = src_ptr[src_x];
-				src_x = src_fx;
-				src_fx += src_fdx;
-				src_x >>= FP;
-				if (eax < shdpen || szbuf_ptr[ecx*2] < z8 || szbuf_ptr[ecx*2+1] <= p8) continue;
-				eax = dst_ptr[ecx];
-				szbuf_ptr[ecx*2] = z8;
-				szbuf_ptr[ecx*2+1] = p8;
-				eax = (eax>>9&0x7c00) | (eax>>6&0x03e0) | (eax>>3&0x001f);
-				dst_ptr[ecx] = shd_base[eax];
-			}
-			while (++ecx);
-
-			ecx = src_fby;   src_fby += src_fdy;
-			szbuf_ptr += (GX_ZBUFW<<1);
-			dst_ptr += GX_BMPPW;
-			ecx >>= FP;      src_fx = src_fbx;
-			src_x = src_fbx; src_fx += src_fdx;
-			ecx <<= 4;       src_ptr = src_base;
-			src_x >>= FP;    src_ptr += ecx;
-			ecx = dst_w;
-		}
-		while (--dst_h);
-	}
-
 #undef FP
 #undef FPONE
 #undef FPHALF

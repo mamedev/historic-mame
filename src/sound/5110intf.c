@@ -55,10 +55,10 @@ static void *tms5110_start(int sndindex, int clock, const void *config)
 	struct tms5110_info *info;
 	
 	info = auto_malloc(sizeof(*info));
+	memset(info, 0, sizeof(*info));
 	info->intf = config ? config : &dummy;
 	
 	info->chip = tms5110_create();
-	memset(info, 0, sizeof(*info));
 	if (!info->chip)
 		return NULL;
 	sound_register_token(info);

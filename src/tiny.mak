@@ -1,5 +1,4 @@
 # a tiny compile is without Neogeo games
-COREDEFS += -DTINY_COMPILE=1
 COREDEFS += -DTINY_NAME="driver_puckman,driver_galaxian,driver_phoenix"
 COREDEFS += -DTINY_POINTER="&driver_puckman,&driver_galaxian,&driver_phoenix"
 
@@ -51,6 +50,8 @@ OBJS = \
 	$(OBJ)/vidhrdw/phoenix.o $(OBJ)/sndhrdw/phoenix.o $(OBJ)/drivers/phoenix.o \
 	$(OBJ)/sndhrdw/pleiads.o \
 	$(OBJ)/vidhrdw/ladybug.o $(OBJ)/drivers/ladybug.o \
+	$(OBJ)/machine/8255ppi.o $(OBJ)/machine/7474.o \
+	$(OBJ)/vidhrdw/res_net.o \
 
 # MAME specific core objs
-COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o
+COREOBJS += $(OBJ)/tiny.o $(OBJ)/cheat.o

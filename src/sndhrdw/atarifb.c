@@ -59,7 +59,7 @@ const struct discrete_op_amp_filt_info atarifb_crowd_filt =
 
 const struct discrete_mixer_desc atarifb_mixer =
 {
-	DISC_MIXER_IS_OP_AMP, 3,
+	DISC_MIXER_IS_OP_AMP,
 	{RES_K(47), RES_K(47), RES_K(220)},	// r71, r70, r73
 	{0},			// no rNodes
 	{CAP_U(.01), CAP_U(.01), CAP_U(.01)},	// c53, c52, c51
@@ -149,7 +149,7 @@ const struct discrete_op_amp_filt_info abaseb_crowd_filt =
 
 const struct discrete_mixer_desc abaseb_mixer =
 {
-	DISC_MIXER_IS_OP_AMP, 3,
+	DISC_MIXER_IS_OP_AMP,
 	{RES_K(330), RES_K(220), RES_K(220)},	// r71, r70, r73
 	{0},				// no rNodes
 	{CAP_U(.01), CAP_U(.01), CAP_U(.01)},	// c53, c52, c51

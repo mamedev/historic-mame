@@ -7,6 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 #include "fm.h"
 #include "2151intf.h"
 #include "ym2151.h"
@@ -30,6 +31,22 @@ static void ym2151_update(void *param, stream_sample_t **inputs, stream_sample_t
 }
 
 
+#ifdef _STATE_H
+static void ym2151_postload(void)
+{
+	int num;
+
+	for (num=0; num < MAX_SOUND; num++)
+	{
+		struct ym2151_info *info = sndti_token(SOUND_YM2151, num);
+
+		if (info)
+			YM2151Postload(info->chip);
+	}
+}
+#endif
+
+
 static void *ym2151_start(int sndindex, int clock, const void *config)
 {
 	static const struct YM2151interface dummy = { 0 };
@@ -50,6 +67,12 @@ static void *ym2151_start(int sndindex, int clock, const void *config)
 	info->stream = stream_create(0,2,rate,info,ym2151_update);
 
 	info->chip = YM2151Init(sndindex,clock,rate);
+
+#ifdef _STATE_H
+	if (sndindex == 0)
+		state_save_register_func_postload(ym2151_postload);
+#endif
+
 	if (info->chip != 0)
 	{
 		YM2151SetIrqHandler(info->chip,info->intf->irqhandler);

@@ -334,7 +334,7 @@ static MACHINE_DRIVER_START( simpsons )
 	MDRV_SOUND_ROUTE(1, "left", 0.0)
 	MDRV_SOUND_ROUTE(1, "right", 0.0)
 
-	MDRV_SOUND_ADD(K053260, 4000000)
+	MDRV_SOUND_ADD(K053260, 3579545) /* measured on real pcb */
 	MDRV_SOUND_CONFIG(k053260_interface)
 	MDRV_SOUND_ROUTE(0, "left", 0.75)
 	MDRV_SOUND_ROUTE(1, "right", 0.75)

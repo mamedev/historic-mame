@@ -31,7 +31,9 @@ struct dss_adsr_context
 struct dss_counter_context
 {
 	int		clock_type;
+	int		is_7492;
 	int		last;		// Last clock state
+	int		count;		// current count
 	double	t_sample;	// discrete clock rate in seconds
 	double	t_clock;	// fixed counter clock in seconds
 	double	t_left;		// time unused during last sample in seconds
@@ -147,11 +149,20 @@ struct dss_trianglewave_context
 #define DSS_COUNTER__INIT		(*(node->input[5]))
 #define DSS_COUNTER__CLOCK_TYPE	(*(node->input[6]))
 
+const int disc_7492_count[6] = {0x00, 0x01, 0x02, 0x04, 0x05, 0x06};
+
 void dss_counter_step(struct node_description *node)
 {
 	struct dss_counter_context *context = node->context;
 	double cycles;
 	int clock, count = 0;
+	int max = DSS_COUNTER__MAX;
+
+	if (max < 0)
+	{
+		/* So we don't loop infinitely */
+		max = 0;
+	}
 
 	if (context->clock_type == DISC_CLK_IS_FREQ)
 	{
@@ -164,7 +175,8 @@ void dss_counter_step(struct node_description *node)
 	/* If reset enabled then set output to the reset value. */
 	if (DSS_COUNTER__RESET)
 	{
-		node->output = DSS_COUNTER__INIT;
+		context->count = DSS_COUNTER__INIT;
+		node->output = context->is_7492 ? disc_7492_count[context->count] : context->count;
 		return;
 	}
 
@@ -199,10 +211,12 @@ void dss_counter_step(struct node_description *node)
 
 		for (clock=0; clock<count; clock++)
 		{
-			node->output += DSS_COUNTER__DIR ? 1 : -1; // up/down
-			if (node->output < 0) node->output = DSS_COUNTER__MAX;
-			if (node->output > DSS_COUNTER__MAX) node->output = 0;
+			context->count += DSS_COUNTER__DIR ? 1 : -1; // up/down
+			if (context->count < 0) context->count = max;
+			if (context->count > max) context->count = 0;
 		}
+
+		node->output = context->is_7492 ? disc_7492_count[context->count] : context->count;
 	}
 }
 
@@ -211,13 +225,21 @@ void dss_counter_reset(struct node_description *node)
 	struct dss_counter_context *context = node->context;
 
 	context->clock_type = (int)DSS_COUNTER__CLOCK_TYPE;
+	if (context->clock_type == DISC_COUNTER_IS_7492)
+	{
+		context->clock_type = DISC_CLK_ON_F_EDGE;
+		context->is_7492 = 1;
+	}
+	else
+		context->is_7492 = 0;
 	if ((context->clock_type < DISC_CLK_ON_F_EDGE) || (context->clock_type > DISC_CLK_IS_FREQ))
 		discrete_log("Invalid clock type passed in NODE_%d\n", node->node - NODE_START);
-	context->last = (DSS_COUNTER__CLOCK != 0);
+	context->last = 0;
 	context->t_sample = 1.0 / Machine->sample_rate;
 	if (context->clock_type == DISC_CLK_IS_FREQ) context->t_clock = 1.0 / DSS_COUNTER__CLOCK;
 	context->t_left = 0;
-	node->output = DSS_COUNTER__INIT; /* Output starts at reset value */
+	context->count = DSS_COUNTER__INIT; /* count starts at reset value */
+	node->output = DSS_COUNTER__INIT;
 }
 
 

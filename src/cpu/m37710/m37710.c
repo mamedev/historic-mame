@@ -1169,7 +1169,7 @@ void m37710_get_info(UINT32 state, union cpuinfo *info)
 																m37710i_cpu.flag_d				|
 																m37710i_cpu.flag_i				|
 																((!m37710i_cpu.flag_z)<<1)		|
-																((m37710i_cpu.flag_c>>8)&1)) | (m37710i_cpu.ipl<<8); break;
+																((m37710i_cpu.flag_c>>8)&1) | (m37710i_cpu.ipl<<8)); break;
 		case CPUINFO_STR_REGISTER + M37710_E:			sprintf(info->s = cpuintrf_temp_str(), "E:%d", m37710i_cpu.flag_e); break;
 		case CPUINFO_STR_REGISTER + M37710_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%04X", m37710i_cpu.a | m37710i_cpu.b); break;
 		case CPUINFO_STR_REGISTER + M37710_B:			sprintf(info->s = cpuintrf_temp_str(), "B:%04X", m37710i_cpu.ba | m37710i_cpu.bb); break;

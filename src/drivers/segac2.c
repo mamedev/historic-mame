@@ -3659,7 +3659,31 @@ ROM_START( tantrbl ) /* Tant-R (Puzzle & Action) (Bootleg)  (c)1992 Sega */
 ROM_END
 
 
-ROM_START( puyopuyo	) /* Puyo Puyo  (c)1992 Sega / Compile */
+ROM_START( puyo ) /* Puyo Puyo  (c)1992 Sega / Compile */
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "epr-15198.32", 0x000000, 0x020000, CRC(9610d80c) SHA1(1ffad09d3369c1942d4db611c41bae47d08c7564) )
+	ROM_LOAD16_BYTE( "epr-15197.31", 0x000001, 0x020000, CRC(7b1f3229) SHA1(13d0905291e748973d7d17eb404a286ffb94de03) )
+	/* 0x040000 - 0x100000 Empty */
+	ROM_LOAD16_BYTE( "epr-15200.34", 0x100000, 0x020000, CRC(0a0692e5) SHA1(d4ecc5b1791a91e3b33a5d4d0dd305f1623483d9) )
+	ROM_LOAD16_BYTE( "epr-15199.33", 0x100001, 0x020000, CRC(353109b8) SHA1(92440987add3124b758e7eaa77a3a6f54ca61bb8) )
+
+	ROM_REGION( 0x020000, REGION_SOUND1, 0 )
+	ROM_LOAD( "epr-15196.4", 0x000000, 0x020000, CRC(79112b3b) SHA1(fc3a202e1e2ff39950d4af689b7fcca86c301805) )
+ROM_END
+
+ROM_START( puyobl ) /* Puyo Puyo  (c)1992 Sega / Compile  Bootleg */
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "puyopuyb.4bo", 0x000000, 0x020000, CRC(89ea4d33) SHA1(bef9d011524e71c072d309f6da3c2ebc38878e0e) )
+	ROM_LOAD16_BYTE( "puyopuyb.3bo", 0x000001, 0x020000, CRC(c002e545) SHA1(7a59ac764d60e9955830d9617b0bd122b44e7b2f) )
+	/* 0x040000 - 0x100000 Empty */
+	ROM_LOAD16_BYTE( "puyopuyb.6bo", 0x100000, 0x020000, CRC(0a0692e5) SHA1(d4ecc5b1791a91e3b33a5d4d0dd305f1623483d9) )
+	ROM_LOAD16_BYTE( "puyopuyb.5bo", 0x100001, 0x020000, CRC(353109b8) SHA1(92440987add3124b758e7eaa77a3a6f54ca61bb8) )
+
+	ROM_REGION( 0x020000, REGION_SOUND1, 0 )
+	ROM_LOAD( "puyopuyb.abo", 0x000000, 0x020000, CRC(79112b3b) SHA1(fc3a202e1e2ff39950d4af689b7fcca86c301805) )
+ROM_END
+
+ROM_START( puyoj ) /* Puyo Puyo  (c)1992 Sega / Compile */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "epr15036", 0x000000, 0x020000, CRC(5310ca1b) SHA1(dcfe2bf7476b640dfb790e8716e75b483d535e48) )
 	ROM_LOAD16_BYTE( "epr15035", 0x000001, 0x020000, CRC(bc62e400) SHA1(12bb6031574838a28889f6edb31dbb689265287c) )
@@ -3672,7 +3696,7 @@ ROM_START( puyopuyo	) /* Puyo Puyo  (c)1992 Sega / Compile */
 ROM_END
 
 
-ROM_START( puyopuya	) /* Puyo Puyo (Rev A)  (c)1992 Sega / Compile */
+ROM_START( puyoja	) /* Puyo Puyo (Rev A)  (c)1992 Sega / Compile */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "ep15036a.32", 0x000000, 0x020000, CRC(61b35257) SHA1(e09a7e992999befc88fc7928a478d1e2d14d7b08) )
 	ROM_LOAD16_BYTE( "ep15035a.31", 0x000001, 0x020000, CRC(dfebb6d9) SHA1(6f685729ef4660c2eba409c5236c6d2f313eef5b) )
@@ -3685,17 +3709,7 @@ ROM_START( puyopuya	) /* Puyo Puyo (Rev A)  (c)1992 Sega / Compile */
 ROM_END
 
 
-ROM_START( puyopuyb ) /* Puyo Puyo  (c)1992 Sega / Compile  Bootleg */
-	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "puyopuyb.4bo", 0x000000, 0x020000, CRC(89ea4d33) SHA1(bef9d011524e71c072d309f6da3c2ebc38878e0e) )
-	ROM_LOAD16_BYTE( "puyopuyb.3bo", 0x000001, 0x020000, CRC(c002e545) SHA1(7a59ac764d60e9955830d9617b0bd122b44e7b2f) )
-	/* 0x040000 - 0x100000 Empty */
-	ROM_LOAD16_BYTE( "puyopuyb.6bo", 0x100000, 0x020000, CRC(0a0692e5) SHA1(d4ecc5b1791a91e3b33a5d4d0dd305f1623483d9) )
-	ROM_LOAD16_BYTE( "puyopuyb.5bo", 0x100001, 0x020000, CRC(353109b8) SHA1(92440987add3124b758e7eaa77a3a6f54ca61bb8) )
 
-	ROM_REGION( 0x020000, REGION_SOUND1, 0 )
-	ROM_LOAD( "puyopuyb.abo", 0x000000, 0x020000, CRC(79112b3b) SHA1(fc3a202e1e2ff39950d4af689b7fcca86c301805) )
-ROM_END
 
 
 ROM_START( ichidant ) /* Ichident-R (Puzzle & Action 2)  (c)1994 Sega */
@@ -3885,6 +3899,18 @@ ROM_START( mt_gng ) /* Ghouls and Ghosts */
 	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
 ROM_END
 
+ROM_START( mt_shang ) /* Super HangOn */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "mpr-12640.ic1", 0x000000, 0x080000, CRC(2fe2cf62) SHA1(4728bcc847deb38b16338cbd0154837cd4a07b7d) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "epr-12368-24.ic2", 0x000000, 0x08000, CRC(6c2db7e3) SHA1(8de0a10ed9185c9e98f17784811a79d3ce8c4c03) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Bios */
+	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
+ROM_END
 
 ROM_START( mt_gaxe ) /* Golden Axe */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
@@ -4111,10 +4137,10 @@ ROM_START( mt_stbld ) /* Super Thunder Blade */
 	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
 ROM_END
 
-ROM_START( mt_tetri ) /* Tetris (Bad Dump) */
+ROM_START( mt_tetri ) /* Tetris */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "mp12356.ic1", 0x000001, 0x020000, BAD_DUMP CRC(136767d2) SHA1(4fa07facda60fa85588a997ff9ff2ddde0dc2534) ) // same data in each half, fails self-check (red screen) doesn't work in GENS
-	ROM_LOAD16_BYTE( "mp12357.ic2", 0x000000, 0x020000, BAD_DUMP CRC(6d5a20f2) SHA1(e8aef99621974a137ea81a597f600881741f94d1) ) // same data in each half, fails self-check (red screen)
+	ROM_LOAD16_BYTE( "mpr-12356f.ic1", 0x000001, 0x020000, CRC(1e71c1a0) SHA1(44b2312792e49d46d71e0417a7f022e5ffddbbfe) )
+	ROM_LOAD16_BYTE( "mpr-12357f.ic2", 0x000000, 0x020000, CRC(d52ca49c) SHA1(a9159892eee2c0cf28ebfcfa99f81f80781851c6) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
 
@@ -4177,7 +4203,7 @@ ROM_START( mt_ggolf ) /* Great Golf (Bad Dump) */
 	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
 ROM_END
 
-ROM_START( mt_gsocr ) /* Great Soccer. (Bad Dump) */
+ROM_START( mt_gsocr ) /* Great Soccer (SMS based) (Bad Dump) */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "mp10747f.ic1", 0x000000, 0x020000, BAD_DUMP CRC(9cf53703) SHA1(c6b4d1de56bd5bf067ec7fc80449c07686d01337) ) // first 32kb is repeated 4 times, doesn't work in MEKA
 
@@ -4190,7 +4216,20 @@ ROM_START( mt_gsocr ) /* Great Soccer. (Bad Dump) */
 	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
 ROM_END
 
-ROM_START( mt_parlg ) /* Parlour Games.  */
+ROM_START( mt_asyn ) /* Alien Syndrome (SMS based) (Bad Dump) */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "mpr-11194.ic1", 0x000000, 0x040000, NO_DUMP )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "epr-12368-07.ic2", 0x000000, 0x08000, CRC(14f4a17b) SHA1(0fc010ac95762534892f1ae16986dbf1c25399d3) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Bios */
+	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
+ROM_END
+
+ROM_START( mt_parlg ) /* Parlour Games (SMS Based)  */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "mp11404.ic1", 0x000000, 0x020000, CRC(E030E66C) SHA1(06664DAF208F07CB00B603B12ECCFC3F01213A17) )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
@@ -4298,8 +4337,8 @@ ROM_START( mp_sonic ) /* Sonic */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "ep15177.ic2", 0x000000, 0x040000, CRC(a389b03b) SHA1(8e9e1cf3dd65ddf08757f5a1ce472130c902ea2c) )
 	ROM_LOAD16_BYTE( "ep15176.ic1", 0x000001, 0x040000, CRC(d180cc21) SHA1(62805cfaaa80c1da6146dd89fc2b49d819fd4f22) )
-	ROM_LOAD16_BYTE( "15175-01.ic3", 0x300000, 0x08000, CRC(99246889) SHA1(184aa3b7fdedcf578c5e34edb7ed44f57f832258) )
-	ROM_LOAD16_BYTE( "15175-01.ic3", 0x300001, 0x08000, CRC(99246889) SHA1(184aa3b7fdedcf578c5e34edb7ed44f57f832258) )
+	/* Game Instruction rom copied to 0x300000 - 0x310000 (odd / even bytes equal) */
+
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
 
 	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
@@ -4313,9 +4352,7 @@ ROM_START( mp_gaxe2 ) /* Golden Axe 2 */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "ep15179b.ic2", 0x000000, 0x040000, CRC(00d97b84) SHA1(914bbf566ddf940aab67b92af237d251650ddadf) )
 	ROM_LOAD16_BYTE( "ep15178b.ic1", 0x000001, 0x040000, CRC(2ea576db) SHA1(6d96b948243533de1f488b1f80e0d5431a4f1f53) )
-	/* copy instead of load again here .. */
-	ROM_LOAD16_BYTE( "ep15175-02b.ic3", 0x300000, 0x08000, CRC(3039b653) SHA1(b19874c74d0fc0cca1169f62e5e74f0e8ca83679) ) // 15175-02b.ic3
-	ROM_LOAD16_BYTE( "ep15175-02b.ic3", 0x300001, 0x08000, CRC(3039b653) SHA1(b19874c74d0fc0cca1169f62e5e74f0e8ca83679) ) // 15175-02b.ic3
+	/* Game Instruction rom copied to 0x300000 - 0x310000 (odd / even bytes equal) */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
 
@@ -4326,13 +4363,27 @@ ROM_START( mp_gaxe2 ) /* Golden Axe 2 */
 	MEGAPLAY_BIOS
 ROM_END
 
+ROM_START( mp_gslam ) /* Grand Slam */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "epr-15181.ic2", 0x000000, 0x040000, CRC(642437c1) SHA1(cbf88e196c04b6d886bf9642b69bf165045510fe) )
+	ROM_LOAD16_BYTE( "epr-15180.ic1", 0x000001, 0x040000, CRC(73bb48f1) SHA1(981b64f834d5618599352f5fad683bf232390ba3) )
+	/* Game Instruction rom copied to 0x300000 - 0x310000 (odd / even bytes equal) */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "epr-15175-03.ic3", 0x000000, 0x08000, CRC(70ea1aec) SHA1(0d9d82a1f8aa51d02707f7b343e7cfb6591efccd) ) // 15175-02b.ic3
+
+	ROM_REGION( 0x28000, REGION_CPU3, 0 ) /* Bios */
+	MEGAPLAY_BIOS
+ROM_END
+
+
 ROM_START( mp_twc ) /* Tecmo World Cup */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "ep15183.ic2", 0x000000, 0x040000, CRC(8b79b861) SHA1(c72af72840513b82f2562409eccdf13b031bf3c0) )
 	ROM_LOAD16_BYTE( "ep15182.ic1", 0x000001, 0x040000, CRC(eb8325c3) SHA1(bb21ac926c353e14184dd476222bc6a8714606e5) )
-	/* copy instead of load again here .. */
-	ROM_LOAD16_BYTE( "ep15175-04.ic3", 0x300000, 0x08000, CRC(faf7c030) SHA1(16ef405335b4d3ecb0b7d97b088dafc4278d4726) )
-	ROM_LOAD16_BYTE( "ep15175-04.ic3", 0x300001, 0x08000, CRC(faf7c030) SHA1(16ef405335b4d3ecb0b7d97b088dafc4278d4726) )
+	/* Game Instruction rom copied to 0x300000 - 0x310000 (odd / even bytes equal) */
 
  	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
 
@@ -4341,6 +4392,48 @@ ROM_START( mp_twc ) /* Tecmo World Cup */
 
  	ROM_REGION( 0x28000, REGION_CPU3, 0 ) /* Bios */
  	MEGAPLAY_BIOS
+ROM_END
+
+ROM_START( mp_sor2 ) /* Streets of Rage 2 */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "mpr-15425.ic1", 0x000000, 0x200000, CRC(cd6376af) SHA1(57ec210975e40505649f152b60ef54f99da31f0e) )
+	/* Game Instruction rom copied to 0x300000 - 0x310000 (odd / even bytes equal) */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "epr-15175-05.ic2", 0x000000, 0x08000, CRC(1df5347c) SHA1(faced2e875e1914392f61577b5256d006eebeef9) )
+
+	ROM_REGION( 0x28000, REGION_CPU3, 0 ) /* Bios */
+	MEGAPLAY_BIOS
+ROM_END
+
+ROM_START( mp_bio ) /* Bio Hazard Battle */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "mpr-15699-f.ic1", 0x000000, 0x100000, CRC(4b193229) SHA1(f8629171ae9b4792f142f6957547d886e5cc6817) )
+	/* Game Instruction rom copied to 0x300000 - 0x310000 (odd / even bytes equal) */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "epr-15175-06.ic2", 0x000000, 0x08000, CRC(1ef64e41) SHA1(13984b714b014ea41963b70de74a5358ed223bc5) )
+
+	ROM_REGION( 0x28000, REGION_CPU3, 0 ) /* Bios */
+	MEGAPLAY_BIOS
+ROM_END
+
+ROM_START( mp_mazin ) /* Mazin Wars */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "mpr-16460.ic1", 0x000000, 0x100000, CRC(e9635a83) SHA1(ab3afa11656f0ae3a50c957dce012fb15d3992e0) )
+	/* Game Instruction rom copied to 0x300000 - 0x310000 (odd / even bytes equal) */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "epr-15175-11.ic2", 0x000000, 0x08000, CRC(bb651120) SHA1(81cb736f2732373e260dde162249c1d29a3489c3) )
+
+	ROM_REGION( 0x28000, REGION_CPU3, 0 ) /* Bios */
+	MEGAPLAY_BIOS
 ROM_END
 
 /******************************************************************************
@@ -4736,9 +4829,11 @@ GAME ( 1991, ribbit,   0,        segac2,   ribbit,   ribbit,   ROT0, "Sega",    
 GAME ( 1992, tantr,    0,        segac2,   ichidant, tantr,    ROT0, "Sega",                   "Tant-R (Puzzle & Action) (Japan)" )
 GAME ( 1992, tantrbl,  tantr,    segac2,   ichidant, segac2,   ROT0, "bootleg",                "Tant-R (Puzzle & Action) (Japan) (bootleg set 1)" )
 GAME ( 1994, tantrbl2, tantr,    segac,    ichidant, tantr,    ROT0, "bootleg",                "Tant-R (Puzzle & Action) (Japan) (bootleg set 2)" )
-GAME ( 1992, puyopuyo, 0,        segac2,   puyopuyo, puyopuyo, ROT0, "Sega / Compile",         "Puyo Puyo (Japan)" )
-GAME ( 1992, puyopuya, puyopuyo, segac2,   puyopuyo, puyopuyo, ROT0, "Sega / Compile",         "Puyo Puyo (Japan) (Rev A)" )
-GAME ( 1992, puyopuyb, puyopuyo, segac2,   puyopuyo, puyopuyo, ROT0, "bootleg",                "Puyo Puyo (English) (bootleg)" )
+
+GAME ( 1992, puyo,     0,        segac2,   puyopuyo, puyopuyo, ROT0, "Sega / Compile",         "Puyo Puyo (World)" )
+GAME ( 1992, puyobl,   puyo,     segac2,   puyopuyo, puyopuyo, ROT0, "bootleg",                "Puyo Puyo (World, bootleg)" )
+GAME ( 1992, puyoj,    puyo,     segac2,   puyopuyo, puyopuyo, ROT0, "Sega / Compile",         "Puyo Puyo (Japan)" )
+GAME ( 1992, puyoja,   puyo,     segac2,   puyopuyo, puyopuyo, ROT0, "Sega / Compile",         "Puyo Puyo (Japan, Rev A)" )
 GAME ( 1994, ichidant, 0,        segac2,   ichidant, ichidant, ROT0, "Sega",                   "Ichidant-R (Puzzle & Action 2) (Japan)" )
 GAME ( 1994, ichidnte, ichidant, segac2,   ichidant, ichidnte, ROT0, "Sega",                   "Ichidant-R (Puzzle & Action 2) (English)" )
 GAME ( 1994, ichidntb, ichidant, segac,    ichidant, segac2,   ROT0, "bootleg",                "Ichidant-R (Puzzle & Action 2) (Japan) (bootleg)" )
@@ -4765,7 +4860,7 @@ GAMEX( 1996, pclubjv5, pclubj,   segac2, pclub,    pclub,    ROT0, "Atlus",     
 /* 04 */ GAMEX( 19??, mt_ggolf, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Great Golf (Mega-Tech)", GAME_NOT_WORKING ) /* sms! also bad */
 /* 05 */ GAMEX( 19??, mt_gsocr, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Great Soccer (Mega-Tech)", GAME_NOT_WORKING ) /* sms! also bad */
 /* 06 */ // unknown
-/* 07 */ // unknown
+/* 07 */ GAMEX( 19??, mt_asyn,  megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Alien Syndrome (Mega-Tech)", GAME_NOT_WORKING ) /* sms! also bad */
 /* 08 */ GAMEX( 19??, mt_shnbi, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Shinobi (Mega-Tech)", GAME_NOT_WORKING) /* sms */
 /* 09 */ // unknown
 /* 10 */ GAMEX( 19??, mt_aftrb, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "After Burner (Mega-Tech)", GAME_NOT_WORKING) /* sms */
@@ -4780,9 +4875,9 @@ GAMEX( 1996, pclubjv5, pclubj,   segac2, pclub,    pclub,    ROT0, "Atlus",     
 /* 19 */ // unknown
 /* 20 */ GAMEX( 1989, mt_lastb, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Last Battle (Mega-Tech)", GAME_NOT_WORKING )
 /* 21 */ GAMEX( 1989, mt_wcsoc, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "World Championship Soccer (Mega-Tech)", GAME_NOT_WORKING )
-/* 22 */ GAMEX( 19??, mt_tetri, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Tetris (Mega-Tech)", GAME_NOT_WORKING ) /* bad dump */
-/* 23 */ GAMEX( 1989, mt_gng,   megatech, megatech, megatech, segac2, ROT0, "Capcom / Sega",         "Ghouls'n Ghosts (Mega-Tech)", GAME_NOT_WORKING ) /* bad dump */
-/* 24 */ // unknown
+/* 22 */ GAMEX( 19??, mt_tetri, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Tetris (Mega-Tech)", GAME_NOT_WORKING )
+/* 23 */ GAMEX( 1989, mt_gng,   megatech, megatech, megatech, segac2, ROT0, "Capcom / Sega",         "Ghouls'n Ghosts (Mega-Tech)", GAME_NOT_WORKING )
+/* 24 */ GAMEX( 1989, mt_shang, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Super Hang-On (Mega-Tech)", GAME_NOT_WORKING )
 /* 25 */ GAMEX( 1989, mt_gaxe,  megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Golden Axe (Mega-Tech)", GAME_NOT_WORKING )
 /* 26 */ // unknown
 /* 27 */ GAMEX( 1989, mt_mystd, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Mystic Defender (Mega-Tech)", GAME_NOT_WORKING )
@@ -4827,9 +4922,25 @@ GAMEX( 1996, pclubjv5, pclubj,   segac2, pclub,    pclub,    ROT0, "Atlus",     
 
 static DRIVER_INIT (megaplay)
 {
-	UINT8 *src = memory_region(REGION_CPU3);
+	data8_t *src = memory_region(REGION_CPU3);
+	data8_t *instruction_rom = memory_region(REGION_USER1);
+	data8_t *game_rom = memory_region(REGION_CPU1);
+	int offs;
 
-	memmove(src+0x10000,src+0x8000,0x18000);
+	memmove(src+0x10000,src+0x8000,0x18000); // move bios..
+
+	/* copy game instruction rom to main map.. maybe this should just be accessed
+	  through a handler instead?.. */
+	for (offs=0;offs<0x8000;offs++)
+	{
+		data8_t dat;
+
+		dat=instruction_rom[offs];
+
+		game_rom[0x300000+offs*2] = dat;
+		game_rom[0x300001+offs*2] = dat;
+
+	}
 
 	init_segac2();
 
@@ -4838,6 +4949,18 @@ static DRIVER_INIT (megaplay)
 /* -- */ GAMEBX(1993, megaplay, 0,        megaplay, megaplay, megaplay, megaplay, ROT0, "Sega",                  "Mega Play BIOS", NOT_A_DRIVER )
 /* 01 */ GAMEB( 1993, mp_sonic, megaplay, megaplay, megaplay, mp_sonic, megaplay, ROT0, "Sega",                  "Sonic The Hedgehog (Mega Play)"  )
 /* 02 */ GAMEB( 1993, mp_gaxe2, megaplay, megaplay, megaplay, mp_gaxe2, megaplay, ROT0, "Sega",                  "Golden Axe II (Mega Play)"  )
-/* 03 */ // unknown
+/* 03 */ GAMEBX(1993, mp_gslam, megaplay, megaplay, megaplay, mp_twc,	megaplay, ROT0, "Sega",                  "Grand Slam (Mega Play)",GAME_NOT_WORKING  )
 /* 04 */ GAMEB( 1993, mp_twc,   megaplay, megaplay, megaplay, mp_twc,	megaplay, ROT0, "Sega",                  "Tecmo World Cup (Mega Play)"  )
-/* Also known to exist: bio hazard battle, gunstar heroes, streets of rage 2, mazin wars, grandslam tennis */
+/* 05 */ GAMEB( 1993, mp_sor2,  megaplay, megaplay, megaplay, mp_twc,	megaplay, ROT0, "Sega",                  "Streets of Rage II (Mega Play)"  )
+/* 06 */ GAMEB( 1993, mp_bio,   megaplay, megaplay, megaplay, mp_twc,	megaplay, ROT0, "Sega",                  "Bio-hazard Battle (Mega Play)"  )
+/* 07 */
+/* 08 */
+/* 09 */
+/* 10 */
+/* 11 */ GAMEBX(1993, mp_mazin,   megaplay, megaplay, megaplay, mp_twc,	megaplay, ROT0, "Sega",                  "Mazin Wars (Mega Play)",GAME_NOT_WORKING  )
+
+/* Also known to exist:
+Bio Hazard Battle
+Gunstar Heroes
+Streets of Rage 2
+*/

@@ -12,6 +12,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 #include "ay8910.h"
 #include "2608intf.h"
 #include "fm.h"
@@ -112,6 +113,22 @@ static void ym2608_stream_update(void *param, stream_sample_t **inputs, stream_s
 }
 
 
+#ifdef _STATE_H
+static void ym2608_postload(void)
+{
+	int num;
+
+	for (num=0; num < MAX_SOUND; num++)
+	{
+		struct ym2608_info *info = sndti_token(SOUND_YM2608, num);
+
+		if (info)
+			YM2608Postload(info->chip);
+	}
+}
+#endif
+
+
 static void *ym2608_start(int sndindex, int clock, const void *config)
 {
 	static const struct YM2608interface generic_2608 = { 0 };
@@ -143,6 +160,12 @@ static void *ym2608_start(int sndindex, int clock, const void *config)
 	info->chip = YM2608Init(info,sndindex,clock,rate,
 		           pcmbufa,pcmsizea,
 		           TimerHandler,IRQHandler,&psgintf);
+
+#ifdef _STATE_H
+	if (sndindex == 0)
+		state_save_register_func_postload(ym2608_postload);
+#endif
+
 	if (info->chip)
 		return info;
 

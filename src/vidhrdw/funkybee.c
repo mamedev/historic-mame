@@ -77,16 +77,12 @@ WRITE8_HANDLER( funkybee_scroll_w )
 
 WRITE8_HANDLER( funkybee_flipscreen_w )
 {
-	if (flip_screen != (data & 0x01))
-	{
-		flip_screen_set(data & 0x01);
-		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
-	}
+	flip_screen_set(data & 0x01);
 }
 
 static void get_bg_tile_info(int tile_index)
 {
-	int code = videoram[tile_index];
+	int code = videoram[tile_index] + ((colorram[tile_index] & 0x80) << 1);
 	int color = colorram[tile_index] & 0x03;
 
 	SET_TILE_INFO(gfx_bank, code, color, 0)
@@ -109,7 +105,7 @@ VIDEO_START( funkybee )
 	return 0;
 }
 
-static void funkybee_draw_sprites( struct mame_bitmap *bitmap )
+static void funkybee_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	int offs;
 
@@ -134,12 +130,11 @@ static void funkybee_draw_sprites( struct mame_bitmap *bitmap )
 			code, color,
 			flipx, flipy,
 			sx, sy,
-			&Machine->visible_area,
-			TRANSPARENCY_PEN, 0);
+			cliprect, TRANSPARENCY_PEN, 0);
 	}
 }
 
-static void funkybee_draw_columns( struct mame_bitmap *bitmap )
+static void funkybee_draw_columns( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	int offs;
 
@@ -177,13 +172,15 @@ static void funkybee_draw_columns( struct mame_bitmap *bitmap )
 				code, color,
 				flip_screen, flip_screen,
 				sx, sy,
-				0,TRANSPARENCY_PEN,0);
+				cliprect,TRANSPARENCY_PEN,0);
 	}
 }
 
 VIDEO_UPDATE( funkybee )
 {
-	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
-	funkybee_draw_sprites(bitmap);
-	funkybee_draw_columns(bitmap);
+	tilemap_mark_all_tiles_dirty(bg_tilemap);
+
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	funkybee_draw_sprites(bitmap, cliprect);
+	funkybee_draw_columns(bitmap, cliprect);
 }

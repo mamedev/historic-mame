@@ -41,6 +41,7 @@ WRITE32_HANDLER( itech020_plane_w );
 
 WRITE16_HANDLER( timekill_paletteram_w );
 WRITE16_HANDLER( bloodstm_paletteram_w );
+WRITE32_HANDLER( drivedge_paletteram_w );
 WRITE32_HANDLER( itech020_paletteram_w );
 
 WRITE16_HANDLER( itech32_video_w );

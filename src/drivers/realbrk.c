@@ -200,50 +200,134 @@ static READ16_HANDLER( realbrk_dsw_r )
 	return 0xffff;
 }
 
+static READ16_HANDLER( pkgnsh_input_r )
+{
+	switch(offset)
+	{
+		case 0x00/2: return 0xffff;
+		case 0x02/2: return 0xffff;
+		case 0x04/2: return input_port_0_word_r(0,0);/*Service buttons*/
+		case 0x06/2: return input_port_1_word_r(0,0);/*DIP 2*/
+		case 0x08/2: return input_port_2_word_r(0,0);/*DIP 1*/
+		case 0x0a/2: return input_port_3_word_r(0,0);/*DIP 1+2 Hi-Bits*/
+		case 0x0c/2: return input_port_4_word_r(0,0);/*Handle 1p*/
+		case 0x0e/2: return input_port_5_word_r(0,0);/*Buttons 1p*/
+		case 0x10/2: return input_port_6_word_r(0,0);/*Handle 2p*/
+		case 0x12/2: return input_port_7_word_r(0,0);/*Buttons 2p*/
+	}
+	return 0xffff;
+}
+
+static READ16_HANDLER( pkgnshdx_input_r )
+{
+	data16_t sel = ~realbrk_dsw_select[0];
+
+	switch(offset)
+	{
+		case 0x00/2: return 0xffff;
+		case 0x02/2: return input_port_0_word_r(0,0);/*Service buttons*/
+		/*DSW,same handling as realbrk*/
+		case 0x04/2:
+			if (sel & 0x01)	return	(input_port_1_word_r(0,0) & 0x00ff) << 8;		// DSW1 low bits
+			if (sel & 0x02)	return	(input_port_2_word_r(0,0) & 0x00ff) << 8;		// DSW2 low bits
+			if (sel & 0x04)	return	(input_port_3_word_r(0,0) & 0x00ff) << 8;		// DSW3 low bits
+			if (sel & 0x08)	return	(input_port_4_word_r(0,0) & 0x00ff) << 8;		// DSW4 low bits
+
+			if (sel & 0x10)	return	((input_port_1_word_r(0,0) & 0x0300) << 0) |	// DSWs high 2 bits
+									((input_port_2_word_r(0,0) & 0x0300) << 2) |
+									((input_port_3_word_r(0,0) & 0x0300) << 4) |
+									((input_port_4_word_r(0,0) & 0x0300) << 6) ;
+
+			return 0xffff;
+		case 0x06/2: return input_port_6_word_r(0,0);/*Buttons+Handle 2p*/
+		case 0x08/2: return input_port_5_word_r(0,0);/*Buttons+Handle 1p*/
+		case 0x0a/2: return 0xffff;
+		case 0x0c/2: return 0xffff;
+		case 0x0e/2: return 0xffff;
+		case 0x10/2: return 0xffff;
+		case 0x12/2: return 0xffff;
+	}
+
+	return 0xffff;
+}
+
+static data16_t *backup_ram;
+
+static READ16_HANDLER( backup_ram_r )
+{
+	/*TODO: understand the format & cmds of the backup-ram,maybe it's an
+	        unemulated tmp68301 feature?*/
+	if(activecpu_get_previouspc() == 0x02c08e)
+		return 0xffff;
+	else
+		return backup_ram[offset];
+}
+
+
+static READ16_HANDLER( backup_ram_dx_r )
+{
+	/*TODO: understand the format & cmds of the backup-ram,maybe it's an
+	        unemulated tmp68301 feature?*/
+	if(activecpu_get_previouspc() == 0x02f046)
+		return 0xffff;
+	else
+		return backup_ram[offset];
+}
+
+static WRITE16_HANDLER( backup_ram_w )
+{
+	COMBINE_DATA(&backup_ram[offset]);
+}
+
 /***************************************************************************
 
 								Memory Maps
 
 ***************************************************************************/
 
-static ADDRESS_MAP_START( realbrk_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM					)	// ROM
-	AM_RANGE(0x200000, 0x203fff) AM_READ(MRA16_RAM					)	// Sprites
-	AM_RANGE(0x400000, 0x40ffff) AM_READ(MRA16_RAM					)	// Palette
-	AM_RANGE(0x600000, 0x601fff) AM_READ(MRA16_RAM					)	// Background	(0)
-	AM_RANGE(0x602000, 0x603fff) AM_READ(MRA16_RAM					)	// Background	(1)
-	AM_RANGE(0x604000, 0x604fff) AM_READ(MRA16_RAM					)	// Text			(2)
-	AM_RANGE(0x606000, 0x60600f) AM_READ(MRA16_RAM					)	// Scroll + Video Regs
-	AM_RANGE(0x605000, 0x61ffff) AM_READ(MRA16_RAM					)	//
-	AM_RANGE(0x800002, 0x800003) AM_READ(YMZ280B_status_0_msb_r	)	// YMZ280
-	AM_RANGE(0xc00000, 0xc00001) AM_READ(input_port_0_word_r		)	// P1 & P2 (Inputs)
-	AM_RANGE(0xc00002, 0xc00003) AM_READ(input_port_1_word_r		)	// Coins
-	AM_RANGE(0xc00004, 0xc00005) AM_READ(realbrk_dsw_r				)	// 4 x DSW (10 bits each)
-	AM_RANGE(0xfe0000, 0xfeffff) AM_READ(MRA16_RAM					)	// RAM
-	AM_RANGE(0xff0000, 0xfffbff) AM_READ(MRA16_RAM					)	// RAM
-	AM_RANGE(0xfffc00, 0xffffff) AM_READ(MRA16_RAM					)	// TMP68301 Registers
+/*Basic memory map for this HW*/
+static ADDRESS_MAP_START( base_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_ROM							    			// ROM
+	AM_RANGE(0x200000, 0x203fff) AM_RAM                   AM_BASE(&spriteram16)	// Sprites
+	AM_RANGE(0x400000, 0x40ffff) AM_READWRITE(MRA16_RAM,paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x600000, 0x601fff) AM_READWRITE(MRA16_RAM,realbrk_vram_0_w) AM_BASE(&realbrk_vram_0	)	// Background	(0)
+	AM_RANGE(0x602000, 0x603fff) AM_READWRITE(MRA16_RAM,realbrk_vram_1_w) AM_BASE(&realbrk_vram_1	)	// Background	(1)
+	AM_RANGE(0x604000, 0x604fff) AM_READWRITE(MRA16_RAM,realbrk_vram_2_w) AM_BASE(&realbrk_vram_2	)	// Text			(2)
+	AM_RANGE(0x606000, 0x60600f) AM_READWRITE(MRA16_RAM,realbrk_vregs_w) AM_BASE(&realbrk_vregs 	)	// Scroll + Video Regs
+	AM_RANGE(0x605000, 0x61ffff) AM_RAM							               	//
+	AM_RANGE(0x800000, 0x800001) AM_WRITE(YMZ280B_register_0_msb_w			)	// YMZ280
+	AM_RANGE(0x800002, 0x800003) AM_READWRITE(YMZ280B_status_0_msb_r,YMZ280B_data_0_msb_w)	//
+	AM_RANGE(0xfe0000, 0xfeffff) AM_RAM						                 	// RAM
+	AM_RANGE(0xfffc00, 0xffffff) AM_READWRITE(MRA16_RAM,tmp68301_regs_w) AM_BASE(&tmp68301_regs	)	// TMP68301 Registers
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( realbrk_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM							)	// ROM
-	AM_RANGE(0x200000, 0x203fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16			)	// Sprites
-	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16	)	// Palette
-	AM_RANGE(0x600000, 0x601fff) AM_WRITE(realbrk_vram_0_w) AM_BASE(&realbrk_vram_0	)	// Background	(0)
-	AM_RANGE(0x602000, 0x603fff) AM_WRITE(realbrk_vram_1_w) AM_BASE(&realbrk_vram_1	)	// Background	(1)
-	AM_RANGE(0x604000, 0x604fff) AM_WRITE(realbrk_vram_2_w) AM_BASE(&realbrk_vram_2	)	// Text			(2)
-	AM_RANGE(0x606000, 0x60600f) AM_WRITE(realbrk_vregs_w) AM_BASE(&realbrk_vregs 	)	// Scroll + Video Regs
-	AM_RANGE(0x605000, 0x61ffff) AM_WRITE(MWA16_RAM							)	//
-	AM_RANGE(0x800000, 0x800001) AM_WRITE(YMZ280B_register_0_msb_w			)	// YMZ280
-	AM_RANGE(0x800002, 0x800003) AM_WRITE(YMZ280B_data_0_msb_w				)	//
+/*realbrk specific memory map*/
+static ADDRESS_MAP_START( realbrk_mem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x800008, 0x800009) AM_WRITE(YM2413_register_port_0_lsb_w		)	// YM2413
 	AM_RANGE(0x80000a, 0x80000b) AM_WRITE(YM2413_data_port_0_lsb_w			)	//
-	AM_RANGE(0xc00004, 0xc00005) AM_WRITE(MWA16_RAM) AM_BASE(&realbrk_dsw_select	)	// DSW select
-	AM_RANGE(0xfe0000, 0xfeffff) AM_WRITE(MWA16_RAM							)	// RAM
-	AM_RANGE(0xff0000, 0xfffbff) AM_WRITE(MWA16_RAM							)	// RAM
+	AM_RANGE(0xc00000, 0xc00001) AM_READ(input_port_0_word_r		)	// P1 & P2 (Inputs)
+	AM_RANGE(0xc00002, 0xc00003) AM_READ(input_port_1_word_r		)	// Coins
+	AM_RANGE(0xc00004, 0xc00005) AM_READWRITE(realbrk_dsw_r,MWA16_RAM) AM_BASE(&realbrk_dsw_select	)	// DSW select
+	AM_RANGE(0xff0000, 0xfffbff) AM_RAM											// RAM
 	AM_RANGE(0xfffd0a, 0xfffd0b) AM_WRITE(realbrk_flipscreen_w				)	// Hack! Parallel port data register
-	AM_RANGE(0xfffc00, 0xffffff) AM_WRITE(tmp68301_regs_w) AM_BASE(&tmp68301_regs	)	// TMP68301 Registers
 ADDRESS_MAP_END
 
+/*pkgnsh specific memory map*/
+static ADDRESS_MAP_START( pkgnsh_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x800008, 0x800009) AM_WRITE(YM2413_register_port_0_msb_w		)	// YM2413
+	AM_RANGE(0x80000a, 0x80000b) AM_WRITE(YM2413_data_port_0_msb_w			)	//
+	AM_RANGE(0xc00000, 0xc00013) AM_READ(pkgnsh_input_r		        )	// P1 & P2 (Inputs)
+	AM_RANGE(0xff0000, 0xfffbff) AM_READWRITE(backup_ram_r,backup_ram_w) AM_BASE(&backup_ram)	// RAM
+ADDRESS_MAP_END
+
+/*pkgnshdx specific memory map*/
+static ADDRESS_MAP_START( pkgnshdx_mem, ADDRESS_SPACE_PROGRAM, 16)
+	AM_RANGE(0x800008, 0x800009) AM_WRITE(YM2413_register_port_0_lsb_w		)	// YM2413
+	AM_RANGE(0x80000a, 0x80000b) AM_WRITE(YM2413_data_port_0_lsb_w			)	//
+	AM_RANGE(0xc00000, 0xc00013) AM_READ(pkgnshdx_input_r		        )	// P1 & P2 (Inputs)
+	AM_RANGE(0xc00004, 0xc00005) AM_WRITE(MWA16_RAM) AM_BASE(&realbrk_dsw_select) // DSW select
+	AM_RANGE(0xff0000, 0xfffbff) AM_READWRITE(backup_ram_dx_r,backup_ram_w) AM_BASE(&backup_ram)	// RAM
+ADDRESS_MAP_END
 
 /***************************************************************************
 
@@ -337,6 +421,12 @@ INPUT_PORTS_START( realbrk )
 	PORT_DIPNAME( 0x0080, 0x0080, "? Coins ?" )
 	PORT_DIPSETTING(      0x0000, "1" )
 	PORT_DIPSETTING(      0x0080, "2" )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
 	PORT_START	// IN4 - $c00004.w (DSW3) - Unused
 	PORT_BIT(  0xffff, IP_ACTIVE_LOW,  IPT_UNKNOWN )
@@ -345,6 +435,282 @@ INPUT_PORTS_START( realbrk )
 	PORT_BIT(  0xffff, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( pkgnsh )
+	PORT_START	// IN0 - $c00002.w
+	PORT_BIT(  0x00ff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW,  IPT_COIN1 )
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW,  IPT_COIN2 )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW,  IPT_SERVICE1 )
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW,  IPT_SERVICE ) PORT_NAME(DEF_STR( Test )) PORT_CODE(KEYCODE_F1)
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x4000, IP_ACTIVE_HIGH, IPT_UNKNOWN )	// the vblank routine wants these 2 bits high
+	PORT_BIT(  0x8000, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT(     0x00bf, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(     0x00c0, IP_ACTIVE_HIGH, IPT_UNUSED )/*pkgnsh wants these two bits to be 0*/
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START	// IN3 - $c00004.w (DSW2)
+	PORT_BIT(     0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START
+	PORT_BIT(     0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT(     0xf000, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT(     0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(     0xff00, 0x0000, IPT_PADDLE ) PORT_PLAYER(1) PORT_MINMAX(0,0x64) PORT_SENSITIVITY(15) PORT_KEYDELTA(15) PORT_CENTERDELTA(0) //PORT_CODE_DEC(KEYCODE_N) PORT_CODE_INC(KEYCODE_M)
+
+	PORT_START
+	PORT_BIT(     0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(     0x0100, IP_ACTIVE_LOW, IPT_START1 ) PORT_PLAYER(1)
+	PORT_BIT(     0x0200, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(     0x0400, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1) //F/F
+	PORT_BIT(     0x0800, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1) //Stop
+	PORT_BIT(     0xf000, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT(     0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(     0xff00, 0x0000, IPT_PADDLE ) PORT_PLAYER(2) PORT_MINMAX(0,0x64) PORT_SENSITIVITY(15) PORT_KEYDELTA(15) PORT_CENTERDELTA(0) PORT_CODE_DEC(KEYCODE_N) PORT_CODE_INC(KEYCODE_M)
+
+	PORT_START
+	PORT_BIT(     0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )/*There's the Pay Out SW here IIRC*/
+	PORT_BIT(     0x0100, IP_ACTIVE_LOW, IPT_START2 ) PORT_PLAYER(2)
+	PORT_BIT(     0x0200, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(     0x0400, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2) //F/F
+	PORT_BIT(     0x0800, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2) //Stop
+	PORT_BIT(     0xf000, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( pkgnshdx )
+	PORT_START	// IN0 - $c00002.w
+	PORT_BIT(  0x00ff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW,  IPT_COIN1 )
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW,  IPT_COIN2 )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW,  IPT_SERVICE1 )
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW,  IPT_SERVICE ) PORT_NAME(DEF_STR( Test )) PORT_CODE(KEYCODE_F1)
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x4000, IP_ACTIVE_HIGH, IPT_UNKNOWN )	// the vblank routine wants these 2 bits high
+	PORT_BIT(  0x8000, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START // IN1
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START //IN2
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START //IN3
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START //IN4
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START //IN5
+	PORT_BIT(     0x0001, IP_ACTIVE_LOW, IPT_START1 ) PORT_PLAYER(1)
+	PORT_DIPNAME( 0x0002, 0x0002, "Pay-Out SW" )//Not a real DIP-Switch
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT(     0x0004, IP_ACTIVE_LOW, IPT_UNUSED ) //F/F
+	PORT_BIT(     0x0008, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1) //Stop
+	PORT_BIT(     0x0010, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(     0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x0040, 0x0040, "Analize SW" )//Not a real DIP-Switch
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT(     0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(     0xff00, 0x0000, IPT_PADDLE ) PORT_PLAYER(1) PORT_MINMAX(0,0x64) PORT_SENSITIVITY(15) PORT_KEYDELTA(15) PORT_CENTERDELTA(0) PORT_CODE_DEC(KEYCODE_N) PORT_CODE_INC(KEYCODE_M)
+
+	PORT_START //IN6
+	PORT_BIT(     0x0001, IP_ACTIVE_LOW, IPT_START2 ) PORT_PLAYER(2)
+	PORT_BIT(	  0x0002, IP_ACTIVE_LOW, IPT_UNUSED ) //Again Pay-Out SW in test mode,but it doesn't work,maybe it is for Player-2?
+	PORT_BIT(     0x0004, IP_ACTIVE_LOW, IPT_UNUSED ) //F/F
+	PORT_BIT(     0x0008, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2) //Stop
+	PORT_BIT(     0x0010, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(     0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x0040, 0x0040, "Mem Clear SW" )//Not a real DIP-Switch
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT(     0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(     0xff00, 0x0000, IPT_PADDLE ) PORT_PLAYER(2) PORT_MINMAX(0,0x64) PORT_SENSITIVITY(15) PORT_KEYDELTA(15) PORT_CENTERDELTA(0) PORT_CODE_DEC(KEYCODE_N) PORT_CODE_INC(KEYCODE_M)
+INPUT_PORTS_END
 
 /***************************************************************************
 
@@ -426,7 +792,7 @@ static MACHINE_DRIVER_START( realbrk )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main",M68000,32000000 / 2)			/* !! TMP68301 !! */
-	MDRV_CPU_PROGRAM_MAP(realbrk_readmem,realbrk_writemem)
+	MDRV_CPU_PROGRAM_MAP(base_mem,realbrk_mem)
 	MDRV_CPU_VBLANK_INT(realbrk_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -455,6 +821,18 @@ static MACHINE_DRIVER_START( realbrk )
 	MDRV_SOUND_ADD(YM2413, 3579000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( pkgnsh )
+	MDRV_IMPORT_FROM( realbrk )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(base_mem,pkgnsh_mem)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( pkgnshdx )
+	MDRV_IMPORT_FROM( realbrk )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(base_mem,pkgnshdx_mem)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -592,6 +970,6 @@ ROM_END
 
 
 GAMEX( 1998, realbrk,  0, realbrk, realbrk, 0, ROT0, "Nakanihon", "Billiard Academy Real Break (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1998, pkgnsh, 0, realbrk, realbrk, 0, ROT0, "Nakanihon / Dynax", "Pachinko Gindama Shoubu (Japan)", GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING )
-GAMEX( 1998, pkgnshdx, 0, realbrk, realbrk, 0, ROT0, "Nakanihon / Dynax", "Pachinko Gindama Shoubu DX (Japan)", GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING )
+GAMEX( 1998, pkgnsh,   0, pkgnsh,  pkgnsh, 0, ROT0, "Nakanihon / Dynax", "Pachinko Gindama Shoubu (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1998, pkgnshdx, 0, pkgnshdx,pkgnshdx, 0, ROT0, "Nakanihon / Dynax", "Pachinko Gindama Shoubu DX (Japan)", GAME_IMPERFECT_GRAPHICS )
 

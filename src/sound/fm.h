@@ -150,6 +150,10 @@ unsigned char YM2203Read(void *chip,int a);
 */
 int YM2203TimerOver(void *chip, int c);
 
+/*
+**	State Save
+*/
+void YM2203Postload(void *chip);
 #endif /* BUILD_YM2203 */
 
 #if BUILD_YM2608
@@ -164,6 +168,7 @@ void YM2608UpdateOne(void *chip, FMSAMPLE **buffer, int length);
 int YM2608Write(void *chip, int a,unsigned char v);
 unsigned char YM2608Read(void *chip,int a);
 int YM2608TimerOver(void *chip, int c );
+void YM2608Postload(void *chip);
 #endif /* BUILD_YM2608 */
 
 #if (BUILD_YM2610||BUILD_YM2610B)
@@ -181,6 +186,7 @@ void YM2610BUpdateOne(void *chip, FMSAMPLE **buffer, int length);
 int YM2610Write(void *chip, int a,unsigned char v);
 unsigned char YM2610Read(void *chip,int a);
 int YM2610TimerOver(void *chip, int c );
+void YM2610Postload(void *chip);
 #endif /* BUILD_YM2610 */
 
 #if BUILD_YM2612
@@ -193,6 +199,7 @@ void YM2612UpdateOne(void *chip, FMSAMPLE **buffer, int length);
 int YM2612Write(void *chip, int a,unsigned char v);
 unsigned char YM2612Read(void *chip,int a);
 int YM2612TimerOver(void *chip, int c );
+void YM2612Postload(void *chip);
 #endif /* BUILD_YM2612 */
 
 

@@ -2485,7 +2485,7 @@ static MACHINE_DRIVER_START( mia )
 	MDRV_SOUND_ADD(YM2151, 3579545)
 	MDRV_SOUND_ROUTE(0, "mono", 1.0)
 	MDRV_SOUND_ROUTE(1, "mono", 1.0)
-	
+
 	MDRV_SOUND_ADD(K007232, 3579545)
 	MDRV_SOUND_CONFIG(k007232_interface)
 	MDRV_SOUND_ROUTE(0, "mono", 0.20)
@@ -2522,7 +2522,7 @@ static MACHINE_DRIVER_START( tmnt )
 	MDRV_SOUND_ADD(YM2151, 3579545)
 	MDRV_SOUND_ROUTE(0, "mono", 1.0)
 	MDRV_SOUND_ROUTE(1, "mono", 1.0)
-	
+
 	MDRV_SOUND_ADD(K007232, 3579545)
 	MDRV_SOUND_CONFIG(k007232_interface)
 	MDRV_SOUND_ROUTE(0, "mono", 0.20)
@@ -2531,7 +2531,7 @@ static MACHINE_DRIVER_START( tmnt )
 	MDRV_SOUND_ADD(UPD7759, UPD7759_STANDARD_CLOCK)
 	MDRV_SOUND_CONFIG(upd7759_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(samples_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
@@ -3729,6 +3729,28 @@ ROM_START( ssrdrabd )
 	ROM_LOAD( "sr_1d.rom",    0x0000, 0x100000, CRC(59810df9) SHA1(a0affc6330bdbfab1447dc0cf13c20ff708c2c71) )
 ROM_END
 
+ROM_START( ssrdradd )
+	ROM_REGION( 0xc0000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "064add02", 0x000000, 0x40000, CRC(06b0138e) SHA1(6d8e00a62faae1b87fafed288a920edd5456b660) )
+	ROM_LOAD16_BYTE( "064add03", 0x000001, 0x40000, CRC(03eb8b91) SHA1(e12f5e5eb89e59277d027f9942fdc38f67cb1066) )
+	ROM_LOAD16_BYTE( "sr_b04.rom",  0x080000, 0x20000, CRC(ef2315bd) SHA1(2c8b11321cb5fdb78d760fabca666c0d8cc5b298) )
+	ROM_LOAD16_BYTE( "sr_b05.rom",  0x080001, 0x20000, CRC(51d6fbc4) SHA1(e80de7d155b7f263c48ef4ae2702059be3c18e76) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the audio CPU */
+	ROM_LOAD( "sr_e01.rom",   0x0000, 0x10000, CRC(44b9bc52) SHA1(4654d6e14c6956c40a19cb41155accb63f0da338) )
+
+    ROM_REGION( 0x100000, REGION_GFX1, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "sr_16k.rom",   0x000000, 0x080000, CRC(e2bdc619) SHA1(04449deb267b0beacfa33640b593eb16194aa0d9) )	/* tiles */
+	ROM_LOAD( "sr_12k.rom",   0x080000, 0x080000, CRC(2d8ca8b0) SHA1(7c882f79c2402cf75979c681071007d76e4db9ae) )
+
+	ROM_REGION( 0x200000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "sr_7l.rom",    0x000000, 0x100000, CRC(4160c372) SHA1(0b36181e5ccd785c7fb89b9f41e458066a42c3b0) )	/* sprites */
+	ROM_LOAD( "sr_3l.rom",    0x100000, 0x100000, CRC(64dd673c) SHA1(bea4d17a71dd21c635866ee69b4892dc9d0ab455) )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* samples for the 053260 */
+	ROM_LOAD( "sr_1d.rom",    0x0000, 0x100000, CRC(59810df9) SHA1(a0affc6330bdbfab1447dc0cf13c20ff708c2c71) )
+ROM_END
+
 ROM_START( ssrdrjbd )
 	ROM_REGION( 0xc0000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "064jbd02.8e", 0x000000, 0x40000, CRC(7acdc1e3) SHA1(09679403abe695758d01fb0161168bc93888f915) )
@@ -4160,6 +4182,7 @@ GAMEX(1991, ssrdruda, ssriders, ssriders, ssrid4ps, gfx,      ROT0,  "Konami", "
 GAMEX(1991, ssrdruac, ssriders, ssriders, ssridr4p, gfx,      ROT0,  "Konami", "Sunset Riders (US 4 Players ver. UAC)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1991, ssrdrubc, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (US 2 Players ver. UBC)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1991, ssrdrabd, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (Asia 2 Players ver. ABD)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, ssrdradd, ssriders, ssriders, ssrid4ps, gfx,      ROT0,  "Konami", "Sunset Riders (Asia 4 Players ver. ADD)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1991, ssrdrjbd, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (Japan 2 Players ver. JBD)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1991, sunsetbl, ssriders, ssridersbl, ssridbl, gfx,     ROT0,  "Konami", "Sunset Riders (bootleg 4 Players ver. ADD)", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS )
 

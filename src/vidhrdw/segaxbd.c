@@ -39,7 +39,7 @@ VIDEO_START( xboard )
 		return 1;
 		
 	/* initialize the road */
-	if (segaic16_road_init(0, SEGAIC16_ROAD_OUTRUN, 0x1700, 0x1720, 0x1780, -166))
+	if (segaic16_road_init(0, SEGAIC16_ROAD_XBOARD, 0x1700, 0x1720, 0x1780, -166))
 		return 1;
 
 	return 0;

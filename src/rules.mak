@@ -838,7 +838,7 @@ CPU=$(strip $(findstring CCPU@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/ccpu
 CPUDEFS += -DHAS_CCPU=1
-CPUOBJS += $(OBJ)/cpu/ccpu/ccpu.o $(OBJ)/vidhrdw/cinemat.o
+CPUOBJS += $(OBJ)/cpu/ccpu/ccpu.o
 DBGOBJS += $(OBJ)/cpu/ccpu/ccpudasm.o
 $(OBJ)/cpu/ccpu/ccpu.o: ccpu.c ccpu.h
 else

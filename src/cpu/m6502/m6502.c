@@ -49,46 +49,7 @@
 #define LOG(x)
 #endif
 
-#ifdef RUNTIME_LOADER
-// currently debugger has symbols of 65ce02, 6509, 4510 so all in 1 library
-#include "m6509.h"
-#include "m65ce02.h"
-#include "m4510.h"
 
-struct cpu_interface
-m6502_interface=
-CPU0(M6502,    m6502,    1,  0,1.00,M6502_INT_NONE,    M6502_IRQ_LINE,  INPUT_LINE_NMI,  8, 16,     0,16,LE,1, 3),
-	m65c02_interface=
-CPU0(M65C02,   m65c02,   1,  0,1.00,M65C02_INT_NONE,   M65C02_INT_IRQ, M65C02_INT_NMI, 8, 16,     0,16,LE,1, 3),
-	m65sc02_interface=
-CPU0(M65SC02,  m65sc02,  1,  0,1.00,M65SC02_INT_NONE,  M65SC02_INT_IRQ,M65SC02_INT_NMI,8, 16,     0,16,LE,1, 3),
-	m6510_interface=
-CPU0(M6510,    m6510,    1,  0,1.00,M6510_INT_NONE,    M6510_INT_IRQ,  M6510_INT_NMI,  8, 16,     0,16,LE,1, 3),
-	m6510t_interface=
-CPU0(M6510T,   m6510t,   1,  0,1.00,M6510T_INT_NONE,   M6510T_INT_IRQ, M6510T_INT_NMI, 8, 16,     0,16,LE,1, 3),
-	m7501_interface=
-CPU0(M7501,    m7501,    1,  0,1.00,M7501_INT_NONE,    M7501_INT_IRQ,  M7501_INT_NMI,  8, 16,     0,16,LE,1, 3),
-	m8502_interface=
-CPU0(M8502,    m8502,    1,  0,1.00,M8502_INT_NONE,    M8502_INT_IRQ,  M8502_INT_NMI,  8, 16,     0,16,LE,1, 3),
-	n2a03_interface=
-CPU0(N2A03,    n2a03,    1,  0,1.00,N2A03_INT_NONE,    N2A03_INT_IRQ,  N2A03_INT_NMI,  8, 16,     0,16,LE,1, 3);
-
-extern void m6502_runtime_loader_init(void)
-{
-	cpuintf[CPU_M6502]=m6502_interface;
-	cpuintf[CPU_M6510]=m6510_interface;
-	cpuintf[CPU_M6510T]=m6510t_interface;
-	cpuintf[CPU_M7501]=m7501_interface;
-	cpuintf[CPU_M8502]=m8502_interface;
-	cpuintf[CPU_N2A03]=n2a03_interface;
-	cpuintf[CPU_M65C02]=m65c02_interface;
-	cpuintf[CPU_M65SC02]=m65sc02_interface;
-
-	m6509_runtime_loader_init();
-	m65ce02_runtime_loader_init();
-	m4510_runtime_loader_init();
-}
-#endif
 
 /* Layout of the registers in the debugger */
 static UINT8 m6502_reg_layout[] = {

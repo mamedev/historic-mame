@@ -19,9 +19,14 @@
 #include "driver.h"
 #include "system16.h"
 #include "machine/segaic16.h"
+#include "machine/8255ppi.h"
 #include "cpu/m68000/m68000.h"
 #include "sound/2151intf.h"
 #include "sound/segapcm.h"
+
+
+#define MASTER_CLOCK			50000000
+#define SOUND_CLOCK				16000000
 
 
 
@@ -35,6 +40,9 @@ static data16_t *workram;
 static data16_t *cpu1ram, *cpu1rom;
 
 static UINT8 adc_select;
+
+static UINT8 irq2_state;
+static UINT8 vblank_irq_state;
 
 static read16_handler custom_io_r;
 static write16_handler custom_io_w;
@@ -54,6 +62,29 @@ extern void fd1094_driver_init(void);
 
 static READ16_HANDLER( misc_io_r );
 static WRITE16_HANDLER( misc_io_w );
+
+static WRITE8_HANDLER( unknown_porta_w );
+static WRITE8_HANDLER( unknown_portb_w );
+static WRITE8_HANDLER( video_control_w );
+
+
+
+/*************************************
+ *
+ *	PPI interfaces
+ *
+ *************************************/
+
+static ppi8255_interface single_ppi_intf =
+{
+	1,
+	{ NULL },
+	{ NULL },
+	{ NULL },
+	{ unknown_porta_w },
+	{ unknown_portb_w },
+	{ video_control_w }
+};
 
 
 
@@ -111,6 +142,9 @@ static void outrun_generic_init(void)
 	/* init the FD1094 */
 	fd1094_driver_init();
 
+	/* configure the 8255 interface */
+	ppi8255_init(&single_ppi_intf);
+
 	/* reset the custom handlers and other pointers */
 	custom_io_r = NULL;
 	custom_io_w = NULL;
@@ -122,6 +156,88 @@ static void outrun_generic_init(void)
 /*************************************
  *
  *	Initialization & interrupts
+ *
+ *************************************/
+
+static void update_main_irqs(void)
+{
+	int irq = 0;
+
+	/* the IRQs are effectively ORed together */
+	if (vblank_irq_state)
+		irq |= 4;
+	if (irq2_state)
+		irq |= 2;
+
+	/* assert the lines that are live, or clear everything if nothing is live */
+	if (irq != 0)
+	{
+		cpunum_set_input_line(0, irq, ASSERT_LINE);
+		cpu_boost_interleave(0, TIME_IN_USEC(100));
+	}
+	else
+		cpunum_set_input_line(0, 7, CLEAR_LINE);
+}
+
+
+static void irq2_gen(int param)
+{
+	/* set the IRQ2 line */
+	irq2_state = 1;
+	update_main_irqs();
+}
+
+
+static void scanline_callback(int scanline)
+{
+	int next_scanline = scanline;
+	
+	/* trigger IRQs on certain scanlines */
+	switch (scanline)
+	{
+		/* IRQ2 triggers on HBLANK of scanlines 65, 129, 193 */
+		case 65:
+		case 129:
+		case 193:
+			timer_set(cpu_getscanlineperiod() * 0.9, 0, irq2_gen);
+			next_scanline = scanline + 1;
+			break;
+		
+		/* IRQ2 turns off at the start of scanlines 66, 130, 194 */ 
+		case 66:
+		case 130:
+		case 194:
+			irq2_state = 0;
+			next_scanline = (scanline == 194) ? 223 : (scanline + 63);
+			break;
+
+		/* VBLANK triggers on scanline 223 */		
+		case 223:
+			vblank_irq_state = 1;
+			next_scanline = scanline + 1;
+			cpunum_set_input_line(1, 4, ASSERT_LINE);
+			break;
+		
+		/* VBLANK turns off at the start of scanline 224 */
+		case 224:
+			vblank_irq_state = 0;
+			next_scanline = 65;
+			cpunum_set_input_line(1, 4, CLEAR_LINE);
+			break;
+	}
+	
+	/* update IRQs on the main CPU */
+	update_main_irqs();
+
+	/* come back at the next targeted scanline */
+	timer_set(cpu_getscanlinetime(next_scanline), next_scanline, scanline_callback);
+}
+
+
+
+/*************************************
+ *
+ *	Basic machine setup
  *
  *************************************/
 
@@ -143,16 +259,44 @@ static MACHINE_INIT( outrun )
 
 	/* hook the RESET line, which resets CPU #1 */
 	cpunum_set_info_fct(0, CPUINFO_PTR_M68K_RESET_CALLBACK, (genf *)outrun_reset);
+	
+	/* start timers to track interrupts */
+	timer_set(cpu_getscanlinetime(223), 223, scanline_callback);
 }
 
 
-static INTERRUPT_GEN( outrun_irq )
+
+/*************************************
+ *
+ *	8255 handlers
+ *
+ *************************************/
+
+static WRITE8_HANDLER( unknown_porta_w )
 {
-	/* note that the true IRQ2 rate isn't known; currently we do 8x/frame */
-	if (cpu_getiloops() != 0)
-		cpunum_set_input_line(0, 2, HOLD_LINE);
-	else
-		cpunum_set_input_line(0, 4, HOLD_LINE);
+	logerror("8255 port A = %02X\n", data);
+}
+
+
+static WRITE8_HANDLER( unknown_portb_w )
+{
+	logerror("8255 port B = %02X\n", data);
+}
+
+
+static WRITE8_HANDLER( video_control_w )
+{
+	/* Output port:
+		D7: SG1 -- connects to sprite chip
+		D6: SG0 -- connects to mixing
+		D5: Screen display (1= blanked, 0= displayed)
+		D4-D2: (ADC2-0)
+		D1: (CONT) - affects sprite hardware
+		D0: Sound section reset (1= normal operation, 0= reset)
+	*/
+	segaic16_set_display_enable(data & 0x20);
+	adc_select = (data >> 2) & 7;
+	cpunum_set_input_line(2, INPUT_LINE_RESET, (data & 0x01) ? CLEAR_LINE : ASSERT_LINE);
 }
 
 
@@ -186,16 +330,12 @@ static WRITE16_HANDLER( misc_io_w )
 static READ16_HANDLER( outrun_custom_io_r )
 {
 	offset &= 0x7f/2;
-	switch (offset)
+	switch (offset & 0x70/2)
 	{
 		case 0x00/2:
-			/* unknown - reads from 0x01, checks bits 5, 3 */
-			break;
+			return ppi8255_0_r(offset & 3);
 
 		case 0x10/2:
-		case 0x12/2:
-		case 0x14/2:
-		case 0x16/2:
 			return readinputport(offset & 3);
 
 		case 0x30/2:
@@ -216,41 +356,35 @@ static READ16_HANDLER( outrun_custom_io_r )
 static WRITE16_HANDLER( outrun_custom_io_w )
 {
 	offset &= 0x7f/2;
-	switch (offset)
+	switch (offset & 0x70/2)
 	{
-		case 0x02/2:
-			/* unknown - writes to 0x03 */
-			break;
-
-		case 0x04/2:
-			/* Output port:
-				D7: (Not connected)
-				D6: (/WDC) - watchdog reset
-				D5: Screen display (1= blanked, 0= displayed)
-				D4-D2: (ADC2-0)
-				D1: (CONT) - affects sprite hardware
-				D0: Sound section reset (1= normal operation, 0= reset)
-			*/
-			segaic16_set_display_enable((data >> 5) & 1);
-			adc_select = (data >> 2) & 7;
-			cpunum_set_input_line(2, INPUT_LINE_RESET, (data & 1) ? CLEAR_LINE : ASSERT_LINE);
+		case 0x00/2:
+			if (ACCESSING_LSB)
+				ppi8255_0_w(offset & 3, data);
 			return;
 
-		case 0x06/2:
-			/* unknown - writes 0x90 to 0x07 */
-			break;
-
 		case 0x20/2:
-			/* writes to 0x21 */
-			break;
+			if (ACCESSING_LSB)
+			{
+				/* Output port:
+					D7: /MUTE
+					D6-D0: unknown
+				*/
+				sound_global_enable(data & 0x80);
+			}
+			return;
 
 		case 0x30/2:
 			/* ADC trigger */
 			return;
 
+		case 0x60/2:
+			watchdog_reset_w(0,0);
+			return;
+
 		case 0x70/2:
 			segaic16_sprites_draw_0_w(offset, data, mem_mask);
-			break;
+			return;
 	}
 	logerror("%06X:misc_io_w - unknown write access to address %04X = %04X & %04X\n", activecpu_get_pc(), offset * 2, data, mem_mask ^ 0xffff);
 }
@@ -351,7 +485,7 @@ static ADDRESS_MAP_START( sub_map, ADDRESS_SPACE_PROGRAM, 16 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) | AMEF_ABITS(20) )
 	AM_RANGE(0x000000, 0x05ffff) AM_ROM AM_BASE(&cpu1rom)
 	AM_RANGE(0x060000, 0x067fff) AM_MIRROR(0x018000) AM_RAM AM_BASE(&cpu1ram)
-	AM_RANGE(0x080000, 0x080fff) AM_MIRROR(0x001000) AM_RAM AM_BASE(&segaic16_roadram_0)
+	AM_RANGE(0x080000, 0x080fff) AM_MIRROR(0x00f000) AM_RAM AM_BASE(&segaic16_roadram_0)
 	AM_RANGE(0x090000, 0x09ffff) AM_READWRITE(segaic16_road_control_0_r, segaic16_road_control_0_w)
 ADDRESS_MAP_END
 
@@ -672,15 +806,13 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( outrun )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", M68000, 40000000/4)
+	MDRV_CPU_ADD_TAG("main", M68000, MASTER_CLOCK/4)
 	MDRV_CPU_PROGRAM_MAP(outrun_map,0)
-	MDRV_CPU_VBLANK_INT(outrun_irq,9)
 
-	MDRV_CPU_ADD_TAG("sub", M68000, 40000000/4)
+	MDRV_CPU_ADD_TAG("sub", M68000, MASTER_CLOCK/4)
 	MDRV_CPU_PROGRAM_MAP(sub_map,0)
-	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
-	MDRV_CPU_ADD_TAG("sound", Z80, 16000000/4)
+	MDRV_CPU_ADD_TAG("sound", Z80, SOUND_CLOCK/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_IO_MAP(sound_portmap,0)
@@ -705,14 +837,14 @@ static MACHINE_DRIVER_START( outrun )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_ADD(YM2151, SOUND_CLOCK/4)
 	MDRV_SOUND_ROUTE(0, "left", 0.43)
 	MDRV_SOUND_ROUTE(1, "right", 0.43)
 
 	MDRV_SOUND_ADD_TAG("pcm", SEGAPCM,SEGAPCM_SAMPLE15K)
 	MDRV_SOUND_CONFIG(segapcm_interface)
 	MDRV_SOUND_ROUTE(0, "left", 1.0)
-	MDRV_SOUND_ROUTE(0, "right", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 

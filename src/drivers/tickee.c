@@ -11,7 +11,6 @@
 
 	Known bugs:
 		* (Tickee) gun sometimes misfires
-		* Ghost Hunter + Tuts Tomb guns aren't hooked up
 
 ***************************************************************************/
 
@@ -56,6 +55,11 @@ static MACHINE_INIT( tickee )
 static READ8_HANDLER( port1_r )
 {
 	return input_port_1_r(offset) | (ticket_dispenser_0_r(0) >> 5) | (ticket_dispenser_1_r(0) >> 6);
+}
+
+static READ8_HANDLER( port2_r )
+{
+	return input_port_3_r(offset) | (ticket_dispenser_0_r(0) >> 5) | (ticket_dispenser_1_r(0) >> 6);
 }
 
 
@@ -132,7 +136,6 @@ static ADDRESS_MAP_START( ghoshunt_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x04200000, 0x042000ff) AM_READ(tlc34076_lsb_r)
 	AM_RANGE(0x04300000, 0x0430000f) AM_READ(AY8910_read_port_0_lsb_r)
 	AM_RANGE(0x04300100, 0x0430010f) AM_READ(AY8910_read_port_1_lsb_r)
-	AM_RANGE(0x04500040, 0x0450004f) AM_READ(input_port_3_word_r)
 	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
 	AM_RANGE(0xff000000, 0xffffffff) AM_READ(MRA16_ROM)
 ADDRESS_MAP_END
@@ -214,6 +217,68 @@ INPUT_PORTS_START( tickee )
 	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,255) PORT_SENSITIVITY(70) PORT_KEYDELTA(10) PORT_PLAYER(2)
 INPUT_PORTS_END
 
+INPUT_PORTS_START( ghoshunt )
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ))
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ))
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ))
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ))
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ))
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ))
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coinage ))
+	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ))
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ))
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ))
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ))
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* right ticket status */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* left ticket status */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0xd8, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* right ticket status */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* left ticket status */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0xd8, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START				/* fake analog X */
+	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_MINMAX(0,255) PORT_SENSITIVITY(50) PORT_KEYDELTA(10)
+
+	PORT_START				/* fake analog Y */
+	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,255) PORT_SENSITIVITY(70) PORT_KEYDELTA(10)
+
+	PORT_START				/* fake analog X */
+	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_MINMAX(0,255) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_PLAYER(2)
+
+	PORT_START				/* fake analog Y */
+	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,255) PORT_SENSITIVITY(70) PORT_KEYDELTA(10) PORT_PLAYER(2)
+INPUT_PORTS_END
+
 
 
 /*************************************
@@ -230,7 +295,8 @@ static struct AY8910interface ay8910_interface_1 =
 
 static struct AY8910interface ay8910_interface_2 =
 {
-	port1_r
+	port1_r,
+	port2_r
 };
 
 
@@ -297,8 +363,14 @@ MACHINE_DRIVER_END
 
 
 /*
+
 Ghost Hunter
 Hanaho Games, 1996
+
+  and
+
+Tut's Tomb
+Island Design Inc., 1996
 
 PCB Layout
 ----------
@@ -342,10 +414,8 @@ Notes:
       CN103/106    - 4-pin connector for gun hookup
       ULN2803      - Motorola ULN2803 Octal High Voltage, High Current Darlington Transistor Arrays (DIP18)
       TIP122       - Motorola TIP122 General-Purpose NPN Darlington Transistor (TO-220)
-
 */
 
-/* todo: correct details  */
 MACHINE_DRIVER_START( ghoshunt )
 
 	/* basic machine hardware */
@@ -372,11 +442,11 @@ MACHINE_DRIVER_START( ghoshunt )
 	/* sound hardware - 2149! */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(AY8910, 40000000/16)
+	MDRV_SOUND_ADD(AY8910, 14318180/8)
 	MDRV_SOUND_CONFIG(ay8910_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 
-	MDRV_SOUND_ADD(AY8910, 40000000/16)
+	MDRV_SOUND_ADD(AY8910, 14318180/8)
 	MDRV_SOUND_CONFIG(ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
@@ -439,7 +509,6 @@ static DRIVER_INIT( tickee )
  *
  *************************************/
 
-GAME( 1994, tickee, 0, tickee, tickee, tickee, ROT0, "Raster Elite", "Tickee Tickats" )
-
-GAMEX( 199?, ghoshunt, 0, ghoshunt, tickee, tickee, ROT0, "Hanaho Games", "Ghost Hunter",GAME_NOT_WORKING )
-GAMEX( 199?, tutstomb, 0, ghoshunt, tickee, tickee, ROT0, "Island Design", "Tuts Tomb",GAME_NOT_WORKING )
+GAME( 1994, tickee,   0, tickee,   tickee,   tickee, ROT0, "Raster Elite",  "Tickee Tickats" )
+GAME( 1996, ghoshunt, 0, ghoshunt, ghoshunt, tickee, ROT0, "Hanaho Games",  "Ghost Hunter" )
+GAME( 1996, tutstomb, 0, ghoshunt, ghoshunt, tickee, ROT0, "Island Design", "Tut's Tomb" )

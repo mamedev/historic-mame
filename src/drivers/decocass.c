@@ -402,8 +402,8 @@ static struct GfxLayout missilelayout =
 	1,		/* 1 object */
 	1,		/* 1 bits per pixel */
 	{ 0 },
-	{ 0, 0, 0, 0, 0, 0, 0, 0 },
-	{ 0, 0, 0, 0, 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
+	{ 0 },
 	8	/* object takes a 1 bit from somewhere */
 };
 

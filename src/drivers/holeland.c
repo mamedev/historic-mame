@@ -419,7 +419,29 @@ ROM_START( crzrally )
 	ROM_LOAD( "82s129.9l",   0x0200, 0x0100, CRC(9ed49cb4) SHA1(f54e66e2211d5fb0da9a81e11670367ee4d9b49a) )  /* Blue component */
 ROM_END
 
+ROM_START( crzrallg )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "12.7g",       0x0000, 0x4000, CRC(0cab3ef9) SHA1(6de4d4a7159e0a6ad13dbca3344759410618ea26) )
+	ROM_LOAD( "13.7f",       0x4000, 0x4000, CRC(e19a8e13) SHA1(1462b21f16990eb9ae2f2d1cd5c097edf88bf614) )
+	ROM_LOAD( "14.7d",       0x8000, 0x4000, CRC(4c0351ba) SHA1(0ed04825d3affe0477bb963f1c96ff223e4bcf50) )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
+	ROM_LOAD( "4.5g",        0x0000, 0x2000, CRC(29dece8b) SHA1(d8a0cfd1259d49f59f9751a2db99b46b9da6a87d) )
+	ROM_LOAD( "16.5f",       0x2000, 0x2000, CRC(94289f9e) SHA1(8da00814d8f769de124bc09f4c1ee851c99cec0e) )
+
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "17.1n",       0x0000, 0x2000, CRC(985ed5c8) SHA1(ee91a6701a8b8bb24d6fa08596deff95816e759e) )
+	ROM_LOAD( "18.1l",       0x2000, 0x2000, CRC(c02ddda2) SHA1(262e33cada0e7935d03014583117c2bc6278865b) )
+	ROM_LOAD( "19.1k",       0x4000, 0x2000, CRC(2a0d5bca) SHA1(8d7aedd63ea374a5809c24f957b0afa3cad437d0) )
+	ROM_LOAD( "20.1i",       0x6000, 0x2000, CRC(49c0c2b8) SHA1(30c4fe1dc2df499927f8fd4a041a707b81a04e1d) )
+
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_LOAD( "82s129.9n",   0x0000, 0x0100, CRC(98ff725a) SHA1(553f033212a7c4785c0beb8156400cabcd53cf25) )  /* Red component */
+	ROM_LOAD( "82s129.9m",   0x0100, 0x0100, CRC(d41f5800) SHA1(446046f5694357da876e1307f49584d79c8d9a1a) )  /* Green component */
+	ROM_LOAD( "82s129.9l",   0x0200, 0x0100, CRC(9ed49cb4) SHA1(f54e66e2211d5fb0da9a81e11670367ee4d9b49a) )  /* Blue component */
+ROM_END
 
 
-GAMEX( 1984, holeland, 0, holeland, holeland, 0, ROT0,   "Tecfri", "Hole Land", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1985, crzrally, 0, crzrally, crzrally, 0, ROT270, "Tecfri", "Crazy Rally", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1984, holeland, 0,        holeland, holeland, 0, ROT0,   "Tecfri", "Hole Land", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1985, crzrally, 0,        crzrally, crzrally, 0, ROT270, "Tecfri", "Crazy Rally", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1985, crzrallg, crzrally, crzrally, crzrally, 0, ROT270, "Tecfri (Gecas license)", "Crazy Rally (Gecas license)", GAME_IMPERFECT_GRAPHICS )

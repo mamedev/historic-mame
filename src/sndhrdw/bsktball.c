@@ -67,7 +67,7 @@ const struct discrete_op_amp_filt_info bsktball_crowd_filt =
 
 const struct discrete_mixer_desc bsktball_mixer =
 {
-	DISC_MIXER_IS_OP_AMP, 3,
+	DISC_MIXER_IS_OP_AMP,
 	{RES_K(47), RES_K(47), RES_K(220)},		// r56, r57, r60
 	{0},			// no rNodes
 	{CAP_U(.01), CAP_U(.01), CAP_U(.01)},	// c53, c54, c57

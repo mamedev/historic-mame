@@ -20,11 +20,12 @@ data16_t *mcu_ram;
 								Gals Panic (set 3)
 								Sand Scorpion
 								Bonk's Adventure
+								Blood Warrior
 ***************************************************************************/
 
 /*
 	- see notes about this "calculator" implementation in drivers\galpanic.c
-	- bonkadv only uses Random Number and XY Overlap Collision bit
+	- bonkadv only uses Random Number, XY Overlap Collision bit and register '0x02'
 */
 
 static struct {
@@ -44,6 +45,10 @@ READ16_HANDLER(galpanib_calc_r)
 	{
 		case 0x00/2: // watchdog
 			return watchdog_reset_r(0);
+
+		case 0x02/2: // unknown (yet!), used by *MANY* games !!!
+			//usrintf_showmessage("unknown collision reg");
+			break;
 
 		case 0x04/2: // similar to the hit detection from SuperNova, but much simpler
 
@@ -99,6 +104,18 @@ WRITE16_HANDLER(galpanib_calc_w)
 		case 0x0e/2: hit.y2s    = data; break;
 		case 0x10/2: hit.mult_a = data; break;
 		case 0x12/2: hit.mult_b = data; break;
+
+		// unknown (yet!), used by bloodwar
+		case 0x20/2:
+		case 0x22/2:
+		case 0x24/2:
+		case 0x26/2:
+		case 0x2c/2:
+		case 0x2e/2:
+		case 0x30/2:
+		case 0x32/2:
+		case 0x38/2:
+
 		default:
 			logerror("CPU #0 PC %06x: warning - write unmapped hit address %06x\n",activecpu_get_pc(),offset<<1);
 	}
@@ -550,75 +567,58 @@ void bloodwar_mcu_run(void)
 		{
 			switch(mcu_data)
 			{
-				// unknown data: 1 per warrior
-				case 0x01: //MCU_RESPONSE(bloodwar_mcu_4_01); break; // Warrior 1
-				case 0x02: //MCU_RESPONSE(bloodwar_mcu_4_02); break; // Warrior 2
-				case 0x03: //MCU_RESPONSE(bloodwar_mcu_4_03); break; // Warrior 3
-				case 0x04: //MCU_RESPONSE(bloodwar_mcu_4_04); break; // Warrior 4
-				case 0x05: //MCU_RESPONSE(bloodwar_mcu_4_05); break; // Warrior 5
-				case 0x06: //MCU_RESPONSE(bloodwar_mcu_4_06); break; // Warrior 6
-				case 0x07: //MCU_RESPONSE(bloodwar_mcu_4_07); break; // Warrior 7
-				case 0x08: //MCU_RESPONSE(bloodwar_mcu_4_08); break; // Warrior 8
-				case 0x09: //MCU_RESPONSE(bloodwar_mcu_4_09); break; // Warrior 9
-				break;
+				// unknown data
+				case 0x01: MCU_RESPONSE(bloodwar_mcu_4_01); break; // Warrior 1
+				case 0x02: MCU_RESPONSE(bloodwar_mcu_4_02); break; // Warrior 2
+				case 0x03: MCU_RESPONSE(bloodwar_mcu_4_03); break; // Warrior 3
+				case 0x04: MCU_RESPONSE(bloodwar_mcu_4_04); break; // Warrior 4
+				case 0x05: MCU_RESPONSE(bloodwar_mcu_4_05); break; // Warrior 5
+				case 0x06: MCU_RESPONSE(bloodwar_mcu_4_06); break; // Warrior 6
+				case 0x07: MCU_RESPONSE(bloodwar_mcu_4_07); break; // Warrior 7
+				case 0x08: MCU_RESPONSE(bloodwar_mcu_4_08); break; // Warrior 8
+				case 0x09: MCU_RESPONSE(bloodwar_mcu_4_09); break; // Warrior 9
 
-				// palette data: 1 per warrior and player
-				case 0x0a: //MCU_RESPONSE(bloodwar_mcu_4_0a); break; // Warrior 1 Player 1
-				case 0x0b: //MCU_RESPONSE(bloodwar_mcu_4_0b); break; // Warrior 1 Player 2
-				case 0x0c: //MCU_RESPONSE(bloodwar_mcu_4_0c); break; // Warrior 5 Player 1
-				case 0x0d: //MCU_RESPONSE(bloodwar_mcu_4_0d); break; // Warrior 5 Player 2
-				case 0x0e: //MCU_RESPONSE(bloodwar_mcu_4_0e); break; // Warrior 4 Player 2
-				case 0x0f: //MCU_RESPONSE(bloodwar_mcu_4_0f); break; // Warrior 4 Player 1
-				case 0x10: //MCU_RESPONSE(bloodwar_mcu_4_10); break; // Warrior 6 Player 1
-				case 0x11: //MCU_RESPONSE(bloodwar_mcu_4_11); break; // Warrior 6 Player 2
-				case 0x12: //MCU_RESPONSE(bloodwar_mcu_4_12); break; // Warrior 9 Player 1
-				case 0x13: //MCU_RESPONSE(bloodwar_mcu_4_13); break; // Warrior 9 Player 2
-				case 0x14: //MCU_RESPONSE(bloodwar_mcu_4_14); break; // Warrior 7 Player 1
-				case 0x15: //MCU_RESPONSE(bloodwar_mcu_4_15); break; // Warrior 7 Player 2
-				case 0x16: //MCU_RESPONSE(bloodwar_mcu_4_16); break; // Warrior 8 Player 1
-				case 0x17: //MCU_RESPONSE(bloodwar_mcu_4_17); break; // Warrior 8 Player 2
-				case 0x18: //MCU_RESPONSE(bloodwar_mcu_4_18); break; // Warrior 2 Player 2
-				case 0x19: //MCU_RESPONSE(bloodwar_mcu_4_19); break; // Warrior 2 Player 1
-				case 0x1a: //MCU_RESPONSE(bloodwar_mcu_4_1a); break; // Warrior 3 Player 1
-				case 0x1b: //MCU_RESPONSE(bloodwar_mcu_4_1b); break; // Warrior 3 Player 2
-				{
-					mcu_ram[mcu_offset + 0] = 0x0001;	// number of palettes (>=1)
-					// palette data follows (each palette is 0x200 byes long)
-					mcu_ram[mcu_offset + 1] = 0x8000;	// a negative word will end the palette
-				}
-				break;
+				// palette data
+				case 0x0a: MCU_RESPONSE(bloodwar_mcu_4_0a); break; // Warrior 1 Player 1
+				case 0x0b: MCU_RESPONSE(bloodwar_mcu_4_0b); break; // Warrior 1 Player 2
+				case 0x0c: MCU_RESPONSE(bloodwar_mcu_4_0c); break; // Warrior 5 Player 1
+				case 0x0d: MCU_RESPONSE(bloodwar_mcu_4_0d); break; // Warrior 5 Player 2
+				case 0x0e: MCU_RESPONSE(bloodwar_mcu_4_0e); break; // Warrior 4 Player 2
+				case 0x0f: MCU_RESPONSE(bloodwar_mcu_4_0f); break; // Warrior 4 Player 1
+				case 0x10: MCU_RESPONSE(bloodwar_mcu_4_10); break; // Warrior 6 Player 1
+				case 0x11: MCU_RESPONSE(bloodwar_mcu_4_11); break; // Warrior 6 Player 2
+				case 0x12: MCU_RESPONSE(bloodwar_mcu_4_12); break; // Warrior 9 Player 1
+				case 0x13: MCU_RESPONSE(bloodwar_mcu_4_13); break; // Warrior 9 Player 2
+				case 0x14: MCU_RESPONSE(bloodwar_mcu_4_14); break; // Warrior 7 Player 1
+				case 0x15: MCU_RESPONSE(bloodwar_mcu_4_15); break; // Warrior 7 Player 2
+				case 0x16: MCU_RESPONSE(bloodwar_mcu_4_16); break; // Warrior 8 Player 1
+				case 0x17: MCU_RESPONSE(bloodwar_mcu_4_17); break; // Warrior 8 Player 2
+				case 0x18: MCU_RESPONSE(bloodwar_mcu_4_18); break; // Warrior 2 Player 2
+				case 0x19: MCU_RESPONSE(bloodwar_mcu_4_19); break; // Warrior 2 Player 1
+				case 0x1a: MCU_RESPONSE(bloodwar_mcu_4_1a); break; // Warrior 3 Player 1
+				case 0x1b: MCU_RESPONSE(bloodwar_mcu_4_1b); break; // Warrior 3 Player 2
 
-				// tilemap data: 1 per warrior
-				case 0x1c: //MCU_RESPONSE(bloodwar_mcu_4_1c); break; // Warrior 8
-				case 0x1d: //MCU_RESPONSE(bloodwar_mcu_4_1d); break; // Warrior 2
-				case 0x1e: //MCU_RESPONSE(bloodwar_mcu_4_1e); break; // Warrior 3
-				case 0x1f: //MCU_RESPONSE(bloodwar_mcu_4_1f); break; // Warrior 5
-				case 0x20: //MCU_RESPONSE(bloodwar_mcu_4_20); break; // Warrior 4
-				case 0x21: //MCU_RESPONSE(bloodwar_mcu_4_21); break; // Warrior 6
-				case 0x22: //MCU_RESPONSE(bloodwar_mcu_4_22); break; // Warrior 1
-				case 0x23: //MCU_RESPONSE(bloodwar_mcu_4_23); break; // Warrior 9
-				case 0x24: //MCU_RESPONSE(bloodwar_mcu_4_24); break; // Warrior 7
-				{
-					// tile data (ff means no tiles) followed by routine index
-					mcu_ram[mcu_offset + 0] = 0xff00;
-				}
-				break;
+				// tilemap data
+				case 0x1c: MCU_RESPONSE(bloodwar_mcu_4_1c); break; // Warrior 8
+				case 0x1d: MCU_RESPONSE(bloodwar_mcu_4_1d); break; // Warrior 2
+				case 0x1e: MCU_RESPONSE(bloodwar_mcu_4_1e); break; // Warrior 3
+				case 0x1f: MCU_RESPONSE(bloodwar_mcu_4_1f); break; // Warrior 5
+				case 0x20: MCU_RESPONSE(bloodwar_mcu_4_20); break; // Warrior 4
+				case 0x21: MCU_RESPONSE(bloodwar_mcu_4_21); break; // Warrior 6
+				case 0x22: MCU_RESPONSE(bloodwar_mcu_4_22); break; // Warrior 1
+				case 0x23: MCU_RESPONSE(bloodwar_mcu_4_23); break; // Warrior 9
+				case 0x24: MCU_RESPONSE(bloodwar_mcu_4_24); break; // Warrior 7
 
-				// unknown long: 1 per warrior
-				case 0x25: //MCU_RESPONSE(bloodwar_mcu_4_25); break; // Warrior 1
-				case 0x26: //MCU_RESPONSE(bloodwar_mcu_4_26); break; // Warrior 2
-				case 0x27: //MCU_RESPONSE(bloodwar_mcu_4_27); break; // Warrior 3
-				case 0x28: //MCU_RESPONSE(bloodwar_mcu_4_28); break; // Warrior 4
-				case 0x29: //MCU_RESPONSE(bloodwar_mcu_4_29); break; // Warrior 5
-				case 0x2a: //MCU_RESPONSE(bloodwar_mcu_4_2a); break; // Warrior 6
-				case 0x2b: //MCU_RESPONSE(bloodwar_mcu_4_2b); break; // Warrior 7
-				case 0x2c: //MCU_RESPONSE(bloodwar_mcu_4_2c); break; // Warrior 8
-				case 0x2d: //MCU_RESPONSE(bloodwar_mcu_4_2d); break; // Warrior 9
-				{
-					mcu_ram[mcu_offset + 0] = 0x0000;
-					mcu_ram[mcu_offset + 1] = 0x0000;
-				}
-				break;
+				// fighter data: pointers to ROM data
+				case 0x25: MCU_RESPONSE(bloodwar_mcu_4_25); break; // Warrior 1
+				case 0x26: MCU_RESPONSE(bloodwar_mcu_4_26); break; // Warrior 2
+				case 0x27: MCU_RESPONSE(bloodwar_mcu_4_27); break; // Warrior 3
+				case 0x28: MCU_RESPONSE(bloodwar_mcu_4_28); break; // Warrior 4
+				case 0x29: MCU_RESPONSE(bloodwar_mcu_4_29); break; // Warrior 5
+				case 0x2a: MCU_RESPONSE(bloodwar_mcu_4_2a); break; // Warrior 6
+				case 0x2b: MCU_RESPONSE(bloodwar_mcu_4_2b); break; // Warrior 7
+				case 0x2c: MCU_RESPONSE(bloodwar_mcu_4_2c); break; // Warrior 8
+				case 0x2d: MCU_RESPONSE(bloodwar_mcu_4_2d); break; // Warrior 9
 
 				default:
 					logerror("UNKNOWN PARAMETER %02X TO COMMAND 4\n",mcu_data);

@@ -399,7 +399,7 @@ static void SCSP_StopSlot(struct _SLOT *slot,int keyoff)
 
 static void SCSP_Init(struct _SCSP *SCSP, const struct SCSPinterface *intf)
 {
-	int i;
+	int i=0;
 
 	SCSP->IrqTimA = SCSP->IrqTimBC = SCSP->IrqMidi = 0;
 	SCSP->MidiR=SCSP->MidiW=0;

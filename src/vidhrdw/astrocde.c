@@ -329,11 +329,11 @@ WRITE8_HANDLER( profpac_page_select_w )
 
 static UINT8 profpac_read_half = 0;
 static UINT8 profpac_write_mode = 0;
+static UINT8 profpac_intercept = 0;
 
 READ8_HANDLER( profpac_intercept_r )
 {
-	/* TBD */
-	return 0;
+	return profpac_intercept;
 }
 
 static UINT16 *profpac_videoram = 0;
@@ -360,6 +360,7 @@ WRITE8_HANDLER( profpac_screenram_ctrl_w )
 		break;
 		case 3: /* port 0xC3 - set 2bpp to 4bpp mapping */
 			profpac_color_mapping[(data>>4)&0x03] = data&0x0f;
+			profpac_intercept = 0x00;
 		break;
 		case 4: /* port 0xC4 - which half to read on a memory access */
 			profpac_vw = data&0x0f; /* refresh write enable lines TBD */
@@ -382,6 +383,7 @@ READ8_HANDLER( profpac_videoram_r )
 		return ((temp>>8)&0xc0) + ((temp>>6)&0x30) + ((temp>>4)&0x0c) + ((temp>>2)&0x03);
 }
 
+/* All this information comes from decoding the PLA at U39 on the screen ram board */
 WRITE8_HANDLER( profpac_videoram_w )
 {
 	UINT16 address = profpac_write_page*0x4000 + offset;
@@ -396,6 +398,9 @@ WRITE8_HANDLER( profpac_videoram_w )
 	};
 
 	composite_value = 0;
+
+	/* There are 4 write modes: overwrite, xor, overlay, or underlay */
+
 	switch(profpac_write_mode)
 	{
 		case 0: /* normal write */
@@ -444,24 +449,42 @@ WRITE8_HANDLER( profpac_videoram_w )
 	}
 	profpac_videoram[address] = composite_value & mask_table[profpac_cw];
 	profpac_videoram[address] |= current_value & ~mask_table[profpac_cw];
+
+	/* Intercept (collision) stuff */
+
+	/* There are 3 bits on the register, which are set by various combinations of writes */
+
+	if ((((current_value&0xf000) == 0x2000) && ((new_value&0x8000) == 0x8000)) ||
+	    (((current_value&0xf000) == 0x3000) && ((new_value&0xc000) == 0x4000)) ||
+	    (((current_value&0x0f00) == 0x0200) && ((new_value&0x0800) == 0x0800)) ||
+	    (((current_value&0x0f00) == 0x0300) && ((new_value&0x0c00) == 0x0400)) ||
+	    (((current_value&0x00f0) == 0x0020) && ((new_value&0x0080) == 0x0080)) ||
+	    (((current_value&0x00f0) == 0x0030) && ((new_value&0x00c0) == 0x0040)) ||
+	    (((current_value&0x000f) == 0x0002) && ((new_value&0x0008) == 0x0008)) ||
+	    (((current_value&0x000f) == 0x0003) && ((new_value&0x000c) == 0x0004)))
+	    profpac_intercept |= 0x01;
+
+	if ((((new_value&0xf000) != 0x0000) && ((current_value&0xc000) == 0x4000)) ||
+	    (((new_value&0x0f00) != 0x0000) && ((current_value&0x0c00) == 0x0400)) ||
+	    (((new_value&0x00f0) != 0x0000) && ((current_value&0x00c0) == 0x0040)) ||
+	    (((new_value&0x000f) != 0x0000) && ((current_value&0x000c) == 0x0004)))
+	    profpac_intercept |= 0x02;
+
+	if ((((new_value&0xf000) != 0x0000) && ((current_value&0x8000) == 0x8000)) ||
+	    (((new_value&0x0f00) != 0x0000) && ((current_value&0x0800) == 0x0800)) ||
+	    (((new_value&0x00f0) != 0x0000) && ((current_value&0x0080) == 0x0080)) ||
+	    (((new_value&0x000f) != 0x0000) && ((current_value&0x0008) == 0x0008)))
+	    profpac_intercept |= 0x04;
 }
 
 WRITE8_HANDLER( astrocde_magic_expand_color_w )
 {
-#ifdef VERBOSE
-//	logerror("%04x: magic_expand_color = %02x\n",activecpu_get_pc(),data);
-#endif
-
 	magic_expand_color = data;
 }
 
 
 WRITE8_HANDLER( astrocde_magic_control_w )
 {
-#ifdef VERBOSE
-//	logerror("%04x: magic_control = %02x\n",activecpu_get_pc(),data);
-#endif
-
 	magic_control = data;
 
 	magic_expand_count = 0;	/* reset flip-flop for expand mode on write to this register */
@@ -1056,7 +1079,6 @@ READ8_HANDLER( robby_io_r )
 	case 0x07: set_led_status(1,data); break;
 	}
 	return 0;
-	logerror("robby_io_r(): %d %d\n",offset,data);
 }
 
 READ8_HANDLER( profpac_io_1_r )

@@ -877,13 +877,13 @@ static ADDRESS_MAP_START( dremshpr_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x4800, 0x4fef) AM_MIRROR(0xa000) AM_RAM
 	AM_RANGE(0x4ff0, 0x4fff) AM_MIRROR(0xa000) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x5000, 0x5000) AM_MIRROR(0xaf38) AM_WRITE(interrupt_enable_w)
-	AM_RANGE(0x5001, 0x5001) AM_MIRROR(0xaf38) AM_WRITE(pacman_sound_enable_w)
+//	AM_RANGE(0x5001, 0x5001) AM_MIRROR(0xaf38) AM_WRITE(pacman_sound_enable_w)
 	AM_RANGE(0x5002, 0x5002) AM_MIRROR(0xaf38) AM_WRITE(MWA8_NOP) /* unknown */
 	AM_RANGE(0x5003, 0x5003) AM_MIRROR(0xaf38) AM_WRITE(pacman_flipscreen_w)
 	AM_RANGE(0x5004, 0x5005) AM_MIRROR(0xaf38) AM_WRITE(MWA8_NOP) // AM_WRITE(pacman_leds_w)
 	AM_RANGE(0x5006, 0x5006) AM_MIRROR(0xaf38) AM_WRITE(MWA8_NOP) // AM_WRITE(pacman_coin_lockout_global_w)
 	AM_RANGE(0x5007, 0x5007) AM_MIRROR(0xaf38) AM_WRITE(pacman_coin_counter_w)
-	AM_RANGE(0x5040, 0x505f) AM_MIRROR(0xaf00) AM_WRITE(pacman_sound_w) AM_BASE(&pacman_soundregs)
+//	AM_RANGE(0x5040, 0x505f) AM_MIRROR(0xaf00) AM_WRITE(pacman_sound_w) AM_BASE(&pacman_soundregs)
 	AM_RANGE(0x5060, 0x506f) AM_MIRROR(0xaf00) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
 	AM_RANGE(0x5070, 0x507f) AM_MIRROR(0xaf00) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0x5080, 0x5080) AM_MIRROR(0xaf3f) AM_WRITE(MWA8_NOP)
@@ -2869,7 +2869,7 @@ static MACHINE_DRIVER_START( dremshpr )
 
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("namco", AY8910, 14318000/8)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

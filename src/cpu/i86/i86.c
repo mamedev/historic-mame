@@ -64,6 +64,7 @@ typedef struct
 	UINT8 int_vector;
 	INT8 nmi_state;
 	INT8 irq_state;
+	INT8 test_state;	/* PJB 03/05 */
 	int extra_cycles;       /* extra cycles for interrupts */
 }
 i86_Regs;
@@ -125,6 +126,7 @@ static void i86_state_register(void)
 	state_save_register_INT8(  type, cpu, "NMI_STATE",		&I.nmi_state, 1);
 	state_save_register_INT8(  type, cpu, "IRQ_STATE",		&I.irq_state, 1);
 	state_save_register_int(   type, cpu, "EXTRA_CYCLES",	&I.extra_cycles);
+	state_save_register_INT8(  type, cpu, "TEST_STATE",		&I.test_state, 1);	/* PJB 03/05 */
 }
 
 static void i86_init(void)
@@ -213,6 +215,12 @@ static void set_irq_line(int irqline, int state)
 		if (state != CLEAR_LINE && I.IF)
 			PREFIX(_interrupt)(-1);
 	}
+}
+
+/* PJB 03/05 */
+static void set_test_line(int state)
+{
+        I.test_state = !state;
 }
 
 static int i86_execute(int num_cycles)
@@ -462,6 +470,7 @@ static void i86_set_info(UINT32 state, union cpuinfo *info)
 		/* --- the following bits of info are set as 64-bit signed integers --- */
 		case CPUINFO_INT_INPUT_STATE + 0:				set_irq_line(0, info->i);				break;
 		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	set_irq_line(INPUT_LINE_NMI, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_TEST:	set_test_line(info->i);	break; /* PJB 03/05 */
 
 		case CPUINFO_INT_PC:
 		case CPUINFO_INT_REGISTER + I86_PC:
@@ -525,7 +534,7 @@ void i86_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 8;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 50;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 20;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
@@ -538,12 +547,14 @@ void i86_get_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_INT_INPUT_STATE + 0:				info->i = I.irq_state;					break;
 		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	info->i = I.nmi_state;					break;
+		
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_TEST:	info->i = I.test_state;	                                break; /* PJB 03/05 */
 
 		case CPUINFO_INT_PREVIOUSPC:					info->i = I.prevpc;						break;
 
 		case CPUINFO_INT_PC:
 		case CPUINFO_INT_REGISTER + I86_PC:				info->i = I.pc;							break;
-		case CPUINFO_INT_REGISTER + I86_IP:				info->i = I.pc - I.base[CS];			break;		
+		case CPUINFO_INT_REGISTER + I86_IP:				info->i = I.pc - I.base[CS];			break;
 		case CPUINFO_INT_SP:							info->i = I.base[SS] + I.regs.w[SP];	break;
 		case CPUINFO_INT_REGISTER + I86_SP:				info->i = I.regs.w[SP];					break;
 		case CPUINFO_INT_REGISTER + I86_FLAGS: 			CompressFlags(); info->i = I.flags;		break;

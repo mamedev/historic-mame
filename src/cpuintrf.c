@@ -24,229 +24,155 @@
  *************************************/
 
 void dummy_get_info(UINT32 state, union cpuinfo *info);
-
-#if (HAS_Z80)
 void z80_get_info(UINT32 state, union cpuinfo *info);
-#endif
-#if (HAS_Z180)
 void z180_get_info(UINT32 state, union cpuinfo *info);
-#endif
-#if (HAS_8080 || HAS_8085A)
-#include "cpu/i8085/i8085.h"
-#endif
-#if (HAS_M6502 || HAS_M65C02 || HAS_M65SC02 || HAS_M6510 || HAS_M6510T || HAS_M7501 || HAS_M8502 || HAS_N2A03 || HAS_DECO16)
-#include "cpu/m6502/m6502.h"
-#endif
-#if (HAS_M4510)
-#include "cpu/m6502/m4510.h"
-#endif
-#if (HAS_M65CE02)
-#include "cpu/m6502/m65ce02.h"
-#endif
-#if (HAS_M6509)
-#include "cpu/m6502/m6509.h"
-#endif
-#if (HAS_H6280)
-#include "cpu/h6280/h6280.h"
-#endif
-#if (HAS_I86)
-#include "cpu/i86/i86intf.h"
-#endif
-#if (HAS_I88)
-#include "cpu/i86/i88intf.h"
-#endif
-#if (HAS_I186)
-#include "cpu/i86/i186intf.h"
-#endif
-#if (HAS_I188)
-#include "cpu/i86/i188intf.h"
-#endif
-#if (HAS_I286)
-#include "cpu/i86/i286intf.h"
-#endif
-#if (HAS_V20 || HAS_V30 || HAS_V33)
-#include "cpu/nec/necintrf.h"
-#endif
-#if (HAS_V60 || HAS_V70)
-#include "cpu/v60/v60.h"
-#endif
-#if (HAS_I8035 || HAS_I8039 || HAS_I8048 || HAS_N7751)
-#include "cpu/i8039/i8039.h"
-#endif
-#if (HAS_I8X41)
-#include "cpu/i8x41/i8x41.h"
-#endif
-#if (HAS_I8051 || HAS_I8052 || HAS_I8751 || HAS_I8751 )
-#include "cpu/i8051/i8051.h"
-#endif
-#if (HAS_M6800 || HAS_M6801 || HAS_M6802 || HAS_M6803 || HAS_M6808 || HAS_HD63701)
-#include "cpu/m6800/m6800.h"
-#endif
-#if (HAS_M6805 || HAS_M68705 || HAS_HD63705)
-#include "cpu/m6805/m6805.h"
-#endif
-#if (HAS_M6809 || HAS_M6809E)
-#include "cpu/m6809/m6809.h"
-#endif
-#if (HAS_HD6309)
-#include "cpu/hd6309/hd6309.h"
-#endif
-#if (HAS_KONAMI)
-#include "cpu/konami/konami.h"
-#endif
-#if (HAS_M68000 || HAS_M68008 || HAS_M68010 || HAS_M68020 || HAS_M68EC020)
-#include "cpu/m68000/m68000.h"
-#endif
-#if (HAS_T11)
-#include "cpu/t11/t11.h"
-#endif
-#if (HAS_S2650)
-#include "cpu/s2650/s2650.h"
-#endif
-#if (HAS_TMS34010 || HAS_TMS34020)
-#include "cpu/tms34010/tms34010.h"
-#endif
-#if (HAS_TMS9900 || HAS_TMS9940 || HAS_TMS9980 || HAS_TMS9985 || HAS_TMS9989 || HAS_TMS9995 || HAS_TMS99105A || HAS_TMS99110A)
-#include "cpu/tms9900/tms9900.h"
-#endif
-#if (HAS_Z8000)
-#include "cpu/z8000/z8000.h"
-#endif
-#if (HAS_TMS32010)
-#include "cpu/tms32010/tms32010.h"
-#endif
-#if (HAS_TMS32025 || HAS_TMS32026)
-#include "cpu/tms32025/tms32025.h"
-#endif
-#if (HAS_TMS32031)
-#include "cpu/tms32031/tms32031.h"
-#endif
-#if (HAS_CCPU)
-#include "cpu/ccpu/ccpu.h"
-#endif
-#if (HAS_ADSP2100)
+void i8080_get_info(UINT32 state, union cpuinfo *info);
+void i8085_get_info(UINT32 state, union cpuinfo *info);
+void m6502_get_info(UINT32 state, union cpuinfo *info);
+void m65c02_get_info(UINT32 state, union cpuinfo *info);
+void m65sc02_get_info(UINT32 state, union cpuinfo *info);
+void m65ce02_get_info(UINT32 state, union cpuinfo *info);
+void m6509_get_info(UINT32 state, union cpuinfo *info);
+void m6510_get_info(UINT32 state, union cpuinfo *info);
+void m6510t_get_info(UINT32 state, union cpuinfo *info);
+void m7501_get_info(UINT32 state, union cpuinfo *info);
+void m8502_get_info(UINT32 state, union cpuinfo *info);
+void n2a03_get_info(UINT32 state, union cpuinfo *info);
+void deco16_get_info(UINT32 state, union cpuinfo *info);
+void m4510_get_info(UINT32 state, union cpuinfo *info);
+void h6280_get_info(UINT32 state, union cpuinfo *info);
+void i86_get_info(UINT32 state, union cpuinfo *info);
+void i88_get_info(UINT32 state, union cpuinfo *info);
+void i186_get_info(UINT32 state, union cpuinfo *info);
+void i188_get_info(UINT32 state, union cpuinfo *info);
+void i286_get_info(UINT32 state, union cpuinfo *info);
+void v20_get_info(UINT32 state, union cpuinfo *info);
+void v30_get_info(UINT32 state, union cpuinfo *info);
+void v33_get_info(UINT32 state, union cpuinfo *info);
+void v60_get_info(UINT32 state, union cpuinfo *info);
+void v70_get_info(UINT32 state, union cpuinfo *info);
+void i8035_get_info(UINT32 state, union cpuinfo *info);
+void i8039_get_info(UINT32 state, union cpuinfo *info);
+void i8048_get_info(UINT32 state, union cpuinfo *info);
+void n7751_get_info(UINT32 state, union cpuinfo *info);
+void i8x41_get_info(UINT32 state, union cpuinfo *info);
+void i8051_get_info(UINT32 state, union cpuinfo *info);
+void i8052_get_info(UINT32 state, union cpuinfo *info);
+void i8751_get_info(UINT32 state, union cpuinfo *info);
+void i8752_get_info(UINT32 state, union cpuinfo *info);
+void m6800_get_info(UINT32 state, union cpuinfo *info);
+void m6801_get_info(UINT32 state, union cpuinfo *info);
+void m6802_get_info(UINT32 state, union cpuinfo *info);
+void m6803_get_info(UINT32 state, union cpuinfo *info);
+void m6808_get_info(UINT32 state, union cpuinfo *info);
+void hd63701_get_info(UINT32 state, union cpuinfo *info);
+void nsc8105_get_info(UINT32 state, union cpuinfo *info);
+void m6805_get_info(UINT32 state, union cpuinfo *info);
+void m68705_get_info(UINT32 state, union cpuinfo *info);
+void hd63705_get_info(UINT32 state, union cpuinfo *info);
+void hd6309_get_info(UINT32 state, union cpuinfo *info);
+void m6809_get_info(UINT32 state, union cpuinfo *info);
+void m6809e_get_info(UINT32 state, union cpuinfo *info);
+void konami_get_info(UINT32 state, union cpuinfo *info);
+void m68000_get_info(UINT32 state, union cpuinfo *info);
+void m68008_get_info(UINT32 state, union cpuinfo *info);
+void m68010_get_info(UINT32 state, union cpuinfo *info);
+void m68ec020_get_info(UINT32 state, union cpuinfo *info);
+void m68020_get_info(UINT32 state, union cpuinfo *info);
+void t11_get_info(UINT32 state, union cpuinfo *info);
+void s2650_get_info(UINT32 state, union cpuinfo *info);
+void tms34010_get_info(UINT32 state, union cpuinfo *info);
+void tms34020_get_info(UINT32 state, union cpuinfo *info);
+void ti990_10_get_info(UINT32 state, union cpuinfo *info);
+void tms9900_get_info(UINT32 state, union cpuinfo *info);
+void tms9940_get_info(UINT32 state, union cpuinfo *info);
+void tms9980a_get_info(UINT32 state, union cpuinfo *info);
+void tms9985_get_info(UINT32 state, union cpuinfo *info);
+void tms9989_get_info(UINT32 state, union cpuinfo *info);
+void tms9995_get_info(UINT32 state, union cpuinfo *info);
+void tms99105a_get_info(UINT32 state, union cpuinfo *info);
+void tms99110a_get_info(UINT32 state, union cpuinfo *info);
+void z8000_get_info(UINT32 state, union cpuinfo *info);
+void tms32010_get_info(UINT32 state, union cpuinfo *info);
+void tms32025_get_info(UINT32 state, union cpuinfo *info);
+void tms32026_get_info(UINT32 state, union cpuinfo *info);
+void tms32031_get_info(UINT32 state, union cpuinfo *info);
+void ccpu_get_info(UINT32 state, union cpuinfo *info);
 void adsp2100_get_info(UINT32 state, union cpuinfo *info);
-#endif
-#if (HAS_ADSP2101)
 void adsp2101_get_info(UINT32 state, union cpuinfo *info);
-#endif
-#if (HAS_ADSP2104)
 void adsp2104_get_info(UINT32 state, union cpuinfo *info);
-#endif
-#if (HAS_ADSP2105)
 void adsp2105_get_info(UINT32 state, union cpuinfo *info);
-#endif
-#if (HAS_ADSP2115)
 void adsp2115_get_info(UINT32 state, union cpuinfo *info);
-#endif
-#if (HAS_ADSP2181)
 void adsp2181_get_info(UINT32 state, union cpuinfo *info);
-#endif
-#if (HAS_PSXCPU)
-#include "cpu/mips/psx.h"
-#endif
-#if (HAS_ASAP)
-#include "cpu/asap/asap.h"
-#endif
-#if (HAS_UPD7810 || HAS_UPD7807)
-#include "cpu/upd7810/upd7810.h"
-#endif
-#if (HAS_JAGUAR)
-#include "cpu/jaguar/jaguar.h"
-#endif
-#if (HAS_R3000)
-#include "cpu/mips/r3000.h"
-#endif
-#if (HAS_R4600 || HAS_R4700 || HAS_R5000 || HAS_QED5271 || HAS_RM7000)
-#include "cpu/mips/mips3.h"
-#endif
-#if (HAS_ARM)
-#include "cpu/arm/arm.h"
-#endif
-#if (HAS_ARM7)
-#include "cpu/arm7/arm7.h"
-#endif
-#if (HAS_SH2)
-#include "cpu/sh2/sh2.h"
-#endif
-#if (HAS_DSP32C)
-#include "cpu/dsp32/dsp32.h"
-#endif
-#if (HAS_PIC16C54 || HAS_PIC16C55 || HAS_PIC16C56 || HAS_PIC16C57 || HAS_PIC16C58)
-#include "cpu/pic16c5x/pic16c5x.h"
-#endif
-#if (HAS_G65816)
-#include "cpu/g65816/g65816.h"
-#endif
-#if (HAS_SPC700)
-#include "cpu/spc700/spc700.h"
-#endif
-#if (HAS_E116T || HAS_E116XT || HAS_E116XS || HAS_E116XSR || HAS_E132N || HAS_E132T || HAS_E132XN || HAS_E132XT || HAS_E132XS || HAS_E132XSR || HAS_GMS30C2116 || HAS_GMS30C2132 || HAS_GMS30C2216 || HAS_GMS30C2232)
-#include "cpu/e132xs/e132xs.h"
-#endif
-#if (HAS_I386)
-#include "cpu/i386/i386intf.h"
-#endif
-#if (HAS_I960)
-#include "cpu/i960/i960.h"
-#endif
-#if (HAS_H83002)
-#include "cpu/h83002/h83002.h"
-#endif
-#if (HAS_V810)
-#include "cpu/v810/v810.h"
-#endif
-#if (HAS_M37710)
-#include "cpu/m37710/m37710.h"
-#endif
-#if (HAS_PPC403 || HAS_PPC602 || HAS_PPC603)
-#include "cpu/powerpc/ppc.h"
-#endif
-#if (HAS_SE3208)
-#include "cpu/se3208/se3208.h"
-#endif
-#if (HAS_MC68HC11)
-#include "cpu/mc68hc11/mc68hc11.h"
-#endif
+void psxcpu_get_info(UINT32 state, union cpuinfo *info);
+void asap_get_info(UINT32 state, union cpuinfo *info);
+void upd7810_get_info(UINT32 state, union cpuinfo *info);
+void upd7807_get_info(UINT32 state, union cpuinfo *info);
+void jaguargpu_get_info(UINT32 state, union cpuinfo *info);
+void jaguardsp_get_info(UINT32 state, union cpuinfo *info);
+void r3000be_get_info(UINT32 state, union cpuinfo *info);
+void r3000le_get_info(UINT32 state, union cpuinfo *info);
+void r4600be_get_info(UINT32 state, union cpuinfo *info);
+void r4600le_get_info(UINT32 state, union cpuinfo *info);
+void r4700be_get_info(UINT32 state, union cpuinfo *info);
+void r4700le_get_info(UINT32 state, union cpuinfo *info);
+void r5000be_get_info(UINT32 state, union cpuinfo *info);
+void r5000le_get_info(UINT32 state, union cpuinfo *info);
+void qed5271be_get_info(UINT32 state, union cpuinfo *info);
+void qed5271le_get_info(UINT32 state, union cpuinfo *info);
+void rm7000be_get_info(UINT32 state, union cpuinfo *info);
+void rm7000le_get_info(UINT32 state, union cpuinfo *info);
+void arm_get_info(UINT32 state, union cpuinfo *info);
+void arm7_get_info(UINT32 state, union cpuinfo *info);
+void sh2_get_info(UINT32 state, union cpuinfo *info);
+void dsp32c_get_info(UINT32 state, union cpuinfo *info);
+void pic16C54_get_info(UINT32 state, union cpuinfo *info);
+void pic16C55_get_info(UINT32 state, union cpuinfo *info);
+void pic16C56_get_info(UINT32 state, union cpuinfo *info);
+void pic16C57_get_info(UINT32 state, union cpuinfo *info);
+void pic16C58_get_info(UINT32 state, union cpuinfo *info);
+void g65816_get_info(UINT32 state, union cpuinfo *info);
+void spc700_get_info(UINT32 state, union cpuinfo *info);
+void e116t_get_info(UINT32 state, union cpuinfo *info);
+void e116xt_get_info(UINT32 state, union cpuinfo *info);
+void e116xs_get_info(UINT32 state, union cpuinfo *info);
+void e116xsr_get_info(UINT32 state, union cpuinfo *info);
+void e132n_get_info(UINT32 state, union cpuinfo *info);
+void e132t_get_info(UINT32 state, union cpuinfo *info);
+void e132xn_get_info(UINT32 state, union cpuinfo *info);
+void e132xt_get_info(UINT32 state, union cpuinfo *info);
+void e132xs_get_info(UINT32 state, union cpuinfo *info);
+void e132xsr_get_info(UINT32 state, union cpuinfo *info);
+void gms30c2116_get_info(UINT32 state, union cpuinfo *info);
+void gms30c2132_get_info(UINT32 state, union cpuinfo *info);
+void gms30c2216_get_info(UINT32 state, union cpuinfo *info);
+void gms30c2232_get_info(UINT32 state, union cpuinfo *info);
+void i386_get_info(UINT32 state, union cpuinfo *info);
+void i960_get_info(UINT32 state, union cpuinfo *info);
+void h8_3002_get_info(UINT32 state, union cpuinfo *info);
+void v810_get_info(UINT32 state, union cpuinfo *info);
+void m37710_get_info(UINT32 state, union cpuinfo *info);
+void ppc403_get_info(UINT32 state, union cpuinfo *info);
+void ppc602_get_info(UINT32 state, union cpuinfo *info);
+void ppc603_get_info(UINT32 state, union cpuinfo *info);
+void SE3208_get_info(UINT32 state, union cpuinfo *info);
+void mc68hc11_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MESS
-
-#if (HAS_APEXC)
-#include "cpu/apexc/apexc.h"
+void apexc_get_info(UINT32 state, union cpuinfo *info);
+void cdp1802_get_info(UINT32 state, union cpuinfo *info);
+void cp1610_get_info(UINT32 state, union cpuinfo *info);
+void f8_get_info(UINT32 state, union cpuinfo *info);
+void lh5801_get_info(UINT32 state, union cpuinfo *info);
+void pdp1_get_info(UINT32 state, union cpuinfo *info);
+void saturn_get_info(UINT32 state, union cpuinfo *info);
+void sc61860_get_info(UINT32 state, union cpuinfo *info);
+void tx0_64kw_get_info(UINT32 state, union cpuinfo *info);
+void tx0_8kw_get_info(UINT32 state, union cpuinfo *info);
+void z80gb_get_info(UINT32 state, union cpuinfo *info);
+void tms7000_get_info(UINT32 state, union cpuinfo *info);
+void tms7000_exl_get_info(UINT32 state, union cpuinfo *info);
 #endif
-#if (HAS_CDP1802)
-#include "cpu/cdp1802/cdp1802.h"
-#endif
-#if (HAS_CP1610)
-#include "cpu/cp1610/cp1610.h"
-#endif
-#if (HAS_F8)
-#include "cpu/f8/f8.h"
-#endif
-#if (HAS_LH5801)
-#include "cpu/lh5801/lh5801.h"
-#endif
-#if (HAS_PDP1)
-#include "cpu/pdp1/pdp1.h"
-#endif
-#if (HAS_SATURN)
-#include "cpu/saturn/saturn.h"
-#endif
-#if (HAS_SC61860)
-#include "cpu/sc61860/sc61860.h"
-#endif
-#if (HAS_TX0_64KW || HAS_TX0_8KW)
-#include "cpu/pdp1/tx0.h"
-#endif
-#if (HAS_Z80GB)
-#include "cpu/z80gb/z80gb.h"
-#endif
-#if (HAS_TMS7000) || (HAS_TMS7000_EXL)
-#include "cpu/tms7000/tms7000.h"
-#endif
-
-#endif /* MESS */
-
 
 
 /*************************************

@@ -290,7 +290,7 @@ static void expand_pathlist(struct pathdata *list)
 
 		for (pathindex = 0; pathindex < list->pathcount; pathindex++)
 			free((void *)list->path[pathindex]);
-		free(list->path);
+		free((void *)list->path);
 	}
 
 	// by default, start with an empty list
@@ -306,7 +306,7 @@ static void expand_pathlist(struct pathdata *list)
 	while (1)
 	{
 		// allocate space for the new pointer
-		list->path = realloc(list->path, (list->pathcount + 1) * sizeof(char *));
+		list->path = realloc((void *)list->path, (list->pathcount + 1) * sizeof(char *));
 		if (!list->path)
 			goto out_of_memory;
 
@@ -359,7 +359,7 @@ void free_pathlists(void)
 
 			for (pathindex = 0; pathindex < list->pathcount; pathindex++)
 				free((void *)list->path[pathindex]);
-			free(list->path);
+			free((void *)list->path);
 		}
 
 		// by default, start with an empty list

@@ -228,8 +228,8 @@ VIDEO_UPDATE( system18 )
 	if (vdp_enable && vdplayer == 0) draw_vdp(bitmap, cliprect, vdppri);
 
 	/* draw background again to draw non-transparent pixels over the VDP and set the priority */
-	segaic16_tilemap_draw(0, NULL, cliprect, SEGAIC16_TILEMAP_BACKGROUND, 0, 0x01);
-	segaic16_tilemap_draw(0, NULL, cliprect, SEGAIC16_TILEMAP_BACKGROUND, 1, 0x02);
+	segaic16_tilemap_draw(0, bitmap, cliprect, SEGAIC16_TILEMAP_BACKGROUND, 0, 0x01);
+	segaic16_tilemap_draw(0, bitmap, cliprect, SEGAIC16_TILEMAP_BACKGROUND, 1, 0x02);
 	if (vdp_enable && vdplayer == 1) draw_vdp(bitmap, cliprect, vdppri);
 
 	/* draw foreground */

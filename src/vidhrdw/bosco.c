@@ -10,11 +10,12 @@
 #include "vidhrdw/generic.h"
 
 
-#define MAX_STARS 250
+#define MAX_STARS 252
 #define STARS_COLOR_BASE 32
 
 static unsigned int stars_scrollx;
 static unsigned int stars_scrolly;
+
 static int bosco_starcontrol,bosco_starblink[2];
 
 static struct tilemap *bg_tilemap,*fg_tilemap;
@@ -24,14 +25,17 @@ struct star
 {
 	int x,y,col,set;
 };
-static struct star stars[MAX_STARS];
-static int total_stars;
+
 
 #define VIDEO_RAM_SIZE 0x400
 
 data8_t *bosco_videoram;
 data8_t *bosco_radarattr;
 static data8_t *bosco_radarx,*bosco_radary;
+
+/* see Galaga.c for starfield locations data */
+
+extern struct star star_seed_tab[];
 
 
 PALETTE_INIT( bosco )
@@ -141,9 +145,6 @@ static void fg_get_tile_info(int tile_index)
 
 VIDEO_START( bosco )
 {
-	int generator;
-	int x,y;
-	int set = 0;
 
 	bg_tilemap = tilemap_create(bg_get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 	fg_tilemap = tilemap_create(fg_get_tile_info,fg_tilemap_scan,  TILEMAP_OPAQUE,8,8, 8,32);
@@ -159,46 +160,6 @@ VIDEO_START( bosco )
 	bosco_radarx = bosco_videoram + 0x03f0;
 	bosco_radary = bosco_radarx + 0x0800;
 
-	/* precalculate the star background */
-	/* this comes from the Galaxian hardware, Bosconian is probably different */
-	total_stars = 0;
-	generator = 0;
-
-	for (x = 255;x >= 0;x--)
-	{
-		for (y = 511;y >= 0;y--)
-		{
-			int bit1,bit2;
-
-
-			generator <<= 1;
-			bit1 = (~generator >> 17) & 1;
-			bit2 = (generator >> 5) & 1;
-
-			if (bit1 ^ bit2) generator |= 1;
-
-			if (x >= Machine->visible_area.min_x &&
-					x <= Machine->visible_area.max_x &&
-					((~generator >> 16) & 1) &&
-					(generator & 0xff) == 0xff)
-			{
-				int color;
-
-				color = (~(generator >> 8)) & 0x3f;
-				if (color && total_stars < MAX_STARS)
-				{
-					stars[total_stars].x = x;
-					stars[total_stars].y = y;
-					stars[total_stars].col = Machine->pens[color + STARS_COLOR_BASE];
-					stars[total_stars].set = set;
-					if (++set > 3)
-						set = 0;
-
-					total_stars++;
-				}
-			}
-		}
-	}
 
 	return 0;
 }
@@ -306,37 +267,48 @@ static void draw_bullets( struct mame_bitmap *bitmap, const struct rectangle *cl
 
 static void draw_stars( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	int offs;
 
-	/* draw the stars */
-	if (1)
+	if (1)  
+
 	{
-		int bpen;
+		int bpen,star_cntr;
+		int set_a, set_b;
+
+		/* two sets of stars controlled by these bits */
+
+		set_a = bosco_starblink[0];
+		set_b = bosco_starblink[1] |0x2;
 
 		bpen = Machine->pens[0x1f];
-		for (offs = 0;offs < total_stars;offs++)
+		for (star_cntr = 0;star_cntr < MAX_STARS;star_cntr++)
 		{
-			int x,y;
-			int set;
-			int starset[4][2] = {{0,3},{0,1},{2,3},{2,1}};
-
-			set = bosco_starblink[0] + (bosco_starblink[1] << 1);
-
-			if (((stars[offs].set == starset[set][0]) ||
-				 (stars[offs].set == starset[set][1])))
+			int x,y;														  
+					
+			if   ( (set_a == star_seed_tab[star_cntr].set) ||  ( set_b == star_seed_tab[star_cntr].set) ) 	 
 			{
-				x = (stars[offs].x + stars_scrollx) % 224;
-				y = (stars[offs].y + stars_scrolly) % 224 + 16;
 
-				if (flip_screen) x += 64;
 
-				if (read_pixel(bitmap, x, y) == bpen)
-				{
-					plot_pixel(bitmap, x, y, stars[offs].col);
-				}
+                                x = (  star_seed_tab[star_cntr].x + stars_scrollx) % 256;
+                                y = (  star_seed_tab[star_cntr].y + stars_scrolly) % 256;
+
+				/* dont draw the stars that are off the screen */
+				if ( x < 224 && y < 224 ) 
+				 {
+
+					if (flip_screen) x += 64;
+
+					if (y >= Machine->visible_area.min_y && y <= Machine->visible_area.max_y)
+					{
+						if (read_pixel(bitmap, x, y) == bpen)
+   							plot_pixel(bitmap, x, y, STARS_COLOR_BASE + star_seed_tab[star_cntr].col );
+					}
+				 }
 			}
+
 		}
 	}
+
+
 }
 
 

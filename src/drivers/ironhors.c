@@ -48,9 +48,12 @@ static WRITE8_HANDLER( ironhors_sh_irqtrigger_w )
 
 static WRITE8_HANDLER( ironhors_filter_w )
 {
-	filter_rc_set_RC(0,1000,2200,1000,data & 0x04 ? 220000 : 0); /* YM2203-SSG-A */
-	filter_rc_set_RC(1,1000,2200,1000,data & 0x02 ? 220000 : 0); /* YM2203-SSG-B */
-	filter_rc_set_RC(2,1000,2200,1000,data & 0x01 ? 220000 : 0); /* YM2203-SSG-C */
+	if (sndti_to_sndnum(SOUND_FILTER_RC, 2) >= 0)
+	{
+		filter_rc_set_RC(0,1000,2200,1000,data & 0x04 ? 220000 : 0); /* YM2203-SSG-A */
+		filter_rc_set_RC(1,1000,2200,1000,data & 0x02 ? 220000 : 0); /* YM2203-SSG-B */
+		filter_rc_set_RC(2,1000,2200,1000,data & 0x01 ? 220000 : 0); /* YM2203-SSG-C */
+	}
 }
 
 

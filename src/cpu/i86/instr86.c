@@ -1994,7 +1994,12 @@ static void PREFIX86(_call_far)(void)
 
 static void PREFIX86(_wait)(void)    /* Opcode 0x9b */
 {
-	ICOUNT -= cycles.wait;
+/* PJB 03/05 */
+        if(!I.test_state) ICOUNT -= cycles.wait;
+        else{
+            ICOUNT -= cycles.wait;
+            I.pc --;
+        }
 }
 
 static void PREFIX86(_pushf)(void)    /* Opcode 0x9c */

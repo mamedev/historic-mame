@@ -133,7 +133,7 @@ INLINE void debug_view_set_property_UINT32(struct debug_view *view, int property
 INLINE const char *debug_view_get_property_string(struct debug_view *view, int property)
 {
 	const char *value;
-	debug_view_get_property(view, property, &value);
+	debug_view_get_property(view, property, (void *)&value);
 	return value;
 }
 

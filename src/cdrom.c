@@ -12,6 +12,8 @@
 
 #include "cdrom.h"
 
+#define VERBOSE	(0)
+
 /*************************************
  *
  *	Type definitions
@@ -53,7 +55,9 @@ UINT32 cdrom_get_track_phys(struct cdrom_file *file, UINT32 frame)
 		}
 	}
 
+	#if VERBOSE
 	logerror("CDROM: could not find track for frame %d\n", frame);
+	#endif
 	return 0;
 }
 
@@ -70,7 +74,9 @@ UINT32 cdrom_get_track_chd(struct cdrom_file *file, UINT32 frame)
 		}
 	}
 
+	#if VERBOSE
 	logerror("CDROM: could not find track for frame %d\n", frame);
+	#endif
 	return 0;
 }
 
@@ -83,6 +89,12 @@ UINT32 cdrom_get_phys_start_of_track(struct cdrom_file *file, UINT32 track)
 /* get CHD frame number that a track starts at */
 UINT32 cdrom_get_chd_start_of_track(struct cdrom_file *file, UINT32 track)
 {
+	// handle lead-out specially
+	if (track == 0xaa)
+	{
+		return file->cdtoc.tracks[file->cdtoc.numtrks-1].chdframeofs + file->cdtoc.tracks[file->cdtoc.numtrks-1].frames;
+	}
+
 	return file->cdtoc.tracks[track].chdframeofs;
 }
 
@@ -184,7 +196,9 @@ struct cdrom_file *cdrom_open(struct chd_file *chd)
 		mrp++;
 	}
 
+	#if VERBOSE
 	logerror("CD has %d tracks\n", file->cdtoc.numtrks);
+	#endif
 
 	/* calculate the starting frame for each track, keeping in mind that CHDMAN
 	   pads tracks out with extra frames to fit hunk size boundries
@@ -199,6 +213,7 @@ struct cdrom_file *cdrom_open(struct chd_file *chd)
 		chdofs  += file->cdtoc.tracks[i].frames; 
 		chdofs  += file->cdtoc.tracks[i].extraframes;
 
+		#if VERBOSE
 		logerror("Track %02d is format %d subtype %d datasize %d subsize %d frames %d extraframes %d physofs %d chdofs %d\n", i+1,
 			file->cdtoc.tracks[i].trktype,
 			file->cdtoc.tracks[i].subtype,
@@ -208,6 +223,7 @@ struct cdrom_file *cdrom_open(struct chd_file *chd)
 			file->cdtoc.tracks[i].extraframes,
 			file->cdtoc.tracks[i].physframeofs,
 			file->cdtoc.tracks[i].chdframeofs);
+		#endif
 	}
 
 	/* fill out dummy entries for the last track to help our search */
@@ -328,9 +344,39 @@ UINT32 cdrom_read_data(struct cdrom_file *file, UINT32 lbasector, UINT32 numsect
 			return 1;		
 		}
 
+		#if VERBOSE
 		logerror("CDROM: Conversion from type %d to type %d not supported!\n", tracktype, datatype);
+		#endif
 		return 0;
 	}
+	return 1;
+}
+
+/*************************************
+ *
+ *  Read subcode data from a CD-ROM
+ *
+ *************************************/
+
+UINT32 cdrom_read_subcode(struct cdrom_file *file, UINT32 lbasector, void *buffer)
+{
+	UINT32 hunknum = lbasector / file->hunksectors;
+	UINT32 sectoroffs = lbasector % file->hunksectors;
+	UINT32 track = cdrom_get_track_chd(file, lbasector);
+	UINT32 tracktype;
+
+	tracktype = file->cdtoc.tracks[track].trktype;
+
+	/* if we haven't cached this hunk, read it now */
+	if (file->cachehunk != hunknum)
+	{
+		if (!chd_read(file->chd, hunknum, 1, file->cache))
+			return 0;
+		file->cachehunk = hunknum;
+	}
+	
+	/* copy out the requested data */
+	memcpy(buffer, &file->cache[(sectoroffs * CD_FRAME_SIZE) + file->cdtoc.tracks[track].datasize], file->cdtoc.tracks[track].subsize);
 	return 1;
 }
 
@@ -487,3 +533,81 @@ void cdrom_get_audio_data(struct cdrom_file *file, stream_sample_t *bufL, stream
 	/* we've got data, feed it out by calling ourselves recursively */
 	cdrom_get_audio_data(file, bufL, bufR, remaining);
 }
+
+// returns the last track number
+int cdrom_get_last_track(struct cdrom_file *file)
+{
+	return file->cdtoc.numtrks;
+}
+
+// get the ADR | CONTROL for a track
+int cdrom_get_adr_control(struct cdrom_file *file, int track)
+{
+	if (track == 0xaa)
+	{
+		return 0x10;	// audio track, subchannel is position
+	}
+
+	if (file->cdtoc.tracks[track].trktype == CD_TRACK_AUDIO)
+	{
+	 	return 0x10;	// audio track, subchannel is position
+	}
+
+	return 0x14;	// data track, subchannel is position
+}
+
+// is a track audio?
+int cdrom_get_track_type(struct cdrom_file *file, int track)
+{
+	if (file->cdtoc.tracks[track].trktype == CD_TRACK_AUDIO)
+	{
+		return 1;
+	}
+
+	return 0;
+}
+
+INLINE UINT8 make_bcd(UINT8 data)
+{
+	return ((data / 10) << 4) | (data % 10);
+}
+
+// get the start of a track
+// *file = cdrom
+// track = track #
+// msf = 0 for LBA, 1 for BCD M:S:F
+data32_t cdrom_get_track_start(struct cdrom_file *file, int track, int msf)
+{
+	int tstart = cdrom_get_chd_start_of_track(file, track);
+
+	if (msf)
+	{
+		data8_t m, s, f;
+
+		m = tstart / (60*75);
+		tstart -= (m * 60 * 75);
+		s = tstart / 75;
+		f = tstart % 75;
+		#if VERBOSE
+		logerror("SCSICD: %d blocks => %d M %d S %d F\n",  cdrom_get_chd_start_of_track(file, track), m, s, f);
+		#endif
+
+		tstart = make_bcd(m)<<16 | make_bcd(s)<<8 | make_bcd(f);
+
+		#if VERBOSE
+		logerror("SCSICD: %08x in BCD\n", tstart);
+		#endif
+
+		return tstart;
+	}
+	else
+	{
+		return tstart;
+	}
+}
+
+struct cdrom_toc *cdrom_get_toc(struct cdrom_file *file)
+{
+	return &file->cdtoc;
+}
+

@@ -373,6 +373,20 @@ WRITE16_HANDLER( bloodstm_paletteram_w )
 }
 
 
+WRITE32_HANDLER( drivedge_paletteram_w )
+{
+	int r, g, b;
+
+	COMBINE_DATA(&paletteram32[offset]);
+
+	r = paletteram32[offset] & 0xff;
+	g = (paletteram32[offset] >> 8) & 0xff;
+	b = (paletteram32[offset] >> 16) & 0xff;
+
+	palette_set_color(offset, r, g, b);
+}
+
+
 WRITE32_HANDLER( itech020_paletteram_w )
 {
 	int r, g, b;
@@ -524,7 +538,7 @@ static void draw_raw(UINT16 *base, UINT16 color)
 			/* clip in the Y direction */
 			if (sy >= scaled_clip_rect.min_y && sy < scaled_clip_rect.max_y)
 			{
-				UINT16 *dstbase;
+				UINT32 dstoffs;
 
 				/* direction matters here */
 				sx = startx;
@@ -534,14 +548,14 @@ static void draw_raw(UINT16 *base, UINT16 color)
 					for (x = 0; x < width && sx < scaled_clip_rect.min_x; x += xsrcstep, sx += xdststep) ;
 
 					/* compute the address */
-					dstbase = &base[compute_safe_address(sx >> 8, sy >> 8) - ((sx >> 8) & vram_xmask)];
+					dstoffs = compute_safe_address(sx >> 8, sy >> 8) - (sx >> 8);
 
 					/* render middle pixels */
 					for ( ; x < width && sx < scaled_clip_rect.max_x; x += xsrcstep, sx += xdststep)
 					{
 						int pixel = rowsrc[x >> 8];
 						if (pixel != transparent_pen)
-							dstbase[((sx >> 8) & vram_xmask)] = pixel | color;
+							base[(dstoffs + (sx >> 8)) & vram_mask] = pixel | color;
 					}
 				}
 				else
@@ -550,14 +564,14 @@ static void draw_raw(UINT16 *base, UINT16 color)
 					for (x = 0; x < width && sx >= scaled_clip_rect.max_x; x += xsrcstep, sx += xdststep) ;
 
 					/* compute the address */
-					dstbase = &base[compute_safe_address(sx >> 8, sy >> 8) - (sx >> 8)];
+					dstoffs = compute_safe_address(sx >> 8, sy >> 8) - (sx >> 8);
 
 					/* render middle pixels */
 					for ( ; x < width && sx >= scaled_clip_rect.min_x; x += xsrcstep, sx += xdststep)
 					{
 						int pixel = rowsrc[x >> 8];
 						if (pixel != transparent_pen)
-							dstbase[((sx >> 8) & vram_xmask)] = pixel | color;
+							base[(dstoffs + (sx >> 8)) & vram_mask] = pixel | color;
 					}
 				}
 			}
@@ -642,7 +656,7 @@ static void draw_raw_drivedge(UINT16 *base, UINT16 *zbase, UINT16 color)
 			/* clip in the Y direction */
 			if (sy >= scaled_clip_rect.min_y && sy < scaled_clip_rect.max_y)
 			{
-				UINT16 *dstbase, *zbufbase;
+				UINT32 dstoffs, zbufoffs;
 				INT32 z = z0;
 
 				/* direction matters here */
@@ -654,8 +668,8 @@ static void draw_raw_drivedge(UINT16 *base, UINT16 *zbase, UINT16 color)
 						z += (INT32)drivedge_zbuf_control[0];
 
 					/* compute the address */
-					dstbase = &base[compute_safe_address(sx >> 8, sy >> 8) - (sx >> 8)];
-					zbufbase = &zbase[compute_safe_address(sx >> 8, sy >> 8) - (sx >> 8)];
+					dstoffs = compute_safe_address(sx >> 8, sy >> 8) - (sx >> 8);
+					zbufoffs = compute_safe_address(sx >> 8, sy >> 8) - (sx >> 8);
 
 					/* render middle pixels */
 					if (drivedge_zbuf_control[3] & 0x8000)
@@ -665,8 +679,8 @@ static void draw_raw_drivedge(UINT16 *base, UINT16 *zbase, UINT16 color)
 							int pixel = rowsrc[x >> 8];
 							if (pixel != transparent_pen)
 							{
-								dstbase[sx >> 8] = pixel | color;
-								zbufbase[sx >> 8] = (z >> 8) | zmatch;
+								base[(dstoffs + (sx >> 8)) & vram_mask] = pixel | color;
+								zbase[(zbufoffs + (sx >> 8)) & vram_mask] = (z >> 8) | zmatch;
 							}
 							z += (INT32)drivedge_zbuf_control[0];
 						}
@@ -676,8 +690,8 @@ static void draw_raw_drivedge(UINT16 *base, UINT16 *zbase, UINT16 color)
 						for ( ; x < width && sx < scaled_clip_rect.max_x; x += xsrcstep, sx += xdststep)
 						{
 							int pixel = rowsrc[x >> 8];
-							if (pixel != transparent_pen && zmatch == (zbufbase[sx >> 8] & (0x1f << 11)))
-								dstbase[sx >> 8] = pixel | color;
+							if (pixel != transparent_pen && zmatch == (zbase[(zbufoffs + (sx >> 8)) & vram_mask] & (0x1f << 11)))
+								base[(dstoffs + (sx >> 8)) & vram_mask] = pixel | color;
 							z += (INT32)drivedge_zbuf_control[0];
 						}
 					}
@@ -686,10 +700,10 @@ static void draw_raw_drivedge(UINT16 *base, UINT16 *zbase, UINT16 color)
 						for ( ; x < width && sx < scaled_clip_rect.max_x; x += xsrcstep, sx += xdststep)
 						{
 							int pixel = rowsrc[x >> 8];
-							if (pixel != transparent_pen && ((z >> 8) <= (zbufbase[sx >> 8] & 0x7ff)))
+							if (pixel != transparent_pen && ((z >> 8) <= (zbase[(zbufoffs + (sx >> 8)) & vram_mask] & 0x7ff)))
 							{
-								dstbase[sx >> 8] = pixel | color;
-								zbufbase[sx >> 8] = (z >> 8) | zmatch;
+								base[(dstoffs + (sx >> 8)) & vram_mask] = pixel | color;
+								zbase[(zbufoffs + (sx >> 8)) & vram_mask] = (z >> 8) | zmatch;
 							}
 							z += (INT32)drivedge_zbuf_control[0];
 						}
@@ -702,8 +716,8 @@ static void draw_raw_drivedge(UINT16 *base, UINT16 *zbase, UINT16 color)
 						z += (INT32)drivedge_zbuf_control[0];
 
 					/* compute the address */
-					dstbase = &base[compute_safe_address(sx >> 8, sy >> 8) - (sx >> 8)];
-					zbufbase = &zbase[compute_safe_address(sx >> 8, sy >> 8) - (sx >> 8)];
+					dstoffs = compute_safe_address(sx >> 8, sy >> 8) - (sx >> 8);
+					zbufoffs = compute_safe_address(sx >> 8, sy >> 8) - (sx >> 8);
 
 					/* render middle pixels */
 					if (drivedge_zbuf_control[3] & 0x8000)
@@ -713,8 +727,8 @@ static void draw_raw_drivedge(UINT16 *base, UINT16 *zbase, UINT16 color)
 							int pixel = rowsrc[x >> 8];
 							if (pixel != transparent_pen)
 							{
-								dstbase[sx >> 8] = pixel | color;
-								zbufbase[sx >> 8] = (z >> 8) | zmatch;
+								base[(dstoffs + (sx >> 8)) & vram_mask] = pixel | color;
+								zbase[(zbufoffs + (sx >> 8)) & vram_mask] = (z >> 8) | zmatch;
 							}
 							z += (INT32)drivedge_zbuf_control[0];
 						}
@@ -724,8 +738,8 @@ static void draw_raw_drivedge(UINT16 *base, UINT16 *zbase, UINT16 color)
 						for ( ; x < width && sx >= scaled_clip_rect.min_x; x += xsrcstep, sx += xdststep)
 						{
 							int pixel = rowsrc[x >> 8];
-							if (pixel != transparent_pen && zmatch == (zbufbase[sx >> 8] & (0x1f << 11)))
-								dstbase[sx >> 8] = pixel | color;
+							if (pixel != transparent_pen && zmatch == (zbase[(zbufoffs + (sx >> 8)) & vram_mask] & (0x1f << 11)))
+								base[(dstoffs + (sx >> 8)) & vram_mask] = pixel | color;
 							z += (INT32)drivedge_zbuf_control[0];
 						}
 					}
@@ -734,10 +748,10 @@ static void draw_raw_drivedge(UINT16 *base, UINT16 *zbase, UINT16 color)
 						for ( ; x < width && sx >= scaled_clip_rect.min_x; x += xsrcstep, sx += xdststep)
 						{
 							int pixel = rowsrc[x >> 8];
-							if (pixel != transparent_pen && ((z >> 8) <= (zbufbase[sx >> 8] & 0x7ff)))
+							if (pixel != transparent_pen && ((z >> 8) <= (zbase[(zbufoffs + (sx >> 8)) & vram_mask] & 0x7ff)))
 							{
-								dstbase[sx >> 8] = pixel | color;
-								zbufbase[sx >> 8] = (z >> 8) | zmatch;
+								base[(dstoffs + (sx >> 8)) & vram_mask] = pixel | color;
+								zbase[(zbufoffs + (sx >> 8)) & vram_mask] = (z >> 8) | zmatch;
 							}
 							z += (INT32)drivedge_zbuf_control[0];
 						}
@@ -906,7 +920,7 @@ INLINE void draw_rle_fast(UINT16 *base, UINT16 color)
 	/* loop over Y in src pixels */
 	for (y = 0; y < height; y++, sy += ydststep)
 	{
-		UINT16 *dstbase;
+		UINT32 dstoffs;
 
 		/* clip in the Y direction */
 		if (sy < scaled_clip_rect.min_y || sy >= scaled_clip_rect.max_y)
@@ -916,7 +930,7 @@ INLINE void draw_rle_fast(UINT16 *base, UINT16 color)
 		}
 
 		/* compute the address */
-		dstbase = &base[compute_safe_address(sx, sy >> 8)];
+		dstoffs = compute_safe_address(sx, sy >> 8);
 
 		/* left clip */
 		SKIP_RLE(lclip, xleft, count, innercount, src);
@@ -933,8 +947,8 @@ INLINE void draw_rle_fast(UINT16 *base, UINT16 color)
 				{
 					int pixel = *src++;
 					if (pixel != transparent_pen)
-						*dstbase = color | pixel;
-					dstbase++;
+						base[dstoffs & vram_mask] = color | pixel;
+					dstoffs++;
 				}
 
 			/* run of non-transparent repeats */
@@ -942,12 +956,12 @@ INLINE void draw_rle_fast(UINT16 *base, UINT16 color)
 			{
 				val |= color;
 				while (innercount--)
-					*dstbase++ = val;
+					base[dstoffs++ & vram_mask] = val;
 			}
 
 			/* run of transparent repeats */
 			else
-				dstbase += innercount;
+				dstoffs += innercount;
 		}
 
 		/* right clip */
@@ -983,7 +997,7 @@ INLINE void draw_rle_fast_xflip(UINT16 *base, UINT16 color)
 	/* loop over Y in src pixels */
 	for (y = 0; y < height; y++, sy += ydststep)
 	{
-		UINT16 *dstbase;
+		UINT32 dstoffs;
 
 		/* clip in the Y direction */
 		if (sy < scaled_clip_rect.min_y || sy >= scaled_clip_rect.max_y)
@@ -993,7 +1007,7 @@ INLINE void draw_rle_fast_xflip(UINT16 *base, UINT16 color)
 		}
 
 		/* compute the address */
-		dstbase = &base[compute_safe_address(sx, sy >> 8)];
+		dstoffs = compute_safe_address(sx, sy >> 8);
 
 		/* left clip */
 		SKIP_RLE(lclip, xleft, count, innercount, src);
@@ -1010,8 +1024,8 @@ INLINE void draw_rle_fast_xflip(UINT16 *base, UINT16 color)
 				{
 					int pixel = *src++;
 					if (pixel != transparent_pen)
-						*dstbase = color | pixel;
-					dstbase--;
+						base[dstoffs & vram_mask] = color | pixel;
+					dstoffs--;
 				}
 
 			/* run of non-transparent repeats */
@@ -1019,12 +1033,12 @@ INLINE void draw_rle_fast_xflip(UINT16 *base, UINT16 color)
 			{
 				val |= color;
 				while (innercount--)
-					*dstbase-- = val;
+					base[dstoffs-- & vram_mask] = val;
 			}
 
 			/* run of transparent repeats */
 			else
-				dstbase -= innercount;
+				dstoffs -= innercount;
 		}
 
 		/* right clip */
@@ -1065,7 +1079,7 @@ INLINE void draw_rle_slow(UINT16 *base, UINT16 color)
 	/* loop over Y in src pixels */
 	for (y = 0; y < height; y++, sy += ydststep)
 	{
-		UINT16 *dstbase;
+		UINT32 dstoffs;
 
 		/* clip in the Y direction */
 		if (sy < scaled_clip_rect.min_y || sy >= scaled_clip_rect.max_y)
@@ -1076,7 +1090,7 @@ INLINE void draw_rle_slow(UINT16 *base, UINT16 color)
 
 		/* compute the address */
 		sx = startx;
-		dstbase = &base[compute_safe_address(clip_rect.min_x, sy >> 8) - clip_rect.min_x];
+		dstoffs = compute_safe_address(clip_rect.min_x, sy >> 8) - clip_rect.min_x;
 
 		/* loop until gone */
 		for (xleft = width; xleft > 0; )
@@ -1091,7 +1105,7 @@ INLINE void draw_rle_slow(UINT16 *base, UINT16 color)
 					int pixel = *src++;
 					if (pixel != transparent_pen)
 						if (sx >= scaled_clip_rect.min_x && sx < scaled_clip_rect.max_x)
-							dstbase[sx >> 8] = color | pixel;
+							base[(dstoffs + (sx >> 8)) & vram_mask] = color | pixel;
 				}
 
 			/* run of non-transparent repeats */
@@ -1100,7 +1114,7 @@ INLINE void draw_rle_slow(UINT16 *base, UINT16 color)
 				val |= color;
 				for ( ; innercount--; sx += xdststep)
 					if (sx >= scaled_clip_rect.min_x && sx < scaled_clip_rect.max_x)
-						dstbase[sx >> 8] = val;
+						base[(dstoffs + (sx >> 8)) & vram_mask] = val;
 			}
 
 			/* run of transparent repeats */

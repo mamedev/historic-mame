@@ -16,6 +16,7 @@ extern UINT8 balsente_shooter_x;
 extern UINT8 balsente_shooter_y;
 extern UINT8 balsente_adc_shift;
 extern data16_t *shrike_shared;
+extern data16_t *shrike_io;
 
 MACHINE_INIT( balsente );
 
@@ -54,11 +55,11 @@ WRITE8_HANDLER( spiker_expand_w );
 READ8_HANDLER( spiker_expand_r );
 READ8_HANDLER( grudge_steering_r );
 
-READ16_HANDLER( shrike_shared_68k_r );
-WRITE16_HANDLER( shrike_shared_68k_w );
 READ8_HANDLER( shrike_shared_6809_r );
 WRITE8_HANDLER( shrike_shared_6809_w );
 
+READ16_HANDLER( shrike_io_68k_r );
+WRITE16_HANDLER( shrike_io_68k_w );
 
 /*----------- defined in vidhrdw/balsente.c -----------*/
 
@@ -68,3 +69,4 @@ VIDEO_UPDATE( balsente );
 WRITE8_HANDLER( balsente_videoram_w );
 WRITE8_HANDLER( balsente_paletteram_w );
 WRITE8_HANDLER( balsente_palette_select_w );
+WRITE8_HANDLER( shrike_sprite_select_w );

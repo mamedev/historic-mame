@@ -1,67 +1,71 @@
 /********************************************************************
 
-Task Force Harrier       UPL        68000 Z80           YM2203 2xOKIM6295
-Mustang                  UPL        68000 NMK004        YM2203 2xOKIM6295
-Mustang (bootleg)        UPL        68000 Z80           YM3812 OKIM6295
-Bio-ship Paladin         UPL        68000 <unknown cpu> YM2203(?) 2xOKIM6295
-Vandyke                  UPL        68000 NMK004        YM2203 2xOKIM6295
-Black Heart              UPL        68000 NMK004        YM2203 2xOKIM6295
-Acrobat Mission          UPL        68000 NMK004        YM2203 2xOKIM6295
-Strahl                   UPL        68000 <unknown cpu> YM2203 2xOKIM6295
-Thunder Dragon           NMK/Tecmo  68000 <unknown cpu> YM2203 2xOKIM6295
-Thunder Dragon (bootleg) NMK/Tecmo  68000 Z80           YM3812 OKIM6295
-Hacha Mecha Fighter      NMK        68000 <unknown cpu> YM2203 2xOKIM6295
-Macross                  Banpresto  68000 <unknown cpu> YM2203 2xOKIM6295
-GunNail                  NMK/Tecmo  68000 NMK004        YM2203 2xOKIM6295
-Macross II               Banpresto  68000 Z80           YM2203 2xOKIM6295
-Thunder Dragon 2         NMK        68000 Z80           YM2203 2xOKIM6295
-Saboten Bombers          NMK/Tecmo  68000               2xOKIM6295
-Bombjack Twin            NMK        68000               2xOKIM6295
-Nouryoku Koujou Iinkai   Tecmo      68000               2xOKIM6295
-Many Block               Bee-Oh     68000 Z80           YM2203 2xOKIM6295
-S.S. Mission             Comad      68000 Z80           OKIM6295
-Rapid Hero				 NMK		68000 tmp90c841     YM2203 2xOKIM6295
+Task Force Harrier       1989 UPL        68000 Z80           YM2203 2xOKIM6295
+Many Block               1991 Bee-Oh     68000 Z80           YM2203 2xOKIM6295
+Mustang                  1990 UPL        68000 NMK004        YM2203 2xOKIM6295
+Bio-ship Paladin         1990 UPL        68000 <unknown cpu> YM2203 2xOKIM6295
+Vandyke                  1990 UPL        68000 NMK004        YM2203 2xOKIM6295
+Black Heart              1991 UPL        68000 NMK004        YM2203 2xOKIM6295
+Acrobat Mission          1991 UPL        68000 NMK004        YM2203 2xOKIM6295
+Strahl                   1992 UPL        68000 <unknown cpu> YM2203 2xOKIM6295
+Thunder Dragon           1991 NMK/Tecmo  68000 <unknown cpu> YM2203 2xOKIM6295
+Hacha Mecha Fighter      1991 NMK        68000 <unknown cpu> YM2203 2xOKIM6295
+Macross                  1992 Banpresto  68000 <unknown cpu> YM2203 2xOKIM6295
+GunNail                  1993 NMK/Tecmo  68000 NMK004        YM2203 2xOKIM6295
+Macross II               1993 Banpresto  68000 Z80           YM2203 2xOKIM6295
+Thunder Dragon 2         1993 NMK        68000 Z80           YM2203 2xOKIM6295
+Rapid Hero               1994 NMK        68000 tmp90c841     YM2203 2xOKIM6295
+
+S.S. Mission             1992 Comad      68000 Z80           OKIM6295
+
+Mustang (bootleg)                        68000 Z80           YM3812 OKIM6295
+Thunder Dragon (bootleg)                 68000 Z80           YM3812 OKIM6295
+
+Saboten Bombers          1992 NMK/Tecmo  68000               2xOKIM6295
+Bombjack Twin            1993 NMK        68000               2xOKIM6295
+Nouryoku Koujou Iinkai   1995 Tecmo      68000               2xOKIM6295
 
 driver by Mirko Buffoni, Richard Bush, Nicola Salmoria, Bryan McPhail,
           David Haywood, and R. Belmont.
 
 The NMK004 CPU might be a Toshiba TLCS-90 class CPU with internal ROM in the
-0000-3fff range.
+0000-1fff range.
 
-The later games have an higher resolution (384x224 instead of 256x224)
-but the hardware is pretty much the same. It's obvious that the higher
-res is an afterthought, because the tilemap layout is weird (the left
-8 screen columns have to be taken from the rightmost 8 columns of the
-tilemap), and the games rely on mirror addresses to access the tilemap
-sequentially.
+The later games (from GunNail onwards) have an higher resolution (384x224 instead
+of 256x224) but the hardware is pretty much the same. It's obvious that the higher
+res is an afterthought, because the tilemap layout is weird (the left 8 screen
+columns have to be taken from the rightmost 8 columns of the tilemap), and the
+games rely on mirror addresses to access the tilemap sequentially.
 
 TODO:
-- Protection is patched in several games, it's the same chip as Macross/Task
-  Force Harrier so it can probably be emulated.  I don't think it's an actual MCU,
-  just some type of state machine (Bryan).
-- Input ports in Bio-ship Paladin, Strahl
-- Sound communication in Mustang might be incorrectly implemented
-- Several games use an unknown (custom?) CPU to drive sound and for protection.
-  In macross and gunnail it's easy to work around, the others are more complex.
-  In hachamf it seems that the two CPUs share some RAM (fe000-fefff), and the
-  main CPU fetches pointers from that shared RAM to do important operations
-  like reading the input ports. Some of them are easily deduced checking for
-  similarities in macross and bjtwin; however another protection check involves
-  (see the routine at 01429a) writing data to the fe100-fe1ff range, and then
-  jumping to subroutines in that range (most likely function pointers since
-  each one is only 0x10 bytes long), and heaven knows what those should do.
+- NMK004 sound CPU is just (imperfectly) simulated for now.
+- There is a handshaking operation happening on boot in most games. It happens on
+  the NMK004 communication ports so I have implemented it in NMK004.c. However,
+  the same handshaking also happen in tharrier, which doesn't have a NMK004!
+  Therefore, it might be another protection device, which sits in the middle
+  between CPU and NMK004.
+- Protection is patched in several games.
+- In hachamf it seems that the protection device shares some RAM (fe000-fefff)
+  with the main CPU, and the main CPU fetches pointers from that shared RAM to
+  do important operations like reading the input ports. Some of them are easily
+  deduced checking for similarities in macross and bjtwin; however another
+  protection check involves (see the routine at 01429a) writing data to the
+  fe100-fe1ff range, and then jumping to subroutines in that range (most likely
+  function pointers since each one is only 0x10 bytes long), and heaven knows
+  what those should do.
   On startup, hachamf does a RAM test, then copies some stuff and jumps to
-  RAM at 0xfef00, where it sits in a loop. Maybe the RAM is shared with the
-  sound CPU, and used as a protection. We patch around that by replacing the
+  RAM at 0xfef00, where it sits in a loop. We patch around that by replacing the
   reset vector with the "real" one.
 - Cocktail mode is supported, but tilemap.c has problems with asymmetrical
   visible areas.
-- Macross2 dip switches (the ones currently listed match macross)
 - Music timing in nouryoku is a little off.
-- DSW's in Tdragon2
 - In Bioship, there's an occasional flicker of one of the sprites composing big
   ships. Increasing CPU speed from 12 to 16 MHz improved it, but it's still not
   100% fixed.
+- Input ports in Bio-ship Paladin, Strahl
+- Macross2 dip switches (the ones currently listed match macross)
+- DSW's in Tdragon2
+- Sound communication in Mustang might be incorrectly implemented
 
 ----
 
@@ -94,12 +98,6 @@ remaps button 2 and 3 to button 1, so you can't enter the above sequence.
 ---
 
 Questions / Notes
-The 2nd cpu program roms .. anyone got any idea what cpu they run on
-areas 0x0000 - 0x3fff in several of them look like they contain nothing
-of value.. maybe this area wouldn't be accessable really and there is
-ram there in that cpu's address space (shared with the main cpu ?)
-.. maybe the roms are bitswapped like the gfx.. needs investigating
-really..
 
 'manybloc' :
 
@@ -120,14 +118,6 @@ mustangb and tdragonb use the Seibu Raiden sound hardware and a modified
 Z80 program (but the music is intact and recognizable).  See sndhrdw/seibu.c
 for more info on this.
 
-tharrier and manybloc share a sound board.  manybloc has some weird/missing
-sound effects and unknown writes at F600 and F700.  Possibly these are some
-sort of OKIM6295 bankswitch?  But there's only 2 256k sample ROMs, and the
-6295 can address 512k on it's own?
-
-tharrier doesn't do the extra writes and doesn't appear to have any trouble.
-If someone could fix the protection it'd be fully playable with sound and music...
-
 ********************************************************************/
 
 #include "driver.h"
@@ -136,6 +126,8 @@ If someone could fix the protection it'd be fully playable with sound and music.
 #include "sound/2203intf.h"
 #include "sound/okim6295.h"
 #include "sound/3812intf.h"
+#include "machine/nmk004.h"
+
 
 extern data16_t *nmk_bgvideoram,*nmk_fgvideoram,*nmk_txvideoram;
 extern data16_t *gunnail_scrollram;
@@ -177,16 +169,18 @@ VIDEO_UPDATE( bjtwin );
 VIDEO_UPDATE( tharrier );
 VIDEO_EOF( nmk );
 
-static int respcount; // used with mcu function
 
 static MACHINE_INIT( nmk16 )
 {
-	respcount = 0;
+}
+
+static MACHINE_INIT( NMK004 )
+{
+	NMK004_init();
 }
 
 static MACHINE_INIT( mustang_sound )
 {
-	respcount = 0;
 	machine_init_seibu_sound_1();
 }
 
@@ -219,124 +213,6 @@ WRITE8_HANDLER ( ssmissin_soundbank_w )
 
 static data16_t *ram;
 
-static WRITE16_HANDLER( macross_mcu_w )
-{
-	logerror("%04x: mcu_w %04x\n",activecpu_get_pc(),data);
-
-
-	/* since its starting to look more unlikely every day that we'll be
-	   able to emulate the NMK004 sound cpu this provides some sound in
-	   gunnail and macross, its entirely guesswork, sadly music can't be
-	   simulated in a similar way :-( what is the NMK004 anyway, are
-	   these really code roms we have, or does it have internal code of
-	   its own, BioShip Paladin's 'Sound Program' Rom looks cleaner than
-	   the others */
-
-
-	/* Note: this doesn't play correct samples, it plays drums and stuff.
-	   That's not quite right so I'm leaving it disabled */
-#if 0
-	if (!strcmp(Machine->gamedrv->name,"gunnail")) {
-		if (ACCESSING_LSB) {
-			if ((data & 0xff) == 0x00) { /* unknown */
-				/* ?? */
-			} else if ((data & 0xff) == 0xcc) { /* unknown */
-				/* ?? */
-			} else if ((data & 0xff) == 0xd0) { /* fire normal? */
-				OKIM6295_data_0_w(0, 0x80 | 0x01 );
-				OKIM6295_data_0_w(0, 0x00 | 0x10 );
-			} else if ((data & 0xff) == 0xd1) { /* fire purple? */
-				OKIM6295_data_0_w(0, 0x80 | 0x03 );
-				OKIM6295_data_0_w(0, 0x00 | 0x10 );
-			} else if ((data & 0xff) == 0xd2) { /* fire red? */
-				OKIM6295_data_0_w(0, 0x80 | 0x03 );
-				OKIM6295_data_0_w(0, 0x00 | 0x10 );
-			} else if ((data & 0xff) == 0xd3) { /* fire blue? */
-				OKIM6295_data_0_w(0, 0x80 | 0x03 );
-				OKIM6295_data_0_w(0, 0x00 | 0x10 );
-			} else if ((data & 0xff) == 0xd8) { /* explosion1? */
-				OKIM6295_data_0_w(0, 0x80 | 0x07 );
-				OKIM6295_data_0_w(0, 0x00 | 0x20 );
-			} else if ((data & 0xff) == 0xdb) { /* explosion2? */
-				OKIM6295_data_0_w(0, 0x80 | 0x08 );
-				OKIM6295_data_0_w(0, 0x00 | 0x20 );
-			} else if ((data & 0xff) == 0xe0) { /* coin? */
-				OKIM6295_data_0_w(0, 0x80 | 0x10 );
-				OKIM6295_data_0_w(0, 0x00 | 0x10 );
-			} else {
-//				usrintf_showmessage("%04x: mcu_w %04x\n",activecpu_get_pc(),data);
-			}
-		}
-	}
-
-
-	if (!strcmp(Machine->gamedrv->name,"macross")) {
-		if (ACCESSING_LSB) {
-			if ((data & 0xff) == 0xc4) { /* unknown */
-				/* ?? */
-			} else if ((data & 0xff) == 0xc5) { /* with bomb? */
-				/* ?? */
-			} else if ((data & 0xff) == 0xc6) { /* unknown */
-				/* ?? */
-			} else if ((data & 0xff) == 0xcc) { /* unknown */
-				/* ?? */
-			} else if ((data & 0xff) == 0xce) { /* green ememy die? */
-				OKIM6295_data_0_w(0, 0x80 | 0x0f );
-				OKIM6295_data_0_w(0, 0x00 | 0x40 );
-			} else if ((data & 0xff) == 0xd0) { /* coin */
-				OKIM6295_data_0_w(0, 0x80 | 0x01 );
-				OKIM6295_data_0_w(0, 0x00 | 0x10 );
-			} else if ((data & 0xff) == 0xd1) { /* shoot? */
-				OKIM6295_data_0_w(0, 0x80 | 0x03 );
-				OKIM6295_data_0_w(0, 0x00 | 0x20 );
-			} else if ((data & 0xff) == 0xdb) { /* explosion? */
-				OKIM6295_data_0_w(0, 0x80 | 0x10 );
-				OKIM6295_data_0_w(0, 0x00 | 0x40 );
-			} else if ((data & 0xff) == 0xdd) { /* player death? */
-				OKIM6295_data_0_w(0, 0x80 | 0x0e );
-				OKIM6295_data_0_w(0, 0x00 | 0x40 );
-			} else if ((data & 0xff) == 0xde) { /* bomb? */
-				OKIM6295_data_0_w(0, 0x80 | 0x0d );
-				OKIM6295_data_0_w(0, 0x00 | 0x40 );
-			} else if ((data & 0xff) == 0xdf) { /* some enemy fire? */
-				OKIM6295_data_0_w(0, 0x80 | 0x12 );
-				OKIM6295_data_0_w(0, 0x00 | 0x20 );
-			} else if ((data & 0xff) == 0xe5) { /* power up? */
-				OKIM6295_data_0_w(0, 0x80 | 0x16 );
-				OKIM6295_data_0_w(0, 0x00 | 0x80 );
-			} else {
-//				usrintf_showmessage("%04x: mcu_w %04x\n",activecpu_get_pc(),data);
-			}
-		}
-	}
-#endif
-}
-
-
-static READ16_HANDLER( macross_mcu_r )
-{
-	static int resp[] = {	0x82, 0xc7, 0x00,
-							0x2c, 0x6c, 0x00,
-							0x9f, 0xc7, 0x00,
-							0x29, 0x69, 0x00,
-							0x8b, 0xc7, 0x00 };
-	int res;
-
-	if (activecpu_get_pc()==0x8aa) res = (ram[0x064/2])|0x20; /* Task Force Harrier */
-	else if (activecpu_get_pc()==0x8ce) res = (ram[0x064/2])|0x60; /* Task Force Harrier */
-	else if (activecpu_get_pc() == 0x0332	/* Macross */
-			||	activecpu_get_pc() == 0x64f4)	/* GunNail */
-		res = ram[0x0f6/2];
-	else
-	{
-		res = resp[respcount++];
-		if (respcount >= sizeof(resp)/sizeof(resp[0])) respcount = 0;
-	}
-
-logerror("%04x: mcu_r %02x\n",activecpu_get_pc(),res);
-
-	return res;
-}
 
 static WRITE16_HANDLER( tharrier_shared_w )
 {
@@ -363,7 +239,26 @@ static READ16_HANDLER( tharrier_mcu_r )
 	/* The MCU is mapped as the top byte for byte accesses only,
 		all word accesses are to the input port */
 	if (ACCESSING_MSB && !ACCESSING_LSB)
-		return macross_mcu_r(offset,0)<<8;
+	{
+		static UINT8 to_main[] =
+		{
+			0x82,0xc7,0x00,0x2c,0x6c,0x00,0x9f,0xc7,0x00,0x29,0x69,0x00,0x8b,0xc7,0x00
+		};
+		static int prot_count;
+
+		int res;
+
+		if (activecpu_get_pc()==0x8aa) res = (ram[0x064/2])|0x20; /* Task Force Harrier */
+		else if (activecpu_get_pc()==0x8ce) res = (ram[0x064/2])|0x60; /* Task Force Harrier */
+		else
+		{
+			res = to_main[prot_count++];
+			if (prot_count > sizeof(to_main))
+				prot_count = 0;
+		}
+
+		return res << 8;
+	}
 	else
 		return ~input_port_1_word_r(0,0);
 }
@@ -413,6 +308,24 @@ static WRITE16_HANDLER( bjtwin_oki6295_bankswitch_w )
 		macross2_oki6295_bankswitch_w(offset,data & 0xff);
 }
 
+static WRITE8_HANDLER( tharrier_oki6295_bankswitch_0_w )
+{
+	UINT8 *rom = memory_region(REGION_SOUND1);
+
+	data &= 3;
+	if (data != 3)
+		memcpy(rom + 0x20000,rom + 0x40000 + data * 0x20000,0x20000);
+}
+
+static WRITE8_HANDLER( tharrier_oki6295_bankswitch_1_w )
+{
+	UINT8 *rom = memory_region(REGION_SOUND2);
+
+	data &= 3;
+	if (data != 3)
+		memcpy(rom + 0x20000,rom + 0x40000 + data * 0x20000,0x20000);
+}
+
 static READ16_HANDLER( hachamf_protection_hack_r )
 {
 	/* adresses for the input ports */
@@ -429,7 +342,7 @@ static ADDRESS_MAP_START( vandyke_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x080002, 0x080003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x080008, 0x080009) AM_READ(input_port_2_word_r)
 	AM_RANGE(0x08000a, 0x08000b) AM_READ(input_port_3_word_r)
-	AM_RANGE(0x08000e, 0x08000f) AM_READ(macross_mcu_r)
+	AM_RANGE(0x08000e, 0x08000f) AM_READ(NMK004_r)
 	AM_RANGE(0x088000, 0x0887ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x090000, 0x093fff) AM_READ(nmk_bgvideoram_r)
 	AM_RANGE(0x09d000, 0x09d7ff) AM_READ(nmk_txvideoram_r)
@@ -442,11 +355,11 @@ static ADDRESS_MAP_START( vandyke_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x080016, 0x080017) AM_WRITE(MWA16_NOP)	/* IRQ enable? */
 	AM_RANGE(0x080018, 0x080019) AM_WRITE(nmk_tilebank_w)
-	AM_RANGE(0x08001e, 0x08001f) AM_WRITE(macross_mcu_w)
+	AM_RANGE(0x08001e, 0x08001f) AM_WRITE(NMK004_w)
 	AM_RANGE(0x088000, 0x0887ff) AM_WRITE(paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x08c000, 0x08c007) AM_WRITE(vandyke_scroll_w)
 	AM_RANGE(0x090000, 0x093fff) AM_WRITE(nmk_bgvideoram_w) AM_BASE(&nmk_bgvideoram)
-//	AM_RANGE(0x094000, 0x097fff) AM_WRITE(MWA16_RAM) /* what is this */
+	AM_RANGE(0x094000, 0x097fff) AM_WRITE(MWA16_RAM) /* what is this */
 	AM_RANGE(0x09d000, 0x09d7ff) AM_WRITE(nmk_txvideoram_w) AM_BASE(&nmk_txvideoram)
 	AM_RANGE(0x0f0000, 0x0f7fff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x0f8000, 0x0f8fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
@@ -490,7 +403,7 @@ static ADDRESS_MAP_START( manybloc_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x0f9000, 0x0fffff) AM_WRITE(MWA16_RAM) AM_BASE(&ram)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( manybloc_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( tharrier_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
 	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xf000, 0xf000) AM_READ(soundlatch_r)
@@ -498,22 +411,22 @@ static ADDRESS_MAP_START( manybloc_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf500, 0xf500) AM_READ(OKIM6295_status_1_r)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( manybloc_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( tharrier_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xf000, 0xf000) AM_WRITE(soundlatch2_w)
 	AM_RANGE(0xf400, 0xf400) AM_WRITE(OKIM6295_data_0_w)
 	AM_RANGE(0xf500, 0xf500) AM_WRITE(OKIM6295_data_1_w)
-	AM_RANGE(0xf600, 0xf600) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0xf700, 0xf700) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xf600, 0xf600) AM_WRITE(tharrier_oki6295_bankswitch_0_w)
+	AM_RANGE(0xf700, 0xf700) AM_WRITE(tharrier_oki6295_bankswitch_1_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( manybloc_sound_readport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( tharrier_sound_readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0x00) AM_READ(YM2203_status_port_0_r)
 	AM_RANGE(0x01, 0x01) AM_READ(YM2203_read_port_0_r)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( manybloc_sound_writeport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( tharrier_sound_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)
 ADDRESS_MAP_END
@@ -535,7 +448,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( tharrier_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x080010, 0x080011) AM_WRITE(tharrier_mcu_control_w)
-	AM_RANGE(0x080012, 0x080013) AM_WRITE(macross_mcu_w)
+	AM_RANGE(0x080012, 0x080013) AM_WRITE(MWA16_NOP)
 //	AM_RANGE(0x080014, 0x080015) AM_WRITE(nmk_flipscreen_w)
 //	AM_RANGE(0x080018, 0x080019) AM_WRITE(nmk_tilebank_w)
 	AM_RANGE(0x08001e, 0x08001f) AM_WRITE(soundlatch_word_w)
@@ -557,7 +470,7 @@ static ADDRESS_MAP_START( mustang_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x080000, 0x080001) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x080002, 0x080003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x080004, 0x080005) AM_READ(input_port_2_word_r)
-	AM_RANGE(0x08000e, 0x08000f) AM_READ(macross_mcu_r)
+	AM_RANGE(0x08000e, 0x08000f) AM_READ(NMK004_r)
 //	AM_RANGE(0x08000e, 0x08000f) AM_READ(soundlatch2_word_r)	/* from Z80 bootleg only? */
 	AM_RANGE(0x088000, 0x0887ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x090000, 0x093fff) AM_READ(nmk_bgvideoram_r)
@@ -569,11 +482,13 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( mustang_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x08000e, 0x08000f) AM_WRITE(macross_mcu_w)
+	AM_RANGE(0x08000e, 0x08000f) AM_WRITE(MWA16_NOP)
 	AM_RANGE(0x080014, 0x080015) AM_WRITE(nmk_flipscreen_w)
 	AM_RANGE(0x080016, 0x080017) AM_WRITE(MWA16_NOP)	// frame number?
+	AM_RANGE(0x08001e, 0x08001f) AM_WRITE(NMK004_w)
 	AM_RANGE(0x088000, 0x0887ff) AM_WRITE(paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x08c000, 0x08c001) AM_WRITE(mustang_scroll_w)
+	AM_RANGE(0x08c002, 0x08c087) AM_WRITE(MWA16_NOP)	// ??
 	AM_RANGE(0x090000, 0x093fff) AM_WRITE(nmk_bgvideoram_w) AM_BASE(&nmk_bgvideoram)
 	AM_RANGE(0x09c000, 0x09c7ff) AM_WRITE(nmk_txvideoram_w) AM_BASE(&nmk_txvideoram)
 	AM_RANGE(0x0f0000, 0x0f7fff) AM_WRITE(MWA16_RAM)	/* Work RAM */
@@ -602,6 +517,7 @@ static ADDRESS_MAP_START( acrobatm_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xc0002, 0xc0003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0xc0008, 0xc0009) AM_READ(input_port_2_word_r)
 	AM_RANGE(0xc000a, 0xc000b) AM_READ(input_port_3_word_r)
+	AM_RANGE(0xc000e, 0xc000f) AM_READ(NMK004_r)
 	AM_RANGE(0xc4000, 0xc45ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0xcc000, 0xcffff) AM_READ(nmk_bgvideoram_r)
 	AM_RANGE(0xd4000, 0xd47ff) AM_READ(nmk_txvideoram_r)
@@ -614,7 +530,7 @@ static ADDRESS_MAP_START( acrobatm_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xc0014, 0xc0015) AM_WRITE(nmk_flipscreen_w)
 	AM_RANGE(0xc0016, 0xc0017) AM_WRITENOP
 	AM_RANGE(0xc0018, 0xc0019) AM_WRITE(nmk_tilebank_w)
-	AM_RANGE(0xc001e, 0xc001f) AM_WRITENOP
+	AM_RANGE(0xc001e, 0xc001f) AM_WRITE(NMK004_w)
 	AM_RANGE(0xc4000, 0xc45ff) AM_WRITE(paletteram16_RRRRGGGGBBBBxxxx_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0xc8000, 0xc8007) AM_WRITE(nmk_scroll_w)
 	AM_RANGE(0xcc000, 0xcffff) AM_WRITE(nmk_bgvideoram_w) AM_BASE(&nmk_bgvideoram)
@@ -626,6 +542,7 @@ static ADDRESS_MAP_START( hachamf_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x080000, 0x080001) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x080002, 0x080003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x080008, 0x080009) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x08000e, 0x08000f) AM_READ(NMK004_r)
 	AM_RANGE(0x088000, 0x0887ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x090000, 0x093fff) AM_READ(nmk_bgvideoram_r)
 	AM_RANGE(0x09c000, 0x09c7ff) AM_READ(nmk_txvideoram_r)
@@ -639,6 +556,7 @@ static ADDRESS_MAP_START( hachamf_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x080014, 0x080015) AM_WRITE(nmk_flipscreen_w)
 	AM_RANGE(0x080018, 0x080019) AM_WRITE(nmk_tilebank_w)
+	AM_RANGE(0x08001e, 0x08001f) AM_WRITE(NMK004_w)
 	AM_RANGE(0x088000, 0x0887ff) AM_WRITE(paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x08c000, 0x08c007) AM_WRITE(nmk_scroll_w)
 	AM_RANGE(0x090000, 0x093fff) AM_WRITE(nmk_bgvideoram_w) AM_BASE(&nmk_bgvideoram)
@@ -654,6 +572,7 @@ static ADDRESS_MAP_START( bioship_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x080002, 0x080003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x080008, 0x080009) AM_READ(input_port_2_word_r)
 	AM_RANGE(0x08000a, 0x08000b) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x08000e, 0x08000f) AM_READ(NMK004_r)
 	AM_RANGE(0x088000, 0x0887ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x090000, 0x093fff) AM_READ(nmk_bgvideoram_r)
 	AM_RANGE(0x09c000, 0x09c7ff) AM_READ(nmk_txvideoram_r)
@@ -665,6 +584,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( bioship_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
 //	AM_RANGE(0x080014, 0x080015) AM_WRITE(nmk_flipscreen_w)
+	AM_RANGE(0x08001e, 0x08001f) AM_WRITE(NMK004_w)
 	AM_RANGE(0x084000, 0x084001) AM_WRITE(bioship_bank_w)
 	AM_RANGE(0x088000, 0x0887ff) AM_WRITE(paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x08c000, 0x08c007) AM_WRITE(bioshipbg_scroll_w)
@@ -698,7 +618,7 @@ static ADDRESS_MAP_START( tdragon_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x0b9000, 0x0bffff) AM_WRITE(MWA16_RAM)	/* Work RAM */
 	AM_RANGE(0x0c0014, 0x0c0015) AM_WRITE(nmk_flipscreen_w) /* Maybe */
 	AM_RANGE(0x0c0018, 0x0c0019) AM_WRITE(nmk_tilebank_w) /* Tile Bank ? */
-	AM_RANGE(0x0c001e, 0x0c001f) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x0c001e, 0x0c001f) AM_WRITE(NMK004_w)
 	AM_RANGE(0x0c4000, 0x0c4007) AM_WRITE(nmk_scroll_w)
 	AM_RANGE(0x0c8000, 0x0c87ff) AM_WRITE(paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x0cc000, 0x0cffff) AM_WRITE(nmk_bgvideoram_w) AM_BASE(&nmk_bgvideoram)
@@ -770,6 +690,7 @@ static ADDRESS_MAP_START( strahl_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x80002, 0x80003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x80008, 0x80009) AM_READ(input_port_2_word_r)
 	AM_RANGE(0x8000a, 0x8000b) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x8000e, 0x8000f) AM_READ(NMK004_r)
 	AM_RANGE(0x8c000, 0x8c7ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x90000, 0x93fff) AM_READ(nmk_bgvideoram_r)
 	AM_RANGE(0x94000, 0x97fff) AM_READ(nmk_fgvideoram_r)
@@ -782,7 +703,8 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( strahl_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x00000, 0x3ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x80014, 0x80015) AM_WRITE(nmk_flipscreen_w)
-	AM_RANGE(0x8001e, 0x8001f) AM_WRITE(MWA16_NOP) /* -> Sound cpu */
+	AM_RANGE(0x80016, 0x80017) AM_WRITE(MWA16_NOP)	/* IRQ enable? */
+	AM_RANGE(0x8001e, 0x8001f) AM_WRITE(NMK004_w)
 	AM_RANGE(0x84000, 0x84007) AM_WRITE(nmk_scroll_w)
 	AM_RANGE(0x88000, 0x88007) AM_WRITE(nmk_scroll_2_w)
 	AM_RANGE(0x8c000, 0x8c7ff) AM_WRITE(paletteram16_RRRRGGGGBBBBxxxx_word_w) AM_BASE(&paletteram16)
@@ -800,7 +722,7 @@ static ADDRESS_MAP_START( macross_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x080002, 0x080003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x080008, 0x080009) AM_READ(input_port_2_word_r)
 	AM_RANGE(0x08000a, 0x08000b) AM_READ(input_port_3_word_r)
-	AM_RANGE(0x08000e, 0x08000f) AM_READ(macross_mcu_r)
+	AM_RANGE(0x08000e, 0x08000f) AM_READ(NMK004_r)
 	AM_RANGE(0x088000, 0x0887ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x090000, 0x093fff) AM_READ(nmk_bgvideoram_r)
 	AM_RANGE(0x09c000, 0x09c7ff) AM_READ(nmk_txvideoram_r)
@@ -814,7 +736,7 @@ static ADDRESS_MAP_START( macross_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x080014, 0x080015) AM_WRITE(nmk_flipscreen_w)
 	AM_RANGE(0x080016, 0x080017) AM_WRITE(MWA16_NOP)	/* IRQ enable? */
 	AM_RANGE(0x080018, 0x080019) AM_WRITE(nmk_tilebank_w)
-	AM_RANGE(0x08001e, 0x08001f) AM_WRITE(macross_mcu_w)
+	AM_RANGE(0x08001e, 0x08001f) AM_WRITE(NMK004_w)
 	AM_RANGE(0x088000, 0x0887ff) AM_WRITE(paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x08c000, 0x08c007) AM_WRITE(nmk_scroll_w)
 	AM_RANGE(0x090000, 0x093fff) AM_WRITE(nmk_bgvideoram_w) AM_BASE(&nmk_bgvideoram)
@@ -830,7 +752,7 @@ static ADDRESS_MAP_START( gunnail_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x080002, 0x080003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x080008, 0x080009) AM_READ(input_port_2_word_r)
 	AM_RANGE(0x08000a, 0x08000b) AM_READ(input_port_3_word_r)
-	AM_RANGE(0x08000e, 0x08000f) AM_READ(macross_mcu_r)
+	AM_RANGE(0x08000e, 0x08000f) AM_READ(NMK004_r)
 	AM_RANGE(0x088000, 0x0887ff) AM_READ(MRA16_RAM) /* palette ram */
 	AM_RANGE(0x090000, 0x093fff) AM_READ(nmk_bgvideoram_r)
 	AM_RANGE(0x09c000, 0x09cfff) AM_READ(nmk_txvideoram_r)
@@ -842,10 +764,10 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( gunnail_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x08001e, 0x08001f) AM_WRITE(macross_mcu_w)
 	AM_RANGE(0x080014, 0x080015) AM_WRITE(nmk_flipscreen_w)
 	AM_RANGE(0x080016, 0x080017) AM_WRITE(MWA16_NOP)	/* IRQ enable? */
 	AM_RANGE(0x080018, 0x080019) AM_WRITE(nmk_tilebank_w)
+	AM_RANGE(0x08001e, 0x08001f) AM_WRITE(NMK004_w)
 	AM_RANGE(0x088000, 0x0887ff) AM_WRITE(paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x08c000, 0x08c1ff) AM_RAM AM_WRITE(gunnail_scrollx_w) AM_BASE(&gunnail_scrollram)
 	AM_RANGE(0x08c200, 0x08c201) AM_WRITE(gunnail_scrolly_w)
@@ -1009,15 +931,13 @@ INPUT_PORTS_START( vandyke )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Service_Mode ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x08, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1107,9 +1027,9 @@ INPUT_PORTS_START( blkheart )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
@@ -2191,15 +2111,14 @@ INPUT_PORTS_START( gunnail )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Japanese ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2217,9 +2136,9 @@ INPUT_PORTS_START( gunnail )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
@@ -2549,6 +2468,12 @@ static struct GfxDecodeInfo strahl_gfxdecodeinfo[] =
 };
 
 
+
+static struct YM2203interface ym2203_nmk004_interface =
+{
+	0,0,0,0,NMK004_irq
+};
+
 static void ym2203_irqhandler(int irq)
 {
 	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
@@ -2570,43 +2495,6 @@ static INTERRUPT_GEN( nmk_interrupt )
 SEIBU_SOUND_SYSTEM_YM3812_HARDWARE
 
 
-static MACHINE_DRIVER_START( vandyke )
-
-	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 10000000) /* 10 MHz ? */
-	MDRV_CPU_PROGRAM_MAP(vandyke_readmem,vandyke_writemem)
-	MDRV_CPU_VBLANK_INT(nmk_interrupt,2)
-	MDRV_CPU_PERIODIC_INT(irq1_line_hold,112)/* ???????? */
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(nmk16)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(256, 256)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(macross_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(1024)
-
-	MDRV_VIDEO_START(macross)
-	MDRV_VIDEO_EOF(nmk)
-	MDRV_VIDEO_UPDATE(macross)
-
-	/* sound hardware */
-	/* there's also a YM2203 */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
-
-	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
-MACHINE_DRIVER_END
-
-
 static MACHINE_DRIVER_START( tharrier )
 
 	/* basic machine hardware */
@@ -2617,8 +2505,8 @@ static MACHINE_DRIVER_START( tharrier )
 
 	MDRV_CPU_ADD(Z80, 3000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_PROGRAM_MAP(manybloc_sound_readmem,manybloc_sound_writemem)
-	MDRV_CPU_IO_MAP(manybloc_sound_readport,manybloc_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(tharrier_sound_readmem,tharrier_sound_writemem)
+	MDRV_CPU_IO_MAP(tharrier_sound_readport,tharrier_sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -2640,15 +2528,18 @@ static MACHINE_DRIVER_START( tharrier )
 
 	MDRV_SOUND_ADD(YM2203, 1500000)
 	MDRV_SOUND_CONFIG(ym2203_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+	MDRV_SOUND_ROUTE(2, "mono", 0.50)
+	MDRV_SOUND_ROUTE(3, "mono", 2.00)
 
 	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 
 	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( manybloc )
@@ -2661,8 +2552,8 @@ static MACHINE_DRIVER_START( manybloc )
 
 	MDRV_CPU_ADD(Z80, 3000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_PROGRAM_MAP(manybloc_sound_readmem,manybloc_sound_writemem)
-	MDRV_CPU_IO_MAP(manybloc_sound_readport,manybloc_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(tharrier_sound_readmem,tharrier_sound_writemem)
+	MDRV_CPU_IO_MAP(tharrier_sound_readport,tharrier_sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -2683,15 +2574,18 @@ static MACHINE_DRIVER_START( manybloc )
 
 	MDRV_SOUND_ADD(YM2203, 1500000)
 	MDRV_SOUND_CONFIG(ym2203_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+	MDRV_SOUND_ROUTE(2, "mono", 0.50)
+	MDRV_SOUND_ROUTE(3, "mono", 2.00)
 
 	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 
 	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( mustang )
@@ -2704,7 +2598,7 @@ static MACHINE_DRIVER_START( mustang )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(nmk16)
+	MDRV_MACHINE_INIT(NMK004)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2722,16 +2616,23 @@ static MACHINE_DRIVER_START( mustang )
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
 	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_CONFIG(ym2203_nmk004_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+	MDRV_SOUND_ROUTE(2, "mono", 0.50)
+	MDRV_SOUND_ROUTE(3, "mono", 2.00)
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
 	MDRV_SOUND_CONFIG(ym2203_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
 
 	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 
 	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( mustangb )
@@ -2764,43 +2665,6 @@ static MACHINE_DRIVER_START( mustangb )
 
 MACHINE_DRIVER_END
 
-static MACHINE_DRIVER_START( acrobatm )
-
-	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 10000000) /* 10 MHz ? 12 MHz? */
-	MDRV_CPU_PROGRAM_MAP(acrobatm_readmem,acrobatm_writemem)
-	MDRV_CPU_VBLANK_INT(nmk_interrupt,2)
-	MDRV_CPU_PERIODIC_INT(irq1_line_hold,112)/* ???????? */
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(nmk16)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(256, 256)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(macross_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(1024)
-
-	MDRV_VIDEO_START(macross)
-	MDRV_VIDEO_EOF(nmk)
-	MDRV_VIDEO_UPDATE(macross)
-
-	/* sound hardware */
-	/* there's also a YM2203? */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
-
-	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
-MACHINE_DRIVER_END
-
-
 static MACHINE_DRIVER_START( bioship )
 
 	/* basic machine hardware */
@@ -2811,7 +2675,7 @@ static MACHINE_DRIVER_START( bioship )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(nmk16)
+	MDRV_MACHINE_INIT(NMK004)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2828,13 +2692,105 @@ static MACHINE_DRIVER_START( bioship )
 	/* there's also a YM2203 */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_CONFIG(ym2203_nmk004_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+	MDRV_SOUND_ROUTE(2, "mono", 0.50)
+	MDRV_SOUND_ROUTE(3, "mono", 2.00)
+
 	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 
 	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( vandyke )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 10000000) /* 10 MHz ? */
+	MDRV_CPU_PROGRAM_MAP(vandyke_readmem,vandyke_writemem)
+	MDRV_CPU_VBLANK_INT(nmk_interrupt,2)
+	MDRV_CPU_PERIODIC_INT(irq1_line_hold,112)/* ???????? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(NMK004)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(macross_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_VIDEO_START(macross)
+	MDRV_VIDEO_EOF(nmk)
+	MDRV_VIDEO_UPDATE(macross)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_CONFIG(ym2203_nmk004_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+	MDRV_SOUND_ROUTE(2, "mono", 0.50)
+	MDRV_SOUND_ROUTE(3, "mono", 2.00)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( acrobatm )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 10000000) /* 10 MHz ? 12 MHz? */
+	MDRV_CPU_PROGRAM_MAP(acrobatm_readmem,acrobatm_writemem)
+	MDRV_CPU_VBLANK_INT(nmk_interrupt,2)
+	MDRV_CPU_PERIODIC_INT(irq1_line_hold,112)/* ???????? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(NMK004)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(macross_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_VIDEO_START(macross)
+	MDRV_VIDEO_EOF(nmk)
+	MDRV_VIDEO_UPDATE(macross)
+
+	/* sound hardware */
+	/* there's also a YM2203? */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_CONFIG(ym2203_nmk004_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+	MDRV_SOUND_ROUTE(2, "mono", 0.50)
+	MDRV_SOUND_ROUTE(3, "mono", 2.00)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 MACHINE_DRIVER_END
 
 
@@ -2892,6 +2848,22 @@ static MACHINE_DRIVER_START( tdragon )
 	MDRV_VIDEO_UPDATE(macross)
 
 	/* sound hardware */
+	/* there's also a YM2203 */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_CONFIG(ym2203_nmk004_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+	MDRV_SOUND_ROUTE(2, "mono", 0.50)
+	MDRV_SOUND_ROUTE(3, "mono", 2.00)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( ssmissin )
@@ -2940,7 +2912,7 @@ static MACHINE_DRIVER_START( strahl )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(nmk16)
+	MDRV_MACHINE_INIT(NMK004)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2957,13 +2929,20 @@ static MACHINE_DRIVER_START( strahl )
 	/* there's also a YM2203 */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_CONFIG(ym2203_nmk004_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+	MDRV_SOUND_ROUTE(2, "mono", 0.50)
+	MDRV_SOUND_ROUTE(3, "mono", 2.00)
+
 	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 
 	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 MACHINE_DRIVER_END
 
 
@@ -2977,7 +2956,7 @@ static MACHINE_DRIVER_START( hachamf )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(nmk16)
+	MDRV_MACHINE_INIT(NMK004)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2994,13 +2973,20 @@ static MACHINE_DRIVER_START( hachamf )
 	/* there's also a YM2203 */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_CONFIG(ym2203_nmk004_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+	MDRV_SOUND_ROUTE(2, "mono", 0.50)
+	MDRV_SOUND_ROUTE(3, "mono", 2.00)
+
 	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 
 	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 MACHINE_DRIVER_END
 
 
@@ -3014,7 +3000,7 @@ static MACHINE_DRIVER_START( macross )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(nmk16)
+	MDRV_MACHINE_INIT(NMK004)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -3031,13 +3017,20 @@ static MACHINE_DRIVER_START( macross )
 	/* there's also a YM2203 */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_CONFIG(ym2203_nmk004_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+	MDRV_SOUND_ROUTE(2, "mono", 0.50)
+	MDRV_SOUND_ROUTE(3, "mono", 2.00)
+
 	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 
 	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 MACHINE_DRIVER_END
 
 
@@ -3051,7 +3044,7 @@ static MACHINE_DRIVER_START( gunnail )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(nmk16)
+	MDRV_MACHINE_INIT(NMK004)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -3067,13 +3060,20 @@ static MACHINE_DRIVER_START( gunnail )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_CONFIG(ym2203_nmk004_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+	MDRV_SOUND_ROUTE(2, "mono", 0.50)
+	MDRV_SOUND_ROUTE(3, "mono", 2.00)
+
 	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 
 	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 MACHINE_DRIVER_END
 
 
@@ -3114,11 +3114,11 @@ static MACHINE_DRIVER_START( macross2 )
 
 	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 
 	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( tdragon2 )
@@ -3158,11 +3158,11 @@ static MACHINE_DRIVER_START( tdragon2 )
 
 	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 
 	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( raphero )
@@ -3204,11 +3204,11 @@ static MACHINE_DRIVER_START( raphero )
 
 	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 
 	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( bjtwin )
@@ -3239,11 +3239,11 @@ static MACHINE_DRIVER_START( bjtwin )
 
 	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 
 	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 MACHINE_DRIVER_END
 
 ROM_START( vandyke )
@@ -3266,11 +3266,13 @@ ROM_START( vandyke )
 	ROM_LOAD16_BYTE( "vdk-04.2-1",	0x100000, 0x080000, CRC(0a730547) SHA1(afac0549eb86d1fab5ca8ae2a0dad14144f55c02) )	/* Sprites */
 	ROM_LOAD16_BYTE( "vdk-05.3-1",	0x100001, 0x080000, CRC(ba456d27) SHA1(5485a560ae2c2c8b6fdec314393c02a3de758ef3) )	/* Sprites */
 
-	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "vdk-02.126",     0x000000, 0x080000, CRC(b2103274) SHA1(6bbdc912393607cd5306be946327c5ea0178c7a6) )	/* all banked */
+	ROM_REGION( 0x0a0000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "vdk-02.126",     0x000000, 0x020000, CRC(b2103274) SHA1(6bbdc912393607cd5306be946327c5ea0178c7a6) )
+	ROM_CONTINUE(               0x040000, 0x060000 )	/* banked */
 
-	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "vdk-03.165",     0x000000, 0x080000, CRC(631776d3) SHA1(ffd76e5b03130252c55eaa6ae7edfee5632dae73) )	/* all banked */
+	ROM_REGION( 0x0a0000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "vdk-03.165",     0x000000, 0x020000, CRC(631776d3) SHA1(ffd76e5b03130252c55eaa6ae7edfee5632dae73) )
+	ROM_CONTINUE(               0x040000, 0x060000 )	/* banked */
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "ic100.bpr", 0x0000, 0x0100, CRC(98ed1c97) SHA1(f125ad05c3cbd1b1ab356161f9b1d814781d4c3b) )	/* V-sync hw (unused) */
@@ -3297,11 +3299,13 @@ ROM_START( vandyjal )
 	ROM_LOAD16_BYTE( "vdk-04.2-1",	0x100000, 0x080000, CRC(0a730547) SHA1(afac0549eb86d1fab5ca8ae2a0dad14144f55c02) )	/* Sprites */
 	ROM_LOAD16_BYTE( "vdk-05.3-1",	0x100001, 0x080000, CRC(ba456d27) SHA1(5485a560ae2c2c8b6fdec314393c02a3de758ef3) )	/* Sprites */
 
-	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "vdk-02.126",     0x000000, 0x080000, CRC(b2103274) SHA1(6bbdc912393607cd5306be946327c5ea0178c7a6) )	/* all banked */
+	ROM_REGION( 0x0a0000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "vdk-02.126",     0x000000, 0x020000, CRC(b2103274) SHA1(6bbdc912393607cd5306be946327c5ea0178c7a6) )
+	ROM_CONTINUE(               0x040000, 0x060000 )	/* banked */
 
-	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "vdk-03.165",     0x000000, 0x080000, CRC(631776d3) SHA1(ffd76e5b03130252c55eaa6ae7edfee5632dae73) )	/* all banked */
+	ROM_REGION( 0x0a0000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "vdk-03.165",     0x000000, 0x020000, CRC(631776d3) SHA1(ffd76e5b03130252c55eaa6ae7edfee5632dae73) )
+	ROM_CONTINUE(               0x040000, 0x060000 )	/* banked */
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "ic100.bpr", 0x0000, 0x0100, CRC(98ed1c97) SHA1(f125ad05c3cbd1b1ab356161f9b1d814781d4c3b) )	/* V-sync hw (unused) */
@@ -3326,11 +3330,13 @@ ROM_START( tharrier )
 	ROM_LOAD16_BYTE( "89050-13",	0x000000, 0x80000, CRC(24db3fa4) SHA1(e0d76c479dfcacf03c04ec4760caecf3fd1e2ff7) )	/* Sprites */
 	ROM_LOAD16_BYTE( "89050-17",	0x000001, 0x80000, CRC(7f715421) SHA1(bde5e0e1e22519e51ca0fd806909e90cc5b1c5b8) )
 
-	ROM_REGION(0x80000, REGION_SOUND1, 0 )	/* Oki sample data */
-	ROM_LOAD( "89050-8",   0x00000, 0x80000, CRC(11ee4c39) SHA1(163295c385cff963a5bf87dc3e7bef6019e10ba8) )
+	ROM_REGION(0xa0000, REGION_SOUND1, 0 )	/* Oki sample data */
+	ROM_LOAD( "89050-8",     0x00000, 0x20000, CRC(11ee4c39) SHA1(163295c385cff963a5bf87dc3e7bef6019e10ba8) )
+	ROM_CONTINUE(            0x40000, 0x60000 )	/* banked */
 
-	ROM_REGION(0x80000, REGION_SOUND2, 0 )	/* Oki sample data */
-	ROM_LOAD( "89050-10",  0x00000, 0x80000, CRC(893552ab) SHA1(b0a34291f4e482858ed295203ae031b17c2dbabc) )
+	ROM_REGION(0xa0000, REGION_SOUND2, 0 )	/* Oki sample data */
+	ROM_LOAD( "89050-10",    0x00000, 0x20000, CRC(893552ab) SHA1(b0a34291f4e482858ed295203ae031b17c2dbabc) )
+	ROM_CONTINUE(            0x40000, 0x60000 )	/* banked */
 
 	ROM_REGION( 0x140, REGION_PROMS, 0 )
 	ROM_LOAD( "21.bpr",  0x00000, 0x100, CRC(fcd5efea) SHA1(cbda6b14127dabd1788cc256743cf62efaa5e8c4) )
@@ -3359,11 +3365,13 @@ ROM_START( tharierj )
 	ROM_LOAD16_BYTE( "89050-13",	0x000000, 0x80000, CRC(24db3fa4) SHA1(e0d76c479dfcacf03c04ec4760caecf3fd1e2ff7) )	/* Sprites */
 	ROM_LOAD16_BYTE( "89050-17",	0x000001, 0x80000, CRC(7f715421) SHA1(bde5e0e1e22519e51ca0fd806909e90cc5b1c5b8) )
 
-	ROM_REGION(0x80000, REGION_SOUND1, 0 )	/* Oki sample data */
-	ROM_LOAD( "89050-8",   0x00000, 0x80000, CRC(11ee4c39) SHA1(163295c385cff963a5bf87dc3e7bef6019e10ba8) )
+	ROM_REGION(0xa0000, REGION_SOUND1, 0 )	/* Oki sample data */
+	ROM_LOAD( "89050-8",     0x00000, 0x20000, CRC(11ee4c39) SHA1(163295c385cff963a5bf87dc3e7bef6019e10ba8) )
+	ROM_CONTINUE(            0x40000, 0x60000 )	/* banked */
 
-	ROM_REGION(0x80000, REGION_SOUND2, 0 )	/* Oki sample data */
-	ROM_LOAD( "89050-10",  0x00000, 0x80000, CRC(893552ab) SHA1(b0a34291f4e482858ed295203ae031b17c2dbabc) )
+	ROM_REGION(0xa0000, REGION_SOUND2, 0 )	/* Oki sample data */
+	ROM_LOAD( "89050-10",    0x00000, 0x20000, CRC(893552ab) SHA1(b0a34291f4e482858ed295203ae031b17c2dbabc) )
+	ROM_CONTINUE(            0x40000, 0x60000 )	/* banked */
 
 	ROM_REGION( 0x140, REGION_PROMS, 0 )
 	ROM_LOAD( "21.bpr",  0x00000, 0x100, CRC(fcd5efea) SHA1(cbda6b14127dabd1788cc256743cf62efaa5e8c4) )
@@ -3392,11 +3400,13 @@ ROM_START( mustang )
 	ROM_LOAD16_BYTE( "90058-8",    0x00000, 0x80000, CRC(560bff04) SHA1(b005642adc81d878971ecbdead8ef5e604c90ae2) )
 	ROM_LOAD16_BYTE( "90058-9",    0x00001, 0x80000, CRC(b9d72a03) SHA1(43ee9def1b6c491c6832562d66c1af54d81d9b3c) )
 
-	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "90058-5",    0x000000, 0x80000, CRC(c60c883e) SHA1(8a01950cad820b2e781ec81cd12737829edc4f19) )
+	ROM_REGION( 0x0a0000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "90058-5",    0x00000, 0x20000, CRC(c60c883e) SHA1(8a01950cad820b2e781ec81cd12737829edc4f19) )
+	ROM_CONTINUE(           0x40000, 0x60000 )	/* banked */
 
-	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "90058-6",    0x000000, 0x80000, CRC(233c1776) SHA1(7010a2f914611698a65bf4f22bc1753a9ed26277) )
+	ROM_REGION( 0x0a0000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "90058-6",    0x00000, 0x20000, CRC(233c1776) SHA1(7010a2f914611698a65bf4f22bc1753a9ed26277) )
+	ROM_CONTINUE(           0x40000, 0x60000 )	/* banked */
 
 	ROM_REGION( 0x200, REGION_PROMS, 0 )
 	ROM_LOAD( "10.bpr",  0x00000, 0x100, CRC(633ab1c9) SHA1(acd99fcca41eaab7948ca84988352f1d7d519c61) ) /* unknown */
@@ -3421,11 +3431,13 @@ ROM_START( mustangs )
 	ROM_LOAD16_BYTE( "90058-8",    0x00000, 0x80000, CRC(560bff04) SHA1(b005642adc81d878971ecbdead8ef5e604c90ae2) )
 	ROM_LOAD16_BYTE( "90058-9",    0x00001, 0x80000, CRC(b9d72a03) SHA1(43ee9def1b6c491c6832562d66c1af54d81d9b3c) )
 
-	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "90058-5",    0x000000, 0x80000, CRC(c60c883e) SHA1(8a01950cad820b2e781ec81cd12737829edc4f19) )
+	ROM_REGION( 0x0a0000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "90058-5",    0x00000, 0x20000, CRC(c60c883e) SHA1(8a01950cad820b2e781ec81cd12737829edc4f19) )
+	ROM_CONTINUE(           0x40000, 0x60000 )	/* banked */
 
-	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "90058-6",    0x000000, 0x80000, CRC(233c1776) SHA1(7010a2f914611698a65bf4f22bc1753a9ed26277) )
+	ROM_REGION( 0x0a0000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "90058-6",    0x00000, 0x20000, CRC(233c1776) SHA1(7010a2f914611698a65bf4f22bc1753a9ed26277) )
+	ROM_CONTINUE(           0x40000, 0x60000 )	/* banked */
 
 	ROM_REGION( 0x200, REGION_PROMS, 0 )
 	ROM_LOAD( "90058-10",  0x00000, 0x100, CRC(de156d99) SHA1(07b70deca74e23bab7c13e5e9aee32d0dbb06509) ) /* unknown */
@@ -3474,11 +3486,13 @@ ROM_START( acrobatm )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "04_ic74.bin",    0x00000, 0x10000, CRC(176905fb) SHA1(135a184f44bedd93b293b9124fa0bd725e0ee93b) )
 
-	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "05_ic54.bin",    0x00000, 0x80000, CRC(3b8c2b0e) SHA1(72491da32512823540b67dc5027f21c74af08c7d) )
+	ROM_REGION( 0xa0000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "05_ic54.bin",    0x00000, 0x20000, CRC(3b8c2b0e) SHA1(72491da32512823540b67dc5027f21c74af08c7d) )
+	ROM_CONTINUE(               0x40000, 0x60000 )	/* banked */
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "06_ic53.bin",    0x00000, 0x80000, CRC(c1517cd4) SHA1(5a91ddc608c7a6fbdd9f93e503d39eac02ef04a4) )
+	ROM_REGION( 0xa0000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "06_ic53.bin",    0x00000, 0x20000, CRC(c1517cd4) SHA1(5a91ddc608c7a6fbdd9f93e503d39eac02ef04a4) )
+	ROM_CONTINUE(               0x40000, 0x60000 )	/* banked */
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "10_ic81.bin",    0x0000, 0x0100, CRC(cfdbb86c) SHA1(588822f6308a860937349c9106c2b4b1a75823ec) )	/* unknown */
@@ -3509,11 +3523,13 @@ ROM_START( bioship )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "6",    0x00000, 0x10000, CRC(5f39a980) SHA1(2a440f86685249f9c317634cad8cdedc8a8f1491) )
 
-	ROM_REGION(0x80000, REGION_SOUND1, 0 )	/* Oki sample data */
-	ROM_LOAD( "sbs-g.04",    0x00000, 0x80000, CRC(7c74cc4e) SHA1(92097b372eacabdb9e8e261b0bc4223821ff9273) )
+	ROM_REGION(0xa0000, REGION_SOUND1, 0 )	/* Oki sample data */
+	ROM_LOAD( "sbs-g.04",    0x00000, 0x20000, CRC(7c74cc4e) SHA1(92097b372eacabdb9e8e261b0bc4223821ff9273) )
+	ROM_CONTINUE(            0x40000, 0x60000 )	/* banked */
 
-	ROM_REGION(0x80000, REGION_SOUND2, 0 )	/* Oki sample data */
-	ROM_LOAD( "sbs-g.05",    0x00000, 0x80000, CRC(f0a782e3) SHA1(d572226b8e597f1c34d246cb284e047a6e2d9290) )
+	ROM_REGION(0xa0000, REGION_SOUND2, 0 )	/* Oki sample data */
+	ROM_LOAD( "sbs-g.05",    0x00000, 0x20000, CRC(f0a782e3) SHA1(d572226b8e597f1c34d246cb284e047a6e2d9290) )
+	ROM_CONTINUE(            0x40000, 0x60000 )	/* banked */
 ROM_END
 
 ROM_START( blkheart )
@@ -3533,11 +3549,13 @@ ROM_START( blkheart )
 	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD16_WORD_SWAP( "90068-8.bin", 0x000000, 0x100000, CRC(9d3204b2) SHA1(b37a246ad37f9ce092b371f01122ddf2bc8b2db6) )	/* Sprites */
 
-	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "90068-1.bin", 0x000000, 0x080000, CRC(e7af69d2) SHA1(da050880e186954bcf0e0adf00750dd5a371551b) )	/* all banked */
+	ROM_REGION( 0x0a0000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "90068-2.bin", 0x00000, 0x20000, CRC(3a583184) SHA1(9226f1ea7725e4b48bb055d1c17389cf960d75f8) )
+	ROM_CONTINUE(            0x40000, 0x60000 )	/* banked */
 
-	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "90068-2.bin", 0x000000, 0x080000, CRC(3a583184) SHA1(9226f1ea7725e4b48bb055d1c17389cf960d75f8) )	/* all banked */
+	ROM_REGION( 0x0a0000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "90068-1.bin", 0x00000, 0x20000, CRC(e7af69d2) SHA1(da050880e186954bcf0e0adf00750dd5a371551b) )
+	ROM_CONTINUE(            0x40000, 0x60000 )	/* banked */
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "9.bpr",      0x0000, 0x0100, CRC(98ed1c97) SHA1(f125ad05c3cbd1b1ab356161f9b1d814781d4c3b) )	/* unknown */
@@ -3561,11 +3579,13 @@ ROM_START( blkhearj )
 	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD16_WORD_SWAP( "90068-8.bin", 0x000000, 0x100000, CRC(9d3204b2) SHA1(b37a246ad37f9ce092b371f01122ddf2bc8b2db6) )	/* Sprites */
 
-	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "90068-1.bin", 0x000000, 0x080000, CRC(e7af69d2) SHA1(da050880e186954bcf0e0adf00750dd5a371551b) )	/* all banked */
+	ROM_REGION( 0x0a0000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "90068-2.bin", 0x00000, 0x20000, CRC(3a583184) SHA1(9226f1ea7725e4b48bb055d1c17389cf960d75f8) )
+	ROM_CONTINUE(            0x40000, 0x60000 )	/* banked */
 
-	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "90068-2.bin", 0x000000, 0x080000, CRC(3a583184) SHA1(9226f1ea7725e4b48bb055d1c17389cf960d75f8) )	/* all banked */
+	ROM_REGION( 0x0a0000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "90068-1.bin", 0x00000, 0x20000, CRC(e7af69d2) SHA1(da050880e186954bcf0e0adf00750dd5a371551b) )
+	ROM_CONTINUE(            0x40000, 0x60000 )	/* banked */
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "9.bpr",      0x0000, 0x0100, CRC(98ed1c97) SHA1(f125ad05c3cbd1b1ab356161f9b1d814781d4c3b) )	/* unknown */
@@ -3589,9 +3609,13 @@ ROM_START( tdragon )
 	ROM_REGION( 0x010000, REGION_CPU2, 0 )		/* Code for (unknown?) CPU */
 	ROM_LOAD( "thund.1",      0x00000, 0x10000, CRC(bf493d74) SHA1(6f8f5eff4b71fb6cabda10075cfa88a3f607859e) )
 
-	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* OKIM6295 samples? */
-	ROM_LOAD( "thund.2",     0x00000, 0x80000, CRC(ecfea43e) SHA1(d664dfa6698fec8e602523bdae16068f1ff6547b) )
-	ROM_LOAD( "thund.3",     0x80000, 0x80000, CRC(ae6875a8) SHA1(bfdb350b3d3fce2bead1ac60875beafe427765ed) )
+	ROM_REGION( 0x0a0000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "thund.2",     0x00000, 0x20000, CRC(ecfea43e) SHA1(d664dfa6698fec8e602523bdae16068f1ff6547b) )
+	ROM_CONTINUE(            0x40000, 0x60000 )	/* banked */
+
+	ROM_REGION( 0x0a0000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "thund.3",     0x00000, 0x20000, CRC(ae6875a8) SHA1(bfdb350b3d3fce2bead1ac60875beafe427765ed) )
+	ROM_CONTINUE(            0x40000, 0x60000 )	/* banked */
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "9.bin",  0x0000, 0x0100, CRC(cfdbb86c) SHA1(588822f6308a860937349c9106c2b4b1a75823ec) )	/* unknown */
@@ -3674,11 +3698,13 @@ ROM_START( strahl )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "strahl-4.66",    0x00000, 0x10000, CRC(60a799c4) SHA1(8ade3cf827a389f7cb4080957dc4d67077ea4166) )
 
-	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* Oki sample data */
-	ROM_LOAD( "str8pmw1.540",    0x00000, 0x80000, CRC(01d6bb6a) SHA1(b157f6f921483ed8067a7e13e370f73fdb60d136) )
+	ROM_REGION( 0xa0000, REGION_SOUND1, 0 )	/* Oki sample data */
+	ROM_LOAD( "str8pmw1.540", 0x00000, 0x20000, CRC(01d6bb6a) SHA1(b157f6f921483ed8067a7e13e370f73fdb60d136) )
+	ROM_CONTINUE(             0x40000, 0x60000 )	/* banked */
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Oki sample data */
-	ROM_LOAD( "str9pew1.639",    0x00000, 0x80000, CRC(6bb3eb9f) SHA1(9c1394df4f8a08f9098c85eb3d38fb862d6eabbb) )
+	ROM_REGION( 0xa0000, REGION_SOUND2, 0 )	/* Oki sample data */
+	ROM_LOAD( "str9pew1.639", 0x00000, 0x20000, CRC(6bb3eb9f) SHA1(9c1394df4f8a08f9098c85eb3d38fb862d6eabbb) )
+	ROM_CONTINUE(             0x40000, 0x60000 )	/* banked */
 ROM_END
 
 ROM_START( strahla )
@@ -3703,11 +3729,13 @@ ROM_START( strahla )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "strahl-4.66",    0x00000, 0x10000, CRC(60a799c4) SHA1(8ade3cf827a389f7cb4080957dc4d67077ea4166) )
 
-	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* Oki sample data */
-	ROM_LOAD( "str8pmw1.540",    0x00000, 0x80000, CRC(01d6bb6a) SHA1(b157f6f921483ed8067a7e13e370f73fdb60d136) )
+	ROM_REGION( 0xa0000, REGION_SOUND1, 0 )	/* Oki sample data */
+	ROM_LOAD( "str8pmw1.540", 0x00000, 0x20000, CRC(01d6bb6a) SHA1(b157f6f921483ed8067a7e13e370f73fdb60d136) )
+	ROM_CONTINUE(             0x40000, 0x60000 )	/* banked */
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Oki sample data */
-	ROM_LOAD( "str9pew1.639",    0x00000, 0x80000, CRC(6bb3eb9f) SHA1(9c1394df4f8a08f9098c85eb3d38fb862d6eabbb) )
+	ROM_REGION( 0xa0000, REGION_SOUND2, 0 )	/* Oki sample data */
+	ROM_LOAD( "str9pew1.639", 0x00000, 0x20000, CRC(6bb3eb9f) SHA1(9c1394df4f8a08f9098c85eb3d38fb862d6eabbb) )
+	ROM_CONTINUE(             0x40000, 0x60000 )	/* banked */
 ROM_END
 
 ROM_START( hachamf )
@@ -3727,11 +3755,13 @@ ROM_START( hachamf )
 	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD16_WORD_SWAP( "hmf_08.rom",  0x000000, 0x100000, CRC(7fd0f556) SHA1(d1b4bec0946869d3d7bcb870d9ae3bd17395a231) )	/* Sprites */
 
-	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "hmf_02.rom",  0x000000, 0x080000, CRC(3f1e67f2) SHA1(413e78587d8a043a0eb94447313ba1b3c5b35be5) )
+	ROM_REGION( 0x0a0000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "hmf_02.rom",   0x00000, 0x20000, CRC(3f1e67f2) SHA1(413e78587d8a043a0eb94447313ba1b3c5b35be5) )
+	ROM_CONTINUE(             0x40000, 0x60000 )	/* banked */
 
-	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "hmf_03.rom",  0x000000, 0x080000, CRC(b25ed93b) SHA1(d7bc686bbccf982f40420a11158aa8e5dd4207c5) )
+	ROM_REGION( 0x0a0000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "hmf_03.rom",   0x00000, 0x20000, CRC(b25ed93b) SHA1(d7bc686bbccf982f40420a11158aa8e5dd4207c5) )
+	ROM_CONTINUE(             0x40000, 0x60000 )	/* banked */
 ROM_END
 
 ROM_START( macross )
@@ -3750,11 +3780,13 @@ ROM_START( macross )
 	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD16_WORD_SWAP( "921a07",      0x000000, 0x200000, CRC(7d2bf112) SHA1(1997c99c2d3998096842abd1cee89e0e6ab43a47) )	/* Sprites */
 
-	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "921a05",      0x000000, 0x080000, CRC(d5a1eddd) SHA1(42b5b255f02b9c6d856b1578af9a5dfc51ea6ebb) )
+	ROM_REGION( 0xa0000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "921a05",      0x00000, 0x20000, CRC(d5a1eddd) SHA1(42b5b255f02b9c6d856b1578af9a5dfc51ea6ebb) )
+	ROM_CONTINUE(            0x40000, 0x60000 )	/* banked */
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "921a06",      0x000000, 0x080000, CRC(89461d0f) SHA1(b7d27d0ee0b7ab44c20ab710b567f64fc3afb90c) )
+	ROM_REGION( 0xa0000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "921a06",      0x00000, 0x20000, CRC(89461d0f) SHA1(b7d27d0ee0b7ab44c20ab710b567f64fc3afb90c) )
+	ROM_CONTINUE(            0x40000, 0x60000 )	/* banked */
 
 	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "921a08",      0x0000, 0x0100, CRC(cfdbb86c) SHA1(588822f6308a860937349c9106c2b4b1a75823ec) )	/* unknown */
@@ -3779,11 +3811,13 @@ ROM_START( gunnail )
 	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD16_WORD_SWAP( "92077-7.bin", 0x000000, 0x200000, CRC(d49169b3) SHA1(565ff7725dd6ace79b55706114132d8d867e81a9) )	/* Sprites */
 
-	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "92077-6.bin", 0x000000, 0x080000, CRC(6d133f0d) SHA1(8a5e6e27a297196f20e4de0d060f1188115809bb) )	/* all banked */
+	ROM_REGION( 0x0a0000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "92077-5.bin", 0x00000, 0x20000, CRC(feb83c73) SHA1(b44e9d20b4af02e218c4bc875d66a7d6b8551cae) )
+	ROM_CONTINUE(            0x40000, 0x60000 )	/* banked */
 
-	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "92077-5.bin", 0x000000, 0x080000, CRC(feb83c73) SHA1(b44e9d20b4af02e218c4bc875d66a7d6b8551cae) )	/* all banked */
+	ROM_REGION( 0x0a0000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "92077-6.bin", 0x00000, 0x20000, CRC(6d133f0d) SHA1(8a5e6e27a297196f20e4de0d060f1188115809bb) )
+	ROM_CONTINUE(            0x40000, 0x60000 )	/* banked */
 
 	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "8.bpr",      0x0000, 0x0100, CRC(4299776e) SHA1(683d14d2ace14965f0fcfe0f0540c1b77d2cece5) )	/* unknown */
@@ -4081,11 +4115,13 @@ ROM_START( manybloc )
 	ROM_LOAD16_BYTE( "9-u53b.bin",  0x040000, 0x20000, CRC(dfcfa040) SHA1(f1561defe9746afdb1a5327d0a4435a6f3e87a77) )
 	ROM_LOAD16_BYTE( "11-u85b.bin", 0x040001, 0x20000, CRC(fe747dd5) SHA1(6ba57a45f4d77e2574de95d4a2f0718c601e7214) )
 
-	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "6-u131.bin", 0x000000, 0x40000, CRC(79a4ae75) SHA1(f7609d0ca18b4af8c5f37daa1795a7a6c6d768ae) )
+	ROM_REGION( 0xa0000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "6-u131.bin",  0x00000, 0x20000, CRC(79a4ae75) SHA1(f7609d0ca18b4af8c5f37daa1795a7a6c6d768ae) )
+	ROM_CONTINUE(            0x40000, 0x20000 )	/* banked */
+	ROM_LOAD( "7-u132.bin",  0x60000, 0x40000, CRC(21db875e) SHA1(e1d96155b6d8825f7c449f276d02f9769258345d) )	/* banked */
 
-	ROM_REGION( 0x40000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "7-u132.bin", 0x000000, 0x40000, CRC(21db875e) SHA1(e1d96155b6d8825f7c449f276d02f9769258345d) )
+	ROM_REGION( 0xa0000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
+	/* empty */
 
 	ROM_REGION( 0x0420, REGION_PROMS, 0 )
 	ROM_LOAD( "u200.bpr",    0x0000, 0x0020, CRC(1823600b) SHA1(7011156ebcb815b176856bd67898ce655ea1b5ab) )	/* unknown */
@@ -4093,6 +4129,8 @@ ROM_START( manybloc )
 	ROM_LOAD( "u10.bpr",     0x0120, 0x0200, CRC(8e9b569a) SHA1(1d8d633fbeb72d5e55ad4b282df02e9ca5e240eb) )	/* unknown */
 	ROM_LOAD( "u120.bpr",    0x0320, 0x0100, CRC(576c5984) SHA1(6e9b7f30de0d91cb766a62abc5888ec9af085a27) )	/* unknown */
 ROM_END
+
+
 
 static unsigned char decode_byte(unsigned char src, unsigned char *bitp)
 {
@@ -4261,70 +4299,34 @@ static DRIVER_INIT( hachamf )
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 
 	rom[0x0006/2] = 0x7dc2;	/* replace reset vector with the "real" one */
-}
 
-static DRIVER_INIT( acrobatm )
-{
-	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
-
-	RAM[0x724/2] = 0x4e71; /* Protection */
-	RAM[0x726/2] = 0x4e71;
-	RAM[0x728/2] = 0x4e71;
-
-	RAM[0x9d8/2] = 0x3e3C; /* Checksum */
-	RAM[0x9da/2] = 0x0;
-	RAM[0x97c/2] = 0x3e3C;
-	RAM[0x97e/2] = 0x0;
+	// kludge the sound communication to let commands go through.
+	rom[0x048a/2] = 0x4e71;
+	rom[0x04aa/2] = 0x4e71;
 }
 
 static DRIVER_INIT( tdragonb )
 {
-	data16_t *ROM = (data16_t *)memory_region(REGION_CPU1);
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 
 	decode_tdragonb();
 
 	/* The Following Patch is taken from Raine, Otherwise the game has no Sprites in Attract Mode or After Level 1
 	   which is rather odd considering its a bootleg.. */
-	ROM[0x00308/2] = 0x4e71; /* Sprite Problem */
+	rom[0x00308/2] = 0x4e71; /* Sprite Problem */
 }
 
 static DRIVER_INIT( tdragon )
 {
-	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 
-	RAM[0x94b0/2] = 0; /* Patch out JMP to shared memory (protection) */
-	RAM[0x94b2/2] = 0x92f4;
+	rom[0x94b0/2] = 0; /* Patch out JMP to shared memory (protection) */
+	rom[0x94b2/2] = 0x92f4;
 }
 
 static DRIVER_INIT( ssmissin )
 {
 	decode_ssmissin();
-}
-
-
-static DRIVER_INIT( strahl )
-{
-	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
-
-	RAM[0x79e/2] = 0x4e71; /* Protection */
-	RAM[0x7a0/2] = 0x4e71;
-	RAM[0x7a2/2] = 0x4e71;
-
-	RAM[0x968/2] = 0x4e71; /* Checksum error */
-	RAM[0x96a/2] = 0x4e71;
-	RAM[0x8e0/2] = 0x4e71; /* Checksum error */
-	RAM[0x8e2/2] = 0x4e71;
-}
-
-static DRIVER_INIT( bioship )
-{
-	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
-
-	RAM[0xe78a/2] = 0x4e71; /* Protection */
-	RAM[0xe78c/2] = 0x4e71;
-
-	RAM[0xe798/2] = 0x4e71; /* Checksum */
-	RAM[0xe79a/2] = 0x4e71;
 }
 
 
@@ -4359,35 +4361,35 @@ static WRITE16_HANDLER ( test_2a_mustang_w )
 
 static DRIVER_INIT( blkheart )
 {
-	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 
 	is_blkheart = 1; // sprite enable is different?
 
    // see raine's games/nmk.c
-	RAM[0x872/2] = 0x4e71;
-   	RAM[0x874/2] = 0x4e71;
-   	RAM[0x876/2] = 0x4e71;
-   	RAM[0x8d6/2] = 0x0300;
-   	RAM[0xe1c/2] = 0x0300;
-   	RAM[0x23dc/2] = 0x0300;
-   	RAM[0x3dea/2] = 0x0300;
+	rom[0x872/2] = 0x4e71;
+   	rom[0x874/2] = 0x4e71;
+   	rom[0x876/2] = 0x4e71;
+   	rom[0x8d6/2] = 0x0300;
+   	rom[0xe1c/2] = 0x0300;
+   	rom[0x23dc/2] = 0x0300;
+   	rom[0x3dea/2] = 0x0300;
 
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xf902a, 0xf902b, 0, 0, test_2a_w );
 }
 
 static DRIVER_INIT( mustang )
 {
-	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 
 	is_blkheart = 1; // sprite enable is different?
 
    // see raine's games/nmk.c
-	RAM[0x85c/2] = 0x4e71;
-	RAM[0x85e/2] = 0x4e71;
-	RAM[0x860/2] = 0x4e71;
-	RAM[0x8c0/2] = 0x0300;
-  	RAM[0xc00/2] = 0x0300;
-  	RAM[0x30b2/2] = 0x0300;
+	rom[0x85c/2] = 0x4e71;
+	rom[0x85e/2] = 0x4e71;
+	rom[0x860/2] = 0x4e71;
+	rom[0x8c0/2] = 0x0300;
+	rom[0xc00/2] = 0x0300;
+	rom[0x30b2/2] = 0x0300;
 
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xf902a, 0xf902b, 0, 0, test_2a_mustang_w );
 }
@@ -4405,7 +4407,7 @@ static DRIVER_INIT( bjtwin )
  *	008F68: 0041 BFBF                ori.w   #-$4041, D1		|   buttons 2 and 3 to
  *	008F6C: E441                     asr.w   #2, D1				|   button 1, so
  *	008F6E: 0040 DFDF                ori.w   #-$2021, D0		|   you can't enter
- *	008F72: E240                     asr.w   #1, D0				|   service mode7
+ *	008F72: E240                     asr.w   #1, D0				|   service mode
  *	008F74: C640                     and.w   D0, D3				|
  *	008F76: C641                     and.w   D1, D3				/
  *	008F78: 33C3 000F FFFE           move.w  D3, $ffffe.l
@@ -4419,24 +4421,24 @@ static DRIVER_INIT( bjtwin )
 
 GAMEX( 1989, tharrier, 0,       tharrier, tharrier, 0, 		  ROT270, "UPL (American Sammy license)",	"Task Force Harrier", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1989, tharierj, tharrier,tharrier, tharrier, 0, 		  ROT270, "UPL",	                        "Task Force Harrier (Japan)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1990, mustang,  0,       mustang,  mustang,  mustang,  ROT0,   "UPL",							"US AAF Mustang (Japan)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND) // Playable but there are Still Protection Problems
-GAMEX( 1990, mustangs, mustang, mustang,  mustang,  mustang,  ROT0,   "UPL (Seoul Trading license)",	"US AAF Mustang (Seoul Trading)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND ) // Playable but there are Still Protection Problems
+GAMEX( 1990, mustang,  0,       mustang,  mustang,  mustang,  ROT0,   "UPL",							"US AAF Mustang (Japan)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND) // Playable but there are Still Protection Problems
+GAMEX( 1990, mustangs, mustang, mustang,  mustang,  mustang,  ROT0,   "UPL (Seoul Trading license)",	"US AAF Mustang (Seoul Trading)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND ) // Playable but there are Still Protection Problems
 GAMEX( 1990, mustangb, mustang, mustangb, mustang,  mustang,  ROT0,   "bootleg",						"US AAF Mustang (bootleg)", GAME_UNEMULATED_PROTECTION ) // Playable but there are Still Protection Problems
-GAMEX( 1990, bioship,  0,       bioship,  bioship,  bioship,  ROT0,   "UPL (American Sammy license)",	"Bio-ship Paladin", GAME_NO_SOUND )
-GAMEX( 1990, vandyke,  0,       vandyke,  vandyke,  0,        ROT270, "UPL",							"Vandyke (Japan)",  GAME_NO_SOUND )
-GAMEX( 1990, vandyjal, vandyke, vandyke,  vandyke,  0,        ROT270, "UPL (Jaleco license)",           "Vandyke (Jaleco)",  GAME_NO_SOUND )
+GAMEX( 1990, bioship,  0,       bioship,  bioship,  0,        ROT0,   "UPL (American Sammy license)",	"Bio-ship Paladin", GAME_IMPERFECT_SOUND )
+GAMEX( 1990, vandyke,  0,       vandyke,  vandyke,  0,        ROT270, "UPL",							"Vandyke (Japan)",  GAME_IMPERFECT_SOUND )
+GAMEX( 1990, vandyjal, vandyke, vandyke,  vandyke,  0,        ROT270, "UPL (Jaleco license)",           "Vandyke (Jaleco)",  GAME_IMPERFECT_SOUND )
 GAMEX( 1991, manybloc, 0,       manybloc, manybloc, 0,        ROT270, "Bee-Oh",                         "Many Block", GAME_NO_COCKTAIL | GAME_IMPERFECT_SOUND )
-GAMEX( 1991, blkheart, 0,       macross,  blkheart, blkheart, ROT0,   "UPL",							"Black Heart", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND  ) // Playable but there are Still Protection Problems
-GAMEX( 1991, blkhearj, blkheart,macross,  blkheart, blkheart, ROT0,   "UPL",							"Black Heart (Japan)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND ) // Playable but there are Still Protection Problems
-GAMEX( 1991, acrobatm, 0,       acrobatm, acrobatm, acrobatm, ROT270, "UPL (Taito license)",			"Acrobat Mission", GAME_NO_SOUND )
-GAMEX( 1992, strahl,   0,       strahl,   strahl,   strahl,   ROT0,   "UPL",							"Koutetsu Yousai Strahl (Japan set 1)", GAME_NO_SOUND )
-GAMEX( 1992, strahla,  strahl,  strahl,   strahl,   strahl,   ROT0,   "UPL",							"Koutetsu Yousai Strahl (Japan set 2)", GAME_NO_SOUND )
-GAMEX( 1991, tdragon,  0,       tdragon,  tdragon,  tdragon,  ROT270, "NMK / Tecmo",					"Thunder Dragon", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1991, blkheart, 0,       macross,  blkheart, blkheart, ROT0,   "UPL",							"Black Heart", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND  ) // Playable but there are Still Protection Problems
+GAMEX( 1991, blkhearj, blkheart,macross,  blkheart, blkheart, ROT0,   "UPL",							"Black Heart (Japan)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND ) // Playable but there are Still Protection Problems
+GAMEX( 1991, acrobatm, 0,       acrobatm, acrobatm, 0,        ROT270, "UPL (Taito license)",			"Acrobat Mission", GAME_IMPERFECT_SOUND )
+GAMEX( 1992, strahl,   0,       strahl,   strahl,   0,        ROT0,   "UPL",							"Koutetsu Yousai Strahl (Japan set 1)", GAME_IMPERFECT_SOUND )
+GAMEX( 1992, strahla,  strahl,  strahl,   strahl,   0,        ROT0,   "UPL",							"Koutetsu Yousai Strahl (Japan set 2)", GAME_IMPERFECT_SOUND )
+GAMEX( 1991, tdragon,  0,       tdragon,  tdragon,  tdragon,  ROT270, "NMK / Tecmo",					"Thunder Dragon", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
 GAME(  1991, tdragonb, tdragon, tdragonb, tdragon,  tdragonb, ROT270, "NMK / Tecmo",					"Thunder Dragon (Bootleg)" )
 GAMEX( 1992, ssmissin, 0,       ssmissin, ssmissin, ssmissin, ROT270, "Comad",				            "S.S. Mission", GAME_NO_COCKTAIL )
-GAMEX( 1991, hachamf,  0,       hachamf,  hachamf,  hachamf,  ROT0,   "NMK",							"Hacha Mecha Fighter", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1992, macross,  0,       macross,  macross,  nmk,      ROT270, "Banpresto",						"Super Spacefortress Macross / Chou-Jikuu Yousai Macross", GAME_NO_SOUND )
-GAMEX( 1993, gunnail,  0,       gunnail,  gunnail,  nmk,      ROT270, "NMK / Tecmo",					"GunNail", GAME_NO_SOUND )
+GAMEX( 1991, hachamf,  0,       hachamf,  hachamf,  hachamf,  ROT0,   "NMK",							"Hacha Mecha Fighter", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1992, macross,  0,       macross,  macross,  nmk,      ROT270, "Banpresto",						"Super Spacefortress Macross / Chou-Jikuu Yousai Macross", GAME_IMPERFECT_SOUND )
+GAMEX( 1993, gunnail,  0,       gunnail,  gunnail,  nmk,      ROT270, "NMK / Tecmo",					"GunNail", GAME_IMPERFECT_SOUND )
 GAMEX( 1993, macross2, 0,       macross2, macross2, 0,        ROT0,   "Banpresto",						"Super Spacefortress Macross II / Chou-Jikuu Yousai Macross II", GAME_NO_COCKTAIL )
 GAMEX( 1993, tdragon2, 0,       tdragon2, tdragon2, 0,        ROT270, "NMK",				         	"Thunder Dragon 2", GAME_NO_COCKTAIL )
 GAMEX( 1993, bigbang,  tdragon2,tdragon2, tdragon2, 0,        ROT270, "NMK",				         	"Big Bang", GAME_NO_COCKTAIL )

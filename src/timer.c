@@ -42,7 +42,7 @@
 #define VERBOSE 0
 
 #if VERBOSE
-#define LOG(x)	logerror x
+#define LOG(x)	printf x
 #else
 #define LOG(x)
 #endif
@@ -453,6 +453,10 @@ INLINE void mame_timer_adjust_common(mame_timer *which, mame_time duration, int 
 	which->callback_param = param;
 	which->callback_ptr_param = ptr_param;
 	which->enabled = 1;
+	
+	/* clamp negative times to 0 */
+	if (duration.seconds < 0)
+		duration = time_zero;
 
 	/* set the start and expire times */
 	which->start = time;

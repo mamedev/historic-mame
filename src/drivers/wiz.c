@@ -1061,6 +1061,12 @@ static DRIVER_INIT( stinger )
 }
 
 
+static DRIVER_INIT( scion )
+{
+	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0x4000, 0x4001, 0, 0, MWA8_NOP);
+}
+
+
 static DRIVER_INIT( wiz )
 {
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd400, 0xd400, 0, 0, wiz_protection_r);
@@ -1069,8 +1075,8 @@ static DRIVER_INIT( wiz )
 
 GAMEX(1983, stinger,  0,       stinger, stinger,  stinger, ROT90,  "Seibu Denshi", "Stinger", GAME_IMPERFECT_SOUND )
 GAMEX(1983, stinger2, stinger, stinger, stinger2, stinger, ROT90,  "Seibu Denshi", "Stinger (prototype?)", GAME_IMPERFECT_SOUND )
-GAMEX(1984, scion,    0,       scion,   scion,    0,       ROT0,   "Seibu Denshi", "Scion", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_COLORS )
-GAMEX(1984, scionc,   scion,   scion,   scion,    0,       ROT0,   "Seibu Denshi (Cinematronics license)", "Scion (Cinematronics)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_COLORS )
+GAMEX(1984, scion,    0,       scion,   scion,    scion,   ROT0,   "Seibu Denshi", "Scion", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_COLORS )
+GAMEX(1984, scionc,   scion,   scion,   scion,    scion,   ROT0,   "Seibu Denshi (Cinematronics license)", "Scion (Cinematronics)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_COLORS )
 GAME( 1984, kungfut,  0,       kungfut, kungfut,  0,       ROT0,   "Seibu Kaihatsu Inc.", "Kung-Fu Taikun" )
 GAME( 1984, kungfuta, kungfut, kungfut, kungfut,  0,       ROT0,   "Seibu Kaihatsu Inc.", "Kung-Fu Taikun (alt)" ) /* board was a bootleg but set might still be original */
 GAME( 1985, wiz,      0,       wiz,     wiz,      wiz,     ROT270, "Seibu Kaihatsu Inc.", "Wiz" )

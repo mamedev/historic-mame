@@ -2216,6 +2216,27 @@ TABLE_FUNCTION(void, set_reg, (int regnum, uint val))
 	 }
 }
 
+
+
+INLINE int g65816i_correct_mode(void)
+{
+#if EXECUTION_MODE == EXECUTION_MODE_E
+	return (FLAG_E == EFLAG_SET);
+#elif EXECUTION_MODE == EXECUTION_MODE_M0X0
+	return (FLAG_E == EFLAG_CLEAR) && (FLAG_M == MFLAG_CLEAR) && (FLAG_X == XFLAG_CLEAR);
+#elif EXECUTION_MODE == EXECUTION_MODE_M0X1
+	return (FLAG_E == EFLAG_CLEAR) && (FLAG_M == MFLAG_CLEAR) && (FLAG_X == XFLAG_SET);
+#elif EXECUTION_MODE == EXECUTION_MODE_M1X0
+	return (FLAG_E == EFLAG_CLEAR) && (FLAG_M == MFLAG_SET) && (FLAG_X == XFLAG_CLEAR);
+#elif EXECUTION_MODE == EXECUTION_MODE_M1X1
+	return (FLAG_E == EFLAG_CLEAR) && (FLAG_M == MFLAG_SET) && (FLAG_X == XFLAG_SET);
+#else
+#error Invalid EXECUTION_MODE
+#endif
+}
+
+
+
 TABLE_FUNCTION(int, execute, (int clocks))
 {
 	if(!CPU_STOPPED)
@@ -2223,17 +2244,18 @@ TABLE_FUNCTION(int, execute, (int clocks))
 		CLOCKS = clocks;
 		do
 		{
-			REGISTER_PPC = REGISTER_PC;
-			G65816_CALL_DEBUGGER;
-			REGISTER_PC++;
-			REGISTER_IR = read_8_IMM(REGISTER_PB | REGISTER_PPC);
-			FTABLE_OPCODES[REGISTER_IR]();
 			/* Note that I'm doing a per-instruction interrupt
 			 * check until this core is working well enough
 			 * to start trying fancy stuff.
 			 */
 			g65816i_check_maskable_interrupt();
-		} while(CLOCKS > 0);
+
+			REGISTER_PPC = REGISTER_PC;
+			G65816_CALL_DEBUGGER;
+			REGISTER_PC++;
+			REGISTER_IR = read_8_IMM(REGISTER_PB | REGISTER_PPC);
+			FTABLE_OPCODES[REGISTER_IR]();
+		} while((CLOCKS > 0) && g65816i_correct_mode());
 		return clocks - CLOCKS;
 	}
 	return clocks;

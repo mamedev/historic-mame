@@ -1072,15 +1072,15 @@ f  e  d  c| b| a  9| 8  7| 6  5| 4| 3  2  1  0
 	{ \
 	case 0: \
 		n_tx += m_n_twx >> 2; \
-		n_ty += m_n_twy >> 2; \
+		n_ty += m_n_twy; \
 		break; \
 	case 1: \
 		n_tx += m_n_twx >> 1; \
-		n_ty += m_n_twy >> 1; \
+		n_ty += m_n_twy; \
 		break; \
 	case 2: \
 		n_tx += m_n_twx >> 0; \
-		n_ty += m_n_twy >> 0; \
+		n_ty += m_n_twy; \
 		break; \
 	} \
 	TRANSPARENCYSETUP
@@ -1158,9 +1158,9 @@ f  e  d  c| b| a  9| 8  7| 6  5| 4| 3  2  1  0
 	{ \
 		n_bgr = *( m_p_p_vram[ n_ty + TXV ] + n_tx + TXU );
 
-#define TEXTUREWINDOW4BIT( TXV, TXU ) TEXTURE4BIT( ( TXV % m_n_twh ), ( TXU % m_n_tww ) )
-#define TEXTUREWINDOW8BIT( TXV, TXU ) TEXTURE8BIT( ( TXV % m_n_twh ), ( TXU % m_n_tww ) )
-#define TEXTUREWINDOW15BIT( TXV, TXU ) TEXTURE15BIT( ( TXV % m_n_twh ), ( TXU % m_n_tww ) )
+#define TEXTUREWINDOW4BIT( TXV, TXU ) TEXTURE4BIT( ( TXV & m_n_twh ), ( TXU & m_n_tww ) )
+#define TEXTUREWINDOW8BIT( TXV, TXU ) TEXTURE8BIT( ( TXV & m_n_twh ), ( TXU & m_n_tww ) )
+#define TEXTUREWINDOW15BIT( TXV, TXU ) TEXTURE15BIT( ( TXV & m_n_twh ), ( TXU & m_n_tww ) )
 
 #define TEXTUREINTERLEAVED4BIT( TXV, TXU ) \
 	while( n_distance > 0 ) \
@@ -1183,9 +1183,9 @@ f  e  d  c| b| a  9| 8  7| 6  5| 4| 3  2  1  0
 		int n_yi = TXV; \
 		n_bgr = *( m_p_p_vram[ n_ty + n_yi ] + n_tx + n_xi );
 
-#define TEXTUREWINDOWINTERLEAVED4BIT( TXV, TXU ) TEXTUREINTERLEAVED4BIT( ( TXV % m_n_twh ), ( TXU % m_n_tww ) )
-#define TEXTUREWINDOWINTERLEAVED8BIT( TXV, TXU ) TEXTUREINTERLEAVED8BIT( ( TXV % m_n_twh ), ( TXU % m_n_tww ) )
-#define TEXTUREWINDOWINTERLEAVED15BIT( TXV, TXU ) TEXTUREINTERLEAVED15BIT( ( TXV % m_n_twh ), ( TXU % m_n_tww ) )
+#define TEXTUREWINDOWINTERLEAVED4BIT( TXV, TXU ) TEXTUREINTERLEAVED4BIT( ( TXV & m_n_twh ), ( TXU & m_n_tww ) )
+#define TEXTUREWINDOWINTERLEAVED8BIT( TXV, TXU ) TEXTUREINTERLEAVED8BIT( ( TXV & m_n_twh ), ( TXU & m_n_tww ) )
+#define TEXTUREWINDOWINTERLEAVED15BIT( TXV, TXU ) TEXTUREINTERLEAVED15BIT( ( TXV & m_n_twh ), ( TXU & m_n_tww ) )
 
 #define SHADEDPIXEL( PIXELUPDATE ) \
 		if( n_bgr != 0 ) \
@@ -1233,8 +1233,8 @@ f  e  d  c| b| a  9| 8  7| 6  5| 4| 3  2  1  0
 	if( n_ti != 0 ) \
 	{ \
 		/* interleaved texture */ \
-		if( m_n_twh != 256 || \
-			m_n_tww != 256 || \
+		if( m_n_twh != 255 || \
+			m_n_tww != 255 || \
 			m_n_twx != 0 || \
 			m_n_twy != 0 ) \
 		{ \
@@ -1338,8 +1338,8 @@ f  e  d  c| b| a  9| 8  7| 6  5| 4| 3  2  1  0
 	else \
 	{ \
 		/* standard texture */ \
-		if( m_n_twh != 256 || \
-			m_n_tww != 256 || \
+		if( m_n_twh != 255 || \
+			m_n_tww != 255 || \
 			m_n_twx != 0 || \
 			m_n_twy != 0 ) \
 		{ \
@@ -3418,6 +3418,7 @@ void psx_gpu_write( UINT32 *p_ram, INT32 n_size )
 			}
 			break;
 		case 0x70:
+		case 0x71:
 			/* 8*8 rectangle */
 			if( m_n_gpu_buffer_offset < 1 )
 			{
@@ -3556,8 +3557,8 @@ void psx_gpu_write( UINT32 *p_ram, INT32 n_size )
 		case 0xe2:
 			m_n_twy = ( ( ( m_packet.n_entry[ 0 ] >> 15 ) & 0x1f ) << 3 );
 			m_n_twx = ( ( ( m_packet.n_entry[ 0 ] >> 10 ) & 0x1f ) << 3 );
-			m_n_twh = 256 - ( ( ( m_packet.n_entry[ 0 ] >> 5 ) & 0x1f ) << 3 );
-			m_n_tww = 256 - ( ( m_packet.n_entry[ 0 ] & 0x1f ) << 3 );
+			m_n_twh = 255 - ( ( ( m_packet.n_entry[ 0 ] >> 5 ) & 0x1f ) << 3 );
+			m_n_tww = 255 - ( ( m_packet.n_entry[ 0 ] & 0x1f ) << 3 );
 			verboselog( 1, "%02x: texture window %u,%u %u,%u\n", m_packet.n_entry[ 0 ] >> 24,
 				m_n_twx, m_n_twy, m_n_tww, m_n_twh );
 			break;
@@ -3710,7 +3711,7 @@ WRITE32_HANDLER( psx_gpu_w )
 			verboselog( 1, "not handled: GPU Control 0x09: %08x\n", data );
 			break;
 		case 0x0d:
-			verboselog( 1, "GPU Lightgun Reset ? %08x\n", data );
+			verboselog( 1, "reset lightgun coordinates %08x\n", data );
 			m_n_lightgun_x = 0;
 			m_n_lightgun_y = 0;
 			break;
@@ -3755,8 +3756,8 @@ WRITE32_HANDLER( psx_gpu_w )
 				verboselog( 1, "GPU Info - GPU Type %08x\n", m_n_gpuinfo );
 				break;
 			case 0x08:
-				m_n_gpuinfo = m_n_lightgun_x | ( m_n_lightgun_y << 10 );
-				verboselog( 0, "GPU Info - Lightgun ? %08x\n", m_n_gpuinfo );
+				m_n_gpuinfo = m_n_lightgun_x | ( m_n_lightgun_y << 16 );
+				verboselog( 1, "GPU Info - lightgun coordinates %08x\n", m_n_gpuinfo );
 				break;
 			default:
 				verboselog( 0, "GPU Info - unknown request (%08x)\n", data );

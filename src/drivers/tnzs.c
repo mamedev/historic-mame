@@ -8,6 +8,13 @@ Notes:
   3) "tnzso". Standard hardware. Harder gameplay, old Taito logo. Maybe a prototype?
   The three versions all have different levels!
 
+- TNZS hidden level select: keep service coin pressed (default:9) and reset the game.
+  When SERVICE SWITCH ERROR appears, release service coin and press 1 player start
+  three times, service coin again, and 1 player start. Use up/down to select the
+  starting level and press 1 player start to start. You'll also get 255 lives.
+  If you have enough patience and go up until the level reads "Q-1" (which corresponds
+  to 1-1), AND the "Invulnerability" dip switch is On, you'll be invulnerable.
+
 
 Hardware datails for the newer tnzs board (from pictures):
 
@@ -927,7 +934,7 @@ INPUT_PORTS_START( tnzs )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x08, 0x08, "Invulnerability (Debug)" )	// see notes
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	TAITO_COINAGE_JAPAN_8
@@ -952,7 +959,7 @@ INPUT_PORTS_START( tnzsb )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x08, 0x08, "Invulnerability (Debug)" )	// see notes
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	TAITO_COINAGE_WORLD_8

@@ -328,8 +328,8 @@ static void cpu_pre_run(void)
 	/* first pass over CPUs */
 	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
 	{
-		/* enable all CPUs (except for audio CPUs if the sound is off) */
-		if (!(Machine->drv->cpu[cpunum].cpu_flags & CPU_AUDIO_CPU) || Machine->sample_rate != 0)
+		/* enable all CPUs (except for disabled CPUs) */
+		if (!(Machine->drv->cpu[cpunum].cpu_flags & CPU_DISABLE))
 			cpunum_resume(cpunum, SUSPEND_ANY_REASON);
 		else
 			cpunum_suspend(cpunum, SUSPEND_REASON_DISABLE, 1);

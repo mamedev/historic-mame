@@ -25,9 +25,7 @@ const struct discrete_555_cc_desc poolshrk_score_vco =
 {
 	DISC_555_OUT_SQW,
 	5,		// B+ voltage of 555
-	5.0 - 1.7,	// High output voltage of 555 (Usually v555 - 1.7)
-	5.0 * 2 / 3,	// threshold
-	5.0 /3,		// trigger
+	DEFAULT_555_VALUES,
 	5,		// B+ voltage of the Constant Current source
 	0.7		// Q3 junction voltage
 };
@@ -35,15 +33,14 @@ const struct discrete_555_cc_desc poolshrk_score_vco =
 const struct discrete_mixer_desc poolshrk_mixer =
 {
 	DISC_MIXER_IS_RESISTOR,
-	4,						// 4 inputs
-	{330000, 330000, 330000, 82000 + 470, 0,0,0,0},	// R77, R75, R74, R76 + R53
-	{0,0,0,0,0,0,0,0},				// No variable resistor nodes
-	{0, 0, 0, 0, 0,0,0,0},				// No caps
-	0,						// No rI
-	1000,						// R78
-	0,						// No filtering
-	1e-7,						// C21
-	0,						// vBias not used for resistor network
+	{330000, 330000, 330000, 82000 + 470},	// R77, R75, R74, R76 + R53
+	{0},				// No variable resistor nodes
+	{0},				// No caps
+	0,					// No rI
+	1000,				// R78
+	0,					// No filtering
+	1e-7,				// C21
+	0,					// vBias not used for resistor network
 	1000000
 };
 

@@ -277,7 +277,7 @@ ADDRESS_MAP_END
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_DOWN ) PORT_8WAY\
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_LEFT ) PORT_8WAY\
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_RIGHT ) PORT_8WAY
-	
+
 #define CCIN1\
 	PORT_START_TAG("IN1")\
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_UP ) PORT_8WAY PORT_COCKTAIL\
@@ -620,7 +620,7 @@ static MACHINE_DRIVER_START( cclimber )
 	MDRV_SOUND_ADD(AY8910, 1536000)
 	MDRV_SOUND_CONFIG(cclimber_ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(cclimber_custom_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
@@ -658,7 +658,7 @@ static MACHINE_DRIVER_START( cannonb )
 	MDRV_SOUND_ADD(AY8910, 1536000)
 	MDRV_SOUND_CONFIG(cclimber_ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(cclimber_custom_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
@@ -951,6 +951,35 @@ ROM_START( ckongalc )
 	ROM_LOAD( "ck12.bin",     0x1000, 0x1000, CRC(2eb23b60) SHA1(c9e7dc584562aceb374193655fbacb7df6c9c731) )
 ROM_END
 
+ROM_START( bigkong )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "dk01f7_2532.d5",   0x0000, 0x1000, CRC(4c9102f1) SHA1(845b48fa1e6ad82dc797520f7ff7daffc1a47c39) )
+	ROM_LOAD( "dk02f8_2532.f5",   0x1000, 0x1000, CRC(1683e9ae) SHA1(4690c8be70c0cc0e7d78d2ff205eed3f4ead7278) )
+	ROM_LOAD( "dk03f9_2532.h5",   0x2000, 0x1000, CRC(073eea32) SHA1(de7889df04f8a279a0864748298e5ccdce0578f1) )
+	ROM_LOAD( "dk04f10_2532.k5",   0x3000, 0x1000, CRC(0aab0334) SHA1(be4b5c121538dc3a82797475f3bb15918eb6d817) )
+	ROM_LOAD( "dk05f11_2532.l5",   0x4000, 0x1000, CRC(45be1c6a) SHA1(3d45da4ab21586148a3608d085aa4c401bd257fe) )
+	ROM_LOAD( "n05-12.bin",   0x5000, 0x1000, CRC(966bc9ab) SHA1(4434fc620169ffea1b1f227b61674e1daf79b54b) )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "n11-06.bin",   0x0000, 0x1000, CRC(2dcedd12) SHA1(dfdcfc21bcba7c8e148ee54daae511ca78c58e70) )
+	ROM_LOAD( "k11-04.bin",   0x1000, 0x1000, CRC(3375b3bd) SHA1(a00b3c31cff123aab6ac0833aabfdd663302971a) )
+	ROM_LOAD( "l11-05.bin",   0x2000, 0x1000, CRC(fa7cbd91) SHA1(0208d2ebc59f3600005476b6987472685bc99d67) )
+	ROM_LOAD( "h11-03.bin",   0x3000, 0x1000, CRC(5655cc11) SHA1(5195e9b2a60c54280b48b32ee8248090904dbc51) )
+
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "c11-02.bin",   0x0000, 0x0800, CRC(d1352c31) SHA1(da726a63a8be830d695afeddc1717749af8c9d47) )
+	ROM_LOAD( "a11-01.bin",   0x0800, 0x0800, CRC(a7a2fdbd) SHA1(529865f8bbfbdbbf34ac39c70ef17e6d5bd0f845) )
+
+	ROM_REGION( 0x0060, REGION_PROMS, 0 )
+	ROM_LOAD( "prom.v6",      0x0000, 0x0020, CRC(b3fc1505) SHA1(5b94adde0428a26b815c7eb9b3f3716470d349c7) )
+	ROM_LOAD( "prom.u6",      0x0020, 0x0020, CRC(26aada9e) SHA1(f59645e606ea4f0dd0fc4ea47dd03f526c534941) )
+	ROM_LOAD( "prom.t6",      0x0040, 0x0020, CRC(676b3166) SHA1(29b9434cd34d43ea5664e436e2a24b54f8d88aac) )
+
+	ROM_REGION( 0x2000, REGION_SOUND1, 0 )	/* samples */
+	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, CRC(5f0bcdfb) SHA1(7f79bf6de117348f606696ed7ea1937bbf926612) )
+	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, CRC(9003ffbd) SHA1(fd016056aabc23957643f37230f03842294f795e) )
+ROM_END
+
 ROM_START( monkeyd )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "ck7.bin",      0x0000, 0x1000, CRC(2171cac3) SHA1(7b18bfe44c32fb64b675bbbe2136344522c79b09) )
@@ -1228,7 +1257,7 @@ ADDRESS_MAP_END
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL\
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL\
   	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNUSED )
-  
+
 #define SWIMIN1\
 	PORT_START_TAG("IN1")\
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY\
@@ -1237,7 +1266,7 @@ ADDRESS_MAP_END
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY\
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )\
   	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNUSED )
-  
+
 #define SWIMDSW1\
 	PORT_START_TAG("DSW1")\
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )\
@@ -1260,7 +1289,7 @@ ADDRESS_MAP_END
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )\
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )\
   	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
-  
+
 #define SWIMIN4\
 	PORT_START_TAG("IN4")\
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )\
@@ -1288,7 +1317,7 @@ SWIMDSW1
 	PORT_DIPSETTING(    0x40, DEF_STR( Hard ) )		// labeled this way for similarities with 'swimmerb'
 	PORT_DIPSETTING(    0x80, DEF_STR( Harder ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( Hardest ) )
-	
+
 SWIMIN4
 INPUT_PORTS_END
 
@@ -1297,7 +1326,7 @@ INPUT_PORTS_START( swimmerb )
 SWIMIN0
 SWIMIN1
 SWIMDSW1
-  
+
 	PORT_START_TAG("IN3")      /* DSW2 */
 	PORT_BIT( 0x03, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
@@ -1656,10 +1685,11 @@ GAME( 1981, ckonga,   ckong,    cclimber, ckong,    0,        ROT270, "Falcon", 
 GAME( 1981, ckongjeu, ckong,    cclimber, ckong,    0,        ROT270, "bootleg", "Crazy Kong (Jeutel bootleg)" )
 GAME( 1981, ckongo,   ckong,    cclimber, ckong,    0,        ROT270, "bootleg", "Crazy Kong (Orca bootleg)" )
 GAME( 1981, ckongalc, ckong,    cclimber, ckong,    0,        ROT270, "bootleg", "Crazy Kong (Alca bootleg)" )
+GAME( 198?, bigkong,  ckong,    cclimber, ckong,    0,        ROT270, "bootleg", "Big Kong" )
 GAME( 1981, monkeyd,  ckong,    cclimber, ckong,    0,        ROT270, "bootleg", "Monkey Donkey" )
 GAME( 1982?,rpatrolb, 0,        cclimber, rpatrolb, 0,        ROT0,   "bootleg", "River Patrol (bootleg)" )
 GAME( 1982?,silvland, rpatrolb, cclimber, rpatrolb, 0,        ROT0,   "Falcon", "Silver Land" )
-GAMEX( 1985, cannonb,  0,        cannonb,  cannonb,  cannonb,  ROT90,  "Soft", "Cannon Ball (Crazy Climber hardware)" , GAME_IMPERFECT_GRAPHICS )
+GAMEX(1985, cannonb,  0,        cannonb,  cannonb,  cannonb,  ROT90,  "Soft", "Cannon Ball (Crazy Climber hardware)" , GAME_IMPERFECT_GRAPHICS )
 GAME( 198?, ckongb  , ckong,    cclimber, ckongb,    ckongb,   ROT270, "bootleg", "Crazy Kong (Alternative levels)" )
 
 GAME( 1982, swimmer,  0,        swimmer,  swimmer,  0,        ROT0,   "Tehkan", "Swimmer (set 1)" )

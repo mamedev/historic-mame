@@ -388,6 +388,8 @@ static void sample_update_sound(void *param, stream_sample_t **inputs, stream_sa
 				else
 				{
 					chan->source = NULL;
+					if (length > 0)
+						memset(buffer, 0, length * sizeof(*buffer));
 					break;
 				}
 			}

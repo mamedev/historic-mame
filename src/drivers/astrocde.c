@@ -6,9 +6,8 @@ driver by Nicola Salmoria, Mike Coates, Frank Palazzolo
 
 TODO:
 	add rotate support
-	profpac intercept register - self test
 	profpac_vm - self test
-	look into NVRAM loading problems in robby and profpac
+	look into NVRAM problems in demndrgn
 	try 10-pin deluxe roms?
 	finish looking at noise gen bug
 	optimize sound code
@@ -187,6 +186,23 @@ static ADDRESS_MAP_START( robby_writemem, ADDRESS_SPACE_PROGRAM, 8 )
   	AM_RANGE(0xe800, 0xffff) AM_WRITE(MWA8_RAM)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( demndrgn_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK2)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_ROM)
+  	AM_RANGE(0xe000, 0xe7ff) AM_READ(demndrgn_nvram_r)
+	AM_RANGE(0xe800, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( demndrgn_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(wow_magicram_w)
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE(profpac_videoram_w)
+	AM_RANGE(0x8000, 0xdfff) AM_WRITE(MWA8_ROM)
+  	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(demndrgn_nvram_w)
+  	AM_RANGE(0xe800, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
+
 static ADDRESS_MAP_START( profpac_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
@@ -202,7 +218,6 @@ static ADDRESS_MAP_START( profpac_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8000, 0xdfff) AM_WRITE(MWA8_ROM)
   	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(profpac_nvram_w)
   	AM_RANGE(0xe800, 0xffff) AM_WRITE(MWA8_RAM)
-
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
@@ -212,6 +227,11 @@ static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x11, 0x11) AM_MIRROR(0xff00) AM_READ(input_port_1_r)
   	AM_RANGE(0x12, 0x12) AM_MIRROR(0xff00) AM_READ(input_port_2_r)
 	AM_RANGE(0x13, 0x13) AM_MIRROR(0xff00) AM_READ(input_port_3_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( demndrgn_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x08, 0x08) AM_MIRROR(0xff00) AM_READ(wow_intercept_r)
+	AM_RANGE(0x0e, 0x0e) AM_MIRROR(0xff00) AM_READ(wow_video_retrace_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( seawolf2_writeport, ADDRESS_SPACE_IO, 8 )
@@ -224,7 +244,9 @@ static ADDRESS_MAP_START( seawolf2_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0d, 0x0d) AM_MIRROR(0xff00) AM_WRITE(astrocde_interrupt_vector_w)
 	AM_RANGE(0x0e, 0x0e) AM_MIRROR(0xff00) AM_WRITE(astrocde_interrupt_enable_w)
 	AM_RANGE(0x0f, 0x0f) AM_MIRROR(0xff00) AM_WRITE(astrocde_interrupt_w)
+
 	AM_RANGE(0x19, 0x19) AM_MIRROR(0xff00) AM_WRITE(astrocde_magic_expand_color_w)
+
 	AM_RANGE(0x40, 0x40) AM_MIRROR(0xff00) AM_WRITE(seawolf2_sound_1_w) /* analog sound */
 	AM_RANGE(0x41, 0x41) AM_MIRROR(0xff00) AM_WRITE(seawolf2_sound_2_w) /* analog sound */
 	AM_RANGE(0x42, 0x43) AM_MIRROR(0xff00) AM_WRITE(seawolf2_lamps_w)	/* cabinet lamps */
@@ -240,8 +262,10 @@ static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0d, 0x0d) AM_MIRROR(0xff00) AM_WRITE(astrocde_interrupt_vector_w)
 	AM_RANGE(0x0e, 0x0e) AM_MIRROR(0xff00) AM_WRITE(astrocde_interrupt_enable_w)
 	AM_RANGE(0x0f, 0x0f) AM_MIRROR(0xff00) AM_WRITE(astrocde_interrupt_w)
+
 	AM_RANGE(0x10, 0x17) AM_MIRROR(0xff00) AM_WRITE(astrocade_sound1_w)
 	AM_SPACE(0x18, 0xff) AM_WRITE(astrocade_soundblock1_w)
+
 	AM_RANGE(0x19, 0x19) AM_MIRROR(0xff00) AM_WRITE(astrocde_magic_expand_color_w)
 
 	/* These two are not part of seawolf2 or ebases */
@@ -598,8 +622,37 @@ INPUT_PORTS_START( robby )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( demndrgn )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_PLAYER(2)
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+
+	PORT_START_TAG("IN2")
+	PORT_BIT( 0xff, 0x80, IPT_TRACKBALL_X ) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_RESET
+
+	PORT_START_TAG("IN3")
+	PORT_BIT( 0xff, 0x80, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_RESET
+
+INPUT_PORTS_END
+
 INPUT_PORTS_START( profpac )
-	PORT_START /* IN0 */
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
@@ -609,17 +662,17 @@ INPUT_PORTS_START( profpac )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2) //LA
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)//LB
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2) //LC
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2) /* Left A */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2) /* Left B */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2) /* Left C */
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) //RA
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) //RB
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) //RC
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) /* Right A */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) /* Right B */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) /* Right C */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START /* IN2 */
+	PORT_START_TAG("IN2")
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -629,7 +682,7 @@ INPUT_PORTS_START( profpac )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START /* Dip Switch */
+	PORT_START_TAG("DSW")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
@@ -717,7 +770,7 @@ static MACHINE_DRIVER_START( seawolf2 )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(seawolf2_samples_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
@@ -900,6 +953,31 @@ static MACHINE_DRIVER_START( robby )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( demndrgn )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
+	MDRV_CPU_PROGRAM_MAP(demndrgn_readmem,demndrgn_writemem)
+	MDRV_CPU_IO_MAP(demndrgn_readport,writeport)
+	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_NVRAM_HANDLER(robby_nvram)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 204)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 204-1)
+	MDRV_PALETTE_LENGTH(256)
+
+	MDRV_PALETTE_INIT(astrocde)
+	MDRV_VIDEO_START(profpac)
+	MDRV_VIDEO_UPDATE(profpac)
+MACHINE_DRIVER_END
+
 static MACHINE_DRIVER_START( profpac )
 
 	/* basic machine hardware */
@@ -1010,8 +1088,25 @@ ROM_START( robby )
 	ROM_LOAD( "rotox10.bin",  0xd000, 0x1000, CRC(e762cbda) SHA1(48c274a859963097a90f80c48366250301eddb5f) )
 ROM_END
 
+ROM_START( demndrgn )
+	ROM_REGION( 0x2a000, REGION_CPU1, 0 )
+	ROM_LOAD( "dd-x1.bin",     0x0000, 0x2000, CRC(9aeaf79e) SHA1(c70aa1a31bc085cca904d497c34e55d49fef49b7) )
+	ROM_LOAD( "dd-x2.bin",     0x2000, 0x2000, CRC(0c63b624) SHA1(3eaeb4e0820e9dda7233a13bb146acc44402addd) )
+	ROM_LOAD( "dd-x9.bin",     0xc000, 0x2000, CRC(3792d632) SHA1(da053df344f39a8f25a2c57fb1a908131c10f248) )
+	ROM_LOAD( "dd-x5.bin",     0x14000, 0x2000, CRC(e377e831) SHA1(f53e74b3138611f9385845d6bdeab891b5d15931) )
+	ROM_LOAD( "dd-x6.bin",     0x16000, 0x2000, CRC(0fcb46ad) SHA1(5611135f9e341bd394d6da7912167b05fff17a93) )
+	ROM_LOAD( "dd-x7.bin",     0x18000, 0x2000, CRC(0675e4fa) SHA1(59668e32271ff9bac0b4411cc0c541d2825ee145) )
+	ROM_LOAD( "dd-x10.bin",    0x1c000, 0x2000, CRC(4a22c4f9) SHA1(d86ca38727fcf1896ea64c3b6255e3230054b5d6) )
+	ROM_LOAD( "dd-x11.bin",    0x1e000, 0x2000, CRC(d3158845) SHA1(510bb8d459625263370ee68f6f63d6d7abc6d26d) )
+	ROM_LOAD( "dd-x12.bin",    0x20000, 0x2000, CRC(592c1d9a) SHA1(c884aabf4cff9f9b974e497fc3a1f8cdd0753680) )
+	ROM_LOAD( "dd-x13.bin",    0x22000, 0x2000, CRC(492d7b7e) SHA1(a9a89a61179b154a8afa429e11e984609f787d74) )
+	ROM_LOAD( "dd-x14.bin",    0x24000, 0x2000, CRC(7843c818) SHA1(4756bf7dd07071b86645908d61891edcdffdde83) )
+	ROM_LOAD( "dd-x15.bin",    0x26000, 0x2000, CRC(6e6bc1b6) SHA1(b8c5ed8df6a709a6502dac47be88271ad22b9203) )
+	ROM_LOAD( "dd-x16.bin",    0x28000, 0x2000, CRC(7a4a343b) SHA1(4eb82ae38ce1b14778fb29d8549c61a46bc3ee66) )
+ROM_END
+
 ROM_START( profpac )
-	ROM_REGION( 0x20000, REGION_CPU1, 0 )
+	ROM_REGION( 0x2c000, REGION_CPU1, 0 )
 	ROM_LOAD( "pps1",         0x0000, 0x2000, CRC(a244a62d) SHA1(f7a9606ce6d66c3e6d210cc25572904aeab2b6c8) )
 	ROM_LOAD( "pps2",         0x2000, 0x2000, CRC(8a9a6653) SHA1(b730b24088dcfddbe954670ff9212b7383c923f6) )
 	ROM_LOAD( "pps3",         0x8000, 0x2000, CRC(15717fd8) SHA1(ffbb156f417d20478117b39de28a15680993b528) )
@@ -1021,6 +1116,7 @@ ROM_START( profpac )
 	ROM_LOAD( "pps6",         0x16000, 0x2000, CRC(5a2186c3) SHA1(f706cef6518b7d839377aa8a7c75fdeed4985c57) )
 	ROM_LOAD( "pps7",         0x18000, 0x2000, CRC(f9c26aba) SHA1(201b930cca9669114ffc97978cade69587e34a0f) )
 	ROM_LOAD( "pps8",         0x1a000, 0x2000, CRC(4d201e41) SHA1(786b30cd7a7db55bdde05909d7a1a7f122b6e546) )
+	/* the rest of the sockets are empty */
 
 	/* Each of these can get mapped from 0x4000-0x7fff */
 	ROM_REGION( 0x38000, REGION_USER1, 0 )
@@ -1039,7 +1135,6 @@ ROM_START( profpac )
 	ROM_LOAD( "ppq13",        0x30000, 0x4000, CRC(87165d4f) SHA1(d47655300c8747698a46f30deb65fe762073e869) )
 	ROM_LOAD( "ppq14",        0x34000, 0x4000, CRC(ecb861de) SHA1(73d28a79b76795d3016dd608f9ab3d255f40e477) )
 ROM_END
-
 
 
 static DRIVER_INIT( seawolf2 )
@@ -1083,17 +1178,40 @@ static DRIVER_INIT( robby )
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x50, 0x57, 0, 0xff00, astrocade_sound2_w);
 	memory_install_write8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x58, 0xff, 0, 0, astrocade_soundblock2_w);
 }
+static DRIVER_INIT( demndrgn )
+{
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x10, 0x10, 0, 0xff00, input_port_0_r );
+
+	/* 0x00 is the middle value, range is up to 0x7f, and down to 0x80 */
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x11, 0x11, 0, 0xff00, demndrgn_move_r );
+
+	memory_install_read8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x14, 0xff, 0, 0, demndrgn_io_r );
+
+	/* analog joystick, converted to digital in software */
+	/* 0x80 is the middle, values of > 0xd8 and < 0x28 are the thresholds */
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x1c, 0x1c, 0, 0xff00, demndrgn_fire_x_r );
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x1d, 0x1d, 0, 0xff00, demndrgn_fire_y_r );
+
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x97, 0x97, 0, 0xff00, demndrgn_sound_w );
+
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xbf, 0xbf, 0, 0xff00, profpac_page_select_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xc3, 0xc3, 0, 0xff00, profpac_intercept_r );
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xc0, 0xc5, 0, 0xff00, profpac_screenram_ctrl_w );
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xf3, 0xf3, 0, 0xff00, profpac_banksw_w);
+}
 static DRIVER_INIT( profpac )
 {
 	memory_install_read8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x14, 0xff, 0, 0, profpac_io_1_r);
 	memory_install_read8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x15, 0xff, 0, 0, profpac_io_2_r);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x50, 0x57, 0, 0xff00, astrocade_sound2_w);
 	memory_install_write8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x58, 0xff, 0, 0, astrocade_soundblock2_w);
+
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xbf, 0xbf, 0, 0xff00, profpac_page_select_w);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xc3, 0xc3, 0, 0xff00, profpac_intercept_r );
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xc0, 0xc5, 0, 0xff00, profpac_screenram_ctrl_w );
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xf3, 0xf3, 0, 0xff00, profpac_banksw_w);
 }
+
 
 /* GAME(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME) */
 GAMEX(1978, seawolf2, 0,    seawolf2, seawolf2, seawolf2, ROT0,   "Midway", "Sea Wolf II", GAME_IMPERFECT_SOUND )
@@ -1103,4 +1221,5 @@ GAME( 1980, wow,      0,    wow,      wow,      wow,      ROT0,   "Midway", "Wiz
 GAME( 1981, gorf,     0,    gorf,     gorf,     gorf,     ROT270, "Midway", "Gorf" )
 GAME( 1981, gorfpgm1, gorf, gorf,     gorf,     gorf,     ROT270, "Midway", "Gorf (Program 1)" )
 GAME( 1981, robby,    0,    robby,    robby,    robby,    ROT0,   "Bally Midway", "Robby Roto" )
+GAMEX(1982, demndrgn, 0,    demndrgn, demndrgn, demndrgn, ROT0,   "Bally Midway", "Demons and Dragons (prototype)", GAME_NO_SOUND )
 GAME( 1983, profpac,  0,    profpac,  profpac,  profpac,  ROT0,   "Bally Midway", "Professor PacMan" )

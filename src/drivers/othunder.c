@@ -452,20 +452,20 @@ static WRITE8_HANDLER( othunder_TC0310FAM_w )
 	   because we are using the AY-3-8910 emulation. */
 	volr = (pan[0] + pan[2]) * 100 / (2 * 0x1f);
 	voll = (pan[1] + pan[3]) * 100 / (2 * 0x1f);
-	flt_volume_set_volume(0, voll);
-	flt_volume_set_volume(1, volr);
+	flt_volume_set_volume(0, voll / 100.0);
+	flt_volume_set_volume(1, volr / 100.0);
 
 	/* CH1 */
 	volr = pan[0] * 100 / 0x1f;
 	voll = pan[1] * 100 / 0x1f;
-	flt_volume_set_volume(2, voll);
-	flt_volume_set_volume(3, volr);
+	flt_volume_set_volume(2, voll / 100.0);
+	flt_volume_set_volume(3, volr / 100.0);
 
 	/* CH2 */
 	volr = pan[2] * 100 / 0x1f;
 	voll = pan[3] * 100 / 0x1f;
-	flt_volume_set_volume(4, voll);
-	flt_volume_set_volume(5, volr);
+	flt_volume_set_volume(4, voll / 100.0);
+	flt_volume_set_volume(5, volr / 100.0);
 }
 
 
@@ -743,10 +743,6 @@ static MACHINE_DRIVER_START( othunder )
 	MDRV_SOUND_ADD_TAG("2610.2l", FILTER_VOLUME, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 	MDRV_SOUND_ADD_TAG("2610.2r", FILTER_VOLUME, 0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
-	MDRV_SOUND_ADD_TAG("2610.3l", FILTER_VOLUME, 0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
-	MDRV_SOUND_ADD_TAG("2610.3r", FILTER_VOLUME, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 

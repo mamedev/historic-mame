@@ -3,22 +3,21 @@
  *
  */
 
-#if !defined( AM53CF96_H )
-#define AM53CF96_H ( 1 )
+#ifndef _AM53CF96_H_
+#define _AM53CF96_H_
 
-#define AM53CF96_DEVICE_HDD	(0)
-#define AM53CF96_DEVICE_CDROM	(1)
+#include "scsidev.h"
 
 struct AM53CF96interface
 {
-	int device;			/* device type */
+	SCSIConfigTable *scsidevs;	/* SCSI devices */
 	void (*irq_callback)(void);	/* irq callback */
 };
 
 extern void am53cf96_init( struct AM53CF96interface *interface );
 extern void am53cf96_read_data(int bytes, data8_t *pData);
 void am53cf96_write_data(int bytes, data8_t *pData);
-void *am53cf96_get_device(void);
+void *am53cf96_get_device(int id);
 extern READ32_HANDLER( am53cf96_r );
 extern WRITE32_HANDLER( am53cf96_w );
 

@@ -313,60 +313,64 @@ static data16_t bonkadv_mcu_4_1C[] = { 0x0000,0x02C0,0x0000,0x0100,0x0400,0x0100
 	TOYBOX MCU data for Blood Warrior
 
 ***************************************************************************/
-#if 0
 
-// unknown data: 1 per warrior
-static data16_t bloodwar_mcu_4_01[] = {};
-static data16_t bloodwar_mcu_4_02[] = {};
-static data16_t bloodwar_mcu_4_03[] = {};
-static data16_t bloodwar_mcu_4_04[] = {};
-static data16_t bloodwar_mcu_4_05[] = {};
-static data16_t bloodwar_mcu_4_06[] = {};
-static data16_t bloodwar_mcu_4_07[] = {};
-static data16_t bloodwar_mcu_4_08[] = {};
-static data16_t bloodwar_mcu_4_09[] = {};
+// --- unknown data ---
+static data16_t bloodwar_mcu_4_01[] = {0x0000}; // Warrior 1
+static data16_t bloodwar_mcu_4_02[] = {0x0000}; // Warrior 2
+static data16_t bloodwar_mcu_4_03[] = {0x0000}; // Warrior 3
+static data16_t bloodwar_mcu_4_04[] = {0x0000}; // Warrior 4
+static data16_t bloodwar_mcu_4_05[] = {0x0000}; // Warrior 5
+static data16_t bloodwar_mcu_4_06[] = {0x0000}; // Warrior 6
+static data16_t bloodwar_mcu_4_07[] = {0x0000}; // Warrior 7
+static data16_t bloodwar_mcu_4_08[] = {0x0000}; // Warrior 8
+static data16_t bloodwar_mcu_4_09[] = {0x0000}; // Warrior 9
 
-// palette data: 1 per warrior and player
-static data16_t bloodwar_mcu_4_0a[] = {};
-static data16_t bloodwar_mcu_4_0b[] = {};
-static data16_t bloodwar_mcu_4_0c[] = {};
-static data16_t bloodwar_mcu_4_0d[] = {};
-static data16_t bloodwar_mcu_4_0e[] = {};
-static data16_t bloodwar_mcu_4_0f[] = {};
-static data16_t bloodwar_mcu_4_10[] = {};
-static data16_t bloodwar_mcu_4_11[] = {};
-static data16_t bloodwar_mcu_4_12[] = {};
-static data16_t bloodwar_mcu_4_13[] = {};
-static data16_t bloodwar_mcu_4_14[] = {};
-static data16_t bloodwar_mcu_4_15[] = {};
-static data16_t bloodwar_mcu_4_16[] = {};
-static data16_t bloodwar_mcu_4_17[] = {};
-static data16_t bloodwar_mcu_4_18[] = {};
-static data16_t bloodwar_mcu_4_19[] = {};
-static data16_t bloodwar_mcu_4_1a[] = {};
-static data16_t bloodwar_mcu_4_1b[] = {};
 
-// tilemap data: 1 per warrior
-static data16_t bloodwar_mcu_4_1c[] = {};
-static data16_t bloodwar_mcu_4_1d[] = {};
-static data16_t bloodwar_mcu_4_1e[] = {};
-static data16_t bloodwar_mcu_4_1f[] = {};
-static data16_t bloodwar_mcu_4_20[] = {};
-static data16_t bloodwar_mcu_4_21[] = {};
-static data16_t bloodwar_mcu_4_22[] = {};
-static data16_t bloodwar_mcu_4_23[] = {};
-static data16_t bloodwar_mcu_4_24[] = {};
+// --- palette data ---
+//	number of palettes (>=1)
+//	palette data follows (each palette is 0x200 bytes long)
+//	a negative word will end the palette
+static data16_t bloodwar_mcu_4_0a[] = {0x0001,0x8000}; // Warrior 1 Player 1
+static data16_t bloodwar_mcu_4_0b[] = {0x0001,0x8000}; // Warrior 1 Player 2
+static data16_t bloodwar_mcu_4_0c[] = {0x0001,0x8000}; // Warrior 5 Player 1
+static data16_t bloodwar_mcu_4_0d[] = {0x0001,0x8000}; // Warrior 5 Player 2
+static data16_t bloodwar_mcu_4_0e[] = {0x0001,0x8000}; // Warrior 4 Player 2
+static data16_t bloodwar_mcu_4_0f[] = {0x0001,0x8000}; // Warrior 4 Player 1
+static data16_t bloodwar_mcu_4_10[] = {0x0001,0x8000}; // Warrior 6 Player 1
+static data16_t bloodwar_mcu_4_11[] = {0x0001,0x8000}; // Warrior 6 Player 2
+static data16_t bloodwar_mcu_4_12[] = {0x0001,0x8000}; // Warrior 9 Player 1
+static data16_t bloodwar_mcu_4_13[] = {0x0001,0x8000}; // Warrior 9 Player 2
+static data16_t bloodwar_mcu_4_14[] = {0x0001,0x8000}; // Warrior 7 Player 1
+static data16_t bloodwar_mcu_4_15[] = {0x0001,0x8000}; // Warrior 7 Player 2
+static data16_t bloodwar_mcu_4_16[] = {0x0001,0x8000}; // Warrior 8 Player 1
+static data16_t bloodwar_mcu_4_17[] = {0x0001,0x8000}; // Warrior 8 Player 2
+static data16_t bloodwar_mcu_4_18[] = {0x0001,0x8000}; // Warrior 2 Player 2
+static data16_t bloodwar_mcu_4_19[] = {0x0001,0x8000}; // Warrior 2 Player 1
+static data16_t bloodwar_mcu_4_1a[] = {0x0001,0x8000}; // Warrior 3 Player 1
+static data16_t bloodwar_mcu_4_1b[] = {0x0001,0x8000}; // Warrior 3 Player 2
 
-// unknown long: 1 per warrior
-static data16_t bloodwar_mcu_4_25[] = {};
-static data16_t bloodwar_mcu_4_26[] = {};
-static data16_t bloodwar_mcu_4_27[] = {};
-static data16_t bloodwar_mcu_4_28[] = {};
-static data16_t bloodwar_mcu_4_29[] = {};
-static data16_t bloodwar_mcu_4_2a[] = {};
-static data16_t bloodwar_mcu_4_2b[] = {};
-static data16_t bloodwar_mcu_4_2c[] = {};
-static data16_t bloodwar_mcu_4_2d[] = {};
 
-#endif
+// --- tilemap data ---
+//	tile data (ff means no tiles) followed by routine index
+static data16_t bloodwar_mcu_4_1c[] = {0xff00}; // Warrior 8
+static data16_t bloodwar_mcu_4_1d[] = {0xff00}; // Warrior 2
+static data16_t bloodwar_mcu_4_1e[] = {0xff00}; // Warrior 3
+static data16_t bloodwar_mcu_4_1f[] = {0xff00}; // Warrior 5
+static data16_t bloodwar_mcu_4_20[] = {0xff00}; // Warrior 4
+static data16_t bloodwar_mcu_4_21[] = {0xff00}; // Warrior 6
+static data16_t bloodwar_mcu_4_22[] = {0xff00}; // Warrior 1
+static data16_t bloodwar_mcu_4_23[] = {0xff00}; // Warrior 9
+static data16_t bloodwar_mcu_4_24[] = {0xff00}; // Warrior 7
+
+
+// --- fighter data: pointers to ROM data ---
+static data16_t bloodwar_mcu_4_25[] = {0x0000,0x0000}; // Warrior 1
+static data16_t bloodwar_mcu_4_26[] = {0x0000,0x0000}; // Warrior 2
+static data16_t bloodwar_mcu_4_27[] = {0x0000,0x0000}; // Warrior 3
+static data16_t bloodwar_mcu_4_28[] = {0x0000,0x0000}; // Warrior 4
+static data16_t bloodwar_mcu_4_29[] = {0x0000,0x0000}; // Warrior 5
+static data16_t bloodwar_mcu_4_2a[] = {0x0000,0x0000}; // Warrior 6
+static data16_t bloodwar_mcu_4_2b[] = {0x0000,0x0000}; // Warrior 7
+static data16_t bloodwar_mcu_4_2c[] = {0x0000,0x0000}; // Warrior 8
+static data16_t bloodwar_mcu_4_2d[] = {0x0000,0x0000}; // Warrior 9
 

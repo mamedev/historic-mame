@@ -783,7 +783,7 @@ static ADDRESS_MAP_START( drivedge_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x08e000, 0x08e003) AM_READWRITE(input_port_1_msw_r, MWA32_NOP)
 	AM_RANGE(0x100000, 0x10000f) AM_WRITE(drivedge_zbuf_control_w) AM_BASE(&drivedge_zbuf_control)
 	AM_RANGE(0x180000, 0x180003) AM_WRITE(drivedge_color0_w)
-	AM_RANGE(0x1a0000, 0x1bffff) AM_READWRITE(MRA32_RAM, itech020_paletteram_w) AM_BASE(&paletteram32)
+	AM_RANGE(0x1a0000, 0x1bffff) AM_READWRITE(MRA32_RAM, drivedge_paletteram_w) AM_BASE(&paletteram32)
 	AM_RANGE(0x1c0000, 0x1c0003) AM_WRITENOP
 	AM_RANGE(0x1e0000, 0x1e0113) AM_READWRITE(itech020_video_r, itech020_video_w) AM_BASE((data32_t **)&itech32_video)
 	AM_RANGE(0x1e4000, 0x1e4003) AM_WRITE(tms_reset_assert_w)

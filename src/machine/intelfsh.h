@@ -9,7 +9,16 @@
 
 #define FLASH_CHIPS_MAX	(8)	// 8 chips
 
-void intelflash_init(int chip);
+#define FLASH_INTEL_28F016S5 ( 0 )
+#define FLASH_SHARP_LH28F400 ( 1 )
+#define FLASH_FUJITSU_29F016A ( 2 ) /* sys 573 2Mx8 */
+#define FLASH_INTEL_E28F008SA ( 3 ) /* seibu spi 1Mx8 */
+#define FLASH_INTEL_TE28F160 ( 4 ) /* taito gnet 1Mx16 */
+
+void intelflash_init(int chip, int type, void *data);
+
+data32_t intelflash_read( int chip, data32_t address );
+void intelflash_write( int chip, data32_t address, data32_t value );
 
 void nvram_handler_intelflash_0(mame_file *file,int read_or_write);
 void nvram_handler_intelflash_1(mame_file *file,int read_or_write);
@@ -20,17 +29,13 @@ void nvram_handler_intelflash_5(mame_file *file,int read_or_write);
 void nvram_handler_intelflash_6(mame_file *file,int read_or_write);
 void nvram_handler_intelflash_7(mame_file *file,int read_or_write);
 
-void intelflash_set_ids_0(int device, int maker);
-void intelflash_set_ids_1(int device, int maker);
-void intelflash_set_ids_2(int device, int maker);
-void intelflash_set_ids_3(int device, int maker);
-void intelflash_set_ids_4(int device, int maker);
-void intelflash_set_ids_5(int device, int maker);
-void intelflash_set_ids_6(int device, int maker);
-void intelflash_set_ids_7(int device, int maker);
-data8_t intelflash_read_byte(int chip, data32_t address);
-void intelflash_write_byte(int chip, data32_t address, data8_t value);
-data16_t intelflash_read_word(int chip, data32_t address);
-void intelflash_write_word(int chip, data32_t address, data16_t data);
+void nvram_handler_intelflash_16le_0(mame_file *file,int read_or_write);
+void nvram_handler_intelflash_16le_1(mame_file *file,int read_or_write);
+void nvram_handler_intelflash_16le_2(mame_file *file,int read_or_write);
+void nvram_handler_intelflash_16le_3(mame_file *file,int read_or_write);
+void nvram_handler_intelflash_16le_4(mame_file *file,int read_or_write);
+void nvram_handler_intelflash_16le_5(mame_file *file,int read_or_write);
+void nvram_handler_intelflash_16le_6(mame_file *file,int read_or_write);
+void nvram_handler_intelflash_16le_7(mame_file *file,int read_or_write);
 
 #endif

@@ -55,16 +55,6 @@
 #define LOG(x)
 #endif
 
-#ifdef RUNTIME_LOADER
-struct cpu_interface
-m65ce02_interface=
-CPU0(M65CE02,  m65ce02,  1,  0,1.00,M65CE02_INT_NONE,  M65CE02_INT_IRQ,M65CE02_INT_NMI,8, 16,     0,16,LE,1, 3);
-
-extern void m65ce02_runtime_loader_init(void)
-{
-	cpuintf[CPU_M65CE02]=m65ce02_interface;
-}
-#endif
 
 /* Layout of the registers in the debugger */
 static UINT8 m65ce02_reg_layout[] = {

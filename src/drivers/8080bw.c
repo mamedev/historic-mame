@@ -617,7 +617,7 @@ static MACHINE_DRIVER_START( invad2ct )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(invad2ct_samples_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
@@ -1561,7 +1561,7 @@ INPUT_PORTS_START( schaser )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START_TAG("IN0")
+	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_4WAY
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_4WAY
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_4WAY
@@ -1598,6 +1598,15 @@ INPUT_PORTS_START( schaser )
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+
+	PORT_START_TAG("4")
+	PORT_ADJUSTER( 70, "VR1 - Music Volume" )
+
+	PORT_START_TAG("5")
+	PORT_ADJUSTER( 90, "VR2 - Explosion/Effect Volume" )
+
+	PORT_START_TAG("6")
+	PORT_ADJUSTER( 70, "VR3 - Dot Volume" )
 INPUT_PORTS_END
 
 static MACHINE_DRIVER_START( schaser )
@@ -1606,6 +1615,7 @@ static MACHINE_DRIVER_START( schaser )
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_REPLACE("main",8080,1996800)        /* 19.968MHz / 10 */
 	MDRV_CPU_PROGRAM_MAP(schaser_readmem,schaser_writemem)
+	MDRV_WATCHDOG_VBLANK_INIT(255)
 	MDRV_MACHINE_INIT(schaser)
 
 	/* video hardware */
@@ -1619,14 +1629,12 @@ static MACHINE_DRIVER_START( schaser )
 
 	MDRV_SOUND_ADD(SN76477, 0)
 	MDRV_SOUND_CONFIG(schaser_sn76477_interface)
+	// This will be routed to the discrete system when that feature is working.
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 
-	MDRV_SOUND_ADD(DAC, 0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(schaser_custom_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(schaser_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1830,21 +1838,20 @@ INPUT_PORTS_START( clowns1 )
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_2C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x04, "3" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x0c, "5" )
 	PORT_DIPNAME( 0x10, 0x00, "Balloon Resets" )
 	PORT_DIPSETTING(    0x00, "Each row" )
 	PORT_DIPSETTING(    0x10, "All rows" )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "3000" )
 	PORT_DIPSETTING(    0x20, "4000" )
-	PORT_DIPNAME( 0x40, 0x00, "Lives? (Possible ROM bug)"  )
-	PORT_DIPSETTING(    0x00, "2 Lives" )
-	PORT_DIPSETTING(    0x40, "Input Test ?" )
+	PORT_DIPNAME( 0x40, 0x00, "Input Test"  )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 INPUT_PORTS_END
 
@@ -1855,13 +1862,18 @@ static MACHINE_DRIVER_START( clowns )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(c8080bw_readport,writeport_1_2)
 	MDRV_MACHINE_INIT(clowns)
+	MDRV_WATCHDOG_VBLANK_INIT(255)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(circus_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
+
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(clowns_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 
@@ -2125,7 +2137,7 @@ static MACHINE_DRIVER_START( polaris )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
 	MDRV_SOUND_CONFIG(polaris_discrete_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
@@ -2470,7 +2482,7 @@ static MACHINE_DRIVER_START( seawolf )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(seawolf_samples_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
@@ -3861,7 +3873,7 @@ ROM_END
 ROM_START( tornbase )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "tb.h",         0x0000, 0x0800, CRC(653f4797) SHA1(feb4c802aa3e0c2a66823cd032496cca5742c883) )
-	ROM_LOAD( "tb.g",         0x0800, 0x0800, BAD_DUMP CRC(33468006) SHA1(cc54da39ef14df6fa5e4e10a4798158a9a7f867e)  )	/* this ROM fails the test */
+	ROM_LOAD( "tb.g",         0x0800, 0x0800, CRC(b63dcdb3) SHA1(bdaa0985bcb5257204ee10faa11a4e02a38b9ac5) )
 	ROM_LOAD( "tb.f",         0x1000, 0x0800, CRC(215e070c) SHA1(425915b37e5315f9216707de0850290145f69a30) )
 ROM_END
 

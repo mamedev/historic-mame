@@ -6,7 +6,6 @@
 #include "driver.h"
 #include "qix.h"
 #include "sound/discrete.h"
-#include "sound/sn76477.h"
 
 /* Discrete Sound Input Nodes */
 #define QIX_DAC_DATA		NODE_01

@@ -825,6 +825,9 @@ static int texture_coord_shift = 16;
 
 static UINT32 viewport_priority;
 
+#define ZBUFFER_SCALE		16777216.0
+#define ZDIVIDE_SHIFT		16
+
 /* TODO: make the render functions with macros instead of copy-pasting */
 
 static void draw_triangle_tex1555(VERTEX v1, VERTEX v2, VERTEX v3)
@@ -833,22 +836,19 @@ static void draw_triangle_tex1555(VERTEX v1, VERTEX v2, VERTEX v3)
 	struct poly_vertex vert[3];
 	const struct poly_scanline_data *scans;
 
-	/* trivial clipping */
-	if(v1.x < clip3d.min_x && v2.x < clip3d.min_x && v3.x < clip3d.min_x)
-		return;
-	if(v1.x > clip3d.max_x && v2.x > clip3d.max_x && v3.x > clip3d.max_x)
-		return;
-	if(v1.y < clip3d.min_y && v2.y < clip3d.min_y && v3.y < clip3d.min_y)
-		return;
-	if(v1.y > clip3d.max_y && v2.y > clip3d.max_y && v3.y > clip3d.max_y)
-		return;
+	v1.z = (1.0 / v1.z) * ZBUFFER_SCALE;
+	v2.z = (1.0 / v2.z) * ZBUFFER_SCALE;
+	v3.z = (1.0 / v3.z) * ZBUFFER_SCALE;
+	v1.u = (UINT32)((UINT64)(v1.u * v1.z) >> ZDIVIDE_SHIFT);
+	v1.v = (UINT32)((UINT64)(v1.v * v1.z) >> ZDIVIDE_SHIFT);
+	v2.u = (UINT32)((UINT64)(v2.u * v2.z) >> ZDIVIDE_SHIFT);
+	v2.v = (UINT32)((UINT64)(v2.v * v2.z) >> ZDIVIDE_SHIFT);
+	v3.u = (UINT32)((UINT64)(v3.u * v3.z) >> ZDIVIDE_SHIFT);
+	v3.v = (UINT32)((UINT64)(v3.v * v3.z) >> ZDIVIDE_SHIFT);
 
-	vert[0].x = v1.x;	vert[0].y = v1.y;	vert[0].p[0] = (UINT32)v1.z | viewport_priority;	vert[0].p[1] = v1.u;	vert[0].p[2] = v1.v;
-	vert[1].x = v2.x;	vert[1].y = v2.y;	vert[1].p[0] = (UINT32)v2.z | viewport_priority;	vert[1].p[1] = v2.u;	vert[1].p[2] = v2.v;
-	vert[2].x = v3.x;	vert[2].y = v3.y;	vert[2].p[0] = (UINT32)v3.z | viewport_priority;	vert[2].p[1] = v3.u;	vert[2].p[2] = v3.v;
-
-	if(v1.z <= 0 || v2.z <= 0 || v3.z <= 0)
-		return;
+	vert[0].x = v1.x;	vert[0].y = v1.y;	vert[0].p[0] = (UINT32)v1.z;	vert[0].p[1] = v1.u;	vert[0].p[2] = v1.v;
+	vert[1].x = v2.x;	vert[1].y = v2.y;	vert[1].p[0] = (UINT32)v2.z;	vert[1].p[1] = v2.u;	vert[1].p[2] = v2.v;
+	vert[2].x = v3.x;	vert[2].y = v3.y;	vert[2].p[0] = (UINT32)v3.z;	vert[2].p[1] = v3.u;	vert[2].p[2] = v3.v;
 
 	scans = setup_triangle_3(&vert[0], &vert[1], &vert[2], &clip3d);
 
@@ -861,6 +861,7 @@ static void draw_triangle_tex1555(VERTEX v1, VERTEX v2, VERTEX v3)
 		for(y = scans->sy; y <= scans->ey; y++) {
 			int x1, x2;
 			INT64 u, v, z;
+			INT64 u2, v2;
 			const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
 			UINT16 *p = (UINT16*)bitmap3d->line[y];
 			UINT32 *d = (UINT32*)zbuffer->line[y];
@@ -878,18 +879,28 @@ static void draw_triangle_tex1555(VERTEX v1, VERTEX v2, VERTEX v3)
 
 			if(x1 < clip3d.max_x && x2 > clip3d.min_x) {
 				for(x = x1; x <= x2; x++) {
-					//UINT16 pix;
+//					UINT16 pix;
 					int iu, iv;
 
 					UINT32 iz = z >> 16;
 
+					if (iz) {
+						u2 = (u << ZDIVIDE_SHIFT) / iz;
+						v2 = (v << ZDIVIDE_SHIFT) / iz;
+					} else {
+						u2 = 0;
+						v2 = 0;
+					}
+
+					iz |= viewport_priority;
+
 					if(iz > d[x]) {
-						iu = (u >> texture_coord_shift) & texture_width_mask;
-						iv = (v >> texture_coord_shift) & texture_height_mask;
+						iu = (u2 >> texture_coord_shift) & texture_width_mask;
+						iv = (v2 >> texture_coord_shift) & texture_height_mask;
 #if BILINEAR
 						{
-							int iu2 = ((u >> texture_coord_shift) + 1) & texture_width_mask;
-							int iv2 = ((v >> texture_coord_shift) + 1) & texture_height_mask;
+							int iu2 = ((u2 >> texture_coord_shift) + 1) & texture_width_mask;
+							int iv2 = ((v2 >> texture_coord_shift) + 1) & texture_height_mask;
 							UINT32 sr[4], sg[4], sb[4];
 							UINT32 ur[2], ug[2], ub[2];
 							UINT32 fr, fg, fb;
@@ -897,8 +908,8 @@ static void draw_triangle_tex1555(VERTEX v1, VERTEX v2, VERTEX v3)
 							UINT16 pix1 = texture_ram[texture_page][(texture_y+iv) * 2048 + (texture_x+iu2)];
 							UINT16 pix2 = texture_ram[texture_page][(texture_y+iv2) * 2048 + (texture_x+iu)];
 							UINT16 pix3 = texture_ram[texture_page][(texture_y+iv2) * 2048 + (texture_x+iu2)];
-							int u_sub1 = (u >> (texture_coord_shift-16)) & 0xffff;
-							int v_sub1 = (v >> (texture_coord_shift-16)) & 0xffff;
+							int u_sub1 = (u2 >> (texture_coord_shift-16)) & 0xffff;
+							int v_sub1 = (v2 >> (texture_coord_shift-16)) & 0xffff;
 							int u_sub0 = 0xffff - u_sub1;
 							int v_sub0 = 0xffff - v_sub1;
 							sr[0] = (pix0 & 0x7c00);
@@ -949,23 +960,19 @@ static void draw_triangle_tex4444(VERTEX v1, VERTEX v2, VERTEX v3)
 	struct poly_vertex vert[3];
 	const struct poly_scanline_data *scans;
 
-	/* trivial clipping */
-	if(v1.x < clip3d.min_x && v2.x < clip3d.min_x && v3.x < clip3d.min_x)
-		return;
-	if(v1.x > clip3d.max_x && v2.x > clip3d.max_x && v3.x > clip3d.max_x)
-		return;
-	if(v1.y < clip3d.min_y && v2.y < clip3d.min_y && v3.y < clip3d.min_y)
-		return;
-	if(v1.y > clip3d.max_y && v2.y > clip3d.max_y && v3.y > clip3d.max_y)
-		return;
+	v1.z = (1.0 / v1.z) * ZBUFFER_SCALE;
+	v2.z = (1.0 / v2.z) * ZBUFFER_SCALE;
+	v3.z = (1.0 / v3.z) * ZBUFFER_SCALE;
+	v1.u = (UINT32)((UINT64)(v1.u * v1.z) >> ZDIVIDE_SHIFT);
+	v1.v = (UINT32)((UINT64)(v1.v * v1.z) >> ZDIVIDE_SHIFT);
+	v2.u = (UINT32)((UINT64)(v2.u * v2.z) >> ZDIVIDE_SHIFT);
+	v2.v = (UINT32)((UINT64)(v2.v * v2.z) >> ZDIVIDE_SHIFT);
+	v3.u = (UINT32)((UINT64)(v3.u * v3.z) >> ZDIVIDE_SHIFT);
+	v3.v = (UINT32)((UINT64)(v3.v * v3.z) >> ZDIVIDE_SHIFT);
 
-	vert[0].x = v1.x;	vert[0].y = v1.y;	vert[0].p[0] = (UINT32)v1.z | viewport_priority;	vert[0].p[1] = v1.u;	vert[0].p[2] = v1.v;
-	vert[1].x = v2.x;	vert[1].y = v2.y;	vert[1].p[0] = (UINT32)v2.z | viewport_priority;	vert[1].p[1] = v2.u;	vert[1].p[2] = v2.v;
-	vert[2].x = v3.x;	vert[2].y = v3.y;	vert[2].p[0] = (UINT32)v3.z | viewport_priority;	vert[2].p[1] = v3.u;	vert[2].p[2] = v3.v;
-
-	if(v1.z <= 0 || v2.z <= 0 || v3.z <= 0)
-		return;
-
+	vert[0].x = v1.x;	vert[0].y = v1.y;	vert[0].p[0] = (UINT32)v1.z;	vert[0].p[1] = v1.u;	vert[0].p[2] = v1.v;
+	vert[1].x = v2.x;	vert[1].y = v2.y;	vert[1].p[0] = (UINT32)v2.z;	vert[1].p[1] = v2.u;	vert[1].p[2] = v2.v;
+	vert[2].x = v3.x;	vert[2].y = v3.y;	vert[2].p[0] = (UINT32)v3.z;	vert[2].p[1] = v3.u;	vert[2].p[2] = v3.v;
 	scans = setup_triangle_3(&vert[0], &vert[1], &vert[2], &clip3d);
 
 	if(scans)
@@ -977,6 +984,7 @@ static void draw_triangle_tex4444(VERTEX v1, VERTEX v2, VERTEX v3)
 		for(y = scans->sy; y <= scans->ey; y++) {
 			int x1, x2;
 			INT64 u, v, z;
+			INT64 u2, v2;
 			const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
 			UINT16 *p = (UINT16*)bitmap3d->line[y];
 			UINT32 *d = (UINT32*)zbuffer->line[y];
@@ -994,19 +1002,29 @@ static void draw_triangle_tex4444(VERTEX v1, VERTEX v2, VERTEX v3)
 
 			if(x1 < clip3d.max_x && x2 > clip3d.min_x) {
 				for(x = x1; x <= x2; x++) {
-					//UINT16 pix;
-					//UINT16 r,g,b;
+//					UINT16 pix;
+//					UINT16 r,g,b;
 					int iu, iv;
 
 					UINT32 iz = z >> 16;
 
+					if (iz) {
+						u2 = (u << ZDIVIDE_SHIFT) / iz;
+						v2 = (v << ZDIVIDE_SHIFT) / iz;
+					} else {
+						u2 = 0;
+						v2 = 0;
+					}
+
+					iz |= viewport_priority;
+
 					if(iz > d[x]) {
-						iu = (u >> texture_coord_shift) & texture_width_mask;
-						iv = (v >> texture_coord_shift) & texture_height_mask;
+						iu = (u2 >> texture_coord_shift) & texture_width_mask;
+						iv = (v2 >> texture_coord_shift) & texture_height_mask;
 #if BILINEAR
 						{
-							int iu2 = ((u >> texture_coord_shift) + 1) & texture_width_mask;
-							int iv2 = ((v >> texture_coord_shift) + 1) & texture_height_mask;
+							int iu2 = ((u2 >> texture_coord_shift) + 1) & texture_width_mask;
+							int iv2 = ((v2 >> texture_coord_shift) + 1) & texture_height_mask;
 							UINT32 sr[4], sg[4], sb[4];
 							UINT32 ur[2], ug[2], ub[2];
 							UINT32 fr, fg, fb;
@@ -1014,8 +1032,8 @@ static void draw_triangle_tex4444(VERTEX v1, VERTEX v2, VERTEX v3)
 							UINT16 pix1 = texture_ram[texture_page][(texture_y+iv) * 2048 + (texture_x+iu2)];
 							UINT16 pix2 = texture_ram[texture_page][(texture_y+iv2) * 2048 + (texture_x+iu)];
 							UINT16 pix3 = texture_ram[texture_page][(texture_y+iv2) * 2048 + (texture_x+iu2)];
-							int u_sub1 = (u >> (texture_coord_shift-16)) & 0xffff;
-							int v_sub1 = (v >> (texture_coord_shift-16)) & 0xffff;
+							int u_sub1 = (u2 >> (texture_coord_shift-16)) & 0xffff;
+							int v_sub1 = (v2 >> (texture_coord_shift-16)) & 0xffff;
 							int u_sub0 = 0xffff - u_sub1;
 							int v_sub0 = 0xffff - v_sub1;
 							sr[0] = (pix0 & 0xf000);
@@ -1070,22 +1088,13 @@ static void draw_triangle_color(VERTEX v1, VERTEX v2, VERTEX v3, UINT16 color)
 	struct poly_vertex vert[3];
 	const struct poly_scanline_data *scans;
 
-	/* trivial clipping */
-	if(v1.x < clip3d.min_x && v2.x < clip3d.min_x && v3.x < clip3d.min_x)
-		return;
-	if(v1.x > clip3d.max_x && v2.x > clip3d.max_x && v3.x > clip3d.max_x)
-		return;
-	if(v1.y < clip3d.min_y && v2.y < clip3d.min_y && v3.y < clip3d.min_y)
-		return;
-	if(v1.y > clip3d.max_y && v2.y > clip3d.max_y && v3.y > clip3d.max_y)
-		return;
+	v1.z = (1.0 / v1.z) * ZBUFFER_SCALE;
+	v2.z = (1.0 / v2.z) * ZBUFFER_SCALE;
+	v3.z = (1.0 / v3.z) * ZBUFFER_SCALE;
 
-	vert[0].x = v1.x;	vert[0].y = v1.y;	vert[0].p[0] = (UINT32)v1.z | viewport_priority;
-	vert[1].x = v2.x;	vert[1].y = v2.y;	vert[1].p[0] = (UINT32)v2.z | viewport_priority;
-	vert[2].x = v3.x;	vert[2].y = v3.y;	vert[2].p[0] = (UINT32)v3.z | viewport_priority;
-
-	if(v1.z <= 0 || v2.z <= 0 || v3.z <= 0)
-		return;
+	vert[0].x = v1.x;	vert[0].y = v1.y;	vert[0].p[0] = (UINT32)v1.z;
+	vert[1].x = v2.x;	vert[1].y = v2.y;	vert[1].p[0] = (UINT32)v2.z;
+	vert[2].x = v3.x;	vert[2].y = v3.y;	vert[2].p[0] = (UINT32)v3.z;
 
 	scans = setup_triangle_1(&vert[0], &vert[1], &vert[2], &clip3d);
 
@@ -1112,6 +1121,8 @@ static void draw_triangle_color(VERTEX v1, VERTEX v2, VERTEX v3, UINT16 color)
 				for(x = x1; x <= x2; x++) {
 					UINT32 iz = z >> 16;
 
+					iz |= viewport_priority;
+
 					if(iz > d[x]) {
 						p[x] = color;
 						d[x] = iz;		/* write new zbuffer value */
@@ -1121,6 +1132,76 @@ static void draw_triangle_color(VERTEX v1, VERTEX v2, VERTEX v3, UINT16 color)
 			}
 		}
 	}
+}
+
+INLINE int is_point_inside(float x, float y, float z, PLANE cp)
+{
+	float s = (x * cp.x) + (y * cp.y) + (z * cp.z) + cp.d;
+	if (s >= 0.0f)
+		return 1;
+	else
+		return 0;
+}
+
+INLINE float line_plane_intersection(VERTEX *v1, VERTEX *v2, PLANE cp)
+{
+	float x = v1->x - v2->x;
+	float y = v1->y - v2->y;
+	float z = v1->z - v2->z;
+	float t = ((cp.x * v1->x) + (cp.y * v1->y) + (cp.z * v1->z)) / ((cp.x * x) + (cp.y * y) + (cp.z * z));
+	return t;
+}
+
+static int clip_polygon(VERTEX *v, int num_vertices, PLANE cp, VERTEX *vout)
+{
+	VERTEX clipv[10];
+	int clip_verts = 0;
+	float t;
+	int i;
+
+	int pv = num_vertices - 1;
+
+	for (i=0; i < num_vertices; i++)
+	{
+		int v1_in = is_point_inside(v[i].x, v[i].y, v[i].z, cp);
+		int v2_in = is_point_inside(v[pv].x, v[pv].y, v[pv].z, cp);
+
+		if (v1_in && v2_in)			/* edge is completely inside the volume */
+		{
+			memcpy(&clipv[clip_verts], &v[i], sizeof(VERTEX));
+			++clip_verts;
+		}
+		else if (!v1_in && v2_in)	/* edge is entering the volume */
+		{
+			/* insert vertex at intersection point */
+			t = line_plane_intersection(&v[i], &v[pv], cp);
+			clipv[clip_verts].x = v[i].x + ((v[pv].x - v[i].x) * t);
+			clipv[clip_verts].y = v[i].y + ((v[pv].y - v[i].y) * t);
+			clipv[clip_verts].z = v[i].z + ((v[pv].z - v[i].z) * t);
+			clipv[clip_verts].u = (UINT32)((float)v[i].u + (((float)v[pv].u - (float)v[i].u) * t));
+			clipv[clip_verts].v = (UINT32)((float)v[i].v + (((float)v[pv].v - (float)v[i].v) * t));
+			++clip_verts;
+		}
+		else if (v1_in && !v2_in)	/* edge is leaving the volume */
+		{
+			/* insert vertex at intersection point */
+			t = line_plane_intersection(&v[i], &v[pv], cp);
+			clipv[clip_verts].x = v[i].x + ((v[pv].x - v[i].x) * t);
+			clipv[clip_verts].y = v[i].y + ((v[pv].y - v[i].y) * t);
+			clipv[clip_verts].z = v[i].z + ((v[pv].z - v[i].z) * t);
+			clipv[clip_verts].u = (UINT32)((float)v[i].u + (((float)v[pv].u - (float)v[i].u) * t));
+			clipv[clip_verts].v = (UINT32)((float)v[i].v + (((float)v[pv].v - (float)v[i].v) * t));
+			++clip_verts;
+
+			/* insert the existing vertex */
+			memcpy(&clipv[clip_verts], &v[i], sizeof(VERTEX));
+			++clip_verts;
+		}
+
+		pv = i;
+	}
+	memcpy(&vout[0], &clipv[0], sizeof(VERTEX) * clip_verts);
+	return clip_verts;
 }
 
 static const int num_bits[16] = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
@@ -1144,6 +1225,7 @@ static void draw_model(UINT32 *model)
 	float fixed_point_fraction;
 	VERTEX vertex[4];
 	VERTEX prev_vertex[4];
+	VERTEX clip_vert[10];
 
 	int polynum = 0;
 	MATRIX transform_matrix;
@@ -1174,7 +1256,7 @@ static void draw_model(UINT32 *model)
 		}
 
 		if(header[6] == 0) {
-			printf("draw_model: header word 6 == 0\n");
+			//printf("draw_model: header word 6 == 0\n");
 			return;
 		}
 
@@ -1253,19 +1335,25 @@ static void draw_model(UINT32 *model)
 			matrix_multiply_vector(transform_matrix, vect, &p[i]);
 
 			/* apply coordinate system */
-			p[i][0] *= coordinate_system[0][1];
-			p[i][1] *= coordinate_system[1][2];
-			p[i][2] *= coordinate_system[2][0];
+			clip_vert[i].x = p[i][0] * coordinate_system[0][1];
+			clip_vert[i].y = p[i][1] * coordinate_system[1][2];
+			clip_vert[i].z = p[i][2] * coordinate_system[2][0];
+			clip_vert[i].u = vertex[i].u;
+			clip_vert[i].v = vertex[i].v;
 		}
 
-		/* TODO: clipping */
+		/* clip against view frustum */
+		num_vertices = clip_polygon(clip_vert, num_vertices, clip_plane[0], clip_vert);
+		num_vertices = clip_polygon(clip_vert, num_vertices, clip_plane[1], clip_vert);
+		num_vertices = clip_polygon(clip_vert, num_vertices, clip_plane[2], clip_vert);
+		num_vertices = clip_polygon(clip_vert, num_vertices, clip_plane[3], clip_vert);
+		num_vertices = clip_polygon(clip_vert, num_vertices, clip_plane[4], clip_vert);
 
+		/* homogeneous Z-divide, screen-space transformation */
 		for(i=0; i < num_vertices; i++) {
-			/* homogeneous Z-divide, screen-space transformation */
-			float ooz = 1.0f / p[i][2];
-			vertex[i].x = ((p[i][0] * ooz) * viewport_focal_length) + center_x;
-			vertex[i].y = ((p[i][1] * ooz) * viewport_focal_length) + center_y;
-			vertex[i].z = (1.0 / p[i][2]) * 16777216.0f;		/* scale to Z-buffer resolution */
+			float ooz = 1.0f / clip_vert[i].z;
+			clip_vert[i].x = ((clip_vert[i].x * ooz) * viewport_focal_length) + center_x;
+			clip_vert[i].y = ((clip_vert[i].y * ooz) * viewport_focal_length) + center_y;
 		}
 
 		/* TODO: setup rest of the surface parameters */
@@ -1282,36 +1370,24 @@ static void draw_model(UINT32 *model)
 
 		if( (header[6] & 0x4000000) != 0 )		/* textured */
 		{
-			switch(texture_format)
-			{
-				case 0: draw_triangle_tex1555(vertex[0], vertex[1], vertex[2]); break;			/* ARGB1555 */
-				case 1: draw_triangle_color(vertex[0], vertex[1], vertex[2], color); break;		/* TODO: 4-bit */
-				case 2: draw_triangle_color(vertex[0], vertex[1], vertex[2], color); break;		/* TODO: 4-bit */
-				case 3: draw_triangle_color(vertex[0], vertex[1], vertex[2], color); break;		/* TODO: 4-bit */
-				case 4: draw_triangle_color(vertex[0], vertex[1], vertex[2], color); break;		/* TODO: A4L4 */
-				case 5: draw_triangle_color(vertex[0], vertex[1], vertex[2], color); break;		/* TODO: A8 */
-				case 6: draw_triangle_color(vertex[0], vertex[1], vertex[2], color); break;		/* TODO: 4-bit */
-				case 7: draw_triangle_tex4444(vertex[0], vertex[1], vertex[2]); break;			/* ARGB4444 */
-			}
-			if(num_vertices == 4) {
+			for (i=2; i < num_vertices; i++) {
 				switch(texture_format)
 				{
-					case 0: draw_triangle_tex1555(vertex[0], vertex[2], vertex[3]); break;			/* ARGB1555 */
-					case 1: draw_triangle_color(vertex[0], vertex[2], vertex[3], color); break;		/* TODO: 4-bit */
-					case 2: draw_triangle_color(vertex[0], vertex[2], vertex[3], color); break;		/* TODO: 4-bit */
-					case 3: draw_triangle_color(vertex[0], vertex[2], vertex[3], color); break;		/* TODO: 4-bit */
-					case 4: draw_triangle_color(vertex[0], vertex[2], vertex[3], color); break;		/* TODO: A4L4 */
-					case 5: draw_triangle_color(vertex[0], vertex[2], vertex[3], color); break;		/* TODO: A8 */
-					case 6: draw_triangle_color(vertex[0], vertex[2], vertex[3], color); break;		/* TODO: 4-bit */
-					case 7: draw_triangle_tex4444(vertex[0], vertex[2], vertex[3]); break;			/* ARGB4444 */
+					case 0: draw_triangle_tex1555(clip_vert[0], clip_vert[i-1], clip_vert[i]); break;			/* ARGB1555 */
+					case 1: draw_triangle_color(clip_vert[0], clip_vert[i-1], clip_vert[i], color); break;		/* TODO: 4-bit */
+					case 2: draw_triangle_color(clip_vert[0], clip_vert[i-1], clip_vert[i], color); break;		/* TODO: 4-bit */
+					case 3: draw_triangle_color(clip_vert[0], clip_vert[i-1], clip_vert[i], color); break;		/* TODO: 4-bit */
+					case 4: draw_triangle_color(clip_vert[0], clip_vert[i-1], clip_vert[i], color); break;		/* TODO: A4L4 */
+					case 5: draw_triangle_color(clip_vert[0], clip_vert[i-1], clip_vert[i], color); break;		/* TODO: A8 */
+					case 6: draw_triangle_color(clip_vert[0], clip_vert[i-1], clip_vert[i], color); break;		/* TODO: 4-bit */
+					case 7: draw_triangle_tex4444(clip_vert[0], clip_vert[i-1], clip_vert[i]); break;			/* ARGB4444 */
 				}
 			}
 		}
 		else									/* non-textured */
 		{
-			draw_triangle_color(vertex[0], vertex[1], vertex[2], color);
-			if(num_vertices == 4) {
-				draw_triangle_color(vertex[0], vertex[2], vertex[3], color);
+			for (i=2; i < num_vertices; i++) {
+				draw_triangle_color(clip_vert[0], clip_vert[i-1], clip_vert[i], color);
 			}
 		}
 		++polynum;
@@ -1539,7 +1615,7 @@ static void traverse_root_node(UINT32 address)
 	clip_plane[1].x = *(float*)&node[17];	clip_plane[1].y = 0.0f;		clip_plane[1].z = *(float*)&node[16];	clip_plane[1].d = 0.0f;
 	clip_plane[2].x = 0.0f;		clip_plane[2].y = *(float*)&node[15];	clip_plane[2].z = *(float*)&node[14];	clip_plane[2].d = 0.0f;
 	clip_plane[3].x = 0.0f;		clip_plane[3].y = *(float*)&node[19];	clip_plane[3].z = *(float*)&node[18];	clip_plane[3].d = 0.0f;
-	clip_plane[4].x = 0.0f;		clip_plane[4].y = 0.0f;		clip_plane[4].z = -1.0f;	clip_plane[4].d = 1.0f;
+	clip_plane[4].x = 0.0f;		clip_plane[4].y = 0.0f;		clip_plane[4].z = 1.0f;	clip_plane[4].d = 1.0f;
 
 	fov_x = viewport_left + viewport_right;
 	fov_y = viewport_top + viewport_bottom;

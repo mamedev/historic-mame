@@ -517,9 +517,9 @@ int frontend_help (const char *gamename)
 
 		/* qsort as appropriate */
 		if (sortby == 1)
-			qsort(drivers, count, sizeof(drivers[0]), compare_names);
+			qsort((void *)drivers, count, sizeof(drivers[0]), compare_names);
 		else if (sortby == 2)
-			qsort(drivers, count, sizeof(drivers[0]), compare_driver_names);
+			qsort((void *)drivers, count, sizeof(drivers[0]), compare_driver_names);
 	}
 
 	switch (list)  /* front-end utilities ;) */

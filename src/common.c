@@ -479,7 +479,7 @@ void *auto_malloc(size_t size)
 
 	/* fail horribly if it doesn't work */
 	if (!result)
-		osd_die("Out of memory attempting to allocate %d bytes\n", size);
+		osd_die("Out of memory attempting to allocate %d bytes\n", (int)size);
 
 	/* make sure we have space */
 	if (malloc_list_index >= MAX_MALLOCS)

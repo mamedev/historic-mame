@@ -17,6 +17,9 @@
 #include "sound/segapcm.h"
 
 
+#define MASTER_CLOCK			50000000
+#define SOUND_CLOCK				16000000
+
 /* use this to fiddle with the IRQ2 timing */
 #define TWEAK_IRQ2_SCANLINE		(0)
 
@@ -299,6 +302,7 @@ static WRITE16_HANDLER( io_chip_w )
 		case 0x0e/2:
 			/* D7 = /MUTE */
 			/* D6-D0 = FLT31-25 */
+			sound_global_enable(data & 0x80);
 			break;
 
 		/* CNT register */
@@ -809,16 +813,16 @@ static struct SEGAPCMinterface segapcm_interface =
 static MACHINE_DRIVER_START( yboard )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", M68000, 12000000)
+	MDRV_CPU_ADD_TAG("main", M68000, MASTER_CLOCK/4)
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
 
-	MDRV_CPU_ADD_TAG("subx", M68000, 12000000)
+	MDRV_CPU_ADD_TAG("subx", M68000, MASTER_CLOCK/4)
 	MDRV_CPU_PROGRAM_MAP(subx_map,0)
 
-	MDRV_CPU_ADD_TAG("suby", M68000, 12000000)
+	MDRV_CPU_ADD_TAG("suby", M68000, MASTER_CLOCK/4)
 	MDRV_CPU_PROGRAM_MAP(suby_map,0)
 
-	MDRV_CPU_ADD_TAG("sound", Z80, 4000000)
+	MDRV_CPU_ADD_TAG("sound", Z80, SOUND_CLOCK/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_IO_MAP(sound_portmap,0)
@@ -828,7 +832,7 @@ static MACHINE_DRIVER_START( yboard )
 
 	MDRV_MACHINE_INIT(yboard)
 	MDRV_NVRAM_HANDLER(yboard)
-	MDRV_INTERLEAVE(1000)
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -842,7 +846,7 @@ static MACHINE_DRIVER_START( yboard )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD_TAG("2151", YM2151, 4000000)
+	MDRV_SOUND_ADD_TAG("2151", YM2151, SOUND_CLOCK/4)
 	MDRV_SOUND_CONFIG(ym2151_interface)
 	MDRV_SOUND_ROUTE(0, "left", 0.43)
 	MDRV_SOUND_ROUTE(1, "right", 0.43)

@@ -287,13 +287,13 @@ static MACHINE_DRIVER_START( pbaction )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
@@ -362,7 +362,35 @@ ROM_START( pbactio2 )
 	ROM_LOAD( "b-f7.bin",     0x04000, 0x2000, CRC(af6e9817) SHA1(56f47d25761b3850c49a3a81b5ea35f12bd77b14) )
 ROM_END
 
+ROM_START( pbactio3 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "12.bin",     0x0000, 0x4000, CRC(ec3c64c6) SHA1(6130b80606d717f95e219316c2d3fa0a1980ea1d) )
+	ROM_LOAD( "13.bin",     0x4000, 0x4000, CRC(c93c851e) SHA1(b41077708fce4ccbcecdeae32af8821ca5322e87) )
+	ROM_LOAD( "14.bin",     0x8000, 0x4000, CRC(f17a62eb) SHA1(8dabfc0ad127c154c0293a65df32d52d57dd9755) )
 
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for sound board */
+	ROM_LOAD( "pba1.bin",     0x0000,  0x2000, CRC(8b69b933) SHA1(eb0762579d52ed9f5b1a002ffe7e517c59650e22) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for a third Z80 (not emulated) */
+	ROM_LOAD( "pba17.bin",    0x0000,  0x4000, CRC(2734ae60) SHA1(4edcdfac1611c49c4f890609efbe8352b8161f8e) )
+
+	ROM_REGION( 0x06000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "a-s6.bin",     0x00000, 0x2000, CRC(9a74a8e1) SHA1(bd27439b91f41db3fd7eedb44e828d61b793bda0) )
+	ROM_LOAD( "a-s7.bin",     0x02000, 0x2000, CRC(5ca6ad3c) SHA1(7c8eff087f18cc2ff0572ea45e681a3a1ec94fad) )
+	ROM_LOAD( "a-s8.bin",     0x04000, 0x2000, CRC(9f00b757) SHA1(74b6d926b8f456c8d0101f0232c5d3662423b396) )
+
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "a-j5.bin",     0x00000, 0x4000, CRC(21efe866) SHA1(0c0a05a26d793ba98b0f421d464ff4b1d301ff9e) )
+	ROM_LOAD( "a-j6.bin",     0x04000, 0x4000, CRC(7f984c80) SHA1(18795ecbcd2da94f1cfcce5559d652388d1b8bc0) )
+	ROM_LOAD( "a-j7.bin",     0x08000, 0x4000, CRC(df69e51b) SHA1(52ab15c63332f0fa98884fa9adc8d35b93c939c4) )
+	ROM_LOAD( "a-j8.bin",     0x0c000, 0x4000, CRC(0094cb8b) SHA1(58f48d24903b797e8451bf231f9e8df621685d9f) )
+
+	ROM_REGION( 0x06000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "b-c7.bin",     0x00000, 0x2000, CRC(d1795ef5) SHA1(69ad8e419e340d2f548468ed7838102789b978da) )
+	ROM_LOAD( "b-d7.bin",     0x02000, 0x2000, CRC(f28df203) SHA1(060f70ed6386c808303a488c97691257681bd8f3) )
+	ROM_LOAD( "b-f7.bin",     0x04000, 0x2000, CRC(af6e9817) SHA1(56f47d25761b3850c49a3a81b5ea35f12bd77b14) )
+ROM_END
 
 GAME( 1985, pbaction, 0,        pbaction, pbaction, 0, ROT90, "Tehkan", "Pinball Action (set 1)" )
 GAME( 1985, pbactio2, pbaction, pbaction, pbaction, 0, ROT90, "Tehkan", "Pinball Action (set 2)" )
+GAMEX(1985, pbactio3, pbaction, pbaction, pbaction, 0, ROT90, "Tehkan", "Pinball Action (set 3, encrypted?)",GAME_NOT_WORKING )

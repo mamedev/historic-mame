@@ -106,23 +106,3 @@ WRITE16_HANDLER( namcond1_cuskey_w )
             break;
     }
 }
-
-#define NAMCOND1_EEPROM_SIZE    0x200
-data16_t *namcond1_eeprom;
-
-/* not used at this point */
-NVRAM_HANDLER( namcond1 )
-{
-  if( file == 0 )
-    return;
-
-  if( read_or_write == 0 ) {
-    /* read eeprom contents */
-    mame_fread( file, namcond1_eeprom, NAMCOND1_EEPROM_SIZE );
-  }
-  else {
-    /* write eeprom contents */
-    mame_fwrite( file, namcond1_eeprom, NAMCOND1_EEPROM_SIZE );
-  }
-}
-

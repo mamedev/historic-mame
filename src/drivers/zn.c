@@ -85,6 +85,7 @@ static const unsigned char mg05[ 8 ] = { 0x80, 0xc2, 0x38, 0xf9, 0xfd, 0x0c, 0x1
 static const unsigned char mg08[ 8 ] = { 0xf0, 0xfa, 0xf9, 0xc1, 0x20, 0x1c, 0x7c, 0x80 };
 static const unsigned char mg09[ 8 ] = { 0xf0, 0x03, 0xe2, 0x18, 0x78, 0x7c, 0x3c, 0xc0 }; /* brute forced */
 static const unsigned char mg11[ 8 ] = { 0x80, 0xc2, 0x38, 0xf9, 0xfd, 0x1c, 0x10, 0xf0 };
+static const unsigned char mg13[ 8 ] = { 0xc0, 0xe2, 0xe1, 0xf9, 0x04, 0x0c, 0x70, 0x80 };
 static const unsigned char mg14[ 8 ] = { 0xfc, 0xf2, 0xfa, 0x18, 0x20, 0x40, 0x81, 0x01 };
 static const unsigned char tt01[ 8 ] = { 0xe0, 0xf9, 0xfd, 0x7c, 0x70, 0x30, 0xc2, 0x02 };
 static const unsigned char tt02[ 8 ] = { 0xfc, 0x60, 0xe1, 0xc1, 0x30, 0x08, 0xfa, 0x02 }; /* brute forced */
@@ -147,6 +148,7 @@ static struct
 	{ "glpracr3", mg01, mg08 },
 	{ "tondemo",  mg01, mg09 }, /* OK */
 	{ "brvblade", mg01, mg11 }, /* OK */
+	{ "tecmowcm", mg01, mg13 }, /* OK */
 	{ "mfjump",   mg01, mg14 }, /* OK */
 	{ "sfchamp",  tt01, tt02 }, /* stuck in test mode */
 	{ "sfchampj", tt01, tt02 }, /* stuck in test mode */
@@ -299,9 +301,35 @@ static READ32_HANDLER( jamma_5_r )
 	return readinputport( 5 );
 }
 
-static READ32_HANDLER( jamma_6_r )
+static READ32_HANDLER( boardconfig_r )
 {
-	return readinputport( 6 );
+	/*
+	------00 mem=4M
+	------01 mem=4M
+	------10 mem=8M
+	------11 mem=16M
+	-----0-- smem=hM
+	-----1-- smem=2M
+	----0--- vmem=1M
+	----1--- vmem=2M
+	000----- rev=-2
+	001----- rev=-1
+	010----- rev=0
+	011----- rev=1
+	100----- rev=2
+	101----- rev=3
+	110----- rev=4
+	111----- rev=5
+	*/
+
+	if( Machine->drv->screen_height == 1024 )
+	{
+		return 64|32|8;
+	}
+	else
+	{
+		return 64|32;
+	}
 }
 
 static READ32_HANDLER( unknown_r )
@@ -338,7 +366,7 @@ static ADDRESS_MAP_START( zn_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x1f801060, 0x1f80106f) AM_RAM
 	AM_RANGE(0x1f801070, 0x1f801077) AM_READWRITE(psx_irq_r, psx_irq_w)
 	AM_RANGE(0x1f801080, 0x1f8010ff) AM_READWRITE(psx_dma_r, psx_dma_w)
-	AM_RANGE(0x1f801100, 0x1f80113f) AM_READWRITE(psx_counter_r, psx_counter_w)
+	AM_RANGE(0x1f801100, 0x1f80112f) AM_READWRITE(psx_counter_r, psx_counter_w)
 	AM_RANGE(0x1f801810, 0x1f801817) AM_READWRITE(psx_gpu_r, psx_gpu_w)
 	AM_RANGE(0x1f801820, 0x1f801827) AM_READWRITE(psx_mdec_r, psx_mdec_w)
 	AM_RANGE(0x1f801c00, 0x1f801dff) AM_READWRITE(psx_spu_r, psx_spu_w)
@@ -350,13 +378,13 @@ static ADDRESS_MAP_START( zn_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x1fa00300, 0x1fa00303) AM_READ(jamma_3_r)
 	AM_RANGE(0x1fa10000, 0x1fa10003) AM_READ(jamma_4_r)
 	AM_RANGE(0x1fa10100, 0x1fa10103) AM_READ(jamma_5_r)
-	AM_RANGE(0x1fa10200, 0x1fa10203) AM_READ(jamma_6_r)
+	AM_RANGE(0x1fa10200, 0x1fa10203) AM_READ(boardconfig_r)
 	AM_RANGE(0x1fa10300, 0x1fa10303) AM_READWRITE(znsecsel_r, znsecsel_w)
 	AM_RANGE(0x1fa20000, 0x1fa20003) AM_WRITE(coin_w)
 	AM_RANGE(0x1fa30000, 0x1fa30003) AM_NOP /* ?? */
 	AM_RANGE(0x1fa40000, 0x1fa40003) AM_READNOP /* ?? */
 	AM_RANGE(0x1fa60000, 0x1fa60003) AM_READNOP /* ?? */
-	AM_RANGE(0x1faf0000, 0x1faf07ff) AM_READWRITE( at28c16_0_32_r, at28c16_0_32_w ) /* eeprom */
+	AM_RANGE(0x1faf0000, 0x1faf07ff) AM_READWRITE( at28c16_32le_0_r, at28c16_32le_0_w ) /* eeprom */
 	AM_RANGE(0x1fb20000, 0x1fb20007) AM_READ(unknown_r)
 	AM_RANGE(0x1fc00000, 0x1fc7ffff) AM_ROM AM_SHARE(2) AM_REGION(REGION_USER1, 0) /* bios */
 	AM_RANGE(0x80000000, 0x803fffff) AM_RAM AM_SHARE(1) /* ram mirror */
@@ -3821,6 +3849,19 @@ ROM_START( glpracr3 )
 	ROM_LOAD( "gra3-7.223",          0x2000000, 0x400000, CRC(73565e1f) SHA1(74311ee94e3abc8428b4a8b1c6c3dacd883b5646) )
 ROM_END
 
+ROM_START( tecmowcm )
+	TPS_BIOS
+
+	ROM_REGION32_LE( 0x02800000, REGION_USER2, 0 )
+	ROM_LOAD16_BYTE( "twm-ep.119",  0x0000001, 0x100000, CRC(5f2908fb) SHA1(fc7ac1f6e81543678705e6e510dbf786b1502444) )
+	ROM_LOAD16_BYTE( "twm-ep.120",  0x0000000, 0x100000, CRC(1a0ef17a) SHA1(bb7123610d3791c08577b87c8be59a0dd2cc33f1) )
+	ROM_LOAD( "twm-0.216",          0x0400000, 0x400000, CRC(39cbc56a) SHA1(931d0d729620ef20e5c4fd521bce45cdb1742127) )
+	ROM_LOAD( "twm-1.217",          0x0800000, 0x400000, CRC(fae0687a) SHA1(383a86f55441be287075af046ebac6a5ab54e6cf) )
+	ROM_LOAD( "twm-2.218",          0x0c00000, 0x400000, CRC(cb852264) SHA1(a7a2f3d6f723ddd80c57ac63522a1a0bf526a7b3) )
+	ROM_LOAD( "twm-3.219",          0x1000000, 0x400000, CRC(7c9f6925) SHA1(32519a238810d02181eaf5c2344334c523fa77d1) )
+	ROM_LOAD( "twm-4.220",          0x1400000, 0x400000, CRC(17cd0ec9) SHA1(37581530e974af692ab71471d0238801cd19c843) )
+ROM_END
+
 ROM_START( mfjump )
 	TPS_BIOS
 
@@ -4388,6 +4429,7 @@ GAMEX( 1998, cbaj,     tps,      coh1002msnd, zn, coh1002m, ROT0, "Tecmo", "Cool
 GAMEX( 1998, shngmtkb, tps,      coh1002m, zn, coh1002m, ROT0, "Sunsoft / Activision", "Shanghai Matekibuyuu", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1999, tondemo,  tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Tondemo Crisis (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1999, glpracr3, tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Gallop Racer 3 (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 2000, tecmowcm, tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Tecmo World Cup Millenium (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 2001, mfjump,   tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Monster Farm Jump (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 
 /* Video System */

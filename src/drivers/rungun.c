@@ -643,11 +643,12 @@ ROM_END
 
 static DRIVER_INIT( rng )
 {
-	K054539_init_flags(0, K054539_REVERSE_STEREO);
 }
 
 MACHINE_INIT( rng )
 {
+	K054539_init_flags(0, K054539_REVERSE_STEREO);
+
 	memset(rng_sysreg, 0, 0x20);
 
 	init_eeprom_count = 0;

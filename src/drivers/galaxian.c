@@ -5854,6 +5854,24 @@ ROM_START( racknrol )
 	ROM_LOAD( "82s147.bin",   0x0000, 0x0200, CRC(aace7fa5) SHA1(6761530bb3585d2eaa97b7ae77b52e96782ffe0a) )
 ROM_END
 
+ROM_START( hexpool )
+	ROM_REGION( 0x8000, REGION_CPU1, 0 )	/* 32k for code */
+	ROM_LOAD( "vert_p.bin",   0x0000, 0x1000, CRC(bdb078fc) SHA1(85a65c3038dc05a98eae71edf9efdd6659a2966a) )
+	ROM_CONTINUE(			  0x2000, 0x1000 )
+	ROM_CONTINUE(			  0x4000, 0x1000 )
+	ROM_CONTINUE(			  0x6000, 0x1000 )
+
+	ROM_REGION( 0x8000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "vert_g.bin",   0x0000, 0x4000, CRC(7e257e80) SHA1(dabb10d076dc49fc130f58e6d1c4b04e6debce55) )
+	ROM_LOAD( "vert_r.bin",   0x4000, 0x4000, CRC(c5f0851e) SHA1(cedcdb29962c6cd65af9d57d0cb2533397d58f99) )
+	
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.bin",   0x0000, 0x0020, CRC(737802bf) SHA1(9b0476c51ce63898cd690e01e16ee83bae361cb2) )
+
+	ROM_REGION( 0x0200, REGION_USER1, 0 ) /* unknown */
+	ROM_LOAD( "82s147.bin",   0x0000, 0x0200, CRC(aace7fa5) SHA1(6761530bb3585d2eaa97b7ae77b52e96782ffe0a) )
+ROM_END
+
 ROM_START( trvchlng )
 	ROM_REGION( 0x8000, REGION_CPU1, 0 )	/* 32k for code */
 	ROM_LOAD( "senko11.bin",  0x0000, 0x1000, CRC(3657331d) SHA1(d9a9a4e4e2e696e70dfb888725c959ec8ce24e3d) )
@@ -5943,15 +5961,16 @@ GAMEX(1981, 4in1,     0,        4in1,     4in1,     4in1,     ROT90,  "Armenia /
 GAMEX(1982, bagmanmc, bagman,   bagmanmc, bagmanmc, 0,        ROT90,  "bootleg", "Bagman (Moon Cresta hardware)", GAME_WRONG_COLORS  )
 GAMEX(1982, dkongjrm, dkongjr,  dkongjrm, dkongjrm, 0,        ROT90,  "bootleg", "Donkey Kong Jr. (Moon Cresta hardware)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 GAME( 1981, froggrmc, frogger,  froggrmc, froggrmc, froggers, ROT90,  "bootleg?", "Frogger (Moon Cresta hardware)" )
-GAME( 1981, rockclim, 0,        rockclim, rockclim, 0,		  ROT180, "Taito", "Rock Climber" )
-GAME( 1983, ozon1,    0,		ozon1,    ozon1,	0,		  ROT90,  "Proma", "Ozon I" )
+GAME( 1981, rockclim, 0,        rockclim, rockclim, 0,	      ROT180, "Taito", "Rock Climber" )
+GAME( 1983, ozon1,    0,        ozon1,    ozon1,    0,	      ROT90,  "Proma", "Ozon I" )
 GAME( 1983, ladybugg, ladybug,  batman2,  ladybugg, ladybugg, ROT270, "bootleg", "Ladybug (bootleg on Galaxian hardware)" )
 GAME( 1980, vpool,    hustler,  mooncrst, vpool,    0,        ROT90,  "bootleg", "Video Pool (bootleg on Moon Cresta hardware)" )
-GAME( 1984, drivfrcg, drivfrcp, drivfrcg, drivfrcg, 0,		  ROT90,  "Shinkai Inc. (Magic Eletronics USA licence)", "Driving Force (Galaxian conversion)" )
-GAME( 1985, drivfrcb, drivfrcp, drivfrcg, drivfrcg, 0,		  ROT90,  "bootleg", "Driving Force (Galaxian conversion bootleg)" )
-GAME( 1983, bongo,    0,		bongo,    bongo,	0,		  ROT90,  "Jetsoft", "Bongo" )
-GAME( 1983, hunchbkg, hunchbak,	hunchbkg, hunchbkg, 0,		  ROT90,  "Century Electronics", "Hunchback (Galaxian hardware)" )
+GAME( 1984, drivfrcg, drivfrcp, drivfrcg, drivfrcg, 0,        ROT90,  "Shinkai Inc. (Magic Eletronics USA licence)", "Driving Force (Galaxian conversion)" )
+GAME( 1985, drivfrcb, drivfrcp, drivfrcg, drivfrcg, 0,        ROT90,  "bootleg", "Driving Force (Galaxian conversion bootleg)" )
+GAME( 1983, bongo,    0,        bongo,    bongo,    0,	      ROT90,  "Jetsoft", "Bongo" )
+GAME( 1983, hunchbkg, hunchbak,	hunchbkg, hunchbkg, 0,        ROT90,  "Century Electronics", "Hunchback (Galaxian hardware)" )
 GAMEX(1983, harem,    0,        harem,    harem,    0,        ROT90,  "I.G.R.", "Harem", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAME( 1982, tazzmang, tazmania,	tazzmang, tazzmang,	0,		  ROT90,  "bootleg", "Tazz-Mania (Galaxian Hardware)" )
-GAME( 1986, racknrol, 0,	    racknrol, racknrol, 0,		  ROT0,   "Status (Shinkai License)", "Rack + Roll" )
-GAMEX(1985, trvchlng, 0,	    racknrol, trvchlng, 0,		  ROT90,  "Joyland (Senko License)", "Trivia Challenge", GAME_NOT_WORKING )
+GAME( 1982, tazzmang, tazmania,	tazzmang, tazzmang, 0,        ROT90,  "bootleg", "Tazz-Mania (Galaxian Hardware)" )
+GAME( 1986, racknrol, 0,        racknrol, racknrol, 0,	      ROT0,   "Status (Shinkai License)", "Rack + Roll" )
+GAME( 1986, hexpool,  racknrol, racknrol, racknrol, 0,	      ROT90,  "Shinkai", "Hex Pool" )
+GAMEX(1985, trvchlng, 0,        racknrol, trvchlng, 0,	      ROT90,  "Joyland (Senko License)", "Trivia Challenge", GAME_NOT_WORKING )

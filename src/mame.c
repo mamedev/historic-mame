@@ -8,99 +8,125 @@
 
 	Since there has been confusion in the past over the order of
 	initialization and other such things, here it is, all spelled out
-	as of May, 2002:
+	as of March, 2005:
 
 	main()
 		- does platform-specific init
-		- calls run_game()
+		- calls run_game() [mame.c]
 
-		run_game()
-			- constructs the machine driver
-			- calls init_game_options()
-
-			init_game_options()
-				- determines color depth from the options
-				- computes orientation from the options
-
+		run_game() [mame.c]
+			- begins resource tracking (level 1)
+			- calls mame_validitychecks() [mame.c] to perform validity checks on all compiled drivers
+			- calls expand_machine_driver() [mame.c] to construct the machine driver
+			- calls cpuintrf_init() [cpuintrf.c] to determine which CPUs are available
+			- calls init_game_options() [mame.c] to compute parameters based on global options struct
 			- initializes the savegame system
-			- calls osd_init() to do platform-specific initialization
-			- calls init_machine()
+			- calls osd_init() [osdepend.h] to do platform-specific initialization
 
-			init_machine()
-				- initializes the localized strings
-				- initializes the input system
-				- parses and allocates the game's input ports
-				- initializes the hard disk system
-				- loads the game's ROMs
-				- resets the timer system
-				- starts the refresh timer
-				- initializes the CPUs
-				- loads the configuration file
-				- initializes the memory system for the game
+			- begins resource tracking (level 2)
+			- calls init_machine() [mame.c]
+
+			init_machine() [mame.c]
+				- calls uistring_init() [ui_text.c] to initialize the localized strings
+				- calls code_init() [input.c] to initialize the input system
+				- calls input_port_alloc() [inptport.c] to construct the game's input ports
+				- calls chd_set_interface() [chd.c] to initialize the hard disk system
+				- calls rom_load() [common.c] to load the game's ROMs
+				- calls timer_init() [timer.c] to reset the timer system
+				- calls cpu_init_refresh_timer() [cpuexec.c] to start the refresh timer
+				- calls cpu_init() [cpuexec.c] to initialize the CPUs
+				- calls load_input_port_settings() [input.c] to load the configuration file
+				- calls memory_init() [memory.c] to process the game's memory maps
 				- calls the driver's DRIVER_INIT callback
 
-			- calls run_machine()
+			- calls run_machine() [mame.c]
 
-			run_machine()
-				- calls vh_open()
+			run_machine() [mame.c]
+				- calls vh_open() [mame.c]
 
-				vh_open()
-					- allocates the palette
-					- decodes the graphics
-					- computes vector game resolution
-					- sets up the artwork
-					- calls osd_create_display() to init the display
+				vh_open() [mame.c]
+					- calls palette_start() [palette.c] to allocate the palette
+					- calls decode_graphics() [mame.c] to decode the graphics
+					- computes game resolution and aspect ratio
+					- calls artwork_create_display() [artwork.c] to set up the artwork and init the display
 					- allocates the scrbitmap
-					- sets the initial visible_area
-					- sets up buffered spriteram
-					- creates the user interface font
-					- creates the debugger bitmap and font
-					- finishes palette initialization
+					- sets the initial refresh rate and visible area
+					- calls init_buffered_spriteram() [mame.c] to set up buffered spriteram
+					- calls builduifont() [usrintrf.c] to create the user interface font
+					- creates the debugger bitmap and font (old debugger only)
+					- calls palette_init() [palette.c] to finish palette initialization
+					- resets the performance tracking variables
 
-				- initializes the tilemap system
+				- calls tilemap_init() [tilemap.c] to initialize the tilemap system
 				- calls the driver's VIDEO_START callback
-				- starts the audio system
+				- calls sound_start() [sndintrf.c] to start the audio system
 				- disposes of regions marked as disposable
-				- calls run_machine_core()
+				- calls run_machine_core() [mame.c]
 
-				run_machine_core()
+				run_machine_core() [mame.c]
 					- shows the copyright screen
 					- shows the game warnings
-					- initializes the user interface
-					- initializes the cheat system
-					- calls the driver's NVRAM_HANDLER
+					- shows the game info screen
+					- calls init_user_interface() [usrintrf.c] to initialize the user interface
+					- calls InitCheat() [cheat.c] to initialize the cheat system
+					- calls the driver's NVRAM_HANDLER to load NVRAM
+					- calls cpu_run() [cpuexec.c]
+					
+					cpu_run() [cpuexec.c]
+						- calls mame_debug_init() [mamedbg.c] to init the debugger (old debugger only)
+						- calls cpu_pre_run() [cpuexec.c]
+						
+						cpu_pre_run() [cpuexec.c]
+							- begins resource tracking (level 3)
+							- calls hs_open() and hs_init() [hiscore.c] to set up high score hacks
+							- calls cpu_inittimers() [cpuexec.c] to set up basic system timers
+							- calls watchdog_setup() [cpuexec.c] to set up watchdog timers
+							- calls sound_reset() [sndintrf.c] to reset all the sound chips
+							- loops over each CPU and initializes its internal state
+							- calls the driver's MACHINE_INIT callback
+							- loops over each CPU and calls cpunum_reset() [cpuintrf.c] to reset it
+							- calls cpu_vblankreset() [cpuexec.c] to set up the first VBLANK callback
 
-	--------------( at this point, we're up and running )---------------------------
+						--------------( at this point, we're up and running )---------------------------
+						
+						- calls cpu_post_run() [cpuexec.c]
+						
+						cpu_post_run() [cpuexec.c]
+							- calls hs_close() [hiscore.c] to flush high score data
+							- calls the driver's MACHINE_STOP callback
+							- ends resource tracking (level 3), freeing all auto_mallocs and timers
+						
+						- if the machine is just being reset, loops back to the cpu_pre_run() step above
+						- calls mame_debug_exit() [mamedbg.c] to shut down the debugger (old debugger only)
+					
+					- calls the driver's NVRAM_HANDLER to save NVRAM
+					- calls StopCheat() [cheat.c] to tear down the cheat system
+					- calls save_input_port_settings() [inptport.c] to save the game's configuration
 
-					- calls the driver's NVRAM_HANDLER
-					- tears down the cheat system
-					- saves the game's configuration
-
-				- stops the audio system
+				- calls sound_stop() [sndintrf.c] to stop the audio system
 				- calls the driver's VIDEO_STOP callback
-				- tears down the tilemap system
-				- calls vh_close()
+				- calls tilemap_close() [tilemap.c] to tear down the tilemap system
+				- calls vh_close() [mame.c]
 
-				vh_close()
+				vh_close() [mame.c]
 					- frees the decoded graphics
 					- frees the fonts
-					- calls osd_close_display() to shut down the display
-					- tears down the artwork
-					- tears down the palette system
+					- calls osd_close_display() [osdepend.h] to shut down the display
 
-			- calls shutdown_machine()
+			- calls shutdown_machine() [mame.c]
 
-			shutdown_machine()
-				- tears down the memory system
+			shutdown_machine() [mame.c]
+				- calls memory_shutdown() [memory.c] to tear down the memory system
 				- frees all the memory regions
-				- tears down the hard disks
-				- tears down the CPU system
-				- releases the input ports
-				- tears down the input system
-				- tears down the localized strings
-				- resets the saved state system
+				- calls chd_close_all() [chd.c] to tear down the hard disks
+				- calls cpu_exit() [cpuexec.c] to tear down the CPU system
+				- calls code_close() [input.c] to tear down the input system
+				- calls state_save_reset() [state.c] to reset the saved state system
+				- calls coin_counter_reset() [common.c] to reset coin counters
 
-			- calls osd_exit() to do platform-specific cleanup
+			- ends resource tracking (level 2), freeing all auto_mallocs and timers
+			- calls osd_exit() [osdepend.h] to do platform-specific cleanup
+			- ends resource tracking (level 1), freeing all auto_mallocs and timers
 
 		- exits the program
 
@@ -941,13 +967,15 @@ static int decode_graphics(const struct GfxDecodeInfo *gfxdecodeinfo)
 		}
 
 		/* loop over all the X/Y offsets, converting fractions */
-		for (j = 0; j < MAX_GFX_SIZE; j++)
+		for (j = 0; j < glcopy.width; j++)
 		{
 			int value = glcopy.xoffset[j];
 			if (IS_FRAC(value))
 				glcopy.xoffset[j] = FRAC_OFFSET(value) + region_length * FRAC_NUM(value) / FRAC_DEN(value);
-
-			value = glcopy.yoffset[j];
+		}
+		for (j = 0; j < glcopy.height; j++)
+		{
+			int value = glcopy.yoffset[j];
 			if (IS_FRAC(value))
 				glcopy.yoffset[j] = FRAC_OFFSET(value) + region_length * FRAC_NUM(value) / FRAC_DEN(value);
 		}
@@ -1300,6 +1328,8 @@ void update_video_and_audio(void)
 	recompute_fps - recompute the frame rate
 -------------------------------------------------*/
 
+int vector_updates = 0;
+
 static void recompute_fps(int skipped_it)
 {
 	/* increment the frame counters */
@@ -1329,13 +1359,9 @@ static void recompute_fps(int skipped_it)
 	vfcount++;
 	if (vfcount >= (int)Machine->refresh_rate)
 	{
-#ifndef MESS
-		/* from vidhrdw/avgdvg.c */
-		extern int vector_updates;
-
 		performance.vector_updates_last_second = vector_updates;
 		vector_updates = 0;
-#endif
+
 		vfcount -= (int)Machine->refresh_rate;
 	}
 }

@@ -2609,7 +2609,7 @@ static ADDRESS_MAP_START( thunderl_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA16_ROM				)	// ROM
 	AM_RANGE(0xffc000, 0xffffff) AM_READ(MRA16_RAM				)	// RAM
 	AM_RANGE(0x100000, 0x103fff) AM_READ(seta_sound_word_r		)	// Sound
-	AM_RANGE(0x600000, 0x600003) AM_READ(seta_dsw_r			)	// DSW
+	AM_RANGE(0x600000, 0x600003) AM_READ(seta_dsw_r				)	// DSW
 	AM_RANGE(0x700000, 0x7003ff) AM_READ(MRA16_RAM				)	// Palette
 	AM_RANGE(0xb00000, 0xb00001) AM_READ(input_port_0_word_r	)	// P1
 	AM_RANGE(0xb00002, 0xb00003) AM_READ(input_port_1_word_r	)	// P2
@@ -8796,6 +8796,10 @@ static DRIVER_INIT(wiggie)
 
 	}
 
+	/* X1_010 is not used. */
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x100000, 0x103fff, 0, 0, MRA16_NOP);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x100000, 0x103fff, 0, 0, MWA16_NOP);
+
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xB00008, 0xB00009, 0, 0, wiggie_soundlatch_w);
 
 }
@@ -8814,7 +8818,7 @@ GAME( 1987, tndrcade, 0,        tndrcade, tndrcade, 0,        ROT270, "[Seta] (T
 GAME( 1987, tndrcadj, tndrcade, tndrcade, tndrcadj, 0,        ROT270, "[Seta] (Taito license)", "Tokusyu Butai U.A.G. (Japan)" ) // License: DSW
 GAME( 1988, twineagl, 0,        twineagl, twineagl, twineagl, ROT270, "Seta (Taito license)",   "Twin Eagle - Revenge Joe's Brother" ) // Country/License: DSW
 GAME( 1989, downtown, 0,        downtown, downtown, downtown, ROT270, "Seta",                   "DownTown" ) // Country/License: DSW
-GAME( 1989, downtowp, downtown,        downtown, downtown, downtown, ROT270, "Seta",                   "DownTown (prototype)" ) // Country/License: DSW
+GAME( 1989, downtowp, downtown, downtown, downtown, downtown, ROT270, "Seta",                   "DownTown (prototype)" ) // Country/License: DSW
 GAME( 1989, usclssic, 0,        usclssic, usclssic, 0,        ROT270, "Seta",                   "U.S. Classic" ) // Country/License: DSW
 GAME( 1989, calibr50, 0,        calibr50, calibr50, 0,        ROT270, "Athena / Seta",          "Caliber 50" ) // Country/License: DSW
 GAME( 1989, arbalest, 0,        metafox,  arbalest, arbalest, ROT270, "Seta",                   "Arbalester" ) // Country/License: DSW
@@ -8824,7 +8828,7 @@ GAME( 1989, metafox,  0,        metafox,  metafox,  metafox,  ROT270, "Seta",   
 GAME( 1989, drgnunit, 0,        drgnunit, drgnunit, 0,        ROT0,   "Seta",                   "Dragon Unit / Castle of Dragon" )
 GAME( 1989, wits,     0,        wits,     wits,     0,        ROT0,   "Athena (Visco license)", "Wit's (Japan)" ) // Country/License: DSW
 GAME( 1990, thunderl, 0,        thunderl, thunderl, 0,        ROT270, "Seta",                   "Thunder & Lightning" ) // Country/License: DSW
-GAME( 1994, wiggie,   0,        wiggie,   thunderl, wiggie,   ROT270, "Promat",                 "Wiggie Waggie" ) // hack of Thunder & Lightning
+GAMEX(1994, wiggie,   0,        wiggie,   thunderl, wiggie,   ROT270, "Promat",                 "Wiggie Waggie", GAME_IMPERFECT_GRAPHICS ) // hack of Thunder & Lightning
 GAME( 1991, rezon,    0,        rezon,    rezon,    rezon,    ROT0,   "Allumer",                "Rezon" )
 GAME( 1992, rezont,   rezon,    rezon,    rezont,   rezon,    ROT0,   "Allumer (Taito license)","Rezon (Taito)" )
 GAME( 1991, stg,      0,        drgnunit, stg,      0,        ROT270, "Athena / Tecmo",         "Strike Gunner S.T.G" )

@@ -1,5 +1,6 @@
 #include <math.h>
 #include "driver.h"
+#include "state.h"
 #include "2203intf.h"
 #include "fm.h"
 
@@ -97,6 +98,22 @@ static void ym2203_stream_update(void *param, stream_sample_t **inputs, stream_s
 }
 
 
+#ifdef _STATE_H
+static void ym2203_postload(void)
+{
+	int num;
+
+	for (num=0; num < MAX_SOUND; num++)
+	{
+		struct ym2203_info *info = sndti_token(SOUND_YM2203, num);
+
+		if (info)
+			YM2203Postload(info->chip);
+	}
+}
+#endif
+
+
 static void *ym2203_start(int sndindex, int clock, const void *config)
 {
 	static const struct YM2203interface generic_2203 = { 0 };
@@ -119,6 +136,12 @@ static void *ym2203_start(int sndindex, int clock, const void *config)
 
 	/* Initialize FM emurator */
 	info->chip = YM2203Init(info,sndindex,clock,Machine->sample_rate,TimerHandler,IRQHandler,&psgintf);
+
+#ifdef _STATE_H
+	if (sndindex == 0)
+		state_save_register_func_postload(ym2203_postload);
+#endif
+
 	if (info->chip)
 		return info;
 

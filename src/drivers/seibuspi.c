@@ -602,7 +602,7 @@ WRITE32_HANDLER( video_dma_length_w );
 WRITE32_HANDLER( video_dma_address_w );
 WRITE32_HANDLER( sprite_dma_start_w );
 
-UINT32 *scroll_ram;
+extern UINT32 *scroll_ram;
 extern int old_vidhw;
 extern int bg_size;
 data32_t *spimainram;
@@ -865,17 +865,28 @@ ADDRESS_MAP_END
 static READ8_HANDLER( flashrom_read )
 {
 	logerror("Flash Read: %08X\n", offset);
-	if( offset < 0x200000 ) {
-		return intelflash_read_byte(0, offset);
-	} else {
-		return 0;
+	if( offset < 0x100000 )
+	{
+		return intelflash_read(0, offset);
 	}
+	else if( offset < 0x200000 )
+	{
+		return intelflash_read(1, offset - 0x100000 );
+	}
+	return 0;
 }
 
 static WRITE8_HANDLER( flashrom_write )
 {
 	logerror("Flash Write: %08X, %02X\n", offset, data);
-	intelflash_write_byte(0, offset, data);
+	if( offset < 0x100000 )
+	{
+		intelflash_write(0, offset, data);
+	}
+	else if( offset < 0x200000 )
+	{
+		intelflash_write(1, offset - 0x100000, data);
+	}
 }
 
 static void irqhandler(int state)
@@ -1421,17 +1432,17 @@ static struct GfxDecodeInfo spi_gfxdecodeinfo[] =
 static NVRAM_HANDLER( spi )
 {
 	if( read_or_write ) {
-		nvram_handler_intelflash_0(file, read_or_write);
 		DS2404_save(file);
 	} else {
-		intelflash_init(0);
 		DS2404_init(1995, 1, 1);
 
 		if(file) {
-			nvram_handler_intelflash_0(file, read_or_write);
 			DS2404_load(file);
 		}
 	}
+
+	nvram_handler_intelflash_0(file, read_or_write);
+	nvram_handler_intelflash_1(file, read_or_write);
 }
 
 static NVRAM_HANDLER( sxx2f )
@@ -1456,7 +1467,6 @@ static INTERRUPT_GEN( spi_interrupt )
 static MACHINE_INIT( spi )
 {
 	UINT8* rom = memory_region(REGION_USER1);
-
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE );
 
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000688, 0x0000068b, 0, 0, z80_fifo_w);
@@ -1464,19 +1474,17 @@ static MACHINE_INIT( spi )
 
 	cpu_setbank(4, memory_region(REGION_CPU2));
 
-	intelflash_set_ids_0(0xaa, 0x89);
-
 	/* If the first value doesn't match, the game shows a checksum error */
 	/* If any of the other values are wrong, the game goes to update mode */
-	intelflash_write_byte(0, 0, 0xff);
-	intelflash_write_byte(0, 0, 0x10);
-	intelflash_write_byte(0, 0, rom[0x1ffffc]);	/* country code */
-	intelflash_write_byte(0, 0, 0x10);
-	intelflash_write_byte(0, 1, rom[0x1ffffd]);	/* unknown */
-	intelflash_write_byte(0, 0, 0x10);
-	intelflash_write_byte(0, 2, rom[0x1ffffe]);	/* unknown */
-	intelflash_write_byte(0, 0, 0x10);
-	intelflash_write_byte(0, 3, rom[0x1fffff]);	/* game code (same between regions) */
+	intelflash_write(0, 0, 0xff);
+	intelflash_write(0, 0, 0x10);
+	intelflash_write(0, 0, rom[0x1ffffc]);	/* country code */
+	intelflash_write(0, 0, 0x10);
+	intelflash_write(0, 1, rom[0x1ffffd]);	/* unknown */
+	intelflash_write(0, 0, 0x10);
+	intelflash_write(0, 2, rom[0x1ffffe]);	/* unknown */
+	intelflash_write(0, 0, 0x10);
+	intelflash_write(0, 3, rom[0x1fffff]);	/* game code (same between regions) */
 }
 
 static MACHINE_DRIVER_START( spi )
@@ -1636,10 +1644,12 @@ READ32_HANDLER ( rfjet_speedup_r )
 
 static DRIVER_INIT( spi )
 {
+	intelflash_init( 0, FLASH_INTEL_E28F008SA, NULL );
+	intelflash_init( 1, FLASH_INTEL_E28F008SA, NULL );
+
 	seibuspi_text_decrypt(memory_region(REGION_GFX1));
 	seibuspi_bg_decrypt(memory_region(REGION_GFX2), memory_region_length(REGION_GFX2));
 	seibuspi_sprite_decrypt(memory_region(REGION_GFX3), 0x400000);
-
 }
 
 static DRIVER_INIT( rdft )
@@ -1710,6 +1720,9 @@ static DRIVER_INIT( viprp1o )
 
 static DRIVER_INIT( rf2 )
 {
+	intelflash_init( 0, FLASH_INTEL_E28F008SA, NULL );
+	intelflash_init( 1, FLASH_INTEL_E28F008SA, NULL );
+
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0282AC, 0x0282AF, 0, 0, rf2_speedup_r );
 	seibuspi_rise10_text_decrypt(memory_region(REGION_GFX1));
 	seibuspi_rise10_bg_decrypt(memory_region(REGION_GFX2), memory_region_length(REGION_GFX2));
@@ -1735,6 +1748,9 @@ static DRIVER_INIT( rdft2us )
 
 static DRIVER_INIT( rfjet )
 {
+	intelflash_init( 0, FLASH_INTEL_E28F008SA, NULL );
+	intelflash_init( 1, FLASH_INTEL_E28F008SA, NULL );
+
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x002894c, 0x002894f, 0, 0, rfjet_speedup_r );
 	seibuspi_rise11_text_decrypt(memory_region(REGION_GFX1));
 	seibuspi_rise11_bg_decrypt(memory_region(REGION_GFX2), memory_region_length(REGION_GFX2));

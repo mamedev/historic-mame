@@ -51,7 +51,7 @@ static void *ym2413_start(int sndindex, int clock, const void *config)
 {
 	int rate = Machine->sample_rate;
 	struct ym2413_info *info;
-	
+
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
 
@@ -143,10 +143,12 @@ WRITE8_HANDLER( YM2413_data_port_2_w ) { struct ym2413_info *info = sndti_token(
 WRITE8_HANDLER( YM2413_data_port_3_w ) { struct ym2413_info *info = sndti_token(SOUND_YM2413, 3); YM2413Write (info->chip, 1, data); } /* 4th chip */
 
 WRITE16_HANDLER( YM2413_register_port_0_lsb_w ) { if (ACCESSING_LSB) YM2413_register_port_0_w(offset,data & 0xff); }
+WRITE16_HANDLER( YM2413_register_port_0_msb_w ) { if (ACCESSING_MSB) YM2413_register_port_0_w(offset,((data & 0xff00) >> 8)); }
 WRITE16_HANDLER( YM2413_register_port_1_lsb_w ) { if (ACCESSING_LSB) YM2413_register_port_1_w(offset,data & 0xff); }
 WRITE16_HANDLER( YM2413_register_port_2_lsb_w ) { if (ACCESSING_LSB) YM2413_register_port_2_w(offset,data & 0xff); }
 WRITE16_HANDLER( YM2413_register_port_3_lsb_w ) { if (ACCESSING_LSB) YM2413_register_port_3_w(offset,data & 0xff); }
 WRITE16_HANDLER( YM2413_data_port_0_lsb_w ) { if (ACCESSING_LSB) YM2413_data_port_0_w(offset,data & 0xff); }
+WRITE16_HANDLER( YM2413_data_port_0_msb_w ) { if (ACCESSING_MSB) YM2413_data_port_0_w(offset,((data & 0xff00) >> 8)); }
 WRITE16_HANDLER( YM2413_data_port_1_lsb_w ) { if (ACCESSING_LSB) YM2413_data_port_1_w(offset,data & 0xff); }
 WRITE16_HANDLER( YM2413_data_port_2_lsb_w ) { if (ACCESSING_LSB) YM2413_data_port_2_w(offset,data & 0xff); }
 WRITE16_HANDLER( YM2413_data_port_3_lsb_w ) { if (ACCESSING_LSB) YM2413_data_port_3_w(offset,data & 0xff); }

@@ -10,12 +10,13 @@ Known Dumps
 
 Game       Description                  Mother Board   Code       Version       Date   Time
 
-kdeadeye   Dead Eye    			GV999          ?       ?            ?         ?
 pbball96   Powerful Pro Baseball '96    GV999          GV017   JAPAN 1.03   96.05.27  18:00
 hyperath   Hyper Athlete                ZV610          GV021   JAPAN 1.00   96.06.09  19:00
 susume     Susume! Taisen Puzzle-Dama   ZV610          GV027   JAPAN 1.20   96.03.04  12:00
 btchamp    Beat the Champ               GV999          GV053   UAA01        ?
+kdeadeye   Dead Eye                     GV999          GV054   UA01         ?
 weddingr   Wedding Rhapsody             ?              GX624   JAA          97.05.29   9:12
+nagano98   Winter Olypmics in Nagano 98 GV999          GX720   EAA01 1.03   98.01.08  10:45
 simpbowl   Simpsons Bowling             ?              GQ829   UAA          ?
 
 PCB Layouts
@@ -191,7 +192,7 @@ static ADDRESS_MAP_START( konamigv_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x1f801060, 0x1f80106f) AM_WRITENOP
 	AM_RANGE(0x1f801070, 0x1f801077) AM_READWRITE(psx_irq_r, psx_irq_w)
 	AM_RANGE(0x1f801080, 0x1f8010ff) AM_READWRITE(psx_dma_r, psx_dma_w)
-	AM_RANGE(0x1f801100, 0x1f80113f) AM_READWRITE(psx_counter_r, psx_counter_w)
+	AM_RANGE(0x1f801100, 0x1f80112f) AM_READWRITE(psx_counter_r, psx_counter_w)
 	AM_RANGE(0x1f801810, 0x1f801817) AM_READWRITE(psx_gpu_r, psx_gpu_w)
 	AM_RANGE(0x1f801820, 0x1f801827) AM_READWRITE(psx_mdec_r, psx_mdec_w)
 	AM_RANGE(0x1f801c00, 0x1f801dff) AM_READWRITE(psx_spu_r, psx_spu_w)
@@ -290,9 +291,17 @@ static void scsi_irq(void)
 	psx_irq_set(0x400);
 }
 
+static SCSIConfigTable dev_table =
+{
+	1, /* 1 SCSI device */
+	{
+		{ SCSI_ID_4, 0, SCSI_DEVICE_CDROM } /* SCSI ID 4, using CHD 0, and it's a CD-ROM */
+	}
+};
+
 static struct AM53CF96interface scsi_intf =
 {
-	AM53CF96_DEVICE_CDROM,	/* CD-ROM */
+	&dev_table,		/* SCSI device table */
 	&scsi_irq,		/* command completion IRQ */
 };
 
@@ -311,7 +320,7 @@ static MACHINE_INIT( konamigv )
 	psx_machine_init();
 
 	/* also hook up CDDA audio to the CD-ROM drive */
-	CDDA_set_cdrom(0, am53cf96_get_device());
+	CDDA_set_cdrom(0, am53cf96_get_device(SCSI_ID_4));
 }
 
 static struct PSXSPUinterface konamigv_psxspu_interface =
@@ -359,7 +368,7 @@ static MACHINE_DRIVER_START( konamigv )
 MACHINE_DRIVER_END
 
 INPUT_PORTS_START( konamigv )
-	/* IN 0 */
+	/* IN0 */
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT) PORT_8WAY
@@ -378,7 +387,7 @@ INPUT_PORTS_START( konamigv )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	/* IN 1 */
+	/* IN1 */
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
@@ -397,7 +406,7 @@ INPUT_PORTS_START( konamigv )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	/* IN 2 */
+	/* IN2 */
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(3)
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(3)
@@ -452,8 +461,8 @@ static READ32_HANDLER( flash_r )
 		int chip = (flash_address >= 0x200000) ? 2 : 0;
 		int ret;
 
-		ret = intelflash_read_byte(chip, flash_address & 0x1fffff) & 0xff;
-		ret |= intelflash_read_byte(chip+1, flash_address & 0x1fffff)<<8;
+		ret = intelflash_read(chip, flash_address & 0x1fffff) & 0xff;
+		ret |= intelflash_read(chip+1, flash_address & 0x1fffff)<<8;
 		flash_address++;
 
 		return ret;
@@ -476,8 +485,8 @@ static WRITE32_HANDLER( flash_w )
 	{
 		case 0:
 			chip = (flash_address >= 0x200000) ? 2 : 0;
-			intelflash_write_byte(chip, flash_address & 0x1fffff, data&0xff);
-			intelflash_write_byte(chip+1, flash_address & 0x1fffff, (data>>8)&0xff);
+			intelflash_write(chip, flash_address & 0x1fffff, data&0xff);
+			intelflash_write(chip+1, flash_address & 0x1fffff, (data>>8)&0xff);
 			break;
 
 		case 1:
@@ -522,30 +531,28 @@ static READ32_HANDLER( unknown_r )
 	return 0xffffffff;
 }
 
-static MACHINE_INIT( simpbowl )
+static DRIVER_INIT( simpbowl )
 {
+	intelflash_init( 0, FLASH_INTEL_28F016S5, NULL );
+	intelflash_init( 1, FLASH_INTEL_28F016S5, NULL );
+	intelflash_init( 2, FLASH_INTEL_28F016S5, NULL );
+	intelflash_init( 3, FLASH_INTEL_28F016S5, NULL );
+
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f680080, 0x1f68008f, 0, 0, flash_r );
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f680080, 0x1f68008f, 0, 0, flash_w );
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f6800c0, 0x1f6800c7, 0, 0, trackball_r );
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f6800c8, 0x1f6800cb, 0, 0, unknown_r ); /* ?? */
 
-	psx_machine_init();
-
-	// Intel (0x89) 29F016 (0xaa)
-	intelflash_set_ids_0(0xaa, 0x89);
-	intelflash_set_ids_1(0xaa, 0x89);
-	intelflash_set_ids_2(0xaa, 0x89);
-	intelflash_set_ids_3(0xaa, 0x89);
+	init_konamigv();
 }
 
 static MACHINE_DRIVER_START( simpbowl )
 	MDRV_IMPORT_FROM( konamigv )
-	MDRV_MACHINE_INIT( simpbowl )
 	MDRV_NVRAM_HANDLER( simpbowl )
 MACHINE_DRIVER_END
 
 INPUT_PORTS_START( simpbowl )
-	/* IN 0 */
+	/* IN0 */
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT) PORT_8WAY
@@ -564,7 +571,7 @@ INPUT_PORTS_START( simpbowl )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	/* IN 1 */
+	/* IN1 */
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
@@ -583,7 +590,7 @@ INPUT_PORTS_START( simpbowl )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	/* IN 2 */
+	/* IN2 */
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(3)
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(3)
@@ -602,11 +609,11 @@ INPUT_PORTS_START( simpbowl )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(4)
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START4 )
 
-	/* IN 3 */
+	/* IN3 */
 	PORT_START
 	PORT_BIT( 0x7ff, 0x0000, IPT_TRACKBALL_X ) PORT_SENSITIVITY(100) PORT_KEYDELTA(63) PORT_REVERSE PORT_PLAYER(1)
 
-	/* IN 4 */
+	/* IN4 */
 	PORT_START
 	PORT_BIT( 0x7ff, 0x0000, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(63) PORT_PLAYER(1)
 
@@ -618,11 +625,11 @@ static READ32_HANDLER( btcflash_r )
 {
 	if (mem_mask == 0xffff0000)
 	{
-		return intelflash_read_word(0, offset*2);
+		return intelflash_read(0, offset*2);
 	}
 	else if (mem_mask == 0x0000ffff)
 	{
-		return intelflash_read_word(0, (offset*2)+1)<<16;
+		return intelflash_read(0, (offset*2)+1)<<16;
 	}
 
 	return 0;
@@ -632,11 +639,11 @@ static WRITE32_HANDLER( btcflash_w )
 {
 	if (mem_mask == 0xffff0000)
 	{
-		intelflash_write_word(0, offset*2, data);
+		intelflash_write(0, offset*2, data&0xffff);
 	}
 	else if (mem_mask == 0x0000ffff)
 	{
-		intelflash_write_word(0, (offset*2)+1, data>>16);
+		intelflash_write(0, (offset*2)+1, (data>>16)&0xffff);
 	}
 }
 
@@ -672,30 +679,29 @@ static WRITE32_HANDLER( btc_trackball_w )
 static NVRAM_HANDLER( btchamp )
 {
 	nvram_handler_konamigv_93C46( file, read_or_write );
-	nvram_handler_intelflash_0( file, read_or_write );
+	nvram_handler_intelflash_16le_0( file, read_or_write );
 }
 
-static MACHINE_INIT( btchamp )
+static DRIVER_INIT( btchamp )
 {
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f680080, 0x1f68008f, 0, 0, btc_trackball_r );
+	intelflash_init( 0, FLASH_SHARP_LH28F400, NULL );
+
+	memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0x1f680080, 0x1f68008f, 0, 0, btc_trackball_r );
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f680080, 0x1f68008f, 0, 0, btc_trackball_w );
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f380000, 0x1f4fffff, 0, 0, btcflash_r );
-	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f380000, 0x1f4fffff, 0, 0, btcflash_w );
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f6800e0, 0x1f6800e3, 0, 0, MWA32_NOP );
+	memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0x1f380000, 0x1f3fffff, 0, 0, btcflash_r );
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f380000, 0x1f3fffff, 0, 0, btcflash_w );
 
-	psx_machine_init();
-
-	// Sharp (0xb0) LH28F400 (0xed)
-	intelflash_set_ids_0(0xb0, 0x3d);
+	init_konamigv();
 }
 
 static MACHINE_DRIVER_START( btchamp )
 	MDRV_IMPORT_FROM( konamigv )
-	MDRV_MACHINE_INIT( btchamp )
 	MDRV_NVRAM_HANDLER( btchamp )
 MACHINE_DRIVER_END
 
 INPUT_PORTS_START( btchamp )
-	/* IN 0 */
+	/* IN0 */
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT) PORT_8WAY
@@ -714,7 +720,7 @@ INPUT_PORTS_START( btchamp )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	/* IN 1 */
+	/* IN1 */
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
@@ -733,7 +739,7 @@ INPUT_PORTS_START( btchamp )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	/* IN 2 */
+	/* IN2 */
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(3)
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(3)
@@ -752,21 +758,212 @@ INPUT_PORTS_START( btchamp )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(4)
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START4 )
 
-	/* IN 3 */
+	/* IN3 */
 	PORT_START
 	PORT_BIT( 0x7ff, 0x0000, IPT_TRACKBALL_X ) PORT_SENSITIVITY(100) PORT_KEYDELTA(63) PORT_REVERSE PORT_PLAYER(1)
 
-	/* IN 4 */
+	/* IN4 */
 	PORT_START
 	PORT_BIT( 0x7ff, 0x0000, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(63) PORT_PLAYER(1)
 
-	/* IN 5 */
+	/* IN5 */
 	PORT_START
 	PORT_BIT( 0x7ff, 0x0000, IPT_TRACKBALL_X ) PORT_SENSITIVITY(100) PORT_KEYDELTA(63) PORT_REVERSE PORT_PLAYER(2)
 
-	/* IN 6 */
+	/* IN6 */
 	PORT_START
 	PORT_BIT( 0x7ff, 0x0000, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(63) PORT_PLAYER(2)
+
+INPUT_PORTS_END
+
+/*
+Dead Eye
+
+Top board:
+	PWB402610
+    Xilinx XC3020A
+    Xilinx 1718DPC
+    74F244N (2 of these)
+    LVT245SS (2 of theses)
+
+CD:
+	P/N 002715
+	054
+	UA
+	A01
+*/
+
+static READ32_HANDLER( kdeadeye_0_r )
+{
+	return readinputport( 3 );
+}
+
+static READ32_HANDLER( kdeadeye_1_r )
+{
+	return readinputport( 4 );
+}
+
+static READ32_HANDLER( kdeadeye_2_r )
+{
+	return readinputport( 5 );
+}
+
+static READ32_HANDLER( kdeadeye_3_r )
+{
+	return readinputport( 6 );
+}
+
+static READ32_HANDLER( kdeadeye_4_r )
+{
+	return readinputport( 7 );
+}
+
+static WRITE32_HANDLER( kdeadeye_0_w )
+{
+}
+
+static int kdeadeye_crosshair_x( int port )
+{
+	const int portmin = 0x004c;
+	const int portmax = 0x01bb;
+	int x = ( readinputport( port ) - portmin );
+	x *= ( Machine->visible_area.max_x - Machine->visible_area.min_x );
+	x /= ( portmax - portmin );
+	return Machine->visible_area.min_x + x;
+}
+
+static int kdeadeye_crosshair_y( int port )
+{
+	const int portmin = 0x0000;
+	const int portmax = 0x00ef;
+	int y = ( readinputport( port ) - portmin );
+	y *= ( Machine->visible_area.max_y - Machine->visible_area.min_y );
+	y /= ( portmax - portmin );
+	return Machine->visible_area.min_y + y;
+}
+
+static VIDEO_UPDATE( kdeadeye )
+{
+	video_update_psx( bitmap, cliprect );
+
+	draw_crosshair( bitmap, kdeadeye_crosshair_x( 3 ), kdeadeye_crosshair_y( 4 ), cliprect );
+	draw_crosshair( bitmap, kdeadeye_crosshair_x( 5 ), kdeadeye_crosshair_y( 6 ), cliprect );
+}
+
+static DRIVER_INIT( kdeadeye )
+{
+	intelflash_init( 0, FLASH_SHARP_LH28F400, NULL );
+
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1f680080, 0x1f680083, 0, 0, kdeadeye_0_r );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1f680090, 0x1f680093, 0, 0, kdeadeye_1_r );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1f6800a0, 0x1f6800a3, 0, 0, kdeadeye_2_r );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1f6800b0, 0x1f6800b3, 0, 0, kdeadeye_3_r );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1f6800c0, 0x1f6800c3, 0, 0, kdeadeye_4_r );
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1f6800e0, 0x1f6800e3, 0, 0, kdeadeye_0_w );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1f380000, 0x1f3fffff, 0, 0, btcflash_r );
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1f380000, 0x1f3fffff, 0, 0, btcflash_w );
+
+	init_konamigv();
+}
+
+static MACHINE_DRIVER_START( kdeadeye )
+	MDRV_IMPORT_FROM( konamigv )
+	MDRV_VIDEO_UPDATE( kdeadeye )
+	MDRV_NVRAM_HANDLER( btchamp )
+MACHINE_DRIVER_END
+
+INPUT_PORTS_START( kdeadeye )
+	/* IN0 */
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(0x1000, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Test Switch") PORT_CODE(KEYCODE_F2)
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* EEPROM data */
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	/* IN1 */
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	/* IN2 */
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	/* IN3 */
+	PORT_START
+	PORT_BIT( 0xffff, 0x0100, IPT_LIGHTGUN_X ) PORT_MINMAX( 0x004c, 0x01bb ) PORT_SENSITIVITY( 100 ) PORT_KEYDELTA( 5 ) PORT_PLAYER( 1 )
+
+	/* IN4 */
+	PORT_START
+	PORT_BIT( 0xffff, 0x0077, IPT_LIGHTGUN_Y ) PORT_MINMAX( 0x0000, 0x00ef ) PORT_SENSITIVITY( 100 ) PORT_KEYDELTA( 5 ) PORT_PLAYER( 1 )
+
+	/* IN5 */
+	PORT_START
+	PORT_BIT( 0xffff, 0x0100, IPT_LIGHTGUN_X ) PORT_MINMAX( 0x004c, 0x01bb ) PORT_SENSITIVITY( 100 ) PORT_KEYDELTA( 5 ) PORT_PLAYER( 2 )
+
+	/* IN6 */
+	PORT_START
+	PORT_BIT( 0xffff, 0x0077, IPT_LIGHTGUN_Y ) PORT_MINMAX( 0x0000, 0x00ef ) PORT_SENSITIVITY( 100 ) PORT_KEYDELTA( 5 ) PORT_PLAYER( 2 )
+
+	/* IN7 */
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER( 1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER( 2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 INPUT_PORTS_END
 
@@ -849,13 +1046,24 @@ ROM_START( kdeadeye )
 	DISK_IMAGE_READONLY( "kdeadeye", 0, MD5(5109d61ab8791a6d622499b51e613a8c) SHA1(2b413a2a22e1959fb4f71b67ba51c6c8e0d58970) )
 ROM_END
 
+ROM_START( nagano98 )
+	GV_BIOS
+
+	ROM_REGION( 0x0000080, REGION_USER2, 0 ) /* default eeprom */
+	ROM_LOAD( "nagano98.25c",  0x000000, 0x000080, CRC(b64b7451) SHA1(a77a37e0cc580934d1e7e05d523bae0acd2c1480) )
+
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE_READONLY( "nagano98", 0, MD5(cbedbd2953b70f214e72179b2cc0dcd8) SHA1(21d14864cdd34c6e052f3577f8d805dce49fcab6) )
+ROM_END
+
 /* BIOS placeholder */
 GAMEX( 1995, konamigv, 0, konamigv, konamigv, konamigv, ROT0, "Konami", "Baby Phoenix/GV System", NOT_A_DRIVER )
 
-GAMEX( 1996, kdeadeye, konamigv, btchamp,  konamigv, konamigv, ROT0, "Konami", "Dead Eye (Konami)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, pbball96, konamigv, konamigv, konamigv, konamigv, ROT0, "Konami", "Powerful Baseball '96 (GV017 JAPAN 1.03)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, hyperath, konamigv, konamigv, konamigv, konamigv, ROT0, "Konami", "Hyper Athlete (GV021 JAPAN 1.00)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, susume,   konamigv, konamigv, konamigv, konamigv, ROT0, "Konami", "Susume! Taisen Puzzle-Dama (GV027 JAPAN 1.20)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1996, btchamp,  konamigv, btchamp,  btchamp,  konamigv, ROT0, "Konami", "Beat the Champ (GV053 UAA01)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1996, btchamp,  konamigv, btchamp,  btchamp,  btchamp,  ROT0, "Konami", "Beat the Champ (GV053 UAA01)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1996, kdeadeye, konamigv, kdeadeye, kdeadeye, kdeadeye, ROT0, "Konami", "Dead Eye (GV054 UA01)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1997, weddingr, konamigv, konamigv, konamigv, konamigv, ROT0, "Konami", "Wedding Rhapsody (GX624 JAA)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 2000, simpbowl, konamigv, simpbowl, simpbowl, konamigv, ROT0, "Konami", "Simpsons Bowling (GQ829 UAA)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1998, nagano98, konamigv, konamigv, konamigv, konamigv, ROT0, "Konami", "Nagano Winter Olympics '98 (GX720 EAA)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 2000, simpbowl, konamigv, simpbowl, simpbowl, simpbowl, ROT0, "Konami", "Simpsons Bowling (GQ829 UAA)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )

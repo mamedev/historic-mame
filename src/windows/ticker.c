@@ -174,8 +174,7 @@ static cycles_t rdtsc_cycle_counter(void)
 	INT64 *presult = &result;
 
 	__asm {
-
-		rdtsc
+		__asm _emit 0Fh __asm _emit 031h	// rdtsc
 		mov ebx, presult
 		mov [ebx],eax
 		mov [ebx+4],edx

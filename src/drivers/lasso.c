@@ -873,6 +873,49 @@ ROM_START( pinbo )
 	ROM_LOAD( "blue.n10",    0x0200, 0x0100, CRC(e41250ad) SHA1(2e9a2babbacb1753057d46cf1dd6dc183611747e) )
 ROM_END
 
+ROM_START( pinboa )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "rom2.b7",     0x2000, 0x2000, CRC(9a185338) SHA1(4029cf927686b5e14ef7600b17ea3056cc58b15b) )
+	ROM_LOAD( "6.bin",       0x6000, 0x2000, CRC(f80b204c) SHA1(ee9b4ae1d8ea2fc062022fcfae67df87ed7aff41) )
+	ROM_LOAD( "5.bin",       0x8000, 0x2000, CRC(c57fe503) SHA1(11b7371c07c9b2c73ab61420a2cc609653c48d37) )
+	ROM_LOAD( "4.bin",       0xa000, 0x2000, CRC(d632b598) SHA1(270a5a790a66eaf3d90bf8081ab144fd1af9db3d) )
+	ROM_RELOAD(              0xe000, 0x2000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64K for sound */
+	ROM_LOAD( "8.bin",       0x0000, 0x2000, CRC(32d1df14) SHA1(c0d4181378bbd6f2c594e923e2f8b21647c7fb0e) )
+
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "rom6.a1",     0x0000, 0x0800, CRC(74fe8e98) SHA1(3c9ac38d7054b2831a515786b6f204b1804aaea3) )	/* tiles   */
+	ROM_CONTINUE(       	 0x2000, 0x0800             )	/* sprites */
+	ROM_CONTINUE(       	 0x0800, 0x0800             )
+	ROM_CONTINUE(       	 0x2800, 0x0800             )
+	ROM_CONTINUE(       	 0x1000, 0x0800             )
+	ROM_CONTINUE(       	 0x3000, 0x0800             )
+	ROM_CONTINUE(       	 0x1800, 0x0800             )
+	ROM_CONTINUE(       	 0x3800, 0x0800             )
+	ROM_LOAD( "rom8.c1",     0x4000, 0x0800, CRC(5a800fe7) SHA1(375269ec73fab7f0cf017a79e002e31b006f5ad7) )	/* 2nd bitplane */
+	ROM_CONTINUE(       	 0x6000, 0x0800             )
+	ROM_CONTINUE(       	 0x4800, 0x0800             )
+	ROM_CONTINUE(       	 0x6800, 0x0800             )
+	ROM_CONTINUE(       	 0x5000, 0x0800             )
+	ROM_CONTINUE(       	 0x7000, 0x0800             )
+	ROM_CONTINUE(       	 0x5800, 0x0800             )
+	ROM_CONTINUE(       	 0x7800, 0x0800             )
+	ROM_LOAD( "2.bin",       0x8000, 0x0800, CRC(33cac92e) SHA1(55d4ff3ae9c9519a59bd6021a53584c873b4d327) ) /* 3rd bitplane */
+	ROM_CONTINUE(       	 0xa000, 0x0800             )
+	ROM_CONTINUE(       	 0x8800, 0x0800             )
+	ROM_CONTINUE(       	 0xa800, 0x0800             )
+	ROM_CONTINUE(       	 0x9000, 0x0800             )
+	ROM_CONTINUE(       	 0xb000, 0x0800             )
+	ROM_CONTINUE(       	 0x9800, 0x0800             )
+	ROM_CONTINUE(       	 0xb800, 0x0800             )
+
+	ROM_REGION( 0x00300, REGION_PROMS, 0 ) /* Color PROMs */
+	ROM_LOAD( "red.l10",     0x0000, 0x0100, CRC(e6c9ba52) SHA1(6ea96f9bd71de6181d675b0f2d59a8c5e1be5aa3) )
+	ROM_LOAD( "green.k10",   0x0100, 0x0100, CRC(1bf2d335) SHA1(dcb074d3de939dfc652743e25bc66bd6fbdc3289) )
+	ROM_LOAD( "blue.n10",    0x0200, 0x0100, CRC(e41250ad) SHA1(2e9a2babbacb1753057d46cf1dd6dc183611747e) )
+ROM_END
+
 ROM_START( pinbos )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "b4.bin",      0x2000, 0x2000, CRC(d9452d4f) SHA1(c744ee037275b880c0ddc2fd83b3c05eb0a53621) )
@@ -917,6 +960,7 @@ ROM_START( pinbos )
 ROM_END
 
 
+
 /***************************************************************************
 
 								Game Drivers
@@ -926,5 +970,6 @@ ROM_END
 GAME( 1982, lasso,    0,     lasso,    lasso,    0, ROT90, "SNK", "Lasso"                   )
 GAME( 1983, chameleo, 0,     chameleo, chameleo, 0, ROT0,  "Jaleco", "Chameleon"               )
 GAME( 1984, wwjgtin,  0,     wwjgtin,  wwjgtin,  0, ROT0,  "Jaleco / Casio", "Wai Wai Jockey Gate-In!" )
-GAME( 1984, pinbo,    0,     pinbo,    pinbo,    0, ROT90, "Jaleco", "Pinbo" )
-GAME( 1984, pinbos,   pinbo, pinbo,    pinbo,   0, ROT90, "bootleg?", "Pinbo (Strike)" )
+GAME( 1984, pinbo,    0,     pinbo,    pinbo,    0, ROT90, "Jaleco", "Pinbo (set 1)" )
+GAME( 1984, pinboa,   pinbo, pinbo,    pinbo,   0, ROT90, "Jaleco", "Pinbo (set 2)" )
+GAME( 1985, pinbos,   pinbo, pinbo,    pinbo,   0, ROT90, "bootleg?", "Pinbo (Strike)" )

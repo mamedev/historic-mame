@@ -17,8 +17,9 @@ Known Dumps
 Game       Description                             CPU board           Mother board             Daughter board          Keycus   ROM0L
 
 tekken     Tekken (TE4/VER.C)                      COH 100             SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       none     5
-tekkena    Tekken (TE2/VER.B)                      COH 100             "                        "                       "        "
-tekkenb    Tekken (TE1/VER.B)                      COH 100             "                        "                       "        "
+tekkena    Tekken (TE2/VER.C)                      COH 100             "                        "                       "        "
+tekkenb    Tekken (TE2/VER.B)                      COH 100             "                        "                       "        "
+tekkenc    Tekken (TE1/VER.B)                      COH 100             "                        "                       "        "
 tekken2    Tekken 2 Ver.B (TES3/VER.B)             COH 100             SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C406     6
 tekken2a   Tekken 2 Ver.B (TES2/VER.B)             COH 100             "                        "                       "        "
 tekken2b   Tekken 2 (TES2/VER.A)                   COH 100             "                        "                       "        "
@@ -711,7 +712,7 @@ static ADDRESS_MAP_START( namcos11_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x1f802040, 0x1f802043) AM_WRITENOP
 	AM_RANGE(0x1fa04000, 0x1fa0ffff) AM_READWRITE(sharedram_r, sharedram_w) AM_BASE(&namcos11_sharedram) /* shared ram */
 	AM_RANGE(0x1fa20000, 0x1fa2ffff) AM_WRITE(keycus_w) AM_BASE(&namcos11_keycus) AM_SIZE(&namcos11_keycus_size) /* keycus */
-	AM_RANGE(0x1fa30000, 0x1fa30fff) AM_READWRITE( at28c16_0_32_lsb_r, at28c16_0_32_lsb_w ) /* eeprom */
+	AM_RANGE(0x1fa30000, 0x1fa30fff) AM_READWRITE( at28c16_32le_16lsb_0_r, at28c16_32le_16lsb_0_w ) /* eeprom */
 	AM_RANGE(0x1fb00000, 0x1fb00003) AM_WRITENOP /* ?? */
 	AM_RANGE(0x1fbf6000, 0x1fbf6003) AM_WRITENOP /* ?? */
 	AM_RANGE(0x1fc00000, 0x1fffffff) AM_ROM AM_SHARE(2) AM_REGION(REGION_USER1, 0) /* bios */
@@ -732,6 +733,7 @@ static struct
 	{ "tekken", NULL, 32 },
 	{ "tekkena", NULL, 32 },
 	{ "tekkenb", NULL, 32 },
+	{ "tekkenc", NULL, 32 },
 	{ "tekken2", keycus_c406_r, 32 },
 	{ "tekken2a", keycus_c406_r, 32 },
 	{ "tekken2b", keycus_c406_r, 32 },
@@ -1464,6 +1466,28 @@ ROM_END
 
 ROM_START( tekkena )
 	ROM_REGION32_LE( 0x0400000, REGION_USER1, 0 ) /* main prg */
+	ROM_LOAD16_BYTE( "te2verc.2l",   0x0000000, 0x100000, CRC(a24c8c57) SHA1(bf69f17310201e38aa17fb4484cdb480f26d876e) )
+	ROM_LOAD16_BYTE( "te2verc.2j",   0x0000001, 0x100000, CRC(3224c298) SHA1(8afe80af0eef52f96bf2ddb2482b06692a8f047d) )
+	ROM_LOAD16_BYTE( "te1verb.2k",   0x0200000, 0x100000, CRC(b9860b29) SHA1(678889fc5c70bf66f0bd9864a20636ffb620ed0d) )
+	ROM_LOAD16_BYTE( "te1verb.2f",   0x0200001, 0x100000, CRC(3dc01aad) SHA1(266f346fa575c42b635bc469798f5aade9821e20) )
+
+	ROM_REGION32_LE( 0x1000000, REGION_USER2, 0 ) /* main data */
+	ROM_LOAD16_BYTE( "te1rom0l.ic5", 0x0000000, 0x200000, CRC(03786e09) SHA1(de2b9e19ace43c424d100dc5d3207217f66d6479) )
+	ROM_LOAD16_BYTE( "te1rom0u.ic6", 0x0000001, 0x200000, CRC(75d91051) SHA1(1c7958162315576c3881dcc684b85710f7f19cd6) )
+	ROM_LOAD16_BYTE( "te1rom1l.ic3", 0x0400000, 0x200000, CRC(81416f8e) SHA1(b42ff08ee84491c57a7c87bb767db7e2ec7a26c2) )
+	ROM_LOAD16_BYTE( "te1rom1u.ic8", 0x0400001, 0x200000, CRC(fa7ba433) SHA1(e222c4b1631c09e58546446a1e82c16fca936f1d) )
+	ROM_LOAD16_BYTE( "te1rom2l.ic4", 0x0800000, 0x200000, CRC(41d77846) SHA1(eeab049135c02a255899fe37e225c1111b2fbb7d) )
+	ROM_LOAD16_BYTE( "te1rom2u.ic7", 0x0800001, 0x200000, CRC(a678987e) SHA1(c62c00ce5cf4d001723c999b2bc3dbb90283def1) )
+
+	ROM_REGION( 0x0040000, REGION_CPU2, 0 ) /* sound prg */
+	ROM_LOAD( "te1sprog.6d",  0x0000000, 0x040000, CRC(849587e9) SHA1(94c6a757b24758a866a41bd8acd46aa46844f74b) )
+
+	ROM_REGION( 0x0400000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "te1wave.8k",   0x0000000, 0x200000, CRC(fce6c57a) SHA1(7fb8c69452c92c59a940a2b69d0d73ef7aefcb82) )
+ROM_END
+
+ROM_START( tekkenb )
+	ROM_REGION32_LE( 0x0400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "te2verb.2l",   0x0000000, 0x100000, CRC(246cfbdd) SHA1(c1bffe3c463e9eff6dcaf9937da72bff8ff33e4e) )
 	ROM_LOAD16_BYTE( "te2verb.2j",   0x0000001, 0x100000, CRC(dfa83e47) SHA1(a29d852c1b6a52c043248d7e5af04067dfa3eb40) )
 	ROM_LOAD16_BYTE( "te1verb.2k",   0x0200000, 0x100000, CRC(b9860b29) SHA1(678889fc5c70bf66f0bd9864a20636ffb620ed0d) )
@@ -1484,7 +1508,7 @@ ROM_START( tekkena )
 	ROM_LOAD( "te1wave.8k",   0x0000000, 0x200000, CRC(fce6c57a) SHA1(7fb8c69452c92c59a940a2b69d0d73ef7aefcb82) )
 ROM_END
 
-ROM_START( tekkenb )
+ROM_START( tekkenc )
 	ROM_REGION32_LE( 0x0400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "te1verb.2l",   0x0000000, 0x100000, CRC(4291afee) SHA1(2e04a6c786544176e2b7e22b5f469e3548896b19) )
 	ROM_LOAD16_BYTE( "te1verb.2j",   0x0000001, 0x100000, CRC(5c534705) SHA1(2430b5c36de419822de0283c006c5af2e7cd95ef) )
@@ -1601,8 +1625,9 @@ ROM_START( xevi3dg )
 ROM_END
 
 GAMEX( 1994, tekken,    0,        coh100, tekken,   namcos11, ROT0, "Namco", "Tekken (TE4/VER.C)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1994, tekkena,   tekken,   coh100, tekken,   namcos11, ROT0, "Namco", "Tekken (TE2/VER.B)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1994, tekkenb,   tekken,   coh100, tekken,   namcos11, ROT0, "Namco", "Tekken (TE1/VER.B)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1994, tekkena,   tekken,   coh100, tekken,   namcos11, ROT0, "Namco", "Tekken (TE2/VER.C)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1994, tekkenb,   tekken,   coh100, tekken,   namcos11, ROT0, "Namco", "Tekken (TE2/VER.B)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1994, tekkenc,   tekken,   coh100, tekken,   namcos11, ROT0, "Namco", "Tekken (TE1/VER.B)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1995, tekken2,   0,        coh100, tekken,   namcos11, ROT0, "Namco", "Tekken 2 Ver.B (TES3/VER.B)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1995, tekken2a,  tekken2,  coh100, tekken,   namcos11, ROT0, "Namco", "Tekken 2 Ver.B (TES2/VER.B)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1995, tekken2b,  tekken2,  coh100, tekken,   namcos11, ROT0, "Namco", "Tekken 2 (TES2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )

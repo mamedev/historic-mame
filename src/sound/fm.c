@@ -2133,38 +2133,35 @@ void YM2203ResetChip(void *chip)
 }
 
 #ifdef _STATE_H
-static void YM2203_postload(void)
+void YM2203Postload(void *chip)
 {
-	int num , r;
-
-	for(num=0; num < MAX_SOUND; num++)
+	if (chip)
 	{
-		YM2203 *F2203 = sndti_token(SOUND_YM2203, num);
-		if (F2203)
+		YM2203 *F2203 = (YM2203 *)chip;
+		int r;
+
+		/* prescaler */
+		OPNPrescaler_w(&F2203->OPN,1,1);
+
+		/* SSG registers */
+		for(r=0;r<16;r++)
 		{
-			/* prescaler */
-			OPNPrescaler_w(&F2203->OPN,1,1);
-
-			/* SSG registers */
-			for(r=0;r<16;r++)
-			{
-				(*F2203->OPN.ST.SSG->write)(F2203->OPN.ST.param,0,r);
-				(*F2203->OPN.ST.SSG->write)(F2203->OPN.ST.param,1,F2203->REGS[r]);
-			}
-
-			/* OPN registers */
-			/* DT / MULTI , TL , KS / AR , AMON / DR , SR , SL / RR , SSG-EG */
-			for(r=0x30;r<0x9e;r++)
-				if((r&3) != 3)
-					OPNWriteReg(&F2203->OPN,r,F2203->REGS[r]);
-			/* FB / CONNECT , L / R / AMS / PMS */
-			for(r=0xb0;r<0xb6;r++)
-				if((r&3) != 3)
-					OPNWriteReg(&F2203->OPN,r,F2203->REGS[r]);
-
-			/* channels */
-			/*FM_channel_postload(F2203->CH,3);*/
+			(*F2203->OPN.ST.SSG->write)(F2203->OPN.ST.param,0,r);
+			(*F2203->OPN.ST.SSG->write)(F2203->OPN.ST.param,1,F2203->REGS[r]);
 		}
+
+		/* OPN registers */
+		/* DT / MULTI , TL , KS / AR , AMON / DR , SR , SL / RR , SSG-EG */
+		for(r=0x30;r<0x9e;r++)
+			if((r&3) != 3)
+				OPNWriteReg(&F2203->OPN,r,F2203->REGS[r]);
+		/* FB / CONNECT , L / R / AMS / PMS */
+		for(r=0xb0;r<0xb6;r++)
+			if((r&3) != 3)
+				OPNWriteReg(&F2203->OPN,r,F2203->REGS[r]);
+
+		/* channels */
+		/*FM_channel_postload(F2203->CH,3);*/
 	}
 	cur_chip = NULL;
 }
@@ -2180,9 +2177,6 @@ static void YM2203_save_state(YM2203 *F2203, int index)
 	state_save_register_UINT32 (statename, index, "slot3fc" , F2203->OPN.SL3.fc , 3);
 	state_save_register_UINT8  (statename, index, "slot3fh" , &F2203->OPN.SL3.fn_h , 1);
 	state_save_register_UINT8  (statename, index, "slot3kc" , F2203->OPN.SL3.kcode , 3);
-
-	if (index == 0)
-		state_save_register_func_postload(YM2203_postload);
 }
 #endif /* _STATE_H */
 
@@ -3353,51 +3347,48 @@ void YM2608UpdateOne(void *chip, FMSAMPLE **buffer, int length)
 
 }
 #ifdef _STATE_H
-static void YM2608_postload(void)
+void YM2608Postload(void *chip)
 {
-	int num , r;
-
-	for(num=0;num<MAX_SOUND;num++)
+	if (chip)
 	{
-		YM2608 *F2608 = sndti_token(SOUND_YM2608, num);
-		if (F2608)
-		{
-			/* prescaler */
-			OPNPrescaler_w(&F2608->OPN,1,2);
-			F2608->deltaT.freqbase = F2608->OPN.ST.freqbase;
-			/* IRQ mask / mode */
-			YM2608IRQMaskWrite(&F2608->OPN, F2608, F2608->REGS[0x29]);
-			/* SSG registers */
-			for(r=0;r<16;r++)
-			{
-				(*F2608->OPN.ST.SSG->write)(F2608->OPN.ST.param,0,r);
-				(*F2608->OPN.ST.SSG->write)(F2608->OPN.ST.param,1,F2608->REGS[r]);
-			}
+		YM2608 *F2608 = (YM2608 *)chip;
+		int r;
 
-			/* OPN registers */
-			/* DT / MULTI , TL , KS / AR , AMON / DR , SR , SL / RR , SSG-EG */
-			for(r=0x30;r<0x9e;r++)
-				if((r&3) != 3)
-				{
-					OPNWriteReg(&F2608->OPN,r,F2608->REGS[r]);
-					OPNWriteReg(&F2608->OPN,r|0x100,F2608->REGS[r|0x100]);
-				}
-			/* FB / CONNECT , L / R / AMS / PMS */
-			for(r=0xb0;r<0xb6;r++)
-				if((r&3) != 3)
-				{
-					OPNWriteReg(&F2608->OPN,r,F2608->REGS[r]);
-					OPNWriteReg(&F2608->OPN,r|0x100,F2608->REGS[r|0x100]);
-				}
-			/* FM channels */
-			/*FM_channel_postload(F2608->CH,6);*/
-			/* rhythm(ADPCMA) */
-			FM_ADPCMAWrite(F2608,1,F2608->REGS[0x111]);
-			for( r=0x08 ; r<0x0c ; r++)
-				FM_ADPCMAWrite(F2608,r,F2608->REGS[r+0x110]);
-			/* Delta-T ADPCM unit */
-			YM_DELTAT_postload(&F2608->deltaT , &F2608->REGS[0x100] );
+		/* prescaler */
+		OPNPrescaler_w(&F2608->OPN,1,2);
+		F2608->deltaT.freqbase = F2608->OPN.ST.freqbase;
+		/* IRQ mask / mode */
+		YM2608IRQMaskWrite(&F2608->OPN, F2608, F2608->REGS[0x29]);
+		/* SSG registers */
+		for(r=0;r<16;r++)
+		{
+			(*F2608->OPN.ST.SSG->write)(F2608->OPN.ST.param,0,r);
+			(*F2608->OPN.ST.SSG->write)(F2608->OPN.ST.param,1,F2608->REGS[r]);
 		}
+
+		/* OPN registers */
+		/* DT / MULTI , TL , KS / AR , AMON / DR , SR , SL / RR , SSG-EG */
+		for(r=0x30;r<0x9e;r++)
+			if((r&3) != 3)
+			{
+				OPNWriteReg(&F2608->OPN,r,F2608->REGS[r]);
+				OPNWriteReg(&F2608->OPN,r|0x100,F2608->REGS[r|0x100]);
+			}
+		/* FB / CONNECT , L / R / AMS / PMS */
+		for(r=0xb0;r<0xb6;r++)
+			if((r&3) != 3)
+			{
+				OPNWriteReg(&F2608->OPN,r,F2608->REGS[r]);
+				OPNWriteReg(&F2608->OPN,r|0x100,F2608->REGS[r|0x100]);
+			}
+		/* FM channels */
+		/*FM_channel_postload(F2608->CH,6);*/
+		/* rhythm(ADPCMA) */
+		FM_ADPCMAWrite(F2608,1,F2608->REGS[0x111]);
+		for( r=0x08 ; r<0x0c ; r++)
+			FM_ADPCMAWrite(F2608,r,F2608->REGS[r+0x110]);
+		/* Delta-T ADPCM unit */
+		YM_DELTAT_postload(&F2608->deltaT , &F2608->REGS[0x100] );
 	}
 	cur_chip = NULL;
 }
@@ -3419,9 +3410,6 @@ static void YM2608_save_state(YM2608 *F2608, int index)
 	FMsave_state_adpcma(statename,index,F2608->adpcm);
 	/* Delta-T ADPCM unit */
 	YM_DELTAT_savestate(statename,index,&F2608->deltaT);
-
-	if (index == 0)
-		state_save_register_func_postload(YM2608_postload);
 }
 #endif /* _STATE_H */
 
@@ -4056,53 +4044,50 @@ void YM2610BUpdateOne(void *chip, FMSAMPLE **buffer, int length)
 
 
 #ifdef _STATE_H
-static void YM2610_postload(void)
+void YM2610Postload(void *chip)
 {
-	int num , r;
-
-	for(num=0;num<MAX_SOUND;num++)
+	if (chip)
 	{
-		YM2610 *F2610 = sndti_token(SOUND_YM2610, num);
-		if (F2610)
+		YM2610 *F2610 = (YM2610 *)chip;
+		int r;
+
+		/* SSG registers */
+		for(r=0;r<16;r++)
 		{
-			/* SSG registers */
-			for(r=0;r<16;r++)
-			{
-				(*F2610->OPN.ST.SSG->write)(F2610->OPN.ST.param,0,r);
-				(*F2610->OPN.ST.SSG->write)(F2610->OPN.ST.param,1,F2610->REGS[r]);
-			}
-
-			/* OPN registers */
-			/* DT / MULTI , TL , KS / AR , AMON / DR , SR , SL / RR , SSG-EG */
-			for(r=0x30;r<0x9e;r++)
-				if((r&3) != 3)
-				{
-					OPNWriteReg(&F2610->OPN,r,F2610->REGS[r]);
-					OPNWriteReg(&F2610->OPN,r|0x100,F2610->REGS[r|0x100]);
-				}
-			/* FB / CONNECT , L / R / AMS / PMS */
-			for(r=0xb0;r<0xb6;r++)
-				if((r&3) != 3)
-				{
-					OPNWriteReg(&F2610->OPN,r,F2610->REGS[r]);
-					OPNWriteReg(&F2610->OPN,r|0x100,F2610->REGS[r|0x100]);
-				}
-			/* FM channels */
-			/*FM_channel_postload(F2610->CH,6);*/
-
-			/* rhythm(ADPCMA) */
-			FM_ADPCMAWrite(F2610,1,F2610->REGS[0x101]);
-			for( r=0 ; r<6 ; r++)
-			{
-				FM_ADPCMAWrite(F2610,r+0x08,F2610->REGS[r+0x108]);
-				FM_ADPCMAWrite(F2610,r+0x10,F2610->REGS[r+0x110]);
-				FM_ADPCMAWrite(F2610,r+0x18,F2610->REGS[r+0x118]);
-				FM_ADPCMAWrite(F2610,r+0x20,F2610->REGS[r+0x120]);
-				FM_ADPCMAWrite(F2610,r+0x28,F2610->REGS[r+0x128]);
-			}
-			/* Delta-T ADPCM unit */
-			YM_DELTAT_postload(&F2610->deltaT , &F2610->REGS[0x010] );
+			(*F2610->OPN.ST.SSG->write)(F2610->OPN.ST.param,0,r);
+			(*F2610->OPN.ST.SSG->write)(F2610->OPN.ST.param,1,F2610->REGS[r]);
 		}
+
+		/* OPN registers */
+		/* DT / MULTI , TL , KS / AR , AMON / DR , SR , SL / RR , SSG-EG */
+		for(r=0x30;r<0x9e;r++)
+			if((r&3) != 3)
+			{
+				OPNWriteReg(&F2610->OPN,r,F2610->REGS[r]);
+				OPNWriteReg(&F2610->OPN,r|0x100,F2610->REGS[r|0x100]);
+			}
+		/* FB / CONNECT , L / R / AMS / PMS */
+		for(r=0xb0;r<0xb6;r++)
+			if((r&3) != 3)
+			{
+				OPNWriteReg(&F2610->OPN,r,F2610->REGS[r]);
+				OPNWriteReg(&F2610->OPN,r|0x100,F2610->REGS[r|0x100]);
+			}
+		/* FM channels */
+		/*FM_channel_postload(F2610->CH,6);*/
+
+		/* rhythm(ADPCMA) */
+		FM_ADPCMAWrite(F2610,1,F2610->REGS[0x101]);
+		for( r=0 ; r<6 ; r++)
+		{
+			FM_ADPCMAWrite(F2610,r+0x08,F2610->REGS[r+0x108]);
+			FM_ADPCMAWrite(F2610,r+0x10,F2610->REGS[r+0x110]);
+			FM_ADPCMAWrite(F2610,r+0x18,F2610->REGS[r+0x118]);
+			FM_ADPCMAWrite(F2610,r+0x20,F2610->REGS[r+0x120]);
+			FM_ADPCMAWrite(F2610,r+0x28,F2610->REGS[r+0x128]);
+		}
+		/* Delta-T ADPCM unit */
+		YM_DELTAT_postload(&F2610->deltaT , &F2610->REGS[0x010] );
 	}
 	cur_chip = NULL;
 }
@@ -4126,9 +4111,6 @@ static void YM2610_save_state(YM2610 *F2610, int index)
 	FMsave_state_adpcma(statename,index,F2610->adpcm);
 	/* Delta-T ADPCM unit */
 	YM_DELTAT_savestate(statename,index,&F2610->deltaT);
-
-	if (index == 0)
-		state_save_register_func_postload(YM2610_postload);
 }
 #endif /* _STATE_H */
 
@@ -4577,36 +4559,33 @@ void YM2612UpdateOne(void *chip, FMSAMPLE **buffer, int length)
 }
 
 #ifdef _STATE_H
-static void YM2612_postload(void)
+void YM2612Postload(void *chip)
 {
-	int num , r;
-
-	for(num=0;num<MAX_SOUND;num++)
+	if (chip)
 	{
-		YM2612 *F2612 = sndti_token(SOUND_YM2612, num);
-		if (F2612)
-		{
-			/* DAC data & port */
-			F2612->dacout = ((int)F2612->REGS[0x2a] - 0x80) << 0;	/* level unknown */
-			F2612->dacen  = F2612->REGS[0x2d] & 0x80;
-			/* OPN registers */
-			/* DT / MULTI , TL , KS / AR , AMON / DR , SR , SL / RR , SSG-EG */
-			for(r=0x30;r<0x9e;r++)
-				if((r&3) != 3)
-				{
-					OPNWriteReg(&F2612->OPN,r,F2612->REGS[r]);
-					OPNWriteReg(&F2612->OPN,r|0x100,F2612->REGS[r|0x100]);
-				}
-			/* FB / CONNECT , L / R / AMS / PMS */
-			for(r=0xb0;r<0xb6;r++)
-				if((r&3) != 3)
-				{
-					OPNWriteReg(&F2612->OPN,r,F2612->REGS[r]);
-					OPNWriteReg(&F2612->OPN,r|0x100,F2612->REGS[r|0x100]);
-				}
-			/* channels */
-			/*FM_channel_postload(F2612->CH,6);*/
-		}
+		YM2612 *F2612 = (YM2612 *)chip;
+		int r;
+
+		/* DAC data & port */
+		F2612->dacout = ((int)F2612->REGS[0x2a] - 0x80) << 0;	/* level unknown */
+		F2612->dacen  = F2612->REGS[0x2d] & 0x80;
+		/* OPN registers */
+		/* DT / MULTI , TL , KS / AR , AMON / DR , SR , SL / RR , SSG-EG */
+		for(r=0x30;r<0x9e;r++)
+			if((r&3) != 3)
+			{
+				OPNWriteReg(&F2612->OPN,r,F2612->REGS[r]);
+				OPNWriteReg(&F2612->OPN,r|0x100,F2612->REGS[r|0x100]);
+			}
+		/* FB / CONNECT , L / R / AMS / PMS */
+		for(r=0xb0;r<0xb6;r++)
+			if((r&3) != 3)
+			{
+				OPNWriteReg(&F2612->OPN,r,F2612->REGS[r]);
+				OPNWriteReg(&F2612->OPN,r|0x100,F2612->REGS[r|0x100]);
+			}
+		/* channels */
+		/*FM_channel_postload(F2612->CH,6);*/
 	}
 	cur_chip = NULL;
 }
@@ -4624,9 +4603,6 @@ static void YM2612_save_state(YM2612 *F2612, int index)
 	state_save_register_UINT8  (statename, index, "slot3kc" , F2612->OPN.SL3.kcode, 3);
 	/* address register1 */
 	state_save_register_UINT8 (statename, index, "addr_A1" , &F2612->addr_A1, 1);
-
-	if (index == 0)
-		state_save_register_func_postload(YM2612_postload);
 }
 #endif /* _STATE_H */
 

@@ -307,7 +307,7 @@ void SN76477_enable_w(int chip, int data)
 
 	timer_adjust(sn->envelope_timer, TIME_NEVER, chip, 0);
 	timer_adjust(sn->oneshot_timer, TIME_NEVER, chip, 0);
-	
+
 	if( sn->enable == 0 )
 	{
 		switch( sn->envelope )
@@ -319,6 +319,7 @@ void SN76477_enable_w(int chip, int data)
 				oneshot_envelope_cb(chip);
 			break;
 		case 1: /* One-Shot */
+			sn->vol = 0;
 			oneshot_envelope_cb(chip);
 			if (sn->oneshot_time > 0)
 				timer_adjust(sn->oneshot_timer, sn->oneshot_time, chip, 0);
@@ -512,7 +513,7 @@ void SN76477_set_amplitude_res(int chip, double res)
 #endif
 		for( i = 0; i < VMAX+1; i++ )
 		{
-			int vol = (int)((3.4 * sn->feedback_res / sn->amplitude_res) * 32767 * i / (VMAX+1));
+			int vol = (int)((sn->feedback_res / sn->amplitude_res) * 32767 * i / (VMAX+1));
 #if VERBOSE
 			if( vol > 32767 && !clip )
 				clip = i;
@@ -521,7 +522,7 @@ void SN76477_set_amplitude_res(int chip, double res)
 			if( vol > 32767 ) vol = 32767;
 			sn->vol_lookup[i] = vol;
 		}
-		LOG(1,("SN76477 #%d: volume range from -%d to +%d (clip at %d%%)\n", chip, sn->vol_lookup[VMAX-VMIN], sn->vol_lookup[VMAX-VMIN], clip * 100 / 256));
+		LOG(1,("SN76477 #%d: volume range from -%d to +%d (clip at %d%%)\n", chip, sn->vol_lookup[VMAX-VMIN], sn->vol_lookup[VMAX-VMIN], clip * 100 / 32767));
 	}
 	else
 	{
@@ -550,14 +551,14 @@ void SN76477_set_feedback_res(int chip, double res)
 #endif
 		for( i = 0; i < VMAX+1; i++ )
 		{
-			int vol = (int)((3.4 * sn->feedback_res / sn->amplitude_res) * 32767 * i / (VMAX+1));
+			int vol = (int)((sn->feedback_res / sn->amplitude_res) * 32767 * i / (VMAX+1));
 #if VERBOSE
 			if( vol > 32767 && !clip ) clip = i;
 #endif
 			if( vol > 32767 ) vol = 32767;
 			sn->vol_lookup[i] = vol;
 		}
-		LOG(1,("SN76477 #%d: volume range from -%d to +%d (clip at %d%%)\n", chip, sn->vol_lookup[VMAX-VMIN], sn->vol_lookup[VMAX-VMIN], clip * 100 / 256));
+		LOG(1,("SN76477 #%d: volume range from -%d to +%d (clip at %d%%)\n", chip, sn->vol_lookup[VMAX-VMIN], sn->vol_lookup[VMAX-VMIN], clip * 100 / 32767));
 	}
 	else
 	{
@@ -956,19 +957,19 @@ static void SN76477_sound_update(void *param, stream_sample_t **inputs, stream_s
 static void *sn76477_start(int sndindex, int clock, const void *config)
 {
 	struct SN76477 *sn;
-	
+
 	sn = auto_malloc(sizeof(*sn));
 	memset(sn, 0, sizeof(*sn));
-	
+
 	sn->intf = config;
 	sn->index = sndindex;
 
 	sn->channel = stream_create(0, 1, Machine->sample_rate, sn, SN76477_sound_update);
 	sn->samplerate = Machine->sample_rate ? Machine->sample_rate : 1;
-	
+
 	sn->envelope_timer = timer_alloc(vco_envelope_cb);
 	sn->oneshot_timer = timer_alloc(oneshot_envelope_cb);
-	
+
 	/* set up interface (default) values */
 	sound_register_token(sn);
 	SN76477_set_noise_res(0, sn->intf->noise_res);

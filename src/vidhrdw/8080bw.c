@@ -134,6 +134,8 @@ DRIVER_INIT( sstrngr2 )
 
 DRIVER_INIT( schaser )
 {
+	schaser_effect_555_timer = timer_alloc(schaser_effect_555_cb);
+
 	init_8080bw();
 	videoram_w_p = schaser_videoram_w;
 	background_color = 2;	/* blue */
@@ -739,7 +741,7 @@ WRITE8_HANDLER( cosmo_colorram_w )
 	{
 		videoram_w_p(offs, videoram[offs]);
 		offs+= 0x20;
-	}		
+	}
 }
 
 static WRITE8_HANDLER( cosmo_videoram_w )

@@ -28,13 +28,6 @@
 #include "cpuintrf.h"
 #include "osd_cpu.h"
 
-#ifdef RUNTIME_LOADER
-# ifdef __cplusplus
-	extern "C" void m6502_runtime_loader_init(void);
-# else
-	extern void m6502_runtime_loader_init(void);
-# endif
-#endif
 
 /* set to 1 to test cur_mrhard/cur_wmhard to avoid calls */
 #define FAST_MEMORY 0

@@ -75,6 +75,5 @@ VIDEO_UPDATE( yboard )
 	segaic16_rotate_draw(0, bitmap, cliprect, yboard_bitmap);
 
 	/* draw the 16B sprites */
-	fillbitmap(priority_bitmap, 0, cliprect);
 	segaic16_sprites_draw(0, bitmap, cliprect);
 }

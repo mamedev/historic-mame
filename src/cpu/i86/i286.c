@@ -113,6 +113,7 @@ typedef struct
 	UINT8	int_vector;
 	INT8	nmi_state;
 	INT8	irq_state;
+	INT8	test_state;		/* PJB 03/05 */
 	int 	extra_cycles;       /* extra cycles for interrupts */
 } i286_Regs;
 

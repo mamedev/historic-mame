@@ -104,16 +104,22 @@ static WRITE8_HANDLER( ddrible_vlm5030_ctrl_w )
 	/* b5 : VLM5030-ST        */
 	/* b4 : VLM5300-VCU       */
 	/* b3 : ROM bank select   */
-	VLM5030_RST( data & 0x40 ? 1 : 0 );
-	VLM5030_ST(  data & 0x20 ? 1 : 0 );
-	VLM5030_VCU( data & 0x10 ? 1 : 0 );
-	VLM5030_set_rom(&SPEECH_ROM[data & 0x08 ? 0x10000 : 0]);
+	if (sndti_to_sndnum(SOUND_VLM5030, 0) >= 0)
+	{
+		VLM5030_RST( data & 0x40 ? 1 : 0 );
+		VLM5030_ST(  data & 0x20 ? 1 : 0 );
+		VLM5030_VCU( data & 0x10 ? 1 : 0 );
+		VLM5030_set_rom(&SPEECH_ROM[data & 0x08 ? 0x10000 : 0]);
+	}
 	/* b2 : SSG-C rc filter enable */
 	/* b1 : SSG-B rc filter enable */
 	/* b0 : SSG-A rc filter enable */
-	filter_rc_set_RC(2,1000,2200,1000,data & 0x04 ? 150000 : 0); /* YM2203-SSG-C */
-	filter_rc_set_RC(1,1000,2200,1000,data & 0x02 ? 150000 : 0); /* YM2203-SSG-B */
-	filter_rc_set_RC(0,1000,2200,1000,data & 0x01 ? 150000 : 0); /* YM2203-SSG-A */
+	if (sndti_to_sndnum(SOUND_FILTER_RC, 2) >= 0)
+	{
+		filter_rc_set_RC(2,1000,2200,1000,data & 0x04 ? 150000 : 0); /* YM2203-SSG-C */
+		filter_rc_set_RC(1,1000,2200,1000,data & 0x02 ? 150000 : 0); /* YM2203-SSG-B */
+		filter_rc_set_RC(0,1000,2200,1000,data & 0x01 ? 150000 : 0); /* YM2203-SSG-A */
+	}
 }
 
 

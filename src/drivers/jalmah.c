@@ -237,7 +237,7 @@ VIDEO_UPDATE( jalmah )
 	if(sc_db > 3)
 		sc_db = 3;
 	//usrintf_showmessage("%04x %04x %04x %04x %04x %04x",jm_vregs[0],jm_vregs[1],jm_vregs[2],jm_vregs[3],fgbank,pri);
-	//usrintf_showmessage("%04d %04d %04x %02x",jm_scrollram[0+sc_db],jm_scrollram[4+sc_db],jm_vregs[0+sc_db],sc_db);
+	usrintf_showmessage("%04d %04d %04x %02x",jm_scrollram[0+sc_db],jm_scrollram[4+sc_db],jm_vregs[0+sc_db],sc_db);
 	/*
 	Argh,priorities are going to make me crazy,fixing one thing will break another,
 	probably I'm missing something but what?
@@ -1043,15 +1043,16 @@ ROM_START( daireika )
 	ROM_LOAD( "mj14.bin", 0x00000, 0x10000, CRC(c84c5577) SHA1(6437368d3be39739d62158590ecd373aa070a9b2) )
 	ROM_LOAD( "mj13.bin", 0x10000, 0x10000, CRC(c54bca14) SHA1(ee9c99858817aedd70bd6266b7a71c3c5ad00607) )
 
-	ROM_REGION( 0x20000, REGION_GFX2, 0 ) /* BG1 */
-	ROM_LOAD( "mj12.bin", 0x00000, 0x20000, CRC(236f809f) SHA1(9e15dd8a810a9d4f7f75f084d6bd277ea7d0e40a) )
-
 	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* BG3 */
 	ROM_LOAD( "mj10.bin", 0x00000, 0x80000, CRC(1f5509a5) SHA1(4dcdee0e159956cf73f5f85ce278479be2a9ca9f) )
 
 	ROM_REGION( 0x40000, REGION_GFX3, 0 ) /* BG2 */
 	ROM_LOAD( "mj11.bin",  0x00000, 0x20000, CRC(14867c51) SHA1(b282b5048a55c9ad72ceb0d23f010a0fee78704f) )
-	ROM_COPY( REGION_GFX4, 0x10000, 0x20000, 0x10000 )/*mj10.bin*/
+	ROM_COPY( REGION_GFX4, 0x20000, 0x20000, 0x20000 )/*mj10.bin*/
+
+	ROM_REGION( 0x40000, REGION_GFX2, 0 ) /* BG1 */
+	ROM_COPY( REGION_GFX3, 0x00000, 0x00000, 0x20000 )/*mj11.bin*/
+	ROM_LOAD( "mj12.bin", 0x20000, 0x20000, CRC(236f809f) SHA1(9e15dd8a810a9d4f7f75f084d6bd277ea7d0e40a) )
 
 	ROM_REGION( 0x220, REGION_USER1, 0 ) /* Proms */
 	ROM_LOAD( "mj15.bpr", 0x000, 0x100, CRC(ebac41f9) SHA1(9d1629d977849663392cbf03a3ddf76665f88608) )
@@ -1272,7 +1273,7 @@ logerror("%04x: mcu_r %02x\n",activecpu_get_pc(),res);
 }
 
 /*
-I don't know if this is used for MCU write,the following is just a guess.
+data value is REQ under mjzoomin video test menu.It is related to MCU?
 */
 static WRITE16_HANDLER( urashima_mcu_w )
 {
@@ -1387,7 +1388,7 @@ static READ16_HANDLER( daireika_mcu_r )
 }
 
 /*
-I don't know if this is used for MCU write,the following is just a guess.
+data value is REQ under mjzoomin video test menu.It is related to MCU?
 */
 static WRITE16_HANDLER( daireika_mcu_w )
 {
@@ -1468,11 +1469,105 @@ static WRITE16_HANDLER( daireika_mcu_w )
 		jm_mcu_code[0x0008/2] = 0x4e75;//rts
 		/*******************************************************
 		4th M68k code uploaded by the MCU
+		They seem video code cleaning functions
 		*******************************************************/
-		jm_regs[0x0100/2] = 0x4e75; 	//rts
-		jm_regs[0x0108/2] = 0x4e75;
-		jm_regs[0x0110/2] = 0x4e75;
-		jm_regs[0x0126/2] = 0x4e75;
+		//108800
+		jm_regs[0x0100/2] = 0x4ef9;
+		jm_regs[0x0102/2] = 0x0010;
+		jm_regs[0x0104/2] = 0x8800;
+
+		jm_mcu_code[0x8800/2] = 0x4df9;
+		jm_mcu_code[0x8802/2] = 0x0009;
+		jm_mcu_code[0x8804/2] = 0x0000; //lea.w #94000,A6
+		jm_mcu_code[0x8806/2] = 0x323c;
+		jm_mcu_code[0x8808/2] = 0x1fff; //move.w #$1fff,D1
+		jm_mcu_code[0x880a/2] = 0x3cbc;
+		jm_mcu_code[0x880c/2] = 0x0000; //move.w #$0000,(A6)
+		jm_mcu_code[0x880e/2] = 0xdcfc;
+		jm_mcu_code[0x8810/2] = 0x0002; //adda.w #$0002,A6
+		jm_mcu_code[0x8812/2] = 0x51c9;
+		jm_mcu_code[0x8814/2] = 0xfff6; //dbra D1
+		jm_mcu_code[0x8816/2] = 0x4df9;
+		jm_mcu_code[0x8818/2] = 0x0000;
+		jm_mcu_code[0x881a/2] = 0x0000; //lea.w #0,A6
+		jm_mcu_code[0x881c/2] = 0x323c;
+		jm_mcu_code[0x881e/2] = 0x0000; //move.w #$0,D1
+		jm_mcu_code[0x8820/2] = 0x4e75; //rts
+
+		//108880
+		jm_regs[0x0108/2] = 0x4ef9;
+		jm_regs[0x010a/2] = 0x0010;
+		jm_regs[0x010c/2] = 0x8880;
+
+		jm_mcu_code[0x8880/2] = 0x4df9;
+		jm_mcu_code[0x8882/2] = 0x0009;
+		jm_mcu_code[0x8884/2] = 0x4000; //lea.w #94000,A6
+		jm_mcu_code[0x8886/2] = 0x323c;
+		jm_mcu_code[0x8888/2] = 0x1fff; //move.w #$1fff,D1
+		jm_mcu_code[0x888a/2] = 0x3cbc;
+		jm_mcu_code[0x888c/2] = 0x0000; //move.w #$0000,(A6)
+		jm_mcu_code[0x888e/2] = 0xdcfc;
+		jm_mcu_code[0x8890/2] = 0x0002; //adda.w #$0002,A6
+		jm_mcu_code[0x8892/2] = 0x51c9;
+		jm_mcu_code[0x8894/2] = 0xfff6; //dbra D1
+		jm_mcu_code[0x8896/2] = 0x4df9;
+		jm_mcu_code[0x8898/2] = 0x0000;
+		jm_mcu_code[0x889a/2] = 0x0000; //lea.w #0,A6
+		jm_mcu_code[0x889c/2] = 0x323c;
+		jm_mcu_code[0x889e/2] = 0x0000; //move.w #$0,D1
+		jm_mcu_code[0x88a0/2] = 0x4e75; //rts
+
+		//108900
+		jm_regs[0x0110/2] = 0x4ef9;
+		jm_regs[0x0112/2] = 0x0010;
+		jm_regs[0x0114/2] = 0x8900;
+
+		jm_mcu_code[0x8900/2] = 0x4df9;
+		jm_mcu_code[0x8902/2] = 0x0009;
+		jm_mcu_code[0x8904/2] = 0x8000; //lea.w #98000,A6
+		jm_mcu_code[0x8906/2] = 0x323c;
+		jm_mcu_code[0x8908/2] = 0x1fff; //move.w #$1fff,D1
+		jm_mcu_code[0x890a/2] = 0x3cbc;
+		jm_mcu_code[0x890c/2] = 0x0000; //move.w #$0020,(A6)
+		jm_mcu_code[0x890e/2] = 0xdcfc;
+		jm_mcu_code[0x8910/2] = 0x0002; //adda.w #$0002,A6
+		jm_mcu_code[0x8912/2] = 0x51c9;
+		jm_mcu_code[0x8914/2] = 0xfff6; //dbra D1
+		jm_mcu_code[0x8916/2] = 0x4df9;
+		jm_mcu_code[0x8918/2] = 0x0000;
+		jm_mcu_code[0x891a/2] = 0x0000; //lea.w #0,A6
+		jm_mcu_code[0x891c/2] = 0x323c;
+		jm_mcu_code[0x891e/2] = 0x0000; //move.w #$0,D1
+		jm_mcu_code[0x8920/2] = 0x4e75; //rts
+
+		/*TX function?*/
+		jm_regs[0x0126/2] = 0x4ef9;
+		jm_regs[0x0128/2] = 0x0010;
+		jm_regs[0x012a/2] = 0x8980;
+
+		//pri $f0590
+		jm_mcu_code[0x8980/2] = 0x33fc;
+		jm_mcu_code[0x8982/2] = 0x0006;
+		jm_mcu_code[0x8984/2] = 0x000f;
+		jm_mcu_code[0x8986/2] = 0x0590; //move.w #$6,$f0590
+		jm_mcu_code[0x8988/2] = 0x4df9;
+		jm_mcu_code[0x898a/2] = 0x0009;
+		jm_mcu_code[0x898c/2] = 0xc000; //lea.w #9c000,A6
+		jm_mcu_code[0x898e/2] = 0x323c;
+		jm_mcu_code[0x8990/2] = 0x1fff; //move.w #$1fff,D1
+		jm_mcu_code[0x8992/2] = 0x3cbc;
+		jm_mcu_code[0x8994/2] = 0x0020; //move.w #$0020,(A6)
+		jm_mcu_code[0x8996/2] = 0xdcfc;
+		jm_mcu_code[0x8998/2] = 0x0002; //adda.w #$0002,A6
+		jm_mcu_code[0x899a/2] = 0x51c9;
+		jm_mcu_code[0x899c/2] = 0xfff6; //dbra D1
+		jm_mcu_code[0x899e/2] = 0x4df9;
+		jm_mcu_code[0x89a0/2] = 0x0000;
+		jm_mcu_code[0x89a2/2] = 0x0000; //lea.w #0,A6
+		jm_mcu_code[0x89a4/2] = 0x323c;
+		jm_mcu_code[0x89a6/2] = 0x0000; //move.w #$0,D1
+		jm_mcu_code[0x89a8/2] = 0x4e75; //rts
+
 /*
 		jm_regs[0x0100/2] = 0x4ef9;
 		jm_regs[0x0102/2] = 0x0010;

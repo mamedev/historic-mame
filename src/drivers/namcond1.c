@@ -71,26 +71,19 @@ Notes:
 #include "cpu/h83002/h83002.h"
 #include "namcond1.h"
 #include "sound/c352.h"
+#include "machine/at28c16.h"
 
 /*************************************************************/
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_READ(namcond1_shared_ram_r)  // shared ram
-	AM_RANGE(0x800000, 0x80000f) AM_READ(ygv608_r)
-	AM_RANGE(0xA00000, 0xA03FFF) AM_READ(MRA16_RAM)              // EEPROM
+static ADDRESS_MAP_START( namcond1_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_ROM
+	AM_RANGE(0x400000, 0x40ffff) AM_READWRITE(namcond1_shared_ram_r,namcond1_shared_ram_w) AM_BASE(&namcond1_shared_ram)
+	AM_RANGE(0x800000, 0x80000f) AM_READWRITE(ygv608_r,ygv608_w)
+	AM_RANGE(0xa00000, 0xa00fff) AM_READWRITE(at28c16_16msb_0_r,at28c16_16msb_0_w)
 #ifdef MAME_DEBUG
-	AM_RANGE(0xB00000, 0xB00001) AM_READ(debug_trigger)
+	AM_RANGE(0xb00000, 0xb00001) AM_READ(debug_trigger)
 #endif
-	AM_RANGE(0xc3ff00, 0xc3ffff) AM_READ(namcond1_cuskey_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_NOP)
-	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(namcond1_shared_ram_w) AM_BASE(&namcond1_shared_ram)        // shared ram?
-	AM_RANGE(0x800000, 0x80000f) AM_WRITE(ygv608_w)
-	AM_RANGE(0xA00000, 0xA03FFF) AM_WRITE(MWA16_RAM) AM_BASE(&namcond1_eeprom)
-	AM_RANGE(0xc3ff00, 0xc3ff0f) AM_WRITE(namcond1_cuskey_w)
+	AM_RANGE(0xc3ff00, 0xc3ffff) AM_READWRITE(namcond1_cuskey_r,namcond1_cuskey_w)
 ADDRESS_MAP_END
 
 /*************************************************************/
@@ -280,7 +273,7 @@ static MACHINE_DRIVER_START( namcond1 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12288000)
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(namcond1_map,0)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold, 1)
 	MDRV_CPU_PERIODIC_INT(ygv608_timed_interrupt, 1000)
 
@@ -294,7 +287,7 @@ static MACHINE_DRIVER_START( namcond1 )
 	MDRV_INTERLEAVE(100)
 
 	MDRV_MACHINE_INIT(namcond1)
-	MDRV_NVRAM_HANDLER(namcond1)
+	MDRV_NVRAM_HANDLER(at28c16_0)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)

@@ -49,13 +49,16 @@ MACHINE_INIT( clowns );
 
 extern struct Samplesinterface boothill_samples_interface;
 extern struct Samplesinterface circus_samples_interface;
+extern struct discrete_sound_block clowns_discrete_interface[];
 extern struct SN76477interface invaders_sn76477_interface;
 extern struct Samplesinterface invaders_samples_interface;
 extern struct SN76477interface invad2ct_sn76477_interface_1;
 extern struct SN76477interface invad2ct_sn76477_interface_2;
 extern struct Samplesinterface invad2ct_samples_interface;
 extern struct discrete_sound_block polaris_discrete_interface[];
-extern struct Samplesinterface schaser_custom_interface;
+extern struct discrete_sound_block schaser_discrete_interface[];
+void schaser_effect_555_cb(int effect);
+mame_timer *schaser_effect_555_timer;
 extern struct SN76477interface schaser_sn76477_interface;
 extern struct Samplesinterface seawolf_samples_interface;
 

@@ -202,6 +202,13 @@ static z80ctc_interface ctc_intf =
 
 static void tmpz84c011_init(void)
 {
+	// initialize the CTC
+	ctc_intf.baseclock[0] = Machine->drv->cpu[1].cpu_clock;
+	z80ctc_init(&ctc_intf);
+}
+
+static MACHINE_INIT( niyanpai )
+{
 	int i;
 
 	// initialize TMPZ84C011 PIO
@@ -210,15 +217,6 @@ static void tmpz84c011_init(void)
 		pio_dir[i] = pio_latch[i] = 0;
 		tmpz84c011_pio_w(i, 0);
 	}
-
-	// initialize the CTC
-	ctc_intf.baseclock[0] = Machine->drv->cpu[1].cpu_clock;
-	z80ctc_init(&ctc_intf);
-}
-
-static MACHINE_INIT( niyanpai )
-{
-	//
 }
 
 static void initialize_driver(void)

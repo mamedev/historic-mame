@@ -67,14 +67,14 @@ of RAM being used both for the 8-bit key and for the 24-bit global key.
 
 
 
-There is still some uncertainty about the exact assignment of global key bits.
+There is still uncertainty about the assignment of two global key bits.
 
 key[1]
 ------
 key_0b invert;	\ bits 7,5 always 1 for now (but 0 in a bad CPU)
 global_xor0;	/
-key_5b invert;	bit 6 always same as bit 4 for now (but not in a bad CPU)
-key_2b invert;	bit 4 always same as bit 6 for now (but not in a bad CPU)
+key_5b invert;	bit 6
+key_2b invert;	bit 4
 key_1b invert;	bit 3 always 1 for now (but 0 in a bad CPU)
 global_xor1;	bit 2
 key_0c invert;	bit 1
@@ -93,9 +93,9 @@ key_3a invert;	bit 0
 
 key[3]
 ------
-key_2a invert;	\ bits 7,5 always 1 for now (but 0 in a bad CPU)
-key_5a_invert;	/
+key_2a invert;	bit 7 always 1 for now (but 0 in a bad CPU)
 global_swap3;	bit 6 always 1 for now (but 0 in a bad CPU)
+key_5a_invert;	bit 5
 global_swap1;	bit 4
 key_3b invert;	bit 3
 global_swap4;	bit 2
@@ -105,29 +105,54 @@ key_4b invert;	bit 0
 
 summary of global keys:
 -----------------------
+          .....    ..       ..
 0049      10101000 11110101 11100011
+0050      10101000 11110101 11100011
 0053      11111111 11111111 11111111
 0056      10101111 11111110 11101000
 0058-02C  10101111 11110101 11111000
+0058-03D  10101111 11110100 11100100
 0058-05C  10101110 11111001 11110010
+0058-09D  10101100 11111001 11100101
 0068      10101111 11111001 11110101
+0070      10101111 11110111 11111001
+0080      10101111 11110111 11100101
 0084      10101111 11110101 11100000
 0085      10101111 11110100 11110111
+0087      10101111 11110100 11110111
 0089      10101111 11110100 11100010
+0090      10101111 11111110 11100100
 0091      10101111 11110100 11100100
 0092      10101111 11110100 11100011
 0093      10101111 11110100 11100010
+0093A     11111101 11110110 11101110
 0096      10101111 11110100 11101010
+0102      10101111 11111101 11111100
+0110      10101110 11111100 11100010
+0115      11111011 11111010 11110100
+0116      11111100 11100001 11110110
 0118      10101110 11111100 11111000
 0120      10101110 11111100 11100010
+0121      10101110 11111100 11100010
 0122      10101110 11111011 11111011
 0124A     11111001 11101010 11110100
 0125A     11111001 11110000 11101111
+0126      11111010 11100011 11111110
+0126A     11111001 11101111 11110000
 0127A     10101110 11111000 11111001
+0128      11111111 11100011 11101011
 0129      11111111 11100011 11101011
 0130      11111111 11100011 11101100
+0134      10101110 11110100 11100001
+0136      10101110 11110100 11100010
+0139      11111100 11100110 11110000
+0142      11111110 11100111 11101110
 0143      11111101 11111101 11101101
+0144      11111101 11101000 11101101
 0146      11111011 11100101 11101110
+0147      11111011 11110001 11110001
+0148      11111011 11100101 11110000
+0153      11111011 11110101 11110001
 0157      11111000 11101011 11110101
 0158      11111000 11110000 11110000
 0159      11111000 11101011 11110101
@@ -135,9 +160,18 @@ summary of global keys:
 0163      11111110 11110010 11110000
 0165      10101101 11110100 11100110
 0166      10101101 11110100 11101110
+0169B     11111001 11011100 11011111
+0175      10101100 11111100 11101001
 0176      10101100 11111100 11110001
+0179A     11111001 11001000 11101110
+0180      11111100 11001010 11111111
 0181A     11111001 11001000 11101110
+0184      11111000 11110011 11101111
 0186      10101100 11111000 11111110
+0196      11101011 11110011 11101001
+0197A     10101011 11111001 11101100
+5023      11111011 11101101 11111010
+          .....    ..       ..
 unknown   11111111 11110110 10111110 (Shinobi 16A, part no. unreadable, could be dead)
 dead      00001111 00001111 00001111 (Alien Storm CPU with no battery)
 bad       11100000 10101011 10111001 (flaky 317-0049)
@@ -323,7 +357,7 @@ static int decode(int address,int val,unsigned char *main_key,int gkey1,int gkey
 	key_1a = BIT(mainkey,1) ^ BIT(gkey2,7);
 	key_1b = BIT(mainkey,1) ^ BIT(gkey1,3);
 
-	key_2a = BIT(mainkey,2) ^ BIT(gkey3,7);	// could be bit 5
+	key_2a = BIT(mainkey,2) ^ BIT(gkey3,7);
 	key_2b = BIT(mainkey,2) ^ BIT(gkey1,4);
 
 	key_3a = BIT(mainkey,3) ^ BIT(gkey2,0);
@@ -332,7 +366,7 @@ static int decode(int address,int val,unsigned char *main_key,int gkey1,int gkey
 	key_4a = BIT(mainkey,4) ^ BIT(gkey2,3);
 	key_4b = BIT(mainkey,4) ^ BIT(gkey3,0);
 
-	key_5a = BIT(mainkey,5) ^ BIT(gkey3,5);	// could be bit 7
+	key_5a = BIT(mainkey,5) ^ BIT(gkey3,5);
 	key_5b = BIT(mainkey,5) ^ BIT(gkey1,6);
 
 	key_6a = BIT(mainkey,6) ^ BIT(gkey2,1);
@@ -442,7 +476,7 @@ int fd1094_set_state(unsigned char *key,int state)
 	{
 		global_key1 ^= 0x04;	// global_xor1
 		global_key2 ^= 0x80;	// key_1a invert
-		global_key3 ^= 0x80;	// key_2a invert - could be 0x20
+		global_key3 ^= 0x80;	// key_2a invert
 	}
 	if (state & 0x0002)
 	{
@@ -460,7 +494,7 @@ int fd1094_set_state(unsigned char *key,int state)
 	{
 		global_key1 ^= 0x20;	// global_xor0   - could be 0x80
 		global_key2 ^= 0x02;	// key_6a invert
-		global_key3 ^= 0x20;	// key_5a invert - could be 0x80
+		global_key3 ^= 0x20;	// key_5a invert
 	}
 	if (state & 0x0010)
 	{

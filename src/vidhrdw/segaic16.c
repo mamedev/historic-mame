@@ -135,8 +135,8 @@
 		CPU Board 171-5376-01:
 			315-5195       -- memory mapper
 			315-5218       -- PCM sound controller
-			315-5155 (PAL x2)
-			315-5222 (PAL)
+			315-5155 (PAL x2) -- road bit extraction
+			315-5222 (PAL) -- road mixing
 			315-5223a (PAL)
 			315-5224 (PAL)
 			315-5225 (PAL)
@@ -154,8 +154,8 @@
 		CPU Board 837-6063-01:
 			315-5195       -- memory mapper
 			315-5218       -- PCM sound controller
-			315-5155 (PAL x2)
-			315-5222 (PAL)
+			315-5155 (PAL x2) -- road bit extraction
+			315-5222 (PAL) -- road mixing
 			315-5223a (PAL)
 			315-5224 (PAL)
 			315-5225 (PAL)
@@ -436,6 +436,7 @@ struct road_info
 	int				xoffs;							/* X scroll offset */
 	void			(*draw)(struct road_info *info, struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority);
 	data16_t *		roadram;						/* pointer to roadram pointer */
+	data16_t *		buffer;							/* buffered roadram pointer */
 	UINT8 *			gfx;							/* expanded road graphics */
 };
 
@@ -2115,7 +2116,7 @@ static void segaic16_sprites_16b_draw(struct sprite_info *info, struct mame_bitm
 	if (x >= cliprect->min_x && x <= cliprect->max_x && pix != 0 && pix != 15) \
 	{																		\
 		/* are we high enough priority to be visible? */					\
-		if (sprpri > pri[x])												\
+		if ((sprpri & 0x1f) < (pri[x] & 0x1f))								\
 		{																	\
 			/* shadow/hilight mode? */										\
 			if (pix == 14)													\
@@ -2127,7 +2128,7 @@ static void segaic16_sprites_16b_draw(struct sprite_info *info, struct mame_bitm
 		}																	\
 																			\
 		/* always mark priority so no one else draws here */				\
-		pri[x] = 0xff;														\
+		pri[x] = 0;															\
 	}																		\
 
 static void segaic16_sprites_yboard_16b_draw(struct sprite_info *info, struct mame_bitmap *bitmap, const struct rectangle *cliprect)
@@ -2147,13 +2148,13 @@ static void segaic16_sprites_yboard_16b_draw(struct sprite_info *info, struct ma
 		int bottom  = data[0] >> 8;
 		int top     = data[0] & 0xff;
 		int xpos    = (data[1] & 0x1ff) - 0xb8;
+		int sprpri  = (data[1] >> 8) & 0x1e;	// 0x00 = high, 0x7f = low -- 0x71 = ship in gforce, 0x31 = strike fighter logo
 		int hide    = data[2] & 0x4000;
 		int flip    = data[2] & 0x100;
 		int pitch   = (INT8)(data[2] & 0xff);
 		UINT16 addr = data[3];
 		int bank    = info->bank[(data[4] >> 8) & 0xf];
-		int sprpri  = 1;
-		int color   = info->colorbase + ((data[4] & 0xff) << 4);
+		int color   = info->colorbase + ((data[4] & 0x7f) << 4);
 		int vzoom   = (data[5] >> 5) & 0x1f;
 		int hzoom   = data[5] & 0x1f;
 		const UINT16 *spritedata;
@@ -2325,25 +2326,26 @@ static void segaic16_sprites_outrun_draw(struct sprite_info *info, struct mame_b
 		int bank    = (data[0] >> 9) & 7;
 		int top     = (data[0] & 0x1ff) - 0x100;
 		UINT16 addr = data[1];
-		int pitch   = (INT16)data[2] >> 9;
-		int xpos    = (data[2] & 0x1ff) - 0xbe;
+		int pitch   = (INT16)((data[2] >> 1) | ((data[4] & 0x1000) << 3)) >> 8;
+		int xpos    = data[2] & 0x1ff;
 		int shadow  = (data[3] >> 14) & 1;
 		int sprpri  = 1 << ((data[3] >> 12) & 3);
-		int vzoom   = data[3] & 0x3ff;
+		int vzoom   = data[3] & 0x7ff;
 		int ydelta  = (data[4] & 0x8000) ? 1 : -1;
 		int flip    = (~data[4] >> 14) & 1;
 		int xdelta  = (data[4] & 0x2000) ? 1 : -1;
-		int hzoom   = data[4] & 0x3ff;
+		int hzoom   = data[4] & 0x7ff;
 		int height  = ((info->type == SEGAIC16_SPRITES_OUTRUN) ? (data[5] >> 8) : (data[5] & 0xfff)) + 1;
 		int color   = info->colorbase + (((info->type == SEGAIC16_SPRITES_OUTRUN) ? (data[5] & 0x7f) : (data[6] & 0xff)) << 4);
 		int x, y, ytarget, yacc = 0, pix;
 		const UINT32 *spritedata;
 
 		/* adjust X coordinate */
-		/* note: if this threshhold is too close to 0, rachero will draw garbage */
-		/* if it is too far from 0, smgp won't draw the bottom part of the road */
-		if (xpos < -0x40 && xdelta < 0)
-			xpos += 512;
+		/* note: the threshhold below is a guess. If it is too high, rachero will draw garbage */
+		/* If it is too low, smgp won't draw the bottom part of the road */
+		if (xpos < 0x80 && xdelta < 0)
+			xpos += 0x200;
+		xpos -= 0xbe;
 
 		/* initialize the end address to the start address */
 		data[7] = addr;
@@ -2451,6 +2453,7 @@ static void segaic16_sprites_outrun_draw(struct sprite_info *info, struct mame_b
  *		 +A   ---x---- --------  Render from left-to-right (1) or right-to-left (0) on screen
  *		 +A   -----zzz zzzzzzzz  Zoom factor
  *		 +C   -ccc---- --------  Sprite color
+ *		 +C   ----rrrr --------  Sprite priority
  *		 +C   -------- pppppppp  Signed 8-bit pitch value between scanlines
  *		 +E   ----nnnn nnnnnnnn  Index of next sprite
  *
@@ -2464,7 +2467,7 @@ static void segaic16_sprites_outrun_draw(struct sprite_info *info, struct mame_b
 #define yboard_draw_pixel() 												\
 	/* only draw if onscreen */												\
 	if (x >= minx && x <= maxx && ind < 0x1fe)								\
-		dest[x] = ind | color;												\
+		dest[x] = ind | colorpri;											\
 
 static void segaic16_sprites_yboard_draw(struct sprite_info *info, struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
@@ -2482,7 +2485,7 @@ static void segaic16_sprites_yboard_draw(struct sprite_info *info, struct mame_b
 	/* clear out any scanlines we might be using */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 		if (!(rotatebase[y & ~1] & 0xc000))
-			memset(&((UINT16 *)bitmap->line[y])[cliprect->min_x], 0, (cliprect->max_x - cliprect->min_x + 1) * sizeof(UINT16));
+			memset(&((UINT16 *)bitmap->line[y])[cliprect->min_x], 0xff, (cliprect->max_x - cliprect->min_x + 1) * sizeof(UINT16));
 
 	/* now scan backwards and render the sprites in order */
 	for (data = info->spriteram; !(data[0] & 0x8000) && !visited[next]; data = info->spriteram + next * 8)
@@ -2498,7 +2501,7 @@ static void segaic16_sprites_yboard_draw(struct sprite_info *info, struct mame_b
 		int flip    = (~data[5] >> 13) & 1;
 		int xdelta  = (data[5] & 0x1000) ? 1 : -1;
 		int zoom    = data[5] & 0x7ff;
-		int color   = info->colorbase + 0x400 * ((data[6] >> 12) & 3) + 0x200 * ((data[6] >> 14) & 1);
+		int colorpri= (data[6] << 1) & 0xfe00;
 		int pitch   = (INT8)data[6];
 		int x, y, ytarget, yacc = 0, pix, ind;
 		const UINT64 *spritedata;
@@ -2710,11 +2713,8 @@ int segaic16_sprites_init(int which, int type, int colorbase, int xoffs)
 
 	/* if the sprites need buffering, allocate memory for the buffer */
 	if (buffer)
-	{
 		info->buffer = auto_malloc(info->ramsize);
-		if (!info->buffer)
-			return 1;
-	}
+
 	return 0;
 }
 
@@ -2880,8 +2880,6 @@ static void segaic16_road_hangon_decode(struct road_info *info)
 
 	/* allocate memory for the unpacked road data */
 	info->gfx = auto_malloc(256 * 512);
-	if (!info->gfx)
-		osd_die("Out of memory for decoded road graphics\n");
 
 	/* loop over rows */
 	for (y = 0; y < 256; y++)
@@ -3081,7 +3079,7 @@ static void segaic16_road_hangon_draw(struct road_info *info, struct mame_bitmap
  *
  *	Road control register:
  *		Bits               Usage
- *		-------- -----d--  Direct scanline mode (1) or indirect mode (0)
+ *		-------- -----d--  (X-board only) Direct scanline mode (1) or indirect mode (0)
  *		-------- ------pp  Road enable/priorities:
  *		                      0 = road 0 only visible
  *		                      1 = both roads visible, road 0 has priority
@@ -3126,6 +3124,48 @@ static void segaic16_road_hangon_draw(struct road_info *info, struct mame_bitmap
  *		The color information is looked up using the index in the table at C00-FFF. Note
  *			that the same table is used for both roads.
  *
+ *
+ *	Out Run road priorities are controlled by a PAL that maps as indicated below.
+ *	This was used to generate the priority_map. It is assumed that X-board is the
+ *	same, though this logic is locked inside a Sega custom.
+ *
+ *	RRC0 =	CENTA & (RDA == 3) & !RRC2
+ *		| CENTB & (RDB == 3) & RRC2
+ *		| (RDA == 1) & !RRC2
+ *		| (RDB == 1) & RRC2
+ *
+ *	RRC1 = 	CENTA & (RDA == 3) & !RRC2
+ *		| CENTB & (RDB == 3) & RRC2
+ *		| (RDA == 2) & !RRC2
+ *		| (RDB == 2) & RRC2
+ *
+ *	RRC2 = !/HSYNC & IIQ
+ *		| (CTRL == 3)
+ *		| !CENTA & (RDA == 3) & !CENTB & (RDB == 3) & (CTRL == 2)
+ *		| CENTB & (RDB == 3) & (CTRL == 2)
+ *		| !CENTA & (RDA == 3) & !M2 & (CTRL == 2)
+ *		| !CENTA & (RDA == 3) & !M3 & (CTRL == 2)
+ *		| !M0 & (RDB == 0) & (CTRL == 2)
+ *		| !M1 & (RDB == 0) & (CTRL == 2)
+ *		| !CENTA & (RDA == 3) & CENTB & (RDB == 3) & (CTRL == 1)
+ *		| !M0 & CENTB & (RDB == 3) & (CTRL == 1)
+ *		| !M1 & CENTB & (RDB == 3) & (CTRL == 1)
+ *		| !CENTA & M0 & (RDB == 0) & (CTRL == 1)
+ *		| !CENTA & M1 & (RDB == 0) & (CTRL == 1)
+ *		| !CENTA & (RDA == 3) & (RDB == 1) & (CTRL == 1)
+ *		| !CENTA & (RDA == 3) & (RDB == 2) & (CTRL == 1)
+ *
+ *	RRC3 =	VA11 & VB11
+ *		| VA11 & (CTRL == 0)
+ *		| (CTRL == 3) & VB11
+ *
+ *	RRC4 = 	!CENTA & (RDA == 3) & !CENTB & (RDB == 3)
+ *		| VA11 & VB11
+ *		| VA11 & (CTRL == 0)
+ *		| (CTRL == 3) & VB11
+ *		| !CENTB & (RDB == 3) & (CTRL == 3)
+ *		| !CENTA & (RDA == 3) & (CTRL == 0)
+ *
  *******************************************************************************************/
 
 static void segaic16_road_outrun_decode(struct road_info *info)
@@ -3134,8 +3174,6 @@ static void segaic16_road_outrun_decode(struct road_info *info)
 
 	/* allocate memory for the unpacked road data */
 	info->gfx = auto_malloc((256 * 2 + 1) * 512);
-	if (!info->gfx)
-		osd_die("Out of memory for decoded road graphics\n");
 
 	/* loop over rows */
 	for (y = 0; y < 256 * 2; y++)
@@ -3161,7 +3199,7 @@ static void segaic16_road_outrun_decode(struct road_info *info)
 
 static void segaic16_road_outrun_draw(struct road_info *info, struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority)
 {
-	UINT16 *roadram = info->roadram;
+	UINT16 *roadram = info->buffer;
 	int x, y;
 
 	/* for debugging road issues */
@@ -3192,6 +3230,15 @@ static void segaic16_road_outrun_draw(struct road_info *info, struct mame_bitmap
 	/* loop over scanlines */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
+		static const UINT8 priority_map[2][8] =
+		{
+			{ 0x80,0x81,0x81,0x87,0,0,0,0x00 },
+			{ 0x81,0x81,0x81,0x8f,0,0,0,0x80 }
+//
+// Original guesses from X-board priorities:
+//			{ 0x80,0x81,0x81,0x83,0,0,0,0x00 },
+//			{ 0x81,0x87,0x87,0x8f,0,0,0,0x00 }
+		};
 		UINT16 *dest = (UINT16 *)bitmap->line[y];
 		int data0 = roadram[0x000 + y];
 		int data1 = roadram[0x100 + y];
@@ -3241,11 +3288,6 @@ static void segaic16_road_outrun_draw(struct road_info *info, struct mame_bitmap
 		/* foreground case: render from ROM */
 		else
 		{
-			static const UINT8 priority_map[2][8] =
-			{
-				{ 0x80,0x81,0x81,0x83,0,0,0,0x00 },
-				{ 0x81,0x87,0x87,0x8f,0,0,0,0x00 }
-			};
 			int hpos0, hpos1, color0, color1;
 			int control = info->control & 3;
 			UINT16 color_table[32];
@@ -3387,6 +3429,8 @@ int segaic16_road_init(int which, int type, int colorbase1, int colorbase2, int 
 			break;
 
 		case SEGAIC16_ROAD_OUTRUN:
+		case SEGAIC16_ROAD_XBOARD:
+			info->buffer = auto_malloc(0x1000);
 			info->draw = segaic16_road_outrun_draw;
 			segaic16_road_outrun_decode(info);
 			break;
@@ -3421,6 +3465,23 @@ void segaic16_road_draw(int which, struct mame_bitmap *bitmap, const struct rect
 
 READ16_HANDLER( segaic16_road_control_0_r )
 {
+	struct road_info *info = &road[0];
+
+	if (info->buffer)
+	{
+		UINT32 *src = (UINT32 *)info->roadram;
+		UINT32 *dst = (UINT32 *)info->buffer;
+		int i;
+
+		/* swap the halves of the road RAM */
+		for (i = 0; i < 0x1000/4; i++)
+		{
+			UINT32 temp = *src;
+			*src++ = *dst;
+			*dst++ = temp;
+		}
+	}
+
 	return 0xffff;
 }
 
@@ -3429,9 +3490,9 @@ WRITE16_HANDLER( segaic16_road_control_0_w )
 {
 	if (ACCESSING_LSB)
 	{
-		road[0].control = data & 0xff;
+		road[0].control = data & ((road[0].type == SEGAIC16_ROAD_OUTRUN) ? 3 : 7);
 		if (DEBUG_ROAD)
-			printf("road_control = %02X\n", data & 0xff);
+			printf("road_control = %02X\n", data & 7);
 	}
 }
 
@@ -3509,6 +3570,7 @@ void segaic16_rotate_draw(int which, struct mame_bitmap *bitmap, const struct re
 	{
 		UINT16 *dest = (UINT16 *)bitmap->line[y];
 		UINT16 *src = (UINT16 *)srcbitmap->base;
+		UINT8 *pri = (UINT8 *)priority_bitmap->line[y];
 		INT32 tx = currx;
 		INT32 ty = curry;
 		
@@ -3521,10 +3583,16 @@ void segaic16_rotate_draw(int which, struct mame_bitmap *bitmap, const struct re
 			int pix = src[sy * srcbitmap->rowpixels + (sx & 0x1ff)];
 			
 			/* non-zero pixels get written; everything else is the scanline color */
-			if (pix)
-				*dest++ = pix;
+			if (pix != 0xffff)
+			{
+				*dest++ = (pix & 0x1ff) | ((pix >> 6) & 0x200) | ((pix >> 3) & 0xc00) | 0x1000;
+				*pri++ = (pix >> 8) | 1;
+			}
 			else
+			{
 				*dest++ = info->colorbase + sy;
+				*pri++ = 0xff;
+			}
 
 			/* advance the source X/Y pointers */
 			tx += dxx;

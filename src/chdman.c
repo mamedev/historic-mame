@@ -207,6 +207,7 @@ static void error(void)
 	printf("   or: chdman -createcd input.toc output.chd\n");
 	printf("   or: chdman -copydata input.chd output.chd\n");
 	printf("   or: chdman -extract input.chd output.raw\n");
+	printf("   or: chdman -extractcd input.chd output.toc output.bin\n");
 	printf("   or: chdman -verify input.chd\n");
 	printf("   or: chdman -verifyfix input.chd\n");
 	printf("   or: chdman -update input.chd output.chd\n");
@@ -570,15 +571,15 @@ static void do_createcd(int argc, char *argv[])
 
 		/*
 		printf("Track %02d: file %s offset %d type %d subtype %d datasize %d subsize %d frames %d extra %d\n", i,
-			track_info.fname[i], 
-			track_info.offset[i], 
+			track_info.fname[i],
+			track_info.offset[i],
 			toc.tracks[i].trktype,
 			toc.tracks[i].subtype,
 			toc.tracks[i].datasize,
 			toc.tracks[i].subsize,
 			toc.tracks[i].frames,
 			toc.tracks[i].extraframes);
-		*/		
+		*/
 	}
 
 	/* create the new CHD file */
@@ -639,8 +640,8 @@ static void do_createcd(int argc, char *argv[])
 
 		printf("Compressing track %d / %d (file %s:%d, %d frames, %d hunks)\n", i+1, toc.numtrks, track_info.fname[i], track_info.offset[i], toc.tracks[i].frames, hunks);
 
- 		err = chd_compress_ex(chdex, track_info.fname[i], track_info.offset[i], 
-				trkbytespersec, CD_FRAMES_PER_HUNK, hunks, 
+ 		err = chd_compress_ex(chdex, track_info.fname[i], track_info.offset[i],
+				trkbytespersec, CD_FRAMES_PER_HUNK, hunks,
 				CD_FRAME_SIZE, progress);
 		if (err != CHDERR_NONE)
 		{
@@ -1028,7 +1029,171 @@ error:
 		chd_close(infile);
 }
 
+/*-------------------------------------------------
+	do_extractcd - extract a CDRDAO .toc/.bin
+	file from a CHD-CD image
+-------------------------------------------------*/
 
+static void do_extractcd(int argc, char *argv[])
+{
+	const char *inputfile, *outputfile, *outputfile2;
+	struct chd_file *infile = NULL;
+	void *hunk = NULL;
+	struct cdrom_file *cdrom = NULL;
+	struct cdrom_toc *toc = NULL;
+	FILE *outfile = NULL, *outfile2 = NULL;
+	int track, m, s, f, frame;
+	long trkoffs, trklen;
+	const char *typenames[8] = { "MODE1", "MODE1_RAW", "MODE2", "MODE2_FORM1", "MODE2_FORM2", "MODE2_FORM_MIX", "MODE2_RAW", "AUDIO" };
+	const char *subnames[2] = { "RW", "RW_RAW" };
+	unsigned char sector[CD_MAX_SECTOR_DATA + CD_MAX_SUBCODE_DATA];
+
+	/* require 5 args total */
+	if (argc != 5)
+		error();
+
+	/* extract the data */
+	inputfile = argv[2];
+	outputfile = argv[3];
+	outputfile2 = argv[4];
+
+	/* print some info */
+	printf("Input file:   %s\n", inputfile);
+	printf("Output files:  %s (toc) and %s (bin)\n", outputfile, outputfile2);
+
+	/* get the header */
+	infile = chd_open(inputfile, 0, NULL);
+	if (!infile)
+	{
+		printf("Error opening CHD file '%s': %s\n", inputfile, error_string(chd_get_last_error()));
+		goto error;
+	}
+
+	/* open the CD */
+	cdrom = cdrom_open(infile);
+	if (!cdrom)
+	{
+		printf("Error opening CHD-CD '%s'\n", inputfile);
+		goto error;
+	}
+
+	/* get the TOC data */
+	toc = cdrom_get_toc(cdrom);
+
+	/* create the output files */
+	outfile = fopen(outputfile, "w");
+	if (!outfile)
+	{
+		printf("Error opening output file '%s'\n", outputfile);
+		goto error;
+	}
+
+	outfile2 = fopen(outputfile2, "wb");
+	if (!outfile2)
+	{
+		printf("Error opening output file '%s'\n", outputfile2);
+		goto error;
+	}
+
+	/* process away */
+	fprintf(outfile, "CD_ROM\n\n\n");
+
+	trkoffs = 0;
+	for (track = 0; track < toc->numtrks; track++)
+	{
+		printf("Extracting track %d\n", track+1);
+
+		fprintf(outfile, "// Track %d\n", track+1);
+
+		/* write out the track type */
+		if (toc->tracks[track].subtype != CD_SUB_NONE)
+		{
+			fprintf(outfile, "TRACK %s %s\n", typenames[toc->tracks[track].trktype], subnames[toc->tracks[track].subtype]);
+		}
+		else
+		{
+			fprintf(outfile, "TRACK %s\n", typenames[toc->tracks[track].trktype]);
+		}
+
+		/* write out the attributes */
+		fprintf(outfile, "NO COPY\n");
+		if (toc->tracks[track].trktype == CD_TRACK_AUDIO)
+		{
+			fprintf(outfile, "NO PRE_EMPHASIS\n");
+			fprintf(outfile, "TWO_CHANNEL_AUDIO\n");
+
+			/* the first audio track on a mixed-track disc always has a 2 second pad */
+			if (track == 1)
+			{
+				if (toc->tracks[track].subtype != CD_SUB_NONE)
+				{
+					fprintf(outfile, "ZERO AUDIO %s 00:02:00\n", subnames[toc->tracks[track].subtype]);
+				}
+				else
+				{
+					fprintf(outfile, "ZERO AUDIO 00:02:00\n");
+				}
+			}
+		}
+
+		/* handle the datafile */
+		trklen = toc->tracks[track].frames;
+
+		/* convert to minutes/seconds/frames */
+		f = trklen;
+		s = f / 75;
+		f %= 75;
+		m = s / 60;
+		s %= 60;
+
+		if (track > 0)
+		{
+			fprintf(outfile, "DATAFILE \"%s\" #%ld %02d:%02d:%02d // length in bytes: %ld\n", outputfile2, trkoffs, m, s, f, trklen*(toc->tracks[track].datasize+toc->tracks[track].subsize));
+		}
+		else
+		{
+			fprintf(outfile, "DATAFILE \"%s\" %02d:%02d:%02d // length in bytes: %ld\n", outputfile2, m, s, f, trklen*(toc->tracks[track].datasize+toc->tracks[track].subsize));
+		}
+
+		if ((toc->tracks[track].trktype == CD_TRACK_AUDIO) && (track == 1))
+		{
+			fprintf(outfile, "START 00:02:00\n");
+		}
+
+		// now handle the actual writeout
+		for (frame = 0; frame < trklen; frame++)
+		{
+			cdrom_read_data(cdrom, cdrom_get_chd_start_of_track(cdrom, track)+frame, 1, sector, toc->tracks[track].trktype);
+			fwrite(sector, toc->tracks[track].datasize, 1, outfile2);
+			trkoffs += toc->tracks[track].datasize;
+			cdrom_read_subcode(cdrom, cdrom_get_chd_start_of_track(cdrom, track)+frame, sector);
+			fwrite(sector, toc->tracks[track].subsize, 1, outfile2);
+			trkoffs += toc->tracks[track].subsize;
+		}
+
+		fprintf(outfile, "\n\n");
+	}
+
+	printf("Completed!\n");
+
+	/* close everything down */
+	fclose(outfile);
+	fclose(outfile2);
+	free(hunk);
+	chd_close(infile);
+	return;
+
+error:
+	/* clean up our mess */
+	if (outfile)
+		fclose(outfile);
+	if (outfile2)
+		fclose(outfile2);
+	if (cdrom)
+		cdrom_close(cdrom);
+	if (infile)
+		chd_close(infile);
+}
 
 /*-------------------------------------------------
 	do_verify - validate the MD5/SHA1 on a drive
@@ -1979,6 +2144,8 @@ int main(int argc, char **argv)
 		do_createcd(argc, argv);
 	else if (!stricmp(argv[1], "-extract"))
 		do_extract(argc, argv);
+	else if (!stricmp(argv[1], "-extractcd"))
+		do_extractcd(argc, argv);
 	else if (!stricmp(argv[1], "-verify"))
 		do_verify(argc, argv, 0);
 	else if (!stricmp(argv[1], "-verifyfix"))

@@ -10,6 +10,7 @@
 //#define INCLUDE_V20
 
 #define I86_NMI_INT_VECTOR 2
+#define INPUT_LINE_TEST 20    /* PJB 03/05 */
 
 typedef enum { ES, CS, SS, DS } SREGS;
 typedef enum { AX, CX, DX, BX, SP, BP, SI, DI } WREGS;

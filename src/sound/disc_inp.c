@@ -10,13 +10,10 @@
  *
  * DSS_ADJUSTMENT        - UI Mapped adjustable input
  * DSS_CONSTANT          - Node based constant - Do we need this ???
- * DSS_INPUT_x           - Memory Mapped input device
+ * DSS_INPUT_x           - Input devices
+ * DSS_INPUT_STREAM      - Connects external streams to the discrete system
  *
  ************************************************************************/
-
-/* NOTE: We will cheat and store the value written by discrete_sound_w
- *       in an unused input.  context->data
- */
 
 #define DSS_INPUT__GAIN		(*(node->input[0]))
 #define DSS_INPUT__OFFSET	(*(node->input[1]))
@@ -35,12 +32,6 @@ struct dss_adjustment_context
 };
 
 
-struct dss_input_context
-{
-	data8_t data;
-};
-
-
 READ8_HANDLER(discrete_sound_r)
 {
 	struct discrete_info *info = sndti_token(SOUND_DISCRETE, 0);
@@ -54,11 +45,11 @@ READ8_HANDLER(discrete_sound_r)
 	/* Read the node input value if allowed */
 	if (node)
 	{
-		struct dss_input_context *context = node->context;
+		data8_t *node_data = node->context;
 
 		if ((node->module.type >= DSS_INPUT_DATA) && (node->module.type <= DSS_INPUT_PULSE))
 		{
-			data = context->data;
+			data = *node_data;
 		}
 	}
 	else
@@ -80,19 +71,19 @@ WRITE8_HANDLER(discrete_sound_w)
 	/* Update the node input value if it's a proper input node */
 	if (node)
 	{
-		struct dss_input_context *context = node->context;
+		data8_t *node_data = node->context;
 
 		switch (node->module.type)
 		{
 			case DSS_INPUT_DATA:
-				context->data = data;
+				*node_data = data;
 				break;
 			case DSS_INPUT_LOGIC:
 			case DSS_INPUT_PULSE:
-				context->data = data ? 1 : 0;
+				*node_data = data ? 1 : 0;
 				break;
 			case DSS_INPUT_NOT:
-				context->data = data ? 0 : 1;
+				*node_data = data ? 0 : 1;
 				break;
 		}
 	}
@@ -204,26 +195,26 @@ void dss_constant_step(struct node_description *node)
  ************************************************************************/
 void dss_input_step(struct node_description *node)
 {
-	struct dss_input_context *context = node->context;
+	data8_t *node_data = node->context;
 
-	node->output = context->data * DSS_INPUT__GAIN + DSS_INPUT__OFFSET;
+	node->output = *node_data * DSS_INPUT__GAIN + DSS_INPUT__OFFSET;
 }
 
 void dss_input_reset(struct node_description *node)
 {
-	struct dss_input_context *context = node->context;
+	data8_t *node_data = node->context;
 
 	switch (node->module.type)
 	{
 		case DSS_INPUT_DATA:
-			context->data = DSS_INPUT__INIT;
+			*node_data = DSS_INPUT__INIT;
 			break;
 		case DSS_INPUT_LOGIC:
 		case DSS_INPUT_PULSE:
-			context->data = (DSS_INPUT__INIT == 0) ? 0 : 1;
+			*node_data = (DSS_INPUT__INIT == 0) ? 0 : 1;
 			break;
 		case DSS_INPUT_NOT:
-			context->data = (DSS_INPUT__INIT == 0) ? 1 : 0;
+			*node_data = (DSS_INPUT__INIT == 0) ? 1 : 0;
 			break;
 	}
 	dss_input_step(node);
@@ -231,11 +222,39 @@ void dss_input_reset(struct node_description *node)
 
 void dss_input_pulse_step(struct node_description *node)
 {
-	struct dss_input_context *context = node->context;
+	data8_t *node_data = node->context;
 
 	/* Set a valid output */
-	node->output = context->data;
+	node->output = *node_data;
 	/* Reset the input to default for the next cycle */
 	/* node order is now important */
-	context->data = DSS_INPUT__INIT;
+	*node_data = DSS_INPUT__INIT;
+}
+
+
+/************************************************************************
+ *
+ * DSS_INPUT_STREAM    - Receives input from a routed stream
+ *
+ * input[0]    - Input stream number
+ * input[1]    - Gain value
+ * input[2]    - Offset value
+ *
+ ************************************************************************/
+#define DSS_INPUT_STREAM__STREAM	(*(node->input[0]))
+#define DSS_INPUT_STREAM__GAIN		(*(node->input[1]))
+#define DSS_INPUT_STREAM__OFFSET	(*(node->input[2]))
+
+void dss_input_stream_step(struct node_description *node)
+{
+	stream_sample_t *data = node->context;
+
+	node->output = *data * DSS_INPUT_STREAM__GAIN + DSS_INPUT_STREAM__OFFSET;
+}
+
+void dss_input_stream_reset(struct node_description *node)
+{
+	stream_sample_t *data = node->context;
+
+	*data = 0;
 }

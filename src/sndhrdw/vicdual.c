@@ -51,10 +51,10 @@ const struct discrete_555_cc_desc frogsZip555cc =
 
 const struct discrete_mixer_desc frogsMixer =
 {
-	DISC_MIXER_IS_OP_AMP, 2,
-	{RES_K(1), RES_K(5), 0,0,0,0,0,0},
-	{FROGS_R93, 0,0,0,0,0,0,0},
-	{CAP_U(0.01), CAP_U(0.01), 0,0,0,0,0,0},
+	DISC_MIXER_IS_OP_AMP,
+	{RES_K(1), RES_K(5)},
+	{FROGS_R93, 0},
+	{CAP_U(0.01), CAP_U(0.01)},
 	0, RES_K(56), 0, CAP_U(0.1), 0, 10000
 };
 
@@ -137,7 +137,7 @@ WRITE8_HANDLER( frogs_sh_port2_w )
 
 	if (data & 0x01)
 		sample_start (3, 3, 0);	// Hop
-if (data & 0x02)
+	if (data & 0x02)
 		sample_start (0, 0, 0);	// Boing
 	if (new_croak)
 		sample_start (2, 2, 0);	// Croak

@@ -380,9 +380,17 @@ static void scsi_irq(void)
 	psx_irq_set(0x400);
 }
 
+static SCSIConfigTable dev_table =
+{
+	1, /* 1 SCSI device */
+	{
+		{ SCSI_ID_0, 0, SCSI_DEVICE_HARDDISK } /* SCSI ID 0, using CHD 0, and it's a HDD */
+	}
+};
+
 static struct AM53CF96interface scsi_intf =
 {
-	AM53CF96_DEVICE_HDD,	/* hard disk */
+	&dev_table,		/* SCSI device table */
 	&scsi_irq,		/* command completion IRQ */
 };
 

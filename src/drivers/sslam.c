@@ -3,12 +3,17 @@
 /*
 
 Still some unknown reads / writes (it writes all over the place ...)
-Odd problem with sprites, and wrong text on tournament screen.
 Inputs / DSW's need finishing / verifying.
-Game crashes after you win your first match.
 
 The 87C751 MCU for sound has not had its internal program ROM dumped.
 So the sound MCU is simulated here - and therefore not 100% correct.
+
+Update 12/03/2005 - Pierpaolo Prazzoli
+- Fixed sprites
+- Fixed text tilemap colors
+- Fixed text tilemap scrolls
+- Fixed VSync
+- Fixed middle tilemap removing wraparound in the title screen (24/03/2005)
 
 */
 
@@ -325,52 +330,27 @@ static INTERRUPT_GEN( sslam_interrupt )
 /* these will need verifying .. the game writes all over the place ... */
 
 static ADDRESS_MAP_START( sslam_program_map, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000400, 0x0fffff) AM_RAM
-
-//	AM_RANGE(0x020000, 0x07ffff) AM_RAM
-
+	AM_RANGE(0x000400, 0x07ffff) AM_RAM
 	AM_RANGE(0x100000, 0x103fff) AM_READWRITE(MRA16_RAM, sslam_bg_tileram_w) AM_BASE(&sslam_bg_tileram)
 	AM_RANGE(0x104000, 0x107fff) AM_READWRITE(MRA16_RAM, sslam_md_tileram_w) AM_BASE(&sslam_md_tileram)
 	AM_RANGE(0x108000, 0x10ffff) AM_READWRITE(MRA16_RAM, sslam_tx_tileram_w) AM_BASE(&sslam_tx_tileram)
-
-	AM_RANGE(0x110000, 0x11000f) AM_WRITE(MWA16_RAM) AM_BASE(&sslam_regs)
-
+	AM_RANGE(0x110000, 0x11000b) AM_RAM AM_BASE(&sslam_regs)
+	AM_RANGE(0x11000c, 0x11000d) AM_WRITENOP
+	AM_RANGE(0x200000, 0x200001) AM_WRITENOP
 	AM_RANGE(0x280000, 0x280fff) AM_READWRITE(MRA16_RAM, bigtwin_paletteram_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x201000, 0x220fff) AM_RAM AM_BASE(&sslam_spriteram) /* probably not all of it .. */
-
+	AM_RANGE(0x304000, 0x304001) AM_WRITENOP
 	AM_RANGE(0x300010, 0x300011) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x300012, 0x300013) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x300014, 0x300015) AM_READ(input_port_2_word_r)
 	AM_RANGE(0x300016, 0x300017) AM_READ(input_port_3_word_r)
 	AM_RANGE(0x300018, 0x300019) AM_READ(input_port_4_word_r)
-
 	AM_RANGE(0x30001a, 0x30001b) AM_READ(input_port_5_word_r)
 	AM_RANGE(0x30001c, 0x30001d) AM_READ(input_port_6_word_r)
 	AM_RANGE(0x30001e, 0x30001f) AM_WRITE(sslam_snd_w)
-
-	AM_RANGE(0x400000, 0x4fffff) AM_ROM
-	AM_RANGE(0x500000, 0x5fffff) AM_ROM
-	AM_RANGE(0x600000, 0x6fffff) AM_ROM
-	AM_RANGE(0x700000, 0x7fffff) AM_ROM
-	AM_RANGE(0x800000, 0x8fffff) AM_ROM
-	AM_RANGE(0x900000, 0x9fffff) AM_ROM
-	AM_RANGE(0xc00000, 0xcfffff) AM_ROM
-	AM_RANGE(0xa00000, 0xafffff) AM_ROM
-	AM_RANGE(0xb00000, 0xbfffff) AM_ROM
-	AM_RANGE(0xc00000, 0xcfffff) AM_ROM
-	AM_RANGE(0xd00000, 0xdfffff) AM_ROM
-	AM_RANGE(0xe00000, 0xefffff) AM_ROM
-	AM_RANGE(0xf00000, 0xffffff) AM_RAM		/* Main RAM */
-
+	AM_RANGE(0xf00000, 0xffffff) AM_RAM	  /* Main RAM */
 
 	AM_RANGE(0x000000, 0xffffff) AM_ROM   /* I don't honestly know where the rom is mirrored .. so all unmapped reads / writes go to rom */
-
-
-#if 0	/* Remove the log file noise */
-	AM_RANGE(0x300020, 0xbfffff) AM_RAM
-	AM_RANGE(0xd00000, 0xfdffff) AM_RAM
-	AM_RANGE(0xff0000, 0xffffff) AM_RAM
-#endif
 ADDRESS_MAP_END
 
 
@@ -524,7 +504,7 @@ static MACHINE_DRIVER_START( sslam )
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 	MDRV_CPU_PERIODIC_INT(sslam_interrupt, 240)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
@@ -545,12 +525,11 @@ static MACHINE_DRIVER_START( sslam )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
-/* maybe one dump is bad .. which? */
-/* should use guru's (sslama) filenames, they're better */
+/* maybe one dump is bad .. which? -> 2nd set was verified good from 2 pcbs */
 
 ROM_START( sslam )
 	ROM_REGION( 0x1000000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_BYTE( "it_21.bin", 0x00000, 0x80000, CRC(1ce52917) SHA1(b9b1d14ea44c248ce6e615c5c553c0d485c1302b) )
+	ROM_LOAD16_BYTE( "2.u67", 0x00000, 0x80000, CRC(1ce52917) SHA1(b9b1d14ea44c248ce6e615c5c553c0d485c1302b) )
 	ROM_RELOAD ( 0x100000, 0x80000 )
 	ROM_RELOAD ( 0x200000, 0x80000 )
 	ROM_RELOAD ( 0x300000, 0x80000 )
@@ -584,21 +563,21 @@ ROM_START( sslam )
 	ROM_RELOAD ( 0xf00001, 0x80000 )
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE  ) /* Bg */
-	ROM_LOAD( "it_23.bin", 0x180000, 0x80000, CRC(8e15fb9d) SHA1(47917d8aac1bce2e15f36904f5c2534e5b80236b) )
-	ROM_LOAD( "it_24.bin", 0x100000, 0x80000, CRC(8d18bdc6) SHA1(cacc4f475f85438a00ead4911730202e995983a7) )
-	ROM_LOAD( "it_25.bin", 0x080000, 0x80000, CRC(6928065c) SHA1(ad5b1889bebf0358df0295d6041b798ac53ac625) )
-	ROM_LOAD( "it_26.bin", 0x000000, 0x80000, CRC(64ecdde9) SHA1(576ba1169d90970622249e532baa4209bf12de5a) )
-
+	ROM_LOAD( "7.u45",     0x000000, 0x80000, CRC(64ecdde9) SHA1(576ba1169d90970622249e532baa4209bf12de5a) )
+	ROM_LOAD( "6.u39",     0x080000, 0x80000, CRC(6928065c) SHA1(ad5b1889bebf0358df0295d6041b798ac53ac625) )
+	ROM_LOAD( "5.u42",     0x100000, 0x80000, CRC(8d18bdc6) SHA1(cacc4f475f85438a00ead4911730202e995983a7) )
+	ROM_LOAD( "4.u36",     0x180000, 0x80000, CRC(8e15fb9d) SHA1(47917d8aac1bce2e15f36904f5c2534e5b80236b) )
+	
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE  ) /* Sprites */
-	ROM_LOAD( "it_27.bin", 0x000000, 0x80000, CRC(19bb89dd) SHA1(c2a0c32d350a193d366b5086502998281fd0bec4) )
-	ROM_LOAD( "it_28.bin", 0x080000, 0x80000, CRC(d50d86c7) SHA1(7ecbcc03851a8174610f7f5ad889e40543da928e) )
-	ROM_LOAD( "it_29.bin", 0x100000, 0x80000, CRC(681b8ac8) SHA1(ebfeffc091f53af246311574b9c5d83d2716a7be) )
-	ROM_LOAD( "it_30.bin", 0x180000, 0x80000, CRC(e41f89e3) SHA1(e4b39411a4cea6aa6c01564f74bb8e432d382a73) )
+	ROM_LOAD( "8.u83",     0x000000, 0x80000, CRC(19bb89dd) SHA1(c2a0c32d350a193d366b5086502998281fd0bec4) )
+	ROM_LOAD( "9.u84",     0x080000, 0x80000, CRC(d50d86c7) SHA1(7ecbcc03851a8174610f7f5ad889e40543da928e) )
+	ROM_LOAD( "10.u85",    0x100000, 0x80000, CRC(681b8ac8) SHA1(ebfeffc091f53af246311574b9c5d83d2716a7be) )
+	ROM_LOAD( "11.u86",    0x180000, 0x80000, CRC(e41f89e3) SHA1(e4b39411a4cea6aa6c01564f74bb8e432d382a73) )
 
 	/* $00000-$20000 stays the same in all sound banks, */
 	/* the second half of the bank is the area that gets switched */
 	ROM_REGION( 0xc0000, REGION_SOUND1, 0 ) /* OKI Samples */
-	ROM_LOAD( "it_20.bin",   0x00000, 0x40000, CRC(d0a9245f) SHA1(2e840cdd7bdfe7c6f986daf88576de0559597499) )
+	ROM_LOAD( "3.u13",       0x00000, 0x40000, CRC(d0a9245f) SHA1(2e840cdd7bdfe7c6f986daf88576de0559597499) )
 	ROM_CONTINUE(            0x60000, 0x20000 )
 	ROM_CONTINUE(            0xa0000, 0x20000 )
 	ROM_COPY( REGION_SOUND1, 0x00000, 0x40000, 0x20000)
@@ -607,7 +586,7 @@ ROM_END
 
 ROM_START( sslama )
 	ROM_REGION( 0x1000000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_BYTE( "it_21.bin", 0x00000, 0x80000, CRC(1ce52917) SHA1(b9b1d14ea44c248ce6e615c5c553c0d485c1302b) )
+	ROM_LOAD16_BYTE( "2.u67", 0x00000, 0x80000, CRC(1ce52917) SHA1(b9b1d14ea44c248ce6e615c5c553c0d485c1302b) )
 	ROM_RELOAD ( 0x100000, 0x80000 )
 	ROM_RELOAD ( 0x200000, 0x80000 )
 	ROM_RELOAD ( 0x300000, 0x80000 )
@@ -641,27 +620,26 @@ ROM_START( sslama )
 	ROM_RELOAD ( 0xf00001, 0x80000 )
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE  ) /* Bg */
-	ROM_LOAD( "it_23.bin", 0x180000, 0x80000, CRC(8e15fb9d) SHA1(47917d8aac1bce2e15f36904f5c2534e5b80236b) )
-	ROM_LOAD( "it_24.bin", 0x100000, 0x80000, CRC(8d18bdc6) SHA1(cacc4f475f85438a00ead4911730202e995983a7) )
-	ROM_LOAD( "it_25.bin", 0x080000, 0x80000, CRC(6928065c) SHA1(ad5b1889bebf0358df0295d6041b798ac53ac625) )
-	ROM_LOAD( "it_26.bin", 0x000000, 0x80000, CRC(64ecdde9) SHA1(576ba1169d90970622249e532baa4209bf12de5a) )
-
+	ROM_LOAD( "7.u45",     0x000000, 0x80000, CRC(64ecdde9) SHA1(576ba1169d90970622249e532baa4209bf12de5a) )
+	ROM_LOAD( "6.u39",     0x080000, 0x80000, CRC(6928065c) SHA1(ad5b1889bebf0358df0295d6041b798ac53ac625) )
+	ROM_LOAD( "5.u42",     0x100000, 0x80000, CRC(8d18bdc6) SHA1(cacc4f475f85438a00ead4911730202e995983a7) )
+	ROM_LOAD( "4.u36",     0x180000, 0x80000, CRC(8e15fb9d) SHA1(47917d8aac1bce2e15f36904f5c2534e5b80236b) )
+	
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE  ) /* Sprites */
-	ROM_LOAD( "it_27.bin", 0x000000, 0x80000, CRC(19bb89dd) SHA1(c2a0c32d350a193d366b5086502998281fd0bec4) )
-	ROM_LOAD( "it_28.bin", 0x080000, 0x80000, CRC(d50d86c7) SHA1(7ecbcc03851a8174610f7f5ad889e40543da928e) )
-	ROM_LOAD( "it_29.bin", 0x100000, 0x80000, CRC(681b8ac8) SHA1(ebfeffc091f53af246311574b9c5d83d2716a7be) )
-	ROM_LOAD( "it_30.bin", 0x180000, 0x80000, CRC(e41f89e3) SHA1(e4b39411a4cea6aa6c01564f74bb8e432d382a73) )
+	ROM_LOAD( "8.u83",     0x000000, 0x80000, CRC(19bb89dd) SHA1(c2a0c32d350a193d366b5086502998281fd0bec4) )
+	ROM_LOAD( "9.u84",     0x080000, 0x80000, CRC(d50d86c7) SHA1(7ecbcc03851a8174610f7f5ad889e40543da928e) )
+	ROM_LOAD( "10.u85",    0x100000, 0x80000, CRC(681b8ac8) SHA1(ebfeffc091f53af246311574b9c5d83d2716a7be) )
+	ROM_LOAD( "11.u86",    0x180000, 0x80000, CRC(e41f89e3) SHA1(e4b39411a4cea6aa6c01564f74bb8e432d382a73) )
 
 	/* $00000-$20000 stays the same in all sound banks, */
 	/* the second half of the bank is the area that gets switched */
 	ROM_REGION( 0xc0000, REGION_SOUND1, 0 ) /* OKI Samples */
-	ROM_LOAD( "it_20.bin",   0x00000, 0x40000, CRC(d0a9245f) SHA1(2e840cdd7bdfe7c6f986daf88576de0559597499) )
+	ROM_LOAD( "3.u13",       0x00000, 0x40000, CRC(d0a9245f) SHA1(2e840cdd7bdfe7c6f986daf88576de0559597499) )
 	ROM_CONTINUE(            0x60000, 0x20000 )
 	ROM_CONTINUE(            0xa0000, 0x20000 )
 	ROM_COPY( REGION_SOUND1, 0x00000, 0x40000, 0x20000)
 	ROM_COPY( REGION_SOUND1, 0x00000, 0x80000, 0x20000)
 ROM_END
 
-
-GAMEX(1993, sslam, 0, sslam, sslam, 0, ROT0, "Playmark", "Super Slam", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX(1993, sslama, sslam, sslam, sslam, 0, ROT0, "Playmark", "Super Slam (alt)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX(1993, sslam, 0,      sslam, sslam, 0, ROT0, "Playmark", "Super Slam (set 1)", GAME_IMPERFECT_SOUND )
+GAMEX(1993, sslama, sslam, sslam, sslam, 0, ROT0, "Playmark", "Super Slam (set 2)", GAME_IMPERFECT_SOUND )

@@ -43,7 +43,7 @@ VIDEO_START( vigilant )
 {
 	video_start_generic();
 
-	if ((bg_bitmap = auto_bitmap_alloc(512*3,256)) == 0)
+	if ((bg_bitmap = auto_bitmap_alloc(512*4,256)) == 0)
 		return 1;
 
 	return 0;
@@ -65,8 +65,8 @@ static void update_background( void )
 
 	charcode=0;
 
-	/* There are only three background ROMs */
-	for (page=0; page<3; page++)
+	/* There are only three background ROMs (4 on bunccaneers!) */
+	for (page=0; page<4; page++)
 	{
 		for( row=0; row<256; row++ )
 		{
@@ -174,6 +174,7 @@ WRITE8_HANDLER( vigilant_rear_color_w )
 
  ???
  **************************************************************************/
+
 static void draw_foreground( struct mame_bitmap *bitmap, int priority, int opaque )
 {
 	int offs;
@@ -215,7 +216,7 @@ static void draw_foreground( struct mame_bitmap *bitmap, int priority, int opaqu
 					color,
 					0,0,
 					sx,sy,
-					&Machine->visible_area,(opaque || color >= 8) ? TRANSPARENCY_NONE : TRANSPARENCY_PEN,0);
+					&Machine->visible_area,(opaque || color >= 4) ? TRANSPARENCY_NONE : TRANSPARENCY_PEN,0);
 		}
 	}
 }
@@ -266,6 +267,8 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 		h = 1 << ((spriteram[offs+5] & 0x30) >> 4);
 		sy -= 16 * h;
 
+		code &= ~(h - 1);
+
 		for (y = 0;y < h;y++)
 		{
 			int c = code;
@@ -286,7 +289,6 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 VIDEO_UPDATE( vigilant )
 {
 	int i;
-
 
 	/* copy the background palette */
 	for (i = 0;i < 16;i++)

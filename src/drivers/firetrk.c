@@ -639,7 +639,7 @@ INPUT_PORTS_START( firetrk )
 	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME("Horn") PORT_PLAYER(1)
 
 	PORT_START		/* 8 */
-	PORT_ADJUSTER( 85, "Motor Frequency" )
+	PORT_ADJUSTER( 20, "R27 - Motor Frequency" )
 INPUT_PORTS_END
 
 
@@ -706,7 +706,7 @@ INPUT_PORTS_START( superbug )
 	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_BUTTON5 ) PORT_NAME("Gear 4") PORT_CODE(KEYCODE_V)
 
 	PORT_START		/* 8 */
-	PORT_ADJUSTER( 85, "Motor Frequency" )
+	PORT_ADJUSTER( 20, "R62 - Motor Frequency" )
 INPUT_PORTS_END
 
 
@@ -784,10 +784,10 @@ INPUT_PORTS_START( montecar )
 	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_BUTTON5 ) PORT_NAME("Gear 4") PORT_CODE(KEYCODE_V)
 
 	PORT_START		/* 8 */
-	PORT_ADJUSTER( 85, "Motor Frequency" )
+	PORT_ADJUSTER( 20, "R89 - Motor Frequency" )
 
 	PORT_START		/* 9 */
-	PORT_ADJUSTER( 80, "Motor Frequency" )
+	PORT_ADJUSTER( 25, "R88 - Drone Motor Frequency" )
 INPUT_PORTS_END
 
 

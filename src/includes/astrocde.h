@@ -17,6 +17,13 @@ WRITE8_HANDLER( wow_protected_ram_w );
 NVRAM_HANDLER( robby_nvram );
 READ8_HANDLER( robby_nvram_r );
 WRITE8_HANDLER( robby_nvram_w );
+READ8_HANDLER( demndrgn_move_r );
+READ8_HANDLER( demndrgn_fire_x_r );
+READ8_HANDLER( demndrgn_fire_y_r );
+WRITE8_HANDLER( demndrgn_sound_w );
+READ8_HANDLER( demndrgn_io_r );
+READ8_HANDLER( demndrgn_nvram_r );
+WRITE8_HANDLER( demndrgn_nvram_w );
 WRITE8_HANDLER( profpac_banksw_w );
 WRITE8_HANDLER( profpac_page_select_w );
 WRITE8_HANDLER( profpac_screenram_ctrl_w );
@@ -78,11 +85,6 @@ void *gorf_sh_start(int clock, const struct CustomSound_interface *config);
 READ8_HANDLER( gorf_speech_r );
 READ8_HANDLER( gorf_port_2_r );
 WRITE8_HANDLER( gorf_sound_control_a_w );
-
-
-
-
-
 
 
 

@@ -646,11 +646,6 @@ TODO:
   the test grid shown on startup is correct, but this way an unerased grey strip
   remains on the left of the screen during the title sequence.
 
-- xevious: the watchdog should fire if not reset for 8 frames, I think. MAME is
-  currently hardwired to wait 3 seconds. This causes credit sounds to play for a
-  while when the test mode switch is toggled because the machine doesn't reset soon
-  enough.
-
 - Should Xevios have a 4th Z80 like the other bootlegs? We don't have a dump for
   that ROM.
 
@@ -672,7 +667,7 @@ TODO:
 #include "sound/namco.h"
 #include "sound/namco52.h"
 #include "sound/namco54.h"
-#include "sound/sn76477.h"
+#include "rc.h"
 #include "sound/samples.h"
 
 
@@ -1867,6 +1862,7 @@ static MACHINE_DRIVER_START( bosco )
 	MDRV_CPU_PROGRAM_MAP(bosco_map,0)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,2)	/* 64V */
 
+	MDRV_WATCHDOG_VBLANK_INIT(8)
 	MDRV_FRAMES_PER_SECOND(60.606060)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
@@ -1922,6 +1918,7 @@ static MACHINE_DRIVER_START( galaga )
 	MDRV_CPU_PROGRAM_MAP(galaga_map,0)
 	MDRV_CPU_VBLANK_INT(galaga_cpu3_nmi,4)	/* 64V (see notes at the top of the driver) */
 
+	MDRV_WATCHDOG_VBLANK_INIT(8)
 	MDRV_FRAMES_PER_SECOND(60.606060)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
@@ -1978,6 +1975,7 @@ static MACHINE_DRIVER_START( xevious )
 	MDRV_CPU_PROGRAM_MAP(xevious_map,0)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,2)	/* 64V */
 
+	MDRV_WATCHDOG_VBLANK_INIT(8)
 	MDRV_FRAMES_PER_SECOND(60.606060)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */

@@ -30,24 +30,9 @@ D000      Paddle Position and Interrupt Reset
 #include "driver.h"
 #include "artwork.h"
 #include "vidhrdw/generic.h"
-#include "sound/dac.h"
 #include "sound/samples.h"
+#include "circus.h"
 
-extern WRITE8_HANDLER( circus_clown_x_w );
-extern WRITE8_HANDLER( circus_clown_y_w );
-extern WRITE8_HANDLER( circus_clown_z_w );
-
-extern WRITE8_HANDLER( circus_videoram_w );
-
-extern VIDEO_START( circus );
-extern VIDEO_UPDATE( crash );
-extern VIDEO_UPDATE( circus );
-extern VIDEO_UPDATE( robotbwl );
-extern VIDEO_UPDATE( ripcord ); //AT
-extern VIDEO_EOF( ripcord ); //AT
-
-extern INTERRUPT_GEN( crash_interrupt );
-extern struct Samplesinterface circus_samples_interface;
 #if 0
 static int circus_interrupt;
 
@@ -58,6 +43,9 @@ static READ8_HANDLER( ripcord_IN2_r )
 	return readinputport (2);
 }
 #endif
+
+
+int circus_game;
 
 
 OVERLAY_START( circus_overlay )
@@ -187,6 +175,12 @@ INPUT_PORTS_START( crash )
 	PORT_DIPSETTING(    0x10, "Credit Awarded" )
 	PORT_BIT( 0x60, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+
+	PORT_START		/* 2 */
+	PORT_ADJUSTER( 90, "R63 - Music Volume" )
+
+	PORT_START		/* 3 */
+	PORT_ADJUSTER( 40, "R39 - Beeper Volume" )
 INPUT_PORTS_END
 
 
@@ -309,10 +303,11 @@ static MACHINE_DRIVER_START( circus )
 
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(circus_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-
-	MDRV_SOUND_ADD(DAC, 0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+	
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(circus_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -340,7 +335,12 @@ static MACHINE_DRIVER_START( robotbwl )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(robotbwl_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+	
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(robotbwl_discrete_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
@@ -368,8 +368,13 @@ static MACHINE_DRIVER_START( crash )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(DAC, 0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(crash_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+	
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(crash_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( ripcord )
@@ -396,8 +401,13 @@ static MACHINE_DRIVER_START( ripcord )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(DAC, 0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(ripcord_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+	
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(circus_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -493,10 +503,24 @@ ROM_END
 static DRIVER_INIT( circus )
 {
 	artwork_set_overlay(circus_overlay);
+	circus_game = 1;
+}
+
+static DRIVER_INIT( robotbwl )
+{
+	circus_game = 2;
+}
+static DRIVER_INIT( crash )
+{
+	circus_game = 3;
+}
+static DRIVER_INIT( ripcord )
+{
+	circus_game = 4;
 }
 
 
-GAME( 1977, circus,   0, circus,   circus,   circus, ROT0, "Exidy", "Circus" )
-GAMEX( 1977, robotbwl, 0, robotbwl, robotbwl, 0,      ROT0, "Exidy", "Robot Bowl", GAME_NO_SOUND )
-GAMEX( 1979, crash,    0, crash,    crash,    0,      ROT0, "Exidy", "Crash", GAME_IMPERFECT_SOUND )
-GAMEX( 1979, ripcord,  0, ripcord,  ripcord,  0,      ROT0, "Exidy", "Rip Cord", GAME_IMPERFECT_SOUND )
+GAME ( 1977, circus,   0, circus,   circus,   circus,   ROT0, "Exidy", "Circus" )
+GAMEX( 1977, robotbwl, 0, robotbwl, robotbwl, robotbwl, ROT0, "Exidy", "Robot Bowl", GAME_IMPERFECT_SOUND )
+GAMEX( 1979, crash,    0, crash,    crash,    crash,    ROT0, "Exidy", "Crash", GAME_IMPERFECT_SOUND )
+GAMEX( 1979, ripcord,  0, ripcord,  ripcord,  ripcord,  ROT0, "Exidy", "Rip Cord", GAME_IMPERFECT_SOUND )

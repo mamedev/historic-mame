@@ -1,4 +1,4 @@
-/***************************************************************************** 
+/*****************************************************************************
  *
  *	cheat.c
  *	by Ian Patterson [ianpatt at pacbell dot net]
@@ -325,7 +325,7 @@ to hex.
 
 Refresh rate: (01100110 -------- -1------ --------) 0x66004000
 
-Sets the refresh rate. Put the new refresh rate in the data field. Use 16.16 fixed 
+Sets the refresh rate. Put the new refresh rate in the data field. Use 16.16 fixed
 point notation for the refresh rate.
 
 Example 1: set the refresh rate to 56.3333333
@@ -642,6 +642,7 @@ enum
 {
 	kSearchSize_8Bit = 0,
 	kSearchSize_16Bit,
+	kSearchSize_24Bit,
 	kSearchSize_32Bit,
 	kSearchSize_1Bit,
 
@@ -786,7 +787,7 @@ struct SearchInfo
 
 	char				* name;
 
-	INT8				bytes;	// 0 = 1, 1 = 2, 2 = 4, 3 = bit
+	INT8				bytes;	// 0 = 1, 1 = 2, 2 = 3, 3 = 4, 4 = bit
 	UINT8				swap;
 	UINT8				sign;
 	INT8				lhs;
@@ -946,6 +947,16 @@ static const int kSearchByteIncrementTable[] =
 {
 	1,
 	2,
+	3,
+	4,
+	1
+};
+
+static const int kSearchByteStep[] =
+{
+	1,
+	2,
+	1,
 	4,
 	1
 };
@@ -954,6 +965,7 @@ static const char * kSearchByteNameTable[] =
 {
 	"1",
 	"2",
+	"3",
 	"4",
 	"Bit"
 };
@@ -962,6 +974,7 @@ static const int	kSearchByteDigitsTable[] =
 {
 	2,
 	4,
+	6,
 	8,
 	1
 };
@@ -970,6 +983,7 @@ static const int	kSearchByteDecDigitsTable[] =
 {
 	3,
 	5,
+	8,
 	10,
 	1
 };
@@ -978,6 +992,7 @@ static const UINT32 kSearchByteMaskTable[] =
 {
 	0x000000FF,
 	0x0000FFFF,
+	0x00FFFFFF,
 	0xFFFFFFFF,
 	0x00000001
 };
@@ -986,6 +1001,7 @@ static const UINT32	kSearchByteSignBitTable[] =
 {
 	0x00000080,
 	0x00008000,
+	0x00800000,
 	0x80000000,
 	0x00000000
 };
@@ -994,6 +1010,7 @@ static const UINT32 kSearchByteUnsignedMaskTable[] =
 {
 	0x0000007F,
 	0x00007FFF,
+	0x007FFFFF,
 	0x7FFFFFFF,
 	0x00000001
 };
@@ -1038,6 +1055,7 @@ static const int	kByteConversionTable[] =
 {
 	kSearchSize_8Bit,
 	kSearchSize_16Bit,
+	kSearchSize_24Bit,
 	kSearchSize_32Bit,
 	kSearchSize_32Bit
 };
@@ -1046,6 +1064,7 @@ static const int	kWatchSizeConversionTable[] =
 {
 	kSearchSize_8Bit,
 	kSearchSize_16Bit,
+	kSearchSize_24Bit,
 	kSearchSize_32Bit,
 	kSearchSize_8Bit
 };
@@ -2797,7 +2816,7 @@ static int EnableDisableCheatMenu(struct mame_bitmap * bitmap, int selection, in
 	{
 		schedule_full_refresh();
 	}
-	
+
 	return sel + 1;
 }
 
@@ -2812,7 +2831,7 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 		"Comment",
 		"Select"
 	};
-	
+
 	static const char *	kNumbersTable[] =
 	{
 		"0",	"1",	"2",	"3",	"4",	"5",	"6",	"7",
@@ -5527,7 +5546,7 @@ static int ViewSearchResults(struct mame_bitmap * bitmap, int selection, int fir
 		resultsPerPage = 1;
 
 	if(region->flags & kRegionFlag_Enabled)
-		numPages = (region->numResults / kSearchByteIncrementTable[search->bytes] + resultsPerPage - 1) / resultsPerPage;
+		numPages = (region->numResults / kSearchByteStep[search->bytes] + resultsPerPage - 1) / resultsPerPage;
 	else
 		numPages = 0;
 
@@ -5557,7 +5576,7 @@ static int ViewSearchResults(struct mame_bitmap * bitmap, int selection, int fir
 			while(	!IsRegionOffsetValid(search, region, traverse) &&
 					(traverse < region->length))
 			{
-				traverse += kSearchByteIncrementTable[search->bytes];
+				traverse += kSearchByteStep[search->bytes];
 			}
 
 			if(traverse < region->length)
@@ -5590,8 +5609,8 @@ static int ViewSearchResults(struct mame_bitmap * bitmap, int selection, int fir
 
 					i++;
 				}
-
-				traverse += kSearchByteIncrementTable[search->bytes];
+				
+				traverse += kSearchByteStep[search->bytes];
 				resultsFound++;
 				hadResults = 1;
 			}
@@ -5714,7 +5733,7 @@ static int ViewSearchResults(struct mame_bitmap * bitmap, int selection, int fir
 
 			{
 				SearchRegion	* newRegion = &search->regionList[search->currentRegionIdx];
-				UINT32			nextNumPages = (newRegion->numResults / kSearchByteIncrementTable[search->bytes] + resultsPerPage - 1) / resultsPerPage;
+				UINT32			nextNumPages = (newRegion->numResults / kSearchByteStep[search->bytes] + resultsPerPage - 1) / resultsPerPage;
 
 				if(nextNumPages <= 0)
 					nextNumPages = 1;
@@ -6015,6 +6034,7 @@ static int EditWatch(struct mame_bitmap * bitmap, WatchInfo * entry, int selecti
 	{
 		"8 Bit",
 		"16 Bit",
+		"24 Bit",
 		"32 Bit"
 	};
 
@@ -7090,6 +7110,14 @@ UINT32 PrintASCII(char * buf, UINT32 data, UINT8 size)
 			buf[2] = 0;
 
 			return 2;
+			
+		case kSearchSize_24Bit:
+			buf[0] = (data >> 16)& 0xFF;
+			buf[1] = (data >> 8) & 0xFF;
+			buf[2] = (data >> 0) & 0xFF;
+			buf[3] = 0;
+
+			return 3;
 
 		case kSearchSize_32Bit:
 			buf[0] = (data >> 24) & 0xFF;
@@ -9046,7 +9074,7 @@ static UINT8 IsRegionOffsetValid(SearchInfo * search, SearchRegion * region, UIN
 
 static UINT8 IsRegionOffsetValidBit(SearchInfo * search, SearchRegion * region, UINT32 offset)
 {
-	switch(kSearchByteIncrementTable[search->bytes])
+	switch(kSearchByteStep[search->bytes])
 	{
 		case 1:
 			return *((UINT8  *)&region->status[offset]) != 0;
@@ -9054,6 +9082,10 @@ static UINT8 IsRegionOffsetValidBit(SearchInfo * search, SearchRegion * region, 
 
 		case 2:
 			return *((UINT16 *)&region->status[offset]) != 0;
+			break;
+
+		case 3:
+			return ((*((UINT16 *)&region->status[offset]) != 0) | (*((UINT8 *)&region->status[offset+2]) != 0));
 			break;
 
 		case 4:
@@ -9066,7 +9098,7 @@ static UINT8 IsRegionOffsetValidBit(SearchInfo * search, SearchRegion * region, 
 
 static void InvalidateRegionOffset(SearchInfo * search, SearchRegion * region, UINT32 offset)
 {
-	switch(kSearchByteIncrementTable[search->bytes])
+	switch(kSearchByteStep[search->bytes])
 	{
 		case 1:
 			*((UINT8  *)&region->status[offset]) = 0;
@@ -9074,6 +9106,11 @@ static void InvalidateRegionOffset(SearchInfo * search, SearchRegion * region, U
 
 		case 2:
 			*((UINT16 *)&region->status[offset]) = 0;
+			break;
+			
+		case 3:
+			*((UINT16 *)&region->status[offset]) = 0;
+			*((UINT8  *)&region->status[offset+2]) = 0;
 			break;
 
 		case 4:
@@ -9084,7 +9121,7 @@ static void InvalidateRegionOffset(SearchInfo * search, SearchRegion * region, U
 
 static void InvalidateRegionOffsetBit(SearchInfo * search, SearchRegion * region, UINT32 offset, UINT32 invalidate)
 {
-	switch(kSearchByteIncrementTable[search->bytes])
+	switch(kSearchByteStep[search->bytes])
 	{
 		case 1:
 			*((UINT8  *)&region->status[offset]) &= ~invalidate;
@@ -9092,6 +9129,11 @@ static void InvalidateRegionOffsetBit(SearchInfo * search, SearchRegion * region
 
 		case 2:
 			*((UINT16 *)&region->status[offset]) &= ~invalidate;
+			break;
+
+		case 3:
+			*((UINT16 *)&region->status[offset]) &= ~invalidate;
+			*((UINT8  *)&region->status[offset+2]) &= ~invalidate;
 			break;
 
 		case 4:
@@ -9158,7 +9200,7 @@ static void DoSearch(SearchInfo * search)
 		{
 			SearchRegion	* region = &search->regionList[i];
 			UINT32			lastAddress = region->length - kSearchByteIncrementTable[search->bytes] + 1;
-			UINT32			increment = kSearchByteIncrementTable[search->bytes];
+			UINT32			increment = kSearchByteStep[search->bytes];
 
 			region->numResults = 0;
 
@@ -9201,7 +9243,7 @@ static void DoSearch(SearchInfo * search)
 		{
 			SearchRegion	* region = &search->regionList[i];
 			UINT32			lastAddress = region->length - kSearchByteIncrementTable[search->bytes] + 1;
-			UINT32			increment = kSearchByteIncrementTable[search->bytes];
+			UINT32			increment = kSearchByteStep[search->bytes];
 
 			region->numResults = 0;
 
@@ -9339,7 +9381,7 @@ static UINT32 DoMemoryRead(UINT8 * buf, UINT32 address, UINT8 bytes, UINT8 swap,
 							((data << 8) & 0xFF00);
 				}
 				break;
-
+				
 			case 4:
 				data = *((UINT32 *)&buf[address]);
 
@@ -10394,7 +10436,7 @@ static void BuildCPUInfoList(void)
 					break;
 #endif
 #if HAS_TMS34020
-				case HAS_TMS34020:
+				case CPU_TMS34020:
 					info->addressShift = 3;
 					break;
 #endif

@@ -22,14 +22,12 @@ extern int namcond1_gfxbank;
 
 extern UINT8 namcond1_h8_irq5_enabled;
 extern unsigned short int *namcond1_shared_ram;
-extern unsigned short int *namcond1_eeprom;
 
 extern READ16_HANDLER( namcond1_shared_ram_r );
 extern READ16_HANDLER( namcond1_cuskey_r );
 extern WRITE16_HANDLER( namcond1_shared_ram_w );
 extern WRITE16_HANDLER( namcond1_cuskey_w );
 
-NVRAM_HANDLER( namcond1 );
 MACHINE_INIT( namcond1 );
 
 /* VIDHRDW */

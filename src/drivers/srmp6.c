@@ -13,9 +13,8 @@ according prg ROM (offset $0fff80):
 	V1.00
 
 TODO:
- - gfx decoding
- - finish (!) gfx emulation
- - sound emulation
+ - gfx decoding / emulation
+ - sound emulation (appears to be really close to st0016)
 
 Are there other games on this 'System S12' hardware ???
 
@@ -62,7 +61,9 @@ Dumped 06/15/2000
 #include "vidhrdw/generic.h"
 
 
-/* vidhrdw */
+/***************************************************************************
+	vidhrdw - VERY preliminary
+***************************************************************************/
 
 VIDEO_START(srmp6)
 {
@@ -114,9 +115,11 @@ cpu #0 (PC=0001170A): unmapped program memory word write to 00412000 = 4004 & FF
 cpu #0 (PC=00011712): unmapped program memory word write to 00412004 = 0000 & FFFF
 cpu #0 (PC=0001171A): unmapped program memory word write to 00412006 = 0000 & FFFF
 ...
-cpu #0 (PC=0001170A): unmapped program memory word write to 004133A0 = 4004 & FFFF - tile code
+cpu #0 (PC=0001170A): unmapped program memory word write to 004133A0 = 4004 & FFFF - tile code [*]
 cpu #0 (PC=00011712): unmapped program memory word write to 004133A4 = 0140 & FFFF - x (00..140, step 16d) -> res = 320d
-cpu #0 (PC=0001171A): unmapped program memory word write to 004133A6 = 00E0 & FFFF - y (00..E0, step 16d)  -> res = 224d
+cpu #0 (PC=0001171A): unmapped program memory word write to 004133A6 = 00E0 & FFFF - y (00..F0, step 16d)  -> res = 240d
+
+[*] tile code is 'incremented by 4', suggesting there are 4 8x8 tiles arranged to make a 16x16 one ???
 */
 
 VIDEO_UPDATE(srmp6)
@@ -130,14 +133,14 @@ VIDEO_UPDATE(srmp6)
 	// parse sprite list
 	while( source<finish )
 	{
+		if (source[0]&0x8000) break;	// end of list
+
 		int num  = source[1];
 		int xpos = source[2];
 		int ypos = source[3];
 		int color = 0;
 		int flipx = 0;
 		int flipy = 0;
-
-		if (source[0]&0x8000) break;	// end of list
 
 		drawgfx(
 				bitmap,
@@ -154,13 +157,19 @@ VIDEO_UPDATE(srmp6)
 	}
 }
 
+/***************************************************************************
+	sndhrdw - VERY preliminary
+
+	TODO: watch similarities with st0016
+***************************************************************************/
+
 /*
 cpu #0 (PC=00011F7C): unmapped program memory word write to 004E0002 = 0000 & FFFF	0?
-cpu #0 (PC=00011F84): unmapped program memory word write to 004E0004 = 0D50 & FFFF	lo word \ sample stop
+cpu #0 (PC=00011F84): unmapped program memory word write to 004E0004 = 0D50 & FFFF	lo word \ sample start
 cpu #0 (PC=00011F8A): unmapped program memory word write to 004E0006 = 0070 & FFFF	hi word / address?
 
 cpu #0 (PC=00011FBA): unmapped program memory word write to 004E000A = 0000 & FFFF	0?
-cpu #0 (PC=00011FC2): unmapped program memory word write to 004E0018 = 866C & FFFF	lo word \ sample start
+cpu #0 (PC=00011FC2): unmapped program memory word write to 004E0018 = 866C & FFFF	lo word \ sample stop
 cpu #0 (PC=00011FC8): unmapped program memory word write to 004E001A = 00AA & FFFF	hi word / address?
 
 cpu #0 (PC=00011FD0): unmapped program memory word write to 004E000C = 0FFF & FFFF
@@ -168,6 +177,25 @@ cpu #0 (PC=00011FD8): unmapped program memory word write to 004E001C = FFFF & FF
 cpu #0 (PC=00011FDC): unmapped program memory word write to 004E001E = FFFF & FFFF
 
 cpu #0 (PC=00026EFA): unmapped program memory word write to 004E0100 = 0001 & FFFF  ctrl word r/w: bit 7-0 = voice 8-1 (1=play,0=stop)
+
+voice #1: $4E0000-$4E001F
+voice #2: $4E0020-$4E003F
+voice #3: $4E0040-$4E005F
+...
+voice #8: $4E00E0-$4E00FF
+
+voice regs:
+offset	description
++00
++02		always 0?
++04		lo-word \ sample
++06		hi-word / counter ?
++0A 
++18 \
++1A /
++1C \
++1E /
+
 */
 
 /***************************************************************************
@@ -193,77 +221,81 @@ READ16_HANDLER( srmp6_inputs_r )
 		case 1<<2: return readinputport(2);
 		case 1<<3: return readinputport(3);
 	}
+
 	return 0;
 }
 
 
-static data16_t *unknown_regs;
+static data16_t *video_regs;
 
-WRITE16_HANDLER( unknown_regs_w )
+WRITE16_HANDLER( video_regs_w )
 {
 	switch(offset)
 	{
 
-		case 0x5e/2: // bank switch, used by ROM Check
+		case 0x5e/2: // bank switch, used by ROM check
 			cpu_setbank(1,(data16_t *)(memory_region(REGION_USER2) + (data & 0x0f)*0x200000));
 			break;
 
 
 		/* unknown registers - there are others */
 
-		// set by IT4 (jsr $b3c), according what's believed to be the flip screen dsw
-		case 0x48/2: //   0 /  b0 if flipscreen
-		case 0x52/2: //   0 / 2ef if flipscreen
-		case 0x54/2: // 152 / 15e if flipscreen
+		// set by IT4 (jsr $b3c), according flip screen dsw
+		case 0x48/2: //     0 /  0xb0 if flipscreen
+		case 0x52/2: //     0 / 0x2ef if flipscreen
+		case 0x54/2: // 0x152 / 0x15e if flipscreen
 
 		// set by IT4 ($82e-$846)
 		case 0x56/2: // written 8,9,8,9 successively
 
 		// set by IT4
-		case 0x5c/2: // either 40 explicitely in many places, or according $2083b0 (IT4)
+		case 0x5c/2: // either 0x40 explicitely in many places, or according $2083b0 (IT4)
 
 		default:
-			logerror("unknown_regs_w (PC=%06X): %04x = %04x & %04x\n", activecpu_get_previouspc(), offset*2, data, mem_mask);
+			logerror("video_regs_w (PC=%06X): %04x = %04x & %04x\n", activecpu_get_previouspc(), offset*2, data, mem_mask);
 			break;
 	}
-	COMBINE_DATA(&unknown_regs[offset]);
+	COMBINE_DATA(&video_regs[offset]);
 }
 
-READ16_HANDLER( unknown_regs_r )
+READ16_HANDLER( video_regs_r )
 {
-	logerror("unknown_regs_r (PC=%06X): %04x\n", activecpu_get_previouspc(), offset*2);
-	return unknown_regs[offset];
+	logerror("video_regs_r (PC=%06X): %04x\n", activecpu_get_previouspc(), offset*2);
+	return video_regs[offset];
 }
 
 
 static ADDRESS_MAP_START( srmp6, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_ROM
-	AM_RANGE(0x200000, 0x23ffff) AM_RAM	// work RAM
-	AM_RANGE(0x600000, 0x7fffff) AM_READ(MRA16_BANK1)	// for ROM check
+	AM_RANGE(0x200000, 0x23ffff) AM_RAM					// work RAM
+	AM_RANGE(0x600000, 0x7fffff) AM_READ(MRA16_BANK1)	// banked ROM (used by ROM check)
 	AM_RANGE(0x800000, 0x9fffff) AM_ROM AM_REGION(REGION_USER1, 0)
 
-	AM_RANGE(0x300000, 0x300005) AM_READWRITE (srmp6_inputs_r, srmp6_input_select_w)	// inputs
-	AM_RANGE(0x480000, 0x480fff) AM_READWRITE(MRA16_RAM, paletteram16_xGGGGGRRRRRBBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x300000, 0x300005) AM_READWRITE(srmp6_inputs_r, srmp6_input_select_w)		// inputs
+	AM_RANGE(0x480000, 0x480fff) AM_READWRITE(MRA16_RAM, paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x4d0000, 0x4d0001) AM_READWRITE(watchdog_reset16_r, watchdog_reset16_w)	// watchdog
 
-	AM_RANGE(0x400000, 0x401fff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)	// sprite RAM (probably larger)
-
-//	AM_RANGE(0x500000, 0x505cff) AM_RAM // ?
-
+	// OBJ RAM: checked [$400000-$47dfff]
+	AM_RANGE(0x400000, 0x401fff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)	// 512 sprites
+	AM_RANGE(0x402000, 0x47dfff) AM_RAM // tiles? layout is different from sprites
 //	AM_RANGE(0x402000, 0x40200f) AM_RAM // set by routine $11c48
 //	AM_RANGE(0x402010, 0x40806f) AM_RAM // set by routine $11bf6 - 2nd sprite RAM maybe ?
+//	AM_RANGE(0x412000, 0x416ebf) AM_RAM // probably larger
 
-//	AM_RANGE(0x412000, 0x416ebf) AM_RAM // tile RAM
+	// CHR RAM: checked [$500000-$5fffff]
+	AM_RANGE(0x500000, 0x5fffff) AM_RAM
+//	AM_RANGE(0x500000, 0x505cff) AM_RAM
+//	AM_RANGE(0x505d00, 0x5fffff) AM_RAM
+
+	AM_RANGE(0x4c0000, 0x4c006f) AM_READWRITE(video_regs_r, video_regs_w) AM_BASE(&video_regs)	// ? gfx regs ST-0026 NiLe
+//	AM_RANGE(0x4e0000, 0x4e00ff) AM_READWRITE(sound_regs_r, sound_regs_w) AM_BASE(&sound_regs)	// ? sound regs (data) ST-0026 NiLe
+//	AM_RANGE(0x4e0100, 0x4e0101) AM_READWRITE(sndctrl_reg_r, sndctrl_reg_w)						// ? sound reg  (ctrl) ST-0026 NiLe
+//	AM_RANGE(0x4e0110, 0x4e0111) AM_NOP	// ? accessed once ($268dc, written $b.w)
+//	AM_RANGE(0x5fff00, 0x5fff1f) AM_RAM // ? see routine $5ca8, video_regs related ???
+
 
 //	AM_RANGE(0xf00004, 0xf00005) AM_RAM // ?
 //	AM_RANGE(0xf00006, 0xf00007) AM_RAM // ?
-
-	AM_RANGE(0x4c0000, 0x4c006f) AM_READWRITE(unknown_regs_r, unknown_regs_w) AM_BASE(&unknown_regs)	// ? gfx ST-0026 NiLe regs
-//	AM_RANGE(0x4e0000, 0x4e00ff) AM_RAM	// ? sound regs (data) ST-0026 NiLe regs
-//	AM_RANGE(0x4e0100, 0x4e0101) AM_RAM	// ? sound reg  (ctrl) ST-0026 NiLe regs
-//	AM_RANGE(0x4e0110, 0x4e0111) AM_NOP	// ? accessed once ($268dc, written $b.w)
-
-//	AM_RANGE(0x5fff00, 0x5fff1f) AM_RAM // ?
 
 ADDRESS_MAP_END
 
@@ -275,7 +307,7 @@ ADDRESS_MAP_END
 INPUT_PORTS_START( srmp6 )
 
 	PORT_START
-	PORT_BIT ( 0xfe01, IP_ACTIVE_LOW, IPT_UNUSED ) // not used at all
+	PORT_BIT ( 0xfe01, IP_ACTIVE_LOW, IPT_UNUSED ) // explicitely discarded
 	PORT_BIT ( 0x0002, IP_ACTIVE_LOW, IPT_MAHJONG_A )
 	PORT_BIT ( 0x0004, IP_ACTIVE_LOW, IPT_MAHJONG_E )
 	PORT_BIT ( 0x0008, IP_ACTIVE_LOW, IPT_MAHJONG_I )
@@ -286,7 +318,7 @@ INPUT_PORTS_START( srmp6 )
 	PORT_BIT ( 0x0100, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME(DEF_STR( Test )) PORT_CODE(KEYCODE_F2)
 
 	PORT_START
-	PORT_BIT ( 0xfe41, IP_ACTIVE_LOW, IPT_UNUSED ) // not used at all
+	PORT_BIT ( 0xfe41, IP_ACTIVE_LOW, IPT_UNUSED ) // explicitely discarded
 	PORT_BIT ( 0x0002, IP_ACTIVE_LOW, IPT_MAHJONG_B )
 	PORT_BIT ( 0x0004, IP_ACTIVE_LOW, IPT_MAHJONG_F )
 	PORT_BIT ( 0x0008, IP_ACTIVE_LOW, IPT_MAHJONG_J )
@@ -295,7 +327,7 @@ INPUT_PORTS_START( srmp6 )
 	PORT_BIT ( 0x0180, IP_ACTIVE_LOW, IPT_UNUSED ) 
 
 	PORT_START
-	PORT_BIT ( 0xfe41, IP_ACTIVE_LOW, IPT_UNUSED ) // not used at all
+	PORT_BIT ( 0xfe41, IP_ACTIVE_LOW, IPT_UNUSED ) // explicitely discarded
 	PORT_BIT ( 0x0002, IP_ACTIVE_LOW, IPT_MAHJONG_C )
 	PORT_BIT ( 0x0004, IP_ACTIVE_LOW, IPT_MAHJONG_G )
 	PORT_BIT ( 0x0008, IP_ACTIVE_LOW, IPT_MAHJONG_K )
@@ -304,7 +336,7 @@ INPUT_PORTS_START( srmp6 )
 	PORT_BIT ( 0x0180, IP_ACTIVE_LOW, IPT_UNUSED ) 
 
 	PORT_START
-	PORT_BIT ( 0xfe61, IP_ACTIVE_LOW, IPT_UNUSED ) // not used at all
+	PORT_BIT ( 0xfe61, IP_ACTIVE_LOW, IPT_UNUSED ) // explicitely discarded
 	PORT_BIT ( 0x0002, IP_ACTIVE_LOW, IPT_MAHJONG_D )
 	PORT_BIT ( 0x0004, IP_ACTIVE_LOW, IPT_MAHJONG_H )
 	PORT_BIT ( 0x0008, IP_ACTIVE_LOW, IPT_MAHJONG_L )
@@ -312,49 +344,49 @@ INPUT_PORTS_START( srmp6 )
 	PORT_BIT ( 0x0180, IP_ACTIVE_LOW, IPT_UNUSED ) 
 
 	PORT_START	/* 16-bit DSW1+DSW2 */
-	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coinage ) )		// DSW1
+	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Flip_Screen ) ) // probably
+	PORT_DIPNAME( 0x0040, 0x0000, "Re-Clothe" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, "Nudity" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0700, 0x0700, DEF_STR( Difficulty ) )	// DSW2
+	PORT_DIPSETTING(      0x0000, "8" )
+	PORT_DIPSETTING(      0x0100, "7" )
+	PORT_DIPSETTING(      0x0200, "6" )
+	PORT_DIPSETTING(      0x0300, "5" )
+	PORT_DIPSETTING(      0x0400, "3" )
+	PORT_DIPSETTING(      0x0500, "2" )
+	PORT_DIPSETTING(      0x0600, "1" )
+	PORT_DIPSETTING(      0x0700, "4" )
+	PORT_DIPNAME( 0x0800, 0x0000, "Kuitan" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Continues ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
@@ -365,21 +397,47 @@ INPUT_PORTS_END
 	Graphics definitions
 ***************************************************************************/
 
+/* all this is plain wrong, failed attempt at decoding the gfx */
+/*
 static struct GfxLayout wrong_layout =
 {
 	8,8,
-	RGN_FRAC(3,4),
-	6,
-	{ 0, 1, 2, 3, 4, 5 },
-	{ 0*6,  1*6,  2*6,  3*6,  4*6,  5*6,  6*6,  7*6 },
-	{ 0*48, 1*48, 2*48, 3*48, 4*48, 5*48, 6*48, 7*48},
-	8*8*6
+	RGN_FRAC(1,1),
+	8,
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8,  1*8,  2*8,  3*8,  4*8,  5*8,  6*8,  7*8 },
+	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64},
+	8*8*8
 };
+
+static struct GfxLayout wrong_layout2 =
+{
+	8,8,
+	RGN_FRAC(1,1),
+	1,
+	{ 0 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8,  1*8,  2*8,  3*8,  4*8,  5*8,  6*8,  7*8 },
+	8*8*1
+};
+*/
+static struct GfxLayout wrong_layout3 = /* 16x16x9? seems to be some 18 bytes granularity in roms */
+{
+	16,16,
+	RGN_FRAC(1,1),
+	8/*9*/,
+	{ /*0,*/ 1, 2, 3, 4, 5, 6, 7, 8 },
+	{ STEP16(0,1)/*STEP16(0,9)*/ },
+	{ STEP16(0,16*9) },
+	16*16*9
+};
+
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &wrong_layout, 0, 0x100 }, // sprites (8x8x?)
-//	{ REGION_GFX1, 0, &wrong_layout, 0, 0x100 }, // tiles (16x16x?)
+//	{ REGION_GFX1, 0, &wrong_layout,  0, 0x100 },	// sprites (8x8x?)
+//	{ REGION_GFX1, 0, &wrong_layout2, 0, 0x100 },	// tiles (16x16x?)
+	{ REGION_GFX1, 0, &wrong_layout3, 0, 0x100 },	// tiles (16x16x9)
 	{ -1 }
 };
 
@@ -423,8 +481,8 @@ CHR?
 most are 8 bits unsigned PCM 16/32KHz if stereo/mono
 some voices in 2nd rom have lower sample rate
 	sx011-08.15	<- samples: instruments, musics, sound FXs, voices
-	sx011-07.16	<- samples: voices (cont'd), sound FXs, music, end music
-	sx011-06.17	<- samples: end music (cont'd)
+	sx011-07.16	<- samples: voices (cont'd), sound FXs, music, theme music
+	sx011-06.17	<- samples: theme music (cont'd)
 */
 ROM_START( srmp6 )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
@@ -446,8 +504,8 @@ ROM_START( srmp6 )
 	ROM_LOAD( "sx011-07.16", 0x0400000, 0x400000, CRC(26e57dac) SHA1(91272268977c5fbff7e8fbe1147bf108bd2ed321) ) // CHR01
 	ROM_LOAD( "sx011-06.17", 0x0800000, 0x400000, CRC(220ee32c) SHA1(77f39b54891c2381b967534b0f6d380962eadcae) ) // CHR02
 
- 	/* CHR loaded here undecoded for ROM Check */
-	ROM_REGION( 0x2000000, REGION_USER2, 0)
+ 	/* CHRxx loaded here undecoded for ROM Check */
+	ROM_REGION( 0x2000000, REGION_USER2, 0)	/* Banked ROM */
 	ROM_LOAD( "sx011-08.15", 0x0000000, 0x400000, CRC(01b3b1f0) SHA1(bbd60509c9ba78358edbcbb5953eafafd6e2eaf5) ) // CHR00
 	ROM_LOAD( "sx011-07.16", 0x0400000, 0x400000, CRC(26e57dac) SHA1(91272268977c5fbff7e8fbe1147bf108bd2ed321) ) // CHR01
 	ROM_LOAD( "sx011-06.17", 0x0800000, 0x400000, CRC(220ee32c) SHA1(77f39b54891c2381b967534b0f6d380962eadcae) ) // CHR02

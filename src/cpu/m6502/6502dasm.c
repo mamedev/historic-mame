@@ -157,7 +157,14 @@ static const char *token[]=
 #define ZRD2 EA_ZPG_RD
 #define ZRW2 EA_ZPG_RDWR
 
-static const UINT8 op6502[256][3] = {
+struct op6502_info
+{
+	UINT8 opc;
+	UINT8 arg;
+	UINT8 access;
+};
+
+static const struct op6502_info op6502[256] = {
 	{m6502_brk,imm,VAL},{ora,idx,MRD},{ill,non,0	},{ill,non,0 },/* 00 */
 	{ill,non,0	},{ora,zpg,ZRD},{asl,zpg,ZRW},{ill,non,0 },
 	{php,imp,0	},{ora,imm,VAL},{asl,acc,0	},{ill,non,0 },
@@ -224,7 +231,7 @@ static const UINT8 op6502[256][3] = {
 	{ill,non,0	},{sbc,abx,MRD},{inc,abx,MRW},{ill,non,0 }
 };
 
-static const UINT8 op65c02[256][3] = {
+static const struct op6502_info op65c02[256] = {
 	{m6502_brk,imm,VAL},{ora,idx,MRD},{ill,non,0	},{ill,non,0 },/* 00 */
 	{tsb,zpg,0	},{ora,zpg,ZRD},{asl,zpg,ZRW},{rmb,zpg,ZRW},
 	{php,imp,0	},{ora,imm,VAL},{asl,acc,MRW},{ill,non,0 },
@@ -292,7 +299,7 @@ static const UINT8 op65c02[256][3] = {
 };
 
 /* only bsr additional to 65c02 yet */
-static const UINT8 op65sc02[256][3] = {
+static const struct op6502_info op65sc02[256] = {
 	{m6502_brk,imm,VAL},{ora,idx,MRD},{ill,non,0	},{ill,non,0 },/* 00 */
 	{tsb,zpg,0	},{ora,zpg,ZRD},{asl,zpg,ZRW},{rmb,zpg,ZRW},
 	{php,imp,0	},{ora,imm,VAL},{asl,acc,MRW},{ill,non,0 },
@@ -359,7 +366,7 @@ static const UINT8 op65sc02[256][3] = {
 	{ill,non,0	},{sbc,abx,MRD},{inc,abx,MRW},{bbs,zpb,ZRD}
 };
 
-static const UINT8 op6510[256][3] = {
+static const struct op6502_info op6510[256] = {
 	{m6502_brk,imm,VAL},{ora,idx,MRD},{kil,non,0	},{slo,idx,MRW},/* 00 */
 	{dop,imm,VAL},{ora,zpg,ZRD},{asl,zpg,ZRW},{slo,zpg,ZRW},
 	{php,imp,0	},{ora,imm,VAL},{asl,acc,0	},{anc,imm,VAL},
@@ -427,7 +434,7 @@ static const UINT8 op6510[256][3] = {
 };
 
 #if (HAS_M65CE02)
-static const UINT8 op65ce02[256][3] = {
+static const struct op6502_info op65ce02[256] = {
 	{m6502_brk,imm,VAL},{ora,idx,MRD},{cle,imp,0	},{see,imp,0  },/* 00 */
 	{tsb,zpg,0	},{ora,zpg,ZRD},{asl,zpg,ZRW},{rmb,zpg,ZRW},
 	{php,imp,0	},{ora,imm,VAL},{asl,acc,MRW},{tsy,imp,0  },
@@ -497,7 +504,7 @@ static const UINT8 op65ce02[256][3] = {
 
 #if (HAS_M4510)
 // only map instead of aug and 20 bit memory management
-static const UINT8 op4510[256][3] = {
+static const struct op6502_info op4510[256] = {
 	{m6502_brk,imm,VAL},{ora,idx,MRD},{cle,imp,0	},{see,imp,0  },/* 00 */
 	{tsb,zpg,0	},{ora,zpg,ZRD},{asl,zpg,ZRW},{rmb,zpg,ZRW},
 	{php,imp,0	},{ora,imm,VAL},{asl,acc,MRW},{tsy,imp,0  },
@@ -566,7 +573,7 @@ static const UINT8 op4510[256][3] = {
 #endif
 
 #if (HAS_DECO16)
-static const UINT8 opdeco16[256][3] =
+static const struct op6502_info opdeco16[256] =
 {
 	{m6502_brk,imp,0  },{ora,idx,MRD},{ill,non,0  },{ill,non,0	},/* 00 */
 	{ill,non,0  },{ora,zpg,ZRD},{asl,zpg,ZRW},{ill,non,0	},
@@ -660,6 +667,7 @@ unsigned Dasm6502(char *buffer, unsigned pc)
 	unsigned PC = pc;
 	UINT16 addr, ea;
 	UINT8 op, opc, arg, access, value;
+	UINT32 flags;
 
 	op = OPCODE(pc++);
 
@@ -667,38 +675,58 @@ unsigned Dasm6502(char *buffer, unsigned pc)
 	{
 #if (HAS_M65C02)
 		case SUBTYPE_65C02:
-			opc = op65c02[op][0];
-			arg = op65c02[op][1];
-			access = op65c02[op][2];
+			opc = op65c02[op].opc;
+			arg = op65c02[op].arg;
+			access = op65c02[op].access;
 			break;
 #endif
 #if (HAS_M65SC02)
 		case SUBTYPE_65SC02:
-			opc = op65sc02[op][0];
-			arg = op65sc02[op][1];
-			access = op65sc02[op][2];
+			opc = op65sc02[op].opc;
+			arg = op65sc02[op].arg;
+			access = op65sc02[op].access;
 			break;
 #endif
 #if (HAS_M6510)
 		case SUBTYPE_6510:
-			opc = op6510[op][0];
-			arg = op6510[op][1];
-			access = op6510[op][2];
+			opc = op6510[op].opc;
+			arg = op6510[op].arg;
+			access = op6510[op].access;
 			break;
 #endif
 #if (HAS_DECO16)
 		case SUBTYPE_DECO16:
-			opc = opdeco16[op][0];
-			arg = opdeco16[op][1];
-			access = opdeco16[op][2];
+			opc = opdeco16[op].opc;
+			arg = opdeco16[op].arg;
+			access = opdeco16[op].access;
 			break;
 #endif
 		default:
-			opc = op6502[op][0];
-			arg = op6502[op][1];
-			access = op6502[op][2];
+			opc = op6502[op].opc;
+			arg = op6502[op].arg;
+			access = op6502[op].access;
 			break;
 	}
+
+	/* determine dasmflags */
+	switch(opc)
+	{
+		case jsr:
+		case bsr:
+			flags = DASMFLAG_SUPPORTED | DASMFLAG_STEP_OVER;
+			break;
+
+		case rts:
+		case rti:
+		case rtn:
+			flags = DASMFLAG_SUPPORTED | DASMFLAG_STEP_OUT;
+			break;
+
+		default:
+			flags = DASMFLAG_SUPPORTED;
+			break;
+	}
+
 	dst += sprintf(dst, "%-5s", token[opc]);
 	if( opc == bbr || opc == bbs || opc == rmb || opc == smb )
 		dst += sprintf(dst, "%d,", (op >> 3) & 7);
@@ -831,7 +859,7 @@ unsigned Dasm6502(char *buffer, unsigned pc)
 	default:
 		dst += sprintf(dst,"$%02X", op);
 	}
-	return pc - PC;
+	return (pc - PC) | flags;
 }
 
 

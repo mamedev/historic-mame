@@ -1574,6 +1574,8 @@ static void init_joycodes(void)
 		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 0), CODE_OTHER_ANALOG_RELATIVE);
 		sprintf(tempname, "Mouse %d Y", mouse + 1);
 		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 1), CODE_OTHER_ANALOG_RELATIVE);
+		sprintf(tempname, "Mouse %d Z", mouse + 1);
+		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 2), CODE_OTHER_ANALOG_RELATIVE);
 
 		// add mouse buttons
 		for (button = 0; button < 4; button++)
@@ -1818,6 +1820,8 @@ static INT32 get_joycode_value(os_code_t joycode)
 				return mouse_state[joynum].lX * 512;
 			if (joyindex == 1)
 				return mouse_state[joynum].lY * 512;
+			if (joyindex == 2)
+				return mouse_state[joynum].lZ * 512;
 			return 0;
 
 		// analog gun axis

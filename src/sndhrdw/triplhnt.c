@@ -29,7 +29,7 @@ const struct discrete_lfsr_desc triplhnt_lfsr={
 const struct discrete_dac_r1_ladder triplhnt_bear_roar_v_dac =
 {
 	4,		// size of ladder
-	{1000000, 470000, 220000, 2200000, 0,0,0,0},	// R47, R50, R48, R51
+	{1000000, 470000, 220000, 2200000},	// R47, R50, R48, R51
 	5,		// vBias
 	68000,	// R44
 	0,		// no rGnd
@@ -39,7 +39,7 @@ const struct discrete_dac_r1_ladder triplhnt_bear_roar_v_dac =
 const struct discrete_dac_r1_ladder triplhnt_bear_roar_out_dac =
 {
 	3,		// size of ladder
-	{100000, 33000, 100000, 0,0,0,0,0},	// R56, R58, R57
+	{100000, 33000, 100000},	// R56, R58, R57
 	0,		// no vBias
 	0,		// no rBias
 	0,		// no rGnd
@@ -49,7 +49,7 @@ const struct discrete_dac_r1_ladder triplhnt_bear_roar_out_dac =
 const struct discrete_dac_r1_ladder triplhnt_shot_dac =
 {
 	4,		// size of ladder
-	{8200, 3900, 2200, 1000, 0,0,0,0},	// R53, R54, R55, R52
+	{8200, 3900, 2200, 1000},	// R53, R54, R55, R52
 	0,		// no vBias
 	0,		// no rBias
 	0,		// no rGnd
@@ -70,24 +70,21 @@ const struct discrete_schmitt_osc_desc triplhnt_screech_osc =
 	2200,	// R84
 	330,	// R85
 	1.e-6,	// C59
-	1.7,	// Rise Threshold of 7414
-	0.9,	// Fall Threshold of 7414
-	DEFAULT_TTL_V_LOGIC_1,	// Output high voltage of 7414
+	DEFAULT_7414_VALUES,
 	1		// invert output using 7400 gate E7
 };
 
 const struct discrete_mixer_desc triplhnt_mixer =
 {
 	DISC_MIXER_IS_RESISTOR,
-	3,					// 3 inputs
-	{3300 + 19879.5, 47000, 27000 + 545.6, 0,0,0,0,0},	// R59 + (R56||R57||R58), R60 + (R52||R53||R54||R55), R61
-	{0,0,0,0,0,0,0,0},		// No variable resistor nodes
-	{0, 0, 0, 0, 0,0,0,0},	// No caps
-	0,						// No rI
-	1000,					// R78
-	1e-7,					// C72
-	1e-7,					// C44
-	0,						// vBias not used for resistor network
+	{3300 + 19879.5, 47000, 27000 + 545.6},	// R59 + (R56||R57||R58), R60 + (R52||R53||R54||R55), R61
+	{0},			// No variable resistor nodes
+	{0},			// No caps
+	0,				// No rI
+	1000,			// R78
+	1e-7,			// C72
+	1e-7,			// C44
+	0,				// vBias not used for resistor network
 	150000
 };
 

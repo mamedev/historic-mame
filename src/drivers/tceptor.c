@@ -17,12 +17,6 @@
 #include "sound/2151intf.h"
 #include "sound/namco.h"
 
-#ifdef TINY_COMPILE
-// to avoid link error
-int namcos2_gametype;
-#endif
-
-
 extern PALETTE_INIT( tceptor );
 extern VIDEO_START( tceptor );
 extern VIDEO_UPDATE( tceptor );

@@ -188,6 +188,56 @@ INPUT_PORTS_START( skylancr )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(	0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x04, "1st 1C/1C - 2nd 1C/2C" )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x30, 0x10, DEF_STR( Lives ) )
+	PORT_DIPSETTING(	0x30, "1" )
+	PORT_DIPSETTING(	0x20, "2" )
+	PORT_DIPSETTING(	0x10, "3" )
+	PORT_DIPSETTING(	0x00, "4" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(	0x40, "20000 50000" )
+	PORT_DIPSETTING(	0x00, "40000 70000" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Cocktail ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( skylance )
+	PORT_START		/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_DIPNAME( 0x20, 0x20, "Freeze" )
+	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+
+	PORT_START		/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START		/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL
+	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START		/* DSW */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(	0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x0c, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( 1C_6C ) )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
@@ -206,27 +256,27 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	256,	/* 256 characters */
-	2,		/* 2 bits per pixel */
-	{ 0, 4 },	/* the two bitplanes for 4 pixels are packed into one byte */
+	8,8,
+	RGN_FRAC(1,1),
+	2,
+	{ 0, 4 },
 	{ 0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	16*8	/* every char takes 16 bytes */
+	16*8
 };
 
 static struct GfxLayout spritelayout =
 {
-	8,32,	/* 8*32 sprites */
-	128,		/* 128 sprites */
-	2,		/* 2 bits per pixel */
-	{ 0, 4 },	/* the two bitplanes for 4 pixels are packed into one byte */
+	8,32,
+	RGN_FRAC(1,1),
+	2,
+	{ 0, 4 },
 	{ 0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3 },
 	{  0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 	  16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8,
 	  32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8,
 	  48*8, 49*8, 50*8, 51*8, 52*8, 53*8, 54*8, 55*8 },
-	4*16*8	/* every sprite takes 64 bytes */
+	4*16*8
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
@@ -301,6 +351,22 @@ ROM_START( funkybee )
 ROM_END
 
 ROM_START( skylancr )
+  	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "1sl.5a",        0x0000, 0x2000, CRC(e80b315e) SHA1(0c02aa9f0d4bdfc3482c400d0e4e38fd3912a512) )
+	ROM_LOAD( "2sl.5c",        0x2000, 0x2000, CRC(9d70567b) SHA1(05ff6f0c4b4d928e937556d9943a76f6cbc0f05f) )
+	ROM_LOAD( "3sl.5d",        0x4000, 0x2000, CRC(64c39457) SHA1(b54a57a8576c2f852b765350c4504ccc3f5a431c) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "4sl.6a",        0x0000, 0x2000, CRC(9b4469a5) SHA1(a0964e6d4fbdd15153be258f0d78680559a962f2) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "5sl.6c",        0x0000, 0x2000, CRC(29afa134) SHA1(d94f483b4d234fe0b1d406322409417daec092f2) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "18s030.1a",     0x0000, 0x0020, CRC(e645bacb) SHA1(5f4c299c4cf165fd229731c0e5799a34892bf28e) )
+ROM_END
+
+ROM_START( skylance )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "1.5a",          0x0000, 0x2000, CRC(82d55824) SHA1(5c457e720ac8611bea4bc7e63ba4ee1c11200471) )
 	ROM_LOAD( "2.5c",          0x2000, 0x2000, CRC(dff3a682) SHA1(e3197e106c2c6d198d2769b63701222d48a196d1) )
@@ -318,5 +384,6 @@ ROM_END
 
 
 
-GAME( 1982, funkybee, 0, funkybee, funkybee, 0, ROT90, "Orca", "Funky Bee" )
-GAME( 1983, skylancr, 0, funkybee, skylancr, 0, ROT90, "Orca (Esco Trading Co license)", "Sky Lancer" )
+GAME( 1982, funkybee, 0,        funkybee, funkybee, 0, ROT90, "Orca",                           "Funky Bee" )
+GAME( 1983, skylancr, 0,        funkybee, skylancr, 0, ROT90, "Orca",                           "Sky Lancer" )
+GAME( 1983, skylance, skylancr, funkybee, skylance, 0, ROT90, "Orca (Esco Trading Co license)", "Sky Lancer (Esco Trading Co license)" )

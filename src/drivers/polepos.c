@@ -217,7 +217,7 @@ Notes:
 #include "sound/namco54.h"
 #include "sound/custom.h"
 #include "sound/samples.h"
-#include "sound/sn76477.h"
+#include "rc.h"
 
 
 #define POLEPOS_TOGGLE	PORT_TOGGLE
@@ -916,6 +916,7 @@ static MACHINE_DRIVER_START( polepos )
 	MDRV_CPU_PROGRAM_MAP(z8002_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_assert,1)
 
+	MDRV_WATCHDOG_VBLANK_INIT(16)	// 128V clocks the same as VBLANK
 	MDRV_FRAMES_PER_SECOND(60.606060)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)	/* some interleaving */
@@ -957,7 +958,7 @@ static MACHINE_DRIVER_START( polepos )
 	MDRV_SOUND_CONFIG(custom_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.77)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.77)
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(samples_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)

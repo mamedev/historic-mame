@@ -26,14 +26,6 @@
 #include "osd_cpu.h"
 #include "m6502.h"
 
-#ifdef RUNTIME_LOADER
-# ifdef __cplusplus
-	extern "C" void m65ce02_runtime_loader_init(void);
-# else
-	extern void m65ce02_runtime_loader_init(void);
-# endif
-#endif
-
 enum {
 	M65CE02_PC=1, M65CE02_S, M65CE02_P, M65CE02_A, M65CE02_X, M65CE02_Y,
 	M65CE02_Z, M65CE02_B, M65CE02_EA, M65CE02_ZP,

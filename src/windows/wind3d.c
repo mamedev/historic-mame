@@ -1048,7 +1048,7 @@ static int create_surfaces(void)
 
 		primary_desc.dwFlags |= DDSD_BACKBUFFERCOUNT;
 		primary_desc.ddsCaps.dwCaps |= DDSCAPS_FLIP | DDSCAPS_COMPLEX | DDSCAPS_3DDEVICE;
-#ifdef _MSC_VER
+#ifdef DDSD_DEPTH
 		// this is correct for current DX8/9 includes
 		primary_desc.DUMMYUNIONNAMEN(5).dwBackBufferCount = buffer_count;
 #else

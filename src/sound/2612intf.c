@@ -12,6 +12,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 #include "sound/fm.h"
 #include "sound/2612intf.h"
 
@@ -91,6 +92,22 @@ static void ym2612_stream_update(void *param, stream_sample_t **inputs, stream_s
 }
 
 
+#ifdef _STATE_H
+static void ym2612_postload(void)
+{
+	int num;
+
+	for (num=0; num < MAX_SOUND; num++)
+	{
+		struct ym2612_info *info = sndti_token(SOUND_YM2612, num);
+
+		if (info)
+			YM2612Postload(info->chip);
+	}
+}
+#endif
+
+
 static void *ym2612_start(int sndindex, int clock, const void *config)
 {
 	static const struct YM2612interface dummy = { 0 };
@@ -112,6 +129,12 @@ static void *ym2612_start(int sndindex, int clock, const void *config)
 
 	/**** initialize YM2612 ****/
 	info->chip = YM2612Init(info,sndindex,clock,rate,TimerHandler,IRQHandler);
+
+#ifdef _STATE_H
+	if (sndindex == 0)
+		state_save_register_func_postload(ym2612_postload);
+#endif
+
 	if (info->chip)
 		return info;
 	/* error */

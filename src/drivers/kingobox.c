@@ -1,7 +1,7 @@
 /***************************************************************************
 
 King of Boxer - (c) 1985 Woodplace Inc.
-Ring King - (c) 1985 Data East USA Inc.
+Ring King     - (c) 1985 Data East USA Inc. / Woodplace Inc.
 
 Preliminary driver by:
 Ernesto Corvi
@@ -846,11 +846,13 @@ ROM_START( ringkinw )
 	ROM_LOAD( "10.1d",        0x08000, 0x2000, CRC(af5013e7) SHA1(26e737138ab0e8dc28bea1f81d1f83345419e611) )
 	ROM_LOAD( "12.1d",        0x0a000, 0x2000, CRC(1f6654d6) SHA1(edd234b6daeaeaad335c8c725380bebd5c11063e) )
 
-	/* NOT dumped for this set, but the gfx roms are the same in ringkin3 */
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	/* we load the ringking PROMs and then expand the first to look like the kingofb ones... */
-	ROM_LOAD( "82s135.2a",    0x0100, 0x0100, CRC(0e723a83) SHA1(51d2274be70506308b3bfa9c2d23606290f8b3b5) )	/* red and green component */
-	ROM_LOAD( "82s129.1a",    0x0200, 0x0100, CRC(d345cbb3) SHA1(6318022ebbbe59d4c0a207801fffed1167b98a66) )	/* blue component */
+	/* PROMs are encoded here like the kingofb ones... */
+
+	ROM_REGION( 0x0c00, REGION_USER1, 0 ) /* color proms */
+	ROM_LOAD( "prom2.bin",    0x0000, 0x0400, CRC(8ce34029) SHA1(b5150afe72ced9a396997dc11691a4ac4ed2cf2a) ) /* red component */
+	ROM_LOAD( "prom3.bin",    0x0400, 0x0400, CRC(54cfe913) SHA1(d93f4bbf232e3893b953470e3e8f66426b4d9a64) ) /* green component */
+	ROM_LOAD( "prom1.bin",    0x0800, 0x0400, CRC(913f5975) SHA1(3d1e40eeb4d5a3a4bd42ec73d05bfca13b2f1805) ) /* blue component */
 ROM_END
 
 static DRIVER_INIT( ringkin3 )
@@ -863,10 +865,31 @@ static DRIVER_INIT( ringkin3 )
 		RAM[i] = RAM[i + 0x100] >> 4;
 }
 
+static DRIVER_INIT( ringkinw )
+{
+	int i,j,k;
+	UINT8 *PROMS = memory_region(REGION_PROMS);
+	UINT8 *USER1 = memory_region(REGION_USER1);
+
+	/* change the PROMs encode in a simple format to use kingofb decode */
+	for(i=0,j=0; j < 0x40; i++,j++)
+	{
+		if((i & 0xf) == 8)
+			i+=8;
+
+		for(k = 0; k <= 3; k++)
+		{
+			PROMS[j + 0x000 + 0x40*k] = USER1[i + 0x000 + 0x100*k]; /* R */
+			PROMS[j + 0x100 + 0x40*k] = USER1[i + 0x400 + 0x100*k]; /* G */
+			PROMS[j + 0x200 + 0x40*k] = USER1[i + 0x800 + 0x100*k]; /* B */
+		}
+	}
+}
+
 
 
 GAME( 1985, kingofb,  0,       kingofb,  kingofb,  0,        ROT90, "Woodplace", "King of Boxer (English)" )
 GAME( 1985, ringking, kingofb, ringking, ringking, 0,        ROT90, "Data East USA", "Ring King (US set 1)" )
 GAME( 1985, ringkin2, kingofb, ringking, ringking, 0,        ROT90, "Data East USA", "Ring King (US set 2)" )
 GAME( 1985, ringkin3, kingofb, kingofb,  kingofb,  ringkin3, ROT90, "Data East USA", "Ring King (US set 3)" )
-GAME( 1985, ringkinw, kingofb, kingofb,  kingofb,  ringkin3, ROT90, "Woodplace", "Ring King (US, Woodplace license)" )
+GAME( 1985, ringkinw, kingofb, kingofb,  kingofb,  ringkinw, ROT90, "Woodplace", "Ring King (US, Woodplace license)" )

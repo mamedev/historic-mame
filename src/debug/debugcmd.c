@@ -296,7 +296,7 @@ static int mini_printf(char *buffer, const char *format, int params, UINT64 *par
 	{
 		char c = *f++;
 		if (!c) break;
-		
+
 		/* escape sequences */
 		if (c == '\\')
 		{
@@ -310,13 +310,13 @@ static int mini_printf(char *buffer, const char *format, int params, UINT64 *par
 			}
 			continue;
 		}
-		
+
 		/* formatting */
 		else if (c == '%')
 		{
 			int width = 0;
 			int zerofill = 0;
-			
+
 			/* parse out the width */
 			for (;;)
 			{
@@ -327,14 +327,14 @@ static int mini_printf(char *buffer, const char *format, int params, UINT64 *par
 				width = width * 10 + (c - '0');
 			}
 			if (!c) break;
-			
+
 			/* get the format */
 			switch (c)
 			{
 				case '%':
 					*p++ = c;
 					break;
-				
+
 				case 'X':
 				case 'x':
 					if (params == 0)
@@ -350,7 +350,7 @@ static int mini_printf(char *buffer, const char *format, int params, UINT64 *par
 					param++;
 					params--;
 					break;
-				
+
 				case 'D':
 				case 'd':
 					if (params == 0)
@@ -364,12 +364,12 @@ static int mini_printf(char *buffer, const char *format, int params, UINT64 *par
 					break;
 			}
 		}
-		
+
 		/* normal stuff */
 		else
 			*p++ = c;
 	}
-	
+
 	/* NULL-terminate and exit */
 	*p = 0;
 	return 1;
@@ -385,12 +385,12 @@ static void execute_printf(int ref, int params, const char *param[])
 	UINT64 values[MAX_COMMAND_PARAMS];
 	char buffer[1024];
 	int i;
-	
+
 	/* validate the other parameters */
 	for (i = 1; i < params; i++)
 		if (!validate_parameter_number(param[i], &values[i]))
 			return;
-	
+
 	/* then do a printf */
 	if (mini_printf(buffer, param[0], params - 1, &values[1]))
 		debug_console_write_line(buffer);
@@ -407,16 +407,16 @@ static void execute_tracelog(int ref, int params, const char *param[])
 	UINT64 values[MAX_COMMAND_PARAMS];
 	char buffer[1024];
 	int i;
-	
+
 	/* if no tracefile, skip */
 	if (!file)
 		return;
-	
+
 	/* validate the other parameters */
 	for (i = 1; i < params; i++)
 		if (!validate_parameter_number(param[i], &values[i]))
 			return;
-	
+
 	/* then do a printf */
 	if (mini_printf(buffer, param[0], params - 1, &values[1]))
 		fprintf(file, "%s", buffer);
@@ -451,7 +451,7 @@ static void execute_do(int ref, int params, const char *param[])
 static void execute_step(int ref, int params, const char *param[])
 {
 	UINT64 steps = 1;
-	
+
 	/* if we have a parameter, use it instead */
 	if (params > 0 && !validate_parameter_number(param[0], &steps))
 		return;
@@ -467,7 +467,7 @@ static void execute_step(int ref, int params, const char *param[])
 static void execute_over(int ref, int params, const char *param[])
 {
 	UINT64 steps = 1;
-	
+
 	/* if we have a parameter, use it instead */
 	if (params > 0 && !validate_parameter_number(param[0], &steps))
 		return;
@@ -493,7 +493,7 @@ static void execute_out(int ref, int params, const char *param[])
 static void execute_go(int ref, int params, const char *param[])
 {
 	UINT64 addr = ~0;
-	
+
 	/* if we have a parameter, use it instead */
 	if (params > 0 && !validate_parameter_number(param[0], &addr))
 		return;
@@ -520,7 +520,7 @@ static void execute_go_vblank(int ref, int params, const char *param[])
 static void execute_go_interrupt(int ref, int params, const char *param[])
 {
 	UINT64 irqline = -1;
-	
+
 	/* if we have a parameter, use it instead */
 	if (params > 0 && !validate_parameter_number(param[0], &irqline))
 		return;
@@ -557,7 +557,7 @@ static void execute_focus(int ref, int params, const char *param[])
 		return;
 	}
 
-	/* first clear the ignore flag on the focused CPU */		
+	/* first clear the ignore flag on the focused CPU */
 	debug_cpu_ignore_cpu(cpuwhich, 0);
 
 	/* then loop over CPUs and set the ignore flags on all other CPUs */
@@ -589,7 +589,7 @@ static void execute_ignore(int ref, int params, const char *param[])
 		for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 		{
 			const struct debug_cpu_info *info = debug_get_cpu_info(cpunum);
-			
+
 			/* build up a comma-separated list */
 			if (info && info->valid && info->ignoring)
 			{
@@ -597,13 +597,13 @@ static void execute_ignore(int ref, int params, const char *param[])
 				else buflen += sprintf(&buffer[buflen], ",%d", cpunum);
 			}
 		}
-		
+
 		/* special message for none */
 		if (buflen == 0)
 			sprintf(&buffer[buflen], "Not currently ignoring any CPUs");
 		debug_console_write_line(buffer);
 	}
-	
+
 	/* otherwise clear the ignore flag on all requested CPUs */
 	else
 	{
@@ -634,7 +634,7 @@ static void execute_ignore(int ref, int params, const char *param[])
 				debug_console_printf("Can't ignore all CPUs!\n");
 				return;
 			}
-			
+
 			debug_cpu_ignore_cpu(cpuwhich[paramnum], 1);
 			debug_console_printf("Now ignoring CPU %d", (int)cpuwhich[paramnum]);
 		}
@@ -660,7 +660,7 @@ static void execute_observe(int ref, int params, const char *param[])
 		for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 		{
 			const struct debug_cpu_info *info = debug_get_cpu_info(cpunum);
-			
+
 			/* build up a comma-separated list */
 			if (info && info->valid && !info->ignoring)
 			{
@@ -668,13 +668,13 @@ static void execute_observe(int ref, int params, const char *param[])
 				else buflen += sprintf(&buffer[buflen], ",%d", cpunum);
 			}
 		}
-		
+
 		/* special message for none */
 		if (buflen == 0)
 			buflen += sprintf(&buffer[buflen], "Not currently observing any CPUs");
 		debug_console_write_line(buffer);
 	}
-	
+
 	/* otherwise set the ignore flag on all requested CPUs */
 	else
 	{
@@ -715,7 +715,7 @@ static void execute_bpset(int ref, int params, const char *param[])
 	/* param 1 is the address */
 	if (!validate_parameter_number(param[0], &address))
 		return;
-	
+
 	/* param 2 is the condition */
 	if (params > 1 && !validate_parameter_expression(param[1], &condition))
 		return;
@@ -738,12 +738,12 @@ static void execute_bpset(int ref, int params, const char *param[])
 static void execute_bpclear(int ref, int params, const char *param[])
 {
 	UINT64 bpindex;
-	
+
 	/* if 0 parameters, clear all */
 	if (params == 0)
 	{
 		int cpunum;
-		
+
 		for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 		{
 			const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
@@ -756,7 +756,7 @@ static void execute_bpclear(int ref, int params, const char *param[])
 		}
 		debug_console_write_line("Cleared all breakpoints");
 	}
-	
+
 	/* otherwise, clear the specific one */
 	else if (!validate_parameter_number(param[0], &bpindex))
 		return;
@@ -779,12 +779,12 @@ static void execute_bpclear(int ref, int params, const char *param[])
 static void execute_bpdisenable(int ref, int params, const char *param[])
 {
 	UINT64 bpindex;
-	
+
 	/* if 0 parameters, clear all */
 	if (params == 0)
 	{
 		int cpunum;
-		
+
 		for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 		{
 			const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
@@ -800,7 +800,7 @@ static void execute_bpdisenable(int ref, int params, const char *param[])
 		else
 			debug_console_write_line("Enabled all breakpoints");
 	}
-	
+
 	/* otherwise, clear the specific one */
 	else if (!validate_parameter_number(param[0], &bpindex))
 		return;
@@ -824,18 +824,18 @@ static void execute_bplist(int ref, int params, const char *param[])
 {
 	int cpunum, printed = 0;
 	char buffer[256];
-	
+
 	/* loop over all CPUs */
 	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 	{
 		const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
-		
+
 		if (cpuinfo->valid && cpuinfo->first_bp)
 		{
 			struct breakpoint *bp;
-			
+
 			debug_console_printf("CPU %d breakpoints:", cpunum);
-			
+
 			/* loop over the breakpoints */
 			for (bp = cpuinfo->first_bp; bp; bp = bp->next)
 			{
@@ -850,7 +850,7 @@ static void execute_bplist(int ref, int params, const char *param[])
 			}
 		}
 	}
-	
+
 	if (!printed)
 		debug_console_write_line("No breakpoints currently installed");
 }
@@ -872,11 +872,11 @@ static void execute_wpset(int ref, int params, const char *param[])
 	/* param 1 is the address */
 	if (!validate_parameter_number(param[0], &address))
 		return;
-	
+
 	/* param 2 is the length */
 	if (!validate_parameter_number(param[1], &length))
 		return;
-	
+
 	/* param 3 is the type */
 	if (!strcmp(param[2], "r"))
 		type = WATCHPOINT_READ;
@@ -889,7 +889,7 @@ static void execute_wpset(int ref, int params, const char *param[])
 		debug_console_printf("Invalid watchpoint type: expected r, w, or rw\n");
 		return;
 	}
-	
+
 	/* param 4 is the condition */
 	if (params > 3 && !validate_parameter_expression(param[3], &condition))
 		return;
@@ -912,7 +912,7 @@ static void execute_wpset(int ref, int params, const char *param[])
 static void execute_wpclear(int ref, int params, const char *param[])
 {
 	UINT64 wpindex;
-	
+
 	/* if 0 parameters, clear all */
 	if (params == 0)
 	{
@@ -924,7 +924,7 @@ static void execute_wpclear(int ref, int params, const char *param[])
 			if (cpuinfo->valid)
 			{
 				int spacenum;
-				
+
 				for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
 				{
 					struct watchpoint *wp;
@@ -935,7 +935,7 @@ static void execute_wpclear(int ref, int params, const char *param[])
 		}
 		debug_console_write_line("Cleared all watchpoints");
 	}
-	
+
 	/* otherwise, clear the specific one */
 	else if (!validate_parameter_number(param[0], &wpindex))
 		return;
@@ -958,19 +958,19 @@ static void execute_wpclear(int ref, int params, const char *param[])
 static void execute_wpdisenable(int ref, int params, const char *param[])
 {
 	UINT64 wpindex;
-	
+
 	/* if 0 parameters, clear all */
 	if (params == 0)
 	{
 		int cpunum;
-		
+
 		for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 		{
 			const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
 			if (cpuinfo->valid)
 			{
 				int spacenum;
-				
+
 				for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
 				{
 					struct watchpoint *wp;
@@ -984,7 +984,7 @@ static void execute_wpdisenable(int ref, int params, const char *param[])
 		else
 			debug_console_write_line("Enabled all watchpoints");
 	}
-	
+
 	/* otherwise, clear the specific one */
 	else if (!validate_parameter_number(param[0], &wpindex))
 		return;
@@ -1009,25 +1009,25 @@ static void execute_wplist(int ref, int params, const char *param[])
 	static const char *spacenames[ADDRESS_SPACES] = { "program", "data", "I/O" };
 	int cpunum, printed = 0;
 	char buffer[256];
-	
+
 	/* loop over all CPUs */
 	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 	{
 		const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
-		
+
 		if (cpuinfo->valid)
 		{
 			int spacenum;
-			
+
 			for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
 			{
 				if (cpuinfo->space[spacenum].first_wp)
 				{
 					static const char *types[] = { "unkn ", "read ", "write", "r/w  " };
 					struct watchpoint *wp;
-					
+
 					debug_console_printf("CPU %d %s space watchpoints:", cpunum, spacenames[spacenum]);
-					
+
 					/* loop over the watchpoints */
 					for (wp = cpuinfo->space[spacenum].first_wp; wp; wp = wp->next)
 					{
@@ -1044,7 +1044,7 @@ static void execute_wplist(int ref, int params, const char *param[])
 			}
 		}
 	}
-	
+
 	if (!printed)
 		debug_console_write_line("No watchpoints currently installed");
 }
@@ -1060,7 +1060,7 @@ static void execute_save(int ref, int params, const char *param[])
 	const struct debug_cpu_info *info;
 	int spacenum = ref;
 	FILE *f;
-	int i;
+	UINT64 i;
 
 	/* validate parameters */
 	if (!validate_parameter_number(param[1], &offset))
@@ -1074,7 +1074,7 @@ static void execute_save(int ref, int params, const char *param[])
 	info = debug_get_cpu_info(cpunum);
 	offset = ADDR2BYTE(offset, info, spacenum);
 	endoffset = ADDR2BYTE(offset + length - 1, info, spacenum);
-	
+
 	/* open the file */
 	f = fopen(param[0], "wb");
 	if (!f)
@@ -1082,7 +1082,7 @@ static void execute_save(int ref, int params, const char *param[])
 		debug_console_printf("Error opening file '%s'", param[0]);
 		return;
 	}
-	
+
 	/* now write the data out */
 	cpuintrf_push_context(cpunum);
 	for (i = offset; i <= endoffset; i++)
@@ -1091,7 +1091,7 @@ static void execute_save(int ref, int params, const char *param[])
 		fwrite(&byte, 1, 1, f);
 	}
 	cpuintrf_pop_context();
-	
+
 	/* close the file */
 	fclose(f);
 	debug_console_write_line("Data saved successfully");
@@ -1108,7 +1108,7 @@ static void execute_dump(int ref, int params, const char *param[])
 	const struct debug_cpu_info *info;
 	int spacenum = ref;
 	FILE *f = NULL;
-	int i, j;
+	UINT64 i, j;
 
 	/* validate parameters */
 	if (!validate_parameter_number(param[1], &offset))
@@ -1121,7 +1121,7 @@ static void execute_dump(int ref, int params, const char *param[])
 		return;
 	if (params > 5 && !validate_parameter_number(param[5], &cpunum))
 		return;
-	
+
 	/* further validation */
 	if (cpunum >= cpu_gettotalcpu())
 	{
@@ -1148,17 +1148,17 @@ static void execute_dump(int ref, int params, const char *param[])
 		debug_console_printf("Error opening file '%s'", param[0]);
 		return;
 	}
-	
+
 	/* now write the data out */
 	cpuintrf_push_context(cpunum);
 	for (i = offset; i <= endoffset; i += 16)
 	{
 		char output[200];
 		int outdex = 0;
-		
+
 		/* print the address */
 		outdex += sprintf(&output[outdex], "%0*X: ", info->space[spacenum].addrchars, (UINT32)BYTE2ADDR(i, info, spacenum));
-		
+
 		/* print the bytes */
 		switch (width)
 		{
@@ -1206,7 +1206,7 @@ static void execute_dump(int ref, int params, const char *param[])
 				}
 				break;
 		}
-		
+
 		/* print the ASCII */
 		if (ascii)
 		{
@@ -1217,12 +1217,12 @@ static void execute_dump(int ref, int params, const char *param[])
 				outdex += sprintf(&output[outdex], "%c", (byte >= 32 && byte < 128) ? byte : '.');
 			}
 		}
-		
+
 		/* output the result */
 		fprintf(f, "%s\n", output);
 	}
 	cpuintrf_pop_context();
-	
+
 	/* close the file */
 	fclose(f);
 	debug_console_write_line("Data dumped successfully");
@@ -1250,7 +1250,7 @@ static void execute_dasm(int ref, int params, const char *param[])
 		return;
 	if (params > 4 && !validate_parameter_number(param[4], &cpunum))
 		return;
-	
+
 	/* further validation */
 	if (cpunum >= cpu_gettotalcpu())
 	{
@@ -1276,7 +1276,7 @@ static void execute_dasm(int ref, int params, const char *param[])
 		debug_console_printf("Error opening file '%s'", param[0]);
 		return;
 	}
-	
+
 	/* now write the data out */
 	cpuintrf_push_context(cpunum);
 	for (i = 0; i < length; )
@@ -1285,7 +1285,7 @@ static void execute_dasm(int ref, int params, const char *param[])
 		char output[200], disasm[200];
 		int outdex = 0;
 		int numbytes;
-		
+
 		/* print the address */
 		outdex += sprintf(&output[outdex], "%0*X: ", info->space[ADDRESS_SPACE_PROGRAM].addrchars, (UINT32)BYTE2ADDR(pcbyte, info, ADDRESS_SPACE_PROGRAM));
 
@@ -1312,17 +1312,17 @@ static void execute_dasm(int ref, int params, const char *param[])
 					for (j = 0; j < numbytes; j++)
 						outdex += sprintf(&output[outdex], "%02X ", (UINT32)debug_read_opcode(pcbyte + j, 1));
 					break;
-				
+
 				case 2:
 					for (j = 0; j < numbytes; j += 2)
 						outdex += sprintf(&output[outdex], "%04X ", (UINT32)debug_read_opcode(pcbyte + j, 2));
 					break;
-				
+
 				case 4:
 					for (j = 0; j < numbytes; j += 4)
 						outdex += sprintf(&output[outdex], "%08X ", (UINT32)debug_read_opcode(pcbyte + j, 4));
 					break;
-				
+
 				case 8:
 					for (j = 0; j < numbytes; j += 8)
 					{
@@ -1335,15 +1335,15 @@ static void execute_dasm(int ref, int params, const char *param[])
 				outdex += sprintf(&output[outdex], "%*s", byteswidth - (outdex - startdex), "");
 			outdex += sprintf(&output[outdex], "  ");
 		}
-		
+
 		/* add the disassembly */
 		sprintf(&output[outdex], "%s", disasm);
-		
+
 		/* output the result */
 		fprintf(f, "%s\n", output);
 	}
 	cpuintrf_pop_context();
-	
+
 	/* close the file */
 	fclose(f);
 	debug_console_write_line("Data dumped successfully");
@@ -1368,7 +1368,7 @@ static void execute_trace_internal(int ref, int params, const char *param[], int
 		return;
 	if (params > 2 && !validate_parameter_command(action = param[2]))
 		return;
-	
+
 	/* further validation */
 	if (!stricmp(filename, "off"))
 		filename = NULL;
@@ -1430,7 +1430,7 @@ static void execute_snap(int ref, int params, const char *param[])
 		save_screen_snapshot(artwork_get_ui_bitmap());
 		debug_console_printf("Saved snapshot\n");
 	}
-	
+
 	/* otherwise, we have to open the file ourselves */
 	else
 	{

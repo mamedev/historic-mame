@@ -345,7 +345,7 @@ static void print_game_rom(FILE* out, const struct GameDriver* game)
 
 			if (*name)
 				fprintf(out, " name=\"%s\"", normalize_string(name));
-			if (!is_disk && in_parent)
+			if (in_parent)
 				fprintf(out, " merge=\"%s\"", normalize_string(ROM_GETNAME(fprom)));
 			if (!is_disk && found_bios)
 				fprintf(out, " bios=\"%s\"", normalize_string(bios_name));
@@ -407,12 +407,13 @@ static void print_game_rom(FILE* out, const struct GameDriver* game)
 				default: fprintf(out, " region=\"0x%x\"", ROMREGION_GETTYPE(region));
 		}
 
+		if (hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_NO_DUMP))
+			fprintf(out, " status=\"nodump\"");
+		if (hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_BAD_DUMP))
+			fprintf(out, " status=\"baddump\"");
+
 		if (!is_disk)
 		{
-			if (hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_NO_DUMP))
-				fprintf(out, " status=\"nodump\"");
-			if (hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_BAD_DUMP))
-				fprintf(out, " status=\"baddump\"");
 			if (ROMREGION_GETFLAGS(region) & ROMREGION_DISPOSE)
 				fprintf(out, " dispose=\"yes\"");
 			if (ROMREGION_GETFLAGS(region) & ROMREGION_SOUNDONLY)
@@ -807,10 +808,12 @@ static void print_game_info(FILE* out, const struct GameDriver* game)
 	fprintf(out, "\t</" XML_TOP ">\n");
 }
 
-#if !defined(MESS) && !defined(TINY_COMPILE)
+#if !defined(MESS)
 /* Print the resource info */
 static void print_resource_info(FILE* out, const struct GameDriver* game)
 {
+	const char *start;
+
 	/* The runnable entry is an hint for frontend authors */
 	/* to easily know which game can be started. */
 	/* Games marked as runnable=yes can be started putting */
@@ -819,6 +822,13 @@ static void print_resource_info(FILE* out, const struct GameDriver* game)
 	fprintf(out, "\t<" XML_TOP " runnable=\"no\"");
 
 	fprintf(out, " name=\"%s\"", normalize_string(game->name) );
+
+	start = strrchr(game->source_file, '/');
+	if (!start)
+		start = strrchr(game->source_file, '\\');
+	if (!start)
+		start = game->source_file - 1;
+	fprintf(out, " sourcefile=\"%s\"", normalize_string(start + 1));
 
 	fprintf(out, ">\n");
 
@@ -886,7 +896,7 @@ static void print_mame_data(FILE* out, const struct GameDriver* games[])
 	for(j=0;games[j];++j)
 		print_game_info(out, games[j]);
 
-#if !defined(MESS) && !defined(TINY_COMPILE)
+#if !defined(MESS)
 	/* print resources */
 	print_resources_data(out, games);
 #endif
@@ -935,8 +945,10 @@ void print_mame_xml(FILE* out, const struct GameDriver* games[])
 		"\t\t\t<!ATTLIST disk name CDATA #REQUIRED>\n"
 		"\t\t\t<!ATTLIST disk md5 CDATA #IMPLIED>\n"
 		"\t\t\t<!ATTLIST disk sha1 CDATA #IMPLIED>\n"
+		"\t\t\t<!ATTLIST disk merge CDATA #IMPLIED>\n"
 		"\t\t\t<!ATTLIST disk region CDATA #IMPLIED>\n"
 		"\t\t\t<!ATTLIST disk index CDATA #IMPLIED>\n"
+		"\t\t\t<!ATTLIST disk status (baddump|nodump|good) \"good\">\n"
 		"\t\t<!ELEMENT sample EMPTY>\n"
 		"\t\t\t<!ATTLIST sample name CDATA #REQUIRED>\n"
 		"\t\t<!ELEMENT chip EMPTY>\n"

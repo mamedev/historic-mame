@@ -14,29 +14,15 @@
 #include "vidhrdw/generic.h"
 #include "artwork.h"
 #include "sound/samples.h"
-#include "sound/dac.h"
+#include "circus.h"
 
-static int clown_x=0,clown_y=0,clown_z=0;
+static int clown_x=0,clown_y=0;
+int clown_z=0;
 
 static struct tilemap *bg_tilemap;
 
 /***************************************************************************
 ***************************************************************************/
-
-static const char *circus_sample_names[] =
-{
-	"*circus",
-	"pop.wav",
-	"miss.wav",
-	"bounce.wav",
-	0       /* end of array */
-};
-
-struct Samplesinterface circus_samples_interface =
-{
-	3,	/* 3 channels */
-	circus_sample_names
-};
 
 WRITE8_HANDLER( circus_videoram_w )
 {
@@ -55,54 +41,6 @@ WRITE8_HANDLER( circus_clown_x_w )
 WRITE8_HANDLER( circus_clown_y_w )
 {
 	clown_y = 240-data;
-}
-
-/* This register controls the clown image currently displayed */
-/* and also is used to enable the amplifier and trigger the   */
-/* discrete circuitry that produces sound effects and music   */
-
-WRITE8_HANDLER( circus_clown_z_w )
-{
-	clown_z = (data & 0x0f);
-*(memory_region(REGION_CPU1)+0x8000)=data; logerror("Z:%02x\n",data); //DEBUG
-	/* Bits 4-6 enable/disable trigger different events */
-	/* descriptions are based on Circus schematics      */
-
-	switch ((data & 0x70) >> 4)
-	{
-		case 0 : /* All Off */
-			DAC_data_w (0,0);
-			break;
-
-		case 1 : /* Music */
-			DAC_data_w (0,0x7f);
-			break;
-
-		case 2 : /* Pop */
-			sample_start (0, 0, 0);
-			break;
-
-		case 3 : /* Normal Video */
-			break;
-
-		case 4 : /* Miss */
-			sample_start (1, 1, 0);
-			break;
-
-		case 5 : /* Invert Video */
-			break;
-
-		case 6 : /* Bounce */
-			sample_start (2, 2, 0);
-			break;
-
-		case 7 : /* Don't Know */
-			break;
-	};
-
-	/* Bit 7 enables amplifier (1 = on) */
-
-//  logerror("clown Z = %02x\n",data);
 }
 
 static void get_bg_tile_info(int tile_index)

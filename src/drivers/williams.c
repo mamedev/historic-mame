@@ -1592,6 +1592,23 @@ ROM_START( defcmnd )
 	ROM_LOAD( "defcmnda.snd", 0xf800, 0x0800, CRC(f122d9c9) SHA1(70092fc354a2efbe7365be922fa36309b50d5c6f) )
 ROM_END
 
+ROM_START( startrkd )
+	ROM_REGION( 0x15000, REGION_CPU1, 0 )
+	ROM_LOAD( "rom8.bin",     0x0d000, 0x1000, CRC(5af871e3) SHA1(f9a42619b37db2eb07d0302ac9d0ff5c1923c21d) )
+	ROM_LOAD( "rom9.bin",     0x0e000, 0x1000, CRC(1126adc9) SHA1(526cf1ca3a7eefd6115d74ac9af1a50774cc258e) )
+	ROM_LOAD( "rom10.bin",    0x0f000, 0x1000, CRC(4097b46b) SHA1(8f506dc59b129c9441d813062fc38747619678db) )
+	/* bank 0 is the place for CMOS ram */
+	ROM_LOAD( "rom6.bin",     0x10000, 0x0800, CRC(93012991) SHA1(9e06ed4a489b2ed063f83b708d3e7c6a02e45389) )
+	ROM_LOAD( "rom5.bin",     0x10800, 0x0800, CRC(c6f0c004) SHA1(57c547b804ad3eceb33a9390bbffcfc0b63f16dd) )
+	ROM_LOAD( "rom4.bin",     0x11000, 0x0800, CRC(b48430bf) SHA1(6572812f3a1e6eede3dff3273f16846799e79ed9) )
+	ROM_LOAD( "rom3.bin",     0x11800, 0x0800, CRC(d068f0c5) SHA1(d32a4232756ca05972780cb35b0add12b31e8283) )
+	ROM_LOAD( "rom2.bin",     0x12000, 0x0800, CRC(fef4cb77) SHA1(96202e97f3392bc043a252e78d1c42b51c38d269) )
+	ROM_LOAD( "rom1.bin",     0x12800, 0x0800, CRC(d23d6cdb) SHA1(2ce9fe269598919f994339c8f8685d6a79e417d8) )
+	ROM_LOAD( "rom7.bin",     0x13000, 0x0800, CRC(43d42a1b) SHA1(b13d59940646451c00b49bbe4a41b9e2df4d7758) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "defend.snd",   0xf800, 0x0800, CRC(fefd5b48) SHA1(ceb0d18483f0691978c604db94417e6941ad7ff2) )
+ROM_END
 
 ROM_START( defence )
 	ROM_REGION( 0x15000, REGION_CPU1, 0 )
@@ -2704,6 +2721,7 @@ GAMEX(1980, tornado2, defender, defender, defender, defndjeu, ROT0,   "Jeutel", 
 GAMEX(1980, zero,     defender, defender, defender, defndjeu, ROT0,   "Jeutel", "Zero ?", GAME_NOT_WORKING )
 GAME( 1980, defcmnd,  defender, defender, defender, defender, ROT0,   "bootleg", "Defense Command (set 1)" )
 GAME( 1981, defence,  defender, defender, defender, defender, ROT0,   "Outer Limits", "Defence Command" )
+GAME( 1981, startrkd, defender, defender, defender, defender, ROT0,   "bootleg", "Star Trek (Defender bootleg)" )
 
 GAME( 1980, mayday,   0,        defender, mayday,   mayday,   ROT0,   "<unknown>", "Mayday (set 1)" )
 GAME( 1980, maydaya,  mayday,   defender, mayday,   mayday,   ROT0,   "<unknown>", "Mayday (set 2)" )

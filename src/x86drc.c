@@ -689,7 +689,7 @@ UINT32 drc_x86_get_features(void)
 		xor ebx, ebx
 		xor ecx, ecx
 		xor edx, edx
-		cpuid
+		__asm _emit 0Fh __asm _emit 0A2h	// cpuid
 		mov features, edx
 	}
 #else /* !_MSC_VER */

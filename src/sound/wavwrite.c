@@ -1,8 +1,9 @@
 #include "driver.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "sound/wavwrite.h"
 
-struct wav_data
+struct _wav_file
 {
 	FILE *file;
 	UINT32 total_offs;
@@ -17,14 +18,14 @@ struct wav_data
 #define intel_short(x) (((x) << 8) | ((x) >> 8))
 #endif
 
-void *wav_open(const char *filename, int sample_rate, int channels)
+wav_file *wav_open(const char *filename, int sample_rate, int channels)
 {
-	struct wav_data *wav;
+	wav_file *wav;
 	UINT32 bps, temp32;
 	UINT16 align, temp16;
 
 	/* allocate memory for the wav struct */
-	wav = malloc(sizeof(struct wav_data));
+	wav = (wav_file *) malloc(sizeof(struct _wav_file));
 	if (!wav)
 		return NULL;
 
@@ -92,9 +93,8 @@ void *wav_open(const char *filename, int sample_rate, int channels)
 }
 
 
-void wav_close(void *wavptr)
+void wav_close(wav_file *wav)
 {
-	struct wav_data *wav = wavptr;
 	UINT32 total = ftell(wav->file);
 	UINT32 temp32;
 
@@ -114,19 +114,16 @@ void wav_close(void *wavptr)
 }
 
 
-void wav_add_data_16(void *wavptr, INT16 *data, int samples)
+void wav_add_data_16(wav_file *wav, INT16 *data, int samples)
 {
-	struct wav_data *wav = wavptr;
-
 	/* just write and flush the data */
 	fwrite(data, 2, samples, wav->file);
 	fflush(wav->file);
 }
 
 
-void wav_add_data_32(void *wavptr, INT32 *data, int samples, int shift)
+void wav_add_data_32(wav_file *wav, INT32 *data, int samples, int shift)
 {
-	struct wav_data *wav = wavptr;
 	INT16 *temp;
 	int i;
 
@@ -151,9 +148,8 @@ void wav_add_data_32(void *wavptr, INT32 *data, int samples, int shift)
 }
 
 
-void wav_add_data_16lr(void *wavptr, INT16 *left, INT16 *right, int samples)
+void wav_add_data_16lr(wav_file *wav, INT16 *left, INT16 *right, int samples)
 {
-	struct wav_data *wav = wavptr;
 	INT16 *temp;
 	int i;
 
@@ -175,9 +171,8 @@ void wav_add_data_16lr(void *wavptr, INT16 *left, INT16 *right, int samples)
 }
 
 
-void wav_add_data_32lr(void *wavptr, INT32 *left, INT32 *right, int samples, int shift)
+void wav_add_data_32lr(wav_file *wav, INT32 *left, INT32 *right, int samples, int shift)
 {
-	struct wav_data *wav = wavptr;
 	INT16 *temp;
 	int i;
 

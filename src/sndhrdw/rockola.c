@@ -12,7 +12,7 @@
 
 #include "driver.h"
 #include "sound/custom.h"
-#include "sound/discrete.h"
+#include "sound/sn76477.h"
 #include "sound/samples.h"
 
 #ifndef M_LN2

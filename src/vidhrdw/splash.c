@@ -245,6 +245,25 @@ static void splash_draw_sprites(struct mame_bitmap *bitmap,const struct rectangl
 	}
 }
 
+static void funystrp_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+{
+	int i;
+	const struct GfxElement *gfx = Machine->gfx[1];
+
+	for (i = 0; i < 0x400; i += 4){
+		int sx = splash_spriteram[i+2] & 0x1ff;
+		int sy = (240 - (splash_spriteram[i+1] & 0xff)) & 0xff;
+		int attr = splash_spriteram[i+3] & 0xff;
+		int attr2 = splash_spriteram[i+0x400];
+		int number = (splash_spriteram[i] & 0xff) + (attr & 0xf)*256;
+
+		drawgfx(bitmap,gfx,number,
+			(attr2 & 0x7f),attr & 0x40,attr & 0x80,
+			sx-8,sy,
+			cliprect,TRANSPARENCY_PEN,0);
+	}
+}
+
 /***************************************************************************
 
 	Display Refresh
@@ -261,5 +280,19 @@ VIDEO_UPDATE( splash )
 
 	tilemap_draw(bitmap,cliprect,screen[1],0,0);
 	splash_draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,screen[0],0,0);
+}
+
+VIDEO_UPDATE( funystrp )
+{
+	/* set scroll registers */
+	tilemap_set_scrolly(screen[0], 0, splash_vregs[0]);
+	tilemap_set_scrolly(screen[1], 0, splash_vregs[1]);
+
+	splash_draw_bitmap(bitmap,cliprect);
+
+	tilemap_draw(bitmap,cliprect,screen[1],0,0);
+	/*Sprite chip is similar but not the same*/
+	funystrp_draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,screen[0],0,0);
 }

@@ -4717,15 +4717,13 @@ ROM_START( thunt )
 
 	ROM_REGION32_BE( 0x2c00000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_FILL(                             0x0000000, 0x0200000, 0x00 )
-	/* I suspect this should be one rom */
 	ROM_LOAD16_BYTE( "th-ic7_2.stv",    0x0200000, 0x0080000, CRC(c4e993de) SHA1(7aa433bc2623cb19a09d4ef4c8233a2d29901020) )
 	ROM_LOAD16_BYTE( "th-ic7_1.stv",    0x0200001, 0x0080000, CRC(1355cc18) SHA1(a9b731228a807b2b01f933fe0f7dcdbadaf89b7e) )
 
-	// missing, putting sando-r roms here gives some good gfx but a lot wrong
-	ROM_LOAD16_WORD_SWAP( "thunt.2",   0x0400000, 0x0400000, NO_DUMP )
-	ROM_LOAD16_WORD_SWAP( "thunt.3",   0x0800000, 0x0400000, NO_DUMP )
-	ROM_LOAD16_WORD_SWAP( "thunt.4",   0x0c00000, 0x0400000, NO_DUMP )
-	ROM_LOAD16_WORD_SWAP( "thunt.5",   0x1000000, 0x0400000, NO_DUMP )
+	ROM_LOAD16_WORD_SWAP( "th-e-2.ic2",   0x0400000, 0x0400000, CRC(47315694) SHA1(4a7cc195b98dbca146f5efe3b5b35be0f13b2f4a) )
+	ROM_LOAD16_WORD_SWAP( "th-e-3.ic3",   0x0800000, 0x0400000, CRC(c9290b44) SHA1(4e51e667edf330cc20e600cf1500f332cc533e20) )
+	ROM_LOAD16_WORD_SWAP( "th-e-4.ic4",   0x0c00000, 0x0400000, CRC(c672e40b) SHA1(4ba189de7b8fb5ca45fb15c89cdaf0f860831d52) )
+	ROM_LOAD16_WORD_SWAP( "th-e-5.ic5",   0x1000000, 0x0400000, CRC(3914b805) SHA1(1331ce82ba0bdfc76fe3456a5252e69c00e2cf1f) )
 ROM_END
 
 ROM_START( sassisu )
@@ -5145,6 +5143,7 @@ GAMEBX( 1997, vmahjong,  stvbios, stvbios, stv, stvmp,stv,       ROT0,   "Micron
 GAMEBX( 1996, sassisu,   stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	     			  "Taisen Tanto-R Sashissu!! (J 980216 V1.000)", GAME_NO_SOUND | GAME_NOT_WORKING )//missing roz layer,but it seems working to me... -AS
 GAMEBX( 1998, myfairld,  stvbios, stvbios, stv, stvmp,stv,       ROT0,   "Micronet",   				  "Virtual Mahjong 2 - My Fair Lady (J 980608 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
 GAMEBX( 1998, astrass,   stvbios, stvbios, stv, stv,  astrass,   ROT0,   "Sunsoft",    				  "Astra SuperStars (J 980514 V1.002)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEBX( 1995, thunt,     sandor,  stvbios, stv, stv,  ic13,      ROT0,   "Sega (Deniam license?)",	  "Treasure Hunt (JUET 970901 V2.00E)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
 
 /* Doing Something.. but not enough yet */
 GAMEBX( 1998, elandore,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Sai-Mate",   				  "Elan Doree - Legend of Dragon (JUET 980922 V1.006)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )//japanese name?
@@ -5163,7 +5162,6 @@ GAMEBX( 1999, ffreveng,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Capcom
 GAMEBX( 1996, findlove,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Daiki / FCF",    			  "Find Love (J 971212 V1.000)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1994, gaxeduel,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	     			  "Golden Axe - The Duel (JUETL 950117 V1.000)", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, sandor,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	     			  "Sando-R (J 951114 V1.000)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, thunt,     sandor,  stvbios, stv, stv,  ic13,      ROT0,   "Sega (Deniam license?)",	  "Treasure Hunt (JUET 970901 V2.00E)", GAME_NO_SOUND | GAME_NOT_WORKING ) // this one actually does something if you use the sandor gfx
 GAMEBX( 1996, sokyugrt,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Raizing / 8ing",    		  "Soukyugurentai / Terra Diver (JUET 960821 V1.000)", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, twcup98,   stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Tecmo",      				  "Tecmo World Cup '98 (JUET 980410 V1.000)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING ) // protected?
 GAMEBX( 1997, znpwfv,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	     			  "Zen Nippon Pro-Wrestling Featuring Virtua (J 971123 V1.000)", GAME_NO_SOUND | GAME_NOT_WORKING )
