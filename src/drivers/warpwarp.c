@@ -54,25 +54,25 @@ void warpwarp_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /* from sndhrdw/warpwarp.c */
-extern void warpwarp_sound_w(int offs, int data);
-extern void warpwarp_music1_w(int offs, int data);
-extern void warpwarp_music2_w(int offs, int data);
+WRITE_HANDLER( warpwarp_sound_w );
+WRITE_HANDLER( warpwarp_music1_w );
+WRITE_HANDLER( warpwarp_music2_w );
 extern int warpwarp_sh_start(const struct MachineSound *msound);
 extern void warpwarp_sh_stop(void);
 extern void warpwarp_sh_update(void);
 
-int warpwarp_input_c000_7_r(int offset)
+static READ_HANDLER( warpwarp_input_c000_7_r )
 {
 	return (readinputport(0) >> offset) & 1;
 }
 
 /* Read the Dipswitches */
-int warpwarp_input_c020_27_r(int offset)
+static READ_HANDLER( warpwarp_input_c020_27_r )
 {
 	return (readinputport(1) >> offset) & 1;
 }
 
-int warpwarp_input_controller_r(int offset)
+static READ_HANDLER( warpwarp_input_controller_r )
 {
 	int res;
 
@@ -82,6 +82,11 @@ int warpwarp_input_controller_r(int offset)
 	if (res & 4) return 111;
 	if (res & 8) return 167;
 	return 255;
+}
+
+static WRITE_HANDLER( warpwarp_leds_w )
+{
+	osd_led_w(offset,data);
 }
 
 
@@ -110,7 +115,7 @@ static struct MemoryWriteAddress bombbee_writemem[] =
 	{ 0x6003, 0x6003, watchdog_reset_w },
 	{ 0x6010, 0x6010, warpwarp_music1_w },
 	{ 0x6020, 0x6020, warpwarp_music2_w },
-    { 0x6030, 0x6032, osd_led_w },
+    { 0x6030, 0x6032, warpwarp_leds_w },
 	{ 0x6035, 0x6035, coin_counter_w },
 	{ -1 }	/* end of table */
 };
@@ -139,7 +144,7 @@ static struct MemoryWriteAddress warpwarp_writemem[] =
     { 0xc003, 0xc003, watchdog_reset_w },
 	{ 0xc010, 0xc010, warpwarp_music1_w },
 	{ 0xc020, 0xc020, warpwarp_music2_w },
-    { 0xc030, 0xc032, osd_led_w },
+    { 0xc030, 0xc032, warpwarp_leds_w },
 	{ 0xc035, 0xc035, coin_counter_w },
 	{ -1 }	/* end of table */
 };

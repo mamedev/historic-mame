@@ -31,8 +31,8 @@ C000-C700  RAM
 
 void cop01_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void cop01_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void cop01_scrollx_w(int offset,int data);
-void cop01_gfxbank_w(int offset,int data);
+WRITE_HANDLER( cop01_scrollx_w );
+WRITE_HANDLER( cop01_gfxbank_w );
 int cop01_vh_start(void);
 void cop01_vh_stop(void);
 
@@ -41,13 +41,13 @@ extern int cop01_videoram_size;
 
 
 
-void cop01_sound_command_w(int offset,int data)
+WRITE_HANDLER( cop01_sound_command_w )
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(1,0xff);
 }
 
-int cop01_sound_command_r(int offset)
+READ_HANDLER( cop01_sound_command_r )
 {
 	int res;
 	static int pulse;

@@ -14,36 +14,27 @@ unsigned char *stfight_text_attr_ram;
 unsigned char *stfight_vh_latch_ram;
 unsigned char *stfight_sprite_ram;
 
-static struct tilemap *fg_tilemap;
-static struct tilemap *bg_tilemap;
-static int stfight_flipscreen = 0;
+static struct tilemap *fg_tilemap,*bg_tilemap,*tx_tilemap;
+static int flipscreen = 0;
 static int stfight_sprite_base = 0;
-static int stfight_fg_x = 0;
-static int stfight_fg_y = 0;
-static int stfight_bg_x = 0;
-static int stfight_bg_y = 0;
-static int stfight_fg_x_tile = 0;   // not strictly necessary
-static int stfight_fg_y_tile = 0;   // but a small peformance
-static int stfight_bg_x_tile = 0;   // optimsation
-static int stfight_bg_y_tile = 0;
 
 /*
-        Graphics ROM Format
-        ===================
+		Graphics ROM Format
+		===================
 
-        Each tile is 8x8 pixels
-        Each composite tile is 2x2 tiles, 16x16 pixels
-        Each screen is 32x32 composite tiles, 64x64 tiles, 256x256 pixels
-        Each layer is a 4-plane bitmap 8x16 screens, 2048x4096 pixels
+		Each tile is 8x8 pixels
+		Each composite tile is 2x2 tiles, 16x16 pixels
+		Each screen is 32x32 composite tiles, 64x64 tiles, 256x256 pixels
+		Each layer is a 4-plane bitmap 8x16 screens, 2048x4096 pixels
 
-        There are 4x256=1024 composite tiles defined for each layer
+		There are 4x256=1024 composite tiles defined for each layer
 
-        Each layer is mapped using 2 bytes/composite tile
-        - one byte for the tile
-        - one byte for the tile bank, attribute
-            - b7,b5     tile bank (0-3)
+		Each layer is mapped using 2 bytes/composite tile
+		- one byte for the tile
+		- one byte for the tile bank, attribute
+			- b7,b5     tile bank (0-3)
 
-        Each pixel is 4 bits = 16 colours.
+		Each pixel is 4 bits = 16 colours.
 
  */
 
@@ -99,63 +90,50 @@ void stfight_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 ***************************************************************************/
 
-static void get_fg_tile_info( int col, int row )
+static UINT32 fg_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
+{
+	/* logical (col,row) -> memory offset */
+	return (col & 0x0f) + ((row & 0x0f) << 4) + ((col & 0x70) << 4) + ((row & 0xf0) << 7);
+}
+
+static void get_fg_tile_info(int tile_index)
 {
 	unsigned char   *fgMap = memory_region(REGION_GFX5);
+	int attr,tile_base;
 
-    int             tile_index;
-    int             attr;
-    int             tile_base;
+	attr = fgMap[0x8000+tile_index];
+	tile_base = ((attr & 0x80) << 2) | ((attr & 0x20) << 3);
 
-    row = ( stfight_fg_y_tile + row ) & 0xff;
-    col = ( stfight_fg_x_tile + col ) & 0x7f;
-
-    tile_index = ( ( row & 0xf0 ) << 7 ) +
-                 ( ( col & 0xf0 ) << 4 ) +
-                 ( ( row & 0x0f ) << 4 ) +
-                   ( col & 0x0f );
-
-    attr = fgMap[0x8000+tile_index];
-    tile_base = ( ( attr & 0x80 ) << 2 ) | ( ( attr & 0x20 ) << 3 );
-
-	SET_TILE_INFO( 1,
-                   tile_base + fgMap[tile_index],
-                   attr & 0x07 );
+	SET_TILE_INFO(1,tile_base + fgMap[tile_index],attr & 0x07);
 }
 
-static void get_bg_tile_info(int col,int row)
+static UINT32 bg_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
+{
+	/* logical (col,row) -> memory offset */
+	return ((col & 0x0e) >> 1) + ((row & 0x0f) << 3) + ((col & 0x70) << 3) +
+			((row & 0x80) << 3) + ((row & 0x10) << 7) + ((col & 0x01) << 12) +
+			((row & 0x60) << 8);
+}
+
+static void get_bg_tile_info(int tile_index)
 {
 	unsigned char   *bgMap = memory_region(REGION_GFX6);
+	int attr,tile_bank,tile_base;
 
-    int             tile_index;
-    int             attr;
-    int             tile_bank;
-    int             tile_base;
+	attr = bgMap[0x8000+tile_index];
+	tile_bank = (attr & 0x20) >> 5;
+	tile_base = (attr & 0x80) << 1;
 
-    row = ( stfight_bg_y_tile + row ) & 0xff;
-    col = ( stfight_bg_x_tile + col ) & 0x7f;
-
-    // Convert the interleaved row to a linear virtual row
-    row = ( ( row & 0x80 ) >> 3 ) |
-          ( ( row & 0x60 ) << 2 ) |
-          ( ( row & 0x10 ) << 1 ) |
-            ( row & 0x0f );
-
-    tile_index = ( ( col & 0x01 ) << 12 ) +
-                 ( ( row & 0x1f0 ) << 6 ) +
-                 ( ( col & 0xf0 ) << 3 ) +
-                 ( ( row & 0x0f ) << 3 ) +
-                 ( ( col & 0x0f ) >> 1 );
-
-    attr = bgMap[0x8000+tile_index];
-    tile_bank = ( attr & 0x20 ) >> 5;
-    tile_base = ( attr & 0x80 ) << 1;
-
-	SET_TILE_INFO( 2+tile_bank,
-                   tile_base + bgMap[tile_index],
-                   attr & 0x07 );
+	SET_TILE_INFO(2+tile_bank,tile_base + bgMap[tile_index],attr & 0x07);
 }
 
+static void get_tx_tile_info(int tile_index)
+{
+	unsigned char attr = stfight_text_attr_ram[tile_index];
+
+	SET_TILE_INFO(0,stfight_text_char_ram[tile_index] + ((attr & 0x80) << 1),attr & 0x0f);
+	tile_info.flags = TILE_FLIPYX((attr & 0x60) >> 5);
+}
 
 
 /***************************************************************************
@@ -166,28 +144,18 @@ static void get_bg_tile_info(int col,int row)
 
 int stfight_vh_start(void)
 {
-	fg_tilemap = tilemap_create(
-		get_fg_tile_info,
-		TILEMAP_TRANSPARENT,
-		16,   16,
-		16+1, 16
-	);
+	bg_tilemap = tilemap_create(get_bg_tile_info,bg_scan,TILEMAP_OPAQUE,     16,16,128,256);
+	fg_tilemap = tilemap_create(get_fg_tile_info,fg_scan,TILEMAP_TRANSPARENT,16,16,128,256);
+	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_rows,
+			TILEMAP_TRANSPARENT_COLOR,8,8,32,32);
 
-	bg_tilemap = tilemap_create(
-		get_bg_tile_info,
-		TILEMAP_OPAQUE,
-		16,   16,
-		16+1, 16
-	);
+	if (!fg_tilemap || !bg_tilemap || !tx_tilemap)
+		return 1;
 
-	if( fg_tilemap && bg_tilemap )
-	{
-		fg_tilemap->transparent_pen = 0x0F;
+	fg_tilemap->transparent_pen = 0x0F;
+	tx_tilemap->transparent_pen = 256;
 
-		return( 0 );
-	}
-
-	return( 1 );
+	return 0;
 }
 
 
@@ -198,60 +166,72 @@ int stfight_vh_start(void)
 
 ***************************************************************************/
 
-void stfight_text_char_w( int offset, int data )
+WRITE_HANDLER( stfight_text_char_w )
 {
-    if( stfight_text_char_ram[offset] != data )
-    {
-        stfight_text_char_ram[offset] = data;
-    }
+	if (stfight_text_char_ram[offset] != data)
+	{
+		stfight_text_char_ram[offset] = data;
+		tilemap_mark_tile_dirty(tx_tilemap,offset);
+	}
 }
 
-void stfight_text_attr_w( int offset, int data )
+WRITE_HANDLER( stfight_text_attr_w )
 {
-    if( stfight_text_attr_ram[offset] != data )
-    {
-        stfight_text_attr_ram[offset] = data;
-    }
+	if (stfight_text_attr_ram[offset] != data)
+	{
+		stfight_text_attr_ram[offset] = data;
+		tilemap_mark_tile_dirty(tx_tilemap,offset);
+	}
 }
 
-extern void stfight_sprite_bank_w( int offset, int data )
+WRITE_HANDLER( stfight_sprite_bank_w )
 {
-    stfight_sprite_base = ( ( data & 0x04 ) << 7 ) |
-                          ( ( data & 0x01 ) << 8 );
+	stfight_sprite_base = ( ( data & 0x04 ) << 7 ) |
+				          ( ( data & 0x01 ) << 8 );
 }
 
-void stfight_vh_latch_w( int offset, int data )
+WRITE_HANDLER( stfight_vh_latch_w )
 {
-    stfight_vh_latch_ram[offset] = data;
+	int scroll;
 
-    switch( offset )
-    {
-        case 0x01 :
-            stfight_fg_x = ( data << 8 ) | stfight_vh_latch_ram[0];
-            break;
 
-        case 0x03 :
-            stfight_fg_y = ( data << 8 ) | stfight_vh_latch_ram[2];
-            break;
+	stfight_vh_latch_ram[offset] = data;
 
-        case 0x05 :
-            stfight_bg_x = ( data << 8 ) | stfight_vh_latch_ram[4];
-            break;
+	switch( offset )
+	{
+		case 0x00:
+		case 0x01:
+			scroll = (stfight_vh_latch_ram[1] << 8) | stfight_vh_latch_ram[0];
+			tilemap_set_scrollx(fg_tilemap,0,scroll);
+			break;
 
-        case 0x08 :
-            stfight_bg_y = ( data << 8 ) | stfight_vh_latch_ram[6];
-            break;
+		case 0x02:
+		case 0x03:
+			scroll = (stfight_vh_latch_ram[3] << 8) | stfight_vh_latch_ram[2];
+			tilemap_set_scrolly(fg_tilemap,0,scroll);
+			break;
 
-        case 0x07 :
-            tilemap_set_enable( bg_tilemap, ( data & 0x20 ) != 0 );
-            tilemap_set_enable( fg_tilemap, ( data & 0x10 ) != 0 );
-            stfight_flipscreen = ( data & 0x01 );
-		    tilemap_set_flip( ALL_TILEMAPS,
-                              ( stfight_flipscreen
-                                    ? ( TILEMAP_FLIPY|TILEMAP_FLIPX )
-                                    : 0 ) );
-            break;
-    }
+		case 0x04:
+		case 0x05:
+			scroll = (stfight_vh_latch_ram[5] << 8) | stfight_vh_latch_ram[4];
+			tilemap_set_scrollx(bg_tilemap,0,scroll);
+			break;
+
+		case 0x06:
+		case 0x08:
+			scroll = (stfight_vh_latch_ram[8] << 8) | stfight_vh_latch_ram[6];
+			tilemap_set_scrolly(bg_tilemap,0,scroll);
+			break;
+
+		case 0x07:
+			tilemap_set_enable(tx_tilemap,data & 0x80);
+			/* 0x40 = sprites */
+			tilemap_set_enable(bg_tilemap,data & 0x20);
+			tilemap_set_enable(fg_tilemap,data & 0x10);
+			flipscreen = data & 0x01;
+			tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+			break;
+	}
 }
 
 /***************************************************************************
@@ -260,138 +240,75 @@ void stfight_vh_latch_w( int offset, int data )
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap,int priority)
+static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs,sx,sy;
 
-	for (offs = 4096-32;offs >= 0;offs -= 32)
+	for (offs = 0;offs < 4096;offs += 32)
 	{
-        int code;
-        int attr = stfight_sprite_ram[offs+1];
-        int flipx = ( ( ( attr & 0x10 ) != 0 ) ^
-                      stfight_flipscreen );
-        int flipy = ( stfight_flipscreen );
+		int code;
+		int attr = stfight_sprite_ram[offs+1];
+		int flipx = attr & 0x10;
 		int color = attr & 0x0f;
 		int pri = (attr & 0x20) >> 5;
 
-		if (pri != priority) continue;
+		sy = stfight_sprite_ram[offs+2];
+		sx = stfight_sprite_ram[offs+3];
 
-        sy = stfight_sprite_ram[offs+2];
-        sx = stfight_sprite_ram[offs+3];
+		// non-active sprites have zero y coordinate value
+		if( sy > 0 )
+		{
+			// sprites which wrap onto/off the screen have
+			// a sign extension bit in the sprite attribute
+			if( sx >= 0xf0 )
+			{
+				if (attr & 0x80)
+				    sx -= 0x100;
+			}
 
-        // non-active sprites have zero y coordinate value
-        if( sy > 0 )
-        {
-            // sprites which wrap onto/off the screen have
-            // a sign extension bit in the sprite attribute
-            if( sx >= 0xf0 )
-            {
-                if( ( ( attr & 0x80 ) != 0 ) ^
-                    stfight_flipscreen )
-                    sx -= 0x100;
-            }
+			if (flipscreen)
+			{
+				sx = 240 - sx;
+				sy = 240 - sy;
+				flipx = !flipx;
+			}
 
-            if( stfight_flipscreen )
-            {
-                sy = 256-16-sy;
-                sx = 256-16-sx;
-            }
+			code = stfight_sprite_base + stfight_sprite_ram[offs];
 
-            code = stfight_sprite_base + stfight_sprite_ram[offs];
-
-            drawgfx( bitmap, Machine->gfx[4],
+			pdrawgfx(bitmap,Machine->gfx[4],
 				     code,
 					 color,
-					 flipx,flipy,
+					 flipx,flipscreen,
 					 sx,sy,
-				     &Machine->drv->visible_area,TRANSPARENCY_PEN,0x0f);
-        }
+				     &Machine->drv->visible_area,TRANSPARENCY_PEN,0x0f,
+					 pri ? 0x02 : 0);
+		}
 	}
 }
 
 
 void stfight_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh )
 {
-	int offs;
-
-    // Only dirty layer if we scroll to next tile
-    if( ( stfight_bg_x >> 4 ) != stfight_bg_x_tile ||
-        ( stfight_bg_y >> 4 ) != stfight_bg_y_tile )
-    {
-        tilemap_mark_all_tiles_dirty( bg_tilemap );
-        stfight_bg_x_tile = stfight_bg_x >> 4;
-        stfight_bg_y_tile = stfight_bg_y >> 4;
-    }
-
-    // Only dirty layer if we scroll to next tile
-    if( ( stfight_fg_x >> 4 ) != stfight_fg_x_tile ||
-        ( stfight_fg_y >> 4 ) != stfight_fg_y_tile )
-    {
-        tilemap_mark_all_tiles_dirty( fg_tilemap );
-        stfight_fg_x_tile = stfight_fg_x >> 4;
-        stfight_fg_y_tile = stfight_fg_y >> 4;
-    }
-
-    tilemap_set_scrollx( bg_tilemap, 0, stfight_bg_x & 0x0f );
-    tilemap_set_scrolly( bg_tilemap, 0, stfight_bg_y & 0x0f );
-
-    tilemap_set_scrollx( fg_tilemap, 0, stfight_fg_x & 0x0f );
-    tilemap_set_scrolly( fg_tilemap, 0, stfight_fg_y & 0x0f );
-
-	tilemap_update( fg_tilemap );
-	tilemap_update( bg_tilemap );
+	tilemap_update(ALL_TILEMAPS);
 
 	if (palette_recalc())
 		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 
-	tilemap_render( fg_tilemap );
-	tilemap_render( bg_tilemap );
-
-    /*
-     *  Now draw everything
-     */
-
-    if( bg_tilemap->enable )
-	    tilemap_draw( bitmap, bg_tilemap, 0 );
-    else
-        fillbitmap( bitmap, Machine->pens[0], &Machine->drv->visible_area );
-
-    /* Draw sprites which appear behind the foreground layer */
-	if( stfight_vh_latch_ram[0x07] & 0x40 )
-        draw_sprites( bitmap, 1 );
-
-	tilemap_draw( bitmap, fg_tilemap, 0 );
-
-    /* Draw sprites which appear on top */
-	if( stfight_vh_latch_ram[0x07] & 0x40 )
-        draw_sprites( bitmap, 0 );
-
-	if( stfight_vh_latch_ram[0x07] & 0x80 )
-	{
-		for (offs = 0x400 - 1;offs >= 0;offs--)
-		{
-			int sx,sy,flipx,flipy;
-			unsigned char   attr = stfight_text_attr_ram[offs];
+	tilemap_render(ALL_TILEMAPS);
 
 
-			sx = offs % 32;
-			sy = offs / 32;
-			flipx = attr & 0x20;
-			flipy = attr & 0x40;
-			if (stfight_flipscreen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
+	fillbitmap(priority_bitmap,0,NULL);
 
-			drawgfx(bitmap,Machine->gfx[0],
-					stfight_text_char_ram[offs] + 2 * (attr & 0x80),
-					attr & 0x0f,
-					flipx,flipy,
-					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_COLOR,256);
-		}
-	}
+	if (bg_tilemap->enable)
+	    tilemap_draw(bitmap,bg_tilemap,0);
+	else
+		fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+
+	tilemap_draw(bitmap,fg_tilemap,1<<16);
+
+	/* Draw sprites (may be obscured by foreground layer) */
+	if (stfight_vh_latch_ram[0x07] & 0x40)
+		draw_sprites(bitmap);
+
+	tilemap_draw(bitmap,tx_tilemap,0);
 }

@@ -12,7 +12,7 @@
 #include "vidhrdw/generic.h"
 
 
-void rampart_playfieldram_w(int offset, int data);
+WRITE_HANDLER( rampart_playfieldram_w );
 
 int rampart_vh_start(void);
 void rampart_vh_stop(void);
@@ -66,7 +66,7 @@ static void scanline_update(int scanline)
 
 static UINT32 bank_list[] = { 0x4000, 0x6000, 0x0000, 0x2000 };
 
-static int slapstic_bank_r(int offset)
+static READ_HANDLER( slapstic_bank_r )
 {
 	int opcode_pc = cpu_getpreviouspc();
 	int result;
@@ -94,12 +94,12 @@ static int slapstic_bank_r(int offset)
 	return result;
 }
 
-static void slapstic_bank_w(int offset,int data)
+static WRITE_HANDLER( slapstic_bank_w )
 {
 }
 
 
-static int opbase_override(int pc)
+static OPBASE_HANDLER( opbase_override )
 {
 	int oldpc = cpu_getpreviouspc();
 
@@ -108,9 +108,9 @@ static int opbase_override(int pc)
 		slapstic_bank_r(oldpc - 0x140000);
 
 	/* tweak the slapstic at the destination PC */
-	if (pc >= 0x140000 && pc < 0x148000)
+	if (address >= 0x140000 && address < 0x148000)
 	{
-		current_bank = bank_list[slapstic_tweak((pc - 0x140000) / 2)];
+		current_bank = bank_list[slapstic_tweak((address - 0x140000) / 2)];
 
 		/* use a bogus ophw so that we will be called again on the next jump/ret */
 		catch_nextBranch();
@@ -119,12 +119,12 @@ static int opbase_override(int pc)
 		OP_RAM = OP_ROM = &slapstic_base[current_bank] - 0x140000;
 
 		/* return -1 so that the standard routine doesn't do anything more */
-		pc = -1;
+		address = -1;
 
-		if (errorlog) fprintf(errorlog, "Slapstic op override at %06X\n", pc);
+		if (errorlog) fprintf(errorlog, "Slapstic op override at %06X\n", address);
 	}
 
-	return pc;
+	return address;
 }
 
 
@@ -151,13 +151,13 @@ static void init_machine(void)
  *
  *************************************/
 
-static int adpcm_r(int offset)
+static READ_HANDLER( adpcm_r )
 {
 	return (OKIM6295_status_0_r(offset) << 8) | 0x00ff;
 }
 
 
-static void adpcm_w(int offset, int data)
+static WRITE_HANDLER( adpcm_w )
 {
 	if (!(data & 0xff000000))
 		OKIM6295_data_0_w(offset, (data >> 8) & 0xff);
@@ -171,14 +171,14 @@ static void adpcm_w(int offset, int data)
  *
  *************************************/
 
-static int ym2413_r(int offset)
+static READ_HANDLER( ym2413_r )
 {
 	(void)offset;
 	return (YM2413_status_port_0_r(0) << 8) | 0x00ff;
 }
 
 
-static void ym2413_w(int offset, int data)
+static WRITE_HANDLER( ym2413_w )
 {
 	if (!(data & 0xff000000))
 	{
@@ -197,7 +197,7 @@ static void ym2413_w(int offset, int data)
  *
  *************************************/
 
-static void latch_w(int offset, int data)
+static WRITE_HANDLER( latch_w )
 {
 	(void)offset;
 	/* bit layout in this register:

@@ -47,7 +47,7 @@ void ssozumo_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 }
 
 
-void ssozumo_paletteram_w(int offset, int data)
+WRITE_HANDLER( ssozumo_paletteram_w )
 {
 	int	bit0, bit1, bit2, bit3, val;
 	int	r, g, b;

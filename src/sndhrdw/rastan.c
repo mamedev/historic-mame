@@ -47,12 +47,12 @@ static unsigned char soundboarddata;
 /*  looking from sound board point of view ...                         */
 /***********************************************************************/
 
-void r_wr_c000(int offset, int data)
+WRITE_HANDLER( rastan_c000_w )
 /* Meaning of this address is unknown !!! */
 {
 }
 
-void r_wr_d000(int offset, int data)
+WRITE_HANDLER( rastan_d000_w )
 /* ADPCM chip used in Rastan does not stop playing the sample by itself
 ** it must be said to stop instead. This is the address that does it.
 */
@@ -78,7 +78,7 @@ void Interrupt_Controller(void)
 }
 
 
-int r_rd_a001(int offset)
+READ_HANDLER( rastan_a001_r )
 {
 
 	static unsigned char pom=0;
@@ -123,7 +123,7 @@ int r_rd_a001(int offset)
 }
 
 
-void r_wr_a000(int offset,int data)
+WRITE_HANDLER( rastan_a000_w )
 {
 	int pom;
 
@@ -152,7 +152,7 @@ void r_wr_a000(int offset,int data)
 		if (errorlog) fprintf(errorlog,"Int mode = 3! (PC = %04x)\n", cpu_get_pc() );
 }
 
-void r_wr_a001(int offset,int data)
+WRITE_HANDLER( rastan_a001_w )
 {
 	data &= 0x0f;
 
@@ -188,6 +188,11 @@ void r_wr_a001(int offset,int data)
 	Interrupt_Controller();
 }
 
+WRITE_HANDLER( rastan_adpcm_trigger_w )
+{
+	ADPCM_trigger(0,data);
+}
+
 void rastan_irq_handler (int irq)
 {
 	IRQ_req = irq;
@@ -197,7 +202,7 @@ void rastan_irq_handler (int irq)
 /*  now looking from main board point of view                          */
 /***********************************************************************/
 
-void rastan_sound_port_w(int offset,int data)
+WRITE_HANDLER( rastan_sound_port_w )
 {
 	int pom;
 
@@ -207,7 +212,7 @@ void rastan_sound_port_w(int offset,int data)
 	m_tr_mode = m_transmit;
 }
 
-void rastan_sound_comm_w(int offset,int data)
+WRITE_HANDLER( rastan_sound_comm_w )
 {
 	data &= 0x0f;
 
@@ -253,7 +258,7 @@ void rastan_sound_comm_w(int offset,int data)
 
 
 
-int rastan_sound_comm_r(int offset)
+READ_HANDLER( rastan_sound_comm_r )
 {
 
 	m_transmit--;
@@ -282,7 +287,7 @@ int rastan_sound_comm_r(int offset)
 
 
 
-void rastan_sound_w(int offset,int data)
+WRITE_HANDLER( rastan_sound_w )
 {
 	if (offset == 0)
 		rastan_sound_port_w(0,data & 0xff);
@@ -290,7 +295,7 @@ void rastan_sound_w(int offset,int data)
 		rastan_sound_comm_w(0,data & 0xff);
 }
 
-int rastan_sound_r(int offset)
+READ_HANDLER( rastan_sound_r )
 {
 	if (offset == 2)
 		return rastan_sound_comm_r(0);

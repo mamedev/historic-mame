@@ -279,18 +279,18 @@ int sound_clock(const struct MachineSound *msound);
 int sound_scalebufferpos(int value);
 
 
-void soundlatch_w(int offset,int data);
-int soundlatch_r(int offset);
-void soundlatch_clear_w(int offset,int data);
-void soundlatch2_w(int offset,int data);
-int soundlatch2_r(int offset);
-void soundlatch2_clear_w(int offset,int data);
-void soundlatch3_w(int offset,int data);
-int soundlatch3_r(int offset);
-void soundlatch3_clear_w(int offset,int data);
-void soundlatch4_w(int offset,int data);
-int soundlatch4_r(int offset);
-void soundlatch4_clear_w(int offset,int data);
+WRITE_HANDLER( soundlatch_w );
+READ_HANDLER( soundlatch_r );
+WRITE_HANDLER( soundlatch_clear_w );
+WRITE_HANDLER( soundlatch2_w );
+READ_HANDLER( soundlatch2_r );
+WRITE_HANDLER( soundlatch2_clear_w );
+WRITE_HANDLER( soundlatch3_w );
+READ_HANDLER( soundlatch3_r );
+WRITE_HANDLER( soundlatch3_clear_w );
+WRITE_HANDLER( soundlatch4_w );
+READ_HANDLER( soundlatch4_r );
+WRITE_HANDLER( soundlatch4_clear_w );
 
 /* If you're going to use soundlatchX_clear_w, and the cleared value is
    something other than 0x00, use this function from machine_init. Note

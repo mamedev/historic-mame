@@ -40,7 +40,7 @@ Devil World / Dark  GX687*1987 2x68000           TWIN16
   Adventure / Majuu no Oukoku
 Double Dribble      GX690*1986  3x6809           005885(x2)               007327 (palette) 007452
 Kitten Kaboodle     GX712+1988                   GX400                    007593 (palette) 051550
-Chequered Flag      GX717+1988  052001               051960 051937(x2)    051316(x2) (zoom/rotation) 051733 (protection)
+Chequered Flag      GX717*1988  052001               051960 051937(x2)    051316(x2) (zoom/rotation) 051733 (protection)
 Fast Lane           GX752*1987    6309           007121                   051733 (protection) 007801
 Hot Chase           GX763*1988 2x68000                                    051316(x3) (zoom/rotation) 007634 007635 007558 007557
 Rack 'Em Up /       GX765*1987    6309 007342        007420               007327 (palette) 007324
@@ -381,6 +381,8 @@ address lines), and then reading it from the 051962.
                     1 = 64 (actually 40) columns
            ---xx--- layer B row scroll
            --x----- layer B column scroll
+           surpratk sets this register to 70 during the second boss. There is
+           nothing obviously wrong so it's not clear what should happen.
 1d00     : bits 0 & 1 might enable NMI and FIRQ, not sure
          : bit 2 = IRQ enable
 1d80     : ROM bank selector bits 0-3 = bank 0 bits 4-7 = bank 1
@@ -804,12 +806,12 @@ if ((K007121_ctrlram[chip][offset] & 0x30) != (data & 0x30))
 	K007121_ctrlram[chip][offset] = data;
 }
 
-void K007121_ctrl_0_w(int offset,int data)
+WRITE_HANDLER( K007121_ctrl_0_w )
 {
 	K007121_ctrl_w(0,offset,data);
 }
 
-void K007121_ctrl_1_w(int offset,int data)
+WRITE_HANDLER( K007121_ctrl_1_w )
 {
 	K007121_ctrl_w(1,offset,data);
 }
@@ -851,7 +853,8 @@ void K007121_ctrl_1_w(int offset,int data)
  */
 
 void K007121_sprites_draw(int chip,struct osd_bitmap *bitmap,
-		const unsigned char *source,int base_color,int global_x_offset,int bank_base)
+		const unsigned char *source,int base_color,int global_x_offset,int bank_base,
+		UINT32 pri_mask)
 {
 	const struct GfxElement *gfx = Machine->gfx[chip];
 	int flip_screen = K007121_flipscreen[chip];
@@ -901,6 +904,12 @@ if (keyboard_pressed(KEYCODE_D))
 		offs[3] = 0x03;
 		offs[4] = 0x04;
 		trans = TRANSPARENCY_COLOR;
+		/* when using priority buffer, draw front to back */
+		if (pri_mask != -1)
+		{
+			source += (num-1)*inc;
+			inc = -inc;
+		}
 	}
 
 	for (i = 0;i < num;i++)
@@ -949,19 +958,41 @@ if (keyboard_pressed(KEYCODE_D))
 					ey = yflip ? (height-1-y) : y;
 
 					if (flip_screen)
-						drawgfx(bitmap,gfx,
-							number + x_offset[ex] + y_offset[ey],
-							color,
-							!xflip,!yflip,
-							248-(sx+x*8),248-(sy+y*8),
-							&Machine->drv->visible_area,trans,0);
+					{
+						if (pri_mask != -1)
+							pdrawgfx(bitmap,gfx,
+								number + x_offset[ex] + y_offset[ey],
+								color,
+								!xflip,!yflip,
+								248-(sx+x*8),248-(sy+y*8),
+								&Machine->drv->visible_area,trans,0,
+								pri_mask);
+						else
+							drawgfx(bitmap,gfx,
+								number + x_offset[ex] + y_offset[ey],
+								color,
+								!xflip,!yflip,
+								248-(sx+x*8),248-(sy+y*8),
+								&Machine->drv->visible_area,trans,0);
+					}
 					else
-						drawgfx(bitmap,gfx,
-							number + x_offset[ex] + y_offset[ey],
-							color,
-							xflip,yflip,
-							global_x_offset+sx+x*8,sy+y*8,
-							&Machine->drv->visible_area,trans,0);
+					{
+						if (pri_mask != -1)
+							pdrawgfx(bitmap,gfx,
+								number + x_offset[ex] + y_offset[ey],
+								color,
+								xflip,yflip,
+								global_x_offset+sx+x*8,sy+y*8,
+								&Machine->drv->visible_area,trans,0,
+								pri_mask);
+						else
+							drawgfx(bitmap,gfx,
+								number + x_offset[ex] + y_offset[ey],
+								color,
+								xflip,yflip,
+								global_x_offset+sx+x*8,sy+y*8,
+								&Machine->drv->visible_area,trans,0);
+					}
 				}
 			}
 		}
@@ -1077,17 +1108,15 @@ static void tilemap_1_preupdate(void)
 	layer = 1;
 }
 
-static void K007342_get_tile_info(int col,int row)
+static UINT32 K007342_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 {
-	int tile_index, color, code;
+	/* logical (col,row) -> memory offset */
+	return (col & 0x1f) + ((row & 0x1f) << 5) + ((col & 0x20) << 5);
+}
 
-	if (col >= 32)
-	{
-		col -= 32;
-		tile_index = 0x400 + row*32 + col;
-	}
-	else
-		tile_index = row*32 + col;
+static void K007342_get_tile_info(int tile_index)
+{
+	int color, code;
 
 	color = colorram[tile_index];
 	code = videoram1[tile_index];
@@ -1105,8 +1134,8 @@ int K007342_vh_start(int gfx_index, void (*callback)(int tilemap, int bank, int 
 	K007342_gfxnum = gfx_index;
 	K007342_callback = callback;
 
-	K007342_tilemap[0] = tilemap_create(K007342_get_tile_info, TILEMAP_TRANSPARENT, 8, 8, 64, 32);
-	K007342_tilemap[1] = tilemap_create(K007342_get_tile_info, TILEMAP_TRANSPARENT, 8, 8, 64, 32);
+	K007342_tilemap[0] = tilemap_create(K007342_get_tile_info,K007342_scan,TILEMAP_TRANSPARENT,8,8,64,32);
+	K007342_tilemap[1] = tilemap_create(K007342_get_tile_info,K007342_scan,TILEMAP_TRANSPARENT,8,8,64,32);
 
 	K007342_ram = malloc(0x2000);
 	K007342_scroll_ram = malloc(0x0200);
@@ -1138,44 +1167,42 @@ void K007342_vh_stop(void)
 	K007342_scroll_ram = 0;
 }
 
-int K007342_r(int offset)
+READ_HANDLER( K007342_r )
 {
 	return K007342_ram[offset];
 }
 
-void K007342_w(int offset,int data)
+WRITE_HANDLER( K007342_w )
 {
-	if (offset < 0x1000){		/* layer 0 */
-		if (K007342_ram[offset] != data){
-			if (offset & 0x400)
-				tilemap_mark_tile_dirty(K007342_tilemap[0], offset%32 + 32, (offset&0x3ff)/32);
-			else
-				tilemap_mark_tile_dirty(K007342_tilemap[0], offset%32, (offset&0x3ff)/32);
+	if (offset < 0x1000)
+	{		/* layer 0 */
+		if (K007342_ram[offset] != data)
+		{
 			K007342_ram[offset] = data;
+			tilemap_mark_tile_dirty(K007342_tilemap[0],offset & 0x7ff);
 		}
 	}
-	else{						/* layer 1 */
-		if (K007342_ram[offset] != data){
-			if (offset & 0x400)
-				tilemap_mark_tile_dirty(K007342_tilemap[1], offset%32 + 32, (offset&0x3ff)/32);
-			else
-				tilemap_mark_tile_dirty(K007342_tilemap[1], offset%32, (offset&0x3ff)/32);
+	else
+	{						/* layer 1 */
+		if (K007342_ram[offset] != data)
+		{
 			K007342_ram[offset] = data;
+			tilemap_mark_tile_dirty(K007342_tilemap[1],offset & 0x7ff);
 		}
 	}
 }
 
-int K007342_scroll_r(int offset)
+READ_HANDLER( K007342_scroll_r )
 {
 	return K007342_scroll_ram[offset];
 }
 
-void K007342_scroll_w(int offset,int data)
+WRITE_HANDLER( K007342_scroll_w )
 {
 	K007342_scroll_ram[offset] = data;
 }
 
-void K007342_vreg_w(int offset,int data)
+WRITE_HANDLER( K007342_vreg_w )
 {
 	switch(offset)
 	{
@@ -1311,12 +1338,12 @@ void K007420_vh_stop(void)
 	K007420_ram = 0;
 }
 
-int K007420_r(int offset)
+READ_HANDLER( K007420_r )
 {
 	return K007420_ram[offset];
 }
 
-void K007420_w(int offset,int data)
+WRITE_HANDLER( K007420_w )
 {
 	K007420_ram[offset] = data;
 }
@@ -1540,10 +1567,9 @@ static void tilemap2_preupdate(void)
 	layer = 2;
 }
 
-static void K052109_get_tile_info(int col,int row)
+static void K052109_get_tile_info(int tile_index)
 {
 	int flipy = 0;
-	int tile_index = 64*row+col;
 	int code = videoram1[tile_index] + 256 * videoram2[tile_index];
 	int color = colorram[tile_index];
 	int bank = K052109_charrombank[(color & 0x0c) >> 2];
@@ -1614,9 +1640,9 @@ int K052109_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 
 	has_extra_video_ram = 0;
 
-	K052109_tilemap[0] = tilemap_create(K052109_get_tile_info,TILEMAP_TRANSPARENT,8,8,64,32);
-	K052109_tilemap[1] = tilemap_create(K052109_get_tile_info,TILEMAP_TRANSPARENT,8,8,64,32);
-	K052109_tilemap[2] = tilemap_create(K052109_get_tile_info,TILEMAP_TRANSPARENT,8,8,64,32);
+	K052109_tilemap[0] = tilemap_create(K052109_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+	K052109_tilemap[1] = tilemap_create(K052109_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+	K052109_tilemap[2] = tilemap_create(K052109_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 
 	K052109_ram = malloc(0x6000);
 
@@ -1653,7 +1679,7 @@ void K052109_vh_stop(void)
 
 
 
-int K052109_r(int offset)
+READ_HANDLER( K052109_r )
 {
 	if (K052109_RMRD_line == CLEAR_LINE)
 	{
@@ -1697,7 +1723,7 @@ else
 	}
 }
 
-void K052109_w(int offset,int data)
+WRITE_HANDLER( K052109_w )
 {
 	if ((offset & 0x1fff) < 0x1800) /* tilemap RAM */
 	{
@@ -1705,7 +1731,7 @@ void K052109_w(int offset,int data)
 		{
 			if (offset >= 0x4000) has_extra_video_ram = 1;  /* kludge for X-Men */
 			K052109_ram[offset] = data;
-			tilemap_mark_tile_dirty(K052109_tilemap[(offset&0x1fff)/0x800],offset%64,(offset%0x800)/64);
+			tilemap_mark_tile_dirty(K052109_tilemap[(offset & 0x1800) >> 11],offset & 0x7ff);
 		}
 	}
 	else	/* control registers */
@@ -1754,7 +1780,7 @@ if (errorlog) fprintf(errorlog,"%04x: 052109 register 1d00 = %02x\n",cpu_get_pc(
 					int bank = (K052109_ram[i]&0x0c) >> 2;
 					if ((bank == 0 && (dirty & 1)) || (bank == 1 && dirty & 2))
 					{
-						tilemap_mark_tile_dirty(K052109_tilemap[(i&0x1fff)/0x800],i%64,(i%0x800)/64);
+						tilemap_mark_tile_dirty(K052109_tilemap[(i & 0x1800) >> 11],i & 0x7ff);
 					}
 				}
 			}
@@ -1796,7 +1822,7 @@ if (errorlog && (data & 0xfe)) fprintf(errorlog,"%04x: 052109 register 1e80 = %0
 				{
 					int bank = (K052109_ram[i] & 0x0c) >> 2;
 					if ((bank == 2 && (dirty & 1)) || (bank == 3 && dirty & 2))
-						tilemap_mark_tile_dirty(K052109_tilemap[(i&0x1fff)/0x800],i%64,(i%0x800)/64);
+						tilemap_mark_tile_dirty(K052109_tilemap[(i & 0x1800) >> 11],i & 0x7ff);
 				}
 			}
 		}
@@ -2094,7 +2120,7 @@ static int K051960_fetchromdata(int byte)
 	return memory_region(K051960_memory_region)[addr];
 }
 
-int K051960_r(int offset)
+READ_HANDLER( K051960_r )
 {
 	if (K051960_readroms)
 	{
@@ -2106,17 +2132,17 @@ int K051960_r(int offset)
 		return K051960_ram[offset];
 }
 
-void K051960_w(int offset,int data)
+WRITE_HANDLER( K051960_w )
 {
 	K051960_ram[offset] = data;
 }
 
-int K051960_word_r(int offset)
+READ_HANDLER( K051960_word_r )
 {
 	return K051960_r(offset + 1) | (K051960_r(offset) << 8);
 }
 
-void K051960_word_w(int offset,int data)
+WRITE_HANDLER( K051960_word_w )
 {
 	if ((data & 0xff000000) == 0)
 		K051960_w(offset,(data >> 8) & 0xff);
@@ -2124,7 +2150,7 @@ void K051960_word_w(int offset,int data)
 		K051960_w(offset + 1,data & 0xff);
 }
 
-int K051937_r(int offset)
+READ_HANDLER( K051937_r )
 {
 	if (K051960_readroms && offset >= 4 && offset < 8)
 	{
@@ -2144,7 +2170,7 @@ if (errorlog) fprintf(errorlog,"%04x: read unknown 051937 address %x\n",cpu_get_
 	}
 }
 
-void K051937_w(int offset,int data)
+WRITE_HANDLER( K051937_w )
 {
 	if (offset == 0)
 	{
@@ -2184,12 +2210,12 @@ if (errorlog) fprintf(errorlog,"%04x: write %02x to unknown 051937 address %x\n"
 	}
 }
 
-int K051937_word_r(int offset)
+READ_HANDLER( K051937_word_r )
 {
 	return K051937_r(offset + 1) | (K051937_r(offset) << 8);
 }
 
-void K051937_word_w(int offset,int data)
+WRITE_HANDLER( K051937_word_w )
 {
 	if ((data & 0xff000000) == 0)
 		K051937_w(offset,(data >> 8) & 0xff);
@@ -2243,7 +2269,12 @@ void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 	for (offs = 0;offs < 0x400;offs += 8)
 	{
 		if (K051960_ram[offs] & 0x80)
-			sortedlist[K051960_ram[offs] & 0x7f] = offs;
+		{
+			if (max_priority == -1)	/* draw front to back when using priority buffer */
+				sortedlist[(K051960_ram[offs] & 0x7f) ^ 0x7f] = offs;
+			else
+				sortedlist[K051960_ram[offs] & 0x7f] = offs;
+		}
 	}
 
 	for (pri_code = 0;pri_code < NUM_SPRITES;pri_code++)
@@ -2274,7 +2305,8 @@ void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 
 		(*K051960_callback)(&code,&color,&pri);
 
-		if (pri < min_priority || pri > max_priority) continue;
+		if (max_priority != -1)
+			if (pri < min_priority || pri > max_priority) continue;
 
 		size = (K051960_ram[offs+1] & 0xe0) >> 5;
 		w = width[size];
@@ -2327,21 +2359,39 @@ void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 					{
 						int o = K051960_gfx->colortable[16*color+15];
 						K051960_gfx->colortable[16*color+15] = palette_transparent_pen;
-						drawgfx(bitmap,K051960_gfx,
-								c,
-								color,
-								flipx,flipy,
-								sx & 0x1ff,sy,
-								&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001);
+						if (max_priority == -1)
+							pdrawgfx(bitmap,K051960_gfx,
+									c,
+									color,
+									flipx,flipy,
+									sx & 0x1ff,sy,
+									&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,pri);
+						else
+							drawgfx(bitmap,K051960_gfx,
+									c,
+									color,
+									flipx,flipy,
+									sx & 0x1ff,sy,
+									&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001);
 						K051960_gfx->colortable[16*color+15] = o;
 					}
 					else
-						drawgfx(bitmap,K051960_gfx,
-								c,
-								color,
-								flipx,flipy,
-								sx & 0x1ff,sy,
-								&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					{
+						if (max_priority == -1)
+							pdrawgfx(bitmap,K051960_gfx,
+									c,
+									color,
+									flipx,flipy,
+									sx & 0x1ff,sy,
+									&Machine->drv->visible_area,TRANSPARENCY_PEN,0,pri);
+						else
+							drawgfx(bitmap,K051960_gfx,
+									c,
+									color,
+									flipx,flipy,
+									sx & 0x1ff,sy,
+									&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					}
 				}
 			}
 		}
@@ -2365,13 +2415,22 @@ void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 					if (flipy) c += yoffset[(h-1-y)];
 					else c += yoffset[y];
 
-					drawgfxzoom(bitmap,K051960_gfx,
-							c,
-							color,
-							flipx,flipy,
-							sx & 0x1ff,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
-							(zw << 16) / 16,(zh << 16) / 16);
+					if (max_priority == -1)
+						pdrawgfxzoom(bitmap,K051960_gfx,
+								c,
+								color,
+								flipx,flipy,
+								sx & 0x1ff,sy,
+								&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
+								(zw << 16) / 16,(zh << 16) / 16,pri);
+					else
+						drawgfxzoom(bitmap,K051960_gfx,
+								c,
+								color,
+								flipx,flipy,
+								sx & 0x1ff,sy,
+								&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
+								(zw << 16) / 16,(zh << 16) / 16);
 				}
 			}
 		}
@@ -2441,7 +2500,7 @@ int K051960_is_NMI_enabled(void)
 
 
 
-int K052109_051960_r(int offset)
+READ_HANDLER( K052109_051960_r )
 {
 	if (K052109_RMRD_line == CLEAR_LINE)
 	{
@@ -2455,7 +2514,7 @@ int K052109_051960_r(int offset)
 	else return K052109_r(offset);
 }
 
-void K052109_051960_w(int offset,int data)
+WRITE_HANDLER( K052109_051960_w )
 {
 	if (offset >= 0x3800 && offset < 0x3808)
 		K051937_w(offset - 0x3800,data);
@@ -2537,30 +2596,30 @@ void K053245_vh_stop(void)
 	K053245_ram = 0;
 }
 
-int K053245_word_r(int offset)
+READ_HANDLER( K053245_word_r )
 {
 	return READ_WORD(&K053245_ram[offset]);
 }
 
-void K053245_word_w(int offset,int data)
+WRITE_HANDLER( K053245_word_w )
 {
 	COMBINE_WORD_MEM(&K053245_ram[offset],data);
 }
 
-int K053245_r(int offset)
+READ_HANDLER( K053245_r )
 {
 	int shift = ((offset & 1) ^ 1) << 3;
 	return (READ_WORD(&K053245_ram[offset & ~1]) >> shift) & 0xff;
 }
 
-void K053245_w(int offset,int data)
+WRITE_HANDLER( K053245_w )
 {
 	int shift = ((offset & 1) ^ 1) << 3;
 	offset &= ~1;
 	COMBINE_WORD_MEM(&K053245_ram[offset],(0xff000000 >> shift) | ((data & 0xff) << shift));
 }
 
-int K053244_r(int offset)
+READ_HANDLER( K053244_r )
 {
 	if (K053244_readroms && offset >= 0x0c && offset < 0x10)
 	{
@@ -2583,7 +2642,7 @@ if (errorlog) fprintf(errorlog,"%04x: read from unknown 053244 address %x\n",cpu
 	}
 }
 
-void K053244_w(int offset,int data)
+WRITE_HANDLER( K053244_w )
 {
 	if (offset == 0x00)
 		K053245_spriteoffsX = (K053245_spriteoffsX & 0x00ff) | (data << 8);
@@ -2656,7 +2715,7 @@ void K053244_bankselect(int bank)   /* used by TMNT2 for ROM testing */
  * The rest of the sprite remains normal.
  */
 
-void K053245_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_priority)
+void K053245_sprites_draw(struct osd_bitmap *bitmap)
 {
 #define NUM_SPRITES 128
 	int offs,pri_code;
@@ -2669,10 +2728,12 @@ void K053245_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 	for (offs = 0;offs < 0x800;offs += 16)
 	{
 		if (READ_WORD(&K053245_ram[offs]) & 0x8000)
+		{
 			sortedlist[READ_WORD(&K053245_ram[offs]) & 0x007f] = offs;
+		}
 	}
 
-	for (pri_code = 0;pri_code < NUM_SPRITES;pri_code++)
+	for (pri_code = NUM_SPRITES-1;pri_code >= 0;pri_code--)
 	{
 		int ox,oy,color,code,size,w,h,x,y,flipx,flipy,mirrorx,mirrory,zoomx,zoomy,pri;
 
@@ -2714,8 +2775,6 @@ void K053245_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 		pri = 0;
 
 		(*K053245_callback)(&code,&color,&pri);
-
-		if (pri < min_priority || pri > max_priority) continue;
 
 		size = (READ_WORD(&K053245_ram[offs]) & 0x0f00) >> 8;
 
@@ -2836,30 +2895,34 @@ else zoomx = zoomy; /* workaround for TMNT2 */
 					{
 						int o = K053245_gfx->colortable[16*color+15];
 						K053245_gfx->colortable[16*color+15] = palette_transparent_pen;
-						drawgfx(bitmap,K053245_gfx,
+						pdrawgfx(bitmap,K053245_gfx,
 								c,
 								color,
 								fx,fy,
 								sx,sy,
-								&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001);
+								&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,pri);
 						K053245_gfx->colortable[16*color+15] = o;
 					}
 					else
-						drawgfx(bitmap,K053245_gfx,
+					{
+						pdrawgfx(bitmap,K053245_gfx,
 								c,
 								color,
 								fx,fy,
 								sx,sy,
-								&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+								&Machine->drv->visible_area,TRANSPARENCY_PEN,0,pri);
+					}
 				}
 				else
-					drawgfxzoom(bitmap,K053245_gfx,
+				{
+					pdrawgfxzoom(bitmap,K053245_gfx,
 							c,
 							color,
 							fx,fy,
 							sx,sy,
 							&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
-							(zw << 16) / 16,(zh << 16) / 16);
+							(zw << 16) / 16,(zh << 16) / 16,pri);
+				}
 			}
 		}
 	}
@@ -2990,30 +3053,30 @@ void K053247_vh_stop(void)
 	K053247_ram = 0;
 }
 
-int K053247_word_r(int offset)
+READ_HANDLER( K053247_word_r )
 {
 	return READ_WORD(&K053247_ram[offset]);
 }
 
-void K053247_word_w(int offset,int data)
+WRITE_HANDLER( K053247_word_w )
 {
 	COMBINE_WORD_MEM(&K053247_ram[offset],data);
 }
 
-int K053247_r(int offset)
+READ_HANDLER( K053247_r )
 {
 	int shift = ((offset & 1) ^ 1) << 3;
 	return (READ_WORD(&K053247_ram[offset & ~1]) >> shift) & 0xff;
 }
 
-void K053247_w(int offset,int data)
+WRITE_HANDLER( K053247_w )
 {
 	int shift = ((offset & 1) ^ 1) << 3;
 	offset &= ~1;
 	COMBINE_WORD_MEM(&K053247_ram[offset],(0xff000000 >> shift) | ((data & 0xff) << shift));
 }
 
-int K053246_r(int offset)
+READ_HANDLER( K053246_r )
 {
 	if (K053246_OBJCHA_line == ASSERT_LINE)
 	{
@@ -3036,7 +3099,7 @@ if (errorlog) fprintf(errorlog,"%04x: read from unknown 053244 address %x\n",cpu
 	}
 }
 
-void K053246_w(int offset,int data)
+WRITE_HANDLER( K053246_w )
 {
 	if (offset == 0x00)
 		K053247_spriteoffsX = (K053247_spriteoffsX & 0x00ff) | (data << 8);
@@ -3075,12 +3138,12 @@ if (errorlog) fprintf(errorlog,"%04x: write %02x to 053246 address 5\n",cpu_get_
 if (errorlog) fprintf(errorlog,"%04x: write %02x to unknown 053246 address %x\n",cpu_get_pc(),data,offset);
 }
 
-int K053246_word_r(int offset)
+READ_HANDLER( K053246_word_r )
 {
 	return K053246_r(offset + 1) | (K053246_r(offset) << 8);
 }
 
-void K053246_word_w(int offset,int data)
+WRITE_HANDLER( K053246_word_w )
 {
 	if ((data & 0xff000000) == 0)
 		K053246_w(offset,(data >> 8) & 0xff);
@@ -3120,7 +3183,7 @@ void K053246_set_OBJCHA_line(int state)
  * The rest of the sprite remains normal.
  */
 
-void K053247_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_priority)
+void K053247_sprites_draw(struct osd_bitmap *bitmap)
 {
 #define NUM_SPRITES 256
 	int offs,pri_code;
@@ -3133,10 +3196,10 @@ void K053247_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 	for (offs = 0;offs < 0x1000;offs += 16)
 	{
 //		if (READ_WORD(&K053247_ram[offs]) & 0x8000)
-			sortedlist[READ_WORD(&K053247_ram[offs]) & 0x00ff] = offs;
+		sortedlist[READ_WORD(&K053247_ram[offs]) & 0x00ff] = offs;
 	}
 
-	for (pri_code = NUM_SPRITES-1;pri_code >= 0;pri_code--)
+	for (pri_code = 0;pri_code < NUM_SPRITES;pri_code++)
 	{
 		int ox,oy,color,code,size,w,h,x,y,xa,ya,flipx,flipy,mirrorx,mirrory,zoomx,zoomy,pri;
 		/* sprites can be grouped up to 8x8. The draw order is
@@ -3164,8 +3227,6 @@ void K053247_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 		pri = 0;
 
 		(*K053247_callback)(&code,&color,&pri);
-
-		if (pri < min_priority || pri > max_priority) continue;
 
 		size = (READ_WORD(&K053247_ram[offs]) & 0x0f00) >> 8;
 
@@ -3338,30 +3399,34 @@ switch (K053247_spriteoffsY)
 					{
 						int o = K053247_gfx->colortable[16*color+15];
 						K053247_gfx->colortable[16*color+15] = palette_transparent_pen;
-						drawgfx(bitmap,K053247_gfx,
+						pdrawgfx(bitmap,K053247_gfx,
 								c,
 								color,
 								fx,fy,
 								sx,sy,
-								&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001);
+								&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,pri);
 						K053247_gfx->colortable[16*color+15] = o;
 					}
 					else
-						drawgfx(bitmap,K053247_gfx,
+					{
+						pdrawgfx(bitmap,K053247_gfx,
 								c,
 								color,
 								fx,fy,
 								sx,sy,
-								&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+								&Machine->drv->visible_area,TRANSPARENCY_PEN,0,pri);
+					}
 				}
 				else
-					drawgfxzoom(bitmap,K053247_gfx,
+				{
+					pdrawgfxzoom(bitmap,K053247_gfx,
 							c,
 							color,
 							fx,fy,
 							sx,sy,
 							&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
-							(zw << 16) / 16,(zh << 16) / 16);
+							(zw << 16) / 16,(zh << 16) / 16,pri);
+				}
 
 				if (mirrory && h == 1)  /* Simpsons shadows */
 				{
@@ -3372,30 +3437,34 @@ switch (K053247_spriteoffsY)
 						{
 							int o = K053247_gfx->colortable[16*color+15];
 							K053247_gfx->colortable[16*color+15] = palette_transparent_pen;
-							drawgfx(bitmap,K053247_gfx,
+							pdrawgfx(bitmap,K053247_gfx,
 									c,
 									color,
 									fx,!fy,
 									sx,sy,
-									&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001);
+									&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,pri);
 							K053247_gfx->colortable[16*color+15] = o;
 						}
 						else
-							drawgfx(bitmap,K053247_gfx,
+						{
+							pdrawgfx(bitmap,K053247_gfx,
 									c,
 									color,
 									fx,!fy,
 									sx,sy,
-									&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+									&Machine->drv->visible_area,TRANSPARENCY_PEN,0,pri);
+						}
 					}
 					else
-						drawgfxzoom(bitmap,K053247_gfx,
+					{
+						pdrawgfxzoom(bitmap,K053247_gfx,
 								c,
 								color,
 								fx,!fy,
 								sx,sy,
 								&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
-								(zw << 16) / 16,(zh << 16) / 16);
+								(zw << 16) / 16,(zh << 16) / 16,pri);
+					}
 				}
 			}
 		}
@@ -3484,9 +3553,8 @@ static void K051316_preupdate(int chip)
 	K051316_chip_selected = chip;
 }
 
-static void K051316_get_tile_info(int col,int row)
+static void K051316_get_tile_info(int tile_index)
 {
-	int tile_index = 32*row+col;
 	int code = K051316_ram[K051316_chip_selected][tile_index];
 	int color = K051316_ram[K051316_chip_selected][tile_index + 0x400];
 
@@ -3571,7 +3639,7 @@ if (errorlog) fprintf(errorlog,"K051316_vh_start supports only 4 or 7 bpp\n");
 	K051316_bpp[chip] = bpp;
 	K051316_callback[chip] = callback;
 
-	K051316_tilemap[chip] = tilemap_create(K051316_get_tile_info,TILEMAP_OPAQUE,16,16,32,32);
+	K051316_tilemap[chip] = tilemap_create(K051316_get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,16,16,32,32);
 
 	K051316_ram[chip] = malloc(0x800);
 
@@ -3633,17 +3701,17 @@ int K051316_r(int chip, int offset)
 	return K051316_ram[chip][offset];
 }
 
-int K051316_0_r(int offset)
+READ_HANDLER( K051316_0_r )
 {
 	return K051316_r(0, offset);
 }
 
-int K051316_1_r(int offset)
+READ_HANDLER( K051316_1_r )
 {
 	return K051316_r(1, offset);
 }
 
-int K051316_2_r(int offset)
+READ_HANDLER( K051316_2_r )
 {
 	return K051316_r(2, offset);
 }
@@ -3654,21 +3722,21 @@ void K051316_w(int chip,int offset,int data)
 	if (K051316_ram[chip][offset] != data)
 	{
 		K051316_ram[chip][offset] = data;
-		tilemap_mark_tile_dirty(K051316_tilemap[chip],offset%32,(offset%0x400)/32);
+		tilemap_mark_tile_dirty(K051316_tilemap[chip],offset & 0x3ff);
 	}
 }
 
-void K051316_0_w(int offset,int data)
+WRITE_HANDLER( K051316_0_w )
 {
 	K051316_w(0,offset,data);
 }
 
-void K051316_1_w(int offset,int data)
+WRITE_HANDLER( K051316_1_w )
 {
 	K051316_w(1,offset,data);
 }
 
-void K051316_2_w(int offset,int data)
+WRITE_HANDLER( K051316_2_w )
 {
 	K051316_w(2,offset,data);
 }
@@ -3697,17 +3765,17 @@ if (errorlog) fprintf(errorlog,"%04x: read 051316 ROM offset %04x but reg 0x0c b
 	}
 }
 
-int K051316_rom_0_r(int offset)
+READ_HANDLER( K051316_rom_0_r )
 {
 	return K051316_rom_r(0,offset);
 }
 
-int K051316_rom_1_r(int offset)
+READ_HANDLER( K051316_rom_1_r )
 {
 	return K051316_rom_r(1,offset);
 }
 
-int K051316_rom_2_r(int offset)
+READ_HANDLER( K051316_rom_2_r )
 {
 	return K051316_rom_r(2,offset);
 }
@@ -3720,17 +3788,17 @@ void K051316_ctrl_w(int chip,int offset,int data)
 if (errorlog && offset >= 0x0c) fprintf(errorlog,"%04x: write %02x to 051316 reg %x\n",cpu_get_pc(),data,offset);
 }
 
-void K051316_ctrl_0_w(int offset,int data)
+WRITE_HANDLER( K051316_ctrl_0_w )
 {
 	K051316_ctrl_w(0,offset,data);
 }
 
-void K051316_ctrl_1_w(int offset,int data)
+WRITE_HANDLER( K051316_ctrl_1_w )
 {
 	K051316_ctrl_w(1,offset,data);
 }
 
-void K051316_ctrl_2_w(int offset,int data)
+WRITE_HANDLER( K051316_ctrl_2_w )
 {
 	K051316_ctrl_w(2,offset,data);
 }
@@ -3770,7 +3838,7 @@ void K051316_tilemap_update_2(void)
 
 /* Note: rotation support doesn't handle asymmetrical visible areas. This doesn't */
 /* matter because in the Konami games the visible area is always symmetrical. */
-void K051316_zoom_draw(int chip, struct osd_bitmap *bitmap)
+void K051316_zoom_draw(int chip, struct osd_bitmap *bitmap,UINT32 priority)
 {
 	UINT32 startx,starty,cx,cy;
 	int incxx,incxy,incyx,incyy;
@@ -3830,7 +3898,7 @@ void K051316_zoom_draw(int chip, struct osd_bitmap *bitmap)
 
 	if (bitmap->depth == 8)
 	{
-		unsigned char *dest;
+		UINT8 *dest;
 
 		if (incxy == 0 && incyx == 0 && !K051316_wraparound[chip])
 		{
@@ -3859,16 +3927,39 @@ void K051316_zoom_draw(int chip, struct osd_bitmap *bitmap)
 							cx = startx;
 							cy = starty >> 11;
 							dest = &bitmap->line[sy][sx];
-							while (x <= ex && cx < 512)
+							if (priority)
 							{
-								int c = srcbitmap->line[cy][cx];
+								UINT8 *pri = &priority_bitmap->line[sy][sx];
 
-								if (c != palette_transparent_pen)
-									*dest = c;
+								while (x <= ex && cx < 512)
+								{
+									int c = srcbitmap->line[cy][cx];
 
-								cx++;
-								x++;
-								dest++;
+									if (c != palette_transparent_pen)
+									{
+										*dest = c;
+										*pri |= priority;
+									}
+
+									cx++;
+									x++;
+									dest++;
+									pri++;
+								}
+							}
+							else
+							{
+								while (x <= ex && cx < 512)
+								{
+									int c = srcbitmap->line[cy][cx];
+
+									if (c != palette_transparent_pen)
+										*dest = c;
+
+									cx++;
+									x++;
+									dest++;
+								}
 							}
 						}
 						starty += incyy;
@@ -3894,16 +3985,39 @@ void K051316_zoom_draw(int chip, struct osd_bitmap *bitmap)
 							cx = startx;
 							cy = starty >> 11;
 							dest = &bitmap->line[sy][sx];
-							while (x <= ex && (cx & 0xfff00000) == 0)
+							if (priority)
 							{
-								int c = srcbitmap->line[cy][cx >> 11];
+								UINT8 *pri = &priority_bitmap->line[sy][sx];
 
-								if (c != palette_transparent_pen)
-									*dest = c;
+								while (x <= ex && (cx & 0xfff00000) == 0)
+								{
+									int c = srcbitmap->line[cy][cx >> 11];
 
-								cx += incxx;
-								x++;
-								dest++;
+									if (c != palette_transparent_pen)
+									{
+										*dest = c;
+										*pri |= priority;
+									}
+
+									cx += incxx;
+									x++;
+									dest++;
+									pri++;
+								}
+							}
+							else
+							{
+								while (x <= ex && (cx & 0xfff00000) == 0)
+								{
+									int c = srcbitmap->line[cy][cx >> 11];
+
+									if (c != palette_transparent_pen)
+										*dest = c;
+
+									cx += incxx;
+									x++;
+									dest++;
+								}
 							}
 						}
 						starty += incyy;
@@ -3923,17 +4037,41 @@ void K051316_zoom_draw(int chip, struct osd_bitmap *bitmap)
 					cx = startx;
 					cy = starty;
 					dest = &bitmap->line[sy][sx];
-					while (x <= ex)
+					if (priority)
 					{
-						int c = srcbitmap->line[(cy >> 11) & 0x1ff][(cx >> 11) & 0x1ff];
+						UINT8 *pri = &priority_bitmap->line[sy][sx];
 
-						if (c != palette_transparent_pen)
-							*dest = c;
+						while (x <= ex)
+						{
+							int c = srcbitmap->line[(cy >> 11) & 0x1ff][(cx >> 11) & 0x1ff];
 
-						cx += incxx;
-						cy += incxy;
-						x++;
-						dest++;
+							if (c != palette_transparent_pen)
+							{
+								*dest = c;
+								*pri |= priority;
+							}
+
+							cx += incxx;
+							cy += incxy;
+							x++;
+							dest++;
+							pri++;
+						}
+					}
+					else
+					{
+						while (x <= ex)
+						{
+							int c = srcbitmap->line[(cy >> 11) & 0x1ff][(cx >> 11) & 0x1ff];
+
+							if (c != palette_transparent_pen)
+								*dest = c;
+
+							cx += incxx;
+							cy += incxy;
+							x++;
+							dest++;
+						}
 					}
 					startx += incyx;
 					starty += incyy;
@@ -3948,20 +4086,47 @@ void K051316_zoom_draw(int chip, struct osd_bitmap *bitmap)
 					cx = startx;
 					cy = starty;
 					dest = &bitmap->line[sy][sx];
-					while (x <= ex)
+					if (priority)
 					{
-						if ((cx & 0xfff00000) == 0 && (cy & 0xfff00000) == 0)
+						UINT8 *pri = &priority_bitmap->line[sy][sx];
+
+						while (x <= ex)
 						{
-							int c = srcbitmap->line[cy >> 11][cx >> 11];
+							if ((cx & 0xfff00000) == 0 && (cy & 0xfff00000) == 0)
+							{
+								int c = srcbitmap->line[cy >> 11][cx >> 11];
 
-							if (c != palette_transparent_pen)
-								*dest = c;
+								if (c != palette_transparent_pen)
+								{
+									*dest = c;
+									*pri |= priority;
+								}
+							}
+
+							cx += incxx;
+							cy += incxy;
+							x++;
+							dest++;
+							pri++;
 						}
+					}
+					else
+					{
+						while (x <= ex)
+						{
+							if ((cx & 0xfff00000) == 0 && (cy & 0xfff00000) == 0)
+							{
+								int c = srcbitmap->line[cy >> 11][cx >> 11];
 
-						cx += incxx;
-						cy += incxy;
-						x++;
-						dest++;
+								if (c != palette_transparent_pen)
+									*dest = c;
+							}
+
+							cx += incxx;
+							cy += incxy;
+							x++;
+							dest++;
+						}
 					}
 					startx += incyx;
 					starty += incyy;
@@ -3973,8 +4138,7 @@ void K051316_zoom_draw(int chip, struct osd_bitmap *bitmap)
 	else
 	{
 		/* 16-bit case */
-
-		unsigned short *dest;
+		UINT16 *dest;
 
 		if (incxy == 0 && incyx == 0 && !K051316_wraparound[chip])
 		{
@@ -4135,19 +4299,19 @@ void K051316_zoom_draw(int chip, struct osd_bitmap *bitmap)
 #endif
 }
 
-void K051316_zoom_draw_0(struct osd_bitmap *bitmap)
+void K051316_zoom_draw_0(struct osd_bitmap *bitmap,UINT32 priority)
 {
-	K051316_zoom_draw(0, bitmap);
+	K051316_zoom_draw(0,bitmap,priority);
 }
 
-void K051316_zoom_draw_1(struct osd_bitmap *bitmap)
+void K051316_zoom_draw_1(struct osd_bitmap *bitmap,UINT32 priority)
 {
-	K051316_zoom_draw(1, bitmap);
+	K051316_zoom_draw(1,bitmap,priority);
 }
 
-void K051316_zoom_draw_2(struct osd_bitmap *bitmap)
+void K051316_zoom_draw_2(struct osd_bitmap *bitmap,UINT32 priority)
 {
-	K051316_zoom_draw(2, bitmap);
+	K051316_zoom_draw(2,bitmap,priority);
 }
 
 
@@ -4156,7 +4320,7 @@ void K051316_zoom_draw_2(struct osd_bitmap *bitmap)
 static unsigned char K053251_ram[16];
 static int K053251_palette_index[5];
 
-void K053251_w(int offset,int data)
+WRITE_HANDLER( K053251_w )
 {
 	data &= 0x3f;
 
@@ -4208,11 +4372,11 @@ int K053251_get_palette_index(int ci)
 
 static unsigned char K054000_ram[0x20];
 
-static void collision_w( int offs, int data )
+static WRITE_HANDLER( collision_w )
 {
 }
 
-void K054000_w(int offset,int data)
+WRITE_HANDLER( K054000_w )
 {
 #if VERBOSE
 if (errorlog) fprintf(errorlog,"%04x: write %02x to 054000 address %02x\n",cpu_get_pc(),data,offset);
@@ -4221,7 +4385,7 @@ if (errorlog) fprintf(errorlog,"%04x: write %02x to 054000 address %02x\n",cpu_g
 	K054000_ram[offset] = data;
 }
 
-int K054000_r(int offset)
+READ_HANDLER( K054000_r )
 {
 	int Acx,Acy,Aax,Aay;
 	int Bcx,Bcy,Bax,Bay;
@@ -4264,7 +4428,7 @@ if (K054000_ram[0x0c] == 0xff) Acy+=3;
 
 static unsigned char K051733_ram[0x20];
 
-void K051733_w(int offset,int data)
+WRITE_HANDLER( K051733_w )
 {
 #if VERBOSE
 if (errorlog) fprintf(errorlog,"%04x: write %02x to 051733 address %02x\n",cpu_get_pc(),data,offset);
@@ -4273,7 +4437,7 @@ if (errorlog) fprintf(errorlog,"%04x: write %02x to 051733 address %02x\n",cpu_g
 	K051733_ram[offset] = data;
 }
 
-int K051733_r(int offset)
+READ_HANDLER( K051733_r )
 {
 	int op1 = (K051733_ram[0x00] << 8) | K051733_ram[0x01];
 	int op2 = (K051733_ram[0x02] << 8) | K051733_ram[0x03];

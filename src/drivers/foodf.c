@@ -63,22 +63,22 @@ extern int foodf_spriteram_size;
 extern unsigned char *foodf_spriteram;
 extern unsigned char *foodf_playfieldram;
 
-int foodf_playfieldram_r (int offset);
-int foodf_nvram_r (int offset);
-int foodf_analog_r (int offset);
-int foodf_digital_r (int offset);
-int foodf_pokey1_r (int offset);
-int foodf_pokey2_r (int offset);
-int foodf_pokey3_r (int offset);
+READ_HANDLER( foodf_playfieldram_r );
+READ_HANDLER( foodf_nvram_r );
+READ_HANDLER( foodf_analog_r );
+READ_HANDLER( foodf_digital_r );
+READ_HANDLER( foodf_pokey1_r );
+READ_HANDLER( foodf_pokey2_r );
+READ_HANDLER( foodf_pokey3_r );
 
-void foodf_playfieldram_w (int offset, int data);
-void foodf_nvram_w (int offset, int data);
-void foodf_analog_w (int offset, int data);
-void foodf_digital_w (int offset, int data);
-void foodf_paletteram_w (int offset, int data);
-void foodf_pokey1_w (int offset, int data);
-void foodf_pokey2_w (int offset, int data);
-void foodf_pokey3_w (int offset, int data);
+WRITE_HANDLER( foodf_playfieldram_w );
+WRITE_HANDLER( foodf_nvram_w );
+WRITE_HANDLER( foodf_analog_w );
+WRITE_HANDLER( foodf_digital_w );
+WRITE_HANDLER( foodf_paletteram_w );
+WRITE_HANDLER( foodf_pokey1_w );
+WRITE_HANDLER( foodf_pokey2_w );
+WRITE_HANDLER( foodf_pokey3_w );
 
 void foodf_nvram_handler(void *file,int read_or_write);
 
@@ -92,13 +92,13 @@ void foodf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-int foodf_pokey1_r (int offset) { return pokey1_r (offset/2); }
-int foodf_pokey2_r (int offset) { return pokey2_r (offset/2); }
-int foodf_pokey3_r (int offset) { return pokey3_r (offset/2); }
+READ_HANDLER( foodf_pokey1_r ) { return pokey1_r (offset/2); }
+READ_HANDLER( foodf_pokey2_r ) { return pokey2_r (offset/2); }
+READ_HANDLER( foodf_pokey3_r ) { return pokey3_r (offset/2); }
 
-void foodf_pokey1_w (int offset, int data) { pokey1_w (offset/2, data & 0xff); }
-void foodf_pokey2_w (int offset, int data) { pokey2_w (offset/2, data & 0xff); }
-void foodf_pokey3_w (int offset, int data) { pokey3_w (offset/2, data & 0xff); }
+WRITE_HANDLER( foodf_pokey1_w ) { pokey1_w (offset/2, data & 0xff); }
+WRITE_HANDLER( foodf_pokey2_w ) { pokey2_w (offset/2, data & 0xff); }
+WRITE_HANDLER( foodf_pokey3_w ) { pokey3_w (offset/2, data & 0xff); }
 
 
 

@@ -102,8 +102,8 @@ extern UINT8 spyhunt_lamp[8];
 extern UINT8 *spyhunt_alpharam;
 extern int spyhunt_alpharam_size;
 
-void mcr3_videoram_w(int offset,int data);
-void mcr3_paletteram_w(int offset,int data);
+WRITE_HANDLER( mcr3_videoram_w );
+WRITE_HANDLER( mcr3_paletteram_w );
 
 void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -156,7 +156,7 @@ static int dotron_interrupt(void)
 }
 
 
-static int dotron_port_2_r(int offset)
+static READ_HANDLER( dotron_port_2_r )
 {
 	static char lastfake = 0;
 	static int mask = 0x00FF;
@@ -200,7 +200,7 @@ static int dotron_port_2_r(int offset)
 }
 
 
-static void dotron_port_4_w(int offset, int data)
+static WRITE_HANDLER( dotron_port_4_w )
 {
 	/* light control is in the top 2 bits */
 	dotron_change_light(data >> 6);
@@ -217,13 +217,13 @@ static void dotron_port_4_w(int offset, int data)
  *
  *************************************/
 
-static int sarge_port_1_r(int offset)
+static READ_HANDLER( sarge_port_1_r )
 {
 	return readinputport(1) & ~one_joy_trans[readinputport(6) & 0x0f];
 }
 
 
-static int sarge_port_2_r(int offset)
+static READ_HANDLER( sarge_port_2_r )
 {
 	return readinputport(2) & ~one_joy_trans[(readinputport(6) >> 4) & 0x0f];
 }
@@ -249,14 +249,14 @@ static int powerdrv_interrupt(void)
 }
 
 
-static int powerdrv_port_2_r(int offset)
+static READ_HANDLER( powerdrv_port_2_r )
 {
 	int result = input_port_2_r(offset) & 0x7f;
 	return result | (input_mux & 0x80);
 }
 
 
-static void powerdrv_port_7_w(int offset, int data)
+static WRITE_HANDLER( powerdrv_port_7_w )
 {
 	/* use input_mux for scratch */
 	input_mux = ~input_mux & 0x80;
@@ -270,20 +270,20 @@ static void powerdrv_port_7_w(int offset, int data)
  *
  *************************************/
 
-static void maxrpm_mux_w(int offset, int data)
+static WRITE_HANDLER( maxrpm_mux_w )
 {
 	input_mux = (data >> 1) & 3;
 }
 
 
-static int maxrpm_port_1_r(int offset)
+static READ_HANDLER( maxrpm_port_1_r )
 {
 	/* multiplexed steering wheel/gas pedal */
 	return readinputport(6 + input_mux);
 }
 
 
-static int maxrpm_port_2_r(int offset)
+static READ_HANDLER( maxrpm_port_2_r )
 {
 	static const UINT8 shift_bits[5] = { 0x00, 0x05, 0x06, 0x01, 0x02 };
 	UINT8 start = readinputport(0);
@@ -334,14 +334,14 @@ static int maxrpm_port_2_r(int offset)
  *
  *************************************/
 
-static int spyhunt_port_2_r(int offset)
+static READ_HANDLER( spyhunt_port_2_r )
 {
 	/* multiplexed steering wheel/gas pedal */
 	return readinputport(6 + input_mux);
 }
 
 
-static void spyhunt_port_4_w(int offset, int data)
+static WRITE_HANDLER( spyhunt_port_4_w )
 {
 	static UINT8 lastport4;
 
@@ -370,7 +370,7 @@ static void spyhunt_port_4_w(int offset, int data)
  *
  *************************************/
 
-static int turbotag_kludge_r(int offset)
+static READ_HANDLER( turbotag_kludge_r )
 {
 	/* The checksum on the ttprog1.bin ROM seems to be bad by 1 bit */
 	/* The checksum should come out to $82 but it should be $92     */

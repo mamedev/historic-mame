@@ -21,18 +21,18 @@ TODO:
 
 void tagteam_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
-int  tagteam_mirrorvideoram_r(int offset);
-void tagteam_mirrorvideoram_w(int offset,int data);
-int  tagteam_mirrorcolorram_r(int offset);
-void tagteam_mirrorcolorram_w(int offset,int data);
-void tagteam_video_control_w(int offset,int data);
-void tagteam_control_w(int offset,int data);
+READ_HANDLER( tagteam_mirrorvideoram_r );
+WRITE_HANDLER( tagteam_mirrorvideoram_w );
+READ_HANDLER( tagteam_mirrorcolorram_r );
+WRITE_HANDLER( tagteam_mirrorcolorram_w );
+WRITE_HANDLER( tagteam_video_control_w );
+WRITE_HANDLER( tagteam_control_w );
 
 int  tagteam_vh_start (void);
 void tagteam_vh_stop (void);
 void tagteam_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
 
-static void sound_command_w(int offset,int data)
+static WRITE_HANDLER( sound_command_w )
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(1,M6502_INT_IRQ);
@@ -84,7 +84,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x2001, 0x2001, AY8910_control_port_0_w },
 	{ 0x2002, 0x2002, AY8910_write_port_1_w },
 	{ 0x2003, 0x2003, AY8910_control_port_1_w },
-	{ 0x2004, 0x2004, DAC_data_w },
+	{ 0x2004, 0x2004, DAC_0_data_w },
 	{ 0x2005, 0x2005, interrupt_enable_w },
 	{ -1 }  /* end of table */
 };

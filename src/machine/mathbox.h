@@ -9,9 +9,9 @@
 typedef short s16;
 typedef int s32;
 
-void mb_go (int addr, int data);
-int mb_status_r (int offset);
-int mb_lo_r (int offset);
-int mb_hi_r (int offset);
+WRITE_HANDLER( mb_go_w );
+READ_HANDLER( mb_status_r );
+READ_HANDLER( mb_lo_r );
+READ_HANDLER( mb_hi_r );
 
 extern s16 mb_result;

@@ -18,8 +18,8 @@ Driver by Nicola Salmoria
 /* from vidhrdw/labyrunr.c */
 extern unsigned char *labyrunr_videoram1,*labyrunr_videoram2;
 void labyrunr_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void labyrunr_vram1_w(int offset,int data);
-void labyrunr_vram2_w(int offset,int data);
+WRITE_HANDLER( labyrunr_vram1_w );
+WRITE_HANDLER( labyrunr_vram2_w );
 int labyrunr_vh_start(void);
 void labyrunr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -36,7 +36,7 @@ static int labyrunr_interrupt(void)
 	return ignore_interrupt();
 }
 
-static void labyrunr_bankswitch_w(int offset, int data)
+static WRITE_HANDLER( labyrunr_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);

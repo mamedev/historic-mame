@@ -102,13 +102,13 @@ void cop01_vh_stop(void)
 
 
 
-void cop01_scrollx_w(int offset,int data)
+WRITE_HANDLER( cop01_scrollx_w )
 {
 	cop01_scrollx[offset] = data;
 }
 
 
-void cop01_gfxbank_w(int offset,int data)
+WRITE_HANDLER( cop01_gfxbank_w )
 {
 	/* bits 0 and 1 coin counters */
 	coin_counter_w(0,data & 1);

@@ -31,8 +31,8 @@ int			memcard_manager=0;	/* 0=Normal boot 1=Call memcard manager */
 unsigned char	*neogeo_memcard;	/* Pointer to 2kb RAM zone */
 
 /*************** MEMCARD FUNCTION PROTOTYPES *****************/
-int		neogeo_memcard_r(int);
-void		neogeo_memcard_w(int, int);
+READ_HANDLER( 		neogeo_memcard_r );
+WRITE_HANDLER( 		neogeo_memcard_w );
 int		neogeo_memcard_load(int);
 void		neogeo_memcard_save(void);
 void		neogeo_memcard_eject(void);
@@ -199,7 +199,7 @@ void init_neogeo(void)
 
 /******************************************************************************/
 
-static int bios_cycle_skip_r(int offset)
+static READ_HANDLER( bios_cycle_skip_r )
 {
 	cpu_spinuntil_int();
 	return 0;
@@ -208,8 +208,8 @@ static int bios_cycle_skip_r(int offset)
 /******************************************************************************/
 /* Routines to speed up the main processor 				      */
 /******************************************************************************/
-#define NEO_CYCLE_R(name,pc,hit,other) static int name##_cycle_r(int offset) {	if (cpu_get_pc()==pc) {cpu_spinuntil_int(); return hit;} return other;}
-#define NEO_CYCLE_RX(name,pc,hit,other,xxx) static int name##_cycle_r(int offset) {	if (cpu_get_pc()==pc) {if(other==xxx) cpu_spinuntil_int(); return hit;} return other;}
+#define NEO_CYCLE_R(name,pc,hit,other) static READ_HANDLER( name##_cycle_r ) {	if (cpu_get_pc()==pc) {cpu_spinuntil_int(); return hit;} return other;}
+#define NEO_CYCLE_RX(name,pc,hit,other,xxx) static READ_HANDLER( name##_cycle_r ) {	if (cpu_get_pc()==pc) {if(other==xxx) cpu_spinuntil_int(); return hit;} return other;}
 
 NEO_CYCLE_R(puzzledp,0x12f2,1,								READ_WORD(&neogeo_ram[0x0000]))
 NEO_CYCLE_R(samsho4, 0xaffc,0,								READ_WORD(&neogeo_ram[0x830c]))
@@ -267,7 +267,7 @@ NEO_CYCLE_R(twinspri,0x492e,READ_WORD(&neogeo_ram[0x8206])+1,READ_WORD(&neogeo_r
 NEO_CYCLE_R(stakwin, 0x0596,0xffff,							READ_WORD(&neogeo_ram[0x0b92]))
 NEO_CYCLE_R(shocktro,0xdd28,0,								READ_WORD(&neogeo_ram[0x8344]))
 NEO_CYCLE_R(tws96,   0x17f4,0xffff,							READ_WORD(&neogeo_ram[0x010e]))
-//static int zedblade_cycle_r(int offset)
+//static READ_HANDLER( zedblade_cycle_r )
 //{
 //	int pc=cpu_get_pc();
 //	if (pc==0xa2fa || pc==0xa2a0 || pc==0xa2ce || pc==0xa396 || pc==0xa3fa) {cpu_spinuntil_int(); return 0;}
@@ -276,7 +276,7 @@ NEO_CYCLE_R(tws96,   0x17f4,0xffff,							READ_WORD(&neogeo_ram[0x010e]))
 //NEO_CYCLE_R(doubledr,0x3574,0,								READ_WORD(&neogeo_ram[0x1c30]))
 NEO_CYCLE_R(galaxyfg,0x09ea,READ_WORD(&neogeo_ram[0x1858])+1,READ_WORD(&neogeo_ram[0x1858]))
 NEO_CYCLE_R(wakuwak7,0x1a3c,READ_WORD(&neogeo_ram[0x0bd4])+1,READ_WORD(&neogeo_ram[0x0bd4]))
-static int mahretsu_cycle_r(int offset)
+static READ_HANDLER( mahretsu_cycle_r )
 {
 	int pc=cpu_get_pc();
 	if (pc==0x1580 || pc==0xf3ba ) {cpu_spinuntil_int(); return 0;}
@@ -290,7 +290,7 @@ NEO_CYCLE_R(fatfury2,0x10ea,0,								READ_WORD(&neogeo_ram[0x418c]))
 NEO_CYCLE_R(bstars2, 0x7e30,0xffff,							READ_WORD(&neogeo_ram[0x001c]))
 NEO_CYCLE_R(ssideki, 0x20b0,0xffff,							READ_WORD(&neogeo_ram[0x8c84]))
 NEO_CYCLE_R(kotm2,   0x045a,0,								READ_WORD(&neogeo_ram[0x1000]))
-static int samsho_cycle_r(int offset)
+static READ_HANDLER( samsho_cycle_r )
 {
 	int pc=cpu_get_pc();
 	if (pc==0x3580 || pc==0x0f84 ) {cpu_spinuntil_int(); return 0xffff;}
@@ -322,7 +322,7 @@ NEO_CYCLE_R(gururin, 0x0604,0xffff,							READ_WORD(&neogeo_ram[0x1002]))
 
 NEO_CYCLE_R(kof98,       0xa146,0xfff,  READ_WORD(&neogeo_ram[0xa784]))
 NEO_CYCLE_R(marukodq,0x070e,0,          READ_WORD(&neogeo_ram[0x0210]))
-static int minasan_cycle_r(int offset)
+static READ_HANDLER( minasan_cycle_r )
 {
         int mem;
         if (cpu_get_pc()==0x17766)
@@ -336,7 +336,7 @@ static int minasan_cycle_r(int offset)
         return READ_WORD(&neogeo_ram[0x00ca]);
 }
 NEO_CYCLE_R(stakwin2,0x0b8c,0,          READ_WORD(&neogeo_ram[0x0002]))
-static int bakatono_cycle_r(int offset)
+static READ_HANDLER( bakatono_cycle_r )
 {
         int mem;
         if (cpu_get_pc()==0x197cc)
@@ -368,7 +368,7 @@ NEO_CYCLE_R(irrmaze,    0x104e,0,       READ_WORD(&neogeo_ram[0x4b6e]))
  *	Used by puzzle de pon and Super Sidekicks 2
  *
  */
-static int cycle_v3_sr(int offset)
+static READ_HANDLER( cycle_v3_sr )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
@@ -382,7 +382,7 @@ static int cycle_v3_sr(int offset)
 /*
  *	Also sound revision no 3.0, but different types.
  */
-static int ssideki_cycle_sr(int offset)
+static READ_HANDLER( ssideki_cycle_sr )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
@@ -393,7 +393,7 @@ static int ssideki_cycle_sr(int offset)
 	return RAM[0xfef3];
 }
 
-static int aof_cycle_sr(int offset)
+static READ_HANDLER( aof_cycle_sr )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
@@ -411,7 +411,7 @@ static int aof_cycle_sr(int offset)
  *
  */
 
-static int cycle_v2_sr(int offset)
+static READ_HANDLER( cycle_v2_sr )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
@@ -422,7 +422,7 @@ static int cycle_v2_sr(int offset)
 	return RAM[0xfeef];
 }
 
-static int vwpoint_cycle_sr(int offset)
+static READ_HANDLER( vwpoint_cycle_sr )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
@@ -440,7 +440,7 @@ static int vwpoint_cycle_sr(int offset)
  */
 
 /*
-static int cycle_v15_sr(int offset)
+static READ_HANDLER( cycle_v15_sr )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
@@ -457,7 +457,7 @@ static int cycle_v15_sr(int offset)
  *	Neo Geo Games.
  */
 
-static int maglord_cycle_sr(int offset)
+static READ_HANDLER( maglord_cycle_sr )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
@@ -472,7 +472,7 @@ static int maglord_cycle_sr(int offset)
 
 static int prot_data;
 
-static int fatfury2_protection_r(int offset)
+static READ_HANDLER( fatfury2_protection_r )
 {
 	int res = (prot_data >> 24) & 0xff;
 
@@ -496,7 +496,7 @@ if (errorlog) fprintf(errorlog,"unknown protection read at pc %06x, offset %08x\
 	}
 }
 
-static void fatfury2_protection_w(int offset,int data)
+static WRITE_HANDLER( fatfury2_protection_w )
 {
 	switch (offset)
 	{
@@ -528,7 +528,7 @@ if (errorlog) fprintf(errorlog,"unknown protection write at pc %06x, offset %08x
 	}
 }
 
-static int popbounc_sfix_r(int offset)
+static READ_HANDLER( popbounc_sfix_r )
 {
         if (cpu_get_pc()==0x6b10) {return 0;}
         return READ_WORD(&neogeo_ram[0x4fbc]);
@@ -788,22 +788,22 @@ static void neogeo_custom_memory(void)
 
 
 
-void neogeo_sram_lock_w(int offset,int data)
+WRITE_HANDLER( neogeo_sram_lock_w )
 {
 	sram_locked = 1;
 }
 
-void neogeo_sram_unlock_w(int offset,int data)
+WRITE_HANDLER( neogeo_sram_unlock_w )
 {
 	sram_locked = 0;
 }
 
-int neogeo_sram_r(int offset)
+READ_HANDLER( neogeo_sram_r )
 {
 	return READ_WORD(&neogeo_sram[offset]);
 }
 
-void neogeo_sram_w(int offset,int data)
+WRITE_HANDLER( neogeo_sram_w )
 {
 	if (sram_locked)
 	{
@@ -870,7 +870,7 @@ void neogeo_nvram_handler(void *file,int read_or_write)
 
 
 /********************* MEMCARD ROUTINES **********************/
-int	neogeo_memcard_r(int offset)
+READ_HANDLER( 	neogeo_memcard_r )
 {
 	if (memcard_status==1)
 	{
@@ -880,7 +880,7 @@ int	neogeo_memcard_r(int offset)
 		return 0xFFFF;
 }
 
-void neogeo_memcard_w(int offset, int data)
+WRITE_HANDLER( neogeo_memcard_w )
 {
 	if (memcard_status==1)
 	{

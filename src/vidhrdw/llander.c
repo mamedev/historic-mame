@@ -174,7 +174,7 @@ void llander_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 */
 
-void llander_led_w (int offset,int data)
+WRITE_HANDLER( llander_led_w )
 {
 	/*      if (errorlog) fprintf (errorlog, "LANDER LED: %02x\n",data); */
 

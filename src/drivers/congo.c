@@ -59,7 +59,6 @@ int  zaxxon_vh_start(void);
 void zaxxon_vh_stop(void);
 void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void congo_daio(int offset, int data);
 
 
 void congo_init_machine(void)
@@ -67,6 +66,25 @@ void congo_init_machine(void)
 	zaxxon_vid_type = 1;
 }
 
+WRITE_HANDLER( congo_daio_w )
+{
+	if (offset == 1)
+	{
+		if (data & 2) sample_start(0,0,0);
+	}
+	else if (offset == 2)
+	{
+		data ^= 0xff;
+
+		if (data & 0x80)
+		{
+			if (data & 8) sample_start(1,1,0);
+			if (data & 4) sample_start(2,2,0);
+			if (data & 2) sample_start(3,3,0);
+			if (data & 1) sample_start(4,4,0);
+		}
+	}
+}
 
 
 static struct MemoryReadAddress readmem[] =
@@ -116,7 +134,7 @@ static struct MemoryWriteAddress sh_writemem[] =
 	{ 0x6000, 0x6003, SN76496_0_w },
 	{ 0xa000, 0xa003, SN76496_1_w },
 	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x8000, 0x8003, congo_daio },
+	{ 0x8000, 0x8003, congo_daio_w },
 	{ 0x0000, 0x2000, MWA_ROM },
 	{ -1 }
 };

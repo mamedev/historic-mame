@@ -143,7 +143,7 @@ void c1943_vh_stop(void)
 
 
 
-void c1943_c804_w(int offset,int data)
+WRITE_HANDLER( c1943_c804_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -172,7 +172,7 @@ void c1943_c804_w(int offset,int data)
 
 
 
-void c1943_d806_w(int offset,int data)
+WRITE_HANDLER( c1943_d806_w )
 {
 	/* bit 4 enables bg 1 */
 	sc1on = data & 0x10;

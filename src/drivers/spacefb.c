@@ -126,22 +126,42 @@ red flash effect when you die.
 #include "vidhrdw/generic.h"
 #include "cpu/i8039/i8039.h"
 
-int  spacefb_sh_gett0(int offset);
-int  spacefb_sh_gett1(int offset);
-int  spacefb_sh_getp2(int offset);
 
 void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void spacefb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
-void spacefb_video_control_w(int offset,int data);
-void spacefb_port_1_w(int offset,int data);
-void spacefb_port_2_w(int offset,int data);
+WRITE_HANDLER( spacefb_video_control_w );
+WRITE_HANDLER( spacefb_port_2_w );
 
 
 static int spacefb_interrupt(void)
 {
 	if (cpu_getiloops() != 0) return (0x00cf);		/* RST 08h */
 	else return (0x00d7);		/* RST 10h */
+}
+
+
+unsigned char spacefb_sound_latch;
+
+static READ_HANDLER( spacefb_sh_p2_r )
+{
+    return ((spacefb_sound_latch & 0x18) << 1);
+}
+
+static READ_HANDLER( spacefb_sh_t0_r )
+{
+    return spacefb_sound_latch & 0x20;
+}
+
+static READ_HANDLER( spacefb_sh_t1_r )
+{
+    return spacefb_sound_latch & 0x04;
+}
+
+static WRITE_HANDLER( spacefb_port_1_w )
+{
+    spacefb_sound_latch = data;
+    if (!(data & 0x02)) cpu_cause_interrupt(1,I8039_EXT_INT);
 }
 
 
@@ -192,15 +212,15 @@ static struct MemoryWriteAddress writemem_sound[] =
 
 static struct IOReadPort readport_sound[] =
 {
-	{ I8039_p2, I8039_p2, spacefb_sh_getp2 },
-	{ I8039_t0, I8039_t0, spacefb_sh_gett0 },
-	{ I8039_t1, I8039_t1, spacefb_sh_gett1 },
+	{ I8039_p2, I8039_p2, spacefb_sh_p2_r },
+	{ I8039_t0, I8039_t0, spacefb_sh_t0_r },
+	{ I8039_t1, I8039_t1, spacefb_sh_t1_r },
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort writeport_sound[] =
 {
-	{ I8039_p1, I8039_p1, DAC_data_w },
+	{ I8039_p1, I8039_p1, DAC_0_data_w },
 	{ -1 }	/* end of table */
 };
 

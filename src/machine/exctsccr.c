@@ -14,15 +14,15 @@ Ernesto Corvi - 10/30/98
 
 *************************************************************************************/
 
-#include "strings.h"
+#include "driver.h"
 
 
 #define MCU_KEY_TABLE_SIZE 16
 
 /* These are global */
 unsigned char *exctsccr_mcu_ram;
-void exctsccr_mcu_w( int offs, int data );
-void exctsccr_mcu_control_w( int offs, int data );
+WRITE_HANDLER( exctsccr_mcu_w );
+WRITE_HANDLER( exctsccr_mcu_control_w );
 
 /* Local stuff */
 static int mcu_code_latch;
@@ -103,7 +103,7 @@ static void mcu_sort_list( unsigned char *src, unsigned char *dst ) {
 	}
 }
 
-void exctsccr_mcu_control_w( int offs, int data ) {
+WRITE_HANDLER( exctsccr_mcu_control_w ) {
 
 	if ( data == 0xff ) { /* goes around the mcu checks */
 		exctsccr_mcu_ram[0x0003] = 0x01; /* mcu state = running */
@@ -178,10 +178,10 @@ void exctsccr_mcu_control_w( int offs, int data ) {
 	}
 }
 
-void exctsccr_mcu_w( int offs, int data ) {
+WRITE_HANDLER( exctsccr_mcu_w ) {
 
-	if ( offs == 0x02f9 )
+	if ( offset == 0x02f9 )
 		mcu_code_latch = data;
 
-	exctsccr_mcu_ram[offs] = data;
+	exctsccr_mcu_ram[offset] = data;
 }

@@ -523,18 +523,18 @@ void williams2_init_machine(void);
 void joust2_init_machine(void);
 
 /* banking */
-void williams_vram_select_w(int offset, int data);
-void defender_bank_select_w(int offset, int data);
-void blaster_bank_select_w(int offset, int data);
-void blaster_vram_select_w(int offset, int data);
-void williams2_bank_select(int offset, int data);
+WRITE_HANDLER( williams_vram_select_w );
+WRITE_HANDLER( defender_bank_select_w );
+WRITE_HANDLER( blaster_bank_select_w );
+WRITE_HANDLER( blaster_vram_select_w );
+WRITE_HANDLER( williams2_bank_select_w );
 
 /* misc */
-void williams2_7segment(int offset, int data);
+WRITE_HANDLER( williams2_7segment_w );
 
 /* Mayday protection */
 extern UINT8 *mayday_protection;
-int mayday_protection_r(int offset);
+READ_HANDLER( mayday_protection_r );
 
 
 
@@ -564,13 +564,13 @@ extern UINT8 *blaster_color_zero_flags;
 extern UINT8 *blaster_video_bits;
 
 
-void defender_videoram_w(int offset,int data);
-void williams_videoram_w(int offset,int data);
-void williams2_videoram_w(int offset,int data);
-void williams_blitter_w(int offset,int data);
-void blaster_remap_select_w(int offset, int data);
-void blaster_video_bits_w(int offset, int data);
-int williams_video_counter_r(int offset);
+WRITE_HANDLER( defender_videoram_w );
+WRITE_HANDLER( williams_videoram_w );
+WRITE_HANDLER( williams2_videoram_w );
+WRITE_HANDLER( williams_blitter_w );
+WRITE_HANDLER( blaster_remap_select_w );
+WRITE_HANDLER( blaster_video_bits_w );
+READ_HANDLER( williams_video_counter_r );
 
 
 int williams_vh_start(void);
@@ -583,8 +583,8 @@ void blaster_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int williams2_vh_start(void);
 void williams2_vh_stop(void);
 
-void williams2_fg_select_w(int offset, int data);
-void williams2_bg_select_w(int offset, int data);
+WRITE_HANDLER( williams2_fg_select_w );
+WRITE_HANDLER( williams2_bg_select_w );
 
 
 
@@ -766,12 +766,12 @@ static struct MemoryWriteAddress williams2_writemem[] =
 	{ 0x0000, 0x8fff, williams2_videoram_w, &videoram, &videoram_size },
 	{ 0x9000, 0xbfff, MWA_RAM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xc800, 0xc800, williams2_bank_select },
+	{ 0xc800, 0xc800, williams2_bank_select_w },
 	{ 0xc880, 0xc887, williams_blitter_w, &williams_blitterram },
 	{ 0xc900, 0xc900, watchdog_reset_w },
 	{ 0xc980, 0xc983, pia_1_w },
 	{ 0xc984, 0xc987, pia_0_w },
-	{ 0xc98c, 0xc98c, williams2_7segment },
+	{ 0xc98c, 0xc98c, williams2_7segment_w },
 	{ 0xcb00, 0xcb00, williams2_fg_select_w },
 	{ 0xcb20, 0xcb20, williams2_bg_select_w },
 	{ 0xcb40, 0xcb40, MWA_RAM, &williams2_xscroll_low },

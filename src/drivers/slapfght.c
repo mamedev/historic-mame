@@ -197,22 +197,22 @@ void slapfight_init_machine(void);
 
 extern unsigned char *slapfight_dpram;
 extern int slapfight_dpram_size;
-void slapfight_dpram_w(int offset, int data);
-int slapfight_dpram_r(int offset);
+WRITE_HANDLER( slapfight_dpram_w );
+READ_HANDLER( slapfight_dpram_r );
 
-int  slapfight_port_00_r(int offset);
+READ_HANDLER( slapfight_port_00_r );
 
-void slapfight_port_00_w(int offset, int data);
-void slapfight_port_01_w(int offset, int data);
-void getstar_port_04_w(int offset, int data);
-void slapfight_port_06_w(int offset, int data);
-void slapfight_port_07_w(int offset, int data);
-void slapfight_port_08_w(int offset, int data);
-void slapfight_port_09_w(int offset, int data);
+WRITE_HANDLER( slapfight_port_00_w );
+WRITE_HANDLER( slapfight_port_01_w );
+WRITE_HANDLER( getstar_port_04_w );
+WRITE_HANDLER( slapfight_port_06_w );
+WRITE_HANDLER( slapfight_port_07_w );
+WRITE_HANDLER( slapfight_port_08_w );
+WRITE_HANDLER( slapfight_port_09_w );
 
 
-int getstar_e803_r(int offset);
-void getstar_sh_intenable_w(int offset, int data);
+READ_HANDLER( getstar_e803_r );
+WRITE_HANDLER( getstar_sh_intenable_w );
 extern int getstar_sequence_index;
 int getstar_interrupt(void);
 

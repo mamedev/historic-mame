@@ -16,7 +16,7 @@ static unsigned int NMION = 0;
 /***************************************************************************
 bsktball_nmion_w
 ***************************************************************************/
-void bsktball_nmion_w(int offset,int data)
+WRITE_HANDLER( bsktball_nmion_w )
 {
 	NMION = offset & 0x01;
 }
@@ -44,12 +44,12 @@ int bsktball_interrupt(void)
 bsktball_ld_w
 ***************************************************************************/
 
-void bsktball_ld1_w(int offset, int data)
+WRITE_HANDLER( bsktball_ld1_w )
 {
 	LD1 = (offset & 0x01);
 }
 
-void bsktball_ld2_w(int offset, int data)
+WRITE_HANDLER( bsktball_ld2_w )
 {
 	LD2 = (offset & 0x01);
 }
@@ -59,7 +59,7 @@ void bsktball_ld2_w(int offset, int data)
 bsktball_in0_r
 ***************************************************************************/
 
-int bsktball_in0_r(int offset)
+READ_HANDLER( bsktball_in0_r )
 {
 	static int DR0=0;		/* PL2 H DIR */
 	static int DR1=0;		/* PL2 V DIR */
@@ -162,12 +162,12 @@ int bsktball_in0_r(int offset)
 /***************************************************************************
 bsktball_led_w
 ***************************************************************************/
-void bsktball_led1_w(int offset,int value)
+WRITE_HANDLER( bsktball_led1_w )
 {
         osd_led_w(0,(offset & 0x01));
 }
 
-void bsktball_led2_w(int offset,int value)
+WRITE_HANDLER( bsktball_led2_w )
 {
         osd_led_w(1,(offset & 0x01));
 }

@@ -38,7 +38,7 @@ void slapfight_init_machine(void)
 
 /* Interrupt handlers cpu & sound */
 
-void slapfight_dpram_w(int offset, int data)
+WRITE_HANDLER( slapfight_dpram_w )
 {
     slapfight_dpram[offset]=data;
 
@@ -59,7 +59,7 @@ void slapfight_dpram_w(int offset, int data)
     return;
 }
 
-int slapfight_dpram_r(int offset)
+READ_HANDLER( slapfight_dpram_r )
 {
     return slapfight_dpram[offset];
 }
@@ -73,38 +73,38 @@ int slapfight_dpram_r(int offset)
 */
 
 /* Reset and hold sound CPU */
-void slapfight_port_00_w(int offset, int data)
+WRITE_HANDLER( slapfight_port_00_w )
 {
 	cpu_set_reset_line(1,ASSERT_LINE);
 	getstar_sh_intenabled = 0;
 }
 
 /* Release reset on sound CPU */
-void slapfight_port_01_w(int offset, int data)
+WRITE_HANDLER( slapfight_port_01_w )
 {
 	cpu_set_reset_line(1,CLEAR_LINE);
 }
 
 /* Disable and clear hardware interrupt */
-void slapfight_port_06_w(int offset, int data)
+WRITE_HANDLER( slapfight_port_06_w )
 {
 	interrupt_enable_w(0,0);
 }
 
 /* Enable hardware interrupt */
-void slapfight_port_07_w(int offset, int data)
+WRITE_HANDLER( slapfight_port_07_w )
 {
 	interrupt_enable_w(0,1);
 }
 
-void slapfight_port_08_w(int offset, int data)
+WRITE_HANDLER( slapfight_port_08_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	cpu_setbank(1,&RAM[0x10000]);
 }
 
-void slapfight_port_09_w(int offset, int data)
+WRITE_HANDLER( slapfight_port_09_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -114,7 +114,7 @@ void slapfight_port_09_w(int offset, int data)
 
 /* Status register */
 
-int  slapfight_port_00_r(int offset)
+READ_HANDLER( slapfight_port_00_r )
 {
 	int states[3]={ 0xc7, 0x55, 0x00 };
 
@@ -134,7 +134,7 @@ int  slapfight_port_00_r(int offset)
  - third value is (first+5)^0x56
  I don't know what writes to this address do (connected to port 0 reads?).
 */
-int getstar_e803_r(int offset)
+READ_HANDLER( getstar_e803_r )
 {
 unsigned char seq[] = { 0, 1, (0+5)^0x56 };
 unsigned char val;
@@ -147,7 +147,7 @@ unsigned char val;
 
 
 /* Enable hardware interrupt of sound cpu */
-void getstar_sh_intenable_w(int offset, int data)
+WRITE_HANDLER( getstar_sh_intenable_w )
 {
 	getstar_sh_intenabled = 1;
 	if (errorlog) fprintf(errorlog,"cpu #1 PC=%d: %d written to a0e0\n",cpu_get_pc(),data);
@@ -164,7 +164,7 @@ int getstar_interrupt(void)
 		return ignore_interrupt();
 }
 
-void getstar_port_04_w(int offset, int data)
+WRITE_HANDLER( getstar_port_04_w )
 {
 //	cpu_halt(0,0);
 }

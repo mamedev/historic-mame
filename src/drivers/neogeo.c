@@ -102,15 +102,15 @@ extern unsigned char *vidram;
 extern unsigned char *neogeo_ram;
 extern unsigned char *neogeo_sram;
 
-void neogeo_sram_lock_w(int offset,int data);
-void neogeo_sram_unlock_w(int offset,int data);
-int neogeo_sram_r(int offset);
-void neogeo_sram_w(int offset,int data);
+WRITE_HANDLER( neogeo_sram_lock_w );
+WRITE_HANDLER( neogeo_sram_unlock_w );
+READ_HANDLER( neogeo_sram_r );
+WRITE_HANDLER( neogeo_sram_w );
 void neogeo_nvram_handler(void *file,int read_or_write);
 
 extern int	memcard_status;
-int	neogeo_memcard_r(int offset);
-void neogeo_memcard_w(int offset,int data);
+READ_HANDLER( 	neogeo_memcard_r );
+WRITE_HANDLER( neogeo_memcard_w );
 
 
 
@@ -120,25 +120,25 @@ void neogeo_vh_raster_partial_refresh(struct osd_bitmap *bitmap,int current_line
 void neogeo_vh_raster_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int  neogeo_mvs_vh_start(void);
 void neogeo_vh_stop(void);
-void neogeo_paletteram_w(int offset,int data);
-int  neogeo_paletteram_r(int offset);
-void neogeo_setpalbank0(int offset, int data);
-void neogeo_setpalbank1(int offset, int data);
+WRITE_HANDLER( neogeo_paletteram_w );
+READ_HANDLER( neogeo_paletteram_r );
+WRITE_HANDLER( neogeo_setpalbank0_w );
+WRITE_HANDLER( neogeo_setpalbank1_w );
 
-void neo_board_fix(int offset, int data);
-void neo_game_fix(int offset, int data);
+WRITE_HANDLER( neo_board_fix_w );
+WRITE_HANDLER( neo_game_fix_w );
 
-void vidram_modulo_w(int offset, int data);
-void vidram_data_w(int offset, int data);
-void vidram_offset_w(int offset, int data);
+WRITE_HANDLER( vidram_modulo_w );
+WRITE_HANDLER( vidram_data_w );
+WRITE_HANDLER( vidram_offset_w );
 
-int vidram_data_r(int offset);
-int vidram_modulo_r(int offset);
+READ_HANDLER( vidram_data_r );
+READ_HANDLER( vidram_modulo_r );
 
 /* debug, used to 'see' the locations mapped in ROM space */
 /* with the debugger */
-int mish_vid_r(int offset);
-void mish_vid_w(int offset, int data);
+READ_HANDLER( mish_vid_r );
+WRITE_HANDLER( mish_vid_w );
 /* end debug */
 
 void neo_unknown1(int offset, int data);
@@ -242,7 +242,7 @@ static int pending_command;
 static int result_code;
 
 /* Calendar, coins + Z80 communication */
-static int timer_r (int offset)
+static READ_HANDLER( timer_r )
 {
 	int res;
 
@@ -265,7 +265,7 @@ static int timer_r (int offset)
 	return res;
 }
 
-static void neo_z80_w(int offset, int data)
+static WRITE_HANDLER( neo_z80_w )
 {
 	soundlatch_w(0,(data>>8)&0xff);
 	pending_command = 1;
@@ -279,12 +279,12 @@ static void neo_z80_w(int offset, int data)
 int neogeo_has_trackball;
 static int ts;
 
-static void trackball_select_w(int offset,int data)
+static WRITE_HANDLER( trackball_select_w )
 {
 	ts = data & 1;
 }
 
-static int controller1_r (int offset)
+static READ_HANDLER( controller1_r )
 {
 	int res;
 
@@ -302,7 +302,7 @@ static int controller1_r (int offset)
 
 	return res;
 }
-static int controller2_r (int offset)
+static READ_HANDLER( controller2_r )
 {
 	int res;
 
@@ -318,16 +318,16 @@ static int controller2_r (int offset)
 
 	return res;
 }
-static int controller3_r (int offset)
+static READ_HANDLER( controller3_r )
 {
 	if (memcard_status==0)
 		return (readinputport(2) << 8);
 	else
 		return ((readinputport(2) << 8)&0x8FFF);
 }
-static int controller4_r (int offset) { return readinputport(6); }
+static READ_HANDLER( controller4_r ) { return readinputport(6); }
 
-static void neo_bankswitch_w(int offset, int data)
+static WRITE_HANDLER( neo_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
@@ -353,7 +353,7 @@ if (errorlog) fprintf(errorlog,"PC %06x: warning: bankswitch to empty bank %02x\
 
 
 /* TODO: Figure out how this really works! */
-static int neo_control_r(int offset)
+static READ_HANDLER( neo_control_r )
 {
 	int line,irq_bit;
 
@@ -424,7 +424,7 @@ int neogeo_irq2type;
 static int irq2repeat_limit;
 
 /* this does much more than this, but I'm not sure exactly what */
-void neo_control_w(int offset, int data)
+WRITE_HANDLER( neo_control_w )
 {
     /* Games which definitely need IRQ2:
     neocup98
@@ -470,7 +470,7 @@ void neo_control_w(int offset, int data)
 		irq2repeat_limit = 29;
 }
 
-static void neo_irq2pos_w(int offset,int data)
+static WRITE_HANDLER( neo_irq2pos_w )
 {
 	static int value;
 	int line;
@@ -530,14 +530,14 @@ static struct MemoryWriteAddress neogeo_writemem[] =
 /* both games write to 0000fe before writing to 200000. The two things could be related. */
 /* sidkicks reads and writes to several addresses in this range, using this for copy */
 /* protection. Custom parts instead of the banked ROMs? */
-//	{ 0x280050, 0x280051, write_4990_control },
+//	{ 0x280050, 0x280051, write_4990_control_w },
 	{ 0x2ffff0, 0x2fffff, neo_bankswitch_w },      /* NOTE THIS CHANGE TO END AT FF !!! */
 	{ 0x300000, 0x300001, watchdog_reset_w },
 	{ 0x320000, 0x320001, neo_z80_w },	/* Sound CPU */
 	{ 0x380000, 0x380001, trackball_select_w },	/* Used by bios, unknown */
 	{ 0x380030, 0x380031, MWA_NOP },    /* Used by bios, unknown */
 	{ 0x380040, 0x380041, MWA_NOP },	/* Output leds */
-	{ 0x380050, 0x380051, write_4990_control },
+	{ 0x380050, 0x380051, write_4990_control_w },
 	{ 0x380060, 0x380063, MWA_NOP },	/* Used by bios, unknown */
 	{ 0x3800e0, 0x3800e3, MWA_NOP },	/* Used by bios, unknown */
 
@@ -545,12 +545,12 @@ static struct MemoryWriteAddress neogeo_writemem[] =
 	{ 0x3a0010, 0x3a0011, MWA_NOP },
 	{ 0x3a0002, 0x3a0003, MWA_NOP },
 	{ 0x3a0012, 0x3a0013, MWA_NOP },
-	{ 0x3a000a, 0x3a000b, neo_board_fix }, /* Select board FIX char rom */
-	{ 0x3a001a, 0x3a001b, neo_game_fix },  /* Select game FIX char rom */
+	{ 0x3a000a, 0x3a000b, neo_board_fix_w }, /* Select board FIX char rom */
+	{ 0x3a001a, 0x3a001b, neo_game_fix_w },  /* Select game FIX char rom */
 	{ 0x3a000c, 0x3a000d, neogeo_sram_lock_w },
 	{ 0x3a001c, 0x3a001d, neogeo_sram_unlock_w },
-	{ 0x3a000e, 0x3a000f, neogeo_setpalbank1 },
-	{ 0x3a001e, 0x3a001f, neogeo_setpalbank0 },    /* Palette banking */
+	{ 0x3a000e, 0x3a000f, neogeo_setpalbank1_w },
+	{ 0x3a001e, 0x3a001f, neogeo_setpalbank0_w },    /* Palette banking */
 
 	{ 0x3c0000, 0x3c0001, vidram_offset_w },
 	{ 0x3c0002, 0x3c0003, vidram_data_w },
@@ -593,7 +593,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 };
 
 
-static int z80_port_r(int offset)
+static READ_HANDLER( z80_port_r )
 {
 	static int bank[4];
 
@@ -668,7 +668,7 @@ if (errorlog) fprintf(errorlog,"CPU #1 PC %04x: read unmapped port %02x\n",cpu_g
 	}
 }
 
-static void z80_port_w(int offset,int data)
+static WRITE_HANDLER( z80_port_w )
 {
 	switch (offset & 0xff)
 	{

@@ -17,11 +17,11 @@ unsigned char *bloodbro_scroll;
 static struct sprite_list *sprite_list;
 
 
-int bloodbro_background_r( int offset ){
+READ_HANDLER( bloodbro_background_r ){
 	return READ_WORD (&videoram[offset]);
 }
 
-void bloodbro_background_w( int offset, int data ){
+WRITE_HANDLER( bloodbro_background_w ){
 	int oldword = READ_WORD(&videoram[offset]);
 	int newword = COMBINE_WORD(oldword,data);
 	if( oldword != newword ){
@@ -30,11 +30,11 @@ void bloodbro_background_w( int offset, int data ){
 	}
 }
 
-int bloodbro_foreground_r( int offset ){
+READ_HANDLER( bloodbro_foreground_r ){
 	return READ_WORD (&bloodbro_videoram2[offset]);
 }
 
-void bloodbro_foreground_w( int offset, int data ){
+WRITE_HANDLER( bloodbro_foreground_w ){
 	int oldword = READ_WORD(&bloodbro_videoram2[offset]);
 	int newword = COMBINE_WORD(oldword,data);
 	if( oldword != newword ){

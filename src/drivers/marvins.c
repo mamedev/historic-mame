@@ -17,7 +17,7 @@ disabled
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
-extern void snkwave_w( int offset, int data );
+WRITE_HANDLER( snkwave_w );
 
 #define CREDITS "Phil Stroffolino\nTim Lindquist\nCarlos A. Lozano"
 
@@ -27,17 +27,17 @@ extern void snkwave_w( int offset, int data );
 **
 ***************************************************************************/
 
-extern int marvins_background_ram_r( int );
-extern void marvins_background_ram_w( int, int );
+READ_HANDLER( marvins_background_ram_r );
+WRITE_HANDLER( marvins_background_ram_w );
 
-extern int marvins_foreground_ram_r( int );
-extern void marvins_foreground_ram_w( int, int );
+READ_HANDLER( marvins_foreground_ram_r );
+WRITE_HANDLER( marvins_foreground_ram_w );
 
-extern int marvins_text_ram_r( int );
-extern void marvins_text_ram_w( int, int );
+READ_HANDLER( marvins_text_ram_r );
+WRITE_HANDLER( marvins_text_ram_w );
 
-extern int marvins_spriteram_r( int );
-extern void marvins_spriteram_w( int, int );
+READ_HANDLER( marvins_spriteram_r );
+WRITE_HANDLER( marvins_spriteram_w );
 
 /***************************************************************************
 **
@@ -48,7 +48,7 @@ extern void marvins_spriteram_w( int, int );
 extern int marvins_vh_start( void );
 extern void marvins_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
 extern void madcrash_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
-extern void marvins_palette_bank_w( int offset, int data );
+WRITE_HANDLER( marvins_palette_bank_w );
 
 /***************************************************************************
 **
@@ -101,7 +101,7 @@ static void init_sound( int busy_bit ){
 	sound_fetched = 1;
 }
 
-static void sound_command_w( int offset, int data ){
+static WRITE_HANDLER( sound_command_w ){
 	if( sound_fetched==0 ){
 		if( errorlog ) fprintf( errorlog, "missed sound command: %02x\n", sound_command );
 	}
@@ -112,12 +112,12 @@ static void sound_command_w( int offset, int data ){
 	cpu_cause_interrupt( 2, Z80_IRQ_INT );
 }
 
-static int sound_command_r( int offset ){
+static READ_HANDLER( sound_command_r ){
 	sound_fetched = 1;
 	return sound_command;
 }
 
-static int sound_ack_r( int offset ){
+static READ_HANDLER( sound_ack_r ){
 	sound_cpu_ready = 1;
 	return 0xff;
 }
@@ -142,7 +142,7 @@ static struct MemoryWriteAddress writemem_sound[] = {
 };
 
 /* this input port has one of its bits mapped to sound CPU status */
-static int marvins_port_0_r( int offset ){
+static READ_HANDLER( marvins_port_0_r ){
 	int result = input_port_0_r( 0 );
 	if( !sound_cpu_ready ) result |= sound_cpu_busy_bit;
 	return result;
@@ -177,7 +177,7 @@ int madcrash_vreg;
 static int CPUA_latch = 0;
 static int CPUB_latch = 0;
 
-static void CPUA_int_enable( int offset, int data )
+static WRITE_HANDLER( CPUA_int_enable_w )
 {
 	if( CPUA_latch & SNK_NMI_PENDING )
 	{
@@ -190,7 +190,7 @@ static void CPUA_int_enable( int offset, int data )
 	}
 }
 
-static int CPUA_int_trigger( int offset )
+static READ_HANDLER( CPUA_int_trigger_r )
 {
 	if( CPUA_latch&SNK_NMI_ENABLE )
 	{
@@ -204,7 +204,7 @@ static int CPUA_int_trigger( int offset )
 	return 0xff;
 }
 
-static void CPUB_int_enable( int offset, int data )
+static WRITE_HANDLER( CPUB_int_enable_w )
 {
 	if( CPUB_latch & SNK_NMI_PENDING )
 	{
@@ -217,7 +217,7 @@ static void CPUB_int_enable( int offset, int data )
 	}
 }
 
-static int CPUB_int_trigger( int offset )
+static READ_HANDLER( CPUB_int_trigger_r )
 {
 	if( CPUB_latch&SNK_NMI_ENABLE )
 	{
@@ -250,7 +250,7 @@ static struct MemoryReadAddress readmem_CPUA[] =
 	{ 0x8200, 0x8200, input_port_2_r },		/* player #2 controls */
 	{ 0x8400, 0x8400, input_port_3_r },		/* dipswitch#1 */
 	{ 0x8500, 0x8500, input_port_4_r },		/* dipswitch#2 */
-	{ 0x8700, 0x8700, CPUB_int_trigger },
+	{ 0x8700, 0x8700, CPUB_int_trigger_r },
 	{ 0xc000, 0xcfff, MRA_RAM },
 	{ 0xd000, 0xffff, MRA_RAM },
 	{ -1 }
@@ -263,7 +263,7 @@ static struct MemoryWriteAddress writemem_CPUA[] =
 	{ 0x8300, 0x8300, sound_command_w },
 	{ 0x8600, 0x8600, MWA_RAM },
 	{ 0x86f1, 0x86f1, MWA_RAM },
-	{ 0x8700, 0x8700, CPUA_int_enable },
+	{ 0x8700, 0x8700, CPUA_int_enable_w },
 	{ 0xc000, 0xcfff, MWA_RAM, &spriteram },
 	{ 0xd000, 0xd7ff, marvins_background_ram_w, &videoram },
 	{ 0xd800, 0xdfff, MWA_RAM },
@@ -277,7 +277,7 @@ static struct MemoryWriteAddress writemem_CPUA[] =
 static struct MemoryReadAddress marvins_readmem_CPUB[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8700, 0x8700, CPUA_int_trigger },
+	{ 0x8700, 0x8700, CPUA_int_trigger_r },
 	{ 0xc000, 0xcfff, marvins_spriteram_r },
 	{ 0xd000, 0xffff, marvins_background_ram_r },
 	{ 0xe000, 0xffff, marvins_foreground_ram_r },
@@ -288,7 +288,7 @@ static struct MemoryReadAddress marvins_readmem_CPUB[] =
 static struct MemoryWriteAddress marvins_writemem_CPUB[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8700, 0x8700, CPUB_int_enable },
+	{ 0x8700, 0x8700, CPUB_int_enable_w },
 	{ 0xc000, 0xcfff, marvins_spriteram_w },
 	{ 0xd000, 0xffff, marvins_background_ram_w },
 	{ 0xe000, 0xffff, marvins_foreground_ram_w },
@@ -309,9 +309,9 @@ static struct MemoryReadAddress madcrash_readmem_CPUB[] =
 static struct MemoryWriteAddress madcrash_writemem_CPUB[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8700, 0x8700, CPUB_int_enable }, /* Vangaurd II */
+	{ 0x8700, 0x8700, CPUB_int_enable_w }, /* Vangaurd II */
 	{ 0x8000, 0x9fff, MWA_ROM }, /* extra ROM for Mad Crasher */
-	{ 0xa000, 0xa000, CPUB_int_enable }, /* Mad Crasher */
+	{ 0xa000, 0xa000, CPUB_int_enable_w }, /* Mad Crasher */
 	{ 0xc000, 0xcfff, marvins_foreground_ram_w },
 	{ 0xd000, 0xdfff, marvins_text_ram_w },
 	{ 0xe000, 0xefff, marvins_spriteram_w },

@@ -60,12 +60,12 @@ static UINT8 oki6295_volume;
 
 static void update_all_volumes(void);
 
-static int jsa1_io_r(int offset);
-static void jsa1_io_w(int offset, int data);
-static int jsa2_io_r(int offset);
-static void jsa2_io_w(int offset, int data);
-static int jsa3_io_r(int offset);
-static void jsa3_io_w(int offset, int data);
+static READ_HANDLER( jsa1_io_r );
+static WRITE_HANDLER( jsa1_io_w );
+static READ_HANDLER( jsa2_io_r );
+static WRITE_HANDLER( jsa2_io_w );
+static READ_HANDLER( jsa3_io_r );
+static WRITE_HANDLER( jsa3_io_w );
 
 
 /*************************************
@@ -147,7 +147,7 @@ void atarijsa_reset(void)
  *
  *************************************/
 
-static int jsa1_io_r(int offset)
+static READ_HANDLER( jsa1_io_r )
 {
 	int result = 0xff;
 
@@ -195,7 +195,7 @@ static int jsa1_io_r(int offset)
 }
 
 
-static void jsa1_io_w(int offset, int data)
+static WRITE_HANDLER( jsa1_io_w )
 {
 	switch (offset & 0x206)
 	{
@@ -267,7 +267,7 @@ static void jsa1_io_w(int offset, int data)
  *
  *************************************/
 
-static int jsa2_io_r(int offset)
+static READ_HANDLER( jsa2_io_r )
 {
 	int result = 0xff;
 
@@ -317,7 +317,7 @@ static int jsa2_io_r(int offset)
 }
 
 
-static void jsa2_io_w(int offset, int data)
+static WRITE_HANDLER( jsa2_io_w )
 {
 	switch (offset & 0x206)
 	{
@@ -384,7 +384,7 @@ static void jsa2_io_w(int offset, int data)
  *
  *************************************/
 
-static int jsa3_io_r(int offset)
+static READ_HANDLER( jsa3_io_r )
 {
 	int result = 0xff;
 
@@ -432,7 +432,7 @@ static int jsa3_io_r(int offset)
 }
 
 
-static void jsa3_io_w(int offset, int data)
+static WRITE_HANDLER( jsa3_io_w )
 {
 	switch (offset & 0x206)
 	{
@@ -511,7 +511,7 @@ static void jsa3_io_w(int offset, int data)
  *
  *************************************/
 
-static int jsa3s_io_r(int offset)
+static READ_HANDLER( jsa3s_io_r )
 {
 	int result = 0xff;
 
@@ -564,7 +564,7 @@ static int jsa3s_io_r(int offset)
 }
 
 
-static void jsa3s_io_w(int offset, int data)
+static WRITE_HANDLER( jsa3s_io_w )
 {
 	switch (offset & 0x206)
 	{

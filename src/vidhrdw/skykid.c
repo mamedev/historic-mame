@@ -2,10 +2,12 @@
 #include "vidhrdw/generic.h"
 #include "tilemap.h"
 
-unsigned char *skykid_textram, *drgnbstr_videoram;
+unsigned char *skykid_textram, *skykid_videoram;
 
-static struct tilemap *background;	/* background */
-static int game;
+static struct tilemap *background;
+static int priority;
+static int flipscreen;
+
 
 /***************************************************************************
 
@@ -75,11 +77,10 @@ void skykid_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 ***************************************************************************/
 
-static void get_tile_info_bg(int col,int row)
+static void get_tile_info_bg(int tile_index)
 {
-	int tile_index = row*64 + col;
-	unsigned char code = drgnbstr_videoram[tile_index];
-	unsigned char attr = drgnbstr_videoram[tile_index+0x800];
+	unsigned char code = skykid_videoram[tile_index];
+	unsigned char attr = skykid_videoram[tile_index+0x800];
 
 	SET_TILE_INFO(1, code + 256*(attr & 0x01),((attr & 0x7e) >> 1) | ((attr & 0x01) << 6));
 }
@@ -90,11 +91,14 @@ static void get_tile_info_bg(int col,int row)
 
 ***************************************************************************/
 
-static int skykid_drgnbstr_common_vh_init(void)
+int skykid_vh_start(void)
 {
-	background = tilemap_create(get_tile_info_bg, TILEMAP_OPAQUE, 8, 8, 64, 32);
+	background = tilemap_create(get_tile_info_bg,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
 
-	if (background){
+	if (!background)
+		return 1;
+
+	{
 		unsigned char *RAM = memory_region(REGION_CPU1);
 
 		spriteram	= &RAM[0x4f80];
@@ -104,19 +108,6 @@ static int skykid_drgnbstr_common_vh_init(void)
 
 		return 0;
 	}
-	return 1;
-}
-
-int skykid_vh_start(void)
-{
-	game = 0;
-	return skykid_drgnbstr_common_vh_init();
-}
-
-int drgnbstr_vh_start(void)
-{
-	game = 1;
-	return skykid_drgnbstr_common_vh_init();
 }
 
 /***************************************************************************
@@ -125,33 +116,40 @@ int drgnbstr_vh_start(void)
 
 ***************************************************************************/
 
-int skykid_videoram_r(int offset)
+READ_HANDLER( skykid_videoram_r )
 {
-	return drgnbstr_videoram[offset];
+	return skykid_videoram[offset];
 }
 
-void skykid_videoram_w(int offset,int data)
+WRITE_HANDLER( skykid_videoram_w )
 {
-	if (drgnbstr_videoram[offset] != data){
-		drgnbstr_videoram[offset] = data;
-		tilemap_mark_tile_dirty(background,(offset & 0x7ff)%64,(offset & 0x7ff)/64);
+	if (skykid_videoram[offset] != data){
+		skykid_videoram[offset] = data;
+		tilemap_mark_tile_dirty(background,offset & 0x7ff);
 	}
 }
 
-void skykid_scroll_x_w(int offset, int data)
+WRITE_HANDLER( skykid_scroll_x_w )
 {
-	if (game)
-		tilemap_set_scrollx(background, 0, ((offset ^ 1) + 36) & 0x1ff);
-	else
+	if (flipscreen)
 		tilemap_set_scrollx(background, 0, (189 - (offset ^ 1)) & 0x1ff);
+	else
+		tilemap_set_scrollx(background, 0, ((offset) + 35) & 0x1ff);
 }
 
-void skykid_scroll_y_w(int offset, int data)
+WRITE_HANDLER( skykid_scroll_y_w )
 {
-	if (game)
-		tilemap_set_scrolly(background, 0, (offset + 25) & 0xff);
-	else
+	if (flipscreen)
 		tilemap_set_scrolly(background, 0, (261 - offset) & 0xff);
+	else
+		tilemap_set_scrolly(background, 0, (offset + 27) & 0xff);
+}
+
+WRITE_HANDLER( skykid_flipscreen_w )
+{
+	priority = data;
+	flipscreen = offset;
+	tilemap_set_flip(background,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 }
 
 /***************************************************************************
@@ -167,60 +165,16 @@ static void skykid_draw_sprites(struct osd_bitmap *bitmap)
 	for (offs = 0; offs < spriteram_size; offs += 2){
 		int number = spriteram[offs] | ((spriteram_3[offs] & 0x80) << 1);
 		int color = (spriteram[offs+1] & 0x3f);
-		int sx = 256 - ((spriteram_2[offs+1]) + 0x100*(spriteram_3[offs+1] & 0x01)) + 72;
-		int sy = spriteram_2[offs] - 7;
+		int sx = (spriteram_2[offs+1]) + 0x100*(spriteram_3[offs+1] & 1) - 72;
+		int sy = 256 - spriteram_2[offs] - 57;
 		int flipy = spriteram_3[offs] & 0x02;
 		int flipx = spriteram_3[offs] & 0x01;
 		int width, height;
 
-		if (number >= 128*3) continue;
-
-		switch (spriteram_3[offs] & 0x0c){
-			case 0x0c:	/* 2x both ways */
-				width = height = 2; number &= (~3); break;
-			case 0x08:	/* 2x vertical */
-				width = 1; height = 2; number &= (~2); break;
-			case 0x04:	/* 2x horizontal */
-				width = 2; height = 1; number &= (~1); break;
-			default:	/* normal sprite */
-				width = height = 1; sx += 16; break;
+		if (flipscreen){
+				flipx = !flipx;
+				flipy = !flipy;
 		}
-
-		{
-			static int x_offset[2] = { 0x00, 0x01 };
-			static int y_offset[2] = { 0x00, 0x02 };
-			int x,y, ex, ey;
-
-			for( y=0; y < height; y++ ){
-				for( x=0; x < width; x++ ){
-					ex = flipx ? (width-1-x) : x;
-					ey = flipy ? (height-1-y) : y;
-
-					drawgfx(bitmap,Machine->gfx[2+(number >> 7)],
-						(number)+x_offset[ex]+y_offset[ey],
-						color,
-						flipx, flipy,
-						sx+x*16,sy+y*16,
-						&Machine->drv->visible_area,
-						TRANSPARENCY_COLOR,255);
-				}
-			}
-		}
-	}
-}
-
-static void drgnbstr_draw_sprites(struct osd_bitmap *bitmap)
-{
-	int offs;
-
-	for (offs = 0; offs < spriteram_size; offs += 2){
-		int number = spriteram[offs] | ((spriteram_3[offs] & 0x80) << 1);
-		int color = (spriteram[offs+1] & 0x3f);
-		int sx = (spriteram_2[offs+1]) + 0x100*(spriteram_3[offs+1] & 1) - 74;
-		int sy = 256 - spriteram_2[offs] - 54;
-		int flipy = spriteram_3[offs] & 0x02;
-		int flipx = spriteram_3[offs] & 0x01;
-		int width, height;
 
 		if (number >= 128*3) continue;
 
@@ -270,7 +224,8 @@ void skykid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_render(ALL_TILEMAPS);
 
 	tilemap_draw(bitmap,background,0);
-	skykid_draw_sprites(bitmap);
+	if ((priority & 0xf0) != 0x50)
+		skykid_draw_sprites(bitmap);
 
 	for (offs = 0x400 - 1; offs > 0; offs--){
 		{
@@ -281,59 +236,29 @@ void skykid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			if (my < 2)	{
 				if (mx < 2 || mx >= 30) continue; /* not visible */
-				sx = my + 34; sy = mx - 2;
+				sx = my + 34;
+				sy = mx - 2;
 			}
 			else if (my >= 30){
 				if (mx < 2 || mx >= 30) continue; /* not visible */
-				sx = my - 30; sy = mx - 2;
+				sx = my - 30;
+				sy = mx - 2;
 			}
 			else{
-				sx = mx + 2; sy = my - 2;
+				sx = mx + 2;
+				sy = my - 2;
 			}
-			drawgfx(bitmap,Machine->gfx[0],	skykid_textram[offs],
+			if (flipscreen){
+				sx = 35 - sx;
+				sy = 27 - sy;
+			}
+
+			drawgfx(bitmap,Machine->gfx[0],	skykid_textram[offs] + (flipscreen << 8),
 					skykid_textram[offs+0x400] & 0x3f,
 					0,0,sx*8,sy*8,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
         }
 	}
-}
-
-void drgnbstr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-	int offs;
-
-	tilemap_update(ALL_TILEMAPS);
-
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
-
-	tilemap_draw(bitmap,background,0);
-	for (offs = 0x400 - 1; offs > 0; offs--){
-		{
-			int mx,my,sx,sy;
-
-            mx = offs % 32;
-			my = offs / 32;
-
-			if (my < 2)	{
-				if (mx < 2 || mx >= 30) continue; /* not visible */
-				sx = my + 34; sy = mx - 2;
-			}
-			else if (my >= 30){
-				if (mx < 2 || mx >= 30) continue; /* not visible */
-				sx = my - 30; sy = mx - 2;
-			}
-			else{
-				sx = mx + 2; sy = my - 2;
-			}
-			drawgfx(bitmap,Machine->gfx[0],	skykid_textram[offs],
-					skykid_textram[offs+0x400] & 0x3f,
-					0,0,sx*8,sy*8,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-        }
-	}
-
-	drgnbstr_draw_sprites(bitmap);
+	if ((priority & 0xf0) == 0x50)
+		skykid_draw_sprites(bitmap);
 }

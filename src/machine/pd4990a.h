@@ -4,6 +4,6 @@
 void addretrace (void);
 int read_4990_testbit(void);
 int read_4990_databit(void);
-void write_4990_control(int offset, int data);
+WRITE_HANDLER( write_4990_control_w );
 void increment_day(void);
 void increment_month(void);

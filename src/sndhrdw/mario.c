@@ -3,7 +3,7 @@
 
 
 
-void mario_sh_w(int offset,int data)
+WRITE_HANDLER( mario_sh_w )
 {
 	if (data)
 		cpu_set_irq_line(1,0,ASSERT_LINE);
@@ -13,7 +13,7 @@ void mario_sh_w(int offset,int data)
 
 
 /* Mario running sample */
-void mario_sh1_w(int offset,int data)
+WRITE_HANDLER( mario_sh1_w )
 {
 	static int last;
 
@@ -25,7 +25,7 @@ void mario_sh1_w(int offset,int data)
 }
 
 /* Luigi running sample */
-void mario_sh2_w(int offset,int data)
+WRITE_HANDLER( mario_sh2_w )
 {
 	static int last;
 
@@ -37,7 +37,7 @@ void mario_sh2_w(int offset,int data)
 }
 
 /* Misc samples */
-void mario_sh3_w (int offset,int data)
+WRITE_HANDLER( mario_sh3_w )
 {
 	static int state[8];
 

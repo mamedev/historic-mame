@@ -50,9 +50,9 @@ extern unsigned char *vulgus_bgvideoram,*vulgus_bgcolorram;
 extern int vulgus_bgvideoram_size;
 extern unsigned char *vulgus_scrolllow,*vulgus_scrollhigh;
 extern unsigned char *vulgus_palette_bank;
-void vulgus_bgvideoram_w(int offset,int data);
-void vulgus_bgcolorram_w(int offset,int data);
-void vulgus_palette_bank_w(int offset,int data);
+WRITE_HANDLER( vulgus_bgvideoram_w );
+WRITE_HANDLER( vulgus_bgcolorram_w );
+WRITE_HANDLER( vulgus_palette_bank_w );
 int vulgus_vh_start(void);
 void vulgus_vh_stop(void);
 void vulgus_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -60,7 +60,7 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-static void vulgus_control_w(int offset, int data)
+static WRITE_HANDLER( vulgus_control_w )
 {
 	/* bit 0-1 coin counters */
 	coin_counter_w(0, data & 1);

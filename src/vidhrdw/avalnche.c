@@ -2,7 +2,7 @@
 #include "vidhrdw/generic.h"
 
 
-void avalnche_videoram_w(int offset, int data)
+WRITE_HANDLER( avalnche_videoram_w )
 {
 	videoram[offset] = data;
 

@@ -126,7 +126,7 @@ void offtwall_vh_stop(void)
  *
  *************************************/
 
-void offtwall_playfieldram_w(int offset, int data)
+WRITE_HANDLER( offtwall_playfieldram_w )
 {
 	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
 	int newword = COMBINE_WORD(oldword, data);

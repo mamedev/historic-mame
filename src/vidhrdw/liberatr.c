@@ -121,12 +121,12 @@ INLINE void bitmap_common_w(UINT8 x, UINT8 y, int data)
 	plot_pixel(Machine->scrbitmap, x, y, pen);
 }
 
-void liberatr_bitmap_xy_w(int offset, int data)
+WRITE_HANDLER( liberatr_bitmap_xy_w )
 {
 	bitmap_common_w(*liberatr_x, *liberatr_y, data);
 }
 
-void liberatr_bitmap_w(int offset, int data)
+WRITE_HANDLER( liberatr_bitmap_w )
 {
 	UINT8 x = (offset & 0x3f) << 2;
 	UINT8 y = (offset >> 6);
@@ -140,13 +140,13 @@ void liberatr_bitmap_w(int offset, int data)
 }
 
 
-int liberatr_bitmap_xy_r(int offset)
+READ_HANDLER( liberatr_bitmap_xy_r )
 {
 	return liberatr_videoram[((*liberatr_y)<<8) | (*liberatr_x)];
 }
 
 
-void liberatr_colorram_w(int offset,int data)
+WRITE_HANDLER( liberatr_colorram_w )
 {
 	UINT8 r,g,b;
 

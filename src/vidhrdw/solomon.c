@@ -59,7 +59,7 @@ void solomon_vh_stop(void)
 }
 
 
-void solomon_bgvideoram_w(int offset,int data)
+WRITE_HANDLER( solomon_bgvideoram_w )
 {
 	if (solomon_bgvideoram[offset] != data)
 	{
@@ -69,7 +69,7 @@ void solomon_bgvideoram_w(int offset,int data)
 	}
 }
 
-void solomon_bgcolorram_w(int offset,int data)
+WRITE_HANDLER( solomon_bgcolorram_w )
 {
 	if (solomon_bgcolorram[offset] != data)
 	{
@@ -81,7 +81,7 @@ void solomon_bgcolorram_w(int offset,int data)
 
 
 
-void solomon_flipscreen_w(int offset,int data)
+WRITE_HANDLER( solomon_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{

@@ -44,7 +44,7 @@ void cloak_vh_stop(void);
   bit 0 -- inverter -- 1  kohm resistor  -- BLUE
 
 ***************************************************************************/
-void cloak_paletteram_w(int offset,int data)
+WRITE_HANDLER( cloak_paletteram_w )
 {
 	int r,g,b;
 	int bit0,bit1,bit2;
@@ -74,7 +74,7 @@ void cloak_paletteram_w(int offset,int data)
 }
 
 
-void cloak_clearbmp_w(int offset, int data)
+WRITE_HANDLER( cloak_clearbmp_w )
 {
 	bmap = data & 1;
 	if (data & 2)	/* clear */
@@ -107,7 +107,7 @@ static void adjust_xy(int offset)
 }
 
 
-int graph_processor_r(int offset)
+READ_HANDLER( graph_processor_r )
 {
 	int ret;
 
@@ -126,7 +126,7 @@ int graph_processor_r(int offset)
 }
 
 
-void graph_processor_w(int offset, int data)
+WRITE_HANDLER( graph_processor_w )
 {
 	int col;
 

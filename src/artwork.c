@@ -1085,11 +1085,20 @@ static struct artwork *allocate_artwork_mem (int width, int height)
 static int artwork_read_bitmap(const char *file_name, struct osd_bitmap **bitmap, struct png_info *p)
 {
 	UINT8 *tmp;
-	UINT32 orientation;
-	UINT32 x, y;
+	int x, y, r, g, b, pen;
 	void *fp;
+	int file_name_len;
+	char file_name2[256];
 
-	if (!(fp = osd_fopen(Machine->gamedrv->name, file_name, OSD_FILETYPE_ARTWORK, 0)))
+	/* check for .png */
+	strcpy(file_name2, file_name);
+	file_name_len = strlen(file_name2);
+	if ((file_name_len < 4) || stricmp(&file_name2[file_name_len - 4], ".png"))
+	{
+		strcat(file_name2, ".png");
+	}
+
+	if (!(fp = osd_fopen(Machine->gamedrv->name, file_name2, OSD_FILETYPE_ARTWORK, 0)))
 	{
 		if (errorlog)
 			fprintf(errorlog,"Unable to open PNG %s\n", file_name);
@@ -1110,12 +1119,6 @@ static int artwork_read_bitmap(const char *file_name, struct osd_bitmap **bitmap
 		return 0;
 	}
 
-	if (p->color_type != 3)
-	{
-		if (errorlog)
-			fprintf(errorlog,"Unsupported color type %i (has to be 3)\n", p->color_type);
-		return 0;
-	}
 	if (p->interlace_method != 0)
 	{
 		if (errorlog)
@@ -1123,29 +1126,81 @@ static int artwork_read_bitmap(const char *file_name, struct osd_bitmap **bitmap
 		return 0;
 	}
 
-	/* Convert to 8 bit */
-	png_expand_buffer_8bit (p);
-
-	png_delete_unused_colors (p);
-
-	if ((*bitmap=osd_create_bitmap(p->width,p->height)) == 0)
+	switch (p->color_type)
 	{
-		if (errorlog)
-			fprintf(errorlog,"Unable to allocate memory for artwork\n");
-		return 0;
-	}
+	case 3:
+		/* Convert to 8 bit */
+		png_expand_buffer_8bit (p);
 
-	orientation = Machine->orientation;
+		png_delete_unused_colors (p);
 
-	tmp = p->image;
-	for (y=0; y<p->height; y++)
-		for (x=0; x<p->width; x++)
+		if ((*bitmap = osd_new_bitmap(p->width,p->height, 8)) == 0)
 		{
-			plot_pixel(*bitmap, x, y, *tmp++);
+			if (errorlog)
+				fprintf(errorlog,"Unable to allocate memory for artwork\n");
+			return 0;
 		}
 
-	free (p->image);
-	return 1;
+		tmp = p->image;
+		for (y=0; y<p->height; y++)
+			for (x=0; x<p->width; x++)
+			{
+				plot_pixel(*bitmap, x, y, *tmp++);
+			}
+
+		free (p->image);
+		break;
+
+	case 2:
+		if ((*bitmap = osd_new_bitmap(p->width,p->height, 16)) == 0)
+		{
+			if (errorlog)
+				fprintf(errorlog,"Unable to allocate memory for artwork\n");
+			return 0;
+		}
+
+		/* create 15 bit palette */
+		if ((p->palette = malloc (3 * 32768)) == 0)
+		{
+			if (errorlog)
+				fprintf(errorlog,"Unable to allocate memory for artwork\n");
+			return 0;
+		}
+
+		tmp = p->palette;
+		for (r = 0; r < 32; r++)
+			for (g = 0; g < 32; g++)
+				for (b = 0; b < 32; b++)
+				{
+					*tmp++ = r << 3;
+					*tmp++ = g << 3;
+					*tmp++ = b << 3;
+				}
+
+		p->num_palette = 32768;
+		p->trans = NULL;
+		p->num_trans = 0;
+
+		/* reduce true color to 15 bit */
+		tmp = p->image;
+		for (y=0; y<p->height; y++)
+			for (x=0; x<p->width; x++)
+			{
+				pen = ((tmp[0] & 0xf8) << 7) | ((tmp[1] & 0xf8) << 2) | (tmp[2] >> 3);
+				tmp += 3;
+				plot_pixel(*bitmap, x, y, pen);
+			}
+
+		free (p->image);
+		break;
+
+	default:
+		if (errorlog)
+			fprintf(errorlog,"Unsupported color type %i \n", p->color_type);
+		return 0;
+		break;
+	}
+		return 1;
 }
 
 /*********************************************************************

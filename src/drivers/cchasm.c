@@ -10,13 +10,13 @@
 #include "machine/z80fmly.h"
 
 /* from machine/cchasm.c */
-int cchasm_6840_r(int offset);
-void cchasm_6840_w(int offset,int data);
-void cchasm_led_w(int offset, int data);
-void cchasm_watchdog_w(int offset, int data);
+READ_HANDLER( cchasm_6840_r );
+WRITE_HANDLER( cchasm_6840_w );
+WRITE_HANDLER( cchasm_led_w );
+WRITE_HANDLER( cchasm_watchdog_w );
 
 /* from vidhrdw/cchasm.c */
-void cchasm_refresh_control_w(int offset, int data);
+WRITE_HANDLER( cchasm_refresh_control_w );
 void cchasm_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int cchasm_vh_start (void);
 void cchasm_vh_stop (void);
@@ -24,10 +24,10 @@ void cchasm_vh_stop (void);
 extern UINT8 *cchasm_ram;
 
 /* from sndhrdw/cchasm.c */
-void cchasm_io_w(int offset, int data);
-int cchasm_io_r(int offset);
-int cchasm_snd_io_r(int offset);
-void cchasm_snd_io_w(int offset, int data);
+WRITE_HANDLER( cchasm_io_w );
+READ_HANDLER( cchasm_io_r );
+READ_HANDLER( cchasm_snd_io_r );
+WRITE_HANDLER( cchasm_snd_io_w );
 int cchasm_sh_start(const struct MachineSound *msound);
 void cchasm_sh_update(void);
 

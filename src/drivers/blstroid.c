@@ -68,8 +68,8 @@ RAM                                FFE000-FFFFFF  R/W
 #include "vidhrdw/generic.h"
 
 
-void blstroid_priorityram_w(int offset, int data);
-void blstroid_playfieldram_w(int offset, int data);
+WRITE_HANDLER( blstroid_priorityram_w );
+WRITE_HANDLER( blstroid_playfieldram_w );
 
 int blstroid_vh_start(void);
 void blstroid_vh_stop(void);
@@ -119,7 +119,7 @@ static void init_machine(void)
  *
  *************************************/
 
-static int special_port2_r(int offset)
+static READ_HANDLER( special_port2_r )
 {
 	int temp = input_port_2_r(offset);
 	if (atarigen_cpu_to_sound_ready) temp ^= 0x0040;

@@ -431,34 +431,34 @@ static int K007232_ReadReg( int r, int chip )
 
 /*****************************************************************************/
 
-void K007232_write_port_0_w(int r,int v)
+WRITE_HANDLER( K007232_write_port_0_w )
 {
-	K007232_WriteReg(r,v,0);
+	K007232_WriteReg(offset,data,0);
 }
 
-int K007232_read_port_0_r(int r)
+READ_HANDLER( K007232_read_port_0_r )
 {
-	return K007232_ReadReg(r,0);
+	return K007232_ReadReg(offset,0);
 }
 
-void K007232_write_port_1_w(int r,int v)
+WRITE_HANDLER( K007232_write_port_1_w )
 {
-	K007232_WriteReg(r,v,1);
+	K007232_WriteReg(offset,data,1);
 }
 
-int K007232_read_port_1_r(int r)
+READ_HANDLER( K007232_read_port_1_r )
 {
-	return K007232_ReadReg(r,1);
+	return K007232_ReadReg(offset,1);
 }
 
-void K007232_write_port_2_w(int r,int v)
+WRITE_HANDLER( K007232_write_port_2_w )
 {
-	K007232_WriteReg(r,v,2);
+	K007232_WriteReg(offset,data,2);
 }
 
-int K007232_read_port_2_r(int r)
+READ_HANDLER( K007232_read_port_2_r )
 {
-	return K007232_ReadReg(r,2);
+	return K007232_ReadReg(offset,2);
 }
 
 void K007232_bankswitch(int chip,unsigned char *ptr_A,unsigned char *ptr_B)

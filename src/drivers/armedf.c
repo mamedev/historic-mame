@@ -28,14 +28,14 @@ extern int armedf_vh_start(void);
 extern int kodure_vh_start(void);
 extern void armedf_vh_stop(void);
 
-extern void armedf_bg_videoram_w(int offset, int data);
-extern int armedf_bg_videoram_r(int offset);
-extern void armedf_fg_videoram_w(int offset, int data);
-extern int armedf_fg_videoram_r(int offset);
-extern int armedf_text_videoram_r( int offset );
-extern void armedf_text_videoram_w( int offset, int data );
-extern int terraf_text_videoram_r( int offset );
-extern void terraf_text_videoram_w( int offset, int data );
+WRITE_HANDLER( armedf_bg_videoram_w );
+READ_HANDLER( armedf_bg_videoram_r );
+WRITE_HANDLER( armedf_fg_videoram_w );
+READ_HANDLER( armedf_fg_videoram_r );
+READ_HANDLER( armedf_text_videoram_r );
+WRITE_HANDLER( armedf_text_videoram_w );
+READ_HANDLER( terraf_text_videoram_r );
+WRITE_HANDLER( terraf_text_videoram_w );
 
 extern UINT16 armedf_vreg;
 extern UINT16 terraf_scroll_msb;
@@ -44,7 +44,7 @@ extern unsigned char *armedf_bg_videoram;
 extern UINT16 armedf_fg_scrollx,armedf_fg_scrolly;
 extern unsigned char *armedf_fg_videoram;
 
-static void io_w (int offset,int data){
+static WRITE_HANDLER( io_w ){
 	switch (offset/2){
 		case 0x0:
 		armedf_vreg = COMBINE_WORD(armedf_vreg,data);
@@ -86,7 +86,7 @@ static void io_w (int offset,int data){
 	}
 }
 
-static void kodure_io_w (int offset,int data){
+static WRITE_HANDLER( kodure_io_w ){
 	switch (offset/2){
 		case 0x0:
 		armedf_vreg = COMBINE_WORD(armedf_vreg,data);
@@ -121,7 +121,7 @@ static void kodure_io_w (int offset,int data){
 	}
 }
 
-static int io_r(int offset){
+static READ_HANDLER( io_r ){
 	switch (offset) {
 		case 0: /* Input */
 		return input_port_0_r(offset) + 256*input_port_2_r(offset);
@@ -140,7 +140,7 @@ static int io_r(int offset){
 }
 
 /* the scroll registers are memory mapped in kodure, I/O ports in the others */
-static void kodure_videoreg_w(int offset, int data)
+static WRITE_HANDLER( kodure_videoreg_w )
 {
 	switch (offset)
 	{
@@ -314,14 +314,15 @@ static struct MemoryWriteAddress cclimbr2_soundwritemem[] ={
 	{ -1 }	/* end of table */
 };
 
-static int soundlatch_clr(int offset){
+static READ_HANDLER( soundlatch_clear_r )
+{
 	soundlatch_clear_w(0,0);
 	return 0;
 }
 
 static struct IOReadPort readport[] =
 {
-	{ 0x4, 0x4, soundlatch_clr },
+	{ 0x4, 0x4, soundlatch_clear_r },
 	{ 0x6, 0x6, soundlatch_r },
 	{ -1 }	/* end of table */
 };
@@ -330,7 +331,8 @@ static struct IOWritePort writeport[] =
 {
 	{ 0x0, 0x0, YM3812_control_port_0_w },
 	{ 0x1, 0x1, YM3812_write_port_0_w },
-  	{ 0x2, 0x3, DAC_signed_data_w },	/* 2 channels */
+  	{ 0x2, 0x2, DAC_0_signed_data_w },
+  	{ 0x3, 0x3, DAC_1_signed_data_w },
 	{ -1 }	/* end of table */
 };
 

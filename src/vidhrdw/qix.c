@@ -124,13 +124,13 @@ the screen address is computed by using the values at $9402 (high byte)
 and $9403 (low byte) to get a value between $0000-$FFFF.  The value at
 that location is either returned or written. */
 
-int qix_videoram_r(int offset)
+READ_HANDLER( qix_videoram_r )
 {
 	offset += (qix_videoaddress[0] & 0x80) * 0x100;
 	return videoram[offset];
 }
 
-void qix_videoram_w(int offset,int data)
+WRITE_HANDLER( qix_videoram_w )
 {
 	int x, y;
 
@@ -146,7 +146,7 @@ void qix_videoram_w(int offset,int data)
 
 
 
-int qix_addresslatch_r(int offset)
+READ_HANDLER( qix_addresslatch_r )
 {
 	offset = qix_videoaddress[0] * 0x100 + qix_videoaddress[1];
 	return videoram[offset];
@@ -154,7 +154,7 @@ int qix_addresslatch_r(int offset)
 
 
 
-void qix_addresslatch_w(int offset,int data)
+WRITE_HANDLER( qix_addresslatch_w )
 {
 	int x, y;
 
@@ -179,7 +179,7 @@ the color RAM pages as follows:
 
 Qix uses a palette of 64 colors (2 each RGB) and four intensities (RRGGBBII).
 */
-void qix_paletteram_w(int offset,int data)
+WRITE_HANDLER( qix_paletteram_w )
 {
 	paletteram[offset] = data;
 
@@ -189,7 +189,7 @@ void qix_paletteram_w(int offset,int data)
 
 
 
-void qix_palettebank_w(int offset,int data)
+WRITE_HANDLER( qix_palettebank_w )
 {
 	if ((*qix_palettebank & 0x03) != (data & 0x03))
 	{

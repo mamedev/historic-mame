@@ -141,7 +141,7 @@ void ringking_vh_convert_color_prom(unsigned char *palette,unsigned short *color
 
 
 
-void kingofb_f800_w(int offset,int data)
+WRITE_HANDLER( kingofb_f800_w )
 {
 	kingofb_nmi_enable = data & 0x20;
 

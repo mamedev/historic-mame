@@ -23,7 +23,7 @@ static struct rectangle spritevisiblearea =
   This might seem a little odd, but it really seems as though the palette
   is writing as GGGRRRBB.  This is just a guess, and has not been confirmed.
 ***************************************************************************/
-void qwakprot_paletteram_w(int offset,int data)
+WRITE_HANDLER( qwakprot_paletteram_w )
 {
 	int bit0,bit1,bit2;
 	int r,g,b;

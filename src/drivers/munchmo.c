@@ -62,29 +62,29 @@ unsigned char *mnchmobl_sprite_xpos;
 unsigned char *mnchmobl_sprite_attr;
 unsigned char *mnchmobl_sprite_tile;
 
-int mnchmobl_sprite_xpos_r( int offset ){ return mnchmobl_sprite_xpos[offset]; }
-void mnchmobl_sprite_xpos_w( int offset, int data ){ mnchmobl_sprite_xpos[offset] = data; }
+READ_HANDLER( mnchmobl_sprite_xpos_r ){ return mnchmobl_sprite_xpos[offset]; }
+WRITE_HANDLER( mnchmobl_sprite_xpos_w ){ mnchmobl_sprite_xpos[offset] = data; }
 
-int mnchmobl_sprite_attr_r( int offset ){ return mnchmobl_sprite_attr[offset]; }
-void mnchmobl_sprite_attr_w( int offset, int data ){ mnchmobl_sprite_attr[offset] = data; }
+READ_HANDLER( mnchmobl_sprite_attr_r ){ return mnchmobl_sprite_attr[offset]; }
+WRITE_HANDLER( mnchmobl_sprite_attr_w ){ mnchmobl_sprite_attr[offset] = data; }
 
-int mnchmobl_sprite_tile_r( int offset ){ return mnchmobl_sprite_tile[offset]; }
-void mnchmobl_sprite_tile_w( int offset, int data ){ mnchmobl_sprite_tile[offset] = data; }
+READ_HANDLER( mnchmobl_sprite_tile_r ){ return mnchmobl_sprite_tile[offset]; }
+WRITE_HANDLER( mnchmobl_sprite_tile_w ){ mnchmobl_sprite_tile[offset] = data; }
 
 static unsigned char mnchmobl_video_reg[13];
-void mnchmobl_videoreg0_w( int offset, int data ){ mnchmobl_video_reg[0] = data; }
-void mnchmobl_videoreg1_w( int offset, int data ){ mnchmobl_video_reg[1] = data; }
-void mnchmobl_videoreg2_w( int offset, int data ){ mnchmobl_video_reg[2] = data; }
-void mnchmobl_videoreg3_w( int offset, int data ){ mnchmobl_video_reg[3] = data; }
-void mnchmobl_videoreg4_w( int offset, int data ){ mnchmobl_video_reg[4] = data; }
-void mnchmobl_videoreg5_w( int offset, int data ){ mnchmobl_video_reg[5] = data; }
-void mnchmobl_videoreg6_w( int offset, int data ){ mnchmobl_video_reg[6] = data; }
-void mnchmobl_videoreg7_w( int offset, int data ){ mnchmobl_video_reg[7] = data; }
-void mnchmobl_videoreg8_w( int offset, int data ){ mnchmobl_video_reg[8] = data; }
-void mnchmobl_videoreg9_w( int offset, int data ){ mnchmobl_video_reg[9] = data; }
-void mnchmobl_videoreg10_w( int offset, int data ){ mnchmobl_video_reg[10] = data; }
-void mnchmobl_videoreg11_w( int offset, int data ){ mnchmobl_video_reg[11] = data; }
-void mnchmobl_videoreg12_w( int offset, int data ){ mnchmobl_video_reg[12] = data; }
+WRITE_HANDLER( mnchmobl_videoreg0_w ){ mnchmobl_video_reg[0] = data; }
+WRITE_HANDLER( mnchmobl_videoreg1_w ){ mnchmobl_video_reg[1] = data; }
+WRITE_HANDLER( mnchmobl_videoreg2_w ){ mnchmobl_video_reg[2] = data; }
+WRITE_HANDLER( mnchmobl_videoreg3_w ){ mnchmobl_video_reg[3] = data; }
+WRITE_HANDLER( mnchmobl_videoreg4_w ){ mnchmobl_video_reg[4] = data; }
+WRITE_HANDLER( mnchmobl_videoreg5_w ){ mnchmobl_video_reg[5] = data; }
+WRITE_HANDLER( mnchmobl_videoreg6_w ){ mnchmobl_video_reg[6] = data; }
+WRITE_HANDLER( mnchmobl_videoreg7_w ){ mnchmobl_video_reg[7] = data; }
+WRITE_HANDLER( mnchmobl_videoreg8_w ){ mnchmobl_video_reg[8] = data; }
+WRITE_HANDLER( mnchmobl_videoreg9_w ){ mnchmobl_video_reg[9] = data; }
+WRITE_HANDLER( mnchmobl_videoreg10_w ){ mnchmobl_video_reg[10] = data; }
+WRITE_HANDLER( mnchmobl_videoreg11_w ){ mnchmobl_video_reg[11] = data; }
+WRITE_HANDLER( mnchmobl_videoreg12_w ){ mnchmobl_video_reg[12] = data; }
 
 void mnchmobl_vh_stop( void ){
 	if( tmpbitmap ) osd_free_bitmap( tmpbitmap );
@@ -104,11 +104,11 @@ int mnchmobl_vh_start( void ){
 	return 1;
 }
 
-int mnchmobl_videoram_r( int offset ){
+READ_HANDLER( mnchmobl_videoram_r ){
 	return videoram[offset];
 }
 
-void mnchmobl_videoram_w( int offset, int data ){
+WRITE_HANDLER( mnchmobl_videoram_w ){
 	offset = offset&0xff; /* mirror the two banks */
 	if( videoram[offset]!=data ){
 		videoram[offset] = data;
@@ -277,7 +277,7 @@ void mnchmobl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 
 static int cpuA_nmi_enable = 0;
 
-static void cpuA_nmi_enable_w( int offset, int data ){
+static WRITE_HANDLER( cpuA_nmi_enable_w ){
 	cpuA_nmi_enable = data;
 }
 

@@ -79,38 +79,38 @@ extern "C" {
  *****************************************************************************/
 
 struct POKEYinterface {
-    int num;    /* total number of pokeys in the machine */
-    int baseclock;
-    int mixing_level[MAXPOKEYS];
-    int (*pot0_r[MAXPOKEYS])(int offset);
-    int (*pot1_r[MAXPOKEYS])(int offset);
-    int (*pot2_r[MAXPOKEYS])(int offset);
-    int (*pot3_r[MAXPOKEYS])(int offset);
-    int (*pot4_r[MAXPOKEYS])(int offset);
-    int (*pot5_r[MAXPOKEYS])(int offset);
-    int (*pot6_r[MAXPOKEYS])(int offset);
-    int (*pot7_r[MAXPOKEYS])(int offset);
-    int (*allpot_r[MAXPOKEYS])(int offset);
-    int (*serin_r[MAXPOKEYS])(int offset);
-    void (*serout_w[MAXPOKEYS])(int offset, int data);
-    void (*interrupt_cb[MAXPOKEYS])(int mask);
+	int num;    /* total number of pokeys in the machine */
+	int baseclock;
+	int mixing_level[MAXPOKEYS];
+	mem_read_handler pot0_r[MAXPOKEYS];
+	mem_read_handler pot1_r[MAXPOKEYS];
+	mem_read_handler pot2_r[MAXPOKEYS];
+	mem_read_handler pot3_r[MAXPOKEYS];
+	mem_read_handler pot4_r[MAXPOKEYS];
+	mem_read_handler pot5_r[MAXPOKEYS];
+	mem_read_handler pot6_r[MAXPOKEYS];
+	mem_read_handler pot7_r[MAXPOKEYS];
+	mem_read_handler allpot_r[MAXPOKEYS];
+	mem_read_handler serin_r[MAXPOKEYS];
+	mem_write_handler serout_w[MAXPOKEYS];
+	void (*interrupt_cb[MAXPOKEYS])(int mask);
 };
 
 
 int pokey_sh_start (const struct MachineSound *msound);
 void pokey_sh_stop (void);
 
-int pokey1_r (int offset);
-int pokey2_r (int offset);
-int pokey3_r (int offset);
-int pokey4_r (int offset);
-int quad_pokey_r (int offset);
+READ_HANDLER( pokey1_r );
+READ_HANDLER( pokey2_r );
+READ_HANDLER( pokey3_r );
+READ_HANDLER( pokey4_r );
+READ_HANDLER( quad_pokey_r );
 
-void pokey1_w (int offset,int data);
-void pokey2_w (int offset,int data);
-void pokey3_w (int offset,int data);
-void pokey4_w (int offset,int data);
-void quad_pokey_w (int offset,int data);
+WRITE_HANDLER( pokey1_w );
+WRITE_HANDLER( pokey2_w );
+WRITE_HANDLER( pokey3_w );
+WRITE_HANDLER( pokey4_w );
+WRITE_HANDLER( quad_pokey_w );
 
 void pokey1_serin_ready (int after);
 void pokey2_serin_ready (int after);

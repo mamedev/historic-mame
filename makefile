@@ -24,13 +24,17 @@ endif
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1
-TINY_NAME = driver_labyrunr
-TINY_OBJS = obj/drivers/labyrunr.o obj/vidhrdw/labyrunr.o obj/vidhrdw/konamiic.o
+TINY_NAME = driver_spinlbrk
+TINY_OBJS = obj/drivers/aerofgt.o obj/vidhrdw/aerofgt.o
 
 # uncomment one of the two next lines to not compile the NeoGeo games or to
 # compile only the NeoGeo games
 # NEOFREE = 1
 # NEOMAME = 1
+
+ifdef NEOMAME
+EMULATOR_EXE = neomame.exe
+endif
 
 # uncomment next line to include the symbols for symify
 # SYMBOLS = 1
@@ -42,6 +46,7 @@ ifdef NEOMAME
 CPUS+=Z80@
 CPUS+=M68000@
 SOUNDS+=YM2610@
+SOUNDS+=SAMPLES@
 else
 # uncomment the following lines to include a CPU core
 CPUS+=Z80@
@@ -842,6 +847,7 @@ CFLAGS = -Isrc -Isrc/msdos -Iobj/cpu/m68000 -Isrc/cpu/m68000 \
 	-O0 -pedantic -Wall -Werror -Wno-unused -g
 else
 CFLAGS = -Isrc -Isrc/msdos -Iobj/cpu/m68000 -Isrc/cpu/m68000 \
+	-DNDEBUG \
 	$(ARCH) -O3 -fomit-frame-pointer -fstrict-aliasing \
 	-Werror -Wall -Wno-sign-compare -Wunused \
 	-Wpointer-arith -Wbad-function-cast -Wcast-align -Waggregate-return \
@@ -899,8 +905,8 @@ DRVLIBS = obj/pacman.a \
 	obj/exidy.a obj/atari.a obj/snk.a obj/technos.a \
 	obj/berzerk.a obj/gameplan.a obj/stratvox.a obj/zaccaria.a \
 	obj/upl.a obj/tms.a obj/cinemar.a obj/cinemav.a obj/thepit.a \
-	obj/valadon.a obj/seibu.a obj/tad.a obj/jaleco.a obj/visco.a \
-	obj/orca.a obj/gaelco.a obj/kaneko.a obj/other.a \
+	obj/valadon.a obj/seibu.a obj/tad.a obj/jaleco.a obj/vsystem.a \
+	obj/orca.a obj/gaelco.a obj/kaneko.a obj/seta.a obj/other.a \
 
 NEOLIBS = obj/neogeo.a \
 
@@ -966,7 +972,7 @@ obj/cpu/m68000/68kem.asm:  src/cpu/m68000/make68k.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -O0 -DDOS -o obj/cpu/m68000/make68k.exe $<
 	@echo Generating $@...
-	obj/cpu/m68000/make68k $@ obj/cpu/m68000/comptab.asm
+	@obj/cpu/m68000/make68k $@ obj/cpu/m68000/comptab.asm
 
 # generated asm files for the 68000 emulator
 obj/cpu/m68000/68kem.oa:  obj/cpu/m68000/68kem.asm
@@ -1045,7 +1051,7 @@ obj/nintendo.a: \
 	obj/vidhrdw/dkong.o obj/sndhrdw/dkong.o obj/drivers/dkong.o \
 	obj/vidhrdw/mario.o obj/sndhrdw/mario.o obj/drivers/mario.o \
 	obj/vidhrdw/popeye.o obj/drivers/popeye.o \
-	obj/vidhrdw/punchout.o obj/sndhrdw/punchout.o obj/drivers/punchout.o \
+	obj/vidhrdw/punchout.o obj/drivers/punchout.o \
 
 obj/midw8080.a: \
 	obj/machine/8080bw.o obj/machine/74123.o \
@@ -1058,8 +1064,8 @@ obj/meadows.a: \
 	obj/drivers/meadows.o obj/sndhrdw/meadows.o obj/vidhrdw/meadows.o \
 
 obj/midway.a: \
-	obj/machine/wow.o obj/vidhrdw/wow.o obj/sndhrdw/wow.o obj/drivers/wow.o \
-	obj/sndhrdw/gorf.o \
+	obj/machine/astrocde.o obj/vidhrdw/astrocde.o \
+	obj/sndhrdw/astrocde.o obj/sndhrdw/gorf.o obj/drivers/astrocde.o \
 	obj/machine/mcr.o obj/sndhrdw/mcr.o \
 	obj/vidhrdw/mcr1.o obj/vidhrdw/mcr2.o obj/vidhrdw/mcr3.o \
 	obj/drivers/mcr1.o obj/drivers/mcr2.o obj/drivers/mcr3.o \
@@ -1162,7 +1168,7 @@ obj/sega.a: \
 	obj/vidhrdw/sega.o obj/sndhrdw/sega.o obj/machine/sega.o obj/drivers/sega.o \
 	obj/vidhrdw/segar.o obj/sndhrdw/segar.o obj/machine/segar.o obj/drivers/segar.o \
 	obj/vidhrdw/zaxxon.o obj/sndhrdw/zaxxon.o obj/drivers/zaxxon.o \
-	obj/sndhrdw/congo.o obj/drivers/congo.o \
+	obj/drivers/congo.o \
 	obj/machine/turbo.o obj/vidhrdw/turbo.o obj/drivers/turbo.o \
 	obj/drivers/kopunch.o \
 	obj/vidhrdw/suprloco.o obj/drivers/suprloco.o \
@@ -1270,6 +1276,7 @@ obj/konami.a: \
 	obj/vidhrdw/tmnt.o obj/drivers/tmnt.o \
 	obj/vidhrdw/xmen.o obj/drivers/xmen.o \
 	obj/vidhrdw/wecleman.o obj/drivers/wecleman.o \
+	obj/vidhrdw/chqflag.o obj/drivers/chqflag.o \
 	obj/vidhrdw/ultraman.o obj/drivers/ultraman.o \
 
 obj/exidy.a: \
@@ -1423,7 +1430,8 @@ obj/jaleco.a: \
 	obj/vidhrdw/megasys1.o obj/drivers/megasys1.o \
 	obj/vidhrdw/cischeat.o obj/drivers/cischeat.o \
 
-obj/visco.a: \
+obj/vsystem.a: \
+	obj/vidhrdw/rpunch.o obj/drivers/rpunch.o \
 	obj/vidhrdw/aerofgt.o obj/drivers/aerofgt.o \
 
 obj/leland.a: \
@@ -1448,8 +1456,11 @@ obj/kaneko.a: \
 obj/neogeo.a: \
 	obj/machine/neogeo.o obj/machine/pd4990a.o obj/vidhrdw/neogeo.o obj/drivers/neogeo.o \
 
+obj/seta.a: \
+	obj/vidhrdw/seta.o obj/sndhrdw/seta.o obj/drivers/seta.o \
+
 obj/other.a: \
-	obj/vidhrdw/spacefb.o obj/sndhrdw/spacefb.o obj/drivers/spacefb.o \
+	obj/vidhrdw/spacefb.o obj/drivers/spacefb.o \
 	obj/vidhrdw/blueprnt.o obj/drivers/blueprnt.o \
 	obj/drivers/omegrace.o \
 	obj/vidhrdw/dday.o obj/drivers/dday.o \
@@ -1475,7 +1486,8 @@ obj/other.a: \
 	obj/vidhrdw/bjtwin.o obj/drivers/bjtwin.o \
 	obj/vidhrdw/aztarac.o obj/sndhrdw/aztarac.o obj/drivers/aztarac.o \
 	obj/vidhrdw/mole.o obj/drivers/mole.o \
-	obj/vidhrdw/gotya.o obj/drivers/gotya.o \
+	obj/vidhrdw/gotya.o obj/sndhrdw/gotya.o obj/drivers/gotya.o \
+	obj/vidhrdw/mrjong.o obj/drivers/mrjong.o \
 
 # dependencies
 obj/cpu/z80/z80.o: z80.c z80.h z80daa.h

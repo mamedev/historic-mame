@@ -21,27 +21,27 @@ void tumblep_vh_stop(void);
 void tumblep_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void tumblepb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void tumblep_pf2_data_w(int offset,int data);
-void tumblep_pf3_data_w(int offset,int data);
+WRITE_HANDLER( tumblep_pf2_data_w );
+WRITE_HANDLER( tumblep_pf3_data_w );
 
-void tumblep_control_0_w(int offset,int data);
+WRITE_HANDLER( tumblep_control_0_w );
 
 extern unsigned char *tumblep_pf2_data,*tumblep_pf3_data;
 
 /******************************************************************************/
 
-static void tumblep_oki_w(int offset, int data)
+static WRITE_HANDLER( tumblep_oki_w )
 {
 	OKIM6295_data_0_w(0,data&0xff);
     /* STUFF IN OTHER BYTE TOO..*/
 }
 
-static int tumblep_prot_r(int offset)
+static READ_HANDLER( tumblep_prot_r )
 {
 	return 0xffff;
 }
 
-static void tumblep_sound_w(int offset,int data)
+static WRITE_HANDLER( tumblep_sound_w )
 {
 	soundlatch_w(0,data & 0xff);
 	cpu_cause_interrupt(1,H6280_INT_IRQ1);
@@ -50,7 +50,7 @@ static void tumblep_sound_w(int offset,int data)
 
 /******************************************************************************/
 
-static int tumblepop_controls_read(int offset)
+static READ_HANDLER( tumblepop_controls_r )
 {
  	switch (offset)
 	{
@@ -69,8 +69,8 @@ static int tumblepop_controls_read(int offset)
 	return 0xffff;
 }
 
-static int tumblep_pf2_data_r(int offset) { return READ_WORD(&tumblep_pf2_data[offset]); }
-static int tumblep_pf3_data_r(int offset) { return READ_WORD(&tumblep_pf3_data[offset]); }
+static READ_HANDLER( tumblep_pf2_data_r ) { return READ_WORD(&tumblep_pf2_data[offset]); }
+static READ_HANDLER( tumblep_pf3_data_r ) { return READ_WORD(&tumblep_pf3_data[offset]); }
 
 /******************************************************************************/
 
@@ -79,7 +79,7 @@ static struct MemoryReadAddress tumblepop_readmem[] =
 	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0x120000, 0x123fff, MRA_BANK1 },
 	{ 0x140000, 0x1407ff, paletteram_word_r },
-	{ 0x180000, 0x18000f, tumblepop_controls_read },
+	{ 0x180000, 0x18000f, tumblepop_controls_r },
 	{ 0x1a0000, 0x1a07ff, MRA_BANK2 },
 	{ 0x320000, 0x320fff, tumblep_pf3_data_r },
 	{ 0x322000, 0x322fff, tumblep_pf2_data_r },
@@ -112,7 +112,7 @@ static struct MemoryReadAddress tumblepopb_readmem[] =
 	{ 0x120000, 0x123fff, MRA_BANK1 },
 	{ 0x140000, 0x1407ff, paletteram_word_r },
 	{ 0x160000, 0x1607ff, MRA_BANK5 },
-	{ 0x180000, 0x18000f, tumblepop_controls_read },
+	{ 0x180000, 0x18000f, tumblepop_controls_r },
 	{ 0x1a0000, 0x1a07ff, MRA_BANK2 },
 	{ -1 }  /* end of table */
 };
@@ -139,7 +139,7 @@ static struct MemoryWriteAddress tumblepopb_writemem[] =
 
 /******************************************************************************/
 
-static void YM2151_w(int offset, int data)
+static WRITE_HANDLER( YM2151_w )
 {
 	switch (offset) {
 	case 0:

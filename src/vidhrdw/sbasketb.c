@@ -88,7 +88,7 @@ void sbasketb_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 }
 
 
-void sbasketb_flipscreen_w(int offset,int data)
+WRITE_HANDLER( sbasketb_flipscreen_w )
 {
 	if (flipscreen != data)
 	{

@@ -229,21 +229,21 @@ static void nvram_handler(void *file, int read_or_write)
 static void omegrace_init_machine(void)
 {
 	/* Omega Race expects the vector processor to be ready. */
-	avgdvg_reset (0, 0);
+	avgdvg_reset_w (0, 0);
 }
 
-static int omegrace_vg_go(int data)
+static READ_HANDLER( omegrace_vg_go_r )
 {
-	avgdvg_go(0,0);
+	avgdvg_go_w(0,0);
 	return 0;
 }
 
-static int omegrace_watchdog_r(int offset)
+static READ_HANDLER( omegrace_watchdog_r )
 {
 	return 0;
 }
 
-static int omegrace_vg_status_r(int offset)
+static READ_HANDLER( omegrace_vg_status_r )
 {
 	if (avgdvg_done())
 		return 0;
@@ -274,7 +274,7 @@ static unsigned char spinnerTable[64] = {
 	0x30, 0x34, 0x24, 0x20, 0x28, 0x2c, 0x0c, 0x08 };
 
 
-int omegrace_spinner1_r(int offset)
+READ_HANDLER( omegrace_spinner1_r )
 {
 	int res;
 	res=readinputport(4);
@@ -282,7 +282,7 @@ int omegrace_spinner1_r(int offset)
 	return (spinnerTable[res&0x3f]);
 }
 
-void omegrace_leds_w (int offset, int data)
+WRITE_HANDLER( omegrace_leds_w )
 {
 	/* bits 0 and 1 are coin counters */
 	coin_counter_w(0,data & 1);
@@ -295,7 +295,7 @@ void omegrace_leds_w (int offset, int data)
 	/* bit 6 flips screen (not supported) */
 }
 
-void omegrace_soundlatch_w (int offset, int data)
+WRITE_HANDLER( omegrace_soundlatch_w )
 {
 	soundlatch_w (offset, data);
 	cpu_cause_interrupt (1, 0xff);
@@ -341,7 +341,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 static struct IOReadPort readport[] =
 {
-	{ 0x08, 0x08, omegrace_vg_go },
+	{ 0x08, 0x08, omegrace_vg_go_r },
 	{ 0x09, 0x09, omegrace_watchdog_r },
 	{ 0x0b, 0x0b, omegrace_vg_status_r }, /* vg_halt */
 	{ 0x10, 0x10, input_port_0_r }, /* DIP SW C4 */
@@ -355,7 +355,7 @@ static struct IOReadPort readport[] =
 
 static struct IOWritePort writeport[] =
 {
-	{ 0x0a, 0x0a, avgdvg_reset },
+	{ 0x0a, 0x0a, avgdvg_reset_w },
 	{ 0x13, 0x13, omegrace_leds_w }, /* coin counters, leds, flip screen */
 	{ 0x14, 0x14, omegrace_soundlatch_w }, /* Sound command */
 	{ -1 }	/* end of table */

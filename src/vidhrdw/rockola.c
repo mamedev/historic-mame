@@ -117,7 +117,7 @@ void satansat_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 
 
-void rockola_characterram_w(int offset,int data)
+WRITE_HANDLER( rockola_characterram_w )
 {
 	if (rockola_characterram[offset] != data)
 	{
@@ -128,7 +128,7 @@ void rockola_characterram_w(int offset,int data)
 
 
 
-void rockola_flipscreen_w(int offset,int data)
+WRITE_HANDLER( rockola_flipscreen_w )
 {
 	/* bits 0-2 select background color */
 	if (backcolor != (data & 7))
@@ -160,7 +160,7 @@ void rockola_flipscreen_w(int offset,int data)
 }
 
 
-void satansat_b002_w(int offset,int data)
+WRITE_HANDLER( satansat_b002_w )
 {
 	/* bit 0 flips screen */
 	if (flipscreen != (data & 0x01))
@@ -179,7 +179,7 @@ void satansat_b002_w(int offset,int data)
 
 
 
-void satansat_backcolor_w(int offset, int data)
+WRITE_HANDLER( satansat_backcolor_w )
 {
 	/* bits 0-1 select background color. Other bits unused. */
 	if (backcolor != (data & 3))

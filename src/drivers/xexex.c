@@ -14,11 +14,11 @@ Xexex
 int xexex_vh_start(void);
 void xexex_vh_stop(void);
 void xexex_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void xexex_palette_w(int offset, int data);
+WRITE_HANDLER( xexex_palette_w );
 
-void K053157_ram_w(int offset, int data);
-void K053157_w(int offset, int data);
-int K053157_r(int offset);
+WRITE_HANDLER( K053157_ram_w );
+WRITE_HANDLER( K053157_w );
+READ_HANDLER( K053157_r );
 
 static int cur_rombank;
 static int cur_back_select, cur_back_ctrla;
@@ -70,12 +70,12 @@ static void init_xexex(void)
 	gfx_init();
 }
 
-static int control0_r(int offset)
+static READ_HANDLER( control0_r )
 {
 	return input_port_0_r(0);
 }
 
-static int control1_r(int offset)
+static READ_HANDLER( control1_r )
 {
 	int res;
 
@@ -93,12 +93,12 @@ static int control1_r(int offset)
 	return res;
 }
 
-static int control2_r(int offset)
+static READ_HANDLER( control2_r )
 {
 	return cur_control2;
 }
 
-static void control2_w(int offset, int data)
+static WRITE_HANDLER( control2_w )
 {
 	/* bit 0  is data */
 	/* bit 1  is cs (active low) */
@@ -135,7 +135,7 @@ static int xexex_interrupt(void)
 
 static int sound_status = 0, sound_cmd = 0;
 
-static void sound_cmd_w(int offset, int data)
+static WRITE_HANDLER( sound_cmd_w )
 {
 	if(errorlog)
 		fprintf(errorlog, "Sound command : %d\n", data & 0xff);
@@ -145,14 +145,14 @@ static void sound_cmd_w(int offset, int data)
 	  sound_status = 0x7f;
 }
 
-static void sound_status_w(int offset, int data)
+static WRITE_HANDLER( sound_status_w )
 {
 	if(errorlog)
 		fprintf(errorlog, "Sound status = %d\n", data);
 	sound_status = data;
 }
 
-static int sound_cmd_r(int offset)
+static READ_HANDLER( sound_cmd_r )
 {
 	if(errorlog)
 		fprintf(errorlog, "Sound CPU read command %d\n", sound_cmd & 0xff);
@@ -160,22 +160,22 @@ static int sound_cmd_r(int offset)
 	return sound_cmd;
 }
 
-static int sound_status_r(int offset)
+static READ_HANDLER( sound_status_r )
 {
 	return sound_status;
 }
 
-static void sound_bankswitch_w(int offset, int data)
+static WRITE_HANDLER( sound_bankswitch_w )
 {
 	cpu_setbank(3, memory_region(REGION_CPU2) + 0x10000 + (data&7)*0x2000);
 }
 
-static int back_ctrla_r(int offset)
+static READ_HANDLER( back_ctrla_r )
 {
 	return cur_back_ctrla;
 }
 
-static void back_ctrla_w(int offset, int data)
+static WRITE_HANDLER( back_ctrla_w )
 {
 	data &= 0xff;
 	if(data != cur_back_ctrla) {
@@ -185,12 +185,12 @@ static void back_ctrla_w(int offset, int data)
 	}
 }
 
-static int back_select_r(int offset)
+static READ_HANDLER( back_select_r )
 {
 	return cur_back_select;
 }
 
-static void back_select_w(int offset, int data)
+static WRITE_HANDLER( back_select_w )
 {
 	data &= 0xff;
 	if(data != cur_back_select) {
@@ -200,7 +200,7 @@ static void back_select_w(int offset, int data)
 	}
 }
 
-static int backrom_r(int offset)
+static READ_HANDLER( backrom_r )
 {
 	if(errorlog && !(cur_back_ctrla & 1))
 		fprintf(errorlog, "Back: Reading rom memory with enable=0\n");

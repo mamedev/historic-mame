@@ -22,7 +22,7 @@ static int noise=0;			/* Output noise signal */
   avalnche_input_r
 ***************************************************************************/
 
-int avalnche_input_r(int offset)
+READ_HANDLER( avalnche_input_r )
 {
 	switch (offset & 0x03)
 	{
@@ -38,7 +38,7 @@ int avalnche_input_r(int offset)
   avalnche_output_w
 ***************************************************************************/
 
-void avalnche_output_w(int offset, int data)
+WRITE_HANDLER( avalnche_output_w )
 {
 	switch (offset & 0x07)
 	{
@@ -82,7 +82,7 @@ void avalnche_output_w(int offset, int data)
   avalnche_noise_amplitude_w
 ***************************************************************************/
 
-void avalnche_noise_amplitude_w(int offset, int data)
+WRITE_HANDLER( avalnche_noise_amplitude_w )
 {
 	volume = data & 0x3F;
 }

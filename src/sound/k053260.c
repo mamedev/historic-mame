@@ -312,8 +312,11 @@ INLINE void check_bounds( int channel ) {
 #endif
 }
 
-void K053260_WriteReg( int r,int v ) {
+WRITE_HANDLER( K053260_w )
+{
 	int i, t;
+	int r = offset;
+	int v = data;
 
 	if ( r > 0x2f ) {
 		if ( errorlog )
@@ -433,9 +436,9 @@ void K053260_WriteReg( int r,int v ) {
 	}
 }
 
-int K053260_ReadReg( int r ) {
-
-	switch ( r ) {
+READ_HANDLER( K053260_r )
+{
+	switch ( offset ) {
 		case 0x29: /* channel status */
 			{
 				int i, status = 0;
@@ -465,5 +468,5 @@ int K053260_ReadReg( int r ) {
 		break;
 	}
 
-	return K053260_chip.regs[r];
+	return K053260_chip.regs[offset];
 }

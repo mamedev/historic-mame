@@ -104,7 +104,7 @@ int appoooh_vh_start(void)
 	return 0;
 }
 
-void appoooh_scroll_w(int offset,int data)
+WRITE_HANDLER( appoooh_scroll_w )
 {
 	scroll_x = data;
 }
@@ -122,7 +122,7 @@ void appoooh_vh_stop(void)
 
 }
 
-void appoooh_videoram2_w(int offset,int data)
+WRITE_HANDLER( appoooh_videoram2_w )
 {
 	if (appoooh_videoram2[offset] != data)
 	{
@@ -134,7 +134,7 @@ void appoooh_videoram2_w(int offset,int data)
 
 
 
-void appoooh_colorram2_w(int offset,int data)
+WRITE_HANDLER( appoooh_colorram2_w )
 {
 	if (appoooh_colorram2[offset] != data)
 	{
@@ -144,7 +144,7 @@ void appoooh_colorram2_w(int offset,int data)
 	}
 }
 
-void appoooh_out_w(int offset,int data)
+WRITE_HANDLER( appoooh_out_w )
 {
 	/* bit 0 controls NMI */
 	if (data & 0x01) interrupt_enable_w(0,1);

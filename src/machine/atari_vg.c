@@ -15,14 +15,14 @@ static int earom_offset;
 static int earom_data;
 static char earom[EAROM_SIZE];
 
-int atari_vg_earom_r (int offset)
+READ_HANDLER( atari_vg_earom_r )
 {
 	if (errorlog)
 		fprintf (errorlog, "read earom: %02x(%02x):%02x\n", earom_offset, offset, earom_data);
 	return (earom_data);
 }
 
-void atari_vg_earom_w (int offset, int data)
+WRITE_HANDLER( atari_vg_earom_w )
 {
 	if (errorlog)
 		fprintf (errorlog, "write earom: %02x:%02x\n", offset, data);
@@ -33,7 +33,7 @@ void atari_vg_earom_w (int offset, int data)
 /* 0,8 and 14 get written to this location, too.
  * Don't know what they do exactly
  */
-void atari_vg_earom_ctrl (int offset, int data)
+WRITE_HANDLER( atari_vg_earom_ctrl_w )
 {
 	if (errorlog)
 		fprintf (errorlog, "earom ctrl: %02x:%02x\n",offset, data);

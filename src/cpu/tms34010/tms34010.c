@@ -1617,12 +1617,12 @@ static void common_io_register_w(int cpunum, TMS34010_Regs *context, int reg, in
 		fprintf(errorlog, "CPU#%d: %s = %04X (%d)\n", cpunum, ioreg_name[reg], CONTEXT_IOREG(context, reg), cpu_getscanline());
 }
 
-void TMS34010_io_register_w(int reg, int data)
+WRITE_HANDLER( TMS34010_io_register_w )
 {
 	if (!host_interface_context)
-		common_io_register_w(cpu_getactivecpu(), &state, reg, data);
+		common_io_register_w(cpu_getactivecpu(), &state, offset, data);
 	else
-		common_io_register_w(host_interface_cpu, host_interface_context, reg, data);
+		common_io_register_w(host_interface_cpu, host_interface_context, offset, data);
 }
 
 
@@ -1667,12 +1667,12 @@ static int common_io_register_r(int cpunum, TMS34010_Regs *context, int reg)
 }
 
 
-int TMS34010_io_register_r(int reg)
+READ_HANDLER( TMS34010_io_register_r )
 {
 	if (!host_interface_context)
-		return common_io_register_r(cpu_getactivecpu(), &state, reg);
+		return common_io_register_r(cpu_getactivecpu(), &state, offset);
 	else
-		return common_io_register_r(host_interface_cpu, host_interface_context, reg);
+		return common_io_register_r(host_interface_cpu, host_interface_context, offset);
 }
 
 

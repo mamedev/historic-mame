@@ -233,7 +233,7 @@ void atarisys2_vh_stop(void)
  *
  *************************************/
 
-void atarisys2_hscroll_w(int offset, int data)
+WRITE_HANDLER( atarisys2_hscroll_w )
 {
 	int oldword = READ_WORD(&atarigen_hscroll[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -251,7 +251,7 @@ void atarisys2_hscroll_w(int offset, int data)
 }
 
 
-void atarisys2_vscroll_w(int offset, int data)
+WRITE_HANDLER( atarisys2_vscroll_w )
 {
 	int oldword = READ_WORD(&atarigen_vscroll[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -279,7 +279,7 @@ void atarisys2_vscroll_w(int offset, int data)
  *
  *************************************/
 
-void atarisys2_paletteram_w(int offset, int data)
+WRITE_HANDLER( atarisys2_paletteram_w )
 {
 	static const int intensity_table[16] =
 	{
@@ -317,7 +317,7 @@ void atarisys2_paletteram_w(int offset, int data)
  *
  *************************************/
 
-int atarisys2_slapstic_r(int offset)
+READ_HANDLER( atarisys2_slapstic_r )
 {
 	slapstic_tweak(offset / 2);
 
@@ -329,7 +329,7 @@ int atarisys2_slapstic_r(int offset)
 }
 
 
-void atarisys2_slapstic_w(int offset, int data)
+WRITE_HANDLER( atarisys2_slapstic_w )
 {
 	slapstic_tweak(offset / 2);
 
@@ -346,13 +346,13 @@ void atarisys2_slapstic_w(int offset, int data)
  *
  *************************************/
 
-int atarisys2_videoram_r(int offset)
+READ_HANDLER( atarisys2_videoram_r )
 {
 	return READ_WORD(&videoram[offset]);
 }
 
 
-void atarisys2_videoram_w(int offset, int data)
+WRITE_HANDLER( atarisys2_videoram_w )
 {
 	int oldword = READ_WORD(&videoram[offset]);
 	int newword = COMBINE_WORD(oldword, data);

@@ -13,10 +13,10 @@
 #include "vidhrdw/generic.h"
 
 
-void skychut_vh_flipscreen_w (int offset,int data);
+WRITE_HANDLER( skychut_vh_flipscreen_w );
 void skychut_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void skychut_colorram_w(int offset,int data);
-void skychut_vh_flipscreen_w (int offset,int data);
+WRITE_HANDLER( skychut_colorram_w );
+WRITE_HANDLER( skychut_vh_flipscreen_w );
 
 
 static unsigned char palette[] = /* V.V */ /* Smoothed pure colors, overlays are not so contrasted */

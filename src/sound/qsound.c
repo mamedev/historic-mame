@@ -215,22 +215,22 @@ void qsound_sh_stop (void)
 #endif
 }
 
-void qsound_data_h_w(int offset,int data)
+WRITE_HANDLER( qsound_data_h_w )
 {
     qsound_data=(qsound_data&0xff)|(data<<8);
 }
 
-void qsound_data_l_w(int offset,int data)
+WRITE_HANDLER( qsound_data_l_w )
 {
     qsound_data=(qsound_data&0xff00)|data;
 }
 
-void qsound_cmd_w(int offset,int data)
+WRITE_HANDLER( qsound_cmd_w )
 {
     qsound_set_command(data, qsound_data);
 }
 
-int qsound_status_r(int offset)
+READ_HANDLER( qsound_status_r )
 {
 	/* Port ready bit (0x80 if ready) */
 	return 0x80;

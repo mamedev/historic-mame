@@ -72,7 +72,7 @@ void exidy_vh_stop(void)
 exidy_characterram_w
 ***************************************************************************/
 
-void exidy_characterram_w(int offset,int data)
+WRITE_HANDLER( exidy_characterram_w )
 {
 	if (exidy_characterram[offset] != data)
 	{
@@ -86,7 +86,7 @@ void exidy_characterram_w(int offset,int data)
 exidy_color_w
 ***************************************************************************/
 
-void exidy_color_w(int offset,int data)
+WRITE_HANDLER( exidy_color_w )
 {
 	int i;
 

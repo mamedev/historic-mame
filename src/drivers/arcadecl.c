@@ -12,7 +12,7 @@
 #include "vidhrdw/generic.h"
 
 
-void arcadecl_playfieldram_w(int offset, int data);
+WRITE_HANDLER( arcadecl_playfieldram_w );
 
 int arcadecl_vh_start(void);
 void arcadecl_vh_stop(void);
@@ -75,13 +75,13 @@ static void init_machine(void)
  *
  *************************************/
 
-static int adpcm_r(int offset)
+static READ_HANDLER( adpcm_r )
 {
 	return (OKIM6295_status_0_r(offset) << 8) | 0x00ff;
 }
 
 
-static void adpcm_w(int offset, int data)
+static WRITE_HANDLER( adpcm_w )
 {
 	if (!(data & 0xff000000))
 		OKIM6295_data_0_w(offset, (data >> 8) & 0xff);
@@ -95,7 +95,7 @@ static void adpcm_w(int offset, int data)
  *
  *************************************/
 
-static void latch_w(int offset, int data)
+static WRITE_HANDLER( latch_w )
 {
 	/* bit layout in this register:
 

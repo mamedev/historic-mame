@@ -16,14 +16,14 @@ static int sign_x_2, sign_y_2;
 static int sign_x_3, sign_y_3;
 static int sign_x_4, sign_y_4;
 
-void atarifb_out1_w(int offset, int data)
+WRITE_HANDLER( atarifb_out1_w )
 {
 	CTRLD = data;
 	/* we also need to handle the whistle, hit, and kicker sound lines */
 //	if (errorlog) fprintf (errorlog, "out1_w: %02x\n", data);
 }
 
-void atarifb4_out1_w(int offset, int data)
+WRITE_HANDLER( atarifb4_out1_w )
 {
 	CTRLD = data;
 	coin_counter_w (0, data & 0x80);
@@ -31,7 +31,7 @@ void atarifb4_out1_w(int offset, int data)
 //	if (errorlog) fprintf (errorlog, "out1_w: %02x\n", data);
 }
 
-void soccer_out1_w(int offset, int data)
+WRITE_HANDLER( soccer_out1_w )
 {
 	/* bit 0 = whistle */
 	/* bit 1 = hit */
@@ -46,7 +46,7 @@ void soccer_out1_w(int offset, int data)
 }
 
 
-int atarifb_in0_r(int offset)
+READ_HANDLER( atarifb_in0_r )
 {
 	if ((CTRLD & 0x20)==0x00)
 	{
@@ -84,7 +84,7 @@ int atarifb_in0_r(int offset)
 }
 
 
-int atarifb_in2_r(int offset)
+READ_HANDLER( atarifb_in2_r )
 {
 	if ((CTRLD & 0x20)==0x00)
 	{
@@ -114,7 +114,7 @@ int atarifb_in2_r(int offset)
 	}
 }
 
-int atarifb4_in0_r(int offset)
+READ_HANDLER( atarifb4_in0_r )
 {
 	/* LD1 and LD2 low, return sign bits */
 	if ((CTRLD & 0x60)==0x00)
@@ -182,7 +182,7 @@ int atarifb4_in0_r(int offset)
 }
 
 
-int atarifb4_in2_r(int offset)
+READ_HANDLER( atarifb4_in2_r )
 {
 	if ((CTRLD & 0x40)==0x00)
 	{

@@ -150,11 +150,10 @@ static void tilemap3_preupdate(void)
 	tile_offs[3] = ((tile_address_prom[0x13] & 0xe0) >> 5) * 0x100;
 }
 
-static void get_tile_info(int col,int row)
+static void get_tile_info(int tile_index)
 {
-	int tile_index = 2*(64*row+col);
-	unsigned char attr = videoram[tile_index + 1];
-	SET_TILE_INFO(gfx_num,videoram[tile_index] + tile_offs[attr & 0x03],attr)
+	unsigned char attr = videoram[2*tile_index + 1];
+	SET_TILE_INFO(gfx_num,videoram[2*tile_index] + tile_offs[attr & 0x03],attr)
 }
 
 
@@ -167,22 +166,20 @@ static void get_tile_info(int col,int row)
 
 int namcos86_vh_start(void)
 {
-	tilemap[0] = tilemap_create(get_tile_info,TILEMAP_TRANSPARENT,8,8,64,32);
-	tilemap[1] = tilemap_create(get_tile_info,TILEMAP_TRANSPARENT,8,8,64,32);
-	tilemap[2] = tilemap_create(get_tile_info,TILEMAP_TRANSPARENT,8,8,64,32);
-	tilemap[3] = tilemap_create(get_tile_info,TILEMAP_TRANSPARENT,8,8,64,32);
+	tilemap[0] = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+	tilemap[1] = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+	tilemap[2] = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+	tilemap[3] = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 
-	if (tilemap[0] && tilemap[1] && tilemap[2] && tilemap[3])
-	{
-		tilemap[0]->transparent_pen = 7;
-		tilemap[1]->transparent_pen = 7;
-		tilemap[2]->transparent_pen = 7;
-		tilemap[3]->transparent_pen = 7;
+	if (!tilemap[0] || !tilemap[1] || !tilemap[2] || !tilemap[3])
+		return 1;
 
-		return 0;
-	}
+	tilemap[0]->transparent_pen = 7;
+	tilemap[1]->transparent_pen = 7;
+	tilemap[2]->transparent_pen = 7;
+	tilemap[3]->transparent_pen = 7;
 
-	return 1;
+	return 0;
 }
 
 
@@ -193,35 +190,35 @@ int namcos86_vh_start(void)
 
 ***************************************************************************/
 
-int rthunder_videoram1_r(int offset)
+READ_HANDLER( rthunder_videoram1_r )
 {
 	return rthunder_videoram1[offset];
 }
 
-void rthunder_videoram1_w(int offset,int data)
+WRITE_HANDLER( rthunder_videoram1_w )
 {
 	if (rthunder_videoram1[offset] != data)
 	{
 		rthunder_videoram1[offset] = data;
-		tilemap_mark_tile_dirty(tilemap[offset/0x1000],(offset/2)%64,((offset%0x1000)/2)/64);
+		tilemap_mark_tile_dirty(tilemap[offset/0x1000],(offset & 0xfff)/2);
 	}
 }
 
-int rthunder_videoram2_r(int offset)
+READ_HANDLER( rthunder_videoram2_r )
 {
 	return rthunder_videoram2[offset];
 }
 
-void rthunder_videoram2_w(int offset,int data)
+WRITE_HANDLER( rthunder_videoram2_w )
 {
 	if (rthunder_videoram2[offset] != data)
 	{
 		rthunder_videoram2[offset] = data;
-		tilemap_mark_tile_dirty(tilemap[2+offset/0x1000],(offset/2)%64,((offset%0x1000)/2)/64);
+		tilemap_mark_tile_dirty(tilemap[2+offset/0x1000],(offset & 0xfff)/2);
 	}
 }
 
-void rthunder_tilebank_select_0(int offset,int data)
+WRITE_HANDLER( rthunder_tilebank_select_0_w )
 {
 	if (tilebank != 0)
 	{
@@ -231,7 +228,7 @@ void rthunder_tilebank_select_0(int offset,int data)
 	}
 }
 
-void rthunder_tilebank_select_1(int offset,int data)
+WRITE_HANDLER( rthunder_tilebank_select_1_w )
 {
 	if (tilebank != 1)
 	{
@@ -272,25 +269,25 @@ static void scroll_w(int layer,int offset,int data)
 	tilemap_set_scrolly(tilemap[layer],0,scrolly+16);
 }
 
-void rthunder_scroll0_w(int offset,int data)
+WRITE_HANDLER( rthunder_scroll0_w )
 {
 	scroll_w(0,offset,data);
 }
-void rthunder_scroll1_w(int offset,int data)
+WRITE_HANDLER( rthunder_scroll1_w )
 {
 	scroll_w(1,offset,data);
 }
-void rthunder_scroll2_w(int offset,int data)
+WRITE_HANDLER( rthunder_scroll2_w )
 {
 	scroll_w(2,offset,data);
 }
-void rthunder_scroll3_w(int offset,int data)
+WRITE_HANDLER( rthunder_scroll3_w )
 {
 	scroll_w(3,offset,data);
 }
 
 
-void rthunder_backcolor_w(int offset,int data)
+WRITE_HANDLER( rthunder_backcolor_w )
 {
 	backcolor = data;
 }

@@ -24,19 +24,19 @@ if (errorlog && read_debug == 0 && latch != param)
 	read_debug = 0;
 }
 
-void soundlatch_w(int offset,int data)
+WRITE_HANDLER( soundlatch_w )
 {
 	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
 	timer_set(TIME_NOW,data,soundlatch_callback);
 }
 
-int soundlatch_r(int offset)
+READ_HANDLER( soundlatch_r )
 {
 	read_debug = 1;
 	return latch;
 }
 
-void soundlatch_clear_w(int offset, int data)
+WRITE_HANDLER( soundlatch_clear_w )
 {
 	latch = cleared_value;
 }
@@ -52,19 +52,19 @@ if (errorlog && read_debug2 == 0 && latch2 != param)
 	read_debug2 = 0;
 }
 
-void soundlatch2_w(int offset,int data)
+WRITE_HANDLER( soundlatch2_w )
 {
 	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
 	timer_set(TIME_NOW,data,soundlatch2_callback);
 }
 
-int soundlatch2_r(int offset)
+READ_HANDLER( soundlatch2_r )
 {
 	read_debug2 = 1;
 	return latch2;
 }
 
-void soundlatch2_clear_w(int offset, int data)
+WRITE_HANDLER( soundlatch2_clear_w )
 {
 	latch2 = cleared_value;
 }
@@ -80,19 +80,19 @@ if (errorlog && read_debug3 == 0 && latch3 != param)
 	read_debug3 = 0;
 }
 
-void soundlatch3_w(int offset,int data)
+WRITE_HANDLER( soundlatch3_w )
 {
 	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
 	timer_set(TIME_NOW,data,soundlatch3_callback);
 }
 
-int soundlatch3_r(int offset)
+READ_HANDLER( soundlatch3_r )
 {
 	read_debug3 = 1;
 	return latch3;
 }
 
-void soundlatch3_clear_w(int offset, int data)
+WRITE_HANDLER( soundlatch3_clear_w )
 {
 	latch3 = cleared_value;
 }
@@ -108,19 +108,19 @@ if (errorlog && read_debug4 == 0 && latch4 != param)
 	read_debug4 = 0;
 }
 
-void soundlatch4_w(int offset,int data)
+WRITE_HANDLER( soundlatch4_w )
 {
 	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
 	timer_set(TIME_NOW,data,soundlatch4_callback);
 }
 
-int soundlatch4_r(int offset)
+READ_HANDLER( soundlatch4_r )
 {
 	read_debug4 = 1;
 	return latch4;
 }
 
-void soundlatch4_clear_w(int offset, int data)
+WRITE_HANDLER( soundlatch4_clear_w )
 {
 	latch4 = cleared_value;
 }

@@ -20,24 +20,24 @@ extern unsigned char *rastan_spriteram;
 extern unsigned char *rastan_scrollx;
 extern unsigned char *rastan_scrolly;
 
-void rastan_spriteram_w(int offset,int data);
-int  rastan_spriteram_r(int offset);
-void rastan_videoram1_w(int offset,int data);
-int  rastan_videoram1_r(int offset);
-void rastan_videoram3_w(int offset,int data);
-int  rastan_videoram3_r(int offset);
+WRITE_HANDLER( rastan_spriteram_w );
+READ_HANDLER( rastan_spriteram_r );
+WRITE_HANDLER( rastan_videoram1_w );
+READ_HANDLER( rastan_videoram1_r );
+WRITE_HANDLER( rastan_videoram3_w );
+READ_HANDLER( rastan_videoram3_r );
 
 int  rastan_vh_start(void);
 void rastan_vh_stop(void);
 
-void rastan_scrollY_w(int offset,int data);
-void rastan_scrollX_w(int offset,int data);
-void rastan_videocontrol_w(int offset,int data);
+WRITE_HANDLER( rastan_scrollY_w );
+WRITE_HANDLER( rastan_scrollX_w );
+WRITE_HANDLER( rastan_videocontrol_w );
 
 int  rastan_s_interrupt(void);
-int  rastan_sound_r(int offset);
-void rastan_sound_port_w(int offset,int data);
-void rastan_sound_comm_w(int offset,int data);
+READ_HANDLER( rastan_sound_r );
+WRITE_HANDLER( rastan_sound_port_w );
+WRITE_HANDLER( rastan_sound_comm_w );
 
 
 /***************************************************************************
@@ -49,9 +49,9 @@ void rastan_sound_comm_w(int offset,int data);
 
 void rastan_irq_handler(int irq);
 
-int  r_rd_a001(int offset);
-void r_wr_a000(int offset,int data);
-void r_wr_a001(int offset,int data);
+READ_HANDLER( rastan_a001_r );
+WRITE_HANDLER( rastan_a000_w );
+WRITE_HANDLER( rastan_a001_w );
 
 static struct MemoryReadAddress rastan_s_readmem[] =
 {
@@ -60,7 +60,7 @@ static struct MemoryReadAddress rastan_s_readmem[] =
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9001, 0x9001, YM2151_status_port_0_r },
 	{ 0x9002, 0x9100, MRA_RAM },
-	{ 0xa001, 0xa001, r_rd_a001 },
+	{ 0xa001, 0xa001, rastan_a001_r },
 	{ -1 }  /* end of table */
 };
 
@@ -70,12 +70,12 @@ static struct MemoryWriteAddress rastan_s_writemem[] =
 	{ 0x8000, 0x8fff, MWA_RAM },
 	{ 0x9000, 0x9000, YM2151_register_port_0_w },
 	{ 0x9001, 0x9001, YM2151_data_port_0_w },
-	{ 0xa000, 0xa000, r_wr_a000 },
-	{ 0xa001, 0xa001, r_wr_a001 },
+	{ 0xa000, 0xa000, rastan_a000_w },
+	{ 0xa001, 0xa001, rastan_a001_w },
 	{ -1 }  /* end of table */
 };
 
-static void rastan_bankswitch_w(int offset, int data)
+static WRITE_HANDLER( rastan_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int banknum = ( data - 1 ) & 3;
@@ -96,14 +96,14 @@ static struct YM2151interface ym2151_interface =
 ***************************************************************************/
 
 int  rainbow_interrupt(void);
-void rainbow_c_chip_w(int offset, int data);
-int  rainbow_c_chip_r(int offset);
+WRITE_HANDLER( rainbow_c_chip_w );
+READ_HANDLER( rainbow_c_chip_r );
 void rainbow_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /* Almost the same as Rastan, it just writes a '1' to the sound port */
 /* before sending the second byte of any 2 byte commands - ignored!  */
 
-void rainbow_sound_w(int offset,int data)
+WRITE_HANDLER( rainbow_sound_w )
 {
 	if (offset == 0)
     {

@@ -746,7 +746,7 @@ struct memory_struct
 {
   int Enabled;
   char Name[24];
-  void (*handler)(int,int);
+  mem_write_handler handler;
 };
 
 #define MAX_TEXT_LINE 1000
@@ -1834,7 +1834,7 @@ static void reset_texttable (struct TextLine *table)
 }
 
 /* Returns 1 if memory area has to be skipped */
-int SkipBank(int CpuToScan, int *BankToScanTable, void (*handler)(int,int))
+int SkipBank(int CpuToScan, int *BankToScanTable, mem_write_handler handler)
 {
 	int res = 0;
 
@@ -1962,7 +1962,7 @@ static int build_tables (void)
 	while (mwa->start != -1)
 	{
 		/* int (*handler)(int) = mra->handler; */
-		void (*handler)(int,int) = mwa->handler;
+		mem_write_handler handler = mwa->handler;
 		int size = (mwa->end - mwa->start) + 1;
 
 		if (SkipBank(CpuToScan, BankToScanTable, handler))

@@ -9,7 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-void subs_invert1_w(int offset, int data)
+WRITE_HANDLER( subs_invert1_w )
 {
 	if ((offset & 0x01) == 1)
 	{
@@ -23,7 +23,7 @@ void subs_invert1_w(int offset, int data)
 	}
 }
 
-void subs_invert2_w(int offset, int data)
+WRITE_HANDLER( subs_invert2_w )
 {
 	if ((offset & 0x01) == 1)
 	{

@@ -27,19 +27,19 @@ ask.  - Mike Balfour (mab22@po.cwru.edu)
 
 /* machine/nitedrvr.c */
 extern unsigned char *nitedrvr_ram;
-extern int nitedrvr_in0_r(int offset);
-extern int nitedrvr_in1_r(int offset);
-extern int nitedrvr_ram_r(int offset);
-extern int nitedrvr_steering_reset_r(int offset);
-extern void nitedrvr_steering_reset_w(int offset, int data);
-extern void nitedrvr_out0_w(int offset, int data);
-extern void nitedrvr_out1_w(int offset, int data);
-extern void nitedrvr_ram_w(int offset, int data);
+READ_HANDLER( nitedrvr_in0_r );
+READ_HANDLER( nitedrvr_in1_r );
+READ_HANDLER( nitedrvr_ram_r );
+READ_HANDLER( nitedrvr_steering_reset_r );
+WRITE_HANDLER( nitedrvr_steering_reset_w );
+WRITE_HANDLER( nitedrvr_out0_w );
+WRITE_HANDLER( nitedrvr_out1_w );
+WRITE_HANDLER( nitedrvr_ram_w );
 
 
 /* vidhrdw/nitedrvr.c */
 extern unsigned char *nitedrvr_hvc;
-extern void nitedrvr_hvc_w(int offset, int data);
+WRITE_HANDLER( nitedrvr_hvc_w );
 extern void nitedrvr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 

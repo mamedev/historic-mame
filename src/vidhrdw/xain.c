@@ -21,27 +21,30 @@ static int flipscreen;
 
 ***************************************************************************/
 
-static void get_bgram0_tile_info( int col, int row )
+static UINT32 back_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 {
-	int addr = (col & 0xf)|((col & 0x10)<<4)|((row & 0xf)<<4)|((row & 0x10)<<5);
-	int attr = xain_bgram0[addr | 0x400];
-	SET_TILE_INFO(2,xain_bgram0[addr] | ((attr & 7) << 8),(attr & 0x70) >> 4);
+	/* logical (col,row) -> memory offset */
+	return (col & 0x0f) + ((row & 0x0f) << 4) + ((col & 0x10) << 4) + ((row & 0x10) << 5);
+}
+
+static void get_bgram0_tile_info(int tile_index)
+{
+	int attr = xain_bgram0[tile_index | 0x400];
+	SET_TILE_INFO(2,xain_bgram0[tile_index] | ((attr & 7) << 8),(attr & 0x70) >> 4);
 	tile_info.flags = (attr & 0x80) ? TILE_FLIPX : 0;
 }
 
-static void get_bgram1_tile_info( int col, int row )
+static void get_bgram1_tile_info(int tile_index)
 {
-	int addr = (col & 0xf)|((col & 0x10)<<4)|((row & 0xf)<<4)|((row & 0x10)<<5);
-	int attr = xain_bgram1[addr | 0x400];
-	SET_TILE_INFO(1,xain_bgram1[addr] | ((attr & 7) << 8),(attr & 0x70) >> 4);
+	int attr = xain_bgram1[tile_index | 0x400];
+	SET_TILE_INFO(1,xain_bgram1[tile_index] | ((attr & 7) << 8),(attr & 0x70) >> 4);
 	tile_info.flags = (attr & 0x80) ? TILE_FLIPX : 0;
 }
 
-static void get_char_tile_info( int col, int row )
+static void get_char_tile_info(int tile_index)
 {
-	int addr = col + row*32;
-	int attr = xain_charram[addr | 0x400];
-	SET_TILE_INFO(0,xain_charram[addr] | ((attr & 3) << 8),(attr & 0xe0) >> 5);
+	int attr = xain_charram[tile_index | 0x400];
+	SET_TILE_INFO(0,xain_charram[tile_index] | ((attr & 3) << 8),(attr & 0xe0) >> 5);
 }
 
 
@@ -53,21 +56,9 @@ static void get_char_tile_info( int col, int row )
 
 int xain_vh_start(void)
 {
-	bgram0_tilemap = tilemap_create(
-			get_bgram0_tile_info,
-			TILEMAP_OPAQUE,
-			16,16,
-			32,32);
-	bgram1_tilemap = tilemap_create(
-			get_bgram1_tile_info,
-			TILEMAP_TRANSPARENT,
-			16,16,
-			32,32);
-	char_tilemap = tilemap_create(
-			get_char_tile_info,
-			TILEMAP_TRANSPARENT,
-			8,8,
-			32,32);
+	bgram0_tilemap = tilemap_create(get_bgram0_tile_info,back_scan,    TILEMAP_OPAQUE,     16,16,32,32);
+	bgram1_tilemap = tilemap_create(get_bgram1_tile_info,back_scan,    TILEMAP_TRANSPARENT,16,16,32,32);
+	char_tilemap = tilemap_create(get_char_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
 
 	if (!bgram0_tilemap || !bgram1_tilemap || !char_tilemap)
 		return 1;
@@ -86,38 +77,34 @@ int xain_vh_start(void)
 
 ***************************************************************************/
 
-void xain_bgram0_w(int offset, int data)
+WRITE_HANDLER( xain_bgram0_w )
 {
 	if (xain_bgram0[offset] != data)
 	{
 		xain_bgram0[offset] = data;
-		tilemap_mark_tile_dirty (bgram0_tilemap,
-				 ((offset>>4)&0x10)|(offset&0xf),
-				 ((offset>>5)&0x10)|((offset>>4)&0xf));
+		tilemap_mark_tile_dirty(bgram0_tilemap,offset & 0x3ff);
 	}
 }
 
-void xain_bgram1_w(int offset, int data)
+WRITE_HANDLER( xain_bgram1_w )
 {
 	if (xain_bgram1[offset] != data)
 	{
 		xain_bgram1[offset] = data;
-		tilemap_mark_tile_dirty (bgram1_tilemap,
-				 ((offset>>4)&0x10)|(offset&0xf),
-				 ((offset>>5)&0x10)|((offset>>4)&0xf));
+		tilemap_mark_tile_dirty(bgram1_tilemap,offset & 0x3ff);
 	}
 }
 
-void xain_charram_w(int offset, int data)
+WRITE_HANDLER( xain_charram_w )
 {
 	if (xain_charram[offset] != data)
 	{
 		xain_charram[offset] = data;
-		tilemap_mark_tile_dirty (char_tilemap, offset & 0x1f, (offset & 0x3e0) >> 5);
+		tilemap_mark_tile_dirty(char_tilemap,offset & 0x3ff);
 	}
 }
 
-void xain_scrollxP0_w(int offset,int data)
+WRITE_HANDLER( xain_scrollxP0_w )
 {
 	static unsigned char xain_scrollxP0[2];
 
@@ -125,7 +112,7 @@ void xain_scrollxP0_w(int offset,int data)
 	tilemap_set_scrollx(bgram0_tilemap, 0, xain_scrollxP0[0]|(xain_scrollxP0[1]<<8));
 }
 
-void xain_scrollyP0_w(int offset,int data)
+WRITE_HANDLER( xain_scrollyP0_w )
 {
 	static unsigned char xain_scrollyP0[2];
 
@@ -133,7 +120,7 @@ void xain_scrollyP0_w(int offset,int data)
 	tilemap_set_scrolly(bgram0_tilemap, 0, xain_scrollyP0[0]|(xain_scrollyP0[1]<<8));
 }
 
-void xain_scrollxP1_w(int offset,int data)
+WRITE_HANDLER( xain_scrollxP1_w )
 {
 	static unsigned char xain_scrollxP1[2];
 
@@ -141,7 +128,7 @@ void xain_scrollxP1_w(int offset,int data)
 	tilemap_set_scrollx(bgram1_tilemap, 0, xain_scrollxP1[0]|(xain_scrollxP1[1]<<8));
 }
 
-void xain_scrollyP1_w(int offset,int data)
+WRITE_HANDLER( xain_scrollyP1_w )
 {
 	static unsigned char xain_scrollyP1[2];
 
@@ -150,7 +137,7 @@ void xain_scrollyP1_w(int offset,int data)
 }
 
 
-void xain_flipscreen_w(int offset,int data)
+WRITE_HANDLER( xain_flipscreen_w )
 {
 	flipscreen = data & 1;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);

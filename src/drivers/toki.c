@@ -26,16 +26,16 @@ int toki_interrupt(void);
 int  toki_vh_start(void);
 void toki_vh_stop(void);
 void toki_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-int  toki_foreground_videoram_r(int offset);
-void toki_foreground_videoram_w(int offset,int data);
-int  toki_background1_videoram_r(int offset);
-void toki_background1_videoram_w(int offset,int data);
-int  toki_background2_videoram_r(int offset);
-void toki_background2_videoram_w(int offset,int data);
-void toki_linescroll_w(int offset,int data);
+READ_HANDLER( toki_foreground_videoram_r );
+WRITE_HANDLER( toki_foreground_videoram_w );
+READ_HANDLER( toki_background1_videoram_r );
+WRITE_HANDLER( toki_background1_videoram_w );
+READ_HANDLER( toki_background2_videoram_r );
+WRITE_HANDLER( toki_background2_videoram_w );
+WRITE_HANDLER( toki_linescroll_w );
 
 
-int toki_read_ports(int offset)
+static READ_HANDLER( toki_ports_r )
 {
     switch(offset)
     {
@@ -50,7 +50,7 @@ int toki_read_ports(int offset)
     }
 }
 
-void toki_soundcommand_w(int offset,int data)
+WRITE_HANDLER( toki_soundcommand_w )
 {
 	soundlatch_w(0,data & 0xff);
 	cpu_cause_interrupt(1,0xff);
@@ -70,7 +70,7 @@ void toki_adpcm_int (int data)
 		cpu_cause_interrupt(1,Z80_NMI_INT);
 }
 
-void toki_adpcm_control_w(int offset,int data)
+WRITE_HANDLER( toki_adpcm_control_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU2);
@@ -83,12 +83,12 @@ void toki_adpcm_control_w(int offset,int data)
 	MSM5205_reset_w(0,data & 0x08);
 }
 
-void toki_adpcm_data_w(int offset,int data)
+WRITE_HANDLER( toki_adpcm_data_w )
 {
 	msm5205next = data;
 }
 
-static int pip(int offset)
+static READ_HANDLER( pip_r )
 {
 	return 0xffff;
 }
@@ -103,8 +103,8 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x06f000, 0x06f7ff, toki_background2_videoram_r },
 	{ 0x06f800, 0x06ffff, toki_foreground_videoram_r },
 	{ 0x072000, 0x072001, watchdog_reset_r },	/* probably */
-	{ 0x0c0000, 0x0c0005, toki_read_ports },
-	{ 0x0c000e, 0x0c000f, pip },	/* sound related, if we return 0 the code writes */
+	{ 0x0c0000, 0x0c0005, toki_ports_r },
+	{ 0x0c000e, 0x0c000f, pip_r },	/* sound related, if we return 0 the code writes */
 									/* the sound command quickly followed by 0 and the */
 									/* sound CPU often misses the command. */
 	{ -1 }  /* end of table */

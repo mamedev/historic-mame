@@ -15,7 +15,7 @@ int astrocade_sh_start(const struct MachineSound *msound);
 void astrocade_sh_stop(void);
 void astrocade_sh_update(void);
 
-void astrocade_sound1_w(int offset, int data);
-void astrocade_sound2_w(int offset, int data);
+WRITE_HANDLER( astrocade_sound1_w );
+WRITE_HANDLER( astrocade_sound2_w );
 
 #endif

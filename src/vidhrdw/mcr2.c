@@ -14,8 +14,6 @@
 #include "vidhrdw/generic.h"
 
 
-UINT8 mcr2_sprite_color;
-
 static UINT8 last_cocktail_flip;
 
 
@@ -26,7 +24,7 @@ static UINT8 last_cocktail_flip;
  *
  *************************************/
 
-void mcr2_paletteram_w(int offset,int data)
+WRITE_HANDLER( mcr2_paletteram_w )
 {
 	int r, g, b;
 
@@ -53,7 +51,7 @@ void mcr2_paletteram_w(int offset,int data)
  *
  *************************************/
 
-void mcr2_videoram_w(int offset,int data)
+WRITE_HANDLER( mcr2_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -115,7 +113,7 @@ void mcr2_update_sprites(struct osd_bitmap *bitmap)
 
 	for (offs = 0; offs < spriteram_size; offs += 4)
 	{
-		int code, x, y, xcount, ycount, hflip, vflip, sx, sy, flags;
+		int code, x, y, xtile, ytile, xcount, ycount, hflip, vflip, sx, sy;
 
 		/* skip if zero */
 		if (spriteram[offs] == 0)
@@ -125,31 +123,48 @@ void mcr2_update_sprites(struct osd_bitmap *bitmap)
 		code = spriteram[offs + 1] & 0x3f;
 		hflip = spriteram[offs + 1] & 0x40;
 		vflip = spriteram[offs + 1] & 0x80;
-		flags = spriteram[offs + 3];
 		x = (spriteram[offs + 2] - 3) * 2;
 		y = (241 - spriteram[offs]) * 2;
 
-		/* TRANSPARENCY_PENS, 0x0101 fixes a black border around the fire */
-		/* breath in Satan's Hollow, however it's probably wrong. I don't */
-		/* know what's going on here: using the "pen 8 masks underlying */
-		/* sprites" as in the MCR3 games doesn't seem to make sense. */
-		if (!mcr_cocktail_flip)
-			drawgfx(bitmap, Machine->gfx[1], code, mcr2_sprite_color, hflip, vflip,
-					x, y, &Machine->drv->visible_area, TRANSPARENCY_PENS, 0x0101);
-		else
-			drawgfx(bitmap, Machine->gfx[1], code, mcr2_sprite_color, !hflip, !vflip,
-					466 - x, 448 - y, &Machine->drv->visible_area, TRANSPARENCY_PENS, 0x0101);
-
-		/* mark tiles underneath as dirty */
+		/* break into tiles, arranged on the background */
 		sx = x / 16;
 		sy = y / 16;
 		xcount = (x & 15) ? 4 : 3;
 		ycount = (y & 15) ? 4 : 3;
 
-		for (y = sy; y < sy + ycount; y++)
-			for (x = sx; x < sx + xcount; x++)
-				if (x >= 0 && x < 32 && y >= 0 && y < 30)
-					dirtybuffer[(32 * y + x) * 2] = 1;
+		for (ytile = sy; ytile < sy + ycount; ytile++)
+			for (xtile = sx; xtile < sx + xcount; xtile++)
+				if (xtile >= 0 && xtile < 32 && ytile >= 0 && ytile < 30)
+				{
+					int toffs = 32 * ytile + xtile;
+					int color = videoram[toffs * 2 + 1] >> 6;
+
+					/* make a clipping rectangle */
+					struct rectangle clip;
+					if (!mcr_cocktail_flip)
+					{
+						clip.min_x = xtile * 16;
+						clip.min_y = ytile * 16;
+					}
+					else
+					{
+						clip.min_x = (31 - xtile) * 16;
+						clip.min_y = (29 - ytile) * 16;
+					}
+					clip.max_x = clip.min_x + 15;
+					clip.max_y = clip.min_y + 15;
+
+					/* draw the sprite */
+					if (!mcr_cocktail_flip)
+						drawgfx(bitmap, Machine->gfx[1], code, color, hflip, vflip,
+								x, y, &clip, TRANSPARENCY_PENS, 0x101);
+					else
+						drawgfx(bitmap, Machine->gfx[1], code, color, !hflip, !vflip,
+								466 - x, 448 - y, &clip, TRANSPARENCY_PENS, 0x101);
+
+					/* mark the tile underneath as dirty */
+					dirtybuffer[toffs * 2] = 1;
+				}
 	}
 }
 

@@ -432,7 +432,7 @@ unsigned h6280_dasm(char *buffer, unsigned pc)
 
 /*****************************************************************************/
 
-int H6280_irq_status_r(int offset)
+READ_HANDLER( H6280_irq_status_r )
 {
 	int status;
 
@@ -452,7 +452,7 @@ int H6280_irq_status_r(int offset)
 	return 0;
 }
 
-void H6280_irq_status_w(int offset, int data)
+WRITE_HANDLER( H6280_irq_status_w )
 {
 	switch (offset)
 	{
@@ -468,7 +468,7 @@ void H6280_irq_status_w(int offset, int data)
 	}
 }
 
-int H6280_timer_r(int offset)
+READ_HANDLER( H6280_timer_r )
 {
 	switch (offset) {
 		case 0: /* Counter value */
@@ -481,7 +481,7 @@ int H6280_timer_r(int offset)
 	return 0;
 }
 
-void H6280_timer_w(int offset, int data)
+WRITE_HANDLER( H6280_timer_w )
 {
 	switch (offset) {
 		case 0: /* Counter preload */

@@ -5,9 +5,9 @@
 
 #define YM2413interface YM3812interface
 
-int  YM2413_status_port_0_r(int offset);
-void YM2413_register_port_0_w(int offset,int data);
-void YM2413_data_port_0_w(int offset,int data);
+READ_HANDLER( YM2413_status_port_0_r );
+WRITE_HANDLER( YM2413_register_port_0_w );
+WRITE_HANDLER( YM2413_data_port_0_w );
 
 int  YM2413_sh_start(const struct MachineSound *msound);
 void YM2413_sh_stop(void);

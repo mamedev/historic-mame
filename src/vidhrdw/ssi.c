@@ -5,12 +5,12 @@
 
 
 
-int ssi_videoram_r(int offset)
+READ_HANDLER( ssi_videoram_r )
 {
 	return READ_WORD(&videoram[offset]);
 }
 
-void ssi_videoram_w(int offset,int data)
+WRITE_HANDLER( ssi_videoram_w )
 {
 	COMBINE_WORD_MEM(&videoram[offset],data);
 }

@@ -114,7 +114,7 @@ void zaccaria_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 
 
-void zaccaria_attributes_w(int offset,int data)
+WRITE_HANDLER( zaccaria_attributes_w )
 {
 	if ((offset & 1) && zaccaria_attributesram[offset] != data)
 	{

@@ -108,7 +108,7 @@ void ghostb_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 	}
 }
 
-void dec8_pf1_w(int offset, int data)
+WRITE_HANDLER( dec8_pf1_w )
 {
 	switch (offset)
 	{
@@ -121,7 +121,7 @@ void dec8_pf1_w(int offset, int data)
   if (errorlog) fprintf(errorlog,"Write %d to playfield 1 register %d\n",data,offset);
 }
 
-void dec8_pf2_w(int offset, int data)
+WRITE_HANDLER( dec8_pf2_w )
 {
 	switch (offset)
 	{
@@ -134,7 +134,7 @@ void dec8_pf2_w(int offset, int data)
   if (errorlog) fprintf(errorlog,"Write %d to playfield 2 register %d\n",data,offset);
 }
 
-void dec8_bac06_0_w(int offset, int data)
+WRITE_HANDLER( dec8_bac06_0_w )
 {
 	switch (offset) {
 	case 0:
@@ -153,7 +153,7 @@ void dec8_bac06_0_w(int offset, int data)
 	}
 }
 
-void dec8_bac06_1_w(int offset, int data)
+WRITE_HANDLER( dec8_bac06_1_w )
 {
 	switch (offset) {
 	case 0:
@@ -172,17 +172,17 @@ void dec8_bac06_1_w(int offset, int data)
 	}
 }
 
-void dec8_scroll1_w(int offset, int data)
+WRITE_HANDLER( dec8_scroll1_w )
 {
 	scroll1[offset]=data;
 }
 
-void dec8_scroll2_w(int offset, int data)
+WRITE_HANDLER( dec8_scroll2_w )
 {
 	scroll2[offset]=data;
 }
 
-void srdarwin_control_w(int offset, int data)
+WRITE_HANDLER( srdarwin_control_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -200,7 +200,7 @@ void srdarwin_control_w(int offset, int data)
     }
 }
 
-void lastmiss_control_w(int offset, int data)
+WRITE_HANDLER( lastmiss_control_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -218,17 +218,17 @@ if (cpu_get_pc()==0xf9d2) cpu_set_reset_line(1,PULSE_LINE); /* No way this can b
 //if (errorlog) fprintf(errorlog,"PC %06x - Write %02x to %04x\n",cpu_get_pc(),data,offset+0x1802);
 }
 
-void lastmiss_scrollx_w(int offset, int data)
+WRITE_HANDLER( lastmiss_scrollx_w )
 {
 	scroll2[1]=data;
 }
 
-void lastmiss_scrolly_w(int offset, int data)
+WRITE_HANDLER( lastmiss_scrolly_w )
 {
 	scroll2[3]=data;
 }
 
-void gondo_scroll_w(int offset, int data)
+WRITE_HANDLER( gondo_scroll_w )
 {
 	switch (offset) {
 		case 0x0:
@@ -1001,12 +1001,12 @@ void lastmiss_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 /******************************************************************************/
 
-int dec8_video_r(int offset)
+READ_HANDLER( dec8_video_r )
 {
 	return pf_video[offset];
 }
 
-void dec8_video_w(int offset, int data)
+WRITE_HANDLER( dec8_video_w )
 {
 	if (pf_video[offset]!=data)
 	{
@@ -1054,7 +1054,7 @@ void dec8_vh_stop (void)
 }
 
 /* Only use with tilemap games (SRDARWIN) for now */
-void dec8_flipscreen_w(int offset, int data)
+WRITE_HANDLER( dec8_flipscreen_w )
 {
 	static int old;
 
@@ -1066,21 +1066,20 @@ void dec8_flipscreen_w(int offset, int data)
 
 /******************************************************************************/
 
-int srdarwin_video_r(int offset)
+READ_HANDLER( srdarwin_video_r )
 {
 	return srdarwin_tileram[offset];
 }
 
-void srdarwin_video_w(int offset, int data)
+WRITE_HANDLER( srdarwin_video_w )
 {
 	srdarwin_tileram[offset]=data;
-	tilemap_mark_tile_dirty( background_layer,(offset/2)%32,(offset/2)/32 );
+	tilemap_mark_tile_dirty( background_layer,offset/2);
 }
 
-static void get_srdarwin_tile_info( int col, int row )
+static void get_srdarwin_tile_info(int tile_index)
 {
-	int offs=(col*2) + (row*64);
-	int tile=srdarwin_tileram[offs+1]+(srdarwin_tileram[offs]<<8);
+	int tile=srdarwin_tileram[2*tile_index+1]+(srdarwin_tileram[2*tile_index]<<8);
 	int color=tile >> 12;
 	int bank;
 
@@ -1092,12 +1091,7 @@ static void get_srdarwin_tile_info( int col, int row )
 
 int srdarwin_vh_start(void)
 {
-	background_layer = tilemap_create(
-		get_srdarwin_tile_info,
-		TILEMAP_SPLIT,
-		16,16,
-		32,16
-	);
+	background_layer = tilemap_create(get_srdarwin_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,16,16,32,16);
 
 	if (background_layer)
 	{

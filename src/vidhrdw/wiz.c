@@ -78,7 +78,7 @@ void wiz_vh_convert_color_prom(unsigned char *palette, unsigned short *colortabl
 	}
 }
 
-void wiz_attributes_w(int offset,int data)
+WRITE_HANDLER( wiz_attributes_w )
 {
 	if ((offset & 1) && wiz_attributesram[offset] != data)
 	{
@@ -94,7 +94,7 @@ void wiz_attributes_w(int offset,int data)
 	wiz_attributesram[offset] = data;
 }
 
-void wiz_palettebank_w(int offset,int data)
+WRITE_HANDLER( wiz_palettebank_w )
 {
 	if (palbank[offset] != (data & 1))
 	{
@@ -105,7 +105,7 @@ void wiz_palettebank_w(int offset,int data)
 	}
 }
 
-void wiz_char_bank_select_w(int offset,int data)
+WRITE_HANDLER( wiz_char_bank_select_w )
 {
 	if (char_bank[offset] != (data & 1))
 	{
@@ -114,7 +114,7 @@ void wiz_char_bank_select_w(int offset,int data)
 	}
 }
 
-void wiz_flipx_w (int offset, int data)
+WRITE_HANDLER( wiz_flipx_w )
 {
     if (flipx != data)
     {
@@ -125,7 +125,7 @@ void wiz_flipx_w (int offset, int data)
 }
 
 
-void wiz_flipy_w (int offset, int data)
+WRITE_HANDLER( wiz_flipy_w )
 {
     if (flipy != data)
     {

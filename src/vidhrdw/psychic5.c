@@ -44,12 +44,12 @@ void psychic5_init_machine(void)
 	bg_clip_mode = -10;
 }
 
-void psychic5_vram_page_select_w(int offset,int data)
+WRITE_HANDLER( psychic5_vram_page_select_w )
 {
 	ps5_vram_page = data;
 }
 
-int psychic5_vram_page_select_r(int offset)
+READ_HANDLER( psychic5_vram_page_select_r )
 {
 	return ps5_vram_page;
 }
@@ -159,7 +159,7 @@ void set_background_palette_intensity(void)
 }
 
 
-void psychic5_bgvideoram_w(int offset,int data)
+WRITE_HANDLER( psychic5_bgvideoram_w )
 {
 	if (ps5_background_videoram[offset] != data)
 	{
@@ -168,7 +168,7 @@ void psychic5_bgvideoram_w(int offset,int data)
 	}
 }
 
-int psychic5_paged_ram_r(int offset)
+READ_HANDLER( psychic5_paged_ram_r )
 {
 	int val;
 
@@ -219,7 +219,7 @@ int psychic5_paged_ram_r(int offset)
 	return 0;
 }
 
-void psychic5_paged_ram_w(int offset,int data)
+WRITE_HANDLER( psychic5_paged_ram_w )
 {
 	if (!ps5_vram_page)
 	{

@@ -57,11 +57,11 @@ RAM                                FF4000-FFFFFF  R/W
 #include "vidhrdw/generic.h"
 
 
-void skullxbo_playfieldram_w(int offset, int data);
-void skullxbo_playfieldlatch_w(int offset, int data);
-void skullxbo_hscroll_w(int offset, int data);
-void skullxbo_vscroll_w(int offset, int data);
-void skullxbo_mobmsb_w(int offset, int data);
+WRITE_HANDLER( skullxbo_playfieldram_w );
+WRITE_HANDLER( skullxbo_playfieldlatch_w );
+WRITE_HANDLER( skullxbo_hscroll_w );
+WRITE_HANDLER( skullxbo_vscroll_w );
+WRITE_HANDLER( skullxbo_mobmsb_w );
 
 int skullxbo_vh_start(void);
 void skullxbo_vh_stop(void);
@@ -133,7 +133,7 @@ static void init_machine(void)
  *
  *************************************/
 
-static int special_port1_r(int offset)
+static READ_HANDLER( special_port1_r )
 {
 	int temp = input_port_1_r(offset);
 	if (atarigen_cpu_to_sound_ready) temp ^= 0x0040;
@@ -149,7 +149,7 @@ static int special_port1_r(int offset)
  *
  *************************************/
 
-static void skullxbo_mobwr_w(int offset, int data)
+static WRITE_HANDLER( skullxbo_mobwr_w )
 {
 	if (errorlog) fprintf(errorlog, "MOBWR[%02X] = %04X\n", offset, data);
 }

@@ -185,18 +185,18 @@ Sound board: uses the same board as Pooyan.
 
 extern unsigned char *tutankhm_scrollx;
 
-void tutankhm_videoram_w( int offset, int data );
-void tutankhm_flipscreen_w( int offset, int data );
+WRITE_HANDLER( tutankhm_videoram_w );
+WRITE_HANDLER( tutankhm_flipscreen_w );
 void tutankhm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /* defined in sndhrdw/timeplt.c */
 extern struct MemoryReadAddress timeplt_sound_readmem[];
 extern struct MemoryWriteAddress timeplt_sound_writemem[];
 extern struct AY8910interface timeplt_ay8910_interface;
-void timeplt_sh_irqtrigger_w(int offset,int data);
+WRITE_HANDLER( timeplt_sh_irqtrigger_w );
 
 
-void tutankhm_bankselect_w(int offset,int data)
+WRITE_HANDLER( tutankhm_bankselect_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);

@@ -179,48 +179,48 @@ extern unsigned short *palette_highlight_table;
 extern unsigned char *paletteram;
 extern unsigned char *paletteram_2;	/* use when palette RAM is split in two parts */
 
-int paletteram_r(int offset);
-int paletteram_2_r(int offset);
-int paletteram_word_r(int offset);	/* for 16 bit CPU */
-int paletteram_2_word_r(int offset);	/* for 16 bit CPU */
+READ_HANDLER( paletteram_r );
+READ_HANDLER( paletteram_2_r );
+READ_HANDLER( paletteram_word_r );	/* for 16 bit CPU */
+READ_HANDLER( paletteram_2_word_r );	/* for 16 bit CPU */
 
-void paletteram_BBGGGRRR_w(int offset,int data);
-void paletteram_RRRGGGBB_w(int offset,int data);
-void paletteram_IIBBGGRR_w(int offset,int data);
-void paletteram_BBGGRRII_w(int offset,int data);
+WRITE_HANDLER( paletteram_BBGGGRRR_w );
+WRITE_HANDLER( paletteram_RRRGGGBB_w );
+WRITE_HANDLER( paletteram_IIBBGGRR_w );
+WRITE_HANDLER( paletteram_BBGGRRII_w );
 
 /* _w       least significant byte first */
 /* _swap_w  most significant byte first */
 /* _split_w least and most significant bytes are not consecutive */
 /* _word_w  use with 16 bit CPU */
 /*              MSB          LSB */
-void paletteram_xxxxBBBBGGGGRRRR_w(int offset,int data);
-void paletteram_xxxxBBBBGGGGRRRR_swap_w(int offset,int data);
-void paletteram_xxxxBBBBGGGGRRRR_split1_w(int offset,int data);	/* uses paletteram[] */
-void paletteram_xxxxBBBBGGGGRRRR_split2_w(int offset,int data);	/* uses paletteram_2[] */
-void paletteram_xxxxBBBBGGGGRRRR_word_w(int offset,int data);
-void paletteram_xxxxBBBBRRRRGGGG_w(int offset,int data);
-void paletteram_xxxxBBBBRRRRGGGG_swap_w(int offset,int data);
-void paletteram_xxxxBBBBRRRRGGGG_split1_w(int offset,int data);	/* uses paletteram[] */
-void paletteram_xxxxBBBBRRRRGGGG_split2_w(int offset,int data);	/* uses paletteram_2[] */
-void paletteram_xxxxRRRRBBBBGGGG_split1_w(int offset,int data);	/* uses paletteram[] */
-void paletteram_xxxxRRRRBBBBGGGG_split2_w(int offset,int data);	/* uses paletteram_2[] */
-void paletteram_xxxxRRRRGGGGBBBB_w(int offset,int data);
-void paletteram_xxxxRRRRGGGGBBBB_word_w(int offset,int data);
-void paletteram_RRRRGGGGBBBBxxxx_swap_w(int offset,int data);
-void paletteram_RRRRGGGGBBBBxxxx_split1_w(int offset,int data);	/* uses paletteram[] */
-void paletteram_RRRRGGGGBBBBxxxx_split2_w(int offset,int data);	/* uses paletteram_2[] */
-void paletteram_RRRRGGGGBBBBxxxx_word_w(int offset,int data);
-void paletteram_BBBBGGGGRRRRxxxx_swap_w(int offset,int data);
-void paletteram_BBBBGGGGRRRRxxxx_split1_w(int offset,int data);	/* uses paletteram[] */
-void paletteram_BBBBGGGGRRRRxxxx_split2_w(int offset,int data);	/* uses paletteram_2[] */
-void paletteram_BBBBGGGGRRRRxxxx_word_w(int offset,int data);
-void paletteram_xBBBBBGGGGGRRRRR_w(int offset,int data);
-void paletteram_xBBBBBGGGGGRRRRR_swap_w(int offset,int data);
-void paletteram_xBBBBBGGGGGRRRRR_word_w(int offset,int data);
-void paletteram_xRRRRRGGGGGBBBBB_w(int offset,int data);
-void paletteram_xRRRRRGGGGGBBBBB_word_w(int offset,int data);
-void paletteram_IIIIRRRRGGGGBBBB_word_w(int offset,int data);
-void paletteram_RRRRGGGGBBBBIIII_word_w(int offset,int data);
+WRITE_HANDLER( paletteram_xxxxBBBBGGGGRRRR_w );
+WRITE_HANDLER( paletteram_xxxxBBBBGGGGRRRR_swap_w );
+WRITE_HANDLER( paletteram_xxxxBBBBGGGGRRRR_split1_w );	/* uses paletteram[] */
+WRITE_HANDLER( paletteram_xxxxBBBBGGGGRRRR_split2_w );	/* uses paletteram_2[] */
+WRITE_HANDLER( paletteram_xxxxBBBBGGGGRRRR_word_w );
+WRITE_HANDLER( paletteram_xxxxBBBBRRRRGGGG_w );
+WRITE_HANDLER( paletteram_xxxxBBBBRRRRGGGG_swap_w );
+WRITE_HANDLER( paletteram_xxxxBBBBRRRRGGGG_split1_w );	/* uses paletteram[] */
+WRITE_HANDLER( paletteram_xxxxBBBBRRRRGGGG_split2_w );	/* uses paletteram_2[] */
+WRITE_HANDLER( paletteram_xxxxRRRRBBBBGGGG_split1_w );	/* uses paletteram[] */
+WRITE_HANDLER( paletteram_xxxxRRRRBBBBGGGG_split2_w );	/* uses paletteram_2[] */
+WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_w );
+WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_word_w );
+WRITE_HANDLER( paletteram_RRRRGGGGBBBBxxxx_swap_w );
+WRITE_HANDLER( paletteram_RRRRGGGGBBBBxxxx_split1_w );	/* uses paletteram[] */
+WRITE_HANDLER( paletteram_RRRRGGGGBBBBxxxx_split2_w );	/* uses paletteram_2[] */
+WRITE_HANDLER( paletteram_RRRRGGGGBBBBxxxx_word_w );
+WRITE_HANDLER( paletteram_BBBBGGGGRRRRxxxx_swap_w );
+WRITE_HANDLER( paletteram_BBBBGGGGRRRRxxxx_split1_w );	/* uses paletteram[] */
+WRITE_HANDLER( paletteram_BBBBGGGGRRRRxxxx_split2_w );	/* uses paletteram_2[] */
+WRITE_HANDLER( paletteram_BBBBGGGGRRRRxxxx_word_w );
+WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_w );
+WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_swap_w );
+WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_word_w );
+WRITE_HANDLER( paletteram_xRRRRRGGGGGBBBBB_w );
+WRITE_HANDLER( paletteram_xRRRRRGGGGGBBBBB_word_w );
+WRITE_HANDLER( paletteram_IIIIRRRRGGGGBBBB_word_w );
+WRITE_HANDLER( paletteram_RRRRGGGGBBBBIIII_word_w );
 
 #endif

@@ -47,12 +47,12 @@ void exterm_init_palette(unsigned char *palette, unsigned short *colortable,cons
 }
 
 
-int exterm_master_videoram_r(int offset)
+READ_HANDLER( exterm_master_videoram_r )
 {
     return READ_WORD(&exterm_master_videoram[offset]);
 }
 
-static void exterm_master_videoram_16_w(int offset, int data)
+static WRITE_HANDLER( exterm_master_videoram_16_w )
 {
 	COMBINE_WORD_MEM(&exterm_master_videoram[offset], data);
 
@@ -61,7 +61,7 @@ static void exterm_master_videoram_16_w(int offset, int data)
 	((unsigned short *)tmpbitmap->line[offset >> 9])[(offset >> 1) & 0xff] = Machine->pens[data];
 }
 
-static void exterm_master_videoram_8_w(int offset, int data)
+static WRITE_HANDLER( exterm_master_videoram_8_w )
 {
 	COMBINE_WORD_MEM(&exterm_master_videoram[offset], data);
 
@@ -70,12 +70,12 @@ static void exterm_master_videoram_8_w(int offset, int data)
 	tmpbitmap->line[offset >> 9][(offset >> 1) & 0xff] = Machine->pens[data];
 }
 
-int exterm_slave_videoram_r(int offset)
+READ_HANDLER( exterm_slave_videoram_r )
 {
     return READ_WORD(&exterm_slave_videoram[offset]);
 }
 
-static void exterm_slave_videoram_16_w(int offset, int data)
+static WRITE_HANDLER( exterm_slave_videoram_16_w )
 {
 	int x,y;
 	unsigned short *pens = Machine->pens;
@@ -92,7 +92,7 @@ static void exterm_slave_videoram_16_w(int offset, int data)
 	((unsigned short *)foreground->line[y])[x+1] = pens[((data >> 8) & 0xff)];
 }
 
-static void exterm_slave_videoram_8_w(int offset, int data)
+static WRITE_HANDLER( exterm_slave_videoram_8_w )
 {
 	int x,y;
 	unsigned short *pens = Machine->pens;
@@ -109,7 +109,7 @@ static void exterm_slave_videoram_8_w(int offset, int data)
 	foreground->line[y][x+1] = pens[((data >> 8) & 0xff)];
 }
 
-void exterm_paletteram_w(int offset, int data)
+WRITE_HANDLER( exterm_paletteram_w )
 {
 	if ((offset == 0xff*2) && (data == 0))
 	{

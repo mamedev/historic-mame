@@ -17,12 +17,12 @@ static int last_command;
 // walks on the rainbow, he'd leave a trail behind him
 static int pending, pending_x, pending_y, pending_color;
 
-void leprechn_graphics_command_w(int offset,int data)
+WRITE_HANDLER( leprechn_graphics_command_w )
 {
     last_command = data;
 }
 
-void leprechn_graphics_data_w(int offset,int data)
+WRITE_HANDLER( leprechn_graphics_data_w )
 {
     int direction;
 
@@ -121,7 +121,7 @@ void leprechn_graphics_data_w(int offset,int data)
 }
 
 
-int leprechn_graphics_data_r(int offset)
+READ_HANDLER( leprechn_graphics_data_r )
 {
     return videoram[y * screen_width + x];
 }

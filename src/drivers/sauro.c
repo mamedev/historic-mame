@@ -78,17 +78,17 @@ unsigned char *sauro_colorram2;
 void sauro_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void sauro_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void sauro_scroll1_w(int offset, int data);
-void sauro_scroll2_w(int offset, int data);
-void sauro_flipscreen_w(int offset, int data);
+WRITE_HANDLER( sauro_scroll1_w );
+WRITE_HANDLER( sauro_scroll2_w );
+WRITE_HANDLER( sauro_flipscreen_w );
 
-static void sauro_sound_command_w(int offset,int data)
+static WRITE_HANDLER( sauro_sound_command_w )
 {
 	data |= 0x80;
 	soundlatch_w(offset,data);
 }
 
-static int sauro_sound_command_r(int offset)
+static READ_HANDLER( sauro_sound_command_r )
 {
 	int ret	= soundlatch_r(offset);
 	soundlatch_clear_w(offset,0);

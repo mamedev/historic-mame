@@ -124,7 +124,7 @@ static int pinbo_interrupt(void)
 	else return interrupt();	/* one IRQ per frame */
 }
 
-void pinbo_sound_command_w(int offset, int data)
+WRITE_HANDLER( pinbo_sound_command_w )
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(1,Z80_IRQ_INT);

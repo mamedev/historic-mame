@@ -22,12 +22,12 @@
 
 static int dsw_select;
 
-void milliped_input_select_w(int offset,int data)
+WRITE_HANDLER( milliped_input_select_w )
 {
 	dsw_select = (data == 0);
 }
 
-int milliped_IN0_r (int offset)
+READ_HANDLER( milliped_IN0_r )
 {
 	static int oldpos,sign;
 	int newpos;
@@ -45,7 +45,7 @@ int milliped_IN0_r (int offset)
 	return ((readinputport(0) & 0x70) | (oldpos & 0x0f) | sign );
 }
 
-int milliped_IN1_r (int offset)
+READ_HANDLER( milliped_IN1_r )
 {
 	static int oldpos,sign;
 	int newpos;

@@ -103,7 +103,7 @@ struct sa sa[TOTAL_SOUNDS] =
 
 
 
-void zaxxon_sound_w(int offset,int data)
+WRITE_HANDLER( zaxxon_sound_w )
 {
 	int line;
 	int noise;

@@ -131,20 +131,25 @@ int pacman_interrupt(void);
 
 int pacman_vh_start(void);
 void pacman_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void pengo_flipscreen_w(int offset,int data);
+WRITE_HANDLER( pengo_flipscreen_w );
 void pengo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *pengo_soundregs;
-void pengo_sound_enable_w(int offset,int data);
-void pengo_sound_w(int offset,int data);
+WRITE_HANDLER( pengo_sound_enable_w );
+WRITE_HANDLER( pengo_sound_w );
 
 extern void pacplus_decode(void);
 
 void theglob_init_machine(void);
-int theglob_decrypt_rom(int offset);
+READ_HANDLER( theglob_decrypt_rom );
 
 
-static void alibaba_sound_w(int offset, int data)
+static WRITE_HANDLER( pacman_leds_w )
+{
+	osd_led_w(offset,data);
+}
+
+static WRITE_HANDLER( alibaba_sound_w )
 {
 	/* since the sound region in Ali Baba is not contiguous, translate the
 	   offset into the 0-0x1f range */
@@ -157,7 +162,7 @@ static void alibaba_sound_w(int offset, int data)
 }
 
 
-static int alibaba_mystery_1_r(int offset)
+static READ_HANDLER( alibaba_mystery_1_r )
 {
 	// The return value determines what the mystery item is.  Each bit corresponds
 	// to a question mark
@@ -165,7 +170,7 @@ static int alibaba_mystery_1_r(int offset)
 	return rand() & 0x0f;
 }
 
-static int alibaba_mystery_2_r(int offset)
+static READ_HANDLER( alibaba_mystery_2_r )
 {
 	static int mystery = 0;
 
@@ -177,7 +182,7 @@ static int alibaba_mystery_2_r(int offset)
 }
 
 
-static void pacman_coin_lockout_global_w(int offset, int data)
+static WRITE_HANDLER( pacman_coin_lockout_global_w )
 {
 	coin_lockout_global_w(offset, ~data & 0x01);
 }
@@ -207,7 +212,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5001, 0x5001, pengo_sound_enable_w },
 	{ 0x5002, 0x5002, MWA_NOP },
 	{ 0x5003, 0x5003, pengo_flipscreen_w },
- 	{ 0x5004, 0x5005, osd_led_w },
+ 	{ 0x5004, 0x5005, pacman_leds_w },
 // 	{ 0x5006, 0x5006, pacman_coin_lockout_global_w },	this breaks many games
  	{ 0x5007, 0x5007, coin_counter_w },
 	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
@@ -245,7 +250,7 @@ static struct MemoryWriteAddress alibaba_writemem[] =
 	{ 0x4ef0, 0x4eff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x4c00, 0x4fff, MWA_RAM },
 	{ 0x5000, 0x5000, watchdog_reset_w },
- 	{ 0x5004, 0x5005, osd_led_w },
+ 	{ 0x5004, 0x5005, pacman_leds_w },
  	{ 0x5006, 0x5006, pacman_coin_lockout_global_w },
  	{ 0x5007, 0x5007, coin_counter_w },
 	{ 0x5040, 0x506f, alibaba_sound_w, &pengo_soundregs },  /* the sound region is not contiguous */
@@ -2106,7 +2111,7 @@ ROM_END
 
 
 
-static int maketrax_special_port2_r(int offset)
+static READ_HANDLER( maketrax_special_port2_r )
 {
 	int pc,data;
 
@@ -2130,7 +2135,7 @@ static int maketrax_special_port2_r(int offset)
 	return data;
 }
 
-static int maketrax_special_port3_r(int offset)
+static READ_HANDLER( maketrax_special_port3_r )
 {
 	int pc;
 

@@ -26,7 +26,7 @@
  * The counter is read 240 times per second. There is no provision whatsoever
  * to prevent the counter from wrapping around between reads.
  */
-int centiped_IN0_r(int offset)
+READ_HANDLER( centiped_IN0_r )
 {
 	static int oldpos,sign;
 	int newpos;
@@ -41,7 +41,7 @@ int centiped_IN0_r(int offset)
 	return ((readinputport(0) & 0x70) | (oldpos & 0x0f) | sign );
 }
 
-int centiped_IN2_r(int offset)
+READ_HANDLER( centiped_IN2_r )
 {
 	static int oldpos,sign;
 	int newpos;

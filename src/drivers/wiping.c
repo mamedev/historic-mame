@@ -38,41 +38,41 @@ dip: 6.7 7.7
 #include "cpu/z80/z80.h"
 
 
-void wiping_flipscreen_w(int offset,int data);
+WRITE_HANDLER( wiping_flipscreen_w );
 void wiping_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void wiping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *wiping_soundregs;
 int wiping_sh_start(const struct MachineSound *msound);
 void wiping_sh_stop(void);
-void wiping_sound_w(int offset,int data);
+WRITE_HANDLER( wiping_sound_w );
 
 
 static unsigned char *sharedram1,*sharedram2;
 
-static int shared1_r(int offset)
+static READ_HANDLER( shared1_r )
 {
 	return sharedram1[offset];
 }
 
-static int shared2_r(int offset)
+static READ_HANDLER( shared2_r )
 {
 	return sharedram2[offset];
 }
 
-static void shared1_w(int offset,int data)
+static WRITE_HANDLER( shared1_w )
 {
 	sharedram1[offset] = data;
 }
 
-static void shared2_w(int offset,int data)
+static WRITE_HANDLER( shared2_w )
 {
 	sharedram2[offset] = data;
 }
 
 
 /* input ports are rotated 90 degrees */
-static int read_ports(int offset)
+static READ_HANDLER( ports_r )
 {
 	int i,res;
 
@@ -84,7 +84,7 @@ static int read_ports(int offset)
 	return res;
 }
 
-static void subcpu_reset_w(int offset,int data)
+static WRITE_HANDLER( subcpu_reset_w )
 {
 	if (data & 1)
 		cpu_set_reset_line(1,CLEAR_LINE);
@@ -100,7 +100,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x8000, 0x8bff, MRA_RAM },
 	{ 0x9000, 0x93ff, shared1_r },
 	{ 0x9800, 0x9bff, shared2_r },
-	{ 0xa800, 0xa807, read_ports },
+	{ 0xa800, 0xa807, ports_r },
 	{ 0xb000, 0xb7ff, MRA_RAM },
 	{ -1 }	/* end of table */
 };

@@ -89,7 +89,7 @@ void mario_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 
 
 
-void mario_gfxbank_w(int offset,int data)
+WRITE_HANDLER( mario_gfxbank_w )
 {
 	if (gfx_bank != (data & 1))
 	{
@@ -100,7 +100,7 @@ void mario_gfxbank_w(int offset,int data)
 
 
 
-void mario_palettebank_w(int offset,int data)
+WRITE_HANDLER( mario_palettebank_w )
 {
 	if (palette_bank != (data & 1))
 	{

@@ -38,12 +38,12 @@ The second CPU plays speech
 
 
 void champbas_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void champbas_gfxbank_w(int offset,int data);
+WRITE_HANDLER( champbas_gfxbank_w );
 void champbas_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-void champbas_dac_w(int offset,int data)
+WRITE_HANDLER( champbas_dac_w )
 {
 	DAC_signed_data_w(0,data<<2);
 }

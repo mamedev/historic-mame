@@ -16,14 +16,14 @@ void run_mbox(void);
 void init_swmathbox (void);
 
 /* Read handlers */
-int reh(int);
-int rel(int);
-int prng(int);
+READ_HANDLER( reh_r );
+READ_HANDLER( rel_r );
+READ_HANDLER( prng_r );
 
 /* Write handlers */
-void prngclr(int, int);
-void mw0(int, int);
-void mw1(int, int);
-void mw2(int, int);
-void swmathbx(int, int);
+WRITE_HANDLER( prngclr_w );
+WRITE_HANDLER( mw0_w );
+WRITE_HANDLER( mw1_w );
+WRITE_HANDLER( mw2_w );
+WRITE_HANDLER( swmathbx_w );
 

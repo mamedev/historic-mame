@@ -5,6 +5,7 @@
  *      NEO GEO and probably a couple of other machines.
  */
 
+#include "driver.h"
 #include "machine/pd4990a.h"
 
 /* Set the data in the chip to Monday 09/09/73 00:00:00     */
@@ -142,7 +143,8 @@ int read_4990_databit(void)
 	return (outputbit);
 }
 
-void write_4990_control(int offset, int data) {
+WRITE_HANDLER( write_4990_control_w )
+{
 
 	data &= 0xff;
 

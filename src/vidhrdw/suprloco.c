@@ -72,11 +72,10 @@ void suprloco_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 ***************************************************************************/
 
-static void get_bg_tile_info(int col,int row)
+static void get_tile_info(int tile_index)
 {
-	int tile_index = 2*(32*row+col);
-	unsigned char attr = suprloco_videoram[tile_index+1];
-	SET_TILE_INFO(0,suprloco_videoram[tile_index] | ((attr & 0x03) << 8),(attr & 0x1c) >> 2)
+	unsigned char attr = suprloco_videoram[2*tile_index+1];
+	SET_TILE_INFO(0,suprloco_videoram[2*tile_index] | ((attr & 0x03) << 8),(attr & 0x1c) >> 2)
 	tile_info.priority = (attr & 0x20) >> 5;
 }
 
@@ -90,16 +89,14 @@ static void get_bg_tile_info(int col,int row)
 
 int suprloco_vh_start(void)
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info,0,8,8,32,32);
+	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 
-	if (bg_tilemap)
-	{
-		tilemap_set_scroll_rows(bg_tilemap,32);
+	if (!bg_tilemap)
+		return 1;
 
-		return 0;
-	}
+	tilemap_set_scroll_rows(bg_tilemap,32);
 
-	return 1;
+	return 0;
 }
 
 
@@ -110,18 +107,18 @@ int suprloco_vh_start(void)
 
 ***************************************************************************/
 
-void suprloco_videoram_w(int offset,int data)
+WRITE_HANDLER( suprloco_videoram_w )
 {
 	if (suprloco_videoram[offset] != data)
 	{
 		suprloco_videoram[offset] = data;
-		tilemap_mark_tile_dirty(bg_tilemap,(offset/2)%32,(offset/2)/32);
+		tilemap_mark_tile_dirty(bg_tilemap,offset/2);
 	}
 }
 
 static int suprloco_scrollram[32];
 
-void suprloco_scrollram_w(int offset, int data)
+WRITE_HANDLER( suprloco_scrollram_w )
 {
 	int adj = flipscreen ? -8 : 8;
 
@@ -129,12 +126,12 @@ void suprloco_scrollram_w(int offset, int data)
 	tilemap_set_scrollx(bg_tilemap,offset, data - adj);
 }
 
-int suprloco_scrollram_r(int offset)
+READ_HANDLER( suprloco_scrollram_r )
 {
 	return suprloco_scrollram[offset];
 }
 
-void suprloco_control_w(int offset,int data)
+WRITE_HANDLER( suprloco_control_w )
 {
 	/* There is probably a palette select in here */
 
@@ -167,7 +164,7 @@ void suprloco_control_w(int offset,int data)
 }
 
 
-int suprloco_control_r(int offset)
+READ_HANDLER( suprloco_control_r )
 {
 	return control;
 }

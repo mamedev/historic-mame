@@ -45,7 +45,7 @@ static int single_volume = 0;
 static int channel;
 
 
-void senjyo_volume_w( int offset , int data )
+WRITE_HANDLER( senjyo_volume_w )
 {
 	single_volume = data & 0x0f;
 	mixer_set_volume(channel,single_volume * 100 / 15);

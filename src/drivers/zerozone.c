@@ -24,13 +24,13 @@ TODO:
 void zerozone_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 int zerozone_vh_start(void);
 void zerozone_vh_stop(void);
-int zerozone_videoram_r(int offset);
-void zerozone_videoram_w(int offset, int data);
+READ_HANDLER( zerozone_videoram_r );
+WRITE_HANDLER( zerozone_videoram_w );
 
 extern unsigned char *zerozone_videoram;
 static unsigned char *ram; /* for high score save */
 
-static int zerozone_input_r (int offset)
+static READ_HANDLER( zerozone_input_r )
 {
 	switch (offset)
 	{
@@ -50,7 +50,7 @@ if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory a
 }
 
 
-void zerozone_sound_w (int offset, int data)
+WRITE_HANDLER( zerozone_sound_w )
 {
 	soundlatch_w (offset, (data >> 8) & 0xff);
 	cpu_cause_interrupt (1, 0xff);

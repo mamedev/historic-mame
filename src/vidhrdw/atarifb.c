@@ -20,9 +20,9 @@ unsigned char *alphap2_dirtybuffer;
 
 extern int atarifb_game;
 
-void atarifb_alphap1_vram_w(int offset,int data);
-void atarifb_alphap2_vram_w(int offset,int data);
-void atarifb_scroll_w(int offset,int data);
+WRITE_HANDLER( atarifb_alphap1_vram_w );
+WRITE_HANDLER( atarifb_alphap2_vram_w );
+WRITE_HANDLER( atarifb_scroll_w );
 void atarifb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 struct rectangle bigfield_area = {  4*8, 34*8-1, 0*8, 32*8-1 };
@@ -31,7 +31,7 @@ struct rectangle right_area =    { 34*8, 38*8-1, 0*8, 32*8-1 };
 
 /***************************************************************************
 ***************************************************************************/
-void atarifb_alphap1_vram_w(int offset,int data)
+WRITE_HANDLER( atarifb_alphap1_vram_w )
 {
 	if (atarifb_alphap1_vram[offset] != data)
 	{
@@ -41,7 +41,7 @@ void atarifb_alphap1_vram_w(int offset,int data)
 	}
 }
 
-void atarifb_alphap2_vram_w(int offset,int data)
+WRITE_HANDLER( atarifb_alphap2_vram_w )
 {
 	if (atarifb_alphap2_vram[offset] != data)
 	{
@@ -53,7 +53,7 @@ void atarifb_alphap2_vram_w(int offset,int data)
 
 /***************************************************************************
 ***************************************************************************/
-void atarifb_scroll_w(int offset,int data)
+WRITE_HANDLER( atarifb_scroll_w )
 {
 	if (data - 8 != *atarifb_scroll_register)
 	{

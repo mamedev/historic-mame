@@ -201,13 +201,13 @@ void YM2610_sh_reset(void)
 /************************************************/
 /* Status Read for YM2610 - Chip 0				*/
 /************************************************/
-int YM2610_status_port_0_A_r( int offset )
+READ_HANDLER( YM2610_status_port_0_A_r )
 {
 //if(errorlog) fprintf(errorlog,"PC %04x: 2610 S0A=%02X\n",cpu_get_pc(),YM2610Read(0,0));
 	return YM2610Read(0,0);
 }
 
-int YM2610_status_port_0_B_r( int offset )
+READ_HANDLER( YM2610_status_port_0_B_r )
 {
 //if(errorlog) fprintf(errorlog,"PC %04x: 2610 S0B=%02X\n",cpu_get_pc(),YM2610Read(0,2));
 	return YM2610Read(0,2);
@@ -216,25 +216,25 @@ int YM2610_status_port_0_B_r( int offset )
 /************************************************/
 /* Status Read for YM2610 - Chip 1				*/
 /************************************************/
-int YM2610_status_port_1_A_r( int offset ) {
+READ_HANDLER( YM2610_status_port_1_A_r ) {
 	return YM2610Read(1,0);
 }
 
-int YM2610_status_port_1_B_r( int offset ) {
+READ_HANDLER( YM2610_status_port_1_B_r ) {
 	return YM2610Read(1,2);
 }
 
 /************************************************/
 /* Port Read for YM2610 - Chip 0				*/
 /************************************************/
-int YM2610_read_port_0_r( int offset ){
+READ_HANDLER( YM2610_read_port_0_r ){
 	return YM2610Read(0,1);
 }
 
 /************************************************/
 /* Port Read for YM2610 - Chip 1				*/
 /************************************************/
-int YM2610_read_port_1_r( int offset ){
+READ_HANDLER( YM2610_read_port_1_r ){
 	return YM2610Read(1,1);
 }
 
@@ -242,13 +242,13 @@ int YM2610_read_port_1_r( int offset ){
 /* Control Write for YM2610 - Chip 0			*/
 /* Consists of 2 addresses						*/
 /************************************************/
-void YM2610_control_port_0_A_w(int offset,int data)
+WRITE_HANDLER( YM2610_control_port_0_A_w )
 {
 //if(errorlog) fprintf(errorlog,"PC %04x: 2610 Reg A %02X",cpu_get_pc(),data);
 	YM2610Write(0,0,data);
 }
 
-void YM2610_control_port_0_B_w(int offset,int data)
+WRITE_HANDLER( YM2610_control_port_0_B_w )
 {
 //if(errorlog) fprintf(errorlog,"PC %04x: 2610 Reg B %02X",cpu_get_pc(),data);
 	YM2610Write(0,2,data);
@@ -258,11 +258,11 @@ void YM2610_control_port_0_B_w(int offset,int data)
 /* Control Write for YM2610 - Chip 1			*/
 /* Consists of 2 addresses						*/
 /************************************************/
-void YM2610_control_port_1_A_w(int offset,int data){
+WRITE_HANDLER( YM2610_control_port_1_A_w ){
 	YM2610Write(1,0,data);
 }
 
-void YM2610_control_port_1_B_w(int offset,int data){
+WRITE_HANDLER( YM2610_control_port_1_B_w ){
 	YM2610Write(1,2,data);
 }
 
@@ -270,13 +270,13 @@ void YM2610_control_port_1_B_w(int offset,int data){
 /* Data Write for YM2610 - Chip 0				*/
 /* Consists of 2 addresses						*/
 /************************************************/
-void YM2610_data_port_0_A_w(int offset,int data)
+WRITE_HANDLER( YM2610_data_port_0_A_w )
 {
 //if(errorlog) fprintf(errorlog," =%02X\n",data);
 	YM2610Write(0,1,data);
 }
 
-void YM2610_data_port_0_B_w(int offset,int data)
+WRITE_HANDLER( YM2610_data_port_0_B_w )
 {
 //if(errorlog) fprintf(errorlog," =%02X\n",data);
 	YM2610Write(0,3,data);
@@ -286,10 +286,10 @@ void YM2610_data_port_0_B_w(int offset,int data)
 /* Data Write for YM2610 - Chip 1				*/
 /* Consists of 2 addresses						*/
 /************************************************/
-void YM2610_data_port_1_A_w(int offset,int data){
+WRITE_HANDLER( YM2610_data_port_1_A_w ){
 	YM2610Write(1,1,data);
 }
-void YM2610_data_port_1_B_w(int offset,int data){
+WRITE_HANDLER( YM2610_data_port_1_B_w ){
 	YM2610Write(1,3,data);
 }
 

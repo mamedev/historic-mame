@@ -15,7 +15,7 @@
 static int flipscreen[2];
 
 
-void pkunwar_flipscreen_w(int offset,int data)
+WRITE_HANDLER( pkunwar_flipscreen_w )
 {
 	if (flipscreen[0] != (data & 1))
 	{

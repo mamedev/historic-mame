@@ -14,9 +14,9 @@
 
 void cheekyms_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void cheekyms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void cheekyms_sprite_w(int offset, int data);
-void cheekyms_port_40_w(int offset, int data);
-void cheekyms_port_80_w(int offset, int data);
+WRITE_HANDLER( cheekyms_sprite_w );
+WRITE_HANDLER( cheekyms_port_40_w );
+WRITE_HANDLER( cheekyms_port_80_w );
 
 
 static struct MemoryReadAddress readmem[] =

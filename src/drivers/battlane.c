@@ -20,31 +20,31 @@ extern void battlane_vh_convert_color_prom (unsigned char *palette, unsigned sho
 
 extern unsigned char *battlane_bitmap;
 extern int battlane_bitmap_size;
-extern void battlane_spriteram_w(int, int);
-extern int battlane_spriteram_r(int);
-extern void battlane_tileram_w(int, int);
-extern int battlane_tileram_r(int);
-extern void battlane_bitmap_w(int, int);
-extern int battlane_bitmap_r(int);
-extern void battlane_video_ctrl_w(int, int);
-extern int battlane_video_ctrl_r(int);
+WRITE_HANDLER( battlane_spriteram_w );
+READ_HANDLER( battlane_spriteram_r );
+WRITE_HANDLER( battlane_tileram_w );
+READ_HANDLER( battlane_tileram_r );
+WRITE_HANDLER( battlane_bitmap_w );
+READ_HANDLER( battlane_bitmap_r );
+WRITE_HANDLER( battlane_video_ctrl_w );
+READ_HANDLER( battlane_video_ctrl_r );
 extern void battlane_set_video_flip(int);
 
-extern void battlane_scrolly_w(int offset, int data);
-extern void battlane_scrollx_w(int offset, int data);
+WRITE_HANDLER( battlane_scrolly_w );
+WRITE_HANDLER( battlane_scrollx_w );
 
 /* CPU interrupt control register */
 int battlane_cpu_control;
 
 /* RAM shared between CPU 0 and 1 */
-void battlane_shared_ram_w(int offset, int data)
+WRITE_HANDLER( battlane_shared_ram_w )
 {
 	unsigned char *RAM =
 		memory_region(REGION_CPU1);
 	RAM[offset]=data;
 }
 
-int battlane_shared_ram_r(int offset)
+READ_HANDLER( battlane_shared_ram_r )
 {
 	unsigned char *RAM =
 		memory_region(REGION_CPU1);
@@ -52,7 +52,7 @@ int battlane_shared_ram_r(int offset)
 }
 
 
-void battlane_cpu_command_w(int offset, int data)
+WRITE_HANDLER( battlane_cpu_command_w )
 {
 	battlane_cpu_control=data;
 

@@ -306,7 +306,7 @@ void atarisys1_vh_stop(void)
  *
  *************************************/
 
-void atarisys1_bankselect_w(int offset, int data)
+WRITE_HANDLER( atarisys1_bankselect_w )
 {
 	int oldword = READ_WORD(&atarisys1_bankselect[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -342,7 +342,7 @@ void atarisys1_bankselect_w(int offset, int data)
  *
  *************************************/
 
-void atarisys1_hscroll_w(int offset, int data)
+WRITE_HANDLER( atarisys1_hscroll_w )
 {
 	int oldword = READ_WORD(&atarigen_hscroll[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -361,7 +361,7 @@ void atarisys1_hscroll_w(int offset, int data)
  *
  *************************************/
 
-void atarisys1_vscroll_w(int offset, int data)
+WRITE_HANDLER( atarisys1_vscroll_w )
 {
 	int scanline = cpu_getscanline() + 1;
 
@@ -384,7 +384,7 @@ void atarisys1_vscroll_w(int offset, int data)
  *
  *************************************/
 
-void atarisys1_playfieldram_w(int offset, int data)
+WRITE_HANDLER( atarisys1_playfieldram_w )
 {
 	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -404,7 +404,7 @@ void atarisys1_playfieldram_w(int offset, int data)
  *
  *************************************/
 
-void atarisys1_spriteram_w(int offset, int data)
+WRITE_HANDLER( atarisys1_spriteram_w )
 {
 	int oldword = READ_WORD(&atarigen_spriteram[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -467,7 +467,7 @@ void atarisys1_int3_callback(int param)
  *
  *************************************/
 
-int atarisys1_int3state_r(int offset)
+READ_HANDLER( atarisys1_int3state_r )
 {
 	return atarigen_scanline_int_state ? 0x0080 : 0x0000;
 }

@@ -53,44 +53,44 @@ void tehkanwc_vh_stop(void)
 
 
 
-int tehkanwc_videoram1_r(int offset)
+READ_HANDLER( tehkanwc_videoram1_r )
 {
 	return tehkanwc_videoram1[offset];
 }
 
-void tehkanwc_videoram1_w(int offset,int data)
+WRITE_HANDLER( tehkanwc_videoram1_w )
 {
 	tehkanwc_videoram1[offset] = data;
 	dirtybuffer1[offset] = 1;
 }
 
-int tehkanwc_scroll_x_r(int offset)
+READ_HANDLER( tehkanwc_scroll_x_r )
 {
 	return scroll_x[offset];
 }
 
-int tehkanwc_scroll_y_r(int offset)
+READ_HANDLER( tehkanwc_scroll_y_r )
 {
 	return scroll_y;
 }
 
-void tehkanwc_scroll_x_w(int offset,int data)
+WRITE_HANDLER( tehkanwc_scroll_x_w )
 {
 	scroll_x[offset] = data;
 }
 
-void tehkanwc_scroll_y_w(int offset,int data)
+WRITE_HANDLER( tehkanwc_scroll_y_w )
 {
 	scroll_y = data;
 }
 
 
 
-void gridiron_led0_w(int offset,int data)
+WRITE_HANDLER( gridiron_led0_w )
 {
 	led0 = data;
 }
-void gridiron_led1_w(int offset,int data)
+WRITE_HANDLER( gridiron_led1_w )
 {
 	led1 = data;
 }

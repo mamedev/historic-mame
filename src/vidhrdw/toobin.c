@@ -169,7 +169,7 @@ void toobin_vh_stop(void)
  *
  *************************************/
 
-void toobin_playfieldram_w(int offset, int data)
+WRITE_HANDLER( toobin_playfieldram_w )
 {
 	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -189,7 +189,7 @@ void toobin_playfieldram_w(int offset, int data)
  *
  *************************************/
 
-void toobin_paletteram_w(int offset, int data)
+WRITE_HANDLER( toobin_paletteram_w )
 {
 	int oldword = READ_WORD(&paletteram[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -248,7 +248,7 @@ void toobin_scanline_update(int scanline)
  *
  *************************************/
 
-void toobin_moslip_w(int offset, int data)
+WRITE_HANDLER( toobin_moslip_w )
 {
 	COMBINE_WORD_MEM(&toobin_moslip[offset], data);
 	toobin_scanline_update(cpu_getscanline());

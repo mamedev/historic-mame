@@ -132,7 +132,7 @@ int gorf_sh_start(const struct MachineSound *msound)
     return 0;
 }
 
-int gorf_speech_r(int offset)
+READ_HANDLER( gorf_speech_r )
 {
     int Phoneme,Intonation;
     int i = 0;
@@ -204,7 +204,7 @@ int gorf_status_r(void)
 
 /* Read from port 2 (0x12) returns speech status as 0x80 */
 
-int gorf_port_2_r(int offset)
+READ_HANDLER( gorf_port_2_r )
 {
     int Ans;
 

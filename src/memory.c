@@ -886,7 +886,7 @@ void memory_shutdown(void)
 
 /* generic byte-sized read handler */
 #define READBYTE(name,type,abits)														\
-int name(int address)																	\
+int name(offs_t address)																\
 {																						\
 	MHELE hw;																			\
 																						\
@@ -940,7 +940,7 @@ int name(int address)																	\
 
 /* generic word-sized read handler (16-bit aligned only!) */
 #define READWORD(name,type,abits,align)													\
-int name##_word(int address)															\
+int name##_word(offs_t address)															\
 {																						\
 	MHELE hw;																			\
 																						\
@@ -984,7 +984,7 @@ int name##_word(int address)															\
 
 /* generic dword-sized read handler (16-bit aligned only!) */
 #define READLONG(name,type,abits,align)													\
-int name##_dword(int address)															\
+int name##_dword(offs_t address)														\
 {																						\
 	UINT16 word1, word2;																\
 	MHELE hw1, hw2;																		\
@@ -1079,7 +1079,7 @@ READLONG(cpu_readmem32,    TYPE_16BIT_BE, 32,    CAN_BE_MISALIGNED)
 
 /* generic byte-sized write handler */
 #define WRITEBYTE(name,type,abits)														\
-void name(int address, int data)														\
+void name(offs_t address,data_t data)													\
 {																						\
 	MHELE hw;																			\
 																						\
@@ -1139,7 +1139,7 @@ void name(int address, int data)														\
 
 /* generic word-sized write handler (16-bit aligned only!) */
 #define WRITEWORD(name,type,abits,align)												\
-void name##_word(int address, int data)													\
+void name##_word(offs_t address,data_t data)											\
 {																						\
 	MHELE hw;																			\
 																						\
@@ -1189,7 +1189,7 @@ void name##_word(int address, int data)													\
 
 /* generic dword-sized write handler (16-bit aligned only!) */
 #define WRITELONG(name,type,abits,align)												\
-void name##_dword(int address, int data)												\
+void name##_dword(offs_t address,data_t data)											\
 {																						\
 	UINT16 word1, word2;																\
 	MHELE hw1, hw2;																		\

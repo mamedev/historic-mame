@@ -202,6 +202,7 @@ actual code sent to the hardware.
 
 ***************************************************************************/
 
+#include "driver.h"
 #include "vidhrdw/generic.h"
 #include "drivers/megasys1.h"
 
@@ -293,7 +294,7 @@ int megasys1_vh_start(void)
 
 
 /* MS1-A, B, C, Z */
-void paletteram_RRRRGGGGBBBBRGBx_word_w(int offset, int data)
+WRITE_HANDLER( paletteram_RRRRGGGGBBBBRGBx_word_w )
 {
 	/*	byte 0    byte 1	*/
 	/*	RRRR GGGG BBBB RGB?	*/
@@ -313,7 +314,7 @@ void paletteram_RRRRGGGGBBBBRGBx_word_w(int offset, int data)
 
 
 /* MS1-D */
-void paletteram_RRRRRGGGGGBBBBBx_word_w(int offset, int data)
+WRITE_HANDLER( paletteram_RRRRRGGGGGBBBBBx_word_w )
 {
 	/*	byte 0    byte 1	*/
 	/*	RRRR RGGG GGBB BBB?	*/
@@ -346,36 +347,40 @@ void paletteram_RRRRRGGGGGBBBBBx_word_w(int offset, int data)
 #define TILES_PER_PAGE (TILES_PER_PAGE_X * TILES_PER_PAGE_Y)
 
 #define MEGASYS1_GET_TILE_INFO(_n_) \
-void megasys1_get_scroll_##_n_##_tile_info_8x8( int col, int row ) \
+void megasys1_get_scroll_##_n_##_tile_info_8x8(int tile_index) \
 { \
-	int tile_index = \
-			(col * TILES_PER_PAGE_Y) + \
-\
-			(row / TILES_PER_PAGE_Y) * TILES_PER_PAGE * megasys1_pages_per_tmap_x[_n_] + \
-			(row % TILES_PER_PAGE_Y); \
-\
-	int code = READ_WORD(&megasys1_scrollram_##_n_[tile_index * 2]); \
+	int code = READ_WORD(&megasys1_scrollram_##_n_[2*tile_index]); \
 	SET_TILE_INFO( _n_ , (code & 0xfff) * megasys1_8x8_scroll_##_n_##_factor, code >> (16 - megasys1_bits_per_color_code) ) \
 } \
 \
-void megasys1_get_scroll_##_n_##_tile_info_16x16( int col, int row ) \
+void megasys1_get_scroll_##_n_##_tile_info_16x16(int tile_index) \
 { \
-	int tile_index = \
-			((col / 2) * (TILES_PER_PAGE_Y / 2)) + \
+	int code = READ_WORD(&megasys1_scrollram_##_n_[2*(tile_index/4)]); \
+	SET_TILE_INFO( _n_ , (code & 0xfff) * megasys1_16x16_scroll_##_n_##_factor + (tile_index & 3), code >> (16-megasys1_bits_per_color_code) ); \
+} \
 \
-			((row / 2) / (TILES_PER_PAGE_Y / 2)) * (TILES_PER_PAGE / 4) * megasys1_pages_per_tmap_x[_n_] + \
-			((row / 2) % (TILES_PER_PAGE_Y / 2)); \
+UINT32 megasys1_##_n_##_scan_8x8(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows) \
+{ \
+	return 	(col * TILES_PER_PAGE_Y) + \
 \
-	int code = READ_WORD(&megasys1_scrollram_##_n_[tile_index * 2]); \
-	SET_TILE_INFO( _n_ , (code & 0xfff) * megasys1_16x16_scroll_##_n_##_factor + (row & 1) + (col & 1) * 2 , code >> (16-megasys1_bits_per_color_code) ); \
+			(row / TILES_PER_PAGE_Y) * TILES_PER_PAGE * megasys1_pages_per_tmap_x[_n_] + \
+			(row % TILES_PER_PAGE_Y); \
+}\
+\
+UINT32 megasys1_##_n_##_scan_16x16(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows) \
+{ \
+	return	( ((col / 2) * (TILES_PER_PAGE_Y / 2)) + \
+\
+			  ((row / 2) / (TILES_PER_PAGE_Y / 2)) * (TILES_PER_PAGE / 4) * megasys1_pages_per_tmap_x[_n_] + \
+			  ((row / 2) % (TILES_PER_PAGE_Y / 2)) )*4 + (row&1) + (col&1)*2; \
 }
 
 
 #define MEGASYS1_SCROLLRAM_R(_n_) \
-int megasys1_scrollram_##_n_##_r(int offset) {return READ_WORD(&megasys1_scrollram_##_n_[offset]);}
+READ_HANDLER( megasys1_scrollram_##_n_##_r ) {return READ_WORD(&megasys1_scrollram_##_n_[offset]);}
 
 #define MEGASYS1_SCROLLRAM_W(_n_) \
-void megasys1_scrollram_##_n_##_w(int offset,int data) \
+WRITE_HANDLER( megasys1_scrollram_##_n_##_w ) \
 { \
 int old_data, new_data; \
 \
@@ -384,40 +389,19 @@ int old_data, new_data; \
 	if (old_data != new_data) \
 	{ \
 		WRITE_WORD(&megasys1_scrollram_##_n_[offset], new_data); \
-		if ( (offset < 0x40000) && (megasys1_tmap_##_n_) )\
-		{ \
-			int page, tile_index, row, col; \
+		if ( (offset < 0x40000) && (megasys1_tmap_##_n_) ) \
+		{\
+			int tile_index = offset / 2; \
 			if (megasys1_scroll_flag[_n_] & 0x10)	/* tiles are 8x8 */ \
 			{ \
-				page		=	(offset/2) / TILES_PER_PAGE; \
-				tile_index	=	(offset/2) % TILES_PER_PAGE; \
- \
-				col	=	tile_index / TILES_PER_PAGE_Y + \
-						( page % megasys1_pages_per_tmap_x[_n_] ) * TILES_PER_PAGE_X; \
- \
-				row	=	tile_index % TILES_PER_PAGE_Y + \
-						( page / megasys1_pages_per_tmap_x[_n_] ) * TILES_PER_PAGE_Y; \
- \
-				tilemap_mark_tile_dirty(megasys1_tmap_##_n_, col, row); \
+				tilemap_mark_tile_dirty(megasys1_tmap_##_n_, tile_index ); \
 			} \
 			else \
 			{ \
-				page		=	(offset/2) / (TILES_PER_PAGE / 4); \
-				tile_index	=	(offset/2) % (TILES_PER_PAGE / 4); \
-\
-				/* col and row when tiles are 16x16 .. */ \
-				col	=	tile_index / (TILES_PER_PAGE_Y / 2) + \
-						( page % megasys1_pages_per_tmap_x[_n_] ) * (TILES_PER_PAGE_X / 2); \
- \
-				row	=	tile_index % (TILES_PER_PAGE_Y / 2) + \
-						( page / megasys1_pages_per_tmap_x[_n_] ) * (TILES_PER_PAGE_Y / 2); \
- \
-				/* .. but we draw four 8x8 tiles, so col and row must be scaled */ \
-				col *= 2;	row *= 2; \
-				tilemap_mark_tile_dirty(megasys1_tmap_##_n_, col + 0, row + 0); \
-				tilemap_mark_tile_dirty(megasys1_tmap_##_n_, col + 1, row + 0); \
-				tilemap_mark_tile_dirty(megasys1_tmap_##_n_, col + 0, row + 1); \
-				tilemap_mark_tile_dirty(megasys1_tmap_##_n_, col + 1, row + 1); \
+				tilemap_mark_tile_dirty(megasys1_tmap_##_n_, tile_index*4 + 0); \
+				tilemap_mark_tile_dirty(megasys1_tmap_##_n_, tile_index*4 + 1); \
+				tilemap_mark_tile_dirty(megasys1_tmap_##_n_, tile_index*4 + 2); \
+				tilemap_mark_tile_dirty(megasys1_tmap_##_n_, tile_index*4 + 3); \
 			} \
 		}\
 	}\
@@ -468,6 +452,9 @@ void megasys1_scroll_##_n_##_flag_w(int data) \
 					(	(megasys1_scroll_flag[_n_] & 0x10) ? \
 							megasys1_get_scroll_##_n_##_tile_info_8x8 : \
 							megasys1_get_scroll_##_n_##_tile_info_16x16, \
+						(megasys1_scroll_flag[_n_] & 0x10) ? \
+							megasys1_##_n_##_scan_8x8 : \
+							megasys1_##_n_##_scan_16x16, \
 						TILEMAP_TRANSPARENT, \
 						8,8, \
 						TILES_PER_PAGE_X * megasys1_pages_per_tmap_x[_n_], \
@@ -483,7 +470,7 @@ MEGASYS1_SCROLL_FLAG_W(2)
 
 
 /* Used by MS1-A/Z, B */
-void megasys1_vregs_A_w(int offset, int data)
+WRITE_HANDLER( megasys1_vregs_A_w )
 {
 int old_data, new_data;
 
@@ -529,7 +516,7 @@ int old_data, new_data;
 
 
 /* Used by MS1-C only */
-int megasys1_vregs_C_r(int offset)
+READ_HANDLER( megasys1_vregs_C_r )
 {
 	switch (offset)
 	{
@@ -538,7 +525,7 @@ int megasys1_vregs_C_r(int offset)
 	}
 }
 
-void megasys1_vregs_C_w(int offset, int data)
+WRITE_HANDLER( megasys1_vregs_C_w )
 {
 int old_data, new_data;
 
@@ -583,7 +570,7 @@ int old_data, new_data;
 
 
 /* Used by MS1-D only */
-void megasys1_vregs_D_w(int offset, int data)
+WRITE_HANDLER( megasys1_vregs_D_w )
 {
 int old_data, new_data;
 

@@ -121,22 +121,22 @@ write:
 
 
 void taitosj_init_machine(void);
-void taitosj_bankswitch_w(int offset,int data);
-int taitosj_fake_data_r(int offset);
-int taitosj_fake_status_r(int offset);
-void taitosj_fake_data_w(int offset,int data);
-int taitosj_mcu_data_r(int offset);
-int taitosj_mcu_status_r(int offset);
-void taitosj_mcu_data_w(int offset,int data);
-int taitosj_68705_portA_r(int offset);
-int taitosj_68705_portB_r(int offset);
-int taitosj_68705_portC_r(int offset);
-void taitosj_68705_portA_w(int offset,int data);
-void taitosj_68705_portB_w(int offset,int data);
+WRITE_HANDLER( taitosj_bankswitch_w );
+READ_HANDLER( taitosj_fake_data_r );
+READ_HANDLER( taitosj_fake_status_r );
+WRITE_HANDLER( taitosj_fake_data_w );
+READ_HANDLER( taitosj_mcu_data_r );
+READ_HANDLER( taitosj_mcu_status_r );
+WRITE_HANDLER( taitosj_mcu_data_w );
+READ_HANDLER( taitosj_68705_portA_r );
+READ_HANDLER( taitosj_68705_portB_r );
+READ_HANDLER( taitosj_68705_portC_r );
+WRITE_HANDLER( taitosj_68705_portA_w );
+WRITE_HANDLER( taitosj_68705_portB_w );
 
-void alpine_protection_w(int offset,int data);
-void alpinea_bankswitch_w(int offset,int data);
-int alpine_port_2_r(int offset);
+WRITE_HANDLER( alpine_protection_w );
+WRITE_HANDLER( alpinea_bankswitch_w );
+READ_HANDLER( alpine_port_2_r );
 
 extern unsigned char *taitosj_videoram2,*taitosj_videoram3;
 extern unsigned char *taitosj_characterram;
@@ -145,15 +145,15 @@ extern unsigned char *taitosj_colscrolly;
 extern unsigned char *taitosj_gfxpointer;
 extern unsigned char *taitosj_colorbank,*taitosj_video_priority;
 void taitosj_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int taitosj_gfxrom_r(int offset);
-void taitosj_videoram2_w(int offset,int data);
-void taitosj_videoram3_w(int offset,int data);
-void taitosj_paletteram_w(int offset,int data);
-void taitosj_colorbank_w(int offset,int data);
-void taitosj_videoenable_w(int offset,int data);
-void taitosj_characterram_w(int offset,int data);
-int taitosj_collision_reg_r(int offset);
-void taitosj_collision_reg_clear_w(int offset,int data);
+READ_HANDLER( taitosj_gfxrom_r );
+WRITE_HANDLER( taitosj_videoram2_w );
+WRITE_HANDLER( taitosj_videoram3_w );
+WRITE_HANDLER( taitosj_paletteram_w );
+WRITE_HANDLER( taitosj_colorbank_w );
+WRITE_HANDLER( taitosj_videoenable_w );
+WRITE_HANDLER( taitosj_characterram_w );
+READ_HANDLER( taitosj_collision_reg_r );
+WRITE_HANDLER( taitosj_collision_reg_clear_w );
 int taitosj_vh_start(void);
 void taitosj_vh_stop(void);
 void taitosj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -161,12 +161,12 @@ void taitosj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static int sndnmi_disable = 1;
 
-static void taitosj_sndnmi_msk(int offset,int data)
+static WRITE_HANDLER( taitosj_sndnmi_msk_w )
 {
 	sndnmi_disable = data & 0x01;
 }
 
-static void taitosj_soundcommand_w(int offset,int data)
+static WRITE_HANDLER( taitosj_soundcommand_w )
 {
 	soundlatch_w(offset,data);
 	if (!sndnmi_disable) cpu_cause_interrupt(1,Z80_NMI_INT);
@@ -1664,8 +1664,8 @@ static struct AY8910interface ay8910_interface =
 	{ 15, 15, 15, MIXERG(15,MIXER_GAIN_2x,MIXER_PAN_CENTER) },
 	{ input_port_6_r, 0, 0, 0 },		/* port Aread */
 	{ input_port_7_r, 0, 0, 0 },		/* port Bread */
-	{ 0, DAC_data_w, 0, 0 },		/* port Awrite */
-	{ 0, 0, 0, taitosj_sndnmi_msk }	/* port Bwrite */
+	{ 0, DAC_0_data_w, 0, 0 },			/* port Awrite */
+	{ 0, 0, 0, taitosj_sndnmi_msk_w }	/* port Bwrite */
 };
 
 static struct DACinterface dac_interface =

@@ -56,21 +56,21 @@ interrupt mode 1 triggered by the main CPU
 
 extern unsigned char *amidar_attributesram;
 void amidar_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void amidar_flipx_w(int offset,int data);
-void amidar_flipy_w(int offset,int data);
-void amidar_attributes_w(int offset,int data);
+WRITE_HANDLER( amidar_flipx_w );
+WRITE_HANDLER( amidar_flipy_w );
+WRITE_HANDLER( amidar_attributes_w );
 void amidar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-int scramble_portB_r(int offset);
-void scramble_sh_irqtrigger_w(int offset,int data);
+READ_HANDLER( scramble_portB_r );
+WRITE_HANDLER( scramble_sh_irqtrigger_w );
 
-void amidar_coina_w (int offset, int data)
+WRITE_HANDLER( amidar_coina_w )
 {
 	coin_counter_w (0, data);
 	coin_counter_w (0, 0);
 }
 
-void amidar_coinb_w (int offset, int data)
+WRITE_HANDLER( amidar_coinb_w )
 {
 	coin_counter_w (1, data);
 	coin_counter_w (1, 0);

@@ -64,7 +64,7 @@ void mnight_vh_stop(void)
 }
 
 
-void mnight_bgvideoram_w(int offset,int data)
+WRITE_HANDLER( mnight_bgvideoram_w )
 {
 	if (mnight_background_videoram[offset] != data)
 	{
@@ -73,13 +73,13 @@ void mnight_bgvideoram_w(int offset,int data)
 	}
 }
 
-void mnight_fgvideoram_w(int offset,int data)
+WRITE_HANDLER( mnight_fgvideoram_w )
 {
 	if (mnight_foreground_videoram[offset] != data)
 		mnight_foreground_videoram[offset] = data;
 }
 
-void mnight_background_enable_w(int offset,int data)
+WRITE_HANDLER( mnight_background_enable_w )
 {
 	if (bg_enable!=data)
 	{
@@ -92,7 +92,7 @@ void mnight_background_enable_w(int offset,int data)
 	}
 }
 
-void mnight_sprite_overdraw_w(int offset,int data)
+WRITE_HANDLER( mnight_sprite_overdraw_w )
 {
 	if (sp_overdraw != (data&1))
 	{

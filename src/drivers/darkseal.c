@@ -22,24 +22,23 @@
 int  darkseal_vh_start(void);
 void darkseal_vh_stop(void);
 void darkseal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void darkseal_update_sprites(int offset, int data);
 
-void darkseal_pf1_data_w(int offset,int data);
-void darkseal_pf2_data_w(int offset,int data);
-void darkseal_pf3_data_w(int offset,int data);
-void darkseal_pf3b_data_w(int offset,int data);
-void darkseal_control_0_w(int offset,int data);
-void darkseal_control_1_w(int offset,int data);
-void darkseal_palette_24bit_rg(int offset,int data);
-void darkseal_palette_24bit_b(int offset,int data);
-int darkseal_palette_24bit_rg_r(int offset);
-int darkseal_palette_24bit_b_r(int offset);
+WRITE_HANDLER( darkseal_pf1_data_w );
+WRITE_HANDLER( darkseal_pf2_data_w );
+WRITE_HANDLER( darkseal_pf3_data_w );
+WRITE_HANDLER( darkseal_pf3b_data_w );
+WRITE_HANDLER( darkseal_control_0_w );
+WRITE_HANDLER( darkseal_control_1_w );
+WRITE_HANDLER( darkseal_palette_24bit_rg_w );
+WRITE_HANDLER( darkseal_palette_24bit_b_w );
+READ_HANDLER( darkseal_palette_24bit_rg_r );
+READ_HANDLER( darkseal_palette_24bit_b_r );
 extern unsigned char *darkseal_pf12_row, *darkseal_pf34_row;
 static unsigned char *darkseal_ram;
 
 /******************************************************************************/
 
-static void darkseal_control_w(int offset,int data)
+static WRITE_HANDLER( darkseal_control_w )
 {
 	switch (offset) {
     case 6: /* DMA flag */
@@ -55,7 +54,7 @@ static void darkseal_control_w(int offset,int data)
 	if (errorlog) fprintf(errorlog,"Warning - %02x written to control %02x\n",data,offset);
 }
 
-static int darkseal_control_r(int offset)
+static READ_HANDLER( darkseal_control_r )
 {
 	switch (offset)
 	{
@@ -93,8 +92,8 @@ static struct MemoryWriteAddress darkseal_writemem[] =
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x100000, 0x103fff, MWA_BANK1, &darkseal_ram },
 	{ 0x120000, 0x1207ff, MWA_BANK2, &spriteram, &spriteram_size },
-	{ 0x140000, 0x140fff, darkseal_palette_24bit_rg, &paletteram },
-	{ 0x141000, 0x141fff, darkseal_palette_24bit_b, &paletteram_2 },
+	{ 0x140000, 0x140fff, darkseal_palette_24bit_rg_w, &paletteram },
+	{ 0x141000, 0x141fff, darkseal_palette_24bit_b_w, &paletteram_2 },
 	{ 0x180000, 0x18000f, darkseal_control_w },
  	{ 0x200000, 0x200fff, darkseal_pf3b_data_w }, /* 2nd half of pf3, only used on last level */
 	{ 0x202000, 0x203fff, darkseal_pf3_data_w },
@@ -109,7 +108,7 @@ static struct MemoryWriteAddress darkseal_writemem[] =
 
 /******************************************************************************/
 
-static void YM2151_w(int offset, int data)
+static WRITE_HANDLER( YM2151_w )
 {
 	switch (offset) {
 	case 0:
@@ -121,7 +120,7 @@ static void YM2151_w(int offset, int data)
 	}
 }
 
-static void YM2203_w(int offset, int data)
+static WRITE_HANDLER( YM2203_w )
 {
 	switch (offset) {
 	case 0:
@@ -546,7 +545,7 @@ static void darkseal_decrypt(void)
 		RAM[i]=(RAM[i] & 0xbd) | ((RAM[i] & 0x02) << 5) | ((RAM[i] & 0x40) >> 5);
 }
 
-static int darkseal_cycle_r(int offset)
+static READ_HANDLER( darkseal_cycle_r )
 {
 	int b=READ_WORD(&darkseal_ram[0x6]);
 	int a=READ_WORD(&darkseal_ram[0x2e7e]);

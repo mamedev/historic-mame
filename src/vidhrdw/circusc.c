@@ -78,7 +78,7 @@ void circusc_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 
 
-void circusc_flipscreen_w(int offset,int data)
+WRITE_HANDLER( circusc_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{

@@ -142,9 +142,9 @@ void ultraman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	fillbitmap(bitmap,Machine->pens[zoom_colorbase[2] * 16],&Machine->drv->visible_area);
 
-	K051316_zoom_draw_2(bitmap);
-	K051316_zoom_draw_1(bitmap);
+	K051316_zoom_draw_2(bitmap,0);
+	K051316_zoom_draw_1(bitmap,0);
 	K051960_sprites_draw(bitmap,0,0);
-	K051316_zoom_draw_0(bitmap);
+	K051316_zoom_draw_0(bitmap,0);
 	K051960_sprites_draw(bitmap,1,1);
 }

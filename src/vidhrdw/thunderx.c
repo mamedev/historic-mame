@@ -24,9 +24,19 @@ static void tile_callback(int layer,int bank,int *code,int *color)
 
 ***************************************************************************/
 
-static void sprite_callback(int *code,int *color,int *priority)
+static void sprite_callback(int *code,int *color,int *priority_mask)
 {
-	*priority = (*color & 0x30) >> 4;
+	/* Sprite priority 1 means appear behind background, used only to mask sprites */
+	/* in the foreground */
+	/* Sprite priority 3 means don't draw (not used) */
+	switch (*color & 0x30)
+	{
+		case 0x00: *priority_mask = 0xf0; break;
+		case 0x10: *priority_mask = 0xf0|0xcc|0xaa; break;
+		case 0x20: *priority_mask = 0xf0|0xcc; break;
+		case 0x30: *priority_mask = 0xffff; break;
+	}
+
 	*color = sprite_colorbase + (*color & 0x0f);
 }
 
@@ -63,6 +73,12 @@ void scontra_vh_stop(void)
 }
 
 
+/***************************************************************************
+
+  Display refresh
+
+***************************************************************************/
+
 void scontra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	K052109_tilemap_update();
@@ -74,28 +90,21 @@ void scontra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_render(ALL_TILEMAPS);
 
-	/* Sprite priority 1 means appear behind background, used only to mask sprites */
-	/* in the foreground */
-	/* Sprite priority 3 means not draw (not used) */
+	fillbitmap(priority_bitmap,0,NULL);
+
 	/* The background color is always from layer 1 - but it's always black anyway */
+//	fillbitmap(bitmap,Machine->pens[16 * layer_colorbase[1]],&Machine->drv->visible_area);
 	if (scontra_priority)
 	{
-//		fillbitmap(bitmap,Machine->pens[16 * layer_colorbase[1]],&Machine->drv->visible_area);
-//		K051960_sprites_draw(bitmap,1,1);
-		K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY);
-		K051960_sprites_draw(bitmap,2,2);
-		K052109_tilemap_draw(bitmap,1,0);
-		K051960_sprites_draw(bitmap,0,0);
-		K052109_tilemap_draw(bitmap,0,0);
+		K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY|(1<<16));
+		K052109_tilemap_draw(bitmap,1,2<<16);
 	}
 	else
 	{
-//		fillbitmap(bitmap,Machine->pens[16 * layer_colorbase[1]],&Machine->drv->visible_area);
-//		K051960_sprites_draw(bitmap,1,1);
-		K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY);
-		K051960_sprites_draw(bitmap,2,2);
-		K052109_tilemap_draw(bitmap,2,0);
-		K051960_sprites_draw(bitmap,0,0);
-		K052109_tilemap_draw(bitmap,0,0);
+		K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY|(1<<16));
+		K052109_tilemap_draw(bitmap,2,2<<16);
 	}
+	K052109_tilemap_draw(bitmap,0,4<<16);
+
+	K051960_sprites_draw(bitmap,-1,-1);
 }

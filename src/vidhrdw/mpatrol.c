@@ -251,49 +251,49 @@ void mpatrol_vh_stop(void)
 
 
 
-void mpatrol_scroll_w(int offset,int data)
+WRITE_HANDLER( mpatrol_scroll_w )
 {
 	scrollreg[offset] = data;
 }
 
 
 
-void mpatrol_bg1xpos_w(int offset,int data)
+WRITE_HANDLER( mpatrol_bg1xpos_w )
 {
 	bg1xpos = data;
 }
 
 
 
-void mpatrol_bg1ypos_w(int offset,int data)
+WRITE_HANDLER( mpatrol_bg1ypos_w )
 {
 	bg1ypos = data;
 }
 
 
 
-void mpatrol_bg2xpos_w(int offset,int data)
+WRITE_HANDLER( mpatrol_bg2xpos_w )
 {
 	bg2xpos = data;
 }
 
 
 
-void mpatrol_bg2ypos_w(int offset,int data)
+WRITE_HANDLER( mpatrol_bg2ypos_w )
 {
 	bg2ypos = data;
 }
 
 
 
-void mpatrol_bgcontrol_w(int offset,int data)
+WRITE_HANDLER( mpatrol_bgcontrol_w )
 {
 	bgcontrol = data;
 }
 
 
 
-void mpatrol_flipscreen_w(int offset,int data)
+WRITE_HANDLER( mpatrol_flipscreen_w )
 {
 	/* screen flip is handled both by software and hardware */
 	data ^= ~readinputport(4) & 1;
@@ -309,7 +309,7 @@ void mpatrol_flipscreen_w(int offset,int data)
 }
 
 
-int mpatrol_input_port_3_r(int offset)
+READ_HANDLER( mpatrol_input_port_3_r )
 {
 	int ret = input_port_3_r(0);
 

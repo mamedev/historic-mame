@@ -76,15 +76,15 @@ The NMI interrupts are only used to read the coin switches.
 #include "vidhrdw/generic.h"
 
 /* vidhrdw/skydiver.c */
-extern void skydiver_sk_lamps_w(int offset, int data);
-extern void skydiver_yd_lamps_w(int offset, int data);
-extern void skydiver_iver_lamps_w(int offset, int data);
-extern void skydiver_width_w(int offset, int data);
+WRITE_HANDLER( skydiver_sk_lamps_w );
+WRITE_HANDLER( skydiver_yd_lamps_w );
+WRITE_HANDLER( skydiver_iver_lamps_w );
+WRITE_HANDLER( skydiver_width_w );
 extern void skydiver_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static int skydiver_nmion;
 
-int skydiver_input_0_r(int offset)
+READ_HANDLER( skydiver_input_0_r )
 {
 	int data = input_port_0_r(0);
 
@@ -98,7 +98,7 @@ int skydiver_input_0_r(int offset)
 	}
 }
 
-int skydiver_input_1_r(int offset)
+READ_HANDLER( skydiver_input_1_r )
 {
 	int data = input_port_1_r(0);
 
@@ -112,7 +112,7 @@ int skydiver_input_1_r(int offset)
 	}
 }
 
-int skydiver_input_2_r(int offset)
+READ_HANDLER( skydiver_input_2_r )
 {
 	int data = input_port_2_r(0);
 
@@ -126,7 +126,7 @@ int skydiver_input_2_r(int offset)
 	}
 }
 
-int skydiver_input_3_r(int offset)
+READ_HANDLER( skydiver_input_3_r )
 {
 	int data = input_port_3_r(0);
 
@@ -140,7 +140,7 @@ int skydiver_input_3_r(int offset)
 	}
 }
 
-void skydiver_nmion_w(int offset, int data)
+WRITE_HANDLER( skydiver_nmion_w )
 {
 //	if (errorlog) fprintf (errorlog, "nmi_on: %02x:%02x\n", offset, data);
 	skydiver_nmion = offset;

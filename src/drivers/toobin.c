@@ -69,9 +69,9 @@ extern UINT8 *toobin_moslip;
 static UINT8 *interrupt_scan;
 
 
-void toobin_moslip_w(int offset, int data);
-void toobin_paletteram_w(int offset, int data);
-void toobin_playfieldram_w(int offset, int data);
+WRITE_HANDLER( toobin_moslip_w );
+WRITE_HANDLER( toobin_paletteram_w );
+WRITE_HANDLER( toobin_playfieldram_w );
 
 int toobin_vh_start(void);
 void toobin_vh_stop(void);
@@ -119,7 +119,7 @@ static void init_machine(void)
  *
  *************************************/
 
-static void interrupt_scan_w(int offset, int data)
+static WRITE_HANDLER( interrupt_scan_w )
 {
 	int oldword = READ_WORD(&interrupt_scan[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -140,7 +140,7 @@ static void interrupt_scan_w(int offset, int data)
  *
  *************************************/
 
-static int special_port1_r(int offset)
+static READ_HANDLER( special_port1_r )
 {
 	int result = input_port_1_r(offset);
 	if (atarigen_get_hblank()) result ^= 0x8000;

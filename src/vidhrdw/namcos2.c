@@ -4,6 +4,9 @@
 #include "vidhrdw/generic.h"
 #include "machine/namcos2.h"
 
+#define tilemap_create(a,b,c,d,e,f) 0
+#define tilemap_mark_tile_dirty(a,b,c)
+
 #define ROTATE_TILE_WIDTH   256
 #define ROTATE_TILE_HEIGHT  256
 #define ROTATE_PIXEL_WIDTH  (ROTATE_TILE_WIDTH*8)

@@ -19,7 +19,7 @@ extern unsigned char *copsnrob_carimage;
 // I read out the current gun position via the sprite image locations,
 // and then decrement/increment it if the up/down keys are pressed.
 
-int copsnrob_gun_position_r(int offset)
+READ_HANDLER( copsnrob_gun_position_r )
 {
     int keys, current_car_image, current_gun_pos = 0;
 

@@ -273,11 +273,11 @@ void ppi8255_w( int which, int offset, int data ) {
 }
 
 /* Helpers */
-int ppi8255_0_r( int offset ) { return ppi8255_r( 0, offset ); }
-int ppi8255_1_r( int offset ) { return ppi8255_r( 1, offset ); }
-int ppi8255_2_r( int offset ) { return ppi8255_r( 2, offset ); }
-int ppi8255_3_r( int offset ) { return ppi8255_r( 3, offset ); }
-void ppi8255_0_w( int offset, int data ) { ppi8255_w( 0, offset, data ); }
-void ppi8255_1_w( int offset, int data ) { ppi8255_w( 1, offset, data ); }
-void ppi8255_2_w( int offset, int data ) { ppi8255_w( 2, offset, data ); }
-void ppi8255_3_w( int offset, int data ) { ppi8255_w( 3, offset, data ); }
+READ_HANDLER( ppi8255_0_r ) { return ppi8255_r( 0, offset ); }
+READ_HANDLER( ppi8255_1_r ) { return ppi8255_r( 1, offset ); }
+READ_HANDLER( ppi8255_2_r ) { return ppi8255_r( 2, offset ); }
+READ_HANDLER( ppi8255_3_r ) { return ppi8255_r( 3, offset ); }
+WRITE_HANDLER( ppi8255_0_w ) { ppi8255_w( 0, offset, data ); }
+WRITE_HANDLER( ppi8255_1_w ) { ppi8255_w( 1, offset, data ); }
+WRITE_HANDLER( ppi8255_2_w ) { ppi8255_w( 2, offset, data ); }
+WRITE_HANDLER( ppi8255_3_w ) { ppi8255_w( 3, offset, data ); }

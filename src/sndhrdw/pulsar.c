@@ -69,7 +69,7 @@ enum
 
 static int port1State = 0;
 
-void pulsar_sh_port1_w( int offset, int data )
+WRITE_HANDLER( pulsar_sh_port1_w )
 {
 	int bitsChanged;
 	int bitsGoneHigh;
@@ -119,7 +119,7 @@ void pulsar_sh_port1_w( int offset, int data )
 }
 
 
-void pulsar_sh_port2_w( int offset, int data )
+WRITE_HANDLER( pulsar_sh_port2_w )
 {
 	static int port2State = 0;
 	int bitsChanged;

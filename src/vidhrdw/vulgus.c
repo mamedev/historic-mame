@@ -127,7 +127,7 @@ void vulgus_vh_stop(void)
 
 
 
-void vulgus_bgvideoram_w(int offset,int data)
+WRITE_HANDLER( vulgus_bgvideoram_w )
 {
 	if (vulgus_bgvideoram[offset] != data)
 	{
@@ -139,7 +139,7 @@ void vulgus_bgvideoram_w(int offset,int data)
 
 
 
-void vulgus_bgcolorram_w(int offset,int data)
+WRITE_HANDLER( vulgus_bgcolorram_w )
 {
 	if (vulgus_bgcolorram[offset] != data)
 	{
@@ -151,7 +151,7 @@ void vulgus_bgcolorram_w(int offset,int data)
 
 
 
-void vulgus_palette_bank_w(int offset,int data)
+WRITE_HANDLER( vulgus_palette_bank_w )
 {
 	if (*vulgus_palette_bank != data)
 	{

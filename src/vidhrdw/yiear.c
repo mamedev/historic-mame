@@ -64,7 +64,7 @@ void yiear_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 }
 
 
-void yiear_control_w(int offset,int data)
+WRITE_HANDLER( yiear_control_w )
 {
 	/* bit 0 flips screen */
 	if (flipscreen != (data & 1))

@@ -31,13 +31,13 @@ void slammast_decode(void);
 
 
 
-static int cps1_input2_r(int offset)
+static READ_HANDLER( cps1_input2_r )
 {
 	int buttons=readinputport(6);
 	return buttons << 8 | buttons;
 }
 
-static int cps1_input3_r(int offset)
+static READ_HANDLER( cps1_input3_r )
 {
     int buttons=readinputport(7);
 	return buttons << 8 | buttons;
@@ -46,7 +46,7 @@ static int cps1_input3_r(int offset)
 
 static int cps1_sound_fade_timer;
 
-static void cps1_snd_bankswitch_w(int offset,int data)
+static WRITE_HANDLER( cps1_snd_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int length = memory_region_length(REGION_CPU2) - 0x10000;
@@ -58,50 +58,50 @@ static void cps1_snd_bankswitch_w(int offset,int data)
 if (errorlog && (data & 0xfe)) fprintf(errorlog,"%04x: write %02x to f004\n",cpu_get_pc(),data);
 }
 
-static void cps1_sound_fade_w(int offset, int data)
+static WRITE_HANDLER( cps1_sound_fade_w )
 {
 	cps1_sound_fade_timer=data;
 }
 
-static int cps1_snd_fade_timer_r(int offset)
+static READ_HANDLER( cps1_snd_fade_timer_r )
 {
 	return cps1_sound_fade_timer;
 }
 
-static int cps1_input_r(int offset)
+static READ_HANDLER( cps1_input_r )
 {
 	int control=readinputport (offset/2);
 	return (control<<8) | control;
 }
 
-static int cps1_player_input_r(int offset)
+static READ_HANDLER( cps1_player_input_r )
 {
 	return (readinputport(offset + 4) + (readinputport(offset+1 + 4)<<8));
 }
 
 static int dial[2];
 
-static int forgottn_dial_0_r(int offset)
+static READ_HANDLER( forgottn_dial_0_r )
 {
 	return ((readinputport(6) - dial[0]) >> (4*offset)) & 0xff;
 }
 
-static int forgottn_dial_1_r(int offset)
+static READ_HANDLER( forgottn_dial_1_r )
 {
 	return ((readinputport(7) - dial[1]) >> (4*offset)) & 0xff;
 }
 
-static void forgottn_dial_0_reset_w(int offset,int data)
+static WRITE_HANDLER( forgottn_dial_0_reset_w )
 {
 	dial[0] = readinputport(6);
 }
 
-static void forgottn_dial_1_reset_w(int offset,int data)
+static WRITE_HANDLER( forgottn_dial_1_reset_w )
 {
 	dial[1] = readinputport(7);
 }
 
-static void cps1_coinctrl_w(int offset,int data)
+static WRITE_HANDLER( cps1_coinctrl_w )
 {
 	if ((data & 0xff000000) == 0)
 	{
@@ -119,7 +119,7 @@ static void cps1_coinctrl_w(int offset,int data)
 	}
 }
 
-void cpsq_coinctrl2_w(int offset, int data)
+WRITE_HANDLER( cpsq_coinctrl2_w )
 {
 	if ((data & 0xff000000) == 0)
 	{
@@ -137,7 +137,7 @@ void cpsq_coinctrl2_w(int offset, int data)
     }
 }
 
-int cps1_protection_ram_r(int offset)
+READ_HANDLER( cps1_protection_ram_r )
 {
 	/*
 	   Protection (slammasters):
@@ -204,17 +204,17 @@ int cps1_qsound_interrupt(void)
 	return 2;
 }
 
-static int qsound_sharedram_r(int offset)
+static READ_HANDLER( qsound_sharedram_r )
 {
 	return qsound_sharedram[offset / 2] | 0xff00;
 }
 
-static void qsound_sharedram_w(int offset,int data)
+static WRITE_HANDLER( qsound_sharedram_w )
 {
 	qsound_sharedram[offset / 2] = data;
 }
 
-static void qsound_banksw_w(int offset,int data)
+static WRITE_HANDLER( qsound_banksw_w )
 {
 	/*
 	Z80 bank register for music note data. It's odd that it isn't encrypted
@@ -288,12 +288,12 @@ static void pang3_nvram_handler(void *file,int read_or_write)
 	}
 }
 
-int cps1_eeprom_port_r(int offset)
+READ_HANDLER( cps1_eeprom_port_r )
 {
 	return EEPROM_read_bit();
 }
 
-void cps1_eeprom_port_w(int offset, int data)
+WRITE_HANDLER( cps1_eeprom_port_w )
 {
 	/*
 	bit 0 = data

@@ -22,10 +22,9 @@ MCU (used by original version): not hooked up
 
 
 extern unsigned char *lkage_scroll, *lkage_vreg;
-extern void lkage_videoram_w( int offset, int data );
-extern int lkage_vh_start(void);
-extern void lkage_vh_stop(void);
-extern void lkage_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+WRITE_HANDLER( lkage_videoram_w );
+int lkage_vh_start(void);
+void lkage_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static int sound_nmi_enable,pending_nmi;
 
@@ -35,18 +34,18 @@ static void nmi_callback(int param)
 	else pending_nmi = 1;
 }
 
-void lkage_sound_command_w(int offset,int data)
+WRITE_HANDLER( lkage_sound_command_w )
 {
 	soundlatch_w(offset,data);
 	timer_set(TIME_NOW,data,nmi_callback);
 }
 
-void lkage_sh_nmi_disable_w(int offset,int data)
+WRITE_HANDLER( lkage_sh_nmi_disable_w )
 {
 	sound_nmi_enable = 0;
 }
 
-void lkage_sh_nmi_enable_w(int offset,int data)
+WRITE_HANDLER( lkage_sh_nmi_enable_w )
 {
 	sound_nmi_enable = 1;
 	if (pending_nmi)
@@ -57,12 +56,12 @@ void lkage_sh_nmi_enable_w(int offset,int data)
 }
 
 
-static int status_r(int offset)
+static READ_HANDLER( status_r )
 {
 	return 0x3;
 }
 
-static int unknown0_r( int offset )
+static READ_HANDLER( unknown0_r )
 {
 	return 0x00;
 }
@@ -107,7 +106,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }
 };
 
-static int port_fetch_r(int offset)
+static READ_HANDLER( port_fetch_r )
 {
 	return memory_region(REGION_USER1)[offset];
 }
@@ -383,7 +382,7 @@ static struct MachineDriver machine_driver_lkage =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	lkage_vh_start,
-	lkage_vh_stop,
+	0,
 	lkage_vh_screenrefresh,
 
 	/* sound hardware */

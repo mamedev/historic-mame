@@ -155,12 +155,12 @@ void aso_draw_sprites(
 
 int hal21_vreg[6];
 
-void hal21_vreg0_w( int offset, int data ){ hal21_vreg[0] = data; }
-void hal21_vreg1_w( int offset, int data ){ hal21_vreg[1] = data; }
-void hal21_vreg2_w( int offset, int data ){ hal21_vreg[2] = data; }
-void hal21_vreg3_w( int offset, int data ){ hal21_vreg[3] = data; }
-void hal21_vreg4_w( int offset, int data ){ hal21_vreg[4] = data; }
-void hal21_vreg5_w( int offset, int data ){ hal21_vreg[5] = data; }
+WRITE_HANDLER( hal21_vreg0_w ){ hal21_vreg[0] = data; }
+WRITE_HANDLER( hal21_vreg1_w ){ hal21_vreg[1] = data; }
+WRITE_HANDLER( hal21_vreg2_w ){ hal21_vreg[2] = data; }
+WRITE_HANDLER( hal21_vreg3_w ){ hal21_vreg[3] = data; }
+WRITE_HANDLER( hal21_vreg4_w ){ hal21_vreg[4] = data; }
+WRITE_HANDLER( hal21_vreg5_w ){ hal21_vreg[5] = data; }
 
 void aso_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ){
 	unsigned char *ram = memory_region(REGION_CPU1);
@@ -425,16 +425,16 @@ static struct GfxDecodeInfo aso_gfxdecodeinfo[] =
 static int snk_soundcommand = 0;
 static unsigned char *shared_ram, *shared_auxram;
 
-static int shared_auxram_r( int offset ){ return shared_auxram[offset]; }
-static void shared_auxram_w( int offset, int data ){ shared_auxram[offset] = data; }
+static READ_HANDLER( shared_auxram_r ){ return shared_auxram[offset]; }
+static WRITE_HANDLER( shared_auxram_w ){ shared_auxram[offset] = data; }
 
-static int shared_ram_r( int offset ){ return shared_ram[offset]; }
-static void shared_ram_w( int offset, int data ){ shared_ram[offset] = data; }
+static READ_HANDLER( shared_ram_r ){ return shared_ram[offset]; }
+static WRITE_HANDLER( shared_ram_w ){ shared_ram[offset] = data; }
 
 static int CPUA_latch = 0;
 static int CPUB_latch = 0;
 
-static void CPUA_int_enable_w( int offset, int data ){
+static WRITE_HANDLER( CPUA_int_enable_w ){
 	if( CPUA_latch & SNK_NMI_PENDING ){
 		cpu_cause_interrupt( 0, Z80_NMI_INT );
 		CPUA_latch = 0;
@@ -444,7 +444,7 @@ static void CPUA_int_enable_w( int offset, int data ){
 	}
 }
 
-static int CPUA_int_trigger_r( int offset ){
+static READ_HANDLER( CPUA_int_trigger_r ){
 	if( CPUA_latch&SNK_NMI_ENABLE ){
 		cpu_cause_interrupt( 0, Z80_NMI_INT );
 		CPUA_latch = 0;
@@ -455,7 +455,7 @@ static int CPUA_int_trigger_r( int offset ){
 	return 0xff;
 }
 
-static void CPUB_int_enable_w( int offset, int data ){
+static WRITE_HANDLER( CPUB_int_enable_w ){
 	if( CPUB_latch & SNK_NMI_PENDING ){
 		cpu_cause_interrupt( 1, Z80_NMI_INT );
 		CPUB_latch = 0;
@@ -465,7 +465,7 @@ static void CPUB_int_enable_w( int offset, int data ){
 	}
 }
 
-static int CPUB_int_trigger_r( int offset ){
+static READ_HANDLER( CPUB_int_trigger_r ){
 	if( CPUB_latch&SNK_NMI_ENABLE ){
 		cpu_cause_interrupt( 1, Z80_NMI_INT );
 		CPUB_latch = 0;
@@ -476,13 +476,13 @@ static int CPUB_int_trigger_r( int offset ){
 	return 0xff;
 }
 
-static void snk_soundcommand_w( int offset, int data ){
+static WRITE_HANDLER( snk_soundcommand_w ){
 	snk_soundcommand = data;
 	cpu_cause_interrupt( 2, Z80_IRQ_INT );
 //	cpu_cause_interrupt(2, 0xff); old ASO
 }
 
-static int snk_soundcommand_r(int offset)
+static READ_HANDLER( snk_soundcommand_r )
 {
 	int val = snk_soundcommand;
 	snk_soundcommand = 0;
@@ -626,10 +626,10 @@ static struct MemoryWriteAddress hal21_writemem_CPUA[] = {
 	{ -1 }
 };
 
-int hal21_spriteram_r( int offset ){
+READ_HANDLER( hal21_spriteram_r ){
 	return spriteram[offset];
 }
-void hal21_spriteram_w( int offset, int data ){
+WRITE_HANDLER( hal21_spriteram_w ){
 	spriteram[offset] = data;
 }
 

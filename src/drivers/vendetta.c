@@ -66,7 +66,7 @@ static void nvram_handler(void *file,int read_or_write)
 	}
 }
 
-static int vendetta_eeprom_r( int offset )
+static READ_HANDLER( vendetta_eeprom_r )
 {
 	int res;
 
@@ -86,7 +86,7 @@ static int vendetta_eeprom_r( int offset )
 
 static int irq_enabled;
 
-static void vendetta_eeprom_w( int offset, int data )
+static WRITE_HANDLER( vendetta_eeprom_w )
 {
 	/* bit 0 - VOC0 - Video banking related */
 	/* bit 1 - VOC1 - Video banking related */
@@ -112,8 +112,8 @@ static void vendetta_eeprom_w( int offset, int data )
 
 /********************************************/
 
-static int vendetta_K052109_r( int offset ) { return K052109_r( offset + 0x2000 ); }
-static void vendetta_K052109_w( int offset, int data ) { K052109_w( offset + 0x2000, data ); }
+static READ_HANDLER( vendetta_K052109_r ) { return K052109_r( offset + 0x2000 ); }
+static WRITE_HANDLER( vendetta_K052109_w ) { K052109_w( offset + 0x2000, data ); }
 
 static void vendetta_video_banking( int select )
 {
@@ -133,7 +133,7 @@ static void vendetta_video_banking( int select )
 	}
 }
 
-static void vendetta_5fe0_w(int offset,int data)
+static WRITE_HANDLER( vendetta_5fe0_w )
 {
 //char baf[40];
 //sprintf(baf,"5fe0 = %02x",data);
@@ -154,7 +154,7 @@ static void vendetta_5fe0_w(int offset,int data)
 	K053246_set_OBJCHA_line((data & 0x20) ? ASSERT_LINE : CLEAR_LINE);
 }
 
-static int speedup_r( int offs )
+static READ_HANDLER( speedup_r )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -176,29 +176,29 @@ static void z80_nmi_callback( int param )
 	cpu_set_nmi_line( 1, ASSERT_LINE );
 }
 
-static void z80_arm_nmi(int offset,int data)
+static WRITE_HANDLER( z80_arm_nmi_w )
 {
 	cpu_set_nmi_line( 1, CLEAR_LINE );
 
 	timer_set( TIME_IN_USEC( 50 ), 0, z80_nmi_callback );
 }
 
-static void z80_irq_w( int offset, int data )
+static WRITE_HANDLER( z80_irq_w )
 {
 	cpu_cause_interrupt( 1, 0xff );
 }
 
-int vendetta_sound_interrupt_r( int offset )
+READ_HANDLER( vendetta_sound_interrupt_r )
 {
 	cpu_cause_interrupt( 1, 0xff );
 	return 0x00;
 }
 
-int vendetta_sound_r(int offset)
+READ_HANDLER( vendetta_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
 	   just make it pass the test */
-	if (Machine->sample_rate != 0) 	return K053260_ReadReg(2 + offset);
+	if (Machine->sample_rate != 0) 	return K053260_r(2 + offset);
 	else
 	{
 		static int res = 0x00;
@@ -241,7 +241,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5fe0, 0x5fe0, vendetta_5fe0_w },
 	{ 0x5fe2, 0x5fe2, vendetta_eeprom_w },
 	{ 0x5fe4, 0x5fe4, z80_irq_w },
-	{ 0x5fe6, 0x5fe7, K053260_WriteReg },
+	{ 0x5fe6, 0x5fe7, K053260_w },
 	{ 0x4000, 0x4fff, MWA_BANK3 },
 	{ 0x6000, 0x6fff, MWA_BANK2 },
 	{ 0x4000, 0x7fff, K052109_w },
@@ -254,7 +254,7 @@ static struct MemoryReadAddress readmem_sound[] =
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xf7ff, MRA_RAM },
 	{ 0xf801, 0xf801, YM2151_status_port_0_r },
-	{ 0xfc00, 0xfc2f, K053260_ReadReg },
+	{ 0xfc00, 0xfc2f, K053260_r },
 	{ -1 }	/* end of table */
 };
 
@@ -264,8 +264,8 @@ static struct MemoryWriteAddress writemem_sound[] =
 	{ 0xf000, 0xf7ff, MWA_RAM },
 	{ 0xf800, 0xf800, YM2151_register_port_0_w },
 	{ 0xf801, 0xf801, YM2151_data_port_0_w },
-	{ 0xfa00, 0xfa00, z80_arm_nmi },
-	{ 0xfc00, 0xfc2f, K053260_WriteReg },
+	{ 0xfa00, 0xfa00, z80_arm_nmi_w },
+	{ 0xfc00, 0xfc2f, K053260_w },
 	{ -1 }	/* end of table */
 };
 

@@ -62,7 +62,7 @@ extern unsigned char *mystston_scroll;
 void mystston_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int mystston_vh_start(void);
 void mystston_vh_stop(void);
-void mystston_2000_w(int offset,int data);
+WRITE_HANDLER( mystston_2000_w );
 void mystston_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -88,12 +88,12 @@ int mystston_interrupt(void)
 
 static int psg_latch;
 
-void mystston_8910_latch_w(int offset,int data)
+WRITE_HANDLER( mystston_8910_latch_w )
 {
 	psg_latch = data;
 }
 
-void mystston_8910_control_w(int offset,int data)
+WRITE_HANDLER( mystston_8910_control_w )
 {
 	static int last;
 

@@ -152,19 +152,19 @@ void K051649_sh_stop(void)
 
 /********************************************************************************/
 
-void K051649_waveform_w(int offset, int data)
+WRITE_HANDLER( K051649_waveform_w )
 {
 	stream_update(stream,0);
 	channel_list[offset>>5].waveform[offset&0x1f]=data;
 }
 
-void K051649_volume_w(int offset, int data)
+WRITE_HANDLER( K051649_volume_w )
 {
 	stream_update(stream,0);
 	channel_list[offset&0x7].volume=data&0xf;
 }
 
-void K051649_frequency_w(int offset, int data)
+WRITE_HANDLER( K051649_frequency_w )
 {
 	static int f[10];
 	f[offset]=data;
@@ -177,7 +177,7 @@ void K051649_frequency_w(int offset, int data)
 		channel_list[4].frequency=(f[6] + (f[7]<<8))&0x3ff;
 }
 
-void K051649_keyonoff_w(int offset, int data)
+WRITE_HANDLER( K051649_keyonoff_w )
 {
 	channel_list[0].key=data&1;
 	channel_list[1].key=data&2;

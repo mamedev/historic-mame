@@ -23,19 +23,17 @@ static int flipscreen;
 
 ***************************************************************************/
 
-static void get_fg_tile_info( int col, int row )
+static void get_fg_tile_info(int tile_index)
 {
-	int tile_index = 2*(row+col*32);
-	unsigned char attr = srumbler_foregroundram[tile_index];
-	SET_TILE_INFO(0,srumbler_foregroundram[tile_index + 1] + ((attr & 0x03) << 8),(attr & 0x3c) >> 2)
+	unsigned char attr = srumbler_foregroundram[2*tile_index];
+	SET_TILE_INFO(0,srumbler_foregroundram[2*tile_index + 1] + ((attr & 0x03) << 8),(attr & 0x3c) >> 2)
 	tile_info.flags = (attr & 0x40) ? TILE_IGNORE_TRANSPARENCY : 0;
 }
 
-static void get_bg_tile_info( int col, int row )
+static void get_bg_tile_info(int tile_index)
 {
-	int tile_index = 2*(row+col*64);
-	unsigned char attr = srumbler_backgroundram[tile_index];
-	SET_TILE_INFO(1,srumbler_backgroundram[tile_index + 1] + ((attr & 0x07) << 8),(attr & 0xe0) >> 5)
+	unsigned char attr = srumbler_backgroundram[2*tile_index];
+	SET_TILE_INFO(1,srumbler_backgroundram[2*tile_index + 1] + ((attr & 0x07) << 8),(attr & 0xe0) >> 5)
 	tile_info.flags = TILE_SPLIT((attr & 0x10) >> 4);
 	if (attr & 0x08) tile_info.flags |= TILE_FLIPY;
 }
@@ -50,8 +48,8 @@ static void get_bg_tile_info( int col, int row )
 
 int srumbler_vh_start(void)
 {
-	fg_tilemap = tilemap_create(get_fg_tile_info,TILEMAP_TRANSPARENT, 8, 8,64,32);
-	bg_tilemap = tilemap_create(get_bg_tile_info,TILEMAP_SPLIT,      16,16,64,64);
+	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,32);
+	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_SPLIT,    16,16,64,64);
 
 	if (!fg_tilemap || !bg_tilemap)
 		return 1;
@@ -72,26 +70,26 @@ int srumbler_vh_start(void)
 
 ***************************************************************************/
 
-void srumbler_foreground_w(int offset,int data)
+WRITE_HANDLER( srumbler_foreground_w )
 {
 	if (srumbler_foregroundram[offset] != data)
 	{
 		srumbler_foregroundram[offset] = data;
-		tilemap_mark_tile_dirty(fg_tilemap,(offset/2)/32,(offset/2)%32);
+		tilemap_mark_tile_dirty(fg_tilemap,offset/2);
 	}
 }
 
-void srumbler_background_w(int offset,int data)
+WRITE_HANDLER( srumbler_background_w )
 {
 	if (srumbler_backgroundram[offset] != data)
 	{
 		srumbler_backgroundram[offset] = data;
-		tilemap_mark_tile_dirty(bg_tilemap,(offset/2)/64,(offset/2)%64);
+		tilemap_mark_tile_dirty(bg_tilemap,offset/2);
 	}
 }
 
 
-void srumbler_4009_w(int offset, int data)
+WRITE_HANDLER( srumbler_4009_w )
 {
 	/* bit 0 flips screen */
 	flipscreen = data & 1;
@@ -105,7 +103,7 @@ void srumbler_4009_w(int offset, int data)
 }
 
 
-void srumbler_scroll_w(int offset,int data)
+WRITE_HANDLER( srumbler_scroll_w )
 {
 	static int scroll[4];
 

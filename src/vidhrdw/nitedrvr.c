@@ -16,7 +16,7 @@ extern int nitedrvr_track;
 /* local */
 unsigned char *nitedrvr_hvc;
 
-void nitedrvr_hvc_w(int offset, int data)
+WRITE_HANDLER( nitedrvr_hvc_w )
 {
 	nitedrvr_hvc[offset & 0x3f] = data;
 

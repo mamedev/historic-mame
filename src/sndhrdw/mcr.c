@@ -49,11 +49,13 @@ extern struct pia6821_interface csdeluxe_pia_intf;
 /* Turbo Chip Squeak-specific globals */
 static UINT8 turbocs_sound_cpu;
 static UINT8 turbocs_dac_index;
+static UINT8 turbocs_status;
 extern struct pia6821_interface turbocs_pia_intf;
 
 /* Sounds Good-specific globals */
 static UINT8 soundsgood_sound_cpu;
 static UINT8 soundsgood_dac_index;
+static UINT8 soundsgood_status;
 extern struct pia6821_interface soundsgood_pia_intf;
 
 /* Squawk n' Talk-specific globals */
@@ -149,12 +151,12 @@ void mcr_sound_init(void)
  *************************************/
 
 /********* internal interfaces ***********/
-static void ssio_status_w(int offset,int data)
+static WRITE_HANDLER( ssio_status_w )
 {
 	ssio_status = data;
 }
 
-static int ssio_data_r(int offset)
+static READ_HANDLER( ssio_data_r )
 {
 	return ssio_data[offset];
 }
@@ -172,27 +174,27 @@ static void ssio_update_volumes(void)
 			AY8910_set_volume(chip, chan, (ssio_duty_cycle[chip][chan] ^ 15) * 100 / 15);
 }
 
-static void ssio_porta0_w(int offset, int data)
+static WRITE_HANDLER( ssio_porta0_w )
 {
 	ssio_duty_cycle[0][0] = data & 15;
 	ssio_duty_cycle[0][1] = data >> 4;
 	ssio_update_volumes();
 }
 
-static void ssio_portb0_w(int offset, int data)
+static WRITE_HANDLER( ssio_portb0_w )
 {
 	ssio_duty_cycle[0][2] = data & 15;
 	ssio_update_volumes();
 }
 
-static void ssio_porta1_w(int offset, int data)
+static WRITE_HANDLER( ssio_porta1_w )
 {
 	ssio_duty_cycle[1][0] = data & 15;
 	ssio_duty_cycle[1][1] = data >> 4;
 	ssio_update_volumes();
 }
 
-static void ssio_portb1_w(int offset, int data)
+static WRITE_HANDLER( ssio_portb1_w )
 {
 	ssio_duty_cycle[1][2] = data & 15;
 	mixer_sound_enable_global_w(!(data & 0x80));
@@ -200,12 +202,12 @@ static void ssio_portb1_w(int offset, int data)
 }
 
 /********* external interfaces ***********/
-void ssio_data_w(int offset, int data)
+WRITE_HANDLER( ssio_data_w )
 {
 	timer_set(TIME_NOW, (offset << 8) | (data & 0xff), ssio_delayed_data_w);
 }
 
-int ssio_status_r(int offset)
+READ_HANDLER( ssio_status_r )
 {
 	return ssio_status;
 }
@@ -280,13 +282,13 @@ struct MemoryWriteAddress ssio_writemem[] =
  *************************************/
 
 /********* internal interfaces ***********/
-static void csdeluxe_porta_w(int offset, int data)
+static WRITE_HANDLER( csdeluxe_porta_w )
 {
 	dacval = (dacval & ~0x3fc) | (data << 2);
 	DAC_signed_data_16_w(csdeluxe_dac_index, dacval << 6);
 }
 
-static void csdeluxe_portb_w(int offset, int data)
+static WRITE_HANDLER( csdeluxe_portb_w )
 {
 	dacval = (dacval & ~0x003) | (data >> 6);
 	DAC_signed_data_16_w(csdeluxe_dac_index, dacval << 6);
@@ -305,19 +307,14 @@ static void csdeluxe_delayed_data_w(int param)
 
 
 /********* external interfaces ***********/
-void csdeluxe_data_w(int offset, int data)
+WRITE_HANDLER( csdeluxe_data_w )
 {
 	timer_set(TIME_NOW, data, csdeluxe_delayed_data_w);
 }
 
 void csdeluxe_reset_w(int state)
 {
-	/* going high halts the CPU */
-	if (state)
-		cpu_set_reset_line(csdeluxe_sound_cpu,ASSERT_LINE);
-	/* going low resets and reactivates the CPU */
-	else
-		cpu_set_reset_line(csdeluxe_sound_cpu,CLEAR_LINE);
+	cpu_set_reset_line(csdeluxe_sound_cpu, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
@@ -331,7 +328,7 @@ struct DACinterface mcr_dac_interface =
 struct DACinterface mcr_dual_dac_interface =
 {
 	2,
-	{ 100, 100 }
+	{ 75, 75 }
 };
 
 
@@ -354,10 +351,6 @@ struct MemoryWriteAddress csdeluxe_writemem[] =
 
 
 /********* PIA interfaces ***********/
-
-/* Note: we map this board to PIA #1. It is only used in Spy Hunter and Spy Hunter 2 */
-/* For Spy Hunter 2, we also have a Turbo Chip Squeak in PIA slot 0, so we don't want */
-/* to interfere */
 struct pia6821_interface csdeluxe_pia_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
@@ -376,16 +369,17 @@ struct pia6821_interface csdeluxe_pia_intf =
  *************************************/
 
 /********* internal interfaces ***********/
-static void soundsgood_porta_w(int offset, int data)
+static WRITE_HANDLER( soundsgood_porta_w )
 {
 	dacval = (dacval & ~0x3fc) | (data << 2);
 	DAC_signed_data_16_w(soundsgood_dac_index, dacval << 6);
 }
 
-static void soundsgood_portb_w(int offset, int data)
+static WRITE_HANDLER( soundsgood_portb_w )
 {
 	dacval = (dacval & ~0x003) | (data >> 6);
 	DAC_signed_data_16_w(soundsgood_dac_index, dacval << 6);
+	soundsgood_status = (data >> 4) & 3;
 }
 
 static void soundsgood_irq(int state)
@@ -401,19 +395,19 @@ static void soundsgood_delayed_data_w(int param)
 
 
 /********* external interfaces ***********/
-void soundsgood_data_w(int offset, int data)
+WRITE_HANDLER( soundsgood_data_w )
 {
 	timer_set(TIME_NOW, data, soundsgood_delayed_data_w);
 }
 
+READ_HANDLER( soundsgood_status_r )
+{
+	return soundsgood_status;
+}
+
 void soundsgood_reset_w(int state)
 {
-	/* going high halts the CPU */
-	if (state)
-		cpu_set_reset_line(soundsgood_sound_cpu,ASSERT_LINE);
-	/* going low resets and reactivates the CPU */
-	else
-		cpu_set_reset_line(soundsgood_sound_cpu,CLEAR_LINE);
+	cpu_set_reset_line(soundsgood_sound_cpu, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
@@ -444,6 +438,9 @@ struct MemoryWriteAddress soundsgood_writemem[] =
 
 
 /********* PIA interfaces ***********/
+/* Note: we map this board to PIA #1. It is only used in Spy Hunter and Spy Hunter 2 */
+/* For Spy Hunter 2, we also have a Turbo Chip Squeak in PIA slot 0, so we don't want */
+/* to interfere */
 struct pia6821_interface soundsgood_pia_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
@@ -462,16 +459,17 @@ struct pia6821_interface soundsgood_pia_intf =
  *************************************/
 
 /********* internal interfaces ***********/
-static void turbocs_porta_w(int offset, int data)
+static WRITE_HANDLER( turbocs_porta_w )
 {
 	dacval = (dacval & ~0x3fc) | (data << 2);
 	DAC_signed_data_16_w(turbocs_dac_index, dacval << 6);
 }
 
-static void turbocs_portb_w(int offset, int data)
+static WRITE_HANDLER( turbocs_portb_w )
 {
 	dacval = (dacval & ~0x003) | (data >> 6);
 	DAC_signed_data_16_w(turbocs_dac_index, dacval << 6);
+	turbocs_status = (data >> 4) & 3;
 }
 
 static void turbocs_irq(int state)
@@ -487,19 +485,19 @@ static void turbocs_delayed_data_w(int param)
 
 
 /********* external interfaces ***********/
-void turbocs_data_w(int offset, int data)
+WRITE_HANDLER( turbocs_data_w )
 {
 	timer_set(TIME_NOW, data, turbocs_delayed_data_w);
 }
 
+READ_HANDLER( turbocs_status_r )
+{
+	return turbocs_status;
+}
+
 void turbocs_reset_w(int state)
 {
-	/* going high halts the CPU */
-	if (state)
-		cpu_set_reset_line(turbocs_sound_cpu,ASSERT_LINE);
-	/* going low resets and reactivates the CPU */
-	else
-		cpu_set_reset_line(turbocs_sound_cpu,CLEAR_LINE);
+	cpu_set_reset_line(turbocs_sound_cpu, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
@@ -542,17 +540,17 @@ struct pia6821_interface turbocs_pia_intf =
  *************************************/
 
 /********* internal interfaces ***********/
-static void squawkntalk_porta1_w(int offset, int data)
+static WRITE_HANDLER( squawkntalk_porta1_w )
 {
 	if (errorlog) fprintf(errorlog, "Write to AY-8912\n");
 }
 
-static void squawkntalk_porta2_w(int offset, int data)
+static WRITE_HANDLER( squawkntalk_porta2_w )
 {
 	squawkntalk_tms_command = data;
 }
 
-static void squawkntalk_portb2_w(int offset, int data)
+static WRITE_HANDLER( squawkntalk_portb2_w )
 {
 	/* bits 0-1 select read/write strobes on the TMS5220 */
 	data &= 0x03;
@@ -594,19 +592,14 @@ static void squawkntalk_delayed_data_w(int param)
 
 
 /********* external interfaces ***********/
-void squawkntalk_data_w(int offset, int data)
+WRITE_HANDLER( squawkntalk_data_w )
 {
 	timer_set(TIME_NOW, data, squawkntalk_delayed_data_w);
 }
 
 void squawkntalk_reset_w(int state)
 {
-	/* going high halts the CPU */
-	if (state)
-		cpu_set_reset_line(squawkntalk_sound_cpu,ASSERT_LINE);
-	/* going low resets and reactivates the CPU */
-	else
-		cpu_set_reset_line(squawkntalk_sound_cpu,CLEAR_LINE);
+	cpu_set_reset_line(squawkntalk_sound_cpu, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 

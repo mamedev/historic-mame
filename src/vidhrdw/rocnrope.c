@@ -76,7 +76,7 @@ void rocnrope_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 
 
-void rocnrope_flipscreen_w(int offset,int data)
+WRITE_HANDLER( rocnrope_flipscreen_w )
 {
 	if (flipscreen != (~data & 1))
 	{

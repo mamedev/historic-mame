@@ -16,7 +16,7 @@ static int flipscreen;
 
 
 
-void bombjack_background_w(int offset,int data)
+WRITE_HANDLER( bombjack_background_w )
 {
 	if (background_image != data)
 	{
@@ -27,7 +27,7 @@ void bombjack_background_w(int offset,int data)
 
 
 
-void bombjack_flipscreen_w(int offset,int data)
+WRITE_HANDLER( bombjack_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{

@@ -23,12 +23,12 @@ ask.  - Mike Balfour (mab22@po.cwru.edu)
 #include "vidhrdw/generic.h"
 
 /* machine/dominos.c */
-extern int dominos_port_r(int offset);
-extern int dominos_sync_r(int offset);
-extern void dominos_attract_w(int offset, int data);
-extern void dominos_tumble_w(int offset, int data);
-extern void dominos_lamp2_w(int offset, int data);
-extern void dominos_lamp1_w(int offset, int data);
+READ_HANDLER( dominos_port_r );
+READ_HANDLER( dominos_sync_r );
+WRITE_HANDLER( dominos_attract_w );
+WRITE_HANDLER( dominos_tumble_w );
+WRITE_HANDLER( dominos_lamp2_w );
+WRITE_HANDLER( dominos_lamp1_w );
 
 /* vidhrdw/dominos.c */
 extern void dominos_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);

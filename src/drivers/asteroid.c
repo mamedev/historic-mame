@@ -143,34 +143,34 @@ void asteroid_init_machine(void);
 int asteroid_interrupt(void);
 int llander_interrupt(void);
 
-void asteroid_bank_switch_w(int offset, int data);
-void astdelux_bank_switch_w (int offset,int data);
-void astdelux_led_w (int offset,int data);
-void llander_led_w (int offset,int data);
+WRITE_HANDLER( asteroid_bank_switch_w );
+WRITE_HANDLER( astdelux_bank_switch_w );
+WRITE_HANDLER( astdelux_led_w );
+WRITE_HANDLER( llander_led_w );
 
-void asteroid_explode_w(int offset,int data);
-void asteroid_thump_w(int offset,int data);
-void asteroid_sounds_w(int offset,int data);
+WRITE_HANDLER( asteroid_explode_w );
+WRITE_HANDLER( asteroid_thump_w );
+WRITE_HANDLER( asteroid_sounds_w );
 int asteroid_sh_start(const struct MachineSound *msound);
 void asteroid_sh_stop(void);
 void asteroid_sh_update(void);
 
-void astdelux_sounds_w(int offset,int data);
+WRITE_HANDLER( astdelux_sounds_w );
 int astdelux_sh_start(const struct MachineSound *msound);
 void astdelux_sh_stop(void);
 void astdelux_sh_update(void);
 
-void llander_sounds_w(int offset,int data);
-void llander_snd_reset_w(int offset,int data);
+WRITE_HANDLER( llander_sounds_w );
+WRITE_HANDLER( llander_snd_reset_w );
 int llander_sh_start(const struct MachineSound *msound);
 void llander_sh_stop(void);
 void llander_sh_update(void);
 
-int asteroid_IN0_r(int offset);
-int asteroib_IN0_r(int offset);
-int asteroid_IN1_r(int offset);
-int asteroid_DSW1_r(int offset);
-int llander_IN0_r(int offset);
+READ_HANDLER( asteroid_IN0_r );
+READ_HANDLER( asteroib_IN0_r );
+READ_HANDLER( asteroid_IN1_r );
+READ_HANDLER( asteroid_DSW1_r );
+READ_HANDLER( llander_IN0_r );
 
 int asteroid_catch_busyloop(int offset);
 
@@ -184,12 +184,12 @@ void llander_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 /* Lunar Lander mirrors page 0 and page 1. */
 static unsigned char *llander_zeropage;
 
-static int llander_zeropage_r(int offset)
+static READ_HANDLER( llander_zeropage_r )
 {
 	return llander_zeropage[offset & 0xff];
 }
 
-static void llander_zeropage_w(int offset,int data)
+static WRITE_HANDLER( llander_zeropage_w )
 {
 	llander_zeropage[offset & 0xff] = data;
 }
@@ -226,7 +226,7 @@ static struct MemoryReadAddress asteroib_readmem[] =
 static struct MemoryWriteAddress asteroid_writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x3000, 0x3000, avgdvg_go },
+	{ 0x3000, 0x3000, avgdvg_go_w },
 	{ 0x3200, 0x3200, asteroid_bank_switch_w },
 	{ 0x3400, 0x3400, watchdog_reset_w },
 	{ 0x3600, 0x3600, asteroid_explode_w },
@@ -258,11 +258,11 @@ static struct MemoryWriteAddress astdelux_writemem[] =
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x2405, 0x2405, astdelux_sounds_w }, /* thrust sound */
 	{ 0x2c00, 0x2c0f, pokey1_w },
-	{ 0x3000, 0x3000, avgdvg_go },
+	{ 0x3000, 0x3000, avgdvg_go_w },
 	{ 0x3200, 0x323f, atari_vg_earom_w },
 	{ 0x3400, 0x3400, watchdog_reset_w },
 	{ 0x3600, 0x3600, asteroid_explode_w },
-	{ 0x3a00, 0x3a00, atari_vg_earom_ctrl },
+	{ 0x3a00, 0x3a00, atari_vg_earom_ctrl_w },
 /*	{ 0x3c00, 0x3c03, astdelux_led_w },*/ /* P1 LED, P2 LED, unknown, thrust? */
 	{ 0x3c00, 0x3c03, MWA_NOP }, /* P1 LED, P2 LED, unknown, thrust? */
 	{ 0x3c04, 0x3c04, astdelux_bank_switch_w },
@@ -290,7 +290,7 @@ static struct MemoryReadAddress llander_readmem[] =
 static struct MemoryWriteAddress llander_writemem[] =
 {
 	{ 0x0000, 0x01ff, llander_zeropage_w, &llander_zeropage },
-	{ 0x3000, 0x3000, avgdvg_go },
+	{ 0x3000, 0x3000, avgdvg_go_w },
 	{ 0x3200, 0x3200, llander_led_w },
 	{ 0x3400, 0x3400, watchdog_reset_w },
 	{ 0x3c00, 0x3c00, llander_sounds_w },

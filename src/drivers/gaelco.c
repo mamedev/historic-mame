@@ -7,23 +7,32 @@ Gaelco Game list:
 
 1987:	Master Boy
 1991:	Big Karnak, Master Boy 2
-1992:	Splash, Thunder Hoop, Squash
-1993:	World Rally, Glass
-1994:	Strike Back, Target Hits, Thunder Hoop 2
-1995:	Alligator Hunt, Toy, World Rally 2, Salter, Touch & Go
-1996:	Maniac Square, Snow Board, Speed Up
-1997:	Surf Planet
-1998:	Radikal Bikers
-1999:	Rolling Extreme
+1992:	Splash!**, Thunder Hoop, Squash
+1993:	World Rally*, Glass**
+1994:	Strike Back, Target Hits*, Thunder Hoop 2
+1995:	Alligator Hunt, Mechanical Toy***, World Rally 2*, Salter, Touch & Go
+1996:	Maniac Square****, Snow Board**, Speed Up (3D)
+1997:	Surf Planet (3D)
+1998:	Radikal Bikers (3D), Bang
+1999:	Rolling Extreme (3D)
+2000:	Football Power* (3D)
 
-All games newer than Splash are heavily protected.
+(*)		Created by Zigurat Software
+(**)	Created by OMK Software
+(***)	Created by Zeus Software
+(****)	Created by Mandragora Soft
+
+All games newer than Splash are heavily protected:
+	World Rally, Squash, Thunder Hoop (and probably others) have encrypted Video RAM.
+	World Rally (and probably others) has a protected MCU.
+
 
 ============================================================================
-							SPLASH
+							SPLASH!
 ============================================================================
 
-Splash memory map:
-------------------
+Splash! memory map:
+-------------------
 0x000000-0x03ffff	ROM (m68000 code + graphics)
 0x100000-0x3fffff	ROM (graphics)
 0x800000-0x83ffff	Screen 2	(pixel layer				(512x256))
@@ -55,8 +64,7 @@ Unmapped addresses in the driver:
 					After that is set to 0xffff.
 
 
-The sound CPU writes to unknown addresses in the NMI handler. The NMI interrupt
-is not needed for music to work.
+In the Z80, what does $e000 do?
 
 ***************************************************************************/
 
@@ -71,16 +79,16 @@ extern unsigned char *splash_spriteram;
 extern unsigned char *splash_pixelram;
 
 /* from vidhrdw/gaelco.c */
-int splash_vram_r( int offset );
-int splash_pixelram_r( int offset );
-void splash_vram_w( int offset, int data );
-void splash_pixelram_w( int offset, int data );
+READ_HANDLER( splash_vram_r );
+READ_HANDLER( splash_pixelram_r );
+WRITE_HANDLER( splash_vram_w );
+WRITE_HANDLER( splash_pixelram_w );
 int splash_vh_start( void );
 void splash_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh );
-void paletteram_xRRRRxGGGGxBBBBx_word_w( int offset, int data );
+WRITE_HANDLER( paletteram_xRRRRxGGGGxBBBBx_word_w );
 
 
-static void splash_sh_irqtrigger_w(int offset, int data)
+static WRITE_HANDLER( splash_sh_irqtrigger_w )
 {
 	if ((data & 0x00ff0000) == 0)
 	{
@@ -99,42 +107,55 @@ static struct MemoryReadAddress splash_readmem[] =
 	{ 0x840004, 0x840005, input_port_2_r },		/* INPUT #1 */
 	{ 0x840006, 0x840007, input_port_3_r },		/* INPUT #2 */
 	{ 0x880000, 0x8817ff, splash_vram_r },		/* Video RAM */
-	{ 0x881800, 0x881803, MRA_BANK2 },			/* Scroll registers */
-	{ 0x881804, 0x881fff, MRA_BANK3 },			/* Work RAM */
+	{ 0x881800, 0x881803, MRA_BANK1 },			/* Scroll registers */
+	{ 0x881804, 0x881fff, MRA_BANK2 },			/* Work RAM */
 	{ 0x8c0000, 0x8c0fff, paletteram_word_r },	/* Palette */
-	{ 0x900000, 0x900fff, MRA_BANK4 },			/* Sprite RAM */
-	{ 0xffc000, 0xffffff, MRA_BANK5 },			/* Work RAM */
+	{ 0x900000, 0x900fff, MRA_BANK3 },			/* Sprite RAM */
+	{ 0xffc000, 0xffffff, MRA_BANK4 },			/* Work RAM */
 	{ -1 }
 };
 
 static struct MemoryWriteAddress splash_writemem[] =
 {
-	{ 0x000000, 0x3fffff, MWA_ROM },					/* ROM */
-	{ 0x800000, 0x83ffff, splash_pixelram_w, &splash_pixelram },/* Pixel Layer */
-	{ 0x84000e, 0x84000f, splash_sh_irqtrigger_w },/* Sound command */
-	{ 0x880000, 0x8817ff, splash_vram_w, &splash_videoram },/* Video RAM */
-	{ 0x881800, 0x881803, MWA_BANK2, &splash_vregs },	/* Scroll registers */
-	{ 0x881804, 0x881fff, MWA_BANK3 },					/* Work RAM */
+	{ 0x000000, 0x3fffff, MWA_ROM },										/* ROM */
+	{ 0x800000, 0x83ffff, splash_pixelram_w, &splash_pixelram },			/* Pixel Layer */
+	{ 0x84000e, 0x84000f, splash_sh_irqtrigger_w },							/* Sound command */
+	{ 0x880000, 0x8817ff, splash_vram_w, &splash_videoram },				/* Video RAM */
+	{ 0x881800, 0x881803, MWA_BANK1, &splash_vregs },						/* Scroll registers */
+	{ 0x881804, 0x881fff, MWA_BANK2 },										/* Work RAM */
 	{ 0x8c0000, 0x8c0fff, paletteram_xRRRRxGGGGxBBBBx_word_w, &paletteram },/* Palette */
-	{ 0x900000, 0x900fff, MWA_BANK4, &splash_spriteram },/* Sprite RAM */
-	{ 0xffc000, 0xffffff, MWA_BANK5 },					/* Work RAM */
+	{ 0x900000, 0x900fff, MWA_BANK3, &splash_spriteram },					/* Sprite RAM */
+	{ 0xffc000, 0xffffff, MWA_BANK4 },										/* Work RAM */
 	{ -1 }
 };
 
 
 static struct MemoryReadAddress splash_readmem_sound[] =
 {
-	{ 0x0000, 0x7fff, MRA_ROM },					/* ROM */
-	{ 0xe800, 0xe800, soundlatch_r },				/* Sound latch? */
+	{ 0x0000, 0xd7ff, MRA_ROM },					/* ROM */
+	{ 0xe800, 0xe800, soundlatch_r },				/* Sound latch */
 	{ 0xf000, 0xf000, YM3812_status_port_0_r },		/* YM3812 */
 	{ 0xf800, 0xffff, MRA_RAM },					/* RAM */
 	{ -1 }
 };
 
+static int adpcm_data;
+
+static WRITE_HANDLER( splash_adpcm_data_w ){
+	adpcm_data = data;
+}
+
+static void splash_msm5205_int(int data)
+{
+	MSM5205_data_w(0,adpcm_data >> 4);
+	adpcm_data = (adpcm_data << 4) & 0xf0;
+}
+
+
 static struct MemoryWriteAddress splash_writemem_sound[] =
 {
-	{ 0x0000, 0x7fff, MWA_ROM },					/* ROM */
-//	{ 0xd800, 0xd800, MWA_NOP },					/* ??? */
+	{ 0x0000, 0xd7ff, MWA_ROM },					/* ROM */
+	{ 0xd800, 0xd800, splash_adpcm_data_w },		/* ADPCM data for the MSM5205 chip */
 //	{ 0xe000, 0xe000, MWA_NOP },					/* ??? */
 	{ 0xf000, 0xf000, YM3812_control_port_0_w },	/* YM3812 */
 	{ 0xf001, 0xf001, YM3812_write_port_0_w },		/* YM3812 */
@@ -145,7 +166,7 @@ static struct MemoryWriteAddress splash_writemem_sound[] =
 
 INPUT_PORTS_START( splash )
 
-PORT_START	/* DSW #1 (if DIPSW #1 == 0, free play) */
+PORT_START	/* DSW #1 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 4C_1C ) )
@@ -183,7 +204,7 @@ PORT_START	/* DSW #2 */
 	PORT_DIPSETTING(    0x08, "1" )
 	PORT_DIPSETTING(    0x04, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
-/* 	PORT_DIPSETTING(    0x00, "3" ) */
+	/* 	according to the manual, Lives = 0x00 is NOT used */
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
@@ -219,9 +240,9 @@ INPUT_PORTS_END
 
 #define TILELAYOUT8(NUM) static struct GfxLayout tilelayout8_##NUM =	\
 {																		\
-	8,8,		/* 8x8 tiles */											\
-	NUM/8,		/* number of tiles */									\
-	4,			/* bitplanes */											\
+	8,8,									/* 8x8 tiles */				\
+	NUM/8,									/* number of tiles */		\
+	4,										/* bitplanes */				\
 	{ 3*NUM*8, 1*NUM*8, 2*NUM*8, 0*NUM*8 }, /* plane offsets */			\
 	{ 0,1,2,3,4,5,6,7 },												\
 	{ 0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8 },								\
@@ -230,9 +251,9 @@ INPUT_PORTS_END
 
 #define TILELAYOUT16(NUM) static struct GfxLayout tilelayout16_##NUM =				\
 {																					\
-	16,16,		/* 16x16 tiles */													\
-	NUM/32,		/* number of tiles */												\
-	4,			/* bitplanes */														\
+	16,16,									/* 16x16 tiles */						\
+	NUM/32,									/* number of tiles */					\
+	4,										/* bitplanes */							\
 	{ 3*NUM*8, 1*NUM*8, 2*NUM*8, 0*NUM*8 }, /* plane offsets */						\
 	{ 0,1,2,3,4,5,6,7, 16*8+0,16*8+1,16*8+2,16*8+3,16*8+4,16*8+5,16*8+6,16*8+7 },	\
 	{ 0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8, 8*8,9*8,10*8,11*8,12*8,13*8,14*8,15*8 },		\
@@ -248,7 +269,7 @@ TILELAYOUT16(0x020000);
 {																					\
 	{ REGION_GFX1, 0x000000, &tilelayout8_##NUM,0, 128 },							\
 	{ REGION_GFX1, 0x000000, &tilelayout16_##NUM,0, 128 },							\
-	{-1 }																			\
+	{ -1 }																			\
 }
 
 GFXDECODEINFO(0x020000);
@@ -257,28 +278,36 @@ GFXDECODEINFO(0x020000);
 
 static struct YM3812interface ym3812_interface =
 {
-	1,			/* 1 chip */
-	3000000,	/* 3 MHz? */
-	{ 100 }
+	1,						/* 1 chip */
+	3000000,				/* 3 MHz? */
+	{ 40 },					/* volume */
+	{ 0 }					/* IRQ handler */
 };
 
+static struct MSM5205interface msm5205_interface =
+{
+	1,						/* 1 chip */
+	384000,					/* 384KHz */
+	{ splash_msm5205_int },	/* IRQ handler */
+	{ MSM5205_S48_4B },		/* 8KHz */
+	{ 80 }					/* volume */
+};
 
 
 static struct MachineDriver machine_driver_splash =
 {
-	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
-			24000000/2,		/* 12 MHz? */
+			24000000/2,			/* 12 MHz */
 			splash_readmem,splash_writemem,0,0,
 			m68_level6_irq,1
 		},
 		{
 			CPU_Z80,
-			4000000,		/* 4 MHz? */
+			30000000/8,			/* 3.75 MHz? */
 			splash_readmem_sound, splash_writemem_sound,0,0,
-			nmi_interrupt,1	/* ??? NOT needed for music to work */
+			nmi_interrupt,64	/* needed for the msm5205 to play the samples */
 		}
 	},
 	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,
@@ -303,7 +332,11 @@ static struct MachineDriver machine_driver_splash =
 		{
 			SOUND_YM3812,
 			&ym3812_interface
-		}
+		},
+		{
+			SOUND_MSM5205,
+			&msm5205_interface
+	    }
 	}
 };
 
@@ -330,4 +363,4 @@ ROM_START( splash )
 ROM_END
 
 
-GAMEX( 1992, splash, 0, splash, splash, 0, ROT0_16BIT, "Gaelco", "Splash", GAME_IMPERFECT_SOUND )
+GAME( 1992, splash, 0, splash, splash, 0, ROT0_16BIT, "Gaelco", "Splash!" )

@@ -11,13 +11,13 @@
 
 static int input_port_select;
 
-void leprechn_input_port_select_w(int offset,int data)
+WRITE_HANDLER( leprechn_input_port_select_w )
 {
     input_port_select = data;
 }
 
 
-int leprechn_input_port_r(int offset)
+READ_HANDLER( leprechn_input_port_r )
 {
     switch (input_port_select)
     {
@@ -39,14 +39,14 @@ int leprechn_input_port_r(int offset)
 }
 
 
-int leprechn_200d_r(int offset)
+READ_HANDLER( leprechn_200d_r )
 {
     // Maybe a VSYNC line?
     return 0x02;
 }
 
 
-int leprechn_0805_r(int offset)
+READ_HANDLER( leprechn_0805_r )
 {
     return 0xc0;
 }

@@ -557,8 +557,8 @@ int mixer_samples_this_frame(void)
 #define EXTRA_SAMPLES 1    // safety margin for sampling rate conversion
 int mixer_need_samples_this_frame(int channel,int freq)
 {
-	return (samples_this_frame - mixer_channel[channel].samples_available + EXTRA_SAMPLES)
-			* freq / Machine->sample_rate;
+	return (samples_this_frame - mixer_channel[channel].samples_available)
+			* freq / Machine->sample_rate + EXTRA_SAMPLES;
 }
 
 

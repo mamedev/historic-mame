@@ -70,27 +70,27 @@ CPU #3 NMI (@120Hz)
 #include "vidhrdw/generic.h"
 
 extern unsigned char *bosco_sharedram;
-int  bosco_sharedram_r(int offset);
-void bosco_sharedram_w(int offset,int data);
-int  bosco_dsw_r(int offset);
-void bosco_interrupt_enable_1_w(int offset,int data);
-void bosco_interrupt_enable_2_w(int offset,int data);
-void bosco_interrupt_enable_3_w(int offset,int data);
-void bosco_halt_w(int offset,int data);
-int  bosco_customio_r_1(int offset);
-int  bosco_customio_r_2(int offset);
-void bosco_customio_w_1(int offset,int data);
-void bosco_customio_w_2(int offset,int data);
-int  bosco_customio_data_r_1(int offset);
-int  bosco_customio_data_r_2(int offset);
-void bosco_customio_data_w_1(int offset,int data);
-void bosco_customio_data_w_2(int offset,int data);
+READ_HANDLER( bosco_sharedram_r );
+WRITE_HANDLER( bosco_sharedram_w );
+READ_HANDLER( bosco_dsw_r );
+WRITE_HANDLER( bosco_interrupt_enable_1_w );
+WRITE_HANDLER( bosco_interrupt_enable_2_w );
+WRITE_HANDLER( bosco_interrupt_enable_3_w );
+WRITE_HANDLER( bosco_halt_w );
+READ_HANDLER( bosco_customio_1_r );
+READ_HANDLER( bosco_customio_2_r );
+WRITE_HANDLER( bosco_customio_1_w );
+WRITE_HANDLER( bosco_customio_2_w );
+READ_HANDLER( bosco_customio_data_1_r );
+READ_HANDLER( bosco_customio_data_2_r );
+WRITE_HANDLER( bosco_customio_data_1_w );
+WRITE_HANDLER( bosco_customio_data_2_w );
 int  bosco_interrupt_1(void);
 int  bosco_interrupt_2(void);
 int  bosco_interrupt_3(void);
 void bosco_init_machine(void);
 
-void bosco_cpu_reset_w(int offset, int data);
+WRITE_HANDLER( bosco_cpu_reset_w );
 int  bosco_vh_start(void);
 void bosco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void bosco_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -100,17 +100,17 @@ extern unsigned char *bosco_radarx,*bosco_radary,*bosco_radarattr;
 extern int bosco_radarram_size;
 extern unsigned char *bosco_staronoff;
 extern unsigned char *bosco_starblink;
-void bosco_videoram2_w(int offset,int data);
-void bosco_colorram2_w(int offset,int data);
-void bosco_flipscreen_w(int offset,int data);
-void bosco_scrollx_w(int offset,int data);
-void bosco_scrolly_w(int offset,int data);
-void bosco_starcontrol_w(int offset,int data);
+WRITE_HANDLER( bosco_videoram2_w );
+WRITE_HANDLER( bosco_colorram2_w );
+WRITE_HANDLER( bosco_flipscreen_w );
+WRITE_HANDLER( bosco_scrollx_w );
+WRITE_HANDLER( bosco_scrolly_w );
+WRITE_HANDLER( bosco_starcontrol_w );
 int  bosco_vh_start(void);
 void bosco_vh_stop(void);
 void bosco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void pengo_sound_w(int offset,int data);
+WRITE_HANDLER( pengo_sound_w );
 int  bosco_sh_start(const struct MachineSound *msound);
 void bosco_sh_stop(void);
 extern unsigned char *pengo_soundregs;
@@ -120,8 +120,8 @@ static struct MemoryReadAddress readmem_cpu1[] =
 {
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x6800, 0x6807, bosco_dsw_r },
-	{ 0x7000, 0x700f, bosco_customio_data_r_1 },
-	{ 0x7100, 0x7100, bosco_customio_r_1 },
+	{ 0x7000, 0x700f, bosco_customio_data_1_r },
+	{ 0x7100, 0x7100, bosco_customio_1_r },
 	{ 0x7800, 0x97ff, bosco_sharedram_r },
 	{ -1 }	/* end of table */
 };
@@ -130,8 +130,8 @@ static struct MemoryReadAddress readmem_cpu2[] =
 {
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x6800, 0x6807, bosco_dsw_r },
-	{ 0x9000, 0x900f, bosco_customio_data_r_2 },
-	{ 0x9100, 0x9100, bosco_customio_r_2 },
+	{ 0x9000, 0x900f, bosco_customio_data_2_r },
+	{ 0x9100, 0x9100, bosco_customio_2_r },
 	{ 0x7800, 0x97ff, bosco_sharedram_r },
 	{ -1 }	/* end of table */
 };
@@ -152,8 +152,8 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x6822, 0x6822, bosco_interrupt_enable_3_w },
 	{ 0x6823, 0x6823, bosco_halt_w },
 	{ 0x6830, 0x6830, watchdog_reset_w },
-	{ 0x7000, 0x700f, bosco_customio_data_w_1 },
-	{ 0x7100, 0x7100, bosco_customio_w_1 },
+	{ 0x7000, 0x700f, bosco_customio_data_1_w },
+	{ 0x7100, 0x7100, bosco_customio_1_w },
 
 	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
 	{ 0x8400, 0x87ff, bosco_videoram2_w, &bosco_videoram2 },
@@ -185,8 +185,8 @@ static struct MemoryWriteAddress writemem_cpu2[] =
 	{ 0x8400, 0x87ff, bosco_videoram2_w },
 	{ 0x8800, 0x8bff, colorram_w },
 	{ 0x8c00, 0x8fff, bosco_colorram2_w },
-	{ 0x9000, 0x900f, bosco_customio_data_w_2 },
-	{ 0x9100, 0x9100, bosco_customio_w_2 },
+	{ 0x9000, 0x900f, bosco_customio_data_2_w },
+	{ 0x9100, 0x9100, bosco_customio_2_w },
 	{ 0x7800, 0x97ff, bosco_sharedram_w },
 
 	{ 0x9810, 0x9810, bosco_scrollx_w },

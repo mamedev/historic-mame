@@ -182,7 +182,7 @@ static void scanline_callback(int scanline)
  *
  *************************************/
 
-int exidy440_videoram_r(int offset)
+READ_HANDLER( exidy440_videoram_r )
 {
 	UINT8 *base = &local_videoram[(*exidy440_scanline * 256 + offset) * 2];
 
@@ -191,7 +191,7 @@ int exidy440_videoram_r(int offset)
 }
 
 
-void exidy440_videoram_w(int offset, int data)
+WRITE_HANDLER( exidy440_videoram_w )
 {
 	UINT8 *base = &local_videoram[(*exidy440_scanline * 256 + offset) * 2];
 
@@ -211,13 +211,13 @@ void exidy440_videoram_w(int offset, int data)
  *
  *************************************/
 
-int exidy440_paletteram_r(int offset)
+READ_HANDLER( exidy440_paletteram_r )
 {
 	return local_paletteram[palettebank_io * 512 + offset];
 }
 
 
-void exidy440_paletteram_w(int offset, int data)
+WRITE_HANDLER( exidy440_paletteram_w )
 {
 	/* update palette ram in the I/O bank */
 	local_paletteram[palettebank_io * 512 + offset] = data;
@@ -244,7 +244,7 @@ void exidy440_paletteram_w(int offset, int data)
  *
  *************************************/
 
-int exidy440_horizontal_pos_r(int offset)
+READ_HANDLER( exidy440_horizontal_pos_r )
 {
 	/* clear the FIRQ on a read here */
 	exidy440_firq_beam = 0;
@@ -256,7 +256,7 @@ int exidy440_horizontal_pos_r(int offset)
 }
 
 
-int exidy440_vertical_pos_r(int offset)
+READ_HANDLER( exidy440_vertical_pos_r )
 {
 	int result;
 
@@ -276,7 +276,7 @@ int exidy440_vertical_pos_r(int offset)
  *
  *************************************/
 
-void exidy440_control_w(int offset, int data)
+WRITE_HANDLER( exidy440_control_w )
 {
 	int oldvis = palettebank_vis;
 
@@ -310,7 +310,7 @@ void exidy440_control_w(int offset, int data)
 }
 
 
-void exidy440_interrupt_clear_w(int offset, int data)
+WRITE_HANDLER( exidy440_interrupt_clear_w )
 {
 	/* clear the VBLANK FIRQ on a write here */
 	exidy440_firq_vblank = 0;

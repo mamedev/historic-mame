@@ -251,11 +251,11 @@ void exidy440_sh_stop(void);
 void exidy440_sh_update(void);
 int exidy440_sound_interrupt(void);
 
-int exidy440_m6844_r(int offset);
-void exidy440_m6844_w(int offset, int data);
-int exidy440_sound_command_r(int offset);
-void exidy440_sound_volume_w(int offset, int data);
-void exidy440_sound_interrupt_clear(int offset, int data);
+READ_HANDLER( exidy440_m6844_r );
+WRITE_HANDLER( exidy440_m6844_w );
+READ_HANDLER( exidy440_sound_command_r );
+WRITE_HANDLER( exidy440_sound_volume_w );
+WRITE_HANDLER( exidy440_sound_interrupt_clear_w );
 
 
 /* video driver data & functions */
@@ -272,14 +272,14 @@ void exidy440_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void topsecex_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int exidy440_vblank_interrupt(void);
 
-int exidy440_videoram_r(int offset);
-void exidy440_videoram_w(int offset, int data);
-int exidy440_paletteram_r(int offset);
-void exidy440_paletteram_w(int offset, int data);
-void exidy440_control_w(int offset, int data);
-int exidy440_vertical_pos_r(int offset);
-int exidy440_horizontal_pos_r(int offset);
-void exidy440_interrupt_clear_w(int offset, int data);
+READ_HANDLER( exidy440_videoram_r );
+WRITE_HANDLER( exidy440_videoram_w );
+READ_HANDLER( exidy440_paletteram_r );
+WRITE_HANDLER( exidy440_paletteram_w );
+WRITE_HANDLER( exidy440_control_w );
+READ_HANDLER( exidy440_vertical_pos_r );
+READ_HANDLER( exidy440_horizontal_pos_r );
+WRITE_HANDLER( exidy440_interrupt_clear_w );
 
 
 
@@ -355,7 +355,7 @@ static void init_machine(void)
  *
  *************************************/
 
-static int input_r(int offset)
+static READ_HANDLER( input_r )
 {
 	int result = input_port_0_r(offset);
 
@@ -381,7 +381,7 @@ static int input_r(int offset)
  *
  *************************************/
 
-static void bankram_w(int offset, int data)
+static WRITE_HANDLER( bankram_w )
 {
 	/* EEROM lives in the upper 8k of bank 15 */
 	if (exidy440_bank == 15 && offset >= 0x2000)
@@ -401,7 +401,7 @@ static void bankram_w(int offset, int data)
  *
  *************************************/
 
-static int io1_r(int offset)
+static READ_HANDLER( io1_r )
 {
 	int result = 0xff;
 
@@ -481,7 +481,7 @@ static void delayed_sound_command_w(int param)
 }
 
 
-static void io1_w(int offset, int data)
+static WRITE_HANDLER( io1_w )
 {
 	if (errorlog) fprintf(errorlog, "W I/O1[%02X]=%02X\n", offset, data);
 
@@ -527,7 +527,7 @@ static void io1_w(int offset, int data)
  *
  *************************************/
 
-int showdown_pld_trigger_r(int offset)
+READ_HANDLER( showdown_pld_trigger_r )
 {
 	/* bank 0 is where the PLD lives - a read here will set the trigger */
 	if (exidy440_bank == 0)
@@ -538,7 +538,7 @@ int showdown_pld_trigger_r(int offset)
 }
 
 
-int showdown_pld_select1_r(int offset)
+READ_HANDLER( showdown_pld_select1_r )
 {
 	/* bank 0 is where the PLD lives - a read here after a trigger will set bank "1" */
 	if (exidy440_bank == 0 && showdown_bank_triggered)
@@ -560,7 +560,7 @@ int showdown_pld_select1_r(int offset)
 }
 
 
-int showdown_pld_select2_r(int offset)
+READ_HANDLER( showdown_pld_select2_r )
 {
 	/* bank 0 is where the PLD lives - a read here after a trigger will set bank "2" */
 	if (exidy440_bank == 0 && showdown_bank_triggered)
@@ -650,7 +650,7 @@ static struct MemoryWriteAddress writemem_cpu2[] =
 	{ 0x8000, 0x8016, exidy440_m6844_w, &exidy440_m6844_data },
 	{ 0x8400, 0x8407, exidy440_sound_volume_w, &exidy440_sound_volume },
 	{ 0x9400, 0x9403, MWA_RAM, &exidy440_sound_banks },
-	{ 0x9800, 0x9800, exidy440_sound_interrupt_clear },
+	{ 0x9800, 0x9800, exidy440_sound_interrupt_clear_w },
 	{ 0xa000, 0xbfff, MWA_RAM },
 	{ 0xe000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */

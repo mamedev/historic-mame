@@ -107,22 +107,22 @@ $8000 - $ffff	ROM
 
 extern void renegade_vh_screenrefresh(struct osd_bitmap *bitmap, int fullrefresh);
 extern int renegade_vh_start( void );
-extern void renegade_scroll0_w( int offset, int data );
-extern void renegade_scroll1_w( int offset, int data );
-extern void renegade_videoram_w( int offset, int data );
-extern void renegade_textram_w( int offset, int data );
-extern void renegade_flipscreen_w( int offset, int data );
+WRITE_HANDLER( renegade_scroll0_w );
+WRITE_HANDLER( renegade_scroll1_w );
+WRITE_HANDLER( renegade_videoram_w );
+WRITE_HANDLER( renegade_textram_w );
+WRITE_HANDLER( renegade_flipscreen_w );
 
 extern unsigned char *renegade_textram;
 
 /********************************************************************************************/
 
-static void adpcm_play_w( int offset, int data ){
+static WRITE_HANDLER( adpcm_play_w ){
 	data -= 0x2c;
 	if( data >= 0 ) ADPCM_play( 0, 0x2000*data, 0x2000*2 );
 }
 
-static void sound_w( int offset, int data ){
+static WRITE_HANDLER( sound_w ){
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(1,M6809_INT_IRQ);
 }
@@ -170,14 +170,14 @@ static int mcu_input_size;
 static int mcu_output_byte;
 static int mcu_key;
 
-static int mcu_reset( int offset ){
+static READ_HANDLER( mcu_reset_r ){
 	mcu_key = -1;
 	mcu_input_size = 0;
 	mcu_output_byte = 0;
 	return 0;
 }
 
-static void mcu_w( int offset, int data ){
+static WRITE_HANDLER( mcu_w ){
 	mcu_output_byte = 0;
 
 	if( mcu_key<0 ){
@@ -324,7 +324,7 @@ static void mcu_process_command( void ){
 	}
 }
 
-static int mcu_r( int offset ){
+static READ_HANDLER( mcu_r ){
 	int result = 1;
 
 	if( mcu_input_size ) mcu_process_command();
@@ -339,7 +339,7 @@ static int mcu_r( int offset ){
 
 static int bank;
 
-static void bankswitch_w( int offset, int data ){
+static WRITE_HANDLER( bankswitch_w ){
 	if( (data&1)!=bank ){
 		unsigned char *RAM = memory_region(REGION_CPU1);
 		bank = data&1;
@@ -376,7 +376,7 @@ static struct MemoryReadAddress main_readmem[] = {
 	{ 0x3802, 0x3802, input_port_2_r },	/* DIP2 ; various IO ports */
 	{ 0x3803, 0x3803, input_port_3_r },	/* DIP1 */
 	{ 0x3804, 0x3804, mcu_r },
-	{ 0x3805, 0x3805, mcu_reset },
+	{ 0x3805, 0x3805, mcu_reset_r },
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }

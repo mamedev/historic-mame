@@ -46,7 +46,7 @@ void funkybee_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 }
 
 
-void funkybee_gfx_bank_w(int offset, int data)
+WRITE_HANDLER( funkybee_gfx_bank_w )
 {
 	if (data != (gfx_bank & 0x01))
 	{

@@ -11,22 +11,22 @@ driver by Richard Bush, Howie Cohen, Alex Pasadyn
 
 
 
-int ssi_videoram_r(int offset);
-void ssi_videoram_w(int offset,int data);
+READ_HANDLER( ssi_videoram_r );
+WRITE_HANDLER( ssi_videoram_w );
 int ssi_vh_start(void);
 void ssi_vh_stop (void);
 void ssi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void rastan_sound_port_w(int offset,int data);
-void rastan_sound_comm_w(int offset,int data);
-int rastan_sound_comm_r(int offset);
+WRITE_HANDLER( rastan_sound_port_w );
+WRITE_HANDLER( rastan_sound_comm_w );
+READ_HANDLER( rastan_sound_comm_r );
 void rastan_irq_handler (int irq);
 
-void r_wr_a000(int offset,int data);
-void r_wr_a001(int offset,int data);
-int  r_rd_a001(int offset);
+READ_HANDLER( rastan_a001_r );
+WRITE_HANDLER( rastan_a000_w );
+WRITE_HANDLER( rastan_a001_w );
 
-static void bankswitch_w ( int offset, int data ) {
+static WRITE_HANDLER( bankswitch_w ) {
 
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
@@ -35,7 +35,7 @@ static void bankswitch_w ( int offset, int data ) {
 	cpu_setbank( 2, &RAM[ 0x10000 + ( banknum * 0x4000 ) ] );
 }
 
-static int ssi_input_r (int offset)
+static READ_HANDLER( ssi_input_r )
 {
     switch (offset)
     {
@@ -60,7 +60,7 @@ if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory a
 	return 0xff;
 }
 
-void ssi_sound_w(int offset,int data)
+WRITE_HANDLER( ssi_sound_w )
 {
 	if (offset == 0)
 		rastan_sound_port_w(0,(data >> 8) & 0xff);
@@ -68,7 +68,7 @@ void ssi_sound_w(int offset,int data)
 		rastan_sound_comm_w(0,(data >> 8) & 0xff);
 }
 
-int ssi_sound_r(int offset)
+READ_HANDLER( ssi_sound_r )
 {
 	if (offset == 2)
 		return ( ( rastan_sound_comm_r(0) & 0xff ) << 8 );
@@ -111,7 +111,7 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0xe001, 0xe001, YM2610_read_port_0_r },
 	{ 0xe002, 0xe002, YM2610_status_port_0_B_r },
 	{ 0xe200, 0xe200, MRA_NOP },
-	{ 0xe201, 0xe201, r_rd_a001 },
+	{ 0xe201, 0xe201, rastan_a001_r },
 	{ 0xea00, 0xea00, MRA_NOP },
 	{ -1 }  /* end of table */
 };
@@ -124,8 +124,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xe001, 0xe001, YM2610_data_port_0_A_w },
 	{ 0xe002, 0xe002, YM2610_control_port_0_B_w },
 	{ 0xe003, 0xe003, YM2610_data_port_0_B_w },
-	{ 0xe200, 0xe200, r_wr_a000 },
-	{ 0xe201, 0xe201, r_wr_a001 },
+	{ 0xe200, 0xe200, rastan_a000_w },
+	{ 0xe201, 0xe201, rastan_a001_w },
 	{ 0xe400, 0xe403, MWA_NOP }, /* pan */
 	{ 0xee00, 0xee00, MWA_NOP }, /* ? */
 	{ 0xf000, 0xf000, MWA_NOP }, /* ? */

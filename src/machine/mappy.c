@@ -32,65 +32,35 @@ void motos_init_machine(void)
 }
 
 
-int mappy_sharedram_r(int offset)
+READ_HANDLER( mappy_sharedram_r )
 {
 	return mappy_sharedram[offset];
 }
 
-
-int mappy_sharedram_r2(int offset)
-{
-	/* to speed up emulation, we check for the loop the sound CPU sits in most of the time
-	   and end the current iteration (things will start going again with the next IRQ) */
-	if (offset == 0x010a - 0x40 && mappy_sharedram[offset] == 0)
-		cpu_spinuntil_int ();
-	return mappy_sharedram[offset];
-}
-
-int digdug2_sharedram_r2(int offset)
-{
-	/* to speed up emulation, we check for the loop the sound CPU sits in most of the time
-	   and end the current iteration (things will start going again with the next IRQ) */
-	if (offset == 0x0a1 - 0x40 && mappy_sharedram[offset] == 0 && cpu_get_pc () == 0xe383)
-		cpu_spinuntil_int ();
-	return mappy_sharedram[offset];
-}
-
-int motos_sharedram_r2(int offset)
-{
-	return mappy_sharedram[offset];
-}
-
-int todruaga_sharedram_r2(int offset)
-{
-	return mappy_sharedram[offset];
-}
-
-
-void mappy_sharedram_w(int offset,int data)
+WRITE_HANDLER( mappy_sharedram_w )
 {
 	mappy_sharedram[offset] = data;
 }
 
 
-void mappy_customio_w_1(int offset,int data)
+WRITE_HANDLER( mappy_customio_1_w )
 {
 	mappy_customio_1[offset] = data;
 }
 
 
-void mappy_customio_w_2(int offset,int data)
+WRITE_HANDLER( mappy_customio_2_w )
 {
 	mappy_customio_2[offset] = data;
 }
 
-void mappy_reset_2_w(int offset,int data)
+WRITE_HANDLER( mappy_reset_2_w )
 {
 	io_chip_1_enabled = io_chip_2_enabled = 0;
 	cpu_set_reset_line(1,PULSE_LINE);
 }
 
-void mappy_io_chips_enable_w(int offset,int data)
+WRITE_HANDLER( mappy_io_chips_enable_w )
 {
 	io_chip_1_enabled = io_chip_2_enabled = 1;
 }
@@ -101,7 +71,7 @@ void mappy_io_chips_enable_w(int offset,int data)
  *
  *************************************************************************************/
 
-int mappy_customio_r_1(int offset)
+READ_HANDLER( mappy_customio_1_r )
 {
 	static int crednum[] = { 1, 2, 3, 6, 1, 3, 1, 2 };
 	static int credden[] = { 1, 1, 1, 1, 2, 2, 3, 3 };
@@ -185,7 +155,7 @@ int mappy_customio_r_1(int offset)
 }
 
 
-int mappy_customio_r_2(int offset)
+READ_HANDLER( mappy_customio_2_r )
 {
 	int mode = mappy_customio_2[8];
 
@@ -238,7 +208,7 @@ int mappy_customio_r_2(int offset)
  *
  *************************************************************************************/
 
-int digdug2_customio_r_1(int offset)
+READ_HANDLER( digdug2_customio_1_r )
 {
 	static int crednum[] = { 1, 1, 2, 2 };
 	static int credden[] = { 1, 2, 1, 3 };
@@ -310,7 +280,7 @@ int digdug2_customio_r_1(int offset)
 }
 
 
-int digdug2_customio_r_2(int offset)
+READ_HANDLER( digdug2_customio_2_r )
 {
 	int mode = mappy_customio_2[8];
 
@@ -357,7 +327,7 @@ int digdug2_customio_r_2(int offset)
  *
  *************************************************************************************/
 
-int motos_customio_r_1(int offset)
+READ_HANDLER( motos_customio_1_r )
 {
 	int val, mode = mappy_customio_1[8];
 
@@ -416,7 +386,7 @@ int motos_customio_r_1(int offset)
 }
 
 
-int motos_customio_r_2(int offset)
+READ_HANDLER( motos_customio_2_r )
 {
 	int mode = mappy_customio_2[8];
 
@@ -472,7 +442,7 @@ int motos_customio_r_2(int offset)
  *
  *************************************************************************************/
 
-int todruaga_customio_r_1(int offset)
+READ_HANDLER( todruaga_customio_1_r )
 {
 	static int crednum[] = { 1, 1, 2, 2 };
 	static int credden[] = { 1, 2, 1, 3 };
@@ -545,7 +515,7 @@ int todruaga_customio_r_1(int offset)
 }
 
 
-int todruaga_customio_r_2(int offset)
+READ_HANDLER( todruaga_customio_2_r )
 {
 	int mode = mappy_customio_2[8];
 
@@ -588,7 +558,7 @@ int todruaga_customio_r_2(int offset)
 
 
 
-void mappy_interrupt_enable_1_w(int offset,int data)
+WRITE_HANDLER( mappy_interrupt_enable_1_w )
 {
 	interrupt_enable_1 = offset;
 }
@@ -603,7 +573,7 @@ int mappy_interrupt_1(void)
 
 
 
-void mappy_interrupt_enable_2_w(int offset,int data)
+WRITE_HANDLER( mappy_interrupt_enable_2_w )
 {
 	interrupt_enable_2 = offset;
 }
@@ -617,7 +587,7 @@ int mappy_interrupt_2(void)
 }
 
 
-void mappy_cpu_enable_w(int offset,int data)
+WRITE_HANDLER( mappy_cpu_enable_w )
 {
 	cpu_set_halt_line(1, offset ? CLEAR_LINE : ASSERT_LINE);
 }

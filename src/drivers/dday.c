@@ -57,10 +57,10 @@ extern unsigned char *dday_videoram3;
 
 void dday_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void dday_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void dday_colorram_w(int offset, int data);
-int  dday_colorram_r(int offset);
-void dday_control_w (int offset, int data);
-void dday_searchlight_w(int offset, int data);
+WRITE_HANDLER( dday_colorram_w );
+READ_HANDLER( dday_colorram_r );
+WRITE_HANDLER( dday_control_w );
+WRITE_HANDLER( dday_searchlight_w );
 void dday_decode(void);
 
 
@@ -72,7 +72,7 @@ void dday_decode(void);
 #define START_TIMER 99
 static int timerVal = START_TIMER;
 
-static int dday_timer_r (int offset)
+static READ_HANDLER( dday_timer_r )
 {
     return ((timerVal / 10) << 4) | (timerVal % 10);
 }

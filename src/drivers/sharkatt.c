@@ -18,16 +18,16 @@
 
 extern void sharkatt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-extern void sharkatt_videoram_w(int offset,int data);
-extern void sharkatt_color_map_w(int offset, int data);
-extern void sharkatt_color_plane_w(int offset, int data);
-extern void sharkatt_vtcsel_w(int offset, int data);
+WRITE_HANDLER( sharkatt_videoram_w );
+WRITE_HANDLER( sharkatt_color_map_w );
+WRITE_HANDLER( sharkatt_color_plane_w );
+WRITE_HANDLER( sharkatt_vtcsel_w );
 
 static int PA_8255 = 0;
 static int PB_8255 = 0;
 static int PC_8255 = 0;
 
-static int sharkatt_8255_r(int offset)
+static READ_HANDLER( sharkatt_8255_r )
 {
 	switch (offset & 0x03)
 	{
@@ -57,7 +57,7 @@ static int sharkatt_8255_r(int offset)
 	return 0;
 }
 
-static void sharkatt_8255_w(int offset, int data)
+static WRITE_HANDLER( sharkatt_8255_w )
 {
 	switch (offset & 0x03)
 	{
@@ -94,7 +94,7 @@ static struct IOReadPort readport[] =
 };
 
 /* TODO: figure out what this does!!! */
-static void fake_w(int offset, int data)
+static WRITE_HANDLER( fake_w )
 {
 }
 

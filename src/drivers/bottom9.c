@@ -31,7 +31,7 @@ static int bottom9_interrupt(void)
 
 static int zoomreadroms,K052109_selected;
 
-static int bottom9_bankedram1_r(int offset)
+static READ_HANDLER( bottom9_bankedram1_r )
 {
 	if (K052109_selected)
 		return K052109_051960_r(offset);
@@ -44,25 +44,25 @@ static int bottom9_bankedram1_r(int offset)
 	}
 }
 
-static void bottom9_bankedram1_w(int offset,int data)
+static WRITE_HANDLER( bottom9_bankedram1_w )
 {
 	if (K052109_selected) K052109_051960_w(offset,data);
 	else K051316_0_w(offset,data);
 }
 
-static int bottom9_bankedram2_r(int offset)
+static READ_HANDLER( bottom9_bankedram2_r )
 {
 	if (K052109_selected) return K052109_051960_r(offset + 0x2000);
 	else return paletteram_r(offset);
 }
 
-static void bottom9_bankedram2_w(int offset,int data)
+static WRITE_HANDLER( bottom9_bankedram2_w )
 {
 	if (K052109_selected) K052109_051960_w(offset + 0x2000,data);
 	else paletteram_xBBBBBGGGGGRRRRR_swap_w(offset,data);
 }
 
-static void bankswitch_w(int offset,int data)
+static WRITE_HANDLER( bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs;
@@ -76,7 +76,7 @@ if ((data & 1) == 0) usrintf_showmessage("bankswitch RAM bank 0");
 	cpu_setbank(1,&RAM[offs]);
 }
 
-static void bottom9_1f90_w(int offset,int data)
+static WRITE_HANDLER( bottom9_1f90_w )
 {
 	/* bits 0/1 = coin counters */
 	coin_counter_w(0,data & 0x01);
@@ -95,7 +95,7 @@ static void bottom9_1f90_w(int offset,int data)
 	K052109_selected = data & 0x20;
 }
 
-static void bottom9_sh_irqtrigger_w(int offset,int data)
+static WRITE_HANDLER( bottom9_sh_irqtrigger_w )
 {
 	cpu_cause_interrupt(1,0xff);
 }
@@ -108,12 +108,12 @@ static int bottom9_sound_interrupt(void)
 	else return ignore_interrupt();
 }
 
-static void nmi_enable_w(int offset,int data)
+static WRITE_HANDLER( nmi_enable_w )
 {
 	nmienable = data;
 }
 
-static void sound_bank_w(int offset, int data)
+static WRITE_HANDLER( sound_bank_w )
 {
 	unsigned char *RAM;
 	int bank_A,bank_B;

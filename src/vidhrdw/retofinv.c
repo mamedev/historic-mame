@@ -110,34 +110,34 @@ void retofinv_vh_stop(void)
 	osd_free_bitmap(bitmap_bg);
 }
 
-void retofinv_flip_screen_w(int offset, int data)
+WRITE_HANDLER( retofinv_flip_screen_w )
 {
 	flipscreen = data;
 	memset(bg_dirtybuffer,1,retofinv_videoram_size);
 	fillbitmap(bitmap_bg,Machine->pens[0],0);
 }
 
-int retofinv_bg_videoram_r(int offset)
+READ_HANDLER( retofinv_bg_videoram_r )
 {
 	return retofinv_bg_videoram[offset];
 }
 
-int retofinv_fg_videoram_r(int offset)
+READ_HANDLER( retofinv_fg_videoram_r )
 {
 	return retofinv_fg_videoram[offset];
 }
 
-int retofinv_bg_colorram_r(int offset)
+READ_HANDLER( retofinv_bg_colorram_r )
 {
 	return retofinv_bg_colorram[offset];
 }
 
-int retofinv_fg_colorram_r(int offset)
+READ_HANDLER( retofinv_fg_colorram_r )
 {
 	return retofinv_fg_colorram[offset];
 }
 
-void retofinv_bg_videoram_w(int offset,int data)
+WRITE_HANDLER( retofinv_bg_videoram_w )
 {
 	if (retofinv_bg_videoram[offset] != data)
 	{
@@ -146,13 +146,13 @@ void retofinv_bg_videoram_w(int offset,int data)
 	}
 }
 
-void retofinv_fg_videoram_w(int offset,int data)
+WRITE_HANDLER( retofinv_fg_videoram_w )
 {
 	if (retofinv_fg_videoram[offset] != data)
 		retofinv_fg_videoram[offset] = data;
 }
 
-void retofinv_bg_colorram_w(int offset,int data)
+WRITE_HANDLER( retofinv_bg_colorram_w )
 {
 	if (retofinv_bg_colorram[offset] != data)
 	{
@@ -161,7 +161,7 @@ void retofinv_bg_colorram_w(int offset,int data)
 	}
 }
 
-void retofinv_fg_colorram_w(int offset,int data)
+WRITE_HANDLER( retofinv_fg_colorram_w )
 {
 	if (retofinv_fg_colorram[offset] != data)
 		retofinv_fg_colorram[offset] = data;

@@ -19,7 +19,7 @@ static int credits;
 
 static void *nmi_timer;
 
-void digdug_halt_w(int offset,int data);
+WRITE_HANDLER( digdug_halt_w );
 
 
 void digdig_init_machine(void)
@@ -31,13 +31,13 @@ void digdig_init_machine(void)
 }
 
 
-int digdug_sharedram_r(int offset)
+READ_HANDLER( digdug_sharedram_r )
 {
 	return digdug_sharedram[offset];
 }
 
 
-void digdug_sharedram_w(int offset,int data)
+WRITE_HANDLER( digdug_sharedram_w )
 {
 	/* a video ram write */
 	if (offset < 0x400)
@@ -62,7 +62,7 @@ static int rightcoinpercred,rightcredpercoin;
 static unsigned char customio[16];
 static int mode;
 
-void digdug_customio_data_w(int offset,int data)
+WRITE_HANDLER( digdug_customio_data_w )
 {
 	customio[offset] = data;
 
@@ -83,7 +83,7 @@ if (errorlog) fprintf(errorlog,"%04x: custom IO offset %02x data %02x\n",cpu_get
 }
 
 
-int digdug_customio_data_r(int offset)
+READ_HANDLER( digdug_customio_data_r )
 {
 	switch (customio_command)
 	{
@@ -211,7 +211,7 @@ int digdug_customio_data_r(int offset)
 }
 
 
-int digdug_customio_r(int offset)
+READ_HANDLER( digdug_customio_r )
 {
 	return customio_command;
 }
@@ -222,7 +222,7 @@ void digdug_nmi_generate (int param)
 }
 
 
-void digdug_customio_w(int offset,int data)
+WRITE_HANDLER( digdug_customio_w )
 {
 if (errorlog && data != 0x10 && data != 0x71) fprintf(errorlog,"%04x: custom IO command %02x\n",cpu_get_pc(),data);
 
@@ -254,7 +254,7 @@ if (errorlog && data != 0x10 && data != 0x71) fprintf(errorlog,"%04x: custom IO 
 
 
 
-void digdug_halt_w(int offset,int data)
+WRITE_HANDLER( digdug_halt_w )
 {
 	if (data & 1)
 	{
@@ -270,7 +270,7 @@ void digdug_halt_w(int offset,int data)
 
 
 
-void digdug_interrupt_enable_1_w(int offset,int data)
+WRITE_HANDLER( digdug_interrupt_enable_1_w )
 {
 	interrupt_enable_1 = (data&1);
 }
@@ -285,7 +285,7 @@ int digdug_interrupt_1(void)
 
 
 
-void digdug_interrupt_enable_2_w(int offset,int data)
+WRITE_HANDLER( digdug_interrupt_enable_2_w )
 {
 	interrupt_enable_2 = data & 1;
 }
@@ -300,7 +300,7 @@ int digdug_interrupt_2(void)
 
 
 
-void digdug_interrupt_enable_3_w(int offset,int data)
+WRITE_HANDLER( digdug_interrupt_enable_3_w )
 {
 	interrupt_enable_3 = !(data & 1);
 }

@@ -92,19 +92,19 @@ void nova2001_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 
 
-void nova2001_scroll_x_w(int offset,int data)
+WRITE_HANDLER( nova2001_scroll_x_w )
 {
 	nova2001_xscroll = data;
 }
 
-void nova2001_scroll_y_w(int offset,int data)
+WRITE_HANDLER( nova2001_scroll_y_w )
 {
 	nova2001_yscroll = data;
 }
 
 
 
-void nova2001_flipscreen_w(int offset,int data)
+WRITE_HANDLER( nova2001_flipscreen_w )
 {
 	if ((~data & 0x01) != flipscreen)
 	{

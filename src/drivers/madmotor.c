@@ -19,30 +19,30 @@
 int  madmotor_vh_start(void);
 void madmotor_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-int madmotor_pf1_rowscroll_r(int offset);
-void madmotor_pf1_rowscroll_w(int offset,int data);
-int madmotor_pf1_data_r(int offset);
-int madmotor_pf2_data_r(int offset);
-int madmotor_pf3_data_r(int offset);
-void madmotor_pf1_data_w(int offset,int data);
-void madmotor_pf2_data_w(int offset,int data);
-void madmotor_pf3_data_w(int offset,int data);
-void madmotor_pf1_control_w(int offset,int data);
-void madmotor_pf2_control_w(int offset,int data);
-void madmotor_pf3_control_w(int offset,int data);
+READ_HANDLER( madmotor_pf1_rowscroll_r );
+WRITE_HANDLER( madmotor_pf1_rowscroll_w );
+READ_HANDLER( madmotor_pf1_data_r );
+READ_HANDLER( madmotor_pf2_data_r );
+READ_HANDLER( madmotor_pf3_data_r );
+WRITE_HANDLER( madmotor_pf1_data_w );
+WRITE_HANDLER( madmotor_pf2_data_w );
+WRITE_HANDLER( madmotor_pf3_data_w );
+WRITE_HANDLER( madmotor_pf1_control_w );
+WRITE_HANDLER( madmotor_pf2_control_w );
+WRITE_HANDLER( madmotor_pf3_control_w );
 extern unsigned char *madmotor_pf1_rowscroll;
 extern unsigned char *madmotor_pf1_data,*madmotor_pf2_data,*madmotor_pf3_data;
 static unsigned char *madmotor_ram;
 
 /******************************************************************************/
 
-static void madmotor_sound_w(int offset, int data)
+static WRITE_HANDLER( madmotor_sound_w )
 {
 	soundlatch_w(0,data & 0xff);
 	cpu_cause_interrupt(1,H6280_INT_IRQ1);
 }
 
-static int madmotor_control_r(int offset)
+static READ_HANDLER( madmotor_control_r )
 {
 	switch (offset)
 	{
@@ -100,7 +100,7 @@ static struct MemoryWriteAddress madmotor_writemem[] =
 
 /******************************************************************************/
 
-static void YM2151_w(int offset, int data)
+static WRITE_HANDLER( YM2151_w )
 {
 	switch (offset) {
 	case 0:
@@ -112,7 +112,7 @@ static void YM2151_w(int offset, int data)
 	}
 }
 
-static void YM2203_w(int offset, int data)
+static WRITE_HANDLER( YM2203_w )
 {
 	switch (offset) {
 	case 0:
@@ -437,7 +437,7 @@ static void madmotor_decrypt(void)
 	}
 }
 
-static int cycle_r(int offset)
+static READ_HANDLER( cycle_r )
 {
 	int ret=READ_WORD(&madmotor_ram[0]);
 

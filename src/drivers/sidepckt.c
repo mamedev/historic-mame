@@ -23,24 +23,24 @@ void sidepckt_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 int sidepckt_vh_start(void);
 void sidepckt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void sidepckt_flipscreen_w(int offset,int data);
-void sidepckt_videoram_w(int offset,int data);
-void sidepckt_colorram_w(int offset,int data);
+WRITE_HANDLER( sidepckt_flipscreen_w );
+WRITE_HANDLER( sidepckt_videoram_w );
+WRITE_HANDLER( sidepckt_colorram_w );
 static int i8751_return;
 
 
-static void sound_cpu_command_w(int offset,int data)
+static WRITE_HANDLER( sound_cpu_command_w )
 {
     soundlatch_w(offset,data);
     cpu_cause_interrupt(1,M6502_INT_NMI);
 }
 
-static int sidepckt_i8751_r(int offset)
+static READ_HANDLER( sidepckt_i8751_r )
 {
 	return i8751_return;
 }
 
-static void sidepckt_i8751_w(int offset, int data)
+static WRITE_HANDLER( sidepckt_i8751_w )
 {
 	int table_1[]={5,3,2};
 	int table_2[]={0x8e,0x42,0xad,0x58,0xec,0x85,0xdd,0x4c,0xad,0x9f,0x00,0x4c,0x7e,0x42,0xa2,0xff};
@@ -81,7 +81,7 @@ static void sidepckt_i8751_w(int offset, int data)
 	}
 }
 
-static void sidepctj_i8751_w(int offset, int data)
+static WRITE_HANDLER( sidepctj_i8751_w )
 {
 	int table_1[]={5,3,0};
 	int table_2[]={0x8e,0x42,0xb2,0x58,0xec,0x85,0xdd,0x4c,0xad,0x9f,0x00,0x4c,0x7e,0x42,0xa7,0xff};

@@ -56,7 +56,7 @@ static void setcolor(int pen,int data)
 	palette_change_color(pen,r,g,b);
 }
 
-void centiped_paletteram_w(int offset,int data)
+WRITE_HANDLER( centiped_paletteram_w )
 {
 	paletteram[offset] = data;
 
@@ -103,7 +103,7 @@ int centiped_interrupt(void)
 
 
 
-void centiped_vh_flipscreen_w (int offset,int data)
+WRITE_HANDLER( centiped_vh_flipscreen_w )
 {
 	if (flipscreen != (data & 0x80))
 	{

@@ -37,11 +37,11 @@ f800      playfield 0 X scroll position
 
 
 extern unsigned char *mrdo_bgvideoram,*mrdo_fgvideoram;
-void mrdo_bgvideoram_w(int offset,int data);
-void mrdo_fgvideoram_w(int offset,int data);
-void mrdo_scrollx_w(int offset,int data);
-void mrdo_scrolly_w(int offset,int data);
-void mrdo_flipscreen_w(int offset,int data);
+WRITE_HANDLER( mrdo_bgvideoram_w );
+WRITE_HANDLER( mrdo_fgvideoram_w );
+WRITE_HANDLER( mrdo_scrollx_w );
+WRITE_HANDLER( mrdo_scrolly_w );
+WRITE_HANDLER( mrdo_flipscreen_w );
 void mrdo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int mrdo_vh_start(void);
 void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -50,7 +50,7 @@ void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /* this looks like some kind of protection. The game doesn't clear the screen */
 /* if a read from this address doesn't return the value it expects. */
-int mrdo_SECRE_r(int offset)
+READ_HANDLER( mrdo_SECRE_r )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	return RAM[ cpu_get_reg(Z80_HL) ];

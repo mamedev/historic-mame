@@ -26,26 +26,26 @@
 #include "cpu/z80/z80.h"
 #include "sndhrdw/seibu.h"
 
-int dynduke_background_r(int offset);
-int dynduke_foreground_r(int offset);
-void dynduke_background_w(int offset,int data);
-void dynduke_foreground_w(int offset,int data);
-void dynduke_text_w(int offset,int data);
-void dynduke_gfxbank_w(int offset,int data);
+READ_HANDLER( dynduke_background_r );
+READ_HANDLER( dynduke_foreground_r );
+WRITE_HANDLER( dynduke_background_w );
+WRITE_HANDLER( dynduke_foreground_w );
+WRITE_HANDLER( dynduke_text_w );
+WRITE_HANDLER( dynduke_gfxbank_w );
 int dynduke_vh_start(void);
-void dynduke_control_w(int offset, int data);
+WRITE_HANDLER( dynduke_control_w );
 void dynduke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void dynduke_paletteram_w(int offset, int data);
+WRITE_HANDLER( dynduke_paletteram_w );
 
 static unsigned char *dynduke_shared_ram;
 extern unsigned char *dynduke_back_data,*dynduke_fore_data,*dynduke_scroll_ram,*dynduke_control_ram;
 
 /***************************************************************************/
 
-static int dynduke_shared_r(int offset) { return dynduke_shared_ram[offset]; }
-static void dynduke_shared_w(int offset,int data) { dynduke_shared_ram[offset]=data; }
+static READ_HANDLER( dynduke_shared_r ) { return dynduke_shared_ram[offset]; }
+static WRITE_HANDLER( dynduke_shared_w ) { dynduke_shared_ram[offset]=data; }
 
-static int dynduke_soundcpu_r(int offset)
+static READ_HANDLER( dynduke_soundcpu_r )
 {
 	int erg,orig;
 	orig=seibu_shared_sound_ram[offset];

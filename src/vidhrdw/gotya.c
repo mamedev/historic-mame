@@ -56,7 +56,7 @@ void gotya_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 }
 
 
-void gotya_video_control_w(int offset, int data)
+WRITE_HANDLER( gotya_video_control_w )
 {
 	static int last;
 

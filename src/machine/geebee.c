@@ -14,7 +14,7 @@
 #include "vidhrdw/generic.h"
 
 /* from sndhrdw/geebee.c */
-extern void geebee_sound_w(int offs, int data);
+WRITE_HANDLER( geebee_sound_w );
 
 /* globals */
 int geebee_ball_h;
@@ -45,37 +45,37 @@ int kaitei_interrupt(void)
     return ignore_interrupt();
 }
 
-int geebee_in_r(int offs)
+READ_HANDLER( geebee_in_r )
 {
-	int data = readinputport(offs & 3);
-	if ((offs & 3) == 2)	/* combine with Bonus Life settings ? */
+	int data = readinputport(offset & 3);
+	if ((offset & 3) == 2)	/* combine with Bonus Life settings ? */
 	{
 		if (data & 0x02)	/* 5 lives? */
 			data |= readinputport(5);
 		else				/* 3 lives */
 			data |= readinputport(4);
 	}
-	if (errorlog) fprintf(errorlog, "in_r %d $%02X\n", offs & 3, data);
+	if (errorlog) fprintf(errorlog, "in_r %d $%02X\n", offset & 3, data);
 	return data;
 }
 
-int navalone_in_r(int offs)
+READ_HANDLER( navalone_in_r )
 {
-    int data = readinputport(offs & 3);
-	if ((offs & 3) == 3)
+    int data = readinputport(offset & 3);
+	if ((offset & 3) == 3)
 	{
 		int joy = readinputport(4);
 		/* map digital two-way joystick to two fixed VOLIN values */
 		if( joy & 1 ) data = 0xa0;
 		if( joy & 2 ) data = 0x10;
 	}
-    if (errorlog) fprintf(errorlog, "in_r %d $%02X\n", offs & 3, data);
+    if (errorlog) fprintf(errorlog, "in_r %d $%02X\n", offset & 3, data);
     return data;
 }
 
-void geebee_out6_w(int offs, int data)
+WRITE_HANDLER( geebee_out6_w )
 {
-    switch (offs&3)
+    switch (offset & 3)
     {
 	case 0:
 		if (errorlog) fprintf(errorlog, "out6_w:0 ball_h   $%02X\n", data);
@@ -94,14 +94,14 @@ void geebee_out6_w(int offs, int data)
         break;
     default:
 		if (errorlog) fprintf(errorlog, "out6_w:3 sound    $%02X\n", data);
-		geebee_sound_w(offs, data);
+		geebee_sound_w(offset,data);
         break;
     }
 }
 
-void geebee_out7_w(int offs, int data)
+WRITE_HANDLER( geebee_out7_w )
 {
-    switch (offs&7)
+    switch (offset & 7)
     {
     case 0:
 		if (errorlog) fprintf(errorlog, "out7_w:0 lamp1    $%02X\n", data);

@@ -110,7 +110,7 @@ static int port2State = 0;
 static int psgData = 0;
 
 
-void carnival_sh_port1_w( int offset, int data )
+WRITE_HANDLER( carnival_sh_port1_w )
 {
 	static int port1State = 0;
 	int bitsChanged;
@@ -193,7 +193,7 @@ void carnival_sh_port1_w( int offset, int data )
 }
 
 
-void carnival_sh_port2_w( int offset, int data )
+WRITE_HANDLER( carnival_sh_port2_w )
 {
 	int bitsChanged;
 	int bitsGoneHigh;
@@ -234,20 +234,20 @@ void carnival_sh_port2_w( int offset, int data )
 }
 
 
-int carnival_music_port_t1_r( int offset )
+READ_HANDLER( carnival_music_port_t1_r )
 {
 	/* note: 8039 T1 signal is inverted on music board */
 	return ( port2State & OUT_PORT_2_MUSIC_T1 ) ? 0 : 1;
 }
 
 
-void carnival_music_port_1_w( int offset, int data )
+WRITE_HANDLER( carnival_music_port_1_w )
 {
 	psgData = data;
 }
 
 
-void carnival_music_port_2_w( int offset, int data )
+WRITE_HANDLER( carnival_music_port_2_w )
 {
 	static int psgSelect = 0;
 	int newSelect;

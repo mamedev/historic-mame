@@ -12,7 +12,7 @@
 #include "vidhrdw/generic.h"
 
 
-void shuuz_playfieldram_w(int offset, int data);
+WRITE_HANDLER( shuuz_playfieldram_w );
 
 int shuuz_vh_start(void);
 void shuuz_vh_stop(void);
@@ -58,7 +58,7 @@ static void init_machine(void)
 }
 
 
-static void latch_w(int offset, int data)
+static WRITE_HANDLER( latch_w )
 {
 	(void)offset;
 	(void)data;
@@ -72,7 +72,7 @@ static void latch_w(int offset, int data)
  *
  *************************************/
 
-static int leta_r(int offset)
+static READ_HANDLER( leta_r )
 {
 	/* trackball -- rotated 45 degrees? */
 	static int cur[2];
@@ -100,13 +100,13 @@ static int leta_r(int offset)
  *
  *************************************/
 
-static int adpcm_r(int offset)
+static READ_HANDLER( adpcm_r )
 {
 	return OKIM6295_status_0_r(offset) | 0xff00;
 }
 
 
-static void adpcm_w(int offset, int data)
+static WRITE_HANDLER( adpcm_w )
 {
 	if (!(data & 0x00ff0000))
 		OKIM6295_data_0_w(offset, data & 0xff);
@@ -120,7 +120,7 @@ static void adpcm_w(int offset, int data)
  *
  *************************************/
 
-static int special_port0_r(int offset)
+static READ_HANDLER( special_port0_r )
 {
 	int result = input_port_0_r(offset);
 

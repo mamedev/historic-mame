@@ -32,7 +32,7 @@ static int aliens_interrupt( void )
 	else return ignore_interrupt();
 }
 
-static int bankedram_r(int offset)
+static READ_HANDLER( bankedram_r )
 {
 	if (palette_selected)
 		return paletteram_r(offset);
@@ -40,7 +40,7 @@ static int bankedram_r(int offset)
 		return ram[offset];
 }
 
-static void bankedram_w(int offset,int data)
+static WRITE_HANDLER( bankedram_w )
 {
 	if (palette_selected)
 		paletteram_xBBBBBGGGGGRRRRR_swap_w(offset,data);
@@ -48,7 +48,7 @@ static void bankedram_w(int offset,int data)
 		ram[offset] = data;
 }
 
-static void aliens_coin_counter_w(int offset,int data)
+static WRITE_HANDLER( aliens_coin_counter_w )
 {
 	/* bits 0-1 = coin counters */
 	coin_counter_w(0,data & 0x01);
@@ -70,13 +70,13 @@ static void aliens_coin_counter_w(int offset,int data)
 #endif
 }
 
-void aliens_sh_irqtrigger_w(int offset, int data)
+WRITE_HANDLER( aliens_sh_irqtrigger_w )
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(1,0xff);
 }
 
-static void aliens_snd_bankswitch_w(int offset, int data)
+static WRITE_HANDLER( aliens_snd_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_SOUND1);
 	/* b1: bank for chanel A */

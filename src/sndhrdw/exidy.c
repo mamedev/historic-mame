@@ -158,7 +158,7 @@ static void riot_interrupt(int parm)
 }
 
 
-void exidy_shriot_w(int offset,int data)
+WRITE_HANDLER( exidy_shriot_w )
 {
    offset &= 0x7F;
    switch (offset)
@@ -210,7 +210,7 @@ void exidy_shriot_w(int offset,int data)
 }
 
 
-int exidy_shriot_r(int offset)
+READ_HANDLER( exidy_shriot_r )
 {
 	static int temp;
 
@@ -244,7 +244,7 @@ int exidy_shriot_r(int offset)
     8253 Timer
 ***************************************************************************/
 
-void exidy_sh8253_w(int offset,int data)
+WRITE_HANDLER( exidy_sh8253_w )
 {
 	int i,c;
 	long f;
@@ -292,7 +292,7 @@ void exidy_sh8253_w(int offset,int data)
 
 }
 
-int exidy_sh8253_r(int offset)
+READ_HANDLER( exidy_sh8253_r )
 {
     if (errorlog) fprintf(errorlog,"8253(R): %x\n",offset);
 	return 0;
@@ -302,12 +302,12 @@ int exidy_sh8253_r(int offset)
     6840 Timer
 ***************************************************************************/
 
-int exidy_sh6840_r(int offset) {
+READ_HANDLER( exidy_sh6840_r ) {
     if (errorlog) fprintf(errorlog,"6840R %x\n",offset);
     return 0;
 }
 
-void exidy_sh6840_w(int offset,int data) {
+WRITE_HANDLER( exidy_sh6840_w ) {
     	offset &= 0x07;
 	switch (offset) {
 		case 0:
@@ -367,7 +367,7 @@ void exidy_sh6840_w(int offset,int data) {
     Special Sound FX Control
 ***************************************************************************/
 
-void exidy_sfxctrl_w(int offset,int data) {
+WRITE_HANDLER( exidy_sfxctrl_w ) {
 	switch (offset & 0x03) {
 	case 0:
 		exidy_sfxctrl = data;
@@ -386,7 +386,7 @@ void exidy_sfxctrl_w(int offset,int data) {
 ***************************************************************************/
 
 
-void mtrap_voiceio_w(int offset,int data) {
+WRITE_HANDLER( mtrap_voiceio_w ) {
     if (!(offset & 0x10)) {
     	hc55516_digit_clock_clear_w(0,data);
     	hc55516_clock_set_w(0,data);
@@ -397,7 +397,7 @@ void mtrap_voiceio_w(int offset,int data) {
 	}
 }
 
-int mtrap_voiceio_r(int offset) {
+READ_HANDLER( mtrap_voiceio_r ) {
 	int data=0;
 
 	if (!(offset & 0x80)) {

@@ -182,13 +182,13 @@ void bnj_vh_stop (void)
 }
 
 
-void btime_paletteram_w(int offset,int data)
+WRITE_HANDLER( btime_paletteram_w )
 {
     /* RGB output is inverted */
     paletteram_BBGGGRRR_w(offset,~data);
 }
 
-void lnc_videoram_w(int offset, int data)
+WRITE_HANDLER( lnc_videoram_w )
 {
     if (videoram[offset] != data || colorram[offset] != *lnc_charbank)
     {
@@ -199,7 +199,7 @@ void lnc_videoram_w(int offset, int data)
     }
 }
 
-int btime_mirrorvideoram_r(int offset)
+READ_HANDLER( btime_mirrorvideoram_r )
 {
     int x,y;
 
@@ -211,7 +211,7 @@ int btime_mirrorvideoram_r(int offset)
     return videoram_r(offset);
 }
 
-int btime_mirrorcolorram_r(int offset)
+READ_HANDLER( btime_mirrorcolorram_r )
 {
     int x,y;
 
@@ -223,7 +223,7 @@ int btime_mirrorcolorram_r(int offset)
     return colorram_r(offset);
 }
 
-void btime_mirrorvideoram_w(int offset,int data)
+WRITE_HANDLER( btime_mirrorvideoram_w )
 {
     int x,y;
 
@@ -235,7 +235,7 @@ void btime_mirrorvideoram_w(int offset,int data)
     videoram_w(offset,data);
 }
 
-void lnc_mirrorvideoram_w(int offset,int data)
+WRITE_HANDLER( lnc_mirrorvideoram_w )
 {
     int x,y;
 
@@ -247,7 +247,7 @@ void lnc_mirrorvideoram_w(int offset,int data)
     lnc_videoram_w(offset,data);
 }
 
-void btime_mirrorcolorram_w(int offset,int data)
+WRITE_HANDLER( btime_mirrorcolorram_w )
 {
     int x,y;
 
@@ -259,7 +259,7 @@ void btime_mirrorcolorram_w(int offset,int data)
     colorram_w(offset,data);
 }
 
-void deco_charram_w(int offset,int data)
+WRITE_HANDLER( deco_charram_w )
 {
     if (deco_charram[offset] == data)  return;
 
@@ -274,7 +274,7 @@ void deco_charram_w(int offset,int data)
     char_dirty  [offset >> 3] = 1;
 }
 
-void bnj_background_w(int offset, int data)
+WRITE_HANDLER( bnj_background_w )
 {
     if (bnj_backgroundram[offset] != data)
     {
@@ -284,7 +284,7 @@ void bnj_background_w(int offset, int data)
     }
 }
 
-void bnj_scroll1_w(int offset, int data)
+WRITE_HANDLER( bnj_scroll1_w )
 {
     // Dirty screen if background is being turned off
     if (bnj_scroll1 && !data)
@@ -295,12 +295,12 @@ void bnj_scroll1_w(int offset, int data)
     bnj_scroll1 = data;
 }
 
-void bnj_scroll2_w(int offset, int data)
+WRITE_HANDLER( bnj_scroll2_w )
 {
     bnj_scroll2 = data;
 }
 
-void zoar_video_control_w(int offset,int data)
+WRITE_HANDLER( zoar_video_control_w )
 {
     // Zoar video control
     //
@@ -321,7 +321,7 @@ void zoar_video_control_w(int offset,int data)
     }
 }
 
-void btime_video_control_w(int offset,int data)
+WRITE_HANDLER( btime_video_control_w )
 {
     // Btime video control
     //
@@ -346,7 +346,7 @@ void btime_video_control_w(int offset,int data)
     }
 }
 
-void bnj_video_control_w(int offset,int data)
+WRITE_HANDLER( bnj_video_control_w )
 {
     /* Bnj/Lnc works a little differently than the btime/eggs (apparently). */
     /* According to the information at: */
@@ -362,7 +362,7 @@ void bnj_video_control_w(int offset,int data)
         btime_video_control_w(offset, data);
 }
 
-void lnc_video_control_w(int offset,int data)
+WRITE_HANDLER( lnc_video_control_w )
 {
     // I have a feeling that this only works by coincidence. I couldn't
     // figure out how NMI's are disabled by the sound processor
@@ -371,7 +371,7 @@ void lnc_video_control_w(int offset,int data)
     bnj_video_control_w(offset, data & 0x01);
 }
 
-void disco_video_control_w(int offset,int data)
+WRITE_HANDLER( disco_video_control_w )
 {
     static int video_control = -1;
 

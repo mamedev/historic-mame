@@ -10,7 +10,7 @@
 #include "vidhrdw/generic.h"
 
 /* from sndhrdw/pleiads.c */
-void pleiads_sound_control_c_w(int offset, int data);
+WRITE_HANDLER( pleiads_sound_control_c_w );
 
 static unsigned char *ram_page1;
 static unsigned char *ram_page2;
@@ -142,13 +142,13 @@ void phoenix_vh_stop(void)
 
 
 
-int phoenix_paged_ram_r (int offset)
+READ_HANDLER( phoenix_paged_ram_r )
 {
 	return current_ram_page[offset];
 }
 
 
-void phoenix_paged_ram_w (int offset,int data)
+WRITE_HANDLER( phoenix_paged_ram_w )
 {
 	if ((offset >= BACKGROUND_VIDEORAM_OFFSET) &&
 		(offset <  BACKGROUND_VIDEORAM_OFFSET + videoram_size))
@@ -164,7 +164,7 @@ void phoenix_paged_ram_w (int offset,int data)
 }
 
 
-void phoenix_videoreg_w (int offset,int data)
+WRITE_HANDLER( phoenix_videoreg_w )
 {
     if (current_ram_page_index != (data & 1))
 	{
@@ -193,13 +193,13 @@ void phoenix_videoreg_w (int offset,int data)
 }
 
 
-void phoenix_scroll_w (int offset,int data)
+WRITE_HANDLER( phoenix_scroll_w )
 {
 	bg_scroll = data;
 }
 
 
-int phoenix_input_port_0_r (int offset)
+READ_HANDLER( phoenix_input_port_0_r )
 {
 	int ret = input_port_0_r(0) & 0xf7;
 

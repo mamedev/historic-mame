@@ -57,14 +57,14 @@ void crbaloon_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 
 
-void crbaloon_spritectrl_w(int offset,int data)
+WRITE_HANDLER( crbaloon_spritectrl_w )
 {
 	spritectrl[offset] = data;
 }
 
 
 
-void crbaloon_flipscreen_w(int offset,int data)
+WRITE_HANDLER( crbaloon_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{

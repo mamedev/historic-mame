@@ -22,24 +22,24 @@ static unsigned char *xain_sharedram;
 
 void xain_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int xain_vh_start(void);
-void xain_scrollxP0_w(int offset,int data);
-void xain_scrollyP0_w(int offset,int data);
-void xain_scrollxP1_w(int offset,int data);
-void xain_scrollyP1_w(int offset,int data);
-void xain_charram_w(int offset,int data);
-void xain_bgram0_w(int offset,int data);
-void xain_bgram1_w(int offset,int data);
-void xain_flipscreen_w(int offset,int data);
+WRITE_HANDLER( xain_scrollxP0_w );
+WRITE_HANDLER( xain_scrollyP0_w );
+WRITE_HANDLER( xain_scrollxP1_w );
+WRITE_HANDLER( xain_scrollyP1_w );
+WRITE_HANDLER( xain_charram_w );
+WRITE_HANDLER( xain_bgram0_w );
+WRITE_HANDLER( xain_bgram1_w );
+WRITE_HANDLER( xain_flipscreen_w );
 
 extern unsigned char *xain_charram, *xain_bgram0, *xain_bgram1;
 
 
-int xain_sharedram_r(int offset)
+READ_HANDLER( xain_sharedram_r )
 {
 	return xain_sharedram[offset];
 }
 
-void xain_sharedram_w(int offset, int data)
+WRITE_HANDLER( xain_sharedram_w )
 {
 	/* locations 003d and 003e are used as a semaphores between CPU A and B, */
 	/* so let's resync every time they are changed to avoid deadlocks */
@@ -49,7 +49,7 @@ void xain_sharedram_w(int offset, int data)
 	xain_sharedram[offset] = data;
 }
 
-void xainCPUA_bankswitch_w(int offset,int data)
+WRITE_HANDLER( xainCPUA_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -57,7 +57,7 @@ void xainCPUA_bankswitch_w(int offset,int data)
 	else {cpu_setbank(1,&RAM[0x4000]);}
 }
 
-void xainCPUB_bankswitch_w(int offset,int data)
+WRITE_HANDLER( xainCPUB_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
@@ -65,44 +65,44 @@ void xainCPUB_bankswitch_w(int offset,int data)
 	else {cpu_setbank(2,&RAM[0x4000]);}
 }
 
-void xain_sound_command_w(int offset, int data)
+WRITE_HANDLER( xain_sound_command_w )
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(2,M6809_INT_IRQ);
 }
 
-static void xain_irqA_assert_w(int offset,int data)
+static WRITE_HANDLER( xain_irqA_assert_w )
 {
 	cpu_set_irq_line(0,M6809_IRQ_LINE,ASSERT_LINE);
 }
 
-static void xain_irqA_clear_w(int offset,int data)
+static WRITE_HANDLER( xain_irqA_clear_w )
 {
 	cpu_set_irq_line(0,M6809_IRQ_LINE,CLEAR_LINE);
 }
 
-static void xain_firqA_clear_w(int offset,int data)
+static WRITE_HANDLER( xain_firqA_clear_w )
 {
 	cpu_set_irq_line(0,M6809_FIRQ_LINE,CLEAR_LINE);
 }
 
-static void xain_irqB_assert_w(int offset,int data)
+static WRITE_HANDLER( xain_irqB_assert_w )
 {
 	cpu_set_irq_line(1,M6809_IRQ_LINE,ASSERT_LINE);
 }
 
-static void xain_irqB_clear_w(int offset,int data)
+static WRITE_HANDLER( xain_irqB_clear_w )
 {
 	cpu_set_irq_line(1,M6809_IRQ_LINE,CLEAR_LINE);
 }
 
-static int xain_68705_r(int offset)
+static READ_HANDLER( xain_68705_r )
 {
 //	if (errorlog) fprintf(errorlog,"read 68705\n");
 	return 0x4d;	/* fake P5 checksum test pass */
 }
 
-static void xain_68705_w(int offset,int data)
+static WRITE_HANDLER( xain_68705_w )
 {
 //	if (errorlog) fprintf(errorlog,"write %02x to 68705\n",data);
 }

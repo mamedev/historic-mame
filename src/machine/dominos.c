@@ -38,7 +38,7 @@ Dominos looks for the following:
 We remap our input ports because if we didn't, we'd use a bunch of ports.
 ***************************************************************************/
 
-int dominos_port_r(int offset)
+READ_HANDLER( dominos_port_r )
 {
 	switch (offset)
 	{
@@ -93,7 +93,7 @@ When reading from SYNC:
 
 The only one of these I really understand is the VBLANK...
 ***************************************************************************/
-int dominos_sync_r(int offset)
+READ_HANDLER( dominos_sync_r )
 {
 		static int ac_line=0x00;
 
@@ -109,21 +109,21 @@ int dominos_sync_r(int offset)
 /***************************************************************************
 Attract
 ***************************************************************************/
-void dominos_attract_w(int offset,int value)
+WRITE_HANDLER( dominos_attract_w )
 {
-	dominos_attract = (value & 0x01) << 6;
+	dominos_attract = (data & 0x01) << 6;
 }
 
 /***************************************************************************
 Lamps
 ***************************************************************************/
-void dominos_lamp1_w(int offset,int value)
+WRITE_HANDLER( dominos_lamp1_w )
 {
 	/* Address Line 0 is the data passed to LAMP1 */
 	osd_led_w(0,offset & 0x01);
 }
 
-void dominos_lamp2_w(int offset,int value)
+WRITE_HANDLER( dominos_lamp2_w )
 {
 	/* Address Line 0 is the data passed to LAMP2 */
 	osd_led_w(1,offset & 0x01);
@@ -132,7 +132,7 @@ void dominos_lamp2_w(int offset,int value)
 /***************************************************************************
 Sound function
 ***************************************************************************/
-void dominos_tumble_w(int offset, int value)
+WRITE_HANDLER( dominos_tumble_w )
 {
 	/* ??? */
 	return;

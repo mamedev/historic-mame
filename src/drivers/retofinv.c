@@ -12,15 +12,15 @@ int  retofinv_vh_start(void);
 void retofinv_vh_stop(void);
 void retofinv_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void retofinv_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-int  retofinv_bg_videoram_r(int offset);
-int  retofinv_fg_videoram_r(int offset);
-int  retofinv_bg_colorram_r(int offset);
-int  retofinv_fg_colorram_r(int offset);
-void retofinv_bg_videoram_w(int offset, int data);
-void retofinv_fg_videoram_w(int offset, int data);
-void retofinv_bg_colorram_w(int offset, int data);
-void retofinv_fg_colorram_w(int offset, int data);
-void retofinv_flip_screen_w(int offset, int data);
+READ_HANDLER( retofinv_bg_videoram_r );
+READ_HANDLER( retofinv_fg_videoram_r );
+READ_HANDLER( retofinv_bg_colorram_r );
+READ_HANDLER( retofinv_fg_colorram_r );
+WRITE_HANDLER( retofinv_bg_videoram_w );
+WRITE_HANDLER( retofinv_fg_videoram_w );
+WRITE_HANDLER( retofinv_bg_colorram_w );
+WRITE_HANDLER( retofinv_fg_colorram_w );
+WRITE_HANDLER( retofinv_flip_screen_w );
 
 extern int retofinv_videoram_size;
 extern unsigned char *retofinv_sprite_ram1;
@@ -41,19 +41,19 @@ static void retofinv_init_machine(void)
 	cpu2_m6000 = 0;
 }
 
-static int  retofinv_shared_ram_r(int offset)
+static READ_HANDLER( retofinv_shared_ram_r )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	return RAM[0x8800+offset];
 }
 
-static void retofinv_shared_ram_w(int offset, int data)
+static WRITE_HANDLER( retofinv_shared_ram_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	RAM[0x8800+offset] = data;
 }
 
-static void retofinv_protection_w(int offset,int data)
+static WRITE_HANDLER( retofinv_protection_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -101,49 +101,49 @@ static void retofinv_protection_w(int offset,int data)
 	cpu0_me800_last = data;
 }
 
-static int retofinv_protection_r(int offset)
+static READ_HANDLER( retofinv_protection_r )
 {
 	return cpu0_me000;
 }
 
-static void reset_cpu2_w(int offset,int data)
+static WRITE_HANDLER( reset_cpu2_w )
 {
      if (data)
 	    cpu_set_reset_line(2,PULSE_LINE);
 }
 
-static void reset_cpu1_w(int offset,int data)
+static WRITE_HANDLER( reset_cpu1_w )
 {
     if (data)
 	    cpu_set_reset_line(1,PULSE_LINE);
 }
 
-static void cpu1_halt_w(int offset,int data)
+static WRITE_HANDLER( cpu1_halt_w )
 {
 	cpu_set_halt_line(1, data ? CLEAR_LINE : ASSERT_LINE);
 }
 
-static int protection_2_r(int offset)
+static READ_HANDLER( protection_2_r )
 {
 	return 0;
 }
 
-static int protection_3_r(int offset)
+static READ_HANDLER( protection_3_r )
 {
 	return 0x30;
 }
 
-static void cpu2_m6000_w(int offset,int data)
+static WRITE_HANDLER( cpu2_m6000_w )
 {
 	cpu2_m6000 = data;
 }
 
-static int cpu0_mf800_r(int offset)
+static READ_HANDLER( cpu0_mf800_r )
 {
 	return cpu2_m6000;
 }
 
-static void soundcommand_w(int offset,int data)
+static WRITE_HANDLER( soundcommand_w )
 {
       soundlatch_w(0, data);
       cpu_set_irq_line(2, 0, HOLD_LINE);

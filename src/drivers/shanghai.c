@@ -439,7 +439,7 @@ if (errorlog) fprintf(errorlog,"unsupported command\n");
 
 static int regno;
 
-static int HD63484_status_r(int offset)
+static READ_HANDLER( HD63484_status_r )
 {
 	if (offset == 1) return 0xff;	/* high 8 bits - not used */
 
@@ -447,7 +447,7 @@ if (errorlog && cpu_get_pc() != 0xfced6) fprintf(errorlog,"%05x: HD63484 status 
 	return 0x22;	/* write FIFO ready + command end */
 }
 
-static void HD63484_address_w(int offset,int data)
+static WRITE_HANDLER( HD63484_address_w )
 {
 	static unsigned char reg[2];
 
@@ -457,7 +457,7 @@ static void HD63484_address_w(int offset,int data)
 //	if (errorlog) fprintf(errorlog,"PC %05x: HD63484 select register %02x\n",cpu_get_pc(),regno);
 }
 
-static void HD63484_data_w(int offset,int data)
+static WRITE_HANDLER( HD63484_data_w )
 {
 	static unsigned char dat[2];
 
@@ -477,7 +477,7 @@ if (errorlog) fprintf(errorlog,"PC %05x: HD63484 register %02x write %04x\n",cpu
 	}
 }
 
-static int HD63484_data_r(int offset)
+static READ_HANDLER( HD63484_data_r )
 {
 	int res;
 
@@ -581,7 +581,7 @@ static int shanghai_interrupt(void)
 	return interrupt();
 }
 
-static void shanghai_coin_w(int offset,int data)
+static WRITE_HANDLER( shanghai_coin_w )
 {
 	coin_counter_w(0,data & 1);
 	coin_counter_w(1,data & 2);

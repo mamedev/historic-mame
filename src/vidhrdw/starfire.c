@@ -15,15 +15,15 @@ unsigned char *starfire_videoram;
 unsigned char *starfire_colorram;
 unsigned char starfire_color = 0;
 
-void starfire_vidctrl_w(int offset,int data) {
+WRITE_HANDLER( starfire_vidctrl_w ) {
     starfire_vidctrl = data;
 }
 
-void starfire_vidctrl1_w(int offset,int data) {
+WRITE_HANDLER( starfire_vidctrl1_w ) {
     starfire_vidctrl1 = data;
 }
 
-void starfire_colorram_w(int offset,int data){
+WRITE_HANDLER( starfire_colorram_w ){
     starfire_color = data & 0x1f;
 
     if ((offset & 0xE0) == 0) {
@@ -51,14 +51,14 @@ void starfire_colorram_w(int offset,int data){
 	    starfire_colorram[offset] = data & 0x1f;
 }
 
-int starfire_colorram_r(int offset) {
+READ_HANDLER( starfire_colorram_r ) {
     if ((offset & 0xE0) == 0)
 	return starfire_colorram[offset&0xfeff];
     else
 	return starfire_colorram[offset];
 }
 
-void starfire_videoram_w(int offset,int data) {
+WRITE_HANDLER( starfire_videoram_w ) {
 
     int i, d0, d1, m0, m1, v0, v1;
     unsigned char c,d,d2;
@@ -188,7 +188,7 @@ void starfire_videoram_w(int offset,int data) {
     }
 }
 
-int starfire_videoram_r(int offset)
+READ_HANDLER( starfire_videoram_r )
 {
     int i, m0, m1, d0;
     unsigned char c;

@@ -21,12 +21,12 @@ void aeroboto_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static int player;
 
-static int aeroboto_in0_r(int offset)
+static READ_HANDLER( aeroboto_in0_r )
 {
 	return readinputport(player);
 }
 
-static int aeroboto_201_r(int offset)
+static READ_HANDLER( aeroboto_201_r )
 {
 	/* if you keep a button pressed during boot, the game will expect this */
 	/* serie of values to be returned from 3004, and display "PASS 201" if it is */
@@ -36,7 +36,7 @@ static int aeroboto_201_r(int offset)
 	return res[(count++)&3];
 }
 
-static void aeroboto_3000_w(int ofset,int data)
+static WRITE_HANDLER( aeroboto_3000_w )
 {
 	/* bit 0 selects player1/player2 controls */
 	player = data & 1;

@@ -72,7 +72,7 @@ static int xmin; int xmax;
 static int ymin; int ymax;
 
 
-int vector_updates; /* avgdvg_go()'s per Mame frame, should be 1 */
+int vector_updates; /* avgdvg_go_w()'s per Mame frame, should be 1 */
 
 static int vg_step = 0;    /* single step the vector generator */
 static int total_length;   /* length of all lines drawn in a frame */
@@ -791,7 +791,7 @@ static void avgdvg_clr_busy (int dummy)
 	busy = 0;
 }
 
-void avgdvg_go (int offset, int data)
+WRITE_HANDLER( avgdvg_go_w )
 {
 
 	if (busy)
@@ -820,7 +820,7 @@ void avgdvg_go (int offset, int data)
 	}
 }
 
-void avgdvg_reset (int offset, int data)
+WRITE_HANDLER( avgdvg_reset_w )
 {
 	avgdvg_clr_busy (0);
 }
@@ -1031,7 +1031,7 @@ VEC_PAL_INIT(astdelux, VEC_PAL_ASTDELUX )
 
 /* If you want to use the next two functions, please make sure that you have
  * a fake GfxLayout, otherwise you'll crash */
-static void colorram_w (int offset, int data)
+static WRITE_HANDLER( colorram_w )
 {
 	colorram[offset & 0x0f] = data & 0x0f;
 }
@@ -1043,7 +1043,7 @@ static void colorram_w (int offset, int data)
  * We need translation tables.
  */
 
-void tempest_colorram_w (int offset, int data)
+WRITE_HANDLER( tempest_colorram_w )
 {
 #if 0 /* with low intensity bit */
 	int trans[]= { 7, 15, 3, 11, 6, 14, 2, 10, 5, 13, 1,  9, 4, 12, 0,  8 };
@@ -1053,7 +1053,7 @@ void tempest_colorram_w (int offset, int data)
 	colorram_w (offset, trans[data & 0x0f]);
 }
 
-void mhavoc_colorram_w (int offset, int data)
+WRITE_HANDLER( mhavoc_colorram_w )
 {
 #if 0 /* with low intensity bit */
 	int trans[]= { 7, 6, 5, 4, 15, 14, 13, 12, 3, 2, 1, 0, 11, 10, 9, 8 };
@@ -1066,7 +1066,7 @@ void mhavoc_colorram_w (int offset, int data)
 }
 
 
-void quantum_colorram_w (int offset, int data)
+WRITE_HANDLER( quantum_colorram_w )
 {
 /* Notes on colors:
 offset:				color:			color (game):

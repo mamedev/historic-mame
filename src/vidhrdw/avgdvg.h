@@ -15,8 +15,8 @@
 #define AVGDVG_MAX          8
 
 int avgdvg_done (void);
-void avgdvg_go (int offset, int data);
-void avgdvg_reset (int offset, int data);
+WRITE_HANDLER( avgdvg_go_w );
+WRITE_HANDLER( avgdvg_reset_w );
 int avgdvg_init(int vgType);
 
 /* Apart from the color mentioned below, the vector games will make additional
@@ -37,9 +37,9 @@ void avg_init_palette_astdelux  (unsigned char *palette, unsigned short *colorta
 
 /* Some games use a colorram. This is not handled via the Mame core functions
  * right now, but in src/vidhrdw/avgdvg.c itself. */
-void tempest_colorram_w (int offset, int data);
-void mhavoc_colorram_w (int offset, int data);
-void quantum_colorram_w (int offset, int data);
+WRITE_HANDLER( tempest_colorram_w );
+WRITE_HANDLER( mhavoc_colorram_w );
+WRITE_HANDLER( quantum_colorram_w );
 
 void dvg_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void avg_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);

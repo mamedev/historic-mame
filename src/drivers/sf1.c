@@ -22,13 +22,13 @@ static unsigned char *sharedram;
 
 int sf1_vh_start(void);
 void sf1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void sf1_deltaxb_w(int offset, int data);
-void sf1_deltaxm_w(int offset, int data);
-void sf1_videoram_w(int offset, int data);
+WRITE_HANDLER( sf1_deltaxb_w );
+WRITE_HANDLER( sf1_deltaxm_w );
+WRITE_HANDLER( sf1_videoram_w );
 void sf1_active_w(int data);
 
 
-static int dummy_r(int offset)
+static READ_HANDLER( dummy_r )
 {
 	return 0xffff;
 }
@@ -41,14 +41,14 @@ static int dummy_r(int offset)
 /* b5 = active background plane */
 /* b6 = active middle plane */
 /* b7 = active sprites */
-static void active_w(int offset, int data)
+static WRITE_HANDLER( active_w )
 {
 	if((data&0xff)!=0)
 		sf1_active_w(data);
 }
 
 
-static void soundcmd_w(int offset,int data)
+static WRITE_HANDLER( soundcmd_w )
 {
 	if (data != 0xffff) {
 		soundlatch_w(offset,data);
@@ -57,7 +57,7 @@ static void soundcmd_w(int offset,int data)
 }
 
 /* Idle cycles skipping */
-static void shared_w(int offset, int data)
+static WRITE_HANDLER( shared_w )
 {
 	COMBINE_WORD_MEM (sharedram+offset, data);
 
@@ -84,7 +84,7 @@ static void shared_w(int offset, int data)
 /* The protection of the japanese version */
 /* I'd love to see someone dump the 68705 rom */
 
-static void protection_w(int offset, int data)
+static WRITE_HANDLER( protection_w )
 {
 	static int maplist[4][10] = {
 		{ 1, 0, 3, 2, 4, 5, 6, 7, 8, 9 },
@@ -182,24 +182,24 @@ static void protection_w(int offset, int data)
 
 static int scale[8] = { 0x00, 0x40, 0xe0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
 
-static int button1_r(int offset)
+static READ_HANDLER( button1_r )
 {
 	return (scale[input_port_7_r(0)]<<8)|scale[input_port_5_r(0)];
 }
 
-static int button2_r(int offset)
+static READ_HANDLER( button2_r )
 {
 	return (scale[input_port_8_r(0)]<<8)|scale[input_port_6_r(0)];
 }
 
 
-static void sound2_bank_w(int offset, int data)
+static WRITE_HANDLER( sound2_bank_w )
 {
 	cpu_setbank(4, memory_region(REGION_CPU3)+0x8000*(data+1));
 }
 
 
-static void msm5205_w(int offset, int data)
+static WRITE_HANDLER( msm5205_w )
 {
 	MSM5205_reset_w(offset,(data>>7)&1);
 	/* ?? bit 6?? */
@@ -852,7 +852,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,	/* 1 chip */
 	3579545,	/* ? xtal is 3.579545MHz */
-	{ YM3012_VOL(30,MIXER_PAN_LEFT,30,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
 	{ irq_handler }
 };
 
@@ -895,7 +895,7 @@ static struct MachineDriver machine_driver_sf1 =
 	0,
 
 	/* video hardware */
-	48*8, 32*8, { 0*8, 48*8-1, 2*8, 30*8-1 },
+	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	1024, 1024,
 	0,
@@ -950,7 +950,7 @@ static struct MachineDriver machine_driver_sf1us =
 	0,
 
 	/* video hardware */
-	48*8, 32*8, { 0*8, 48*8-1, 2*8, 30*8-1 },
+	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	1024, 1024,
 	0,
@@ -1005,7 +1005,7 @@ static struct MachineDriver machine_driver_sf1jp =
 	0,
 
 	/* video hardware */
-	48*8, 32*8, { 0*8, 48*8-1, 2*8, 30*8-1 },
+	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	1024, 1024,
 	0,

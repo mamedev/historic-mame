@@ -28,26 +28,26 @@ void zwackery_init_machine(void);
 int mcr_interrupt(void);
 int mcr68_interrupt(void);
 
-void mcr_port_01_w(int offset, int data);
-void mcr_port_47_dispatch_w(int offset, int value);
-void mcr_scroll_value_w(int offset, int value);
+WRITE_HANDLER( mcr_port_01_w );
+WRITE_HANDLER( mcr_port_47_dispatch_w );
+WRITE_HANDLER( mcr_scroll_value_w );
 
-int mcr_port_04_dispatch_r(int offset);
+READ_HANDLER( mcr_port_04_dispatch_r );
 
-void mcr68_6840_upper_w(int offset, int data);
-void mcr68_6840_lower_w(int offset, int data);
-int mcr68_6840_upper_r(int offset);
-int mcr68_6840_lower_r(int offset);
+WRITE_HANDLER( mcr68_6840_upper_w );
+WRITE_HANDLER( mcr68_6840_lower_w );
+READ_HANDLER( mcr68_6840_upper_r );
+READ_HANDLER( mcr68_6840_lower_r );
 
 
 
 /************ I/O Port Configuration ***************/
 
-extern int (*mcr_port04_r[5])(int offset);
-extern void (*mcr_port47_w[4])(int offset, int data);
+extern mem_read_handler mcr_port04_r[5];
+extern mem_write_handler mcr_port47_w[4];
 extern UINT8 mcr_cocktail_flip;
 
-extern void mcr_dummy_w(int offset, int data);
+WRITE_HANDLER( mcr_dummy_w );
 
 #define MCR_CONFIGURE_PORT_04_READS(p0,p1,p2,p3,p4) \
 	mcr_port04_r[0] = p0 ? p0 : input_port_0_r;\

@@ -174,18 +174,18 @@ Every 3, add 1                  | On |Off | On |    |    |    |    |    |
 void mhavoc_init_machine(void);
 int mhavoc_alpha_interrupt (void);
 int mhavoc_gamma_interrupt (void);
-void mhavoc_rom_banksel_w (int offset, int data);
-void mhavoc_ram_banksel_w (int offset, int data);
-int mhavoc_gamma_r(int offset);
-void mhavoc_gamma_w(int offset, int data);
-int mhavoc_alpha_r(int offset);
-void mhavoc_alpha_w(int offset, int data);
-int mhavoc_port_0_r(int offset);
-int mhavoc_port_1_r(int offset);
-void mhavoc_out_0_w(int offset, int data);
-void mhavoc_out_1_w(int offset, int data);
-void mhavoc_irqack_w(int offset, int data);
-void tempest_colorram_w(int offset, int data);
+WRITE_HANDLER( mhavoc_rom_banksel_w );
+WRITE_HANDLER( mhavoc_ram_banksel_w );
+READ_HANDLER( mhavoc_gamma_r );
+WRITE_HANDLER( mhavoc_gamma_w );
+READ_HANDLER( mhavoc_alpha_r );
+WRITE_HANDLER( mhavoc_alpha_w );
+READ_HANDLER( mhavoc_port_0_r );
+READ_HANDLER( mhavoc_port_1_r );
+WRITE_HANDLER( mhavoc_out_0_w );
+WRITE_HANDLER( mhavoc_out_1_w );
+WRITE_HANDLER( mhavoc_irqack_w );
+WRITE_HANDLER( tempest_colorram_w );
 
 
 
@@ -208,12 +208,12 @@ static void nvram_handler(void *file, int read_or_write)
 
 static unsigned char *gammaram;
 
-static int mhavoc_gammaram_r (int offset)
+static READ_HANDLER( mhavoc_gammaram_r )
 {
 	return gammaram[offset & 0x7ff];
 }
 
-static void mhavoc_gammaram_w (int offset, int data)
+static WRITE_HANDLER( mhavoc_gammaram_w )
 {
 	gammaram[offset & 0x7ff] = data;
 }
@@ -246,9 +246,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1200, 0x1200, MWA_NOP },			/* don't care */
 	{ 0x1400, 0x141f, mhavoc_colorram_w },	/* ColorRAM */
 	{ 0x1600, 0x1600, mhavoc_out_0_w },		/* Control Signals */
-	{ 0x1640, 0x1640, avgdvg_go },			/* Vector Generator GO */
+	{ 0x1640, 0x1640, avgdvg_go_w },			/* Vector Generator GO */
 	{ 0x1680, 0x1680, MWA_NOP },			/* Watchdog Clear */
-	{ 0x16c0, 0x16c0, avgdvg_reset },		/* Vector Generator Reset */
+	{ 0x16c0, 0x16c0, avgdvg_reset_w },		/* Vector Generator Reset */
 	{ 0x1700, 0x1700, MWA_NOP },			/* IRQ ack */
 	{ 0x1740, 0x1740, mhavoc_rom_banksel_w },/* Program ROM Page Select */
 	{ 0x1780, 0x1780, mhavoc_ram_banksel_w },/* Program RAM Page Select */

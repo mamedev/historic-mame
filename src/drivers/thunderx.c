@@ -45,7 +45,7 @@ static int palette_selected;
 static int bank;
 static unsigned char *ram,*unknownram;
 
-static int scontra_bankedram_r(int offset)
+static READ_HANDLER( scontra_bankedram_r )
 {
 	if (palette_selected)
 		return paletteram_r(offset);
@@ -53,7 +53,7 @@ static int scontra_bankedram_r(int offset)
 		return ram[offset];
 }
 
-static void scontra_bankedram_w(int offset,int data)
+static WRITE_HANDLER( scontra_bankedram_w )
 {
 	if (palette_selected)
 		paletteram_xBBBBBGGGGGRRRRR_swap_w(offset,data);
@@ -61,7 +61,7 @@ static void scontra_bankedram_w(int offset,int data)
 		ram[offset] = data;
 }
 
-static int thunderx_bankedram_r(int offset)
+static READ_HANDLER( thunderx_bankedram_r )
 {
 	if ((bank & 0x01) == 0)
 	{
@@ -74,7 +74,7 @@ static int thunderx_bankedram_r(int offset)
 		return ram[offset];
 }
 
-static void thunderx_bankedram_w(int offset,int data)
+static WRITE_HANDLER( thunderx_bankedram_w )
 {
 	if ((bank & 0x01) == 0)
 	{
@@ -163,7 +163,7 @@ static void calculate_collisions( void ) {
 	}
 }
 
-static void thunderx_1f98_w(int offset,int data)
+static WRITE_HANDLER( thunderx_1f98_w )
 {
 //if (errorlog) fprintf(errorlog,"%04x: write %02x to 1f98\n",cpu_get_pc(),data);
 	/* bit 0 = enable char ROM reading through the video RAM */
@@ -174,7 +174,7 @@ static void thunderx_1f98_w(int offset,int data)
 		calculate_collisions();
 }
 
-void scontra_bankswitch_w(int offset, int data)
+WRITE_HANDLER( scontra_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs;
@@ -196,7 +196,7 @@ void scontra_bankswitch_w(int offset, int data)
 	scontra_priority = data & 0x80;
 }
 
-static void thunderx_videobank_w(int offset,int data)
+static WRITE_HANDLER( thunderx_videobank_w )
 {
 //if (errorlog) fprintf(errorlog,"%04x: select video ram bank %02x\n",cpu_get_pc(),data);
 	/* 0x01 = work RAM at 4000-5fff */
@@ -212,12 +212,12 @@ static void thunderx_videobank_w(int offset,int data)
 	scontra_priority = data & 0x08;
 }
 
-static void thunderx_sh_irqtrigger_w(int offset, int data)
+static WRITE_HANDLER( thunderx_sh_irqtrigger_w )
 {
 	cpu_cause_interrupt(1,0xff);
 }
 
-static void scontra_snd_bankswitch_w(int offset, int data)
+static WRITE_HANDLER( scontra_snd_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_SOUND1);
 	/* b3-b2: bank for chanel B */

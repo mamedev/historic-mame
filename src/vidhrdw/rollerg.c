@@ -13,7 +13,7 @@ static int bg_colorbase,sprite_colorbase,zoom_colorbase;
 
 ***************************************************************************/
 
-static void sprite_callback(int *code,int *color,int *priority)
+static void sprite_callback(int *code,int *color,int *priority_mask)
 {
 #if 0
 if (keyboard_pressed(KEYCODE_Q) && (*color & 0x80)) *color = rand();
@@ -21,7 +21,7 @@ if (keyboard_pressed(KEYCODE_W) && (*color & 0x40)) *color = rand();
 if (keyboard_pressed(KEYCODE_E) && (*color & 0x20)) *color = rand();
 if (keyboard_pressed(KEYCODE_R) && (*color & 0x10)) *color = rand();
 #endif
-	*priority = ((*color & 0x10) >> 4);
+	*priority_mask = (*color & 0x10) ? 0 : 0x02;
 	*color = sprite_colorbase + (*color & 0x0f);
 }
 
@@ -97,8 +97,9 @@ void rollerg_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_render(ALL_TILEMAPS);
 
+	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase],&Machine->drv->visible_area);
-	K053245_sprites_draw(bitmap,0,0);
-	K051316_zoom_draw_0(bitmap);
-	K053245_sprites_draw(bitmap,1,1);
+	K051316_zoom_draw_0(bitmap,1);
+
+	K053245_sprites_draw(bitmap);
 }

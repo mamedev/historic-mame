@@ -46,11 +46,11 @@ extern void ripoff_sound(UINT8 sound_val, UINT8 bits_changed);
 extern void spacewar_sound(UINT8 sound_val, UINT8 bits_changed);
 
 
-static int cinemat_readport (int offset);
-static void cinemat_writeport (int offset, int data);
+static READ_HANDLER( cinemat_port_r );
+static WRITE_HANDLER( cinemat_port_w );
 
-static int speedfrk_readports (int offset);
-static int boxingb_readports (int offset);
+static READ_HANDLER( speedfrk_ports_r );
+static READ_HANDLER( boxingb_ports_r );
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -66,31 +66,31 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct IOReadPort readport[] =
 {
-	{ 0, CCPU_PORT_MAX, cinemat_readport },
+	{ 0, CCPU_PORT_MAX, cinemat_port_r },
 	{ -1 }  /* end of table */
 };
 
 static struct IOWritePort writeport[] =
 {
-	{ 0, CCPU_PORT_MAX, cinemat_writeport },
+	{ 0, CCPU_PORT_MAX, cinemat_port_w },
 	{ -1 }  /* end of table */
 };
 
 static struct IOReadPort speedfrk_readport[] =
 {
-	{ 0, CCPU_PORT_MAX, speedfrk_readports },
+	{ 0, CCPU_PORT_MAX, speedfrk_ports_r },
 	{ -1 }  /* end of table */
 };
 
 static struct IOReadPort boxingb_readport[] =
 {
-	{ 0, CCPU_PORT_MAX, boxingb_readports },
+	{ 0, CCPU_PORT_MAX, boxingb_ports_r },
 	{ -1 }  /* end of table */
 };
 
 static int cinemat_outputs = 0xff;
 
-static int cinemat_readport (int offset)
+static READ_HANDLER( cinemat_port_r )
 {
 	switch (offset)
 	{
@@ -115,7 +115,7 @@ static int cinemat_readport (int offset)
 
 static void (*cinemat_sound_handler) (UINT8, UINT8);
 
-static void cinemat_writeport (int offset, int data)
+static WRITE_HANDLER( cinemat_port_w )
 {
 	switch (offset)
 	{
@@ -789,7 +789,7 @@ CINEMA_MACHINE (ripoff, 0, 0, 1024, 768)
 
 static UINT8 speedfrk_steer[] = {0xe, 0x6, 0x2, 0x0, 0x3, 0x7, 0xf};
 
-int speedfrk_in2_r(int offset)
+READ_HANDLER( speedfrk_in2_r )
 {
     static int last_wheel=0, delta_wheel, last_frame=0, gear=0xe0;
 	int val, current_frame;
@@ -825,7 +825,7 @@ int speedfrk_in2_r(int offset)
 	return val;
 }
 
-static int speedfrk_readports (int offset)
+static READ_HANDLER( speedfrk_ports_r )
 {
 	switch (offset)
 	{
@@ -1456,7 +1456,7 @@ CINEMA_MACHINE (wotw, 0, 0, 1024, 768)
 
 ***************************************************************************/
 
-static int boxingb_readports (int offset)
+static READ_HANDLER( boxingb_ports_r )
 {
 	switch (offset)
 	{

@@ -154,7 +154,7 @@ void vindictr_vh_stop(void)
  *
  *************************************/
 
-void vindictr_playfieldram_w(int offset, int data)
+WRITE_HANDLER( vindictr_playfieldram_w )
 {
 	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -174,7 +174,7 @@ void vindictr_playfieldram_w(int offset, int data)
  *
  *************************************/
 
-void vindictr_paletteram_w(int offset,int data)
+WRITE_HANDLER( vindictr_paletteram_w )
 {
 	static const int ztable[16] =
 		{ 0x0, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10, 0x11 };

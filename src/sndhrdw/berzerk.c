@@ -70,7 +70,7 @@ int berzerk_sh_start(const struct MachineSound *msound)
 	return 0;
 }
 
-void berzerk_sound_control_a_w(int offset,int data)
+WRITE_HANDLER( berzerk_sound_control_a_w )
 {
 	int noise = 0;
 	int voice = 0;
@@ -249,7 +249,7 @@ if (errorlog) fprintf(errorlog,"Trying death sound");
 	} /* End of berzerknoisemulate */
 }
 
-void berzerk_sound_control_b_w(int offset,int data)
+WRITE_HANDLER( berzerk_sound_control_b_w )
 {
 	if (errorlog)  fprintf(errorlog, "B Data value %d and offset %d at %d\n", data, offset, lastfreq);
 }

@@ -13,9 +13,9 @@
 
 
 void thunderj_set_alpha_bank(int bank);
-void thunderj_playfieldram_w(int offset, int data);
-void thunderj_playfield2ram_w(int offset, int data);
-void thunderj_colorram_w(int offset, int data);
+WRITE_HANDLER( thunderj_playfieldram_w );
+WRITE_HANDLER( thunderj_playfield2ram_w );
+WRITE_HANDLER( thunderj_colorram_w );
 
 int thunderj_vh_start(void);
 void thunderj_vh_stop(void);
@@ -73,7 +73,7 @@ static void init_machine(void)
  *
  *************************************/
 
-static int special_port2_r(int offset)
+static READ_HANDLER( special_port2_r )
 {
 	int result = input_port_2_r(offset);
 
@@ -85,7 +85,7 @@ static int special_port2_r(int offset)
 }
 
 
-static void latch_w(int offset, int data)
+static WRITE_HANDLER( latch_w )
 {
 	/* reset extra CPU */
 	if (!(data & 0x00ff0000))
@@ -109,7 +109,7 @@ static void latch_w(int offset, int data)
  *
  *************************************/
 
-int thunderj_video_control_r(int offset)
+READ_HANDLER( thunderj_video_control_r )
 {
 	/* Sigh. CPU #1 reads the video controller register twice per frame, once at
 	   the beginning of interrupt and once near the end. It stores these values in a

@@ -236,56 +236,56 @@ void toaplan1_vh_stop(void)
 
 
 
-int toaplan1_vblank_r(int offset)
+READ_HANDLER( toaplan1_vblank_r )
 {
 	return vblank ^= 1;
 }
 
-void toaplan1_flipscreen_w(int offset, int data)
+WRITE_HANDLER( toaplan1_flipscreen_w )
 {
 	toaplan1_flipscreen = data; /* 8000 flip, 0000 dont */
 }
 
-int video_ofs_r(int offset)
+READ_HANDLER( video_ofs_r )
 {
 	return video_ofs ;
 }
 
-void video_ofs_w(int offset, int data)
+WRITE_HANDLER( video_ofs_w )
 {
 	video_ofs = data ;
 }
 
 /* tile palette */
-int toaplan1_colorram1_r(int offset)
+READ_HANDLER( toaplan1_colorram1_r )
 {
 	return READ_WORD (&toaplan1_colorram1[offset]);
 }
 
-void toaplan1_colorram1_w(int offset, int data)
+WRITE_HANDLER( toaplan1_colorram1_w )
 {
 	WRITE_WORD (&toaplan1_colorram1[offset], data);
 	paletteram_xBBBBBGGGGGRRRRR_word_w(offset,data);
 }
 
 /* sprite palette */
-int toaplan1_colorram2_r(int offset)
+READ_HANDLER( toaplan1_colorram2_r )
 {
 	return READ_WORD (&toaplan1_colorram2[offset]);
 }
 
-void toaplan1_colorram2_w(int offset, int data)
+WRITE_HANDLER( toaplan1_colorram2_w )
 {
 	WRITE_WORD (&toaplan1_colorram2[offset], data);
 	paletteram_xBBBBBGGGGGRRRRR_word_w(offset+colorram1_size,data);
 }
 
-int toaplan1_videoram1_r(int offset)
+READ_HANDLER( toaplan1_videoram1_r )
 {
 	return READ_WORD (&toaplan1_videoram1[2*(video_ofs & (VIDEORAM1_SIZE-1))]);
 }
 
-void toaplan1_videoram1_w(int offset, int data)
+WRITE_HANDLER( toaplan1_videoram1_w )
 {
 	int oldword = READ_WORD (&toaplan1_videoram1[2*video_ofs & (VIDEORAM1_SIZE-1)]);
 	int newword = COMBINE_WORD (oldword, data);
@@ -302,12 +302,12 @@ void toaplan1_videoram1_w(int offset, int data)
 	video_ofs++;
 }
 
-int toaplan1_videoram2_r(int offset)
+READ_HANDLER( toaplan1_videoram2_r )
 {
 	return READ_WORD (&toaplan1_videoram2[2*video_ofs & (VIDEORAM2_SIZE-1)]);
 }
 
-void toaplan1_videoram2_w(int offset, int data)
+WRITE_HANDLER( toaplan1_videoram2_w )
 {
 	int oldword = READ_WORD (&toaplan1_videoram2[2*video_ofs & (VIDEORAM2_SIZE-1)]);
 	int newword = COMBINE_WORD (oldword, data);
@@ -324,17 +324,17 @@ void toaplan1_videoram2_w(int offset, int data)
 	video_ofs++;
 }
 
-int video_ofs3_r(int offset)
+READ_HANDLER( video_ofs3_r )
 {
 	return video_ofs3;
 }
 
-void video_ofs3_w(int offset, int data)
+WRITE_HANDLER( video_ofs3_w )
 {
 	video_ofs3 = data ;
 }
 
-int rallybik_videoram3_r(int offset)
+READ_HANDLER( rallybik_videoram3_r )
 {
 	int rb_tmp_vid;
 
@@ -348,12 +348,12 @@ int rallybik_videoram3_r(int offset)
 	return rb_tmp_vid;
 }
 
-int toaplan1_videoram3_r(int offset)
+READ_HANDLER( toaplan1_videoram3_r )
 {
 	return READ_WORD (&toaplan1_videoram3[(video_ofs3 & (VIDEORAM3_SIZE-1))*4 + offset]);
 }
 
-void toaplan1_videoram3_w(int offset, int data)
+WRITE_HANDLER( toaplan1_videoram3_w )
 {
 	int oldword = READ_WORD (&toaplan1_videoram3[(video_ofs3 & (VIDEORAM3_SIZE-1))*4 + offset]);
 	int newword = COMBINE_WORD (oldword, data);
@@ -370,17 +370,17 @@ void toaplan1_videoram3_w(int offset, int data)
 	if ( offset == 2 ) video_ofs3++;
 }
 
-int scrollregs_r(int offset)
+READ_HANDLER( scrollregs_r )
 {
 	return scrollregs[offset>>1];
 }
 
-void scrollregs_w(int offset, int data)
+WRITE_HANDLER( scrollregs_w )
 {
 	scrollregs[offset>>1] = data ;
 }
 
-void offsetregs_w(int offset, int data)
+WRITE_HANDLER( offsetregs_w )
 {
 	if ( offset == 0 )
 		tiles_offsetx = data ;
@@ -388,7 +388,7 @@ void offsetregs_w(int offset, int data)
 		tiles_offsety = data ;
 }
 
-void layers_offset_w(int offset, int data)
+WRITE_HANDLER( layers_offset_w )
 {
 	switch (offset)
 	{

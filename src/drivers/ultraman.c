@@ -19,81 +19,81 @@ int ultraman_vh_start( void );
 void ultraman_vh_stop( void );
 void ultraman_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh );
 
-static int ultraman_K051937_r( int offset )
+static READ_HANDLER( ultraman_K051937_r )
 {
 	return K051937_r(offset >> 1);
 }
 
-static int ultraman_K051960_r( int offset )
+static READ_HANDLER( ultraman_K051960_r )
 {
 	return K051960_r(offset >> 1);
 }
 
-static int ultraman_K051316_r_0( int offset )
+static READ_HANDLER( ultraman_K051316_0_r )
 {
 	return K051316_0_r(offset >> 1);
 }
 
-static int ultraman_K051316_r_1( int offset )
+static READ_HANDLER( ultraman_K051316_1_r )
 {
 	return K051316_1_r(offset >> 1);
 }
 
-static int ultraman_K051316_r_2( int offset )
+static READ_HANDLER( ultraman_K051316_2_r )
 {
 	return K051316_2_r(offset >> 1);
 }
 
-static void ultraman_K051316_w_0(int offset,int data)
+static WRITE_HANDLER( ultraman_K051316_0_w )
 {
 	if ((data & 0x00ff0000) == 0)
 		K051316_0_w(offset >> 1, data & 0xff);
 }
 
-static void ultraman_K051316_w_1(int offset,int data)
+static WRITE_HANDLER( ultraman_K051316_1_w )
 {
 	if ((data & 0x00ff0000) == 0)
 		K051316_1_w(offset >> 1, data & 0xff);
 }
 
-static void ultraman_K051316_w_2(int offset,int data)
+static WRITE_HANDLER( ultraman_K051316_2_w )
 {
 	if ((data & 0x00ff0000) == 0)
 		K051316_2_w(offset >> 1, data & 0xff);
 }
 
-static void ultraman_K051316_ctrl_w_0(int offset,int data)
+static WRITE_HANDLER( ultraman_K051316_ctrl_0_w )
 {
 	if ((data & 0x00ff0000) == 0)
 		K051316_ctrl_0_w(offset >> 1, data & 0xff);
 }
 
-static void ultraman_K051316_ctrl_w_1(int offset,int data)
+static WRITE_HANDLER( ultraman_K051316_ctrl_1_w )
 {
 	if ((data & 0x00ff0000) == 0)
 		K051316_ctrl_1_w(offset >> 1, data & 0xff);
 
 }
 
-static void ultraman_K051316_ctrl_w_2(int offset,int data)
+static WRITE_HANDLER( ultraman_K051316_ctrl_2_w )
 {
 	if ((data & 0x00ff0000) == 0)
 		K051316_ctrl_2_w(offset >> 1, data & 0xff);
 }
 
-static void ultraman_K051937_w(int offset,int data)
+static WRITE_HANDLER( ultraman_K051937_w )
 {
 	if ((data & 0x00ff0000) == 0)
 		K051937_w(offset >> 1, data & 0xff);
 }
 
-static void ultraman_K051960_w(int offset,int data)
+static WRITE_HANDLER( ultraman_K051960_w )
 {
 	if ((data & 0x00ff0000) == 0)
 		K051960_w(offset >> 1, data & 0xff);
 }
 
-static void ultraman_reg_w(int offset,int data)
+static WRITE_HANDLER( ultraman_reg_w )
 {
 	int oldword = READ_WORD(&ultraman_regs[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -139,9 +139,9 @@ static struct MemoryReadAddress ultraman_readmem[] =
 	{ 0x1c0004, 0x1c0005, input_port_2_r },			/* 2P controls */
 	{ 0x1c0006, 0x1c0007, input_port_3_r },			/* DIPSW #1 */
 	{ 0x1c0008, 0x1c0009, input_port_4_r },			/* DIPSW #2 */
-	{ 0x204000, 0x204fff, ultraman_K051316_r_0 },	/* K051316 #0 RAM */
-	{ 0x205000, 0x205fff, ultraman_K051316_r_1 },	/* K051316 #1 RAM */
-	{ 0x206000, 0x206fff, ultraman_K051316_r_2 },	/* K051316 #2 RAM */
+	{ 0x204000, 0x204fff, ultraman_K051316_0_r },	/* K051316 #0 RAM */
+	{ 0x205000, 0x205fff, ultraman_K051316_1_r },	/* K051316 #1 RAM */
+	{ 0x206000, 0x206fff, ultraman_K051316_2_r },	/* K051316 #2 RAM */
 	{ 0x304000, 0x30400f, ultraman_K051937_r },		/* Sprite control */
 	{ 0x304800, 0x304fff, ultraman_K051960_r },		/* Sprite RAM */
 	{ -1 }
@@ -153,12 +153,12 @@ static struct MemoryWriteAddress ultraman_writemem[] =
 	{ 0x080000, 0x08ffff, MWA_BANK1 },					/* RAM */
 	{ 0x180000, 0x183fff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },/* Palette */
 	{ 0x1c0000, 0x1c0031, ultraman_reg_w, &ultraman_regs },	/* counters + sound + watchdog + gfx ctrl */
-	{ 0x204000, 0x204fff, ultraman_K051316_w_0 },		/* K051316 #0 RAM */
-	{ 0x205000, 0x205fff, ultraman_K051316_w_1 },		/* K051316 #1 RAM */
-	{ 0x206000, 0x206fff, ultraman_K051316_w_2 },		/* K051316 #2 RAM */
-	{ 0x207f80, 0x207f9f, ultraman_K051316_ctrl_w_0	},	/* K051316 #0 registers  */
-	{ 0x207fa0, 0x207fbf, ultraman_K051316_ctrl_w_1	},	/* K051316 #1 registers */
-	{ 0x207fc0, 0x207fdf, ultraman_K051316_ctrl_w_2	},	/* K051316 #2 registers */
+	{ 0x204000, 0x204fff, ultraman_K051316_0_w },		/* K051316 #0 RAM */
+	{ 0x205000, 0x205fff, ultraman_K051316_1_w },		/* K051316 #1 RAM */
+	{ 0x206000, 0x206fff, ultraman_K051316_2_w },		/* K051316 #2 RAM */
+	{ 0x207f80, 0x207f9f, ultraman_K051316_ctrl_0_w	},	/* K051316 #0 registers  */
+	{ 0x207fa0, 0x207fbf, ultraman_K051316_ctrl_1_w	},	/* K051316 #1 registers */
+	{ 0x207fc0, 0x207fdf, ultraman_K051316_ctrl_2_w	},	/* K051316 #2 registers */
 	{ 0x304000, 0x30400f, ultraman_K051937_w },			/* Sprite control */
 	{ 0x304800, 0x304fff, ultraman_K051960_w },			/* Sprite RAM */
 	{ -1 }

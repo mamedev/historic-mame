@@ -32,7 +32,7 @@ static void sound_volume_decay(int param)
 		sound_volume = 0;
 }
 
-void warpwarp_sound_w(int offs, int data)
+WRITE_HANDLER( warpwarp_sound_w )
 {
 	stream_update(channel,0);
 	sound_latch = data;
@@ -71,7 +71,7 @@ void warpwarp_sound_w(int offs, int data)
     }
 }
 
-void warpwarp_music1_w(int offs, int data)
+WRITE_HANDLER( warpwarp_music1_w )
 {
     stream_update(channel,0);
 	music1_latch = data & 63;
@@ -83,7 +83,7 @@ static void music_volume_decay(int param)
         music_volume = 0;
 }
 
-void warpwarp_music2_w(int offs, int data)
+WRITE_HANDLER( warpwarp_music2_w )
 {
     stream_update(channel,0);
 	music2_latch = data;

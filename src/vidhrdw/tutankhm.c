@@ -46,7 +46,7 @@ static void videowrite(int offset,int data)
 
 
 
-void tutankhm_videoram_w(int offset,int data)
+WRITE_HANDLER( tutankhm_videoram_w )
 {
 	videoram[offset] = data;
 	videowrite(offset,data);
@@ -54,7 +54,7 @@ void tutankhm_videoram_w(int offset,int data)
 
 
 
-void tutankhm_flipscreen_w(int offset,int data)
+WRITE_HANDLER( tutankhm_flipscreen_w )
 {
 	if (flipscreen[offset] != (data & 1))
 	{
@@ -143,7 +143,7 @@ void tutankhm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		The clear works properly.
 */
 
-void junofrst_blitter_w( int offset, int data )
+WRITE_HANDLER( junofrst_blitter_w )
 {
 	static unsigned char blitterdata[4];
 

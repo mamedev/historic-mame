@@ -54,13 +54,13 @@ void atarigen_update_interrupts(void);
 
 void atarigen_scanline_int_set(int scanline);
 int atarigen_scanline_int_gen(void);
-void atarigen_scanline_int_ack_w(int offset, int data);
+WRITE_HANDLER( atarigen_scanline_int_ack_w );
 
 int atarigen_sound_int_gen(void);
-void atarigen_sound_int_ack_w(int offset, int data);
+WRITE_HANDLER( atarigen_sound_int_ack_w );
 
 int atarigen_video_int_gen(void);
-void atarigen_video_int_ack_w(int offset, int data);
+WRITE_HANDLER( atarigen_video_int_ack_w );
 
 
 /*--------------------------------------------------------------------------
@@ -87,10 +87,10 @@ extern int atarigen_eeprom_size;
 
 void atarigen_eeprom_reset(void);
 
-void atarigen_eeprom_enable_w(int offset, int data);
-void atarigen_eeprom_w(int offset, int data);
-int atarigen_eeprom_r(int offset);
-int atarigen_eeprom_upper_r(int offset);
+WRITE_HANDLER( atarigen_eeprom_enable_w );
+WRITE_HANDLER( atarigen_eeprom_w );
+READ_HANDLER( atarigen_eeprom_r );
+READ_HANDLER( atarigen_eeprom_upper_r );
 
 void atarigen_nvram_handler(void *file,int read_or_write);
 void atarigen_hisave(void);
@@ -115,8 +115,8 @@ void atarigen_hisave(void);
 void atarigen_slapstic_init(int cpunum, int base, int chipnum);
 void atarigen_slapstic_reset(void);
 
-void atarigen_slapstic_w(int offset, int data);
-int atarigen_slapstic_r(int offset);
+WRITE_HANDLER( atarigen_slapstic_w );
+READ_HANDLER( atarigen_slapstic_r );
 
 void slapstic_init(int chip);
 void slapstic_reset(void);
@@ -161,20 +161,20 @@ extern int atarigen_sound_to_cpu_ready;
 void atarigen_sound_io_reset(int cpu_num);
 
 int atarigen_6502_irq_gen(void);
-int atarigen_6502_irq_ack_r(int offset);
-void atarigen_6502_irq_ack_w(int offset, int data);
+READ_HANDLER( atarigen_6502_irq_ack_r );
+WRITE_HANDLER( atarigen_6502_irq_ack_w );
 
 void atarigen_ym2151_irq_gen(int irq);
 
-void atarigen_sound_w(int offset, int data);
-int atarigen_sound_r(int offset);
-void atarigen_sound_upper_w(int offset, int data);
-int atarigen_sound_upper_r(int offset);
+WRITE_HANDLER( atarigen_sound_w );
+READ_HANDLER( atarigen_sound_r );
+WRITE_HANDLER( atarigen_sound_upper_w );
+READ_HANDLER( atarigen_sound_upper_r );
 
 void atarigen_sound_reset(void);
-void atarigen_sound_reset_w(int offset, int data);
-void atarigen_6502_sound_w(int offset, int data);
-int atarigen_6502_sound_r(int offset);
+WRITE_HANDLER( atarigen_sound_reset_w );
+WRITE_HANDLER( atarigen_6502_sound_w );
+READ_HANDLER( atarigen_6502_sound_r );
 
 
 
@@ -270,8 +270,8 @@ extern struct atarigen_video_control_state_desc atarigen_video_control_state;
 void atarigen_video_control_reset(void);
 void atarigen_video_control_update(const UINT8 *data);
 
-void atarigen_video_control_w(int offset, int data);
-int atarigen_video_control_r(int offset);
+WRITE_HANDLER( atarigen_video_control_w );
+READ_HANDLER( atarigen_video_control_r );
 
 
 
@@ -424,9 +424,9 @@ void atarigen_pf2_process(atarigen_pf_callback callback, void *param, const stru
 
 --------------------------------------------------------------------------*/
 int atarigen_get_hblank(void);
-void atarigen_halt_until_hblank_0_w(int offset, int data);
-void atarigen_666_paletteram_w(int offset, int data);
-void atarigen_expanded_666_paletteram_w(int offset, int data);
+WRITE_HANDLER( atarigen_halt_until_hblank_0_w );
+WRITE_HANDLER( atarigen_666_paletteram_w );
+WRITE_HANDLER( atarigen_expanded_666_paletteram_w );
 
 
 

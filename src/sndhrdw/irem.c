@@ -4,7 +4,7 @@
 
 
 
-void irem_sound_cmd_w(int offset,int data)
+WRITE_HANDLER( irem_sound_cmd_w )
 {
 	if ((data & 0x80) == 0)
 		soundlatch_w(0,data & 0x7f);
@@ -15,12 +15,12 @@ void irem_sound_cmd_w(int offset,int data)
 
 static int port1,port2;
 
-static void irem_port1_w(int offset,int data)
+static WRITE_HANDLER( irem_port1_w )
 {
 	port1 = data;
 }
 
-static void irem_port2_w(int offset,int data)
+static WRITE_HANDLER( irem_port2_w )
 {
 	/* write latch */
 	if ((port2 & 0x01) && !(data & 0x01))
@@ -47,7 +47,7 @@ static void irem_port2_w(int offset,int data)
 }
 
 
-static int irem_port1_r(int offset)
+static READ_HANDLER( irem_port1_r )
 {
 	/* PSG 0 or 1? */
 	if (port2 & 0x10)
@@ -59,14 +59,18 @@ static int irem_port1_r(int offset)
 
 
 
-static void irem_adpcm_reset_w(int offset,int data)
+static WRITE_HANDLER( irem_adpcm_reset_w )
 {
 	MSM5205_reset_w(0,data & 1);
 	MSM5205_reset_w(1,data & 2);
 }
 
+static WRITE_HANDLER( irem_adpcm_w )
+{
+	MSM5205_data_w(offset,data);
+}
 
-static void irem_adpcm_int (int data)
+static void irem_adpcm_int(int data)
 {
 	cpu_set_nmi_line(1,PULSE_LINE);
 }
@@ -106,7 +110,7 @@ struct MemoryWriteAddress irem_sound_writemem[] =
 {
 	{ 0x0000, 0x001f, m6803_internal_registers_w },
 	{ 0x0080, 0x00ff, MWA_RAM },
-	{ 0x0801, 0x0802, MSM5205_data_w },
+	{ 0x0801, 0x0802, irem_adpcm_w },
 	{ 0x9000, 0x9000, MWA_NOP },    /* IACK */
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */

@@ -13,12 +13,12 @@
 #include "cpu/m6805/m6805.h"
 #include "6821pia.h"
 
-static int sdungeon_coin_r (int offset);
-static void sdungeon_coinctrl_w (int offset, int data);
-static void sdungeon_coin_w (int offset, int data);
+static READ_HANDLER( sdungeon_coin_r );
+static WRITE_HANDLER( sdungeon_coinctrl_w );
+static WRITE_HANDLER( sdungeon_coin_w );
 
-static int qix_sound_r (int offset);
-static void qix_dac_w (int offset, int data);
+static READ_HANDLER( qix_sound_r );
+static WRITE_HANDLER( qix_dac_w );
 static void qix_pia_sint (int state);
 static void qix_pia_dint (int state);
 static int suspended;
@@ -166,19 +166,19 @@ static pia6821_interface pia_intf =
 unsigned char *qix_sharedram;
 
 
-int qix_sharedram_r(int offset)
+READ_HANDLER( qix_sharedram_r )
 {
 	return qix_sharedram[offset];
 }
 
 
-void qix_sharedram_w(int offset,int data)
+WRITE_HANDLER( qix_sharedram_w )
 {
 	qix_sharedram[offset] = data;
 }
 
 
-void zoo_bankswitch_w(int offset,int data)
+WRITE_HANDLER( zoo_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
@@ -188,7 +188,7 @@ void zoo_bankswitch_w(int offset,int data)
 }
 
 
-void qix_video_firq_w(int offset, int data)
+WRITE_HANDLER( qix_video_firq_w )
 {
 	/* generate firq for video cpu */
 	cpu_cause_interrupt(1,M6809_INT_FIRQ);
@@ -196,7 +196,7 @@ void qix_video_firq_w(int offset, int data)
 
 
 
-void qix_data_firq_w(int offset, int data)
+WRITE_HANDLER( qix_data_firq_w )
 {
 	/* generate firq for data cpu */
 	cpu_cause_interrupt(0,M6809_INT_FIRQ);
@@ -205,7 +205,7 @@ void qix_data_firq_w(int offset, int data)
 
 
 /* Return the current video scan line */
-int qix_scanline_r(int offset)
+READ_HANDLER( qix_scanline_r )
 {
 	/* The +80&0xff thing is a hack to avoid flicker in Electric Yo-Yo */
 	return (cpu_scalebyfcount(256) + 80) & 0xff;
@@ -255,12 +255,12 @@ void zoo_init_machine(void)
 
 ***************************************************************************/
 
-static void qix_dac_w (int offset, int data)
+static WRITE_HANDLER( qix_dac_w )
 {
 	DAC_data_w (0, data);
 }
 
-int qix_sound_r (int offset)
+READ_HANDLER( qix_sound_r )
 {
 	/* if we've suspended the main CPU for this, trigger it and give up some of our timeslice */
 	if (suspended)
@@ -307,25 +307,25 @@ static unsigned char portA_in,portA_out,ddrA;
 static unsigned char portB_in,portB_out,ddrB;
 static unsigned char portC_in,portC_out,ddrC;
 
-int sdungeon_68705_portA_r(int offset)
+READ_HANDLER( sdungeon_68705_portA_r )
 {
 //if (errorlog) fprintf(errorlog,"PC: %x MCU PORTA R = %x\n",cpu_get_pc(),portA_in);
 	return (portA_out & ddrA) | (portA_in & ~ddrA);
 }
 
-void sdungeon_68705_portA_w(int offest,int data)
+WRITE_HANDLER( sdungeon_68705_portA_w )
 {
 //if (errorlog) fprintf(errorlog,"PC: %x SD COINTOMAIN W: %x\n",cpu_get_pc(),data);
 	portA_out = data;
 }
 
-void sdungeon_68705_ddrA_w(int offset,int data)
+WRITE_HANDLER( sdungeon_68705_ddrA_w )
 {
 	ddrA = data;
 }
 
 
-int sdungeon_68705_portB_r(int offset)
+READ_HANDLER( sdungeon_68705_portB_r )
 {
 	portB_in = input_port_1_r(0) & 0x0F;
 	portB_in = portB_in | ((input_port_1_r(0) & 0x80) >> 3);
@@ -334,19 +334,19 @@ int sdungeon_68705_portB_r(int offset)
 	return (portB_out & ddrB) | (portB_in & ~ddrB);
 }
 
-void sdungeon_68705_portB_w(int offest,int data)
+WRITE_HANDLER( sdungeon_68705_portB_w )
 {
 //if (errorlog) fprintf(errorlog,"PC: %x port B write %x\n",cpu_get_pc(),data);
 	portB_out = data;
 }
 
-void sdungeon_68705_ddrB_w(int offset,int data)
+WRITE_HANDLER( sdungeon_68705_ddrB_w )
 {
 	ddrB = data;
 }
 
 
-int sdungeon_68705_portC_r(int offset)
+READ_HANDLER( sdungeon_68705_portC_r )
 {
 	portC_in = (~sdungeon_coinctrl & 0x08) | ((input_port_1_r(0) & 0x70) >> 4);
 //if (errorlog) fprintf(errorlog,"PC: %x MCU PORTC R = %x\n",cpu_get_pc(),portC_in);
@@ -354,25 +354,25 @@ int sdungeon_68705_portC_r(int offset)
 	return (portC_out & ddrC) | (portC_in & ~ddrC);
 }
 
-void sdungeon_68705_portC_w(int offest,int data)
+WRITE_HANDLER( sdungeon_68705_portC_w )
 {
 //if (errorlog) fprintf(errorlog,"PC: %x port C write %x\n",cpu_get_pc(),data);
 	portC_out = data;
 }
 
-void sdungeon_68705_ddrC_w(int offset,int data)
+WRITE_HANDLER( sdungeon_68705_ddrC_w )
 {
 	ddrC = data;
 }
 
 
 
-int sdungeon_coin_r (int offset)
+READ_HANDLER( sdungeon_coin_r )
 {
 	return portA_out;
 }
 
-static void sdungeon_coin_w (int offset, int data)
+static WRITE_HANDLER( sdungeon_coin_w )
 {
 //if (errorlog) fprintf(errorlog,"PC: %x COIN COMMAND W: %x\n",cpu_get_pc(),data);
 	/* this is a callback called by pia_0_w(), so I don't need to synchronize */
@@ -380,7 +380,7 @@ static void sdungeon_coin_w (int offset, int data)
 	portA_in = data;
 }
 
-static void sdungeon_coinctrl_w (int offset, int data)
+static WRITE_HANDLER( sdungeon_coinctrl_w )
 {
 //if (errorlog) fprintf(errorlog,"PC: %x COIN CTRL W: %x\n",cpu_get_pc(),data);
 	if (data & 0x04)
@@ -403,7 +403,7 @@ static void pia_0_w_callback(int param)
 	pia_0_w(param >> 8,param & 0xff);
 }
 
-void sdungeon_pia_0_w(int offset,int data)
+WRITE_HANDLER( sdungeon_pia_0_w )
 {
 //if (errorlog) fprintf(errorlog,"%04x: PIA 1 write offset %02x data %02x\n",cpu_get_pc(),offset,data);
 

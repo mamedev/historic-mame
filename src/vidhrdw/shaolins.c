@@ -96,7 +96,7 @@ void shaolins_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 
 
-void shaolins_palettebank_w(int offset,int data)
+WRITE_HANDLER( shaolins_palettebank_w )
 {
 	if (palettebank != (data & 7))
 	{

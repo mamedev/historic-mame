@@ -62,18 +62,18 @@ I/O write:
 #include "vidhrdw/generic.h"
 
 extern unsigned char *galaxian_attributesram;
-void galaxian_attributes_w(int offset,int data);
+WRITE_HANDLER( galaxian_attributes_w );
 
 void fastfred_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void fastfred_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void fastfred_character_bank_select_w (int offset, int data);
-void fastfred_color_bank_select_w (int offset, int data);
-void fastfred_background_color_w (int offset, int data);
-void fastfred_flipx_w(int offset,int data);
-void fastfred_flipy_w(int offset,int data);
+WRITE_HANDLER( fastfred_character_bank_select_w );
+WRITE_HANDLER( fastfred_color_bank_select_w );
+WRITE_HANDLER( fastfred_background_color_w );
+WRITE_HANDLER( fastfred_flipx_w );
+WRITE_HANDLER( fastfred_flipy_w );
 void jumpcoas_init_machine(void);
 
-static int jumpcoas_custom_io_r(int offset)
+static READ_HANDLER( jumpcoas_custom_io_r )
 {
 	if (offset == 0x100)  return 0x63;
 
@@ -85,7 +85,7 @@ static int jumpcoas_custom_io_r(int offset)
 // These values were derived based on disassembly of the code. Usually, it
 // was pretty obvious what the values should be. Of course, this will have
 // to change if a different ROM set ever surfaces.
-static int fastfred_custom_io_r(int offset)
+static READ_HANDLER( fastfred_custom_io_r )
 {
     switch (cpu_get_pc())
     {

@@ -49,21 +49,21 @@ static int SN76496_latch;
     the no of cycles by 4 to undo the 14.318/4 operation
 */
 
-int trackfld_sh_timer_r(int offset)
+READ_HANDLER( trackfld_sh_timer_r )
 {
     int clock = cpu_gettotalcycles() / TIMER_RATE;
 
     return clock & 0xF;
 }
 
-int trackfld_speech_r(int offset)
+READ_HANDLER( trackfld_speech_r )
 {
     return VLM5030_BSY() ? 0x10 : 0;
 }
 
 static int last_addr = 0;
 
-void trackfld_sound_w(int offset , int data)
+WRITE_HANDLER( trackfld_sound_w )
 {
     if( (offset & 0x07) == 0x03 )
     {
@@ -82,14 +82,14 @@ void trackfld_sound_w(int offset , int data)
     last_addr = offset;
 }
 
-int hyperspt_sh_timer_r(int offset)
+READ_HANDLER( hyperspt_sh_timer_r )
 {
     int clock = cpu_gettotalcycles() / TIMER_RATE;
 
     return (clock & 0x3) | (VLM5030_BSY()? 0x04 : 0);
 }
 
-void hyperspt_sound_w(int offset , int data)
+WRITE_HANDLER( hyperspt_sound_w )
 {
     int changes = offset^last_addr;
     /* A3 = data enable for VLM5030 (don't care )          */
@@ -111,7 +111,7 @@ void hyperspt_sound_w(int offset , int data)
 
 
 
-void konami_sh_irqtrigger_w(int offset,int data)
+WRITE_HANDLER( konami_sh_irqtrigger_w )
 {
     static int last;
 
@@ -125,13 +125,13 @@ void konami_sh_irqtrigger_w(int offset,int data)
 }
 
 
-void konami_SN76496_latch_w(int offset,int data)
+WRITE_HANDLER( konami_SN76496_latch_w )
 {
     SN76496_latch = data;
 }
 
 
-void konami_SN76496_0_w(int offset,int data)
+WRITE_HANDLER( konami_SN76496_0_w )
 {
     SN76496_0_w(offset, SN76496_latch);
 }
@@ -139,12 +139,12 @@ void konami_SN76496_0_w(int offset,int data)
 
 
 
-int hyprolyb_speech_r(int offset)
+READ_HANDLER( hyprolyb_speech_r )
 {
     return ADPCM_playing(0) ? 0x10 : 0x00;
 }
 
-void hyprolyb_ADPCM_data_w(int offset,int data)
+WRITE_HANDLER( hyprolyb_ADPCM_data_w )
 {
     int cmd,start,end;
     unsigned char *RAM = memory_region(REGION_CPU3);

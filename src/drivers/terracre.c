@@ -46,15 +46,15 @@ void terracre_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 //void terracre_vh_screenrefresh(struct osd_bitmap *bitmap);
 int terrac_vh_start(void);
 void terrac_vh_stop(void);
-void terrac_videoram2_w(int offset,int data);
-int terrac_videoram2_r(int offset);
+WRITE_HANDLER( terrac_videoram2_w );
+READ_HANDLER( terrac_videoram2_r );
 
 extern unsigned char *terrac_videoram;
 extern int terrac_videoram_size;
 extern unsigned char terrac_scrolly[];
 
 
-void terracre_r_write (int offset,int data)
+WRITE_HANDLER( terracre_misc_w )
 {
 	switch (offset)
 	{
@@ -79,7 +79,7 @@ void terracre_r_write (int offset,int data)
 	if( errorlog ) fprintf( errorlog, "OUTPUT [%x] <- %08x\n", offset,data );
 }
 
-int terracre_r_read(int offset)
+static READ_HANDLER( terracre_ports_r )
 {
 	switch (offset)
 	{
@@ -99,7 +99,7 @@ int terracre_r_read(int offset)
 }
 
 
-static int soundlatch_clear(int offset)
+static READ_HANDLER( soundlatch_clear_r )
 {
 	soundlatch_clear_w(0,0);
 	return 0;
@@ -114,7 +114,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x020200, 0x021fff, MRA_BANK2 },
 	{ 0x022000, 0x022fff, terrac_videoram2_r },
 	{ 0x023000, 0x023fff, MRA_BANK3 },
-	{ 0x024000, 0x024007, terracre_r_read },
+	{ 0x024000, 0x024007, terracre_ports_r },
 	{ 0x028000, 0x0287ff, MRA_BANK4 },
 	{ -1 }	/* end of table */
 };
@@ -126,7 +126,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x020200, 0x021fff, MWA_BANK2, &terrac_ram },
 	{ 0x022000, 0x022fff, terrac_videoram2_w, &terrac_videoram, &terrac_videoram_size },
 	{ 0x023000, 0x023fff, MWA_BANK3 },
-	{ 0x026000, 0x02600f, terracre_r_write },
+	{ 0x026000, 0x02600f, terracre_misc_w },
 	{ 0x028000, 0x0287ff, MWA_BANK4, &videoram, &videoram_size },
 	{ -1 }	/* end of table */
 };
@@ -148,7 +148,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 static struct IOReadPort sound_readport[] =
 {
-	{ 0x04, 0x04, soundlatch_clear },
+	{ 0x04, 0x04, soundlatch_clear_r },
 	{ 0x06, 0x06, soundlatch_r },
 	{ -1 }	/* end of table */
 };
@@ -157,7 +157,8 @@ static struct IOWritePort sound_writeport_3526[] =
 {
 	{ 0x00, 0x00, YM3526_control_port_0_w },
 	{ 0x01, 0x01, YM3526_write_port_0_w },
-	{ 0x02, 0x03, DAC_signed_data_w },	/* 2 channels */
+	{ 0x02, 0x02, DAC_0_signed_data_w },
+	{ 0x03, 0x03, DAC_1_signed_data_w },
 	{ -1 }	/* end of table */
 };
 
@@ -165,7 +166,8 @@ static struct IOWritePort sound_writeport_2203[] =
 {
 	{ 0x00, 0x00, YM2203_control_port_0_w },
 	{ 0x01, 0x01, YM2203_write_port_0_w },
-	{ 0x02, 0x03, DAC_signed_data_w },	/* 2 channels */
+	{ 0x02, 0x02, DAC_0_signed_data_w },
+	{ 0x03, 0x03, DAC_1_signed_data_w },
 	{ -1 }	/* end of table */
 };
 

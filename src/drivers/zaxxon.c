@@ -65,7 +65,7 @@ Changes:
 
 
 
-int zaxxon_IN2_r(int offset);
+READ_HANDLER( zaxxon_IN2_r );
 
 extern unsigned char *zaxxon_char_color_bank;
 extern unsigned char *zaxxon_background_position;
@@ -79,7 +79,7 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void razmataz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern int zaxxon_vid_type;
 
-void zaxxon_sound_w(int offset, int data);
+WRITE_HANDLER( zaxxon_sound_w );
 
 /* in machine/segacrpt.c */
 void szaxxon_decode(void);
@@ -98,12 +98,12 @@ void futspy_init_machine(void)
 	zaxxon_vid_type = 2;
 }
 
-static int razmataz_unknown1_r(int offset)
+static READ_HANDLER( razmataz_unknown1_r )
 {
 	return rand() & 0xff;
 }
 
-static int razmataz_unknown2_r(int offset)
+static READ_HANDLER( razmataz_unknown2_r )
 {
 	return 0xff;
 }
@@ -131,12 +131,12 @@ static int razmataz_dial_r(int num)
 	return res;
 }
 
-static int razmataz_dial_0_r(int offset)
+static READ_HANDLER( razmataz_dial_0_r )
 {
 	return razmataz_dial_r(0);
 }
 
-static int razmataz_dial_1_r(int offset)
+static READ_HANDLER( razmataz_dial_1_r )
 {
 	return razmataz_dial_r(1);
 }

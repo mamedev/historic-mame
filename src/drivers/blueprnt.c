@@ -50,30 +50,30 @@ write:
 extern unsigned char *blueprnt_scrollram;
 
 void blueprnt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void blueprnt_flipscreen_w(int offset,int data);
+WRITE_HANDLER( blueprnt_flipscreen_w );
 void blueprnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
 static int dipsw;
 
-static void dipsw_w(int offset,int data)
+static WRITE_HANDLER( dipsw_w )
 {
 	dipsw = data;
 }
 
-int blueprnt_sh_dipsw_r(int offset)
+READ_HANDLER( blueprnt_sh_dipsw_r )
 {
 	return dipsw;
 }
 
-void blueprnt_sound_command_w(int offset,int data)
+WRITE_HANDLER( blueprnt_sound_command_w )
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(1,Z80_NMI_INT);
 }
 
-static void blueprnt_coin_w (int offset, int data)
+static WRITE_HANDLER( blueprnt_coin_w )
 {
 	static int lastval;
 

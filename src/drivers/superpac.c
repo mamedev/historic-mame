@@ -39,28 +39,25 @@ CPU #2 uses no interrupts
 #include "vidhrdw/generic.h"
 
 extern unsigned char *mappy_soundregs;
-void mappy_sound_enable_w(int offset,int data);
-void mappy_sound_w(int offset,int data);
+WRITE_HANDLER( mappy_sound_enable_w );
+WRITE_HANDLER( mappy_sound_w );
 
 extern unsigned char *superpac_sharedram;
 extern unsigned char *superpac_customio_1,*superpac_customio_2;
-int superpac_customio_r(int offset);
-int superpac_sharedram_r(int offset);
-int superpac_sharedram_r2(int offset);
-void superpac_sharedram_w(int offset,int data);
-void superpac_customio_w_1(int offset,int data);
-void superpac_customio_w_2(int offset,int data);
-int superpac_customio_r_1(int offset);
-int superpac_customio_r_2(int offset);
-void superpac_interrupt_enable_1_w(int offset,int data);
-void superpac_cpu_enable_w(int offset,int data);
+READ_HANDLER( superpac_customio_r );
+READ_HANDLER( superpac_sharedram_r );
+WRITE_HANDLER( superpac_sharedram_w );
+WRITE_HANDLER( superpac_customio_1_w );
+WRITE_HANDLER( superpac_customio_2_w );
+READ_HANDLER( superpac_customio_1_r );
+READ_HANDLER( superpac_customio_2_r );
+WRITE_HANDLER( superpac_interrupt_enable_1_w );
+WRITE_HANDLER( superpac_cpu_enable_w );
 int superpac_interrupt_1(void);
-void superpac_reset_2_w(int offset,int data);
+WRITE_HANDLER( superpac_reset_2_w );
 
-int pacnpal_sharedram_r2(int offset);
-void pacnpal_sharedram_w2(int offset,int data);
 int pacnpal_interrupt_2(void);
-void pacnpal_interrupt_enable_2_w(int offset,int data);
+WRITE_HANDLER( pacnpal_interrupt_enable_2_w );
 
 int superpac_vh_start(void);
 void superpac_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -73,8 +70,8 @@ static struct MemoryReadAddress readmem_cpu1[] =
 {
 	{ 0x0000, 0x1fff, MRA_RAM },                                       /* general RAM */
 	{ 0x4040, 0x43ff, superpac_sharedram_r },     /* shared RAM */
-	{ 0x4800, 0x480f, superpac_customio_r_1 },   /* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, superpac_customio_r_2 },   /* custom I/O chip #2 interface */
+	{ 0x4800, 0x480f, superpac_customio_1_r },   /* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, superpac_customio_2_r },   /* custom I/O chip #2 interface */
 	{ 0xa000, 0xffff, MRA_ROM },						/* SPC-2.1C at 0xc000, SPC-1.1B at 0xe000 */
 	{ -1 }                                              /* end of table */
 };
@@ -93,8 +90,8 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x1f80, 0x1fff, MWA_RAM, &spriteram_3 },          /* sprite RAM, area 3 */
 	{ 0x2000, 0x2000, MWA_NOP },                        /* watchdog timer */
 	{ 0x4040, 0x43ff, superpac_sharedram_w, &superpac_sharedram },	/* shared RAM */
-	{ 0x4800, 0x480f, superpac_customio_w_1, &superpac_customio_1 },	/* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, superpac_customio_w_2, &superpac_customio_2 },	/* custom I/O chip #2 interface */
+	{ 0x4800, 0x480f, superpac_customio_1_w, &superpac_customio_1 },	/* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, superpac_customio_1_w, &superpac_customio_2 },	/* custom I/O chip #2 interface */
 	{ 0x5000, 0x5000, superpac_reset_2_w },				/* reset CPU #2 */
 	{ 0x5002, 0x5003, superpac_interrupt_enable_1_w },  /* interrupt enable */
 	{ 0x5008, 0x5009, mappy_sound_enable_w },           /* sound enable */
@@ -109,7 +106,7 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 static struct MemoryReadAddress superpac_readmem_cpu2[] =
 {
 	{ 0xf000, 0xffff, MRA_ROM },                        /* ROM code */
-	{ 0x0040, 0x03ff, superpac_sharedram_r2 },          /* shared RAM with the main CPU */
+	{ 0x0040, 0x03ff, superpac_sharedram_r },          /* shared RAM with the main CPU */
 	{ -1 }                                              /* end of table */
 };
 
@@ -128,7 +125,7 @@ static struct MemoryWriteAddress superpac_writemem_cpu2[] =
 static struct MemoryReadAddress pacnpal_readmem_cpu2[] =
 {
 	{ 0xf000, 0xffff, MRA_ROM },                        /* ROM code */
-	{ 0x0040, 0x03ff, pacnpal_sharedram_r2 },           /* shared RAM with the main CPU */
+	{ 0x0040, 0x03ff, superpac_sharedram_r },           /* shared RAM with the main CPU */
 	{ -1 }                                              /* end of table */
 };
 
@@ -136,7 +133,7 @@ static struct MemoryReadAddress pacnpal_readmem_cpu2[] =
 /* CPU 2 write addresses */
 static struct MemoryWriteAddress pacnpal_writemem_cpu2[] =
 {
-	{ 0x0040, 0x03ff, pacnpal_sharedram_w2 },           /* shared RAM with the main CPU */
+	{ 0x0040, 0x03ff, superpac_sharedram_w },           /* shared RAM with the main CPU */
 	{ 0x0000, 0x003f, mappy_sound_w, &mappy_soundregs },/* sound control registers */
 	{ 0x2000, 0x2001, pacnpal_interrupt_enable_2_w },   /* interrupt enable */
 	{ 0x2006, 0x2007, mappy_sound_enable_w },           /* sound enable */

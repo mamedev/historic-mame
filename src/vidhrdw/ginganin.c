@@ -60,7 +60,7 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 #include "cpu/m6809/m6809.h"
 
 /* Variables only used here */
-static struct tilemap *bg_tilemap, *fg_tilemap, *txt_tilemap;
+static struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
 static int layers_ctrl, flipscreen;
 
 /* Variables that driver has access to */
@@ -82,10 +82,9 @@ unsigned char *ginganin_fgram, *ginganin_txtram, *ginganin_vregs;
 #define BG_NX  (16*32)
 #define BG_NY  (16*2)
 
-static void get_bg_tile_info( int col, int row )
+static void get_bg_tile_info(int tile_index)
 {
-	int tile_index = row + col * BG_NY;
-	int code = memory_region(REGION_GFX5)[tile_index*2 + 0] * 256 + memory_region(REGION_GFX5)[tile_index*2 + 1];
+	int code = memory_region(REGION_GFX5)[2*tile_index + 0] * 256 + memory_region(REGION_GFX5)[2*tile_index + 1];
 	SET_TILE_INFO(BG_GFX, code, code >> 12);
 }
 
@@ -99,23 +98,22 @@ static void get_bg_tile_info( int col, int row )
 #define FG_NX  (16*16)
 #define FG_NY  (16*2)
 
-static void get_fg_tile_info( int col, int row )
+static void get_fg_tile_info(int tile_index)
 {
-	int tile_index = row + col * FG_NY;
-	int code = READ_WORD(&ginganin_fgram[tile_index*2]);
+	int code = READ_WORD(&ginganin_fgram[2*tile_index]);
 	SET_TILE_INFO(FG_GFX, code, code >> 12);
 }
 
-void ginganin_fgram_w(int offset,int data)
+WRITE_HANDLER( ginganin_fgram_w )
 {
-int old_data, new_data;
+	int old_data, new_data;
 
 	old_data  = READ_WORD(&ginganin_fgram[offset]);
 	COMBINE_WORD_MEM(&ginganin_fgram[offset],data);
 	new_data  = READ_WORD(&ginganin_fgram[offset]);
 
 	if (old_data != new_data)
-		tilemap_mark_tile_dirty(fg_tilemap,(offset/2) / FG_NY,(offset/2) % FG_NY);
+		tilemap_mark_tile_dirty(fg_tilemap,offset/2);
 }
 
 
@@ -127,14 +125,13 @@ int old_data, new_data;
 #define TXT_NX  (32)
 #define TXT_NY  (32)
 
-static void get_txt_tile_info( int col, int row )
+static void get_txt_tile_info(int tile_index)
 {
-	int tile_index = row * TXT_NX + col;
-	int code = READ_WORD(&ginganin_txtram[tile_index*2]);
+	int code = READ_WORD(&ginganin_txtram[2*tile_index]);
 	SET_TILE_INFO(TXT_GFX, code, code >> 12);
 }
 
-void ginganin_txtram_w(int offset,int data)
+WRITE_HANDLER( ginganin_txtram_w )
 {
 int old_data, new_data;
 
@@ -143,7 +140,7 @@ int old_data, new_data;
 	new_data  = READ_WORD(&ginganin_txtram[offset]);
 
 	if (old_data != new_data)
-		tilemap_mark_tile_dirty(txt_tilemap, (offset/2) % TXT_NX, (offset/2) / TXT_NX);
+		tilemap_mark_tile_dirty(tx_tilemap,offset/2);
 }
 
 
@@ -152,46 +149,26 @@ int old_data, new_data;
 
 int ginganin_vh_start(void)
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info,
-								TILEMAP_OPAQUE,
-								16,16,
-								BG_NX,BG_NY );
+	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,16,16,BG_NX,BG_NY);
+	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,FG_NX,FG_NY);
+	tx_tilemap = tilemap_create(get_txt_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,TXT_NX,TXT_NY);
 
-	fg_tilemap = tilemap_create(get_fg_tile_info,
-								TILEMAP_TRANSPARENT,
-								16,16,
-								FG_NX,FG_NY );
+	if (!fg_tilemap || !bg_tilemap || !tx_tilemap)
+		return 1;
 
-	txt_tilemap = tilemap_create(get_txt_tile_info,
-								TILEMAP_TRANSPARENT,
-								8,8,
-								TXT_NX,TXT_NY );
+	fg_tilemap->transparent_pen = 15;
+	tx_tilemap->transparent_pen = 15;
 
-	if (fg_tilemap && bg_tilemap && txt_tilemap)
-	{
-		tilemap_set_scroll_rows(bg_tilemap,1);
-		tilemap_set_scroll_cols(bg_tilemap,1);
-
-		tilemap_set_scroll_rows(fg_tilemap,1);
-		tilemap_set_scroll_cols(fg_tilemap,1);
-		fg_tilemap->transparent_pen = 15;
-
-		tilemap_set_scroll_rows(txt_tilemap,0);
-		tilemap_set_scroll_cols(txt_tilemap,0);
-		txt_tilemap->transparent_pen = 15;
-
-		return 0;
-	}
-	else return 1;
+	return 0;
 }
 
 
 
 
 
-void ginganin_vregs_w(int offset,int data)
+WRITE_HANDLER( ginganin_vregs_w )
 {
-int new_data;
+	int new_data;
 
 	COMBINE_WORD_MEM(&ginganin_vregs[offset],data);
 	new_data  = READ_WORD(&ginganin_vregs[offset]);
@@ -373,6 +350,6 @@ int color, colmask[16];
 
 	if (layers_ctrl1 & 2)	tilemap_draw(bitmap, fg_tilemap,  0);
 	if (layers_ctrl1 & 8)	draw_sprites(bitmap);
-	if (layers_ctrl1 & 4)	tilemap_draw(bitmap, txt_tilemap, 0);
+	if (layers_ctrl1 & 4)	tilemap_draw(bitmap, tx_tilemap, 0);
 
 }

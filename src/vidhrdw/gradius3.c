@@ -34,10 +34,21 @@ static void gradius3_tile_callback(int layer,int bank,int *code,int *color)
 
 ***************************************************************************/
 
-static void gradius3_sprite_callback(int *code,int *color,int *priority)
+static void gradius3_sprite_callback(int *code,int *color,int *priority_mask)
 {
+	#define L0 0xaa
+	#define L1 0xcc
+	#define L2 0xf0
+	static int primask[2][4] =
+	{
+		{ L0|L2, L0, L0|L2, L0|L1|L2 },
+		{ L1|L2, L2, 0,     L0|L1|L2 }
+	};
+	int pri = ((*color & 0x60) >> 5);
+	if (gradius3_priority == 0) *priority_mask = primask[0][pri];
+	else *priority_mask = primask[1][pri];
+
 	*code |= (*color & 0x01) << 13;
-	*priority = ((*color & 0x60) >> 5);
 	*color = sprite_colorbase + ((*color & 0x1e) >> 1);
 }
 
@@ -109,19 +120,19 @@ void gradius3_vh_stop(void)
 
 ***************************************************************************/
 
-int gradius3_gfxrom_r(int offset)
+READ_HANDLER( gradius3_gfxrom_r )
 {
 	unsigned char *gfxdata = memory_region(REGION_GFX2);
 
 	return (gfxdata[offset+1] << 8) | gfxdata[offset];
 }
 
-int gradius3_gfxram_r(int offset)
+READ_HANDLER( gradius3_gfxram_r )
 {
 	return READ_WORD(&gradius3_gfxram[offset]);
 }
 
-void gradius3_gfxram_w(int offset,int data)
+WRITE_HANDLER( gradius3_gfxram_w )
 {
 	int oldword = READ_WORD(&gradius3_gfxram[offset]);
 	int newword = COMBINE_WORD(oldword,data);
@@ -190,24 +201,19 @@ void gradius3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_render(ALL_TILEMAPS);
 
+	fillbitmap(priority_bitmap,0,NULL);
 	if (gradius3_priority == 0)
 	{
-//		K051960_sprites_draw(bitmap,3,3);	/* are these used? */
-		K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY);
-		K051960_sprites_draw(bitmap,0,0);
-		K051960_sprites_draw(bitmap,2,2);	/* are these used? */
-		K052109_tilemap_draw(bitmap,2,0);
-		K051960_sprites_draw(bitmap,1,1);
-		K052109_tilemap_draw(bitmap,0,0);
+		K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY|(2<<16));
+		K052109_tilemap_draw(bitmap,2,4<<16);
+		K052109_tilemap_draw(bitmap,0,1<<16);
 	}
 	else
 	{
-//		K051960_sprites_draw(bitmap,3,3);	/* are these used? */
-		K052109_tilemap_draw(bitmap,0,TILEMAP_IGNORE_TRANSPARENCY);
-		K051960_sprites_draw(bitmap,0,0);
-		K052109_tilemap_draw(bitmap,1,0);
-		K051960_sprites_draw(bitmap,1,1);
-		K052109_tilemap_draw(bitmap,2,0);
-		K051960_sprites_draw(bitmap,2,2);	/* are these used? */
+		K052109_tilemap_draw(bitmap,0,TILEMAP_IGNORE_TRANSPARENCY|(1<<16));
+		K052109_tilemap_draw(bitmap,1,2<<16);
+		K052109_tilemap_draw(bitmap,2,4<<16);
 	}
+
+	K051960_sprites_draw(bitmap,-1,-1);
 }

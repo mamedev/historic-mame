@@ -69,18 +69,18 @@ int  leprechn_vh_start(void);
 void leprechn_vh_stop(void);
 void leprechn_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void leprechn_graphics_command_w(int offset,int data);
-int  leprechn_graphics_data_r(int offset);
-void leprechn_graphics_data_w(int offset,int data);
+WRITE_HANDLER( leprechn_graphics_command_w );
+READ_HANDLER( leprechn_graphics_data_r );
+WRITE_HANDLER( leprechn_graphics_data_w );
 
-void leprechn_input_port_select_w(int offset,int data);
-int  leprechn_input_port_r(int offset);
-int  leprechn_200d_r(int offset);
-int  leprechn_0805_r(int offset);
+WRITE_HANDLER( leprechn_input_port_select_w );
+READ_HANDLER( leprechn_input_port_r );
+READ_HANDLER( leprechn_200d_r );
+READ_HANDLER( leprechn_0805_r );
 
 
 
-void leprechn_sh_w(int offset, int data)
+WRITE_HANDLER( leprechn_sh_w )
 {
     soundlatch_w(offset,data);
     cpu_cause_interrupt(1,M6502_INT_IRQ);

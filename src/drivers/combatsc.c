@@ -1,12 +1,12 @@
 /***************************************************************************
 
+"Combat School" (also known as "Boot Camp") - (Konami GX611)
+
 TODO:
 - in combasc (and more generally the 007121) the number of sprites can be
   increased from 0x40 to 0x80. There is a hack in konamiic.c to handle that,
   but it is wrong. If you don't pass the Iron Man stage, a few sprites are
   left dangling on the screen.
-- priority orthogonality problems in the last level of combasc - see the
-  comments in vidhrdw.
 - it seems that to get correct target colors in firing range III we have to
   use the WRONG lookup table (the one for tiles instead of the one for
   sprites).
@@ -16,8 +16,6 @@ TODO:
   Konami ROMset)
 - understand how the trackball really works
 - YM2203 pitch is wrong. Fixing it screws up the tempo.
-
-"Combat School" (also known as "Boot Camp") - (Konami GX611)
 
 Credits:
 
@@ -109,28 +107,28 @@ extern unsigned char* banked_area;
 /* from vidhrdw/combasc.c */
 void combasc_convert_color_prom( unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom );
 void combascb_convert_color_prom( unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom );
-int combasc_video_r( int offset );
-void combasc_video_w( int offset, int data );
+READ_HANDLER( combasc_video_r );
+WRITE_HANDLER( combasc_video_w );
 int combasc_vh_start( void );
 int combascb_vh_start( void );
 void combasc_vh_stop( void );
 
-void combascb_bankselect_w( int offset, int data );
-void combasc_bankselect_w( int offset, int data );
+WRITE_HANDLER( combascb_bankselect_w );
+WRITE_HANDLER( combasc_bankselect_w );
 void combasc_init_machine( void );
-void combasc_pf_control_w( int offset, int data );
-int combasc_scrollram_r( int offset );
-void combasc_scrollram_w( int offset, int data );
+WRITE_HANDLER( combasc_pf_control_w );
+READ_HANDLER( combasc_scrollram_r );
+WRITE_HANDLER( combasc_scrollram_w );
 
 void combascb_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
 void combasc_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
-void combasc_io_w( int offset, int data );
-void combasc_vreg_w(int offset, int data);
+WRITE_HANDLER( combasc_io_w );
+WRITE_HANDLER( combasc_vreg_w );
 
 
 
 
-static void combasc_coin_counter_w(int offset,int data)
+static WRITE_HANDLER( combasc_coin_counter_w )
 {
 	/* b7-b3: unused? */
 	/* b1: coin counter 2 */
@@ -140,7 +138,7 @@ static void combasc_coin_counter_w(int offset,int data)
 	coin_counter_w(1,data & 0x02);
 }
 
-static int trackball_r(int offset)
+static READ_HANDLER( trackball_r )
 {
 	static UINT8 pos[4],sign[4];
 
@@ -179,15 +177,15 @@ static int trackball_r(int offset)
 /* the protection is a simple multiply */
 static int prot[2];
 
-static void protection_w(int offset,int data)
+static WRITE_HANDLER( protection_w )
 {
 	prot[offset] = data;
 }
-static int protection_r(int offset)
+static READ_HANDLER( protection_r )
 {
 	return ((prot[0] * prot[1]) >> (offset * 8)) & 0xff;
 }
-static void protection_clock(int offset,int data)
+static WRITE_HANDLER( protection_clock_w )
 {
 	/* 0x3f is written here every time before accessing the other registers */
 }
@@ -195,23 +193,23 @@ static void protection_clock(int offset,int data)
 
 /****************************************************************************/
 
-static void combasc_sh_irqtrigger_w(int offset,int data)
+static WRITE_HANDLER( combasc_sh_irqtrigger_w )
 {
 	cpu_cause_interrupt(1,0xff);
 }
 
-static void combasc_play_w(int offset,int data)
+static WRITE_HANDLER( combasc_play_w )
 {
 	if (data & 0x02)
         UPD7759_start_w(0, 0);
 }
 
-static void combasc_voice_reset_w(int offset,int data)
+static WRITE_HANDLER( combasc_voice_reset_w )
 {
     UPD7759_reset_w(0,data & 1);
 }
 
-static void combasc_portA_w(int offset,int data)
+static WRITE_HANDLER( combasc_portA_w )
 {
 	/* unknown. always write 0 */
 }
@@ -241,7 +239,7 @@ static struct MemoryWriteAddress combasc_writemem[] =
 	{ 0x0020, 0x005f, combasc_scrollram_w },
 //	{ 0x0060, 0x00ff, MWA_RAM },					/* RAM */
 	{ 0x0200, 0x0201, protection_w },
-	{ 0x0206, 0x0206, protection_clock },
+	{ 0x0206, 0x0206, protection_clock_w },
 	{ 0x0408, 0x0408, combasc_coin_counter_w },	/* coin counters */
 	{ 0x040c, 0x040c, combasc_vreg_w },
 	{ 0x0410, 0x0410, combasc_bankselect_w },
@@ -312,7 +310,7 @@ static struct MemoryReadAddress combasc_readmem_sound[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },					/* ROM */
 	{ 0x8000, 0x87ff, MRA_RAM },					/* RAM */
-	{ 0xb000, 0xb000, UPD7759_busy_r },				/* UPD7759 busy? */
+	{ 0xb000, 0xb000, UPD7759_0_busy_r },			/* UPD7759 busy? */
 	{ 0xd000, 0xd000, soundlatch_r },				/* soundlatch_r? */
     { 0xe000, 0xe000, YM2203_status_port_0_r },		/* YM 2203 */
 	{ -1 }
@@ -322,8 +320,8 @@ static struct MemoryWriteAddress combasc_writemem_sound[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },				/* ROM */
 	{ 0x8000, 0x87ff, MWA_RAM },				/* RAM */
-	{ 0x9000, 0x9000, combasc_play_w },		/* uPD7759 play voice */
-	{ 0xa000, 0xa000, UPD7759_message_w },		/* uPD7759 voice select */
+	{ 0x9000, 0x9000, combasc_play_w },			/* uPD7759 play voice */
+	{ 0xa000, 0xa000, UPD7759_0_message_w },	/* uPD7759 voice select */
 	{ 0xc000, 0xc000, combasc_voice_reset_w },	/* uPD7759 reset? */
  	{ 0xe000, 0xe000, YM2203_control_port_0_w },/* YM 2203 */
 	{ 0xe001, 0xe001, YM2203_write_port_0_w },	/* YM 2203 */

@@ -13,9 +13,9 @@
 
 
 void batman_set_alpha_bank(int bank);
-void batman_playfieldram_w(int offset, int data);
-void batman_playfield2ram_w(int offset, int data);
-void batman_colorram_w(int offset, int data);
+WRITE_HANDLER( batman_playfieldram_w );
+WRITE_HANDLER( batman_playfield2ram_w );
+WRITE_HANDLER( batman_colorram_w );
 
 int batman_vh_start(void);
 void batman_vh_stop(void);
@@ -66,7 +66,7 @@ static void init_machine(void)
  *
  *************************************/
 
-static int special_port2_r(int offset)
+static READ_HANDLER( special_port2_r )
 {
 	int result = input_port_2_r(offset);
 
@@ -77,7 +77,7 @@ static int special_port2_r(int offset)
 }
 
 
-static void latch_w(int offset, int data)
+static WRITE_HANDLER( latch_w )
 {
 	int oldword = READ_WORD(latch_data);
 	int newword = COMBINE_WORD(oldword, data);

@@ -138,9 +138,9 @@ void gsword_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 int  gsword_vh_start(void);
 void gsword_vh_stop(void);
 void gsword_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void gs_charbank_w(int offset, int data);
-void gs_videoctrl_w(int offset, int data);
-void gs_videoram_w(int offset, int data);
+WRITE_HANDLER( gs_charbank_w );
+WRITE_HANDLER( gs_videoctrl_w );
+WRITE_HANDLER( gs_videoram_w );
 
 
 extern int gs_videoram_size;
@@ -169,9 +169,9 @@ static int gsword_coins_in(void)
 	return 0x00;
 }
 
-static int gsword_8741_2_r(int num)
+static READ_HANDLER( gsword_8741_2_r )
 {
-	switch(num)
+	switch (offset)
 	{
 	case 0x01: /* start button , coins */
 		return readinputport(0);
@@ -180,15 +180,15 @@ static int gsword_8741_2_r(int num)
 	case 0x04: /* Player 2 Controller */
 		return readinputport(3);
 	default:
-		if(errorlog) fprintf(errorlog,"8741-2 unknown read %d PC=%04x\n",num,cpu_get_pc());
+		if(errorlog) fprintf(errorlog,"8741-2 unknown read %d PC=%04x\n",offset,cpu_get_pc());
 	}
 	/* unknown */
 	return 0;
 }
 
-static int gsword_8741_3_r(int num)
+static READ_HANDLER( gsword_8741_3_r )
 {
-	switch(num)
+	switch (offset)
 	{
 	case 0x01: /* start button  */
 		return readinputport(2);
@@ -198,7 +198,7 @@ static int gsword_8741_3_r(int num)
 		return readinputport(3);
 	}
 	/* unknown */
-	if(errorlog) fprintf(errorlog,"8741-3 unknown read %d PC=%04x\n",num,cpu_get_pc());
+	if(errorlog) fprintf(errorlog,"8741-3 unknown read %d PC=%04x\n",offset,cpu_get_pc());
 	return 0;
 }
 
@@ -241,7 +241,7 @@ static int gsword_snd_interrupt(void)
 	return Z80_IGNORE_INT;
 }
 
-static void gsword_nmi_set(int offset,int data)
+static WRITE_HANDLER( gsword_nmi_set_w )
 {
 	switch(data)
 	{
@@ -263,34 +263,34 @@ static void gsword_nmi_set(int offset,int data)
 	if(errorlog) fprintf(errorlog,"NMI controll %02x\n",data);
 }
 
-static void gsword_AY8910_control_port_0_w(int offset,int data)
+static WRITE_HANDLER( gsword_AY8910_control_port_0_w )
 {
 	AY8910_control_port_0_w(offset,data);
 	fake8910_0 = data;
 }
-static void gsword_AY8910_control_port_1_w(int offset,int data)
+static WRITE_HANDLER( gsword_AY8910_control_port_1_w )
 {
 	AY8910_control_port_1_w(offset,data);
 	fake8910_1 = data;
 }
 
-static int gsword_fake_0_r(int offset)
+static READ_HANDLER( gsword_fake_0_r )
 {
 	return fake8910_0+1;
 }
-static int gsword_fake_1_r(int offset)
+static READ_HANDLER( gsword_fake_1_r )
 {
 	return fake8910_1+1;
 }
 
-void gsword_adpcm_data_w(int offset, int data)
+WRITE_HANDLER( gsword_adpcm_data_w )
 {
 	MSM5205_data_w (0,data & 0x0f); /* bit 0..3 */
 	MSM5205_reset_w(0,(data>>5)&1); /* bit 5    */
 	MSM5205_vclk_w(0,(data>>4)&1);  /* bit 4    */
 }
 
-void adpcm_soundcommand_w(int offset,int data)
+WRITE_HANDLER( adpcm_soundcommand_w )
 {
 	soundlatch_w(0,data);
 	cpu_set_nmi_line(2, PULSE_LINE);
@@ -554,7 +554,7 @@ static struct AY8910interface ay8910_interface =
 	{ 30, 30 },
 	{ 0,0 },
 	{ 0,0 },
-	{ 0,gsword_nmi_set }, /* portA write */
+	{ 0,gsword_nmi_set_w }, /* portA write */
 	{ 0,0 }
 };
 
@@ -563,7 +563,7 @@ static struct MSM5205interface msm5205_interface =
 	1,				/* 1 chip             */
 	384000,				/* 384KHz verified!   */
 	{ 0 },				/* interrupt function */
-	{ MSM5205_SEX_4B},		/* vclk input mode    */
+	{ MSM5205_SEX_4B },		/* vclk input mode    */
 	{ 60 }
 };
 

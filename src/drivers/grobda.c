@@ -1,37 +1,8 @@
 /***************************************************************************
 
-Grobda (Namco 1984)
+Grobda (c) Namco 1984
 
-	Manuel Abadia (emumanu@hotmail.com)
-
-Grobda Memory Map (preliminary)
-
-CPU #1: (MAIN CPU)
-0000-03ff   video RAM
-0400-07ff   color RAM
-0800-0f7f   RAM
-0f80-0fff   sprite RAM 1 (sprite number and color)
-1000-177f   RAM
-1780-17ff   sprite RAM 2 (sprite x and y position)
-1800-1f7f   RAM
-1f80-1fff   sprite RAM 3 (sprite control)
-2000		???
-4040-43ff   shared RAM with CPU #2
-4800-481f	custon IO chips
-8000		watchdog reset
-a000-bfff   ROM
-c000-dfff   ROM
-e000-ffff   ROM
-
-CPU #2: (SOUND CPU)
-0000-0040   sound registers
-0040-03ff   shared RAM with CPU #1
-2000-2001	IRQ enable?
-2006-2007	sound enable?
-e000-ffff   ROM
-
-TODO:
-	- cocktail mode
+Driver by Manuel Abadia <manu@teleline.es>
 
 ***************************************************************************/
 
@@ -44,22 +15,21 @@ extern unsigned char *grobda_customio_1, *grobda_customio_2;
 extern unsigned char *mappy_soundregs;
 
 /* memory functions */
-int grobda_spriteram_r(int offset);
-int grobda_snd_sharedram_r(int offset);
-void grobda_spriteram_w(int offset,int data);
-void grobda_snd_sharedram_w(int offset,int data);
+READ_HANDLER( grobda_snd_sharedram_r );
+WRITE_HANDLER( grobda_snd_sharedram_w );
 
 /* custom IO chips functions */
-void grobda_customio_w_1(int offset,int data);
-void grobda_customio_w_2(int offset,int data);
-int grobda_customio_r_1(int offset);
-int grobda_customio_r_2(int offset);
+WRITE_HANDLER( grobda_customio_1_w );
+WRITE_HANDLER( grobda_customio_2_w );
+READ_HANDLER( grobda_customio_1_r );
+READ_HANDLER( grobda_customio_2_r );
 
+/* INT functions */
 int grobda_interrupt_1(void);
 int grobda_interrupt_2(void);
-void grobda_cpu2_enable_w(int offset,int data);
-void grobda_interrupt_ctrl_1_w(int offset,int data);
-void grobda_interrupt_ctrl_2_w(int offset,int data);
+WRITE_HANDLER( grobda_cpu2_enable_w );
+WRITE_HANDLER( grobda_interrupt_ctrl_1_w );
+WRITE_HANDLER( grobda_interrupt_ctrl_2_w );
 void grobda_init_machine(void);
 
 /* video functions */
@@ -67,58 +37,58 @@ int grobda_vh_start( void );
 void grobda_vh_stop( void );
 void grobda_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void grobda_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+WRITE_HANDLER( grobda_flipscreen_w );
 
 
-static void grobda_DAC_w(int offset, int data)
+static WRITE_HANDLER( grobda_DAC_w )
 {
 	DAC_data_w(0, (data << 4) | data);
 }
-	/* CPU 1 (MAIN CPU) read addresses */
+
 static struct MemoryReadAddress readmem_cpu1[] =
 {
-	{ 0x0000, 0x03ff, videoram_r },			/* video RAM */
-	{ 0x0400, 0x07ff, colorram_r },										/* color RAM */
-	{ 0x0800, 0x1fff, grobda_spriteram_r },			/* RAM & sprite RAM */
-	{ 0x4040, 0x43ff, grobda_snd_sharedram_r },  /* shared RAM with CPU #2 */
-	{ 0x4800, 0x480f, grobda_customio_r_1 },		/* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, grobda_customio_r_2 },		/* custom I/O chip #2 interface */
-	{ 0xa000, 0xffff, MRA_ROM },										/* ROM */
-	{ -1 }																/* end of table */
+	{ 0x0000, 0x03ff, videoram_r },						/* video RAM */
+	{ 0x0400, 0x07ff, colorram_r },						/* color RAM */
+	{ 0x0800, 0x1fff, MRA_RAM },						/* RAM & sprite RAM */
+	{ 0x4040, 0x43ff, grobda_snd_sharedram_r },			/* shared RAM with CPU #2 */
+	{ 0x4800, 0x480f, grobda_customio_1_r },			/* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, grobda_customio_2_r },			/* custom I/O chip #2 interface */
+	{ 0xa000, 0xffff, MRA_ROM },						/* ROM */
+	{ -1 }
 };
 
-	/* CPU 1 (MAIN CPU) write addresses */
 static struct MemoryWriteAddress writemem_cpu1[] =
 {
-	{ 0x0000, 0x03ff, videoram_w, &videoram, &videoram_size },				/* video RAM */
-	{ 0x0400, 0x07ff, colorram_w, &colorram },  /* color RAM */
-	{ 0x0800, 0x1fff, grobda_spriteram_w, &grobda_spriteram },		/* RAM & sprite RAM */
-//	{ 0x2000, 0x2000, MWA_NOP },				/* ??? */
-	{ 0x4040, 0x43ff, grobda_snd_sharedram_w, &grobda_snd_sharedram }, /* shared RAM with CPU #2 */
-	{ 0x4800, 0x480f, grobda_customio_w_1, &grobda_customio_1 },	/* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, grobda_customio_w_2, &grobda_customio_2 },	/* custom I/O chip #2 interface */
-	{ 0x5002, 0x5003, grobda_interrupt_ctrl_1_w },
-//	{ 0x5008, 0x5009, MWA_NOP },				/* ??? */
-	{ 0x500a, 0x500b, grobda_cpu2_enable_w },	/* sound CPU enable? */
-	{ 0x8000, 0x8000, watchdog_reset_w },	 	/* watchdog reset */
-	{ 0xa000, 0xffff, MWA_ROM },				/* ROM */
-	{ -1 }										/* end of table */
+	{ 0x0000, 0x03ff, videoram_w, &videoram, &videoram_size },		/* video RAM */
+	{ 0x0400, 0x07ff, colorram_w, &colorram },						/* color RAM */
+	{ 0x0800, 0x1fff, MWA_RAM, &grobda_spriteram },					/* RAM & sprite RAM */
+	{ 0x2000, 0x2000, grobda_flipscreen_w },						/* flip screen */
+	{ 0x4040, 0x43ff, grobda_snd_sharedram_w },						/* shared RAM with CPU #2 */
+	{ 0x4800, 0x480f, grobda_customio_1_w, &grobda_customio_1 },	/* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, grobda_customio_2_w, &grobda_customio_2 },	/* custom I/O chip #2 interface */
+	{ 0x5002, 0x5003, grobda_interrupt_ctrl_1_w },					/* Interrupt control */
+//	{ 0x5008, 0x5009, MWA_NOP },									/* ??? */
+	{ 0x500a, 0x500b, grobda_cpu2_enable_w },						/* sound CPU enable? */
+	{ 0x8000, 0x8000, watchdog_reset_w },	 						/* watchdog reset */
+	{ 0xa000, 0xffff, MWA_ROM },									/* ROM */
+	{ -1 }
 };
-	/* CPU 2 (SOUND CPU) read addresses */
+
 static struct MemoryReadAddress readmem_cpu2[] =
 {
 	{ 0x0000, 0x003f, MRA_RAM },				/* sound registers */
-	{ 0x0040, 0x03ff, grobda_snd_sharedram_r }, /* shared RAM with CPU #1 */
+	{ 0x0040, 0x03ff, MRA_RAM },				/* shared RAM with CPU #1 */
 	{ 0xe000, 0xffff, MRA_ROM },				/* ROM */
-	{ -1 }										/* end of table */
+	{ -1 }
 };
 
-	/* CPU 2 (SOUND CPU) write addresses */
+
 static struct MemoryWriteAddress writemem_cpu2[] =
 {
-	{ 0x0002, 0x0002, grobda_DAC_w },	 /* $12, $22 and $32 are DAC locations as well */
+	{ 0x0002, 0x0002, grobda_DAC_w },					/* $12, $22 and $32 are DAC locations as well */
 	{ 0x0000, 0x003f, mappy_sound_w, &mappy_soundregs },/* sound registers */
-	{ 0x0040, 0x03ff, grobda_snd_sharedram_w },			/* shared RAM with the main CPU */
-	{ 0x2000, 0x2001, grobda_interrupt_ctrl_2_w },
+	{ 0x0040, 0x03ff, MWA_RAM, &grobda_snd_sharedram },	/* shared RAM with the main CPU */
+	{ 0x2000, 0x2001, grobda_interrupt_ctrl_2_w },		/* Interrupt control */
 	{ 0x2006, 0x2007, mappy_sound_enable_w },			/* sound enable? */
 	{ 0xe000, 0xffff, MWA_ROM },						/* ROM */
 	{ -1 }												/* end of table */
@@ -175,9 +145,9 @@ INPUT_PORTS_START( grobda )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
 	PORT_START  /* IN1 */
 	PORT_BIT(   0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY  )
@@ -196,6 +166,8 @@ INPUT_PORTS_START( grobda )
 	PORT_BITX(  0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS )
 	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2, 1 )
 	PORT_BITX(  0x20, IP_ACTIVE_HIGH, IPT_BUTTON2, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL, 1 )
+	PORT_BITX(  0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS )
 INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
@@ -225,7 +197,7 @@ static struct GfxLayout spritelayout =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,		0, 64 },
-	{ REGION_GFX2, 0, &spritelayout,	 64*4, 64 },
+	{ REGION_GFX2, 0, &spritelayout,	64*4, 64 },
 	{ -1 } /* end of table */
 };
 
@@ -262,7 +234,7 @@ static struct MachineDriver machine_driver_grobda =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,	/* a high value to ensure proper synchronization of the CPUs */
-	grobda_init_machine,	/* init machine routine */
+	grobda_init_machine,
 
 	/* video hardware */
 	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
@@ -294,9 +266,9 @@ static struct MachineDriver machine_driver_grobda =
 
 ROM_START( grobda )
 	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
-	ROM_LOAD( "gr1-3.d1",  0xa000, 0x2000, 0x4ef4a7c1 )
-	ROM_LOAD( "gr1-2.c1",  0xc000, 0x2000, 0x7dcc6e8e )
-	ROM_LOAD( "gr1-1.b1",  0xe000, 0x2000, 0x32d42f22 )
+	ROM_LOAD( "gr2-3",     0xa000, 0x2000, 0x8e3a23be )
+	ROM_LOAD( "gr2-2",     0xc000, 0x2000, 0x19ffa83d )
+	ROM_LOAD( "gr2-1",     0xe000, 0x2000, 0x0089b13a )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "gr1-4.k1",  0xe000, 0x2000, 0x3fe78c08 )
@@ -344,9 +316,9 @@ ROM_END
 
 ROM_START( grobda3 )
 	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
-	ROM_LOAD( "gr2-3",     0xa000, 0x2000, 0x8e3a23be )
-	ROM_LOAD( "gr2-2",     0xc000, 0x2000, 0x19ffa83d )
-	ROM_LOAD( "gr2-1",     0xe000, 0x2000, 0x0089b13a )
+	ROM_LOAD( "gr1-3.d1",  0xa000, 0x2000, 0x4ef4a7c1 )
+	ROM_LOAD( "gr1-2.c1",  0xc000, 0x2000, 0x7dcc6e8e )
+	ROM_LOAD( "gr1-1.b1",  0xe000, 0x2000, 0x32d42f22 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "gr1-4.k1",  0xe000, 0x2000, 0x3fe78c08 )
@@ -368,6 +340,6 @@ ROM_START( grobda3 )
 ROM_END
 
 
-GAME( 1984, grobda,  0,      grobda, grobda, 0, ROT90, "Namco", "Grobda (set 1)" )
-GAME( 1984, grobda2, grobda, grobda, grobda, 0, ROT90, "Namco", "Grobda (set 2)" )
-GAME( 1984, grobda3, grobda, grobda, grobda, 0, ROT90, "Namco", "Grobda (set 3)" )
+GAME( 1984, grobda,  0,      grobda, grobda, 0, ROT90, "Namco", "Grobda (New version)" )
+GAME( 1984, grobda2, grobda, grobda, grobda, 0, ROT90, "Namco", "Grobda (Old version set 1)" )
+GAME( 1984, grobda3, grobda, grobda, grobda, 0, ROT90, "Namco", "Grobda (Old version set 2)" )

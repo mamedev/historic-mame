@@ -24,19 +24,19 @@ static int mcu_sent = 0,main_sent = 0;
 
 static unsigned char portA_in,portA_out,ddrA;
 
-int flstory_68705_portA_r(int offset)
+READ_HANDLER( flstory_68705_portA_r )
 {
 //if (errorlog) fprintf(errorlog,"%04x: 68705 port A read %02x\n",cpu_get_pc(),portA_in);
 	return (portA_out & ddrA) | (portA_in & ~ddrA);
 }
 
-void flstory_68705_portA_w(int offset,int data)
+WRITE_HANDLER( flstory_68705_portA_w )
 {
 //if (errorlog) fprintf(errorlog,"%04x: 68705 port A write %02x\n",cpu_get_pc(),data);
 	portA_out = data;
 }
 
-void flstory_68705_ddrA_w(int offset,int data)
+WRITE_HANDLER( flstory_68705_ddrA_w )
 {
 	ddrA = data;
 }
@@ -54,12 +54,12 @@ void flstory_68705_ddrA_w(int offset,int data)
 
 static unsigned char portB_in,portB_out,ddrB;
 
-int flstory_68705_portB_r(int offset)
+READ_HANDLER( flstory_68705_portB_r )
 {
 	return (portB_out & ddrB) | (portB_in & ~ddrB);
 }
 
-void flstory_68705_portB_w(int offset,int data)
+WRITE_HANDLER( flstory_68705_portB_w )
 {
 //if (errorlog) fprintf(errorlog,"%04x: 68705 port B write %02x\n",cpu_get_pc(),data);
 
@@ -80,7 +80,7 @@ if (errorlog) fprintf(errorlog,"send command %02x to main cpu\n",portA_out);
 	portB_out = data;
 }
 
-void flstory_68705_ddrB_w(int offset,int data)
+WRITE_HANDLER( flstory_68705_ddrB_w )
 {
 	ddrB = data;
 }
@@ -88,7 +88,7 @@ void flstory_68705_ddrB_w(int offset,int data)
 
 static unsigned char portC_in,portC_out,ddrC;
 
-int flstory_68705_portC_r(int offset)
+READ_HANDLER( flstory_68705_portC_r )
 {
 	portC_in = 0;
 //	if (main_sent) portC_in |= 0x01;
@@ -97,19 +97,19 @@ if (errorlog) fprintf(errorlog,"%04x: 68705 port C read %02x\n",cpu_get_pc(),por
 	return (portC_out & ddrC) | (portC_in & ~ddrC);
 }
 
-void flstory_68705_portC_w(int offset,int data)
+WRITE_HANDLER( flstory_68705_portC_w )
 {
 if (errorlog) fprintf(errorlog,"%04x: 68705 port C write %02x\n",cpu_get_pc(),data);
 	portC_out = data;
 }
 
-void flstory_68705_ddrC_w(int offset,int data)
+WRITE_HANDLER( flstory_68705_ddrC_w )
 {
 	ddrC = data;
 }
 
 
-void flstory_mcu_w(int offset,int data)
+WRITE_HANDLER( flstory_mcu_w )
 {
 if (errorlog) fprintf (errorlog, "%04x: mcu_w %02x\n",cpu_get_pc(),data);
 	from_main = data;
@@ -117,14 +117,14 @@ if (errorlog) fprintf (errorlog, "%04x: mcu_w %02x\n",cpu_get_pc(),data);
 	cpu_set_irq_line(2,0,ASSERT_LINE);
 }
 
-int flstory_mcu_r(int offset)
+READ_HANDLER( flstory_mcu_r )
 {
 if (errorlog) fprintf (errorlog, "%04x: mcu_r %02x\n",cpu_get_pc(),from_mcu);
 	mcu_sent = 0;
 	return from_mcu;
 }
 
-int flstory_mcu_status_r(int offset)
+READ_HANDLER( flstory_mcu_status_r )
 {
 	int res = 0;
 

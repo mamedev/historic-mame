@@ -21,7 +21,7 @@ void vastar_init_machine(void)
 	cpu_set_reset_line(1,ASSERT_LINE);
 }
 
-void vastar_hold_cpu2_w(int offset,int data)
+WRITE_HANDLER( vastar_hold_cpu2_w )
 {
 	/* I'm not sure that this works exactly like this */
 	if (data & 1)
@@ -32,12 +32,12 @@ void vastar_hold_cpu2_w(int offset,int data)
 
 
 
-int vastar_sharedram_r(int offset)
+READ_HANDLER( vastar_sharedram_r )
 {
 	return vastar_sharedram[offset];
 }
 
-void vastar_sharedram_w(int offset, int data)
+WRITE_HANDLER( vastar_sharedram_w )
 {
 	vastar_sharedram[offset] = data;
 }

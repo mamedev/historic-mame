@@ -173,16 +173,16 @@ unsigned m6803_dasm(char *buffer, unsigned pc);
 
 #if (HAS_M6803||HAS_HD63701)
 /* By default, on a port write port bits which are not set as output in the DDR */
-/* are set to 1. If you need to know the DDR for e.g. port 1, do */
-/* m6803_internal_registers_r(M6801_DDR1) */
+/* are set to the value returned by a read from the same port. If you need to */
+/* know the DDR for e.g. port 1, do m6803_internal_registers_r(M6801_DDR1) */
 
 #define M6803_DDR1	0x00
 #define M6803_DDR2	0x01
 
 #define M6803_PORT1 0x100
 #define M6803_PORT2 0x101
-int m6803_internal_registers_r(int offset);
-void m6803_internal_registers_w(int offset,int data);
+READ_HANDLER( m6803_internal_registers_r );
+WRITE_HANDLER( m6803_internal_registers_w );
 #endif
 
 /****************************************************************************
@@ -276,8 +276,8 @@ void hd63701_trap_pc(void);
 #define HD63701_PORT1 M6803_PORT1
 #define HD63701_PORT2 M6803_PORT2
 
-int hd63701_internal_registers_r(int offset);
-void hd63701_internal_registers_w(int offset,int data);
+READ_HANDLER( hd63701_internal_registers_r );
+WRITE_HANDLER( hd63701_internal_registers_w );
 
 #endif
 

@@ -13,26 +13,26 @@
 #include "cpu/z80/z80.h"
 #include "sndhrdw/seibu.h"
 
-void dcon_background_w(int offset,int data);
-void dcon_foreground_w(int offset,int data);
-void dcon_midground_w(int offset,int data);
-void dcon_text_w(int offset,int data);
-void dcon_control_w(int offset,int data);
+WRITE_HANDLER( dcon_background_w );
+WRITE_HANDLER( dcon_foreground_w );
+WRITE_HANDLER( dcon_midground_w );
+WRITE_HANDLER( dcon_text_w );
+WRITE_HANDLER( dcon_control_w );
 
 int dcon_vh_start(void);
-void dcon_control_w(int offset, int data);
+WRITE_HANDLER( dcon_control_w );
 void dcon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *dcon_back_data,*dcon_fore_data,*dcon_mid_data,*dcon_scroll_ram;
 
 /***************************************************************************/
 
-static void dcon_sound_w(int offset, int data)
+static WRITE_HANDLER( dcon_sound_w )
 {
 	seibu_soundlatch_w(offset,data&0xff); /* Convert 16 bit write to 8 bit */
 }
 
-static int dcon_control_r(int offset)
+static READ_HANDLER( dcon_control_r )
 {
 	switch (offset)
 	{
@@ -48,9 +48,9 @@ static int dcon_control_r(int offset)
 	return 0xffff;
 }
 
-static int dcon_background_r(int offset) { return READ_WORD(&dcon_back_data[offset]); }
-static int dcon_foreground_r(int offset) { return READ_WORD(&dcon_fore_data[offset]); }
-static int dcon_midground_r(int offset) { return READ_WORD(&dcon_mid_data[offset]); }
+static READ_HANDLER( dcon_background_r ) { return READ_WORD(&dcon_back_data[offset]); }
+static READ_HANDLER( dcon_foreground_r ) { return READ_WORD(&dcon_fore_data[offset]); }
+static READ_HANDLER( dcon_midground_r ) { return READ_WORD(&dcon_mid_data[offset]); }
 
 /******************************************************************************/
 

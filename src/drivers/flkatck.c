@@ -16,11 +16,10 @@ TO DO:
 #include "vidhrdw/generic.h"
 
 /* from vidhrdw/flkatck.c */
-int flkatck_vh_start( void );
-void flkatck_vh_stop( void );
-void flkatck_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
-void flkatck_k007121_w(int offset,int data);
-void flkatck_k007121_regs_w(int offset,int data);
+int flkatck_vh_start(void);
+void flkatck_vh_screenrefresh(struct osd_bitmap *bitmap,int fullrefresh);
+WRITE_HANDLER( flkatck_k007121_w );
+WRITE_HANDLER( flkatck_k007121_regs_w );
 
 extern unsigned char *k007121_ram;
 extern int flkatck_irq_enabled;
@@ -45,7 +44,7 @@ static int flkatck_interrupt( void )
 		return ignore_interrupt();
 }
 
-static void flkatck_bankswitch_w(int offset,int data)
+static WRITE_HANDLER( flkatck_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress = 0;
@@ -60,7 +59,7 @@ static void flkatck_bankswitch_w(int offset,int data)
 		cpu_setbank(1,&RAM[bankaddress]);
 }
 
-static int flkatck_ls138_r(int offset)
+static READ_HANDLER( flkatck_ls138_r )
 {
 	int data = 0;
 
@@ -80,7 +79,7 @@ static int flkatck_ls138_r(int offset)
 	return data;
 }
 
-static void flkatck_ls138_w(int offset,int data)
+static WRITE_HANDLER( flkatck_ls138_w )
 {
 	switch ((offset & 0x1c) >> 2){
 		case 0x04:	/* bankswitch */
@@ -320,7 +319,7 @@ static struct MachineDriver machine_driver_flkatck =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	flkatck_vh_start,
-	flkatck_vh_stop,
+	0,
 	flkatck_vh_screenrefresh,
 
 	/* sound hardware */

@@ -41,11 +41,11 @@ int invaders_vh_start(void);
 void invaders_vh_stop(void);
 
 void invadpt2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void invaders_videoram_w(int offset,int data);
+WRITE_HANDLER( invaders_videoram_w );
 void invaders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void astinvad_sh_port_4_w(int offset,int data);
-void astinvad_sh_port_5_w(int offset,int data);
+WRITE_HANDLER( astinvad_sh_port_4_w );
+WRITE_HANDLER( astinvad_sh_port_5_w );
 void astinvad_sh_update(void);
 
 void init_astinvad(void);

@@ -152,12 +152,12 @@ void YM2612_sh_reset(void)
 /************************************************/
 /* Status Read for YM2612 - Chip 0				*/
 /************************************************/
-int YM2612_status_port_0_A_r( int offset )
+READ_HANDLER( YM2612_status_port_0_A_r )
 {
   return YM2612Read(0,0);
 }
 
-int YM2612_status_port_0_B_r( int offset )
+READ_HANDLER( YM2612_status_port_0_B_r )
 {
   return YM2612Read(0,2);
 }
@@ -165,25 +165,25 @@ int YM2612_status_port_0_B_r( int offset )
 /************************************************/
 /* Status Read for YM2612 - Chip 1				*/
 /************************************************/
-int YM2612_status_port_1_A_r( int offset ) {
+READ_HANDLER( YM2612_status_port_1_A_r ) {
   return YM2612Read(1,0);
 }
 
-int YM2612_status_port_1_B_r( int offset ) {
+READ_HANDLER( YM2612_status_port_1_B_r ) {
   return YM2612Read(1,2);
 }
 
 /************************************************/
 /* Port Read for YM2612 - Chip 0				*/
 /************************************************/
-int YM2612_read_port_0_r( int offset ){
+READ_HANDLER( YM2612_read_port_0_r ){
   return YM2612Read(0,1);
 }
 
 /************************************************/
 /* Port Read for YM2612 - Chip 1				*/
 /************************************************/
-int YM2612_read_port_1_r( int offset ){
+READ_HANDLER( YM2612_read_port_1_r ){
   return YM2612Read(1,1);
 }
 
@@ -191,12 +191,12 @@ int YM2612_read_port_1_r( int offset ){
 /* Control Write for YM2612 - Chip 0			*/
 /* Consists of 2 addresses						*/
 /************************************************/
-void YM2612_control_port_0_A_w(int offset,int data)
+WRITE_HANDLER( YM2612_control_port_0_A_w )
 {
   YM2612Write(0,0,data);
 }
 
-void YM2612_control_port_0_B_w(int offset,int data)
+WRITE_HANDLER( YM2612_control_port_0_B_w )
 {
   YM2612Write(0,2,data);
 }
@@ -205,11 +205,11 @@ void YM2612_control_port_0_B_w(int offset,int data)
 /* Control Write for YM2612 - Chip 1			*/
 /* Consists of 2 addresses						*/
 /************************************************/
-void YM2612_control_port_1_A_w(int offset,int data){
+WRITE_HANDLER( YM2612_control_port_1_A_w ){
   YM2612Write(1,0,data);
 }
 
-void YM2612_control_port_1_B_w(int offset,int data){
+WRITE_HANDLER( YM2612_control_port_1_B_w ){
   YM2612Write(1,2,data);
 }
 
@@ -217,12 +217,12 @@ void YM2612_control_port_1_B_w(int offset,int data){
 /* Data Write for YM2612 - Chip 0				*/
 /* Consists of 2 addresses						*/
 /************************************************/
-void YM2612_data_port_0_A_w(int offset,int data)
+WRITE_HANDLER( YM2612_data_port_0_A_w )
 {
   YM2612Write(0,1,data);
 }
 
-void YM2612_data_port_0_B_w(int offset,int data)
+WRITE_HANDLER( YM2612_data_port_0_B_w )
 {
   YM2612Write(0,3,data);
 }
@@ -231,10 +231,10 @@ void YM2612_data_port_0_B_w(int offset,int data)
 /* Data Write for YM2612 - Chip 1				*/
 /* Consists of 2 addresses						*/
 /************************************************/
-void YM2612_data_port_1_A_w(int offset,int data){
+WRITE_HANDLER( YM2612_data_port_1_A_w ){
   YM2612Write(1,1,data);
 }
-void YM2612_data_port_1_B_w(int offset,int data){
+WRITE_HANDLER( YM2612_data_port_1_B_w ){
   YM2612Write(1,3,data);
 }
 

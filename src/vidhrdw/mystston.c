@@ -102,7 +102,7 @@ void mystston_vh_stop(void)
 
 
 
-void mystston_2000_w(int offset,int data)
+WRITE_HANDLER( mystston_2000_w )
 {
 	/* bits 0 and 1 are text color */
 	textcolor = ((data & 0x01) << 1) | ((data & 0x02) >> 1);

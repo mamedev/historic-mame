@@ -43,21 +43,21 @@ int sbrkout_interrupt(void)
     return interrupt();
 }
 
-int sbrkout_select1(int offset)
+READ_HANDLER( sbrkout_select1_r )
 {
     if (sbrkout_game_switch==SBRKOUT_CAVITY)
         return 0x80;
     else return 0x00;
 }
 
-int sbrkout_select2(int offset)
+READ_HANDLER( sbrkout_select2_r )
 {
     if (sbrkout_game_switch==SBRKOUT_DOUBLE)
         return 0x80;
     else return 0x00;
 }
 
-void sbrkout_irq_w(int offset, int data)
+WRITE_HANDLER( sbrkout_irq_w )
 {
         /* generate irq */
         cpu_cause_interrupt(0,M6502_INT_IRQ);
@@ -72,7 +72,7 @@ because some of the DIP switch settings would be spread across multiple
 bytes, and MAME doesn't currently support that.
 ***************************************************************************/
 
-int sbrkout_read_DIPs(int offset)
+READ_HANDLER( sbrkout_read_DIPs_r )
 {
         switch (offset)
         {
@@ -94,7 +94,7 @@ The LEDs are turned on and off by two consecutive memory addresses.  The
 first address turns them off, the second address turns them on.  This is
 reversed for the Serve LED, which has a NOT on the signal.
 ***************************************************************************/
-void sbrkout_start_1_led(int offset,int value)
+WRITE_HANDLER( sbrkout_start_1_led_w )
 {
     if (offset==0)
         osd_led_w(0,0);
@@ -102,7 +102,7 @@ void sbrkout_start_1_led(int offset,int value)
         osd_led_w(0,1);
 }
 
-void sbrkout_start_2_led(int offset,int value)
+WRITE_HANDLER( sbrkout_start_2_led_w )
 {
     if (offset==0)
         osd_led_w(1,0);
@@ -110,7 +110,7 @@ void sbrkout_start_2_led(int offset,int value)
         osd_led_w(1,1);
 }
 
-void sbrkout_serve_led(int offset,int value)
+WRITE_HANDLER( sbrkout_serve_led_w )
 {
     if (offset==0)
         osd_led_w(2,1);

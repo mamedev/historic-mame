@@ -71,6 +71,8 @@
  *                  remove routines for 5 non existant opcodes
  * 05.03.00  MJC  - not command decrement A7 by 1 for bytes
  * 10.03.00  MJC  - as did btst,cmpm and nbcd
+ * 22.03.00  MJC  - Divide by zero should not decrement PC by 2 before push
+ *                  Move memory banking into exception routine
  *---------------------------------------------------------------
  * Known Problems / Bugs
  *
@@ -126,6 +128,7 @@ int 		DisOp;
 
 #define MEMORY_H	/* so memory.h will not be included... */
 #include "d68k.c"
+#undef MEMORY_H
 
 #undef cpu_readmem24
 #undef cpu_readmem24_word
@@ -714,7 +717,7 @@ void Exception(int Number, int BaseCode)
     }
 
     fprintf(fp, "\t\t call  Exception\n\n");
-	MemoryBanking(BaseCode);
+//	MemoryBanking(BaseCode);
 
     if (Number > -1)
        Completed();
@@ -6364,8 +6367,9 @@ void divides(void)
                 /* Correct cycle counter for error */
 
 				fprintf(fp, "\t\t add   dword [%s],byte %d\n",ICOUNT,95 + (type * 17));
-
-				Exception(5,BaseCode);
+		        fprintf(fp, "\t\t mov   al,5\n");
+				Exception(-1,BaseCode);
+		        Completed();
 			}
 
 			OpcodeArray[Opcode] = BaseCode ;
@@ -6860,6 +6864,10 @@ void CodeSegmentBegin(void)
 
 	fprintf(fp, "\t\t mov   esi,eax\t\t;Set PC\n");
 	fprintf(fp, "\t\t pop   edx\t\t; Restore flags\n");
+
+    /* Sort out any bank changes */
+	MemoryBanking(1);
+
 	fprintf(fp, "\t\t ret\n");
 }
 

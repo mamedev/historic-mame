@@ -18,14 +18,14 @@ void hcastle_vh_stop (void);
 
 extern unsigned char *hcastle_pf1_videoram,*hcastle_pf2_videoram;
 
-void hcastle_pf1_video_w(int offset,int data);
-void hcastle_pf2_video_w(int offset,int data);
-int hcastle_gfxbank_r(int offset);
-void hcastle_gfxbank_w(int offset,int data);
-void hcastle_pf1_control_w(int offset,int data);
-void hcastle_pf2_control_w(int offset,int data);
+WRITE_HANDLER( hcastle_pf1_video_w );
+WRITE_HANDLER( hcastle_pf2_video_w );
+READ_HANDLER( hcastle_gfxbank_r );
+WRITE_HANDLER( hcastle_gfxbank_w );
+WRITE_HANDLER( hcastle_pf1_control_w );
+WRITE_HANDLER( hcastle_pf2_control_w );
 
-static void hcastle_bankswitch_w(int offset, int data)
+static WRITE_HANDLER( hcastle_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
@@ -34,18 +34,18 @@ static void hcastle_bankswitch_w(int offset, int data)
 	cpu_setbank(1,&RAM[bankaddress]);
 }
 
-static void hcastle_soundirq_w(int offset, int data)
+static WRITE_HANDLER( hcastle_soundirq_w )
 {
 	cpu_cause_interrupt( 1, Z80_IRQ_INT );
 }
 
-static void hcastle_coin_w(int offset, int data)
+static WRITE_HANDLER( hcastle_coin_w )
 {
 	coin_counter_w(0,data & 0x40);
 	coin_counter_w(1,data & 0x80);
 }
 
-static int speedup_r( int offs )
+static READ_HANDLER( speedup_r )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -107,7 +107,7 @@ static struct MemoryWriteAddress writemem[] =
 
 /*****************************************************************************/
 
-static void sound_bank_w(int offset, int data)
+static WRITE_HANDLER( sound_bank_w )
 {
 	unsigned char *RAM = memory_region(REGION_SOUND1);
 	int bank_A=0x20000 * (data&0x3);

@@ -78,12 +78,12 @@ void arabian_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 int arabian_vh_start(void);
 void arabian_vh_stop(void);
 void arabian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void arabian_blitter_w(int offset, int val);
-void arabian_videoram_w(int offset, int val);
+WRITE_HANDLER( arabian_blitter_w );
+WRITE_HANDLER( arabian_videoram_w );
 
 int arabian_interrupt(void);
-void arabian_portB_w(int offset,int data);
-int arabian_input_port_r(int offset);
+WRITE_HANDLER( arabian_portB_w );
+READ_HANDLER( arabian_input_port_r );
 
 
 static struct MemoryReadAddress readmem[] =

@@ -15,20 +15,20 @@ struct YM2151interface
 	int baseclock;
 	int volume[MAX_2151]; /* need for use YM3012()_VOL macro */
 	void (*irqhandler[MAX_2151])(int irq);
-	void (*portwritehandler[MAX_2151])(int,int);
+	mem_write_handler portwritehandler[MAX_2151];
 };
 
-int YM2151_status_port_0_r(int offset);
-int YM2151_status_port_1_r(int offset);
-int YM2151_status_port_2_r(int offset);
+READ_HANDLER( YM2151_status_port_0_r );
+READ_HANDLER( YM2151_status_port_1_r );
+READ_HANDLER( YM2151_status_port_2_r );
 
-void YM2151_register_port_0_w(int offset,int data);
-void YM2151_register_port_1_w(int offset,int data);
-void YM2151_register_port_2_w(int offset,int data);
+WRITE_HANDLER( YM2151_register_port_0_w );
+WRITE_HANDLER( YM2151_register_port_1_w );
+WRITE_HANDLER( YM2151_register_port_2_w );
 
-void YM2151_data_port_0_w(int offset,int data);
-void YM2151_data_port_1_w(int offset,int data);
-void YM2151_data_port_2_w(int offset,int data);
+WRITE_HANDLER( YM2151_data_port_0_w );
+WRITE_HANDLER( YM2151_data_port_1_w );
+WRITE_HANDLER( YM2151_data_port_2_w );
 int YM2151_sh_start(const struct MachineSound *msound);
 int YM2151_ALT_sh_start(const struct MachineSound *msound);
 void YM2151_sh_stop(void);

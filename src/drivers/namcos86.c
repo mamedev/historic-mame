@@ -31,17 +31,17 @@ extern unsigned char *rthunder_videoram1, *rthunder_videoram2, *spriteram, *dirt
 void namcos86_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom);
 int namcos86_vh_start(void);
 void namcos86_vh_screenrefresh(struct osd_bitmap *bitmap,int fullrefresh);
-int rthunder_videoram1_r(int offset);
-void rthunder_videoram1_w(int offset,int data);
-int rthunder_videoram2_r(int offset);
-void rthunder_videoram2_w(int offset,int data);
-void rthunder_scroll0_w(int offset,int data);
-void rthunder_scroll1_w(int offset,int data);
-void rthunder_scroll2_w(int offset,int data);
-void rthunder_scroll3_w(int offset,int data);
-void rthunder_backcolor_w(int offset,int data);
-void rthunder_tilebank_select_0(int offset,int data);
-void rthunder_tilebank_select_1(int offset,int data);
+READ_HANDLER( rthunder_videoram1_r );
+WRITE_HANDLER( rthunder_videoram1_w );
+READ_HANDLER( rthunder_videoram2_r );
+WRITE_HANDLER( rthunder_videoram2_w );
+WRITE_HANDLER( rthunder_scroll0_w );
+WRITE_HANDLER( rthunder_scroll1_w );
+WRITE_HANDLER( rthunder_scroll2_w );
+WRITE_HANDLER( rthunder_scroll3_w );
+WRITE_HANDLER( rthunder_backcolor_w );
+WRITE_HANDLER( rthunder_tilebank_select_0_w );
+WRITE_HANDLER( rthunder_tilebank_select_1_w );
 
 
 
@@ -190,12 +190,12 @@ static void namco_voice_play( int offset, int data, int ch ) {
 		sample_start( ch, voice[ch], 0 );
 }
 
-static void namco_voice0_play_w(int offset,int data) {
+static WRITE_HANDLER( namco_voice0_play_w ) {
 
 	namco_voice_play(offset, data, 0);
 }
 
-static void namco_voice1_play_w(int offset,int data) {
+static WRITE_HANDLER( namco_voice1_play_w ) {
 
 	namco_voice_play(offset, data, 1);
 }
@@ -274,12 +274,12 @@ static void namco_voice_select( int offset, int data, int ch ) {
 	voice[ch] = data - 1;
 }
 
-static void namco_voice0_select_w(int offset,int data) {
+static WRITE_HANDLER( namco_voice0_select_w ) {
 
 	namco_voice_select(offset, data, 0);
 }
 
-static void namco_voice1_select_w(int offset,int data) {
+static WRITE_HANDLER( namco_voice1_select_w ) {
 
 	namco_voice_select(offset, data, 1);
 }
@@ -287,21 +287,21 @@ static void namco_voice1_select_w(int offset,int data) {
 
 /* shared memory area with the mcu */
 static unsigned char *shared1;
-static int shared1_r( int offs ) { return shared1[offs]; }
-static void shared1_w( int offs, int data ) { shared1[offs] = data; }
+static READ_HANDLER( shared1_r ) { return shared1[offset]; }
+static WRITE_HANDLER( shared1_w ) { shared1[offset] = data; }
 
 
 
-static void spriteram_w(int offset,int data)
+static WRITE_HANDLER( spriteram_w )
 {
 	spriteram[offset] = data;
 }
-static int spriteram_r( int offset )
+static READ_HANDLER( spriteram_r )
 {
 	return spriteram[offset];
 }
 
-static void bankswitch1_w(int offset,int data)
+static WRITE_HANDLER( bankswitch1_w )
 {
 	unsigned char *base = memory_region(REGION_CPU1) + 0x10000;
 
@@ -312,7 +312,7 @@ static void bankswitch1_w(int offset,int data)
 	cpu_setbank(1,base + ((data & 0x03) * 0x2000));
 }
 
-static void bankswitch1_ext_w(int offset,int data)
+static WRITE_HANDLER( bankswitch1_ext_w )
 {
 	unsigned char *base = memory_region(REGION_USER1);
 
@@ -321,7 +321,7 @@ static void bankswitch1_ext_w(int offset,int data)
 	cpu_setbank(1,base + ((data & 0x1f) * 0x2000));
 }
 
-static void bankswitch2_w(int offset,int data)
+static WRITE_HANDLER( bankswitch2_w )
 {
 	unsigned char *base = memory_region(REGION_CPU2) + 0x10000;
 
@@ -329,7 +329,7 @@ static void bankswitch2_w(int offset,int data)
 }
 
 /* Stubs to pass the correct Dip Switch setup to the MCU */
-static int dsw_r0( int offset )
+static READ_HANDLER( dsw0_r )
 {
 	int rhi, rlo;
 
@@ -346,7 +346,7 @@ static int dsw_r0( int offset )
 	return ~( rhi | rlo ) & 0xff; /* Active Low */
 }
 
-static int dsw_r1( int offset )
+static READ_HANDLER( dsw1_r )
 {
 	int rhi, rlo;
 
@@ -365,12 +365,12 @@ static int dsw_r1( int offset )
 
 static int int_enabled[2];
 
-static void int_ack1_w( int offs, int data )
+static WRITE_HANDLER( int_ack1_w )
 {
 	int_enabled[0] = 1;
 }
 
-static void int_ack2_w( int offs, int data )
+static WRITE_HANDLER( int_ack2_w )
 {
 	int_enabled[1] = 1;
 }
@@ -397,16 +397,14 @@ static int namco86_interrupt2(void)
 	return ignore_interrupt();
 }
 
-static void namcos86_coin_w(int offset,int data)
+static WRITE_HANDLER( namcos86_coin_w )
 {
-	coin_lockout_w(0,data & 1);
-	coin_lockout_w(1,data & 1);
-
+	coin_lockout_global_w(0,data & 1);
 	coin_counter_w(0,~data & 2);
 	coin_counter_w(1,~data & 4);
 }
 
-static void namcos86_led_w(int offset,int data)
+static WRITE_HANDLER( namcos86_led_w )
 {
 	osd_led_w(0,data >> 3);
 	osd_led_w(1,data >> 4);
@@ -449,8 +447,8 @@ static struct MemoryWriteAddress writemem1[] =
 
 	{ 0x8000, 0x8000, watchdog_reset_w },
 	{ 0x8400, 0x8400, int_ack1_w }, /* IRQ acknowledge */
-	{ 0x8800, 0x8800, rthunder_tilebank_select_0 },
-	{ 0x8c00, 0x8c00, rthunder_tilebank_select_1 },
+	{ 0x8800, 0x8800, rthunder_tilebank_select_0_w },
+	{ 0x8c00, 0x8c00, rthunder_tilebank_select_1_w },
 
 	{ 0x9000, 0x9002, rthunder_scroll0_w },	/* scroll + priority */
 	{ 0x9003, 0x9003, bankswitch1_w },
@@ -517,8 +515,8 @@ static struct MemoryReadAddress NAME##_mcu_readmem[] =						\
 	{ ADDR_INPUT+0x00, ADDR_INPUT+0x01, YM2151_status_port_0_r },			\
 	{ ADDR_INPUT+0x20, ADDR_INPUT+0x20, input_port_0_r },					\
 	{ ADDR_INPUT+0x21, ADDR_INPUT+0x21, input_port_1_r },					\
-	{ ADDR_INPUT+0x30, ADDR_INPUT+0x30, dsw_r0 },							\
-	{ ADDR_INPUT+0x31, ADDR_INPUT+0x31, dsw_r1 },							\
+	{ ADDR_INPUT+0x30, ADDR_INPUT+0x30, dsw0_r },							\
+	{ ADDR_INPUT+0x31, ADDR_INPUT+0x31, dsw1_r },							\
 	{ ADDR_LOWROM, ADDR_LOWROM+0x3fff, MRA_ROM },							\
 	{ 0x8000, 0xbfff, MRA_ROM },											\
 	{ 0xf000, 0xffff, MRA_ROM },											\
@@ -585,7 +583,7 @@ INPUT_PORTS_START( hopmappy )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 2 player 2 */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -638,9 +636,9 @@ INPUT_PORTS_START( hopmappy )
 	PORT_DIPSETTING(    0x80, "Hard" )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin lockout */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 1 */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 2 */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -664,7 +662,7 @@ INPUT_PORTS_START( skykiddx )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -717,9 +715,9 @@ INPUT_PORTS_START( skykiddx )
 	PORT_DIPSETTING(    0xc0, "5" )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin lockout */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 1 */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 2 */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -743,7 +741,7 @@ INPUT_PORTS_START( roishtar )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -799,9 +797,9 @@ INPUT_PORTS_START( roishtar )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin lockout */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 1 */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 2 */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_8WAY )
@@ -825,7 +823,7 @@ INPUT_PORTS_START( genpeitd )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -877,9 +875,9 @@ INPUT_PORTS_START( genpeitd )
 	PORT_DIPSETTING(    0xc0, "70" )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin lockout */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 1 */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 2 */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -903,7 +901,7 @@ INPUT_PORTS_START( rthunder )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -956,9 +954,9 @@ INPUT_PORTS_START( rthunder )
 	PORT_DIPSETTING(    0x80, "5" )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin lockout */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 1 */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 2 */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
@@ -982,7 +980,7 @@ INPUT_PORTS_START( rthundro )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1035,9 +1033,9 @@ INPUT_PORTS_START( rthundro )
 	PORT_DIPSETTING(    0xc0, "5" )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin lockout */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 1 */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 2 */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
@@ -1061,7 +1059,7 @@ INPUT_PORTS_START( wndrmomo )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1114,9 +1112,9 @@ INPUT_PORTS_START( wndrmomo )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin lockout */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 1 */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 2 */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
@@ -1728,7 +1726,7 @@ static void init_namco86(void)
 
 
 
-static void roishtar_semaphore(int offset, int data)
+WRITE_HANDLER( roishtar_semaphore_w )
 {
     rthunder_videoram1_w(0x7e24-0x6000+offset,data);
 
@@ -1739,7 +1737,7 @@ static void roishtar_semaphore(int offset, int data)
 static void init_roishtar(void)
 {
 	/* install hook to avoid hang at game over */
-    install_mem_write_handler(1, 0x7e24, 0x7e24, roishtar_semaphore);
+    install_mem_write_handler(1, 0x7e24, 0x7e24, roishtar_semaphore_w);
 
 	init_namco86();
 }

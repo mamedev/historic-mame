@@ -60,7 +60,7 @@ void blueprnt_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 
 
-void blueprnt_flipscreen_w(int offset,int data)
+WRITE_HANDLER( blueprnt_flipscreen_w )
 {
 	if (flipscreen != (~data & 2))
 	{

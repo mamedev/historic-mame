@@ -16,38 +16,39 @@ extern unsigned char *rastan_spriteram;
 extern unsigned char *rastan_scrollx;
 extern unsigned char *rastan_scrolly;
 
-void rastan_spriteram_w(int offset,int data);
-int rastan_spriteram_r(int offset);
-void rastan_videoram1_w(int offset,int data);
-int rastan_videoram1_r(int offset);
-void rastan_videoram3_w(int offset,int data);
-int rastan_videoram3_r(int offset);
+WRITE_HANDLER( rastan_spriteram_w );
+READ_HANDLER( rastan_spriteram_r );
+WRITE_HANDLER( rastan_videoram1_w );
+READ_HANDLER( rastan_videoram1_r );
+WRITE_HANDLER( rastan_videoram3_w );
+READ_HANDLER( rastan_videoram3_r );
 
-void rastan_scrollY_w(int offset,int data);
-void rastan_scrollX_w(int offset,int data);
+WRITE_HANDLER( rastan_scrollY_w );
+WRITE_HANDLER( rastan_scrollX_w );
 
-void rastan_videocontrol_w(int offset,int data);
+WRITE_HANDLER( rastan_videocontrol_w );
 
 int rastan_interrupt(void);
 int rastan_s_interrupt(void);
 
-void rastan_background_w(int offset,int data);
+WRITE_HANDLER( rastan_background_w );
 void rastan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int  rastan_vh_start(void);
 void rastan_vh_stop(void);
 
-void rastan_sound_w(int offset,int data);
-int rastan_sound_r(int offset);
+WRITE_HANDLER( rastan_sound_w );
+READ_HANDLER( rastan_sound_r );
 
 
 
-int r_rd_a001(int offset);
-void r_wr_a000(int offset,int data);
-void r_wr_a001(int offset,int data);
+READ_HANDLER( rastan_a001_r );
+WRITE_HANDLER( rastan_a000_w );
+WRITE_HANDLER( rastan_a001_w );
+WRITE_HANDLER( rastan_adpcm_trigger_w );
 
-void r_wr_c000(int offset,int data);
-void r_wr_d000(int offset,int data);
+WRITE_HANDLER( rastan_c000_w );
+WRITE_HANDLER( rastan_d000_w );
 
 void rastan_irq_handler(int irq);
 
@@ -56,7 +57,7 @@ int rastan_interrupt(void)
 	return 5;  /*Interrupt vector 5*/
 }
 
-int rastan_input_r (int offset)
+READ_HANDLER( rastan_input_r )
 {
 	switch (offset)
 	{
@@ -75,19 +76,11 @@ int rastan_input_r (int offset)
 	}
 }
 
-static int rastan_cycle_r(int offset)
+static READ_HANDLER( rastan_cycle_r )
 {
 	if (cpu_get_pc()==0x3b088) cpu_spinuntil_int();
 
 	return READ_WORD(&rastan_ram[0x1c10]);
-}
-
-static int rastan_sound_spin(int offset)
-{
-	if ( (cpu_get_pc()==0x1c5) && !(memory_region(REGION_CPU2)[ 0x8f27 ] & 0x01) )
-		cpu_spin();
-
-	return memory_region(REGION_CPU2)[ 0x8f27 ];
 }
 
 
@@ -130,7 +123,7 @@ static struct MemoryWriteAddress rastan_writemem[] =
 };
 
 
-static void rastan_bankswitch_w(int offset, int data)
+static WRITE_HANDLER( rastan_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU2);
@@ -143,11 +136,10 @@ static struct MemoryReadAddress rastan_s_readmem[] =
 {
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x7fff, MRA_BANK5 },
-	{ 0x8f27, 0x8f27, rastan_sound_spin },
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9001, 0x9001, YM2151_status_port_0_r },
 	{ 0x9002, 0x9100, MRA_RAM },
-	{ 0xa001, 0xa001, r_rd_a001 },
+	{ 0xa001, 0xa001, rastan_a001_r },
 	{ -1 }  /* end of table */
 };
 
@@ -157,11 +149,11 @@ static struct MemoryWriteAddress rastan_s_writemem[] =
 	{ 0x8000, 0x8fff, MWA_RAM },
 	{ 0x9000, 0x9000, YM2151_register_port_0_w },
 	{ 0x9001, 0x9001, YM2151_data_port_0_w },
-	{ 0xa000, 0xa000, r_wr_a000 },
-	{ 0xa001, 0xa001, r_wr_a001 },
-	{ 0xb000, 0xb000, ADPCM_trigger },
-	{ 0xc000, 0xc000, r_wr_c000 },
-	{ 0xd000, 0xd000, r_wr_d000 },
+	{ 0xa000, 0xa000, rastan_a000_w },
+	{ 0xa001, 0xa001, rastan_a001_w },
+	{ 0xb000, 0xb000, rastan_adpcm_trigger_w },
+	{ 0xc000, 0xc000, rastan_c000_w },
+	{ 0xd000, 0xd000, rastan_d000_w },
 	{ -1 }  /* end of table */
 };
 

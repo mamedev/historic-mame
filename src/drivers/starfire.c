@@ -68,20 +68,20 @@ C000 - DFFF: Video RAM
 void starfire_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern int starfire_vh_start(void);
 extern void starfire_vh_stop(void);
-extern void starfire_videoram_w(int offset,int data);
-extern int starfire_videoram_r(int offset);
-extern void starfire_colorram_w(int offset,int data);
-extern int starfire_colorram_r(int offset);
+WRITE_HANDLER( starfire_videoram_w );
+READ_HANDLER( starfire_videoram_r );
+WRITE_HANDLER( starfire_colorram_w );
+READ_HANDLER( starfire_colorram_r );
 
 /* In machine/starfire.c */
 extern int starfire_interrupt (void);
-extern void starfire_shadow_w(int address, int data);
-extern void starfire_output_w(int address, int data);
-extern void fireone_output_w(int address, int data);
-extern int starfire_shadow_r(int address);
-extern int starfire_input_r(int address);
-extern int fireone_input_r(int address);
-extern void starfire_soundctrl_w(int offset, int data);
+WRITE_HANDLER( starfire_shadow_w );
+WRITE_HANDLER( starfire_output_w );
+WRITE_HANDLER( fireone_output_w );
+READ_HANDLER( starfire_shadow_r );
+READ_HANDLER( starfire_input_r );
+READ_HANDLER( fireone_input_r );
+WRITE_HANDLER( starfire_soundctrl_w );
 
 
 unsigned char *starfire_ram;

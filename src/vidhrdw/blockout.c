@@ -38,7 +38,7 @@ static void setcolor(int color,int rgb)
 	palette_change_color(color,r,g,b);
 }
 
-void blockout_paletteram_w(int offset, int data)
+WRITE_HANDLER( blockout_paletteram_w )
 {
 	int oldword = READ_WORD(&paletteram[offset]);
 	int newword = COMBINE_WORD(oldword,data);
@@ -49,7 +49,7 @@ void blockout_paletteram_w(int offset, int data)
 	setcolor(offset / 2,newword);
 }
 
-void blockout_frontcolor_w(int offset, int data)
+WRITE_HANDLER( blockout_frontcolor_w )
 {
 	setcolor(512,data);
 }
@@ -110,7 +110,7 @@ static void updatepixels(int x,int y)
 
 
 
-void blockout_videoram_w(int offset, int data)
+WRITE_HANDLER( blockout_videoram_w )
 {
 	int oldword = READ_WORD(&blockout_videoram[offset]);
 	int newword = COMBINE_WORD(oldword,data);
@@ -122,19 +122,19 @@ void blockout_videoram_w(int offset, int data)
 	}
 }
 
-int blockout_videoram_r(int offset)
+READ_HANDLER( blockout_videoram_r )
 {
    return READ_WORD(&blockout_videoram[offset]);
 }
 
 
 
-void blockout_frontvideoram_w(int offset, int data)
+WRITE_HANDLER( blockout_frontvideoram_w )
 {
 	COMBINE_WORD_MEM(&blockout_frontvideoram[offset],data);
 }
 
-int blockout_frontvideoram_r(int offset)
+READ_HANDLER( blockout_frontvideoram_r )
 {
    return READ_WORD(&blockout_frontvideoram[offset]);
 }

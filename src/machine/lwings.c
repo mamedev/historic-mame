@@ -13,7 +13,7 @@
 
 int lwings_bank_register=0xff;
 
-void lwings_bankswitch_w(int offset,int data){
+WRITE_HANDLER( lwings_bankswitch_w ){
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bank = (data>>1)&0x3;
 	cpu_setbank(1,&RAM[0x10000 + bank*0x4000]);

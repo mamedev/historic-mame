@@ -64,7 +64,7 @@ void goindol_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 }
 
 
-void goindol_fg_videoram_w(int offset,int data)
+WRITE_HANDLER( goindol_fg_videoram_w )
 {
 	if (goindol_fg_videoram[offset] != data)
 	{
@@ -73,7 +73,7 @@ void goindol_fg_videoram_w(int offset,int data)
 	}
 }
 
-void goindol_bg_videoram_w(int offset,int data)
+WRITE_HANDLER( goindol_bg_videoram_w )
 {
 	if (goindol_bg_videoram[offset] != data)
 	{

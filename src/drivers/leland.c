@@ -59,7 +59,7 @@ static int initdone=0;
 
 static int leland_slave_halt=0;
 
-void leland_slave_halt_w(int offset, int data)
+WRITE_HANDLER( leland_slave_halt_w )
 {
 	/* Only used for self-test */
 /*
@@ -103,22 +103,22 @@ void leland_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void pigout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /* Video RAM ports */
-void leland_master_video_addr_w(int offset, int data);
-void leland_slave_video_addr_w(int offset, int data);
-void leland_mvram_port_w(int offset, int data);
-void leland_svram_port_w(int offset, int data);
-int  leland_mvram_port_r(int offset);
-int  leland_svram_port_r(int offset);
+WRITE_HANDLER( leland_master_video_addr_w );
+WRITE_HANDLER( leland_slave_video_addr_w );
+WRITE_HANDLER( leland_mvram_port_w );
+WRITE_HANDLER( leland_svram_port_w );
+READ_HANDLER( leland_mvram_port_r );
+READ_HANDLER( leland_svram_port_r );
 
-void leland_sound_port_w(int offset, int data);
-int  leland_sound_port_r(int offset);
+WRITE_HANDLER( leland_sound_port_w );
+READ_HANDLER( leland_sound_port_r );
 
-void leland_gfx_port_w(int offset, int data);
+WRITE_HANDLER( leland_gfx_port_w );
 
-void leland_bk_xlow_w(int offset, int data);
-void leland_bk_xhigh_w(int offset, int data);
-void leland_bk_ylow_w(int offset, int data);
-void leland_bk_yhigh_w(int offset, int data);
+WRITE_HANDLER( leland_bk_xlow_w );
+WRITE_HANDLER( leland_bk_xhigh_w );
+WRITE_HANDLER( leland_bk_ylow_w );
+WRITE_HANDLER( leland_bk_yhigh_w );
 
 static int  leland_slave_cmd;
 
@@ -149,7 +149,7 @@ static int leland_eeprom[0x0100]; /* Unknown size */
 */
 
 
-int leland_eeprom_r(int offset)
+READ_HANDLER( leland_eeprom_r )
 {
 	static int s;
 	s=s^0x01;
@@ -169,7 +169,7 @@ int leland_eeprom_r(int offset)
 	return s;
 }
 
-void leland_eeprom_w(int offset, int data)
+WRITE_HANDLER( leland_eeprom_w )
 {
 #if 0
 	if (errorlog)
@@ -191,7 +191,7 @@ void leland_eeprom_w(int offset, int data)
 #define leland_battery_ram_size 0x4000
 static unsigned char leland_battery_ram[leland_battery_ram_size];
 
-void leland_battery_w(int offset, int data)
+WRITE_HANDLER( leland_battery_w )
 {
 	leland_battery_ram[offset]=data;
 }
@@ -421,19 +421,19 @@ void leland_sound_init(void)
     leland_sound_response=0x55;
 }
 
-void leland_sound_cmd_low_w(int offset, int data)
+WRITE_HANDLER( leland_sound_cmd_low_w )
 {
 	/* Z80 sound command low byte write */
     leland_sound_cmd_low=data;
 }
 
-void leland_sound_cmd_high_w(int offset, int data)
+WRITE_HANDLER( leland_sound_cmd_high_w )
 {
 	/* Z80 sound command high byte write */
     leland_sound_cmd_high=data;
 }
 
-int leland_sound_cmd_r(int offset)
+READ_HANDLER( leland_sound_cmd_r )
 {
 	/* 80186 sound command word read */
 	if (!offset)
@@ -447,13 +447,13 @@ int leland_sound_cmd_r(int offset)
 }
 
 
-int leland_sound_response_r(int offset)
+READ_HANDLER( leland_sound_response_r )
 {
 	/* Z80 sound response byte read */
     return leland_sound_response;
 }
 
-void leland_sound_response_w(int offset, int data)
+WRITE_HANDLER( leland_sound_response_w )
 {
 	/* 80186 sound response byte write */
 	if (!offset)
@@ -507,7 +507,7 @@ void leland_sound_cpu_control_w(int data)
 static int leland_dac_value[leland_max_dac];
 static int leland_dac_volume[leland_max_dac];
 
-void leland_dac_w(int offset, int data)
+WRITE_HANDLER( leland_dac_w )
 {
 	int dacnum=(offset/2)+1;
 	if (offset & 0x01)
@@ -548,7 +548,7 @@ static pit8254_interface leland_pit8254_interface=
 };
 
 
-void leland_pit8254_0_w(int offset, int data)
+WRITE_HANDLER( leland_pit8254_0_w )
 {
 	if (!(offset & 0x01))
 	{
@@ -556,7 +556,7 @@ void leland_pit8254_0_w(int offset, int data)
 	}
 }
 
-void leland_pit8254_1_w(int offset, int data)
+WRITE_HANDLER( leland_pit8254_1_w )
 {
 	if (!(offset & 0x01))
 	{
@@ -581,7 +581,7 @@ static struct IOWritePort leland_i86_writeport[] =
 	{ -1 }  /* end of table */
 };
 
-int leland_i86_ram_r(int offset)
+READ_HANDLER( leland_i86_ram_r )
 {
 	/*
 	Not very tidy, but it works for now...
@@ -590,7 +590,7 @@ int leland_i86_ram_r(int offset)
 	return RAM[0x1c000+offset];
 }
 
-void leland_i86_ram_w(int offset, int data)
+WRITE_HANDLER( leland_i86_ram_w )
 {
 	/*
 	Not very tidy, but it works for now...
@@ -600,7 +600,7 @@ void leland_i86_ram_w(int offset, int data)
 }
 
 
-static int leland_i86_unknown1_r(int offset)
+static READ_HANDLER( leland_i86_unknown1_r )
 {
 	/*
 	This must have 0x10 set, within a certain time period,
@@ -630,7 +630,7 @@ static struct MemoryReadAddress leland_i86_readmem[] =
 
 
 
-static void leland_i86_unknown2_w(int offset, int data)
+static WRITE_HANDLER( leland_i86_unknown2_w )
 {
 
 }
@@ -720,7 +720,7 @@ int leland_master_interrupt(void)
 	return interrupt();
 }
 
-void leland_slave_cmd_w(int offset, int data)
+WRITE_HANDLER( leland_slave_cmd_w )
 {
 #if 0
 	if (errorlog)
@@ -763,12 +763,12 @@ INLINE int leland_slavebit_r(int bit)
 	return ret;
 }
 
-int leland_slavebit0_r(int offset)
+READ_HANDLER( leland_slavebit0_r )
 {
     return leland_slavebit_r(0x01);
 }
 
-int leland_slavebit1_r(int offset)
+READ_HANDLER( leland_slavebit1_r )
 {
     return leland_slavebit_r(0x02);
 }
@@ -781,7 +781,7 @@ int leland_slavebit1_r(int offset)
 
 static int leland_current_analog;
 
-void leland_analog_w(int offset, int data)
+WRITE_HANDLER( leland_analog_w )
 {
 	/* Set the current analog port number */
 	leland_current_analog=data&0x0f;
@@ -793,7 +793,7 @@ void leland_analog_w(int offset, int data)
 #endif
 }
 
-int leland_analog_r(int offset)
+READ_HANDLER( leland_analog_r )
 {
 #ifdef NOISY_CONTROLS
 	if (errorlog)
@@ -812,12 +812,12 @@ int leland_analog_r(int offset)
 
 ************************************************************************/
 
-int leland_slave_cmd_r(int offset)
+READ_HANDLER( leland_slave_cmd_r )
 {
     return leland_slave_cmd;
 }
 
-void leland_slave_banksw_w(int offset, int data)
+WRITE_HANDLER( leland_slave_banksw_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int bankaddress;
@@ -833,7 +833,7 @@ void leland_slave_banksw_w(int offset, int data)
 #endif
 }
 
-void leland_slave_large_banksw_w(int offset, int data)
+WRITE_HANDLER( leland_slave_large_banksw_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int bankaddress=0x10000+0x8000*(data&0x0f);
@@ -933,7 +933,7 @@ void leland_rearrange_bank(int cpu, int start)
 	}
 }
 
-int leland_raster_r(int offset)
+READ_HANDLER( leland_raster_r )
 {
     static int r;
     r++;
@@ -1143,7 +1143,7 @@ void strkzone_update_bank(void)
 	cpu_setbank(1, &RAM[bankaddress]);
 }
 
-void strkzone_banksw_w(int offset, int data)
+WRITE_HANDLER( strkzone_banksw_w )
 {
 	leland_bank=data;
 	strkzone_update_bank();
@@ -1637,7 +1637,7 @@ void pigout_init_machine(void)
 	leland_rearrange_bank_swap(0, 0x10000);
 }
 
-void pigout_banksw_w(int offset, int data)
+WRITE_HANDLER( pigout_banksw_w )
 {
 	int bank;
 	int bankaddress;
@@ -1925,7 +1925,7 @@ INPUT_PORTS_START( redlin2p )
 	PORT_ANALOG( 0xff, 0x80, IPT_DIAL|IPF_PLAYER1, 100, 10, 0, 255 )
 INPUT_PORTS_END
 
-void redlin2p_banksw_w(int offset, int data)
+WRITE_HANDLER( redlin2p_banksw_w )
 {
 	int bank;
 	int bankaddress;
@@ -1956,7 +1956,7 @@ void redlin2p_banksw_w(int offset, int data)
     leland_sound_cpu_control_w(data);
 }
 
-static int redlin2p_kludge_r(int offset)
+static READ_HANDLER( redlin2p_kludge_r )
 {
 static int s;
 s=~s;
@@ -2051,7 +2051,7 @@ INPUT_PORTS_START( dangerz )
 	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER1, 100, 10, 0, 255 )
 INPUT_PORTS_END
 
-void dangerz_banksw_w(int offset, int data)
+WRITE_HANDLER( dangerz_banksw_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress=(data&0x01)*0x10000;
@@ -2136,7 +2136,7 @@ INPUT_PORTS_START( viper )
 	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER1, 100, 10, 0, 255 )
 INPUT_PORTS_END
 
-void viper_banksw_w(int offset, int data)
+WRITE_HANDLER( viper_banksw_w )
 {
 	int bank;
 	int bankaddress;

@@ -172,51 +172,51 @@ static int p[8] = { 255,255,255,255,255,255,255,255 };
 static int t[2] = { 1,1 };
 
 
-void radarscp_grid_enable_w(int offset,int data);
-void radarscp_grid_color_w(int offset,int data);
-void dkong_flipscreen_w(int offset,int data);
-void dkongjr_gfxbank_w(int offset,int data);
-void dkong3_gfxbank_w(int offset,int data);
-void dkong_palettebank_w(int offset,int data);
+WRITE_HANDLER( radarscp_grid_enable_w );
+WRITE_HANDLER( radarscp_grid_color_w );
+WRITE_HANDLER( dkong_flipscreen_w );
+WRITE_HANDLER( dkongjr_gfxbank_w );
+WRITE_HANDLER( dkong3_gfxbank_w );
+WRITE_HANDLER( dkong_palettebank_w );
 void dkong_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void dkong3_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int dkong_vh_start(void);
 void radarscp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void dkong_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void dkong_sh_w(int offset, int data);
-void dkongjr_sh_death_w(int offset, int data);
-void dkongjr_sh_drop_w(int offset, int data);
-void dkongjr_sh_roar_w(int offset, int data);
-void dkongjr_sh_jump_w(int offset, int data);
-void dkongjr_sh_walk_w(int offset, int data);
-void dkongjr_sh_climb_w(int offset, int data);
-void dkongjr_sh_land_w(int offset, int data);
-void dkongjr_sh_snapjaw_w(int offset, int data);
+WRITE_HANDLER( dkong_sh_w );
+WRITE_HANDLER( dkongjr_sh_death_w );
+WRITE_HANDLER( dkongjr_sh_drop_w );
+WRITE_HANDLER( dkongjr_sh_roar_w );
+WRITE_HANDLER( dkongjr_sh_jump_w );
+WRITE_HANDLER( dkongjr_sh_walk_w );
+WRITE_HANDLER( dkongjr_sh_climb_w );
+WRITE_HANDLER( dkongjr_sh_land_w );
+WRITE_HANDLER( dkongjr_sh_snapjaw_w );
 
-void dkong_sh1_w(int offset,int data);
+WRITE_HANDLER( dkong_sh1_w );
 
 #define ACTIVELOW_PORT_BIT(P,A,D)   ((P & (~(1 << A))) | ((D ^ 1) << A))
 
 
-void dkong_sh_sound3(int offset, int data)     { p[2] = ACTIVELOW_PORT_BIT(p[2],5,data); }
-void dkong_sh_sound4(int offset, int data)    { t[1] = ~data & 1; }
-void dkong_sh_sound5(int offset, int data)    { t[0] = ~data & 1; }
-void dkong_sh_tuneselect(int offset, int data) { soundlatch_w(offset,data ^ 0x0f); }
+WRITE_HANDLER( dkong_sh_sound3_w )     { p[2] = ACTIVELOW_PORT_BIT(p[2],5,data); }
+WRITE_HANDLER( dkong_sh_sound4_w )    { t[1] = ~data & 1; }
+WRITE_HANDLER( dkong_sh_sound5_w )    { t[0] = ~data & 1; }
+WRITE_HANDLER( dkong_sh_tuneselect_w ) { soundlatch_w(offset,data ^ 0x0f); }
 
-void dkongjr_sh_test6(int offset, int data)      { p[2] = ACTIVELOW_PORT_BIT(p[2],6,data); }
-void dkongjr_sh_test5(int offset, int data)      { p[2] = ACTIVELOW_PORT_BIT(p[2],5,data); }
-void dkongjr_sh_test4(int offset, int data)      { p[2] = ACTIVELOW_PORT_BIT(p[2],4,data); }
-void dkongjr_sh_tuneselect(int offset, int data) { soundlatch_w(offset,data); }
+WRITE_HANDLER( dkongjr_sh_test6_w )      { p[2] = ACTIVELOW_PORT_BIT(p[2],6,data); }
+WRITE_HANDLER( dkongjr_sh_test5_w )      { p[2] = ACTIVELOW_PORT_BIT(p[2],5,data); }
+WRITE_HANDLER( dkongjr_sh_test4_w )      { p[2] = ACTIVELOW_PORT_BIT(p[2],4,data); }
+WRITE_HANDLER( dkongjr_sh_tuneselect_w ) { soundlatch_w(offset,data); }
 
-int  hunchbks_mirror_r(int offset);
-void hunchbks_mirror_w(int offset,int data);
+READ_HANDLER( hunchbks_mirror_r );
+WRITE_HANDLER( hunchbks_mirror_w );
 
-static int  dkong_sh_getp1(int offset)   { return p[1]; }
-static int  dkong_sh_getp2(int offset)   { return p[2]; }
-static int  dkong_sh_gett0(int offset)   { return t[0]; }
-static int  dkong_sh_gett1(int offset)   { return t[1]; }
-static int  dkong_sh_gettune(int offset)
+static READ_HANDLER( dkong_sh_p1_r )   { return p[1]; }
+static READ_HANDLER( dkong_sh_p2_r )   { return p[2]; }
+static READ_HANDLER( dkong_sh_t0_r )   { return t[0]; }
+static READ_HANDLER( dkong_sh_t1_r )   { return t[1]; }
+static READ_HANDLER( dkong_sh_tune_r )
 {
 	unsigned char *SND = memory_region(REGION_CPU2);
 	if (page & 0x40)
@@ -236,7 +236,7 @@ static int decay;
 
 #define TSTEP 0.001
 
-static void dkong_sh_putp1(int offset, int data)
+static WRITE_HANDLER( dkong_sh_p1_w )
 {
 	envelope=exp(-tt);
 	DAC_data_w(0,(int)(data*envelope));
@@ -244,7 +244,7 @@ static void dkong_sh_putp1(int offset, int data)
 	else tt=0;
 }
 
-static void dkong_sh_putp2(int offset, int data)
+static WRITE_HANDLER( dkong_sh_p2_w )
 {
 	/*   If P2.Bit7 -> is apparently an external signal decay or other output control
 	 *   If P2.Bit6 -> activates the external compressed sample ROM
@@ -258,7 +258,7 @@ static void dkong_sh_putp2(int offset, int data)
 }
 
 
-static int dkong_in2_r(int offset)
+static READ_HANDLER( dkong_in2_r )
 {
 	return input_port_2_r(offset) | (mcustatus << 6);
 }
@@ -300,12 +300,12 @@ static struct MemoryWriteAddress radarscp_writemem[] =
 	{ 0x7400, 0x77ff, videoram_w, &videoram, &videoram_size },
 	{ 0x7800, 0x7803, MWA_RAM },	/* ???? */
 	{ 0x7808, 0x7808, MWA_RAM },	/* ???? */
-	{ 0x7c00, 0x7c00, dkong_sh_tuneselect },
+	{ 0x7c00, 0x7c00, dkong_sh_tuneselect_w },
 	{ 0x7c80, 0x7c80, radarscp_grid_color_w },
 	{ 0x7d00, 0x7d02, dkong_sh1_w },	/* walk/jump/boom sample trigger */
-	{ 0x7d03, 0x7d03, dkong_sh_sound3 },
-	{ 0x7d04, 0x7d04, dkong_sh_sound4 },
-	{ 0x7d05, 0x7d05, dkong_sh_sound5 },
+	{ 0x7d03, 0x7d03, dkong_sh_sound3_w },
+	{ 0x7d04, 0x7d04, dkong_sh_sound4_w },
+	{ 0x7d05, 0x7d05, dkong_sh_sound5_w },
 	{ 0x7d80, 0x7d80, dkong_sh_w },
 	{ 0x7d81, 0x7d81, radarscp_grid_enable_w },
 	{ 0x7d82, 0x7d82, dkong_flipscreen_w },
@@ -326,12 +326,12 @@ static struct MemoryWriteAddress dkong_writemem[] =
 	{ 0x7400, 0x77ff, videoram_w, &videoram, &videoram_size },
 	{ 0x7800, 0x7803, MWA_RAM },	/* ???? */
 	{ 0x7808, 0x7808, MWA_RAM },	/* ???? */
-	{ 0x7c00, 0x7c00, dkong_sh_tuneselect },
+	{ 0x7c00, 0x7c00, dkong_sh_tuneselect_w },
 //	{ 0x7c80, 0x7c80,  },
 	{ 0x7d00, 0x7d02, dkong_sh1_w },	/* walk/jump/boom sample trigger */
-	{ 0x7d03, 0x7d03, dkong_sh_sound3 },
-	{ 0x7d04, 0x7d04, dkong_sh_sound4 },
-	{ 0x7d05, 0x7d05, dkong_sh_sound5 },
+	{ 0x7d03, 0x7d03, dkong_sh_sound3_w },
+	{ 0x7d04, 0x7d04, dkong_sh_sound4_w },
+	{ 0x7d05, 0x7d05, dkong_sh_sound5_w },
 	{ 0x7d80, 0x7d80, dkong_sh_w },
 	{ 0x7d81, 0x7d81, MWA_RAM },	/* ???? */
 	{ 0x7d82, 0x7d82, dkong_flipscreen_w },
@@ -342,7 +342,7 @@ static struct MemoryWriteAddress dkong_writemem[] =
 	{ -1 }	/* end of table */
 };
 
-int herbiedk_acknowledge(int offset)
+READ_HANDLER( herbiedk_iack_r )
 {
 	s2650_set_sense(1);
     return 0;
@@ -354,12 +354,12 @@ static struct MemoryReadAddress hunchbkd_readmem[] =
 	{ 0x2000, 0x2fff, MRA_ROM },
 	{ 0x4000, 0x4fff, MRA_ROM },
 	{ 0x6000, 0x6fff, MRA_ROM },
-	{ 0x1400, 0x1400, input_port_0_r },			/* IN0 */
-	{ 0x1480, 0x1480, input_port_1_r },			/* IN1 */
-	{ 0x1500, 0x1500, input_port_2_r },			/* IN2/DSW2 */
-    { 0x1507, 0x1507, herbiedk_acknowledge },  	/* Clear Int */
-	{ 0x1580, 0x1580, input_port_3_r },			/* DSW1 */
-	{ 0x1600, 0x1bff, MRA_RAM },				/* video RAM */
+	{ 0x1400, 0x1400, input_port_0_r },		/* IN0 */
+	{ 0x1480, 0x1480, input_port_1_r },		/* IN1 */
+	{ 0x1500, 0x1500, input_port_2_r },		/* IN2/DSW2 */
+    { 0x1507, 0x1507, herbiedk_iack_r },  	/* Clear Int */
+	{ 0x1580, 0x1580, input_port_3_r },		/* DSW1 */
+	{ 0x1600, 0x1bff, MRA_RAM },			/* video RAM */
 	{ 0x1c00, 0x1fff, MRA_RAM },
     { 0x3000, 0x3fff, hunchbks_mirror_r },
     { 0x5000, 0x5fff, hunchbks_mirror_r },
@@ -373,7 +373,7 @@ static struct MemoryWriteAddress hunchbkd_writemem[] =
 	{ 0x2000, 0x2fff, MWA_ROM },
 	{ 0x4000, 0x4fff, MWA_ROM },
 	{ 0x6000, 0x6fff, MWA_ROM },
-	{ 0x1400, 0x1400, dkong_sh_tuneselect },
+	{ 0x1400, 0x1400, dkong_sh_tuneselect_w },
 	{ 0x1480, 0x1480, dkongjr_gfxbank_w },
 	{ 0x1580, 0x1580, dkong_sh_w },
 	{ 0x1582, 0x1582, dkong_flipscreen_w },
@@ -391,12 +391,12 @@ static struct MemoryWriteAddress hunchbkd_writemem[] =
 
 int hunchloopback;
 
-void hunchbkd_write_data(int offset,int data)
+WRITE_HANDLER( hunchbkd_data_w )
 {
 	hunchloopback=data;
 }
 
-int hunchbkd_read_0(int offset)
+READ_HANDLER( hunchbkd_port0_r )
 {
 	if(errorlog) fprintf(errorlog, "port 0 : pc = %4x\n",s2650_get_pc());
 
@@ -409,12 +409,12 @@ int hunchbkd_read_0(int offset)
     return 0;
 }
 
-int hunchbkd_read_1(int offset)
+READ_HANDLER( hunchbkd_port1_r )
 {
 	return hunchloopback;
 }
 
-int herbiedk_read_1(int offset)
+READ_HANDLER( herbiedk_port1_r )
 {
 	switch (s2650_get_pc())
 	{
@@ -427,20 +427,20 @@ int herbiedk_read_1(int offset)
 
 static struct IOWritePort hunchbkd_writeport[] =
 {
-	{ 0x101, 0x101, hunchbkd_write_data },
+	{ 0x101, 0x101, hunchbkd_data_w },
 	{ -1 }	/* end of table */
 };
 
 static struct IOReadPort hunchbkd_readport[] =
 {
-	{ 0x00, 0x00, hunchbkd_read_0 },
-	{ 0x01, 0x01, hunchbkd_read_1 },
+	{ 0x00, 0x00, hunchbkd_port0_r },
+	{ 0x01, 0x01, hunchbkd_port1_r },
 	{ -1 }	/* end of table */
 };
 
 static struct IOReadPort herbiedk_readport[] =
 {
-	{ 0x01, 0x01, herbiedk_read_1 },
+	{ 0x01, 0x01, herbiedk_port1_r },
 	{ -1 }	/* end of table */
 };
 
@@ -456,27 +456,27 @@ static struct MemoryWriteAddress writemem_sound[] =
 };
 static struct IOReadPort readport_sound[] =
 {
-	{ 0x00,     0xff,     dkong_sh_gettune },
-	{ I8039_p1, I8039_p1, dkong_sh_getp1 },
-	{ I8039_p2, I8039_p2, dkong_sh_getp2 },
-	{ I8039_t0, I8039_t0, dkong_sh_gett0 },
-	{ I8039_t1, I8039_t1, dkong_sh_gett1 },
+	{ 0x00,     0xff,     dkong_sh_tune_r },
+	{ I8039_p1, I8039_p1, dkong_sh_p1_r },
+	{ I8039_p2, I8039_p2, dkong_sh_p2_r },
+	{ I8039_t0, I8039_t0, dkong_sh_t0_r },
+	{ I8039_t1, I8039_t1, dkong_sh_t1_r },
 	{ -1 }	/* end of table */
 };
 static struct IOWritePort writeport_sound[] =
 {
-	{ I8039_p1, I8039_p1, dkong_sh_putp1 },
-	{ I8039_p2, I8039_p2, dkong_sh_putp2 },
+	{ I8039_p1, I8039_p1, dkong_sh_p1_w },
+	{ I8039_p2, I8039_p2, dkong_sh_p2_w },
 	{ -1 }	/* end of table */
 };
 
 static struct IOReadPort readport_hunchbkd_sound[] =
 {
 	{ I8039_bus,I8039_bus,soundlatch_r },
-	{ I8039_p1, I8039_p1, dkong_sh_getp1 },
-	{ I8039_p2, I8039_p2, dkong_sh_getp2 },
-	{ I8039_t0, I8039_t0, dkong_sh_gett0 },
-	{ I8039_t1, I8039_t1, dkong_sh_gett1 },
+	{ I8039_p1, I8039_p1, dkong_sh_p1_r },
+	{ I8039_p2, I8039_p2, dkong_sh_p2_r },
+	{ I8039_t0, I8039_t0, dkong_sh_t0_r },
+	{ I8039_t1, I8039_t1, dkong_sh_t1_r },
 	{ -1 }	/* end of table */
 };
 
@@ -489,15 +489,15 @@ static struct MemoryWriteAddress dkongjr_writemem[] =
 	{ 0x7400, 0x77ff, videoram_w, &videoram, &videoram_size },
 	{ 0x7800, 0x7803, MWA_RAM },	/* ???? */
 	{ 0x7808, 0x7808, MWA_RAM },	/* ???? */
-	{ 0x7c00, 0x7c00, dkongjr_sh_tuneselect },
+	{ 0x7c00, 0x7c00, dkongjr_sh_tuneselect_w },
 	{ 0x7c80, 0x7c80, dkongjr_gfxbank_w },
-	{ 0x7c81, 0x7c81, dkongjr_sh_test6 },
+	{ 0x7c81, 0x7c81, dkongjr_sh_test6_w },
 	{ 0x7d00, 0x7d00, dkongjr_sh_climb_w }, /* HC - climb sound */
 	{ 0x7d01, 0x7d01, dkongjr_sh_jump_w }, /* HC - jump */
 	{ 0x7d02, 0x7d02, dkongjr_sh_land_w }, /* HC - climb sound */
 	{ 0x7d03, 0x7d03, dkongjr_sh_roar_w },
-	{ 0x7d04, 0x7d04, dkong_sh_sound4 },
-	{ 0x7d05, 0x7d05, dkong_sh_sound5 },
+	{ 0x7d04, 0x7d04, dkong_sh_sound4_w },
+	{ 0x7d05, 0x7d05, dkong_sh_sound5_w },
 	{ 0x7d06, 0x7d06, dkongjr_sh_snapjaw_w },
 	{ 0x7d07, 0x7d07, dkongjr_sh_walk_w },	/* controls pitch of the walk/climb? */
 	{ 0x7d80, 0x7d80, dkongjr_sh_death_w },
@@ -514,7 +514,7 @@ static struct MemoryWriteAddress dkongjr_writemem[] =
 
 
 
-void dkong3_2a03_reset_w(int offset,int data)
+WRITE_HANDLER( dkong3_2a03_reset_w )
 {
 	if (data & 1)
 	{

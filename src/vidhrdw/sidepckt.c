@@ -5,10 +5,6 @@
 static struct tilemap *bg_tilemap;
 static int flipscreen;
 
-void sidepckt_flipscreen_w(int offset,int data)
-{
-	flipscreen=data; /* The game never seems to write here?! */
-}
 
 void sidepckt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
@@ -49,13 +45,12 @@ void sidepckt_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 ***************************************************************************/
 
-static void get_tile_info( int col, int row )
+static void get_tile_info(int tile_index)
 {
-	int tile_index = row*32+(31-col);
 	unsigned char attr = colorram[tile_index];
 	SET_TILE_INFO(0,videoram[tile_index] + ((attr & 0x07) << 8),
 			((attr & 0x10) >> 3) | ((attr & 0x20) >> 5))
-	tile_info.flags = TILE_SPLIT((attr & 0x80) >> 7);
+	tile_info.flags = TILE_FLIPX | TILE_SPLIT((attr & 0x80) >> 7);
 }
 
 
@@ -68,13 +63,15 @@ static void get_tile_info( int col, int row )
 
 int sidepckt_vh_start(void)
 {
-	bg_tilemap = tilemap_create(get_tile_info,TILEMAP_SPLIT,8,8,32,32);
+	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,32,32);
 
 	if (!bg_tilemap)
 		return 1;
 
 	bg_tilemap->transmask[0] = 0xff; /* split type 0 is totally transparent in front half */
 	bg_tilemap->transmask[1] = 0x01; /* split type 1 has pen 1 transparent in front half */
+
+	tilemap_set_flip(ALL_TILEMAPS,TILEMAP_FLIPX);
 
 	return 0;
 }
@@ -87,22 +84,28 @@ int sidepckt_vh_start(void)
 
 ***************************************************************************/
 
-void sidepckt_videoram_w(int offset,int data)
+WRITE_HANDLER( sidepckt_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
 		videoram[offset] = data;
-		tilemap_mark_tile_dirty(bg_tilemap,31-offset%32,offset/32);
+		tilemap_mark_tile_dirty(bg_tilemap,offset);
 	}
 }
 
-void sidepckt_colorram_w(int offset,int data)
+WRITE_HANDLER( sidepckt_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
 		colorram[offset] = data;
-		tilemap_mark_tile_dirty(bg_tilemap,31-offset%32,offset/32);
+		tilemap_mark_tile_dirty(bg_tilemap,offset);
 	}
+}
+
+WRITE_HANDLER( sidepckt_flipscreen_w )
+{
+	flipscreen = data;
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? TILEMAP_FLIPY : TILEMAP_FLIPX);
 }
 
 
@@ -148,8 +151,6 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 void sidepckt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-//	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
-
 	tilemap_update(ALL_TILEMAPS);
 	tilemap_render(ALL_TILEMAPS);
 

@@ -199,9 +199,9 @@ int flipscreen;
 extern unsigned char *airbustr_bgram, *airbustr_fgram;
 
 /* Functions defined in vidhrdw */
-extern void airbustr_bgram_w(int offset,int data);
-extern void airbustr_fgram_w(int offset,int data);
-extern void airbustr_scrollregs_w(int offset,int data);
+WRITE_HANDLER( airbustr_bgram_w );
+WRITE_HANDLER( airbustr_fgram_w );
+WRITE_HANDLER( airbustr_scrollregs_w );
 extern int  airbustr_vh_start(void);
 extern void airbustr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -209,9 +209,9 @@ extern void airbustr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh
 int u1, u2, u3, u4;
 
 
-static void bankswitch_w(int offs,int data);
-static void bankswitch2_w(int offs,int data);
-static void sound_bankswitch_w(int offs,int data);
+static WRITE_HANDLER( bankswitch_w );
+static WRITE_HANDLER( bankswitch2_w );
+static WRITE_HANDLER( sound_bankswitch_w );
 
 static void airbustr_init_machine (void)
 {
@@ -241,14 +241,14 @@ static int addr = 0xff;
 }
 
 
-static int  sharedram_r(int offs)				{ return sharedram[offs]; }
-static void sharedram_w(int offs, int data)	{ sharedram[offs] = data; }
+static READ_HANDLER( sharedram_r )	{ return sharedram[offset]; }
+static WRITE_HANDLER( sharedram_w )	{ sharedram[offset] = data; }
 
 
 /* There's an MCU here, possibly */
-int devram_r(int offs)
+READ_HANDLER( devram_r )
 {
-	switch (offs)
+	switch (offset)
 	{
 		/* Reading efe0 probably resets a watchdog mechanism
 		   that would reset the main cpu. We avoid this and patch
@@ -264,7 +264,7 @@ int devram_r(int offs)
 		{
 			int	x = (devram[0xff0] + devram[0xff1] * 256) *
 					(devram[0xff2] + devram[0xff3] * 256);
-			if (offs == 0xff2)	return (x & 0x00FF) >> 0;
+			if (offset == 0xff2)	return (x & 0x00FF) >> 0;
 			else				return (x & 0xFF00) >> 8;
 		}	break;
 
@@ -275,14 +275,14 @@ int devram_r(int offs)
 			return rand();
 		}	break;
 
-		default:	{ return devram[offs]; break;}
+		default:	{ return devram[offset]; break;}
 	}
 
 }
-void devram_w(int offs, int data)	{	devram[offs] = data; }
+WRITE_HANDLER( devram_w )	{	devram[offset] = data; }
 
 
-static void bankswitch_w(int offs,int data)
+static WRITE_HANDLER( bankswitch_w )
 {
 unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -319,7 +319,7 @@ static struct MemoryWriteAddress writemem[] =
 
 /* Ports */
 
-void cause_nmi(int offset, int data)
+static WRITE_HANDLER( cause_nmi_w )
 {
 	cpu_cause_interrupt(1,Z80_NMI_INT);	// cause a nmi to sub cpu
 }
@@ -332,7 +332,7 @@ static struct IOWritePort writeport[] =
 {
 	{ 0x00, 0x00, bankswitch_w },
 //	{ 0x01, 0x01, IOWP_NOP },	// ?? only 2 (see 378b)
-	{ 0x02, 0x02, cause_nmi },	// always 0. Cause a nmi to sub cpu
+	{ 0x02, 0x02, cause_nmi_w },	// always 0. Cause a nmi to sub cpu
 	{ -1 }
 };
 
@@ -365,7 +365,7 @@ static int addr = 0xfd;
 }
 
 
-static void bankswitch2_w(int offs,int data)
+static WRITE_HANDLER( bankswitch2_w )
 {
 unsigned char *RAM = memory_region(REGION_CPU2);
 
@@ -382,7 +382,7 @@ unsigned char *RAM = memory_region(REGION_CPU2);
 }
 
 
-void airbustr_paletteram_w(int offset,int data)
+WRITE_HANDLER( airbustr_paletteram_w )
 {
 int r,g,b;
 
@@ -448,21 +448,21 @@ Code at 505: waits for bit 1 to go low, writes command, waits for bit
 */
 
 
-static int soundcommand_status_r(int offset)
+static READ_HANDLER( soundcommand_status_r )
 {
 /* bits: 2 <-> ?	1 <-> soundlatch full	0 <-> soundlatch2 empty */
 	return 4 + soundlatch_status * 2 + (1-soundlatch2_status);
 }
 
 
-static int soundcommand2_r(int offset)
+static READ_HANDLER( soundcommand2_r )
 {
 	soundlatch2_status = 0;				// soundlatch2 has been read
 	return soundlatch2_r(0);
 }
 
 
-static void soundcommand_w(int offset, int data)
+static WRITE_HANDLER( soundcommand_w )
 {
 	soundlatch_w(0,data);
 	soundlatch_status = 1;				// soundlatch has been written
@@ -470,7 +470,7 @@ static void soundcommand_w(int offset, int data)
 }
 
 
-void port_38_w(int offset, int data)	{	u4 = data; } // for debug
+WRITE_HANDLER( port_38_w )	{	u4 = data; } // for debug
 
 
 static struct IOReadPort readport2[] =
@@ -508,7 +508,7 @@ static struct IOWritePort writeport2[] =
 **
 */
 
-static void sound_bankswitch_w(int offs,int data)
+static WRITE_HANDLER( sound_bankswitch_w )
 {
 unsigned char *RAM = memory_region(REGION_CPU3);
 
@@ -542,14 +542,14 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 /* Ports */
 
-int soundcommand_r(int offset)
+READ_HANDLER( soundcommand_r )
 {
 	soundlatch_status = 0;		// soundlatch has been read
 	return soundlatch_r(0);
 }
 
 
-void soundcommand2_w(int offset, int data)
+WRITE_HANDLER( soundcommand2_w )
 {
 	soundlatch2_status = 1;		// soundlatch2 has been written
 	soundlatch2_w(0,data);

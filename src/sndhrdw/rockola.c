@@ -1,7 +1,7 @@
 /* from Andrew Scott (ascott@utkux.utcc.utk.edu) */
 #include "driver.h"
 
-void rockola_flipscreen_w(int offset,int data);
+WRITE_HANDLER( rockola_flipscreen_w );
 
 #define TONE_VOLUME 25
 #define SAMPLE_VOLUME 25
@@ -132,7 +132,7 @@ void rockola_sh_update(void)
 
 
 
-void satansat_sound0_w(int offset,int data)
+WRITE_HANDLER( satansat_sound0_w )
 {
 	/* bit 0 = analog sound trigger */
 
@@ -163,7 +163,7 @@ void satansat_sound0_w(int offset,int data)
 	LastPort1 = data;
 }
 
-void satansat_sound1_w(int offset,int data)
+WRITE_HANDLER( satansat_sound1_w )
 {
 	/* select tune in ROM based on sound command byte */
 	Sound0Base = 0x0000 + ((data & 0x0e) << 7);
@@ -187,7 +187,7 @@ void satansat_sound1_w(int offset,int data)
 }
 
 
-void vanguard_sound0_w(int offset,int data)
+WRITE_HANDLER( vanguard_sound0_w )
 {
 	/* select musical tune in ROM based on sound command byte */
 
@@ -237,7 +237,7 @@ void vanguard_sound0_w(int offset,int data)
 	LastPort1 = data;
 }
 
-void vanguard_sound1_w(int offset,int data)
+WRITE_HANDLER( vanguard_sound1_w )
 {
 	/* select tune in ROM based on sound command byte */
 	Sound1Base = 0x0800 + ((data & 0x07) << 8);
@@ -254,7 +254,7 @@ void vanguard_sound1_w(int offset,int data)
 
 
 
-void fantasy_sound0_w(int offset,int data)
+WRITE_HANDLER( fantasy_sound0_w )
 {
 	/* select musical tune in ROM based on sound command byte */
 	Sound0Base = 0x0000 + ((data & 0x07) << 8);
@@ -292,7 +292,7 @@ void fantasy_sound0_w(int offset,int data)
 	LastPort1 = data;
 }
 
-void fantasy_sound1_w(int offset,int data)
+WRITE_HANDLER( fantasy_sound1_w )
 {
 	/* select tune in ROM based on sound command byte */
 	Sound1Base = 0x0800 + ((data & 0x07) << 8);
@@ -307,7 +307,7 @@ void fantasy_sound1_w(int offset,int data)
 	}
 }
 
-void fantasy_sound2_w(int offset,int data)
+WRITE_HANDLER( fantasy_sound2_w )
 {
 	rockola_flipscreen_w(offset,data);
 

@@ -110,13 +110,13 @@ Program ROM (48K bytes)                   4000-FFFF   R    D0-D7
 extern UINT8 *atarisys1_bankselect;
 extern UINT8 *atarisys1_prioritycolor;
 
-int atarisys1_int3state_r(int offset);
+READ_HANDLER( atarisys1_int3state_r );
 
-void atarisys1_playfieldram_w(int offset, int data);
-void atarisys1_spriteram_w(int offset, int data);
-void atarisys1_bankselect_w(int offset, int data);
-void atarisys1_hscroll_w(int offset, int data);
-void atarisys1_vscroll_w(int offset, int data);
+WRITE_HANDLER( atarisys1_playfieldram_w );
+WRITE_HANDLER( atarisys1_spriteram_w );
+WRITE_HANDLER( atarisys1_bankselect_w );
+WRITE_HANDLER( atarisys1_hscroll_w );
+WRITE_HANDLER( atarisys1_vscroll_w );
 
 void atarisys1_scanline_update(int scanline);
 
@@ -203,7 +203,7 @@ static void init_machine(void)
  *
  *************************************/
 
-static void led_w(int offset, int data)
+static WRITE_HANDLER( led_w )
 {
 	osd_led_w(offset, ~data & 1);
 }
@@ -225,7 +225,7 @@ static void delayed_joystick_int(int param)
 }
 
 
-static int joystick_r(int offset)
+static READ_HANDLER( joystick_r )
 {
 	int newval = 0xff;
 
@@ -258,7 +258,7 @@ static int joystick_r(int offset)
 }
 
 
-static void joystick_w(int offset, int data)
+static WRITE_HANDLER( joystick_w )
 {
 	/* the A4 bit enables/disables joystick IRQs */
 	joystick_int_enable = ((offset >> 4) & 1) ^ 1;
@@ -272,7 +272,7 @@ static void joystick_w(int offset, int data)
  *
  *************************************/
 
-static int trakball_r(int offset)
+static READ_HANDLER( trakball_r )
 {
 	int result = 0xff;
 
@@ -321,7 +321,7 @@ static int trakball_r(int offset)
  *
  *************************************/
 
-static int input_r(int offset)
+static READ_HANDLER( input_r )
 {
 	int temp = input_port_5_r(offset);
 	if (atarigen_cpu_to_sound_ready) temp ^= 0x0080;
@@ -329,7 +329,7 @@ static int input_r(int offset)
 }
 
 
-static int switch_6502_r(int offset)
+static READ_HANDLER( switch_6502_r )
 {
 	int temp = input_port_4_r(offset);
 
@@ -384,7 +384,7 @@ static int switch_6502_r(int offset)
  *	        D5 = 	??? (out)
  */
 
-static int m6522_r(int offset)
+static READ_HANDLER( m6522_r )
 {
 	switch (offset)
 	{
@@ -407,7 +407,7 @@ static int m6522_r(int offset)
 }
 
 
-void m6522_w(int offset, int data)
+WRITE_HANDLER( m6522_w )
 {
 	int old;
 
@@ -453,7 +453,7 @@ void m6522_w(int offset, int data)
  *
  *************************************/
 
-int marble_speedcheck_r(int offset)
+READ_HANDLER( marble_speedcheck_r )
 {
 	int result = READ_WORD(&marble_speedcheck[offset]);
 
@@ -471,7 +471,7 @@ int marble_speedcheck_r(int offset)
 }
 
 
-void marble_speedcheck_w(int offset, int data)
+WRITE_HANDLER( marble_speedcheck_w )
 {
 	COMBINE_WORD_MEM(&marble_speedcheck[offset], data);
 	speedcheck_time1 = cpu_gettotalcycles() - 1000;
@@ -486,7 +486,7 @@ void marble_speedcheck_w(int offset, int data)
  *
  *************************************/
 
-static int indytemp_setopbase(int pc)
+static OPBASE_HANDLER( indytemp_setopbase )
 {
 	int prevpc = cpu_getpreviouspc();
 
@@ -508,12 +508,12 @@ static int indytemp_setopbase(int pc)
 	 *	ROM, so it doesn't matter which version we're actually executing.
 	 */
 
-	if (pc & 0x80000)
+	if (address & 0x80000)
 		atarigen_slapstic_r(0);
 	else if (prevpc & 0x80000)
 		atarigen_slapstic_r(prevpc & 0x7fff);
 
-	return pc;
+	return address;
 }
 
 

@@ -14,32 +14,29 @@ static struct tilemap *bgb_tilemap, *bgm_tilemap, *char_tilemap;
 
 ***************************************************************************/
 
-static void get_bgb_tile_info( int col, int row )
+static void get_bgb_tile_info(int tile_index)
 {
-	int addr = (col*32 + row*2 + 128) & 0xffff;
-	unsigned char *base = memory_region(REGION_GFX5) + addr;
-	int attr = base[65536];
+	unsigned char *base = memory_region(REGION_GFX5) + 2*tile_index;
+	int attr = base[0x10000];
 	int color = base[0];
-	int code = (base[65537]<<8) | base[1];
+	int code = (base[0x10000+1]<<8) | base[1];
 	SET_TILE_INFO (0, code, color);
 	tile_info.flags = TILE_FLIPYX(attr & 3);
 }
 
-static void get_bgm_tile_info( int col, int row )
+static void get_bgm_tile_info(int tile_index)
 {
-	int addr = (col*32 + row*2 + 128) & 0xffff;
-	unsigned char *base = memory_region(REGION_GFX5) + addr + 65536*2;
-	int attr = base[65536];
+	unsigned char *base = memory_region(REGION_GFX5) + 0x20000 + 2*tile_index;
+	int attr = base[0x10000];
 	int color = base[0];
-	int code = (base[65537]<<8) | base[1];
+	int code = (base[0x10000+1]<<8) | base[1];
 	SET_TILE_INFO (1, code, color);
 	tile_info.flags = TILE_FLIPYX(attr & 3);
 }
 
-static void get_char_tile_info( int col, int row )
+static void get_char_tile_info(int tile_index)
 {
-	int addr = 16 + col*2 + row*128;
-	int code = READ_WORD(videoram + addr);
+	int code = READ_WORD(&videoram[2*tile_index]);
 	SET_TILE_INFO (3, code & 0x3ff, code>>12);
 	tile_info.flags = TILE_FLIPYX((code & 0xc00)>>10);
 }
@@ -56,20 +53,11 @@ int sf1_vh_start(void)
 {
 	int i;
 
-	bgb_tilemap = tilemap_create (get_bgb_tile_info,
-								  TILEMAP_OPAQUE,
-								  16, 16,
-								  2048, 16);
-	bgm_tilemap = tilemap_create (get_bgm_tile_info,
-								  TILEMAP_TRANSPARENT,
-								  16, 16,
-								  2048, 16);
-	char_tilemap = tilemap_create (get_char_tile_info,
-								   TILEMAP_TRANSPARENT,
-								   8, 8,
-								   48, 32);
+	bgb_tilemap =  tilemap_create(get_bgb_tile_info, tilemap_scan_cols,TILEMAP_OPAQUE,     16,16,2048,16);
+	bgm_tilemap =  tilemap_create(get_bgm_tile_info, tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,2048,16);
+	char_tilemap = tilemap_create(get_char_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,  64,32);
 
-	if(!bgb_tilemap || !bgm_tilemap || !char_tilemap)
+	if (!bgb_tilemap || !bgm_tilemap || !char_tilemap)
 		return 1;
 
 	bgm_tilemap->transparent_pen = 15;
@@ -89,26 +77,23 @@ int sf1_vh_start(void)
 
 ***************************************************************************/
 
-void sf1_videoram_w(int offset, int data)
+WRITE_HANDLER( sf1_videoram_w )
 {
-	int old = READ_WORD(videoram+offset);
+	int old = READ_WORD(&videoram[offset]);
 	int new = COMBINE_WORD(old, data);
-	if(old!=new) {
-		int x;
-		WRITE_WORD(videoram+offset, new);
-		offset /= 2;
-		x = offset%64;
-		if(x>=8 && x<56)
-			tilemap_mark_tile_dirty (char_tilemap, x-8, offset/64);
+	if (old != new)
+	{
+		WRITE_WORD(&videoram[offset], new);
+		tilemap_mark_tile_dirty(char_tilemap,offset/2);
 	}
 }
 
-void sf1_deltaxb_w(int offset, int data)
+WRITE_HANDLER( sf1_deltaxb_w )
 {
 	tilemap_set_scrollx(bgb_tilemap, 0, data);
 }
 
-void sf1_deltaxm_w(int offset, int data)
+WRITE_HANDLER( sf1_deltaxm_w )
 {
 	tilemap_set_scrollx(bgm_tilemap, 0, data);
 }
@@ -182,8 +167,6 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 		int x = READ_WORD(pt+6);
 
 		if(x>32 && x<415 && y>0 && y<256) {
-			x -= 64;
-
 			if(!(at&0x400)) {
 				drawgfx(bitmap,
 						Machine->gfx[2],

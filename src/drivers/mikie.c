@@ -22,14 +22,14 @@ MAIN BOARD:
 
 
 
-void mikie_palettebank_w(int offset,int data);
-void mikie_flipscreen_w(int offset,int data);
+WRITE_HANDLER( mikie_palettebank_w );
+WRITE_HANDLER( mikie_flipscreen_w );
 void mikie_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void mikie_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-int mikie_sh_timer_r(int offset)
+READ_HANDLER( mikie_sh_timer_r )
 {
 	int clock;
 
@@ -40,7 +40,7 @@ int mikie_sh_timer_r(int offset)
 	return clock;
 }
 
-void mikie_sh_irqtrigger_w(int offset,int data)
+WRITE_HANDLER( mikie_sh_irqtrigger_w )
 {
 	static int last;
 

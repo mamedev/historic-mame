@@ -29,28 +29,28 @@ extern unsigned char *kyugo_videoram;
 extern int kyugo_videoram_size;
 extern unsigned char *kyugo_back_scrollY_lo;
 extern unsigned char *kyugo_back_scrollX;
-void kyugo_gfxctrl_w(int offset,int data);
-void kyugo_flipscreen_w(int offset,int data);
+WRITE_HANDLER( kyugo_gfxctrl_w );
+WRITE_HANDLER( kyugo_flipscreen_w );
 void kyugo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void kyugo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 
 static unsigned char *shared_ram;
 
-static int shared_ram_r( int offs )
+static READ_HANDLER( shared_ram_r )
 {
-	return shared_ram[ offs ];
+	return shared_ram[offset];
 }
 
-static void shared_ram_w( int offs, int data )
+static WRITE_HANDLER( shared_ram_w )
 {
-	shared_ram[ offs ] = data;
+	shared_ram[offset] = data;
 }
 
-static int special_spriteram_r( int offs )
+static READ_HANDLER( special_spriteram_r )
 {
 	/* RAM is 4 bits wide, must set the high bits to 1 for the RAM test to pass */
-	return spriteram_2[ offs] | 0xf0;
+	return spriteram_2[offset] | 0xf0;
 }
 
 
@@ -114,7 +114,7 @@ Sub_MemMap( sonofphx, 0x7fff, 0xa000, 0x0000, 0xc080, 0xc040, 0xc000 )
 Sub_MemMap( flashgal, 0x7fff, 0xa000, 0x0000, 0xc080, 0xc040, 0xc000 )
 Sub_MemMap( srdmissn, 0x7fff, 0x8000, 0x8800, 0xf400, 0xf401, 0xf402 )
 
-static void sub_cpu_control_w( int offs, int data )
+static WRITE_HANDLER( sub_cpu_control_w )
 {
 	if (data & 1)
 		cpu_set_reset_line(1,CLEAR_LINE);

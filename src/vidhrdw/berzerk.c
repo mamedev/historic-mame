@@ -41,7 +41,7 @@ INLINE void copy_byte(int x, int y, int data, int col)
 }
 
 
-void berzerk_videoram_w(int offset,int data)
+WRITE_HANDLER( berzerk_videoram_w )
 {
 	int coloroffset, x, y;
 
@@ -57,7 +57,7 @@ void berzerk_videoram_w(int offset,int data)
 }
 
 
-void berzerk_colorram_w(int offset,int data)
+WRITE_HANDLER( berzerk_colorram_w )
 {
 	int x, y, i;
 
@@ -113,7 +113,7 @@ INLINE int shifter_flopper(unsigned char data)
 }
 
 
-void berzerk_magicram_w(int offset,int data)
+WRITE_HANDLER( berzerk_magicram_w )
 {
 	int data2;
 
@@ -151,7 +151,7 @@ void berzerk_magicram_w(int offset,int data)
 }
 
 
-void berzerk_magicram_control_w(int offset,int data)
+WRITE_HANDLER( berzerk_magicram_control_w )
 {
 	magicram_control = data;
 	magicram_latch = 0;
@@ -159,7 +159,7 @@ void berzerk_magicram_control_w(int offset,int data)
 }
 
 
-int berzerk_collision_r(int offset)
+READ_HANDLER( berzerk_collision_r )
 {
 	int ret = (collision ? 0x80 : 0x00);
 

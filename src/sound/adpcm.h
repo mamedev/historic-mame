@@ -56,10 +56,10 @@ void OKIM6295_sh_update(void);
 void OKIM6295_set_bank_base(int which, int voice, int base);	/* set voice to ALL_VOICES to set all banks at once */
 void OKIM6295_set_frequency(int which, int voice, int frequency);	/* set voice to ALL_VOICES to set all banks at once */
 
-int OKIM6295_status_0_r(int offset);
-int OKIM6295_status_1_r(int offset);
-void OKIM6295_data_0_w(int offset,int data);
-void OKIM6295_data_1_w(int offset,int data);
+READ_HANDLER( OKIM6295_status_0_r );
+READ_HANDLER( OKIM6295_status_1_r );
+WRITE_HANDLER( OKIM6295_data_0_w );
+WRITE_HANDLER( OKIM6295_data_1_w );
 
 
 #endif

@@ -23,7 +23,7 @@ void pcktgal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /***************************************************************************/
 
-static void pcktgal_bank_w(int offset,int data)
+static WRITE_HANDLER( pcktgal_bank_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -34,7 +34,7 @@ static void pcktgal_bank_w(int offset,int data)
 	else { cpu_setbank(2,&RAM[0x12000]); }
 }
 
-static void pcktgal_sound_bank_w(int offset,int data)
+static WRITE_HANDLER( pcktgal_sound_bank_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
@@ -42,7 +42,7 @@ static void pcktgal_sound_bank_w(int offset,int data)
 	else { cpu_setbank(3,&RAM[0x10000]); }
 }
 
-static void pcktgal_sound_w(int offset,int data)
+static WRITE_HANDLER( pcktgal_sound_w )
 {
 	soundlatch_w(0,data);
 	cpu_cause_interrupt(1,M6502_INT_NMI);
@@ -62,12 +62,12 @@ static void pcktgal_adpcm_int(int data)
 		cpu_cause_interrupt(1,M6502_INT_IRQ);
 }
 
-static void pcktgal_adpcm_data_w(int offset,int data)
+static WRITE_HANDLER( pcktgal_adpcm_data_w )
 {
 	msm5205next=data;
 }
 
-static int pcktgal_adpcm_reset_r(int offset)
+static READ_HANDLER( pcktgal_adpcm_reset_r )
 {
 	MSM5205_reset_w(0,0);
 	return 0;

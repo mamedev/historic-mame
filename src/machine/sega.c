@@ -23,7 +23,7 @@ unsigned char mult1;
 unsigned short result;
 unsigned char ioSwitch; /* determines whether we're reading the spinner or the buttons */
 
-void sega_wr(int offset, int data)
+WRITE_HANDLER( sega_w )
 {
 	int pc,off;
 
@@ -67,24 +67,24 @@ int sega_interrupt (void)
 		return interrupt();
 }
 
-void sega_mult1_w (int offset, int data)
+WRITE_HANDLER( sega_mult1_w )
 {
 	mult1 = data;
 }
 
-void sega_mult2_w (int offset, int data)
+WRITE_HANDLER( sega_mult2_w )
 {
 	/* Curiously, the multiply is _only_ calculated by writes to this port. */
 	result = mult1 * data;
 }
 
-void sega_switch_w (int offset, int data) {
+WRITE_HANDLER( sega_switch_w ) {
 
 	ioSwitch = data;
 /*	if (errorlog) fprintf (errorlog,"ioSwitch: %02x\n",ioSwitch); */
 	}
 
-int sega_mult_r (int offset)
+READ_HANDLER( sega_mult_r )
 {
 	int c;
 
@@ -108,7 +108,8 @@ int sega_mult_r (int offset)
   Port 6 - 1-1, 1-2, 1-3, 1-4, 1-5, 1-6, 1-7, 1-8
   Port 7 - 2-1, 2-2, 2-3, 2-4, 2-5, 2-6, 2-7, 2-8
 ***************************************************************************/
-int sega_read_ports(int offset)
+
+READ_HANDLER( sega_ports_r )
 {
 	int dip1, dip2;
 
@@ -135,7 +136,7 @@ int sega_read_ports(int offset)
 }
 
 
-int sega_IN4_r (int offset) {
+READ_HANDLER( sega_IN4_r ) {
 
 /*
  * The values returned are always increasing.  That is, regardless of whether
@@ -165,7 +166,7 @@ int sega_IN4_r (int offset) {
 	return (~((spinner<<1) | sign));
 }
 
-int elim4_IN4_r (int offset)
+READ_HANDLER( elim4_IN4_r )
 {
 	/* If the ioPort ($f8) is 0x1f, we're reading the 4 coin inputs.    */
 	/* If the ioPort ($f8) is 0x1e, we're reading player 3 & 4 controls.*/

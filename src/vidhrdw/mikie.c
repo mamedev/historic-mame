@@ -92,7 +92,7 @@ void mikie_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 
 
 
-void mikie_palettebank_w(int offset,int data)
+WRITE_HANDLER( mikie_palettebank_w )
 {
 	if (palettebank != (data & 7))
 	{
@@ -101,7 +101,7 @@ void mikie_palettebank_w(int offset,int data)
 	}
 }
 
-void mikie_flipscreen_w(int offset,int data)
+WRITE_HANDLER( mikie_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{

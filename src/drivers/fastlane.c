@@ -16,8 +16,8 @@ TODO:
 
 /* from vidhrdw/fastlane.c */
 extern unsigned char *fastlane_k007121_regs,*fastlane_videoram1,*fastlane_videoram2;
-void fastlane_vram1_w(int offset,int data);
-void fastlane_vram2_w(int offset,int data);
+WRITE_HANDLER( fastlane_vram1_w );
+WRITE_HANDLER( fastlane_vram2_w );
 int fastlane_vh_start(void);
 void fastlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -34,7 +34,7 @@ static int fastlane_interrupt(void)
 	return ignore_interrupt();
 }
 
-void k007121_registers_w(int offset, int data)
+WRITE_HANDLER( k007121_registers_w )
 {
 	if (offset < 8)
 		K007121_ctrl_0_w(offset,data);
@@ -42,7 +42,7 @@ void k007121_registers_w(int offset, int data)
 		fastlane_k007121_regs[offset] = data;
 }
 
-static void fastlane_bankswitch_w(int offset, int data)
+static WRITE_HANDLER( fastlane_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -65,19 +65,19 @@ static void fastlane_bankswitch_w(int offset, int data)
 /* Read and write handlers for one K007232 chip:
    even and odd register are mapped swapped */
 
-static int fastlane_K007232_read_port_0_r(int offset)
+static READ_HANDLER( fastlane_K007232_read_port_0_r )
 {
 	return K007232_read_port_0_r(offset ^ 1);
 }
-static void fastlane_K007232_write_port_0_w(int offset, int data)
+static WRITE_HANDLER( fastlane_K007232_write_port_0_w )
 {
 	K007232_write_port_0_w(offset ^ 1, data);
 }
-static int fastlane_K007232_read_port_1_r(int offset)
+static READ_HANDLER( fastlane_K007232_read_port_1_r )
 {
 	return K007232_read_port_1_r(offset ^ 1);
 }
-static void fastlane_K007232_write_port_1_w(int offset, int data)
+static WRITE_HANDLER( fastlane_K007232_write_port_1_w )
 {
 	K007232_write_port_1_w(offset ^ 1, data);
 }

@@ -110,7 +110,7 @@ void commando_vh_stop(void)
 
 
 
-void commando_bgvideoram_w(int offset,int data)
+WRITE_HANDLER( commando_bgvideoram_w )
 {
 	if (commando_bgvideoram[offset] != data)
 	{
@@ -122,7 +122,7 @@ void commando_bgvideoram_w(int offset,int data)
 
 
 
-void commando_bgcolorram_w(int offset,int data)
+WRITE_HANDLER( commando_bgcolorram_w )
 {
 	if (commando_bgcolorram[offset] != data)
 	{
@@ -134,7 +134,7 @@ void commando_bgcolorram_w(int offset,int data)
 
 
 
-void commando_spriteram_w(int offset,int data)
+WRITE_HANDLER( commando_spriteram_w )
 {
 if (errorlog && data != spriteram[offset] && offset % 4 == 2)
 	fprintf(errorlog,"%04x: sprite %d X offset (old = %d new = %d) scanline %d\n",
@@ -151,7 +151,7 @@ if (errorlog && data != spriteram[offset] && offset % 4 == 0)
 
 
 
-void commando_c804_w(int offset,int data)
+WRITE_HANDLER( commando_c804_w )
 {
 	/* bits 0 and 1 are for coin counters - we ignore them */
 

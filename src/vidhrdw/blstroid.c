@@ -175,7 +175,7 @@ void blstroid_scanline_update(int scanline)
  *
  *************************************/
 
-void blstroid_playfieldram_w(int offset, int data)
+WRITE_HANDLER( blstroid_playfieldram_w )
 {
 	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -195,7 +195,7 @@ void blstroid_playfieldram_w(int offset, int data)
  *
  *************************************/
 
-void blstroid_priorityram_w(int offset, int data)
+WRITE_HANDLER( blstroid_priorityram_w )
 {
 	int shift, which;
 

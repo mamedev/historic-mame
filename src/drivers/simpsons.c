@@ -17,17 +17,17 @@ someone@secureshell.com
 /* from vidhrdw */
 int simpsons_vh_start( void );
 void simpsons_vh_stop( void );
-void simpsons_priority_w(int offset,int data);
+WRITE_HANDLER( simpsons_priority_w );
 void simpsons_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /* from machine */
-int simpsons_eeprom_r( int offset );
-void simpsons_eeprom_w( int offset, int data );
-void simpsons_coin_counter_w( int offset, int data );
-int simpsons_sound_interrupt_r( int offset );
-int simpsons_sound_r(int offset);
-int simpsons_speedup1_r( int offs );
-int simpsons_speedup2_r( int offs );
+READ_HANDLER( simpsons_eeprom_r );
+WRITE_HANDLER( simpsons_eeprom_w );
+WRITE_HANDLER( simpsons_coin_counter_w );
+READ_HANDLER( simpsons_sound_interrupt_r );
+READ_HANDLER( simpsons_sound_r );
+READ_HANDLER( simpsons_speedup1_r );
+READ_HANDLER( simpsons_speedup2_r );
 void simpsons_init_machine( void );
 void simpsons_nvram_handler(void *file,int read_or_write);
 extern int simpsons_firq_enabled;
@@ -68,7 +68,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1fb0, 0x1fbf, K053251_w },
 	{ 0x1fc0, 0x1fc0, simpsons_coin_counter_w },
 	{ 0x1fc2, 0x1fc2, simpsons_eeprom_w },
-	{ 0x1fc6, 0x1fc7, K053260_WriteReg },
+	{ 0x1fc6, 0x1fc7, K053260_w },
 	{ 0x2000, 0x3fff, MWA_BANK4 },
 	{ 0x0000, 0x3fff, K052109_w },
 	{ 0x4000, 0x5fff, MWA_RAM },
@@ -77,7 +77,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
-static void z80_bankswitch_w( int offset, int data )
+static WRITE_HANDLER( z80_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
@@ -100,7 +100,7 @@ static void nmi_callback(int param)
 	cpu_set_nmi_line(1,ASSERT_LINE);
 }
 
-static void z80_arm_nmi(int offset,int data)
+static WRITE_HANDLER( z80_arm_nmi_w )
 {
 //	sound_nmi_enabled = 1;
 	cpu_set_nmi_line(1,CLEAR_LINE);
@@ -113,7 +113,7 @@ static struct MemoryReadAddress z80_readmem[] =
 	{ 0x8000, 0xbfff, MRA_BANK2 },
 	{ 0xf000, 0xf7ff, MRA_RAM },
 	{ 0xf801, 0xf801, YM2151_status_port_0_r },
-	{ 0xfc00, 0xfc2f, K053260_ReadReg },
+	{ 0xfc00, 0xfc2f, K053260_r },
 	{ -1 }	/* end of table */
 };
 
@@ -124,8 +124,8 @@ static struct MemoryWriteAddress z80_writemem[] =
 	{ 0xf000, 0xf7ff, MWA_RAM },
 	{ 0xf800, 0xf800, YM2151_register_port_0_w },
 	{ 0xf801, 0xf801, YM2151_data_port_0_w },
-	{ 0xfa00, 0xfa00, z80_arm_nmi },
-	{ 0xfc00, 0xfc2f, K053260_WriteReg },
+	{ 0xfa00, 0xfa00, z80_arm_nmi_w },
+	{ 0xfc00, 0xfc2f, K053260_w },
 	{ 0xfe00, 0xfe00, z80_bankswitch_w },
 	{ -1 }	/* end of table */
 };

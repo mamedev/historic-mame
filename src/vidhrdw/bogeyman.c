@@ -56,13 +56,13 @@ void bogeyman_vh_stop(void)
 
 /******************************************************************************/
 
-void bogeyman_paletteram_w(int offset,int data)
+WRITE_HANDLER( bogeyman_paletteram_w )
 {
 	/* RGB output is inverted */
 	paletteram_BBGGGRRR_w(offset,~data);
 }
 
-void bogeyman_videoram_w(int offset, int data)
+WRITE_HANDLER( bogeyman_videoram_w )
 {
 	bogeyman_videoram[offset]=data;
 	dirtybuffer[offset]=1;

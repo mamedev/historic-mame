@@ -771,7 +771,7 @@ int frontend_help (int argc, char **argv)
 
 					printf("| %-33.33s",name_ref);
 
-					if (drivers[i]->flags & GAME_NOT_WORKING)
+					if (drivers[i]->flags & (GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION))
 					{
 						const struct GameDriver *maindrv;
 						int foundworking;
@@ -786,7 +786,7 @@ int frontend_help (int argc, char **argv)
 						{
 							if (drivers[j] == maindrv || drivers[j]->clone_of == maindrv)
 							{
-								if ((drivers[j]->flags & GAME_NOT_WORKING) == 0)
+								if ((drivers[j]->flags & (GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)) == 0)
 								{
 									foundworking = 1;
 									break;

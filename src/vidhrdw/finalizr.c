@@ -95,7 +95,7 @@ void finalizr_vh_stop(void)
 
 
 
-void finalizr_videoctrl_w(int offset,int data)
+WRITE_HANDLER( finalizr_videoctrl_w )
 {
 	spriterambank = data & 8;
 

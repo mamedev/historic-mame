@@ -12,8 +12,8 @@
 #include "vidhrdw/generic.h"
 
 
-void badlands_playfieldram_w(int offset, int data);
-void badlands_pf_bank_w(int offset, int data);
+WRITE_HANDLER( badlands_playfieldram_w );
+WRITE_HANDLER( badlands_pf_bank_w );
 
 int badlands_vh_start(void);
 void badlands_vh_stop(void);
@@ -110,7 +110,7 @@ static int vblank_int(void)
  *
  *************************************/
 
-static int sound_busy_r(int offset)
+static READ_HANDLER( sound_busy_r )
 {
 	int temp = 0xfeff;
 
@@ -120,14 +120,14 @@ static int sound_busy_r(int offset)
 }
 
 
-static int pedal_0_r(int offset)
+static READ_HANDLER( pedal_0_r )
 {
 	(void)offset;
 	return pedal_value[0];
 }
 
 
-static int pedal_1_r(int offset)
+static READ_HANDLER( pedal_1_r )
 {
 	(void)offset;
 	return pedal_value[1];
@@ -141,7 +141,7 @@ static int pedal_1_r(int offset)
  *
  *************************************/
 
-static int audio_io_r(int offset)
+static READ_HANDLER( audio_io_r )
 {
 	int result = 0xff;
 
@@ -189,7 +189,7 @@ static int audio_io_r(int offset)
 }
 
 
-static void audio_io_w(int offset, int data)
+static WRITE_HANDLER( audio_io_w )
 {
 	switch (offset & 0x206)
 	{

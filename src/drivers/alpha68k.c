@@ -52,13 +52,13 @@ void kyros_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void alpha68k_I_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void alpha68k_I_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void alpha68k_II_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-void alpha68k_II_video_bank_w(int offset, int data);
+WRITE_HANDLER( alpha68k_II_video_bank_w );
 void alpha68k_V_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void alpha68k_V_16bit_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void alpha68k_V_sb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-void alpha68k_V_video_bank_w(int offset, int data);
-void alpha68k_V_video_control_w(int offset, int data);
-void alpha68k_paletteram_w(int offset,int data);
+WRITE_HANDLER( alpha68k_V_video_bank_w );
+WRITE_HANDLER( alpha68k_V_video_control_w );
+WRITE_HANDLER( alpha68k_paletteram_w );
 
 static unsigned char *timesold_ram;
 static int invert_controls;
@@ -67,7 +67,7 @@ static int invert_controls;
 
 /* Video ram is 8 bit, and writes to the high or low parts of the 16 bit word
 end up in the same place */
-static void alpha68k_II_video_w(int offset,int data)
+static WRITE_HANDLER( alpha68k_II_video_w )
 {
 	if ((data>>16)==0xff)
 		WRITE_WORD(&videoram[offset],(data>>8)&0xff);
@@ -75,14 +75,14 @@ static void alpha68k_II_video_w(int offset,int data)
 		WRITE_WORD(&videoram[offset],data);
 }
 
-static int alpha68k_II_video_r(int offset)
+static READ_HANDLER( alpha68k_II_video_r )
 {
 	return READ_WORD(&videoram[offset]);
 }
 
 /******************************************************************************/
 
-static int control_1_r(int offset)
+static READ_HANDLER( control_1_r )
 {
 //	if (invert_controls)
 //		return ~(readinputport(0) + (readinputport(1) << 8));
@@ -90,7 +90,7 @@ static int control_1_r(int offset)
 	return (readinputport(0) + (readinputport(1) << 8));
 }
 
-static int control_2_r(int offset)
+static READ_HANDLER( control_2_r )
 {
 //	if (invert_controls)
 //		return ~(readinputport(3) + ((~(1 << (readinputport(5) * 12 / 256))) << 8));
@@ -99,17 +99,17 @@ static int control_2_r(int offset)
     	((~(1 << (readinputport(5) * 12 / 256))) << 8);
 }
 
-static int control_2_V_r(int offset)
+static READ_HANDLER( control_2_V_r )
 {
 	return readinputport(3);
 }
 
-static int control_2_K_r(int offset)
+static READ_HANDLER( control_2_K_r )
 {
 	return readinputport(2)<<8;
 }
 
-static int control_3_r(int offset)
+static READ_HANDLER( control_3_r )
 {
 //	if (invert_controls)
 //		return ~((( ~(1 << (readinputport(6) * 12 / 256)) )<<8)&0xff00);
@@ -118,7 +118,7 @@ static int control_3_r(int offset)
 }
 
 /* High 4 bits of CN1 & CN2 */
-static int control_4_r(int offset)
+static READ_HANDLER( control_4_r )
 {
 	if (invert_controls)
 		return ~(((( ~(1 << (readinputport(6) * 12 / 256))  ) <<4)&0xf000)
@@ -130,12 +130,12 @@ static int control_4_r(int offset)
 
 /******************************************************************************/
 
-static void alpha68k_II_sound_w(int offset, int data)
+static WRITE_HANDLER( alpha68k_II_sound_w )
 {
 	soundlatch_w(0,data&0xff);
 }
 
-static void alpha68k_V_sound_w(int offset, int data)
+static WRITE_HANDLER( alpha68k_V_sound_w )
 {
 	/* Sound & fix bank select are in the same word */
 	if ((data>>16)!=0xff) {
@@ -148,7 +148,7 @@ static void alpha68k_V_sound_w(int offset, int data)
 /******************************************************************************/
 
 /* Time Soldiers, Sky Soldiers, Gold Medalist */
-static int alpha_II_trigger_r(int offset)
+static READ_HANDLER( alpha_II_trigger_r )
 {
 	static int latch;
 	int source=READ_WORD(&timesold_ram[offset]);
@@ -191,7 +191,7 @@ static int alpha_II_trigger_r(int offset)
 }
 
 /* Sky Adventure & Gang Wars */
-static int alpha_V_trigger_r(int offset)
+static READ_HANDLER( alpha_V_trigger_r )
 {
 	static int latch;
 	int source=READ_WORD(&timesold_ram[offset]);
@@ -265,7 +265,7 @@ static int alpha_V_trigger_r(int offset)
 	return 0; /* Values returned don't matter */
 }
 
-static void alpha_trigger_w(int offset, int data)
+static WRITE_HANDLER( alpha_trigger_w )
 {
 	if (errorlog) fprintf(errorlog,"%04x:  Alpha write trigger at %04x (%04x)\n",cpu_get_pc(),offset,data);
 
@@ -276,7 +276,7 @@ static void alpha_trigger_w(int offset, int data)
 		invert_controls=0;
 }
 
-static int kyros_alpha_trigger_r(int offset)
+static READ_HANDLER( kyros_alpha_trigger_r )
 {
 	static int latch;
 	int source=READ_WORD(&timesold_ram[offset]);
@@ -419,7 +419,7 @@ static struct MemoryWriteAddress alpha68k_V_writemem[] =
 
 /******************************************************************************/
 
-static void sound_bank_w(int offset, int data)
+static WRITE_HANDLER( sound_bank_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU2);
@@ -453,7 +453,7 @@ static struct IOReadPort sound_readport[] =
 static struct IOWritePort sound_writeport[] =
 {
 	{ 0x00, 0x00, soundlatch_clear_w },
-	{ 0x08, 0x08, DAC_data_w },
+	{ 0x08, 0x08, DAC_0_data_w },
 	{ 0x0a, 0x0a, YM2413_register_port_0_w },
 	{ 0x0b, 0x0b, YM2413_data_port_0_w },
 	{ 0x0c, 0x0c, YM2203_control_port_0_w },
@@ -1826,7 +1826,7 @@ ROM_END
 
 /******************************************************************************/
 
-static int timesold_cycle_r(int offset)
+static READ_HANDLER( timesold_cycle_r )
 {
 	int ret=READ_WORD(&timesold_ram[0x8]);
 
@@ -1838,7 +1838,7 @@ static int timesold_cycle_r(int offset)
 	return ret;
 }
 
-static int skysoldr_cycle_r(int offset)
+static READ_HANDLER( skysoldr_cycle_r )
 {
 	int ret=READ_WORD(&timesold_ram[0x8]);
 
@@ -1850,7 +1850,7 @@ static int skysoldr_cycle_r(int offset)
 	return ret;
 }
 
-static int gangwars_cycle_r(int offset)
+static READ_HANDLER( gangwars_cycle_r )
 {
 	int ret=READ_WORD(&timesold_ram[0x206]);
 

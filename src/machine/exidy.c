@@ -141,7 +141,7 @@ void exidy_vh_init_palette(unsigned char *game_palette, unsigned short *game_col
 
 unsigned char exidy_collision_mask = 0x00;
 
-void fax_bank_select_w(int offset,int data)
+WRITE_HANDLER( fax_bank_select_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -156,7 +156,7 @@ void fax_bank_select_w(int offset,int data)
 	}
 }
 
-int exidy_input_port_2_r(int offset)
+READ_HANDLER( exidy_input_port_2_r )
 {
 	int value;
 

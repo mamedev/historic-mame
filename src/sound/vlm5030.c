@@ -467,7 +467,7 @@ int VLM5030_BSY(void)
 }
 
 /* latch contoll data */
-void VLM5030_data_w(int offset,int data)
+WRITE_HANDLER( VLM5030_data_w )
 {
 	latch_data = data;
 }

@@ -58,10 +58,10 @@ I/O 2  ;bit 0 Coin in 1
 extern unsigned char *popeye_videoram;
 extern int popeye_videoram_size;
 extern unsigned char *popeye_background_pos,*popeye_palette_bank;
-void popeye_backgroundram_w(int offset,int data);
-void popeye_videoram_w(int offset,int data);
-void popeye_colorram_w(int offset,int data);
-void popeye_palettebank_w(int offset,int data);
+WRITE_HANDLER( popeye_backgroundram_w );
+WRITE_HANDLER( popeye_videoram_w );
+WRITE_HANDLER( popeye_colorram_w );
+WRITE_HANDLER( popeye_palettebank_w );
 void popeye_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void popeyebl_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void popeye_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -223,7 +223,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static int dswbit;
 
-static void popeye_portB_w(int offset,int data)
+static WRITE_HANDLER( popeye_portB_w )
 {
 	/* bit 0 does something - RV in the schematics */
 
@@ -231,7 +231,7 @@ static void popeye_portB_w(int offset,int data)
 	dswbit = (data & 0x0e) >> 1;
 }
 
-static int popeye_portA_r(int offset)
+static READ_HANDLER( popeye_portA_r )
 {
 	int res;
 

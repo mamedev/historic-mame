@@ -20,7 +20,7 @@ int arabian_interrupt(void)
 }
 
 
-void arabian_portB_w(int offset,int data)
+WRITE_HANDLER( arabian_portB_w )
 {
 	int pc;
 	static int last;
@@ -36,7 +36,7 @@ void arabian_portB_w(int offset,int data)
 	coin_counter_w(1, ~data & 0x02);
 }
 
-int arabian_input_port_r(int offset)
+READ_HANDLER( arabian_input_port_r )
 {
 	int pom;
 

@@ -11,7 +11,7 @@ static int bank_base;
 
 /******************************************************************************/
 
-void alpha68k_paletteram_w(int offset,int data)
+WRITE_HANDLER( alpha68k_paletteram_w )
 {
 	int oldword = READ_WORD (&paletteram[offset]);
 	int newword = COMBINE_WORD (oldword, data);
@@ -177,7 +177,7 @@ void alpha68k_II_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 */
 
-void alpha68k_II_video_bank_w(int offset, int data)
+WRITE_HANDLER( alpha68k_II_video_bank_w )
 {
 	static int buffer_28,buffer_60,buffer_68;
 
@@ -215,7 +215,7 @@ void alpha68k_II_video_bank_w(int offset, int data)
 
 /******************************************************************************/
 
-void alpha68k_V_video_control_w(int offset, int data)
+WRITE_HANDLER( alpha68k_V_video_control_w )
 {
 	switch (offset) {
 		case 0x10: /* Graphics flags?  Not related to fix chars anyway */
@@ -266,7 +266,7 @@ static void draw_sprites_V(struct osd_bitmap *bitmap, int j, int s, int e, int f
 	}
 }
 
-void alpha68k_V_video_bank_w(int offset, int data)
+WRITE_HANDLER( alpha68k_V_video_bank_w )
 {
 	bank_base=data&0xf;
 }

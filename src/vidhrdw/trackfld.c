@@ -115,7 +115,7 @@ void trackfld_vh_stop(void)
 
 
 
-void trackfld_flipscreen_w(int offset,int data)
+WRITE_HANDLER( trackfld_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{

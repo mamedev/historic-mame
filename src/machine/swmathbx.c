@@ -174,7 +174,7 @@ if (errorlog) fprintf(errorlog, "MATH ADDR: %x, CPU ADDR: %x, RAMWORD: %x\n", MA
 /******************************************************/
 /****** Other Starwars Math related handlers **********/
 
-int prng(int offset)
+READ_HANDLER( prng_r )
 {
 #if(MATHDEBUG==1)
 printf("prng\n");
@@ -184,7 +184,7 @@ printf("prng\n");
 }
 
 /********************************************************/
-void prngclr(int offset, int data)
+WRITE_HANDLER( prngclr_w )
 {
 #if(MATHDEBUG==1)
 printf("prngclr\n");
@@ -193,7 +193,7 @@ printf("prngclr\n");
 }
 
 /********************************************************/
-void mw0(int offset, int data)
+WRITE_HANDLER( mw0_w )
 {
 #if(MATHDEBUG==1)
 printf("mw0: %x\n",data);
@@ -204,7 +204,7 @@ printf("mw0: %x\n",data);
 
 /********************************************************/
 /* BIC - write high bit */
-void mw1(int offset, int data)
+WRITE_HANDLER( mw1_w )
 {
 #if(MATHDEBUG==1)
 printf("mw1: %x\n",data);
@@ -214,7 +214,7 @@ printf("mw1: %x\n",data);
 
 /********************************************************/
 /* BIC - write low byte */
-void mw2 (int offset, int data)
+WRITE_HANDLER( mw2_w )
 {
 #if(MATHDEBUG==1)
 printf("mw2: %x\n",data);
@@ -232,33 +232,33 @@ static int RESULT;	/* ASG 971002 */
 static int DIVISOR, DIVIDEND;
 
 /********************************************************/
-int reh(int offset)
+READ_HANDLER( reh_r )
 {
 	return((RESULT & 0xff00)>>8 );
 }
 /********************************************************/
-int rel(int offset)
+READ_HANDLER( rel_r )
 {
 	return(RESULT & 0x00ff);
 }
 /********************************************************/
 
 
-void swmathbx(int offset, int data)
+WRITE_HANDLER( swmathbx_w )
 {
 	data &= 0xff;	/* ASG 971002 -- make sure we only get bytes here */
 	switch(offset)
 	{
       case 0:
-        mw0(0,data);
+        mw0_w(0,data);
         break;
 
       case 1:
-        mw1(0,data);
+        mw1_w(0,data);
         break;
 
       case 2:
-        mw2(0,data);
+        mw2_w(0,data);
         break;
 
       case 4: /* dvsrh */

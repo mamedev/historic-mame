@@ -138,20 +138,20 @@ static void common_videoram_w(int offset, int data, int color)
 	}
 }
 
-void astrof_videoram_w(int offset,int data)
+WRITE_HANDLER( astrof_videoram_w )
 {
 	// Astro Fighter's palette is set in astrof_video_control2_w, D0 is unused
 	common_videoram_w(offset, data, *astrof_color & 0x0e);
 }
 
-void tomahawk_videoram_w(int offset,int data)
+WRITE_HANDLER( tomahawk_videoram_w )
 {
 	// Tomahawk's palette is set per byte
 	common_videoram_w(offset, data, (*astrof_color & 0x0e) | ((*astrof_color & 0x01) << 4));
 }
 
 
-void astrof_video_control1_w(int offset,int data)
+WRITE_HANDLER( astrof_video_control1_w )
 {
 	// Video control register 1
 	//
@@ -182,7 +182,7 @@ void astrof_video_control1_w(int offset,int data)
 // 			   in the color PROM
 // Bit 4-7   = Not hooked up
 
-void astrof_video_control2_w(int offset,int data)
+WRITE_HANDLER( astrof_video_control2_w )
 {
 	if (palette_bank != (data & 0x04))
 	{
@@ -199,7 +199,7 @@ void astrof_video_control2_w(int offset,int data)
 	/* Defer changing the colors to avoid flicker */
 }
 
-void tomahawk_video_control2_w(int offset,int data)
+WRITE_HANDLER( tomahawk_video_control2_w )
 {
 	if (palette_bank == -1)
 	{
@@ -217,7 +217,7 @@ void tomahawk_video_control2_w(int offset,int data)
 }
 
 
-int tomahawk_protection_r(int offset)
+READ_HANDLER( tomahawk_protection_r )
 {
 	/* flip the byte */
 

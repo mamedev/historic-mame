@@ -85,7 +85,7 @@ static void init_voice( VOICE *v )
 	v->sample_loop=0;
 }
 
-int C140_r(int offset)
+READ_HANDLER( C140_r )
 {
 	offset&=0x1ff;
 	return REG[offset];
@@ -98,7 +98,7 @@ static long find_sample( long adrs, long bank)
 	return ((adrs&0x200000)>>2)|(adrs&0x7ffff);		/* 991104.CAB */
 }
 
-void C140_w(int offset,int data)
+WRITE_HANDLER( C140_w )
 {
 	stream_update(stream, 0);
 

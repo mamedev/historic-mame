@@ -5,7 +5,7 @@
 ****************************************************************************/
 
 
-void irem_sound_cmd_w(int offset, int value);
+WRITE_HANDLER( irem_sound_cmd_w );
 
 
 extern struct MemoryReadAddress irem_sound_readmem[];

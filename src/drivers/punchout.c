@@ -109,10 +109,10 @@ extern unsigned char *punchout_scroll;
 extern unsigned char *punchout_bigsprite1;
 extern unsigned char *punchout_bigsprite2;
 extern unsigned char *punchout_palettebank;
-void punchout_videoram2_w(int offset,int data);
-void punchout_bigsprite1ram_w(int offset,int data);
-void punchout_bigsprite2ram_w(int offset,int data);
-void punchout_palettebank_w(int offset,int data);
+WRITE_HANDLER( punchout_videoram2_w );
+WRITE_HANDLER( punchout_bigsprite1ram_w );
+WRITE_HANDLER( punchout_bigsprite2ram_w );
+WRITE_HANDLER( punchout_palettebank_w );
 int punchout_vh_start(void);
 int armwrest_vh_start(void);
 void punchout_vh_stop(void);
@@ -126,10 +126,6 @@ void init_spnchout(void);
 void init_spnchotj(void);
 void init_armwrest(void);
 
-int punchout_input_3_r(int offset);
-void punchout_speech_reset(int offset,int data);
-void punchout_speech_st(int offset,int data);
-void punchout_speech_vcu(int offset,int data);
 
 
 static unsigned char *nvram;
@@ -150,7 +146,31 @@ static void nvram_handler(void *file,int read_or_write)
 
 
 
-void punchout_2a03_reset_w(int offset,int data)
+READ_HANDLER( punchout_input_3_r )
+{
+	int data = input_port_3_r(offset);
+	/* bit 4 is busy pin level */
+	if( VLM5030_BSY() ) data &= ~0x10;
+	else data |= 0x10;
+	return data;
+}
+
+WRITE_HANDLER( punchout_speech_reset_w )
+{
+	VLM5030_RST( data&0x01 );
+}
+
+WRITE_HANDLER( punchout_speech_st_w )
+{
+	VLM5030_ST( data&0x01 );
+}
+
+WRITE_HANDLER( punchout_speech_vcu_w )
+{
+	VLM5030_VCU( data & 0x01 );
+}
+
+WRITE_HANDLER( punchout_2a03_reset_w )
 {
 	if (data & 1)
 		cpu_set_reset_line(1,ASSERT_LINE);
@@ -161,7 +181,7 @@ void punchout_2a03_reset_w(int offset,int data)
 static int prot_mode_sel = -1; /* Mode selector */
 static int prot_mem[16];
 
-static int spunchout_prot_r( int offset ) {
+static READ_HANDLER( spunchout_prot_r ) {
 
 	switch ( offset ) {
 		case 0x00:
@@ -237,7 +257,7 @@ static int spunchout_prot_r( int offset ) {
 	return prot_mem[offset];
 }
 
-static void spunchout_prot_w( int offset, int data ) {
+static WRITE_HANDLER( spunchout_prot_w ) {
 
 	switch ( offset ) {
 		case 0x00:
@@ -298,90 +318,90 @@ static void spunchout_prot_w( int offset, int data ) {
 	prot_mem[offset] = data;
 }
 
-static int spunchout_prot_0_r( int offset ) {
+static READ_HANDLER( spunchout_prot_0_r ) {
 	return spunchout_prot_r( 0 );
 }
 
-static void spunchout_prot_0_w( int offset, int data ) {
+static WRITE_HANDLER( spunchout_prot_0_w ) {
 	spunchout_prot_w( 0, data );
 }
 
-static int spunchout_prot_1_r( int offset ) {
+static READ_HANDLER( spunchout_prot_1_r ) {
 	return spunchout_prot_r( 1 );
 }
 
-static void spunchout_prot_1_w( int offset, int data ) {
+static WRITE_HANDLER( spunchout_prot_1_w ) {
 	spunchout_prot_w( 1, data );
 }
 
-static int spunchout_prot_2_r( int offset ) {
+static READ_HANDLER( spunchout_prot_2_r ) {
 	return spunchout_prot_r( 2 );
 }
 
-static void spunchout_prot_2_w( int offset, int data ) {
+static WRITE_HANDLER( spunchout_prot_2_w ) {
 	spunchout_prot_w( 2, data );
 }
 
-static int spunchout_prot_3_r( int offset ) {
+static READ_HANDLER( spunchout_prot_3_r ) {
 	return spunchout_prot_r( 3 );
 }
 
-static void spunchout_prot_3_w( int offset, int data ) {
+static WRITE_HANDLER( spunchout_prot_3_w ) {
 	spunchout_prot_w( 3, data );
 }
 
-static int spunchout_prot_5_r( int offset ) {
+static READ_HANDLER( spunchout_prot_5_r ) {
 	return spunchout_prot_r( 5 );
 }
 
-static void spunchout_prot_5_w( int offset, int data ) {
+static WRITE_HANDLER( spunchout_prot_5_w ) {
 	spunchout_prot_w( 5, data );
 }
 
 
-static int spunchout_prot_6_r( int offset ) {
+static READ_HANDLER( spunchout_prot_6_r ) {
 	return spunchout_prot_r( 6 );
 }
 
-static void spunchout_prot_6_w( int offset, int data ) {
+static WRITE_HANDLER( spunchout_prot_6_w ) {
 	spunchout_prot_w( 6, data );
 }
 
-static int spunchout_prot_9_r( int offset ) {
+static READ_HANDLER( spunchout_prot_9_r ) {
 	return spunchout_prot_r( 9 );
 }
 
-static int spunchout_prot_b_r( int offset ) {
+static READ_HANDLER( spunchout_prot_b_r ) {
 	return spunchout_prot_r( 11 );
 }
 
-static void spunchout_prot_b_w( int offset, int data ) {
+static WRITE_HANDLER( spunchout_prot_b_w ) {
 	spunchout_prot_w( 11, data );
 }
 
-static int spunchout_prot_c_r( int offset ) {
+static READ_HANDLER( spunchout_prot_c_r ) {
 	return spunchout_prot_r( 12 );
 }
 
-static void spunchout_prot_d_w( int offset, int data ) {
+static WRITE_HANDLER( spunchout_prot_d_w ) {
 	spunchout_prot_w( 13, data );
 }
 
-static int spunchout_prot_a_r( int offset ) {
+static READ_HANDLER( spunchout_prot_a_r ) {
 	return spunchout_prot_r( 10 );
 }
 
-static void spunchout_prot_a_w( int offset, int data ) {
+static WRITE_HANDLER( spunchout_prot_a_w ) {
 	spunchout_prot_w( 10, data );
 }
 
 #if 0
-static int spunchout_prot_f_r( int offset ) {
+static READ_HANDLER( spunchout_prot_f_r ) {
 	return spunchout_prot_r( 15 );
 }
 #endif
 
-static void spunchout_prot_f_w( int offset, int data ) {
+static WRITE_HANDLER( spunchout_prot_f_w ) {
 	spunchout_prot_w( 15, data );
 }
 
@@ -444,9 +464,9 @@ static struct IOWritePort writeport[] =
 	{ 0x09, 0x09, IOWP_NOP },	/* watchdog reset, seldom used because 08 clears the watchdog as well */
 	{ 0x0a, 0x0a, IOWP_NOP },	/* ?? */
 	{ 0x0b, 0x0b, punchout_2a03_reset_w },
-	{ 0x0c, 0x0c, punchout_speech_reset },	/* VLM5030 */
-	{ 0x0d, 0x0d, punchout_speech_st    },	/* VLM5030 */
-	{ 0x0e, 0x0e, punchout_speech_vcu   },	/* VLM5030 */
+	{ 0x0c, 0x0c, punchout_speech_reset_w },	/* VLM5030 */
+	{ 0x0d, 0x0d, punchout_speech_st_w    },	/* VLM5030 */
+	{ 0x0e, 0x0e, punchout_speech_vcu_w   },	/* VLM5030 */
 	{ 0x0f, 0x0f, IOWP_NOP },	/* enable NVRAM ? */
 
 	{ 0x06, 0x06, IOWP_NOP},

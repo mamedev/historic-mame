@@ -21,11 +21,11 @@ Notes:
 
 int superqix_vh_start(void);
 void superqix_vh_stop(void);
-int superqix_bitmapram_r(int offset);
-void superqix_bitmapram_w(int offset,int data);
-int superqix_bitmapram2_r(int offset);
-void superqix_bitmapram2_w(int offset,int data);
-void superqix_0410_w(int offset,int data);
+READ_HANDLER( superqix_bitmapram_r );
+WRITE_HANDLER( superqix_bitmapram_w );
+READ_HANDLER( superqix_bitmapram2_r );
+WRITE_HANDLER( superqix_bitmapram2_w );
+WRITE_HANDLER( superqix_0410_w );
 void superqix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 

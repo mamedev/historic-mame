@@ -131,12 +131,12 @@ void twincobr_vh_stop(void)
 }
 
 
-int twincobr_crtc_r(int offset)
+READ_HANDLER( twincobr_crtc_r )
 {
 	return crtc6845_register_r(offset);
 }
 
-void twincobr_crtc_w(int offset,int data)
+WRITE_HANDLER( twincobr_crtc_w )
 {
 	if (offset == 0) crtc6845_address_w(offset, data);
 	if (offset == 2) crtc6845_register_w(offset, data);
@@ -146,66 +146,66 @@ int twincobr_txoffs_r(void)
 {
 	return txoffs / 2;
 }
-void twincobr_txoffs_w(int offset,int data)
+WRITE_HANDLER( twincobr_txoffs_w )
 {
 	txoffs = (2 * data) % videoram_size;
 }
-int twincobr_txram_r(int offset)
+READ_HANDLER( twincobr_txram_r )
 {
 	return READ_WORD(&videoram[txoffs]);
 }
-void twincobr_txram_w(int offset,int data)
+WRITE_HANDLER( twincobr_txram_w )
 {
 	WRITE_WORD(&videoram[txoffs],data);
 }
 
-void twincobr_bgoffs_w(int offset,int data)
+WRITE_HANDLER( twincobr_bgoffs_w )
 {
 	bgoffs = (2 * data) % (twincobr_bgvideoram_size >> 1);
 }
-int twincobr_bgram_r(int offset)
+READ_HANDLER( twincobr_bgram_r )
 {
 	return READ_WORD(&twincobr_bgvideoram[bgoffs+twincobr_bg_ram_bank]);
 }
-void twincobr_bgram_w(int offset,int data)
+WRITE_HANDLER( twincobr_bgram_w )
 {
 	WRITE_WORD(&twincobr_bgvideoram[bgoffs+twincobr_bg_ram_bank],data);
 	dirtybuffer[bgoffs / 2] = 1;
 }
 
-void twincobr_fgoffs_w(int offset,int data)
+WRITE_HANDLER( twincobr_fgoffs_w )
 {
 	fgoffs = (2 * data) % twincobr_fgvideoram_size;
 }
-int twincobr_fgram_r(int offset)
+READ_HANDLER( twincobr_fgram_r )
 {
 	return READ_WORD(&twincobr_fgvideoram[fgoffs]);
 }
-void twincobr_fgram_w(int offset,int data)
+WRITE_HANDLER( twincobr_fgram_w )
 {
 	WRITE_WORD(&twincobr_fgvideoram[fgoffs],data);
 }
 
 
-void twincobr_txscroll_w(int offset,int data)
+WRITE_HANDLER( twincobr_txscroll_w )
 {
 	if (offset == 0) txscrollx = data;
 	else txscrolly = data;
 }
 
-void twincobr_bgscroll_w(int offset,int data)
+WRITE_HANDLER( twincobr_bgscroll_w )
 {
 	if (offset == 0) bgscrollx = data;
 	else bgscrolly = data;
 }
 
-void twincobr_fgscroll_w(int offset,int data)
+WRITE_HANDLER( twincobr_fgscroll_w )
 {
 	if (offset == 0) fgscrollx = data;
 	else fgscrolly = data;
 }
 
-void twincobr_exscroll_w(int offset,int data)	/* Extra unused video layer */
+WRITE_HANDLER( twincobr_exscroll_w )	/* Extra unused video layer */
 {
 	if (errorlog) {
 		if (offset == 0) fprintf(errorlog,"PC - write %04x to extra video layer Y scroll register\n",data);
@@ -214,26 +214,26 @@ void twincobr_exscroll_w(int offset,int data)	/* Extra unused video layer */
 }
 
 /******************** Wardner interface to this hardware ********************/
-void wardner_txlayer_w(int offset, int data)
+WRITE_HANDLER( wardner_txlayer_w )
 {
 	if (offset == 0) tx_offset_lsb = data;
 	if (offset == 1) tx_offset_msb = (data << 8);
 	twincobr_txoffs_w(0,tx_offset_msb | tx_offset_lsb);
 }
-void wardner_bglayer_w(int offset, int data)
+WRITE_HANDLER( wardner_bglayer_w )
 {
 	if (offset == 0) bg_offset_lsb = data;
 	if (offset == 1) bg_offset_msb = (data<<8);
 	twincobr_bgoffs_w(0,bg_offset_msb | bg_offset_lsb);
 }
-void wardner_fglayer_w(int offset, int data)
+WRITE_HANDLER( wardner_fglayer_w )
 {
 	if (offset == 0) fg_offset_lsb = data;
 	if (offset == 1) fg_offset_msb = (data<<8);
 	twincobr_fgoffs_w(0,fg_offset_msb | fg_offset_lsb);
 }
 
-void wardner_txscroll_w(int offset, int data)
+WRITE_HANDLER( wardner_txscroll_w )
 {
 	if (offset & 2) {
 		if (offset == 2) tx_scrollx_lsb = data;
@@ -247,7 +247,7 @@ void wardner_txscroll_w(int offset, int data)
 		twincobr_txscroll_w(0,tx_scrolly_msb | tx_scrolly_lsb);
 	}
 }
-void wardner_bgscroll_w(int offset, int data)
+WRITE_HANDLER( wardner_bgscroll_w )
 {
 	if (offset & 2) {
 		if (offset == 2) bg_scrollx_lsb = data;
@@ -261,7 +261,7 @@ void wardner_bgscroll_w(int offset, int data)
 		twincobr_bgscroll_w(0,bg_scrolly_msb | bg_scrolly_lsb);
 	}
 }
-void wardner_fgscroll_w(int offset, int data)
+WRITE_HANDLER( wardner_fgscroll_w )
 {
 	if (offset & 2) {
 		if (offset == 2) fg_scrollx_lsb = data;
@@ -276,7 +276,7 @@ void wardner_fgscroll_w(int offset, int data)
 	}
 }
 
-int wardner_videoram_r(int offset)
+READ_HANDLER( wardner_videoram_r )
 {
 	int memdata = 0;
 	switch (offset) {
@@ -290,7 +290,7 @@ int wardner_videoram_r(int offset)
 	return memdata;
 }
 
-void wardner_videoram_w(int offset, int data)
+WRITE_HANDLER( wardner_videoram_w )
 {
 	int memdata = 0;
 	switch (offset) {

@@ -153,34 +153,34 @@ static void williams_adpcm_ym2151_irq(int state);
 static void williams_cvsd_irqa(int state);
 static void williams_cvsd_irqb(int state);
 
-static int williams_cvsd_pia_r(int offset);
-static int williams_ym2151_r(int offset);
-static int counter_down_r(int offset);
-static int counter_value_r(int offset);
+static READ_HANDLER( williams_cvsd_pia_r );
+static READ_HANDLER( williams_ym2151_r );
+static READ_HANDLER( counter_down_r );
+static READ_HANDLER( counter_value_r );
 
-static void williams_dac_data_w(int offset, int data);
-static void williams_dac2_data_w(int offset, int data);
-static void williams_cvsd_pia_w(int offset, int data);
-static void williams_ym2151_w(int offset, int data);
-static void williams_cvsd_bank_select_w(int offset, int data);
+static WRITE_HANDLER( williams_dac_data_w );
+static WRITE_HANDLER( williams_dac2_data_w );
+static WRITE_HANDLER( williams_cvsd_pia_w );
+static WRITE_HANDLER( williams_ym2151_w );
+static WRITE_HANDLER( williams_cvsd_bank_select_w );
 
-static int williams_adpcm_command_r(int offset);
-static void williams_adpcm_bank_select_w(int offset, int data);
-static void williams_adpcm_6295_bank_select_w(int offset, int data);
+static READ_HANDLER( williams_adpcm_command_r );
+static WRITE_HANDLER( williams_adpcm_bank_select_w );
+static WRITE_HANDLER( williams_adpcm_6295_bank_select_w );
 
-static int williams_narc_command_r(int offset);
-static int williams_narc_command2_r(int offset);
-static void williams_narc_command2_w(int offset, int data);
-static void williams_narc_master_bank_select_w(int offset, int data);
-static void williams_narc_slave_bank_select_w(int offset, int data);
+static READ_HANDLER( williams_narc_command_r );
+static READ_HANDLER( williams_narc_command2_r );
+static WRITE_HANDLER( williams_narc_command2_w );
+static WRITE_HANDLER( williams_narc_master_bank_select_w );
+static WRITE_HANDLER( williams_narc_slave_bank_select_w );
 
 static void counter_enable(int param);
-static void counter_divisor_w(int offset, int data);
-static void counter_down_w(int offset, int data);
-static void counter_value_w(int offset, int data);
+static WRITE_HANDLER( counter_divisor_w );
+static WRITE_HANDLER( counter_down_w );
+static WRITE_HANDLER( counter_value_w );
 
-static void cvsd_state_w(int offset, int data);
-static void dac_state_bank_w(int offset, int data);
+static WRITE_HANDLER( cvsd_state_w );
+static WRITE_HANDLER( dac_state_bank_w );
 
 static void update_counter(void);
 static void cvsd_update(int num, INT16 *buffer, int length);
@@ -208,8 +208,8 @@ struct MemoryWriteAddress williams_cvsd_writemem[] =
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x2000, 0x2001, williams_ym2151_w },
 	{ 0x4000, 0x4003, williams_cvsd_pia_w },
-	{ 0x6000, 0x6000, hc55516_digit_clock_clear_w },
-	{ 0x6800, 0x6800, hc55516_clock_set_w },
+	{ 0x6000, 0x6000, hc55516_0_digit_clock_clear_w },
+	{ 0x6800, 0x6800, hc55516_0_clock_set_w },
 	{ 0x7800, 0x7800, williams_cvsd_bank_select_w },
 	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 }
@@ -281,8 +281,8 @@ struct MemoryReadAddress williams_narc_slave_readmem[] =
 struct MemoryWriteAddress williams_narc_slave_writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x2000, hc55516_clock_set_w },
-	{ 0x2400, 0x2400, hc55516_digit_clock_clear_w },
+	{ 0x2000, 0x2000, hc55516_0_clock_set_w },
+	{ 0x2400, 0x2400, hc55516_0_digit_clock_clear_w },
 	{ 0x3000, 0x3000, williams_dac2_data_w },
 	{ 0x3800, 0x3800, williams_narc_slave_bank_select_w },
 	{ 0x3c00, 0x3c00, MWA_NOP },
@@ -796,7 +796,7 @@ static void williams_adpcm_ym2151_irq(int state)
 	CVSD BANK SELECT
 ****************************************************************************/
 
-void williams_cvsd_bank_select_w(int offset, int data)
+WRITE_HANDLER( williams_cvsd_bank_select_w )
 {
 	cpu_setbank(6, get_cvsd_bank_base(data));
 }
@@ -806,12 +806,12 @@ void williams_cvsd_bank_select_w(int offset, int data)
 	ADPCM BANK SELECT
 ****************************************************************************/
 
-void williams_adpcm_bank_select_w(int offset, int data)
+WRITE_HANDLER( williams_adpcm_bank_select_w )
 {
 	cpu_setbank(6, get_adpcm_bank_base(data));
 }
 
-void williams_adpcm_6295_bank_select_w(int offset, int data)
+WRITE_HANDLER( williams_adpcm_6295_bank_select_w )
 {
 	if (!(data & 0x04))
 		OKIM6295_set_bank_base(0, ALL_VOICES, 0x00000);
@@ -826,12 +826,12 @@ void williams_adpcm_6295_bank_select_w(int offset, int data)
 	NARC BANK SELECT
 ****************************************************************************/
 
-void williams_narc_master_bank_select_w(int offset, int data)
+WRITE_HANDLER( williams_narc_master_bank_select_w )
 {
 	cpu_setbank(6, get_narc_master_bank_base(data));
 }
 
-void williams_narc_slave_bank_select_w(int offset, int data)
+WRITE_HANDLER( williams_narc_slave_bank_select_w )
 {
 	cpu_setbank(5, get_narc_slave_bank_base(data));
 }
@@ -848,7 +848,7 @@ static void williams_cvsd_delayed_data_w(int param)
 	pia_set_input_cb2(williams_pianum, param & 0x200);
 }
 
-void williams_cvsd_data_w(int offset, int data)
+WRITE_HANDLER( williams_cvsd_data_w )
 {
 	timer_set(TIME_NOW, data, williams_cvsd_delayed_data_w);
 }
@@ -872,13 +872,13 @@ void williams_cvsd_reset_w(int state)
 	ADPCM COMMUNICATIONS
 ****************************************************************************/
 
-int williams_adpcm_command_r(int offset)
+READ_HANDLER( williams_adpcm_command_r )
 {
 	cpu_set_irq_line(williams_cpunum, M6809_IRQ_LINE, CLEAR_LINE);
 	return soundlatch_r(0);
 }
 
-void williams_adpcm_data_w(int offset, int data)
+WRITE_HANDLER( williams_adpcm_data_w )
 {
 	soundlatch_w(0, data & 0xff);
 	if (!(data & 0x200))
@@ -904,14 +904,14 @@ void williams_adpcm_reset_w(int state)
 	NARC COMMUNICATIONS
 ****************************************************************************/
 
-int williams_narc_command_r(int offset)
+READ_HANDLER( williams_narc_command_r )
 {
 	cpu_set_nmi_line(williams_cpunum, CLEAR_LINE);
 	cpu_set_irq_line(williams_cpunum, M6809_IRQ_LINE, CLEAR_LINE);
 	return soundlatch_r(0);
 }
 
-void williams_narc_data_w(int offset, int data)
+WRITE_HANDLER( williams_narc_data_w )
 {
 	soundlatch_w(0, data & 0xff);
 	if (!(data & 0x100))
@@ -939,13 +939,13 @@ void williams_narc_reset_w(int state)
 	}
 }
 
-int williams_narc_command2_r(int offset)
+READ_HANDLER( williams_narc_command2_r )
 {
 	cpu_set_irq_line(williams_cpunum + 1, M6809_FIRQ_LINE, CLEAR_LINE);
 	return soundlatch2_r(0);
 }
 
-void williams_narc_command2_w(int offset, int data)
+WRITE_HANDLER( williams_narc_command2_w )
 {
 	soundlatch2_w(0, data & 0xff);
 	cpu_set_irq_line(williams_cpunum + 1, M6809_FIRQ_LINE, ASSERT_LINE);
@@ -956,12 +956,12 @@ void williams_narc_command2_w(int offset, int data)
 	YM2151 INTERFACES
 ****************************************************************************/
 
-static int williams_ym2151_r(int offset)
+static READ_HANDLER( williams_ym2151_r )
 {
 	return YM2151_status_port_0_r(offset);
 }
 
-static void williams_ym2151_w(int offset, int data)
+static WRITE_HANDLER( williams_ym2151_w )
 {
 	if (offset & 1)
 	{
@@ -1036,12 +1036,12 @@ static void williams_ym2151_w(int offset, int data)
 	PIA INTERFACES
 ****************************************************************************/
 
-static int williams_cvsd_pia_r(int offset)
+static READ_HANDLER( williams_cvsd_pia_r )
 {
 	return pia_read(williams_pianum, offset);
 }
 
-static void williams_cvsd_pia_w(int offset, int data)
+static WRITE_HANDLER( williams_cvsd_pia_w )
 {
 	pia_write(williams_pianum, offset, data);
 }
@@ -1051,12 +1051,12 @@ static void williams_cvsd_pia_w(int offset, int data)
 	DAC INTERFACES
 ****************************************************************************/
 
-static void williams_dac_data_w(int offset, int data)
+static WRITE_HANDLER( williams_dac_data_w )
 {
 	DAC_data_w(0, data);
 }
 
-static void williams_dac2_data_w(int offset, int data)
+static WRITE_HANDLER( williams_dac2_data_w )
 {
 	DAC_data_w(1, data);
 }
@@ -1119,26 +1119,26 @@ static void update_counter(void)
 	counter.downcount[0] = downcounter;
 }
 
-static void counter_divisor_w(int offset, int data)
+static WRITE_HANDLER( counter_divisor_w )
 {
 	update_counter();
 	counter.divisor[offset] = data;
 	counter.adjusted_divisor = data ? data : 256;
 }
 
-static int counter_down_r(int offset)
+static READ_HANDLER( counter_down_r )
 {
 	update_counter();
 	return counter.downcount[offset];
 }
 
-static void counter_down_w(int offset, int data)
+static WRITE_HANDLER( counter_down_w )
 {
 	update_counter();
 	counter.downcount[offset] = data;
 }
 
-static int counter_value_r(int offset)
+static READ_HANDLER( counter_value_r )
 {
 	UINT16 pc = cpu_getpreviouspc();
 
@@ -1168,7 +1168,7 @@ static int counter_value_r(int offset)
 	return counter.value[offset];
 }
 
-static void counter_value_w(int offset, int data)
+static WRITE_HANDLER( counter_value_w )
 {
 	/* only update the counter after the LSB is written */
 	if (offset == 1)
@@ -1204,7 +1204,7 @@ static void cvsd_start(int param)
 	cvsd.invalid = 0;
 }
 
-static void cvsd_state_w(int offset, int data)
+static WRITE_HANDLER( cvsd_state_w )
 {
 	/* if we write a value here with a non-zero high bit, prepare to start playing */
 	stream_update(cvsd_stream, 0);
@@ -1244,7 +1244,7 @@ static void dac_start(int param)
 	dac.invalid = 0;
 }
 
-static void dac_state_bank_w(int offset, int data)
+static WRITE_HANDLER( dac_state_bank_w )
 {
 	/* if we write a value here with a non-zero high bit, prepare to start playing */
 	stream_update(dac_stream, 0);

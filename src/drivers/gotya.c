@@ -3,7 +3,7 @@
 	Got-Ya driver by Zsolt Vasvari
 
 
-TODO: Sound
+TODO: Emulated sound
 
 	  Hitachi HD38880BP
          	  HD38882PA06
@@ -22,7 +22,9 @@ extern unsigned char *gotya_foregroundram;
 void gotya_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int gotya_vh_start(void);
 void gotya_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void gotya_video_control_w(int offset, int data);
+WRITE_HANDLER( gotya_video_control_w );
+
+WRITE_HANDLER( gotya_soundlatch_w );
 
 
 static struct MemoryReadAddress readmem[] =
@@ -41,7 +43,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x5000, 0x5fff, MWA_RAM },
 	{ 0x6004, 0x6004, gotya_video_control_w },
-	{ 0x6005, 0x6005, soundlatch_w },
+	{ 0x6005, 0x6005, gotya_soundlatch_w },
 	{ 0x6006, 0x6006, MWA_RAM, &gotya_scroll },
 	{ 0x6007, 0x6007, watchdog_reset_w },
 	{ 0xc000, 0xc7ff, videoram_w, &videoram, &videoram_size },
@@ -130,6 +132,50 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
+static const char *sample_names[] =
+{												// Address triggered at
+	"*gotya",
+	"01.wav",	/* game start tune */			// 075f
+	"02.wav",	/* coin in */					// 0074
+	"03.wav",	/* eat dot */					// 0e45
+	"05.wav",	/* eat dollar sign */			// 0e45
+
+	"06.wav",	/* door open */					// 19e1
+	"07.wav",	/* door close */				// 1965
+
+	"08.wav",	/* theme song */				// 0821
+	//"09.wav"									// 1569
+
+	/* one of these two is played after eating the last dot */
+	"0a.wav",	/* piccolo */					// 17af
+	"0b.wav",	/* tune */						// 17af
+
+	//"0f.wav"									// 08ee
+	"10.wav",	/* 'We're even. Bye Bye!' */	// 162a
+	"11.wav",	/* 'You got me!' */				// 1657
+	"12.wav",	/* 'You have lost out' */		// 085e
+
+	"13.wav",	/* 'Rock' */					// 14de
+	"14.wav",	/* 'Scissors' */				// 14f3
+	"15.wav",	/* 'Paper' */					// 1508
+
+	/* one of these is played when going by the girl between levels */
+	"16.wav",	/* 'Very good!' */				// 194a
+	"17.wav",	/* 'Wonderful!' */				// 194a
+	"18.wav",	/* 'Come on!' */				// 194a
+	"19.wav",	/* 'I love you!' */				// 194a
+	"1a.wav",	/* 'See you again!' */			// 194a
+	0       /* end of array */
+};
+
+static struct Samplesinterface samples_interface =
+{
+	4,	/* 4 channels */
+	50,	/* volume */
+	sample_names
+};
+
+
 static struct MachineDriver machine_driver_gotya =
 {
 	/* basic machine hardware */
@@ -159,6 +205,12 @@ static struct MachineDriver machine_driver_gotya =
 
 	/* sound hardware */
 	0,0,0,0,
+	{
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
 };
 
 /***************************************************************************
@@ -196,4 +248,4 @@ ROM_START( gotya )
 ROM_END
 
 
-GAMEX( 1981, gotya, 0, gotya, gotya, 0, ROT270, "Game-A-Tron", "Got-Ya (12/24/1981, prototype?)", GAME_NO_SOUND )
+GAME( 1981, gotya, 0, gotya, gotya, 0, ROT270, "Game-A-Tron", "Got-Ya (12/24/1981, prototype?)" )

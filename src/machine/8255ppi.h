@@ -22,12 +22,12 @@ int ppi8255_r ( int which, int offset );
 void ppi8255_w( int which, int offset, int data );
 
 /* Helpers */
-int ppi8255_0_r( int offset );
-int ppi8255_1_r( int offset );
-int ppi8255_2_r( int offset );
-int ppi8255_3_r( int offset );
-void ppi8255_0_w( int offset, int data );
-void ppi8255_1_w( int offset, int data );
-void ppi8255_2_w( int offset, int data );
-void ppi8255_3_w( int offset, int data );
+READ_HANDLER( ppi8255_0_r );
+READ_HANDLER( ppi8255_1_r );
+READ_HANDLER( ppi8255_2_r );
+READ_HANDLER( ppi8255_3_r );
+WRITE_HANDLER( ppi8255_0_w );
+WRITE_HANDLER( ppi8255_1_w );
+WRITE_HANDLER( ppi8255_2_w );
+WRITE_HANDLER( ppi8255_3_w );
 #endif

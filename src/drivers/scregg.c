@@ -17,11 +17,11 @@ void btime_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 int  btime_vh_start (void);
 void eggs_vh_screenrefresh    (struct osd_bitmap *bitmap,int full_refresh);
 
-int  btime_mirrorvideoram_r(int offset);
-void btime_mirrorvideoram_w(int offset,int data);
-int  btime_mirrorcolorram_r(int offset);
-void btime_mirrorcolorram_w(int offset,int data);
-void btime_video_control_w(int offset,int data);
+READ_HANDLER( btime_mirrorvideoram_r );
+WRITE_HANDLER( btime_mirrorvideoram_w );
+READ_HANDLER( btime_mirrorcolorram_r );
+WRITE_HANDLER( btime_mirrorcolorram_w );
+WRITE_HANDLER( btime_video_control_w );
 
 
 

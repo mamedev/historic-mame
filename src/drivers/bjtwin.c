@@ -86,10 +86,10 @@ extern unsigned char *bjtwin_videocontrol;
 extern int bjtwin_txvideoram_size;
 
 
-int  bjtwin_txvideoram_r(int offset);
-void bjtwin_txvideoram_w(int offset,int data);
-void bjtwin_paletteram_w(int offset,int data);
-void bjtwin_flipscreen_w(int offset,int data);
+READ_HANDLER( bjtwin_txvideoram_r );
+WRITE_HANDLER( bjtwin_txvideoram_w );
+WRITE_HANDLER( bjtwin_paletteram_w );
+WRITE_HANDLER( bjtwin_flipscreen_w );
 
 int  bjtwin_vh_start(void);
 void bjtwin_vh_stop(void);
@@ -97,7 +97,7 @@ void bjtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-void bjtwin_oki6295_bankswitch_w(int offset, int data)
+WRITE_HANDLER( bjtwin_oki6295_bankswitch_w )
 {
 	if ((data & 0x00ff0000) == 0)
 	{

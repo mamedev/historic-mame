@@ -106,17 +106,17 @@ void generic_bitmapped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refre
 }
 
 
-int videoram_r(int offset)
+READ_HANDLER( videoram_r )
 {
 	return videoram[offset];
 }
 
-int colorram_r(int offset)
+READ_HANDLER( colorram_r )
 {
 	return colorram[offset];
 }
 
-void videoram_w(int offset,int data)
+WRITE_HANDLER( videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -126,7 +126,7 @@ void videoram_w(int offset,int data)
 	}
 }
 
-void colorram_w(int offset,int data)
+WRITE_HANDLER( colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -138,22 +138,22 @@ void colorram_w(int offset,int data)
 
 
 
-int spriteram_r(int offset)
+READ_HANDLER( spriteram_r )
 {
 	return spriteram[offset];
 }
 
-void spriteram_w(int offset,int data)
+WRITE_HANDLER( spriteram_w )
 {
 	spriteram[offset] = data;
 }
 
-int spriteram_2_r(int offset)
+READ_HANDLER( spriteram_2_r )
 {
 	return spriteram_2[offset];
 }
 
-void spriteram_2_w(int offset,int data)
+WRITE_HANDLER( spriteram_2_w )
 {
 	spriteram_2[offset] = data;
 }
@@ -201,12 +201,12 @@ more control is needed over what is buffered.
 
 */
 
-void buffer_spriteram_w(int offset,int data)
+WRITE_HANDLER( buffer_spriteram_w )
 {
 	memcpy(buffered_spriteram,spriteram,spriteram_size);
 }
 
-void buffer_spriteram_2_w(int offset,int data)
+WRITE_HANDLER( buffer_spriteram_2_w )
 {
 	memcpy(buffered_spriteram_2,spriteram_2,spriteram_2_size);
 }

@@ -381,7 +381,7 @@ static void channel_update(int ch, INT16 **buffer, int length)
  *
  *************************************/
 
-int exidy440_sound_command_r(int offset)
+READ_HANDLER( exidy440_sound_command_r )
 {
 	/* clear the FIRQ that got us here and acknowledge the read to the main CPU */
 	cpu_set_irq_line(1, 1, CLEAR_LINE);
@@ -398,7 +398,7 @@ int exidy440_sound_command_r(int offset)
  *
  *************************************/
 
-void exidy440_sound_volume_w(int offset, int data)
+WRITE_HANDLER( exidy440_sound_volume_w )
 {
 	if (SOUND_LOG && debuglog)
 		fprintf(debuglog, "Volume %02X=%02X\n", offset, data);
@@ -425,7 +425,7 @@ int exidy440_sound_interrupt(void)
 }
 
 
-void exidy440_sound_interrupt_clear(int offset, int data)
+WRITE_HANDLER( exidy440_sound_interrupt_clear_w )
 {
 	cpu_set_irq_line(1, 0, CLEAR_LINE);
 }
@@ -469,7 +469,7 @@ void m6844_finished(int ch)
  *
  *************************************/
 
-int exidy440_m6844_r(int offset)
+READ_HANDLER( exidy440_m6844_r )
 {
 	int result = 0;
 
@@ -550,7 +550,7 @@ int exidy440_m6844_r(int offset)
 }
 
 
-void exidy440_m6844_w(int offset, int data)
+WRITE_HANDLER( exidy440_m6844_w )
 {
 	int i;
 

@@ -130,38 +130,38 @@ extern int f2_paletteram_size;
 
 int taitof2_vh_start (void);
 void taitof2_vh_stop (void);
-int taitof2_characterram_r (int offset);
-void taitof2_characterram_w (int offset,int data);
-int taitof2_text_r (int offset);
-void taitof2_text_w (int offset,int data);
-int taitof2_background_r (int offset);
-void taitof2_background_w (int offset,int data);
-int taitof2_foreground_r (int offset);
-void taitof2_foreground_w (int offset,int data);
-void taitof2_spritebank_w (int offset,int data);
+READ_HANDLER( taitof2_characterram_r );
+WRITE_HANDLER( taitof2_characterram_w );
+READ_HANDLER( taitof2_text_r );
+WRITE_HANDLER( taitof2_text_w );
+READ_HANDLER( taitof2_background_r );
+WRITE_HANDLER( taitof2_background_w );
+READ_HANDLER( taitof2_foreground_r );
+WRITE_HANDLER( taitof2_foreground_w );
+WRITE_HANDLER( taitof2_spritebank_w );
 void taitof2_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 
-int ssi_videoram_r (int offset);
-void ssi_videoram_w (int offset,int data);
+READ_HANDLER( ssi_videoram_r );
+WRITE_HANDLER( ssi_videoram_w );
 
-void rastan_sound_port_w (int offset,int data);
-void rastan_sound_comm_w (int offset,int data);
-int rastan_sound_comm_r (int offset);
+WRITE_HANDLER( rastan_sound_port_w );
+WRITE_HANDLER( rastan_sound_comm_w );
+READ_HANDLER( rastan_sound_comm_r );
 
-void r_wr_a000(int offset,int data);
-void r_wr_a001(int offset,int data);
-int  r_rd_a001(int offset);
+READ_HANDLER( rastan_a001_r );
+WRITE_HANDLER( rastan_a000_w );
+WRITE_HANDLER( rastan_a001_w );
 
-void ssi_sound_w(int offset,int data);
-int ssi_sound_r(int offset);
+WRITE_HANDLER( ssi_sound_w );
+READ_HANDLER( ssi_sound_r );
 
 void cchip1_init_machine(void);
-int cchip1_r (int offset);
-void cchip1_w (int offset, int data);
+READ_HANDLER( cchip1_r );
+WRITE_HANDLER( cchip1_w );
 
 static unsigned char *taitof2_ram; /* used for high score save */
 
-static void bankswitch_w (int offset, int data)
+static WRITE_HANDLER( bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int banknum = (data - 1) & 3;
@@ -169,7 +169,7 @@ static void bankswitch_w (int offset, int data)
 	cpu_setbank (2, &RAM [0x10000 + (banknum * 0x4000)]);
 }
 
-static int taitof2_input_r (int offset)
+static READ_HANDLER( taitof2_input_r )
 {
     switch (offset)
     {
@@ -194,7 +194,7 @@ if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory a
 	return 0xff;
 }
 
-static int growl_dsw_r (int offset)
+static READ_HANDLER( growl_dsw_r )
 {
     switch (offset)
     {
@@ -210,7 +210,7 @@ if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory a
 	return 0xff;
 }
 
-static int growl_input_r (int offset)
+static READ_HANDLER( growl_input_r )
 {
     switch (offset)
     {
@@ -230,7 +230,7 @@ if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory a
 	return 0xff;
 }
 
-int megab_input_r (int offset)
+READ_HANDLER( megab_input_r )
 {
 	switch (offset)
 	{
@@ -259,7 +259,7 @@ static int liquidk_interrupt(void)
 	return MC68000_IRQ_6;
 }
 
-void taitof2_sound_w(int offset,int data)
+WRITE_HANDLER( taitof2_sound_w )
 {
 	if (offset == 0)
 		rastan_sound_port_w (0, data & 0xff);
@@ -267,14 +267,14 @@ void taitof2_sound_w(int offset,int data)
 		rastan_sound_comm_w (0, data & 0xff);
 }
 
-int taitof2_sound_r(int offset)
+READ_HANDLER( taitof2_sound_r )
 {
 	if (offset == 2)
 		return ((rastan_sound_comm_r (0) & 0xff));
 	else return 0;
 }
 
-static int sound_hack_r (int offs)
+static READ_HANDLER( sound_hack_r )
 {
 	return YM2610_status_port_0_A_r (0) | 1;
 }
@@ -409,7 +409,7 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0xe001, 0xe001, YM2610_read_port_0_r },
 	{ 0xe002, 0xe002, YM2610_status_port_0_B_r },
 	{ 0xe200, 0xe200, MRA_NOP },
-	{ 0xe201, 0xe201, r_rd_a001 },
+	{ 0xe201, 0xe201, rastan_a001_r },
 	{ 0xea00, 0xea00, MRA_NOP },
 	{ -1 }  /* end of table */
 };
@@ -422,8 +422,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xe001, 0xe001, YM2610_data_port_0_A_w },
 	{ 0xe002, 0xe002, YM2610_control_port_0_B_w },
 	{ 0xe003, 0xe003, YM2610_data_port_0_B_w },
-	{ 0xe200, 0xe200, r_wr_a000 },
-	{ 0xe201, 0xe201, r_wr_a001 },
+	{ 0xe200, 0xe200, rastan_a000_w },
+	{ 0xe201, 0xe201, rastan_a001_w },
 	{ 0xe400, 0xe403, MWA_NOP }, /* pan */
 	{ 0xee00, 0xee00, MWA_NOP }, /* ? */
 	{ 0xf000, 0xf000, MWA_NOP }, /* ? */

@@ -34,19 +34,19 @@ static int spy_interrupt(void)
 static int rambank;
 static unsigned char *ram;
 
-static int spy_bankedram1_r(int offset)
+static READ_HANDLER( spy_bankedram1_r )
 {
 	if (!rambank) return ram[offset];
 	else return paletteram_r(offset);
 }
 
-static void spy_bankedram1_w(int offset,int data)
+static WRITE_HANDLER( spy_bankedram1_w )
 {
 	if (!rambank) ram[offset] = data;
 	else paletteram_xBBBBBGGGGGRRRRR_swap_w(offset,data);
 }
 
-static void bankswitch_w(int offset,int data)
+static WRITE_HANDLER( bankswitch_w )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int offs;
@@ -60,7 +60,7 @@ if ((data & 1) == 0) usrintf_showmessage("bankswitch RAM bank 0");
 	cpu_setbank(1,&rom[offs]);
 }
 
-static void spy_3f90_w(int offset,int data)
+static WRITE_HANDLER( spy_3f90_w )
 {
 	/* bits 0/1 = coin counters */
 	coin_counter_w(0,data & 0x01);
@@ -76,12 +76,12 @@ static void spy_3f90_w(int offset,int data)
 }
 
 
-static void spy_sh_irqtrigger_w(int offset,int data)
+static WRITE_HANDLER( spy_sh_irqtrigger_w )
 {
 	cpu_cause_interrupt(1,0xff);
 }
 
-static void sound_bank_w(int offset, int data)
+static WRITE_HANDLER( sound_bank_w )
 {
 	unsigned char *rom;
 	int bank_A,bank_B;

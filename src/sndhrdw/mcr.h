@@ -14,23 +14,26 @@
 
 void mcr_sound_init(void);
 
-void ssio_data_w(int offset, int data);
-int ssio_status_r(int offset);
+WRITE_HANDLER( ssio_data_w );
+READ_HANDLER( ssio_status_r );
 void ssio_reset_w(int state);
 
-void csdeluxe_data_w(int offset, int data);
+WRITE_HANDLER( csdeluxe_data_w );
+READ_HANDLER( csdeluxe_status_r );
 void csdeluxe_reset_w(int state);
 
-void turbocs_data_w(int offset, int data);
+WRITE_HANDLER( turbocs_data_w );
+READ_HANDLER( turbocs_status_r );
 void turbocs_reset_w(int state);
 
-void soundsgood_data_w(int offset, int data);
+WRITE_HANDLER( soundsgood_data_w );
+READ_HANDLER( soundsgood_status_r );
 void soundsgood_reset_w(int state);
 
-void squawkntalk_data_w(int offset, int data);
+WRITE_HANDLER( squawkntalk_data_w );
 void squawkntalk_reset_w(int state);
 
-void advaudio_data_w(int offset, int data);
+WRITE_HANDLER( advaudio_data_w );
 void advaudio_reset_w(int state);
 
 
@@ -80,7 +83,6 @@ extern struct MemoryReadAddress csdeluxe_readmem[];
 extern struct MemoryWriteAddress csdeluxe_writemem[];
 
 extern struct DACinterface mcr_dac_interface;
-extern struct DACinterface mcr_dual_dac_interface;
 
 #define SOUND_CPU_CHIP_SQUEAK_DELUXE				\
 	{												\
@@ -96,18 +98,14 @@ extern struct DACinterface mcr_dual_dac_interface;
 		&mcr_dac_interface							\
 	}
 
-#define SOUND_TURBO_CHIP_SQUEAK_PLUS_SOUNDSGOOD		\
-	{												\
-		SOUND_DAC,									\
-		&mcr_dual_dac_interface						\
-	}
-
 
 
 /************ Sounds Good CPU and sound definitions ***************/
 
 extern struct MemoryReadAddress soundsgood_readmem[];
 extern struct MemoryWriteAddress soundsgood_writemem[];
+
+extern struct DACinterface mcr_dual_dac_interface;
 
 #define SOUND_CPU_SOUNDS_GOOD						\
 	{												\
@@ -118,6 +116,12 @@ extern struct MemoryWriteAddress soundsgood_writemem[];
 	}
 
 #define SOUND_SOUNDS_GOOD SOUND_CHIP_SQUEAK_DELUXE
+
+#define SOUND_TURBO_CHIP_SQUEAK_PLUS_SOUNDSGOOD		\
+	{												\
+		SOUND_DAC,									\
+		&mcr_dual_dac_interface						\
+	}
 
 
 

@@ -23,10 +23,10 @@ extern unsigned char *travrusa_videoram;
 
 void travrusa_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int travrusa_vh_start(void);
-void travrusa_videoram_w(int offset,int data);
-void travrusa_scroll_x_low_w(int offset,int data);
-void travrusa_scroll_x_high_w(int offset,int data);
-void travrusa_flipscreen_w(int offset,int data);
+WRITE_HANDLER( travrusa_videoram_w );
+WRITE_HANDLER( travrusa_scroll_x_low_w );
+WRITE_HANDLER( travrusa_scroll_x_high_w );
+WRITE_HANDLER( travrusa_flipscreen_w );
 void travrusa_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 

@@ -101,7 +101,7 @@ void vicdual_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 
 
-void vicdual_characterram_w(int offset,int data)
+WRITE_HANDLER( vicdual_characterram_w )
 {
 	if (vicdual_characterram[offset] != data)
 	{
@@ -111,12 +111,12 @@ void vicdual_characterram_w(int offset,int data)
 	}
 }
 
-int vicdual_characterram_r(int offset)
+READ_HANDLER( vicdual_characterram_r )
 {
 	return vicdual_characterram[offset];
 }
 
-void vicdual_palette_bank_w(int offset, int data)
+WRITE_HANDLER( vicdual_palette_bank_w )
 {
 	if (palette_bank != (data & 3))
 	{

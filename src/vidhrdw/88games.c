@@ -120,12 +120,12 @@ void k88games_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		K052109_tilemap_draw(bitmap,2,0);
 		K052109_tilemap_draw(bitmap,1,0);
 		K051960_sprites_draw(bitmap,0,0);
-		K051316_zoom_draw_0(bitmap);
+		K051316_zoom_draw_0(bitmap,0);
 	}
 	else
 	{
 		K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY);
-		K051316_zoom_draw_0(bitmap);
+		K051316_zoom_draw_0(bitmap,0);
 		K051960_sprites_draw(bitmap,0,0);
 		K052109_tilemap_draw(bitmap,1,0);
 		K051960_sprites_draw(bitmap,1,1);

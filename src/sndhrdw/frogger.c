@@ -23,7 +23,7 @@ static int frogger_timer[10] =
 	0x00, 0x10, 0x08, 0x18, 0x40, 0x90, 0x88, 0x98, 0x88, 0xd0
 };
 
-int frogger_portB_r(int offset)
+READ_HANDLER( frogger_portB_r )
 {
 	/* need to protect from totalcycles overflow */
 	static int last_totalcycles = 0;
@@ -43,7 +43,7 @@ int frogger_portB_r(int offset)
 
 
 
-void frogger_sh_irqtrigger_w(int offset,int data)
+WRITE_HANDLER( frogger_sh_irqtrigger_w )
 {
 	static int last;
 
@@ -57,7 +57,7 @@ void frogger_sh_irqtrigger_w(int offset,int data)
 	last = data & 0x08;
 }
 
-void frogger2_sh_irqtrigger_w(int offset,int data)
+WRITE_HANDLER( frogger2_sh_irqtrigger_w )
 {
 	static int last;
 

@@ -104,7 +104,7 @@ static int subs_steering_2(void)
 /***************************************************************************
 subs_steer_reset
 ***************************************************************************/
-void subs_steer_reset_w(int offset, int value)
+WRITE_HANDLER( subs_steer_reset_w )
 {
     subs_steering_val1 = 0x00;
     subs_steering_val2 = 0x00;
@@ -113,7 +113,7 @@ void subs_steer_reset_w(int offset, int value)
 /***************************************************************************
 subs_control_r
 ***************************************************************************/
-int subs_control_r(int offset)
+READ_HANDLER( subs_control_r )
 {
 	int inport = input_port_1_r(offset);
 
@@ -135,7 +135,7 @@ int subs_control_r(int offset)
 /***************************************************************************
 subs_coin_r
 ***************************************************************************/
-int subs_coin_r(int offset)
+READ_HANDLER( subs_coin_r )
 {
 	int inport = input_port_2_r(offset);
 
@@ -157,7 +157,7 @@ int subs_coin_r(int offset)
 /***************************************************************************
 subs_options_r
 ***************************************************************************/
-int subs_options_r(int offset)
+READ_HANDLER( subs_options_r )
 {
 	int opts = input_port_0_r(offset);
 
@@ -175,7 +175,7 @@ int subs_options_r(int offset)
 /***************************************************************************
 subs_lamp1_w
 ***************************************************************************/
-void subs_lamp1_w(int offset, int data)
+WRITE_HANDLER( subs_lamp1_w )
 {
 	if ((offset & 0x01) == 1)
 	{
@@ -192,7 +192,7 @@ void subs_lamp1_w(int offset, int data)
 /***************************************************************************
 subs_lamp2_w
 ***************************************************************************/
-void subs_lamp2_w(int offset, int data)
+WRITE_HANDLER( subs_lamp2_w )
 {
 	if ((offset & 0x01) == 1)
 	{
@@ -210,23 +210,23 @@ void subs_lamp2_w(int offset, int data)
 TODO: sub sound functions
 ***************************************************************************/
 
-void subs_sonar2_w(int offset, int data)
+WRITE_HANDLER( subs_sonar2_w )
 {
 }
 
-void subs_sonar1_w(int offset, int data)
+WRITE_HANDLER( subs_sonar1_w )
 {
 }
 
-void subs_crash_w(int offset, int data)
+WRITE_HANDLER( subs_crash_w )
 {
 }
 
-void subs_explode_w(int offset, int data)
+WRITE_HANDLER( subs_explode_w )
 {
 }
 
-void subs_noise_reset_w(int offset, int data)
+WRITE_HANDLER( subs_noise_reset_w )
 {
 }
 

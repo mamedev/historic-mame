@@ -83,12 +83,12 @@ void leland_draw_bkchar(int x, int y, int ch)
 
 /* Graphics control register (driven by AY8910 port A) */
 static int leland_gfx_control;
-int leland_sound_port_r(int offset)
+READ_HANDLER( leland_sound_port_r )
 {
     return leland_gfx_control;
 }
 
-extern void leland_sound_port_w(int offset, int data)
+WRITE_HANDLER( leland_sound_port_w )
 {
     leland_gfx_control=data;
     if (leland_update_master_bank)
@@ -99,27 +99,27 @@ extern void leland_sound_port_w(int offset, int data)
 }
 
 /* Scroll ports */
-void leland_bk_xlow_w(int offset, int data)
+WRITE_HANDLER( leland_bk_xlow_w )
 {
         leland_bk_xlow=data;
 }
 
-void leland_bk_xhigh_w(int offset, int data)
+WRITE_HANDLER( leland_bk_xhigh_w )
 {
         leland_bk_xhigh=data;
 }
 
-void leland_bk_ylow_w(int offset, int data)
+WRITE_HANDLER( leland_bk_ylow_w )
 {
         leland_bk_ylow=data;
 }
 
-void leland_bk_yhigh_w(int offset, int data)
+WRITE_HANDLER( leland_bk_yhigh_w )
 {
         leland_bk_yhigh=data;
 }
 
-void leland_gfx_port_w(int offset, int data)
+WRITE_HANDLER( leland_gfx_port_w )
 {
     switch (offset)
     {
@@ -424,32 +424,32 @@ void leland_vram_port_w(int offset, int data, int num)
 }
 
 
-void leland_mvram_port_w(int offset, int data)
+WRITE_HANDLER( leland_mvram_port_w )
 {
     leland_vram_port_w(offset, data, 0);
 }
 
-void leland_svram_port_w(int offset, int data)
+WRITE_HANDLER( leland_svram_port_w )
 {
     leland_vram_port_w(offset, data, 1);
 }
 
-int  leland_mvram_port_r(int offset)
+READ_HANDLER( leland_mvram_port_r )
 {
     return leland_vram_port_r(offset, 0);
 }
 
-int  leland_svram_port_r(int offset)
+READ_HANDLER( leland_svram_port_r )
 {
     return leland_vram_port_r(offset, 1);
 }
 
-void leland_master_video_addr_w(int offset, int data)
+WRITE_HANDLER( leland_master_video_addr_w )
 {
     leland_video_addr_w(offset, data, 0);
 }
 
-void leland_slave_video_addr_w(int offset, int data)
+WRITE_HANDLER( leland_slave_video_addr_w )
 {
     leland_video_addr_w(offset, data, 1);
 }
@@ -880,22 +880,22 @@ void ataxx_vram_port_w(int offset, int data, int num)
 #endif
 }
 
-void ataxx_mvram_port_w(int offset, int data)
+WRITE_HANDLER( ataxx_mvram_port_w )
 {
     ataxx_vram_port_w(offset, data, 0);
 }
 
-void ataxx_svram_port_w(int offset, int data)
+WRITE_HANDLER( ataxx_svram_port_w )
 {
     ataxx_vram_port_w(offset, data, 1);
 }
 
-int  ataxx_mvram_port_r(int offset)
+READ_HANDLER( ataxx_mvram_port_r )
 {
     return ataxx_vram_port_r(offset, 0);
 }
 
-int  ataxx_svram_port_r(int offset)
+READ_HANDLER( ataxx_svram_port_r )
 {
     return ataxx_vram_port_r(offset, 1);
 }

@@ -1652,22 +1652,22 @@ int readinputport(int port)
 	return input_port_value[port];
 }
 
-int input_port_0_r(int offset) { return readinputport(0); }
-int input_port_1_r(int offset) { return readinputport(1); }
-int input_port_2_r(int offset) { return readinputport(2); }
-int input_port_3_r(int offset) { return readinputport(3); }
-int input_port_4_r(int offset) { return readinputport(4); }
-int input_port_5_r(int offset) { return readinputport(5); }
-int input_port_6_r(int offset) { return readinputport(6); }
-int input_port_7_r(int offset) { return readinputport(7); }
-int input_port_8_r(int offset) { return readinputport(8); }
-int input_port_9_r(int offset) { return readinputport(9); }
-int input_port_10_r(int offset) { return readinputport(10); }
-int input_port_11_r(int offset) { return readinputport(11); }
-int input_port_12_r(int offset) { return readinputport(12); }
-int input_port_13_r(int offset) { return readinputport(13); }
-int input_port_14_r(int offset) { return readinputport(14); }
-int input_port_15_r(int offset) { return readinputport(15); }
+READ_HANDLER( input_port_0_r ) { return readinputport(0); }
+READ_HANDLER( input_port_1_r ) { return readinputport(1); }
+READ_HANDLER( input_port_2_r ) { return readinputport(2); }
+READ_HANDLER( input_port_3_r ) { return readinputport(3); }
+READ_HANDLER( input_port_4_r ) { return readinputport(4); }
+READ_HANDLER( input_port_5_r ) { return readinputport(5); }
+READ_HANDLER( input_port_6_r ) { return readinputport(6); }
+READ_HANDLER( input_port_7_r ) { return readinputport(7); }
+READ_HANDLER( input_port_8_r ) { return readinputport(8); }
+READ_HANDLER( input_port_9_r ) { return readinputport(9); }
+READ_HANDLER( input_port_10_r ) { return readinputport(10); }
+READ_HANDLER( input_port_11_r ) { return readinputport(11); }
+READ_HANDLER( input_port_12_r ) { return readinputport(12); }
+READ_HANDLER( input_port_13_r ) { return readinputport(13); }
+READ_HANDLER( input_port_14_r ) { return readinputport(14); }
+READ_HANDLER( input_port_15_r ) { return readinputport(15); }
 
 #ifdef MAME_NET
 void set_default_player_controls(int player)

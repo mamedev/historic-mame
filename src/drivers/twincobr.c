@@ -189,16 +189,16 @@ Shark	Zame
 
 /**************** Machine stuff ******************/
 void fsharkbt_reset_8741_mcu(void);
-int  fsharkbt_dsp_in(int offset);
-void fshark_coin_dsp_w(int offset,int data);
-int  twincobr_dsp_in(int offset);
-void twincobr_dsp_out(int fnction,int data);
-int  twincobr_68k_dsp_r(int offset);
-void twincobr_68k_dsp_w(int offset,int data);
-int  twincobr_7800c_r(int offset);
-void twincobr_7800c_w(int offset,int data);
-int  twincobr_sharedram_r(int offset);
-void twincobr_sharedram_w(int offset,int data);
+READ_HANDLER( fsharkbt_dsp_r );
+WRITE_HANDLER( fshark_coin_dsp_w );
+READ_HANDLER( twincobr_dsp_r );
+WRITE_HANDLER( twincobr_dsp_w );
+READ_HANDLER( twincobr_68k_dsp_r );
+WRITE_HANDLER( twincobr_68k_dsp_w );
+READ_HANDLER( twincobr_7800c_r );
+WRITE_HANDLER( twincobr_7800c_w );
+READ_HANDLER( twincobr_sharedram_r );
+WRITE_HANDLER( twincobr_sharedram_w );
 
 extern unsigned char *twincobr_68k_dsp_ram;
 extern unsigned char *twincobr_sharedram;
@@ -206,23 +206,23 @@ extern int twincobr_intenable;
 
 
 /**************** Video stuff ******************/
-int  twincobr_crtc_r(int offset);
-void twincobr_crtc_w(int offset,int data);
+READ_HANDLER( twincobr_crtc_r );
+WRITE_HANDLER( twincobr_crtc_w );
 
-void twincobr_txscroll_w(int offset,int data);
-void twincobr_bgscroll_w(int offset,int data);
-void twincobr_fgscroll_w(int offset,int data);
-void twincobr_exscroll_w(int offset,int data);
+WRITE_HANDLER( twincobr_txscroll_w );
+WRITE_HANDLER( twincobr_bgscroll_w );
+WRITE_HANDLER( twincobr_fgscroll_w );
+WRITE_HANDLER( twincobr_exscroll_w );
 int  twincobr_txoffs_r(void);
-void twincobr_txoffs_w(int offset,int data);
-void twincobr_bgoffs_w(int offset,int data);
-void twincobr_fgoffs_w(int offset,int data);
-int  twincobr_txram_r(int offset);
-int  twincobr_bgram_r(int offset);
-int  twincobr_fgram_r(int offset);
-void twincobr_txram_w(int offset,int data);
-void twincobr_bgram_w(int offset,int data);
-void twincobr_fgram_w(int offset,int data);
+WRITE_HANDLER( twincobr_txoffs_w );
+WRITE_HANDLER( twincobr_bgoffs_w );
+WRITE_HANDLER( twincobr_fgoffs_w );
+READ_HANDLER( twincobr_txram_r );
+READ_HANDLER( twincobr_bgram_r );
+READ_HANDLER( twincobr_fgram_r );
+WRITE_HANDLER( twincobr_txram_w );
+WRITE_HANDLER( twincobr_bgram_w );
+WRITE_HANDLER( twincobr_fgram_w );
 
 int  twincobr_vh_start(void);
 void twincobr_vh_stop(void);
@@ -330,14 +330,14 @@ static struct MemoryWriteAddress DSP_writemem[] =
 
 static struct IOReadPort DSP_readport[] =
 {
-	{ 0x01, 0x01, twincobr_dsp_in },
-	{ 0x02, 0x02, fsharkbt_dsp_in },
+	{ 0x01, 0x01, twincobr_dsp_r },
+	{ 0x02, 0x02, fsharkbt_dsp_r },
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort DSP_writeport[] =
 {
-	{ 0x00, 0x03, twincobr_dsp_out },
+	{ 0x00, 0x03, twincobr_dsp_w },
 	{ -1 }	/* end of table */
 };
 

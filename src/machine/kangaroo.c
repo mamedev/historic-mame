@@ -21,14 +21,14 @@ static int kangaroo_clock=0;
    this just seems to do the trick -V-
 */
 
-int kangaroo_sec_chip_r(int offset)
+READ_HANDLER( kangaroo_sec_chip_r )
 {
 /*  kangaroo_clock = (kangaroo_clock << 1) + 1; */
   kangaroo_clock++;
   return (kangaroo_clock & 0x0f);
 }
 
-void kangaroo_sec_chip_w(int offset, int val)
+WRITE_HANDLER( kangaroo_sec_chip_w )
 {
 /*  kangaroo_clock = val & 0x0f; */
 }

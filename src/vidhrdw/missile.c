@@ -110,7 +110,7 @@ void missile_video_w (int address,int data)
 	}
 }
 
-void missile_video2_w (int offset, int data)
+WRITE_HANDLER( missile_video2_w )
 {
 	/* $5000 - $ffff */
 	offset += 0x5000;

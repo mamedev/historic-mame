@@ -13,10 +13,10 @@
 #include "cpu/z80/z80.h"
 
 void prehisle_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-void prehisle_video_w(int offset,int data);
-int prehisle_control_r(int offset);
-void prehisle_control_w(int offset,int data);
-int prehisle_video_r(int offset);
+WRITE_HANDLER( prehisle_video_w );
+READ_HANDLER( prehisle_control_r );
+WRITE_HANDLER( prehisle_control_w );
+READ_HANDLER( prehisle_video_r );
 void prehisle_vh_stop (void);
 int prehisle_vh_start (void);
 
@@ -25,7 +25,7 @@ extern unsigned char *prehisle_video;
 
 /******************************************************************************/
 
-static void prehisle_sound_w(int offset, int data)
+static WRITE_HANDLER( prehisle_sound_w )
 {
 	soundlatch_w(0,data&0xff);
 	cpu_cause_interrupt(1,Z80_NMI_INT);
@@ -60,7 +60,7 @@ static struct MemoryWriteAddress prehisle_writemem[] =
 
 /******************************************************************************/
 
-static void D7759_write_port_0_w(int offset, int data)
+static WRITE_HANDLER( D7759_write_port_0_w )
 {
 	UPD7759_reset_w (0,0);
 	UPD7759_message_w(offset,data);
@@ -388,7 +388,7 @@ ROM_END
 
 /******************************************************************************/
 
-static int world_cycle_r(int offset)
+static READ_HANDLER( world_cycle_r )
 {
 	int pc=cpu_get_pc();
 	int ret=READ_WORD(&prehisle_ram[0x24]);
@@ -405,7 +405,7 @@ static void init_prehisle(void)
 	install_mem_read_handler(0, 0x70024, 0x70025, world_cycle_r);
 }
 
-static int usa_cycle_r(int offset)
+static READ_HANDLER( usa_cycle_r )
 {
 	int pc=cpu_get_pc();
 	int ret=READ_WORD(&prehisle_ram[0x24]);
@@ -422,7 +422,7 @@ static void init_prehislu(void)
 	install_mem_read_handler(0, 0x70024, 0x70025, usa_cycle_r);
 }
 
-static int jap_cycle_r(int offset)
+static READ_HANDLER( jap_cycle_r )
 {
 	int pc=cpu_get_pc();
 	int ret=READ_WORD(&prehisle_ram[0x24]);

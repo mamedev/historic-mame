@@ -162,7 +162,7 @@ static int SprTrans(Sprites *u)
            A7FF is not 0 or FF), 6809 waits for Z80 to store a 1 in
            A701 and draw currently queued sprites
 	*/
-void gyruss_queuereg_w (int offset,int data)
+WRITE_HANDLER( gyruss_queuereg_w )
 {
 	if (data == 1)
 	{
@@ -235,7 +235,7 @@ void gyruss_queuereg_w (int offset,int data)
 
 
 
-void gyruss_flipscreen_w(int offset,int data)
+WRITE_HANDLER( gyruss_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{
@@ -247,7 +247,7 @@ void gyruss_flipscreen_w(int offset,int data)
 
 
 /* Return the current video scan line */
-int gyruss_scanline_r(int offset)
+READ_HANDLER( gyruss_scanline_r )
 {
 	return cpu_scalebyfcount(256);
 }

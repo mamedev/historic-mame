@@ -79,12 +79,12 @@ extern unsigned char *galaxian_bulletsram;
 extern int galaxian_bulletsram_size;
 void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void mariner_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void galaxian_flipx_w(int offset,int data);
-void galaxian_flipy_w(int offset,int data);
-void hotshock_flipscreen_w(int offset,int data);
-void galaxian_attributes_w(int offset,int data);
-void galaxian_stars_w(int offset,int data);
-void scramble_background_w(int offset, int data);
+WRITE_HANDLER( galaxian_flipx_w );
+WRITE_HANDLER( galaxian_flipy_w );
+WRITE_HANDLER( hotshock_flipscreen_w );
+WRITE_HANDLER( galaxian_attributes_w );
+WRITE_HANDLER( galaxian_stars_w );
+WRITE_HANDLER( scramble_background_w );
 
 int  scramble_vh_start(void);
 int  mariner_vh_start(void);
@@ -93,45 +93,45 @@ int  pisces_vh_start(void);
 
 void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void pisces_gfxbank_w(int offset,int data);
+WRITE_HANDLER( pisces_gfxbank_w );
 
 int  scramble_vh_interrupt(void);
 int  mariner_vh_interrupt(void);
 int  hunchbks_vh_interrupt(void);
-void scramble_filter_w(int offset, int data);
+WRITE_HANDLER( scramble_filter_w );
 
-int scramble_portB_r(int offset);
-void scramble_sh_irqtrigger_w(int offset,int data);
-void hotshock_sh_irqtrigger_w(int offset,int data);
+READ_HANDLER( scramble_portB_r );
+WRITE_HANDLER( scramble_sh_irqtrigger_w );
+WRITE_HANDLER( hotshock_sh_irqtrigger_w );
 
-int frogger_portB_r(int offset);
+READ_HANDLER( frogger_portB_r );
 
 /* protection stuff. in machine\scramble.c */
-int scramble_input_port_2_r(int offset);
-int scramble_protection_r(int offset);
-int scramblk_protection_r(int offset);
-int mariner_protection_1_r(int offset);
-int mariner_protection_2_r(int offset);
-int mariner_pip(int offset);
-int mariner_pap(int offset);
+READ_HANDLER( scramble_input_port_2_r );
+READ_HANDLER( scramble_protection_r );
+READ_HANDLER( scramblk_protection_r );
+READ_HANDLER( mariner_protection_1_r );
+READ_HANDLER( mariner_protection_2_r );
+READ_HANDLER( mariner_pip_r );
+READ_HANDLER( mariner_pap_r );
 
 
-static int ckongs_input_port_1_r(int offset)
+static READ_HANDLER( ckongs_input_port_1_r )
 {
 	return (readinputport(1) & 0xfc) | ((readinputport(2) & 0x06) >> 1);
 }
 
-static int ckongs_input_port_2_r(int offset)
+static READ_HANDLER( ckongs_input_port_2_r )
 {
 	return (readinputport(2) & 0xf9) | ((readinputport(1) & 0x03) << 1);
 }
 
-static void scramble_coin_counter_2_w(int offset, int data)
+static WRITE_HANDLER( scramble_coin_counter_2_w )
 {
 	coin_counter_w(1, data);
 }
 
-static void scramble_coin_counter_3_w(int offset, int data)
+static WRITE_HANDLER( scramble_coin_counter_3_w )
 {
 	coin_counter_w(2, data);
 }
@@ -212,12 +212,12 @@ static struct MemoryReadAddress hotshock_readmem[] =
 	{ -1 }	/* end of table */
 };
 
-int hunchbks_mirror_r(int offset)
+READ_HANDLER( hunchbks_mirror_r )
 {
 	return cpu_readmem16(0x1000+offset);
 }
 
-void hunchbks_mirror_w(int offset,int data)
+WRITE_HANDLER( hunchbks_mirror_w )
 {
 	cpu_writemem16(0x1000+offset,data);
 }
@@ -366,8 +366,8 @@ static struct MemoryWriteAddress hunchbks_writemem[] =
 static struct IOReadPort triplep_readport[] =
 {
 	{ 0x01, 0x01, AY8910_read_port_0_r },
-	{ 0x02, 0x02, mariner_pip },
-	{ 0x03, 0x03, mariner_pap },
+	{ 0x02, 0x02, mariner_pip_r },
+	{ 0x03, 0x03, mariner_pap_r },
 	{ -1 }	/* end of table */
 };
 

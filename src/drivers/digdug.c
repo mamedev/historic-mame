@@ -115,32 +115,32 @@ CPU #3 NMI (@120Hz)
 #include "vidhrdw/generic.h"
 
 extern unsigned char *digdug_sharedram;
-int digdug_hiscore_print_r(int offset);
-int digdug_sharedram_r(int offset);
-void digdug_sharedram_w(int offset,int data);
-void digdug_interrupt_enable_1_w(int offset,int data);
-void digdug_interrupt_enable_2_w(int offset,int data);
-void digdug_interrupt_enable_3_w(int offset,int data);
-void digdug_halt_w(int offset,int data);
-int digdug_customio_r(int offset);
-void digdug_customio_w(int offset,int data);
-int digdug_customio_data_r(int offset);
-void digdug_customio_data_w(int offset,int data);
+READ_HANDLER( digdug_hiscore_print_r );
+READ_HANDLER( digdug_sharedram_r );
+WRITE_HANDLER( digdug_sharedram_w );
+WRITE_HANDLER( digdug_interrupt_enable_1_w );
+WRITE_HANDLER( digdug_interrupt_enable_2_w );
+WRITE_HANDLER( digdug_interrupt_enable_3_w );
+WRITE_HANDLER( digdug_halt_w );
+READ_HANDLER( digdug_customio_r );
+WRITE_HANDLER( digdug_customio_w );
+READ_HANDLER( digdug_customio_data_r );
+WRITE_HANDLER( digdug_customio_data_w );
 int digdug_interrupt_1(void);
 int digdug_interrupt_2(void);
 int digdug_interrupt_3(void);
 void digdig_init_machine(void);
 
-void digdug_flipscreen_w(int offset,int data);
+WRITE_HANDLER( digdug_flipscreen_w );
 extern unsigned char *digdug_vlatches;
-void digdug_cpu_reset_w(int offset, int data);
-void digdug_vh_latch_w(int offset, int data);
+WRITE_HANDLER( digdug_cpu_reset_w );
+WRITE_HANDLER( digdug_vh_latch_w );
 int digdug_vh_start(void);
 void digdug_vh_stop(void);
 void digdug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void digdug_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
-void pengo_sound_w(int offset,int data);
+WRITE_HANDLER( pengo_sound_w );
 extern unsigned char *pengo_soundregs;
 
 

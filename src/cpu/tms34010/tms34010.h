@@ -76,8 +76,8 @@ extern int tms34010_host_r(int cpunum, int reg);
 void TMS34010_set_stack_base(int cpu, UINT8* stackbase, UINT32 stackoffs);
 
 /* Reads & writes to the 34010 I/O registers; place at TOBYTE(0xc0000000) */
-void TMS34010_io_register_w(int offset, int data);
-int TMS34010_io_register_r(int offset);
+WRITE_HANDLER( TMS34010_io_register_w );
+READ_HANDLER( TMS34010_io_register_r );
 
 /* Checks whether the display is inhibited */
 int TMS34010_io_display_blanked(int cpu);

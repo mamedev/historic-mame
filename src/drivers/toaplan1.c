@@ -42,51 +42,51 @@ To Do:
 
 /**************** Machine stuff ******************/
 int  toaplan1_interrupt(void);
-void toaplan1_int_enable_w(int offset, int data );
-int  toaplan1_shared_r(int offset);
-void toaplan1_shared_w(int offset, int data);
-int  toaplan1_unk_r(int offset);
-int  samesame_port_6_r(int offset);
-int  vimana_mcu_r(int offset);
-void vimana_mcu_w(int offset, int data);
-int  vimana_input_port_5_r(int offset);
+WRITE_HANDLER( toaplan1_int_enable_w );
+READ_HANDLER( toaplan1_shared_r );
+WRITE_HANDLER( toaplan1_shared_w );
+READ_HANDLER( toaplan1_unk_r );
+READ_HANDLER( samesame_port_6_r );
+READ_HANDLER( vimana_mcu_r );
+WRITE_HANDLER( vimana_mcu_w );
+READ_HANDLER( vimana_input_port_5_r );
 
-int  demonwld_dsp_in(int offset);
-void demonwld_dsp_out(int fnction,int data);
-void demonwld_dsp_w(int offset,int data);
+READ_HANDLER( demonwld_dsp_r );
+WRITE_HANDLER( demonwld_dsp_w );
+WRITE_HANDLER( demonwld_dsp_ctrl_w );
 
 void toaplan1_init_machine(void);
 
-void rallybik_coin_w(int offset,int data);
-void toaplan1_coin_w(int offset,int data);
+WRITE_HANDLER( rallybik_coin_w );
+WRITE_HANDLER( toaplan1_coin_w );
 
 unsigned char *toaplan1_sharedram;
 
 
 /**************** Video stuff ******************/
-int  toaplan1_vblank_r(int offset);
-void toaplan1_flipscreen_w(int offset, int data);
+READ_HANDLER( toaplan1_vblank_r );
+WRITE_HANDLER( toaplan1_flipscreen_w );
 
-int  toaplan1_videoram1_r(int offset);
-void toaplan1_videoram1_w(int offset, int data);
-int  toaplan1_videoram2_r(int offset);
-void toaplan1_videoram2_w(int offset, int data);
-int  rallybik_videoram3_r(int offset);
-int  toaplan1_videoram3_r(int offset);
-void toaplan1_videoram3_w(int offset, int data);
-int  toaplan1_colorram1_r(int offset);
-void toaplan1_colorram1_w(int offset, int data);
-int  toaplan1_colorram2_r(int offset);
-void toaplan1_colorram2_w(int offset, int data);
+READ_HANDLER( toaplan1_videoram1_r );
+WRITE_HANDLER( toaplan1_videoram1_w );
+READ_HANDLER( toaplan1_videoram2_r );
+WRITE_HANDLER( toaplan1_videoram2_w );
+READ_HANDLER( rallybik_videoram3_r );
+READ_HANDLER( toaplan1_videoram3_r );
+WRITE_HANDLER( toaplan1_videoram3_w );
+READ_HANDLER( toaplan1_colorram1_r );
+WRITE_HANDLER( toaplan1_colorram1_w );
+READ_HANDLER( toaplan1_colorram2_r );
+WRITE_HANDLER( toaplan1_colorram2_w );
 
-int  video_ofs_r(int offset);
-void video_ofs_w(int offset, int data);
-int  video_ofs3_r(int offset);
-void video_ofs3_w(int offset, int data);
-int  scrollregs_r(int offset);
-void scrollregs_w(int offset, int data);
-void offsetregs_w(int offset, int data);
-void layers_offset_w(int offset, int data);
+READ_HANDLER( video_ofs_r );
+WRITE_HANDLER( video_ofs_w );
+READ_HANDLER( video_ofs3_r );
+WRITE_HANDLER( video_ofs3_w );
+READ_HANDLER( scrollregs_r );
+WRITE_HANDLER( scrollregs_w );
+WRITE_HANDLER( offsetregs_w );
+WRITE_HANDLER( layers_offset_w );
 
 void toaplan1_eof_callback(void);
 void rallybik_eof_callback(void);
@@ -280,7 +280,7 @@ static struct MemoryWriteAddress demonwld_writemem[] =
 	{ 0xa00006, 0xa00007, toaplan1_videoram2_w },	/* sprite size ? */
 	{ 0xc00000, 0xc03fff, MWA_BANK1},
 	{ 0xe00000, 0xe00003, offsetregs_w },
-	{ 0xe0000a, 0xe0000b, demonwld_dsp_w },			/* DSP Comms control */
+	{ 0xe0000a, 0xe0000b, demonwld_dsp_ctrl_w },			/* DSP Comms control */
 	{ -1 }
 };
 
@@ -548,13 +548,13 @@ static struct MemoryWriteAddress DSP_writemem[] =
 
 static struct IOReadPort DSP_readport[] =
 {
-	{ 0x01, 0x01, demonwld_dsp_in },
+	{ 0x01, 0x01, demonwld_dsp_r },
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort DSP_writeport[] =
 {
-	{ 0x00, 0x03, demonwld_dsp_out },
+	{ 0x00, 0x03, demonwld_dsp_w },
 	{ -1 }	/* end of table */
 };
 

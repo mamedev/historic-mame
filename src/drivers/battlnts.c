@@ -14,7 +14,7 @@ Preliminary driver by:
 #include "vidhrdw/konamiic.h"
 
 /* from vidhrdw */
-extern void battlnts_spritebank_w(int offset,int data);
+WRITE_HANDLER( battlnts_spritebank_w );
 int battlnts_vh_start(void);
 void battlnts_vh_stop(void);
 void battlnts_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -27,12 +27,12 @@ static int battlnts_interrupt( void )
         return ignore_interrupt();
 }
 
-void battlnts_sh_irqtrigger_w(int offset, int data)
+WRITE_HANDLER( battlnts_sh_irqtrigger_w )
 {
 	cpu_cause_interrupt(1,0xff);
 }
 
-static void battlnts_bankswitch_w(int offset, int data)
+static WRITE_HANDLER( battlnts_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;

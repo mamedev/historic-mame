@@ -47,16 +47,14 @@ static void dv_tile_callback(int layer,int bank,int *code,int *color)
 
 ***************************************************************************/
 
-static void mainevt_sprite_callback(int *code,int *color,int *priority)
+static void mainevt_sprite_callback(int *code,int *color,int *priority_mask)
 {
 	/* bit 5 = priority over layer B (has precedence) */
 	/* bit 6 = HALF priority over layer B (used for crowd when you get out of the ring) */
-	if (*color & 0x20) *priority = 1;
-	else if (*color & 0x40) *priority = 2;
+	if (*color & 0x20)		*priority_mask = 0xff00;
+	else if (*color & 0x40)	*priority_mask = 0xff00|0xf0f0;
+	else					*priority_mask = 0xff00|0xf0f0|0xcccc;
 	/* bit 7 is shadow, not used */
-
-/* kludge to fix ropes until sprite/sprite priority is supported correctly */
-	if (*code == 0x3f8 || *code == 0x3f9) *priority = 2;
 
 	*color = sprite_colorbase + (*color & 0x03);
 }
@@ -123,13 +121,13 @@ void mainevt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_render(ALL_TILEMAPS);
 
-	K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY);
-	K051960_sprites_draw(bitmap,0,0);
-	K052109_tilemap_draw(bitmap,2,1);	/* low priority part of layer */
-	K051960_sprites_draw(bitmap,2,2);
-	K052109_tilemap_draw(bitmap,2,0);	/* high priority part of layer */
-	K051960_sprites_draw(bitmap,1,1);
-	K052109_tilemap_draw(bitmap,0,0);
+	fillbitmap(priority_bitmap,0,NULL);
+	K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY|(1<<16));
+	K052109_tilemap_draw(bitmap,2,1|(2<<16));	/* low priority part of layer */
+	K052109_tilemap_draw(bitmap,2,0|(4<<16));	/* high priority part of layer */
+	K052109_tilemap_draw(bitmap,0,8<<16);
+
+	K051960_sprites_draw(bitmap,-1,-1);
 }
 
 void dv_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)

@@ -66,7 +66,7 @@ standard NMI at 0x66
 #include "vidhrdw/generic.h"
 
 
-void pooyan_flipscreen_w(int offset,int data);
+WRITE_HANDLER( pooyan_flipscreen_w );
 void pooyan_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void pooyan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -74,7 +74,7 @@ void pooyan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern struct MemoryReadAddress timeplt_sound_readmem[];
 extern struct MemoryWriteAddress timeplt_sound_writemem[];
 extern struct AY8910interface timeplt_ay8910_interface;
-void timeplt_sh_irqtrigger_w(int offset,int data);
+WRITE_HANDLER( timeplt_sh_irqtrigger_w );
 
 
 static struct MemoryReadAddress readmem[] =

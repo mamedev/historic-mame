@@ -45,12 +45,12 @@ To do:
 #include "cpu/m6809/m6809.h"
 #include "cpu/m6502/m6502.h"
 
-int dec8_video_r(int offset);
-void dec8_video_w(int offset, int data);
-void dec8_pf1_w(int offset, int data);
-void dec8_pf2_w(int offset, int data);
-void dec8_scroll1_w(int offset, int data);
-void dec8_scroll2_w(int offset, int data);
+READ_HANDLER( dec8_video_r );
+WRITE_HANDLER( dec8_video_w );
+WRITE_HANDLER( dec8_pf1_w );
+WRITE_HANDLER( dec8_pf2_w );
+WRITE_HANDLER( dec8_scroll1_w );
+WRITE_HANDLER( dec8_scroll2_w );
 void dec8_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void ghostb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void srdarwin_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
@@ -60,20 +60,20 @@ void lastmiss_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void oscar_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 int dec8_vh_start(void);
 void dec8_vh_stop(void);
-void srdarwin_control_w(int offset, int data);
-void gondo_scroll_w(int offset, int data);
-void lastmiss_control_w(int offset, int data);
-void lastmiss_scrollx_w(int offset, int data);
-void lastmiss_scrolly_w(int offset, int data);
-void dec8_bac06_0_w(int offset, int data);
-void dec8_bac06_1_w(int offset, int data);
+WRITE_HANDLER( srdarwin_control_w );
+WRITE_HANDLER( gondo_scroll_w );
+WRITE_HANDLER( lastmiss_control_w );
+WRITE_HANDLER( lastmiss_scrollx_w );
+WRITE_HANDLER( lastmiss_scrolly_w );
+WRITE_HANDLER( dec8_bac06_0_w );
+WRITE_HANDLER( dec8_bac06_1_w );
 void ghostb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 int srdarwin_vh_start(void);
-int srdarwin_video_r(int offset);
-void srdarwin_video_w(int offset, int data);
+READ_HANDLER( srdarwin_video_r );
+WRITE_HANDLER( srdarwin_video_w );
 
-void dec8_flipscreen_w(int offset, int data);
+WRITE_HANDLER( dec8_flipscreen_w );
 
 /* Only used by ghostb, gondo, garyoret, other games can control buffering */
 static void dec8_eof_callback(void)
@@ -92,24 +92,24 @@ static int msm5205next;
 
 /******************************************************************************/
 
-static int i8751_h_r(int offset)
+static READ_HANDLER( i8751_h_r )
 {//if (errorlog && cpu_get_pc()!=0xecde && cpu_get_pc()!=0xecd5 && cpu_get_pc()!=0xecd8) fprintf(errorlog,"PC %06x - Read from 8751 high\n",cpu_get_pc());
 	return i8751_return>>8; /* MSB */
 }
 
-static int i8751_l_r(int offset)
+static READ_HANDLER( i8751_l_r )
 {//if (errorlog && cpu_get_pc()!=0xecde && cpu_get_pc()!=0xecd5 && cpu_get_pc()!=0xecd8) fprintf(errorlog,"PC %06x - Read from 8751 low\n",cpu_get_pc());
 	return i8751_return&0xff; /* LSB */
 }
 
-static void i8751_reset_w(int offset, int data)
+static WRITE_HANDLER( i8751_reset_w )
 {
 	i8751_return=0;
 }
 
 /******************************************************************************/
 
-static int gondo_player_1_r(int offset)
+static READ_HANDLER( gondo_player_1_r )
 {
 	switch (offset) {
 		case 0: /* Rotary low byte */
@@ -120,7 +120,7 @@ static int gondo_player_1_r(int offset)
 	return 0xff;
 }
 
-static int gondo_player_2_r(int offset)
+static READ_HANDLER( gondo_player_2_r )
 {
 	switch (offset) {
 		case 0: /* Rotary low byte */
@@ -133,7 +133,7 @@ static int gondo_player_2_r(int offset)
 
 /******************************************************************************/
 
-static void ghostb_i8751_w(int offset, int data)
+static WRITE_HANDLER( ghostb_i8751_w )
 {
 	i8751_return=0;
 
@@ -151,7 +151,7 @@ static void ghostb_i8751_w(int offset, int data)
 	if (i8751_value==0x021b) i8751_return=0x6e4; /* Meikyuu Hunter G ID */
 }
 
-static void srdarwin_i8751_w(int offset, int data)
+static WRITE_HANDLER( srdarwin_i8751_w )
 {
 	static int coins,latch;
 	i8751_return=0;
@@ -222,7 +222,7 @@ bb63           = Square things again
 	if (i8751_value==0x8009) i8751_return=0xf580 + 40; /* Boss #10: Bird */
 }
 
-static void gondo_i8751_w(int offset, int data)
+static WRITE_HANDLER( gondo_i8751_w )
 {
 	static int coin1,coin2,latch,snd;
 	i8751_return=0;
@@ -255,7 +255,7 @@ static void gondo_i8751_w(int offset, int data)
 	if ((i8751_value>>8)==0x0a) {i8751_return=0xa00 | snd; if (snd) snd=0; }
 }
 
-static void shackled_i8751_w(int offset, int data)
+static WRITE_HANDLER( shackled_i8751_w )
 {
 	static int coin1,coin2,latch=0;
 	i8751_return=0;
@@ -285,7 +285,7 @@ static void shackled_i8751_w(int offset, int data)
 			((((coin1 / 10) << 4) | (coin1 % 10))<<8); /* Coins */
 }
 
-static void lastmiss_i8751_w(int offset, int data)
+static WRITE_HANDLER( lastmiss_i8751_w )
 {
 	static int coin,latch=0,snd;
 	i8751_return=0;
@@ -312,7 +312,7 @@ static void lastmiss_i8751_w(int offset, int data)
 	if ((i8751_value>>8)==0x03) {i8751_return=0; coin--; } /* Coin clear */
 }
 
-static void csilver_i8751_w(int offset, int data)
+static WRITE_HANDLER( csilver_i8751_w )
 {
 	static int coin,latch=0,snd;
 	i8751_return=0;
@@ -337,7 +337,7 @@ static void csilver_i8751_w(int offset, int data)
 	if (i8751_value==0x0003 && coin) {i8751_return=0; coin--;} /* Coin Clear */
 }
 
-static void garyoret_i8751_w(int offset, int data)
+static WRITE_HANDLER( garyoret_i8751_w )
 {
 	static int coin1,coin2,latch;
 	i8751_return=0;
@@ -367,7 +367,7 @@ if (errorlog && data!=5) fprintf(errorlog,"PC %06x - Write %02x to 8751 %d\n",cp
 
 /******************************************************************************/
 
-static void dec8_bank_w(int offset, int data)
+static WRITE_HANDLER( dec8_bank_w )
 {
  	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -377,7 +377,7 @@ static void dec8_bank_w(int offset, int data)
 }
 
 /* Used by Ghostbusters, Meikyuu Hunter G & Gondomania */
-static void ghostb_bank_w(int offset, int data)
+static WRITE_HANDLER( ghostb_bank_w )
 {
  	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -398,7 +398,7 @@ static void ghostb_bank_w(int offset, int data)
 //if (errorlog) fprintf(errorlog,"PC %06x - Bank switch %02x (%02x)\n",cpu_get_pc(),data&0x7,data);
 }
 
-void csilver_control_w(int offset, int data)
+WRITE_HANDLER( csilver_control_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -411,13 +411,13 @@ void csilver_control_w(int offset, int data)
  //if (errorlog) fprintf(errorlog,"PC %06x - Write %02x to %04x\n",cpu_get_pc(),data,offset+0x1802);
 }
 
-static void dec8_sound_w(int offset, int data)
+static WRITE_HANDLER( dec8_sound_w )
 {
  	soundlatch_w(0,data);
 	cpu_cause_interrupt(1,M6502_INT_NMI);
 }
 
-static void oscar_sound_w(int offset, int data)
+static WRITE_HANDLER( oscar_sound_w )
 {
  	soundlatch_w(0,data);
 	cpu_cause_interrupt(2,M6502_INT_NMI);
@@ -435,18 +435,18 @@ static void csilver_adpcm_int(int data)
 	msm5205next<<=4;
 }
 
-static int csilver_adpcm_reset_r(int offset)
+static READ_HANDLER( csilver_adpcm_reset_r )
 {
 	MSM5205_reset_w(0,0);
 	return 0;
 }
 
-static void csilver_adpcm_data_w(int offset,int data)
+static WRITE_HANDLER( csilver_adpcm_data_w )
 {
 	msm5205next = data;
 }
 
-static void csilver_sound_bank_w(int offset,int data)
+static WRITE_HANDLER( csilver_sound_bank_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU3);
 
@@ -456,7 +456,7 @@ static void csilver_sound_bank_w(int offset,int data)
 
 /******************************************************************************/
 
-static void oscar_int_w(int offset, int data)
+static WRITE_HANDLER( oscar_int_w )
 {
 	/* Deal with interrupts, coins also generate NMI to CPU 0 */
 	switch (offset) {
@@ -474,7 +474,7 @@ static void oscar_int_w(int offset, int data)
 }
 
 /* Used by Shackled, Last Mission, Captain Silver */
-static void shackled_int_w(int offset, int data)
+static WRITE_HANDLER( shackled_int_w )
 {
 	switch (offset) {
 		case 0: /* CPU 2 - IRQ acknowledge */
@@ -494,14 +494,14 @@ static void shackled_int_w(int offset, int data)
 
 /******************************************************************************/
 
-static int dec8_share_r(int offset) { return dec8_shared_ram[offset]; }
-static int dec8_share2_r(int offset) { return dec8_shared2_ram[offset]; }
-static void dec8_share_w(int offset,int data) { dec8_shared_ram[offset]=data; }
-static void dec8_share2_w(int offset,int data) { dec8_shared2_ram[offset]=data; }
-static int shackled_sprite_r(int offset) { return spriteram[offset]; }
-static void shackled_sprite_w(int offset,int data) { spriteram[offset]=data; }
-static void shackled_video_w(int offset,int data) { videoram[offset]=data; }
-static int shackled_video_r(int offset) { return videoram[offset]; }
+static READ_HANDLER( dec8_share_r ) { return dec8_shared_ram[offset]; }
+static READ_HANDLER( dec8_share2_r ) { return dec8_shared2_ram[offset]; }
+static WRITE_HANDLER( dec8_share_w ) { dec8_shared_ram[offset]=data; }
+static WRITE_HANDLER( dec8_share2_w ) { dec8_shared2_ram[offset]=data; }
+static READ_HANDLER( shackled_sprite_r ) { return spriteram[offset]; }
+static WRITE_HANDLER( shackled_sprite_w ) { spriteram[offset]=data; }
+static WRITE_HANDLER( shackled_video_w ) { videoram[offset]=data; }
+static READ_HANDLER( shackled_video_r ) { return videoram[offset]; }
 
 /******************************************************************************/
 

@@ -18,14 +18,14 @@ void bogeyman_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 void bogeyman_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 int bogeyman_vh_start(void);
 void bogeyman_vh_stop(void);
-void bogeyman_paletteram_w(int offset,int data);
-void bogeyman_videoram_w(int offset, int data);
+WRITE_HANDLER( bogeyman_paletteram_w );
+WRITE_HANDLER( bogeyman_videoram_w );
 
 /******************************************************************************/
 
 extern unsigned char *bogeyman_videoram;
 
-static int bogeyman_videoram_r(int offset) { return bogeyman_videoram[offset]; }
+static READ_HANDLER( bogeyman_videoram_r ) { return bogeyman_videoram[offset]; }
 
 /******************************************************************************/
 
@@ -33,12 +33,12 @@ static int bogeyman_videoram_r(int offset) { return bogeyman_videoram[offset]; }
 
 static int psg_latch;
 
-static void bogeyman_8910_latch_w(int offset,int data)
+static WRITE_HANDLER( bogeyman_8910_latch_w )
 {
 	psg_latch = data;
 }
 
-static void bogeyman_8910_control_w(int offset,int data)
+static WRITE_HANDLER( bogeyman_8910_control_w )
 {
 	static int last;
 

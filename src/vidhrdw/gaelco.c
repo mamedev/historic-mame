@@ -16,7 +16,7 @@ static struct osd_bitmap *screen2;
 
 ***************************************************************************/
 
-void paletteram_xRRRRxGGGGxBBBBx_word_w( int offset, int data )
+WRITE_HANDLER( paletteram_xRRRRxGGGGxBBBBx_word_w )
 {
 	int r,g,b;
 	int oldword = READ_WORD(&paletteram[offset]);
@@ -41,20 +41,18 @@ void paletteram_xRRRRxGGGGxBBBBx_word_w( int offset, int data )
 
 ***************************************************************************/
 
-static void get_tile_info_screen0(int col,int row)
+static void get_tile_info_screen0(int tile_index)
 {
-	int tile_index = 2*(64*row + col);
-	unsigned short data = READ_WORD(&splash_videoram[tile_index]);
+	unsigned short data = READ_WORD(&splash_videoram[2*tile_index]);
 	unsigned char attr = data >> 8;
 	unsigned char code = data & 0xff;
 
 	SET_TILE_INFO(0, code + ((0x20 + (attr & 0x0f)) << 8), (attr & 0xf0) >> 4);
 }
 
-static void get_tile_info_screen1(int col,int row)
+static void get_tile_info_screen1(int tile_index)
 {
-	int tile_index = 2*(32*row + col);
-	unsigned short data = READ_WORD(&splash_videoram[tile_index+0x1000]);
+	unsigned short data = READ_WORD(&splash_videoram[2*tile_index+0x1000]);
 	unsigned char attr = data >> 8;
 	unsigned char code = data & 0xff;
 
@@ -69,29 +67,29 @@ static void get_tile_info_screen1(int col,int row)
 
 ***************************************************************************/
 
-int splash_vram_r( int offset )
+READ_HANDLER( splash_vram_r )
 {
 	return READ_WORD(&splash_videoram[offset]);
 }
 
-void splash_vram_w( int offset, int data )
+WRITE_HANDLER( splash_vram_w )
 {
 	COMBINE_WORD_MEM(&splash_videoram[offset],data);
 	if (offset < 0x1000){	/* Screen 0 */
-		tilemap_mark_tile_dirty(screen0,(offset/2)%64,(offset/2)/64);
+		tilemap_mark_tile_dirty(screen0,offset/2);
 	}
 	else{	/* Screen 1 */
 		offset -= 0x1000;
-		tilemap_mark_tile_dirty(screen1,(offset/2)%32,(offset/2)/32);
+		tilemap_mark_tile_dirty(screen1,offset/2);
 	}
 }
 
-int splash_pixelram_r(int offset)
+READ_HANDLER( splash_pixelram_r )
 {
 	return READ_WORD(&splash_pixelram[offset]);
 }
 
-void splash_pixelram_w(int offset,int data)
+WRITE_HANDLER( splash_pixelram_w )
 {
 	int sx,sy,color;
 
@@ -113,19 +111,19 @@ void splash_pixelram_w(int offset,int data)
 
 int splash_vh_start(void)
 {
-	screen0 = tilemap_create(get_tile_info_screen0, TILEMAP_TRANSPARENT, 8, 8, 64, 32);
-	screen1 = tilemap_create(get_tile_info_screen1, TILEMAP_TRANSPARENT, 16, 16, 32, 32);
+	screen0 = tilemap_create(get_tile_info_screen0,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
+	screen1 = tilemap_create(get_tile_info_screen1,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	screen2 = osd_create_bitmap (512, 256);
 
-	if (screen0 && screen1 && screen2){
-		screen0->transparent_pen = 0;
-		screen1->transparent_pen = 0;
+	if (!screen0 || !screen1 || !screen2)
+		return 1;
 
-		tilemap_set_scrollx(screen0, 0, 4);
+	screen0->transparent_pen = 0;
+	screen1->transparent_pen = 0;
 
-		return 0;
-	}
-	return 1;
+	tilemap_set_scrollx(screen0, 0, 4);
+
+	return 0;
 }
 
 

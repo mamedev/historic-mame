@@ -22,30 +22,30 @@ notes:
 
 void flstory_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-int flstory_68705_portA_r(int offset);
-void flstory_68705_portA_w(int offset,int data);
-int flstory_68705_portB_r(int offset);
-void flstory_68705_portB_w(int offset,int data);
-int flstory_68705_portC_r(int offset);
-void flstory_68705_portC_w(int offset,int data);
-void flstory_68705_ddrA_w(int offset,int data);
-void flstory_68705_ddrB_w(int offset,int data);
-void flstory_68705_ddrC_w(int offset,int data);
-void flstory_mcu_w(int offset,int data);
-int flstory_mcu_r(int offset);
-int flstory_mcu_status_r(int offset);
+READ_HANDLER( flstory_68705_portA_r );
+WRITE_HANDLER( flstory_68705_portA_w );
+READ_HANDLER( flstory_68705_portB_r );
+WRITE_HANDLER( flstory_68705_portB_w );
+READ_HANDLER( flstory_68705_portC_r );
+WRITE_HANDLER( flstory_68705_portC_w );
+WRITE_HANDLER( flstory_68705_ddrA_w );
+WRITE_HANDLER( flstory_68705_ddrB_w );
+WRITE_HANDLER( flstory_68705_ddrC_w );
+WRITE_HANDLER( flstory_mcu_w );
+READ_HANDLER( flstory_mcu_r );
+READ_HANDLER( flstory_mcu_status_r );
 
 
 int d400 = 0;
 
-static void sound_command_w(int offset, int data)
+static WRITE_HANDLER( sound_command_w )
 {
 	d400 = data;
 	soundlatch_w(0,data);
 	cpu_cause_interrupt(1,Z80_NMI_INT);
 }
 
-int read_d401(int offset)
+static READ_HANDLER( flstory_d401_r )
 {
 /* writing $ef or $06 to $d400 makes bit 0 of d401 go hi */
 	/* it looks like writing $ef to $d400 is meant to eventually
@@ -70,7 +70,7 @@ static struct MemoryReadAddress readmem[] =
     { 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xd000, 0xd000, flstory_mcu_r },
 //	{ 0xd400, 0xd400, MRA_RAM },
-	{ 0xd401, 0xd401, read_d401 },
+	{ 0xd401, 0xd401, flstory_d401_r },
 	{ 0xd800, 0xd800, input_port_0_r },
 	{ 0xd801, 0xd801, input_port_1_r },
 	{ 0xd802, 0xd802, input_port_2_r },

@@ -132,13 +132,13 @@ void speedbal_vh_stop (void)
  *				   *
  *************************************/
 
-void speedbal_foreground_videoram_w (int offset, int data)
+WRITE_HANDLER( speedbal_foreground_videoram_w )
 {
    ch_dirtybuffer[offset] = 1;
    speedbal_foreground_videoram[offset]=data;
 }
 
-int speedbal_foreground_videoram_r (int offset)
+READ_HANDLER( speedbal_foreground_videoram_r )
 {
    return speedbal_foreground_videoram[offset];
 }
@@ -151,13 +151,13 @@ int speedbal_foreground_videoram_r (int offset)
  *				   *
  *************************************/
 
-void speedbal_background_videoram_w (int offset, int data)
+WRITE_HANDLER( speedbal_background_videoram_w )
 {
    bg_dirtybuffer[offset] = 1;
    speedbal_background_videoram[offset] = data;
 }
 
-int speedbal_background_videoram_r (int offset)
+READ_HANDLER( speedbal_background_videoram_r )
 {
    return speedbal_background_videoram[offset];
 }

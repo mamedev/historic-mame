@@ -77,7 +77,7 @@ void pooyan_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 
 
-void pooyan_flipscreen_w(int offset,int data)
+WRITE_HANDLER( pooyan_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{

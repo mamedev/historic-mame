@@ -29,30 +29,30 @@ extern int tehkanwc_videoram1_size;
 int tehkanwc_vh_start(void);
 void tehkanwc_vh_stop(void);
 void tehkanwc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-int tehkanwc_videoram1_r(int offset);
-void tehkanwc_videoram1_w(int offset,int data);
-int tehkanwc_scroll_x_r(int offset);
-int tehkanwc_scroll_y_r(int offset);
-void tehkanwc_scroll_x_w(int offset,int data);
-void tehkanwc_scroll_y_w(int offset,int data);
-void gridiron_led0_w(int offset,int data);
-void gridiron_led1_w(int offset,int data);
+READ_HANDLER( tehkanwc_videoram1_r );
+WRITE_HANDLER( tehkanwc_videoram1_w );
+READ_HANDLER( tehkanwc_scroll_x_r );
+READ_HANDLER( tehkanwc_scroll_y_r );
+WRITE_HANDLER( tehkanwc_scroll_x_w );
+WRITE_HANDLER( tehkanwc_scroll_y_w );
+WRITE_HANDLER( gridiron_led0_w );
+WRITE_HANDLER( gridiron_led1_w );
 
 
 static unsigned char *shared_ram;
 
-static int shared_r(int offset)
+static READ_HANDLER( shared_r )
 {
 	return shared_ram[offset];
 }
 
-static void shared_w(int offset,int data)
+static WRITE_HANDLER( shared_w )
 {
 	shared_ram[offset] = data;
 }
 
 
-static void sub_cpu_halt_w(int offset,int data)
+static WRITE_HANDLER( sub_cpu_halt_w )
 {
 	if (data)
 		cpu_set_reset_line(1,CLEAR_LINE);
@@ -64,7 +64,7 @@ static void sub_cpu_halt_w(int offset,int data)
 
 static int track0[2],track1[2];
 
-static int tehkanwc_track_0_r(int offset)
+static READ_HANDLER( tehkanwc_track_0_r )
 {
 	int joy;
 
@@ -74,7 +74,7 @@ static int tehkanwc_track_0_r(int offset)
 	return readinputport(3 + offset) - track0[offset];
 }
 
-static int tehkanwc_track_1_r(int offset)
+static READ_HANDLER( tehkanwc_track_1_r )
 {
 	int joy;
 
@@ -84,13 +84,13 @@ static int tehkanwc_track_1_r(int offset)
 	return readinputport(6 + offset) - track1[offset];
 }
 
-static void tehkanwc_track_0_reset_w(int offset,int data)
+static WRITE_HANDLER( tehkanwc_track_0_reset_w )
 {
 	/* reset the trackball counters */
 	track0[offset] = readinputport(3 + offset) + data;
 }
 
-static void tehkanwc_track_1_reset_w(int offset,int data)
+static WRITE_HANDLER( tehkanwc_track_1_reset_w )
 {
 	/* reset the trackball counters */
 	track1[offset] = readinputport(6 + offset) + data;
@@ -98,7 +98,7 @@ static void tehkanwc_track_1_reset_w(int offset,int data)
 
 
 
-static void sound_command_w(int offset,int data)
+static WRITE_HANDLER( sound_command_w )
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(2,Z80_NMI_INT);
@@ -109,7 +109,7 @@ static void reset_callback(int param)
 	cpu_set_reset_line(2,PULSE_LINE);
 }
 
-static void sound_answer_w(int offset,int data)
+static WRITE_HANDLER( sound_answer_w )
 {
 	soundlatch2_w(0,data);
 
@@ -123,27 +123,27 @@ static void sound_answer_w(int offset,int data)
 
 static int msm_data_offs;
 
-static int tehkanwc_portA_r(int offset)
+static READ_HANDLER( tehkanwc_portA_r )
 {
 	return msm_data_offs & 0xff;
 }
 
-static int tehkanwc_portB_r( int offset )
+static READ_HANDLER( tehkanwc_portB_r )
 {
 	return (msm_data_offs >> 8) & 0xff;
 }
 
-static void tehkanwc_portA_w(int offset,int data)
+static WRITE_HANDLER( tehkanwc_portA_w )
 {
 	msm_data_offs = (msm_data_offs & 0xff00) | data;
 }
 
-static void tehkanwc_portB_w(int offset,int data)
+static WRITE_HANDLER( tehkanwc_portB_w )
 {
 	msm_data_offs = (msm_data_offs & 0x00ff) | (data << 8);
 }
 
-static void msm_reset_w(int offset,int data)
+static WRITE_HANDLER( msm_reset_w )
 {
 	MSM5205_reset_w(0,data ? 0 : 1);
 }

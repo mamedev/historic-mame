@@ -23,32 +23,32 @@ void phozon_init_machine( void )
 }
 
 /* memory handlers */
-int phozon_spriteram_r( int offset ){
+READ_HANDLER( phozon_spriteram_r ){
     return phozon_spriteram[offset];
 }
 
-void phozon_spriteram_w( int offset,int data ){
+WRITE_HANDLER( phozon_spriteram_w ){
    phozon_spriteram[offset] = data;
 }
 
-int phozon_snd_sharedram_r( int offset ){
+READ_HANDLER( phozon_snd_sharedram_r ){
     return phozon_snd_sharedram[offset];
 }
 
-void phozon_snd_sharedram_w( int offset,int data ){
+WRITE_HANDLER( phozon_snd_sharedram_w ){
     phozon_snd_sharedram[offset] = data;
 }
 
 /* cpu control functions */
-void phozon_cpu2_enable_w(int offset,int data){
+WRITE_HANDLER( phozon_cpu2_enable_w ){
 	cpu_set_halt_line(1, offset ? CLEAR_LINE : ASSERT_LINE);
 }
 
-void phozon_cpu3_enable_w(int offset,int data){
+WRITE_HANDLER( phozon_cpu3_enable_w ){
 	cpu_set_halt_line(2, offset ? CLEAR_LINE : ASSERT_LINE);
 }
 
-void phozon_cpu3_reset_w(int offset,int data){
+WRITE_HANDLER( phozon_cpu3_reset_w ){
 	cpu_set_reset_line(2,PULSE_LINE);
 }
 
@@ -58,18 +58,21 @@ void phozon_cpu3_reset_w(int offset,int data){
 *																					*
 ************************************************************************************/
 
-void phozon_customio_w_1( int offset,int data ){
+WRITE_HANDLER( phozon_customio_1_w )
+{
 	phozon_customio_1[offset] = data;
 }
 
-void phozon_customio_w_2( int offset,int data ){
+WRITE_HANDLER( phozon_customio_2_w )
+{
     phozon_customio_2[offset] = data;
 }
 
 static int credmoned [] = { 1, 1, 1, 1, 1, 2, 2, 3 };
 static int monedcred [] = { 1, 2, 3, 6, 7, 1, 3, 1 };
 
-int phozon_customio_r_1( int offset ){
+READ_HANDLER( phozon_customio_1_r )
+{
     int mode, val, temp1, temp2;
 
     mode = phozon_customio_1[8];
@@ -193,7 +196,7 @@ int phozon_customio_r_1( int offset ){
     return val;
 }
 
-int phozon_customio_r_2( int offset )
+READ_HANDLER( phozon_customio_2_r )
 {
     int mode, val;
 

@@ -17,11 +17,11 @@
  *
  */
 
-void ramtek_videoram_w(int offset,int data);
+WRITE_HANDLER( ramtek_videoram_w );
 
 int  invaders_interrupt(void);
 void ramtek_sh_update(void);
-void ramtek_mask_w(int offset, int data);
+WRITE_HANDLER( ramtek_mask_w );
 
 /*
  * since these functions aren't used anywhere else, i've made them
@@ -34,12 +34,12 @@ static const int ControllerTable[32] = {
     20 , 21 , 23 , 22 , 18 , 19 , 17 , 16
 };
 
-static int gray5bit_controller0_r(int offset)
+static READ_HANDLER( gray5bit_controller0_r )
 {
     return (input_port_2_r(0) & 0xe0) | (~ControllerTable[input_port_2_r(0) & 0x1f] & 0x1f);
 }
 
-static int gray5bit_controller1_r(int offset)
+static READ_HANDLER( gray5bit_controller1_r )
 {
     return (input_port_3_r(0) & 0xe0) | (~ControllerTable[input_port_3_r(0) & 0x1f] & 0x1f);
 }
@@ -57,7 +57,7 @@ static struct MemoryReadAddress readmem[] =
 	{ -1 }  /* end of table */
 };
 
-void sound_w(int offset,int data)
+WRITE_HANDLER( sound_w )
 {
 }
 

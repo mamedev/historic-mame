@@ -24,14 +24,14 @@ extern unsigned char *galpanic_bgvideoram,*galpanic_fgvideoram;
 extern int galpanic_fgvideoram_size;
 
 void galpanic_init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom);
-int galpanic_bgvideoram_r(int offset);
-void galpanic_bgvideoram_w(int offset,int data);
-int galpanic_fgvideoram_r(int offset);
-void galpanic_fgvideoram_w(int offset,int data);
-int galpanic_paletteram_r(int offset);
-void galpanic_paletteram_w(int offset,int data);
-int galpanic_spriteram_r(int offset);
-void galpanic_spriteram_w(int offset,int data);
+READ_HANDLER( galpanic_bgvideoram_r );
+WRITE_HANDLER( galpanic_bgvideoram_w );
+READ_HANDLER( galpanic_fgvideoram_r );
+WRITE_HANDLER( galpanic_fgvideoram_w );
+READ_HANDLER( galpanic_paletteram_r );
+WRITE_HANDLER( galpanic_paletteram_w );
+READ_HANDLER( galpanic_spriteram_r );
+WRITE_HANDLER( galpanic_spriteram_w );
 void galpanic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -44,7 +44,7 @@ int galpanic_interrupt(void)
 	else return 3;
 }
 
-void galpanic_6295_bankswitch_w(int offset,int data)
+WRITE_HANDLER( galpanic_6295_bankswitch_w )
 {
 	static unsigned char bank[2];
 	unsigned char *RAM = memory_region(REGION_SOUND1);

@@ -236,7 +236,7 @@ void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *color
   bit 0 -- 1  kohm resistor  -- BLUE
 
 ***************************************************************************/
-void swimmer_bgcolor_w(int offset,int data)
+WRITE_HANDLER( swimmer_bgcolor_w )
 {
 	int bit0,bit1,bit2;
 	int r,g,b;
@@ -308,7 +308,7 @@ void cclimber_vh_stop(void)
 
 
 
-void cclimber_flipscreen_w(int offset,int data)
+WRITE_HANDLER( cclimber_flipscreen_w )
 {
 	if (flipscreen[offset] != (data & 1))
 	{
@@ -319,7 +319,7 @@ void cclimber_flipscreen_w(int offset,int data)
 
 
 
-void cclimber_colorram_w(int offset,int data)
+WRITE_HANDLER( cclimber_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -338,7 +338,7 @@ void cclimber_colorram_w(int offset,int data)
 
 
 
-void cclimber_bigsprite_videoram_w(int offset,int data)
+WRITE_HANDLER( cclimber_bigsprite_videoram_w )
 {
 	if (cclimber_bsvideoram[offset] != data)
 	{
@@ -350,7 +350,7 @@ void cclimber_bigsprite_videoram_w(int offset,int data)
 
 
 
-void swimmer_palettebank_w(int offset,int data)
+WRITE_HANDLER( swimmer_palettebank_w )
 {
 	if (palettebank != (data & 1))
 	{
@@ -361,7 +361,7 @@ void swimmer_palettebank_w(int offset,int data)
 
 
 
-void swimmer_sidepanel_enable_w(int offset,int data)
+WRITE_HANDLER( swimmer_sidepanel_enable_w )
 {
     if (data != sidepanel_enabled)
     {

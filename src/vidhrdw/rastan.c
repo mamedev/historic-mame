@@ -89,19 +89,19 @@ void rastan_vh_stop (void)
  *   scroll write handlers
  */
 
-void rastan_scrollY_w (int offset, int data)
+WRITE_HANDLER( rastan_scrollY_w )
 {
 	COMBINE_WORD_MEM (&rastan_scrolly[offset], data);
 }
 
-void rastan_scrollX_w (int offset, int data)
+WRITE_HANDLER( rastan_scrollX_w )
 {
 	COMBINE_WORD_MEM (&rastan_scrollx[offset], data);
 }
 
 
 
-void rastan_videoram1_w (int offset, int data)
+WRITE_HANDLER( rastan_videoram1_w )
 {
 	int oldword = READ_WORD(&rastan_videoram1[offset]);
 	int newword = COMBINE_WORD(oldword,data);
@@ -113,12 +113,12 @@ void rastan_videoram1_w (int offset, int data)
 		rastan_dirty1[offset / 4] = 1;
 	}
 }
-int rastan_videoram1_r (int offset)
+READ_HANDLER( rastan_videoram1_r )
 {
    return READ_WORD (&rastan_videoram1[offset]);
 }
 
-void rastan_videoram3_w (int offset, int data)
+WRITE_HANDLER( rastan_videoram3_w )
 {
 	int oldword = READ_WORD(&rastan_videoram3[offset]);
 	int newword = COMBINE_WORD(oldword,data);
@@ -130,14 +130,14 @@ void rastan_videoram3_w (int offset, int data)
 		rastan_dirty3[offset / 4] = 1;
 	}
 }
-int rastan_videoram3_r (int offset)
+READ_HANDLER( rastan_videoram3_r )
 {
    return READ_WORD (&rastan_videoram3[offset]);
 }
 
 
 
-void rastan_videocontrol_w (int offset, int data)
+WRITE_HANDLER( rastan_videocontrol_w )
 {
 	if (offset == 0)
 	{
@@ -195,13 +195,13 @@ palette_init_used_colors();
 
 	for (offs = 0x800-8; offs >= 0; offs -= 8)
 	{
-		code = READ_WORD (&rastan_spriteram[offs+4]);
+		code = READ_WORD(&rastan_spriteram[offs+4]) & 0xfff;
 
 		if (code)
 		{
 			int data1;
 
-			data1 = READ_WORD (&rastan_spriteram[offs]);
+			data1 = READ_WORD(&rastan_spriteram[offs]);
 
 			color = (data1 & 0x0f) + 0x10 * spritepalettebank;
 			colmask[color] |= Machine->gfx[1]->pen_usage[code];
@@ -290,7 +290,7 @@ palette_init_used_colors();
 	/* Draw the sprites. 256 sprites in total */
 	for (offs = 0x800-8; offs >= 0; offs -= 8)
 	{
-		int num = READ_WORD (&rastan_spriteram[offs+4]);
+		int num = READ_WORD (&rastan_spriteram[offs+4]) & 0xfff;
 
 
 		if (num)
@@ -341,7 +341,7 @@ palette_init_used_colors();
 
 	for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
 	{
-		code = READ_WORD(&rastan_videoram1[offs + 2]) & 0x3FFF;
+		code = READ_WORD(&rastan_videoram1[offs + 2]) & 0x3fff;
 		color = READ_WORD(&rastan_videoram1[offs]) & 0x7f;
 
 		colmask[color] |= Machine->gfx[0]->pen_usage[code];
@@ -532,7 +532,7 @@ void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	    for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
 	    {
-		    code = READ_WORD(&rastan_videoram1[offs + 2]) & 0x3FFF;
+		    code = READ_WORD(&rastan_videoram1[offs + 2]) & 0x3fff;
 		    color = READ_WORD(&rastan_videoram1[offs]) & 0x7f;
 
 		    colmask[color] |= Machine->gfx[0]->pen_usage[code];
@@ -555,7 +555,7 @@ void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	    for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
 	    {
-		    code = READ_WORD(&rastan_videoram3[offs + 2]) & 0x3FFF;
+		    code = READ_WORD(&rastan_videoram3[offs + 2]) & 0x3fff;
 		    color = READ_WORD(&rastan_videoram3[offs]) & 0x7f;
 
 		    colmask[color] |= Machine->gfx[0]->pen_usage[code];

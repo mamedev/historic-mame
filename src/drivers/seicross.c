@@ -40,7 +40,7 @@ on a very small daughterboard).
 
 
 extern unsigned char *seicross_row_scroll;
-void seicross_colorram_w(int offset,int data);
+WRITE_HANDLER( seicross_colorram_w );
 void seicross_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void seicross_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -79,12 +79,12 @@ static void friskyt_init_machine(void)
 
 static int portb;
 
-static int friskyt_portB_r(int offset)
+static READ_HANDLER( friskyt_portB_r )
 {
 	return (portb & 0x9f) | (readinputport(6) & 0x60);
 }
 
-static void friskyt_portB_w(int offset,int data)
+static WRITE_HANDLER( friskyt_portB_w )
 {
 //if (errorlog) fprintf(errorlog,"PC %04x: 8910 port B = %02x\n",cpu_get_pc(),data);
 	/* bit 0 is IRQ enable */
@@ -107,12 +107,12 @@ static void friskyt_portB_w(int offset,int data)
 
 static unsigned char *sharedram;
 
-static int sharedram_r(int offset)
+static READ_HANDLER( sharedram_r )
 {
 	return sharedram[offset];
 }
 
-static void sharedram_w(int offset,int data)
+static WRITE_HANDLER( sharedram_w )
 {
 	sharedram[offset] = data;
 }
@@ -185,7 +185,7 @@ static struct MemoryWriteAddress mcu_nvram_writemem[] =
 {
 	{ 0x0000, 0x007f, MWA_RAM },
 	{ 0x1000, 0x10ff, MWA_RAM, &nvram, &nvram_size },
-	{ 0x2000, 0x2000, DAC_data_w },
+	{ 0x2000, 0x2000, DAC_0_data_w },
 	{ 0x8000, 0xf7ff, MWA_ROM },
 	{ 0xf800, 0xffff, sharedram_w },
 	{ -1 }	/* end of table */
@@ -194,7 +194,7 @@ static struct MemoryWriteAddress mcu_nvram_writemem[] =
 static struct MemoryWriteAddress mcu_no_nvram_writemem[] =
 {
 	{ 0x0000, 0x007f, MWA_RAM },
-	{ 0x2000, 0x2000, DAC_data_w },
+	{ 0x2000, 0x2000, DAC_0_data_w },
 	{ 0x8000, 0xf7ff, MWA_ROM },
 	{ 0xf800, 0xffff, sharedram_w },
 	{ -1 }	/* end of table */

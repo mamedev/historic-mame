@@ -24,7 +24,7 @@ void rollerg_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static int readzoomroms;
 
-static void rollerg_0010_w(int offset,int data)
+static WRITE_HANDLER( rollerg_0010_w )
 {
 if (errorlog) fprintf(errorlog,"%04x: write %02x to 0010\n",cpu_get_pc(),data);
 
@@ -41,21 +41,21 @@ if (errorlog) fprintf(errorlog,"%04x: write %02x to 0010\n",cpu_get_pc(),data);
 	/* other bits unknown */
 }
 
-static int rollerg_K051316_r(int offset)
+static READ_HANDLER( rollerg_K051316_r )
 {
 	if (readzoomroms) return K051316_rom_0_r(offset);
 	else return K051316_0_r(offset);
 }
 
-static int rollerg_sound_r(int offset)
+static READ_HANDLER( rollerg_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
 	   just make it pass the test */
-	if (Machine->sample_rate != 0) 	return K053260_ReadReg(2 + offset);
+	if (Machine->sample_rate != 0) 	return K053260_r(2 + offset);
 	else return 0x00;
 }
 
-static void soundirq_w(int offset,int data)
+static WRITE_HANDLER( soundirq_w )
 {
 	cpu_cause_interrupt(1,0xff);
 }
@@ -65,13 +65,13 @@ static void nmi_callback(int param)
 	cpu_set_nmi_line(1,ASSERT_LINE);
 }
 
-static void sound_arm_nmi(int offset,int data)
+static WRITE_HANDLER( sound_arm_nmi_w )
 {
 	cpu_set_nmi_line(1,CLEAR_LINE);
 	timer_set(TIME_IN_USEC(50),0,nmi_callback);	/* kludge until the K053260 is emulated correctly */
 }
 
-static int pip(int offset)
+static READ_HANDLER( pip_r )
 {
 	return 0x7f;
 }
@@ -85,7 +85,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0052, 0x0052, input_port_4_r },
 	{ 0x0053, 0x0053, input_port_2_r },
 	{ 0x0060, 0x0060, input_port_3_r },
-	{ 0x0061, 0x0061, pip },				/* ????? */
+	{ 0x0061, 0x0061, pip_r },				/* ????? */
 	{ 0x0300, 0x030f, K053244_r },
 	{ 0x0800, 0x0fff, rollerg_K051316_r },
 	{ 0x1000, 0x17ff, K053245_r },
@@ -100,7 +100,7 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0010, 0x0010, rollerg_0010_w },
 	{ 0x0020, 0x0020, watchdog_reset_w },
-	{ 0x0030, 0x0031, K053260_WriteReg },
+	{ 0x0030, 0x0031, K053260_w },
 	{ 0x0040, 0x0040, soundirq_w },
 	{ 0x0200, 0x020f, K051316_ctrl_0_w },
 	{ 0x0300, 0x030f, K053244_w },
@@ -116,7 +116,7 @@ static struct MemoryReadAddress readmem_sound[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0xa000, 0xa02f, K053260_ReadReg },
+	{ 0xa000, 0xa02f, K053260_r },
 	{ 0xc000, 0xc000, YM3812_status_port_0_r },
 	{ -1 }	/* end of table */
 };
@@ -125,10 +125,10 @@ static struct MemoryWriteAddress writemem_sound[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0xa000, 0xa02f, K053260_WriteReg },
+	{ 0xa000, 0xa02f, K053260_w },
 	{ 0xc000, 0xc000, YM3812_control_port_0_w },
 	{ 0xc001, 0xc001, YM3812_write_port_0_w },
-	{ 0xfc00, 0xfc00, sound_arm_nmi },
+	{ 0xfc00, 0xfc00, sound_arm_nmi_w },
 	{ -1 }	/* end of table */
 };
 

@@ -199,17 +199,11 @@ static void SEGAPCMUpdate( int num, INT16 **buffer, int length )
 
 	for( i = 0; i < SEGAPCM_MAX; i++ )
 	{
-
 		if( spcm.flag[i] == 2)
-
 		{
-
 			spcm.flag[i]=0;
-
 			spcm.add_addr[i] = (( (((int)spcm.addr_h[i]<<8)&0xff00) |
-
 				  (spcm.addr_l[i]&0x00ff) ) << PCM_ADDR_SHIFT) &0x0ffff000;
-
 		}
 		if( !spcm.flag[i] )
 		{
@@ -219,14 +213,12 @@ static void SEGAPCMUpdate( int num, INT16 **buffer, int length )
 			pcm_buf = pcm_rom + (((int)spcm.bank[i]&spcm.bankmask)<<spcm.bankshift);
 			addr = (spcm.add_addr[i]>>PCM_ADDR_SHIFT)&0x0000ffff;
 			end_addr = ((((unsigned int)spcm.end_h[i]<<8)&0xff00) + 0x00ff);
-
 			if(spcm.end_h[i] < spcm.addr_h[i]) end_addr+=0x10000;
 
 			for( j = 0; j < length; j++ )
 			{
 				old_addr = addr;
 				/**** make address ****/
-
 				end_check_addr = (spcm.add_addr[i]>>PCM_ADDR_SHIFT);
 				addr = end_check_addr&0x0000ffff;
 				for(; old_addr <= addr; old_addr++ )
@@ -274,15 +266,16 @@ static void SEGAPCMUpdate( int num, INT16 **buffer, int length )
 /************************************************/
 /*    wrtie register SEGAPCM                    */
 /************************************************/
-void SEGAPCMWriteReg( int r, int v )
+WRITE_HANDLER( SegaPCM_w )
 {
+	int r = offset;
+	int v = data;
 	int rate;
 	int  lv, rv, cen;
 
 	int channel = (r>>3)&0x0f;
 
 	spcm.writeram[r&0x07ff] = (char)v;		/* write value data */
-
 	switch( (r&0x87) )
 	{
 		case 0x00:
@@ -328,7 +321,6 @@ remake_vol:
 				/**** start D/A ****/
 //				spcm.flag[channel] = 0;
 				spcm.flag[channel] = 2;
-
 //				spcm.add_addr[channel] = (( (((int)spcm.addr_h[channel]<<8)&0xff00) |
 //					  (spcm.addr_l[channel]&0x00ff) ) << PCM_ADDR_SHIFT) &0x0ffff000;
 				spcm.pcmd[channel] = 0;
@@ -345,9 +337,9 @@ remake_vol:
 /************************************************/
 /*    read register SEGAPCM                     */
 /************************************************/
-int SEGAPCMReadReg( int r )
+READ_HANDLER( SegaPCM_r )
 {
-	return spcm.writeram[r&0x07ff];		/* read value data */
+	return spcm.writeram[offset & 0x07ff];		/* read value data */
 }
 
 /**************** end of file ****************/

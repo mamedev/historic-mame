@@ -97,7 +97,7 @@ void terrac_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 
 
-void terrac_videoram2_w(int offset,int data)
+WRITE_HANDLER( terrac_videoram2_w )
 {
 	int oldword = READ_WORD(&terrac_videoram[offset]);
 	int newword = COMBINE_WORD(oldword,data);
@@ -110,7 +110,7 @@ void terrac_videoram2_w(int offset,int data)
 	}
 }
 
-int terrac_videoram2_r (int offset)
+READ_HANDLER( terrac_videoram2_r )
 {
    return READ_WORD (&terrac_videoram[offset]);
 }

@@ -30,19 +30,19 @@ extern unsigned char *gradius3_gfxram;
 extern int gradius3_priority;
 int gradius3_vh_start(void);
 void gradius3_vh_stop(void);
-int gradius3_gfxrom_r(int offset);
-int gradius3_gfxram_r(int offset);
-void gradius3_gfxram_w(int offset,int data);
+READ_HANDLER( gradius3_gfxrom_r );
+READ_HANDLER( gradius3_gfxram_r );
+WRITE_HANDLER( gradius3_gfxram_w );
 void gradius3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-static int K052109_halfword_r(int offset)
+static READ_HANDLER( K052109_halfword_r )
 {
 	return K052109_r(offset >> 1);
 }
 
-static void K052109_halfword_w(int offset,int data)
+static WRITE_HANDLER( K052109_halfword_w )
 {
 	if ((data & 0x00ff0000) == 0)
 		K052109_w(offset >> 1,data & 0xff);
@@ -53,23 +53,23 @@ static void K052109_halfword_w(int offset,int data)
 //		if (errorlog) fprintf(errorlog,"%06x half %04x = %04x\n",cpu_get_pc(),offset,data);
 }
 
-static int K051937_halfword_r(int offset)
+static READ_HANDLER( K051937_halfword_r )
 {
 	return K051937_r(offset >> 1);
 }
 
-static void K051937_halfword_w(int offset,int data)
+static WRITE_HANDLER( K051937_halfword_w )
 {
 	if ((data & 0x00ff0000) == 0)
 		K051937_w(offset >> 1,data & 0xff);
 }
 
-static int K051960_halfword_r(int offset)
+static READ_HANDLER( K051960_halfword_r )
 {
 	return K051960_r(offset >> 1);
 }
 
-static void K051960_halfword_w(int offset,int data)
+static WRITE_HANDLER( K051960_halfword_w )
 {
 	if ((data & 0x00ff0000) == 0)
 		K051960_w(offset >> 1,data & 0xff);
@@ -90,17 +90,17 @@ static void gradius3_init(void)
 
 static unsigned char *sharedram;
 
-static int sharedram_r(int offset)
+static READ_HANDLER( sharedram_r )
 {
 	return READ_WORD(&sharedram[offset]);
 }
 
-static void sharedram_w(int offset,int data)
+static WRITE_HANDLER( sharedram_w )
 {
 	COMBINE_WORD_MEM(&sharedram[offset],data);
 }
 
-static void cpuA_ctrl_w(int offset,int data)
+static WRITE_HANDLER( cpuA_ctrl_w )
 {
 	if ((data & 0xff000000) == 0)
 	{
@@ -124,7 +124,7 @@ static void cpuA_ctrl_w(int offset,int data)
 	}
 }
 
-static void cpuB_irqenable_w(int offset,int data)
+static WRITE_HANDLER( cpuB_irqenable_w )
 {
 	if ((data & 0xff000000) == 0)
 		irqBmask = (data >> 8) & 0x07;
@@ -149,7 +149,7 @@ static int cpuB_interrupt(void)
 	return 0;
 }
 
-static void cpuB_irqtrigger_w(int offset,int data)
+static WRITE_HANDLER( cpuB_irqtrigger_w )
 {
 	if (irqBmask & 4)
 	{
@@ -160,18 +160,18 @@ if (errorlog) fprintf(errorlog,"%04x trigger cpu B irq 4 %02x\n",cpu_get_pc(),da
 if (errorlog) fprintf(errorlog,"%04x MISSED cpu B irq 4 %02x\n",cpu_get_pc(),data);
 }
 
-static void sound_command_w(int offset,int data)
+static WRITE_HANDLER( sound_command_w )
 {
 	if ((data & 0xff000000) == 0)
 		soundlatch_w(0,(data >> 8) & 0xff);
 }
 
-static void sound_irq_w(int offset,int data)
+static WRITE_HANDLER( sound_irq_w )
 {
 	cpu_cause_interrupt(2,0xff);
 }
 
-static void sound_bank_w(int offset, int data)
+static WRITE_HANDLER( sound_bank_w )
 {
 	unsigned char *RAM = memory_region(REGION_SOUND1);
 	int bank_A, bank_B;

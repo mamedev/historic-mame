@@ -16,18 +16,18 @@ void xmen_vh_stop(void);
 void xmen_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-static int K052109_halfword_r(int offset)
+static READ_HANDLER( K052109_halfword_r )
 {
 	return K052109_r(offset >> 1);
 }
 
-static void K052109_halfword_w(int offset,int data)
+static WRITE_HANDLER( K052109_halfword_w )
 {
 	if ((data & 0x00ff0000) == 0)
 		K052109_w(offset >> 1,data & 0xff);
 }
 
-static void K053251_halfword_w(int offset,int data)
+static WRITE_HANDLER( K053251_halfword_w )
 {
 	if ((data & 0x00ff0000) == 0)
 		K053251_w(offset >> 1,data & 0xff);
@@ -73,7 +73,7 @@ static void nvram_handler(void *file,int read_or_write)
 	}
 }
 
-static int eeprom_r(int offset)
+static READ_HANDLER( eeprom_r )
 {
 	int res;
 
@@ -90,7 +90,7 @@ if (errorlog) fprintf(errorlog,"%06x eeprom_r\n",cpu_get_pc());
 	return res;
 }
 
-static void eeprom_w(int offset,int data)
+static WRITE_HANDLER( eeprom_w )
 {
 if (errorlog) fprintf(errorlog,"%06x: write %04x to 108000\n",cpu_get_pc(),data);
 	if ((data & 0x00ff0000) == 0)
@@ -114,13 +114,13 @@ if (errorlog) fprintf(errorlog,"%06x: write %04x to 108000\n",cpu_get_pc(),data)
 	}
 }
 
-static int xmen_sound_r(int offset)
+static READ_HANDLER( xmen_sound_r )
 {
 	/* fake self test pass until we emulate the sound chip */
 	return 0x000f;
 }
 
-static void xmen_sound_w(int offset,int data)
+static WRITE_HANDLER( xmen_sound_w )
 {
 	if (offset == 0)
 	{
@@ -130,13 +130,13 @@ static void xmen_sound_w(int offset,int data)
 	if (offset == 2) cpu_cause_interrupt(1,0xff);
 }
 
-static void xmen_18fa00_w(int offset,int data)
+static WRITE_HANDLER( xmen_18fa00_w )
 {
 	/* bit 2 is interrupt enable */
 	interrupt_enable_w(0,data & 0x04);
 }
 
-static void sound_bankswitch(int offset,int data)
+static WRITE_HANDLER( sound_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU2);
@@ -200,7 +200,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xe800, 0xe800, YM2151_register_port_0_w },
 	{ 0xec01, 0xec01, YM2151_data_port_0_w },
 //	{ 0xf000, 0xf000, soundlatch2_w },	/* to main cpu */
-	{ 0xf800, 0xf800, sound_bankswitch },
+	{ 0xf800, 0xf800, sound_bankswitch_w },
 	{ -1 }	/* end of table */
 };
 

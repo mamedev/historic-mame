@@ -65,14 +65,14 @@ B ?
 
 extern unsigned char *espial_attributeram;
 extern unsigned char *espial_column_scroll;
-void espial_attributeram_w(int offset,int data);
+WRITE_HANDLER( espial_attributeram_w );
 void espial_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void espial_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void espial_init_machine(void);
-void zodiac_master_interrupt_enable_w(int offset, int data);
+WRITE_HANDLER( zodiac_master_interrupt_enable_w );
 int  zodiac_master_interrupt(void);
-void zodiac_master_soundlatch_w(int offset, int data);
+WRITE_HANDLER( zodiac_master_soundlatch_w );
 
 
 static struct MemoryReadAddress readmem[] =

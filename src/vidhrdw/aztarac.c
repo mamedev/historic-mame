@@ -30,7 +30,7 @@ INLINE void aztarac_vector (int x, int y, int color, int intensity)
     vector_add_point (xcenter + (x << VEC_SHIFT), ycenter - (y << VEC_SHIFT), color, intensity);
 }
 
-void aztarac_ubr_w(int offset, int data)
+WRITE_HANDLER( aztarac_ubr_w )
 {
     int x, y, c, intensity, xoffset, yoffset, color;
     int defaddr, objaddr=0, ndefs;

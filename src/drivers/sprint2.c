@@ -47,45 +47,45 @@ extern unsigned char *sprint2_vert_car_ram;
 extern unsigned char *sprint2_horiz_ram;
 
 /* machine/sprint2.c */
-int sprint1_read_ports(int offset);
-int sprint2_read_ports(int offset);
-int sprint2_read_sync(int offset);
-int sprint2_coins(int offset);
-int sprint2_steering1(int offset);
-int sprint2_steering2(int offset);
-int sprint2_collision1(int offset);
-int sprint2_collision2(int offset);
-void sprint2_collision_reset1(int offset, int value);
-void sprint2_collision_reset2(int offset, int value);
-void sprint2_steering_reset1(int offset, int value);
-void sprint2_steering_reset2(int offset, int value);
-void sprint2_lamp1(int offset, int value);
-void sprint2_lamp2(int offset, int value);
+READ_HANDLER( sprint1_read_ports_r );
+READ_HANDLER( sprint2_read_ports_r );
+READ_HANDLER( sprint2_read_sync_r );
+READ_HANDLER( sprint2_coins_r );
+READ_HANDLER( sprint2_steering1_r );
+READ_HANDLER( sprint2_steering2_r );
+READ_HANDLER( sprint2_collision1_r );
+READ_HANDLER( sprint2_collision2_r );
+WRITE_HANDLER( sprint2_collision_reset1_w );
+WRITE_HANDLER( sprint2_collision_reset2_w );
+WRITE_HANDLER( sprint2_steering_reset1_w );
+WRITE_HANDLER( sprint2_steering_reset2_w );
+WRITE_HANDLER( sprint2_lamp1_w );
+WRITE_HANDLER( sprint2_lamp2_w );
 
 
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x03ff, MRA_RAM }, /* WRAM */
 	{ 0x0400, 0x07ff, MRA_RAM }, /* DISPLAY RAM */
-	{ 0x0800, 0x083f, sprint2_read_ports }, /* SWITCH */
-	{ 0x0840, 0x087f, sprint2_coins },
-	{ 0x0880, 0x08bf, sprint2_steering1 },
-	{ 0x08c0, 0x08ff, sprint2_steering2 },
-	{ 0x0900, 0x093f, sprint2_read_ports }, /* SWITCH */
-	{ 0x0940, 0x097f, sprint2_coins },
-	{ 0x0980, 0x09bf, sprint2_steering1 },
-	{ 0x09c0, 0x09ff, sprint2_steering2 },
-	{ 0x0a00, 0x0a3f, sprint2_read_ports }, /* SWITCH */
-	{ 0x0a40, 0x0a7f, sprint2_coins },
-	{ 0x0a80, 0x0abf, sprint2_steering1 },
-	{ 0x0ac0, 0x0aff, sprint2_steering2 },
-	{ 0x0b00, 0x0b3f, sprint2_read_ports }, /* SWITCH */
-	{ 0x0b40, 0x0b7f, sprint2_coins },
-	{ 0x0b80, 0x0bbf, sprint2_steering1 },
-	{ 0x0bc0, 0x0bff, sprint2_steering2 },
-	{ 0x0c00, 0x0fff, sprint2_read_sync }, /* SYNC */
-	{ 0x1000, 0x13ff, sprint2_collision1 }, /* COLLISION 1 */
-	{ 0x1400, 0x17ff, sprint2_collision2 }, /* COLLISION 2 */
+	{ 0x0800, 0x083f, sprint2_read_ports_r }, /* SWITCH */
+	{ 0x0840, 0x087f, sprint2_coins_r },
+	{ 0x0880, 0x08bf, sprint2_steering1_r },
+	{ 0x08c0, 0x08ff, sprint2_steering2_r },
+	{ 0x0900, 0x093f, sprint2_read_ports_r }, /* SWITCH */
+	{ 0x0940, 0x097f, sprint2_coins_r },
+	{ 0x0980, 0x09bf, sprint2_steering1_r },
+	{ 0x09c0, 0x09ff, sprint2_steering2_r },
+	{ 0x0a00, 0x0a3f, sprint2_read_ports_r }, /* SWITCH */
+	{ 0x0a40, 0x0a7f, sprint2_coins_r },
+	{ 0x0a80, 0x0abf, sprint2_steering1_r },
+	{ 0x0ac0, 0x0aff, sprint2_steering2_r },
+	{ 0x0b00, 0x0b3f, sprint2_read_ports_r }, /* SWITCH */
+	{ 0x0b40, 0x0b7f, sprint2_coins_r },
+	{ 0x0b80, 0x0bbf, sprint2_steering1_r },
+	{ 0x0bc0, 0x0bff, sprint2_steering2_r },
+	{ 0x0c00, 0x0fff, sprint2_read_sync_r }, /* SYNC */
+	{ 0x1000, 0x13ff, sprint2_collision1_r }, /* COLLISION 1 */
+	{ 0x1400, 0x17ff, sprint2_collision2_r }, /* COLLISION 2 */
 	{ 0x2000, 0x3fff, MRA_ROM }, /* PROM1-PROM8 */
 	{ 0xfff0, 0xffff, MRA_ROM }, /* PROM8 for 6502 vectors */
 	{ -1 }	/* end of table */
@@ -100,14 +100,14 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0c00, 0x0c0f, MWA_RAM }, /* ATTRACT */
 	{ 0x0c10, 0x0c1f, MWA_RAM }, /* SKID1 */
 	{ 0x0c20, 0x0c2f, MWA_RAM }, /* SKID2 */
-	{ 0x0c30, 0x0c3f, sprint2_lamp1 }, /* LAMP1 */
-	{ 0x0c40, 0x0c4f, sprint2_lamp2 }, /* LAMP2 */
+	{ 0x0c30, 0x0c3f, sprint2_lamp1_w }, /* LAMP1 */
+	{ 0x0c40, 0x0c4f, sprint2_lamp2_w }, /* LAMP2 */
 	{ 0x0c60, 0x0c6f, MWA_RAM }, /* SPARE */
 	{ 0x0c80, 0x0cff, MWA_NOP }, /* TIMER RESET (watchdog) */
-	{ 0x0d00, 0x0d7f, sprint2_collision_reset1 }, /* COLLISION RESET 1 */
-	{ 0x0d80, 0x0dff, sprint2_collision_reset2 }, /* COLLISION RESET 2 */
-	{ 0x0e00, 0x0e7f, sprint2_steering_reset1 }, /* STEERING RESET 1 */
-	{ 0x0e80, 0x0eff, sprint2_steering_reset2 }, /* STEERING RESET 2 */
+	{ 0x0d00, 0x0d7f, sprint2_collision_reset1_w }, /* COLLISION RESET 1 */
+	{ 0x0d80, 0x0dff, sprint2_collision_reset2_w }, /* COLLISION RESET 2 */
+	{ 0x0e00, 0x0e7f, sprint2_steering_reset1_w }, /* STEERING RESET 1 */
+	{ 0x0e80, 0x0eff, sprint2_steering_reset2_w }, /* STEERING RESET 2 */
 	{ 0x0f00, 0x0f7f, MWA_RAM }, /* NOISE RESET */
 	{ 0x2000, 0x3fff, MWA_ROM }, /* PROM1-PROM8 */
 	{ -1 }	/* end of table */
@@ -118,25 +118,25 @@ static struct MemoryReadAddress sprint1_readmem[] =
 {
 	{ 0x0000, 0x03ff, MRA_RAM }, /* WRAM */
 	{ 0x0400, 0x07ff, MRA_RAM }, /* DISPLAY RAM */
-	{ 0x0800, 0x083f, sprint1_read_ports }, /* SWITCH */
-	{ 0x0840, 0x087f, sprint2_coins },
-	{ 0x0880, 0x08bf, sprint2_steering1 },
-	{ 0x08c0, 0x08ff, sprint2_steering2 },
-	{ 0x0900, 0x093f, sprint1_read_ports }, /* SWITCH */
-	{ 0x0940, 0x097f, sprint2_coins },
-	{ 0x0980, 0x09bf, sprint2_steering1 },
-	{ 0x09c0, 0x09ff, sprint2_steering2 },
-	{ 0x0a00, 0x0a3f, sprint1_read_ports }, /* SWITCH */
-	{ 0x0a40, 0x0a7f, sprint2_coins },
-	{ 0x0a80, 0x0abf, sprint2_steering1 },
-	{ 0x0ac0, 0x0aff, sprint2_steering2 },
-	{ 0x0b00, 0x0b3f, sprint1_read_ports }, /* SWITCH */
-	{ 0x0b40, 0x0b7f, sprint2_coins },
-	{ 0x0b80, 0x0bbf, sprint2_steering1 },
-	{ 0x0bc0, 0x0bff, sprint2_steering2 },
-	{ 0x0c00, 0x0fff, sprint2_read_sync }, /* SYNC */
-	{ 0x1000, 0x13ff, sprint2_collision1 }, /* COLLISION 1 */
-	{ 0x1400, 0x17ff, sprint2_collision2 }, /* COLLISION 2 */
+	{ 0x0800, 0x083f, sprint1_read_ports_r }, /* SWITCH */
+	{ 0x0840, 0x087f, sprint2_coins_r },
+	{ 0x0880, 0x08bf, sprint2_steering1_r },
+	{ 0x08c0, 0x08ff, sprint2_steering2_r },
+	{ 0x0900, 0x093f, sprint1_read_ports_r }, /* SWITCH */
+	{ 0x0940, 0x097f, sprint2_coins_r },
+	{ 0x0980, 0x09bf, sprint2_steering1_r },
+	{ 0x09c0, 0x09ff, sprint2_steering2_r },
+	{ 0x0a00, 0x0a3f, sprint1_read_ports_r }, /* SWITCH */
+	{ 0x0a40, 0x0a7f, sprint2_coins_r },
+	{ 0x0a80, 0x0abf, sprint2_steering1_r },
+	{ 0x0ac0, 0x0aff, sprint2_steering2_r },
+	{ 0x0b00, 0x0b3f, sprint1_read_ports_r }, /* SWITCH */
+	{ 0x0b40, 0x0b7f, sprint2_coins_r },
+	{ 0x0b80, 0x0bbf, sprint2_steering1_r },
+	{ 0x0bc0, 0x0bff, sprint2_steering2_r },
+	{ 0x0c00, 0x0fff, sprint2_read_sync_r }, /* SYNC */
+	{ 0x1000, 0x13ff, sprint2_collision1_r }, /* COLLISION 1 */
+	{ 0x1400, 0x17ff, sprint2_collision2_r }, /* COLLISION 2 */
 	{ 0x2000, 0x3fff, MRA_ROM }, /* PROM1-PROM8 */
 	{ 0xfff0, 0xffff, MRA_ROM }, /* PROM8 for 6502 vectors */
 	{ -1 }	/* end of table */

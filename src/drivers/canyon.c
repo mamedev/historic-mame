@@ -28,7 +28,7 @@ ask.  - Mike Balfour (mab22@po.cwru.edu)
 /* vidhrdw/canyon.c */
 extern void canyon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-static int canyon_options_r(int offset)
+static READ_HANDLER( canyon_options_r )
 {
 	switch (offset & 0x03)
 	{
@@ -45,7 +45,7 @@ static int canyon_options_r(int offset)
 	return 0xFF;
 }
 
-static int canyon_switches_r(int offset)
+static READ_HANDLER( canyon_switches_r )
 {
 	switch (offset & 0x07)
 	{
@@ -70,7 +70,7 @@ static int canyon_switches_r(int offset)
 	return 0xFF;
 }
 
-void canyon_led_w(int offset, int data)
+WRITE_HANDLER( canyon_led_w )
 {
 	osd_led_w((offset & 0x01), data & 0x01);
 }

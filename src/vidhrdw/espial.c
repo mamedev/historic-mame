@@ -69,7 +69,7 @@ void espial_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 
 
-void espial_attributeram_w(int offset,int data)
+WRITE_HANDLER( espial_attributeram_w )
 {
 	if (espial_attributeram[offset] != data)
 	{

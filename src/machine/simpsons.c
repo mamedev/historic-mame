@@ -48,7 +48,7 @@ void simpsons_nvram_handler(void *file,int read_or_write)
 	}
 }
 
-int simpsons_eeprom_r( int offset )
+READ_HANDLER( simpsons_eeprom_r )
 {
 	int res;
 
@@ -66,7 +66,7 @@ int simpsons_eeprom_r( int offset )
 	return res;
 }
 
-void simpsons_eeprom_w( int offset, int data )
+WRITE_HANDLER( simpsons_eeprom_w )
 {
 	if ( data == 0xff )
 		return;
@@ -86,7 +86,7 @@ void simpsons_eeprom_w( int offset, int data )
 
 ***************************************************************************/
 
-void simpsons_coin_counter_w( int offset, int data )
+WRITE_HANDLER( simpsons_coin_counter_w )
 {
 	/* bit 0,1 coin counters */
 	coin_counter_w(0,data & 0x01);
@@ -99,17 +99,17 @@ void simpsons_coin_counter_w( int offset, int data )
 	K053246_set_OBJCHA_line((~data & 0x20) ? ASSERT_LINE : CLEAR_LINE);
 }
 
-int simpsons_sound_interrupt_r( int offset )
+READ_HANDLER( simpsons_sound_interrupt_r )
 {
 	cpu_cause_interrupt( 1, 0xff );
 	return 0x00;
 }
 
-int simpsons_sound_r(int offset)
+READ_HANDLER( simpsons_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
 	   just make it pass the test */
-	if (Machine->sample_rate != 0) 	return K053260_ReadReg(2 + offset);
+	if (Machine->sample_rate != 0) 	return K053260_r(2 + offset);
 	else
 	{
 		static int res = 0x80;
@@ -125,7 +125,7 @@ int simpsons_sound_r(int offset)
 
 ***************************************************************************/
 
-int simpsons_speedup1_r( int offs )
+READ_HANDLER( simpsons_speedup1_r )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -154,7 +154,7 @@ int simpsons_speedup1_r( int offs )
 	return RAM[0x4942];
 }
 
-int simpsons_speedup2_r( int offs )
+READ_HANDLER( simpsons_speedup2_r )
 {
 	int data = memory_region(REGION_CPU1)[0x4856];
 

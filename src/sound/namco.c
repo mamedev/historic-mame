@@ -389,12 +389,12 @@ void namco_sh_stop(void)
 /********************************************************************************/
 
 
-void pengo_sound_enable_w(int offset,int data)
+WRITE_HANDLER( pengo_sound_enable_w )
 {
 	sound_enable = data;
 }
 
-void pengo_sound_w(int offset,int data)
+WRITE_HANDLER( pengo_sound_w )
 {
 	sound_channel *voice;
 	int base;
@@ -425,7 +425,7 @@ void pengo_sound_w(int offset,int data)
 
 /********************************************************************************/
 
-void polepos_sound_w(int offset,int data)
+WRITE_HANDLER( polepos_sound_w )
 {
 	sound_channel *voice;
 	int base;
@@ -461,12 +461,12 @@ void polepos_sound_w(int offset,int data)
 
 /********************************************************************************/
 
-void mappy_sound_enable_w(int offset,int data)
+WRITE_HANDLER( mappy_sound_enable_w )
 {
 	sound_enable = offset;
 }
 
-void mappy_sound_w(int offset,int data)
+WRITE_HANDLER( mappy_sound_w )
 {
 	sound_channel *voice;
 	int base;
@@ -492,7 +492,7 @@ void mappy_sound_w(int offset,int data)
 
 /********************************************************************************/
 
-void namcos1_sound_w(int offset, int data)
+WRITE_HANDLER( namcos1_sound_w )
 {
 	sound_channel *voice;
 	int base;
@@ -529,12 +529,12 @@ void namcos1_sound_w(int offset, int data)
 	voice->noise_sw = nssw;
 }
 
-int namcos1_sound_r(int offset)
+READ_HANDLER( namcos1_sound_r )
 {
 	return namco_soundregs[offset];
 }
 
-void namcos1_wavedata_w(int offset, int data)
+WRITE_HANDLER( namcos1_wavedata_w )
 {
 	/* update the streams */
 	stream_update(stream,0);
@@ -542,7 +542,7 @@ void namcos1_wavedata_w(int offset, int data)
 	namco_wavedata[offset] = data;
 }
 
-int namcos1_wavedata_r(int offset)
+READ_HANDLER( namcos1_wavedata_r )
 {
 	return namco_wavedata[offset];
 }
@@ -550,7 +550,7 @@ int namcos1_wavedata_r(int offset)
 
 /********************************************************************************/
 
-void snkwave_w(int offset,int data)
+WRITE_HANDLER( snkwave_w )
 {
 	static int freq0 = 0xff;
 	sound_channel *voice = channel_list;

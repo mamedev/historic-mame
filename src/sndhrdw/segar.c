@@ -166,12 +166,12 @@ static void astrob_queue_speech(int sound)
 	speechQueue[newPtr] = sound;
 }
 
-void astrob_speech_port_w( int offset, int val )
+WRITE_HANDLER( astrob_speech_port_w )
 {
 	if( Machine->samples == 0 )
 		return;
 
-	switch (val)
+	switch (data)
 	{
 		case 0x01:      astrob_queue_speech(v01); break;
 		case 0x02:      astrob_queue_speech(v02); break;
@@ -210,7 +210,7 @@ void astrob_speech_port_w( int offset, int val )
 	}
 }
 
-void astrob_audio_ports_w( int offset, int data )
+WRITE_HANDLER( astrob_audio_ports_w )
 {
 	int line;
 	int noise;
@@ -360,7 +360,7 @@ static struct sa spaceod_sa[TOTAL_SOUNDS] =
 		{ 10, sodamaged,  0, 0, 1 },    /* Line  7 - Black Hole */
 };
 
-void spaceod_audio_ports_w(int offset,int data)
+WRITE_HANDLER( spaceod_audio_ports_w )
 {
 		int line;
 		int noise;
@@ -414,7 +414,7 @@ enum
 
 
 /* Monster Bash uses an 8255 to control the sounds, much like Zaxxon */
-void monsterb_audio_8255_w( int offset, int data )
+WRITE_HANDLER( monsterb_audio_8255_w )
 {
 	/* Port A controls the special TMS3617 music chip */
 	if (offset == 0)
@@ -456,7 +456,7 @@ void monsterb_audio_8255_w( int offset, int data )
 	}
 }
 
-int monsterb_audio_8255_r( int offset )
+READ_HANDLER( monsterb_audio_8255_r )
 {
 	// Only PC4 is hooked up
 	/* 0x00 = BUSY, 0x10 = NOT BUSY */
@@ -464,7 +464,7 @@ int monsterb_audio_8255_r( int offset )
 }
 
 /* read from BUS */
-int monsterb_sh_rom_r(int offset)
+READ_HANDLER( monsterb_sh_rom_r )
 {
 	unsigned char *sound_rom = memory_region(REGION_SOUND1);
 
@@ -472,27 +472,27 @@ int monsterb_sh_rom_r(int offset)
 }
 
 /* read from T1 */
-int monsterb_sh_t1_r(int offset)
+READ_HANDLER( monsterb_sh_t1_r )
 {
 	// Labelled as "TEST", connected to ground
 	return 0;
 }
 
 /* read from P2 */
-int monsterb_sh_command_r(int offset)
+READ_HANDLER( monsterb_sh_command_r )
 {
 	// 8255's PC0-2 connects to 7751's S0-2 (P24-P26 on an 8048)
 	return ((port_8255_c03 & 0x07) << 4) | port_7751_p27;
 }
 
 /* write to P1 */
-void monsterb_sh_dac_w(int offset, int data)
+WRITE_HANDLER( monsterb_sh_dac_w )
 {
 	DAC_data_w(0,data);
 }
 
 /* write to P2 */
-void monsterb_sh_busy_w(int offset, int data)
+WRITE_HANDLER( monsterb_sh_busy_w )
 {
 	// 8255's PC0-2 connects to 7751's S0-2 (P24-P26 on an 8048)
 	// 8255's PC4 connects to 7751's BSY OUT (P27 on an 8048)
@@ -502,25 +502,25 @@ void monsterb_sh_busy_w(int offset, int data)
 }
 
 /* write to P4 */
-void monsterb_sh_offset_a0_a3_w(int offset, int data)
+WRITE_HANDLER( monsterb_sh_offset_a0_a3_w )
 {
 	rom_offset = (rom_offset & 0x1FF0) | (data & 0x0F);
 }
 
 /* write to P5 */
-void monsterb_sh_offset_a4_a7_w(int offset, int data)
+WRITE_HANDLER( monsterb_sh_offset_a4_a7_w )
 {
 	rom_offset = (rom_offset & 0x1F0F) | ((data & 0x0F) << 4);
 }
 
 /* write to P6 */
-void monsterb_sh_offset_a8_a11_w(int offset, int data)
+WRITE_HANDLER( monsterb_sh_offset_a8_a11_w )
 {
 	rom_offset = (rom_offset & 0x10FF) | ((data & 0x0F) << 8);
 }
 
 /* write to P7 */
-void monsterb_sh_rom_select_w(int offset, int data)
+WRITE_HANDLER( monsterb_sh_rom_select_w )
 {
 	rom_offset = (rom_offset & 0x0FFF);
 

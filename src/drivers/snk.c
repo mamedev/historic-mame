@@ -190,11 +190,11 @@ static int snk_input_port_r( int which ){
 
 /*********************************************************************/
 
-static void snk_sound_register_w( int offset, int data ){
+static WRITE_HANDLER( snk_sound_register_w ){
 	snk_sound_register &= (data>>4);
 }
 
-static int snk_sound_register_r( int offset ){
+static READ_HANDLER( snk_sound_register_r ){
 	return snk_sound_register;// | 0x2; /* hack; lets chopper1 play music */
 }
 
@@ -249,12 +249,12 @@ static struct Y8950interface ym3526_y8950_interface = {
 	{ REGION_SOUND1, REGION_SOUND1 }
 };
 
-static void snk_soundlatch_w( int offset, int data ){
+static WRITE_HANDLER( snk_soundlatch_w ){
 	snk_sound_register |= 0x08 | 0x04;
 	soundlatch_w( offset, data );
 }
 
-static int snk_soundlatch_clear( int offset ){ /* TNK3 */
+static READ_HANDLER( snk_soundlatch_clear_r ){ /* TNK3 */
 	soundlatch_w( 0, 0 );
 	snk_sound_register = 0;
 	return 0x00;
@@ -266,7 +266,7 @@ static struct MemoryReadAddress YM3526_readmem_sound[] = {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xa000, 0xa000, soundlatch_r },
-	{ 0xc000, 0xc000, snk_soundlatch_clear },
+	{ 0xc000, 0xc000, snk_soundlatch_clear_r },
 	{ 0xe000, 0xe000, YM3526_status_port_0_r },
 	{ -1 }
 };
@@ -365,21 +365,21 @@ static struct MemoryWriteAddress Y8950_writemem_sound[] = {
 
 /**********************  Tnk3, Athena, Fighting Golf ********************/
 
-static int shared_ram_r( int offset ){
+static READ_HANDLER( shared_ram_r ){
 	return shared_ram[offset];
 }
-static void shared_ram_w( int offset, int data ){
+static WRITE_HANDLER( shared_ram_w ){
 	shared_ram[offset] = data;
 }
 
-static int shared_ram2_r( int offset ){
+static READ_HANDLER( shared_ram2_r ){
 	return shared_ram2[offset];
 }
-static void shared_ram2_w( int offset, int data ){
+static WRITE_HANDLER( shared_ram2_w ){
 	shared_ram2[offset] = data;
 }
 
-static int cpuA_io_r( int offset ){
+static READ_HANDLER( cpuA_io_r ){
 	switch( offset ){
 		case 0x000: return snk_input_port_r( 0 ); // coin input, player start
 		case 0x100: return snk_input_port_r( 1 ); // joy1
@@ -416,7 +416,7 @@ static int cpuA_io_r( int offset ){
 	return io_ram[offset];
 }
 
-static void cpuA_io_w( int offset, int data ){
+static WRITE_HANDLER( cpuA_io_w ){
 	switch( offset ){
 		case 0x000:
 		break;
@@ -442,7 +442,7 @@ static void cpuA_io_w( int offset, int data ){
 	}
 }
 
-static int cpuB_io_r( int offset ){
+static READ_HANDLER( cpuB_io_r ){
 	switch( offset ){
 		case 0x000:
 		case 0x700:
@@ -467,7 +467,7 @@ static int cpuB_io_r( int offset ){
 	return io_ram[offset];
 }
 
-static void cpuB_io_w( int offset, int data ){
+static WRITE_HANDLER( cpuB_io_w ){
 	if( offset==0 || offset==0x700 ){
 		if( cpuB_latch&SNK_NMI_PENDING ){
 			cpu_cause_interrupt( 1, Z80_NMI_INT );

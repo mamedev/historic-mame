@@ -9,35 +9,17 @@ driver by Nicola Salmoria
 
 TODO:
 
-- detatwin:
-  - sprites are left on screen during attract mode
-  - sprite priorities are wrong
-  - the "telescopic tower" in the next to last level is wrong
-  - end sequence has one sprite with wrong colors and priority
-  - collision detection is handled by a protection chip. Its emulation might
-    not be 100% accurate.
+- detatwin: sprites are left on screen during attract mode
 - sprite priorities in ssriders (protection)
 - sprite colors / zoomed placement in tmnt2 (protection)
 - is IPT_VBLANK really vblank or something else? Investigate.
 - shadows: they should not be drawn as opaque sprites, instead they should
   make the background darker
 - wrong sprites in ssriders at the end of the saloon level. They have the
-  "shadow" bit on.
-- sprite/sprite priority has to be orthogonal to sprite/tile priority. Examples:
-  - woman coming from behind corner in punkshot DownTown level
-  - ship coming out of a hangar in lgtnfght ice level
-- sprite/tilemap priority in lgtnfght is not 100%
-  see smoke under space ship in attract animation. This is the only place where
-    priority is wrong so I don't know what happens.
-- there seems to be a priority problem in the ending sequence of TMNT2 (clouds
-  appearing as solid rectangles in front of sprites). I'm certainly not going to
-  fix this unless someone finds a way to jump straight to that point wihout
-  playing the full game!
+  "shadow" bit on, but should actually highlight.
 - sprite lag, quite evident in lgtnfght and mia but also in the others. Also
-  see the left corner in punkshot DownTown level
+  see the left corner of the wall in punkshot DownTown level
 - some slowdowns in lgtnfght when there are many sprites on screen - vblank issue?
-- 053260 sound emulation for
-Asterix
 
 ***************************************************************************/
 
@@ -49,14 +31,14 @@ Asterix
 #include "cpu/z80/z80.h"
 
 
-void tmnt_paletteram_w(int offset,int data);
-void tmnt_0a0000_w(int offset,int data);
-void punkshot_0a0020_w(int offset,int data);
-void lgtnfght_0a0018_w(int offset,int data);
-void detatwin_700300_w(int offset,int data);
-void glfgreat_122000_w(int offset,int data);
-void ssriders_1c0300_w(int offset,int data);
-void tmnt_priority_w(int offset,int data);
+WRITE_HANDLER( tmnt_paletteram_w );
+WRITE_HANDLER( tmnt_0a0000_w );
+WRITE_HANDLER( punkshot_0a0020_w );
+WRITE_HANDLER( lgtnfght_0a0018_w );
+WRITE_HANDLER( detatwin_700300_w );
+WRITE_HANDLER( glfgreat_122000_w );
+WRITE_HANDLER( ssriders_1c0300_w );
+WRITE_HANDLER( tmnt_priority_w );
 int mia_vh_start(void);
 int tmnt_vh_start(void);
 int punkshot_vh_start(void);
@@ -79,13 +61,13 @@ void thndrx2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 static int tmnt_soundlatch;
 
 
-static int K052109_word_r(int offset)
+static READ_HANDLER( K052109_word_r )
 {
 	offset >>= 1;
 	return K052109_r(offset + 0x2000) | (K052109_r(offset) << 8);
 }
 
-static void K052109_word_w(int offset,int data)
+static WRITE_HANDLER( K052109_word_w )
 {
 	offset >>= 1;
 	if ((data & 0xff000000) == 0)
@@ -94,7 +76,7 @@ static void K052109_word_w(int offset,int data)
 		K052109_w(offset + 0x2000,data & 0xff);
 }
 
-static int K052109_word_noA12_r(int offset)
+static READ_HANDLER( K052109_word_noA12_r )
 {
 	/* some games have the A12 line not connected, so the chip spans */
 	/* twice the memory range, with mirroring */
@@ -102,7 +84,7 @@ static int K052109_word_noA12_r(int offset)
 	return K052109_word_r(offset);
 }
 
-static void K052109_word_noA12_w(int offset,int data)
+static WRITE_HANDLER( K052109_word_noA12_w )
 {
 	/* some games have the A12 line not connected, so the chip spans */
 	/* twice the memory range, with mirroring */
@@ -113,7 +95,7 @@ static void K052109_word_noA12_w(int offset,int data)
 /* the interface with the 053245 is weird. The chip can address only 0x800 bytes */
 /* of RAM, but they put 0x4000 there. The CPU can access them all. Address lines */
 /* A1, A5 and A6 don't go to the 053245. */
-static int K053245_scattered_word_r(int offset)
+static READ_HANDLER( K053245_scattered_word_r )
 {
 	if (offset & 0x0062)
 		return READ_WORD(&spriteram[offset]);
@@ -124,7 +106,7 @@ static int K053245_scattered_word_r(int offset)
 	}
 }
 
-static void K053245_scattered_word_w(int offset,int data)
+static WRITE_HANDLER( K053245_scattered_word_w )
 {
 	if (offset & 0x0062)
 		COMBINE_WORD_MEM(&spriteram[offset],data);
@@ -137,25 +119,25 @@ static void K053245_scattered_word_w(int offset,int data)
 	}
 }
 
-static int K053244_halfword_r(int offset)
+static READ_HANDLER( K053244_halfword_r )
 {
 	return K053244_r(offset >> 1);
 }
 
-static void K053244_halfword_w(int offset,int data)
+static WRITE_HANDLER( K053244_halfword_w )
 {
 	if ((data & 0x00ff0000) == 0)
 		K053244_w(offset >> 1,data & 0xff);
 }
 
-static int K053244_word_noA1_r(int offset)
+static READ_HANDLER( K053244_word_noA1_r )
 {
 	offset &= ~2;	/* handle mirror address */
 
 	return K053244_r(offset/2 + 1) | (K053244_r(offset/2) << 8);
 }
 
-static void K053244_word_noA1_w(int offset,int data)
+static WRITE_HANDLER( K053244_word_noA1_w )
 {
 	offset &= ~2;	/* handle mirror address */
 
@@ -165,24 +147,24 @@ static void K053244_word_noA1_w(int offset,int data)
 		K053244_w(offset/2 + 1,data & 0xff);
 }
 
-static void K053251_halfword_w(int offset,int data)
+static WRITE_HANDLER( K053251_halfword_w )
 {
 	if ((data & 0x00ff0000) == 0)
 		K053251_w(offset >> 1,data & 0xff);
 }
 
-static void K053251_halfword_swap_w(int offset,int data)
+static WRITE_HANDLER( K053251_halfword_swap_w )
 {
 	if ((data & 0xff000000) == 0)
 		K053251_w(offset >> 1,(data >> 8) & 0xff);
 }
 
-static int K054000_halfword_r(int offset)
+static READ_HANDLER( K054000_halfword_r )
 {
 	return K054000_r(offset >> 1);
 }
 
-static void K054000_halfword_w(int offset,int data)
+static WRITE_HANDLER( K054000_halfword_w )
 {
 	if ((data & 0x00ff0000) == 0)
 		K054000_w(offset >> 1,data & 0xff);
@@ -207,58 +189,58 @@ static int lgtnfght_interrupt(void)
 
 
 
-void tmnt_sound_command_w(int offset,int data)
+WRITE_HANDLER( tmnt_sound_command_w )
 {
 	soundlatch_w(0,data & 0xff);
 }
 
-static int punkshot_sound_r(int offset)
+static READ_HANDLER( punkshot_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
 	   just make it pass the test */
-	if (Machine->sample_rate != 0) 	return K053260_ReadReg(2 + offset/2);
+	if (Machine->sample_rate != 0) 	return K053260_r(2 + offset/2);
 	else return 0x80;
 }
 
-static int detatwin_sound_r(int offset)
+static READ_HANDLER( detatwin_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
 	   just make it pass the test */
-	if (Machine->sample_rate != 0) 	return K053260_ReadReg(2 + offset/2);
+	if (Machine->sample_rate != 0) 	return K053260_r(2 + offset/2);
 	else return offset ? 0xfe : 0x00;
 }
 
-static int glfgreat_sound_r(int offset)
+static READ_HANDLER( glfgreat_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
 	   just make it pass the test */
-	if (Machine->sample_rate != 0) 	return K053260_ReadReg(2 + offset/2) << 8;
+	if (Machine->sample_rate != 0) 	return K053260_r(2 + offset/2) << 8;
 	else return 0;
 }
 
-static void glfgreat_sound_w(int offset,int data)
+static WRITE_HANDLER( glfgreat_sound_w )
 {
 	if ((data & 0xff000000) == 0)
-		K053260_WriteReg(offset >> 1,(data >> 8) & 0xff);
+		K053260_w(offset >> 1,(data >> 8) & 0xff);
 
 	if (offset == 2) cpu_cause_interrupt(1,0xff);
 }
 
-static int tmnt2_sound_r(int offset)
+static READ_HANDLER( tmnt2_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
 	   just make it pass the test */
-	if (Machine->sample_rate != 0) 	return K053260_ReadReg(2 + offset/2);
+	if (Machine->sample_rate != 0) 	return K053260_r(2 + offset/2);
 	else return offset ? 0x00 : 0x80;
 }
 
 
-int tmnt_sres_r(int offset)
+READ_HANDLER( tmnt_sres_r )
 {
 	return tmnt_soundlatch;
 }
 
-void tmnt_sres_w(int offset,int data)
+WRITE_HANDLER( tmnt_sres_w )
 {
 	/* bit 1 resets the UPD7795C sound chip */
 	if ((data & 0x02) == 0)
@@ -339,7 +321,7 @@ static void nmi_callback(int param)
 	cpu_set_nmi_line(1,ASSERT_LINE);
 }
 
-static void sound_arm_nmi(int offset,int data)
+static WRITE_HANDLER( sound_arm_nmi_w )
 {
 //	sound_nmi_enabled = 1;
 	cpu_set_nmi_line(1,CLEAR_LINE);
@@ -350,7 +332,7 @@ static void sound_arm_nmi(int offset,int data)
 
 
 
-static int punkshot_kludge(int offset)
+static READ_HANDLER( punkshot_kludge_r )
 {
 	/* I don't know what's going on here; at one point, the code reads location */
 	/* 0xffffff, and returning 0 causes the game to mess up - locking up in a */
@@ -359,7 +341,7 @@ static int punkshot_kludge(int offset)
 	return rand();
 }
 
-static int ssriders_kludge(int offset)
+static READ_HANDLER( ssriders_kludge_r )
 {
     int data = cpu_readmem24_word(0x105a0a);
 
@@ -418,7 +400,7 @@ static void nvram_handler(void *file,int read_or_write)
 	}
 }
 
-static int detatwin_coin_r(int offset)
+static READ_HANDLER( detatwin_coin_r )
 {
 	int res;
 	static int toggle;
@@ -435,7 +417,7 @@ static int detatwin_coin_r(int offset)
 	return res ^ toggle;
 }
 
-static int detatwin_eeprom_r(int offset)
+static READ_HANDLER( detatwin_eeprom_r )
 {
 	int res;
 
@@ -445,7 +427,7 @@ static int detatwin_eeprom_r(int offset)
 	return res;
 }
 
-static int ssriders_eeprom_r(int offset)
+static READ_HANDLER( ssriders_eeprom_r )
 {
 	int res;
 	static int toggle;
@@ -464,7 +446,7 @@ static int ssriders_eeprom_r(int offset)
 	return res ^ toggle;
 }
 
-static void ssriders_eeprom_w(int offset,int data)
+static WRITE_HANDLER( ssriders_eeprom_w )
 {
 	/* bit 0 is data */
 	/* bit 1 is cs (active low) */
@@ -507,7 +489,7 @@ static void thndrx2_nvram_handler(void *file,int read_or_write)
 	}
 }
 
-static int thndrx2_in0_r(int offset)
+static READ_HANDLER( thndrx2_in0_r )
 {
 	int res;
 
@@ -520,7 +502,7 @@ static int thndrx2_in0_r(int offset)
 	return res;
 }
 
-static int thndrx2_eeprom_r(int offset)
+static READ_HANDLER( thndrx2_eeprom_r )
 {
 	int res;
 	static int toggle;
@@ -534,7 +516,7 @@ static int thndrx2_eeprom_r(int offset)
 	return (res ^ toggle);
 }
 
-static void thndrx2_eeprom_w(int offset,int data)
+static WRITE_HANDLER( thndrx2_eeprom_w )
 {
 	static int last;
 
@@ -644,7 +626,7 @@ static struct MemoryReadAddress punkshot_readmem[] =
 	{ 0x100000, 0x107fff, K052109_word_noA12_r },
 	{ 0x110000, 0x110007, K051937_word_r },
 	{ 0x110400, 0x1107ff, K051960_word_r },
-	{ 0xfffffc, 0xffffff, punkshot_kludge },
+	{ 0xfffffc, 0xffffff, punkshot_kludge_r },
 	{ -1 }	/* end of table */
 };
 
@@ -654,7 +636,7 @@ static struct MemoryWriteAddress punkshot_writemem[] =
 	{ 0x080000, 0x083fff, MWA_BANK1 },	/* main RAM */
 	{ 0x090000, 0x090fff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
 	{ 0x0a0020, 0x0a0021, punkshot_0a0020_w },
-	{ 0x0a0040, 0x0a0041, K053260_WriteReg },
+	{ 0x0a0040, 0x0a0041, K053260_w },
 	{ 0x0a0060, 0x0a007f, K053251_halfword_w },
 	{ 0x0a0080, 0x0a0081, watchdog_reset_w },
 	{ 0x100000, 0x107fff, K052109_word_noA12_w },
@@ -687,7 +669,7 @@ static struct MemoryWriteAddress lgtnfght_writemem[] =
 	{ 0x080000, 0x080fff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
 	{ 0x090000, 0x093fff, MWA_BANK1 },	/* main RAM */
 	{ 0x0a0018, 0x0a0019, lgtnfght_0a0018_w },
-	{ 0x0a0020, 0x0a0021, K053260_WriteReg },
+	{ 0x0a0020, 0x0a0021, K053260_w },
 	{ 0x0a0028, 0x0a0029, watchdog_reset_w },
 	{ 0x0b0000, 0x0b3fff, K053245_scattered_word_w, &spriteram },
 	{ 0x0c0000, 0x0c001f, K053244_word_noA1_w },
@@ -697,7 +679,7 @@ static struct MemoryWriteAddress lgtnfght_writemem[] =
 };
 
 
-static void ssriders_soundkludge_w(int offset,int data)
+static WRITE_HANDLER( ssriders_soundkludge_w )
 {
 	/* I think this is more than just a trigger */
 	cpu_cause_interrupt(1,0xff);
@@ -732,14 +714,14 @@ static struct MemoryWriteAddress detatwin_writemem[] =
 	{ 0x700200, 0x700201, ssriders_eeprom_w },
 	{ 0x700400, 0x700401, watchdog_reset_w },
 	{ 0x700300, 0x700301, detatwin_700300_w },
-	{ 0x780600, 0x780601, K053260_WriteReg },
+	{ 0x780600, 0x780601, K053260_w },
 	{ 0x780604, 0x780605, ssriders_soundkludge_w },
 	{ 0x780700, 0x78071f, K053251_halfword_w },
 	{ -1 }	/* end of table */
 };
 
 
-static int ball(int offset)
+static READ_HANDLER( ball_r )
 {
 	return 0x11;
 }
@@ -756,7 +738,7 @@ static struct MemoryReadAddress glfgreat_readmem[] =
 	{ 0x120002, 0x120003, input_port_1_r },
 	{ 0x120004, 0x120005, input_port_3_r },
 	{ 0x120006, 0x120007, input_port_2_r },
-	{ 0x121000, 0x121001, ball },	/* protection? returning 0, every shot is a "water" */
+	{ 0x121000, 0x121001, ball_r },	/* protection? returning 0, every shot is a "water" */
 	{ 0x125000, 0x125003, glfgreat_sound_r },	/* K053260 */
 	{ 0x200000, 0x207fff, K052109_word_noA12_r },
 	{ -1 }	/* end of table */
@@ -795,7 +777,7 @@ static struct MemoryReadAddress tmnt2_readmem[] =
 	{ 0x1c0102, 0x1c0103, ssriders_eeprom_r },
 	{ 0x1c0400, 0x1c0401, watchdog_reset_r },
 	{ 0x1c0500, 0x1c057f, MRA_BANK3 },	/* TMNT2 only (1J); unknown */
-//	{ 0x1c0800, 0x1c0801, ssriders_kludge },	/* protection device */
+//	{ 0x1c0800, 0x1c0801, ssriders_kludge_r },	/* protection device */
 	{ 0x5a0000, 0x5a001f, K053244_word_noA1_r },
 	{ 0x5c0600, 0x5c0603, tmnt2_sound_r },	/* K053260 */
 	{ 0x600000, 0x603fff, K052109_word_r },
@@ -804,7 +786,7 @@ static struct MemoryReadAddress tmnt2_readmem[] =
 
 static unsigned char *tmnt2_1c0800,*sunset_104000;
 
-void tmnt2_1c0800_w( int offset, int data )
+WRITE_HANDLER( tmnt2_1c0800_w )
 {
     COMBINE_WORD_MEM( &tmnt2_1c0800[offset], data );
     if ( offset == 0x0010 && ( ( READ_WORD( &tmnt2_1c0800[0x10] ) & 0xff00 ) == 0x8200 ) )
@@ -900,7 +882,7 @@ static struct MemoryWriteAddress tmnt2_writemem[] =
 	{ 0x1c0500, 0x1c057f, MWA_BANK3 },	/* unknown: TMNT2 only (1J) */
 	{ 0x1c0800, 0x1c081f, tmnt2_1c0800_w, &tmnt2_1c0800 },	/* protection device */
 	{ 0x5a0000, 0x5a001f, K053244_word_noA1_w },
-	{ 0x5c0600, 0x5c0601, K053260_WriteReg },
+	{ 0x5c0600, 0x5c0601, K053260_w },
 	{ 0x5c0604, 0x5c0605, ssriders_soundkludge_w },
 	{ 0x5c0700, 0x5c071f, K053251_halfword_w },
 	{ 0x600000, 0x603fff, K052109_word_w },
@@ -922,7 +904,7 @@ static struct MemoryReadAddress ssriders_readmem[] =
 	{ 0x1c0102, 0x1c0103, ssriders_eeprom_r },
 	{ 0x1c0400, 0x1c0401, watchdog_reset_r },
 	{ 0x1c0500, 0x1c057f, MRA_BANK3 },	/* TMNT2 only (1J); unknown */
-	{ 0x1c0800, 0x1c0801, ssriders_kludge },	/* protection device */
+	{ 0x1c0800, 0x1c0801, ssriders_kludge_r },	/* protection device */
 	{ 0x5a0000, 0x5a001f, K053244_word_noA1_r },
 	{ 0x5c0600, 0x5c0603, punkshot_sound_r },	/* K053260 */
 	{ 0x600000, 0x603fff, K052109_word_r },
@@ -941,7 +923,7 @@ static struct MemoryWriteAddress ssriders_writemem[] =
 	{ 0x1c0500, 0x1c057f, MWA_BANK3 },	/* TMNT2 only (1J); unknown */
 //	{ 0x1c0800, 0x1c081f,  },	/* protection device */
 	{ 0x5a0000, 0x5a001f, K053244_word_noA1_w },
-	{ 0x5c0600, 0x5c0601, K053260_WriteReg },
+	{ 0x5c0600, 0x5c0601, K053260_w },
 	{ 0x5c0604, 0x5c0605, ssriders_soundkludge_w },
 	{ 0x5c0700, 0x5c071f, K053251_halfword_w },
 	{ 0x600000, 0x603fff, K052109_word_w },
@@ -970,7 +952,7 @@ static struct MemoryWriteAddress thndrx2_writemem[] =
 	{ 0x100000, 0x103fff, MWA_BANK1 },	/* main RAM */
 	{ 0x200000, 0x200fff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
 	{ 0x300000, 0x30001f, K053251_halfword_w },
-	{ 0x400000, 0x400001, K053260_WriteReg },
+	{ 0x400000, 0x400001, K053260_w },
 	{ 0x500000, 0x50003f, K054000_halfword_w },
 	{ 0x500100, 0x500101, thndrx2_eeprom_w },
 	{ 0x500300, 0x500301, MWA_NOP },	/* watchdog reset? irq enable? */
@@ -1010,7 +992,7 @@ static struct MemoryReadAddress tmnt_s_readmem[] =
 	{ 0xa000, 0xa000, soundlatch_r },
 	{ 0xb000, 0xb00d, K007232_read_port_0_r },
 	{ 0xc001, 0xc001, YM2151_status_port_0_r },
-	{ 0xf000, 0xf000, UPD7759_busy_r },
+	{ 0xf000, 0xf000, UPD7759_0_busy_r },
 	{ -1 }	/* end of table */
 };
 
@@ -1022,8 +1004,8 @@ static struct MemoryWriteAddress tmnt_s_writemem[] =
 	{ 0xb000, 0xb00d, K007232_write_port_0_w  },
 	{ 0xc000, 0xc000, YM2151_register_port_0_w },
 	{ 0xc001, 0xc001, YM2151_data_port_0_w },
-	{ 0xd000, 0xd000, UPD7759_message_w },
-	{ 0xe000, 0xe000, UPD7759_start_w },
+	{ 0xd000, 0xd000, UPD7759_0_message_w },
+	{ 0xe000, 0xe000, UPD7759_0_start_w },
 	{ -1 }	/* end of table */
 };
 
@@ -1032,7 +1014,7 @@ static struct MemoryReadAddress punkshot_s_readmem[] =
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xf000, 0xf7ff, MRA_RAM },
 	{ 0xf801, 0xf801, YM2151_status_port_0_r },
-	{ 0xfc00, 0xfc2f, K053260_ReadReg },
+	{ 0xfc00, 0xfc2f, K053260_r },
 	{ -1 }	/* end of table */
 };
 
@@ -1042,8 +1024,8 @@ static struct MemoryWriteAddress punkshot_s_writemem[] =
 	{ 0xf000, 0xf7ff, MWA_RAM },
 	{ 0xf800, 0xf800, YM2151_register_port_0_w },
 	{ 0xf801, 0xf801, YM2151_data_port_0_w },
-	{ 0xfa00, 0xfa00, sound_arm_nmi },
-	{ 0xfc00, 0xfc2f, K053260_WriteReg },
+	{ 0xfa00, 0xfa00, sound_arm_nmi_w },
+	{ 0xfc00, 0xfc2f, K053260_w },
 	{ -1 }	/* end of table */
 };
 
@@ -1052,7 +1034,7 @@ static struct MemoryReadAddress lgtnfght_s_readmem[] =
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xa001, 0xa001, YM2151_status_port_0_r },
-	{ 0xc000, 0xc02f, K053260_ReadReg },
+	{ 0xc000, 0xc02f, K053260_r },
 	{ -1 }	/* end of table */
 };
 
@@ -1062,7 +1044,7 @@ static struct MemoryWriteAddress lgtnfght_s_writemem[] =
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xa000, 0xa000, YM2151_register_port_0_w },
 	{ 0xa001, 0xa001, YM2151_data_port_0_w },
-	{ 0xc000, 0xc02f, K053260_WriteReg },
+	{ 0xc000, 0xc02f, K053260_w },
 	{ -1 }	/* end of table */
 };
 
@@ -1070,7 +1052,7 @@ static struct MemoryReadAddress glfgreat_s_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xf000, 0xf7ff, MRA_RAM },
-	{ 0xf800, 0xf82f, K053260_ReadReg },
+	{ 0xf800, 0xf82f, K053260_r },
 	{ -1 }	/* end of table */
 };
 
@@ -1078,8 +1060,8 @@ static struct MemoryWriteAddress glfgreat_s_writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xf000, 0xf7ff, MWA_RAM },
-	{ 0xf800, 0xf82f, K053260_WriteReg },
-	{ 0xfa00, 0xfa00, sound_arm_nmi },
+	{ 0xf800, 0xf82f, K053260_w },
+	{ 0xfa00, 0xfa00, sound_arm_nmi_w },
 	{ -1 }	/* end of table */
 };
 
@@ -1088,7 +1070,7 @@ static struct MemoryReadAddress ssriders_s_readmem[] =
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xf7ff, MRA_RAM },
 	{ 0xf801, 0xf801, YM2151_status_port_0_r },
-	{ 0xfa00, 0xfa2f, K053260_ReadReg },
+	{ 0xfa00, 0xfa2f, K053260_r },
 	{ -1 }	/* end of table */
 };
 
@@ -1098,8 +1080,8 @@ static struct MemoryWriteAddress ssriders_s_writemem[] =
 	{ 0xf000, 0xf7ff, MWA_RAM },
 	{ 0xf800, 0xf800, YM2151_register_port_0_w },
 	{ 0xf801, 0xf801, YM2151_data_port_0_w },
-	{ 0xfa00, 0xfa2f, K053260_WriteReg },
-	{ 0xfc00, 0xfc00, sound_arm_nmi },
+	{ 0xfa00, 0xfa2f, K053260_w },
+	{ 0xfc00, 0xfc00, sound_arm_nmi_w },
 	{ -1 }	/* end of table */
 };
 
@@ -1108,7 +1090,7 @@ static struct MemoryReadAddress thndrx2_s_readmem[] =
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xf7ff, MRA_RAM },
 	{ 0xf801, 0xf801, YM2151_status_port_0_r },
-	{ 0xfc00, 0xfc2f, K053260_ReadReg },
+	{ 0xfc00, 0xfc2f, K053260_r },
 	{ -1 }	/* end of table */
 };
 
@@ -1119,8 +1101,8 @@ static struct MemoryWriteAddress thndrx2_s_writemem[] =
 	{ 0xf800, 0xf800, YM2151_register_port_0_w },
 	{ 0xf801, 0xf801, YM2151_data_port_0_w },
 	{ 0xf811, 0xf811, YM2151_data_port_0_w },	/* mirror */
-	{ 0xfa00, 0xfa00, sound_arm_nmi },
-	{ 0xfc00, 0xfc2f, K053260_WriteReg },
+	{ 0xfa00, 0xfa00, sound_arm_nmi_w },
+	{ 0xfc00, 0xfc2f, K053260_w },
 	{ -1 }	/* end of table */
 };
 
@@ -3039,6 +3021,34 @@ ROM_START( glfgreat )
 	ROM_LOAD( "061e04.1d",    0x0000, 0x100000, 0x7921d8df )
 ROM_END
 
+ROM_START( glfgretj )
+	ROM_REGION( 0x40000, REGION_CPU1 )
+	ROM_LOAD_EVEN( "061j02.1h",   0x000000, 0x20000, 0x7f0d95f4 )
+	ROM_LOAD_ODD ( "061j03.4h",   0x000000, 0x20000, 0x06caa38b )
+
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
+	ROM_LOAD( "061f01.4e",    0x0000, 0x8000, 0xab9a2a57 )
+
+    ROM_REGION( 0x100000, REGION_GFX1 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "061d14.12l",   0x000000, 0x080000, 0xb9440924 )	/* tiles */
+	ROM_LOAD( "061d13.12k",   0x080000, 0x080000, 0x9f999f0b )
+
+	ROM_REGION( 0x200000, REGION_GFX2 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "061d11.3k",    0x000000, 0x100000, 0xc45b66a3 )	/* sprites */
+	ROM_LOAD( "061d12.8k",    0x100000, 0x100000, 0xd305ecd1 )
+
+	ROM_REGION( 0x300000, REGION_GFX3 )	/* unknown (data for the 053936?) */
+	ROM_LOAD( "061b05.15d",   0x000000, 0x020000, 0x2456fb11 )	/* gfx */
+	ROM_LOAD( "061b06.16d",   0x080000, 0x080000, 0x41ada2ad )
+	ROM_LOAD( "061b07.18d",   0x100000, 0x080000, 0x517887e2 )
+	ROM_LOAD( "061b08.14g",   0x180000, 0x080000, 0x6ab739c3 )
+	ROM_LOAD( "061b09.15g",   0x200000, 0x080000, 0x42c7a603 )
+	ROM_LOAD( "061b10.17g",   0x280000, 0x080000, 0x10f89ce7 )
+
+	ROM_REGION( 0x100000, REGION_SOUND1 )	/* samples for the 053260 */
+	ROM_LOAD( "061e04.1d",    0x0000, 0x100000, 0x7921d8df )
+ROM_END
+
 ROM_START( tmnt2 )
 	ROM_REGION( 0x80000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "uaa02", 0x000000, 0x20000, 0x58d5c93d )
@@ -3576,6 +3586,7 @@ GAME( 1991, blswhstl, 0,        detatwin, detatwin, gfx,      ROT90, "Konami", "
 GAME( 1991, detatwin, blswhstl, detatwin, detatwin, gfx,      ROT90, "Konami", "Detana!! Twin Bee (Japan)" )
 
 GAMEX(1991, glfgreat, 0,        glfgreat, glfgreat, glfgreat, ROT0,  "Konami", "Golfing Greats", GAME_NOT_WORKING )
+GAMEX(1991, glfgretj, glfgreat, glfgreat, glfgreat, glfgreat, ROT0,  "Konami", "Golfing Greats (Japan)", GAME_NOT_WORKING )
 
 GAMEX(1991, tmnt2,    0,        tmnt2,    ssridr4p, gfx,      ROT0,  "Konami", "Teenage Mutant Ninja Turtles - Turtles in Time (4 Players US)", GAME_IMPERFECT_COLORS )
 GAMEX(1991, tmnt22p,  tmnt2,    tmnt2,    ssriders, gfx,      ROT0,  "Konami", "Teenage Mutant Ninja Turtles - Turtles in Time (2 Players US)", GAME_IMPERFECT_COLORS )

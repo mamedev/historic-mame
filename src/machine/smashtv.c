@@ -13,7 +13,7 @@
 #define FAST_DMA			1
 
 
-#if LSB_FIRST
+#ifdef LSB_FIRST
 	#define BYTE_XOR_LE(a)  (a)
 	#define BIG_DWORD_LE(x) (x)
 #else
@@ -26,14 +26,14 @@
 #define GFX_ROM	     cpu_bankbase[8]
 #define SCRATCH_RAM	 cpu_bankbase[2]
 
-static void narc_sound_w (int offset,int data);
-static void adpcm_sound_w (int offset,int data);
-static void cvsd_sound_w (int offset,int data);
+static WRITE_HANDLER( narc_sound_w );
+static WRITE_HANDLER( adpcm_sound_w );
+static WRITE_HANDLER( cvsd_sound_w );
 
-void wms_vram_w(int offset, int data);
-void wms_objpalram_w(int offset, int data);
-int wms_vram_r(int offset);
-int wms_objpalram_r(int offset);
+WRITE_HANDLER( wms_vram_w );
+WRITE_HANDLER( wms_objpalram_w );
+READ_HANDLER( wms_vram_r );
+READ_HANDLER( wms_objpalram_r );
 void wms_update_partial(int scanline);
 
 static UINT8 *gfxrombackup;
@@ -92,7 +92,7 @@ static UINT32 wms_protect_d=0xffffffff;
 
 static UINT32 term2_analog_select = 0;
 
-static int narc_input_r (int offset)
+static READ_HANDLER( narc_input_r )
 {
 	int ans = 0xffff;
 	switch (offset)
@@ -106,18 +106,18 @@ static int narc_input_r (int offset)
 	case 4:
 		ans = (input_port_5_r (offset) << 8) + (soundlatch3_r (0));
 		break;
-//	case 6:
-//		ans = (input_port_7_r (offset) << 8) + (input_port_6_r (offset));
-//		break;
-//	case 8:
-//		ans = (input_port_9_r (offset) << 8) + (input_port_8_r (offset));
-//		break;
+/*	case 6: */
+/*		ans = (input_port_7_r (offset) << 8) + (input_port_6_r (offset)); */
+/*		break; */
+/*	case 8: */
+/*		ans = (input_port_9_r (offset) << 8) + (input_port_8_r (offset)); */
+/*		break; */
 	default:
 		if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - read from unmapped bit address %x\n", cpu_get_pc(), (offset<<3));
 	}
 	return ans;
 }
-int wms_input_r (int offset)
+READ_HANDLER( wms_input_r )
 {
 	int ans = 0xffff;
 	switch (offset)
@@ -142,7 +142,7 @@ int wms_input_r (int offset)
 	}
 	return ans;
 }
-static int term2_input_r (int offset)
+static READ_HANDLER( term2_input_r )
 {
 	int ans = 0xffff;
 	switch (offset)
@@ -175,27 +175,27 @@ static int term2_input_r (int offset)
 	return ans;
 }
 
-static int term2_input_lo_r (int offset)
+static READ_HANDLER( term2_input_lo_r )
 {
 	int ans = 0xffff;
 	switch (offset)
 	{
-//	case 0:
-//		ans = (input_port_5_r (offset) << 8) + (input_port_4_r (offset));
-//		break;
-//	case 2:
-//		ans = (input_port_7_r (offset) << 8) + (input_port_6_r (offset));
-//		break;
-//	case 4:
-//		ans = (input_port_9_r (offset) << 8) + (input_port_8_r (offset));
-//		break;
+/*	case 0: */
+/*		ans = (input_port_5_r (offset) << 8) + (input_port_4_r (offset)); */
+/*		break; */
+/*	case 2: */
+/*		ans = (input_port_7_r (offset) << 8) + (input_port_6_r (offset)); */
+/*		break; */
+/*	case 4: */
+/*		ans = (input_port_9_r (offset) << 8) + (input_port_8_r (offset)); */
+/*		break; */
 	default:
 		if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - read from unmapped bit address %x\n", cpu_get_pc(), (offset<<3));
 	}
 	return ans;
 }
 
-static void term2_sound_w (int offset,int data)
+static WRITE_HANDLER( term2_sound_w )
 {
 	if (offset == 0)
 	{
@@ -235,7 +235,7 @@ static void dma2_callback(int is_in_34010_context)
 		cpu_cause_interrupt(0,TMS34010_INT1);
 }
 
-int wms_dma_r(int offset)
+READ_HANDLER( wms_dma_r )
 {
 	if (wms_dma_stat&0x8000)
 	{
@@ -262,7 +262,7 @@ int wms_dma_r(int offset)
 		break;
 
 		default:
-//			if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: read hi dma\n", cpu_get_pc());
+/*			if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: read hi dma\n", cpu_get_pc()); */
 			break;
 		}
 	}
@@ -321,7 +321,7 @@ int wms_dma_r(int offset)
 		}												\
 	}
 
-void wms_dma_w(int offset, int data)
+WRITE_HANDLER( wms_dma_w )
 {
 	UINT32 i, j, pal, write_data, line_skip, dma_skip=0;
 	int write_cols;
@@ -859,7 +859,7 @@ void wms_dma_w(int offset, int data)
 	}															\
 
 
-void wms_dma2_w(int offset, int data)
+WRITE_HANDLER( wms_dma2_w )
 {
 	/*
 	 * This is a MESS! -- lots to do
@@ -935,7 +935,7 @@ void wms_dma2_w(int offset, int data)
 			dma_skip=0;
 			wms_dma_cols=1;
 			wms_dma_rows=0;
-//			wms_dma_pal=0;
+/*			wms_dma_pal=0; */
 			wms_dma_fgcol=0;
 			break;
 		case 0xf000: /* draw nothing ???*/
@@ -963,7 +963,7 @@ void wms_dma2_w(int offset, int data)
 			DMA2_DRAW(5, +, +, write_data, write_data, ++);
 			break;
 		case 0xe042: /* draw only nonzero pixels (6bpp) ????? */
-			// fixme 0x0040 ?????
+			/* fixme 0x0040 ????? */
 		case 0xe002: /* draw only nonzero pixels (6bpp) */
 			DMA2_DRAW(6, +, +, write_data, write_data, ++);
 			break;
@@ -1070,7 +1070,7 @@ void wms_dma2_w(int offset, int data)
 		break;
 	case 0x10:  /* set palette */
 		wms_dma_pal = (data&0xff00);  /* changed from rev1? */
-//		wms_dma_pal = (data&0xffff);
+/*		wms_dma_pal = (data&0xffff); */
 		wms_dma_pal_word = data;
 		break;
 	case 0x12:  /* set color for 1-bit */
@@ -1110,22 +1110,22 @@ void wms_from_shiftreg(UINT32 address, UINT16* shiftreg)
 	memcpy(&wms_videoram[address>>3], shiftreg, 2*512*sizeof(UINT16));
 }
 
-void wms_01c00060_w(int offset, int data) /* protection and more */
+WRITE_HANDLER( wms_01c00060_w ) /* protection and more */
 {
 	if ((data&0xfdff) == 0x0000) /* enable CMOS write */
 	{
 		smashtv_cmos_w_enable = 1;
-//		if (errorlog) fprintf(errorlog, "Enable CMOS writes\n");
+/*		if (errorlog) fprintf(errorlog, "Enable CMOS writes\n"); */
 	}
 	else if ((data&0xfdff) == 0x0100) /* disable CMOS write */
 	{
-//		smashtv_cmos_w_enable = 0;
-//		if (errorlog) fprintf(errorlog, "Disable CMOS writes\n");
+/*		smashtv_cmos_w_enable = 0; */
+/*		if (errorlog) fprintf(errorlog, "Disable CMOS writes\n"); */
 	}
 	else
 	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - write %x to protection chip\n", cpu_get_pc(), data);
 }
-int wms_01c00060_r(int offset) /* protection and more */
+READ_HANDLER( wms_01c00060_r ) /* protection and more */
 {
 	if (cpu_get_pc() == wms_protect_s) /* protection */
 	{
@@ -1136,7 +1136,7 @@ int wms_01c00060_r(int offset) /* protection and more */
 	return 0xffffffff;
 }
 
-void wms_sysreg_w(int offset, int data)
+WRITE_HANDLER( wms_sysreg_w )
 {
 	/*
 	 * Narc system register
@@ -1178,10 +1178,10 @@ void wms_sysreg_w(int offset, int data)
 	}
 }
 
-void wms_sysreg2_w(int offset, int data)
+WRITE_HANDLER( wms_sysreg2_w )
 {
 	wms_sysreg2 = data;
-//	wms_cmos_page = (data&0xc0)<<8; /* 0x4000 offsets */
+/*	wms_cmos_page = (data&0xc0)<<8;    0x4000 offsets    */
 	wms_cmos_page = 0; /* 0x4000 offsets */
 	if(data&0x20&&wms_objpalram_select) /* access VRAM */
 	{
@@ -1194,20 +1194,20 @@ void wms_sysreg2_w(int offset, int data)
 		install_mem_read_handler (0, TOBYTE(0x00000000), TOBYTE(0x003fffff), wms_objpalram_r);
 	}
 	wms_objpalram_select = ((data&0x20)?0:0x40000);
-//	if (data&0x10) /* turn off auto-erase */
-//	{
-//		wms_autoerase_enable = 0;
-//	}
-//	else /* enable auto-erase */
-//	{
-//		wms_autoerase_enable = 1;
-//		wms_autoerase_start  = cpu_getscanline();
-//	}
+/*	if (data&0x10)    turn off auto-erase    */
+/*	{ */
+/*		wms_autoerase_enable = 0; */
+/*	} */
+/*	else    enable auto-erase    */
+/*	{ */
+/*		wms_autoerase_enable = 1; */
+/*		wms_autoerase_start  = cpu_getscanline(); */
+/*	} */
 }
 
-void wms_unk1_w(int offset, int data)
+WRITE_HANDLER( wms_unk1_w )
 {
-//	INT8 buf[80];
+/*	INT8 buf[80]; */
 	wms_unk1 = data;
 	if (data == 0x4472)
 	{
@@ -1225,7 +1225,7 @@ void wms_unk1_w(int offset, int data)
 		cpu_bankbase[8] = &(gfxrombackup[0x000000]);
 	}
 	wms_sysreg2 = data;
-//	wms_cmos_page = (data&0xc0)<<8; /* 0x4000 offsets */
+/*	wms_cmos_page = (data&0xc0)<<8;    0x4000 offsets    */
 	wms_cmos_page = 0; /* 0x4000 offsets */
 	if(data&0x20&&wms_objpalram_select) /* access VRAM */
 	{
@@ -1238,46 +1238,46 @@ void wms_unk1_w(int offset, int data)
 		install_mem_read_handler (0, TOBYTE(0x00000000), TOBYTE(0x003fffff), wms_objpalram_r);
 	}
 	wms_objpalram_select = ((data&0x20)?0:0x40000);
-//	if (data&0x10) /* turn off auto-erase */
-//	{
-//		wms_autoerase_enable = 0;
-//	}
-//	else /* enable auto-erase */
-//	{
-//		wms_autoerase_enable = 1;
-//		wms_autoerase_start  = cpu_getscanline();
-//	}
+/*	if (data&0x10)    turn off auto-erase    */
+/*	{ */
+/*		wms_autoerase_enable = 0; */
+/*	} */
+/*	else    enable auto-erase    */
+/*	{ */
+/*		wms_autoerase_enable = 1; */
+/*		wms_autoerase_start  = cpu_getscanline(); */
+/*	} */
 
-//	if (errorlog) fprintf(errorlog, "wms_unk1:       %04x\n", data);
-//#ifdef MAME_DEBUG
-//	sprintf(buf,"write: 0x%04x",data);
-//	usrintf_showmessage(buf);
-//#endif
+/*	if (errorlog) fprintf(errorlog, "wms_unk1:       %04x\n", data); */
+/*#ifdef MAME_DEBUG */
+/*	sprintf(buf,"write: 0x%04x",data); */
+/*	usrintf_showmessage(buf); */
+/*#endif */
 }
 
 extern int debug_key_pressed;
-void wms_unk2_w(int offset, int data)
+WRITE_HANDLER( wms_unk2_w )
 {
-//	INT8 buf[80];
+/*	INT8 buf[80]; */
 	if (offset==2)
 	{
 		wms_unk2 = data;
-//#ifdef MAME_DEBUG
-//		sprintf(buf,"unk2 write: 0x%04x",data);
-//		usrintf_showmessage(buf);
-//#endif
+/*#ifdef MAME_DEBUG */
+/*		sprintf(buf,"unk2 write: 0x%04x",data); */
+/*		usrintf_showmessage(buf); */
+/*#endif */
 	}
-//	if (offset == 2) debug_key_pressed = 1;
+/*	if (offset == 2) debug_key_pressed = 1; */
 	if (errorlog&&(offset!=6)) fprintf(errorlog, "wms_unk2(%04x): %04x\n", offset<<3, data);
 }
 
-static int narc_unknown_r (int offset)
+static READ_HANDLER( narc_unknown_r )
 {
 	int ans = 0xffff;
 	return ans;
 }
 
-void wms_cmos_w(int offset, int data)
+WRITE_HANDLER( wms_cmos_w )
 {
 	if (smashtv_cmos_w_enable)
 	{
@@ -1287,7 +1287,7 @@ void wms_cmos_w(int offset, int data)
 	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - write %x to disabled CMOS address %x\n", cpu_get_pc(), data, offset);
 
 }
-int wms_cmos_r(int offset)
+READ_HANDLER( wms_cmos_r )
 {
 	return READ_WORD(&wms_cmos_ram[(offset)+wms_cmos_page]);
 }
@@ -1297,13 +1297,42 @@ void wms_load_code_roms(void)
 	memcpy(CODE_ROM,memory_region(REGION_CPU1),wms_code_rom_size);
 }
 
+#ifndef ALIGN_SHORTS
+#  define READ_U16(a)    (*(INT16 *)a)
+#  define WRITE_U16(a,x) (*(INT16 *)a = (x))
+#else
+#  ifdef LSB_FIRST  /* unaligned read and write macros, cpg */
+#    define READ_U16(a)    ((INT16)(*(UINT8 *)a | (*((UINT8 *)a+1) << 8)))
+#    define WRITE_U16(a,x) do { *(UINT8 *)a = x; *((UINT8 *)a+1) = (x>>8); } while (0)
+#  else
+#    define READ_U16(a)    ((INT16)((*(UINT8 *)a << 8) | *((UINT8 *)a+1)))
+#    define WRITE_U16(a,x) do { *(UINT8 *)a = (x>>8); *((UINT8 *)a+1) = x; } while (0)
+#  endif
+#endif
 
-#define READ_INT8(REG)			(*(INT8 *)BYTE_XOR_LE(&SCRATCH_RAM[TOBYTE((REG) & 0xffffff)]))
-#define READ_INT16(REG)			(*(INT16 *)&SCRATCH_RAM[TOBYTE((REG) & 0xffffff)])
-#define READ_INT32(REG)			BIG_DWORD_LE(*(INT32 *)&SCRATCH_RAM[TOBYTE((REG) & 0xffffff)])
+#ifndef ALIGN_INTS
+#  define READ_U32(a)    (*(INT32 *)a)
+#  define WRITE_U32(a,x) (*(INT16 *)a = (x))
+#else
+#  ifdef LSB_FIRST  /* unaligned read and write macros, cpg */
+#    define READ_U32(a) ((INT32)(*(UINT8 *)a | (*((UINT8 *)a+1) << 8) \
+                        | (*((UINT8 *)a+2) << 16) | (*((UINT8 *)a+3) << 24)))
+#    define WRITE_U32(a,x) do { *(UINT8 *)a = x; *((UINT8 *)a+1) = (x>>8); \
+                           *((UINT8 *)a+2) = (x>>16); *((UINT8 *)a+3) = (x>>24); } while (0)
+#  else
+#    define READ_U32(a) ((INT32)((*(UINT8 *)a << 24) | (*((UINT8 *)a+1) << 16) \
+                        | (*((UINT8 *)a+2) << 8) | *((UINT8 *)a+3)))
+#    define WRITE_U32(a,x) do { *(UINT8 *)a = (x>>24); *((UINT8 *)a+1) = (x>>16); \
+                           *((UINT8 *)a+2) = (x>>8); *((UINT8 *)a+3) = x; } while (0)
+#  endif
+#endif
+
+#define READ_INT8(REG)		(*(INT8 *)BYTE_XOR_LE(&SCRATCH_RAM[TOBYTE((REG) & 0xffffff)]))
+#define READ_INT16(REG)		READ_U16(&SCRATCH_RAM[TOBYTE((REG) & 0xffffff)])
+#define READ_INT32(REG)		BIG_DWORD_LE(READ_U32(&SCRATCH_RAM[TOBYTE((REG) & 0xffffff)]))
 #define WRITE_INT8(REG,DATA)	(*(INT8 *)BYTE_XOR_LE(&SCRATCH_RAM[TOBYTE((REG) & 0xffffff)]) = (DATA))
-#define WRITE_INT16(REG,DATA)	(*(INT16 *)&SCRATCH_RAM[TOBYTE((REG) & 0xffffff)] = (DATA))
-#define WRITE_INT32(REG,DATA)	(*(INT32 *)&SCRATCH_RAM[TOBYTE((REG) & 0xffffff)] = BIG_DWORD_LE(DATA))
+#define WRITE_INT16(REG,DATA)	WRITE_U16(&SCRATCH_RAM[TOBYTE((REG) & 0xffffff)],DATA)
+#define WRITE_INT32(REG,DATA)	WRITE_U32(&SCRATCH_RAM[TOBYTE((REG) & 0xffffff)],BIG_DWORD_LE(DATA))
 
 #define BURN_TIME(INST_CNT)		tms34010_ICount -= INST_CNT * TMS34010_AVGCYCLES
 
@@ -1425,7 +1454,7 @@ void wms_load_code_roms(void)
 	}
 
 
-static int narc_speedup_r(int offset)
+static READ_HANDLER( narc_speedup_r )
 {
 	if (offset)
 	{
@@ -1443,7 +1472,7 @@ static int narc_speedup_r(int offset)
 		return READ_WORD(&SCRATCH_RAM[TOBYTE(0x1b300)]);
 	}
 }
-static int smashtv_speedup_r(int offset)
+static READ_HANDLER( smashtv_speedup_r )
 {
 	if (offset)
 	{
@@ -1461,7 +1490,7 @@ static int smashtv_speedup_r(int offset)
 		return value1;
 	}
 }
-static int smashtv4_speedup_r(int offset)
+static READ_HANDLER( smashtv4_speedup_r )
 {
 	if (offset)
 	{
@@ -1479,7 +1508,7 @@ static int smashtv4_speedup_r(int offset)
 		return READ_WORD(&SCRATCH_RAM[TOBYTE(0x86780)]);
 	}
 }
-static int totcarn_speedup_r(int offset)
+static READ_HANDLER( totcarn_speedup_r )
 {
 	if (offset)
 	{
@@ -1497,7 +1526,7 @@ static int totcarn_speedup_r(int offset)
 		return value1;
 	}
 }
-static int trogp_speedup_r(int offset)
+static READ_HANDLER( trogp_speedup_r )
 {
 	if (offset)
 	{
@@ -1515,7 +1544,7 @@ static int trogp_speedup_r(int offset)
 		return value1;
 	}
 }
-static int trog_speedup_r(int offset)
+static READ_HANDLER( trog_speedup_r )
 {
 	if (offset)
 	{
@@ -1533,7 +1562,7 @@ static int trog_speedup_r(int offset)
 		return value1;
 	}
 }
-static int trog3_speedup_r(int offset)
+static READ_HANDLER( trog3_speedup_r )
 {
 	if (offset)
 	{
@@ -1551,7 +1580,7 @@ static int trog3_speedup_r(int offset)
 		return READ_WORD(&SCRATCH_RAM[TOBYTE(0xa2080)]);
 	}
 }
-static int mk_speedup_r(int offset)
+static READ_HANDLER( mk_speedup_r )
 {
 	if (offset)
 	{
@@ -1569,7 +1598,7 @@ static int mk_speedup_r(int offset)
 		return value1;
 	}
 }
-static int mkla1_speedup_r(int offset)
+static READ_HANDLER( mkla1_speedup_r )
 {
 	if (offset)
 	{
@@ -1587,7 +1616,7 @@ static int mkla1_speedup_r(int offset)
 		return value1;
 	}
 }
-static int mkla2_speedup_r(int offset)
+static READ_HANDLER( mkla2_speedup_r )
 {
 	if (offset)
 	{
@@ -1605,7 +1634,7 @@ static int mkla2_speedup_r(int offset)
 		return value1;
 	}
 }
-static int mkla3_speedup_r(int offset)
+static READ_HANDLER( mkla3_speedup_r )
 {
 	if (offset)
 	{
@@ -1623,7 +1652,7 @@ static int mkla3_speedup_r(int offset)
 		return value1;
 	}
 }
-static int mkla4_speedup_r(int offset)
+static READ_HANDLER( mkla4_speedup_r )
 {
 	if (!offset)
 	{
@@ -1641,7 +1670,7 @@ static int mkla4_speedup_r(int offset)
 		return value1;
 	}
 }
-static int hiimpact_speedup_r(int offset)
+static READ_HANDLER( hiimpact_speedup_r )
 {
 	if (!offset)
 	{
@@ -1659,7 +1688,7 @@ static int hiimpact_speedup_r(int offset)
 		return value1;
 	}
 }
-static int shimpact_speedup_r(int offset)
+static READ_HANDLER( shimpact_speedup_r )
 {
 	if (!offset)
 	{
@@ -1699,7 +1728,7 @@ static int shimpact_speedup_r(int offset)
 													/* DIVS   A5,A6			*/  \
 	WRITE_INT32(a1+0x140, a6xa7x & 0xffffffff);		/* MOVE   A6,*A1(140h),1*/
 
-static int term2_speedup_r(int offset)
+static READ_HANDLER( term2_speedup_r )
 {
 	if (offset)
 	{
@@ -1716,114 +1745,114 @@ static int term2_speedup_r(int offset)
 			INT32 a3x,a5x,a6x,a7x;
 			INT64 a6xa7x;
 
-			b1 = 0;			 									// CLR    B1
-			b2 = (INT32)(READ_INT16(0x100F640));				// MOVE   @100F640h,B2,0
-			if (!b2)											// JREQ   FFC029F0h
+			b1 = 0;			 									/* CLR    B1 */
+			b2 = (INT32)(READ_INT16(0x100F640));				/* MOVE   @100F640h,B2,0 */
+			if (!b2)											/* JREQ   FFC029F0h */
 			{
 				cpu_spinuntil_int();
 				return value1;
 			}
-			b2--;												// DEC    B2
-			b0  = 0x01008000;									// MOVI   1008000h,B0
-			a4  = 0x7fffffff;									// MOVI   7FFFFFFFh,A4
+			b2--;												/* DEC    B2 */
+			b0  = 0x01008000;									/* MOVI   1008000h,B0 */
+			a4  = 0x7fffffff;									/* MOVI   7FFFFFFFh,A4 */
 
 			while (1)
 			{
-				// FFC07770
-				a10 = b0;										// MOVE   B0,A10
-				a0  = a10;										// MOVE   A10,A0
-				a3  = a4;										// MOVE   A4,A3
-																// CMP    B2,B1
-				if (b1 < b2)									// JRLT   FFC07800h
+				/* FFC07770 */
+				a10 = b0;										/* MOVE   B0,A10 */
+				a0  = a10;										/* MOVE   A10,A0 */
+				a3  = a4;										/* MOVE   A4,A3 */
+																/* CMP    B2,B1 */
+				if (b1 < b2)									/* JRLT   FFC07800h */
 				{
-					// FFC07800
-					a4 = (INT32)(READ_INT16(a10+0xc0));			// MOVE   *A10(C0h),A4,0
-					a4 <<= 16;									// SLL    10h,A4
+					/* FFC07800 */
+					a4 = (INT32)(READ_INT16(a10+0xc0));			/* MOVE   *A10(C0h),A4,0 */
+					a4 <<= 16;									/* SLL    10h,A4 */
 				}
 				else
 				{
-					// FFC077C0
-					a4 = 0x80000000;							// MOVI   80000000h,A4
-				}												// JR     FFC07830h
+					/* FFC077C0 */
+					a4 = 0x80000000;							/* MOVI   80000000h,A4 */
+				}												/* JR     FFC07830h */
 
-				// FFC07830
-				b0 += 0xf0;										// ADDI   F0h,B0
-				a6 = 0x80000000;								// MOVI   80000000h,A6
-				a5 = 0x80000000;								// MOVI   80000000h,A5
-				goto t2_FFC07DD0;								// JR     FFC07DD0h
+				/* FFC07830 */
+				b0 += 0xf0;										/* ADDI   F0h,B0 */
+				a6 = 0x80000000;								/* MOVI   80000000h,A6 */
+				a5 = 0x80000000;								/* MOVI   80000000h,A5 */
+				goto t2_FFC07DD0;								/* JR     FFC07DD0h */
 
 			t2_FFC078C0:
-				a8  = READ_INT32(a1+0x1c0);						// MOVE   *A1(1C0h),A8,1
-				a7  = READ_INT32(a1+0x1a0);						// MOVE   *A1(1A0h),A7,1
-				a14 = (INT32)(READ_INT16(a1+0x220));			// MOVE   *A1(220h),A14,0
-				if (a14 & 0x6000)								// BTST   Eh,A14
-				{												// JRNE   FFC07C50h
-					goto t2_FFC07C50;							// BTST   Dh,A14
-				}												// JRNE   FFC07C50h
+				a8  = READ_INT32(a1+0x1c0);						/* MOVE   *A1(1C0h),A8,1 */
+				a7  = READ_INT32(a1+0x1a0);						/* MOVE   *A1(1A0h),A7,1 */
+				a14 = (INT32)(READ_INT16(a1+0x220));			/* MOVE   *A1(220h),A14,0 */
+				if (a14 & 0x6000)								/* BTST   Eh,A14 */
+				{												/* JRNE   FFC07C50h */
+					goto t2_FFC07C50;							/* BTST   Dh,A14 */
+				}												/* JRNE   FFC07C50h */
 
-				if (a8 <= a3)									// CMP    A3,A8
+				if (a8 <= a3)									/* CMP    A3,A8 */
 				{
-					goto t2_FFC07AE0;							// JRLE   FFC07AE0h
+					goto t2_FFC07AE0;							/* JRLE   FFC07AE0h */
 				}
 
-				a2 = b1 - 1;									// MOVE   B1,A2;  DEC    A2
-				T2_FFC08C40										// CALLR  FFC08C40h
-				a14 = READ_INT32(a1);							// MOVE   *A1,A14,1
-				WRITE_INT32(a0, a14);							// MOVE   A14,*A0,1
-				WRITE_INT32(a14+0x20, a0);						// MOVE   A0,*A14(20h),1
-				a14 = b0 - 0x1e0;								// MOVE   B0,A14; SUBI   1E0h,A14
-				WRITE_INT32(a1+0x20, a14);						// MOVE   A14,*A1(20h),1
-				a9 = READ_INT32(a14);							// MOVE   *A14,A9,1
-				WRITE_INT32(a14, a1);							// MOVE   A1,*A14,1
-				WRITE_INT32(a9+0x20, a1);						// MOVE   A1,*A9(20h),1
-				WRITE_INT32(a1, a9);							// MOVE   A9,*A1,1
-				goto t2_FFC07DD0;								// JR     FFC07DD0h
+				a2 = b1 - 1;									/* MOVE   B1,A2;  DEC    A2 */
+				T2_FFC08C40										/* CALLR  FFC08C40h */
+				a14 = READ_INT32(a1);							/* MOVE   *A1,A14,1 */
+				WRITE_INT32(a0, a14);							/* MOVE   A14,*A0,1 */
+				WRITE_INT32(a14+0x20, a0);						/* MOVE   A0,*A14(20h),1 */
+				a14 = b0 - 0x1e0;								/* MOVE   B0,A14; SUBI   1E0h,A14 */
+				WRITE_INT32(a1+0x20, a14);						/* MOVE   A14,*A1(20h),1 */
+				a9 = READ_INT32(a14);							/* MOVE   *A14,A9,1 */
+				WRITE_INT32(a14, a1);							/* MOVE   A1,*A14,1 */
+				WRITE_INT32(a9+0x20, a1);						/* MOVE   A1,*A9(20h),1 */
+				WRITE_INT32(a1, a9);							/* MOVE   A9,*A1,1 */
+				goto t2_FFC07DD0;								/* JR     FFC07DD0h */
 
 			t2_FFC07AE0:
-				if (a8 >= a4)									// CMP    A4,A8
+				if (a8 >= a4)									/* CMP    A4,A8 */
 				{
-					goto t2_FFC07C50;							// JRGE   FFC07C50h
+					goto t2_FFC07C50;							/* JRGE   FFC07C50h */
 				}
 
-				a2 = b1 + 1;									// MOVE   B1,A2; INC    A2
-				T2_FFC08C40										// CALLR  FFC08C40h
-				a14 = READ_INT32(a1);							// MOVE   *A1,A14,1
-				WRITE_INT32(a0, a14);							// MOVE   A14,*A0,1
-				WRITE_INT32(a14+0x20, a0);						// MOVE   A0,*A14(20h),1
-				a14 = b0;										// MOVE   B0,A14
-				a9 = READ_INT32(a14+0x20);						// MOVE   *A14(20h),A9,1
-				WRITE_INT32(a1, a14);							// MOVE   A14,*A1,1
-				WRITE_INT32(a14+0x20, a1);						// MOVE   A1,*A14(20h),1
-				WRITE_INT32(a9, a1);							// MOVE   A1,*A9,1
-				WRITE_INT32(a1+0x20, a9);						// MOVE   A9,*A1(20h),1
+				a2 = b1 + 1;									/* MOVE   B1,A2; INC    A2 */
+				T2_FFC08C40										/* CALLR  FFC08C40h */
+				a14 = READ_INT32(a1);							/* MOVE   *A1,A14,1 */
+				WRITE_INT32(a0, a14);							/* MOVE   A14,*A0,1 */
+				WRITE_INT32(a14+0x20, a0);						/* MOVE   A0,*A14(20h),1 */
+				a14 = b0;										/* MOVE   B0,A14 */
+				a9 = READ_INT32(a14+0x20);						/* MOVE   *A14(20h),A9,1 */
+				WRITE_INT32(a1, a14);							/* MOVE   A14,*A1,1 */
+				WRITE_INT32(a14+0x20, a1);						/* MOVE   A1,*A14(20h),1 */
+				WRITE_INT32(a9, a1);							/* MOVE   A1,*A9,1 */
+				WRITE_INT32(a1+0x20, a9);						/* MOVE   A9,*A1(20h),1 */
 				goto t2_FFC07DD0;
 
 			t2_FFC07C50:
-				if (a8 > a6) 									// CMP    A6,A8
+				if (a8 > a6) 									/* CMP    A6,A8 */
 				{
-					a1 = a0; 									// MOVE   A1,A0
-					a6 = a8; 									// MOVE   A8,A6
-					a5 = a7; 									// MOVE   A7,A5
+					a1 = a0; 									/* MOVE   A1,A0 */
+					a6 = a8; 									/* MOVE   A8,A6 */
+					a5 = a7; 									/* MOVE   A7,A5 */
 					goto t2_FFC07DD0;
 				}
 
-				if ((a8 == a6) && (a7 >= a5)) 					// CMP    A5,A7
+				if ((a8 == a6) && (a7 >= a5)) 					/* CMP    A5,A7 */
 				{
-					a1 = a0; 									// MOVE   A1,A0
-					a6 = a8; 									// MOVE   A8,A6
-					a5 = a7; 									// MOVE   A7,A5
+					a1 = a0; 									/* MOVE   A1,A0 */
+					a6 = a8; 									/* MOVE   A8,A6 */
+					a5 = a7; 									/* MOVE   A7,A5 */
 					goto t2_FFC07DD0;
 				}
 
-				// FFC07CC0
-				a14 = READ_INT32(a0+0x20);						// MOVE   *A0(20h),A14,1
-				WRITE_INT32(a14, a1);							// MOVE   A1,*A14,1
-				WRITE_INT32(a1+0x20, a14);						// MOVE   A14,*A1(20h),1
-				a14 = READ_INT32(a1);							// MOVE   *A1,A14,1
-				WRITE_INT32(a0, a14);							// MOVE   A14,*A0,1
-				WRITE_INT32(a1, a0);							// MOVE   A0,*A1,1
-				WRITE_INT32(a0 +0x20, a1);						// MOVE   A1,*A0(20h),1
-				WRITE_INT32(a14+0x20, a0);						// MOVE   A0,*A14(20h),1
+				/* FFC07CC0 */
+				a14 = READ_INT32(a0+0x20);						/* MOVE   *A0(20h),A14,1 */
+				WRITE_INT32(a14, a1);							/* MOVE   A1,*A14,1 */
+				WRITE_INT32(a1+0x20, a14);						/* MOVE   A14,*A1(20h),1 */
+				a14 = READ_INT32(a1);							/* MOVE   *A1,A14,1 */
+				WRITE_INT32(a0, a14);							/* MOVE   A14,*A0,1 */
+				WRITE_INT32(a1, a0);							/* MOVE   A0,*A1,1 */
+				WRITE_INT32(a0 +0x20, a1);						/* MOVE   A1,*A0(20h),1 */
+				WRITE_INT32(a14+0x20, a0);						/* MOVE   A0,*A14(20h),1 */
 
 			t2_FFC07DD0:
 				BURN_TIME(50);
@@ -1832,17 +1861,17 @@ static int term2_speedup_r(int offset)
 					break;
 				}
 
-				a1 = READ_INT32(a0);							// MOVE   *A0,A1,1
-				if (a10 != a1)									// CMP    A1,A10
+				a1 = READ_INT32(a0);							/* MOVE   *A0,A1,1 */
+				if (a10 != a1)									/* CMP    A1,A10 */
 				{
-					goto t2_FFC078C0;							// JRNE   FFC078C0h
+					goto t2_FFC078C0;							/* JRNE   FFC078C0h */
 				}
 
-				b1++;											// INC    B1
-				if (b1 > b2)									// CMP    B2,B1
+				b1++;											/* INC    B1 */
+				if (b1 > b2)									/* CMP    B2,B1 */
 				{
 					cpu_spinuntil_int();
-					return value1;								// JRLE   FFC07770h; RTS
+					return value1;								/* JRLE   FFC07770h; RTS */
 				}
 			}
 		}
@@ -1850,7 +1879,7 @@ static int term2_speedup_r(int offset)
 		return value1;
 	}
 }
-int strkforc_speedup_r(int offset)
+READ_HANDLER( strkforc_speedup_r )
 {
 	if (!offset)
 	{
@@ -1868,7 +1897,7 @@ int strkforc_speedup_r(int offset)
 		return value1;
 	}
 }
-static int mk2_speedup_r(int offset)
+static READ_HANDLER( mk2_speedup_r )
 {
 	if (!offset)
 	{
@@ -1886,7 +1915,7 @@ static int mk2_speedup_r(int offset)
 		return value1;
 	}
 }
-static int mk2r14_speedup_r(int offset)
+static READ_HANDLER( mk2r14_speedup_r )
 {
 	if (offset)
 	{
@@ -1904,7 +1933,7 @@ static int mk2r14_speedup_r(int offset)
 		return value1;
 	}
 }
-static int nbajam_speedup_r(int offset)
+static READ_HANDLER( nbajam_speedup_r )
 {
 	if (offset)
 	{
@@ -2019,7 +2048,7 @@ static void wms_modify_pen(int i, int rgb)
 	Machine->pens[i] = shrinked_pens[rgbpenindex(r,g,b)];
 }
 
-static void wms_8bit_t_paletteram_xRRRRRGGGGGBBBBB_word_w(int offset,int data)
+static WRITE_HANDLER( wms_8bit_t_paletteram_xRRRRRGGGGGBBBBB_word_w )
 {
 	int i;
 	int oldword = READ_WORD(&paletteram[offset]);
@@ -2035,7 +2064,7 @@ static void wms_8bit_t_paletteram_xRRRRRGGGGGBBBBB_word_w(int offset,int data)
 	}
 }
 
-static void wms_8bit_paletteram_xRRRRRGGGGGBBBBB_word_w(int offset,int data)
+static WRITE_HANDLER( wms_8bit_paletteram_xRRRRRGGGGGBBBBB_word_w )
 {
 	int i;
 	int oldword = READ_WORD(&paletteram[offset]);
@@ -2051,7 +2080,7 @@ static void wms_8bit_paletteram_xRRRRRGGGGGBBBBB_word_w(int offset,int data)
 	}
 }
 
-static void wms_6bit_paletteram_xRRRRRGGGGGBBBBB_word_w(int offset,int data)
+static WRITE_HANDLER( wms_6bit_paletteram_xRRRRRGGGGGBBBBB_word_w )
 {
 	/*
 	 * the palette entry to find is mapped like this:
@@ -2088,7 +2117,7 @@ static void wms_6bit_paletteram_xRRRRRGGGGGBBBBB_word_w(int offset,int data)
 	}
 }
 
-static void wms_4bit_paletteram_xRRRRRGGGGGBBBBB_word_w(int offset,int data)
+static WRITE_HANDLER( wms_4bit_paletteram_xRRRRRGGGGGBBBBB_word_w )
 {
 	/*
 	 * the palette entry to find is mapped like this:
@@ -2612,24 +2641,24 @@ void nbajam_init_machine(void)
 	install_mem_write_handler(0, TOBYTE(0x01d01020), TOBYTE(0x01d0103f), adpcm_sound_w);
 }
 
-static void cvsd_sound_w(int offset, int data)
+static WRITE_HANDLER( cvsd_sound_w )
 {
 	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: ", cpu_get_pc());
 	if (errorlog) fprintf(errorlog, "sound write %x\n", data);
 	williams_cvsd_data_w(0, (data & 0xff) | ((data & 0x200) >> 1));
 }
 
-static void adpcm_sound_w(int offset, int data)
+static WRITE_HANDLER( adpcm_sound_w )
 {
-//	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: ", cpu_get_pc());
-//	if (errorlog) fprintf(errorlog, "sound write %x\n", data);
+/*	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: ", cpu_get_pc()); */
+/*	if (errorlog) fprintf(errorlog, "sound write %x\n", data); */
 	williams_adpcm_data_w(0, data);
 }
 
-static void narc_sound_w(int offset, int data)
+static WRITE_HANDLER( narc_sound_w )
 {
-//	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: ", cpu_get_pc());
-//	if (errorlog) fprintf(errorlog, "sound write %x\n", data);
+/*	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: ", cpu_get_pc()); */
+/*	if (errorlog) fprintf(errorlog, "sound write %x\n", data); */
 	williams_narc_data_w(0, data);
 }
 

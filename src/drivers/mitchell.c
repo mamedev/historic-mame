@@ -46,21 +46,21 @@ int  pang_vh_start(void);
 void pang_vh_stop(void);
 void pang_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void mgakuen_paletteram_w(int offset, int data);
-int  mgakuen_paletteram_r(int offset);
-void mgakuen_videoram_w(int offset, int data);
-int  mgakuen_videoram_r(int offset);
-void mgakuen_objram_w(int offset, int data);
-int  mgakuen_objram_r(int offset);
+WRITE_HANDLER( mgakuen_paletteram_w );
+READ_HANDLER( mgakuen_paletteram_r );
+WRITE_HANDLER( mgakuen_videoram_w );
+READ_HANDLER( mgakuen_videoram_r );
+WRITE_HANDLER( mgakuen_objram_w );
+READ_HANDLER( mgakuen_objram_r );
 
-void pang_video_bank_w(int offset, int data);
-void pang_videoram_w(int offset, int data);
-int  pang_videoram_r(int offset);
-void pang_colorram_w(int offset, int data);
-int  pang_colorram_r(int offset);
-void pang_gfxctrl_w(int offset, int data);
-void pang_paletteram_w(int offset, int data);
-int  pang_paletteram_r(int offset);
+WRITE_HANDLER( pang_video_bank_w );
+WRITE_HANDLER( pang_videoram_w );
+READ_HANDLER( pang_videoram_r );
+WRITE_HANDLER( pang_colorram_w );
+READ_HANDLER( pang_colorram_r );
+WRITE_HANDLER( pang_gfxctrl_w );
+WRITE_HANDLER( pang_paletteram_w );
+READ_HANDLER( pang_paletteram_r );
 
 extern unsigned char *pang_videoram;
 extern unsigned char *pang_colorram;
@@ -69,7 +69,7 @@ extern int pang_videoram_size;
 
 
 
-static void pang_bankswitch_w(int offset,int data)
+static WRITE_HANDLER( pang_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -124,7 +124,7 @@ static void nvram_handler(void *file,int read_or_write)
 	}
 }
 
-static int pang_port5_r(int offset)
+static READ_HANDLER( pang_port5_r )
 {
 	int bit;
 	extern struct GameDriver driver_mgakuen2;
@@ -144,17 +144,17 @@ if (Machine->gamedrv == &driver_mgakuen2)	/* hack... music doesn't work otherwis
 	return (input_port_0_r(0) & 0x76) | bit;
 }
 
-static void eeprom_cs_w(int offset,int data)
+static WRITE_HANDLER( eeprom_cs_w )
 {
 	EEPROM_set_cs_line(data ? CLEAR_LINE : ASSERT_LINE);
 }
 
-static void eeprom_clock_w(int offset,int data)
+static WRITE_HANDLER( eeprom_clock_w )
 {
 	EEPROM_set_clock_line(data ? CLEAR_LINE : ASSERT_LINE);
 }
 
-static void eeprom_serial_w(int offset,int data)
+static WRITE_HANDLER( eeprom_serial_w )
 {
 	EEPROM_write_bit(data);
 }
@@ -169,7 +169,7 @@ static void eeprom_serial_w(int offset,int data)
 
 static int dial[2],dial_selected;
 
-static int block_input_r(int offset)
+static READ_HANDLER( block_input_r )
 {
 	static int dir[2];
 
@@ -211,7 +211,7 @@ static int block_input_r(int offset)
 	}
 }
 
-static void block_dial_control_w(int offset,int data)
+static WRITE_HANDLER( block_dial_control_w )
 {
 	if (data == 0x08)
 	{
@@ -228,7 +228,7 @@ static void block_dial_control_w(int offset,int data)
 
 static int keymatrix;
 
-static int mahjong_input_r(int offset)
+static READ_HANDLER( mahjong_input_r )
 {
 	int i;
 
@@ -238,7 +238,7 @@ static int mahjong_input_r(int offset)
 	return 0xff;
 }
 
-static void mahjong_input_select_w(int offset,int data)
+static WRITE_HANDLER( mahjong_input_select_w )
 {
 	keymatrix = data;
 }
@@ -246,7 +246,7 @@ static void mahjong_input_select_w(int offset,int data)
 
 static int input_type;
 
-static int input_r(int offset)
+static READ_HANDLER( input_r )
 {
 	switch (input_type)
 	{
@@ -273,7 +273,7 @@ static int input_r(int offset)
 	}
 }
 
-static void input_w(int offset,int data)
+static WRITE_HANDLER( input_w )
 {
 	switch (input_type)
 	{

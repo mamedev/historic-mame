@@ -143,7 +143,7 @@ typedef struct
 	unsigned int LFOfreq[256];			/*frequency deltas for LFO*/
 
 	void (*irqhandler)(int irq);				/*IRQ function handler*/
-	void (*porthandler)(int offset, int data);	/*port write function handler*/
+	mem_write_handler porthandler;	/*port write function handler*/
 
 	unsigned int clock;			/*chip clock in Hz (passed from 2151intf.c)*/
 	unsigned int sampfreq;		/*sampling frequency in Hz (passed from 2151intf.c)*/
@@ -1843,7 +1843,7 @@ void YM2151SetIrqHandler(int n, void(*handler)(int irq))
 	YMPSG[n].irqhandler = handler;
 }
 
-void YM2151SetPortWriteHandler(int n, void(*handler)(int offset, int data))
+void YM2151SetPortWriteHandler(int n, mem_write_handler handler)
 {
 	YMPSG[n].porthandler = handler;
 }

@@ -102,16 +102,16 @@ extern unsigned char *jrpacman_palettebank,*jrpacman_colortablebank;
 void jrpacman_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int jrpacman_vh_start(void);
 void jrpacman_vh_stop(void);
-void jrpacman_videoram_w(int offset,int data);
-void jrpacman_palettebank_w(int offset,int data);
-void jrpacman_colortablebank_w(int offset,int data);
-void jrpacman_charbank_w(int offset,int data);
-void jrpacman_flipscreen_w(int offset,int data);
+WRITE_HANDLER( jrpacman_videoram_w );
+WRITE_HANDLER( jrpacman_palettebank_w );
+WRITE_HANDLER( jrpacman_colortablebank_w );
+WRITE_HANDLER( jrpacman_charbank_w );
+WRITE_HANDLER( jrpacman_flipscreen_w );
 void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *pengo_soundregs;
-void pengo_sound_enable_w(int offset,int data);
-void pengo_sound_w(int offset,int data);
+WRITE_HANDLER( pengo_sound_enable_w );
+WRITE_HANDLER( pengo_sound_w );
 
 
 

@@ -23,21 +23,21 @@ extern unsigned char *contra_text_vram,*contra_text_cram;
 
 void contra_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
-void contra_fg_vram_w(int offset,int data);
-void contra_fg_cram_w(int offset,int data);
-void contra_bg_vram_w(int offset,int data);
-void contra_bg_cram_w(int offset,int data);
-void contra_text_vram_w(int offset,int data);
-void contra_text_cram_w(int offset,int data);
+WRITE_HANDLER( contra_fg_vram_w );
+WRITE_HANDLER( contra_fg_cram_w );
+WRITE_HANDLER( contra_bg_vram_w );
+WRITE_HANDLER( contra_bg_cram_w );
+WRITE_HANDLER( contra_text_vram_w );
+WRITE_HANDLER( contra_text_cram_w );
 
-void contra_K007121_ctrl_0_w( int offset, int data );
-void contra_K007121_ctrl_1_w( int offset, int data );
+WRITE_HANDLER( contra_K007121_ctrl_0_w );
+WRITE_HANDLER( contra_K007121_ctrl_1_w );
 void contra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int contra_vh_start(void);
 void contra_vh_stop(void);
 
 
-void contra_bankswitch_w(int offset,int data)
+WRITE_HANDLER( contra_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -48,18 +48,18 @@ void contra_bankswitch_w(int offset,int data)
 		cpu_setbank(1,&RAM[bankaddress]);
 }
 
-void contra_sh_irqtrigger_w(int offset, int data)
+WRITE_HANDLER( contra_sh_irqtrigger_w )
 {
 	cpu_cause_interrupt(1,M6809_INT_IRQ);
 }
 
-void contra_coin_counter_w(int offset, int data)
+WRITE_HANDLER( contra_coin_counter_w )
 {
 	if (data & 0x01) coin_counter_w(0,data & 0x01);
 	if (data & 0x02) coin_counter_w(1,(data & 0x02) >> 1);
 }
 
-static void cpu_sound_command_w(int offset,int data)
+static WRITE_HANDLER( cpu_sound_command_w )
 {
 	soundlatch_w(offset,data);
 }

@@ -13,27 +13,27 @@ void konami1_decode(void);
 
 extern unsigned char *hyperspt_scroll;
 
-void hyperspt_flipscreen_w(int offset,int data);
+WRITE_HANDLER( hyperspt_flipscreen_w );
 void hyperspt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int hyperspt_vh_start(void);
 void hyperspt_vh_stop(void);
 void hyperspt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void roadf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void konami_sh_irqtrigger_w(int offset,int data);
-int hyperspt_sh_timer_r(int offset);
-void hyperspt_sound_w(int offset , int data);
+WRITE_HANDLER( konami_sh_irqtrigger_w );
+READ_HANDLER( hyperspt_sh_timer_r );
+WRITE_HANDLER( hyperspt_sound_w );
 
 /* these routines lurk in sndhrdw/trackfld.c */
 extern struct VLM5030interface konami_vlm5030_interface;
 extern struct SN76496interface konami_sn76496_interface;
 extern struct DACinterface konami_dac_interface;
-void konami_SN76496_latch_w(int offset,int data);
-void konami_SN76496_0_w(int offset,int data);
+WRITE_HANDLER( konami_SN76496_latch_w );
+WRITE_HANDLER( konami_SN76496_0_w );
 
 
 /* handle fake button for speed cheat */
-static int konami_IN1_r(int offset)
+static READ_HANDLER( konami_IN1_r )
 {
 	int res;
 	static int cheat = 0;
@@ -186,7 +186,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x4000, 0x4fff, MWA_RAM },
 	{ 0xa000, 0xa000, VLM5030_data_w }, /* speech data */
 	{ 0xc000, 0xdfff, hyperspt_sound_w },     /* speech and output controll */
-	{ 0xe000, 0xe000, DAC_data_w },
+	{ 0xe000, 0xe000, DAC_0_data_w },
 	{ 0xe001, 0xe001, konami_SN76496_latch_w },  /* Loads the snd command into the snd latch */
 	{ 0xe002, 0xe002, konami_SN76496_0_w },      /* This address triggers the SN chip to read the data port. */
 	{ -1 }	/* end of table */

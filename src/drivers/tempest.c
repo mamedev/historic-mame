@@ -170,7 +170,7 @@ High Scores:
 #include "machine/atari_vg.h"
 
 
-static int tempest_IN0_r(int offset)
+static READ_HANDLER( tempest_IN0_r )
 {
 	int res;
 
@@ -186,14 +186,14 @@ static int tempest_IN0_r(int offset)
 	return res;
 }
 
-static void tempest_led_w (int offset, int data)
+static WRITE_HANDLER( tempest_led_w )
 {
 	osd_led_w (0, ~(data >> 1));
 	osd_led_w (1, ~data);
 	/* FLIP is bit 0x04 */
 }
 
-static void tempest_coin_w (int offset, int data)
+static WRITE_HANDLER( tempest_coin_w )
 {
 	static int lastval;
 
@@ -230,12 +230,12 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x2000, 0x2fff, MWA_RAM, &vectorram, &vectorram_size },
 	{ 0x3000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x4000, tempest_coin_w },
-	{ 0x4800, 0x4800, avgdvg_go },
+	{ 0x4800, 0x4800, avgdvg_go_w },
 	{ 0x5000, 0x5000, watchdog_reset_w },
-	{ 0x5800, 0x5800, avgdvg_reset },
+	{ 0x5800, 0x5800, avgdvg_reset_w },
 	{ 0x6000, 0x603f, atari_vg_earom_w },
-	{ 0x6040, 0x6040, atari_vg_earom_ctrl },
-	{ 0x6080, 0x609f, mb_go },
+	{ 0x6040, 0x6040, atari_vg_earom_ctrl_w },
+	{ 0x6080, 0x609f, mb_go_w },
 	{ 0x60c0, 0x60cf, pokey1_w },
 	{ 0x60d0, 0x60df, pokey2_w },
 	{ 0x60e0, 0x60e0, tempest_led_w },
@@ -338,8 +338,8 @@ INPUT_PORTS_START( tempest )
 INPUT_PORTS_END
 
 
-int input_port_1_bit_r(int offs) { return (readinputport(1) & (1 << offs)) ? 0 : 228; }
-int input_port_2_bit_r(int offs) { return (readinputport(2) & (1 << offs)) ? 0 : 228; }
+READ_HANDLER( input_port_1_bit_r ) { return (readinputport(1) & (1 << offset)) ? 0 : 228; }
+READ_HANDLER( input_port_2_bit_r ) { return (readinputport(2) & (1 << offset)) ? 0 : 228; }
 
 static struct POKEYinterface pokey_interface =
 {

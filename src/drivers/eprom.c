@@ -111,9 +111,9 @@ Write sound processor   360030          W    D0-D7
 extern UINT8 *eprom_playfieldpalram;
 extern int eprom_playfieldpalram_size;
 
-void eprom_latch_w(int offset, int data);
-void eprom_playfieldram_w(int offset, int data);
-void eprom_playfieldpalram_w(int offset, int data);
+WRITE_HANDLER( eprom_latch_w );
+WRITE_HANDLER( eprom_playfieldram_w );
+WRITE_HANDLER( eprom_playfieldpalram_w );
 
 int eprom_vh_start(void);
 void eprom_vh_stop(void);
@@ -169,7 +169,7 @@ static void init_machine(void)
  *
  *************************************/
 
-static int special_port1_r(int offset)
+static READ_HANDLER( special_port1_r )
 {
 	int result = input_port_1_r(offset);
 
@@ -181,7 +181,7 @@ static int special_port1_r(int offset)
 }
 
 
-static int adc_r(int offset)
+static READ_HANDLER( adc_r )
 {
 	static int last_offset;
 	int result = readinputport(2 + ((last_offset / 2) & 3));
@@ -197,7 +197,7 @@ static int adc_r(int offset)
  *
  *************************************/
 
-void eprom_latch_w(int offset, int data)
+WRITE_HANDLER( eprom_latch_w )
 {
 	(void)offset;
 
@@ -219,13 +219,13 @@ void eprom_latch_w(int offset, int data)
  *
  *************************************/
 
-static int sync_r(int offset)
+static READ_HANDLER( sync_r )
 {
 	return READ_WORD(&sync_data[offset]);
 }
 
 
-static void sync_w(int offset, int data)
+static WRITE_HANDLER( sync_w )
 {
 	int oldword = READ_WORD(&sync_data[offset]);
 	int newword = COMBINE_WORD(oldword, data);

@@ -22,11 +22,10 @@ static int k007121_flip_screen = 0;
 
 ***************************************************************************/
 
-static void get_tile_info_A( int col, int row )
+static void get_tile_info_A(int tile_index)
 {
-	int offs = row*32 + col;
-	int attr = k007121_ram[offs];
-	int code = k007121_ram[offs+0x400];
+	int attr = k007121_ram[tile_index];
+	int code = k007121_ram[tile_index+0x400];
 	int bit0 = (K007121_ctrlram[0][0x05] >> 0) & 0x03;
 	int bit1 = (K007121_ctrlram[0][0x05] >> 2) & 0x03;
 	int bit2 = (K007121_ctrlram[0][0x05] >> 4) & 0x03;
@@ -49,14 +48,42 @@ static void get_tile_info_A( int col, int row )
 	SET_TILE_INFO(0, code + 256*bank, (attr & 0x0f) + 16)
 }
 
-static void get_tile_info_B( int col, int row )
+static void get_tile_info_B(int tile_index)
 {
-	int offs = (row*32 + col) + 0x800;
-	int attr = k007121_ram[offs];
-	int code = k007121_ram[offs+0x400];
+	int attr = k007121_ram[tile_index+0x800];
+	int code = k007121_ram[tile_index+0xc00];
 
 	SET_TILE_INFO(0, code, (attr & 0x0f) + 16)
 }
+
+
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
+
+int flkatck_vh_start(void)
+{
+	k007121_tilemap[0] = tilemap_create(get_tile_info_A,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
+	k007121_tilemap[1] = tilemap_create(get_tile_info_B,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
+
+	if (!k007121_tilemap[0] || !k007121_tilemap[1])
+		return 1;
+
+	{
+		struct rectangle clip = Machine->drv->visible_area;
+		clip.min_x += 40;
+		tilemap_set_clip(k007121_tilemap[0],&clip);
+
+		clip.max_x = 39;
+		clip.min_x = 0;
+		tilemap_set_clip(k007121_tilemap[1],&clip);
+
+		return 0;
+	}
+}
+
 
 /***************************************************************************
 
@@ -64,27 +91,23 @@ static void get_tile_info_B( int col, int row )
 
 ***************************************************************************/
 
-void flkatck_k007121_w(int offset,int data)
+WRITE_HANDLER( flkatck_k007121_w )
 {
 	if (offset < 0x1000){	/* tiles */
 		if (k007121_ram[offset] != data)
 		{
 			k007121_ram[offset] = data;
 			if (offset & 0x800)	/* score */
-			{
-				int col = offset%32;
-				if (col < 5)
-					tilemap_mark_tile_dirty(k007121_tilemap[1], col, (offset & 0x3ff)/32 );
-			}
+				tilemap_mark_tile_dirty(k007121_tilemap[1],offset & 0x3ff);
 			else
-				tilemap_mark_tile_dirty(k007121_tilemap[0], offset%32, (offset & 0x3ff)/32 );
+				tilemap_mark_tile_dirty(k007121_tilemap[0],offset & 0x3ff);
 		}
 	}
 	else	/* sprites */
 		k007121_ram[offset] = data;
 }
 
-void flkatck_k007121_regs_w(int offset,int data)
+WRITE_HANDLER( flkatck_k007121_regs_w )
 {
 	switch (offset)
 	{
@@ -103,36 +126,6 @@ void flkatck_k007121_regs_w(int offset,int data)
 	K007121_ctrl_0_w(offset,data);
 }
 
-/***************************************************************************
-
-  Start the video hardware emulation.
-
-***************************************************************************/
-
-int flkatck_vh_start(void)
-{
-	k007121_tilemap[0] = tilemap_create(get_tile_info_A, TILEMAP_OPAQUE, 8,8, 32, 32 );
-	k007121_tilemap[1] = tilemap_create(get_tile_info_B, TILEMAP_OPAQUE, 8,8, 32, 32 );
-
-	if (k007121_tilemap[0] && k007121_tilemap[1])
-	{
-		struct rectangle clip = Machine->drv->visible_area;
-		clip.min_x += 40;
-		tilemap_set_clip(k007121_tilemap[0],&clip);
-
-		clip.max_x = 39;
-		clip.min_x = 0;
-		tilemap_set_clip(k007121_tilemap[1],&clip);
-
-		return 0;
-	}
-
-	return 1;
-}
-
-void flkatck_vh_stop(void)
-{
-}
 
 /***************************************************************************
 
@@ -169,6 +162,6 @@ usrintf_showmessage("%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x  %02x-%02x-%02x-%02
 
 	/* draw the graphics */
 	tilemap_draw(bitmap,k007121_tilemap[0],0);
-	K007121_sprites_draw(0,bitmap,&k007121_ram[0x1000],0,40,0);
+	K007121_sprites_draw(0,bitmap,&k007121_ram[0x1000],0,40,0,-1);
 	tilemap_draw(bitmap,k007121_tilemap[1],0);
 }

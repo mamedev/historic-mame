@@ -27,7 +27,7 @@ static unsigned char control_num = kPitch;
 
 #if 0
 /********************************************************/
-int input_bank_0_r(int offset)
+READ_HANDLER( input_bank_0_r )
 {
 	int x;
 	x=input_port_0_r(0); /* Read memory mapped port 1 */
@@ -40,7 +40,7 @@ int input_bank_0_r(int offset)
 #endif
 
 /********************************************************/
-int starwars_input_bank_1_r(int offset)
+READ_HANDLER( starwars_input_bank_1_r )
 {
 	int x;
 	x=input_port_1_r(0); /* Read memory mapped port 2 */
@@ -70,7 +70,7 @@ int starwars_input_bank_1_r(int offset)
 }
 /*********************************************************/
 /********************************************************/
-int starwars_control_r (int offset)
+READ_HANDLER( starwars_control_r )
 {
 
 	if (control_num == kPitch)
@@ -81,7 +81,7 @@ int starwars_control_r (int offset)
 	else return 0;
 }
 
-void starwars_control_w (int offset, int data)
+WRITE_HANDLER( starwars_control_w )
 {
 	control_num = offset;
 }

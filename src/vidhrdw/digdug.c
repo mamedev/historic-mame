@@ -102,7 +102,7 @@ void digdug_vh_stop(void)
 }
 
 
-void digdug_vh_latch_w(int offset, int data)
+WRITE_HANDLER( digdug_vh_latch_w )
 {
 	switch (offset)
 	{
@@ -142,7 +142,7 @@ void digdug_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int c
 
 
 
-void digdug_flipscreen_w(int offset,int data)
+WRITE_HANDLER( digdug_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{

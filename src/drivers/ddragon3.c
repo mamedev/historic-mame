@@ -22,26 +22,26 @@
 
 void ddragon3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void ctribe_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void ddragon3_scroll_write(int offset,int data);
+WRITE_HANDLER( ddragon3_scroll_w );
 
 extern int ddragon3_vh_start(void);
 
 extern unsigned char *ddragon3_bg_videoram;
-extern void ddragon3_bg_videoram_w(int offset, int data);
-extern int ddragon3_bg_videoram_r(int offset);
+WRITE_HANDLER( ddragon3_bg_videoram_w );
+READ_HANDLER( ddragon3_bg_videoram_r );
 
 extern unsigned char *ddragon3_fg_videoram;
-extern void ddragon3_fg_videoram_w(int offset, int data);
-extern int ddragon3_fg_videoram_r(int offset);
+WRITE_HANDLER( ddragon3_fg_videoram_w );
+READ_HANDLER( ddragon3_fg_videoram_r );
 
 /***************************************************************************/
 
-static void oki_bankswitch_w(int offset, int data)
+static WRITE_HANDLER( oki_bankswitch_w )
 {
 	OKIM6295_set_bank_base(0, ALL_VOICES, (data & 1) * 0x40000);
 }
 
-static int ddrago3b_io_r(int offset)
+static READ_HANDLER( ddrago3b_io_r )
 {
 	switch (offset) {
 		case 0x0: return readinputport(0) + 256*((readinputport(3)&0x0f)|((readinputport(4)&0xc0)<<2));
@@ -52,7 +52,7 @@ static int ddrago3b_io_r(int offset)
 	return 0xffff;
 }
 
-static int ctribe_io_r( int offset ){
+static READ_HANDLER( ctribe_io_r ){
 	switch (offset) {
 		case 0x0: return readinputport(0) + 256*((readinputport(3)&0x0f)|((readinputport(4)&0xc0)<<2));
 		case 0x2: return readinputport(1) + 256*(readinputport(4)&0x3f);
@@ -62,7 +62,7 @@ static int ctribe_io_r( int offset ){
 	return 0xffff;
 }
 
-static int ddragon3_io_r(int offset)
+static READ_HANDLER( ddragon3_io_r )
 {
 	switch (offset) {
 		case 0x0: return readinputport(0);
@@ -90,7 +90,7 @@ static int ddragon3_cpu_interrupt(void) { /* 6:0x177e - 5:0x176a */
 
 static UINT16 reg[8];
 
-static void ddragon3_io_w(int offset,int data){
+static WRITE_HANDLER( ddragon3_io_w ){
 	reg[offset/2] = COMBINE_WORD(reg[offset],data);
 
 	switch (offset) {
@@ -143,7 +143,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x080000, 0x080fff, ddragon3_fg_videoram_w, &ddragon3_fg_videoram },
 	{ 0x082000, 0x0827ff, ddragon3_bg_videoram_w, &ddragon3_bg_videoram },
-	{ 0x0c0000, 0x0c000f, ddragon3_scroll_write },
+	{ 0x0c0000, 0x0c000f, ddragon3_scroll_w },
 	{ 0x100000, 0x10000f, ddragon3_io_w },
 	{ 0x140000, 0x1405ff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram},
 	{ 0x180000, 0x180fff, MWA_BANK1, &spriteram }, /* Sprites (16 bytes per sprite) */
@@ -167,7 +167,7 @@ static struct MemoryWriteAddress dd3b_writemem[] = {
 	{ 0x080000, 0x080fff, ddragon3_fg_videoram_w, &ddragon3_fg_videoram },
 	{ 0x081000, 0x081fff, MWA_BANK1, &spriteram }, /* Sprites (16 bytes per sprite) */
 	{ 0x082000, 0x0827ff, ddragon3_bg_videoram_w, &ddragon3_bg_videoram },
-	{ 0x0c0000, 0x0c000f, ddragon3_scroll_write },
+	{ 0x0c0000, 0x0c000f, ddragon3_scroll_w },
 	{ 0x100000, 0x1005ff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram},
 	{ 0x140000, 0x14000f, ddragon3_io_w },
 	{ 0x1c0000, 0x1c3fff, MWA_BANK2 },
@@ -190,7 +190,7 @@ static struct MemoryWriteAddress ctribe_writemem[] = {
 	{ 0x080000, 0x080fff, ddragon3_fg_videoram_w, &ddragon3_fg_videoram },
 	{ 0x081000, 0x081fff, MWA_BANK1, &spriteram }, /* Sprites (16 bytes per sprite) */
 	{ 0x082000, 0x0827ff, ddragon3_bg_videoram_w, &ddragon3_bg_videoram },
-	{ 0x0c0000, 0x0c000f, ddragon3_scroll_write },
+	{ 0x0c0000, 0x0c000f, ddragon3_scroll_w },
 	{ 0x100000, 0x1005ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram},
 	{ 0x140000, 0x14000f, ddragon3_io_w },
 	{ 0x1c0000, 0x1c3fff, MWA_BANK2 },

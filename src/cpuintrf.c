@@ -766,12 +766,12 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
   machine will be reset.
 
 ***************************************************************************/
-void watchdog_reset_w(int offset,int data)
+WRITE_HANDLER( watchdog_reset_w )
 {
 	watchdog_counter = Machine->drv->frames_per_second;
 }
 
-int watchdog_reset_r(int offset)
+READ_HANDLER( watchdog_reset_r )
 {
 	watchdog_counter = Machine->drv->frames_per_second;
 	return 0;
@@ -1151,14 +1151,14 @@ void cpu_irq_line_vector_w(int cpunum, int irqline, int vector)
   of CPU #0 to #3
 
 ***************************************************************************/
-void cpu_0_irq_line_vector_w(int offset, int data) { cpu_irq_line_vector_w(0, offset, data); }
-void cpu_1_irq_line_vector_w(int offset, int data) { cpu_irq_line_vector_w(1, offset, data); }
-void cpu_2_irq_line_vector_w(int offset, int data) { cpu_irq_line_vector_w(2, offset, data); }
-void cpu_3_irq_line_vector_w(int offset, int data) { cpu_irq_line_vector_w(3, offset, data); }
-void cpu_4_irq_line_vector_w(int offset, int data) { cpu_irq_line_vector_w(4, offset, data); }
-void cpu_5_irq_line_vector_w(int offset, int data) { cpu_irq_line_vector_w(5, offset, data); }
-void cpu_6_irq_line_vector_w(int offset, int data) { cpu_irq_line_vector_w(6, offset, data); }
-void cpu_7_irq_line_vector_w(int offset, int data) { cpu_irq_line_vector_w(7, offset, data); }
+WRITE_HANDLER( cpu_0_irq_line_vector_w ) { cpu_irq_line_vector_w(0, offset, data); }
+WRITE_HANDLER( cpu_1_irq_line_vector_w ) { cpu_irq_line_vector_w(1, offset, data); }
+WRITE_HANDLER( cpu_2_irq_line_vector_w ) { cpu_irq_line_vector_w(2, offset, data); }
+WRITE_HANDLER( cpu_3_irq_line_vector_w ) { cpu_irq_line_vector_w(3, offset, data); }
+WRITE_HANDLER( cpu_4_irq_line_vector_w ) { cpu_irq_line_vector_w(4, offset, data); }
+WRITE_HANDLER( cpu_5_irq_line_vector_w ) { cpu_irq_line_vector_w(5, offset, data); }
+WRITE_HANDLER( cpu_6_irq_line_vector_w ) { cpu_irq_line_vector_w(6, offset, data); }
+WRITE_HANDLER( cpu_7_irq_line_vector_w ) { cpu_irq_line_vector_w(7, offset, data); }
 
 /***************************************************************************
 
@@ -1212,7 +1212,7 @@ void cpu_clear_pending_interrupts(int cpunum)
 
 
 
-void interrupt_enable_w(int offset,int data)
+WRITE_HANDLER( interrupt_enable_w )
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
 	interrupt_enable[cpunum] = data;
@@ -1223,7 +1223,7 @@ void interrupt_enable_w(int offset,int data)
 
 
 
-void interrupt_vector_w(int offset,int data)
+WRITE_HANDLER( interrupt_vector_w )
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
 	if (interrupt_vector[cpunum] != data)

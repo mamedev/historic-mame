@@ -9,34 +9,37 @@
 #include "driver.h"
 
 #include <time.h>
+#include <assert.h>
 
 /***************************************************************************/
 /* Codes */
 
 /* Subtype of codes */
 #define CODE_TYPE_NONE 0U /* code not assigned */
-#define CODE_TYPE_KEYBOARD_OS 1U /* os depend code */
-#define CODE_TYPE_KEYBOARD_STANDARD 2U /* standard code */
-#define CODE_TYPE_JOYSTICK_OS 3U /* os depend code */
-#define CODE_TYPE_JOYSTICK_STANDARD 4U /* standard code */
+#define CODE_TYPE_KEYBOARD 1U /* keyboard code */
+#define CODE_TYPE_JOYSTICK 2U /* joystick code */
 
 /* Informations for every input code */
 struct code_info {
 	int memory; /* boolean memory */
-	unsigned oscode; /* osdepend code */
-	unsigned type; /* subtype */
+	unsigned oscode; /* os dependant code */
+	unsigned type; /* subtype: CODE_TYPE_KEYBOARD or CODE_TYPE_JOYSTICK */
 };
 
-/* Main code table, generic KEYCODE_*, JOYCODE_* are index in this table */
+/* Main code table, generic KEYCODE_*, JOYCODE_* are indexes in this table */
 static struct code_info* code_map;
 
-/* Element in the table */
+/* Size of the table */
 static unsigned code_mac;
 
 /* Create the code table */
 int code_init(void)
 {
 	unsigned i;
+
+	assert(	__code_key_first == 0
+		&& __code_key_last + 1 == __code_joy_first
+		&& __code_joy_last + 1 == __code_max );
 
 	/* allocate */
 	code_map = (struct code_info*)malloc( __code_max * sizeof(struct code_info) );
@@ -52,84 +55,80 @@ int code_init(void)
 		code_map[code_mac].oscode = 0; /* not used */
 
 		if (__code_key_first <= i && i <= __code_key_last)
-			code_map[code_mac].type = CODE_TYPE_KEYBOARD_STANDARD;
+			code_map[code_mac].type = CODE_TYPE_KEYBOARD;
 		else if (__code_joy_first <= i && i <= __code_joy_last)
-			code_map[code_mac].type = CODE_TYPE_JOYSTICK_STANDARD;
-		else
-			code_map[code_mac].type = CODE_TYPE_NONE; /* never happen */
+			code_map[code_mac].type = CODE_TYPE_JOYSTICK;
+		else {
+			/* never happen */
+			assert(0);
+			code_map[code_mac].type = CODE_TYPE_NONE;
+		}
 		++code_mac;
 	}
 
 	return 0;
 }
 
-/* Delete the code table */
-void code_close(void)
-{
-	code_mac = 0;
-	free(code_map);
-}
-
-/* Find the OSD record of a specific standard oscode */
-INLINE const struct KeyboardInfo* internal_code_find_keyboard_standard_os(unsigned oscode)
+/* Find the osd record of an oscode */
+INLINE const struct KeyboardInfo* internal_oscode_find_keyboard(unsigned oscode)
 {
 	const struct KeyboardInfo *keyinfo;
 	keyinfo = osd_get_key_list();
 	while (keyinfo->name)
 	{
-		if (keyinfo->code == oscode && keyinfo->standardcode != CODE_OTHER)
+		if (keyinfo->code == oscode)
 			return keyinfo;
 		++keyinfo;
 	}
 	return 0;
 }
 
-INLINE const struct JoystickInfo* internal_code_find_joystick_standard_os(unsigned oscode)
+INLINE const struct JoystickInfo* internal_oscode_find_joystick(unsigned oscode)
 {
 	const struct JoystickInfo *joyinfo;
 	joyinfo = osd_get_joy_list();
 	while (joyinfo->name)
 	{
-		if (joyinfo->code == oscode && joyinfo->standardcode != CODE_OTHER)
+		if (joyinfo->code == oscode)
 			return joyinfo;
 		++joyinfo;
 	}
 	return 0;
 }
 
-/* Find a osdepend code in the table */
-static int code_find_os(unsigned oscode, unsigned type)
+/* Find a oscode in the table */
+static int internal_oscode_find(unsigned oscode, unsigned type)
 {
 	unsigned i;
 	const struct KeyboardInfo *keyinfo;
 	const struct JoystickInfo *joyinfo;
 
-	/* Search on the main table */
+	/* Search in the main table for an oscode */
 	for(i=__code_max;i<code_mac;++i)
 		if (code_map[i].type == type && code_map[i].oscode == oscode)
 			return i;
 
-	/* Search in the OSD tables for a standard code */
+	/* Search in the osd table for a standard code */
 	switch (type)
 	{
-		case CODE_TYPE_KEYBOARD_OS :
-			keyinfo = internal_code_find_keyboard_standard_os(oscode);
-			if (keyinfo)
+		case CODE_TYPE_KEYBOARD :
+			keyinfo = internal_oscode_find_keyboard(oscode);
+			if (keyinfo && keyinfo->standardcode != CODE_OTHER)
 				return keyinfo->standardcode;
 			break;
-		case CODE_TYPE_JOYSTICK_OS :
-			joyinfo = internal_code_find_joystick_standard_os(oscode);
-			if (joyinfo)
+		case CODE_TYPE_JOYSTICK :
+			joyinfo = internal_oscode_find_joystick(oscode);
+			if (joyinfo && joyinfo->standardcode != CODE_OTHER)
 				return joyinfo->standardcode;
 			break;
 	}
 
-	/* os code not found */
+	/* oscode not found */
 	return CODE_NONE;
 }
 
-/* Add a new osdepend code in the table */
-static void code_add_os(unsigned oscode, unsigned type)
+/* Add a new oscode in the table */
+static int internal_oscode_add(unsigned oscode, unsigned type)
 {
 	struct code_info* new_code_map;
 	new_code_map = realloc( code_map, (code_mac+1) * sizeof(struct code_info) );
@@ -139,119 +138,117 @@ static void code_add_os(unsigned oscode, unsigned type)
 		code_map[code_mac].memory = 0;
 		code_map[code_mac].oscode = oscode;
 		code_map[code_mac].type = type;
-		++code_mac;
-	}
+		return code_mac++;
+	} else {
+		return CODE_NONE;
+        }
 }
 
-/* Find the record of a specific code type */
-
-INLINE const struct KeyboardInfo* internal_code_find_keyboard_standard(unsigned code)
+/* Find the osd record of a standard code */
+INLINE const struct KeyboardInfo* internal_code_find_keyboard(InputCode code)
 {
 	const struct KeyboardInfo *keyinfo;
 	keyinfo = osd_get_key_list();
-	while (keyinfo->name)
+
+	assert( code < code_mac );
+
+        if (code < __code_max)
 	{
-		if (keyinfo->standardcode == code)
-			return keyinfo;
-		++keyinfo;
+		while (keyinfo->name)
+		{
+			if (keyinfo->standardcode == code)
+				return keyinfo;
+			++keyinfo;
+		}
+	} else {
+		while (keyinfo->name)
+		{
+			if (keyinfo->standardcode == CODE_OTHER && keyinfo->code == code_map[code].oscode)
+				return keyinfo;
+	      		++keyinfo;
+		}
 	}
 	return 0;
 }
 
-INLINE const struct KeyboardInfo* internal_code_find_keyboard_os(unsigned code)
-{
-	const struct KeyboardInfo *keyinfo;
-	keyinfo = osd_get_key_list();
-	while (keyinfo->name)
-	{
-		if (keyinfo->standardcode == CODE_OTHER && keyinfo->code == code_map[code].oscode)
-			return keyinfo;
-      		++keyinfo;
-	}
-	return 0;
-}
-
-INLINE const struct JoystickInfo* internal_code_find_joystick_standard(unsigned code)
-{
-	const struct JoystickInfo *joyinfo;
-	joyinfo = osd_get_joy_list();
-	while (joyinfo->name)
-	{
-		if (joyinfo->standardcode == code)
-			return joyinfo;
-		++joyinfo;
-	}
-	return 0;
-}
-
-INLINE const struct JoystickInfo* internal_code_find_joystick_os(unsigned code)
+INLINE const struct JoystickInfo* internal_code_find_joystick(InputCode code)
 {
 	const struct JoystickInfo *joyinfo;
 	joyinfo = osd_get_joy_list();
-	while (joyinfo->name)
+
+	assert( code < code_mac );
+
+	if (code < __code_max)
 	{
-		if (joyinfo->standardcode == CODE_OTHER && joyinfo->code == code_map[code].oscode)
-			return joyinfo;
-		++joyinfo;
+		while (joyinfo->name)
+		{
+			if (joyinfo->standardcode == code)
+				return joyinfo;
+			++joyinfo;
+		}
+	} else {
+		while (joyinfo->name)
+		{
+			if (joyinfo->standardcode == CODE_OTHER && joyinfo->code == code_map[code].oscode)
+				return joyinfo;
+			++joyinfo;
+		}
 	}
 	return 0;
 }
 
 /* Check if a code is pressed */
-static int internal_code_pressed(unsigned code)
+static int internal_code_pressed(InputCode code)
 {
 	const struct KeyboardInfo *keyinfo;
 	const struct JoystickInfo *joyinfo;
-	switch (code_map[code].type)
+
+	assert( code < code_mac );
+
+	if (code < __code_max)
 	{
-		case CODE_TYPE_KEYBOARD_STANDARD :
-			keyinfo = internal_code_find_keyboard_standard(code);
-			if (keyinfo)
-				return osd_is_key_pressed(keyinfo->code);
-			break;
-		case CODE_TYPE_KEYBOARD_OS :
-			keyinfo = internal_code_find_keyboard_os(code);
-			if (keyinfo)
-				return osd_is_key_pressed(keyinfo->code);
-			break;
-		case CODE_TYPE_JOYSTICK_STANDARD :
-			joyinfo = internal_code_find_joystick_standard(code);
-			if (joyinfo)
-				return osd_is_joy_pressed(joyinfo->code);
-			break;
-		case CODE_TYPE_JOYSTICK_OS :
-			joyinfo = internal_code_find_joystick_os(code);
-			if (joyinfo)
-				return osd_is_joy_pressed(joyinfo->code);
-			break;
+		switch (code_map[code].type)
+		{
+			case CODE_TYPE_KEYBOARD :
+				keyinfo = internal_code_find_keyboard(code);
+				if (keyinfo)
+					return osd_is_key_pressed(keyinfo->code);
+				break;
+			case CODE_TYPE_JOYSTICK :
+				joyinfo = internal_code_find_joystick(code);
+				if (joyinfo)
+					return osd_is_joy_pressed(joyinfo->code);
+				break;
+		}
+	} else {
+		switch (code_map[code].type)
+		{
+			case CODE_TYPE_KEYBOARD :
+				return osd_is_key_pressed(code_map[code].oscode);
+			case CODE_TYPE_JOYSTICK :
+				return osd_is_joy_pressed(code_map[code].oscode);
+		}
 	}
 	return 0;
 }
 
 /* Return the name of the code */
-INLINE const char* internal_code_name(unsigned code)
+static const char* internal_code_name(InputCode code)
 {
 	const struct KeyboardInfo *keyinfo;
 	const struct JoystickInfo *joyinfo;
+
+	assert( code < code_mac );
+
 	switch (code_map[code].type)
 	{
-		case CODE_TYPE_KEYBOARD_STANDARD :
-			keyinfo = internal_code_find_keyboard_standard(code);
+		case CODE_TYPE_KEYBOARD :
+			keyinfo = internal_code_find_keyboard(code);
 			if (keyinfo)
 				return keyinfo->name;
 			break;
-		case CODE_TYPE_KEYBOARD_OS :
-			keyinfo = internal_code_find_keyboard_os(code);
-			if (keyinfo)
-				return keyinfo->name;
-			break;
-		case CODE_TYPE_JOYSTICK_STANDARD :
-			joyinfo = internal_code_find_joystick_standard(code);
-			if (joyinfo)
-				return joyinfo->name;
-			break;
-		case CODE_TYPE_JOYSTICK_OS :
-			joyinfo = internal_code_find_joystick_os(code);
+		case CODE_TYPE_JOYSTICK :
+			joyinfo = internal_code_find_joystick(code);
 			if (joyinfo)
 				return joyinfo->name;
 			break;
@@ -265,14 +262,14 @@ static void internal_code_update(void)
 	const struct KeyboardInfo *keyinfo;
 	const struct JoystickInfo *joyinfo;
 
-	/* add only osdepend code because all standard codes are already present */
+	/* add only oscode because all standard codes are already present */
 
 	keyinfo = osd_get_key_list();
 	while (keyinfo->name)
 	{
 		if (keyinfo->standardcode == CODE_OTHER)
-			if (code_find_os(keyinfo->code,CODE_TYPE_KEYBOARD_OS) == CODE_NONE)
-				code_add_os(keyinfo->code,CODE_TYPE_KEYBOARD_OS);
+			if (internal_oscode_find(keyinfo->code,CODE_TYPE_KEYBOARD) == CODE_NONE)
+				internal_oscode_add(keyinfo->code,CODE_TYPE_KEYBOARD);
 		++keyinfo;
 	}
 
@@ -280,23 +277,40 @@ static void internal_code_update(void)
 	while (joyinfo->name)
 	{
 		if (joyinfo->standardcode == CODE_OTHER)
-                        if (code_find_os(joyinfo->code,CODE_TYPE_JOYSTICK_OS)==CODE_NONE)
-				code_add_os(joyinfo->code,CODE_TYPE_JOYSTICK_OS);
+                        if (internal_oscode_find(joyinfo->code,CODE_TYPE_JOYSTICK)==CODE_NONE)
+				internal_oscode_add(joyinfo->code,CODE_TYPE_JOYSTICK);
 		++joyinfo;
 	}
+}
+
+/* Delete the code table */
+void code_close(void)
+{
+#if 0
+	if (errorlog)
+	{
+		int i;
+		fprintf(errorlog,"List of OS dependant input codes:\n");
+		for(i=__code_max;i<code_mac;++i)
+			fprintf(errorlog,"\tcode %d, oscode %d, %s, %s\n",i,code_map[i].oscode,code_map[i].type == CODE_TYPE_KEYBOARD ? "keyboard" : "joystick", internal_code_name(i));
+	}
+#endif
+
+	code_mac = 0;
+	free(code_map);
+	code_map = 0;
 }
 
 /***************************************************************************/
 /* Save support */
 
-/* Flags used in saving codes to file */
-#define SAVECODE_FLAGS_TYPE_NONE        0x00000000
-#define SAVECODE_FLAGS_TYPE_STANDARD    0x10000000 /* standard code */
-#define SAVECODE_FLAGS_TYPE_KEYBOARD_OS 0x20000000 /* keyboard os depend code */
-#define SAVECODE_FLAGS_TYPE_JOYSTICK_OS 0x30000000 /* joystick os depend code */
-#define SAVECODE_FLAGS_TYPE_MASK        0xF0000000
+/* Flags used for saving codes to file */
+#define SAVECODE_FLAGS_TYPE_STANDARD 0x10000000 /* code */
+#define SAVECODE_FLAGS_TYPE_KEYBOARD 0x20000000 /* keyboard oscode */
+#define SAVECODE_FLAGS_TYPE_JOYSTICK 0x30000000 /* joystick oscode */
+#define SAVECODE_FLAGS_TYPE_MASK     0xF0000000
 
-/* Convert one key osdepend code to one standard code */
+/* Convert one key oscode to one standard code */
 InputCode keyoscode_to_code(unsigned oscode)
 {
 	InputCode code;
@@ -304,31 +318,23 @@ InputCode keyoscode_to_code(unsigned oscode)
 	if (oscode == OSD_KEY_NONE)
 		return CODE_NONE;
 
-	code = code_find_os(oscode,CODE_TYPE_KEYBOARD_OS);
+	code = internal_oscode_find(oscode,CODE_TYPE_KEYBOARD);
 
 	/* insert if missing */
 	if (code == CODE_NONE)
-	{
-		code_add_os(oscode,CODE_TYPE_KEYBOARD_OS);
-		/* this fail only if the realloc call in code_add_os fail */
-		code = code_find_os(oscode,CODE_TYPE_KEYBOARD_OS);
-	}
+		code = internal_oscode_add(oscode,CODE_TYPE_KEYBOARD);
 
 	return code;
 }
 
-/* Convert one joystick osdepend code to one code */
+/* Convert one joystick oscode to one code */
 InputCode joyoscode_to_code(unsigned oscode)
 {
-	InputCode code = code_find_os(oscode,CODE_TYPE_JOYSTICK_OS);
+	InputCode code = internal_oscode_find(oscode,CODE_TYPE_JOYSTICK);
 
 	/* insert if missing */
 	if (code == CODE_NONE)
-	{
-		code_add_os(oscode,CODE_TYPE_JOYSTICK_OS);
-		/* this fail only if the realloc call in code_add_os fail */
-		code = code_find_os(oscode,CODE_TYPE_JOYSTICK_OS);
-	}
+		code = internal_oscode_add(oscode,CODE_TYPE_JOYSTICK);
 
 	return code;
 }
@@ -337,20 +343,20 @@ InputCode joyoscode_to_code(unsigned oscode)
 InputCode savecode_to_code(unsigned savecode)
 {
 	unsigned type = savecode & SAVECODE_FLAGS_TYPE_MASK;
-	unsigned code = savecode & ~SAVECODE_FLAGS_TYPE_MASK;
+	InputCode code = savecode & ~SAVECODE_FLAGS_TYPE_MASK;
 
 	switch (type)
 	{
 		case SAVECODE_FLAGS_TYPE_STANDARD :
 			return code;
-		case SAVECODE_FLAGS_TYPE_KEYBOARD_OS :
+		case SAVECODE_FLAGS_TYPE_KEYBOARD :
 			return keyoscode_to_code(code);
-		case SAVECODE_FLAGS_TYPE_JOYSTICK_OS :
+		case SAVECODE_FLAGS_TYPE_JOYSTICK :
 			return joyoscode_to_code(code);
 	}
 
 	/* never happen */
-
+	assert(0);
 	return CODE_NONE;
 }
 
@@ -363,12 +369,12 @@ unsigned code_to_savecode(InputCode code)
 
 	switch (code_map[code].type)
 	{
-		case CODE_TYPE_KEYBOARD_OS : return code_map[code].oscode | SAVECODE_FLAGS_TYPE_KEYBOARD_OS;
-		case CODE_TYPE_JOYSTICK_OS : return code_map[code].oscode | SAVECODE_FLAGS_TYPE_JOYSTICK_OS;
+		case CODE_TYPE_KEYBOARD : return code_map[code].oscode | SAVECODE_FLAGS_TYPE_KEYBOARD;
+		case CODE_TYPE_JOYSTICK : return code_map[code].oscode | SAVECODE_FLAGS_TYPE_JOYSTICK;
 	}
 
 	/* never happen */
-
+	assert(0);
 	return 0;
 }
 
@@ -414,9 +420,30 @@ int code_pressed_memory(InputCode code)
 	if (pressed)
 	{
 		if (code_map[code].memory == 0)
-		{
 			code_map[code].memory = 1;
-		} else
+		else
+			pressed = 0;
+	} else
+		code_map[code].memory = 0;
+
+	profiler_mark(PROFILER_END);
+
+	return pressed;
+}
+
+/* Report the pressure only if isn't already signaled with one of the */
+/* functions code_memory and code_memory_repeat */
+static int code_pressed_not_memorized(InputCode code)
+{
+	int pressed;
+
+	profiler_mark(PROFILER_INPUT);
+
+	pressed = internal_code_pressed(code);
+
+	if (pressed)
+	{
+		if (code_map[code].memory != 0)
 			pressed = 0;
 	} else
 		code_map[code].memory = 0;
@@ -464,7 +491,7 @@ InputCode code_read_async(void)
 
 	profiler_mark(PROFILER_INPUT);
 
-	/* Update the table */
+	/* update the table */
 	internal_code_update();
 
 	for(i=0;i<code_mac;++i)
@@ -486,6 +513,10 @@ InputCode code_read_sync(void)
 
 	/* convert the code */
 	code = keyoscode_to_code(oscode);
+
+	/* update the memory of the code, like if code_pressed_memory was called */
+	if (code != CODE_NONE)
+		code_map[code].memory = 1;
 
 	while (code == CODE_NONE)
 		code = code_read_async();
@@ -605,8 +636,12 @@ int seq_pressed(InputSeq* code)
 				invert = !invert;
 				break;
 			default:
-				if (res && (code_pressed((*code)[j]) != 0) == invert)
-					res = 0;
+				if (res)
+				{
+					int pressed = code_pressed_not_memorized((*code)[j]);
+					if ((pressed != 0) == invert)
+						res = 0;
+				}
 				invert = 0;
 				++count;
 		}

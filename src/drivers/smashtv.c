@@ -99,8 +99,8 @@ int wms_t_vh_start(void);
 void wms_vh_stop (void);
 void wms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void wms_vh_eof(void);
-void wms_vram_w(int offset, int data);
-int wms_vram_r(int offset);
+WRITE_HANDLER( wms_vram_w );
+READ_HANDLER( wms_vram_r );
 void wms_display_addr_changed(UINT32 offs, int rowbytes, int scanline);
 void wms_display_interrupt(int scanline);
 
@@ -116,23 +116,23 @@ void nbajam_init_machine(void);
 void wms_to_shiftreg(unsigned int address, unsigned short* shiftreg);
 void wms_from_shiftreg(unsigned int address, unsigned short* shiftreg);
 
-void wms_sysreg_w(int offset, int data);
-void wms_sysreg2_w(int offset, int data);
+WRITE_HANDLER( wms_sysreg_w );
+WRITE_HANDLER( wms_sysreg2_w );
 
-void wms_cmos_w(int offset, int data);
-int wms_cmos_r(int offset);
+WRITE_HANDLER( wms_cmos_w );
+READ_HANDLER( wms_cmos_r );
 
-void wms_01c00060_w(int offset, int data);
-int wms_01c00060_r(int offset);
+WRITE_HANDLER( wms_01c00060_w );
+READ_HANDLER( wms_01c00060_r );
 
-void wms_unk1_w(int offset, int data);
-void wms_unk2_w(int offset, int data);
+WRITE_HANDLER( wms_unk1_w );
+WRITE_HANDLER( wms_unk2_w );
 
-int wms_dma_r(int offset);
-void wms_dma_w(int offset, int data);
-void wms_dma2_w(int offset, int data);
+READ_HANDLER( wms_dma_r );
+WRITE_HANDLER( wms_dma_w );
+WRITE_HANDLER( wms_dma2_w );
 
-int wms_input_r (int offset);
+READ_HANDLER( wms_input_r );
 
 void init_narc(void);
 void init_smashtv(void);
@@ -157,9 +157,9 @@ void init_term2(void);
 
 /* Functions in sndhrdw/smashtv.c */
 void narc_ym2151_int (int irq);
-int  narc_DAC_r(int offset);
-void narc_slave_DAC_w (int offset,int data);
-void narc_slave_cmd_w (int offset,int data);
+READ_HANDLER( narc_DAC_r );
+WRITE_HANDLER( narc_slave_DAC_w );
+WRITE_HANDLER( narc_slave_cmd_w );
 
 
 
@@ -2406,7 +2406,7 @@ ROM_START( nbajamte )
 
 	ROM_LOAD ( "nbauj14.bin",  0x300000, 0x80000, 0xb34b7af3 )  /* odd  same as nbajam */
 	ROM_LOAD ( "te-uj16.bin",  0x380000, 0x80000, 0x905ad88b )  /* odd  */
-	ROM_LOAD ( "te-uj17.bin",  0x400000, 0x80000, 0x44cf3151 )  /* odd  */
+	ROM_LOAD ( "te-uj17.bin",  0x400000, 0x80000, 0x8a852b9e )  /* odd  */
 	ROM_LOAD ( "te-uj18.bin",  0x480000, 0x80000, 0x4eb73c26 )  /* odd  */
 
 	ROM_LOAD ( "nbaug19.bin",  0x600000, 0x80000, 0xa8f22fbb )  /* even  same as nbajam */

@@ -74,7 +74,9 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 
 
 **************************************************************************/
+
 #include "vidhrdw/generic.h"
+#include "vidhrdw/konamiic.h"
 
 /* Variables only used here: */
 
@@ -86,8 +88,6 @@ static struct sprite_list *sprite_list;
 
 unsigned char *wecleman_pageram, *wecleman_txtram, *wecleman_roadram, *wecleman_unknown;
 int wecleman_roadram_size, wecleman_bgpage[4], wecleman_fgpage[4], *wecleman_gfx_bank;
-
-unsigned char *hotchase_bgram, *hotchase_fgram, *hotchase_bgreg, *hotchase_fgreg;
 
 
 
@@ -115,7 +115,7 @@ extern int wecleman_selected_ip, wecleman_irqctrl;
 #define NUM_SPRITES 256
 
 
-void paletteram_SBGRBBBBGGGGRRRR_word_w(int offset, int data)
+WRITE_HANDLER( paletteram_SBGRBBBBGGGGRRRR_word_w )
 {
 	/*	byte 0    	byte 1		*/
 	/*	SBGR BBBB 	GGGG RRRR	*/
@@ -165,9 +165,8 @@ void paletteram_SBGRBBBBGGGGRRRR_word_w(int offset, int data)
 
 
 
-void wecleman_get_txt_tile_info( int col, int row )
+void wecleman_get_txt_tile_info( int tile_index )
 {
-	int tile_index	=	col + row * PAGE_NX;
 	int code 		=	READ_WORD(&wecleman_txtram[tile_index*2]);
 	SET_TILE_INFO(PAGE_GFX, code & 0xfff, (code >> 12) + ((code >> 5) & 0x70) );
 }
@@ -175,7 +174,7 @@ void wecleman_get_txt_tile_info( int col, int row )
 
 
 
-int wecleman_txtram_r(int offset)
+READ_HANDLER( wecleman_txtram_r )
 {
 	return READ_WORD(&wecleman_txtram[offset]);
 }
@@ -183,7 +182,7 @@ int wecleman_txtram_r(int offset)
 
 
 
-void wecleman_txtram_w(int offset, int data)
+WRITE_HANDLER( wecleman_txtram_w )
 {
 	int old_data = READ_WORD(&wecleman_txtram[offset]);
 	int new_data = COMBINE_WORD(old_data,data);
@@ -218,7 +217,7 @@ void wecleman_txtram_w(int offset, int data)
 
 		}
 		else
-			tilemap_mark_tile_dirty(txt_tilemap,(offset/2) % PAGE_NX,(offset/2) / PAGE_NX);
+			tilemap_mark_tile_dirty(txt_tilemap, offset / 2);
 	}
 }
 
@@ -231,14 +230,12 @@ void wecleman_txtram_w(int offset, int data)
 
 
 
-void wecleman_get_bg_tile_info( int col, int row )
+void wecleman_get_bg_tile_info( int tile_index )
 {
-	int tile_index	=	(col % PAGE_NX) + (row % PAGE_NY) * PAGE_NX;
-	int page		=	wecleman_bgpage[(col / PAGE_NX) + (row / PAGE_NY) * 2];
-	int code 		=	READ_WORD(&wecleman_pageram[tile_index*2 + page*(PAGE_NX*PAGE_NY*2)]);
+	int page = wecleman_bgpage[(tile_index%(PAGE_NX*2))/PAGE_NX+2*(tile_index/(PAGE_NX*PAGE_NY*2))];
+	int code = READ_WORD(&wecleman_pageram[( (tile_index%PAGE_NX) + PAGE_NX*((tile_index/(PAGE_NX*2))%PAGE_NY) + page*PAGE_NX*PAGE_NY ) * 2]);
 	SET_TILE_INFO(PAGE_GFX, code & 0xfff, (code >> 12) + ((code >> 5) & 0x70) );
 }
-
 
 
 
@@ -248,11 +245,10 @@ void wecleman_get_bg_tile_info( int col, int row )
 
 
 
-void wecleman_get_fg_tile_info( int col, int row )
+void wecleman_get_fg_tile_info( int tile_index )
 {
-	int tile_index	=	(col % PAGE_NX) + (row % PAGE_NY) * PAGE_NX;
-	int page		=	wecleman_fgpage[(col / PAGE_NX) + (row / PAGE_NY) * 2];
-	int code 		=	READ_WORD(&wecleman_pageram[tile_index*2 + page*(PAGE_NX*PAGE_NY*2)]);
+	int page = wecleman_fgpage[(tile_index%(PAGE_NX*2))/PAGE_NX+2*(tile_index/(PAGE_NX*PAGE_NY*2))];
+	int code = READ_WORD(&wecleman_pageram[( (tile_index%PAGE_NX) + PAGE_NX*((tile_index/(PAGE_NX*2))%PAGE_NY) + page*PAGE_NX*PAGE_NY ) * 2]);
 	SET_TILE_INFO(PAGE_GFX, code & 0xfff, (code >> 12) + ((code >> 5) & 0x70) );
 }
 
@@ -268,38 +264,39 @@ void wecleman_get_fg_tile_info( int col, int row )
 
 
 /* Pages that compose both the background and the foreground */
-int wecleman_pageram_r(int offset)
+READ_HANDLER( wecleman_pageram_r )
 {
 	return READ_WORD(&wecleman_pageram[offset]);
 }
 
 
-void wecleman_pageram_w(int offset, int data)
+WRITE_HANDLER( wecleman_pageram_w )
 {
 	int old_data = READ_WORD(&wecleman_pageram[offset]);
 	int new_data = COMBINE_WORD(old_data,data);
 
 	if ( old_data != new_data )
 	{
-		int page,row,col;
+		int page,col,row;
 
 		WRITE_WORD(&wecleman_pageram[offset], new_data);
 
-		page	=	( offset / 2			) / (PAGE_NX * PAGE_NY);
-		col		=	( offset / 2			) % PAGE_NX;
-		row		=	( offset / 2 / PAGE_NX	) % PAGE_NY;
+		page	=	( offset / 2 ) / (PAGE_NX * PAGE_NY);
+
+		col		=	( offset / 2 )           % PAGE_NX;
+		row		=	( offset / 2 / PAGE_NX ) % PAGE_NY;
 
 		/* background */
-		if (wecleman_bgpage[0] == page)	tilemap_mark_tile_dirty(bg_tilemap, col,			row				);
-		if (wecleman_bgpage[1] == page)	tilemap_mark_tile_dirty(bg_tilemap, col + PAGE_NX,	row				);
-		if (wecleman_bgpage[2] == page)	tilemap_mark_tile_dirty(bg_tilemap, col, 			row + PAGE_NY	);
-		if (wecleman_bgpage[3] == page)	tilemap_mark_tile_dirty(bg_tilemap, col + PAGE_NX,	row + PAGE_NY	);
+		if (wecleman_bgpage[0] == page)	tilemap_mark_tile_dirty(bg_tilemap, (col+PAGE_NX*0) + (row+PAGE_NY*0)*PAGE_NX*2 );
+		if (wecleman_bgpage[1] == page)	tilemap_mark_tile_dirty(bg_tilemap, (col+PAGE_NX*1) + (row+PAGE_NY*0)*PAGE_NX*2 );
+		if (wecleman_bgpage[2] == page)	tilemap_mark_tile_dirty(bg_tilemap, (col+PAGE_NX*0) + (row+PAGE_NY*1)*PAGE_NX*2 );
+		if (wecleman_bgpage[3] == page)	tilemap_mark_tile_dirty(bg_tilemap, (col+PAGE_NX*1) + (row+PAGE_NY*1)*PAGE_NX*2 );
 
 		/* foreground */
-		if (wecleman_fgpage[0] == page)	tilemap_mark_tile_dirty(fg_tilemap, col,			row				);
-		if (wecleman_fgpage[1] == page)	tilemap_mark_tile_dirty(fg_tilemap, col + PAGE_NX,	row				);
-		if (wecleman_fgpage[2] == page)	tilemap_mark_tile_dirty(fg_tilemap, col, 			row + PAGE_NY	);
-		if (wecleman_fgpage[3] == page)	tilemap_mark_tile_dirty(fg_tilemap, col + PAGE_NX,	row + PAGE_NY	);
+		if (wecleman_fgpage[0] == page)	tilemap_mark_tile_dirty(fg_tilemap, (col+PAGE_NX*0) + (row+PAGE_NY*0)*PAGE_NX*2 );
+		if (wecleman_fgpage[1] == page)	tilemap_mark_tile_dirty(fg_tilemap, (col+PAGE_NX*1) + (row+PAGE_NY*0)*PAGE_NX*2 );
+		if (wecleman_fgpage[2] == page)	tilemap_mark_tile_dirty(fg_tilemap, (col+PAGE_NX*0) + (row+PAGE_NY*1)*PAGE_NX*2 );
+		if (wecleman_fgpage[3] == page)	tilemap_mark_tile_dirty(fg_tilemap, (col+PAGE_NX*1) + (row+PAGE_NY*1)*PAGE_NX*2 );
 	}
 }
 
@@ -314,7 +311,7 @@ int wecleman_vh_start(void)
 
 /*
  Sprite banking - each bank is 0x20000 bytes (we support 0x40 bank codes)
- This games has ROMs for 16 banks
+ This game has ROMs for 16 banks
 */
 
 	static int bank[0x40] = {	0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,
@@ -326,19 +323,22 @@ int wecleman_vh_start(void)
 
 
 	bg_tilemap = tilemap_create(wecleman_get_bg_tile_info,
+								tilemap_scan_rows,
 								TILEMAP_TRANSPARENT,	/* We draw part of the road below */
 								8,8,
 								PAGE_NX * 2, PAGE_NY * 2 );
 
 	fg_tilemap = tilemap_create(wecleman_get_fg_tile_info,
+								tilemap_scan_rows,
 								TILEMAP_TRANSPARENT,
 								8,8,
 								PAGE_NX * 2, PAGE_NY * 2);
 
 	txt_tilemap = tilemap_create(wecleman_get_txt_tile_info,
-								TILEMAP_TRANSPARENT,
-								8,8,
-								PAGE_NX * 1, PAGE_NY * 1);
+								 tilemap_scan_rows,
+								 TILEMAP_TRANSPARENT,
+								 8,8,
+								 PAGE_NX * 1, PAGE_NY * 1);
 
 
 	sprite_list = sprite_list_create( NUM_SPRITES, SPRITE_LIST_BACK_TO_FRONT | SPRITE_LIST_RAW_DATA );
@@ -384,142 +384,27 @@ int wecleman_vh_start(void)
 								Hot Chase
 ***************************************************************************/
 
-/*
-Hot Chase Logo:
-00F9 0000 000F 00F8-0000 0000 0010 00B0
-0000 0000 000F 00F8-0000 0000 0001 0000
-*/
-void hotchase_bgreg_w(int offset,int data)
+
+/***************************************************************************
+
+  Callbacks for the K051316
+
+***************************************************************************/
+
+#define ZOOMROM0_MEM_REGION REGION_GFX2
+#define ZOOMROM1_MEM_REGION REGION_GFX3
+
+static void zoom_callback_0(int *code,int *color)
 {
-int regs[0x20/4];
-int i;
-
-	COMBINE_WORD_MEM(&hotchase_bgreg[offset],data);
-
-	for (i = 0; i < 0x20; i+=4)
-	{
-		regs[i/4] = ( READ_WORD(&hotchase_bgreg[i+0]) & 0xff ) * 256 +
-					( READ_WORD(&hotchase_bgreg[i+2]) & 0xff );
-	}
-
-	tilemap_set_scrollx(bg_tilemap,0,regs[0]>>3);
-	tilemap_set_scrolly(bg_tilemap,0,regs[3]>>3);
-
-#if 0
-{
-	char buf[80];
-	sprintf(buf,"%04X %04X %04X %04X - %04X %04X %04X %04X",
-				regs[0],regs[1],regs[2],regs[3],
-				regs[4],regs[5],regs[6],regs[7]);
-
-	usrintf_showmessage(buf);
-}
-#endif
+	*code |= (*color & 0x03) << 8;
+	*color = (*color & 0xfc) >> 2;
 }
 
-void hotchase_fgreg_w(int offset,int data)
+static void zoom_callback_1(int *code,int *color)
 {
-int regs[0x20/4];
-int i;
-
-	COMBINE_WORD_MEM(&hotchase_fgreg[offset],data);
-
-	for (i = 0; i < 0x20; i+=4)
-	{
-		regs[i/4] = ( READ_WORD(&hotchase_fgreg[i+0]) & 0xff ) * 256 +
-					( READ_WORD(&hotchase_fgreg[i+2]) & 0xff );
-	}
-
-#if 0
-{
-	char buf[80];
-	tilemap_set_scrollx(fg_tilemap,0,regs[0]>>3);
-	tilemap_set_scrolly(fg_tilemap,0,regs[3]>>3);
-
-	sprintf(buf,"%04X %04X %04X %04X - %04X %04X %04X %04X",
-				regs[0],regs[1],regs[2],regs[3],
-				regs[4],regs[5],regs[6],regs[7]);
-
-	usrintf_showmessage(buf);
+	*code |= (*color & 0x01) << 8;
+	*color = ((*color & 0x3f) << 1) | ((*code & 0x80) >> 7);
 }
-#endif
-}
-
-
-
-/*------------------------------------------------------------------------
-							[ Background ]
-------------------------------------------------------------------------*/
-
-
-
-#define BG_NX  (0x20)
-#define BG_NY  (0x20)
-#define BG_GFX (0)
-
-
-static void hotchase_get_bg_tile_info( int col, int row )
-{
-	int tile_index	=	col + row * BG_NX;
-	int code 		=	(READ_WORD(&hotchase_bgram[tile_index*2 + 0x000]) & 0xFF ) +
-						(READ_WORD(&hotchase_bgram[tile_index*2 + 0x800]) & 0xFF ) * 256;
-	SET_TILE_INFO(BG_GFX, code & 0x03ff, (code >> 10));
-}
-
-
-
-void hotchase_bgram_w(int offset,int data)
-{
-int old_data, new_data;
-
-	old_data  = READ_WORD(&hotchase_bgram[offset]);
-	COMBINE_WORD_MEM(&hotchase_bgram[offset],data);
-	new_data  = READ_WORD(&hotchase_bgram[offset]);
-
-	if (old_data != new_data)
-		tilemap_mark_tile_dirty(bg_tilemap,((offset % 0x800)/2) % BG_NX,((offset % 0x800)/2) / BG_NX);
-}
-
-
-
-
-
-
-
-/*------------------------------------------------------------------------
-							[ Foreground ]
-------------------------------------------------------------------------*/
-
-
-
-#define FG_NX  (0x20)
-#define FG_NY  (0x20)
-#define FG_GFX (1)
-
-
-static void hotchase_get_fg_tile_info( int col, int row )
-{
-	int tile_index	=	col + row * FG_NX;
-	int code 		=	(READ_WORD(&hotchase_fgram[tile_index*2 + 0x000]) & 0xFF ) +
-						(READ_WORD(&hotchase_fgram[tile_index*2 + 0x800]) & 0xFF ) * 256;
-	SET_TILE_INFO(FG_GFX, code & 0x03ff, code >> 7 );
-}
-
-
-
-void hotchase_fgram_w(int offset,int data)
-{
-int old_data, new_data;
-
-	old_data  = READ_WORD(&hotchase_fgram[offset]);
-	COMBINE_WORD_MEM(&hotchase_fgram[offset],data);
-	new_data  = READ_WORD(&hotchase_fgram[offset]);
-
-	if (old_data != new_data)
-		tilemap_mark_tile_dirty(fg_tilemap,((offset % 0x800)/2) % FG_NX,((offset % 0x800)/2) / FG_NX);
-}
-
-
 
 
 
@@ -534,7 +419,7 @@ int hotchase_vh_start(void)
 {
 /*
  Sprite banking - each bank is 0x20000 bytes (we support 0x40 bank codes)
- This games has ROMs for 0x30 banks
+ This game has ROMs for 0x30 banks
 */
 	static int bank[0x40] = {	0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
 								16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,
@@ -543,32 +428,26 @@ int hotchase_vh_start(void)
 	wecleman_gfx_bank = bank;
 
 
+	if (K051316_vh_start_0(ZOOMROM0_MEM_REGION,4,zoom_callback_0))
+		return 1;
+
+	if (K051316_vh_start_1(ZOOMROM1_MEM_REGION,4,zoom_callback_1))
+	{
+		K051316_vh_stop_0();
+		return 1;
+	}
+
 	temp_bitmap  = osd_create_bitmap(512,512);
 	temp_bitmap2 = osd_create_bitmap(512,256);
 
-	bg_tilemap = tilemap_create(hotchase_get_bg_tile_info,
-								TILEMAP_OPAQUE,
-								16,16,
-								BG_NX,BG_NY );
-
-	fg_tilemap = tilemap_create(hotchase_get_fg_tile_info,
-								TILEMAP_TRANSPARENT,
-								16,16,
-								FG_NX,FG_NY );
-
 	sprite_list = sprite_list_create( NUM_SPRITES, SPRITE_LIST_BACK_TO_FRONT | SPRITE_LIST_RAW_DATA );
 
-	if (bg_tilemap && fg_tilemap && temp_bitmap && temp_bitmap2 && sprite_list)
+	if (temp_bitmap && temp_bitmap2 && sprite_list)
 	{
-	struct rectangle clip = {0,512-1, 0, 512-1};
-
-		tilemap_set_scroll_rows(bg_tilemap,1);
-		tilemap_set_scroll_cols(bg_tilemap,1);
-
-		tilemap_set_scroll_rows(fg_tilemap,1);
-		tilemap_set_scroll_cols(fg_tilemap,1);
-		fg_tilemap->transparent_pen = 0;
-		tilemap_set_clip( fg_tilemap, &clip );
+		K051316_wraparound_enable(0,1);
+//		K051316_wraparound_enable(1,1);
+		K051316_set_offset(0,-96,-16);
+		K051316_set_offset(1,-96,-16);
 
 		sprite_list->max_priority = 0;
 		sprite_list->sprite_type = SPRITE_TYPE_ZOOM;
@@ -582,6 +461,8 @@ void hotchase_vh_stop(void)
 {
 	if (temp_bitmap)	osd_free_bitmap(temp_bitmap);
 	if (temp_bitmap2)	osd_free_bitmap(temp_bitmap2);
+	K051316_vh_stop_0();
+	K051316_vh_stop_1();
 }
 
 
@@ -700,7 +581,7 @@ void hotchase_mark_road_colors(void)
 {
 	int y					=	Machine->drv->visible_area.min_y;
 	int ymax				=	Machine->drv->visible_area.max_y;
-	int color_codes_start	=	Machine->drv->gfxdecodeinfo[2].color_codes_start;
+	int color_codes_start	=	Machine->drv->gfxdecodeinfo[0].color_codes_start;
 
 	for (; y <= ymax; y++)
 	{
@@ -770,7 +651,7 @@ int sy;
 
 		for (sx = -(scrollx % 64) ; sx <= rect.max_x ; sx += 64)
 		{
-			drawgfx(bitmap,Machine->gfx[2],
+			drawgfx(bitmap,Machine->gfx[0],
 				curr_code++,
 				color,
 				0,0,
@@ -856,7 +737,7 @@ The factors are in the range 0 (no shrinking) - 3F (half size).
 
 static void get_sprite_info(void)
 {
-	const unsigned short *base_pal	= Machine->gfx[0]->colortable + 0;
+	const unsigned short *base_pal	= Machine->remapped_colortable;
 	const unsigned char  *base_gfx	= memory_region(REGION_GFX1);
 
 	const int gfx_max = memory_region_length(REGION_GFX1);
@@ -1147,6 +1028,7 @@ void wecleman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void hotchase_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
+	int i;
 	int layers_ctrl = 0xFFFF;
 
 	WECLEMAN_LAMPS
@@ -1157,7 +1039,8 @@ void hotchase_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	WECLEMAN_LAYERSCTRL
 #endif
 
-	tilemap_update(ALL_TILEMAPS);
+	K051316_tilemap_update_0();
+	K051316_tilemap_update_1();
 	get_sprite_info();
 
 	palette_init_used_colors();
@@ -1166,15 +1049,24 @@ void hotchase_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	mark_sprites_colors();
 	sprite_update();
 
-	if (palette_recalc())	tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	/* set transparent pens for the K051316 */
+	for (i = 0;i < 128;i++)
+	{
+		palette_used_colors[i * 16] = PALETTE_COLOR_TRANSPARENT;
+		palette_used_colors[i * 16] = PALETTE_COLOR_TRANSPARENT;
+		palette_used_colors[i * 16] = PALETTE_COLOR_TRANSPARENT;
+	}
+
+	if (palette_recalc())
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+
+	tilemap_render(ALL_TILEMAPS);
+
+	fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
 
 	/* Draw the background */
 	if (layers_ctrl & 1)
-	{
-		tilemap_render(bg_tilemap);
-		tilemap_draw(bitmap, bg_tilemap,  0);
-	}
-	else	osd_clearbitmap(Machine->scrbitmap);
+		K051316_zoom_draw_0(bitmap,0);
 
 	/* Draw the road */
 	if (layers_ctrl & 16)
@@ -1198,18 +1090,5 @@ void hotchase_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* Draw the foreground (text) */
 	if (layers_ctrl & 4)
-	{
-		tilemap_render(fg_tilemap);
-		fillbitmap(temp_bitmap,fg_tilemap->transparent_pen,0);
-		tilemap_draw(temp_bitmap, fg_tilemap,  0);
-
-		copybitmapzoom(	bitmap, temp_bitmap,
-						0, 0,							// flip
-						0, 0,							// pos
-						&Machine->drv->visible_area,	// clip
-						TRANSPARENCY_PEN,fg_tilemap->transparent_pen,
-						(320<<16)/512,(256<<16)/480		// scale: 16.16 fixed
-						);
-	}
-
+		K051316_zoom_draw_1(bitmap,0);
 }

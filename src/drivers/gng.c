@@ -168,25 +168,25 @@ OUTPUT:
 
 
 
-void gng_bankswitch_w(int offset,int data);
-int gng_bankedrom_r(int offset);
+WRITE_HANDLER( gng_bankswitch_w );
+READ_HANDLER( gng_bankedrom_r );
 void gng_init_machine(void);
 
 extern unsigned char *gng_fgvideoram,*gng_fgcolorram;
 extern unsigned char *gng_bgvideoram,*gng_bgcolorram;
-void gng_fgvideoram_w(int offset,int data);
-void gng_fgcolorram_w(int offset,int data);
-void gng_bgvideoram_w(int offset,int data);
-void gng_bgcolorram_w(int offset,int data);
-void gng_bgscrollx_w(int offset,int data);
-void gng_bgscrolly_w(int offset,int data);
-void gng_flipscreen_w(int offset,int data);
+WRITE_HANDLER( gng_fgvideoram_w );
+WRITE_HANDLER( gng_fgcolorram_w );
+WRITE_HANDLER( gng_bgvideoram_w );
+WRITE_HANDLER( gng_bgcolorram_w );
+WRITE_HANDLER( gng_bgscrollx_w );
+WRITE_HANDLER( gng_bgscrolly_w );
+WRITE_HANDLER( gng_flipscreen_w );
 int gng_vh_start(void);
 void gng_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-void gng_bankswitch_w(int offset,int data)
+WRITE_HANDLER( gng_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

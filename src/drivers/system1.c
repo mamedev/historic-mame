@@ -77,12 +77,12 @@ static void wbml_init_machine(void)
 
 static int bankswitch;
 
-int wbml_bankswitch_r(int offset)
+READ_HANDLER( wbml_bankswitch_r )
 {
 	return bankswitch;
 }
 
-void hvymetal_bankswitch_w(int offset,int data)
+WRITE_HANDLER( hvymetal_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *rom = memory_region(REGION_CPU1);
@@ -100,7 +100,7 @@ void hvymetal_bankswitch_w(int offset,int data)
 	bankswitch = data;
 }
 
-void brain_bankswitch_w(int offset,int data)
+WRITE_HANDLER( brain_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *rom = memory_region(REGION_CPU1);
@@ -112,7 +112,7 @@ void brain_bankswitch_w(int offset,int data)
 	bankswitch = data;
 }
 
-void chplft_bankswitch_w(int offset,int data)
+WRITE_HANDLER( chplft_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *rom = memory_region(REGION_CPU1);
@@ -124,7 +124,7 @@ void chplft_bankswitch_w(int offset,int data)
 	bankswitch = data;
 }
 
-void system1_soundport_w(int offset, int data)
+WRITE_HANDLER( system1_soundport_w )
 {
 	soundlatch_w(0,data);
 	cpu_cause_interrupt(1,Z80_NMI_INT);
@@ -276,12 +276,12 @@ static struct IOWritePort chplft_writeport[] =
 
 static unsigned char *work_ram;
 
-static int work_ram_r(int offset)
+static READ_HANDLER( work_ram_r )
 {
 	return work_ram[offset];
 }
 
-static void work_ram_w(int offset,int data)
+static WRITE_HANDLER( work_ram_w )
 {
 	work_ram[offset] = data;
 }

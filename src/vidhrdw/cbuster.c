@@ -9,7 +9,7 @@
 
 unsigned char *twocrude_pf1_data,*twocrude_pf2_data,*twocrude_pf3_data,*twocrude_pf4_data;
 
-static struct tilemap *twocrude_pf1_tilemap,*twocrude_pf2_tilemap,*twocrude_pf3_tilemap,*twocrude_pf4_tilemap;
+static struct tilemap *pf1_tilemap,*pf2_tilemap,*pf3_tilemap,*pf4_tilemap;
 static unsigned char *gfx_base;
 static int gfx_bank,twocrude_pri,flipscreen,last_flip;
 
@@ -21,9 +21,66 @@ unsigned char *twocrude_pf3_rowscroll,*twocrude_pf4_rowscroll;
 
 static unsigned char *twocrude_spriteram;
 
+
+
+/* Function for all 16x16 1024 by 512 layers */
+static UINT32 back_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
+{
+	/* logical (col,row) -> memory offset */
+	return (col & 0x1f) + ((row & 0x1f) << 5) + ((col & 0x20) << 5);
+}
+
+static void get_back_tile_info(int tile_index)
+{
+	int tile,color;
+
+	tile=READ_WORD(&gfx_base[2*tile_index]);
+	color=tile >> 12;
+	tile=tile&0xfff;
+
+	SET_TILE_INFO(gfx_bank,tile,color)
+}
+
+/* 8x8 top layer */
+static void get_fore_tile_info(int tile_index)
+{
+	int tile=READ_WORD(&twocrude_pf1_data[2*tile_index]);
+	int color=tile >> 12;
+
+	tile=tile&0xfff;
+
+	SET_TILE_INFO(0,tile,color)
+}
+
 /******************************************************************************/
 
-void twocrude_update_sprites(int offset, int data)
+void twocrude_vh_stop (void)
+{
+	free(twocrude_spriteram);
+}
+
+int twocrude_vh_start(void)
+{
+	pf2_tilemap = tilemap_create(get_back_tile_info,back_scan,        TILEMAP_OPAQUE,16,16,64,32);
+	pf3_tilemap = tilemap_create(get_back_tile_info,back_scan,        TILEMAP_TRANSPARENT,16,16,64,32);
+	pf4_tilemap = tilemap_create(get_back_tile_info,back_scan,        TILEMAP_TRANSPARENT,16,16,64,32);
+	pf1_tilemap = tilemap_create(get_fore_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+
+	if (!pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
+		return 1;
+
+	pf1_tilemap->transparent_pen = 0;
+	pf3_tilemap->transparent_pen = 0;
+	pf4_tilemap->transparent_pen = 0;
+
+	twocrude_spriteram = malloc(0x800);
+
+	return 0;
+}
+
+/******************************************************************************/
+
+WRITE_HANDLER( twocrude_update_sprites_w )
 {
 	memcpy(twocrude_spriteram,spriteram,0x800);
 }
@@ -39,26 +96,111 @@ static void update_24bitcol(int offset)
 	palette_change_color(offset / 2,r,g,b);
 }
 
-void twocrude_palette_24bit_rg(int offset,int data)
+WRITE_HANDLER( twocrude_palette_24bit_rg_w )
 {
 	COMBINE_WORD_MEM(&paletteram[offset],data);
 	update_24bitcol(offset);
 }
 
-void twocrude_palette_24bit_b(int offset,int data)
+WRITE_HANDLER( twocrude_palette_24bit_b_w )
 {
 	COMBINE_WORD_MEM(&paletteram_2[offset],data);
 	update_24bitcol(offset);
 }
 
-int twocrude_palette_24bit_rg_r(int offset)
+READ_HANDLER( twocrude_palette_24bit_rg_r )
 {
 	return READ_WORD(&paletteram[offset]);
 }
 
-int twocrude_palette_24bit_b_r(int offset)
+READ_HANDLER( twocrude_palette_24bit_b_r )
 {
 	return READ_WORD(&paletteram_2[offset]);
+}
+
+/******************************************************************************/
+
+void twocrude_pri_w(int pri)
+{
+	twocrude_pri=pri;
+}
+
+WRITE_HANDLER( twocrude_pf1_data_w )
+{
+	int oldword = READ_WORD(&twocrude_pf1_data[offset]);
+	int newword = COMBINE_WORD(oldword,data);
+
+	if (oldword != newword)
+	{
+		WRITE_WORD(&twocrude_pf1_data[offset],newword);
+		tilemap_mark_tile_dirty(pf1_tilemap,offset/2);
+	}
+}
+
+WRITE_HANDLER( twocrude_pf2_data_w )
+{
+	int oldword = READ_WORD(&twocrude_pf2_data[offset]);
+	int newword = COMBINE_WORD(oldword,data);
+
+	if (oldword != newword)
+	{
+		WRITE_WORD(&twocrude_pf2_data[offset],newword);
+		tilemap_mark_tile_dirty(pf2_tilemap,offset/2);
+	}
+}
+
+WRITE_HANDLER( twocrude_pf3_data_w )
+{
+	int oldword = READ_WORD(&twocrude_pf3_data[offset]);
+	int newword = COMBINE_WORD(oldword,data);
+
+	if (oldword != newword)
+	{
+		WRITE_WORD(&twocrude_pf3_data[offset],newword);
+		tilemap_mark_tile_dirty(pf3_tilemap,offset/2);
+	}
+}
+
+WRITE_HANDLER( twocrude_pf4_data_w )
+{
+	int oldword = READ_WORD(&twocrude_pf4_data[offset]);
+	int newword = COMBINE_WORD(oldword,data);
+
+	if (oldword != newword)
+	{
+		WRITE_WORD(&twocrude_pf4_data[offset],newword);
+		tilemap_mark_tile_dirty(pf4_tilemap,offset/2);
+	}
+}
+
+WRITE_HANDLER( twocrude_control_0_w )
+{
+	COMBINE_WORD_MEM(&twocrude_control_0[offset],data);
+}
+
+WRITE_HANDLER( twocrude_control_1_w )
+{
+	COMBINE_WORD_MEM(&twocrude_control_1[offset],data);
+}
+
+WRITE_HANDLER( twocrude_pf1_rowscroll_w )
+{
+	COMBINE_WORD_MEM(&twocrude_pf1_rowscroll[offset],data);
+}
+
+WRITE_HANDLER( twocrude_pf2_rowscroll_w )
+{
+	COMBINE_WORD_MEM(&twocrude_pf2_rowscroll[offset],data);
+}
+
+WRITE_HANDLER( twocrude_pf3_rowscroll_w )
+{
+	COMBINE_WORD_MEM(&twocrude_pf3_rowscroll[offset],data);
+}
+
+WRITE_HANDLER( twocrude_pf4_rowscroll_w )
+{
+	COMBINE_WORD_MEM(&twocrude_pf4_rowscroll[offset],data);
 }
 
 /******************************************************************************/
@@ -184,35 +326,6 @@ static void twocrude_drawsprites(struct osd_bitmap *bitmap, int pri)
 	}
 }
 
-/* Function for all 16x16 1024 by 256 layers */
-static void get_back_tile_info( int col, int row )
-{
-	int offs,tile,color;
-
-	if (col>31 && row>15) offs=0xc00 + (col-32)*2 + (row-16) *64; /* Bottom right */
-	else if (col>31) offs=0x800 + (col-32)*2 + row *64; /* Top right */
-	else if (row>15) offs=0x400 + col*2 + (row-16) *64; /* Bottom left */
-	else offs=col*2 + row *64; /* Top left */
-
-	tile=READ_WORD(&gfx_base[offs]);
-	color=tile >> 12;
-	tile=tile&0xfff;
-
-	SET_TILE_INFO(gfx_bank,tile,color)
-}
-
-/* 8x8 top layer */
-static void get_fore_tile_info( int col, int row )
-{
-	int offs=(col*2) + (row*128);
-	int tile=READ_WORD(&twocrude_pf1_data[offs]);
-	int color=tile >> 12;
-
-	tile=tile&0xfff;
-
-	SET_TILE_INFO(0,tile,color)
-}
-
 /******************************************************************************/
 
 void twocrude_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
@@ -236,8 +349,8 @@ void twocrude_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* Background - Rowscroll enable */
 	if (pf23_control&0x4000) {
 		int scrollx=READ_WORD(&twocrude_control_0[6]),rows;
-		tilemap_set_scroll_cols(twocrude_pf2_tilemap,1);
-		tilemap_set_scrolly( twocrude_pf2_tilemap,0, READ_WORD(&twocrude_control_0[8]) );
+		tilemap_set_scroll_cols(pf2_tilemap,1);
+		tilemap_set_scrolly( pf2_tilemap,0, READ_WORD(&twocrude_control_0[8]) );
 
 		/* Several different rowscroll styles! */
 		switch ((READ_WORD (&twocrude_control_0[0xa])>>11)&7) {
@@ -252,22 +365,22 @@ void twocrude_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			default: rows=1; break;
 		}
 
-		tilemap_set_scroll_rows(twocrude_pf2_tilemap,rows);
+		tilemap_set_scroll_rows(pf2_tilemap,rows);
 		for (offs = 0;offs < rows;offs++)
-			tilemap_set_scrollx( twocrude_pf2_tilemap,offs, scrollx + READ_WORD(&twocrude_pf2_rowscroll[2*offs]) );
+			tilemap_set_scrollx( pf2_tilemap,offs, scrollx + READ_WORD(&twocrude_pf2_rowscroll[2*offs]) );
 	}
 	else {
-		tilemap_set_scroll_rows(twocrude_pf2_tilemap,1);
-		tilemap_set_scroll_cols(twocrude_pf2_tilemap,1);
-		tilemap_set_scrollx( twocrude_pf2_tilemap,0, READ_WORD(&twocrude_control_0[6]) );
-		tilemap_set_scrolly( twocrude_pf2_tilemap,0, READ_WORD(&twocrude_control_0[8]) );
+		tilemap_set_scroll_rows(pf2_tilemap,1);
+		tilemap_set_scroll_cols(pf2_tilemap,1);
+		tilemap_set_scrollx( pf2_tilemap,0, READ_WORD(&twocrude_control_0[6]) );
+		tilemap_set_scrolly( pf2_tilemap,0, READ_WORD(&twocrude_control_0[8]) );
 	}
 
 	/* Playfield 3 */
 	if (pf23_control&0x40) { /* Rowscroll */
 		int scrollx=READ_WORD(&twocrude_control_0[2]),rows;
-		tilemap_set_scroll_cols(twocrude_pf3_tilemap,1);
-		tilemap_set_scrolly( twocrude_pf3_tilemap,0, READ_WORD(&twocrude_control_0[4]) );
+		tilemap_set_scroll_cols(pf3_tilemap,1);
+		tilemap_set_scrolly( pf3_tilemap,0, READ_WORD(&twocrude_control_0[4]) );
 
 		/* Several different rowscroll styles! */
 		switch ((READ_WORD (&twocrude_control_0[0xa])>>3)&7) {
@@ -282,14 +395,14 @@ void twocrude_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			default: rows=1; break;
 		}
 
-		tilemap_set_scroll_rows(twocrude_pf3_tilemap,rows);
+		tilemap_set_scroll_rows(pf3_tilemap,rows);
 		for (offs = 0;offs < rows;offs++)
-			tilemap_set_scrollx( twocrude_pf3_tilemap,offs, scrollx + READ_WORD(&twocrude_pf3_rowscroll[2*offs]) );
+			tilemap_set_scrollx( pf3_tilemap,offs, scrollx + READ_WORD(&twocrude_pf3_rowscroll[2*offs]) );
 	}
 	else if (pf23_control&0x20) { /* Colscroll */
 		int scrolly=READ_WORD(&twocrude_control_0[4]),cols;
-		tilemap_set_scroll_rows(twocrude_pf3_tilemap,1);
-		tilemap_set_scrollx( twocrude_pf3_tilemap,0, READ_WORD(&twocrude_control_0[2]) );
+		tilemap_set_scroll_rows(pf3_tilemap,1);
+		tilemap_set_scrollx( pf3_tilemap,0, READ_WORD(&twocrude_control_0[2]) );
 
 		/* Several different colscroll styles! */
 		switch ((READ_WORD (&twocrude_control_0[0xa])>>0)&7) {
@@ -304,22 +417,22 @@ void twocrude_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			default: cols=1; break;
 		}
 
-		tilemap_set_scroll_cols(twocrude_pf3_tilemap,cols);
+		tilemap_set_scroll_cols(pf3_tilemap,cols);
 		for (offs = 0;offs < cols;offs++)
-			tilemap_set_scrolly( twocrude_pf3_tilemap,offs,scrolly + READ_WORD(&twocrude_pf3_rowscroll[2*offs+0x400]) );
+			tilemap_set_scrolly( pf3_tilemap,offs,scrolly + READ_WORD(&twocrude_pf3_rowscroll[2*offs+0x400]) );
 	}
 	else {
-		tilemap_set_scroll_rows(twocrude_pf3_tilemap,1);
-		tilemap_set_scroll_cols(twocrude_pf3_tilemap,1);
-		tilemap_set_scrollx( twocrude_pf3_tilemap,0, READ_WORD(&twocrude_control_0[2]) );
-		tilemap_set_scrolly( twocrude_pf3_tilemap,0, READ_WORD(&twocrude_control_0[4]) );
+		tilemap_set_scroll_rows(pf3_tilemap,1);
+		tilemap_set_scroll_cols(pf3_tilemap,1);
+		tilemap_set_scrollx( pf3_tilemap,0, READ_WORD(&twocrude_control_0[2]) );
+		tilemap_set_scrolly( pf3_tilemap,0, READ_WORD(&twocrude_control_0[4]) );
 	}
 
 	/* Playfield 4 - Rowscroll enable */
 	if (pf14_control&0x4000) {
 		int scrollx=READ_WORD(&twocrude_control_1[6]),rows;
-		tilemap_set_scroll_cols(twocrude_pf4_tilemap,1);
-		tilemap_set_scrolly( twocrude_pf4_tilemap,0, READ_WORD(&twocrude_control_1[8]) );
+		tilemap_set_scroll_cols(pf4_tilemap,1);
+		tilemap_set_scrolly( pf4_tilemap,0, READ_WORD(&twocrude_control_1[8]) );
 
 		/* Several different rowscroll styles! */
 		switch ((READ_WORD (&twocrude_control_1[0xa])>>11)&7) {
@@ -334,22 +447,22 @@ void twocrude_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			default: rows=1; break;
 		}
 
-		tilemap_set_scroll_rows(twocrude_pf4_tilemap,rows);
+		tilemap_set_scroll_rows(pf4_tilemap,rows);
 		for (offs = 0;offs < rows;offs++)
-			tilemap_set_scrollx( twocrude_pf4_tilemap,offs, scrollx + READ_WORD(&twocrude_pf4_rowscroll[2*offs]) );
+			tilemap_set_scrollx( pf4_tilemap,offs, scrollx + READ_WORD(&twocrude_pf4_rowscroll[2*offs]) );
 	}
 	else {
-		tilemap_set_scroll_rows(twocrude_pf4_tilemap,1);
-		tilemap_set_scroll_cols(twocrude_pf4_tilemap,1);
-		tilemap_set_scrollx( twocrude_pf4_tilemap,0, READ_WORD(&twocrude_control_1[6]) );
-		tilemap_set_scrolly( twocrude_pf4_tilemap,0, READ_WORD(&twocrude_control_1[8]) );
+		tilemap_set_scroll_rows(pf4_tilemap,1);
+		tilemap_set_scroll_cols(pf4_tilemap,1);
+		tilemap_set_scrollx( pf4_tilemap,0, READ_WORD(&twocrude_control_1[6]) );
+		tilemap_set_scrolly( pf4_tilemap,0, READ_WORD(&twocrude_control_1[8]) );
 	}
 
 	/* Playfield 1 */
 	if (pf14_control&0x40) { /* Rowscroll */
 		int scrollx=READ_WORD(&twocrude_control_1[2]),rows;
-		tilemap_set_scroll_cols(twocrude_pf1_tilemap,1);
-		tilemap_set_scrolly( twocrude_pf1_tilemap,0, READ_WORD(&twocrude_control_1[4]) );
+		tilemap_set_scroll_cols(pf1_tilemap,1);
+		tilemap_set_scrolly( pf1_tilemap,0, READ_WORD(&twocrude_control_1[4]) );
 
 		/* Several different rowscroll styles! */
 		switch ((READ_WORD (&twocrude_control_1[0xa])>>3)&7) {
@@ -364,203 +477,46 @@ void twocrude_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			default: rows=1; break;
 		}
 
-		tilemap_set_scroll_rows(twocrude_pf1_tilemap,rows);
+		tilemap_set_scroll_rows(pf1_tilemap,rows);
 		for (offs = 0;offs < rows;offs++)
-			tilemap_set_scrollx( twocrude_pf1_tilemap,offs, scrollx + READ_WORD(&twocrude_pf1_rowscroll[2*offs]) );
+			tilemap_set_scrollx( pf1_tilemap,offs, scrollx + READ_WORD(&twocrude_pf1_rowscroll[2*offs]) );
 	}
 	else {
-		tilemap_set_scroll_rows(twocrude_pf1_tilemap,1);
-		tilemap_set_scroll_cols(twocrude_pf1_tilemap,1);
-		tilemap_set_scrollx( twocrude_pf1_tilemap,0, READ_WORD(&twocrude_control_1[2]) );
-		tilemap_set_scrolly( twocrude_pf1_tilemap,0, READ_WORD(&twocrude_control_1[4]) );
+		tilemap_set_scroll_rows(pf1_tilemap,1);
+		tilemap_set_scroll_cols(pf1_tilemap,1);
+		tilemap_set_scrollx( pf1_tilemap,0, READ_WORD(&twocrude_control_1[2]) );
+		tilemap_set_scrolly( pf1_tilemap,0, READ_WORD(&twocrude_control_1[4]) );
 	}
 
 	/* Update playfields */
 	gfx_bank=1;
 	gfx_base=twocrude_pf2_data;
-	tilemap_update(twocrude_pf2_tilemap);
+	tilemap_update(pf2_tilemap);
 
 	gfx_bank=2;
 	gfx_base=twocrude_pf3_data;
-	tilemap_update(twocrude_pf3_tilemap);
+	tilemap_update(pf3_tilemap);
 
 	gfx_bank=3;
 	gfx_base=twocrude_pf4_data;
-	tilemap_update(twocrude_pf4_tilemap);
-	tilemap_update(twocrude_pf1_tilemap);
+	tilemap_update(pf4_tilemap);
+	tilemap_update(pf1_tilemap);
 	twocrude_update_palette();
 
 	/* Draw playfields & sprites */
 	tilemap_render(ALL_TILEMAPS);
-	tilemap_draw(bitmap,twocrude_pf2_tilemap,0);
+	tilemap_draw(bitmap,pf2_tilemap,0);
 	twocrude_drawsprites(bitmap,0);
 
 	if (twocrude_pri) {
-		tilemap_draw(bitmap,twocrude_pf4_tilemap,0);
-		tilemap_draw(bitmap,twocrude_pf3_tilemap,0);
+		tilemap_draw(bitmap,pf4_tilemap,0);
+		tilemap_draw(bitmap,pf3_tilemap,0);
 	}
 	else {
-		tilemap_draw(bitmap,twocrude_pf3_tilemap,0);
-		tilemap_draw(bitmap,twocrude_pf4_tilemap,0);
+		tilemap_draw(bitmap,pf3_tilemap,0);
+		tilemap_draw(bitmap,pf4_tilemap,0);
 	}
 
 	twocrude_drawsprites(bitmap,1);
-	tilemap_draw(bitmap,twocrude_pf1_tilemap,0);
+	tilemap_draw(bitmap,pf1_tilemap,0);
 }
-
-/******************************************************************************/
-
-void twocrude_pri_w(int pri)
-{
-	twocrude_pri=pri;
-}
-
-void twocrude_pf1_data_w(int offset,int data)
-{
-	int oldword = READ_WORD(&twocrude_pf1_data[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&twocrude_pf1_data[offset],newword);
-		tilemap_mark_tile_dirty(twocrude_pf1_tilemap,(offset%128)/2,offset/128);
-	}
-}
-
-void twocrude_pf2_data_w(int offset,int data)
-{
-	int oldword = READ_WORD(&twocrude_pf2_data[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-	int dx=0,dy=0;
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&twocrude_pf2_data[offset],newword);
-
-		if (offset>0xbff) {offset-=0xc00;dx=32; dy=16;}
-		else if (offset>0x7ff) {offset-=0x800;dx=32; dy=0;}
-		else if (offset>0x3ff) {offset-=0x400;dx=0; dy=16;}
-		dx+=(offset%64)/2; dy+=(offset/64);
-		tilemap_mark_tile_dirty(twocrude_pf2_tilemap,dx,dy);
-	}
-}
-
-void twocrude_pf3_data_w(int offset,int data)
-{
-	int oldword = READ_WORD(&twocrude_pf3_data[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-	int dx=0,dy=0;
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&twocrude_pf3_data[offset],newword);
-
-		if (offset>0xbff) {offset-=0xc00;dx=32; dy=16;}
-		else if (offset>0x7ff) {offset-=0x800;dx=32; dy=0;}
-		else if (offset>0x3ff) {offset-=0x400;dx=0; dy=16;}
-		dx+=(offset%64)/2; dy+=(offset/64);
-		tilemap_mark_tile_dirty(twocrude_pf3_tilemap,dx,dy);
-	}
-}
-
-void twocrude_pf4_data_w(int offset,int data)
-{
-	int oldword = READ_WORD(&twocrude_pf4_data[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-	int dx=0,dy=0;
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&twocrude_pf4_data[offset],newword);
-
-		if (offset>0xbff) {offset-=0xc00;dx=32; dy=16;}
-		else if (offset>0x7ff) {offset-=0x800;dx=32; dy=0;}
-		else if (offset>0x3ff) {offset-=0x400;dx=0; dy=16;}
-		dx+=(offset%64)/2; dy+=(offset/64);
-		tilemap_mark_tile_dirty(twocrude_pf4_tilemap,dx,dy);
-	}
-}
-
-void twocrude_control_0_w(int offset,int data)
-{
-	COMBINE_WORD_MEM(&twocrude_control_0[offset],data);
-}
-
-void twocrude_control_1_w(int offset,int data)
-{
-	COMBINE_WORD_MEM(&twocrude_control_1[offset],data);
-}
-
-void twocrude_pf1_rowscroll_w(int offset,int data)
-{
-	COMBINE_WORD_MEM(&twocrude_pf1_rowscroll[offset],data);
-}
-
-void twocrude_pf2_rowscroll_w(int offset,int data)
-{
-	COMBINE_WORD_MEM(&twocrude_pf2_rowscroll[offset],data);
-}
-
-void twocrude_pf3_rowscroll_w(int offset,int data)
-{
-	COMBINE_WORD_MEM(&twocrude_pf3_rowscroll[offset],data);
-}
-
-void twocrude_pf4_rowscroll_w(int offset,int data)
-{
-	COMBINE_WORD_MEM(&twocrude_pf4_rowscroll[offset],data);
-}
-
-/******************************************************************************/
-
-void twocrude_vh_stop (void)
-{
-	free(twocrude_spriteram);
-}
-
-int twocrude_vh_start(void)
-{
-	twocrude_pf2_tilemap = tilemap_create(
-		get_back_tile_info,
-		0,
-		16,16,
-		64,32 /* 1024 by 512 */
-	);
-
-	twocrude_pf3_tilemap = tilemap_create(
-		get_back_tile_info,
-		TILEMAP_TRANSPARENT,
-		16,16,
-		64,32
-	);
-
-	twocrude_pf4_tilemap = tilemap_create(
-		get_back_tile_info,
-		TILEMAP_TRANSPARENT,
-		16,16,
-		64,32
-	);
-
-	twocrude_pf1_tilemap = tilemap_create(
-		get_fore_tile_info,
-		TILEMAP_TRANSPARENT,
-		8,8,
-		64,32
-	);
-
-	twocrude_pf1_tilemap->transparent_pen = 0;
-	twocrude_pf3_tilemap->transparent_pen = 0;
-	twocrude_pf4_tilemap->transparent_pen = 0;
-
-	tilemap_set_scroll_rows(twocrude_pf4_tilemap,1);
-	tilemap_set_scroll_cols(twocrude_pf4_tilemap,1);
-	tilemap_set_scroll_rows(twocrude_pf1_tilemap,1);
-	tilemap_set_scroll_cols(twocrude_pf1_tilemap,1);
-
-	twocrude_spriteram = malloc(0x800);
-
-	return 0;
-}
-
-/******************************************************************************/
-

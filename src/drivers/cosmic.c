@@ -104,11 +104,12 @@ void magspot2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void cosmica_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void cosmicg_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void nomnlnd_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void cosmica_videoram_w(int offset,int data);
-void cosmica_flipscreen_w(int offset, int data);
-void panic_color_register_w(int offset,int data);
-void cosmicg_color_register_w(int offset,int data);
-void nomnlnd_background_w(int offset, int data);
+WRITE_HANDLER( cosmica_videoram_w );
+WRITE_HANDLER( cosmica_flipscreen_w );
+WRITE_HANDLER( panic_flipscreen_w );
+WRITE_HANDLER( panic_color_register_w );
+WRITE_HANDLER( cosmicg_color_register_w );
+WRITE_HANDLER( nomnlnd_background_w );
 
 
 static unsigned int pixel_clock = 0;
@@ -116,7 +117,7 @@ static unsigned int pixel_clock = 0;
 
 /* Schematics show 12 triggers for discrete sound circuits */
 
-static void panic_sound_output_w(int offset, int data)
+static WRITE_HANDLER( panic_sound_output_w )
 {
     static int sound_enabled=1;
 
@@ -187,12 +188,12 @@ static void panic_sound_output_w(int offset, int data)
 	#endif
 }
 
-void panic_sound_output_w2(int offset, int data)
+WRITE_HANDLER( panic_sound_output2_w )
 {
 	panic_sound_output_w(offset+15, data);
 }
 
-void cosmicg_output_w(int offset, int data)
+WRITE_HANDLER( cosmicg_output_w )
 {
 	static int march_select;
     static int gun_die_select;
@@ -345,19 +346,19 @@ static int magspot2_interrupt(void)
 }
 
 
-static int cosmica_read_pixel_clock(int offset)
+READ_HANDLER( cosmica_pixel_clock_r )
 {
 	return pixel_clock;
 }
 
-static int cosmicg_read_pixel_clock(int offset)
+READ_HANDLER( cosmicg_pixel_clock_r )
 {
 	/* The top four address lines from the CRTC are bits 0-3 */
 
 	return (input_port_0_r(0) & 0xf0) | pixel_clock;
 }
 
-static int magspot2_coinage_dip_r(int offset)
+static READ_HANDLER( magspot2_coinage_dip_r )
 {
 	return (input_port_5_r(0) & (1 << (7 - offset))) ? 0 : 1;
 }
@@ -365,7 +366,7 @@ static int magspot2_coinage_dip_r(int offset)
 
 /* Has 8 way joystick, remap combinations to missing directions */
 
-static int nomnlnd_port_r(int offset)
+static READ_HANDLER( nomnlnd_port_r )
 {
 	int control;
     int fire = input_port_3_r(0);
@@ -399,7 +400,7 @@ static int nomnlnd_port_r(int offset)
 
 #else
 
-static void cosmicg_videoram_w(int offset,int data)
+static WRITE_HANDLER( cosmicg_videoram_w )
 {
   /* 16-bit handler */
   if (! (data & 0xff000000))
@@ -408,7 +409,7 @@ static void cosmicg_videoram_w(int offset,int data)
     cosmica_videoram_w(offset + 1, data & 0xff);
 }
 
-static int cosmicg_videoram_r(int offset)
+static READ_HANDLER( cosmicg_videoram_r )
 {
 	return (videoram[offset] << 8) | videoram[offset+1];
 }
@@ -436,8 +437,8 @@ static struct MemoryWriteAddress panic_writemem[] =
 	{ 0x6000, 0x601f, MWA_RAM, &spriteram, &spriteram_size },
     { 0x7000, 0x700b, panic_sound_output_w },
 	{ 0x700c, 0x700e, panic_color_register_w },
-	{ 0x700f, 0x700f, cosmica_flipscreen_w },
-    { 0x7800, 0x7801, panic_sound_output_w2 },
+	{ 0x700f, 0x700f, panic_flipscreen_w },
+    { 0x7800, 0x7801, panic_sound_output2_w },
 	{ -1 }	/* end of table */
 };
 
@@ -448,7 +449,7 @@ static struct MemoryReadAddress cosmica_readmem[] =
 	{ 0x6800, 0x6800, input_port_0_r }, /* IN1 */
 	{ 0x6801, 0x6801, input_port_1_r }, /* IN2 */
 	{ 0x6802, 0x6802, input_port_2_r }, /* DSW */
-	{ 0x6803, 0x6803, cosmica_read_pixel_clock },
+	{ 0x6803, 0x6803, cosmica_pixel_clock_r },
 	{ -1 }	/* end of table */
 };
 
@@ -479,7 +480,7 @@ static struct MemoryWriteAddress cosmicg_writemem[] =
 
 static struct IOReadPort cosmicg_readport[] =
 {
-	{ 0x00, 0x00, cosmicg_read_pixel_clock },
+	{ 0x00, 0x00, cosmicg_pixel_clock_r },
 	{ 0x01, 0x01, input_port_1_r },
 	{ -1 }	/* end of table */
 };
@@ -507,7 +508,7 @@ static struct MemoryWriteAddress magspot2_writemem[] =
 {
 	{ 0x0000, 0x2fff, MWA_ROM },
 	{ 0x4000, 0x401f, MWA_RAM, &spriteram, &spriteram_size},
-	{ 0x4800, 0x4800, DAC_data_w },
+	{ 0x4800, 0x4800, DAC_0_data_w },
 	{ 0x480c, 0x480e, panic_color_register_w },
 	{ 0x480f, 0x480f, cosmica_flipscreen_w },
 	{ 0x6000, 0x7fff, cosmica_videoram_w, &videoram, &videoram_size},
@@ -530,7 +531,7 @@ static struct MemoryWriteAddress nomnlnd_writemem[] =
 	{ 0x0000, 0x2fff, MWA_ROM },
 	{ 0x4000, 0x401f, MWA_RAM, &spriteram, &spriteram_size},
 	{ 0x4807, 0x4807, nomnlnd_background_w },
-	{ 0x480a, 0x480a, DAC_data_w },
+	{ 0x480a, 0x480a, DAC_0_data_w },
 	{ 0x480c, 0x480e, panic_color_register_w },
 	{ 0x480f, 0x480f, cosmica_flipscreen_w },
 	{ 0x6000, 0x7fff, cosmica_videoram_w, &videoram, &videoram_size},

@@ -14,8 +14,8 @@
 #include "vidhrdw/generic.h"
 
 
-void offtwall_playfieldram_w(int offset, int data);
-void offtwall_video_control_w(int offset, int data);
+WRITE_HANDLER( offtwall_playfieldram_w );
+WRITE_HANDLER( offtwall_video_control_w );
 
 int offtwall_vh_start(void);
 void offtwall_vh_stop(void);
@@ -71,7 +71,7 @@ static void init_machine(void)
  *
  *************************************/
 
-static int special_port3_r(int offset)
+static READ_HANDLER( special_port3_r )
 {
 	int result = input_port_3_r(offset);
 	if (atarigen_cpu_to_sound_ready) result ^= 0x0020;
@@ -79,7 +79,7 @@ static int special_port3_r(int offset)
 }
 
 
-static void io_latch_w(int offset, int data)
+static WRITE_HANDLER( io_latch_w )
 {
 	/* lower byte */
 	if (!(data & 0x00ff0000))
@@ -132,7 +132,7 @@ static UINT8 *bankswitch_base;
 static UINT8 *bankrom_base;
 static UINT32 bank_offset;
 
-static int bankswitch_r(int offset)
+static READ_HANDLER( bankswitch_r )
 {
 	/* this is the table lookup; the bank is determined by the address that was requested */
 	bank_offset = ((offset / 2) & 3) * 0x2000;
@@ -141,7 +141,7 @@ static int bankswitch_r(int offset)
 	return READ_WORD(&bankswitch_base[offset]);
 }
 
-static int bankrom_r(int offset)
+static READ_HANDLER( bankrom_r )
 {
 	/* this is the banked ROM read */
 	if (errorlog) fprintf(errorlog, "%06X: %04X\n", cpu_getpreviouspc(), offset);
@@ -181,7 +181,7 @@ static int bankrom_r(int offset)
 
 static UINT8 *spritecache_count;
 
-static int spritecache_count_r(int offset)
+static READ_HANDLER( spritecache_count_r )
 {
 	int prevpc = cpu_getpreviouspc();
 
@@ -234,7 +234,7 @@ static int spritecache_count_r(int offset)
 
 static UINT8 *unknown_verify_base;
 
-static int unknown_verify_r(int offset)
+static READ_HANDLER( unknown_verify_r )
 {
 	int prevpc = cpu_getpreviouspc();
 	if (prevpc < 0x5c5e || prevpc > 0xc432)

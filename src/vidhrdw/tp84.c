@@ -174,7 +174,7 @@ void tp84_vh_stop(void)
 
 
 
-void tp84_videoram2_w(int offset,int data)
+WRITE_HANDLER( tp84_videoram2_w )
 {
 	if (tp84_videoram2[offset] != data)
 	{
@@ -186,7 +186,7 @@ void tp84_videoram2_w(int offset,int data)
 
 
 
-void tp84_colorram2_w(int offset,int data)
+WRITE_HANDLER( tp84_colorram2_w )
 {
 	if (tp84_colorram2[offset] != data)
 	{
@@ -201,7 +201,7 @@ void tp84_colorram2_w(int offset,int data)
 /*****
   col0 is a register to index the color Proms
 *****/
-void tp84_col0_w(int offset,int data)
+WRITE_HANDLER( tp84_col0_w )
 {
 	if(col0 != data)
 	{

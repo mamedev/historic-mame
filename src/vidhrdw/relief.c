@@ -188,7 +188,7 @@ void relief_vh_stop(void)
  *
  *************************************/
 
-void relief_colorram_w(int offset, int data)
+WRITE_HANDLER( relief_colorram_w )
 {
 	int oldword = READ_WORD(&atarigen_playfieldram_color[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -211,7 +211,7 @@ void relief_colorram_w(int offset, int data)
 }
 
 
-void relief_playfieldram_w(int offset, int data)
+WRITE_HANDLER( relief_playfieldram_w )
 {
 	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -229,7 +229,7 @@ void relief_playfieldram_w(int offset, int data)
 }
 
 
-void relief_playfield2ram_w(int offset, int data)
+WRITE_HANDLER( relief_playfield2ram_w )
 {
 	int oldword = READ_WORD(&atarigen_playfield2ram[offset]);
 	int newword = COMBINE_WORD(oldword, data);

@@ -117,7 +117,7 @@ void mappy_vh_stop(void)
 
 
 
-void mappy_videoram_w(int offset,int data)
+WRITE_HANDLER( mappy_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -127,7 +127,7 @@ void mappy_videoram_w(int offset,int data)
 }
 
 
-void mappy_colorram_w(int offset,int data)
+WRITE_HANDLER( mappy_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -137,7 +137,7 @@ void mappy_colorram_w(int offset,int data)
 }
 
 
-void mappy_scroll_w(int offset,int data)
+WRITE_HANDLER( mappy_scroll_w )
 {
 	mappy_scroll = offset >> 3;
 }
@@ -153,7 +153,7 @@ void mappy_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int co
 		TRANSPARENCY_COLOR,15);
 }
 
-void mappy_flipscreen_w(int offset,int data)
+WRITE_HANDLER( mappy_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{

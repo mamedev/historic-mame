@@ -21,31 +21,19 @@ static int flipscreen;
 
 ***************************************************************************/
 
-static const unsigned short *videoram1,*videoram2;
-
-static void bg_preupdate(void)
+static void get_bg_tile_info(int tile_index)
 {
-	videoram1 = (const unsigned short *)bionicc_bgvideoram;
-}
-
-static void get_bg_tile_info(int col,int row)
-{
-	int offset = 2*(row*64+col);
-	int attr = videoram1[offset+1];
-	SET_TILE_INFO(1,(videoram1[offset] & 0xff) + ((attr & 0x07) << 8),(attr & 0x18) >> 3);
+	UINT16 *videoram1 = (UINT16 *)bionicc_bgvideoram;
+	int attr = videoram1[2*tile_index+1];
+	SET_TILE_INFO(1,(videoram1[2*tile_index] & 0xff) + ((attr & 0x07) << 8),(attr & 0x18) >> 3);
 	tile_info.flags = TILE_FLIPXY((attr & 0xc0) >> 6);
 }
 
-static void fg_preupdate(void)
+static void get_fg_tile_info(int tile_index)
 {
-	videoram1 = (const unsigned short *)bionicc_fgvideoram;
-}
-
-static void get_fg_tile_info( int col, int row )
-{
-	int offset = 2*(row*64 + col);
-	int attr = videoram1[offset+1];
-	SET_TILE_INFO(2,(videoram1[offset] & 0xff) + ((attr & 0x07) << 8),(attr & 0x18) >> 3);
+	UINT16 *videoram1 = (UINT16 *)bionicc_fgvideoram;
+	int attr = videoram1[2*tile_index+1];
+	SET_TILE_INFO(2,(videoram1[2*tile_index] & 0xff) + ((attr & 0x07) << 8),(attr & 0x18) >> 3);
 	if ((attr & 0xc0) == 0xc0)
 	{
 		tile_info.priority = 2;
@@ -58,17 +46,11 @@ static void get_fg_tile_info( int col, int row )
 	}
 }
 
-static void tx_preupdate(void)
+static void get_tx_tile_info(int tile_index)
 {
-	videoram1 = (const unsigned short *)bionicc_txvideoram;
-	videoram2 = (const unsigned short *)&bionicc_txvideoram[0x800];
-}
-
-static void get_tx_tile_info( int col, int row )
-{
-	int offset = row*32+col;
-	int attr = videoram2[offset];
-	SET_TILE_INFO(0,(videoram1[offset] & 0xff) + ((attr & 0x00c0) << 2),attr & 0x3f);
+	UINT16 *videoram1 = (UINT16 *)bionicc_txvideoram;
+	int attr = videoram1[tile_index + 0x400];
+	SET_TILE_INFO(0,(videoram1[tile_index] & 0xff) + ((attr & 0x00c0) << 2),attr & 0x3f);
 }
 
 
@@ -81,35 +63,18 @@ static void get_tx_tile_info( int col, int row )
 
 int bionicc_vh_start(void)
 {
-	tx_tilemap = tilemap_create(
-		get_tx_tile_info,
-		TILEMAP_TRANSPARENT,
-		8,8,
-		32,32
-	);
-	fg_tilemap = tilemap_create(
-		get_fg_tile_info,
-		TILEMAP_TRANSPARENT,
-		16,16,
-		64,64
-	);
-	bg_tilemap = tilemap_create(
-		get_bg_tile_info,
-		TILEMAP_TRANSPARENT,
-		8,8,
-		64,64
-	);
+	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,  8,8,32,32);
+	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64);
+	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,  8,8,64,64);
 
-	if (fg_tilemap && bg_tilemap && tx_tilemap)
-	{
-		tx_tilemap->transparent_pen = 3;
-		fg_tilemap->transparent_pen = 15;
-		bg_tilemap->transparent_pen = 15;
+	if (!fg_tilemap || !bg_tilemap || !tx_tilemap)
+		return 1;
 
-		return 0;
-	}
+	tx_tilemap->transparent_pen = 3;
+	fg_tilemap->transparent_pen = 15;
+	bg_tilemap->transparent_pen = 15;
 
-	return 1;
+	return 0;
 }
 
 
@@ -120,7 +85,7 @@ int bionicc_vh_start(void)
 
 ***************************************************************************/
 
-void bionicc_bgvideoram_w(int offset,int data)
+WRITE_HANDLER( bionicc_bgvideoram_w )
 {
 	int oldword = READ_WORD(&bionicc_bgvideoram[offset]);
 	int newword = COMBINE_WORD(oldword,data);
@@ -129,11 +94,11 @@ void bionicc_bgvideoram_w(int offset,int data)
 	{
 		int tile_index = offset/4;
 		WRITE_WORD(&bionicc_bgvideoram[offset],newword);
-		tilemap_mark_tile_dirty(bg_tilemap,tile_index%64,tile_index/64);
+		tilemap_mark_tile_dirty(bg_tilemap,tile_index);
 	}
 }
 
-void bionicc_fgvideoram_w(int offset,int data)
+WRITE_HANDLER( bionicc_fgvideoram_w )
 {
 	int oldword = READ_WORD(&bionicc_fgvideoram[offset]);
 	int newword = COMBINE_WORD(oldword,data);
@@ -142,11 +107,11 @@ void bionicc_fgvideoram_w(int offset,int data)
 	{
 		int tile_index = offset/4;
 		WRITE_WORD(&bionicc_fgvideoram[offset],newword);
-		tilemap_mark_tile_dirty(fg_tilemap,tile_index%64,tile_index/64);
+		tilemap_mark_tile_dirty(fg_tilemap,tile_index);
 	}
 }
 
-void bionicc_txvideoram_w(int offset,int data)
+WRITE_HANDLER( bionicc_txvideoram_w )
 {
 	int oldword = READ_WORD(&bionicc_txvideoram[offset]);
 	int newword = COMBINE_WORD(oldword,data);
@@ -155,31 +120,31 @@ void bionicc_txvideoram_w(int offset,int data)
 	{
 		int tile_index = (offset&0x7ff)/2;
 		WRITE_WORD(&bionicc_txvideoram[offset],newword);
-		tilemap_mark_tile_dirty(tx_tilemap,tile_index%32,tile_index/32);
+		tilemap_mark_tile_dirty(tx_tilemap,tile_index);
 	}
 }
 
-int bionicc_bgvideoram_r(int offset)
+READ_HANDLER( bionicc_bgvideoram_r )
 {
 	return READ_WORD(&bionicc_bgvideoram[offset]);
 }
 
-int bionicc_fgvideoram_r(int offset)
+READ_HANDLER( bionicc_fgvideoram_r )
 {
 	return READ_WORD(&bionicc_fgvideoram[offset]);
 }
 
-int bionicc_txvideoram_r(int offset)
+READ_HANDLER( bionicc_txvideoram_r )
 {
 	return READ_WORD(&bionicc_txvideoram[offset]);
 }
 
-void bionicc_paletteram_w(int offset,int data)
+WRITE_HANDLER( bionicc_paletteram_w )
 {
 	paletteram_RRRRGGGGBBBBIIII_word_w(offset,(data & 0xfff1) | ((data & 0x0007) << 1));
 }
 
-void bionicc_scroll_w(int offset,int data)
+WRITE_HANDLER( bionicc_scroll_w )
 {
 	switch( offset )
 	{
@@ -198,7 +163,7 @@ void bionicc_scroll_w(int offset,int data)
 	}
 }
 
-void bionicc_gfxctrl_w(int offset,int data)
+WRITE_HANDLER( bionicc_gfxctrl_w )
 {
 	data >>= 8;
 
@@ -285,9 +250,7 @@ void mark_sprite_colors( void )
 
 void bionicc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	fg_preupdate(); tilemap_update(fg_tilemap);
-	bg_preupdate(); tilemap_update(bg_tilemap);
-	tx_preupdate(); tilemap_update(tx_tilemap);
+	tilemap_update(ALL_TILEMAPS);
 
 	palette_init_used_colors();
 	mark_sprite_colors();

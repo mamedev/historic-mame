@@ -44,13 +44,13 @@ int foodf_interrupt (void)
 
 static unsigned char nvram[128];
 
-int foodf_nvram_r (int offset)
+READ_HANDLER( foodf_nvram_r )
 {
 	return ((nvram[(offset / 4) ^ 0x03] >> 2*(offset % 4))) & 0x0f;
 }
 
 
-void foodf_nvram_w (int offset, int data)
+WRITE_HANDLER( foodf_nvram_w )
 {
 	nvram[(offset / 4) ^ 0x03] &= ~(0x0f << 2*(offset % 4));
 	nvram[(offset / 4) ^ 0x03] |= (data & 0x0f) << 2*(offset % 4);
@@ -74,7 +74,7 @@ void foodf_nvram_handler(void *file,int read_or_write)
  *		Analog controller read dispatch.
  */
 
-int foodf_analog_r (int offset)
+READ_HANDLER( foodf_analog_r )
 {
 	switch (offset)
 	{
@@ -92,7 +92,7 @@ int foodf_analog_r (int offset)
  *		Digital controller read dispatch.
  */
 
-int foodf_digital_r (int offset)
+READ_HANDLER( foodf_digital_r )
 {
 	switch (offset)
 	{
@@ -107,7 +107,7 @@ int foodf_digital_r (int offset)
  *		Analog write dispatch.
  */
 
-void foodf_analog_w (int offset, int data)
+WRITE_HANDLER( foodf_analog_w )
 {
 	whichport = 3 - ((offset/2) & 3);
 }
@@ -117,6 +117,6 @@ void foodf_analog_w (int offset, int data)
  *		Digital write dispatch.
  */
 
-void foodf_digital_w (int offset, int data)
+WRITE_HANDLER( foodf_digital_w )
 {
 }

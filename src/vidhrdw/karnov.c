@@ -278,7 +278,7 @@ void wndrplnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 /******************************************************************************/
 
-void karnov_foreground_w(int offset, int data)
+WRITE_HANDLER( karnov_foreground_w )
 {
 	COMBINE_WORD_MEM(&karnov_foreground[offset],data);
 	dirty_f[offset] = 1;

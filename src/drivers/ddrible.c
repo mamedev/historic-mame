@@ -1,112 +1,101 @@
 /***************************************************************************
 
-Double dribble (Konami GX690)
+Double Dribble(GX690) (c) Konami 1986
 
-	Manuel Abadia (manu@teleline.es)
-
-Memory Map (preliminary):
-
-CPU #0 :
---------
-0000		foreground scroll y register
-0001-0002	foreground scroll x registers
-0003		foreground bank selection
-0004		interrupt control for CPU #0?
-0020-005f	unused?
-0800		background scroll y register
-0801-0802	background scroll x registers
-0803		background bank selection
-0804		interrupt control for CPU #1?
-1800-187f	palette
-2000-2fff	Video RAM 1
-	2000-27ff	foreground layer 1
-	2800-2fff	foreground layer 2
-3000-34ff	Object RAM 1 a
-3800-3cff	Object RAM 1 b
-4000-5fff?	Shared RAM with CPU #1(Work RAM a)
-6000-6fff	 Video RAM 2
-	6000-67ff	background layer 1
-	6800-6fff	background layer 2
-7000-74ff	Object RAM 2 a
-7500-77ff	Work RAM b
-7800-7cff	Object RAM 2 b
-7d00-7fff	Work RAM c
-8000		Bankswitch control
-8000-9fff	Banked ROM
-a000-ffff	ROM
-
-CPU #1:
--------
-0000-1fff	shared RAM with CPU #0
-2000-27ff	shared RAM with SOUND CPU
-2800		DSW #1
-2801		Player 1 Controls
-2802		Player 2 Controls
-2803		Coin switch & start
-2c00		DSW #2
-3000		DSW #3
-3400		coin counters
-3c00		watchdog reset
-8000-ffff	ROM
-
-CPU #2 (SOUND CPU):
--------------------
-0000-07ff	shared RAM with CPU #1
-1000-1001	YM 2203
-3000		VLM5030_data_w
-8000-ffff	ROM
+Driver by Manuel Abadia <manu@teleline.es>
 
 ***************************************************************************/
 
 #include "driver.h"
+#include "cpu/m6809/m6809.h"
 #include "vidhrdw/generic.h"
 
-extern unsigned char *ddrible_sharedram;
-extern unsigned char *ddrible_snd_sharedram;
+extern int int_enable_0;
+extern int int_enable_1;
+
+static unsigned char *ddrible_sharedram;
+static unsigned char *ddrible_snd_sharedram;
+
 extern unsigned char *ddrible_spriteram_1;
 extern unsigned char *ddrible_spriteram_2;
-
-/* shared ram functions */
-int ddrible_sharedram_r( int offset );
-void ddrible_sharedram_w( int offset, int data );
-int ddrible_snd_sharedram_r( int offset );
-void ddrible_snd_sharedram_w( int offset, int data );
-
-extern unsigned char* ddrible_fg_videoram;
-extern unsigned char* ddrible_bg_videoram;
+extern unsigned char *ddrible_fg_videoram;
+extern unsigned char *ddrible_bg_videoram;
 
 /* video hardware memory handlers */
-void ddrible_fg_videoram_w( int offset, int data );
-void ddrible_bg_videoram_w( int offset, int data );
+WRITE_HANDLER( ddrible_fg_videoram_w );
+WRITE_HANDLER( ddrible_bg_videoram_w );
 
 /* video hardware functions */
 void ddrible_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int ddrible_vh_start( void );
 void ddrible_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh );
-void ddrible_bank_select_w( int offset, int data );
-void ddrible_bank_select_w_2( int offset,int data );
-void ddrible_fg_scrollx_w( int offset, int data );
-void ddrible_fg_scrolly_w( int offset, int data );
-void ddrible_bg_scrollx_w( int offset, int data );
-void ddrible_bg_scrolly_w( int offset, int data );
+WRITE_HANDLER( K005885_0_w );
+WRITE_HANDLER( K005885_1_w );
 
-/* other machine functions */
-void ddrible_init_machine( void );
-void ddrible_bankswitch_w( int offset, int data );
-int ddrible_interrupt_0( void );
-int ddrible_interrupt_1( void );
-void int_0_w( int offset, int data );
-void int_1_w( int offset, int data );
-void ddrible_coin_counter_w( int offset, int data );
 
-static int ddrible_vlm5030_busy_r(int offset)
+static int ddrible_interrupt_0( void )
+{
+	if (int_enable_0)
+		return M6809_INT_FIRQ;
+	return ignore_interrupt();
+}
+
+static int ddrible_interrupt_1( void )
+{
+	if (int_enable_1)
+		return M6809_INT_FIRQ;
+	return ignore_interrupt();
+}
+
+
+static WRITE_HANDLER( ddrible_bankswitch_w )
+{
+	int bankaddress;
+	unsigned char *RAM = memory_region(REGION_CPU1);
+
+	bankaddress = 0x10000 + (data & 0x0f)*0x2000;
+	cpu_setbank(1,&RAM[bankaddress]);
+}
+
+
+static READ_HANDLER( ddrible_sharedram_r )
+{
+	return ddrible_sharedram[offset];
+}
+
+static WRITE_HANDLER( ddrible_sharedram_w )
+{
+	ddrible_sharedram[offset] = data;
+}
+
+static READ_HANDLER( ddrible_snd_sharedram_r )
+{
+	return ddrible_snd_sharedram[offset];
+}
+
+static WRITE_HANDLER( ddrible_snd_sharedram_w )
+{
+	ddrible_snd_sharedram[offset] = data;
+}
+
+static WRITE_HANDLER( ddrible_coin_counter_w )
+{
+	/* b4-b7: unused */
+	/* b2-b3: unknown */
+	/* b1: coin counter 2 */
+	/* b0: coin counter 1 */
+	coin_counter_w(0,(data) & 0x01);
+	coin_counter_w(1,(data >> 1) & 0x01);
+}
+
+static READ_HANDLER( ddrible_vlm5030_busy_r )
 {
 	return rand(); /* patch */
 	if (VLM5030_BSY()) return 1;
 	else return 0;
 }
 
-static void ddrible_vlm5030_ctrl_w(int offset,int data)
+static WRITE_HANDLER( ddrible_vlm5030_ctrl_w )
 {
 	unsigned char *SPEECH_ROM = memory_region(REGION_SOUND1);
 	/* b7 : vlm data bus OE   */
@@ -126,43 +115,34 @@ static void ddrible_vlm5030_ctrl_w(int offset,int data)
 	set_RC_filter(0,1000,2200,1000,data & 0x01 ? 150000 : 0); /* YM2203-SSG-A */
 }
 
-	/* CPU 0 read addresses */
+
 static struct MemoryReadAddress readmem_cpu0[] =
 {
-	{ 0x1800, 0x187f, MRA_RAM },			/* palette? */
+	{ 0x1800, 0x187f, MRA_RAM },			/* palette */
 	{ 0x2000, 0x3fff, MRA_RAM },			/* Video RAM 1 + Object RAM 1 */
-	{ 0x4000, 0x5fff, ddrible_sharedram_r },/* shared RAM with CPU #1 */
+	{ 0x4000, 0x5fff, MRA_RAM },			/* shared RAM with CPU #1 */
 	{ 0x6000, 0x7fff, MRA_RAM },			/* Video RAM 2 + Object RAM 2 */
 	{ 0x8000, 0x9fff, MRA_BANK1 },			/* banked ROM */
 	{ 0xa000, 0xffff, MRA_ROM },			/* ROM */
-	{ -1 }									/* end of table */
+	{ -1 }
 };
 
-	/* CPU 0 write addresses */
+
 static struct MemoryWriteAddress writemem_cpu0[] =
 {
-	{ 0x0000, 0x0000, ddrible_fg_scrolly_w },
-	{ 0x0001, 0x0002, ddrible_fg_scrollx_w },
-	{ 0x0003, 0x0003, ddrible_bank_select_w },
-	{ 0x0004, 0x0004, int_0_w },
-//	{ 0x0020, 0x005f, MWA_RAM },				/* unused? */
-	{ 0x0800, 0x0800, ddrible_bg_scrolly_w },
-	{ 0x0801, 0x0802, ddrible_bg_scrollx_w },
-	{ 0x0803, 0x0803, ddrible_bank_select_w_2 },
-	{ 0x0804, 0x0804, int_1_w },
-//	{ 0x0820, 0x085f, MWA_RAM },				/* unused? */
-	{ 0x1800, 0x187f, paletteram_xBBBBBGGGGGRRRRR_swap_w, &paletteram }, /* seems wrong, MSB is used as well */
-	{ 0x2000, 0x2fff, ddrible_fg_videoram_w, &ddrible_fg_videoram },/* Video RAM 2 */
+	{ 0x0000, 0x0004, K005885_0_w },								/* video registers (005885 #1) */
+	{ 0x0800, 0x0804, K005885_1_w },								/* video registers (005885 #2) */
+	{ 0x1800, 0x187f, paletteram_xBBBBBGGGGGRRRRR_swap_w, &paletteram },/* seems wrong, MSB is used as well */
+	{ 0x2000, 0x2fff, ddrible_fg_videoram_w, &ddrible_fg_videoram },/* Video RAM 1 */
 	{ 0x3000, 0x3fff, MWA_RAM, &ddrible_spriteram_1 },				/* Object RAM 1 */
-	{ 0x4000, 0x5fff, ddrible_sharedram_w, &ddrible_sharedram },	/* shared RAM with CPU #1 */
+	{ 0x4000, 0x5fff, MWA_RAM, &ddrible_sharedram },				/* shared RAM with CPU #1 */
 	{ 0x6000, 0x6fff, ddrible_bg_videoram_w, &ddrible_bg_videoram },/* Video RAM 2 */
 	{ 0x7000, 0x7fff, MWA_RAM, &ddrible_spriteram_2 },				/* Object RAM 2 + Work RAM */
 	{ 0x8000, 0x8000, ddrible_bankswitch_w },						/* bankswitch control */
-	{ 0x8001, 0xffff, MWA_ROM },									/* ROM */
-	{ -1 }															/* end of table */
+	{ 0x8000, 0xffff, MWA_ROM },									/* ROM */
+	{ -1 }
 };
 
-	/* CPU 1 read addresses */
 static struct MemoryReadAddress readmem_cpu1[] =
 {
 	{ 0x0000, 0x1fff, ddrible_sharedram_r },		/* shared RAM with CPU #0 */
@@ -174,10 +154,9 @@ static struct MemoryReadAddress readmem_cpu1[] =
 	{ 0x2c00, 0x2c00, input_port_4_r },				/* DSW #2 */
 	{ 0x3000, 0x3000, input_port_5_r },				/* DSW #3 */
 	{ 0x8000, 0xffff, MRA_ROM },					/* ROM */
-	{ -1 }											/* end of table */
+	{ -1 }
 };
 
-	/* CPU 1 write addresses */
 static struct MemoryWriteAddress writemem_cpu1[] =
 {
 	{ 0x0000, 0x1fff, ddrible_sharedram_w },		/* shared RAM with CPU #0 */
@@ -185,28 +164,26 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x3400, 0x3400, ddrible_coin_counter_w },		/* coin counters */
 	{ 0x3c00, 0x3c00, watchdog_reset_w },			/* watchdog reset */
 	{ 0x8000, 0xffff, MWA_ROM },					/* ROM */
-	{ -1 }											/* end of table */
+	{ -1 }
 };
 
-	/* CPU 2 (SOUND CPU) read addresses */
 static struct MemoryReadAddress readmem_cpu2[] =
 {
-	{ 0x0000, 0x07ff, ddrible_snd_sharedram_r },	/* shared RAM with CPU #1 */
-	{ 0x1000, 0x1000, YM2203_status_port_0_r },
-	{ 0x1001, 0x1001, YM2203_read_port_0_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
+	{ 0x0000, 0x07ff, MRA_RAM },					/* shared RAM with CPU #1 */
+	{ 0x1000, 0x1000, YM2203_status_port_0_r },		/* YM2203 */
+	{ 0x1001, 0x1001, YM2203_read_port_0_r },		/* YM2203 */
+	{ 0x8000, 0xffff, MRA_ROM },					/* ROM */
+	{ -1 }
 };
 
-	/* CPU 2 (SOUND CPU) write addresses */
 static struct MemoryWriteAddress writemem_cpu2[] =
 {
-	{ 0x0000, 0x07ff, ddrible_snd_sharedram_w, &ddrible_snd_sharedram  },/* shared RAM with CPU #1 */
-	{ 0x1000, 0x1000, YM2203_control_port_0_w },
-	{ 0x1001, 0x1001, YM2203_write_port_0_w },
-	{ 0x3000, 0x3000, VLM5030_data_w },
-	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
+	{ 0x0000, 0x07ff, MWA_RAM, &ddrible_snd_sharedram  },	/* shared RAM with CPU #1 */
+	{ 0x1000, 0x1000, YM2203_control_port_0_w },			/* YM2203 */
+	{ 0x1001, 0x1001, YM2203_write_port_0_w },				/* YM2203 */
+	{ 0x3000, 0x3000, VLM5030_data_w },						/* Speech data */
+	{ 0x8000, 0xffff, MWA_ROM },							/* ROM */
+	{ -1 }
 };
 
 INPUT_PORTS_START( ddribble )
@@ -390,7 +367,7 @@ static struct VLM5030interface vlm5030_interface =
 {
 	3580000,    /* 3.58 MHz */
 	25,         /* volume */
-	REGION_SOUND1,	/* memory region of speech rom */
+	REGION_SOUND1,/* memory region of speech rom */
 	0x10000,    /* memory size 64Kbyte * 2 bank */
 	0           /* VCU pin level (default) */
 };
@@ -419,11 +396,12 @@ static struct MachineDriver machine_driver_ddribble =
 		},
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,
-	100,					/* we need heavy synch */
-	ddrible_init_machine,	/* init machine routine */
+	100,	/* we need heavy synch */
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	//64*8, 32*8, { 0*8, 64*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	64, 64 + 256,
 	ddrible_vh_convert_color_prom,
@@ -479,4 +457,4 @@ ROM_END
 
 
 
-GAMEX( 1986, ddribble, 0, ddribble, ddribble, 0, ROT0, "Konami", "Double Dribble", GAME_NO_COCKTAIL )
+GAME( 1986, ddribble, 0, ddribble, ddribble, 0, ROT0, "Konami", "Double Dribble")

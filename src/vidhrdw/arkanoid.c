@@ -66,7 +66,7 @@ void arkanoid_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 
 
-void arkanoid_d008_w(int offset,int data)
+WRITE_HANDLER( arkanoid_d008_w )
 {
 	/* bits 0 and 1 flip X and Y, I don't know which is which */
 	if (flipscreen[0] != (data & 0x01))

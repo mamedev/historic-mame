@@ -136,9 +136,9 @@ extern UINT8 *liberatr_y;
 
 
 /* in machine */
-int  liberatr_input_port_0_r(int offset) ;
-void liberatr_led_w(int offset, int data);
-void liberatr_coin_counter_w(int offset, int data);
+READ_HANDLER( liberatr_input_port_0_r ) ;
+WRITE_HANDLER( liberatr_led_w );
+WRITE_HANDLER( liberatr_coin_counter_w );
 
 /* in vidhrdw */
 extern unsigned char *liberatr_bitmapram;
@@ -146,10 +146,10 @@ extern unsigned char *liberatr_bitmapram;
 int  liberatr_vh_start(void);
 void liberatr_vh_stop(void);
 void liberatr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void liberatr_colorram_w(int offset, int data) ;
-void liberatr_bitmap_w(int offset, int data);
-int liberatr_bitmap_xy_r(int offset);
-void liberatr_bitmap_xy_w(int offset, int data);
+WRITE_HANDLER( liberatr_colorram_w ) ;
+WRITE_HANDLER( liberatr_bitmap_w );
+READ_HANDLER( liberatr_bitmap_xy_r );
+WRITE_HANDLER( liberatr_bitmap_xy_w );
 
 
 static struct MemoryReadAddress liberatr_readmem[] =
@@ -188,7 +188,7 @@ static struct MemoryWriteAddress liberatr_writemem[] =
 	{ 0x6000, 0x600f, MWA_RAM, &liberatr_base_ram },
 	{ 0x6200, 0x621f, liberatr_colorram_w },
 	{ 0x6400, 0x6400, MWA_NOP },
-	{ 0x6600, 0x6600, atari_vg_earom_ctrl },
+	{ 0x6600, 0x6600, atari_vg_earom_ctrl_w },
 	{ 0x6800, 0x6800, MWA_RAM, &liberatr_planet_frame },
 	{ 0x6a00, 0x6a00, watchdog_reset_w },
 	{ 0x6c00, 0x6c01, liberatr_led_w },
@@ -213,7 +213,7 @@ static struct MemoryWriteAddress liberat2_writemem[] =
 	{ 0x4000, 0x400f, MWA_RAM, &liberatr_base_ram },
 	{ 0x4200, 0x421f, liberatr_colorram_w },
 	{ 0x4400, 0x4400, MWA_NOP },
-	{ 0x4600, 0x4600, atari_vg_earom_ctrl },
+	{ 0x4600, 0x4600, atari_vg_earom_ctrl_w },
 	{ 0x4800, 0x4800, MWA_RAM, &liberatr_planet_frame },
 	{ 0x4a00, 0x4a00, watchdog_reset_w },
 	{ 0x4c00, 0x4c01, liberatr_led_w },

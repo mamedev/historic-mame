@@ -44,17 +44,17 @@ static int meteor_interrupt(void)
 static int meteor_SN76496_latch;
 static int meteor_SN76496_select;
 
-static void meteor_SN76496_latch_w(int offset, int data)
+static WRITE_HANDLER( meteor_SN76496_latch_w )
 {
 	meteor_SN76496_latch = data;
 }
 
-static int meteor_SN76496_select_r(int offset)
+static READ_HANDLER( meteor_SN76496_select_r )
 {
 	return meteor_SN76496_select;
 }
 
-static void meteor_SN76496_select_w(int offset, int data)
+static WRITE_HANDLER( meteor_SN76496_select_w )
 {
     meteor_SN76496_select = data;
 
@@ -63,7 +63,7 @@ static void meteor_SN76496_select_w(int offset, int data)
 	if (~data & 0x10)  SN76496_2_w(0, meteor_SN76496_latch);
 }
 
-static int meteor_t0_r(int offset)
+static READ_HANDLER( meteor_t0_r )
 {
 	/* SN76496 status according to Al - not supported by MAME?? */
 	return rand() & 1;
@@ -72,7 +72,7 @@ static int meteor_t0_r(int offset)
 
 static int meteor_soundtrigger;
 
-static void meteor_soundtrigger_w(int offset, int data)
+static WRITE_HANDLER( meteor_soundtrigger_w )
 {
 	if ((meteor_soundtrigger & 0x08) && (~data & 0x08))
 	{

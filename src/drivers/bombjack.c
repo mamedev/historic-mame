@@ -71,8 +71,8 @@ NMI interrupts for music timing
 
 
 
-void bombjack_background_w(int offset,int data);
-void bombjack_flipscreen_w(int offset,int data);
+WRITE_HANDLER( bombjack_background_w );
+WRITE_HANDLER( bombjack_flipscreen_w );
 void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -84,13 +84,13 @@ static void soundlatch_callback(int param)
 	latch = param;
 }
 
-void bombjack_soundlatch_w(int offset,int data)
+WRITE_HANDLER( bombjack_soundlatch_w )
 {
 	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
 	timer_set(TIME_NOW,data,soundlatch_callback);
 }
 
-int bombjack_soundlatch_r(int offset)
+READ_HANDLER( bombjack_soundlatch_r )
 {
 	int res;
 

@@ -85,17 +85,17 @@ extern unsigned char *wiz_attributesram;
 extern unsigned char *wiz_attributesram2;
 extern unsigned char *wiz_sprite_bank;
 
-void wiz_char_bank_select_w (int offset, int data);
-void wiz_attributes_w(int offset,int data);
-void wiz_palettebank_w(int offset,int data);
+WRITE_HANDLER( wiz_char_bank_select_w );
+WRITE_HANDLER( wiz_attributes_w );
+WRITE_HANDLER( wiz_palettebank_w );
 void wiz_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void wiz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void stinger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void wiz_flipx_w(int offset,int data);
-void wiz_flipy_w(int offset,int data);
+WRITE_HANDLER( wiz_flipx_w );
+WRITE_HANDLER( wiz_flipy_w );
 
 
-static void sound_command_w(int offset,int data)
+static WRITE_HANDLER( sound_command_w )
 {
 	if (data == 0x90)
 	{

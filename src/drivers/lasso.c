@@ -23,12 +23,13 @@ unsigned char *lasso_vram; /* 0x2000 bytes for a 256x256x1 bitmap */
 
 static UINT8 *shareram;
 
-static int shareram_r( int offset ){
+static READ_HANDLER( shareram_r ){
 	return shareram[offset];
 }
 
-static void shareram_w( int offset, int value ){
-	shareram[offset] = value;
+static WRITE_HANDLER( shareram_w )
+{
+	shareram[offset] = data;
 }
 
 static struct AY8910interface ay8910_interface =

@@ -18,15 +18,136 @@ static unsigned char vaportra_control_0[16];
 static unsigned char vaportra_control_1[16];
 static unsigned char vaportra_control_2[4];
 
-static struct tilemap *vaportra_pf1_tilemap,*vaportra_pf2_tilemap,*vaportra_pf3_tilemap,*vaportra_pf4_tilemap;
+static struct tilemap *pf1_tilemap,*pf2_tilemap,*pf3_tilemap,*pf4_tilemap;
 static unsigned char *gfx_base;
 static int gfx_bank,flipscreen;
 
 static unsigned char *vaportra_spriteram;
 
+
+
+/* Function for all 16x16 1024x1024 layers */
+static UINT32 vaportra_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
+{
+	/* logical (col,row) -> memory offset */
+	return (col & 0x1f) + ((row & 0x1f) << 5) + ((col & 0x20) << 5) + ((row & 0x20) << 6);
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int tile,color;
+
+	tile=READ_WORD(&gfx_base[2*tile_index]);
+	color=tile >> 12;
+	tile=tile&0xfff;
+
+	SET_TILE_INFO(gfx_bank,tile,color)
+}
+
+/* 8x8 top layer */
+static void get_fg_tile_info(int tile_index)
+{
+	int tile=READ_WORD(&vaportra_pf1_data[2*tile_index]);
+	int color=tile >> 12;
+
+	tile=tile&0xfff;
+
+	SET_TILE_INFO(0,tile,color)
+}
+
 /******************************************************************************/
 
-void vaportra_update_sprites(int offset, int data)
+void vaportra_vh_stop (void)
+{
+	free(vaportra_spriteram);
+}
+
+int vaportra_vh_start(void)
+{
+	pf1_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,64);
+	pf2_tilemap = tilemap_create(get_bg_tile_info,vaportra_scan,    TILEMAP_TRANSPARENT,16,16,64,32);
+	pf3_tilemap = tilemap_create(get_bg_tile_info,vaportra_scan,    TILEMAP_TRANSPARENT,16,16,64,32);
+	pf4_tilemap = tilemap_create(get_bg_tile_info,vaportra_scan,    TILEMAP_TRANSPARENT,16,16,64,32);
+
+	if (!pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
+		return 1;
+
+	vaportra_spriteram = malloc(0x800);
+	if (!vaportra_spriteram)
+		return 1;
+
+	pf1_tilemap->transparent_pen = 0;
+	pf2_tilemap->transparent_pen = 0;
+	pf3_tilemap->transparent_pen = 0;
+	pf4_tilemap->transparent_pen = 0;
+
+	return 0;
+}
+
+/******************************************************************************/
+
+READ_HANDLER( vaportra_pf1_data_r )
+{
+	return READ_WORD(&vaportra_pf1_data[offset]);
+}
+
+READ_HANDLER( vaportra_pf2_data_r )
+{
+	return READ_WORD(&vaportra_pf2_data[offset]);
+}
+
+READ_HANDLER( vaportra_pf3_data_r )
+{
+	return READ_WORD(&vaportra_pf3_data[offset]);
+}
+
+READ_HANDLER( vaportra_pf4_data_r )
+{
+	return READ_WORD(&vaportra_pf4_data[offset]);
+}
+
+WRITE_HANDLER( vaportra_pf1_data_w )
+{
+	COMBINE_WORD_MEM(&vaportra_pf1_data[offset],data);
+	tilemap_mark_tile_dirty(pf1_tilemap,offset/2);
+}
+
+WRITE_HANDLER( vaportra_pf2_data_w )
+{
+	COMBINE_WORD_MEM(&vaportra_pf2_data[offset],data);
+	tilemap_mark_tile_dirty(pf2_tilemap,offset/2);
+}
+
+WRITE_HANDLER( vaportra_pf3_data_w )
+{
+	COMBINE_WORD_MEM(&vaportra_pf3_data[offset],data);
+	tilemap_mark_tile_dirty(pf3_tilemap,offset/2);
+}
+
+WRITE_HANDLER( vaportra_pf4_data_w )
+{
+	COMBINE_WORD_MEM(&vaportra_pf4_data[offset],data);
+	tilemap_mark_tile_dirty(pf4_tilemap,offset/2);
+}
+
+WRITE_HANDLER( vaportra_control_0_w )
+{
+	COMBINE_WORD_MEM(&vaportra_control_0[offset],data);
+}
+
+WRITE_HANDLER( vaportra_control_1_w )
+{
+	COMBINE_WORD_MEM(&vaportra_control_1[offset],data);
+}
+
+WRITE_HANDLER( vaportra_control_2_w )
+{
+	COMBINE_WORD_MEM(&vaportra_control_2[offset],data);
+}
+
+/******************************************************************************/
+
+WRITE_HANDLER( vaportra_update_sprites_w )
 {
 	memcpy(vaportra_spriteram,spriteram,0x800);
 }
@@ -42,13 +163,13 @@ static void update_24bitcol(int offset)
 	palette_change_color(offset / 2,r,g,b);
 }
 
-void vaportra_palette_24bit_rg(int offset,int data)
+WRITE_HANDLER( vaportra_palette_24bit_rg_w )
 {
 	COMBINE_WORD_MEM(&paletteram[offset],data);
 	update_24bitcol(offset);
 }
 
-void vaportra_palette_24bit_b(int offset,int data)
+WRITE_HANDLER( vaportra_palette_24bit_b_w )
 {
 	COMBINE_WORD_MEM(&paletteram_2[offset],data);
 	update_24bitcol(offset);
@@ -150,7 +271,8 @@ static void vaportra_drawsprites(struct osd_bitmap *bitmap, int pri)
 			inc = 1;
 		}
 
-		if (flipscreen) {
+		if (flipscreen)
+		{
 			y=240-y;
 			x=240-x;
 			if (fx) fx=0; else fx=1;
@@ -173,36 +295,6 @@ static void vaportra_drawsprites(struct osd_bitmap *bitmap, int pri)
 	}
 }
 
-/* Function for all 16x16 1024x1024 layers */
-static void get_back_tile_info( int col, int row )
-{
-	int offs,tile,color;
-
-	if (col>31 && row>31) offs=0x1800 + (col-32)*2 + (row-32) *64; /* Bottom right */
-	else if (row>31) offs=0x1000 + col*2 + (row-32) *64; /* Bottom left */
-	else if (col>31) offs=0x800 + (col-32)*2 + row *64; /* Top right */
-	else offs=col*2 + row *64; /* Top left */
-
-	tile=READ_WORD(&gfx_base[offs]);
-	color=tile >> 12;
-	tile=tile&0xfff;
-
-	SET_TILE_INFO(gfx_bank,tile,color)
-}
-
-/* 8x8 top layer */
-static void get_fore_tile_info( int col, int row )
-{
-	int offs=(col*2) + (row*128);
-	int tile=READ_WORD(&vaportra_pf1_data[offs]);
-	int color=tile >> 12;
-
-	tile=tile&0xfff;
-
-	SET_TILE_INFO(0,tile,color)
-}
-
-/******************************************************************************/
 
 void vaportra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
@@ -218,14 +310,14 @@ void vaportra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
 	/* Update scroll registers */
-	tilemap_set_scrollx( vaportra_pf1_tilemap,0, READ_WORD(&vaportra_control_1[2]) );
-	tilemap_set_scrolly( vaportra_pf1_tilemap,0, READ_WORD(&vaportra_control_1[4]) );
-	tilemap_set_scrollx( vaportra_pf2_tilemap,0, READ_WORD(&vaportra_control_0[2]) );
-	tilemap_set_scrolly( vaportra_pf2_tilemap,0, READ_WORD(&vaportra_control_0[4]) );
-	tilemap_set_scrollx( vaportra_pf3_tilemap,0, READ_WORD(&vaportra_control_1[6]) );
-	tilemap_set_scrolly( vaportra_pf3_tilemap,0, READ_WORD(&vaportra_control_1[8]) );
-	tilemap_set_scrollx( vaportra_pf4_tilemap,0, READ_WORD(&vaportra_control_0[6]) );
-	tilemap_set_scrolly( vaportra_pf4_tilemap,0, READ_WORD(&vaportra_control_0[8]) );
+	tilemap_set_scrollx( pf1_tilemap,0, READ_WORD(&vaportra_control_1[2]) );
+	tilemap_set_scrolly( pf1_tilemap,0, READ_WORD(&vaportra_control_1[4]) );
+	tilemap_set_scrollx( pf2_tilemap,0, READ_WORD(&vaportra_control_0[2]) );
+	tilemap_set_scrolly( pf2_tilemap,0, READ_WORD(&vaportra_control_0[4]) );
+	tilemap_set_scrollx( pf3_tilemap,0, READ_WORD(&vaportra_control_1[6]) );
+	tilemap_set_scrolly( pf3_tilemap,0, READ_WORD(&vaportra_control_1[8]) );
+	tilemap_set_scrollx( pf4_tilemap,0, READ_WORD(&vaportra_control_0[6]) );
+	tilemap_set_scrolly( pf4_tilemap,0, READ_WORD(&vaportra_control_0[8]) );
 
 	pri&=0x3;
 	if (pri!=last_pri)
@@ -236,183 +328,61 @@ void vaportra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	switch (pri) {
 		case 0:
 		case 2:
-			vaportra_pf4_tilemap->type=TILEMAP_OPAQUE;
-			vaportra_pf3_tilemap->type=TILEMAP_TRANSPARENT;
-			vaportra_pf2_tilemap->type=TILEMAP_TRANSPARENT;
+			pf4_tilemap->type=TILEMAP_OPAQUE;
+			pf3_tilemap->type=TILEMAP_TRANSPARENT;
+			pf2_tilemap->type=TILEMAP_TRANSPARENT;
 			break;
 		case 1:
 		case 3:
-			vaportra_pf2_tilemap->type=TILEMAP_OPAQUE;
-			vaportra_pf3_tilemap->type=TILEMAP_TRANSPARENT;
-			vaportra_pf4_tilemap->type=TILEMAP_TRANSPARENT;
+			pf2_tilemap->type=TILEMAP_OPAQUE;
+			pf3_tilemap->type=TILEMAP_TRANSPARENT;
+			pf4_tilemap->type=TILEMAP_TRANSPARENT;
 			break;
 	}
 
 	gfx_bank=1;
 	gfx_base=vaportra_pf2_data;
-	tilemap_update(vaportra_pf2_tilemap);
+	tilemap_update(pf2_tilemap);
 
 	gfx_bank=2;
 	gfx_base=vaportra_pf3_data;
-	tilemap_update(vaportra_pf3_tilemap);
+	tilemap_update(pf3_tilemap);
 
 	gfx_bank=3;
 	gfx_base=vaportra_pf4_data;
-	tilemap_update(vaportra_pf4_tilemap);
+	tilemap_update(pf4_tilemap);
 
-	tilemap_update(vaportra_pf1_tilemap);
+	tilemap_update(pf1_tilemap);
 	vaportra_update_palette();
 
 	/* Draw playfields */
 	tilemap_render(ALL_TILEMAPS);
 
 	if (pri==0) {
-		tilemap_draw(bitmap,vaportra_pf4_tilemap,0);
-		tilemap_draw(bitmap,vaportra_pf2_tilemap,0);
+		tilemap_draw(bitmap,pf4_tilemap,0);
+		tilemap_draw(bitmap,pf2_tilemap,0);
 		vaportra_drawsprites(bitmap,0);
-		tilemap_draw(bitmap,vaportra_pf3_tilemap,0);
+		tilemap_draw(bitmap,pf3_tilemap,0);
 	}
 	else if (pri==1) {
-		tilemap_draw(bitmap,vaportra_pf2_tilemap,0);
-		tilemap_draw(bitmap,vaportra_pf4_tilemap,0);
+		tilemap_draw(bitmap,pf2_tilemap,0);
+		tilemap_draw(bitmap,pf4_tilemap,0);
 		vaportra_drawsprites(bitmap,0);
-		tilemap_draw(bitmap,vaportra_pf3_tilemap,0);
+		tilemap_draw(bitmap,pf3_tilemap,0);
 	}
 	else if (pri==2) {
-		tilemap_draw(bitmap,vaportra_pf4_tilemap,0);
-		tilemap_draw(bitmap,vaportra_pf3_tilemap,0);
+		tilemap_draw(bitmap,pf4_tilemap,0);
+		tilemap_draw(bitmap,pf3_tilemap,0);
 		vaportra_drawsprites(bitmap,0);
-		tilemap_draw(bitmap,vaportra_pf2_tilemap,0);
+		tilemap_draw(bitmap,pf2_tilemap,0);
 	}
 	else {
-		tilemap_draw(bitmap,vaportra_pf2_tilemap,0);
-		tilemap_draw(bitmap,vaportra_pf3_tilemap,0);
+		tilemap_draw(bitmap,pf2_tilemap,0);
+		tilemap_draw(bitmap,pf3_tilemap,0);
 		vaportra_drawsprites(bitmap,0);
-		tilemap_draw(bitmap,vaportra_pf4_tilemap,0);
+		tilemap_draw(bitmap,pf4_tilemap,0);
 	}
 
 	vaportra_drawsprites(bitmap,1);
-	tilemap_draw(bitmap,vaportra_pf1_tilemap,0);
+	tilemap_draw(bitmap,pf1_tilemap,0);
 }
-
-/******************************************************************************/
-
-int vaportra_pf1_data_r(int offset)
-{
-	return READ_WORD(&vaportra_pf1_data[offset]);
-}
-
-int vaportra_pf2_data_r(int offset)
-{
-	return READ_WORD(&vaportra_pf2_data[offset]);
-}
-
-int vaportra_pf3_data_r(int offset)
-{
-	return READ_WORD(&vaportra_pf3_data[offset]);
-}
-
-int vaportra_pf4_data_r(int offset)
-{
-	return READ_WORD(&vaportra_pf4_data[offset]);
-}
-
-void vaportra_pf1_data_w(int offset,int data)
-{
-	COMBINE_WORD_MEM(&vaportra_pf1_data[offset],data);
-	tilemap_mark_tile_dirty(vaportra_pf1_tilemap,(offset%128)/2,offset/128);
-}
-
-void vaportra_pf2_data_w(int offset,int data)
-{
-	int dx=0,dy=0;
-
-	COMBINE_WORD_MEM(&vaportra_pf2_data[offset],data);
-	if (offset>0x7ff) {offset-=0x800;dx=32; dy=0;}
-	dx+=(offset%64)/2; dy+=(offset/64);
-	tilemap_mark_tile_dirty(vaportra_pf2_tilemap,dx,dy);
-}
-
-void vaportra_pf3_data_w(int offset,int data)
-{
-	int dx=0,dy=0;
-
-	COMBINE_WORD_MEM(&vaportra_pf3_data[offset],data);
-	if (offset>0x7ff) {offset-=0x800;dx=32; dy=0;}
-	dx+=(offset%64)/2; dy+=(offset/64);
-	tilemap_mark_tile_dirty(vaportra_pf3_tilemap,dx,dy);
-}
-
-void vaportra_pf4_data_w(int offset,int data)
-{
-	int dx=0,dy=0;
-
-	COMBINE_WORD_MEM(&vaportra_pf4_data[offset],data);
-	if (offset>0x7ff) {offset-=0x800;dx=32; dy=0;}
-	dx+=(offset%64)/2; dy+=(offset/64);
-	tilemap_mark_tile_dirty(vaportra_pf4_tilemap,dx,dy);
-}
-
-void vaportra_control_0_w(int offset,int data)
-{
-	COMBINE_WORD_MEM(&vaportra_control_0[offset],data);
-}
-
-void vaportra_control_1_w(int offset,int data)
-{
-	COMBINE_WORD_MEM(&vaportra_control_1[offset],data);
-}
-
-void vaportra_control_2_w(int offset,int data)
-{
-	COMBINE_WORD_MEM(&vaportra_control_2[offset],data);
-}
-
-/******************************************************************************/
-
-void vaportra_vh_stop (void)
-{
-	free(vaportra_spriteram);
-}
-
-int vaportra_vh_start(void)
-{
-	vaportra_pf2_tilemap = tilemap_create(
-		get_back_tile_info,
-		TILEMAP_TRANSPARENT,
-		16,16,
-		64,32 /* 1024 by 512 */
-	);
-
-	vaportra_pf3_tilemap = tilemap_create(
-		get_back_tile_info,
-		TILEMAP_TRANSPARENT,
-		16,16,
-		64,32
-	);
-
-	vaportra_pf4_tilemap = tilemap_create(
-		get_back_tile_info,
-		TILEMAP_TRANSPARENT,
-		16,16,
-		64,32
-	);
-
-	vaportra_pf1_tilemap = tilemap_create(
-		get_fore_tile_info,
-		TILEMAP_TRANSPARENT,
-		8,8,
-		64,64
-	);
-
-	vaportra_pf1_tilemap->transparent_pen = 0;
-	vaportra_pf2_tilemap->transparent_pen = 0;
-	vaportra_pf3_tilemap->transparent_pen = 0;
-	vaportra_pf4_tilemap->transparent_pen = 0;
-
-	vaportra_spriteram = malloc(0x800);
-
-	return 0;
-}
-
-/******************************************************************************/

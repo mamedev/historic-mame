@@ -28,12 +28,12 @@ extern unsigned char *nemesis_characterram;
 extern unsigned char *nemesis_xscroll1,*nemesis_xscroll2, *nemesis_yscroll;
 extern int  nemesis_characterram_size;
 
-int  nemesis_videoram1_r(int offset);
-void nemesis_videoram1_w(int offset,int data);
-int  nemesis_videoram2_r(int offset);
-void nemesis_videoram2_w(int offset,int data);
-int  nemesis_characterram_r(int offset);
-void nemesis_characterram_w(int offset,int data);
+READ_HANDLER( nemesis_videoram1_r );
+WRITE_HANDLER( nemesis_videoram1_w );
+READ_HANDLER( nemesis_videoram2_r );
+WRITE_HANDLER( nemesis_videoram2_w );
+READ_HANDLER( nemesis_characterram_r );
+WRITE_HANDLER( nemesis_characterram_w );
 void nemesis_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int  nemesis_vh_start(void);
 void nemesis_vh_stop(void);
@@ -42,20 +42,20 @@ void twinbee_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void salamand_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void nemesis_init_machine(void);
 
-void salamander_palette_w(int offset,int data);
+WRITE_HANDLER( salamander_palette_w );
 
 
-void gx400_xscroll1_w(int offset,int data);
-void gx400_xscroll2_w(int offset,int data);
-void gx400_yscroll_w(int offset,int data);
-int  gx400_xscroll1_r(int offset);
-int  gx400_xscroll2_r(int offset);
-int  gx400_yscroll_r(int offset);
+WRITE_HANDLER( gx400_xscroll1_w );
+WRITE_HANDLER( gx400_xscroll2_w );
+WRITE_HANDLER( gx400_yscroll_w );
+READ_HANDLER( gx400_xscroll1_r );
+READ_HANDLER( gx400_xscroll2_r );
+READ_HANDLER( gx400_yscroll_r );
 
 extern unsigned char *nemesis_yscroll1, *nemesis_yscroll2;
 
 
-void nemesis_palette_w(int offset,int data);
+WRITE_HANDLER( nemesis_palette_w );
 
 int irq_on = 0;
 int irq1_on = 0;
@@ -80,7 +80,7 @@ int nemesis_interrupt(void)
 	return 0;
 }
 
-void salamand_soundlatch_w (int offset, int data)
+WRITE_HANDLER( salamand_soundlatch_w )
 {
 	soundlatch_w(offset,data & 0xff);
 	cpu_cause_interrupt(1,Z80_IRQ_INT);
@@ -123,7 +123,7 @@ int gx400_interrupt(void)
 	return 0;
 }
 
-void gx400_irq1_enable_w(int offset,int data)
+WRITE_HANDLER( gx400_irq1_enable_w )
 {
 	if ((data & 0x00ff0000) == 0)
 		irq1_on = data & 0x0001;
@@ -131,7 +131,7 @@ void gx400_irq1_enable_w(int offset,int data)
 if (errorlog) fprintf(errorlog,"irq1en = %08x\n",data);*/
 }
 
-void gx400_irq2_enable_w(int offset,int data)
+WRITE_HANDLER( gx400_irq2_enable_w )
 {
 	if ((data & 0x00ff0000) == 0)
 		irq2_on = data & 0x0001;
@@ -139,7 +139,7 @@ void gx400_irq2_enable_w(int offset,int data)
 if (errorlog) fprintf(errorlog,"irq2en = %08x\n",data);*/
 }
 
-void gx400_irq4_enable_w(int offset,int data)
+WRITE_HANDLER( gx400_irq4_enable_w )
 {
 	if ((data & 0xff000000) == 0)
 		irq4_on = data & 0x0100;
@@ -150,17 +150,17 @@ if (errorlog) fprintf(errorlog,"irq4en = %08x\n",data);*/
 static unsigned char *gx400_shared_ram;
 
 
-int gx400_sharedram_nosoundfix_r(int offset)
+READ_HANDLER( gx400_sharedram_nosoundfix_r )
 {
 	return 2;
 }
 
-int gx400_sharedram_r(int offset)
+READ_HANDLER( gx400_sharedram_r )
 {
 	return gx400_shared_ram[offset / 2];
 }
 
-void gx400_sharedram_w(int offset,int data)
+WRITE_HANDLER( gx400_sharedram_w )
 {
 	gx400_shared_ram[offset / 2] = data;
 }
@@ -175,19 +175,19 @@ int salamand_interrupt(void)
 		return(0);
 }
 
-void nemesis_irq_enable_w(int offset,int data)
+WRITE_HANDLER( nemesis_irq_enable_w )
 {
 	irq_on = data & 0xff;
 }
 
-void konamigt_irq_enable_w(int offset,int data)
+WRITE_HANDLER( konamigt_irq_enable_w )
 {
 	if ((data & 0x00ff0000) == 0)
 	{
 		irq_on = data & 0xff;
 	}
 }
-void konamigt_irq2_enable_w(int offset,int data)
+WRITE_HANDLER( konamigt_irq2_enable_w )
 {
 	if ((data & 0x00ff0000) == 0)
 	{
@@ -195,7 +195,7 @@ void konamigt_irq2_enable_w(int offset,int data)
 	}
 }
 
-int konamigt_input_r(int offset)
+READ_HANDLER( konamigt_input_r )
 {
 	int data=readinputport(1);
 	int data2=readinputport(6);
@@ -213,7 +213,7 @@ int konamigt_input_r(int offset)
 	return ret;
 }
 
-void nemesis_soundlatch_w (int offset, int data)
+WRITE_HANDLER( nemesis_soundlatch_w )
 {
 	soundlatch_w(offset,data & 0xff);
 
@@ -274,13 +274,13 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }  /* end of table */
 };
 
-void salamand_speech_start (int offset, int data)
+WRITE_HANDLER( salamand_speech_start_w )
 {
         VLM5030_ST ( 1 );
         VLM5030_ST ( 0 );
 }
 
-void gx400_speech_start (int offset, int data)
+WRITE_HANDLER( gx400_speech_start_w )
 {
         /* the voice data is not in a rom but in sound RAM at $8000 */
         VLM5030_set_rom ((memory_region(REGION_CPU2))+ 0x8000);
@@ -288,7 +288,7 @@ void gx400_speech_start (int offset, int data)
         VLM5030_ST (0);
 }
 
-static int nemesis_portA_r(int offset)
+static READ_HANDLER( nemesis_portA_r )
 {
 	#define TIMER_RATE 1024
 
@@ -503,7 +503,7 @@ static struct MemoryWriteAddress gx400_sound_writemem[] =
 	{ 0xe004, 0xe004, k005289_keylatch_B_w },
 	{ 0xe005, 0xe005, AY8910_control_port_1_w },
 	{ 0xe006, 0xe006, AY8910_control_port_0_w },
-	{ 0xe030, 0xe030, gx400_speech_start },
+	{ 0xe030, 0xe030, gx400_speech_start_w },
 	{ 0xe106, 0xe106, AY8910_write_port_0_w },
 	{ 0xe405, 0xe405, AY8910_write_port_1_w },
 	{ -1 }  /* end of table */
@@ -549,7 +549,7 @@ static struct MemoryWriteAddress salamand_writemem[] =
 	{ -1 }  /* end of table */
 };
 
-static int wd_read(int offset)
+static READ_HANDLER( wd_r )
 {
 	static int a=1;
 	a^= 1;
@@ -563,7 +563,7 @@ static struct MemoryReadAddress sal_sound_readmem[] =
 	{ 0xa000, 0xa000, soundlatch_r },
 	{ 0xb000, 0xb00d, K007232_read_port_0_r },
 	{ 0xc001, 0xc001, YM2151_status_port_0_r },
-	{ 0xe000, 0xe000, wd_read }, /* watchdog?? */
+	{ 0xe000, 0xe000, wd_r }, /* watchdog?? */
 	{ -1 }  /* end of table */
 };
 
@@ -575,7 +575,7 @@ static struct MemoryWriteAddress sal_sound_writemem[] =
 	{ 0xc000, 0xc000, YM2151_register_port_0_w },
 	{ 0xc001, 0xc001, YM2151_data_port_0_w },
 	{ 0xd000, 0xd000, VLM5030_data_w },
-	{ 0xf000, 0xf000, salamand_speech_start },
+	{ 0xf000, 0xf000, salamand_speech_start_w },
 	{ -1 }  /* end of table */
 };
 

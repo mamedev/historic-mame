@@ -116,7 +116,7 @@ void taitof2_vh_stop (void)
 }
 
 /* we have to straighten out the 16-bit word into bytes for gfxdecode() to work */
-int taitof2_characterram_r(int offset)
+READ_HANDLER( taitof2_characterram_r )
 {
 	int res;
 
@@ -129,7 +129,7 @@ int taitof2_characterram_r(int offset)
 	return res;
 }
 
-void taitof2_characterram_w(int offset,int data)
+WRITE_HANDLER( taitof2_characterram_w )
 {
 	int oldword = READ_WORD (&taitof2_characterram[offset]);
 	int newword;
@@ -147,12 +147,12 @@ void taitof2_characterram_w(int offset,int data)
 	}
 }
 
-int taitof2_text_r(int offset)
+READ_HANDLER( taitof2_text_r )
 {
 	return READ_WORD(&f2_textram[offset]);
 }
 
-void taitof2_text_w(int offset,int data)
+WRITE_HANDLER( taitof2_text_w )
 {
 	int oldword = READ_WORD (&f2_textram[offset]);
 	int newword = COMBINE_WORD (oldword, data);
@@ -164,12 +164,12 @@ void taitof2_text_w(int offset,int data)
 	}
 }
 
-int taitof2_background_r(int offset)
+READ_HANDLER( taitof2_background_r )
 {
 	return READ_WORD(&f2_backgroundram[offset]);
 }
 
-void taitof2_background_w(int offset,int data)
+WRITE_HANDLER( taitof2_background_w )
 {
 	int oldword = READ_WORD (&f2_backgroundram[offset]);
 	int newword = COMBINE_WORD (oldword, data);
@@ -181,12 +181,12 @@ void taitof2_background_w(int offset,int data)
 	}
 }
 
-int taitof2_foreground_r(int offset)
+READ_HANDLER( taitof2_foreground_r )
 {
 	return READ_WORD(&f2_foregroundram[offset]);
 }
 
-void taitof2_foreground_w(int offset,int data)
+WRITE_HANDLER( taitof2_foreground_w )
 {
 	int oldword = READ_WORD (&f2_foregroundram[offset]);
 	int newword = COMBINE_WORD (oldword, data);
@@ -198,7 +198,7 @@ void taitof2_foreground_w(int offset,int data)
 	}
 }
 
-void taitof2_spritebank_w (int offset, int data)
+WRITE_HANDLER( taitof2_spritebank_w )
 {
 	if (errorlog) fprintf (errorlog, "bank %d, new value: %04x\n", offset >> 1, data << 10);
 	if ((offset >> 1) < 4) return;

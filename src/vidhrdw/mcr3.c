@@ -69,7 +69,7 @@ static UINT8 last_cocktail_flip;
  *
  *************************************/
 
-void mcr3_paletteram_w(int offset,int data)
+WRITE_HANDLER( mcr3_paletteram_w )
 {
 	int r, g, b;
 
@@ -97,7 +97,7 @@ void mcr3_paletteram_w(int offset,int data)
  *
  *************************************/
 
-void mcr3_videoram_w(int offset,int data)
+WRITE_HANDLER( mcr3_videoram_w )
 {
 	if (videoram[offset] != data)
 	{

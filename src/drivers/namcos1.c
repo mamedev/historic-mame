@@ -134,44 +134,44 @@ extern int namcos1_vh_start(void);
 extern void namcos1_vh_stop(void);
 
 /* from machine */
-extern void namcos1_bankswitch_w(int offset,int data);
-extern void namcos1_subcpu_bank(int offset,int data);
+WRITE_HANDLER( namcos1_bankswitch_w );
+WRITE_HANDLER( namcos1_subcpu_bank_w );
 
-extern int namcos1_0_banked_area0_r(int offset);
-extern int namcos1_0_banked_area1_r(int offset);
-extern int namcos1_0_banked_area2_r(int offset);
-extern int namcos1_0_banked_area3_r(int offset);
-extern int namcos1_0_banked_area4_r(int offset);
-extern int namcos1_0_banked_area5_r(int offset);
-extern int namcos1_0_banked_area6_r(int offset);
-extern int namcos1_0_banked_area7_r(int offset);
-extern int namcos1_1_banked_area0_r(int offset);
-extern int namcos1_1_banked_area1_r(int offset);
-extern int namcos1_1_banked_area2_r(int offset);
-extern int namcos1_1_banked_area3_r(int offset);
-extern int namcos1_1_banked_area4_r(int offset);
-extern int namcos1_1_banked_area5_r(int offset);
-extern int namcos1_1_banked_area6_r(int offset);
-extern int namcos1_1_banked_area7_r(int offset);
-extern void namcos1_0_banked_area0_w(int offset,int data);
-extern void namcos1_0_banked_area1_w(int offset,int data);
-extern void namcos1_0_banked_area2_w(int offset,int data);
-extern void namcos1_0_banked_area3_w(int offset,int data);
-extern void namcos1_0_banked_area4_w(int offset,int data);
-extern void namcos1_0_banked_area5_w(int offset,int data);
-extern void namcos1_0_banked_area6_w(int offset,int data);
-extern void namcos1_1_banked_area0_w(int offset,int data);
-extern void namcos1_1_banked_area1_w(int offset,int data);
-extern void namcos1_1_banked_area2_w(int offset,int data);
-extern void namcos1_1_banked_area3_w(int offset,int data);
-extern void namcos1_1_banked_area4_w(int offset,int data);
-extern void namcos1_1_banked_area5_w(int offset,int data);
-extern void namcos1_1_banked_area6_w(int offset,int data);
-extern void namcos1_cpu_control_w(int offset,int data);
-extern void namcos1_sound_bankswitch_w(int offset,int data);
+READ_HANDLER( namcos1_0_banked_area0_r );
+READ_HANDLER( namcos1_0_banked_area1_r );
+READ_HANDLER( namcos1_0_banked_area2_r );
+READ_HANDLER( namcos1_0_banked_area3_r );
+READ_HANDLER( namcos1_0_banked_area4_r );
+READ_HANDLER( namcos1_0_banked_area5_r );
+READ_HANDLER( namcos1_0_banked_area6_r );
+READ_HANDLER( namcos1_0_banked_area7_r );
+READ_HANDLER( namcos1_1_banked_area0_r );
+READ_HANDLER( namcos1_1_banked_area1_r );
+READ_HANDLER( namcos1_1_banked_area2_r );
+READ_HANDLER( namcos1_1_banked_area3_r );
+READ_HANDLER( namcos1_1_banked_area4_r );
+READ_HANDLER( namcos1_1_banked_area5_r );
+READ_HANDLER( namcos1_1_banked_area6_r );
+READ_HANDLER( namcos1_1_banked_area7_r );
+WRITE_HANDLER( namcos1_0_banked_area0_w );
+WRITE_HANDLER( namcos1_0_banked_area1_w );
+WRITE_HANDLER( namcos1_0_banked_area2_w );
+WRITE_HANDLER( namcos1_0_banked_area3_w );
+WRITE_HANDLER( namcos1_0_banked_area4_w );
+WRITE_HANDLER( namcos1_0_banked_area5_w );
+WRITE_HANDLER( namcos1_0_banked_area6_w );
+WRITE_HANDLER( namcos1_1_banked_area0_w );
+WRITE_HANDLER( namcos1_1_banked_area1_w );
+WRITE_HANDLER( namcos1_1_banked_area2_w );
+WRITE_HANDLER( namcos1_1_banked_area3_w );
+WRITE_HANDLER( namcos1_1_banked_area4_w );
+WRITE_HANDLER( namcos1_1_banked_area5_w );
+WRITE_HANDLER( namcos1_1_banked_area6_w );
+WRITE_HANDLER( namcos1_cpu_control_w );
+WRITE_HANDLER( namcos1_sound_bankswitch_w );
 
-extern void namcos1_mcu_bankswitch_w(int offset,int data);
-extern void namcos1_mcu_patch_w(int offset,int data);
+WRITE_HANDLER( namcos1_mcu_bankswitch_w );
+WRITE_HANDLER( namcos1_mcu_patch_w );
 
 extern void init_namcos1( void );
 
@@ -242,7 +242,7 @@ static struct MemoryWriteAddress main_writemem[] =
 	{ 0xf200, 0xf200, MWA_NOP }, /* watchdog? */
 //	{ 0xf400, 0xf400, MWA_NOP }, /* unknown */
 //	{ 0xf600, 0xf600, MWA_NOP }, /* unknown */
-	{ 0xfc00, 0xfc01, namcos1_subcpu_bank },
+	{ 0xfc00, 0xfc01, namcos1_subcpu_bank_w },
 	{ -1 }	/* end of table */
 };
 
@@ -305,21 +305,21 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }	/* end of table */
 };
 
-static int dsw_r(int offs)
+static READ_HANDLER( dsw_r )
 {
 	int ret = readinputport(2);
 
-	if (offs == 0)
+	if (offset == 0)
 		ret >>= 4;
 
 	return 0xf0 | (ret & 0x0f);
 }
 
-static void namcos1_coin_w(int offset,int data)
+static WRITE_HANDLER( namcos1_coin_w )
 {
-//	coin_lockout_global_w(0,~data & 1);
-//	coin_counter_w(0,data & 2);
-//	coin_counter_w(1,data & 4);
+	coin_lockout_global_w(0,~data & 1);
+	coin_counter_w(0,data & 2);
+	coin_counter_w(1,data & 4);
 }
 
 static int dac0_value ,dac1_value, dac0_gain=0, dac1_gain=0;
@@ -329,7 +329,7 @@ static void namcos1_update_DACs(void)
 	DAC_signed_data_16_w(0,0x8000+(dac0_value * dac0_gain)+(dac1_value * dac1_gain));
 }
 
-static void namcos1_dac_gain_w(int offset,int data)
+static WRITE_HANDLER( namcos1_dac_gain_w )
 {
 	int value;
 	/* DAC0 */
@@ -341,13 +341,13 @@ static void namcos1_dac_gain_w(int offset,int data)
 	namcos1_update_DACs();
 }
 
-static void namcos1_dac0_w(int offset,int data)
+static WRITE_HANDLER( namcos1_dac0_w )
 {
 	dac0_value = data-0x80; /* shift zero point */
 	namcos1_update_DACs();
 }
 
-static void namcos1_dac1_w(int offset,int data)
+static WRITE_HANDLER( namcos1_dac1_w )
 {
 	dac1_value = data-0x80; /* shift zero point */
 	namcos1_update_DACs();
@@ -355,7 +355,7 @@ static void namcos1_dac1_w(int offset,int data)
 
 static int num=0, strobe=0;
 
-static int quester_in0_r(int offset)
+static READ_HANDLER( quester_in0_r )
 {
 	int ret;
 
@@ -369,7 +369,7 @@ static int quester_in0_r(int offset)
 	return ret;
 }
 
-static int quester_in1_r(int offset)
+static READ_HANDLER( quester_in1_r )
 {
 	int ret;
 
@@ -383,7 +383,7 @@ static int quester_in1_r(int offset)
 	return ret;
 }
 
-static int faceoff_in0_r(int offset)
+static READ_HANDLER( faceoff_in0_r )
 {
 	int ret;
 
@@ -397,7 +397,7 @@ static int faceoff_in0_r(int offset)
 	return ret;
 }
 
-static int faceoff_in1_r(int offset)
+static READ_HANDLER( faceoff_in1_r )
 {
 	int ret;
 
@@ -530,13 +530,13 @@ INPUT_PORTS_START( ns1 )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START		/* IN2 : mcu PORT2 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED ) //OUT:coin lockout
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED ) //OUT:coin counter1
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNUSED ) //OUT:coin counter2
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* OUT:coin lockout */
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* OUT:coin counter 1 */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* OUT:coin counter 2 */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Service Button", KEYCODE_F1, IP_JOY_NONE )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -569,13 +569,13 @@ INPUT_PORTS_START( dspirit )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START		/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* OUT:coin lockout */
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* OUT:coin counter 1 */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* OUT:coin counter 2 */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Service Button", KEYCODE_F1, IP_JOY_NONE )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -610,13 +610,13 @@ INPUT_PORTS_START( quester )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START		/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* OUT:coin lockout */
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* OUT:coin counter 1 */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* OUT:coin counter 2 */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Service Button", KEYCODE_F1, IP_JOY_NONE )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START		/* IN4 - fake input port for player 1 paddle */
@@ -651,13 +651,13 @@ INPUT_PORTS_START( faceoff )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START		/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* OUT:coin lockout */
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* OUT:coin counter 1 */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* OUT:coin counter 2 */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Service Button", KEYCODE_F1, IP_JOY_NONE )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START		/* IN4 - fake input port for player 1 */
@@ -728,13 +728,13 @@ INPUT_PORTS_START( berabohm )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START		/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* OUT:coin lockout */
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* OUT:coin counter 1 */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* OUT:coin counter 2 */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Service Button", KEYCODE_F1, IP_JOY_NONE )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	/*

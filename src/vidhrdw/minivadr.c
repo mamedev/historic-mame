@@ -34,7 +34,7 @@ void minivadr_init_palette(unsigned char *game_palette, unsigned short *game_col
 	Draw Pixel.
 
 *******************************************************************/
-void minivadr_videoram_w(int offset,int data)
+WRITE_HANDLER( minivadr_videoram_w )
 {
 	int i;
 	int x, y;

@@ -11,27 +11,27 @@
 #include "vidhrdw/vector.h"
 
 /* from machine/foodf.c */
-int foodf_nvram_r(int offset);
-void foodf_nvram_w(int offset,int data);
+READ_HANDLER( foodf_nvram_r );
+WRITE_HANDLER( foodf_nvram_w );
 void foodf_nvram_handler(void *file,int read_or_write);
 
 /* from vidhrdw/aztarac.c */
 void aztarac_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int aztarac_vh_start (void);
-void aztarac_ubr_w(int offset, int data);
+WRITE_HANDLER( aztarac_ubr_w );
 int aztarac_vg_interrupt(void);
 
 extern UINT8 *aztarac_vectorram;
 
 /* from sndhrdw/aztarac.c */
-int aztarac_sound_r(int offset);
-void aztarac_sound_w(int offset, int data);
-int aztarac_snd_command_r(int offset);
-int aztarac_snd_status_r(int offset);
-void aztarac_snd_status_w(int offset, int data);
+READ_HANDLER( aztarac_sound_r );
+WRITE_HANDLER( aztarac_sound_w );
+READ_HANDLER( aztarac_snd_command_r );
+READ_HANDLER( aztarac_snd_status_r );
+WRITE_HANDLER( aztarac_snd_status_w );
 int aztarac_snd_timed_irq (void);
 
-static int aztarac_joystick_r(int offset)
+static READ_HANDLER( aztarac_joystick_r )
 {
     return (((input_port_0_r (offset) - 0xf) << 8) |
             ((input_port_1_r (offset) - 0xf) & 0xff));

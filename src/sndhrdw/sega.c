@@ -192,7 +192,7 @@ int sega_sh_start (const struct MachineSound *msound)
 	return 0;
 }
 
-int sega_sh_r (int offset)
+READ_HANDLER( sega_sh_r )
 {
 	/* 0x80 = universal sound board ready */
 	/* 0x01 = speech ready */
@@ -203,7 +203,7 @@ int sega_sh_r (int offset)
 		return 0x80;
 }
 
-void sega_sh_speech_w (int offset,int data)
+WRITE_HANDLER( sega_sh_speech_w )
 {
 	int sound;
 
@@ -268,7 +268,7 @@ int tacscan_sh_start (const struct MachineSound *msound)
 	return 0;
 }
 
-void tacscan_sh_w (int offset,int data)
+WRITE_HANDLER( tacscan_sh_w )
 {
 	int sound;   /* index into the sample name array in drivers/sega.c */
 	int voice=0; /* which voice to play the sound on */
@@ -393,7 +393,7 @@ void tacscan_sh_update (void)
 }
 
 
-void elim1_sh_w (int offset,int data)
+WRITE_HANDLER( elim1_sh_w )
 {
 	data ^= 0xff;
 
@@ -426,7 +426,7 @@ void elim1_sh_w (int offset,int data)
 	}
 }
 
-void elim2_sh_w (int offset,int data)
+WRITE_HANDLER( elim2_sh_w )
 {
 	data ^= 0xff;
 
@@ -452,7 +452,7 @@ void elim2_sh_w (int offset,int data)
 }
 
 
-void zektor1_sh_w (int offset,int data)
+WRITE_HANDLER( zektor1_sh_w )
 {
 	data ^= 0xff;
 
@@ -485,7 +485,7 @@ void zektor1_sh_w (int offset,int data)
 	}
 }
 
-void zektor2_sh_w (int offset,int data)
+WRITE_HANDLER( zektor2_sh_w )
 {
 	data ^= 0xff;
 
@@ -512,7 +512,7 @@ void zektor2_sh_w (int offset,int data)
 
 
 
-void startrek_sh_w (int offset,int data)
+WRITE_HANDLER( startrek_sh_w )
 {
 	switch (data)
    	{
@@ -603,7 +603,7 @@ void startrek_sh_w (int offset,int data)
 	}
 }
 
-void spacfury1_sh_w (int offset,int data)
+WRITE_HANDLER( spacfury1_sh_w )
 {
 	data ^= 0xff;
 
@@ -639,7 +639,7 @@ void spacfury1_sh_w (int offset,int data)
 
 }
 
-void spacfury2_sh_w (int offset,int data)
+WRITE_HANDLER( spacfury2_sh_w )
 {
 	if (Machine->samples == 0) return;
 

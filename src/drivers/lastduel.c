@@ -19,28 +19,28 @@ microcontroller.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-int lastduel_vram_r(int offset);
-void lastduel_vram_w(int offset,int value);
-void lastduel_flip_w(int offset,int value);
-int lastduel_scroll2_r(int offset);
-int lastduel_scroll1_r(int offset);
-void lastduel_scroll1_w(int offset,int value);
-void lastduel_scroll2_w(int offset,int value);
-void madgear_scroll1_w(int offset,int value);
-void madgear_scroll2_w(int offset,int value);
+READ_HANDLER( lastduel_vram_r );
+WRITE_HANDLER( lastduel_vram_w );
+WRITE_HANDLER( lastduel_flip_w );
+READ_HANDLER( lastduel_scroll2_r );
+READ_HANDLER( lastduel_scroll1_r );
+WRITE_HANDLER( lastduel_scroll1_w );
+WRITE_HANDLER( lastduel_scroll2_w );
+WRITE_HANDLER( madgear_scroll1_w );
+WRITE_HANDLER( madgear_scroll2_w );
 int lastduel_vh_start(void);
 int madgear_vh_start(void);
 void lastduel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void ledstorm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void lastduel_eof_callback(void);
-void lastduel_scroll_w( int offset, int data );
+WRITE_HANDLER( lastduel_scroll_w );
 
 extern unsigned char *lastduel_vram,*lastduel_scroll2,*lastduel_scroll1;
 static unsigned char *lastduel_ram;
 
 /******************************************************************************/
 
-static int lastduel_inputs_r(int offset)
+static READ_HANDLER( lastduel_inputs_r )
 {
 
   switch (offset) {
@@ -61,7 +61,7 @@ static int lastduel_inputs_r(int offset)
   return 0xffff;
 }
 
-static int madgear_inputs_r(int offset)
+static READ_HANDLER( madgear_inputs_r )
 {
 	switch (offset) {
     case 0: /* DIP switch A, DIP switch B */
@@ -81,7 +81,7 @@ static int madgear_inputs_r(int offset)
 	return 0xffff;
 }
 
-static void lastduel_sound_w( int offset, int data )
+static WRITE_HANDLER( lastduel_sound_w )
 {
 	soundlatch_w(offset,data & 0xff);
 }
@@ -168,7 +168,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }	/* end of table */
 };
 
-static void mg_bankswitch_w(int offset, int data)
+static WRITE_HANDLER( mg_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU2);

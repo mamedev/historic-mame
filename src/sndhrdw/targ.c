@@ -78,7 +78,7 @@ void targ_sh_stop(void)
     mixer_stop_sample(tone_channel);
 }
 
-void targ_sh_w(int offset,int data)
+WRITE_HANDLER( targ_sh_w )
 {
 	int maxfreq;
 

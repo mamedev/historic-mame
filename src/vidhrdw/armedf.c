@@ -25,246 +25,205 @@ static struct tilemap *background, *foreground, *text_layer;
 
 /******************************************************************/
 
-static void get_text_tile_info( int col, int row ){
-	UINT16 *source = (UINT16 *)(videoram+0x80);
-	int offset = col*32+row;
-	unsigned char attributes = source[offset+0x800]&0xff;
-	int tile_number = (source[offset]&0xff) + 256*(attributes&3);
+static UINT32 armedf_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
+{
+	/* logical (col,row) -> memory offset */
+	return 32*col+row + 0x80;
+}
+
+static void get_tx_tile_info(int tile_index)
+{
+	UINT16 *source = (UINT16 *)videoram;
+	unsigned char attributes = source[tile_index+0x800]&0xff;
+	int tile_number = (source[tile_index]&0xff) + 256*(attributes&3);
 	int color = attributes>>4;
 	SET_TILE_INFO( 0, tile_number, color );
 }
 
-void armedf_text_videoram_w( int offset, int data ){
+WRITE_HANDLER( armedf_text_videoram_w )
+{
 	int oldword = READ_WORD(&videoram[offset]);
 	int newword = COMBINE_WORD(oldword,data);
-	if( oldword != newword ){
+	if( oldword != newword )
+	{
 		WRITE_WORD(&videoram[offset],newword);
-		offset = (offset-0x80)/2;
-		if( offset>=0x800 ) offset -= 0x800;
-		if( offset>=0 && offset<38*32 ){
-			tilemap_mark_tile_dirty( text_layer, offset/32, offset%32 );
-		}
+		tilemap_mark_tile_dirty(text_layer,(offset/2) & 0x7ff);
 	}
 }
 
-int armedf_text_videoram_r( int offset ){
+READ_HANDLER( armedf_text_videoram_r )
+{
 	return READ_WORD (&videoram[offset]);
 }
 
-int terraf_text_videoram_r(int offset){
+READ_HANDLER( terraf_text_videoram_r )
+{
 	return READ_WORD( &videoram[offset] );
 }
 
-void terraf_text_videoram_w( int offset,int data ){
+WRITE_HANDLER( terraf_text_videoram_w )
+{
 	int oldword = READ_WORD(&videoram[offset]);
 	int newword = COMBINE_WORD(oldword,data);
-	if( oldword != newword ){
-		int row,col;
+	if( oldword != newword )
+	{
 		WRITE_WORD(&videoram[offset],newword);
 		offset = offset/2;
-		row = 31-(offset&0x3ff)/32;
-
-		if( offset>=0x800 ){
-			col = offset%32;
-			if( col<3 )
-				tilemap_mark_tile_dirty( text_layer,col+35,row );
-			else if( col>=29 )
-				tilemap_mark_tile_dirty( text_layer,col-29,row );
-		}
-		else {
-			offset = offset&0x3ff;
-			col = (offset%32)+3;
-			tilemap_mark_tile_dirty( text_layer,col,row );
-		}
+		tilemap_mark_tile_dirty(text_layer,offset & 0xbff);
 	}
 }
 
-static void terraf_get_text_tile_info( int col, int row ){
+static UINT32 terraf_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
+{
+	/* logical (col,row) -> memory offset */
 	int tile_index = 32*(31-row);
-	UINT16 *source = (UINT16 *)videoram;
-
-	if( col<3 ){
+	if( col<3 )
+	{
 		tile_index += 0x800+col+29;
 	}
-	else if( col<35 ){
+	else if( col<35 )
+	{
 		tile_index += (col-3);
 	}
-	else {
+	else
+	{
 		tile_index += 0x800+col-35;
 	}
+	return tile_index;
+}
 
-	{
-		unsigned char attributes = source[tile_index+0x400]&0xff;
-		int tile_number = source[tile_index]&0xff;
+static void terraf_get_tx_tile_info(int tile_index)
+{
+	UINT16 *source = (UINT16 *)videoram;
+	unsigned char attributes = source[tile_index+0x400]&0xff;
+	int tile_number = source[tile_index]&0xff;
 
-		SET_TILE_INFO( 0, /* gfx bank */
-			tile_number+ 256*(attributes&0x3),
-			attributes>>4 /* color */
-		);
-	}
+	SET_TILE_INFO(0,tile_number + 256 * (attributes & 0x3),attributes >> 4);
 }
 
 /******************************************************************/
 
-static void get_fg_tile_info( int col, int row ){
-	UINT16 data = ((UINT16 *)armedf_fg_videoram)[col*32+row];
+static void get_fg_tile_info( int tile_index )
+{
+	UINT16 data = ((UINT16 *)armedf_fg_videoram)[tile_index];
 	SET_TILE_INFO( 1, data&0x7ff, data>>11 );
 }
 
-void armedf_fg_videoram_w(int offset,int data){
+WRITE_HANDLER( armedf_fg_videoram_w )
+{
 	int oldword = READ_WORD(&armedf_fg_videoram[offset]);
 	int newword = COMBINE_WORD(oldword,data);
-	if( oldword != newword ){
+	if( oldword != newword )
+	{
 		WRITE_WORD(&armedf_fg_videoram[offset],newword);
-		offset = offset/2;
-		tilemap_mark_tile_dirty( foreground, offset/32, offset%32 );
+		tilemap_mark_tile_dirty( foreground, offset/2 );
 	}
 }
 
-int armedf_fg_videoram_r (int offset){
+READ_HANDLER( armedf_fg_videoram_r )
+{
 	return READ_WORD (&armedf_fg_videoram[offset]);
 }
 
 /******************************************************************/
 
-static void get_bg_tile_info( int col, int row ){
-	UINT16 data = ((UINT16 *)armedf_bg_videoram)[col*32+row];
+static void get_bg_tile_info( int tile_index )
+{
+	UINT16 data = ((UINT16 *)armedf_bg_videoram)[tile_index];
 	SET_TILE_INFO( 2, data&0x3ff, data>>11 );
 }
 
-void armedf_bg_videoram_w(int offset,int data){
+WRITE_HANDLER( armedf_bg_videoram_w )
+{
 	int oldword = READ_WORD(&armedf_bg_videoram[offset]);
 	int newword = COMBINE_WORD(oldword,data);
-	if( oldword != newword ){
+	if( oldword != newword )
+	{
 		WRITE_WORD(&armedf_bg_videoram[offset],newword);
-		offset = offset/2;
-		tilemap_mark_tile_dirty( background, offset/32, offset%32 );
+		tilemap_mark_tile_dirty( background, offset/2 );
 	}
 }
 
-int armedf_bg_videoram_r (int offset){
+READ_HANDLER( armedf_bg_videoram_r )
+{
 	return READ_WORD( &armedf_bg_videoram[offset] );
 }
 
 /******************************************************************/
 
-int terraf_vh_start(void){
+int terraf_vh_start(void)
+{
 	scroll_type = 0;
 
-	text_layer = tilemap_create(
-		terraf_get_text_tile_info,
-		TILEMAP_TRANSPARENT,
-		8,8,	/* tile width, tile height */
-		38,32	/* number of columns, number of rows */
-	);
+	text_layer = tilemap_create(terraf_get_tx_tile_info,terraf_scan,TILEMAP_TRANSPARENT,8,8,38,32);
+	background = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,16,16,64,32);
+	foreground = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,64,32);
 
-	background = tilemap_create(
-		get_bg_tile_info,
-		0,
-		16,16,	/* tile width, tile height */
-		64,32	/* number of columns, number of rows */
-	);
+	if (!background || !foreground || !text_layer)
+		return 1;
 
-	foreground = tilemap_create(
-		get_fg_tile_info,
-		TILEMAP_TRANSPARENT,
-		16,16,	/* tile width, tile height */
-		64,32	/* number of columns, number of rows */
-	);
+	foreground->transparent_pen = 0xf;
+	text_layer->transparent_pen = 0xf;
 
-	if( background && foreground && text_layer ){
-		foreground->transparent_pen = 0xf;
-		text_layer->transparent_pen = 0xf;
-
-		return 0;
-	}
-	return 1;
+	return 0;
 }
 
-int armedf_vh_start(void){
+int armedf_vh_start(void)
+{
 	scroll_type = 1;
 
-	text_layer = tilemap_create(
-		get_text_tile_info,
-		TILEMAP_TRANSPARENT,
-		8,8,	/* tile width, tile height */
-		38,32	/* number of columns, number of rows */
-	);
+	text_layer = tilemap_create(get_tx_tile_info,armedf_scan,TILEMAP_TRANSPARENT,8,8,38,32);
+	background = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,16,16,64,32);
+	foreground = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,64,32);
 
-	background = tilemap_create(
-		get_bg_tile_info,
-		0,
-		16,16,	/* tile width, tile height */
-		64,32	/* number of columns, number of rows */
-	);
+	if (!background || !foreground || !text_layer)
+		return 1;
 
-	foreground = tilemap_create(
-		get_fg_tile_info,
-		TILEMAP_TRANSPARENT,
-		16,16,	/* tile width, tile height */
-		64,32	/* number of columns, number of rows */
-	);
+	foreground->transparent_pen = 0xf;
+	text_layer->transparent_pen = 0xf;
 
-	if( background && foreground && text_layer ){
-		foreground->transparent_pen = 0xf;
-		text_layer->transparent_pen = 0xf;
-
-		return 0;
-	}
-	return 1;
+	return 0;
 }
 
-int kodure_vh_start(void){
+int kodure_vh_start(void)
+{
 	scroll_type = 2;
 
-	text_layer = tilemap_create(
-		terraf_get_text_tile_info,
-		TILEMAP_TRANSPARENT,
-		8,8,	/* tile width, tile height */
-		38,32	/* number of columns, number of rows */
-	);
+	text_layer = tilemap_create(terraf_get_tx_tile_info,terraf_scan,TILEMAP_TRANSPARENT,8,8,38,32);
+	background = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,16,16,64,32);
+	foreground = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,64,32);
 
-	background = tilemap_create(
-		get_bg_tile_info,
-		0,
-		16,16,	/* tile width, tile height */
-		64,32	/* number of columns, number of rows */
-	);
+	if (!background || !foreground || !text_layer)
+		return 1;
 
-	foreground = tilemap_create(
-		get_fg_tile_info,
-		TILEMAP_TRANSPARENT,
-		16,16,	/* tile width, tile height */
-		64,32	/* number of columns, number of rows */
-	);
+	foreground->transparent_pen = 0xf;
+	text_layer->transparent_pen = 0xf;
 
-	if( background && foreground && text_layer ){
-		foreground->transparent_pen = 0xf;
-		text_layer->transparent_pen = 0xf;
-
-		return 0;
-	}
-	return 1;
+	return 0;
 }
 
-void armedf_vh_stop(void){
+void armedf_vh_stop(void)
+{
 }
 
-static void draw_sprites( struct osd_bitmap *bitmap, int priority ){
+static void draw_sprites( struct osd_bitmap *bitmap, int priority )
+{
 	const struct rectangle *clip = &Machine->drv->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[3];
 
 	UINT16 *source = (UINT16 *)spriteram;
 	UINT16 *finish = source+512;
 
-	while( source<finish ){
+	while( source<finish )
+	{
 		int sy = 128+240-(source[0]&0x1ff);
 		int tile_number = source[1]; /* ??YX?TTTTTTTTTTT */
 
 		int color = (source[2]>>8)&0x1f;
 		int sx = source[3] - 0x60;
 
-		if( ((source[0]&0x2000)?0:1) == priority ){
+		if( ((source[0]&0x2000)?0:1) == priority )
+		{
 			drawgfx(bitmap,gfx,
 				tile_number,
 				color,
@@ -277,7 +236,8 @@ static void draw_sprites( struct osd_bitmap *bitmap, int priority ){
 	}
 }
 
-static void mark_sprite_colors( void ){
+static void mark_sprite_colors( void )
+{
 	UINT16 *source = (UINT16 *)spriteram;
 	UINT16 *finish = source+512;
 	int i;
@@ -285,7 +245,8 @@ static void mark_sprite_colors( void ){
 
 	for( i=0; i<32; i++ ) flag[i] = 0;
 
-	while( source<finish ){
+	while( source<finish )
+	{
 		int color = (source[2]>>8)&0x1f;
 		flag[color] = 1;
 		source+=4;
@@ -294,8 +255,10 @@ static void mark_sprite_colors( void ){
 	{
 		unsigned char *pen_ptr = &palette_used_colors[Machine->drv->gfxdecodeinfo[3].color_codes_start];
 		int pen;
-		for( i = 0; i<32; i++ ){
-			if( flag[i] ){
+		for( i = 0; i<32; i++ )
+		{
+			if( flag[i] )
+			{
 				for( pen = 0; pen<0xf; pen++ ) pen_ptr[pen] = PALETTE_COLOR_USED;
 			}
 			pen_ptr += 16;
@@ -303,7 +266,8 @@ static void mark_sprite_colors( void ){
 	}
 }
 
-void armedf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
+void armedf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
 	int sprite_enable = armedf_vreg & 0x200;
 
 	tilemap_set_enable( background, armedf_vreg&0x800 );
@@ -353,14 +317,16 @@ void armedf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 }
 
 
-static void cclimbr2_draw_sprites( struct osd_bitmap *bitmap, int priority ){
+static void cclimbr2_draw_sprites( struct osd_bitmap *bitmap, int priority )
+{
 	const struct rectangle *clip = &Machine->drv->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[3];
 
 	UINT16 *source = (UINT16 *)spriteram;
 	UINT16 *finish = source+1024;
 
-	while( source<finish ){
+	while( source<finish )
+	{
 		int sy = 240-(source[0]&0x1ff);				// ???
 		int tile_number = source[1]; /* ??YX?TTTTTTTTTTT */
 

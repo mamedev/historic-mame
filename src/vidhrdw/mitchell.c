@@ -30,9 +30,8 @@ void pang_vh_stop(void);
 
 ***************************************************************************/
 
-static void get_bg_tile_info(int col,int row)
+static void get_tile_info(int tile_index)
 {
-	int tile_index = 64*row+col;
 	unsigned char attr = pang_colorram[tile_index];
 	int code = pang_videoram[2*tile_index] + (pang_videoram[2*tile_index+1] << 8);
 	SET_TILE_INFO(0,code,attr & 0x7f)
@@ -42,7 +41,9 @@ static void get_bg_tile_info(int col,int row)
 
 
 /***************************************************************************
-		Video init
+
+  Start the video hardware emulation.
+
 ***************************************************************************/
 
 int pang_vh_start(void)
@@ -51,12 +52,7 @@ int pang_vh_start(void)
 	paletteram=NULL;
 
 
-	bg_tilemap = tilemap_create(
-		get_bg_tile_info,
-		TILEMAP_OPAQUE,
-		8,8,
-		64,32
-	);
+	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
 
 	if (!bg_tilemap)
 		return 1;
@@ -99,48 +95,54 @@ void pang_vh_stop(void)
 
 
 /***************************************************************************
+
+  Memory handlers
+
+***************************************************************************/
+
+/***************************************************************************
   OBJ / CHAR RAM HANDLERS (BANK 0 = CHAR, BANK 1=OBJ)
 ***************************************************************************/
 
 static int video_bank;
 
-void pang_video_bank_w(int offset, int data)
+WRITE_HANDLER( pang_video_bank_w )
 {
 	/* Bank handler (sets base pointers for video write) (doesn't apply to mgakuen) */
 	video_bank = data;
 }
 
-void mgakuen_videoram_w(int offset, int data)
+WRITE_HANDLER( mgakuen_videoram_w )
 {
 	if (pang_videoram[offset] != data)
 	{
 		pang_videoram[offset] = data;
-		tilemap_mark_tile_dirty(bg_tilemap,(offset/2)%64,(offset/2)/64);
+		tilemap_mark_tile_dirty(bg_tilemap,offset/2);
 	}
 }
 
-int mgakuen_videoram_r(int offset)
+READ_HANDLER( mgakuen_videoram_r )
 {
 	return pang_videoram[offset];
 }
 
-void mgakuen_objram_w(int offset, int data)
+WRITE_HANDLER( mgakuen_objram_w )
 {
 	pang_objram[offset]=data;
 }
 
-int mgakuen_objram_r(int offset)
+READ_HANDLER( mgakuen_objram_r )
 {
 	return pang_objram[offset];
 }
 
-void pang_videoram_w(int offset, int data)
+WRITE_HANDLER( pang_videoram_w )
 {
 	if (video_bank) mgakuen_objram_w(offset,data);
 	else mgakuen_videoram_w(offset,data);
 }
 
-int pang_videoram_r(int offset)
+READ_HANDLER( pang_videoram_r )
 {
 	if (video_bank) return mgakuen_objram_r(offset);
 	else return mgakuen_videoram_r(offset);
@@ -150,16 +152,16 @@ int pang_videoram_r(int offset)
   COLOUR RAM
 ****************************************************************************/
 
-void pang_colorram_w(int offset, int data)
+WRITE_HANDLER( pang_colorram_w )
 {
 	if (pang_colorram[offset] != data)
 	{
 		pang_colorram[offset] = data;
-		tilemap_mark_tile_dirty(bg_tilemap,offset%64,offset/64);
+		tilemap_mark_tile_dirty(bg_tilemap,offset);
 	}
 }
 
-int pang_colorram_r(int offset)
+READ_HANDLER( pang_colorram_r )
 {
 	return pang_colorram[offset];
 }
@@ -170,7 +172,7 @@ int pang_colorram_r(int offset)
 
 static int paletteram_bank;
 
-void pang_gfxctrl_w(int offset, int data)
+WRITE_HANDLER( pang_gfxctrl_w )
 {
 if (errorlog) fprintf(errorlog,"PC %04x: pang_gfxctrl_w %02x\n",cpu_get_pc(),data);
 {
@@ -205,24 +207,24 @@ if (errorlog) fprintf(errorlog,"PC %04x: pang_gfxctrl_w %02x\n",cpu_get_pc(),dat
 	/* up marukin - you can see partially built up screens during attract mode. */
 }
 
-void pang_paletteram_w(int offset,int data)
+WRITE_HANDLER( pang_paletteram_w )
 {
 	if (paletteram_bank) paletteram_xxxxRRRRGGGGBBBB_w(offset + 0x800,data);
 	else paletteram_xxxxRRRRGGGGBBBB_w(offset,data);
 }
 
-int pang_paletteram_r(int offset)
+READ_HANDLER( pang_paletteram_r )
 {
 	if (paletteram_bank) return paletteram_r(offset + 0x800);
 	return paletteram_r(offset);
 }
 
-void mgakuen_paletteram_w(int offset,int data)
+WRITE_HANDLER( mgakuen_paletteram_w )
 {
 	paletteram_xxxxRRRRGGGGBBBB_w(offset,data);
 }
 
-int mgakuen_paletteram_r(int offset)
+READ_HANDLER( mgakuen_paletteram_r )
 {
 	return paletteram_r(offset);
 }

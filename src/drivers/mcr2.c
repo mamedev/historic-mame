@@ -84,11 +84,10 @@
 
 
 /* external video code and data */
-extern UINT8 mcr2_sprite_color;
 extern UINT16 mcr3_sprite_code_mask;
 
-void mcr2_videoram_w(int offset, int data);
-void mcr2_paletteram_w(int offset, int data);
+WRITE_HANDLER( mcr2_videoram_w );
+WRITE_HANDLER( mcr2_paletteram_w );
 void mcr2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 void journey_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
@@ -101,7 +100,7 @@ void journey_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
  *
  *************************************/
 
-static int kroozr_dial_r(int offset)
+static READ_HANDLER( kroozr_dial_r )
 {
 	int dial = readinputport(7);
 	int val = readinputport(1);
@@ -113,7 +112,7 @@ static int kroozr_dial_r(int offset)
 }
 
 
-static int kroozr_trakball_x_r(int data)
+static READ_HANDLER( kroozr_trakball_x_r )
 {
 	int val = readinputport(6);
 
@@ -125,7 +124,7 @@ static int kroozr_trakball_x_r(int data)
 }
 
 
-static int kroozr_trakball_y_r(int data)
+static READ_HANDLER( kroozr_trakball_y_r )
 {
 	int val = readinputport(6);
 
@@ -556,8 +555,6 @@ static void init_shollow(void)
 	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_DEFAULT_PORTS;
-
-	mcr2_sprite_color = 1;
 }
 
 
@@ -566,8 +563,6 @@ static void init_tron(void)
 	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_DEFAULT_PORTS;
-
-	mcr2_sprite_color = 1;
 }
 
 
@@ -577,8 +572,6 @@ static void init_kroozr(void)
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_PORT_04_READS(NULL, kroozr_dial_r, kroozr_trakball_x_r, NULL, kroozr_trakball_y_r);
 	MCR_CONFIGURE_PORT_47_WRITES(NULL, NULL, NULL, NULL);
-
-	mcr2_sprite_color = 1;
 }
 
 
@@ -587,8 +580,6 @@ static void init_domino(void)
 	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_DEFAULT_PORTS;
-
-	mcr2_sprite_color = 1;
 }
 
 
@@ -597,8 +588,6 @@ static void init_wacko(void)
 	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_DEFAULT_PORTS;
-
-	mcr2_sprite_color = 0;
 }
 
 
@@ -607,8 +596,6 @@ static void init_twotiger(void)
 	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_DEFAULT_PORTS;
-
-	mcr2_sprite_color = 1;
 }
 
 

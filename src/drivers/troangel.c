@@ -10,7 +10,7 @@ driver by Phil Stroffolino
 #include "vidhrdw/generic.h"
 
 extern unsigned char *troangel_scroll;
-void troangel_flipscreen_w(int offset,int data);
+WRITE_HANDLER( troangel_flipscreen_w );
 void troangel_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void troangel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 

@@ -138,19 +138,19 @@ void pacland_vh_stop(void)
 
 
 
-void pacland_scroll0_w(int offset,int data)
+WRITE_HANDLER( pacland_scroll0_w )
 {
 	scroll0 = data + 256 * offset;
 }
 
-void pacland_scroll1_w(int offset,int data)
+WRITE_HANDLER( pacland_scroll1_w )
 {
 	scroll1 = data + 256 * offset;
 }
 
 
 
-void pacland_bankswitch_w(int offset,int data)
+WRITE_HANDLER( pacland_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);

@@ -122,9 +122,9 @@ Program ROM (48K bytes)                   4000-FFFF   R    D0-D7
 
 extern int vindctr2_screen_refresh;
 
-void gauntlet_playfieldram_w(int offset, int data);
-void gauntlet_hscroll_w(int offset, int data);
-void gauntlet_vscroll_w(int offset, int data);
+WRITE_HANDLER( gauntlet_playfieldram_w );
+WRITE_HANDLER( gauntlet_hscroll_w );
+WRITE_HANDLER( gauntlet_vscroll_w );
 
 void gauntlet_scanline_update(int scanline);
 
@@ -235,7 +235,7 @@ static int fake_inputs(int real_port, int fake_port)
 }
 
 
-static int control_r(int offset)
+static READ_HANDLER( control_r )
 {
 	/* differentiate Gauntlet input from Vindicators 2 inputs via the refresh flag */
 	if (!vindctr2_screen_refresh)
@@ -279,7 +279,7 @@ static int control_r(int offset)
  *
  *************************************/
 
-static int input_r(int offset)
+static READ_HANDLER( input_r )
 {
 	int temp;
 
@@ -298,7 +298,7 @@ static int input_r(int offset)
 }
 
 
-static int switch_6502_r(int offset)
+static READ_HANDLER( switch_6502_r )
 {
 	int temp = 0x30;
 
@@ -318,7 +318,7 @@ static int switch_6502_r(int offset)
  *
  *************************************/
 
-static void input_w(int offset, int data)
+static WRITE_HANDLER( input_w )
 {
 	switch (offset)
 	{
@@ -345,7 +345,7 @@ static void input_w(int offset, int data)
  *
  *************************************/
 
-static void tms5220_w(int offset, int data)
+static WRITE_HANDLER( tms5220_w )
 {
 	(void)offset;
 	speech_val = data;
@@ -359,7 +359,7 @@ static void tms5220_w(int offset, int data)
  *
  *************************************/
 
-static void sound_ctl_w(int offset, int data)
+static WRITE_HANDLER( sound_ctl_w )
 {
 	switch (offset & 7)
 	{
@@ -392,7 +392,7 @@ static void sound_ctl_w(int offset, int data)
  *
  *************************************/
 
-static void mixer_w(int offset, int data)
+static WRITE_HANDLER( mixer_w )
 {
 	(void)offset;
 	atarigen_set_ym2151_vol((data & 7) * 100 / 7);
@@ -408,7 +408,7 @@ static void mixer_w(int offset, int data)
  *
  *************************************/
 
-static int speedup_68010_r(int offset)
+static READ_HANDLER( speedup_68010_r )
 {
 	int result = READ_WORD(&speed_check[offset]);
 	int time = cpu_gettotalcycles();
@@ -422,7 +422,7 @@ static int speedup_68010_r(int offset)
 }
 
 
-static void speedup_68010_w(int offset, int data)
+static WRITE_HANDLER( speedup_68010_w )
 {
 	last_speed_check -= 1000;
 	COMBINE_WORD_MEM(&speed_check[offset], data);

@@ -32,7 +32,7 @@ static int FrameBank,
  *
  *************************************/
 
-void rainbow_c_chip_w(int offset, int data)
+WRITE_HANDLER( rainbow_c_chip_w )
 {
   switch(offset+1)
   {
@@ -55,7 +55,7 @@ void rainbow_c_chip_w(int offset, int data)
 
 extern int mrh_bank1(int address);
 
-int  rainbow_c_chip_r(int offset)
+READ_HANDLER( rainbow_c_chip_r )
 {
   unsigned char *CROM = memory_region(REGION_USER1);	/* C-Chip Dump */
 

@@ -11,8 +11,8 @@
 
 
 unsigned char *pbaction_videoram2,*pbaction_colorram2;
-void pbaction_videoram2_w(int offset,int data);
-void pbaction_colorram2_w(int offset,int data);
+WRITE_HANDLER( pbaction_videoram2_w );
+WRITE_HANDLER( pbaction_colorram2_w );
 static unsigned char *dirtybuffer2;
 static struct osd_bitmap *tmpbitmap2;
 static int scroll;
@@ -68,7 +68,7 @@ void pbaction_vh_stop(void)
 
 
 
-void pbaction_videoram2_w(int offset,int data)
+WRITE_HANDLER( pbaction_videoram2_w )
 {
 	if (pbaction_videoram2[offset] != data)
 	{
@@ -80,7 +80,7 @@ void pbaction_videoram2_w(int offset,int data)
 
 
 
-void pbaction_colorram2_w(int offset,int data)
+WRITE_HANDLER( pbaction_colorram2_w )
 {
 	if (pbaction_colorram2[offset] != data)
 	{
@@ -92,14 +92,14 @@ void pbaction_colorram2_w(int offset,int data)
 
 
 
-void pbaction_scroll_w(int offset,int data)
+WRITE_HANDLER( pbaction_scroll_w )
 {
 	scroll = -(data-3);
 }
 
 
 
-void pbaction_flipscreen_w(int offset,int data)
+WRITE_HANDLER( pbaction_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{

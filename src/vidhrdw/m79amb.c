@@ -17,12 +17,12 @@ enum { BLACK, WHITE };
 
 static unsigned char mask = 0;
 
-void ramtek_mask_w(int offset, int data)
+WRITE_HANDLER( ramtek_mask_w )
 {
 	mask = data;
 }
 
-void ramtek_videoram_w (int offset,int data)
+WRITE_HANDLER( ramtek_videoram_w )
 {
 	data = data & ~mask;
 

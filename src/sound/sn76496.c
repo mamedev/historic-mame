@@ -134,10 +134,10 @@ static void SN76496Write(int chip,int data)
 }
 
 
-void SN76496_0_w(int offset,int data) {	SN76496Write(0,data); }
-void SN76496_1_w(int offset,int data) {	SN76496Write(1,data); }
-void SN76496_2_w(int offset,int data) {	SN76496Write(2,data); }
-void SN76496_3_w(int offset,int data) {	SN76496Write(3,data); }
+WRITE_HANDLER( SN76496_0_w ) {	SN76496Write(0,data); }
+WRITE_HANDLER( SN76496_1_w ) {	SN76496Write(1,data); }
+WRITE_HANDLER( SN76496_2_w ) {	SN76496Write(2,data); }
+WRITE_HANDLER( SN76496_3_w ) {	SN76496Write(3,data); }
 
 
 

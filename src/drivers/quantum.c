@@ -44,16 +44,16 @@
 
 
 int quantum_interrupt(void);
-int quantum_switches_r(int offset);
-void quantum_led_write(int offset,int data);
-void quantum_snd_write(int offset,int data);
-int quantum_snd_read(int offset);
-int quantum_trackball_r (int offset);
-int quantum_input_1_r(int offset);
-int quantum_input_2_r(int offset);
+READ_HANDLER( quantum_switches_r );
+WRITE_HANDLER( quantum_led_w );
+WRITE_HANDLER( quantum_snd_w );
+READ_HANDLER( quantum_snd_r );
+READ_HANDLER( quantum_trackball_r );
+READ_HANDLER( quantum_input_1_r );
+READ_HANDLER( quantum_input_2_r );
 
-int foodf_nvram_r(int offset);
-void foodf_nvram_w(int offset,int data);
+READ_HANDLER( foodf_nvram_r );
+WRITE_HANDLER( foodf_nvram_w );
 void foodf_nvram_handler(void *file,int read_or_write);
 
 
@@ -63,7 +63,7 @@ struct MemoryReadAddress quantum_read[] =
 	{ 0x000000, 0x013fff, MRA_ROM },
 	{ 0x018000, 0x01cfff, MRA_BANK1 },
 	{ 0x800000, 0x801fff, MRA_BANK2 },
-	{ 0x840000, 0x84003f, quantum_snd_read },
+	{ 0x840000, 0x84003f, quantum_snd_r },
 	{ 0x900000, 0x9001ff, foodf_nvram_r },
 	{ 0x940000, 0x940001, quantum_trackball_r }, /* trackball */
 	{ 0x948000, 0x948001, quantum_switches_r },
@@ -76,16 +76,16 @@ struct MemoryWriteAddress quantum_write[] =
 	{ 0x000000, 0x013fff, MWA_ROM },
 	{ 0x018000, 0x01cfff, MWA_BANK1 },
 	{ 0x800000, 0x801fff, MWA_BANK2, &vectorram, &vectorram_size },
-	{ 0x840000, 0x84003f, quantum_snd_write },
+	{ 0x840000, 0x84003f, quantum_snd_w },
 	{ 0x900000, 0x9001ff, foodf_nvram_w },
 	{ 0x950000, 0x95001f, quantum_colorram_w },
-	{ 0x958000, 0x958001, quantum_led_write },
+	{ 0x958000, 0x958001, quantum_led_w },
 	{ 0x960000, 0x960001, MWA_NOP },	/* enable NVRAM? */
-	{ 0x968000, 0x968001, avgdvg_reset },
-//	{ 0x970000, 0x970001, avgdvg_go },
+	{ 0x968000, 0x968001, avgdvg_reset_w },
+//	{ 0x970000, 0x970001, avgdvg_go_w },
 //	{ 0x978000, 0x978001, watchdog_reset_w },
 	/* the following is wrong, but it's the only way I found to fix the service mode */
-	{ 0x978000, 0x978001, avgdvg_go },
+	{ 0x978000, 0x978001, avgdvg_go_w },
 	{ -1 }	/* end of table */
 };
 

@@ -13,19 +13,19 @@
 UINT8 *liberatr_ctrld;
 
 
-void liberatr_led_w(int offset, int data)
+WRITE_HANDLER( liberatr_led_w )
 {
 	osd_led_w(offset, (data >> 4) & 0x01);
 }
 
 
-void liberatr_coin_counter_w(int offset, int data)
+WRITE_HANDLER( liberatr_coin_counter_w )
 {
 	coin_counter_w(offset ^ 0x01, data);
 }
 
 
-int liberatr_input_port_0_r(int offset)
+READ_HANDLER( liberatr_input_port_0_r )
 {
 	int	res ;
 	int xdelta, ydelta;

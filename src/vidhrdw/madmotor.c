@@ -19,6 +19,165 @@ static unsigned char madmotor_pf3_control[32];
 static int flipscreen;
 static struct tilemap *madmotor_pf1_tilemap,*madmotor_pf2_tilemap,*madmotor_pf3_tilemap,*madmotor_pf3a_tilemap;
 
+
+
+
+/* 512 by 512 playfield, 8 by 8 tiles */
+static UINT32 pf1_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
+{
+	/* logical (col,row) -> memory offset */
+	return (col & 0x1f) + ((row & 0x1f) << 5) + ((row & 0x20) << 5) + ((col & 0x20) << 6);
+}
+
+static void get_pf1_tile_info(int tile_index)
+{
+	int tile,color;
+
+	tile=READ_WORD(&madmotor_pf1_data[2*tile_index]);
+	color=tile >> 12;
+	tile=tile&0xfff;
+
+	SET_TILE_INFO(0,tile,color)
+}
+
+/* 512 by 512 playfield, 16 by 16 tiles */
+static UINT32 pf2_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
+{
+	/* logical (col,row) -> memory offset */
+	return (col & 0x0f) + ((row & 0x0f) << 4) + ((row & 0x10) << 4) + ((col & 0x10) << 5);
+}
+
+static void get_pf2_tile_info(int tile_index)
+{
+	int tile,color;
+
+	tile=READ_WORD(&madmotor_pf2_data[2*tile_index]);
+	color=tile >> 12;
+	tile=tile&0xfff;
+
+	SET_TILE_INFO(1,tile,color)
+}
+
+/* 512 by 1024 playfield, 16 by 16 tiles */
+static UINT32 pf3_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
+{
+	/* logical (col,row) -> memory offset */
+	return (col & 0x0f) + ((row & 0x0f) << 4) + ((row & 0x30) << 4) + ((col & 0x10) << 6);
+}
+
+static void get_pf3_tile_info(int tile_index)
+{
+	int tile,color;
+
+	tile=READ_WORD(&madmotor_pf3_data[2*tile_index]);
+	color=tile >> 12;
+	tile=tile&0xfff;
+
+	SET_TILE_INFO(2,tile,color)
+}
+
+/* 2048 by 256 playfield, 16 by 16 tiles */
+static UINT32 pf3a_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
+{
+	/* logical (col,row) -> memory offset */
+	return (col & 0x0f) + ((row & 0x0f) << 4) + ((col & 0x70) << 4);
+}
+
+static void get_pf3a_tile_info(int tile_index)
+{
+	int tile,color;
+
+	tile=READ_WORD(&madmotor_pf3_data[2*tile_index]);
+	color=tile >> 12;
+	tile=tile&0xfff;
+
+	SET_TILE_INFO(2,tile,color)
+}
+
+/******************************************************************************/
+
+int madmotor_vh_start(void)
+{
+	madmotor_pf1_tilemap = tilemap_create(get_pf1_tile_info, pf1_scan, TILEMAP_TRANSPARENT, 8, 8, 64,64);
+	madmotor_pf2_tilemap = tilemap_create(get_pf2_tile_info, pf2_scan, TILEMAP_TRANSPARENT,16,16, 32,32);
+	madmotor_pf3_tilemap = tilemap_create(get_pf3_tile_info, pf3_scan, TILEMAP_OPAQUE,     16,16, 32,64);
+	madmotor_pf3a_tilemap= tilemap_create(get_pf3a_tile_info,pf3a_scan,TILEMAP_OPAQUE,     16,16,128,16);
+
+	if (!madmotor_pf1_tilemap  || !madmotor_pf2_tilemap || !madmotor_pf3_tilemap || !madmotor_pf3a_tilemap)
+		return 1;
+
+	madmotor_pf1_tilemap->transparent_pen = 0;
+	madmotor_pf2_tilemap->transparent_pen = 0;
+	tilemap_set_scroll_rows(madmotor_pf1_tilemap,512);
+
+	return 0;
+}
+
+/******************************************************************************/
+
+READ_HANDLER( madmotor_pf1_data_r )
+{
+	return READ_WORD(&madmotor_pf1_data[offset]);
+}
+
+READ_HANDLER( madmotor_pf2_data_r )
+{
+	return READ_WORD(&madmotor_pf2_data[offset]);
+}
+
+READ_HANDLER( madmotor_pf3_data_r )
+{
+	return READ_WORD(&madmotor_pf3_data[offset]);
+}
+
+WRITE_HANDLER( madmotor_pf1_data_w )
+{
+	COMBINE_WORD_MEM(&madmotor_pf1_data[offset],data);
+	tilemap_mark_tile_dirty(madmotor_pf1_tilemap,offset/2);
+}
+
+WRITE_HANDLER( madmotor_pf2_data_w )
+{
+	COMBINE_WORD_MEM(&madmotor_pf2_data[offset],data);
+	tilemap_mark_tile_dirty(madmotor_pf2_tilemap,offset/2);
+}
+
+WRITE_HANDLER( madmotor_pf3_data_w )
+{
+	COMBINE_WORD_MEM(&madmotor_pf3_data[offset],data);
+
+	/* Mark the dirty position on the 512 x 1024 version */
+	tilemap_mark_tile_dirty(madmotor_pf3_tilemap,offset/2);
+
+	/* Mark the dirty position on the 2048 x 256 version */
+	tilemap_mark_tile_dirty(madmotor_pf3_tilemap,offset/2);
+}
+
+WRITE_HANDLER( madmotor_pf1_control_w )
+{
+	COMBINE_WORD_MEM(&madmotor_pf1_control[offset],data);
+}
+
+WRITE_HANDLER( madmotor_pf2_control_w )
+{
+	COMBINE_WORD_MEM(&madmotor_pf2_control[offset],data);
+}
+
+WRITE_HANDLER( madmotor_pf3_control_w )
+{
+	COMBINE_WORD_MEM(&madmotor_pf3_control[offset],data);
+}
+
+READ_HANDLER( madmotor_pf1_rowscroll_r )
+{
+	return READ_WORD(&madmotor_pf1_rowscroll[offset]);
+}
+
+WRITE_HANDLER( madmotor_pf1_rowscroll_w )
+{
+	COMBINE_WORD_MEM(&madmotor_pf1_rowscroll[offset],data);
+}
+
 /******************************************************************************/
 
 static void madmotor_mark_sprite_colours(void)
@@ -70,81 +229,6 @@ static void madmotor_mark_sprite_colours(void)
 	}
 }
 
-/* 512 by 512 playfield, 8 by 8 tiles */
-static void get_pf1_tile_info( int col, int row )
-{
-	int offs,tile,color;
-
-	if (col>31 && row>31) offs=0x1800 + (col-32)*2 + (row-32) *64; /* Bottom right */
-	else if (col>31) offs=0x1000 + (col-32)*2 + row *64; /* Top right */
-	else if (row>31) offs=0x800 + col*2 + (row-32) *64; /* Bottom left */
-	else offs=col*2 + row *64; /* Top left */
-
-	tile=READ_WORD(&madmotor_pf1_data[offs]);
-	color=tile >> 12;
-	tile=tile&0xfff;
-
-	SET_TILE_INFO(0,tile,color)
-}
-
-/* 512 by 512 playfield, 16 by 16 tiles */
-static void get_pf2_tile_info( int col, int row )
-{
-	int offs,tile,color;
-
-	if (col>15 && row>15) offs=0x600 + (col-16)*2 + (row-16) * 32; /* Bottom right */
-	else if (col>15) offs=0x400 + (col-16)*2 + row *32; /* Top right */
-	else if (row>15) offs=0x200 + col*2 + (row-16) *32; /* Bottom left */
-	else offs=col*2 + row *32; /* Top left */
-
-	tile=READ_WORD(&madmotor_pf2_data[offs]);
-	color=tile >> 12;
-	tile=tile&0xfff;
-
-	SET_TILE_INFO(1,tile,color)
-}
-
-/* 512 by 1024 playfield, 16 by 16 tiles */
-static void get_pf3_tile_info( int col, int row )
-{
-	int offs,tile,color;
-
-	if (col>15 && row>47) offs=0xe00 + (col-16)*2 + (row-48) *32;
-	else if (col>15 && row>31) offs=0xc00 + (col-16)*2 + (row-32) *32;
-	else if (col>15 && row>15) offs=0xa00 + (col-16)*2 + (row-16) *32;
-	else if (col>15) offs=0x800 + (col-16)*2 + row *32;
-	else if (row>47) offs=0x600 + col*2 + (row-48) *32;
-	else if (row>31) offs=0x400 + col*2 + (row-32) *32;
-	else if (row>15) offs=0x200 + col*2 + (row-16) *32;
-	else offs=col*2 + row *32; /* Top left */
-
-	tile=READ_WORD(&madmotor_pf3_data[offs]);
-	color=tile >> 12;
-	tile=tile&0xfff;
-
-	SET_TILE_INFO(2,tile,color)
-}
-
-/* 2048 by 256 playfield, 16 by 16 tiles */
-static void get_pf3a_tile_info( int col, int row )
-{
-	int offs,tile,color;
-
-	if (col>111) offs=0xe00 + (col-112)*2 + row *32;
-	else if (col>95) offs=0xc00 + (col-96)*2 + row *32;
-	else if (col>79) offs=0xa00 + (col-80)*2 + row *32;
-	else if (col>63) offs=0x800 + (col-64)*2 + row *32;
-	else if (col>47) offs=0x600 + (col-48)*2 + row *32;
-	else if (col>31) offs=0x400 + (col-32)*2 + row *32;
-	else if (col>15) offs=0x200 + (col-16)*2 + row *32;
-	else offs=col*2 + row *32; /* Top left */
-
-	tile=READ_WORD(&madmotor_pf3_data[offs]);
-	color=tile >> 12;
-	tile=tile&0xfff;
-
-	SET_TILE_INFO(2,tile,color)
-}
 
 static void dec0_drawsprites(struct osd_bitmap *bitmap,int pri_mask,int pri_val)
 {
@@ -255,147 +339,3 @@ void madmotor_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	dec0_drawsprites(bitmap,0x00,0x00);
 	tilemap_draw(bitmap,madmotor_pf1_tilemap,0);
 }
-
-/******************************************************************************/
-
-int madmotor_pf1_data_r(int offset)
-{
-	return READ_WORD(&madmotor_pf1_data[offset]);
-}
-
-int madmotor_pf2_data_r(int offset)
-{
-	return READ_WORD(&madmotor_pf2_data[offset]);
-}
-
-int madmotor_pf3_data_r(int offset)
-{
-	return READ_WORD(&madmotor_pf3_data[offset]);
-}
-
-void madmotor_pf1_data_w(int offset,int data)
-{
-	int dx=0,dy=0;
-
-	COMBINE_WORD_MEM(&madmotor_pf1_data[offset],data);
-	if (offset>0x17ff) {offset-=0x1800;dx=32; dy=32;}
-	else if (offset>0xfff) {offset-=0x1000;dx=32; dy=0;}
-	else if (offset>0x7ff) {offset-=0x800;dx=0; dy=32;}
-	dx+=(offset%64)/2; dy+=(offset/64);
-	tilemap_mark_tile_dirty(madmotor_pf1_tilemap,dx,dy);
-}
-
-void madmotor_pf2_data_w(int offset,int data)
-{
-	int dx=0,dy=0;
-
-	COMBINE_WORD_MEM(&madmotor_pf2_data[offset],data);
-	if (offset>0x5ff) {offset-=0x600;dx=16; dy=16;}
-	else if (offset>0x3ff) {offset-=0x400;dx=16; dy=0;}
-	else if (offset>0x1ff) {offset-=0x200;dx=0; dy=16;}
-	dx+=(offset%32)/2; dy+=(offset/32);
-	tilemap_mark_tile_dirty(madmotor_pf2_tilemap,dx,dy);
-}
-
-void madmotor_pf3_data_w(int offset,int data)
-{
-	int dx=0,dy=0;
-
-	COMBINE_WORD_MEM(&madmotor_pf3_data[offset],data);
-
-	/* Mark the dirty position on the 512 x 1024 version */
-	if (offset>0xdff) {offset-=0xe00;dx=16; dy=48;}
-	else if (offset>0xbff) {offset-=0xc00;dx=16; dy=32;}
-	else if (offset>0x9ff) {offset-=0xa00;dx=16; dy=16;}
-	else if (offset>0x7ff) {offset-=0x800;dx=16; dy=0; }
-	else if (offset>0x5ff) {offset-=0x600;dx=0;  dy=48;}
-	else if (offset>0x3ff) {offset-=0x400;dx=0;  dy=32;}
-	else if (offset>0x1ff) {offset-=0x200;dx=0;  dy=16;}
-	dx+=(offset%32)/2; dy+=(offset/32);
-	tilemap_mark_tile_dirty(madmotor_pf3_tilemap,dx,dy);
-
-	/* Mark the dirty position on the 2048 x 256 version */
-	dx=0; dy=0;
-	if (offset>0xdff) {offset-=0xe00;dx=112; }
-	else if (offset>0xbff) {offset-=0xc00;dx=96; }
-	else if (offset>0x9ff) {offset-=0xa00;dx=80; }
-	else if (offset>0x7ff) {offset-=0x800;dx=64; }
-	else if (offset>0x5ff) {offset-=0x600;dx=48; }
-	else if (offset>0x3ff) {offset-=0x400;dx=32; }
-	else if (offset>0x1ff) {offset-=0x200;dx=16; }
-	dx+=(offset%32)/2; dy+=(offset/32);
-	tilemap_mark_tile_dirty(madmotor_pf3_tilemap,dx,dy);
-}
-
-void madmotor_pf1_control_w(int offset,int data)
-{
-	COMBINE_WORD_MEM(&madmotor_pf1_control[offset],data);
-}
-
-void madmotor_pf2_control_w(int offset,int data)
-{
-	COMBINE_WORD_MEM(&madmotor_pf2_control[offset],data);
-}
-
-void madmotor_pf3_control_w(int offset,int data)
-{
-	COMBINE_WORD_MEM(&madmotor_pf3_control[offset],data);
-}
-
-int madmotor_pf1_rowscroll_r(int offset)
-{
-	return READ_WORD(&madmotor_pf1_rowscroll[offset]);
-}
-
-void madmotor_pf1_rowscroll_w(int offset,int data)
-{
-	COMBINE_WORD_MEM(&madmotor_pf1_rowscroll[offset],data);
-}
-
-/******************************************************************************/
-
-int madmotor_vh_start(void)
-{
-	madmotor_pf1_tilemap = tilemap_create(
-		get_pf1_tile_info,
-		TILEMAP_TRANSPARENT,
-		8,8,
-		64,64
-	);
-
-	madmotor_pf2_tilemap = tilemap_create(
-		get_pf2_tile_info,
-		TILEMAP_TRANSPARENT,
-		16,16,
-		32,32
-	);
-
-	madmotor_pf3_tilemap = tilemap_create(
-		get_pf3_tile_info,
-		0,
-		16,16,
-		32,64
-	);
-
-	madmotor_pf3a_tilemap = tilemap_create(
-		get_pf3a_tile_info,
-		0,
-		16,16,
-		128,16
-	);
-
-	madmotor_pf1_tilemap->transparent_pen = 0;
-	madmotor_pf2_tilemap->transparent_pen = 0;
-	tilemap_set_scroll_rows(madmotor_pf1_tilemap,512);
-	tilemap_set_scroll_cols(madmotor_pf1_tilemap,1);
-	tilemap_set_scroll_rows(madmotor_pf2_tilemap,1);
-	tilemap_set_scroll_cols(madmotor_pf2_tilemap,1);
-	tilemap_set_scroll_rows(madmotor_pf3_tilemap,1);
-	tilemap_set_scroll_cols(madmotor_pf3_tilemap,1);
-	tilemap_set_scroll_rows(madmotor_pf3a_tilemap,1);
-	tilemap_set_scroll_cols(madmotor_pf3a_tilemap,1);
-
-	return 0;
-}
-
-/******************************************************************************/

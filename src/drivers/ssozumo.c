@@ -16,7 +16,7 @@ extern unsigned char *ssozumo_videoram2, *ssozumo_colorram2;
 extern int ssozumo_videoram2_size;
 extern unsigned char *ssozumo_scroll;
 
-void ssozumo_paletteram_w(int offset, int data);
+WRITE_HANDLER( ssozumo_paletteram_w );
 void ssozumo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
 void ssozumo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 int ssozumo_vh_start(void);
@@ -41,7 +41,7 @@ static int ssozumo_interrupt(void)
 }
 
 
-void ssozumo_sh_command_w(int offset, int data)
+WRITE_HANDLER( ssozumo_sh_command_w )
 {
 	soundlatch_w(offset, data);
 	cpu_cause_interrupt(1, M6502_INT_IRQ);
@@ -104,7 +104,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x2001, 0x2001, AY8910_control_port_0_w },
 	{ 0x2002, 0x2002, AY8910_write_port_1_w },
 	{ 0x2003, 0x2003, AY8910_control_port_1_w },
-	{ 0x2004, 0x2004, DAC_signed_data_w },
+	{ 0x2004, 0x2004, DAC_0_signed_data_w },
 	{ 0x2005, 0x2005, interrupt_enable_w },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */

@@ -8,7 +8,7 @@ sndhrdw\jedi.c
 
 /* Misc sound code */
 
-void jedi_speech_w(int offset, int data)
+WRITE_HANDLER( jedi_speech_w )
 {
     static unsigned char speech_write_buffer;
 
@@ -22,7 +22,7 @@ void jedi_speech_w(int offset, int data)
     }
 }
 
-int jedi_speech_ready_r(int offset)
+READ_HANDLER( jedi_speech_ready_r )
 {
     return (!tms5220_ready_r())<<7;
 }

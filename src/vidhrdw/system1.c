@@ -112,7 +112,7 @@ void system1_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	}
 }
 
-void system1_paletteram_w(int offset,int data)
+WRITE_HANDLER( system1_paletteram_w )
 {
 	unsigned char *palette = palette_lookup + data * 3;
 	int r,g,b;
@@ -187,7 +187,7 @@ void system1_vh_stop(void)
 	free(SpritesCollisionTable);
 }
 
-void system1_videomode_w(int offset,int data)
+WRITE_HANDLER( system1_videomode_w )
 {
 if (errorlog && (data & 0xef)) fprintf(errorlog,"videomode = %02x\n",data);
 
@@ -199,7 +199,7 @@ if (errorlog && (data & 0xef)) fprintf(errorlog,"videomode = %02x\n",data);
 	system1_video_mode = data;
 }
 
-int system1_videomode_r(int offset)
+READ_HANDLER( system1_videomode_r )
 {
 	return system1_video_mode;
 }
@@ -282,14 +282,14 @@ static void Pixel(struct osd_bitmap *bitmap,int x,int y,int spr_number,int color
 	/* (TeddyBoy Blues, head of the tiger in girl bonus round) */
 }
 
-void system1_background_collisionram_w(int offset,int data)
+WRITE_HANDLER( system1_background_collisionram_w )
 {
 	/* to do the RAM check, Mister Viking writes 0xff and immediately */
 	/* reads it back, expecting bit 0 to be NOT set. */
 	system1_background_collisionram[offset] = 0x7e;
 }
 
-void system1_sprites_collisionram_w(int offset,int data)
+WRITE_HANDLER( system1_sprites_collisionram_w )
 {
 	/* to do the RAM check, Mister Viking write 0xff and immediately */
 	/* reads it back, expecting bit 0 to be NOT set. */
@@ -465,13 +465,13 @@ void system1_compute_palette (void)
 }
 
 
-void system1_videoram_w(int offset,int data)
+WRITE_HANDLER( system1_videoram_w )
 {
 	system1_videoram[offset] = data;
 	tx_dirtybuffer[offset>>1] = 1;
 }
 
-void system1_backgroundram_w(int offset,int data)
+WRITE_HANDLER( system1_backgroundram_w )
 {
 	system1_backgroundram[offset] = data;
 	bg_dirtybuffer[offset>>1] = 1;
@@ -641,7 +641,7 @@ void system1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 
-void choplifter_scroll_x_w(int offset,int data)
+WRITE_HANDLER( choplifter_scroll_x_w )
 {
 	system1_scrollx_ram[offset] = data;
 
@@ -755,23 +755,23 @@ void choplifter_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 
-int wbml_bg_bankselect_r(int offset)
+READ_HANDLER( wbml_bg_bankselect_r )
 {
 	return bg_bank_latch;
 }
 
-void wbml_bg_bankselect_w(int offset, int data)
+WRITE_HANDLER( wbml_bg_bankselect_w )
 {
 	bg_bank_latch = data;
 	bg_bank = (data >> 1) & 0x03;	/* Select 4 banks of 4k, bit 2,1 */
 }
 
-int wbml_paged_videoram_r(int offset)
+READ_HANDLER( wbml_paged_videoram_r )
 {
 	return bg_ram[0x1000*bg_bank + offset];
 }
 
-void wbml_paged_videoram_w(int offset,int data)
+WRITE_HANDLER( wbml_paged_videoram_w )
 {
 	bg_ram[0x1000*bg_bank + offset] = data;
 }

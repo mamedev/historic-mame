@@ -27,7 +27,7 @@ int quantum_interrupt(void)
 * History: 11/20/97 PF Created
 *
 **************************/
-int quantum_switches_r(int offset)
+READ_HANDLER( quantum_switches_r )
 {
 	return (input_port_0_r(0) |
 		(avgdvg_done() ? 1 : 0));
@@ -35,7 +35,7 @@ int quantum_switches_r(int offset)
 
 
 
-void quantum_led_write(int offset,int data)
+WRITE_HANDLER( quantum_led_w )
 {
 	/* bits 0 and 1 are coin counters */
 	coin_counter_w(0,data & 2);
@@ -60,7 +60,7 @@ void quantum_led_write(int offset,int data)
 * History: 11/19/97 PF Created
 *
 **************************/
-void quantum_snd_write(int offset,int data)
+WRITE_HANDLER( quantum_snd_w )
 {
 	if (offset & 0x20) /* A5 selects chip */
 		pokey2_w((offset >> 1) % 0x10,data);
@@ -68,7 +68,7 @@ void quantum_snd_write(int offset,int data)
 		pokey1_w((offset >> 1) % 0x10,data);
 }
 
-int quantum_snd_read(int offset)
+READ_HANDLER( quantum_snd_r )
 {
 	if (offset & 0x20)
 		return pokey2_r((offset >> 1) % 0x10);
@@ -90,7 +90,7 @@ int quantum_snd_read(int offset)
 * History: 11/19/97 PF Created
 *
 **************************/
-int quantum_trackball_r (int offset)
+READ_HANDLER( quantum_trackball_r )
 {
 	int x, y;
 
@@ -110,12 +110,12 @@ int quantum_trackball_r (int offset)
 * History: 12/2/97 ASG Created
 *
 **************************/
-int quantum_input_1_r(int offset)
+READ_HANDLER( quantum_input_1_r )
 {
 	return (input_port_1_r (0) << (7 - (offset - POT0_C))) & 0x80;
 }
 
-int quantum_input_2_r(int offset)
+READ_HANDLER( quantum_input_2_r )
 {
 	return (input_port_2_r (0) << (7 - (offset - POT0_C))) & 0x80;
 }

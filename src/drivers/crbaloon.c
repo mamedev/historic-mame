@@ -53,8 +53,8 @@ write:
 #include "vidhrdw/generic.h"
 
 
-void crbaloon_spritectrl_w(int offset,int data);
-void crbaloon_flipscreen_w(int offset,int data);
+WRITE_HANDLER( crbaloon_spritectrl_w );
+WRITE_HANDLER( crbaloon_flipscreen_w );
 void crbaloon_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void crbaloon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -73,7 +73,7 @@ static void crbaloon_machine_init(void)
     SN76477_enable_w(0, 0);
 }
 
-void crbaloon_06_w(int offset,int data)
+WRITE_HANDLER( crbaloon_06_w )
 {
 	val06 = data;
 
@@ -119,19 +119,19 @@ void crbaloon_06_w(int offset,int data)
 	}
 }
 
-void crbaloon_08_w(int offset,int data)
+WRITE_HANDLER( crbaloon_08_w )
 {
 	val08 = data;
 
 	crbaloon_flipscreen_w(offset,data & 1);
 }
 
-void crbaloon_0a_w(int offset,int data)
+WRITE_HANDLER( crbaloon_0a_w )
 {
 	val0a = data;
 }
 
-int crbaloon_IN2_r(int offset)
+READ_HANDLER( crbaloon_IN2_r )
 {
 	extern int crbaloon_collision;
 
@@ -153,7 +153,7 @@ if (errorlog) fprintf(errorlog,"PC %04x: %02x low\n",cpu_get_pc(),offset);
 	}
 }
 
-int crbaloon_IN3_r(int offset)
+READ_HANDLER( crbaloon_IN3_r )
 {
 	if (val08 & 0x02)
 		/* enable coin & start input? Wild guess!!! */
@@ -173,7 +173,7 @@ if (errorlog) fprintf(errorlog,"PC %04x: 03 low\n",cpu_get_pc());
 }
 
 
-int crbaloon_IN_r(int offset)
+READ_HANDLER( crbaloon_IN_r )
 {
 	switch (offset & 0x03)
 	{

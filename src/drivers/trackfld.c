@@ -27,7 +27,7 @@ void konami1_decode(void);
 
 extern unsigned char *trackfld_scroll;
 extern unsigned char *trackfld_scroll2;
-void trackfld_flipscreen_w(int offset,int data);
+WRITE_HANDLER( trackfld_flipscreen_w );
 void trackfld_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void trackfld_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int trackfld_vh_start(void);
@@ -35,12 +35,12 @@ void trackfld_vh_stop(void);
 
 void hyperspt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void konami_sh_irqtrigger_w(int offset,int data);
-int trackfld_sh_timer_r(int offset);
-int trackfld_speech_r(int offset);
-void trackfld_sound_w(int offset , int data);
-int hyprolyb_speech_r(int offset);
-void hyprolyb_ADPCM_data_w(int offset , int data);
+WRITE_HANDLER( konami_sh_irqtrigger_w );
+READ_HANDLER( trackfld_sh_timer_r );
+READ_HANDLER( trackfld_speech_r );
+WRITE_HANDLER( trackfld_sound_w );
+READ_HANDLER( hyprolyb_speech_r );
+WRITE_HANDLER( hyprolyb_ADPCM_data_w );
 
 extern struct SN76496interface konami_sn76496_interface;
 extern struct DACinterface konami_dac_interface;
@@ -49,7 +49,7 @@ extern struct ADPCMinterface hyprolyb_adpcm_interface;
 
 
 /* handle fake button for speed cheat */
-static int konami_IN1_r(int offset)
+static READ_HANDLER( konami_IN1_r )
 {
 	int res;
 	static int cheat = 0;
@@ -195,7 +195,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x4000, 0x43ff, MWA_RAM },
 	{ 0xa000, 0xa000, SN76496_0_w },	/* Loads the snd command into the snd latch */
 	{ 0xc000, 0xc000, MWA_NOP },		/* This address triggers the SN chip to read the data port. */
-	{ 0xe000, 0xe000, DAC_data_w },
+	{ 0xe000, 0xe000, DAC_0_data_w },
 /* There are lots more addresses which are used for setting a two bit volume
 	controls for speech and music
 
@@ -223,7 +223,7 @@ static struct MemoryWriteAddress hyprolyb_sound_writemem[] =
 	{ 0x4000, 0x43ff, MWA_RAM },
 	{ 0xa000, 0xa000, SN76496_0_w },	/* Loads the snd command into the snd latch */
 	{ 0xc000, 0xc000, MWA_NOP },		/* This address triggers the SN chip to read the data port. */
-	{ 0xe000, 0xe000, DAC_data_w },
+	{ 0xe000, 0xe000, DAC_0_data_w },
 /* There are lots more addresses which are used for setting a two bit volume
 	controls for speech and music
 

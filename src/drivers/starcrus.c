@@ -14,19 +14,19 @@ palazzol@home.com
 #include "cpu/i8085/i8085.h"
 
 /* included from vidhrdw/starcrus.c */
-extern void starcrus_s1_x_w(int offset, int data);
-extern void starcrus_s1_y_w(int offset, int data);
-extern void starcrus_s2_x_w(int offset, int data);
-extern void starcrus_s2_y_w(int offset, int data);
-extern void starcrus_p1_x_w(int offset, int data);
-extern void starcrus_p1_y_w(int offset, int data);
-extern void starcrus_p2_x_w(int offset, int data);
-extern void starcrus_p2_y_w(int offset, int data);
-extern void starcrus_ship_parm_1_w(int offset, int data);
-extern void starcrus_ship_parm_2_w(int offset, int data);
-extern void starcrus_proj_parm_1_w(int offset, int data);
-extern void starcrus_proj_parm_2_w(int offset, int data);
-extern int starcrus_coll_det_r(int offset);
+WRITE_HANDLER( starcrus_s1_x_w );
+WRITE_HANDLER( starcrus_s1_y_w );
+WRITE_HANDLER( starcrus_s2_x_w );
+WRITE_HANDLER( starcrus_s2_y_w );
+WRITE_HANDLER( starcrus_p1_x_w );
+WRITE_HANDLER( starcrus_p1_y_w );
+WRITE_HANDLER( starcrus_p2_x_w );
+WRITE_HANDLER( starcrus_p2_y_w );
+WRITE_HANDLER( starcrus_ship_parm_1_w );
+WRITE_HANDLER( starcrus_ship_parm_2_w );
+WRITE_HANDLER( starcrus_proj_parm_1_w );
+WRITE_HANDLER( starcrus_proj_parm_2_w );
+READ_HANDLER( starcrus_coll_det_r );
 extern int starcrus_vh_start(void);
 extern void starcrus_vh_stop(void);
 extern void starcrus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);

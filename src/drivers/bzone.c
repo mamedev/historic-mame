@@ -196,8 +196,8 @@ All different denominations                         |Off |Off |    |    |
 #define IN0_3KHZ (1<<7)
 #define IN0_VG_HALT (1<<6)
 
-void redbaron_sounds_w (int offset,int data);
-void bzone_sounds_w (int offset, int data);
+WRITE_HANDLER( redbaron_sounds_w );
+WRITE_HANDLER( bzone_sounds_w );
 int bzone_sh_start(const struct MachineSound *msound);
 void bzone_sh_stop(void);
 void bzone_sh_update(void);
@@ -205,7 +205,7 @@ int redbaron_sh_start(const struct MachineSound *msound);
 void redbaron_sh_stop(void);
 void redbaron_sh_update(void);
 
-int bzone_IN0_r(int offset)
+READ_HANDLER( bzone_IN0_r )
 {
 	int res;
 
@@ -229,7 +229,7 @@ static int one_joy_trans[32]={
         0x00,0x0A,0x05,0x00,0x06,0x02,0x01,0x00,
         0x09,0x08,0x04,0x00,0x00,0x00,0x00,0x00 };
 
-static int bzone_IN3_r(int offset)
+static READ_HANDLER( bzone_IN3_r )
 {
 	int res,res1;
 
@@ -251,7 +251,7 @@ static int bzone_interrupt(void)
 
 int rb_input_select;
 
-static int redbaron_joy_r (int offset)
+static READ_HANDLER( redbaron_joy_r )
 {
 	if (rb_input_select)
 		return readinputport (5);
@@ -281,12 +281,12 @@ static struct MemoryWriteAddress bzone_writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x1000, 0x1000, coin_counter_w },
-	{ 0x1200, 0x1200, avgdvg_go },
+	{ 0x1200, 0x1200, avgdvg_go_w },
 	{ 0x1400, 0x1400, watchdog_reset_w },
-	{ 0x1600, 0x1600, avgdvg_reset },
+	{ 0x1600, 0x1600, avgdvg_reset_w },
 	{ 0x1820, 0x182f, pokey1_w },
 	{ 0x1840, 0x1840, bzone_sounds_w },
-	{ 0x1860, 0x187f, mb_go },
+	{ 0x1860, 0x187f, mb_go_w },
 	{ 0x2000, 0x2fff, MWA_RAM, &vectorram, &vectorram_size },
 	{ 0x3000, 0x3fff, MWA_ROM },
 	{ 0x5000, 0x7fff, MWA_ROM },
@@ -395,15 +395,15 @@ static struct MemoryWriteAddress redbaron_writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x1000, 0x1000, MWA_NOP },			/* coin out */
-	{ 0x1200, 0x1200, avgdvg_go },
+	{ 0x1200, 0x1200, avgdvg_go_w },
 	{ 0x1400, 0x1400, MWA_NOP },			/* watchdog clear */
-	{ 0x1600, 0x1600, avgdvg_reset },
+	{ 0x1600, 0x1600, avgdvg_reset_w },
 	{ 0x1808, 0x1808, redbaron_sounds_w },	/* and select joystick pot also */
 	{ 0x180a, 0x180a, MWA_NOP },			/* sound reset, yet todo */
-	{ 0x180c, 0x180c, atari_vg_earom_ctrl },
+	{ 0x180c, 0x180c, atari_vg_earom_ctrl_w },
 	{ 0x1810, 0x181f, pokey1_w },
 	{ 0x1820, 0x185f, atari_vg_earom_w },
-	{ 0x1860, 0x187f, mb_go },
+	{ 0x1860, 0x187f, mb_go_w },
 	{ 0x2000, 0x2fff, MWA_RAM, &vectorram, &vectorram_size },
 	{ 0x3000, 0x3fff, MWA_ROM },
 	{ 0x5000, 0x7fff, MWA_ROM },

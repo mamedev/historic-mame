@@ -23,21 +23,21 @@ pending:
 
 typedef struct
 {
-	int vector;                           /* interrupt vector */
-	int clock;                            /* system clock */
-	double invclock16;                    /* 16/system clock */
-	double invclock256;                   /* 256/system clock */
-	void (*intr)(int which);              /* interrupt callback */
-	void (*zc[4])(int offset, int data);  /* zero crossing callbacks */
-	int notimer;                          /* no timer masks */
-	int mask[4];                          /* masked channel flags */
-	int mode[4];                          /* current mode */
-	int tconst[4];                        /* time constant */
-	int down[4];                          /* down counter (clock mode only) */
-	int extclk[4];                        /* current signal from the external clock */
-	void *timer[4];                       /* array of active timers */
+	int vector;                 /* interrupt vector */
+	int clock;                  /* system clock */
+	double invclock16;          /* 16/system clock */
+	double invclock256;         /* 256/system clock */
+	void (*intr)(int which);    /* interrupt callback */
+	mem_write_handler zc[4];    /* zero crossing callbacks */
+	int notimer;                /* no timer masks */
+	int mask[4];                /* masked channel flags */
+	int mode[4];                /* current mode */
+	int tconst[4];              /* time constant */
+	int down[4];                /* down counter (clock mode only) */
+	int extclk[4];              /* current signal from the external clock */
+	void *timer[4];             /* array of active timers */
 
-	int int_state[4];                     /* interrupt status (for daisy chain) */
+	int int_state[4];           /* interrupt status (for daisy chain) */
 } z80ctc;
 
 static z80ctc ctcs[MAX_CTC];
@@ -257,8 +257,8 @@ void z80ctc_w (int which, int offset, int data)
 	}
 }
 
-void z80ctc_0_w (int offset, int data) { z80ctc_w (0, offset, data); }
-void z80ctc_1_w (int offset, int data) { z80ctc_w (1, offset, data); }
+WRITE_HANDLER( z80ctc_0_w ) { z80ctc_w (0, offset, data); }
+WRITE_HANDLER( z80ctc_1_w ) { z80ctc_w (1, offset, data); }
 
 
 int z80ctc_r (int which, int ch)
@@ -289,8 +289,8 @@ if(errorlog) fprintf(errorlog,"CTC clock %f\n",1.0/clock);
 	}
 }
 
-int z80ctc_0_r (int offset) { return z80ctc_r (0, offset); }
-int z80ctc_1_r (int offset) { return z80ctc_r (1, offset); }
+READ_HANDLER( z80ctc_0_r ) { return z80ctc_r (0, offset); }
+READ_HANDLER( z80ctc_1_r ) { return z80ctc_r (1, offset); }
 
 
 int z80ctc_interrupt( int which )
@@ -411,14 +411,14 @@ if(errorlog) fprintf(errorlog,"CTC clock %f\n",1.0/clock);
 	}
 }
 
-void z80ctc_0_trg0_w (int offset, int data) { z80ctc_trg_w (0, 0, offset, data); }
-void z80ctc_0_trg1_w (int offset, int data) { z80ctc_trg_w (0, 1, offset, data); }
-void z80ctc_0_trg2_w (int offset, int data) { z80ctc_trg_w (0, 2, offset, data); }
-void z80ctc_0_trg3_w (int offset, int data) { z80ctc_trg_w (0, 3, offset, data); }
-void z80ctc_1_trg0_w (int offset, int data) { z80ctc_trg_w (1, 0, offset, data); }
-void z80ctc_1_trg1_w (int offset, int data) { z80ctc_trg_w (1, 1, offset, data); }
-void z80ctc_1_trg2_w (int offset, int data) { z80ctc_trg_w (1, 2, offset, data); }
-void z80ctc_1_trg3_w (int offset, int data) { z80ctc_trg_w (1, 3, offset, data); }
+WRITE_HANDLER( z80ctc_0_trg0_w ) { z80ctc_trg_w (0, 0, offset, data); }
+WRITE_HANDLER( z80ctc_0_trg1_w ) { z80ctc_trg_w (0, 1, offset, data); }
+WRITE_HANDLER( z80ctc_0_trg2_w ) { z80ctc_trg_w (0, 2, offset, data); }
+WRITE_HANDLER( z80ctc_0_trg3_w ) { z80ctc_trg_w (0, 3, offset, data); }
+WRITE_HANDLER( z80ctc_1_trg0_w ) { z80ctc_trg_w (1, 0, offset, data); }
+WRITE_HANDLER( z80ctc_1_trg1_w ) { z80ctc_trg_w (1, 1, offset, data); }
+WRITE_HANDLER( z80ctc_1_trg2_w ) { z80ctc_trg_w (1, 2, offset, data); }
+WRITE_HANDLER( z80ctc_1_trg3_w ) { z80ctc_trg_w (1, 3, offset, data); }
 
 
 /*---------------------- Z80 PIO ---------------------------------*/
@@ -735,18 +735,18 @@ int z80pio_p_r( int which , int ch )
 
 void z80pio_0_reset (void) { z80pio_reset (0); }
 
-void z80pio_0_w(int offset , int data)
+WRITE_HANDLER( z80pio_0_w )
 {
 	if(offset&1) z80pio_c_w(0,(offset/2)&1,data);
 	else         z80pio_d_w(0,(offset/2)&1,data);
 }
 
-int  z80pio_0_r(int offset)
+READ_HANDLER( z80pio_0_r )
 {
 	return (offset&1) ? z80pio_c_r(0,(offset/2)&1) : z80pio_d_r(0,(offset/2)&1);
 }
 
-void z80pioA_0_p_w(int offset , int data) { z80pio_p_w(0,0,data);   }
-void z80pioB_0_p_w(int offset , int data) { z80pio_p_w(0,1,data);   }
-int  z80pioA_0_p_r(int offset )           { return z80pio_p_r(0,0); }
-int  z80pioB_0_p_r(int offset )           { return z80pio_p_r(0,1); }
+WRITE_HANDLER( z80pioA_0_p_w ) { z80pio_p_w(0,0,data);   }
+WRITE_HANDLER( z80pioB_0_p_w ) { z80pio_p_w(0,1,data);   }
+READ_HANDLER( z80pioA_0_p_r )           { return z80pio_p_r(0,0); }
+READ_HANDLER( z80pioB_0_p_r )           { return z80pio_p_r(0,1); }

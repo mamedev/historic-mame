@@ -66,6 +66,9 @@ Notes:
   differences are the title, copyright removed, different encryptions or
   no encryption, plus hustlerb has a different memory map.
 
+- In Tazmania, when set to Upright mode, player 2 left skips the current
+  level
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -89,17 +92,17 @@ int  calipso_vh_start (void);
 int  stratgyx_vh_start(void);
 
 void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void galaxian_flipx_w(int offset,int data);
-void galaxian_flipy_w(int offset,int data);
-void galaxian_attributes_w(int offset,int data);
-void galaxian_stars_w(int offset,int data);
+WRITE_HANDLER( galaxian_flipx_w );
+WRITE_HANDLER( galaxian_flipy_w );
+WRITE_HANDLER( galaxian_attributes_w );
+WRITE_HANDLER( galaxian_stars_w );
 int  scramble_vh_interrupt(void);
-void scramble_background_w(int offset, int data);
-void scramble_filter_w(int offset, int data);
+WRITE_HANDLER( scramble_background_w );
+WRITE_HANDLER( scramble_filter_w );
 
-int  scramble_portB_r(int offset);
-int  frogger_portB_r(int offset);
-void scramble_sh_irqtrigger_w(int offset,int data);
+READ_HANDLER( scramble_portB_r );
+READ_HANDLER( frogger_portB_r );
+WRITE_HANDLER( scramble_sh_irqtrigger_w );
 
 
 static void scobra_init_machine(void)
@@ -109,7 +112,7 @@ static void scobra_init_machine(void)
 	interrupt_enable_w(0,0);
 }
 
-static int moonwar2_IN0_r (int offset)
+static READ_HANDLER( moonwar2_IN0_r )
 {
 	int sign;
 	int delta;
@@ -122,7 +125,7 @@ static int moonwar2_IN0_r (int offset)
 	return ((readinputport(0) & 0xe0) | delta | sign );
 }
 
-static void stratgyx_coin_counter_w(int offset, int data)
+static WRITE_HANDLER( stratgyx_coin_counter_w )
 {
 	/* Bit 1 selects coin counter */
 	coin_counter_w(offset >> 1, data);

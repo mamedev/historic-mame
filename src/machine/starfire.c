@@ -16,18 +16,18 @@ static int fireone_sell;
 extern unsigned char *starfire_ram;
 
 /* In vidhrdw/starfire.c */
-extern void starfire_vidctrl_w(int offset,int data);
-extern void starfire_vidctrl1_w(int offset,int data);
+WRITE_HANDLER( starfire_vidctrl_w );
+WRITE_HANDLER( starfire_vidctrl1_w );
 
-void starfire_shadow_w(int address, int data)
+WRITE_HANDLER( starfire_shadow_w )
 {
-    starfire_ram[address & 0x3ff] = data;
+    starfire_ram[offset & 0x3ff] = data;
 }
 
-void starfire_output_w(int address, int data)
+WRITE_HANDLER( starfire_output_w )
 {
-    starfire_ram[address & 0x3ff] = data;
-    switch(address & 0xf) {
+    starfire_ram[offset & 0x3ff] = data;
+    switch(offset & 0xf) {
     case 0:
 		starfire_vidctrl_w(0, data);
 		break;
@@ -40,10 +40,10 @@ void starfire_output_w(int address, int data)
     }
 }
 
-void fireone_output_w(int address, int data)
+WRITE_HANDLER( fireone_output_w )
 {
-    starfire_ram[address & 0x3ff] = data;
-    switch(address & 0xf) {
+    starfire_ram[offset & 0x3ff] = data;
+    switch(offset & 0xf) {
     case 0:
 		starfire_vidctrl_w(0, data);
 		break;
@@ -57,14 +57,14 @@ void fireone_output_w(int address, int data)
     }
 }
 
-int starfire_shadow_r(int address)
+READ_HANDLER( starfire_shadow_r )
 {
-    return starfire_ram[address & 0x3ff];
+    return starfire_ram[offset & 0x3ff];
 }
 
-int starfire_input_r(int address)
+READ_HANDLER( starfire_input_r )
 {
-    switch(address & 0xf) {
+    switch(offset & 0xf) {
     case 0:
 		return input_port_0_r(0);
     case 1:
@@ -82,9 +82,9 @@ int starfire_input_r(int address)
     }
 }
 
-int fireone_input_r(int address)
+READ_HANDLER( fireone_input_r )
 {
-    switch(address & 0xf) {
+    switch(offset & 0xf) {
     case 0:
 		return input_port_0_r(0);
     case 1:
@@ -97,11 +97,11 @@ int fireone_input_r(int address)
     }
 }
 
-void starfire_soundctrl_w(int offset, int data) {
+WRITE_HANDLER( starfire_soundctrl_w ) {
     sound_ctrl = data;
 }
 
-int starfire_io1_r(int offset) {
+READ_HANDLER( starfire_io1_r ) {
     int in,out;
 
     in = readinputport(1);

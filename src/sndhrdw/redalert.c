@@ -39,7 +39,7 @@ static int c030_data = 0;
 static int sound_register_IC1 = 0;
 static int sound_register_IC2 = 0;
 
-void redalert_c030_w(int offset, int data)
+WRITE_HANDLER( redalert_c030_w )
 {
 	c030_data = data & 0x3F;
 
@@ -49,12 +49,12 @@ void redalert_c030_w(int offset, int data)
 		cpu_cause_interrupt(2,I8085_RST75);
 }
 
-int redalert_voicecommand_r(int offset)
+READ_HANDLER( redalert_voicecommand_r )
 {
 	return c030_data;
 }
 
-void redalert_soundlatch_w(int offset, int data)
+WRITE_HANDLER( redalert_soundlatch_w )
 {
 	/* The byte is connected to Port A of the AY8910 */
 	AY8910_A_input_data = data;
@@ -64,12 +64,12 @@ void redalert_soundlatch_w(int offset, int data)
 		cpu_cause_interrupt(1,M6502_INT_NMI);
 }
 
-int redalert_AY8910_A_r(int offset)
+READ_HANDLER( redalert_AY8910_A_r )
 {
 	return AY8910_A_input_data;
 }
 
-void redalert_AY8910_w(int offset, int data)
+WRITE_HANDLER( redalert_AY8910_w )
 {
 	/* BC2 is connected to a pull-up resistor, so BC2=1 always */
 	switch (data)
@@ -95,17 +95,17 @@ void redalert_AY8910_w(int offset, int data)
 	}
 }
 
-int redalert_sound_register_IC1_r(int offset)
+READ_HANDLER( redalert_sound_register_IC1_r )
 {
 	return sound_register_IC1;
 }
 
-void redalert_sound_register_IC2_w(int offset, int data)
+WRITE_HANDLER( redalert_sound_register_IC2_w )
 {
 	sound_register_IC2 = data;
 }
 
-void redalert_AY8910_B_w(int offset, int data)
+WRITE_HANDLER( redalert_AY8910_B_w )
 {
 	/* I'm fairly certain this port triggers analog sounds */
 	if (errorlog) fprintf(errorlog,"Port B Trigger: %02X\n",data);

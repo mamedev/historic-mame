@@ -46,10 +46,10 @@ void dd_vh_stop( void )
 }
 
 
-void dd_background_w( int offset, int val )
+WRITE_HANDLER( dd_background_w )
 {
-	if( dd_videoram[offset] != val ){
-		dd_videoram[offset] = val;
+	if( dd_videoram[offset] != data ){
+		dd_videoram[offset] = data;
 		dirtybuffer[offset/2] = 1;
 	}
 }

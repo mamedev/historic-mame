@@ -53,10 +53,10 @@ extern unsigned char *appoooh_colorram2;
 extern unsigned char *appoooh_spriteram2;
 
 void appoooh_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void appoooh_scroll_w(int offset,int data);
-void appoooh_videoram2_w(int offset,int data);
-void appoooh_colorram2_w(int offset,int data);
-void appoooh_out_w(int offset,int data);
+WRITE_HANDLER( appoooh_scroll_w );
+WRITE_HANDLER( appoooh_videoram2_w );
+WRITE_HANDLER( appoooh_colorram2_w );
+WRITE_HANDLER( appoooh_out_w );
 int appoooh_vh_start(void);
 void appoooh_vh_stop(void);
 void appoooh_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -85,7 +85,7 @@ static void appoooh_adpcm_int (int num)
 	}
 }
 /* adpcm address write */
-static void appoooh_adpcm_w (int offset,int data)
+static WRITE_HANDLER( appoooh_adpcm_w )
 {
 	unsigned char *RAM = memory_region(REGION_SOUND1);
 	adpcmptr  = &RAM[data*256];

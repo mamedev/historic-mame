@@ -32,7 +32,7 @@ static int scramble_timer[10] =
 	0x00, 0x10, 0x20, 0x30, 0x40, 0x90, 0xa0, 0xb0, 0xa0, 0xd0
 };
 
-int scramble_portB_r(int offset)
+READ_HANDLER( scramble_portB_r )
 {
 	/* need to protect from totalcycles overflow */
 	static int last_totalcycles = 0;
@@ -52,7 +52,7 @@ int scramble_portB_r(int offset)
 
 
 
-void scramble_sh_irqtrigger_w(int offset,int data)
+WRITE_HANDLER( scramble_sh_irqtrigger_w )
 {
 	static int last;
 
@@ -66,7 +66,7 @@ void scramble_sh_irqtrigger_w(int offset,int data)
 	last = data & 0x08;
 }
 
-void hotshock_sh_irqtrigger_w(int offset,int data)
+WRITE_HANDLER( hotshock_sh_irqtrigger_w )
 {
 	cpu_cause_interrupt(1, Z80_IRQ_INT);
 }
@@ -83,7 +83,7 @@ static void filter_w(int chip, int channel, int data)
 	set_RC_filter(3*chip + channel,1000,5100,0,C);
 }
 
-void scramble_filter_w(int offset,int data)
+WRITE_HANDLER( scramble_filter_w )
 {
 	filter_w(1, 0, (offset >>  0) & 3);
 	filter_w(1, 1, (offset >>  2) & 3);

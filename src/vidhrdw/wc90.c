@@ -84,64 +84,64 @@ void wc90_vh_stop( void ) {
 	generic_vh_stop();
 }
 
-int wc90_tile_videoram_r( int offset ) {
+READ_HANDLER( wc90_tile_videoram_r ) {
 	return wc90_tile_videoram[offset];
 }
 
-void wc90_tile_videoram_w( int offset, int v ) {
-	if ( wc90_tile_videoram[offset] != v ) {
+WRITE_HANDLER( wc90_tile_videoram_w ) {
+	if ( wc90_tile_videoram[offset] != data ) {
 		dirtybuffer1[offset] = 1;
-		wc90_tile_videoram[offset] = v;
+		wc90_tile_videoram[offset] = data;
 		if ( offset > last_tile1 )
 			last_tile1 = offset;
 	}
 }
 
-int wc90_tile_colorram_r( int offset ) {
+READ_HANDLER( wc90_tile_colorram_r ) {
 	return wc90_tile_colorram[offset];
 }
 
-void wc90_tile_colorram_w( int offset, int v ) {
-	if ( wc90_tile_colorram[offset] != v ) {
+WRITE_HANDLER( wc90_tile_colorram_w ) {
+	if ( wc90_tile_colorram[offset] != data ) {
 		dirtybuffer1[offset] = 1;
-		wc90_tile_colorram[offset] = v;
+		wc90_tile_colorram[offset] = data;
 		if ( offset > last_tile1 )
 			last_tile1 = offset;
 	}
 }
 
-int wc90_tile_videoram2_r( int offset ) {
+READ_HANDLER( wc90_tile_videoram2_r ) {
 	return wc90_tile_videoram2[offset];
 }
 
-void wc90_tile_videoram2_w( int offset, int v ) {
-	if ( wc90_tile_videoram2[offset] != v ) {
+WRITE_HANDLER( wc90_tile_videoram2_w ) {
+	if ( wc90_tile_videoram2[offset] != data ) {
 		dirtybuffer2[offset] = 1;
-		wc90_tile_videoram2[offset] = v;
+		wc90_tile_videoram2[offset] = data;
 		if ( offset > last_tile2 )
 			last_tile2 = offset;
 	}
 }
 
-int wc90_tile_colorram2_r( int offset ) {
+READ_HANDLER( wc90_tile_colorram2_r ) {
 	return wc90_tile_colorram2[offset];
 }
 
-void wc90_tile_colorram2_w( int offset, int v ) {
-	if ( wc90_tile_colorram2[offset] != v ) {
+WRITE_HANDLER( wc90_tile_colorram2_w ) {
+	if ( wc90_tile_colorram2[offset] != data ) {
 		dirtybuffer2[offset] = 1;
-		wc90_tile_colorram2[offset] = v;
+		wc90_tile_colorram2[offset] = data;
 		if ( offset > last_tile2 )
 			last_tile2 = offset;
 	}
 }
 
-int wc90_shared_r ( int offset ) {
+READ_HANDLER( wc90_shared_r ) {
 	return wc90_shared[offset];
 }
 
-void wc90_shared_w( int offset, int v ) {
-	wc90_shared[offset] = v;
+WRITE_HANDLER( wc90_shared_w ) {
+	wc90_shared[offset] = data;
 }
 
 void wc90_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)

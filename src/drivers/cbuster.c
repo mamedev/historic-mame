@@ -21,37 +21,37 @@ int  twocrude_vh_start(void);
 void twocrude_vh_stop(void);
 void twocrude_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void twocrude_pf1_data_w(int offset,int data);
-void twocrude_pf2_data_w(int offset,int data);
-void twocrude_pf3_data_w(int offset,int data);
-void twocrude_pf4_data_w(int offset,int data);
-void twocrude_control_0_w(int offset,int data);
-void twocrude_control_1_w(int offset,int data);
-void twocrude_palette_24bit_rg(int offset,int data);
-void twocrude_palette_24bit_b(int offset,int data);
-int twocrude_palette_24bit_rg_r(int offset);
-int twocrude_palette_24bit_b_r(int offset);
+WRITE_HANDLER( twocrude_pf1_data_w );
+WRITE_HANDLER( twocrude_pf2_data_w );
+WRITE_HANDLER( twocrude_pf3_data_w );
+WRITE_HANDLER( twocrude_pf4_data_w );
+WRITE_HANDLER( twocrude_control_0_w );
+WRITE_HANDLER( twocrude_control_1_w );
+WRITE_HANDLER( twocrude_palette_24bit_rg_w );
+WRITE_HANDLER( twocrude_palette_24bit_b_w );
+READ_HANDLER( twocrude_palette_24bit_rg_r );
+READ_HANDLER( twocrude_palette_24bit_b_r );
 
-void twocrude_pf1_rowscroll_w(int offset,int data);
-void twocrude_pf2_rowscroll_w(int offset,int data);
-void twocrude_pf3_rowscroll_w(int offset,int data);
-void twocrude_pf4_rowscroll_w(int offset,int data);
+WRITE_HANDLER( twocrude_pf1_rowscroll_w );
+WRITE_HANDLER( twocrude_pf2_rowscroll_w );
+WRITE_HANDLER( twocrude_pf3_rowscroll_w );
+WRITE_HANDLER( twocrude_pf4_rowscroll_w );
 
 extern unsigned char *twocrude_pf1_rowscroll,*twocrude_pf2_rowscroll;
 extern unsigned char *twocrude_pf3_rowscroll,*twocrude_pf4_rowscroll;
 extern unsigned char *twocrude_pf1_data, *twocrude_pf2_data, *twocrude_pf3_data, *twocrude_pf4_data;
 static unsigned char *twocrude_ram;
 extern void twocrude_pri_w(int pri);
-void twocrude_update_sprites(int offset, int data);
+WRITE_HANDLER( twocrude_update_sprites_w );
 static int prot;
 
 /******************************************************************************/
 
-static void twocrude_control_w(int offset,int data)
+static WRITE_HANDLER( twocrude_control_w )
 {
 	switch (offset) {
 	case 0: /* DMA flag */
-		twocrude_update_sprites(0,0);
+		twocrude_update_sprites_w(0,0);
 		return;
 
 	case 6: /* IRQ ack */
@@ -97,7 +97,7 @@ static void twocrude_control_w(int offset,int data)
 	if (errorlog) fprintf(errorlog,"Warning %04x- %02x written to control %02x\n",cpu_get_pc(),data,offset);
 }
 
-int twocrude_control_r(int offset)
+READ_HANDLER( twocrude_control_r )
 {
 	switch (offset)
 	{
@@ -118,14 +118,14 @@ int twocrude_control_r(int offset)
 	return 0xffff;
 }
 
-static int twocrude_pf1_data_r(int offset) { return READ_WORD(&twocrude_pf1_data[offset]);}
-static int twocrude_pf2_data_r(int offset) { return READ_WORD(&twocrude_pf2_data[offset]);}
-static int twocrude_pf3_data_r(int offset) { return READ_WORD(&twocrude_pf3_data[offset]);}
-static int twocrude_pf4_data_r(int offset) { return READ_WORD(&twocrude_pf4_data[offset]);}
-static int twocrude_pf1_rowscroll_r(int offset) { return READ_WORD(&twocrude_pf1_rowscroll[offset]);}
-static int twocrude_pf2_rowscroll_r(int offset) { return READ_WORD(&twocrude_pf2_rowscroll[offset]);}
-static int twocrude_pf3_rowscroll_r(int offset) { return READ_WORD(&twocrude_pf3_rowscroll[offset]);}
-static int twocrude_pf4_rowscroll_r(int offset) { return READ_WORD(&twocrude_pf4_rowscroll[offset]);}
+static READ_HANDLER( twocrude_pf1_data_r ) { return READ_WORD(&twocrude_pf1_data[offset]);}
+static READ_HANDLER( twocrude_pf2_data_r ) { return READ_WORD(&twocrude_pf2_data[offset]);}
+static READ_HANDLER( twocrude_pf3_data_r ) { return READ_WORD(&twocrude_pf3_data[offset]);}
+static READ_HANDLER( twocrude_pf4_data_r ) { return READ_WORD(&twocrude_pf4_data[offset]);}
+static READ_HANDLER( twocrude_pf1_rowscroll_r ) { return READ_WORD(&twocrude_pf1_rowscroll[offset]);}
+static READ_HANDLER( twocrude_pf2_rowscroll_r ) { return READ_WORD(&twocrude_pf2_rowscroll[offset]);}
+static READ_HANDLER( twocrude_pf3_rowscroll_r ) { return READ_WORD(&twocrude_pf3_rowscroll[offset]);}
+static READ_HANDLER( twocrude_pf4_rowscroll_r ) { return READ_WORD(&twocrude_pf4_rowscroll[offset]);}
 
 /******************************************************************************/
 
@@ -170,15 +170,15 @@ static struct MemoryWriteAddress twocrude_writemem[] =
 	{ 0x0b4000, 0x0b4001, MWA_NOP },
 	{ 0x0b5000, 0x0b500f, twocrude_control_1_w },
 	{ 0x0b6000, 0x0b600f, twocrude_control_0_w },
-	{ 0x0b8000, 0x0b8fff, twocrude_palette_24bit_rg, &paletteram },
-	{ 0x0b9000, 0x0b9fff, twocrude_palette_24bit_b, &paletteram_2 },
+	{ 0x0b8000, 0x0b8fff, twocrude_palette_24bit_rg_w, &paletteram },
+	{ 0x0b9000, 0x0b9fff, twocrude_palette_24bit_b_w, &paletteram_2 },
 	{ 0x0bc000, 0x0bc00f, twocrude_control_w },
 	{ -1 }  /* end of table */
 };
 
 /******************************************************************************/
 
-static void YM2151_w(int offset, int data)
+static WRITE_HANDLER( YM2151_w )
 {
 	switch (offset) {
 	case 0:
@@ -190,7 +190,7 @@ static void YM2151_w(int offset, int data)
 	}
 }
 
-static void YM2203_w(int offset, int data)
+static WRITE_HANDLER( YM2203_w )
 {
 	switch (offset) {
 	case 0:

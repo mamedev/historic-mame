@@ -18,11 +18,12 @@ Kickle Cubicle                1988  Rev 2.21
 Shisensho                     1989  Rev 2.21
 R-Type II                     1989  Rev 2.21
 Major Title                   1990  Rev 2.21
+Air Duel                      1990  Rev 3.14 M72 (no NMI handler)
 Daiku no Gensan               1990  Rev 3.14 M81
 Hammerin' Harry               1990  Rev 3.15 M81
 Ken-Go	                      1991  Rev 3.15 M81
-Gallop - Armed Police Unit    1991  Rev 3.15 M72
-Pound for Pound               ????  Rev 3.15 M83
+Pound for Pound               1990  Rev 3.15 M83 (no NMI handler)
+Gallop - Armed Police Unit    1991  Rev 3.15 M72 (no NMI handler)
 Bomber Man World              1992  Rev 3.31 M81
 Atomic Punk                   1992  Rev 3.31 M99
 Quiz F-1 1,2finish            1992  Rev 3.33 M81
@@ -101,7 +102,7 @@ void m72_ym2151_irq_handler(int irq)
 		timer_set(TIME_NOW,YM2151_CLEAR,setvector_callback);
 }
 
-void m72_sound_command_w(int offset,int data)
+WRITE_HANDLER( m72_sound_command_w )
 {
 	if (offset == 0)
 	{
@@ -110,7 +111,7 @@ void m72_sound_command_w(int offset,int data)
 	}
 }
 
-void m72_sound_irq_ack_w(int offset,int data)
+WRITE_HANDLER( m72_sound_irq_ack_w )
 {
 	timer_set(TIME_NOW,Z80_CLEAR,setvector_callback);
 }
@@ -124,7 +125,7 @@ void m72_set_sample_start(int start)
 	sample_addr = start;
 }
 
-void vigilant_sample_addr_w(int offset,int data)
+WRITE_HANDLER( vigilant_sample_addr_w )
 {
 	if (offset == 1)
 		sample_addr = (sample_addr & 0x00ff) | ((data << 8) & 0xff00);
@@ -132,7 +133,7 @@ void vigilant_sample_addr_w(int offset,int data)
 		sample_addr = (sample_addr & 0xff00) | ((data << 0) & 0x00ff);
 }
 
-void shisen_sample_addr_w(int offset,int data)
+WRITE_HANDLER( shisen_sample_addr_w )
 {
 	sample_addr >>= 2;
 
@@ -144,7 +145,7 @@ void shisen_sample_addr_w(int offset,int data)
 	sample_addr <<= 2;
 }
 
-void rtype2_sample_addr_w(int offset,int data)
+WRITE_HANDLER( rtype2_sample_addr_w )
 {
 	sample_addr >>= 5;
 
@@ -156,12 +157,12 @@ void rtype2_sample_addr_w(int offset,int data)
 	sample_addr <<= 5;
 }
 
-int m72_sample_r(int offset)
+READ_HANDLER( m72_sample_r )
 {
 	return memory_region(REGION_SOUND1)[sample_addr];
 }
 
-void m72_sample_w(int offset,int data)
+WRITE_HANDLER( m72_sample_w )
 {
 	DAC_signed_data_w(0,data);
 	sample_addr = (sample_addr + 1) & (memory_region_length(REGION_SOUND1) - 1);

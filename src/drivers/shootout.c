@@ -41,26 +41,25 @@ extern void btime_vh_convert_color_prom(unsigned char *palette, unsigned short *
 
 /*******************************************************************************/
 
-static void shootout_bankswitch_w( int offset, int v )
+static WRITE_HANDLER( shootout_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM;
 
-	v=v&0xf;
 	RAM = memory_region(REGION_CPU1);
-	bankaddress = 0x10000 + ( 0x4000 * v );
+	bankaddress = 0x10000 + ( 0x4000 * (data & 0x0f) );
 
 	cpu_setbank(1,&RAM[bankaddress]);
 }
 
-static void sound_cpu_command_w( int offset, int v )
+static WRITE_HANDLER( sound_cpu_command_w )
 {
-	soundlatch_w( offset, v );
+	soundlatch_w( offset, data );
 	cpu_cause_interrupt( 1, M6502_INT_NMI );
 }
 
 /* stub for reading input ports as active low (makes building ports much easier) */
-static int low_input_r( int offset )
+static READ_HANDLER( low_input_r )
 {
 	return ~readinputport( offset );
 }

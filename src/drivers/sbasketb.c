@@ -25,18 +25,18 @@ extern unsigned char *sbasketb_palettebank;
 extern unsigned char *sbasketb_spriteram_select;
 void sbasketb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void sbasketb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void sbasketb_flipscreen_w(int offset,int data);
+WRITE_HANDLER( sbasketb_flipscreen_w );
 
 extern struct VLM5030interface konami_vlm5030_interface;
 extern struct SN76496interface konami_sn76496_interface;
 extern struct DACinterface konami_dac_interface;
-void konami_SN76496_latch_w(int offset,int data);
-void konami_SN76496_0_w(int offset,int data);
-void hyperspt_sound_w(int offset, int data);
-int  hyperspt_sh_timer_r(int offset);
+WRITE_HANDLER( konami_SN76496_latch_w );
+WRITE_HANDLER( konami_SN76496_0_w );
+WRITE_HANDLER( hyperspt_sound_w );
+READ_HANDLER( hyperspt_sh_timer_r );
 
 
-void sbasketb_sh_irqtrigger_w(int offset,int data)
+WRITE_HANDLER( sbasketb_sh_irqtrigger_w )
 {
 	cpu_cause_interrupt(1,0xff);
 }
@@ -89,7 +89,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x4000, 0x43ff, MWA_RAM },
 	{ 0xa000, 0xa000, VLM5030_data_w }, /* speech data */
 	{ 0xc000, 0xdfff, hyperspt_sound_w },     /* speech and output controll */
-	{ 0xe000, 0xe000, DAC_data_w },
+	{ 0xe000, 0xe000, DAC_0_data_w },
 	{ 0xe001, 0xe001, konami_SN76496_latch_w },  /* Loads the snd command into the snd latch */
 	{ 0xe002, 0xe002, konami_SN76496_0_w },      /* This address triggers the SN chip to read the data port. */
 	{ -1 }  /* end of table */

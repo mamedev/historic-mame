@@ -68,12 +68,12 @@ f809	DSWB
 
 
 
-void tecmo_bankswitch_w(int offset,int data);
-int tecmo_bankedrom_r(int offset);
+WRITE_HANDLER( tecmo_bankswitch_w );
+READ_HANDLER( tecmo_bankedrom_r );
 
 
 
-void tecmo_bankswitch_w(int offset,int data)
+WRITE_HANDLER( tecmo_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -83,7 +83,7 @@ void tecmo_bankswitch_w(int offset,int data)
 	cpu_setbank(1,&RAM[bankaddress]);
 }
 
-static void tecmo_sound_command_w(int offset,int data)
+static WRITE_HANDLER( tecmo_sound_command_w )
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(1,Z80_NMI_INT);
@@ -91,15 +91,15 @@ static void tecmo_sound_command_w(int offset,int data)
 
 static int adpcm_start,adpcm_end;
 
-static void tecmo_adpcm_start_w(int offset,int data)
+static WRITE_HANDLER( tecmo_adpcm_start_w )
 {
 	adpcm_start = data << 8;
 }
-static void tecmo_adpcm_end_w(int offset,int data)
+static WRITE_HANDLER( tecmo_adpcm_end_w )
 {
 	adpcm_end = (data + 1) << 8;
 }
-static void tecmo_adpcm_trigger_w(int offset,int data)
+static WRITE_HANDLER( tecmo_adpcm_trigger_w )
 {
 	ADPCM_setvol(0,(data & 0x0f) * 0x11);
 	if (data & 0x0f)	/* maybe this selects the volume? */
@@ -114,8 +114,8 @@ extern unsigned char *tecmo_videoram2,*tecmo_colorram2;
 extern unsigned char *tecmo_scroll;
 extern int tecmo_videoram2_size;
 
-void tecmo_videoram_w(int offset,int data);
-void tecmo_colorram_w(int offset,int data);
+WRITE_HANDLER( tecmo_videoram_w );
+WRITE_HANDLER( tecmo_colorram_w );
 
 int rygar_vh_start(void);
 int silkworm_vh_start(void);

@@ -48,19 +48,19 @@ extern unsigned char *phozon_customio_1, *phozon_customio_2;
 extern unsigned char *mappy_soundregs;
 
 /* memory functions */
-extern int phozon_spriteram_r(int offset);
-extern int phozon_snd_sharedram_r(int offset);
-extern void phozon_spriteram_w(int offset,int data);
-extern void phozon_snd_sharedram_w(int offset,int data);
+READ_HANDLER( phozon_spriteram_r );
+READ_HANDLER( phozon_snd_sharedram_r );
+WRITE_HANDLER( phozon_spriteram_w );
+WRITE_HANDLER( phozon_snd_sharedram_w );
 
 /* custom IO chips & CPU functions */
-extern int phozon_customio_r_1(int offset);
-extern int phozon_customio_r_2(int offset);
-extern void phozon_customio_w_1(int offset,int data);
-extern void phozon_customio_w_2(int offset,int data);
-extern void phozon_cpu2_enable_w(int offset,int data);
-extern void phozon_cpu3_enable_w(int offset,int data);
-extern void phozon_cpu3_reset_w(int offset,int data);
+READ_HANDLER( phozon_customio_1_r );
+READ_HANDLER( phozon_customio_2_r );
+WRITE_HANDLER( phozon_customio_1_w );
+WRITE_HANDLER( phozon_customio_2_w );
+WRITE_HANDLER( phozon_cpu2_enable_w );
+WRITE_HANDLER( phozon_cpu3_enable_w );
+WRITE_HANDLER( phozon_cpu3_reset_w );
 extern void phozon_init_machine(void);
 
 /* video functions */
@@ -76,8 +76,8 @@ static struct MemoryReadAddress readmem_cpu1[] =
 	{ 0x0400, 0x07ff, colorram_r },										/* color RAM */
 	{ 0x0800, 0x1fff, phozon_spriteram_r },			/* shared RAM with CPU #2/sprite RAM*/
 	{ 0x4040, 0x43ff, phozon_snd_sharedram_r },  /* shared RAM with CPU #3 */
-	{ 0x4800, 0x480f, phozon_customio_r_1 },		/* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, phozon_customio_r_2 },		/* custom I/O chip #2 interface */
+	{ 0x4800, 0x480f, phozon_customio_1_r },		/* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, phozon_customio_2_r },		/* custom I/O chip #2 interface */
 	{ 0x8000, 0xffff, MRA_ROM },										/* ROM */
 	{ -1 }																/* end of table */
 };
@@ -90,8 +90,8 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x0800, 0x1fff, phozon_spriteram_w, &phozon_spriteram },		/* shared RAM with CPU #2/sprite RAM*/
 	{ 0x4000, 0x403f, MWA_RAM },				/* initialized but probably unused */
 	{ 0x4040, 0x43ff, phozon_snd_sharedram_w, &phozon_snd_sharedram }, /* shared RAM with CPU #3 */
-	{ 0x4800, 0x480f, phozon_customio_w_1, &phozon_customio_1 },	/* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, phozon_customio_w_2, &phozon_customio_2 },	/* custom I/O chip #2 interface */
+	{ 0x4800, 0x480f, phozon_customio_1_w, &phozon_customio_1 },	/* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, phozon_customio_2_w, &phozon_customio_2 },	/* custom I/O chip #2 interface */
 	{ 0x4820, 0x483f, MWA_RAM },				/* initialized but probably unused */
 	{ 0x5000, 0x5007, MWA_NOP },				/* ??? */
 	{ 0x5008, 0x5008, phozon_cpu3_reset_w },	/* reset SOUND CPU? */

@@ -56,7 +56,7 @@ void sonson_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-void sonson_sh_irqtrigger_w(int offset,int data)
+WRITE_HANDLER( sonson_sh_irqtrigger_w )
 {
 	static int last;
 

@@ -48,8 +48,8 @@ Known Issues:
 #include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
 
-extern void fround_gfx_bank_w( int offset, int data );
-extern void twin16_video_register_w( int offset, int data );
+WRITE_HANDLER( fround_gfx_bank_w );
+WRITE_HANDLER( twin16_video_register_w );
 
 extern int twin16_vh_start( void );
 extern void twin16_vh_stop( void );
@@ -109,19 +109,19 @@ enum
 #define twin16_tile_gfx_ram_w		MWA_BANK6, &twin16_tile_gfx_ram
 #define twin16_tile_gfx_ram_r		MRA_BANK7
 
-int VIDRAM_r( int offset ){ return READ_WORD(&videoram[offset]); }
-void VIDRAM_w( int offset, int data ){ COMBINE_WORD_MEM(&videoram[offset],data); }
+READ_HANDLER( VIDRAM_r ){ return READ_WORD(&videoram[offset]); }
+WRITE_HANDLER( VIDRAM_w ){ COMBINE_WORD_MEM(&videoram[offset],data); }
 
-int OBJRAM_r( int offset ){ return READ_WORD(&spriteram[offset]); }
-void OBJRAM_w( int offset, int data ){ COMBINE_WORD_MEM(&spriteram[offset],data); }
+READ_HANDLER( OBJRAM_r ){ return READ_WORD(&spriteram[offset]); }
+WRITE_HANDLER( OBJRAM_w ){ COMBINE_WORD_MEM(&spriteram[offset],data); }
 
 
-int battery_backed_ram_r( int offset )
+READ_HANDLER( battery_backed_ram_r )
 {
 	return READ_WORD(&battery_backed_ram[offset]);
 }
 
-void battery_backed_ram_w( int offset, int data )
+WRITE_HANDLER( battery_backed_ram_w )
 {
 	COMBINE_WORD_MEM(&battery_backed_ram[offset],data);
 }
@@ -141,22 +141,22 @@ static void cuebrick_nvram_handler(void *file,int read_or_write)
 
 /******************************************************************************************/
 
-static int extra_rom_r( int offset )
+static READ_HANDLER( extra_rom_r )
 {
 	return ((UINT16 *)memory_region(REGION_GFX3))[offset/2];
 }
 
-static int twin16_gfx_rom1_r( int offset )
+static READ_HANDLER( twin16_gfx_rom1_r )
 {
 	return twin16_gfx_rom[offset/2];
 }
 
-static int twin16_gfx_rom2_r( int offset )
+static READ_HANDLER( twin16_gfx_rom2_r )
 {
 	return twin16_gfx_rom[offset/2 + 0x80000 + ((twin16_CPUB_register&0x04)?0x40000:0)];
 }
 
-static void twin16_paletteram_w(int offset,int data)
+static WRITE_HANDLER( twin16_paletteram_w )
 { // identical to tmnt_paletteram_w
 	int oldword = READ_WORD(&paletteram[offset]);
 	int newword = COMBINE_WORD(oldword,data);
@@ -181,7 +181,7 @@ static void twin16_paletteram_w(int offset,int data)
 
 /******************************************************************************************/
 
-static void sound_command_w( int offset, int data )
+static WRITE_HANDLER( sound_command_w )
 {
 	twin16_sound_command = COMBINE_WORD( twin16_sound_command, data );
 	soundlatch_w( 0, twin16_sound_command&0xff );
@@ -197,7 +197,7 @@ static int CPUB_interrupt( void )
 	return CPUB_IRQ_ENABLE?MC68000_IRQ_5:MC68000_INT_NONE;
 }
 
-static int twin16_sprite_status_r( int offset )
+static READ_HANDLER( twin16_sprite_status_r )
 {
 	/*
 		return value indicates whether the spriteram-processing circuitry
@@ -210,7 +210,7 @@ static int twin16_sprite_status_r( int offset )
 	return k;
 }
 
-static void twin16_CPUA_register_w( int offset, int data )
+static WRITE_HANDLER( twin16_CPUA_register_w )
 {
 	/*
 		7	6	5	4	3	2	1	0
@@ -243,7 +243,7 @@ static void twin16_CPUA_register_w( int offset, int data )
 	}
 }
 
-static void twin16_CPUB_register_w( int offset, int data )
+static WRITE_HANDLER( twin16_CPUB_register_w )
 {
 	/*
 		7	6	5	4	3	2	1	0
@@ -262,7 +262,7 @@ static void twin16_CPUB_register_w( int offset, int data )
 	}
 }
 
-static void fround_CPU_register_w( int offset, int data )
+static WRITE_HANDLER( fround_CPU_register_w )
 {
 	UINT16 old = twin16_CPUA_register;
 	twin16_CPUA_register = COMBINE_WORD( old, data );
@@ -275,7 +275,7 @@ static void fround_CPU_register_w( int offset, int data )
 
 /******************************************************************************************/
 
-static int twin16_input_r (int offset)
+static READ_HANDLER( twin16_input_r )
 {
 	switch( offset )
 	{
@@ -293,12 +293,12 @@ static int twin16_input_r (int offset)
 /******************************************************************************************/
 /* sound system */
 
-int twin16_sres_r(int offset)
+READ_HANDLER( twin16_sres_r )
 {
 	return twin16_soundlatch;
 }
 
-void twin16_sres_w(int offset,int data)
+WRITE_HANDLER( twin16_sres_w )
 {
 	/* bit 1 resets the UPD7795C sound chip */
 	if ((data & 0x02) == 0)
@@ -310,7 +310,7 @@ void twin16_sres_w(int offset,int data)
 
 
 // Added by Takahiro Nogi. (1999/10/27)
-static void UPD7759_start_wx(int offset, int data)
+static WRITE_HANDLER( twin16_UPD7759_start_w )
 {
 	UPD7759_start_w(offset, (!(data & 0x01)));
 }
@@ -323,7 +323,7 @@ static struct MemoryReadAddress readmem_sound[] =
 	{ 0xa000, 0xa000, soundlatch_r },
 	{ 0xb000, 0xb00d, K007232_read_port_0_r },
 	{ 0xc001, 0xc001, YM2151_status_port_0_r },
-	{ 0xf000, 0xf000, UPD7759_busy_r },
+	{ 0xf000, 0xf000, UPD7759_0_busy_r },
 	{ -1 }
 };
 
@@ -335,8 +335,8 @@ static struct MemoryWriteAddress writemem_sound[] =
 	{ 0xb000, 0xb00d, K007232_write_port_0_w  },
 	{ 0xc000, 0xc000, YM2151_register_port_0_w },
 	{ 0xc001, 0xc001, YM2151_data_port_0_w },
-	{ 0xd000, 0xd000, UPD7759_message_w },
-	{ 0xe000, 0xe000, UPD7759_start_wx },	// Changed by Takahiro Nogi. (1999/10/27)
+	{ 0xd000, 0xd000, UPD7759_0_message_w },
+	{ 0xe000, 0xe000, twin16_UPD7759_start_w },	// Changed by Takahiro Nogi. (1999/10/27)
 	{ -1 }
 };
 

@@ -316,21 +316,21 @@ void psychic5_init_machine(void);
 int  psychic5_vh_start(void);
 void psychic5_vh_stop(void);
 void psychic5_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void psychic5_paged_ram_w(int offset, int data);
-int  psychic5_paged_ram_r(int offset);
-void psychic5_vram_page_select_w(int offset,int data);
-int  psychic5_vram_page_select_r(int offset);
+WRITE_HANDLER( psychic5_paged_ram_w );
+READ_HANDLER( psychic5_paged_ram_r );
+WRITE_HANDLER( psychic5_vram_page_select_w );
+READ_HANDLER( psychic5_vram_page_select_r );
 
 
 static int psychic5_bank_latch = 0x0;
 
 
-int psychic5_bankselect_r(int offset)
+READ_HANDLER( psychic5_bankselect_r )
 {
 	return psychic5_bank_latch;
 }
 
-void psychic5_bankselect_w(int offset, int data)
+WRITE_HANDLER( psychic5_bankselect_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;

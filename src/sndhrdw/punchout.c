@@ -1,6 +1,6 @@
 #include "driver.h"
 
-int punchout_input_3_r(int offset)
+READ_HANDLER( punchout_input_3_r )
 {
 	int data = input_port_3_r(offset);
 	/* bit 4 is busy pin level */

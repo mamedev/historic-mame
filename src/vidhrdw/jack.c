@@ -11,14 +11,14 @@
 
 static int flipscreen = 0;
 
-void jack_paletteram_w (int offset,int data)
+WRITE_HANDLER( jack_paletteram_w )
 {
 	/* RGB output is inverted */
 	paletteram_BBGGGRRR_w(offset,~data);
 }
 
 
-int jack_flipscreen_r(int offset)
+READ_HANDLER( jack_flipscreen_r )
 {
 	if (offset != flipscreen)
 	{
@@ -29,7 +29,7 @@ int jack_flipscreen_r(int offset)
 	return 0;
 }
 
-void jack_flipscreen_w(int offset, int data)
+WRITE_HANDLER( jack_flipscreen_w )
 {
 	jack_flipscreen_r(offset);
 }

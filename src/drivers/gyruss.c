@@ -65,29 +65,29 @@ and 1 SFX channel controlled by an 8039:
 void konami1_decode_cpu4(void);
 
 extern unsigned char *gyruss_spritebank,*gyruss_6809_drawplanet,*gyruss_6809_drawship;
-void gyruss_queuereg_w(int offset, int data);
-void gyruss_flipscreen_w(int offset, int data);
-int gyruss_scanline_r(int offset);
+WRITE_HANDLER( gyruss_queuereg_w );
+WRITE_HANDLER( gyruss_flipscreen_w );
+READ_HANDLER( gyruss_scanline_r );
 void gyruss_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void gyruss_6809_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-int gyruss_portA_r(int offset);
-void gyruss_filter0_w(int offset,int data);
-void gyruss_filter1_w(int offset,int data);
-void gyruss_sh_irqtrigger_w(int offset,int data);
-void gyruss_i8039_irq_w(int offset,int data);
+READ_HANDLER( gyruss_portA_r );
+WRITE_HANDLER( gyruss_filter0_w );
+WRITE_HANDLER( gyruss_filter1_w );
+WRITE_HANDLER( gyruss_sh_irqtrigger_w );
+WRITE_HANDLER( gyruss_i8039_irq_w );
 
 
 unsigned char *gyruss_sharedram;
 
-int gyruss_sharedram_r(int offset)
+READ_HANDLER( gyruss_sharedram_r )
 {
 	return gyruss_sharedram[offset];
 }
 
-void gyruss_sharedram_w(int offset,int data)
+WRITE_HANDLER( gyruss_sharedram_w )
 {
 	gyruss_sharedram[offset] = data;
 }
@@ -224,7 +224,7 @@ static struct IOReadPort i8039_readport[] =
 
 static struct IOWritePort i8039_writeport[] =
 {
-	{ I8039_p1, I8039_p1, DAC_data_w },
+	{ I8039_p1, I8039_p1, DAC_0_data_w },
 	{ I8039_p2, I8039_p2, IOWP_NOP },
 	{ -1 }	/* end of table */
 };

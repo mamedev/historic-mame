@@ -31,7 +31,7 @@ extern unsigned char *dd_scrolly_lo;
 int dd_vh_start(void);
 void dd_vh_stop(void);
 void dd_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void dd_background_w( int offset, int val );
+WRITE_HANDLER( dd_background_w );
 extern unsigned char *dd_spriteram;
 extern int dd2_video;
 /* end of extern code & data */
@@ -57,7 +57,7 @@ static void dd2_init_machine( void ) {
 	dd_sub_cpu_busy = 0x10;
 }
 
-static void dd_bankswitch_w( int offset, int data )
+static WRITE_HANDLER( dd_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -72,21 +72,21 @@ static void dd_bankswitch_w( int offset, int data )
 	cpu_setbank( 1,&RAM[ 0x10000 + ( 0x4000 * ( ( data >> 5 ) & 7 ) ) ] );
 }
 
-static void dd_forcedIRQ_w( int offset, int data ) {
+static WRITE_HANDLER( dd_forcedIRQ_w ) {
 	cpu_cause_interrupt( 0, M6809_INT_IRQ );
 }
 
-static int port4_r( int offset ) {
+static READ_HANDLER( port4_r ) {
 	int port = readinputport( 4 );
 
 	return port | dd_sub_cpu_busy;
 }
 
-static int dd_spriteram_r( int offset ){
+static READ_HANDLER( dd_spriteram_r ){
 	return dd_spriteram[offset];
 }
 
-static void dd_spriteram_w( int offset, int data ) {
+static WRITE_HANDLER( dd_spriteram_w ) {
 
 	if ( cpu_getactivecpu() == 1 && offset == 0 )
 		dd_sub_cpu_busy = 0x10;
@@ -94,12 +94,12 @@ static void dd_spriteram_w( int offset, int data ) {
 	dd_spriteram[offset] = data;
 }
 
-static void cpu_sound_command_w( int offset, int data ) {
+static WRITE_HANDLER( cpu_sound_command_w ) {
 	soundlatch_w( offset, data );
 	cpu_cause_interrupt( 2, sound_irq );
 }
 
-static void dd_adpcm_w(int offset,int data)
+static WRITE_HANDLER( dd_adpcm_w )
 {
 	static int start[2],end[2];
 	int chip = offset & 1;
@@ -126,7 +126,7 @@ static void dd_adpcm_w(int offset,int data)
 	}
 }
 
-static int dd_adpcm_status_r( int offset )
+static READ_HANDLER( dd_adpcm_status_r )
 {
 	return ( ADPCM_playing( 0 ) + ( ADPCM_playing( 1 ) << 1 ) );
 }

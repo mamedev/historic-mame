@@ -60,17 +60,17 @@ Port I/O Write:
 
 extern unsigned char *galaxian_attributesram;
 extern unsigned char *intrepid_sprite_bank_select;
-void galaxian_attributes_w(int offset,int data);
+WRITE_HANDLER( galaxian_attributes_w );
 
 void thepit_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void thepit_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void thepit_flipx_w(int offset,int data);
-void thepit_flipy_w(int offset,int data);
-int  thepit_input_port_0_r(int offset);
-void thepit_sound_enable_w(int offset, int data);
-void thepit_AY8910_0_w(int offset, int data);
-void thepit_AY8910_1_w(int offset, int data);
-void intrepid_graphics_bank_select_w(int offset, int data);
+WRITE_HANDLER( thepit_flipx_w );
+WRITE_HANDLER( thepit_flipy_w );
+READ_HANDLER( thepit_input_port_0_r );
+WRITE_HANDLER( thepit_sound_enable_w );
+WRITE_HANDLER( thepit_AY8910_0_w );
+WRITE_HANDLER( thepit_AY8910_1_w );
+WRITE_HANDLER( intrepid_graphics_bank_select_w );
 
 
 static struct MemoryReadAddress thepit_readmem[] =

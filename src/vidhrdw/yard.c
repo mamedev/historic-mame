@@ -204,7 +204,7 @@ void yard_vh_stop(void)
 
 
 
-void yard_flipscreen_w(int offset,int data)
+WRITE_HANDLER( yard_flipscreen_w )
 {
 	/* screen flip is handled both by software and hardware */
 	data ^= ~readinputport(4) & 1;
@@ -220,7 +220,7 @@ void yard_flipscreen_w(int offset,int data)
 }
 
 
-void yard_scroll_panel_w(int offset,int data)
+WRITE_HANDLER( yard_scroll_panel_w )
 {
 	int sx,sy,i;
 

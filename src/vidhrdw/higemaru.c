@@ -56,7 +56,7 @@ void higemaru_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 
 
-void higemaru_c800_w(int offset,int data)
+WRITE_HANDLER( higemaru_c800_w )
 {
 if (errorlog && (data & 0x7c)) fprintf(errorlog,"c800 = %02x\n",data);
 

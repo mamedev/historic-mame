@@ -14,10 +14,6 @@ TODO:
 - There is a custom microcontroller on the original Kangaroo board which is
   not emulated. This MIGHT cause some problems, but we don't know of any.
 
-- Funky Fish graphics don't work correctly, I suppose there's some scrolling
-  effect missing and the radar often corrupts. Also note the wrong FUNKY on
-  the tile screen.
-
 ***************************************************************************
 
 Kangaroo memory map
@@ -49,8 +45,8 @@ e800-e801 low/high byte start address of data in picture ROM for DMA
 e802-e803 low/high byte start address in bitmap RAM (where picture is to be
           written) during DMA
 e804-e805 picture size for DMA, and DMA start
-e806      vertical start address in bitmap
-e807      horizontal start address in bitmap
+e806      vertical scroll of playfield
+e807      horizontal scroll of playfield
 e808      bank select latch
 e809      A & B bitmap control latch (A=playfield B=motion)
           bit 5 FLIP A
@@ -88,22 +84,23 @@ interrupts:
 
 
 /* machine */
-int  kangaroo_sec_chip_r(int offset);
-void kangaroo_sec_chip_w(int offset,int val);
+READ_HANDLER( kangaroo_sec_chip_r );
+WRITE_HANDLER( kangaroo_sec_chip_w );
 
 /* vidhrdw */
 extern unsigned char *kangaroo_video_control;
 extern unsigned char *kangaroo_bank_select;
 extern unsigned char *kangaroo_blitter;
+extern unsigned char *kangaroo_scroll;
 void kangaroo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  kangaroo_vh_start(void);
 void kangaroo_vh_stop(void);
 void kangaroo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void kangaroo_blitter_w(int offset, int val);
-void kangaroo_videoram_w(int offset, int val);
-void kangaroo_video_control_w(int offset,int data);
-void kangaroo_bank_select_w(int offset,int data);
-void kangaroo_color_mask_w(int offset,int data);
+WRITE_HANDLER( kangaroo_blitter_w );
+WRITE_HANDLER( kangaroo_videoram_w );
+WRITE_HANDLER( kangaroo_video_control_w );
+WRITE_HANDLER( kangaroo_bank_select_w );
+WRITE_HANDLER( kangaroo_color_mask_w );
 
 
 
@@ -124,7 +121,7 @@ static void kangaroo_init_machine(void)
 }
 
 
-static void kangaroo_coin_counter_w(int offset, int data)
+static WRITE_HANDLER( kangaroo_coin_counter_w )
 {
 	coin_counter_w(0, data & 1);
 	coin_counter_w(1, data & 2);
@@ -150,7 +147,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8000, 0xbfff, kangaroo_videoram_w },
 	{ 0xc000, 0xdfff, MWA_ROM },
 	{ 0xe000, 0xe3ff, MWA_RAM },
-	{ 0xe800, 0xe807, kangaroo_blitter_w, &kangaroo_blitter },
+	{ 0xe800, 0xe805, kangaroo_blitter_w, &kangaroo_blitter },
+	{ 0xe806, 0xe807, MWA_RAM, &kangaroo_scroll },
 	{ 0xe808, 0xe808, kangaroo_bank_select_w, &kangaroo_bank_select },
 	{ 0xe809, 0xe809, kangaroo_video_control_w, &kangaroo_video_control },
 	{ 0xe80a, 0xe80a, kangaroo_color_mask_w },
@@ -160,7 +158,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }  /* end of table */
 };
 
-static struct MemoryReadAddress sh_readmem[] =
+static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x0fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
@@ -168,14 +166,14 @@ static struct MemoryReadAddress sh_readmem[] =
 	{ -1 }  /* end of table */
 };
 
-static struct MemoryWriteAddress sh_writemem[] =
+static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x0fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
 	{ -1 }  /* end of table */
 };
 
-static struct IOWritePort sh_writeport[] =
+static struct IOWritePort sound_writeport[] =
 {
 	{ 0x7000, 0x7000, AY8910_write_port_0_w },
 	{ 0x8000, 0x8000, AY8910_control_port_0_w },
@@ -339,7 +337,7 @@ static struct MachineDriver machine_driver_kangaroo =
 		{
 			CPU_Z80 | CPU_16BIT_PORT | CPU_AUDIO_CPU,
 			10000000/4, /* 2.5 MHz */
-			sh_readmem,sh_writemem,0,sh_writeport,
+			sound_readmem,sound_writemem,0,sound_writeport,
 			interrupt,1
 		}
 	},
@@ -353,7 +351,7 @@ static struct MachineDriver machine_driver_kangaroo =
 	24,0,
 	kangaroo_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	kangaroo_vh_start,
 	kangaroo_vh_stop,
@@ -454,7 +452,7 @@ ROM_END
 
 
 
-GAMEX(1981, fnkyfish, 0,        kangaroo, fnkyfish, 0, ROT90, "Sun Electronics", "Funky Fish", GAME_NOT_WORKING )
+GAME( 1981, fnkyfish, 0,        kangaroo, fnkyfish, 0, ROT90, "Sun Electronics", "Funky Fish" )
 GAME( 1982, kangaroo, 0,        kangaroo, kangaroo, 0, ROT90, "Sun Electronics", "Kangaroo" )
 GAME( 1982, kangaroa, kangaroo, kangaroo, kangaroo, 0, ROT90, "[Sun Electronics] (Atari license)", "Kangaroo (Atari)" )
 GAME( 1982, kangarob, kangaroo, kangaroo, kangaroo, 0, ROT90, "bootleg", "Kangaroo (bootleg)" )

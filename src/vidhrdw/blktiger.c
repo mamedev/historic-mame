@@ -25,9 +25,9 @@ unsigned char *blktiger_backgroundram;
 static unsigned char blktiger_video_control;
 unsigned char *blktiger_screen_layout;
 int blktiger_backgroundram_size;
-void blktiger_scrollx_w(int offset,int data);
-void blktiger_scrolly_w(int offset,int data);
-void blktiger_scrollbank_w(int offset,int data);
+WRITE_HANDLER( blktiger_scrollx_w );
+WRITE_HANDLER( blktiger_scrolly_w );
+WRITE_HANDLER( blktiger_scrollbank_w );
 
 static int blktiger_scroll_bank;
 static const int scroll_page_count=4;
@@ -108,7 +108,7 @@ void blktiger_vh_stop(void)
 
 
 
-void blktiger_background_w(int offset,int data)
+WRITE_HANDLER( blktiger_background_w )
 {
 	offset += blktiger_scroll_bank;
 
@@ -122,31 +122,31 @@ void blktiger_background_w(int offset,int data)
 }
 
 
-void blktiger_scrollbank_w(int offset, int data)
+WRITE_HANDLER( blktiger_scrollbank_w )
 {
 	blktiger_scroll_bank = (data & 0x03) * blktiger_backgroundram_size;
 }
 
 
-int blktiger_background_r(int offset)
+READ_HANDLER( blktiger_background_r )
 {
 	offset += blktiger_scroll_bank;
 	return scroll_ram[offset];
 }
 
 
-void blktiger_scrolly_w(int offset,int data)
+WRITE_HANDLER( blktiger_scrolly_w )
 {
 	blktiger_scrolly[offset]=data;
 }
 
-void blktiger_scrollx_w(int offset,int data)
+WRITE_HANDLER( blktiger_scrollx_w )
 {
 	blktiger_scrollx[offset]=data;
 }
 
 
-void blktiger_video_control_w(int offset,int data)
+WRITE_HANDLER( blktiger_video_control_w )
 {
 	/* bits 0 and 1 are coin counters */
 	coin_counter_w(0,data & 1);
@@ -161,7 +161,7 @@ void blktiger_video_control_w(int offset,int data)
 	chon = ~data & 0x80;
 }
 
-void blktiger_video_enable_w(int offset,int data)
+WRITE_HANDLER( blktiger_video_enable_w )
 {
 	/* not sure which is which, but I think that bit 1 and 2 enable background and sprites */
 	/* bit 1 enables bg ? */
@@ -171,7 +171,7 @@ void blktiger_video_enable_w(int offset,int data)
 	objon = ~data & 0x04;
 }
 
-void blktiger_screen_layout_w(int offset,int data)
+WRITE_HANDLER( blktiger_screen_layout_w )
 {
 	screen_layout = data;
 }

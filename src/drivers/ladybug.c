@@ -39,12 +39,12 @@ Coin insertion in left slot generates a NMI, in right slot an IRQ.
 
 
 
-int ladybug_IN0_r(int offset);
-int ladybug_IN1_r(int offset);
+READ_HANDLER( ladybug_IN0_r );
+READ_HANDLER( ladybug_IN1_r );
 int ladybug_interrupt(void);
 
 void ladybug_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void ladybug_flipscreen_w(int offset,int data);
+WRITE_HANDLER( ladybug_flipscreen_w );
 void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 

@@ -74,56 +74,56 @@ void wc90b_vh_stop ( void ) {
 	generic_vh_stop();
 }
 
-int wc90b_tile_videoram_r ( int offset ) {
+READ_HANDLER( wc90b_tile_videoram_r ) {
 	return wc90b_tile_videoram[offset];
 }
 
-void wc90b_tile_videoram_w( int offset, int v ) {
-	if ( wc90b_tile_videoram[offset] != v ) {
+WRITE_HANDLER( wc90b_tile_videoram_w ) {
+	if ( wc90b_tile_videoram[offset] != data ) {
 		dirtybuffer1[offset] = 1;
-		wc90b_tile_videoram[offset] = v;
+		wc90b_tile_videoram[offset] = data;
 	}
 }
 
-int wc90b_tile_colorram_r ( int offset ) {
+READ_HANDLER( wc90b_tile_colorram_r ) {
 	return wc90b_tile_colorram[offset];
 }
 
-void wc90b_tile_colorram_w( int offset, int v ) {
-	if ( wc90b_tile_colorram[offset] != v ) {
+WRITE_HANDLER( wc90b_tile_colorram_w ) {
+	if ( wc90b_tile_colorram[offset] != data ) {
 		dirtybuffer1[offset] = 1;
-		wc90b_tile_colorram[offset] = v;
+		wc90b_tile_colorram[offset] = data;
 	}
 }
 
-int wc90b_tile_videoram2_r ( int offset ) {
+READ_HANDLER( wc90b_tile_videoram2_r ) {
 	return wc90b_tile_videoram2[offset];
 }
 
-void wc90b_tile_videoram2_w( int offset, int v ) {
-	if ( wc90b_tile_videoram2[offset] != v ) {
+WRITE_HANDLER( wc90b_tile_videoram2_w ) {
+	if ( wc90b_tile_videoram2[offset] != data ) {
 		dirtybuffer2[offset] = 1;
-		wc90b_tile_videoram2[offset] = v;
+		wc90b_tile_videoram2[offset] = data;
 	}
 }
 
-int wc90b_tile_colorram2_r ( int offset ) {
+READ_HANDLER( wc90b_tile_colorram2_r ) {
 	return wc90b_tile_colorram2[offset];
 }
 
-void wc90b_tile_colorram2_w( int offset, int v ) {
-	if ( wc90b_tile_colorram2[offset] != v ) {
+WRITE_HANDLER( wc90b_tile_colorram2_w ) {
+	if ( wc90b_tile_colorram2[offset] != data ) {
 		dirtybuffer2[offset] = 1;
-		wc90b_tile_colorram2[offset] = v;
+		wc90b_tile_colorram2[offset] = data;
 	}
 }
 
-int wc90b_shared_r ( int offset ) {
+READ_HANDLER( wc90b_shared_r ) {
 	return wc90b_shared[offset];
 }
 
-void wc90b_shared_w( int offset, int v ) {
-	wc90b_shared[offset] = v;
+WRITE_HANDLER( wc90b_shared_w ) {
+	wc90b_shared[offset] = data;
 }
 
 static void wc90b_draw_sprites( struct osd_bitmap *bitmap, int priority ){

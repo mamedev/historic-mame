@@ -23,22 +23,20 @@ static void tile_callback(int layer,int bank,int *code,int *color)
 
 ***************************************************************************/
 
-static void sprite_callback(int *code,int *color,int *priority)
+static void sprite_callback(int *code,int *color,int *priority_mask)
 {
-	/* Weird priority scheme. Why use three bits when two would suffice? */
 	/* The PROM allows for mixed priorities, where sprites would have */
 	/* priority over text but not on one or both of the other two planes. */
-	/* Luckily, this isn't used by the game. */
 	switch (*color & 0x70)
 	{
-		case 0x10: *priority = 0; break;
-		case 0x00: *priority = 1; break;
-		case 0x40: *priority = 2; break;
-		case 0x20: *priority = 3; break;
-		/*   0x60 == 0x20 */
-		/*   0x50 priority over F and A, but not over B */
-		/*   0x30 priority over F, but not over A and B */
-		/*   0x70 == 0x30 */
+		case 0x10: *priority_mask = 0x00; break;			/* over ABF */
+		case 0x00: *priority_mask = 0xf0          ; break;	/* over AB, not F */
+		case 0x40: *priority_mask = 0xf0|0xcc     ; break;	/* over A, not BF */
+		case 0x20:
+		case 0x60: *priority_mask = 0xf0|0xcc|0xaa; break;	/* over -, not ABF */
+		case 0x50: *priority_mask =      0xcc     ; break;	/* over AF, not B */
+		case 0x30:
+		case 0x70: *priority_mask =      0xcc|0xaa; break;	/* over F, not AB */
 	}
 	*code |= (*color & 0x80) << 6;
 	*color = sprite_colorbase + (*color & 0x0f);
@@ -103,12 +101,11 @@ void aliens_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_render(ALL_TILEMAPS);
 
+	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[layer_colorbase[1] * 16],&Machine->drv->visible_area);
-	K051960_sprites_draw(bitmap,3,3);
-	K052109_tilemap_draw(bitmap,1,0);
-	K051960_sprites_draw(bitmap,2,2);
-	K052109_tilemap_draw(bitmap,2,0);
-	K051960_sprites_draw(bitmap,1,1);
-	K052109_tilemap_draw(bitmap,0,0);
-	K051960_sprites_draw(bitmap,0,0);
+	K052109_tilemap_draw(bitmap,1,1<<16);
+	K052109_tilemap_draw(bitmap,2,2<<16);
+	K052109_tilemap_draw(bitmap,0,4<<16);
+
+	K051960_sprites_draw(bitmap,-1,-1);
 }

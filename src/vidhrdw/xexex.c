@@ -12,7 +12,7 @@ static int sprite_colorbase;
 
 ***************************************************************************/
 
-static void sprite_callback(int *code,int *color,int *priority)
+static void sprite_callback(int *code,int *color,int *priority_mask)
 {
 	*color = sprite_colorbase + (*color & 0x001f);
 }
@@ -24,22 +24,20 @@ static int K053157_rambank, K053157_cur_rambank, K053157_rombank, K053157_cur_ro
 static unsigned char *K053157_rambase, *K053157_cur_rambase, *K053157_rombase;
 static void (*K053157_cur_notifier)(int);
 
-static void K053157_get_char01_tile_info(int col, int row)
+static void K053157_get_char01_tile_info(int tile_index)
 {
-	int addr = col*4+row*256+0x2000;
-	int attr = READ_WORD(K053157_rambase+addr);
-	int code = READ_WORD(K053157_rambase+addr+2);
+	int attr = READ_WORD(K053157_rambase+4*tile_index+0x2000);
+	int code = READ_WORD(K053157_rambase+4*tile_index+0x2000+2);
 
 	SET_TILE_INFO (0, code, ((attr + 0x300) & 0x7f0)>>4);
 	tile_info.flags = TILE_FLIPYX(attr & 3);
 
 }
 
-static void K053157_get_char11_tile_info(int col, int row)
+static void K053157_get_char11_tile_info(int tile_index)
 {
-	int addr = col*4+row*256+0xa000;
-	int attr = READ_WORD(K053157_rambase+addr);
-	int code = READ_WORD(K053157_rambase+addr+2);
+	int attr = READ_WORD(K053157_rambase+4*tile_index+0xa000);
+	int code = READ_WORD(K053157_rambase+4*tile_index+0xa000+2);
 
 	SET_TILE_INFO (0, code, ((attr + 0x700) & 0x7f0)>>4);
 	tile_info.flags = TILE_FLIPYX(attr & 3);
@@ -47,16 +45,12 @@ static void K053157_get_char11_tile_info(int col, int row)
 
 static void K053157_char01_m(int offset)
 {
-	tilemap_mark_tile_dirty(K053157_char01_tilemap,
-							(offset & 0xfc)>>2,
-							(offset & 0x1f00)>>8);
+	tilemap_mark_tile_dirty(K053157_char01_tilemap,offset/4);
 }
 
 static void K053157_char11_m(int offset)
 {
-	tilemap_mark_tile_dirty(K053157_char11_tilemap,
-							(offset & 0xfc)>>2,
-							(offset & 0x1f00)>>8);
+	tilemap_mark_tile_dirty(K053157_char11_tilemap,offset/4);
 }
 
 static void (*K053157_modify_notifiers[8])(int) = {
@@ -72,15 +66,11 @@ static void (*K053157_modify_notifiers[8])(int) = {
 
 int K053157_vh_start(int rambank, int rombank, int roms_memory_region)
 {
-	K053157_char01_tilemap = tilemap_create(K053157_get_char01_tile_info,
-											TILEMAP_OPAQUE,
-											8, 8,
-											64, 32);
+	K053157_char01_tilemap = tilemap_create(K053157_get_char01_tile_info,tilemap_scan_rows,
+											TILEMAP_OPAQUE,8,8,64,32);
 
-	K053157_char11_tilemap = tilemap_create(K053157_get_char11_tile_info,
-											TILEMAP_TRANSPARENT,
-											8, 8,
-											64, 32);
+	K053157_char11_tilemap = tilemap_create(K053157_get_char11_tile_info,tilemap_scan_rows,
+											TILEMAP_TRANSPARENT,8,8,64,32);
 
 	if(!K053157_char01_tilemap || !K053157_char11_tilemap)
 		return 1;
@@ -103,7 +93,7 @@ int K053157_vh_start(int rambank, int rombank, int roms_memory_region)
 	return 0;
 }
 
-void K053157_ram_w(int offset, int data)
+WRITE_HANDLER( K053157_ram_w )
 {
 	unsigned char *adr = K053157_cur_rambase + offset;
 	int old = READ_WORD(adr);
@@ -113,14 +103,14 @@ void K053157_ram_w(int offset, int data)
 		K053157_cur_notifier(offset);
 }
 
-int K053157_r(int offset)
+READ_HANDLER( K053157_r )
 {
 	if(errorlog)
 		fprintf(errorlog, "K053157: unhandled read(%02x), pc=%08x\n", offset, cpu_get_pc());
 	return 0;
 }
 
-void K053157_w(int offset, int data)
+WRITE_HANDLER( K053157_w )
 {
 	switch(offset) {
 	case 0x32: {
@@ -196,20 +186,6 @@ void K053157_draw(struct osd_bitmap *bitmap)
 
 extern unsigned char *xexex_palette_ram;
 
-void xexex_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
-{
-	K053157_update();
-
-	palette_init_used_colors();
-	K053247_mark_sprites_colors();
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	K053157_render();
-	K053157_draw(bitmap);
-	K053247_sprites_draw(bitmap,0,0);
-}
-
 int xexex_vh_start(void)
 {
 	K053157_vh_start(2, 6, REGION_GFX1);
@@ -228,7 +204,7 @@ void xexex_vh_stop(void)
 }
 
 
-void xexex_palette_w(int offset, int data)
+WRITE_HANDLER( xexex_palette_w )
 {
 	int r, g, b;
 	int data0, data1;
@@ -245,4 +221,19 @@ void xexex_palette_w(int offset, int data)
 	b = data1 & 0xff;
 
 	palette_change_color(offset>>2, r, g, b);
+}
+
+
+void xexex_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+{
+	K053157_update();
+
+	palette_init_used_colors();
+	K053247_mark_sprites_colors();
+	if (palette_recalc())
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+
+	K053157_render();
+	K053157_draw(bitmap);
+	K053247_sprites_draw(bitmap);
 }

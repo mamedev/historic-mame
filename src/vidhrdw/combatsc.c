@@ -91,9 +91,8 @@ void combascb_convert_color_prom(unsigned char *palette, unsigned short *colorta
 
 ***************************************************************************/
 
-static void get_tile_info0( int col, int row )
+static void get_tile_info0(int tile_index)
 {
-	int tile_index = row*32 + col;
 	unsigned char attributes = combasc_page[0][tile_index];
 	int bank = 4*((combasc_vreg & 0x0f) - 1);
 	int number,color;
@@ -113,9 +112,8 @@ static void get_tile_info0( int col, int row )
 	tile_info.priority = (attributes & 0x40) >> 6;
 }
 
-static void get_tile_info1( int col, int row )
+static void get_tile_info1(int tile_index)
 {
-	int tile_index = row*32 + col;
 	unsigned char attributes = combasc_page[1][tile_index];
 	int bank = 4*((combasc_vreg >> 4) - 1);
 	int number, color;
@@ -135,11 +133,10 @@ static void get_tile_info1( int col, int row )
 	tile_info.priority = (attributes & 0x40) >> 6;
 }
 
-static void get_text_info( int col, int row )
+static void get_text_info(int tile_index)
 {
-	int tile_index = row*32 + col + 0x800;
-	unsigned char attributes = combasc_page[0][tile_index];
-	int number = combasc_page[0][tile_index + 0x400];
+	unsigned char attributes = combasc_page[0][tile_index + 0x800];
+	int number = combasc_page[0][tile_index + 0xc00];
 	int color = 16 + (attributes & 0x0f);
 
 	SET_TILE_INFO(0,number,color)
@@ -150,9 +147,9 @@ static void get_text_info( int col, int row )
 		tile_info.flags = TILE_IGNORE_TRANSPARENCY;
 }
 
-static void get_tile_info0_bootleg( int col, int row )
+
+static void get_tile_info0_bootleg(int tile_index)
 {
-	int tile_index = row*32 + col;
 	unsigned char attributes = combasc_page[0][tile_index];
 	int bank = 4*((combasc_vreg & 0x0f) - 1);
 	int number, pal, color;
@@ -171,9 +168,8 @@ static void get_tile_info0_bootleg( int col, int row )
 	SET_TILE_INFO(0,number,color)
 }
 
-static void get_tile_info1_bootleg( int col, int row )
+static void get_tile_info1_bootleg(int tile_index)
 {
-	int tile_index = row*32 + col;
 	unsigned char attributes = combasc_page[1][tile_index];
 	int bank = 4*((combasc_vreg >> 4) - 1);
 	int number, pal, color;
@@ -192,11 +188,10 @@ static void get_tile_info1_bootleg( int col, int row )
 	SET_TILE_INFO(1,number,color)
 }
 
-static void get_text_info_bootleg( int col, int row )
+static void get_text_info_bootleg(int tile_index)
 {
-	int tile_index = row*32 + col + 0x800;
-//	unsigned char attributes = combasc_page[0][tile_index];
-	int number = combasc_page[0][tile_index + 0x400];
+//	unsigned char attributes = combasc_page[0][tile_index + 0x800];
+	int number = combasc_page[0][tile_index + 0xc00];
 	int color = 16;// + (attributes & 0x0f);
 
 	SET_TILE_INFO(1, number, color)
@@ -212,9 +207,9 @@ int combasc_vh_start(void)
 {
 	combasc_vreg = -1;
 
-	tilemap[0] = tilemap_create(get_tile_info0,TILEMAP_TRANSPARENT,8,8,32,32);
-	tilemap[1] = tilemap_create(get_tile_info1,TILEMAP_TRANSPARENT,8,8,32,32);
-	textlayer =  tilemap_create(get_text_info, TILEMAP_TRANSPARENT,8,8,32,32);
+	tilemap[0] = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	tilemap[1] = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	textlayer =  tilemap_create(get_text_info, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 
 	private_spriteram[0] = malloc(0x800);
 	private_spriteram[1] = malloc(0x800);
@@ -239,9 +234,9 @@ int combascb_vh_start(void)
 {
 	combasc_vreg = -1;
 
-	tilemap[0] =  tilemap_create(get_tile_info0_bootleg,TILEMAP_TRANSPARENT,8,8,32,32);
-	tilemap[1] =  tilemap_create(get_tile_info1_bootleg,TILEMAP_TRANSPARENT,8,8,32,32);
-	textlayer = tilemap_create(get_text_info_bootleg, TILEMAP_TRANSPARENT,8,8,32,32);
+	tilemap[0] = tilemap_create(get_tile_info0_bootleg,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	tilemap[1] = tilemap_create(get_tile_info1_bootleg,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	textlayer =  tilemap_create(get_text_info_bootleg, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 
 	private_spriteram[0] = malloc(0x800);
 	private_spriteram[1] = malloc(0x800);
@@ -269,40 +264,39 @@ void combasc_vh_stop(void)
 	free(private_spriteram[1]);
 }
 
+
 /***************************************************************************
 
 	Memory handlers
 
 ***************************************************************************/
 
-int combasc_video_r( int offset )
+READ_HANDLER( combasc_video_r )
 {
 	return videoram[offset];
 }
 
-void combasc_video_w( int offset, int data )
+WRITE_HANDLER( combasc_video_w )
 {
 	if( videoram[offset]!=data )
 	{
 		videoram[offset] = data;
 		if( offset<0x800 )
 		{
-			offset = offset&0x3ff;
 			if (combasc_video_circuit)
-				tilemap_mark_tile_dirty( tilemap[1], offset%32, offset/32 );
+				tilemap_mark_tile_dirty(tilemap[1],offset & 0x3ff);
 			else
-				tilemap_mark_tile_dirty( tilemap[0], offset%32, offset/32 );
+				tilemap_mark_tile_dirty(tilemap[0],offset & 0x3ff);
 		}
 		else if( offset<0x1000 && combasc_video_circuit==0 )
 		{
-			offset = offset&0x3ff;
-			tilemap_mark_tile_dirty( textlayer, offset%32, offset/32 );
+			tilemap_mark_tile_dirty( textlayer,offset & 0x3ff);
 		}
 	}
 }
 
 
-void combasc_vreg_w( int offset, int data )
+WRITE_HANDLER( combasc_vreg_w )
 {
 	if (data != combasc_vreg)
 	{
@@ -315,13 +309,13 @@ void combasc_vreg_w( int offset, int data )
 	}
 }
 
-void combascb_sh_irqtrigger_w(int offset, int data)
+WRITE_HANDLER( combascb_sh_irqtrigger_w )
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(1,0xff);
 }
 
-int combasc_io_r( int offset )
+READ_HANDLER( combasc_io_r )
 {
 	if ((offset <= 0x403) && (offset >= 0x400))
 	{
@@ -336,7 +330,7 @@ int combasc_io_r( int offset )
 	return banked_area[offset];
 }
 
-void combasc_io_w( int offset, int data )
+WRITE_HANDLER( combasc_io_w )
 {
 	switch (offset)
 	{
@@ -348,7 +342,7 @@ void combasc_io_w( int offset, int data )
 	}
 }
 
-void combasc_bankselect_w(int offset,int data)
+WRITE_HANDLER( combasc_bankselect_w )
 {
 	unsigned char *page = memory_region(REGION_CPU1) + 0x10000;
 
@@ -377,7 +371,7 @@ void combasc_bankselect_w(int offset,int data)
 	}
 }
 
-void combascb_bankselect_w(int offset,int data)
+WRITE_HANDLER( combascb_bankselect_w )
 {
 	if (data & 0x40)
 	{
@@ -436,7 +430,7 @@ void combasc_init_machine( void )
 	combasc_bankselect_w( 0,0 );
 }
 
-void combasc_pf_control_w( int offset, int data )
+WRITE_HANDLER( combasc_pf_control_w )
 {
 	K007121_ctrl_w(combasc_video_circuit,offset,data);
 
@@ -452,12 +446,12 @@ void combasc_pf_control_w( int offset, int data )
 	}
 }
 
-int combasc_scrollram_r( int offset )
+READ_HANDLER( combasc_scrollram_r )
 {
 	return combasc_scrollram[offset];
 }
 
-void combasc_scrollram_w( int offset, int data )
+WRITE_HANDLER( combasc_scrollram_w )
 {
 	combasc_scrollram[offset] = data;
 }
@@ -470,11 +464,11 @@ void combasc_scrollram_w( int offset, int data )
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap, const unsigned char *source, int circuit)
+static void draw_sprites(struct osd_bitmap *bitmap, const unsigned char *source,int circuit,UINT32 pri_mask)
 {
 	int base_color = (circuit*4)*16+(K007121_ctrlram[circuit][6]&0x10)*2;
 
-	K007121_sprites_draw(circuit,bitmap,source,base_color,0,0);
+	K007121_sprites_draw(circuit,bitmap,source,base_color,0,0,pri_mask);
 }
 
 
@@ -519,30 +513,29 @@ void combasc_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 	tilemap_render(ALL_TILEMAPS);
 
+	fillbitmap(priority_bitmap,0,NULL);
+
 	if (priority == 0)
 	{
-/*
- TODO: there's a priority bug in the Mission level which isn't easy to fix.
- It is an orthogonality issue: while tilemap[1],1 has priority over sprites 1,
- and sprites 1 have priority over tilemap[0],1, tilemap[1] does NOT have
- priority over tilemap[0]. As it is now, the damage indicator passes behind the
- wall when you go through the first door, while it should of course be in front.
- */
-		tilemap_draw(bitmap,tilemap[1],TILEMAP_IGNORE_TRANSPARENCY|0);
-		tilemap_draw(bitmap,tilemap[0],0);
-		draw_sprites(bitmap,private_spriteram[0],0);
-		tilemap_draw(bitmap,tilemap[0],1);
-		draw_sprites(bitmap,private_spriteram[1],1);
-		tilemap_draw(bitmap,tilemap[1],1);
+		tilemap_draw(bitmap,tilemap[1],TILEMAP_IGNORE_TRANSPARENCY|0|(4<<16));
+		tilemap_draw(bitmap,tilemap[1],TILEMAP_IGNORE_TRANSPARENCY|1|(8<<16));
+		tilemap_draw(bitmap,tilemap[0],0|(1<<16));
+		tilemap_draw(bitmap,tilemap[0],1|(2<<16));
+
+		/* we use the priority buffer so sprites are drawn front to back */
+		draw_sprites(bitmap,private_spriteram[1],1,0x0f00);
+		draw_sprites(bitmap,private_spriteram[0],0,0x4444);
 	}
 	else
 	{
-		tilemap_draw(bitmap,tilemap[0],TILEMAP_IGNORE_TRANSPARENCY|0);
-		draw_sprites(bitmap,private_spriteram[0],0);
-		tilemap_draw(bitmap,tilemap[0],1);
-		tilemap_draw(bitmap,tilemap[1],0);
-		draw_sprites(bitmap,private_spriteram[1],1);
-		tilemap_draw(bitmap,tilemap[1],1);
+		tilemap_draw(bitmap,tilemap[0],TILEMAP_IGNORE_TRANSPARENCY|0|(1<<16));
+		tilemap_draw(bitmap,tilemap[0],TILEMAP_IGNORE_TRANSPARENCY|1|(2<<16));
+		tilemap_draw(bitmap,tilemap[1],1|(4<<16));
+		tilemap_draw(bitmap,tilemap[1],0|(8<<16));
+
+		/* we use the priority buffer so sprites are drawn front to back */
+		draw_sprites(bitmap,private_spriteram[1],1,0x0f00);
+		draw_sprites(bitmap,private_spriteram[0],0,0x4444);
 	}
 
 	if (K007121_ctrlram[0][0x01] & 0x08)

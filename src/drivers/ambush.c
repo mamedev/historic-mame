@@ -44,7 +44,7 @@ void ambush_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 void ambush_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-static void ambush_coin_counter_w(int offset, int data)
+static WRITE_HANDLER( ambush_coin_counter_w )
 {
 	coin_counter_w(0, data & 0x01);
 	coin_counter_w(1, data & 0x02);

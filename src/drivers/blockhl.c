@@ -45,7 +45,7 @@ static int blockhl_interrupt( void )
 		return ignore_interrupt();
 }
 
-static int bankedram_r(int offset)
+static READ_HANDLER( bankedram_r )
 {
 	if (palette_selected)
 		return paletteram_r(offset);
@@ -53,7 +53,7 @@ static int bankedram_r(int offset)
 		return ram[offset];
 }
 
-static void bankedram_w(int offset,int data)
+static WRITE_HANDLER( bankedram_w )
 {
 	if (palette_selected)
 		paletteram_xBBBBBGGGGGRRRRR_swap_w(offset,data);
@@ -61,7 +61,7 @@ static void bankedram_w(int offset,int data)
 		ram[offset] = data;
 }
 
-void blockhl_sh_irqtrigger_w(int offset, int data)
+WRITE_HANDLER( blockhl_sh_irqtrigger_w )
 {
 	cpu_cause_interrupt(1,0xff);
 }

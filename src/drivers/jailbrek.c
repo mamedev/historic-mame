@@ -27,11 +27,11 @@ static void jailbrek_machine_init( void )
 	interrupt_control[0] = 0;
 }
 
-static int jailbrek_speech_r( int offs ) {
+static READ_HANDLER( jailbrek_speech_r ) {
 	return ( VLM5030_BSY() ? 1 : 0 );
 }
 
-static void jailbrek_speech_w( int offs, int data ) {
+static WRITE_HANDLER( jailbrek_speech_w ) {
 	VLM5030_VCU( data & 1 );
 	VLM5030_ST( ( data >> 1 ) & 1 );
 	VLM5030_RST( ( data >> 2 ) & 1 );

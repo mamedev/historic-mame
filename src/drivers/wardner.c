@@ -128,12 +128,12 @@ out:
 
 /******************** Machine stuff **********************/
 void wardner_reset(void);
-void wardner_mainram_w(int offset, int data);
-int  wardner_mainram_r(int offset);
-int  twincobr_dsp_in(int offset);
-void twincobr_dsp_out(int fnction,int data);
-void twincobr_7800c_w(int offset,int data);
-void fshark_coin_dsp_w(int offset,int data);
+WRITE_HANDLER( wardner_mainram_w );
+READ_HANDLER( wardner_mainram_r );
+READ_HANDLER( twincobr_dsp_r );
+WRITE_HANDLER( twincobr_dsp_w );
+WRITE_HANDLER( twincobr_7800c_w );
+WRITE_HANDLER( fshark_coin_dsp_w );
 
 static int wardner_membank = 0;
 extern int twincobr_intenable;
@@ -142,18 +142,18 @@ extern unsigned char *wardner_mainram;
 
 
 /******************** Video stuff **********************/
-int  twincobr_crtc_r(int offset);
-void twincobr_crtc_w(int offset,int data);
+READ_HANDLER( twincobr_crtc_r );
+WRITE_HANDLER( twincobr_crtc_w );
 
-void wardner_videoram_w(int offset, int data);
-int  wardner_videoram_r(int offset);
-void wardner_bglayer_w(int offset, int data);
-void wardner_fglayer_w(int offset, int data);
-void wardner_txlayer_w(int offset, int data);
-void wardner_bgscroll_w(int offset, int data);
-void wardner_fgscroll_w(int offset, int data);
-void wardner_txscroll_w(int offset, int data);
-void twincobr_exscroll_w(int offset,int data);
+WRITE_HANDLER( wardner_videoram_w );
+READ_HANDLER( wardner_videoram_r );
+WRITE_HANDLER( wardner_bglayer_w );
+WRITE_HANDLER( wardner_fglayer_w );
+WRITE_HANDLER( wardner_txlayer_w );
+WRITE_HANDLER( wardner_bgscroll_w );
+WRITE_HANDLER( wardner_fgscroll_w );
+WRITE_HANDLER( wardner_txscroll_w );
+WRITE_HANDLER( twincobr_exscroll_w );
 
 int  twincobr_vh_start(void);
 void twincobr_vh_stop(void);
@@ -178,29 +178,29 @@ static int wardner_interrupt(void)
 }
 
 
-static void CRTC_add_w(int offset,int data)
+static WRITE_HANDLER( CRTC_add_w )
 {
 	crtc6845_address_w(offset, data);
 }
 
-static void CRTC_data_w(int offset, int data)
+static WRITE_HANDLER( CRTC_data_w )
 {
 	crtc6845_register_w(0, data);
 	twincobr_display_on = 1;
 }
 
-static int wardner_sprite_r(int offset)
+static READ_HANDLER( wardner_sprite_r )
 {
 	return spriteram[offset];
 }
 
-static void wardner_sprite_w(int offset, int data)
+static WRITE_HANDLER( wardner_sprite_w )
 {
 	spriteram[offset] = data;
 }
 
 
-static void wardner_ramrom_banksw(int offset,int data)
+static WRITE_HANDLER( wardner_ramrom_banks_w )
 {
 	if (wardner_membank != data) {
 		int bankaddress = 0;
@@ -321,7 +321,7 @@ static struct IOWritePort writeport[] =
 	{ 0x60, 0x65, wardner_videoram_w },		/* data for video layer RAM */
 	{ 0x5a, 0x5a, fshark_coin_dsp_w },		/* Machine system control */
 	{ 0x5c, 0x5c, twincobr_7800c_w },		/* Machine system control */
-	{ 0x70, 0x70, wardner_ramrom_banksw },	/* ROM bank select */
+	{ 0x70, 0x70, wardner_ramrom_banks_w },	/* ROM bank select */
 	{ -1 }
 };
 
@@ -340,12 +340,12 @@ static struct IOWritePort sound_writeport[] =
 
 static struct IOReadPort DSP_readport[] =
 {
-	{ 0x01, 0x01, twincobr_dsp_in },
+	{ 0x01, 0x01, twincobr_dsp_r },
 	{ -1 }
 };
 static struct IOWritePort DSP_writeport[] =
 {
-	{ 0x00,  0x03, twincobr_dsp_out },
+	{ 0x00,  0x03, twincobr_dsp_w },
 	{ -1 }
 };
 

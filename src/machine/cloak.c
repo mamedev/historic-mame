@@ -14,12 +14,12 @@ unsigned char *cloak_sharedram;
 unsigned char *cloak_nvRAM;
 unsigned char *enable_nvRAM;
 
-int cloak_sharedram_r(int offset)
+READ_HANDLER( cloak_sharedram_r )
 {
 	return cloak_sharedram[offset];
 }
 
-void cloak_sharedram_w(int offset,int data)
+WRITE_HANDLER( cloak_sharedram_w )
 {
 	cloak_sharedram[offset] = data;
 }

@@ -32,7 +32,7 @@ static int qcode_last;
 static int queue_data;
 static int queue_len;
 
-void qsound_queue_w( int offset, int data )
+WRITE_HANDLER( qsound_queue_w )
 {
     queue_data = data;
     queue_len = 2;
@@ -104,7 +104,7 @@ static struct QSound_interface qsound_interface =
     { 100,100 }
 };
 
-static void qsound_banksw_w( int offset, int data )
+static WRITE_HANDLER( qsound_banksw_w )
 {
     unsigned char *RAM = memory_region( REGION_CPU2 );
     cpu_setbank( 1, &RAM[ 0x10000 + ( ( data & 0x0f ) * 0x4000 ) ] );

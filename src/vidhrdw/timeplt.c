@@ -110,9 +110,8 @@ void timeplt_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 ***************************************************************************/
 
-static void get_bg_tile_info(int col,int row)
+static void get_tile_info(int tile_index)
 {
-	int tile_index = 32*row+col;
 	unsigned char attr = timeplt_colorram[tile_index];
 	SET_TILE_INFO(0,timeplt_videoram[tile_index] + ((attr & 0x20) << 3),attr & 0x1f)
 	tile_info.flags = TILE_FLIPYX((attr & 0xc0) >> 6);
@@ -129,19 +128,12 @@ static void get_bg_tile_info(int col,int row)
 
 int timeplt_vh_start(void)
 {
-	bg_tilemap = tilemap_create(
-		get_bg_tile_info,
-		TILEMAP_OPAQUE,
-		8,8,
-		32,32
-	);
+	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 
-	if (bg_tilemap)
-	{
-		return 0;
-	}
+	if (!bg_tilemap)
+		return 1;
 
-	return 1;
+	return 0;
 }
 
 
@@ -152,32 +144,32 @@ int timeplt_vh_start(void)
 
 ***************************************************************************/
 
-void timeplt_videoram_w(int offset,int data)
+WRITE_HANDLER( timeplt_videoram_w )
 {
 	if (timeplt_videoram[offset] != data)
 	{
 		timeplt_videoram[offset] = data;
-		tilemap_mark_tile_dirty(bg_tilemap,offset%32,offset/32);
+		tilemap_mark_tile_dirty(bg_tilemap,offset);
 	}
 }
 
-void timeplt_colorram_w(int offset,int data)
+WRITE_HANDLER( timeplt_colorram_w )
 {
 	if (timeplt_colorram[offset] != data)
 	{
 		timeplt_colorram[offset] = data;
-		tilemap_mark_tile_dirty(bg_tilemap,offset%32,offset/32);
+		tilemap_mark_tile_dirty(bg_tilemap,offset);
 	}
 }
 
-void timeplt_flipscreen_w(int offset,int data)
+WRITE_HANDLER( timeplt_flipscreen_w )
 {
 	flipscreen = data & 1;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 }
 
 /* Return the current video scan line */
-int timeplt_scanline_r(int offset)
+READ_HANDLER( timeplt_scanline_r )
 {
 	return cpu_scalebyfcount(256);
 }

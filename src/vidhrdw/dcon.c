@@ -13,7 +13,7 @@ static int dcon_enable;
 
 /******************************************************************************/
 
-void dcon_control_w(int offset,int data)
+WRITE_HANDLER( dcon_control_w )
 {
 	dcon_enable=data;
 	if ((dcon_enable&4)==4)
@@ -32,34 +32,33 @@ void dcon_control_w(int offset,int data)
 		tilemap_set_enable(background_layer,1);
 }
 
-void dcon_background_w(int offset,int data)
+WRITE_HANDLER( dcon_background_w )
 {
 	COMBINE_WORD_MEM(&dcon_back_data[offset],data);
-	tilemap_mark_tile_dirty( background_layer,(offset/2)%32,(offset/2)/32 );
+	tilemap_mark_tile_dirty( background_layer,offset/2);
 }
 
-void dcon_foreground_w(int offset,int data)
+WRITE_HANDLER( dcon_foreground_w )
 {
 	COMBINE_WORD_MEM(&dcon_fore_data[offset],data);
-	tilemap_mark_tile_dirty( foreground_layer,(offset/2)%32,(offset/2)/32 );
+	tilemap_mark_tile_dirty( foreground_layer,offset/2);
 }
 
-void dcon_midground_w(int offset,int data)
+WRITE_HANDLER( dcon_midground_w )
 {
 	COMBINE_WORD_MEM(&dcon_mid_data[offset],data);
-	tilemap_mark_tile_dirty( midground_layer,(offset/2)%32,(offset/2)/32 );
+	tilemap_mark_tile_dirty( midground_layer,offset/2);
 }
 
-void dcon_text_w(int offset,int data)
+WRITE_HANDLER( dcon_text_w )
 {
 	COMBINE_WORD_MEM(&videoram[offset],data);
-	tilemap_mark_tile_dirty( text_layer,(offset/2)%64,(offset/2)/64 );
+	tilemap_mark_tile_dirty( text_layer,offset/2);
 }
 
-static void get_back_tile_info( int col, int row )
+static void get_back_tile_info(int tile_index)
 {
-	int offs=(col*2) + (row*64);
-	int tile=READ_WORD(&dcon_back_data[offs]);
+	int tile=READ_WORD(&dcon_back_data[2*tile_index]);
 	int color=(tile>>12)&0xf;
 
 	tile&=0xfff;
@@ -67,10 +66,9 @@ static void get_back_tile_info( int col, int row )
 	SET_TILE_INFO(1,tile,color)
 }
 
-static void get_fore_tile_info( int col, int row )
+static void get_fore_tile_info(int tile_index)
 {
-	int offs=(col*2) + (row*64);
-	int tile=READ_WORD(&dcon_fore_data[offs]);
+	int tile=READ_WORD(&dcon_fore_data[2*tile_index]);
 	int color=(tile>>12)&0xf;
 
 	tile&=0xfff;
@@ -78,10 +76,9 @@ static void get_fore_tile_info( int col, int row )
 	SET_TILE_INFO(2,tile,color)
 }
 
-static void get_mid_tile_info( int col, int row )
+static void get_mid_tile_info(int tile_index)
 {
-	int offs=(col*2) + (row*64);
-	int tile=READ_WORD(&dcon_mid_data[offs]);
+	int tile=READ_WORD(&dcon_mid_data[2*tile_index]);
 	int color=(tile>>12)&0xf;
 
 	tile&=0xfff;
@@ -89,10 +86,9 @@ static void get_mid_tile_info( int col, int row )
 	SET_TILE_INFO(3,tile,color)
 }
 
-static void get_text_tile_info( int col, int row )
+static void get_text_tile_info(int tile_index)
 {
-	int offs=(col*2) + (row*128);
-	int tile=READ_WORD(&videoram[offs]);
+	int tile=READ_WORD(&videoram[2*tile_index]);
 	int color=(tile>>12)&0xf;
 
 	tile&=0xfff;
@@ -102,33 +98,13 @@ static void get_text_tile_info( int col, int row )
 
 int dcon_vh_start(void)
 {
-	background_layer = tilemap_create(
-		get_back_tile_info,
-		0,
-		16,16,
-		32,32
-	);
+	background_layer = tilemap_create(get_back_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     16,16,32,32);
+	foreground_layer = tilemap_create(get_fore_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+	midground_layer =  tilemap_create(get_mid_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+	text_layer =       tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,  8,8,64,32);
 
-	foreground_layer = tilemap_create(
-		get_fore_tile_info,
-		TILEMAP_TRANSPARENT,
-		16,16,
-		32,32
-	);
-
-	midground_layer = tilemap_create(
-		get_mid_tile_info,
-		TILEMAP_TRANSPARENT,
-		16,16,
-		32,32
-	);
-
-	text_layer = tilemap_create(
-		get_text_tile_info,
-		TILEMAP_TRANSPARENT,
-		8,8,
-		64,32
-	);
+	if (!background_layer || !foreground_layer || !midground_layer || !text_layer)
+		return 1;
 
 	midground_layer->transparent_pen = 15;
 	foreground_layer->transparent_pen = 15;

@@ -147,11 +147,11 @@ static unsigned char *sharedram1, *sharedram2;
 extern unsigned char *cischeat_roadram[2];
 
 /* Functions defined in vidhrdw: */
-int  cischeat_vregs_r(int offset);
-int  f1gpstar_vregs_r(int offset);
+READ_HANDLER( cischeat_vregs_r );
+READ_HANDLER( f1gpstar_vregs_r );
 
-void cischeat_vregs_w(int offset, int data);
-void f1gpstar_vregs_w(int offset, int data);
+WRITE_HANDLER( cischeat_vregs_w );
+WRITE_HANDLER( f1gpstar_vregs_w );
 
 int cischeat_vh_start(void);
 int f1gpstar_vh_start(void);
@@ -166,15 +166,15 @@ void f1gpstar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 **
 */
 
-int  sharedram1_r(int offset)			{return READ_WORD(&sharedram1[offset]);	}
-int  sharedram2_r(int offset)			{return READ_WORD(&sharedram2[offset]);	}
+READ_HANDLER( sharedram1_r )			{return READ_WORD(&sharedram1[offset]);	}
+READ_HANDLER( sharedram2_r )			{return READ_WORD(&sharedram2[offset]);	}
 
-void sharedram1_w(int offset, int data) {WRITE_WORD(&sharedram1[offset],data);	}
-void sharedram2_w(int offset, int data) {WRITE_WORD(&sharedram2[offset],data);	}
+WRITE_HANDLER( sharedram1_w ) {WRITE_WORD(&sharedram1[offset],data);	}
+WRITE_HANDLER( sharedram2_w ) {WRITE_WORD(&sharedram2[offset],data);	}
 
-static int rom_1_r(int offset) {return READ_WORD(&rom_1[offset]);}
-static int rom_2_r(int offset) {return READ_WORD(&rom_2[offset]);}
-static int rom_3_r(int offset) {return READ_WORD(&rom_3[offset]);}
+static READ_HANDLER( rom_1_r ) {return READ_WORD(&rom_1[offset]);}
+static READ_HANDLER( rom_2_r ) {return READ_WORD(&rom_2[offset]);}
+static READ_HANDLER( rom_3_r ) {return READ_WORD(&rom_3[offset]);}
 
 
 /**************************************************************************
@@ -191,12 +191,12 @@ static int rom_3_r(int offset) {return READ_WORD(&rom_3[offset]);}
 	bd000-bd3ff		bd000-bdfff		sprites
 	bec00-befff		<				text		*/
 
-int cischeat_palette_r(int offset)
+READ_HANDLER( cischeat_palette_r )
 {
 	return READ_WORD(&paletteram[offset]);
 }
 
-void cischeat_palette_w(int offset, int data)
+WRITE_HANDLER( cischeat_palette_w )
 {
 int newword,r,g,b;
 
@@ -279,11 +279,11 @@ static struct MemoryWriteAddress cischeat_writemem[] =
 **************************************************************************/
 
 
-int f1gpstar_palette_r(int offset)
+READ_HANDLER( f1gpstar_palette_r )
 {
 	return READ_WORD(&paletteram[offset]);
 }
-void f1gpstar_palette_w(int offset, int data)
+WRITE_HANDLER( f1gpstar_palette_w )
 {
 int newword,r,g,b;
 
@@ -488,7 +488,7 @@ static struct MemoryWriteAddress f1gpstar_writemem3[] =
 **************************************************************************/
 
 #define SOUNDBANK_W(_n_) \
-void cischeat_soundbank_##_n_##_w(int offset, int data) \
+WRITE_HANDLER( cischeat_soundbank_##_n_##_w ) \
 { \
 	OKIM6295_set_bank_base(_n_, ALL_VOICES, 0x40000 * (data & 1) ); \
 }

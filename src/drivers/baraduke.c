@@ -2,11 +2,12 @@
 
 Baraduke/Metro-Cross (c) Namco 1985
 
-Driver by:
-	Manuel Abadia (manu@teleline.es)
+Driver by Manuel Abadia <manu@teleline.es>
 
 TO DO:
-	- Cocktail Mode
+	- in Metro-Cross test mode, inputs are unnecessarily repeated, so
+	selecting the sound you want to listen to is almost impossible.
+	- remove the sound kludge in Baraduke.
 
 ***************************************************************************/
 
@@ -23,26 +24,32 @@ int metrocrs_vh_start( void );
 void baraduke_vh_stop( void );
 void baraduke_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh );
 void metrocrs_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh );
-int baraduke_textlayer_r( int offset );
-int baraduke_videoram_r( int offset );
-void baraduke_textlayer_w( int offset, int data );
-void baraduke_videoram_w( int offset, int data );
-void baraduke_scroll0_w( int offset, int data );
-void baraduke_scroll1_w( int offset, int data );
+READ_HANDLER( baraduke_textlayer_r );
+READ_HANDLER( baraduke_videoram_r );
+WRITE_HANDLER( baraduke_textlayer_w );
+WRITE_HANDLER( baraduke_videoram_w );
+WRITE_HANDLER( baraduke_scroll0_w );
+WRITE_HANDLER( baraduke_scroll1_w );
 void baraduke_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 static int inputport_selected;
 
-static void inputport_select_w( int offset, int data )
+static WRITE_HANDLER( inputport_select_w )
 {
-	if ((data & 0xf0) == 0x60)
+	if ((data & 0xe0) == 0x60)
 		inputport_selected = data & 0x07;
+	else if ((data & 0xe0) == 0xc0)
+	{
+		coin_lockout_global_w(0,~data & 1);
+		coin_counter_w(0,data & 2);
+		coin_counter_w(1,data & 4);
+	}
 }
 
 #define reverse_bitstrm(data) ((data & 0x01) << 4) | ((data & 0x02) << 2) | (data & 0x04) \
 							| ((data & 0x08) >> 2) | ((data & 0x10) >> 4)
 
-static int inputport_r (int offset)
+static READ_HANDLER( inputport_r )
 {
 	int data = 0;
 
@@ -68,19 +75,19 @@ static int inputport_r (int offset)
 	return data;
 }
 
-static void baraduke_lamps_w(int offset,int data)
+static WRITE_HANDLER( baraduke_lamps_w )
 {
 	osd_led_w(0, (data & 0x08) >> 3);
 	osd_led_w(1, (data & 0x10) >> 4);
 }
 
-int baraduke_sharedram_r( int offset )
+READ_HANDLER( baraduke_sharedram_r )
 {
 	return sharedram[offset];
 }
-void baraduke_sharedram_w( int offset, int val )
+WRITE_HANDLER( baraduke_sharedram_w )
 {
-	sharedram[offset] = val;
+	sharedram[offset] = data;
 }
 
 static struct MemoryReadAddress baraduke_readmem[] =
@@ -102,16 +109,16 @@ static struct MemoryWriteAddress baraduke_writemem[] =
 	{ 0x2000, 0x3fff, baraduke_videoram_w, &baraduke_videoram },/* Video RAM */
 	{ 0x4000, 0x40ff, namcos1_wavedata_w },		/* PSG device, shared RAM */
 	{ 0x4000, 0x43ff, baraduke_sharedram_w, &sharedram },/* shared RAM with the MCU */
-	{ 0x4800, 0x4fff, MWA_RAM, &baraduke_textram },	/* video RAM (text layer) */
+	{ 0x4800, 0x4fff, MWA_RAM, &baraduke_textram },/* video RAM (text layer) */
 	{ 0x8000, 0x8000, watchdog_reset_w },		/* watchdog reset */
-	{ 0x8800, 0x8800, MWA_NOP },				/* ??? */
+//	{ 0x8800, 0x8800, MWA_NOP },				/* ??? */
 	{ 0xb000, 0xb002, baraduke_scroll0_w },		/* scroll (layer 0) */
 	{ 0xb004, 0xb006, baraduke_scroll1_w },		/* scroll (layer 1) */
 	{ 0x6000, 0xffff, MWA_ROM },				/* ROM */
 	{ -1 }
 };
 
-static int soundkludge(int offset)
+READ_HANDLER( soundkludge_r )
 {
 	static int counter;
 
@@ -123,7 +130,7 @@ static struct MemoryReadAddress mcu_readmem[] =
 	{ 0x0000, 0x001f, hd63701_internal_registers_r },/* internal registers */
 	{ 0x0080, 0x00ff, MRA_RAM },					/* built in RAM */
 	{ 0x1000, 0x10ff, namcos1_wavedata_r },			/* PSG device, shared RAM */
-	{ 0x1105, 0x1105, soundkludge },	/* cures speech */
+	{ 0x1105, 0x1105, soundkludge_r },				/* cures speech */
 	{ 0x1100, 0x113f, MRA_RAM },					/* PSG device */
 	{ 0x1000, 0x13ff, baraduke_sharedram_r },		/* shared RAM with the 6809 */
 	{ 0x8000, 0xbfff, MRA_ROM },					/* MCU external ROM */
@@ -139,8 +146,8 @@ static struct MemoryWriteAddress mcu_writemem[] =
 	{ 0x1000, 0x10ff, namcos1_wavedata_w, &namco_wavedata },/* PSG device, shared RAM */
 	{ 0x1100, 0x113f, namcos1_sound_w, &namco_soundregs },/* PSG device */
 	{ 0x1000, 0x13ff, baraduke_sharedram_w },	/* shared RAM with the 6809 */
-	{ 0x8000, 0x8000, MWA_NOP },				/* ??? */
-	{ 0x8800, 0x8800, MWA_NOP },				/* ??? */
+//	{ 0x8000, 0x8000, MWA_NOP },				/* ??? */
+//	{ 0x8800, 0x8800, MWA_NOP },				/* ??? */
 	{ 0x8000, 0xbfff, MWA_ROM },				/* MCU external ROM */
 	{ 0xc000, 0xc800, MWA_RAM },				/* RAM */
 	{ 0xf000, 0xffff, MWA_ROM },				/* MCU internal ROM */
@@ -589,5 +596,5 @@ static void init_metrocrs( void )
 
 
 
-GAMEX( 1985, baraduke, 0, baraduke, baraduke, 0,        ROT0, "Namco", "Baraduke", GAME_NO_COCKTAIL )
-GAMEX( 1985, metrocrs, 0, metrocrs, metrocrs, metrocrs, ROT0, "Namco", "Metro-Cross", GAME_NO_COCKTAIL )
+GAME( 1985, baraduke, 0, baraduke, baraduke, 0,        ROT0, "Namco", "Baraduke" )
+GAME( 1985, metrocrs, 0, metrocrs, metrocrs, metrocrs, ROT0, "Namco", "Metro-Cross" )

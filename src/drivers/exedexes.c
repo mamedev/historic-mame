@@ -60,8 +60,8 @@ write:
 
 
 
-void c1942_bankswitch_w(int offset,int data);
-int c1942_bankedrom_r(int offset);
+WRITE_HANDLER( c1942_bankswitch_w );
+READ_HANDLER( c1942_bankedrom_r );
 int c1942_interrupt(void);
 
 extern unsigned char *exedexes_bg_scroll;

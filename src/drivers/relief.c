@@ -12,10 +12,10 @@
 #include "vidhrdw/generic.h"
 
 
-void relief_playfieldram_w(int offset, int data);
-void relief_playfield2ram_w(int offset, int data);
-void relief_colorram_w(int offset, int data);
-void relief_video_control_w(int offset, int data);
+WRITE_HANDLER( relief_playfieldram_w );
+WRITE_HANDLER( relief_playfield2ram_w );
+WRITE_HANDLER( relief_colorram_w );
+WRITE_HANDLER( relief_video_control_w );
 
 int relief_vh_start(void);
 void relief_vh_stop(void);
@@ -78,7 +78,7 @@ static void init_machine(void)
  *
  *************************************/
 
-static int special_port2_r(int offset)
+static READ_HANDLER( special_port2_r )
 {
 	int result = input_port_2_r(offset);
 	if (atarigen_cpu_to_sound_ready) result ^= 0x0020;
@@ -94,7 +94,7 @@ static int special_port2_r(int offset)
  *
  *************************************/
 
-static void audio_control_w(int offset, int data)
+static WRITE_HANDLER( audio_control_w )
 {
 	(void)offset;
 	if (!(data & 0x00ff0000))
@@ -110,7 +110,7 @@ static void audio_control_w(int offset, int data)
 }
 
 
-static void audio_volume_w(int offset, int data)
+static WRITE_HANDLER( audio_volume_w )
 {
 	(void)offset;
 	if (!(data & 0x00ff0000))
@@ -129,13 +129,13 @@ static void audio_volume_w(int offset, int data)
  *
  *************************************/
 
-static int adpcm_r(int offset)
+static READ_HANDLER( adpcm_r )
 {
 	return OKIM6295_status_0_r(offset) | 0xff00;
 }
 
 
-static void adpcm_w(int offset, int data)
+static WRITE_HANDLER( adpcm_w )
 {
 	if (!(data & 0x00ff0000))
 		OKIM6295_data_0_w(offset, data & 0xff);
@@ -149,14 +149,14 @@ static void adpcm_w(int offset, int data)
  *
  *************************************/
 
-static int ym2413_r(int offset)
+static READ_HANDLER( ym2413_r )
 {
 	(void)offset;
 	return YM2413_status_port_0_r(0) | 0xff00;
 }
 
 
-static void ym2413_w(int offset, int data)
+static WRITE_HANDLER( ym2413_w )
 {
 	if (!(data & 0x00ff0000))
 	{

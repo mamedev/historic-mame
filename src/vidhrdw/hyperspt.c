@@ -114,7 +114,7 @@ void hyperspt_vh_stop(void)
 
 
 
-void hyperspt_flipscreen_w(int offset,int data)
+WRITE_HANDLER( hyperspt_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{

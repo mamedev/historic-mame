@@ -262,27 +262,27 @@ void stadhero_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 /******************************************************************************/
 
-void stadhero_pf1_data_w(int offset,int data)
+WRITE_HANDLER( stadhero_pf1_data_w )
 {
 	COMBINE_WORD_MEM(&stadhero_pf1_data[offset],data);
 }
 
-int stadhero_pf1_data_r(int offset)
+READ_HANDLER( stadhero_pf1_data_r )
 {
 	return READ_WORD(&stadhero_pf1_data[offset]);
 }
 
-void stadhero_pf2_control_0_w(int offset,int data)
+WRITE_HANDLER( stadhero_pf2_control_0_w )
 {
 	COMBINE_WORD_MEM(&stadhero_pf2_control_0[offset],data);
 }
 
-void stadhero_pf2_control_1_w(int offset,int data)
+WRITE_HANDLER( stadhero_pf2_control_1_w )
 {
 	COMBINE_WORD_MEM(&stadhero_pf2_control_1[offset],data);
 }
 
-void stadhero_pf2_data_w(int offset,int data)
+WRITE_HANDLER( stadhero_pf2_data_w )
 {
 	int oldword = READ_WORD(&stadhero_pf2_data[offset]);
 	int newword = COMBINE_WORD(oldword,data);
@@ -294,7 +294,7 @@ void stadhero_pf2_data_w(int offset,int data)
 	}
 }
 
-int stadhero_pf2_data_r(int offset)
+READ_HANDLER( stadhero_pf2_data_r )
 {
 	return READ_WORD(&stadhero_pf2_data[offset]);
 }

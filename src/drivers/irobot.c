@@ -68,19 +68,19 @@ extern int  irobot_vh_start(void);
 extern void irobot_vh_stop(void);
 extern void irobot_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 extern void irobot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void irobot_paletteram_w(int offset,int data);
+WRITE_HANDLER( irobot_paletteram_w );
 
 void init_irobot(void);	/* convert mathbox ROMs */
 void irobot_init_machine (void);
 
-int irobot_status_r(int offset);
-void irobot_statwr_w(int offset, int data);
-void irobot_out0_w(int offset, int data);
-void irobot_rom_banksel( int offset, int data);
-int irobot_control_r (int offset);
-void irobot_control_w (int offset, int data);
-int irobot_sharedmem_r(int offset);
-void irobot_sharedmem_w(int offset,int data);
+READ_HANDLER( irobot_status_r );
+WRITE_HANDLER( irobot_statwr_w );
+WRITE_HANDLER( irobot_out0_w );
+WRITE_HANDLER( irobot_rom_banksel_w );
+READ_HANDLER( irobot_control_r );
+WRITE_HANDLER( irobot_control_w );
+READ_HANDLER( irobot_sharedmem_r );
+WRITE_HANDLER( irobot_sharedmem_w );
 
 
 
@@ -100,19 +100,20 @@ static void nvram_handler(void *file, int read_or_write)
 	}
 }
 
-void irobot_nvram_w(int offset,int data)
+WRITE_HANDLER( irobot_nvram_w )
 {
 	nvram[offset] = data & 0x0f;
 }
 
 
-void irobot_clearirq(int offest,int data) {
+static WRITE_HANDLER( irobot_clearirq_w )
+{
     cpu_set_irq_line(0, M6809_IRQ_LINE ,CLEAR_LINE);
 }
 
-void irobot_clearfirq(int offset,int data) {
+static WRITE_HANDLER( irobot_clearfirq_w )
+{
     cpu_set_irq_line(0, M6809_FIRQ_LINE ,CLEAR_LINE);
-
 }
 
 
@@ -138,15 +139,15 @@ static struct MemoryWriteAddress writemem[] =
 {
     { 0x0000, 0x07ff, MWA_RAM },
     { 0x0800, 0x0fff, MWA_BANK2 },
-    { 0x1100, 0x1100, irobot_clearirq },
+    { 0x1100, 0x1100, irobot_clearirq_w },
     { 0x1140, 0x1140, irobot_statwr_w },
     { 0x1180, 0x1180, irobot_out0_w },
-    { 0x11c0, 0x11c0, irobot_rom_banksel },
+    { 0x11c0, 0x11c0, irobot_rom_banksel_w },
     { 0x1200, 0x12ff, irobot_nvram_w, &nvram, &nvram_size },
     { 0x1400, 0x143f, quad_pokey_w },
     { 0x1800, 0x18ff, irobot_paletteram_w },
     { 0x1900, 0x19ff, MWA_RAM },            /* Watchdog reset */
-    { 0x1a00, 0x1a00, irobot_clearfirq },
+    { 0x1a00, 0x1a00, irobot_clearfirq_w },
     { 0x1b00, 0x1bff, irobot_control_w },
     { 0x1c00, 0x1fff, MWA_RAM, &videoram, &videoram_size },
     { 0x2000, 0x3fff, irobot_sharedmem_w},

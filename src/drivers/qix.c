@@ -181,35 +181,35 @@ Timer input : From data cpu
 #include "machine/6821pia.h"
 
 
-extern int sdungeon_68705_portA_r(int offset);
-extern int sdungeon_68705_portB_r(int offset);
-extern int sdungeon_68705_portC_r(int offset);
-extern void sdungeon_68705_portA_w(int offest,int data);
-extern void sdungeon_68705_portB_w(int offest,int data);
-extern void sdungeon_68705_portC_w(int offest,int data);
-void sdungeon_68705_ddrA_w(int offset,int data);
-void sdungeon_68705_ddrB_w(int offset,int data);
-void sdungeon_68705_ddrC_w(int offset,int data);
-void sdungeon_pia_0_w(int offset,int data);
+READ_HANDLER( sdungeon_68705_portA_r );
+READ_HANDLER( sdungeon_68705_portB_r );
+READ_HANDLER( sdungeon_68705_portC_r );
+WRITE_HANDLER( sdungeon_68705_portA_w );
+WRITE_HANDLER( sdungeon_68705_portB_w );
+WRITE_HANDLER( sdungeon_68705_portC_w );
+WRITE_HANDLER( sdungeon_68705_ddrA_w );
+WRITE_HANDLER( sdungeon_68705_ddrB_w );
+WRITE_HANDLER( sdungeon_68705_ddrC_w );
+WRITE_HANDLER( sdungeon_pia_0_w );
 
 extern unsigned char *qix_sharedram;
-int qix_scanline_r(int offset);
-void qix_data_firq_w(int offset, int data);
-void qix_video_firq_w(int offset, int data);
+READ_HANDLER( qix_scanline_r );
+WRITE_HANDLER( qix_data_firq_w );
+WRITE_HANDLER( qix_video_firq_w );
 
 
 extern unsigned char *qix_palettebank;
 extern unsigned char *qix_videoaddress;
 
-int qix_videoram_r(int offset);
-void qix_videoram_w(int offset, int data);
-int qix_addresslatch_r(int offset);
-void qix_addresslatch_w(int offset, int data);
-void qix_paletteram_w(int offset,int data);
-void qix_palettebank_w(int offset,int data);
+READ_HANDLER( qix_videoram_r );
+WRITE_HANDLER( qix_videoram_w );
+READ_HANDLER( qix_addresslatch_r );
+WRITE_HANDLER( qix_addresslatch_w );
+WRITE_HANDLER( qix_paletteram_w );
+WRITE_HANDLER( qix_palettebank_w );
 
-int qix_sharedram_r(int offset);
-void qix_sharedram_w(int offset, int data);
+READ_HANDLER( qix_sharedram_r );
+WRITE_HANDLER( qix_sharedram_w );
 int qix_interrupt_video(void);
 void qix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int qix_vh_start(void);
@@ -217,12 +217,12 @@ void qix_vh_stop(void);
 void qix_init_machine(void);
 void withmcu_init_machine(void);
 
-int qix_data_io_r (int offset);
-int qix_sound_io_r (int offset);
-void qix_data_io_w (int offset, int data);
-void qix_sound_io_w (int offset, int data);
+READ_HANDLER( qix_data_io_r );
+READ_HANDLER( qix_sound_io_r );
+WRITE_HANDLER( qix_data_io_w );
+WRITE_HANDLER( qix_sound_io_w );
 
-extern void zoo_bankswitch_w(int offset, int data);
+WRITE_HANDLER( zoo_bankswitch_w );
 extern void zoo_init_machine(void);
 
 

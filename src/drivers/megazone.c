@@ -28,14 +28,14 @@ static int i8039_status;
 int megazone_vh_start(void);
 void megazone_vh_stop(void);
 
-void megazone_flipscreen_w(int offset,int data);
+WRITE_HANDLER( megazone_flipscreen_w );
 void megazone_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void megazone_sprite_bank_select_w(int offset, int data);
+WRITE_HANDLER( megazone_sprite_bank_select_w );
 void megazone_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-int megazone_portA_r(int offset)
+READ_HANDLER( megazone_portA_r )
 {
 	int clock,timer;
 
@@ -55,7 +55,7 @@ int megazone_portA_r(int offset)
 	return (timer << 4) | i8039_status;
 }
 
-static void megazone_portB_w(int offset,int data)
+static WRITE_HANDLER( megazone_portB_w )
 {
 	int i;
 
@@ -73,7 +73,7 @@ static void megazone_portB_w(int offset,int data)
 	}
 }
 
-void megazone_videoram2_w(int offset,int data)
+WRITE_HANDLER( megazone_videoram2_w )
 {
 	if (megazone_videoram2[offset] != data)
 	{
@@ -81,7 +81,7 @@ void megazone_videoram2_w(int offset,int data)
 	}
 }
 
-void megazone_colorram2_w(int offset,int data)
+WRITE_HANDLER( megazone_colorram2_w )
 {
 	if (megazone_colorram2[offset] != data)
 	{
@@ -89,28 +89,28 @@ void megazone_colorram2_w(int offset,int data)
 	}
 }
 
-int megazone_dip3_r(int offset)
+READ_HANDLER( megazone_dip3_r )
 {
 	return(0xff);
 }
 
-int megazone_sharedram_r(int offset)
+READ_HANDLER( megazone_sharedram_r )
 {
 	return(megazone_sharedram[offset]);
 }
 
-void megazone_sharedram_w(int offset,int data)
+WRITE_HANDLER( megazone_sharedram_w )
 {
 	megazone_sharedram[offset] = data;
 }
 
-static void megazone_i8039_irq_w(int offset,int data)
+static WRITE_HANDLER( megazone_i8039_irq_w )
 {
 	if (i8039_irqenable)
 		cpu_cause_interrupt(2,I8039_EXT_INT);
 }
 
-void i8039_irqen_and_status_w(int offset,int data)
+WRITE_HANDLER( i8039_irqen_and_status_w )
 {
 	i8039_irqenable = data & 0x80;
 	i8039_status = (data & 0x70) >> 4;
@@ -200,7 +200,7 @@ static struct IOReadPort i8039_readport[] =
 
 static struct IOWritePort i8039_writeport[] =
 {
-	{ I8039_p1, I8039_p1, DAC_data_w },
+	{ I8039_p1, I8039_p1, DAC_0_data_w },
 	{ I8039_p2, I8039_p2, i8039_irqen_and_status_w },
 	{ -1 }	/* end of table */
 };

@@ -34,26 +34,26 @@ f000-ffff MCU internal ROM
 
 static unsigned char *sharedram1;
 
-void pacland_scroll0_w(int offset,int data);
-void pacland_scroll1_w(int offset,int data);
-void pacland_bankswitch_w(int offset,int data);
+WRITE_HANDLER( pacland_scroll0_w );
+WRITE_HANDLER( pacland_scroll1_w );
+WRITE_HANDLER( pacland_bankswitch_w );
 void pacland_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int pacland_vh_start(void);
 void pacland_vh_stop(void);
 void pacland_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-static int sharedram1_r( int offset )
+static READ_HANDLER( sharedram1_r )
 {
 	return sharedram1[offset];
 }
 
-static void sharedram1_w( int offset, int val )
+static WRITE_HANDLER( sharedram1_w )
 {
-	sharedram1[offset] = val;
+	sharedram1[offset] = data;
 }
 
-static void pacland_halt_mcu_w( int offset, int data )
+static WRITE_HANDLER( pacland_halt_mcu_w )
 {
 	if (offset == 0)
 		cpu_set_reset_line(1,CLEAR_LINE);
@@ -63,7 +63,7 @@ static void pacland_halt_mcu_w( int offset, int data )
 
 
 /* Stubs to pass the correct Dip Switch setup to the MCU */
-static int dsw_r0( int offset )
+static READ_HANDLER( dsw0_r )
 {
 	/* Hi 4 bits = DSWA Hi 4 bits */
 	/* Lo 4 bits = DSWB Hi 4 bits */
@@ -73,7 +73,7 @@ static int dsw_r0( int offset )
 	return ~r; /* Active Low */
 }
 
-static int dsw_r1( int offset )
+static READ_HANDLER( dsw1_r )
 {
 	/* Hi 4 bits = DSWA Lo 4 bits */
 	/* Lo 4 bits = DSWB Lo 4 bits */
@@ -82,16 +82,14 @@ static int dsw_r1( int offset )
 	return ~r; /* Active Low */
 }
 
-static void pacland_coin_w(int offset,int data)
+static WRITE_HANDLER( pacland_coin_w )
 {
-	coin_lockout_w(0,data & 1);
-	coin_lockout_w(1,data & 1);
-
+	coin_lockout_global_w(0,data & 1);
 	coin_counter_w(0,~data & 2);
 	coin_counter_w(1,~data & 4);
 }
 
-static void pacland_led_w(int offset,int data)
+static WRITE_HANDLER( pacland_led_w )
 {
 	osd_led_w(0,data >> 3);
 	osd_led_w(1,data >> 4);
@@ -140,8 +138,8 @@ static struct MemoryReadAddress mcu_readmem[] =
 	{ 0x1000, 0x13ff, sharedram1_r },
 	{ 0x8000, 0x9fff, MRA_ROM },
 	{ 0xc000, 0xc800, MRA_RAM },
-	{ 0xd000, 0xd000, dsw_r0 },
-	{ 0xd000, 0xd001, dsw_r1 },
+	{ 0xd000, 0xd000, dsw0_r },
+	{ 0xd000, 0xd001, dsw1_r },
 	{ 0xd000, 0xd002, input_port_2_r },
 	{ 0xd000, 0xd003, input_port_3_r },
 	{ 0xf000, 0xffff, MRA_ROM },
@@ -246,14 +244,14 @@ INPUT_PORTS_START( pacland )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* MCU Input Port */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin lockout */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 1 */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 2 */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )

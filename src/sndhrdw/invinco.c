@@ -47,7 +47,7 @@ enum
 };
 
 
-void invinco_sh_port2_w( int offset, int data )
+WRITE_HANDLER( invinco_sh_port2_w )
 {
 	static int port2State = 0;
 	int bitsChanged;

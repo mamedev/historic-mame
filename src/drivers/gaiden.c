@@ -42,30 +42,27 @@ extern unsigned char *gaiden_videoram3;
 
 void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void gaiden_unknownram_w(int offset,int data);
-int gaiden_unknownram_r(int offset);
-void gaiden_videoram_w(int offset,int data);
-int gaiden_videoram_r(int offset);
-void gaiden_videoram2_w(int offset,int data);
-int gaiden_videoram2_r(int offset);
-void gaiden_videoram3_w(int offset,int data);
-int gaiden_videoram3_r(int offset);
-void gaiden_spriteram_w(int offset,int data);
-int gaiden_spriteram_r(int offset);
+WRITE_HANDLER( gaiden_unknownram_w );
+READ_HANDLER( gaiden_unknownram_r );
+WRITE_HANDLER( gaiden_videoram_w );
+READ_HANDLER( gaiden_videoram_r );
+WRITE_HANDLER( gaiden_videoram2_w );
+READ_HANDLER( gaiden_videoram2_r );
+WRITE_HANDLER( gaiden_videoram3_w );
+READ_HANDLER( gaiden_videoram3_r );
 
-void gaiden_txscrollx_w(int offset,int data);
-void gaiden_txscrolly_w(int offset,int data);
-void gaiden_fgscrollx_w(int offset,int data);
-void gaiden_fgscrolly_w(int offset,int data);
-void gaiden_bgscrollx_w(int offset,int data);
-void gaiden_bgscrolly_w(int offset,int data);
+WRITE_HANDLER( gaiden_txscrollx_w );
+WRITE_HANDLER( gaiden_txscrolly_w );
+WRITE_HANDLER( gaiden_fgscrollx_w );
+WRITE_HANDLER( gaiden_fgscrolly_w );
+WRITE_HANDLER( gaiden_bgscrollx_w );
+WRITE_HANDLER( gaiden_bgscrolly_w );
 
 
-void gaiden_background_w(int offset,int data);
+WRITE_HANDLER( gaiden_background_w );
 void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int  gaiden_vh_start(void);
-void gaiden_vh_stop(void);
 
 
 int gaiden_interrupt(void)
@@ -73,7 +70,7 @@ int gaiden_interrupt(void)
 	return 5;  /*Interrupt vector 5*/
 }
 
-int gaiden_input_r(int offset)
+READ_HANDLER( gaiden_input_r )
 {
 	switch (offset)
 	{
@@ -92,7 +89,7 @@ int gaiden_input_r(int offset)
 }
 
 
-void gaiden_sound_command_w(int offset,int data)
+WRITE_HANDLER( gaiden_sound_command_w )
 {
 	if (data & 0xff000000) soundlatch_w(0,data & 0xff);	/* Ninja Gaiden */
 	if (data & 0x00ff0000) soundlatch_w(0,(data >> 8) & 0xff);	/* Tecmo Knight */
@@ -107,7 +104,7 @@ void gaiden_sound_command_w(int offset,int data)
 
 static int prot;
 
-void tknight_protection_w(int offset,int data)
+WRITE_HANDLER( tknight_protection_w )
 {
 	static int jumpcode;
 	static int jumppoints[] =
@@ -154,7 +151,7 @@ if (errorlog) fprintf(errorlog,"unknown jumpcode %02x\n",jumpcode);
 	}
 }
 
-int tknight_protection_r(int offset)
+READ_HANDLER( tknight_protection_r )
 {
 //if (errorlog) fprintf(errorlog,"PC %06x: read prot %02x\n",cpu_get_pc(),prot);
 	return prot;
@@ -169,7 +166,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x070000, 0x070fff, gaiden_videoram_r },
 	{ 0x072000, 0x073fff, gaiden_videoram2_r },
 	{ 0x074000, 0x075fff, gaiden_videoram3_r },
-	{ 0x076000, 0x077fff, gaiden_spriteram_r },
+	{ 0x076000, 0x077fff, MRA_BANK2 },
 	{ 0x078000, 0x0787ff, paletteram_word_r },
 	{ 0x078800, 0x079fff, MRA_NOP },   /* extra portion of palette RAM, not really used */
 	{ 0x07a000, 0x07a005, gaiden_input_r },
@@ -184,7 +181,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x070000, 0x070fff, gaiden_videoram_w, &gaiden_videoram },
 	{ 0x072000, 0x073fff, gaiden_videoram2_w,  &gaiden_videoram2 },
 	{ 0x074000, 0x075fff, gaiden_videoram3_w,  &gaiden_videoram3 },
-	{ 0x076000, 0x077fff, gaiden_spriteram_w, &spriteram },
+	{ 0x076000, 0x077fff, MWA_BANK2, &spriteram },
 	{ 0x078000, 0x0787ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram },
 	{ 0x078800, 0x079fff, MWA_NOP },   /* extra portion of palette RAM, not really used */
 	{ 0x07a104, 0x07a105, gaiden_txscrolly_w },
@@ -395,7 +392,7 @@ INPUT_PORTS_END
 static struct GfxLayout tilelayout =
 {
 	8,8,	/* tile size */
-	0x800,	/* number of tiles */
+	RGN_FRAC(1,1),	/* number of tiles */
 	4,	/* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
 	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
@@ -406,7 +403,7 @@ static struct GfxLayout tilelayout =
 static struct GfxLayout tile2layout =
 {
 	16,16,	/* tile size */
-	0x1000,	/* number of tiles */
+	RGN_FRAC(1,1),	/* number of tiles */
 	4,	/* 4 bits per pixel */
 	{ 0, 1, 2, 3 },	/* the bitplanes are packed in one nibble */
 	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
@@ -417,58 +414,22 @@ static struct GfxLayout tile2layout =
 	128*8	/* offset to next tile */
 };
 
-#if 0
-static struct GfxLayout old_spritelayout =
-{
-	8,8,	/* sprites size */
-	0x8000,	/* number of sprites */
-	4,	/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },	/* the bitplanes are packed in one nibble */
-	{
-		0*4, 1*4, 0*4+2048*256*8, 1*4+2048*256*8,
-		2*4, 3*4, 2*4+2048*256*8, 3*4+2048*256*8
-	},
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8	/* offset to next sprite */
-};
-#endif
-
-#define OFFS (8*16)
 static struct GfxLayout spritelayout =
 {
-	64,64,	/* sprites size */
-	0x8000/64,	/* number of sprites */
+	8,8,	/* sprites size */
+	RGN_FRAC(1,2),	/* number of sprites */
 	4,	/* 4 bits per pixel */
 	{ 0, 1, 2, 3 },	/* the bitplanes are packed in one nibble */
-	{
-		0,4,0x80000*8,4+0x80000*8,8,12,8+0x80000*8,12+0x80000*8,
-		OFFS,OFFS+4,OFFS+0x80000*8,OFFS+4+0x80000*8,OFFS+2*4,OFFS+3*4,OFFS+2*4+0x80000*8,OFFS+3*4+0x80000*8,
-		OFFS*4,OFFS*4+4,OFFS*4+0x80000*8,OFFS*4+4+0x80000*8,OFFS*4+2*4,OFFS*4+3*4,OFFS*4+2*4+0x80000*8,OFFS*4+3*4+0x80000*8,
-		OFFS*5,OFFS*5+4,OFFS*5+0x80000*8,OFFS*5+4+0x80000*8,OFFS*5+2*4,OFFS*5+3*4,OFFS*5+2*4+0x80000*8,OFFS*5+3*4+0x80000*8,
-		OFFS*16,OFFS*16+4,OFFS*16+0x80000*8,OFFS*16+4+0x80000*8,OFFS*16+2*4,OFFS*16+3*4,OFFS*16+2*4+0x80000*8,OFFS*16+3*4+0x80000*8,
-		OFFS*17,OFFS*17+4,OFFS*17+0x80000*8,OFFS*17+4+0x80000*8,OFFS*17+2*4,OFFS*17+3*4,OFFS*17+2*4+0x80000*8,OFFS*17+3*4+0x80000*8,
-		OFFS*20,OFFS*20+4,OFFS*20+0x80000*8,OFFS*20+4+0x80000*8,OFFS*20+2*4,OFFS*20+3*4,OFFS*20+2*4+0x80000*8,OFFS*20+3*4+0x80000*8,
-		OFFS*21,OFFS*21+4,OFFS*21+0x80000*8,OFFS*21+4+0x80000*8,OFFS*21+2*4,OFFS*21+3*4,OFFS*21+2*4+0x80000*8,OFFS*21+3*4+0x80000*8
-	},
-	{
-		0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-		OFFS*2+0*16, OFFS*2+1*16, OFFS*2+2*16, OFFS*2+3*16, OFFS*2+4*16, OFFS*2+5*16, OFFS*2+6*16, OFFS*2+7*16,
-		OFFS*8+0*16, OFFS*8+1*16, OFFS*8+2*16, OFFS*8+3*16, OFFS*8+4*16, OFFS*8+5*16, OFFS*8+6*16, OFFS*8+7*16,
-		OFFS*10+0*16, OFFS*10+1*16, OFFS*10+2*16, OFFS*10+3*16, OFFS*10+4*16, OFFS*10+5*16, OFFS*10+6*16, OFFS*10+7*16,
-
-		OFFS*32+0*16, OFFS*32+1*16, OFFS*32+2*16, OFFS*32+3*16, OFFS*32+4*16, OFFS*32+5*16, OFFS*32+6*16, OFFS*32+7*16,
-		OFFS*34+0*16, OFFS*34+1*16, OFFS*34+2*16, OFFS*34+3*16, OFFS*34+4*16, OFFS*34+5*16, OFFS*34+6*16, OFFS*34+7*16,
-		OFFS*40+0*16, OFFS*40+1*16, OFFS*40+2*16, OFFS*40+3*16, OFFS*40+4*16, OFFS*40+5*16, OFFS*40+6*16, OFFS*40+7*16,
-		OFFS*42+0*16, OFFS*42+1*16, OFFS*42+2*16, OFFS*42+3*16, OFFS*42+4*16, OFFS*42+5*16, OFFS*42+6*16, OFFS*42+7*16
-	},
-	OFFS*64	/* offset to next sprite */
+	{ 0,4,RGN_FRAC(1,2),4+RGN_FRAC(1,2),8,12,8+RGN_FRAC(1,2),12+RGN_FRAC(1,2) },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
+	16*8	/* offset to next sprite */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tilelayout,        256, 16 },	/* tiles 8x8*/
-	{ REGION_GFX2, 0, &tile2layout,       768, 16 },	/* tiles 16x16*/
-	{ REGION_GFX3, 0, &tile2layout,       512, 16 },	/* tiles 16x16*/
+	{ REGION_GFX1, 0, &tilelayout,        256, 16 },	/* tiles 8x8 */
+	{ REGION_GFX2, 0, &tile2layout,       768, 16 },	/* tiles 16x16 */
+	{ REGION_GFX3, 0, &tile2layout,       512, 16 },	/* tiles 16x16 */
 	{ REGION_GFX4, 0, &spritelayout,        0, 16 },	/* sprites 8x8 */
 	{ -1 } /* end of array */
 };
@@ -485,7 +446,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	4000000,	/* 4 MHz ? (hand tuned) */
-	{ YM2203_VOL(30,15), YM2203_VOL(30,15) },
+	{ YM2203_VOL(60,15), YM2203_VOL(60,15) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -534,7 +495,7 @@ static struct MachineDriver machine_driver_gaiden =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	gaiden_vh_start,
-	gaiden_vh_stop,
+	0,
 	gaiden_vh_screenrefresh,
 
 	/* sound hardware */
@@ -635,6 +596,46 @@ ROM_START( shadoww )
 	ROM_LOAD( "gaiden.4",     0x0000, 0x20000, 0xb0e0faf9 ) /* samples */
 ROM_END
 
+ROM_START( ryukendn )
+	ROM_REGION( 0x40000, REGION_CPU1 )	/* 2*128k for 68000 code */
+	ROM_LOAD_EVEN( "ryukendn.1",  0x00000, 0x20000, 0x6203a5e2 )
+	ROM_LOAD_ODD ( "ryukendn.2",  0x00000, 0x20000, 0x9e99f522 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "ryukendn.3",   0x0000, 0x10000, 0x6b686b69 )   /* Audio CPU is a Z80  */
+
+	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ryukendn.5",   0x000000, 0x10000, 0x765e7baa )	/* 8x8 tiles */
+
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "14.bin",       0x000000, 0x20000, 0x1ecfddaa )
+	ROM_LOAD( "15.bin",       0x020000, 0x20000, 0x1291a696 )
+	ROM_LOAD( "16.bin",       0x040000, 0x20000, 0x140b47ca )
+	ROM_LOAD( "17.bin",       0x060000, 0x20000, 0x7638cccb )
+
+	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "18.bin",       0x000000, 0x20000, 0x3fadafd6 )
+	ROM_LOAD( "19.bin",       0x020000, 0x20000, 0xddae9d5b )
+	ROM_LOAD( "20.bin",       0x040000, 0x20000, 0x08cf7a93 )
+	ROM_LOAD( "21.bin",       0x060000, 0x20000, 0x1ac892f5 )
+
+	ROM_REGION( 0x100000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gaiden.6",     0x000000, 0x20000, 0xe7ccdf9f )	/* sprites A1 */
+	ROM_LOAD( "gaiden.8",     0x020000, 0x20000, 0x7ef7f880 )	/* sprites B1 */
+	ROM_LOAD( "gaiden.10",    0x040000, 0x20000, 0xa6451dec )	/* sprites C1 */
+	ROM_LOAD( "shadoww.12a",  0x060000, 0x10000, 0x9bb07731 )	/* sprites D1 */
+	ROM_LOAD( "ryukendn.12b", 0x070000, 0x10000, 0x1773628a )	/* sprites D1 */
+	ROM_LOAD( "gaiden.7",     0x080000, 0x20000, 0x016bec95 )	/* sprites A2 */
+	ROM_LOAD( "ryukendn.9a",  0x0a0000, 0x10000, 0xc821e200 )	/* sprites B2 */
+	ROM_LOAD( "ryukendn.9b",  0x0b0000, 0x10000, 0x6a6233b3 )	/* sprites B2 */
+	ROM_LOAD( "gaiden.11",    0x0c0000, 0x20000, 0x7fbfdf5e )	/* sprites C2 */
+	ROM_LOAD( "shadoww.13a",  0x0e0000, 0x10000, 0x996d2fa5 )	/* sprites D2 */
+	ROM_LOAD( "ryukendn.13b", 0x0f0000, 0x10000, 0x1f43c507 )	/* sprites D2 */
+
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* 128k for ADPCM samples - sound chip is OKIM6295 */
+	ROM_LOAD( "gaiden.4",     0x0000, 0x20000, 0xb0e0faf9 ) /* samples */
+ROM_END
+
 ROM_START( tknight )
 	ROM_REGION( 0x40000, REGION_CPU1 )	/* 2*128k for 68000 code */
 	ROM_LOAD_EVEN( "tkni1.bin",    0x00000, 0x20000, 0x9121daa8 )
@@ -690,7 +691,8 @@ ROM_END
 
 
 
-GAME( 1988, gaiden,   0,       gaiden, gaiden,  0, ROT0, "Tecmo", "Ninja Gaiden" )
-GAME( 1988, shadoww,  gaiden,  gaiden, gaiden,  0, ROT0, "Tecmo", "Shadow Warriors" )
+GAME( 1988, gaiden,   0,       gaiden, gaiden,  0, ROT0, "Tecmo", "Ninja Gaiden (World)" )
+GAME( 1988, shadoww,  gaiden,  gaiden, gaiden,  0, ROT0, "Tecmo", "Shadow Warriors (US)" )
+GAME( 1989, ryukendn, gaiden,  gaiden, gaiden,  0, ROT0, "Tecmo", "Ninja Ryukenden (Japan)" )
 GAME( 1989, tknight,  0,       gaiden, tknight, 0, ROT0, "Tecmo", "Tecmo Knight" )
 GAME( 1989, wildfang, tknight, gaiden, tknight, 0, ROT0, "Tecmo", "Wild Fang" )

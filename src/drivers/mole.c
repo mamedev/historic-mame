@@ -49,8 +49,8 @@ extern int moleattack_vh_start( void );
 extern void moleattack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern void moleattack_vh_stop( void );
 
-extern void moleattack_videoram_w(int offset,int data);
-void moleattack_tilesetselector_w(int offset,int data);
+WRITE_HANDLER( moleattack_videoram_w );
+WRITE_HANDLER( moleattack_tilesetselector_w );
 
 static struct GfxLayout tile_layout =
 {
@@ -80,7 +80,7 @@ static struct AY8910interface ay8910_interface =
 	{ 0 }
 };
 
-int mole_prot_r( int offset ){
+READ_HANDLER( mole_prot_r ){
 	/*	Following are all known examples of Mole Attack
 	**	code reading from the protection circuitry:
 	**

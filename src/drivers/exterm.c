@@ -71,9 +71,9 @@ extern unsigned char *exterm_master_videoram, *exterm_slave_videoram;
 void exterm_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  exterm_vh_start(void);
 void exterm_vh_stop (void);
-int  exterm_master_videoram_r(int offset);
-int  exterm_slave_videoram_r(int offset);
-void exterm_paletteram_w(int offset, int data);
+READ_HANDLER( exterm_master_videoram_r );
+READ_HANDLER( exterm_slave_videoram_r );
+WRITE_HANDLER( exterm_paletteram_w );
 void exterm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void exterm_to_shiftreg_master(unsigned int address, unsigned short* shiftreg);
 void exterm_from_shiftreg_master(unsigned int address, unsigned short* shiftreg);
@@ -81,23 +81,23 @@ void exterm_to_shiftreg_slave(unsigned int address, unsigned short* shiftreg);
 void exterm_from_shiftreg_slave(unsigned int address, unsigned short* shiftreg);
 
 /* Functions in sndhrdw/gottlieb.c */
-void gottlieb_sh_w(int offset,int data);
-int  gottlieb_cause_dac_nmi_r(int offset);
-void gottlieb_nmi_rate_w(int offset, int data);
-void exterm_sound_control_w(int offset, int data);
-void exterm_ym2151_w(int offset, int data);
+WRITE_HANDLER( gottlieb_sh_w );
+READ_HANDLER( gottlieb_cause_dac_nmi_r );
+WRITE_HANDLER( gottlieb_nmi_rate_w );
+WRITE_HANDLER( exterm_sound_control_w );
+WRITE_HANDLER( exterm_ym2151_w );
 
 /* Functions in machine/exterm.c */
-void exterm_host_data_w(int offset, int data);
-int  exterm_host_data_r(int offset);
-int  exterm_coderom_r(int offset);
-int  exterm_input_port_0_1_r(int offset);
-int  exterm_input_port_2_3_r(int offset);
-void exterm_output_port_0_w(int offset, int data);
-int  exterm_master_speedup_r(int offset);
-void exterm_slave_speedup_w(int offset, int data);
-int  exterm_sound_dac_speedup_r(int offset);
-int  exterm_sound_ym2151_speedup_r(int offset);
+WRITE_HANDLER( exterm_host_data_w );
+READ_HANDLER( exterm_host_data_r );
+READ_HANDLER( exterm_coderom_r );
+READ_HANDLER( exterm_input_port_0_1_r );
+READ_HANDLER( exterm_input_port_2_3_r );
+WRITE_HANDLER( exterm_output_port_0_w );
+READ_HANDLER( exterm_master_speedup_r );
+WRITE_HANDLER( exterm_slave_speedup_w );
+READ_HANDLER( exterm_sound_dac_speedup_r );
+READ_HANDLER( exterm_sound_ym2151_speedup_r );
 
 
 static void nvram_handler(void *file, int read_or_write)
@@ -143,7 +143,7 @@ static struct MemoryReadAddress master_readmem[] =
 	{ -1 }  /* end of table */
 };
 
-static void placeholder(int offset,int data)
+static WRITE_HANDLER( placeholder )
 {}
 
 static struct MemoryWriteAddress master_writemem[] =
@@ -206,7 +206,8 @@ static struct MemoryReadAddress sound_dac_readmem[] =
 static struct MemoryWriteAddress sound_dac_writemem[] =
 {
 	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x8000, 0x8001, DAC_data_w },
+	{ 0x8000, 0x8000, DAC_0_data_w },
+	{ 0x8001, 0x8001, DAC_1_data_w },
 	{ -1 }  /* end of table */
 };
 

@@ -30,52 +30,30 @@ void superpac_init_machine(void)
 }
 
 
-int superpac_sharedram_r(int offset)
+READ_HANDLER( superpac_sharedram_r )
 {
 	return superpac_sharedram[offset];
 }
 
-
-int superpac_sharedram_r2(int offset)
-{
-	/* to speed up emulation, we check for the loop the sound CPU sits in most of the time
-	   and end the current iteration (things will start going again with the next IRQ) */
-//	if (offset == 0xfb - 0x40 && superpac_sharedram[offset] == 0)
-//		cpu_seticount (0);
-	return superpac_sharedram[offset];
-}
-
-
-int pacnpal_sharedram_r2(int offset)
-{
-	return superpac_sharedram[offset];
-}
-
-
-void pacnpal_sharedram_w2(int offset,int data)
+WRITE_HANDLER( superpac_sharedram_w )
 {
 	superpac_sharedram[offset] = data;
 }
 
 
-void superpac_sharedram_w(int offset,int data)
-{
-	superpac_sharedram[offset] = data;
-}
-
-void superpac_reset_2_w(int offset,int data)
+WRITE_HANDLER( superpac_reset_2_w )
 {
 	cpu_set_reset_line(1,PULSE_LINE);
 }
 
 
-void superpac_customio_w_1(int offset,int data)
+WRITE_HANDLER( superpac_customio_1_w )
 {
 	superpac_customio_1[offset] = data;
 }
 
 
-void superpac_customio_w_2(int offset,int data)
+WRITE_HANDLER( superpac_customio_2_w )
 {
 	superpac_customio_2[offset] = data;
 }
@@ -112,7 +90,7 @@ void superpac_update_credits (void)
 }
 
 
-int superpac_customio_r_1(int offset)
+READ_HANDLER( superpac_customio_1_r )
 {
 	int val, temp;
 
@@ -201,7 +179,7 @@ int superpac_customio_r_1(int offset)
 	return superpac_customio_1[offset];
 }
 
-int superpac_customio_r_2(int offset)
+READ_HANDLER( superpac_customio_2_r )
 {
 	int val;
 
@@ -293,7 +271,7 @@ int superpac_customio_r_2(int offset)
 }
 
 
-void superpac_interrupt_enable_1_w(int offset,int data)
+WRITE_HANDLER( superpac_interrupt_enable_1_w )
 {
 	interrupt_enable_1 = offset;
 }
@@ -306,13 +284,13 @@ int superpac_interrupt_1(void)
 }
 
 
-void pacnpal_interrupt_enable_2_w(int offset,int data)
+WRITE_HANDLER( pacnpal_interrupt_enable_2_w )
 {
 	interrupt_enable_2 = offset;
 }
 
 
-void superpac_cpu_enable_w(int offset,int data)
+WRITE_HANDLER( superpac_cpu_enable_w )
 {
 	cpu_set_halt_line(1, offset ? CLEAR_LINE : ASSERT_LINE);
 }

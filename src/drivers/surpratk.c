@@ -30,7 +30,7 @@ static int surpratk_interrupt(void)
 	else return ignore_interrupt();
 }
 
-static int bankedram_r(int offset)
+static READ_HANDLER( bankedram_r )
 {
 	if (videobank & 0x02)
 	{
@@ -45,7 +45,7 @@ static int bankedram_r(int offset)
 		return ram[offset];
 }
 
-static void bankedram_w(int offset,int data)
+static WRITE_HANDLER( bankedram_w )
 {
 	if (videobank & 0x02)
 	{
@@ -60,7 +60,7 @@ static void bankedram_w(int offset,int data)
 		ram[offset] = data;
 }
 
-static void surpratk_videobank_w(int offset,int data)
+static WRITE_HANDLER( surpratk_videobank_w )
 {
 if (errorlog) fprintf(errorlog,"%04x: videobank = %02x\n",cpu_get_pc(),data);
 	/* bit 0 = select 053245 at 0000-07ff */
@@ -69,7 +69,7 @@ if (errorlog) fprintf(errorlog,"%04x: videobank = %02x\n",cpu_get_pc(),data);
 	videobank = data;
 }
 
-static void surpratk_5fc0_w(int offset,int data)
+static WRITE_HANDLER( surpratk_5fc0_w )
 {
 if (errorlog && (data & 0xf4) != 0x10) fprintf(errorlog,"%04x: 3fc0 = %02x\n",cpu_get_pc(),data);
 

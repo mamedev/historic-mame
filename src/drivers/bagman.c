@@ -51,13 +51,13 @@ I/O C  ;AY-3-8910 Data Read Reg.
 
 
 
-int bagman_pal16r6_r(int offset);
+READ_HANDLER( bagman_pal16r6_r );
 void bagman_machine_init(void);
-void bagman_pal16r6_w(int offset, int data);
+WRITE_HANDLER( bagman_pal16r6_w );
 
 
 extern unsigned char *bagman_video_enable;
-void bagman_flipscreen_w(int offset,int data);
+WRITE_HANDLER( bagman_flipscreen_w );
 void bagman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void bagman_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
 

@@ -236,7 +236,7 @@ void cps1_debug_tiles(struct osd_bitmap *bitmap)
     }
 }
 
-extern void cps2_qsound_sharedram_w(int offset,int data);
+WRITE_HANDLER( cps2_qsound_sharedram_w );
 
 void cps2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {

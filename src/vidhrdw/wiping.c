@@ -63,7 +63,7 @@ void wiping_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 
 
-void wiping_flipscreen_w(int offset,int data)
+WRITE_HANDLER( wiping_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{

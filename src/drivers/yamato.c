@@ -20,9 +20,9 @@ extern unsigned char *cclimber_bsvideoram;
 extern int cclimber_bsvideoram_size;
 extern unsigned char *cclimber_bigspriteram;
 extern unsigned char *cclimber_column_scroll;
-void cclimber_flipscreen_w(int offset,int data);
-void cclimber_colorram_w(int offset,int data);
-void cclimber_bigsprite_videoram_w(int offset,int data);
+WRITE_HANDLER( cclimber_flipscreen_w );
+WRITE_HANDLER( cclimber_colorram_w );
+WRITE_HANDLER( cclimber_bigsprite_videoram_w );
 void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int cclimber_vh_start(void);
 void cclimber_vh_stop(void);
@@ -114,19 +114,19 @@ void yamato_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 static int p0,p1;
 
-static void p0_w(int offset,int data)
+static WRITE_HANDLER( p0_w )
 {
 	p0 = data;
 }
-static void p1_w(int offset,int data)
+static WRITE_HANDLER( p1_w )
 {
 	p1 = data;
 }
-static int p0_r(int offset)
+static READ_HANDLER( p0_r )
 {
 	return p0;
 }
-static int p1_r(int offset)
+static READ_HANDLER( p1_r )
 {
 	return p1;
 }

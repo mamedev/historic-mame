@@ -221,12 +221,12 @@ void docastle_flipscreen_on_r(int offset)
 	setflip(1);
 }
 
-void docastle_flipscreen_off_w(int offset, int data)
+WRITE_HANDLER( docastle_flipscreen_off_w )
 {
 	setflip(0);
 }
 
-void docastle_flipscreen_on_w(int offset, int data)
+WRITE_HANDLER( docastle_flipscreen_on_w )
 {
 	setflip(1);
 }

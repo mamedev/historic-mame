@@ -28,37 +28,37 @@ void jackal_init_machine(void)
 
 
 
-int jackal_zram_r(int offset)
+READ_HANDLER( jackal_zram_r )
 {
 	return jackal_rambank[0x0020+offset];
 }
 
 
-int jackal_commonram_r(int offset)
+READ_HANDLER( jackal_commonram_r )
 {
 	return jackal_rambank[0x0060+offset];
 }
 
 
-int jackal_commonram1_r(int offset)
+READ_HANDLER( jackal_commonram1_r )
 {
 	return (memory_region(REGION_CPU1))[0x0060+offset];
 }
 
 
-int jackal_voram_r(int offset)
+READ_HANDLER( jackal_voram_r )
 {
 	return jackal_rambank[0x2000+offset];
 }
 
 
-int jackal_spriteram_r(int offset)
+READ_HANDLER( jackal_spriteram_r )
 {
 	return jackal_spritebank[0x3000+offset];
 }
 
 
-void jackal_rambank_w(int offset,int data)
+WRITE_HANDLER( jackal_rambank_w )
 {
 	jackal_rambank = &((memory_region(REGION_CPU1))[((data & 0x10) << 12)]);
 	jackal_spritebank = &((memory_region(REGION_CPU1))[((data & 0x08) << 13)]);
@@ -66,26 +66,26 @@ void jackal_rambank_w(int offset,int data)
 }
 
 
-void jackal_zram_w(int offset,int data)
+WRITE_HANDLER( jackal_zram_w )
 {
 	jackal_rambank[0x0020+offset] = data;
 }
 
 
-void jackal_commonram_w(int offset,int data)
+WRITE_HANDLER( jackal_commonram_w )
 {
 	jackal_rambank[0x0060+offset] = data;
 }
 
 
-void jackal_commonram1_w(int offset,int data)
+WRITE_HANDLER( jackal_commonram1_w )
 {
 	(memory_region(REGION_CPU1))[0x0060+offset] = data;
 	(memory_region(REGION_CPU2))[0x6060+offset] = data;
 }
 
 
-void jackal_voram_w(int offset,int data)
+WRITE_HANDLER( jackal_voram_w )
 {
 	if ((offset & 0xF800) == 0)
 	{
@@ -95,7 +95,7 @@ void jackal_voram_w(int offset,int data)
 }
 
 
-void jackal_spriteram_w(int offset,int data)
+WRITE_HANDLER( jackal_spriteram_w )
 {
 	jackal_spritebank[0x3000+offset] = data;
 }

@@ -17,12 +17,12 @@ int snowbros_spriteram_size;
 
 /* Put in case screen can be optimised later */
 
-void snowbros_spriteram_w (int offset, int data)
+WRITE_HANDLER( snowbros_spriteram_w )
 {
   	COMBINE_WORD_MEM(&snowbros_spriteram[offset], data);
 }
 
-int  snowbros_spriteram_r (int offset)
+READ_HANDLER( snowbros_spriteram_r )
 {
 	return READ_WORD(&snowbros_spriteram[offset]);
 }

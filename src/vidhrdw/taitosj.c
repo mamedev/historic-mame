@@ -145,7 +145,7 @@ void taitosj_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 
 
-void taitosj_paletteram_w(int offset,int data)
+WRITE_HANDLER( taitosj_paletteram_w )
 {
 	int bit0,bit1,bit2;
 	int r,g,b,val;
@@ -282,7 +282,7 @@ void taitosj_vh_stop(void)
 
 
 
-int taitosj_gfxrom_r(int offset)
+READ_HANDLER( taitosj_gfxrom_r )
 {
 	int offs;
 
@@ -299,7 +299,7 @@ int taitosj_gfxrom_r(int offset)
 
 
 
-void taitosj_videoram2_w(int offset,int data)
+WRITE_HANDLER( taitosj_videoram2_w )
 {
 	if (taitosj_videoram2[offset] != data)
 	{
@@ -311,7 +311,7 @@ void taitosj_videoram2_w(int offset,int data)
 
 
 
-void taitosj_videoram3_w(int offset,int data)
+WRITE_HANDLER( taitosj_videoram3_w )
 {
 	if (taitosj_videoram3[offset] != data)
 	{
@@ -323,7 +323,7 @@ void taitosj_videoram3_w(int offset,int data)
 
 
 
-void taitosj_colorbank_w(int offset,int data)
+WRITE_HANDLER( taitosj_colorbank_w )
 {
 	if (taitosj_colorbank[offset] != data)
 	{
@@ -338,7 +338,7 @@ if (errorlog) fprintf(errorlog,"colorbank %d = %02x\n",offset,data);
 
 
 
-void taitosj_videoenable_w(int offset,int data)
+WRITE_HANDLER( taitosj_videoenable_w )
 {
 	if (taitosj_video_enable != data)
 	{
@@ -360,7 +360,7 @@ if (errorlog) fprintf(errorlog,"videoenable = %02x\n",data);
 
 
 
-void taitosj_characterram_w(int offset,int data)
+WRITE_HANDLER( taitosj_characterram_w )
 {
 	if (taitosj_characterram[offset] != data)
 	{
@@ -386,12 +386,12 @@ void taitosj_characterram_w(int offset,int data)
   collision detection.
 
 ***************************************************************************/
-int taitosj_collision_reg_r(int offset)
+READ_HANDLER( taitosj_collision_reg_r )
 {
 	return taitosj_collision_reg[offset];
 }
 
-void taitosj_collision_reg_clear_w(int offset,int data)
+WRITE_HANDLER( taitosj_collision_reg_clear_w )
 {
 	taitosj_collision_reg[0] = 0;
 	taitosj_collision_reg[1] = 0;

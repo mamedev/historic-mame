@@ -95,7 +95,7 @@ void irobot_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 }
 
 
-void irobot_paletteram_w(int offset,int data)
+WRITE_HANDLER( irobot_paletteram_w )
 {
     int r,g,b;
 	int bits,intensity;

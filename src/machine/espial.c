@@ -19,7 +19,7 @@ void espial_init_machine(void)
 }
 
 
-void zodiac_master_interrupt_enable_w(int offset, int data)
+WRITE_HANDLER( zodiac_master_interrupt_enable_w )
 {
 	interrupt_enable_w(offset, data ^ 1);
 }
@@ -31,7 +31,7 @@ int zodiac_master_interrupt(void)
 }
 
 
-void zodiac_master_soundlatch_w(int offset, int data)
+WRITE_HANDLER( zodiac_master_soundlatch_w )
 {
 	soundlatch_w(offset, data);
 	cpu_cause_interrupt(1, Z80_IRQ_INT);

@@ -21,16 +21,16 @@ extern int blktiger_backgroundram_size;
 extern unsigned char *blktiger_palette_bank;
 extern unsigned char *blktiger_screen_layout;
 
-void blktiger_palette_bank_w(int offset,int data);
-void blktiger_screen_layout_w(int offset,int data);
+WRITE_HANDLER( blktiger_palette_bank_w );
+WRITE_HANDLER( blktiger_screen_layout_w );
 
-int blktiger_background_r(int offset);
-void blktiger_background_w(int offset,int data);
-void blktiger_video_control_w(int offset,int data);
-void blktiger_video_enable_w(int offset,int data);
-void blktiger_scrollbank_w(int offset,int data);
-void blktiger_scrollx_w(int offset,int data);
-void blktiger_scrolly_w(int offset,int data);
+READ_HANDLER( blktiger_background_r );
+WRITE_HANDLER( blktiger_background_w );
+WRITE_HANDLER( blktiger_video_control_w );
+WRITE_HANDLER( blktiger_video_enable_w );
+WRITE_HANDLER( blktiger_scrollbank_w );
+WRITE_HANDLER( blktiger_scrollx_w );
+WRITE_HANDLER( blktiger_scrolly_w );
 
 int blktiger_interrupt(void);
 
@@ -42,14 +42,14 @@ void blktiger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /* this is a protection check. The game crashes (thru a jump to 0x8000) */
 /* if a read from this address doesn't return the value it expects. */
-static int blktiger_protection_r(int offset)
+static READ_HANDLER( blktiger_protection_r )
 {
 	int data = cpu_get_reg(Z80_DE) >> 8;
 	if (errorlog) fprintf(errorlog,"protection read, PC: %04x Result:%02x\n",cpu_get_pc(),data);
 	return data;
 }
 
-static void blktiger_bankswitch_w(int offset,int data)
+static WRITE_HANDLER( blktiger_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);

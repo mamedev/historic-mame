@@ -1,9 +1,9 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 
 
 static int layer_colorbase[3],bg_colorbase,sprite_colorbase;
+static int layerpri[3];
 
 
 /***************************************************************************
@@ -27,9 +27,14 @@ static void tile_callback(int layer,int bank,int *code,int *color)
 
 ***************************************************************************/
 
-static void sprite_callback(int *code,int *color,int *priority)
+static void sprite_callback(int *code,int *color,int *priority_mask)
 {
-	*priority = (*color & 0x03e0) >> 4;	/* ??????? */
+	int pri = (*color & 0x03e0) >> 4;	/* ??????? */
+	if (pri <= layerpri[2])								*priority_mask = 0;
+	else if (pri > layerpri[2] && pri <= layerpri[1])	*priority_mask = 0xf0;
+	else if (pri > layerpri[1] && pri <= layerpri[0])	*priority_mask = 0xf0|0xcc;
+	else 												*priority_mask = 0xf0|0xcc|0xaa;
+
 	*color = sprite_colorbase + (*color & 0x001f);
 }
 
@@ -85,7 +90,7 @@ static void sortlayers(int *layer,int *pri)
 
 void vendetta_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int pri[3],layer[3];
+	int layer[3];
 
 
 	bg_colorbase       = K053251_get_palette_index(K053251_CI0);
@@ -104,18 +109,18 @@ void vendetta_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_render(ALL_TILEMAPS);
 
 	layer[0] = 0;
-	pri[0] = K053251_get_priority(K053251_CI2);
+	layerpri[0] = K053251_get_priority(K053251_CI2);
 	layer[1] = 1;
-	pri[1] = K053251_get_priority(K053251_CI3);
+	layerpri[1] = K053251_get_priority(K053251_CI3);
 	layer[2] = 2;
-	pri[2] = K053251_get_priority(K053251_CI4);
+	layerpri[2] = K053251_get_priority(K053251_CI4);
 
-	sortlayers(layer,pri);
+	sortlayers(layer,layerpri);
 
-	K052109_tilemap_draw(bitmap,layer[0],TILEMAP_IGNORE_TRANSPARENCY);
-	K053247_sprites_draw(bitmap,pri[1]+1,pri[0]);
-	K052109_tilemap_draw(bitmap,layer[1],0);
-	K053247_sprites_draw(bitmap,pri[2]+1,pri[1]);
-	K052109_tilemap_draw(bitmap,layer[2],0);
-	K053247_sprites_draw(bitmap,0,pri[2]);
+	fillbitmap(priority_bitmap,0,NULL);
+	K052109_tilemap_draw(bitmap,layer[0],TILEMAP_IGNORE_TRANSPARENCY|(1<<16));
+	K052109_tilemap_draw(bitmap,layer[1],2<<16);
+	K052109_tilemap_draw(bitmap,layer[2],4<<16);
+
+	K053247_sprites_draw(bitmap);
 }

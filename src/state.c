@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include "osd_cpu.h"
+#include "memory.h"
 #include "mamedbg.h"
 #include "osdepend.h"
 #include "state.h"

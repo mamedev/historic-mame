@@ -22,19 +22,19 @@ int crimfght_vh_start( void );
 void crimfght_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-static void crimfght_coin_w(int offset,int data)
+static WRITE_HANDLER( crimfght_coin_w )
 {
 	coin_counter_w(0,data & 1);
 	coin_counter_w(1,data & 2);
 }
 
-static void crimfght_sh_irqtrigger_w(int offset, int data)
+static WRITE_HANDLER( crimfght_sh_irqtrigger_w )
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(1,0xff);
 }
 
-static void crimfght_snd_bankswitch_w(int offset, int data)
+static WRITE_HANDLER( crimfght_snd_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_SOUND1);
 	/* b1: bank for channel A */
@@ -49,7 +49,7 @@ static void crimfght_snd_bankswitch_w(int offset, int data)
 
 /********************************************/
 
-static int speedup_r( int offs )
+static READ_HANDLER( speedup_r )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

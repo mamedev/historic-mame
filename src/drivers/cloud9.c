@@ -50,10 +50,10 @@ ask.  - Mike Balfour (mab22@po.cwru.edu)
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern void cloud9_paletteram_w(int offset, int data);
-extern int  cloud9_bitmap_regs_r(int offset);
-extern void cloud9_bitmap_regs_w(int offset, int data);
-extern void cloud9_bitmap_w(int offset, int data);
+WRITE_HANDLER( cloud9_paletteram_w );
+READ_HANDLER( cloud9_bitmap_regs_r );
+WRITE_HANDLER( cloud9_bitmap_regs_w );
+WRITE_HANDLER( cloud9_bitmap_w );
 extern void cloud9_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *cloud9_vram2;
@@ -82,7 +82,7 @@ static void nvram_handler(void *file,int read_or_write)
 }
 
 
-static void cloud9_led_w(int offset,int data)
+static WRITE_HANDLER( cloud9_led_w )
 {
 //	osd_led_w(offset,~data >> 7);
 }

@@ -22,18 +22,18 @@ extern unsigned char *suprloco_videoram;
 void suprloco_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  suprloco_vh_start(void);
 void suprloco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void suprloco_videoram_w(int offset,int data);
-void suprloco_scrollram_w(int offset, int data);
-int  suprloco_scrollram_r(int offset);
-void suprloco_control_w(int offset,int data);
-int  suprloco_control_r(int offset);
+WRITE_HANDLER( suprloco_videoram_w );
+WRITE_HANDLER( suprloco_scrollram_w );
+READ_HANDLER( suprloco_scrollram_r );
+WRITE_HANDLER( suprloco_control_w );
+READ_HANDLER( suprloco_control_r );
 
 
 /* in machine/segacrpt.c */
 void suprloco_decode(void);
 
 
-static void suprloco_soundport_w(int offset, int data)
+static WRITE_HANDLER( suprloco_soundport_w )
 {
 	soundlatch_w(0,data);
 	cpu_cause_interrupt(1,Z80_NMI_INT);

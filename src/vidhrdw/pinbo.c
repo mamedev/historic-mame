@@ -48,7 +48,7 @@ void pinbo_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 	}
 }
 
-void pinbo_flipscreen_w(int offset,int data)
+WRITE_HANDLER( pinbo_flipscreen_w )
 {
 	if (flipscreen[0] != (data & 1))
 	{

@@ -1,14 +1,15 @@
 #ifndef DRIVER_H
 #define DRIVER_H
 
+#include "osd_cpu.h"
+#include "memory.h"
 #include "osdepend.h"
+#include "mame.h"
 #include "common.h"
 #include "drawgfx.h"
 #include "palette.h"
-#include "mame.h"
 #include "cpuintrf.h"
 #include "sndintrf.h"
-#include "memory.h"
 #include "input.h"
 #include "inptport.h"
 #include "usrintrf.h"
@@ -365,20 +366,21 @@ struct GameDriver
 
 /* values for the flags field */
 
-#define ORIENTATION_MASK        0x0007
-#define	ORIENTATION_FLIP_X		0x0001	/* mirror everything in the X direction */
-#define	ORIENTATION_FLIP_Y		0x0002	/* mirror everything in the Y direction */
-#define ORIENTATION_SWAP_XY		0x0004	/* mirror along the top-left/bottom-right diagonal */
+#define ORIENTATION_MASK        	0x0007
+#define	ORIENTATION_FLIP_X			0x0001	/* mirror everything in the X direction */
+#define	ORIENTATION_FLIP_Y			0x0002	/* mirror everything in the Y direction */
+#define ORIENTATION_SWAP_XY			0x0004	/* mirror along the top-left/bottom-right diagonal */
 
-#define GAME_NOT_WORKING		0x0008
-#define GAME_WRONG_COLORS		0x0010	/* colors are totally wrong */
-#define GAME_IMPERFECT_COLORS	0x0020	/* colors are not 100% accurate, but close */
-#define GAME_NO_SOUND			0x0040	/* sound is missing */
-#define GAME_IMPERFECT_SOUND	0x0080	/* sound is known to be wrong */
-#define	GAME_REQUIRES_16BIT		0x0100	/* cannot fit in 256 colors */
-#define GAME_NO_COCKTAIL		0x0200	/* screen flip support is missing */
-#define NOT_A_DRIVER			0x4000	/* set by the fake "root" driver_ and by "containers" */
-										/* e.g. driver_neogeo. */
+#define GAME_NOT_WORKING			0x0008
+#define GAME_WRONG_COLORS			0x0010	/* colors are totally wrong */
+#define GAME_IMPERFECT_COLORS		0x0020	/* colors are not 100% accurate, but close */
+#define GAME_NO_SOUND				0x0040	/* sound is missing */
+#define GAME_IMPERFECT_SOUND		0x0080	/* sound is known to be wrong */
+#define	GAME_REQUIRES_16BIT			0x0100	/* cannot fit in 256 colors */
+#define GAME_NO_COCKTAIL			0x0200	/* screen flip support is missing */
+#define GAME_UNEMULATED_PROTECTION	0x0400	/* game's protection not fully emulated */
+#define NOT_A_DRIVER				0x4000	/* set by the fake "root" driver_ and by "containers" */
+											/* e.g. driver_neogeo. */
 #ifdef MESS
 #define GAME_COMPUTER	0x8000			/* Driver is a computer (needs full keyboard) */
 #define GAME_ALIAS		NOT_A_DRIVER	/* Driver is only an alias for an existing model */

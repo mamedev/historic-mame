@@ -35,9 +35,8 @@ void labyrunr_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 ***************************************************************************/
 
-static void get_tile_info0(int col,int row)
+static void get_tile_info0(int tile_index)
 {
-	int tile_index = 32*row+col;
 	int attr = labyrunr_videoram1[tile_index];
 	int code = labyrunr_videoram1[tile_index + 0x400];
 	int bit0 = (K007121_ctrlram[0][0x05] >> 0) & 0x03;
@@ -57,9 +56,8 @@ static void get_tile_info0(int col,int row)
 	SET_TILE_INFO(0,code+bank*256,((K007121_ctrlram[0][6]&0x30)*2+16)+(attr&7))
 }
 
-static void get_tile_info1(int col,int row)
+static void get_tile_info1(int tile_index)
 {
-	int tile_index = 32*row+col;
 	int attr = labyrunr_videoram2[tile_index];
 	int code = labyrunr_videoram2[tile_index + 0x400];
 	int bit0 = (K007121_ctrlram[0][0x05] >> 0) & 0x03;
@@ -88,8 +86,8 @@ static void get_tile_info1(int col,int row)
 
 int labyrunr_vh_start(void)
 {
-	layer0 = tilemap_create(get_tile_info0, TILEMAP_OPAQUE, 8, 8, 32, 32);
-	layer1 = tilemap_create(get_tile_info1, TILEMAP_OPAQUE, 8, 8,  5, 32);
+	layer0 = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
+	layer1 = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 
 	if (layer0 && layer1)
 	{
@@ -114,23 +112,21 @@ int labyrunr_vh_start(void)
 
 ***************************************************************************/
 
-void labyrunr_vram1_w(int offset,int data)
+WRITE_HANDLER( labyrunr_vram1_w )
 {
 	if (labyrunr_videoram1[offset] != data)
 	{
-		tilemap_mark_tile_dirty(layer0, offset%32, (offset&0x3ff)/32);
 		labyrunr_videoram1[offset] = data;
+		tilemap_mark_tile_dirty(layer0,offset & 0x3ff);
 	}
 }
 
-void labyrunr_vram2_w(int offset,int data)
+WRITE_HANDLER( labyrunr_vram2_w )
 {
 	if (labyrunr_videoram2[offset] != data)
 	{
-		int col = offset%32;
-		if (col < 5)
-			tilemap_mark_tile_dirty(layer1, col, (offset&0x3ff)/32);
 		labyrunr_videoram2[offset] = data;
+		tilemap_mark_tile_dirty(layer1,offset & 0x3ff);
 	}
 }
 
@@ -153,6 +149,6 @@ void labyrunr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_render(ALL_TILEMAPS);
 
 	tilemap_draw(bitmap,layer0,0);
-	K007121_sprites_draw(0,bitmap,spriteram,(K007121_ctrlram[0][6]&0x30)*2,40,0);
+	K007121_sprites_draw(0,bitmap,spriteram,(K007121_ctrlram[0][6]&0x30)*2,40,0,-1);
 	tilemap_draw(bitmap,layer1,0 );
 }

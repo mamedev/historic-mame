@@ -12,17 +12,98 @@ unsigned char *actfancr_pf1_data,*actfancr_pf2_data,*actfancr_pf1_rowscroll_data
 static struct tilemap *pf1_tilemap;
 static int flipscreen;
 
+
+
+static UINT32 actfancr_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
+{
+	/* logical (col,row) -> memory offset */
+	return (col & 0x0f) + ((row & 0x0f) << 4) + ((col & 0xf0) << 4);
+}
+
+static void get_tile_info(int tile_index)
+{
+	int tile,color;
+
+	tile=actfancr_pf1_data[2*tile_index]+(actfancr_pf1_data[2*tile_index+1]<<8);
+	color=tile >> 12;
+	tile=tile&0xfff;
+
+	SET_TILE_INFO(2,tile,color)
+}
+
+static UINT32 triothep_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
+{
+	/* logical (col,row) -> memory offset */
+	return (col & 0x0f) + ((row & 0x0f) << 4) + ((row & 0x10) << 4) + ((col & 0x10) << 5);
+}
+
+static void get_trio_tile_info(int tile_index)
+{
+	int tile,color;
+
+	tile=actfancr_pf1_data[2*tile_index]+(actfancr_pf1_data[2*tile_index+1]<<8);
+	color=tile >> 12;
+	tile=tile&0xfff;
+
+	SET_TILE_INFO(2,tile,color)
+}
+
 /******************************************************************************/
 
-void actfancr_pf1_control_w(int offset, int data)
+int actfancr_vh_start (void)
+{
+	pf1_tilemap = tilemap_create(get_tile_info,actfancr_scan,TILEMAP_OPAQUE,16,16,256,16);
+
+	if (!pf1_tilemap)
+		return 1;
+
+	return 0;
+}
+
+int triothep_vh_start (void)
+{
+	pf1_tilemap = tilemap_create(get_trio_tile_info,triothep_scan,TILEMAP_OPAQUE,16,16,32,32);
+
+	if (!pf1_tilemap)
+		return 1;
+
+	return 0;
+}
+
+/******************************************************************************/
+
+WRITE_HANDLER( actfancr_pf1_control_w )
 {
 	actfancr_control_1[offset]=data;
 }
 
-void actfancr_pf2_control_w(int offset, int data)
+WRITE_HANDLER( actfancr_pf2_control_w )
 {
 	actfancr_control_2[offset]=data;
 }
+
+WRITE_HANDLER( actfancr_pf1_data_w )
+{
+	actfancr_pf1_data[offset]=data;
+	tilemap_mark_tile_dirty(pf1_tilemap,offset/2);
+}
+
+READ_HANDLER( actfancr_pf1_data_r )
+{
+	return actfancr_pf1_data[offset];
+}
+
+WRITE_HANDLER( actfancr_pf2_data_w )
+{
+	actfancr_pf2_data[offset]=data;
+}
+
+READ_HANDLER( actfancr_pf2_data_r )
+{
+	return actfancr_pf2_data[offset];
+}
+
+/******************************************************************************/
 
 void actfancr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
@@ -294,114 +375,3 @@ void triothep_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
-
-/******************************************************************************/
-
-static void get_tile_info( int col, int row )
-{
-	int offs,tile,color;
-
-	offs=(col/16)*0x200; /* Find base */
-	offs+=(col%16)*2 + row *32;
-
-	tile=actfancr_pf1_data[offs]+(actfancr_pf1_data[offs+1]<<8);
-	color=tile >> 12;
-	tile=tile&0xfff;
-
-	SET_TILE_INFO(2,tile,color)
-}
-
-static void get_trio_tile_info( int col, int row )
-{
-	int offs,tile,color;
-
-	if (col>15 && row>15) offs=0x600 + (col-16)*2 + (row-16) * 32; /* Bottom right */
-	else if (col>15) offs=0x400 + (col-16)*2 + row *32; /* Top right */
-	else if (row>15) offs=0x200 + col*2 + (row-16) *32; /* Bottom left */
-	else offs=col*2 + row *32; /* Top left */
-
-	tile=actfancr_pf1_data[offs]+(actfancr_pf1_data[offs+1]<<8);
-	color=tile >> 12;
-	tile=tile&0xfff;
-
-	SET_TILE_INFO(2,tile,color)
-}
-
-void actfancr_pf1_data_w(int offset, int data)
-{
-	int dx,dy;
-
-	actfancr_pf1_data[offset]=data;
-	offset=offset&0xfffe;
-
-	/* Playfield is 16 blocks of 256 by 256 laid side to side */
-	dx=(offset>>9)*16;
-	offset&=0x1ff;
-
-	dx+=(offset%32)/2; dy=offset/32;
-	tilemap_mark_tile_dirty(pf1_tilemap,dx,dy);
-}
-
-void triothep_pf1_data_w(int offset, int data)
-{
-	int dx=0,dy=0;
-
-	actfancr_pf1_data[offset]=data;
-	offset=offset&0x7fe;
-
-	if (offset>0x5ff) {offset-=0x600;dx=16; dy=16;}
-	else if (offset>0x3ff) {offset-=0x400;dx=16; dy=0;}
-	else if (offset>0x1ff) {offset-=0x200;dx=0; dy=16;}
-
-	dx+=(offset%32)/2; dy+=offset/32;
-	tilemap_mark_tile_dirty(pf1_tilemap,dx,dy);
-}
-
-int actfancr_pf1_data_r(int offset)
-{
-	return actfancr_pf1_data[offset];
-}
-
-void actfancr_pf2_data_w(int offset, int data)
-{
-	actfancr_pf2_data[offset]=data;
-}
-
-int actfancr_pf2_data_r(int offset)
-{
-	return actfancr_pf2_data[offset];
-}
-
-/******************************************************************************/
-
-int actfancr_vh_start (void)
-{
-	pf1_tilemap = tilemap_create(
-		get_tile_info,
-		0,
-		16,16,
-		256,16 /* 4096 by 256 */
-	);
-
-	tilemap_set_scroll_rows(pf1_tilemap,1);
-	tilemap_set_scroll_cols(pf1_tilemap,1);
-
-	return 0;
-}
-
-int triothep_vh_start (void)
-{
-	pf1_tilemap = tilemap_create(
-		get_trio_tile_info,
-		0,
-		16,16,
-		32,32 /* 512 by 512 */
-	);
-
-	tilemap_set_scroll_rows(pf1_tilemap,1);
-	tilemap_set_scroll_cols(pf1_tilemap,1);
-
-	return 0;
-}
-
-/******************************************************************************/

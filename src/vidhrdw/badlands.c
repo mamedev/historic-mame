@@ -164,7 +164,7 @@ void badlands_scanline_update(int scanline)
  *
  *************************************/
 
-void badlands_pf_bank_w(int offset, int data)
+WRITE_HANDLER( badlands_pf_bank_w )
 {
 	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -184,7 +184,7 @@ void badlands_pf_bank_w(int offset, int data)
  *
  *************************************/
 
-void badlands_playfieldram_w(int offset, int data)
+WRITE_HANDLER( badlands_playfieldram_w )
 {
 	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
 	int newword = COMBINE_WORD(oldword, data);

@@ -231,7 +231,7 @@ void cyberbal_set_screen(int which)
  *
  *************************************/
 
-void cyberbal_playfieldram_1_w(int offset, int data)
+WRITE_HANDLER( cyberbal_playfieldram_1_w )
 {
 	int oldword = READ_WORD(&cyberbal_playfieldram_1[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -245,7 +245,7 @@ void cyberbal_playfieldram_1_w(int offset, int data)
 }
 
 
-void cyberbal_playfieldram_2_w(int offset, int data)
+WRITE_HANDLER( cyberbal_playfieldram_2_w )
 {
 	int oldword = READ_WORD(&cyberbal_playfieldram_2[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -266,7 +266,7 @@ void cyberbal_playfieldram_2_w(int offset, int data)
  *
  *************************************/
 
-void cyberbal_paletteram_1_w(int offset, int data)
+WRITE_HANDLER( cyberbal_paletteram_1_w )
 {
 	int oldword = READ_WORD(&paletteram[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -279,13 +279,13 @@ void cyberbal_paletteram_1_w(int offset, int data)
 	}
 }
 
-int cyberbal_paletteram_1_r(int offset)
+READ_HANDLER( cyberbal_paletteram_1_r )
 {
 	return READ_WORD(&paletteram[offset]);
 }
 
 
-void cyberbal_paletteram_2_w(int offset, int data)
+WRITE_HANDLER( cyberbal_paletteram_2_w )
 {
 	int oldword = READ_WORD(&paletteram_2[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -298,7 +298,7 @@ void cyberbal_paletteram_2_w(int offset, int data)
 	}
 }
 
-int cyberbal_paletteram_2_r(int offset)
+READ_HANDLER( cyberbal_paletteram_2_r )
 {
 	return READ_WORD(&paletteram_2[offset]);
 }

@@ -168,7 +168,7 @@ int galaga_vh_start(void)
 
 
 
-void galaga_flipscreen_w(int offset,int data)
+WRITE_HANDLER( galaga_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{

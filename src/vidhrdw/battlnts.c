@@ -31,7 +31,7 @@ static void sprite_callback(int *code,int *color)
 	*color = 0;
 }
 
-void battlnts_spritebank_w(int offset,int data)
+WRITE_HANDLER( battlnts_spritebank_w )
 {
 	spritebank = 1024 * (data & 1);
 }

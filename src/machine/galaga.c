@@ -17,7 +17,7 @@ static unsigned char interrupt_enable_1,interrupt_enable_2,interrupt_enable_3;
 
 static void *nmi_timer;
 
-void galaga_halt_w(int offset,int data);
+WRITE_HANDLER( galaga_halt_w );
 void galaga_vh_interrupt(void);
 
 
@@ -29,14 +29,14 @@ void galaga_init_machine(void)
 
 
 
-int galaga_sharedram_r(int offset)
+READ_HANDLER( galaga_sharedram_r )
 {
 	return galaga_sharedram[offset];
 }
 
 
 
-void galaga_sharedram_w(int offset,int data)
+WRITE_HANDLER( galaga_sharedram_w )
 {
 	if (offset < 0x800)		/* write to video RAM */
 		dirtybuffer[offset & 0x3ff] = 1;
@@ -46,7 +46,7 @@ void galaga_sharedram_w(int offset,int data)
 
 
 
-int galaga_dsw_r(int offset)
+READ_HANDLER( galaga_dsw_r )
 {
 	int bit0,bit1;
 
@@ -70,7 +70,7 @@ static int coinpercred,credpercoin;
 static unsigned char customio[16];
 
 
-void galaga_customio_data_w(int offset,int data)
+WRITE_HANDLER( galaga_customio_data_w )
 {
 	customio[offset] = data;
 
@@ -94,7 +94,7 @@ if (errorlog) fprintf(errorlog,"%04x: custom IO offset %02x data %02x\n",cpu_get
 }
 
 
-int galaga_customio_data_r(int offset)
+READ_HANDLER( galaga_customio_data_r )
 {
 if (errorlog && customio_command != 0x71) fprintf(errorlog,"%04x: custom IO read offset %02x\n",cpu_get_pc(),offset);
 
@@ -156,7 +156,7 @@ if (errorlog && customio_command != 0x71) fprintf(errorlog,"%04x: custom IO read
 }
 
 
-int galaga_customio_r(int offset)
+READ_HANDLER( galaga_customio_r )
 {
 	return customio_command;
 }
@@ -168,7 +168,7 @@ void galaga_nmi_generate (int param)
 }
 
 
-void galaga_customio_w(int offset,int data)
+WRITE_HANDLER( galaga_customio_w )
 {
 if (errorlog && data != 0x10 && data != 0x71) fprintf(errorlog,"%04x: custom IO command %02x\n",cpu_get_pc(),data);
 
@@ -196,7 +196,7 @@ if (errorlog && data != 0x10 && data != 0x71) fprintf(errorlog,"%04x: custom IO 
 
 
 
-void galaga_halt_w(int offset,int data)
+WRITE_HANDLER( galaga_halt_w )
 {
 	if (data & 1)
 	{
@@ -212,7 +212,7 @@ void galaga_halt_w(int offset,int data)
 
 
 
-void galaga_interrupt_enable_1_w(int offset,int data)
+WRITE_HANDLER( galaga_interrupt_enable_1_w )
 {
 	interrupt_enable_1 = data & 1;
 }
@@ -229,7 +229,7 @@ int galaga_interrupt_1(void)
 
 
 
-void galaga_interrupt_enable_2_w(int offset,int data)
+WRITE_HANDLER( galaga_interrupt_enable_2_w )
 {
 	interrupt_enable_2 = data & 1;
 }
@@ -244,7 +244,7 @@ int galaga_interrupt_2(void)
 
 
 
-void galaga_interrupt_enable_3_w(int offset,int data)
+WRITE_HANDLER( galaga_interrupt_enable_3_w )
 {
 	interrupt_enable_3 = !(data & 1);
 }

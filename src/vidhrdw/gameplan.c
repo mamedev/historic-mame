@@ -53,7 +53,7 @@ static int new_request = 0;
 static int finished_sound = 0;
 static int cb2 = -1;
 
-int gameplan_sound_r(int offset)
+READ_HANDLER( gameplan_sound_r )
 {
 #ifdef VERBOSE
 	if (errorlog)  fprintf(errorlog, "GAME:  read reg%X at PC %04x\n", offset, cpu_get_pc());
@@ -75,7 +75,7 @@ int gameplan_sound_r(int offset)
 		return 0;
 }
 
-void gameplan_sound_w(int offset,int data)
+WRITE_HANDLER( gameplan_sound_w )
 {
 #ifdef VERBOSE
 	if (errorlog)  fprintf(errorlog, "GAME: write reg%X with %02x at PC %04x\n", offset, data, cpu_get_pc());
@@ -116,7 +116,7 @@ void gameplan_sound_w(int offset,int data)
 	}
 }
 
-int gameplan_via5_r(int offset)
+READ_HANDLER( gameplan_via5_r )
 {
 #ifdef VERBOSE
 	if (errorlog)  fprintf(errorlog, "SOUND:  read reg%X at PC %04x\n", offset, cpu_get_pc());
@@ -152,7 +152,7 @@ int gameplan_via5_r(int offset)
 	return 1;
 }
 
-void gameplan_via5_w(int offset, int data)
+WRITE_HANDLER( gameplan_via5_w )
 {
 #ifdef VERBOSE
 	if (errorlog)  fprintf(errorlog, "SOUND: write reg%X with %02x at PC %04x\n", offset, data, cpu_get_pc());
@@ -167,7 +167,7 @@ void gameplan_via5_w(int offset, int data)
 	}
 }
 
-int gameplan_video_r(int offset)
+READ_HANDLER( gameplan_video_r )
 {
 	static int x;
 	x++;
@@ -177,7 +177,7 @@ int gameplan_video_r(int offset)
 	return x;
 }
 
-void gameplan_video_w(int offset,int data)
+WRITE_HANDLER( gameplan_video_w )
 {
 	static int r0 = -1;
 	static unsigned char xpos, ypos, colour = 7;

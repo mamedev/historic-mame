@@ -45,14 +45,14 @@ void astrof_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 int  astrof_vh_start(void);
 void astrof_vh_stop(void);
 void astrof_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void astrof_videoram_w(int offset,int data);
-void tomahawk_videoram_w(int offset,int data);
-void astrof_video_control1_w(int offset,int data);
-void astrof_video_control2_w(int offset,int data);
-void tomahawk_video_control2_w(int offset,int data);
-int  tomahawk_protection_r(int offset);
-void astrof_sample1_w(int offset,int data);
-void astrof_sample2_w(int offset,int data);
+WRITE_HANDLER( astrof_videoram_w );
+WRITE_HANDLER( tomahawk_videoram_w );
+WRITE_HANDLER( astrof_video_control1_w );
+WRITE_HANDLER( astrof_video_control2_w );
+WRITE_HANDLER( tomahawk_video_control2_w );
+READ_HANDLER( tomahawk_protection_r );
+WRITE_HANDLER( astrof_sample1_w );
+WRITE_HANDLER( astrof_sample2_w );
 
 extern struct Samplesinterface astrof_samples_interface;
 extern struct Samplesinterface tomahawk_samples_interface;

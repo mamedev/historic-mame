@@ -2344,7 +2344,7 @@ int showgamewarnings(void)
 	char buf[2048];
 
 	if (Machine->gamedrv->flags &
-			(GAME_NOT_WORKING | GAME_WRONG_COLORS | GAME_IMPERFECT_COLORS |
+			(GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION | GAME_WRONG_COLORS | GAME_IMPERFECT_COLORS |
 			  GAME_NO_SOUND | GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL))
 	{
 		int done;
@@ -2389,7 +2389,7 @@ int showgamewarnings(void)
 			strcat(buf, "Screen flipping in cocktail mode is not supported.\n");
 		}
 
-		if (Machine->gamedrv->flags & GAME_NOT_WORKING)
+		if (Machine->gamedrv->flags & (GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION))
 		{
 			const struct GameDriver *maindrv;
 			int foundworking;
@@ -2397,7 +2397,10 @@ int showgamewarnings(void)
 			#ifdef MESS
 			strcpy(buf,"THIS SYSTEM DOESN'T WORK PROPERLY");
 			#else
-			strcpy(buf,"THIS GAME DOESN'T WORK PROPERLY");
+			if (Machine->gamedrv->flags & GAME_NOT_WORKING)
+				strcpy(buf,"THIS GAME DOESN'T WORK PROPERLY");
+			if (Machine->gamedrv->flags & GAME_UNEMULATED_PROTECTION)
+				strcat(buf, "The game has protection which isn't fully emulated.");
 			#endif
 
 			if (Machine->gamedrv->clone_of && !(Machine->gamedrv->clone_of->flags & NOT_A_DRIVER))
@@ -2410,7 +2413,7 @@ int showgamewarnings(void)
 			{
 				if (drivers[i] == maindrv || drivers[i]->clone_of == maindrv)
 				{
-					if ((drivers[i]->flags & GAME_NOT_WORKING) == 0)
+					if ((drivers[i]->flags & (GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)) == 0)
 					{
 						if (foundworking == 0)
 							strcat(buf,"\n\nThere are working clones of this game. They are:\n\n");

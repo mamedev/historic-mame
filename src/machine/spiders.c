@@ -28,9 +28,9 @@ void spiders_irq3b(int state) { }
 
 /* Function prototypes */
 
-void spiders_flip_w(int address,int data);
-void spiders_vrif_w(int address,int data);
-int spiders_vrom_r(int address);
+WRITE_HANDLER( spiders_flip_w );
+WRITE_HANDLER( spiders_vrif_w );
+READ_HANDLER( spiders_vrom_r );
 
 
 /* Declare PIA structure */
@@ -135,19 +135,19 @@ static int vrom_ctrl_data;
 
 int spiders_video_flip=0;
 
-void spiders_flip_w(int address,int data)
+WRITE_HANDLER( spiders_flip_w )
 {
 	spiders_video_flip=data;
 }
 
-void spiders_vrif_w(int address,int data)
+WRITE_HANDLER( spiders_vrif_w )
 {
 	vrom_ctrl_mode=(data&0x80)>>7;
 	vrom_ctrl_latch=(data&0x30)>>4;
 	vrom_ctrl_data=15-(data&0x0f);
 }
 
-int spiders_vrom_r(int address)
+READ_HANDLER( spiders_vrom_r )
 {
 	int retval;
 	unsigned char *RAM = memory_region(REGION_GFX1);

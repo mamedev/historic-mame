@@ -47,7 +47,7 @@ unsigned char *ccastles_scrolly;
   bit 0 -- inverter -- 1  kohm resistor  -- GREEN
 
 ***************************************************************************/
-void ccastles_paletteram_w(int offset,int data)
+WRITE_HANDLER( ccastles_paletteram_w )
 {
 	int r,g,b;
 	int bit0,bit1,bit2;
@@ -124,7 +124,7 @@ void ccastles_vh_stop(void)
 
 
 
-int ccastles_bitmode_r(int offset)
+READ_HANDLER( ccastles_bitmode_r )
 {
 	int addr;
 
@@ -161,7 +161,7 @@ int ccastles_bitmode_r(int offset)
 	return 0;
 }
 
-void ccastles_bitmode_w(int offset, int data)
+WRITE_HANDLER( ccastles_bitmode_w )
 {
 	int addr;
 
@@ -239,7 +239,7 @@ void ccastles_bitmode_w(int offset, int data)
 
 }
 
-void ccastles_flipscreen_w (int offset,int data)
+WRITE_HANDLER( ccastles_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{

@@ -79,7 +79,7 @@ void champbas_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 
 
-void champbas_gfxbank_w(int offset,int data)
+WRITE_HANDLER( champbas_gfxbank_w )
 {
 	if (gfxbank != (data & 1))
 	{

@@ -95,7 +95,7 @@ void wardner_reset(void)
 }
 
 
-int twincobr_dsp_in(int offset)
+READ_HANDLER( twincobr_dsp_r )
 {
 	/* DSP can read data from main CPU RAM via DSP IO port 1 */
 
@@ -116,7 +116,7 @@ int twincobr_dsp_in(int offset)
 	return input_data;
 }
 
-int fsharkbt_dsp_in(int offset)
+READ_HANDLER( fsharkbt_dsp_r )
 {
 	/* Flying Shark bootleg uses IO port 2 */
 	/* DSP reads data from an extra MCU (8741) at IO port 2 */
@@ -130,9 +130,9 @@ int fsharkbt_dsp_in(int offset)
 	return (fsharkbt_8741 & 1);
 }
 
-void twincobr_dsp_out(int fnction,int data)
+WRITE_HANDLER( twincobr_dsp_w )
 {
-	if (fnction == 0) {
+	if (offset == 0) {
 		/* This sets the main CPU RAM address the DSP should */
 		/*		read/write, via the DSP IO port 0 */
 		/* Top three bits of data need to be shifted left 3 places */
@@ -153,7 +153,7 @@ void twincobr_dsp_out(int fnction,int data)
 		if (errorlog) fprintf(errorlog,"DSP PC:%04x IO write %04x (%08x) at port 0\n",cpu_getpreviouspc(),data,main_ram_seg + dsp_addr_w);
 #endif
 	}
-	if (fnction == 1) {
+	if (offset == 1) {
 		/* Data written to main CPU RAM via DSP IO port 1*/
 		dsp_execute = 0;
 		switch (main_ram_seg) {
@@ -175,13 +175,13 @@ void twincobr_dsp_out(int fnction,int data)
 		if (errorlog) fprintf(errorlog,"DSP PC:%04x IO write %04x at %08x (port 1)\n",cpu_getpreviouspc(),data,main_ram_seg + dsp_addr_w);
 #endif
 	}
-	if (fnction == 2) {
+	if (offset == 2) {
 		/* Flying Shark bootleg DSP writes data to an extra MCU (8741) at IO port 2 */
 #if 0
 		if (errorlog) fprintf(errorlog,"DSP PC:%04x IO write from DSP RAM:%04x to 8741 MCU (port 2)\n",cpu_getpreviouspc(),fsharkbt_8741);
 #endif
 	}
-	if (fnction == 3) {
+	if (offset == 3) {
 		/* data 0xffff	means inhibit BIO line to DSP and enable  */
 		/*				communication to main processor */
 		/*				Actually only DSP data bit 15 controls this */
@@ -206,12 +206,12 @@ void twincobr_dsp_out(int fnction,int data)
 	}
 }
 
-int twincobr_68k_dsp_r(int offset)
+READ_HANDLER( twincobr_68k_dsp_r )
 {
 	return READ_WORD(&twincobr_68k_dsp_ram[offset]);
 }
 
-void twincobr_68k_dsp_w(int offset,int data)
+WRITE_HANDLER( twincobr_68k_dsp_w )
 {
 #if LOG_DSP_CALLS
 	if (errorlog) if (offset < 10) fprintf(errorlog,"%s:%08x write %08x at %08x\n",toaplan_cpu_type[toaplan_main_cpu],cpu_get_pc(),data,0x30000+offset);
@@ -220,7 +220,7 @@ void twincobr_68k_dsp_w(int offset,int data)
 }
 
 
-void wardner_mainram_w(int offset, int data)
+WRITE_HANDLER( wardner_mainram_w )
 {
 #if 0
 	if (errorlog)
@@ -229,13 +229,13 @@ void wardner_mainram_w(int offset, int data)
 	wardner_mainram[offset] = data;
 
 }
-int wardner_mainram_r(int offset)
+READ_HANDLER( wardner_mainram_r )
 {
 	return wardner_mainram[offset];
 }
 
 
-void twincobr_7800c_w(int offset,int data)
+WRITE_HANDLER( twincobr_7800c_w )
 {
 #if 0
 	if (errorlog) fprintf(errorlog,"%s:%08x  Writing %08x to %08x.\n",toaplan_cpu_type[toaplan_main_cpu],cpu_get_pc(),data,toaplan_port_type[toaplan_main_cpu] - offset);
@@ -279,17 +279,17 @@ void twincobr_7800c_w(int offset,int data)
 
 
 
-int twincobr_sharedram_r(int offset)
+READ_HANDLER( twincobr_sharedram_r )
 {
 	return twincobr_sharedram[offset / 2];
 }
 
-void twincobr_sharedram_w(int offset,int data)
+WRITE_HANDLER( twincobr_sharedram_w )
 {
 	twincobr_sharedram[offset / 2] = data;
 }
 
-void fshark_coin_dsp_w(int offset,int data)
+WRITE_HANDLER( fshark_coin_dsp_w )
 {
 #if 0
 	if (errorlog)

@@ -86,7 +86,7 @@ void amidar_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 
 
-void amidar_flipx_w(int offset,int data)
+WRITE_HANDLER( amidar_flipx_w )
 {
 	if (flipscreen[0] != (data & 1))
 	{
@@ -95,7 +95,7 @@ void amidar_flipx_w(int offset,int data)
 	}
 }
 
-void amidar_flipy_w(int offset,int data)
+WRITE_HANDLER( amidar_flipy_w )
 {
 	if (flipscreen[1] != (data & 1))
 	{
@@ -106,7 +106,7 @@ void amidar_flipy_w(int offset,int data)
 
 
 
-void amidar_attributes_w(int offset,int data)
+WRITE_HANDLER( amidar_attributes_w )
 {
 	if ((offset & 1) && amidar_attributesram[offset] != data)
 	{

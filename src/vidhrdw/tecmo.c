@@ -93,7 +93,7 @@ void tecmo_vh_stop(void){
   generic_vh_stop();
 }
 
-void tecmo_videoram_w(int offset,int data)
+WRITE_HANDLER( tecmo_videoram_w )
 {
 	if (tecmo_videoram[offset] != data)
 	{
@@ -102,7 +102,7 @@ void tecmo_videoram_w(int offset,int data)
 	}
 }
 
-void tecmo_colorram_w(int offset,int data)
+WRITE_HANDLER( tecmo_colorram_w )
 {
 	if (tecmo_colorram[offset] != data)
 	{

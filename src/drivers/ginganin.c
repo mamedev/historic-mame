@@ -58,9 +58,9 @@ f5d6	print 7 digit BCD number: d0.l to (a1)+ color $3000
 extern unsigned char *ginganin_fgram, *ginganin_txtram, *ginganin_vregs;
 
 /* Functions defined in vidhrdw */
-void ginganin_fgram_w(int offset,int data);
-void ginganin_txtram_w(int offset,int data);
-void ginganin_vregs_w(int offset,int data);
+WRITE_HANDLER( ginganin_fgram_w );
+WRITE_HANDLER( ginganin_txtram_w );
+WRITE_HANDLER( ginganin_vregs_w );
 int  ginganin_vh_start(void);
 void ginganin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -118,7 +118,7 @@ static int MC6809_CTR = 0;
 static int MC6809_FLAG = 0;
 
 
-static void MC6840_control_port_0_w(int offset, int data)
+static WRITE_HANDLER( MC6840_control_port_0_w )
 {
 	/* MC6840 Emulation by Takahiro Nogi. 1999/09/27
 	(This routine hasn't been completed yet.) */
@@ -140,7 +140,7 @@ static void MC6840_control_port_0_w(int offset, int data)
 //	if (errorlog) fprintf(errorlog, "MC6840 Write:(0x%02X)0x%02X\n", MC6840_register0_index, data);
 }
 
-static void MC6840_control_port_1_w(int offset, int data)
+static WRITE_HANDLER( MC6840_control_port_1_w )
 {
 	/* MC6840 Emulation by Takahiro Nogi. 1999/09/27
 	(This routine hasn't been completed yet.) */
@@ -148,7 +148,7 @@ static void MC6840_control_port_1_w(int offset, int data)
 	MC6840_index1 = data;
 }
 
-static void MC6840_write_port_0_w(int offset, int data)
+static WRITE_HANDLER( MC6840_write_port_0_w )
 {
 	/* MC6840 Emulation by Takahiro Nogi. 1999/09/27
 	(This routine hasn't been completed yet.) */
@@ -156,7 +156,7 @@ static void MC6840_write_port_0_w(int offset, int data)
 	MC6840_register0 = data;
 }
 
-static void MC6840_write_port_1_w(int offset, int data)
+static WRITE_HANDLER( MC6840_write_port_1_w )
 {
 	/* MC6840 Emulation by Takahiro Nogi. 1999/09/27
 	(This routine hasn't been completed yet.) */

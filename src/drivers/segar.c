@@ -35,21 +35,21 @@ TODO:
 
 /* sndhrdw/segar.c */
 
-void astrob_speech_port_w(int offset, int data);
-void astrob_audio_ports_w(int offset, int data);
-void spaceod_audio_ports_w(int offset, int data);
-void monsterb_audio_8255_w(int offset, int data);
- int monsterb_audio_8255_r(int offset);
+WRITE_HANDLER( astrob_speech_port_w );
+WRITE_HANDLER( astrob_audio_ports_w );
+WRITE_HANDLER( spaceod_audio_ports_w );
+WRITE_HANDLER( monsterb_audio_8255_w );
+ READ_HANDLER( monsterb_audio_8255_r );
 
- int monsterb_sh_rom_r(int offset);
- int monsterb_sh_t1_r(int offset);
- int monsterb_sh_command_r(int offset);
-void monsterb_sh_dac_w(int offset, int data);
-void monsterb_sh_busy_w(int offset, int data);
-void monsterb_sh_offset_a0_a3_w(int offset, int data);
-void monsterb_sh_offset_a4_a7_w(int offset, int data);
-void monsterb_sh_offset_a8_a11_w(int offset, int data);
-void monsterb_sh_rom_select_w(int offset, int data);
+ READ_HANDLER( monsterb_sh_rom_r );
+ READ_HANDLER( monsterb_sh_t1_r );
+ READ_HANDLER( monsterb_sh_command_r );
+WRITE_HANDLER( monsterb_sh_dac_w );
+WRITE_HANDLER( monsterb_sh_busy_w );
+WRITE_HANDLER( monsterb_sh_offset_a0_a3_w );
+WRITE_HANDLER( monsterb_sh_offset_a4_a7_w );
+WRITE_HANDLER( monsterb_sh_offset_a8_a11_w );
+WRITE_HANDLER( monsterb_sh_rom_select_w );
 
 /* temporary speech handling through samples */
 int astrob_speech_sh_start(const struct MachineSound *msound);
@@ -64,7 +64,7 @@ extern const char *spaceod_sample_names[];
 /* machine/segar.c */
 
 extern void sega_security(int chip);
-extern void segar_wr(int offset, int data);
+WRITE_HANDLER( segar_w );
 
 extern unsigned char *segar_mem;
 
@@ -79,38 +79,93 @@ extern unsigned char *segar_characterram2;
 extern unsigned char *segar_mem_colortable;
 extern unsigned char *segar_mem_bcolortable;
 
-extern void segar_characterram_w(int offset,int data);
-extern void segar_characterram2_w(int offset,int data);
-extern void segar_colortable_w(int offset,int data);
-extern void segar_bcolortable_w(int offset,int data);
+WRITE_HANDLER( segar_characterram_w );
+WRITE_HANDLER( segar_characterram2_w );
+WRITE_HANDLER( segar_colortable_w );
+WRITE_HANDLER( segar_bcolortable_w );
 extern void segar_init_colors(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void segar_video_port_w(int offset,int data);
+WRITE_HANDLER( segar_video_port_w );
 extern int  segar_vh_start(void);
 extern void segar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-extern void monsterb_back_port_w(int offset,int data);
+WRITE_HANDLER( monsterb_back_port_w );
 extern int  monsterb_vh_start(void);
 extern void monsterb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern int  spaceod_vh_start(void);
 extern void spaceod_vh_stop(void);
-extern void spaceod_back_port_w(int offset,int data);
-extern void spaceod_backshift_w(int offset,int data);
-extern void spaceod_backshift_clear_w(int offset,int data);
-extern void spaceod_backfill_w(int offset,int data);
-extern void spaceod_nobackfill_w(int offset,int data);
+WRITE_HANDLER( spaceod_back_port_w );
+WRITE_HANDLER( spaceod_backshift_w );
+WRITE_HANDLER( spaceod_backshift_clear_w );
+WRITE_HANDLER( spaceod_backfill_w );
+WRITE_HANDLER( spaceod_nobackfill_w );
 extern void spaceod_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-extern void pignewt_back_color_w(int offset,int data);
-extern void pignewt_back_ports_w(int offset,int data);
+WRITE_HANDLER( pignewt_back_color_w );
+WRITE_HANDLER( pignewt_back_ports_w );
 
-extern void sindbadm_back_port_w(int offset,int data);
+WRITE_HANDLER( sindbadm_back_port_w );
 extern void sindbadm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-/* drivers/segar.c */
 
-static int segar_interrupt(void);
-static int segar_read_ports(int offset);
+
+/***************************************************************************
+
+  The Sega games use NMI to trigger the self test. We use a fake input port to
+  tie that event to a keypress.
+
+***************************************************************************/
+static int segar_interrupt(void)
+{
+	if (readinputport(5) & 1)       /* get status of the F2 key */
+		return nmi_interrupt(); /* trigger self test */
+	else return interrupt();
+}
+
+/***************************************************************************
+
+  The Sega games store the DIP switches in a very mangled format that's
+  not directly useable by MAME.  This function mangles the DIP switches
+  into a format that can be used.
+
+  Original format:
+  Port 0 - 2-4, 2-8, 1-4, 1-8
+  Port 1 - 2-3, 2-7, 1-3, 1-7
+  Port 2 - 2-2, 2-6, 1-2, 1-6
+  Port 3 - 2-1, 2-5, 1-1, 1-5
+  MAME format:
+  Port 6 - 1-1, 1-2, 1-3, 1-4, 1-5, 1-6, 1-7, 1-8
+  Port 7 - 2-1, 2-2, 2-3, 2-4, 2-5, 2-6, 2-7, 2-8
+***************************************************************************/
+static READ_HANDLER( segar_ports_r )
+{
+	int dip1, dip2;
+
+	dip1 = input_port_6_r(offset);
+	dip2 = input_port_7_r(offset);
+
+	switch(offset)
+	{
+		case 0:
+		   return ((input_port_0_r(0) & 0xF0) | ((dip2 & 0x08)>>3) | ((dip2 & 0x80)>>6) |
+						((dip1 & 0x08)>>1) | ((dip1 & 0x80)>>4));
+		case 1:
+		   return ((input_port_1_r(0) & 0xF0) | ((dip2 & 0x04)>>2) | ((dip2 & 0x40)>>5) |
+						((dip1 & 0x04)>>0) | ((dip1 & 0x40)>>3));
+		case 2:
+		   return ((input_port_2_r(0) & 0xF0) | ((dip2 & 0x02)>>1) | ((dip2 & 0x20)>>4) |
+						((dip1 & 0x02)<<1) | ((dip1 & 0x20)>>2));
+		case 3:
+		   return ((input_port_3_r(0) & 0xF0) | ((dip2 & 0x01)>>0) | ((dip2 & 0x10)>>3) |
+						((dip1 & 0x01)<<2) | ((dip1 & 0x10)>>1));
+		case 4:
+		   return input_port_4_r(0);
+	}
+
+	return 0;
+}
+
+
 
 
 /***************************************************************************
@@ -134,7 +189,7 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0xffff, segar_wr, &segar_mem },
+	{ 0x0000, 0xffff, segar_w, &segar_mem },
 	{ 0xe000, 0xe3ff, MWA_RAM, &videoram, &videoram_size },    /* handled by */
 	{ 0xe800, 0xefff, MWA_RAM, &segar_characterram },    	/* the above, */
 	{ 0xf000, 0xf03f, MWA_RAM, &segar_mem_colortable },     /* here only */
@@ -177,7 +232,7 @@ static struct IOReadPort readport[] =
 //{0x3f, 0x3f, MRA_NOP }, /* Pig Newton - read from 1D87 */
 	{ 0x0e, 0x0e, monsterb_audio_8255_r },
 	{ 0x81, 0x81, input_port_8_r },     /* only used by Sindbad Mystery */
-	{ 0xf8, 0xfc, segar_read_ports },
+	{ 0xf8, 0xfc, segar_ports_r },
 	{ -1 }  /* end of table */
 };
 
@@ -224,7 +279,7 @@ static struct IOWritePort pignewt_writeport[] =
 	{ -1 }  /* end of table */
 };
 
-static void sindbadm_soundport_w(int offset, int data)
+static WRITE_HANDLER( sindbadm_soundport_w )
 {
 	soundlatch_w(0,data);
 	cpu_cause_interrupt(1,Z80_NMI_INT);
@@ -233,7 +288,7 @@ static void sindbadm_soundport_w(int offset, int data)
 }
 
 /* the data lines are flipped */
-static void sindbadm_SN76496_0_w(int offset, int data)
+static WRITE_HANDLER( sindbadm_SN76496_0_w )
 {
 	int flipped = ((data >> 7) & 0x01) | ((data >> 5) & 0x02) | ((data >> 3) & 0x04) | ((data >> 1) & 0x08) |
 			      ((data << 1) & 0x10) | ((data << 3) & 0x20) | ((data << 5) & 0x40) | ((data << 7) & 0x80);
@@ -241,7 +296,7 @@ static void sindbadm_SN76496_0_w(int offset, int data)
 	SN76496_0_w(offset, flipped);
 }
 
-static void sindbadm_SN76496_1_w(int offset, int data)
+static WRITE_HANDLER( sindbadm_SN76496_1_w )
 {
 	int flipped = ((data >> 7) & 0x01) | ((data >> 5) & 0x02) | ((data >> 3) & 0x04) | ((data >> 1) & 0x08) |
 			      ((data << 1) & 0x10) | ((data << 3) & 0x20) | ((data << 5) & 0x40) | ((data << 7) & 0x80);
@@ -335,63 +390,6 @@ static struct MemoryWriteAddress sindbadm_sound_writemem[] =
 	{ 0xc000, 0xc003, sindbadm_SN76496_1_w },    /* in sequence */
 	{ -1 }  /* end of table */
 };
-
-
-/***************************************************************************
-
-  The Sega games use NMI to trigger the self test. We use a fake input port to
-  tie that event to a keypress.
-
-***************************************************************************/
-static int segar_interrupt(void)
-{
-	if (readinputport(5) & 1)       /* get status of the F2 key */
-		return nmi_interrupt(); /* trigger self test */
-	else return interrupt();
-}
-
-/***************************************************************************
-
-  The Sega games store the DIP switches in a very mangled format that's
-  not directly useable by MAME.  This function mangles the DIP switches
-  into a format that can be used.
-
-  Original format:
-  Port 0 - 2-4, 2-8, 1-4, 1-8
-  Port 1 - 2-3, 2-7, 1-3, 1-7
-  Port 2 - 2-2, 2-6, 1-2, 1-6
-  Port 3 - 2-1, 2-5, 1-1, 1-5
-  MAME format:
-  Port 6 - 1-1, 1-2, 1-3, 1-4, 1-5, 1-6, 1-7, 1-8
-  Port 7 - 2-1, 2-2, 2-3, 2-4, 2-5, 2-6, 2-7, 2-8
-***************************************************************************/
-static int segar_read_ports(int offset)
-{
-	int dip1, dip2;
-
-	dip1 = input_port_6_r(offset);
-	dip2 = input_port_7_r(offset);
-
-	switch(offset)
-	{
-		case 0:
-		   return ((input_port_0_r(0) & 0xF0) | ((dip2 & 0x08)>>3) | ((dip2 & 0x80)>>6) |
-						((dip1 & 0x08)>>1) | ((dip1 & 0x80)>>4));
-		case 1:
-		   return ((input_port_1_r(0) & 0xF0) | ((dip2 & 0x04)>>2) | ((dip2 & 0x40)>>5) |
-						((dip1 & 0x04)>>0) | ((dip1 & 0x40)>>3));
-		case 2:
-		   return ((input_port_2_r(0) & 0xF0) | ((dip2 & 0x02)>>1) | ((dip2 & 0x20)>>4) |
-						((dip1 & 0x02)<<1) | ((dip1 & 0x20)>>2));
-		case 3:
-		   return ((input_port_3_r(0) & 0xF0) | ((dip2 & 0x01)>>0) | ((dip2 & 0x10)>>3) |
-						((dip1 & 0x01)<<2) | ((dip1 & 0x10)>>1));
-		case 4:
-		   return input_port_4_r(0);
-	}
-
-	return 0;
-}
 
 
 /***************************************************************************

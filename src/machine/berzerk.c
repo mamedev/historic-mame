@@ -35,48 +35,48 @@ void berzerk_init_machine(void)
 }
 
 
-void berzerk_irq_enable_w(int offset,int data)
+WRITE_HANDLER( berzerk_irq_enable_w )
 {
 	irq_enabled = data;
 }
 
-void berzerk_nmi_enable_w(int offset,int data)
+WRITE_HANDLER( berzerk_nmi_enable_w )
 {
 	nmi_enabled = 1;
 }
 
-void berzerk_nmi_disable_w(int offset,int data)
+WRITE_HANDLER( berzerk_nmi_disable_w )
 {
 	nmi_enabled = 0;
 }
 
-int berzerk_nmi_enable_r(int offset)
+READ_HANDLER( berzerk_nmi_enable_r )
 {
 	nmi_enabled = 1;
 	return 0;
 }
 
-int berzerk_nmi_disable_r(int offset)
+READ_HANDLER( berzerk_nmi_disable_r )
 {
 	nmi_enabled = 0;
 	return 0;
 }
 
-int berzerk_led_on_r(int offset)
+READ_HANDLER( berzerk_led_on_r )
 {
 	osd_led_w(0,1);
 
 	return 0;
 }
 
-int berzerk_led_off_r(int offset)
+READ_HANDLER( berzerk_led_off_r )
 {
 	osd_led_w(0,0);
 
 	return 0;
 }
 
-int berzerk_voiceboard_read(int offset)
+READ_HANDLER( berzerk_voiceboard_r )
 {
    if (!berzerkplayvoice)
       return 0;

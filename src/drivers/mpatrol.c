@@ -42,25 +42,25 @@ c0        background control?
 
 
 
-void mpatrol_scroll_w(int offset,int data);
-void mpatrol_bg1xpos_w(int offset,int data);
-void mpatrol_bg1ypos_w(int offset,int data);
-void mpatrol_bg2xpos_w(int offset,int data);
-void mpatrol_bg2ypos_w(int offset,int data);
-void mpatrol_bgcontrol_w(int offset,int data);
-void mpatrol_flipscreen_w(int offset,int data);
+WRITE_HANDLER( mpatrol_scroll_w );
+WRITE_HANDLER( mpatrol_bg1xpos_w );
+WRITE_HANDLER( mpatrol_bg1ypos_w );
+WRITE_HANDLER( mpatrol_bg2xpos_w );
+WRITE_HANDLER( mpatrol_bg2ypos_w );
+WRITE_HANDLER( mpatrol_bgcontrol_w );
+WRITE_HANDLER( mpatrol_flipscreen_w );
 int mpatrol_vh_start(void);
 void mpatrol_vh_stop(void);
 void mpatrol_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-int mpatrol_input_port_3_r(int offset);
+READ_HANDLER( mpatrol_input_port_3_r );
 
 
 
 /* this looks like some kind of protection. The game does strange things */
 /* if a read from this address doesn't return the value it expects. */
-int mpatrol_protection_r(int offset)
+READ_HANDLER( mpatrol_protection_r )
 {
 //if (errorlog) fprintf(errorlog,"%04x: read protection\n",cpu_get_pc());
 	return cpu_get_reg(Z80_DE) & 0xff;

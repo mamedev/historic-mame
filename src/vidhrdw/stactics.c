@@ -358,7 +358,7 @@ void stactics_vh_stop(void)
 }
 
 
-void stactics_palette_w(int offset,int data)
+WRITE_HANDLER( stactics_palette_w )
 {
     int old_palette_select = palette_select;
 
@@ -385,7 +385,7 @@ void stactics_palette_w(int offset,int data)
 }
 
 
-void stactics_scroll_ram_w(int offset,int data)
+WRITE_HANDLER( stactics_scroll_ram_w )
 {
     int temp;
 
@@ -417,7 +417,7 @@ void stactics_scroll_ram_w(int offset,int data)
     }
 }
 
-void stactics_speed_latch_w(int offset, int data)
+WRITE_HANDLER( stactics_speed_latch_w )
 {
     /* This writes to a shift register which is clocked by   */
     /* a 555 oscillator.  This value determines the speed of */
@@ -441,17 +441,17 @@ void stactics_speed_latch_w(int offset, int data)
     states_per_frame = num_rising_edges*19/8;
 }
 
-void stactics_shot_trigger_w(int offset, int data)
+WRITE_HANDLER( stactics_shot_trigger_w )
 {
     stactics_shot_standby = 0;
 }
 
-void stactics_shot_flag_clear_w(int offset, int data)
+WRITE_HANDLER( stactics_shot_flag_clear_w )
 {
     stactics_shot_arrive = 0;
 }
 
-void stactics_videoram_b_w(int offset,int data)
+WRITE_HANDLER( stactics_videoram_b_w )
 {
     if (stactics_videoram_b[offset] != data)
     {
@@ -460,7 +460,7 @@ void stactics_videoram_b_w(int offset,int data)
     }
 }
 
-void stactics_chardata_b_w(int offset,int data)
+WRITE_HANDLER( stactics_chardata_b_w )
 {
     if (stactics_chardata_b[offset] != data)
     {
@@ -469,7 +469,7 @@ void stactics_chardata_b_w(int offset,int data)
     }
 }
 
-void stactics_videoram_d_w(int offset,int data)
+WRITE_HANDLER( stactics_videoram_d_w )
 {
     if (stactics_videoram_d[offset] != data)
     {
@@ -478,7 +478,7 @@ void stactics_videoram_d_w(int offset,int data)
     }
 }
 
-void stactics_chardata_d_w(int offset,int data)
+WRITE_HANDLER( stactics_chardata_d_w )
 {
     if (stactics_chardata_d[offset] != data)
     {
@@ -487,7 +487,7 @@ void stactics_chardata_d_w(int offset,int data)
     }
 }
 
-void stactics_videoram_e_w(int offset,int data)
+WRITE_HANDLER( stactics_videoram_e_w )
 {
     if (stactics_videoram_e[offset] != data)
     {
@@ -496,7 +496,7 @@ void stactics_videoram_e_w(int offset,int data)
     }
 }
 
-void stactics_chardata_e_w(int offset,int data)
+WRITE_HANDLER( stactics_chardata_e_w )
 {
     if (stactics_chardata_e[offset] != data)
     {
@@ -505,7 +505,7 @@ void stactics_chardata_e_w(int offset,int data)
     }
 }
 
-void stactics_videoram_f_w(int offset,int data)
+WRITE_HANDLER( stactics_videoram_f_w )
 {
     if (stactics_videoram_f[offset] != data)
     {
@@ -514,7 +514,7 @@ void stactics_videoram_f_w(int offset,int data)
     }
 }
 
-void stactics_chardata_f_w(int offset,int data)
+WRITE_HANDLER( stactics_chardata_f_w )
 {
     if (stactics_chardata_f[offset] != data)
     {

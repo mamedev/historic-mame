@@ -83,16 +83,16 @@ interrupt mode 1 triggered by the main CPU
 
 extern unsigned char *frogger_attributesram;
 void frogger_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void frogger_attributes_w(int offset,int data);
-void frogger_flipscreen_w(int offset,int data);
+WRITE_HANDLER( frogger_attributes_w );
+WRITE_HANDLER( frogger_flipscreen_w );
 void frogger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void frogger2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-int frogger_portB_r(int offset);
-void frogger_sh_irqtrigger_w(int offset,int data);
-void frogger2_sh_irqtrigger_w(int offset,int data);
+READ_HANDLER( frogger_portB_r );
+WRITE_HANDLER( frogger_sh_irqtrigger_w );
+WRITE_HANDLER( frogger2_sh_irqtrigger_w );
 
-static void frogger_counterb_w (int offset, int data)
+static WRITE_HANDLER( frogger_counterb_w )
 {
 	coin_counter_w (1, data);
 }

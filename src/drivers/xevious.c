@@ -202,37 +202,37 @@ S-RAMS in schematic
 
 
 extern unsigned char *xevious_sharedram;
-int  xevious_sharedram_r(int offset);
-void xevious_sharedram_w(int offset,int data);
-int  xevious_dsw_r(int offset);
-void xevious_interrupt_enable_1_w(int offset,int data);
-void xevious_interrupt_enable_2_w(int offset,int data);
-void xevious_interrupt_enable_3_w(int offset,int data);
-void xevious_bs_w(int offset,int data);
-int  xevious_bb_r(int offset);
-int xevious_customio_r(int offset);
-int xevious_customio_data_r(int offset);
-void xevious_customio_w(int offset,int data);
-void xevious_customio_data_w(int offset,int data);
-void xevious_halt_w(int offset,int data);
+READ_HANDLER( xevious_sharedram_r );
+WRITE_HANDLER( xevious_sharedram_w );
+READ_HANDLER( xevious_dsw_r );
+WRITE_HANDLER( xevious_interrupt_enable_1_w );
+WRITE_HANDLER( xevious_interrupt_enable_2_w );
+WRITE_HANDLER( xevious_interrupt_enable_3_w );
+WRITE_HANDLER( xevious_bs_w );
+READ_HANDLER( xevious_bb_r );
+READ_HANDLER( xevious_customio_r );
+READ_HANDLER( xevious_customio_data_r );
+WRITE_HANDLER( xevious_customio_w );
+WRITE_HANDLER( xevious_customio_data_w );
+WRITE_HANDLER( xevious_halt_w );
 int  xevious_interrupt_1(void);
 int  xevious_interrupt_2(void);
 int  xevious_interrupt_3(void);
 void xevious_init_machine(void);
 
-void xevious_vh_latch_w(int offset, int data);
+WRITE_HANDLER( xevious_vh_latch_w );
 
 extern unsigned char *xevious_fg_videoram,*xevious_fg_colorram;
 extern unsigned char *xevious_bg_videoram,*xevious_bg_colorram;
-void xevious_fg_videoram_w(int offset,int data);
-void xevious_fg_colorram_w(int offset,int data);
-void xevious_bg_videoram_w(int offset,int data);
-void xevious_bg_colorram_w(int offset,int data);
+WRITE_HANDLER( xevious_fg_videoram_w );
+WRITE_HANDLER( xevious_fg_colorram_w );
+WRITE_HANDLER( xevious_bg_videoram_w );
+WRITE_HANDLER( xevious_bg_colorram_w );
 int  xevious_vh_start( void );
 void xevious_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void xevious_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void pengo_sound_w(int offset,int data);
+WRITE_HANDLER( pengo_sound_w );
 extern unsigned char *pengo_soundregs;
 
 

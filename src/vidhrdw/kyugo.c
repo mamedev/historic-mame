@@ -56,7 +56,7 @@ void kyugo_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 
 
 
-void kyugo_gfxctrl_w(int offset,int data)
+WRITE_HANDLER( kyugo_gfxctrl_w )
 {
 	/* bit 0 is scroll MSB */
 	kyugo_back_scrollY_hi = data & 0x01;
@@ -80,7 +80,7 @@ if (data & 0x9e)
 }
 
 
-void kyugo_flipscreen_w(int offset,int data)
+WRITE_HANDLER( kyugo_flipscreen_w )
 {
 	if (flipscreen != (data & 0x01))
 	{

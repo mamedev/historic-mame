@@ -17,7 +17,7 @@ extern int rockrage_irq_enable;
 int rockrage_vh_start(void);
 void rockrage_vh_stop(void);
 void rockrage_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void rockrage_vreg_w(int offset, int data);
+WRITE_HANDLER( rockrage_vreg_w );
 void rockrage_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 static int rockrage_interrupt( void )
@@ -28,7 +28,7 @@ static int rockrage_interrupt( void )
 		return ignore_interrupt();
 }
 
-static void rockrage_bankswitch_w(int offset, int data)
+static WRITE_HANDLER( rockrage_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -44,17 +44,17 @@ static void rockrage_bankswitch_w(int offset, int data)
 	/* other bits unknown */
 }
 
-static void rockrage_sh_irqtrigger_w(int offset, int data)
+static WRITE_HANDLER( rockrage_sh_irqtrigger_w )
 {
 	soundlatch_w(offset, data);
 	cpu_cause_interrupt(1,M6809_INT_IRQ);
 }
 
-static int rockrage_VLM5030_busy_r( int offs ) {
+static READ_HANDLER( rockrage_VLM5030_busy_r ) {
 	return ( VLM5030_BSY() ? 1 : 0 );
 }
 
-static void rockrage_speech_w( int offs, int data ) {
+static WRITE_HANDLER( rockrage_speech_w ) {
 	VLM5030_RST( ( data >> 2 ) & 0x01 );
 	VLM5030_ST(  ( data >> 0 ) & 0x01 );
 	VLM5030_VCU( ( data >> 1 ) & 0x01 );

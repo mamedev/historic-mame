@@ -11,7 +11,7 @@ Based on drivers from Juno First emulator by Chris Hardy (chrish@kcbbs.gen.nz)
 
 void konami1_decode(void);
 
-void rocnrope_flipscreen_w(int offset,int data);
+WRITE_HANDLER( rocnrope_flipscreen_w );
 void rocnrope_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void rocnrope_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -19,11 +19,11 @@ void rocnrope_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern struct MemoryReadAddress timeplt_sound_readmem[];
 extern struct MemoryWriteAddress timeplt_sound_writemem[];
 extern struct AY8910interface timeplt_ay8910_interface;
-void timeplt_sh_irqtrigger_w(int offset,int data);
+WRITE_HANDLER( timeplt_sh_irqtrigger_w );
 
 
 /* Roc'n'Rope has the IRQ vectors in RAM. The rom contains $FFFF at this address! */
-void rocnrope_interrupt_vector_w(int offset, int data)
+WRITE_HANDLER( rocnrope_interrupt_vector_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

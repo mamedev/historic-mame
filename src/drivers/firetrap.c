@@ -72,9 +72,9 @@ extern unsigned char *firetrap_scroll1x,*firetrap_scroll1y;
 extern unsigned char *firetrap_scroll2x,*firetrap_scroll2y;
 extern int firetrap_bgvideoram_size;
 extern int firetrap_videoram_size;
-void firetrap_bg1videoram_w(int offset,int data);
-void firetrap_bg2videoram_w(int offset,int data);
-void firetrap_flipscreen_w(int offset,int data);
+WRITE_HANDLER( firetrap_bg1videoram_w );
+WRITE_HANDLER( firetrap_bg2videoram_w );
+WRITE_HANDLER( firetrap_flipscreen_w );
 int firetrap_vh_start(void);
 void firetrap_vh_stop(void);
 void firetrap_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -83,12 +83,12 @@ void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static int firetrap_irq_enable = 0;
 
-void firetrap_nmi_disable_w(int offset,int data)
+WRITE_HANDLER( firetrap_nmi_disable_w )
 {
 	interrupt_enable_w(offset,~data & 1);
 }
 
-void firetrap_bankselect_w(int offset,int data)
+WRITE_HANDLER( firetrap_bankselect_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -98,7 +98,7 @@ void firetrap_bankselect_w(int offset,int data)
 	cpu_setbank(1,&RAM[bankaddress]);
 }
 
-int firetrap_8751_r(int offset)
+READ_HANDLER( firetrap_8751_r )
 {
 //if (errorlog) fprintf(errorlog,"PC:%04x read from 8751\n",cpu_get_pc());
 
@@ -109,25 +109,25 @@ int firetrap_8751_r(int offset)
 	else return 0;
 }
 
-void firetrap_8751_w(int offset,int data)
+WRITE_HANDLER( firetrap_8751_w )
 {
 if (errorlog) fprintf(errorlog,"PC:%04x write %02x to 8751\n",cpu_get_pc(),data);
 	cpu_cause_interrupt(0,0xff);
 }
 
-static void firetrap_sound_command_w(int offset,int data)
+static WRITE_HANDLER( firetrap_sound_command_w )
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(1,M6502_INT_NMI);
 }
 
-static void firetrap_sound_2400_w(int offset,int data)
+static WRITE_HANDLER( firetrap_sound_2400_w )
 {
 	MSM5205_reset_w(offset,~data & 0x01);
 	firetrap_irq_enable = data & 0x02;
 }
 
-void firetrap_sound_bankselect_w(int offset,int data)
+WRITE_HANDLER( firetrap_sound_bankselect_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU2);
@@ -151,7 +151,7 @@ void firetrap_adpcm_int (int data)
 		cpu_cause_interrupt (1, M6502_INT_IRQ);
 }
 
-void firetrap_adpcm_data_w (int offset, int data)
+WRITE_HANDLER( firetrap_adpcm_data_w )
 {
 	msm5205next = data;
 }

@@ -128,14 +128,14 @@ extern UINT8 *atarisys2_slapstic;
 extern UINT16 atarisys2_mo_mask;
 
 
-int atarisys2_slapstic_r(int offset);
-int atarisys2_videoram_r(int offset);
+READ_HANDLER( atarisys2_slapstic_r );
+READ_HANDLER( atarisys2_videoram_r );
 
-void atarisys2_slapstic_w(int offset, int data);
-void atarisys2_vscroll_w(int offset, int data);
-void atarisys2_hscroll_w(int offset, int data);
-void atarisys2_videoram_w(int offset, int data);
-void atarisys2_paletteram_w(int offset, int data);
+WRITE_HANDLER( atarisys2_slapstic_w );
+WRITE_HANDLER( atarisys2_vscroll_w );
+WRITE_HANDLER( atarisys2_hscroll_w );
+WRITE_HANDLER( atarisys2_videoram_w );
+WRITE_HANDLER( atarisys2_paletteram_w );
 
 void atarisys2_scanline_update(int scanline);
 
@@ -255,7 +255,7 @@ static int vblank_interrupt(void)
 }
 
 
-static void interrupt_ack_w(int offset, int data)
+static WRITE_HANDLER( interrupt_ack_w )
 {
 	switch (offset & 0x60)
 	{
@@ -296,7 +296,7 @@ static void interrupt_ack_w(int offset, int data)
  *
  *************************************/
 
-static void bankselect_w(int offset, int data)
+static WRITE_HANDLER( bankselect_w )
 {
 	static int bankoffset[64] =
 	{
@@ -344,7 +344,7 @@ static void bankselect_w(int offset, int data)
  *
  *************************************/
 
-static int switch_r(int offset)
+static READ_HANDLER( switch_r )
 {
 	int result = input_port_1_r(offset) | (input_port_2_r(offset) << 8);
 
@@ -355,7 +355,7 @@ static int switch_r(int offset)
 }
 
 
-static int switch_6502_r(int offset)
+static READ_HANDLER( switch_6502_r )
 {
 	int result = input_port_0_r(offset);
 
@@ -368,7 +368,7 @@ static int switch_6502_r(int offset)
 }
 
 
-static void switch_6502_w(int offset, int data)
+static WRITE_HANDLER( switch_6502_w )
 {
 	(void)offset;
 
@@ -387,14 +387,14 @@ static void switch_6502_w(int offset, int data)
  *
  *************************************/
 
-static void adc_strobe_w(int offset, int data)
+static WRITE_HANDLER( adc_strobe_w )
 {
 	(void)data;
 	which_adc = (offset / 2) & 3;
 }
 
 
-static int adc_r(int offset)
+static READ_HANDLER( adc_r )
 {
 	(void)offset;
 
@@ -405,7 +405,7 @@ static int adc_r(int offset)
 }
 
 
-static int leta_r(int offset)
+static READ_HANDLER( leta_r )
 {
     if (pedal_count == -1)   /* 720 */
 	{
@@ -429,7 +429,7 @@ static int leta_r(int offset)
  *
  *************************************/
 
-static void mixer_w(int offset, int data)
+static WRITE_HANDLER( mixer_w )
 {
 	(void)offset;
 
@@ -439,14 +439,14 @@ static void mixer_w(int offset, int data)
 }
 
 
-static void sound_enable_w(int offset, int data)
+static WRITE_HANDLER( sound_enable_w )
 {
 	(void)offset;
 	(void)data;
 }
 
 
-static int sound_r(int offset)
+static READ_HANDLER( sound_r )
 {
 	/* clear the p2portwr state on a p1portrd */
 	p2portwr_state = 0;
@@ -457,7 +457,7 @@ static int sound_r(int offset)
 }
 
 
-static void sound_6502_w(int offset, int data)
+static WRITE_HANDLER( sound_6502_w )
 {
 	/* clock the state through */
 	p2portwr_state = (READ_WORD(&interrupt_enable[0]) & 2) != 0;
@@ -468,7 +468,7 @@ static void sound_6502_w(int offset, int data)
 }
 
 
-static int sound_6502_r(int offset)
+static READ_HANDLER( sound_6502_r )
 {
 	/* clock the state through */
 	p2portrd_state = (READ_WORD(&interrupt_enable[0]) & 1) != 0;
@@ -485,14 +485,14 @@ static int sound_6502_r(int offset)
  *
  *************************************/
 
-static void tms5220_w(int offset, int data)
+static WRITE_HANDLER( tms5220_w )
 {
 	(void)offset;
 	tms5220_data = data;
 }
 
 
-static void tms5220_strobe_w(int offset, int data)
+static WRITE_HANDLER( tms5220_strobe_w )
 {
 	(void)data;
 

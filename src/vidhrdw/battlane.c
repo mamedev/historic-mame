@@ -32,7 +32,7 @@ extern int battlane_cpu_control;
 static struct osd_bitmap *bkgnd_bitmap;  /* scroll bitmap */
 
 
-void battlane_video_ctrl_w(int offset, int data)
+WRITE_HANDLER( battlane_video_ctrl_w )
 {
 	/*
     Video control register
@@ -45,7 +45,7 @@ void battlane_video_ctrl_w(int offset, int data)
 	battlane_video_ctrl=data;
 }
 
-int battlane_video_ctrl_r(int offset)
+READ_HANDLER( battlane_video_ctrl_r )
 {
 	return battlane_video_ctrl;
 }
@@ -68,38 +68,38 @@ void battlane_set_video_flip(int flip)
 
 }
 
-void battlane_scrollx_w(int offset, int data)
+WRITE_HANDLER( battlane_scrollx_w )
 {
     battlane_scrollx=data;
 }
 
-void battlane_scrolly_w(int offset, int data)
+WRITE_HANDLER( battlane_scrolly_w )
 {
     battlane_scrolly=data;
 }
 
-void battlane_tileram_w(int offset, int data)
+WRITE_HANDLER( battlane_tileram_w )
 {
     battlane_tileram[offset]=data;
 }
 
-int battlane_tileram_r(int offset)
+READ_HANDLER( battlane_tileram_r )
 {
     return battlane_tileram[offset];
 }
 
-void battlane_spriteram_w(int offset, int data)
+WRITE_HANDLER( battlane_spriteram_w )
 {
     battlane_spriteram[offset]=data;
 }
 
-int battlane_spriteram_r(int offset)
+READ_HANDLER( battlane_spriteram_r )
 {
     return battlane_spriteram[offset];
 }
 
 
-void battlane_bitmap_w(int offset, int data)
+WRITE_HANDLER( battlane_bitmap_w )
 {
 	int i, orval;
 
@@ -122,7 +122,7 @@ void battlane_bitmap_w(int offset, int data)
 	battlane_bitmap[offset]=data;
 }
 
-int battlane_bitmap_r(int offset)
+READ_HANDLER( battlane_bitmap_r )
 {
 	return battlane_bitmap[offset];
 }

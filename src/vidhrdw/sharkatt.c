@@ -16,14 +16,14 @@ static int color_plane = 0;
 
  TODO:  This writes to a TMS9927 VTAC.  Do we care?
  **************************************************************************/
-void sharkatt_vtcsel_w(int offset, int data)
+WRITE_HANDLER( sharkatt_vtcsel_w )
 {
 }
 
 /***************************************************************************
  sharkatt_color_plane_w
  **************************************************************************/
-void sharkatt_color_plane_w(int offset, int data)
+WRITE_HANDLER( sharkatt_color_plane_w )
 {
 	/* D0-D3 = WS0-WS3, D4-D5 = RS0-RS1 */
 	/* RS = CPU Memory Plane Read Multiplex Select */
@@ -33,7 +33,7 @@ void sharkatt_color_plane_w(int offset, int data)
 /***************************************************************************
  sharkatt_color_map_w
  **************************************************************************/
-void sharkatt_color_map_w(int offset, int data)
+WRITE_HANDLER( sharkatt_color_map_w )
 {
     int vals[4] = {0x00,0x55,0xAA,0xFF};
     int r,g,b;
@@ -47,7 +47,7 @@ void sharkatt_color_map_w(int offset, int data)
 /***************************************************************************
  sharkatt_videoram_w
  **************************************************************************/
-void sharkatt_videoram_w(int offset,int data)
+WRITE_HANDLER( sharkatt_videoram_w )
 {
 	int i,x,y;
 

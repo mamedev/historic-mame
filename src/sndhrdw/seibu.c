@@ -80,12 +80,12 @@ static void setvector_callback(int param)
 		cpu_set_irq_line(sound_cpu,0,ASSERT_LINE);
 }
 
-void seibu_rst10_ack(int offset, int data)
+WRITE_HANDLER( seibu_rst10_ack_w )
 {
 	/* Unused for now */
 }
 
-void seibu_rst18_ack(int offset, int data)
+WRITE_HANDLER( seibu_rst18_ack_w )
 {
 	timer_set(TIME_NOW,RST18_CLEAR,setvector_callback);
 }
@@ -116,7 +116,7 @@ void seibu_sound_init_2(void)
 
 /***************************************************************************/
 
-void seibu_bank_w(int offset,int data)
+WRITE_HANDLER( seibu_bank_w )
 {
 	unsigned char *RAM;
 
@@ -127,31 +127,31 @@ void seibu_bank_w(int offset,int data)
 	else { cpu_setbank(1,&RAM[0x10000]); }
 }
 
-int seibu_soundlatch_r(int offset)
+READ_HANDLER( seibu_soundlatch_r )
 {
 	return seibu_shared_sound_ram[offset<<1];
 }
 
-void seibu_soundclear_w(int offset,int data)
+WRITE_HANDLER( seibu_soundclear_w )
 {
 	seibu_shared_sound_ram[0]=data;
 }
 
-void seibu_soundlatch_w(int offset, int data)
+WRITE_HANDLER( seibu_soundlatch_w )
 {
 	seibu_shared_sound_ram[offset]=data;
 	if (offset==0xc && seibu_shared_sound_ram[0]!=0)
 		timer_set(TIME_NOW,RST18_ASSERT,setvector_callback);
 }
 
-void seibu_main_data_w(int offset, int data)
+WRITE_HANDLER( seibu_main_data_w )
 {
 	seibu_shared_sound_ram[offset<<1]=data;
 }
 
 /***************************************************************************/
 
-static int sound_cpu_spin(int offset)
+static READ_HANDLER( sound_cpu_spin_r )
 {
 	unsigned char *RAM;
 
@@ -166,7 +166,7 @@ static int sound_cpu_spin(int offset)
 
 void install_seibu_sound_speedup(int cpu)
 {
-	install_mem_read_handler(cpu, 0x201c, 0x201d, sound_cpu_spin);
+	install_mem_read_handler(cpu, 0x201c, 0x201d, sound_cpu_spin_r);
 }
 
 /***************************************************************************/

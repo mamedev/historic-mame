@@ -111,13 +111,13 @@ void superqix_vh_stop(void)
 
 
 
-int superqix_bitmapram_r(int offset)
+READ_HANDLER( superqix_bitmapram_r )
 {
 	return superqix_bitmapram[offset];
 }
 
 
-void superqix_bitmapram_w(int offset,int data)
+WRITE_HANDLER( superqix_bitmapram_w )
 {
 	if(data != superqix_bitmapram[offset])
 	{
@@ -133,12 +133,12 @@ void superqix_bitmapram_w(int offset,int data)
 	}
 }
 
-int superqix_bitmapram2_r(int offset)
+READ_HANDLER( superqix_bitmapram2_r )
 {
 	return superqix_bitmapram2[offset];
 }
 
-void superqix_bitmapram2_w(int offset,int data)
+WRITE_HANDLER( superqix_bitmapram2_w )
 {
 	if(data != superqix_bitmapram2[offset])
 	{
@@ -156,7 +156,7 @@ void superqix_bitmapram2_w(int offset,int data)
 
 
 
-void superqix_0410_w(int offset,int data)
+WRITE_HANDLER( superqix_0410_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);

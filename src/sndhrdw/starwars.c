@@ -51,7 +51,7 @@ static void snd_interrupt(int foo)
 
 /********************************************************/
 
-int starwars_m6532_r(int offset)
+READ_HANDLER( starwars_m6532_r )
 {
 	static int temp;
 
@@ -85,7 +85,7 @@ int starwars_m6532_r(int offset)
 }
 /********************************************************/
 
-void starwars_m6532_w(int offset, int data)
+WRITE_HANDLER( starwars_m6532_w )
 {
 	switch (offset)
 	{
@@ -155,7 +155,7 @@ static int main_data;   /* data for the main  cpu */
 /* communicate with the Main CPU                        */
 /********************************************************/
 
-int starwars_sin_r(int offset)
+READ_HANDLER( starwars_sin_r )
 {
 	int res;
 
@@ -165,7 +165,7 @@ int starwars_sin_r(int offset)
 	return res;
 }
 
-void starwars_sout_w(int offset, int data)
+WRITE_HANDLER( starwars_sout_w )
 {
 	port_A |= 0x40; /* result from sound cpu pending */
 	main_data = data;
@@ -179,7 +179,7 @@ void starwars_sout_w(int offset, int data)
 /* CPU communications                                   */
 /********************************************************/
 
-int starwars_main_read_r(int offset)
+READ_HANDLER( starwars_main_read_r )
 {
 	int res;
 
@@ -194,7 +194,7 @@ int starwars_main_read_r(int offset)
 
 /********************************************************/
 
-int starwars_main_ready_flag_r(int offset)
+READ_HANDLER( starwars_main_ready_flag_r )
 {
 #if 0 /* correct, but doesn't work */
 	return (port_A & 0xc0); /* only upper two flag bits mapped */
@@ -205,7 +205,7 @@ int starwars_main_ready_flag_r(int offset)
 
 /********************************************************/
 
-void starwars_main_wr_w(int offset, int data)
+WRITE_HANDLER( starwars_main_wr_w )
 {
 	port_A |= 0x80;  /* command from main cpu pending */
 	sound_data = data;
@@ -215,7 +215,7 @@ void starwars_main_wr_w(int offset, int data)
 
 /********************************************************/
 
-void starwars_soundrst(int offset, int data)
+WRITE_HANDLER( starwars_soundrst_w )
 {
 	port_A &= 0x3f;
 

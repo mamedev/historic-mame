@@ -153,7 +153,7 @@ void xybots_vh_stop(void)
  *
  *************************************/
 
-void xybots_playfieldram_w(int offset, int data)
+WRITE_HANDLER( xybots_playfieldram_w )
 {
 	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
 	int newword = COMBINE_WORD(oldword, data);

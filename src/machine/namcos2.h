@@ -86,20 +86,20 @@ void namcos2_init_machine(void);
 /**************************************************************/
 /* Dual port memory handlers								  */
 /**************************************************************/
-int  namcos2_dpram_byte_r(int offset);
-void namcos2_dpram_byte_w(int offset, int data);
-int  namcos2_68k_dpram_word_r(int offset);
-void namcos2_68k_dpram_word_w(int offset, int data);
+READ_HANDLER( namcos2_dpram_byte_r );
+WRITE_HANDLER( namcos2_dpram_byte_w );
+READ_HANDLER( namcos2_68k_dpram_word_r );
+WRITE_HANDLER( namcos2_68k_dpram_word_w );
 
 extern unsigned char *namcos2_dpram;
 
 /**************************************************************/
 /* Sprite memory handlers									  */
 /**************************************************************/
-void namcos2_68k_sprite_ram_w(int offset, int data);
-void namcos2_68k_sprite_bank_w( int offset, int data );
-int namcos2_68k_sprite_ram_r(int offset );
-int namcos2_68k_sprite_bank_r( int offset );
+WRITE_HANDLER( namcos2_68k_sprite_ram_w );
+WRITE_HANDLER( namcos2_68k_sprite_bank_w );
+READ_HANDLER( namcos2_68k_sprite_ram_r );
+READ_HANDLER( namcos2_68k_sprite_bank_r );
 
 extern unsigned char *namcos2_sprite_ram;
 extern int namcos2_sprite_bank;
@@ -111,21 +111,21 @@ extern int namcos2_sprite_bank;
 #define NAMCOS2_68K_EEPROM_W	namcos2_68k_eeprom_w, &namcos2_eeprom, &namcos2_eeprom_size
 #define NAMCOS2_68K_EEPROM_R	namcos2_68k_eeprom_r
 void	namcos2_nvram_handler(void *file, int read_or_write);
-void	namcos2_68k_eeprom_w( int offset, int data );
-int 	namcos2_68k_eeprom_r( int offset );
+WRITE_HANDLER( 	namcos2_68k_eeprom_w );
+READ_HANDLER( 	namcos2_68k_eeprom_r );
 extern unsigned char *namcos2_eeprom;
 extern int namcos2_eeprom_size;
 
 /**************************************************************/
 /*	Shared video memory function handlers					  */
 /**************************************************************/
-void namcos2_68k_vram_w(int offset, int data);
-int  namcos2_68k_vram_r(int offset);
+WRITE_HANDLER( namcos2_68k_vram_w );
+READ_HANDLER( namcos2_68k_vram_r );
 
 extern int namcos2_68k_vram_size;
 
-int  namcos2_68k_vram_ctrl_r( int offset );
-void namcos2_68k_vram_ctrl_w( int offset, int data );
+READ_HANDLER( namcos2_68k_vram_ctrl_r );
+WRITE_HANDLER( namcos2_68k_vram_ctrl_w );
 
 extern unsigned char namcos2_68k_vram_ctrl[];
 
@@ -146,8 +146,8 @@ extern int namcos2_tilemap5_flip;
 /**************************************************************/
 /*	Shared video palette function handlers					  */
 /**************************************************************/
-int  namcos2_68k_video_palette_r( int offset );
-void namcos2_68k_video_palette_w( int offset, int data );
+READ_HANDLER( namcos2_68k_video_palette_r );
+WRITE_HANDLER( namcos2_68k_video_palette_w );
 
 #define NAMCOS2_COLOUR_CODES	0x20
 extern unsigned char *namcos2_68k_palette_ram;
@@ -157,16 +157,16 @@ extern int namcos2_68k_palette_size;
 /**************************************************************/
 /*	Shared data ROM memory handlerhandlers					  */
 /**************************************************************/
-int  namcos2_68k_data_rom_r(int offset);
+READ_HANDLER( namcos2_68k_data_rom_r );
 
 
 /**************************************************************/
 /* Shared serial communications processory (CPU5 ????)		  */
 /**************************************************************/
-int  namcos2_68k_serial_comms_ram_r(int offset);
-void namcos2_68k_serial_comms_ram_w(int offset, int data);
-int  namcos2_68k_serial_comms_ctrl_r(int offset);
-void namcos2_68k_serial_comms_ctrl_w(int offset,int data);
+READ_HANDLER( namcos2_68k_serial_comms_ram_r );
+WRITE_HANDLER( namcos2_68k_serial_comms_ram_w );
+READ_HANDLER( namcos2_68k_serial_comms_ctrl_r );
+WRITE_HANDLER( namcos2_68k_serial_comms_ctrl_w );
 
 extern unsigned char  namcos2_68k_serial_comms_ctrl[0x10];
 extern unsigned char *namcos2_68k_serial_comms_ram;
@@ -176,13 +176,13 @@ extern unsigned char *namcos2_68k_serial_comms_ram;
 /**************************************************************/
 /* Shared protection/random number generator				  */
 /**************************************************************/
-int  namcos2_68k_key_r( int offset );
-void namcos2_68k_key_w( int offset, int data );
+READ_HANDLER( namcos2_68k_key_r );
+WRITE_HANDLER( namcos2_68k_key_w );
 
 extern unsigned char namcos2_68k_key[];
 
-int  namcos2_68k_protect_r( int offset );
-void namcos2_68k_protect_w( int offset, int data );
+READ_HANDLER( namcos2_68k_protect_r );
+WRITE_HANDLER( namcos2_68k_protect_w );
 
 extern int namcos2_68k_protect;
 
@@ -204,13 +204,13 @@ extern int namcos2_68k_protect;
 extern int	namcos2_68k_master_C148[32];
 extern int	namcos2_68k_slave_C148[32];
 
-void namcos2_68k_master_C148_w( int offset, int data );
-int  namcos2_68k_master_C148_r( int offset );
+WRITE_HANDLER( namcos2_68k_master_C148_w );
+READ_HANDLER( namcos2_68k_master_C148_r );
 int  namcos2_68k_master_vblank( void );
 void namcos2_68k_master_posirq( int moog );
 
-void namcos2_68k_slave_C148_w( int offset, int data );
-int  namcos2_68k_slave_C148_r( int offset );
+WRITE_HANDLER( namcos2_68k_slave_C148_w );
+READ_HANDLER( namcos2_68k_slave_C148_r );
 int  namcos2_68k_slave_vblank(void);
 void namcos2_68k_slave_posirq( int moog );
 
@@ -239,12 +239,12 @@ extern unsigned char *namcos2_68k_slave_ram;
 /*	ROZ - Rotate & Zoom memory function handlers			  */
 /**************************************************************/
 
-void namcos2_68k_roz_ctrl_w( int offset, int data );
-int  namcos2_68k_roz_ctrl_r( int offset );
+WRITE_HANDLER( namcos2_68k_roz_ctrl_w );
+READ_HANDLER( namcos2_68k_roz_ctrl_r );
 extern unsigned char namcos2_68k_roz_ctrl[];
 
-void namcos2_68k_roz_ram_w( int offset, int data );
-int  namcos2_68k_roz_ram_r( int offset );
+WRITE_HANDLER( namcos2_68k_roz_ram_w );
+READ_HANDLER( namcos2_68k_roz_ram_r );
 extern int namcos2_68k_roz_ram_size;
 extern unsigned char *namcos2_68k_roz_ram;
 
@@ -253,18 +253,18 @@ extern unsigned char *namcos2_68k_roz_ram;
 /* FINAL LAP road generator definitions.....				  */
 /**************************************************************/
 
-void namcos2_68k_roadtile_ram_w( int offset, int data );
-int  namcos2_68k_roadtile_ram_r( int offset );
+WRITE_HANDLER( namcos2_68k_roadtile_ram_w );
+READ_HANDLER( namcos2_68k_roadtile_ram_r );
 extern unsigned char *namcos2_68k_roadtile_ram;
 extern int namcos2_68k_roadtile_ram_size;
 
-void namcos2_68k_roadgfx_ram_w( int offset, int data );
-int  namcos2_68k_roadgfx_ram_r( int offset );
+WRITE_HANDLER( namcos2_68k_roadgfx_ram_w );
+READ_HANDLER( namcos2_68k_roadgfx_ram_r );
 extern unsigned char *namcos2_68k_roadgfx_ram;
 extern int namcos2_68k_roadgfx_ram_size;
 
-void namcos2_68k_road_ctrl_w( int offset, int data );
-int  namcos2_68k_road_ctrl_r( int offset );
+WRITE_HANDLER( namcos2_68k_road_ctrl_w );
+READ_HANDLER( namcos2_68k_road_ctrl_r );
 
 
 /**************************************************************/
@@ -280,7 +280,7 @@ int  namcos2_68k_road_ctrl_r( int offset );
 /**************************************************************/
 
 int  namcos2_sound_interrupt(void);
-void namcos2_sound_bankselect_w(int offset, int data);
+WRITE_HANDLER( namcos2_sound_bankselect_w );
 
 
 /**************************************************************/
@@ -289,12 +289,12 @@ void namcos2_sound_bankselect_w(int offset, int data);
 
 int  namcos2_mcu_interrupt(void);
 
-void namcos2_mcu_analog_ctrl_w( int offset, int data );
-int  namcos2_mcu_analog_ctrl_r( int offset );
+WRITE_HANDLER( namcos2_mcu_analog_ctrl_w );
+READ_HANDLER( namcos2_mcu_analog_ctrl_r );
 
-void namcos2_mcu_analog_port_w( int offset, int data );
-int  namcos2_mcu_analog_port_r( int offset );
+WRITE_HANDLER( namcos2_mcu_analog_port_w );
+READ_HANDLER( namcos2_mcu_analog_port_r );
 
-void namcos2_mcu_port_d_w( int offset, int data );
-int  namcos2_mcu_port_d_r( int offset );
+WRITE_HANDLER( namcos2_mcu_port_d_w );
+READ_HANDLER( namcos2_mcu_port_d_r );
 

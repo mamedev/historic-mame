@@ -49,7 +49,7 @@ extern unsigned char *copsnrob_carimage;
 extern unsigned char *copsnrob_cary;
 extern unsigned char *copsnrob_trucky;
 
-extern int  copsnrob_gun_position_r(int offset);
+READ_HANDLER( copsnrob_gun_position_r );
 extern void copsnrob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static struct MemoryReadAddress readmem[] =

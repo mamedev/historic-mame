@@ -21,8 +21,8 @@ extern UINT8 *williams_videoram;
 extern UINT8 *williams2_paletteram;
 
 void williams_vh_update(int counter);
-void williams_videoram_w(int offset,int data);
-int williams_video_counter_r(int offset);
+WRITE_HANDLER( williams_videoram_w );
+READ_HANDLER( williams_video_counter_r );
 void williams2_vh_update(int counter);
 int williams2_palette_w(int offset, int data);
 
@@ -49,36 +49,36 @@ static UINT16 joust2_current_sound_data;
 static void williams_main_irq(int state);
 static void williams_main_firq(int state);
 static void williams_snd_irq(int state);
-static void williams_snd_cmd_w(int offset, int cmd);
+static WRITE_HANDLER( williams_snd_cmd_w );
 
 /* input port mapping */
 static UINT8 port_select;
-static void williams_port_select_w(int offset, int data);
-static int williams_input_port_0_3_r(int offset);
-static int williams_input_port_1_4_r(int offset);
-static int williams_49way_port_0_r(int offset);
+static WRITE_HANDLER( williams_port_select_w );
+static READ_HANDLER( williams_input_port_0_3_r );
+static READ_HANDLER( williams_input_port_1_4_r );
+static READ_HANDLER( williams_49way_port_0_r );
 
 /* newer-Williams routines */
-void williams2_bank_select(int offset, int data);
-static void williams2_snd_cmd_w(int offset, int cmd);
+WRITE_HANDLER( williams2_bank_select_w );
+static WRITE_HANDLER( williams2_snd_cmd_w );
 
 /* Defender-specific code */
-void defender_bank_select_w(int offset, int data);
-int defender_input_port_0_r(int offset);
-static int defender_io_r(int offset);
-static void defender_io_w(int offset, int data);
+WRITE_HANDLER( defender_bank_select_w );
+READ_HANDLER( defender_input_port_0_r );
+static READ_HANDLER( defender_io_r );
+static WRITE_HANDLER( defender_io_w );
 
 /* Stargate-specific code */
-int stargate_input_port_0_r(int offset);
+READ_HANDLER( stargate_input_port_0_r );
 
 /* Turkey Shoot-specific code */
-static int tshoot_input_port_0_3(int offset);
-static void tshoot_lamp_w(int offset, int data);
-static void tshoot_maxvol_w(int offset, int data);
+static READ_HANDLER( tshoot_input_port_0_3_r );
+static WRITE_HANDLER( tshoot_lamp_w );
+static WRITE_HANDLER( tshoot_maxvol_w );
 
 /* Joust 2-specific code */
-static void joust2_snd_cmd_w(int offset, int data);
-static void joust2_pia_3_cb1_w(int offset, int data);
+static WRITE_HANDLER( joust2_snd_cmd_w );
+static WRITE_HANDLER( joust2_pia_3_cb1_w );
 
 
 
@@ -132,7 +132,7 @@ struct pia6821_interface williams_pia_1_intf =
 struct pia6821_interface williams_snd_pia_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2       */ DAC_data_w, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ DAC_0_data_w, 0, 0, 0,
 	/*irqs   : A/B             */ williams_snd_irq, williams_snd_irq
 };
 
@@ -164,7 +164,7 @@ struct pia6821_interface stargate_pia_0_intf =
 struct pia6821_interface sinistar_snd_pia_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2       */ DAC_data_w, 0, hc55516_digit_w, hc55516_clock_w,
+	/*outputs: A/B,CA/B2       */ DAC_0_data_w, 0, hc55516_0_digit_w, hc55516_0_clock_w,
 	/*irqs   : A/B             */ williams_snd_irq, williams_snd_irq
 };
 
@@ -196,7 +196,7 @@ struct pia6821_interface williams2_pia_1_intf =
 struct pia6821_interface williams2_snd_pia_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2       */ pia_1_portb_w, DAC_data_w, pia_1_cb1_w, 0,
+	/*outputs: A/B,CA/B2       */ pia_1_portb_w, DAC_0_data_w, pia_1_cb1_w, 0,
 	/*irqs   : A/B             */ williams_snd_irq, williams_snd_irq
 };
 
@@ -219,7 +219,7 @@ struct pia6821_interface mysticm_pia_0_intf =
 /* Turkey Shoot PIA 0 */
 struct pia6821_interface tshoot_pia_0_intf =
 {
-	/*inputs : A/B,CA/B1,CA/B2 */ tshoot_input_port_0_3, input_port_1_r, 0, 0, 0, 0,
+	/*inputs : A/B,CA/B1,CA/B2 */ tshoot_input_port_0_3_r, input_port_1_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, tshoot_lamp_w, williams_port_select_w, 0,
 	/*irqs   : A/B             */ williams_main_irq, williams_main_irq
 };
@@ -228,7 +228,7 @@ struct pia6821_interface tshoot_pia_0_intf =
 struct pia6821_interface tshoot_snd_pia_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2       */ pia_1_portb_w, DAC_data_w, pia_1_cb1_w, tshoot_maxvol_w,
+	/*outputs: A/B,CA/B2       */ pia_1_portb_w, DAC_0_data_w, pia_1_cb1_w, tshoot_maxvol_w,
 	/*irqs   : A/B             */ williams_snd_irq, williams_snd_irq
 };
 
@@ -331,7 +331,7 @@ void williams_init_machine(void)
  *
  *************************************/
 
-void williams_vram_select_w(int offset, int data)
+WRITE_HANDLER( williams_vram_select_w )
 {
 	/* VRAM/ROM banking from bit 0 */
 	vram_bank = data & 0x01;
@@ -367,10 +367,10 @@ static void williams_deferred_snd_cmd_w(int param)
 	pia_2_cb1_w(0, (param == 0xff) ? 0 : 1);
 }
 
-static void williams_snd_cmd_w(int offset, int cmd)
+WRITE_HANDLER( williams_snd_cmd_w )
 {
 	/* the high two bits are set externally, and should be 1 */
-	timer_set(TIME_NOW, cmd | 0xc0, williams_deferred_snd_cmd_w);
+	timer_set(TIME_NOW, data | 0xc0, williams_deferred_snd_cmd_w);
 }
 
 
@@ -381,19 +381,19 @@ static void williams_snd_cmd_w(int offset, int cmd)
  *
  *************************************/
 
-void williams_port_select_w(int offset, int data)
+WRITE_HANDLER( williams_port_select_w )
 {
 	port_select = data;
 }
 
 
-int williams_input_port_0_3_r(int offset)
+READ_HANDLER( williams_input_port_0_3_r )
 {
 	return readinputport(port_select ? 3 : 0);
 }
 
 
-int williams_input_port_1_4_r(int offset)
+READ_HANDLER( williams_input_port_1_4_r )
 {
 	return readinputport(port_select ? 4 : 1);
 }
@@ -424,7 +424,7 @@ int williams_input_port_1_4_r(int offset)
  *
  */
 
-int williams_49way_port_0_r(int offset)
+READ_HANDLER( williams_49way_port_0_r )
 {
 	int joy_x, joy_y;
 	int bits_x, bits_y;
@@ -495,7 +495,7 @@ void williams2_init_machine(void)
 	pia_reset();
 
 	/* make sure our banking is reset */
-	williams2_bank_select(0, 0);
+	williams2_bank_select_w(0, 0);
 
 	/* set a timer to go off every 16 scanlines, to toggle the VA11 line and update the screen */
 	timer_set(cpu_getscanlinetime(0), 0, williams2_va11_callback);
@@ -512,7 +512,7 @@ void williams2_init_machine(void)
  *
  *************************************/
 
-void williams2_bank_select(int offset, int data)
+WRITE_HANDLER( williams2_bank_select_w )
 {
 	static const UINT32 bank[8] = { 0, 0x10000, 0x20000, 0x10000, 0, 0x30000, 0x40000, 0x30000 };
 
@@ -561,9 +561,9 @@ static void williams2_deferred_snd_cmd_w(int param)
 }
 
 
-static void williams2_snd_cmd_w(int offset, int cmd)
+static WRITE_HANDLER( williams2_snd_cmd_w )
 {
-	timer_set(TIME_NOW, cmd, williams2_deferred_snd_cmd_w);
+	timer_set(TIME_NOW, data, williams2_deferred_snd_cmd_w);
 }
 
 
@@ -574,7 +574,7 @@ static void williams2_snd_cmd_w(int offset, int cmd)
  *
  *************************************/
 
-void williams2_7segment(int offset, int data)
+WRITE_HANDLER( williams2_7segment_w )
 {
 	int n;
 	char dot;
@@ -631,7 +631,7 @@ void defender_init_machine(void)
 
 
 
-void defender_bank_select_w(int offset, int data)
+WRITE_HANDLER( defender_bank_select_w )
 {
 	UINT32 bank_offset = defender_bank_list[data & 7];
 
@@ -654,7 +654,7 @@ void defender_bank_select_w(int offset, int data)
 }
 
 
-int defender_input_port_0_r(int offset)
+READ_HANDLER( defender_input_port_0_r )
 {
 	int keys, altkeys;
 
@@ -679,7 +679,7 @@ int defender_input_port_0_r(int offset)
 }
 
 
-int defender_io_r(int offset)
+READ_HANDLER( defender_io_r )
 {
 	/* PIAs */
 	if (offset >= 0x0c00 && offset < 0x0c04)
@@ -696,7 +696,7 @@ int defender_io_r(int offset)
 }
 
 
-void defender_io_w(int offset, int data)
+WRITE_HANDLER( defender_io_w )
 {
 	/* write the data through */
 	defender_bank_base[offset] = data;
@@ -724,7 +724,7 @@ void defender_io_w(int offset, int data)
  *
  *************************************/
 
-int mayday_protection_r(int offset)
+READ_HANDLER( mayday_protection_r )
 {
 	/* Mayday does some kind of protection check that is not currently understood  */
 	/* However, the results of that protection check are stored at $a190 and $a191 */
@@ -742,7 +742,7 @@ int mayday_protection_r(int offset)
  *
  *************************************/
 
-int stargate_input_port_0_r(int offset)
+READ_HANDLER( stargate_input_port_0_r )
 {
 	int keys, altkeys;
 
@@ -781,7 +781,7 @@ static const UINT32 blaster_bank_offset[16] =
 };
 
 
-void blaster_vram_select_w(int offset, int data)
+WRITE_HANDLER( blaster_vram_select_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -803,7 +803,7 @@ void blaster_vram_select_w(int offset, int data)
 }
 
 
-void blaster_bank_select_w(int offset, int data)
+WRITE_HANDLER( blaster_bank_select_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -824,7 +824,7 @@ void blaster_bank_select_w(int offset, int data)
  *
  *************************************/
 
-static int tshoot_input_port_0_3(int offset)
+static READ_HANDLER( tshoot_input_port_0_3_r )
 {
 	/* merge in the gun inputs with the standard data */
 	int data = williams_input_port_0_3_r(offset);
@@ -833,7 +833,7 @@ static int tshoot_input_port_0_3(int offset)
 }
 
 
-static void tshoot_maxvol_w(int offset, int data)
+static WRITE_HANDLER( tshoot_maxvol_w )
 {
 	/* something to do with the sound volume */
 	if (errorlog)
@@ -841,7 +841,7 @@ static void tshoot_maxvol_w(int offset, int data)
 }
 
 
-static void tshoot_lamp_w(int offset, int data)
+static WRITE_HANDLER( tshoot_lamp_w )
 {
 	/* set the grenade lamp */
 	if (data & 0x04)
@@ -897,16 +897,16 @@ static void joust2_deferred_snd_cmd_w(int param)
 }
 
 
-void joust2_pia_3_cb1_w(int offset, int data)
+static WRITE_HANDLER( joust2_pia_3_cb1_w )
 {
 	joust2_current_sound_data = (joust2_current_sound_data & ~0x100) | ((data << 8) & 0x100);
 	pia_3_cb1_w(offset, data);
 }
 
 
-void joust2_snd_cmd_w(int offset, int cmd)
+static WRITE_HANDLER( joust2_snd_cmd_w )
 {
-	joust2_current_sound_data = (joust2_current_sound_data & ~0xff) | (cmd & 0xff);
+	joust2_current_sound_data = (joust2_current_sound_data & ~0xff) | (data & 0xff);
 	williams_cvsd_data_w(0, joust2_current_sound_data);
 	timer_set(TIME_NOW, joust2_current_sound_data, joust2_deferred_snd_cmd_w);
 }

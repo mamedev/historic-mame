@@ -42,26 +42,26 @@ static void update_color(int offset)
 	palette_change_color(513,0xff,0xff,0xff);
 }
 
-void gladiatr_paletteram_rg_w(int offset,int data)
+WRITE_HANDLER( gladiatr_paletteram_rg_w )
 {
 	paletteram[offset] = data;
 	update_color(offset);
 }
 
-void gladiatr_paletteram_b_w(int offset,int data)
+WRITE_HANDLER( gladiatr_paletteram_b_w )
 {
 	paletteram_2[offset] = data;
 	update_color(offset);
 }
 
 
-void gladiatr_spritebank_w( int offset, int data );
-void gladiatr_spritebank_w( int offset, int data ){
+WRITE_HANDLER( gladiatr_spritebank_w );
+WRITE_HANDLER( gladiatr_spritebank_w ){
 	sprite_bank = (data)?4:2;
 }
 
-int gladiatr_video_registers_r( int offset );
-int gladiatr_video_registers_r( int offset ){
+READ_HANDLER( gladiatr_video_registers_r );
+READ_HANDLER( gladiatr_video_registers_r ){
 	switch( offset ){
 		case 0x080: return video_attributes;
 		case 0x100: return base_scroll;
@@ -70,8 +70,8 @@ int gladiatr_video_registers_r( int offset ){
 	return 0;
 }
 
-void gladiatr_video_registers_w( int offset, int data );
-void gladiatr_video_registers_w( int offset, int data ){
+WRITE_HANDLER( gladiatr_video_registers_w );
+WRITE_HANDLER( gladiatr_video_registers_w ){
 	switch( offset ){
 		case 0x000: break;
 		case 0x080: video_attributes = data; break;

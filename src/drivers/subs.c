@@ -11,23 +11,23 @@ ask.  - Mike Balfour (mab22@po.cwru.edu)
 
 /* vidhrdw/subs.c */
 extern void subs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void subs_invert1_w(int offset, int data);
-extern void subs_invert2_w(int offset, int data);
+WRITE_HANDLER( subs_invert1_w );
+WRITE_HANDLER( subs_invert2_w );
 
 /* machine/subs.c */
 extern void subs_init_machine(void);
 extern int subs_interrupt(void);
-extern void subs_steer_reset_w(int offset, int data);
-extern int subs_control_r(int offset);
-extern int subs_coin_r(int offset);
-extern int subs_options_r(int offset);
-extern void subs_lamp1_w(int offset, int data);
-extern void subs_lamp2_w(int offset, int data);
-extern void subs_noise_reset_w(int offset, int data);
-extern void subs_sonar2_w(int offset, int data);
-extern void subs_sonar1_w(int offset, int data);
-extern void subs_crash_w(int offset, int data);
-extern void subs_explode_w(int offset, int data);
+WRITE_HANDLER( subs_steer_reset_w );
+READ_HANDLER( subs_control_r );
+READ_HANDLER( subs_coin_r );
+READ_HANDLER( subs_options_r );
+WRITE_HANDLER( subs_lamp1_w );
+WRITE_HANDLER( subs_lamp2_w );
+WRITE_HANDLER( subs_noise_reset_w );
+WRITE_HANDLER( subs_sonar2_w );
+WRITE_HANDLER( subs_sonar1_w );
+WRITE_HANDLER( subs_crash_w );
+WRITE_HANDLER( subs_explode_w );
 
 static struct MemoryReadAddress readmem[] =
 {

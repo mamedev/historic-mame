@@ -4,9 +4,9 @@
 
  	Mike@Dissfulfils.co.uk
 
-        Modified to match phonemes to words
+		Modified to match phonemes to words
 
-        Ajudd@quantime.co.uk
+		Ajudd@quantime.co.uk
 
 **************************************************************************
 
@@ -119,95 +119,95 @@ int wow_sh_start(const struct MachineSound *msound)
 {
 	Machine->samples = readsamples(wow_sample_names,Machine->gamedrv->name);
 
-    wowBaseFrequency = 11025;
-    wowBaseVolume = 230;
-    wowChannel = 0;
-    return 0;
+	wowBaseFrequency = 11025;
+	wowBaseVolume = 230;
+	wowChannel = 0;
+	return 0;
 }
 
-int wow_speech_r(int offset)
+READ_HANDLER( wow_speech_r )
 {
-    int Phoneme,Intonation;
-    int i = 0;
+	int Phoneme,Intonation;
+	int i = 0;
 
-    int data;
+	int data;
 
-    totalword_ptr = totalword;
+	totalword_ptr = totalword;
 
 	data = cpu_get_reg(Z80_BC) >> 8;
 
-    Phoneme = data & 0x3F;
-    Intonation = data >> 6;
+	Phoneme = data & 0x3F;
+	Intonation = data >> 6;
 
-    if(errorlog) fprintf(errorlog,"Data : %d Speech : %s at intonation %d\n",Phoneme, PhonemeTable[Phoneme],Intonation);
+//	if(errorlog) fprintf(errorlog,"Data : %d Speech : %s at intonation %d\n",Phoneme, PhonemeTable[Phoneme],Intonation);
 
-    if(Phoneme==63) {
+	if(Phoneme==63) {
    		sample_stop(wowChannel);
-                if (errorlog) fprintf(errorlog,"Clearing sample %s\n",totalword);
-                totalword[0] = 0;				   /* Clear the total word stack */
-                return data;
-    }
-    if (PhonemeTable[Phoneme] == "PA0")						   /* We know PA0 is never part of a word */
-                totalword[0] = 0;				   /* Clear the total word stack */
+//				if (errorlog) fprintf(errorlog,"Clearing sample %s\n",totalword);
+				totalword[0] = 0;				   /* Clear the total word stack */
+				return data;
+	}
+	if (PhonemeTable[Phoneme] == "PA0")						   /* We know PA0 is never part of a word */
+				totalword[0] = 0;				   /* Clear the total word stack */
 
 /* Phoneme to word translation */
 
-    if (strlen(totalword) == 0) {
-       strcpy(totalword,PhonemeTable[Phoneme]);	                   /* Copy over the first phoneme */
-       if (plural != 0) {
-          if (errorlog) fprintf(errorlog,"found a possible plural at %d\n",plural-1);
-          if (!strcmp("S",totalword)) {		   /* Plural check */
-             sample_start(wowChannel, num_samples-2, 0);	   /* play the sample at position of word */
-             sample_set_freq(wowChannel, wowBaseFrequency);    /* play at correct rate */
-             totalword[0] = 0;				   /* Clear the total word stack */
-             oldword[0] = 0;				   /* Clear the total word stack */
-             return data;
-          } else {
-             plural=0;
-          }
-       }
-    } else
-       strcat(totalword,PhonemeTable[Phoneme]);	                   /* Copy over the first phoneme */
+	if (strlen(totalword) == 0) {
+	   strcpy(totalword,PhonemeTable[Phoneme]);	                   /* Copy over the first phoneme */
+	   if (plural != 0) {
+//		  if (errorlog) fprintf(errorlog,"found a possible plural at %d\n",plural-1);
+		  if (!strcmp("S",totalword)) {		   /* Plural check */
+			 sample_start(wowChannel, num_samples-2, 0);	   /* play the sample at position of word */
+			 sample_set_freq(wowChannel, wowBaseFrequency);    /* play at correct rate */
+			 totalword[0] = 0;				   /* Clear the total word stack */
+			 oldword[0] = 0;				   /* Clear the total word stack */
+			 return data;
+		  } else {
+			 plural=0;
+		  }
+	   }
+	} else
+	   strcat(totalword,PhonemeTable[Phoneme]);	                   /* Copy over the first phoneme */
 
-    if(errorlog) fprintf(errorlog,"Total word = %s\n",totalword);
+//	if(errorlog) fprintf(errorlog,"Total word = %s\n",totalword);
 
-    for (i=0; wowWordTable[i]; i++) {
-       if (!strcmp(wowWordTable[i],totalword)) {		   /* Scan the word (sample) table for the complete word */
+	for (i=0; wowWordTable[i]; i++) {
+	   if (!strcmp(wowWordTable[i],totalword)) {		   /* Scan the word (sample) table for the complete word */
 	  /* WOW has Dungeon */
-          if ((!strcmp("GDTO1RFYA2N",totalword)) || (!strcmp("RO1U1BAH1T",totalword)) || (!strcmp("KO1UH3I3E1N",totalword))) {		   /* May be plural */
-             plural=i+1;
-             strcpy(oldword,totalword);
-	     if (errorlog) fprintf(errorlog,"Storing sample position %d and copying string %s\n",plural,oldword);
-          } else {
-             plural=0;
-          }
-          sample_start(wowChannel, i, 0);	                   /* play the sample at position of word */
-          sample_set_freq(wowChannel, wowBaseFrequency);         /* play at correct rate */
-          if (errorlog) fprintf(errorlog,"Playing sample %d",i);
-          totalword[0] = 0;				   /* Clear the total word stack */
-          return data;
-       }
-    }
+		  if ((!strcmp("GDTO1RFYA2N",totalword)) || (!strcmp("RO1U1BAH1T",totalword)) || (!strcmp("KO1UH3I3E1N",totalword))) {		   /* May be plural */
+			 plural=i+1;
+			 strcpy(oldword,totalword);
+//	     if (errorlog) fprintf(errorlog,"Storing sample position %d and copying string %s\n",plural,oldword);
+		  } else {
+			 plural=0;
+		  }
+		  sample_start(wowChannel, i, 0);	                   /* play the sample at position of word */
+		  sample_set_freq(wowChannel, wowBaseFrequency);         /* play at correct rate */
+//		  if (errorlog) fprintf(errorlog,"Playing sample %d\n",i);
+		  totalword[0] = 0;				   /* Clear the total word stack */
+		  return data;
+	   }
+	}
 
-    /* Note : We should really also use volume in this as well as frequency */
-    return data;				                   /* Return nicely */
+	/* Note : We should really also use volume in this as well as frequency */
+	return data;				                   /* Return nicely */
 }
 
 int wow_status_r(void)
 {
-    if (errorlog) fprintf(errorlog, "asked for samples status %d\n",wowChannel);
-    return !sample_playing(wowChannel);
+//	if (errorlog) fprintf(errorlog, "asked for samples status %d\n",wowChannel);
+	return !sample_playing(wowChannel);
 }
 
 /* Read from port 2 (0x12) returns speech status as 0x80 */
 
-int wow_port_2_r(int offset)
+READ_HANDLER( wow_port_2_r )
 {
-    int Ans;
+	int Ans;
 
-    Ans = (input_port_2_r(0) & 0x7F);
-    if (wow_status_r() != 0) Ans += 128;
-    return Ans;
+	Ans = (input_port_2_r(0) & 0x7F);
+	if (wow_status_r() != 0) Ans += 128;
+	return Ans;
 }
 
 void wow_sh_update(void)

@@ -88,16 +88,16 @@ void konami1_decode(void);
 
 extern unsigned char *tutankhm_scrollx;
 
-void tutankhm_videoram_w( int offset, int data );
-void tutankhm_flipscreen_w( int offset, int data );
-void junofrst_blitter_w( int offset, int data );
+WRITE_HANDLER( tutankhm_videoram_w );
+WRITE_HANDLER( tutankhm_flipscreen_w );
+WRITE_HANDLER( junofrst_blitter_w );
 void tutankhm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-void tutankhm_sh_irqtrigger_w(int offset,int data);
+WRITE_HANDLER( tutankhm_sh_irqtrigger_w );
 
 
-void junofrst_bankselect_w(int offset,int data)
+WRITE_HANDLER( junofrst_bankselect_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -110,7 +110,7 @@ void junofrst_bankselect_w(int offset,int data)
 static int i8039_irqenable;
 static int i8039_status;
 
-static int junofrst_portA_r(int offset)
+static READ_HANDLER( junofrst_portA_r )
 {
 	int timer;
 
@@ -126,7 +126,7 @@ static int junofrst_portA_r(int offset)
 	return (timer << 4) | i8039_status;
 }
 
-static void junofrst_portB_w(int offset,int data)
+static WRITE_HANDLER( junofrst_portB_w )
 {
 	int i;
 
@@ -144,7 +144,7 @@ static void junofrst_portB_w(int offset,int data)
 	}
 }
 
-void junofrst_sh_irqtrigger_w(int offset,int data)
+WRITE_HANDLER( junofrst_sh_irqtrigger_w )
 {
 	static int last;
 
@@ -158,13 +158,13 @@ void junofrst_sh_irqtrigger_w(int offset,int data)
 	last = data;
 }
 
-void junofrst_i8039_irq_w(int offset,int data)
+WRITE_HANDLER( junofrst_i8039_irq_w )
 {
 	if (i8039_irqenable)
 		cpu_cause_interrupt(2,I8039_EXT_INT);
 }
 
-static void i8039_irqen_and_status_w(int offset,int data)
+static WRITE_HANDLER( i8039_irqen_and_status_w )
 {
 	i8039_irqenable = data & 0x80;
 	i8039_status = (data & 0x70) >> 4;
@@ -248,7 +248,7 @@ static struct IOReadPort i8039_readport[] =
 
 static struct IOWritePort i8039_writeport[] =
 {
-	{ I8039_p1, I8039_p1, DAC_data_w },
+	{ I8039_p1, I8039_p1, DAC_0_data_w },
 	{ I8039_p2, I8039_p2, i8039_irqen_and_status_w },
 	{ -1 }	/* end of table */
 };

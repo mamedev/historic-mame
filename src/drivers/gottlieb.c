@@ -139,44 +139,44 @@ VBlank duration: 1/VSYNC * (16/256) = 1017.6 us
 
 int gottlieb_vh_start(void);
 void gottlieb_vh_stop(void);
-void gottlieb_characterram_w(int offset, int data);
-void gottlieb_video_outputs(int offset,int data);
-void usvsthem_video_outputs(int offset,int data);
+WRITE_HANDLER( gottlieb_characterram_w );
+WRITE_HANDLER( gottlieb_video_outputs_w );
+WRITE_HANDLER( usvsthem_video_outputs_w );
 extern unsigned char *gottlieb_characterram;
-void gottlieb_paletteram_w(int offset,int data);
+WRITE_HANDLER( gottlieb_paletteram_w );
 void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void gottlieb_sh_w(int offset, int data);
+WRITE_HANDLER( gottlieb_sh_w );
 
 extern unsigned char *riot_ram;
-int riot_ram_r(int offset);
-int gottlieb_riot_r(int offset);
-void riot_ram_w(int offset, int data);
-void gottlieb_riot_w(int offset, int data);
-void gottlieb_speech_w(int offset, int data);
-void gottlieb_speech_clock_DAC_w(int offset, int data);
+READ_HANDLER( riot_ram_r );
+READ_HANDLER( gottlieb_riot_r );
+WRITE_HANDLER( riot_ram_w );
+WRITE_HANDLER( gottlieb_riot_w );
+WRITE_HANDLER( gottlieb_speech_w );
+WRITE_HANDLER( gottlieb_speech_clock_DAC_w );
 void gottlieb_sound_init(void);
-int stooges_sound_input_r(int offset);
-void stooges_8910_latch_w(int offset,int data);
-void stooges_sound_control_w(int offset,int data);
-void gottlieb_nmi_rate_w(int offset,int data);
-void gottlieb_cause_dac_nmi_w(int offset, int data);
+READ_HANDLER( stooges_sound_input_r );
+WRITE_HANDLER( stooges_8910_latch_w );
+WRITE_HANDLER( stooges_sound_control_w );
+WRITE_HANDLER( gottlieb_nmi_rate_w );
+WRITE_HANDLER( gottlieb_cause_dac_nmi_w );
 
 
 
 static int track[2];
 
-int gottlieb_track_0_r(int offset)
+READ_HANDLER( gottlieb_track_0_r )
 {
 	return input_port_2_r(offset) - track[0];
 }
 
-int gottlieb_track_1_r(int offset)
+READ_HANDLER( gottlieb_track_1_r )
 {
 	return input_port_3_r(offset) - track[1];
 }
 
-void gottlieb_track_reset_w(int offset,int data)
+WRITE_HANDLER( gottlieb_track_reset_w )
 {
 	/* reset the trackball counters */
 	track[0] = input_port_2_r(offset);
@@ -185,7 +185,7 @@ void gottlieb_track_reset_w(int offset,int data)
 
 static int joympx;
 
-int stooges_IN4_r(int offset)
+READ_HANDLER( stooges_IN4_r )
 {
 	int joy;
 
@@ -207,18 +207,18 @@ int stooges_IN4_r(int offset)
 	return joy | (readinputport(4) & 0xf0);
 }
 
-void reactor_output(int offset,int data)
+WRITE_HANDLER( reactor_output_w )
 {
 	osd_led_w(0,(data & 0x20) >> 5);
 	osd_led_w(1,(data & 0x40) >> 6);
 	osd_led_w(2,(data & 0x80) >> 7);
-	gottlieb_video_outputs(offset,data);
+	gottlieb_video_outputs_w(offset,data);
 }
 
-void stooges_output(int offset,int data)
+WRITE_HANDLER( stooges_output_w )
 {
 	joympx = (data >> 5) & 0x03;
-	gottlieb_video_outputs(offset,data);
+	gottlieb_video_outputs_w(offset,data);
 }
 
 
@@ -226,7 +226,7 @@ static int current_frame = 0x00001;
 static int laserdisc_playing;
 static int lasermpx;
 
-int gottlieb_laserdisc_status_r(int offset)
+READ_HANDLER( gottlieb_laserdisc_status_r )
 {
 	switch (offset)
 	{
@@ -253,12 +253,12 @@ int gottlieb_laserdisc_status_r(int offset)
 	return 0;
 }
 
-void gottlieb_laserdisc_mpx_w(int offset,int data)
+WRITE_HANDLER( gottlieb_laserdisc_mpx_w )
 {
 	lasermpx = data & 1;
 }
 
-void gottlieb_laserdisc_command_w(int offset,int data)
+WRITE_HANDLER( gottlieb_laserdisc_command_w )
 {
 	static int loop;
 	int cmd;
@@ -353,7 +353,7 @@ static struct MemoryWriteAddress reactor_writemem[] =
 	{ 0x7000, 0x7000, watchdog_reset_w },
 	{ 0x7001, 0x7001, gottlieb_track_reset_w },
 	{ 0x7002, 0x7002, gottlieb_sh_w }, /* sound/speech command */
-	{ 0x7003, 0x7003, reactor_output },       /* OUT1 */
+	{ 0x7003, 0x7003, reactor_output_w },       /* OUT1 */
 	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -388,7 +388,7 @@ static struct MemoryWriteAddress gottlieb_writemem[] =
 	{ 0x5800, 0x5800, watchdog_reset_w },
 	{ 0x5801, 0x5801, gottlieb_track_reset_w },
 	{ 0x5802, 0x5802, gottlieb_sh_w }, /* sound/speech command */
-	{ 0x5803, 0x5803, gottlieb_video_outputs },       /* OUT1 */
+	{ 0x5803, 0x5803, gottlieb_video_outputs_w },       /* OUT1 */
 	{ 0x6000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -408,7 +408,7 @@ static struct MemoryWriteAddress usvsthem_writemem[] =
 	{ 0x5800, 0x5800, watchdog_reset_w },
 	{ 0x5801, 0x5801, gottlieb_track_reset_w },
 	{ 0x5802, 0x5802, gottlieb_sh_w }, /* sound/speech command */
-	{ 0x5803, 0x5803, usvsthem_video_outputs },       /* OUT1 */
+	{ 0x5803, 0x5803, usvsthem_video_outputs_w },       /* OUT1 */
 	{ 0x5805, 0x5805, gottlieb_laserdisc_command_w },	/* command for the player */
 	{ 0x5806, 0x5806, gottlieb_laserdisc_mpx_w },
 	{ 0x6000, 0xffff, MWA_ROM },
@@ -446,7 +446,7 @@ static struct MemoryWriteAddress stooges_writemem[] =
 	{ 0x5800, 0x5800, watchdog_reset_w },
 	{ 0x5801, 0x5801, gottlieb_track_reset_w },
 	{ 0x5802, 0x5802, gottlieb_sh_w }, /* sound/speech command */
-	{ 0x5803, 0x5803, stooges_output },       /* OUT1 */
+	{ 0x5803, 0x5803, stooges_output_w },       /* OUT1 */
 	{ 0x6000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -469,14 +469,14 @@ struct MemoryWriteAddress gottlieb_sound_writemem[] =
 {
 	{ 0x0000, 0x01ff, riot_ram_w, &riot_ram },
 	{ 0x0200, 0x03ff, gottlieb_riot_w },
-	{ 0x1000, 0x1000, DAC_data_w },
+	{ 0x1000, 0x1000, DAC_0_data_w },
 	{ 0x2000, 0x2000, gottlieb_speech_w },
 	{ 0x3000, 0x3000, gottlieb_speech_clock_DAC_w },
 	{ 0x6000, 0x7fff, MWA_ROM },
 			 /* A15 not decoded except in expansion socket */
 	{ 0x8000, 0x81ff, riot_ram_w },
 	{ 0x8200, 0x83ff, gottlieb_riot_w },
-	{ 0x9000, 0x9000, DAC_data_w },
+	{ 0x9000, 0x9000, DAC_0_data_w },
 	{ 0xa000, 0xa000, gottlieb_speech_w },
 	{ 0xb000, 0xb000, gottlieb_speech_clock_DAC_w },
 	{ 0xe000, 0xffff, MWA_ROM },
@@ -495,7 +495,7 @@ static struct MemoryReadAddress stooges_sound_readmem[] =
 struct MemoryWriteAddress stooges_sound_writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x4000, 0x4001, DAC_data_w },
+	{ 0x4000, 0x4001, DAC_0_data_w },
 	{ 0xe000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };

@@ -180,18 +180,20 @@ void YM2413_sh_stop(void)
 	YM3812_sh_stop();
 }
 
-int  YM2413_status_port_0_r(int offset)
+READ_HANDLER( YM2413_status_port_0_r )
 {
 	return YM3812_status_port_0_r(offset);
 }
 
-void YM2413_register_port_0_w(int chip,int data)
+WRITE_HANDLER( YM2413_register_port_0_w )
 {
+	int chip = offset;
 	ym2413_state[chip].pending_register=data;
 }
 
-void YM2413_data_port_0_w(int chip,int data)
+WRITE_HANDLER( YM2413_data_port_0_w )
 {
+	int chip = offset;
 	int value, channel, instrument, i, block, volume;
 	int pending=ym2413_state[chip].pending_register;
 

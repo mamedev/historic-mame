@@ -199,31 +199,31 @@ static int lazercmd_timer(void)
  *************************************************************/
 
 /* triggered by WRTC,r opcode */
-static void lazercmd_ctrl_port_w(int offset, int data)
+static WRITE_HANDLER( lazercmd_ctrl_port_w )
 {
 }
 
 /* triggered by REDC,r opcode */
-static int lazercmd_ctrl_port_r(int offset)
+static READ_HANDLER( lazercmd_ctrl_port_r )
 {
 	int data = 0;
 	return data;
 }
 
 /* triggered by WRTD,r opcode */
-static void lazercmd_data_port_w(int offset, int data)
+static WRITE_HANDLER( lazercmd_data_port_w )
 {
 }
 
 /* triggered by REDD,r opcode */
-static int lazercmd_data_port_r(int offset)
+static READ_HANDLER( lazercmd_data_port_r )
 {
 	int data;
 	data = input_port_2_r(0) & 0x0f;
 	return data;
 }
 
-static void lazercmd_hardware_w(int offset, int data)
+static WRITE_HANDLER( lazercmd_hardware_w )
 {
 	static int DAC_data = 0;
 
@@ -253,7 +253,7 @@ static void lazercmd_hardware_w(int offset, int data)
 	}
 }
 
-static void medlanes_hardware_w(int offset, int data)
+static WRITE_HANDLER( medlanes_hardware_w )
 {
 	static int DAC_data = 0;
 
@@ -286,7 +286,7 @@ static void medlanes_hardware_w(int offset, int data)
 	}
 }
 
-static int lazercmd_hardware_r(int offset)
+static READ_HANDLER( lazercmd_hardware_r )
 {
 	int data = 0;
 

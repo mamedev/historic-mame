@@ -54,14 +54,14 @@ VBlank duration: 1/VSYNC * (20/132) = 2500 us
 
 
 void pengo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void pengo_gfxbank_w(int offset,int data);
+WRITE_HANDLER( pengo_gfxbank_w );
 int pengo_vh_start(void);
-void pengo_flipscreen_w(int offset,int data);
+WRITE_HANDLER( pengo_flipscreen_w );
 void pengo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *pengo_soundregs;
-void pengo_sound_enable_w(int offset,int data);
-void pengo_sound_w(int offset,int data);
+WRITE_HANDLER( pengo_sound_enable_w );
+WRITE_HANDLER( pengo_sound_w );
 
 /* in machine/segacrpt.c */
 void pengo_decode(void);

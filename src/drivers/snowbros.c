@@ -16,8 +16,8 @@ static unsigned char *ram;
 extern unsigned char *snowbros_spriteram;
 
 void snowbros_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void snowbros_spriteram_w(int offset,int data);
-int  snowbros_spriteram_r(int offset);
+WRITE_HANDLER( snowbros_spriteram_w );
+READ_HANDLER( snowbros_spriteram_r );
 
 
 
@@ -28,7 +28,7 @@ static int snowbros_interrupt(void)
 
 
 
-static int snowbros_input_r (int offset)
+static READ_HANDLER( snowbros_input_r )
 {
 	int ans = 0xff;
 
@@ -50,7 +50,7 @@ static int snowbros_input_r (int offset)
 
 /* Sound Routines */
 
-int snowbros_68000_sound_r(int offset)
+READ_HANDLER( snowbros_68000_sound_r )
 {
 	int ret;
 
@@ -69,7 +69,7 @@ int snowbros_68000_sound_r(int offset)
 }
 
 
-static void snowbros_68000_sound_w(int offset, int data)
+static WRITE_HANDLER( snowbros_68000_sound_w )
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(1,Z80_NMI_INT);

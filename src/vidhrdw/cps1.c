@@ -304,7 +304,7 @@ INLINE unsigned char * cps1_base(int offset,int boundary)
 
 
 
-int cps1_output_r(int offset)
+READ_HANDLER( cps1_output_r )
 {
 #if VERBOSE
 if (errorlog && offset >= 0x18) fprintf(errorlog,"PC %06x: read output port %02x\n",cpu_get_pc(),offset);
@@ -333,7 +333,7 @@ if (errorlog && offset >= 0x18) fprintf(errorlog,"PC %06x: read output port %02x
 	return READ_WORD(&cps1_output[offset]);
 }
 
-void cps1_output_w(int offset, int data)
+WRITE_HANDLER( cps1_output_w )
 {
 #if VERBOSE
 if (errorlog && offset >= 0x18 && //offset != 0x22 &&

@@ -2199,7 +2199,7 @@ void osd_update_video_and_audio(void)
 		vfcount += waittable[frameskip][frameskip_counter];
 		if (vfcount >= Machine->drv->frames_per_second)
 		{
-			extern int vector_updates; /* avgdvg_go()'s per Mame frame, should be 1 */
+			extern int vector_updates; /* avgdvg_go_w()'s per Mame frame, should be 1 */
 
 
 			vfcount = 0;

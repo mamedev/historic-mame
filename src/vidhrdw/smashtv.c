@@ -27,7 +27,7 @@ static UINT8 update_status;
 static UINT32 current_offset;
 static int current_rowbytes;
 
-void wms_vram_w(int offset, int data)
+WRITE_HANDLER( wms_vram_w )
 {
 	UINT32 tempw,tempwb;
 	UINT16 tempwordhi;
@@ -59,7 +59,7 @@ void wms_vram_w(int offset, int data)
 	wms_videoram[offset+1] = (tempwordhi&0x00ff)|(datahi<<8);
 }
 
-void wms_objpalram_w(int offset, int data)
+WRITE_HANDLER( wms_objpalram_w )
 {
 	UINT32 tempw,tempwb;
 	UINT16 tempwordhi;
@@ -77,12 +77,12 @@ void wms_objpalram_w(int offset, int data)
 	wms_videoram[offset+1] = (tempwordhi&0x00ff)|(datahi<<8);
 }
 
-int wms_vram_r(int offset)
+READ_HANDLER( wms_vram_r )
 {
 	return (wms_videoram[offset]&0x00ff) | (wms_videoram[offset+1]<<8);
 }
 
-int wms_objpalram_r(int offset)
+READ_HANDLER( wms_objpalram_r )
 {
 	return (wms_videoram[offset]>>8) | (wms_videoram[offset+1]&0xff00);
 }

@@ -115,37 +115,37 @@ void jackal_init_machine(void);
 int jackal_vh_start(void);
 void jackal_vh_stop(void);
 
-int jackal_zram_r(int offset);
-int jackal_commonram_r(int offset);
-int jackal_commonram1_r(int offset);
-int jackal_voram_r(int offset);
-int jackal_spriteram_r(int offset);
+READ_HANDLER( jackal_zram_r );
+READ_HANDLER( jackal_commonram_r );
+READ_HANDLER( jackal_commonram1_r );
+READ_HANDLER( jackal_voram_r );
+READ_HANDLER( jackal_spriteram_r );
 
-void jackal_rambank_w(int offset,int data);
-void jackal_zram_w(int offset,int data);
-void jackal_commonram_w(int offset,int data);
-void jackal_commonram1_w(int offset,int data);
-void jackal_voram_w(int offset,int data);
-void jackal_spriteram_w(int offset,int data);
+WRITE_HANDLER( jackal_rambank_w );
+WRITE_HANDLER( jackal_zram_w );
+WRITE_HANDLER( jackal_commonram_w );
+WRITE_HANDLER( jackal_commonram1_w );
+WRITE_HANDLER( jackal_voram_w );
+WRITE_HANDLER( jackal_spriteram_w );
 
 void jackal_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-static int rotary_0_r(int offset)
+static READ_HANDLER( rotary_0_r )
 {
 	return (1 << (readinputport(6) * 8 / 256)) ^ 0xff;
 }
 
-static int rotary_1_r(int offset)
+static READ_HANDLER( rotary_1_r )
 {
 	return (1 << (readinputport(7) * 8 / 256)) ^ 0xff;
 }
 
 static unsigned char intenable;
 
-void jackal_interrupt_enable_w(int offset,int data)
+WRITE_HANDLER( jackal_interrupt_enable_w )
 {
 	intenable = data;
 }

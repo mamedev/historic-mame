@@ -112,12 +112,12 @@ void foodf_vh_stop(void)
  *   playfield RAM read/write handlers
  */
 
-int foodf_playfieldram_r (int offset)
+READ_HANDLER( foodf_playfieldram_r )
 {
 	return READ_WORD (&foodf_playfieldram[offset]);
 }
 
-void foodf_playfieldram_w (int offset, int data)
+WRITE_HANDLER( foodf_playfieldram_w )
 {
 	int oldword = READ_WORD (&foodf_playfieldram[offset]);
 	int newword = COMBINE_WORD (oldword, data);
@@ -134,7 +134,7 @@ void foodf_playfieldram_w (int offset, int data)
  *   palette RAM read/write handlers
  */
 
-void foodf_paletteram_w (int offset,int data)
+WRITE_HANDLER( foodf_paletteram_w )
 {
 	int oldword = READ_WORD(&paletteram[offset]);
 	int newword = COMBINE_WORD(oldword,data);

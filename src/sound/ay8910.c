@@ -23,10 +23,10 @@ struct AY8910
 {
 	int Channel;
 	int SampleRate;
-	int (*PortAread)(int offset);
-	int (*PortBread)(int offset);
-	void (*PortAwrite)(int offset,int data);
-	void (*PortBwrite)(int offset,int data);
+	mem_read_handler PortAread;
+	mem_read_handler PortBread;
+	mem_write_handler PortAwrite;
+	mem_write_handler PortBwrite;
 	int register_latch;
 	unsigned char Regs[16];
 	unsigned int UpdateStep;
@@ -277,23 +277,23 @@ int AY8910Read(int chip)
 
 
 /* AY8910 interface */
-int AY8910_read_port_0_r(int offset) { return AY8910Read(0); }
-int AY8910_read_port_1_r(int offset) { return AY8910Read(1); }
-int AY8910_read_port_2_r(int offset) { return AY8910Read(2); }
-int AY8910_read_port_3_r(int offset) { return AY8910Read(3); }
-int AY8910_read_port_4_r(int offset) { return AY8910Read(4); }
+READ_HANDLER( AY8910_read_port_0_r ) { return AY8910Read(0); }
+READ_HANDLER( AY8910_read_port_1_r ) { return AY8910Read(1); }
+READ_HANDLER( AY8910_read_port_2_r ) { return AY8910Read(2); }
+READ_HANDLER( AY8910_read_port_3_r ) { return AY8910Read(3); }
+READ_HANDLER( AY8910_read_port_4_r ) { return AY8910Read(4); }
 
-void AY8910_control_port_0_w(int offset,int data) { AY8910Write(0,0,data); }
-void AY8910_control_port_1_w(int offset,int data) { AY8910Write(1,0,data); }
-void AY8910_control_port_2_w(int offset,int data) { AY8910Write(2,0,data); }
-void AY8910_control_port_3_w(int offset,int data) { AY8910Write(3,0,data); }
-void AY8910_control_port_4_w(int offset,int data) { AY8910Write(4,0,data); }
+WRITE_HANDLER( AY8910_control_port_0_w ) { AY8910Write(0,0,data); }
+WRITE_HANDLER( AY8910_control_port_1_w ) { AY8910Write(1,0,data); }
+WRITE_HANDLER( AY8910_control_port_2_w ) { AY8910Write(2,0,data); }
+WRITE_HANDLER( AY8910_control_port_3_w ) { AY8910Write(3,0,data); }
+WRITE_HANDLER( AY8910_control_port_4_w ) { AY8910Write(4,0,data); }
 
-void AY8910_write_port_0_w(int offset,int data) { AY8910Write(0,1,data); }
-void AY8910_write_port_1_w(int offset,int data) { AY8910Write(1,1,data); }
-void AY8910_write_port_2_w(int offset,int data) { AY8910Write(2,1,data); }
-void AY8910_write_port_3_w(int offset,int data) { AY8910Write(3,1,data); }
-void AY8910_write_port_4_w(int offset,int data) { AY8910Write(4,1,data); }
+WRITE_HANDLER( AY8910_write_port_0_w ) { AY8910Write(0,1,data); }
+WRITE_HANDLER( AY8910_write_port_1_w ) { AY8910Write(1,1,data); }
+WRITE_HANDLER( AY8910_write_port_2_w ) { AY8910Write(2,1,data); }
+WRITE_HANDLER( AY8910_write_port_3_w ) { AY8910Write(3,1,data); }
+WRITE_HANDLER( AY8910_write_port_4_w ) { AY8910Write(4,1,data); }
 
 
 
@@ -634,8 +634,8 @@ void AY8910_reset(int chip)
 
 static int AY8910_init(const struct MachineSound *msound,int chip,
 		int clock,int volume,int sample_rate,
-		int (*portAread)(int offset),int (*portBread)(int offset),
-		void (*portAwrite)(int offset,int data),void (*portBwrite)(int offset,int data))
+		mem_read_handler portAread,mem_read_handler portBread,
+		mem_write_handler portAwrite,mem_write_handler portBwrite)
 {
 	int i;
 	struct AY8910 *PSG = &AYPSG[chip];

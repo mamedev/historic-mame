@@ -2,7 +2,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *background_layer,*foreground_layer,*text_layer;
+static struct tilemap *bg_layer,*fg_layer,*tx_layer;
 unsigned char *dynduke_back_data,*dynduke_fore_data,*dynduke_scroll_ram,*dynduke_control_ram;
 
 static int flipscreen,back_bankbase,fore_bankbase,back_palbase;
@@ -10,7 +10,7 @@ static int back_enable,fore_enable,sprite_enable;
 
 /******************************************************************************/
 
-void dynduke_paletteram_w(int offset, int data)
+WRITE_HANDLER( dynduke_paletteram_w )
 {
 	int r,g,b;
 
@@ -34,38 +34,37 @@ void dynduke_paletteram_w(int offset, int data)
 	}
 }
 
-int dynduke_background_r(int offset)
+READ_HANDLER( dynduke_background_r )
 {
 	return dynduke_back_data[offset];
 }
 
-int dynduke_foreground_r(int offset)
+READ_HANDLER( dynduke_foreground_r )
 {
 	return dynduke_fore_data[offset];
 }
 
-void dynduke_background_w(int offset,int data)
+WRITE_HANDLER( dynduke_background_w )
 {
 	dynduke_back_data[offset]=data;
-	tilemap_mark_tile_dirty( background_layer,(offset/2)/32,(offset/2)%32 );
+	tilemap_mark_tile_dirty(bg_layer,offset/2);
 }
 
-void dynduke_foreground_w(int offset,int data)
+WRITE_HANDLER( dynduke_foreground_w )
 {
 	dynduke_fore_data[offset]=data;
-	tilemap_mark_tile_dirty( foreground_layer,(offset/2)/32,(offset/2)%32 );
+	tilemap_mark_tile_dirty(fg_layer,offset/2);
 }
 
-void dynduke_text_w(int offset,int data)
+WRITE_HANDLER( dynduke_text_w )
 {
 	videoram[offset]=data;
-	tilemap_mark_tile_dirty( text_layer,(offset/2)%32,(offset/2)/32 );
+	tilemap_mark_tile_dirty(tx_layer,offset/2);
 }
 
-static void get_back_tile_info( int col, int row )
+static void get_bg_tile_info(int tile_index)
 {
-	int offs=(row*2) + (col*64);
-	int tile=dynduke_back_data[offs]+(dynduke_back_data[offs+1]<<8);
+	int tile=dynduke_back_data[2*tile_index]+(dynduke_back_data[2*tile_index+1]<<8);
 	int color=tile >> 12;
 
 	tile=tile&0xfff;
@@ -73,10 +72,9 @@ static void get_back_tile_info( int col, int row )
 	SET_TILE_INFO(1,tile+back_bankbase,color+back_palbase)
 }
 
-static void get_fore_tile_info( int col, int row )
+static void get_fg_tile_info(int tile_index)
 {
-	int offs=(row*2) + (col*64);
-	int tile=dynduke_fore_data[offs]+(dynduke_fore_data[offs+1]<<8);
+	int tile=dynduke_fore_data[2*tile_index]+(dynduke_fore_data[2*tile_index+1]<<8);
 	int color=tile >> 12;
 
 	tile=tile&0xfff;
@@ -84,54 +82,30 @@ static void get_fore_tile_info( int col, int row )
 	SET_TILE_INFO(2,tile+fore_bankbase,color)
 }
 
-static void get_text_tile_info( int col, int row )
+static void get_tx_tile_info(int tile_index)
 {
-	int offs=(col*2) + (row*64);
-	int tile=videoram[offs]+((videoram[offs+1]&0xc0)<<2);
-	int color=videoram[offs+1]&0xf;
+	int tile=videoram[2*tile_index]+((videoram[2*tile_index+1]&0xc0)<<2);
+	int color=videoram[2*tile_index+1]&0xf;
 
 	SET_TILE_INFO(0,tile,color)
 }
 
 int dynduke_vh_start(void)
 {
-	background_layer = tilemap_create(
-		get_back_tile_info,
-		TILEMAP_SPLIT,
-		16,16,
-		32,32
-	);
+	bg_layer = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_SPLIT,      16,16,32,32);
+	fg_layer = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,32,32);
+	tx_layer = tilemap_create(get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
 
-	foreground_layer = tilemap_create(
-		get_fore_tile_info,
-		TILEMAP_TRANSPARENT,
-		16,16,
-		32,32
-	);
+	bg_layer->transmask[0] = 0x0000ffff; /* 4bpp */
+	bg_layer->transmask[1] = 0xffff0000; /* The rest - 1bpp */
 
-	text_layer = tilemap_create(
-		get_text_tile_info,
-		TILEMAP_TRANSPARENT,
-		8,8,
-		32,32
-	);
-
-	background_layer->transmask[0] = 0x0000ffff; /* 4bpp */
-	background_layer->transmask[1] = 0xffff0000; /* The rest - 1bpp */
-	tilemap_set_scroll_rows(background_layer,1);
-	tilemap_set_scroll_cols(background_layer,1);
-	tilemap_set_scroll_rows(foreground_layer,1);
-	tilemap_set_scroll_cols(foreground_layer,1);
-	tilemap_set_scroll_rows(text_layer,0);
-	tilemap_set_scroll_cols(text_layer,0);
-
-	foreground_layer->transparent_pen = 15;
-	text_layer->transparent_pen = 15;
+	fg_layer->transparent_pen = 15;
+	tx_layer->transparent_pen = 15;
 
 	return 0;
 }
 
-void dynduke_gfxbank_w(int offset,int data)
+WRITE_HANDLER( dynduke_gfxbank_w )
 {
 	static int old_back,old_fore;
 
@@ -139,15 +113,15 @@ void dynduke_gfxbank_w(int offset,int data)
 	if (data&0x10) fore_bankbase=0x1000; else fore_bankbase=0;
 
 	if (back_bankbase!=old_back)
-		tilemap_mark_all_tiles_dirty(background_layer);
+		tilemap_mark_all_tiles_dirty(bg_layer);
 	if (fore_bankbase!=old_fore)
-		tilemap_mark_all_tiles_dirty(foreground_layer);
+		tilemap_mark_all_tiles_dirty(fg_layer);
 
 	old_back=back_bankbase;
 	old_fore=fore_bankbase;
 }
 
-void dynduke_control_w(int offset, int data)
+WRITE_HANDLER( dynduke_control_w )
 {
 	static int old_bpal;
 
@@ -161,7 +135,7 @@ void dynduke_control_w(int offset, int data)
 	if (data&0x8) sprite_enable=0; else sprite_enable=1;
 
 	if (back_palbase!=old_bpal)
-		tilemap_mark_all_tiles_dirty(background_layer);
+		tilemap_mark_all_tiles_dirty(bg_layer);
 
 	old_bpal=back_palbase;
 	flipscreen=data&0x40;
@@ -212,12 +186,12 @@ void dynduke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int colmask[32],i,pal_base;
 
 	/* Setup the tilemaps */
-	tilemap_set_scrolly( background_layer,0, ((dynduke_scroll_ram[0x02]&0x30)<<4)+((dynduke_scroll_ram[0x04]&0x7f)<<1)+((dynduke_scroll_ram[0x04]&0x80)>>7) );
-	tilemap_set_scrollx( background_layer,0, ((dynduke_scroll_ram[0x12]&0x30)<<4)+((dynduke_scroll_ram[0x14]&0x7f)<<1)+((dynduke_scroll_ram[0x14]&0x80)>>7) );
-	tilemap_set_scrolly( foreground_layer,0, ((dynduke_scroll_ram[0x22]&0x30)<<4)+((dynduke_scroll_ram[0x24]&0x7f)<<1)+((dynduke_scroll_ram[0x24]&0x80)>>7) );
-	tilemap_set_scrollx( foreground_layer,0, ((dynduke_scroll_ram[0x32]&0x30)<<4)+((dynduke_scroll_ram[0x34]&0x7f)<<1)+((dynduke_scroll_ram[0x34]&0x80)>>7) );
-	tilemap_set_enable( background_layer,back_enable);
-	tilemap_set_enable( foreground_layer,fore_enable);
+	tilemap_set_scrolly( bg_layer,0, ((dynduke_scroll_ram[0x02]&0x30)<<4)+((dynduke_scroll_ram[0x04]&0x7f)<<1)+((dynduke_scroll_ram[0x04]&0x80)>>7) );
+	tilemap_set_scrollx( bg_layer,0, ((dynduke_scroll_ram[0x12]&0x30)<<4)+((dynduke_scroll_ram[0x14]&0x7f)<<1)+((dynduke_scroll_ram[0x14]&0x80)>>7) );
+	tilemap_set_scrolly( fg_layer,0, ((dynduke_scroll_ram[0x22]&0x30)<<4)+((dynduke_scroll_ram[0x24]&0x7f)<<1)+((dynduke_scroll_ram[0x24]&0x80)>>7) );
+	tilemap_set_scrollx( fg_layer,0, ((dynduke_scroll_ram[0x32]&0x30)<<4)+((dynduke_scroll_ram[0x34]&0x7f)<<1)+((dynduke_scroll_ram[0x34]&0x80)>>7) );
+	tilemap_set_enable( bg_layer,back_enable);
+	tilemap_set_enable( fg_layer,fore_enable);
 	tilemap_update(ALL_TILEMAPS);
 
 	/* Build the dynamic palette */
@@ -248,15 +222,15 @@ void dynduke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_render(ALL_TILEMAPS);
 
 	if (back_enable)
-		tilemap_draw(bitmap,background_layer,TILEMAP_BACK);
+		tilemap_draw(bitmap,bg_layer,TILEMAP_BACK);
 	else
 		fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
 
 	draw_sprites(bitmap,0); /* Untested: does anything use it? Could be behind background */
 	draw_sprites(bitmap,1);
-	tilemap_draw(bitmap,background_layer,TILEMAP_FRONT);
+	tilemap_draw(bitmap,bg_layer,TILEMAP_FRONT);
 	draw_sprites(bitmap,2);
-	tilemap_draw(bitmap,foreground_layer,0);
+	tilemap_draw(bitmap,fg_layer,0);
 	draw_sprites(bitmap,3);
-	tilemap_draw(bitmap,text_layer,0);
+	tilemap_draw(bitmap,tx_layer,0);
 }

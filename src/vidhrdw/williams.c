@@ -277,7 +277,7 @@ void williams_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
  *
  *************************************/
 
-void williams_videoram_w(int offset, int data)
+WRITE_HANDLER( williams_videoram_w )
 {
 	/* only update if different */
 	if (williams_videoram[offset] != data)
@@ -289,7 +289,7 @@ void williams_videoram_w(int offset, int data)
 }
 
 
-int williams_video_counter_r(int offset)
+READ_HANDLER( williams_video_counter_r )
 {
 	return cpu_getscanline() & 0xfc;
 }
@@ -471,7 +471,7 @@ static void williams2_update_bg_color(unsigned int offset)
 }
 
 
-void williams2_fg_select_w(int offset, int data)
+WRITE_HANDLER( williams2_fg_select_w )
 {
 	unsigned int i, palindex;
 
@@ -487,7 +487,7 @@ void williams2_fg_select_w(int offset, int data)
 }
 
 
-void williams2_bg_select_w(int offset, int data)
+WRITE_HANDLER( williams2_bg_select_w )
 {
 	unsigned int i, palindex;
 
@@ -528,7 +528,7 @@ void williams2_bg_select_w(int offset, int data)
  *
  *************************************/
 
-void williams2_videoram_w(int offset, int data)
+WRITE_HANDLER( williams2_videoram_w )
 {
 	/* bank 3 doesn't touch the screen */
 	if ((williams2_bank & 0x03) == 0x03)
@@ -629,13 +629,13 @@ void blaster_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
  *
  *************************************/
 
-void blaster_remap_select_w(int offset, int data)
+WRITE_HANDLER( blaster_remap_select_w )
 {
 	blaster_remap = blaster_remap_lookup + data * 256;
 }
 
 
-void blaster_video_bits_w(int offset, int data)
+WRITE_HANDLER( blaster_video_bits_w )
 {
 	*blaster_video_bits = data;
 	blaster_erase_screen = data & 0x02;
@@ -707,7 +707,7 @@ void blaster_video_bits_w(int offset, int data)
  *
  *************************************/
 
-void williams_blitter_w(int offset, int data)
+WRITE_HANDLER( williams_blitter_w )
 {
 	int sstart, dstart, w, h, count;
 

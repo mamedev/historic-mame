@@ -7,25 +7,25 @@ unsigned char *exterm_master_speedup, *exterm_slave_speedup;
 static int aimpos1, aimpos2;
 
 
-void exterm_host_data_w(int offset, int data)
+WRITE_HANDLER( exterm_host_data_w )
 {
 	tms34010_host_w(1, offset / TOBYTE(0x00100000), data);
 }
 
 
-int exterm_host_data_r(int offset)
+READ_HANDLER( exterm_host_data_r )
 {
 	return tms34010_host_r(1, TMS34010_HOST_DATA);
 }
 
 
-int exterm_coderom_r(int offset)
+READ_HANDLER( exterm_coderom_r )
 {
     return READ_WORD(&exterm_code_rom[offset]);
 }
 
 
-int exterm_input_port_0_1_r(int offset)
+READ_HANDLER( exterm_input_port_0_1_r )
 {
 	int hi = input_port_1_r(offset);
 	if (!(hi & 2)) aimpos1++;
@@ -35,7 +35,7 @@ int exterm_input_port_0_1_r(int offset)
 	return ((hi & 0x80) << 8) | (aimpos1 << 8) | input_port_0_r(offset);
 }
 
-int exterm_input_port_2_3_r(int offset)
+READ_HANDLER( exterm_input_port_2_3_r )
 {
 	int hi = input_port_3_r(offset);
 	if (!(hi & 2)) aimpos2++;
@@ -45,7 +45,7 @@ int exterm_input_port_2_3_r(int offset)
 	return (aimpos2 << 8) | input_port_2_r(offset);
 }
 
-void exterm_output_port_0_w(int offset, int data)
+WRITE_HANDLER( exterm_output_port_0_w )
 {
 	/* All the outputs are activated on the rising edge */
 
@@ -76,7 +76,7 @@ void exterm_output_port_0_w(int offset, int data)
 }
 
 
-int exterm_master_speedup_r(int offset)
+READ_HANDLER( exterm_master_speedup_r )
 {
 	int value = READ_WORD(&exterm_master_speedup[offset]);
 
@@ -89,7 +89,7 @@ int exterm_master_speedup_r(int offset)
 	return value;
 }
 
-void exterm_slave_speedup_w(int offset, int data)
+WRITE_HANDLER( exterm_slave_speedup_w )
 {
 	/* Suspend cpu if it's waiting for an interrupt */
 	if (cpu_get_pc() == 0xfffff050)
@@ -100,7 +100,7 @@ void exterm_slave_speedup_w(int offset, int data)
 	WRITE_WORD(&exterm_slave_speedup[offset], data);
 }
 
-int exterm_sound_dac_speedup_r(int offset)
+READ_HANDLER( exterm_sound_dac_speedup_r )
 {
 	unsigned char *RAM = memory_region(REGION_CPU3);
 	int value = RAM[0x0007];
@@ -114,7 +114,7 @@ int exterm_sound_dac_speedup_r(int offset)
 	return value;
 }
 
-int exterm_sound_ym2151_speedup_r(int offset)
+READ_HANDLER( exterm_sound_ym2151_speedup_r )
 {
 	/* Doing this won't flash the LED, but we're not emulating that anyhow, so
 	   it doesn't matter */

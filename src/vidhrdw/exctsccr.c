@@ -11,7 +11,7 @@
 
 static int gfx_bank;
 
-void exctsccr_gfx_bank_w( int offset, int data ) {
+WRITE_HANDLER( exctsccr_gfx_bank_w ) {
 	gfx_bank = data & 1;
 }
 

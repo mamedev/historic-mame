@@ -69,8 +69,8 @@ Working RAM             FFD000-FFFFFF  R/W   D15-D0
 #include "vidhrdw/generic.h"
 
 
-void vindictr_playfieldram_w(int offset, int data);
-void vindictr_paletteram_w(int offset, int data);
+WRITE_HANDLER( vindictr_playfieldram_w );
+WRITE_HANDLER( vindictr_paletteram_w );
 
 int vindictr_vh_start(void);
 void vindictr_vh_stop(void);
@@ -88,15 +88,15 @@ void vindictr_scanline_update(int scanline);
 
 static UINT8 *shared_ram_4;
 
-static int shared_ram_1_r(int offset) { return READ_WORD(&atarigen_playfieldram[offset]); }
-static int shared_ram_2_r(int offset) { return READ_WORD(&atarigen_spriteram[offset]); }
-static int shared_ram_3_r(int offset) { return READ_WORD(&atarigen_alpharam[offset]); }
-static int shared_ram_4_r(int offset) { return READ_WORD(&shared_ram_4[offset]); }
+static READ_HANDLER( shared_ram_1_r ) { return READ_WORD(&atarigen_playfieldram[offset]); }
+static READ_HANDLER( shared_ram_2_r ) { return READ_WORD(&atarigen_spriteram[offset]); }
+static READ_HANDLER( shared_ram_3_r ) { return READ_WORD(&atarigen_alpharam[offset]); }
+static READ_HANDLER( shared_ram_4_r ) { return READ_WORD(&shared_ram_4[offset]); }
 
-static void shared_ram_1_w(int offset, int data) { COMBINE_WORD_MEM(&atarigen_playfieldram[offset], data); }
-static void shared_ram_2_w(int offset, int data) { COMBINE_WORD_MEM(&atarigen_spriteram[offset], data); }
-static void shared_ram_3_w(int offset, int data) { COMBINE_WORD_MEM(&atarigen_alpharam[offset], data); }
-static void shared_ram_4_w(int offset, int data) { COMBINE_WORD_MEM(&shared_ram_4[offset], data); }
+static WRITE_HANDLER( shared_ram_1_w ) { COMBINE_WORD_MEM(&atarigen_playfieldram[offset], data); }
+static WRITE_HANDLER( shared_ram_2_w ) { COMBINE_WORD_MEM(&atarigen_spriteram[offset], data); }
+static WRITE_HANDLER( shared_ram_3_w ) { COMBINE_WORD_MEM(&atarigen_alpharam[offset], data); }
+static WRITE_HANDLER( shared_ram_4_w ) { COMBINE_WORD_MEM(&shared_ram_4[offset], data); }
 
 
 
@@ -170,7 +170,7 @@ static int fake_inputs(int real_port, int fake_port)
 }
 
 
-static int special_input_r(int offset)
+static READ_HANDLER( special_input_r )
 {
 	int result = 0;
 

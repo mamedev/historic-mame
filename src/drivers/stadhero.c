@@ -17,16 +17,16 @@ void stadhero_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *stadhero_pf1_data,*stadhero_pf2_data;
 
-void stadhero_pf1_data_w(int offset,int data);
-int stadhero_pf1_data_r(int offset);
-void stadhero_pf2_control_0_w(int offset,int data);
-void stadhero_pf2_control_1_w(int offset,int data);
-void stadhero_pf2_data_w(int offset,int data);
-int stadhero_pf2_data_r(int offset);
+WRITE_HANDLER( stadhero_pf1_data_w );
+READ_HANDLER( stadhero_pf1_data_r );
+WRITE_HANDLER( stadhero_pf2_control_0_w );
+WRITE_HANDLER( stadhero_pf2_control_1_w );
+WRITE_HANDLER( stadhero_pf2_data_w );
+READ_HANDLER( stadhero_pf2_data_r );
 
 /******************************************************************************/
 
-static int stadhero_control_r(int offset)
+static READ_HANDLER( stadhero_control_r )
 {
 	switch (offset)
 	{
@@ -44,7 +44,7 @@ static int stadhero_control_r(int offset)
 	return 0xffff;
 }
 
-static void stadhero_control_w(int offset,int data)
+static WRITE_HANDLER( stadhero_control_w )
 {
 	switch (offset)
 	{
@@ -60,7 +60,7 @@ static void stadhero_control_w(int offset,int data)
 	}
 }
 
-static void spriteram_mirror(int offset, int data)
+static WRITE_HANDLER( spriteram_mirror_w )
 {
 	WRITE_WORD(&spriteram[offset],data);
 }
@@ -90,13 +90,13 @@ static struct MemoryWriteAddress stadhero_writemem[] =
 	{ 0x310000, 0x3107ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram },
 	{ 0xff8000, 0xffbfff, MWA_BANK1 },
 	{ 0xffc000, 0xffc7ff, MWA_BANK2, &spriteram },
-	{ 0xffc800, 0xffcfff, spriteram_mirror },
+	{ 0xffc800, 0xffcfff, spriteram_mirror_w },
 	{ -1 }  /* end of table */
 };
 
 /******************************************************************************/
 
-static void YM3812_w(int offset, int data)
+static WRITE_HANDLER( YM3812_w )
 {
 	switch (offset) {
 	case 0:
@@ -108,7 +108,7 @@ static void YM3812_w(int offset, int data)
 	}
 }
 
-static void YM2203_w(int offset, int data)
+static WRITE_HANDLER( YM2203_w )
 {
 	switch (offset) {
 	case 0:

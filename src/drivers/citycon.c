@@ -9,9 +9,9 @@
 
 extern unsigned char *citycon_scroll;
 extern unsigned char *citycon_charlookup;
-void citycon_charlookup_w(int offset,int data);
-void citycon_background_w(int offset,int data);
-int citycon_in_r(int offset);
+WRITE_HANDLER( citycon_charlookup_w );
+WRITE_HANDLER( citycon_background_w );
+READ_HANDLER( citycon_in_r );
 
 void citycon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int  citycon_vh_start(void);

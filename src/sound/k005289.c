@@ -204,37 +204,37 @@ static void k005289_recompute(void)
 	voice[1].wave = &sound_prom[32 * k005289_B_waveform + 0x100];
 }
 
-void k005289_control_A_w(int offset, int data)
+WRITE_HANDLER( k005289_control_A_w )
 {
 	k005289_A_volume=data&0xf;
 	k005289_A_waveform=data>>5;
 	k005289_recompute();
 }
 
-void k005289_control_B_w(int offset, int data)
+WRITE_HANDLER( k005289_control_B_w )
 {
 	k005289_B_volume=data&0xf;
 	k005289_B_waveform=data>>5;
 	k005289_recompute();
 }
 
-void k005289_pitch_A_w (int offset, int data)
+WRITE_HANDLER( k005289_pitch_A_w )
 {
 	k005289_A_latch = 0x1000 - offset;
 }
 
-void k005289_pitch_B_w (int offset, int data)
+WRITE_HANDLER( k005289_pitch_B_w )
 {
 	k005289_B_latch = 0x1000 - offset;
 }
 
-void k005289_keylatch_A_w (int offset, int data)
+WRITE_HANDLER( k005289_keylatch_A_w )
 {
 	k005289_A_frequency = k005289_A_latch;
 	k005289_recompute();
 }
 
-void k005289_keylatch_B_w (int offset, int data)
+WRITE_HANDLER( k005289_keylatch_B_w )
 {
 	k005289_B_frequency = k005289_B_latch;
 	k005289_recompute();

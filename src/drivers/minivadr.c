@@ -15,7 +15,7 @@ Japan). It has no sound.
 #include "cpu/z80/z80.h"
 
 
-void minivadr_videoram_w(int offset,int data);
+WRITE_HANDLER( minivadr_videoram_w );
 void minivadr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void minivadr_init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom);
 

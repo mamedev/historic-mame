@@ -26,9 +26,9 @@ D000      Paddle Position and Interrupt Reset
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern void circus_clown_x_w(int offset, int data);
-extern void circus_clown_y_w(int offset, int data);
-extern void circus_clown_z_w(int offset, int data);
+WRITE_HANDLER( circus_clown_x_w );
+WRITE_HANDLER( circus_clown_y_w );
+WRITE_HANDLER( circus_clown_z_w );
 
 extern int circus_vh_start(void);
 extern void circus_vh_stop(void);
@@ -41,7 +41,7 @@ extern int crash_interrupt(void);
 
 static int circus_interrupt;
 
-static int ripcord_IN2_r (int offset)
+static READ_HANDLER( ripcord_IN2_r )
 {
 	circus_interrupt ++;
 	if (errorlog) fprintf (errorlog, "circus_int: %02x\n", circus_interrupt);

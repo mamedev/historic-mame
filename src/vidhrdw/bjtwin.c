@@ -39,12 +39,12 @@ void bjtwin_vh_stop(void)
 }
 
 
-int bjtwin_txvideoram_r(int offset)
+READ_HANDLER( bjtwin_txvideoram_r )
 {
 	return READ_WORD(&bjtwin_txvideoram[offset]);
 }
 
-void bjtwin_txvideoram_w(int offset,int data)
+WRITE_HANDLER( bjtwin_txvideoram_w )
 {
 	int oldword = READ_WORD(&bjtwin_txvideoram[offset]);
 	int newword = COMBINE_WORD(oldword,data);
@@ -57,7 +57,7 @@ void bjtwin_txvideoram_w(int offset,int data)
 }
 
 
-void bjtwin_paletteram_w(int offset,int data)
+WRITE_HANDLER( bjtwin_paletteram_w )
 {
 	int r,g,b;
 	int oldword = READ_WORD(&paletteram[offset]);
@@ -78,7 +78,7 @@ void bjtwin_paletteram_w(int offset,int data)
 }
 
 
-void bjtwin_flipscreen_w(int offset,int data)
+WRITE_HANDLER( bjtwin_flipscreen_w )
 {
 	if ((data & 1) != flipscreen)
 	{

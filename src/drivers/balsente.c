@@ -155,16 +155,16 @@ int balsente_vh_start(void);
 void balsente_vh_stop(void);
 void balsente_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
-void balsente_videoram_w(int offset, int data);
-void balsente_paletteram_w(int offset, int data);
-void balsente_palette_select_w(int offset, int data);
+WRITE_HANDLER( balsente_videoram_w );
+WRITE_HANDLER( balsente_paletteram_w );
+WRITE_HANDLER( balsente_palette_select_w );
 
 
 /* local prototypes */
 static void poly17_init(void);
 static void counter_set_out(int which, int gate);
-static void m6850_w(int offset, int data);
-static void m6850_sound_w(int offset, int data);
+static WRITE_HANDLER( m6850_w );
+static WRITE_HANDLER( m6850_sound_w );
 static void counter_callback(int param);
 
 
@@ -418,13 +418,13 @@ static void noise_gen(int chip, int count, short *buffer)
  *
  *************************************/
 
-static void random_reset_w(int offset, int data)
+static WRITE_HANDLER( random_reset_w )
 {
 	/* reset random number generator */
 }
 
 
-static int random_num_r(int offset)
+static READ_HANDLER( random_num_r )
 {
 	unsigned int cc;
 
@@ -444,7 +444,7 @@ static int random_num_r(int offset)
  *
  *************************************/
 
-static void rombank_select_w(int offset, int data)
+static WRITE_HANDLER( rombank_select_w )
 {
 	int bank_offset = 0x6000 * ((data >> 4) & 7);
 
@@ -456,7 +456,7 @@ if (errorlog) fprintf(errorlog, "%04X:rombank_select_w(%02X)\n", cpu_getprevious
 }
 
 
-static void rombank2_select_w(int offset, int data)
+static WRITE_HANDLER( rombank2_select_w )
 {
 	/* Night Stocker and Name that Tune only so far.... */
 	int bank = data & 7;
@@ -489,7 +489,7 @@ static void rombank2_select_w(int offset, int data)
  *
  *************************************/
 
-static void misc_output_w(int offset, int data)
+static WRITE_HANDLER( misc_output_w )
 {
 	offset = (offset / 4) % 8;
 	data >>= 7;
@@ -606,7 +606,7 @@ static void m6850_update_io(void)
  *
  *************************************/
 
-static int m6850_r(int offset)
+static READ_HANDLER( m6850_r )
 {
 	int result;
 
@@ -651,7 +651,7 @@ static void m6850_w_callback(int param)
 }
 
 
-static void m6850_w(int offset, int data)
+static WRITE_HANDLER( m6850_w )
 {
 	/* control register is at offset 0 */
 	if (offset == 0)
@@ -675,7 +675,7 @@ static void m6850_w(int offset, int data)
  *
  *************************************/
 
-static int m6850_sound_r(int offset)
+static READ_HANDLER( m6850_sound_r )
 {
 	int result;
 
@@ -699,7 +699,7 @@ static int m6850_sound_r(int offset)
 }
 
 
-static void m6850_sound_w(int offset, int data)
+static WRITE_HANDLER( m6850_sound_w )
 {
 	/* control register is at offset 0 */
 	if (offset == 0)
@@ -765,14 +765,14 @@ static void adc_finished(int which)
 }
 
 
-static int adc_data_r(int offset)
+static READ_HANDLER( adc_data_r )
 {
 	/* just return the last value read */
 	return adc_value;
 }
 
 
-static void adc_select_w(int offset, int data)
+static WRITE_HANDLER( adc_select_w )
 {
 	/* set a timer to go off and read the value after 50us */
 	/* it's important that we do this for Mini Golf */
@@ -903,7 +903,7 @@ static void counter_callback(int param)
  *
  *************************************/
 
-static int counter_8253_r(int offset)
+static READ_HANDLER( counter_8253_r )
 {
 	int which;
 
@@ -937,7 +937,7 @@ static int counter_8253_r(int offset)
 }
 
 
-static void counter_8253_w(int offset, int data)
+static WRITE_HANDLER( counter_8253_w )
 {
 	int which;
 
@@ -1078,7 +1078,7 @@ static void update_counter_0_timer(void)
  *
  *************************************/
 
-static int counter_state_r(int offset)
+static READ_HANDLER( counter_state_r )
 {
 	/* bit D0 is the inverse of the flip-flop state */
 	int result = !counter_0_ff;
@@ -1090,7 +1090,7 @@ static int counter_state_r(int offset)
 }
 
 
-static void counter_control_w(int offset, int data)
+static WRITE_HANDLER( counter_control_w )
 {
 	UINT8 diff_counter_control = counter_control ^ data;
 
@@ -1142,13 +1142,13 @@ static void counter_control_w(int offset, int data)
  *
  *************************************/
 
-static int nstocker_port2_r(int offset)
+static READ_HANDLER( nstocker_port2_r )
 {
 	return (input_port_2_r(offset) & 0xf0) | nstocker_bits;
 }
 
 
-static void spiker_expand_w(int offset, int data)
+static WRITE_HANDLER( spiker_expand_w )
 {
 	/* offset 0 is the bit pattern */
 	if (offset == 0)
@@ -1164,7 +1164,7 @@ static void spiker_expand_w(int offset, int data)
 }
 
 
-static int spiker_expand_r(int offset)
+static READ_HANDLER( spiker_expand_r )
 {
 	UINT8 left, right;
 
@@ -1190,7 +1190,7 @@ static int spiker_expand_r(int offset)
  *
  *************************************/
 
-static void chip_select_w(int offset, int data)
+static WRITE_HANDLER( chip_select_w )
 {
 	static const UINT8 register_map[8] =
 	{
@@ -1247,7 +1247,7 @@ static void chip_select_w(int offset, int data)
 
 
 
-static void dac_data_w(int offset, int data)
+static WRITE_HANDLER( dac_data_w )
 {
 	/* LSB or MSB? */
 	if (offset & 1)
@@ -1265,7 +1265,7 @@ static void dac_data_w(int offset, int data)
 }
 
 
-static void register_addr_w(int offset, int data)
+static WRITE_HANDLER( register_addr_w )
 {
 	dac_register = data & 7;
 }

@@ -16,18 +16,16 @@ static int flipscreen;
 
 ***************************************************************************/
 
-static void get_bg_tile_info(int col,int row)
+static void get_bg_tile_info(int tile_index)
 {
-	int tile_index = 2*(64*row+col);
-	unsigned char attr = cbasebal_scrollram[tile_index+1];
-	SET_TILE_INFO(1,cbasebal_scrollram[tile_index] + ((attr & 0x07) << 8) + 0x800 * tilebank,
+	unsigned char attr = cbasebal_scrollram[2*tile_index+1];
+	SET_TILE_INFO(1,cbasebal_scrollram[2*tile_index] + ((attr & 0x07) << 8) + 0x800 * tilebank,
 			(attr & 0xf0) >> 4)
 	tile_info.flags = (attr & 0x08) ? TILE_FLIPX : 0;
 }
 
-static void get_fg_tile_info(int col,int row)
+static void get_fg_tile_info(int tile_index)
 {
-	int tile_index = 64*row+col;
 	unsigned char attr = cbasebal_textram[tile_index+0x800];
 	SET_TILE_INFO(0,cbasebal_textram[tile_index] + ((attr & 0xf0) << 4),attr & 0x07)
 	tile_info.flags = (attr & 0x08) ? TILE_FLIPX : 0;
@@ -57,19 +55,8 @@ int cbasebal_vh_start(void)
 	cbasebal_textram = malloc(0x1000);
 	cbasebal_scrollram = malloc(0x1000);
 
-	bg_tilemap = tilemap_create(
-		get_bg_tile_info,
-		TILEMAP_OPAQUE,
-		16,16,
-		64,32
-	);
-
-	fg_tilemap = tilemap_create(
-		get_fg_tile_info,
-		TILEMAP_TRANSPARENT,
-		8,8,
-		64,32
-	);
+	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,   16,16,64,32);
+	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 
 	if (!cbasebal_textram || !cbasebal_scrollram || !bg_tilemap || !fg_tilemap)
 	{
@@ -118,35 +105,35 @@ int cbasebal_vh_start(void)
 
 ***************************************************************************/
 
-void cbasebal_textram_w(int offset,int data)
+WRITE_HANDLER( cbasebal_textram_w )
 {
 	if (cbasebal_textram[offset] != data)
 	{
 		cbasebal_textram[offset] = data;
-		tilemap_mark_tile_dirty(fg_tilemap,(offset&0x7ff)%64,(offset&0x7ff)/64);
+		tilemap_mark_tile_dirty(fg_tilemap,offset & 0x7ff);
 	}
 }
 
-int cbasebal_textram_r(int offset)
+READ_HANDLER( cbasebal_textram_r )
 {
 	return cbasebal_textram[offset];
 }
 
-void cbasebal_scrollram_w(int offset,int data)
+WRITE_HANDLER( cbasebal_scrollram_w )
 {
 	if (cbasebal_scrollram[offset] != data)
 	{
 		cbasebal_scrollram[offset] = data;
-		tilemap_mark_tile_dirty(bg_tilemap,(offset/2)%64,(offset/2)/64);
+		tilemap_mark_tile_dirty(bg_tilemap,offset/2);
 	}
 }
 
-int cbasebal_scrollram_r(int offset)
+READ_HANDLER( cbasebal_scrollram_r )
 {
 	return cbasebal_scrollram[offset];
 }
 
-void cbasebal_gfxctrl_w(int offset,int data)
+WRITE_HANDLER( cbasebal_gfxctrl_w )
 {
 	/* bit 0 is unknown - toggles continuously */
 
@@ -176,7 +163,7 @@ void cbasebal_gfxctrl_w(int offset,int data)
 	/* other bits unknown, but used */
 }
 
-void cbasebal_scrollx_w(int offset,int data)
+WRITE_HANDLER( cbasebal_scrollx_w )
 {
 	static unsigned char scroll[2];
 
@@ -184,7 +171,7 @@ void cbasebal_scrollx_w(int offset,int data)
 	tilemap_set_scrollx(bg_tilemap,0,scroll[0] + 256 * scroll[1]);
 }
 
-void cbasebal_scrolly_w(int offset,int data)
+WRITE_HANDLER( cbasebal_scrolly_w )
 {
 	static unsigned char scroll[2];
 

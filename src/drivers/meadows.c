@@ -111,8 +111,8 @@ int deadeye_vh_start(void);
 int gypsyjug_vh_start(void);
 void meadows_vh_stop(void);
 void meadows_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void meadows_videoram_w(int offset, int data);
-void meadows_sprite_w(int offset, int data);
+WRITE_HANDLER( meadows_videoram_w );
+WRITE_HANDLER( meadows_sprite_w );
 
 int meadows_sh_start(const struct MachineSound *msound);
 void meadows_sh_stop(void);
@@ -154,7 +154,7 @@ static int cycles_at_vsync = 0;
 /* Hardware read/write from the main CPU                     */
 /*                                                           */
 /*************************************************************/
-int meadows_hardware_r(int offset)
+READ_HANDLER( meadows_hardware_r )
 {
 	switch( offset ) {
         case 0: /* buttons */
@@ -169,7 +169,7 @@ int meadows_hardware_r(int offset)
     return 0;
 }
 
-void meadows_hardware_w(int offset, int data)
+WRITE_HANDLER( meadows_hardware_w )
 {
 	switch( offset ) {
 		case 0:
@@ -221,7 +221,7 @@ static	int coin1_state = 0;
 /* Hardware read/write for the sound CPU                     */
 /*                                                           */
 /*************************************************************/
-static void sound_hardware_w(int offset, int data)
+static WRITE_HANDLER( sound_hardware_w )
 {
 	switch( offset & 3 ) {
 		case 0: /* DAC */
@@ -251,7 +251,7 @@ static void sound_hardware_w(int offset, int data)
 	}
 }
 
-static int sound_hardware_r(int offset)
+static READ_HANDLER( sound_hardware_r )
 {
 	int data = 0;
 

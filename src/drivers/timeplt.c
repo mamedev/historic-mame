@@ -48,10 +48,10 @@ extern unsigned char *timeplt_videoram,*timeplt_colorram;
 
 void init_timeplt(void);
 void init_psurge(void);
-int timeplt_scanline_r(int offset);
-void timeplt_videoram_w(int offset,int data);
-void timeplt_colorram_w(int offset,int data);
-void timeplt_flipscreen_w(int offset,int data);
+READ_HANDLER( timeplt_scanline_r );
+WRITE_HANDLER( timeplt_videoram_w );
+WRITE_HANDLER( timeplt_colorram_w );
+WRITE_HANDLER( timeplt_flipscreen_w );
 int  timeplt_vh_start(void);
 void timeplt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -60,16 +60,16 @@ void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern struct MemoryReadAddress timeplt_sound_readmem[];
 extern struct MemoryWriteAddress timeplt_sound_writemem[];
 extern struct AY8910interface timeplt_ay8910_interface;
-void timeplt_sh_irqtrigger_w(int offset,int data);
+WRITE_HANDLER( timeplt_sh_irqtrigger_w );
 
 
 
-static void timeplt_coin_counter_w(int offset, int data)
+static WRITE_HANDLER( timeplt_coin_counter_w )
 {
 	coin_counter_w(offset >> 1, data);
 }
 
-static int psurge_protection_r(int offset)
+static READ_HANDLER( psurge_protection_r )
 {
 	return 0x80;
 }

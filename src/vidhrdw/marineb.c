@@ -19,7 +19,7 @@ static int flipscreen_x;
 static int flipscreen_y;
 
 
-void marineb_palbank0_w(int offset, int data)
+WRITE_HANDLER( marineb_palbank0_w )
 {
 	if ((palbank & 1) != (data & 1))
 	{
@@ -28,7 +28,7 @@ void marineb_palbank0_w(int offset, int data)
 	}
 }
 
-void marineb_palbank1_w(int offset, int data)
+WRITE_HANDLER( marineb_palbank1_w )
 {
 	data <<= 1;
 	if ((palbank & 2) != (data & 2))
@@ -38,7 +38,7 @@ void marineb_palbank1_w(int offset, int data)
 	}
 }
 
-void marineb_flipscreen_x_w(int offset, int data)
+WRITE_HANDLER( marineb_flipscreen_x_w )
 {
 	if (flipscreen_x != (data ^ marineb_active_low_flipscreen))
 	{
@@ -47,7 +47,7 @@ void marineb_flipscreen_x_w(int offset, int data)
 	}
 }
 
-void marineb_flipscreen_y_w(int offset, int data)
+WRITE_HANDLER( marineb_flipscreen_y_w )
 {
 	if (flipscreen_y != (data ^ marineb_active_low_flipscreen))
 	{

@@ -3,12 +3,7 @@
 Dragon Buster (c) Namco 1984
 Sky Kid	(c) Namco 1985
 
-Driver by:
-	Manuel Abadia (manu@teleline.es)
-
-TO DO:
-	- Background Layer colors are wrong
-	- Cocktail Mode
+Driver by Manuel Abadia <manu@teleline.es>
 
 ***************************************************************************/
 
@@ -18,21 +13,18 @@ TO DO:
 #include "cpu/m6809/m6809.h"
 
 static unsigned char *sharedram;
-extern unsigned char *skykid_textram, *spriteram, *drgnbstr_videoram;
+extern unsigned char *skykid_textram, *spriteram, *skykid_videoram;
 
 /* from vidhrdw/skykid.c */
 int skykid_vh_start( void );
-int drgnbstr_vh_start( void );
-void skykid_vh_stop( void );
-int skykid_videoram_r( int offset );
-void skykid_videoram_w( int offset, int data );
-void skykid_scroll_x_w( int offset, int data );
-void skykid_scroll_y_w( int offset, int data );
+READ_HANDLER( skykid_videoram_r );
+WRITE_HANDLER( skykid_videoram_w );
+WRITE_HANDLER( skykid_scroll_x_w );
+WRITE_HANDLER( skykid_scroll_y_w );
+WRITE_HANDLER( skykid_flipscreen_w );
 void skykid_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh );
 void drgnbstr_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh );
 void skykid_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-
-
 
 
 static int irq_disabled = 1;
@@ -46,21 +38,27 @@ static int skykid_interrupt( void )
 		return ignore_interrupt();
 }
 
-static void skykid_irq_ctrl_w( int offset, int data )
+static WRITE_HANDLER( skykid_irq_ctrl_w )
 {
 	irq_disabled = offset;
 }
 
-static void inputport_select_w( int offset, int data )
+static WRITE_HANDLER( inputport_select_w )
 {
-	if ((data & 0xf0) == 0x60)
+	if ((data & 0xe0) == 0x60)
 		inputport_selected = data & 0x07;
+	else if ((data & 0xe0) == 0xc0)
+	{
+		coin_lockout_global_w(0,~data & 1);
+		coin_counter_w(0,data & 2);
+		coin_counter_w(1,data & 4);
+	}
 }
 
 #define reverse_bitstrm(data) ((data & 0x01) << 4) | ((data & 0x02) << 2) | (data & 0x04) \
 							| ((data & 0x08) >> 2) | ((data & 0x10) >> 4)
 
-static int inputport_r (int offset)
+static READ_HANDLER( inputport_r )
 {
 	int data = 0;
 
@@ -86,13 +84,13 @@ static int inputport_r (int offset)
 	return data;
 }
 
-static void skykid_lamps_w(int offset,int data)
+static WRITE_HANDLER( skykid_lamps_w )
 {
 	osd_led_w(0, (data & 0x08) >> 3);
 	osd_led_w(1, (data & 0x10) >> 4);
 }
 
-static void skykid_halt_mcu_w( int offset, int data )
+static WRITE_HANDLER( skykid_halt_mcu_w )
 {
 	if (offset == 0){
 		cpu_set_reset_line(1,PULSE_LINE);
@@ -103,16 +101,16 @@ static void skykid_halt_mcu_w( int offset, int data )
 	}
 }
 
-int skykid_sharedram_r( int offset )
+READ_HANDLER( skykid_sharedram_r )
 {
 	return sharedram[offset];
 }
-void skykid_sharedram_w( int offset, int val )
+WRITE_HANDLER( skykid_sharedram_w )
 {
-	sharedram[offset] = val;
+	sharedram[offset] = data;
 }
 
-void skykid_bankswitch_w(int offset,int data)
+WRITE_HANDLER( skykid_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -138,8 +136,8 @@ static struct MemoryReadAddress skykid_readmem[] =
 static struct MemoryWriteAddress skykid_writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM },				/* banked ROM */
-	{ 0x2000, 0x2fff, skykid_videoram_w, &drgnbstr_videoram },/* Video RAM (background) */
-	{ 0x4000, 0x47ff, MWA_RAM, &skykid_textram },	/* video RAM (text layer) */
+	{ 0x2000, 0x2fff, skykid_videoram_w, &skykid_videoram },/* Video RAM (background) */
+	{ 0x4000, 0x47ff, MWA_RAM, &skykid_textram },/* video RAM (text layer) */
 	{ 0x4800, 0x5fff, MWA_RAM },				/* RAM + Sprite RAM */
 	{ 0x6000, 0x60ff, skykid_scroll_y_w },		/* Y scroll register map */
 	{ 0x6200, 0x63ff, skykid_scroll_x_w },		/* X scroll register map */
@@ -148,7 +146,7 @@ static struct MemoryWriteAddress skykid_writemem[] =
 	{ 0x7000, 0x7800, skykid_irq_ctrl_w },		/* IRQ control */
 	{ 0x8000, 0x8800, skykid_halt_mcu_w },		/* MCU control */
 	{ 0x9000, 0x9800, skykid_bankswitch_w },	/* Bankswitch control */
-	{ 0xa000, 0xa001, MWA_NOP },				/* ??? */
+	{ 0xa000, 0xa001, skykid_flipscreen_w },	/* flip screen */
 	{ 0x8000, 0xffff, MWA_ROM },				/* ROM */
 	{ -1 }
 };
@@ -238,9 +236,9 @@ INPUT_PORTS_START( skykid )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
 	PORT_START	/* DSW C */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )
@@ -254,7 +252,7 @@ INPUT_PORTS_START( skykid )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* IN 0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START3 )	/* service */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
@@ -345,7 +343,7 @@ INPUT_PORTS_START( drgnbstr )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* IN 0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START3 )	/* service */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
@@ -500,48 +498,6 @@ static struct MachineDriver machine_driver_skykid =
 	}
 };
 
-static struct MachineDriver machine_driver_drgnbstr =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			49152000/32,	/* ??? */
-			skykid_readmem,skykid_writemem,0,0,
-			skykid_interrupt,1
-		},
-		{
-			CPU_HD63701,	/* or compatible 6808 with extra instructions */
-			49152000/32,	/* ??? */
-			mcu_readmem,mcu_writemem,mcu_readport,mcu_writeport,
-			interrupt,1
-		}
-	},
-	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,	/* we need heavy synch */
-	0,
-
-	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	256, 64*4+128*4+64*8,
-	skykid_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	drgnbstr_vh_start,
-	0,
-	drgnbstr_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		}
-	}
-};
 
 ROM_START( skykid )
 	ROM_REGION( 0x14000, REGION_CPU1 )	/* 6809 code */
@@ -606,5 +562,5 @@ ROM_END
 
 
 
-GAMEX( 1985, skykid,   0, skykid,   skykid,   0, ROT0, "Namco", "Sky Kid", GAME_NO_COCKTAIL )
-GAMEX( 1984, drgnbstr, 0, drgnbstr, drgnbstr, 0, ROT0, "Namco", "Dragon Buster", GAME_NO_COCKTAIL )
+GAME( 1985, skykid,   0, skykid, skykid,   0, ROT0, "Namco", "Sky Kid" )
+GAME( 1984, drgnbstr, 0, skykid, drgnbstr, 0, ROT0, "Namco", "Dragon Buster" )

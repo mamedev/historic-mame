@@ -25,12 +25,12 @@ SOUND : (none)
 #include "cpu/z80/z80.h"
 
 
-void dotrikun_videoram_w(int offset,int data);
+WRITE_HANDLER( dotrikun_videoram_w );
 void dotrikun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int dotrikun_vh_start(void);
 void dotrikun_vh_stop(void);
 
-void dotrikun_color_w(int offset, int data);
+WRITE_HANDLER( dotrikun_color_w );
 
 
 static struct MemoryReadAddress readmem[] =

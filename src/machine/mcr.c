@@ -38,8 +38,8 @@ UINT16 mcr_hiscore_length;
 const UINT8 *mcr_hiscore_init;
 UINT16 mcr_hiscore_init_length;
 
-int (*mcr_port04_r[5])(int offset);
-void (*mcr_port47_w[4])(int offset, int data);
+mem_read_handler mcr_port04_r[5];
+mem_write_handler mcr_port47_w[4];
 UINT8 mcr_cocktail_flip;
 
 
@@ -89,9 +89,9 @@ static void subtract_from_counter(int counter, int count);
 static void mcr68_493_callback(int param);
 static void zwackery_493_callback(int param);
 
-static void zwackery_pia_2_w(int offset, int data);
-static void zwackery_pia_3_w(int offset, int data);
-static void zwackery_ca2_w(int offset, int data);
+static WRITE_HANDLER( zwackery_pia_2_w );
+static WRITE_HANDLER( zwackery_pia_3_w );
+static WRITE_HANDLER( zwackery_ca2_w );
 static void zwackery_pia_irq(int state);
 
 static void reload_count(int counter);
@@ -104,7 +104,7 @@ static void reload_count(int counter);
  *
  *************************************/
 
-extern int zwackery_port_2_r(int offset);
+READ_HANDLER( zwackery_port_2_r );
 
 static struct pia6821_interface zwackery_pia_2_intf =
 {
@@ -329,24 +329,24 @@ static void mcr68_493_callback(int param)
  *
  *************************************/
 
-void mcr_dummy_w(int offset, int data)
+WRITE_HANDLER( mcr_dummy_w )
 {
 }
 
 
-void mcr_port_01_w(int offset, int data)
+WRITE_HANDLER( mcr_port_01_w )
 {
 	mcr_cocktail_flip = (data >> 6) & 1;
 }
 
 
-void mcr_port_47_dispatch_w(int offset, int data)
+WRITE_HANDLER( mcr_port_47_dispatch_w )
 {
 	(*mcr_port47_w[offset])(offset, data);
 }
 
 
-void mcr_scroll_value_w(int offset, int data)
+WRITE_HANDLER( mcr_scroll_value_w )
 {
 	switch (offset)
 	{
@@ -376,7 +376,7 @@ void mcr_scroll_value_w(int offset, int data)
  *
  *************************************/
 
-int mcr_port_04_dispatch_r(int offset)
+READ_HANDLER( mcr_port_04_dispatch_r )
 {
 	return (*mcr_port04_r[offset])(offset);
 }
@@ -414,7 +414,7 @@ void mcr_nvram_handler(void *file,int read_or_write)
  *
  *************************************/
 
-void zwackery_pia_2_w(int offset, int data)
+WRITE_HANDLER( zwackery_pia_2_w )
 {
 	/* bit 7 is the watchdog */
 	if (!(data & 0x80)) watchdog_reset_w(offset, data);
@@ -425,13 +425,13 @@ void zwackery_pia_2_w(int offset, int data)
 }
 
 
-void zwackery_pia_3_w(int offset, int data)
+WRITE_HANDLER( zwackery_pia_3_w )
 {
 	zwackery_sound_data = (data >> 4) & 0x0f;
 }
 
 
-void zwackery_ca2_w(int offset, int data)
+WRITE_HANDLER( zwackery_ca2_w )
 {
 	csdeluxe_data_w(offset, (data << 4) | zwackery_sound_data);
 }
@@ -730,27 +730,27 @@ static int mcr68_6840_r_common(int offset)
 }
 
 
-void mcr68_6840_upper_w(int offset, int data)
+WRITE_HANDLER( mcr68_6840_upper_w )
 {
 	if (!(data & 0xff000000))
 		mcr68_6840_w_common(offset / 2, (data >> 8) & 0xff);
 }
 
 
-void mcr68_6840_lower_w(int offset, int data)
+WRITE_HANDLER( mcr68_6840_lower_w )
 {
 	if (!(data & 0x00ff0000))
 		mcr68_6840_w_common(offset / 2, data & 0xff);
 }
 
 
-int mcr68_6840_upper_r(int offset)
+READ_HANDLER( mcr68_6840_upper_r )
 {
 	return (mcr68_6840_r_common(offset / 2) << 8) | 0x00ff;
 }
 
 
-int mcr68_6840_lower_r(int offset)
+READ_HANDLER( mcr68_6840_lower_r )
 {
 	return mcr68_6840_r_common(offset / 2) | 0xff00;
 }

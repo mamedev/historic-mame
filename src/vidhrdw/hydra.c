@@ -216,7 +216,7 @@ void hydra_vh_stop(void)
  *
  *************************************/
 
-void hydra_playfieldram_w(int offset, int data)
+WRITE_HANDLER( hydra_playfieldram_w )
 {
 	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -236,7 +236,7 @@ void hydra_playfieldram_w(int offset, int data)
  *
  *************************************/
 
-void hydra_mo_control_w(int offset, int data)
+WRITE_HANDLER( hydra_mo_control_w )
 {
 	if (errorlog) fprintf(errorlog, "MOCONT = %d (scan = %d)\n", data, cpu_getscanline());
 

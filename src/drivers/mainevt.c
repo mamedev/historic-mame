@@ -8,10 +8,6 @@ Emulation by Bryan McPhail, mish@tendril.co.uk
 Notes:
 * Schematics show a palette/work RAM bank selector, but this doesn't seem
   to be used?
-* Sprite priorities are not correct (ropes appear behind fighters).
-  Sprite/sprite priorities have to be orthogonal to sprite/tile priorities
-  for this to work correctly.
-  This is fixed with a kludge in mainevt_sprite_callback().
 
 ***************************************************************************/
 
@@ -38,7 +34,7 @@ static int mainevt_interrupt(void)
 
 static int nmi_enable;
 
-static void dv_nmienable_w(int offset,int data)
+static WRITE_HANDLER( dv_nmienable_w )
 {
 	nmi_enable = data;
 }
@@ -56,7 +52,7 @@ static int zero_ret(int offset)
 }
 
 
-void mainevt_bankswitch_w(int offset, int data)
+WRITE_HANDLER( mainevt_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
@@ -76,7 +72,7 @@ void mainevt_bankswitch_w(int offset, int data)
 	/* other bits unused */
 }
 
-void mainevt_coin_w(int offset,int data)
+WRITE_HANDLER( mainevt_coin_w )
 {
 	coin_counter_w(0,data & 0x10);
 	coin_counter_w(1,data & 0x20);
@@ -86,12 +82,12 @@ void mainevt_coin_w(int offset,int data)
 	osd_led_w(3,data >> 3);
 }
 
-void mainevt_sh_irqtrigger_w(int offset,int data)
+WRITE_HANDLER( mainevt_sh_irqtrigger_w )
 {
 	cpu_cause_interrupt(1,0xff);
 }
 
-void mainevt_sh_irqcontrol_w(int offset,int data)
+WRITE_HANDLER( mainevt_sh_irqcontrol_w )
 {
  	/* I think bit 1 resets the UPD7795C sound chip */
  	if ((data & 0x02) == 0)
@@ -106,12 +102,12 @@ void mainevt_sh_irqcontrol_w(int offset,int data)
 	interrupt_enable_w(0,data & 4);
 }
 
-void devstor_sh_irqcontrol_w(int offset,int data)
+WRITE_HANDLER( devstor_sh_irqcontrol_w )
 {
 interrupt_enable_w(0,data & 4);
 }
 
-void mainevt_sh_bankswitch_w(int offset,int data)
+WRITE_HANDLER( mainevt_sh_bankswitch_w )
 {
 	unsigned char *src,*dest;
 	unsigned char *RAM = memory_region(REGION_SOUND1);
@@ -130,7 +126,7 @@ void mainevt_sh_bankswitch_w(int offset,int data)
 	memcpy(dest,&src[((data >> 4) & 0x03) * 0x20000],0x20000);
 }
 
-void dv_sh_bankswitch_w(int offset,int data)
+WRITE_HANDLER( dv_sh_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_SOUND1);
 	int bank_A,bank_B;
@@ -218,7 +214,7 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x8000, 0x83ff, MRA_RAM },
 	{ 0xa000, 0xa000, soundlatch_r },
 	{ 0xb000, 0xb00d, K007232_read_port_0_r },
-	{ 0xd000, 0xd000, UPD7759_busy_r },
+	{ 0xd000, 0xd000, UPD7759_0_busy_r },
 	{ -1 }	/* end of table */
 };
 
@@ -227,7 +223,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x83ff, MWA_RAM },
 	{ 0xb000, 0xb00d, K007232_write_port_0_w },
-	{ 0x9000, 0x9000, UPD7759_message_w },
+	{ 0x9000, 0x9000, UPD7759_0_message_w },
 	{ 0xe000, 0xe000, mainevt_sh_irqcontrol_w },
 	{ 0xf000, 0xf000, mainevt_sh_bankswitch_w },
 	{ -1 }	/* end of table */

@@ -82,15 +82,15 @@ static void z80_interrupt(int scanline)
 	timer_set(cpu_getscanlinetime(scanline), scanline, z80_interrupt);
 }
 
-void polepos_z80_irq_enable_w(int offs, int data)
+WRITE_HANDLER( polepos_z80_irq_enable_w )
 {
 	z80_irq_enabled = data & 1;
 	if ((data & 1) == 0) cpu_set_irq_line(0, 0, CLEAR_LINE);
 }
 
-void polepos_z8002_nvi_enable_w(int offs, int data)
+WRITE_HANDLER( polepos_z8002_nvi_enable_w )
 {
-	int which = (offs / 2) + 1;
+	int which = (offset / 2) + 1;
 
 	if (which == cpu_getactivecpu())
 	{
@@ -119,12 +119,12 @@ int polepos_z8002_2_interrupt(void)
 	return ignore_interrupt();
 }
 
-void polepos_z8002_enable_w(int offs, int data)
+WRITE_HANDLER( polepos_z8002_enable_w )
 {
 	if (data & 1)
-		cpu_set_reset_line(offs + 1, CLEAR_LINE);
+		cpu_set_reset_line(offset + 1, CLEAR_LINE);
 	else
-		cpu_set_reset_line(offs + 1, ASSERT_LINE);
+		cpu_set_reset_line(offset + 1, ASSERT_LINE);
 }
 
 
@@ -132,12 +132,12 @@ void polepos_z8002_enable_w(int offs, int data)
 /* I/O and ADC handling                                                              */
 /*************************************************************************************/
 
-void polepos_adc_select_w(int offs, int data)
+WRITE_HANDLER( polepos_adc_select_w )
 {
 	adc_input = data;
 }
 
-int polepos_adc_r(int offs)
+READ_HANDLER( polepos_adc_r )
 {
 	int ret = 0;
 
@@ -159,7 +159,7 @@ int polepos_adc_r(int offs)
 	return ret;
 }
 
-int polepos_io_r(int offs)
+READ_HANDLER( polepos_io_r )
 {
 	int ret = 0xff;
 
@@ -176,7 +176,7 @@ int polepos_io_r(int offs)
 /* Pole Position II protection                                                       */
 /*************************************************************************************/
 
-int polepos2_ic25_r(int offset)
+READ_HANDLER( polepos2_ic25_r )
 {
 	int result;
 
@@ -204,7 +204,7 @@ int polepos2_ic25_r(int offset)
 /* 4 bit cpu emulation                                                               */
 /*************************************************************************************/
 
-void polepos_mcu_enable_w(int offs, int data)
+WRITE_HANDLER( polepos_mcu_enable_w )
 {
 	polepos_mcu.enabled = data & 1;
 
@@ -224,7 +224,7 @@ static void polepos_mcu_callback(int param)
 	cpu_cause_interrupt(0, Z80_NMI_INT);
 }
 
-int polepos_mcu_control_r(int offs)
+READ_HANDLER( polepos_mcu_control_r )
 {
 	if (polepos_mcu.enabled)
 		return polepos_mcu.status;
@@ -232,9 +232,9 @@ int polepos_mcu_control_r(int offs)
 	return 0x00;
 }
 
-void polepos_mcu_control_w(int offs, int data)
+WRITE_HANDLER( polepos_mcu_control_w )
 {
-	LOG((errorlog, "polepos_mcu_control_w: %d, $%02x\n", offs, data));
+	LOG((errorlog, "polepos_mcu_control_w: %d, $%02x\n", offset, data));
 
     if (polepos_mcu.enabled)
     {
@@ -259,16 +259,16 @@ void polepos_mcu_control_w(int offs, int data)
 	}
 }
 
-int polepos_mcu_data_r(int offs)
+READ_HANDLER( polepos_mcu_data_r )
 {
 	if (polepos_mcu.enabled)
 	{
-		LOG((errorlog, "MCU read: PC = %04x, transfer mode = %02x, offs = %02x\n", cpu_get_pc(), polepos_mcu.transfer_id & 0xff, offs ));
+		LOG((errorlog, "MCU read: PC = %04x, transfer mode = %02x, offset = %02x\n", cpu_get_pc(), polepos_mcu.transfer_id & 0xff, offset ));
 
 		switch(polepos_mcu.transfer_id)
 		{
 			case 0x71: /* 3 bytes */
-				switch (offs)
+				switch (offset)
 				{
 					case 0x00:
 						if ( polepos_mcu.mode == 0 )
@@ -322,7 +322,7 @@ int polepos_mcu_data_r(int offs)
 				break;
 
 			case 0x72: /* 8 bytes */
-				switch (offs)
+				switch (offset)
 				{
 					case 0x00: /* Steering */
 						return readinputport(5);
@@ -355,14 +355,14 @@ int polepos_mcu_data_r(int offs)
 	return 0xff; /* pull up */
 }
 
-void polepos_mcu_data_w(int offs, int data)
+WRITE_HANDLER( polepos_mcu_data_w )
 {
 	if (polepos_mcu.enabled)
 	{
-		LOG((errorlog, "MCU write: PC = %04x, transfer mode = %02x, offs = %02x, data = %02x\n", cpu_get_pc(), polepos_mcu.transfer_id & 0xff, offs, data ));
+		LOG((errorlog, "MCU write: PC = %04x, transfer mode = %02x, offset = %02x, data = %02x\n", cpu_get_pc(), polepos_mcu.transfer_id & 0xff, offset, data ));
 
 		if ( polepos_mcu.transfer_id == 0xa1 ) { /* setup coins/credits, etc ( 8 bytes ) */
-			switch( offs ) {
+			switch( offset ) {
 				case 1:
 					polepos_mcu.coin1_coinpercred = data;
 					break;
@@ -379,7 +379,7 @@ void polepos_mcu_data_w(int offs, int data)
 					polepos_mcu.coin2_credpercoin = data;
 					break;
 
-				/* NOTE: I still have no clue what offs 0, 5, 6 & 7 do */
+				/* NOTE: I still have no clue what offset 0, 5, 6 & 7 do */
 			}
 		}
 
@@ -388,7 +388,7 @@ void polepos_mcu_data_w(int offs, int data)
 		}
 
 		if ( polepos_mcu.transfer_id == 0x84 ) { /* play sample */
-			if ( offs == 0 ) {
+			if ( offset == 0 ) {
 				switch( data ) {
 					case 0x01:
 						polepos_sample_play( 0 );
@@ -411,7 +411,7 @@ void polepos_mcu_data_w(int offs, int data)
 		}
 
 		if ( polepos_mcu.transfer_id == 0x88 ) { /* play screech/explosion */
-			if ( offs == 0 ) {
+			if ( offset == 0 ) {
 				/* 0x40 = Start Explosion sample */
 				/* 0x20 = ???? */
 				/* 0x7n = Screech sound. n = pitch (if 0 then no sound) */
@@ -439,7 +439,7 @@ void polepos_mcu_data_w(int offs, int data)
 	}
 }
 
-void polepos_start_w(int offs, int data)
+WRITE_HANDLER( polepos_start_w )
 {
 	static int last_start = 0;
 

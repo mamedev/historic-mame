@@ -16,7 +16,7 @@
 static int flipscreen;
 
 
-void skychut_vh_flipscreen_w (int offset,int data)
+WRITE_HANDLER( skychut_vh_flipscreen_w )
 {
 /*	if (flipscreen != (data & 0x8f))
 	{
@@ -27,7 +27,7 @@ void skychut_vh_flipscreen_w (int offset,int data)
 }
 
 
-void skychut_colorram_w(int offset,int data)
+WRITE_HANDLER( skychut_colorram_w )
 {
 	if (colorram[offset] != data)
 	{

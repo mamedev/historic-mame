@@ -82,13 +82,13 @@ extern unsigned char *senjyo_scrollx3,*senjyo_scrolly3;
 extern unsigned char *senjyo_fgvideoram,*senjyo_fgcolorram;
 extern unsigned char *senjyo_bg1videoram,*senjyo_bg2videoram,*senjyo_bg3videoram;
 extern unsigned char *senjyo_radarram;
-void senjyo_fgvideoram_w(int offset,int data);
-void senjyo_fgcolorram_w(int offset,int data);
-void senjyo_bg1videoram_w(int offset,int data);
-void senjyo_bg2videoram_w(int offset,int data);
-void senjyo_bg3videoram_w(int offset,int data);
-void senjyo_bgstripes_w(int offset,int data);
-void senjyo_flipscreen_w(int offset,int data);
+WRITE_HANDLER( senjyo_fgvideoram_w );
+WRITE_HANDLER( senjyo_fgcolorram_w );
+WRITE_HANDLER( senjyo_bg1videoram_w );
+WRITE_HANDLER( senjyo_bg2videoram_w );
+WRITE_HANDLER( senjyo_bg3videoram_w );
+WRITE_HANDLER( senjyo_bgstripes_w );
+WRITE_HANDLER( senjyo_flipscreen_w );
 
 void init_starforc(void);
 void init_starfore(void);
@@ -102,15 +102,15 @@ int senjyo_sh_start(const struct MachineSound *msound);
 void senjyo_sh_stop(void);
 void senjyo_sh_update(void);
 
-void senjyo_sh_0_w( int offset , int data );
-void senjyo_sh_1_w( int offset , int data );
-void senjyo_sh_2_w( int offset , int data );
+WRITE_HANDLER( senjyo_sh_0_w );
+WRITE_HANDLER( senjyo_sh_1_w );
+WRITE_HANDLER( senjyo_sh_2_w );
 
-void starforc_pio_w( int offset , int data );
-int  starforc_pio_r( int offset );
+WRITE_HANDLER( starforc_pio_w );
+READ_HANDLER( starforc_pio_r );
 
 #if 1
-void senjyo_volume_w( int offset , int data );
+WRITE_HANDLER( senjyo_volume_w );
 #endif
 
 

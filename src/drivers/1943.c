@@ -13,8 +13,8 @@ TODO: 1943 is almost identical to GunSmoke (one more scrolling playfield). We
 extern unsigned char *c1943_scrollx;
 extern unsigned char *c1943_scrolly;
 extern unsigned char *c1943_bgscrolly;
-void c1943_c804_w(int offset,int data);	/* in vidhrdw/c1943.c */
-void c1943_d806_w(int offset,int data);	/* in vidhrdw/c1943.c */
+WRITE_HANDLER( c1943_c804_w );	/* in vidhrdw/c1943.c */
+WRITE_HANDLER( c1943_d806_w );	/* in vidhrdw/c1943.c */
 void c1943_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void c1943_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int c1943_vh_start(void);
@@ -24,7 +24,7 @@ void c1943_vh_stop(void);
 
 /* this is a protection check. The game crashes (thru a jump to 0x8000) */
 /* if a read from this address doesn't return the value it expects. */
-static int c1943_protection_r(int offset)
+static READ_HANDLER( c1943_protection_r )
 {
 	int data = cpu_get_reg(Z80_BC) >> 8;
 	if (errorlog) fprintf(errorlog,"protection read, PC: %04x Result:%02x\n",cpu_get_pc(),data);

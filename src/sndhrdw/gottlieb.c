@@ -4,7 +4,7 @@
 
 
 
-void gottlieb_sh_w(int offset,int data)
+WRITE_HANDLER( gottlieb_sh_w )
 {
 	static int score_sample=7;
 	static int random_offset=0;
@@ -116,7 +116,7 @@ static const char *PhonemeTable[65] =
 };
 
 
-void gottlieb_speech_w(int offset, int data)
+WRITE_HANDLER( gottlieb_speech_w )
 {
 	static int queue[100],pos;
 
@@ -152,7 +152,7 @@ if (errorlog) fprintf(errorlog,"Votrax: intonation %d, phoneme %02x %s\n",data >
 	timer_set(TIME_IN_USEC(50),0,gottlieb_nmi_generate);
 }
 
-void gottlieb_speech_clock_DAC_w(int offset, int data)
+WRITE_HANDLER( gottlieb_speech_clock_DAC_w )
 {}
 
 
@@ -164,12 +164,12 @@ void gottlieb_speech_clock_DAC_w(int offset, int data)
 
 unsigned char *riot_ram;
 
-int riot_ram_r(int offset)
+READ_HANDLER( riot_ram_r )
 {
     return riot_ram[offset&0x7f];
 }
 
-void riot_ram_w(int offset, int data)
+WRITE_HANDLER( riot_ram_w )
 {
 	riot_ram[offset&0x7f]=data;
 }
@@ -177,7 +177,7 @@ void riot_ram_w(int offset, int data)
 static unsigned char riot_regs[32];
     /* lazy handling of the 6532's I/O, and no handling of timers at all */
 
-int gottlieb_riot_r(int offset)
+READ_HANDLER( gottlieb_riot_r )
 {
     switch (offset&0x1f) {
 	case 0: /* port A */
@@ -191,7 +191,7 @@ int gottlieb_riot_r(int offset)
     }
 }
 
-void gottlieb_riot_w(int offset, int data)
+WRITE_HANDLER( gottlieb_riot_w )
 {
     riot_regs[offset&0x1f]=data;
 }
@@ -209,7 +209,7 @@ void gottlieb_sound_init(void)
 	nmi_timer = NULL;
 }
 
-int stooges_sound_input_r(int offset)
+READ_HANDLER( stooges_sound_input_r )
 {
 	/* bits 0-3 are probably unused (future expansion) */
 
@@ -222,7 +222,7 @@ int stooges_sound_input_r(int offset)
 	return 0xc0;
 }
 
-void stooges_8910_latch_w(int offset,int data)
+WRITE_HANDLER( stooges_8910_latch_w )
 {
 	psg_latch = data;
 }
@@ -233,7 +233,7 @@ static void nmi_callback(int param)
 	cpu_cause_interrupt(cpu_gettotalcpu()-1, M6502_INT_NMI);
 }
 
-static void common_sound_control_w(int offset, int data)
+static WRITE_HANDLER( common_sound_control_w )
 {
 	/* Bit 0 enables and starts NMI timer */
 
@@ -253,7 +253,7 @@ static void common_sound_control_w(int offset, int data)
 	/* Bit 1 controls a LED on the sound board. I'm not emulating it */
 }
 
-void stooges_sound_control_w(int offset,int data)
+WRITE_HANDLER( stooges_sound_control_w )
 {
 	static int last;
 
@@ -293,7 +293,7 @@ void stooges_sound_control_w(int offset,int data)
 	last = data & 0x44;
 }
 
-void exterm_sound_control_w(int offset, int data)
+WRITE_HANDLER( exterm_sound_control_w )
 {
 	common_sound_control_w(offset, data);
 
@@ -301,7 +301,7 @@ void exterm_sound_control_w(int offset, int data)
 	ym2151_port = data & 0x80;
 }
 
-void gottlieb_nmi_rate_w(int offset, int data)
+WRITE_HANDLER( gottlieb_nmi_rate_w )
 {
 	nmi_rate = data;
 }
@@ -311,19 +311,19 @@ static void cause_dac_nmi_callback(int param)
 	cpu_cause_interrupt(cpu_gettotalcpu()-2, M6502_INT_NMI);
 }
 
-void gottlieb_cause_dac_nmi_w(int offset, int data)
+WRITE_HANDLER( gottlieb_cause_dac_nmi_w )
 {
 	/* make all the CPUs synchronize, and only AFTER that cause the NMI */
 	timer_set(TIME_NOW,0,cause_dac_nmi_callback);
 }
 
-int gottlieb_cause_dac_nmi_r(int offset)
+READ_HANDLER( gottlieb_cause_dac_nmi_r )
 {
     gottlieb_cause_dac_nmi_w(offset, 0);
 	return 0;
 }
 
-void exterm_ym2151_w(int offset, int data)
+WRITE_HANDLER( exterm_ym2151_w )
 {
 	if (ym2151_port)
 	{

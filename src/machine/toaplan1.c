@@ -10,9 +10,9 @@
 #define ASSERT 1
 
 
-int  video_ofs3_r(int offset);
-void video_ofs3_w(int offset, int data);
-void toaplan1_videoram3_w(int offset, int data);
+READ_HANDLER( video_ofs3_r );
+WRITE_HANDLER( video_ofs3_w );
+WRITE_HANDLER( toaplan1_videoram3_w );
 
 int toaplan1_coin_count; /* coin count increments on startup ? , so dont count it */
 
@@ -27,7 +27,7 @@ extern unsigned char *toaplan1_sharedram;
 
 
 
-int demonwld_dsp_in(int offset)
+READ_HANDLER( demonwld_dsp_r )
 {
 	/* DSP can read data from main CPU RAM via DSP IO port 1 */
 
@@ -43,9 +43,9 @@ int demonwld_dsp_in(int offset)
 	return input_data;
 }
 
-void demonwld_dsp_out(int fnction,int data)
+WRITE_HANDLER( demonwld_dsp_w )
 {
-	if (fnction == 0) {
+	if (offset == 0) {
 		/* This sets the main CPU RAM address the DSP should */
 		/*		read/write, via the DSP IO port 0 */
 		/* Top three bits of data need to be shifted left 9 places */
@@ -58,7 +58,7 @@ void demonwld_dsp_out(int fnction,int data)
 		main_ram_seg = ((data & 0xe000) << 9);
 		if (errorlog) fprintf(errorlog,"DSP PC:%04x IO write %04x (%08x) at port 0\n",cpu_getpreviouspc(),data,main_ram_seg + dsp_addr_w);
 	}
-	if (fnction == 1) {
+	if (offset == 1) {
 		/* Data written to main CPU RAM via DSP IO port 1*/
 
 		dsp_execute = 0;
@@ -70,7 +70,7 @@ void demonwld_dsp_out(int fnction,int data)
 		}
 		if (errorlog) fprintf(errorlog,"DSP PC:%04x IO write %04x at %08x (port 1)\n",cpu_getpreviouspc(),data,main_ram_seg + dsp_addr_w);
 	}
-	if (fnction == 3) {
+	if (offset == 3) {
 		/* data 0xffff	means inhibit BIO line to DSP and enable  */
 		/*				communication to main processor */
 		/*				Actually only DSP data bit 15 controls this */
@@ -91,7 +91,7 @@ void demonwld_dsp_out(int fnction,int data)
 	}
 }
 
-void demonwld_dsp_w(int offset,int data)
+WRITE_HANDLER( demonwld_dsp_ctrl_w )
 {
 #if 0
 	if (errorlog) fprintf(errorlog,"68000:%08x  Writing %08x to %08x.\n",cpu_get_pc() ,data ,0xe0000a + offset);
@@ -125,17 +125,17 @@ int toaplan1_interrupt(void)
 	return MC68000_INT_NONE;
 }
 
-void toaplan1_int_enable_w(int offset, int data)
+WRITE_HANDLER( toaplan1_int_enable_w )
 {
 	toaplan1_int_enable = data;
 }
 
-int toaplan1_unk_r(int offset)
+READ_HANDLER( toaplan1_unk_r )
 {
 	return unk ^= 1;
 }
 
-int samesame_port_6_r(int offset)
+READ_HANDLER( samesame_port_6_r )
 {
 	/* Bit 0x80 is secondary CPU (HD647180) ready signal */
 	if (errorlog)
@@ -143,7 +143,7 @@ int samesame_port_6_r(int offset)
 	return (0x80 | input_port_6_r(0));
 }
 
-int vimana_input_port_5_r(int offset)
+READ_HANDLER( vimana_input_port_5_r )
 {
 	int data, p;
 
@@ -166,7 +166,7 @@ int vimana_input_port_5_r(int offset)
 	return p;
 }
 
-int vimana_mcu_r(int offset)
+READ_HANDLER( vimana_mcu_r )
 {
 	int data = 0 ;
 	switch (offset >> 1)
@@ -183,7 +183,7 @@ int vimana_mcu_r(int offset)
 	}
 	return data;
 }
-void vimana_mcu_w(int offset, int data)
+WRITE_HANDLER( vimana_mcu_w )
 {
 	switch (offset >> 1)
 	{
@@ -197,12 +197,12 @@ void vimana_mcu_w(int offset, int data)
 	}
 }
 
-int toaplan1_shared_r(int offset)
+READ_HANDLER( toaplan1_shared_r )
 {
 	return toaplan1_sharedram[offset>>1];
 }
 
-void toaplan1_shared_w(int offset, int data)
+WRITE_HANDLER( toaplan1_shared_w )
 {
 	toaplan1_sharedram[offset>>1] = data;
 }
@@ -219,7 +219,7 @@ void toaplan1_init_machine(void)
 	coin_lockout_global_w(0,0);
 }
 
-void rallybik_coin_w(int offset,int data)
+WRITE_HANDLER( rallybik_coin_w )
 {
 	switch (data) {
 		case 0x08: if (toaplan1_coin_count) { coin_counter_w(0,1); coin_counter_w(0,0); } break;
@@ -233,7 +233,7 @@ void rallybik_coin_w(int offset,int data)
 	}
 }
 
-void toaplan1_coin_w(int offset,int data)
+WRITE_HANDLER( toaplan1_coin_w )
 {
 	if (errorlog) fprintf(errorlog,"Z80 writing %02x to coin control\n",data);
 	/* This still isnt too clear yet. */

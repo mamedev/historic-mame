@@ -12,7 +12,7 @@ SOUND : OKI-M6295 x (1 | 2), YM2149 x (0 | 2)
 ---------------------------------------------------------------------------
 Game						Year		Working?	Notes
 ---------------------------------------------------------------------------
-The Berlin Wall				1991	*	Yes			No sound, wrong bg colors
+The Berlin Wall				1991		Yes			Wrong bg colors
 Shogun Warriors				1992	?	No
 Great 1000 Miles Rally		1994	*	Yes
 Great 1000 Miles Rally 2	1995?	?	-			The code isn't dumped !
@@ -29,8 +29,8 @@ Memory Map			RW	gtmr			shogwarr **		berlwall
 
 ROM					R	000000-0fffff	000000-03ffff	<
 Work RAM			RW	100000-10ffff	<				200000-20ffff
-MCU: Shared RAM		RW	200000-20ffff	<				800000-80ffff
-MCU: Comm.			 W	2x0000-2x0001	<
+MCU: Shared RAM		RW	200000-20ffff	<				-
+MCU: Comm.			 W	2x0000-2x0001	<				-
 Palette				RW	300000-30ffff	380000-380fff	400000-400fff
 Sprites 			RW	400000-401fff	580000-581fff	30e000-30ffff
 Layers 1			RW	500000-503fff	600000-603fff	c00000-c03fff
@@ -38,7 +38,7 @@ Layers 2			RW	580000-583fff	*				*
 Layers 1 Regs		 W	600000-60000f	800000-80000f	d00000-d0001f
 Layers 2 Regs		 W	680000-68000f	*				*
 Screen Regs?		 W	700000-70001f	900000-90001f	600000-60003f
-M6295 #0			RW	800000-800001	400000-400001	MCU?
+M6295 #0			RW	800000-800001	400000-400001	800400-800401
 M6295 #1			RW	880000-880001	480000-480001	-
 Random Value ?		R	900014-900015	a00014-a00015
 Watchdog			RW	a00000-a00001	a80000-a80001	780000-780001(R)
@@ -48,7 +48,8 @@ Coin Lockout		 W	b80000-b80001	?				700000-700001
 ?					R	d00000-d00001	< RW			?
 Bankswitching #0	 W	e00000-e00001	< Both Chips	-
 Bankswitching #1	 W	e80000-e80001	-				-
-YM2149			 	 W	-				-				MCU?
+YM2149 #0		 	RW	-				-				800000-80001f
+YM2149 #1		 	RW	-				-				800200-80021f
 Hi-Color Bg Ctrl 	 W	-				-				500000-500001
 														580000-580001
 
@@ -71,7 +72,6 @@ Hi-Color Bg Ctrl 	 W	-				-				500000-500001
 [berlwall]
 
 - Fix colors of the high color background
-- Sound (I think the MCU is in charge of it)
 
 
 [gtmr]
@@ -115,22 +115,22 @@ extern int kaneko16_spritetype;
 
 /* Functions defined in vidhrdw: */
 
-void kaneko16_paletteram_w(int offset, int data);
-void gtmr_paletteram_w(int offset, int data);
+WRITE_HANDLER( kaneko16_paletteram_w );
+WRITE_HANDLER( gtmr_paletteram_w );
 
-void kaneko16_layers1_w(int offset, int data);
+WRITE_HANDLER( kaneko16_layers1_w );
 
-void kaneko16_layers1_regs_w(int offset,int data);
-void kaneko16_layers2_regs_w(int offset,int data);
+WRITE_HANDLER( kaneko16_layers1_regs_w );
+WRITE_HANDLER( kaneko16_layers2_regs_w );
 
-int  kaneko16_screen_regs_r(int offset);
-void kaneko16_screen_regs_w(int offset,int data);
+READ_HANDLER( kaneko16_screen_regs_r );
+WRITE_HANDLER( kaneko16_screen_regs_w );
 
-int  kaneko16_bg15_select_r(int offset);
-void kaneko16_bg15_select_w(int offset,int data);
+READ_HANDLER( kaneko16_bg15_select_r );
+WRITE_HANDLER( kaneko16_bg15_select_w );
 
-int  kaneko16_bg15_reg_r(int offset);
-void kaneko16_bg15_reg_w(int offset,int data);
+READ_HANDLER( kaneko16_bg15_reg_r );
+WRITE_HANDLER( kaneko16_bg15_reg_w );
 
 int  kaneko16_vh_start(void);
 void kaneko16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -175,26 +175,6 @@ static void berlwall_init_machine (void)
 							MCU Code simulation
 
 ***************************************************************************/
-
-
-
-/***************************************************************************
-							[ The Berlin Wall ]
-***************************************************************************/
-
-/* I think the MCU is in charge of the sound too */
-
-int berlwall_mcu_ram_r(int offset)
-{
-	switch (offset)
-	{
-		case 0x001c:	return readinputport(4);
-		case 0x001e:	return readinputport(5);
-		case 0x0400:	return 0x0000;
-		default:		return READ_WORD(&mcu_ram[offset]);
-	}
-}
-
 
 
 
@@ -281,7 +261,7 @@ void gtmr_mcu_run(void)
 
 
 #define GTMR_MCU_COM_W(_n_) \
-void gtmr_mcu_com##_n_##_w(int offset, int data) \
+WRITE_HANDLER( gtmr_mcu_com##_n_##_w ) \
 { \
 	COMBINE_WORD_MEM(&gtmr_mcu_com[_n_ * 2], data); \
 	if (READ_WORD(&gtmr_mcu_com[0]) != 0xFFFF)	return; \
@@ -404,7 +384,7 @@ void shogwarr_mcu_run(void)
 
 
 
-void shogwarr_mcu_ram_w(int offset, int data)
+WRITE_HANDLER( shogwarr_mcu_ram_w )
 {
 	COMBINE_WORD_MEM(&mcu_ram[offset], data);
 	shogwarr_mcu_run();
@@ -413,7 +393,7 @@ void shogwarr_mcu_ram_w(int offset, int data)
 
 
 #define SHOGWARR_MCU_COM_W(_n_) \
-void shogwarr_mcu_com##_n_##_w(int offset, int data) \
+WRITE_HANDLER( shogwarr_mcu_com##_n_##_w ) \
 { \
 	shogwarr_mcu_status |= (1 << _n_); \
 	shogwarr_mcu_run(); \
@@ -435,14 +415,14 @@ SHOGWARR_MCU_COM_W(3)
 ***************************************************************************/
 
 
-int kaneko16_rnd_r(int offset)
+READ_HANDLER( kaneko16_rnd_r )
 {
 	return rand();
 }
 
 /* bit 0 of this byte is set after a coin insertion,
    then reset after a short while */
-void kaneko16_coin_lockout_w(int offset, int data)
+WRITE_HANDLER( kaneko16_coin_lockout_w )
 {
 	if (!(data & 0xff000000))
 	{
@@ -455,6 +435,29 @@ void kaneko16_coin_lockout_w(int offset, int data)
 /***************************************************************************
 							[ The Berlin Wall ]
 ***************************************************************************/
+
+#define BERLWALL_YM2149_RW(_n_) \
+\
+READ_HANDLER( berlwall_YM2149_##_n_##_r ) \
+{ \
+	/* Each 2149 register is mapped to a different address */ \
+	AY8910_control_port_##_n_##_w(0,offset/2); \
+	return AY8910_read_port_##_n_##_r(0); \
+} \
+\
+WRITE_HANDLER( berlwall_YM2149_##_n_##_w ) \
+{ \
+	/* Each 2149 register is mapped to a different address */ \
+	AY8910_control_port_##_n_##_w(0,offset / 2); \
+	/* The registers are mapped to odd addresses, except one! */ \
+	if ((data & 0x00ff0000)==0)	AY8910_write_port_##_n_##_w(0, data       & 0xff); \
+	else						AY8910_write_port_##_n_##_w(0,(data >> 8) & 0xff); \
+}
+
+/* Two identically mapped chips */
+BERLWALL_YM2149_RW(0)
+BERLWALL_YM2149_RW(1)
+
 
 static struct MemoryReadAddress berlwall_readmem[] =
 {
@@ -471,7 +474,9 @@ static struct MemoryReadAddress berlwall_readmem[] =
 	{ 0x680004, 0x680005, input_port_2_r			},
 //	{ 0x680006, 0x680007, input_port_3_r			},
 	{ 0x780000, 0x780001, watchdog_reset_r			},	// Watchdog
-	{ 0x800000, 0x80ffff, berlwall_mcu_ram_r		},	// Shared With MCU
+	{ 0x800000, 0x80001f, berlwall_YM2149_0_r		},	// Sound
+	{ 0x800200, 0x80021f, berlwall_YM2149_1_r		},
+	{ 0x800400, 0x800401, OKIM6295_status_0_r		},
 	{ 0xc00000, 0xc03fff, MRA_BANK7					},	// Layers 1
 	{ 0xd00000, 0xd0001f, MRA_BANK8					},	// Layers 1 Regs
 	{ -1 }
@@ -488,7 +493,9 @@ static struct MemoryWriteAddress berlwall_writemem[] =
 	{ 0x580000, 0x580001, kaneko16_bg15_select_w, &kaneko16_bg15_select		},
 	{ 0x600000, 0x60003f, kaneko16_screen_regs_w, &kaneko16_screen_regs		},	// Screen Regs ?
 	{ 0x700000, 0x700001, kaneko16_coin_lockout_w							},	// Coin Lockout
-	{ 0x800000, 0x80ffff, MWA_BANK6, &mcu_ram								},	// Shared With MCU
+	{ 0x800000, 0x80001f, berlwall_YM2149_0_w								},	// Sound
+	{ 0x800200, 0x80021f, berlwall_YM2149_1_w								},
+	{ 0x800400, 0x800401, OKIM6295_data_0_w									},
 	{ 0xc00000, 0xc03fff, kaneko16_layers1_w, &kaneko16_fgram				},	// Layers 1
 	{ 0xd00000, 0xd0001f, kaneko16_layers1_regs_w, &kaneko16_layers1_regs	},	// Layers 1 Regs
 	{ -1 }
@@ -502,7 +509,7 @@ static struct MemoryWriteAddress berlwall_writemem[] =
 ***************************************************************************/
 
 
-int gtmr_wheel_r(int offset)
+READ_HANDLER( gtmr_wheel_r )
 {
 	if ( (readinputport(4) & 0x1800) == 0x10)	// DSW setting
 		return	readinputport(5)<<8;			// 360° Wheel
@@ -511,14 +518,14 @@ int gtmr_wheel_r(int offset)
 }
 
 static int bank0;
-void gtmr_oki_0_bank_w(int offset, int data)
+WRITE_HANDLER( gtmr_oki_0_bank_w )
 {
 	OKIM6295_set_bank_base(0, ALL_VOICES, 0x10000 * (data & 0xF) );
 	bank0 = (data & 0xF);
 //	if (errorlog) fprintf(errorlog, "CPU #0 PC %06X : OKI0 bank %08X\n",cpu_get_pc(),data);
 }
 
-void gtmr_oki_1_bank_w(int offset, int data)
+WRITE_HANDLER( gtmr_oki_1_bank_w )
 {
 	OKIM6295_set_bank_base(1, ALL_VOICES, 0x40000 * (data & 0x1) );
 //	if (errorlog) fprintf(errorlog, "CPU #0 PC %06X : OKI1 bank %08X\n",cpu_get_pc(),data);
@@ -535,7 +542,7 @@ void gtmr_oki_1_bank_w(int offset, int data)
 	the sound improves, but I wouldn't bet it's correct..
 */
 
-void gtmr_oki_0_data_w(int offset, int data)
+WRITE_HANDLER( gtmr_oki_0_data_w )
 {
 	static int pend = 0;
 
@@ -561,7 +568,7 @@ void gtmr_oki_0_data_w(int offset, int data)
 //	if (errorlog) fprintf(errorlog, "CPU #0 PC %06X : OKI0 <- %08X\n",cpu_get_pc(),data);
 }
 
-void gtmr_oki_1_data_w(int offset, int data)
+WRITE_HANDLER( gtmr_oki_1_data_w )
 {
 	OKIM6295_data_1_w(offset,data);
 //	if (errorlog) fprintf(errorlog, "CPU #0 PC %06X : OKI1 <- %08X\n",cpu_get_pc(),data);
@@ -629,7 +636,7 @@ static struct MemoryWriteAddress gtmr_writemem[] =
 ***************************************************************************/
 
 /* Untested */
-void shogwarr_oki_bank_w(int offset, int data)
+WRITE_HANDLER( shogwarr_oki_bank_w )
 {
 	OKIM6295_set_bank_base(0, ALL_VOICES, 0x10000 * ((data >> 0) & 0x3) );
 	OKIM6295_set_bank_base(1, ALL_VOICES, 0x10000 * ((data >> 4) & 0x3) );
@@ -1160,18 +1167,18 @@ static struct GfxDecodeInfo shogwarr_gfxdecodeinfo[] =
 static struct OKIM6295interface berlwall_okim6295_interface =
 {
 	1,
-	{ 12000 },		/* ? */
+	{ 8000 },		/* ? */
 	{ REGION_SOUND1 },
-	{ 33 }
+	{ 40 }
 };
 
 static struct AY8910interface berlwall_ay8910_interface =
 {
 	2,
-	1500000,	/* ? */
-	{ 33, 33 },
-	{ 0, 0 },	/* input A */
-	{ 0, 0 },	/* input B */
+	1000000,	/* ? */
+	{ MIXERG(30,MIXER_GAIN_2x,MIXER_PAN_LEFT), MIXERG(30,MIXER_GAIN_2x,MIXER_PAN_RIGHT) },
+	{ input_port_4_r, 0 },	/* input A: DSW 1 */
+	{ input_port_5_r, 0 },	/* input B: DSW 2 */
 	{ 0, 0 },
 	{ 0, 0 }
 };
@@ -1222,7 +1229,7 @@ static struct MachineDriver machine_driver_berlwall =
 	kaneko16_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_AY8910,
@@ -1450,9 +1457,6 @@ ROM_START( berlwall )
 	ROM_LOAD_EVEN( "bw100a", 0x000000, 0x020000, 0xe6bcb4eb )
 	ROM_LOAD_ODD(  "bw101a", 0x000000, 0x020000, 0x38056fb2 )
 
- 	ROM_REGION( 0x010000, REGION_CPU2 )			/* MCU Code */
-	ROM_LOAD( "mcu_code",  0x000000, 0x010000, 0x00000000 )
-
 	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* Tiles (Scrambled) */
 	ROM_LOAD( "bw003",  0x000000, 0x080000, 0xfbb4b72d )
 
@@ -1484,9 +1488,6 @@ ROM_START( berlwalt )
  	ROM_REGION( 0x040000, REGION_CPU1 )			/* 68000 Code */
 	ROM_LOAD_EVEN( "u23_01.bin", 0x000000, 0x020000, 0x76b526ce )
 	ROM_LOAD_ODD(  "u39_01.bin", 0x000000, 0x020000, 0x78fa7ef2 )
-
- 	ROM_REGION( 0x010000, REGION_CPU2 )			/* MCU Code */
-	ROM_LOAD( "mcu_code",  0x000000, 0x010000, 0x00000000 )
 
 	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* Tiles (Scrambled) */
 	ROM_LOAD( "bw003",  0x000000, 0x080000, 0xfbb4b72d )
@@ -1828,8 +1829,8 @@ void init_shogwarr(void)
 
 ***************************************************************************/
 
-GAMEX( 1991, berlwall, 0,        berlwall, berlwall, kaneko16, ROT0_16BIT, "Kaneko", "The Berlin Wall (set 1)", GAME_NO_SOUND | GAME_WRONG_COLORS )
-GAMEX( 1991, berlwalt, berlwall, berlwall, berlwalt, kaneko16, ROT0_16BIT, "Kaneko", "The Berlin Wall (set 2)", GAME_NO_SOUND | GAME_WRONG_COLORS )
+GAMEX( 1991, berlwall, 0,        berlwall, berlwall, kaneko16, ROT0_16BIT, "Kaneko", "The Berlin Wall (set 1)", GAME_WRONG_COLORS )
+GAMEX( 1991, berlwalt, berlwall, berlwall, berlwalt, kaneko16, ROT0_16BIT, "Kaneko", "The Berlin Wall (set 2)", GAME_WRONG_COLORS )
 GAMEX( 1992, shogwarr, 0,        shogwarr, shogwarr, shogwarr, ROT0,       "Kaneko", "Shogun Warriors", GAME_NOT_WORKING )
 GAME ( 1994, gtmr,     0,        gtmr,     gtmr,     kaneko16, ROT0_16BIT, "Kaneko", "Great 1000 Miles Rally" )
 GAME ( 1994, gtmre,    gtmr,     gtmr,     gtmr,     kaneko16, ROT0_16BIT, "Kaneko", "Great 1000 Miles Rally (Evolution Model)" )

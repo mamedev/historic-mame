@@ -128,17 +128,17 @@ static int ip_select, ip_select_values[5];
 void megasys1_convert_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *prom);
 int  megasys1_vh_start(void);
 void megasys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-int  megasys1_vregs_C_r(int offset);
-void megasys1_vregs_A_w(int offset, int data);
-void megasys1_vregs_C_w(int offset, int data);
-void megasys1_vregs_D_w(int offset, int data);
-void paletteram_RRRRGGGGBBBBRGBx_word_w(int offset, int data);
-void paletteram_RRRRRGGGGGBBBBBx_word_w(int offset, int data);
+READ_HANDLER( megasys1_vregs_C_r );
+WRITE_HANDLER( megasys1_vregs_A_w );
+WRITE_HANDLER( megasys1_vregs_C_w );
+WRITE_HANDLER( megasys1_vregs_D_w );
+WRITE_HANDLER( paletteram_RRRRGGGGBBBBRGBx_word_w );
+WRITE_HANDLER( paletteram_RRRRRGGGGGBBBBBx_word_w );
 
 
 
-int  protection_peekaboo_r(int offset);
-void protection_peekaboo_w(int offset,int data);
+READ_HANDLER( protection_peekaboo_r );
+WRITE_HANDLER( protection_peekaboo_w );
 
 void megasys1_init_machine(void)
 {
@@ -159,12 +159,12 @@ void megasys1_init_machine(void)
 						[ Main CPU - System A / Z ]
 ***************************************************************************/
 
-static int coins_r(int offset)   {return input_port_0_r(0);}	// < 00 | Coins >
-static int player1_r(int offset) {return input_port_1_r(0);}	// < 00 | Player 1 >
-static int player2_r(int offset) {return (input_port_2_r(0)<<8)+input_port_3_r(0);}		// < Reserve | Player 2 >
-static int dsw1_r(int offset)	 {return input_port_4_r(0);}							//   DSW 1
-static int dsw2_r(int offset)	 {return input_port_5_r(0);}							//   DSW 2
-static int dsw_r(int offset)	 {return (input_port_4_r(0)<<8)+input_port_5_r(0);}		// < DSW 1 | DSW 2 >
+static READ_HANDLER( coins_r )   {return input_port_0_r(0);}	// < 00 | Coins >
+static READ_HANDLER( player1_r ) {return input_port_1_r(0);}	// < 00 | Player 1 >
+static READ_HANDLER( player2_r ) {return (input_port_2_r(0)<<8)+input_port_3_r(0);}		// < Reserve | Player 2 >
+static READ_HANDLER( dsw1_r )	 {return input_port_4_r(0);}							//   DSW 1
+static READ_HANDLER( dsw2_r )	 {return input_port_5_r(0);}							//   DSW 2
+static READ_HANDLER( dsw_r )	 {return (input_port_4_r(0)<<8)+input_port_5_r(0);}		// < DSW 1 | DSW 2 >
 
 
 #define INTERRUPT_NUM_A		3
@@ -247,7 +247,7 @@ int interrupt_B(void)
 
  in that order.			*/
 
-static int ip_select_r(int offset)
+static READ_HANDLER( ip_select_r )
 {
 int i;
 
@@ -274,7 +274,7 @@ int i;
 	}
 }
 
-static void ip_select_w(int offset,int data)
+static WRITE_HANDLER( ip_select_w )
 {
 	ip_select = COMBINE_WORD(ip_select,data);
 	cpu_cause_interrupt(0,2);
@@ -459,25 +459,25 @@ static int sound_interrupt(void)
 }
 
 
-void ms_YM2151_register_port_0_w(int offset,int data)
+WRITE_HANDLER( ms_YM2151_register_port_0_w )
 {
 	if ((data & 0x00ff0000) == 0)	YM2151_register_port_0_w(0,data & 0xff);
 	else							if (errorlog) fprintf(errorlog,"%06x: write %02x to YM2151_register_port_0_w\n",cpu_get_pc(),data);
 }
 
-void ms_YM2151_data_port_0_w(int offset,int data)
+WRITE_HANDLER( ms_YM2151_data_port_0_w )
 {
 	if ((data & 0x00ff0000) == 0)	YM2151_data_port_0_w(0,data & 0xff);
 	else							if (errorlog) fprintf(errorlog,"%06x: write %02x to YM2151_data_port_0_w\n",cpu_get_pc(),data);
 }
 
-void ms_OKIM6295_data_0_w(int offset,int data)
+WRITE_HANDLER( ms_OKIM6295_data_0_w )
 {
 	if ((data & 0x00ff0000) == 0)	OKIM6295_data_0_w(0,data & 0xff);
 	else							if (errorlog) fprintf(errorlog,"%06x: write %02x to OKIM6295_data_0_w\n",cpu_get_pc(),data);
 }
 
-void ms_OKIM6295_data_1_w(int offset,int data)
+WRITE_HANDLER( ms_OKIM6295_data_1_w )
 {
 	if ((data & 0x00ff0000) == 0)	OKIM6295_data_1_w(0,data & 0xff);
 	else							if (errorlog) fprintf(errorlog,"%06x: write %02x to OKIM6295_data_1_w\n",cpu_get_pc(),data);
@@ -485,14 +485,14 @@ void ms_OKIM6295_data_1_w(int offset,int data)
 
 
 
-void ms_soundlatch_w(int offset,int data)
+WRITE_HANDLER( ms_soundlatch_w )
 {
 	static unsigned char val[2];
 	COMBINE_WORD_MEM(val,data);
 	soundlatch_w(0, READ_WORD(val) );
 }
 
-void ms_soundlatch2_w(int offset,int data)
+WRITE_HANDLER( ms_soundlatch2_w )
 {
 	static unsigned char val[2];
 	COMBINE_WORD_MEM(val,data);
@@ -1652,7 +1652,7 @@ INPUT_PORTS_START( bigstrik )
 
 INPUT_PORTS_END
 
-void bigstrik_spriteram_w(int offset, int data)
+WRITE_HANDLER( bigstrik_spriteram_w )
 {
 	COMBINE_WORD_MEM(&spriteram[offset],data);
 }
@@ -2810,7 +2810,7 @@ INPUT_PORTS_END
 static int protection_val;
 
 /* Read the input ports, through a protection device */
-int  protection_peekaboo_r(int offset)
+READ_HANDLER( protection_peekaboo_r )
 {
 	switch (protection_val)
 	{
@@ -2820,7 +2820,7 @@ int  protection_peekaboo_r(int offset)
 		default:	return protection_val;
 	}
 }
-void protection_peekaboo_w(int offset,int data)
+WRITE_HANDLER( protection_peekaboo_w )
 {
 	static int bank;
 	protection_val = data;
@@ -3354,11 +3354,11 @@ INPUT_PORTS_START( soldamj )
 
 INPUT_PORTS_END
 
-int  soldamj_spriteram_r(int offset)
+READ_HANDLER( soldamj_spriteram_r )
 {
 	return READ_WORD(&spriteram[offset]);
 }
-void soldamj_spriteram_w(int offset, int data)
+WRITE_HANDLER( soldamj_spriteram_w )
 {
 	if (offset < 0x800)	COMBINE_WORD_MEM(&spriteram[offset],data);
 }

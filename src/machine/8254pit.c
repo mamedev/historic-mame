@@ -92,102 +92,102 @@ int pit8254_r (int which, int offset)
 Port handler wrappers.
 */
 
-void pit8254_0_w(int offset, int data)
+WRITE_HANDLER( pit8254_0_w )
 {
 	pit8254_w(0, offset, data);
 }
 
-void pit8254_0_counter1_w (int offset, int data)
+WRITE_HANDLER( pit8254_0_counter1_w )
 {
 	pit8254_w(0, 0, data);
 }
 
-void pit8254_0_counter2_w (int offset, int data)
+WRITE_HANDLER( pit8254_0_counter2_w )
 {
 	pit8254_w(0, 1, data);
 }
 
-void pit8254_0_counter3_w (int offset, int data)
+WRITE_HANDLER( pit8254_0_counter3_w )
 {
 	pit8254_w(0, 2, data);
 }
 
-void pit8254_0_control_w  (int offset, int data)
+WRITE_HANDLER( pit8254_0_control_w )
 {
 	pit8254_w(0, 3, data);
 }
 
-void pit8254_1_w(int offset, int data)
+WRITE_HANDLER( pit8254_1_w )
 {
 	pit8254_w(1, 0, data);
 }
 
-void pit8254_1_counter1_w (int offset, int data)
+WRITE_HANDLER( pit8254_1_counter1_w )
 {
 	pit8254_w(1, 0, data);
 }
 
-void pit8254_1_counter2_w (int offset, int data)
+WRITE_HANDLER( pit8254_1_counter2_w )
 {
 	pit8254_w(1, 1, data);
 }
 
-void pit8254_1_counter3_w (int offset, int data)
+WRITE_HANDLER( pit8254_1_counter3_w )
 {
 	pit8254_w(1, 2, data);
 }
 
-void pit8254_1_control_w  (int offset, int data)
+WRITE_HANDLER( pit8254_1_control_w )
 {
 	pit8254_w(1, 3, data);
 }
 
 
-int pit8254_0_r (int offset)
+READ_HANDLER( pit8254_0_r )
 {
 	return pit8254_r(0, offset);
 }
 
-int pit8254_0_counter1_r (int offset)
+READ_HANDLER( pit8254_0_counter1_r )
 {
 	return pit8254_r(0, 0);
 }
 
-int pit8254_0_counter2_r (int offset)
+READ_HANDLER( pit8254_0_counter2_r )
 {
 	return pit8254_r(0, 1);
 }
 
-int pit8254_0_counter3_r (int offset)
+READ_HANDLER( pit8254_0_counter3_r )
 {
 	return pit8254_r(0, 2);
 }
 
-int pit8254_0_control_r (int offset)
+READ_HANDLER( pit8254_0_control_r )
 {
 	return pit8254_r(0, 3);
 }
 
-int pit8254_1_r (int offset)
+READ_HANDLER( pit8254_1_r )
 {
 	return pit8254_r(1, offset);
 }
 
-int pit8254_1_counter1_r (int offset)
+READ_HANDLER( pit8254_1_counter1_r )
 {
 	return pit8254_r(1, 0);
 }
 
-int pit8254_1_counter2_r (int offset)
+READ_HANDLER( pit8254_1_counter2_r )
 {
 	return pit8254_r(1, 1);
 }
 
-int pit8254_1_counter3_r (int offset)
+READ_HANDLER( pit8254_1_counter3_r )
 {
 	return pit8254_r(1, 2);
 }
-int pit8254_1_control_r (int offset)
+READ_HANDLER( pit8254_1_control_r )
 {
 	return pit8254_r(1, 3);
 }

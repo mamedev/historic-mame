@@ -39,8 +39,8 @@ extern unsigned char *ironhors_scroll;
 static unsigned char *ironhors_interrupt_enable;
 
 void ironhors_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void ironhors_palettebank_w(int offset,int data);
-void ironhors_charbank_w(int offset,int data);
+WRITE_HANDLER( ironhors_palettebank_w );
+WRITE_HANDLER( ironhors_charbank_w );
 void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -58,7 +58,7 @@ static int ironhors_interrupt(void)
 	return ignore_interrupt();
 }
 
-static void ironhors_sh_irqtrigger_w(int offset,int data)
+static WRITE_HANDLER( ironhors_sh_irqtrigger_w )
 {
 	cpu_cause_interrupt(1,0xff);
 }

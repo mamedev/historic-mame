@@ -58,29 +58,34 @@ IM 2 and IM 0)
 
 
 
-void pengo_sound_w(int offset,int data);
+WRITE_HANDLER( pengo_sound_w );
 extern unsigned char *pengo_soundregs;
 
 extern unsigned char *rallyx_videoram2,*rallyx_colorram2;
 extern unsigned char *rallyx_radarx,*rallyx_radary,*rallyx_radarattr;
 extern int rallyx_radarram_size;
 extern unsigned char *rallyx_scrollx,*rallyx_scrolly;
-void rallyx_videoram2_w(int offset,int data);
-void rallyx_colorram2_w(int offset,int data);
-void rallyx_spriteram_w(int offset,int data);
-void rallyx_flipscreen_w(int offset,int data);
+WRITE_HANDLER( rallyx_videoram2_w );
+WRITE_HANDLER( rallyx_colorram2_w );
+WRITE_HANDLER( rallyx_spriteram_w );
+WRITE_HANDLER( rallyx_flipscreen_w );
 void rallyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int rallyx_vh_start(void);
 void rallyx_vh_stop(void);
 void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-static void rallyx_coin_lockout_w(int offset, int data)
+static WRITE_HANDLER( rallyx_coin_lockout_w )
 {
 	coin_lockout_w(offset, data ^ 1);
 }
 
-static void rallyx_play_sound_w(int offset, int data)
+static WRITE_HANDLER( rallyx_leds_w )
+{
+	osd_led_w(offset,data);
+}
+
+static WRITE_HANDLER( rallyx_play_sound_w )
 {
 	static int last;
 
@@ -119,7 +124,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa180, 0xa180, rallyx_play_sound_w },
 	{ 0xa181, 0xa181, interrupt_enable_w },
 	{ 0xa183, 0xa183, rallyx_flipscreen_w },
-	{ 0xa184, 0xa185, osd_led_w },
+	{ 0xa184, 0xa185, rallyx_leds_w },
 	{ 0xa186, 0xa186, rallyx_coin_lockout_w },
 	{ 0xa187, 0xa187, coin_counter_w },
 	{ 0x8014, 0x801f, MWA_RAM, &spriteram, &spriteram_size },	/* these are here just to initialize */

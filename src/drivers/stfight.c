@@ -238,22 +238,22 @@ void stfight_init_machine(void);
 int  stfight_vb_interrupt( void );
 int  stfight_interrupt_1( void );
 int  stfight_interrupt_2( void );
-int  stfight_dsw_r( int offset );
-void stfight_fm_w( int offset, int data );
-void stfight_voice_w( int offset, int data );
-int  stfight_coin_r( int offset );
-void stfight_coin_w( int offset, int data );
-void stfight_e800_w( int offset, int data );
-int  stfight_fm_r( int offset );
+READ_HANDLER( stfight_dsw_r );
+WRITE_HANDLER( stfight_fm_w );
+WRITE_HANDLER( stfight_voice_w );
+READ_HANDLER( stfight_coin_r );
+WRITE_HANDLER( stfight_coin_w );
+WRITE_HANDLER( stfight_e800_w );
+READ_HANDLER( stfight_fm_r );
 void stfight_adpcm_int( int data );
-void stfight_adpcm_control_w( int offset, int data );
+WRITE_HANDLER( stfight_adpcm_control_w );
 
 // vidhrdw
 void stfight_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void stfight_text_char_w( int offset, int data );
-void stfight_text_attr_w( int offset, int data );
-void stfight_vh_latch_w( int offset, int data );
-void stfight_sprite_bank_w( int offset, int data );
+WRITE_HANDLER( stfight_text_char_w );
+WRITE_HANDLER( stfight_text_attr_w );
+WRITE_HANDLER( stfight_vh_latch_w );
+WRITE_HANDLER( stfight_sprite_bank_w );
 int  stfight_vh_start( void );
 void stfight_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh );
 

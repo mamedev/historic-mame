@@ -17,23 +17,23 @@ extern unsigned char *redalert_backram;
 extern unsigned char *redalert_spriteram1;
 extern unsigned char *redalert_spriteram2;
 extern unsigned char *redalert_characterram;
-extern void redalert_backram_w(int offset, int data);
-extern void redalert_spriteram1_w(int offset, int data);
-extern void redalert_spriteram2_w(int offset, int data);
-extern void redalert_characterram_w(int offset, int data);
+WRITE_HANDLER( redalert_backram_w );
+WRITE_HANDLER( redalert_spriteram1_w );
+WRITE_HANDLER( redalert_spriteram2_w );
+WRITE_HANDLER( redalert_characterram_w );
 extern void redalert_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void redalert_c040_w(int offset, int data);
-extern void redalert_backcolor_w(int offset, int data);
+WRITE_HANDLER( redalert_c040_w );
+WRITE_HANDLER( redalert_backcolor_w );
 
 /* sndhrdw/redalert.c */
-void redalert_c030_w(int offset, int data);
-int redalert_voicecommand_r(int offset);
-void redalert_soundlatch_w(int offset, int data);
-int redalert_AY8910_A_r(int offset);
-void redalert_AY8910_B_w(int offset, int data);
-void redalert_AY8910_w(int offset, int data);
-int redalert_sound_register_IC1_r(int offset);
-void redalert_sound_register_IC2_w(int offset, int data);
+WRITE_HANDLER( redalert_c030_w );
+READ_HANDLER( redalert_voicecommand_r );
+WRITE_HANDLER( redalert_soundlatch_w );
+READ_HANDLER( redalert_AY8910_A_r );
+WRITE_HANDLER( redalert_AY8910_B_w );
+WRITE_HANDLER( redalert_AY8910_w );
+READ_HANDLER( redalert_sound_register_IC1_r );
+WRITE_HANDLER( redalert_sound_register_IC2_w );
 
 
 static struct MemoryReadAddress readmem[] =

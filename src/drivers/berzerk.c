@@ -15,22 +15,22 @@ void berzerk_init_machine(void);
 void berzerk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int  berzerk_interrupt(void);
-void berzerk_irq_enable_w(int offset,int data);
-void berzerk_nmi_enable_w(int offset,int data);
-void berzerk_nmi_disable_w(int offset,int data);
-int  berzerk_nmi_enable_r(int offset);
-int  berzerk_nmi_disable_r(int offset);
-int  berzerk_led_on_r(int offset);
-int  berzerk_led_off_r(int offset);
-int  berzerk_voiceboard_read(int offset);
-void berzerk_videoram_w(int offset,int data);
-void berzerk_colorram_w(int offset,int data);
+WRITE_HANDLER( berzerk_irq_enable_w );
+WRITE_HANDLER( berzerk_nmi_enable_w );
+WRITE_HANDLER( berzerk_nmi_disable_w );
+READ_HANDLER( berzerk_nmi_enable_r );
+READ_HANDLER( berzerk_nmi_disable_r );
+READ_HANDLER( berzerk_led_on_r );
+READ_HANDLER( berzerk_led_off_r );
+READ_HANDLER( berzerk_voiceboard_r );
+WRITE_HANDLER( berzerk_videoram_w );
+WRITE_HANDLER( berzerk_colorram_w );
 
-void berzerk_magicram_w(int offset,int data);
-void berzerk_magicram_control_w(int offset,int data);
-int  berzerk_collision_r(int offset);
+WRITE_HANDLER( berzerk_magicram_w );
+WRITE_HANDLER( berzerk_magicram_control_w );
+READ_HANDLER( berzerk_collision_r );
 
-void berzerk_sound_control_a_w(int offset, int data);
+WRITE_HANDLER( berzerk_sound_control_a_w );
 int  berzerk_sh_start(const struct MachineSound *msound);
 void berzerk_sh_update(void);
 
@@ -94,7 +94,7 @@ static struct MemoryWriteAddress frenzy_writemem[] =
 
 static struct IOReadPort readport[] =
 {
-	{ 0x44, 0x44, berzerk_voiceboard_read}, /* Sound stuff */
+	{ 0x44, 0x44, berzerk_voiceboard_r}, /* Sound stuff */
 	{ 0x48, 0x48, input_port_0_r},
 	{ 0x49, 0x49, input_port_1_r},
 	{ 0x4a, 0x4a, input_port_2_r},

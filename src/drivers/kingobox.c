@@ -23,7 +23,7 @@ extern unsigned char *kingobox_videoram1;
 extern unsigned char *kingobox_colorram1;
 extern int kingobox_videoram1_size;
 extern unsigned char *kingobox_scroll_y;
-void kingofb_f800_w(int offset,int data);
+WRITE_HANDLER( kingofb_f800_w );
 void kingobox_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom);
 void ringking_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom);
 void kingobox_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -33,36 +33,36 @@ static unsigned char *video_shared;
 static unsigned char *sprite_shared;
 int kingofb_nmi_enable = 0;
 
-static int video_shared_r( int offs ) {
-	return video_shared[offs];
+static READ_HANDLER( video_shared_r ) {
+	return video_shared[offset];
 }
 
-static void video_shared_w( int offs, int data ) {
-	video_shared[offs] = data;
+static WRITE_HANDLER( video_shared_w ) {
+	video_shared[offset] = data;
 }
 
-static int sprite_shared_r( int offs ) {
-	return sprite_shared[offs];
+static READ_HANDLER( sprite_shared_r ) {
+	return sprite_shared[offset];
 }
 
-static void sprite_shared_w( int offs, int data ) {
-	sprite_shared[offs] = data;
+static WRITE_HANDLER( sprite_shared_w ) {
+	sprite_shared[offset] = data;
 }
 
-static void video_interrupt_w( int offs, int data ) {
+static WRITE_HANDLER( video_interrupt_w ) {
 	cpu_cause_interrupt( 1, 0xff );
 }
 
-static void sprite_interrupt_w( int offs, int data ) {
+static WRITE_HANDLER( sprite_interrupt_w ) {
 	cpu_cause_interrupt( 2, 0xff );
 }
 
-static void scroll_interrupt_w( int offs, int data ) {
-	sprite_interrupt_w( offs, data );
+static WRITE_HANDLER( scroll_interrupt_w ) {
+	sprite_interrupt_w( offset, data );
 	*kingobox_scroll_y = data;
 }
 
-static void sound_command_w( int offs, int data ) {
+static WRITE_HANDLER( sound_command_w ) {
 	soundlatch_w( 0, data );
 	cpu_cause_interrupt( 3, 0xff );
 }
@@ -166,7 +166,7 @@ static struct IOReadPort sound_readport[] =
 
 static struct IOWritePort sound_writeport[] =
 {
-	{ 0x00, 0x00, DAC_data_w },
+	{ 0x00, 0x00, DAC_0_data_w },
 	{ 0x08, 0x08, AY8910_write_port_0_w },
 	{ 0x0c, 0x0c, AY8910_control_port_0_w },
 	{ -1 }  /* end of table */
@@ -256,7 +256,7 @@ static struct IOReadPort rk_sound_readport[] =
 
 static struct IOWritePort rk_sound_writeport[] =
 {
-	{ 0x00, 0x00, DAC_data_w },
+	{ 0x00, 0x00, DAC_0_data_w },
 	{ 0x02, 0x02, AY8910_write_port_0_w },
 	{ 0x03, 0x03, AY8910_control_port_0_w },
 	{ -1 }  /* end of table */

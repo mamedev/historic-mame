@@ -14,14 +14,14 @@ void konami1_decode(void);
 extern unsigned char *circusc_spritebank;
 extern unsigned char *circusc_scroll;
 
-void circusc_flipscreen_w(int offset,int data);
+WRITE_HANDLER( circusc_flipscreen_w );
 void circusc_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void circusc_sprite_bank_select_w(int offset, int data);
+WRITE_HANDLER( circusc_sprite_bank_select_w );
 void circusc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-int circusc_sh_timer_r(int offset)
+READ_HANDLER( circusc_sh_timer_r )
 {
 	int clock;
 #define CIRCUSCHALIE_TIMER_RATE (14318180/6144)
@@ -31,12 +31,12 @@ int circusc_sh_timer_r(int offset)
 	return clock & 0xF;
 }
 
-void circusc_sh_irqtrigger_w(int offset,int data)
+WRITE_HANDLER( circusc_sh_irqtrigger_w )
 {
 	cpu_cause_interrupt(1,0xff);
 }
 
-void circusc_dac_w(int offset,int data)
+WRITE_HANDLER( circusc_dac_w )
 {
 	DAC_data_w(0,data);
 }

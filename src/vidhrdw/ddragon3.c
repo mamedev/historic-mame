@@ -23,7 +23,7 @@ UINT16 ddragon3_vreg;
 static struct tilemap *background, *foreground;
 
 /* scroll write function */
-void ddragon3_scroll_write(int offset,int data){
+WRITE_HANDLER( ddragon3_scroll_w ){
 	switch (offset) {
 		case 0x0: /* Scroll X, BG1 */
 		ddragon3_fg_scrollx = data;
@@ -52,44 +52,52 @@ void ddragon3_scroll_write(int offset,int data){
 }
 
 /* background */
-static void get_bg_tile_info( int col, int row ){
-	UINT16 data = ((UINT16 *)ddragon3_bg_videoram)[col+row*32+0];
+static void get_bg_tile_info(int tile_index)
+{
+	UINT16 data = ((UINT16 *)ddragon3_bg_videoram)[tile_index];
 	SET_TILE_INFO( 0, (data&0xfff) | ((ddragon3_bg_tilebase&1)<<12), ((data&0xf000)>>12)+16 );  // GFX,NUMBER,COLOR
 }
 
-void ddragon3_bg_videoram_w(int offset,int data){
+WRITE_HANDLER( ddragon3_bg_videoram_w )
+{
 	int oldword = READ_WORD(&ddragon3_bg_videoram[offset]);
 	int newword = COMBINE_WORD(oldword,data);
-	if( oldword != newword ){
+	if( oldword != newword )
+	{
 		WRITE_WORD(&ddragon3_bg_videoram[offset],newword);
 		offset = offset/2;
-		tilemap_mark_tile_dirty( background, offset%32, offset/32 );
+		tilemap_mark_tile_dirty(background,offset);
 	}
 }
 
-int ddragon3_bg_videoram_r (int offset){
+READ_HANDLER( ddragon3_bg_videoram_r )
+{
 	return READ_WORD( &ddragon3_bg_videoram[offset] );
 }
 
 /* foreground */
-static void get_fg_tile_info( int col, int row ){
-	UINT16 data0 = ((UINT16 *)ddragon3_fg_videoram)[col*2+row*64+0];
-	UINT16 data1 = ((UINT16 *)ddragon3_fg_videoram)[col*2+row*64+1];
+static void get_fg_tile_info(int tile_index)
+{
+	UINT16 data0 = ((UINT16 *)ddragon3_fg_videoram)[2*tile_index];
+	UINT16 data1 = ((UINT16 *)ddragon3_fg_videoram)[2*tile_index+1];
 	SET_TILE_INFO( 0, data1&0x1fff , data0&0xf );  // GFX,NUMBER,COLOR
         tile_info.flags = ((data0&0x40) >> 6);  // FLIPX
 }
 
-void ddragon3_fg_videoram_w(int offset,int data){
+WRITE_HANDLER( ddragon3_fg_videoram_w )
+{
 	int oldword = READ_WORD(&ddragon3_fg_videoram[offset]);
 	int newword = COMBINE_WORD(oldword,data);
-	if( oldword != newword ){
+	if( oldword != newword )
+	{
 		WRITE_WORD(&ddragon3_fg_videoram[offset],newword);
 		offset = offset/4;
-		tilemap_mark_tile_dirty( foreground, offset%32, offset/32 );
+		tilemap_mark_tile_dirty(foreground,offset);
 	}
 }
 
-int ddragon3_fg_videoram_r (int offset){
+READ_HANDLER( ddragon3_fg_videoram_r )
+{
 	return READ_WORD( &ddragon3_fg_videoram[offset] );
 }
 
@@ -98,25 +106,14 @@ int ddragon3_vh_start(void){
 	ddragon3_bg_tilebase = 0;
 	old_ddragon3_bg_tilebase = -1;
 
-	background = tilemap_create(
-		get_bg_tile_info,
-		0,
-		16,16,	/* tile width, tile height */
-		32,32	/* number of columns, number of rows */
-	);
+	background = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     16,16,32,32);
+	foreground = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 
-	foreground = tilemap_create(
-		get_fg_tile_info,
-		TILEMAP_TRANSPARENT,
-		16,16,	/* tile width, tile height */
-		32,32	/* number of columns, number of rows */
-	);
+	if (!background || !foreground)
+		return 1;
 
-	if( background && foreground ){
-		foreground->transparent_pen = 0;
-		return 0;
-	}
-	return 1;
+	foreground->transparent_pen = 0;
+	return 0;
 }
 
 /*

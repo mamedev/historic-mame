@@ -66,23 +66,23 @@ static void cclimber_play_sample(int start,int freq,int volume)
 
 static int sample_num,sample_freq,sample_volume;
 
-void cclimber_sample_select_w(int offset,int data)
+WRITE_HANDLER( cclimber_sample_select_w )
 {
 	sample_num = data;
 }
 
-void cclimber_sample_rate_w(int offset,int data)
+WRITE_HANDLER( cclimber_sample_rate_w )
 {
 	/* calculate the sampling frequency */
 	sample_freq = SND_CLOCK / 4 / (256 - data);
 }
 
-void cclimber_sample_volume_w(int offset,int data)
+WRITE_HANDLER( cclimber_sample_volume_w )
 {
 	sample_volume = data & 0x1f;	/* range 0-31 */
 }
 
-void cclimber_sample_trigger_w(int offset,int data)
+WRITE_HANDLER( cclimber_sample_trigger_w )
 {
 	if (data == 0 || Machine->sample_rate == 0)
 		return;

@@ -45,10 +45,10 @@ ask.  - Mike Balfour (mab22@po.cwru.edu)
 #include "vidhrdw/generic.h"
 
 void qwakprot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void qwakprot_paletteram_w (int offset, int data);
+WRITE_HANDLER( qwakprot_paletteram_w );
 
 
-static void qwakprot_led_w(int offset,int data)
+static WRITE_HANDLER( qwakprot_led_w )
 {
 	osd_led_w(offset,~data >> 7);
 }

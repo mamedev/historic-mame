@@ -83,7 +83,7 @@ void frogger_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 
 
-void frogger_attributes_w(int offset,int data)
+WRITE_HANDLER( frogger_attributes_w )
 {
 	if ((offset & 1) && frogger_attributesram[offset] != data)
 	{
@@ -97,7 +97,7 @@ void frogger_attributes_w(int offset,int data)
 	frogger_attributesram[offset] = data;
 }
 
-void frogger_flipscreen_w(int offset,int data)
+WRITE_HANDLER( frogger_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{

@@ -20,18 +20,18 @@ void spelunk2_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 int ldrun_vh_start( void );
 int kidniki_vh_start( void );
 int spelunkr_vh_start( void );
-void irem_flipscreen_w(int offset,int data);
-void kungfum_scroll_low_w(int offset,int data);
-void kungfum_scroll_high_w(int offset,int data);
-void ldrun3_vscroll_w(int offset,int data);
-void ldrun4_hscroll_w(int offset,int data);
-void irem_background_hscroll_w( int offset, int data );
-void irem_background_vscroll_w( int offset, int data );
-void battroad_scroll_w( int offset, int data );
-void kidniki_text_vscroll_w( int offset, int data );
-void kidniki_background_bank_w( int offset, int data );
-void spelunkr_palbank_w( int offset, int data );
-void spelunk2_gfxport_w( int offset, int data );
+WRITE_HANDLER( irem_flipscreen_w );
+WRITE_HANDLER( kungfum_scroll_low_w );
+WRITE_HANDLER( kungfum_scroll_high_w );
+WRITE_HANDLER( ldrun3_vscroll_w );
+WRITE_HANDLER( ldrun4_hscroll_w );
+WRITE_HANDLER( irem_background_hscroll_w );
+WRITE_HANDLER( irem_background_vscroll_w );
+WRITE_HANDLER( battroad_scroll_w );
+WRITE_HANDLER( kidniki_text_vscroll_w );
+WRITE_HANDLER( kidniki_background_bank_w );
+WRITE_HANDLER( spelunkr_palbank_w );
+WRITE_HANDLER( spelunk2_gfxport_w );
 void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap,int fullrefresh);
 void battroad_vh_screenrefresh(struct osd_bitmap *bitmap,int fullrefresh);
 void ldrun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -55,7 +55,7 @@ extern int irem_textram_size;
 /* service mode to test the ROMs. */
 static int ldrun2_bankswap;
 
-int ldrun2_bankswitch_r(int offset)
+READ_HANDLER( ldrun2_bankswitch_r )
 {
 	if (ldrun2_bankswap)
 	{
@@ -71,7 +71,7 @@ int ldrun2_bankswitch_r(int offset)
 	return 0;
 }
 
-void ldrun2_bankswitch_w(int offset,int data)
+WRITE_HANDLER( ldrun2_bankswitch_w )
 {
 	int bankaddress;
 	static int bankcontrol[2];
@@ -108,18 +108,18 @@ if (errorlog) fprintf(errorlog,"unknown bank select %02x\n",data);
 /* Lode Runner 3 has, it seems, a poor man's protection consisting of a PAL */
 /* (I think; it's included in the ROM set) which is read at certain times, */
 /* and the game crashes if ti doesn't match the expected values. */
-int ldrun3_prot_5_r(int offset)
+READ_HANDLER( ldrun3_prot_5_r )
 {
 	return 5;
 }
 
-int ldrun3_prot_7_r(int offset)
+READ_HANDLER( ldrun3_prot_7_r )
 {
 	return 7;
 }
 
 
-void ldrun4_bankswitch_w(int offset,int data)
+WRITE_HANDLER( ldrun4_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -129,7 +129,7 @@ void ldrun4_bankswitch_w(int offset,int data)
 	cpu_setbank(1,&RAM[bankaddress]);
 }
 
-static void kidniki_bankswitch_w(int offset,int data)
+static WRITE_HANDLER( kidniki_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -141,7 +141,7 @@ static void kidniki_bankswitch_w(int offset,int data)
 
 #define battroad_bankswitch_w kidniki_bankswitch_w
 
-static void spelunkr_bankswitch_w(int offset,int data)
+static WRITE_HANDLER( spelunkr_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -151,7 +151,7 @@ static void spelunkr_bankswitch_w(int offset,int data)
 	cpu_setbank(1,&RAM[bankaddress]);
 }
 
-void spelunk2_bankswitch_w( int offset, int data )
+WRITE_HANDLER( spelunk2_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -586,7 +586,7 @@ INPUT_PORTS_START( battroad )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* In stop mode, press 2 to stop and 1 to restart */
-	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
@@ -636,7 +636,7 @@ INPUT_PORTS_START( ldrun )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* In stop mode, press 2 to stop and 1 to restart */
-	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* In level selection mode, press 1 to select and 2 to restart */
@@ -740,7 +740,7 @@ INPUT_PORTS_START( ldrun3 )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* In stop mode, press 2 to stop and 1 to restart */
-	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* In level selection mode, press 1 to select and 2 to restart */

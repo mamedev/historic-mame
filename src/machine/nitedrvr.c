@@ -20,7 +20,7 @@ static int nitedrvr_steering_val = 0x00;
 /***************************************************************************
 nitedrvr_ram_r
 ***************************************************************************/
-int nitedrvr_ram_r(int offset)
+READ_HANDLER( nitedrvr_ram_r )
 {
 	return nitedrvr_ram[offset];
 }
@@ -28,7 +28,7 @@ int nitedrvr_ram_r(int offset)
 /***************************************************************************
 nitedrvr_ram_w
 ***************************************************************************/
-void nitedrvr_ram_w(int offset, int data)
+WRITE_HANDLER( nitedrvr_ram_w )
 {
 	nitedrvr_ram[offset]=data;
 }
@@ -78,13 +78,13 @@ static int nitedrvr_steering(void)
 /***************************************************************************
 nitedrvr_steering_reset
 ***************************************************************************/
-int nitedrvr_steering_reset_r(int offset)
+READ_HANDLER( nitedrvr_steering_reset_r )
 {
 	nitedrvr_steering_val=0x00;
 	return 0;
 }
 
-void nitedrvr_steering_reset_w(int offset, int value)
+WRITE_HANDLER( nitedrvr_steering_reset_w )
 {
 	nitedrvr_steering_val=0x00;
 }
@@ -118,7 +118,7 @@ Night Driver looks for the following:
 Fill in the steering and gear bits in a special way.
 ***************************************************************************/
 
-int nitedrvr_in0_r(int offset)
+READ_HANDLER( nitedrvr_in0_r )
 {
 	int gear;
 
@@ -178,7 +178,7 @@ Night Driver looks for the following:
 Fill in the track difficulty switch and special signal in a special way.
 ***************************************************************************/
 
-int nitedrvr_in1_r(int offset)
+READ_HANDLER( nitedrvr_in1_r )
 {
 	static int ac_line=0x00;
 	int port;
@@ -226,7 +226,7 @@ D3 = !SPEED4
 D4 = SKID1
 D5 = SKID2
 ***************************************************************************/
-void nitedrvr_out0_w(int offset, int data)
+WRITE_HANDLER( nitedrvr_out0_w )
 {
 	/* TODO: put sound bits here */
 }
@@ -241,7 +241,7 @@ D3 = Not used?
 D4 = LED START
 D5 = Spare (Not used)
 ***************************************************************************/
-void nitedrvr_out1_w(int offset, int data)
+WRITE_HANDLER( nitedrvr_out1_w )
 {
 	osd_led_w(0,(data & 0x10)>>4);
 	/* TODO: put sound bits here */

@@ -51,7 +51,7 @@ void ticket_dispenser_init(int msec, int motoronhigh, int statusactivehigh)
 /***************************************************************************
   ticket_dispenser_r
 ***************************************************************************/
-int ticket_dispenser_r(int offset)
+READ_HANDLER( ticket_dispenser_r )
 {
 #ifdef DEBUG_TICKET
 	fprintf(errorlog, "PC: %04X  Ticket Status Read = %02X\n", cpu_get_pc(), status);
@@ -62,7 +62,7 @@ int ticket_dispenser_r(int offset)
 /***************************************************************************
   ticket_dispenser_w
 ***************************************************************************/
-void ticket_dispenser_w(int offset, int data)
+WRITE_HANDLER( ticket_dispenser_w )
 {
 	/* On an activate signal, start dispensing! */
 	if ((data & active_bit) == motoron)

@@ -74,30 +74,30 @@ void zoar_vh_screenrefresh    (struct osd_bitmap *bitmap,int full_refresh);
 void disco_vh_screenrefresh   (struct osd_bitmap *bitmap,int full_refresh);
 void eggs_vh_screenrefresh    (struct osd_bitmap *bitmap,int full_refresh);
 
-void btime_paletteram_w(int offset,int data);
-void bnj_background_w(int offset, int data);
-void bnj_scroll1_w(int offset, int data);
-void bnj_scroll2_w(int offset, int data);
-int  btime_mirrorvideoram_r(int offset);
-void btime_mirrorvideoram_w(int offset,int data);
-int  btime_mirrorcolorram_r(int offset);
-void btime_mirrorcolorram_w(int offset,int data);
-void lnc_videoram_w(int offset,int data);
-void lnc_mirrorvideoram_w(int offset,int data);
-void deco_charram_w(int offset,int data);
+WRITE_HANDLER( btime_paletteram_w );
+WRITE_HANDLER( bnj_background_w );
+WRITE_HANDLER( bnj_scroll1_w );
+WRITE_HANDLER( bnj_scroll2_w );
+READ_HANDLER( btime_mirrorvideoram_r );
+WRITE_HANDLER( btime_mirrorvideoram_w );
+READ_HANDLER( btime_mirrorcolorram_r );
+WRITE_HANDLER( btime_mirrorcolorram_w );
+WRITE_HANDLER( lnc_videoram_w );
+WRITE_HANDLER( lnc_mirrorvideoram_w );
+WRITE_HANDLER( deco_charram_w );
 
-void zoar_video_control_w (int offset,int data);
-void btime_video_control_w(int offset,int data);
-void bnj_video_control_w  (int offset,int data);
-void lnc_video_control_w  (int offset,int data);
-void disco_video_control_w(int offset,int data);
+WRITE_HANDLER( zoar_video_control_w );
+WRITE_HANDLER( btime_video_control_w );
+WRITE_HANDLER( bnj_video_control_w );
+WRITE_HANDLER( lnc_video_control_w );
+WRITE_HANDLER( disco_video_control_w );
 
 int lnc_sound_interrupt(void);
 
-static void sound_command_w(int offset,int data);
+static WRITE_HANDLER( sound_command_w );
 
-int  mmonkey_protection_r(int offset);
-void mmonkey_protection_w(int offset, int data);
+READ_HANDLER( mmonkey_protection_r );
+WRITE_HANDLER( mmonkey_protection_w );
 
 
 INLINE int swap_bits_5_6(int data)
@@ -136,7 +136,7 @@ static void btime_decrypt(void)
 	}
 }
 
-static void lnc_w(int offset,int data)
+static WRITE_HANDLER( lnc_w )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
@@ -158,7 +158,7 @@ static void lnc_w(int offset,int data)
 	rom[offset+diff] = swap_bits_5_6(data);
 }
 
-static void mmonkey_w(int offset,int data)
+static WRITE_HANDLER( mmonkey_w )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
@@ -179,7 +179,7 @@ static void mmonkey_w(int offset,int data)
 	rom[offset+diff] = swap_bits_5_6(data);
 }
 
-static void btime_w(int offset,int data)
+static WRITE_HANDLER( btime_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -197,7 +197,7 @@ static void btime_w(int offset,int data)
 	btime_decrypt();
 }
 
-static void zoar_w(int offset,int data)
+static WRITE_HANDLER( zoar_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -217,7 +217,7 @@ static void zoar_w(int offset,int data)
 
 }
 
-static void disco_w(int offset,int data)
+static WRITE_HANDLER( disco_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -545,7 +545,7 @@ static int btime_nmi_interrupt(void)
 	return btime_interrupt(nmi_interrupt, 0);
 }
 
-static void sound_command_w(int offset,int data)
+static WRITE_HANDLER( sound_command_w )
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(1,M6502_INT_IRQ);
@@ -1704,7 +1704,7 @@ ROM_START( disco )
 ROM_END
 
 
-static int wtennis_reset_hack_r(int offset)
+static READ_HANDLER( wtennis_reset_hack_r )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -1785,7 +1785,7 @@ GAME( 1982, disco,    0,       disco,    disco,    btime,   ROT270, "Data East",
 void decocass_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-static int pip(int offset)
+READ_HANDLER( pip_r )
 {
 	return rand();
 }
@@ -1794,7 +1794,7 @@ static struct MemoryReadAddress decocass_readmem[] =
 {
 	{ 0x0000, 0x01ff, MRA_RAM },
 	{ 0xe300, 0xe300, input_port_3_r },     /* DSW1 */
-	{ 0xe500, 0xe502, pip },	/* read data from tape */
+	{ 0xe500, 0xe502, pip_r },	/* read data from tape */
 #if 0
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x0500, 0x3fff, MRA_ROM },

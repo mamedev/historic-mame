@@ -29,7 +29,7 @@ XYBOTS 6502 MEMORY MAP
 #include "vidhrdw/generic.h"
 
 
-void xybots_playfieldram_w(int offset, int data);
+WRITE_HANDLER( xybots_playfieldram_w );
 
 int xybots_vh_start(void);
 void xybots_vh_stop(void);
@@ -78,7 +78,7 @@ static void init_machine(void)
  *
  *************************************/
 
-static int special_port1_r(int offset)
+static READ_HANDLER( special_port1_r )
 {
 	static int h256 = 0x0400;
 

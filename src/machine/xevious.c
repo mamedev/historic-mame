@@ -21,7 +21,7 @@ static int xevious_bs[2];
 
 static void *nmi_timer;
 
-void xevious_halt_w(int offset,int data);
+WRITE_HANDLER( xevious_halt_w );
 
 /* namco stick number array */
 /*
@@ -54,12 +54,12 @@ void xevious_init_machine(void)
 }
 
 /* emulation for schematic 9B */
-void xevious_bs_w(int offset, int data)
+WRITE_HANDLER( xevious_bs_w )
 {
 	xevious_bs[offset & 0x01] = data;
 }
 
-int xevious_bb_r(int offset )
+READ_HANDLER( xevious_bb_r )
 {
 	int adr_2b,adr_2c;
 	int dat1,dat2;
@@ -96,19 +96,19 @@ int xevious_bb_r(int offset )
 	return dat2;
 }
 
-int xevious_sharedram_r(int offset)
+READ_HANDLER( xevious_sharedram_r )
 {
 	return xevious_sharedram[offset];
 }
 
-void xevious_sharedram_w(int offset,int data)
+WRITE_HANDLER( xevious_sharedram_w )
 {
 	xevious_sharedram[offset] = data;
 }
 
 
 
-int xevious_dsw_r(int offset)
+READ_HANDLER( xevious_dsw_r )
 {
 	int bit0,bit1;
 
@@ -131,7 +131,7 @@ static int rightcoinpercred,rightcredpercoin;
 static unsigned char customio[16];
 
 
-void xevious_customio_data_w(int offset,int data)
+WRITE_HANDLER( xevious_customio_data_w )
 {
 	customio[offset] = data;
 
@@ -176,7 +176,7 @@ if (errorlog) fprintf(errorlog,"%04x: custom IO offset %02x data %02x\n",cpu_get
 }
 
 
-int xevious_customio_data_r(int offset)
+READ_HANDLER( xevious_customio_data_r )
 {
 if (errorlog && customio_command != 0x71) fprintf(errorlog,"%04x: custom IO read offset %02x\n",cpu_get_pc(),offset);
 
@@ -285,7 +285,7 @@ if (errorlog && customio_command != 0x71) fprintf(errorlog,"%04x: custom IO read
 }
 
 
-int xevious_customio_r(int offset)
+READ_HANDLER( xevious_customio_r )
 {
 	return customio_command;
 }
@@ -296,7 +296,7 @@ void xevious_nmi_generate (int param)
 }
 
 
-void xevious_customio_w(int offset,int data)
+WRITE_HANDLER( xevious_customio_w )
 {
 if (errorlog && data != 0x10 && data != 0x71) fprintf(errorlog,"%04x: custom IO command %02x\n",cpu_get_pc(),data);
 
@@ -315,7 +315,7 @@ if (errorlog && data != 0x10 && data != 0x71) fprintf(errorlog,"%04x: custom IO 
 
 
 
-void xevious_halt_w(int offset,int data)
+WRITE_HANDLER( xevious_halt_w )
 {
 	if (data & 1)
 	{
@@ -331,7 +331,7 @@ void xevious_halt_w(int offset,int data)
 
 
 
-void xevious_interrupt_enable_1_w(int offset,int data)
+WRITE_HANDLER( xevious_interrupt_enable_1_w )
 {
 	interrupt_enable_1 = (data&1);
 }
@@ -346,7 +346,7 @@ int xevious_interrupt_1(void)
 
 
 
-void xevious_interrupt_enable_2_w(int offset,int data)
+WRITE_HANDLER( xevious_interrupt_enable_2_w )
 {
 	interrupt_enable_2 = data & 1;
 }
@@ -361,7 +361,7 @@ int xevious_interrupt_2(void)
 
 
 
-void xevious_interrupt_enable_3_w(int offset,int data)
+WRITE_HANDLER( xevious_interrupt_enable_3_w )
 {
 	interrupt_enable_3 = !(data & 1);
 }

@@ -110,7 +110,7 @@ void fastfred_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 }
 
 
-void fastfred_character_bank_select_w (int offset, int data)
+WRITE_HANDLER( fastfred_character_bank_select_w )
 {
     if (character_bank[offset] != data)
     {
@@ -122,7 +122,7 @@ void fastfred_character_bank_select_w (int offset, int data)
 }
 
 
-void fastfred_color_bank_select_w (int offset, int data)
+WRITE_HANDLER( fastfred_color_bank_select_w )
 {
     if (color_bank[offset] != data)
     {
@@ -134,7 +134,7 @@ void fastfred_color_bank_select_w (int offset, int data)
 }
 
 
-void fastfred_background_color_w (int offset, int data)
+WRITE_HANDLER( fastfred_background_color_w )
 {
 	int r,g,b;
 
@@ -146,7 +146,7 @@ void fastfred_background_color_w (int offset, int data)
 }
 
 
-void fastfred_flipx_w(int offset,int data)
+WRITE_HANDLER( fastfred_flipx_w )
 {
 	if (flipscreenx != (data & 1))
 	{
@@ -155,7 +155,7 @@ void fastfred_flipx_w(int offset,int data)
 	}
 }
 
-void fastfred_flipy_w(int offset,int data)
+WRITE_HANDLER( fastfred_flipy_w )
 {
 	if (flipscreeny != (data & 1))
 	{

@@ -26,7 +26,7 @@ extern unsigned char *tp84_sharedram;	/* JB 970829 */
 	F174: ADDA  #$20
 	F176: BCC   $F104
 */
-int tp84_beam_r(int offset)
+READ_HANDLER( tp84_beam_r )
 {
 //	return cpu_getscanline();
 	return 255; /* always return beam position 255 */ /* JB 970829 */
@@ -37,7 +37,7 @@ int tp84_beam_r(int offset)
 	E0EF: STA   $4000
 	E0F2: BRA   $E0ED
 */
-void tp84_catchloop_w(int offset,int data)
+WRITE_HANDLER( tp84_catchloop_w )
 {
 	if( cpu_get_pc()==0xe0f2 ) cpu_spinuntil_int();
 }

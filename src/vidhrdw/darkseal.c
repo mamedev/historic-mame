@@ -117,7 +117,7 @@ static void update_24bitcol(int offset)
 	palette_change_color(offset / 2,r,g,b);
 }
 
-void darkseal_palette_24bit_rg(int offset,int data)
+WRITE_HANDLER( darkseal_palette_24bit_rg_w )
 {
 	/* only 1280 out of 2048 colors are actually used */
 	if (offset >= 2*Machine->drv->total_colors) return;
@@ -126,7 +126,7 @@ void darkseal_palette_24bit_rg(int offset,int data)
 	update_24bitcol(offset);
 }
 
-void darkseal_palette_24bit_b(int offset,int data)
+WRITE_HANDLER( darkseal_palette_24bit_b_w )
 {
 	/* only 1280 out of 2048 colors are actually used */
 	if (offset >= 2*Machine->drv->total_colors) return;
@@ -135,12 +135,12 @@ void darkseal_palette_24bit_b(int offset,int data)
 	update_24bitcol(offset);
 }
 
-int darkseal_palette_24bit_rg_r(int offset)
+READ_HANDLER( darkseal_palette_24bit_rg_r )
 {
 	return READ_WORD(&paletteram[offset]);
 }
 
-int darkseal_palette_24bit_b_r(int offset)
+READ_HANDLER( darkseal_palette_24bit_b_r )
 {
 	return READ_WORD(&paletteram_2[offset]);
 }
@@ -478,7 +478,7 @@ void darkseal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 /******************************************************************************/
 
-void darkseal_pf1_data_w(int offset,int data)
+WRITE_HANDLER( darkseal_pf1_data_w )
 {
 	int oldword = READ_WORD(&darkseal_pf1_data[offset]);
 	int newword = COMBINE_WORD(oldword,data);
@@ -491,7 +491,7 @@ void darkseal_pf1_data_w(int offset,int data)
 	}
 }
 
-void darkseal_pf2_data_w(int offset,int data)
+WRITE_HANDLER( darkseal_pf2_data_w )
 {
 	int oldword = READ_WORD(&darkseal_pf2_data[offset]);
 	int newword = COMBINE_WORD(oldword,data);
@@ -504,7 +504,7 @@ void darkseal_pf2_data_w(int offset,int data)
 	}
 }
 
-void darkseal_pf3_data_w(int offset,int data)
+WRITE_HANDLER( darkseal_pf3_data_w )
 {
 	int oldword = READ_WORD(&darkseal_pf3_data[offset]);
 	int newword = COMBINE_WORD(oldword,data);
@@ -517,7 +517,7 @@ void darkseal_pf3_data_w(int offset,int data)
 	}
 }
 
-void darkseal_pf3b_data_w(int offset,int data)
+WRITE_HANDLER( darkseal_pf3b_data_w )
 {
 	int oldword = READ_WORD(&darkseal_pf3_data[offset+0x1000]);
 	int newword = COMBINE_WORD(oldword,data);
@@ -530,12 +530,12 @@ void darkseal_pf3b_data_w(int offset,int data)
 	}
 }
 
-void darkseal_control_0_w(int offset,int data)
+WRITE_HANDLER( darkseal_control_0_w )
 {
 	COMBINE_WORD_MEM(&darkseal_control_0[offset],data);
 }
 
-void darkseal_control_1_w(int offset,int data)
+WRITE_HANDLER( darkseal_control_1_w )
 {
 	COMBINE_WORD_MEM(&darkseal_control_1[offset],data);
 }

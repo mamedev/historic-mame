@@ -36,7 +36,7 @@ int bladestl_vh_start(void);
 void bladestl_vh_stop(void);
 void bladestl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void bladestl_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void bladestl_vreg_w(int offset, int data);
+WRITE_HANDLER( bladestl_vreg_w );
 
 static int bladestl_interrupt( void )
 {
@@ -50,7 +50,7 @@ static int bladestl_interrupt( void )
 	return ignore_interrupt();
 }
 
-static int trackball_r(int offset)
+static READ_HANDLER( trackball_r )
 {
 	static int last[4];
 	int curr,delta;
@@ -62,7 +62,7 @@ static int trackball_r(int offset)
 	return (delta & 0x80) | (curr >> 1);
 }
 
-static void bladestl_bankswitch_w(int offset, int data)
+static WRITE_HANDLER( bladestl_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
@@ -86,27 +86,27 @@ static void bladestl_bankswitch_w(int offset, int data)
 
 }
 
-static void bladestl_sh_irqtrigger_w(int offset, int data)
+static WRITE_HANDLER( bladestl_sh_irqtrigger_w )
 {
 	soundlatch_w(offset, data);
 	cpu_cause_interrupt(1,M6809_INT_IRQ);
 	//if (errorlog) fprintf(errorlog,"(sound) write %02x\n", data);
 }
 
-static void bladestl_port_A_w(int offset,int data){
+static WRITE_HANDLER( bladestl_port_A_w ){
 	/* bits 0-4 = uPD7759 sample number (chip 0) */
 	//UPD7759_message_w( 0, data);
 	//if (data)
 	//	if (errorlog) fprintf(errorlog,"%04x: (port A) write %02x\n",cpu_get_pc(), data);
 }
 
-static void bladestl_port_B_w(int offset,int data){
+static WRITE_HANDLER( bladestl_port_B_w ){
 	/* unknown */
 	//if (data)
 	//	if (errorlog) fprintf(errorlog,"%04x: (port B) write %02x\n",cpu_get_pc(), data);
 }
 
-static void bladestl_speech_ctrl_w(int offset,int data){
+static WRITE_HANDLER( bladestl_speech_ctrl_w ){
 	/* not understood yet */
 	//if (data)
 	//	if (errorlog) fprintf(errorlog,"%04x: (speech_ctrl) write %02x\n",cpu_get_pc(), data);
@@ -154,7 +154,7 @@ static struct MemoryReadAddress bladestl_readmem_sound[] =
 	{ 0x0000, 0x07ff, MRA_RAM },				/* RAM */
 	{ 0x1000, 0x1000, YM2203_status_port_0_r },	/* YM2203 */
 	{ 0x1001, 0x1001, YM2203_read_port_0_r },	/* YM2203 */
-	{ 0x4000, 0x4000, UPD7759_busy_r },			/* UPD7759? */
+	{ 0x4000, 0x4000, UPD7759_0_busy_r },		/* UPD7759? */
 	{ 0x6000, 0x6000, soundlatch_r },			/* soundlatch_r */
 	{ 0x8000, 0xffff, MRA_ROM },				/* ROM */
 	{ -1 }	/* end of table */

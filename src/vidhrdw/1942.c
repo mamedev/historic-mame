@@ -139,7 +139,7 @@ void c1942_vh_stop(void)
 
 
 
-void c1942_background_w(int offset,int data)
+WRITE_HANDLER( c1942_background_w )
 {
 	if (c1942_backgroundram[offset] != data)
 	{
@@ -151,7 +151,7 @@ void c1942_background_w(int offset,int data)
 
 
 
-void c1942_palette_bank_w(int offset,int data)
+WRITE_HANDLER( c1942_palette_bank_w )
 {
 	if (*c1942_palette_bank != data)
 	{
@@ -162,7 +162,7 @@ void c1942_palette_bank_w(int offset,int data)
 
 
 
-void c1942_flipscreen_w(int offset,int data)
+WRITE_HANDLER( c1942_flipscreen_w )
 {
 	if (flipscreen != (data & 0x80))
 	{

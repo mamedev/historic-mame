@@ -18,9 +18,9 @@ struct QSound_interface {
 int  qsound_sh_start( const struct MachineSound *msound );
 void qsound_sh_stop( void );
 
-void qsound_data_h_w(int offset,int data);
-void qsound_data_l_w(int offset,int data);
-void qsound_cmd_w(int offset,int data);
-int  qsound_status_r(int offset);
+WRITE_HANDLER( qsound_data_h_w );
+WRITE_HANDLER( qsound_data_l_w );
+WRITE_HANDLER( qsound_cmd_w );
+READ_HANDLER( qsound_status_r );
 
 #endif /* __QSOUND_H__ */

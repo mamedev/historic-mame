@@ -13,14 +13,14 @@ driver by Mirko Buffoni
 extern unsigned char *solomon_bgvideoram;
 extern unsigned char *solomon_bgcolorram;
 
-void solomon_flipscreen_w(int offset,int data);
-void solomon_bgvideoram_w(int offset,int data);
-void solomon_bgcolorram_w(int offset,int data);
+WRITE_HANDLER( solomon_flipscreen_w );
+WRITE_HANDLER( solomon_bgvideoram_w );
+WRITE_HANDLER( solomon_bgcolorram_w );
 int  solomon_vh_start(void);
 void solomon_vh_stop(void);
 void solomon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-static void solomon_sh_command_w(int offset,int data)
+static WRITE_HANDLER( solomon_sh_command_w )
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(1,Z80_NMI_INT);

@@ -263,12 +263,12 @@ void llander_sh_update(void)
 	mixer_play_streamed_sample_16(channel,sample_buffer,2*buffer_len,emulation_rate);
 }
 
-void llander_snd_reset_w(int offset,int data)
+WRITE_HANDLER( llander_snd_reset_w )
 {
         lfsr_index=0;
 }
 
-void llander_sounds_w (int offset,int data)
+WRITE_HANDLER( llander_sounds_w )
 {
 	/* Update sound to present */
 	llander_sh_update_partial();

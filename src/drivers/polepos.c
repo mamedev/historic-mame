@@ -75,28 +75,28 @@ track selection.
 
 /* from machine */
 void polepos_init_machine(void);
-void polepos_z80_irq_enable_w(int offs, int data);
-void polepos_z8002_nvi_enable_w(int offs, int data);
+WRITE_HANDLER( polepos_z80_irq_enable_w );
+WRITE_HANDLER( polepos_z8002_nvi_enable_w );
 int polepos_z8002_1_interrupt(void);
 int polepos_z8002_2_interrupt(void);
-void polepos_z8002_enable_w(int offs, int data);
-void polepos_adc_select_w(int offs, int data);
-int polepos_adc_r(int offs);
-int polepos_io_r(int offs);
-void polepos_mcu_enable_w(int offs, int data);
-int polepos_mcu_control_r(int offs);
-void polepos_mcu_control_w(int offs, int data);
-int polepos_mcu_data_r(int offs);
-void polepos_mcu_data_w(int offs, int data);
-void polepos_start_w(int offs, int data);
-int polepos2_ic25_r(int offset);
+WRITE_HANDLER( polepos_z8002_enable_w );
+WRITE_HANDLER( polepos_adc_select_w );
+READ_HANDLER( polepos_adc_r );
+READ_HANDLER( polepos_io_r );
+WRITE_HANDLER( polepos_mcu_enable_w );
+READ_HANDLER( polepos_mcu_control_r );
+WRITE_HANDLER( polepos_mcu_control_w );
+READ_HANDLER( polepos_mcu_data_r );
+WRITE_HANDLER( polepos_mcu_data_w );
+WRITE_HANDLER( polepos_start_w );
+READ_HANDLER( polepos2_ic25_r );
 
 /* from sndhrdw */
 int polepos_sh_start(const struct MachineSound *msound);
 void polepos_sh_stop(void);
 void polepos_sh_update(void);
-void polepos_engine_sound_lsb_w(int offs, int data);
-void polepos_engine_sound_msb_w(int offs, int data);
+WRITE_HANDLER( polepos_engine_sound_lsb_w );
+WRITE_HANDLER( polepos_engine_sound_msb_w );
 
 /* from vidhrdw */
 extern UINT8 *polepos_view_memory;
@@ -109,26 +109,26 @@ void polepos_vh_stop(void);
 void polepos_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void polepos_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void polepos_view_w(int offset, int data);
-void polepos_road_w(int offset, int data);
-void polepos_alpha_w(int offset, int data);
-void polepos_sprite_w(int offset, int data);
-void polepos_z80_view_w(int offset, int data);
-void polepos_z80_road_w(int offset, int data);
-void polepos_z80_alpha_w(int offset, int data);
-void polepos_z80_sprite_w(int offset, int data);
+WRITE_HANDLER( polepos_view_w );
+WRITE_HANDLER( polepos_road_w );
+WRITE_HANDLER( polepos_alpha_w );
+WRITE_HANDLER( polepos_sprite_w );
+WRITE_HANDLER( polepos_z80_view_w );
+WRITE_HANDLER( polepos_z80_road_w );
+WRITE_HANDLER( polepos_z80_alpha_w );
+WRITE_HANDLER( polepos_z80_sprite_w );
 
-int polepos_view_r(int offset);
-int polepos_road_r(int offset);
-int polepos_alpha_r(int offset);
-int polepos_sprite_r(int offset);
-int polepos_z80_view_r(int offset);
-int polepos_z80_road_r(int offset);
-int polepos_z80_alpha_r(int offset);
-int polepos_z80_sprite_r(int offset);
+READ_HANDLER( polepos_view_r );
+READ_HANDLER( polepos_road_r );
+READ_HANDLER( polepos_alpha_r );
+READ_HANDLER( polepos_sprite_r );
+READ_HANDLER( polepos_z80_view_r );
+READ_HANDLER( polepos_z80_road_r );
+READ_HANDLER( polepos_z80_alpha_r );
+READ_HANDLER( polepos_z80_sprite_r );
 
-void polepos_view_hscroll_w(int offset, int data);
-void polepos_road_vscroll_w(int offset, int data);
+WRITE_HANDLER( polepos_view_hscroll_w );
+WRITE_HANDLER( polepos_road_vscroll_w );
 
 
 

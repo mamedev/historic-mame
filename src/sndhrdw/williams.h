@@ -23,15 +23,15 @@ extern struct hc55516_interface williams_cvsd_interface;
 extern struct OKIM6295interface williams_adpcm_6295_interface_REGION_SOUND1;
 
 void williams_cvsd_init(int cpunum, int pianum);
-void williams_cvsd_data_w(int offset, int data);
+WRITE_HANDLER( williams_cvsd_data_w );
 void williams_cvsd_reset_w(int state);
 
 void williams_adpcm_init(int cpunum);
-void williams_adpcm_data_w(int offset, int data);
+WRITE_HANDLER( williams_adpcm_data_w );
 void williams_adpcm_reset_w(int state);
 
 void williams_narc_init(int cpunum);
-void williams_narc_data_w(int offset, int data);
+WRITE_HANDLER( williams_narc_data_w );
 void williams_narc_reset_w(int state);
 
 

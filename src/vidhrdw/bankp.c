@@ -120,7 +120,7 @@ int bankp_vh_start(void)
 
 
 
-void bankp_scroll_w(int offset,int data)
+WRITE_HANDLER( bankp_scroll_w )
 {
 	scroll_x = data;
 }
@@ -141,7 +141,7 @@ void bankp_vh_stop(void)
 
 
 
-void bankp_videoram2_w(int offset,int data)
+WRITE_HANDLER( bankp_videoram2_w )
 {
 	if (bankp_videoram2[offset] != data)
 	{
@@ -153,7 +153,7 @@ void bankp_videoram2_w(int offset,int data)
 
 
 
-void bankp_colorram2_w(int offset,int data)
+WRITE_HANDLER( bankp_colorram2_w )
 {
 	if (bankp_colorram2[offset] != data)
 	{
@@ -165,7 +165,7 @@ void bankp_colorram2_w(int offset,int data)
 
 
 
-void bankp_out_w(int offset,int data)
+WRITE_HANDLER( bankp_out_w )
 {
 	/* bits 0-1 are playfield priority */
 	/* TODO: understand how this works, currently the only thing I do is */

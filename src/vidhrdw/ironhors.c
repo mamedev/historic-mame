@@ -93,7 +93,7 @@ void ironhors_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 
 
-void ironhors_charbank_w(int offset,int data)
+WRITE_HANDLER( ironhors_charbank_w )
 {
 	if (charbank != (data & 1))
 	{
@@ -108,7 +108,7 @@ void ironhors_charbank_w(int offset,int data)
 
 
 
-void ironhors_palettebank_w(int offset,int data)
+WRITE_HANDLER( ironhors_palettebank_w )
 {
 	if (palettebank != (data & 7))
 	{

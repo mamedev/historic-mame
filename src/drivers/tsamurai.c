@@ -16,17 +16,17 @@ driver by Phil Stroffolino
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
 
-void tsamurai_bgcolor_w( int offset, int data );
-void tsamurai_flipscreen_w( int offset, int data );
-void tsamurai_textbank_w( int offset, int data );
+WRITE_HANDLER( tsamurai_bgcolor_w );
+WRITE_HANDLER( tsamurai_flipscreen_w );
+WRITE_HANDLER( tsamurai_textbank_w );
 
-extern void tsamurai_scrolly_w( int offset, int data );
-extern void tsamurai_scrollx_w( int offset, int data );
+WRITE_HANDLER( tsamurai_scrolly_w );
+WRITE_HANDLER( tsamurai_scrollx_w );
 extern void tsamurai_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
 extern void tsamurai_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void tsamurai_bg_videoram_w( int offset, int data );
-extern void tsamurai_fg_videoram_w( int offset, int data );
-extern void tsamurai_fg_colorram_w( int offset, int data );
+WRITE_HANDLER( tsamurai_bg_videoram_w );
+WRITE_HANDLER( tsamurai_fg_videoram_w );
+WRITE_HANDLER( tsamurai_fg_colorram_w );
 extern int tsamurai_vh_start( void );
 extern unsigned char *tsamurai_videoram;
 
@@ -50,7 +50,7 @@ static struct DACinterface dac_interface =
 static int nmi_enabled;
 static int sound_command1, sound_command2;
 
-static void nmi_enable_w( int offset, int data ){
+static WRITE_HANDLER( nmi_enable_w ){
 	nmi_enabled = data;
 }
 
@@ -58,34 +58,34 @@ static int samurai_interrupt( void ){
 	return nmi_enabled? nmi_interrupt():ignore_interrupt();
 }
 
-int unknown_d803_r(int offset)
+READ_HANDLER( unknown_d803_r )
 {
 	return 0x6b;     // nogi
 }
 
-int unknown_d806_r( int offset )
+READ_HANDLER( unknown_d806_r )
 {
 	return 0x40;
 }
 
-int unknown_d900_r( int offset )
+READ_HANDLER( unknown_d900_r )
 {
 	return 0x6a;
 }
 
-int unknown_d938_r(int offset)
+READ_HANDLER( unknown_d938_r )
 {
 	return 0xfb;    // nogi
 }
 
 
-static void sound_command1_w( int offset, int data )
+static WRITE_HANDLER( sound_command1_w )
 {
 	sound_command1 = data;
 	cpu_cause_interrupt( 1, Z80_IRQ_INT );
 }
 
-static void sound_command2_w( int offset, int data )
+static WRITE_HANDLER( sound_command2_w )
 {
 	sound_command2 = data;
 	cpu_cause_interrupt( 2, Z80_IRQ_INT );
@@ -157,12 +157,12 @@ static struct IOWritePort z80_writeport[] =
 
 /*******************************************************************************/
 
-static int sound_command1_r( int offset )
+static READ_HANDLER( sound_command1_r )
 {
 	return sound_command1;
 }
 
-static void sound_out1_w( int offset, int data )
+static WRITE_HANDLER( sound_out1_w )
 {
 	DAC_data_w(0,data);
 }
@@ -184,11 +184,11 @@ static struct MemoryWriteAddress writemem_sound1[] =
 	{ -1 }
 };
 /*******************************************************************************/
-static int sound_command2_r( int offset ){
+static READ_HANDLER( sound_command2_r ){
 	return sound_command2;
 }
 
-static void sound_out2_w( int offset, int data ){
+static WRITE_HANDLER( sound_out2_w ){
 	DAC_data_w(1,data);
 }
 

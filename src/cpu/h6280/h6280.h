@@ -59,11 +59,11 @@ extern void h6280_set_irq_callback(int (*callback)(int irqline));
 extern const char *h6280_info(void *context, int regnum);
 extern unsigned h6280_dasm(char *buffer, unsigned pc);
 
-extern int H6280_irq_status_r(int offset);
-extern void H6280_irq_status_w(int offset, int data);
+READ_HANDLER( H6280_irq_status_r );
+WRITE_HANDLER( H6280_irq_status_w );
 
-extern int H6280_timer_r(int offset);
-extern void H6280_timer_w(int offset, int data);
+READ_HANDLER( H6280_timer_r );
+WRITE_HANDLER( H6280_timer_w );
 
 #ifdef MAME_DEBUG
 extern int Dasm6280(char *buffer, int pc);

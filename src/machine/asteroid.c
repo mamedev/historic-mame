@@ -29,7 +29,7 @@ int llander_interrupt (void)
 		return ignore_interrupt();
 }
 
-int asteroid_IN0_r (int offset)
+READ_HANDLER( asteroid_IN0_r )
 {
 
 	int res;
@@ -52,7 +52,7 @@ int asteroid_IN0_r (int offset)
 	return res;
 }
 
-int asteroib_IN0_r (int offset)
+READ_HANDLER( asteroib_IN0_r )
 {
 	int res;
 
@@ -71,7 +71,7 @@ int asteroib_IN0_r (int offset)
  * Typically, only the high bit is used. This is handled by one input port.
  */
 
-int asteroid_IN1_r (int offset)
+READ_HANDLER( asteroid_IN1_r )
 {
 	int res;
 	int bitmask;
@@ -86,7 +86,7 @@ int asteroid_IN1_r (int offset)
 	return (res);
 }
 
-int asteroid_DSW1_r (int offset)
+READ_HANDLER( asteroid_DSW1_r )
 {
 	int res;
 	int res1;
@@ -98,7 +98,7 @@ int asteroid_DSW1_r (int offset)
 }
 
 
-void asteroid_bank_switch_w (int offset,int data)
+WRITE_HANDLER( asteroid_bank_switch_w )
 {
 	static int asteroid_bank = 0;
 	int asteroid_newbank;
@@ -122,7 +122,7 @@ void asteroid_bank_switch_w (int offset,int data)
 	osd_led_w (1, ~data);
 }
 
-void astdelux_bank_switch_w (int offset,int data)
+WRITE_HANDLER( astdelux_bank_switch_w )
 {
 	static int astdelux_bank = 0;
 	int astdelux_newbank;
@@ -144,7 +144,7 @@ void astdelux_bank_switch_w (int offset,int data)
 	}
 }
 
-void astdelux_led_w (int offset,int data)
+WRITE_HANDLER( astdelux_led_w )
 {
 	osd_led_w (offset, ~data);
 }
@@ -157,7 +157,7 @@ void asteroid_init_machine(void)
 /*
  * This is Lunar Lander's Inputport 0.
  */
-int llander_IN0_r (int offset)
+READ_HANDLER( llander_IN0_r )
 {
 	int res;
 

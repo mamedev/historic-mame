@@ -73,7 +73,7 @@ static void irmb_run(void);
 
 
 
-int irobot_sharedmem_r(int offset)
+READ_HANDLER( irobot_sharedmem_r )
 {
 	if (irobot_outx == 3)
 		return mbRAM[BYTE_XOR_LE(offset)];
@@ -91,7 +91,7 @@ int irobot_sharedmem_r(int offset)
 }
 
 /* Comment out the mbRAM =, comRAM2 = or comRAM1 = and it will start working */
-void irobot_sharedmem_w(int offset,int data)
+WRITE_HANDLER( irobot_sharedmem_w )
 {
 	if (irobot_outx == 3)
 		mbRAM[BYTE_XOR_LE(offset)] = data;
@@ -108,7 +108,7 @@ static void irvg_done_callback (int param)
 	irvg_running = 0;
 }
 
-void irobot_statwr_w(int offset, int data)
+WRITE_HANDLER( irobot_statwr_w )
 {
 	if (errorlog)
 	{
@@ -148,7 +148,7 @@ void irobot_statwr_w(int offset, int data)
 	irobot_statwr = data;
 }
 
-void irobot_out0_w(int offset, int data)
+WRITE_HANDLER( irobot_out0_w )
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
 
@@ -170,7 +170,7 @@ void irobot_out0_w(int offset, int data)
 	irobot_alphamap = (data & 0x80);
 }
 
-void irobot_rom_banksel(int offset, int data)
+WRITE_HANDLER( irobot_rom_banksel_w )
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
 
@@ -230,20 +230,20 @@ void irobot_init_machine(void)
 	/* set an initial timer to go off on scanline 0 */
 	irscanline_timer = timer_set(cpu_getscanlinetime(0), 0, scanline_callback);
 
-	irobot_rom_banksel(0,0);
+	irobot_rom_banksel_w(0,0);
 	irobot_out0_w(0,0);
 	irobot_combase = comRAM[0];
 	irobot_combase_mb = comRAM[1];
 	irobot_outx = 0;
 }
 
-void irobot_control_w (int offset, int data)
+WRITE_HANDLER( irobot_control_w )
 {
 
 	irobot_control_num = offset & 0x03;
 }
 
-int irobot_control_r (int offset)
+READ_HANDLER( irobot_control_r )
 {
 
 	if (irobot_control_num == 0)
@@ -256,7 +256,7 @@ int irobot_control_r (int offset)
 
 /*  we allow irmb_running and irvg_running to appear running before clearing
 	them to simulate the mathbox and vector generator running in real time */
-int irobot_status_r(int offset)
+READ_HANDLER( irobot_status_r )
 {
 	int d=0;
 

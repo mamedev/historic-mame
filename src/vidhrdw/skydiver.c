@@ -12,13 +12,13 @@
 static int skydiver_lamps[8];
 static int skydiver_width = 0;
 
-void skydiver_width_w(int offset, int data)
+WRITE_HANDLER( skydiver_width_w )
 {
 	skydiver_width = offset;
 	if (errorlog) fprintf (errorlog, "width: %02x\n", data);
 }
 
-void skydiver_sk_lamps_w(int offset, int data)
+WRITE_HANDLER( skydiver_sk_lamps_w )
 {
 	switch (offset)
 	{
@@ -29,7 +29,7 @@ void skydiver_sk_lamps_w(int offset, int data)
 	}
 }
 
-void skydiver_yd_lamps_w(int offset, int data)
+WRITE_HANDLER( skydiver_yd_lamps_w )
 {
 	switch (offset)
 	{
@@ -40,7 +40,7 @@ void skydiver_yd_lamps_w(int offset, int data)
 	}
 }
 
-void skydiver_iver_lamps_w(int offset, int data)
+WRITE_HANDLER( skydiver_iver_lamps_w )
 {
 	switch (offset)
 	{

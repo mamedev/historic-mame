@@ -97,7 +97,7 @@ void vastar_vh_stop(void)
 
 
 
-void vastar_bg1colorram2_w(int offset,int data)
+WRITE_HANDLER( vastar_bg1colorram2_w )
 {
 	if (vastar_bg1colorram2[offset] != data)
 	{
@@ -107,7 +107,7 @@ void vastar_bg1colorram2_w(int offset,int data)
 	}
 }
 
-void vastar_bg2videoram_w(int offset,int data)
+WRITE_HANDLER( vastar_bg2videoram_w )
 {
 	if (vastar_bg2videoram[offset] != data)
 	{
@@ -117,7 +117,7 @@ void vastar_bg2videoram_w(int offset,int data)
 	}
 }
 
-void vastar_bg2colorram1_w(int offset,int data)
+WRITE_HANDLER( vastar_bg2colorram1_w )
 {
 	if (vastar_bg2colorram1[offset] != data)
 	{
@@ -127,7 +127,7 @@ void vastar_bg2colorram1_w(int offset,int data)
 	}
 }
 
-void vastar_bg2colorram2_w(int offset,int data)
+WRITE_HANDLER( vastar_bg2colorram2_w )
 {
 	if (vastar_bg2colorram2[offset] != data)
 	{

@@ -18,10 +18,9 @@ static int spritebank[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 /* Callbacks */
 #define LAYER_CALLBACK( layer_name ) \
-	static void layer_name##_map_info( int col, int row ) { \
-		int tileoffs = ( row * 32 + col ) * 4; \
-		int data0 = READ_WORD( &footchmp_##layer_name##_ram[tileoffs] ); \
-		int data1 = READ_WORD( &footchmp_##layer_name##_ram[tileoffs+2] ); \
+	static void layer_name##_map_info( int tile_index ) { \
+		int data0 = READ_WORD( &footchmp_##layer_name##_ram[4*tile_index] ); \
+		int data1 = READ_WORD( &footchmp_##layer_name##_ram[4*tile_index+2] ); \
 		tile_info.flags = TILE_FLIPYX( ( data0 & 0xc000 ) >> 14 ); \
 		SET_TILE_INFO( 0, data1 & 0x1fff, data0 & 0xff ); \
 	}
@@ -31,10 +30,9 @@ LAYER_CALLBACK( layer1 )
 LAYER_CALLBACK( layer2 )
 LAYER_CALLBACK( layer3 )
 
-static void text_layer_info( int col, int row ) {
-
-	int tileoffs = ( row * 64 + col ) * 2;
-	int data = READ_WORD( &footchmp_text_ram[tileoffs] );
+static void text_layer_info( int tile_index )
+{
+	int data = READ_WORD( &footchmp_text_ram[2*tile_index] );
 
 	tile_info.flags = TILE_FLIPYX( ( data & 0xc000 ) >> 14 );
 
@@ -43,19 +41,18 @@ static void text_layer_info( int col, int row ) {
 }
 
 #define LAYER_READ( layer_name ) \
-	int footchmp_##layer_name##ram_r( int offset ) { \
+	READ_HANDLER( footchmp_##layer_name##ram_r ) { \
 		return READ_WORD( &footchmp_##layer_name##_ram[offset] ); \
 	}
 
 #define LAYER_WRITE( layer_name ) \
-	void footchmp_##layer_name##ram_w( int offset, int data ) { \
+	WRITE_HANDLER( footchmp_##layer_name##ram_w ) { \
 		int oldword = READ_WORD (&footchmp_##layer_name##_ram[offset]); \
 		int newword = COMBINE_WORD (oldword,data); \
 		if (oldword != newword) \
 		{ \
 			WRITE_WORD (&footchmp_##layer_name##_ram[offset],newword); \
-			offset /= 4; \
-			tilemap_mark_tile_dirty( layer_name##_map, offset % 32, offset / 32 ); \
+			tilemap_mark_tile_dirty( layer_name##_map, offset/4 ); \
 		} \
 	}
 
@@ -74,24 +71,23 @@ LAYER_WRITE( layer3 )
 
 ***************************************************************************/
 
-int footchmp_textram_r( int offset ) {
+READ_HANDLER( footchmp_textram_r ) {
 	return READ_WORD( &footchmp_text_ram[offset] );
 }
 
-void footchmp_textram_w( int offset, int data ) {
+WRITE_HANDLER( footchmp_textram_w ) {
 	int oldword = READ_WORD (&footchmp_text_ram[offset]);
 	int newword = COMBINE_WORD (oldword,data);
 
 	if (oldword != newword)
 	{
 		WRITE_WORD (&footchmp_text_ram[offset],newword);
-		offset /= 2;
-		tilemap_mark_tile_dirty( text_layer, offset % 64, offset / 64 );
+		tilemap_mark_tile_dirty( text_layer, offset/2 );
 	}
 }
 
 /* we have to straighten out the 16-bit word into bytes for gfxdecode() to work */
-int footchmp_chargen_r( int offset ) {
+READ_HANDLER( footchmp_chargen_r ) {
 	int res;
 
 	res = READ_WORD (&footchmp_chargen_ram[offset]);
@@ -103,7 +99,7 @@ int footchmp_chargen_r( int offset ) {
 	return res;
 }
 
-void footchmp_chargen_w( int offset,int data ) {
+WRITE_HANDLER( footchmp_chargen_w ) {
 	int oldword = READ_WORD (&footchmp_chargen_ram[offset]);
 	int newword;
 
@@ -126,15 +122,15 @@ void footchmp_chargen_w( int offset,int data ) {
 
 ***************************************************************************/
 
-int footchmp_spriteram_r( int offset ) {
+READ_HANDLER( footchmp_spriteram_r ) {
 	return READ_WORD( &spriteram[offset] );
 }
 
-void footchmp_spriteram_w( int offset, int data ) {
+WRITE_HANDLER( footchmp_spriteram_w ) {
 	COMBINE_WORD_MEM( &spriteram[offset], data );
 }
 
-void footchmp_spritebank_w( int offset, int data ) {
+WRITE_HANDLER( footchmp_spritebank_w ) {
 	if (errorlog) fprintf (errorlog, "PC = %06x: bank %d, new value: %04x\n", cpu_get_pc(), offset >> 1, ( data & 0x0f ) << 10);
 //	if ( ( offset >> 1 ) < 2 ) return;
 //	if ( data == 0 ) data = ( ( offset >> 1 ) * 0x400 ) >> 10;
@@ -289,7 +285,7 @@ static void footchmp_drawsprites( struct osd_bitmap *bitmap ) {
 
 ***************************************************************************/
 
-void footchmp_scroll_w( int offset, int data ) {
+WRITE_HANDLER( footchmp_scroll_w ) {
 
 	/* scroll values are adjusted at PC $8BA */
 
@@ -402,11 +398,11 @@ int footchmp_vh_start( void )
 
 	memset( char_dirty, 1, 256 );
 
-	text_layer = tilemap_create( text_layer_info, TILEMAP_TRANSPARENT,  8,  8, 64, 64 );
-	layer3_map = tilemap_create( layer3_map_info, TILEMAP_TRANSPARENT, 16, 16, 32, 32 );
-	layer2_map = tilemap_create( layer2_map_info, TILEMAP_TRANSPARENT, 16, 16, 32, 32 );
-	layer1_map = tilemap_create( layer1_map_info, TILEMAP_TRANSPARENT, 16, 16, 32, 32 );
-	layer0_map = tilemap_create( layer0_map_info, TILEMAP_OPAQUE,      16, 16, 32, 32 );
+	text_layer = tilemap_create(text_layer_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,64);
+	layer3_map = tilemap_create(layer3_map_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+	layer2_map = tilemap_create(layer2_map_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+	layer1_map = tilemap_create(layer1_map_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+	layer0_map = tilemap_create(layer0_map_info,tilemap_scan_rows,TILEMAP_OPAQUE,     16,16,32,32);
 
 	if ( !text_layer || !layer3_map || !layer2_map || !layer1_map || !layer0_map )
 	{

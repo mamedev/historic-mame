@@ -45,10 +45,10 @@ write:
 extern unsigned char *commando_bgvideoram,*commando_bgcolorram;
 extern int commando_bgvideoram_size;
 extern unsigned char *commando_scrollx,*commando_scrolly;
-void commando_bgvideoram_w(int offset,int data);
-void commando_bgcolorram_w(int offset,int data);
-void commando_spriteram_w(int offset,int data);
-void commando_c804_w(int offset,int data);
+WRITE_HANDLER( commando_bgvideoram_w );
+WRITE_HANDLER( commando_bgcolorram_w );
+WRITE_HANDLER( commando_spriteram_w );
+WRITE_HANDLER( commando_c804_w );
 int commando_vh_start(void);
 void commando_vh_stop(void);
 void commando_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);

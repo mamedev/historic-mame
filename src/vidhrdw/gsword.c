@@ -87,7 +87,7 @@ void gsword_vh_stop(void)
 	osd_free_bitmap(bitmap_bg);
 }
 
-void gs_charbank_w(int offset, int data)
+WRITE_HANDLER( gs_charbank_w )
 {
 	if (charbank != data)
 	{
@@ -96,7 +96,7 @@ void gs_charbank_w(int offset, int data)
 	}
 }
 
-void gs_videoctrl_w(int offset, int data)
+WRITE_HANDLER( gs_videoctrl_w )
 {
 	if (data & 0x8f)
 	{
@@ -122,7 +122,7 @@ void gs_videoctrl_w(int offset, int data)
 	/* other bits unused */
 }
 
-void gs_videoram_w(int offset,int data)
+WRITE_HANDLER( gs_videoram_w )
 {
 	if (gs_videoram[offset] != data)
 	{

@@ -54,7 +54,7 @@ void sidearms_vh_stop(void)
 
 
 
-void sidearms_c804_w(int offset,int data)
+WRITE_HANDLER( sidearms_c804_w )
 {
 	/* bits 0 and 1 are coin counters */
 	coin_counter_w(0,data & 0x01);
@@ -73,7 +73,7 @@ void sidearms_c804_w(int offset,int data)
 	}
 }
 
-void sidearms_gfxctrl_w(int offset,int data)
+WRITE_HANDLER( sidearms_gfxctrl_w )
 {
 	objon = data & 0x01;
 	bgon = data & 0x02;

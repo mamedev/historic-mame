@@ -169,7 +169,7 @@ void gauntlet_vh_stop(void)
  *
  *************************************/
 
-void gauntlet_hscroll_w(int offset, int data)
+WRITE_HANDLER( gauntlet_hscroll_w )
 {
 	/* update memory */
 	int oldword = READ_WORD(&atarigen_hscroll[offset]);
@@ -189,7 +189,7 @@ void gauntlet_hscroll_w(int offset, int data)
  *
  *************************************/
 
-void gauntlet_vscroll_w(int offset, int data)
+WRITE_HANDLER( gauntlet_vscroll_w )
 {
 	/* update memory */
 	int oldword = READ_WORD(&atarigen_vscroll[offset]);
@@ -210,7 +210,7 @@ void gauntlet_vscroll_w(int offset, int data)
  *
  *************************************/
 
-void gauntlet_playfieldram_w(int offset, int data)
+WRITE_HANDLER( gauntlet_playfieldram_w )
 {
 	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
 	int newword = COMBINE_WORD(oldword, data);

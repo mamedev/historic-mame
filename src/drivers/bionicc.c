@@ -42,15 +42,15 @@ ToDo:
 
 static unsigned char *ram_bc; /* used by high scores */
 
-void bionicc_fgvideoram_w(int offset,int data);
-void bionicc_bgvideoram_w(int offset,int data);
-void bionicc_txvideoram_w(int offset,int data);
-int  bionicc_fgvideoram_r(int offset);
-int  bionicc_bgvideoram_r(int offset);
-int  bionicc_txvideoram_r(int offset);
-void bionicc_paletteram_w(int offset,int data);
-void bionicc_scroll_w(int offset,int data);
-void bionicc_gfxctrl_w(int offset,int data);
+WRITE_HANDLER( bionicc_fgvideoram_w );
+WRITE_HANDLER( bionicc_bgvideoram_w );
+WRITE_HANDLER( bionicc_txvideoram_w );
+READ_HANDLER( bionicc_fgvideoram_r );
+READ_HANDLER( bionicc_bgvideoram_r );
+READ_HANDLER( bionicc_txvideoram_r );
+WRITE_HANDLER( bionicc_paletteram_w );
+WRITE_HANDLER( bionicc_scroll_w );
+WRITE_HANDLER( bionicc_gfxctrl_w );
 
 extern unsigned char *bionicc_bgvideoram;
 extern unsigned char *bionicc_fgvideoram;
@@ -67,7 +67,7 @@ void bionicc_sound_cmd(int data);
 
 
 
-int bionicc_inputs_r(int offset)
+READ_HANDLER( bionicc_inputs_r )
 {
 if (errorlog) fprintf(errorlog,"%06x: inputs_r %04x\n",cpu_get_pc(),offset);
 	return (readinputport(offset)<<8) + readinputport(offset+1);
@@ -75,19 +75,19 @@ if (errorlog) fprintf(errorlog,"%06x: inputs_r %04x\n",cpu_get_pc(),offset);
 
 static unsigned char bionicc_inp[6];
 
-void hacked_controls_w( int offset, int data )
+WRITE_HANDLER( hacked_controls_w )
 {
 if (errorlog) fprintf(errorlog,"%06x: hacked_controls_w %04x %02x\n",cpu_get_pc(),offset,data);
 	COMBINE_WORD_MEM( &bionicc_inp[offset], data);
 }
 
-static int hacked_controls_r(int offset)
+static READ_HANDLER( hacked_controls_r )
 {
 if (errorlog) fprintf(errorlog,"%06x: hacked_controls_r %04x %04x\n",cpu_get_pc(),offset,READ_WORD( &bionicc_inp[offset] ));
 	return READ_WORD( &bionicc_inp[offset] );
 }
 
-static void bionicc_mpu_trigger_w(int offset,int data)
+static WRITE_HANDLER( bionicc_mpu_trigger_w )
 {
 	data = readinputport(0) >> 4;
 	WRITE_WORD(&bionicc_inp[0x00],data ^ 0x0f);
@@ -103,13 +103,13 @@ static void bionicc_mpu_trigger_w(int offset,int data)
 
 static unsigned char soundcommand[2];
 
-void hacked_soundcommand_w( int offset, int data )
+WRITE_HANDLER( hacked_soundcommand_w )
 {
 	COMBINE_WORD_MEM( &soundcommand[offset], data);
 	soundlatch_w(0,data & 0xff);
 }
 
-static int hacked_soundcommand_r(int offset)
+static READ_HANDLER( hacked_soundcommand_r )
 {
 	return READ_WORD( &soundcommand[offset] );
 }

@@ -16,20 +16,22 @@ static int screen_red;
 static int screen_red_enabled;		/* 1 for games that can turn the screen red */
 static int redraw_screen;
 static int color_map_select;
+static int background_color;
 
-static const struct artwork_element *init_overlay;
+static int overlay_type;	/* 0=none, 1=simple, 2=file */
+static const void *init_overlay;
 static struct artwork *overlay;
 
-static void (*videoram_w_p)(int offset,int data);
+static mem_write_handler videoram_w_p;
 static void (*vh_screenrefresh_p)(struct osd_bitmap *bitmap,int full_refresh);
 static void (*plot_pixel_p)(int x, int y, int col);
 
-static void bw_videoram_w(int offset,int data);
-static void schaser_videoram_w(int offset,int data);
-static void rollingc_videoram_w(int offset,int data);
-static void invadpt2_videoram_w (int offset,int data);
-static void astinvad_videoram_w (int offset,int data);
-static void spaceint_videoram_w (int offset,int data);
+static WRITE_HANDLER( bw_videoram_w );
+static WRITE_HANDLER( schaser_videoram_w );
+static WRITE_HANDLER( lupin3_videoram_w );
+static WRITE_HANDLER( invadpt2_videoram_w );
+static WRITE_HANDLER( astinvad_videoram_w );
+static WRITE_HANDLER( spaceint_videoram_w );
 
 static void vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 static void seawolf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -105,7 +107,7 @@ void init_8080bw(void)
 	vh_screenrefresh_p = vh_screenrefresh;
 	use_tmpbitmap = 0;
 	screen_red_enabled = 0;
-	init_overlay = 0;
+	overlay_type = 0;
 	color_map_select = 0;
 	flipscreen = 0;
 }
@@ -114,36 +116,49 @@ void init_invaders(void)
 {
 	init_8080bw();
 	init_overlay = invaders_overlay;
+	overlay_type = 1;
 }
 
 void init_invdpt2m(void)
 {
 	init_8080bw();
 	init_overlay = invdpt2m_overlay;
+	overlay_type = 1;
 }
 
 void init_invrvnge(void)
 {
 	init_8080bw();
 	init_overlay = invrvnge_overlay;
+	overlay_type = 1;
 }
 
 void init_invad2ct(void)
 {
 	init_8080bw();
 	init_overlay = invad2ct_overlay;
+	overlay_type = 1;
 }
 
 void init_schaser(void)
 {
 	init_8080bw();
 	videoram_w_p = schaser_videoram_w;
+	background_color = 2;	/* blue */
 }
 
 void init_rollingc(void)
 {
 	init_8080bw();
-	videoram_w_p = rollingc_videoram_w;
+	videoram_w_p = schaser_videoram_w;
+	background_color = 0;	/* black */
+}
+
+void init_lupin3(void)
+{
+	init_8080bw();
+	videoram_w_p = lupin3_videoram_w;
+	background_color = 0;	/* black */
 }
 
 void init_invadpt2(void)
@@ -187,22 +202,49 @@ void init_spaceint(void)
 	videoram_w_p = spaceint_videoram_w;
 }
 
+void init_spcenctr(void)
+{
+	extern struct GameDriver driver_spcenctr;
+
+	init_8080bw();
+	init_overlay = driver_spcenctr.name;
+	overlay_type = 2;
+}
+
 
 int invaders_vh_start(void)
 {
 	/* create overlay if one of was specified in init_X */
-	if (init_overlay)
+	if (overlay_type)
 	{
-		if ((overlay = artwork_create(init_overlay, 2, Machine->drv->total_colors-2)) == 0)
-			return 1;
+		int start_pen;
+		int max_pens;
 
-		use_tmpbitmap = 1;
+
+		start_pen = 2;
+		max_pens = Machine->drv->total_colors-start_pen;
+
+		if (overlay_type == 1)
+		{
+			if ((overlay = artwork_create((const struct artwork_element *)init_overlay, start_pen, max_pens)) == 0)
+				return 1;
+		}
+		else
+		{
+			overlay = artwork_load((const char *)init_overlay, start_pen, max_pens);
+		}
+
+		if (overlay)
+			use_tmpbitmap = 1;
 	}
 
 	if (use_tmpbitmap && (generic_bitmapped_vh_start() != 0))
 		return 1;
 
 	plot_pixel_p = use_tmpbitmap ? plot_pixel_8080_tmpbitmap : plot_pixel_8080;
+
+	/* make sure that the screen matches the videoram, this fixes invad2ct */
+	redraw_screen = 1;
 
 	return 0;
 }
@@ -272,13 +314,13 @@ static void plot_pixel_8080_tmpbitmap (int x, int y, int col)
 }
 
 
-void invaders_videoram_w (int offset,int data)
+WRITE_HANDLER( invaders_videoram_w )
 {
 	videoram_w_p(offset, data);
 }
 
 
-static void bw_videoram_w (int offset,int data)
+static WRITE_HANDLER( bw_videoram_w )
 {
 	int i,x,y;
 
@@ -297,57 +339,53 @@ static void bw_videoram_w (int offset,int data)
 }
 
 
-/* thr only difference between these is the background color */
-
-static void schaser_videoram_w (int offset,int data)
+static WRITE_HANDLER( schaser_videoram_w )
 {
-	int i,x,y,fore_color,back_color;
+	int i,x,y,foreground_color;
 
 	videoram[offset] = data;
 
 	y = offset / 32;
 	x = 8 * (offset % 32);
 
-	back_color = 2;	/* blue */
-	fore_color = colorram[offset & 0x1f1f] & 0x07;
+	foreground_color = colorram[offset & 0x1f1f] & 0x07;
 
 	for (i = 0; i < 8; i++)
 	{
 		if (data & 0x01)
-			plot_pixel_p (x, y, fore_color);
+			plot_pixel_p (x, y, foreground_color);
 		else
-			plot_pixel_p (x, y, back_color);
+			plot_pixel_p (x, y, background_color);
 
 		x ++;
 		data >>= 1;
 	}
 }
 
-static void rollingc_videoram_w (int offset,int data)
+static WRITE_HANDLER( lupin3_videoram_w )
 {
-	int i,x,y,fore_color,back_color;
+	int i,x,y,foreground_color;
 
 	videoram[offset] = data;
 
 	y = offset / 32;
 	x = 8 * (offset % 32);
 
-	back_color = 0;	/* black */
-	fore_color = colorram[offset & 0x1f1f] & 0x07;
+	foreground_color = ~colorram[offset & 0x1f1f] & 0x07;
 
 	for (i = 0; i < 8; i++)
 	{
 		if (data & 0x01)
-			plot_pixel_p (x, y, fore_color);
+			plot_pixel_p (x, y, foreground_color);
 		else
-			plot_pixel_p (x, y, back_color);
+			plot_pixel_p (x, y, background_color);
 
 		x ++;
 		data >>= 1;
 	}
 }
 
-void schaser_colorram_w (int offset,int data)
+WRITE_HANDLER( schaser_colorram_w )
 {
 	int i;
 
@@ -468,7 +506,7 @@ void invadpt2_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	}
 }
 
-static void invadpt2_videoram_w (int offset,int data)
+static WRITE_HANDLER( invadpt2_videoram_w )
 {
 	int i,x,y;
 	int col;
@@ -494,7 +532,7 @@ static void invadpt2_videoram_w (int offset,int data)
 }
 
 
-static void astinvad_videoram_w (int offset,int data)
+static WRITE_HANDLER( astinvad_videoram_w )
 {
 	int i,x,y;
 	int col;
@@ -523,7 +561,7 @@ static void astinvad_videoram_w (int offset,int data)
 	}
 }
 
-static void spaceint_videoram_w (int offset,int data)
+static WRITE_HANDLER( spaceint_videoram_w )
 {
 	int i;
 	UINT8 x,y;

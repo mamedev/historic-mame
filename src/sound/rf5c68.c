@@ -179,31 +179,31 @@ static void RF5C68Update( int num, INT16 **buffer, int length )
 /************************************************/
 /*    RF5C68 write register                     */
 /************************************************/
-void RF5C68WriteReg( int r, int v )
+WRITE_HANDLER( RF5C68_reg_w )
 {
 	int  i;
-	int  data;
+	int  val;
 
-	wreg[r] = v;			/* stock write data */
+	wreg[offset] = data;			/* stock write data */
 	/**** set PCM registers ****/
 	if( (wreg[0x07]&0x40) )  reg_port = wreg[0x07]&0x07;	/* select port # */
 
-	switch( r )
+	switch( offset )
 	{
 		case 0x00:
-			rpcm.env[reg_port] = v;		/* set env. */
+			rpcm.env[reg_port] = data;		/* set env. */
 			break;
 		case 0x01:
-			rpcm.pan[reg_port] = v;		/* set pan */
+			rpcm.pan[reg_port] = data;		/* set pan */
 			break;
 		case 0x02:
 		case 0x03:
 			/**** address step ****/
-			data = (((((int)wreg[0x03])<<8)&0xff00) | (((int)wreg[0x02])&0x00ff));
+			val = (((((int)wreg[0x03])<<8)&0xff00) | (((int)wreg[0x02])&0x00ff));
 			rpcm.step[reg_port] = (int)(
 			(
 			( 28456.0 / (float)emulation_rate ) *
-			( data / (float)(0x0800) ) *
+			( val / (float)(0x0800) ) *
 			(rpcm.clock / 8000000.0) *
 			(1<<BASE_SHIFT)
 			)
@@ -220,9 +220,9 @@ void RF5C68WriteReg( int r, int v )
 			rpcm.addr[reg_port] = rpcm.start[reg_port];
 			break;
 		case 0x07:
-			if( (v&0xc0) == 0xc0 )
+			if( (data&0xc0) == 0xc0 )
 			{
-				i = v&0x07;		/* register port */
+				i = data&0x07;		/* register port */
 				rpcm.pcmx[0][i] = 0;
 				rpcm.pcmx[1][i] = 0;
 				rpcm.flag[i] |= RF_START;
@@ -233,7 +233,7 @@ void RF5C68WriteReg( int r, int v )
 			/**** pcm on/off ****/
 			for( i = 0; i < RF5C68_PCM_MAX; i++ )
 			{
-				if( !(v&(1<<i)) )
+				if( !(data&(1<<i)) )
 				{
 					rpcm.flag[i] |= RF_ON;	/* PCM on */
 				}
@@ -249,20 +249,20 @@ void RF5C68WriteReg( int r, int v )
 /************************************************/
 /*    RF5C68 read memory                        */
 /************************************************/
-int RF5C68ReadMem( int r )
+READ_HANDLER( RF5C68_r )
 {
 	unsigned int  bank;
 	bank = ((unsigned int)(wreg[0x07]&0x0f))<<(8+4);
-	return pcmbuf[bank + r];
+	return pcmbuf[bank + offset];
 }
 /************************************************/
 /*    RF5C68 write memory                       */
 /************************************************/
-void RF5C68WriteMem( int r, int v )
+WRITE_HANDLER( RF5C68_w )
 {
 	unsigned int  bank;
 	bank = ((unsigned int)(wreg[0x07]&0x0f))<<(8+4);
-	pcmbuf[bank + r] = v;
+	pcmbuf[bank + offset] = data;
 }
 
 

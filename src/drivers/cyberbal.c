@@ -69,13 +69,13 @@ RAM                                FF4000-FFFFFF  R/W
 
 void cyberbal_set_screen(int which);
 
-void cyberbal_playfieldram_1_w(int offset, int data);
-void cyberbal_playfieldram_2_w(int offset, int data);
+WRITE_HANDLER( cyberbal_playfieldram_1_w );
+WRITE_HANDLER( cyberbal_playfieldram_2_w );
 
-void cyberbal_paletteram_1_w(int offset, int data);
-int cyberbal_paletteram_1_r(int offset);
-void cyberbal_paletteram_2_w(int offset, int data);
-int cyberbal_paletteram_2_r(int offset);
+WRITE_HANDLER( cyberbal_paletteram_1_w );
+READ_HANDLER( cyberbal_paletteram_1_r );
+WRITE_HANDLER( cyberbal_paletteram_2_w );
+READ_HANDLER( cyberbal_paletteram_2_r );
 
 int cyberbal_vh_start(void);
 void cyberbal_vh_stop(void);
@@ -191,7 +191,7 @@ static void cyberb2p_init_machine(void)
  *
  *************************************/
 
-static int special_port0_r(int offset)
+static READ_HANDLER( special_port0_r )
 {
 	int temp = input_port_0_r(offset);
 	if (atarigen_cpu_to_sound_ready) temp ^= 0x0080;
@@ -199,7 +199,7 @@ static int special_port0_r(int offset)
 }
 
 
-static int special_port2_r(int offset)
+static READ_HANDLER( special_port2_r )
 {
 	int temp = input_port_2_r(offset);
 	if (atarigen_cpu_to_sound_ready) temp ^= 0x2000;
@@ -207,7 +207,7 @@ static int special_port2_r(int offset)
 }
 
 
-static int sound_state_r(int offset)
+static READ_HANDLER( sound_state_r )
 {
 	int temp = 0xffff;
 
@@ -224,7 +224,7 @@ static int sound_state_r(int offset)
  *
  *************************************/
 
-static void p2_reset_w(int offset, int data)
+static WRITE_HANDLER( p2_reset_w )
 {
 	(void)offset;
 	(void)data;
@@ -239,7 +239,7 @@ static void p2_reset_w(int offset, int data)
  *
  *************************************/
 
-static int special_port3_r(int offset)
+static READ_HANDLER( special_port3_r )
 {
 	int temp = input_port_3_r(offset);
 	if (!(readinputport(0) & 0x8000)) temp ^= 0x80;
@@ -249,7 +249,7 @@ static int special_port3_r(int offset)
 }
 
 
-static int sound_6502_stat_r(int offset)
+static READ_HANDLER( sound_6502_stat_r )
 {
 	int temp = 0xff;
 
@@ -260,14 +260,14 @@ static int sound_6502_stat_r(int offset)
 }
 
 
-static void sound_bank_select_w(int offset, int data)
+static WRITE_HANDLER( sound_bank_select_w )
 {
 	(void)offset;
 	cpu_setbank(8, &bank_base[0x1000 * ((data >> 6) & 3)]);
 }
 
 
-static int sound_68k_6502_r(int offset)
+static READ_HANDLER( sound_68k_6502_r )
 {
 	(void)offset;
 	sound_data_from_68k_ready = 0;
@@ -275,7 +275,7 @@ static int sound_68k_6502_r(int offset)
 }
 
 
-static void sound_68k_6502_w(int offset, int data)
+static WRITE_HANDLER( sound_68k_6502_w )
 {
 	(void)offset;
 	sound_data_from_6502 = data;
@@ -329,7 +329,7 @@ static int sound_68k_irq_gen(void)
 }
 
 
-static void io_68k_irq_ack_w(int offset, int data)
+static WRITE_HANDLER( io_68k_irq_ack_w )
 {
 	(void)offset;
 	(void)data;
@@ -341,7 +341,7 @@ static void io_68k_irq_ack_w(int offset, int data)
 }
 
 
-static int sound_68k_r(int offset)
+static READ_HANDLER( sound_68k_r )
 {
 	int temp = (sound_data_from_6502 << 8) | 0xff;
 
@@ -354,7 +354,7 @@ static int sound_68k_r(int offset)
 }
 
 
-static void sound_68k_w(int offset, int data)
+static WRITE_HANDLER( sound_68k_w )
 {
 	(void)offset;
 	if (!(data & 0xff000000))
@@ -365,7 +365,7 @@ static void sound_68k_w(int offset, int data)
 }
 
 
-static void sound_68k_dac_w(int offset, int data)
+static WRITE_HANDLER( sound_68k_dac_w )
 {
 	DAC_signed_data_w((offset >> 4) & 1, (INT16)data >> 8);
 
@@ -792,8 +792,8 @@ struct MemoryWriteAddress sound_writemem[] =
 #ifdef EMULATE_SOUND_68000
 
 static UINT8 *ram;
-static int ram_r(int offset) { return READ_WORD(&ram[offset]); }
-static void ram_w(int offset, int data) { COMBINE_WORD_MEM(&ram[offset], data); }
+static READ_HANDLER( ram_r ) { return READ_WORD(&ram[offset]); }
+static WRITE_HANDLER( ram_w ) { COMBINE_WORD_MEM(&ram[offset], data); }
 
 static struct MemoryReadAddress sound_68k_readmem[] =
 {

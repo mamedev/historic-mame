@@ -253,7 +253,7 @@ int spelunkr_vh_start(void)
 
 
 
-void irem_flipscreen_w(int offset,int data)
+WRITE_HANDLER( irem_flipscreen_w )
 {
 	/* screen flip is handled both by software and hardware */
 	data ^= ~readinputport(4) & 1;
@@ -269,7 +269,7 @@ void irem_flipscreen_w(int offset,int data)
 }
 
 
-void irem_background_hscroll_w(int offset,int data)
+WRITE_HANDLER( irem_background_hscroll_w )
 {
 	switch(offset)
 	{
@@ -283,16 +283,16 @@ void irem_background_hscroll_w(int offset,int data)
 	}
 }
 
-void kungfum_scroll_low_w(int offset,int data)
+WRITE_HANDLER( kungfum_scroll_low_w )
 {
 	irem_background_hscroll_w(0,data);
 }
-void kungfum_scroll_high_w(int offset,int data)
+WRITE_HANDLER( kungfum_scroll_high_w )
 {
 	irem_background_hscroll_w(1,data);
 }
 
-void irem_background_vscroll_w( int offset, int data ){
+WRITE_HANDLER( irem_background_vscroll_w ){
 	switch( offset ){
 		case 0:
 		irem_background_vscroll = (irem_background_vscroll&0xff00)|data;
@@ -304,7 +304,7 @@ void irem_background_vscroll_w( int offset, int data ){
 	}
 }
 
-void battroad_scroll_w( int offset, int data ){
+WRITE_HANDLER( battroad_scroll_w ){
 	switch( offset ){
 		case 0:
 		irem_background_vscroll_w(0, data);
@@ -320,17 +320,17 @@ void battroad_scroll_w( int offset, int data ){
 	}
 }
 
-void ldrun3_vscroll_w(int offset,int data)
+WRITE_HANDLER( ldrun3_vscroll_w )
 {
 	irem_background_vscroll = data;
 }
 
-void ldrun4_hscroll_w(int offset,int data)
+WRITE_HANDLER( ldrun4_hscroll_w )
 {
 	irem_background_hscroll_w(offset ^ 1,data);
 }
 
-void kidniki_text_vscroll_w( int offset, int data )
+WRITE_HANDLER( kidniki_text_vscroll_w )
 {
 	switch (offset)
 	{
@@ -344,7 +344,7 @@ void kidniki_text_vscroll_w( int offset, int data )
 	}
 }
 
-void kidniki_background_bank_w( int offset, int data )
+WRITE_HANDLER( kidniki_background_bank_w )
 {
 	if (kidniki_background_bank != (data & 1))
 	{
@@ -353,7 +353,7 @@ void kidniki_background_bank_w( int offset, int data )
 	}
 }
 
-void spelunkr_palbank_w(int offset, int data)
+WRITE_HANDLER( spelunkr_palbank_w )
 {
 	if (spelunk2_palbank != (data & 0x01))
 	{
@@ -362,7 +362,7 @@ void spelunkr_palbank_w(int offset, int data)
 	}
 }
 
-void spelunk2_gfxport_w(int offset, int data)
+WRITE_HANDLER( spelunk2_gfxport_w )
 {
 	switch( offset )
 	{

@@ -146,11 +146,11 @@ Known issues:
 #include "machine/atari_vg.h"
 
 
-int centiped_IN0_r(int offset);
-int centiped_IN2_r(int offset);	/* JB 971220 */
+READ_HANDLER( centiped_IN0_r );
+READ_HANDLER( centiped_IN2_r );	/* JB 971220 */
 
-void centiped_paletteram_w (int offset, int data);
-void centiped_vh_flipscreen_w (int offset,int data);
+WRITE_HANDLER( centiped_paletteram_w );
+WRITE_HANDLER( centiped_vh_flipscreen_w );
 void centiped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void centiped_init_machine(void);	/* in vidhrdw */
@@ -158,23 +158,23 @@ int centiped_interrupt(void);	/* in vidhrdw */
 
 
 
-static void centiped_led_w(int offset,int data)
+static WRITE_HANDLER( centiped_led_w )
 {
 	osd_led_w(offset,~data >> 7);
 }
 
-static int centipdb_rand_r(int offset)
+static READ_HANDLER( centipdb_rand_r )
 {
 	return rand() % 0xff;
 }
 
-static void centipdb_AY8910_w(int offset, int data)
+static WRITE_HANDLER( centipdb_AY8910_w )
 {
 	AY8910_control_port_0_w(0, offset);
 	AY8910_write_port_0_w(0, data);
 }
 
-static int centipdb_AY8910_r(int offset)
+static READ_HANDLER( centipdb_AY8910_r )
 {
 	AY8910_control_port_0_w(0, offset);
 	return AY8910_read_port_0_r(0);
@@ -242,7 +242,7 @@ static struct MemoryWriteAddress centiped_writemem[] =
 	{ 0x1000, 0x100f, pokey1_w },
 	{ 0x1400, 0x140f, centiped_paletteram_w, &paletteram },
 	{ 0x1600, 0x163f, atari_vg_earom_w },
-	{ 0x1680, 0x1680, atari_vg_earom_ctrl },
+	{ 0x1680, 0x1680, atari_vg_earom_ctrl_w },
 	{ 0x1800, 0x1800, MWA_NOP },	/* IRQ acknowldege */
 	{ 0x1c00, 0x1c02, coin_counter_w },
 	{ 0x1c03, 0x1c04, centiped_led_w },
@@ -261,7 +261,7 @@ static struct MemoryWriteAddress centipdb_writemem[] =
 	{ 0x1000, 0x100f, centipdb_AY8910_w },
 	{ 0x1400, 0x140f, centiped_paletteram_w, &paletteram },
 	{ 0x1600, 0x163f, atari_vg_earom_w },
-	{ 0x1680, 0x1680, atari_vg_earom_ctrl },
+	{ 0x1680, 0x1680, atari_vg_earom_ctrl_w },
 	{ 0x1800, 0x1800, MWA_NOP },	/* IRQ acknowldege */
 	{ 0x1c00, 0x1c02, coin_counter_w },
 	{ 0x1c03, 0x1c04, centiped_led_w },
@@ -280,7 +280,7 @@ static struct MemoryWriteAddress centipb2_writemem[] =
 	{ 0x1001, 0x1001, AY8910_control_port_0_w },
 	{ 0x1400, 0x140f, centiped_paletteram_w, &paletteram },
 	{ 0x1600, 0x163f, atari_vg_earom_w },
-	{ 0x1680, 0x1680, atari_vg_earom_ctrl },
+	{ 0x1680, 0x1680, atari_vg_earom_ctrl_w },
 	{ 0x1800, 0x1800, MWA_NOP },	/* IRQ acknowldege */
 	{ 0x1c00, 0x1c02, coin_counter_w },
 	{ 0x1c03, 0x1c04, centiped_led_w },

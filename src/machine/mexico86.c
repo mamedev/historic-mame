@@ -27,19 +27,19 @@ int mexico86_m68705_interrupt(void)
 
 static unsigned char portA_in,portA_out,ddrA;
 
-int mexico86_68705_portA_r(int offset)
+READ_HANDLER( mexico86_68705_portA_r )
 {
 //if (errorlog) fprintf(errorlog,"%04x: 68705 port A read %02x\n",cpu_get_pc(),portA_in);
 	return (portA_out & ddrA) | (portA_in & ~ddrA);
 }
 
-void mexico86_68705_portA_w(int offset,int data)
+WRITE_HANDLER( mexico86_68705_portA_w )
 {
 //if (errorlog) fprintf(errorlog,"%04x: 68705 port A write %02x\n",cpu_get_pc(),data);
 	portA_out = data;
 }
 
-void mexico86_68705_ddrA_w(int offset,int data)
+WRITE_HANDLER( mexico86_68705_ddrA_w )
 {
 	ddrA = data;
 }
@@ -64,14 +64,14 @@ void mexico86_68705_ddrA_w(int offset,int data)
 
 static unsigned char portB_in,portB_out,ddrB;
 
-int mexico86_68705_portB_r(int offset)
+READ_HANDLER( mexico86_68705_portB_r )
 {
 	return (portB_out & ddrB) | (portB_in & ~ddrB);
 }
 
 static int address,latch;
 
-void mexico86_68705_portB_w(int offset,int data)
+WRITE_HANDLER( mexico86_68705_portB_w )
 {
 //if (errorlog) fprintf(errorlog,"%04x: 68705 port B write %02x\n",cpu_get_pc(),data);
 
@@ -123,7 +123,7 @@ if (errorlog) fprintf(errorlog,"%04x: 68705 unknown port B bit %02x\n",cpu_get_p
 	portB_out = data;
 }
 
-void mexico86_68705_ddrB_w(int offset,int data)
+WRITE_HANDLER( mexico86_68705_ddrB_w )
 {
 	ddrB = data;
 }

@@ -373,7 +373,7 @@ void punchout_vh_stop(void)
 
 
 
-void punchout_videoram2_w(int offset,int data)
+WRITE_HANDLER( punchout_videoram2_w )
 {
 	if (punchout_videoram2[offset] != data)
 	{
@@ -383,7 +383,7 @@ void punchout_videoram2_w(int offset,int data)
 	}
 }
 
-void punchout_bigsprite1ram_w(int offset,int data)
+WRITE_HANDLER( punchout_bigsprite1ram_w )
 {
 	if (punchout_bigsprite1ram[offset] != data)
 	{
@@ -393,7 +393,7 @@ void punchout_bigsprite1ram_w(int offset,int data)
 	}
 }
 
-void punchout_bigsprite2ram_w(int offset,int data)
+WRITE_HANDLER( punchout_bigsprite2ram_w )
 {
 	if (punchout_bigsprite2ram[offset] != data)
 	{
@@ -405,7 +405,7 @@ void punchout_bigsprite2ram_w(int offset,int data)
 
 
 
-void punchout_palettebank_w(int offset,int data)
+WRITE_HANDLER( punchout_palettebank_w )
 {
 	*punchout_palettebank = data;
 

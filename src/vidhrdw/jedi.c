@@ -20,15 +20,15 @@ static unsigned int jedi_alpha_bank;
 static unsigned char *dirtybuffer2;
 static struct osd_bitmap *tmpbitmap2,*tmpbitmap3;
 
-void jedi_vscroll_w(int offset,int data) {
+WRITE_HANDLER( jedi_vscroll_w ) {
     jedi_vscroll = data | (offset << 8);
 }
 
-void jedi_hscroll_w(int offset,int data) {
+WRITE_HANDLER( jedi_hscroll_w ) {
     jedi_hscroll = data | (offset << 8);
 }
 
-void jedi_alpha_banksel (int offset, int data)
+WRITE_HANDLER( jedi_alpha_banksel_w )
 {
 	if (jedi_alpha_bank != 2*(data & 0x80))
 	{
@@ -56,7 +56,7 @@ void jedi_alpha_banksel (int offset, int data)
 */
 
 
-void jedi_paletteram_w(int offset,int data)
+WRITE_HANDLER( jedi_paletteram_w )
 {
     int r,g,b;
 	int bits,intensity;
@@ -129,7 +129,7 @@ void jedi_vh_stop(void)
 
 
 
-void jedi_backgroundram_w(int offset,int data)
+WRITE_HANDLER( jedi_backgroundram_w )
 {
 	if (jedi_backgroundram[offset] != data)
 	{

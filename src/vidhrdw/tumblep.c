@@ -395,7 +395,7 @@ void tumblepb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 /******************************************************************************/
 
-void tumblep_pf2_data_w(int offset,int data)
+WRITE_HANDLER( tumblep_pf2_data_w )
 {
 	int oldword = READ_WORD(&tumblep_pf2_data[offset]);
 	int newword = COMBINE_WORD(oldword,data);
@@ -407,7 +407,7 @@ void tumblep_pf2_data_w(int offset,int data)
 	}
 }
 
-void tumblep_pf3_data_w(int offset,int data)
+WRITE_HANDLER( tumblep_pf3_data_w )
 {
 	int oldword = READ_WORD(&tumblep_pf3_data[offset]);
 	int newword = COMBINE_WORD(oldword,data);
@@ -419,7 +419,7 @@ void tumblep_pf3_data_w(int offset,int data)
 	}
 }
 
-void tumblep_control_0_w(int offset,int data)
+WRITE_HANDLER( tumblep_control_0_w )
 {
 	static int last=0;
 

@@ -68,12 +68,12 @@ static int tankbatt_sound_enable;
 void tankbatt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void tankbatt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void tankbatt_led_w(int offset,int data)
+WRITE_HANDLER( tankbatt_led_w )
 {
 	osd_led_w(offset, data);
 }
 
-int tankbatt_in0_r (int offset)
+READ_HANDLER( tankbatt_in0_r )
 {
 	int val;
 
@@ -81,7 +81,7 @@ int tankbatt_in0_r (int offset)
 	return ((val << (7-offset)) & 0x80);
 }
 
-int tankbatt_in1_r (int offset)
+READ_HANDLER( tankbatt_in1_r )
 {
 	int val;
 
@@ -89,7 +89,7 @@ int tankbatt_in1_r (int offset)
 	return ((val << (7-offset)) & 0x80);
 }
 
-int tankbatt_dsw_r (int offset)
+READ_HANDLER( tankbatt_dsw_r )
 {
 	int val;
 
@@ -97,7 +97,7 @@ int tankbatt_dsw_r (int offset)
 	return ((val << (7-offset)) & 0x80);
 }
 
-void tankbatt_interrupt_enable_w (int offset, int data)
+WRITE_HANDLER( tankbatt_interrupt_enable_w )
 {
 	tankbatt_nmi_enable = !data;
 	tankbatt_sound_enable = !data;
@@ -107,20 +107,20 @@ void tankbatt_interrupt_enable_w (int offset, int data)
 //	interrupt_enable_w (offset, !data);
 }
 
-void tankbatt_demo_interrupt_enable_w (int offset, int data)
+WRITE_HANDLER( tankbatt_demo_interrupt_enable_w )
 {
 	tankbatt_nmi_enable = data;
 	if (data != 0) cpu_clear_pending_interrupts(0);
 //	interrupt_enable_w (offset, data);
 }
 
-void tankbatt_sh_expl_w (int offset, int data)
+WRITE_HANDLER( tankbatt_sh_expl_w )
 {
 	if (tankbatt_sound_enable)
 		sample_start (1, 3, 0);
 }
 
-void tankbatt_sh_engine_w (int offset, int data)
+WRITE_HANDLER( tankbatt_sh_engine_w )
 {
 	if (tankbatt_sound_enable)
 	{
@@ -132,7 +132,7 @@ void tankbatt_sh_engine_w (int offset, int data)
 	else sample_stop (2);
 }
 
-void tankbatt_sh_fire_w (int offset, int data)
+WRITE_HANDLER( tankbatt_sh_fire_w )
 {
 	if (tankbatt_sound_enable)
 		sample_start (0, 0, 0);

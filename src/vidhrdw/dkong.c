@@ -152,7 +152,7 @@ int dkong_vh_start(void)
 
 
 
-void dkongjr_gfxbank_w(int offset,int data)
+WRITE_HANDLER( dkongjr_gfxbank_w )
 {
 	if (gfx_bank != (data & 1))
 	{
@@ -161,7 +161,7 @@ void dkongjr_gfxbank_w(int offset,int data)
 	}
 }
 
-void dkong3_gfxbank_w(int offset,int data)
+WRITE_HANDLER( dkong3_gfxbank_w )
 {
 	if (gfx_bank != (~data & 1))
 	{
@@ -172,7 +172,7 @@ void dkong3_gfxbank_w(int offset,int data)
 
 
 
-void dkong_palettebank_w(int offset,int data)
+WRITE_HANDLER( dkong_palettebank_w )
 {
 	int newbank;
 
@@ -190,12 +190,12 @@ void dkong_palettebank_w(int offset,int data)
 	}
 }
 
-void radarscp_grid_enable_w(int offset,int data)
+WRITE_HANDLER( radarscp_grid_enable_w )
 {
 	grid_on = data & 1;
 }
 
-void radarscp_grid_color_w(int offset,int data)
+WRITE_HANDLER( radarscp_grid_color_w )
 {
 	int r,g,b;
 
@@ -206,7 +206,7 @@ void radarscp_grid_color_w(int offset,int data)
 	palette_change_color(257,0x00,0x00,0xff);
 }
 
-void dkong_flipscreen_w(int offset,int data)
+WRITE_HANDLER( dkong_flipscreen_w )
 {
 	if (flipscreen != (~data & 1))
 	{

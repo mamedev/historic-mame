@@ -54,17 +54,17 @@ The 6809 NMI is used for sound timing.
 
 void yiear_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void yiear_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void yiear_videoram_w(int offset,int data);
-void yiear_control_w(int offset,int data);
+WRITE_HANDLER( yiear_videoram_w );
+WRITE_HANDLER( yiear_control_w );
 int  yiear_nmi_interrupt(void);
 
 /* in sndhrdw/trackfld.c */
-void konami_SN76496_latch_w(int offset,int data);
-void konami_SN76496_0_w(int offset,int data);
+WRITE_HANDLER( konami_SN76496_latch_w );
+WRITE_HANDLER( konami_SN76496_0_w );
 
 
 
-static int yiear_speech_r(int offset)
+static READ_HANDLER( yiear_speech_r )
 {
 	return rand();
 	/* maybe bit 0 is VLM5030 busy pin??? */
@@ -72,7 +72,7 @@ static int yiear_speech_r(int offset)
 	else return 0;
 }
 
-static void yiear_speech_st(int offset,int data)
+static WRITE_HANDLER( yiear_speech_st_w )
 {
 	/* no idea if this is correct... */
 	VLM5030_ST( 1 );
@@ -100,7 +100,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x4800, 0x4800, konami_SN76496_latch_w },
 	{ 0x4900, 0x4900, konami_SN76496_0_w },
 	{ 0x4a00, 0x4a00, VLM5030_data_w },
-	{ 0x4b00, 0x4b00, yiear_speech_st },
+	{ 0x4b00, 0x4b00, yiear_speech_st_w },
 	{ 0x4f00, 0x4f00, watchdog_reset_w },
 	{ 0x5000, 0x502f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x5030, 0x53ff, MWA_RAM },

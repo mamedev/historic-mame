@@ -73,7 +73,7 @@ void zodiack_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 }
 
 
-void zodiac_flipscreen_w(int offset,int data)
+WRITE_HANDLER( zodiac_flipscreen_w )
 {
 	if (flipscreen != (!data))
 	{
@@ -84,7 +84,7 @@ void zodiac_flipscreen_w(int offset,int data)
 }
 
 
-void zodiac_control_w(int offset,int data)
+WRITE_HANDLER( zodiac_control_w )
 {
 	/* Bit 0-1 - coin counters */
 	coin_counter_w(0, data & 0x02);

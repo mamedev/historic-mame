@@ -35,17 +35,17 @@ s16 mb_result = 0;
 
 /*define MB_TEST*/
 
-void mb_go (int addr, int data)
+WRITE_HANDLER( mb_go_w )
 {
   s32 mb_temp;  /* temp 32-bit multiply results */
   s16 mb_q;     /* temp used in division */
   int msb;
 
 #ifdef MB_TEST
-  if (errorlog) fprintf (errorlog, "math box command %02x data %02x  ", addr, data);
+  if (errorlog) fprintf (errorlog, "math box command %02x data %02x  ", offset, data);
 #endif
 
-  switch (addr)
+  switch (offset)
     {
     case 0x00: mb_result = REG0 = (REG0 & 0xff00) | data;        break;
     case 0x01: mb_result = REG0 = (REG0 & 0x00ff) | (data << 8); break;
@@ -261,17 +261,17 @@ void mb_go (int addr, int data)
 #endif
 }
 
-int mb_status_r (int offset)
+READ_HANDLER( mb_status_r )
 {
 	return 0x00; /* always done! */
 }
 
-int mb_lo_r (int offset)
+READ_HANDLER( mb_lo_r )
 {
 	return mb_result & 0xff;
 }
 
-int mb_hi_r (int offset)
+READ_HANDLER( mb_hi_r )
 {
 	return (mb_result >> 8) & 0xff;
 }

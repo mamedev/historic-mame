@@ -1,6 +1,9 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
+#include "osd_cpu.h"
+
+
 #define MAX_BANKS		16
 
 
@@ -8,13 +11,23 @@
 	Core memory read/write/opbase handler types.
 ***************************************************************************/
 
-typedef int (*mem_read_handler)(int offset);
-typedef void (*mem_write_handler)(int offset, int data);
-typedef int (*opbase_handler)(int address);
+typedef UINT32 offs_t;
+typedef UINT32 data_t;
 
-#define READ_HANDLER(name)		int name(int offset)
-#define WRITE_HANDLER(name)		void name(int offset, int data)
-#define OPBASE_HANDLER(name)	int name(int address)
+typedef int (*mem_read_handler)(offs_t offset);
+typedef void (*mem_write_handler)(offs_t offset,data_t data);
+typedef int (*opbase_handler)(offs_t address);
+
+#ifdef DJGPP
+#define READ_HANDLER(name)		int name(offs_t __attribute__ ((unused)) offset)
+#define WRITE_HANDLER(name)		void name(offs_t __attribute__ ((unused)) offset,data_t __attribute__ ((unused)) data)
+#define OPBASE_HANDLER(name)	int name(offs_t __attribute__ ((unused)) address)
+#else
+#define READ_HANDLER(name)		int name(offs_t offset)
+#define WRITE_HANDLER(name)		void name(offs_t offset,data_t data)
+#define OPBASE_HANDLER(name)	int name(offs_t address)
+#endif
+
 
 
 /***************************************************************************

@@ -54,7 +54,7 @@ unsigned char *brkthru_nmi_enable; /* needs to be tracked down */
 extern unsigned char *brkthru_videoram;
 extern int brkthru_videoram_size;
 
-void brkthru_1800_w(int offset,int data);
+WRITE_HANDLER( brkthru_1800_w );
 int brkthru_vh_start(void);
 void brkthru_vh_stop(void);
 void brkthru_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -63,14 +63,14 @@ void brkthru_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static int nmi_enable;
 
-void brkthru_1803_w(int offset, int data)
+WRITE_HANDLER( brkthru_1803_w )
 {
 	/* bit 0 = NMI enable */
 	nmi_enable = ~data & 1;
 
 	/* bit 1 = ? maybe IRQ acknowledge */
 }
-void darwin_0803_w(int offset, int data)
+WRITE_HANDLER( darwin_0803_w )
 {
 	/* bit 0 = NMI enable */
 	/*nmi_enable = ~data & 1;*/
@@ -79,7 +79,7 @@ void darwin_0803_w(int offset, int data)
 	/* bit 1 = ? maybe IRQ acknowledge */
 }
 
-void brkthru_soundlatch_w(int offset, int data)
+WRITE_HANDLER( brkthru_soundlatch_w )
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(1,M6809_INT_NMI);

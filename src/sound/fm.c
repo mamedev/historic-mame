@@ -1797,8 +1797,8 @@ static void FM_ADPCMAWrite(YM2610 *F2610,int r,int v)
 		    adpcm[c].flag = 0;
 		  }
 
-Log(LOG_WAR,"YM2610: Start %06X : %02X %02X %02X\n",adpcm[c].start,
-pcmbufA[adpcm[c].start],pcmbufA[adpcm[c].start+1],pcmbufA[adpcm[c].start+2]);
+/*Log(LOG_WAR,"YM2610: Start %06X : %02X %02X %02X\n",adpcm[c].start,
+pcmbufA[adpcm[c].start],pcmbufA[adpcm[c].start+1],pcmbufA[adpcm[c].start+2]);*/
 
 		}
 		/*** (1<<c)&v ***/

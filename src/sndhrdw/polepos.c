@@ -150,7 +150,7 @@ void polepos_sh_update(void)
 /************************************/
 /* Write LSB of engine sound		*/
 /************************************/
-void polepos_engine_sound_lsb_w(int offset, int data)
+WRITE_HANDLER( polepos_engine_sound_lsb_w )
 {
 	stream_update(sound_stream, 0);
 	sample_lsb = data & 62;
@@ -160,7 +160,7 @@ void polepos_engine_sound_lsb_w(int offset, int data)
 /************************************/
 /* Write MSB of engine sound		*/
 /************************************/
-void polepos_engine_sound_msb_w(int offset, int data)
+WRITE_HANDLER( polepos_engine_sound_msb_w )
 {
 	stream_update(sound_stream, 0);
 	sample_msb = data & 63;

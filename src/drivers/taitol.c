@@ -32,8 +32,6 @@ TODO:
   time ago.
 - There may still  be some issues of  priorities in fighting  hawk, at
   the beginning of the first level (I didn't play the game far).
-- Wrong priority in Raimais game intro, this requires sprite/sprite and
-  sprite/tile priorities to be orthogonal
 - Cachat's title    screen  has some  problems.   The middle tile layer
   is shifted 16 pixels to the left.
 
@@ -97,12 +95,12 @@ void taitol_bg19_m(int offset);
 void taitol_char1a_m(int offset);
 void taitol_obj1b_m(int offset);
 
-void taitol_control_w(int offset, int data);
-int taitol_control_r(int offset);
-void taitol_bankg_w(int offset, int data);
-int taitol_bankg_r(int offset);
-void taitol_bankc_w(int offset, int data);
-int taitol_bankc_r(int offset);
+WRITE_HANDLER( taitol_control_w );
+READ_HANDLER( taitol_control_r );
+WRITE_HANDLER( taitol_bankg_w );
+READ_HANDLER( taitol_bankg_r );
+WRITE_HANDLER( taitol_bankc_w );
+READ_HANDLER( taitol_bankc_r );
 
 static void (*rambank_modify_notifiers[12])(int) = {
 	taitol_chardef14_m,	// 14
@@ -135,10 +133,10 @@ static unsigned char *palette_ram;
 static unsigned char *empty_ram;
 static unsigned char *shared_ram;
 
-static int (*porte0_r)(int);
-static int (*porte1_r)(int);
-static int (*portf0_r)(int);
-static int (*portf1_r)(int);
+static mem_read_handler porte0_r;
+static mem_read_handler porte1_r;
+static mem_read_handler portf0_r;
+static mem_read_handler portf1_r;
 
 static void palette_notifier(int addr)
 {
@@ -292,29 +290,29 @@ static int vbl_interrupt(void)
 	return (irq_enable & 4) ? irq_adr_table[2] : Z80_IGNORE_INT;
 }
 
-static void irq_adr_w(int offset, int data)
+static WRITE_HANDLER( irq_adr_w )
 {
 //if (errorlog) fprintf(errorlog,"irq_adr_table[%d] = %02x\n",offset,data);
 	irq_adr_table[offset] = data;
 }
 
-static int irq_adr_r(int offset)
+static READ_HANDLER( irq_adr_r )
 {
 	return irq_adr_table[offset];
 }
 
-static void irq_enable_w(int offset, int data)
+static WRITE_HANDLER( irq_enable_w )
 {
 	irq_enable = data;
 }
 
-static int irq_enable_r(int offset)
+static READ_HANDLER( irq_enable_r )
 {
 	return irq_enable;
 }
 
 
-static void rombankswitch_w(int offset, int data)
+static WRITE_HANDLER( rombankswitch_w )
 {
 	static int high = 0;
 	if(cur_rombank != data) {
@@ -331,7 +329,7 @@ static void rombankswitch_w(int offset, int data)
 	}
 }
 
-static void rombank2switch_w(int offset, int data)
+static WRITE_HANDLER( rombank2switch_w )
 {
 	static int high = 0;
 
@@ -352,17 +350,17 @@ static void rombank2switch_w(int offset, int data)
 	}
 }
 
-static int rombankswitch_r(int offset)
+static READ_HANDLER( rombankswitch_r )
 {
 	return cur_rombank;
 }
 
-static int rombank2switch_r(int offset)
+static READ_HANDLER( rombank2switch_r )
 {
 	return cur_rombank2;
 }
 
-static void rambankswitch_w(int offset, int data)
+static WRITE_HANDLER( rambankswitch_w )
 {
 	if(cur_rambank[offset]!=data)
 	{
@@ -388,12 +386,12 @@ if(errorlog) fprintf(errorlog, "unknown rambankswitch %d, %02x (%04x)\n", offset
 	}
 }
 
-static int rambankswitch_r(int offset)
+static READ_HANDLER( rambankswitch_r )
 {
 	return cur_rambank[offset];
 }
 
-static void bank0_w(int offset, int data)
+static WRITE_HANDLER( bank0_w )
 {
 	if(current_base[0][offset]!=data) {
 		current_base[0][offset] = data;
@@ -402,7 +400,7 @@ static void bank0_w(int offset, int data)
 	}
 }
 
-static void bank1_w(int offset, int data)
+static WRITE_HANDLER( bank1_w )
 {
 	if(current_base[1][offset]!=data) {
 		current_base[1][offset] = data;
@@ -411,7 +409,7 @@ static void bank1_w(int offset, int data)
 	}
 }
 
-static void bank2_w(int offset, int data)
+static WRITE_HANDLER( bank2_w )
 {
 	if(current_base[2][offset]!=data) {
 		current_base[2][offset] = data;
@@ -420,7 +418,7 @@ static void bank2_w(int offset, int data)
 	}
 }
 
-static void bank3_w(int offset, int data)
+static WRITE_HANDLER( bank3_w )
 {
 	if(current_base[3][offset]!=data) {
 		current_base[3][offset] = data;
@@ -429,31 +427,31 @@ static void bank3_w(int offset, int data)
 	}
 }
 
-static void control2_w(int offset, int data)
+static WRITE_HANDLER( control2_w )
 {
 }
 
 static int extport;
 
-static int portA_r(int offset)
+static READ_HANDLER( portA_r )
 {
 	if (extport == 0) return porte0_r(0);
 	else return porte1_r(0);
 }
 
-static int portB_r(int offset)
+static READ_HANDLER( portB_r )
 {
 	if (extport == 0) return portf0_r(0);
 	else return portf1_r(0);
 }
 
-static int ym2203_data0_r(int offset)
+static READ_HANDLER( ym2203_data0_r )
 {
 	extport = 0;
 	return YM2203_read_port_0_r(offset);
 }
 
-static int ym2203_data1_r(int offset)
+static READ_HANDLER( ym2203_data1_r )
 {
 	extport = 1;
 	return YM2203_read_port_0_r(offset);
@@ -465,7 +463,7 @@ static int last_data_adr, last_data;
 
 static int puzznic_mcu_reply[] = { 0x50, 0x1f, 0xb6, 0xba, 0x06, 0x03, 0x47, 0x05, 0x00 };
 
-static void mcu_data_w(int offset, int data)
+static WRITE_HANDLER( mcu_data_w )
 {
 	last_data = data;
 	last_data_adr = cpu_get_pc();
@@ -480,13 +478,13 @@ static void mcu_data_w(int offset, int data)
 	}
 }
 
-static void mcu_control_w(int offset, int data)
+static WRITE_HANDLER( mcu_control_w )
 {
 	if(0 && errorlog)
 		fprintf(errorlog, "mcu control %02x (%04x)\n", data, cpu_get_pc());
 }
 
-static int mcu_data_r(int offset)
+static READ_HANDLER( mcu_data_r )
 {
 	if(0 && errorlog)
 		fprintf(errorlog, "mcu read (%04x) [%02x, %04x]\n", cpu_get_pc(), last_data, last_data_adr);
@@ -496,32 +494,32 @@ static int mcu_data_r(int offset)
 	return mcu_reply[mcu_pos++];
 }
 
-static int mcu_control_r(int offset)
+static READ_HANDLER( mcu_control_r )
 {
 	if(0 && errorlog)
 		fprintf(errorlog, "mcu control read (%04x)\n", cpu_get_pc());
 	return 0x1;
 }
 
-static void sound_w(int offset, int data)
+static WRITE_HANDLER( sound_w )
 {
 	if(errorlog)
 		fprintf(errorlog, "Sound_w %02x (%04x)\n", data, cpu_get_pc());
 }
 
-static int shared_r(int offset)
+static READ_HANDLER( shared_r )
 {
 	return shared_ram[offset];
 }
 
-static void shared_w(int offset, int data)
+static WRITE_HANDLER( shared_w )
 {
 	shared_ram[offset] = data;
 }
 
 static int mux_ctrl = 0;
 
-static int mux_r(int offset)
+static READ_HANDLER( mux_r )
 {
 	switch(mux_ctrl) {
 	case 0:
@@ -541,7 +539,7 @@ static int mux_r(int offset)
 	}
 }
 
-static void mux_w(int offset, int data)
+static WRITE_HANDLER( mux_w )
 {
 	switch(mux_ctrl) {
 	case 4:
@@ -553,7 +551,7 @@ static void mux_w(int offset, int data)
 	}
 }
 
-static void mux_ctrl_w(int offset, int data)
+static WRITE_HANDLER( mux_ctrl_w )
 {
 	mux_ctrl = data;
 }
@@ -1612,7 +1610,7 @@ static void irqhandler(int irq)
 	cpu_set_irq_line(2,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
-static void portA_w(int offset,int data)
+static WRITE_HANDLER( portA_w )
 {
 }
 

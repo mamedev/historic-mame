@@ -119,7 +119,7 @@ int atarigen_scanline_int_gen(void)
  *
  */
 
-void atarigen_scanline_int_ack_w(int offset, int data)
+WRITE_HANDLER( atarigen_scanline_int_ack_w )
 {
 	atarigen_scanline_int_state = 0;
 	(*update_int_callback)();
@@ -148,7 +148,7 @@ int atarigen_sound_int_gen(void)
  *
  */
 
-void atarigen_sound_int_ack_w(int offset, int data)
+WRITE_HANDLER( atarigen_sound_int_ack_w )
 {
 	atarigen_sound_int_state = 0;
 	(*update_int_callback)();
@@ -177,7 +177,7 @@ int atarigen_video_int_gen(void)
  *
  */
 
-void atarigen_video_int_ack_w(int offset, int data)
+WRITE_HANDLER( atarigen_video_int_ack_w )
 {
 	atarigen_video_int_state = 0;
 	(*update_int_callback)();
@@ -254,7 +254,7 @@ void atarigen_eeprom_reset(void)
  *
  */
 
-void atarigen_eeprom_enable_w(int offset, int data)
+WRITE_HANDLER( atarigen_eeprom_enable_w )
 {
 	unlocked = 1;
 }
@@ -269,7 +269,7 @@ void atarigen_eeprom_enable_w(int offset, int data)
  *
  */
 
-void atarigen_eeprom_w(int offset, int data)
+WRITE_HANDLER( atarigen_eeprom_w )
 {
 	if (!unlocked)
 		return;
@@ -287,12 +287,12 @@ void atarigen_eeprom_w(int offset, int data)
  *
  */
 
-int atarigen_eeprom_r(int offset)
+READ_HANDLER( atarigen_eeprom_r )
 {
 	return READ_WORD(&atarigen_eeprom[offset]) | 0xff00;
 }
 
-int atarigen_eeprom_upper_r(int offset)
+READ_HANDLER( atarigen_eeprom_upper_r )
 {
 	return READ_WORD(&atarigen_eeprom[offset]) | 0x00ff;
 }
@@ -448,7 +448,7 @@ void atarigen_slapstic_reset(void)
  *
  */
 
-void atarigen_slapstic_w(int offset, int data)
+WRITE_HANDLER( atarigen_slapstic_w )
 {
 	slapstic_tweak(offset / 2);
 }
@@ -462,7 +462,7 @@ void atarigen_slapstic_w(int offset, int data)
  *
  */
 
-int atarigen_slapstic_r(int offset)
+READ_HANDLER( atarigen_slapstic_r )
 {
 	int bank = slapstic_tweak(offset / 2) * 0x2000;
 	return READ_WORD(&atarigen_slapstic[bank + (offset & 0x1fff)]);
@@ -568,14 +568,14 @@ int atarigen_6502_irq_gen(void)
  *
  */
 
-int atarigen_6502_irq_ack_r(int offset)
+READ_HANDLER( atarigen_6502_irq_ack_r )
 {
 	timed_int = 0;
 	update_6502_irq();
 	return 0;
 }
 
-void atarigen_6502_irq_ack_w(int offset, int data)
+WRITE_HANDLER( atarigen_6502_irq_ack_w )
 {
 	timed_int = 0;
 	update_6502_irq();
@@ -603,7 +603,7 @@ void atarigen_ym2151_irq_gen(int irq)
  *
  */
 
-void atarigen_sound_reset_w(int offset, int data)
+WRITE_HANDLER( atarigen_sound_reset_w )
 {
 	timer_set(TIME_NOW, 0, delayed_sound_reset);
 }
@@ -631,13 +631,13 @@ void atarigen_sound_reset(void)
  *
  */
 
-void atarigen_sound_w(int offset, int data)
+WRITE_HANDLER( atarigen_sound_w )
 {
 	if (!(data & 0x00ff0000))
 		timer_set(TIME_NOW, data & 0xff, delayed_sound_w);
 }
 
-void atarigen_sound_upper_w(int offset, int data)
+WRITE_HANDLER( atarigen_sound_upper_w )
 {
 	if (!(data & 0xff000000))
 		timer_set(TIME_NOW, (data >> 8) & 0xff, delayed_sound_w);
@@ -653,14 +653,14 @@ void atarigen_sound_upper_w(int offset, int data)
  *
  */
 
-int atarigen_sound_r(int offset)
+READ_HANDLER( atarigen_sound_r )
 {
 	atarigen_sound_to_cpu_ready = 0;
 	atarigen_sound_int_ack_w(0, 0);
 	return atarigen_sound_to_cpu | 0xff00;
 }
 
-int atarigen_sound_upper_r(int offset)
+READ_HANDLER( atarigen_sound_upper_r )
 {
 	atarigen_sound_to_cpu_ready = 0;
 	atarigen_sound_int_ack_w(0, 0);
@@ -675,7 +675,7 @@ int atarigen_sound_upper_r(int offset)
  *
  */
 
-void atarigen_6502_sound_w(int offset, int data)
+WRITE_HANDLER( atarigen_6502_sound_w )
 {
 	timer_set(TIME_NOW, data, delayed_6502_sound_w);
 }
@@ -688,7 +688,7 @@ void atarigen_6502_sound_w(int offset, int data)
  *
  */
 
-int atarigen_6502_sound_r(int offset)
+READ_HANDLER( atarigen_6502_sound_r )
 {
 	atarigen_cpu_to_sound_ready = 0;
 	cpu_set_nmi_line(sound_cpu_num, CLEAR_LINE);
@@ -815,7 +815,7 @@ static UINT8 *speed_a, *speed_b;
 static UINT32 speed_pc;
 
 /* prototypes */
-static int m6502_speedup_r(int offset);
+static READ_HANDLER( m6502_speedup_r );
 
 
 /*
@@ -959,7 +959,7 @@ void atarigen_set_oki6295_vol(int volume)
  *
  */
 
-static int m6502_speedup_r(int offset)
+static READ_HANDLER( m6502_speedup_r )
 {
 	int result = speed_b[0];
 
@@ -1168,7 +1168,7 @@ void atarigen_video_control_update(const UINT8 *data)
  *
  */
 
-void atarigen_video_control_w(int offset, int data)
+WRITE_HANDLER( atarigen_video_control_w )
 {
 	int oldword = READ_WORD(&atarigen_video_control_data[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -1271,7 +1271,7 @@ void atarigen_video_control_w(int offset, int data)
  *
  */
 
-int atarigen_video_control_r(int offset)
+READ_HANDLER( atarigen_video_control_r )
 {
 	if (errorlog) fprintf(errorlog, "video_control_r(%02X)\n", offset);
 
@@ -3048,7 +3048,7 @@ int atarigen_get_hblank(void)
  *
  */
 
-void atarigen_halt_until_hblank_0_w(int offset, int data)
+WRITE_HANDLER( atarigen_halt_until_hblank_0_w )
 {
 	/* halt the CPU until the next HBLANK */
 	int hpos = cpu_gethorzbeampos();
@@ -3073,7 +3073,7 @@ void atarigen_halt_until_hblank_0_w(int offset, int data)
  *
  */
 
-void atarigen_666_paletteram_w(int offset, int data)
+WRITE_HANDLER( atarigen_666_paletteram_w )
 {
 	int oldword = READ_WORD(&paletteram[offset]);
 	int newword = COMBINE_WORD(oldword,data);
@@ -3102,7 +3102,7 @@ void atarigen_666_paletteram_w(int offset, int data)
  *
  */
 
-void atarigen_expanded_666_paletteram_w(int offset, int data)
+WRITE_HANDLER( atarigen_expanded_666_paletteram_w )
 {
 	COMBINE_WORD_MEM(&paletteram[offset], data);
 

@@ -10,7 +10,7 @@ driver by Mirko Buffoni
 #include "vidhrdw/generic.h"
 
 
-void higemaru_c800_w(int offset,int data);
+WRITE_HANDLER( higemaru_c800_w );
 void higemaru_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void higemaru_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 

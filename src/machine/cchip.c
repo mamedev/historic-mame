@@ -54,7 +54,7 @@ void cchip1_init_machine(void)
 	cchip1_bank = 0;
 }
 
-int cchip1_r (int offset)
+READ_HANDLER( cchip1_r )
 {
 	int ret = 0;
 
@@ -121,7 +121,7 @@ int cchip1_r (int offset)
 	return ret;
 }
 
-void cchip1_w (int offset, int data)
+WRITE_HANDLER( cchip1_w )
 {
 	if (errorlog) fprintf (errorlog, "cchip1_w pc: %06x, %04x:%02x\n", cpu_get_pc(), offset, data);
 	switch (offset)

@@ -46,11 +46,11 @@ extern int marineb_active_low_flipscreen;
 void espial_init_machine(void);
 void espial_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
-void marineb_palbank0_w(int offset, int data);
-void marineb_palbank1_w(int offset, int data);
+WRITE_HANDLER( marineb_palbank0_w );
+WRITE_HANDLER( marineb_palbank1_w );
 
-void marineb_flipscreen_x_w(int offset, int data);
-void marineb_flipscreen_y_w(int offset, int data);
+WRITE_HANDLER( marineb_flipscreen_x_w );
+WRITE_HANDLER( marineb_flipscreen_y_w );
 
 void marineb_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 void changes_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);

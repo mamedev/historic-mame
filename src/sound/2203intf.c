@@ -117,56 +117,56 @@ void YM2203_sh_reset(void)
 
 
 
-int YM2203_status_port_0_r(int offset) { return YM2203Read(0,0); }
-int YM2203_status_port_1_r(int offset) { return YM2203Read(1,0); }
-int YM2203_status_port_2_r(int offset) { return YM2203Read(2,0); }
-int YM2203_status_port_3_r(int offset) { return YM2203Read(3,0); }
-int YM2203_status_port_4_r(int offset) { return YM2203Read(4,0); }
+READ_HANDLER( YM2203_status_port_0_r ) { return YM2203Read(0,0); }
+READ_HANDLER( YM2203_status_port_1_r ) { return YM2203Read(1,0); }
+READ_HANDLER( YM2203_status_port_2_r ) { return YM2203Read(2,0); }
+READ_HANDLER( YM2203_status_port_3_r ) { return YM2203Read(3,0); }
+READ_HANDLER( YM2203_status_port_4_r ) { return YM2203Read(4,0); }
 
-int YM2203_read_port_0_r(int offset) { return YM2203Read(0,1); }
-int YM2203_read_port_1_r(int offset) { return YM2203Read(1,1); }
-int YM2203_read_port_2_r(int offset) { return YM2203Read(2,1); }
-int YM2203_read_port_3_r(int offset) { return YM2203Read(3,1); }
-int YM2203_read_port_4_r(int offset) { return YM2203Read(4,1); }
+READ_HANDLER( YM2203_read_port_0_r ) { return YM2203Read(0,1); }
+READ_HANDLER( YM2203_read_port_1_r ) { return YM2203Read(1,1); }
+READ_HANDLER( YM2203_read_port_2_r ) { return YM2203Read(2,1); }
+READ_HANDLER( YM2203_read_port_3_r ) { return YM2203Read(3,1); }
+READ_HANDLER( YM2203_read_port_4_r ) { return YM2203Read(4,1); }
 
-void YM2203_control_port_0_w(int offset,int data)
+WRITE_HANDLER( YM2203_control_port_0_w )
 {
 	YM2203Write(0,0,data);
 }
-void YM2203_control_port_1_w(int offset,int data)
+WRITE_HANDLER( YM2203_control_port_1_w )
 {
 	YM2203Write(1,0,data);
 }
-void YM2203_control_port_2_w(int offset,int data)
+WRITE_HANDLER( YM2203_control_port_2_w )
 {
 	YM2203Write(2,0,data);
 }
-void YM2203_control_port_3_w(int offset,int data)
+WRITE_HANDLER( YM2203_control_port_3_w )
 {
 	YM2203Write(3,0,data);
 }
-void YM2203_control_port_4_w(int offset,int data)
+WRITE_HANDLER( YM2203_control_port_4_w )
 {
 	YM2203Write(4,0,data);
 }
 
-void YM2203_write_port_0_w(int offset,int data)
+WRITE_HANDLER( YM2203_write_port_0_w )
 {
 	YM2203Write(0,1,data);
 }
-void YM2203_write_port_1_w(int offset,int data)
+WRITE_HANDLER( YM2203_write_port_1_w )
 {
 	YM2203Write(1,1,data);
 }
-void YM2203_write_port_2_w(int offset,int data)
+WRITE_HANDLER( YM2203_write_port_2_w )
 {
 	YM2203Write(2,1,data);
 }
-void YM2203_write_port_3_w(int offset,int data)
+WRITE_HANDLER( YM2203_write_port_3_w )
 {
 	YM2203Write(3,1,data);
 }
-void YM2203_write_port_4_w(int offset,int data)
+WRITE_HANDLER( YM2203_write_port_4_w )
 {
 	YM2203Write(4,1,data);
 }

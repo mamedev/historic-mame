@@ -38,10 +38,14 @@ static void sprite_callback(int *code,int *color,int *priority)
 {
 	/* priority bits:
 	   4 over zoom (0 = have priority)
-	   5 over B    (0 = have priority) - is this used?
+	   5 over B    (0 = have priority)
 	   6 over A    (1 = have priority)
+	   never over F
 	*/
-	*priority = (*color & 0x70) >> 4;
+	*priority = 0xff00;							/* F = 8 */
+	if ( *color & 0x10) *priority |= 0xf0f0;	/* Z = 4 */
+	if (~*color & 0x40) *priority |= 0xcccc;	/* A = 2 */
+	if ( *color & 0x20) *priority |= 0xaaaa;	/* B = 1 */
 	*color = sprite_colorbase + (*color & 0x0f);
 }
 
@@ -119,54 +123,24 @@ void ajax_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 
 	tilemap_render(ALL_TILEMAPS);
 
-	/* sprite priority bits:
-	   0 over zoom (0 = have priority)
-	   1 over B    (0 = have priority)
-	   2 over A    (1 = have priority)
-	*/
+	fillbitmap(priority_bitmap,0,NULL);
+
 	if (ajax_priority)
 	{
 		/* basic layer order is B, zoom, A, F */
-
-		/* pri = 2 have priority over zoom, not over A and B - is this used? */
-		/* pri = 3 have priority over nothing - is this used? */
-//		K051960_sprites_draw(bitmap,2,3);
-		K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY);
-		/* pri = 1 have priority over B, not over zoom and A - is this used? */
-//		K051960_sprites_draw(bitmap,1,1);
-		K051316_zoom_draw_0(bitmap);
-		/* pri = 0 have priority over zoom and B, not over A */
-		/* the game seems to just use pri 0. */
-		K051960_sprites_draw(bitmap,0,0);
-		K052109_tilemap_draw(bitmap,1,0);
-		/* pri = 4 have priority over zoom, A and B */
-		/* pri = 5 have priority over A and B, not over zoom - OPPOSITE TO BASIC ORDER! (stage 6 boss) */
-		K051960_sprites_draw(bitmap,4,5);
-		/* pri = 6 have priority over zoom and A, not over B - is this used? */
-		/* pri = 7 have priority over A, not over zoom and B - is this used? */
-//		K051960_sprites_draw(bitmap,5,7);
-		K052109_tilemap_draw(bitmap,0,0);
+		K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY|(1<<16));
+		K051316_zoom_draw_0(bitmap,4);
+		K052109_tilemap_draw(bitmap,1,2<<16);
+		K052109_tilemap_draw(bitmap,0,8<<16);
 	}
 	else
 	{
 		/* basic layer order is B, A, zoom, F */
-
-		/* pri = 2 have priority over zoom, not over A and B - is this used? */
-		/* pri = 3 have priority over nothing - is this used? */
-//		K051960_sprites_draw(bitmap,2,3);
-		K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY);
-		/* pri = 0 have priority over zoom and B, not over A - OPPOSITE TO BASIC ORDER! */
-		/* pri = 1 have priority over B, not over zoom and A */
-		/* the game seems to just use pri 0. */
-		K051960_sprites_draw(bitmap,0,1);
-		K052109_tilemap_draw(bitmap,1,0);
-		K051316_zoom_draw_0(bitmap);
-		/* pri = 4 have priority over zoom, A and B */
-		K051960_sprites_draw(bitmap,4,4);
-		/* pri = 5 have priority over A and B, not over zoom - is this used? */
-		/* pri = 6 have priority over zoom and A, not over B - is this used? */
-		/* pri = 7 have priority over A, not over zoom and B - is this used? */
-//		K051960_sprites_draw(bitmap,5,7);
-		K052109_tilemap_draw(bitmap,0,0);
+		K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY|(1<<16));
+		K052109_tilemap_draw(bitmap,1,2<<16);
+		K051316_zoom_draw_0(bitmap,4);
+		K052109_tilemap_draw(bitmap,0,8<<16);
 	}
+
+	K051960_sprites_draw(bitmap,-1,-1);
 }

@@ -91,20 +91,20 @@ extern int wc90b_tile_videoram_size2;
 
 int wc90b_vh_start( void );
 void wc90b_vh_stop ( void );
-int wc90b_tile_videoram_r ( int offset );
-void wc90b_tile_videoram_w( int offset, int v );
-int wc90b_tile_colorram_r ( int offset );
-void wc90b_tile_colorram_w( int offset, int v );
-int wc90b_tile_videoram2_r ( int offset );
-void wc90b_tile_videoram2_w( int offset, int v );
-int wc90b_tile_colorram2_r ( int offset );
-void wc90b_tile_colorram2_w( int offset, int v );
-int wc90b_shared_r ( int offset );
-void wc90b_shared_w( int offset, int v );
+READ_HANDLER( wc90b_tile_videoram_r );
+WRITE_HANDLER( wc90b_tile_videoram_w );
+READ_HANDLER( wc90b_tile_colorram_r );
+WRITE_HANDLER( wc90b_tile_colorram_w );
+READ_HANDLER( wc90b_tile_videoram2_r );
+WRITE_HANDLER( wc90b_tile_videoram2_w );
+READ_HANDLER( wc90b_tile_colorram2_r );
+WRITE_HANDLER( wc90b_tile_colorram2_w );
+READ_HANDLER( wc90b_shared_r );
+WRITE_HANDLER( wc90b_shared_w );
 void wc90b_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-static void wc90b_bankswitch_w(int offset,int data)
+static WRITE_HANDLER( wc90b_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -114,7 +114,7 @@ static void wc90b_bankswitch_w(int offset,int data)
 	cpu_setbank(1,&RAM[bankaddress]);
 }
 
-static void wc90b_bankswitch1_w(int offset,int data)
+static WRITE_HANDLER( wc90b_bankswitch1_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU2);
@@ -124,7 +124,7 @@ static void wc90b_bankswitch1_w(int offset,int data)
 	cpu_setbank(2,&RAM[bankaddress]);
 }
 
-static void wc90b_sound_command_w(int offset,int data)
+static WRITE_HANDLER( wc90b_sound_command_w )
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(2,/*Z80_NMI_INT*/-1000);

@@ -11,7 +11,7 @@
 
 
 /* from sndhrdw/pleiads.c */
-void pleiads_sound_control_c_w (int offset,int data);
+WRITE_HANDLER( pleiads_sound_control_c_w );
 
 unsigned char *naughtyb_videoram2;
 
@@ -164,7 +164,7 @@ void naughtyb_vh_stop(void)
 
 
 
-void naughtyb_videoram2_w(int offset,int data)
+WRITE_HANDLER( naughtyb_videoram2_w )
 {
 	if (naughtyb_videoram2[offset] != data)
 	{
@@ -176,7 +176,7 @@ void naughtyb_videoram2_w(int offset,int data)
 
 
 
-void naughtyb_videoreg_w (int offset, int data)
+WRITE_HANDLER( naughtyb_videoreg_w )
 {
 	/* bits 4+5 control the sound circuit */
 	pleiads_sound_control_c_w(offset,data);
@@ -192,7 +192,7 @@ void naughtyb_videoreg_w (int offset, int data)
 	}
 }
 
-void popflame_videoreg_w (int offset, int data)
+WRITE_HANDLER( popflame_videoreg_w )
 {
 	/* bits 4+5 control the sound circuit */
 	pleiads_sound_control_c_w(offset,data);

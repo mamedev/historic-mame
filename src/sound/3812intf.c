@@ -439,35 +439,35 @@ void YM3812_sh_reset(void)
 	YM3812_write_port_0_w(0,0x80);
 }
 
-void YM3812_control_port_0_w( int offset, int data ) {
+WRITE_HANDLER( YM3812_control_port_0_w ) {
 	(*control_port_w)( 0, data );
 }
 
-void YM3812_write_port_0_w( int offset, int data ) {
+WRITE_HANDLER( YM3812_write_port_0_w ) {
 	(*write_port_w)( 0, data );
 }
 
-int YM3812_status_port_0_r( int offset ) {
+READ_HANDLER( YM3812_status_port_0_r ) {
 	return (*status_port_r)( 0 );
 }
 
-int YM3812_read_port_0_r( int offset ) {
+READ_HANDLER( YM3812_read_port_0_r ) {
 	return (*read_port_r)( 0 );
 }
 
-void YM3812_control_port_1_w( int offset, int data ) {
+WRITE_HANDLER( YM3812_control_port_1_w ) {
 	(*control_port_w)( 1, data );
 }
 
-void YM3812_write_port_1_w( int offset, int data ) {
+WRITE_HANDLER( YM3812_write_port_1_w ) {
 	(*write_port_w)( 1, data );
 }
 
-int YM3812_status_port_1_r( int offset ) {
+READ_HANDLER( YM3812_status_port_1_r ) {
 	return (*status_port_r)( 1 );
 }
 
-int YM3812_read_port_1_r( int offset ) {
+READ_HANDLER( YM3812_read_port_1_r ) {
 	return (*read_port_r)( 1 );
 }
 

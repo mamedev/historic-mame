@@ -179,10 +179,10 @@ struct POKEYregisters {
 	void *timer[3]; 		/* timers for channel 1,2 and 4 events */
     void *rtimer;           /* timer for calculating the random offset */
 	void *ptimer[8];		/* pot timers */
-	int (*pot_r[8])(int offs);
-	int (*allpot_r)(int offs);
-	int (*serin_r)(int offs);
-	void (*serout_w)(int offs, int data);
+	mem_read_handler pot_r[8];
+	mem_read_handler allpot_r;
+	mem_read_handler serin_r;
+	mem_write_handler serout_w;
 	void (*interrupt_cb)(int mask);
     UINT8 AUDF[4];          /* AUDFx (D200, D202, D204, D206) */
 	UINT8 AUDC[4];			/* AUDCx (D201, D203, D205, D207) */
@@ -929,27 +929,27 @@ int pokey_register_r(int chip, int offs)
     return data;
 }
 
-int pokey1_r (int offset)
+READ_HANDLER( pokey1_r )
 {
 	return pokey_register_r(0, offset);
 }
 
-int pokey2_r (int offset)
+READ_HANDLER( pokey2_r )
 {
 	return pokey_register_r(1, offset);
 }
 
-int pokey3_r (int offset)
+READ_HANDLER( pokey3_r )
 {
 	return pokey_register_r(2, offset);
 }
 
-int pokey4_r (int offset)
+READ_HANDLER( pokey4_r )
 {
 	return pokey_register_r(3, offset);
 }
 
-int quad_pokey_r (int offset)
+READ_HANDLER( quad_pokey_r )
 {
 	int pokey_num = (offset >> 3) & ~0x04;
 	int control = (offset & 0x20) >> 2;
@@ -1349,27 +1349,27 @@ void pokey_register_w(int chip, int offs, int data)
     }
 }
 
-void pokey1_w (int offset,int data)
+WRITE_HANDLER( pokey1_w )
 {
 	pokey_register_w(0,offset,data);
 }
 
-void pokey2_w (int offset,int data)
+WRITE_HANDLER( pokey2_w )
 {
     pokey_register_w(1,offset,data);
 }
 
-void pokey3_w (int offset,int data)
+WRITE_HANDLER( pokey3_w )
 {
     pokey_register_w(2,offset,data);
 }
 
-void pokey4_w (int offset,int data)
+WRITE_HANDLER( pokey4_w )
 {
     pokey_register_w(3,offset,data);
 }
 
-void quad_pokey_w (int offset,int data)
+WRITE_HANDLER( quad_pokey_w )
 {
     int pokey_num = (offset >> 3) & ~0x04;
     int control = (offset & 0x20) >> 2;

@@ -166,7 +166,7 @@ void meadows_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 /* Video RAM write                                           */
 /*                                                           */
 /*************************************************************/
-void    meadows_videoram_w(int offset, int data)
+WRITE_HANDLER( meadows_videoram_w )
 {
     if (offset >= videoram_size)
         return;
@@ -205,7 +205,7 @@ int     x, y;
 /*************************************************************/
 /* write to the sprite registers                             */
 /*************************************************************/
-void    meadows_sprite_w(int offset, int data)
+WRITE_HANDLER( meadows_sprite_w )
 {
 int     n = offset % SPR_COUNT;
 	switch (offset)

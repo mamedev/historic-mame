@@ -205,7 +205,7 @@ unsigned char row, column, val;
 
 }
 
-void bagman_pal16r6_w(int offset, int data)
+WRITE_HANDLER( bagman_pal16r6_w )
 {
 unsigned char line;
 
@@ -227,7 +227,7 @@ void bagman_machine_init(void)
 	update_pal();
 }
 
-int bagman_pal16r6_r(int offset)
+READ_HANDLER( bagman_pal16r6_r )
 {
 	update_pal();
 	return	(outvalue[6]) + (outvalue[5]<<1) + (outvalue[4]<<2) +

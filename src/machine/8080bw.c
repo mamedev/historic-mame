@@ -13,12 +13,12 @@
 static int shift_data1,shift_data2,shift_amount;
 
 
-void invaders_shift_amount_w(int offset,int data)
+WRITE_HANDLER( invaders_shift_amount_w )
 {
 	shift_amount = data;
 }
 
-void invaders_shift_data_w(int offset,int data)
+WRITE_HANDLER( invaders_shift_data_w )
 {
 	shift_data2 = shift_data1;
 	shift_data1 = data;
@@ -28,12 +28,12 @@ void invaders_shift_data_w(int offset,int data)
 #define SHIFT  (((((shift_data1 << 8) | shift_data2) << (shift_amount & 0x07)) >> 8) & 0xff)
 
 
-int invaders_shift_data_r(int offset)
+READ_HANDLER( invaders_shift_data_r )
 {
 	return SHIFT;
 }
 
-int invaders_shift_data_rev_r(int offset)
+READ_HANDLER( invaders_shift_data_rev_r )
 {
 	int	ret = SHIFT;
 
@@ -49,7 +49,7 @@ int invaders_shift_data_rev_r(int offset)
 	return ret;
 }
 
-int invaders_shift_data_comp_r(int offset)
+READ_HANDLER( invaders_shift_data_comp_r )
 {
 	return SHIFT ^ 0xff;
 }
@@ -71,7 +71,7 @@ int invaders_interrupt(void)
 	Extra / Different functions for Boot Hill                (MJC 300198)
 ****************************************************************************/
 
-int boothill_shift_data_r(int offset)
+READ_HANDLER( boothill_shift_data_r )
 {
 	if (shift_amount < 0x10)
 		return invaders_shift_data_r(0);
@@ -79,20 +79,37 @@ int boothill_shift_data_r(int offset)
     	return invaders_shift_data_rev_r(0);
 }
 
-/* Grays Binary again! */
+/* Grays binary again! */
 
-static const int BootHillTable[8] = {
+static const int boothill_controller_table[8] =
+{
 	0x00, 0x40, 0x60, 0x70, 0x30, 0x10, 0x50, 0x50
 };
 
-int boothill_port_0_r(int offset)
+READ_HANDLER( boothill_port_0_r )
 {
-    return (input_port_0_r(0) & 0x8F) | BootHillTable[input_port_3_r(0) >> 5];
+    return (input_port_0_r(0) & 0x8f) | boothill_controller_table[input_port_3_r(0) >> 5];
 }
 
-int boothill_port_1_r(int offset)
+READ_HANDLER( boothill_port_1_r )
 {
-    return (input_port_1_r(0) & 0x8F) | BootHillTable[input_port_4_r(0) >> 5];
+    return (input_port_1_r(0) & 0x8f) | boothill_controller_table[input_port_4_r(0) >> 5];
+}
+
+
+static const int gunfight_controller_table[8] =
+{
+	0x10, 0x50, 0x70, 0x30, 0x20, 0x60, 0x40, 0x00
+};
+
+READ_HANDLER( gunfight_port_0_r )
+{
+    return (input_port_0_r(0) & 0x8f) | (gunfight_controller_table[input_port_3_r(0) >> 5]);
+}
+
+READ_HANDLER( gunfight_port_1_r )
+{
+    return (input_port_1_r(0) & 0x8f) | (gunfight_controller_table[input_port_4_r(0) >> 5]);
 }
 
 /*
@@ -100,11 +117,12 @@ int boothill_port_1_r(int offset)
  * each controller responds 0-63 for reading, with bit 7 as
  * fire button.
  *
- * The controllers look like they returns Grays binary,
- * so I use a table to translate my simple counter into it!
+ * The controllers return Grays binary, so I use a table
+ * to translate my simple counter into it!
  */
 
-static const int ControllerTable[64] = {
+static const int graybit6_controller_table[64] =
+{
     0  , 1  , 3  , 2  , 6  , 7  , 5  , 4  ,
     12 , 13 , 15 , 14 , 10 , 11 , 9  , 8  ,
     24 , 25 , 27 , 26 , 30 , 31 , 29 , 28 ,
@@ -115,30 +133,31 @@ static const int ControllerTable[64] = {
     36 , 37 , 39 , 38 , 34 , 35 , 33 , 32
 };
 
-int gray6bit_controller0_r(int offset)
+READ_HANDLER( spcenctr_port_0_r )
 {
-    return (input_port_0_r(0) & 0xc0) + (ControllerTable[input_port_0_r(0) & 0x3f] ^ 0x3f);
+    return (input_port_0_r(0) & 0xc0) + (graybit6_controller_table[input_port_0_r(0) & 0x3f] ^ 0x3f);
 }
 
-int gray6bit_controller1_r(int offset)
+READ_HANDLER( spcenctr_port_1_r )
 {
-    return (input_port_1_r(0) & 0xc0) + (ControllerTable[input_port_1_r(0) & 0x3f] ^ 0x3f);
+    return (input_port_1_r(0) & 0xc0) + (graybit6_controller_table[input_port_1_r(0) & 0x3f] ^ 0x3f);
 }
 
-int seawolf_port_0_r (int offset)
+
+READ_HANDLER( seawolf_port_0_r )
 {
-	return (input_port_0_r(0) & 0xe0) + ControllerTable[input_port_0_r(0) & 0x1f];
+	return (input_port_0_r(0) & 0xe0) + graybit6_controller_table[input_port_0_r(0) & 0x1f];
 }
 
 
 static int desertgu_controller_select;
 
-int desertgu_port_1_r(int offset)
+READ_HANDLER( desertgu_port_1_r )
 {
 	return readinputport(desertgu_controller_select ? 1 : 2);
 }
 
-void desertgu_controller_select_w(int offset, int data)
+WRITE_HANDLER( desertgu_controller_select_w )
 {
 	desertgu_controller_select = data & 0x08;
 }

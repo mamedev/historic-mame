@@ -198,7 +198,7 @@ void rallyx_vh_stop(void)
 
 
 
-void rallyx_videoram2_w(int offset,int data)
+WRITE_HANDLER( rallyx_videoram2_w )
 {
 	if (rallyx_videoram2[offset] != data)
 	{
@@ -209,7 +209,7 @@ void rallyx_videoram2_w(int offset,int data)
 }
 
 
-void rallyx_colorram2_w(int offset,int data)
+WRITE_HANDLER( rallyx_colorram2_w )
 {
 	if (rallyx_colorram2[offset] != data)
 	{
@@ -221,7 +221,7 @@ void rallyx_colorram2_w(int offset,int data)
 
 
 
-void rallyx_flipscreen_w(int offset,int data)
+WRITE_HANDLER( rallyx_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{

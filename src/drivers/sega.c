@@ -123,36 +123,36 @@ Is 1) still valid?
 
 extern unsigned char *sega_mem;
 extern void sega_security(int chip);
-extern void sega_wr(int offset, int data);
+WRITE_HANDLER( sega_w );
 
-int sega_read_ports (int offset);
-int sega_IN4_r (int offset);
-int elim4_IN4_r (int offset);
+READ_HANDLER( sega_ports_r );
+READ_HANDLER( sega_IN4_r );
+READ_HANDLER( elim4_IN4_r );
 
 int sega_interrupt(void);
-int sega_mult_r (int offset);
-void sega_mult1_w (int offset, int data);
-void sega_mult2_w (int offset, int data);
-void sega_switch_w (int offset, int data);
+READ_HANDLER( sega_mult_r );
+WRITE_HANDLER( sega_mult1_w );
+WRITE_HANDLER( sega_mult2_w );
+WRITE_HANDLER( sega_switch_w );
 
 /* Sound hardware prototypes */
 int sega_sh_start (const struct MachineSound *msound);
-int sega_sh_r (int offset);
-void sega_sh_speech_w (int offset, int data);
+READ_HANDLER( sega_sh_r );
+WRITE_HANDLER( sega_sh_speech_w );
 void sega_sh_update(void);
 
-void elim1_sh_w (int offset, int data);
-void elim2_sh_w (int offset, int data);
-void spacfury1_sh_w (int offset, int data);
-void spacfury2_sh_w (int offset, int data);
-void zektor1_sh_w (int offset, int data);
-void zektor2_sh_w (int offset, int data);
+WRITE_HANDLER( elim1_sh_w );
+WRITE_HANDLER( elim2_sh_w );
+WRITE_HANDLER( spacfury1_sh_w );
+WRITE_HANDLER( spacfury2_sh_w );
+WRITE_HANDLER( zektor1_sh_w );
+WRITE_HANDLER( zektor2_sh_w );
 
 int tacscan_sh_start (const struct MachineSound *msound);
-void tacscan_sh_w (int offset, int data);
+WRITE_HANDLER( tacscan_sh_w );
 void tacscan_sh_update(void);
 
-void startrek_sh_w (int offset, int data);
+WRITE_HANDLER( startrek_sh_w );
 
 /* Video hardware prototypes */
 void sega_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -171,7 +171,7 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0xFFFF, sega_wr, &sega_mem },
+	{ 0x0000, 0xffff, sega_w, &sega_mem },
 	{ 0xe000, 0xefff, MWA_RAM, &vectorram, &vectorram_size },	/* handled by the above, */
 												/* here only to initialize the pointer */
 	{ -1 }
@@ -181,7 +181,7 @@ static struct IOReadPort spacfury_readport[] =
 {
 	{ 0x3f, 0x3f, sega_sh_r },
 	{ 0xbe, 0xbe, sega_mult_r },
-	{ 0xf8, 0xfb, sega_read_ports },
+	{ 0xf8, 0xfb, sega_ports_r },
 	{ -1 }	/* end of table */
 };
 
@@ -200,7 +200,7 @@ static struct IOReadPort zektor_readport[] =
 {
 	{ 0x3f, 0x3f, sega_sh_r },
 	{ 0xbe, 0xbe, sega_mult_r },
-	{ 0xf8, 0xfb, sega_read_ports },
+	{ 0xf8, 0xfb, sega_ports_r },
 	{ 0xfc, 0xfc, sega_IN4_r },
 	{ -1 }	/* end of table */
 };
@@ -231,7 +231,7 @@ static struct IOReadPort elim2_readport[] =
 {
 	{ 0x3f, 0x3f, sega_sh_r },
 	{ 0xbe, 0xbe, sega_mult_r },
-	{ 0xf8, 0xfb, sega_read_ports },
+	{ 0xf8, 0xfb, sega_ports_r },
 	{ 0xfc, 0xfc, input_port_4_r },
 	{ -1 }	/* end of table */
 };
@@ -240,7 +240,7 @@ static struct IOReadPort elim4_readport[] =
 {
 	{ 0x3f, 0x3f, sega_sh_r },
 	{ 0xbe, 0xbe, sega_mult_r },
-	{ 0xf8, 0xfb, sega_read_ports },
+	{ 0xf8, 0xfb, sega_ports_r },
 	{ 0xfc, 0xfc, elim4_IN4_r },
 	{ -1 }	/* end of table */
 };

@@ -43,11 +43,11 @@ void twin16_vh_stop( void ){
 
 /******************************************************************************************/
 
-void fround_gfx_bank_w( int offset, int data ){
+WRITE_HANDLER( fround_gfx_bank_w ){
 	gfx_bank = COMBINE_WORD(gfx_bank,data);
 }
 
-void twin16_video_register_w( int offset, int data ){
+WRITE_HANDLER( twin16_video_register_w ){
 	switch( offset ){
 		case 0x0: COMBINE_WORD_MEM( &video_register, data ); break;
 		case 0x2: COMBINE_WORD_MEM( &scrollx[0], data ); break;

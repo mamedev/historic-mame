@@ -736,7 +736,7 @@ void free_memory_region(int num)
 
 
 /* LBO 042898 - added coin counters */
-void coin_counter_w (int offset, int data)
+WRITE_HANDLER( coin_counter_w )
 {
 	if (offset >= COIN_COUNTERS) return;
 	/* Count it only if the data has changed from 0 to non-zero */
@@ -747,7 +747,7 @@ void coin_counter_w (int offset, int data)
 	lastcoin[offset] = data;
 }
 
-void coin_lockout_w (int offset, int data)
+WRITE_HANDLER( coin_lockout_w )
 {
 	if (offset >= COIN_COUNTERS) return;
 
@@ -755,7 +755,7 @@ void coin_lockout_w (int offset, int data)
 }
 
 /* Locks out all the coin inputs */
-void coin_lockout_global_w (int offset, int data)
+WRITE_HANDLER( coin_lockout_global_w )
 {
 	int i;
 

@@ -27,7 +27,7 @@ static int parodius_interrupt(void)
 	else return ignore_interrupt();
 }
 
-static int bankedram_r(int offset)
+static READ_HANDLER( bankedram_r )
 {
 	if (videobank & 0x01)
 	{
@@ -40,7 +40,7 @@ static int bankedram_r(int offset)
 		return ram[offset];
 }
 
-static void bankedram_w(int offset,int data)
+static WRITE_HANDLER( bankedram_w )
 {
 	if (videobank & 0x01)
 	{
@@ -53,7 +53,7 @@ static void bankedram_w(int offset,int data)
 		ram[offset] = data;
 }
 
-static int parodius_052109_053245_r(int offset)
+static READ_HANDLER( parodius_052109_053245_r )
 {
 	if (videobank & 0x02)
 		return K053245_r(offset);
@@ -61,7 +61,7 @@ static int parodius_052109_053245_r(int offset)
 		return K052109_r(offset);
 }
 
-static void parodius_052109_053245_w(int offset,int data)
+static WRITE_HANDLER( parodius_052109_053245_w )
 {
 	if (videobank & 0x02)
 		K053245_w(offset,data);
@@ -69,7 +69,7 @@ static void parodius_052109_053245_w(int offset,int data)
 		K052109_w(offset,data);
 }
 
-static void parodius_videobank_w(int offset,int data)
+static WRITE_HANDLER( parodius_videobank_w )
 {
 if (errorlog && (videobank & 0xf8)) fprintf(errorlog,"%04x: videobank = %02x\n",cpu_get_pc(),data);
 
@@ -79,7 +79,7 @@ if (errorlog && (videobank & 0xf8)) fprintf(errorlog,"%04x: videobank = %02x\n",
 	videobank = data;
 }
 
-static void parodius_3fc0_w(int offset,int data)
+static WRITE_HANDLER( parodius_3fc0_w )
 {
 if (errorlog && (data & 0xf4) != 0x10) fprintf(errorlog,"%04x: 3fc0 = %02x\n",cpu_get_pc(),data);
 
@@ -93,15 +93,15 @@ if (errorlog && (data & 0xf4) != 0x10) fprintf(errorlog,"%04x: 3fc0 = %02x\n",cp
 	/* other bits unknown */
 }
 
-static int parodius_sound_r(int offset)
+static READ_HANDLER( parodius_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
 	   just make it pass the test */
-	if (Machine->sample_rate != 0) 	return K053260_ReadReg(2 + offset);
+	if (Machine->sample_rate != 0) 	return K053260_r(2 + offset);
 	else return offset ? 0x00 : 0x80;
 }
 
-static void parodius_sh_irqtrigger_w(int offset, int data)
+static WRITE_HANDLER( parodius_sh_irqtrigger_w )
 {
 	cpu_cause_interrupt(1,0xff);
 }
@@ -120,14 +120,14 @@ static void nmi_callback(int param)
 	cpu_set_nmi_line(1,ASSERT_LINE);
 }
 
-static void sound_arm_nmi( int offs, int data )
+static WRITE_HANDLER( sound_arm_nmi_w )
 {
 //	sound_nmi_enabled = 1;
 	cpu_set_nmi_line(1,CLEAR_LINE);
 	timer_set(TIME_IN_USEC(50),0,nmi_callback);	/* kludge until the K053260 is emulated correctly */
 }
 
-static int speedup_r( int offs )
+static READ_HANDLER( speedup_r )
 {
 	int data = memory_region(REGION_CPU1)[0x1837];
 
@@ -168,7 +168,7 @@ static struct MemoryWriteAddress parodius_writemem[] =
 	{ 0x3fc0, 0x3fc0, parodius_3fc0_w },
 	{ 0x3fc4, 0x3fc4, parodius_videobank_w },
 	{ 0x3fc8, 0x3fc8, parodius_sh_irqtrigger_w },
-	{ 0x3fcc, 0x3fcd, K053260_WriteReg },
+	{ 0x3fcc, 0x3fcd, K053260_w },
 	{ 0x2000, 0x27ff, parodius_052109_053245_w },
 	{ 0x2000, 0x5fff, K052109_w },
 	{ 0x6000, 0x9fff, MWA_ROM },					/* banked ROM */
@@ -181,7 +181,7 @@ static struct MemoryReadAddress parodius_readmem_sound[] =
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xf7ff, MRA_RAM },
 	{ 0xf801, 0xf801, YM2151_status_port_0_r },
-	{ 0xfc00, 0xfc2f, K053260_ReadReg },
+	{ 0xfc00, 0xfc2f, K053260_r },
 	{ -1 }	/* end of table */
 };
 
@@ -191,8 +191,8 @@ static struct MemoryWriteAddress parodius_writemem_sound[] =
 	{ 0xf000, 0xf7ff, MWA_RAM },
 	{ 0xf800, 0xf800, YM2151_register_port_0_w },
 	{ 0xf801, 0xf801, YM2151_data_port_0_w },
-	{ 0xfa00, 0xfa00, sound_arm_nmi },
-	{ 0xfc00, 0xfc2f, K053260_WriteReg },
+	{ 0xfa00, 0xfa00, sound_arm_nmi_w },
+	{ 0xfc00, 0xfc2f, K053260_w },
 	{ -1 }	/* end of table */
 };
 

@@ -134,18 +134,18 @@ extern unsigned char *cclimber_bsvideoram;
 extern int cclimber_bsvideoram_size;
 extern unsigned char *cclimber_bigspriteram;
 extern unsigned char *cclimber_column_scroll;
-void cclimber_flipscreen_w(int offset,int data);
-void cclimber_colorram_w(int offset,int data);
-void cclimber_bigsprite_videoram_w(int offset,int data);
+WRITE_HANDLER( cclimber_flipscreen_w );
+WRITE_HANDLER( cclimber_colorram_w );
+WRITE_HANDLER( cclimber_bigsprite_videoram_w );
 void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int cclimber_vh_start(void);
 void cclimber_vh_stop(void);
 void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void cclimber_sample_select_w(int offset,int data);
-void cclimber_sample_trigger_w(int offset,int data);
-void cclimber_sample_rate_w(int offset,int data);
-void cclimber_sample_volume_w(int offset,int data);
+WRITE_HANDLER( cclimber_sample_select_w );
+WRITE_HANDLER( cclimber_sample_trigger_w );
+WRITE_HANDLER( cclimber_sample_rate_w );
+WRITE_HANDLER( cclimber_sample_volume_w );
 int cclimber_sh_start(const struct MachineSound *msound);
 void cclimber_sh_stop(void);
 
@@ -1016,15 +1016,15 @@ ROM_END
 
 ***************************************************************************/
 
-void swimmer_bgcolor_w(int offset,int data);
-void swimmer_palettebank_w(int offset,int data);
+WRITE_HANDLER( swimmer_bgcolor_w );
+WRITE_HANDLER( swimmer_palettebank_w );
 void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void swimmer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void swimmer_sidepanel_enable_w(int offset,int data);
+WRITE_HANDLER( swimmer_sidepanel_enable_w );
 
 
 
-void swimmer_sh_soundlatch_w(int offset,int data)
+WRITE_HANDLER( swimmer_sh_soundlatch_w )
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(1,0xff);

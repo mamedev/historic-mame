@@ -38,7 +38,7 @@ write:
 extern unsigned char *zaccaria_attributesram;
 
 void zaccaria_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void zaccaria_attributes_w(int offset,int data);
+WRITE_HANDLER( zaccaria_attributes_w );
 void zaccaria_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -72,7 +72,7 @@ static void zaccaria_init_machine(void)
 
 struct GameDriver monymony_driver;
 
-int zaccaria_prot1_r(int offset)
+READ_HANDLER( zaccaria_prot1_r )
 {
 	switch (offset)
 	{
@@ -92,7 +92,7 @@ int zaccaria_prot1_r(int offset)
 	}
 }
 
-int zaccaria_prot2_r(int offset)
+READ_HANDLER( zaccaria_prot2_r )
 {
 	switch (offset)
 	{
@@ -116,7 +116,7 @@ int zaccaria_prot2_r(int offset)
 
 static int dsw;
 
-void zaccaria_dsw_sel_w(int offset,int data)
+WRITE_HANDLER( zaccaria_dsw_sel_w )
 {
 	switch (data)
 	{
@@ -138,7 +138,7 @@ if (errorlog) fprintf(errorlog,"PC %04x: portsel = %02x\n",cpu_get_pc(),data);
 	}
 }
 
-int zaccaria_dsw_r(int offset)
+READ_HANDLER( zaccaria_dsw_r )
 {
 	return readinputport(dsw);
 }

@@ -28,20 +28,20 @@ extern int m107_raster_irq_position,m107_sprite_list;
 #define m107_IRQ_2 ((m107_irq_vectorbase+8)/4) /* Raster interrupt */
 #define m107_IRQ_3 ((m107_irq_vectorbase+12)/4) /* ??? */
 
-void m107_spritebuffer_w(int offset,int data);
+WRITE_HANDLER( m107_spritebuffer_w );
 void m107_vh_raster_partial_refresh(struct osd_bitmap *bitmap,int start_line,int end_line);
 void m107_screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip);
 void m107_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void dsoccr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void m107_vh_stop(void);
 int m107_vh_start(void);
-void m107_control_w(int offset,int data);
-void m107_vram_w(int offset,int data);
-int m107_vram_r(int offset);
+WRITE_HANDLER( m107_control_w );
+WRITE_HANDLER( m107_vram_w );
+READ_HANDLER( m107_vram_r );
 
 /*****************************************************************************/
 
-static void bankswitch_w(int offset, int data)
+static WRITE_HANDLER( bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -49,19 +49,19 @@ static void bankswitch_w(int offset, int data)
 	cpu_setbank(1,&RAM[0x100000 + ((data&0x7)*0x10000)]);
 }
 
-static int m107_port_4_r(int offset)
+static READ_HANDLER( m107_port_4_r )
 {
 	if (m107_vblank) return readinputport(4) | 0;
 	return readinputport(4) | 0x80;
 }
 
-static void m107_soundlatch_w(int offset, int data)
+static WRITE_HANDLER( m107_soundlatch_w )
 {
 	if (offset==0) soundlatch_w(0,data);
 	/* Interrupt second V30 */
 }
 
-static void m107_coincounter_w(int offset, int data)
+static WRITE_HANDLER( m107_coincounter_w )
 {
 	if (offset==0) {
 		coin_counter_w(0,data & 0x01);

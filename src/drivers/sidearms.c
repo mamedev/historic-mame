@@ -21,17 +21,15 @@ TODO:
 extern unsigned char *sidearms_bg_scrollx,*sidearms_bg_scrolly;
 extern unsigned char *sidearms_bg2_scrollx,*sidearms_bg2_scrolly;
 
-void sidearms_c804_w(int offset, int data);
-void sidearms_gfxctrl_w(int offset, int data);
+WRITE_HANDLER( sidearms_c804_w );
+WRITE_HANDLER( sidearms_gfxctrl_w );
 int  sidearms_vh_start(void);
 void sidearms_vh_stop(void);
 void sidearms_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void sidearms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-int turtship_read_ports(int offset);
 
-
-static void sidearms_bankswitch_w(int offset,int data)
+static WRITE_HANDLER( sidearms_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -44,7 +42,7 @@ static void sidearms_bankswitch_w(int offset,int data)
 
 
 /* Turtle Ship input ports are rotated 90 degrees */
-int turtship_read_ports(int offset)
+static READ_HANDLER( turtship_ports_r )
 {
 	int i,res;
 
@@ -131,7 +129,7 @@ static struct MemoryReadAddress turtship_readmem[] =
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xe7ff, MRA_RAM },
-	{ 0xe800, 0xe807, turtship_read_ports },
+	{ 0xe800, 0xe807, turtship_ports_r },
 	{ 0xf000, 0xffff, MRA_RAM },
 	{ -1 }  /* end of table */
 };
@@ -786,7 +784,38 @@ ROM_START( dyger )
 	ROM_CONTINUE(             0x00000, 0x04000 )	/* is the first half used? */
 
 	ROM_REGION( 0x60000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "dyger.010",    0x00000, 0x10000, 0x73ae2b2e )	/* tiles */
+	ROM_LOAD( "dyger.010",    0x00000, 0x10000, 0x9715880d )	/* tiles */
+	ROM_LOAD( "dyger.009",    0x10000, 0x10000, 0x628dae72 )
+	ROM_LOAD( "dyger.011",    0x20000, 0x10000, 0x23248db1 )
+	ROM_LOAD( "dyger.006",    0x30000, 0x10000, 0x4ba7a437 )
+	ROM_LOAD( "dyger.008",    0x40000, 0x10000, 0x6c0f0e0c )
+	ROM_LOAD( "dyger.007",    0x50000, 0x10000, 0x2c50a229 )
+
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "dyger.014",    0x00000, 0x10000, 0x99c60b26 )	/* sprites */
+	ROM_LOAD( "dyger.015",    0x10000, 0x10000, 0xd6475ecc )
+	ROM_LOAD( "dyger.012",    0x20000, 0x10000, 0xe345705f )
+	ROM_LOAD( "dyger.013",    0x30000, 0x10000, 0xfaf4be3a )
+
+	ROM_REGION( 0x08000, REGION_GFX4 )	/* background tilemaps */
+	ROM_LOAD( "dyger.016",    0x0000, 0x8000, 0x0792e8f2 )
+ROM_END
+
+ROM_START( dygera )
+	ROM_REGION( 0x20000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
+	ROM_LOAD( "dygar_t3.bin", 0x00000, 0x08000, 0xfc63da8b )
+	ROM_LOAD( "dyger.002",    0x10000, 0x08000, 0x059ac4dc )
+	ROM_LOAD( "dyger.001",    0x18000, 0x08000, 0xd8440f66 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_LOAD( "dyger.004",    0x0000, 0x8000, 0x8a256c09 )
+
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "dyger.005",    0x00000, 0x04000, 0xc4bc72a5 )	/* characters */
+	ROM_CONTINUE(             0x00000, 0x04000 )	/* is the first half used? */
+
+	ROM_REGION( 0x60000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "dyger.010",    0x00000, 0x10000, 0x9715880d )	/* tiles */
 	ROM_LOAD( "dyger.009",    0x10000, 0x10000, 0x628dae72 )
 	ROM_LOAD( "dyger.011",    0x20000, 0x10000, 0x23248db1 )
 	ROM_LOAD( "dyger.006",    0x30000, 0x10000, 0x4ba7a437 )
@@ -809,4 +838,5 @@ GAMEX( 1986, sidearms, 0,        sidearms, sidearms, 0, ROT0,   "Capcom", "Side 
 GAMEX( 1988, sidearmr, sidearms, sidearms, sidearms, 0, ROT0,   "Capcom (Romstar license)", "Side Arms - Hyper Dyne (US)", GAME_NO_COCKTAIL )
 GAMEX( 1986, sidearjp, sidearms, sidearms, sidearms, 0, ROT0,   "Capcom", "Side Arms - Hyper Dyne (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1988, turtship, 0,        turtship, turtship, 0, ROT0,   "Philko", "Turtle Ship", GAME_NO_COCKTAIL )
-GAMEX( 1989, dyger,    0,        turtship, dyger,    0, ROT270, "Philko", "Dyger", GAME_NO_COCKTAIL )
+GAMEX( 1989, dyger,    0,        turtship, dyger,    0, ROT270, "Philko", "Dyger (set 1)", GAME_NO_COCKTAIL )
+GAMEX( 1989, dygera,   dyger,    turtship, dyger,    0, ROT270, "Philko", "Dyger (set 2)", GAME_NO_COCKTAIL )

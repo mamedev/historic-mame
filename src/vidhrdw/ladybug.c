@@ -87,7 +87,7 @@ void ladybug_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 
 
-void ladybug_flipscreen_w(int offset,int data)
+WRITE_HANDLER( ladybug_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{

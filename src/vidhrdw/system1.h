@@ -37,21 +37,21 @@ void system1_vh_stop(void);
 void system1_define_sprite_pixelmode(int Mode);
 void system1_define_background_memory(int Mode);
 
-int  wbml_bg_bankselect_r(int offset);
-void wbml_bg_bankselect_w(int offset, int data);
-int  wbml_paged_videoram_r(int offset);
-void wbml_paged_videoram_w(int offset,int data);
-void system1_background_collisionram_w(int offset,int data);
-void system1_sprites_collisionram_w(int offset,int data);
-void system1_videoram_w(int offset,int data);
-void system1_paletteram_w(int offset,int data);
-void system1_backgroundram_w(int offset,int data);
+READ_HANDLER( wbml_bg_bankselect_r );
+WRITE_HANDLER( wbml_bg_bankselect_w );
+READ_HANDLER( wbml_paged_videoram_r );
+WRITE_HANDLER( wbml_paged_videoram_w );
+WRITE_HANDLER( system1_background_collisionram_w );
+WRITE_HANDLER( system1_sprites_collisionram_w );
+WRITE_HANDLER( system1_videoram_w );
+WRITE_HANDLER( system1_paletteram_w );
+WRITE_HANDLER( system1_backgroundram_w );
 void system1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void system1_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void system1_videomode_w(int offset,int data);
-int system1_videomode_r(int offset);
+WRITE_HANDLER( system1_videomode_w );
+READ_HANDLER( system1_videomode_r );
 
-void choplifter_scroll_x_w(int offset,int data);
+WRITE_HANDLER( choplifter_scroll_x_w );
 void choplifter_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void wbml_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 

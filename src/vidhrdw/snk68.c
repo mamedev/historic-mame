@@ -18,15 +18,81 @@ Notes:
 static int sprite_flip,flipscreen;
 static struct tilemap *fix_tilemap;
 
-/******************************************************************************/
 
-void pow_flipscreen_w(int offset,int data)
+
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static void get_pow_tile_info(int tile_index)
+{
+	int tile=READ_WORD(&videoram[4*tile_index])&0xff;
+	int color=READ_WORD(&videoram[4*tile_index+2]);
+
+	tile=((color&0xf000)>>4) | tile;
+	color&=0xf;
+
+	SET_TILE_INFO(0,tile,color)
+}
+
+static void get_sar_tile_info(int tile_index)
+{
+	int tile=READ_WORD(&videoram[4*tile_index]);
+	int color=tile >> 12;
+
+	tile=tile&0xfff;
+
+	SET_TILE_INFO(0,tile,color)
+}
+
+
+
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
+
+int pow_vh_start(void)
+{
+	fix_tilemap = tilemap_create(get_pow_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
+
+	if (!fix_tilemap)
+		return 1;
+
+	fix_tilemap->transparent_pen = 0;
+
+	return 0;
+}
+
+int searchar_vh_start(void)
+{
+	fix_tilemap = tilemap_create(get_sar_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
+
+	if (!fix_tilemap)
+		return 1;
+
+	fix_tilemap->transparent_pen = 0;
+
+	return 0;
+}
+
+
+/***************************************************************************
+
+  Memory handlers
+
+***************************************************************************/
+
+WRITE_HANDLER( pow_flipscreen_w )
 {
 	flipscreen=data&0x8;
 	sprite_flip=data&0x4;
 }
 
-void pow_paletteram_w(int offset,int data)
+WRITE_HANDLER( pow_paletteram_w )
 {
 	int oldword = READ_WORD (&paletteram[offset]);
 	int newword = COMBINE_WORD (oldword, data);
@@ -45,7 +111,18 @@ void pow_paletteram_w(int offset,int data)
 	palette_change_color(offset / 2,r,g,b);
 }
 
-/******************************************************************************/
+WRITE_HANDLER( pow_video_w )
+{
+	COMBINE_WORD_MEM(&videoram[offset],data);
+	tilemap_mark_tile_dirty(fix_tilemap,offset/4);
+}
+
+
+/***************************************************************************
+
+  Display refresh
+
+***************************************************************************/
 
 static void draw_sprites(struct osd_bitmap *bitmap, int j,int pos)
 {
@@ -88,7 +165,6 @@ static void draw_sprites(struct osd_bitmap *bitmap, int j,int pos)
 	}
 }
 
-/******************************************************************************/
 
 void pow_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
@@ -138,38 +214,6 @@ void pow_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	tilemap_draw(bitmap,fix_tilemap,0);
 }
 
-/******************************************************************************/
-
-static void get_pow_tile_info( int col, int row )
-{
-	int offs=(row*4) + (col*128);
-	int tile=READ_WORD(&videoram[offs])&0xff;
-	int color=READ_WORD(&videoram[offs+2]);
-
-	tile=((color&0xf000)>>4) | tile;
-	color&=0xf;
-
-	SET_TILE_INFO(0,tile,color)
-}
-
-static void get_sar_tile_info( int col, int row )
-{
-	int offs=(row*4) + (col*128);
-	int tile=READ_WORD(&videoram[offs]);
-	int color=tile >> 12;
-
-	tile=tile&0xfff;
-
-	SET_TILE_INFO(0,tile,color)
-}
-
-void pow_video_w(int offset,int data)
-{
-	COMBINE_WORD_MEM(&videoram[offset],data);
-	tilemap_mark_tile_dirty(fix_tilemap,offset/128,(offset%128)/4);
-}
-
-/******************************************************************************/
 
 static void draw_sprites2(struct osd_bitmap *bitmap, int j, int z, int pos)
 {
@@ -219,7 +263,6 @@ static void draw_sprites2(struct osd_bitmap *bitmap, int j, int z, int pos)
 	}
 }
 
-/******************************************************************************/
 
 void searchar_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
@@ -270,33 +313,4 @@ void searchar_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	draw_sprites2(bitmap,4,0x1000,0x800);
 
 	tilemap_draw(bitmap,fix_tilemap,0);
-}
-
-/******************************************************************************/
-
-int pow_vh_start(void)
-{
-	/* Tilemaps are different between games */
-	if (!strcmp(Machine->gamedrv->name,"pow")
-		 || !strcmp(Machine->gamedrv->name,"powj")
-		 || !strcmp(Machine->gamedrv->name,"streetsm"))
-		fix_tilemap=tilemap_create(
-			get_pow_tile_info,
-			TILEMAP_TRANSPARENT,
-			8,8,
-			32,32
-		);
-	else
-		fix_tilemap=tilemap_create(
-			get_sar_tile_info,
-			TILEMAP_TRANSPARENT,
-			8,8,
-			32,32
-		);
-
-	fix_tilemap->transparent_pen = 0;
-	tilemap_set_scroll_rows(fix_tilemap,0);
-	tilemap_set_scroll_cols(fix_tilemap,0);
-
-	return 0;
 }

@@ -39,17 +39,17 @@ Notes:
 
 
 extern unsigned char *pbaction_videoram2,*pbaction_colorram2;
-void pbaction_videoram2_w(int offset,int data);
-void pbaction_colorram2_w(int offset,int data);
-void pbaction_flipscreen_w(int offset,int data);
-void pbaction_scroll_w(int offset,int data);
+WRITE_HANDLER( pbaction_videoram2_w );
+WRITE_HANDLER( pbaction_colorram2_w );
+WRITE_HANDLER( pbaction_flipscreen_w );
+WRITE_HANDLER( pbaction_scroll_w );
 int pbaction_vh_start(void);
 void pbaction_vh_stop(void);
 
 void pbaction_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-static void pbaction_sh_command_w(int offset,int data)
+static WRITE_HANDLER( pbaction_sh_command_w )
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(1,0x00);

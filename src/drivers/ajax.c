@@ -15,15 +15,15 @@ TO DO:
 
 extern unsigned char *ajax_sharedram;
 
-static void k007232_extvol_w(int offset,int data);
-static void sound_bank_w(int offset, int data);
+static WRITE_HANDLER( k007232_extvol_w );
+static WRITE_HANDLER( sound_bank_w );
 
 /* from machine/ajax.c */
-void ajax_bankswitch_w_2( int offset, int data );
-int ajax_sharedram_r( int offset );
-void ajax_sharedram_w( int offset, int data );
-int ajax_ls138_f10_r( int offset );
-void ajax_ls138_f10_w( int offset, int data );
+WRITE_HANDLER( ajax_bankswitch_2_w );
+READ_HANDLER( ajax_sharedram_r );
+WRITE_HANDLER( ajax_sharedram_w );
+READ_HANDLER( ajax_ls138_f10_r );
+WRITE_HANDLER( ajax_ls138_f10_w );
 void ajax_init_machine( void );
 int ajax_interrupt( void );
 
@@ -75,7 +75,7 @@ static struct MemoryWriteAddress ajax_writemem_2[] =
 {
 	{ 0x0000, 0x07ff, K051316_0_w },			/* 051316 zoom/rotation layer */
 	{ 0x0800, 0x080f, K051316_ctrl_0_w },		/* 051316 control registers */
-	{ 0x1800, 0x1800, ajax_bankswitch_w_2 },	/* bankswitch control */
+	{ 0x1800, 0x1800, ajax_bankswitch_2_w },	/* bankswitch control */
 	{ 0x2000, 0x3fff, ajax_sharedram_w, &ajax_sharedram },/* shared RAM with the 052001 */
 	{ 0x4000, 0x7fff, K052109_w },				/* video RAM + color RAM + video registers */
 	{ 0x8000, 0x9fff, MWA_ROM },				/* banked ROM */
@@ -219,7 +219,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,
 	3579545,	/* 3.58 MHz */
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
 	{ 0 },
 };
 
@@ -238,7 +238,7 @@ static struct YM2151interface ym2151_interface =
 	0	/ 2MBANK
 */
 
-static void sound_bank_w(int offset, int data)
+static WRITE_HANDLER( sound_bank_w )
 {
 	unsigned char *RAM;
 	int bank_A, bank_B;
@@ -262,10 +262,10 @@ static void volume_callback0(int v)
 	K007232_set_volume(0,1,0,(v & 0x0f) * 0x11);
 }
 
-static void k007232_extvol_w(int offset,int v)
+static WRITE_HANDLER( k007232_extvol_w )
 {
 	/* channel A volume (mono) */
-	K007232_set_volume(1,0,(v & 0x0f) * 0x11/2,(v & 0x0f) * 0x11/2);
+	K007232_set_volume(1,0,(data & 0x0f) * 0x11/2,(data & 0x0f) * 0x11/2);
 }
 
 static void volume_callback1(int v)

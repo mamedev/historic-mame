@@ -122,7 +122,7 @@ void toki_vh_stop (void)
  *
  *************************************/
 
-void toki_foreground_videoram_w (int offset, int data)
+WRITE_HANDLER( toki_foreground_videoram_w )
 {
    int oldword = READ_WORD (&toki_foreground_videoram[offset]);
    int newword = COMBINE_WORD (oldword, data);
@@ -134,7 +134,7 @@ void toki_foreground_videoram_w (int offset, int data)
    }
 }
 
-int toki_foreground_videoram_r (int offset)
+READ_HANDLER( toki_foreground_videoram_r )
 {
    return READ_WORD (&toki_foreground_videoram[offset]);
 }
@@ -147,7 +147,7 @@ int toki_foreground_videoram_r (int offset)
  *
  *************************************/
 
-void toki_background1_videoram_w (int offset, int data)
+WRITE_HANDLER( toki_background1_videoram_w )
 {
    int oldword = READ_WORD (&toki_background1_videoram[offset]);
    int newword = COMBINE_WORD (oldword, data);
@@ -159,7 +159,7 @@ void toki_background1_videoram_w (int offset, int data)
    }
 }
 
-int toki_background1_videoram_r (int offset)
+READ_HANDLER( toki_background1_videoram_r )
 {
    return READ_WORD (&toki_background1_videoram[offset]);
 }
@@ -172,7 +172,7 @@ int toki_background1_videoram_r (int offset)
  *
  *************************************/
 
-void toki_background2_videoram_w (int offset, int data)
+WRITE_HANDLER( toki_background2_videoram_w )
 {
    int oldword = READ_WORD (&toki_background2_videoram[offset]);
    int newword = COMBINE_WORD (oldword, data);
@@ -184,7 +184,7 @@ void toki_background2_videoram_w (int offset, int data)
    }
 }
 
-int toki_background2_videoram_r (int offset)
+READ_HANDLER( toki_background2_videoram_r )
 {
    return READ_WORD (&toki_background2_videoram[offset]);
 }
@@ -428,7 +428,7 @@ void toki_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 static int lastline,lastdata;
 
-void toki_linescroll_w(int offset,int data)
+WRITE_HANDLER( toki_linescroll_w )
 {
 	if (offset == 2)
 	{

@@ -125,7 +125,7 @@ void brkthru_vh_stop(void)
 
 
 
-void brkthru_1800_w(int offset,int data)
+WRITE_HANDLER( brkthru_1800_w )
 {
 	if (offset == 0)	/* low 8 bits of scroll */
 		bgscroll = (bgscroll & 0x100) | data;

@@ -52,34 +52,30 @@ extern unsigned char *mappy_sharedram;
 extern unsigned char *mappy_customio_1,*mappy_customio_2;
 void mappy_init_machine(void);
 void motos_init_machine(void);
-int mappy_sharedram_r(int offset);
-void mappy_sharedram_w(int offset,int data);
-void mappy_customio_w_1(int offset,int data);
-void mappy_customio_w_2(int offset,int data);
+READ_HANDLER( mappy_sharedram_r );
+WRITE_HANDLER( mappy_sharedram_w );
+WRITE_HANDLER( mappy_customio_1_w );
+WRITE_HANDLER( mappy_customio_2_w );
 int mappy_interrupt_1(void);
 int mappy_interrupt_2(void);
-void mappy_interrupt_enable_1_w(int offset,int data);
-void mappy_interrupt_enable_2_w(int offset,int data);
-void mappy_cpu_enable_w(int offset,int data);
-void mappy_reset_2_w(int offset,int data);
-void mappy_io_chips_enable_w(int offset,int data);
-void mappy_flipscreen_w(int offset,int data);
+WRITE_HANDLER( mappy_interrupt_enable_1_w );
+WRITE_HANDLER( mappy_interrupt_enable_2_w );
+WRITE_HANDLER( mappy_cpu_enable_w );
+WRITE_HANDLER( mappy_reset_2_w );
+WRITE_HANDLER( mappy_io_chips_enable_w );
+WRITE_HANDLER( mappy_flipscreen_w );
 
-int mappy_sharedram_r2(int offset);
-int mappy_customio_r_1(int offset);
-int mappy_customio_r_2(int offset);
+READ_HANDLER( mappy_customio_1_r );
+READ_HANDLER( mappy_customio_2_r );
 
-int digdug2_sharedram_r2(int offset);
-int digdug2_customio_r_1(int offset);
-int digdug2_customio_r_2(int offset);
+READ_HANDLER( digdug2_customio_1_r );
+READ_HANDLER( digdug2_customio_2_r );
 
-int motos_sharedram_r2(int offset);
-int motos_customio_r_1(int offset);
-int motos_customio_r_2(int offset);
+READ_HANDLER( motos_customio_1_r );
+READ_HANDLER( motos_customio_2_r );
 
-int todruaga_sharedram_r2(int offset);
-int todruaga_customio_r_1(int offset);
-int todruaga_customio_r_2(int offset);
+READ_HANDLER( todruaga_customio_1_r );
+READ_HANDLER( todruaga_customio_2_r );
 
 /* video driver data & functions */
 int mappy_vh_start(void);
@@ -87,23 +83,23 @@ int motos_vh_start(void);
 int todruaga_vh_start(void);
 void mappy_vh_stop(void);
 void mappy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void mappy_videoram_w(int offset,int data);
-void mappy_colorram_w(int offset,int data);
-void mappy_scroll_w(int offset,int data);
+WRITE_HANDLER( mappy_videoram_w );
+WRITE_HANDLER( mappy_colorram_w );
+WRITE_HANDLER( mappy_scroll_w );
 void mappy_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 /* sound driver data & functions */
 extern unsigned char *mappy_soundregs;
-void mappy_sound_w(int offset,int data);
-void mappy_sound_enable_w(int offset,int data);
+WRITE_HANDLER( mappy_sound_w );
+WRITE_HANDLER( mappy_sound_enable_w );
 
 
 /* CPU 1 read addresses */
 static struct MemoryReadAddress mappy_readmem_cpu1[] =
 {
 	{ 0x4040, 0x43ff, MRA_RAM },			/* shared RAM with the sound CPU */
-	{ 0x4800, 0x480f, mappy_customio_r_1 },	/* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, mappy_customio_r_2 },	/* custom I/O chip #2 interface */
+	{ 0x4800, 0x480f, mappy_customio_1_r },	/* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, mappy_customio_2_r },	/* custom I/O chip #2 interface */
 	{ 0x0000, 0x9fff, MRA_RAM },			/* RAM everywhere else */
 	{ 0xa000, 0xffff, MRA_ROM },			/* ROM code */
 	{ -1 }  /* end of table */
@@ -112,8 +108,8 @@ static struct MemoryReadAddress mappy_readmem_cpu1[] =
 static struct MemoryReadAddress digdug2_readmem_cpu1[] =
 {
 	{ 0x4040, 0x43ff, MRA_RAM },				/* shared RAM with the sound CPU */
-	{ 0x4800, 0x480f, digdug2_customio_r_1 },	/* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, digdug2_customio_r_2 },	/* custom I/O chip #2 interface */
+	{ 0x4800, 0x480f, digdug2_customio_1_r },	/* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, digdug2_customio_2_r },	/* custom I/O chip #2 interface */
 	{ 0x4820, 0x4bff, MRA_RAM },				/* extra RAM for Dig Dug 2 */
 	{ 0x0000, 0x7fff, MRA_RAM },				/* RAM everywhere else */
 	{ 0x8000, 0xffff, MRA_ROM },				/* ROM code */
@@ -123,8 +119,8 @@ static struct MemoryReadAddress digdug2_readmem_cpu1[] =
 static struct MemoryReadAddress motos_readmem_cpu1[] =
 {
 	{ 0x4040, 0x43ff, MRA_RAM },			/* shared RAM with the sound CPU */
-	{ 0x4800, 0x480f, motos_customio_r_1 },	/* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, motos_customio_r_2 },	/* custom I/O chip #2 interface */
+	{ 0x4800, 0x480f, motos_customio_1_r },	/* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, motos_customio_2_r },	/* custom I/O chip #2 interface */
 	{ 0x0000, 0x7fff, MRA_RAM },			/* RAM everywhere else */
 	{ 0x8000, 0xffff, MRA_ROM },			/* ROM code */
 	{ -1 }  /* end of table */
@@ -133,8 +129,8 @@ static struct MemoryReadAddress motos_readmem_cpu1[] =
 static struct MemoryReadAddress todruaga_readmem_cpu1[] =
 {
 	{ 0x4040, 0x43ff, MRA_RAM },				/* shared RAM with the sound CPU */
-	{ 0x4800, 0x480f, todruaga_customio_r_1 },	/* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, todruaga_customio_r_2 },	/* custom I/O chip #2 interface */
+	{ 0x4800, 0x480f, todruaga_customio_1_r },	/* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, todruaga_customio_2_r },	/* custom I/O chip #2 interface */
 	{ 0x0000, 0x7fff, MRA_RAM },				/* RAM everywhere else */
 	{ 0x8000, 0xffff, MRA_ROM },				/* ROM code */
 	{ -1 }  /* end of table */
@@ -155,8 +151,8 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x1f80, 0x1fff, MWA_RAM, &spriteram_2 },                   /* sprite RAM, area 2 */
 	{ 0x2780, 0x27ff, MWA_RAM, &spriteram_3 },                   /* sprite RAM, area 3 */
 	{ 0x3800, 0x3fff, mappy_scroll_w },                          /* scroll registers */
-	{ 0x4800, 0x480f, mappy_customio_w_1, &mappy_customio_1 },   /* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, mappy_customio_w_2, &mappy_customio_2 },   /* custom I/O chip #2 interface */
+	{ 0x4800, 0x480f, mappy_customio_1_w, &mappy_customio_1 },   /* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, mappy_customio_2_w, &mappy_customio_2 },   /* custom I/O chip #2 interface */
 	{ 0x5002, 0x5003, mappy_interrupt_enable_1_w },              /* interrupt enable */
 	{ 0x5004, 0x5005, mappy_flipscreen_w },				 /* cocktail flipscreen */
 	{ 0x5008, 0x5008, mappy_reset_2_w },			       /* reset CPU #2 & disable I/O chips */
@@ -173,7 +169,7 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 static struct MemoryReadAddress mappy_readmem_cpu2[] =
 {
 	{ 0xe000, 0xffff, MRA_ROM },                                 /* ROM code */
-	{ 0x0040, 0x03ff, mappy_sharedram_r2 },                      /* shared RAM with the main CPU */
+	{ 0x0040, 0x03ff, mappy_sharedram_r },                      /* shared RAM with the main CPU */
 
 	{ -1 }  /* end of table */
 };
@@ -181,7 +177,7 @@ static struct MemoryReadAddress mappy_readmem_cpu2[] =
 static struct MemoryReadAddress digdug2_readmem_cpu2[] =
 {
 	{ 0xe000, 0xffff, MRA_ROM },                                 /* ROM code */
-	{ 0x0040, 0x03ff, digdug2_sharedram_r2 },                    /* shared RAM with the main CPU */
+	{ 0x0040, 0x03ff, mappy_sharedram_r },                    /* shared RAM with the main CPU */
 
 	{ -1 }  /* end of table */
 };
@@ -189,7 +185,7 @@ static struct MemoryReadAddress digdug2_readmem_cpu2[] =
 static struct MemoryReadAddress motos_readmem_cpu2[] =
 {
 	{ 0xe000, 0xffff, MRA_ROM },                                 /* ROM code */
-	{ 0x0040, 0x03ff, motos_sharedram_r2 },						 /* shared RAM with the main CPU */
+	{ 0x0040, 0x03ff, mappy_sharedram_r },						 /* shared RAM with the main CPU */
 
 	{ -1 }  /* end of table */
 };
@@ -197,7 +193,7 @@ static struct MemoryReadAddress motos_readmem_cpu2[] =
 static struct MemoryReadAddress todruaga_readmem_cpu2[] =
 {
 	{ 0xe000, 0xffff, MRA_ROM },                                 /* ROM code */
-	{ 0x0040, 0x03ff, motos_sharedram_r2 },						 /* shared RAM with the main CPU */
+	{ 0x0040, 0x03ff, mappy_sharedram_r },						 /* shared RAM with the main CPU */
 
 	{ -1 }  /* end of table */
 };

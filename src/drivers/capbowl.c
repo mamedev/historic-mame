@@ -93,12 +93,12 @@ void capbowl_vh_stop(void);
 
 extern unsigned char *capbowl_rowaddress;
 
-void capbowl_rom_select_w(int offset,int data);
+WRITE_HANDLER( capbowl_rom_select_w );
 
-int  capbowl_pagedrom_r(int offset);
+READ_HANDLER( capbowl_pagedrom_r );
 
-void bowlrama_turbo_w(int offset, int data);
-int  bowlrama_turbo_r(int offset);
+WRITE_HANDLER( bowlrama_turbo_w );
+READ_HANDLER( bowlrama_turbo_r );
 
 
 
@@ -124,7 +124,7 @@ static void nvram_handler(void *file,int read_or_write)
 }
 
 
-static void capbowl_sndcmd_w(int offset,int data)
+static WRITE_HANDLER( capbowl_sndcmd_w )
 {
 	cpu_cause_interrupt(1, M6809_INT_IRQ);
 
@@ -156,17 +156,17 @@ static int capbowl_interrupt(void)
 
 static int track[2];
 
-static int track_0_r(int offset)
+static READ_HANDLER( track_0_r )
 {
 	return (input_port_0_r(offset) & 0xf0) | ((input_port_2_r(offset) - track[0]) & 0x0f);
 }
 
-static int track_1_r(int offset)
+static READ_HANDLER( track_1_r )
 {
 	return (input_port_1_r(offset) & 0xf0) | ((input_port_3_r(offset) - track[1]) & 0x0f);
 }
 
-static void track_reset_w(int offset,int data)
+static WRITE_HANDLER( track_reset_w )
 {
 	/* reset the trackball counters */
 	track[0] = input_port_2_r(offset);
@@ -228,7 +228,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x1000, 0x1000, YM2203_control_port_0_w },
 	{ 0x1001, 0x1001, YM2203_write_port_0_w },
 	{ 0x2000, 0x2000, MWA_NOP },  /* Not hooked up according to the schematics */
-	{ 0x6000, 0x6000, DAC_data_w },
+	{ 0x6000, 0x6000, DAC_0_data_w },
 	{ -1 }  /* end of table */
 };
 

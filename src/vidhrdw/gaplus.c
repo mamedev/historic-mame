@@ -244,7 +244,7 @@ static void starfield_render( struct osd_bitmap *bitmap ) {
 	}
 }
 
-void gaplus_starfield_control_w( int offset, int data ) {
+WRITE_HANDLER( gaplus_starfield_control_w ) {
 	gaplus_starfield_control[offset] = data;
 }
 
@@ -253,7 +253,6 @@ static int flipscreen = 0;
 void gaplus_flipscreen_w( int data )
 {
 	flipscreen = data;
-	memset(dirtybuffer,1,videoram_size);
 }
 
 extern unsigned char *gaplus_sharedram;
@@ -276,27 +275,76 @@ void gaplus_vh_stop( void ) {
 	generic_vh_stop();
 }
 
-void gaplus_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int color,
-    int flipx,int flipy,int sx,int sy)
-{
-    if (code < 128)
-        drawgfx(dest,Machine->gfx[2],code,color,flipx,flipy,sx,sy,&Machine->drv->visible_area,
-            TRANSPARENCY_COLOR,255);
-    else if (code < 256)
-        drawgfx(dest,Machine->gfx[3],code,color,flipx,flipy,sx,sy,&Machine->drv->visible_area,
-            TRANSPARENCY_COLOR,255);
-    else
-        drawgfx(dest,Machine->gfx[4],code,color,flipx,flipy,sx,sy,&Machine->drv->visible_area,
-            TRANSPARENCY_COLOR,255);
-}
-
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+	Display Refresh
 
 ***************************************************************************/
+
+static void gaplus_draw_sprites(struct osd_bitmap *bitmap){
+	int offs;
+
+	for (offs = 0; offs < spriteram_size; offs += 2){
+        if ((spriteram_3[offs+1] & 2) == 0){
+			int number = spriteram[offs]+4*(spriteram_3[offs] & 0x40);
+			int color = spriteram[offs+1] & 0x3f;
+            int sx = (spriteram_2[offs+1]-71) + 0x100*(spriteram_3[offs+1] & 1);
+			int sy = ( Machine->drv->screen_height ) - spriteram_2[offs]-24;
+			int flipy = spriteram_3[offs] & 2;
+			int flipx = spriteram_3[offs] & 1;
+			int width, height;
+
+			if (number >= 128*3) continue;
+
+			if (flipscreen)
+			{
+				flipx = !flipx;
+				flipy = !flipy;
+			}
+
+			if ((spriteram_3[offs] & 0xa8) == 0xa0){ /* draw the sprite twice in a row */
+                    drawgfx(bitmap,Machine->gfx[2+(number >> 7)],
+								number,color,flipx,flipy,sx,sy,
+								&Machine->drv->visible_area,TRANSPARENCY_COLOR,255);
+					drawgfx(bitmap,Machine->gfx[2+(number >> 7)],
+								number,color,flipx,flipy,sx,sy+16,
+								&Machine->drv->visible_area,TRANSPARENCY_COLOR,255);
+			}
+			else{
+				switch (spriteram_3[offs] & 0x28){
+					case 0x28:	/* 2x both ways */
+						width = height = 2; number &= (~3); break;
+					case 0x20:	/* 2x vertical */
+						width = 1; height = 2; number &= (~2); break;
+					case 0x08:	/* 2x horizontal */
+						width = 2; height = 1; number &= (~1); sy += 16; break;
+					default:	/* normal sprite */
+						width = height = 1; sy += 16; break;
+				}
+				{
+					static int x_offset[2] = { 0x00, 0x01 };
+					static int y_offset[2] = { 0x00, 0x02 };
+					int x,y, ex, ey;
+
+					for( y=0; y < height; y++ ){
+						for( x=0; x < width; x++ ){
+							ex = flipx ? (width-1-x) : x;
+							ey = flipy ? (height-1-y) : y;
+
+							drawgfx(bitmap,Machine->gfx[2+(number >> 7)],
+								(number)+x_offset[ex]+y_offset[ey],
+								color,
+								flipx, flipy,
+								sx+x*16,sy+y*16,
+								&Machine->drv->visible_area,
+								TRANSPARENCY_COLOR,255);
+						}
+					}
+				}
+			}
+		}
+	}
+}
 
 void gaplus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
@@ -305,6 +353,12 @@ void gaplus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	fillbitmap( bitmap, Machine->pens[0], &Machine->drv->visible_area );
 
 	starfield_render( bitmap );
+
+	/* colorram layout: */
+	/* bit 7 = bank */
+	/* bit 6 = not used? */
+	/* bit 5-0 = color */
+
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
@@ -342,10 +396,6 @@ void gaplus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sx = 27 - sx;
 			sy = 35 - sy;
 		}
-		/* colorram layout: */
-		/* bit 7 = bank */
-		/* bit 6 = chars that go on top of sprites (unimplemented yet) */
-		/* bit 5-0 = color */
 
 		sx = ( ( Machine->drv->screen_height - 1 ) / 8 ) - sx;
 
@@ -358,97 +408,5 @@ void gaplus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
                 &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 
-	/* Draw the sprites. */
-	for (offs = 0;offs < spriteram_size;offs += 2)
-	{
-            /* is it on? */
-        if ((spriteram_3[offs+1] & 2) == 0)
-        {
-            int sprite = spriteram[offs]+4*(spriteram_3[offs] & 0x40);
-			int color = spriteram[offs+1] & 0x3f;
-            int y = ( Machine->drv->screen_height ) - spriteram_2[offs]-8;
-            int x = (spriteram_2[offs+1]-71) + 0x100*(spriteram_3[offs+1] & 1);
-			int flipy = spriteram_3[offs] & 2;
-			int flipx = spriteram_3[offs] & 1;
-
-			if (flipscreen)
-			{
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-            switch (spriteram_3[offs] & 0xa8)
-			{
-				case 0:		/* normal size */
-                    gaplus_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-					break;
-
-                case 0x20:     /* 2x horizontal */
-                	sprite &= ~2;
-					if (!flipy)
-					{
-						gaplus_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y);
-						gaplus_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y-16);
-					}
-					else
-					{
-						gaplus_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-						gaplus_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y-16);
-					}
-					break;
-
-                case 0x08:     /* 2x vertical */
-					sprite &= ~1;
-					if (!flipx)
-					{
-						gaplus_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-						gaplus_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x+16,y);
-					}
-					else
-					{
-						gaplus_draw_sprite(bitmap,sprite,color,flipx,flipy,x+16,y);
-						gaplus_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y);
-					}
-					break;
-
-                case 0x28:        /* 2x both ways */
-					sprite &= ~3;
-					if (!flipx && !flipy)
-					{
-						gaplus_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y);
-						gaplus_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x+16,y);
-						gaplus_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y-16);
-						gaplus_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x+16,y-16);
-					}
-					else if (flipx && flipy)
-					{
-						gaplus_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y);
-						gaplus_draw_sprite(bitmap,sprite,color,flipx,flipy,x+16,y);
-						gaplus_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,y-16);
-						gaplus_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x+16,y-16);
-					}
-					else if (flipy)
-					{
-						gaplus_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-						gaplus_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x+16,y);
-						gaplus_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y-16);
-						gaplus_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x+16,y-16);
-					}
-					else /* flipx */
-					{
-						gaplus_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,y);
-						gaplus_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x+16,y);
-						gaplus_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y-16);
-						gaplus_draw_sprite(bitmap,sprite,color,flipx,flipy,x+16,y-16);
-					}
-					break;
-
-                case 0xa0:  /*  draw the sprite twice in a row */
-                    gaplus_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-                    gaplus_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y-16);
-					break;
-
-            }
-        }
-    }
+	gaplus_draw_sprites(bitmap);
 }

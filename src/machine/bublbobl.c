@@ -15,26 +15,26 @@
 unsigned char *bublbobl_sharedram1,*bublbobl_sharedram2;
 
 
-int bublbobl_sharedram1_r(int offset)
+READ_HANDLER( bublbobl_sharedram1_r )
 {
 	return bublbobl_sharedram1[offset];
 }
-int bublbobl_sharedram2_r(int offset)
+READ_HANDLER( bublbobl_sharedram2_r )
 {
 	return bublbobl_sharedram2[offset];
 }
-void bublbobl_sharedram1_w(int offset,int data)
+WRITE_HANDLER( bublbobl_sharedram1_w )
 {
 	bublbobl_sharedram1[offset] = data;
 }
-void bublbobl_sharedram2_w(int offset,int data)
+WRITE_HANDLER( bublbobl_sharedram2_w )
 {
 	bublbobl_sharedram2[offset] = data;
 }
 
 
 
-void bublbobl_bankswitch_w(int offset,int data)
+WRITE_HANDLER( bublbobl_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -43,19 +43,19 @@ void bublbobl_bankswitch_w(int offset,int data)
 	else { cpu_setbank(1,&RAM[0x10000 + 0x4000 * ((data & 3) - 1)]); }
 }
 
-void tokio_bankswitch_w(int offset,int data)
+WRITE_HANDLER( tokio_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	cpu_setbank(1, &RAM[0x10000 + 0x4000 * (data & 7)]);
 }
 
-void tokio_nmitrigger_w(int offset, int data)
+WRITE_HANDLER( tokio_nmitrigger_w )
 {
 	cpu_cause_interrupt(1,Z80_NMI_INT);
 }
 
-int tokio_fake_r(int offset)
+READ_HANDLER( tokio_fake_r )
 {
   return 0xbf; /* ad-hoc value set to pass initial testing */
 }
@@ -70,18 +70,18 @@ static void nmi_callback(int param)
 	else pending_nmi = 1;
 }
 
-void bublbobl_sound_command_w(int offset,int data)
+WRITE_HANDLER( bublbobl_sound_command_w )
 {
 	soundlatch_w(offset,data);
 	timer_set(TIME_NOW,data,nmi_callback);
 }
 
-void bublbobl_sh_nmi_disable_w(int offset,int data)
+WRITE_HANDLER( bublbobl_sh_nmi_disable_w )
 {
 	sound_nmi_enable = 0;
 }
 
-void bublbobl_sh_nmi_enable_w(int offset,int data)
+WRITE_HANDLER( bublbobl_sh_nmi_enable_w )
 {
 	sound_nmi_enable = 1;
 	if (pending_nmi)	/* probably wrong but commands go lost otherwise */
@@ -115,19 +115,19 @@ int bublbobl_m68705_interrupt(void)
 
 static unsigned char portA_in,portA_out,ddrA;
 
-int bublbobl_68705_portA_r(int offset)
+READ_HANDLER( bublbobl_68705_portA_r )
 {
 //if (errorlog) fprintf(errorlog,"%04x: 68705 port A read %02x\n",cpu_get_pc(),portA_in);
 	return (portA_out & ddrA) | (portA_in & ~ddrA);
 }
 
-void bublbobl_68705_portA_w(int offset,int data)
+WRITE_HANDLER( bublbobl_68705_portA_w )
 {
 //if (errorlog) fprintf(errorlog,"%04x: 68705 port A write %02x\n",cpu_get_pc(),data);
 	portA_out = data;
 }
 
-void bublbobl_68705_ddrA_w(int offset,int data)
+WRITE_HANDLER( bublbobl_68705_ddrA_w )
 {
 	ddrA = data;
 }
@@ -156,14 +156,14 @@ void bublbobl_68705_ddrA_w(int offset,int data)
 
 static unsigned char portB_in,portB_out,ddrB;
 
-int bublbobl_68705_portB_r(int offset)
+READ_HANDLER( bublbobl_68705_portB_r )
 {
 	return (portB_out & ddrB) | (portB_in & ~ddrB);
 }
 
 static int address,latch;
 
-void bublbobl_68705_portB_w(int offset,int data)
+WRITE_HANDLER( bublbobl_68705_portB_w )
 {
 //if (errorlog) fprintf(errorlog,"%04x: 68705 port B write %02x\n",cpu_get_pc(),data);
 
@@ -228,7 +228,7 @@ if (errorlog) fprintf(errorlog,"%04x: 68705 unknown port B bit %02x\n",cpu_get_p
 	portB_out = data;
 }
 
-void bublbobl_68705_ddrB_w(int offset,int data)
+WRITE_HANDLER( bublbobl_68705_ddrB_w )
 {
 	ddrB = data;
 }

@@ -78,8 +78,8 @@ static int t[2] = { 0,0 };
 
 extern unsigned char *mario_scrolly;
 
-void mario_gfxbank_w(int offset,int data);
-void mario_palettebank_w(int offset,int data);
+WRITE_HANDLER( mario_gfxbank_w );
+WRITE_HANDLER( mario_palettebank_w );
 int  mario_vh_start(void);
 void mario_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void mario_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -87,42 +87,41 @@ void mario_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 /*
  *  from sndhrdw/mario.c
  */
-void   mario_sh_w(int offset,int data);
-void   mario_sh1_w(int offset,int data);
-void   mario_sh2_w(int offset,int data);
-void   mario_sh3_w(int offset,int data);
+WRITE_HANDLER( mario_sh_w );
+WRITE_HANDLER( mario_sh1_w );
+WRITE_HANDLER( mario_sh2_w );
+WRITE_HANDLER( mario_sh3_w );
 
 
 #define ACTIVELOW_PORT_BIT(P,A,D)   ((P & (~(1 << A))) | ((D ^ 1) << A))
 #define ACTIVEHIGH_PORT_BIT(P,A,D)   ((P & (~(1 << A))) | (D << A))
 
 
-void mario_sh_growing(int offset, int data)    { t[1] = data; }
-void mario_sh_getcoin(int offset, int data)    { t[0] = data; }
-void mario_sh_crab(int offset, int data)       { p[1] = ACTIVEHIGH_PORT_BIT(p[1],0,data); }
-void mario_sh_turtle(int offset, int data)     { p[1] = ACTIVEHIGH_PORT_BIT(p[1],1,data); }
-void mario_sh_fly(int offset, int data)        { p[1] = ACTIVEHIGH_PORT_BIT(p[1],2,data); }
-static void mario_sh_tuneselect(int offset, int data) { soundlatch_w(offset,data); }
+WRITE_HANDLER( mario_sh_getcoin_w )    { t[0] = data; }
+WRITE_HANDLER( mario_sh_crab_w )       { p[1] = ACTIVEHIGH_PORT_BIT(p[1],0,data); }
+WRITE_HANDLER( mario_sh_turtle_w )     { p[1] = ACTIVEHIGH_PORT_BIT(p[1],1,data); }
+WRITE_HANDLER( mario_sh_fly_w )        { p[1] = ACTIVEHIGH_PORT_BIT(p[1],2,data); }
+static WRITE_HANDLER( mario_sh_tuneselect_w ) { soundlatch_w(offset,data); }
 
-static int  mario_sh_getp1(int offset)   { return p[1]; }
-static int  mario_sh_getp2(int offset)   { return p[2]; }
-static int  mario_sh_gett0(int offset)   { return t[0]; }
-static int  mario_sh_gett1(int offset)   { return t[1]; }
-static int  mario_sh_gettune(int offset) { return soundlatch_r(offset); }
+static READ_HANDLER( mario_sh_p1_r )   { return p[1]; }
+static READ_HANDLER( mario_sh_p2_r )   { return p[2]; }
+static READ_HANDLER( mario_sh_t0_r )   { return t[0]; }
+static READ_HANDLER( mario_sh_t1_r )   { return t[1]; }
+static READ_HANDLER( mario_sh_tune_r ) { return soundlatch_r(offset); }
 
-static void mario_sh_putsound(int offset, int data)
+static WRITE_HANDLER( mario_sh_sound_w )
 {
 	DAC_data_w(0,data);
 }
-static void mario_sh_putp1(int offset, int data)
+static WRITE_HANDLER( mario_sh_p1_w )
 {
 	p[1] = data;
 }
-static void mario_sh_putp2(int offset, int data)
+static WRITE_HANDLER( mario_sh_p2_w )
 {
 	p[2] = data;
 }
-void masao_sh_irqtrigger_w(int offset,int data)
+WRITE_HANDLER( masao_sh_irqtrigger_w )
 {
 	static int last;
 
@@ -163,12 +162,12 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x7e83, 0x7e83, mario_palettebank_w },
 	{ 0x7e84, 0x7e84, interrupt_enable_w },
 	{ 0x7f00, 0x7f00, mario_sh_w },	/* death */
-	{ 0x7f01, 0x7f01, mario_sh_getcoin },
-	{ 0x7f03, 0x7f03, mario_sh_crab },
-	{ 0x7f04, 0x7f04, mario_sh_turtle },
-	{ 0x7f05, 0x7f05, mario_sh_fly },
+	{ 0x7f01, 0x7f01, mario_sh_getcoin_w },
+	{ 0x7f03, 0x7f03, mario_sh_crab_w },
+	{ 0x7f04, 0x7f04, mario_sh_turtle_w },
+	{ 0x7f05, 0x7f05, mario_sh_fly_w },
 	{ 0x7f00, 0x7f07, mario_sh3_w }, /* Misc discrete samples */
-	{ 0x7e00, 0x7e00, mario_sh_tuneselect },
+	{ 0x7e00, 0x7e00, mario_sh_tuneselect_w },
 	{ 0x7000, 0x73ff, MWA_NOP },	/* ??? */
 //	{ 0x7e85, 0x7e85, MWA_RAM },	/* Sets alternative 1 and 0 */
 	{ 0xf000, 0xffff, MWA_ROM },
@@ -211,18 +210,18 @@ static struct MemoryWriteAddress writemem_sound[] =
 };
 static struct IOReadPort readport_sound[] =
 {
-	{ 0x00,     0xff,     mario_sh_gettune },
-	{ I8039_p1, I8039_p1, mario_sh_getp1 },
-	{ I8039_p2, I8039_p2, mario_sh_getp2 },
-	{ I8039_t0, I8039_t0, mario_sh_gett0 },
-	{ I8039_t1, I8039_t1, mario_sh_gett1 },
+	{ 0x00,     0xff,     mario_sh_tune_r },
+	{ I8039_p1, I8039_p1, mario_sh_p1_r },
+	{ I8039_p2, I8039_p2, mario_sh_p2_r },
+	{ I8039_t0, I8039_t0, mario_sh_t0_r },
+	{ I8039_t1, I8039_t1, mario_sh_t1_r },
 	{ -1 }	/* end of table */
 };
 static struct IOWritePort writeport_sound[] =
 {
-	{ 0x00,     0xff,     mario_sh_putsound },
-	{ I8039_p1, I8039_p1, mario_sh_putp1 },
-	{ I8039_p2, I8039_p2, mario_sh_putp2 },
+	{ 0x00,     0xff,     mario_sh_sound_w },
+	{ I8039_p1, I8039_p1, mario_sh_p1_w },
+	{ I8039_p2, I8039_p2, mario_sh_p2_w },
 	{ -1 }	/* end of table */
 };
 

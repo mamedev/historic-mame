@@ -34,11 +34,11 @@
 
 static int led0,led1;
 
-void dlair_led0_w(int offset,int data)
+WRITE_HANDLER( dlair_led0_w )
 {
 	led0 = data;
 }
-void dlair_led1_w(int offset,int data)
+WRITE_HANDLER( dlair_led1_w )
 {
 	led1 = data;
 }
@@ -161,12 +161,12 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 static unsigned char pip[4];
-static int pip_r(int offset)
+static READ_HANDLER( pip_r )
 {
 if (errorlog) fprintf(errorlog,"PC %04x: read I/O port %02x\n",cpu_get_pc(),offset);
 	return pip[offset];
 }
-static void pip_w(int offset,int data)
+static WRITE_HANDLER( pip_w )
 {
 if (errorlog) fprintf(errorlog,"PC %04x: write %02x to I/O port %02x\n",cpu_get_pc(),data,offset);
 	pip[offset] = data;

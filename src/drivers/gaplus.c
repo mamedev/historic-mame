@@ -1,47 +1,10 @@
 /***************************************************************************
 
+Gaplus (c) 1984 Namco
+
 MAME driver by:
-	Manuel Abadia (emumanu@hotmail.com)
-	Ernesto Corvi (someone@secureshell.com)
-
-Gaplus Memory Map (preliminary)
-
-CPU #1: (MAIN CPU)
-0000-03ff   video RAM
-0400-07ff   color RAM
-0800-0f7f   shared RAM with CPU #2
-0f80-0fff   sprite RAM 1 (sprite number and color)
-1000-177f   shared RAM with CPU #2
-1780-17ff   sprite RAM 2 (sprite x and y position)
-1800-1f7f   shared RAM with CPU #2
-1f80-1fff   sprite RAM 3 (sprite control)
-6040-63ff   shared RAM with CPU #3
-6800-680f   custom I/O chip #1
-6810-681f   custom I/O chip #2
-6820-682f   custom I/O chip #3
-8c00		reset CPU #2 and CPU #3?
-a000-a003   starfield control (write)
-a000-bfff   ROM gp2-4.64
-c000-dfff   ROM gp2-3.64
-e000-ffff   ROM gp2-2.64
-
-CPU #2: (SUB CPU)
-0000-07ff   shared video/color RAM with CPU #1
-0800-0f7f   shared RAM with CPU #1
-0f80-0fff   sprite RAM 1 (sprite number and color)
-1000-177f   shared RAM with CPU #1
-1780-17ff   sprite RAM 2 (sprite x and y position)
-1800-1f7f   shared RAM with CPU #1
-1f80-1fff   sprite RAM 3 (sprite control)
-6080-6081   IRQ enable
-a000-bfff   ROM gp2-8.64
-c000-dfff   ROM gp2-7.64
-e000-ffff   ROM gp2-6.64
-
-CPU #3: (SOUND CPU)
-0000-0040   sound registers
-0040-03ff   shared RAM with CPU #1
-e000-ffff   ROM gp2-1.64
+	Manuel Abadia <manu@teleline.es>
+	Ernesto Corvi <someone@secureshell.com>
 
 ***************************************************************************/
 
@@ -54,154 +17,147 @@ extern unsigned char *gaplus_customio_1, *gaplus_customio_2, *gaplus_customio_3;
 extern unsigned char *mappy_soundregs;
 
 /* shared memory functions */
-extern int gaplus_sharedram_r(int offset);
-extern int gaplus_snd_sharedram_r(int offset);
-extern void gaplus_sharedram_w(int offset,int data);
-extern void gaplus_snd_sharedram_w(int offset,int data);
+READ_HANDLER( gaplus_sharedram_r );
+READ_HANDLER( gaplus_snd_sharedram_r );
+WRITE_HANDLER( gaplus_sharedram_w );
+WRITE_HANDLER( gaplus_snd_sharedram_w );
 
 /* custom IO chips functions */
-extern void gaplus_customio_w_1(int offset,int data);
-extern void gaplus_customio_w_2(int offset,int data);
-extern void gaplus_customio_w_3(int offset,int data);
-extern int gaplus_customio_r_1(int offset);
-extern int gaplus_customio_r_2(int offset);
-extern int gaplus_customio_r_3(int offset);
-extern int gaplusa_customio_r_1( int offset );
-extern int gaplusa_customio_r_2( int offset );
-extern int gaplusa_customio_r_3( int offset );
-extern int galaga3_customio_r_1(int offset);
-extern int galaga3_customio_r_2(int offset);
-extern int galaga3_customio_r_3(int offset);
+WRITE_HANDLER( gaplus_customio_1_w );
+WRITE_HANDLER( gaplus_customio_2_w );
+WRITE_HANDLER( gaplus_customio_3_w );
+READ_HANDLER( gaplus_customio_1_r );
+READ_HANDLER( gaplus_customio_2_r );
+READ_HANDLER( gaplus_customio_3_r );
+READ_HANDLER( gaplusa_customio_1_r );
+READ_HANDLER( gaplusa_customio_2_r );
+READ_HANDLER( gaplusa_customio_3_r );
+READ_HANDLER( galaga3_customio_1_r );
+READ_HANDLER( galaga3_customio_2_r );
+READ_HANDLER( galaga3_customio_3_r );
 
 extern int gaplus_interrupt_1(void);
-extern void gaplus_reset_2_3_w(int offset, int data);
+WRITE_HANDLER( gaplus_reset_2_3_w );
 extern int gaplus_interrupt_2(void);
-extern void gaplus_interrupt_ctrl_2_w(int offset,int data);
+WRITE_HANDLER( gaplus_interrupt_ctrl_2_w );
 extern int gaplus_interrupt_3( void );
-extern void gaplus_interrupt_ctrl_3a_w( int offset,int data );
-extern void gaplus_interrupt_ctrl_3b_w( int offset,int data );
+WRITE_HANDLER( gaplus_interrupt_ctrl_3a_w );
+WRITE_HANDLER( gaplus_interrupt_ctrl_3b_w );
 
 extern int gaplus_vh_start( void );
 extern void gaplus_vh_stop( void );
 extern void gaplus_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 extern void gaplus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern void gaplus_init_machine(void);
-extern void gaplus_starfield_control_w( int offset, int data );
+WRITE_HANDLER( gaplus_starfield_control_w );
 
-	/* CPU 1 (MAIN CPU) read addresses */
 static struct MemoryReadAddress readmem_cpu1[] =
 {
-	{ 0x0000, 0x03ff, videoram_r }, /* video RAM */
-	{ 0x0400, 0x07ff, colorram_r }, /* color RAM */
-	{ 0x0800, 0x1fff, gaplus_sharedram_r },  /* shared RAM with CPU #2 & spriteram */
-	{ 0x6040, 0x63ff, gaplus_snd_sharedram_r },  /* shared RAM with CPU #3 */
-	{ 0x6800, 0x680f, gaplus_customio_r_1 },	/* custom I/O chip #1 interface */
-	{ 0x6810, 0x681f, gaplus_customio_r_2 },	/* custom I/O chip #2 interface */
-	{ 0x6820, 0x682f, gaplus_customio_r_3 },	/* custom I/O chip #3 interface */
-	{ 0x7820, 0x782f, MRA_RAM },	/* ??? */
-	{ 0x7c00, 0x7c01, MRA_NOP },	/* ??? */
-	{ 0xa000, 0xffff, MRA_ROM },	/* gp2-4.64 at a000, gp2-3.64 at c000, gp2-2.64 at e000 */
-	{ -1 }						  /* end of table */
+	{ 0x0000, 0x03ff, videoram_r },				/* video RAM */
+	{ 0x0400, 0x07ff, colorram_r },				/* color RAM */
+	{ 0x0800, 0x1fff, gaplus_sharedram_r },		/* shared RAM with CPU #2 & spriteram */
+	{ 0x6040, 0x63ff, gaplus_snd_sharedram_r }, /* shared RAM with CPU #3 */
+	{ 0x6800, 0x680f, gaplus_customio_1_r },	/* custom I/O chip #1 interface */
+	{ 0x6810, 0x681f, gaplus_customio_2_r },	/* custom I/O chip #2 interface */
+	{ 0x6820, 0x682f, gaplus_customio_3_r },	/* custom I/O chip #3 interface */
+	{ 0x7820, 0x782f, MRA_RAM },				/* ??? */
+	{ 0x7c00, 0x7c01, MRA_NOP },				/* ??? */
+	{ 0xa000, 0xffff, MRA_ROM },				/* ROM */
+	{ -1 }
 };
 
-	/* CPU 1 (MAIN CPU) write addresses */
 static struct MemoryWriteAddress writemem_cpu1[] =
 {
 	{ 0x0000, 0x03ff, videoram_w, &videoram, &videoram_size },  /* video RAM */
-	{ 0x0400, 0x07ff, colorram_w, &colorram },  /* color RAM */
-	{ 0x0800, 0x1fff, gaplus_sharedram_w, &gaplus_sharedram }, /* shared RAM with CPU #2 */
+	{ 0x0400, 0x07ff, colorram_w, &colorram },					/* color RAM */
+	{ 0x0800, 0x1fff, gaplus_sharedram_w, &gaplus_sharedram },	/* shared RAM with CPU #2 */
 	{ 0x6040, 0x63ff, gaplus_snd_sharedram_w, &gaplus_snd_sharedram }, /* shared RAM with CPU #3 */
-	{ 0x6800, 0x680f, gaplus_customio_w_1, &gaplus_customio_1 },	/* custom I/O chip #1 interface */
-	{ 0x6810, 0x681f, gaplus_customio_w_2, &gaplus_customio_2 },	/* custom I/O chip #2 interface */
-	{ 0x6820, 0x682f, gaplus_customio_w_3, &gaplus_customio_3 },	/* custom I/O chip #3 interface */
-	{ 0x7820, 0x782f, MWA_RAM },				/* ??? */
-	{ 0x7c00, 0x7c00, MWA_NOP },				/* ??? */
-	{ 0x8400, 0x8400, MWA_NOP },				/* ??? */
-	{ 0x8c00, 0x8c00, gaplus_reset_2_3_w },	 	/* reset CPU #2 y #3? */
-	{ 0x9400, 0x9400, MWA_NOP },				/* ??? */
-	{ 0x9c00, 0x9c00, MWA_NOP },				/* ??? */
-	{ 0xa000, 0xa003, gaplus_starfield_control_w }, /* starfield control */
-	{ 0xa000, 0xffff, MWA_ROM },				/* ROM */
-	{ -1 }									  /* end of table */
+	{ 0x6800, 0x680f, gaplus_customio_1_w, &gaplus_customio_1 },/* custom I/O chip #1 interface */
+	{ 0x6810, 0x681f, gaplus_customio_2_w, &gaplus_customio_2 },/* custom I/O chip #2 interface */
+	{ 0x6820, 0x682f, gaplus_customio_3_w, &gaplus_customio_3 },/* custom I/O chip #3 interface */
+	{ 0x7820, 0x782f, MWA_RAM },								/* ??? */
+//	{ 0x7c00, 0x7c00, MWA_NOP },								/* ??? */
+//	{ 0x8400, 0x8400, MWA_NOP },								/* ??? */
+	{ 0x8c00, 0x8c00, gaplus_reset_2_3_w },	 					/* reset CPU #2 y #3? */
+//	{ 0x9400, 0x9400, MWA_NOP },								/* ??? */
+//	{ 0x9c00, 0x9c00, MWA_NOP },								/* ??? */
+	{ 0xa000, 0xa003, gaplus_starfield_control_w },				/* starfield control */
+	{ 0xa000, 0xffff, MWA_ROM },								/* ROM */
+	{ -1 }
 };
 
-	/* CPU 2 (SUB CPU) read addresses */
 static struct MemoryReadAddress readmem_cpu2[] =
 {
-	{ 0x0000, 0x03ff, videoram_r }, /* video RAM */
-	{ 0x0400, 0x07ff, colorram_r }, /* color RAM */
-	{ 0x0800, 0x1fff, gaplus_sharedram_r },  /* shared RAM with CPU #1 & spriteram */
-	{ 0xa000, 0xffff, MRA_ROM },	/* gp2-8.64 at a000, gp2-7.64 at c000, gp2-6.64 at e000 */
-	{ -1 }						  /* end of table */
+	{ 0x0000, 0x03ff, videoram_r },				/* video RAM */
+	{ 0x0400, 0x07ff, colorram_r },				/* color RAM */
+	{ 0x0800, 0x1fff, gaplus_sharedram_r },		/* shared RAM with CPU #1 & spriteram */
+	{ 0xa000, 0xffff, MRA_ROM },				/* ROM */
+	{ -1 }
 };
 
-	/* CPU 2 (SUB CPU) write addresses */
 static struct MemoryWriteAddress writemem_cpu2[] =
 {
-	{ 0x0000, 0x03ff, videoram_w },  /* video RAM */
-	{ 0x0400, 0x07ff, colorram_w },  /* color RAM */
-	{ 0x0800, 0x1fff, gaplus_sharedram_w }, /* shared RAM with CPU #1 */
-	{ 0x500f, 0x500f, MWA_NOP },				/* ??? */
-	{ 0x6001, 0x6001, MWA_NOP },				/* ??? */
-	{ 0x6080, 0x6081, gaplus_interrupt_ctrl_2_w },   /* IRQ 2 enable */
-	{ 0xa000, 0xffff, MWA_ROM },	/* ROM */
-	{ -1 }						  /* end of table */
+	{ 0x0000, 0x03ff, videoram_w },				/* video RAM */
+	{ 0x0400, 0x07ff, colorram_w },				/* color RAM */
+	{ 0x0800, 0x1fff, gaplus_sharedram_w },		/* shared RAM with CPU #1 */
+//	{ 0x500f, 0x500f, MWA_NOP },				/* ??? */
+//	{ 0x6001, 0x6001, MWA_NOP },				/* ??? */
+	{ 0x6080, 0x6081, gaplus_interrupt_ctrl_2_w },/* IRQ 2 enable */
+	{ 0xa000, 0xffff, MWA_ROM },				/* ROM */
+	{ -1 }
 };
 
-	/* CPU 3 (SOUND CPU) read addresses */
 static struct MemoryReadAddress readmem_cpu3[] =
 {
-	{ 0x0000, 0x003f, MRA_RAM },	/* sound registers? */
+	{ 0x0000, 0x003f, MRA_RAM },				/* sound registers? */
 	{ 0x0040, 0x03ff, gaplus_snd_sharedram_r }, /* shared RAM with CPU #1 */
-	{ 0x3000, 0x3001, MRA_NOP },	/* ???*/
-	{ 0xe000, 0xffff, MRA_ROM },	/* ROM gp2-1.64 */
+//	{ 0x3000, 0x3001, MRA_NOP },				/* ???*/
+	{ 0xe000, 0xffff, MRA_ROM },				/* ROM */
 	{ -1 }						  /* end of table */
 };
 
 	/* CPU 3 (SOUND CPU) write addresses */
 static struct MemoryWriteAddress writemem_cpu3[] =
 {
-	{ 0x0000, 0x003f, mappy_sound_w, &mappy_soundregs },	/* sound registers */
-	{ 0x0040, 0x03ff, gaplus_snd_sharedram_w }, /* shared RAM with the main CPU */
-	{ 0x2007, 0x2007, MWA_NOP },	/* ???*/
-	{ 0x3000, 0x3000, watchdog_reset_w },	/* watchdog */
-	{ 0x4000, 0x4000, gaplus_interrupt_ctrl_3a_w },	/* interrupt enable */
-	{ 0x6000, 0x6000, gaplus_interrupt_ctrl_3b_w },	/* interrupt disable */
-	{ 0xe000, 0xffff, MWA_ROM },	/* ROM */
-	{ -1 }						  /* end of table */
+	{ 0x0000, 0x003f, mappy_sound_w, &mappy_soundregs },/* sound registers */
+	{ 0x0040, 0x03ff, gaplus_snd_sharedram_w },			/* shared RAM with the main CPU */
+//	{ 0x2007, 0x2007, MWA_NOP },	/* ??? */
+	{ 0x3000, 0x3000, watchdog_reset_w },				/* watchdog */
+	{ 0x4000, 0x4000, gaplus_interrupt_ctrl_3a_w },		/* interrupt enable */
+	{ 0x6000, 0x6000, gaplus_interrupt_ctrl_3b_w },		/* interrupt disable */
+	{ 0xe000, 0xffff, MWA_ROM },						/* ROM */
+	{ -1 }
 };
 
 static struct MemoryReadAddress gaplusa_readmem_cpu1[] =
 {
-	{ 0x0000, 0x03ff, videoram_r },									/* video RAM */
-	{ 0x0400, 0x07ff, colorram_r },									/* color RAM */
+	{ 0x0000, 0x03ff, videoram_r },				/* video RAM */
+	{ 0x0400, 0x07ff, colorram_r },				/* color RAM */
 	{ 0x0800, 0x1fff, gaplus_sharedram_r },		/* shared RAM with CPU #2 & spriteram */
-	{ 0x6040, 0x63ff, gaplus_snd_sharedram_r },  /* shared RAM with CPU #3 */
-	{ 0x6800, 0x680f, gaplusa_customio_r_1 },	/* custom I/O chip #1 interface */
-	{ 0x6810, 0x681f, gaplusa_customio_r_2 },	/* custom I/O chip #2 interface */
-	{ 0x6820, 0x682f, gaplusa_customio_r_3 },	/* custom I/O chip #3 interface */
-	{ 0x7820, 0x782f, MRA_RAM },									/* ??? */
-	{ 0x7c00, 0x7c01, MRA_NOP },									/* ??? */
-	{ 0xa000, 0xffff, MRA_ROM },									/* gp2-4.64 at a000, gp2-3.64 at c000, gp2-2.64 at e000 */
-	{ -1 }															/* end of table */
+	{ 0x6040, 0x63ff, gaplus_snd_sharedram_r }, /* shared RAM with CPU #3 */
+	{ 0x6800, 0x680f, gaplusa_customio_1_r },	/* custom I/O chip #1 interface */
+	{ 0x6810, 0x681f, gaplusa_customio_2_r },	/* custom I/O chip #2 interface */
+	{ 0x6820, 0x682f, gaplusa_customio_3_r },	/* custom I/O chip #3 interface */
+	{ 0x7820, 0x782f, MRA_RAM },				/* ??? */
+	{ 0x7c00, 0x7c01, MRA_NOP },				/* ??? */
+	{ 0xa000, 0xffff, MRA_ROM },				/* ROM */
+	{ -1 }
 };
 
 static struct MemoryReadAddress galaga3_readmem_cpu1[] =
 {
-	{ 0x0000, 0x03ff, videoram_r }, /* video RAM */
-	{ 0x0400, 0x07ff, colorram_r }, /* color RAM */
-	{ 0x0800, 0x1fff, gaplus_sharedram_r },  /* shared RAM with CPU #2 & spriteram */
-	{ 0x6040, 0x63ff, gaplus_snd_sharedram_r },  /* shared RAM with CPU #3 */
-	{ 0x6800, 0x680f, galaga3_customio_r_1 },	/* custom I/O chip #1 interface */
-	{ 0x6810, 0x681f, galaga3_customio_r_2 },	/* custom I/O chip #2 interface */
-	{ 0x6820, 0x682f, galaga3_customio_r_3 },	/* custom I/O chip #3 interface */
-	{ 0x7820, 0x782f, MRA_RAM },	/* ??? */
-	{ 0x7c00, 0x7c01, MRA_NOP },	/* ??? */
-	{ 0xa000, 0xffff, MRA_ROM },	/* gp2-4.64 at a000, gp2-3.64 at c000, gp2-2.64 at e000 */
-	{ -1 }						  /* end of table */
+	{ 0x0000, 0x03ff, videoram_r },				/* video RAM */
+	{ 0x0400, 0x07ff, colorram_r },				/* color RAM */
+	{ 0x0800, 0x1fff, gaplus_sharedram_r },		/* shared RAM with CPU #2 & spriteram */
+	{ 0x6040, 0x63ff, gaplus_snd_sharedram_r }, /* shared RAM with CPU #3 */
+	{ 0x6800, 0x680f, galaga3_customio_1_r },	/* custom I/O chip #1 interface */
+	{ 0x6810, 0x681f, galaga3_customio_2_r },	/* custom I/O chip #2 interface */
+	{ 0x6820, 0x682f, galaga3_customio_3_r },	/* custom I/O chip #3 interface */
+	{ 0x7820, 0x782f, MRA_RAM },				/* ??? */
+	{ 0x7c00, 0x7c01, MRA_NOP },				/* ??? */
+	{ 0xa000, 0xffff, MRA_ROM },				/* ROM */
+	{ -1 }
 };
-
-
 
 /* The dipswitches and player inputs are not memory mapped, they are handled by an I/O chip. */
 INPUT_PORTS_START( gaplus )
@@ -438,8 +394,8 @@ static struct GfxLayout charlayout2 =
 static struct GfxLayout spritelayout1 =
 {
 	16,16,			/* 16*16 sprites */
-	128,		   /* 128 sprites */
-	3,			 /* 3 bits per pixel */
+	128,			/* 128 sprites */
+	3,				/* 3 bits per pixel */
 	{ 0, 8192*8+0, 8192*8+4 },
 	{ 0, 1, 2, 3, 8*8, 8*8+1, 8*8+2, 8*8+3,
 	  16*8+0, 16*8+1, 16*8+2, 16*8+3, 24*8+0, 24*8+1, 24*8+2, 24*8+3 },
@@ -452,8 +408,8 @@ static struct GfxLayout spritelayout1 =
 static struct GfxLayout spritelayout2 =
 {
 	16,16,			/* 16*16 sprites */
-	128,		   /* 128 sprites */
-	3,			 /* 3 bits per pixel */
+	128,			/* 128 sprites */
+	3,				/* 3 bits per pixel */
 	{ 4, 8192*8*2+0, 8192*8*2+4 },
 	{ 0, 1, 2, 3, 8*8, 8*8+1, 8*8+2, 8*8+3,
 	  16*8+0, 16*8+1, 16*8+2, 16*8+3, 24*8+0, 24*8+1, 24*8+2, 24*8+3 },
@@ -513,19 +469,19 @@ static struct MachineDriver machine_driver_gaplus =
 	/* basic machine hardware  */
 	{
 		{
-			CPU_M6809,		  /* MAIN CPU */
+			CPU_M6809,			/* MAIN CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
 			readmem_cpu1,writemem_cpu1,0,0,
 			gaplus_interrupt_1,1
 		},
 		{
-			CPU_M6809,		  /* SUB CPU */
+			CPU_M6809,			/* SUB CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
 			readmem_cpu2,writemem_cpu2,0,0,
 			gaplus_interrupt_2,1
 		},
 		{
-			CPU_M6809,		  /* SOUND CPU */
+			CPU_M6809,			/* SOUND CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
 			readmem_cpu3,writemem_cpu3,0,0,
 			gaplus_interrupt_3,1
@@ -533,7 +489,7 @@ static struct MachineDriver machine_driver_gaplus =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,	/* a high value to ensure proper synchronization of the CPUs */
-	gaplus_init_machine,	/* init machine routine */
+	gaplus_init_machine,
 
 	/* video hardware */
 	36*8, 28*8,
@@ -568,19 +524,19 @@ static struct MachineDriver machine_driver_gaplusa =
 	/* basic machine hardware  */
 	{
 		{
-			CPU_M6809,		  /* MAIN CPU */
+			CPU_M6809,			/* MAIN CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
 			gaplusa_readmem_cpu1,writemem_cpu1,0,0,
 			gaplus_interrupt_1,1
 		},
 		{
-			CPU_M6809,		  /* SUB CPU */
+			CPU_M6809,			/* SUB CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
 			readmem_cpu2,writemem_cpu2,0,0,
 			gaplus_interrupt_2,1
 		},
 		{
-			CPU_M6809,		  /* SOUND CPU */
+			CPU_M6809,			/* SOUND CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
 			readmem_cpu3,writemem_cpu3,0,0,
 			gaplus_interrupt_3,1
@@ -588,7 +544,7 @@ static struct MachineDriver machine_driver_gaplusa =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,	/* a high value to ensure proper synchronization of the CPUs */
-	gaplus_init_machine,	/* init machine routine */
+	gaplus_init_machine,
 
 	/* video hardware */
 	36*8, 28*8,
@@ -623,19 +579,19 @@ static struct MachineDriver machine_driver_galaga3 =
 	/* basic machine hardware  */
 	{
 		{
-			CPU_M6809,		  /* MAIN CPU */
+			CPU_M6809,			/* MAIN CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
 			galaga3_readmem_cpu1,writemem_cpu1,0,0,
 			gaplus_interrupt_1,1
 		},
 		{
-			CPU_M6809,		  /* SUB CPU */
+			CPU_M6809,			/* SUB CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
 			readmem_cpu2,writemem_cpu2,0,0,
 			gaplus_interrupt_2,1
 		},
 		{
-			CPU_M6809,		  /* SOUND CPU */
+			CPU_M6809,			/* SOUND CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
 			readmem_cpu3,writemem_cpu3,0,0,
 			gaplus_interrupt_3,1
@@ -643,7 +599,7 @@ static struct MachineDriver machine_driver_galaga3 =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,	/* a high value to ensure proper synchronization of the CPUs */
-	gaplus_init_machine,	/* init machine routine */
+	gaplus_init_machine,
 
 	/* video hardware */
 	36*8, 28*8,
@@ -821,7 +777,7 @@ ROM_END
 
 
 
-GAMEX( 1984, gaplus,   0,      gaplus,  gaplus,   0, ROT90, "Namco", "Gaplus (set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1984, gaplusa,  gaplus, gaplusa, gaplus,   0, ROT90, "Namco", "Gaplus (set 2)", GAME_NO_COCKTAIL )
-GAMEX( 1984, galaga3,  gaplus, galaga3, galaga3,  0, ROT90, "Namco", "Galaga 3 (set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1984, galaga3a, gaplus, galaga3, galaga3a, 0, ROT90, "Namco", "Galaga 3 (set 2)", GAME_NO_COCKTAIL )
+GAME( 1984, gaplus,   0,      gaplus,  gaplus,   0, ROT90, "Namco", "Gaplus (set 1)" )
+GAME( 1984, gaplusa,  gaplus, gaplusa, gaplus,   0, ROT90, "Namco", "Gaplus (set 2)" )
+GAME( 1984, galaga3,  gaplus, galaga3, galaga3,  0, ROT90, "Namco", "Galaga 3 (set 1)" )
+GAME( 1984, galaga3a, gaplus, galaga3, galaga3a, 0, ROT90, "Namco", "Galaga 3 (set 2)" )

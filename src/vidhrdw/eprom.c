@@ -186,7 +186,7 @@ void eprom_vh_stop(void)
  *
  *************************************/
 
-void eprom_playfieldram_w(int offset, int data)
+WRITE_HANDLER( eprom_playfieldram_w )
 {
 	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -206,7 +206,7 @@ void eprom_playfieldram_w(int offset, int data)
  *
  *************************************/
 
-void eprom_playfieldpalram_w(int offset, int data)
+WRITE_HANDLER( eprom_playfieldpalram_w )
 {
 	int oldword = READ_WORD(&eprom_playfieldpalram[offset]);
 	int newword = COMBINE_WORD(oldword, data);

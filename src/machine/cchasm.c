@@ -29,7 +29,7 @@ static void timer_2_timeout (int dummy)
 
 /* from machine/mcr68.c modified for Cosmic Chasm (still very incomplete) */
 
-int cchasm_6840_r(int offset)
+READ_HANDLER( cchasm_6840_r )
 {
 	/* From datasheet:
 		0 - nothing
@@ -84,7 +84,7 @@ e		7 - lsb buffer
 }
 
 
-void cchasm_6840_w(int offset, int data)
+WRITE_HANDLER( cchasm_6840_w )
 {
 
 	/* From datasheet:
@@ -220,12 +220,12 @@ Write ff0a00 to 6840 00  = } Write 0a to control reg 3
 
 }
 
-void cchasm_led_w(int offset, int data)
+WRITE_HANDLER( cchasm_led_w )
 {
     /*if (errorlog) fprintf (errorlog, "LED write %x to %x\n", data, offset);*/
 }
 
-void cchasm_watchdog_w(int offset, int data)
+WRITE_HANDLER( cchasm_watchdog_w )
 {
     /*if (errorlog) fprintf (errorlog, "watchdog write %x to %x\n", data, offset);*/
 }

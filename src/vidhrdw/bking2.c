@@ -94,42 +94,42 @@ void bking2_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 	}
 }
 
-void bking2_xld1_w(int offset, int data)
+WRITE_HANDLER( bking2_xld1_w )
 {
     xld1 = -data;
 }
 
-void bking2_yld1_w(int offset, int data)
+WRITE_HANDLER( bking2_yld1_w )
 {
     yld1 = -data;
 }
 
-void bking2_xld2_w(int offset, int data)
+WRITE_HANDLER( bking2_xld2_w )
 {
     xld2 = -data;
 }
 
-void bking2_yld2_w(int offset, int data)
+WRITE_HANDLER( bking2_yld2_w )
 {
     yld2 = -data;
 }
 
-void bking2_xld3_w(int offset, int data)
+WRITE_HANDLER( bking2_xld3_w )
 {
     xld3 = -data;
 }
 
-void bking2_yld3_w(int offset, int data)
+WRITE_HANDLER( bking2_yld3_w )
 {
     yld3 = -data;
 }
 
-void bking2_msk_w(int offset, int data)
+WRITE_HANDLER( bking2_msk_w )
 {
     msk = data;
 }
 
-void bking2_cont1_w(int offset, int data)
+WRITE_HANDLER( bking2_cont1_w )
 {
     /* D0 = COIN LOCK */
     /* D1 =  BALL 5 (Controller selection) */
@@ -150,7 +150,7 @@ void bking2_cont1_w(int offset, int data)
     crow_pic = (data >> 4) & 0x0f;
 }
 
-void bking2_cont2_w(int offset, int data)
+WRITE_HANDLER( bking2_cont2_w )
 {
 	static int last = -1;
 
@@ -169,7 +169,7 @@ void bking2_cont2_w(int offset, int data)
 	}
 }
 
-void bking2_cont3_w(int offset, int data)
+WRITE_HANDLER( bking2_cont3_w )
 {
 	static int sound_disabled = -1;
 
@@ -193,18 +193,18 @@ void bking2_cont3_w(int offset, int data)
 }
 
 
-void bking2_hitclr_w(int offset, int data)
+WRITE_HANDLER( bking2_hitclr_w )
 {
     hitclr = data;
 }
 
 
-int bking2_input_port_5_r(int offset)
+READ_HANDLER( bking2_input_port_5_r )
 {
 	return controller ? input_port_7_r(0) : input_port_5_r(0);
 }
 
-int bking2_input_port_6_r(int offset)
+READ_HANDLER( bking2_input_port_6_r )
 {
 	return controller ? input_port_8_r(0) : input_port_6_r(0);
 }
@@ -212,7 +212,7 @@ int bking2_input_port_6_r(int offset)
 
 /* Hack alert.  I don't know how to upper bits work, so I'm just returning
    what the code expects, otherwise the collision detection is skipped */
-int bking2_pos_r(int offset)
+READ_HANDLER( bking2_pos_r )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

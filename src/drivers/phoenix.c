@@ -49,24 +49,24 @@ read-only:
 #include "driver.h"
 
 
-int  phoenix_paged_ram_r (int offset);
-void phoenix_paged_ram_w (int offset,int data);
-void phoenix_videoreg_w (int offset,int data);
-void phoenix_scroll_w (int offset,int data);
-int  phoenix_input_port_0_r (int offset);
+READ_HANDLER( phoenix_paged_ram_r );
+WRITE_HANDLER( phoenix_paged_ram_w );
+WRITE_HANDLER( phoenix_videoreg_w );
+WRITE_HANDLER( phoenix_scroll_w );
+READ_HANDLER( phoenix_input_port_0_r );
 void phoenix_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  phoenix_vh_start(void);
 void phoenix_vh_stop(void);
 void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void phoenix_sound_control_a_w(int offset, int data);
-void phoenix_sound_control_b_w(int offset, int data);
+WRITE_HANDLER( phoenix_sound_control_a_w );
+WRITE_HANDLER( phoenix_sound_control_b_w );
 int phoenix_sh_start(const struct MachineSound *msound);
 void phoenix_sh_stop(void);
 void phoenix_sh_update(void);
 
-void pleiads_sound_control_a_w(int offset, int data);
-void pleiads_sound_control_b_w(int offset, int data);
+WRITE_HANDLER( pleiads_sound_control_a_w );
+WRITE_HANDLER( pleiads_sound_control_b_w );
 int pleiads_sh_start(const struct MachineSound *msound);
 void pleiads_sh_stop(void);
 void pleiads_sh_update(void);

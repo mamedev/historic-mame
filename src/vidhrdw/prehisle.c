@@ -227,7 +227,7 @@ void prehisle_vh_stop (void)
 	osd_free_bitmap(pf2_bitmap);
 }
 
-void prehisle_video_w(int offset,int data)
+WRITE_HANDLER( prehisle_video_w )
 {
 	int oldword = READ_WORD(&prehisle_video[offset]);
 	int newword = COMBINE_WORD(oldword,data);
@@ -239,14 +239,14 @@ void prehisle_video_w(int offset,int data)
 	}
 }
 
-int prehisle_video_r(int offset)
+READ_HANDLER( prehisle_video_r )
 {
 	return READ_WORD(&prehisle_video[offset]);
 }
 
 static int controls_invert;
 
-int prehisle_control_r(int offset)
+READ_HANDLER( prehisle_control_r )
 {
 	switch (offset) {
 		case 0x10: /* Player 2 */
@@ -270,7 +270,7 @@ int prehisle_control_r(int offset)
 	}
 }
 
-void prehisle_control_w(int offset,int data)
+WRITE_HANDLER( prehisle_control_w )
 {
 	switch (offset) {
 		case 0:

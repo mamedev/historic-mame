@@ -108,14 +108,14 @@ static unsigned char *m92_eeprom,*m92_ram;
 #define M92_IRQ_3 ((m92_irq_vectorbase+12)/4) /* Sprite buffer complete interrupt? */
 
 /* From vidhrdw/m92.c */
-void m92_spritecontrol_w(int offset,int data);
-void m92_spritebuffer_w(int offset,int data);
-int m92_vram_r(int offset);
-void m92_vram_w(int offset,int data);
-void m92_pf1_control_w(int offset,int data);
-void m92_pf2_control_w(int offset,int data);
-void m92_pf3_control_w(int offset,int data);
-void m92_master_control_w(int offset,int data);
+WRITE_HANDLER( m92_spritecontrol_w );
+WRITE_HANDLER( m92_spritebuffer_w );
+READ_HANDLER( m92_vram_r );
+WRITE_HANDLER( m92_vram_w );
+WRITE_HANDLER( m92_pf1_control_w );
+WRITE_HANDLER( m92_pf2_control_w );
+WRITE_HANDLER( m92_pf3_control_w );
+WRITE_HANDLER( m92_master_control_w );
 int m92_vh_start(void);
 void m92_vh_stop(void);
 void m92_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -128,7 +128,7 @@ extern int m92_game_kludge;
 
 /*****************************************************************************/
 
-static int status_port_r(int offset)
+static READ_HANDLER( status_port_r )
 {
 //if (errorlog) fprintf(errorlog,"%06x: status %04x\n",cpu_get_pc(),offset);
 
@@ -151,7 +151,7 @@ static int status_port_r(int offset)
 	return 0xff;
 }
 
-static int m92_eeprom_r(int offset)
+static READ_HANDLER( m92_eeprom_r )
 {
 	unsigned char *RAM = memory_region(REGION_USER1);
 //	if (errorlog) fprintf(errorlog,"%05x: EEPROM RE %04x\n",cpu_get_pc(),offset);
@@ -159,14 +159,14 @@ static int m92_eeprom_r(int offset)
 	return RAM[offset/2];
 }
 
-static void m92_eeprom_w(int offset,int data)
+static WRITE_HANDLER( m92_eeprom_w )
 {
 	unsigned char *RAM = memory_region(REGION_USER1);
 //	if (errorlog) fprintf(errorlog,"%05x: EEPROM WR %04x\n",cpu_get_pc(),offset);
 	RAM[offset/2]=data;
 }
 
-static void m92_coincounter_w(int offset, int data)
+static WRITE_HANDLER( m92_coincounter_w )
 {
 	if (offset==0) {
 		coin_counter_w(0,data & 0x01);
@@ -193,7 +193,7 @@ static void m92_coincounter_w(int offset, int data)
 #endif
 }
 
-static void m92_unknown_w(int offset, int data)
+static WRITE_HANDLER( m92_unknown_w )
 {
 #if 0
 	static int d[2];
@@ -206,7 +206,7 @@ static void m92_unknown_w(int offset, int data)
 #endif
 }
 
-static void m92_bankswitch_w(int offset, int data)
+static WRITE_HANDLER( m92_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -216,13 +216,13 @@ static void m92_bankswitch_w(int offset, int data)
 	cpu_setbank(1,&RAM[0x100000 + ((data&0x7)*0x10000)]);
 }
 
-static int m92_port_4_r(int offset)
+static READ_HANDLER( m92_port_4_r )
 {
 	if (m92_vblank) return readinputport(4) | 0;
 	return readinputport(4) | 0x80;
 }
 
-static void m92_soundlatch_w(int offset, int data)
+static WRITE_HANDLER( m92_soundlatch_w )
 {
 	if (offset==0) soundlatch_w(0,data);
 	/* Interrupt second V33 */
@@ -1813,7 +1813,7 @@ ROM_END
 
 /***************************************************************************/
 
-static int lethalth_cycle_r(int offset)
+static READ_HANDLER( lethalth_cycle_r )
 {
 	if (cpu_get_pc()==0x1f4 && m92_ram[0x1e]==2 && offset==0)
 		cpu_spinuntil_int();
@@ -1821,7 +1821,7 @@ static int lethalth_cycle_r(int offset)
 	return m92_ram[0x1e + offset];
 }
 
-static int hook_cycle_r(int offset)
+static READ_HANDLER( hook_cycle_r )
 {
 	if (cpu_get_pc()==0x55ba && m92_ram[0x12]==0 && m92_ram[0x13]==0 && offset==0)
 		cpu_spinuntil_int();
@@ -1829,7 +1829,7 @@ static int hook_cycle_r(int offset)
 	return m92_ram[0x12 + offset];
 }
 
-static int psoldier_cycle_r(int offset)
+static READ_HANDLER( psoldier_cycle_r )
 {
 	int a=m92_ram[0]+(m92_ram[1]<<8);
 	int b=m92_ram[0x1aec]+(m92_ram[0x1aed]<<8);
@@ -1841,7 +1841,7 @@ static int psoldier_cycle_r(int offset)
 	return m92_ram[0x1aec + offset];
 }
 
-static int inthunt_cycle_r(int offset)
+static READ_HANDLER( inthunt_cycle_r )
 {
 	int d=cpu_geticount();
 	int line = 256 - cpu_getiloops();
@@ -1864,7 +1864,7 @@ static int inthunt_cycle_r(int offset)
 	return m92_ram[0x25e + offset];
 }
 
-static int uccops_cycle_r(int offset)
+static READ_HANDLER( uccops_cycle_r )
 {
 	int a=m92_ram[0x3f28]+(m92_ram[0x3f29]<<8);
 	int b=m92_ram[0x3a00]+(m92_ram[0x3a01]<<8);
@@ -1886,7 +1886,7 @@ static int uccops_cycle_r(int offset)
 	return m92_ram[0x3a02 + offset];
 }
 
-static int rtypeleo_cycle_r(int offset)
+static READ_HANDLER( rtypeleo_cycle_r )
 {
 	if (cpu_get_pc()==0x307a3 && offset==0 && m92_ram[0x32]==2 && m92_ram[0x33]==0)
 		cpu_spinuntil_int();
@@ -1894,7 +1894,7 @@ static int rtypeleo_cycle_r(int offset)
 	return m92_ram[0x32 + offset];
 }
 
-static int gunforce_cycle_r(int offset)
+static READ_HANDLER( gunforce_cycle_r )
 {
 	int a=m92_ram[0x6542]+(m92_ram[0x6543]<<8);
 	int b=m92_ram[0x61d0]+(m92_ram[0x61d1]<<8);

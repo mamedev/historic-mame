@@ -26,40 +26,40 @@ void gaplus_init_machine( void )
 }
 
 /* shared ram functions */
-int gaplus_sharedram_r( int offset )
+READ_HANDLER( gaplus_sharedram_r )
 {
     return gaplus_sharedram[offset];
 }
 
-void gaplus_sharedram_w( int offset,int data )
+WRITE_HANDLER( gaplus_sharedram_w )
 {
 	if (offset == 0x082c)	/* 0x102c */
 		gaplus_flipscreen_w( data );
     gaplus_sharedram[offset] = data;
 }
 
-int gaplus_snd_sharedram_r( int offset )
+READ_HANDLER( gaplus_snd_sharedram_r )
 {
     return gaplus_snd_sharedram[offset];
 }
 
-void gaplus_snd_sharedram_w( int offset,int data )
+WRITE_HANDLER( gaplus_snd_sharedram_w )
 {
     gaplus_snd_sharedram[offset] = data;
 }
 
 /* irq control functions */
-void gaplus_interrupt_ctrl_2_w( int offset,int data )
+WRITE_HANDLER( gaplus_interrupt_ctrl_2_w )
 {
     int_enable_2 = offset;
 }
 
-void gaplus_interrupt_ctrl_3a_w( int offset,int data )
+WRITE_HANDLER( gaplus_interrupt_ctrl_3a_w )
 {
     int_enable_3 = 1;
 }
 
-void gaplus_interrupt_ctrl_3b_w( int offset,int data )
+WRITE_HANDLER( gaplus_interrupt_ctrl_3b_w )
 {
     int_enable_3 = 0;
 }
@@ -87,7 +87,7 @@ int gaplus_interrupt_3( void )
         return ignore_interrupt();
 }
 
-void gaplus_reset_2_3_w( int offset,int data )
+WRITE_HANDLER( gaplus_reset_2_3_w )
 {
     int_enable_2 = int_enable_3 = 1;
     cpu_set_reset_line(1,PULSE_LINE);
@@ -101,17 +101,17 @@ void gaplus_reset_2_3_w( int offset,int data )
 *																					*
 ************************************************************************************/
 
-void gaplus_customio_w_1( int offset,int data )
+WRITE_HANDLER( gaplus_customio_1_w )
 {
     gaplus_customio_1[offset] = data;
 }
 
-void gaplus_customio_w_2( int offset,int data )
+WRITE_HANDLER( gaplus_customio_2_w )
 {
     gaplus_customio_2[offset] = data;
 }
 
-void gaplus_customio_w_3( int offset,int data )
+WRITE_HANDLER( gaplus_customio_3_w )
 {
 	if ((offset == 0x09) && (data >= 0x0f))
 		sample_start(0,0,0);
@@ -121,7 +121,7 @@ void gaplus_customio_w_3( int offset,int data )
 static int credmoned [] = { 1, 1, 2, 3 };
 static int monedcred [] = { 1, 2, 1, 1 };
 
-int gaplus_customio_r_1( int offset )
+READ_HANDLER( gaplus_customio_1_r )
 {
     int mode, val, temp1, temp2;
 
@@ -248,7 +248,7 @@ int gaplus_customio_r_1( int offset )
     }
     return gaplus_customio_1[offset];
 }
-int gaplus_customio_r_2( int offset )
+READ_HANDLER( gaplus_customio_2_r )
 {
     int val, mode;
 
@@ -292,7 +292,7 @@ int gaplus_customio_r_2( int offset )
 		return gaplus_customio_2[offset];
 }
 
-int gaplus_customio_r_3( int offset )
+READ_HANDLER( gaplus_customio_3_r )
 {
     int mode;
 
@@ -337,7 +337,7 @@ int gaplus_customio_r_3( int offset )
 *																					*
 ************************************************************************************/
 
-int gaplusa_customio_r_1( int offset )
+READ_HANDLER( gaplusa_customio_1_r )
 {
     int mode, val, temp1, temp2;
 
@@ -466,7 +466,7 @@ int gaplusa_customio_r_1( int offset )
 	}
     return gaplus_customio_1[offset];
 }
-int gaplusa_customio_r_2( int offset )
+READ_HANDLER( gaplusa_customio_2_r )
 {
     int val, mode;
 
@@ -508,7 +508,7 @@ int gaplusa_customio_r_2( int offset )
 		return gaplus_customio_2[offset];
 }
 
-int gaplusa_customio_r_3( int offset )
+READ_HANDLER( gaplusa_customio_3_r )
 {
     int mode;
 
@@ -552,7 +552,7 @@ int gaplusa_customio_r_3( int offset )
 *																					*
 ************************************************************************************/
 
-int galaga3_customio_r_1( int offset )
+READ_HANDLER( galaga3_customio_1_r )
 {
     int mode;
 
@@ -594,7 +594,7 @@ int galaga3_customio_r_1( int offset )
     return gaplus_customio_1[offset];
 }
 
-int galaga3_customio_r_2( int offset )
+READ_HANDLER( galaga3_customio_2_r )
 {
     int val, mode;
 
@@ -636,7 +636,7 @@ int galaga3_customio_r_2( int offset )
         return gaplus_customio_2[offset];
 }
 
-int galaga3_customio_r_3( int offset )
+READ_HANDLER( galaga3_customio_3_r )
 {
     int mode;
 

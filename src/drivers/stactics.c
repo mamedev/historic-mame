@@ -46,13 +46,13 @@ Verify Bar graph displays
 #include "vidhrdw/generic.h"
 
 /* Defined in machine/stactics.c */
-int stactics_port_0_r(int offset);
-int stactics_port_2_r(int offset);
-int stactics_port_3_r(int offset);
-int stactics_vert_pos_r(int offset);
-int stactics_horiz_pos_r(int offset);
+READ_HANDLER( stactics_port_0_r );
+READ_HANDLER( stactics_port_2_r );
+READ_HANDLER( stactics_port_3_r );
+READ_HANDLER( stactics_vert_pos_r );
+READ_HANDLER( stactics_horiz_pos_r );
 int stactics_interrupt(void);
-void stactics_coin_lockout_w(int offset, int data);
+WRITE_HANDLER( stactics_coin_lockout_w );
 extern unsigned char *stactics_motor_on;
 
 /* Defined in vidhrdw/stactics.c */
@@ -73,20 +73,20 @@ extern unsigned char *stactics_display_buffer;
 void stactics_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,
                                     const unsigned char *color_prom);
 
-void stactics_palette_w(int offset, int data);
-void stactics_scroll_ram_w(int offset, int data);
-void stactics_speed_latch_w(int offset, int data);
-void stactics_shot_trigger_w(int offset, int data);
-void stactics_shot_flag_clear_w(int offset, int data);
+WRITE_HANDLER( stactics_palette_w );
+WRITE_HANDLER( stactics_scroll_ram_w );
+WRITE_HANDLER( stactics_speed_latch_w );
+WRITE_HANDLER( stactics_shot_trigger_w );
+WRITE_HANDLER( stactics_shot_flag_clear_w );
 
-void stactics_videoram_b_w(int offset, int data);
-void stactics_chardata_b_w(int offset, int data);
-void stactics_videoram_d_w(int offset, int data);
-void stactics_chardata_d_w(int offset, int data);
-void stactics_videoram_e_w(int offset, int data);
-void stactics_chardata_e_w(int offset, int data);
-void stactics_videoram_f_w(int offset, int data);
-void stactics_chardata_f_w(int offset, int data);
+WRITE_HANDLER( stactics_videoram_b_w );
+WRITE_HANDLER( stactics_chardata_b_w );
+WRITE_HANDLER( stactics_videoram_d_w );
+WRITE_HANDLER( stactics_chardata_d_w );
+WRITE_HANDLER( stactics_videoram_e_w );
+WRITE_HANDLER( stactics_chardata_e_w );
+WRITE_HANDLER( stactics_videoram_f_w );
+WRITE_HANDLER( stactics_chardata_f_w );
 
 static struct MemoryReadAddress readmem[] =
 {

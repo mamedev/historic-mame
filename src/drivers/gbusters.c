@@ -34,7 +34,7 @@ static int gbusters_interrupt( void )
 		return ignore_interrupt();
 }
 
-static int bankedram_r(int offset)
+static READ_HANDLER( bankedram_r )
 {
 	if (palette_selected)
 		return paletteram_r(offset);
@@ -42,7 +42,7 @@ static int bankedram_r(int offset)
 		return ram[offset];
 }
 
-static void bankedram_w(int offset,int data)
+static WRITE_HANDLER( bankedram_w )
 {
 	if (palette_selected)
 		paletteram_xBBBBBGGGGGRRRRR_swap_w(offset,data);
@@ -50,7 +50,7 @@ static void bankedram_w(int offset,int data)
 		ram[offset] = data;
 }
 
-static void gbusters_1f98_w(int offset,int data)
+static WRITE_HANDLER( gbusters_1f98_w )
 {
 
 	/* bit 0 = enable char ROM reading through the video RAM */
@@ -67,7 +67,7 @@ static void gbusters_1f98_w(int offset,int data)
 	}
 }
 
-static void gbusters_coin_counter_w(int offset,int data)
+static WRITE_HANDLER( gbusters_coin_counter_w )
 {
 	/* bit 0 select palette RAM  or work RAM at 5800-5fff */
 	palette_selected = ~data & 0x01;
@@ -92,7 +92,7 @@ static void gbusters_coin_counter_w(int offset,int data)
 	}
 }
 
-static void gbusters_unknown_w(int offset,int data)
+static WRITE_HANDLER( gbusters_unknown_w )
 {
 	if (errorlog)
 		fprintf(errorlog,"%04x: (???) write %02x\n",cpu_get_pc(), data);
@@ -104,12 +104,12 @@ char baf[40];
 }
 }
 
-void gbusters_sh_irqtrigger_w(int offset, int data)
+WRITE_HANDLER( gbusters_sh_irqtrigger_w )
 {
 	cpu_cause_interrupt(1,0xff);
 }
 
-static void gbusters_snd_bankswitch_w(int offset, int data)
+static WRITE_HANDLER( gbusters_snd_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_SOUND1);
 

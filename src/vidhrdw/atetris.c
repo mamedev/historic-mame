@@ -33,7 +33,7 @@ static int slapstic_last75xx = 0;
 // BANK0 gets selected, there are 3.
 
 
-int atetris_slapstic_r(int offset)
+READ_HANDLER( atetris_slapstic_r )
 {
     if (slapstic_nextbank != -1)
     {

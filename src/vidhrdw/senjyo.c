@@ -59,43 +59,38 @@ void init_senjyo(void)
 
 ***************************************************************************/
 
-static void get_fg_tile_info(int col,int row)
+static void get_fg_tile_info(int tile_index)
 {
-	int tile_index = 32*row+col;
 	unsigned char attr = senjyo_fgcolorram[tile_index];
 	SET_TILE_INFO(0,senjyo_fgvideoram[tile_index] + ((attr & 0x10) << 4),attr & 0x07)
 	tile_info.flags = (attr & 0x80) ? TILE_FLIPY : 0;
-	if (senjyo && col >= 32-8)
+	if (senjyo && (tile_index & 0x1f) >= 32-8)
 		tile_info.flags |= TILE_IGNORE_TRANSPARENCY;
 }
 
-static void senjyo_get_bg1_tile_info(int col,int row)
+static void senjyo_bg1_tile_info(int tile_index)
 {
-	int tile_index = 16*row+col;
 	unsigned char code = senjyo_bg1videoram[tile_index];
 	SET_TILE_INFO(1,code,(code & 0x70) >> 4)
 }
 
-static void starforc_get_bg1_tile_info(int col,int row)
+static void starforc_bg1_tile_info(int tile_index)
 {
 	/* Star Force has more tiles in bg1, so to get a uniform color code spread */
 	/* they wired bit 7 of the tile code in place of bit 4 to get the color code */
 	static int colormap[8] = { 0,2,4,6,1,3,5,7 };
-	int tile_index = 16*row+col;
 	unsigned char code = senjyo_bg1videoram[tile_index];
 	SET_TILE_INFO(1,code,colormap[(code & 0xe0) >> 5])
 }
 
-static void get_bg2_tile_info(int col,int row)
+static void get_bg2_tile_info(int tile_index)
 {
-	int tile_index = 16*row+col;
 	unsigned char code = senjyo_bg2videoram[tile_index];
 	SET_TILE_INFO(2,code,(code & 0xe0) >> 5)
 }
 
-static void get_bg3_tile_info(int col,int row)
+static void get_bg3_tile_info(int tile_index)
 {
-	int tile_index = 16*row+col;
 	unsigned char code = senjyo_bg3videoram[tile_index];
 	SET_TILE_INFO(3,code,(code & 0xe0) >> 5)
 }
@@ -116,54 +111,41 @@ void senjyo_vh_stop(void)
 
 int senjyo_vh_start(void)
 {
-	if ((bgbitmap = osd_create_bitmap(256,256)) == 0)
+	bgbitmap = osd_create_bitmap(256,256);
+	if (!bgbitmap)
 		return 1;
 
-	fg_tilemap = tilemap_create(
-		get_fg_tile_info,
-		TILEMAP_TRANSPARENT,
-		8,8,
-		32,32
-	);
-
-	bg1_tilemap = tilemap_create(
-		senjyo ? senjyo_get_bg1_tile_info : starforc_get_bg1_tile_info,
-		TILEMAP_TRANSPARENT,
-		16,16,
-		16,32
-	);
-
-	bg2_tilemap = tilemap_create(
-		get_bg2_tile_info,
-		TILEMAP_TRANSPARENT,
-		16,16,
-		16, senjyo ? 48 : 32	/* only 16x32 used by Star Force */
-	);
-
-	bg3_tilemap = tilemap_create(
-		get_bg3_tile_info,
-		TILEMAP_TRANSPARENT,
-		16,16,
-		16, senjyo ? 56 : 32	/* only 16x32 used by Star Force */
-	);
-
-
-	if (fg_tilemap && bg1_tilemap && bg2_tilemap && bg3_tilemap)
+	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	if (senjyo)
 	{
-		fg_tilemap->transparent_pen = 0;
-		bg1_tilemap->transparent_pen = 0;
-		bg2_tilemap->transparent_pen = 0;
-		bg3_tilemap->transparent_pen = 0;
-		tilemap_set_scroll_cols(fg_tilemap,32);
-
-		bgbitmap_dirty = 1;
-
-		return 0;
+		bg1_tilemap = tilemap_create(senjyo_bg1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,16,32);
+		bg2_tilemap = tilemap_create(get_bg2_tile_info,   tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,16,48);	/* only 16x32 used by Star Force */
+		bg3_tilemap = tilemap_create(get_bg3_tile_info,   tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,16,56);	/* only 16x32 used by Star Force */
+	}
+	else
+	{
+		bg1_tilemap = tilemap_create(starforc_bg1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,16,32);
+		bg2_tilemap = tilemap_create(get_bg2_tile_info,     tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,16,32);	/* only 16x32 used by Star Force */
+		bg3_tilemap = tilemap_create(get_bg3_tile_info,     tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,16,32);	/* only 16x32 used by Star Force */
 	}
 
-	senjyo_vh_stop();
 
-	return 1;
+	if (!fg_tilemap || !bg1_tilemap || !bg2_tilemap || !bg3_tilemap)
+	{
+		senjyo_vh_stop();
+
+		return 1;
+	}
+
+	fg_tilemap->transparent_pen = 0;
+	bg1_tilemap->transparent_pen = 0;
+	bg2_tilemap->transparent_pen = 0;
+	bg3_tilemap->transparent_pen = 0;
+	tilemap_set_scroll_cols(fg_tilemap,32);
+
+	bgbitmap_dirty = 1;
+
+	return 0;
 }
 
 
@@ -174,48 +156,48 @@ int senjyo_vh_start(void)
 
 ***************************************************************************/
 
-void senjyo_fgvideoram_w(int offset,int data)
+WRITE_HANDLER( senjyo_fgvideoram_w )
 {
 	if (senjyo_fgvideoram[offset] != data)
 	{
 		senjyo_fgvideoram[offset] = data;
-		tilemap_mark_tile_dirty(fg_tilemap,offset%32,offset/32);
+		tilemap_mark_tile_dirty(fg_tilemap,offset);
 	}
 }
-void senjyo_fgcolorram_w(int offset,int data)
+WRITE_HANDLER( senjyo_fgcolorram_w )
 {
 	if (senjyo_fgcolorram[offset] != data)
 	{
 		senjyo_fgcolorram[offset] = data;
-		tilemap_mark_tile_dirty(fg_tilemap,offset%32,offset/32);
+		tilemap_mark_tile_dirty(fg_tilemap,offset);
 	}
 }
-void senjyo_bg1videoram_w(int offset,int data)
+WRITE_HANDLER( senjyo_bg1videoram_w )
 {
 	if (senjyo_bg1videoram[offset] != data)
 	{
 		senjyo_bg1videoram[offset] = data;
-		tilemap_mark_tile_dirty(bg1_tilemap,offset%16,offset/16);
+		tilemap_mark_tile_dirty(bg1_tilemap,offset);
 	}
 }
-void senjyo_bg2videoram_w(int offset,int data)
+WRITE_HANDLER( senjyo_bg2videoram_w )
 {
 	if (senjyo_bg2videoram[offset] != data)
 	{
 		senjyo_bg2videoram[offset] = data;
-		tilemap_mark_tile_dirty(bg2_tilemap,offset%16,offset/16);
+		tilemap_mark_tile_dirty(bg2_tilemap,offset);
 	}
 }
-void senjyo_bg3videoram_w(int offset,int data)
+WRITE_HANDLER( senjyo_bg3videoram_w )
 {
 	if (senjyo_bg3videoram[offset] != data)
 	{
 		senjyo_bg3videoram[offset] = data;
-		tilemap_mark_tile_dirty(bg3_tilemap,offset%16,offset/16);
+		tilemap_mark_tile_dirty(bg3_tilemap,offset);
 	}
 }
 
-void senjyo_bgstripes_w(int offset,int data)
+WRITE_HANDLER( senjyo_bgstripes_w )
 {
 	if (*senjyo_bgstripes != data)
 	{
@@ -224,10 +206,10 @@ void senjyo_bgstripes_w(int offset,int data)
 	}
 }
 
-void senjyo_flipscreen_w(int offset,int data)
+WRITE_HANDLER( senjyo_flipscreen_w )
 {
 	flipscreen = data & 0x01;
-	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPX | TILEMAP_FLIPX) : 0);
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPX | TILEMAP_FLIPY) : 0);
 }
 
 
@@ -256,6 +238,7 @@ static void draw_bgbitmap(struct osd_bitmap *bitmap)
 		count = 0;
 		strwid = *senjyo_bgstripes;
 		if (strwid == 0) strwid = 0x100;
+		if (flipscreen) strwid ^= 0xff;
 
 		for (x = 0;x < 256;x++)
 		{
@@ -375,8 +358,6 @@ void senjyo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int i;
 
 
-	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
-
 	/* two colors for the radar dots (verified on the real board) */
 	palette_change_color(400,0xff,0x00,0x00);	/* red for enemies */
 	palette_change_color(401,0xff,0xff,0x00);	/* yellow for player */
@@ -389,6 +370,8 @@ void senjyo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		scrollx = senjyo_scrollx1[0];
 		scrolly = senjyo_scrolly1[0] + 256 * senjyo_scrolly1[1];
+		if (flipscreen)
+			scrollx = -scrollx;
 		tilemap_set_scrollx(bg1_tilemap,0,scrollx);
 		tilemap_set_scrolly(bg1_tilemap,0,scrolly);
 
@@ -399,11 +382,15 @@ void senjyo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			scrollx = senjyo_scrollx1[0];
 			scrolly = senjyo_scrolly1[0] + 256 * senjyo_scrolly1[1];
 		}
+		if (flipscreen)
+			scrollx = -scrollx;
 		tilemap_set_scrollx(bg2_tilemap,0,scrollx);
 		tilemap_set_scrolly(bg2_tilemap,0,scrolly);
 
 		scrollx = senjyo_scrollx3[0];
 		scrolly = senjyo_scrolly3[0] + 256 * senjyo_scrolly3[1];
+		if (flipscreen)
+			scrollx = -scrollx;
 		tilemap_set_scrollx(bg3_tilemap,0,scrollx);
 		tilemap_set_scrolly(bg3_tilemap,0,scrolly);
 	}

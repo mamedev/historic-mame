@@ -165,7 +165,7 @@ void firetrap_vh_stop(void)
 
 
 
-void firetrap_bg1videoram_w(int offset,int data)
+WRITE_HANDLER( firetrap_bg1videoram_w )
 {
 	if (firetrap_bg1videoram[offset] != data)
 	{
@@ -175,7 +175,7 @@ void firetrap_bg1videoram_w(int offset,int data)
 	}
 }
 
-void firetrap_bg2videoram_w(int offset,int data)
+WRITE_HANDLER( firetrap_bg2videoram_w )
 {
 	if (firetrap_bg2videoram[offset] != data)
 	{
@@ -187,7 +187,7 @@ void firetrap_bg2videoram_w(int offset,int data)
 
 
 
-void firetrap_flipscreen_w(int offset,int data)
+WRITE_HANDLER( firetrap_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{

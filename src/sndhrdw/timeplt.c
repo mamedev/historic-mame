@@ -12,8 +12,8 @@
 
 #include "driver.h"
 
-static int  timeplt_portB_r(int offset);
-static void timeplt_filter_w(int offset,int data);
+static READ_HANDLER( timeplt_portB_r );
+static WRITE_HANDLER( timeplt_filter_w );
 
 struct MemoryReadAddress timeplt_sound_readmem[] =
 {
@@ -73,7 +73,7 @@ static int timeplt_timer[10] =
 	0x00, 0x10, 0x20, 0x30, 0x40, 0x90, 0xa0, 0xb0, 0xa0, 0xd0
 };
 
-static int timeplt_portB_r(int offset)
+static READ_HANDLER( timeplt_portB_r )
 {
 	/* need to protect from totalcycles overflow */
 	static int last_totalcycles = 0;
@@ -101,7 +101,7 @@ static void filter_w(int chip, int channel, int data)
 	set_RC_filter(3*chip + channel,1000,5100,0,C);
 }
 
-static void timeplt_filter_w(int offset,int data)
+static WRITE_HANDLER( timeplt_filter_w )
 {
 	filter_w(0, 0, (offset >>  6) & 3);
 	filter_w(0, 1, (offset >>  8) & 3);
@@ -112,7 +112,7 @@ static void timeplt_filter_w(int offset,int data)
 }
 
 
-void timeplt_sh_irqtrigger_w(int offset,int data)
+WRITE_HANDLER( timeplt_sh_irqtrigger_w )
 {
 	static int last;
 

@@ -231,7 +231,7 @@ Typically, only the high 2 bits are read.
 
 */
 
-static int spacduel_IN3_r (int offset) {
+static READ_HANDLER( spacduel_IN3_r ) {
 
 	int res;
 	int res1;
@@ -275,9 +275,9 @@ static int spacduel_IN3_r (int offset) {
 	return res;
 	}
 
-int bzone_IN0_r(int offset);
+READ_HANDLER( bzone_IN0_r );
 
-void bwidow_misc_w (int offset, int data)
+WRITE_HANDLER( bwidow_misc_w )
 {
 	/*
 		0x10 = p1 led
@@ -319,10 +319,10 @@ static struct MemoryWriteAddress bwidow_writemem[] =
 	{ 0x6000, 0x67ff, pokey1_w },
 	{ 0x6800, 0x6fff, pokey2_w },
 	{ 0x8800, 0x8800, bwidow_misc_w }, /* coin counters, leds */
-	{ 0x8840, 0x8840, avgdvg_go },
-	{ 0x8880, 0x8880, avgdvg_reset },
+	{ 0x8840, 0x8840, avgdvg_go_w },
+	{ 0x8880, 0x8880, avgdvg_reset_w },
 	{ 0x88c0, 0x88c0, MWA_NOP }, /* interrupt acknowledge */
-	{ 0x8900, 0x8900, atari_vg_earom_ctrl },
+	{ 0x8900, 0x8900, atari_vg_earom_ctrl_w },
 	{ 0x8940, 0x897f, atari_vg_earom_w },
 	{ 0x8980, 0x89ed, MWA_NOP }, /* watchdog clear */
 	{ 0x9000, 0xffff, MWA_ROM },
@@ -349,11 +349,11 @@ static struct MemoryWriteAddress spacduel_writemem[] =
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x0905, 0x0906, MWA_NOP }, /* ignore? */
 //	{ 0x0c00, 0x0c00, coin_counter_w }, /* coin out */
-	{ 0x0c80, 0x0c80, avgdvg_go },
+	{ 0x0c80, 0x0c80, avgdvg_go_w },
 	{ 0x0d00, 0x0d00, MWA_NOP }, /* watchdog clear */
-	{ 0x0d80, 0x0d80, avgdvg_reset },
+	{ 0x0d80, 0x0d80, avgdvg_reset_w },
 	{ 0x0e00, 0x0e00, MWA_NOP }, /* interrupt acknowledge */
-	{ 0x0e80, 0x0e80, atari_vg_earom_ctrl },
+	{ 0x0e80, 0x0e80, atari_vg_earom_ctrl_w },
 	{ 0x0f00, 0x0f3f, atari_vg_earom_w },
 	{ 0x1000, 0x13ff, pokey1_w },
 	{ 0x1400, 0x17ff, pokey2_w },

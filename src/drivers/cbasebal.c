@@ -23,19 +23,19 @@ void pang_decode(void);
 
 int cbasebal_vh_start(void);
 void cbasebal_vh_stop(void);
-void cbasebal_textram_w(int offset,int data);
-int cbasebal_textram_r(int offset);
-void cbasebal_scrollram_w(int offset,int data);
-int cbasebal_scrollram_r(int offset);
-void cbasebal_gfxctrl_w(int offset,int data);
-void cbasebal_scrollx_w(int offset,int data);
-void cbasebal_scrolly_w(int offset,int data);
+WRITE_HANDLER( cbasebal_textram_w );
+READ_HANDLER( cbasebal_textram_r );
+WRITE_HANDLER( cbasebal_scrollram_w );
+READ_HANDLER( cbasebal_scrollram_r );
+WRITE_HANDLER( cbasebal_gfxctrl_w );
+WRITE_HANDLER( cbasebal_scrollx_w );
+WRITE_HANDLER( cbasebal_scrolly_w );
 void cbasebal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 static int rambank;
 
-static void cbasebal_bankswitch_w(int offset,int data)
+static WRITE_HANDLER( cbasebal_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -52,7 +52,7 @@ static void cbasebal_bankswitch_w(int offset,int data)
 }
 
 
-static int bankedram_r(int offset)
+static READ_HANDLER( bankedram_r )
 {
 	if (rambank == 2)
 		return cbasebal_textram_r(offset);	/* VRAM */
@@ -68,7 +68,7 @@ static int bankedram_r(int offset)
 	}
 }
 
-static void bankedram_w(int offset,int data)
+static WRITE_HANDLER( bankedram_w )
 {
 	if (rambank == 2)
 		cbasebal_textram_w(offset,data);
@@ -81,7 +81,7 @@ static void bankedram_w(int offset,int data)
 		cbasebal_scrollram_w(offset,data);
 }
 
-static void cbasebal_coinctrl_w(int offset,int data)
+static WRITE_HANDLER( cbasebal_coinctrl_w )
 {
 	coin_lockout_w(0,~data & 0x04);
 	coin_lockout_w(1,~data & 0x08);
@@ -120,7 +120,7 @@ static void nvram_handler(void *file,int read_or_write)
 	}
 }
 
-static int eeprom_r(int offset)
+static READ_HANDLER( eeprom_r )
 {
 	int bit;
 
@@ -129,17 +129,17 @@ static int eeprom_r(int offset)
 	return (input_port_2_r(0) & 0x7f) | bit;
 }
 
-static void eeprom_cs_w(int offset,int data)
+static WRITE_HANDLER( eeprom_cs_w )
 {
 	EEPROM_set_cs_line(data ? CLEAR_LINE : ASSERT_LINE);
 }
 
-static void eeprom_clock_w(int offset,int data)
+static WRITE_HANDLER( eeprom_clock_w )
 {
 	EEPROM_set_clock_line(data ? CLEAR_LINE : ASSERT_LINE);
 }
 
-static void eeprom_serial_w(int offset,int data)
+static WRITE_HANDLER( eeprom_serial_w )
 {
 	EEPROM_write_bit(data);
 }

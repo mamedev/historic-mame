@@ -39,10 +39,10 @@ Notes:  Support is complete with the exception of the square wave generator
 /* in vidhrdw */
 void blockade_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void blockade_coin_latch_w(int offset, int data);
-void blockade_sound_freq_w(int offset, int data);
-void blockade_env_on_w(int offset, int data);
-void blockade_env_off_w(int offset, int data);
+WRITE_HANDLER( blockade_coin_latch_w );
+WRITE_HANDLER( blockade_sound_freq_w );
+WRITE_HANDLER( blockade_env_on_w );
+WRITE_HANDLER( blockade_env_off_w );
 
 /* These are used to simulate coin latch circuitry */
 
@@ -123,7 +123,7 @@ int blockade_interrupt(void)
 	return ignore_interrupt();
 }
 
-int blockade_input_port_0_r(int offset)
+READ_HANDLER( blockade_input_port_0_r )
 {
     /* coin latch is bit 7 */
 
@@ -131,7 +131,7 @@ int blockade_input_port_0_r(int offset)
     return (coin_latch<<7) | (temp);
 }
 
-void blockade_coin_latch_w(int offset, int data)
+WRITE_HANDLER( blockade_coin_latch_w )
 {
     if (data & 0x80)
     {
@@ -163,7 +163,7 @@ void blockade_coin_latch_w(int offset, int data)
     return;
 }
 
-void blockade_sound_freq_w(int offset, int data)
+WRITE_HANDLER( blockade_sound_freq_w )
 {
 #ifdef BLOCKADE_LOG
     printf("Sound Freq Write: %d\n",data);
@@ -171,7 +171,7 @@ void blockade_sound_freq_w(int offset, int data)
     return;
 }
 
-void blockade_env_on_w(int offset, int data)
+WRITE_HANDLER( blockade_env_on_w )
 {
 #ifdef BLOCKADE_LOG
     printf("Boom Start\n");
@@ -180,7 +180,7 @@ void blockade_env_on_w(int offset, int data)
     return;
 }
 
-void blockade_env_off_w(int offset, int data)
+WRITE_HANDLER( blockade_env_off_w )
 {
 #ifdef BLOCKADE_LOG
     printf("Boom End\n");
@@ -188,7 +188,7 @@ void blockade_env_off_w(int offset, int data)
     return;
 }
 
-static void blockade_videoram_w(int offset, int data)
+static WRITE_HANDLER( blockade_videoram_w )
 {
 	videoram_w(offset, data);
 	if (input_port_3_r(0) & 0x80)

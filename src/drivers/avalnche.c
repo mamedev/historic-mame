@@ -20,13 +20,13 @@ ask.  - Mike Balfour (mab22@po.cwru.edu)
 #include "vidhrdw/generic.h"
 
 /* machine/avalnche.c */
-int avalnche_input_r(int offset);
-void avalnche_output_w(int offset, int data);
-void avalnche_noise_amplitude_w(int offset, int data);
+READ_HANDLER( avalnche_input_r );
+WRITE_HANDLER( avalnche_output_w );
+WRITE_HANDLER( avalnche_noise_amplitude_w );
 int avalnche_interrupt(void);
 
 /* vidhrdw/avalnche.c */
-void avalnche_videoram_w(int offset, int data);
+WRITE_HANDLER( avalnche_videoram_w );
 void avalnche_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static struct MemoryReadAddress readmem[] =

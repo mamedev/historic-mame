@@ -31,7 +31,7 @@ void superman_vh_stop (void)
  *
  *************************************/
 
-void supes_attribram_w (int offset, int data)
+WRITE_HANDLER( supes_attribram_w )
 {
    int oldword = READ_WORD (&supes_attribram[offset]);
    int newword = COMBINE_WORD (oldword, data);
@@ -43,7 +43,7 @@ void supes_attribram_w (int offset, int data)
    }
 }
 
-int supes_attribram_r (int offset)
+READ_HANDLER( supes_attribram_r )
 {
    return READ_WORD (&supes_attribram[offset]);
 }
@@ -56,7 +56,7 @@ int supes_attribram_r (int offset)
  *
  *************************************/
 
-void supes_videoram_w (int offset, int data)
+WRITE_HANDLER( supes_videoram_w )
 {
    int oldword = READ_WORD (&supes_videoram[offset]);
    int newword = COMBINE_WORD (oldword, data);
@@ -68,7 +68,7 @@ void supes_videoram_w (int offset, int data)
    }
 }
 
-int supes_videoram_r (int offset)
+READ_HANDLER( supes_videoram_r )
 {
    return READ_WORD (&supes_videoram[offset]);
 }

@@ -42,7 +42,7 @@ static unsigned char scrollx[2], scrolly[2];
 
 static int flipscreen, layers;
 
-static struct tilemap *bg_tilemap, *char_tilemap;
+static struct tilemap *bg_tilemap, *tx_tilemap;
 
 static const unsigned char *spritepalettebank;
 static int ninjemak_dispdisable;
@@ -135,38 +135,34 @@ void galivan_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 ***************************************************************************/
 
-static void get_bg_tile_info(int col,int row)
+static void get_bg_tile_info(int tile_index)
 {
 	unsigned char *BGROM = memory_region(REGION_GFX4);
-	int addr = 128 * row + col;
-	int attr = BGROM[addr + 0x4000];
-	int code = BGROM[addr] | ((attr & 0x03) << 8);
+	int attr = BGROM[tile_index + 0x4000];
+	int code = BGROM[tile_index] | ((attr & 0x03) << 8);
 	SET_TILE_INFO(1,code,(attr & 0x78) >> 3);	/* seems correct */
 }
 
-static void get_char_tile_info(int col,int row)
+static void get_tx_tile_info(int tile_index)
 {
-	int addr = 32 * col + row;
-	int attr = colorram[addr];
-	int code = videoram[addr] | ((attr & 0x01) << 8);
+	int attr = colorram[tile_index];
+	int code = videoram[tile_index] | ((attr & 0x01) << 8);
 	SET_TILE_INFO(0,code,(attr & 0xe0) >> 5);	/* not sure */
 	tile_info.priority = attr & 8 ? 0 : 1;	/* wrong */
 }
 
-static void ninjemak_get_bg_tile_info(int col,int row)
+static void ninjemak_get_bg_tile_info(int tile_index)
 {
 	unsigned char *BGROM = memory_region(REGION_GFX4);
-	int addr = 32 * col + row;
-	int attr = BGROM[addr + 0x4000];
-	int code = BGROM[addr] | ((attr & 0x03) << 8);
+	int attr = BGROM[tile_index + 0x4000];
+	int code = BGROM[tile_index] | ((attr & 0x03) << 8);
 	SET_TILE_INFO(1,code,((attr & 0x60) >> 3) | ((attr & 0x0c) >> 2));	/* seems correct */
 }
 
-static void ninjemak_get_char_tile_info(int col,int row)
+static void ninjemak_get_tx_tile_info(int tile_index)
 {
-	int addr = 32 * col + row;
-	int attr = colorram[addr];
-	int code = videoram[addr] | ((attr & 0x03) << 8);
+	int attr = colorram[tile_index];
+	int code = videoram[tile_index] | ((attr & 0x03) << 8);
 	SET_TILE_INFO(0,code,(attr & 0x1c) >> 2);	/* seems correct ? */
 }
 
@@ -180,38 +176,26 @@ static void ninjemak_get_char_tile_info(int col,int row)
 
 int galivan_vh_start(void)
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info,
-			TILEMAP_OPAQUE,
-			16,16,
-			128,128);
-	char_tilemap = tilemap_create(get_char_tile_info,
-			TILEMAP_TRANSPARENT,
-			8,8,
-			32,32);
+	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,   16,16,128,128);
+	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!bg_tilemap || !char_tilemap)
+	if (!bg_tilemap || !tx_tilemap)
 		return 1;
 
-	char_tilemap->transparent_pen = 15;
+	tx_tilemap->transparent_pen = 15;
 
 	return 0;
 }
 
 int ninjemak_vh_start(void)
 {
-	bg_tilemap = tilemap_create(ninjemak_get_bg_tile_info,
-			TILEMAP_OPAQUE,
-			16,16,
-			512,32);
-	char_tilemap = tilemap_create(ninjemak_get_char_tile_info,
-			TILEMAP_TRANSPARENT,
-			8,8,
-			32,32);
+	bg_tilemap = tilemap_create(ninjemak_get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,   16,16,512,32);
+	tx_tilemap = tilemap_create(ninjemak_get_tx_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!bg_tilemap || !char_tilemap)
+	if (!bg_tilemap || !tx_tilemap)
 		return 1;
 
-	char_tilemap->transparent_pen = 15;
+	tx_tilemap->transparent_pen = 15;
 
 	return 0;
 }
@@ -224,26 +208,26 @@ int ninjemak_vh_start(void)
 
 ***************************************************************************/
 
-void galivan_videoram_w(int offset,int data)
+WRITE_HANDLER( galivan_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
 		videoram[offset] = data;
-		tilemap_mark_tile_dirty(char_tilemap,offset/32,offset%32);
+		tilemap_mark_tile_dirty(tx_tilemap,offset);
 	}
 }
 
-void galivan_colorram_w(int offset,int data)
+WRITE_HANDLER( galivan_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
 		colorram[offset] = data;
-		tilemap_mark_tile_dirty(char_tilemap,offset/32,offset%32);
+		tilemap_mark_tile_dirty(tx_tilemap,offset);
 	}
 }
 
 /* Written through port 40 */
-void galivan_gfxbank_w(int offset,int data)
+WRITE_HANDLER( galivan_gfxbank_w )
 {
 	/* bits 0 and 1 coin counters */
 	coin_counter_w(0,data & 1);
@@ -252,7 +236,7 @@ void galivan_gfxbank_w(int offset,int data)
 	/* bit 2 flip screen */
 	flipscreen = data & 0x04;
 	tilemap_set_flip (bg_tilemap, flipscreen ? TILEMAP_FLIPX|TILEMAP_FLIPY : 0);
-	tilemap_set_flip (char_tilemap, flipscreen ? TILEMAP_FLIPX|TILEMAP_FLIPY : 0);
+	tilemap_set_flip (tx_tilemap, flipscreen ? TILEMAP_FLIPX|TILEMAP_FLIPY : 0);
 
 	/* bit 7 selects one of two ROM banks for c000-dfff */
 	{
@@ -265,7 +249,7 @@ void galivan_gfxbank_w(int offset,int data)
 /*	if (errorlog) fprintf(errorlog,"Address: %04X - port 40 = %02x\n",cpu_get_pc(),data); */
 }
 
-void ninjemak_gfxbank_w(int offset, int data)
+WRITE_HANDLER( ninjemak_gfxbank_w )
 {
 	/* bits 0 and 1 coin counters */
 	coin_counter_w(0,data & 1);
@@ -274,7 +258,7 @@ void ninjemak_gfxbank_w(int offset, int data)
 	/* bit 2 flip screen */
 	flipscreen = data & 0x04;
 	tilemap_set_flip (bg_tilemap, flipscreen ? TILEMAP_FLIPX|TILEMAP_FLIPY : 0);
-	tilemap_set_flip (char_tilemap, flipscreen ? TILEMAP_FLIPX|TILEMAP_FLIPY : 0);
+	tilemap_set_flip (tx_tilemap, flipscreen ? TILEMAP_FLIPX|TILEMAP_FLIPY : 0);
 
 	/* bit 3 text bank flag ??? */
 	if (data & 0x08)
@@ -325,7 +309,7 @@ if (errorlog) fprintf(errorlog,"%04x: write %02x to port 80\n",cpu_get_pc(),data
 
 
 /* Written through port 41-42 */
-void galivan_scrollx_w(int offset,int data)
+WRITE_HANDLER( galivan_scrollx_w )
 {
 	static int up = 0;
 	if (offset == 1) {
@@ -340,18 +324,18 @@ void galivan_scrollx_w(int offset,int data)
 }
 
 /* Written through port 43-44 */
-void galivan_scrolly_w(int offset,int data)
+WRITE_HANDLER( galivan_scrolly_w )
 {
 	scrolly[offset] = data;
 }
 
 
-void ninjemak_scrollx_w(int offset, int data)
+WRITE_HANDLER( ninjemak_scrollx_w )
 {
 	scrollx[offset] = data;
 }
 
-void ninjemak_scrolly_w(int offset, int data)
+WRITE_HANDLER( ninjemak_scrolly_w )
 {
 	scrolly[offset] = data;
 }
@@ -414,11 +398,11 @@ void galivan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	else
 		tilemap_draw(bitmap,bg_tilemap,0);
 
-	tilemap_draw (bitmap,char_tilemap,0);
+	tilemap_draw (bitmap,tx_tilemap,0);
 
 	draw_sprites(bitmap);
 
-	tilemap_draw (bitmap,char_tilemap,1);
+	tilemap_draw (bitmap,tx_tilemap,1);
 }
 
 void ninjemak_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
@@ -437,5 +421,5 @@ void ninjemak_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	draw_sprites(bitmap);
 
-	tilemap_draw(bitmap,char_tilemap,0);
+	tilemap_draw(bitmap,tx_tilemap,0);
 }

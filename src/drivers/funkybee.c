@@ -48,10 +48,10 @@ extern unsigned char *funkyb_row_scroll;
 void funkybee_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void funkybee_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void funkybee_gfx_bank_w(int offset, int data);
+WRITE_HANDLER( funkybee_gfx_bank_w );
 
 
-static int funkybee_input_port_0_r(int offset)
+static READ_HANDLER( funkybee_input_port_0_r )
 {
 	watchdog_reset_r(0);
 	return input_port_0_r(offset);

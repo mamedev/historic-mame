@@ -106,24 +106,24 @@ void bublbobl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /* machine/bublbobl.c */
 extern unsigned char *bublbobl_sharedram1,*bublbobl_sharedram2;
-int bublbobl_sharedram1_r(int offset);
-int bublbobl_sharedram2_r(int offset);
-void bublbobl_sharedram1_w(int offset,int data);
-void bublbobl_sharedram2_w(int offset,int data);
+READ_HANDLER( bublbobl_sharedram1_r );
+READ_HANDLER( bublbobl_sharedram2_r );
+WRITE_HANDLER( bublbobl_sharedram1_w );
+WRITE_HANDLER( bublbobl_sharedram2_w );
 int bublbobl_m68705_interrupt(void);
-int bublbobl_68705_portA_r(int offset);
-void bublbobl_68705_portA_w(int offset,int data);
-void bublbobl_68705_ddrA_w(int offset,int data);
-int bublbobl_68705_portB_r(int offset);
-void bublbobl_68705_portB_w(int offset,int data);
-void bublbobl_68705_ddrB_w(int offset,int data);
-void bublbobl_bankswitch_w(int offset,int data);
-void tokio_bankswitch_w(int offset,int data);
-void tokio_nmitrigger_w(int offset, int data);
-int tokio_fake_r(int offset);
-void bublbobl_sound_command_w(int offset,int data);
-void bublbobl_sh_nmi_disable_w(int offset,int data);
-void bublbobl_sh_nmi_enable_w(int offset,int data);
+READ_HANDLER( bublbobl_68705_portA_r );
+WRITE_HANDLER( bublbobl_68705_portA_w );
+WRITE_HANDLER( bublbobl_68705_ddrA_w );
+READ_HANDLER( bublbobl_68705_portB_r );
+WRITE_HANDLER( bublbobl_68705_portB_w );
+WRITE_HANDLER( bublbobl_68705_ddrB_w );
+WRITE_HANDLER( bublbobl_bankswitch_w );
+WRITE_HANDLER( tokio_bankswitch_w );
+WRITE_HANDLER( tokio_nmitrigger_w );
+READ_HANDLER( tokio_fake_r );
+WRITE_HANDLER( bublbobl_sound_command_w );
+WRITE_HANDLER( bublbobl_sh_nmi_disable_w );
+WRITE_HANDLER( bublbobl_sh_nmi_enable_w );
 
 
 

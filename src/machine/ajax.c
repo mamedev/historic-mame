@@ -34,7 +34,7 @@ static int firq_enable;
 	(*)	The Coin Counters are handled by the Konami Custom 051550
 */
 
-static void ajax_bankswitch_w( int offset, int data )
+static WRITE_HANDLER( ajax_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress = 0;
@@ -78,7 +78,7 @@ static void ajax_bankswitch_w( int offset, int data )
 		LS393		C20			Dual -ve edge trigger 4-bit Binary Ripple Counter with Resets
 */
 
-static void ajax_lamps_w( int offset, int data )
+static WRITE_HANDLER( ajax_lamps_w )
 {
 	osd_led_w(0,(data & 0x02) >> 1);	/* super weapon lamp */
 	osd_led_w(1,(data & 0x04) >> 2);	/* power up lamps */
@@ -107,7 +107,7 @@ static void ajax_lamps_w( int offset, int data )
 	0x01c0	(r) MIO2			Enables DIPSW #3 reading
 */
 
-int ajax_ls138_f10_r( int offset )
+READ_HANDLER( ajax_ls138_f10_r )
 {
 	int data = 0;
 
@@ -135,7 +135,7 @@ int ajax_ls138_f10_r( int offset )
 	return data;
 }
 
-void ajax_ls138_f10_w( int offset, int data )
+WRITE_HANDLER( ajax_ls138_f10_w )
 {
 	switch ((offset & 0x01c0) >> 6){
 		case 0x00:	/* NSFIRQ + AFR */
@@ -165,12 +165,12 @@ void ajax_ls138_f10_w( int offset, int data )
 }
 
 /* Shared RAM between the 052001 and the 6809 (6264SL at I8) */
-int ajax_sharedram_r( int offset )
+READ_HANDLER( ajax_sharedram_r )
 {
 	return ajax_sharedram[offset];
 }
 
-void ajax_sharedram_w( int offset, int data )
+WRITE_HANDLER( ajax_sharedram_w )
 {
 	ajax_sharedram[offset] = data;
 }
@@ -190,7 +190,7 @@ void ajax_sharedram_w( int offset, int data )
 	0	SRB0	/
 */
 
-void ajax_bankswitch_w_2( int offset, int data )
+WRITE_HANDLER( ajax_bankswitch_2_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int bankaddress;

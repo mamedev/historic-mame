@@ -117,7 +117,7 @@ void route16_vh_stop(void)
 /***************************************************************************
   route16_out0_w
 ***************************************************************************/
-void route16_out0_w(int offset,int data)
+WRITE_HANDLER( route16_out0_w )
 {
 	static int last_write = 0;
 
@@ -136,7 +136,7 @@ void route16_out0_w(int offset,int data)
 /***************************************************************************
   route16_out1_w
 ***************************************************************************/
-void route16_out1_w(int offset,int data)
+WRITE_HANDLER( route16_out1_w )
 {
 	static int last_write = 0;
 
@@ -159,7 +159,7 @@ void route16_out1_w(int offset,int data)
   Handle Stratovox's extra sound effects.
 
 ***************************************************************************/
-void stratvox_sn76477_w (int offset,int data)
+WRITE_HANDLER( stratvox_sn76477_w )
 {
 	/* get out for Route 16 */
 	if (route16_hardware) return;
@@ -184,7 +184,7 @@ void stratvox_sn76477_w (int offset,int data)
 /***************************************************************************
   route16_sharedram_r
 ***************************************************************************/
-int route16_sharedram_r(int offset)
+READ_HANDLER( route16_sharedram_r )
 {
 	return route16_sharedram[offset];
 }
@@ -192,7 +192,7 @@ int route16_sharedram_r(int offset)
 /***************************************************************************
   route16_sharedram_w
 ***************************************************************************/
-void route16_sharedram_w(int offset,int data)
+WRITE_HANDLER( route16_sharedram_w )
 {
 	route16_sharedram[offset] = data;
 
@@ -207,7 +207,7 @@ void route16_sharedram_w(int offset,int data)
 /***************************************************************************
   route16_videoram1_r
 ***************************************************************************/
-int route16_videoram1_r(int offset)
+READ_HANDLER( route16_videoram1_r )
 {
 	return route16_videoram1[offset];
 }
@@ -215,7 +215,7 @@ int route16_videoram1_r(int offset)
 /***************************************************************************
   route16_videoram2_r
 ***************************************************************************/
-int route16_videoram2_r(int offset)
+READ_HANDLER( route16_videoram2_r )
 {
 	return route16_videoram1[offset];
 }
@@ -223,7 +223,7 @@ int route16_videoram2_r(int offset)
 /***************************************************************************
   route16_videoram1_w
 ***************************************************************************/
-void route16_videoram1_w(int offset,int data)
+WRITE_HANDLER( route16_videoram1_w )
 {
 	route16_videoram1[offset] = data;
 
@@ -233,7 +233,7 @@ void route16_videoram1_w(int offset,int data)
 /***************************************************************************
   route16_videoram2_w
 ***************************************************************************/
-void route16_videoram2_w(int offset,int data)
+WRITE_HANDLER( route16_videoram2_w )
 {
 	route16_videoram2[offset] = data;
 

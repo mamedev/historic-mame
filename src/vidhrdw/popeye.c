@@ -291,7 +291,7 @@ void popeye_vh_stop(void)
 
 
 
-void popeye_videoram_w(int offset,int data)
+WRITE_HANDLER( popeye_videoram_w )
 {
 	if (data & 0x80)	/* write to the upper nibble */
 	{
@@ -315,7 +315,7 @@ void popeye_videoram_w(int offset,int data)
 
 
 
-void popeye_palettebank_w(int offset,int data)
+WRITE_HANDLER( popeye_palettebank_w )
 {
 	if ((data & 0x08) != (*popeye_palette_bank & 0x08))
 	{

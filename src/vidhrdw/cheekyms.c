@@ -64,13 +64,13 @@ void cheekyms_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 }
 
 
-void cheekyms_sprite_w(int offset, int data)
+WRITE_HANDLER( cheekyms_sprite_w )
 {
 	sprites[offset] = data;
 }
 
 
-void cheekyms_port_40_w(int offset, int data)
+WRITE_HANDLER( cheekyms_port_40_w )
 {
 	static int last_dac = -1;
 
@@ -85,7 +85,7 @@ void cheekyms_port_40_w(int offset, int data)
 }
 
 
-void cheekyms_port_80_w(int offset, int data)
+WRITE_HANDLER( cheekyms_port_80_w )
 {
 	int new_man_scroll, new_char_palette, new_flipscreen;
 

@@ -109,21 +109,21 @@ extern unsigned char *atarifb_alphap1_vram;
 extern unsigned char *atarifb_alphap2_vram;
 extern unsigned char *atarifb_scroll_register;
 
-extern void atarifb_scroll_w(int offset, int data);
-extern void atarifb_alphap1_vram_w(int offset, int data);
-extern void atarifb_alphap2_vram_w(int offset, int data);
+WRITE_HANDLER( atarifb_scroll_w );
+WRITE_HANDLER( atarifb_alphap1_vram_w );
+WRITE_HANDLER( atarifb_alphap2_vram_w );
 extern int atarifb_vh_start(void);
 extern void atarifb_vh_stop(void);
 extern void atarifb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /* machine/atarifb.c */
-void atarifb_out1_w(int offset, int data);
-int atarifb_in0_r(int offset);
-int atarifb_in2_r(int offset);
-void atarifb4_out1_w(int offset, int data);
-int atarifb4_in0_r(int offset);
-int atarifb4_in2_r(int offset);
-void soccer_out1_w(int offset, int data);
+WRITE_HANDLER( atarifb_out1_w );
+READ_HANDLER( atarifb_in0_r );
+READ_HANDLER( atarifb_in2_r );
+WRITE_HANDLER( atarifb4_out1_w );
+READ_HANDLER( atarifb4_in0_r );
+READ_HANDLER( atarifb4_in2_r );
+WRITE_HANDLER( soccer_out1_w );
 
 int atarifb_lamp1, atarifb_lamp2;
 int atarifb_game;
@@ -160,7 +160,7 @@ static void atarifb_noise_256H(int foo)
 	noise_timer_set=1;
 }
 
-static void atarifb_out2_w (int offset, int data)
+static WRITE_HANDLER( atarifb_out2_w )
 {
 	/* D0-D3 = crowd */
 	crowd_mask = (data & 0x0F) << 4;
@@ -177,7 +177,7 @@ static void atarifb_out2_w (int offset, int data)
 //	if (errorlog) fprintf (errorlog, "out2_w: %02x\n", data & ~0x0f);
 }
 
-static void soccer_out2_w (int offset, int data)
+static WRITE_HANDLER( soccer_out2_w )
 {
 	/* D0-D3 = crowd */
 	crowd_mask = (data & 0x0F) << 4;
@@ -196,7 +196,7 @@ static void soccer_out2_w (int offset, int data)
 //	if (errorlog) fprintf (errorlog, "out2_w: %02x\n", data & ~0x0f);
 }
 
-static void atarifb_out3_w (int offset, int data)
+static WRITE_HANDLER( atarifb_out3_w )
 {
 	int loop = cpu_getiloops ();
 

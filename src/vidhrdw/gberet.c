@@ -87,9 +87,8 @@ void gberet_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 ***************************************************************************/
 
-static void get_tile_info( int col, int row )
+static void get_tile_info(int tile_index)
 {
-	int tile_index = row*64+col;
 	unsigned char attr = gberet_colorram[tile_index];
 	SET_TILE_INFO(0,gberet_videoram[tile_index] + ((attr & 0x40) << 2),attr & 0x0f)
 	tile_info.flags = TILE_FLIPYX((attr & 0x30) >> 4) | TILE_SPLIT((attr & 0x80) >> 7);
@@ -105,7 +104,7 @@ static void get_tile_info( int col, int row )
 
 int gberet_vh_start(void)
 {
-	bg_tilemap = tilemap_create(get_tile_info,TILEMAP_SPLIT,8,8,64,32);
+	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,64,32);
 
 	if (!bg_tilemap)
 		return 0;
@@ -135,25 +134,25 @@ void init_gberetb(void)
 
 ***************************************************************************/
 
-void gberet_videoram_w(int offset,int data)
+WRITE_HANDLER( gberet_videoram_w )
 {
 	if (gberet_videoram[offset] != data)
 	{
 		gberet_videoram[offset] = data;
-		tilemap_mark_tile_dirty(bg_tilemap,offset%64,offset/64);
+		tilemap_mark_tile_dirty(bg_tilemap,offset);
 	}
 }
 
-void gberet_colorram_w(int offset,int data)
+WRITE_HANDLER( gberet_colorram_w )
 {
 	if (gberet_colorram[offset] != data)
 	{
 		gberet_colorram[offset] = data;
-		tilemap_mark_tile_dirty(bg_tilemap,offset%64,offset/64);
+		tilemap_mark_tile_dirty(bg_tilemap,offset);
 	}
 }
 
-void gberet_e044_w(int offset,int data)
+WRITE_HANDLER( gberet_e044_w )
 {
 	/* bit 0 enables interrupts */
 	interruptenable = data & 1;
@@ -165,7 +164,7 @@ void gberet_e044_w(int offset,int data)
 	/* don't know about the other bits */
 }
 
-void gberet_scroll_w(int offset,int data)
+WRITE_HANDLER( gberet_scroll_w )
 {
 	int scroll;
 
@@ -175,7 +174,7 @@ void gberet_scroll_w(int offset,int data)
 	tilemap_set_scrollx(bg_tilemap,offset & 0x1f,scroll);
 }
 
-void gberetb_scroll_w(int offset,int data)
+WRITE_HANDLER( gberetb_scroll_w )
 {
 	if (offset) data |= 0x100;
 

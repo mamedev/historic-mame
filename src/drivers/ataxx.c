@@ -43,24 +43,24 @@ extern unsigned char *ataxx_qram1;
 extern unsigned char *ataxx_qram2;
 extern int  ataxx_vram_port_r(int offset, int num);
 extern void ataxx_vram_port_w(int offset, int data, int num);
-extern void ataxx_mvram_port_w(int offset, int data);
-extern void ataxx_svram_port_w(int offset, int data);
-extern int  ataxx_mvram_port_r(int offset);
-extern int  ataxx_svram_port_r(int offset);
+WRITE_HANDLER( ataxx_mvram_port_w );
+WRITE_HANDLER( ataxx_svram_port_w );
+READ_HANDLER( ataxx_mvram_port_r );
+READ_HANDLER( ataxx_svram_port_r );
 
 /* These leland externs should all be reviewed */
-extern void leland_graphics_ram_w(int offset, int data);
-extern void leland_bk_xlow_w(int offset, int data);
-extern void leland_bk_xhigh_w(int offset, int data);
-extern void leland_bk_ylow_w(int offset, int data);
-extern void leland_bk_yhigh_w(int offset, int data);
+WRITE_HANDLER( leland_graphics_ram_w );
+WRITE_HANDLER( leland_bk_xlow_w );
+WRITE_HANDLER( leland_bk_xhigh_w );
+WRITE_HANDLER( leland_bk_ylow_w );
+WRITE_HANDLER( leland_bk_yhigh_w );
 extern void leland_rearrange_bank_swap(int, int);
 extern int  leland_sh_start(const struct MachineSound *msound);
 extern void leland_sh_stop(void);
 extern void leland_sh_update(void);
 extern int  leland_master_interrupt(void);
-extern void leland_master_video_addr_w(int offset, int data);
-extern void leland_slave_video_addr_w(int offset, int data);
+WRITE_HANDLER( leland_master_video_addr_w );
+WRITE_HANDLER( leland_slave_video_addr_w );
 
 /* Globals  */
 static int ataxx_palette_bank=0;    /* Palette / video RAM register bank */
@@ -119,7 +119,7 @@ static struct MachineDriver machine_driver_##DRV =                              
 
 ************************************************************************/
 
-INLINE int ataxx_input_port_0_r(int offset)
+INLINE READ_HANDLER( ataxx_input_port_0_r )
 {
     int halt=cpu_get_halt_line(1) ? 0x01 : 0x00;
     return (input_port_0_r(0)&0xfe)|halt;
@@ -159,7 +159,7 @@ static struct EEPROM_interface ataxx_eeprom_interface =
 
 static int ataxx_eeprom[0x0080];
 
-int ataxx_eeprom_r(int offset)
+READ_HANDLER( ataxx_eeprom_r )
 {
     static int ret;
 #if USE_EEPROM
@@ -184,7 +184,7 @@ int ataxx_eeprom_r(int offset)
     return ret;
 }
 
-void ataxx_eeprom_w(int offset, int data)
+WRITE_HANDLER( ataxx_eeprom_w )
 {
 	/*
 	ATAXX - Routine at 0x5ab9 tests the EEPROM. Appears to be 16 bits.
@@ -214,7 +214,7 @@ void ataxx_eeprom_w(int offset, int data)
 #define ataxx_battery_ram_size 0x4000
 static unsigned char ataxx_battery_ram[ataxx_battery_ram_size];
 
-void ataxx_battery_w(int offset, int data)
+WRITE_HANDLER( ataxx_battery_w )
 {
     ataxx_battery_ram[offset]=data;
 }
@@ -343,19 +343,19 @@ void ataxx_sound_init(void)
     ataxx_sound_response=0x55;
 }
 
-void ataxx_sound_cmd_low_w(int offset, int data)
+WRITE_HANDLER( ataxx_sound_cmd_low_w )
 {
 	/* Z80 sound command low byte write */
     ataxx_sound_cmd_low=data;
 }
 
-void ataxx_sound_cmd_high_w(int offset, int data)
+WRITE_HANDLER( ataxx_sound_cmd_high_w )
 {
 	/* Z80 sound command high byte write */
     ataxx_sound_cmd_high=data;
 }
 
-int ataxx_sound_cmd_r(int offset)
+READ_HANDLER( ataxx_sound_cmd_r )
 {
 	/* 80186 sound command word read */
 	if (!offset)
@@ -364,20 +364,20 @@ int ataxx_sound_cmd_r(int offset)
         return ataxx_sound_cmd_high;
 }
 
-int ataxx_sound_response_r(int offset)
+READ_HANDLER( ataxx_sound_response_r )
 {
 	/* Z80 sound response byte read */
     return ataxx_sound_response;
 }
 
-void ataxx_sound_response_w(int offset, int data)
+WRITE_HANDLER( ataxx_sound_response_w )
 {
 	/* 80186 sound response byte write */
 	if (!offset)
         ataxx_sound_response=data;
 }
 
-int ataxx_i86_ram_r(int offset)
+READ_HANDLER( ataxx_i86_ram_r )
 {
 	/*
 	Not very tidy, but it works for now...
@@ -386,7 +386,7 @@ int ataxx_i86_ram_r(int offset)
     return RAM[0x0c000+offset];
 }
 
-void ataxx_i86_ram_w(int offset, int data)
+WRITE_HANDLER( ataxx_i86_ram_w )
 {
 	/*
 	Not very tidy, but it works for now...
@@ -395,7 +395,7 @@ void ataxx_i86_ram_w(int offset, int data)
     RAM[0x0c000+offset]=data;
 }
 
-static int ataxx_i86_unknown_port1_r(int offset)
+static READ_HANDLER( ataxx_i86_unknown_port1_r )
 {
     static int s;
 
@@ -446,7 +446,7 @@ int ataxx_i86_interrupt(void)
 	return ignore_interrupt();
 }
 
-void ataxx_sound_control_w(int offset, int data)
+WRITE_HANDLER( ataxx_sound_control_w )
 {
 	/*
 		0x01=Reset
@@ -505,7 +505,7 @@ static struct GfxDecodeInfo ataxx_gfxdecodeinfo[] =
 
 ************************************************************************/
 
-void ataxx_slave_banksw_w(int offset, int data)
+WRITE_HANDLER( ataxx_slave_banksw_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
     int bank=data&0x0f;
@@ -530,7 +530,7 @@ void ataxx_slave_banksw_w(int offset, int data)
  */
 }
 
-int ataxx_raster_r(int offset)
+READ_HANDLER( ataxx_raster_r )
 {
     static int r;
     r++;
@@ -578,14 +578,14 @@ static struct MemoryWriteAddress ataxx_slave_writemem[] =
 
 ************************************************************************/
 
-void ataxx_slave_cmd_w(int offset, int data)
+WRITE_HANDLER( ataxx_slave_cmd_w )
 {
 	cpu_set_irq_line(1, 0, data&0x01 ? CLEAR_LINE : ASSERT_LINE);
 	cpu_set_nmi_line(1,    data&0x04 ? CLEAR_LINE : ASSERT_LINE);
 	cpu_set_reset_line(1,  data&0x10 ? CLEAR_LINE : ASSERT_LINE);
 }
 
-void ataxx_banksw_w(int offset, int data)
+WRITE_HANDLER( ataxx_banksw_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
     int bank=data & 0x0f;
@@ -637,7 +637,7 @@ void ataxx_banksw_w(int offset, int data)
     */
 }
 
-void ataxx_master_video_addr_w(int offset, int data)
+WRITE_HANDLER( ataxx_master_video_addr_w )
 {
 	if (ataxx_palette_bank)
 	{
@@ -662,7 +662,7 @@ int ataxx_master_interrupt(void)
 
 static int ataxx_xrom_address;
 
-int ataxx_xrom1_data_r(int offset)
+READ_HANDLER( ataxx_xrom1_data_r )
 {
     if (ataxx_palette_bank)
     {
@@ -683,7 +683,7 @@ int ataxx_xrom1_data_r(int offset)
     }
 }
 
-int ataxx_xrom2_data_r(int offset)
+READ_HANDLER( ataxx_xrom2_data_r )
 {
     if (ataxx_palette_bank)
     {
@@ -704,7 +704,7 @@ int ataxx_xrom2_data_r(int offset)
     }
 }
 
-void ataxx_xrom_addr_w(int offset, int data)
+WRITE_HANDLER( ataxx_xrom_addr_w )
 {
     if (ataxx_palette_bank)
     {

@@ -57,6 +57,7 @@ Video Section Summary		[ Cisco Heat ]			[ F1 GP Star ]
 
 ***************************************************************************/
 
+#include "driver.h"
 #include "drivers/megasys1.h"
 #include "vidhrdw/generic.h"
 
@@ -157,7 +158,7 @@ static int read_accelerator(void)
 								[ Cisco Heat ]
 **************************************************************************/
 
-int cischeat_vregs_r(int offset)
+READ_HANDLER( cischeat_vregs_r )
 {
 	switch (offset)
 	{
@@ -187,7 +188,7 @@ int cischeat_vregs_r(int offset)
 **************************************************************************/
 
 
-int f1gpstar_vregs_r(int offset)
+READ_HANDLER( f1gpstar_vregs_r )
 {
 
 	switch (offset)
@@ -217,7 +218,7 @@ int f1gpstar_vregs_r(int offset)
 								[ Cisco Heat ]
 **************************************************************************/
 
-void cischeat_vregs_w(int offset, int data)
+WRITE_HANDLER( cischeat_vregs_w )
 {
 int old_data, new_data;
 
@@ -280,7 +281,7 @@ int old_data, new_data;
 							[ F1 GrandPrix Star ]
 **************************************************************************/
 
-void f1gpstar_vregs_w(int offset, int data)
+WRITE_HANDLER( f1gpstar_vregs_w )
 {
 int old_data, new_data;
 

@@ -228,7 +228,7 @@ static void swap_palettes(void)
 	palette_swap_pending=0;
 }
 
-void neogeo_setpalbank0(int offset,int data)
+WRITE_HANDLER( neogeo_setpalbank0_w )
 {
 	if (palno != 0) {
 		palno = 0;
@@ -237,7 +237,7 @@ void neogeo_setpalbank0(int offset,int data)
 	}
 }
 
-void neogeo_setpalbank1(int offset,int data)
+WRITE_HANDLER( neogeo_setpalbank1_w )
 {
 	if (palno != 1) {
 		palno = 1;
@@ -246,12 +246,12 @@ void neogeo_setpalbank1(int offset,int data)
 	}
 }
 
-int neogeo_paletteram_r(int offset)
+READ_HANDLER( neogeo_paletteram_r )
 {
 	return READ_WORD(&neogeo_paletteram[offset]);
 }
 
-void neogeo_paletteram_w(int offset,int data)
+WRITE_HANDLER( neogeo_paletteram_w )
 {
 	int oldword = READ_WORD (&neogeo_paletteram[offset]);
 	int newword = COMBINE_WORD (oldword, data);
@@ -456,17 +456,17 @@ static const unsigned char *neogeo_palette(const struct rectangle *clip)
 
 /******************************************************************************/
 
-void vidram_offset_w(int offset, int data)
+WRITE_HANDLER( vidram_offset_w )
 {
 	where = data;
 }
 
-int vidram_data_r(int offset)
+READ_HANDLER( vidram_data_r )
 {
 	return (READ_WORD(&vidram[where << 1]));
 }
 
-void vidram_data_w(int offset,int data)
+WRITE_HANDLER( vidram_data_w )
 {
 	WRITE_WORD(&vidram[where << 1],data);
 	where = (where + modulo) & 0xffff;
@@ -474,34 +474,34 @@ void vidram_data_w(int offset,int data)
 
 /* Modulo can become negative , Puzzle Bobble Super Sidekicks and a lot */
 /* of other games use this */
-void vidram_modulo_w(int offset, int data)
+WRITE_HANDLER( vidram_modulo_w )
 {
 	modulo = data;
 }
 
-int vidram_modulo_r(int offset)
+READ_HANDLER( vidram_modulo_r )
 {
 	return modulo;
 }
 
 
 /* Two routines to enable videoram to be read in debugger */
-int mish_vid_r(int offset)
+READ_HANDLER( mish_vid_r )
 {
 	return READ_WORD(&vidram[offset]);
 }
 
-void mish_vid_w(int offset, int data)
+WRITE_HANDLER( mish_vid_w )
 {
 	COMBINE_WORD_MEM(&vidram[offset],data);
 }
 
-void neo_board_fix(int offset, int data)
+WRITE_HANDLER( neo_board_fix_w )
 {
 	fix_bank=1;
 }
 
-void neo_game_fix(int offset, int data)
+WRITE_HANDLER( neo_game_fix_w )
 {
 	fix_bank=0;
 }

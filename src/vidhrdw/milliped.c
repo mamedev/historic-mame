@@ -34,7 +34,7 @@ static struct rectangle spritevisiblearea =
   bit 0 blue
 
 ***************************************************************************/
-void milliped_paletteram_w(int offset,int data)
+WRITE_HANDLER( milliped_paletteram_w )
 {
 	int bit0,bit1,bit2;
 	int r,g,b;

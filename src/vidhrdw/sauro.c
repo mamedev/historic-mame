@@ -52,7 +52,7 @@ void sauro_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 
 
 
-void sauro_scroll1_w(int offset, int data)
+WRITE_HANDLER( sauro_scroll1_w )
 {
 	scroll1 = data;
 }
@@ -61,14 +61,14 @@ void sauro_scroll1_w(int offset, int data)
 static int scroll2_map     [8] = {2, 1, 4, 3, 6, 5, 0, 7};
 static int scroll2_map_flip[8] = {0, 7, 2, 1, 4, 3, 6, 5};
 
-void sauro_scroll2_w(int offset, int data)
+WRITE_HANDLER( sauro_scroll2_w )
 {
 	int* map = (flipscreen ? scroll2_map_flip : scroll2_map);
 
 	scroll2 = (data & 0xf8) | map[data & 7];
 }
 
-void sauro_flipscreen_w(int offset, int data)
+WRITE_HANDLER( sauro_flipscreen_w )
 {
 	if (flipscreen != data)
 	{

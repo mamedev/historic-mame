@@ -112,21 +112,21 @@ ac00      sound port 4
 
 
 
-int docastle_shared0_r(int offset);
-int docastle_shared1_r(int offset);
-void docastle_shared0_w(int offset,int data);
-void docastle_shared1_w(int offset,int data);
-void docastle_nmitrigger(int offset,int data);
+READ_HANDLER( docastle_shared0_r );
+READ_HANDLER( docastle_shared1_r );
+WRITE_HANDLER( docastle_shared0_w );
+WRITE_HANDLER( docastle_shared1_w );
+WRITE_HANDLER( docastle_nmitrigger_w );
 
 void docastle_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void dorunrun_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int docastle_vh_start(void);
 void docastle_vh_stop(void);
 void docastle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-int docastle_flipscreen_off_r(int offset);
-int docastle_flipscreen_on_r(int offset);
-void docastle_flipscreen_off_w(int offset,int data);
-void docastle_flipscreen_on_w(int offset,int data);
+READ_HANDLER( docastle_flipscreen_off_r );
+READ_HANDLER( docastle_flipscreen_on_r );
+WRITE_HANDLER( docastle_flipscreen_off_w );
+WRITE_HANDLER( docastle_flipscreen_on_w );
 
 
 static struct MemoryReadAddress docastle_readmem[] =
@@ -148,7 +148,7 @@ static struct MemoryWriteAddress docastle_writemem[] =
 	{ 0xa800, 0xa800, watchdog_reset_w },
 	{ 0xb000, 0xb3ff, videoram_w, &videoram, &videoram_size },
 	{ 0xb400, 0xb7ff, colorram_w, &colorram },
-	{ 0xe000, 0xe000, docastle_nmitrigger },
+	{ 0xe000, 0xe000, docastle_nmitrigger_w },
 	{ -1 }	/* end of table */
 };
 
@@ -170,7 +170,7 @@ static struct MemoryWriteAddress dorunrun_writemem[] =
 	{ 0xa000, 0xa008, docastle_shared1_w },
 	{ 0xb000, 0xb3ff, videoram_w, &videoram, &videoram_size },
 	{ 0xb400, 0xb7ff, colorram_w, &colorram },
-	{ 0xb800, 0xb800, docastle_nmitrigger },
+	{ 0xb800, 0xb800, docastle_nmitrigger_w },
 	{ 0xa800, 0xa800, watchdog_reset_w },
 	{ -1 }	/* end of table */
 };

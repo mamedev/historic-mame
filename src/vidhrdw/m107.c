@@ -49,75 +49,71 @@ static int pf1_rowscroll,pf2_rowscroll,pf3_rowscroll,pf4_rowscroll;
 
 /*****************************************************************************/
 
-static void get_pf1_tile_info( int col, int row )
+static void get_pf1_tile_info(int tile_index)
 {
-	int offs,tile,color;
-	offs=(col*4) + (row*256);
-	offs+=pf1_vram_ptr;
+	int tile,color;
+	tile_index = 4*tile_index + pf1_vram_ptr;
 
-	tile=m107_vram_data[offs]+(m107_vram_data[offs+1]<<8);
-	if (m107_vram_data[offs+3] & 0x10) tile+=0x10000;
-	color=m107_vram_data[offs+2];
+	tile=m107_vram_data[tile_index]+(m107_vram_data[tile_index+1]<<8);
+	if (m107_vram_data[tile_index+3] & 0x10) tile+=0x10000;
+	color=m107_vram_data[tile_index+2];
 
 	SET_TILE_INFO(0,tile,color&0x7f)
 
 	/* Priority 1 = tile appears above sprites */
-	tile_info.priority = ((m107_vram_data[offs+3]&2)>>1);
-	tile_info.flags = TILE_FLIPYX((m107_vram_data[offs+3] & 0xc)>>2);
+	tile_info.priority = ((m107_vram_data[tile_index+3]&2)>>1);
+	tile_info.flags = TILE_FLIPYX((m107_vram_data[tile_index+3] & 0xc)>>2);
 }
 
-static void get_pf2_tile_info( int col, int row )
+static void get_pf2_tile_info(int tile_index)
 {
-	int offs,tile,color;
-	offs=(col*4) + (row*256);
-	offs+=pf2_vram_ptr;
+	int tile,color;
+	tile_index = 4*tile_index + pf2_vram_ptr;
 
-	tile=m107_vram_data[offs]+(m107_vram_data[offs+1]<<8);
-	if (m107_vram_data[offs+3] & 0x10) tile+=0x10000;
-	color=m107_vram_data[offs+2];
+	tile=m107_vram_data[tile_index]+(m107_vram_data[tile_index+1]<<8);
+	if (m107_vram_data[tile_index+3] & 0x10) tile+=0x10000;
+	color=m107_vram_data[tile_index+2];
 
 	SET_TILE_INFO(0,tile,color&0x7f)
 
-	tile_info.priority = ((m107_vram_data[offs+3]&2)>>1);
-	tile_info.flags = TILE_FLIPYX((m107_vram_data[offs+3] & 0xc)>>2);
+	tile_info.priority = ((m107_vram_data[tile_index+3]&2)>>1);
+	tile_info.flags = TILE_FLIPYX((m107_vram_data[tile_index+3] & 0xc)>>2);
 }
 
-static void get_pf3_tile_info( int col, int row )
+static void get_pf3_tile_info(int tile_index)
 {
-	int offs,tile,color;
-	offs=(col*4) + (row*256);
-	offs+=pf3_vram_ptr;
+	int tile,color;
+	tile_index = 4*tile_index + pf3_vram_ptr;
 
-	tile=m107_vram_data[offs]+(m107_vram_data[offs+1]<<8);
-	if (m107_vram_data[offs+3] & 0x10) tile+=0x10000;
-	color=m107_vram_data[offs+2];
+	tile=m107_vram_data[tile_index]+(m107_vram_data[tile_index+1]<<8);
+	if (m107_vram_data[tile_index+3] & 0x10) tile+=0x10000;
+	color=m107_vram_data[tile_index+2];
 
 	SET_TILE_INFO(0,tile,color&0x7f)
-	tile_info.flags = TILE_FLIPYX((m107_vram_data[offs+3] & 0xc)>>2);
+	tile_info.flags = TILE_FLIPYX((m107_vram_data[tile_index+3] & 0xc)>>2);
 }
 
-static void get_pf4_tile_info( int col, int row )
+static void get_pf4_tile_info(int tile_index)
 {
-	int offs,tile,color;
-	offs=(col*4) + (row*256);
-	offs+=pf4_vram_ptr;
+	int tile,color;
+	tile_index = 4*tile_index + pf4_vram_ptr;
 
-	tile=m107_vram_data[offs]+(m107_vram_data[offs+1]<<8);
-	if (m107_vram_data[offs+3] & 0x10) tile+=0x10000;
-	color=m107_vram_data[offs+2];
+	tile=m107_vram_data[tile_index]+(m107_vram_data[tile_index+1]<<8);
+	if (m107_vram_data[tile_index+3] & 0x10) tile+=0x10000;
+	color=m107_vram_data[tile_index+2];
 
 	SET_TILE_INFO(0,tile,color&0x7f)
-	tile_info.flags = TILE_FLIPYX((m107_vram_data[offs+3] & 0xc)>>2);
+	tile_info.flags = TILE_FLIPYX((m107_vram_data[tile_index+3] & 0xc)>>2);
 }
 
 /*****************************************************************************/
 
-int m107_vram_r(int offset)
+READ_HANDLER( m107_vram_r )
 {
 	return m107_vram_data[offset];
 }
 
-void m107_vram_w(int offset,int data)
+WRITE_HANDLER( m107_vram_w )
 {
 	int a;
 
@@ -128,21 +124,21 @@ void m107_vram_w(int offset,int data)
 	offset&=0x3fff;
 
 	if (a==pf1_vram_ptr)
-		tilemap_mark_tile_dirty( pf1_layer,(offset/4)%64,(offset/4)/64 );
+		tilemap_mark_tile_dirty( pf1_layer,offset/4);
 
 	if (a==pf2_vram_ptr)
-		tilemap_mark_tile_dirty( pf2_layer,(offset/4)%64,(offset/4)/64 );
+		tilemap_mark_tile_dirty( pf2_layer,offset/4);
 
 	if (a==pf3_vram_ptr)
-		tilemap_mark_tile_dirty( pf3_layer,(offset/4)%64,(offset/4)/64 );
+		tilemap_mark_tile_dirty( pf3_layer,offset/4);
 
 	if (a==pf4_vram_ptr)
-		tilemap_mark_tile_dirty( pf4_layer,(offset/4)%64,(offset/4)/64 );
+		tilemap_mark_tile_dirty( pf4_layer,offset/4);
 }
 
 /*****************************************************************************/
 
-void m107_control_w(int offset,int data)
+WRITE_HANDLER( m107_control_w )
 {
 	static int last_pf1,last_pf2,last_pf3,last_pf4;
 
@@ -209,32 +205,35 @@ void m107_control_w(int offset,int data)
 int m107_vh_start(void)
 {
 	pf1_layer = tilemap_create(
-		get_pf1_tile_info,
+		get_pf1_tile_info,tilemap_scan_rows,
 		TILEMAP_TRANSPARENT,// | TILEMAP_SPLIT,
 		8,8,
 		64,64
 	);
 
 	pf2_layer = tilemap_create(
-		get_pf2_tile_info,
+		get_pf2_tile_info,tilemap_scan_rows,
 		TILEMAP_TRANSPARENT,// | TILEMAP_SPLIT,
 		8,8,
 		64,64
 	);
 
 	pf3_layer = tilemap_create(
-		get_pf3_tile_info,
+		get_pf3_tile_info,tilemap_scan_rows,
 		TILEMAP_TRANSPARENT,
 		8,8,
 		64,64
 	);
 
 	pf4_layer = tilemap_create(
-		get_pf4_tile_info,
+		get_pf4_tile_info,tilemap_scan_rows,
 		0,
 		8,8,
 		64,64
 	);
+
+	if (!pf1_layer || !pf2_layer || !pf3_layer || !pf4_layer)
+		return 1;
 
 	pf1_layer->transparent_pen = 0;
 	pf2_layer->transparent_pen = 0;
@@ -245,15 +244,6 @@ int m107_vh_start(void)
 //	pf2_layer->transmask[1] = 0xff00;
 //	pf3_layer->transmask[0] = 0x00ff;
 //	pf3_layer->transmask[1] = 0xff00;
-
-	tilemap_set_scroll_cols(pf1_layer,1);
-	tilemap_set_scroll_cols(pf2_layer,1);
-	tilemap_set_scroll_cols(pf3_layer,1);
-	tilemap_set_scroll_cols(pf4_layer,1);
-	tilemap_set_scroll_rows(pf1_layer,1);
-	tilemap_set_scroll_rows(pf2_layer,1);
-	tilemap_set_scroll_rows(pf3_layer,1);
-	tilemap_set_scroll_rows(pf4_layer,1);
 
 	pf1_vram_ptr=pf2_vram_ptr=pf3_vram_ptr=pf4_vram_ptr=0;
 	pf1_enable=pf2_enable=pf3_enable=pf4_enable=0;
@@ -417,10 +407,10 @@ static void m107_update_scroll_positions(void)
 	tilemap_set_scrolly( pf3_layer,0, (m107_control[9]<<8)+m107_control[8] );
 	tilemap_set_scrolly( pf4_layer,0, (m107_control[13]<<8)+m107_control[12] );
 
-	pf4_layer->scrolled=1;
-	pf3_layer->scrolled=1;
-	pf2_layer->scrolled=1;
-	pf1_layer->scrolled=1;
+//	pf4_layer->scrolled=1;
+//	pf3_layer->scrolled=1;
+//	pf2_layer->scrolled=1;
+//	pf1_layer->scrolled=1;
 }
 
 /*****************************************************************************/
@@ -481,7 +471,7 @@ void m107_vh_raster_partial_refresh(struct osd_bitmap *bitmap,int start_line,int
 
 /*****************************************************************************/
 
-void m107_spritebuffer_w(int offset,int data)
+WRITE_HANDLER( m107_spritebuffer_w )
 {
 	if (offset==0) {
 //		if (errorlog) fprintf(errorlog,"%04x: buffered spriteram\n",cpu_get_pc());

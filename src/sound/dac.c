@@ -108,3 +108,24 @@ int DAC_sh_start(const struct MachineSound *msound)
 
 	return 0;
 }
+
+
+WRITE_HANDLER( DAC_0_data_w )
+{
+	DAC_data_w(0,data);
+}
+
+WRITE_HANDLER( DAC_1_data_w )
+{
+	DAC_data_w(1,data);
+}
+
+WRITE_HANDLER( DAC_0_signed_data_w )
+{
+	DAC_signed_data_w(0,data);
+}
+
+WRITE_HANDLER( DAC_1_signed_data_w )
+{
+	DAC_signed_data_w(1,data);
+}

@@ -24,8 +24,8 @@ Memory Overview:
 #include "cpu/z80/z80.h"
 
 
-void tigeroad_videoctrl_w(int offset,int data);
-void tigeroad_scroll_w(int offset,int data);
+WRITE_HANDLER( tigeroad_videoctrl_w );
+WRITE_HANDLER( tigeroad_scroll_w );
 void tigeroad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -145,19 +145,19 @@ static void f1dream_protection_w(void)
 	}
 }
 
-static void f1dream_control_w(int offset,int data)
+static WRITE_HANDLER( f1dream_control_w )
 {
 	if (errorlog) fprintf(errorlog,"protection write, PC: %04x  FFE1 Value:%01x\n",cpu_get_pc(), ram[0x3fe1]);
 	f1dream_protection_w();
 }
 
-static void tigeroad_soundcmd_w(int offset,int data)
+static WRITE_HANDLER( tigeroad_soundcmd_w )
 {
 	if ((data & 0xff000000) == 0)
 		soundlatch_w(offset,(data >> 8) & 0xff);
 }
 
-static void msm5205_w(int offset,int data)
+static WRITE_HANDLER( msm5205_w )
 {
 	MSM5205_reset_w(offset,(data>>7)&1);
 	MSM5205_data_w(offset,data);

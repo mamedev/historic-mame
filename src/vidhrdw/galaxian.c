@@ -47,6 +47,7 @@ static int stars_type;		/* -1 = no stars */
 						    /*  1 = Scramble stars */
 						    /*  2 = Rescue stars (same as Scramble, but only half screen) */
 						    /*  3 = Mariner stars (same as Galaxian, but some parts are blanked */
+						    /*  5 = Jumpbug stars */
 static unsigned int stars_scroll;
 static int color_mask;
 
@@ -66,7 +67,7 @@ static int flipscreen[2];
 static int background_on;
 static unsigned char backcolor[256];
 
-static void mooncrgx_gfxextend_w      (int offset,int data);
+static WRITE_HANDLER( mooncrgx_gfxextend_w );
 
 static void mooncrst_modify_charcode  (int *charcode,int offs);
 static void  moonqsr_modify_charcode  (int *charcode,int offs);
@@ -558,7 +559,9 @@ int mariner_vh_start(void)
 
 int jumpbug_vh_start(void)
 {
-	int ret = galaxian_vh_start();
+	int ret = common_vh_start();
+
+	stars_type = 5;
 
 	modify_charcode   = jumpbug_modify_charcode;
 	modify_spritecode = jumpbug_modify_spritecode;
@@ -576,7 +579,7 @@ int zigzag_vh_start(void)
 
 
 
-void galaxian_flipx_w(int offset,int data)
+WRITE_HANDLER( galaxian_flipx_w )
 {
 	if (flipscreen[0] != (data & 1))
 	{
@@ -585,7 +588,7 @@ void galaxian_flipx_w(int offset,int data)
 	}
 }
 
-void galaxian_flipy_w(int offset,int data)
+WRITE_HANDLER( galaxian_flipy_w )
 {
 	if (flipscreen[1] != (data & 1))
 	{
@@ -594,14 +597,14 @@ void galaxian_flipy_w(int offset,int data)
 	}
 }
 
-void hotshock_flipscreen_w(int offset,int data)
+WRITE_HANDLER( hotshock_flipscreen_w )
 {
 	galaxian_flipx_w(offset, data);
 	galaxian_flipy_w(offset, data);
 }
 
 
-void galaxian_attributes_w(int offset,int data)
+WRITE_HANDLER( galaxian_attributes_w )
 {
 	if ((offset & 1) && galaxian_attributesram[offset] != data)
 	{
@@ -616,7 +619,7 @@ void galaxian_attributes_w(int offset,int data)
 }
 
 
-void scramble_background_w(int offset, int data)
+WRITE_HANDLER( scramble_background_w )
 {
 	if (background_on != data)
     {
@@ -626,21 +629,21 @@ void scramble_background_w(int offset, int data)
 }
 
 
-void galaxian_stars_w(int offset,int data)
+WRITE_HANDLER( galaxian_stars_w )
 {
 	stars_on = (data & 1);
 	stars_scroll = 0;
 }
 
 
-void mooncrst_gfxextend_w(int offset,int data)
+WRITE_HANDLER( mooncrst_gfxextend_w )
 {
 	if (data) mooncrst_gfxextend |= (1 << offset);
 	else mooncrst_gfxextend &= ~(1 << offset);
 }
 
 
-static void mooncrgx_gfxextend_w(int offset,int data)
+static WRITE_HANDLER( mooncrgx_gfxextend_w )
 {
   /* for the Moon Cresta bootleg on Galaxian H/W the gfx_extend is
      located at 0x6000-0x6002.  Also, 0x6000 and 0x6001 are reversed. */
@@ -651,7 +654,7 @@ static void mooncrgx_gfxextend_w(int offset,int data)
 	mooncrst_gfxextend_w(offset, data);
 }
 
-void pisces_gfxbank_w(int offset,int data)
+WRITE_HANDLER( pisces_gfxbank_w )
 {
 	if (pisces_gfxbank != (data & 1))
 	{
@@ -660,7 +663,7 @@ void pisces_gfxbank_w(int offset,int data)
 	}
 }
 
-void jumpbug_gfxbank_w(int offset,int data)
+WRITE_HANDLER( jumpbug_gfxbank_w )
 {
 	if (jumpbug_gfxbank[offset] != data)
 	{
@@ -1031,6 +1034,45 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				}
 			}
 			break;
+
+		case 5:	/* Jumpbug stars */
+			for (offs = 0;offs < total_stars;offs++)
+			{
+				int x,y;
+
+
+				x = ((stars[offs].x + stars_scroll) % 512) / 2;
+				y = (stars[offs].y + (stars_scroll + stars[offs].x) / 512) % 256;
+
+				if (y >= Machine->drv->visible_area.min_y &&
+					y <= Machine->drv->visible_area.max_y)
+				{
+					/* no stars in the status area */
+					if (x >= 240)  continue;
+
+					/* Determine when to skip plotting */
+					if ((y & 1) ^ ((x >> 4) & 1))
+					{
+						switch (stars_blink)
+						{
+						case 0:
+							if (!(stars[offs].code & 1))  continue;
+							break;
+						case 1:
+							if (!(stars[offs].code & 4))  continue;
+							break;
+						case 2:
+							if (!(stars[offs].x & 4))  continue;
+							break;
+						case 3:
+							/* Always plot */
+							break;
+						}
+						plot_star(bitmap, x, y, stars[offs].code);
+					}
+				}
+			}
+			break;
 		}
 	}
 }
@@ -1079,4 +1121,21 @@ int hunchbks_vh_interrupt(void)
 	cpu_set_irq_line(0,0,PULSE_LINE);
 
 	return ignore_interrupt();
+}
+
+int jumpbug_vh_interrupt(void)
+{
+	static int blink_count;
+
+
+	stars_scroll++;
+
+	blink_count++;
+	if (blink_count >= 45)
+	{
+		blink_count = 0;
+		stars_blink = (stars_blink + 1) & 3;
+	}
+
+	return nmi_interrupt();
 }

@@ -10,10 +10,10 @@ struct AY8910interface
 	int num;	/* total number of 8910 in the machine */
 	int baseclock;
 	int mixing_level[MAX_8910];
-	int (*portAread[MAX_8910])(int offset);
-	int (*portBread[MAX_8910])(int offset);
-	void (*portAwrite[MAX_8910])(int offset,int data);
-	void (*portBwrite[MAX_8910])(int offset,int data);
+	mem_read_handler portAread[MAX_8910];
+	mem_read_handler portBread[MAX_8910];
+	mem_write_handler portAwrite[MAX_8910];
+	mem_write_handler portBwrite[MAX_8910];
 	void (*handler[MAX_8910])(int irq);	/* IRQ handler for the YM2203 */
 };
 
@@ -27,23 +27,23 @@ void AY8910Write(int chip,int a,int data);
 int AY8910Read(int chip);
 
 
-int AY8910_read_port_0_r(int offset);
-int AY8910_read_port_1_r(int offset);
-int AY8910_read_port_2_r(int offset);
-int AY8910_read_port_3_r(int offset);
-int AY8910_read_port_4_r(int offset);
+READ_HANDLER( AY8910_read_port_0_r );
+READ_HANDLER( AY8910_read_port_1_r );
+READ_HANDLER( AY8910_read_port_2_r );
+READ_HANDLER( AY8910_read_port_3_r );
+READ_HANDLER( AY8910_read_port_4_r );
 
-void AY8910_control_port_0_w(int offset,int data);
-void AY8910_control_port_1_w(int offset,int data);
-void AY8910_control_port_2_w(int offset,int data);
-void AY8910_control_port_3_w(int offset,int data);
-void AY8910_control_port_4_w(int offset,int data);
+WRITE_HANDLER( AY8910_control_port_0_w );
+WRITE_HANDLER( AY8910_control_port_1_w );
+WRITE_HANDLER( AY8910_control_port_2_w );
+WRITE_HANDLER( AY8910_control_port_3_w );
+WRITE_HANDLER( AY8910_control_port_4_w );
 
-void AY8910_write_port_0_w(int offset,int data);
-void AY8910_write_port_1_w(int offset,int data);
-void AY8910_write_port_2_w(int offset,int data);
-void AY8910_write_port_3_w(int offset,int data);
-void AY8910_write_port_4_w(int offset,int data);
+WRITE_HANDLER( AY8910_write_port_0_w );
+WRITE_HANDLER( AY8910_write_port_1_w );
+WRITE_HANDLER( AY8910_write_port_2_w );
+WRITE_HANDLER( AY8910_write_port_3_w );
+WRITE_HANDLER( AY8910_write_port_4_w );
 
 int AY8910_sh_start(const struct MachineSound *msound);
 

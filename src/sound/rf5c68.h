@@ -33,10 +33,10 @@ struct RF5C68interface
 /******************************************/
 int RF5C68_sh_start( const struct MachineSound *msound );
 void RF5C68_sh_stop( void );
-void RF5C68WriteReg( int r, int v );
+WRITE_HANDLER( RF5C68_reg_w );
 
-int RF5C68ReadMem( int r );
-void RF5C68WriteMem( int r, int v );
+READ_HANDLER( RF5C68_r );
+WRITE_HANDLER( RF5C68_w );
 
 
 #endif

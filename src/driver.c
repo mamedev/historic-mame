@@ -591,13 +591,14 @@ TESTDRIVER( herocast )
 	DRIVER( medlanes )	/* [1977?] */
 
 	/* Midway "Astrocade" games */
-	DRIVER( wow )		/* (c) 1980 */
-	DRIVER( robby )		/* (c) 1981 */
-	DRIVER( gorf )		/* (c) 1981 */
-	DRIVER( gorfpgm1 )	/* (c) 1981 */
 	DRIVER( seawolf2 )
 	DRIVER( spacezap )	/* (c) 1980 */
 	DRIVER( ebases )
+	DRIVER( wow )		/* (c) 1980 */
+	DRIVER( gorf )		/* (c) 1981 */
+	DRIVER( gorfpgm1 )	/* (c) 1981 */
+	DRIVER( robby )		/* (c) 1981 Bally Midway */
+TESTDRIVER( profpac )	/* (c) 1983 Bally Midway */
 
 	/* Bally Midway MCR games */
 	/* MCR1 */
@@ -637,6 +638,7 @@ TESTDRIVER( herocast )
 	DRIVER( zwackery )	/* (c) 1984 */
 	DRIVER( xenophob )	/* (c) 1987 */
 	DRIVER( spyhunt2 )	/* (c) 1987 */
+	DRIVER( spyhnt2a )	/* (c) 1987 */
 	DRIVER( blasted )	/* (c) 1988 */
 	DRIVER( archrivl )	/* (c) 1989 */
 	DRIVER( archriv2 )	/* (c) 1989 */
@@ -710,8 +712,8 @@ Six Flags (?)
 	DRIVER( kikcubic )	/* (c) 1988 (Japan) */
 	/* M72 (and derivatives) */
 	DRIVER( rtype )		/* (c) 1987 (Japan) */
+	DRIVER( rtypepj )	/* (c) 1987 (Japan) */
 	DRIVER( rtypeu )	/* (c) 1987 + Nintendo USA license (US) */
-	DRIVER( rtypeb )	/* bootleg */
 	DRIVER( bchopper )	/* (c) 1987 */
 	DRIVER( mrheli )	/* (c) 1987 (Japan) */
 	DRIVER( nspirit )	/* (c) 1988 */
@@ -727,8 +729,10 @@ Six Flags (?)
 	DRIVER( hharryu )	/* (c) 1990 Irem America (US) */
 	DRIVER( dkgensan )	/* (c) 1990 (Japan) */
 TESTDRIVER( kengo )
+	DRIVER( poundfor )	/* (c) 1990 (World) */
+	DRIVER( poundfou )	/* (c) 1990 Irem America (US) */
+	DRIVER( airduel )	/* (c) 1990 (Japan) */
 	DRIVER( gallop )	/* (c) 1991 (Japan) */
-TESTDRIVER( poundfor )
 	/* not M72, but same sound hardware */
 	DRIVER( sichuan2 )	/* (c) 1989 Tamtex */
 	DRIVER( sichuana )	/* (c) 1989 Tamtex */
@@ -1091,6 +1095,7 @@ TESTDRIVER( defcomnd )	/* bootleg */
 	DRIVER( sidearjp )	/* 12/1986 (c) 1986 (Japan) */
 	DRIVER( turtship )	/* (c) 1988 Philco (NOT A CAPCOM GAME but runs on modified Sidearms hardware) */
 	DRIVER( dyger )		/* (c) 1989 Philco (NOT A CAPCOM GAME but runs on modified Sidearms hardware) */
+	DRIVER( dygera )	/* (c) 1989 Philco (NOT A CAPCOM GAME but runs on modified Sidearms hardware) */
 	DRIVER( avengers )	/*  2/1987 (c) 1987 (US) */
 	DRIVER( avenger2 )	/*  2/1987 (c) 1987 (US) */
 	DRIVER( bionicc )	/*  3/1987 (c) 1987 (US) */
@@ -1758,6 +1763,7 @@ TESTDRIVER( funkyjet )	/* MAT (c) 1992 Mitchell */
 	DRIVER( bombjac2 )	/* (c) 1984 Tehkan */
 	DRIVER( pbaction )	/* (c) 1985 Tehkan */
 	DRIVER( pbactio2 )	/* (c) 1985 Tehkan */
+	/* 6009 Tank Busters */
 	/* 6011 Pontoon (c) 1985 Tehkan is a gambling game - removed */
 	DRIVER( tehkanwc )	/* (c) 1985 Tehkan */
 	DRIVER( gridiron )	/* (c) 1985 Tehkan */
@@ -1769,16 +1775,13 @@ TESTDRIVER( funkyjet )	/* MAT (c) 1992 Mitchell */
 	DRIVER( gemini )	/* (c) 1987 Tecmo */
 	DRIVER( silkworm )	/* 6217 - (c) 1988 Tecmo */
 	DRIVER( silkwrm2 )	/* 6217 - (c) 1988 Tecmo */
-	DRIVER( gaiden )	/* 6215 - (c) 1988 Tecmo */
-	DRIVER( shadoww )	/* 6215 - (c) 1988 Tecmo */
+	DRIVER( gaiden )	/* 6215 - (c) 1988 Tecmo (World) */
+	DRIVER( shadoww )	/* 6215 - (c) 1988 Tecmo (US) */
+	DRIVER( ryukendn )	/* 6215 - (c) 1989 Tecmo (Japan) */
 	DRIVER( tknight )	/* (c) 1989 Tecmo */
 	DRIVER( wildfang )	/* (c) 1989 Tecmo */
 	DRIVER( wc90 )		/* (c) 1989 Tecmo */
 	DRIVER( wc90b )		/* bootleg */
-
-/* Other Tehkan games:
-6009 Tank Busters
-*/
 
 	/* Konami bitmap games */
 	DRIVER( tutankhm )	/* GX350 (c) 1982 Konami */
@@ -1907,6 +1910,8 @@ TESTDRIVER( xexex )		/* GX067 (c) 1991 */
 	DRIVER( vendettj )	/* GX081 (c) 1991 (Japan) */
 	DRIVER( wecleman )	/* GX602 (c) 1986 */
 	DRIVER( hotchase )	/* GX763 (c) 1988 */
+TESTDRIVER( chqflag )	/* GX717 (c) 1988 */
+TESTDRIVER( chqflagj )	/* GX717 (c) 1988 (Japan) */
 	DRIVER( ultraman )	/* GX910 (c) 1991 Banpresto/Bandai */
 
 	/* Konami "Nemesis hardware" games */
@@ -1954,6 +1959,7 @@ TESTDRIVER( xexex )		/* GX067 (c) 1991 */
 	DRIVER( blswhstl )	/* GX060 (c) 1991 */
 	DRIVER( detatwin )	/* GX060 (c) 1991 (Japan) */
 TESTDRIVER( glfgreat )	/* GX061 (c) 1991 */
+TESTDRIVER( glfgretj )	/* GX061 (c) 1991 (Japan) */
 	DRIVER( tmnt2 )		/* GX063 (c) 1991 (US) */
 	DRIVER( tmnt22p )	/* GX063 (c) 1991 (US) */
 	DRIVER( tmnt2a )	/* GX063 (c) 1991 (Asia) */
@@ -2084,7 +2090,7 @@ Konami System GX game list
 	DRIVER( qwakprot )	/* (c) 1982 */
 
 	/* "Kangaroo hardware" games */
-TESTDRIVER( fnkyfish )	/* (c) 1981 Sun Electronics */
+	DRIVER( fnkyfish )	/* (c) 1981 Sun Electronics */
 	DRIVER( kangaroo )	/* (c) 1982 Sun Electronics */
 	DRIVER( kangaroa )	/* (c) 1982 Atari */
 	DRIVER( kangarob )	/* bootleg */
@@ -2518,8 +2524,16 @@ TESTDRIVER( narc3 )		/* (c) 1988 Williams */
 	DRIVER( soldamj )	/* (c) 1992 (Japan) */
 
 	/* Video System Co. games */
-	DRIVER( pspikes )	/* (c) 1991 */
+	DRIVER( rabiolep )	/* (c) 1987 V-System Co. (Japan) */
+	DRIVER( rpunch )	/* (c) 1987 V-System Co. + Bally/Midway/Sente license (US) */
+	DRIVER( svolley )	/* (c) 1989 V-System Co. (Japan) */
+	DRIVER( svolleyk )	/* (c) 1989 V-System Co. (Japan) */
+	DRIVER( pspikes )	/* (c) 1991 (Korea) */
 	DRIVER( svolly91 )	/* (c) 1991 */
+	DRIVER( karatblz )	/* (c) 1991 */
+	DRIVER( karatblu )	/* (c) 1991 (US) */
+	DRIVER( spinlbrk )	/* (c) 1991 */
+	DRIVER( spinlbrj )	/* (c) 1991 */
 	DRIVER( turbofrc )	/* (c) 1991 */
 	DRIVER( aerofgt )	/* (c) 1992 */
 	DRIVER( aerofgtb )	/* (c) 1992 */
@@ -2590,6 +2604,19 @@ TESTDRIVER( shogwarr )
 	DRIVER( galpanic )	/* (c) 1990 Kaneko */
 	DRIVER( airbustr )	/* (c) 1990 Kaneko */
 
+	/* Seta games */
+	DRIVER( tndrcade )	/* UA-0 */
+	DRIVER( twineagl )	/* UA-2 (c) 1988 + Taito license */
+	DRIVER( downtown )	/* UD-2 (c) 1989 + Romstar or Taito license (DSW) */
+	DRIVER( usclssic )	/* UE   (c) 1989 + Romstar or Taito license (DSW) */
+TESTDRIVER( calibr50 )	/* UH   */
+	DRIVER( arbalest )	/* UK   (c) 1989 + Jordan, Romstar or Taito license (DSW) */
+	DRIVER( metafox )	/* UP   (c) 1989 + Jordan, Romstar or Taito license (DSW) */
+	DRIVER( zingzip )	/* UY   (c) 1992 Allumer + Tecmo */
+TESTDRIVER( msgundam )
+	DRIVER( wrofaero )	/* (c) 1993 Yang Cheng */
+
+
 	DRIVER( spacefb )	/* (c) [1980?] Nintendo */
 	DRIVER( spacefbg )	/* 834-0031 (c) 1980 Gremlin */
 	DRIVER( spacefbb )	/* bootleg */
@@ -2637,6 +2664,8 @@ TESTDRIVER( dlair )
 	DRIVER( aztarac )	/* (c) 1983 Centuri (vector game) */
 	DRIVER( mole )		/* (c) 1982 Yachiyo Electronics, Ltd. */
 	DRIVER( gotya )		/* (c) 1981 Game-A-Tron */
+	DRIVER( mrjong )	/* (c) 1983 Kiwako */
+	DRIVER( crazyblk )	/* (c) 1983 Kiwako + ECI license */
 
 
 #endif /* NEOMAME */

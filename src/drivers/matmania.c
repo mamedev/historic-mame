@@ -32,44 +32,44 @@ extern int matmania_videoram3_size;
 extern unsigned char *matmania_scroll;
 extern unsigned char *matmania_pageselect;
 
-void matmania_paletteram_w(int offset,int data);
+WRITE_HANDLER( matmania_paletteram_w );
 void matmania_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void matmania_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void maniach_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void matmania_videoram3_w(int offset,int data);
-void matmania_colorram3_w(int offset,int data);
+WRITE_HANDLER( matmania_videoram3_w );
+WRITE_HANDLER( matmania_colorram3_w );
 int matmania_vh_start(void);
 void matmania_vh_stop(void);
 void matmania_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-int maniach_68705_portA_r(int offset);
-void maniach_68705_portA_w(int offset,int data);
-int maniach_68705_portB_r(int offset);
-void maniach_68705_portB_w(int offset,int data);
-int maniach_68705_portC_r(int offset);
-void maniach_68705_portC_w(int offset,int data);
-void maniach_68705_ddrA_w(int offset,int data);
-void maniach_68705_ddrB_w(int offset,int data);
-void maniach_68705_ddrC_w(int offset,int data);
-void maniach_mcu_w(int offset,int data);
-int maniach_mcu_r(int offset);
-int maniach_mcu_status_r(int offset);
+READ_HANDLER( maniach_68705_portA_r );
+WRITE_HANDLER( maniach_68705_portA_w );
+READ_HANDLER( maniach_68705_portB_r );
+WRITE_HANDLER( maniach_68705_portB_w );
+READ_HANDLER( maniach_68705_portC_r );
+WRITE_HANDLER( maniach_68705_portC_w );
+WRITE_HANDLER( maniach_68705_ddrA_w );
+WRITE_HANDLER( maniach_68705_ddrB_w );
+WRITE_HANDLER( maniach_68705_ddrC_w );
+WRITE_HANDLER( maniach_mcu_w );
+READ_HANDLER( maniach_mcu_r );
+READ_HANDLER( maniach_mcu_status_r );
 
 
 
-void matmania_sh_command_w (int offset, int data)
+WRITE_HANDLER( matmania_sh_command_w )
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(1,M6502_INT_IRQ);
 }
 
-void matmania_dac_w(int offset,int data)
+WRITE_HANDLER( matmania_dac_w )
 {
 	DAC_signed_data_w(0,data);
 }
 
 
-void maniach_sh_command_w(int offset,int data)
+WRITE_HANDLER( maniach_sh_command_w )
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(1,M6809_INT_IRQ);

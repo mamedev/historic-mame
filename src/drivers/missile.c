@@ -141,15 +141,15 @@ Off Off 						1 coin 2 plays
 extern unsigned char *missile_video2ram;
 
 void missile_init_machine(void);
-int  missile_r(int offset);
-void missile_w(int offset, int data);
+READ_HANDLER( missile_r );
+WRITE_HANDLER( missile_w );
 
 int  missile_vh_start(void);
 void missile_vh_stop(void);
 void missile_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void missile_video_3rd_bit_w (int offset, int data);
-void missile_video2_w (int offset, int data);
+WRITE_HANDLER( missile_video_3rd_bit_w );
+WRITE_HANDLER( missile_video2_w );
 
 
 static struct MemoryReadAddress readmem[] =

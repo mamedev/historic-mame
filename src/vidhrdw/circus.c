@@ -59,12 +59,12 @@ void circus_vh_stop(void)
 /***************************************************************************
 ***************************************************************************/
 
-void circus_clown_x_w(int offset, int data)
+WRITE_HANDLER( circus_clown_x_w )
 {
 	clown_x = 240-data;
 }
 
-void circus_clown_y_w(int offset, int data)
+WRITE_HANDLER( circus_clown_y_w )
 {
 	clown_y = 240-data;
 }
@@ -73,7 +73,7 @@ void circus_clown_y_w(int offset, int data)
 /* and also is used to enable the amplifier and trigger the   */
 /* discrete circuitry that produces sound effects and music   */
 
-void circus_clown_z_w(int offset, int data)
+WRITE_HANDLER( circus_clown_z_w )
 {
 	clown_z = (data & 0x0f);
 

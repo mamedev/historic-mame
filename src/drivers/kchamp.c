@@ -114,21 +114,21 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }
 };
 
-static void control_w( int offset, int data ) {
+static WRITE_HANDLER( control_w ) {
 	nmi_enable = data & 1;
 }
 
-static void sound_reset_w( int offset, int data ) {
+static WRITE_HANDLER( sound_reset_w ) {
 	if ( !( data & 1 ) )
 		cpu_set_reset_line(1,PULSE_LINE);
 }
 
-static void sound_control_w( int offset, int data ) {
+static WRITE_HANDLER( sound_control_w ) {
 	MSM5205_reset_w( 0, !( data & 1 ) );
 	sound_nmi_enable = ( ( data >> 1 ) & 1 );
 }
 
-static void sound_command_w( int offset, int data ) {
+static WRITE_HANDLER( sound_command_w ) {
 	soundlatch_w( 0, data );
 	cpu_cause_interrupt( 1, 0xff );
 }
@@ -136,7 +136,7 @@ static void sound_command_w( int offset, int data ) {
 static int msm_data = 0;
 static int msm_play_lo_nibble = 1;
 
-static void sound_msm_w( int offset, int data ) {
+static WRITE_HANDLER( sound_msm_w ) {
 	msm_data = data;
 	msm_play_lo_nibble = 1;
 }
@@ -216,12 +216,12 @@ static struct MemoryWriteAddress kc_sound_writemem[] =
 	{ -1 }
 };
 
-static int sound_reset_r( int offset ) {
+static READ_HANDLER( sound_reset_r ) {
 	cpu_set_reset_line(1,PULSE_LINE);
 	return 0;
 }
 
-static void kc_sound_control_w( int offset, int data ) {
+static WRITE_HANDLER( kc_sound_control_w ) {
 	if ( offset == 0 )
 		sound_nmi_enable = ( ( data >> 7 ) & 1 );
 //	else
@@ -258,7 +258,7 @@ static struct IOWritePort kc_sound_writeport[] =
 	{ 0x01, 0x01, AY8910_control_port_0_w },
 	{ 0x02, 0x02, AY8910_write_port_1_w },
 	{ 0x03, 0x03, AY8910_control_port_1_w },
-	{ 0x04, 0x04, DAC_data_w },
+	{ 0x04, 0x04, DAC_0_data_w },
 	{ 0x05, 0x05, kc_sound_control_w },
 	{ -1 }	/* end of table */
 };

@@ -141,10 +141,10 @@ Here is a complete list of the ROMs:
 
 /* from machine */
 void turbo_init_machine(void);
-int turbo_8279_r(int offset);
-int turbo_collision_r(int offset);
-void turbo_8279_w(int offset, int data);
-void turbo_coin_and_lamp_w(int offset, int data);
+READ_HANDLER( turbo_8279_r );
+READ_HANDLER( turbo_collision_r );
+WRITE_HANDLER( turbo_8279_w );
+WRITE_HANDLER( turbo_coin_and_lamp_w );
 
 /* from vidhrdw */
 extern UINT8 *turbo_sprite_position;
@@ -154,7 +154,7 @@ void turbo_vh_stop(void);
 void turbo_vh_convert_color_prom(UINT8 *palette, UINT16 *colortable, const UINT8 *color_prom);
 void turbo_vh_eof(void);
 void turbo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-void turbo_collision_clear_w(int offset, int data);
+WRITE_HANDLER( turbo_collision_clear_w );
 
 
 /*********************************************************************

@@ -67,7 +67,7 @@ void bagman_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 
 
-void bagman_flipscreen_w(int offset,int data)
+WRITE_HANDLER( bagman_flipscreen_w )
 {
 	if ((data & 1) != flipscreen[offset])
 	{

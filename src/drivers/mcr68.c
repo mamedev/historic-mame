@@ -5,7 +5,7 @@
 	Currently implemented:
 		* Zwackery (Chip Squeak Deluxe)
 		* Xenopohobe (Sounds Good)
-		* Spy Hunter 2 (Turbo Chip Squeak)
+		* Spy Hunter 2 (Sounds Good/Turbo Chip Squeak)
 		* Blasted (Sounds Good)
 		* Arch Rivals
 		* Tri-Sports
@@ -61,13 +61,13 @@ extern INT8 mcr68_sprite_xoffset;
 static UINT8 *control_word;
 
 
-void mcr68_videoram_w(int offset, int data);
-void mcr68_paletteram_w(int offset, int data);
+WRITE_HANDLER( mcr68_videoram_w );
+WRITE_HANDLER( mcr68_paletteram_w );
 void mcr68_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
-void zwackery_videoram_w(int offset, int data);
-void zwackery_paletteram_w(int offset, int data);
-void zwackery_spriteram_w(int offset, int data);
+WRITE_HANDLER( zwackery_videoram_w );
+WRITE_HANDLER( zwackery_paletteram_w );
+WRITE_HANDLER( zwackery_spriteram_w );
 void zwackery_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
 void zwackery_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
@@ -79,7 +79,7 @@ void zwackery_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
  *
  *************************************/
 
-int zwackery_port_2_r(int offset)
+READ_HANDLER( zwackery_port_2_r )
 {
 	int result = input_port_2_r(offset);
 	int wheel = input_port_5_r(offset);
@@ -88,7 +88,7 @@ int zwackery_port_2_r(int offset)
 }
 
 
-static int zwackery_6840_r(int offset)
+static READ_HANDLER( zwackery_6840_r )
 {
 	/* Zwackery does a timer test:                          */
 	/* It loads $1388 into one of the timers clocked by E   */
@@ -110,7 +110,7 @@ static int zwackery_6840_r(int offset)
  *
  *************************************/
 
-static void xenophobe_control_w(int offset, int data)
+static WRITE_HANDLER( xenophobe_control_w )
 {
 	int oldword = READ_WORD(&control_word[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -128,13 +128,12 @@ static void xenophobe_control_w(int offset, int data)
  *
  *************************************/
 
-static void blasted_control_w(int offset, int data)
+static WRITE_HANDLER( blasted_control_w )
 {
 	int oldword = READ_WORD(&control_word[offset]);
 	int newword = COMBINE_WORD(oldword, data);
 	WRITE_WORD(&control_word[offset], newword);
 
-	if (errorlog) fprintf(errorlog, "extcontrol = %04X\n", data);
 /*	soundsgood_reset_w(~newword & 0x0020);*/
 	soundsgood_data_w(offset, (newword >> 8) & 0x1f);
 }
@@ -147,27 +146,33 @@ static void blasted_control_w(int offset, int data)
  *
  *************************************/
 
-static int spyhunt2_port_0_r(int offset)
+static READ_HANDLER( spyhunt2_port_0_r )
 {
 	int result = input_port_0_r(offset);
 	int which = (READ_WORD(control_word) >> 3) & 3;
 	int analog = readinputport(3 + which);
-	return result | (analog << 8);
+	return result | ((soundsgood_status_r(0) & 1) << 5) | (analog << 8);
 }
 
 
-static void spyhunt2_control_w(int offset, int data)
+static READ_HANDLER( spyhunt2_port_1_r )
+{
+	int result = input_port_1_r(offset);
+	return result | ((turbocs_status_r(0) & 1) << 7);
+}
+
+
+static WRITE_HANDLER( spyhunt2_control_w )
 {
 	int oldword = READ_WORD(&control_word[offset]);
 	int newword = COMBINE_WORD(oldword, data);
 	WRITE_WORD(&control_word[offset], newword);
 
-/*	turbocs_reset_w(~newword & 0x0080);*/
+/* 	turbocs_reset_w(~newword & 0x0080);*/
 	turbocs_data_w(offset, (newword >> 8) & 0x001f);
 
-	/* we don't have the Sounds Good ROMs, so just make sure it's halted */
-	timer_suspendcpu(2, 1, SUSPEND_REASON_DISABLE);
 /*	soundsgood_reset_w(~newword & 0x2000);*/
+	soundsgood_data_w(offset, (newword >> 8) & 0x001f);
 }
 
 
@@ -178,7 +183,7 @@ static void spyhunt2_control_w(int offset, int data)
  *
  *************************************/
 
-static int archrivl_port_1_r(int offset)
+static READ_HANDLER( archrivl_port_1_r )
 {
 	int joystick = input_port_3_r(offset);
 	int result = 0;
@@ -208,7 +213,7 @@ static int archrivl_port_1_r(int offset)
 }
 
 
-static void archrivl_control_w(int offset, int data)
+static WRITE_HANDLER( archrivl_control_w )
 {
 	int oldword = READ_WORD(&control_word[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -227,7 +232,7 @@ static void archrivl_control_w(int offset, int data)
  *************************************/
 
 static UINT8 protection_data[5];
-static void pigskin_protection_w(int offset, int data)
+static WRITE_HANDLER( pigskin_protection_w )
 {
 	/* ignore upper-byte only */
 	if (data & 0x00ff0000) return;
@@ -243,7 +248,7 @@ static void pigskin_protection_w(int offset, int data)
 }
 
 
-static int pigskin_protection_r(int offset)
+static READ_HANDLER( pigskin_protection_r )
 {
 	/* based on the last 5 bytes return a value */
 	if (protection_data[4] == 0xe3 && protection_data[3] == 0x94)
@@ -263,7 +268,7 @@ static int pigskin_protection_r(int offset)
 }
 
 
-static int pigskin_port_1_r(int offset)
+static READ_HANDLER( pigskin_port_1_r )
 {
 	int joystick = input_port_3_r(offset);
 	int result = input_port_1_r(offset);
@@ -280,7 +285,7 @@ static int pigskin_port_1_r(int offset)
 }
 
 
-static int pigskin_port_2_r(int offset)
+static READ_HANDLER( pigskin_port_2_r )
 {
 	int joystick = input_port_3_r(offset);
 	int result = input_port_2_r(offset);
@@ -304,7 +309,7 @@ static int pigskin_port_2_r(int offset)
  *
  *************************************/
 
-static int trisport_port_1_r(int offset)
+static READ_HANDLER( trisport_port_1_r )
 {
 	int xaxis = (INT8)input_port_3_r(offset);
 	int yaxis = (INT8)input_port_4_r(offset);
@@ -595,7 +600,7 @@ INPUT_PORTS_START( spyhunt2 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* SG status */
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_SERVICE )
 	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
 	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -608,7 +613,7 @@ INPUT_PORTS_START( spyhunt2 )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 ) /* 1st gear */
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 ) /* 2nd gear */
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON7 | IPF_PLAYER1 ) /* 3rd gear */
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNUSED )               /* TCS status */
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 ) /* Left Trigger */
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 ) /* Left Button */
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 ) /* Right Trigger */
@@ -1278,6 +1283,32 @@ ROM_END
 
 ROM_START( spyhunt2 )
 	ROM_REGION( 0x40000, REGION_CPU1 )
+	ROM_LOAD_EVEN( "sh23c.bin",  0x00000, 0x10000, 0x30b91c90 )
+	ROM_LOAD_ODD ( "sh23b.bin",  0x00000, 0x10000, 0xf64513c6 )
+	ROM_LOAD_EVEN( "sh22c.bin",  0x20000, 0x10000, 0x8ee65009 )
+	ROM_LOAD_ODD ( "sh22b.bin",  0x20000, 0x10000, 0x850c21ad )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )  /* 64k for the Turbo Cheap Squeak */
+	ROM_LOAD( "turbo-cs.u5", 0x08000, 0x4000, 0x4b1d8a66 )
+	ROM_LOAD( "turbo-cs.u4", 0x0c000, 0x4000, 0x3722ce48 )
+
+	ROM_REGION( 0x40000, REGION_CPU3 )  /* Sounds Good board */
+	ROM_LOAD_EVEN( "sh2u7.bin",  0x00000, 0x10000, 0x02362ea4 )
+	ROM_LOAD_ODD ( "sh2u17.bin", 0x00000, 0x10000, 0xe29a2c37 )
+
+	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sh2bg0.bin",  0x00000, 0x08000, 0xcb3c3d8e )
+	ROM_LOAD( "sh2bg1.bin",  0x10000, 0x08000, 0x029d4af1 )
+
+	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "fg0.7j",   0x00000, 0x20000, 0x55ce12ea )
+	ROM_LOAD( "fg1.8j",   0x20000, 0x20000, 0x692afb67 )
+	ROM_LOAD( "fg2.9j",   0x40000, 0x20000, 0xf1aba383 )
+	ROM_LOAD( "fg3.10j",  0x60000, 0x20000, 0xd3475ff8 )
+ROM_END
+
+ROM_START( spyhnt2a )
+	ROM_REGION( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "3c",  0x00000, 0x10000, 0x5b92aadf )
 	ROM_LOAD_ODD ( "3b",  0x00000, 0x10000, 0x6ed0a25f )
 	ROM_LOAD_EVEN( "2c",  0x20000, 0x10000, 0xbc834f3f )
@@ -1288,10 +1319,8 @@ ROM_START( spyhunt2 )
 	ROM_LOAD( "turbo-cs.u4", 0x0c000, 0x4000, 0x3722ce48 )
 
 	ROM_REGION( 0x40000, REGION_CPU3 )  /* Sounds Good board */
-	ROM_LOAD_EVEN( "u7",  0x00000, 0x10000, 0x00000000 )
-	ROM_LOAD_ODD ( "u17", 0x00000, 0x10000, 0x00000000 )
-	ROM_LOAD_EVEN( "u8",  0x20000, 0x10000, 0x00000000 )
-	ROM_LOAD_ODD ( "u18", 0x20000, 0x10000, 0x00000000 )
+	ROM_LOAD_EVEN( "sh2u7.bin",  0x00000, 0x10000, 0x02362ea4 )
+	ROM_LOAD_ODD ( "sh2u17.bin", 0x00000, 0x10000, 0xe29a2c37 )
 
 	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "bg0.11d",  0x00000, 0x08000, 0x81efef7a )
@@ -1462,8 +1491,6 @@ static void init_xenophob(void)
 
 static void init_spyhunt2(void)
 {
-	int i;
-
 	MCR_CONFIGURE_NO_HISCORE;
 	MCR_CONFIGURE_SOUND(MCR_TURBO_CHIP_SQUEAK | MCR_SOUNDS_GOOD);
 
@@ -1478,15 +1505,7 @@ static void init_spyhunt2(void)
 	/* analog port handling is a bit tricky */
 	install_mem_write_handler(0, 0x0c0000, 0x0cffff, spyhunt2_control_w);
 	install_mem_read_handler(0, 0x0d0000, 0x0dffff, spyhunt2_port_0_r);
-
-	/* since we don't have ROMs for the Sounds Good board yet, install an */
-	/* infinite loop in the sound CPU */
-	for (i = 0; i < 0x100; i += 4)
-	{
-		WRITE_WORD(&memory_region(REGION_CPU3)[i + 0x0000], 0x0000);
-		WRITE_WORD(&memory_region(REGION_CPU3)[i + 0x0002], 0x0100);
-	}
-	WRITE_WORD(&memory_region(REGION_CPU3)[0x0100], 0x60fe);
+	install_mem_read_handler(0, 0x0e0000, 0x0effff, spyhunt2_port_1_r);
 
 	rom_decode();
 }
@@ -1610,7 +1629,8 @@ static void init_trisport(void)
 
 GAME( 1984, zwackery, 0,        zwackery, zwackery, zwackery, ROT0,   "Bally Midway", "Zwackery" )
 GAME( 1987, xenophob, 0,        xenophob, xenophob, xenophob, ROT0,   "Bally Midway", "Xenophobe" )
-GAME( 1987, spyhunt2, 0,        spyhunt2, spyhunt2, spyhunt2, ROT0,   "Bally Midway", "Spy Hunter 2" )
+GAME( 1987, spyhunt2, 0,        spyhunt2, spyhunt2, spyhunt2, ROT0,   "Bally Midway", "Spy Hunter 2 (rev 2)" )
+GAME( 1987, spyhnt2a, spyhunt2, spyhunt2, spyhunt2, spyhunt2, ROT0,   "Bally Midway", "Spy Hunter 2 (rev 1)" )
 GAME( 1988, blasted,  0,        xenophob, blasted,  blasted,  ROT0,   "Bally Midway", "Blasted" )
 GAME( 1989, archrivl, 0,        archrivl, archrivl, archrivl, ROT0,   "Bally Midway", "Arch Rivals (rev 4.0)" )
 GAME( 1989, archriv2, archrivl, archrivl, archrivl, archrivl, ROT0,   "Bally Midway", "Arch Rivals (rev 2.0)" )

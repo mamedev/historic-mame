@@ -268,7 +268,7 @@ void funkyjet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 /******************************************************************************/
 
-void funkyjet_pf2_data_w(int offset,int data)
+WRITE_HANDLER( funkyjet_pf2_data_w )
 {
 	int oldword = READ_WORD(&funkyjet_pf2_data[offset]);
 	int newword = COMBINE_WORD(oldword,data);
@@ -280,7 +280,7 @@ void funkyjet_pf2_data_w(int offset,int data)
 	}
 }
 
-void funkyjet_pf1_data_w(int offset,int data)
+WRITE_HANDLER( funkyjet_pf1_data_w )
 {
 	int oldword = READ_WORD(&funkyjet_pf1_data[offset]);
 	int newword = COMBINE_WORD(oldword,data);
@@ -292,17 +292,17 @@ void funkyjet_pf1_data_w(int offset,int data)
 	}
 }
 
-int funkyjet_pf1_data_r(int offset)
+READ_HANDLER( funkyjet_pf1_data_r )
 {
 	return READ_WORD(&funkyjet_pf1_data[offset]);
 }
 
-int funkyjet_pf2_data_r(int offset)
+READ_HANDLER( funkyjet_pf2_data_r )
 {
 	return READ_WORD(&funkyjet_pf2_data[offset]);
 }
 
-void funkyjet_control_0_w(int offset,int data)
+WRITE_HANDLER( funkyjet_control_0_w )
 {
 	COMBINE_WORD_MEM(&funkyjet_control_0[offset],data);
 }

@@ -130,7 +130,7 @@ void balsente_vh_stop(void)
  *
  *************************************/
 
-void balsente_videoram_w(int offset, int data)
+WRITE_HANDLER( balsente_videoram_w )
 {
 	videoram[offset] = data;
 
@@ -187,7 +187,7 @@ static void update_palette(void)
 }
 
 
-void balsente_palette_select_w(int offset, int data)
+WRITE_HANDLER( balsente_palette_select_w )
 {
 	/* only update if changed */
 	if (palettebank_vis != (data & 3))
@@ -208,7 +208,7 @@ void balsente_palette_select_w(int offset, int data)
  *
  *************************************/
 
-void balsente_paletteram_w(int offset, int data)
+WRITE_HANDLER( balsente_paletteram_w )
 {
 	int r, g, b;
 

@@ -20,36 +20,36 @@ NOTE:  ROM DM03 is missing from all known ROM sets.  This is a color palette.
 
 void bking2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void bking2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void bking2_xld1_w(int offset, int data);
-void bking2_yld1_w(int offset, int data);
-void bking2_xld2_w(int offset, int data);
-void bking2_yld2_w(int offset, int data);
-void bking2_xld3_w(int offset, int data);
-void bking2_yld3_w(int offset, int data);
-void bking2_msk_w(int offset, int data);
-void bking2_cont1_w(int offset, int data);
-void bking2_cont2_w(int offset, int data);
-void bking2_cont3_w(int offset, int data);
-void bking2_hitclr_w(int offset, int data);
-int  bking2_input_port_5_r(int offset);
-int  bking2_input_port_6_r(int offset);
-int  bking2_pos_r(int offset);
+WRITE_HANDLER( bking2_xld1_w );
+WRITE_HANDLER( bking2_yld1_w );
+WRITE_HANDLER( bking2_xld2_w );
+WRITE_HANDLER( bking2_yld2_w );
+WRITE_HANDLER( bking2_xld3_w );
+WRITE_HANDLER( bking2_yld3_w );
+WRITE_HANDLER( bking2_msk_w );
+WRITE_HANDLER( bking2_cont1_w );
+WRITE_HANDLER( bking2_cont2_w );
+WRITE_HANDLER( bking2_cont3_w );
+WRITE_HANDLER( bking2_hitclr_w );
+READ_HANDLER( bking2_input_port_5_r );
+READ_HANDLER( bking2_input_port_6_r );
+READ_HANDLER( bking2_pos_r );
 
 
 static int sndnmi_enable = 1;
 
-static int bking2_sndnmi_disable_r(int offset)
+static READ_HANDLER( bking2_sndnmi_disable_r )
 {
 	sndnmi_enable = 0;
 	return 0;
 }
 
-static void bking2_sndnmi_enable_w(int offset,int data)
+static WRITE_HANDLER( bking2_sndnmi_enable_w )
 {
 	sndnmi_enable = 1;
 }
 
-static void bking2_soundlatch_w(int offset,int data)
+static WRITE_HANDLER( bking2_soundlatch_w )
 {
 	int i,code;
 
@@ -302,7 +302,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static void portb_w(int offset,int data)
+static WRITE_HANDLER( portb_w )
 {
 	/* don't know what this is... could be a filter */
 	if (errorlog) if (data != 0x00) fprintf(errorlog,"portB = %02x\n",data);
@@ -315,7 +315,7 @@ static struct AY8910interface ay8910_interface =
 	{ 25, 25 },
 	{ 0, 0 },
 	{ 0, 0 },
-	{ 0, DAC_signed_data_w },
+	{ 0, DAC_0_signed_data_w },
 	{ 0, portb_w }
 };
 

@@ -42,14 +42,14 @@
 #include "cpu/z80/z80.h"
 #include "sndhrdw/seibu.h"
 
-int raiden_background_r(int offset);
-int raiden_foreground_r(int offset);
-void raiden_background_w(int offset,int data);
-void raiden_foreground_w(int offset,int data);
-void raiden_text_w(int offset,int data);
-void raidena_text_w(int offset,int data);
+READ_HANDLER( raiden_background_r );
+READ_HANDLER( raiden_foreground_r );
+WRITE_HANDLER( raiden_background_w );
+WRITE_HANDLER( raiden_foreground_w );
+WRITE_HANDLER( raiden_text_w );
+WRITE_HANDLER( raidena_text_w );
 int raiden_vh_start(void);
-void raiden_control_w(int offset, int data);
+WRITE_HANDLER( raiden_control_w );
 void raiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static unsigned char *raiden_shared_ram;
@@ -57,10 +57,10 @@ extern unsigned char *raiden_back_data,*raiden_fore_data,*raiden_scroll_ram;
 
 /***************************************************************************/
 
-static int raiden_shared_r(int offset) { return raiden_shared_ram[offset]; }
-static void raiden_shared_w(int offset,int data) { raiden_shared_ram[offset]=data; }
+static READ_HANDLER( raiden_shared_r ) { return raiden_shared_ram[offset]; }
+static WRITE_HANDLER( raiden_shared_w ) { raiden_shared_ram[offset]=data; }
 
-static int raiden_sound_r(int offset)
+static READ_HANDLER( raiden_sound_r )
 {
 	static int latch=0;
 	int erg,orig,coin=readinputport(4);
@@ -504,7 +504,7 @@ ROM_END
 /***************************************************************************/
 
 /* Spin the sub-cpu if it is waiting on the master cpu */
-static int sub_cpu_spin(int offset)
+static READ_HANDLER( sub_cpu_spin_r )
 {
 	int pc=cpu_get_pc();
 	int ret=raiden_shared_ram[0x8];
@@ -517,7 +517,7 @@ static int sub_cpu_spin(int offset)
 	return ret;
 }
 
-static int sub_cpu_spina(int offset)
+static READ_HANDLER( sub_cpu_spina_r )
 {
 	int pc=cpu_get_pc();
 	int ret=raiden_shared_ram[0x8];
@@ -532,13 +532,13 @@ static int sub_cpu_spina(int offset)
 
 static void init_raiden(void)
 {
-	install_mem_read_handler(1, 0x4008, 0x4009, sub_cpu_spin);
+	install_mem_read_handler(1, 0x4008, 0x4009, sub_cpu_spin_r);
 	install_seibu_sound_speedup(2);
 }
 
 static void memory_patcha(void)
 {
-	install_mem_read_handler(1, 0x4008, 0x4009, sub_cpu_spina);
+	install_mem_read_handler(1, 0x4008, 0x4009, sub_cpu_spina_r);
 	install_seibu_sound_speedup(2);
 }
 

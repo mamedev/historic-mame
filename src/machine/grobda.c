@@ -24,32 +24,22 @@ void grobda_init_machine( void )
 }
 
 /* memory handlers */
-int grobda_spriteram_r( int offset )
-{
-    return grobda_spriteram[offset];
-}
-
-void grobda_spriteram_w( int offset,int data )
-{
-    grobda_spriteram[offset] = data;
-}
-
-int grobda_snd_sharedram_r( int offset )
+READ_HANDLER( grobda_snd_sharedram_r )
 {
     return grobda_snd_sharedram[offset];
 }
 
-void grobda_snd_sharedram_w( int offset,int data )
+WRITE_HANDLER( grobda_snd_sharedram_w )
 {
     grobda_snd_sharedram[offset] = data;
 }
 
 /* irq control functions */
-void grobda_interrupt_ctrl_1_w( int offset,int data ){
+WRITE_HANDLER( grobda_interrupt_ctrl_1_w ){
     int_enable_1 = offset;
 }
 
-void grobda_interrupt_ctrl_2_w( int offset,int data ){
+WRITE_HANDLER( grobda_interrupt_ctrl_2_w ){
     int_enable_2 = offset;
 }
 
@@ -67,7 +57,7 @@ int grobda_interrupt_2( void ){
         return ignore_interrupt();
 }
 
-void grobda_cpu2_enable_w(int offset,int data)
+WRITE_HANDLER( grobda_cpu2_enable_w )
 {
 	cpu_set_halt_line(1, offset ? CLEAR_LINE : ASSERT_LINE);
 }
@@ -78,12 +68,12 @@ void grobda_cpu2_enable_w(int offset,int data)
 *																					*
 ************************************************************************************/
 
-void grobda_customio_w_1( int offset,int data )
+WRITE_HANDLER( grobda_customio_1_w )
 {
     grobda_customio_1[offset] = data;
 }
 
-void grobda_customio_w_2( int offset,int data )
+WRITE_HANDLER( grobda_customio_2_w )
 {
     grobda_customio_2[offset] = data;
 }
@@ -91,11 +81,12 @@ void grobda_customio_w_2( int offset,int data )
 static int credmoned [] = { 1, 1, 1, 1, 2, 2, 3, 4 };
 static int monedcred [] = { 3, 4, 2, 1, 1, 3, 1, 1 };
 
-int grobda_customio_r_1( int offset )
+READ_HANDLER( grobda_customio_1_r )
 {
     int mode, val, temp1, temp2;
 
     mode = grobda_customio_1[8];
+
     if (mode == 3)	/* normal mode */
     {
         switch (offset)
@@ -169,10 +160,16 @@ int grobda_customio_r_1( int offset )
                 return (credits % 10);      /* low BCD of credits */
                 break;
             case 4:
-                return (readinputport( 3 ) & 0x0f);   /* 1P controls */
+                return (readinputport( 3 ) & 0x0f);		/* 1P controls */
                 break;
             case 5:
-                return (readinputport( 4 ) & 0x03);   /* 1P button 1 */
+                return (readinputport( 4 ) & 0x03);		/* 1P button 1 */
+                break;
+			case 6:
+                return (readinputport( 3 ) >> 4);		/* 1P controls (cocktail mode) */
+                break;
+            case 7:
+                return (readinputport( 4 ) & 0x0c) >> 2;/* 1P button 1 (cocktail mode) */
                 break;
             default:
                 return 0x0f;
@@ -211,11 +208,12 @@ int grobda_customio_r_1( int offset )
     return grobda_customio_1[offset];
 }
 
-int grobda_customio_r_2( int offset )
+READ_HANDLER( grobda_customio_2_r )
 {
     int val, mode;
 
     mode = grobda_customio_2[8];
+
     if (mode == 8)  /* IO tests chip 2 */
     {
         switch (offset)
@@ -252,6 +250,8 @@ int grobda_customio_r_2( int offset )
             case 6:
                 val = readinputport( 1 ) & 0x08;			/* test mode */
 				val |= (readinputport( 4 ) & 0x20) >> 5;	/* 1P button 2 */
+				val |= (readinputport( 4 ) & 0x80) >> 6;	/* 1P button 2 (cocktail mode) */
+				val |= (readinputport( 2 ) & 0x80) >> 5;	/* cabinet */
                 break;
             default:
                 val = 0x0f;

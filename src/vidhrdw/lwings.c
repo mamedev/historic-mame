@@ -112,7 +112,7 @@ void lwings_vh_stop(void)
 	generic_vh_stop();
 }
 
-void lwings_background_w(int offset,int data)
+WRITE_HANDLER( lwings_background_w )
 {
 	if (lwings_backgroundram[offset] != data)
 	{
@@ -121,7 +121,7 @@ void lwings_background_w(int offset,int data)
 	}
 }
 
-void lwings_backgroundattrib_w(int offset,int data)
+WRITE_HANDLER( lwings_backgroundattrib_w )
 {
 	if (lwings_backgroundattribram[offset] != data)
 	{

@@ -43,7 +43,7 @@ void moleattack_vh_stop( void ){
 	free( tile_data );
 }
 
-void moleattack_videoram_w( int offset,int data ){
+WRITE_HANDLER( moleattack_videoram_w ){
 	if( offset<NUM_TILES ){
 		if( tile_data[offset]!=data ){
 			dirtybuffer[offset] = 1;
@@ -56,7 +56,7 @@ void moleattack_videoram_w( int offset,int data ){
 	}
 }
 
-void moleattack_tilesetselector_w( int offset,int data ){
+WRITE_HANDLER( moleattack_tilesetselector_w ){
 	tile_bank = data;
 }
 

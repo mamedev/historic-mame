@@ -62,13 +62,13 @@ void spacefb_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 }
 
 
-void spacefb_video_control_w(int offset,int data)
+WRITE_HANDLER( spacefb_video_control_w )
 {
 	video_control = data;
 }
 
 
-void spacefb_port_2_w(int offset,int data)
+WRITE_HANDLER( spacefb_port_2_w )
 {
 if (errorlog) fprintf(errorlog,"Port #2 = %02d\n",data);
 }

@@ -67,7 +67,7 @@ void citycon_vh_stop(void)
 
 
 
-void citycon_charlookup_w(int offset,int data)
+WRITE_HANDLER( citycon_charlookup_w )
 {
 	if (citycon_charlookup[offset] != data)
 	{
@@ -79,7 +79,7 @@ void citycon_charlookup_w(int offset,int data)
 
 
 
-void citycon_background_w(int offset,int data)
+WRITE_HANDLER( citycon_background_w )
 {
 	/* bits 4-7 control the background image */
 	if (bg_image != (data >> 4))
@@ -101,7 +101,7 @@ void citycon_background_w(int offset,int data)
 if (errorlog && (data & 0x0e) != 0) fprintf(errorlog,"background register = %02x\n",data);
 }
 
-int citycon_in_r(int offset)
+READ_HANDLER( citycon_in_r )
 {
 	return readinputport(flipscreen);
 }

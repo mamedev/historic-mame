@@ -64,25 +64,25 @@ void exprraid_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 /* Emulate Protection ( only for original express raider, code is cracked on the bootleg */
 /*****************************************************************************************/
 
-static int exprraid_prot_0_r(int offset)
+static READ_HANDLER( exprraid_prot_0_r )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	return RAM[0x02a9];
 }
 
-static int exprraid_prot_1_r(int offset)
+static READ_HANDLER( exprraid_prot_1_r )
 {
 	return 0x02;
 }
 
-static void sound_cpu_command_w( int offset, int v )
+static WRITE_HANDLER( sound_cpu_command_w )
 {
-    soundlatch_w(0,v);
+    soundlatch_w(0,data);
     cpu_cause_interrupt(1,M6809_INT_NMI);
 }
 
-static int vblank_r( int offset ) {
+static READ_HANDLER( vblank_r ) {
 	int val = readinputport( 0 );
 
 	if ( ( val & 0x02 ) )

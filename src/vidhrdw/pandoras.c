@@ -1,8 +1,9 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern unsigned char *pandoras_sharedram;
+static int flipscreen;
 static struct tilemap *layer0;
+extern unsigned char *pandoras_sharedram;
 
 /***********************************************************************
 
@@ -70,9 +71,8 @@ void pandoras_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 ***************************************************************************/
 
-static void get_tile_info0(int col,int row)
+static void get_tile_info0(int tile_index)
 {
-	int tile_index = 32*row+col;
 	unsigned char attr = colorram[tile_index];
 	SET_TILE_INFO(0,videoram[tile_index] + ((attr & 0x10) << 4),attr & 0x0f);
 	tile_info.flags = TILE_FLIPYX((attr & 0xc0) >> 6);
@@ -87,12 +87,12 @@ static void get_tile_info0(int col,int row)
 
 int pandoras_vh_start(void)
 {
-	layer0 = tilemap_create(get_tile_info0, TILEMAP_OPAQUE, 8, 8, 32, 32);
+	layer0 = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 
-	if(layer0)
-		return 0;
-	else
+	if (!layer0)
 		return 1;
+
+	return 0;
 }
 
 /***************************************************************************
@@ -101,31 +101,43 @@ int pandoras_vh_start(void)
 
 ***************************************************************************/
 
-int pandoras_vram_r(int offset){
+READ_HANDLER( pandoras_vram_r )
+{
 	return videoram[offset];
 }
 
-int pandoras_cram_r(int offset){
+READ_HANDLER( pandoras_cram_r )
+{
 	return colorram[offset];
 }
 
-void pandoras_vram_w(int offset,int data){
-	if (videoram[offset] != data){
-		tilemap_mark_tile_dirty(layer0, offset%32, offset/32);
+WRITE_HANDLER( pandoras_vram_w )
+{
+	if (videoram[offset] != data)
+	{
+		tilemap_mark_tile_dirty(layer0,offset);
 		videoram[offset] = data;
 	}
 }
 
-void pandoras_cram_w(int offset,int data){
-	if (colorram[offset] != data){
-		tilemap_mark_tile_dirty(layer0, offset%32, offset/32);
+WRITE_HANDLER( pandoras_cram_w )
+{
+	if (colorram[offset] != data)
+	{
+		tilemap_mark_tile_dirty(layer0,offset);
 		colorram[offset] = data;
 	}
 }
 
-void pandoras_scrolly_w(int offset,int data)
+WRITE_HANDLER( pandoras_scrolly_w )
 {
 	tilemap_set_scrolly(layer0,0,data);
+}
+
+WRITE_HANDLER( pandoras_flipscreen_w )
+{
+	flipscreen = data;
+	tilemap_set_flip(ALL_TILEMAPS, flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 }
 
 /***************************************************************************
@@ -134,21 +146,21 @@ void pandoras_scrolly_w(int offset,int data)
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap, unsigned char* sr){
+static void draw_sprites(struct osd_bitmap *bitmap, unsigned char* sr)
+{
 	int offs;
 
-	for (offs = 0; offs < 0x100; offs += 4){
-		int sx,sy,flipx,flipy;
-
-		sy = sr[offs] - 1;
-		sx = 240 - sr[offs + 1];
-		flipx = sr[offs + 3] & 0x40;
-		flipy = sr[offs + 3] & 0x80;
+	for (offs = 0; offs < 0x100; offs += 4)
+	{
+		int sx = sr[offs + 1];
+		int sy = 240 - sr[offs];
+		int nflipx = sr[offs + 3] & 0x40;
+		int nflipy = sr[offs + 3] & 0x80;
 
 		drawgfx(bitmap,Machine->gfx[1],
 			sr[offs + 2],
 			sr[offs + 3] & 0x0f,
-			flipx,flipy,
+			!nflipx,!nflipy,
 			sx,sy,
 			&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 	}

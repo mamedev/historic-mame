@@ -18,11 +18,11 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-void lwings_bankswitch_w(int offset,int data);
-int lwings_bankedrom_r(int offset);
+WRITE_HANDLER( lwings_bankswitch_w );
+READ_HANDLER( lwings_bankedrom_r );
 int lwings_interrupt(void);
-int avengers_protection_r(int offset);
-void avengers_protection_w(int offset, int data);
+READ_HANDLER( avengers_protection_r );
+WRITE_HANDLER( avengers_protection_w );
 
 extern unsigned char *lwings_backgroundram;
 extern unsigned char *lwings_backgroundattribram;
@@ -30,9 +30,9 @@ extern int lwings_backgroundram_size;
 extern unsigned char *lwings_scrolly;
 extern unsigned char *lwings_scrollx;
 extern unsigned char *lwings_palette_bank;
-void lwings_background_w(int offset,int data);
-void lwings_backgroundattrib_w(int offset,int data);
-void lwings_palette_bank_w(int offset,int data);
+WRITE_HANDLER( lwings_background_w );
+WRITE_HANDLER( lwings_backgroundattrib_w );
+WRITE_HANDLER( lwings_palette_bank_w );
 int  lwings_vh_start(void);
 void lwings_vh_stop(void);
 void lwings_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -46,7 +46,7 @@ int  trojan_vh_start(void);
 void trojan_vh_stop(void);
 void trojan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void trojan_sound_cmd_w(int offset, int data)
+WRITE_HANDLER( trojan_sound_cmd_w )
 {
        soundlatch_w(offset, data);
        if (data != 0xff && (data & 0x08))
@@ -1009,10 +1009,10 @@ ROM_END
 
 extern int avengers_interrupt(void);
 
-void avengers_protection_w(int offset, int data){
+WRITE_HANDLER( avengers_protection_w ){
 }
 
-int avengers_protection_r(int offset){
+READ_HANDLER( avengers_protection_r ){
 	/* the protection reads are used for background palette among other things */
 	static int hack;
 	hack = hack&0xf;

@@ -131,31 +131,31 @@ static void namcos1_set_flipscreen(int flip)
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? TILEMAP_FLIPX|TILEMAP_FLIPY : 0);
 }
 
-static void namcos1_playfield_control_w(int offs,int data)
+static WRITE_HANDLER( namcos1_playfield_control_w )
 {
 	/* 0-15 : scrolling */
-	if ( offs < 16 )
+	if ( offset < 16 )
 	{
-		int whichone = offs / 4;
-		int xy = offs & 2;
+		int whichone = offset / 4;
+		int xy = offset & 2;
 		if ( xy == 0 ) { /* scroll x */
-			if ( offs & 1 )
+			if ( offset & 1 )
 				playfields[whichone].scroll_x = ( playfields[whichone].scroll_x & 0xff00 ) | data;
 			else
 				playfields[whichone].scroll_x = ( playfields[whichone].scroll_x & 0xff ) | ( data << 8 );
 		} else { /* scroll y */
-			if ( offs & 1 )
+			if ( offset & 1 )
 				playfields[whichone].scroll_y = ( playfields[whichone].scroll_y & 0xff00 ) | data;
 			else
 				playfields[whichone].scroll_y = ( playfields[whichone].scroll_y & 0xff ) | ( data << 8 );
 		}
 	}
 	/* 16-21 : priority */
-	else if ( offs < 22 )
+	else if ( offset < 22 )
 	{
 		/* bit 0-2 priority */
 		/* bit 3   disable	*/
-		int whichone = offs - 16;
+		int whichone = offset - 16;
 		objects[whichone].priority = data & 7;
 		objects[whichone].visible = (data&0xf8) ? 0 : 1;
 #if NAMCOS1_DIRECT_DRAW
@@ -164,13 +164,13 @@ static void namcos1_playfield_control_w(int offs,int data)
 		playfields[whichone].tilemap->enable = objects[whichone].visible;
 	}
 	/* 22,23 unused */
-	else if (offs < 24)
+	else if (offset < 24)
 	{
 	}
 	/* 24-29 palette */
-	else if ( offs < 30 )
+	else if ( offset < 30 )
 	{
-		int whichone = offs - 24;
+		int whichone = offset - 24;
 		if (playfields[whichone].color != (data & 7))
 		{
 			playfields[whichone].color = data & 7;
@@ -179,12 +179,12 @@ static void namcos1_playfield_control_w(int offs,int data)
 	}
 }
 
-int namcos1_videoram_r(int offset)
+READ_HANDLER( namcos1_videoram_r )
 {
 	return namcos1_videoram[offset];
 }
 
-void namcos1_videoram_w(int offset,int data)
+WRITE_HANDLER( namcos1_videoram_w )
 {
 	if (namcos1_videoram[offset] != data)
 	{
@@ -197,14 +197,14 @@ void namcos1_videoram_w(int offset,int data)
 		{	/* background 0-3 */
 			int layer = offset/0x2000;
 			int num = (offset &= 0x1fff)/2;
-			tilemap_mark_tile_dirty(playfields[layer].tilemap,num%64,num/64);
+			tilemap_mark_tile_dirty(playfields[layer].tilemap,num);
 		}
 		else
 		{	/* foreground 4-5 */
 			int layer = (offset&0x800) ? 5 : 4;
 			int num = ((offset&0x7ff)-0x10)/2;
 			if (num >= 0 && num < 0x3f0)
-				tilemap_mark_tile_dirty(playfields[layer].tilemap,num%36,num/36);
+				tilemap_mark_tile_dirty(playfields[layer].tilemap,num);
 		}
 #if NAMCOS1_DIRECT_DRAW
 		}
@@ -212,12 +212,12 @@ void namcos1_videoram_w(int offset,int data)
 	}
 }
 
-int namcos1_paletteram_r(int offset)
+READ_HANDLER( namcos1_paletteram_r )
 {
 	return namcos1_paletteram[offset];
 }
 
-void namcos1_paletteram_w(int offset,int data)
+WRITE_HANDLER( namcos1_paletteram_w )
 {
 	if(namcos1_paletteram[offset] != data)
 	{
@@ -268,7 +268,7 @@ static void namcos1_palette_refresh(int start,int offset,int num)
 	}
 }
 
-static void namcos1_spriteram_w(int offset,int data)
+static WRITE_HANDLER( namcos1_spriteram_w )
 {
 	static const int sprite_sizemap[4] = {16,8,32,4};
 	int num = offset / 0x10;
@@ -359,7 +359,7 @@ static void namcos1_spriteram_w(int offset,int data)
 7	 sprite offset y
 8-15 unknown
 */
-static void namcos1_displaycontrol_w(int offset,int data)
+static WRITE_HANDLER( namcos1_displaycontrol_w )
 {
 	unsigned char *disp_reg = &namcos1_controlram[0xff0];
 	int newflip;
@@ -411,7 +411,7 @@ static void namcos1_displaycontrol_w(int offset,int data)
 #endif
 }
 
-void namcos1_videocontrol_w(int offset,int data)
+WRITE_HANDLER( namcos1_videocontrol_w )
 {
 	namcos1_controlram[offset] = data;
 	/* 0000-07ff work ram */
@@ -545,18 +545,16 @@ static void draw_foreground( struct osd_bitmap *bitmap, int layer )
 static unsigned char *info_vram;
 static int info_color;
 
-static void background_get_info( int col, int row )
+static void background_get_info(int tile_index)
 {
-	int tile_index = (row*64+col)*2;
-	int code = info_vram[tile_index+1]+((info_vram[tile_index]&0x3f)<<8);
+	int code = info_vram[2*tile_index+1]+((info_vram[2*tile_index]&0x3f)<<8);
 	SET_TILE_INFO(1,code,info_color);
 	tile_info.mask_data = mask_ptr[code];
 }
 
-static void foreground_get_info( int col, int row )
+static void foreground_get_info(int tile_index)
 {
-	int tile_index = (row*36+col)*2;
-	int code = info_vram[tile_index+1]+((info_vram[tile_index]&0x3f)<<8);
+	int code = info_vram[2*tile_index+1]+((info_vram[2*tile_index]&0x3f)<<8);
 	SET_TILE_INFO(1,code,info_color);
 	tile_info.mask_data = mask_ptr[code];
 }
@@ -668,15 +666,13 @@ int namcos1_vh_start( void )
 		if ( i < 4 ) {
 			playfields[i].base = &namcos1_videoram[i<<13];
 			playfields[i].tilemap =
-				tilemap_create( background_get_info,TILEMAP_BITMASK
-								,8,8
-								,64,i==3 ? 32 : 64);
+				tilemap_create(background_get_info,tilemap_scan_rows,TILEMAP_BITMASK,
+								8,8,64,i==3 ? 32 : 64);
 		} else {
 			playfields[i].base = &namcos1_videoram[FG_OFFSET+0x10+( ( i - 4 ) * 0x800 )];
 			playfields[i].tilemap =
-				tilemap_create( foreground_get_info,TILEMAP_BITMASK
-								,8,8
-								,36,28);
+				tilemap_create(foreground_get_info,tilemap_scan_rows,TILEMAP_BITMASK,
+								8,8,36,28);
 		}
 #if NAMCOS1_DIRECT_DRAW
 		}
@@ -752,7 +748,7 @@ int namcos1_vh_start( void )
 				switch(mask->pen_usage[c])
 				{
 				case 0x01: mask_ptr[c] = TILEMAP_BITMASK_TRANSPARENT; break; /* blank */
-				case 0x02: mask_ptr[c] = TILEMAP_BITMAK_OPAQUE; break; /* full */
+				case 0x02: mask_ptr[c] = TILEMAP_BITMASK_OPAQUE; break; /* full */
 				}
 			}
 		}

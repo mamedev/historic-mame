@@ -106,7 +106,7 @@ int kaneko16_spritetype;
 
 ***************************************************************************/
 
-void kaneko16_paletteram_w(int offset, int data)
+WRITE_HANDLER( kaneko16_paletteram_w )
 {
 	/*	byte 0    	byte 1		*/
 	/*	xGGG GGRR   RRRB BBBB	*/
@@ -126,7 +126,7 @@ void kaneko16_paletteram_w(int offset, int data)
 									 (b * 0xFF) / 0x1F	 );
 }
 
-void gtmr_paletteram_w(int offset, int data)
+WRITE_HANDLER( gtmr_paletteram_w )
 {
 	if (offset < 0x10000)	kaneko16_paletteram_w(offset, data);
 	else					COMBINE_WORD_MEM(&paletteram[offset], data);
@@ -159,12 +159,12 @@ Race start:
 
 */
 
-int kaneko16_screen_regs_r(int offset)
+READ_HANDLER( kaneko16_screen_regs_r )
 {
 	return READ_WORD(&kaneko16_screen_regs[offset]);
 }
 
-void kaneko16_screen_regs_w(int offset,int data)
+WRITE_HANDLER( kaneko16_screen_regs_w )
 {
 	int new_data;
 
@@ -198,33 +198,33 @@ void kaneko16_screen_regs_w(int offset,int data)
 
 */
 
-void kaneko16_layers1_regs_w(int offset,int data)
+WRITE_HANDLER( kaneko16_layers1_regs_w )
 {
 	COMBINE_WORD_MEM(&kaneko16_layers1_regs[offset],data);
 }
 
-void kaneko16_layers2_regs_w(int offset,int data)
+WRITE_HANDLER( kaneko16_layers2_regs_w )
 {
 	COMBINE_WORD_MEM(&kaneko16_layers2_regs[offset],data);
 }
 
 
 /* Select the high color background image (out of 32 in the ROMs) */
-int kaneko16_bg15_select_r(int offset)
+READ_HANDLER( kaneko16_bg15_select_r )
 {
 	return READ_WORD(&kaneko16_bg15_select[0]);
 }
-void kaneko16_bg15_select_w(int offset,int data)
+WRITE_HANDLER( kaneko16_bg15_select_w )
 {
 	COMBINE_WORD_MEM(&kaneko16_bg15_select[0],data);
 }
 
 /* ? */
-int kaneko16_bg15_reg_r(int offset)
+READ_HANDLER( kaneko16_bg15_reg_r )
 {
 	return READ_WORD(&kaneko16_bg15_reg[0]);
 }
-void kaneko16_bg15_reg_w(int offset,int data)
+WRITE_HANDLER( kaneko16_bg15_reg_w )
 {
 	COMBINE_WORD_MEM(&kaneko16_bg15_reg[0],data);
 }
@@ -256,16 +256,15 @@ Offset:
 #define BG_NX  (0x20)
 #define BG_NY  (0x20)
 
-static void get_bg_tile_info( int col, int row )
+static void get_bg_tile_info(int tile_index)
 {
-	int tile_index = col + row * BG_NX;
-	int code_hi = READ_WORD(&kaneko16_bgram[tile_index*4 + 0]);
-	int code_lo = READ_WORD(&kaneko16_bgram[tile_index*4 + 2]);
+	int code_hi = READ_WORD(&kaneko16_bgram[4*tile_index + 0]);
+	int code_lo = READ_WORD(&kaneko16_bgram[4*tile_index + 2]);
 	SET_TILE_INFO(BG_GFX, code_lo,(code_hi >> 2) & 0x3f);
 	tile_info.flags 	=	TILE_FLIPXY( code_hi & 3 );
 }
 
-void kaneko16_bgram_w(int offset,int data)
+WRITE_HANDLER( kaneko16_bgram_w )
 {
 int old_data, new_data;
 
@@ -274,7 +273,7 @@ int old_data, new_data;
 	new_data  = READ_WORD(&kaneko16_bgram[offset]);
 
 	if (old_data != new_data)
-		tilemap_mark_tile_dirty(bg_tilemap,(offset/4) % BG_NX,(offset/4) / BG_NX);
+		tilemap_mark_tile_dirty(bg_tilemap,offset/4);
 }
 
 
@@ -287,17 +286,16 @@ int old_data, new_data;
 #define FG_NX  (0x20)
 #define FG_NY  (0x20)
 
-static void get_fg_tile_info( int col, int row )
+static void get_fg_tile_info(int tile_index)
 {
-	int tile_index = col + row * FG_NX;
-	int code_hi = READ_WORD(&kaneko16_fgram[tile_index*4 + 0]);
-	int code_lo = READ_WORD(&kaneko16_fgram[tile_index*4 + 2]);
+	int code_hi = READ_WORD(&kaneko16_fgram[4*tile_index + 0]);
+	int code_lo = READ_WORD(&kaneko16_fgram[4*tile_index + 2]);
 	SET_TILE_INFO(FG_GFX, code_lo,(code_hi >> 2) & 0x3f);
 	tile_info.flags 	=	TILE_FLIPXY( code_hi & 3 );
 	tile_info.priority	=	(code_hi >> 8) & 3;
 }
 
-void kaneko16_fgram_w(int offset,int data)
+WRITE_HANDLER( kaneko16_fgram_w )
 {
 int old_data, new_data;
 
@@ -306,12 +304,12 @@ int old_data, new_data;
 	new_data  = READ_WORD(&kaneko16_fgram[offset]);
 
 	if (old_data != new_data)
-		tilemap_mark_tile_dirty(fg_tilemap,(offset/4) % FG_NX,(offset/4) / FG_NX);
+		tilemap_mark_tile_dirty(fg_tilemap,offset/4);
 }
 
 
 
-void kaneko16_layers1_w(int offset, int data)
+WRITE_HANDLER( kaneko16_layers1_w )
 {
 	if (offset < 0x1000)	kaneko16_fgram_w(offset,data);
 	else
@@ -333,17 +331,17 @@ void kaneko16_layers1_w(int offset, int data)
 
 int kaneko16_vh_start(void)
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info,
+	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,
 								TILEMAP_TRANSPARENT, /* to handle the optional hi-color bg */
-								16,16,
-								BG_NX,BG_NY );
+								16,16,BG_NX,BG_NY);
 
-	fg_tilemap = tilemap_create(get_fg_tile_info,
+	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,
 								TILEMAP_TRANSPARENT,
-								16,16,
-								FG_NX,FG_NY );
+								16,16,FG_NX,FG_NY);
 
-	if (bg_tilemap && fg_tilemap)
+	if (!bg_tilemap || !fg_tilemap)
+		return 1;
+
 	{
 /*
 gtmr background:
@@ -382,8 +380,6 @@ berlwall background:
 		fg_tilemap->transparent_pen = 0;
 		return 0;
 	}
-	else
-		return 1;
 }
 
 

@@ -104,7 +104,7 @@ void troangel_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 
 
-void troangel_flipscreen_w(int offset,int data)
+WRITE_HANDLER( troangel_flipscreen_w )
 {
 	/* screen flip is handled both by software and hardware */
 	data ^= ~readinputport(4) & 1;

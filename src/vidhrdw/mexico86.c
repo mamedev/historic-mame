@@ -45,7 +45,7 @@ void mexico86_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 
 
-void mexico86_bankswitch_w(int offs,int data)
+WRITE_HANDLER( mexico86_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

@@ -32,7 +32,7 @@ static unsigned char *sprite3232_dirty;	/* 128 sprites */
 static unsigned char *sprite168_dirty;	/* 1024 sprites */
 static unsigned char *sprite6464_dirty;	/* 32 sprites */
 
-void nemesis_palette_w(int offset,int data)
+WRITE_HANDLER( nemesis_palette_w )
 {
 	int r,g,b,bit1,bit2,bit3,bit4,bit5;
 
@@ -76,7 +76,7 @@ void nemesis_palette_w(int offset,int data)
 	palette_change_color(offset / 2,r,g,b);
 }
 
-void salamander_palette_w(int offset,int data)
+WRITE_HANDLER( salamander_palette_w )
 {
 	int r,g,b;
 
@@ -96,12 +96,12 @@ void salamander_palette_w(int offset,int data)
 	palette_change_color(offset / 4,r,g,b);
 }
 
-int nemesis_videoram1_r(int offset)
+READ_HANDLER( nemesis_videoram1_r )
 {
 	return READ_WORD(&nemesis_videoram1[offset]);
 }
 
-void nemesis_videoram1_w(int offset,int data)
+WRITE_HANDLER( nemesis_videoram1_w )
 {
 	COMBINE_WORD_MEM(&nemesis_videoram1[offset],data);
 	if (offset < 0x1000)
@@ -110,12 +110,12 @@ void nemesis_videoram1_w(int offset,int data)
 		video2_dirty[(offset - 0x1000) / 2] = 1;
 }
 
-int nemesis_videoram2_r(int offset)
+READ_HANDLER( nemesis_videoram2_r )
 {
 	return READ_WORD(&nemesis_videoram2[offset]);
 }
 
-void nemesis_videoram2_w(int offset,int data)
+WRITE_HANDLER( nemesis_videoram2_w )
 {
 	COMBINE_WORD_MEM(&nemesis_videoram2[offset],data);
 	if (offset < 0x1000)
@@ -125,17 +125,17 @@ void nemesis_videoram2_w(int offset,int data)
 }
 
 
-int  gx400_xscroll1_r(int offset) { return READ_WORD(&nemesis_xscroll1[offset]);}
-int  gx400_xscroll2_r(int offset) { return READ_WORD(&nemesis_xscroll2[offset]);}
-int  gx400_yscroll_r(int offset) { return READ_WORD(&nemesis_yscroll[offset]);}
+READ_HANDLER( gx400_xscroll1_r ) { return READ_WORD(&nemesis_xscroll1[offset]);}
+READ_HANDLER( gx400_xscroll2_r ) { return READ_WORD(&nemesis_xscroll2[offset]);}
+READ_HANDLER( gx400_yscroll_r ) { return READ_WORD(&nemesis_yscroll[offset]);}
 
-void gx400_xscroll1_w(int offset,int data) { COMBINE_WORD_MEM(&nemesis_xscroll1[offset],data);}
-void gx400_xscroll2_w(int offset,int data) { COMBINE_WORD_MEM(&nemesis_xscroll2[offset],data);}
-void gx400_yscroll_w(int offset,int data) { COMBINE_WORD_MEM(&nemesis_yscroll[offset],data);}
+WRITE_HANDLER( gx400_xscroll1_w ) { COMBINE_WORD_MEM(&nemesis_xscroll1[offset],data);}
+WRITE_HANDLER( gx400_xscroll2_w ) { COMBINE_WORD_MEM(&nemesis_xscroll2[offset],data);}
+WRITE_HANDLER( gx400_yscroll_w ) { COMBINE_WORD_MEM(&nemesis_yscroll[offset],data);}
 
 
 /* we have to straighten out the 16-bit word into bytes for gfxdecode() to work */
-int nemesis_characterram_r(int offset)
+READ_HANDLER( nemesis_characterram_r )
 {
 	int res;
 
@@ -148,7 +148,7 @@ int nemesis_characterram_r(int offset)
 	return res;
 }
 
-void nemesis_characterram_w(int offset,int data)
+WRITE_HANDLER( nemesis_characterram_w )
 {
 	int oldword = READ_WORD(&nemesis_characterram_gfx[offset]);
 	int newword;

@@ -57,63 +57,63 @@ extern unsigned char *dec0_pf1_rowscroll,*dec0_pf2_rowscroll,*dec0_pf3_rowscroll
 extern unsigned char *dec0_pf1_colscroll,*dec0_pf2_colscroll,*dec0_pf3_colscroll;
 extern unsigned char *dec0_pf1_data,*dec0_pf2_data,*dec0_pf3_data;
 
-void dec0_pf1_control_0_w(int offset,int data);
-void dec0_pf1_control_1_w(int offset,int data);
-void dec0_pf1_rowscroll_w(int offset,int data);
-void dec0_pf1_colscroll_w(int offset,int data);
-void dec0_pf1_data_w(int offset,int data);
-int dec0_pf1_data_r(int offset);
-void dec0_pf2_control_0_w(int offset,int data);
-void dec0_pf2_control_1_w(int offset,int data);
-void dec0_pf2_rowscroll_w(int offset,int data);
-void dec0_pf2_colscroll_w(int offset,int data);
-void dec0_pf2_data_w(int offset,int data);
-int dec0_pf2_data_r(int offset);
-void dec0_pf3_control_0_w(int offset,int data);
-void dec0_pf3_control_1_w(int offset,int data);
-void dec0_pf3_rowscroll_w(int offset,int data);
-void dec0_pf3_colscroll_w(int offset,int data);
-int dec0_pf3_colscroll_r(int offset);
-void dec0_pf3_data_w(int offset,int data);
-int dec0_pf3_data_r(int offset);
-void dec0_priority_w(int offset,int data);
-void dec0_update_sprites(int offset, int data);
+WRITE_HANDLER( dec0_pf1_control_0_w );
+WRITE_HANDLER( dec0_pf1_control_1_w );
+WRITE_HANDLER( dec0_pf1_rowscroll_w );
+WRITE_HANDLER( dec0_pf1_colscroll_w );
+WRITE_HANDLER( dec0_pf1_data_w );
+READ_HANDLER( dec0_pf1_data_r );
+WRITE_HANDLER( dec0_pf2_control_0_w );
+WRITE_HANDLER( dec0_pf2_control_1_w );
+WRITE_HANDLER( dec0_pf2_rowscroll_w );
+WRITE_HANDLER( dec0_pf2_colscroll_w );
+WRITE_HANDLER( dec0_pf2_data_w );
+READ_HANDLER( dec0_pf2_data_r );
+WRITE_HANDLER( dec0_pf3_control_0_w );
+WRITE_HANDLER( dec0_pf3_control_1_w );
+WRITE_HANDLER( dec0_pf3_rowscroll_w );
+WRITE_HANDLER( dec0_pf3_colscroll_w );
+READ_HANDLER( dec0_pf3_colscroll_r );
+WRITE_HANDLER( dec0_pf3_data_w );
+READ_HANDLER( dec0_pf3_data_r );
+WRITE_HANDLER( dec0_priority_w );
+WRITE_HANDLER( dec0_update_sprites_w );
 
-void dec0_paletteram_w_rg(int offset,int data);
-void dec0_paletteram_w_b(int offset,int data);
+WRITE_HANDLER( dec0_paletteram_rg_w );
+WRITE_HANDLER( dec0_paletteram_b_w );
 
-int dec0_pf3_data_8bit_r(int offset);
-void dec0_pf3_data_8bit_w(int offset, int data);
-void dec0_pf3_control_8bit_w(int offset, int data);
+READ_HANDLER( dec0_pf3_data_8bit_r );
+WRITE_HANDLER( dec0_pf3_data_8bit_w );
+WRITE_HANDLER( dec0_pf3_control_8bit_w );
 
 /* System prototypes - from machine/dec0.c */
 extern void dec0_custom_memory(void);
-extern int dec0_controls_read(int offset);
-extern int dec0_rotary_read(int offset);
-extern int midres_controls_read(int offset);
-extern int slyspy_controls_read(int offset);
-extern int slyspy_protection_r(int offset);
-extern void slyspy_state_w(int offset,int data);
-extern int slyspy_state_r(int offset);
-extern void slyspy_240000_w(int offset,int data);
-extern void slyspy_242000_w(int offset,int data);
-extern void slyspy_246000_w(int offset,int data);
-extern void slyspy_248000_w(int offset,int data);
-extern void slyspy_24c000_w(int offset,int data);
-extern void slyspy_24e000_w(int offset,int data);
+READ_HANDLER( dec0_controls_r );
+READ_HANDLER( dec0_rotary_r );
+READ_HANDLER( midres_controls_r );
+READ_HANDLER( slyspy_controls_r );
+READ_HANDLER( slyspy_protection_r );
+WRITE_HANDLER( slyspy_state_w );
+READ_HANDLER( slyspy_state_r );
+WRITE_HANDLER( slyspy_240000_w );
+WRITE_HANDLER( slyspy_242000_w );
+WRITE_HANDLER( slyspy_246000_w );
+WRITE_HANDLER( slyspy_248000_w );
+WRITE_HANDLER( slyspy_24c000_w );
+WRITE_HANDLER( slyspy_24e000_w );
 
 extern void dec0_i8751_write(int data);
 extern void dec0_i8751_reset(void);
-extern int hippodrm_prot_r(int offset);
-extern void hippodrm_prot_w(int offset,int data);
-extern int hippodrm_shared_r(int offset);
-extern void hippodrm_shared_w(int offset,int data);
+READ_HANDLER( hippodrm_prot_r );
+WRITE_HANDLER( hippodrm_prot_w );
+READ_HANDLER( hippodrm_shared_r );
+WRITE_HANDLER( hippodrm_shared_w );
 
 unsigned char *dec0_ram;
 
 /******************************************************************************/
 
-static void dec0_control_w(int offset,int data)
+static WRITE_HANDLER( dec0_control_w )
 {
 	switch (offset)
 	{
@@ -122,7 +122,7 @@ static void dec0_control_w(int offset,int data)
 			break;
 
 		case 2: /* DMA flag */
-			dec0_update_sprites(0,0);
+			dec0_update_sprites_w(0,0);
 			break;
 
 		case 4: /* 6502 sound cpu */
@@ -152,7 +152,7 @@ static void dec0_control_w(int offset,int data)
 	}
 }
 
-static void slyspy_control_w(int offset, int data)
+static WRITE_HANDLER( slyspy_control_w )
 {
     switch (offset) {
     	case 0:
@@ -165,7 +165,7 @@ static void slyspy_control_w(int offset, int data)
     }
 }
 
-static void midres_sound_w(int offset, int data)
+static WRITE_HANDLER( midres_sound_w )
 {
 	soundlatch_w(0,data & 0xff);
 	cpu_cause_interrupt(1,H6280_INT_NMI);
@@ -181,8 +181,8 @@ static struct MemoryReadAddress dec0_readmem[] =
 	{ 0x24a000, 0x24a7ff, dec0_pf2_data_r },
 	{ 0x24c800, 0x24c87f, dec0_pf3_colscroll_r },
 	{ 0x24d000, 0x24d7ff, dec0_pf3_data_r },
-	{ 0x300000, 0x30001f, dec0_rotary_read },
-	{ 0x30c000, 0x30c00b, dec0_controls_read },
+	{ 0x300000, 0x30001f, dec0_rotary_r },
+	{ 0x30c000, 0x30c00b, dec0_controls_r },
 	{ 0x310000, 0x3107ff, paletteram_word_r },
 	{ 0x314000, 0x3147ff, paletteram_2_word_r },
 	{ 0xff8000, 0xffbfff, MRA_BANK1 }, /* Main ram */
@@ -214,8 +214,8 @@ static struct MemoryWriteAddress dec0_writemem[] =
 	{ 0x24d000, 0x24d7ff, dec0_pf3_data_w, &dec0_pf3_data },
 
 	{ 0x30c010, 0x30c01f, dec0_control_w },	/* Priority, sound, etc. */
-	{ 0x310000, 0x3107ff, dec0_paletteram_w_rg, &paletteram },	/* Red & Green bits */
-	{ 0x314000, 0x3147ff, dec0_paletteram_w_b, &paletteram_2 },	/* Blue bits */
+	{ 0x310000, 0x3107ff, dec0_paletteram_rg_w, &paletteram },	/* Red & Green bits */
+	{ 0x314000, 0x3147ff, dec0_paletteram_b_w, &paletteram_2 },	/* Blue bits */
 	{ 0xff8000, 0xffbfff, MWA_BANK1, &dec0_ram },
 	{ 0xffc000, 0xffc7ff, MWA_BANK2, &spriteram },
 	{ -1 }  /* end of table */
@@ -265,7 +265,7 @@ static struct MemoryReadAddress slyspy_readmem[] =
 	{ 0x304000, 0x307fff, MRA_BANK1 }, /* Sly spy main ram */
 	{ 0x308000, 0x3087ff, MRA_BANK2 }, /* Sprites */
 	{ 0x310000, 0x3107ff, paletteram_word_r },
-	{ 0x314008, 0x31400f, slyspy_controls_read },
+	{ 0x314008, 0x31400f, slyspy_controls_r },
 	{ 0x31c000, 0x31c00f, slyspy_protection_r },
 	{ -1 }  /* end of table */
 };
@@ -314,7 +314,7 @@ static struct MemoryReadAddress midres_readmem[] =
 	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0x100000, 0x103fff, MRA_BANK1 },
 	{ 0x120000, 0x1207ff, MRA_BANK2 },
-	{ 0x180000, 0x18000f, midres_controls_read },
+	{ 0x180000, 0x18000f, midres_controls_r },
 	{ 0x320000, 0x321fff, dec0_pf1_data_r },
 	{ -1 }  /* end of table */
 };
@@ -352,7 +352,7 @@ static struct MemoryWriteAddress midres_writemem[] =
 
 /******************************************************************************/
 
-static void YM3812_w(int offset, int data)
+static WRITE_HANDLER( YM3812_w )
 {
 	switch (offset) {
 	case 0:
@@ -364,7 +364,7 @@ static void YM3812_w(int offset, int data)
 	}
 }
 
-static void YM2203_w(int offset, int data)
+static WRITE_HANDLER( YM2203_w )
 {
 	switch (offset) {
 	case 0:
@@ -469,7 +469,7 @@ static struct MemoryWriteAddress midres_s_writemem[] =
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 ) \
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 ) \
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 ) \
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 ) /* Service */ \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 ) \
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
 #define DEC0_COIN_SETTING \
@@ -491,9 +491,7 @@ INPUT_PORTS_START( hbarrel )
 
 	PORT_START	/* Dip switch bank 1 */
 	DEC0_COIN_SETTING
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
@@ -541,9 +539,7 @@ INPUT_PORTS_START( baddudes )
 
 	PORT_START	/* DSW0 */
 	DEC0_COIN_SETTING
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
@@ -707,7 +703,7 @@ INPUT_PORTS_START( slyspy )
 	PORT_START	/* Credits, start buttons */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )	/* screwed up colors with ACTIVE_LOW */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -716,9 +712,7 @@ INPUT_PORTS_START( slyspy )
 
 	PORT_START	/* Dip switch bank 1 */
 	DEC0_COIN_SETTING
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
@@ -761,7 +755,7 @@ INPUT_PORTS_START( midres )
 	PORT_START	/* Credits */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -821,7 +815,7 @@ INPUT_PORTS_START( bouldash )
 	PORT_START	/* Credits, start buttons */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -2193,9 +2187,9 @@ GAMEX( 1987, hbarrelw, hbarrel,  hbarrel,  hbarrel,  dec0,     ROT270, "Data Eas
 GAMEX( 1988, baddudes, 0,        baddudes, baddudes, dec0,     ROT0,   "Data East USA", "Bad Dudes vs. Dragonninja (US)", GAME_NO_COCKTAIL )
 GAMEX( 1988, drgninja, baddudes, baddudes, baddudes, dec0,     ROT0,   "Data East Corporation", "Dragonninja (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1988, birdtry,  0,        birdtry,  hbarrel,  dec0,     ROT270, "Data East Corporation", "Birdie Try (Japan)", GAME_NOT_WORKING | GAME_NO_COCKTAIL)
-GAMEX( 1988, robocop,  0,        robocop,  robocop,  dec0,     ROT0,   "Data East Corporation", "Robocop (World revision 3)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX( 1988, robocopu, robocop,  robocop,  robocop,  dec0,     ROT0,   "Data East USA", "Robocop (US revision 1)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX( 1988, robocpu0, robocop,  robocop,  robocop,  dec0,     ROT0,   "Data East USA", "Robocop (US revision 0)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1988, robocop,  0,        robocop,  robocop,  dec0,     ROT0,   "Data East Corporation", "Robocop (World revision 3)", GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL )
+GAMEX( 1988, robocopu, robocop,  robocop,  robocop,  dec0,     ROT0,   "Data East USA", "Robocop (US revision 1)", GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL )
+GAMEX( 1988, robocpu0, robocop,  robocop,  robocop,  dec0,     ROT0,   "Data East USA", "Robocop (US revision 0)", GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL )
 GAMEX( 1988, robocopb, robocop,  robocopb, robocop,  dec0,     ROT0,   "bootleg", "Robocop (World bootleg)", GAME_NO_COCKTAIL )
 GAMEX( 1989, hippodrm, 0,        hippodrm, hippodrm, hippodrm, ROT0,   "Data East USA", "Hippodrome (US)", GAME_NO_COCKTAIL )
 GAMEX( 1989, ffantasy, hippodrm, hippodrm, hippodrm, hippodrm, ROT0,   "Data East Corporation", "Fighting Fantasy (Japan)", GAME_NO_COCKTAIL )

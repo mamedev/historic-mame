@@ -18,14 +18,14 @@
 
 ***************************************************************************/
 
-void seibu_rst10_ack(int offset, int data);
-void seibu_rst18_ack(int offset, int data);
-void seibu_bank_w(int offset,int data);
-void seibu_soundclear_w(int offset,int data);
+WRITE_HANDLER( seibu_rst10_ack_w );
+WRITE_HANDLER( seibu_rst18_ack_w );
+WRITE_HANDLER( seibu_bank_w );
+WRITE_HANDLER( seibu_soundclear_w );
 void seibu_ym3812_irqhandler(int linestate);
-int seibu_soundlatch_r(int offset);
-void seibu_soundlatch_w(int offset, int data);
-void seibu_main_data_w(int offset, int data);
+READ_HANDLER( seibu_soundlatch_r );
+WRITE_HANDLER( seibu_soundlatch_w );
+WRITE_HANDLER( seibu_main_data_w );
 void seibu_sound_init_1(void);
 void seibu_sound_init_2(void);
 void seibu_sound_decrypt(void);
@@ -54,8 +54,8 @@ static struct MemoryWriteAddress sound_writemem[] =					\
 	{ 0x0000, 0x1fff, MWA_ROM },									\
 	{ 0x2000, 0x27ff, MWA_RAM },									\
 	{ 0x4000, 0x4000, seibu_soundclear_w },							\
-	{ 0x4002, 0x4002, seibu_rst10_ack }, 							\
-	{ 0x4003, 0x4003, seibu_rst18_ack }, 							\
+	{ 0x4002, 0x4002, seibu_rst10_ack_w }, 							\
+	{ 0x4003, 0x4003, seibu_rst18_ack_w }, 							\
 	{ 0x4007, 0x4007, seibu_bank_w },								\
 	{ 0x4008, 0x4008, YM3812_control_port_0_w },					\
 	{ 0x4009, 0x4009, YM3812_write_port_0_w },						\

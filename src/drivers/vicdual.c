@@ -82,41 +82,41 @@ static unsigned char *vicdual_ram;
 
 extern unsigned char *vicdual_characterram;
 void vicdual_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void vicdual_characterram_w(int offset,int data);
-int vicdual_characterram_r(int offset);
-void vicdual_palette_bank_w(int offset, int data);
+WRITE_HANDLER( vicdual_characterram_w );
+READ_HANDLER( vicdual_characterram_r );
+WRITE_HANDLER( vicdual_palette_bank_w );
 void vicdual_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /* Carnival sound handlers */
 extern const char *carnival_sample_names[];
-void carnival_sh_port1_w(int offset, int data);
-void carnival_sh_port2_w(int offset, int data);
-int carnival_music_port_t1_r( int offset );
-void carnival_music_port_1_w( int offset, int data );
-void carnival_music_port_2_w( int offset, int data );
+WRITE_HANDLER( carnival_sh_port1_w );
+WRITE_HANDLER( carnival_sh_port2_w );
+READ_HANDLER( carnival_music_port_t1_r );
+WRITE_HANDLER( carnival_music_port_1_w );
+WRITE_HANDLER( carnival_music_port_2_w );
 
 /* Depth Charge sound handlers */
 extern const char *depthch_sample_names[];
-void depthch_sh_port1_w(int offset, int data);
+WRITE_HANDLER( depthch_sh_port1_w );
 
 /* Invinco sound handlers */
 extern const char *invinco_sample_names[];
-void invinco_sh_port2_w(int offset, int data);
+WRITE_HANDLER( invinco_sh_port2_w );
 
 /* Pulsar sound handlers */
 extern const char *pulsar_sample_names[];
-void pulsar_sh_port1_w(int offset, int data);
-void pulsar_sh_port2_w(int offset, int data);
+WRITE_HANDLER( pulsar_sh_port1_w );
+WRITE_HANDLER( pulsar_sh_port2_w );
 
 
 static int protection_data;
 
-static void samurai_protection_w(int offset,int data)
+static WRITE_HANDLER( samurai_protection_w )
 {
 	protection_data = data;
 }
 
-static int samurai_input_r(int offset)
+static READ_HANDLER( samurai_input_r )
 {
 	int answer = 0;
 
@@ -127,18 +127,18 @@ static int samurai_input_r(int offset)
 }
 
 
-static void vicdual_ram_w(int offset, int data)
+static WRITE_HANDLER( vicdual_ram_w )
 {
 	vicdual_ram[offset] = data;
 }
 
-static int vicdual_ram_r(int offset)
+static READ_HANDLER( vicdual_ram_r )
 {
 	return vicdual_ram[offset];
 }
 
 
-static int depthch_input_port_1_r(int offset)
+static READ_HANDLER( depthch_input_port_1_r )
 {
 	/* bit 0 is 64V according to the schematics */
 	return (input_port_1_r(0) & 0xfe) | ((cpu_getscanline() >> 6) & 0x01);

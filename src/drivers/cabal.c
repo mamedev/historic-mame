@@ -53,11 +53,11 @@ static void cabal_init_machine( void ) {
 	cabal_sound_command1 = cabal_sound_command2 = 0xff;
 }
 
-static int cabal_background_r( int offset ){
+static READ_HANDLER( cabal_background_r ){
 	return READ_WORD (&videoram[offset]);
 }
 
-static void cabal_background_w( int offset, int data ){
+static WRITE_HANDLER( cabal_background_w ){
 	int oldword = READ_WORD(&videoram[offset]);
 	int newword = COMBINE_WORD(oldword,data);
 	if( oldword != newword ){
@@ -103,7 +103,7 @@ static void cabal_play_adpcm( int channel, int which ){
 	}
 }
 
-static int cabal_coin_r( int offset ) {
+static READ_HANDLER( cabal_coin_r ) {
 	static int coin = 0;
 	int val = readinputport( 3 );
 
@@ -119,7 +119,7 @@ static int cabal_coin_r( int offset ) {
  	return val | 0x04;
 }
 
-static int cabal_io_r( int offset ) {
+static READ_HANDLER( cabal_io_r ) {
 	// if( errorlog ) fprintf( errorlog, "INPUT a000[%02x] \n", offset);
 	switch (offset){
 		case 0x0: return readinputport(4) + (readinputport(5)<<8); /* DIPSW */
@@ -129,7 +129,7 @@ static int cabal_io_r( int offset ) {
 	}
 }
 
-static void cabal_snd_w( int offset,int data ) {
+static WRITE_HANDLER( cabal_sndcmd_w ) {
 	switch (offset) {
 		case 0x0:
 			cabal_sound_command1 = data;
@@ -169,13 +169,14 @@ static struct MemoryWriteAddress writemem_cpu[] = {
 	{ 0xc0040, 0xc0041, MWA_NOP }, /* ??? */
 	{ 0xc0080, 0xc0081, MWA_NOP }, /* ??? */
 	{ 0xe0000, 0xe07ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram},
-	{ 0xe8000, 0xe800f, cabal_snd_w },
+	{ 0xe8000, 0xe800f, cabal_sndcmd_w },
 	{ -1 }
 };
 
 /*********************************************************************/
 
-int cabal_snd_read(int offset){
+static READ_HANDLER( cabal_snd_r )
+{
 	switch(offset){
 		case 0x08: return cabal_sound_command2;
 		case 0x0a: return cabal_sound_command1;
@@ -183,7 +184,8 @@ int cabal_snd_read(int offset){
 	}
 }
 
-void cabal_snd_write(int offset,int data){
+static WRITE_HANDLER( cabal_snd_w )
+{
 	switch( offset ){
 		case 0x00: cabal_play_adpcm( 0, data ); break;
 		case 0x02: cabal_play_adpcm( 1, data ); break;
@@ -194,7 +196,7 @@ static struct MemoryReadAddress readmem_sound[] =
 {
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x2fff, MRA_RAM },
-	{ 0x4000, 0x400d, cabal_snd_read },
+	{ 0x4000, 0x400d, cabal_snd_r },
 	{ 0x400f, 0x400f, YM2151_status_port_0_r },
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }
@@ -204,7 +206,7 @@ static struct MemoryWriteAddress writemem_sound[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x2fff, MWA_RAM },
-	{ 0x4000, 0x400d, cabal_snd_write },
+	{ 0x4000, 0x400d, cabal_snd_w },
 	{ 0x400e, 0x400e, YM2151_register_port_0_w },
 	{ 0x400f, 0x400f, YM2151_data_port_0_w },
 	{ 0x6000, 0x6000, MWA_NOP },  /*???*/
@@ -216,7 +218,7 @@ static struct MemoryReadAddress cabalbl_readmem_sound[] =
 {
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x2fff, MRA_RAM },
-	{ 0x4000, 0x400d, cabal_snd_read },
+	{ 0x4000, 0x400d, cabal_snd_r },
 	{ 0x400f, 0x400f, YM2151_status_port_0_r },
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }
@@ -226,7 +228,7 @@ static struct MemoryWriteAddress cabalbl_writemem_sound[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x2fff, MWA_RAM },
-	{ 0x4000, 0x400d, cabal_snd_write },
+	{ 0x4000, 0x400d, cabal_snd_w },
 	{ 0x400e, 0x400e, YM2151_register_port_0_w },
 	{ 0x400f, 0x400f, YM2151_data_port_0_w },
 	{ 0x6000, 0x6000, MWA_NOP },  /*???*/

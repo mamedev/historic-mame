@@ -205,7 +205,7 @@ void bosco_vh_stop(void)
 
 
 
-void bosco_videoram2_w(int offset,int data)
+WRITE_HANDLER( bosco_videoram2_w )
 {
 	if (bosco_videoram2[offset] != data)
 	{
@@ -217,7 +217,7 @@ void bosco_videoram2_w(int offset,int data)
 
 
 
-void bosco_colorram2_w(int offset,int data)
+WRITE_HANDLER( bosco_colorram2_w )
 {
 	if (bosco_colorram2[offset] != data)
 	{
@@ -228,7 +228,7 @@ void bosco_colorram2_w(int offset,int data)
 }
 
 
-void bosco_flipscreen_w(int offset,int data)
+WRITE_HANDLER( bosco_flipscreen_w )
 {
 	if (flipscreen != (~data & 1))
 	{
@@ -238,17 +238,17 @@ void bosco_flipscreen_w(int offset,int data)
 	}
 }
 
-void bosco_scrollx_w(int offset,int data)
+WRITE_HANDLER( bosco_scrollx_w )
 {
 	bosco_scrollx = data;
 }
 
-void bosco_scrolly_w(int offset,int data)
+WRITE_HANDLER( bosco_scrolly_w )
 {
 	bosco_scrolly = data;
 }
 
-void bosco_starcontrol_w(int offset,int data)
+WRITE_HANDLER( bosco_starcontrol_w )
 {
 	bosco_starcontrol = data;
 }

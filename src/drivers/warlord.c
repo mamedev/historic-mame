@@ -90,7 +90,7 @@ Off On  On                          For every 5 coins, add 1 coin
 void warlord_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void warlord_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-static void warlord_led_w(int offset,int data)
+static WRITE_HANDLER( warlord_led_w )
 {
 	osd_led_w(offset,~data >> 7);
 }

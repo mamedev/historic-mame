@@ -31,17 +31,17 @@ KNOWN ISSUES/TODO:
 /* from vidhrdw */
 extern void exctsccr_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 extern void exctsccr_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void exctsccr_gfx_bank_w( int offset, int data );
+WRITE_HANDLER( exctsccr_gfx_bank_w );
 extern int exctsccr_vh_start( void );
 extern void exctsccr_vh_stop( void );
 
 /* from machine */
 extern unsigned char *exctsccr_mcu_ram;
-extern void exctsccr_mcu_w( int offs, int data );
-extern void exctsccr_mcu_control_w( int offs, int data );
+WRITE_HANDLER( exctsccr_mcu_w );
+WRITE_HANDLER( exctsccr_mcu_control_w );
 
 
-void exctsccr_DAC_data_w(int offset,int data)
+WRITE_HANDLER( exctsccr_DAC_data_w )
 {
 	DAC_signed_data_w(offset,data << 2);
 }

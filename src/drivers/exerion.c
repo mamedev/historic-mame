@@ -15,27 +15,67 @@ out of Bizarro World. I submit for your approval:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-//#define TRY_CPU2
 
-void exerion_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int exerion_vh_start (void);
-void exerion_vh_stop (void);
-void exerion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void exerion_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
+int exerion_vh_start(void);
+void exerion_vh_stop(void);
+void exerion_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
-extern void exerion_videoreg_w (int offset,int data);
+WRITE_HANDLER( exerion_videoreg_w );
+WRITE_HANDLER( exerion_video_latch_w );
+READ_HANDLER( exerion_video_timing_r );
+
+extern UINT8 exerion_cocktail_flip;
+
+
+/*********************************************************************
+ * Interrupts & inputs
+ *********************************************************************/
+
+static READ_HANDLER( exerion_port01_r )
+{
+	/* the cocktail flip bit muxes between ports 0 and 1 */
+	return exerion_cocktail_flip ? input_port_1_r(offset) : input_port_0_r(offset);
+}
+
+
+static READ_HANDLER( exerion_port3_r )
+{
+	/* bit 0 is VBLANK, which we simulate manually */
+	int result = input_port_3_r(offset);
+	int ybeam = cpu_getscanline();
+	if (ybeam > Machine->drv->visible_area.max_y)
+		result |= 1;
+	return result;
+}
+
+
+static int exerion_interrupt(void)
+{
+	/* Exerion triggers NMIs on coin insertion */
+	if (readinputport(4) & 1)
+		return nmi_interrupt();
+	else return ignore_interrupt();
+}
+
+
+
+/*********************************************************************
+ * Protection??
+ *********************************************************************/
 
 /* This is the first of many Exerion "features." No clue if it's */
 /* protection or some sort of timer. */
-static unsigned char porta;
-static unsigned char portb;
+static UINT8 porta;
+static UINT8 portb;
 
-static int exerion_porta_r (int offset)
+static READ_HANDLER( exerion_porta_r )
 {
 	porta ^= 0x40;
 	return porta;
 }
 
-static void exerion_portb_w (int offset, int data)
+static WRITE_HANDLER( exerion_portb_w )
 {
 	/* pull the expected value from the ROM */
 	porta = memory_region(REGION_CPU1)[0x5f76];
@@ -44,10 +84,9 @@ static void exerion_portb_w (int offset, int data)
 	if (errorlog) fprintf(errorlog, "Port B = %02X\n", data);
 }
 
-static int exerion_protection_r(int offset)
+static READ_HANDLER( exerion_protection_r )
 {
-	unsigned char *RAM;
-	RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 
 	if (cpu_get_pc() == 0x4143)
 		return RAM[0x33c0 + (RAM[0x600d] << 2) + offset];
@@ -56,18 +95,24 @@ static int exerion_protection_r(int offset)
 }
 
 
+
+/*********************************************************************
+ * CPU memory structures
+ *********************************************************************/
+
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x6008, 0x600b, exerion_protection_r },
 	{ 0x6000, 0x67ff, MRA_RAM },
 	{ 0x8000, 0x8bff, MRA_RAM },
-	{ 0xa000, 0xa000, input_port_0_r },
-	{ 0xa800, 0xa800, input_port_1_r },
-	{ 0xb000, 0xb000, input_port_2_r },
+	{ 0xa000, 0xa000, exerion_port01_r },
+	{ 0xa800, 0xa800, input_port_2_r },
+	{ 0xb000, 0xb000, exerion_port3_r },
 	{ 0xd802, 0xd802, AY8910_read_port_1_r },
 	{ -1 }  /* end of table */
 };
+
 
 static struct MemoryWriteAddress writemem[] =
 {
@@ -85,49 +130,53 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }  /* end of table */
 };
 
-#ifdef TRY_CPU2
+
 static struct MemoryReadAddress cpu2_readmem[] =
 {
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x4000, 0x47ff, MRA_RAM },
 	{ 0x6000, 0x6000, soundlatch_r },
-//  { 0xa000, 0xa000, MRA_NOP }, /* ??? */
+	{ 0xa000, 0xa000, exerion_video_timing_r },
 	{ -1 }  /* end of table */
 };
+
 
 static struct MemoryWriteAddress cpu2_writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
-//  { 0x8001, 0x8001, MWA_RAM },
-//  { 0x8003, 0x8003, MWA_RAM },
-//  { 0x8005, 0x8005, MWA_RAM },
-//  { 0x8007, 0x8007, MWA_RAM },
+	{ 0x8000, 0x800c, exerion_video_latch_w },
 	{ -1 }  /* end of table */
 };
-#endif
 
 
-/* Exerion triggers NMIs on vblank */
-int exerion_interrupt(void)
-{
-	if (readinputport(3) & 1)
-		return nmi_interrupt();
-	else return ignore_interrupt();
-}
+
+/*********************************************************************
+ * Input port definitions
+ *********************************************************************/
 
 INPUT_PORTS_START( exerion )
-	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_START      /* player 1 inputs (muxed on 0xa000) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-	PORT_START      /* DSW0 */
+	PORT_START      /* player 2 inputs (muxed on 0xa000) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START      /* dip switches (0xa800) */
 	PORT_DIPNAME( 0x07, 0x02, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x01, "2" )
@@ -150,8 +199,8 @@ INPUT_PORTS_START( exerion )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
-	PORT_START      /* VBLANK */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_START      /* dip switches/VBLANK (0xb000) */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )		/* VBLANK */
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
@@ -173,6 +222,10 @@ INPUT_PORTS_END
 
 
 
+/*********************************************************************
+ * Graphics layouts
+ *********************************************************************/
+
 static struct GfxLayout charlayout =
 {
 	8,8,            /* 8*8 characters */
@@ -184,23 +237,6 @@ static struct GfxLayout charlayout =
 	16*8            /* every char takes 16 consecutive bytes */
 };
 
-static struct GfxLayout bgcharlayout =
-{
-	32,32,            /* 64*8 characters */
-	128,          /* total number of chars */
-	2,              /* 2 bits per pixel (# of planes) */
-	{ 0, 4 },       /* start of every bitplane */
-	{ 3, 2, 1, 0, 8+3, 8+2, 8+1, 8+0,
-			2*8+3, 2*8+2, 2*8+1, 2*8+0, 3*8+3, 3*8+2, 3*8+1, 3*8+0,
-			4*8+3, 4*8+2, 4*8+1, 4*8+0, 5*8+3, 5*8+2, 5*8+1, 5*8+0,
-			6*8+3, 6*8+2, 6*8+1, 6*8+0, 7*8+3, 7*8+2, 7*8+1, 7*8+0 },
-	{ 64*0, 64*1, 64*2, 64*3, 64*4, 64*5, 64*6, 64*7,
-			64*8, 64*9, 64*10, 64*11, 64*12, 64*13, 64*14, 64*15,
-			64*16, 64*17, 64*18, 64*19, 64*20, 64*21, 64*22, 64*23,
-			64*24, 64*25, 64*26, 64*27, 64*28, 64*29, 64*30, 64*31 },
-	64*32            /* every char takes 16 consecutive bytes */
-};
-
 /* 16 x 16 sprites -- requires reorganizing characters in init_exerion() */
 static struct GfxLayout spritelayout =
 {
@@ -209,9 +245,9 @@ static struct GfxLayout spritelayout =
 	2,              /* 2 bits per pixel (# of planes) */
 	{ 0, 4 },       /* start of every bitplane */
 	{  3, 2, 1, 0, 8+3, 8+2, 8+1, 8+0,
-			128+3, 128+2, 128+1, 128+0, 128+8+3, 128+8+2, 128+8+1, 128+8+0 },
-	{ 16*0, 16*1, 16*2, 16*3, 16*4, 16*5, 16*6, 16*7,
-			256+16*0, 256+16*1, 256+16*2, 256+16*3, 256+16*4, 256+16*5, 256+16*6, 256+16*7 },
+			16+3, 16+2, 16+1, 16+0, 24+3, 24+2, 24+1, 24+0 },
+	{ 32*0, 32*1, 32*2, 32*3, 32*4, 32*5, 32*6, 32*7,
+			32*8, 32*9, 32*10, 32*11, 32*12, 32*13, 32*14, 32*15 },
 	64*8            /* every sprite takes 64 consecutive bytes */
 };
 
@@ -222,26 +258,30 @@ static struct GfxLayout bigspritelayout =
 	128*2,          /* total number of sprites in the rom */
 	2,              /* 2 bits per pixel (# of planes) */
 	{ 0, 4 },       /* start of every bitplane */
-	{ 3, 3, 2, 2, 1, 1, 0, 0, 8+3, 8+3, 8+2, 8+2, 8+1, 8+1, 8+0, 8+0,
-			128+3, 128+3, 128+2, 128+2, 128+1, 128+1, 128+0, 128+0,
-			128+8+3, 128+8+3, 128+8+2, 128+8+2, 128+8+1, 128+8+1, 128+8+0, 128+8+0 },
-	{ 16*0, 16*0, 16*1, 16*1, 16*2, 16*2, 16*3, 16*3,
-			16*4, 16*4, 16*5, 16*5, 16*6, 16*6, 16*7, 16*7,
-			256+16*0, 256+16*0, 256+16*1, 256+16*1, 256+16*2, 256+16*2, 256+16*3, 256+16*3,
-			256+16*4, 256+16*4, 256+16*5, 256+16*5, 256+16*6, 256+16*6, 256+16*7, 256+16*7 },
+	{  3, 3, 2, 2, 1, 1, 0, 0,
+			8+3, 8+3, 8+2, 8+2, 8+1, 8+1, 8+0, 8+0,
+			16+3, 16+3, 16+2, 16+2, 16+1, 16+1, 16+0, 16+0,
+			24+3, 24+3, 24+2, 24+2, 24+1, 24+1, 24+0, 24+0 },
+	{ 32*0, 32*0, 32*1, 32*1, 32*2, 32*2, 32*3, 32*3,
+			32*4, 32*4, 32*5, 32*5, 32*6, 32*6, 32*7, 32*7,
+			32*8, 32*8, 32*9, 32*9, 32*10, 32*10, 32*11, 32*11,
+			32*12, 32*12, 32*13, 32*13, 32*14, 32*14, 32*15, 32*15 },
 	64*8            /* every sprite takes 64 consecutive bytes */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,           0, 64 },
-	{ REGION_GFX2, 0, &bgcharlayout,      64*4, 64 },
-	{ REGION_GFX3, 0, &spritelayout,    2*64*4, 64 },
-	{ REGION_GFX3, 0, &bigspritelayout, 2*64*4, 64 },
+	{ REGION_GFX1, 0, &charlayout,         0, 64 },
+	{ REGION_GFX2, 0, &spritelayout,     256, 64 },
+	{ REGION_GFX2, 0, &bigspritelayout,  256, 64 },
 	{ -1 } /* end of array */
 };
 
 
+
+/*********************************************************************
+ * Sound interfaces
+ *********************************************************************/
 
 static struct AY8910interface ay8910_interface =
 {
@@ -256,6 +296,10 @@ static struct AY8910interface ay8910_interface =
 
 
 
+/*********************************************************************
+ * Machine driver
+ *********************************************************************/
+
 static struct MachineDriver machine_driver_exerion =
 {
 	/* basic machine hardware */
@@ -266,26 +310,24 @@ static struct MachineDriver machine_driver_exerion =
 			readmem,writemem,0,0,
 			exerion_interrupt,1
 		},
-#ifdef TRY_CPU2
 		{
 			CPU_Z80,
 			10000000/3, /* 3.333 MHz */
 			cpu2_readmem,cpu2_writemem,0,0,
 			ignore_interrupt,0
 		}
-#endif
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
+	60, 0,  /* frames per second, vblank duration */
 	1,  /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
 	64*8, 32*8, { 12*8, 52*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	32,64*4+64*4+64*4,
+	32,256*3,
 	exerion_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	exerion_vh_start,
 	exerion_vh_stop,
@@ -303,11 +345,9 @@ static struct MachineDriver machine_driver_exerion =
 
 
 
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
+/*********************************************************************
+ * ROM definitions
+ *********************************************************************/
 
 ROM_START( exerion )
 	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
@@ -321,15 +361,15 @@ ROM_START( exerion )
 	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "exerion.06",   0x00000, 0x2000, 0x435a85a4 ) /* fg chars */
 
-	ROM_REGION( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "exerion.03",   0x00000, 0x2000, 0x790595b8 ) /* bg chars */
+	ROM_REGION( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "exerion.11",   0x00000, 0x2000, 0xf0633a09 ) /* sprites */
+	ROM_LOAD( "exerion.10",   0x02000, 0x2000, 0x80312de0 )
+
+	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "exerion.03",   0x00000, 0x2000, 0x790595b8 ) /* bg data */
 	ROM_LOAD( "exerion.04",   0x02000, 0x2000, 0xd7abd0b9 )
 	ROM_LOAD( "exerion.01",   0x04000, 0x2000, 0x5bb755cb )
 	ROM_LOAD( "exerion.02",   0x06000, 0x2000, 0xa7ecbb70 )
-
-	ROM_REGION( 0x04000, REGION_GFX3 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "exerion.11",   0x00000, 0x2000, 0xf0633a09 ) /* sprites */
-	ROM_LOAD( "exerion.10",   0x02000, 0x2000, 0x80312de0 )
 
 	ROM_REGION( 0x0420, REGION_PROMS )
 	ROM_LOAD( "exerion.e1",   0x0000, 0x0020, 0x2befcc20 ) /* palette */
@@ -344,18 +384,21 @@ ROM_START( exeriont )
 	ROM_LOAD( "prom5.4p",     0x0000, 0x4000, 0x58b4dc1b )
 	ROM_LOAD( "prom6.4s",     0x4000, 0x2000, 0xfca18c2d )
 
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_LOAD( "exerion.05",   0x0000, 0x2000, 0x32f6bff5 )
+
 	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "exerion.06",   0x00000, 0x2000, 0x435a85a4 ) /* fg chars */
 
-	ROM_REGION( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "exerion.03",   0x00000, 0x2000, 0x790595b8 ) /* bg chars */
+	ROM_REGION( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "exerion.11",   0x00000, 0x2000, 0xf0633a09 ) /* sprites */
+	ROM_LOAD( "exerion.10",   0x02000, 0x2000, 0x80312de0 )
+
+	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "exerion.03",   0x00000, 0x2000, 0x790595b8 ) /* bg data */
 	ROM_LOAD( "exerion.04",   0x02000, 0x2000, 0xd7abd0b9 )
 	ROM_LOAD( "exerion.01",   0x04000, 0x2000, 0x5bb755cb )
 	ROM_LOAD( "exerion.02",   0x06000, 0x2000, 0xa7ecbb70 )
-
-	ROM_REGION( 0x04000, REGION_GFX3 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "exerion.11",   0x00000, 0x2000, 0xf0633a09 ) /* sprites */
-	ROM_LOAD( "exerion.10",   0x02000, 0x2000, 0x80312de0 )
 
 	ROM_REGION( 0x0420, REGION_PROMS )
 	ROM_LOAD( "exerion.e1",   0x0000, 0x0020, 0x2befcc20 ) /* palette */
@@ -363,9 +406,6 @@ ROM_START( exeriont )
 	ROM_LOAD( "exerion.h10",  0x0120, 0x0100, 0xcdd23f3e ) /* sprite lookup table */
 	ROM_LOAD( "exerion.i3",   0x0220, 0x0100, 0xfe72ab79 ) /* bg char lookup table */
 	ROM_LOAD( "exerion.k4",   0x0320, 0x0100, 0xffc2ba43 ) /* bg char mixer */
-
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
-	ROM_LOAD( "exerion.05",   0x0000, 0x2000, 0x32f6bff5 )
 ROM_END
 
 ROM_START( exerionb )
@@ -373,18 +413,21 @@ ROM_START( exerionb )
 	ROM_LOAD( "eb5.bin",      0x0000, 0x4000, 0xda175855 )
 	ROM_LOAD( "eb6.bin",      0x4000, 0x2000, 0x0dbe2eff )
 
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_LOAD( "exerion.05",   0x0000, 0x2000, 0x32f6bff5 )
+
 	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "exerion.06",   0x00000, 0x2000, 0x435a85a4 ) /* fg chars */
 
-	ROM_REGION( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "exerion.03",   0x00000, 0x2000, 0x790595b8 ) /* bg chars */
+	ROM_REGION( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "exerion.11",   0x00000, 0x2000, 0xf0633a09 ) /* sprites */
+	ROM_LOAD( "exerion.10",   0x02000, 0x2000, 0x80312de0 )
+
+	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "exerion.03",   0x00000, 0x2000, 0x790595b8 ) /* bg data */
 	ROM_LOAD( "exerion.04",   0x02000, 0x2000, 0xd7abd0b9 )
 	ROM_LOAD( "exerion.01",   0x04000, 0x2000, 0x5bb755cb )
 	ROM_LOAD( "exerion.02",   0x06000, 0x2000, 0xa7ecbb70 )
-
-	ROM_REGION( 0x04000, REGION_GFX3 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "exerion.11",   0x00000, 0x2000, 0xf0633a09 ) /* sprites */
-	ROM_LOAD( "exerion.10",   0x02000, 0x2000, 0x80312de0 )
 
 	ROM_REGION( 0x0420, REGION_PROMS )
 	ROM_LOAD( "exerion.e1",   0x0000, 0x0020, 0x2befcc20 ) /* palette */
@@ -392,107 +435,73 @@ ROM_START( exerionb )
 	ROM_LOAD( "exerion.h10",  0x0120, 0x0100, 0xcdd23f3e ) /* sprite lookup table */
 	ROM_LOAD( "exerion.i3",   0x0220, 0x0100, 0xfe72ab79 ) /* bg char lookup table */
 	ROM_LOAD( "exerion.k4",   0x0320, 0x0100, 0xffc2ba43 ) /* bg char mixer */
-
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
-	ROM_LOAD( "exerion.05",   0x0000, 0x2000, 0x32f6bff5 )
 ROM_END
 
 
 
-static void untangle(unsigned char *dst,unsigned char *src,int length)
-{
-	int i, x, offs;
-
-	for (i = 0;i < length/16;i++)
-	{
-		offs = (i/16)*2048 + (i%16)*16;
-
-		for (x=0; x<8; x++)
-		{
-			int d, s;
-
-			d = i*16 + x*2;
-			s = (offs + 256*x) / 8;
-
-			dst[d] = src[s];
-			dst[d+1] = src[s+1];
-		}
-	}
-}
+/*********************************************************************
+ * Initialization routines
+ *********************************************************************/
 
 static void init_exerion(void)
 {
-	int i, offs;
-	unsigned char *rom;
-	unsigned char *tmp;
+	UINT32 oldaddr, newaddr, length;
+	UINT8 *src, *dst, *temp;
 
-	/*
-		The gfx ROMs are stored in a half-assed fashion that makes using them with
-		MAME challenging. We shuffle the bytes around to make it easier.
-	*/
+	/* allocate some temporary space */
+	temp = malloc(0x8000);
+	if (!temp)
+		return;
 
-	tmp = malloc(0x8000);
-	if (!tmp) return;
+	/* make a temporary copy of the character data */
+	src = temp;
+	dst = memory_region(REGION_GFX1);
+	length = memory_region_length(REGION_GFX1);
+	memcpy(src, dst, length);
 
-	rom = memory_region(REGION_GFX1);
-	memcpy(tmp,rom,memory_region_length(REGION_GFX1));
-
-	untangle(rom,tmp,memory_region_length(REGION_GFX1));
-
-
-	/* reorganize bg chars */
-	rom = memory_region(REGION_GFX2);
-	memcpy(tmp,rom,memory_region_length(REGION_GFX2));
-
-	for(i = 0;i < memory_region_length(REGION_GFX2);i++)
+	/* decode the characters */
+	/* the bits in the ROM are ordered: n8-n7 n6 n5 n4-v2 v1 v0 n3-n2 n1 n0 h2 */
+	/* we want them ordered like this:  n8-n7 n6 n5 n4-n3 n2 n1 n0-v2 v1 v0 h2 */
+	for (oldaddr = 0; oldaddr < length; oldaddr++)
 	{
-		int s;
-
-		s = (i & 0x6000) | ((i & 0x1fe0) >> 2) | ((i & 0x0018) << 8) | (i & 0x0007);
-
-		rom[s] = tmp[i];
+		newaddr = ((oldaddr     ) & 0x1f00) |       /* keep n8-n4 */
+		          ((oldaddr << 3) & 0x00f0) |       /* move n3-n0 */
+		          ((oldaddr >> 4) & 0x000e) |       /* move v2-v0 */
+		          ((oldaddr     ) & 0x0001);        /* keep h2 */
+		dst[newaddr] = src[oldaddr];
 	}
 
-	/* now reorganize the characters that form the sprites, and the sprites */
+	/* make a temporary copy of the sprite data */
+	src = temp;
+	dst = memory_region(REGION_GFX2);
+	length = memory_region_length(REGION_GFX2);
+	memcpy(src, dst, length);
 
-	rom = memory_region(REGION_GFX3);
-	memcpy(tmp,rom,memory_region_length(REGION_GFX3));
-
-	untangle(rom,tmp,memory_region_length(REGION_GFX3));
-
-	/* get a fresh copy to work with */
-	memcpy(tmp,rom,memory_region_length(REGION_GFX3));
-
-	/* for each of the 256 sprites, make the 4 characters contiguous */
-	for (i=0; i<(128*2); i++)
+	/* decode the sprites */
+	/* the bits in the ROMs are ordered: n3 n7-n6 n5 n4 v3-v2 v1 v0 n2-n1 n0 h3 h2 */
+	/* we want them ordered like this:   n7 n6-n5 n4 n3 n2-n1 n0 v3 v2-v1 v0 h3 h2 */
+	for (oldaddr = 0; oldaddr < length; oldaddr++)
 	{
-		int d, s;
-
-		/* this assumes that sprite 1 is offset by 32 characters (32*16 bytes) from sprite 0 */
-		offs = 16 * ((i/32)*2 + (i%32)*32);     // byte offset of sprite
-
-		/* this assumes that sprite 1 is right next to sprite 0 (informational only) */
-		//offs = 16 * i * 2; // byte offset of sprite
-
-		d = i*64;
-		s = offs;
-
-		memcpy(&rom[d], &tmp[s], 32);  // first 32 bytes
-		memcpy(&rom[d+32], &tmp[s+256], 32); // next 32 bytes
+		newaddr = ((oldaddr << 1) & 0x3c00) |       /* move n7-n4 */
+		          ((oldaddr >> 4) & 0x0200) |       /* move n3 */
+		          ((oldaddr << 4) & 0x01c0) |       /* move n2-n0 */
+		          ((oldaddr >> 3) & 0x003c) |       /* move v3-v0 */
+		          ((oldaddr     ) & 0x0003);        /* keep h3-h2 */
+		dst[newaddr] = src[oldaddr];
 	}
 
-	free(tmp);
+	free(temp);
 }
+
 
 static void init_exerionb(void)
 {
-	int A;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
+	UINT8 *ram = memory_region(REGION_CPU1);
+	int addr;
 
 	/* the program ROMs have data lines D1 and D2 swapped. Decode them. */
-	for (A = 0;A < 0x6000;A++)
-		RAM[A] = (RAM[A] & 0xf9) | ((RAM[A] & 2) << 1) | ((RAM[A] & 4) >> 1);
+	for (addr = 0; addr < 0x6000; addr++)
+		ram[addr] = (ram[addr] & 0xf9) | ((ram[addr] & 2) << 1) | ((ram[addr] & 4) >> 1);
 
 	/* also convert the gfx as in Exerion */
 	init_exerion();
@@ -500,6 +509,10 @@ static void init_exerionb(void)
 
 
 
-GAMEX( 1983, exerion,  0,       exerion, exerion, exerion,  ROT90, "Jaleco", "Exerion", GAME_WRONG_COLORS | GAME_NO_COCKTAIL )
-GAMEX( 1983, exeriont, exerion, exerion, exerion, exerion,  ROT90, "Jaleco (Taito America license)", "Exerion (Taito)", GAME_WRONG_COLORS | GAME_NO_COCKTAIL )
-GAMEX( 1983, exerionb, exerion, exerion, exerion, exerionb, ROT90, "Jaleco", "Exerion (bootleg)", GAME_WRONG_COLORS | GAME_NO_COCKTAIL )
+/*********************************************************************
+ * Game drivers
+ *********************************************************************/
+
+GAMEX( 1983, exerion,  0,       exerion, exerion, exerion,  ROT90, "Jaleco", "Exerion", GAME_IMPERFECT_COLORS )
+GAMEX( 1983, exeriont, exerion, exerion, exerion, exerion,  ROT90, "Jaleco (Taito America license)", "Exerion (Taito)", GAME_IMPERFECT_COLORS )
+GAMEX( 1983, exerionb, exerion, exerion, exerion, exerionb, ROT90, "Jaleco", "Exerion (bootleg)", GAME_IMPERFECT_COLORS )

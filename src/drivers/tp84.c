@@ -86,17 +86,17 @@ C004      76489 #4 trigger
 
 
 /* In Machine */
-extern int tp84_beam_r(int offset);
-void tp84_catchloop_w(int offset,int data); /* JB 970829 */
+READ_HANDLER( tp84_beam_r );
+WRITE_HANDLER( tp84_catchloop_w ); /* JB 970829 */
 void tp84_init_machine(void); /* JB 970829 */
 
 extern unsigned char *tp84_videoram2;
 extern unsigned char *tp84_colorram2;
 extern unsigned char *tp84_scrollx;
 extern unsigned char *tp84_scrolly;
-void tp84_videoram2_w(int offset,int data);
-void tp84_colorram2_w(int offset,int data);
-void tp84_col0_w(int offset,int data);
+WRITE_HANDLER( tp84_videoram2_w );
+WRITE_HANDLER( tp84_colorram2_w );
+WRITE_HANDLER( tp84_col0_w );
 void tp84_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int tp84_vh_start(void);
 void tp84_vh_stop(void);
@@ -105,18 +105,18 @@ void tp84_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static unsigned char *sharedram;
 
-static int sharedram_r(int offset)
+static READ_HANDLER( sharedram_r )
 {
 	return sharedram[offset];
 }
 
-static void sharedram_w(int offset,int data)
+static WRITE_HANDLER( sharedram_w )
 {
 	sharedram[offset] = data;
 }
 
 
-int tp84_sh_timer_r(int offset)
+READ_HANDLER( tp84_sh_timer_r )
 {
 	/* main xtal 14.318MHz, divided by 4 to get the CPU clock, further */
 	/* divided by 2048 to get this timer */
@@ -125,7 +125,7 @@ int tp84_sh_timer_r(int offset)
 	return (cpu_gettotalcycles() / (2048/2)) & 0x0f;
 }
 
-void tp84_filter_w(int offset,int data)
+WRITE_HANDLER( tp84_filter_w )
 {
 	int C;
 
@@ -152,7 +152,7 @@ void tp84_filter_w(int offset,int data)
 	set_RC_filter(2,1000,2200,1000,C);
 }
 
-void tp84_sh_irqtrigger_w(int offset,int data)
+WRITE_HANDLER( tp84_sh_irqtrigger_w )
 {
 	cpu_cause_interrupt(2,0xff);
 }

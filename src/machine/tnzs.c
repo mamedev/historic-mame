@@ -36,7 +36,7 @@ static unsigned char mcu_coinsA,mcu_coinsB,mcu_credits;
 
 
 
-int arkanoi2_sh_f000_r(int offset)
+READ_HANDLER( arkanoi2_sh_f000_r )
 {
 	int val;
 
@@ -139,7 +139,7 @@ static void mcu_handle_coins(int coin)
 
 
 
-static int mcu_arkanoi2_r(int offset)
+static READ_HANDLER( mcu_arkanoi2_r )
 {
 	char *mcu_startup = "\x55\xaa\x5a";
 
@@ -201,7 +201,7 @@ if (errorlog) fprintf (errorlog, "error, unknown mcu command\n");
 	}
 }
 
-static void mcu_arkanoi2_w(int offset, int data)
+static WRITE_HANDLER( mcu_arkanoi2_w )
 {
 	if (offset == 0)
 	{
@@ -238,7 +238,7 @@ static void mcu_arkanoi2_w(int offset, int data)
 }
 
 
-static int mcu_chukatai_r(int offset)
+static READ_HANDLER( mcu_chukatai_r )
 {
 	char *mcu_startup = "\xa5\x5a\xaa";
 
@@ -316,7 +316,7 @@ if (errorlog) fprintf (errorlog, "error, unknown mcu command (%02x)\n",mcu_comma
 	}
 }
 
-static void mcu_chukatai_w(int offset, int data)
+static WRITE_HANDLER( mcu_chukatai_w )
 {
 	if (errorlog) fprintf (errorlog, "PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
 
@@ -354,7 +354,7 @@ static void mcu_chukatai_w(int offset, int data)
 
 
 
-static int mcu_tnzs_r(int offset)
+static READ_HANDLER( mcu_tnzs_r )
 {
 	char *mcu_startup = "\x5a\xa5\x55";
 
@@ -448,7 +448,7 @@ if (errorlog) fprintf (errorlog, "error, unknown mcu command\n");
 	}
 }
 
-static void mcu_tnzs_w(int offset, int data)
+static WRITE_HANDLER( mcu_tnzs_w )
 {
 	if (offset == 0)
 	{
@@ -569,7 +569,7 @@ void init_kageki(void)
 }
 
 
-int tnzs_mcu_r(int offset)
+READ_HANDLER( tnzs_mcu_r )
 {
 	switch (mcu_type)
 	{
@@ -588,7 +588,7 @@ int tnzs_mcu_r(int offset)
 	}
 }
 
-void tnzs_mcu_w(int offset,int data)
+WRITE_HANDLER( tnzs_mcu_w )
 {
 	switch (mcu_type)
 	{
@@ -657,7 +657,7 @@ void tnzs_init_machine (void)
 }
 
 
-int tnzs_workram_r (int offset)
+READ_HANDLER( tnzs_workram_r )
 {
 	/* Location $EF10 workaround required to stop TNZS getting */
 	/* caught in and endless loop due to shared ram sync probs */
@@ -682,12 +682,12 @@ int tnzs_workram_r (int offset)
 	return tnzs_workram[offset];
 }
 
-int tnzs_workram_sub_r (int offset)
+READ_HANDLER( tnzs_workram_sub_r )
 {
 	return tnzs_workram[offset];
 }
 
-void tnzs_workram_w (int offset, int data)
+WRITE_HANDLER( tnzs_workram_w )
 {
 	/* Location $EF10 workaround required to stop TNZS getting */
 	/* caught in and endless loop due to shared ram sync probs */
@@ -716,12 +716,12 @@ void tnzs_workram_w (int offset, int data)
 		tnzs_workram[offset] = data;
 }
 
-void tnzs_workram_sub_w (int offset, int data)
+WRITE_HANDLER( tnzs_workram_sub_w )
 {
 	tnzs_workram[offset] = data;
 }
 
-void tnzs_bankswitch_w (int offset, int data)
+WRITE_HANDLER( tnzs_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -736,7 +736,7 @@ void tnzs_bankswitch_w (int offset, int data)
 	cpu_setbank (1, &RAM[0x10000 + 0x4000 * (data & 0x07)]);
 }
 
-void tnzs_bankswitch1_w (int offset,int data)
+WRITE_HANDLER( tnzs_bankswitch1_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 

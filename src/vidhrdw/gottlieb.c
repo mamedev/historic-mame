@@ -49,7 +49,7 @@ static int spritebank;
   bit 0 -- 2  kohm resistor  -- BLUE
 
 ***************************************************************************/
-void gottlieb_paletteram_w(int offset,int data)
+WRITE_HANDLER( gottlieb_paletteram_w )
 {
 	int bit0,bit1,bit2,bit3;
 	int r,g,b,val;
@@ -123,7 +123,7 @@ void gottlieb_vh_stop(void)
 
 
 
-void gottlieb_video_outputs(int offset,int data)
+WRITE_HANDLER( gottlieb_video_outputs_w )
 {
 	extern void gottlieb_knocker(void);
 	static int last = 0;
@@ -144,7 +144,7 @@ void gottlieb_video_outputs(int offset,int data)
 	last = data;
 }
 
-void usvsthem_video_outputs(int offset,int data)
+WRITE_HANDLER( usvsthem_video_outputs_w )
 {
 	background_priority = data & 1;
 
@@ -161,7 +161,7 @@ void usvsthem_video_outputs(int offset,int data)
 
 
 
-void gottlieb_characterram_w(int offset,int data)
+WRITE_HANDLER( gottlieb_characterram_w )
 {
 	if (gottlieb_characterram[offset] != data)
 	{

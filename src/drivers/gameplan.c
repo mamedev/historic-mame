@@ -14,18 +14,16 @@ TO-DO: - Fix the input ports/dip switches of Kaos?
 #include "vidhrdw/generic.h"
 
 int gameplan_vh_start(void);
-int gameplan_video_r(int offset);
-void gameplan_video_w(int offset, int data);
-int gameplan_sound_r(int offset);
-void gameplan_sound_w(int offset, int data);
-int gameplan_via5_r(int offset);
-void gameplan_via5_w(int offset, int data);
-void gameplan_select_port(int offset, int data);
-int gameplan_read_port(int offset);
+READ_HANDLER( gameplan_video_r );
+WRITE_HANDLER( gameplan_video_w );
+READ_HANDLER( gameplan_sound_r );
+WRITE_HANDLER( gameplan_sound_w );
+READ_HANDLER( gameplan_via5_r );
+WRITE_HANDLER( gameplan_via5_w );
 
 static int gameplan_current_port;
 
-void gameplan_select_port(int offset, int data)
+static WRITE_HANDLER( gameplan_port_select_w )
 {
 #ifdef VERY_VERBOSE
 	if (errorlog)
@@ -98,7 +96,7 @@ void gameplan_select_port(int offset, int data)
 	}
 }
 
-int gameplan_read_port(int offset)
+static READ_HANDLER( gameplan_port_r )
 {
 	return readinputport(gameplan_current_port);
 }
@@ -111,7 +109,7 @@ static struct MemoryReadAddress readmem[] =
 								  * (write by code at e1df and e1e9,
 								  * 32d is read by e258)*/
     { 0x2000, 0x200f, gameplan_video_r },
-    { 0x2801, 0x2801, gameplan_read_port },
+    { 0x2801, 0x2801, gameplan_port_r },
 	{ 0x3000, 0x300f, gameplan_sound_r },
     { 0x9000, 0xffff, MRA_ROM },
 
@@ -122,7 +120,7 @@ static struct MemoryWriteAddress writemem[] =
 {
     { 0x0000, 0x03ff, MWA_RAM },
     { 0x2000, 0x200f, gameplan_video_w },		/* VIA 1 */
-    { 0x2800, 0x280f, gameplan_select_port },	/* VIA 2 */
+    { 0x2800, 0x280f, gameplan_port_select_w },	/* VIA 2 */
     { 0x3000, 0x300f, gameplan_sound_w },       /* VIA 3 */
     { 0x9000, 0xffff, MWA_ROM },
 

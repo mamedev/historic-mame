@@ -36,23 +36,23 @@
 
 void arkanoid_init_machine(void);
 
-void arkanoid_d008_w(int offset,int data);
+WRITE_HANDLER( arkanoid_d008_w );
 void arkanoid_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void arkanoid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-int arkanoid_Z80_mcu_r (int value);
-void arkanoid_Z80_mcu_w (int offset, int value);
+READ_HANDLER( arkanoid_Z80_mcu_r );
+WRITE_HANDLER( arkanoid_Z80_mcu_w );
 
-int arkanoid_68705_portA_r(int offset);
-void arkanoid_68705_portA_w(int offset,int data);
-void arkanoid_68705_ddrA_w(int offset,int data);
+READ_HANDLER( arkanoid_68705_portA_r );
+WRITE_HANDLER( arkanoid_68705_portA_w );
+WRITE_HANDLER( arkanoid_68705_ddrA_w );
 
-int arkanoid_68705_portC_r(int offset);
-void arkanoid_68705_portC_w(int offset,int data);
-void arkanoid_68705_ddrC_w(int offset,int data);
+READ_HANDLER( arkanoid_68705_portC_r );
+WRITE_HANDLER( arkanoid_68705_portC_w );
+WRITE_HANDLER( arkanoid_68705_ddrC_w );
 
-int arkanoid_68705_input_0_r (int offset);
-int arkanoid_input_2_r (int offset);
+READ_HANDLER( arkanoid_68705_input_0_r );
+READ_HANDLER( arkanoid_input_2_r );
 
 
 static struct MemoryReadAddress readmem[] =

@@ -21,13 +21,13 @@ extern unsigned char *yard_score_panel_disabled;
 void yard_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int yard_vh_start(void);
 void yard_vh_stop(void);
-void yard_flipscreen_w(int offset,int data);
-void yard_scroll_panel_w(int offset,int data);
+WRITE_HANDLER( yard_flipscreen_w );
+WRITE_HANDLER( yard_scroll_panel_w );
 void yard_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-int mpatrol_input_port_3_r(int offset);
+READ_HANDLER( mpatrol_input_port_3_r );
 
 
 

@@ -117,7 +117,7 @@ void gunsmoke_vh_stop(void)
 
 
 
-void gunsmoke_c804_w(int offset,int data)
+WRITE_HANDLER( gunsmoke_c804_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -144,7 +144,7 @@ void gunsmoke_c804_w(int offset,int data)
 
 
 
-void gunsmoke_d806_w(int offset,int data)
+WRITE_HANDLER( gunsmoke_d806_w )
 {
 	/* bits 0-2 select the sprite 3 bank */
 	sprite3bank = data & 0x07;

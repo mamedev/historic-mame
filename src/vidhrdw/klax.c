@@ -127,7 +127,7 @@ void klax_vh_stop(void)
  *
  *************************************/
 
-void klax_playfieldram_w(int offset, int data)
+WRITE_HANDLER( klax_playfieldram_w )
 {
 	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -147,7 +147,7 @@ void klax_playfieldram_w(int offset, int data)
  *
  *************************************/
 
-void klax_latch_w(int offset, int data)
+WRITE_HANDLER( klax_latch_w )
 {
 }
 

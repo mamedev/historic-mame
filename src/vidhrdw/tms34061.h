@@ -45,10 +45,10 @@ int TMS34061_start(struct TMS34061interface *interface);
 void TMS34061_stop(void);
 
 /* Writes to the 34061 */
-void TMS34061_w(int offset, int data);
+WRITE_HANDLER( TMS34061_w );
 
 /* Reads from the 34061 */
-int TMS34061_r(int offset);
+READ_HANDLER( TMS34061_r );
 
 /* Checks whether the display is inhibited */
 int TMS34061_display_blanked(void);

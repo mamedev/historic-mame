@@ -19,12 +19,12 @@ int  missile_video_r (int address);
 void missile_video_w (int address, int data);
 void missile_video_mult_w (int address, int data);
 
-void missile_palette_w (int offset, int data);
+WRITE_HANDLER( missile_palette_w );
 void missile_flip_screen (void);
 
 
 /********************************************************************************************/
-int missile_IN0_r(int offset)
+READ_HANDLER( missile_IN0_r )
 {
 	if (ctrld)	/* trackball */
 	{

@@ -9,8 +9,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern unsigned char *grobda_spriteram;
 static int flipscreen;
+extern unsigned char *grobda_spriteram;
 
 
 /***************************************************************************
@@ -78,26 +78,77 @@ void grobda_vh_stop( void )
 	generic_vh_stop();
 }
 
+WRITE_HANDLER( grobda_flipscreen_w )
+{
+	if (flipscreen != data)
+		memset(dirtybuffer,1,videoram_size);
+	flipscreen = data;
+}
+
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+	Screen Refresh
 
 ***************************************************************************/
 
-void grobda_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int color,
-	int flipx,int flipy,int sx,int sy)
+static void grobda_draw_sprites(struct osd_bitmap *bitmap)
 {
-	drawgfx(dest,Machine->gfx[1],code,color,flipx,flipy,sx,sy,&Machine->drv->visible_area,
-		TRANSPARENCY_PEN,0);
+	int offs;
+
+	for (offs = 0; offs < spriteram_size; offs += 2){
+		int number = spriteram[offs];
+		int color = spriteram[offs+1];
+		int sx = (spriteram_2[offs+1]-40) + 0x100*(spriteram_3[offs+1] & 1);
+		int sy = 28*8-spriteram_2[offs] - 16;
+		int flipx = spriteram_3[offs] & 1;
+		int flipy = spriteram_3[offs] & 2;
+		int width,height;
+
+		if (flipscreen){
+			flipx = !flipx;
+			flipy = !flipy;
+		}
+
+		if (spriteram_3[offs+1] & 2) continue;
+
+		switch (spriteram_3[offs] & 0x0c){
+			case 0x0c:	/* 2x both ways */
+				width = height = 2; number &= (~3); break;
+			case 0x08:	/* 2x vertical */
+				width = 1; height = 2; number &= (~2); break;
+			case 0x04:	/* 2x horizontal */
+				width = 2; height = 1; number &= (~1); sy += 16; break;
+			default:	/* normal sprite */
+				width = height = 1; sy += 16; break;
+		}
+
+		{
+			static int x_offset[2] = { 0x00, 0x01 };
+			static int y_offset[2] = { 0x00, 0x02 };
+			int x,y, ex, ey;
+
+			for( y=0; y < height; y++ ){
+				for( x=0; x < width; x++ ){
+					ex = flipx ? (width-1-x) : x;
+					ey = flipy ? (height-1-y) : y;
+
+					drawgfx(bitmap,Machine->gfx[1],
+						(number)+x_offset[ex]+y_offset[ey],
+						color,
+						flipx, flipy,
+						sx+x*16,sy+y*16,
+						&Machine->drv->visible_area,
+						TRANSPARENCY_PEN,0);
+				}
+			}
+		}
+	}
 }
 
 void grobda_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
-
 
 	for (offs = videoram_size - 1; offs > 0; offs--)
 	{
@@ -144,86 +195,5 @@ void grobda_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-
-	/* Draw the sprites. */
-	for (offs = 0;offs < spriteram_size;offs += 2)
-	{
-		/* is it on? */
-		if ((spriteram_3[offs+1] & 2) == 0)
-		{
-			int sprite = spriteram[offs];
-			int color = spriteram[offs+1];
-			int x = (spriteram_2[offs+1]-40) + 0x100*(spriteram_3[offs+1] & 1);
-			int y = 28*8-spriteram_2[offs];
-			int flipx = spriteram_3[offs] & 1;
-			int flipy = spriteram_3[offs] & 2;
-
-			switch (spriteram_3[offs] & 0x0c)
-			{
-				case 0:		/* normal size */
-					grobda_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-					break;
-
-				case 4:		/* 2x horizontal */
-					sprite &= ~1;
-					if (!flipx)
-					{
-						grobda_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-						grobda_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x+16,y);
-					}
-					else
-					{
-						grobda_draw_sprite(bitmap,sprite,color,flipx,flipy,x+16,y);
-						grobda_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y);
-					}
-					break;
-
-				case 8:		/* 2x vertical */
-					sprite &= ~2;
-					if (!flipy)
-					{
-						grobda_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y);
-						grobda_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y-16);
-					}
-					else
-					{
-						grobda_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-						grobda_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y-16);
-					}
-					break;
-
-				case 12:		/* 2x both ways */
-					sprite &= ~3;
-					if (!flipx && !flipy)
-					{
-						grobda_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y);
-						grobda_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x+16,y);
-						grobda_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y-16);
-						grobda_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x+16,y-16);
-					}
-					else if (flipx && flipy)
-					{
-						grobda_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y);
-						grobda_draw_sprite(bitmap,sprite,color,flipx,flipy,x+16,y);
-						grobda_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,y-16);
-						grobda_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x+16,y-16);
-					}
-					else if (flipy)
-					{
-						grobda_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-						grobda_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x+16,y);
-						grobda_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y-16);
-						grobda_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x+16,y-16);
-					}
-					else /* flipx */
-					{
-						grobda_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,y);
-						grobda_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x+16,y);
-						grobda_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y-16);
-						grobda_draw_sprite(bitmap,sprite,color,flipx,flipy,x+16,y-16);
-					}
-					break;
-			}
-		}
-	}
+	grobda_draw_sprites(bitmap);
 }

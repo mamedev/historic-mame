@@ -151,14 +151,14 @@ extern int sys16_MaxShadowColors;
 
 /***************************************************************************/
 
-extern int sys16_tileram_r(int offset);
-extern void sys16_tileram_w(int offset,int data);
-extern int sys16_textram_r(int offset);
-extern void sys16_textram_w(int offset,int data);
+READ_HANDLER( sys16_tileram_r );
+WRITE_HANDLER( sys16_tileram_w );
+READ_HANDLER( sys16_textram_r );
+WRITE_HANDLER( sys16_textram_w );
 extern int sys16_vh_start( void );
 extern void sys16_vh_stop( void );
 extern void sys16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void sys16_paletteram_w(int offset, int data);
+WRITE_HANDLER( sys16_paletteram_w );
 
 extern int sys16_ho_vh_start( void );
 extern void sys16_ho_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -240,17 +240,17 @@ static unsigned char *sys16_extraram4;
 static unsigned char *sys16_extraram5;
 
 // 7751 emulation
-void sys16_7751_audio_8255_w( int offset, int data );
- int sys16_7751_audio_8255_r( int offset );
- int sys16_7751_sh_rom_r(int offset);
- int sys16_7751_sh_t1_r(int offset);
- int sys16_7751_sh_command_r(int offset);
-void sys16_7751_sh_dac_w(int offset, int data);
-void sys16_7751_sh_busy_w(int offset, int data);
-void sys16_7751_sh_offset_a0_a3_w(int offset, int data);
-void sys16_7751_sh_offset_a4_a7_w(int offset, int data);
-void sys16_7751_sh_offset_a8_a11_w(int offset, int data);
-void sys16_7751_sh_rom_select_w(int offset, int data);
+WRITE_HANDLER( sys16_7751_audio_8255_w );
+ READ_HANDLER( sys16_7751_audio_8255_r );
+ READ_HANDLER( sys16_7751_sh_rom_r );
+ READ_HANDLER( sys16_7751_sh_t1_r );
+ READ_HANDLER( sys16_7751_sh_command_r );
+WRITE_HANDLER( sys16_7751_sh_dac_w );
+WRITE_HANDLER( sys16_7751_sh_busy_w );
+WRITE_HANDLER( sys16_7751_sh_offset_a0_a3_w );
+WRITE_HANDLER( sys16_7751_sh_offset_a4_a7_w );
+WRITE_HANDLER( sys16_7751_sh_offset_a8_a11_w );
+WRITE_HANDLER( sys16_7751_sh_rom_select_w );
 
 
 // encryption decoding
@@ -617,7 +617,7 @@ static struct MemoryReadAddress sound_readmem_7759[] =
 
 // some games (aurail, riotcity, eswat), seem to send different format data to the 7759
 // this function changes that data to what the 7759 expects, but it sounds quite poor.
-static void UPD7759_process_message_w(int offset,int data)
+static WRITE_HANDLER( UPD7759_process_message_w )
 {
 	if((data & 0xc0) == 0x40) data=0xc0;
 	else data&=0x3f;
@@ -630,7 +630,7 @@ static struct IOWritePort sound_writeport_7759[] =
 	{ 0x00, 0x00, YM2151_register_port_0_w },
 	{ 0x01, 0x01, YM2151_data_port_0_w },
 	{ 0x40, 0x40, UPD7759_process_message_w },
-	{ 0x80, 0x80, UPD7759_start_w },
+	{ 0x80, 0x80, UPD7759_0_start_w },
 	{ -1 }
 };
 
@@ -648,7 +648,7 @@ static struct UPD7759_interface upd7759_interface =
 
 unsigned char *sys18_SoundMemBank;
 
-static int system18_bank_r(int offset)
+static READ_HANDLER( system18_bank_r )
 {
 	return sys18_SoundMemBank[offset];
 }
@@ -658,7 +658,7 @@ static struct MemoryReadAddress sound_readmem_18[] =
 	{ 0x0000, 0x9fff, MRA_ROM },
 	{ 0xa000, 0xbfff, system18_bank_r },
 	/**** D/A register ****/
-	{ 0xd000, 0xdfff, RF5C68ReadMem },
+	{ 0xd000, 0xdfff, RF5C68_r },
 	{ 0xe000, 0xffff, MRA_RAM },
 	{ -1 }  /* end of table */
 };
@@ -667,8 +667,8 @@ static struct MemoryWriteAddress sound_writemem_18[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
 	/**** D/A register ****/
-	{ 0xc000, 0xc008, RF5C68WriteReg },
-	{ 0xd000, 0xdfff, RF5C68WriteMem },
+	{ 0xc000, 0xc008, RF5C68_reg_w },
+	{ 0xd000, 0xdfff, RF5C68_w },
 	{ 0xe000, 0xffff, MWA_RAM },	//??
 	{ -1 }  /* end of table */
 };
@@ -680,7 +680,7 @@ static struct RF5C68interface rf5c68_interface = {
 };
 
 
-static void sys18_soundbank_w(int offset,int data)
+static WRITE_HANDLER( sys18_soundbank_w )
 {
 // select access bank for a000~bfff
 	unsigned char *RAM = memory_region(REGION_CPU2);
@@ -791,12 +791,12 @@ static struct SEGAPCMinterface segapcm_interface_32k = {
 
 // hopefully this is endian safe!
 static unsigned char *sound_shared_ram;
-static int sound_shared_ram_r(int offset)
+static READ_HANDLER( sound_shared_ram_r )
 {
 	return (sound_shared_ram[offset] << 8) + sound_shared_ram[offset+1];
 }
 
-static void sound_shared_ram_w(int offset, int data)
+static WRITE_HANDLER( sound_shared_ram_w )
 {
 	int val=(sound_shared_ram[offset] << 8) + sound_shared_ram[offset+1];
 	val=(val & (data>>16)) | (data &0xffff);
@@ -806,16 +806,16 @@ static void sound_shared_ram_w(int offset, int data)
 }
 
 
-static int sound2_shared_ram_r(int offset) { return sound_shared_ram[offset]; }
-static void sound2_shared_ram_w(int offset, int data) { sound_shared_ram[offset] = data; }
+static READ_HANDLER( sound2_shared_ram_r ) { return sound_shared_ram[offset]; }
+static WRITE_HANDLER( sound2_shared_ram_w ) { sound_shared_ram[offset] = data; }
 
-static void sound_command_w(int offset, int data){
+static WRITE_HANDLER( sound_command_w ){
 	if( errorlog ) fprintf( errorlog, "SOUND COMMAND %04x <- %02x\n", offset, data&0xff );
 	soundlatch_w( 0,data&0xff );
 	cpu_cause_interrupt( 1, 0 );
 }
 
-static void sound_command_nmi_w(int offset, int data){
+static WRITE_HANDLER( sound_command_nmi_w ){
 	if( errorlog ) fprintf( errorlog, "SOUND COMMAND %04x <- %02x\n", offset, data&0xff );
 	soundlatch_w( 0,data&0xff );
 	cpu_set_nmi_line(1, PULSE_LINE);
@@ -1522,7 +1522,7 @@ ROM_END
 
 /***************************************************************************/
 
-static int alexkidd_skip(int offset)
+static READ_HANDLER( alexkidd_skip_r )
 {
 	if (cpu_get_pc()==0x242c) {cpu_spinuntil_int(); return 0xffff;}
 
@@ -1543,7 +1543,7 @@ static struct MemoryReadAddress alexkidd_readmem[] =
 	{ 0xc42000, 0xc42001, io_dip1_r },
 	{ 0xc42002, 0xc42003, io_dip2_r },
 	{ 0xc60000, 0xc60001, MRA_NOP },
-	{ 0xfff108, 0xfff109, alexkidd_skip },
+	{ 0xfff108, 0xfff109, alexkidd_skip_r },
 	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
@@ -1984,7 +1984,7 @@ ROM_END
 
 /***************************************************************************/
 
-static int altbeast_skip(int offset)
+static READ_HANDLER( altbeast_skip_r )
 {
 	if (cpu_get_pc()==0x3994) {cpu_spinuntil_int(); return 1<<8;}
 
@@ -1992,7 +1992,7 @@ static int altbeast_skip(int offset)
 }
 
 // ??? What is this, input test shows 4 bits to each player, but what does it do?
-static int altbeast_io_r(int offset)
+static READ_HANDLER( altbeast_io_r )
 {
 	return 0xff;
 }
@@ -2011,7 +2011,7 @@ static struct MemoryReadAddress altbeast_readmem[] =
 	{ 0xc42002, 0xc42003, io_dip1_r },
 	{ 0xc42000, 0xc42001, io_dip2_r },
 	{ 0xc40000, 0xc40fff, MRA_EXTRAM },
-	{ 0xfff01c, 0xfff01d, altbeast_skip },
+	{ 0xfff01c, 0xfff01d, altbeast_skip_r },
 	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
@@ -2187,7 +2187,7 @@ ROM_END
 
 /***************************************************************************/
 
-static int astorm_skip(int offset)
+static READ_HANDLER( astorm_skip_r )
 {
 	if (cpu_get_pc()==0x3d4c) {cpu_spinuntil_int(); return 0xffff;}
 
@@ -2210,7 +2210,7 @@ static struct MemoryReadAddress astorm_readmem[] =
 	{ 0xa00000, 0xa0ffff, MRA_EXTRAM2 },
 	{ 0xc00000, 0xc0ffff, MRA_EXTRAM },
 	{ 0xc40000, 0xc4ffff, MRA_EXTRAM3 },
-	{ 0xffec2c, 0xffec2d, astorm_skip },
+	{ 0xffec2c, 0xffec2d, astorm_skip_r },
 	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
@@ -2457,7 +2457,7 @@ ROM_END
 
 /***************************************************************************/
 
-static int atomicp_skip(int offset)
+static READ_HANDLER( atomicp_skip_r )
 {
 	if (cpu_get_pc()==0x7fc) {cpu_spinuntil_int(); return 0xffff;}
 
@@ -2476,12 +2476,12 @@ static struct MemoryReadAddress atomicp_readmem[] =
 	{ 0xc41002, 0xc41003, io_player2_r },
 	{ 0xc41004, 0xc41005, io_dip1_r },
 	{ 0xc41006, 0xc41007, io_dip2_r },
-//	{ 0xffc902, 0xffc903, atomicp_skip },
+//	{ 0xffc902, 0xffc903, atomicp_skip_r },
 	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
-static void atomicp_sound_w(int offset,int data)
+static WRITE_HANDLER( atomicp_sound_w )
 {
 	if(offset==0)
 		YM2413_register_port_0_w(0,(data>>8)&0xff);
@@ -2742,7 +2742,7 @@ ROM_END
 
 /***************************************************************************/
 
-static int aurail_skip(int offset)
+static READ_HANDLER( aurail_skip_r )
 {
 	if (cpu_get_pc()==0xe4e) {cpu_spinuntil_int(); return 0;}
 
@@ -2764,7 +2764,7 @@ static struct MemoryReadAddress aurail_readmem[] =
 	{ 0xc42000, 0xc42001, io_dip2_r },
 	{ 0xc40000, 0xc4ffff, MRA_EXTRAM2 },
 	{ 0xfc0000, 0xfc0fff, MRA_EXTRAM3 },
-	{ 0xffe74e, 0xffe74f, aurail_skip },
+	{ 0xffe74e, 0xffe74f, aurail_skip_r },
 	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
@@ -3388,7 +3388,7 @@ ROM_START( dduxbl )
 ROM_END
 
 /***************************************************************************/
-static int dduxbl_skip(int offset)
+static READ_HANDLER( dduxbl_skip_r )
 {
 	if (cpu_get_pc()==0x502) {cpu_spinuntil_int(); return 0xffff;}
 
@@ -3407,7 +3407,7 @@ static struct MemoryReadAddress dduxbl_readmem[] =
 	{ 0xc41000, 0xc41001, io_service_r },
 	{ 0xc42002, 0xc42003, io_dip1_r },
 	{ 0xc42000, 0xc42001, io_dip2_r },
-	{ 0xfff6e0, 0xfff6e1, dduxbl_skip },
+	{ 0xfff6e0, 0xfff6e1, dduxbl_skip_r },
 	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
@@ -3591,7 +3591,7 @@ ROM_START( eswatbl )
 ROM_END
 /***************************************************************************/
 
-static int eswatbl_skip(int offset)
+static READ_HANDLER( eswatbl_skip_r )
 {
 	if (cpu_get_pc()==0x65c) {cpu_spinuntil_int(); return 0xffff;}
 
@@ -3610,16 +3610,16 @@ static struct MemoryReadAddress eswat_readmem[] =
 	{ 0xc41000, 0xc41001, io_service_r },
 	{ 0xc42002, 0xc42003, io_dip1_r },
 	{ 0xc42000, 0xc42001, io_dip2_r },
-	{ 0xffc454, 0xffc455, eswatbl_skip },
+	{ 0xffc454, 0xffc455, eswatbl_skip_r },
 	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
 static int eswat_tilebank0;
 
-static void eswat_tilebank0_w(int o,int d)
+static WRITE_HANDLER( eswat_tilebank0_w )
 {
-	eswat_tilebank0=d;
+	eswat_tilebank0 = data;
 }
 
 static struct MemoryWriteAddress eswat_writemem[] =
@@ -3766,7 +3766,7 @@ ROM_END
 
 /***************************************************************************/
 
-static int fantzone_skip(int offset)
+static READ_HANDLER( fantzone_skip_r )
 {
 	if (cpu_get_pc()==0x91b2) {cpu_spinuntil_int(); return 0xffff;}
 
@@ -3786,7 +3786,7 @@ static struct MemoryReadAddress fantzono_readmem[] =
 	{ 0xc42000, 0xc42001, io_dip1_r },
 	{ 0xc42002, 0xc42003, io_dip2_r },
 	{ 0xc40000, 0xc40003, MRA_EXTRAM2 },
-	{ 0xffc22a, 0xffc22b, fantzone_skip },
+	{ 0xffc22a, 0xffc22b, fantzone_skip_r },
 	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
@@ -3818,7 +3818,7 @@ static struct MemoryReadAddress fantzone_readmem[] =
 	{ 0xc42000, 0xc42001, io_dip1_r },
 	{ 0xc42002, 0xc42003, io_dip2_r },
 	{ 0xc40000, 0xc40003, MRA_EXTRAM2 },
-	{ 0xffc22a, 0xffc22b, fantzone_skip },
+	{ 0xffc22a, 0xffc22b, fantzone_skip_r },
 	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
@@ -3992,7 +3992,7 @@ ROM_START( fpointbl )
 ROM_END
 /***************************************************************************/
 
-static int fp_io_service_dummy_r( int offset ){
+static READ_HANDLER( fp_io_service_dummy_r ){
 	int data = input_port_2_r( 0 ) & 0xff;
 	return (data << 8) + data;
 }
@@ -4244,15 +4244,15 @@ ROM_END
 
 /***************************************************************************/
 
-static int goldnaxe_skip(int offset)
+static READ_HANDLER( goldnaxe_skip_r )
 {
 	if (cpu_get_pc()==0x3cb0) {cpu_spinuntil_int(); return 0xffff;}
 
 	return READ_WORD(&sys16_workingram[0x2c1c]);
 }
 
-static int ga_io_players_r(int offset) {return (io_player1_r(offset) << 8) | io_player2_r(offset);}
-static int ga_io_service_r(int offset)
+static READ_HANDLER( ga_io_players_r ) {return (io_player1_r(offset) << 8) | io_player2_r(offset);}
+static READ_HANDLER( ga_io_service_r )
 {
 	return (io_service_r(offset) << 8) | (READ_WORD(&sys16_workingram[0x2c96]) & 0x00ff);
 }
@@ -4274,12 +4274,12 @@ static struct MemoryReadAddress goldnaxe_readmem[] =
 	{ 0xc40000, 0xc40fff, MRA_EXTRAM2 },
 	{ 0xffecd0, 0xffecd1, ga_io_players_r },
 	{ 0xffec96, 0xffec97, ga_io_service_r },
-	{ 0xffec1c, 0xffec1d, goldnaxe_skip },
+	{ 0xffec1c, 0xffec1d, goldnaxe_skip_r },
 	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
-static void ga_sound_command_w(int offset,int data)
+static WRITE_HANDLER( ga_sound_command_w )
 {
 	if( (data&0xff000000)==0 )
 		sound_command_w(offset,data>>8);
@@ -4458,7 +4458,7 @@ ROM_END
 
 /***************************************************************************/
 
-static int goldnaxa_skip(int offset)
+static READ_HANDLER( goldnaxa_skip_r )
 {
 	if (cpu_get_pc()==0x3ca0) {cpu_spinuntil_int(); return 0xffff;}
 
@@ -4468,7 +4468,7 @@ static int goldnaxa_skip(int offset)
 // This version has somekind of hardware comparitor for collision detection,
 // and a hardware multiplier.
 static int ga_hardware_collision_data[5];
-static void ga_hardware_collision_w( int offset, int data )
+static WRITE_HANDLER( ga_hardware_collision_w )
 {
 	static int bit=1;
 	ga_hardware_collision_data[offset/2]=data;
@@ -4484,18 +4484,18 @@ static void ga_hardware_collision_w( int offset, int data )
 	if(offset==8) bit=1;
 }
 
-static int ga_hardware_collision_r( int offset )
+static READ_HANDLER( ga_hardware_collision_r )
 {
 	return ga_hardware_collision_data[4];
 }
 
 static int ga_hardware_multiplier_data[4];
-static void ga_hardware_multiplier_w( int offset, int data )
+static WRITE_HANDLER( ga_hardware_multiplier_w )
 {
 	ga_hardware_multiplier_data[offset/2]=data;
 }
 
-static int ga_hardware_multiplier_r( int offset )
+static READ_HANDLER( ga_hardware_multiplier_r )
 {
 	if(offset==6)
 		return ga_hardware_multiplier_data[0] * ga_hardware_multiplier_data[1];
@@ -4523,7 +4523,7 @@ static struct MemoryReadAddress goldnaxa_readmem[] =
 	{ 0xc40000, 0xc40fff, MRA_EXTRAM2 },
 	{ 0xffecd0, 0xffecd1, ga_io_players_r },
 	{ 0xffec96, 0xffec97, ga_io_service_r },
-	{ 0xffec1c, 0xffec1d, goldnaxa_skip },
+	{ 0xffec1c, 0xffec1d, goldnaxa_skip_r },
 	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
@@ -4611,12 +4611,12 @@ ROM_END
 
 static int hwc_handles_shifts[3];
 
-static void hwc_io_handles_w(int offset,int data)
+static WRITE_HANDLER( hwc_io_handles_w )
 {
 	hwc_handles_shifts[offset/2]=7;
 }
 
-static int hwc_io_handles_r(int offset)
+static READ_HANDLER( hwc_io_handles_r )
 {
 	static int dodge_toggle=0;
 	int data=0,ret;
@@ -4847,7 +4847,7 @@ ROM_END
 
 /***************************************************************************/
 
-static int mjl_io_player1_r( int offset )
+static READ_HANDLER( mjl_io_player1_r )
 {
 	int data=input_port_0_r( offset ) & 0x80;
 
@@ -4859,7 +4859,7 @@ static int mjl_io_player1_r( int offset )
 	return data;
 }
 
-static int mjl_io_service_r( int offset )
+static READ_HANDLER( mjl_io_service_r )
 {
 	int data=input_port_2_r( offset ) & 0x3f;
 
@@ -4877,7 +4877,7 @@ static int mjl_io_service_r( int offset )
 	return data;
 }
 
-static int mjl_io_player2_r( int offset )
+static READ_HANDLER( mjl_io_player2_r )
 {
 	int data=input_port_1_r( offset ) & 0x80;
 	if(READ_WORD( &sys16_extraram2[2] ) & 0x4)
@@ -4887,7 +4887,7 @@ static int mjl_io_player2_r( int offset )
 	return data;
 }
 
-static int mjl_io_bat_r( int offset )
+static READ_HANDLER( mjl_io_bat_r )
 {
 	int data1=input_port_0_r( offset );
 	int data2=input_port_1_r( offset );
@@ -5143,7 +5143,7 @@ ROM_END
 
 /***************************************************************************/
 
-static int moonwlkb_skip(int offset)
+static READ_HANDLER( moonwlkb_skip_r )
 {
 	if (cpu_get_pc()==0x308a) {cpu_spinuntil_int(); return 0xffff;}
 
@@ -5168,7 +5168,7 @@ static struct MemoryReadAddress moonwalk_readmem[] =
 	{ 0xc40000, 0xc4ffff, MRA_EXTRAM3 },
 	{ 0xe40000, 0xe4ffff, MRA_EXTRAM2 },
 	{ 0xfe0000, 0xfeffff, MRA_EXTRAM4 },
-	{ 0xffe02c, 0xffe02d, moonwlkb_skip },
+	{ 0xffe02c, 0xffe02d, moonwlkb_skip_r },
 	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
@@ -5470,7 +5470,7 @@ static int passht4b_io1_val;
 static int passht4b_io2_val;
 static int passht4b_io3_val;
 
-static int passht4b_service_r(int offset)
+static READ_HANDLER( passht4b_service_r )
 {
 	int val=io_service_r(offset);
 
@@ -5507,9 +5507,9 @@ static int passht4b_service_r(int offset)
 	return val;
 }
 
-static int passht4b_io1_r(int offset) {	return passht4b_io1_val;}
-static int passht4b_io2_r(int offset) {	return passht4b_io2_val;}
-static int passht4b_io3_r(int offset) {	return passht4b_io3_val;}
+static READ_HANDLER( passht4b_io1_r ) {	return passht4b_io1_val;}
+static READ_HANDLER( passht4b_io2_r ) {	return passht4b_io2_val;}
+static READ_HANDLER( passht4b_io3_r ) {	return passht4b_io3_val;}
 
 static struct MemoryReadAddress passht4b_readmem[] =
 {
@@ -5838,19 +5838,19 @@ ROM_END
 
 /***************************************************************************/
 
-static int quartet_skip(int offset)
+static READ_HANDLER( quartet_skip_r )
 {
 	if (cpu_get_pc()==0x89b2) {cpu_spinuntil_int(); return 0xffff;}
 
 	return READ_WORD(&sys16_workingram[0x0800]);
 }
 
-static int io_quartet_p1_r( int offset ) {return input_port_0_r( offset );}
-static int io_quartet_p2_r( int offset ) {return input_port_1_r( offset );}
-static int io_quartet_p3_r( int offset ) {return input_port_2_r( offset );}
-static int io_quartet_p4_r( int offset ) {return input_port_3_r( offset );}
-static int io_quartet_dip1_r( int offset ) {return input_port_4_r( offset );}
-static int io_quartet_dip2_r( int offset ) {return input_port_5_r( offset );}
+static READ_HANDLER( io_quartet_p1_r ) {return input_port_0_r( offset );}
+static READ_HANDLER( io_quartet_p2_r ) {return input_port_1_r( offset );}
+static READ_HANDLER( io_quartet_p3_r ) {return input_port_2_r( offset );}
+static READ_HANDLER( io_quartet_p4_r ) {return input_port_3_r( offset );}
+static READ_HANDLER( io_quartet_dip1_r ) {return input_port_4_r( offset );}
+static READ_HANDLER( io_quartet_dip2_r ) {return input_port_5_r( offset );}
 
 static struct MemoryReadAddress quartet_readmem[] =
 {
@@ -5866,7 +5866,7 @@ static struct MemoryReadAddress quartet_readmem[] =
 	{ 0xc42000, 0xc42001, io_quartet_dip1_r },
 	{ 0xc42002, 0xc42003, io_quartet_dip2_r },
 	{ 0xc40000, 0xc4ffff, MRA_EXTRAM },
-	{ 0xffc800, 0xffc801, quartet_skip },
+	{ 0xffc800, 0xffc801, quartet_skip_r },
 	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
@@ -6039,7 +6039,7 @@ ROM_END
 
 /***************************************************************************/
 
-static int quartet2_skip(int offset)
+static READ_HANDLER( quartet2_skip_r )
 {
 	if (cpu_get_pc()==0x8f6c) {cpu_spinuntil_int(); return 0xffff;}
 
@@ -6059,7 +6059,7 @@ static struct MemoryReadAddress quartet2_readmem[] =
 	{ 0xc42000, 0xc42001, io_dip1_r },
 	{ 0xc42002, 0xc42003, io_dip2_r },
 	{ 0xc40000, 0xc4ffff, MRA_EXTRAM },
-	{ 0xffc800, 0xffc801, quartet2_skip },
+	{ 0xffc800, 0xffc801, quartet2_skip_r },
 	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
@@ -6187,7 +6187,7 @@ ROM_END
 
 /***************************************************************************/
 
-static int riotcity_skip(int offset)
+static READ_HANDLER( riotcity_skip_r )
 {
 	if (cpu_get_pc()==0x3ce) {cpu_spinuntil_int(); return 0;}
 
@@ -6209,7 +6209,7 @@ static struct MemoryReadAddress riotcity_readmem[] =
 	{ 0xf80000, 0xf8ffff, MRA_EXTRAM2 },
 	{ 0xfa0000, 0xfaffff, MRA_TILERAM },
 	{ 0xfb0000, 0xfb0fff, MRA_TEXTRAM },
-	{ 0xffecde, 0xffecdf, riotcity_skip },
+	{ 0xffecde, 0xffecdf, riotcity_skip_r },
 	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
@@ -6360,13 +6360,13 @@ ROM_END
 
 /***************************************************************************/
 
-static int io_p1mousex_r( int offset ){ return 0xff-input_port_5_r( offset ); }
-static int io_p1mousey_r( int offset ){ return input_port_6_r( offset ); }
+static READ_HANDLER( io_p1mousex_r ){ return 0xff-input_port_5_r( offset ); }
+static READ_HANDLER( io_p1mousey_r ){ return input_port_6_r( offset ); }
 
-static int io_p2mousex_r( int offset ){ return input_port_7_r( offset ); }
-static int io_p2mousey_r( int offset ){ return input_port_8_r( offset ); }
+static READ_HANDLER( io_p2mousex_r ){ return input_port_7_r( offset ); }
+static READ_HANDLER( io_p2mousey_r ){ return input_port_8_r( offset ); }
 
-static int sdi_skip(int offset)
+static READ_HANDLER( sdi_skip_r )
 {
 	if (cpu_get_pc()==0x5326) {cpu_spinuntil_int(); return 0xffff;}
 
@@ -6393,7 +6393,7 @@ static struct MemoryReadAddress sdi_readmem[] =
 	{ 0xc4300c, 0xc4300d, io_p2mousey_r },
 //	{ 0xc42000, 0xc42001, MRA_NOP }, /* What is this? */
 	{ 0xc60000, 0xc60001, MRA_NOP }, /* What is this? */
-	{ 0xffc400, 0xffc401, sdi_skip },
+	{ 0xffc400, 0xffc401, sdi_skip_r },
 	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
@@ -6546,7 +6546,7 @@ ROM_END
 
 /***************************************************************************/
 
-static int shdancer_skip(int offset)
+static READ_HANDLER( shdancer_skip_r )
 {
 	if (cpu_get_pc()==0x2f76) {cpu_spinuntil_int(); return 0xffff;}
 
@@ -6632,7 +6632,7 @@ static void init_shdancer( void ){
 	sys16_onetime_init_machine();
 	sys18_splittab_fg_x=&sys16_textram[0x0f80];
 	sys18_splittab_bg_x=&sys16_textram[0x0fc0];
-	install_mem_read_handler(0, 0xffc000, 0xffc001, shdancer_skip);
+	install_mem_read_handler(0, 0xffc000, 0xffc001, shdancer_skip_r );
 	sys16_MaxShadowColors=0;		// doesn't seem to use transparent shadows
 
 	memcpy(RAM,&RAM[0x10000],0xa000);
@@ -6758,7 +6758,7 @@ ROM_END
 /***************************************************************************/
 
 /*
-static int shdancer_skip(int offset)
+static READ_HANDLER( shdancer_skip_r )
 {
 	if (cpu_get_pc()==0x2f76) {cpu_spinuntil_int(); return 0xffff;}
 
@@ -6784,7 +6784,7 @@ static struct MemoryReadAddress shdancbl_readmem[] =
 //	{ 0xc40000, 0xc4ffff, MRA_EXTRAM3 },
 	{ 0xe40000, 0xe4001f, MRA_EXTRAM2 },
 	{ 0xe43034, 0xe43035, MRA_NOP },
-//	{ 0xffc000, 0xffc001, shdancer_skip },
+//	{ 0xffc000, 0xffc001, shdancer_skip_r },
 	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
@@ -6854,7 +6854,7 @@ static void init_shdancbl( void ){
 	sys16_onetime_init_machine();
 	sys18_splittab_fg_x=&sys16_textram[0x0f80];
 	sys18_splittab_bg_x=&sys16_textram[0x0fc0];
-	install_mem_read_handler(0, 0xffc000, 0xffc001, shdancer_skip);
+	install_mem_read_handler(0, 0xffc000, 0xffc001, shdancer_skip_r );
 	sys16_MaxShadowColors=0;		// doesn't seem to use transparent shadows
 
 	memcpy(RAM,&RAM[0x10000],0xa000);
@@ -6897,7 +6897,7 @@ ROM_START( shdancrj )
 ROM_END
 
 /***************************************************************************/
-static int shdancrj_skip(int offset)
+static READ_HANDLER( shdancrj_skip_r )
 {
 	if (cpu_get_pc()==0x2f70) {cpu_spinuntil_int(); return 0xffff;}
 
@@ -6918,7 +6918,7 @@ static void init_shdancrj( void ){
 	sys16_onetime_init_machine();
 	sys18_splittab_fg_x=&sys16_textram[0x0f80];
 	sys18_splittab_bg_x=&sys16_textram[0x0fc0];
-	install_mem_read_handler(0, 0xffc000, 0xffc001, shdancrj_skip);
+	install_mem_read_handler(0, 0xffc000, 0xffc001, shdancrj_skip_r );
 
 	memcpy(RAM,&RAM[0x10000],0xa000);
 
@@ -6993,7 +6993,7 @@ ROM_END
 
 /***************************************************************************/
 
-static int shinobi_skip(int offset)
+static READ_HANDLER( shinobi_skip_r )
 {
 	if (cpu_get_pc()==0x32e0) {cpu_spinuntil_int(); return 1<<8;}
 
@@ -7014,7 +7014,7 @@ static struct MemoryReadAddress shinobi_readmem[] =
 	{ 0xc42000, 0xc42001, io_dip2_r },
 	{ 0xc40000, 0xc40001, MRA_EXTRAM2 },
 	{ 0xc43000, 0xc43001, MRA_NOP },
-	{ 0xfff01c, 0xfff01d, shinobi_skip },
+	{ 0xfff01c, 0xfff01d, shinobi_skip_r },
 	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
@@ -7446,7 +7446,7 @@ ROM_END
 
 /***************************************************************************/
 
-static int timscanr_skip(int offset)
+static READ_HANDLER( timscanr_skip_r )
 {
 	if (cpu_get_pc()==0x1044c) {cpu_spinuntil_int(); return 0;}
 
@@ -7467,7 +7467,7 @@ static struct MemoryReadAddress timscanr_readmem[] =
 	{ 0xc42002, 0xc42003, io_dip1_r },
 	{ 0xc42000, 0xc42001, io_dip2_r },
 	{ 0xc41004, 0xc41005, io_dip3_r },
-	{ 0xffc00c, 0xffc00d, timscanr_skip },
+	{ 0xffc00c, 0xffc00d, timscanr_skip_r },
 	{ 0xffc000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
@@ -7780,9 +7780,9 @@ ROM_START( tturfu )
 ROM_END
 
 /***************************************************************************/
-static int tt_io_player1_r( int offset ){ return input_port_0_r( offset ) << 8; }
-static int tt_io_player2_r( int offset ){ return input_port_1_r( offset ) << 8; }
-static int tt_io_service_r( int offset ){ return input_port_2_r( offset ) << 8; }
+static READ_HANDLER( tt_io_player1_r ){ return input_port_0_r( offset ) << 8; }
+static READ_HANDLER( tt_io_player2_r ){ return input_port_1_r( offset ) << 8; }
+static READ_HANDLER( tt_io_service_r ){ return input_port_2_r( offset ) << 8; }
 
 static struct MemoryReadAddress tturf_readmem[] =
 {
@@ -8081,7 +8081,7 @@ static struct MemoryReadAddress wb3_readmem[] =
 	{-1}
 };
 
-static void wb3_sound_command_w(int offset,int data)
+static WRITE_HANDLER( wb3_sound_command_w )
 {
 	if( (data&0xff000000)==0 )
 		sound_command_w(offset,data>>8);
@@ -8329,7 +8329,7 @@ ROM_END
 
 /***************************************************************************/
 
-static int ww_io_service_r(int offset)
+static READ_HANDLER( ww_io_service_r )
 {
 	return io_service_r(offset) | (READ_WORD(&sys16_workingram[0x2082]) & 0xff00);
 }
@@ -8497,9 +8497,9 @@ ROM_END
 /***************************************************************************/
 
 
-static int ho_io_x_r( int offset ){ return input_port_0_r( offset ); }
+static READ_HANDLER( ho_io_x_r ){ return input_port_0_r( offset ); }
 #ifdef HANGON_DIGITAL_CONTROLS
-static int ho_io_y_r( int offset ){
+static READ_HANDLER( ho_io_y_r ){
 	int data = input_port_1_r( offset );
 
 	switch(data & 3)
@@ -8512,10 +8512,10 @@ static int ho_io_y_r( int offset ){
 	return 0x0000;
 }
 #else
-static int ho_io_y_r( int offset ){ return (input_port_1_r( offset ) << 8) + input_port_5_r( offset ); }
+static READ_HANDLER( ho_io_y_r ){ return (input_port_1_r( offset ) << 8) + input_port_5_r( offset ); }
 #endif
 
-static int ho_io_highscoreentry_r( int offset )
+static READ_HANDLER( ho_io_highscoreentry_r )
 {
 	int mode=READ_WORD(&sys16_extraram4[0x3000]);
 
@@ -8531,7 +8531,7 @@ static int ho_io_highscoreentry_r( int offset )
 	return 0;
 }
 
-static int hangon1_skip_r(int offset)
+static READ_HANDLER( hangon1_skip_r )
 {
 	if (cpu_get_pc()==0x17e6) {cpu_spinuntil_int(); return 0xffff;}
 
@@ -8576,7 +8576,7 @@ static struct MemoryWriteAddress hangon_writemem[] =
 	{-1}
 };
 
-static int hangon2_skip_r(int offset)
+static READ_HANDLER( hangon2_skip_r )
 {
 	if (cpu_get_pc()==0xf66) {cpu_spinuntil_int(); return 0xffff;}
 
@@ -8607,7 +8607,7 @@ static struct MemoryReadAddress hangon_sound_readmem[] =
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xd000, 0xd000, YM2203_status_port_0_r },
-	{ 0xe000, 0xe7ff, SEGAPCMReadReg },
+	{ 0xe000, 0xe7ff, SegaPCM_r },
 	{ 0xf800, 0xffff, MRA_RAM },
 	{ -1 }  /* end of table */
 };
@@ -8618,7 +8618,7 @@ static struct MemoryWriteAddress hangon_sound_writemem[] =
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xd000, 0xd000, YM2203_control_port_0_w },
 	{ 0xd001, 0xd001, YM2203_write_port_0_w },
-	{ 0xe000, 0xe7ff, SEGAPCMWriteReg },
+	{ 0xe000, 0xe7ff, SegaPCM_w },
 	{ 0xf800, 0xffff, MWA_RAM },
 	{ -1 }  /* end of table */
 };
@@ -8883,13 +8883,13 @@ ROM_END
 
 /***************************************************************************/
 
-static int sh_io_joy_r( int offset ){ return (input_port_5_r( offset ) << 8) + input_port_6_r( offset ); }
+static READ_HANDLER( sh_io_joy_r ){ return (input_port_5_r( offset ) << 8) + input_port_6_r( offset ); }
 
 static unsigned char *shared_ram;
-static int shared_ram_r(int offset) { return READ_WORD(&shared_ram[offset]); }
-static void shared_ram_w(int offset, int data) { COMBINE_WORD_MEM(&shared_ram[offset], data); }
+static READ_HANDLER( shared_ram_r ) { return READ_WORD(&shared_ram[offset]); }
+static WRITE_HANDLER( shared_ram_w ) { COMBINE_WORD_MEM(&shared_ram[offset], data); }
 
-static int sh_motor_status_r(int offset) { return 0x0; }
+static READ_HANDLER( sh_motor_status_r ) { return 0x0; }
 
 static struct MemoryReadAddress harrier_readmem[] =
 {
@@ -8946,7 +8946,7 @@ static struct MemoryReadAddress harrier_sound_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xd000, 0xd000, YM2203_status_port_0_r },
-	{ 0xe000, 0xe0ff, SEGAPCMReadReg },
+	{ 0xe000, 0xe0ff, SegaPCM_r },
 	{ 0x8000, 0xffff, MRA_RAM },
 	{ -1 }  /* end of table */
 };
@@ -8956,7 +8956,7 @@ static struct MemoryWriteAddress harrier_sound_writemem[] =
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xd000, 0xd000, YM2203_control_port_0_w },
 	{ 0xd001, 0xd001, YM2203_write_port_0_w },
-	{ 0xe000, 0xe0ff, SEGAPCMWriteReg },
+	{ 0xe000, 0xe0ff, SegaPCM_w },
 	{ 0x8000, 0xffff, MWA_RAM },
 	{ -1 }  /* end of table */
 };
@@ -9296,8 +9296,8 @@ ROM_END
 /***************************************************************************/
 
 static unsigned char *shared_ram2;
-static int shared_ram2_r(int offset) { return READ_WORD(&shared_ram2[offset]); }
-static void shared_ram2_w(int offset, int data) { COMBINE_WORD_MEM(&shared_ram2[offset], data); }
+static READ_HANDLER( shared_ram2_r ) { return READ_WORD(&shared_ram2[offset]); }
+static WRITE_HANDLER( shared_ram2_w ) { COMBINE_WORD_MEM(&shared_ram2[offset], data); }
 
 static struct MemoryReadAddress shangon_readmem[] =
 {
@@ -9358,7 +9358,7 @@ static struct MemoryWriteAddress shangon_writemem2[] =
 static struct MemoryReadAddress shangon_sound_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xf000, 0xf7ff, SEGAPCMReadReg },
+	{ 0xf000, 0xf7ff, SegaPCM_r },
 	{ 0xf800, 0xf807, sound2_shared_ram_r },
 	{ 0xf808, 0xffff, MRA_RAM },
 	{ -1 }  /* end of table */
@@ -9367,7 +9367,7 @@ static struct MemoryReadAddress shangon_sound_readmem[] =
 static struct MemoryWriteAddress shangon_sound_writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xf000, 0xf7ff, SEGAPCMWriteReg },
+	{ 0xf000, 0xf7ff, SegaPCM_w },
 	{ 0xf800, 0xf807, sound2_shared_ram_w,&sound_shared_ram },
 	{ 0xf808, 0xffff, MWA_RAM },
 	{ -1 }  /* end of table */
@@ -9748,10 +9748,10 @@ ROM_END
 
 /***************************************************************************/
 
-static int or_io_joy_r( int offset ){ return (input_port_5_r( offset ) << 8) + input_port_6_r( offset ); }
+static READ_HANDLER( or_io_joy_r ){ return (input_port_5_r( offset ) << 8) + input_port_6_r( offset ); }
 
 #ifdef HANGON_DIGITAL_CONTROLS
-static int or_io_brake_r( int offset ){
+static READ_HANDLER( or_io_brake_r ){
 	int data = input_port_1_r( offset );
 
 	switch(data & 3)
@@ -9764,7 +9764,7 @@ static int or_io_brake_r( int offset ){
 	return 0x0000;
 }
 
-static int or_io_acc_steer_r( int offset ){
+static READ_HANDLER( or_io_acc_steer_r ){
 	int data = input_port_1_r( offset );
 	int ret = input_port_0_r( offset ) << 8;
 
@@ -9778,13 +9778,13 @@ static int or_io_acc_steer_r( int offset ){
 	return 0x00 | ret;
 }
 #else
-static int or_io_acc_steer_r( int offset ){ return (input_port_0_r( offset ) << 8) + input_port_1_r( offset ); }
-static int or_io_brake_r( int offset ){ return input_port_5_r( offset ) << 8; }
+static READ_HANDLER( or_io_acc_steer_r ){ return (input_port_0_r( offset ) << 8) + input_port_1_r( offset ); }
+static READ_HANDLER( or_io_brake_r ){ return input_port_5_r( offset ) << 8; }
 #endif
 
 static int or_gear=0;
 
-static int or_io_service_r( int offset )
+static READ_HANDLER( or_io_service_r )
 {
 	int ret=input_port_2_r( offset );
 	int data=input_port_1_r( offset );
@@ -9797,7 +9797,7 @@ static int or_io_service_r( int offset )
 	return ret;
 }
 
-static int or_reset2_r( int offset )
+static READ_HANDLER( or_reset2_r )
 {
 	cpu_set_reset_line(2,PULSE_LINE);
 	return 0;
@@ -9830,7 +9830,7 @@ static struct MemoryReadAddress outrun_readmem[] =
 	{-1}
 };
 
-static void outrun_sound_write_w(int offset,int data)
+static WRITE_HANDLER( outrun_sound_write_w )
 {
 	sound_shared_ram[0]=data&0xff;
 }
@@ -9878,7 +9878,7 @@ static struct MemoryWriteAddress outrun_writemem2[] =
 static struct MemoryReadAddress outrun_sound_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xf000, 0xf0ff, SEGAPCMReadReg },
+	{ 0xf000, 0xf0ff, SegaPCM_r },
 	{ 0xf100, 0xf7ff, MRA_NOP },
 	{ 0xf800, 0xf807, sound2_shared_ram_r },
 	{ 0xf808, 0xffff, MRA_RAM },
@@ -9888,7 +9888,7 @@ static struct MemoryReadAddress outrun_sound_readmem[] =
 static struct MemoryWriteAddress outrun_sound_writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xf000, 0xf0ff, SEGAPCMWriteReg },
+	{ 0xf000, 0xf0ff, SegaPCM_w },
 	{ 0xf100, 0xf7ff, MWA_NOP },
 	{ 0xf800, 0xf807, sound2_shared_ram_w,&sound_shared_ram },
 	{ 0xf808, 0xffff, MWA_RAM },
@@ -10474,7 +10474,7 @@ ROM_END
 
 /***************************************************************************/
 
-static int er_io_analog_r( int offset )
+static READ_HANDLER( er_io_analog_r )
 {
 	switch(READ_WORD(&sys16_extraram3[0x30]))
 	{
@@ -10500,7 +10500,7 @@ static int er_io_analog_r( int offset )
 	return 0;
 }
 
-static int er_reset2_r( int offset )
+static READ_HANDLER( er_reset2_r )
 {
 	cpu_set_reset_line(2,PULSE_LINE);
 	return 0;
@@ -10544,7 +10544,7 @@ static struct MemoryWriteAddress enduror_writemem[] =
 };
 
 
-static int enduro_p2_skip_r(int offset)
+static READ_HANDLER( enduro_p2_skip_r )
 {
 	if (cpu_get_pc()==0x4ba) {cpu_spinuntil_int(); return 0xffff;}
 
@@ -10573,7 +10573,7 @@ static struct MemoryReadAddress enduror_sound_readmem[] =
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xd000, 0xd000, YM2203_status_port_0_r },
-	{ 0xe000, 0xe7ff, SEGAPCMReadReg },
+	{ 0xe000, 0xe7ff, SegaPCM_r },
 	{ -1 }  /* end of table */
 };
 
@@ -10583,7 +10583,7 @@ static struct MemoryWriteAddress enduror_sound_writemem[] =
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xd000, 0xd000, YM2203_control_port_0_w },
 	{ 0xd001, 0xd001, YM2203_write_port_0_w },
-	{ 0xe000, 0xe7ff, SEGAPCMWriteReg },
+	{ 0xe000, 0xe7ff, SegaPCM_w },
 	{ -1 }  /* end of table */
 };
 
@@ -10603,7 +10603,7 @@ static struct MemoryReadAddress enduror_b2_sound_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
 //	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xf000, 0xf7ff, SEGAPCMReadReg },
+	{ 0xf000, 0xf7ff, SegaPCM_r },
 	{ 0xf800, 0xffff, MRA_RAM },
 	{ -1 }  /* end of table */
 };
@@ -10612,7 +10612,7 @@ static struct MemoryWriteAddress enduror_b2_sound_writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
 //	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xf000, 0xf7ff, SEGAPCMWriteReg },
+	{ 0xf000, 0xf7ff, SegaPCM_w },
 	{ 0xf800, 0xffff, MWA_RAM },
 	{ -1 }  /* end of table */
 };

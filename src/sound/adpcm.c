@@ -786,12 +786,12 @@ static void OKIM6295_data_w(int num, int data)
 
 ***********************************************************************************************/
 
-int OKIM6295_status_0_r(int offset)
+READ_HANDLER( OKIM6295_status_0_r )
 {
 	return OKIM6295_status_r(0);
 }
 
-int OKIM6295_status_1_r(int offset)
+READ_HANDLER( OKIM6295_status_1_r )
 {
 	return OKIM6295_status_r(1);
 }
@@ -805,12 +805,12 @@ int OKIM6295_status_1_r(int offset)
 
 ***********************************************************************************************/
 
-void OKIM6295_data_0_w(int offset, int data)
+WRITE_HANDLER( OKIM6295_data_0_w )
 {
 	OKIM6295_data_w(0, data);
 }
 
-void OKIM6295_data_1_w(int offset, int data)
+WRITE_HANDLER( OKIM6295_data_1_w )
 {
 	OKIM6295_data_w(1, data);
 }

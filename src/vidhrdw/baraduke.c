@@ -6,6 +6,7 @@ unsigned char *baraduke_textram, *baraduke_videoram;
 
 static struct tilemap *tilemap[2];	/* backgrounds */
 static int xscroll[2], yscroll[2];	/* scroll registers */
+static int flipscreen;
 
 /***************************************************************************
 
@@ -25,7 +26,8 @@ void baraduke_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	int i;
 	int bit0,bit1,bit2,bit3;
 
-	for (i = 0; i < 2048; i++){
+	for (i = 0; i < 2048; i++)
+	{
 		/* red component */
 		bit0 = (color_prom[2048] >> 0) & 0x01;
 		bit1 = (color_prom[2048] >> 1) & 0x01;
@@ -57,20 +59,18 @@ void baraduke_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 ***************************************************************************/
 
-static void get_tile_info0(int col,int row)
+static void get_tile_info0(int tile_index)
 {
-	int tile_index = 2*(64*row + col);
-	unsigned char attr = baraduke_videoram[tile_index + 1];
-	unsigned char code = baraduke_videoram[tile_index];
+	unsigned char attr = baraduke_videoram[2*tile_index + 1];
+	unsigned char code = baraduke_videoram[2*tile_index];
 
 	SET_TILE_INFO(1 + ((attr & 0x02) >> 1), code | ((attr & 0x01) << 8), attr);
 }
 
-static void get_tile_info1(int col,int row)
+static void get_tile_info1(int tile_index)
 {
-	int tile_index = 2*(64*row + col);
-	unsigned char attr = baraduke_videoram[0x1000 + tile_index + 1];
-	unsigned char code = baraduke_videoram[0x1000 + tile_index];
+	unsigned char attr = baraduke_videoram[0x1000 + 2*tile_index + 1];
+	unsigned char code = baraduke_videoram[0x1000 + 2*tile_index];
 
 	SET_TILE_INFO(3 + ((attr & 0x02) >> 1), code | ((attr & 0x01) << 8), attr);
 }
@@ -83,16 +83,16 @@ static void get_tile_info1(int col,int row)
 
 int baraduke_vh_start( void )
 {
-	tilemap[0] = tilemap_create(get_tile_info0, TILEMAP_TRANSPARENT, 8, 8, 64, 32);
-	tilemap[1] = tilemap_create(get_tile_info1, TILEMAP_TRANSPARENT, 8, 8, 64, 32);
+	tilemap[0] = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+	tilemap[1] = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 
-	if (tilemap[0] && tilemap[1]){
-		tilemap[0]->transparent_pen = 7;
-		tilemap[1]->transparent_pen = 7;
+	if (!tilemap[0] || !tilemap[1])
+		return 1;
 
-		return 0;
-	}
-	return 1;
+	tilemap[0]->transparent_pen = 7;
+	tilemap[1]->transparent_pen = 7;
+
+	return 0;
 }
 
 /***************************************************************************
@@ -101,25 +101,27 @@ int baraduke_vh_start( void )
 
 ***************************************************************************/
 
-int baraduke_videoram_r(int offset)
+READ_HANDLER( baraduke_videoram_r )
 {
 	return baraduke_videoram[offset];
 }
 
-void baraduke_videoram_w(int offset,int data)
+WRITE_HANDLER( baraduke_videoram_w )
 {
-	if (baraduke_videoram[offset] != data){
+	if (baraduke_videoram[offset] != data)
+	{
 		baraduke_videoram[offset] = data;
-		tilemap_mark_tile_dirty(tilemap[offset/0x1000],(offset/2)%64,((offset%0x1000)/2)/64);
+		tilemap_mark_tile_dirty(tilemap[offset/0x1000],(offset&0xfff)/2);
 	}
 }
 
 static void scroll_w(int layer,int offset,int data)
 {
 	int xdisp[2] = { 26, 24 };
+	int scrollx, scrolly;
 
-	switch (offset){
-
+	switch (offset)
+	{
 		case 0:	/* high scroll x */
 			xscroll[layer] = (xscroll[layer] & 0xff) | (data << 8);
 			break;
@@ -131,15 +133,23 @@ static void scroll_w(int layer,int offset,int data)
 			break;
 	}
 
-	tilemap_set_scrollx(tilemap[layer], 0, xscroll[layer] + xdisp[layer]);
-	tilemap_set_scrolly(tilemap[layer], 0, yscroll[layer] + 25);
+	scrollx = xscroll[layer] + xdisp[layer];
+	scrolly = yscroll[layer] + 25;
+	if (flipscreen)
+	{
+		scrollx = -scrollx + 227;
+		scrolly = -scrolly + 32;
+	}
+
+	tilemap_set_scrollx(tilemap[layer], 0, scrollx);
+	tilemap_set_scrolly(tilemap[layer], 0, scrolly);
 }
 
-void baraduke_scroll0_w(int offset,int data)
+WRITE_HANDLER( baraduke_scroll0_w )
 {
 	scroll_w(0, offset, data);
 }
-void baraduke_scroll1_w(int offset,int data)
+WRITE_HANDLER( baraduke_scroll1_w )
 {
 	scroll_w(1, offset, data);
 }
@@ -203,7 +213,20 @@ static void draw_sprites(struct osd_bitmap *bitmap, int priority)
 				{
 					for( col=0; col<=wide; col++ )
 					{
-						drawgfx( bitmap, Machine->gfx[5],
+						if (flipscreen)
+						{
+							drawgfx( bitmap, Machine->gfx[5],
+								sprite_number+2*row+col,
+								color,
+								!flipx,!flipy,
+								512-67 - (sx+16*(flipx ? 1-col : col)),
+								64-16-209 - (sy+16*(flipy ? 1-row : row)),
+								clip,
+								TRANSPARENCY_PEN, 0xf );
+						}
+						else
+						{
+							drawgfx( bitmap, Machine->gfx[5],
 								sprite_number+2*row+col,
 								color,
 								flipx,flipy,
@@ -211,6 +234,7 @@ static void draw_sprites(struct osd_bitmap *bitmap, int priority)
 								209 + (sy+16*(flipy ? 1-row : row)),
 								clip,
 								TRANSPARENCY_PEN, 0x0f );
+						}
 					}
 				}
 			}
@@ -226,14 +250,17 @@ static void mark_textlayer_colors(void)
 
 	memset (palette_map, 0, sizeof (palette_map));
 
-	for (offs = 0; offs < 0x400; offs++){
+	for (offs = 0; offs < 0x400; offs++)
+	{
 		palette_map[(baraduke_textram[offs+0x400] << 2) & 0x1ff] |= 0xffff;
 	}
 
 	/* now build the final table */
-	for (i = 0; i < 512; i++){
+	for (i = 0; i < 512; i++)
+	{
 		int usage = palette_map[i], j;
-		if (usage){
+		if (usage)
+		{
 			for (j = 0; j < 4; j++)
 				if (usage & (1 << j))
 					palette_used_colors[i * 4 + j] |= PALETTE_COLOR_VISIBLE;
@@ -251,15 +278,18 @@ static void mark_sprites_colors(void)
 
 	memset (palette_map, 0, sizeof (palette_map));
 
-	while( source<finish ){
+	while( source<finish )
+	{
 		palette_map[source[6] >> 1] |= 0xffff;
 		source+=16;
 	}
 
 	/* now build the final table */
-	for (i = 0; i < 128; i++){
+	for (i = 0; i < 128; i++)
+	{
 		int usage = palette_map[i], j;
-		if (usage){
+		if (usage)
+		{
 			for (j = 0; j < 16; j++)
 				if (usage & (1 << j))
 					palette_used_colors[i * 16 + j] |= PALETTE_COLOR_VISIBLE;
@@ -267,10 +297,13 @@ static void mark_sprites_colors(void)
 	}
 }
 
-
 void baraduke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
+
+	/* this is the global sprite Y offset, actually */
+	flipscreen = spriteram[0x07f6] & 0x01;
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
 	tilemap_update(ALL_TILEMAPS);
 
@@ -287,26 +320,35 @@ void baraduke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_draw(bitmap,tilemap[0],0);
 	draw_sprites(bitmap,1);
 
-	for (offs = 0x400 - 1; offs > 0; offs--){
+	for (offs = 0x400 - 1; offs > 0; offs--)
+	{
 		int mx,my,sx,sy;
 
         mx = offs % 32;
 		my = offs / 32;
 
-		if (my < 2)	{
+		if (my < 2)
+		{
 			if (mx < 2 || mx >= 30) continue; /* not visible */
 			sx = my + 34; sy = mx - 2;
 		}
-		else if (my >= 30){
+		else if (my >= 30)
+		{
 			if (mx < 2 || mx >= 30) continue; /* not visible */
 			sx = my - 30; sy = mx - 2;
 		}
-		else{
+		else
+		{
 			sx = mx + 2; sy = my - 2;
 		}
+		if (flipscreen)
+		{
+				sx = 35 - sx; sy = 27 - sy;
+		}
+
 		drawgfx(bitmap,Machine->gfx[0],	baraduke_textram[offs],
 				(baraduke_textram[offs+0x400] << 2) & 0x1ff,
-				0,0,sx*8,sy*8,
+				flipscreen,flipscreen,sx*8,sy*8,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
 	}
 }
@@ -314,6 +356,10 @@ void baraduke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 void metrocrs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
+
+	/* this is the global sprite Y offset, actually */
+	flipscreen = spriteram[0x07f6] & 0x01;
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
 	tilemap_update(ALL_TILEMAPS);
 
@@ -326,26 +372,34 @@ void metrocrs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	draw_sprites(bitmap,0);
 	tilemap_draw(bitmap,tilemap[1],0);
 	draw_sprites(bitmap,1);
-	for (offs = 0x400 - 1; offs > 0; offs--){
+	for (offs = 0x400 - 1; offs > 0; offs--)
+	{
 		int mx,my,sx,sy;
 
         mx = offs % 32;
 		my = offs / 32;
 
-		if (my < 2)	{
+		if (my < 2)
+		{
 			if (mx < 2 || mx >= 30) continue; /* not visible */
 			sx = my + 34; sy = mx - 2;
 		}
-		else if (my >= 30){
+		else if (my >= 30)
+		{
 			if (mx < 2 || mx >= 30) continue; /* not visible */
 			sx = my - 30; sy = mx - 2;
 		}
-		else{
+		else
+		{
 			sx = mx + 2; sy = my - 2;
+		}
+		if (flipscreen)
+		{
+				sx = 35 - sx; sy = 27 - sy;
 		}
 		drawgfx(bitmap,Machine->gfx[0],	baraduke_textram[offs],
 				(baraduke_textram[offs+0x400] << 2) & 0x1ff,
-				0,0,sx*8,sy*8,
+				flipscreen,flipscreen,sx*8,sy*8,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
 	}
 }

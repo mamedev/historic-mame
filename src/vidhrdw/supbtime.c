@@ -272,7 +272,7 @@ void supbtime_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 /******************************************************************************/
 
-void supbtime_pf2_data_w(int offset,int data)
+WRITE_HANDLER( supbtime_pf2_data_w )
 {
 	int oldword = READ_WORD(&supbtime_pf2_data[offset]);
 	int newword = COMBINE_WORD(oldword,data);
@@ -284,7 +284,7 @@ void supbtime_pf2_data_w(int offset,int data)
 	}
 }
 
-void supbtime_pf1_data_w(int offset,int data)
+WRITE_HANDLER( supbtime_pf1_data_w )
 {
 	int oldword = READ_WORD(&supbtime_pf1_data[offset]);
 	int newword = COMBINE_WORD(oldword,data);
@@ -296,17 +296,17 @@ void supbtime_pf1_data_w(int offset,int data)
 	}
 }
 
-int supbtime_pf1_data_r(int offset)
+READ_HANDLER( supbtime_pf1_data_r )
 {
 	return READ_WORD(&supbtime_pf1_data[offset]);
 }
 
-int supbtime_pf2_data_r(int offset)
+READ_HANDLER( supbtime_pf2_data_r )
 {
 	return READ_WORD(&supbtime_pf2_data[offset]);
 }
 
-void supbtime_control_0_w(int offset,int data)
+WRITE_HANDLER( supbtime_control_0_w )
 {
 	COMBINE_WORD_MEM(&supbtime_control_0[offset],data);
 }

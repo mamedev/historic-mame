@@ -108,7 +108,7 @@ static void cchasm_refresh (void)
 }
 
 
-void cchasm_refresh_control_w(int offset, int data)
+WRITE_HANDLER( cchasm_refresh_control_w )
 {
     switch (data)
     {

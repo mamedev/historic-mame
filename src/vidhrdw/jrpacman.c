@@ -108,7 +108,7 @@ void jrpacman_vh_stop(void)
 
 
 
-void jrpacman_videoram_w(int offset,int data)
+WRITE_HANDLER( jrpacman_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -133,7 +133,7 @@ void jrpacman_videoram_w(int offset,int data)
 
 
 
-void jrpacman_palettebank_w(int offset,int data)
+WRITE_HANDLER( jrpacman_palettebank_w )
 {
 	if (*jrpacman_palettebank != data)
 	{
@@ -144,7 +144,7 @@ void jrpacman_palettebank_w(int offset,int data)
 
 
 
-void jrpacman_colortablebank_w(int offset,int data)
+WRITE_HANDLER( jrpacman_colortablebank_w )
 {
 	if (*jrpacman_colortablebank != data)
 	{
@@ -155,7 +155,7 @@ void jrpacman_colortablebank_w(int offset,int data)
 
 
 
-void jrpacman_charbank_w(int offset,int data)
+WRITE_HANDLER( jrpacman_charbank_w )
 {
 	if (*jrpacman_charbank != data)
 	{
@@ -165,7 +165,7 @@ void jrpacman_charbank_w(int offset,int data)
 }
 
 
-void jrpacman_flipscreen_w(int offset,int data)
+WRITE_HANDLER( jrpacman_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{

@@ -58,8 +58,8 @@ ADPCM chip              270000         R/W   D[7:0]
 #include "vidhrdw/generic.h"
 
 
-void klax_playfieldram_w(int offset, int data);
-void klax_latch_w(int offset, int data);
+WRITE_HANDLER( klax_playfieldram_w );
+WRITE_HANDLER( klax_latch_w );
 
 int klax_vh_start(void);
 void klax_vh_stop(void);
@@ -100,7 +100,7 @@ static void scanline_update(int scanline)
 }
 
 
-static void interrupt_ack_w(int offset, int data)
+static WRITE_HANDLER( interrupt_ack_w )
 {
 	atarigen_scanline_int_ack_w(offset, data);
 	atarigen_video_int_ack_w(offset, data);
@@ -129,13 +129,13 @@ static void init_machine(void)
  *
  *************************************/
 
-static int adpcm_r(int offset)
+static READ_HANDLER( adpcm_r )
 {
 	return OKIM6295_status_0_r(offset) | 0xff00;
 }
 
 
-static void adpcm_w(int offset, int data)
+static WRITE_HANDLER( adpcm_w )
 {
 	if (!(data & 0x00ff0000))
 		OKIM6295_data_0_w(offset, data & 0xff);

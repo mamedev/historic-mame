@@ -31,10 +31,10 @@ extern void weststry_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefres
 extern int bloodbro_vh_start(void);
 extern void bloodbro_vh_stop(void);
 
-extern int bloodbro_background_r( int offset );
-extern void bloodbro_background_w( int offset, int data );
-extern int bloodbro_foreground_r( int offset );
-extern void bloodbro_foreground_w( int offset, int data );
+READ_HANDLER( bloodbro_background_r );
+WRITE_HANDLER( bloodbro_background_w );
+READ_HANDLER( bloodbro_foreground_r );
+WRITE_HANDLER( bloodbro_foreground_w );
 
 extern unsigned char *bloodbro_videoram2;
 extern unsigned char *textlayoutram;
@@ -42,7 +42,7 @@ extern unsigned char *bloodbro_scroll;
 
 /***************************************************************************/
 
-int bloodbro_r_read(int offset) {
+static READ_HANDLER( bloodbro_ports_r ) {
      //if( errorlog ) fprintf( errorlog, "INPUT e000[%x] \n", offset);
      switch (offset) {
        case 0x0: /* DIPSW 1&2 */
@@ -55,7 +55,7 @@ int bloodbro_r_read(int offset) {
      }
 }
 
-static void bloodbro_sound_w(int offset, int data)
+static WRITE_HANDLER( bloodbro_sound_w )
 {
 	/* Slightly different interface in this game */
 	if (offset==0) seibu_soundlatch_w(0,data&0xff); /* Convert 16 bit write to 8 bit */
@@ -63,7 +63,7 @@ static void bloodbro_sound_w(int offset, int data)
 	else if (offset!=2) seibu_soundlatch_w(offset,data&0xff);
 }
 
-int bloodbro_sound_r(int offset)
+READ_HANDLER( bloodbro_sound_r )
 {
       return 0x0060; /* Always return sound cpu ready */
 }
@@ -85,7 +85,7 @@ static struct MemoryReadAddress readmem_cpu[] = {
 	{ 0x8f800, 0x8ffff, MRA_RAM },
 	{ 0xa0000, 0xa001f, bloodbro_sound_r },
 	{ 0xc0000, 0xc007f, MRA_BANK3 },
-	{ 0xe0000, 0xe000f, bloodbro_r_read },
+	{ 0xe0000, 0xe000f, bloodbro_ports_r },
 	{ -1 }
 };
 
@@ -121,7 +121,7 @@ static struct MemoryReadAddress weststry_readmem_cpu[] = {
 	{ 0x08d400, 0x08dfff, MRA_RAM },
 	{ 0x08d800, 0x08dfff, MRA_RAM },
 	{ 0x08e000, 0x08ffff, MRA_RAM },
-	{ 0x0c1000, 0x0c100f, bloodbro_r_read },
+	{ 0x0c1000, 0x0c100f, bloodbro_ports_r },
 	{ 0x0c1010, 0x0c17ff, MRA_BANK3 },
 	{ 0x128000, 0x1287ff, paletteram_word_r },
 	{ 0x120000, 0x128fff, MRA_BANK2 },

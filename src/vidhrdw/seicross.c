@@ -66,7 +66,7 @@ void seicross_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 
 
-void seicross_colorram_w(int offset,int data)
+WRITE_HANDLER( seicross_colorram_w )
 {
 	if (colorram[offset] != data)
 	{

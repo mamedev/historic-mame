@@ -461,7 +461,7 @@ void asteroid_sh_update(void)
 }
 
 
-void asteroid_explode_w (int offset,int data)
+WRITE_HANDLER( asteroid_explode_w )
 {
 	if( data == explosion_latch )
 		return;
@@ -472,7 +472,7 @@ void asteroid_explode_w (int offset,int data)
 
 
 
-void asteroid_thump_w (int offset,int data)
+WRITE_HANDLER( asteroid_thump_w )
 {
 	double r0 = 1/47000, r1 = 1/1e12;
 
@@ -507,7 +507,7 @@ void asteroid_thump_w (int offset,int data)
 }
 
 
-void asteroid_sounds_w (int offset,int data)
+WRITE_HANDLER( asteroid_sounds_w )
 {
 	data &= 0x80;
     if( data == sound_latch[offset] )
@@ -556,7 +556,7 @@ void astdelux_sh_update(void)
 }
 
 
-void astdelux_sounds_w (int offset,int data)
+WRITE_HANDLER( astdelux_sounds_w )
 {
 	data = ~data & 0x80;
 	if( data == sound_latch[THRUSTEN] )

@@ -161,9 +161,9 @@ void showdisclaimer(void);
 
 /* LBO 042898 - added coin counters */
 #define COIN_COUNTERS	4	/* total # of coin counters */
-void coin_counter_w (int offset, int data);
-void coin_lockout_w (int offset, int data);
-void coin_lockout_global_w (int offset, int data);  /* Locks out all coin inputs */
+WRITE_HANDLER( coin_counter_w );
+WRITE_HANDLER( coin_lockout_w );
+WRITE_HANDLER( coin_lockout_global_w );  /* Locks out all coin inputs */
 
 int readroms(void);
 void printromlist(const struct RomModule *romp,const char *name);

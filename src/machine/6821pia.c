@@ -9,8 +9,8 @@
 
 #include <string.h>
 #include <stdio.h>
-#include "6821pia.h"
 #include "driver.h"
+#include "6821pia.h"
 
 
 /* define this to "errorlog" to get logging; define it to 0 to get no logging */
@@ -668,128 +668,128 @@ void pia_set_input_cb2(int which, int data)
 
 /******************* Standard 8-bit CPU interfaces, D0-D7 *******************/
 
-int pia_0_r(int offset) { return pia_read(0, offset); }
-int pia_1_r(int offset) { return pia_read(1, offset); }
-int pia_2_r(int offset) { return pia_read(2, offset); }
-int pia_3_r(int offset) { return pia_read(3, offset); }
-int pia_4_r(int offset) { return pia_read(4, offset); }
-int pia_5_r(int offset) { return pia_read(5, offset); }
-int pia_6_r(int offset) { return pia_read(6, offset); }
-int pia_7_r(int offset) { return pia_read(7, offset); }
+READ_HANDLER( pia_0_r ) { return pia_read(0, offset); }
+READ_HANDLER( pia_1_r ) { return pia_read(1, offset); }
+READ_HANDLER( pia_2_r ) { return pia_read(2, offset); }
+READ_HANDLER( pia_3_r ) { return pia_read(3, offset); }
+READ_HANDLER( pia_4_r ) { return pia_read(4, offset); }
+READ_HANDLER( pia_5_r ) { return pia_read(5, offset); }
+READ_HANDLER( pia_6_r ) { return pia_read(6, offset); }
+READ_HANDLER( pia_7_r ) { return pia_read(7, offset); }
 
-void pia_0_w(int offset, int data) { pia_write(0, offset, data); }
-void pia_1_w(int offset, int data) { pia_write(1, offset, data); }
-void pia_2_w(int offset, int data) { pia_write(2, offset, data); }
-void pia_3_w(int offset, int data) { pia_write(3, offset, data); }
-void pia_4_w(int offset, int data) { pia_write(4, offset, data); }
-void pia_5_w(int offset, int data) { pia_write(5, offset, data); }
-void pia_6_w(int offset, int data) { pia_write(6, offset, data); }
-void pia_7_w(int offset, int data) { pia_write(7, offset, data); }
+WRITE_HANDLER( pia_0_w ) { pia_write(0, offset, data); }
+WRITE_HANDLER( pia_1_w ) { pia_write(1, offset, data); }
+WRITE_HANDLER( pia_2_w ) { pia_write(2, offset, data); }
+WRITE_HANDLER( pia_3_w ) { pia_write(3, offset, data); }
+WRITE_HANDLER( pia_4_w ) { pia_write(4, offset, data); }
+WRITE_HANDLER( pia_5_w ) { pia_write(5, offset, data); }
+WRITE_HANDLER( pia_6_w ) { pia_write(6, offset, data); }
+WRITE_HANDLER( pia_7_w ) { pia_write(7, offset, data); }
 
 /******************* 8-bit A/B port interfaces *******************/
 
-void pia_0_porta_w(int offset, int data) { pia_set_input_a(0, data); }
-void pia_1_porta_w(int offset, int data) { pia_set_input_a(1, data); }
-void pia_2_porta_w(int offset, int data) { pia_set_input_a(2, data); }
-void pia_3_porta_w(int offset, int data) { pia_set_input_a(3, data); }
-void pia_4_porta_w(int offset, int data) { pia_set_input_a(4, data); }
-void pia_5_porta_w(int offset, int data) { pia_set_input_a(5, data); }
-void pia_6_porta_w(int offset, int data) { pia_set_input_a(6, data); }
-void pia_7_porta_w(int offset, int data) { pia_set_input_a(7, data); }
+WRITE_HANDLER( pia_0_porta_w ) { pia_set_input_a(0, data); }
+WRITE_HANDLER( pia_1_porta_w ) { pia_set_input_a(1, data); }
+WRITE_HANDLER( pia_2_porta_w ) { pia_set_input_a(2, data); }
+WRITE_HANDLER( pia_3_porta_w ) { pia_set_input_a(3, data); }
+WRITE_HANDLER( pia_4_porta_w ) { pia_set_input_a(4, data); }
+WRITE_HANDLER( pia_5_porta_w ) { pia_set_input_a(5, data); }
+WRITE_HANDLER( pia_6_porta_w ) { pia_set_input_a(6, data); }
+WRITE_HANDLER( pia_7_porta_w ) { pia_set_input_a(7, data); }
 
-void pia_0_portb_w(int offset, int data) { pia_set_input_b(0, data); }
-void pia_1_portb_w(int offset, int data) { pia_set_input_b(1, data); }
-void pia_2_portb_w(int offset, int data) { pia_set_input_b(2, data); }
-void pia_3_portb_w(int offset, int data) { pia_set_input_b(3, data); }
-void pia_4_portb_w(int offset, int data) { pia_set_input_b(4, data); }
-void pia_5_portb_w(int offset, int data) { pia_set_input_b(5, data); }
-void pia_6_portb_w(int offset, int data) { pia_set_input_b(6, data); }
-void pia_7_portb_w(int offset, int data) { pia_set_input_b(7, data); }
+WRITE_HANDLER( pia_0_portb_w ) { pia_set_input_b(0, data); }
+WRITE_HANDLER( pia_1_portb_w ) { pia_set_input_b(1, data); }
+WRITE_HANDLER( pia_2_portb_w ) { pia_set_input_b(2, data); }
+WRITE_HANDLER( pia_3_portb_w ) { pia_set_input_b(3, data); }
+WRITE_HANDLER( pia_4_portb_w ) { pia_set_input_b(4, data); }
+WRITE_HANDLER( pia_5_portb_w ) { pia_set_input_b(5, data); }
+WRITE_HANDLER( pia_6_portb_w ) { pia_set_input_b(6, data); }
+WRITE_HANDLER( pia_7_portb_w ) { pia_set_input_b(7, data); }
 
-int pia_0_porta_r(int offset) { return pia[0].in_a; }
-int pia_1_porta_r(int offset) { return pia[1].in_a; }
-int pia_2_porta_r(int offset) { return pia[2].in_a; }
-int pia_3_porta_r(int offset) { return pia[3].in_a; }
-int pia_4_porta_r(int offset) { return pia[4].in_a; }
-int pia_5_porta_r(int offset) { return pia[5].in_a; }
-int pia_6_porta_r(int offset) { return pia[6].in_a; }
-int pia_7_porta_r(int offset) { return pia[7].in_a; }
+READ_HANDLER( pia_0_porta_r ) { return pia[0].in_a; }
+READ_HANDLER( pia_1_porta_r ) { return pia[1].in_a; }
+READ_HANDLER( pia_2_porta_r ) { return pia[2].in_a; }
+READ_HANDLER( pia_3_porta_r ) { return pia[3].in_a; }
+READ_HANDLER( pia_4_porta_r ) { return pia[4].in_a; }
+READ_HANDLER( pia_5_porta_r ) { return pia[5].in_a; }
+READ_HANDLER( pia_6_porta_r ) { return pia[6].in_a; }
+READ_HANDLER( pia_7_porta_r ) { return pia[7].in_a; }
 
-int pia_0_portb_r(int offset) { return pia[0].in_b; }
-int pia_1_portb_r(int offset) { return pia[1].in_b; }
-int pia_2_portb_r(int offset) { return pia[2].in_b; }
-int pia_3_portb_r(int offset) { return pia[3].in_b; }
-int pia_4_portb_r(int offset) { return pia[4].in_b; }
-int pia_5_portb_r(int offset) { return pia[5].in_b; }
-int pia_6_portb_r(int offset) { return pia[6].in_b; }
-int pia_7_portb_r(int offset) { return pia[7].in_b; }
+READ_HANDLER( pia_0_portb_r ) { return pia[0].in_b; }
+READ_HANDLER( pia_1_portb_r ) { return pia[1].in_b; }
+READ_HANDLER( pia_2_portb_r ) { return pia[2].in_b; }
+READ_HANDLER( pia_3_portb_r ) { return pia[3].in_b; }
+READ_HANDLER( pia_4_portb_r ) { return pia[4].in_b; }
+READ_HANDLER( pia_5_portb_r ) { return pia[5].in_b; }
+READ_HANDLER( pia_6_portb_r ) { return pia[6].in_b; }
+READ_HANDLER( pia_7_portb_r ) { return pia[7].in_b; }
 
 /******************* 1-bit CA1/CA2/CB1/CB2 port interfaces *******************/
 
-void pia_0_ca1_w(int offset, int data) { pia_set_input_ca1(0, data); }
-void pia_1_ca1_w(int offset, int data) { pia_set_input_ca1(1, data); }
-void pia_2_ca1_w(int offset, int data) { pia_set_input_ca1(2, data); }
-void pia_3_ca1_w(int offset, int data) { pia_set_input_ca1(3, data); }
-void pia_4_ca1_w(int offset, int data) { pia_set_input_ca1(4, data); }
-void pia_5_ca1_w(int offset, int data) { pia_set_input_ca1(5, data); }
-void pia_6_ca1_w(int offset, int data) { pia_set_input_ca1(6, data); }
-void pia_7_ca1_w(int offset, int data) { pia_set_input_ca1(7, data); }
-void pia_0_ca2_w(int offset, int data) { pia_set_input_ca2(0, data); }
-void pia_1_ca2_w(int offset, int data) { pia_set_input_ca2(1, data); }
-void pia_2_ca2_w(int offset, int data) { pia_set_input_ca2(2, data); }
-void pia_3_ca2_w(int offset, int data) { pia_set_input_ca2(3, data); }
-void pia_4_ca2_w(int offset, int data) { pia_set_input_ca2(4, data); }
-void pia_5_ca2_w(int offset, int data) { pia_set_input_ca2(5, data); }
-void pia_6_ca2_w(int offset, int data) { pia_set_input_ca2(6, data); }
-void pia_7_ca2_w(int offset, int data) { pia_set_input_ca2(7, data); }
+WRITE_HANDLER( pia_0_ca1_w ) { pia_set_input_ca1(0, data); }
+WRITE_HANDLER( pia_1_ca1_w ) { pia_set_input_ca1(1, data); }
+WRITE_HANDLER( pia_2_ca1_w ) { pia_set_input_ca1(2, data); }
+WRITE_HANDLER( pia_3_ca1_w ) { pia_set_input_ca1(3, data); }
+WRITE_HANDLER( pia_4_ca1_w ) { pia_set_input_ca1(4, data); }
+WRITE_HANDLER( pia_5_ca1_w ) { pia_set_input_ca1(5, data); }
+WRITE_HANDLER( pia_6_ca1_w ) { pia_set_input_ca1(6, data); }
+WRITE_HANDLER( pia_7_ca1_w ) { pia_set_input_ca1(7, data); }
+WRITE_HANDLER( pia_0_ca2_w ) { pia_set_input_ca2(0, data); }
+WRITE_HANDLER( pia_1_ca2_w ) { pia_set_input_ca2(1, data); }
+WRITE_HANDLER( pia_2_ca2_w ) { pia_set_input_ca2(2, data); }
+WRITE_HANDLER( pia_3_ca2_w ) { pia_set_input_ca2(3, data); }
+WRITE_HANDLER( pia_4_ca2_w ) { pia_set_input_ca2(4, data); }
+WRITE_HANDLER( pia_5_ca2_w ) { pia_set_input_ca2(5, data); }
+WRITE_HANDLER( pia_6_ca2_w ) { pia_set_input_ca2(6, data); }
+WRITE_HANDLER( pia_7_ca2_w ) { pia_set_input_ca2(7, data); }
 
-void pia_0_cb1_w(int offset, int data) { pia_set_input_cb1(0, data); }
-void pia_1_cb1_w(int offset, int data) { pia_set_input_cb1(1, data); }
-void pia_2_cb1_w(int offset, int data) { pia_set_input_cb1(2, data); }
-void pia_3_cb1_w(int offset, int data) { pia_set_input_cb1(3, data); }
-void pia_4_cb1_w(int offset, int data) { pia_set_input_cb1(4, data); }
-void pia_5_cb1_w(int offset, int data) { pia_set_input_cb1(5, data); }
-void pia_6_cb1_w(int offset, int data) { pia_set_input_cb1(6, data); }
-void pia_7_cb1_w(int offset, int data) { pia_set_input_cb1(7, data); }
-void pia_0_cb2_w(int offset, int data) { pia_set_input_cb2(0, data); }
-void pia_1_cb2_w(int offset, int data) { pia_set_input_cb2(1, data); }
-void pia_2_cb2_w(int offset, int data) { pia_set_input_cb2(2, data); }
-void pia_3_cb2_w(int offset, int data) { pia_set_input_cb2(3, data); }
-void pia_4_cb2_w(int offset, int data) { pia_set_input_cb2(4, data); }
-void pia_5_cb2_w(int offset, int data) { pia_set_input_cb2(5, data); }
-void pia_6_cb2_w(int offset, int data) { pia_set_input_cb2(6, data); }
-void pia_7_cb2_w(int offset, int data) { pia_set_input_cb2(7, data); }
+WRITE_HANDLER( pia_0_cb1_w ) { pia_set_input_cb1(0, data); }
+WRITE_HANDLER( pia_1_cb1_w ) { pia_set_input_cb1(1, data); }
+WRITE_HANDLER( pia_2_cb1_w ) { pia_set_input_cb1(2, data); }
+WRITE_HANDLER( pia_3_cb1_w ) { pia_set_input_cb1(3, data); }
+WRITE_HANDLER( pia_4_cb1_w ) { pia_set_input_cb1(4, data); }
+WRITE_HANDLER( pia_5_cb1_w ) { pia_set_input_cb1(5, data); }
+WRITE_HANDLER( pia_6_cb1_w ) { pia_set_input_cb1(6, data); }
+WRITE_HANDLER( pia_7_cb1_w ) { pia_set_input_cb1(7, data); }
+WRITE_HANDLER( pia_0_cb2_w ) { pia_set_input_cb2(0, data); }
+WRITE_HANDLER( pia_1_cb2_w ) { pia_set_input_cb2(1, data); }
+WRITE_HANDLER( pia_2_cb2_w ) { pia_set_input_cb2(2, data); }
+WRITE_HANDLER( pia_3_cb2_w ) { pia_set_input_cb2(3, data); }
+WRITE_HANDLER( pia_4_cb2_w ) { pia_set_input_cb2(4, data); }
+WRITE_HANDLER( pia_5_cb2_w ) { pia_set_input_cb2(5, data); }
+WRITE_HANDLER( pia_6_cb2_w ) { pia_set_input_cb2(6, data); }
+WRITE_HANDLER( pia_7_cb2_w ) { pia_set_input_cb2(7, data); }
 
-int pia_0_ca1_r(int offset) { return pia[0].in_ca1; }
-int pia_1_ca1_r(int offset) { return pia[1].in_ca1; }
-int pia_2_ca1_r(int offset) { return pia[2].in_ca1; }
-int pia_3_ca1_r(int offset) { return pia[3].in_ca1; }
-int pia_4_ca1_r(int offset) { return pia[4].in_ca1; }
-int pia_5_ca1_r(int offset) { return pia[5].in_ca1; }
-int pia_6_ca1_r(int offset) { return pia[6].in_ca1; }
-int pia_7_ca1_r(int offset) { return pia[7].in_ca1; }
-int pia_0_ca2_r(int offset) { return pia[0].in_ca2; }
-int pia_1_ca2_r(int offset) { return pia[1].in_ca2; }
-int pia_2_ca2_r(int offset) { return pia[2].in_ca2; }
-int pia_3_ca2_r(int offset) { return pia[3].in_ca2; }
-int pia_4_ca2_r(int offset) { return pia[4].in_ca2; }
-int pia_5_ca2_r(int offset) { return pia[5].in_ca2; }
-int pia_6_ca2_r(int offset) { return pia[6].in_ca2; }
-int pia_7_ca2_r(int offset) { return pia[7].in_ca2; }
+READ_HANDLER( pia_0_ca1_r ) { return pia[0].in_ca1; }
+READ_HANDLER( pia_1_ca1_r ) { return pia[1].in_ca1; }
+READ_HANDLER( pia_2_ca1_r ) { return pia[2].in_ca1; }
+READ_HANDLER( pia_3_ca1_r ) { return pia[3].in_ca1; }
+READ_HANDLER( pia_4_ca1_r ) { return pia[4].in_ca1; }
+READ_HANDLER( pia_5_ca1_r ) { return pia[5].in_ca1; }
+READ_HANDLER( pia_6_ca1_r ) { return pia[6].in_ca1; }
+READ_HANDLER( pia_7_ca1_r ) { return pia[7].in_ca1; }
+READ_HANDLER( pia_0_ca2_r ) { return pia[0].in_ca2; }
+READ_HANDLER( pia_1_ca2_r ) { return pia[1].in_ca2; }
+READ_HANDLER( pia_2_ca2_r ) { return pia[2].in_ca2; }
+READ_HANDLER( pia_3_ca2_r ) { return pia[3].in_ca2; }
+READ_HANDLER( pia_4_ca2_r ) { return pia[4].in_ca2; }
+READ_HANDLER( pia_5_ca2_r ) { return pia[5].in_ca2; }
+READ_HANDLER( pia_6_ca2_r ) { return pia[6].in_ca2; }
+READ_HANDLER( pia_7_ca2_r ) { return pia[7].in_ca2; }
 
-int pia_0_cb1_r(int offset) { return pia[0].in_cb1; }
-int pia_1_cb1_r(int offset) { return pia[1].in_cb1; }
-int pia_2_cb1_r(int offset) { return pia[2].in_cb1; }
-int pia_3_cb1_r(int offset) { return pia[3].in_cb1; }
-int pia_4_cb1_r(int offset) { return pia[4].in_cb1; }
-int pia_5_cb1_r(int offset) { return pia[5].in_cb1; }
-int pia_6_cb1_r(int offset) { return pia[6].in_cb1; }
-int pia_7_cb1_r(int offset) { return pia[7].in_cb1; }
-int pia_0_cb2_r(int offset) { return pia[0].in_cb2; }
-int pia_1_cb2_r(int offset) { return pia[1].in_cb2; }
-int pia_2_cb2_r(int offset) { return pia[2].in_cb2; }
-int pia_3_cb2_r(int offset) { return pia[3].in_cb2; }
-int pia_4_cb2_r(int offset) { return pia[4].in_cb2; }
-int pia_5_cb2_r(int offset) { return pia[5].in_cb2; }
-int pia_6_cb2_r(int offset) { return pia[6].in_cb2; }
-int pia_7_cb2_r(int offset) { return pia[7].in_cb2; }
+READ_HANDLER( pia_0_cb1_r ) { return pia[0].in_cb1; }
+READ_HANDLER( pia_1_cb1_r ) { return pia[1].in_cb1; }
+READ_HANDLER( pia_2_cb1_r ) { return pia[2].in_cb1; }
+READ_HANDLER( pia_3_cb1_r ) { return pia[3].in_cb1; }
+READ_HANDLER( pia_4_cb1_r ) { return pia[4].in_cb1; }
+READ_HANDLER( pia_5_cb1_r ) { return pia[5].in_cb1; }
+READ_HANDLER( pia_6_cb1_r ) { return pia[6].in_cb1; }
+READ_HANDLER( pia_7_cb1_r ) { return pia[7].in_cb1; }
+READ_HANDLER( pia_0_cb2_r ) { return pia[0].in_cb2; }
+READ_HANDLER( pia_1_cb2_r ) { return pia[1].in_cb2; }
+READ_HANDLER( pia_2_cb2_r ) { return pia[2].in_cb2; }
+READ_HANDLER( pia_3_cb2_r ) { return pia[3].in_cb2; }
+READ_HANDLER( pia_4_cb2_r ) { return pia[4].in_cb2; }
+READ_HANDLER( pia_5_cb2_r ) { return pia[5].in_cb2; }
+READ_HANDLER( pia_6_cb2_r ) { return pia[6].in_cb2; }
+READ_HANDLER( pia_7_cb2_r ) { return pia[7].in_cb2; }

@@ -11,7 +11,7 @@ static int protection_value;
 static int protection_ret = 0;
 
 
-int mmonkey_protection_r(int offset)
+READ_HANDLER( mmonkey_protection_r )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -27,7 +27,7 @@ int mmonkey_protection_r(int offset)
 
 
 
-void mmonkey_protection_w(int offset, int data)
+WRITE_HANDLER( mmonkey_protection_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

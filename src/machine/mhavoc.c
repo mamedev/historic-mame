@@ -25,7 +25,7 @@ static int player_1;
 static void *gamma_timer = NULL;
 static void mhavoc_gamma_irq(int param);
 
-void mhavoc_ram_banksel_w (int offset,int data)
+WRITE_HANDLER( mhavoc_ram_banksel_w )
 {
 	static int bank[2] = { 0x20200, 0x20800 };
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -35,7 +35,7 @@ void mhavoc_ram_banksel_w (int offset,int data)
 	cpu_setbank (1, &RAM[bank[data]]);
 }
 
-void mhavoc_rom_banksel_w (int offset,int data)
+WRITE_HANDLER( mhavoc_rom_banksel_w )
 {
 	static int bank[4] = { 0x10000, 0x12000, 0x14000, 0x16000 };
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -66,7 +66,7 @@ void mhavoc_init_machine (void)
 }
 
 /* Read from the gamma processor */
-int mhavoc_gamma_r (int offset)
+READ_HANDLER( mhavoc_gamma_r )
 {
 	if (errorlog)
 		fprintf (errorlog, "  reading from gamma processor: %02x (%d %d)\n", gamma_data, alpha_rcvd, gamma_xmtd);
@@ -76,7 +76,7 @@ int mhavoc_gamma_r (int offset)
 }
 
 /* Read from the alpha processor */
-int mhavoc_alpha_r (int offset)
+READ_HANDLER( mhavoc_alpha_r )
 {
 	if (errorlog)
 		fprintf (errorlog, "\t\t\t\t\treading from alpha processor: %02x (%d %d)\n", alpha_data, gamma_rcvd, alpha_xmtd);
@@ -86,7 +86,7 @@ int mhavoc_alpha_r (int offset)
 }
 
 /* Write to the gamma processor */
-void mhavoc_gamma_w (int offset, int data)
+WRITE_HANDLER( mhavoc_gamma_w )
 {
 	if (errorlog)
 		fprintf (errorlog, "  writing to gamma processor: %02x (%d %d)\n", data, gamma_rcvd, alpha_xmtd);
@@ -100,7 +100,7 @@ void mhavoc_gamma_w (int offset, int data)
 }
 
 /* Write to the alpha processor */
-void mhavoc_alpha_w (int offset, int data)
+WRITE_HANDLER( mhavoc_alpha_w )
 {
 	if (errorlog)
 		fprintf (errorlog, "\t\t\t\t\twriting to alpha processor: %02x %d %d\n", data, alpha_rcvd, gamma_xmtd);
@@ -110,7 +110,7 @@ void mhavoc_alpha_w (int offset, int data)
 }
 
 /* Simulates frequency and vector halt */
-int mhavoc_port_0_r(int offset)
+READ_HANDLER( mhavoc_port_0_r )
 {
 	int res;
 
@@ -142,7 +142,7 @@ int mhavoc_port_0_r(int offset)
 	return (res & 0xff);
 }
 
-int mhavoc_port_1_r(int offset)
+READ_HANDLER( mhavoc_port_1_r )
 {
 	int res;
 
@@ -161,7 +161,7 @@ int mhavoc_port_1_r(int offset)
 	return (res & 0xff);
 }
 
-void mhavoc_out_0_w (int offset, int data)
+WRITE_HANDLER( mhavoc_out_0_w )
 {
 	if (!(data & 0x08))
 	{
@@ -178,7 +178,7 @@ void mhavoc_out_0_w (int offset, int data)
 	osd_led_w (2, data & 0x01);
 }
 
-void mhavoc_out_1_w (int offset, int data)
+WRITE_HANDLER( mhavoc_out_1_w )
 {
 	osd_led_w (1, data & 0x01);
 	osd_led_w (0, (data & 0x02)>>1);
@@ -189,7 +189,7 @@ static void mhavoc_gamma_irq(int param)
 	cpu_set_irq_line(1,0,HOLD_LINE);
 }
 
-void mhavoc_irqack_w (int offset, int data)
+WRITE_HANDLER( mhavoc_irqack_w )
 {
 	timer_reset( gamma_timer, TIME_IN_HZ(LS161_CLOCK/16));
 	cpu_set_irq_line(1,0,CLEAR_LINE);

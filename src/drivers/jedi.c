@@ -83,33 +83,33 @@ Sound processor
 #include "vidhrdw/generic.h"
 
 /* sndhrdw jedi.c */
-void jedi_speech_w( int offset, int data);
-int jedi_speech_ready_r( int offset );
+WRITE_HANDLER( jedi_speech_w );
+READ_HANDLER( jedi_speech_ready_r );
 
 /* vidhrdw jedi.c */
-void jedi_paletteram_w(int offset,int data);
-void jedi_backgroundram_w(int offset,int data);
+WRITE_HANDLER( jedi_paletteram_w );
+WRITE_HANDLER( jedi_backgroundram_w );
 int  jedi_vh_start(void);
 void jedi_vh_stop(void);
 void jedi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void jedi_vscroll_w(int offset,int data);
-void jedi_hscroll_w(int offset,int data);
+WRITE_HANDLER( jedi_vscroll_w );
+WRITE_HANDLER( jedi_hscroll_w );
 
 extern unsigned char *jedi_PIXIRAM;
 extern unsigned char *jedi_backgroundram;
 extern int jedi_backgroundram_size;
 
-void jedi_soundlatch_w(int offset,int data);
-void jedi_soundacklatch_w(int offset, int data);
-int jedi_soundacklatch_r(int offset);
-int jedi_soundlatch_r(int offset);
-int jedi_soundstat_r(int offset);
-int jedi_mainstat_r(int offset);
-int jedi_control_r (int offset);
-void jedi_control_w (int offset, int data);
-void jedi_alpha_banksel (int offset, int data);
-void jedi_sound_reset( int offset, int data);
-void jedi_rom_banksel( int offset, int data);
+WRITE_HANDLER( jedi_soundlatch_w );
+WRITE_HANDLER( jedi_soundacklatch_w );
+READ_HANDLER( jedi_soundacklatch_r );
+READ_HANDLER( jedi_soundlatch_r );
+READ_HANDLER( jedi_soundstat_r );
+READ_HANDLER( jedi_mainstat_r );
+READ_HANDLER( jedi_control_r );
+WRITE_HANDLER( jedi_control_w );
+WRITE_HANDLER( jedi_alpha_banksel_w );
+WRITE_HANDLER( jedi_sound_reset_w );
+WRITE_HANDLER( jedi_rom_banksel_w );
 
 
 
@@ -154,10 +154,10 @@ static struct MemoryWriteAddress writemem[] =
     { 0x0800, 0x08ff, MWA_RAM, &nvram, &nvram_size },
     { 0x1C80, 0x1C82, jedi_control_w},
     { 0x1D80, 0x1D80, watchdog_reset_w },
-    { 0x1E84, 0x1E84, jedi_alpha_banksel },
-    { 0x1E86, 0x1E86, jedi_sound_reset },
+    { 0x1E84, 0x1E84, jedi_alpha_banksel_w },
+    { 0x1E86, 0x1E86, jedi_sound_reset_w },
     { 0x1F00, 0x1F00, jedi_soundlatch_w },
-    { 0x1F80, 0x1F80, jedi_rom_banksel },
+    { 0x1F80, 0x1F80, jedi_rom_banksel_w },
     { 0x2000, 0x27FF, jedi_backgroundram_w, &jedi_backgroundram, &jedi_backgroundram_size },
     { 0x2800, 0x2FFF, jedi_paletteram_w, &paletteram },
     { 0x3000, 0x37BF, videoram_w, &videoram, &videoram_size },

@@ -24,11 +24,11 @@ void ticket_dispenser_init(int msec, int motoractivehigh, int statusactivehigh);
 /***************************************************************************
   ticket_dispenser_r
 ***************************************************************************/
-int ticket_dispenser_r(int offset);
+READ_HANDLER( ticket_dispenser_r );
 
 
 /***************************************************************************
   ticket_dispenser_w
 ***************************************************************************/
-void ticket_dispenser_w(int offset, int data);
+WRITE_HANDLER( ticket_dispenser_w );
 

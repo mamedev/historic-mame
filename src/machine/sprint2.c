@@ -40,46 +40,46 @@ Sprint1 looks for the following:
 We remap our input ports because if we didn't, we'd need 16 ports for this.
 ***************************************************************************/
 
-int sprint1_read_ports(int offset)
+READ_HANDLER( sprint1_read_ports_r )
 {
-        int gear;
+	int gear;
 
-        gear=input_port_1_r(0);
-        if (gear & 0x01)                sprint2_gear1=1;
-        else if (gear & 0x02)           sprint2_gear1=2;
-        else if (gear & 0x04)           sprint2_gear1=3;
-        else if (gear & 0x08)           sprint2_gear1=4;
+	gear=input_port_1_r(0);
+	if (gear & 0x01)                sprint2_gear1=1;
+	else if (gear & 0x02)           sprint2_gear1=2;
+	else if (gear & 0x04)           sprint2_gear1=3;
+	else if (gear & 0x08)           sprint2_gear1=4;
 
-        switch (offset)
-        {
-                /* IN1 */
-                case 0x28:      if (sprint2_gear1==1) return 0x00; else return 0x80;
-                case 0x29:      if (sprint2_gear2==1) return 0x00; else return 0x80;
-                case 0x2A:      if (sprint2_gear1==2) return 0x00; else return 0x80;
-                case 0x2B:      return ((input_port_2_r(0) & 0x01) << 7);
-                case 0x2C:      return ((input_port_2_r(0) & 0x02) << 6);
-                case 0x2D:      return ((input_port_2_r(0) & 0x04) << 5);
-                /* DSW */
-                case 0x10:
-                case 0x14:
-                case 0x30:
-                case 0x34:      return ((input_port_0_r(0) & 0x03) << 6);
-                case 0x11:
-                case 0x15:
-                case 0x31:
-                case 0x35:      return ((input_port_0_r(0) & 0x0C) << 4);
-                case 0x12:
-                case 0x16:
-                case 0x32:
-                case 0x36:      return ((input_port_0_r(0) & 0x30) << 2);
-                case 0x13:
-                case 0x17:
-                case 0x33:
-                case 0x37:      return ((input_port_0_r(0) & 0xC0) << 0);
+	switch (offset)
+	{
+	        /* IN1 */
+	        case 0x28:      if (sprint2_gear1==1) return 0x00; else return 0x80;
+	        case 0x29:      if (sprint2_gear2==1) return 0x00; else return 0x80;
+	        case 0x2A:      if (sprint2_gear1==2) return 0x00; else return 0x80;
+	        case 0x2B:      return ((input_port_2_r(0) & 0x01) << 7);
+	        case 0x2C:      return ((input_port_2_r(0) & 0x02) << 6);
+	        case 0x2D:      return ((input_port_2_r(0) & 0x04) << 5);
+	        /* DSW */
+	        case 0x10:
+	        case 0x14:
+	        case 0x30:
+	        case 0x34:      return ((input_port_0_r(0) & 0x03) << 6);
+	        case 0x11:
+	        case 0x15:
+	        case 0x31:
+	        case 0x35:      return ((input_port_0_r(0) & 0x0C) << 4);
+	        case 0x12:
+	        case 0x16:
+	        case 0x32:
+	        case 0x36:      return ((input_port_0_r(0) & 0x30) << 2);
+	        case 0x13:
+	        case 0x17:
+	        case 0x33:
+	        case 0x37:      return ((input_port_0_r(0) & 0xC0) << 0);
 
-                /* Just in case */
-                default:        return 0xFF;
-        }
+	        /* Just in case */
+	        default:        return 0xFF;
+	}
 }
 
 /***************************************************************************
@@ -110,59 +110,59 @@ Sprint2 looks for the following:
 We remap our input ports because if we didn't, we'd need 16 ports for this.
 ***************************************************************************/
 
-int sprint2_read_ports(int offset)
+READ_HANDLER( sprint2_read_ports_r )
 {
-        int gear;
+	int gear;
 
-        gear=input_port_1_r(0);
-        if (gear & 0x01)                sprint2_gear1=1;
-        else if (gear & 0x02)           sprint2_gear1=2;
-        else if (gear & 0x04)           sprint2_gear1=3;
-        else if (gear & 0x08)           sprint2_gear1=4;
+	gear=input_port_1_r(0);
+	if (gear & 0x01)                sprint2_gear1=1;
+	else if (gear & 0x02)           sprint2_gear1=2;
+	else if (gear & 0x04)           sprint2_gear1=3;
+	else if (gear & 0x08)           sprint2_gear1=4;
 
-        if (gear & 0x10)                sprint2_gear2=1;
-        else if (gear & 0x20)           sprint2_gear2=2;
-        else if (gear & 0x40)           sprint2_gear2=3;
-        else if (gear & 0x80)           sprint2_gear2=4;
+	if (gear & 0x10)                sprint2_gear2=1;
+	else if (gear & 0x20)           sprint2_gear2=2;
+	else if (gear & 0x40)           sprint2_gear2=3;
+	else if (gear & 0x80)           sprint2_gear2=4;
 
 
-        switch (offset)
-        {
-                /* IN0 */
-                case 0x28:      return ((input_port_2_r(0) & 0x01) << 7);
-                case 0x29:      return ((input_port_2_r(0) & 0x02) << 6);
-                case 0x2A:      return ((input_port_2_r(0) & 0x04) << 5);
-                case 0x2C:      return ((input_port_2_r(0) & 0x08) << 4);
-                case 0x2D:      return ((input_port_2_r(0) & 0x10) << 3);
-                case 0x2E:      return ((input_port_2_r(0) & 0x20) << 2);
-                /* IN1 */
-                case 0x18:      if (sprint2_gear1==1) return 0x00; else return 0x80;
-                case 0x19:      if (sprint2_gear2==1) return 0x00; else return 0x80;
-                case 0x1A:      if (sprint2_gear1==2) return 0x00; else return 0x80;
-                case 0x1B:      if (sprint2_gear2==2) return 0x00; else return 0x80;
-                case 0x1C:      if (sprint2_gear1==3) return 0x00; else return 0x80;
-                case 0x1D:      if (sprint2_gear2==3) return 0x00; else return 0x80;
-                /* DSW */
-                case 0x10:
-                case 0x14:
-                case 0x30:
-                case 0x34:      return ((input_port_0_r(0) & 0x03) << 6);
-                case 0x11:
-                case 0x15:
-                case 0x31:
-                case 0x35:      return ((input_port_0_r(0) & 0x0C) << 4);
-                case 0x12:
-                case 0x16:
-                case 0x32:
-                case 0x36:      return ((input_port_0_r(0) & 0x30) << 2);
-                case 0x13:
-                case 0x17:
-                case 0x33:
-                case 0x37:      return ((input_port_0_r(0) & 0xC0) << 0);
+	switch (offset)
+	{
+	        /* IN0 */
+	        case 0x28:      return ((input_port_2_r(0) & 0x01) << 7);
+	        case 0x29:      return ((input_port_2_r(0) & 0x02) << 6);
+	        case 0x2A:      return ((input_port_2_r(0) & 0x04) << 5);
+	        case 0x2C:      return ((input_port_2_r(0) & 0x08) << 4);
+	        case 0x2D:      return ((input_port_2_r(0) & 0x10) << 3);
+	        case 0x2E:      return ((input_port_2_r(0) & 0x20) << 2);
+	        /* IN1 */
+	        case 0x18:      if (sprint2_gear1==1) return 0x00; else return 0x80;
+	        case 0x19:      if (sprint2_gear2==1) return 0x00; else return 0x80;
+	        case 0x1A:      if (sprint2_gear1==2) return 0x00; else return 0x80;
+	        case 0x1B:      if (sprint2_gear2==2) return 0x00; else return 0x80;
+	        case 0x1C:      if (sprint2_gear1==3) return 0x00; else return 0x80;
+	        case 0x1D:      if (sprint2_gear2==3) return 0x00; else return 0x80;
+	        /* DSW */
+	        case 0x10:
+	        case 0x14:
+	        case 0x30:
+	        case 0x34:      return ((input_port_0_r(0) & 0x03) << 6);
+	        case 0x11:
+	        case 0x15:
+	        case 0x31:
+	        case 0x35:      return ((input_port_0_r(0) & 0x0C) << 4);
+	        case 0x12:
+	        case 0x16:
+	        case 0x32:
+	        case 0x36:      return ((input_port_0_r(0) & 0x30) << 2);
+	        case 0x13:
+	        case 0x17:
+	        case 0x33:
+	        case 0x37:      return ((input_port_0_r(0) & 0xC0) << 0);
 
-                /* Just in case */
-                default:        return 0xFF;
-        }
+	        /* Just in case */
+	        default:        return 0xFF;
+	}
 }
 
 /***************************************************************************
@@ -176,15 +176,15 @@ When reading from SYNC:
 
 The only one of these I really understand is the VBLANK...
 ***************************************************************************/
-int sprint2_read_sync(int offset)
+READ_HANDLER( sprint2_read_sync_r )
 {
-        static int ac_line=0x00;
+	static int ac_line=0x00;
 
-        ac_line=(ac_line+1) % 3;
-        if (ac_line==0)
-                return ((input_port_3_r(0) & 0x7f) | 0x80);
-        else
-                return (input_port_3_r(0) & 0x7F);
+	ac_line=(ac_line+1) % 3;
+	if (ac_line==0)
+	        return ((input_port_3_r(0) & 0x7f) | 0x80);
+	else
+	        return (input_port_3_r(0) & 0x7F);
 }
 
 
@@ -192,9 +192,9 @@ int sprint2_read_sync(int offset)
 /***************************************************************************
 Coin inputs - Nothing special here.
 ***************************************************************************/
-int sprint2_coins(int offset)
+READ_HANDLER( sprint2_coins_r )
 {
-        return (input_port_4_r(0));
+	return (input_port_4_r(0));
 }
 
 
@@ -208,69 +208,69 @@ Be sure to keep returning a direction until steering_reset is called,
 because D6 and D7 are apparently checked at different times, and a
 change in-between can affect the direction you move.
 ***************************************************************************/
-int sprint2_steering1(int offset)
+READ_HANDLER( sprint2_steering1_r )
 {
-        static int last_val=0;
-        int this_val;
-        int delta;
+	static int last_val=0;
+	int this_val;
+	int delta;
 
-        this_val=input_port_5_r(0);
+	this_val=input_port_5_r(0);
 
-        delta=this_val-last_val;
-        last_val=this_val;
-        if (delta>128) delta-=256;
-        else if (delta<-128) delta+=256;
-        /* Divide by four to make our steering less sensitive */
-        sprint2_steering_buf1+=(delta/4);
+	delta=this_val-last_val;
+	last_val=this_val;
+	if (delta>128) delta-=256;
+	else if (delta<-128) delta+=256;
+	/* Divide by four to make our steering less sensitive */
+	sprint2_steering_buf1+=(delta/4);
 
-        if (sprint2_steering_buf1>0)
-        {
-                sprint2_steering_buf1--;
-                sprint2_steering_val1=0x7F;
-        }
-        else if (sprint2_steering_buf1<0)
-        {
-                sprint2_steering_buf1++;
-                sprint2_steering_val1=0x3F;
-        }
+	if (sprint2_steering_buf1>0)
+	{
+	        sprint2_steering_buf1--;
+	        sprint2_steering_val1=0x7F;
+	}
+	else if (sprint2_steering_buf1<0)
+	{
+	        sprint2_steering_buf1++;
+	        sprint2_steering_val1=0x3F;
+	}
 
-        return sprint2_steering_val1;
+	return sprint2_steering_val1;
 }
 
-int sprint2_steering2(int offset)
+READ_HANDLER( sprint2_steering2_r )
 {
-        static int last_val=0;
-        int this_val;
-        int delta;
+	static int last_val=0;
+	int this_val;
+	int delta;
 
-        this_val=input_port_6_r(0);
-        delta=this_val-last_val;
-        last_val=this_val;
-        if (delta>128) delta-=256;
-        else if (delta<-128) delta+=256;
-        /* Divide by four to make our steering less sensitive */
-        sprint2_steering_buf2+=(delta/4);
+	this_val=input_port_6_r(0);
+	delta=this_val-last_val;
+	last_val=this_val;
+	if (delta>128) delta-=256;
+	else if (delta<-128) delta+=256;
+	/* Divide by four to make our steering less sensitive */
+	sprint2_steering_buf2+=(delta/4);
 
-        if (sprint2_steering_buf2>0)
-        {
-                sprint2_steering_buf2--;
-                sprint2_steering_val2=0x7F;
-        }
-        else if (sprint2_steering_buf2<0)
-        {
-                sprint2_steering_buf2++;
-                sprint2_steering_val2=0x3F;
-        }
+	if (sprint2_steering_buf2>0)
+	{
+	        sprint2_steering_buf2--;
+	        sprint2_steering_val2=0x7F;
+	}
+	else if (sprint2_steering_buf2<0)
+	{
+	        sprint2_steering_buf2++;
+	        sprint2_steering_val2=0x3F;
+	}
 
-        return sprint2_steering_val2;
+	return sprint2_steering_val2;
 }
 
-void sprint2_steering_reset1(int offset, int value)
+WRITE_HANDLER( sprint2_steering_reset1_w )
 {
     sprint2_steering_val1=0xFF;
 }
 
-void sprint2_steering_reset2(int offset, int value)
+WRITE_HANDLER( sprint2_steering_reset2_w )
 {
     sprint2_steering_val2=0xFF;
 }
@@ -284,37 +284,37 @@ D6=1, skid.  D7=1, crash.
 
 Note:  collisions are actually being set in vidhrdw/sprint2.c
 ***************************************************************************/
-int sprint2_collision1(int offset)
+READ_HANDLER( sprint2_collision1_r )
 {
-        return sprint2_collision1_data;
+	return sprint2_collision1_data;
 }
 
-int sprint2_collision2(int offset)
+READ_HANDLER( sprint2_collision2_r )
 {
-        return sprint2_collision2_data;
+	return sprint2_collision2_data;
 }
 
-void sprint2_collision_reset1(int offset, int value)
+WRITE_HANDLER( sprint2_collision_reset1_w )
 {
-        sprint2_collision1_data=0;
+	sprint2_collision1_data=0;
 }
 
-void sprint2_collision_reset2(int offset, int value)
+WRITE_HANDLER( sprint2_collision_reset2_w )
 {
-        sprint2_collision2_data=0;
+	sprint2_collision2_data=0;
 }
 
 /***************************************************************************
 Lamps
 ***************************************************************************/
-void sprint2_lamp1(int offset,int value)
+WRITE_HANDLER( sprint2_lamp1_w )
 {
-        osd_led_w(0,(value>0));
+	osd_led_w(0,(data>0));
 }
 
-void sprint2_lamp2(int offset,int value)
+WRITE_HANDLER( sprint2_lamp2_w )
 {
-        osd_led_w(1,(value>0));
+	osd_led_w(1,(data>0));
 }
 
 

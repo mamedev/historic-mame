@@ -27,18 +27,18 @@ extern unsigned char *sbrkout_horiz_ram;
 extern unsigned char *sbrkout_vert_ram;
 
 /* machine/sbrkout.c */
-extern void sbrkout_serve_led(int offset,int value);
-extern void sbrkout_start_1_led(int offset,int value);
-extern void sbrkout_start_2_led(int offset,int value);
-extern int sbrkout_read_DIPs(int offset);
+WRITE_HANDLER( sbrkout_serve_led_w );
+WRITE_HANDLER( sbrkout_start_1_led_w );
+WRITE_HANDLER( sbrkout_start_2_led_w );
+READ_HANDLER( sbrkout_read_DIPs_r );
 extern int sbrkout_interrupt(void);
-extern int sbrkout_select1(int offset);
-extern int sbrkout_select2(int offset);
+READ_HANDLER( sbrkout_select1_r );
+READ_HANDLER( sbrkout_select2_r );
 
 
 /* sound hardware - temporary */
 
-static void sbrkout_dac_w(int offset,int data);
+static WRITE_HANDLER( sbrkout_dac_w );
 static void sbrkout_tones_4V(int foo);
 static int init_timer=1;
 
@@ -46,7 +46,7 @@ static int init_timer=1;
 
 unsigned char *sbrkout_sound;
 
-static void sbrkout_dac_w(int offset,int data)
+static WRITE_HANDLER( sbrkout_dac_w )
 {
 	sbrkout_sound[offset]=data;
 
@@ -78,10 +78,10 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0000, 0x00ff, MRA_RAM }, /* Zero Page RAM */
 	{ 0x0100, 0x01ff, MRA_RAM }, /* ??? */
 	{ 0x0400, 0x077f, MRA_RAM }, /* Video Display RAM */
-	{ 0x0828, 0x0828, sbrkout_select1 }, /* Select 1 */
-	{ 0x082f, 0x082f, sbrkout_select2 }, /* Select 2 */
+	{ 0x0828, 0x0828, sbrkout_select1_r }, /* Select 1 */
+	{ 0x082f, 0x082f, sbrkout_select2_r }, /* Select 2 */
 	{ 0x082e, 0x082e, input_port_5_r }, /* Serve Switch */
-	{ 0x0830, 0x0833, sbrkout_read_DIPs }, /* DIP Switches */
+	{ 0x0830, 0x0833, sbrkout_read_DIPs_r }, /* DIP Switches */
 	{ 0x0840, 0x0840, input_port_1_r }, /* Coin Switches */
 	{ 0x0880, 0x0880, input_port_2_r }, /* Start Switches */
 	{ 0x08c0, 0x08c0, input_port_3_r }, /* Self Test Switch */
@@ -99,9 +99,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0x00ff, MWA_RAM }, /* WRAM */
 	{ 0x0100, 0x01ff, MWA_RAM }, /* ??? */
 	{ 0x0400, 0x07ff, videoram_w, &videoram, &videoram_size }, /* DISPLAY */
-//		  { 0x0c10, 0x0c11, sbrkout_serve_led }, /* Serve LED */
-	{ 0x0c30, 0x0c31, sbrkout_start_1_led }, /* 1 Player Start Light */
-	{ 0x0c40, 0x0c41, sbrkout_start_2_led }, /* 2 Player Start Light */
+//	{ 0x0c10, 0x0c11, sbrkout_serve_led_w }, /* Serve LED */
+	{ 0x0c30, 0x0c31, sbrkout_start_1_led_w }, /* 1 Player Start Light */
+	{ 0x0c40, 0x0c41, sbrkout_start_2_led_w }, /* 2 Player Start Light */
 	{ 0x0c50, 0x0c51, MWA_RAM }, /* NMI Pot Reading Enable */
 	{ 0x0c70, 0x0c71, MWA_RAM }, /* Coin Counter */
 	{ 0x0c80, 0x0c80, MWA_NOP }, /* Watchdog */

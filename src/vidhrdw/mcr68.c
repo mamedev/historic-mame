@@ -41,7 +41,7 @@ static void zwackery_debug();
  *
  *************************************/
 
-void mcr68_paletteram_w(int offset, int data)
+WRITE_HANDLER( mcr68_paletteram_w )
 {
 	int oldword = READ_WORD(&paletteram[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -69,7 +69,7 @@ void mcr68_paletteram_w(int offset, int data)
  *
  *************************************/
 
-void mcr68_videoram_w(int offset,int data)
+WRITE_HANDLER( mcr68_videoram_w )
 {
 	int oldword = READ_WORD(&videoram[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -282,7 +282,7 @@ void mcr68_debug(void)
  *
  *************************************/
 
-void zwackery_paletteram_w(int offset, int data)
+WRITE_HANDLER( zwackery_paletteram_w )
 {
 	int oldword = READ_WORD(&paletteram[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -310,7 +310,7 @@ void zwackery_paletteram_w(int offset, int data)
  *
  *************************************/
 
-void zwackery_videoram_w(int offset,int data)
+WRITE_HANDLER( zwackery_videoram_w )
 {
 	int oldword = READ_WORD(&videoram[offset]);
 	int newword = COMBINE_WORD(oldword, data);
@@ -330,7 +330,7 @@ void zwackery_videoram_w(int offset,int data)
  *
  *************************************/
 
-void zwackery_spriteram_w(int offset, int data)
+WRITE_HANDLER( zwackery_spriteram_w )
 {
 	/* yech -- Zwackery relies on the upper 8 bits of a spriteram read being $ff! */
 	/* to make this happen we always write $ff in the upper 8 bits */

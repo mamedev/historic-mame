@@ -5,7 +5,7 @@ static int flipscreen,bgcharbank;
 
 
 
-void tigeroad_videoctrl_w(int offset,int data)
+WRITE_HANDLER( tigeroad_videoctrl_w )
 {
 	if ((data & 0xff000000) == 0)
 	{
@@ -25,7 +25,7 @@ void tigeroad_videoctrl_w(int offset,int data)
 	}
 }
 
-void tigeroad_scroll_w(int offset,int data)
+WRITE_HANDLER( tigeroad_scroll_w )
 {
 	COMBINE_WORD_MEM(&tigeroad_scrollram[offset],data);
 }

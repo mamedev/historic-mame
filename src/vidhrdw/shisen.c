@@ -4,7 +4,7 @@
 static int gfxbank;
 
 
-void sichuan2_bankswitch_w(int offset,int data)
+WRITE_HANDLER( sichuan2_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -27,7 +27,7 @@ if (errorlog && (data & 0xc0)) fprintf(errorlog,"bank switch %02x\n",data);
 }
 
 
-void sichuan2_paletteram_w(int offset,int data)
+WRITE_HANDLER( sichuan2_paletteram_w )
 {
 	int r,g,b;
 

@@ -12,7 +12,7 @@
 #include "cpu/z80/z80.h"
 
 // this prototype will move to the driver
-void stfight_bank_w( int offset, int data );
+WRITE_HANDLER( stfight_bank_w );
 
 
 /*
@@ -90,7 +90,7 @@ void stfight_init_machine( void )
 
 // It's entirely possible that this bank is never switched out
 // - in fact I don't even know how/where it's switched in!
-void stfight_bank_w( int offset, int data )
+WRITE_HANDLER( stfight_bank_w )
 {
 	unsigned char   *ROM2 = memory_region(REGION_CPU1) + 0x10000;
 
@@ -131,7 +131,7 @@ int stfight_interrupt_2( void )
  */
 
 // Perhaps define dipswitches as active low?
-int stfight_dsw_r( int offset )
+READ_HANDLER( stfight_dsw_r )
 {
     return( ~readinputport( 3+offset ) );
 }
@@ -139,7 +139,7 @@ int stfight_dsw_r( int offset )
 static int stfight_coin_mech_query_active = 0;
 static int stfight_coin_mech_query;
 
-int stfight_coin_r( int offset )
+READ_HANDLER( stfight_coin_r )
 {
     static int coin_mech_latch[2] = { 0x02, 0x01 };
 
@@ -174,7 +174,7 @@ int stfight_coin_r( int offset )
     return( coin_mech_data );
 }
 
-void stfight_coin_w( int offset, int data )
+WRITE_HANDLER( stfight_coin_w )
 {
     // interrogate coin mech
     stfight_coin_mech_query_active = 1;
@@ -221,7 +221,7 @@ void stfight_adpcm_int( int data )
 	toggle ^= 1;
 }
 
-void stfight_adpcm_control_w( int offset, int data )
+WRITE_HANDLER( stfight_adpcm_control_w )
 {
     if( data < 0x08 )
     {
@@ -232,7 +232,7 @@ void stfight_adpcm_control_w( int offset, int data )
     MSM5205_reset_w( 0, data & 0x08 ? 1 : 0 );
 }
 
-void stfight_e800_w( int offset, int data )
+WRITE_HANDLER( stfight_e800_w )
 {
 }
 
@@ -242,13 +242,13 @@ void stfight_e800_w( int offset, int data )
 
 static unsigned char fm_data;
 
-void stfight_fm_w( int offset, int data )
+WRITE_HANDLER( stfight_fm_w )
 {
     // the sound cpu ignores any fm data without bit 7 set
     fm_data = 0x80 | data;
 }
 
-int stfight_fm_r( int offset )
+READ_HANDLER( stfight_fm_r )
 {
     int data = fm_data;
 

@@ -98,7 +98,7 @@ enum
 
 
 /* LT 20-3-1998 */
-void astinvad_sh_port_4_w(int offset, int data)
+WRITE_HANDLER( astinvad_sh_port_4_w )
 {
 	static int port4State;
 
@@ -141,7 +141,7 @@ void astinvad_sh_port_4_w(int offset, int data)
 
 
 
-void astinvad_sh_port_5_w(int offset, int data)
+WRITE_HANDLER( astinvad_sh_port_5_w )
 {
 	static int port5State;
 

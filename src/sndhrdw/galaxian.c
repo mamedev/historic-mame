@@ -107,14 +107,14 @@ static void tone_update(int ch, INT16 *buffer, int length)
 	}
 }
 
-void galaxian_pitch_w(int offset,int data)
+WRITE_HANDLER( galaxian_pitch_w )
 {
 	stream_update(tone_stream,0);
 
 	pitch = data;
 }
 
-void galaxian_vol_w(int offset,int data)
+WRITE_HANDLER( galaxian_vol_w )
 {
 	stream_update(tone_stream,0);
 
@@ -132,7 +132,7 @@ static void noise_timer_cb(int param)
 	}
 }
 
-void galaxian_noise_enable_w(int offset,int data)
+WRITE_HANDLER( galaxian_noise_enable_w )
 {
 #if SAMPLES
 	if (deathsampleloaded)
@@ -168,7 +168,7 @@ void galaxian_noise_enable_w(int offset,int data)
 	}
 }
 
-void galaxian_shoot_enable_w(int offset,int data)
+WRITE_HANDLER( galaxian_shoot_enable_w )
 {
 	if( data & 1 && !(last_port2 & 1) )
 	{
@@ -525,7 +525,7 @@ void galaxian_sh_stop(void)
 	shootwave = 0;
 }
 
-void galaxian_background_enable_w(int offset,int data)
+WRITE_HANDLER( galaxian_background_enable_w )
 {
 	mixer_set_volume(channellfo+offset,(data & 1) ? 100 : 0);
 }
@@ -538,7 +538,7 @@ static void lfo_timer_cb(int param)
 		freq = MAXFREQ;
 }
 
-void galaxian_lfo_freq_w(int offset,int data)
+WRITE_HANDLER( galaxian_lfo_freq_w )
 {
 #if NEW_LFO
 	static int lfobit[4];

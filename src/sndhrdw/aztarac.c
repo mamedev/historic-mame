@@ -10,7 +10,7 @@
 
 static int sound_command, sound_status;
 
-int aztarac_sound_r(int offset)
+READ_HANDLER( aztarac_sound_r )
 {
     if (Machine->sample_rate)
         return sound_status & 0x01;
@@ -18,7 +18,7 @@ int aztarac_sound_r(int offset)
         return 1;
 }
 
-void aztarac_sound_w(int offset, int data)
+WRITE_HANDLER( aztarac_sound_w )
 {
     sound_command = data;
     sound_status ^= 0x21;
@@ -26,19 +26,19 @@ void aztarac_sound_w(int offset, int data)
         cpu_cause_interrupt( 1, Z80_IRQ_INT );
 }
 
-int aztarac_snd_command_r(int offset)
+READ_HANDLER( aztarac_snd_command_r )
 {
     sound_status |= 0x01;
     sound_status &= ~0x20;
     return sound_command;
 }
 
-int aztarac_snd_status_r(int offset)
+READ_HANDLER( aztarac_snd_status_r )
 {
     return sound_status & ~0x01;
 }
 
-void aztarac_snd_status_w(int offset, int data)
+WRITE_HANDLER( aztarac_snd_status_w )
 {
     sound_status &= ~0x10;
 }

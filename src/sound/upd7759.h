@@ -32,8 +32,11 @@ void UPD7759_start_w (int num, int playback);
 int UPD7759_busy_r (int num);
 int UPD7759_data_r (int num, int offs);
 
-int UPD7759_0_data_r(int offs);
-int UPD7759_1_data_r(int offs);
+WRITE_HANDLER( UPD7759_0_message_w );
+WRITE_HANDLER( UPD7759_0_start_w );
+READ_HANDLER( UPD7759_0_busy_r );
+READ_HANDLER( UPD7759_0_data_r );
+READ_HANDLER( UPD7759_1_data_r );
 
 #endif
 

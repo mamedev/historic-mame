@@ -46,7 +46,7 @@ void hexa_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 
 
 
-void hexa_d008_w(int offset,int data)
+WRITE_HANDLER( hexa_d008_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);

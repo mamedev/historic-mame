@@ -743,10 +743,6 @@ int UPD7759_data_r(int num, int offs)
 	return voice->base[offs];
 }
 
-/* helper functions to be used as memory read handler function pointers */
-int UPD7759_0_data_r(int offs) { return UPD7759_data_r(0, offs); }
-int UPD7759_1_data_r(int offs) { return UPD7759_data_r(1, offs); }
-
 /************************************************************
  UPD7759_busy_r
 
@@ -825,3 +821,11 @@ void UPD7759_reset_w (int num, int data)
 	/* (Note: do we need to do anything else?) */
 	voice->playing = 0;
 }
+
+
+/* helper functions to be used as memory read handler function pointers */
+WRITE_HANDLER( UPD7759_0_message_w )	{ UPD7759_message_w(0,data); }
+WRITE_HANDLER( UPD7759_0_start_w )	{ UPD7759_start_w(0,data); }
+READ_HANDLER( UPD7759_0_busy_r )	{ return UPD7759_busy_r(0); }
+READ_HANDLER( UPD7759_0_data_r )	{ return UPD7759_data_r(0,offset); }
+READ_HANDLER( UPD7759_1_data_r )	{ return UPD7759_data_r(1,offset); }

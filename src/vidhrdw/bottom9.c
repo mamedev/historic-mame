@@ -120,7 +120,7 @@ void bottom9_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 //	if (bottom9_video_enable)
 	{
 		K051960_sprites_draw(bitmap,1,1);
-		K051316_zoom_draw_0(bitmap);
+		K051316_zoom_draw_0(bitmap,0);
 		K051960_sprites_draw(bitmap,0,0);
 		K052109_tilemap_draw(bitmap,2,0);
 		/* note that priority 3 is opposite to the basic layer priority! */

@@ -10,7 +10,7 @@
 #include "driver.h"
 
 
-int scramble_input_port_2_r(int offset)
+READ_HANDLER( scramble_input_port_2_r )
 {
 	int res;
 
@@ -27,14 +27,14 @@ int scramble_input_port_2_r(int offset)
 
 
 
-int scramble_protection_r(int offset)
+READ_HANDLER( scramble_protection_r )
 {
 	if (errorlog) fprintf(errorlog,"%04x: read protection\n",cpu_get_pc());
 
 	return 0x6f;
 }
 
-int scramblk_protection_r(int offset)
+READ_HANDLER( scramblk_protection_r )
 {
 	switch (cpu_get_pc())
 	{
@@ -52,7 +52,7 @@ int scramblk_protection_r(int offset)
 	}
 }
 
-int scramblb_protection_1_r(int offset)
+READ_HANDLER( scramblb_protection_1_r )
 {
 	switch (cpu_get_pc())
 	{
@@ -64,7 +64,7 @@ int scramblb_protection_1_r(int offset)
 	}
 }
 
-int scramblb_protection_2_r(int offset)
+READ_HANDLER( scramblb_protection_2_r )
 {
 	switch (cpu_get_pc())
 	{
@@ -76,17 +76,17 @@ int scramblb_protection_2_r(int offset)
 }
 
 
-int mariner_protection_1_r(int offset)
+READ_HANDLER( mariner_protection_1_r )
 {
 	return 7;
 }
-int mariner_protection_2_r(int offset)
+READ_HANDLER( mariner_protection_2_r )
 {
 	return 3;
 }
 
 
-int mariner_pip(int offset)
+READ_HANDLER( mariner_pip_r )
 {
 	if (errorlog) fprintf(errorlog,"PC %04x: read port 2\n",cpu_get_pc());
 	if (cpu_get_pc() == 0x015a) return 0xff;
@@ -94,7 +94,7 @@ int mariner_pip(int offset)
 	else return 0;
 }
 
-int mariner_pap(int offset)
+READ_HANDLER( mariner_pap_r )
 {
 	if (errorlog) fprintf(errorlog,"PC %04x: read port 3\n",cpu_get_pc());
 	if (cpu_get_pc() == 0x015d) return 0x04;

@@ -86,7 +86,7 @@ void matmania_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 
 
-void matmania_paletteram_w(int offset,int data)
+WRITE_HANDLER( matmania_paletteram_w )
 {
 	int bit0,bit1,bit2,bit3,val;
 	int r,g,b;
@@ -175,7 +175,7 @@ void matmania_vh_stop(void)
 }
 
 
-void matmania_videoram3_w(int offset,int data)
+WRITE_HANDLER( matmania_videoram3_w )
 {
 	if (matmania_videoram3[offset] != data)
 	{
@@ -187,7 +187,7 @@ void matmania_videoram3_w(int offset,int data)
 
 
 
-void matmania_colorram3_w(int offset,int data)
+WRITE_HANDLER( matmania_colorram3_w )
 {
 	if (matmania_colorram3[offset] != data)
 	{

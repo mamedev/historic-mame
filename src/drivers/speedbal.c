@@ -58,22 +58,22 @@ int speedbal_sprites_dataram_size;
 int  speedbal_vh_start(void);
 void speedbal_vh_stop(void);
 void speedbal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-int  speedbal_foreground_videoram_r(int offset);
-void speedbal_foreground_videoram_w(int offset,int data);
-int  speedbal_background_videoram_r(int offset);
-void speedbal_background_videoram_w(int offset,int data);
+READ_HANDLER( speedbal_foreground_videoram_r );
+WRITE_HANDLER( speedbal_foreground_videoram_w );
+READ_HANDLER( speedbal_background_videoram_r );
+WRITE_HANDLER( speedbal_background_videoram_w );
 
 
 unsigned char *speedbal_sharedram;
 
-int speedbal_sharedram_r(int offset)
+READ_HANDLER( speedbal_sharedram_r )
 {
 //  if (offset==0x0) speedbal_sharedram[offset]+=1;
   return speedbal_sharedram[offset];
 }
 
 
-void speedbal_sharedram_w(int offset,int data)
+WRITE_HANDLER( speedbal_sharedram_w )
 {
     speedbal_sharedram[offset] = data;
 }

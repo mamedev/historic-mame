@@ -16,7 +16,7 @@ struct K053260_interface {
 
 int K053260_sh_start( const struct MachineSound *msound );
 void K053260_sh_stop( void );
-void K053260_WriteReg( int r, int v );
-int K053260_ReadReg( int r );
+WRITE_HANDLER( K053260_w );
+READ_HANDLER( K053260_r );
 
 #endif /* __K053260_H__ */

@@ -14,13 +14,13 @@ ask.  - Mike Balfour (mab22@po.cwru.edu)
 #include "vidhrdw/generic.h"
 
 /* machine/bsktball.c */
-extern void bsktball_nmion_w(int offset, int data);
+WRITE_HANDLER( bsktball_nmion_w );
 extern int bsktball_interrupt(void);
-extern void bsktball_ld1_w(int offset, int data);
-extern void bsktball_ld2_w(int offset, int data);
-extern int bsktball_in0_r(int offset);
-extern void bsktball_led1_w(int offset, int data);
-extern void bsktball_led2_w(int offset, int data);
+WRITE_HANDLER( bsktball_ld1_w );
+WRITE_HANDLER( bsktball_ld2_w );
+READ_HANDLER( bsktball_in0_r );
+WRITE_HANDLER( bsktball_led1_w );
+WRITE_HANDLER( bsktball_led2_w );
 
 /* vidhrdw/bsktball.c */
 extern unsigned char *bsktball_motion;
@@ -31,7 +31,7 @@ extern void bsktball_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh
 
 static int note_timer=255;
 static int note_count=256;
-static void bsktball_note_w(int offset,int data);
+static WRITE_HANDLER( bsktball_note_w );
 static void bsktball_note_32H(int foo);
 static void bsktball_noise_256H(int foo);
 static int init_timer=1;
@@ -40,7 +40,7 @@ static int crowd_mask=0;
 #define TIME_32H 10582*2
 #define TIME_256H TIME_32H*4
 
-static void bsktball_note_w(int offset,int data)
+static WRITE_HANDLER( bsktball_note_w )
 {
 
 	note_timer=data;
@@ -58,7 +58,7 @@ static int noise_a10=0;
 static int noise=0;
 static int noise_timer_set=0;
 
-static void bsktball_noise_reset_w(int offset, int data)
+static WRITE_HANDLER( bsktball_noise_reset_w )
 {
 	noise_a10=0;
 	noise_b10=0;
@@ -109,7 +109,7 @@ static void bsktball_note_32H(int foo)
 		init_timer=1;
 }
 
-static void bsktball_bounce_w(int offset,int data)
+static WRITE_HANDLER( bsktball_bounce_w )
 {
 	/* D0-D3 = crowd */
 	crowd_mask = (data & 0x0F) << 4;

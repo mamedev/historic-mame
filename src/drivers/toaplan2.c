@@ -81,18 +81,18 @@ static INT8 old_p2_paddle_v;
 
 
 /**************** Video stuff ******************/
-int  toaplan2_0_videoram_r(int offset);
-int  toaplan2_1_videoram_r(int offset);
-void toaplan2_0_videoram_w(int offset, int data);
-void toaplan2_1_videoram_w(int offset, int data);
+READ_HANDLER( toaplan2_0_videoram_r );
+READ_HANDLER( toaplan2_1_videoram_r );
+WRITE_HANDLER( toaplan2_0_videoram_w );
+WRITE_HANDLER( toaplan2_1_videoram_w );
 
-void toaplan2_0_voffs_w(int offset, int data);
-void toaplan2_1_voffs_w(int offset, int data);
+WRITE_HANDLER( toaplan2_0_voffs_w );
+WRITE_HANDLER( toaplan2_1_voffs_w );
 
-void toaplan2_0_scroll_reg_select_w(int offset, int data);
-void toaplan2_1_scroll_reg_select_w(int offset, int data);
-void toaplan2_0_scroll_reg_data_w(int offset, int data);
-void toaplan2_1_scroll_reg_data_w(int offset, int data);
+WRITE_HANDLER( toaplan2_0_scroll_reg_select_w );
+WRITE_HANDLER( toaplan2_1_scroll_reg_select_w );
+WRITE_HANDLER( toaplan2_0_scroll_reg_data_w );
+WRITE_HANDLER( toaplan2_1_scroll_reg_data_w );
 
 void toaplan2_0_eof_callback(void);
 void toaplan2_1_eof_callback(void);
@@ -139,7 +139,7 @@ static int toaplan2_interrupt(void)
 	return MC68000_IRQ_4;
 }
 
-static void toaplan2_coin_w(int offset, int data)
+static WRITE_HANDLER( toaplan2_coin_w )
 {
 	switch (data & 0x0f)
 	{
@@ -162,22 +162,22 @@ static void toaplan2_coin_w(int offset, int data)
 	}
 }
 
-static void oki_bankswitch_w(int offset, int data)
+static WRITE_HANDLER( oki_bankswitch_w )
 {
 	OKIM6295_set_bank_base(0, ALL_VOICES, (data & 1) * 0x40000);
 }
 
-static int toaplan2_shared_r(int offset)
+static READ_HANDLER( toaplan2_shared_r )
 {
 	return toaplan2_shared_ram[offset>>1];
 }
 
-static void toaplan2_shared_w(int offset, int data)
+static WRITE_HANDLER( toaplan2_shared_w )
 {
 	toaplan2_shared_ram[offset>>1] = data;
 }
 
-static void toaplan2_hd647180_cpu_w(int offset, int data)
+static WRITE_HANDLER( toaplan2_hd647180_cpu_w )
 {
 	/* Command sent to secondary CPU. Support for HD647180 will be
 	   required when a ROM dump becomes available for this hardware */
@@ -193,7 +193,7 @@ static void toaplan2_hd647180_cpu_w(int offset, int data)
 	}
 }
 
-static int c2map_port_6_r(int offset)
+static READ_HANDLER( c2map_port_6_r )
 {
 	/* bit 4 high signifies secondary CPU is ready */
 	/* bit 5 is tested low before V-Blank bit ??? */
@@ -208,7 +208,7 @@ static int c2map_port_6_r(int offset)
 	return ( mcu_data | input_port_6_r(0) );
 }
 
-static int video_status_r(int offset)
+static READ_HANDLER( video_status_r )
 {
 	/* video busy if bit 8 is low, or bits 7-0 are high ??? */
 	video_status += 0x100;
@@ -217,7 +217,7 @@ static int video_status_r(int offset)
 }
 
 
-static int ghox_p1_h_analog_r(int offset)
+static READ_HANDLER( ghox_p1_h_analog_r )
 {
 	INT8 value, new_value;
 	new_value = input_port_7_r(0);
@@ -226,7 +226,7 @@ static int ghox_p1_h_analog_r(int offset)
 	old_p1_paddle_h = new_value;
 	return value;
 }
-static int ghox_p1_v_analog_r(int offset)
+static READ_HANDLER( ghox_p1_v_analog_r )
 {
 	INT8 new_value;
 	new_value = input_port_9_r(0);		/* fake vertical movement */
@@ -239,7 +239,7 @@ static int ghox_p1_v_analog_r(int offset)
 	old_p1_paddle_v = new_value;
 	return (input_port_1_r(0) | 1);
 }
-static int ghox_p2_h_analog_r(int offset)
+static READ_HANDLER( ghox_p2_h_analog_r )
 {
 	INT8 value, new_value;
 	new_value = input_port_8_r(0);
@@ -248,7 +248,7 @@ static int ghox_p2_h_analog_r(int offset)
 	old_p2_paddle_h = new_value;
 	return value;
 }
-static int ghox_p2_v_analog_r(int offset)
+static READ_HANDLER( ghox_p2_v_analog_r )
 {
 	INT8 new_value;
 	new_value = input_port_10_r(0);		/* fake vertical movement */
@@ -262,11 +262,11 @@ static int ghox_p2_v_analog_r(int offset)
 	return (input_port_2_r(0) | 1);
 }
 
-static int ghox_mcu_r(int offset)
+static READ_HANDLER( ghox_mcu_r )
 {
 	return 0xff;
 }
-static void ghox_mcu_w(int offset, int data)
+static WRITE_HANDLER( ghox_mcu_w )
 {
 	data &= 0xffff;
 	mcu_data = data;
@@ -305,7 +305,7 @@ static void ghox_mcu_w(int offset, int data)
 
 }
 
-static int ghox_shared_ram_r(int offset)
+static READ_HANDLER( ghox_shared_ram_r )
 {
 	/* Ghox 68K reads data from MCU shared RAM and writes it to main RAM.
 	   It then subroutine jumps to main RAM and executes this code.
@@ -325,13 +325,13 @@ static int ghox_shared_ram_r(int offset)
 
 	return data;
 }
-static void ghox_shared_ram_w(int offset, int data)
+static WRITE_HANDLER( ghox_shared_ram_w )
 {
 	WRITE_WORD (&toaplan2_shared_ram[offset],data);
 }
 
 
-static int kbash_sub_cpu_r(int offset)
+static READ_HANDLER( kbash_sub_cpu_r )
 {
 /*	Knuckle Bash's  68000 reads secondary CPU status via an I/O port.
 	If a value of 2 is read, then secondary CPU is busy.
@@ -342,12 +342,12 @@ static int kbash_sub_cpu_r(int offset)
 	return mcu_data;
 }
 
-static void kbash_sub_cpu_w(int offset, int data)
+static WRITE_HANDLER( kbash_sub_cpu_w )
 {
 	if (errorlog) fprintf(errorlog,"PC:%08x writing %04x to Zx80 secondary CPU status port %02x\n",cpu_getpreviouspc(),mcu_data,offset/2);
 }
 
-static int shared_ram_r(int offset)
+static READ_HANDLER( shared_ram_r )
 {
 /*	Other games using a Zx80 based secondary CPU, have shared memory between
 	the 68000 and the Zx80 CPU. The 68000 reads the status of the Zx80
@@ -357,7 +357,7 @@ static int shared_ram_r(int offset)
 	return data;
 }
 
-static void shared_ram_w(int offset, int data)
+static WRITE_HANDLER( shared_ram_w )
 {
 	if (offset == 0x9e8)
 	{
@@ -371,7 +371,7 @@ static void shared_ram_w(int offset, int data)
 	}
 	WRITE_WORD (&toaplan2_shared_ram[offset],data);
 }
-static int Zx80_status_port_r(int offset)
+static READ_HANDLER( Zx80_status_port_r )
 {
 /*** Status port includes Zx80 CPU POST codes. ************
  *** This is actually a part of the 68000/Zx80 Shared RAM */
@@ -389,18 +389,18 @@ static int Zx80_status_port_r(int offset)
 	data = mcu_data & 0x0000ffff;
 	return data;
 }
-static void Zx80_command_port_w(int offset, int data)
+static WRITE_HANDLER( Zx80_command_port_w )
 {
 	mcu_data = data;
 	if (errorlog) fprintf(errorlog,"PC:%08x Writing command (%04x) to Zx80 secondary CPU command/status port\n",cpu_getpreviouspc(),mcu_data);
 }
 
-int Zx80_sharedram_r(int offset)
+READ_HANDLER( Zx80_sharedram_r )
 {
 	return Zx80_shared_ram[offset / 2];
 }
 
-void Zx80_sharedram_w(int offset,int data)
+WRITE_HANDLER( Zx80_sharedram_w )
 {
 	Zx80_shared_ram[offset / 2] = data;
 }

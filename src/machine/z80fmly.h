@@ -14,9 +14,9 @@ typedef struct
 	int baseclock[MAX_CTC];                           /* timer clock */
 	int notimer[MAX_CTC];                         /* timer disablers */
 	void (*intr[MAX_CTC])(int which);             /* callback when change interrupt status */
-	void (*zc0[MAX_CTC])(int offset, int data);   /* ZC/TO0 callback */
-	void (*zc1[MAX_CTC])(int offset, int data);   /* ZC/TO1 callback */
-	void (*zc2[MAX_CTC])(int offset, int data);   /* ZC/TO2 callback */
+	mem_write_handler zc0[MAX_CTC];   /* ZC/TO0 callback */
+	mem_write_handler zc1[MAX_CTC];   /* ZC/TO1 callback */
+	mem_write_handler zc2[MAX_CTC];   /* ZC/TO2 callback */
 } z80ctc_interface;
 
 void z80ctc_init (z80ctc_interface *intf);
@@ -28,22 +28,22 @@ void z80ctc_0_reset (void);
 void z80ctc_1_reset (void);
 
 void z80ctc_w (int which, int offset, int data);
-void z80ctc_0_w (int offset, int data);
-void z80ctc_1_w (int offset, int data);
+WRITE_HANDLER( z80ctc_0_w );
+WRITE_HANDLER( z80ctc_1_w );
 
 int z80ctc_r (int which, int offset);
-int z80ctc_0_r (int offset);
-int z80ctc_1_r (int offset);
+READ_HANDLER( z80ctc_0_r );
+READ_HANDLER( z80ctc_1_r );
 
 void z80ctc_trg_w (int which, int trg, int offset, int data);
-void z80ctc_0_trg0_w (int offset, int data);
-void z80ctc_0_trg1_w (int offset, int data);
-void z80ctc_0_trg2_w (int offset, int data);
-void z80ctc_0_trg3_w (int offset, int data);
-void z80ctc_1_trg0_w (int offset, int data);
-void z80ctc_1_trg1_w (int offset, int data);
-void z80ctc_1_trg2_w (int offset, int data);
-void z80ctc_1_trg3_w (int offset, int data);
+WRITE_HANDLER( z80ctc_0_trg0_w );
+WRITE_HANDLER( z80ctc_0_trg1_w );
+WRITE_HANDLER( z80ctc_0_trg2_w );
+WRITE_HANDLER( z80ctc_0_trg3_w );
+WRITE_HANDLER( z80ctc_1_trg0_w );
+WRITE_HANDLER( z80ctc_1_trg1_w );
+WRITE_HANDLER( z80ctc_1_trg2_w );
+WRITE_HANDLER( z80ctc_1_trg3_w );
 
 /* Z80 DaisyChain controll */
 int z80ctc_interrupt( int which );
@@ -77,12 +77,12 @@ void z80pio_reti( int which );
 void z80pio_0_reset (void);
 
 /* this functions can use when C/D = A0 , A/B = A1 */
-void z80pio_0_w(int offset , int data);
-int  z80pio_0_r(int offset );
+WRITE_HANDLER( z80pio_0_w );
+READ_HANDLER( z80pio_0_r );
 
-void z80pioA_0_p_w(int offset , int data);
-void z80pioB_0_p_w(int offset , int data);
-int z80pioA_0_p_r( int offset );
-int z80pioB_0_p_r( int offset );
+WRITE_HANDLER( z80pioA_0_p_w );
+WRITE_HANDLER( z80pioB_0_p_w );
+READ_HANDLER( z80pioA_0_p_r );
+READ_HANDLER( z80pioB_0_p_r );
 
 

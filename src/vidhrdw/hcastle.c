@@ -70,29 +70,29 @@ void hcastle_vh_stop(void)
 
 
 
-void hcastle_pf1_video_w(int offset, int data)
+WRITE_HANDLER( hcastle_pf1_video_w )
 {
 	hcastle_pf1_videoram[offset]=data;
 	dirty_pf1[offset]=1;
 }
 
-void hcastle_pf2_video_w(int offset, int data)
+WRITE_HANDLER( hcastle_pf2_video_w )
 {
 	hcastle_pf2_videoram[offset]=data;
 	dirty_pf2[offset]=1;
 }
 
-void hcastle_gfxbank_w(int offset, int data)
+WRITE_HANDLER( hcastle_gfxbank_w )
 {
 	gfx_bank = data;
 }
 
-int hcastle_gfxbank_r(int offset)
+READ_HANDLER( hcastle_gfxbank_r )
 {
 	return gfx_bank;
 }
 
-void hcastle_pf1_control_w(int offset,int data)
+WRITE_HANDLER( hcastle_pf1_control_w )
 {
 	if (offset==3)
 	{
@@ -104,7 +104,7 @@ void hcastle_pf1_control_w(int offset,int data)
 	K007121_ctrl_0_w(offset,data);
 }
 
-void hcastle_pf2_control_w(int offset,int data)
+WRITE_HANDLER( hcastle_pf2_control_w )
 {
 	if (offset==3)
 	{
@@ -121,7 +121,7 @@ void hcastle_pf2_control_w(int offset,int data)
 static void draw_sprites( struct osd_bitmap *bitmap, unsigned char *sbank, int bank )
 {
 	int bank_base = (bank == 0) ? 0x4000 * (gfx_bank & 1) : 0;
-	K007121_sprites_draw(bank,bitmap,sbank,(K007121_ctrlram[bank][6]&0x30)*2,0,bank_base);
+	K007121_sprites_draw(bank,bitmap,sbank,(K007121_ctrlram[bank][6]&0x30)*2,0,bank_base,-1);
 }
 
 /*****************************************************************************/

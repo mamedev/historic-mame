@@ -24,19 +24,19 @@ int  supbtime_vh_start(void);
 void supbtime_vh_stop(void);
 void supbtime_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void supbtime_pf2_data_w(int offset,int data);
-void supbtime_pf1_data_w(int offset,int data);
-int supbtime_pf1_data_r(int offset);
-int supbtime_pf2_data_r(int offset);
+WRITE_HANDLER( supbtime_pf2_data_w );
+WRITE_HANDLER( supbtime_pf1_data_w );
+READ_HANDLER( supbtime_pf1_data_r );
+READ_HANDLER( supbtime_pf2_data_r );
 
-void supbtime_control_0_w(int offset,int data);
+WRITE_HANDLER( supbtime_control_0_w );
 
 extern unsigned char *supbtime_pf2_data,*supbtime_pf1_data,*supbtime_pf1_row;
 static unsigned char *supbtime_ram;
 
 /******************************************************************************/
 
-static int supbtime_controls_read(int offset)
+static READ_HANDLER( supbtime_controls_r )
 {
  	switch (offset)
 	{
@@ -55,7 +55,7 @@ static int supbtime_controls_read(int offset)
 	return 0xffff;
 }
 
-static void sound_w(int offset,int data)
+static WRITE_HANDLER( sound_w )
 {
 	soundlatch_w(0,data & 0xff);
 	cpu_cause_interrupt(1,H6280_INT_IRQ1);
@@ -70,7 +70,7 @@ static struct MemoryReadAddress supbtime_readmem[] =
 	{ 0x100000, 0x13ffff, MRA_BANK1 },
 	{ 0x120000, 0x1207ff, MRA_BANK2 },
 	{ 0x140000, 0x1407ff, paletteram_word_r },
-	{ 0x180000, 0x18000f, supbtime_controls_read },
+	{ 0x180000, 0x18000f, supbtime_controls_r },
 	{ 0x320000, 0x321fff, supbtime_pf1_data_r },
 	{ 0x322000, 0x323fff, supbtime_pf2_data_r },
 	{ -1 }  /* end of table */
@@ -100,7 +100,7 @@ static struct MemoryWriteAddress supbtime_writemem[] =
 
 /******************************************************************************/
 
-static void YM2151_w(int offset, int data)
+static WRITE_HANDLER( YM2151_w )
 {
 	switch (offset) {
 	case 0:
@@ -363,7 +363,7 @@ ROM_END
 
 /******************************************************************************/
 
-static int supbtime_cycle_r(int offset)
+static READ_HANDLER( supbtime_cycle_r )
 {
 	if (cpu_get_pc()==0x7e2 && READ_WORD(&supbtime_ram[0])==0) {cpu_spinuntil_int(); return 1;}
 

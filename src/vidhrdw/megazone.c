@@ -76,7 +76,7 @@ void megazone_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 		COLOR(0,i) = (*(color_prom++) & 0x0f) + 0x10;
 }
 
-void megazone_flipscreen_w(int offset,int data)
+WRITE_HANDLER( megazone_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{

@@ -186,86 +186,74 @@ static struct tilemap *top_tilemap[2], *fg_tilemap[2], *bg_tilemap[2];
 
 ***************************************************************************/
 
-static void get_top0_tile_info( int col, int row )
+static void get_top0_tile_info(int tile_index)
 {
-	int color, tile_number, attrib, offset;
+	int color, tile_number, attrib;
 	UINT16 *source = (UINT16 *)(topvideoram[0]);
 
-	offset = ((row*64) + (col*2)) & 0x7ff;
-
-	attrib = source[offset];
-	tile_number = source[offset+1];
+	attrib = source[2*tile_index];
+	tile_number = source[2*tile_index+1];
 	color = attrib & 0x7f;
 	SET_TILE_INFO(0,tile_number,color)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 }
 
-static void get_fg0_tile_info( int col, int row )
+static void get_fg0_tile_info(int tile_index)
 {
-	int color, tile_number, attrib, offset;
+	int color, tile_number, attrib;
 	UINT16 *source = (UINT16 *)(fgvideoram[0]);
 
-	offset = ((row*64) + (col*2)) & 0x7ff;
-
-	attrib = source[offset];
-	tile_number = source[offset+1];
+	attrib = source[2*tile_index];
+	tile_number = source[2*tile_index+1];
 	color = attrib & 0x7f;
 	SET_TILE_INFO(0,tile_number,color)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 }
 
-static void get_bg0_tile_info( int col, int row )
+static void get_bg0_tile_info(int tile_index)
 {
-	int color, tile_number, attrib, offset;
+	int color, tile_number, attrib;
 	UINT16 *source = (UINT16 *)(bgvideoram[0]);
 
-	offset = ((row*64) + (col*2)) & 0x7ff;
-
-	attrib = source[offset];
-	tile_number = source[offset+1];
+	attrib = source[2*tile_index];
+	tile_number = source[2*tile_index+1];
 	color = attrib & 0x7f;
 	SET_TILE_INFO(0,tile_number,color)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 }
 
 
-static void get_top1_tile_info( int col, int row )
+static void get_top1_tile_info(int tile_index)
 {
-	int color, tile_number, attrib, offset;
+	int color, tile_number, attrib;
 	UINT16 *source = (UINT16 *)(topvideoram[1]);
 
-	offset = ((row*64) + (col*2)) & 0x7ff;
-
-	attrib = source[offset];
-	tile_number = source[offset+1];
+	attrib = source[2*tile_index];
+	tile_number = source[2*tile_index+1];
 	color = attrib & 0x7f;
 	SET_TILE_INFO(2,tile_number,color)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 }
 
-static void get_fg1_tile_info( int col, int row )
+static void get_fg1_tile_info(int tile_index)
 {
-	int color, tile_number, attrib, offset;
+	int color, tile_number, attrib;
 	UINT16 *source = (UINT16 *)(fgvideoram[1]);
 
-	offset = ((row*64) + (col*2)) & 0x7ff;
-
-	attrib = source[offset];
-	tile_number = source[offset+1];
+	attrib = source[2*tile_index];
+	tile_number = source[2*tile_index+1];
 	color = attrib & 0x7f;
 	SET_TILE_INFO(2,tile_number,color)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 }
 
-static void get_bg1_tile_info( int col, int row )
+static void get_bg1_tile_info(int tile_index)
 {
-	int color, tile_number, attrib, offset;
+	int color, tile_number, attrib;
 	UINT16 *source = (UINT16 *)(bgvideoram[1]);
 
-	offset = ((row*64) + (col*2)) & 0x7ff;
-
-	attrib = source[offset];
-	tile_number = source[offset+1];
+	attrib = source[2*tile_index];
+	tile_number = source[2*tile_index+1];
 	color = attrib & 0x7f;
 	SET_TILE_INFO(2,tile_number,color)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
@@ -300,67 +288,33 @@ void toaplan2_1_vh_stop(void)
 
 static int create_tilemaps_0(void)
 {
-	top_tilemap[0] = tilemap_create(
-		get_top0_tile_info,
-		TILEMAP_TRANSPARENT,
-		16,16,
-		32,32
-	);
+	top_tilemap[0] = tilemap_create(get_top0_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+	fg_tilemap[0] = tilemap_create(get_fg0_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+	bg_tilemap[0] = tilemap_create(get_bg0_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 
-	fg_tilemap[0] = tilemap_create(
-		get_fg0_tile_info,
-		TILEMAP_TRANSPARENT,
-		16,16,
-		32,32
-	);
+	if (!top_tilemap[0] || !fg_tilemap[0] || !bg_tilemap[0])
+		return 1;
 
-	bg_tilemap[0] = tilemap_create(
-		get_bg0_tile_info,
-		TILEMAP_TRANSPARENT,
-		16,16,
-		32,32
-	);
+	top_tilemap[0]->transparent_pen = 0;
+	fg_tilemap[0]->transparent_pen = 0;
+	bg_tilemap[0]->transparent_pen = 0;
 
-	if (top_tilemap[0] && fg_tilemap[0] && bg_tilemap[0])
-	{
-		top_tilemap[0]->transparent_pen = 0;
-		fg_tilemap[0]->transparent_pen = 0;
-		bg_tilemap[0]->transparent_pen = 0;
-		return 0;
-	}
-	return 1;
+	return 0;
 }
 static int create_tilemaps_1(void)
 {
-	top_tilemap[1] = tilemap_create(
-		get_top1_tile_info,
-		TILEMAP_TRANSPARENT,
-		16,16,
-		32,32
-	);
+	top_tilemap[1] = tilemap_create(get_top1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+	fg_tilemap[1] = tilemap_create(get_fg1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+	bg_tilemap[1] = tilemap_create(get_bg1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 
-	fg_tilemap[1] = tilemap_create(
-		get_fg1_tile_info,
-		TILEMAP_TRANSPARENT,
-		16,16,
-		32,32
-	);
+	if (!top_tilemap[1] || !fg_tilemap[1] || !bg_tilemap[1])
+		return 1;
 
-	bg_tilemap[1] = tilemap_create(
-		get_bg1_tile_info,
-		TILEMAP_TRANSPARENT,
-		16,16,
-		32,32
-	);
+	top_tilemap[1]->transparent_pen = 0;
+	fg_tilemap[1]->transparent_pen = 0;
+	bg_tilemap[1]->transparent_pen = 0;
 
-	if (top_tilemap[1] && fg_tilemap[1] && bg_tilemap[1])
-	{
-		top_tilemap[1]->transparent_pen = 0;
-		fg_tilemap[1]->transparent_pen = 0;
-		bg_tilemap[1]->transparent_pen = 0;
-		return 0;
-	}
-	return 1;
+	return 0;
 }
 
 static int toaplan2_vh_start(int controller)
@@ -475,11 +429,11 @@ void toaplan2_voffs_w(int offset, int data, int controller)
 						break;
 	}
 }
-void toaplan2_0_voffs_w(int offset, int data)
+WRITE_HANDLER( toaplan2_0_voffs_w )
 {
 	toaplan2_voffs_w(offset, data, 0);
 }
-void toaplan2_1_voffs_w(int offset, int data)
+WRITE_HANDLER( toaplan2_1_voffs_w )
 {
 	toaplan2_voffs_w(offset, data, 1);
 }
@@ -542,11 +496,11 @@ int toaplan2_videoram_r(int offset, int controller)
 	}
 	return video_data;
 }
-int toaplan2_0_videoram_r(int offset)
+READ_HANDLER( toaplan2_0_videoram_r )
 {
 	return toaplan2_videoram_r(offset, 0);
 }
-int toaplan2_1_videoram_r(int offset)
+READ_HANDLER( toaplan2_1_videoram_r )
 {
 	return toaplan2_videoram_r(offset, 1);
 }
@@ -567,7 +521,7 @@ void toaplan2_videoram_w(int offset, int data, int controller)
 				{
 					WRITE_WORD (&bgvideoram[controller][videoram_offset],data);
 					dirty_cell = (bg_offs[controller] & (TOAPLAN2_BG_VRAM_SIZE-3))/2;
-					tilemap_mark_tile_dirty(bg_tilemap[controller], (dirty_cell%64)/2, dirty_cell/64);
+					tilemap_mark_tile_dirty(bg_tilemap[controller],dirty_cell/2);
 				}
 				bg_offs[controller] += 2;
 				if (bg_offs[controller] > TOAPLAN2_BG_VRAM_SIZE)
@@ -584,7 +538,7 @@ void toaplan2_videoram_w(int offset, int data, int controller)
 				{
 					WRITE_WORD (&fgvideoram[controller][videoram_offset],data);
 					dirty_cell = (fg_offs[controller] & (TOAPLAN2_FG_VRAM_SIZE-3))/2;
-					tilemap_mark_tile_dirty(fg_tilemap[controller], (dirty_cell%64)/2, dirty_cell/64);
+					tilemap_mark_tile_dirty(fg_tilemap[controller],dirty_cell/2);
 				}
 				fg_offs[controller] += 2;
 				if (fg_offs[controller] > TOAPLAN2_FG_VRAM_SIZE)
@@ -601,7 +555,7 @@ void toaplan2_videoram_w(int offset, int data, int controller)
 				{
 					WRITE_WORD (&topvideoram[controller][videoram_offset],data);
 					dirty_cell = (top_offs[controller] & (TOAPLAN2_TOP_VRAM_SIZE-3))/2;
-					tilemap_mark_tile_dirty(top_tilemap[controller], (dirty_cell%64)/2, dirty_cell/64);
+					tilemap_mark_tile_dirty(top_tilemap[controller],dirty_cell/2);
 				}
 				top_offs[controller] += 2;
 				if (top_offs[controller] > TOAPLAN2_TOP_VRAM_SIZE)
@@ -627,11 +581,11 @@ void toaplan2_videoram_w(int offset, int data, int controller)
 				break;
 	}
 }
-void toaplan2_0_videoram_w(int offset, int data)
+WRITE_HANDLER( toaplan2_0_videoram_w )
 {
 	toaplan2_videoram_w(offset, data, 0);
 }
-void toaplan2_1_videoram_w(int offset, int data)
+WRITE_HANDLER( toaplan2_1_videoram_w )
 {
 	toaplan2_videoram_w(offset, data, 1);
 }
@@ -645,11 +599,11 @@ void toaplan2_scroll_reg_select_w(int offset, int data, int controller)
 		if (errorlog) fprintf(errorlog,"Hmmm, unknown video control register selected (%08x)  Video controller %01x  \n",toaplan2_scroll_reg[controller],controller);
 	}
 }
-void toaplan2_0_scroll_reg_select_w(int offset, int data)
+WRITE_HANDLER( toaplan2_0_scroll_reg_select_w )
 {
 	toaplan2_scroll_reg_select_w(offset, data, 0);
 }
-void toaplan2_1_scroll_reg_select_w(int offset, int data)
+WRITE_HANDLER( toaplan2_1_scroll_reg_select_w )
 {
 	toaplan2_scroll_reg_select_w(offset, data, 1);
 }
@@ -827,11 +781,11 @@ void toaplan2_scroll_reg_data_w(int offset, int data, int controller)
 	}
 #endif
 }
-void toaplan2_0_scroll_reg_data_w(int offset, int data)
+WRITE_HANDLER( toaplan2_0_scroll_reg_data_w )
 {
 	toaplan2_scroll_reg_data_w(offset, data, 0);
 }
-void toaplan2_1_scroll_reg_data_w(int offset, int data)
+WRITE_HANDLER( toaplan2_1_scroll_reg_data_w )
 {
 	toaplan2_scroll_reg_data_w(offset, data, 1);
 }
@@ -1297,4 +1251,3 @@ void toaplan2_1_eof_callback(void)
 	memcpy(spriteram_now[1],spriteram_next[1],TOAPLAN2_SPRITERAM_SIZE);
 	memcpy(spriteram_next[1],spriteram_new[1],TOAPLAN2_SPRITERAM_SIZE);
 }
-

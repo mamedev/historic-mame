@@ -67,11 +67,11 @@ mrgoemon:
 extern unsigned char *gberet_videoram,*gberet_colorram;
 extern unsigned char *gberet_spritebank;
 extern unsigned char *gberet_scrollram;
-void gberet_videoram_w(int offset,int data);
-void gberet_colorram_w(int offset,int data);
-void gberet_e044_w(int offset,int data);
-void gberet_scroll_w(int offset,int data);
-void gberetb_scroll_w(int offset,int data);
+WRITE_HANDLER( gberet_videoram_w );
+WRITE_HANDLER( gberet_colorram_w );
+WRITE_HANDLER( gberet_e044_w );
+WRITE_HANDLER( gberet_scroll_w );
+WRITE_HANDLER( gberetb_scroll_w );
 void gberet_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int gberet_vh_start(void);
 void init_gberet(void);
@@ -81,14 +81,14 @@ void gberet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int gberet_interrupt(void);
 
 
-static void gberet_coincounter_w(int offset,int data)
+static WRITE_HANDLER( gberet_coincounter_w )
 {
 	/* bits 0/1 = coin counters */
 	coin_counter_w(0,data & 1);
 	coin_counter_w(1,data & 2);
 }
 
-static void mrgoemon_bankswitch_w(int offset,int data)
+static WRITE_HANDLER( mrgoemon_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs;

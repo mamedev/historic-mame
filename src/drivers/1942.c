@@ -358,14 +358,14 @@ extern unsigned char *c1942_palette_bank;
 int c1942_vh_start(void);
 void c1942_vh_stop(void);
 void c1942_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void c1942_background_w(int offset,int data);
-void c1942_palette_bank_w(int offset,int data);
-void c1942_flipscreen_w(int offset,int data);
+WRITE_HANDLER( c1942_background_w );
+WRITE_HANDLER( c1942_palette_bank_w );
+WRITE_HANDLER( c1942_flipscreen_w );
 void c1942_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-void c1942_bankswitch_w(int offset,int data)
+WRITE_HANDLER( c1942_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);

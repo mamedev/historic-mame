@@ -105,26 +105,22 @@ E0     - Comunication port to 6809
 
 /*Video functions*/
 extern unsigned char *gladiator_text;
-extern void gladiatr_video_registers_w( int offset, int data );
-extern int gladiatr_video_registers_r( int offset );
-extern void gladiatr_paletteram_rg_w( int offset, int data );
-extern void gladiatr_paletteram_b_w( int offset, int data );
+WRITE_HANDLER( gladiatr_video_registers_w );
+READ_HANDLER( gladiatr_video_registers_r );
+WRITE_HANDLER( gladiatr_paletteram_rg_w );
+WRITE_HANDLER( gladiatr_paletteram_b_w );
 extern int gladiatr_vh_start(void);
 extern void gladiatr_vh_stop(void);
 extern void gladiatr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void gladiatr_spritebank_w( int offset, int data );
-
-/*Sound and I/O Functions*/
-void glad_adpcm_w( int channel, int data );
-void glad_cpu_sound_command_w(int offset,int data);
+WRITE_HANDLER( gladiatr_spritebank_w );
 
 /*Rom bankswitching*/
 static int banka;
-void gladiatr_bankswitch_w(int offset,int data);
-int gladiatr_bankswitch_r(int offset);
+WRITE_HANDLER( gladiatr_bankswitch_w );
+READ_HANDLER( gladiatr_bankswitch_r );
 
 /*Rom bankswitching*/
-void gladiatr_bankswitch_w(int offset,int data){
+WRITE_HANDLER( gladiatr_bankswitch_w ){
 	static int bank1[2] = { 0x10000, 0x12000 };
 	static int bank2[2] = { 0x14000, 0x18000 };
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -133,11 +129,11 @@ void gladiatr_bankswitch_w(int offset,int data){
 	cpu_setbank(2,&RAM[bank2[(data & 0x03)]]);
 }
 
-int gladiatr_bankswitch_r(int offset){
+READ_HANDLER( gladiatr_bankswitch_r ){
 	return banka;
 }
 
-static int gladiator_dsw1_r(int num)
+static READ_HANDLER( gladiator_dsw1_r )
 {
 	int orig = readinputport(0); /* DSW1 */
 /*Reverse all bits for Input Port 0*/
@@ -148,7 +144,7 @@ return   ((orig&0x01)<<7) | ((orig&0x02)<<5)
        | ((orig&0x40)>>5) | ((orig&0x80)>>7);;
 }
 
-static int gladiator_dsw2_r(int num)
+static READ_HANDLER( gladiator_dsw2_r )
 {
 	int orig = readinputport(1); /* DSW2 */
 /*Bits 2-7 are reversed for Input Port 1*/
@@ -159,12 +155,12 @@ return	  (orig&0x01) | (orig&0x02)
 	| ((orig&0x40)>>3) | ((orig&0x80)>>5);
 }
 
-static int gladiator_controll_r(int num)
+static READ_HANDLER( gladiator_controll_r )
 {
 	int coins = 0;
 
 	if( readinputport(4) & 0xc0 ) coins = 0x80;
-	switch(num)
+	switch(offset)
 	{
 	case 0x01: /* start button , coins */
 		return readinputport(3) | coins;
@@ -177,9 +173,9 @@ static int gladiator_controll_r(int num)
 	return 0;
 }
 
-static int gladiator_button3_r(int num)
+static READ_HANDLER( gladiator_button3_r )
 {
-	switch(num)
+	switch(offset)
 	{
 	case 0x01: /* button 3 */
 		return readinputport(7);
@@ -210,19 +206,19 @@ static void gladiator_machine_init(void)
 
 #if 1
 /* !!!!! patch to IRQ timming for 2nd CPU !!!!! */
-void gladiatr_irq_patch_w(int offset,int data)
+WRITE_HANDLER( gladiatr_irq_patch_w )
 {
 	cpu_cause_interrupt(1,Z80_INT_REQ);
 }
 #endif
 
 /* YM2203 port A handler (input) */
-static int gladiator_dsw3_r(int offset)
+static READ_HANDLER( gladiator_dsw3_r )
 {
 	return input_port_2_r(offset)^0xff;
 }
 /* YM2203 port B handler (output) */
-static void gladiator_int_controll_w(int offer , int data)
+static WRITE_HANDLER( gladiator_int_control_w )
 {
 	/* bit 7   : SSRST = sound reset ? */
 	/* bit 6-1 : N.C.                  */
@@ -237,7 +233,7 @@ static void gladiator_ym_irq(int irq)
 }
 
 /*Sound Functions*/
-void glad_adpcm_w( int offset, int data)
+static WRITE_HANDLER( glad_adpcm_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU3);
 	/* bit6 = bank offset */
@@ -251,13 +247,13 @@ void glad_adpcm_w( int offset, int data)
 	MSM5205_vclk_w (0,(data>>4)&1); /* bit4     */
 }
 
-void glad_cpu_sound_command_w(int offset,int data)
+static WRITE_HANDLER( glad_cpu_sound_command_w )
 {
 	soundlatch_w(0,data);
 	cpu_set_nmi_line(2,ASSERT_LINE);
 }
 
-int glad_cpu_sound_command_r(int offset)
+static READ_HANDLER( glad_cpu_sound_command_r )
 {
 	cpu_set_nmi_line(2,CLEAR_LINE);
 	return soundlatch_r(0);
@@ -573,7 +569,7 @@ static struct YM2203interface ym2203_interface =
 	{ YM2203_VOL(25,25) },
 	{ 0 },
 	{ gladiator_dsw3_r },         /* port B read */
-	{ gladiator_int_controll_w }, /* port A write */
+	{ gladiator_int_control_w }, /* port A write */
 	{ 0 },
 	{ gladiator_ym_irq }          /* NMI request for 2nd cpu */
 };

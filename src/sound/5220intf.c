@@ -97,7 +97,7 @@ void tms5220_sh_update(void)
 
 ***********************************************************************************************/
 
-void tms5220_data_w(int offset, int data)
+WRITE_HANDLER( tms5220_data_w )
 {
     /* bring up to date first */
     stream_update(stream, 0);
@@ -112,7 +112,7 @@ void tms5220_data_w(int offset, int data)
 
 ***********************************************************************************************/
 
-int tms5220_status_r(int offset)
+READ_HANDLER( tms5220_status_r )
 {
     /* bring up to date first */
     stream_update(stream, 0);

@@ -20,19 +20,19 @@ static unsigned char portC_out,ddrC;
 
 FILE *thelog;
 
-void arkanoid_init_machine (void)
+void arkanoid_init_machine(void)
 {
 	portA_in = portA_out = z80write = m68705write = 0;
 }
 
-int arkanoid_Z80_mcu_r (int value)
+READ_HANDLER( arkanoid_Z80_mcu_r )
 {
 	/* return the last value the 68705 wrote, and mark that we've read it */
 	m68705write = 0;
 	return toz80;
 }
 
-void arkanoid_Z80_mcu_w(int offset,int data)
+WRITE_HANDLER( arkanoid_Z80_mcu_w )
 {
 	/* a write from the Z80 has occurred, mark it and remember the value */
 	z80write = 1;
@@ -42,23 +42,23 @@ void arkanoid_Z80_mcu_w(int offset,int data)
 	cpu_spinuntil_trigger(700);
 }
 
-int arkanoid_68705_portA_r(int offset)
+READ_HANDLER( arkanoid_68705_portA_r )
 {
 	return (portA_out & ddrA) | (portA_in & ~ddrA);
 }
 
-void arkanoid_68705_portA_w(int offset,int data)
+WRITE_HANDLER( arkanoid_68705_portA_w )
 {
 	portA_out = data;
 }
 
-void arkanoid_68705_ddrA_w(int offset,int data)
+WRITE_HANDLER( arkanoid_68705_ddrA_w )
 {
 	ddrA = data;
 }
 
 
-int arkanoid_68705_portC_r(int offset)
+READ_HANDLER( arkanoid_68705_portC_r )
 {
 	int res=0;
 
@@ -71,7 +71,7 @@ int arkanoid_68705_portC_r(int offset)
 	return (portC_out & ddrC) | (res & ~ddrC);
 }
 
-void arkanoid_68705_portC_w(int offset,int data)
+WRITE_HANDLER( arkanoid_68705_portC_w )
 {
 	if ((ddrC & 0x04) && (~data & 0x04) && (portC_out & 0x04))
 	{
@@ -92,14 +92,14 @@ void arkanoid_68705_portC_w(int offset,int data)
 	portC_out = data;
 }
 
-void arkanoid_68705_ddrC_w(int offset,int data)
+WRITE_HANDLER( arkanoid_68705_ddrC_w )
 {
 	ddrC = data;
 }
 
 
 
-int arkanoid_68705_input_0_r(int offset)
+READ_HANDLER( arkanoid_68705_input_0_r )
 {
 	int res = input_port_0_r(offset) & 0x3f;
 
@@ -112,7 +112,7 @@ int arkanoid_68705_input_0_r(int offset)
 	return res;
 }
 
-int arkanoid_input_2_r (int offset)
+READ_HANDLER( arkanoid_input_2_r )
 {
 	if (arkanoid_paddle_select)
 	{

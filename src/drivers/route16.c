@@ -60,16 +60,16 @@ void init_stratvox(void);
 void route16_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  route16_vh_start(void);
 void route16_vh_stop(void);
-void route16_out0_w(int offset,int data);
-void route16_out1_w(int offset,int data);
-void route16_videoram1_w(int offset,int data);
-void route16_videoram2_w(int offset,int data);
-int  route16_videoram1_r(int offset);
-int  route16_videoram2_r(int offset);
-void route16_sharedram_w(int offset,int data);
-int  route16_sharedram_r(int offset);
+WRITE_HANDLER( route16_out0_w );
+WRITE_HANDLER( route16_out1_w );
+WRITE_HANDLER( route16_videoram1_w );
+WRITE_HANDLER( route16_videoram2_w );
+READ_HANDLER( route16_videoram1_r );
+READ_HANDLER( route16_videoram2_r );
+WRITE_HANDLER( route16_sharedram_w );
+READ_HANDLER( route16_sharedram_r );
 void route16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void stratvox_sn76477_w (int offset,int data);
+WRITE_HANDLER( stratvox_sn76477_w );
 
 static struct MemoryReadAddress cpu1_readmem[] =
 {
@@ -113,7 +113,7 @@ static struct MemoryReadAddress cpu2_readmem[] =
 static struct MemoryWriteAddress cpu2_writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2800, 0x2800, DAC_data_w }, // Not used by Route 16
+	{ 0x2800, 0x2800, DAC_0_data_w }, // Not used by Route 16
 	{ 0x4000, 0x43ff, route16_sharedram_w },
 	{ 0x8000, 0xbfff, route16_videoram2_w, &route16_videoram2 },
 	{ 0xc000, 0xc1ff, MWA_NOP }, // Route 16 sometimes writes outside of

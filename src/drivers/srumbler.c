@@ -14,17 +14,17 @@
 
 extern unsigned char *srumbler_backgroundram,*srumbler_foregroundram;
 
-void srumbler_background_w(int offset,int data);
-void srumbler_foreground_w(int offset,int data);
-void srumbler_scroll_w(int offset,int data);
-void srumbler_4009_w(int offset,int data);
+WRITE_HANDLER( srumbler_background_w );
+WRITE_HANDLER( srumbler_foreground_w );
+WRITE_HANDLER( srumbler_scroll_w );
+WRITE_HANDLER( srumbler_4009_w );
 
 int  srumbler_vh_start(void);
 void srumbler_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-static void srumbler_bankswitch_w(int offset,int data)
+static WRITE_HANDLER( srumbler_bankswitch_w )
 {
 	/*
 	  banking is controlled by two PROMs. 0000-4fff is mapped to the same

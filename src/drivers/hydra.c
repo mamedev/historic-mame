@@ -24,14 +24,14 @@ extern INT32 hydra_pf_xoffset;
 static UINT8 which_input;
 
 
-void hydra_playfieldram_w(int offset, int data);
+WRITE_HANDLER( hydra_playfieldram_w );
 
 int hydra_vh_start(void);
 void hydra_vh_stop(void);
 void hydra_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 void hydra_scanline_update(int param);
-void hydra_mo_control_w(int offset, int data);
+WRITE_HANDLER( hydra_mo_control_w );
 
 
 
@@ -74,7 +74,7 @@ static void init_machine(void)
  *
  *************************************/
 
-static int special_port0_r(int offset)
+static READ_HANDLER( special_port0_r )
 {
 	int temp = input_port_0_r(offset);
 	if (atarigen_cpu_to_sound_ready) temp ^= 0x1000;
@@ -83,14 +83,14 @@ static int special_port0_r(int offset)
 }
 
 
-static void a2d_select_w(int offset, int data)
+static WRITE_HANDLER( a2d_select_w )
 {
 	(void)data;
 	which_input = (offset / 2);
 }
 
 
-static int a2d_data_r(int offset)
+static READ_HANDLER( a2d_data_r )
 {
 	/* Pit Fighter has no A2D, just another input port */
 	if (hydra_mo_area.min_x != 0)

@@ -24,17 +24,15 @@ static int flipscreen;
 
 ***************************************************************************/
 
-static void get_fg_tile_info( int col, int row )
+static void get_fg_tile_info(int tile_index)
 {
-	int tile_index = row*32+col;
 	unsigned char attr = gng_fgcolorram[tile_index];
 	SET_TILE_INFO(0,gng_fgvideoram[tile_index] + ((attr & 0xc0) << 2),attr & 0x0f)
 	tile_info.flags = TILE_FLIPYX((attr & 0x30) >> 4);
 }
 
-static void get_bg_tile_info( int col, int row )
+static void get_bg_tile_info(int tile_index)
 {
-	int tile_index = col*32+row;
 	unsigned char attr = gng_bgcolorram[tile_index];
 	SET_TILE_INFO(1,gng_bgvideoram[tile_index] + ((attr & 0xc0) << 2),attr & 0x07)
 	tile_info.flags = TILE_FLIPYX((attr & 0x30) >> 4) | TILE_SPLIT((attr & 0x08) >> 3);
@@ -50,79 +48,72 @@ static void get_bg_tile_info( int col, int row )
 
 int gng_vh_start(void)
 {
-	fg_tilemap = tilemap_create(
-		get_fg_tile_info,
-		TILEMAP_TRANSPARENT,
-		8,8, /* tile width, tile height */
-		32,32 /* number of columns, number of rows */
-	);
+	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_SPLIT,    16,16,32,32);
 
-	bg_tilemap = tilemap_create(
-		get_bg_tile_info,
-		TILEMAP_SPLIT,
-		16,16,
-		32,32
-	);
+	if (!fg_tilemap || !bg_tilemap)
+		return 1;
 
-	if (fg_tilemap && bg_tilemap)
-	{
-		fg_tilemap->transparent_pen = 3;
+	fg_tilemap->transparent_pen = 3;
 
-		bg_tilemap->transmask[0] = 0xff; /* split type 0 is totally transparent in front half */
-		bg_tilemap->transmask[1] = 0x01; /* split type 1 has pen 1 transparent in front half */
+	bg_tilemap->transmask[0] = 0xff; /* split type 0 is totally transparent in front half */
+	bg_tilemap->transmask[1] = 0x01; /* split type 1 has pen 1 transparent in front half */
 
-		return 0;
-	}
-
-	return 1;
+	return 0;
 }
 
-void gng_fgvideoram_w(int offset,int data)
+
+/***************************************************************************
+
+  Memory handlers
+
+***************************************************************************/
+
+WRITE_HANDLER( gng_fgvideoram_w )
 {
 	if (gng_fgvideoram[offset] != data)
 	{
 		gng_fgvideoram[offset] = data;
-		tilemap_mark_tile_dirty(fg_tilemap,offset%32,offset/32);
+		tilemap_mark_tile_dirty(fg_tilemap,offset);
 	}
 }
 
-void gng_fgcolorram_w(int offset,int data)
+WRITE_HANDLER( gng_fgcolorram_w )
 {
 	if (gng_fgcolorram[offset] != data)
 	{
 		gng_fgcolorram[offset] = data;
-		tilemap_mark_tile_dirty(fg_tilemap,offset%32,offset/32);
+		tilemap_mark_tile_dirty(fg_tilemap,offset);
 	}
 }
 
-void gng_bgvideoram_w(int offset,int data)
+WRITE_HANDLER( gng_bgvideoram_w )
 {
 	if (gng_bgvideoram[offset] != data)
 	{
 		gng_bgvideoram[offset] = data;
-		tilemap_mark_tile_dirty(bg_tilemap,offset/32,offset%32);
+		tilemap_mark_tile_dirty(bg_tilemap,offset);
 	}
 }
 
-void gng_bgcolorram_w(int offset,int data)
+WRITE_HANDLER( gng_bgcolorram_w )
 {
 	if (gng_bgcolorram[offset] != data)
 	{
 		gng_bgcolorram[offset] = data;
-		tilemap_mark_tile_dirty(bg_tilemap,offset/32,offset%32);
+		tilemap_mark_tile_dirty(bg_tilemap,offset);
 	}
 }
 
 
-
-void gng_bgscrollx_w(int offset,int data)
+WRITE_HANDLER( gng_bgscrollx_w )
 {
 	static unsigned char scrollx[2];
 	scrollx[offset] = data;
 	tilemap_set_scrollx( bg_tilemap, 0, scrollx[0] + 256 * scrollx[1] );
 }
 
-void gng_bgscrolly_w(int offset,int data)
+WRITE_HANDLER( gng_bgscrolly_w )
 {
 	static unsigned char scrolly[2];
 	scrolly[offset] = data;
@@ -130,7 +121,7 @@ void gng_bgscrolly_w(int offset,int data)
 }
 
 
-void gng_flipscreen_w(int offset,int data)
+WRITE_HANDLER( gng_flipscreen_w )
 {
 	flipscreen = ~data & 1;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);

@@ -21,7 +21,7 @@ static unsigned char *finalizr_interrupt_enable;
 void finalizr_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int finalizr_vh_start(void);
 void finalizr_vh_stop(void);
-void finalizr_videoctrl_w(int offset,int data);
+WRITE_HANDLER( finalizr_videoctrl_w );
 void finalizr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -39,7 +39,7 @@ static int finalizr_interrupt(void)
 	return ignore_interrupt();
 }
 
-static void finalizr_coin_w(int offset,int data)
+static WRITE_HANDLER( finalizr_coin_w )
 {
 	coin_counter_w(0,data & 0x01);
 	coin_counter_w(1,data & 0x02);
@@ -49,18 +49,18 @@ static void finalizr_coin_w(int offset,int data)
 static int i8039_irqenable;
 static int i8039_status;
 
-void finalizr_i8039_irq_w(int offset,int data)
+WRITE_HANDLER( finalizr_i8039_irq_w )
 {
 	if (i8039_irqenable)
 		cpu_cause_interrupt(1,I8039_EXT_INT);
 }
 
-static int i8039_irqen_and_status_r(int offset)
+static READ_HANDLER( i8039_irqen_and_status_r )
 {
 	return i8039_status;
 }
 
-static void i8039_irqen_and_status_w(int offset,int data)
+static WRITE_HANDLER( i8039_irqen_and_status_w )
 {
 	i8039_irqenable = data & 0x80;
 	i8039_status = data;
@@ -130,7 +130,7 @@ static struct IOReadPort i8039_readport[] =
 
 static struct IOWritePort i8039_writeport[] =
 {
-	{ I8039_p1, I8039_p1, DAC_data_w },
+	{ I8039_p1, I8039_p1, DAC_0_data_w },
 	{ I8039_p2, I8039_p2, i8039_irqen_and_status_w },
 	{ -1 }	/* end of table */
 };

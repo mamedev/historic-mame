@@ -116,20 +116,20 @@ IO:
 #define COLORTABLE_LEN 20
 
 /* These are defined in sndhrdw/exidy.c */
-void mtrap_voiceio_w(int offset,int data);
-int mtrap_voiceio_r(int offset);
+WRITE_HANDLER( mtrap_voiceio_w );
+READ_HANDLER( mtrap_voiceio_r );
 
 /* These are defined in sndhrdw/exidy.c */
-void exidy_shriot_w(int offset,int data);
-int exidy_shriot_r(int offset);
+WRITE_HANDLER( exidy_shriot_w );
+READ_HANDLER( exidy_shriot_r );
 
-void exidy_sfxctrl_w(int offset,int data);
+WRITE_HANDLER( exidy_sfxctrl_w );
 
-void exidy_sh8253_w(int offset,int data);
-int exidy_sh8253_r(int offset);
+WRITE_HANDLER( exidy_sh8253_w );
+READ_HANDLER( exidy_sh8253_r );
 
-int exidy_sh6840_r(int offset);
-void exidy_sh6840_w(int offset,int data);
+READ_HANDLER( exidy_sh6840_r );
+WRITE_HANDLER( exidy_sh6840_w );
 
 int exidy_sh_start(const struct MachineSound *msound);
 void exidy_sh_stop(void);
@@ -138,9 +138,9 @@ void exidy_sh_stop(void);
 
 int exidy_vh_start(void);
 void exidy_vh_stop(void);
-void exidy_characterram_w(int offset,int data);
+WRITE_HANDLER( exidy_characterram_w );
 void exidy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void exidy_color_w(int offset,int data);
+WRITE_HANDLER( exidy_color_w );
 
 extern unsigned char *exidy_characterram;
 extern unsigned char *exidy_sprite_no;
@@ -155,8 +155,8 @@ extern int exidy_collision_counter;
 
 /* These are defined in machine/exidy.c */
 
-void fax_bank_select_w(int offset,int data);
-int exidy_input_port_2_r(int offset);
+WRITE_HANDLER( fax_bank_select_w );
+READ_HANDLER( exidy_input_port_2_r );
 void exidy_init_machine(void);
 int venture_interrupt(void);
 int venture_shinterrupt(void);
@@ -176,7 +176,7 @@ extern unsigned char exidy_collision_mask;
 
 /* These are defined in sndhrdw/targ.c */
 extern unsigned char targ_spec_flag;
-void targ_sh_w(int offset,int data);
+WRITE_HANDLER( targ_sh_w );
 int targ_sh_start(const struct MachineSound *msound);
 void targ_sh_stop(void);
 

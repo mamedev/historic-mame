@@ -2,8 +2,7 @@
 
 Pandora's Palace(GX328) (c) 1984 Konami/Interlogic
 
-Preliminary driver by:
-	Manuel Abadia <manu@teleline.es>
+Driver by Manuel Abadia <manu@teleline.es>
 
 Notes:
 	Press 1P and 2P together to enter test mode.
@@ -33,11 +32,12 @@ static unsigned char *pandoras_sharedram2;
 
 /* from vidhrdw */
 void pandoras_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int pandoras_vram_r(int offset);
-int pandoras_cram_r(int offset);
-void pandoras_vram_w(int offset,int data);
-void pandoras_cram_w(int offset,int data);
-void pandoras_scrolly_w(int offset,int data);
+READ_HANDLER( pandoras_vram_r );
+READ_HANDLER( pandoras_cram_r );
+WRITE_HANDLER( pandoras_vram_w );
+WRITE_HANDLER( pandoras_cram_w );
+WRITE_HANDLER( pandoras_flipscreen_w );
+WRITE_HANDLER( pandoras_scrolly_w );
 int pandoras_vh_start(void);
 void pandoras_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -53,26 +53,27 @@ static int pandoras_interrupt_b( void ){
 	return ignore_interrupt();
 }
 
-static int pandoras_sharedram_r(int offset){
+static READ_HANDLER( pandoras_sharedram_r ){
 	return pandoras_sharedram[offset];
 }
 
-static void pandoras_sharedram_w(int offset, int data){
+static WRITE_HANDLER( pandoras_sharedram_w ){
 	pandoras_sharedram[offset] = data;
 }
 
-static int pandoras_sharedram2_r(int offset){
+static READ_HANDLER( pandoras_sharedram2_r ){
 	return pandoras_sharedram2[offset];
 }
 
-static void pandoras_sharedram2_w(int offset, int data){
+static WRITE_HANDLER( pandoras_sharedram2_w ){
 	pandoras_sharedram2[offset] = data;
 }
 
-static void pandoras_int_control_w(int offset, int data){
+static WRITE_HANDLER( pandoras_int_control_w ){
 	/*	byte 0:	irq enable (CPU A)
 		byte 2:	coin counter 1
 		byte 3: coin counter 2
+		byte 5: flip screen
 		byte 6:	irq enable (CPU B)
 		byte 7:	NMI to CPU B
 
@@ -86,6 +87,8 @@ static void pandoras_int_control_w(int offset, int data){
 					break;
 		case 0x03:	coin_counter_w(1,data & 0x01);
 					break;
+		case 0x05:	pandoras_flipscreen_w(0, data);
+					break;
 		case 0x06:	if (!data) cpu_set_irq_line(1, M6809_IRQ_LINE, CLEAR_LINE);
 					irq_enable_b = data;
 					break;
@@ -98,7 +101,7 @@ static void pandoras_int_control_w(int offset, int data){
 	}
 }
 
-void pandoras_cpua_irqtrigger_w(int offset,int data){
+WRITE_HANDLER( pandoras_cpua_irqtrigger_w ){
 	if (!firq_old_data_a && data){
 		cpu_cause_interrupt(0,M6809_INT_FIRQ);
 	}
@@ -106,7 +109,7 @@ void pandoras_cpua_irqtrigger_w(int offset,int data){
 	firq_old_data_a = data;
 }
 
-void pandoras_cpub_irqtrigger_w(int offset,int data){
+WRITE_HANDLER( pandoras_cpub_irqtrigger_w ){
 	if (!firq_old_data_b && data){
 		cpu_cause_interrupt(1,M6809_INT_FIRQ);
 	}
@@ -114,18 +117,18 @@ void pandoras_cpub_irqtrigger_w(int offset,int data){
 	firq_old_data_b = data;
 }
 
-static void i8039_irqen_w(int offset,int data)
+static WRITE_HANDLER( i8039_irqen_w )
 {
 	/* ??? */
 	i8039_irqenable = data & 0x80;
 }
 
-void pandoras_z80_irqtrigger_w(int offset,int data)
+WRITE_HANDLER( pandoras_z80_irqtrigger_w )
 {
 	cpu_cause_interrupt(2,0xff);
 }
 
-void pandoras_i8039_irqtrigger_w(int offset,int data)
+WRITE_HANDLER( pandoras_i8039_irqtrigger_w )
 {
 	if (i8039_irqenable)
 		cpu_cause_interrupt(3,I8039_EXT_INT);
@@ -133,30 +136,30 @@ void pandoras_i8039_irqtrigger_w(int offset,int data)
 
 static struct MemoryReadAddress pandoras_readmem_a[] =
 {
-	{ 0x0000, 0x0fff, pandoras_sharedram_r },/* Work RAM (Shared with CPU B) */
-	{ 0x1000, 0x13ff, pandoras_cram_r },	/* Color RAM (shared with CPU B) */
-	{ 0x1400, 0x17ff, pandoras_vram_r },	/* Video RAM (shared with CPU B) */
-	{ 0x4000, 0x5fff, MRA_ROM },					/* see notes */
-	{ 0x6000, 0x67ff, pandoras_sharedram2_r },/* Shared RAM with CPU B */
-	{ 0x8000, 0xffff, MRA_ROM },			/* ROM */
-	{ -1 }	/* end of table */
+	{ 0x0000, 0x0fff, pandoras_sharedram_r },	/* Work RAM (Shared with CPU B) */
+	{ 0x1000, 0x13ff, pandoras_cram_r },		/* Color RAM (shared with CPU B) */
+	{ 0x1400, 0x17ff, pandoras_vram_r },		/* Video RAM (shared with CPU B) */
+	{ 0x4000, 0x5fff, MRA_ROM },				/* see notes */
+	{ 0x6000, 0x67ff, pandoras_sharedram2_r },	/* Shared RAM with CPU B */
+	{ 0x8000, 0xffff, MRA_ROM },				/* ROM */
+	{ -1 }
 };
 
 static struct MemoryWriteAddress pandoras_writemem_a[] =
 {
-	{ 0x0000, 0x0fff, pandoras_sharedram_w, &pandoras_sharedram },/* Work RAM (Shared with CPU B) */
-	{ 0x1000, 0x13ff, pandoras_cram_w, &colorram },		/* Color RAM (shared with CPU B) */
-	{ 0x1400, 0x17ff, pandoras_vram_w, &videoram },		/* Video RAM (shared with CPU B) */
-	{ 0x1800, 0x1807, pandoras_int_control_w },	/* INT control */
-	{ 0x1a00, 0x1a00, pandoras_scrolly_w },		/* bg scroll */
-	{ 0x1c00, 0x1c00, pandoras_z80_irqtrigger_w },/* cause INT on the Z80 */
-	{ 0x1e00, 0x1e00, soundlatch_w },			/* sound command to the Z80 */
-	{ 0x2000, 0x2000, pandoras_cpub_irqtrigger_w },/* cause FIRQ on CPU B */
-	{ 0x2001, 0x2001, watchdog_reset_w },		/* watchdog reset */
-	{ 0x4000, 0x5fff, MWA_ROM },				/* see notes */
-	{ 0x6000, 0x67ff, pandoras_sharedram2_w, &pandoras_sharedram2 },	/* Shared RAM with CPU B */
-	{ 0x8000, 0xffff, MWA_ROM },				/* ROM */
-	{ -1 }	/* end of table */
+	{ 0x0000, 0x0fff, pandoras_sharedram_w, &pandoras_sharedram },	/* Work RAM (Shared with CPU B) */
+	{ 0x1000, 0x13ff, pandoras_cram_w, &colorram },					/* Color RAM (shared with CPU B) */
+	{ 0x1400, 0x17ff, pandoras_vram_w, &videoram },					/* Video RAM (shared with CPU B) */
+	{ 0x1800, 0x1807, pandoras_int_control_w },						/* INT control */
+	{ 0x1a00, 0x1a00, pandoras_scrolly_w },							/* bg scroll */
+	{ 0x1c00, 0x1c00, pandoras_z80_irqtrigger_w },					/* cause INT on the Z80 */
+	{ 0x1e00, 0x1e00, soundlatch_w },								/* sound command to the Z80 */
+	{ 0x2000, 0x2000, pandoras_cpub_irqtrigger_w },					/* cause FIRQ on CPU B */
+	{ 0x2001, 0x2001, watchdog_reset_w },							/* watchdog reset */
+	{ 0x4000, 0x5fff, MWA_ROM },									/* see notes */
+	{ 0x6000, 0x67ff, pandoras_sharedram2_w, &pandoras_sharedram2 },/* Shared RAM with CPU B */
+	{ 0x8000, 0xffff, MWA_ROM },									/* ROM */
+	{ -1 }
 };
 
 static struct MemoryReadAddress pandoras_readmem_b[] =
@@ -170,10 +173,10 @@ static struct MemoryReadAddress pandoras_readmem_b[] =
 	{ 0x1a01, 0x1a01, input_port_4_r },			/* 1P inputs */
 	{ 0x1a02, 0x1a02, input_port_5_r },			/* 2P inputs */
 	{ 0x1a03, 0x1a03, input_port_2_r },			/* DIPSW #3 */
-	{ 0x1e00, 0x1e00, MWA_NOP },			/* ??? */
+//	{ 0x1e00, 0x1e00, MWA_NOP },				/* ??? */
 	{ 0xc000, 0xc7ff, pandoras_sharedram2_r },	/* Shared RAM with the CPU A */
 	{ 0xe000, 0xffff, MRA_ROM },				/* ROM */
-	{ -1 }	/* end of table */
+	{ -1 }
 };
 
 static struct MemoryWriteAddress pandoras_writemem_b[] =
@@ -186,7 +189,7 @@ static struct MemoryWriteAddress pandoras_writemem_b[] =
 	{ 0xa000, 0xa000, pandoras_cpua_irqtrigger_w },/* cause FIRQ on CPU A */
 	{ 0xc000, 0xc7ff, pandoras_sharedram2_w },	/* Shared RAM with the CPU A */
 	{ 0xe000, 0xffff, MWA_ROM },				/* ROM */
-	{ -1 }	/* end of table */
+	{ -1 }
 };
 
 static struct MemoryReadAddress pandoras_readmem_snd[] =
@@ -195,7 +198,7 @@ static struct MemoryReadAddress pandoras_readmem_snd[] =
 	{ 0x2000, 0x23ff, MRA_RAM },				/* RAM */
 	{ 0x4000, 0x4000, soundlatch_r },			/* soundlatch_r */
 	{ 0x6001, 0x6001, AY8910_read_port_0_r },	/* AY-8910 */
-	{ -1 }	/* end of table */
+	{ -1 }
 };
 
 static struct MemoryWriteAddress pandoras_writemem_snd[] =
@@ -206,19 +209,19 @@ static struct MemoryWriteAddress pandoras_writemem_snd[] =
 	{ 0x6002, 0x6002, AY8910_write_port_0_w },	/* AY-8910 */
 	{ 0x8000, 0x8000, pandoras_i8039_irqtrigger_w },/* cause INT on the 8039 */
 	{ 0xa000, 0xa000, soundlatch2_w },			/* sound command to the 8039 */
-	{ -1 }	/* end of table */
+	{ -1 }
 };
 
 static struct MemoryReadAddress i8039_readmem[] =
 {
 	{ 0x0000, 0x0fff, MRA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }
 };
 
 static struct MemoryWriteAddress i8039_writemem[] =
 {
 	{ 0x0000, 0x0fff, MWA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }
 };
 
 static struct IOReadPort i8039_readport[] =
@@ -229,9 +232,9 @@ static struct IOReadPort i8039_readport[] =
 
 static struct IOWritePort i8039_writeport[] =
 {
-	{ I8039_p1, I8039_p1, DAC_data_w },
+	{ I8039_p1, I8039_p1, DAC_0_data_w },
 	{ I8039_p2, I8039_p2, i8039_irqen_w },
-	{ -1 }	/* end of table */
+	{ -1 }
 };
 
 /***************************************************************************
@@ -396,20 +399,20 @@ static void pandoras_init_machine( void )
 	irq_enable_a = irq_enable_b = 0;
 }
 
-static int pandoras_portB_r(int offset)
+static READ_HANDLER( pandoras_portB_r )
 {
 	/* ??? */
 	return (cpu_gettotalcycles() / 1024) & 0x0f;
 }
 
-static void pandoras_portB_w(int offset,int data)
+static WRITE_HANDLER( pandoras_portB_w )
 {
 	/* ??? */
 }
 
 static struct AY8910interface ay8910_interface =
 {
-	1,	/* 1 chip */
+	1,			/* 1 chip */
 	4000000,	/* ??????? */
 	{ 25 },
 	{ 0 },
@@ -523,4 +526,4 @@ ROM_END
 
 
 
-GAMEX( 1984, pandoras, 0, pandoras, pandoras, 0, ROT270, "Konami/Interlogic", "Pandora's Palace", GAME_NO_COCKTAIL )
+GAME( 1984, pandoras, 0, pandoras, pandoras, 0, ROT90, "Konami/Interlogic", "Pandora's Palace" )

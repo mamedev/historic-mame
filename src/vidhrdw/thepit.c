@@ -82,7 +82,7 @@ void thepit_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 }
 
 
-void intrepid_graphics_bank_select_w(int offset, int data)
+WRITE_HANDLER( intrepid_graphics_bank_select_w )
 {
 	if (graphics_bank != (data << 1))
 	{
@@ -92,7 +92,7 @@ void intrepid_graphics_bank_select_w(int offset, int data)
 }
 
 
-void thepit_flipx_w(int offset,int data)
+WRITE_HANDLER( thepit_flipx_w )
 {
 	if (*flip_screen_x != (data & 1))
 	{
@@ -101,7 +101,7 @@ void thepit_flipx_w(int offset,int data)
 	}
 }
 
-void thepit_flipy_w(int offset,int data)
+WRITE_HANDLER( thepit_flipy_w )
 {
 	if (*flip_screen_y != (data & 1))
 	{
@@ -111,7 +111,7 @@ void thepit_flipy_w(int offset,int data)
 }
 
 
-int thepit_input_port_0_r(int offset)
+READ_HANDLER( thepit_input_port_0_r )
 {
 	/* Read either the real or the fake input ports depending on the
 	   horizontal flip switch. (This is how the real PCB does it) */
@@ -126,7 +126,7 @@ int thepit_input_port_0_r(int offset)
 }
 
 
-void thepit_sound_enable_w(int offset, int data)
+WRITE_HANDLER( thepit_sound_enable_w )
 {
 	if (sound_enabled && !data)
 	{
@@ -137,8 +137,8 @@ void thepit_sound_enable_w(int offset, int data)
 }
 
 static void common_AY8910_w(int offset, int data,
-				            void (*write_port)(int, int),
-				            void (*control_port)(int, int))
+				            mem_write_handler write_port,
+				            mem_write_handler control_port)
 {
 	/* Get out if sound is off */
 	if (!sound_enabled) return;
@@ -153,12 +153,12 @@ static void common_AY8910_w(int offset, int data,
 	}
 }
 
-void thepit_AY8910_0_w(int offset, int data)
+WRITE_HANDLER( thepit_AY8910_0_w )
 {
 	common_AY8910_w(offset, data, AY8910_write_port_0_w, AY8910_control_port_0_w);
 }
 
-void thepit_AY8910_1_w(int offset, int data)
+WRITE_HANDLER( thepit_AY8910_1_w )
 {
 	common_AY8910_w(offset, data, AY8910_write_port_1_w, AY8910_control_port_1_w);
 }

@@ -426,7 +426,7 @@ void write_rom_section(char *prefix,char *suffix,int start,int end)
 }
 #endif
 
-void jrpacman_interrupt_enable_w(int offset,int data)
+WRITE_HANDLER( jrpacman_interrupt_enable_w )
 {
 	interrupt_enable = data;
 }

@@ -14,11 +14,11 @@ Ernesto Corvi
 #include "vidhrdw/generic.h"
 
 /* from sndhrdw/rastan */
-extern void r_wr_a000(int offset,int data);
-extern void r_wr_a001(int offset,int data);
-extern int  r_rd_a001(int offset);
-extern void rastan_sound_w(int offset,int data);
-extern int rastan_sound_r(int offset);
+READ_HANDLER( rastan_a001_r );
+WRITE_HANDLER( rastan_a000_w );
+WRITE_HANDLER( rastan_a001_w );
+WRITE_HANDLER( rastan_sound_w );
+READ_HANDLER( rastan_sound_r );
 
 /* from vidhrdw */
 extern unsigned char *footchmp_chargen_ram, *footchmp_text_ram;
@@ -27,25 +27,25 @@ extern unsigned char *footchmp_layer2_ram, *footchmp_layer3_ram;
 extern int footchmp_vh_start( void );
 extern void footchmp_vh_stop( void );
 extern void footchmp_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh );
-extern int footchmp_textram_r( int offset );
-extern void footchmp_textram_w( int offset, int data );
-extern int footchmp_layer0ram_r( int offset );
-extern void footchmp_layer0ram_w( int offset, int data );
-extern int footchmp_layer1ram_r( int offset );
-extern void footchmp_layer1ram_w( int offset, int data );
-extern int footchmp_layer2ram_r( int offset );
-extern void footchmp_layer2ram_w( int offset, int data );
-extern int footchmp_layer3ram_r( int offset );
-extern void footchmp_layer3ram_w( int offset, int data );
-extern int footchmp_chargen_r( int offset );
-extern void footchmp_chargen_w( int offset,int data );
-extern int footchmp_spriteram_r( int offset );
-extern void footchmp_spriteram_w( int offset, int data );
-extern void footchmp_spritebank_w( int offset, int data );
-extern void footchmp_scroll_w( int offset, int data );
+READ_HANDLER( footchmp_textram_r );
+WRITE_HANDLER( footchmp_textram_w );
+READ_HANDLER( footchmp_layer0ram_r );
+WRITE_HANDLER( footchmp_layer0ram_w );
+READ_HANDLER( footchmp_layer1ram_r );
+WRITE_HANDLER( footchmp_layer1ram_w );
+READ_HANDLER( footchmp_layer2ram_r );
+WRITE_HANDLER( footchmp_layer2ram_w );
+READ_HANDLER( footchmp_layer3ram_r );
+WRITE_HANDLER( footchmp_layer3ram_w );
+READ_HANDLER( footchmp_chargen_r );
+WRITE_HANDLER( footchmp_chargen_w );
+READ_HANDLER( footchmp_spriteram_r );
+WRITE_HANDLER( footchmp_spriteram_w );
+WRITE_HANDLER( footchmp_spritebank_w );
+WRITE_HANDLER( footchmp_scroll_w );
 
 /* Input ports handling */
-static int footchmp_input_r( int offset ) {
+static READ_HANDLER( footchmp_input_r ) {
 
 	switch ( offset ) {
 		case 0x00:
@@ -122,7 +122,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }  /* end of table */
 };
 
-static void sound_bankswitch_w (int offset, int data)
+static WRITE_HANDLER( sound_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int banknum = (data - 1) & 3;
@@ -139,7 +139,7 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0xe001, 0xe001, YM2610_read_port_0_r },
 	{ 0xe002, 0xe002, YM2610_status_port_0_B_r },
 	{ 0xe200, 0xe200, MRA_NOP },
-	{ 0xe201, 0xe201, r_rd_a001 },
+	{ 0xe201, 0xe201, rastan_a001_r },
 	{ 0xea00, 0xea00, MRA_NOP },
 	{ -1 }  /* end of table */
 };
@@ -152,8 +152,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xe001, 0xe001, YM2610_data_port_0_A_w },
 	{ 0xe002, 0xe002, YM2610_control_port_0_B_w },
 	{ 0xe003, 0xe003, YM2610_data_port_0_B_w },
-	{ 0xe200, 0xe200, r_wr_a000 },
-	{ 0xe201, 0xe201, r_wr_a001 },
+	{ 0xe200, 0xe200, rastan_a000_w },
+	{ 0xe201, 0xe201, rastan_a001_w },
 	{ 0xe400, 0xe403, MWA_NOP }, /* pan */
 	{ 0xee00, 0xee00, MWA_NOP }, /* ? */
 	{ 0xf000, 0xf000, MWA_NOP }, /* ? */
