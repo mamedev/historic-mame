@@ -16,10 +16,15 @@
 
 
 #define MAX_SAMPLE_CHUNK	10000
+#define MAKE_WAVS			0
 
 #define FRAC_BITS			14
 #define FRAC_ONE			(1 << FRAC_BITS)
 #define FRAC_MASK			(FRAC_ONE - 1)
+
+#if MAKE_WAVS
+#include "wavwrite.h"
+#endif
 
 
 /* struct describing a single playing ADPCM voice */
@@ -68,6 +73,10 @@ struct YMZ280BChip
 	double master_clock;			/* master clock frequency */
 	void (*irq_callback)(int);		/* IRQ callback */
 	struct YMZ280BVoice	voice[8];	/* the 8 voices */
+
+#if MAKE_WAVS
+	void *		wavresample;			/* resampled waveform */
+#endif
 };
 
 static struct YMZ280BChip ymz280b[MAX_YMZ280B];
@@ -457,7 +466,7 @@ static void ymz280b_update(int num, INT16 **buffer, int length)
 
 		/* compute how many new samples we need */
 		final_pos = voice->output_pos + remaining * voice->output_step;
-		new_samples = (final_pos + FRAC_ONE - 1) >> FRAC_BITS;
+		new_samples = (final_pos + FRAC_ONE) >> FRAC_BITS;
 		if (new_samples > MAX_SAMPLE_CHUNK)
 			new_samples = MAX_SAMPLE_CHUNK;
 		samples_left = new_samples;
@@ -541,6 +550,12 @@ static void ymz280b_update(int num, INT16 **buffer, int length)
 		buffer[0][v] = lsamp;
 		buffer[1][v] = rsamp;
 	}
+
+#if MAKE_WAVS
+	/* log the resampled data */
+	if (chip->wavresample)
+		wav_add_data_16lr(chip->wavresample, buffer[0], buffer[1], length);
+#endif
 }
 
 
@@ -649,6 +664,10 @@ int YMZ280B_sh_start(const struct MachineSound *msound)
 	chip_num = intf->num;
 //ks e
 
+#if MAKE_WAVS
+	ymz280b[0].wavresample = wav_open("resamp.wav", Machine->sample_rate, 2);
+#endif
+
 	/* success */
 	return 0;
 }
@@ -671,6 +690,18 @@ void YMZ280B_sh_stop(void)
 	if (scratch)
 		free(scratch);
 	scratch = NULL;
+
+#if MAKE_WAVS
+{
+	int i;
+
+	for (i = 0; i < MAX_BSMT2000; i++)
+	{
+		if (ymz280b[i].wavresample)
+			wav_close(ymz280b[i].wavresample);
+	}
+}
+#endif
 }
 
 
@@ -717,7 +748,7 @@ static void write_to_register(struct YMZ280BChip *chip, int data)
 //ks start
 				{
 					voice->playing = 0;
-					chip->status_register &= ~(1 << ((chip->current_register >> 2) & 7));
+//					chip->status_register &= ~(1 << ((chip->current_register >> 2) & 7));
 				}
 //ks end
 				voice->keyon = (data & 0x80) >> 7;

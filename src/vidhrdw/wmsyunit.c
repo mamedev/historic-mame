@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "cpu/tms34010/tms34010.h"
-
+#include "wmsyunit.h"
 
 
 /* compile-time options */
@@ -32,10 +32,6 @@ enum
 };
 
 
-
-/* CMOS-related variables */
-extern data16_t *wms_cmos_ram;
-extern UINT32	wms_cmos_page;
 
 /* graphics-related variables */
        struct rectangle wms_visible_area;
@@ -79,7 +75,6 @@ static struct
 
 /* prototypes */
 static void update_partial(int scanline);
-       void wms_yunit_vh_stop(void);
 
 
 

@@ -161,7 +161,7 @@ extern data16_t *atarisys2_slapstic;
  *
  *************************************/
 
-static data16_t *interrupt_enable;
+static UINT8 interrupt_enable;
 static data16_t *bankselect;
 
 static INT8 pedal_count;
@@ -224,7 +224,7 @@ static void scanline_update(int scanline)
 	{
 		/* generate the 32V interrupt (IRQ 2) */
 		if ((scanline % 64) == 0)
-			if (interrupt_enable[0] & 4)
+			if (interrupt_enable & 4)
 				atarigen_scanline_int_gen();
 	}
 }
@@ -264,7 +264,7 @@ static void init_machine(void)
 static int vblank_interrupt(void)
 {
 	/* clock the VBLANK through */
-	if (interrupt_enable[0] & 8)
+	if (interrupt_enable & 8)
 		atarigen_video_int_gen();
 
 	return ignore_interrupt();
@@ -284,6 +284,19 @@ static WRITE16_HANDLER( int1_ack_w )
 	/* reset sound CPU */
 	if (ACCESSING_LSB)
 		cpu_set_reset_line(1, (data & 1) ? ASSERT_LINE : CLEAR_LINE);
+}
+
+
+static void delayed_int_enable_w(int data)
+{
+	interrupt_enable = data;
+}
+
+
+static WRITE16_HANDLER( int_enable_w )
+{
+	if (offset == 0 && ACCESSING_LSB)
+		timer_set(TIME_NOW, data, delayed_int_enable_w);
 }
 
 
@@ -445,7 +458,7 @@ static READ16_HANDLER( sound_r )
 static WRITE_HANDLER( sound_6502_w )
 {
 	/* clock the state through */
-	p2portwr_state = (interrupt_enable[0] & 2) != 0;
+	p2portwr_state = (interrupt_enable & 2) != 0;
 	atarigen_update_interrupts();
 
 	/* handle it normally otherwise */
@@ -456,7 +469,7 @@ static WRITE_HANDLER( sound_6502_w )
 static READ_HANDLER( sound_6502_r )
 {
 	/* clock the state through */
-	p2portrd_state = (interrupt_enable[0] & 1) != 0;
+	p2portrd_state = (interrupt_enable & 1) != 0;
 	atarigen_update_interrupts();
 
 	/* handle it normally otherwise */
@@ -530,7 +543,7 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ 0x15a0, 0x15bf, int1_ack_w },
 	{ 0x15c0, 0x15df, atarigen_scanline_int_ack_w },
 	{ 0x15e0, 0x15ff, atarigen_video_int_ack_w },
-	{ 0x1600, 0x1601, MWA16_RAM, &interrupt_enable },
+	{ 0x1600, 0x1601, int_enable_w },
 	{ 0x1680, 0x1681, atarigen_sound_w },
 	{ 0x1700, 0x1701, atarisys2_hscroll_w },
 	{ 0x1780, 0x1781, atarisys2_vscroll_w },

@@ -21,31 +21,9 @@ static struct tempsprite *spritelist;
 
 static int taito_hide_pixels;
 
+
+
 /**********************************************************/
-
-static int has_TC0110PCR(void)
-{
-	const struct Memory_WriteAddress16 *mwa;
-
-	/* scan the memory handlers and see if the TC0110PCR is used */
-
-	mwa = Machine->drv->cpu[0].memory_write;
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if (mwa->handler == TC0110PCR_step1_rbswap_word_w)
-					return 1;
-			}
-			mwa++;
-		}
-	}
-
-	return 0;
-}
-
 
 static int othunder_core_vh_start (void)
 {

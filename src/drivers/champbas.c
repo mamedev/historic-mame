@@ -336,6 +336,6 @@ ROM_END
 
 
 
-GAME( 1983, champbas, 0,        champbas, champbas, 0, ROT0, "Sega", "Champion Baseball" )
+GAMEX(1983, champbas, 0,        champbas, champbas, 0, ROT0, "Sega", "Champion Baseball", GAME_NO_COCKTAIL )
 GAMEX(1983, champbbj, champbas, champbas, champbas, 0, ROT0, "Alpha Denshi Co.", "Champion Baseball (Japan)", GAME_NOT_WORKING )
 GAMEX(1983, champbb2, 0,        champbas, champbas, 0, ROT0, "Sega", "Champion Baseball II", GAME_NOT_WORKING )

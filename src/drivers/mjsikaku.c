@@ -44,6 +44,9 @@
 	House Mannequin Roppongi Live hen
 	(c)1987 Nihon Bussan Co.,Ltd.
 
+	Crystal Gal
+	(c)1986 Nihon Bussan Co.,Ltd.
+
 	Crystal Gal 2
 	(c)1986 Nihon Bussan Co.,Ltd.
 
@@ -67,7 +70,7 @@ Memo:
 - You cannot set to LCD mode (it's not implemented yet).
   Housemnq is LCD mode only, so you cannot play it.
 
-- Input handling is wrong in crystal2.
+- Input handling is wrong in crystalg and crystal2.
 
 - Some games display "GFXROM BANK OVER!!" or "GFXROM ADDRESS OVER!!"
   in Debug build.
@@ -79,15 +82,15 @@ Memo:
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
-#include "machine/nb1413m3.h"
+#include "nb1413m3.h"
 
 
 #define	SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC
 
 
-void mjsikaku_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-void seiha_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-void crystal2_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
+void mjsikaku_init_palette(unsigned char *obsolete, unsigned short *colortable, const unsigned char *color_prom);
+void seiha_init_palette(unsigned char *obsolete, unsigned short *colortable, const unsigned char *color_prom);
+void crystal2_init_palette(unsigned char *obsolete, unsigned short *colortable, const unsigned char *color_prom);
 void mjsikaku_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 int mjsikaku_vh_start(void);
 int secolove_vh_start(void);
@@ -118,13 +121,11 @@ void crystal2_romsel_w(int data);
 static void init_mjsikaku(void)
 {
 	nb1413m3_type = NB1413M3_MJSIKAKU;
-	nb1413m3_int_count = 144;
 }
 
 static void init_otonano(void)
 {
 	nb1413m3_type = NB1413M3_OTONANO;
-	nb1413m3_int_count = 144;
 }
 
 static void init_mjcamera(void)
@@ -138,85 +139,76 @@ static void init_mjcamera(void)
 	ROM[0x013f] = 0x00;
 #endif
 	nb1413m3_type = NB1413M3_MJCAMERA;
-	nb1413m3_int_count = 144;
 }
 
 static void init_kaguya(void)
 {
 	nb1413m3_type = NB1413M3_KAGUYA;
-	nb1413m3_int_count = 128;
 }
 
 static void init_secolove(void)
 {
 	nb1413m3_type = NB1413M3_SECOLOVE;
-	nb1413m3_int_count = 128;
 }
 
 static void init_citylove(void)
 {
 	nb1413m3_type = NB1413M3_CITYLOVE;
-	nb1413m3_int_count = 128;
 }
 
 static void init_seiha(void)
 {
 	nb1413m3_type = NB1413M3_SEIHA;
-	nb1413m3_int_count = 128;
 }
 
 static void init_seiham(void)
 {
 	nb1413m3_type = NB1413M3_SEIHAM;
-	nb1413m3_int_count = 128;
 }
 
 static void init_iemoto(void)
 {
 	nb1413m3_type = NB1413M3_IEMOTO;
-	nb1413m3_int_count = 128;
 }
 
 static void init_ojousan(void)
 {
 	nb1413m3_type = NB1413M3_OJOUSAN;
-	nb1413m3_int_count = 128;
 }
 
 static void init_bijokkoy(void)
 {
 	nb1413m3_type = NB1413M3_BIJOKKOY;
-	nb1413m3_int_count = 128;
 }
 
 static void init_bijokkog(void)
 {
 	nb1413m3_type = NB1413M3_BIJOKKOG;
-	nb1413m3_int_count = 128;
 }
 
 static void init_housemnq(void)
 {
 	nb1413m3_type = NB1413M3_HOUSEMNQ;
-	nb1413m3_int_count = 128;
 }
 
 static void init_housemn2(void)
 {
 	nb1413m3_type = NB1413M3_HOUSEMN2;
-	nb1413m3_int_count = 128;
+}
+
+static void init_crystalg(void)
+{
+	nb1413m3_type = NB1413M3_CRYSTALG;
 }
 
 static void init_crystal2(void)
 {
 	nb1413m3_type = NB1413M3_CRYSTAL2;
-	nb1413m3_int_count = 96;
 }
 
 static void init_apparel(void)
 {
 	nb1413m3_type = NB1413M3_APPAREL;
-	nb1413m3_int_count = 128;
 }
 
 
@@ -1451,6 +1443,79 @@ INPUT_PORTS_START( ojousan )
 	NBMJCTRL_PORT5	/* (7) PORT 1-5 */
 INPUT_PORTS_END
 
+INPUT_PORTS_START( crystalg )
+
+	// I don't have manual for this game.
+
+	PORT_START	/* (0) DIPSW-A */
+	PORT_DIPNAME( 0x01, 0x01, "DIPSW 1-1" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "DIPSW 1-2" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "DIPSW 1-3" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "DIPSW 1-4" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "DIPSW 1-5" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "DIPSW 1-6" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "DIPSW 1-7" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "DIPSW 1-8" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* (1) DIPSW-B */
+	PORT_DIPNAME( 0x01, 0x01, "DIPSW 2-1" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "DIPSW 2-2" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "DIPSW 2-3" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "DIPSW 2-4" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "DIPSW 2-5" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "DIPSW 2-6" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "DIPSW 2-7" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "DIPSW 2-8" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* (2) PORT 0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
+	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )		// COIN1
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START3 )		// CREDIT CLEAR
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )		// OPTION (?)
+
+	NBMJCTRL_PORT1	/* (3) PORT 1-1 */
+	NBMJCTRL_PORT2	/* (4) PORT 1-2 */
+	NBMJCTRL_PORT3	/* (5) PORT 1-3 */
+	NBMJCTRL_PORT4	/* (6) PORT 1-4 */
+	NBMJCTRL_PORT5	/* (7) PORT 1-5 */
+INPUT_PORTS_END
+
 INPUT_PORTS_START( crystal2 )
 
 	// I don't have manual for this game.
@@ -1614,7 +1679,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			nb1413m3_interrupt, _intcnt_ \
 		} \
 	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
+	60, DEFAULT_60HZ_VBLANK_DURATION, \
 	1, \
 	nb1413m3_init_machine, \
 \
@@ -1656,7 +1721,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			nb1413m3_interrupt, _intcnt_ \
 		} \
 	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
+	60, DEFAULT_60HZ_VBLANK_DURATION, \
 	1, \
 	nb1413m3_init_machine, \
 \
@@ -1698,7 +1763,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			nb1413m3_interrupt, _intcnt_ \
 		} \
 	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
+	60, DEFAULT_60HZ_VBLANK_DURATION, \
 	1, \
 	nb1413m3_init_machine, \
 \
@@ -1740,7 +1805,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			nb1413m3_interrupt, _intcnt_ \
 		} \
 	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
+	60, DEFAULT_60HZ_VBLANK_DURATION, \
 	1, \
 	nb1413m3_init_machine, \
 \
@@ -1782,7 +1847,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			nb1413m3_interrupt, _intcnt_ \
 		} \
 	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
+	60, DEFAULT_60HZ_VBLANK_DURATION, \
 	1, \
 	nb1413m3_init_machine, \
 \
@@ -1824,7 +1889,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			nb1413m3_interrupt, _intcnt_ \
 		} \
 	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
+	60, DEFAULT_60HZ_VBLANK_DURATION, \
 	1, \
 	nb1413m3_init_machine, \
 \
@@ -1866,7 +1931,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			nb1413m3_interrupt, _intcnt_ \
 		} \
 	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
+	60, DEFAULT_60HZ_VBLANK_DURATION, \
 	1, \
 	nb1413m3_init_machine, \
 \
@@ -1913,6 +1978,7 @@ NBMJDRV4(   seiham, 128, secolove, secolove, secolove,    seiha, nb1413m3_nvram_
 NBMJDRV4(   iemoto, 128, secolove, secolove, secolove,   iemoto, nb1413m3_nvram_handler )
 NBMJDRV4(  ojousan, 128,  ojousan,  ojousan, secolove,   iemoto, nb1413m3_nvram_handler )
 NBMJDRV6(   kaguya, 128, mjsikaku, mjsikaku,   kaguya,   kaguya, nb1413m3_nvram_handler )
+NBMJDRV5( crystalg,  96, secolove, secolove, secolove, crystal2, nb1413m3_nvram_handler )
 NBMJDRV5( crystal2,  96, secolove, secolove, secolove, crystal2, nb1413m3_nvram_handler )
 NBMJDRV5(  apparel, 128, secolove, secolove, secolove, secolove, nb1413m3_nvram_handler )
 
@@ -2225,6 +2291,26 @@ ROM_START( housemn2 )
 	ROM_LOAD( "hmq2_c4.bin",  0x100000, 0x40000, 0xea2b78b3 )
 ROM_END
 
+ROM_START( crystalg )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
+	ROM_LOAD( "mbs1.3c",  0x00000, 0x04000, 0x1cacdbbd )
+	ROM_LOAD( "mbs2.4c",  0x04000, 0x04000, 0xbf833674 )
+	ROM_LOAD( "mbs3.5c",  0x08000, 0x04000, 0xfaacafd0 )
+	ROM_LOAD( "mbs4.6c",  0x0c000, 0x04000, 0xb3bedcf1 )
+
+	ROM_REGION( 0x080000, REGION_GFX1, 0 ) /* gfx */
+	ROM_LOAD( "ft1.1h",   0x000000, 0x08000, 0x99b982ea )
+	ROM_LOAD( "ft2.2h",   0x008000, 0x08000, 0x026301da )
+	ROM_LOAD( "ft3.3h",   0x010000, 0x08000, 0xbff22ef7 )
+	ROM_LOAD( "ft4.4h",   0x018000, 0x08000, 0x4601e3a7 )
+	ROM_LOAD( "ft5.5h",   0x020000, 0x08000, 0xe1388239 )
+	ROM_LOAD( "ft6.6h",   0x028000, 0x08000, 0xda635046 )
+	ROM_LOAD( "ft7.7h",   0x030000, 0x08000, 0xb4d2121b )
+	ROM_LOAD( "ft8.8h",   0x038000, 0x08000, 0xb3fab376 )
+	ROM_LOAD( "ft9.9h",   0x040000, 0x08000, 0x3d4102ca )
+	ROM_LOAD( "ft10.10h", 0x048000, 0x08000, 0x264b6f7d )
+ROM_END
+
 ROM_START( crystal2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "cgl2_01.bin",  0x00000, 0x04000, 0x67673350 )
@@ -2271,7 +2357,6 @@ ROM_START( kaguya )
 ROM_END
 
 
-//     YEAR,     NAME,   PARENT,  MACHINE,    INPUT,     INIT,    MONITOR, COMPANY, FULLNAME, FLAGS
 GAME( 1988, mjsikaku, 0,        mjsikaku, mjsikaku, mjsikaku, ROT0, "Nichibutsu", "Mahjong Sikaku (Japan set 1)" )
 GAME( 1988, mjsikakb, mjsikaku, mjsikaku, mjsikaku, mjsikaku, ROT0, "Nichibutsu", "Mahjong Sikaku (Japan set 2)" )
 GAME( 1988,  otonano, 0,         otonano,  otonano,  otonano, ROT0, "Apple", "Otona no Mahjong (Japan)" )
@@ -2287,5 +2372,6 @@ GAME( 1988, bijokkog, 0,        bijokkog, bijokkog, bijokkog, ROT0, "Nichibutsu"
 GAMEX(1987, housemnq, 0,        housemnq, housemnq, housemnq, ROT0, "Nichibutsu", "House Mannequin (Japan)", GAME_NOT_WORKING )
 GAMEX(1987, housemn2, 0,        housemn2, housemn2, housemn2, ROT0, "Nichibutsu", "House Mannequin Roppongi Live hen (Japan)", GAME_NOT_WORKING )
 GAME( 1988,   kaguya, 0,          kaguya,   kaguya,   kaguya, ROT0, "MIKI SYOUJI", "Mahjong Kaguyahime [BET] (Japan)" )
+GAMEX(1986, crystalg, 0,        crystalg, crystalg, crystalg, ROT0, "Nichibutsu", "Crystal Gal (Japan)", GAME_NOT_WORKING )
 GAMEX(1986, crystal2, 0,        crystal2, crystal2, crystal2, ROT0, "Nichibutsu", "Crystal Gal 2 (Japan)", GAME_NOT_WORKING )
 GAME( 1986,  apparel, 0,         apparel,  apparel,  apparel, ROT0, "Central Denshi", "Apparel Night (Japan)" )

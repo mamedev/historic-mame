@@ -431,7 +431,7 @@ struct GfxElement *builduifont(void)
 
 static void erase_screen(struct mame_bitmap *bitmap)
 {
-	fillbitmap(bitmap,Machine->uifont->colortable[0],NULL);
+	fillbitmap(bitmap,get_black_pen(),NULL);
 	schedule_full_refresh();
 }
 
@@ -504,6 +504,8 @@ void displaytext(struct mame_bitmap *bitmap,const struct DisplayText *dt)
 				drawgfx(bitmap,Machine->uifont,*c,dt->color,0,0,x+Machine->uixmin,y+Machine->uiymin,0,TRANSPARENCY_NONE,0);
 				x += Machine->uifontwidth;
 			}
+			else
+				break;
 
 			c++;
 		}
@@ -966,14 +968,17 @@ static void showcharset(struct mame_bitmap *bitmap)
 {
 	int i;
 	char buf[80];
-	int bank,color,firstdrawn;
+	int mode,bank,color,firstdrawn;
 	int palpage;
 	int changed;
 	int total_colors = 0;
 	pen_t *colortable = NULL;
+	int cpx=0,cpy,skip_chars=0,skip_tmap=0;
+	int tilemap_xpos = 0;
+	int tilemap_ypos = 0;
 
-
-	bank = -2;
+	mode = 0;
+	bank = 0;
 	color = 0;
 	firstdrawn = 0;
 	palpage = 0;
@@ -982,124 +987,154 @@ static void showcharset(struct mame_bitmap *bitmap)
 
 	do
 	{
-		int cpx,cpy,skip_chars;
-
-		if (bank >= 0)
+		switch (mode)
 		{
-			cpx = Machine->uiwidth / Machine->gfx[bank]->width;
-			cpy = (Machine->uiheight - Machine->uifontheight) / Machine->gfx[bank]->height;
-			skip_chars = cpx * cpy;
-		}
-		else
-		{
-			cpx = cpy = skip_chars = 0;
-
-			if (bank == -2)	/* palette */
+			case 0: /* palette or clut */
 			{
-				total_colors = Machine->drv->total_colors;
-				colortable = Machine->pens;
-			}
-			else if (bank == -1)	/* clut */
-			{
-				total_colors = Machine->drv->color_table_len;
-				colortable = Machine->remapped_colortable;
-			}
-		}
-
-		if (changed)
-		{
-			int lastdrawn=0;
-
-			erase_screen(bitmap);
-
-			/* validity check after char bank change */
-			if (bank >= 0)
-			{
-				if (firstdrawn >= Machine->gfx[bank]->total_elements)
+				if (bank == 0)	/* palette */
 				{
-					firstdrawn = Machine->gfx[bank]->total_elements - skip_chars;
-					if (firstdrawn < 0) firstdrawn = 0;
+					total_colors = Machine->drv->total_colors;
+					colortable = Machine->pens;
+					strcpy(buf,"PALETTE");
 				}
-			}
-
-			switch_ui_orientation();
-
-			if (bank >= 0)
-			{
-				int flipx,flipy;
-
-#ifndef PREROTATE_GFX
-				flipx = (Machine->orientation ^ trueorientation) & ORIENTATION_FLIP_X;
-				flipy = (Machine->orientation ^ trueorientation) & ORIENTATION_FLIP_Y;
-
-				if (Machine->orientation & ORIENTATION_SWAP_XY)
+				else if (bank == 1)	/* clut */
 				{
-					int t;
-					t = flipx; flipx = flipy; flipy = t;
-				}
-#else
-				flipx = 0;
-				flipy = 0;
-#endif
-
-				for (i = 0; i+firstdrawn < Machine->gfx[bank]->total_elements && i<cpx*cpy; i++)
-				{
-					drawgfx(bitmap,Machine->gfx[bank],
-							i+firstdrawn,color,  /*sprite num, color*/
-							flipx,flipy,
-							(i % cpx) * Machine->gfx[bank]->width + Machine->uixmin,
-							Machine->uifontheight + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
-							0,Machine->gfx[bank]->colortable ? TRANSPARENCY_NONE : TRANSPARENCY_NONE_RAW,0);
-
-					lastdrawn = i+firstdrawn;
-				}
-			}
-			else
-			{
-				if (total_colors)
-				{
-					int sx,sy,colors;
-
-					colors = total_colors - 256 * palpage;
-					if (colors > 256) colors = 256;
-
-					for (i = 0;i < 16;i++)
-					{
-						char bf[40];
-
-						sx = 3*Machine->uifontwidth + (Machine->uifontwidth*4/3)*(i % 16);
-						sprintf(bf,"%X",i);
-						ui_text(bitmap,bf,sx,2*Machine->uifontheight);
-						if (16*i < colors)
-						{
-							sy = 3*Machine->uifontheight + (Machine->uifontheight)*(i % 16);
-							sprintf(bf,"%3X",i+16*palpage);
-							ui_text(bitmap,bf,0,sy);
-						}
-					}
-
-					for (i = 0;i < colors;i++)
-					{
-						sx = Machine->uixmin + 3*Machine->uifontwidth + (Machine->uifontwidth*4/3)*(i % 16);
-						sy = Machine->uiymin + 2*Machine->uifontheight + (Machine->uifontheight)*(i / 16) + Machine->uifontheight;
-						plot_box(bitmap,sx,sy,Machine->uifontwidth*4/3,Machine->uifontheight,colortable[i + 256*palpage]);
-					}
+					total_colors = Machine->drv->color_table_len;
+					colortable = Machine->remapped_colortable;
+					strcpy(buf,"CLUT");
 				}
 				else
-					ui_text(bitmap,"N/A",3*Machine->uifontwidth,2*Machine->uifontheight);
+				{
+					buf[0] = 0;
+					total_colors = 0;
+					colortable = 0;
+				}
+
+				if (changed)
+				{
+					erase_screen(bitmap);
+
+					if (total_colors)
+					{
+						int sx,sy,colors;
+
+						switch_ui_orientation();
+
+						colors = total_colors - 256 * palpage;
+						if (colors > 256) colors = 256;
+
+						for (i = 0;i < 16;i++)
+						{
+							char bf[40];
+
+							sx = 3*Machine->uifontwidth + (Machine->uifontwidth*4/3)*(i % 16);
+							sprintf(bf,"%X",i);
+							ui_text(bitmap,bf,sx,2*Machine->uifontheight);
+							if (16*i < colors)
+							{
+								sy = 3*Machine->uifontheight + (Machine->uifontheight)*(i % 16);
+								sprintf(bf,"%3X",i+16*palpage);
+								ui_text(bitmap,bf,0,sy);
+							}
+						}
+
+						for (i = 0;i < colors;i++)
+						{
+							sx = Machine->uixmin + 3*Machine->uifontwidth + (Machine->uifontwidth*4/3)*(i % 16);
+							sy = Machine->uiymin + 2*Machine->uifontheight + (Machine->uifontheight)*(i / 16) + Machine->uifontheight;
+							plot_box(bitmap,sx,sy,Machine->uifontwidth*4/3,Machine->uifontheight,colortable[i + 256*palpage]);
+						}
+						switch_true_orientation();
+					}
+					else
+						ui_text(bitmap,"N/A",3*Machine->uifontwidth,2*Machine->uifontheight);
+
+					ui_text(bitmap,buf,0,0);
+					changed = 0;
+				}
+
+				break;
 			}
+			case 1: /* characters */
+			{
+				cpx = Machine->uiwidth / Machine->gfx[bank]->width;
+				cpy = (Machine->uiheight - Machine->uifontheight) / Machine->gfx[bank]->height;
+				skip_chars = cpx * cpy;
+				if (changed)
+				{
+					int flipx,flipy;
+					int lastdrawn=0;
 
-			switch_true_orientation();
+					erase_screen(bitmap);
 
-			if (bank >= 0)
-				sprintf(buf,"GFXSET %d COLOR %2X CODE %X-%X",bank,color,firstdrawn,lastdrawn);
-			else if (bank == -2)
-				strcpy(buf,"PALETTE");
-			else if (bank == -1)
-				strcpy(buf,"CLUT");
-			ui_text(bitmap,buf,0,0);
+					/* validity check after char bank change */
+					if (firstdrawn >= Machine->gfx[bank]->total_elements)
+					{
+						firstdrawn = Machine->gfx[bank]->total_elements - skip_chars;
+						if (firstdrawn < 0) firstdrawn = 0;
+					}
 
-			changed = 0;
+					switch_ui_orientation();
+
+
+#ifndef PREROTATE_GFX
+					flipx = (Machine->orientation ^ trueorientation) & ORIENTATION_FLIP_X;
+					flipy = (Machine->orientation ^ trueorientation) & ORIENTATION_FLIP_Y;
+
+					if (Machine->orientation & ORIENTATION_SWAP_XY)
+					{
+						int t;
+						t = flipx; flipx = flipy; flipy = t;
+					}
+#else
+					flipx = 0;
+					flipy = 0;
+#endif
+
+					for (i = 0; i+firstdrawn < Machine->gfx[bank]->total_elements && i<cpx*cpy; i++)
+					{
+						drawgfx(bitmap,Machine->gfx[bank],
+								i+firstdrawn,color,  /*sprite num, color*/
+								flipx,flipy,
+								(i % cpx) * Machine->gfx[bank]->width + Machine->uixmin,
+								Machine->uifontheight + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
+								0,Machine->gfx[bank]->colortable ? TRANSPARENCY_NONE : TRANSPARENCY_NONE_RAW,0);
+
+						lastdrawn = i+firstdrawn;
+					}
+
+					switch_true_orientation();
+
+					sprintf(buf,"GFXSET %d COLOR %2X CODE %X-%X",bank,color,firstdrawn,lastdrawn);
+					ui_text(bitmap,buf,0,0);
+					changed = 0;
+				}
+
+				break;
+			}
+			case 2: /* Tilemaps */
+			{
+				if (changed)
+				{
+					UINT32 tilemap_width, tilemap_height;
+					tilemap_nb_size (bank, &tilemap_width, &tilemap_height);
+					while (tilemap_xpos < 0)
+						tilemap_xpos += tilemap_width;
+					tilemap_xpos %= tilemap_width;
+
+					while (tilemap_ypos < 0)
+						tilemap_ypos += tilemap_height;
+					tilemap_ypos %= tilemap_height;
+
+					erase_screen(bitmap);
+					tilemap_nb_draw (bitmap, bank, tilemap_xpos, tilemap_ypos);
+					sprintf(buf, "TILEMAP %d (%dx%d)  X:%d  Y:%d", bank, tilemap_width, tilemap_height, tilemap_xpos, tilemap_ypos);
+					ui_text(bitmap,buf,0,0);
+					changed = 0;
+					skip_tmap = 0;
+				}
+				break;
+			}
 		}
 
 		update_video_and_audio();
@@ -1107,24 +1142,52 @@ static void showcharset(struct mame_bitmap *bitmap)
 		if (code_pressed(KEYCODE_LCONTROL) || code_pressed(KEYCODE_RCONTROL))
 		{
 			skip_chars = cpx;
+			skip_tmap = 8;
 		}
 		if (code_pressed(KEYCODE_LSHIFT) || code_pressed(KEYCODE_RSHIFT))
 		{
 			skip_chars = 1;
+			skip_tmap = 1;
 		}
 
 
 		if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
 		{
-			int next;
+			int next_bank, next_mode;
+			int jumped;
 
-			next = bank+1;
-			if (next == -1 && Machine->drv->color_table_len == 0)
-				next++;
-
-			if (next < 0 || (next < MAX_GFX_ELEMENTS && Machine->gfx[next]))
+			next_mode = mode;
+			next_bank = bank+1;
+			do {
+				jumped = 0;
+				switch (next_mode)
+				{
+					case 0:
+						if (next_bank == 2 || Machine->drv->color_table_len == 0)
+						{
+							jumped = 1;
+							next_mode++;
+							next_bank = 0;
+						}
+						break;
+					case 1:
+						if (next_bank == MAX_GFX_ELEMENTS || !Machine->gfx[next_bank])
+						{
+							jumped = 1;
+							next_mode++;
+							next_bank = 0;
+						}
+						break;
+					case 2:
+						if (next_bank == tilemap_count())
+							next_mode = -1;
+						break;
+				}
+			}	while (jumped);
+			if (next_mode != -1 )
 			{
-				bank = next;
+				bank = next_bank;
+				mode = next_mode;
 //				firstdrawn = 0;
 				changed = 1;
 			}
@@ -1132,11 +1195,35 @@ static void showcharset(struct mame_bitmap *bitmap)
 
 		if (input_ui_pressed_repeat(IPT_UI_LEFT,8))
 		{
-			if (bank > -2)
+			int next_bank, next_mode;
+
+			next_mode = mode;
+			next_bank = bank-1;
+			while(next_bank < 0 && next_mode >= 0)
 			{
-				bank--;
-				if (bank == -1 && Machine->drv->color_table_len == 0)
-					bank--;
+				next_mode = next_mode - 1;
+				switch (next_mode)
+				{
+					case 0:
+						if (Machine->drv->color_table_len == 0)
+							next_bank = 0;
+						else
+							next_bank = 1;
+						break;
+					case 1:
+						next_bank = MAX_GFX_ELEMENTS-1;
+						while (next_bank >= 0 && !Machine->gfx[next_bank])
+							next_bank--;
+						break;
+					case 2:
+						next_bank = tilemap_count() - 1;
+						break;
+				}
+			}
+			if (next_mode != -1 )
+			{
+				bank = next_bank;
+				mode = next_mode;
 //				firstdrawn = 0;
 				changed = 1;
 			}
@@ -1144,62 +1231,131 @@ static void showcharset(struct mame_bitmap *bitmap)
 
 		if (code_pressed_memory_repeat(KEYCODE_PGDN,4))
 		{
-			if (bank >= 0)
+			switch (mode)
 			{
-				if (firstdrawn + skip_chars < Machine->gfx[bank]->total_elements)
+				case 0:
 				{
-					firstdrawn += skip_chars;
-					changed = 1;
+					if (256 * (palpage + 1) < total_colors)
+					{
+						palpage++;
+						changed = 1;
+					}
+					break;
 				}
-			}
-			else
-			{
-				if (256 * (palpage + 1) < total_colors)
+				case 1:
 				{
-					palpage++;
+					if (firstdrawn + skip_chars < Machine->gfx[bank]->total_elements)
+					{
+						firstdrawn += skip_chars;
+						changed = 1;
+					}
+					break;
+				}
+				case 2:
+				{
+					if (skip_tmap)
+						tilemap_ypos -= skip_tmap;
+					else
+						tilemap_ypos -= bitmap->height;
 					changed = 1;
+					break;
 				}
 			}
 		}
 
 		if (code_pressed_memory_repeat(KEYCODE_PGUP,4))
 		{
-			if (bank >= 0)
+			switch (mode)
 			{
-				firstdrawn -= skip_chars;
-				if (firstdrawn < 0) firstdrawn = 0;
-				changed = 1;
-			}
-			else
-			{
-				if (palpage > 0)
+				case 0:
 				{
-					palpage--;
+					if (palpage > 0)
+					{
+						palpage--;
+						changed = 1;
+					}
+					break;
+				}
+				case 1:
+				{
+					firstdrawn -= skip_chars;
+					if (firstdrawn < 0) firstdrawn = 0;
 					changed = 1;
+					break;
+				}
+				case 2:
+				{
+					if (skip_tmap)
+						tilemap_ypos += skip_tmap;
+					else
+						tilemap_ypos += bitmap->height;
+					changed = 1;
+					break;
+				}
+			}
+		}
+
+		if (code_pressed_memory_repeat(KEYCODE_D,4))
+		{
+			switch (mode)
+			{
+				case 2:
+				{
+					if (skip_tmap)
+						tilemap_xpos -= skip_tmap;
+					else
+						tilemap_xpos -= bitmap->width;
+					changed = 1;
+					break;
+				}
+			}
+		}
+
+		if (code_pressed_memory_repeat(KEYCODE_G,4))
+		{
+			switch (mode)
+			{
+				case 2:
+				{
+					if (skip_tmap)
+						tilemap_xpos += skip_tmap;
+					else
+						tilemap_xpos += bitmap->width;
+					changed = 1;
+					break;
 				}
 			}
 		}
 
 		if (input_ui_pressed_repeat(IPT_UI_UP,6))
 		{
-			if (bank >= 0)
+			switch (mode)
 			{
-				if (color < Machine->gfx[bank]->total_colors - 1)
+				case 1:
 				{
-					color++;
-					changed = 1;
+					if (color < Machine->gfx[bank]->total_colors - 1)
+					{
+						color++;
+						changed = 1;
+					}
+					break;
 				}
 			}
 		}
 
 		if (input_ui_pressed_repeat(IPT_UI_DOWN,6))
 		{
-			if (bank >= 0)
+			switch (mode)
 			{
-				if (color > 0)
+				case 0:
+					break;
+				case 1:
 				{
-					color--;
-					changed = 1;
+					if (color > 0)
+					{
+						color--;
+						changed = 1;
+					}
 				}
 			}
 		}
@@ -1411,7 +1567,7 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if (in->name != 0  && (in->type & ~IPF_MASK) != IPT_UNKNOWN && (in->type & IPF_UNUSED) == 0
+		if (in->name != 0  && (in->type & ~IPF_MASK) != IPT_UNKNOWN && (in->type & ~IPF_MASK) != IPT_OSD_RESERVED && (in->type & IPF_UNUSED) == 0
 			&& !(!options.cheat && (in->type & IPF_CHEAT)))
 		{
 			entry[total] = in;
@@ -1539,7 +1695,7 @@ static int setcodesettings(struct mame_bitmap *bitmap,int selected)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if (input_port_name(in) != 0 && seq_get_1(&in->seq) != CODE_NONE && (in->type & ~IPF_MASK) != IPT_UNKNOWN)
+		if (input_port_name(in) != 0 && seq_get_1(&in->seq) != CODE_NONE && (in->type & ~IPF_MASK) != IPT_UNKNOWN && (in->type & ~IPF_MASK) != IPT_OSD_RESERVED)
 		{
 			entry[total] = in;
 			menu_item[total] = input_port_name(in);

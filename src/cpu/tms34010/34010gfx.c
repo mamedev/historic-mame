@@ -9,7 +9,7 @@
 
 #ifndef RECURSIVE_INCLUDE
 
-#if LOG_GRAPHICS_OPS
+#if 0
 #define LOGGFX(x) logerror x
 #else
 #define LOGGFX(x)
@@ -904,7 +904,7 @@ static void pixblt_b_l(void)
 	int trans = (IOREG(REG_CONTROL) & 0x20) >> 5;
 	int rop = (IOREG(REG_CONTROL) >> 10) & 0x1f;
 	int ix = trans | (rop << 1) | (psize << 6);
-	if (!P_FLAG) LOGGFX(("%08X:PIXBLT B,L (%dx%d)\n", PC, DYDX_X, DYDX_Y));
+	if (!P_FLAG) LOGGFX(("%08X:PIXBLT B,L (%dx%d) depth=%d\n", PC, DYDX_X, DYDX_Y, IOREG(REG_PSIZE) ? IOREG(REG_PSIZE) : 32));
 	pixel_op = pixel_op_table[rop];
 	pixel_op_timing = pixel_op_timing_table[rop];
 	(*pixblt_b_op_table[ix])(1);
@@ -916,7 +916,7 @@ static void pixblt_b_xy(void)
 	int trans = (IOREG(REG_CONTROL) & 0x20) >> 5;
 	int rop = (IOREG(REG_CONTROL) >> 10) & 0x1f;
 	int ix = trans | (rop << 1) | (psize << 6);
-	if (!P_FLAG) LOGGFX(("%08X:PIXBLT B,XY (%d,%d) (%dx%d)\n", PC, DADDR_X, DADDR_Y, DYDX_X, DYDX_Y));
+	if (!P_FLAG) LOGGFX(("%08X:PIXBLT B,XY (%d,%d) (%dx%d) depth=%d\n", PC, DADDR_X, DADDR_Y, DYDX_X, DYDX_Y, IOREG(REG_PSIZE) ? IOREG(REG_PSIZE) : 32));
 	pixel_op = pixel_op_table[rop];
 	pixel_op_timing = pixel_op_timing_table[rop];
 	(*pixblt_b_op_table[ix])(0);
@@ -929,7 +929,7 @@ static void pixblt_l_l(void)
 	int rop = (IOREG(REG_CONTROL) >> 10) & 0x1f;
 	int pbh = (IOREG(REG_CONTROL) >> 8) & 1;
 	int ix = trans | (rop << 1) | (psize << 6);
-	if (!P_FLAG) LOGGFX(("%08X:PIXBLT L,L (%dx%d)\n", PC, DYDX_X, DYDX_Y));
+	if (!P_FLAG) LOGGFX(("%08X:PIXBLT L,L (%dx%d) depth=%d\n", PC, DYDX_X, DYDX_Y, IOREG(REG_PSIZE) ? IOREG(REG_PSIZE) : 32));
 	pixel_op = pixel_op_table[rop];
 	pixel_op_timing = pixel_op_timing_table[rop];
 	if (!pbh)
@@ -945,7 +945,7 @@ static void pixblt_l_xy(void)
 	int rop = (IOREG(REG_CONTROL) >> 10) & 0x1f;
 	int pbh = (IOREG(REG_CONTROL) >> 8) & 1;
 	int ix = trans | (rop << 1) | (psize << 6);
-	if (!P_FLAG) LOGGFX(("%08X:PIXBLT L,XY (%d,%d) (%dx%d)\n", PC, DADDR_X, DADDR_Y, DYDX_X, DYDX_Y));
+	if (!P_FLAG) LOGGFX(("%08X:PIXBLT L,XY (%d,%d) (%dx%d) depth=%d\n", PC, DADDR_X, DADDR_Y, DYDX_X, DYDX_Y, IOREG(REG_PSIZE) ? IOREG(REG_PSIZE) : 32));
 	pixel_op = pixel_op_table[rop];
 	pixel_op_timing = pixel_op_timing_table[rop];
 	if (!pbh)
@@ -961,7 +961,7 @@ static void pixblt_xy_l(void)
 	int rop = (IOREG(REG_CONTROL) >> 10) & 0x1f;
 	int pbh = (IOREG(REG_CONTROL) >> 8) & 1;
 	int ix = trans | (rop << 1) | (psize << 6);
-	if (!P_FLAG) LOGGFX(("%08X:PIXBLT XY,L (%dx%d)\n", PC, DYDX_X, DYDX_Y));
+	if (!P_FLAG) LOGGFX(("%08X:PIXBLT XY,L (%dx%d) depth=%d\n", PC, DYDX_X, DYDX_Y, IOREG(REG_PSIZE) ? IOREG(REG_PSIZE) : 32));
 	pixel_op = pixel_op_table[rop];
 	pixel_op_timing = pixel_op_timing_table[rop];
 	if (!pbh)
@@ -977,7 +977,7 @@ static void pixblt_xy_xy(void)
 	int rop = (IOREG(REG_CONTROL) >> 10) & 0x1f;
 	int pbh = (IOREG(REG_CONTROL) >> 8) & 1;
 	int ix = trans | (rop << 1) | (psize << 6);
-	if (!P_FLAG) LOGGFX(("%08X:PIXBLT XY,XY (%dx%d)\n", PC, DYDX_X, DYDX_Y));
+	if (!P_FLAG) LOGGFX(("%08X:PIXBLT XY,XY (%dx%d) depth=%d\n", PC, DYDX_X, DYDX_Y, IOREG(REG_PSIZE) ? IOREG(REG_PSIZE) : 32));
 	pixel_op = pixel_op_table[rop];
 	pixel_op_timing = pixel_op_timing_table[rop];
 	if (!pbh)
@@ -992,7 +992,7 @@ static void fill_l(void)
 	int trans = (IOREG(REG_CONTROL) & 0x20) >> 5;
 	int rop = (IOREG(REG_CONTROL) >> 10) & 0x1f;
 	int ix = trans | (rop << 1) | (psize << 6);
-	if (!P_FLAG) LOGGFX(("%08X:FILL L (%dx%d)\n", PC, DYDX_X, DYDX_Y));
+	if (!P_FLAG) LOGGFX(("%08X:FILL L (%dx%d) depth=%d\n", PC, DYDX_X, DYDX_Y, IOREG(REG_PSIZE) ? IOREG(REG_PSIZE) : 32));
 	pixel_op = pixel_op_table[rop];
 	pixel_op_timing = pixel_op_timing_table[rop];
 	(*fill_op_table[ix])(1);
@@ -1004,7 +1004,7 @@ static void fill_xy(void)
 	int trans = (IOREG(REG_CONTROL) & 0x20) >> 5;
 	int rop = (IOREG(REG_CONTROL) >> 10) & 0x1f;
 	int ix = trans | (rop << 1) | (psize << 6);
-	if (!P_FLAG) LOGGFX(("%08X:FILL XY (%d,%d) (%dx%d)\n", PC, DADDR_X, DADDR_Y, DYDX_X, DYDX_Y));
+	if (!P_FLAG) LOGGFX(("%08X:FILL XY (%d,%d) (%dx%d) depth=%d\n", PC, DADDR_X, DADDR_Y, DYDX_X, DYDX_Y, IOREG(REG_PSIZE) ? IOREG(REG_PSIZE) : 32));
 	pixel_op = pixel_op_table[rop];
 	pixel_op_timing = pixel_op_timing_table[rop];
 	(*fill_op_table[ix])(0);
@@ -1029,7 +1029,7 @@ static void FUNCTION_NAME(pixblt)(int src_is_linear, int dst_is_linear)
 	/* if this is the first time through, perform the operation */
 	if (!P_FLAG)
 	{
-		int dx, dy, x, y, words, left_partials, right_partials, full_words, bitshift, bitshift_alt, yreverse;
+		int dx, dy, x, y, words, yreverse;
 		void (*word_write)(offs_t address,data16_t data);
 		data16_t (*word_read)(offs_t address);
 		UINT32 saddr, daddr;
@@ -1065,6 +1065,7 @@ static void FUNCTION_NAME(pixblt)(int src_is_linear, int dst_is_linear)
 		else
 			daddr = DADDR;
 		daddr &= ~(BITS_PER_PIXEL - 1);
+		LOGGFX(("  saddr=%08X daddr=%08X sptch=%08X dptch=%08X\n", saddr, daddr, SPTCH, DPTCH));
 
 		/* bail if we're clipped */
 		if (dx <= 0 || dy <= 0)
@@ -1079,28 +1080,30 @@ static void FUNCTION_NAME(pixblt)(int src_is_linear, int dst_is_linear)
 				daddr += (dy - 1) * DPTCH;
 			}
 
-		/* determine the bit shift to get from source to dest */
-		bitshift = ((daddr & 15) - (saddr & 15)) & 15;
-		bitshift_alt = (16 - bitshift) & 15;
-
-		/* how many left and right partial pixels do we have? */
-		left_partials = (PIXELS_PER_WORD - ((daddr & 15) / BITS_PER_PIXEL)) & (PIXELS_PER_WORD - 1);
-		right_partials = ((daddr + dx * BITS_PER_PIXEL) & 15) / BITS_PER_PIXEL;
-		full_words = dx - left_partials - right_partials;
-		if (full_words < 0)
-			left_partials = dx, right_partials = full_words = 0;
-		else
-			full_words /= PIXELS_PER_WORD;
-
-		/* compute cycles */
-		state.gfxcycles += compute_pixblt_cycles(left_partials, right_partials, full_words, dy, PIXEL_OP_TIMING);
 		P_FLAG = 1;
 
 		/* loop over rows */
 		for (y = 0; y < dy; y++)
 		{
+			int left_partials, right_partials, full_words, bitshift, bitshift_alt;
 			UINT16 srcword, srcmask, dstword, dstmask, pixel;
 			UINT32 swordaddr, dwordaddr;
+
+			/* determine the bit shift to get from source to dest */
+			bitshift = ((daddr & 15) - (saddr & 15)) & 15;
+			bitshift_alt = (16 - bitshift) & 15;
+
+			/* how many left and right partial pixels do we have? */
+			left_partials = (PIXELS_PER_WORD - ((daddr & 15) / BITS_PER_PIXEL)) & (PIXELS_PER_WORD - 1);
+			right_partials = ((daddr + dx * BITS_PER_PIXEL) & 15) / BITS_PER_PIXEL;
+			full_words = dx - left_partials - right_partials;
+			if (full_words < 0)
+				left_partials = dx, right_partials = full_words = 0;
+			else
+				full_words /= PIXELS_PER_WORD;
+
+			/* compute cycles */
+			state.gfxcycles += compute_pixblt_cycles(left_partials, right_partials, full_words, 1, PIXEL_OP_TIMING);
 
 			/* use word addresses each row */
 			swordaddr = saddr >> 4;
@@ -1246,14 +1249,16 @@ static void FUNCTION_NAME(pixblt)(int src_is_linear, int dst_is_linear)
 	{
 		tms34010_ICount -= state.gfxcycles;
 		P_FLAG = 0;
-		if (src_is_linear)
-			SADDR += DYDX_Y * SPTCH + DYDX_X * BITS_PER_PIXEL;
+		if (src_is_linear && dst_is_linear)
+			SADDR += DYDX_Y * SPTCH;
+		else if (src_is_linear)
+			SADDR += DYDX_Y * SPTCH;
 		else
-			SADDR_Y += DYDX_Y, SADDR_X += DYDX_X;
+			SADDR_Y += DYDX_Y;
 		if (dst_is_linear)
-			DADDR += DYDX_Y * DPTCH + DYDX_X * BITS_PER_PIXEL;
+			DADDR += DYDX_Y * DPTCH;
 		else
-			DADDR_Y += DYDX_Y, DADDR_X += DYDX_X;
+			DADDR_Y += DYDX_Y;
 	}
 }
 
@@ -1262,7 +1267,7 @@ static void FUNCTION_NAME(pixblt_r)(int src_is_linear, int dst_is_linear)
 	/* if this is the first time through, perform the operation */
 	if (!P_FLAG)
 	{
-		int dx, dy, x, y, words, left_partials, right_partials, full_words, bitshift, bitshift_alt, yreverse;
+		int dx, dy, x, y, words, yreverse;
 		void (*word_write)(offs_t address,data16_t data);
 		data16_t (*word_read)(offs_t address);
 		UINT32 saddr, daddr;
@@ -1298,6 +1303,7 @@ static void FUNCTION_NAME(pixblt_r)(int src_is_linear, int dst_is_linear)
 		else
 			daddr = DADDR;
 		daddr &= ~(BITS_PER_PIXEL - 1);
+		LOGGFX(("  saddr=%08X daddr=%08X sptch=%08X dptch=%08X\n", saddr, daddr, SPTCH, DPTCH));
 
 		/* bail if we're clipped */
 		if (dx <= 0 || dy <= 0)
@@ -1316,28 +1322,30 @@ static void FUNCTION_NAME(pixblt_r)(int src_is_linear, int dst_is_linear)
 			}
 		}
 
-		/* determine the bit shift to get from source to dest */
-		bitshift = ((daddr & 15) - (saddr & 15)) & 15;
-		bitshift_alt = (16 - bitshift) & 15;
-
-		/* how many left and right partial pixels do we have? */
-		left_partials = (PIXELS_PER_WORD - (((daddr - dx * BITS_PER_PIXEL) & 15) / BITS_PER_PIXEL)) & (PIXELS_PER_WORD - 1);
-		right_partials = (daddr & 15) / BITS_PER_PIXEL;
-		full_words = dx - left_partials - right_partials;
-		if (full_words < 0)
-			left_partials = dx, right_partials = full_words = 0;
-		else
-			full_words /= PIXELS_PER_WORD;
-
-		/* compute cycles */
-		state.gfxcycles += compute_pixblt_cycles(left_partials, right_partials, full_words, dy, PIXEL_OP_TIMING);
 		P_FLAG = 1;
 
 		/* loop over rows */
 		for (y = 0; y < dy; y++)
 		{
+			int left_partials, right_partials, full_words, bitshift, bitshift_alt;
 			UINT16 srcword, srcmask, dstword, dstmask, pixel;
 			UINT32 swordaddr, dwordaddr;
+
+			/* determine the bit shift to get from source to dest */
+			bitshift = ((daddr & 15) - (saddr & 15)) & 15;
+			bitshift_alt = (16 - bitshift) & 15;
+
+			/* how many left and right partial pixels do we have? */
+			left_partials = (PIXELS_PER_WORD - (((daddr - dx * BITS_PER_PIXEL) & 15) / BITS_PER_PIXEL)) & (PIXELS_PER_WORD - 1);
+			right_partials = (daddr & 15) / BITS_PER_PIXEL;
+			full_words = dx - left_partials - right_partials;
+			if (full_words < 0)
+				right_partials = dx, left_partials = full_words = 0;
+			else
+				full_words /= PIXELS_PER_WORD;
+
+			/* compute cycles */
+			state.gfxcycles += compute_pixblt_cycles(left_partials, right_partials, full_words, 1, PIXEL_OP_TIMING);
 
 			/* use word addresses each row */
 			swordaddr = (saddr + 15) >> 4;
@@ -1484,14 +1492,16 @@ static void FUNCTION_NAME(pixblt_r)(int src_is_linear, int dst_is_linear)
 	{
 		tms34010_ICount -= state.gfxcycles;
 		P_FLAG = 0;
-		if (src_is_linear)
-			SADDR += DYDX_Y * SPTCH + DYDX_X * BITS_PER_PIXEL;
+		if (src_is_linear && dst_is_linear)
+			SADDR += DYDX_Y * SPTCH;
+		else if (src_is_linear)
+			SADDR += DYDX_Y * SPTCH;
 		else
-			SADDR_Y += DYDX_Y, SADDR_X += DYDX_X;
+			SADDR_Y += DYDX_Y;
 		if (dst_is_linear)
-			DADDR += DYDX_Y * DPTCH + DYDX_X * BITS_PER_PIXEL;
+			DADDR += DYDX_Y * DPTCH;
 		else
-			DADDR_Y += DYDX_Y, DADDR_X += DYDX_X;
+			DADDR_Y += DYDX_Y;
 	}
 }
 
@@ -1539,6 +1549,7 @@ static void FUNCTION_NAME(pixblt_b)(int dst_is_linear)
 		else
 			daddr = DADDR;
 		daddr &= ~(BITS_PER_PIXEL - 1);
+		LOGGFX(("  saddr=%08X daddr=%08X sptch=%08X dptch=%08X\n", saddr, daddr, SPTCH, DPTCH));
 
 		/* bail if we're clipped */
 		if (dx <= 0 || dy <= 0)
@@ -1690,11 +1701,11 @@ static void FUNCTION_NAME(pixblt_b)(int dst_is_linear)
 	{
 		tms34010_ICount -= state.gfxcycles;
 		P_FLAG = 0;
-		SADDR += DYDX_Y * SPTCH + DYDX_X;
+		SADDR += DYDX_Y * SPTCH;
 		if (dst_is_linear)
-			DADDR += DYDX_Y * DPTCH + DYDX_X * BITS_PER_PIXEL;
+			DADDR += DYDX_Y * DPTCH;
 		else
-			DADDR_Y += DYDX_Y, DADDR_X += DYDX_X;
+			DADDR_Y += DYDX_Y;
 	}
 }
 
@@ -1735,6 +1746,7 @@ static void FUNCTION_NAME(fill)(int dst_is_linear)
 		else
 			daddr = DADDR;
 		daddr &= ~(BITS_PER_PIXEL - 1);
+		LOGGFX(("  daddr=%08X\n", daddr));
 
 		/* bail if we're clipped */
 		if (dx <= 0 || dy <= 0)
@@ -1854,9 +1866,9 @@ static void FUNCTION_NAME(fill)(int dst_is_linear)
 		tms34010_ICount -= state.gfxcycles;
 		P_FLAG = 0;
 		if (dst_is_linear)
-			DADDR += DYDX_Y * DPTCH + DYDX_X * BITS_PER_PIXEL;
+			DADDR += DYDX_Y * DPTCH;
 		else
-			DADDR_Y += DYDX_Y, DADDR_X += DYDX_X;
+			DADDR_Y += DYDX_Y;
 	}
 }
 

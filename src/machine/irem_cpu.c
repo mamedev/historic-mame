@@ -33,9 +33,10 @@
 
 	Shisensho II                 			D8000020A1 023 9320NK700
 
-	Ninja Baseball Batman			?		?
+	World PK Soccer					Irem	D8000021A1
+	Ninja Baseball Batman			?		?  (same as World PK Soccer)
 
-	Perfect Soldiers						D8000022A1
+	Perfect Soldiers				Irem	D8000022A1
 
 	Dream Soccer '94				Irem	D8000023A1 026
 

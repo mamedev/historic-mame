@@ -12,7 +12,7 @@
 #include "cpu/tms34010/tms34010.h"
 #include "cpu/m6809/m6809.h"
 #include "sndhrdw/williams.h"
-
+#include "wmstunit.h"
 
 
 /* constant definitions */
@@ -39,32 +39,12 @@
 	wms_speedup_base = install_mem_read16_handler(0, TOBYTE((addr) & ~0x1f), TOBYTE((addr) | 0x1f), wms_generic_speedup_3);
 
 
-/* code-related variables */
-extern data16_t *wms_code_rom;
-
 /* CMOS-related variables */
-extern data16_t *wms_cmos_ram;
 static UINT8	cmos_write_enable;
-
-/* graphics-related variables */
-extern UINT8 *	wms_gfx_rom;
-extern size_t	wms_gfx_rom_size;
-extern UINT8	wms_gfx_rom_large;
 
 /* sound-related variables */
 static UINT8	sound_type;
 static UINT8	fake_sound_state;
-
-/* speedup-related variables */
-extern offs_t 	wms_speedup_pc;
-extern offs_t 	wms_speedup_offset;
-extern offs_t 	wms_speedup_spin[3];
-extern data16_t *wms_speedup_base;
-
-
-/* speedup-related prototypes */
-extern READ16_HANDLER( wms_generic_speedup_1_16bit );
-extern READ16_HANDLER( wms_generic_speedup_3 );
 
 
 

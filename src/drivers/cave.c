@@ -18,11 +18,13 @@ Other        :  93C46 EEPROM
 -----------------------------------------------------------------------------------
 Year + Game			License		PCB			Tilemaps		Sprites			Other
 -----------------------------------------------------------------------------------
-94	Mazinger Z		Banpresto	?			038 9335EX706	013 9341E7009
-95	Metamoqester	Banpresto	BP947A		038 9437WX711	013 9346E7002
-95	Sailor Moon		Banpresto	BP945A		038 9437WX711	013 9346E7002
+94	Mazinger Z		Banpresto	?			038 9335EX706	013 9341E7009	Z80
+94	PowerInstinct 2 Atlus		ATG02?		038 9429WX709?	?				Z80
+95	Metamoqester	Banpresto	BP947A		038 9437WX711	013 9346E7002	Z80
+95	Sailor Moon		Banpresto	BP945A		038 9437WX711	013 9346E7002	Z80
 95	Donpachi		Atlus		AT-C01DP-2	038 9429WX727	013 8647-01		NMK 112
-96	Hotdog Storm	Marble		?			?
+96	Air Gallet		Banpresto	BP962A		038 9437WX711	013 9346E7002	Z80
+96	Hotdog Storm	Marble		?			?								Z80
 97	Dodonpachi		Atlus		ATC03D2 	?
 98	Dangun Feveron	Nihon Sys.	CV01    	?
 98	ESP Ra.De.		Atlus		ATC04		?
@@ -272,6 +274,10 @@ static data8_t cave_default_eeprom_type3[16] =	{0x00,0x03,0x08,0x00,0xFF,0xFF,0x
 static data8_t cave_default_eeprom_type4[16] =	{0xF3,0xFE,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};  /* Hotdog Storm */
 static data8_t cave_default_eeprom_type5[16] =	{0xED,0xFF,0x00,0x00,0x12,0x31,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};  /* Mazinger Z (6th byte is country code) */
 static data8_t cave_default_eeprom_type6[18] =	{0xa5,0x00,0xa5,0x00,0xa5,0x00,0xa5,0x00,0xa5,0x01,0xa5,0x01,0xa5,0x04,0xa5,0x01,0xa5,0x02};	/* Sailor Moon (last byte is country code) */
+// Air Gallet. Byte 1f is the country code (0==JAPAN,U.S.A,EUROPE,HONGKONG,TAIWAN,KOREA)
+static data8_t cave_default_eeprom_type7[48] =	{0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+												 0x00,0x00,0x00,0x00,0x00,0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,
+												 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff};
 
 static data8_t *cave_default_eeprom;
 static int cave_default_eeprom_length;
@@ -475,12 +481,9 @@ static MEMORY_WRITE16_START( ddonpach_writemem )
 	{ 0x300000, 0x300003, cave_sound_w						},	// YMZ280
 	{ 0x400000, 0x407fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
 	{ 0x408000, 0x40ffff, MWA16_RAM							},	// Sprites?
-	{ 0x500000, 0x507fff, cave_vram_0_w, &cave_vram_0		},	// Layer 0
-	{ 0x600000, 0x607fff, cave_vram_1_w, &cave_vram_1		},	// Layer 1
-	{ 0x700000, 0x703fff, cave_vram_2_8x8_w, &cave_vram_2	},	// Layer 2
-	{ 0x704000, 0x707fff, cave_vram_2_8x8_w					},	// Layer 2 (mirror)
-	{ 0x708000, 0x70bfff, cave_vram_2_8x8_w					},	// Layer 2 (mirror)
-	{ 0x70c000, 0x70ffff, cave_vram_2_8x8_w					},	// Layer 2 (mirror)
+	{ 0x500000, 0x507fff, cave_vram_0_w,     &cave_vram_0	},	// Layer 0
+	{ 0x600000, 0x607fff, cave_vram_1_w,     &cave_vram_1	},	// Layer 1
+	{ 0x700000, 0x70ffff, cave_vram_2_8x8_w, &cave_vram_2	},	// Layer 2
 	{ 0x800000, 0x80007f, MWA16_RAM, &cave_videoregs		},	// Video Regs
 	{ 0x900000, 0x900005, MWA16_RAM, &cave_vctrl_0			},	// Layer 0 Control
 	{ 0xa00000, 0xa00005, MWA16_RAM, &cave_vctrl_1			},	// Layer 1 Control
@@ -576,8 +579,7 @@ static MEMORY_WRITE16_START( donpachi_writemem )
 	{ 0x100000, 0x10ffff, MWA16_RAM							},	// RAM
 	{ 0x200000, 0x207fff, cave_vram_1_w,     &cave_vram_1	},	// Layer 1
 	{ 0x300000, 0x307fff, cave_vram_0_w,     &cave_vram_0	},	// Layer 0
-	{ 0x400000, 0x403fff, cave_vram_2_8x8_w, &cave_vram_2	},	// Layer 2
-	{ 0x404000, 0x407fff, cave_vram_2_8x8_w					},	// Layer 2 (mirror)
+	{ 0x400000, 0x407fff, cave_vram_2_8x8_w, &cave_vram_2	},	// Layer 2
 	{ 0x500000, 0x507fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
 	{ 0x508000, 0x50ffff, MWA16_RAM							},	// Sprites?
 	{ 0x600000, 0x600005, MWA16_RAM, &cave_vctrl_1			},	// Layer 1 Control
@@ -744,8 +746,8 @@ static MEMORY_WRITE16_START( mazinger_writemem )
 	{ 0x300068, 0x300069, watchdog_reset16_w				},	// Watchdog
 	{ 0x30006e, 0x30006f, sound_cmd_w						},	// To Sound CPU
 	{ 0x300000, 0x30007f, MWA16_RAM, &cave_videoregs		},	// Video Regs
-	{ 0x404000, 0x407fff, cave_vram_1_8x8_w, &cave_vram_1	},	// Layer 1
-	{ 0x504000, 0x507fff, cave_vram_0_8x8_w, &cave_vram_0	},	// Layer 0
+	{ 0x400000, 0x407fff, cave_vram_1_8x8_w, &cave_vram_1	},	// Layer 1
+	{ 0x500000, 0x507fff, cave_vram_0_8x8_w, &cave_vram_0	},	// Layer 0
 	{ 0x600000, 0x600005, MWA16_RAM, &cave_vctrl_1			},	// Layer 1 Control
 	{ 0x700000, 0x700005, MWA16_RAM, &cave_vctrl_0			},	// Layer 0 Control
 	{ 0x900000, 0x900001, cave_eeprom_msb_w					},	// EEPROM
@@ -807,6 +809,78 @@ MEMORY_END
 
 
 /***************************************************************************
+								Power Instinct 2
+***************************************************************************/
+
+READ16_HANDLER( pwrinst2_eeprom_r )
+{
+	return ~8 + ((EEPROM_read_bit() & 1) ? 8 : 0);
+}
+
+INLINE void vctrl_w(data16_t *VCTRL, UNUSEDARG offs_t offset, UNUSEDARG data16_t data, UNUSEDARG data16_t mem_mask)
+{
+	if ( offset == 4/2 )
+	{
+		switch( data & 0x000f )
+		{
+			case 1:	data = (data & ~0x000f) | 0;	break;
+			case 2:	data = (data & ~0x000f) | 1;	break;
+			case 4:	data = (data & ~0x000f) | 2;	break;
+			default:
+			case 8:	data = (data & ~0x000f) | 3;	break;
+		}
+	}
+	COMBINE_DATA(&VCTRL[offset]);
+}
+WRITE16_HANDLER( pwrinst2_vctrl_0_w )	{ vctrl_w(cave_vctrl_0, offset, data, mem_mask); }
+WRITE16_HANDLER( pwrinst2_vctrl_1_w )	{ vctrl_w(cave_vctrl_1, offset, data, mem_mask); }
+WRITE16_HANDLER( pwrinst2_vctrl_2_w )	{ vctrl_w(cave_vctrl_2, offset, data, mem_mask); }
+WRITE16_HANDLER( pwrinst2_vctrl_3_w )	{ vctrl_w(cave_vctrl_3, offset, data, mem_mask); }
+
+static MEMORY_READ16_START( pwrinst2_readmem )
+	{ 0x000000, 0x1fffff, MRA16_ROM					},	// ROM
+	{ 0x400000, 0x40ffff, MRA16_RAM					},	// RAM
+	{ 0x500000, 0x500001, input_port_0_word_r		},	// Inputs
+	{ 0x500002, 0x500003, input_port_1_word_r		},	//
+	{ 0x800000, 0x807fff, MRA16_RAM					},	// Layer 0
+	{ 0x880000, 0x887fff, MRA16_RAM					},	// Layer 1
+	{ 0x900000, 0x907fff, MRA16_RAM					},	// Layer 2
+	{ 0x980000, 0x987fff, MRA16_RAM					},	// Layer 3
+	{ 0xa00000, 0xa07fff, MRA16_RAM					},	// Sprites
+	{ 0xa08000, 0xa0ffff, MRA16_RAM					},	// Sprites?
+	{ 0xa10000, 0xa1ffff, MRA16_RAM					},	// Sprites?
+/**/{ 0xb00000, 0xb00005, MRA16_RAM					},	// Layer 0 Control
+/**/{ 0xb80000, 0xb80005, MRA16_RAM					},	// Layer 1 Control
+/**/{ 0xc00000, 0xc00005, MRA16_RAM					},	// Layer 2 Control
+/**/{ 0xc80000, 0xc80005, MRA16_RAM					},	// Layer 3 Control
+	{ 0xa80000, 0xa8007f, donpachi_videoregs_r		},	// Video Regs
+	{ 0xd80000, 0xd80001, MRA16_NOP					},	// ? From Sound CPU
+	{ 0xe80000, 0xe80001, pwrinst2_eeprom_r			},	// EEPROM
+	{ 0xf00000, 0xf04fff, MRA16_RAM					},	// Palette
+MEMORY_END
+
+static MEMORY_WRITE16_START( pwrinst2_writemem )
+	{ 0x000000, 0x1fffff, MWA16_ROM							},	// ROM
+	{ 0x400000, 0x40ffff, MWA16_RAM							},	// RAM
+	{ 0x700000, 0x700001, cave_eeprom_msb_w					},	// EEPROM
+	{ 0x800000, 0x807fff, cave_vram_0_w,     &cave_vram_0	},	// Layer 0
+	{ 0x880000, 0x887fff, cave_vram_1_w,     &cave_vram_1	},	// Layer 1
+	{ 0x900000, 0x907fff, cave_vram_2_w,     &cave_vram_2	},	// Layer 2
+	{ 0x980000, 0x987fff, cave_vram_3_8x8_w, &cave_vram_3	},	// Layer 3
+	{ 0xa00000, 0xa07fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
+	{ 0xa08000, 0xa0ffff, MWA16_RAM							},	// Sprites?
+	{ 0xa10000, 0xa1ffff, MWA16_RAM							},	// Sprites?
+	{ 0xa80000, 0xa8007f, MWA16_RAM, &cave_videoregs		},	// Video Regs
+	{ 0xb00000, 0xb00005, pwrinst2_vctrl_0_w, &cave_vctrl_0			},	// Layer 0 Control
+	{ 0xb80000, 0xb80005, pwrinst2_vctrl_1_w, &cave_vctrl_1			},	// Layer 1 Control
+	{ 0xc00000, 0xc00005, pwrinst2_vctrl_2_w, &cave_vctrl_2			},	// Layer 2 Control
+	{ 0xc80000, 0xc80005, pwrinst2_vctrl_3_w, &cave_vctrl_3			},	// Layer 3 Control
+	{ 0xe00000, 0xe00001, sound_cmd_w						},	// To Sound CPU
+	{ 0xf00000, 0xf04fff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16 },	// Palette
+MEMORY_END
+
+
+/***************************************************************************
 								Sailorm Moon
 ***************************************************************************/
 
@@ -816,22 +890,63 @@ static READ16_HANDLER( sailormn_input0_r )
 	return readinputport(0);
 }
 
+/*
+	sailormn and agallet wait for bit 2 of $b80001 to go 1 -> 0.
+	It must happen once per frame as agallet uses this to show
+	the copyright notice screen for ~8.5s
+*/
+static READ16_HANDLER( sailormn_irq_cause_r )
+{
+	data16_t irq_cause = cave_irq_cause_r(offset,mem_mask);
+
+	if (offset == 0)
+	{
+		irq_cause &= ~4;
+		irq_cause |= (cpu_getvblank()?0:4);
+	}
+
+	return irq_cause;
+}
+
+static READ16_HANDLER( agallet_irq_cause_r )
+{
+	data16_t irq_cause = cave_irq_cause_r(offset,mem_mask);
+
+	if (offset == 0)
+	{
+		irq_cause &= ~4;
+		irq_cause |= (cpu_getvblank()?0:4);
+
+// Speed hack for agallet
+		if ((cpu_get_pc() == 0xcdca) && (irq_cause & 4))
+			cpu_spinuntil_int();
+	}
+
+	return irq_cause;
+}
+
 static MEMORY_READ16_START( sailormn_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM				},	// ROM
 	{ 0x100000, 0x10ffff, MRA16_RAM				},	// RAM
+	{ 0x110000, 0x110001, MRA16_RAM				},	// (agallet)
 	{ 0x200000, 0x3fffff, MRA16_ROM				},	// ROM
+	{ 0x400000, 0x407fff, MRA16_RAM				},	// (agallet)
 	{ 0x408000, 0x40bfff, MRA16_RAM				},	// Palette
+	{ 0x40c000, 0x40ffff, MRA16_RAM				},	// (agallet)
+	{ 0x410000, 0x410001, MRA16_RAM				},	// (agallet)
 	{ 0x500000, 0x507fff, MRA16_RAM				},	// Sprites
 	{ 0x508000, 0x50ffff, MRA16_RAM				},	// Sprites?
+	{ 0x510000, 0x510001, MRA16_RAM				},	// (agallet)
 	{ 0x600000, 0x600001, sailormn_input0_r		},	// Inputs + Watchdog!
 	{ 0x600002, 0x600003, cave_input1_r			},	// Inputs + EEPROM
 	{ 0x800000, 0x887fff, MRA16_RAM				},	// Layer 0
 	{ 0x880000, 0x887fff, MRA16_RAM				},	// Layer 1
 	{ 0x900000, 0x907fff, MRA16_RAM				},	// Layer 2
+	{ 0x908000, 0x908001, MRA16_RAM				},	// (agallet)
 /**/{ 0xa00000, 0xa00005, MRA16_RAM				},	// Layer 0 Control
 /**/{ 0xa80000, 0xa80005, MRA16_RAM				},	// Layer 1 Control
 /**/{ 0xb00000, 0xb00005, MRA16_RAM				},	// Layer 2 Control
-	{ 0xb80000, 0xb80007, cave_irq_cause_r		},	// IRQ Cause
+	{ 0xb80000, 0xb80007, sailormn_irq_cause_r	},	// IRQ Cause (bit 2 tested!)
 	{ 0xb8006c, 0xb8006d, soundflags_ack_r		},	// Communication
 	{ 0xb8006e, 0xb8006f, soundlatch_ack_r		},	// From Sound CPU
 MEMORY_END
@@ -839,14 +954,20 @@ MEMORY_END
 static MEMORY_WRITE16_START( sailormn_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM							},	// ROM
 	{ 0x100000, 0x10ffff, MWA16_RAM							},	// RAM
+	{ 0x110000, 0x110001, MWA16_RAM							},	// (agallet)
 	{ 0x200000, 0x3fffff, MWA16_ROM							},	// ROM
+	{ 0x400000, 0x407fff, MWA16_RAM							},	// (agallet)
 	{ 0x408000, 0x40bfff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16 },	// Palette
+	{ 0x40c000, 0x40ffff, MWA16_RAM							},	// (agallet)
+	{ 0x410000, 0x410001, MWA16_RAM							},	// (agallet)
 	{ 0x500000, 0x507fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
 	{ 0x508000, 0x50ffff, MWA16_RAM							},	// Sprites?
+	{ 0x510000, 0x510001, MWA16_RAM							},	// (agallet)
 	{ 0x700000, 0x700001, sailormn_eeprom_msb_w				},	// EEPROM
 	{ 0x800000, 0x807fff, cave_vram_0_w, &cave_vram_0		},	// Layer 0
 	{ 0x880000, 0x887fff, cave_vram_1_w, &cave_vram_1		},	// Layer 1
-	{ 0x900000, 0x907fff, cave_vram_2_8x8_w, &cave_vram_2	},	// Layer 2
+	{ 0x900000, 0x907fff, cave_vram_2_w, &cave_vram_2		},	// Layer 2
+	{ 0x908000, 0x908001, MWA16_RAM							},	// (agallet)
 	{ 0xa00000, 0xa00005, MWA16_RAM, &cave_vctrl_0			},	// Layer 0 Control
 	{ 0xa80000, 0xa80005, MWA16_RAM, &cave_vctrl_1			},	// Layer 1 Control
 	{ 0xb00000, 0xb00005, MWA16_RAM, &cave_vctrl_2			},	// Layer 2 Control
@@ -1053,8 +1174,101 @@ PORT_END
 
 
 /***************************************************************************
+								Power Instinct 2
+***************************************************************************/
+
+// TODO : FIX SAMPLES TABLE BEING OVERWRITTEN IN DONPACHI
+static WRITE_HANDLER( pwrinst2_okibank_w )
+{
+	/* The OKI6295 ROM space is divided in four banks, each one indepentently
+	   controlled. The sample table at the beginning of the addressing space is
+	   divided in four pages as well, banked together with the sample data. */
+
+	#define TABLESIZE 0x100
+	#define BANKSIZE 0x10000
+
+	int chip	=	offset / 4;
+	int banknum	=	offset % 4;
+
+	unsigned char *rom	=	memory_region(REGION_SOUND1 + chip);
+	int size			=	memory_region_length(REGION_SOUND1 + chip) - 0x40000;
+
+	int bankaddr		=	data * BANKSIZE;
+
+	if (Machine->sample_rate == 0)	return;
+
+	if (bankaddr >= size)
+	{
+		bankaddr %= size;
+logerror("CPU #1 - PC %06X: chip %d bank %X<-%02X\n",cpu_get_pc(),chip,banknum,data);
+	}
+
+	/* copy the samples */
+	if (banknum == 0)		/* skip table */
+		memcpy(rom + banknum * BANKSIZE+0x400,rom + 0x40000 + bankaddr+0x400,BANKSIZE-0x400);
+	else
+		memcpy(rom + banknum * BANKSIZE,rom + 0x40000 + bankaddr,BANKSIZE);
+
+	/* and also copy the samples address table (only for chip #1) */
+	rom += banknum * TABLESIZE;
+	memcpy(rom,rom + 0x40000 + bankaddr,TABLESIZE);
+}
+
+WRITE_HANDLER( pwrinst2_rombank_w )
+{
+	data8_t *ROM = memory_region(REGION_CPU2);
+	int bank = data & 0x07;
+	if ( data & ~0x07 )	logerror("CPU #1 - PC %04X: Bank %02X\n",cpu_get_pc(),data);
+	if (bank > 2)	bank+=1;
+	cpu_setbank(1, &ROM[ 0x4000 * bank ]);
+}
+
+static MEMORY_READ_START( pwrinst2_sound_readmem )
+	{ 0x0000, 0x7fff, MRA_ROM	},	// ROM
+	{ 0x8000, 0xbfff, MRA_BANK1	},	// ROM (Banked)
+	{ 0xe000, 0xffff, MRA_RAM	},	// RAM
+MEMORY_END
+
+static MEMORY_WRITE_START( pwrinst2_sound_writemem )
+	{ 0x0000, 0x7fff, MWA_ROM	},	// ROM
+	{ 0x8000, 0xbfff, MWA_ROM	},	// ROM (Banked)
+	{ 0xe000, 0xffff, MWA_RAM	},	// RAM
+MEMORY_END
+
+static PORT_READ_START( pwrinst2_sound_readport )
+	{ 0x00, 0x00, OKIM6295_status_0_r		},	// M6295
+	{ 0x08, 0x08, OKIM6295_status_1_r		},	//
+	{ 0x40, 0x40, YM2203_status_port_0_r	},	// YM2203
+	{ 0x41, 0x41, YM2203_read_port_0_r		},	//
+	{ 0x60, 0x60, soundlatch_hi_r			},	// From Main CPU
+	{ 0x70, 0x70, soundlatch_lo_r			},	//
+PORT_END
+
+static PORT_WRITE_START( pwrinst2_sound_writeport )
+	{ 0x00, 0x00, OKIM6295_data_0_w			},	// M6295
+	{ 0x08, 0x08, OKIM6295_data_1_w			},	//
+	{ 0x10, 0x17, pwrinst2_okibank_w		},	// Samples bank
+	{ 0x40, 0x40, YM2203_control_port_0_w	},	// YM2203
+	{ 0x41, 0x41, YM2203_write_port_0_w		},	//
+//	{ 0x50, 0x50, IOWP_NOP		},	// ?? volume
+//	{ 0x51, 0x51, IOWP_NOP		},	// ?? volume
+	{ 0x80, 0x80, pwrinst2_rombank_w		},	// ROM bank
+PORT_END
+
+
+/***************************************************************************
 								Sailorm Moon
 ***************************************************************************/
+
+static data8_t *mirror_ram;
+static READ_HANDLER( mirror_ram_r )
+{
+	return mirror_ram[offset];
+}
+static WRITE_HANDLER( mirror_ram_w )
+{
+	mirror_ram[offset] = data;
+}
 
 WRITE_HANDLER( sailormn_rombank_w )
 {
@@ -1078,23 +1292,25 @@ WRITE_HANDLER( sailormn_okibank0_w )
 WRITE_HANDLER( sailormn_okibank1_w )
 {
 	data8_t *RAM = memory_region(REGION_SOUND2);
-	int bank1 = (data >> 0) & 0x3;
-	int bank2 = (data >> 4) & 0x3;
+	int bank1 = (data >> 0) & 0xf;
+	int bank2 = (data >> 4) & 0xf;
 	if (Machine->sample_rate == 0)	return;
 	memcpy(RAM + 0x20000 * 0, RAM + 0x40000 + 0x20000 * bank1, 0x20000);
 	memcpy(RAM + 0x20000 * 1, RAM + 0x40000 + 0x20000 * bank2, 0x20000);
 }
 
 static MEMORY_READ_START( sailormn_sound_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM	},	// ROM
-	{ 0x4000, 0x7fff, MRA_BANK1	},	// ROM (Banked)
-	{ 0xc000, 0xdfff, MRA_RAM	},	// RAM
+	{ 0x0000, 0x3fff, MRA_ROM					},	// ROM
+	{ 0x4000, 0x7fff, MRA_BANK1					},	// ROM (Banked)
+	{ 0xc000, 0xdfff, mirror_ram_r				},	// RAM
+	{ 0xe000, 0xffff, mirror_ram_r				},	// Mirrored RAM (agallet)
 MEMORY_END
 
 static MEMORY_WRITE_START( sailormn_sound_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM	},	// ROM
-	{ 0x4000, 0x7fff, MWA_ROM	},	// ROM (Banked)
-	{ 0xc000, 0xdfff, MWA_RAM	},	// RAM
+	{ 0x0000, 0x3fff, MWA_ROM					},	// ROM
+	{ 0x4000, 0x7fff, MWA_ROM					},	// ROM (Banked)
+	{ 0xc000, 0xdfff, mirror_ram_w, &mirror_ram	},	// RAM
+	{ 0xe000, 0xffff, mirror_ram_w				},	// Mirrored RAM (agallet)
 MEMORY_END
 
 static PORT_READ_START( sailormn_sound_readport )
@@ -1314,34 +1530,6 @@ static struct GfxLayout layout_8x8x8 =
 	8*8*8
 };
 
-/* 16x16x4 tiles */
-static struct GfxLayout layout_16x16x4 =
-{
-	16,16,
-	RGN_FRAC(1,1),
-	4,
-	{0,1,2,3},
-	{0*4,1*4,2*4,3*4,4*4,5*4,6*4,7*4,
-	 64*4,65*4,66*4,67*4,68*4,69*4,70*4,71*4},
-	{0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32,
-	 16*32,17*32,18*32,19*32,20*32,21*32,22*32,23*32},
-	16*16*4
-};
-
-/* 16x16x8 tiles */
-static struct GfxLayout layout_16x16x8 =
-{
-	16,16,
-	RGN_FRAC(1,1),
-	8,
-	{8,9,10,11, 0,1,2,3},
-	{0*4,1*4,4*4,5*4,8*4,9*4,12*4,13*4,
-	 128*4,129*4,132*4,133*4,136*4,137*4,140*4,141*4},
-	{0*64,1*64,2*64,3*64,4*64,5*64,6*64,7*64,
-	 16*64,17*64,18*64,19*64,20*64,21*64,22*64,23*64},
-	16*16*8
-};
-
 #if 0
 /* 16x16x8 Zooming Sprites - No need to decode them */
 static struct GfxLayout layout_sprites =
@@ -1367,9 +1555,9 @@ static struct GfxDecodeInfo dfeveron_gfxdecodeinfo[] =
 	   for consistency with games having $8000 real colors.
 	   A vh_init_palette function is thus needed for sprites */
 
-	{ REGION_GFX1, 0, &layout_16x16x4,	0x4400, 0x40 }, // [0] Layer 0
-	{ REGION_GFX2, 0, &layout_16x16x4,	0x4400, 0x40 }, // [1] Layer 1
-//	{ REGION_GFX4, 0, &layout_sprites,	0x0000, 0x40 }, // Sprites
+//    REGION_GFX1										// Sprites
+	{ REGION_GFX2, 0, &layout_8x8x4,	0x4400, 0x40 }, // [0] Layer 0
+	{ REGION_GFX3, 0, &layout_8x8x4,	0x4400, 0x40 }, // [1] Layer 1
 	{ -1 }
 };
 
@@ -1385,10 +1573,10 @@ static struct GfxDecodeInfo ddonpach_gfxdecodeinfo[] =
 	   in the color table). Layer 2 uses the whole 256 for any given
 	   color code and the 4000-7fff range in the color table.	*/
 
-	{ REGION_GFX1, 0, &layout_16x16x4,	0x8000, 0x40 }, // [0] Layer 0
-	{ REGION_GFX2, 0, &layout_16x16x4,	0x8000, 0x40 }, // [1] Layer 1
-	{ REGION_GFX3, 0, &layout_8x8x8,	0x4000, 0x40 }, // [2] Layer 2
-//	{ REGION_GFX4, 0, &layout_sprites,	0x0000, 0x40 }, // Sprites
+//    REGION_GFX1										// Sprites
+	{ REGION_GFX2, 0, &layout_8x8x4,	0x8000, 0x40 }, // [0] Layer 0
+	{ REGION_GFX3, 0, &layout_8x8x4,	0x8000, 0x40 }, // [1] Layer 1
+	{ REGION_GFX4, 0, &layout_8x8x8,	0x4000, 0x40 }, // [2] Layer 2
 	{ -1 }
 };
 
@@ -1403,10 +1591,10 @@ static struct GfxDecodeInfo donpachi_gfxdecodeinfo[] =
 	   for consistency with games having $8000 real colors.
 	   A vh_init_palette function is thus needed for sprites */
 
-	{ REGION_GFX1, 0, &layout_16x16x4,	0x4400, 0x40 }, // [0] Layer 0
-	{ REGION_GFX2, 0, &layout_16x16x4,	0x4400, 0x40 }, // [1] Layer 1
-	{ REGION_GFX3, 0, &layout_8x8x4,	0x4400, 0x40 }, // [2] Layer 2
-//	{ REGION_GFX4, 0, &layout_sprites,	0x0000, 0x40 }, // Sprites
+//    REGION_GFX1										// Sprites
+	{ REGION_GFX2, 0, &layout_8x8x4,	0x4400, 0x40 }, // [0] Layer 0
+	{ REGION_GFX3, 0, &layout_8x8x4,	0x4400, 0x40 }, // [1] Layer 1
+	{ REGION_GFX4, 0, &layout_8x8x4,	0x4400, 0x40 }, // [2] Layer 2
 	{ -1 }
 };
 
@@ -1416,10 +1604,10 @@ static struct GfxDecodeInfo donpachi_gfxdecodeinfo[] =
 
 static struct GfxDecodeInfo esprade_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &layout_16x16x8,	0x4000, 0x40 }, // [0] Layer 0
-	{ REGION_GFX2, 0, &layout_16x16x8,	0x4000, 0x40 }, // [1] Layer 1
-	{ REGION_GFX3, 0, &layout_16x16x8,	0x4000, 0x40 }, // [2] Layer 2
-//	{ REGION_GFX4, 0, &layout_sprites,	0x0000, 0x40 }, // Sprites
+//    REGION_GFX1										// Sprites
+	{ REGION_GFX2, 0, &layout_8x8x8,	0x4000, 0x40 }, // [0] Layer 0
+	{ REGION_GFX3, 0, &layout_8x8x8,	0x4000, 0x40 }, // [1] Layer 1
+	{ REGION_GFX4, 0, &layout_8x8x8,	0x4000, 0x40 }, // [2] Layer 2
 	{ -1 }
 };
 
@@ -1434,10 +1622,10 @@ static struct GfxDecodeInfo hotdogst_gfxdecodeinfo[] =
 	   for consistency with games having $8000 real colors.
 	   A vh_init_palette function is needed for sprites */
 
-	{ REGION_GFX1, 0, &layout_16x16x4,	0x4000, 0x40 }, // [0] Layer 0
-	{ REGION_GFX2, 0, &layout_16x16x4,	0x4000, 0x40 }, // [1] Layer 1
-	{ REGION_GFX3, 0, &layout_16x16x4,	0x4000, 0x40 }, // [2] Layer 2
-//	{ REGION_GFX4, 0, &layout_sprites,	0x0000, 0x40 }, // Sprites
+//    REGION_GFX1										// Sprites
+	{ REGION_GFX2, 0, &layout_8x8x4,	0x4000, 0x40 }, // [0] Layer 0
+	{ REGION_GFX3, 0, &layout_8x8x4,	0x4000, 0x40 }, // [1] Layer 1
+	{ REGION_GFX4, 0, &layout_8x8x4,	0x4000, 0x40 }, // [2] Layer 2
 	{ -1 }
 };
 
@@ -1455,28 +1643,24 @@ static struct GfxDecodeInfo mazinger_gfxdecodeinfo[] =
 		$40 color codes, only $400 colors are addressable.
 		A vh_init_palette is thus needed for sprites and layer 0.	*/
 
-	{ REGION_GFX1, 0, &layout_8x8x4,	0x4000, 0x40 }, // [0] Layer 0
-	{ REGION_GFX2, 0, &layout_8x8x6,	0x4400, 0x40 }, // [1] Layer 1
-//	{ REGION_GFX4, 0, &layout_sprites,	0x0000, 0x40 }, // Sprites
+//    REGION_GFX1										// Sprites
+	{ REGION_GFX2, 0, &layout_8x8x4,	0x4000, 0x40 }, // [0] Layer 0
+	{ REGION_GFX3, 0, &layout_8x8x6,	0x4400, 0x40 }, // [1] Layer 1
 	{ -1 }
 };
 
 
 /***************************************************************************
-								Metamoqester
+								Power Instinct 2
 ***************************************************************************/
 
-static struct GfxDecodeInfo metmqstr_gfxdecodeinfo[] =
+static struct GfxDecodeInfo pwrinst2_gfxdecodeinfo[] =
 {
-	/* There are only $800 colors here, the first half for sprites
-	   the second half for tiles. We use $8000 virtual colors instead
-	   for consistency with games having $8000 real colors.
-	   A vh_init_palette function is thus needed for sprites */
-
-	{ REGION_GFX1, 0, &layout_16x16x4,	0x4400, 0x40 }, // [0] Layer 0
-	{ REGION_GFX2, 0, &layout_16x16x4,	0x4400, 0x40 }, // [1] Layer 1
-	{ REGION_GFX3, 0, &layout_16x16x4,	0x4400, 0x40 }, // [2] Layer 2
-//	{ REGION_GFX4, 0, &layout_sprites,	0x0000, 0x40 }, // Sprites
+//    REGION_GFX1										// Sprites
+	{ REGION_GFX2, 0, &layout_8x8x4,	0x1800, 0x40 }, // [0] Layer 0
+	{ REGION_GFX3, 0, &layout_8x8x4,	0x0800, 0x40 }, // [1] Layer 1
+	{ REGION_GFX4, 0, &layout_8x8x4,	0x1000, 0x40 }, // [2] Layer 2
+	{ REGION_GFX5, 0, &layout_8x8x4,	0x2000, 0x40 }, // [3] Layer 3
 	{ -1 }
 };
 
@@ -1488,10 +1672,10 @@ static struct GfxDecodeInfo metmqstr_gfxdecodeinfo[] =
 static struct GfxDecodeInfo sailormn_gfxdecodeinfo[] =
 {
 	/* 4 bit sprites ? */
-	{ REGION_GFX1, 0, &layout_16x16x4,	0x4400, 0x40 }, // [0] Layer 0
-	{ REGION_GFX2, 0, &layout_16x16x4,	0x4800, 0x40 }, // [1] Layer 1
-	{ REGION_GFX3, 0, &layout_8x8x6_2,	0x4c00, 0x40 }, // [2] Layer 2
-//	{ REGION_GFX4, 0, &layout_sprites,	0x0000, 0x40 }, // Sprites
+//    REGION_GFX1										// Sprites
+	{ REGION_GFX2, 0, &layout_8x8x4,	0x4400, 0x40 }, // [0] Layer 0
+	{ REGION_GFX3, 0, &layout_8x8x4,	0x4800, 0x40 }, // [1] Layer 1
+	{ REGION_GFX4, 0, &layout_8x8x6_2,	0x4c00, 0x40 }, // [2] Layer 2
 	{ -1 }
 };
 
@@ -1502,8 +1686,8 @@ static struct GfxDecodeInfo sailormn_gfxdecodeinfo[] =
 
 static struct GfxDecodeInfo uopoko_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &layout_16x16x8,	0x4000, 0x40 }, // [0] Layer 0
-//	{ REGION_GFX4, 0, &layout_sprites,	0x0000, 0x40 }, // Sprites
+//    REGION_GFX1										// Sprites
+	{ REGION_GFX2, 0, &layout_8x8x8,	0x4000, 0x40 }, // [0] Layer 0
 	{ -1 }
 };
 
@@ -1622,7 +1806,7 @@ static const struct MachineDriver machine_driver_dfeveron =
 	dfeveron_vh_init_palette,
 	VIDEO_TYPE_RASTER,
 	0,
-	cave_vh_start_16_16_0,
+	cave_vh_start_2_layers,
 	cave_vh_stop,
 	cave_vh_screenrefresh,
 
@@ -1661,7 +1845,7 @@ static const struct MachineDriver machine_driver_ddonpach =
 	ddonpach_vh_init_palette,
 	VIDEO_TYPE_RASTER,
 	0,
-	cave_vh_start_16_16_8,
+	cave_vh_start_3_layers,
 	cave_vh_stop,
 	cave_vh_screenrefresh,
 
@@ -1700,7 +1884,7 @@ static const struct MachineDriver machine_driver_donpachi =
 	dfeveron_vh_init_palette,
 	VIDEO_TYPE_RASTER,
 	0,
-	cave_vh_start_16_16_8,
+	cave_vh_start_3_layers,
 	cave_vh_stop,
 	cave_vh_screenrefresh,
 
@@ -1739,7 +1923,7 @@ static const struct MachineDriver machine_driver_esprade =
 	0,
 	VIDEO_TYPE_RASTER,
 	0,
-	cave_vh_start_16_16_16,
+	cave_vh_start_3_layers,
 	cave_vh_stop,
 	cave_vh_screenrefresh,
 
@@ -1778,7 +1962,7 @@ static const struct MachineDriver machine_driver_guwange =
 	0,
 	VIDEO_TYPE_RASTER,
 	0,
-	cave_vh_start_16_16_16,
+	cave_vh_start_3_layers,
 	cave_vh_stop,
 	cave_vh_screenrefresh,
 
@@ -1823,7 +2007,7 @@ static const struct MachineDriver machine_driver_hotdogst =
 	dfeveron_vh_init_palette,
 	VIDEO_TYPE_RASTER,
 	0,
-	cave_vh_start_16_16_16,
+	cave_vh_start_3_layers,
 	cave_vh_stop,
 	cave_vh_screenrefresh,
 
@@ -1869,7 +2053,7 @@ static const struct MachineDriver machine_driver_mazinger =
 	mazinger_vh_init_palette,
 	VIDEO_TYPE_RASTER,
 	0,
-	cave_vh_start_8_8_0,
+	cave_vh_start_2_layers,
 	cave_vh_stop,
 	cave_vh_screenrefresh,
 
@@ -1911,12 +2095,12 @@ static const struct MachineDriver machine_driver_metmqstr =
 
 	/* video hardware */
 	0x200, 240, { 0x7d, 0x7d + 0x180-1, 0, 240-1 },
-	metmqstr_gfxdecodeinfo,
+	donpachi_gfxdecodeinfo,
 	0x800, 0x8000,	/* $8000 palette entries for consistency with the other games */
 	dfeveron_vh_init_palette,
 	VIDEO_TYPE_RASTER,
 	0,
-	cave_vh_start_16_16_16,
+	cave_vh_start_3_layers,
 	cave_vh_stop,
 	cave_vh_screenrefresh,
 
@@ -1932,7 +2116,77 @@ static const struct MachineDriver machine_driver_metmqstr =
 
 
 /***************************************************************************
-								Sailor Moon
+								Power Instinct 2
+***************************************************************************/
+
+/*	X1 = 12 MHz, X2 = 28 MHz, X3 = 16 MHz. OKI: / 165 mode A ; / 132 mode B */
+
+//	sound1 is wrong!! (it seems to require only ~1 ipf on the z80?)
+static struct OKIM6295interface okim6295_intf_pwrinst2 =
+{
+	2,
+	{ 16000000 / 8 / 132,		16000000 / 8 / 132	},
+	{ REGION_SOUND1, 			REGION_SOUND2		},
+	{ 0, 	/*<-wrong */		50					}
+};
+
+static struct YM2203interface ym2203_intf_pwrinst2 =
+{
+	1,
+	16000000 / 4,	/* ? */
+	{ YM2203_VOL(100,100) },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ irqhandler }
+};
+
+static const struct MachineDriver machine_driver_pwrinst2 =
+{
+	{
+		{
+			CPU_M68000,
+			16000000,
+			pwrinst2_readmem, pwrinst2_writemem,0,0,
+			cave_interrupt, 1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			16000000 / 2,	/* ? */
+			pwrinst2_sound_readmem,  pwrinst2_sound_writemem,
+			pwrinst2_sound_readport, pwrinst2_sound_writeport,
+			ignore_interrupt,0	/* NMI triggered by main CPU, IRQ triggered by YM2203 */
+		}
+	},
+	15625/271.5,DEFAULT_60HZ_VBLANK_DURATION,				//ks
+	1,
+	cave_init_machine,
+
+	/* video hardware */
+	0x200, 240, { 0x72, 0x72 + 0x140-1, 0, 240-1 },
+	pwrinst2_gfxdecodeinfo,
+	0x5000/2, 0x8000,	/* $8000 palette entries for consistency with the other games */
+	0,
+	VIDEO_TYPE_RASTER,
+	0,
+	cave_vh_start_4_layers,
+	cave_vh_stop,
+	cave_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{	SOUND_YM2203,	&ym2203_intf_pwrinst2		},
+		{	SOUND_OKIM6295,	&okim6295_intf_pwrinst2		}
+	},
+
+	cave_nvram_handler
+};
+
+
+/***************************************************************************
+						Sailor Moon / Air Gallet
 ***************************************************************************/
 
 static const struct MachineDriver machine_driver_sailormn =
@@ -1951,18 +2205,19 @@ static const struct MachineDriver machine_driver_sailormn =
 			ignore_interrupt,0	/* NMI triggered by main CPU, IRQ triggered by YM2151 */
 		}
 	},
-	15625/271.5,DEFAULT_60HZ_VBLANK_DURATION,				//ks
+	15625/271.5, DEFAULT_REAL_60HZ_VBLANK_DURATION,	// we use cpu_getvblank
 	10,
 	cave_init_machine,
 
 	/* video hardware */
-	320, 240, { 0, 320-1, 0, 240-1 },
+//	320, 240, { 0, 320-1, 0, 240-1 },
+	320+1, 240, { 0+1, 320+1-1, 0, 240-1 },
 	sailormn_gfxdecodeinfo,
 	0x2000, 0x8000,	/* $8000 palette entries for consistency with the other games */
-	dfeveron_vh_init_palette,	// 4 bit sprites
+	sailormn_vh_init_palette,	// 4 bit sprites, 6 bit tiles
 	VIDEO_TYPE_RASTER,
 	0,
-	sailormn_vh_start_16_16_8,	/* Layer 2 has a banked ROM and a peculiar layout */
+	sailormn_vh_start_3_layers,	/* Layer 2 has 1 banked ROM */
 	cave_vh_stop,
 	cave_vh_screenrefresh,
 
@@ -2002,7 +2257,7 @@ static const struct MachineDriver machine_driver_uopoko =
 	0,
 	VIDEO_TYPE_RASTER,
 	0,
-	cave_vh_start_16_0_0,
+	cave_vh_start_1_layer,
 	cave_vh_stop,
 	cave_vh_screenrefresh,
 
@@ -2027,7 +2282,7 @@ static const struct MachineDriver machine_driver_uopoko =
 /* 4 bits -> 8 bits. Even and odd pixels are swapped */
 static void unpack_sprites(void)
 {
-	const int region		=	REGION_GFX4;	// sprites
+	const int region		=	REGION_GFX1;	// sprites
 
 	const unsigned int len	=	memory_region_length(region);
 	unsigned char *src		=	memory_region(region) + len / 2 - 1;
@@ -2045,7 +2300,7 @@ static void unpack_sprites(void)
 /* 4 bits -> 8 bits. Even and odd pixels and even and odd words, are swapped */
 static void ddonpach_unpack_sprites(void)
 {
-	const int region		=	REGION_GFX4;	// sprites
+	const int region		=	REGION_GFX1;	// sprites
 
 	const unsigned int len	=	memory_region_length(region);
 	unsigned char *src		=	memory_region(region) + len / 2 - 1;
@@ -2070,7 +2325,7 @@ static void ddonpach_unpack_sprites(void)
 /* 2 pages of 4 bits -> 8 bits */
 static void esprade_unpack_sprites(void)
 {
-	const int region		=	REGION_GFX4;	// sprites
+	const int region		=	REGION_GFX1;	// sprites
 
 	unsigned char *src		=	memory_region(region);
 	unsigned char *dst		=	memory_region(region) + memory_region_length(region);
@@ -2089,6 +2344,85 @@ static void esprade_unpack_sprites(void)
 
 /***************************************************************************
 
+								Air Gallet
+
+Banpresto
+Runs on identical board to Sailor Moon (several sockets unpopulated)
+
+PCB: BP945A (overstamped with BP962A)
+CPU: TMP68HC000P16 (68000, 64 pin DIP)
+SND: Z84C0008PEC (Z80, 40 pin DIP), OKI M6295 x 2, YM2151, YM3012
+OSC: 28.000MHz, 16.000MHz
+RAM: 62256 x 8, NEC 424260 x 2, 6264 x 5
+
+Other Chips:
+SGS Thomson ST93C46CB1 (EEPROM)
+PALS (same as Sailor Moon, not dumped):
+      18CV8 label SMBG
+      18CV8 label SMZ80
+      18CV8 label SMCPU
+      GAL16V8 (located near BP962A.U47)
+
+GFX:  038 9437WX711 (176 pin PQFP)
+      038 9437WX711 (176 pin PQFP)
+      038 9437WX711 (176 pin PQFP)
+      013 9346E7002 (240 pin PQFP)
+
+On PCB near JAMMA connector is a small push button to access test mode.
+
+ROMS:
+BP962A.U9	27C040		Sound Program
+BP962A.U45	27C240		Main Program
+BP962A.U47	23C16000	Sound
+BP962A.U48	23C16000	Sound
+BP962A.U53	23C16000	GFX
+BP962A.U54	23C16000	GFX
+BP962A.U57	23C16000	GFX
+BP962A.U65	23C16000	GFX
+BP962A.U76	23C16000	GFX
+BP962A.U77	23C16000	GFX
+
+***************************************************************************/
+
+ROM_START( agallet )	// Shows "Taiwan Only" on the copyright notice screen.
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )		/* 68000 code */
+	ROM_LOAD16_WORD_SWAP( "bp962a.u45", 0x000000, 0x080000, 0x24815046 )
+	//empty
+
+	ROM_REGION( 0x88000, REGION_CPU2, 0 )	/* Z80 code */
+	ROM_LOAD( "bp962a.u9",  0x00000, 0x08000, 0x06caddbe )	// 1xxxxxxxxxxxxxxxxxx = 0xFF
+	ROM_CONTINUE(           0x10000, 0x78000             )
+
+	ROM_REGION( 0x400000 * 2, REGION_GFX1, 0 )		/* Sprites (do not dispose) */
+	ROM_LOAD( "bp962a.u76", 0x000000, 0x200000, 0x858da439 )
+	ROM_LOAD( "bp962a.u77", 0x200000, 0x200000, 0xea2ba35e )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "bp962a.u53", 0x000000, 0x100000, 0xfcd9a107 )	// FIRST AND SECOND HALF IDENTICAL
+	ROM_CONTINUE(           0x000000, 0x100000             )
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "bp962a.u54", 0x000000, 0x200000, 0x0cfa3409 )
+
+	ROM_REGION( (1*0x200000)*2, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
+	/* 4 bit part */
+	ROM_LOAD( "bp962a.u57", 0x000000, 0x200000, 0x6d608957 )
+	/* 2 bit part */
+	ROM_LOAD( "bp962a.u65", 0x200000, 0x100000, 0x135fcf9a )	// FIRST AND SECOND HALF IDENTICAL
+	ROM_CONTINUE(           0x200000, 0x100000             )
+
+	ROM_REGION( 0x240000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* OKIM6295 #0 Samples */
+	/* Leave the 0x40000 bytes addressable by the chip empty */
+	ROM_LOAD( "bp962a.u48", 0x040000, 0x200000, 0xae00a1ce )	// 16 x $20000, FIRST AND SECOND HALF IDENTICAL
+
+	ROM_REGION( 0x240000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* OKIM6295 #1 Samples */
+	/* Leave the 0x40000 bytes addressable by the chip empty */
+	ROM_LOAD( "bp962a.u47", 0x040000, 0x200000, 0x6d4e9737 )	// 16 x $20000, FIRST AND SECOND HALF IDENTICAL
+ROM_END
+
+
+/***************************************************************************
+
 								Dangun Feveron
 
 Board:	CV01
@@ -2101,18 +2435,15 @@ ROM_START( dfeveron )
 	ROM_LOAD16_BYTE( "cv01-u34.bin", 0x000000, 0x080000, 0xbe87f19d )
 	ROM_LOAD16_BYTE( "cv01-u33.bin", 0x000001, 0x080000, 0xe53a7db3 )
 
-	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* Layer 0 */
-	ROM_LOAD( "cv01-u50.bin", 0x000000, 0x200000, 0x7a344417 )
-
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
-	ROM_LOAD( "cv01-u49.bin", 0x000000, 0x200000, 0xd21cdda7 )
-
-//	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 2 */
-//	empty
-
-	ROM_REGION( 0x800000 * 2, REGION_GFX4, 0 )		/* Sprites: * 2 , do not dispose */
+	ROM_REGION( 0x800000 * 2, REGION_GFX1, 0 )		/* Sprites: * 2 , do not dispose */
 	ROM_LOAD( "cv01-u25.bin", 0x000000, 0x400000, 0xa6f6a95d )
 	ROM_LOAD( "cv01-u26.bin", 0x400000, 0x400000, 0x32edb62a )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "cv01-u50.bin", 0x000000, 0x200000, 0x7a344417 )
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "cv01-u49.bin", 0x000000, 0x200000, 0xd21cdda7 )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "cv01-u19.bin", 0x000000, 0x400000, 0x5f5514da )
@@ -2137,20 +2468,20 @@ ROM_START( ddonpach )
 	ROM_LOAD16_BYTE( "u27.bin", 0x000000, 0x080000, 0x2432ff9b )
 	ROM_LOAD16_BYTE( "u26.bin", 0x000001, 0x080000, 0x4f3a914a )
 
-	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* Layer 0 */
-	ROM_LOAD( "u60.bin", 0x000000, 0x200000, 0x903096a7 )
-
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
-	ROM_LOAD( "u61.bin", 0x000000, 0x200000, 0xd89b7631 )
-
-	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 2 */
-	ROM_LOAD( "u62.bin", 0x000000, 0x200000, 0x292bfb6b )
-
-	ROM_REGION( 0x800000 * 2, REGION_GFX4, 0 )		/* Sprites: * 2, do not dispose */
+	ROM_REGION( 0x800000 * 2, REGION_GFX1, 0 )		/* Sprites: * 2, do not dispose */
 	ROM_LOAD( "u50.bin", 0x000000, 0x200000, 0x14b260ec )
 	ROM_LOAD( "u51.bin", 0x200000, 0x200000, 0xe7ba8cce )
 	ROM_LOAD( "u52.bin", 0x400000, 0x200000, 0x02492ee0 )
 	ROM_LOAD( "u53.bin", 0x600000, 0x200000, 0xcb4c10f0 )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "u60.bin", 0x000000, 0x200000, 0x903096a7 )
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "u61.bin", 0x000000, 0x200000, 0xd89b7631 )
+
+	ROM_REGION( 0x200000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "u62.bin", 0x000000, 0x200000, 0x292bfb6b )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "u6.bin", 0x000000, 0x200000, 0x9dfdafaf )
@@ -2188,18 +2519,45 @@ ROM_START( donpachi )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 code */
 	ROM_LOAD16_WORD_SWAP( "prg.u29",     0x00000, 0x80000, 0x6be14af6 )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* Layer 0 */
-	ROM_LOAD( "atdp.u54", 0x000000, 0x100000, 0x6bda6b66 )
-
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
-	ROM_LOAD( "atdp.u57", 0x000000, 0x100000, 0x0a0e72b9 )
-
-	ROM_REGION( 0x040000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 2 */
-	ROM_LOAD( "u58.bin", 0x000000, 0x040000, 0x285379ff )
-
-	ROM_REGION( 0x400000 * 2, REGION_GFX4, 0 )		/* Sprites (do not dispose) */
+	ROM_REGION( 0x400000 * 2, REGION_GFX1, 0 )		/* Sprites (do not dispose) */
 	ROM_LOAD( "atdp.u44", 0x000000, 0x200000, 0x7189e953 )
 	ROM_LOAD( "atdp.u45", 0x200000, 0x200000, 0x6984173f )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "atdp.u54", 0x000000, 0x100000, 0x6bda6b66 )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "atdp.u57", 0x000000, 0x100000, 0x0a0e72b9 )
+
+	ROM_REGION( 0x040000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "u58.bin", 0x000000, 0x040000, 0x285379ff )
+
+	ROM_REGION( 0x240000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* OKIM6295 #1 Samples */
+	/* Leave the 0x40000 bytes addressable by the chip empty */
+	ROM_LOAD( "atdp.u33", 0x040000, 0x200000, 0xd749de00 )
+
+	ROM_REGION( 0x340000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* OKIM6295 #2 Samples */
+	/* Leave the 0x40000 bytes addressable by the chip empty */
+	ROM_LOAD( "atdp.u32", 0x040000, 0x100000, 0x0d89fcca )
+	ROM_LOAD( "atdp.u33", 0x140000, 0x200000, 0xd749de00 )
+ROM_END
+
+ROM_START( donpachk )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 code */
+	ROM_LOAD16_WORD_SWAP( "prgk.u26",    0x00000, 0x80000, 0xbbaf4c8b )
+
+	ROM_REGION( 0x400000 * 2, REGION_GFX1, 0 )		/* Sprites (do not dispose) */
+	ROM_LOAD( "atdp.u44", 0x000000, 0x200000, 0x7189e953 )
+	ROM_LOAD( "atdp.u45", 0x200000, 0x200000, 0x6984173f )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "atdp.u54", 0x000000, 0x100000, 0x6bda6b66 )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "atdp.u57", 0x000000, 0x100000, 0x0a0e72b9 )
+
+	ROM_REGION( 0x040000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "u58.bin", 0x000000, 0x040000, 0x285379ff )
 
 	ROM_REGION( 0x240000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* OKIM6295 #1 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
@@ -2226,22 +2584,22 @@ ROM_START( esprade )
 	ROM_LOAD16_BYTE( "u42.bin", 0x000000, 0x080000, 0x0718c7e5 )
 	ROM_LOAD16_BYTE( "u41.bin", 0x000001, 0x080000, 0xdef30539 )
 
-	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )	/* Layer 0 */
-	ROM_LOAD( "u54.bin", 0x000000, 0x400000, 0xe7ca6936 )
-	ROM_LOAD( "u55.bin", 0x400000, 0x400000, 0xf53bd94f )
-
-	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
-	ROM_LOAD( "u52.bin", 0x000000, 0x400000, 0xe7abe7b4 )
-	ROM_LOAD( "u53.bin", 0x400000, 0x400000, 0x51a0f391 )
-
-	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 2 */
-	ROM_LOAD( "u51.bin", 0x000000, 0x400000, 0x0b9b875c )
-
-	ROM_REGION( 0x1000000, REGION_GFX4, 0 )		/* Sprites (do not dispose) */
+	ROM_REGION( 0x1000000, REGION_GFX1, 0 )		/* Sprites (do not dispose) */
 	ROM_LOAD16_BYTE( "u63.bin", 0x000000, 0x400000, 0x2f2fe92c )
 	ROM_LOAD16_BYTE( "u64.bin", 0x000001, 0x400000, 0x491a3da4 )
 	ROM_LOAD16_BYTE( "u65.bin", 0x800000, 0x400000, 0x06563efe )
 	ROM_LOAD16_BYTE( "u66.bin", 0x800001, 0x400000, 0x7bbe4cfc )
+
+	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "u54.bin", 0x000000, 0x400000, 0xe7ca6936 )
+	ROM_LOAD( "u55.bin", 0x400000, 0x400000, 0xf53bd94f )
+
+	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "u52.bin", 0x000000, 0x400000, 0xe7abe7b4 )
+	ROM_LOAD( "u53.bin", 0x400000, 0x400000, 0x51a0f391 )
+
+	ROM_REGION( 0x400000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "u51.bin", 0x000000, 0x400000, 0x0b9b875c )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "u19.bin", 0x000000, 0x400000, 0xf54b1cab )
@@ -2266,16 +2624,7 @@ ROM_START( guwange )
 	ROM_LOAD16_BYTE( "gu-u0127.bin", 0x000000, 0x080000, 0xf86b5293 )
 	ROM_LOAD16_BYTE( "gu-u0129.bin", 0x000001, 0x080000, 0x6c0e3b93 )
 
-	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )	/* Layer 0 */
-	ROM_LOAD( "u101.bin", 0x000000, 0x800000, 0x0369491f )
-
-	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
-	ROM_LOAD( "u10102.bin", 0x000000, 0x400000, 0xe28d6855 )
-
-	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 2 */
-	ROM_LOAD( "u10103.bin", 0x000000, 0x400000, 0x0fe91b8e )
-
-	ROM_REGION( 0x2000000, REGION_GFX4, 0 )		/* Sprites (do not dispose) */		//ks
+	ROM_REGION( 0x2000000, REGION_GFX1, 0 )		/* Sprites (do not dispose) */		//ks
 	ROM_LOAD16_BYTE( "u083.bin", 0x0000000, 0x800000, 0xadc4b9c4 )
 	ROM_LOAD16_BYTE( "u082.bin", 0x0000001, 0x800000, 0x3d75876c )
 	ROM_LOAD16_BYTE( "u086.bin", 0x1000000, 0x400000, 0x188e4f81 )
@@ -2289,6 +2638,15 @@ ROM_START( guwange )
 	ROM_RELOAD(                  0x1800001, 0x400000 )
 #endif
 //ks e
+
+	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "u101.bin", 0x000000, 0x800000, 0x0369491f )
+
+	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "u10102.bin", 0x000000, 0x400000, 0xe28d6855 )
+
+	ROM_REGION( 0x400000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "u10103.bin", 0x000000, 0x400000, 0x0fe91b8e )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "u0462.bin", 0x000000, 0x400000, 0xb3d75691 )
@@ -2325,18 +2683,18 @@ ROM_START( hotdogst )
 	ROM_LOAD( "mp2u19", 0x00000, 0x08000, 0xff979ebe )	// FIRST AND SECOND HALF IDENTICAL
 	ROM_CONTINUE(       0x10000, 0x38000             )
 
-	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )	/* Layer 0 */
-	ROM_LOAD( "mp7u56", 0x00000, 0x80000, 0x87c21c50 )
-
-	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
-	ROM_LOAD( "mp6u61", 0x00000, 0x80000, 0x4dafb288 )
-
-	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 2 */
-	ROM_LOAD( "mp5u64", 0x00000, 0x80000, 0x9b26458c )
-
-	ROM_REGION( 0x400000 * 2, REGION_GFX4, 0 )		/* Sprites: * 2 , do not dispose */
+	ROM_REGION( 0x400000 * 2, REGION_GFX1, 0 )		/* Sprites: * 2 , do not dispose */
 	ROM_LOAD( "mp9u55", 0x000000, 0x200000, 0x258d49ec )
 	ROM_LOAD( "mp8u54", 0x200000, 0x200000, 0xbdb4d7b8 )
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "mp7u56", 0x00000, 0x80000, 0x87c21c50 )
+
+	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "mp6u61", 0x00000, 0x80000, 0x4dafb288 )
+
+	ROM_REGION( 0x80000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "mp5u64", 0x00000, 0x80000, 0x9b26458c )
 
 	ROM_REGION( 0xc0000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
@@ -2380,18 +2738,15 @@ ROM_START( mazinger )
 	ROM_LOAD( "mzs.u21", 0x00000, 0x08000, 0xc5b4f7ed )
 	ROM_CONTINUE(        0x10000, 0x18000             )
 
-	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* Layer 0 */
-	ROM_LOAD( "bp943a-1.u60", 0x000000, 0x200000, 0x46327415 )
-
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
-	ROM_LOAD( "bp943a-0.u63", 0x000000, 0x200000, 0xc1fed98a )	// FIXED BITS (xxxxxxxx00000000)
-
-//	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 2 */
-//	empty
-
-	ROM_REGION( 0x400000 * 2, REGION_GFX4, ROMREGION_ERASEFF )		/* Sprites: * 2 , do not dispose */
+	ROM_REGION( 0x400000 * 2, REGION_GFX1, ROMREGION_ERASEFF )		/* Sprites: * 2 , do not dispose */
 	ROM_LOAD( "bp943a-2.u56", 0x000000, 0x200000, 0x97e13959 )
 	ROM_LOAD( "bp943a-3.u55", 0x200000, 0x080000, 0x9c4957dd )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "bp943a-1.u60", 0x000000, 0x200000, 0x46327415 )
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "bp943a-0.u63", 0x000000, 0x200000, 0xc1fed98a )	// FIXED BITS (xxxxxxxx00000000)
 
 	ROM_REGION( 0x0c0000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
@@ -2456,23 +2811,23 @@ ROM_START( metmqstr )
 	ROM_LOAD( "bp947a.u20",  0x00000, 0x08000, 0xa4a36170 )
 	ROM_CONTINUE(            0x10000, 0x38000             )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* Layer 0 */
-	ROM_LOAD( "bp947a.u48", 0x000000, 0x100000, 0x04ff6a3d )	// FIRST AND SECOND HALF IDENTICAL
-	ROM_CONTINUE(           0x000000, 0x100000             )
-
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
-	ROM_LOAD( "bp947a.u47", 0x000000, 0x100000, 0x0de42827 )	// FIRST AND SECOND HALF IDENTICAL
-	ROM_CONTINUE(           0x000000, 0x100000             )
-
-	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 2 */
-	ROM_LOAD( "bp947a.u46", 0x000000, 0x100000, 0x0f9c906e )	// FIRST AND SECOND HALF IDENTICAL
-	ROM_CONTINUE(           0x000000, 0x100000             )
-
-	ROM_REGION( 0x800000 * 2, REGION_GFX4, 0 )		/* Sprites (do not dispose) */
+	ROM_REGION( 0x800000 * 2, REGION_GFX1, 0 )		/* Sprites (do not dispose) */
 	ROM_LOAD( "bp947a.u49", 0x000000, 0x200000, 0x09749531 )
 	ROM_LOAD( "bp947a.u50", 0x200000, 0x200000, 0x19cea8b2 )
 	ROM_LOAD( "bp947a.u51", 0x400000, 0x200000, 0xc19bed67 )
 	ROM_LOAD( "bp947a.u52", 0x600000, 0x200000, 0x70c64875 )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "bp947a.u48", 0x000000, 0x100000, 0x04ff6a3d )	// FIRST AND SECOND HALF IDENTICAL
+	ROM_CONTINUE(           0x000000, 0x100000             )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "bp947a.u47", 0x000000, 0x100000, 0x0de42827 )	// FIRST AND SECOND HALF IDENTICAL
+	ROM_CONTINUE(           0x000000, 0x100000             )
+
+	ROM_REGION( 0x100000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "bp947a.u46", 0x000000, 0x100000, 0x0f9c906e )	// FIRST AND SECOND HALF IDENTICAL
+	ROM_CONTINUE(           0x000000, 0x100000             )
 
 	ROM_REGION( 0x140000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* OKIM6295 #1 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
@@ -2483,6 +2838,64 @@ ROM_START( metmqstr )
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "bp947a.u37", 0x040000, 0x100000, 0xc3077c8f )	// FIRST AND SECOND HALF IDENTICAL
 	ROM_CONTINUE(           0x040000, 0x100000             )
+ROM_END
+
+
+/***************************************************************************
+
+							Power Instinct 2
+
+©1994 Atlus
+CPU: 68000, Z80
+Sound: YM2203, AR17961 (x2)
+Custom: NMK 112 (sound?), Atlus 8647-01  013, 038 (x4)
+X1 = 12 MHz
+X2 = 28 MHz
+X3 = 16 MHz
+
+***************************************************************************/
+
+ROM_START( pwrinst2 )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )		/* 68000 code */
+	ROM_LOAD16_BYTE( "g02.u45", 0x000000, 0x80000, 0x7b33bc43 )
+	ROM_LOAD16_BYTE( "g02.u44", 0x000001, 0x80000, 0x8f6f6637 )
+	ROM_LOAD16_BYTE( "g02.u43", 0x100000, 0x80000, 0x178e3d24 )
+	ROM_LOAD16_BYTE( "g02.u42", 0x100001, 0x80000, 0xa0b4ee99 )
+
+	ROM_REGION( 0x24000, REGION_CPU2, 0 )		/* Z80 code */
+	ROM_LOAD( "g02.u3a", 0x00000, 0x0c000, 0xebea5e1e )
+	ROM_CONTINUE(        0x10000, 0x14000             )
+
+	ROM_REGION( 0xe00000 * 2, REGION_GFX1, 0 )		/* Sprites (do not dispose) */
+	ROM_LOAD( "g02.u61", 0x000000, 0x200000, 0x91e30398 )
+	ROM_LOAD( "g02.u62", 0x200000, 0x200000, 0xd9455dd7 )
+	ROM_LOAD( "g02.u63", 0x400000, 0x200000, 0x4d20560b )
+	ROM_LOAD( "g02.u64", 0x600000, 0x200000, 0xb17b9b6e )
+	ROM_LOAD( "g02.u65", 0x800000, 0x200000, 0x08541878 )
+	ROM_LOAD( "g02.u66", 0xa00000, 0x200000, 0xbecf2a36 )
+	ROM_LOAD( "g02.u67", 0xc00000, 0x200000, 0x52fe2b8b )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "g02.u89", 0x000000, 0x100000, 0x373e1f73 )
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "g02.u78", 0x000000, 0x200000, 0x1eca63d2 )
+
+	ROM_REGION( 0x100000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "g02.u81", 0x000000, 0x100000, 0x8a3ff685 )
+
+	ROM_REGION( 0x080000, REGION_GFX5, ROMREGION_DISPOSE )	/* Layer 3 */
+	ROM_LOAD( "g02.82a", 0x000000, 0x080000, 0x4b3567d6 )
+
+	ROM_REGION( 0x440000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* OKIM6295 #1 Samples */
+	/* Leave the 0x40000 bytes addressable by the chip empty */
+	ROM_LOAD( "g02.u53", 0x040000, 0x200000, 0xc4bdd9e0 )
+	ROM_LOAD( "g02.u54", 0x240000, 0x200000, 0x1357d50e )
+
+	ROM_REGION( 0x440000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* OKIM6295 #2 Samples */
+	/* Leave the 0x40000 bytes addressable by the chip empty */
+	ROM_LOAD( "g02.u55", 0x040000, 0x200000, 0x2d102898 )
+	ROM_LOAD( "g02.u56", 0x240000, 0x200000, 0x9ff50dda )
 ROM_END
 
 
@@ -2543,13 +2956,17 @@ ROM_START( sailormn )
 	ROM_LOAD( "bpsm945a.u9",  0x00000, 0x08000, 0x438de548 )
 	ROM_CONTINUE(             0x10000, 0x78000             )
 
-	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_REGION( 0x400000 * 2, REGION_GFX1, 0 )		/* Sprites (do not dispose) */
+	ROM_LOAD( "bpsm.u76", 0x000000, 0x200000, 0xa243a5ba )
+	ROM_LOAD( "bpsm.u77", 0x200000, 0x200000, 0x5179a4ac )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
 	ROM_LOAD( "bpsm.u53", 0x000000, 0x200000, 0xb9b15f83 )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
 	ROM_LOAD( "bpsm.u54", 0x000000, 0x200000, 0x8f00679d )
 
-	ROM_REGION( (5*0x200000)*2, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_REGION( (5*0x200000)*2, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
 	/* 4 bit part */
 	ROM_LOAD( "bpsm.u57", 0x000000, 0x200000, 0x86be7b63 )
 	ROM_LOAD( "bpsm.u58", 0x200000, 0x200000, 0xe0bba83b )
@@ -2562,17 +2979,60 @@ ROM_START( sailormn )
 	ROM_LOAD( "bpsm.u63", 0xe00000, 0x100000, 0xd57a56b4 )	// FIRST AND SECOND HALF IDENTICAL
 	ROM_CONTINUE(         0xe00000, 0x100000             )
 
-	ROM_REGION( 0x400000 * 2, REGION_GFX4, 0 )		/* Sprites (do not dispose) */
+	ROM_REGION( 0x240000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* OKIM6295 #0 Samples */
+	/* Leave the 0x40000 bytes addressable by the chip empty */
+	ROM_LOAD( "bpsm.u48", 0x040000, 0x200000, 0x498e4ed1 )	// 16 x $20000
+
+	ROM_REGION( 0x240000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* OKIM6295 #1 Samples */
+	/* Leave the 0x40000 bytes addressable by the chip empty */
+	ROM_LOAD( "bpsm.u47", 0x040000, 0x080000, 0x0f2901b9 )	// 4 x $20000
+	ROM_RELOAD(           0x0c0000, 0x080000             )
+	ROM_RELOAD(           0x140000, 0x080000             )
+	ROM_RELOAD(           0x1c0000, 0x080000             )
+ROM_END
+
+ROM_START( sailormo )
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )		/* 68000 code */
+	ROM_LOAD16_WORD_SWAP( "smprg.u45",    0x000000, 0x080000, 0x234f1152 )
+	ROM_LOAD16_WORD_SWAP( "bpsm.u46",     0x200000, 0x200000, 0x32084e80 )
+
+	ROM_REGION( 0x88000, REGION_CPU2, 0 )	/* Z80 code */
+	ROM_LOAD( "bpsm945a.u9",  0x00000, 0x08000, 0x438de548 )
+	ROM_CONTINUE(             0x10000, 0x78000             )
+
+	ROM_REGION( 0x400000 * 2, REGION_GFX1, 0 )		/* Sprites (do not dispose) */
 	ROM_LOAD( "bpsm.u76", 0x000000, 0x200000, 0xa243a5ba )
 	ROM_LOAD( "bpsm.u77", 0x200000, 0x200000, 0x5179a4ac )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "bpsm.u53", 0x000000, 0x200000, 0xb9b15f83 )
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "bpsm.u54", 0x000000, 0x200000, 0x8f00679d )
+
+	ROM_REGION( (5*0x200000)*2, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
+	/* 4 bit part */
+	ROM_LOAD( "bpsm.u57", 0x000000, 0x200000, 0x86be7b63 )
+	ROM_LOAD( "bpsm.u58", 0x200000, 0x200000, 0xe0bba83b )
+	ROM_LOAD( "bpsm.u62", 0x400000, 0x200000, 0xa1e3bfac )
+	ROM_LOAD( "bpsm.u61", 0x600000, 0x200000, 0x6a014b52 )
+	ROM_LOAD( "bpsm.u60", 0x800000, 0x200000, 0x992468c0 )
+	/* 2 bit part */
+	ROM_LOAD( "bpsm.u65", 0xa00000, 0x200000, 0xf60fb7b5 )
+	ROM_LOAD( "bpsm.u64", 0xc00000, 0x200000, 0x6559d31c )
+	ROM_LOAD( "bpsm.u63", 0xe00000, 0x100000, 0xd57a56b4 )	// FIRST AND SECOND HALF IDENTICAL
+	ROM_CONTINUE(         0xe00000, 0x100000             )
 
 	ROM_REGION( 0x240000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* OKIM6295 #0 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "bpsm.u48", 0x040000, 0x200000, 0x498e4ed1 )	// 16 x $20000
 
-	ROM_REGION( 0x0c0000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* OKIM6295 #1 Samples */
+	ROM_REGION( 0x240000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* OKIM6295 #1 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "bpsm.u47", 0x040000, 0x080000, 0x0f2901b9 )	// 4 x $20000
+	ROM_RELOAD(           0x0c0000, 0x080000             )
+	ROM_RELOAD(           0x140000, 0x080000             )
+	ROM_RELOAD(           0x1c0000, 0x080000             )
 ROM_END
 
 
@@ -2589,17 +3049,11 @@ ROM_START( uopoko )
 	ROM_LOAD16_BYTE( "u26j.bin", 0x000000, 0x080000, 0xe7eec050 )
 	ROM_LOAD16_BYTE( "u25j.bin", 0x000001, 0x080000, 0x68cb6211 )
 
-	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )	/* Layer 0 */
-	ROM_LOAD( "u49.bin", 0x000000, 0x400000, 0x12fb11bb )
-
-//	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
-//	empty
-
-//	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 2 */
-//	empty
-
-	ROM_REGION( 0x400000 * 2, REGION_GFX4, 0 )		/* Sprites: * 2 , do not dispose */
+	ROM_REGION( 0x400000 * 2, REGION_GFX1, 0 )		/* Sprites: * 2 , do not dispose */
 	ROM_LOAD( "u33.bin", 0x000000, 0x400000, 0x5d142ad2 )
+
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "u49.bin", 0x000000, 0x400000, 0x12fb11bb )
 
 	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "u4.bin", 0x000000, 0x200000, 0xa2d0d755 )
@@ -2617,6 +3071,38 @@ ROM_END
 
 
 ***************************************************************************/
+
+/* Tiles are 6 bit, 4 bits stored in one rom, 2 bits in the other.
+   Expand the 2 bit part into a 4 bit layout, so we can decode it */
+void sailormn_unpack_tiles( const int region )
+{
+	unsigned char *src		=	memory_region(region) + (memory_region_length(region)/4)*3 - 1;
+	unsigned char *dst		=	memory_region(region) + (memory_region_length(region)/4)*4 - 2;
+
+	while(src <= dst)
+	{
+		unsigned char data = src[0];
+
+		dst[0] = ((data & 0x03) << 4) + ((data & 0x0c) >> 2);
+		dst[1] = ((data & 0x30) >> 0) + ((data & 0xc0) >> 6);
+
+		src -= 1;
+		dst -= 2;
+	}
+}
+
+void init_agallet(void)
+{
+	sailormn_unpack_tiles( REGION_GFX4 );
+
+	cave_default_eeprom = cave_default_eeprom_type7;
+	cave_default_eeprom_length = sizeof(cave_default_eeprom_type7);
+	unpack_sprites();
+	cave_spritetype = 0;	// "normal" sprites
+
+//	Speed Hack
+	install_mem_read16_handler(0, 0xb80000, 0xb80001, agallet_irq_cause_r);
+}
 
 void init_dfeveron(void)
 {
@@ -2670,8 +3156,8 @@ void init_hotdogst(void)
 void init_mazinger(void)
 {
 	unsigned char *buffer;
-	data8_t *src = memory_region(REGION_GFX4);
-	int len = memory_region_length(REGION_GFX4);
+	data8_t *src = memory_region(REGION_GFX1);
+	int len = memory_region_length(REGION_GFX1);
 
 	/* decrypt sprites */
 	if ((buffer = malloc(len)))
@@ -2701,30 +3187,23 @@ void init_metmqstr(void)
 	cave_spritetype = 2;	// "normal" sprites with different position handling
 }
 
-/* Tiles are 6 bit, 4 bits stored in one rom, 2 bits in the other.
-   Expand the 2 bit part into a 4 bit layout, so we can decode it */
-void sailormn_unpack_tiles( const int region )
+
+void init_pwrinst2(void)
 {
-	unsigned char *src		=	memory_region(region) + (memory_region_length(region)/4)*3 - 1;
-	unsigned char *dst		=	memory_region(region) + (memory_region_length(region)/4)*4 - 2;
+	cave_default_eeprom = 0;
+	cave_default_eeprom_length = 0;
 
-	while(src <= dst)
-	{
-		unsigned char data = src[0];
+//	To do: Decrypt sprites
 
-		dst[0] = ((data & 0x03) << 4) + ((data & 0x0c) >> 2);
-		dst[1] = ((data & 0x30) >> 0) + ((data & 0xc0) >> 6);
-
-		src -= 1;
-		dst -= 2;
-	}
+	unpack_sprites();
+	cave_spritetype = 1;	// "different" sprites (no zooming?)
 }
 
 void init_sailormn(void)
 {
 	unsigned char *buffer;
-	data8_t *src = memory_region(REGION_GFX4);
-	int len = memory_region_length(REGION_GFX4);
+	data8_t *src = memory_region(REGION_GFX1);
+	int len = memory_region_length(REGION_GFX1);
 
 	/* decrypt sprites */
 	if ((buffer = malloc(len)))
@@ -2736,7 +3215,7 @@ void init_sailormn(void)
 		free(buffer);
 	}
 
-	sailormn_unpack_tiles( REGION_GFX3 );
+	sailormn_unpack_tiles( REGION_GFX4 );
 
 	cave_default_eeprom = cave_default_eeprom_type6;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type6);
@@ -2761,13 +3240,19 @@ void init_uopoko(void)
 
 ***************************************************************************/
 
-GAME( 1994, mazinger, 0, mazinger, cave,     mazinger, ROT90,  "Banpresto",                   "Mazinger Z"                 )
-GAME( 1995, donpachi, 0, donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                  "DonPachi (Japan)"           )
-GAME( 1995, metmqstr, 0, metmqstr, metmqstr, metmqstr, ROT0,   "Banpresto / Pandorabox",      "Metamoqester"               )
-GAME( 1995, sailormn, 0, sailormn, cave,     sailormn, ROT0,   "Banpresto",                   "Pretty Soldier Sailor Moon" )
-GAME( 1996, hotdogst, 0, hotdogst, cave,     hotdogst, ROT90,  "Marble",                      "Hotdog Storm"               )
-GAME( 1997, ddonpach, 0, ddonpach, cave,     ddonpach, ROT270, "Atlus/Cave",                  "DoDonPachi (Japan)"         )
-GAME( 1998, dfeveron, 0, dfeveron, cave,     dfeveron, ROT270, "Cave (Nihon System license)", "Dangun Feveron (Japan)"     )
-GAME( 1998, esprade,  0, esprade,  cave,     esprade,  ROT270, "Atlus/Cave",                  "ESP Ra.De. (Japan)"         )
-GAME( 1998, uopoko,   0, uopoko,   cave,     uopoko,   ROT0,   "Cave (Jaleco license)",       "Uo Poko (Japan)"            )
-GAME( 1999, guwange,  0, guwange,  guwange,  guwange,  ROT270, "Atlus/Cave",                  "Guwange (Japan)"            )
+GAME( 1994, mazinger, 0,        mazinger, cave,     mazinger, ROT90,  "Banpresto/Dynamic Pl. Toei Animation", "Mazinger Z"                 )
+GAME( 1995, donpachi, 0,        donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DonPachi (Japan)"           )
+GAME( 1995, donpachk, donpachi, donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DonPachi (Korea)"           )
+GAME( 1995, metmqstr, 0,        metmqstr, metmqstr, metmqstr, ROT0,   "Banpresto/Pandorabox",                 "Metamoqester"               )
+GAME( 1995, sailormn, 0,        sailormn, cave,     sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22B)" )
+GAME( 1995, sailormo, sailormn, sailormn, cave,     sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22)" )
+GAME( 1996, agallet,  0,        sailormn, cave,     agallet,  ROT270, "Banpresto / Gazelle",                  "Air Gallet (Taiwan)"        )
+GAME( 1996, hotdogst, 0,        hotdogst, cave,     hotdogst, ROT90,  "Marble",                               "Hotdog Storm"               )
+GAME( 1997, ddonpach, 0,        ddonpach, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DoDonPachi (Japan)"         )
+GAME( 1998, dfeveron, 0,        dfeveron, cave,     dfeveron, ROT270, "Cave (Nihon System license)",          "Dangun Feveron (Japan)"     )
+GAME( 1998, esprade,  0,        esprade,  cave,     esprade,  ROT270, "Atlus/Cave",                           "ESP Ra.De. (Japan)"         )
+GAME( 1998, uopoko,   0,        uopoko,   cave,     uopoko,   ROT0,   "Cave (Jaleco license)",                "Uo Poko (Japan)"            )
+GAME( 1999, guwange,  0,        guwange,  guwange,  guwange,  ROT270, "Atlus/Cave",                           "Guwange (Japan)"            )
+
+/* Games not working properly: */
+GAMEX(1994, pwrinst2, 0,        pwrinst2, metmqstr, pwrinst2, ROT0,   "Atlus/Cave",                           "Power Instinct 2 (USA)", GAME_NOT_WORKING )

@@ -597,10 +597,10 @@ UINT32 opDIVX(void)
 		b=MemRead32(f12Op2+4);
 	}
 
-	dv = (INT64)(((INT64)b<<32) | (INT64)a);
+	dv = (INT64)(((INT64)b<<32) | (UINT64)a);
 
-	a = (INT32)(dv / (INT64)f12Op1);
-	b = (INT32)(dv % (INT64)f12Op1);
+	a = (INT32)(dv / (INT64)(*(INT32*)&f12Op1));
+	b = (INT32)(dv % (INT64)(*(INT32*)&f12Op1));
 
 	_S = ((a & 0x80000000)!=0);
 	_Z = (a == 0);
@@ -2262,7 +2262,8 @@ UINT32 opMULX(void)
 		a=MemRead32(f12Op2);
 	}
 
-	res = (INT64)a * (INT64)f12Op1;
+	res = (INT64)a * (INT64)(*(INT32*)&f12Op1);
+
 	b = (INT32)((res >> 32)&0xffffffff);
 	a = (INT32)(res&0xffffffff);
 
@@ -2285,7 +2286,7 @@ UINT32 opMULX(void)
 
 UINT32 opMULUX(void)
 {
-	int a,b;
+	INT32 a,b;
 	UINT64 res;
 
 	F12DecodeOperands(ReadAM,2,ReadAMAddress,3);
@@ -2299,7 +2300,7 @@ UINT32 opMULUX(void)
 		a=MemRead32(f12Op2);
 	}
 
-	res = (INT64)a * (INT64)f12Op1;
+	res = (UINT64)a * (UINT64)f12Op1;
 	b = (INT32)((res >> 32)&0xffffffff);
 	a = (INT32)(res&0xffffffff);
 
@@ -2319,4 +2320,3 @@ UINT32 opMULUX(void)
 
 	F12END();
 }
-

@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "machine/nb1413m3.h"
+#include "nb1413m3.h"
 
 
 static int hyhoo_scrolly;

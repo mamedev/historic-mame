@@ -8,11 +8,73 @@ Notes:
 - There are probably palette PROMs missing. Palette data doesn't seem to be
   written anywhere in RAM.
 - The board has a 052591, which is used for protection in Thunder Cross and
-  S.P.Y. IN this game, however, it doesn't seem to do much, except maybe
-  clear the screen.
-- during startup, some garbage is written to video RAM. This is probably
-  supposed to go somewhere else, maybe the 052591. It doesn't look like
-  palette data.
+  S.P.Y. In this game, however, the only thing it seems to do is clear the
+  screen.
+  This is the program for the 052591:
+5f 80 01 e0 08
+df 80 00 e0 0c
+df 90 02 e0 0c
+df a0 03 e0 0c
+df b0 0f e0 0c
+df c0 ff bf 0c
+5c 02 00 33 0c
+5f 80 04 80 0c
+5c 0e 00 2b 0c
+df 70 00 cb 08
+5f 80 00 80 0c
+5c 04 00 2b 0c
+df 60 00 cb 08
+5c 0c 1f e9 0c
+4c 0c 2d e9 08
+5f 80 03 80 0c
+5c 04 00 2b 0c
+5f 00 00 cb 00
+5f 80 02 a0 0c
+df d0 00 c0 04
+01 3a 00 f3 0a
+5c 08 00 b3 0c
+5c 0e 00 13 0c
+5f 80 00 a0 0c
+5c 00 00 13 0c
+5c 08 00 b3 0c
+5c 00 00 13 0c
+84 5a 00 b3 0c
+48 0a 5b d1 0c
+5f 80 00 e0 08
+5f 00 1e fd 0c
+5f 80 01 a0 0c
+df 20 00 cb 08
+5c 08 00 b3 0c
+5f 80 03 00 0c
+5c 08 00 b3 0c
+5f 80 00 80 0c
+5c 00 00 33 0c
+5c 08 00 93 0c
+9f 91 ff cf 0e
+5c 84 00 20 0c
+84 00 00 b3 0c
+49 10 69 d1 0c
+5f 80 00 e0 08
+5f 00 2c fd 0c
+5f 80 01 a0 0c
+df 20 00 cb 08
+5c 08 00 b3 0c
+5f 80 03 00 0c
+5c 00 00 b3 0c
+5f 80 01 00 0c
+5c 08 00 b3 0c
+5f 80 00 80 0c
+5c 00 00 33 0c
+5c 08 00 93 0c
+9f 91 ff cf 0e
+5c 84 00 20 0c
+84 00 00 b3 0c
+49 10 79 d1 0c
+5f 80 00 e0 08
+5f 00 3c fd 0c
+ff ff ff ff ff
+ff ff ff ff ff
+ff ff ff ff ff
 
 ***************************************************************************/
 

@@ -8,7 +8,7 @@
 	Currently implemented:
 		* Crossbow
 		* Cheyenne
-		* Combat
+		* Combat/Catch-22
 		* Crackshot
 		* Chiller
 		* Top Secret
@@ -793,6 +793,46 @@ INPUT_PORTS_START( combat )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( catch22 )
+	PORT_START				/* player inputs and logic board dips */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x0c, "5" )
+	PORT_DIPSETTING(    0x04, "6" )
+	PORT_DIPSETTING(    0x00, "7" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x30, "Normal" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x10, "Hardest" )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START 				/* audio board dips */
+	COINAGE
+	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START				/* start button */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START				/* coin counters */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START				/* fake analog X */
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 255 )
+
+	PORT_START				/* fake analog Y */
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 255 )
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( cracksht )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1343,6 +1383,54 @@ ROM_START( combat )
 ROM_END
 
 
+ROM_START( catch22 )
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
+	ROM_LOAD( "22l-8_0.1a",   0x08000, 0x2000, 0x232e8723 )
+	ROM_LOAD( "22l-8_0.3a",   0x0a000, 0x2000, 0xa94afce6 )
+	ROM_LOAD( "22l-8_0.4a",   0x0c000, 0x2000, 0x0983ab83 )
+	ROM_LOAD( "22l-8_0.6a",   0x0e000, 0x2000, 0x9084a23a )
+	ROM_LOAD( "6d",   0x26000, 0x2000, 0x43d3eb61 )
+	ROM_LOAD( "7d",   0x28000, 0x2000, 0xef31659c )
+	ROM_LOAD( "8d",   0x2a000, 0x2000, 0xfb29c5cd )
+	ROM_LOAD( "10d",  0x2c000, 0x2000, 0x2ca0eaa4 )
+	ROM_LOAD( "11d",  0x2e000, 0x2000, 0xcc9f2001 )
+	ROM_LOAD( "1c",   0x30000, 0x2000, 0xb7b9c5ad )
+	ROM_LOAD( "3c",   0x32000, 0x2000, 0xb700e6ec )
+	ROM_LOAD( "4c",   0x34000, 0x2000, 0x89fc2b2d )
+	ROM_LOAD( "6c",   0x36000, 0x2000, 0x6a8d0dcf )
+	ROM_LOAD( "7c",   0x38000, 0x2000, 0x9df7172d )
+	ROM_LOAD( "8c",   0x3a000, 0x2000, 0x63b2e4f3 )
+	ROM_LOAD( "10c",  0x3c000, 0x2000, 0x3b430adc )
+	ROM_LOAD( "11c",  0x3e000, 0x2000, 0x04301032 )
+	ROM_LOAD( "1b",   0x40000, 0x2000, 0x70e25cae )
+	ROM_LOAD( "3b",   0x42000, 0x2000, 0xd09d167e )
+	ROM_LOAD( "4b",   0x44000, 0x2000, 0xf46aba0d )
+	ROM_LOAD( "6b",   0x46000, 0x2000, 0x8eb46f40 )
+	ROM_LOAD( "7b",   0x48000, 0x2000, 0x3be9b1bd )
+	ROM_LOAD( "8b",   0x4a000, 0x2000, 0xae977f4c )
+	ROM_LOAD( "10b",  0x4c000, 0x2000, 0x502da003 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "1h",  0x0e000, 0x2000, 0x8f3dd350 )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )
+	ROM_LOAD( "2k", 		 0x00000, 0x2000, 0x1c9df8b5 )
+	ROM_LOAD( "2l", 		 0x02000, 0x2000, 0x6b733306 )
+	ROM_LOAD( "2m", 		 0x04000, 0x2000, 0xdc074733 )
+	ROM_LOAD( "2n", 		 0x06000, 0x2000, 0x7985867f )
+	ROM_LOAD( "2p",  		 0x08000, 0x2000, 0x88684dcf )
+	ROM_LOAD( "2r", 		 0x0a000, 0x2000, 0x5857321e )
+	ROM_LOAD( "2s", 		 0x0c000, 0x2000, 0x371e5235 )
+	ROM_LOAD( "2t",  		 0x0e000, 0x2000, 0x7ae65f05 )
+	ROM_LOAD( "1k",   	 0x10000, 0x2000, 0xf748ea87 )
+	ROM_LOAD( "xba-1.2s", 0x16000, 0x2000, 0x14dd8993 )	/* from Crossbow */
+	ROM_LOAD( "xba-1.1n", 0x18000, 0x2000, 0x2e855698 )	/* from Crossbow */
+	ROM_LOAD( "xba-1.1p", 0x1a000, 0x2000, 0x788bfac6 )	/* from Crossbow */
+	ROM_LOAD( "xba-1.2l", 0x1c000, 0x2000, 0x2c24cb35 )	/* from Crossbow */
+	ROM_LOAD( "xba-1.1t", 0x1e000, 0x2000, 0x5f41c282 )	/* from Crossbow */
+ROM_END
+
+
 ROM_START( cracksht )
 	ROM_REGION( 0x50000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "csl2.1a",   0x08000, 0x2000, 0x16fd0171 )
@@ -1752,6 +1840,7 @@ ROM_END
 GAME( 1983, crossbow, 0,        exidy440, crossbow, crossbow, ROT0, "Exidy", "Crossbow (version 2.0)" )
 GAME( 1984, cheyenne, 0,        exidy440, cheyenne, cheyenne, ROT0, "Exidy", "Cheyenne (version 1.0)" )
 GAME( 1985, combat,   0,        exidy440, combat,   combat,   ROT0, "Exidy", "Combat (version 3.0)" )
+GAME( 1985, catch22,  combat,   exidy440, catch22,  combat,   ROT0, "Exidy", "Catch-22 (version 8.0)" )
 GAME( 1985, cracksht, 0,        exidy440, cracksht, cracksht, ROT0, "Exidy", "Crackshot (version 2.0)" )
 GAME( 1986, claypign, 0,        exidy440, claypign, claypign, ROT0, "Exidy", "Clay Pigeon (version 2.0)" )
 GAME( 1986, chiller,  0,        exidy440, chiller,  chiller,  ROT0, "Exidy", "Chiller (version 3.0)" )

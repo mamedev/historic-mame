@@ -417,7 +417,7 @@ static void mjyuugi_draw_sprites(struct mame_bitmap *bitmap)
 	xoffs	=	flip ? 0x10 : 0x10;
 	yoffs	=	flip ? 0x06 : 0x06;
 
-	for (offs = (0x400 - 2) / 2; offs >= 0 / 2; offs -= 2 / 2)
+	for (offs = (0x400 - 6) / 2; offs >= 0 / 2; offs -= 2 / 2)
 	{
 		int code	=	src[offs + 0x000 / 2];
 		int gfxbank	=	code & 0x2000;
@@ -471,4 +471,3 @@ void mjyuugi_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 	fillbitmap(bitmap, Machine->pens[0x1f0], &Machine->visible_area);
 	mjyuugi_draw_sprites(bitmap);
 }
-

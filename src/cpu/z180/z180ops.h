@@ -24,7 +24,7 @@
  ***************************************************************/
 #define IN(port)												\
 	(((port ^ IO_IOCR) & 0xffc0) == 0) ?						\
-		z180_readcontrol(port) : cpu_readport(port)
+		z180_readcontrol(port) : cpu_readport16(port)
 
 /***************************************************************
  * Output a byte to given I/O port
@@ -32,7 +32,7 @@
 #define OUT(port,value) 										\
 	if (((port ^ IO_IOCR) & 0xffc0) == 0)						\
 		z180_writecontrol(port,value);							\
-	else cpu_writeport(port,value)
+	else cpu_writeport16(port,value)
 
 /***************************************************************
  * MMU calculate the memory managemant lookup table
@@ -54,9 +54,9 @@ INLINE void z180_mmu( void )
 		if (page >= bb)
 		{
 			if (page >= cb)
-				addr = (IO_CBR << 16) + ((page - cb) << 12);
+				addr += IO_CBR << 12;
 			else
-				addr = (IO_BBR << 16) + ((page - bb) << 12);
+				addr += IO_BBR << 12;
 		}
 		Z180.mmu[page] = addr;
 	}
@@ -66,7 +66,7 @@ INLINE void z180_mmu( void )
  * Read a byte from given memory location
  ***************************************************************/
 #define RM(addr)	cpu_readmem20(Z180.mmu[((addr)>>12)&15]|((addr)&4095))
-data_t cpu_readmemz180(offs_t offset)
+data8_t cpu_readmemz180(offs_t offset)
 {
 	return RM(offset);
 }
@@ -75,7 +75,7 @@ data_t cpu_readmemz180(offs_t offset)
  * Write a byte to given memory location
  ***************************************************************/
 #define WM(addr,value) cpu_writemem20(Z180.mmu[((addr)>>12)&15]|((addr)&4095),value)
-void cpu_writememz180(offs_t offset, data_t data)
+void cpu_writememz180(offs_t offset, data8_t data)
 {
 	WM(offset, data);
 }

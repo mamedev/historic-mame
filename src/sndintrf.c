@@ -252,6 +252,9 @@ int OKIM6295_clock(const struct MachineSound *msound) { return ((struct OKIM6295
 #if (HAS_MSM5205)
 int MSM5205_num(const struct MachineSound *msound) { return ((struct MSM5205interface*)msound->sound_interface)->num; }
 #endif
+#if (HAS_MSM5232)
+int MSM5232_num(const struct MachineSound *msound) { return ((struct MSM5232interface*)msound->sound_interface)->num; }
+#endif
 #if (HAS_HC55516)
 int HC55516_num(const struct MachineSound *msound) { return ((struct hc55516_interface*)msound->sound_interface)->num; }
 #endif
@@ -323,6 +326,9 @@ int SN76496_num(const struct MachineSound *msound) { return ((struct SN76496inte
 #if (HAS_MSM5205)
 int MSM5205_clock(const struct MachineSound *msound) { return ((struct MSM5205interface*)msound->sound_interface)->baseclock; }
 #endif
+#if (HAS_MSM5232)
+int MSM5232_clock(const struct MachineSound *msound) { return ((struct MSM5232interface*)msound->sound_interface)->baseclock; }
+#endif
 #if (HAS_UPD7759)
 int UPD7759_clock(const struct MachineSound *msound) { return ((struct UPD7759_interface*)msound->sound_interface)->clock_rate; }
 #endif
@@ -360,6 +366,10 @@ int ES5505_num(const struct MachineSound *msound) { return ((struct ES5505interf
 #if (HAS_ES5506)
 int ES5506_clock(const struct MachineSound *msound) { return ((struct ES5506interface*)msound->sound_interface)->baseclock[0]; }
 int ES5506_num(const struct MachineSound *msound) { return ((struct ES5506interface*)msound->sound_interface)->num; }
+#endif
+#if (HAS_BSMT2000)
+int BSMT2000_clock(const struct MachineSound *msound) { return ((struct BSMT2000interface*)msound->sound_interface)->baseclock[0]; }
+int BSMT2000_num(const struct MachineSound *msound) { return ((struct BSMT2000interface*)msound->sound_interface)->num; }
 #endif
 
 #ifdef MESS
@@ -444,7 +454,7 @@ struct snd_interface sndintf[] =
 		AY8910_num,
 		AY8910_clock,
 		AY8910_sh_start,
-		0,
+		AY8910_sh_stop,
 		0,
 		AY8910_sh_reset
 	},
@@ -748,6 +758,18 @@ struct snd_interface sndintf[] =
 		MSM5205_sh_reset,
 	},
 #endif
+#if (HAS_MSM5232)
+    {
+		SOUND_MSM5232,
+		"MSM5232",
+		MSM5232_num,
+		MSM5232_clock,
+		MSM5232_sh_start,
+		MSM5232_sh_stop,
+		0,
+		MSM5232_sh_reset,
+	},
+#endif
 #if (HAS_UPD7759)
     {
 		SOUND_UPD7759,
@@ -936,6 +958,18 @@ struct snd_interface sndintf[] =
 		ES5506_clock,
 		ES5506_sh_start,
 		ES5506_sh_stop,
+		0,
+		0
+	},
+#endif
+#if (HAS_BSMT2000)
+	{
+		SOUND_BSMT2000,
+		"BSMT2000",
+		BSMT2000_num,
+		BSMT2000_clock,
+		BSMT2000_sh_start,
+		BSMT2000_sh_stop,
 		0,
 		0
 	},

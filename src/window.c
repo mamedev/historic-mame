@@ -1504,7 +1504,7 @@ UINT32 DECL_SPEC win_set_title(UINT32 idx, const char *fmt, ... )
 	if( pwin->title && !strcmp(pwin->title, tmp_text) )
 		return TRUE;
 
-	strcpy( pwin->title, tmp_text );
+	strncpy( pwin->title, tmp_text, screen_w );
 
 	win_update(idx);
 	return TRUE;

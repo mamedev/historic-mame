@@ -477,116 +477,13 @@ Memory Map:
 #include "machine/6821pia.h"
 #include "sndhrdw/williams.h"
 #include "vidhrdw/generic.h"
+#include "williams.h"
 
 
 /**** local stuff ****/
 
 static UINT16 cmos_base;
 static UINT16 cmos_length;
-
-
-
-/**** from machine/williams.h ****/
-
-/* Generic old-Williams PIA interfaces */
-extern struct pia6821_interface williams_pia_0_intf;
-extern struct pia6821_interface williams_muxed_pia_0_intf;
-extern struct pia6821_interface williams_dual_muxed_pia_0_intf;
-extern struct pia6821_interface williams_49way_pia_0_intf;
-extern struct pia6821_interface williams_pia_1_intf;
-extern struct pia6821_interface williams_snd_pia_intf;
-
-/* Game-specific old-Williams PIA interfaces */
-extern struct pia6821_interface defender_pia_0_intf;
-extern struct pia6821_interface stargate_pia_0_intf;
-extern struct pia6821_interface lottofun_pia_0_intf;
-extern struct pia6821_interface sinistar_snd_pia_intf;
-
-/* Generic later-Williams PIA interfaces */
-extern struct pia6821_interface williams2_muxed_pia_0_intf;
-extern struct pia6821_interface williams2_pia_1_intf;
-extern struct pia6821_interface williams2_snd_pia_intf;
-
-/* Game-specific later-Williams PIA interfaces */
-extern struct pia6821_interface mysticm_pia_0_intf;
-extern struct pia6821_interface tshoot_pia_0_intf;
-extern struct pia6821_interface tshoot_snd_pia_intf;
-extern struct pia6821_interface joust2_pia_1_intf;
-
-/* banking variables */
-extern UINT8 *defender_bank_base;
-extern const UINT32 *defender_bank_list;
-extern UINT8 *williams_bank_base;
-
-/* initialization */
-void defender_init_machine(void);
-void williams_init_machine(void);
-void williams2_init_machine(void);
-void joust2_init_machine(void);
-
-/* banking */
-WRITE_HANDLER( williams_vram_select_w );
-WRITE_HANDLER( defender_bank_select_w );
-WRITE_HANDLER( blaster_bank_select_w );
-WRITE_HANDLER( blaster_vram_select_w );
-WRITE_HANDLER( williams2_bank_select_w );
-
-/* misc */
-WRITE_HANDLER( williams2_7segment_w );
-
-/* Mayday protection */
-extern UINT8 *mayday_protection;
-READ_HANDLER( mayday_protection_r );
-
-
-
-/**** from vidhrdw/williams.h ****/
-
-/* blitter variables */
-extern UINT8 *williams_blitterram;
-extern UINT8 williams_blitter_xor;
-extern UINT8 williams_blitter_remap;
-extern UINT8 williams_blitter_clip;
-
-/* tilemap variables */
-extern UINT8 williams2_tilemap_mask;
-extern const UINT8 *williams2_row_to_palette;
-extern UINT8 williams2_M7_flip;
-extern INT8  williams2_videoshift;
-extern UINT8 williams2_special_bg_color;
-
-/* later-Williams video control variables */
-extern UINT8 *williams2_blit_inhibit;
-extern UINT8 *williams2_xscroll_low;
-extern UINT8 *williams2_xscroll_high;
-
-/* Blaster extra variables */
-extern UINT8 *blaster_color_zero_flags;
-extern UINT8 *blaster_color_zero_table;
-extern UINT8 *blaster_video_bits;
-
-
-WRITE_HANDLER( defender_videoram_w );
-WRITE_HANDLER( williams_videoram_w );
-WRITE_HANDLER( williams2_videoram_w );
-WRITE_HANDLER( williams_blitter_w );
-WRITE_HANDLER( blaster_remap_select_w );
-WRITE_HANDLER( blaster_palette_0_w );
-READ_HANDLER( williams_video_counter_r );
-
-
-int williams_vh_start(void);
-void williams_vh_stop(void);
-void williams_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void williams2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-
-int blaster_vh_start(void);
-
-int williams2_vh_start(void);
-void williams2_vh_stop(void);
-
-WRITE_HANDLER( williams2_fg_select_w );
-WRITE_HANDLER( williams2_bg_select_w );
 
 
 
@@ -839,7 +736,7 @@ INPUT_PORTS_START( defender )
 	PORT_START      /* IN2 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", KEYCODE_F1, IP_JOY_NONE )
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", KEYCODE_7, IP_JOY_NONE )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -897,7 +794,7 @@ INPUT_PORTS_START( stargate )
 	PORT_START      /* IN2 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", KEYCODE_F1, IP_JOY_NONE )
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", KEYCODE_7, IP_JOY_NONE )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -926,7 +823,7 @@ INPUT_PORTS_START( joust )
 	PORT_START      /* IN2 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", KEYCODE_F1, IP_JOY_NONE )
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", KEYCODE_7, IP_JOY_NONE )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -962,7 +859,7 @@ INPUT_PORTS_START( robotron )
 	PORT_START      /* IN2 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", KEYCODE_F1, IP_JOY_NONE )
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", KEYCODE_7, IP_JOY_NONE )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -985,7 +882,7 @@ INPUT_PORTS_START( bubbles )
 	PORT_START      /* IN2 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", KEYCODE_F1, IP_JOY_NONE )
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", KEYCODE_7, IP_JOY_NONE )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -1012,7 +909,7 @@ INPUT_PORTS_START( splat )
 	PORT_START      /* IN4 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", KEYCODE_F1, IP_JOY_NONE )
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", KEYCODE_7, IP_JOY_NONE )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -1048,7 +945,7 @@ INPUT_PORTS_START( sinistar )
 	PORT_START      /* IN2 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", KEYCODE_F1, IP_JOY_NONE )
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", KEYCODE_7, IP_JOY_NONE )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -1059,6 +956,27 @@ INPUT_PORTS_START( sinistar )
 
 	PORT_START	/* fake, converted by sinistar_input_port_0() */
 	PORT_ANALOG( 0xff, 0x38, IPT_AD_STICK_Y | IPF_REVERSE, 100, 10, 0x00, 0x6f )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( playball )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", KEYCODE_F1, IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", KEYCODE_7, IP_JOY_NONE )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
 INPUT_PORTS_END
 
 
@@ -1102,7 +1020,7 @@ INPUT_PORTS_START( blaster )
 	PORT_START      /* IN2 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", KEYCODE_F1, IP_JOY_NONE )
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", KEYCODE_7, IP_JOY_NONE )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -1136,7 +1054,7 @@ INPUT_PORTS_START( mysticm )
 	PORT_BITX(0x04, IP_ACTIVE_HIGH, 0, "High Score Reset", KEYCODE_7, IP_JOY_NONE )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
@@ -1161,7 +1079,7 @@ INPUT_PORTS_START( tshoot )
 	PORT_BITX(0x04, IP_ACTIVE_HIGH, 0, "High Score Reset", KEYCODE_7, IP_JOY_NONE )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
@@ -1196,7 +1114,7 @@ INPUT_PORTS_START( inferno )
 	PORT_BITX(0x04, IP_ACTIVE_HIGH, 0, "High Score Reset", KEYCODE_7, IP_JOY_NONE )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
@@ -1231,7 +1149,7 @@ INPUT_PORTS_START( joust2 )
 	PORT_BITX(0x04, IP_ACTIVE_HIGH, 0, "High Score Reset", KEYCODE_7, IP_JOY_NONE )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
@@ -1449,6 +1367,57 @@ static const struct MachineDriver machine_driver_sinistar =
 };
 
 
+static const struct MachineDriver machine_driver_playball =
+{
+	/* basic machine hardware  */
+	{
+		{
+			CPU_M6809,
+			1000000,
+			williams_readmem,williams_writemem,0,0,
+			ignore_interrupt,1
+		},
+		{
+			CPU_M6808 | CPU_AUDIO_CPU,
+			3579000/4,
+			sound_readmem,sound_writemem,0,0,
+			ignore_interrupt,1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+	williams_init_machine,
+
+	/* video hardware */
+	304, 256,
+	{ 6, 298-1, 8, 239-1 },
+	0,
+	16, 0,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	0,
+	williams_vh_start,
+	williams_vh_stop,
+	williams_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		},
+		{
+			SOUND_HC55516,
+			&sinistar_cvsd_interface
+		}
+	},
+
+	nvram_handler
+};
+
+
 static const struct MachineDriver machine_driver_blaster =
 {
 	/* basic machine hardware  */
@@ -1586,299 +1555,6 @@ static const struct MachineDriver machine_driver_joust2 =
 
 	nvram_handler
 };
-
-
-
-/*************************************
- *
- *	Driver initialization
- *
- *************************************/
-
-static void init_defender(void)
-{
-	static const UINT32 bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x0c000, 0x0c000, 0x0c000, 0x13000 };
-	defender_bank_list = bank;
-
-	/* CMOS configuration */
-	CONFIGURE_CMOS(0xc400, 0x100);
-
-	/* PIA configuration */
-	CONFIGURE_PIAS(defender_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
-}
-
-
-static void init_defndjeu(void)
-{
-/*
-	Note: Please do not remove these comments in BETA versions. They are
-			helpful to get the games working. When they will work, useless
-			comments may be removed as desired.
-
-	The encryption in this game is one of the silliest I have ever seen.
-	I just wondered if the ROMs were encrypted, and figured out how they
-	were in just about 5 mins...
-	Very simple: bits 0 and 7 are swapped in the ROMs (not sound).
-
-	Game does not work due to bad ROMs 16 and 20. However, the others are
-	VERY similar (if not nearly SAME) to MAYDAY and DEFENSE ones (and NOT
-	DEFENDER), although MAYDAY ROMs are more similar than DEFENSE ones...
-	By putting MAYDAY ROMs and encrypting them, I got a first machine test
-	and then, reboot... The test was the random graphic drawings, which
-	were bad. Each time the full screen was drawn, the game rebooted.
-	Unfortunately, I don't remember which roms I took to get that, and I
-	could not get the same result anymore (I did not retry ALL the
-	possibilities I did at 01:30am). :-(
-
-	ROM equivalences (not including the sound ROM):
-
-	MAYDAY      MAYDAY (Alternate)    DEFENSE       JEUTEL's Defender
-	-----------------------------------------------------------------
-	ROMC.BIN    IC03-3.BIN            DFNDR-C.ROM           15
-	ROMB.BIN    IC02-2.BIN            DFNDR-B.ROM           16
-	ROMA.BIN    IC01-1.BIN            DFNDR-A.ROM           17
-	ROMG.BIN    IC07-7D.BIN           DFNDR-G.ROM           18
-	ROMF.BIN    IC06-6.BIN            DFNDR-F.ROM           19
-	ROME.BIN    IC05-5.BIN            DFNDR-E.ROM           20
-	ROMD.BIN    IC04-4.BIN            DFNDR-D.ROM           21
-*/
-
-	UINT8 *rom = memory_region(REGION_CPU1);
-	int x;
-
-	for (x = 0xd000; x < 0x15000; x++)
-	{
-		UINT8 src = rom[x];
-		rom[x] = (src & 0x7e) | (src >> 7) | (src << 7);
-	}
-}
-
-#if 0
-static void init_defcmnd(void)
-{
-	static const UINT32 bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x13000, 0x0c000, 0x0c000, 0x14000 };
-	defender_bank_list = bank;
-
-	/* CMOS configuration */
-	CONFIGURE_CMOS(0xc400, 0x100);
-
-	/* PIA configuration */
-	CONFIGURE_PIAS(williams_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
-}
-#endif
-
-static void init_mayday(void)
-{
-	static const UINT32 bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x0c000, 0x0c000, 0x0c000, 0x13000 };
-	defender_bank_list = bank;
-
-	/* CMOS configuration */
-	CONFIGURE_CMOS(0xc400, 0x100);
-
-	/* PIA configuration */
-	CONFIGURE_PIAS(williams_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
-
-	/* install a handler to catch protection checks */
-	mayday_protection = install_mem_read_handler(0, 0xa190, 0xa191, mayday_protection_r);
-}
-
-
-static void init_colony7(void)
-{
-	static const UINT32 bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x0c000, 0x0c000, 0x0c000, 0x0c000 };
-	defender_bank_list = bank;
-
-	/* CMOS configuration */
-	CONFIGURE_CMOS(0xc400, 0x100);
-
-	/* PIA configuration */
-	CONFIGURE_PIAS(williams_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
-}
-
-
-static void init_stargate(void)
-{
-	/* CMOS configuration */
-	CONFIGURE_CMOS(0xcc00, 0x400);
-
-	/* PIA configuration */
-	CONFIGURE_PIAS(stargate_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
-}
-
-
-static void init_joust(void)
-{
-	/* CMOS configuration */
-	CONFIGURE_CMOS(0xcc00, 0x400);
-
-	/* video configuration */
-	CONFIGURE_BLITTER(4, 0, 0);
-
-	/* PIA configuration */
-	CONFIGURE_PIAS(williams_muxed_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
-}
-
-
-static void init_robotron(void)
-{
-	/* CMOS configuration */
-	CONFIGURE_CMOS(0xcc00, 0x400);
-
-	/* video configuration */
-	CONFIGURE_BLITTER(4, 0, 0);
-
-	/* PIA configuration */
-	CONFIGURE_PIAS(williams_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
-}
-
-
-static void init_bubbles(void)
-{
-	/* CMOS configuration */
-	CONFIGURE_CMOS(0xcc00, 0x400);
-
-	/* video configuration */
-	CONFIGURE_BLITTER(4, 0, 0);
-
-	/* PIA configuration */
-	CONFIGURE_PIAS(williams_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
-}
-
-
-static void init_splat(void)
-{
-	/* CMOS configuration */
-	CONFIGURE_CMOS(0xcc00, 0x400);
-
-	/* video configuration */
-	CONFIGURE_BLITTER(0, 0, 0);
-
-	/* PIA configuration */
-	CONFIGURE_PIAS(williams_dual_muxed_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
-}
-
-
-static void init_sinistar(void)
-{
-	/* CMOS configuration */
-	CONFIGURE_CMOS(0xcc00, 0x400);
-
-	/* video configuration */
-	CONFIGURE_BLITTER(4, 0, 1);
-
-	/* PIA configuration */
-	CONFIGURE_PIAS(williams_49way_pia_0_intf, williams_pia_1_intf, sinistar_snd_pia_intf);
-
-	/* install RAM instead of ROM in the Dxxx slot */
-	install_mem_read_handler (0, 0xd000, 0xdfff, MRA_RAM);
-	install_mem_write_handler(0, 0xd000, 0xdfff, MWA_RAM);
-}
-
-
-static void init_lottofun(void)
-{
-	/* CMOS configuration */
-	CONFIGURE_CMOS(0xcc00, 0x400);
-
-	/* video configuration */
-	CONFIGURE_BLITTER(4, 0, 0);
-
-	/* PIA configuration */
-	CONFIGURE_PIAS(lottofun_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
-}
-
-
-static void init_blaster(void)
-{
-	/* CMOS configuration */
-	CONFIGURE_CMOS(0xcc00, 0x400);
-
-	/* video configuration */
-	CONFIGURE_BLITTER(0, 1, 0);
-
-	/* PIA configuration */
-	CONFIGURE_PIAS(williams_49way_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
-}
-
-
-static void init_tshoot(void)
-{
-	static const UINT8 tilemap_colors[] = { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7 };
-
-	/* CMOS configuration */
-	CONFIGURE_CMOS(0xcc00, 0x400);
-
-	/* video configuration */
-	CONFIGURE_BLITTER(0, 0, 0);
-	CONFIGURE_TILEMAP(0x7f, tilemap_colors, 1, 0, 0);
-
-	/* PIA configuration */
-	CONFIGURE_PIAS(tshoot_pia_0_intf, williams2_pia_1_intf, tshoot_snd_pia_intf);
-}
-
-
-static void init_joust2(void)
-{
-	static const UINT8 tilemap_colors[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-
-	/* CMOS configuration */
-	CONFIGURE_CMOS(0xcc00, 0x400);
-
-	/* video configuration */
-	CONFIGURE_BLITTER(0, 0, 0);
-	CONFIGURE_TILEMAP(0xff, tilemap_colors, 0, -2, 0);
-
-	/* PIA configuration */
-	CONFIGURE_PIAS(williams2_muxed_pia_0_intf, joust2_pia_1_intf, williams2_snd_pia_intf);
-
-	/* expand the sound ROMs */
-	memcpy(&memory_region(REGION_CPU3)[0x18000], &memory_region(REGION_CPU3)[0x10000], 0x08000);
-	memcpy(&memory_region(REGION_CPU3)[0x20000], &memory_region(REGION_CPU3)[0x10000], 0x10000);
-	memcpy(&memory_region(REGION_CPU3)[0x38000], &memory_region(REGION_CPU3)[0x30000], 0x08000);
-	memcpy(&memory_region(REGION_CPU3)[0x40000], &memory_region(REGION_CPU3)[0x30000], 0x10000);
-	memcpy(&memory_region(REGION_CPU3)[0x58000], &memory_region(REGION_CPU3)[0x50000], 0x08000);
-	memcpy(&memory_region(REGION_CPU3)[0x60000], &memory_region(REGION_CPU3)[0x50000], 0x10000);
-}
-
-
-static void init_mysticm(void)
-{
-	static const UINT8 tilemap_colors[] = { 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-
-	/* CMOS configuration */
-	CONFIGURE_CMOS(0xcc00, 0x400);
-
-	/* video configuration */
-	CONFIGURE_BLITTER(0, 0, 0);
-	CONFIGURE_TILEMAP(0x7f, tilemap_colors, 1, 0, 1);
-
-	/* PIA configuration */
-	CONFIGURE_PIAS(mysticm_pia_0_intf, williams2_pia_1_intf, williams2_snd_pia_intf);
-
-	/* install RAM instead of ROM in the Dxxx slot */
-	install_mem_read_handler (0, 0xd000, 0xdfff, MRA_RAM);
-	install_mem_write_handler(0, 0xd000, 0xdfff, MWA_RAM);
-}
-
-
-static void init_inferno(void)
-{
-	static const UINT8 tilemap_colors[] = { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7 };
-
-	/* CMOS configuration */
-	CONFIGURE_CMOS(0xcc00, 0x400);
-
-	/* video configuration */
-	CONFIGURE_BLITTER(0, 0, 0);
-	CONFIGURE_TILEMAP(0x7f, tilemap_colors, 1, 0, 0);
-
-	/* PIA configuration */
-	CONFIGURE_PIAS(williams2_muxed_pia_0_intf, williams2_pia_1_intf, williams2_snd_pia_intf);
-
-	/* install RAM instead of ROM in the Dxxx slot */
-	install_mem_read_handler (0, 0xd000, 0xdfff, MRA_RAM);
-	install_mem_write_handler(0, 0xd000, 0xdfff, MWA_RAM);
-}
 
 
 
@@ -2343,6 +2019,30 @@ ROM_START( sinista2 )
 ROM_END
 
 
+ROM_START( playball )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "playball.01",  0x0000, 0x1000, 0x7ba8fd71 )
+	ROM_LOAD( "playball.02",  0x1000, 0x1000, 0x2387c3d4 )
+	ROM_LOAD( "playball.03",  0x2000, 0x1000, 0xd34cc5fd )
+	ROM_LOAD( "playball.04",  0x3000, 0x1000, 0xf68c3a8e )
+	ROM_LOAD( "playball.05",  0x4000, 0x1000, 0xa3f20810 )
+	ROM_LOAD( "playball.06",  0x5000, 0x1000, 0xf213e48e )
+	ROM_LOAD( "playball.07",  0x6000, 0x1000, 0x9b5574e9 )
+	ROM_LOAD( "playball.08",  0x7000, 0x1000, 0xb2d2074a )
+	ROM_LOAD( "playball.09",  0x8000, 0x1000, 0xc4566d0f )
+	ROM_LOAD( "playball.10",  0xd000, 0x1000, 0x18787b52 )
+	ROM_LOAD( "playball.11",  0xe000, 0x1000, 0x1dd5c8f2 )
+	ROM_LOAD( "playball.12",  0xf000, 0x1000, 0xa700597b )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the sound CPU */
+	ROM_LOAD( "speech.ic4",   0xb000, 0x1000, 0x7e4fc798 )
+	ROM_LOAD( "speech.ic5",   0xc000, 0x1000, 0xddfe860c )
+	ROM_LOAD( "speech.ic6",   0xd000, 0x1000, 0x8bfebf87 )
+	ROM_LOAD( "speech.ic7",   0xe000, 0x1000, 0xdb351db6 )
+	ROM_LOAD( "playball.snd", 0xf000, 0x1000, 0xf3076f9f )
+ROM_END
+
+
 ROM_START( lottofun )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) 	/* 64k for code */
 	ROM_LOAD( "vl4e.dat",     0x0000, 0x1000, 0x5e9af236 )
@@ -2538,6 +2238,316 @@ ROM_END
 
 /*************************************
  *
+ *	Driver initialization
+ *
+ *************************************/
+
+static void init_defender(void)
+{
+	static const UINT32 bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x0c000, 0x0c000, 0x0c000, 0x13000 };
+	defender_bank_list = bank;
+
+	/* CMOS configuration */
+	CONFIGURE_CMOS(0xc400, 0x100);
+
+	/* PIA configuration */
+	CONFIGURE_PIAS(defender_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
+}
+
+
+static void init_defndjeu(void)
+{
+/*
+	Note: Please do not remove these comments in BETA versions. They are
+			helpful to get the games working. When they will work, useless
+			comments may be removed as desired.
+
+	The encryption in this game is one of the silliest I have ever seen.
+	I just wondered if the ROMs were encrypted, and figured out how they
+	were in just about 5 mins...
+	Very simple: bits 0 and 7 are swapped in the ROMs (not sound).
+
+	Game does not work due to bad ROMs 16 and 20. However, the others are
+	VERY similar (if not nearly SAME) to MAYDAY and DEFENSE ones (and NOT
+	DEFENDER), although MAYDAY ROMs are more similar than DEFENSE ones...
+	By putting MAYDAY ROMs and encrypting them, I got a first machine test
+	and then, reboot... The test was the random graphic drawings, which
+	were bad. Each time the full screen was drawn, the game rebooted.
+	Unfortunately, I don't remember which roms I took to get that, and I
+	could not get the same result anymore (I did not retry ALL the
+	possibilities I did at 01:30am). :-(
+
+	ROM equivalences (not including the sound ROM):
+
+	MAYDAY      MAYDAY (Alternate)    DEFENSE       JEUTEL's Defender
+	-----------------------------------------------------------------
+	ROMC.BIN    IC03-3.BIN            DFNDR-C.ROM           15
+	ROMB.BIN    IC02-2.BIN            DFNDR-B.ROM           16
+	ROMA.BIN    IC01-1.BIN            DFNDR-A.ROM           17
+	ROMG.BIN    IC07-7D.BIN           DFNDR-G.ROM           18
+	ROMF.BIN    IC06-6.BIN            DFNDR-F.ROM           19
+	ROME.BIN    IC05-5.BIN            DFNDR-E.ROM           20
+	ROMD.BIN    IC04-4.BIN            DFNDR-D.ROM           21
+*/
+
+	UINT8 *rom = memory_region(REGION_CPU1);
+	int x;
+
+	for (x = 0xd000; x < 0x15000; x++)
+	{
+		UINT8 src = rom[x];
+		rom[x] = (src & 0x7e) | (src >> 7) | (src << 7);
+	}
+}
+
+#if 0
+static void init_defcmnd(void)
+{
+	static const UINT32 bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x13000, 0x0c000, 0x0c000, 0x14000 };
+	defender_bank_list = bank;
+
+	/* CMOS configuration */
+	CONFIGURE_CMOS(0xc400, 0x100);
+
+	/* PIA configuration */
+	CONFIGURE_PIAS(williams_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
+}
+#endif
+
+static void init_mayday(void)
+{
+	static const UINT32 bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x0c000, 0x0c000, 0x0c000, 0x13000 };
+	defender_bank_list = bank;
+
+	/* CMOS configuration */
+	CONFIGURE_CMOS(0xc400, 0x100);
+
+	/* PIA configuration */
+	CONFIGURE_PIAS(williams_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
+
+	/* install a handler to catch protection checks */
+	mayday_protection = install_mem_read_handler(0, 0xa190, 0xa191, mayday_protection_r);
+}
+
+
+static void init_colony7(void)
+{
+	static const UINT32 bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x0c000, 0x0c000, 0x0c000, 0x0c000 };
+	defender_bank_list = bank;
+
+	/* CMOS configuration */
+	CONFIGURE_CMOS(0xc400, 0x100);
+
+	/* PIA configuration */
+	CONFIGURE_PIAS(williams_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
+}
+
+
+static void init_stargate(void)
+{
+	/* CMOS configuration */
+	CONFIGURE_CMOS(0xcc00, 0x400);
+
+	/* PIA configuration */
+	CONFIGURE_PIAS(stargate_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
+}
+
+
+static void init_joust(void)
+{
+	/* CMOS configuration */
+	CONFIGURE_CMOS(0xcc00, 0x400);
+
+	/* video configuration */
+	CONFIGURE_BLITTER(4, 0, 0);
+
+	/* PIA configuration */
+	CONFIGURE_PIAS(williams_muxed_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
+}
+
+
+static void init_robotron(void)
+{
+	/* CMOS configuration */
+	CONFIGURE_CMOS(0xcc00, 0x400);
+
+	/* video configuration */
+	CONFIGURE_BLITTER(4, 0, 0);
+
+	/* PIA configuration */
+	CONFIGURE_PIAS(williams_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
+}
+
+
+static void init_bubbles(void)
+{
+	/* CMOS configuration */
+	CONFIGURE_CMOS(0xcc00, 0x400);
+
+	/* video configuration */
+	CONFIGURE_BLITTER(4, 0, 0);
+
+	/* PIA configuration */
+	CONFIGURE_PIAS(williams_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
+}
+
+
+static void init_splat(void)
+{
+	/* CMOS configuration */
+	CONFIGURE_CMOS(0xcc00, 0x400);
+
+	/* video configuration */
+	CONFIGURE_BLITTER(0, 0, 0);
+
+	/* PIA configuration */
+	CONFIGURE_PIAS(williams_dual_muxed_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
+}
+
+
+static void init_sinistar(void)
+{
+	/* CMOS configuration */
+	CONFIGURE_CMOS(0xcc00, 0x400);
+
+	/* video configuration */
+	CONFIGURE_BLITTER(4, 0, 1);
+
+	/* PIA configuration */
+	CONFIGURE_PIAS(williams_49way_pia_0_intf, williams_pia_1_intf, sinistar_snd_pia_intf);
+
+	/* install RAM instead of ROM in the Dxxx slot */
+	install_mem_read_handler (0, 0xd000, 0xdfff, MRA_RAM);
+	install_mem_write_handler(0, 0xd000, 0xdfff, MWA_RAM);
+}
+
+
+static void init_playball(void)
+{
+	/* CMOS configuration */
+	CONFIGURE_CMOS(0xcc00, 0x400);
+
+	/* video configuration */
+	CONFIGURE_BLITTER(4, 0, 1);
+
+	/* PIA configuration */
+	CONFIGURE_PIAS(williams_pia_0_intf, playball_pia_1_intf, sinistar_snd_pia_intf);
+
+	/* install RAM instead of ROM in the Dxxx slot */
+	install_mem_read_handler (0, 0xd000, 0xdfff, MRA_RAM);
+	install_mem_write_handler(0, 0xd000, 0xdfff, MWA_RAM);
+}
+
+
+static void init_lottofun(void)
+{
+	/* CMOS configuration */
+	CONFIGURE_CMOS(0xcc00, 0x400);
+
+	/* video configuration */
+	CONFIGURE_BLITTER(4, 0, 0);
+
+	/* PIA configuration */
+	CONFIGURE_PIAS(lottofun_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
+}
+
+
+static void init_blaster(void)
+{
+	/* CMOS configuration */
+	CONFIGURE_CMOS(0xcc00, 0x400);
+
+	/* video configuration */
+	CONFIGURE_BLITTER(0, 1, 0);
+
+	/* PIA configuration */
+	CONFIGURE_PIAS(williams_49way_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
+}
+
+
+static void init_tshoot(void)
+{
+	static const UINT8 tilemap_colors[] = { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7 };
+
+	/* CMOS configuration */
+	CONFIGURE_CMOS(0xcc00, 0x400);
+
+	/* video configuration */
+	CONFIGURE_BLITTER(0, 0, 0);
+	CONFIGURE_TILEMAP(0x7f, tilemap_colors, 1, 0, 0);
+
+	/* PIA configuration */
+	CONFIGURE_PIAS(tshoot_pia_0_intf, williams2_pia_1_intf, tshoot_snd_pia_intf);
+}
+
+
+static void init_joust2(void)
+{
+	static const UINT8 tilemap_colors[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+	/* CMOS configuration */
+	CONFIGURE_CMOS(0xcc00, 0x400);
+
+	/* video configuration */
+	CONFIGURE_BLITTER(0, 0, 0);
+	CONFIGURE_TILEMAP(0xff, tilemap_colors, 0, -2, 0);
+
+	/* PIA configuration */
+	CONFIGURE_PIAS(williams2_muxed_pia_0_intf, joust2_pia_1_intf, williams2_snd_pia_intf);
+
+	/* expand the sound ROMs */
+	memcpy(&memory_region(REGION_CPU3)[0x18000], &memory_region(REGION_CPU3)[0x10000], 0x08000);
+	memcpy(&memory_region(REGION_CPU3)[0x20000], &memory_region(REGION_CPU3)[0x10000], 0x10000);
+	memcpy(&memory_region(REGION_CPU3)[0x38000], &memory_region(REGION_CPU3)[0x30000], 0x08000);
+	memcpy(&memory_region(REGION_CPU3)[0x40000], &memory_region(REGION_CPU3)[0x30000], 0x10000);
+	memcpy(&memory_region(REGION_CPU3)[0x58000], &memory_region(REGION_CPU3)[0x50000], 0x08000);
+	memcpy(&memory_region(REGION_CPU3)[0x60000], &memory_region(REGION_CPU3)[0x50000], 0x10000);
+}
+
+
+static void init_mysticm(void)
+{
+	static const UINT8 tilemap_colors[] = { 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+	/* CMOS configuration */
+	CONFIGURE_CMOS(0xcc00, 0x400);
+
+	/* video configuration */
+	CONFIGURE_BLITTER(0, 0, 0);
+	CONFIGURE_TILEMAP(0x7f, tilemap_colors, 1, 0, 1);
+
+	/* PIA configuration */
+	CONFIGURE_PIAS(mysticm_pia_0_intf, williams2_pia_1_intf, williams2_snd_pia_intf);
+
+	/* install RAM instead of ROM in the Dxxx slot */
+	install_mem_read_handler (0, 0xd000, 0xdfff, MRA_RAM);
+	install_mem_write_handler(0, 0xd000, 0xdfff, MWA_RAM);
+}
+
+
+static void init_inferno(void)
+{
+	static const UINT8 tilemap_colors[] = { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7 };
+
+	/* CMOS configuration */
+	CONFIGURE_CMOS(0xcc00, 0x400);
+
+	/* video configuration */
+	CONFIGURE_BLITTER(0, 0, 0);
+	CONFIGURE_TILEMAP(0x7f, tilemap_colors, 1, 0, 0);
+
+	/* PIA configuration */
+	CONFIGURE_PIAS(williams2_muxed_pia_0_intf, williams2_pia_1_intf, williams2_snd_pia_intf);
+
+	/* install RAM instead of ROM in the Dxxx slot */
+	install_mem_read_handler (0, 0xd000, 0xdfff, MRA_RAM);
+	install_mem_write_handler(0, 0xd000, 0xdfff, MWA_RAM);
+}
+
+
+
+/*************************************
+ *
  *	Game drivers
  *
  *************************************/
@@ -2573,6 +2583,8 @@ GAME( 1982, splat,    0,        williams, splat,    splat,    ROT0,   "Williams"
 GAME( 1982, sinistar, 0,        sinistar, sinistar, sinistar, ROT270, "Williams", "Sinistar (revision 3)" )
 GAME( 1982, sinista1, sinistar, sinistar, sinistar, sinistar, ROT270, "Williams", "Sinistar (prototype version)" )
 GAME( 1982, sinista2, sinistar, sinistar, sinistar, sinistar, ROT270, "Williams", "Sinistar (revision 2)" )
+
+GAME( 1983, playball, 0,        playball, playball, playball, ROT270, "Williams", "PlayBall! (prototype)" )
 
 GAME( 1983, blaster,  0,        blaster,  blaster,  blaster,  ROT0,   "Williams", "Blaster" )
 

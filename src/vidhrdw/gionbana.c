@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "machine/nb1413m3.h"
+#include "nb1413m3.h"
 
 
 static int gionbana_scrolly1, gionbana_scrolly2;
@@ -260,6 +260,8 @@ static void gionbana_gfxdraw(void)
 		skipy = 1;
 	}
 
+	Machine->pens[0xff] = 0;	/* palette_transparent_pen */
+
 	gfxaddr = ((gionbana_gfxrom << 17) + (gionbana_radry << 9) + (gionbana_radrx << 1));
 
 	for (y = starty, ctry = sizey; ctry > 0; y += skipy, ctry--)
@@ -385,7 +387,6 @@ static void gionbana_gfxdraw(void)
 	}
 
 	nb1413m3_busyflag = (nb1413m3_busyctr > 4650) ? 0 : 1;
-
 }
 
 /******************************************************************************
@@ -457,6 +458,9 @@ void gionbana_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 	if (full_refresh || gionbana_screen_refresh)
 	{
 		gionbana_screen_refresh = 0;
+
+		Machine->pens[0xff] = 0;	/* palette_transparent_pen */
+
 		for (y = 0; y < Machine->drv->screen_height; y++)
 		{
 			for (x = 0; x < Machine->drv->screen_width; x++)

@@ -14,15 +14,7 @@
 #include "cpu/m6809/m6809.h"
 #include "6821pia.h"
 #include "machine/ticket.h"
-
-
-/* defined in vidhrdw/williams.c */
-extern UINT8 *williams_videoram;
-extern UINT8 *williams2_paletteram;
-
-void williams_vh_update(int counter);
-WRITE_HANDLER( williams_videoram_w );
-READ_HANDLER( williams_video_counter_r );
+#include "williams.h"
 
 
 /* banking addresses set by the drivers */
@@ -48,6 +40,7 @@ static void williams_main_irq(int state);
 static void williams_main_firq(int state);
 static void williams_snd_irq(int state);
 static WRITE_HANDLER( williams_snd_cmd_w );
+static WRITE_HANDLER( playball_snd_cmd_w );
 
 /* input port mapping */
 static UINT8 port_select;
@@ -57,11 +50,9 @@ static READ_HANDLER( williams_input_port_1_4_r );
 static READ_HANDLER( williams_49way_port_0_r );
 
 /* newer-Williams routines */
-WRITE_HANDLER( williams2_bank_select_w );
 static WRITE_HANDLER( williams2_snd_cmd_w );
 
 /* Defender-specific code */
-WRITE_HANDLER( defender_bank_select_w );
 READ_HANDLER( defender_input_port_0_r );
 static READ_HANDLER( defender_io_r );
 static WRITE_HANDLER( defender_io_w );
@@ -175,6 +166,14 @@ struct pia6821_interface sinistar_snd_pia_intf =
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ DAC_0_data_w, 0, hc55516_0_digit_w, hc55516_0_clock_w,
 	/*irqs   : A/B             */ williams_snd_irq, williams_snd_irq
+};
+
+/* Special PIA 1 for PlayBall, doesn't set the high bits on sound commands */
+struct pia6821_interface playball_pia_1_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ input_port_2_r, 0, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, playball_snd_cmd_w, 0, 0,
+	/*irqs   : A/B             */ williams_main_irq, williams_main_irq
 };
 
 
@@ -383,6 +382,11 @@ WRITE_HANDLER( williams_snd_cmd_w )
 {
 	/* the high two bits are set externally, and should be 1 */
 	timer_set(TIME_NOW, data | 0xc0, williams_deferred_snd_cmd_w);
+}
+
+WRITE_HANDLER( playball_snd_cmd_w )
+{
+	timer_set(TIME_NOW, data, williams_deferred_snd_cmd_w);
 }
 
 

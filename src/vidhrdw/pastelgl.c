@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "machine/nb1413m3.h"
+#include "nb1413m3.h"
 
 
 static int pastelgl_drawx, pastelgl_drawy;
@@ -28,14 +28,14 @@ static unsigned char *pastelgl_paltbl;
 
 
 void pastelgl_vramflip(void);
-void pastelgl_gfxdraw_w(void);
+void pastelgl_gfxdraw(void);
 
 
 /******************************************************************************
 
 
 ******************************************************************************/
-void pastelgl_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+void pastelgl_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
 {
 	int i;
 
@@ -91,7 +91,7 @@ void pastelgl_sizey_w(int data)
 {
 	pastelgl_sizey = data;
 
-	pastelgl_gfxdraw_w();
+	pastelgl_gfxdraw();
 }
 
 void pastelgl_drawx_w(int data)
@@ -164,7 +164,7 @@ void pastelgl_vramflip(void)
 	}
 }
 
-void pastelgl_gfxdraw_w(void)
+void pastelgl_gfxdraw(void)
 {
 	unsigned char *GFX = memory_region(REGION_GFX1);
 
@@ -312,6 +312,7 @@ void pastelgl_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 	if (full_refresh || pastelgl_screen_refresh)
 	{
 		pastelgl_screen_refresh = 0;
+
 		for (y = 0; y < Machine->drv->screen_height; y++)
 		{
 			for (x = 0; x < Machine->drv->screen_width; x++)

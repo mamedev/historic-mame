@@ -948,7 +948,7 @@ static void emit_expansion(int count, const UINT8 *reglist, const UINT32 *offsli
 	// loop over copied lines and blit them
 	for (row = 0; row < blit->dstyscale; row++)
 	{
-		// handle dimmed win_old_scanlines
+		// handle dimmed scanlines
 		if (blit->dsteffect >= EFFECT_SCANLINE_25 && blit->dsteffect <= EFFECT_SCANLINE_75 && row != 0 && row == blit->dstyscale - 1)
 		{
 			if (has_mmx)
@@ -963,7 +963,7 @@ static void emit_expansion(int count, const UINT8 *reglist, const UINT32 *offsli
 		rowoffs += blit->dstpitch;
 	}
 
-	// if updating, and generating win_old_scanlines, store a 0
+	// if updating, and generating scanlines, store a 0
 	if (update && blit->dstyskip)
 	{
 		// if we have any MMX, generate a PXOR MM7,MM7

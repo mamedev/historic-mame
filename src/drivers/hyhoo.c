@@ -24,7 +24,7 @@ Memo:
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
-#include "machine/nb1413m3.h"
+#include "nb1413m3.h"
 
 
 #define	SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC
@@ -50,13 +50,11 @@ void hyhoo_romsel_w(int data);
 static void init_hyhoo(void)
 {
 	nb1413m3_type = NB1413M3_HYHOO;
-	nb1413m3_int_count = 128;
 }
 
 static void init_hyhoo2(void)
 {
 	nb1413m3_type = NB1413M3_HYHOO2;
-	nb1413m3_int_count = 128;
 }
 
 
@@ -331,7 +329,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			nb1413m3_interrupt, _intcnt_ \
 		} \
 	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
+	60, DEFAULT_60HZ_VBLANK_DURATION, \
 	1, \
 	nb1413m3_init_machine, \
 \
@@ -341,7 +339,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	65536, 65536, \
 	hyhoo_init_palette, \
 \
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_NEEDS_6BITS_PER_GUN, \
 	0, \
 	hyhoo_vh_start, \
 	hyhoo_vh_stop, \

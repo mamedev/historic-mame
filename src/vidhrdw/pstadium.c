@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "machine/nb1413m3.h"
+#include "nb1413m3.h"
 
 
 static int pstadium_scrollx, pstadium_scrollx1, pstadium_scrollx2;
@@ -397,6 +397,7 @@ void pstadium_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 	if (full_refresh || pstadium_screen_refresh)
 	{
 		pstadium_screen_refresh = 0;
+
 		for (y = 0; y < Machine->drv->screen_height; y++)
 		{
 			for (x = 0; x < Machine->drv->screen_width; x++)
@@ -428,6 +429,7 @@ void galkoku_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 	if (full_refresh || pstadium_screen_refresh)
 	{
 		pstadium_screen_refresh = 0;
+
 		for (y = 0; y < Machine->drv->screen_height; y++)
 		{
 			for (x = 0; x < Machine->drv->screen_width; x++)

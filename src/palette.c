@@ -85,13 +85,17 @@ int palette_start(void)
 
 	if (colormode == PALETTIZED_16BIT)
 	{
-		palette_shadow_table = malloc(total_colors * sizeof(*palette_shadow_table));
+		/* we allocate a full 65536 entries table, to prevent memory corruption
+		 * bugs should the tilemap contains pens >= total_colors
+		 * (e.g. Machine->uifont->colortable[0] as returned by get_black_pen())
+		 */
+		palette_shadow_table = malloc(65536 * sizeof(*palette_shadow_table));
 		if (palette_shadow_table == 0)
 		{
 			palette_stop();
 			return 1;
 		}
-		for (i = 0;i < total_colors;i++)
+		for (i = 0;i < 65536;i++)
 		{
 			palette_shadow_table[i] = i;
 			if ((Machine->drv->video_attributes & VIDEO_HAS_SHADOWS) && i < Machine->drv->total_colors)
@@ -478,6 +482,11 @@ void palette_set_highlight_factor(double factor)
 	}
 }
 
+
+pen_t get_black_pen(void)
+{
+	return Machine->uifont->colortable[0];
+}
 
 
 /******************************************************************************

@@ -448,7 +448,7 @@ static void PREFIX(rep)(int flagval)
 		{
 			if (ICOUNT <= 0) { I.pc = I.prevpc; break; }
 			write_port(I.regs.w[DX],GetMemB(DS,I.regs.w[SI]));
-			I.regs.w[DI] += I.DirVal;
+			I.regs.w[SI] += I.DirVal; /* GOL 11/27/01 */
 			ICOUNT -= cycles.rep_outs8_count;
 		}
 		I.regs.w[CX]=count;
@@ -460,7 +460,7 @@ static void PREFIX(rep)(int flagval)
 			if (ICOUNT <= 0) { I.pc = I.prevpc; break; }
 			write_port(I.regs.w[DX],GetMemB(DS,I.regs.w[SI]));
 			write_port(I.regs.w[DX]+1,GetMemB(DS,I.regs.w[SI]+1));
-			I.regs.w[DI] += 2 * I.DirVal;
+			I.regs.w[SI] += 2 * I.DirVal; /* GOL 11/27/01 */
 			ICOUNT -= cycles.rep_outs16_count;
 		}
 		I.regs.w[CX]=count;

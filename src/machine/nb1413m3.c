@@ -11,7 +11,7 @@ Memo:
 ******************************************************************************/
 
 #include "driver.h"
-#include "machine/nb1413m3.h"
+#include "nb1413m3.h"
 
 
 #define NB1413M3_DEBUG	0
@@ -59,50 +59,20 @@ void nb1413m3_nmi_clock_w(int data)
 
 int nb1413m3_interrupt(void)
 {
-	switch (nb1413m3_type)
+	if (cpu_getiloops() == 0)
 	{
-		case	NB1413M3_TRIPLEW1:
-		case	NB1413M3_NTOPSTAR:
-		case	NB1413M3_PSTADIUM:
-		case	NB1413M3_TRIPLEW2:
-		case	NB1413M3_VANILLA:
-		case	NB1413M3_FINALBNY:
-		case	NB1413M3_MJLSTORY:
-		case	NB1413M3_QMHAYAKU:
-		case	NB1413M3_AV2MJ1:
-			nb1413m3_busyflag = 1;
-			nb1413m3_busyctr = 0;
-			return interrupt();
-			break;
+		nb1413m3_busyflag = 1;
+		nb1413m3_busyctr = 0;
+		return interrupt();
+	}
 
-		default:
-			if (nb1413m3_nmi_enable)
-			{
-				if (nb1413m3_counter++ % nb1413m3_int_count)
-				{
-					return nmi_interrupt();
-				}
-				else
-				{
-					nb1413m3_busyflag = 1;
-					nb1413m3_busyctr = 0;
-					return interrupt();
-				}
-			}
-			else
-			{
-				if (nb1413m3_counter++ % nb1413m3_int_count)
-				{
-					return ignore_interrupt();
-				}
-				else
-				{
-					nb1413m3_busyflag = 1;
-					nb1413m3_busyctr = 0;
-					return interrupt();
-				}
-			}
-			break;
+	if (nb1413m3_nmi_enable)
+	{
+		return nmi_interrupt();
+	}
+	else
+	{
+		return ignore_interrupt();
 	}
 }
 
@@ -173,6 +143,7 @@ int nb1413m3_sndrom_r(int offset)
 		case	NB1413M3_CHINMOKU:
 		case	NB1413M3_GALKAIKA:
 		case	NB1413M3_MCONTEST:
+		case	NB1413M3_UCHUUAI:
 		case	NB1413M3_TOKIMBSJ:
 		case	NB1413M3_TOKYOGAL:
 		case	NB1413M3_MAIKO:
@@ -189,6 +160,7 @@ int nb1413m3_sndrom_r(int offset)
 
 void nb1413m3_sndrombank1_w(int data)
 {
+	// if (data & 0x02) coin counter ?
 	nb1413m3_nmi_enable = ((data & 0x20) >> 5);
 	nb1413m3_sndrombank1 = (((data & 0xc0) >> 5) | ((data & 0x10) >> 4));
 }
@@ -396,6 +368,7 @@ int nb1413m3_dipsw1_r(void)
 		case	NB1413M3_HYOUBAN:
 		case	NB1413M3_GALKAIKA:
 		case	NB1413M3_MCONTEST:
+		case	NB1413M3_UCHUUAI:
 		case	NB1413M3_TOKIMBSJ:
 		case	NB1413M3_TOKYOGAL:
 			return ((readinputport(0) & 0x0f) | ((readinputport(1) & 0x0f) << 4));
@@ -438,6 +411,7 @@ int nb1413m3_dipsw2_r(void)
 		case	NB1413M3_HYOUBAN:
 		case	NB1413M3_GALKAIKA:
 		case	NB1413M3_MCONTEST:
+		case	NB1413M3_UCHUUAI:
 		case	NB1413M3_TOKIMBSJ:
 		case	NB1413M3_TOKYOGAL:
 			return (((readinputport(0) & 0xf0) >> 4) | (readinputport(1) & 0xf0));
@@ -500,15 +474,11 @@ void nb1413m3_vcrctrl_w(int data)
 {
 	if (data & 0x08)
 	{
-#if NB1413M3_DEBUG
 		usrintf_showmessage(" ** VCR CONTROL ** ");
 		set_led_status(2, 1);
-#endif
 	}
 	else
 	{
-#if NB1413M3_DEBUG
 		set_led_status(2, 0);
-#endif
 	}
 }

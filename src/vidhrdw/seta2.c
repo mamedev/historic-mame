@@ -139,7 +139,7 @@ WRITE16_HANDLER( seta2_vregs_w )
 
 ***************************************************************************/
 
-const struct GameDriver driver_pzlbowl;
+extern const struct GameDriver driver_pzlbowl;
 
 static void seta2_draw_sprites(struct mame_bitmap *bitmap)
 {

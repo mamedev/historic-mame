@@ -44,7 +44,13 @@
 	Miss Mahjong Contest
 	(c)1989 Nihon Bussan Co.,Ltd.
 
+	Mahjong Uchuu yori Ai wo komete
+	(c)1989 Nihon Bussan Co.,Ltd.
+
 	AV2 Mahjong No.1 Bay Bridge no Seijo
+	(c)1991 MIKI SYOUJI Co.,Ltd. / AV JAPAN Co.,Ltd.
+
+	AV2 Mahjong No.2 Rouge no Kaori
 	(c)1991 MIKI SYOUJI Co.,Ltd. / AV JAPAN Co.,Ltd.
 
 	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 1999/12/02 -
@@ -63,7 +69,7 @@ Memo:
 - Sound CPU of qmhayaku is running on 4MHz in real machine. But if I set
   it to 4MHz in MAME, sounds are not  played so I lowered the clock a bit.
 
-- av2mj1's VCR playback is not implemented.
+- av2mj's VCR playback is not implemented.
 
 - Some games display "GFXROM BANK OVER!!" or "GFXROM ADDRESS OVER!!"
   in Debug build.
@@ -75,7 +81,7 @@ Memo:
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
-#include "machine/nb1413m3.h"
+#include "nb1413m3.h"
 
 
 #define	SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC
@@ -130,37 +136,31 @@ static READ_HANDLER( pstadium_sound_r )
 static void init_pstadium(void)
 {
 	nb1413m3_type = NB1413M3_PSTADIUM;
-	nb1413m3_int_count = 0;
 }
 
 static void init_triplew1(void)
 {
 	nb1413m3_type = NB1413M3_TRIPLEW1;
-	nb1413m3_int_count = 0;
 }
 
 static void init_triplew2(void)
 {
 	nb1413m3_type = NB1413M3_TRIPLEW2;
-	nb1413m3_int_count = 0;
 }
 
 static void init_ntopstar(void)
 {
 	nb1413m3_type = NB1413M3_NTOPSTAR;
-	nb1413m3_int_count = 0;
 }
 
 static void init_mjlstory(void)
 {
 	nb1413m3_type = NB1413M3_MJLSTORY;
-	nb1413m3_int_count = 0;
 }
 
 static void init_vanilla(void)
 {
 	nb1413m3_type = NB1413M3_VANILLA;
-	nb1413m3_int_count = 0;
 }
 
 static void init_finalbny(void)
@@ -171,25 +171,21 @@ static void init_finalbny(void)
 	for (i = 0xf800; i < 0x10000; i++) ROM[i] = 0x00;
 
 	nb1413m3_type = NB1413M3_FINALBNY;
-	nb1413m3_int_count = 0;
 }
 
 static void init_qmhayaku(void)
 {
 	nb1413m3_type = NB1413M3_QMHAYAKU;
-	nb1413m3_int_count = 0;
 }
 
 static void init_galkoku(void)
 {
 	nb1413m3_type = NB1413M3_GALKOKU;
-	nb1413m3_int_count = 128;
 }
 
 static void init_hyouban(void)
 {
 	nb1413m3_type = NB1413M3_HYOUBAN;
-	nb1413m3_int_count = 128;
 }
 
 static void init_galkaika(void)
@@ -201,7 +197,6 @@ static void init_galkaika(void)
 	ROM[0x0002] = 0x56;
 #endif
 	nb1413m3_type = NB1413M3_GALKAIKA;
-	nb1413m3_int_count = 128;
 }
 
 static void init_tokyogal(void)
@@ -213,7 +208,6 @@ static void init_tokyogal(void)
 	ROM[0x0002] = 0x56;
 #endif
 	nb1413m3_type = NB1413M3_TOKYOGAL;
-	nb1413m3_int_count = 128;
 }
 
 static void init_tokimbsj(void)
@@ -225,19 +219,26 @@ static void init_tokimbsj(void)
 	ROM[0x0002] = 0x56;
 #endif
 	nb1413m3_type = NB1413M3_TOKIMBSJ;
-	nb1413m3_int_count = 128;
 }
 
 static void init_mcontest(void)
 {
 	nb1413m3_type = NB1413M3_MCONTEST;
-	nb1413m3_int_count = 128;
 }
 
-static void init_av2mj1(void)
+static void init_uchuuai(void)
 {
-	nb1413m3_type = NB1413M3_AV2MJ1;
-	nb1413m3_int_count = 0;
+	nb1413m3_type = NB1413M3_UCHUUAI;
+}
+
+static void init_av2mj1bb(void)
+{
+	nb1413m3_type = NB1413M3_AV2MJ1BB;
+}
+
+static void init_av2mj2rg(void)
+{
+	nb1413m3_type = NB1413M3_AV2MJ2RG;
 }
 
 
@@ -339,17 +340,31 @@ static MEMORY_WRITE_START( writemem_tokyogal )
 	{ 0xf800, 0xffff, MWA_RAM },
 MEMORY_END
 
-static MEMORY_READ_START( readmem_av2mj1 )
+static MEMORY_READ_START( readmem_av2mj1bb )
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xf1ff, pstadium_palette_r },
 	{ 0xf500, 0xf50f, pstadium_paltbl_r },
 	{ 0xf800, 0xffff, MRA_RAM },
 MEMORY_END
 
-static MEMORY_WRITE_START( writemem_av2mj1 )
+static MEMORY_WRITE_START( writemem_av2mj1bb )
 	{ 0x0000, 0xefff, MWA_ROM },
 	{ 0xf000, 0xf1ff, pstadium_palette_w },
 	{ 0xf500, 0xf50f, pstadium_paltbl_w },
+	{ 0xf800, 0xffff, MWA_RAM },
+MEMORY_END
+
+static MEMORY_READ_START( readmem_av2mj2rg )
+	{ 0x0000, 0xefff, MRA_ROM },
+	{ 0xf000, 0xf00f, pstadium_paltbl_r },
+	{ 0xf200, 0xf3ff, pstadium_palette_r },
+	{ 0xf800, 0xffff, MRA_RAM },
+MEMORY_END
+
+static MEMORY_WRITE_START( writemem_av2mj2rg )
+	{ 0x0000, 0xefff, MWA_ROM },
+	{ 0xf000, 0xf00f, pstadium_paltbl_w },
+	{ 0xf200, 0xf3ff, pstadium_palette_w },
 	{ 0xf800, 0xffff, MWA_RAM },
 MEMORY_END
 
@@ -407,7 +422,7 @@ static PORT_WRITE_START( writeport_pstadium )
 	{ 0x0000, 0xffff, io_pstadium_w },
 PORT_END
 
-static WRITE_HANDLER( io_av2mj1_w )
+static WRITE_HANDLER( io_av2mj1bb_w )
 {
 	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
 
@@ -436,8 +451,8 @@ static WRITE_HANDLER( io_av2mj1_w )
 	}
 }
 
-static PORT_WRITE_START( writeport_av2mj1 )
-	{ 0x0000, 0xffff, io_av2mj1_w },
+static PORT_WRITE_START( writeport_av2mj1bb )
+	{ 0x0000, 0xffff, io_av2mj1bb_w },
 PORT_END
 
 static READ_HANDLER( io_galkoku_r )
@@ -1352,7 +1367,137 @@ INPUT_PORTS_START( mcontest )
 	NBMJCTRL_PORT5	/* (7) PORT 1-5 */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( av2mj1 )
+INPUT_PORTS_START( uchuuai )
+
+	// I don't have manual for this game.
+
+	PORT_START	/* (0) DIPSW-A */
+	PORT_DIPNAME( 0x01, 0x01, "DIPSW 1-1" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "DIPSW 1-2" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "DIPSW 1-3" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "DIPSW 1-4" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, "Game Sounds" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Character Display Test" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* (1) DIPSW-B */
+	PORT_DIPNAME( 0x01, 0x01, "DIPSW 2-1" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "DIPSW 2-2" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "DIPSW 2-3" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "DIPSW 2-4" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "DIPSW 2-5" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "DIPSW 2-6" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "DIPSW 2-7" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "DIPSW 2-8" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* (2) PORT 0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
+	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )		// COIN1
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START3 )		// CREDIT CLEAR
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )		// SERVICE
+
+	NBMJCTRL_PORT1	/* (3) PORT 1-1 */
+	NBMJCTRL_PORT2	/* (4) PORT 1-2 */
+	NBMJCTRL_PORT3	/* (5) PORT 1-3 */
+	NBMJCTRL_PORT4	/* (6) PORT 1-4 */
+	NBMJCTRL_PORT5	/* (7) PORT 1-5 */
+INPUT_PORTS_END
+
+INPUT_PORTS_START( av2mj1bb )
+	PORT_START	/* (0) DIPSW-A */
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x07, "1 (Easy)" )
+	PORT_DIPSETTING(    0x06, "2" )
+	PORT_DIPSETTING(    0x05, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPSETTING(    0x02, "6" )
+	PORT_DIPSETTING(    0x01, "7" )
+	PORT_DIPSETTING(    0x00, "8 (Hard)" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0xc0, 0xc0, "Video Playback Time" )
+	PORT_DIPSETTING(    0xc0, "Type-A" )
+	PORT_DIPSETTING(    0x80, "Type-B" )
+	PORT_DIPSETTING(    0x40, "Type-C" )
+	PORT_DIPSETTING(    0x00, "Type-D" )
+
+	PORT_START	/* (1) DIPSW-B */
+	PORT_DIPNAME( 0x03, 0x03, "Attract mode" )
+	PORT_DIPSETTING(    0x03, "No attract mode" )
+	PORT_DIPSETTING(    0x02, "Once per 10min." )
+	PORT_DIPSETTING(    0x01, "Once per 5min." )
+	PORT_DIPSETTING(    0x00, "Normal" )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x08, 0x08, "Graphic ROM Test" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* (2) PORT 0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
+	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )		// COIN1
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START3 )		// CREDIT CLEAR
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )		// COIN2
+
+	NBMJCTRL_PORT1	/* (3) PORT 1-1 */
+	NBMJCTRL_PORT2	/* (4) PORT 1-2 */
+	NBMJCTRL_PORT3	/* (5) PORT 1-3 */
+	NBMJCTRL_PORT4	/* (6) PORT 1-4 */
+	NBMJCTRL_PORT5	/* (7) PORT 1-5 */
+INPUT_PORTS_END
+
+INPUT_PORTS_START( av2mj2rg )
+
+	// I don't have manual for this game.
+
 	PORT_START	/* (0) DIPSW-A */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x07, "1 (Easy)" )
@@ -1463,7 +1608,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			interrupt, 128 \
 		} \
 	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
+	60, DEFAULT_60HZ_VBLANK_DURATION, \
 	1, \
 	nb1413m3_init_machine, \
 \
@@ -1505,7 +1650,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			nb1413m3_interrupt, 128 \
 		} \
 	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
+	60, DEFAULT_60HZ_VBLANK_DURATION, \
 	1, \
 	nb1413m3_init_machine, \
 \
@@ -1547,7 +1692,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			nb1413m3_interrupt, 128 \
 		} \
 	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
+	60, DEFAULT_60HZ_VBLANK_DURATION, \
 	1, \
 	nb1413m3_init_machine, \
 \
@@ -1593,7 +1738,9 @@ NBMJDRV2( galkaika, galkaika, galkaika,  galkoku,  galkoku, 0 )
 NBMJDRV2( tokyogal, tokyogal, tokyogal,  galkoku,  galkoku, 0 )
 NBMJDRV2( tokimbsj, galkaika, galkaika,  galkoku,  galkoku, nb1413m3_nvram_handler )
 NBMJDRV2( mcontest,  galkoku,  galkoku,  galkoku,  galkoku, 0 )
-NBMJDRV1(   av2mj1,   av2mj1,   av2mj1, pstadium,   av2mj1, 0 )
+NBMJDRV2(  uchuuai,  galkoku,  galkoku,  galkoku,  galkoku, 0 )
+NBMJDRV1( av2mj1bb, av2mj1bb, av2mj1bb, pstadium, av2mj1bb, 0 )
+NBMJDRV1( av2mj2rg, av2mj2rg, av2mj2rg, pstadium, av2mj1bb, 0 )
 
 
 ROM_START( pstadium )
@@ -1991,35 +2138,84 @@ ROM_START( mcontest )
 	ROM_LOAD( "mcon_23.bin",  0x150000, 0x10000, 0x979e0f93 )
 ROM_END
 
-ROM_START( av2mj1 )
+ROM_START( uchuuai )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
-	ROM_LOAD( "1.bin",       0x00000, 0x10000, 0xdf0f03fb )
+	ROM_LOAD( "1.3h",   0x00000, 0x10000, 0x6a6fd569 )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
+	ROM_LOAD( "2.3h",   0x00000, 0x10000, 0x8673ba16 )
+
+	ROM_REGION( 0x160000, REGION_GFX1, 0 ) /* gfx */
+	ROM_LOAD( "3.10a",  0x000000, 0x20000, 0x67b8dcd9 )
+	ROM_LOAD( "4.10c",  0x020000, 0x20000, 0x6a3b50ce )
+	ROM_LOAD( "5.10d",  0x040000, 0x10000, 0x5334ed3c )
+	ROM_LOAD( "6.10e",  0x050000, 0x10000, 0x2871addf )
+	ROM_LOAD( "7.10f",  0x060000, 0x10000, 0x0a75383d )
+	ROM_LOAD( "8.10j",  0x070000, 0x10000, 0x4a45a098 )
+	ROM_LOAD( "9.10k",  0x080000, 0x10000, 0x36ec60f8 )
+	ROM_LOAD( "10.10m", 0x090000, 0x10000, 0x4f17dce6 )
+	ROM_LOAD( "11.10n", 0x0a0000, 0x10000, 0x84c31068 )
+	ROM_LOAD( "12.10p", 0x0b0000, 0x10000, 0x8a263dfb )
+	ROM_LOAD( "13.11a", 0x0c0000, 0x10000, 0x3f47bf0b )
+	ROM_LOAD( "14.11c", 0x0d0000, 0x10000, 0x89f0143f )
+	ROM_LOAD( "15.11d", 0x0e0000, 0x10000, 0xdc3d52ad )
+	ROM_LOAD( "16.11e", 0x0f0000, 0x10000, 0xaba3e0c5 )
+	ROM_LOAD( "17.11f", 0x100000, 0x10000, 0x23a75436 )
+	ROM_LOAD( "18.11j", 0x110000, 0x10000, 0x3602af29 )
+	ROM_LOAD( "19.11k", 0x120000, 0x10000, 0x1c4a3b49 )
+	ROM_LOAD( "20.11m", 0x130000, 0x10000, 0xcc491fa9 )
+	ROM_LOAD( "21.11n", 0x140000, 0x10000, 0xba4e42a1 )
+	ROM_LOAD( "22.11p", 0x150000, 0x10000, 0xbe5ebd80 )
+ROM_END
+
+ROM_START( av2mj1bb )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
+	ROM_LOAD( "1.bin",      0x00000, 0x10000, 0xdf0f03fb )
 
 	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sub program */
-	ROM_LOAD( "3.bin",       0x00000, 0x10000, 0x0cdc9489 )
-	ROM_LOAD( "2.bin",       0x10000, 0x10000, 0x6283a444 )
+	ROM_LOAD( "3.bin",      0x00000, 0x10000, 0x0cdc9489 )
+	ROM_LOAD( "2.bin",      0x10000, 0x10000, 0x6283a444 )
 
 	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* gfx */
-	ROM_LOAD( "4.bin",       0x000000, 0x20000, 0x18fe29c3 )
-	ROM_LOAD( "5.bin",       0x020000, 0x20000, 0x0eff4bbf )
-	ROM_LOAD( "6.bin",       0x040000, 0x20000, 0xac351796 )
-	ROM_LOAD( "mj-1802.bin", 0x180000, 0x80000, BADCRC( 0xe6213f10 ) )
+	ROM_LOAD( "4.bin",      0x000000, 0x20000, 0x18fe29c3 )
+	ROM_LOAD( "5.bin",      0x020000, 0x20000, 0x0eff4bbf )
+	ROM_LOAD( "6.bin",      0x040000, 0x20000, 0xac351796 )
+	ROM_LOAD( "mj-1802.9a", 0x180000, 0x80000, 0xe6213f10 )
+ROM_END
+
+ROM_START( av2mj2rg )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
+	ROM_LOAD( "1.4e",       0x00000, 0x10000, 0x2295b8df )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sub program */
+	ROM_LOAD( "3.4t",       0x00000, 0x10000, 0x52be7b5e )
+	ROM_LOAD( "2.4s",       0x10000, 0x10000, 0x6283a444 )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* gfx */
+	ROM_LOAD( "4.9b",       0x000000, 0x20000, 0x4d965b5c )
+	ROM_LOAD( "5.9d",       0x020000, 0x20000, 0x4f5bd948 )
+	ROM_LOAD( "6.9e",       0x040000, 0x20000, 0x1921dae4 )
+	ROM_LOAD( "7.9f",       0x060000, 0x20000, 0xfbd9d0b0 )
+	ROM_LOAD( "8.9j",       0x080000, 0x20000, 0x637098a9 )
+	ROM_LOAD( "9.9k",       0x0a0000, 0x20000, 0x6c06ca0d )
+	ROM_LOAD( "mj-1802.9a", 0x180000, 0x80000, 0xe6213f10 )
 ROM_END
 
 
-//     YEAR,     NAME,   PARENT,  MACHINE,    INPUT,     INIT, MONITOR, COMPANY, FULLNAME, FLAGS
-GAME( 1990, pstadium,        0, pstadium, pstadium, pstadium,    ROT0, "Nichibutsu", "Mahjong Panic Stadium (Japan)" )
-GAME( 1989, triplew1,        0, triplew1, triplew1, triplew1,    ROT0, "Nichibutsu", "Mahjong Triple Wars (Japan)" )
-GAME( 1990, triplew2,        0, triplew2, triplew1, triplew2,    ROT0, "Nichibutsu", "Mahjong Triple Wars 2 (Japan)" )
-GAME( 1990, ntopstar,        0, ntopstar, ntopstar, ntopstar,    ROT0, "Nichibutsu", "Mahjong Nerae! Top Star (Japan)" )
-GAME( 1991, mjlstory,        0, mjlstory, mjlstory, mjlstory,    ROT0, "Nichibutsu", "Mahjong Jikken Love Story (Japan)" )
-GAME( 1991,  vanilla,        0,  vanilla,  vanilla,  vanilla,    ROT0, "Nichibutsu", "Mahjong Vanilla Syndrome (Japan)" )
-GAME( 1991, finalbny,  vanilla, finalbny, finalbny, finalbny,    ROT0, "Nichibutsu", "Mahjong Final Bunny [BET] (Japan)" )
-GAME( 1991, qmhayaku,        0, qmhayaku, qmhayaku, qmhayaku,    ROT0, "Nichibutsu", "Quiz-Mahjong Hayaku Yatteyo! (Japan)" )
-GAME( 1989,  galkoku,        0,  galkoku,  galkoku,  galkoku,    ROT0, "Nichibutsu/T.R.TEC", "Mahjong Gal no Kokuhaku (Japan)" )
-GAME( 1989,  hyouban,  galkoku,  hyouban,  hyouban,  hyouban,    ROT0, "Nichibutsu/T.R.TEC", "Mahjong Hyouban Musume [BET] (Japan)" )
-GAME( 1989, galkaika,        0, galkaika, galkaika, galkaika,    ROT0, "Nichibutsu/T.R.TEC", "Mahjong Gal no Kaika (Japan)" )
-GAME( 1989, tokyogal,        0, tokyogal, tokyogal, tokyogal,    ROT0, "Nichibutsu", "Tokyo Gal Zukan (Japan)" )
-GAME( 1989, tokimbsj, tokyogal, tokimbsj, tokimbsj, tokimbsj,    ROT0, "Nichibutsu", "Tokimeki Bishoujo [BET] (Japan)" )
-GAME( 1989, mcontest,        0, mcontest, mcontest, mcontest,    ROT0, "Nichibutsu", "Miss Mahjong Contest (Japan)" )
-GAMEX(1991,   av2mj1,        0,   av2mj1,   av2mj1,   av2mj1,    ROT0, "MIKI SYOUJI/AV JAPAN", "AV2Mahjong No.1 Bay Bridge no Seijo", GAME_NOT_WORKING )
+GAME( 1990, pstadium,        0, pstadium, pstadium, pstadium, ROT0, "Nichibutsu", "Mahjong Panic Stadium (Japan)" )
+GAME( 1989, triplew1,        0, triplew1, triplew1, triplew1, ROT0, "Nichibutsu", "Mahjong Triple Wars (Japan)" )
+GAME( 1990, triplew2,        0, triplew2, triplew1, triplew2, ROT0, "Nichibutsu", "Mahjong Triple Wars 2 (Japan)" )
+GAME( 1990, ntopstar,        0, ntopstar, ntopstar, ntopstar, ROT0, "Nichibutsu", "Mahjong Nerae! Top Star (Japan)" )
+GAME( 1991, mjlstory,        0, mjlstory, mjlstory, mjlstory, ROT0, "Nichibutsu", "Mahjong Jikken Love Story (Japan)" )
+GAME( 1991,  vanilla,        0,  vanilla,  vanilla,  vanilla, ROT0, "Nichibutsu", "Mahjong Vanilla Syndrome (Japan)" )
+GAME( 1991, finalbny,  vanilla, finalbny, finalbny, finalbny, ROT0, "Nichibutsu", "Mahjong Final Bunny [BET] (Japan)" )
+GAME( 1991, qmhayaku,        0, qmhayaku, qmhayaku, qmhayaku, ROT0, "Nichibutsu", "Quiz-Mahjong Hayaku Yatteyo! (Japan)" )
+GAME( 1989,  galkoku,        0,  galkoku,  galkoku,  galkoku, ROT0, "Nichibutsu/T.R.TEC", "Mahjong Gal no Kokuhaku (Japan)" )
+GAME( 1989,  hyouban,  galkoku,  hyouban,  hyouban,  hyouban, ROT0, "Nichibutsu/T.R.TEC", "Mahjong Hyouban Musume [BET] (Japan)" )
+GAME( 1989, galkaika,        0, galkaika, galkaika, galkaika, ROT0, "Nichibutsu/T.R.TEC", "Mahjong Gal no Kaika (Japan)" )
+GAME( 1989, tokyogal,        0, tokyogal, tokyogal, tokyogal, ROT0, "Nichibutsu", "Tokyo Gal Zukan (Japan)" )
+GAME( 1989, tokimbsj, tokyogal, tokimbsj, tokimbsj, tokimbsj, ROT0, "Nichibutsu", "Tokimeki Bishoujo [BET] (Japan)" )
+GAME( 1989, mcontest,        0, mcontest, mcontest, mcontest, ROT0, "Nichibutsu", "Miss Mahjong Contest (Japan)" )
+GAME( 1989,  uchuuai,        0,  uchuuai,  uchuuai,  uchuuai, ROT0, "Nichibutsu", "Mahjong Uchuu yori Ai wo komete (Japan)" )
+GAMEX(1991, av2mj1bb,        0, av2mj1bb, av2mj1bb, av2mj1bb, ROT0, "MIKI SYOUJI/AV JAPAN", "AV2Mahjong No.1 Bay Bridge no Seijo (Japan)", GAME_NOT_WORKING )
+GAMEX(1991, av2mj2rg,        0, av2mj2rg, av2mj2rg, av2mj2rg, ROT0, "MIKI SYOUJI/AV JAPAN", "AV2Mahjong No.2 Rouge no Kaori (Japan)", GAME_NOT_WORKING )

@@ -48,9 +48,11 @@ size_t galaxian_bulletsram_size;
 
 static int mooncrst_gfxextend;
 static int pisces_gfxbank;
+static int skybase_gfxbank;
 static int jumpbug_gfxbank[5];
 static void (*modify_charcode)(int*,int);		/* function to call to do character banking */
 static void mooncrst_modify_charcode(int *code,int x);
+static void  skybase_modify_charcode(int *code,int x);
 static void  moonqsr_modify_charcode(int *code,int x);
 static void   pisces_modify_charcode(int *code,int x);
 static void  batman2_modify_charcode(int *code,int x);
@@ -59,6 +61,7 @@ static void  jumpbug_modify_charcode(int *code,int x);
 
 static void (*modify_spritecode)(int*,int*,int*,int);	/* function to call to do sprite banking */
 static void mooncrst_modify_spritecode(int *code,int *flipx,int *flipy,int offs);
+static void  skybase_modify_spritecode(int *code,int *flipx,int *flipy,int offs);
 static void  moonqsr_modify_spritecode(int *code,int *flipx,int *flipy,int offs);
 static void   ckongs_modify_spritecode(int *code,int *flipx,int *flipy,int offs);
 static void  calipso_modify_spritecode(int *code,int *flipx,int *flipy,int offs);
@@ -478,6 +481,16 @@ int mooncrst_vh_start(void)
 	return ret;
 }
 
+int skybase_vh_start(void)
+{
+	int ret = galaxian_vh_start();
+
+	modify_charcode   = skybase_modify_charcode;
+	modify_spritecode = skybase_modify_spritecode;
+
+	return ret;
+}
+
 int moonqsr_vh_start(void)
 {
 	int ret = galaxian_vh_start();
@@ -756,6 +769,11 @@ WRITE_HANDLER( mooncrgx_gfxextend_w )
 	mooncrst_gfxextend_w(offset, data);
 }
 
+WRITE_HANDLER( skybase_gfxbank_w )
+{
+	set_vh_global_attribute( &skybase_gfxbank, data );
+}
+
 WRITE_HANDLER( pisces_gfxbank_w )
 {
 	set_vh_global_attribute( &pisces_gfxbank, data & 0x01 );
@@ -774,6 +792,14 @@ static void mooncrst_modify_charcode(int *code,int x)
 	if ((mooncrst_gfxextend & 0x04) && (*code & 0xc0) == 0x80)
 	{
 		*code = (*code & 0x3f) | (mooncrst_gfxextend << 6);
+	}
+}
+
+static void skybase_modify_charcode(int *code,int x)
+{
+	if (skybase_gfxbank)
+	{
+		*code += 256 * skybase_gfxbank;
 	}
 }
 
@@ -837,6 +863,14 @@ static void mooncrst_modify_spritecode(int *code,int *flipx,int *flipy,int offs)
 	if ((mooncrst_gfxextend & 0x04) && (*code & 0x30) == 0x20)
 	{
 		*code = (*code & 0x0f) | (mooncrst_gfxextend << 4);
+	}
+}
+
+static void skybase_modify_spritecode(int *code,int *flipx,int *flipy,int offs)
+{
+	if (skybase_gfxbank)
+	{
+		*code += 64 * skybase_gfxbank;
 	}
 }
 

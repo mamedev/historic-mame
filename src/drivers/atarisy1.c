@@ -5,11 +5,11 @@
 	driver by Aaron Giles
 
 	Games supported:
-		* Marble Madness (1984) [3 sets]
+		* Marble Madness (1984) [4 sets]
 		* Peter Packrat (1984)
-		* Indiana Jones & the Temple of Doom (1985) [4 sets]
+		* Indiana Jones & the Temple of Doom (1985) [5 sets]
 		* Road Runner (1985)
-		* Road Blasters (1987)
+		* Road Blasters (1987) [2 sets]
 
 	Known bugs:
 		* none at this time
@@ -1481,6 +1481,72 @@ ROM_START( roadblst )
 ROM_END
 
 
+ROM_START( roadbls2 )
+	ROM_REGION( 0x88000, REGION_CPU1, 0 )	/* 8.5*64k for 68000 code & slapstic ROM */
+	ROM_LOAD16_BYTE( "136032.114",   0x00000, 0x04000, 0x195c54ad )
+	ROM_LOAD16_BYTE( "136032.115",   0x00001, 0x04000, 0x7275b4dc )
+	ROM_LOAD16_BYTE( "136048-2.151", 0x10000, 0x08000, 0xea6b3060 )
+	ROM_CONTINUE(                    0x50000, 0x08000 )
+	ROM_LOAD16_BYTE( "136048-2.152", 0x10001, 0x08000, 0xf5c1fbe0 )
+	ROM_CONTINUE(                    0x50001, 0x08000 )
+	ROM_LOAD16_BYTE( "136048-2.153", 0x20000, 0x08000, 0x11c41698 )
+	ROM_CONTINUE(                    0x60000, 0x08000 )
+	ROM_LOAD16_BYTE( "136048-2.154", 0x20001, 0x08000, 0x7b947d64 )
+	ROM_CONTINUE(                    0x60001, 0x08000 )
+	ROM_LOAD16_BYTE( "048-1167.rom", 0x70000, 0x08000, 0xc6d30d6f )
+	ROM_LOAD16_BYTE( "048-1168.rom", 0x70001, 0x08000, 0x16951020 )
+	ROM_LOAD16_BYTE( "048-2147.rom", 0x80000, 0x04000, 0x5c1adf67 )
+	ROM_LOAD16_BYTE( "048-2148.rom", 0x80001, 0x04000, 0xd9ac8966 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for 6502 code */
+	ROM_LOAD( "048-1149.rom", 0x4000, 0x4000, 0x2e54f95e )
+	ROM_LOAD( "048-1169.rom", 0x8000, 0x4000, 0xee318052 )
+	ROM_LOAD( "048-1170.rom", 0xc000, 0x4000, 0x75dfec33 )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
+
+	ROM_REGION( 0x120000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
+	ROM_LOAD( "048-1101.rom", 0x000000, 0x08000, 0xfe342d27 )  /* bank 1, plane 0 */
+	ROM_LOAD( "048-1102.rom", 0x008000, 0x08000, 0x17c7e780 )  /* bank 1, plane 1 */
+	ROM_LOAD( "048-1103.rom", 0x010000, 0x08000, 0x39688e01 )  /* bank 1, plane 2 */
+	ROM_LOAD( "048-1104.rom", 0x018000, 0x08000, 0xc8f9bd8e )  /* bank 1, plane 3 */
+	ROM_LOAD( "048-1105.rom", 0x020000, 0x08000, 0xc69e439e )  /* bank 1, plane 4 */
+	ROM_LOAD( "048-1106.rom", 0x028000, 0x08000, 0x4ee55796 )  /* bank 1, plane 5 */
+
+	ROM_LOAD( "048-1107.rom", 0x030000, 0x08000, 0x02117c58 )  /* bank 2, plane 0 */
+	ROM_CONTINUE(             0x060000, 0x08000 )			   /* bank 3, plane 0 */
+	ROM_LOAD( "048-1108.rom", 0x038000, 0x08000, 0x1e148525 )  /* bank 2, plane 1 */
+	ROM_CONTINUE(             0x068000, 0x08000 )			   /* bank 3, plane 1 */
+	ROM_LOAD( "048-1109.rom", 0x040000, 0x08000, 0x110ce07e )  /* bank 2, plane 2 */
+	ROM_CONTINUE(             0x070000, 0x08000 )			   /* bank 3, plane 2 */
+	ROM_LOAD( "048-1110.rom", 0x048000, 0x08000, 0xc00aa0f4 )  /* bank 2, plane 3 */
+	ROM_CONTINUE(             0x078000, 0x08000 )			   /* bank 3, plane 3 */
+
+	ROM_LOAD( "048-1111.rom", 0x090000, 0x08000, 0xc951d014 )  /* bank 4, plane 0 */
+	ROM_CONTINUE(             0x0c0000, 0x08000 )			   /* bank 5, plane 0 */
+	ROM_LOAD( "048-1112.rom", 0x098000, 0x08000, 0x95c5a006 )  /* bank 4, plane 1 */
+	ROM_CONTINUE(             0x0c8000, 0x08000 )			   /* bank 5, plane 1 */
+	ROM_LOAD( "048-1113.rom", 0x0a0000, 0x08000, 0xf61f2370 )  /* bank 4, plane 2 */
+	ROM_CONTINUE(             0x0d0000, 0x08000 )			   /* bank 5, plane 2 */
+	ROM_LOAD( "048-1114.rom", 0x0a8000, 0x08000, 0x774a36a8 )  /* bank 4, plane 3 */
+	ROM_CONTINUE(             0x0d8000, 0x08000 )			   /* bank 5, plane 3 */
+
+	ROM_LOAD( "048-1115.rom", 0x100000, 0x08000, 0xa47bc79d )  /* bank 7, plane 0 */
+	ROM_CONTINUE(             0x0e0000, 0x08000 )			   /* bank 6, plane 0 */
+	ROM_LOAD( "048-1116.rom", 0x108000, 0x08000, 0xb8a5c215 )  /* bank 7, plane 1 */
+	ROM_CONTINUE(             0x0e8000, 0x08000 )			   /* bank 6, plane 1 */
+	ROM_LOAD( "048-1117.rom", 0x110000, 0x08000, 0x2d1c1f64 )  /* bank 7, plane 2 */
+	ROM_CONTINUE(             0x0f0000, 0x08000 )			   /* bank 6, plane 2 */
+	ROM_LOAD( "048-1118.rom", 0x118000, 0x08000, 0xbe879b8e )  /* bank 7, plane 3 */
+	ROM_CONTINUE(             0x0f8000, 0x08000 )			   /* bank 6, plane 3 */
+
+	ROM_REGION( 0x400, REGION_PROMS, 0 )	/* graphics mapping PROMs */
+	ROM_LOAD( "048-1174.bpr", 0x000, 0x200, 0xdb4a4d53 )  /* remap */
+	ROM_LOAD( "048-1173.bpr", 0x200, 0x200, 0xc80574af )  /* color */
+ROM_END
+
+
 
 /*************************************
  *
@@ -1546,6 +1612,17 @@ static void init_roadblst(void)
 }
 
 
+static void init_roadbls2(void)
+{
+	atarigen_eeprom_default = NULL;
+	atarigen_slapstic_init(0, 0x080000, 109);
+	atarigen_init_6502_speedup(1, 0x410b, 0x4123);
+
+	joystick_type = 3;	/* pedal */
+	trackball_type = 2;	/* steering wheel */
+}
+
+
 
 /*************************************
  *
@@ -1564,4 +1641,5 @@ GAME( 1985, indytem3, indytemp, atarisy1, indytemp, indytemp, ROT0, "Atari Games
 GAME( 1985, indytem4, indytemp, atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (set 4)" )
 GAME( 1985, indytemd, indytemp, atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (German)" )
 GAME( 1985, roadrunn, 0,        atarisy1, roadrunn, roadrunn, ROT0, "Atari Games", "Road Runner" )
-GAME( 1987, roadblst, 0,        atarisy1, roadblst, roadblst, ROT0, "Atari Games", "Road Blasters" )
+GAME( 1987, roadblst, 0,        atarisy1, roadblst, roadblst, ROT0, "Atari Games", "Road Blasters (set 1)" )
+GAME( 1987, roadbls2, roadblst, atarisy1, roadblst, roadbls2, ROT0, "Atari Games", "Road Blasters (set 2)" )

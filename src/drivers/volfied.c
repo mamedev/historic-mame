@@ -277,6 +277,56 @@ ROM_START( volfied )
 	ROM_LOAD16_BYTE( "c04-12-1.bin", 0x00000, 0x10000, 0xafb6a058 )
 	ROM_LOAD16_BYTE( "c04-08-1.bin", 0x00001, 0x10000, 0x19f7e66b )
 	ROM_LOAD16_BYTE( "c04-11-1.bin", 0x20000, 0x10000, 0x1aaf6e9b )
+	ROM_LOAD16_BYTE( "volf-w.512",   0x20001, 0x10000, 0xb39e04f9 )
+	ROM_LOAD16_BYTE( "c04-20.bin",   0x80000, 0x20000, 0x0aea651f )
+	ROM_LOAD16_BYTE( "c04-22.bin",   0x80001, 0x20000, 0xf405d465 )
+	ROM_LOAD16_BYTE( "c04-19.bin",   0xc0000, 0x20000, 0x231493ae )
+	ROM_LOAD16_BYTE( "c04-21.bin",   0xc0001, 0x20000, 0x8598d38e )
+
+	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE )	/* sprites 16x16 */
+	ROM_LOAD16_BYTE( "c04-16.bin",   0x00000, 0x20000, 0x8c2476ef )
+	ROM_LOAD16_BYTE( "c04-18.bin",   0x00001, 0x20000, 0x7665212c )
+	ROM_LOAD16_BYTE( "c04-15.bin",   0x40000, 0x20000, 0x7c50b978 )
+	ROM_LOAD16_BYTE( "c04-17.bin",   0x40001, 0x20000, 0xc62fdeb8 )
+	ROM_LOAD16_BYTE( "c04-10.bin",   0x80000, 0x10000, 0x429b6b49 )
+	ROM_RELOAD     (                 0xa0000, 0x10000 )
+	ROM_LOAD16_BYTE( "c04-09.bin",   0x80001, 0x10000, 0xc78cf057 )
+	ROM_RELOAD     (                 0xa0001, 0x10000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* sound cpu */
+	ROM_LOAD( "c04-06.bin", 0x0000, 0x8000, 0xb70106b2 )
+ROM_END
+
+ROM_START( volfiedu )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )     /* 68000 code and tile data */
+	ROM_LOAD16_BYTE( "c04-12-1.bin", 0x00000, 0x10000, 0xafb6a058 )
+	ROM_LOAD16_BYTE( "c04-08-1.bin", 0x00001, 0x10000, 0x19f7e66b )
+	ROM_LOAD16_BYTE( "c04-11-1.bin", 0x20000, 0x10000, 0x1aaf6e9b )
+	ROM_LOAD16_BYTE( "volf-usa.512", 0x20001, 0x10000, 0xc499346f )
+	ROM_LOAD16_BYTE( "c04-20.bin",   0x80000, 0x20000, 0x0aea651f )
+	ROM_LOAD16_BYTE( "c04-22.bin",   0x80001, 0x20000, 0xf405d465 )
+	ROM_LOAD16_BYTE( "c04-19.bin",   0xc0000, 0x20000, 0x231493ae )
+	ROM_LOAD16_BYTE( "c04-21.bin",   0xc0001, 0x20000, 0x8598d38e )
+
+	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE )	/* sprites 16x16 */
+	ROM_LOAD16_BYTE( "c04-16.bin",   0x00000, 0x20000, 0x8c2476ef )
+	ROM_LOAD16_BYTE( "c04-18.bin",   0x00001, 0x20000, 0x7665212c )
+	ROM_LOAD16_BYTE( "c04-15.bin",   0x40000, 0x20000, 0x7c50b978 )
+	ROM_LOAD16_BYTE( "c04-17.bin",   0x40001, 0x20000, 0xc62fdeb8 )
+	ROM_LOAD16_BYTE( "c04-10.bin",   0x80000, 0x10000, 0x429b6b49 )
+	ROM_RELOAD     (                 0xa0000, 0x10000 )
+	ROM_LOAD16_BYTE( "c04-09.bin",   0x80001, 0x10000, 0xc78cf057 )
+	ROM_RELOAD     (                 0xa0001, 0x10000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* sound cpu */
+	ROM_LOAD( "c04-06.bin", 0x0000, 0x8000, 0xb70106b2 )
+ROM_END
+
+ROM_START( volfiedj )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )     /* 68000 code and tile data */
+	ROM_LOAD16_BYTE( "c04-12-1.bin", 0x00000, 0x10000, 0xafb6a058 )
+	ROM_LOAD16_BYTE( "c04-08-1.bin", 0x00001, 0x10000, 0x19f7e66b )
+	ROM_LOAD16_BYTE( "c04-11-1.bin", 0x20000, 0x10000, 0x1aaf6e9b )
 	ROM_LOAD16_BYTE( "c04-07-1.bin", 0x20001, 0x10000, 0x5d9065d5 )
 	ROM_LOAD16_BYTE( "c04-20.bin",   0x80000, 0x20000, 0x0aea651f )
 	ROM_LOAD16_BYTE( "c04-22.bin",   0x80001, 0x20000, 0xf405d465 )
@@ -297,4 +347,7 @@ ROM_START( volfied )
 	ROM_LOAD( "c04-06.bin", 0x0000, 0x8000, 0xb70106b2 )
 ROM_END
 
-GAMEX( 1989, volfied, 0, volfied, volfied, volfied, ROT270, "Taito Corporation", "Volfied (Japan)", GAME_UNEMULATED_PROTECTION )
+
+GAMEX( 1989, volfied,  0,       volfied, volfied, volfied, ROT270, "Taito Corporation Japan", "Volfied (World)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1989, volfiedu, volfied, volfied, volfied, volfied, ROT270, "Taito America Corporation", "Volfied (US)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1989, volfiedj, volfied, volfied, volfied, volfied, ROT270, "Taito Corporation", "Volfied (Japan)", GAME_UNEMULATED_PROTECTION )

@@ -167,6 +167,7 @@ WRITE_HANDLER( mooncrgx_gfxextend_w );
 int galaxian_plain_vh_start(void);
 int galaxian_vh_start(void);
 int mooncrst_vh_start(void);
+int  skybase_vh_start(void);
 int  moonqsr_vh_start(void);
 int   pisces_vh_start(void);
 int gteikob2_vh_start(void);
@@ -176,6 +177,7 @@ int  jumpbug_vh_start(void);
 void galaxian_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( jumpbug_gfxbank_w );
 WRITE_HANDLER( pisces_gfxbank_w );
+WRITE_HANDLER( skybase_gfxbank_w );
 WRITE_HANDLER( galaxian_flip_screen_x_w );
 WRITE_HANDLER( galaxian_flip_screen_y_w );
 WRITE_HANDLER( gteikob2_flip_screen_x_w );
@@ -349,6 +351,40 @@ static MEMORY_WRITE_START( mooncrst_writemem )
 	{ 0x9880, 0x98ff, MWA_RAM },
 	{ 0xa000, 0xa002, mooncrst_gfxextend_w },
 	{ 0xa003, 0xa003, galaxian_coin_counter_w },
+	{ 0xa004, 0xa007, galaxian_lfo_freq_w },
+	{ 0xa800, 0xa802, galaxian_background_enable_w },
+	{ 0xa803, 0xa803, galaxian_noise_enable_w },
+	{ 0xa805, 0xa805, galaxian_shoot_enable_w },
+	{ 0xa806, 0xa807, galaxian_vol_w },
+	{ 0xb000, 0xb000, interrupt_enable_w },
+	{ 0xb004, 0xb004, galaxian_stars_enable_w },
+	{ 0xb006, 0xb006, galaxian_flip_screen_x_w },
+	{ 0xb007, 0xb007, galaxian_flip_screen_y_w },
+	{ 0xb800, 0xb800, galaxian_pitch_w },
+MEMORY_END
+
+
+static MEMORY_READ_START( skybase_readmem )
+	{ 0x0000, 0x5fff, MRA_ROM },
+	{ 0x8000, 0x87ff, MRA_RAM },
+	{ 0x9000, 0x93ff, MRA_RAM },
+	{ 0x9400, 0x97ff, galaxian_videoram_r },
+	{ 0x9800, 0x98ff, MRA_RAM },
+	{ 0xa000, 0xa000, input_port_0_r },
+	{ 0xa800, 0xa800, input_port_1_r },
+	{ 0xb000, 0xb000, input_port_2_r },
+	{ 0xb800, 0xb800, watchdog_reset_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( skybase_writemem )
+	{ 0x0000, 0x5fff, MWA_ROM },
+	{ 0x8000, 0x87ff, MWA_RAM },
+	{ 0x9000, 0x93ff, MWA_RAM, &galaxian_videoram },
+	{ 0x9800, 0x983f, MWA_RAM, &galaxian_attributesram },
+	{ 0x9840, 0x985f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
+	{ 0x9860, 0x987f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
+	{ 0x9880, 0x98ff, MWA_RAM },
+	{ 0xa002, 0xa002, skybase_gfxbank_w },
 	{ 0xa004, 0xa007, galaxian_lfo_freq_w },
 	{ 0xa800, 0xa802, galaxian_background_enable_w },
 	{ 0xa803, 0xa803, galaxian_noise_enable_w },
@@ -1921,6 +1957,49 @@ INPUT_PORTS_START( kingball )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( skybase )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
+ 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x80, "1C/1C (2 to start)" )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Free_Play ) )
+
+	PORT_START	/* IN2 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Unlimited", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "10000" )
+	PORT_DIPSETTING(    0x04, "15000" )
+	PORT_DIPSETTING(    0x08, "20000" )
+	PORT_DIPSETTING(    0x0c, "None" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+INPUT_PORTS_END
+
 
 static struct GfxLayout galaxian_charlayout =
 {
@@ -2069,6 +2148,7 @@ MACHINE_DRIVER(mooncrgx, galaxian, nmi_interrupt, galaxian, mooncrst)
 MACHINE_DRIVER(pacmanbl, galaxian, nmi_interrupt, pacmanbl, galaxian)
 MACHINE_DRIVER(devilfsg, galaxian, interrupt,  	  pacmanbl, galaxian)
 MACHINE_DRIVER(mooncrst, mooncrst, nmi_interrupt, galaxian, mooncrst)
+MACHINE_DRIVER(skybase,  skybase,  nmi_interrupt, galaxian, skybase)
 MACHINE_DRIVER(moonqsr,  mooncrst, nmi_interrupt, galaxian, moonqsr)
 
 
@@ -3028,23 +3108,6 @@ ROM_START( mooncrst )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
-ROM_START( skybase )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "skybase.9a",   0x0000, 0x1000, 0x7d954a7a )
-	ROM_LOAD( "skybase.8a",   0x1000, 0x1000, 0x7d954a7a )
-	ROM_LOAD( "skybase.7a",   0x2000, 0x1000, 0x7d954a7a )
-	ROM_LOAD( "skybase.6a",   0x3000, 0x1000, 0x7d954a7a )
-
-	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "mcs_b",        0x0000, 0x0800, 0xfb0f1f81 )
-	ROM_LOAD( "mcs_d",        0x0800, 0x0800, 0x13932a15 )
-	ROM_LOAD( "mcs_a",        0x1000, 0x0800, 0x631ebb5a )
-	ROM_LOAD( "mcs_c",        0x1800, 0x0800, 0x24cfd145 )
-
-	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
-ROM_END
-
 ROM_START( mooncrsg )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "epr194",       0x0000, 0x0800, 0x0e5582b1 )
@@ -3210,6 +3273,25 @@ ROM_START( eagle2 )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
+ROM_END
+
+ROM_START( skybase )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "skybase.9a",   0x0000, 0x1000, 0x845b87a5 )
+	ROM_LOAD( "skybase.8a",   0x1000, 0x1000, 0x096785c2 )
+	ROM_LOAD( "skybase.7a",   0x2000, 0x1000, 0xd50c715b )
+	ROM_LOAD( "skybase.6a",   0x3000, 0x1000, 0xf57edb27 )
+	ROM_LOAD( "skybase.5a",   0x4000, 0x1000, 0x50365d95 )
+	ROM_LOAD( "skybase.4a",   0x5000, 0x1000, 0xcbd6647f )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "skybase.7t",   0x0000, 0x1000, 0x9b471686 )
+	ROM_LOAD( "skybase.8t",   0x1000, 0x1000, 0x1cf723da )
+	ROM_LOAD( "skybase.10t",  0x2000, 0x1000, 0xfe02e72c )
+	ROM_LOAD( "skybase.9t",   0x3000, 0x1000, 0x0871291f )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "skybase.123",  0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
 ROM_START( moonqsr )
@@ -3504,6 +3586,7 @@ GAMEX(1980, fantazia, mooncrst, mooncrst, mooncrst, 0,        ROT90,  "bootleg",
 GAME( 1980, eagle,    mooncrst, mooncrst, eagle,    0,        ROT90,  "Centuri", "Eagle (set 1)" )
 GAME( 1980, eagle2,   mooncrst, mooncrst, eagle2,   0,        ROT90,  "Centuri", "Eagle (set 2)" )
 GAME( 1980, mooncrgx, mooncrst, mooncrgx, mooncrgx, mooncrgx, ROT270, "bootleg", "Moon Cresta (bootleg on Galaxian hardware)" )
+GAME( 1982, skybase,  0,        skybase,  skybase,  0,        ROT90,  "Omori Electric Co., Ltd.", "Sky Base" )
 GAME( 19??, omega,    theend,   galaxian, omega,    0,        ROT270, "bootleg?", "Omega" )
 GAME( 1980, moonqsr,  0,        moonqsr,  moonqsr,  moonqsr,  ROT90,  "Nichibutsu", "Moon Quasar" )
 GAME( 1980, moonal2,  0,        mooncrst, moonal2,  moonal2,  ROT90,  "Nichibutsu", "Moon Alien Part 2" )

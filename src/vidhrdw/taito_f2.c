@@ -74,143 +74,6 @@ int f2_tilemap_col_base = 0;
 static int f2_game = 0;
 static int FOOTCHMP = 1;
 
-/********************************************************************/
-
-static int has_two_TC0100SCN(void)
-{
-	const struct Memory_WriteAddress16 *mwa;
-
-	/* scan the memory handlers and see if the second TC0100SCN is used */
-
-	mwa = Machine->drv->cpu[0].memory_write;
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if (mwa->handler == TC0100SCN_word_1_w)
-					return 1;
-			}
-			mwa++;
-		}
-	}
-
-	return 0;
-}
-
-static int has_TC0480SCP(void)
-{
-	const struct Memory_WriteAddress16 *mwa;
-
-	/* scan the memory handlers and see if the TC0480SCP is used */
-
-	mwa = Machine->drv->cpu[0].memory_write;
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if (mwa->handler == TC0480SCP_word_w)
-					return 1;
-			}
-			mwa++;
-		}
-	}
-
-	return 0;
-}
-
-static int has_TC0110PCR(void)
-{
-	const struct Memory_WriteAddress16 *mwa;
-
-	/* scan the memory handlers and see if the TC0110PCR is used */
-
-	mwa = Machine->drv->cpu[0].memory_write;
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if (mwa->handler == TC0110PCR_word_w)
-					return 1;
-			}
-			mwa++;
-		}
-	}
-
-	return 0;
-}
-
-static int has_TC0360PRI(void)
-{
-	const struct Memory_WriteAddress16 *mwa;
-
-	/* scan the memory handlers and see if the TC0360PRI is used */
-	mwa = Machine->drv->cpu[0].memory_write;
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if ((mwa->handler == TC0360PRI_halfword_w) ||
-						(mwa->handler == TC0360PRI_halfword_swap_w))
-					return 1;
-			}
-			mwa++;
-		}
-	}
-
-	return 0;
-}
-
-static int has_TC0280GRD(void)
-{
-	const struct Memory_WriteAddress16 *mwa;
-
-	/* scan the memory handlers and see if the TC0280GRD is used */
-	mwa = Machine->drv->cpu[0].memory_write;
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if (mwa->handler == TC0280GRD_word_w)
-					return 1;
-			}
-			mwa++;
-		}
-	}
-
-	return 0;
-}
-
-static int has_TC0430GRW(void)
-{
-	const struct Memory_WriteAddress16 *mwa;
-
-	/* scan the memory handlers and see if the TC0430GRW is used */
-	mwa = Machine->drv->cpu[0].memory_write;
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if (mwa->handler == TC0430GRW_word_w)
-					return 1;
-			}
-			mwa++;
-		}
-	}
-
-	return 0;
-}
 
 
 /***********************************************************************************/
@@ -218,7 +81,7 @@ static int has_TC0430GRW(void)
 int taitof2_core_vh_start (int sprite_type,int hide,int flip_hide,int x_offs,int y_offs,
 		int flip_xoffs,int flip_yoffs,int flip_text_x_offs,int flip_text_yoffs)
 {
-	int i;
+	int i,chips;
 	f2_sprite_type = sprite_type;
 	f2_hide_pixels = hide;
 	f2_flip_hide_pixels = flip_hide;
@@ -228,6 +91,14 @@ int taitof2_core_vh_start (int sprite_type,int hide,int flip_hide,int x_offs,int
 	spritelist = malloc(0x400 * sizeof(*spritelist));
 	if (!spriteram_delayed || !spriteram_buffered || !spritelist)
 		return 1;
+
+	chips = number_of_TC0100SCN();
+
+	if (chips < 0)	/* we have an erroneous TC0100SCN configuration */
+	{
+		taitof2_vh_stop();
+		return 1;
+	}
 
 	if (has_TC0480SCP())	/* it's a tc0480scp game */
 	{
@@ -240,8 +111,8 @@ int taitof2_core_vh_start (int sprite_type,int hide,int flip_hide,int x_offs,int
 	}
 	else	/* it's a tc0100scn game */
 	{
-		if (TC0100SCN_vh_start(has_two_TC0100SCN() ? 2 : 1,TC0100SCN_GFX_NUM,
-			f2_hide_pixels,0,flip_xoffs,flip_yoffs,flip_text_x_offs,flip_text_yoffs,0))
+		if (TC0100SCN_vh_start(chips,TC0100SCN_GFX_NUM,f2_hide_pixels,0,
+			flip_xoffs,flip_yoffs,flip_text_x_offs,flip_text_yoffs,0))
 		{
 			taitof2_vh_stop();
 			return 1;

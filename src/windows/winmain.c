@@ -51,6 +51,7 @@ static int original_leds;
 
 static LONG CALLBACK exception_filter(struct _EXCEPTION_POINTERS *info);
 static const char *lookup_symbol(UINT32 address);
+static int get_code_base_size(UINT32 *base, UINT32 *size);
 
 
 
@@ -161,6 +162,7 @@ static LONG CALLBACK exception_filter(struct _EXCEPTION_POINTERS *info)
 		{ 0,								"UNKNOWN EXCEPTION" }
 	};
 	static int already_hit = 0;
+	UINT32 code_start, code_size;
 	int i;
 
 	// if we're hitting this recursively, just exit
@@ -183,24 +185,74 @@ static LONG CALLBACK exception_filter(struct _EXCEPTION_POINTERS *info)
 		fprintf(stderr, "While attempting to %s memory at %08X\n",
 				info->ExceptionRecord->ExceptionInformation[0] ? "write" : "read",
 				(UINT32)info->ExceptionRecord->ExceptionInformation[1]);
-/*
-	UINT32 eip, ebp, esp;
-	// attempt to print a call chain
-	fprintf(stderr, "\nCall chain:\n");
-	eip = (UINT32)info->ExceptionRecord->ExceptionAddress;
-	ebp = info->ContextRecord->Ebp;
-	esp = info->ContextRecord->Esp;
-	while (1)
-	{
-		fprintf(stderr, "\t0x%08x\t%s\n", eip, lookup_symbol(eip));
-fprintf(stderr, "esp = %08x  ebp = %08x\n", esp, ebp);
-		if (esp - ebp >= 0x10000)
-			break;
 
-		ebp = *(UINT32 *)ebp;
-		eip = *(UINT32 *)(ebp + 4);
+	// print the state of the CPU
+	fprintf(stderr, "-----------------------------------------------------\n");
+	fprintf(stderr, "EAX=%08X EBX=%08X ECX=%08X EDX=%08X\n",
+			(UINT32)info->ContextRecord->Eax,
+			(UINT32)info->ContextRecord->Ebx,
+			(UINT32)info->ContextRecord->Ecx,
+			(UINT32)info->ContextRecord->Edx);
+	fprintf(stderr, "ESI=%08X EDI=%08X EBP=%08X ESP=%08X\n",
+			(UINT32)info->ContextRecord->Esi,
+			(UINT32)info->ContextRecord->Edi,
+			(UINT32)info->ContextRecord->Ebp,
+			(UINT32)info->ContextRecord->Esp);
+
+	// crawl the stack for a while
+	if (get_code_base_size(&code_start, &code_size))
+	{
+		char prev_symbol[1024], curr_symbol[1024];
+		UINT32 last_call = (UINT32)info->ExceptionRecord->ExceptionAddress;
+		UINT32 esp_start = info->ContextRecord->Esp;
+		UINT32 esp_end = (esp_start | 0xffff) + 1;
+		UINT32 esp;
+
+		// reprint the actual exception address
+		fprintf(stderr, "-----------------------------------------------------\n");
+		fprintf(stderr, "Stack crawl:\n");
+		fprintf(stderr, "exception-> %08X%s\n", last_call, strcpy(prev_symbol, lookup_symbol(last_call)));
+
+		// crawl the stack until we hit the next 64k boundary
+		for (esp = esp_start; esp < esp_end; esp += 4)
+		{
+			UINT32 stack_val = *(UINT32 *)esp;
+
+			// if the value on the stack points within the code block, check it out
+			if (stack_val >= code_start && stack_val < code_start + code_size)
+			{
+				UINT8 *return_addr = (UINT8 *)stack_val;
+				UINT32 call_target = 0;
+
+				// make sure the code that we think got us here is actually a CALL instruction
+				if (return_addr[-5] == 0xe8)
+					call_target = stack_val - 5 + *(INT32 *)&return_addr[-4];
+				if ((return_addr[-2] == 0xff && (return_addr[-1] & 0x38) == 0x10) ||
+					(return_addr[-3] == 0xff && (return_addr[-2] & 0x38) == 0x10) ||
+					(return_addr[-4] == 0xff && (return_addr[-3] & 0x38) == 0x10) ||
+					(return_addr[-5] == 0xff && (return_addr[-4] & 0x38) == 0x10) ||
+					(return_addr[-6] == 0xff && (return_addr[-5] & 0x38) == 0x10) ||
+					(return_addr[-7] == 0xff && (return_addr[-6] & 0x38) == 0x10))
+					call_target = 1;
+
+				// make sure it points somewhere a little before the last call
+				if (call_target == 1 || (call_target < last_call && call_target >= last_call - 0x1000))
+				{
+					char *stop_compare = strchr(prev_symbol, '+');
+
+					// don't print duplicate hits in the same routine
+					strcpy(curr_symbol, lookup_symbol(stack_val));
+					if (stop_compare == NULL || strncmp(curr_symbol, prev_symbol, stop_compare - prev_symbol))
+					{
+						strcpy(prev_symbol, curr_symbol);
+						fprintf(stderr, "  %08X: %08X%s\n", esp, stack_val, curr_symbol);
+						last_call = stack_val;
+					}
+				}
+			}
+		}
 	}
-*/
+
 	// exit
 	return EXCEPTION_EXECUTE_HANDLER;
 }
@@ -242,4 +294,28 @@ static const char *lookup_symbol(UINT32 address)
 		return "";
 	sprintf(buffer, " (%s+0x%04x)", best_symbol, address - best_addr);
 	return buffer;
+}
+
+
+
+//============================================================
+//	get_code_base_size
+//============================================================
+
+static int get_code_base_size(UINT32 *base, UINT32 *size)
+{
+	FILE *	map = fopen(mapfile_name, "r");
+	char	line[1024];
+
+	// if no file, return nothing
+	if (map == NULL)
+		return 0;
+
+	// parse the file, looking for .text entry
+	while (fgets(line, sizeof(line) - 1, map))
+		if (!strncmp(line, ".text           0x", 18))
+			if (sscanf(line, ".text           0x%08x 0x%x", base, size) == 2)
+				return 1;
+
+	return 0;
 }

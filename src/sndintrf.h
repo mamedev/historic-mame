@@ -91,6 +91,9 @@ struct MachineSound
 #if (HAS_MSM5205)
 #include "sound/msm5205.h"
 #endif
+#if (HAS_MSM5232)
+#include "sound/msm5232.h"
+#endif
 #if (HAS_UPD7759)
 #include "sound/upd7759.h"
 #endif
@@ -135,6 +138,9 @@ struct MachineSound
 #endif
 #if (HAS_ES5505 || HAS_ES5506)
 #include "sound/es5506.h"
+#endif
+#if (HAS_BSMT2000)
+#include "sound/bsmt2000.h"
 #endif
 
 #ifdef MESS
@@ -252,6 +258,9 @@ enum
 #if (HAS_MSM5205)
 	SOUND_MSM5205,
 #endif
+#if (HAS_MSM5232)
+	SOUND_MSM5232,
+#endif
 #if (HAS_UPD7759)
 	SOUND_UPD7759,
 #endif
@@ -299,6 +308,9 @@ enum
 #endif
 #if (HAS_ES5506)
 	SOUND_ES5506,
+#endif
+#if (HAS_BSMT2000)
+	SOUND_BSMT2000,
 #endif
 
 #ifdef MESS

@@ -52,6 +52,7 @@ WRITE16_HANDLER( gaiden_fgscrollx_w );
 WRITE16_HANDLER( gaiden_fgscrolly_w );
 WRITE16_HANDLER( gaiden_bgscrollx_w );
 WRITE16_HANDLER( gaiden_bgscrolly_w );
+WRITE16_HANDLER( gaiden_flip_w );
 
 int gaiden_vh_start(void);
 void gaiden_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
@@ -165,6 +166,7 @@ static MEMORY_WRITE16_START( writemem )
 	{ 0x07a802, 0x07a803, gaiden_sound_command_w },
 	{ 0x07a804, 0x07a805, tknight_protection_w },
 	{ 0x07a806, 0x07a807, MWA16_NOP },
+	{ 0x07a808, 0x07a809, gaiden_flip_w },
 MEMORY_END
 
 static MEMORY_READ_START( sound_readmem )
@@ -445,7 +447,7 @@ static const struct MachineDriver machine_driver_gaiden =
 	0,
 
 	/* video hardware */
-	32*8, 30*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	1024, 0,
 	0,
@@ -649,8 +651,8 @@ ROM_END
 
 
 
-GAMEX( 1988, gaiden,   0,       gaiden, gaiden,  0, ROT0, "Tecmo", "Ninja Gaiden (World)", GAME_NO_COCKTAIL )
-GAMEX( 1988, shadoww,  gaiden,  gaiden, gaiden,  0, ROT0, "Tecmo", "Shadow Warriors (US)", GAME_NO_COCKTAIL )
-GAMEX( 1989, ryukendn, gaiden,  gaiden, gaiden,  0, ROT0, "Tecmo", "Ninja Ryukenden (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1989, tknight,  0,       gaiden, tknight, 0, ROT0, "Tecmo", "Tecmo Knight", GAME_NO_COCKTAIL )
-GAMEX( 1989, wildfang, tknight, gaiden, tknight, 0, ROT0, "Tecmo", "Wild Fang", GAME_NO_COCKTAIL )
+GAME( 1988, gaiden,   0,       gaiden, gaiden,  0, ROT0, "Tecmo", "Ninja Gaiden (World)" )
+GAME( 1988, shadoww,  gaiden,  gaiden, gaiden,  0, ROT0, "Tecmo", "Shadow Warriors (US)" )
+GAME( 1989, ryukendn, gaiden,  gaiden, gaiden,  0, ROT0, "Tecmo", "Ninja Ryukenden (Japan)" )
+GAME( 1989, tknight,  0,       gaiden, tknight, 0, ROT0, "Tecmo", "Tecmo Knight" )
+GAME( 1989, wildfang, tknight, gaiden, tknight, 0, ROT0, "Tecmo", "Wild Fang" )

@@ -127,6 +127,51 @@ int popflame_sh_start(const struct MachineSound *msound);
 void pleiads_sh_stop(void);
 void pleiads_sh_update(void);
 
+
+/* Pop Flamer
+   1st protection relies on reading values from a device at $9000 and writing to 400A-400D (See $26A9).
+   Then value stored in 400C must be xxxx1001 (rrca x 3) or else reset
+   2nd protection relies on the values stored in 400A-400D matching $2690+($400E) (Starts at $460)
+   If the values all match then it will jump to 0x0011 instead of 0x0009 (refresh instead of reset)
+   Paul Priest: tourniquet@mameworld.net */
+
+//static int popflame_prot_count = 0;
+
+READ_HANDLER( popflame_protection_r ) /* Not used by bootleg/hack */
+{
+	static int values[4] = { 0x78, 0x68, 0x48, 0x38|0x80 };
+	static int count;
+
+	count = (count + 1) % 4;
+	return values[count];
+
+#if 0
+	if ( cpu_get_pc() == (0x26F2 + 0x03) )
+	{
+		popflame_prot_count = 0;
+		return 0x01;
+	} /* Must not carry when rotated left */
+
+	if ( cpu_get_pc() == (0x26F9 + 0x03) )
+		return 0x80; /* Must carry when rotated left */
+
+	if ( cpu_get_pc() == (0x270F + 0x03) )
+	{
+		switch( popflame_prot_count++ )
+		{
+			case 0: return 0x78; /* x111 1xxx, matches 0x0F at $2690, stored in $400A */
+			case 1: return 0x68; /* x110 1xxx, matches 0x0D at $2691, stored in $400B */
+			case 2: return 0x48; /* x100 1xxx, matches 0x09 at $2692, stored in $400C */
+			case 3: return 0x38; /* x011 1xxx, matches 0x07 at $2693, stored in $400D */
+		}
+	}
+	logerror("CPU #0 PC %06x: unmapped protection read\n", cpu_get_pc());
+	return 0x00;
+#endif
+}
+
+
+
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x8fff, MRA_RAM },
@@ -449,46 +494,6 @@ ROM_START( naughtyc )
 ROM_END
 
 ROM_START( popflame )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "ic86.pop",	  0x0000, 0x1000, 0x5e32bbdf )
-	ROM_LOAD( "ic80.pop",	  0x1000, 0x1000, 0xb77abf3d )
-	ROM_LOAD( "ic94.pop",	  0x2000, 0x1000, 0x945a3c0f )
-	ROM_LOAD( "ic100.pop",	  0x3000, 0x1000, 0xf9f2343b )
-
-	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic13.pop",	  0x0000, 0x1000, 0x2367131e )
-	ROM_LOAD( "ic3.pop",	  0x1000, 0x1000, 0xdeed0a8b )
-
-	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic29.pop",	  0x0000, 0x1000, 0x7b54f60f )
-	ROM_LOAD( "ic38.pop",	  0x1000, 0x1000, 0xdd2d9601 )
-
-	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "ic53",		  0x0000, 0x0100, 0x6e66057f ) /* palette low bits */
-	ROM_LOAD( "ic54",		  0x0100, 0x0100, 0x236bc771 ) /* palette high bits */
-ROM_END
-
-ROM_START( popflama )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "popflama.30",	 0x0000, 0x1000, 0xa9bb0e8a )
-	ROM_LOAD( "popflama.28",	 0x1000, 0x1000, 0xdebe6d03 )
-	ROM_LOAD( "popflama.26",	 0x2000, 0x1000, 0x09df0d4d )
-	ROM_LOAD( "popflama.24",	 0x3000, 0x1000, 0xf399d553 )
-
-	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic13.pop",	  0x0000, 0x1000, 0x2367131e )
-	ROM_LOAD( "ic3.pop",	  0x1000, 0x1000, 0xdeed0a8b )
-
-	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic29.pop",	  0x0000, 0x1000, 0x7b54f60f )
-	ROM_LOAD( "ic38.pop",	  0x1000, 0x1000, 0xdd2d9601 )
-
-	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "ic53",		  0x0000, 0x0100, 0x6e66057f ) /* palette low bits */
-	ROM_LOAD( "ic54",		  0x0100, 0x0100, 0x236bc771 ) /* palette high bits */
-ROM_END
-
-ROM_START( popflamb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )		/* 64k for code */
 	ROM_LOAD( "ic86.bin",	  0x0000, 0x1000, 0x06397a4b )
 	ROM_LOAD( "ic80.pop",	  0x1000, 0x1000, 0xb77abf3d )
@@ -508,11 +513,58 @@ ROM_START( popflamb )
 	ROM_LOAD( "ic54",		  0x0100, 0x0100, 0x236bc771 ) /* palette high bits */
 ROM_END
 
+ROM_START( popflama )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "ic86.pop",	  0x0000, 0x1000, 0x5e32bbdf )
+	ROM_LOAD( "ic80.pop",	  0x1000, 0x1000, 0xb77abf3d )
+	ROM_LOAD( "ic94.pop",	  0x2000, 0x1000, 0x945a3c0f )
+	ROM_LOAD( "ic100.pop",	  0x3000, 0x1000, 0xf9f2343b )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic13.pop",	  0x0000, 0x1000, 0x2367131e )
+	ROM_LOAD( "ic3.pop",	  0x1000, 0x1000, 0xdeed0a8b )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic29.pop",	  0x0000, 0x1000, 0x7b54f60f )
+	ROM_LOAD( "ic38.pop",	  0x1000, 0x1000, 0xdd2d9601 )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "ic53",		  0x0000, 0x0100, 0x6e66057f ) /* palette low bits */
+	ROM_LOAD( "ic54",		  0x0100, 0x0100, 0x236bc771 ) /* palette high bits */
+ROM_END
+
+ROM_START( popflamb )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "popflama.30",	 0x0000, 0x1000, 0xa9bb0e8a )
+	ROM_LOAD( "popflama.28",	 0x1000, 0x1000, 0xdebe6d03 )
+	ROM_LOAD( "popflama.26",	 0x2000, 0x1000, 0x09df0d4d )
+	ROM_LOAD( "popflama.24",	 0x3000, 0x1000, 0xf399d553 )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic13.pop",	  0x0000, 0x1000, 0x2367131e )
+	ROM_LOAD( "ic3.pop",	  0x1000, 0x1000, 0xdeed0a8b )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic29.pop",	  0x0000, 0x1000, 0x7b54f60f )
+	ROM_LOAD( "ic38.pop",	  0x1000, 0x1000, 0xdd2d9601 )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "ic53",		  0x0000, 0x0100, 0x6e66057f ) /* palette low bits */
+	ROM_LOAD( "ic54",		  0x0100, 0x0100, 0x236bc771 ) /* palette high bits */
+ROM_END
 
 
-GAMEX( 1982, naughtyb, 0,		 naughtyb, naughtyb, 0, ROT90, "Jaleco", "Naughty Boy", GAME_NO_COCKTAIL )
-GAMEX( 1982, naughtya, naughtyb, naughtyb, naughtyb, 0, ROT90, "bootleg", "Naughty Boy (bootleg)", GAME_NO_COCKTAIL )
-GAMEX( 1982, naughtyc, naughtyb, naughtyb, naughtyb, 0, ROT90, "Jaleco (Cinematronics license)", "Naughty Boy (Cinematronics)", GAME_NO_COCKTAIL )
-GAMEX( 1982, popflame, 0,		 popflame, naughtyb, 0, ROT90, "Jaleco", "Pop Flamer (set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1982, popflama, popflame, popflame, naughtyb, 0, ROT90, "Jaleco", "Pop Flamer (set 2)", GAME_NO_COCKTAIL )
-GAMEX( 1982, popflamb, popflame, popflame, naughtyb, 0, ROT90, "Jaleco (Stern License)", "Pop Flamer (set 3)", GAME_NO_COCKTAIL )
+
+void init_popflame(void)
+{
+	/* install a handler to catch protection checks */
+	install_mem_read_handler(0, 0x9000, 0x9000, popflame_protection_r);
+}
+
+
+GAMEX( 1982, naughtyb, 0,		 naughtyb, naughtyb, 0,        ROT90, "Jaleco", "Naughty Boy", GAME_NO_COCKTAIL )
+GAMEX( 1982, naughtya, naughtyb, naughtyb, naughtyb, 0,        ROT90, "bootleg", "Naughty Boy (bootleg)", GAME_NO_COCKTAIL )
+GAMEX( 1982, naughtyc, naughtyb, naughtyb, naughtyb, 0,        ROT90, "Jaleco (Cinematronics license)", "Naughty Boy (Cinematronics)", GAME_NO_COCKTAIL )
+GAMEX( 1982, popflame, 0,		 popflame, naughtyb, popflame, ROT90, "Jaleco", "Pop Flamer (protected)", GAME_NO_COCKTAIL )
+GAMEX( 1982, popflama, popflame, popflame, naughtyb, 0,        ROT90, "Jaleco", "Pop Flamer (not protected)", GAME_NO_COCKTAIL )
+GAMEX( 1982, popflamb, popflame, popflame, naughtyb, 0,        ROT90, "Jaleco", "Pop Flamer (hack?)", GAME_NO_COCKTAIL )

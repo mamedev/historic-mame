@@ -55,6 +55,11 @@ READ_HANDLER( ES5506_data_1_r );
 WRITE_HANDLER( ES5506_data_0_w );
 WRITE_HANDLER( ES5506_data_1_w );
 
+READ16_HANDLER( ES5506_data_0_word_r );
+READ16_HANDLER( ES5506_data_1_word_r );
+WRITE16_HANDLER( ES5506_data_0_word_w );
+WRITE16_HANDLER( ES5506_data_1_word_w );
+
 void ES5506_voice_bank_0_w(int voice, int bank);
 void ES5506_voice_bank_1_w(int voice, int bank);
 

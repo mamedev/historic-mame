@@ -41,6 +41,12 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 		curve of sizes.
 
 
+		Since the tilemaps can change size its safest to allocate all
+		the possible sizes at startup, as opposed to during the emulation
+
+		By doing it this way theres no chance of a memory allocation
+		failing during gameplay and crashing MAME
+
 **************************************************************************/
 
 #include "vidhrdw/generic.h"
@@ -53,7 +59,7 @@ data32_t *psikyo_vram_0, *psikyo_vram_1, *psikyo_vregs;
 
 /* Variables only used here: */
 
-static struct tilemap *tilemap_0, *tilemap_1;
+static struct tilemap *tilemap_0_size0, *tilemap_0_size1, *tilemap_1_size0, *tilemap_1_size1;
 
 
 /***************************************************************************
@@ -94,8 +100,17 @@ WRITE32_HANDLER( psikyo_vram_0_w )
 	data32_t newlong = psikyo_vram_0[offset];
 	data32_t oldlong = COMBINE_DATA(&psikyo_vram_0[offset]);
 	if (oldlong == newlong)	return;
-	if (ACCESSING_MSW32)	tilemap_mark_tile_dirty(tilemap_0, offset*2);
-	if (ACCESSING_LSW32)	tilemap_mark_tile_dirty(tilemap_0, offset*2+1);
+	if (ACCESSING_MSW32)
+	{
+		tilemap_mark_tile_dirty(tilemap_0_size0, offset*2);
+		tilemap_mark_tile_dirty(tilemap_0_size1, offset*2);
+	}
+
+	if (ACCESSING_LSW32)
+	{
+		tilemap_mark_tile_dirty(tilemap_0_size0, offset*2+1);
+		tilemap_mark_tile_dirty(tilemap_0_size1, offset*2+1);
+	}
 }
 
 WRITE32_HANDLER( psikyo_vram_1_w )
@@ -103,37 +118,67 @@ WRITE32_HANDLER( psikyo_vram_1_w )
 	data32_t newlong = psikyo_vram_1[offset];
 	data32_t oldlong = COMBINE_DATA(&psikyo_vram_1[offset]);
 	if (oldlong == newlong)	return;
-	if (ACCESSING_MSW32)	tilemap_mark_tile_dirty(tilemap_1, offset*2);
-	if (ACCESSING_LSW32)	tilemap_mark_tile_dirty(tilemap_1, offset*2+1);
+	if (ACCESSING_MSW32)
+	{
+		tilemap_mark_tile_dirty(tilemap_1_size0, offset*2);
+		tilemap_mark_tile_dirty(tilemap_1_size1, offset*2);
+	}
+
+	if (ACCESSING_LSW32)
+	{
+		tilemap_mark_tile_dirty(tilemap_1_size0, offset*2+1);
+		tilemap_mark_tile_dirty(tilemap_1_size1, offset*2+1);
+	}
 }
-
-
-
 
 
 int psikyo_vh_start(void)
 {
-	tilemap_0	=	tilemap_create(	get_tile_info_0,
+
+	/* The Hardware is Capable of Changing the Dimensions of the Tilemaps, its safer to create
+	   the various sized tilemaps now as opposed to later */
+
+	tilemap_0_size0	=	tilemap_create(	get_tile_info_0,
+									tilemap_scan_rows,
+									TILEMAP_TRANSPARENT,
+									16,16,
+									0x20, 0x80 );
+	tilemap_0_size1	=	tilemap_create(	get_tile_info_0,
+									tilemap_scan_rows,
+									TILEMAP_TRANSPARENT,
+									16,16,
+									0x40, 0x40 );
+
+	tilemap_1_size0	=	tilemap_create(	get_tile_info_1,
 									tilemap_scan_rows,
 									TILEMAP_TRANSPARENT,
 									16,16,
 									0x20, 0x80 );
 
-	tilemap_1	=	tilemap_create(	get_tile_info_1,
+	tilemap_1_size1	=	tilemap_create(	get_tile_info_1,
 									tilemap_scan_rows,
 									TILEMAP_TRANSPARENT,
 									16,16,
-									0x20, 0x80 );
+									0x40, 0x40 );
 
-	if (tilemap_0 && tilemap_1)
+	if (tilemap_0_size0 && tilemap_0_size1 && tilemap_1_size0 &&tilemap_1_size1)
 	{
-		tilemap_set_scroll_rows(tilemap_0,0x80*16);	// line scrolling
-		tilemap_set_scroll_cols(tilemap_0,1);
-		tilemap_set_transparent_pen(tilemap_0,15);
+		tilemap_set_scroll_rows(tilemap_0_size0,0x80*16);	// line scrolling
+		tilemap_set_scroll_cols(tilemap_0_size0,1);
+		tilemap_set_transparent_pen(tilemap_0_size0,15);
 
-		tilemap_set_scroll_rows(tilemap_1,0x80*16);	// line scrolling
-		tilemap_set_scroll_cols(tilemap_1,1);
-		tilemap_set_transparent_pen(tilemap_1,15);
+		tilemap_set_scroll_rows(tilemap_0_size1,0x40*16);	// line scrolling
+		tilemap_set_scroll_cols(tilemap_0_size1,1);
+		tilemap_set_transparent_pen(tilemap_0_size1,15);
+
+
+		tilemap_set_scroll_rows(tilemap_1_size0,0x80*16);	// line scrolling
+		tilemap_set_scroll_cols(tilemap_1_size0,1);
+		tilemap_set_transparent_pen(tilemap_1_size0,15);
+
+		tilemap_set_scroll_rows(tilemap_1_size1,0x40*16);	// line scrolling
+		tilemap_set_scroll_cols(tilemap_1_size1,1);
+		tilemap_set_transparent_pen(tilemap_1_size1,15);
 		return 0;
 	}
 	else return 1;
@@ -310,7 +355,7 @@ void psikyo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i, layers_ctrl = -1;
 
-	static data32_t old_layer0_ctrl=0, old_layer1_ctrl=0;
+	data32_t tm0size, tm1size;
 
 	data32_t layer0_scrollx, layer0_scrolly;
 	data32_t layer1_scrollx, layer1_scrolly;
@@ -319,34 +364,8 @@ void psikyo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	flip_screen_set(~readinputport(2) & 1);	// hardwired to a DSW bit
 
-	/* The layers' sizes can dynamically change */
-	if ((old_layer0_ctrl & 0x0100) != (layer0_ctrl & 0x0100))
-	{
-		tilemap_dispose(tilemap_0);
-		tilemap_0 = tilemap_create(	get_tile_info_0, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16,16,
-									(layer0_ctrl & 0x0100) ? 0x40 : 0x20,
-									(layer0_ctrl & 0x0100) ? 0x40 : 0x80 );
-
-		tilemap_set_scroll_rows(tilemap_0,(layer0_ctrl & 0x0100) ? 0x40*16 : 0x80*16);	// line scrolling
-		tilemap_set_scroll_cols(tilemap_0,1);
-		tilemap_set_transparent_pen(tilemap_0,15);
-	}
-
-	if ((old_layer1_ctrl & 0x0100) != (layer1_ctrl & 0x0100))
-	{
-		tilemap_dispose(tilemap_1);
-		tilemap_1 = tilemap_create(	get_tile_info_1, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16,16,
-									(layer1_ctrl & 0x0100) ? 0x40 : 0x20,
-									(layer1_ctrl & 0x0100) ? 0x40 : 0x80 );
-
-		tilemap_set_scroll_rows(tilemap_1,(layer1_ctrl & 0x0100) ? 0x40*16 : 0x80*16);	// line scrolling
-		tilemap_set_scroll_cols(tilemap_1,1);
-		tilemap_set_transparent_pen(tilemap_1,15);
-	}
-
-	old_layer0_ctrl = layer0_ctrl;
-	old_layer1_ctrl = layer1_ctrl;
-
+	tm0size = layer0_ctrl & 0x0100;
+	tm1size = layer1_ctrl & 0x0100;
 
 #ifdef MAME_DEBUG
 if (keyboard_pressed(KEYCODE_Z))
@@ -375,8 +394,9 @@ if (keyboard_pressed(KEYCODE_Z))
 	sngkace:	L:00d0-00d0	S:0008 (00d1 00d1 0009, for a blink, on scene transitions)
 	btlkrodj:	L:0120-0510	S:0008 (0121 0511 0009, for a blink, on scene transitions)
 */
-	tilemap_set_enable(tilemap_0, ~layer0_ctrl & 1);
-	tilemap_set_enable(tilemap_1, ~layer1_ctrl & 1);
+	tilemap_set_enable(tm0size ? tilemap_0_size1 : tilemap_0_size0, ~layer0_ctrl & 1);
+
+	tilemap_set_enable(tm1size ? tilemap_1_size1 : tilemap_1_size0, ~layer1_ctrl & 1);
 
 	/* Layers scrolling */
 
@@ -385,29 +405,34 @@ if (keyboard_pressed(KEYCODE_Z))
 	layer1_scrolly = psikyo_vregs[ 0x40a/4 ];
 	layer1_scrollx = psikyo_vregs[ 0x40e/4 ];
 
-	tilemap_set_scrolly(tilemap_0, 0, layer0_scrolly );
-	tilemap_set_scrolly(tilemap_1, 0, layer1_scrolly );
+	tilemap_set_scrolly(tm0size ? tilemap_0_size1 : tilemap_0_size0, 0, layer0_scrolly );
+
+	tilemap_set_scrolly(tm1size ? tilemap_1_size1 : tilemap_1_size0, 0, layer1_scrolly );
 
 	for (i=0; i<256; i++)	// 256 screen lines
 	{
 		tilemap_set_scrollx(
-			tilemap_0,
-			(i+layer0_scrolly) % ((layer0_ctrl & 0x0100) ? 0x40*16 : 0x80*16),
+			tm0size ? tilemap_0_size1 : tilemap_0_size0,
+			(i+layer0_scrolly) % (tm0size ? 0x40*16 : 0x80*16),
 			layer0_scrollx + ((data16_t *)psikyo_vregs)[BYTE_XOR_BE(0x000/2 + i)] );
 
 		tilemap_set_scrollx(
-			tilemap_1,
-			(i+layer1_scrolly) % ((layer1_ctrl & 0x0100) ? 0x40*16 : 0x80*16),
+			tm1size ? tilemap_1_size1 : tilemap_1_size0,
+			(i+layer1_scrolly) % (tm1size ? 0x40*16 : 0x80*16),
 			layer1_scrollx + ((data16_t *)psikyo_vregs)[BYTE_XOR_BE(0x200/2 + i)] );
+
 	}
 
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,get_black_pen(),&Machine->visible_area);
 
 	fillbitmap(priority_bitmap,0,NULL);
 
-	if (layers_ctrl & 1)	tilemap_draw(bitmap,tilemap_0, TILEMAP_IGNORE_TRANSPARENCY, 0);
-	if (layers_ctrl & 2)	tilemap_draw(bitmap,tilemap_1, 0,                           1);
+	if (layers_ctrl & 1)
+		tilemap_draw(bitmap,tm0size ? tilemap_0_size1 : tilemap_0_size0, TILEMAP_IGNORE_TRANSPARENCY, 0);
+
+	if (layers_ctrl & 2)
+		tilemap_draw(bitmap,tm1size ? tilemap_1_size1 : tilemap_1_size0, 0,                           1);
 
 	/* Sprites can go below layer 1 (and 0?) */
 	if (layers_ctrl & 4)	psikyo_draw_sprites(bitmap);

@@ -195,10 +195,7 @@ UINT32 opPREPARE(void)	/* somewhat TRUSTED */
 	FP = SP;
 
 	// step 3: SP -= operand
-	if (amFlag)	// not sure this is working right, an immediate prepare #0 is getting here...
-		SP -= v60.reg[amOut&0x1F];
-	else
-		SP -= amOut;
+	SP -= amOut;
 
 	return amLength1 + 1;
 }

@@ -350,6 +350,8 @@ static void sailorws_gfxdraw(int vram)
 
 	gfxaddr = ((sailorws_radr[vram] + 2) & 0x00ffffff);
 
+	Machine->pens[0xff] = 0;	/* palette_transparent_pen */
+
 	for (y = starty, ctry = sizey; ctry > 0; y += skipy, ctry--)
 	{
 		for (x = startx, ctrx = sizex; ctrx > 0; x += skipx, ctrx--)
@@ -495,6 +497,9 @@ static void mscoutm_gfxdraw(int vram)
 	}
 
 	gfxaddr = ((sailorws_radr[vram] + 2) & 0x00ffffff);
+
+	Machine->pens[0x0ff] = 0;	/* palette_transparent_pen */
+	Machine->pens[0x1ff] = 0;	/* palette_transparent_pen */
 
 	for (y = starty, ctry = sizey; ctry > 0; y += skipy, ctry--)
 	{
@@ -796,6 +801,9 @@ void sailorws_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 	if (full_refresh || sailorws_screen_refresh)
 	{
 		sailorws_screen_refresh = 0;
+
+		Machine->pens[0xff] = 0;	/* palette_transparent_pen */
+
 		for (y = 0; y < Machine->drv->screen_height; y++)
 		{
 			for (x = 0; x < Machine->drv->screen_width; x++)
@@ -877,6 +885,10 @@ void mscoutm_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 	if (full_refresh || sailorws_screen_refresh)
 	{
 		sailorws_screen_refresh = 0;
+
+		Machine->pens[0x0ff] = 0;	/* palette_transparent_pen */
+		Machine->pens[0x1ff] = 0;	/* palette_transparent_pen */
+
 		for (y = 0; y < Machine->drv->screen_height; y++)
 		{
 			for (x = 0; x < Machine->drv->screen_width; x++)

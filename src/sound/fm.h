@@ -22,8 +22,6 @@
 #define FM_INTERNAL_TIMER 0
 
 /* --- speedup optimize --- */
-/* support OPN SSG type envelope mode */
-#define FM_SEG_SUPPORT 0
 /* busy flag enulation , The definition of FM_GET_TIME_NOW() is necessary. */
 #define FM_BUSY_FLAG_SUPPORT 1
 
@@ -80,6 +78,7 @@
 #endif
 
 /* compiler dependence */
+#if 0
 #ifndef OSD_CPU_H
 #define OSD_CPU_H
 typedef unsigned char	UINT8;   /* unsigned  8bit */
@@ -89,6 +88,14 @@ typedef signed char		INT8;    /* signed  8bit   */
 typedef signed short	INT16;   /* signed 16bit   */
 typedef signed int		INT32;   /* signed 32bit   */
 #endif
+#endif
+
+#ifndef INLINE
+#define INLINE static __inline__
+#endif
+
+
+
 
 #define YM2203_NUMBUF 1
 #if FM_STEREO_MIX

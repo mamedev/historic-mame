@@ -5,9 +5,9 @@
 **************************************************************************
 
 	Atari Slapstic FAQ
-	Version 1.1
+	Version 1.11
 	by Aaron Giles and Frank Palazzolo
-	08/06/2001
+	11/15/2001
 
 
 	What is a slapstic?
@@ -130,6 +130,7 @@
 		137412-108	Road Runner
 		137412-108	Super Sprint
 		137412-109	Championship Sprint
+		137412-109	Road Blasters (some versions)
 		137412-110	Road Blasters
 		137412-110	APB
 		137412-111	Pit Fighter
@@ -377,7 +378,7 @@ static struct slapstic_data slapstic105 =
 };
 
 
-/* slapstic 137412-106: Gauntlet II (NOT confirmed) */
+/* slapstic 137412-106: Gauntlet II (confirmed) */
 static struct slapstic_data slapstic106 =
 {
 	/* basic banking */
@@ -455,7 +456,7 @@ static struct slapstic_data slapstic108 =
 };
 
 
-/* slapstic 137412-109: Championship Sprint (confirmed) */
+/* slapstic 137412-109: Championship Sprint/Road Blasters (confirmed) */
 static struct slapstic_data slapstic109 =
 {
 	/* basic banking */
@@ -633,7 +634,7 @@ static struct slapstic_data *slapstic_table[] =
 	&slapstic103,
 	&slapstic104,
 	&slapstic105,
-	&slapstic106,	/* NOT confirmed! */
+	&slapstic106,
 	&slapstic107,
 	&slapstic108,
 	&slapstic109,

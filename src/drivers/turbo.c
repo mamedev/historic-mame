@@ -1,9 +1,14 @@
 /*************************************************************************
 
 	Turbo - Sega - 1981
+	Subroc 3D - Sega - 1982
+	Buck Rogers: Planet of Zoom - Sega - 1982
 
-driver by Alex Pasadyn, Howie Cohen, Frank Palazzolo, Aaron Giles, Ernesto Corvi
+	driver by Alex Pasadyn, Howie Cohen, Frank Palazzolo, Aaron Giles, Ernesto Corvi
 
+**************************************************************************
+	TURBO
+**************************************************************************
 
 	Memory Map:  ( * not complete * )
 
@@ -26,8 +31,8 @@ driver by Alex Pasadyn, Howie Cohen, Frank Palazzolo, Aaron Giles, Ernesto Corvi
 	fd00			R		 Coin Inputs, etc.
 	fe00			R		 DS3,x
 
- Switch settings:
- Notes:
+	Switch settings:
+	Notes:
 		1) Facing the CPU board, with the two large IDC connectors at
 		   the top of the board, and the large and small IDC
 		   connectors at the bottom, DIP switch #1 is upper right DIP
@@ -35,68 +40,68 @@ driver by Alex Pasadyn, Howie Cohen, Frank Palazzolo, Aaron Giles, Ernesto Corvi
 
 		2) Facing the Sound board, with the IDC connector at the
 		   bottom of the board, DIP switch #3 (4 bank) can be seen.
- ----------------------------------------------------------------------------
+	----------------------------------------------------------------------------
 
- Option	   (DIP Swtich #1) | SW1 | SW2 | SW3 | SW4 | SW5 | SW6 | SW7 | SW8 |
- --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
- 1 Car On Extended Play	   | ON	 | ON  |	 |	   |	 |	   |	 |	   |
- 2 Car On Extended Play	   | OFF | ON  |	 |	   |	 |	   |	 |	   |
- 3 Car On Extended Play	   | ON	 | OFF |	 |	   |	 |	   |	 |	   |
- 4 Car On Extended Play	   | OFF | OFF |	 |	   |	 |	   |	 |	   |
- --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
- Game Time Adjustable	   |	 |	   | ON	 |	   |	 |	   |	 |	   |
- Game Time Fixed (55 Sec.) |	 |	   | OFF |	   |	 |	   |	 |	   |
- --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
- Hard Game Difficulty	   |	 |	   |	 | ON  |	 |	   |	 |	   |
- Easy Game Difficulty	   |	 |	   |	 | OFF |	 |	   |	 |	   |
- --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
- Normal Game Mode		   |	 |	   |	 |	   | ON	 |	   |	 |	   |
- No Collisions (cheat)	   |	 |	   |	 |	   | OFF |	   |	 |	   |
- --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
- Initial Entry Off (?)	   |	 |	   |	 |	   |	 | ON  |	 |	   |
- Initial Entry On  (?)	   |	 |	   |	 |	   |	 | OFF |	 |	   |
- --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
- Not Used				   |	 |	   |	 |	   |	 |	   |  X	 |	X  |
- ---------------------------------------------------------------------------
+	Option	   (DIP Swtich #1) | SW1 | SW2 | SW3 | SW4 | SW5 | SW6 | SW7 | SW8 |
+	 --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
+	1 Car On Extended Play	   | ON	 | ON  |	 |	   |	 |	   |	 |	   |
+	2 Car On Extended Play	   | OFF | ON  |	 |	   |	 |	   |	 |	   |
+	3 Car On Extended Play	   | ON	 | OFF |	 |	   |	 |	   |	 |	   |
+	4 Car On Extended Play	   | OFF | OFF |	 |	   |	 |	   |	 |	   |
+	 --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
+	Game Time Adjustable	   |	 |	   | ON	 |	   |	 |	   |	 |	   |
+	Game Time Fixed (55 Sec.)  |	 |	   | OFF |	   |	 |	   |	 |	   |
+	 --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
+	Hard Game Difficulty	   |	 |	   |	 | ON  |	 |	   |	 |	   |
+	Easy Game Difficulty	   |	 |	   |	 | OFF |	 |	   |	 |	   |
+	 --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
+	Normal Game Mode		   |	 |	   |	 |	   | ON	 |	   |	 |	   |
+	No Collisions (cheat)	   |	 |	   |	 |	   | OFF |	   |	 |	   |
+	 --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
+	Initial Entry Off (?)	   |	 |	   |	 |	   |	 | ON  |	 |	   |
+	Initial Entry On  (?)	   |	 |	   |	 |	   |	 | OFF |	 |	   |
+	 --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
+	Not Used				   |	 |	   |	 |	   |	 |	   |  X	 |	X  |
+	---------------------------------------------------------------------------
 
- Option	   (DIP Swtich #2) | SW1 | SW2 | SW3 | SW4 | SW5 | SW6 | SW7 | SW8 |
- --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
- 60 Seconds Game Time	   | ON	 | ON  |	 |	   |	 |	   |	 |	   |
- 70 Seconds Game Time	   | OFF | ON  |	 |	   |	 |	   |	 |	   |
- 80 Seconds Game Time	   | ON	 | OFF |	 |	   |	 |	   |	 |	   |
- 90 Seconds Game Time	   | OFF | OFF |	 |	   |	 |	   |	 |	   |
- --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
- Slot 1	 1 Coin	 1 Credit  |	 |	   | ON	 | ON  | ON	 |	   |	 |	   |
- Slot 1	 1 Coin	 2 Credits |	 |	   | OFF | ON  | ON	 |	   |	 |	   |
- Slot 1	 1 Coin	 3 Credits |	 |	   | ON	 | OFF | ON	 |	   |	 |	   |
- Slot 1	 1 Coin	 6 Credits |	 |	   | OFF | OFF | ON	 |	   |	 |	   |
- Slot 1	 2 Coins 1 Credit  |	 |	   | ON	 | ON  | OFF |	   |	 |	   |
- Slot 1	 3 Coins 1 Credit  |	 |	   | OFF | ON  | OFF |	   |	 |	   |
- Slot 1	 4 Coins 1 Credit  |	 |	   | ON	 | OFF | OFF |	   |	 |	   |
- Slot 1	 1 Coin	 1 Credit  |	 |	   | OFF | OFF | OFF |	   |	 |	   |
- --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
- Slot 2	 1 Coin	 1 Credit  |	 |	   |	 |	   |	 | ON  | ON	 | ON  |
- Slot 2	 1 Coin	 2 Credits |	 |	   |	 |	   |	 | OFF | ON	 | ON  |
- Slot 2	 1 Coin	 3 Credits |	 |	   |	 |	   |	 | ON  | OFF | ON  |
- Slot 2	 1 Coin	 6 Credits |	 |	   |	 |	   |	 | OFF | OFF | ON  |
- Slot 2	 2 Coins 1 Credit  |	 |	   |	 |	   |	 | ON  | ON	 | OFF |
- Slot 2	 3 Coins 1 Credit  |	 |	   |	 |	   |	 | OFF | ON	 | OFF |
- Slot 2	 4 Coins 1 Credit  |	 |	   |	 |	   |	 | ON  | OFF | OFF |
- Slot 2	 1 Coins 1 Credit  |	 |	   |	 |	   |	 | OFF | OFF | OFF |
- ---------------------------------------------------------------------------
+	Option	   (DIP Swtich #2) | SW1 | SW2 | SW3 | SW4 | SW5 | SW6 | SW7 | SW8 |
+	--------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
+	60 Seconds Game Time	   | ON	 | ON  |	 |	   |	 |	   |	 |	   |
+	70 Seconds Game Time	   | OFF | ON  |	 |	   |	 |	   |	 |	   |
+	80 Seconds Game Time	   | ON	 | OFF |	 |	   |	 |	   |	 |	   |
+	90 Seconds Game Time	   | OFF | OFF |	 |	   |	 |	   |	 |	   |
+	 --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
+	Slot 1	 1 Coin	 1 Credit  |	 |	   | ON	 | ON  | ON	 |	   |	 |	   |
+	Slot 1	 1 Coin	 2 Credits |	 |	   | OFF | ON  | ON	 |	   |	 |	   |
+	Slot 1	 1 Coin	 3 Credits |	 |	   | ON	 | OFF | ON	 |	   |	 |	   |
+	Slot 1	 1 Coin	 6 Credits |	 |	   | OFF | OFF | ON	 |	   |	 |	   |
+	Slot 1	 2 Coins 1 Credit  |	 |	   | ON	 | ON  | OFF |	   |	 |	   |
+	Slot 1	 3 Coins 1 Credit  |	 |	   | OFF | ON  | OFF |	   |	 |	   |
+	Slot 1	 4 Coins 1 Credit  |	 |	   | ON	 | OFF | OFF |	   |	 |	   |
+	Slot 1	 1 Coin	 1 Credit  |	 |	   | OFF | OFF | OFF |	   |	 |	   |
+	 --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
+	Slot 2	 1 Coin	 1 Credit  |	 |	   |	 |	   |	 | ON  | ON	 | ON  |
+	Slot 2	 1 Coin	 2 Credits |	 |	   |	 |	   |	 | OFF | ON	 | ON  |
+	Slot 2	 1 Coin	 3 Credits |	 |	   |	 |	   |	 | ON  | OFF | ON  |
+	Slot 2	 1 Coin	 6 Credits |	 |	   |	 |	   |	 | OFF | OFF | ON  |
+	Slot 2	 2 Coins 1 Credit  |	 |	   |	 |	   |	 | ON  | ON	 | OFF |
+	Slot 2	 3 Coins 1 Credit  |	 |	   |	 |	   |	 | OFF | ON	 | OFF |
+	Slot 2	 4 Coins 1 Credit  |	 |	   |	 |	   |	 | ON  | OFF | OFF |
+	Slot 2	 1 Coins 1 Credit  |	 |	   |	 |	   |	 | OFF | OFF | OFF |
+	---------------------------------------------------------------------------
 
- Option	   (DIP Swtich #3) | SW1 | SW2 | SW3 | SW4 |
- --------------------------|-----|-----|-----|-----|
- Not Used				   |  X	 |	X  |	 |	   |
- --------------------------|-----|-----|-----|-----|
- Digital (LED) Tachometer  |	 |	   | ON	 |	   |
- Analog (Meter) Tachometer |	 |	   | OFF |	   |
- --------------------------|-----|-----|-----|-----|
- Cockpit Sound System	   |	 |	   |	 | ON  |
- Upright Sound System	   |	 |	   |	 | OFF |
----------------------------------------------------
+	Option	   (DIP Swtich #3) | SW1 | SW2 | SW3 | SW4 |
+	 --------------------------|-----|-----|-----|-----|
+	Not Used				   |  X	 |	X  |	 |	   |
+	 --------------------------|-----|-----|-----|-----|
+	Digital (LED) Tachometer   |	 |	   | ON	 |	   |
+	Analog (Meter) Tachometer  |	 |	   | OFF |	   |
+	 --------------------------|-----|-----|-----|-----|
+	Cockpit Sound System	   |	 |	   |	 | ON  |
+	Upright Sound System	   |	 |	   |	 | OFF |
+	---------------------------------------------------
 
-Here is a complete list of the ROMs:
+	Here is a complete list of the ROMs:
 
 	Turbo ROMLIST - Frank Palazzolo
 	Name	 Loc			 Function
@@ -138,30 +143,20 @@ Here is a complete list of the ROMs:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/8255ppi.h"
-
-/* from machine */
-void turbo_init_machine(void);
-READ_HANDLER( turbo_8279_r );
-READ_HANDLER( turbo_collision_r );
-WRITE_HANDLER( turbo_8279_w );
-WRITE_HANDLER( turbo_coin_and_lamp_w );
-
-/* from vidhrdw */
-extern UINT8 *turbo_sprite_position;
-
-int turbo_vh_start(void);
-void turbo_vh_stop(void);
-void turbo_vh_convert_color_prom(UINT8 *palette, UINT16 *colortable, const UINT8 *color_prom);
-void turbo_vh_eof(void);
-void turbo_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-WRITE_HANDLER( turbo_collision_clear_w );
+#include "turbo.h"
 
 
-/*********************************************************************
- * CPU memory structures
- *********************************************************************/
+#define PORT_SERVICE_NO_TOGGLE(mask,default)	\
+	PORT_BITX(    mask, mask & default, IPT_SERVICE1, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
-static MEMORY_READ_START( readmem )
+
+/*************************************
+ *
+ *	Turbo CPU memory handlers
+ *
+ *************************************/
+
+static MEMORY_READ_START( turbo_readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0xb000, 0xb1ff, MRA_RAM },
 	{ 0xe000, 0xe7ff, MRA_RAM },
@@ -175,11 +170,12 @@ static MEMORY_READ_START( readmem )
 	{ 0xfe00, 0xfeff, turbo_collision_r },
 MEMORY_END
 
-static MEMORY_WRITE_START( writemem )
+
+static MEMORY_WRITE_START( turbo_writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0xa000, 0xa0ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xa800, 0xa807, turbo_coin_and_lamp_w },
-	{ 0xb000, 0xb1ff, MWA_RAM, &turbo_sprite_position },
+	{ 0xb000, 0xb1ff, MWA_RAM, &sega_sprite_position },
 	{ 0xb800, 0xb800, MWA_NOP },	/* resets the analog wheel value */
 	{ 0xe000, 0xe7ff, MWA_RAM, &videoram, &videoram_size },
 	{ 0xe800, 0xe800, turbo_collision_clear_w },
@@ -192,9 +188,96 @@ static MEMORY_WRITE_START( writemem )
 MEMORY_END
 
 
-/*********************************************************************
- * Input port definitions
- *********************************************************************/
+
+/*************************************
+ *
+ *	Subroc3D CPU memory handlers
+ *
+ *************************************/
+
+static MEMORY_READ_START( subroc3d_readmem )
+	{ 0x0000, 0x5fff, MRA_ROM },
+	{ 0xa000, 0xa7ff, MRA_RAM },
+	{ 0xa800, 0xa800, input_port_0_r },
+	{ 0xa801, 0xa801, input_port_1_r },
+	{ 0xa802, 0xa802, input_port_2_r },
+	{ 0xa803, 0xa803, input_port_3_r },
+	{ 0xb000, 0xb7ff, MRA_RAM },
+	{ 0xe000, 0xe7ff, MRA_RAM },
+	{ 0xe800, 0xe803, ppi8255_0_r },
+	{ 0xf000, 0xf003, ppi8255_1_r },
+MEMORY_END
+
+
+static MEMORY_WRITE_START( subroc3d_writemem )
+	{ 0x0000, 0x5fff, MWA_ROM },
+	{ 0xa000, 0xa3ff, MWA_RAM, &sega_sprite_position },
+	{ 0xa400, 0xa7ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xb000, 0xb7ff, MWA_RAM },
+	{ 0xe000, 0xe7ff, MWA_RAM, &videoram, &videoram_size },
+	{ 0xe800, 0xe803, ppi8255_0_w },
+	{ 0xf000, 0xf003, ppi8255_1_w },
+	{ 0xf800, 0xf801, turbo_8279_w },
+MEMORY_END
+
+
+
+/*************************************
+ *
+ *	Buck Rogers CPU memory handlers
+ *
+ *************************************/
+
+static MEMORY_READ_START( buckrog_readmem )
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0xc000, 0xc7ff, MRA_RAM },
+	{ 0xc800, 0xc803, ppi8255_0_r },
+	{ 0xd000, 0xd003, ppi8255_1_r },
+	{ 0xe000, 0xe1ff, MRA_RAM },
+	{ 0xe800, 0xe800, input_port_0_r },
+	{ 0xe801, 0xe801, input_port_1_r },
+	{ 0xe802, 0xe802, buckrog_port_2_r },
+	{ 0xe803, 0xe803, buckrog_port_3_r },
+	{ 0xf800, 0xffff, MRA_RAM },
+MEMORY_END
+
+
+static MEMORY_WRITE_START( buckrog_writemem )
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0xc000, 0xc7ff, MWA_RAM, &videoram, &videoram_size },
+	{ 0xc800, 0xc803, ppi8255_0_w },
+	{ 0xd000, 0xd003, ppi8255_1_w },
+	{ 0xd800, 0xd801, turbo_8279_w },
+	{ 0xe000, 0xe1ff, MWA_RAM, &sega_sprite_position },
+	{ 0xe400, 0xe4ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xf800, 0xffff, MWA_RAM },
+MEMORY_END
+
+
+static MEMORY_READ_START( buckrog_readmem2 )
+	{ 0x0000, 0x0fff, MRA_ROM },
+	{ 0xf000, 0xf7ff, MRA_RAM },
+MEMORY_END
+
+
+static PORT_READ_START( buckrog_readport2 )
+	{ 0x00, 0x00, buckrog_cpu2_command_r },
+PORT_END
+
+
+static MEMORY_WRITE_START( buckrog_writemem2 )
+	{ 0x0000, 0xdfff, buckrog_bitmap_w },
+	{ 0xf000, 0xf7ff, MWA_RAM },
+MEMORY_END
+
+
+
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( turbo )
 	PORT_START		/* IN0 */
@@ -202,8 +285,8 @@ INPUT_PORTS_START( turbo )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )				/* ACCEL A */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_TOGGLE )	/* SHIFT */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN4 )					/* SERVICE */
+	PORT_SERVICE_NO_TOGGLE( 0x10, IP_ACTIVE_LOW )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
@@ -214,14 +297,14 @@ INPUT_PORTS_START( turbo )
 	PORT_DIPSETTING( 0x01, "3" )
 	PORT_DIPSETTING( 0x00, "4" )
 	PORT_DIPNAME( 0x04, 0x04, "Game Time" )
-	PORT_DIPSETTING( 0x00, "Fixed (55 sec)")
+	PORT_DIPSETTING( 0x00, "Fixed (55 sec)" )
 	PORT_DIPSETTING( 0x04, "Adjustable" )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING( 0x00, "Easy")
 	PORT_DIPSETTING( 0x08, "Hard")
 	PORT_DIPNAME( 0x10, 0x00, "Game Mode" )
-	PORT_DIPSETTING( 0x10, "No Collisions (cheat)")
-	PORT_DIPSETTING( 0x00, "Normal")
+	PORT_DIPSETTING( 0x10, "No Collisions (cheat)" )
+	PORT_DIPSETTING( 0x00, "Normal" )
 	PORT_DIPNAME( 0x20, 0x00, "Initial Entry" )
 	PORT_DIPSETTING( 0x20, DEF_STR( Off ))
 	PORT_DIPSETTING( 0x00, DEF_STR( On ))
@@ -267,55 +350,219 @@ INPUT_PORTS_START( turbo )
 INPUT_PORTS_END
 
 
-/*********************************************************************
- * Graphics layouts
- *********************************************************************/
+INPUT_PORTS_START( subroc3d )
+	PORT_START
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+
+	PORT_START
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_SERVICE_NO_TOGGLE( 0x10, 0x10 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START  /* DSW 2 */
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coin_A ))
+	PORT_DIPSETTING(    0x07, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x38, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x38, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0xc0, 0x40, "Ships" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x40, "3" )
+	PORT_DIPSETTING(    0x80, "4" )
+	PORT_DIPSETTING(    0xc0, "5" )
+
+	PORT_START  /* DSW 3 */
+	PORT_DIPNAME( 0x03, 0x03, "Extra Ship" )
+	PORT_DIPSETTING(    0x00, "20000" )
+	PORT_DIPSETTING(    0x01, "40000" )
+	PORT_DIPSETTING(    0x02, "60000" )
+	PORT_DIPSETTING(    0x03, "80000" )
+	PORT_DIPNAME( 0x04, 0x04, "Initial Input" )
+	PORT_DIPSETTING(    0x00, "Disable" )
+	PORT_DIPSETTING(    0x04, "Enable" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Difficult" )
+	PORT_DIPSETTING(    0x08, "Normal" )
+	PORT_DIPNAME( 0x10, 0x10, "Play" )
+	PORT_DIPSETTING(    0x00, "Free" )
+	PORT_DIPSETTING(    0x10, "Normal" )
+	PORT_DIPNAME( 0x20, 0x20, "Motion" )
+	PORT_DIPSETTING(    0x00, "Stop" )
+	PORT_DIPSETTING(    0x20, "Normal" )
+	PORT_DIPNAME( 0x40, 0x00, "Screen" )
+	PORT_DIPSETTING(    0x00, "Mono" )
+	PORT_DIPSETTING(    0x40, "Stereo" )
+	PORT_DIPNAME( 0x80, 0x80, "Game" )
+	PORT_DIPSETTING(    0x00, "Endless" )
+	PORT_DIPSETTING(    0x80, "Normal" )
+
+	PORT_START  /* DSW 1 */					/* Unused */
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( buckrog )
+	PORT_START
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 ) // Accel Hi
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) // Accel Lo
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+
+	PORT_START /* Inputs */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_SERVICE_NO_TOGGLE( 0x10, 0x10 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START  /* DSW 1 */
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coin_A ))
+	PORT_DIPSETTING(    0x07, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x38, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x38, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
+
+	PORT_START  /* DSW 2 */
+	PORT_DIPNAME( 0x01, 0x00, "Collisions" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Accel by" )
+	PORT_DIPSETTING(    0x00, "Pedal" )
+	PORT_DIPSETTING(    0x02, "Button" )
+	PORT_DIPNAME( 0x04, 0x00, "Best 5 Scores" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, "Score Display" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Difficult" )
+	PORT_DIPSETTING(    0x10, "Normal" )
+	PORT_DIPNAME( 0x60, 0x00, "Extra Ships" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x40, "5" )
+	PORT_DIPSETTING(    0x60, "6" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, "Cockpit" )
+INPUT_PORTS_END
+
+
+
+/*************************************
+ *
+ *	Graphics layouts
+ *
+ *************************************/
 
 static struct GfxLayout numlayout =
 {
-	10,8,	/* 10*8 characters */
-	16,		/* 16 characters */
-	1,		/* 1 bit per pixel */
-	{ 0 },	/* bitplane offsets */
-	{ 9*8, 8*8, 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
+	8,10,
+	16,
+	1,
+	{ 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	10*8	/* every character uses 10 consecutive bytes */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8 },
+	10*8
 };
 
-static struct GfxLayout tachlayout =
+static struct GfxLayout rotated_numlayout =
 {
-	16,1,	/* 16*1 characters */
-	2,		/* 2 characters */
-	1,		/* 1 bit per pixel */
-	{ 0 },	/* bitplane offsets */
+	10,8,
+	16,
+	1,
+	{ 0 },
+	{ 9*8, 8*8, 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	10*8
+};
+
+static struct GfxLayout rotated_tachlayout =
+{
+	16,1,
+	2,
+	1,
+	{ 0 },
 	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
 	{ 0 },
-	1*8		/* every character uses 1 consecutive byte */
+	1*8
 };
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	256,	/* 256 characters */
-	2,		/* 2 bits per pixel */
-	{ 256*8*8, 0 },	/* bitplane offsets */
+	8,8,
+	RGN_FRAC(1,2),
+	2,
+	{ RGN_FRAC(1,2), 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8		/* every character uses 8 consecutive bytes */
+	8*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+
+static struct GfxDecodeInfo turbo_gfxdecode[] =
+{
+	{ REGION_GFX4, 0x0000, &rotated_numlayout,	512,   1 },
+	{ REGION_GFX4, 0x0100, &rotated_tachlayout,	512,   3 },
+	{ REGION_GFX2, 0x0000, &charlayout,	512,   3 },
+	{ -1 }
+};
+
+static struct GfxDecodeInfo subroc3d_gfxdecode[] =
 {
 	{ REGION_GFX4, 0x0000, &numlayout,	512,   1 },
-	{ REGION_GFX4, 0x0100, &tachlayout,	512,   3 },
-	{ REGION_GFX3, 0x0000, &charlayout,	512,   3 },
+	{ -1 }
+};
+
+static struct GfxDecodeInfo buckrog_gfxdecode[] =
+{
+	{ REGION_GFX4, 0x0000, &numlayout,	1024+512+256, 1 },
 	{ -1 }
 };
 
 
-/*********************************************************************
- * Sound interfaces
- *********************************************************************/
+
+/*************************************
+ *
+ *	Sound interfaces
+ *
+ *************************************/
 
 static const char *sample_names[]=
 {
@@ -340,9 +587,12 @@ static struct Samplesinterface samples_interface =
 };
 
 
-/*********************************************************************
- * Machine driver
- *********************************************************************/
+
+/*************************************
+ *
+ *	Machine drivers
+ *
+ *************************************/
 
 static const struct MachineDriver machine_driver_turbo =
 {
@@ -351,18 +601,18 @@ static const struct MachineDriver machine_driver_turbo =
 		{
 			CPU_Z80,
 			5000000,
-			readmem,writemem,0,0,
+			turbo_readmem,turbo_writemem,0,0,
 			interrupt,1
 		}
 	},
-	30, DEFAULT_REAL_30HZ_VBLANK_DURATION,
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,
 	turbo_init_machine,
 
 	/* video hardware */
 	32*8, 35*8, { 1*8, 32*8-1, 0*8, 35*8-1 },
-	gfxdecodeinfo,
-	512+6,512+6,
+	turbo_gfxdecode,
+	512+6,0,
 	turbo_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_ASPECT_RATIO(104,105),
@@ -382,35 +632,112 @@ static const struct MachineDriver machine_driver_turbo =
 };
 
 
-/*********************************************************************
- * ROM definitions
- *********************************************************************/
+static const struct MachineDriver machine_driver_subroc3d =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			5000000,
+            subroc3d_readmem,subroc3d_writemem,0,0,
+            interrupt,1
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1,
+    subroc3d_init_machine,
+
+	/* video hardware */
+  	32*8, 34*8, { 0*8, 30*8-1, 0*8, 30*8-1 },
+    subroc3d_gfxdecode,
+	512+2,0,
+    subroc3d_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_ASPECT_RATIO(56,45),
+	0,
+	subroc3d_vh_start,
+	subroc3d_vh_stop,
+    subroc3d_vh_screenrefresh,
+
+	/* sound hardware */
+    0,0,0,0
+};
+
+
+static const struct MachineDriver machine_driver_buckrog =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			5000000,
+            buckrog_readmem,buckrog_writemem,0,0,
+            interrupt,1
+		},
+		{
+			CPU_Z80,
+			5000000,
+            buckrog_readmem2,buckrog_writemem2,buckrog_readport2,0,
+            ignore_interrupt,0
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	10,
+    buckrog_init_machine,
+
+	/* video hardware */
+  	39*8, 32*8, { 0*8, 39*8-1, 0*8, 28*8-1 },
+    buckrog_gfxdecode,
+	1024+512+256+2,0,
+    buckrog_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER | VIDEO_ASPECT_RATIO(13,8),
+	0,
+	buckrog_vh_start,
+	buckrog_vh_stop,
+    buckrog_vh_screenrefresh,
+
+	/* sound hardware */
+    0,0,0,0
+};
+
+
+
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( turbo )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "epr1513.bin",  0x0000, 0x2000, 0x0326adfc )
 	ROM_LOAD( "epr1514.bin",  0x2000, 0x2000, 0x25af63b0 )
 	ROM_LOAD( "epr1515.bin",  0x4000, 0x2000, 0x059c1c36 )
 
-	ROM_REGION( 0x20000, REGION_GFX1, 0 ) /* sprite data */
-	ROM_LOAD( "epr1246.rom", 0x00000, 0x2000, 0x555bfe9a )
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )	/* sprite data */
+	ROM_LOAD( "epr1246.rom", 0x00000, 0x2000, 0x555bfe9a )	/* level 0 */
 	ROM_RELOAD(				 0x02000, 0x2000 )
-	ROM_LOAD( "epr1247.rom", 0x04000, 0x2000, 0xc8c5e4d5 )
+	ROM_LOAD( "epr1247.rom", 0x04000, 0x2000, 0xc8c5e4d5 )	/* level 1 */
 	ROM_RELOAD(				 0x06000, 0x2000 )
-	ROM_LOAD( "epr1248.rom", 0x08000, 0x2000, 0x82fe5b94 )
+	ROM_LOAD( "epr1248.rom", 0x08000, 0x2000, 0x82fe5b94 )	/* level 2 */
 	ROM_RELOAD(				 0x0a000, 0x2000 )
-	ROM_LOAD( "epr1249.rom", 0x0c000, 0x2000, 0xe258e009 )
+	ROM_LOAD( "epr1249.rom", 0x0c000, 0x2000, 0xe258e009 )	/* level 3 */
 	ROM_LOAD( "epr1250.rom", 0x0e000, 0x2000, 0xaee6e05e )
-	ROM_LOAD( "epr1251.rom", 0x10000, 0x2000, 0x292573de )
+	ROM_LOAD( "epr1251.rom", 0x10000, 0x2000, 0x292573de )	/* level 4 */
 	ROM_LOAD( "epr1252.rom", 0x12000, 0x2000, 0xaee6e05e )
-	ROM_LOAD( "epr1253.rom", 0x14000, 0x2000, 0x92783626 )
+	ROM_LOAD( "epr1253.rom", 0x14000, 0x2000, 0x92783626 )	/* level 5 */
 	ROM_LOAD( "epr1254.rom", 0x16000, 0x2000, 0xaee6e05e )
-	ROM_LOAD( "epr1255.rom", 0x18000, 0x2000, 0x485dcef9 )
+	ROM_LOAD( "epr1255.rom", 0x18000, 0x2000, 0x485dcef9 )	/* level 6 */
 	ROM_LOAD( "epr1256.rom", 0x1a000, 0x2000, 0xaee6e05e )
-	ROM_LOAD( "epr1257.rom", 0x1c000, 0x2000, 0x4ca984ce )
+	ROM_LOAD( "epr1257.rom", 0x1c000, 0x2000, 0x4ca984ce )	/* level 7 */
 	ROM_LOAD( "epr1258.rom", 0x1e000, 0x2000, 0xaee6e05e )
 
-	ROM_REGION( 0x4800, REGION_GFX2, 0 ) /* road data */
+	ROM_REGION( 0x1000, REGION_GFX2, 0 )	/* foreground data */
+	ROM_LOAD( "epr1244.rom", 0x0000, 0x0800, 0x17f67424 )
+	ROM_LOAD( "epr1245.rom", 0x0800, 0x0800, 0x2ba0b46b )
+
+	ROM_REGION( 0x4800, REGION_GFX3, 0 )	/* road data */
 	ROM_LOAD( "epr1125.rom", 0x0000, 0x0800, 0x65b5d44b )
 	ROM_LOAD( "epr1126.rom", 0x0800, 0x0800, 0x685ace1b )
 	ROM_LOAD( "epr1127.rom", 0x1000, 0x0800, 0x9233c9ca )
@@ -421,14 +748,9 @@ ROM_START( turbo )
 	ROM_LOAD( "epr1242.rom", 0x3800, 0x0800, 0x04866769 )
 	ROM_LOAD( "epr1243.rom", 0x4000, 0x0800, 0x29854c48 )
 
-	ROM_REGION( 0x1000, REGION_GFX3, 0 )	/* background data */
-	ROM_LOAD( "epr1244.rom", 0x0000, 0x0800, 0x17f67424 )
-	ROM_LOAD( "epr1245.rom", 0x0800, 0x0800, 0x2ba0b46b )
+	ROM_REGION( 0x200, REGION_GFX4, 0 )		/* number data (copied at init time) */
 
-	ROM_REGION( 0x200, REGION_GFX4, 0 )	/* number data (copied at init time) */
-
-
-	ROM_REGION( 0x1000, REGION_PROMS, 0 ) /* various PROMs */
+	ROM_REGION( 0x1000, REGION_PROMS, 0 )	/* various PROMs */
 	ROM_LOAD( "pr1121.bin",	 0x0000, 0x0200, 0x7692f497 )	/* palette */
 	ROM_LOAD( "pr1122.bin",	 0x0200, 0x0400, 0x1a86ce70 )	/* sprite priorities */
 	ROM_LOAD( "pr1123.bin",	 0x0600, 0x0400, 0x02d2cb52 )	/* sprite/road/background priorities */
@@ -442,31 +764,36 @@ ROM_START( turbo )
 	ROM_LOAD( "pr-1120.bin", 0x0e00, 0x0200, 0x591b6a68 )	/* timing - not used */
 ROM_END
 
+
 ROM_START( turboa )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "epr1262.rom",  0x0000, 0x2000, 0x1951b83a )
 	ROM_LOAD( "epr1263.rom",  0x2000, 0x2000, 0x45e01608 )
 	ROM_LOAD( "epr1264.rom",  0x4000, 0x2000, 0x1802f6c7 )
 
-	ROM_REGION( 0x20000, REGION_GFX1, 0 ) /* sprite data */
-	ROM_LOAD( "epr1246.rom", 0x00000, 0x2000, 0x555bfe9a )
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )	/* sprite data */
+	ROM_LOAD( "epr1246.rom", 0x00000, 0x2000, 0x555bfe9a )	/* level 0 */
 	ROM_RELOAD(				 0x02000, 0x2000 )
-	ROM_LOAD( "epr1247.rom", 0x04000, 0x2000, 0xc8c5e4d5 )
+	ROM_LOAD( "epr1247.rom", 0x04000, 0x2000, 0xc8c5e4d5 )	/* level 1 */
 	ROM_RELOAD(				 0x06000, 0x2000 )
-	ROM_LOAD( "epr1248.rom", 0x08000, 0x2000, 0x82fe5b94 )
+	ROM_LOAD( "epr1248.rom", 0x08000, 0x2000, 0x82fe5b94 )	/* level 2 */
 	ROM_RELOAD(				 0x0a000, 0x2000 )
-	ROM_LOAD( "epr1249.rom", 0x0c000, 0x2000, 0xe258e009 )
+	ROM_LOAD( "epr1249.rom", 0x0c000, 0x2000, 0xe258e009 )	/* level 3 */
 	ROM_LOAD( "epr1250.rom", 0x0e000, 0x2000, 0xaee6e05e )
-	ROM_LOAD( "epr1251.rom", 0x10000, 0x2000, 0x292573de )
+	ROM_LOAD( "epr1251.rom", 0x10000, 0x2000, 0x292573de )	/* level 4 */
 	ROM_LOAD( "epr1252.rom", 0x12000, 0x2000, 0xaee6e05e )
-	ROM_LOAD( "epr1253.rom", 0x14000, 0x2000, 0x92783626 )
+	ROM_LOAD( "epr1253.rom", 0x14000, 0x2000, 0x92783626 )	/* level 5 */
 	ROM_LOAD( "epr1254.rom", 0x16000, 0x2000, 0xaee6e05e )
-	ROM_LOAD( "epr1255.rom", 0x18000, 0x2000, 0x485dcef9 )
+	ROM_LOAD( "epr1255.rom", 0x18000, 0x2000, 0x485dcef9 )	/* level 6 */
 	ROM_LOAD( "epr1256.rom", 0x1a000, 0x2000, 0xaee6e05e )
-	ROM_LOAD( "epr1257.rom", 0x1c000, 0x2000, 0x4ca984ce )
+	ROM_LOAD( "epr1257.rom", 0x1c000, 0x2000, 0x4ca984ce )	/* level 7 */
 	ROM_LOAD( "epr1258.rom", 0x1e000, 0x2000, 0xaee6e05e )
 
-	ROM_REGION( 0x4800, REGION_GFX2, 0 ) /* road data */
+	ROM_REGION( 0x1000, REGION_GFX2, 0 )	/* foreground data */
+	ROM_LOAD( "epr1244.rom", 0x0000, 0x0800, 0x17f67424 )
+	ROM_LOAD( "epr1245.rom", 0x0800, 0x0800, 0x2ba0b46b )
+
+	ROM_REGION( 0x4800, REGION_GFX3, 0 )	/* road data */
 	ROM_LOAD( "epr1125.rom", 0x0000, 0x0800, 0x65b5d44b )
 	ROM_LOAD( "epr1126.rom", 0x0800, 0x0800, 0x685ace1b )
 	ROM_LOAD( "epr1127.rom", 0x1000, 0x0800, 0x9233c9ca )
@@ -477,14 +804,9 @@ ROM_START( turboa )
 	ROM_LOAD( "epr1242.rom", 0x3800, 0x0800, 0x04866769 )
 	ROM_LOAD( "epr1243.rom", 0x4000, 0x0800, 0x29854c48 )
 
-	ROM_REGION( 0x1000, REGION_GFX3, 0 )	/* background data */
-	ROM_LOAD( "epr1244.rom", 0x0000, 0x0800, 0x17f67424 )
-	ROM_LOAD( "epr1245.rom", 0x0800, 0x0800, 0x2ba0b46b )
+	ROM_REGION( 0x200, REGION_GFX4, 0 )		/* number data (copied at init time) */
 
-	ROM_REGION( 0x200, REGION_GFX4, 0 )	/* number data (copied at init time) */
-
-
-	ROM_REGION( 0x1000, REGION_PROMS, 0 ) /* various PROMs */
+	ROM_REGION( 0x1000, REGION_PROMS, 0 )	/* various PROMs */
 	ROM_LOAD( "pr1121.bin",	 0x0000, 0x0200, 0x7692f497 )	/* palette */
 	ROM_LOAD( "pr1122.bin",	 0x0200, 0x0400, 0x1a86ce70 )	/* sprite priorities */
 	ROM_LOAD( "pr1123.bin",	 0x0600, 0x0400, 0x02d2cb52 )	/* sprite/road/background priorities */
@@ -497,6 +819,7 @@ ROM_START( turboa )
 	ROM_LOAD( "pr-1119.bin", 0x0c00, 0x0200, 0x628d3f1d )	/* timing - not used */
 	ROM_LOAD( "pr-1120.bin", 0x0e00, 0x0200, 0x591b6a68 )	/* timing - not used */
 ROM_END
+
 
 ROM_START( turbob )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
@@ -505,24 +828,28 @@ ROM_START( turbob )
 	ROM_LOAD( "epr-1365.cpu",  0x4000, 0x2000, 0x3b6b0dc8 )
 
 	ROM_REGION( 0x20000, REGION_GFX1, 0 ) /* sprite data */
-	ROM_LOAD( "epr1246.rom", 0x00000, 0x2000, 0x555bfe9a )
+	ROM_LOAD( "epr1246.rom", 0x00000, 0x2000, 0x555bfe9a )	/* level 0 */
 	ROM_RELOAD(				 0x02000, 0x2000 )
 	ROM_LOAD( "mpr1290.rom", 0x04000, 0x2000, 0x95182020 )	/* is this good? */
 	ROM_RELOAD(				 0x06000, 0x2000 )
-	ROM_LOAD( "epr1248.rom", 0x08000, 0x2000, 0x82fe5b94 )
+	ROM_LOAD( "epr1248.rom", 0x08000, 0x2000, 0x82fe5b94 )	/* level 2 */
 	ROM_RELOAD(				 0x0a000, 0x2000 )
 	ROM_LOAD( "mpr1291.rom", 0x0c000, 0x2000, 0x0e857f82 )	/* is this good? */
 	ROM_LOAD( "epr1250.rom", 0x0e000, 0x2000, 0xaee6e05e )
-	ROM_LOAD( "epr1251.rom", 0x10000, 0x2000, 0x292573de )
+	ROM_LOAD( "epr1251.rom", 0x10000, 0x2000, 0x292573de )	/* level 4 */
 	ROM_LOAD( "epr1252.rom", 0x12000, 0x2000, 0xaee6e05e )
-	ROM_LOAD( "epr1253.rom", 0x14000, 0x2000, 0x92783626 )
+	ROM_LOAD( "epr1253.rom", 0x14000, 0x2000, 0x92783626 )	/* level 5 */
 	ROM_LOAD( "epr1254.rom", 0x16000, 0x2000, 0xaee6e05e )
-	ROM_LOAD( "epr1255.rom", 0x18000, 0x2000, 0x485dcef9 )
+	ROM_LOAD( "epr1255.rom", 0x18000, 0x2000, 0x485dcef9 )	/* level 6 */
 	ROM_LOAD( "epr1256.rom", 0x1a000, 0x2000, 0xaee6e05e )
-	ROM_LOAD( "epr1257.rom", 0x1c000, 0x2000, 0x4ca984ce )
+	ROM_LOAD( "epr1257.rom", 0x1c000, 0x2000, 0x4ca984ce )	/* level 7 */
 	ROM_LOAD( "epr1258.rom", 0x1e000, 0x2000, 0xaee6e05e )
 
-	ROM_REGION( 0x4800, REGION_GFX2, 0 ) /* road data */
+	ROM_REGION( 0x1000, REGION_GFX2, 0 )	/* foreground data */
+	ROM_LOAD( "epr1244.rom", 0x0000, 0x0800, 0x17f67424 )
+	ROM_LOAD( "epr1245.rom", 0x0800, 0x0800, 0x2ba0b46b )
+
+	ROM_REGION( 0x4800, REGION_GFX3, 0 )	/* road data */
 	ROM_LOAD( "epr1125.rom", 0x0000, 0x0800, 0x65b5d44b )
 	ROM_LOAD( "epr1126.rom", 0x0800, 0x0800, 0x685ace1b )
 	ROM_LOAD( "epr1127.rom", 0x1000, 0x0800, 0x9233c9ca )
@@ -533,14 +860,9 @@ ROM_START( turbob )
 	ROM_LOAD( "epr1242.rom", 0x3800, 0x0800, 0x04866769 )
 	ROM_LOAD( "epr1243.rom", 0x4000, 0x0800, 0x29854c48 )
 
-	ROM_REGION( 0x1000, REGION_GFX3, 0 )	/* background data */
-	ROM_LOAD( "epr1244.rom", 0x0000, 0x0800, 0x17f67424 )
-	ROM_LOAD( "epr1245.rom", 0x0800, 0x0800, 0x2ba0b46b )
+	ROM_REGION( 0x200, REGION_GFX4, 0 )		/* number data (copied at init time) */
 
-	ROM_REGION( 0x200, REGION_GFX4, 0 )	/* number data (copied at init time) */
-
-
-	ROM_REGION( 0x1000, REGION_PROMS, 0 ) /* various PROMs */
+	ROM_REGION( 0x1000, REGION_PROMS, 0 )	/* various PROMs */
 	ROM_LOAD( "pr1121.bin",	 0x0000, 0x0200, 0x7692f497 )	/* palette */
 	ROM_LOAD( "pr1122.bin",	 0x0200, 0x0400, 0x1a86ce70 )	/* sprite priorities */
 	ROM_LOAD( "pr1123.bin",	 0x0600, 0x0400, 0x02d2cb52 )	/* sprite/road/background priorities */
@@ -555,153 +877,142 @@ ROM_START( turbob )
 ROM_END
 
 
-/*********************************************************************
- * ROM decoding
- *********************************************************************/
+ROM_START( subroc3d )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "epr1614a.88", 0x0000, 0x2000, 0x0ed856b4 )
+	ROM_LOAD( "epr1615.87",  0x2000, 0x2000, 0x6281eb2e )
+	ROM_LOAD( "epr1616.86",  0x4000, 0x2000, 0xcc7b0c9b )
 
-static void rom_decode(void)
+	ROM_REGION( 0x40000, REGION_GFX1, 0 )	/* sprite data */
+	ROM_LOAD( "epr1417.29",  0x00000, 0x2000, 0x2aaff4e0 )	/* level 0 */
+	ROM_LOAD( "epr1418.30",  0x02000, 0x2000, 0x41ff0f15 )
+	ROM_LOAD( "epr1419.55",  0x08000, 0x2000, 0x37ac818c )	/* level 1 */
+	ROM_LOAD( "epr1420.56",  0x0a000, 0x2000, 0x41ff0f15 )
+	ROM_LOAD( "epr1422.81",  0x10000, 0x2000, 0x0221db58 )	/* level 2 */
+	ROM_LOAD( "epr1423.82",  0x12000, 0x2000, 0x08b1a4b8 )
+	ROM_LOAD( "epr1421.80",  0x16000, 0x2000, 0x1db33c09 )
+	ROM_LOAD( "epr1425.107", 0x18000, 0x2000, 0x0221db58 )	/* level 3 */
+	ROM_LOAD( "epr1426.108", 0x1a000, 0x2000, 0x08b1a4b8 )
+	ROM_LOAD( "epr1424.106", 0x1e000, 0x2000, 0x1db33c09 )
+	ROM_LOAD( "epr1664.116", 0x20000, 0x2000, 0x6c93ece7 )	/* level 4 */
+	ROM_LOAD( "epr1427.115", 0x22000, 0x2000, 0x2f8cfc2d )
+	ROM_LOAD( "epr1429.117", 0x26000, 0x2000, 0x80e649c7 )
+	ROM_LOAD( "epr1665.90",  0x28000, 0x2000, 0x6c93ece7 )	/* level 5 */
+	ROM_LOAD( "epr1430.89",  0x2a000, 0x2000, 0x2f8cfc2d )
+	ROM_LOAD( "epr1432.91",  0x2e000, 0x2000, 0xd9cd98d0 )
+	ROM_LOAD( "epr1666.64",  0x30000, 0x2000, 0x6c93ece7 )	/* level 6 */
+	ROM_LOAD( "epr1433.63",  0x32000, 0x2000, 0x2f8cfc2d )
+	ROM_LOAD( "epr1436.66",  0x34000, 0x2000, 0xfc4ad926 )
+	ROM_LOAD( "epr1435.65",  0x36000, 0x2000, 0x40662eef )
+	ROM_LOAD( "epr1438.38",  0x38000, 0x2000, 0xd563d4c1 )	/* level 7 */
+	ROM_LOAD( "epr1437.37",  0x3a000, 0x2000, 0x18ba6aad )
+	ROM_LOAD( "epr1440.40",  0x3c000, 0x2000, 0x3a0e659c )
+	ROM_LOAD( "epr1439.39",  0x3e000, 0x2000, 0x3d051668 )
+
+	ROM_REGION( 0x01000, REGION_GFX2, 0 )	/* foreground data */
+	ROM_LOAD( "epr1618.82",  0x0000, 0x0800, 0xa25fea71 )
+	ROM_LOAD( "epr1617.83",  0x0800, 0x0800, 0xf70c678e )
+
+	ROM_REGION( 0x200, REGION_GFX4, 0 )		/* number data (copied at init time) */
+
+	ROM_REGION( 0x01000, REGION_PROMS, 0 )	/* various PROMs */
+	ROM_LOAD( "pr1419.108", 0x00000, 0x0200, 0x2cfa2a3f )  /* color prom */
+	ROM_LOAD( "pr1620.62",  0x00200, 0x0100, 0x0ab7ef09 )  /* char color palette */
+	ROM_LOAD( "pr1449.14",  0x00300, 0x0200, 0x5eb9ff47 )  /* ??? */
+	ROM_LOAD( "pr1450.21",  0x00500, 0x0200, 0x66bdb00c )  /* sprite priority */
+	ROM_LOAD( "pr1451.58",  0x00700, 0x0200, 0x6a575261 )  /* ??? */
+	ROM_LOAD( "pr1453.39",  0x00900, 0x0020, 0x181c6d23 )  /* ??? */
+	ROM_LOAD( "pr1454.67",  0x00920, 0x0020, 0xdc683440 )  /* ??? */
+ROM_END
+
+
+ROM_START( buckrog )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "ic3", 0x0000, 0x4000, 0x7f1910af )
+	ROM_LOAD( "ic4", 0x4000, 0x4000, 0x5ecd393b )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for code */
+	ROM_LOAD( "5200.66", 0x0000, 0x1000, 0x0d58b154 )
+
+	ROM_REGION( 0x40000, REGION_GFX1, 0 ) /* sprite data */
+	ROM_LOAD( "5216.100",  0x00000, 0x2000, 0x8155bd73 )	/* level 0 */
+	ROM_LOAD( "5213.84",   0x08000, 0x2000, 0xfd78dda4 )	/* level 1 */
+	ROM_LOAD( "ic68",      0x10000, 0x4000, 0x2a194270 )	/* level 2 */
+	ROM_LOAD( "ic52",      0x18000, 0x4000, 0xb31a120f )	/* level 3 */
+	ROM_LOAD( "ic43",      0x20000, 0x4000, 0xd3584926 )	/* level 4 */
+	ROM_LOAD( "ic59",      0x28000, 0x4000, 0xd83c7fcf )	/* level 5 */
+	ROM_LOAD( "5208.58",   0x2c000, 0x2000, 0xd181fed2 )
+	ROM_LOAD( "ic75",      0x30000, 0x4000, 0x1bd6e453 )	/* level 6 */
+	ROM_LOAD( "5239.74",   0x34000, 0x2000, 0xc34e9b82 )
+	ROM_LOAD( "ic91",      0x38000, 0x4000, 0x221f4ced )	/* level 7 */
+	ROM_LOAD( "5238.90",   0x3c000, 0x2000, 0x7aff0886 )
+
+	ROM_REGION( 0x01000, REGION_GFX2, 0 )	/* foreground data */
+	ROM_LOAD( "5201.102",  0x0000, 0x0800, 0x7f21b0a4 )
+	ROM_LOAD( "5202.103",  0x0800, 0x0800, 0x43f3e5a7 )
+
+	ROM_REGION( 0x2000, REGION_GFX3, 0 )	/* background color data */
+	ROM_LOAD( "5203.91", 0x0000, 0x2000, 0x631f5b65 )
+
+	ROM_REGION( 0x200, REGION_GFX4, 0 )		/* number data (copied at init time) */
+
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )	/* various PROMs */
+	ROM_LOAD( "ic95",    0x0000, 0x0400, 0x45e997a8 ) /* sprite colortable */
+	ROM_LOAD( "5198.93", 0x0400, 0x0200, 0x32e74bc8 ) /* char colortable */
+ROM_END
+
+
+
+/*************************************
+ *
+ *	Driver init
+ *
+ *************************************/
+
+static const UINT8 led_number_data[] =
 {
-/*
- * The table is arranged this way (second half is mirror image of first)
- *
- *		0  1  2	 3	4  5  6	 7	8  9  A	 B	C  D  E	 F
- *
- * 0   00 00 00 00 01 01 01 01 02 02 02 02 03 03 03 03
- * 1   04 04 04 04 05 05 05 05 06 06 06 06 07 07 07 07
- * 2   08 08 08 08 09 09 09 09 0A 0A 0A 0A 0B 0B 0B 0B
- * 3   0C 0C 0C 0C 0D 0D 0D 0D 0E 0E 0E 0E 0F 0F 0F 0F
- * 4   10 10 10 10 11 11 11 11 12 12 12 12 13 13 13 13
- * 5   14 14 14 14 15 15 15 15 16 16 16 16 17 17 17 17
- * 6   18 18 18 18 19 19 19 19 1A 1A 1A 1A 1B 1B 1B 1B
- * 7   1C 1C 1C 1C 1D 1D 1D 1D 1E 1E 1E 1E 1F 1F 1F 1F
- * 8   1F 1F 1F 1F 1E 1E 1E 1E 1D 1D 1D 1D 1C 1C 1C 1C
- * 9   1B 1B 1B 1B 1A 1A 1A 1A 19 19 19 19 18 18 18 18
- * A   17 17 17 17 16 16 16 16 15 15 15 15 14 14 14 14
- * B   13 13 13 13 12 12 12 12 11 11 11 11 10 10 10 10
- * C   0F 0F 0F 0F 0E 0E 0E 0E 0D 0D 0D 0D 0C 0C 0C 0C
- * D   0B 0B 0B 0B 0A 0A 0A 0A 09 09 09 09 08 08 08 08
- * E   07 07 07 07 06 06 06 06 05 05 05 05 04 04 04 04
- * F   03 03 03 03 02 02 02 02 01 01 01 01 00 00 00 00
- *
- */
+	0x3e,0x41,0x41,0x41,0x00,0x41,0x41,0x41,0x3e,0x00,
+	0x00,0x01,0x01,0x01,0x00,0x01,0x01,0x01,0x00,0x00,
+	0x3e,0x01,0x01,0x01,0x3e,0x40,0x40,0x40,0x3e,0x00,
+	0x3e,0x01,0x01,0x01,0x3e,0x01,0x01,0x01,0x3e,0x00,
+	0x00,0x41,0x41,0x41,0x3e,0x01,0x01,0x01,0x00,0x00,
+	0x3e,0x40,0x40,0x40,0x3e,0x01,0x01,0x01,0x3e,0x00,
+	0x3e,0x40,0x40,0x40,0x3e,0x41,0x41,0x41,0x3e,0x00,
+	0x3e,0x01,0x01,0x01,0x00,0x01,0x01,0x01,0x00,0x00,
+	0x3e,0x41,0x41,0x41,0x3e,0x41,0x41,0x41,0x3e,0x00,
+	0x3e,0x41,0x41,0x41,0x3e,0x01,0x01,0x01,0x3e,0x00
+};
 
-	static const UINT8 xortable[4][32]=
-	{
-		/* Table 0 */
-		/* 0x0000-0x3ff */
-		/* 0x0800-0xbff */
-		/* 0x4000-0x43ff */
-		/* 0x4800-0x4bff */
-		{ 0x00,0x44,0x0c,0x48,0x00,0x44,0x0c,0x48,
-		  0xa0,0xe4,0xac,0xe8,0xa0,0xe4,0xac,0xe8,
-		  0x60,0x24,0x6c,0x28,0x60,0x24,0x6c,0x28,
-		  0xc0,0x84,0xcc,0x88,0xc0,0x84,0xcc,0x88 },
-
-		/* Table 1 */
-		/* 0x0400-0x07ff */
-		/* 0x0c00-0x0fff */
-		/* 0x1400-0x17ff */
-		/* 0x1c00-0x1fff */
-		/* 0x2400-0x27ff */
-		/* 0x2c00-0x2fff */
-		/* 0x3400-0x37ff */
-		/* 0x3c00-0x3fff */
-		/* 0x4400-0x47ff */
-		/* 0x4c00-0x4fff */
-		/* 0x5400-0x57ff */
-		/* 0x5c00-0x5fff */
-		{ 0x00,0x44,0x18,0x5c,0x14,0x50,0x0c,0x48,
-		  0x28,0x6c,0x30,0x74,0x3c,0x78,0x24,0x60,
-		  0x60,0x24,0x78,0x3c,0x74,0x30,0x6c,0x28,
-		  0x48,0x0c,0x50,0x14,0x5c,0x18,0x44,0x00 }, //0x00 --> 0x10 ?
-
-		/* Table 2 */
-		/* 0x1000-0x13ff */
-		/* 0x1800-0x1bff */
-		/* 0x5000-0x53ff */
-		/* 0x5800-0x5bff */
-		{ 0x00,0x00,0x28,0x28,0x90,0x90,0xb8,0xb8,
-		  0x28,0x28,0x00,0x00,0xb8,0xb8,0x90,0x90,
-		  0x00,0x00,0x28,0x28,0x90,0x90,0xb8,0xb8,
-		  0x28,0x28,0x00,0x00,0xb8,0xb8,0x90,0x90 },
-
-		/* Table 3 */
-		/* 0x2000-0x23ff */
-		/* 0x2800-0x2bff */
-		/* 0x3000-0x33ff */
-		/* 0x3800-0x3bff */
-		{ 0x00,0x14,0x88,0x9c,0x30,0x24,0xb8,0xac,
-		  0x24,0x30,0xac,0xb8,0x14,0x00,0x9c,0x88,
-		  0x48,0x5c,0xc0,0xd4,0x78,0x6c,0xf0,0xe4,
-		  0x6c,0x78,0xe4,0xf0,0x5c,0x48,0xd4,0xc0 }
-	};
-
-	int findtable[]=
-	{
-		0,1,0,1, /* 0x0000-0x0fff */
-		2,1,2,1, /* 0x1000-0x1fff */
-		3,1,3,1, /* 0x2000-0x2fff */
-		3,1,3,1, /* 0x3000-0x3fff */
-		0,1,0,1, /* 0x4000-0x4fff */
-		2,1,2,1	 /* 0x5000-0x5fff */
-	};
-
-	UINT8 *RAM = memory_region(REGION_CPU1);
-	int offs, i, j;
-	UINT8 src;
-
-	for (offs = 0x0000; offs < 0x6000; offs++)
-	{
-		src = RAM[offs];
-		i = findtable[offs >> 10];
-		j = src >> 2;
-		if (src & 0x80) j ^= 0x3f;
-		RAM[offs] = src ^ xortable[i][j];
-	}
-}
-
-
-/*********************************************************************
- * Driver init
- *********************************************************************/
-
-static void init_turbo(void)
+static const UINT8 led_tach_data[] =
 {
-	static const UINT8 led_number_data[] =
-	{
-		0x3e,0x41,0x41,0x41,0x00,0x41,0x41,0x41,0x3e,0x00,
-		0x00,0x01,0x01,0x01,0x00,0x01,0x01,0x01,0x00,0x00,
-		0x3e,0x01,0x01,0x01,0x3e,0x40,0x40,0x40,0x3e,0x00,
-		0x3e,0x01,0x01,0x01,0x3e,0x01,0x01,0x01,0x3e,0x00,
-		0x00,0x41,0x41,0x41,0x3e,0x01,0x01,0x01,0x00,0x00,
-		0x3e,0x40,0x40,0x40,0x3e,0x01,0x01,0x01,0x3e,0x00,
-		0x3e,0x40,0x40,0x40,0x3e,0x41,0x41,0x41,0x3e,0x00,
-		0x3e,0x01,0x01,0x01,0x00,0x01,0x01,0x01,0x00,0x00,
-		0x3e,0x41,0x41,0x41,0x3e,0x41,0x41,0x41,0x3e,0x00,
-		0x3e,0x41,0x41,0x41,0x3e,0x01,0x01,0x01,0x3e,0x00
-	};
+	0xff,0x00
+};
 
-	static const UINT8 led_tach_data[] =
-	{
-		0xff,0x00
-	};
 
+static void init_common(void)
+{
 	memset(memory_region(REGION_GFX4), 0, memory_region_length(REGION_GFX4));
 	memcpy(memory_region(REGION_GFX4), led_number_data, sizeof(led_number_data));
 	memcpy(memory_region(REGION_GFX4)+0x100, led_tach_data, sizeof(led_tach_data));
 }
 
+
 static void init_decode_turbo(void)
 {
-	init_turbo();
-	rom_decode();
+	init_common();
+	turbo_rom_decode();
 }
 
 
-/*********************************************************************
- * Game drivers
- *********************************************************************/
 
-GAMEX( 1981, turbo,  0,     turbo, turbo, turbo,        ROT270, "Sega", "Turbo", GAME_NO_COCKTAIL )
-GAMEX( 1981, turboa, turbo, turbo, turbo, decode_turbo, ROT270, "Sega", "Turbo (encrypted set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1981, turbob, turbo, turbo, turbo, decode_turbo, ROT270, "Sega", "Turbo (encrypted set 2)", GAME_NO_COCKTAIL )
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
+
+GAMEX( 1981, turbo,    0,       turbo,    turbo,    common,       ROT270,             "Sega", "Turbo", GAME_NO_COCKTAIL )
+GAMEX( 1981, turboa,   turbo,   turbo,    turbo,    decode_turbo, ROT270,             "Sega", "Turbo (encrypted set 1)", GAME_NO_COCKTAIL )
+GAMEX( 1981, turbob,   turbo,   turbo,    turbo,    decode_turbo, ROT270,             "Sega", "Turbo (encrypted set 2)", GAME_NO_COCKTAIL )
+GAMEX( 1982, subroc3d, 0,       subroc3d, subroc3d, common,       ORIENTATION_FLIP_X, "Sega", "Subroc3D", GAME_NO_SOUND )
+GAMEX( 1982, buckrog,  0,       buckrog,  buckrog,  common,       ROT0,               "Sega", "Buck Rogers: Planet of Zoom", GAME_NO_SOUND )

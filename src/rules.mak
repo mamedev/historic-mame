@@ -11,6 +11,17 @@ else
 CPUDEFS += -DHAS_Z80=0
 endif
 
+CPU=$(strip $(findstring Z180@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/z180
+CPUDEFS += -DHAS_Z180=1
+CPUOBJS += $(OBJ)/cpu/z180/z180.o
+DBGOBJS += $(OBJ)/cpu/z180/z180dasm.o
+$(OBJ)/cpu/z180/z180.o: z180.c z180.h z180daa.h z180op.c z180ops.h z180tbl.h z180cb.c z180dd.c z180ed.c z180fd.c z180xy.c
+else
+CPUDEFS += -DHAS_Z180=0
+endif
+
 CPU=$(strip $(findstring 8080@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/i8085
@@ -258,6 +269,7 @@ OBJDIRS += $(OBJ)/cpu/v60
 CPUDEFS += -DHAS_V60=1
 CPUOBJS += $(OBJ)/cpu/v60/v60.o
 DBGOBJS += $(OBJ)/cpu/v60/v60d.o
+$(OBJ)/cpu/v60/v60.o: am.c am1.c am2.c am3.c op12.c op2.c op3.c op4.c op5.c op6.c op7a.c optable.c v60.c v60.h v60d.c
 else
 CPUDEFS += -DHAS_V60=0
 endif
@@ -1013,6 +1025,14 @@ else
 SOUNDDEFS += -DHAS_MSM5205=0
 endif
 
+SOUND=$(strip $(findstring MSM5232@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_MSM5232=1
+SOUNDOBJS += $(OBJ)/sound/msm5232.o
+else
+SOUNDDEFS += -DHAS_MSM5232=0
+endif
+
 SOUND=$(strip $(findstring UPD7759@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_UPD7759=1
@@ -1141,3 +1161,10 @@ else
 SOUNDDEFS += -DHAS_ES5506=0
 endif
 
+SOUND=$(strip $(findstring BSMT2000@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_BSMT2000=1
+SOUNDOBJS += $(OBJ)/sound/bsmt2000.o
+else
+SOUNDDEFS += -DHAS_BSMT2000=0
+endif

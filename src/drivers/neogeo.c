@@ -36,6 +36,8 @@
 	  - fatfury3, 7th stage (Port Town). Raster effects are used for the background,
 	    but what we get now is a flickering mess.
 
+	- Full screen zoom has some glitches in tpgolf.
+
 	- Viewpoint resets halfway through level 1. This is a bug in the asm 68k core.
 
 	- Gururin has bad tiles all over the place (used to work ..)
@@ -90,24 +92,7 @@
 	  This depends on location 0x46 of nvram, which should be set in the arcade version. There
 	  doesn't seem to be a place in the BIOS where this location is initialized.
 
-	- Encryption on newer games (some have program code & gfx encrypted, some just have gfx, S1
-	  rom is also missing from all these later boards, although the games still appear to get
-	  this data from somewhere)  kof99 and garou can only be supported at present because the
-	  romsets avaliable are beta versions.  Actually we don't have any valid encrytped program
-	  code to look at, but we have what we can only assume is a good dump of encrypted kof99 gfx
-	  roms.
-
 	NOTES ABOUT UNSUPPORTED GAMES :
-
-	- Prehistoric Isle 2 (Yumekobo / SNK, 1999) - Encrypted GFX
-
-	- Garou - Mark of the Wolves (Release Version (SNK, 1999) - Encrypted Code + GFX
-
-	- Strikers 1945 Plus (Psikyo / SNK, 1999) - Encrypted GFX (not dumped)
-
-	- Metal Slug 3 (SNK, 2000) - Encrypted Code + GFX + Code
-
-	- King of Fighters 2000 (SNK, 2000) - Encrypted Code + GFX (not dumped)
 
 	- Diggerman (???, 2000) - Not A Real Arcade Game .. Will Not Be Supported.
 
@@ -237,7 +222,8 @@ void neogeo_init_machine(void);
 void init_neogeo(void);
 
 /* from machine/neocrypt.c */
-void neogeo_gfx_decrypt(int extra_xor);
+void kof99_neogeo_gfx_decrypt(int extra_xor);
+void kof2000_neogeo_gfx_decrypt(int extra_xor);
 
 
 /******************************************************************************/
@@ -991,7 +977,7 @@ INPUT_PORTS_END
 static struct GfxLayout charlayout =	/* All games */
 {
 	8,8,			/* 8 x 8 chars */
-	4096,			/* 4096 in total */
+	RGN_FRAC(1,1),
 	4,				/* 4 bits per pixel */
 	{ 0, 1, 2, 3 },    /* planes are packed in a nibble */
 	{ 33*4, 32*4, 49*4, 48*4, 1*4, 0*4, 17*4, 16*4 },
@@ -1013,9 +999,9 @@ static struct GfxLayout dummy_mvs_tilelayout =
 
 static struct GfxDecodeInfo neogeo_mvs_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x000000, &charlayout, 0, 16 },
-	{ REGION_GFX1, 0x020000, &charlayout, 0, 16 },
-	{ REGION_GFX2, 0x000000, &dummy_mvs_tilelayout, 0, 256 },
+	{ REGION_GFX1, 0, &charlayout, 0, 16 },
+	{ REGION_GFX2, 0, &charlayout, 0, 16 },
+	{ REGION_GFX3, 0, &dummy_mvs_tilelayout, 0, 256 },
 	{ -1 } /* end of array */
 };
 
@@ -1180,7 +1166,7 @@ static const struct MachineDriver machine_driver_raster_busy =
 	ROM_REGION( 0x80000, REGION_CPU2, 0 ) \
 	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )  /* we don't use the BIOS anyway... */ \
 	ROM_LOAD( name, 		0x00000, 0x80000, sum ) /* so overwrite it with the real thing */ \
-	ROM_REGION( 0x10000, REGION_GFX3, 0 ) \
+	ROM_REGION( 0x10000, REGION_GFX4, 0 ) \
 	ROM_LOAD( "ng-lo.rom", 0x00000, 0x10000, 0xe09e253c )  /* Y zoom control */
 
 #define NEO_BIOS_SOUND_256K(name,sum) \
@@ -1189,7 +1175,7 @@ static const struct MachineDriver machine_driver_raster_busy =
 	ROM_REGION( 0x40000, REGION_CPU2, 0 ) \
 	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )  /* we don't use the BIOS anyway... */ \
 	ROM_LOAD( name, 		0x00000, 0x40000, sum ) /* so overwrite it with the real thing */ \
-	ROM_REGION( 0x10000, REGION_GFX3, 0 ) \
+	ROM_REGION( 0x10000, REGION_GFX4, 0 ) \
 	ROM_LOAD( "ng-lo.rom", 0x00000, 0x10000, 0xe09e253c )  /* Y zoom control */
 
 #define NEO_BIOS_SOUND_128K(name,sum) \
@@ -1198,7 +1184,7 @@ static const struct MachineDriver machine_driver_raster_busy =
 	ROM_REGION( 0x40000, REGION_CPU2, 0 ) \
 	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )  /* we don't use the BIOS anyway... */ \
 	ROM_LOAD( name, 		0x00000, 0x20000, sum ) /* so overwrite it with the real thing */ \
-	ROM_REGION( 0x10000, REGION_GFX3, 0 ) \
+	ROM_REGION( 0x10000, REGION_GFX4, 0 ) \
 	ROM_LOAD( "ng-lo.rom", 0x00000, 0x10000, 0xe09e253c )  /* Y zoom control */
 
 #define NEO_BIOS_SOUND_64K(name,sum) \
@@ -1207,25 +1193,28 @@ static const struct MachineDriver machine_driver_raster_busy =
 	ROM_REGION( 0x40000, REGION_CPU2, 0 ) \
 	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )  /* we don't use the BIOS anyway... */ \
 	ROM_LOAD( name, 		0x00000, 0x10000, sum ) /* so overwrite it with the real thing */ \
-	ROM_REGION( 0x10000, REGION_GFX3, 0 ) \
+	ROM_REGION( 0x10000, REGION_GFX4, 0 ) \
 	ROM_LOAD( "ng-lo.rom", 0x00000, 0x10000, 0xe09e253c )  /* Y zoom control */
 
 #define NO_DELTAT_REGION
 
 #define NEO_SFIX_128K(name,sum) \
-	ROM_REGION( 0x40000, REGION_GFX1, 0 ) \
+	ROM_REGION( 0x20000, REGION_GFX1, 0 ) \
 	ROM_LOAD( name, 		  0x000000, 0x20000, sum ) \
-	ROM_LOAD( "ng-sfix.rom",  0x020000, 0x20000, 0x354029fc )
+	ROM_REGION( 0x20000, REGION_GFX2, 0 ) \
+	ROM_LOAD( "ng-sfix.rom",  0x000000, 0x20000, 0x354029fc )
 
 #define NEO_SFIX_64K(name,sum) \
-	ROM_REGION( 0x40000, REGION_GFX1, 0 ) \
+	ROM_REGION( 0x20000, REGION_GFX1, 0 ) \
 	ROM_LOAD( name, 		  0x000000, 0x10000, sum ) \
-	ROM_LOAD( "ng-sfix.rom",  0x020000, 0x20000, 0x354029fc )
+	ROM_REGION( 0x20000, REGION_GFX2, 0 ) \
+	ROM_LOAD( "ng-sfix.rom",  0x000000, 0x20000, 0x354029fc )
 
 #define NEO_SFIX_32K(name,sum) \
-	ROM_REGION( 0x40000, REGION_GFX1, 0 ) \
+	ROM_REGION( 0x20000, REGION_GFX1, 0 ) \
 	ROM_LOAD( name, 		  0x000000, 0x08000, sum ) \
-	ROM_LOAD( "ng-sfix.rom",  0x020000, 0x20000, 0x354029fc )
+	ROM_REGION( 0x20000, REGION_GFX2, 0 ) \
+	ROM_LOAD( "ng-sfix.rom",  0x000000, 0x20000, 0x354029fc )
 
 /******************************************************************************/
 
@@ -1245,7 +1234,7 @@ ROM_START( nam1975 )
 	ROM_LOAD( "nam_v22.rom", 0x080000, 0x080000, 0xab0d8368 )
 	ROM_LOAD( "nam_v23.rom", 0x100000, 0x080000, 0xdf468e28 )
 
-	ROM_REGION( 0x300000, REGION_GFX2, 0 )
+	ROM_REGION( 0x300000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "nam_c1.rom", 0x000000, 0x80000, 0x32ea98e1 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "nam_c2.rom", 0x000001, 0x80000, 0xcbc4064c ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "nam_c3.rom", 0x100000, 0x80000, 0x0151054c ) /* Plane 0,1 */
@@ -1271,7 +1260,7 @@ ROM_START( bstars )
 	ROM_REGION( 0x080000, REGION_SOUND2, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "bpro_v21.rom", 0x000000, 0x080000, 0x04a733d1 )
 
-	ROM_REGION( 0x300000, REGION_GFX2, 0 )
+	ROM_REGION( 0x300000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "bpro_c1.rom", 0x000000, 0x080000, 0xaaff2a45 )
 	ROM_LOAD16_BYTE( "bpro_c2.rom", 0x000001, 0x080000, 0x3ba0f7e4 )
 	ROM_LOAD16_BYTE( "bpro_c3.rom", 0x100000, 0x080000, 0x96f0fdfa )
@@ -1298,7 +1287,7 @@ ROM_START( tpgolf )
 	ROM_LOAD( "topg_v23.rom", 0x100000, 0x080000, 0x30f53e54 )
 	ROM_LOAD( "topg_v24.rom", 0x180000, 0x080000, 0x5ba0f501 )
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "topg_c1.rom", 0x000000, 0x80000, 0x0315fbaf )
 	ROM_LOAD16_BYTE( "topg_c2.rom", 0x000001, 0x80000, 0xb4c15d59 )
 	ROM_LOAD16_BYTE( "topg_c3.rom", 0x100000, 0x80000, 0xb09f1612 )
@@ -1326,7 +1315,7 @@ ROM_START( mahretsu )
 	ROM_LOAD( "maj_v4.rom", 0x080000, 0x080000, 0x776fa2a2 )
 	ROM_LOAD( "maj_v5.rom", 0x100000, 0x080000, 0xb3e7eeea )
 
-	ROM_REGION( 0x200000, REGION_GFX2, 0 )
+	ROM_REGION( 0x200000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "maj_c1.rom", 0x000000, 0x80000, 0xf1ae16bc ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "maj_c2.rom", 0x000001, 0x80000, 0xbdc13520 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "maj_c3.rom", 0x100000, 0x80000, 0x9c571a37 ) /* Plane 0,1 */
@@ -1348,7 +1337,7 @@ ROM_START( maglord )
 	ROM_LOAD( "magl_v21.rom", 0x000000, 0x080000, 0xf94ab5b7 )
 	ROM_LOAD( "magl_v22.rom", 0x080000, 0x080000, 0x232cfd04 )
 
-	ROM_REGION( 0x300000, REGION_GFX2, 0 )
+	ROM_REGION( 0x300000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "magl_c1.rom", 0x000000, 0x80000, 0x806aee34 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "magl_c2.rom", 0x000001, 0x80000, 0x34aa9a86 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "magl_c3.rom", 0x100000, 0x80000, 0xc4c2b926 ) /* Plane 0,1 */
@@ -1372,7 +1361,7 @@ ROM_START( maglordh )
 	ROM_LOAD( "magl_v21.rom", 0x000000, 0x080000, 0xf94ab5b7 )
 	ROM_LOAD( "magl_v22.rom", 0x080000, 0x080000, 0x232cfd04 )
 
-	ROM_REGION( 0x300000, REGION_GFX2, 0 )
+	ROM_REGION( 0x300000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "magl_c1.rom", 0x000000, 0x80000, 0x806aee34 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "magl_c2.rom", 0x000001, 0x80000, 0x34aa9a86 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "magl_c3.rom", 0x100000, 0x80000, 0xc4c2b926 ) /* Plane 0,1 */
@@ -1399,7 +1388,7 @@ ROM_START( ridhero )
 	ROM_LOAD( "ridh_v23.rom", 0x100000, 0x080000, 0x069c71ed )
 	ROM_LOAD( "ridh_v24.rom", 0x180000, 0x080000, 0x89fbb825 )
 
-	ROM_REGION( 0x200000, REGION_GFX2, 0 )
+	ROM_REGION( 0x200000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "ridh_c1.rom", 0x000000, 0x080000, 0x4a5c7f78 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "ridh_c2.rom", 0x000001, 0x080000, 0xe0b70ece ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "ridh_c3.rom", 0x100000, 0x080000, 0x8acff765 ) /* Plane 0,1 */
@@ -1424,7 +1413,7 @@ ROM_START( ridheroh )
 	ROM_LOAD( "ridh_v23.rom", 0x100000, 0x080000, 0x069c71ed )
 	ROM_LOAD( "ridh_v24.rom", 0x180000, 0x080000, 0x89fbb825 )
 
-	ROM_REGION( 0x200000, REGION_GFX2, 0 )
+	ROM_REGION( 0x200000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "ridh_c1.rom", 0x000000, 0x080000, 0x4a5c7f78 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "ridh_c2.rom", 0x000001, 0x080000, 0xe0b70ece ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "ridh_c3.rom", 0x100000, 0x080000, 0x8acff765 ) /* Plane 0,1 */
@@ -1446,7 +1435,7 @@ ROM_START( alpham2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x300000, REGION_GFX2, 0 )
+	ROM_REGION( 0x300000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "007-c1.bin", 0x000000, 0x100000, 0x8fba8ff3 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "007-c2.bin", 0x000001, 0x100000, 0x4dad2945 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "007-c3.bin", 0x200000, 0x080000, 0x68c2994e ) /* Plane 0,1 */
@@ -1469,7 +1458,7 @@ ROM_START( ncombat )
 	ROM_REGION( 0x080000, REGION_SOUND2, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "ncom_v21.rom", 0x000000, 0x080000, 0x365f9011 )
 
-	ROM_REGION( 0x300000, REGION_GFX2, 0 )
+	ROM_REGION( 0x300000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "ncom_c1.rom", 0x000000, 0x80000, 0x33cc838e ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "ncom_c2.rom", 0x000001, 0x80000, 0x26877feb ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "ncom_c3.rom", 0x100000, 0x80000, 0x3b60a05d ) /* Plane 0,1 */
@@ -1495,7 +1484,7 @@ ROM_START( cyberlip )
 	ROM_REGION( 0x080000, REGION_SOUND2, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "cybl_v21.rom", 0x000000, 0x080000, 0x586f4cb2 )
 
-	ROM_REGION( 0x300000, REGION_GFX2, 0 )
+	ROM_REGION( 0x300000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "cybl_c1.rom", 0x000000, 0x80000, 0x8bba5113 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "cybl_c2.rom", 0x000001, 0x80000, 0xcbf66432 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "cybl_c3.rom", 0x100000, 0x80000, 0xe4f86efc ) /* Plane 0,1 */
@@ -1520,7 +1509,7 @@ ROM_START( superspy )
 	ROM_REGION( 0x100000, REGION_SOUND2, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "sspy_v21.rom", 0x000000, 0x100000, 0x1ebe94c7 )
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "sspy_c1.rom", 0x000000, 0x100000, 0xcae7be57 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "sspy_c2.rom", 0x000001, 0x100000, 0x9e29d986 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "sspy_c3.rom", 0x200000, 0x100000, 0x14832ff2 ) /* Plane 0,1 */
@@ -1541,7 +1530,7 @@ ROM_START( mutnat )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "mnat_c1.rom", 0x000000, 0x100000, 0x5e4381bf ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "mnat_c2.rom", 0x000001, 0x100000, 0x69ba4e18 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "mnat_c3.rom", 0x200000, 0x100000, 0x890327d5 ) /* Plane 0,1 */
@@ -1563,7 +1552,7 @@ ROM_START( kotm )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "kotm_c1.rom", 0x000000, 0x100000, 0x71471c25 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "kotm_c2.rom", 0x000001, 0x100000, 0x320db048 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "kotm_c3.rom", 0x200000, 0x100000, 0x98de7995 ) /* Plane 0,1 */
@@ -1585,7 +1574,7 @@ ROM_START( sengoku )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "sngku_c1.rom", 0x000000, 0x100000, 0xb4eb82a1 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "sngku_c2.rom", 0x000001, 0x100000, 0xd55c550d ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "sngku_c3.rom", 0x200000, 0x100000, 0xed51ef65 ) /* Plane 0,1 */
@@ -1607,7 +1596,7 @@ ROM_START( sengokh )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "sngku_c1.rom", 0x000000, 0x100000, 0xb4eb82a1 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "sngku_c2.rom", 0x000001, 0x100000, 0xd55c550d ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "sngku_c3.rom", 0x200000, 0x100000, 0xed51ef65 ) /* Plane 0,1 */
@@ -1628,7 +1617,7 @@ ROM_START( burningf )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "burnf_c1.rom", 0x000000, 0x100000, 0x25a25e9b ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "burnf_c2.rom", 0x000001, 0x100000, 0xd4378876 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "burnf_c3.rom", 0x200000, 0x100000, 0x862b60da ) /* Plane 0,1 */
@@ -1649,7 +1638,7 @@ ROM_START( burningh )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "burnf_c1.rom", 0x000000, 0x100000, 0x25a25e9b ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "burnf_c2.rom", 0x000001, 0x100000, 0xd4378876 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "burnf_c3.rom", 0x200000, 0x100000, 0x862b60da ) /* Plane 0,1 */
@@ -1671,7 +1660,7 @@ ROM_START( lbowling )
 	ROM_REGION( 0x080000, REGION_SOUND2, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "019-v21.bin", 0x000000, 0x080000, 0x2efd5ada )
 
-	ROM_REGION( 0x100000, REGION_GFX2, 0 )
+	ROM_REGION( 0x100000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "019-c1.bin", 0x000000, 0x080000, 0x4ccdef18 )
 	ROM_LOAD16_BYTE( "019-c2.bin", 0x000001, 0x080000, 0xd4dd0802 )
 ROM_END
@@ -1692,7 +1681,7 @@ ROM_START( gpilots )
 	ROM_REGION( 0x080000, REGION_SOUND2, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "ghst_v21.rom", 0x000000, 0x080000, 0x7abf113d )
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "ghst_c1.rom", 0x000000, 0x100000, 0xbd6fe78e )
 	ROM_LOAD16_BYTE( "ghst_c2.rom", 0x000001, 0x100000, 0x5f4a925c )
 	ROM_LOAD16_BYTE( "ghst_c3.rom", 0x200000, 0x100000, 0xd1e42fd0 )
@@ -1713,7 +1702,7 @@ ROM_START( joyjoy )
 	ROM_REGION( 0x080000, REGION_SOUND2, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "joy_v2.rom", 0x000000, 0x080000, 0x8ed20a86 )
 
-	ROM_REGION( 0x100000, REGION_GFX2, 0 )
+	ROM_REGION( 0x100000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "joy_c1.rom", 0x000000, 0x080000, 0x509250ec )
 	ROM_LOAD16_BYTE( "joy_c2.rom", 0x000001, 0x080000, 0x09ed5258 )
 ROM_END
@@ -1732,7 +1721,7 @@ ROM_START( bjourney )
 	ROM_REGION( 0x100000, REGION_SOUND2, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "bj-v22.rom", 0x000000, 0x100000, 0x65a54d13 )
 
-	ROM_REGION( 0x300000, REGION_GFX2, 0 )
+	ROM_REGION( 0x300000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "bj-c1.rom", 0x000000, 0x100000, 0x4d47a48c )
 	ROM_LOAD16_BYTE( "bj-c2.rom", 0x000001, 0x100000, 0xe8c1491a )
 	ROM_LOAD16_BYTE( "bj-c3.rom", 0x200000, 0x080000, 0x66e69753 )
@@ -1752,7 +1741,7 @@ ROM_START( quizdais )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x200000, REGION_GFX2, 0 )
+	ROM_REGION( 0x200000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "quizd_c1.rom", 0x000000, 0x100000, 0x2999535a ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "quizd_c2.rom", 0x000001, 0x100000, 0x876a99e6 ) /* Plane 2,3 */
 ROM_END
@@ -1771,7 +1760,7 @@ ROM_START( lresort )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x300000, REGION_GFX2, 0 )
+	ROM_REGION( 0x300000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "lr_c1.rom", 0x000000, 0x100000, 0x3617c2dc )
 	ROM_LOAD16_BYTE( "lr_c2.rom", 0x000001, 0x100000, 0x3f0a7fd8 )
 	ROM_LOAD16_BYTE( "lr_c3.rom", 0x200000, 0x080000, 0xe9f745f8 )
@@ -1792,7 +1781,7 @@ ROM_START( eightman )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x300000, REGION_GFX2, 0 )
+	ROM_REGION( 0x300000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "8man_c1.rom", 0x000000, 0x100000, 0x555e16a4 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "8man_c2.rom", 0x000001, 0x100000, 0xe1ee51c3 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "8man_c3.rom", 0x200000, 0x080000, 0x0923d5b0 ) /* Plane 2,3 */
@@ -1813,7 +1802,7 @@ ROM_START( minasan )
 	ROM_REGION( 0x100000, REGION_SOUND2, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "027-v21.bin", 0x000000, 0x100000, 0xdf5b4eeb )
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "027-c1.bin", 0x000000, 0x100000, 0xd0086f94 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "027-c2.bin", 0x000001, 0x100000, 0xda61f5a6 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "027-c3.bin", 0x200000, 0x100000, 0x08df1228 ) /* Plane 0,1 */
@@ -1833,7 +1822,7 @@ ROM_START( legendos )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "joe_c1.rom", 0x000000, 0x100000, 0x2f5ab875 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "joe_c2.rom", 0x000001, 0x100000, 0x318b2711 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "joe_c3.rom", 0x200000, 0x100000, 0x6bc52cb2 ) /* Plane 0,1 */
@@ -1854,7 +1843,7 @@ ROM_START( 2020bb )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x300000, REGION_GFX2, 0 )
+	ROM_REGION( 0x300000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "2020_c1.rom", 0x000000, 0x100000, 0x4f5e19bd ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "2020_c2.rom", 0x000001, 0x100000, 0xd6314bf0 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "2020_c3.rom", 0x200000, 0x080000, 0x6a87ae30 ) /* Plane 0,1 */
@@ -1875,7 +1864,7 @@ ROM_START( 2020bbh )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x300000, REGION_GFX2, 0 )
+	ROM_REGION( 0x300000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "2020_c1.rom", 0x000000, 0x100000, 0x4f5e19bd ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "2020_c2.rom", 0x000001, 0x100000, 0xd6314bf0 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "2020_c3.rom", 0x200000, 0x080000, 0x6a87ae30 ) /* Plane 0,1 */
@@ -1896,7 +1885,7 @@ ROM_START( socbrawl )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x300000, REGION_GFX2, 0 )
+	ROM_REGION( 0x300000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "sbrl_c1.rom", 0x000000, 0x100000, 0xbd0a4eb8 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "sbrl_c2.rom", 0x000001, 0x100000, 0xefde5382 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "sbrl_c3.rom", 0x200000, 0x080000, 0x580f7f33 ) /* Plane 0,1 */
@@ -1919,7 +1908,7 @@ ROM_START( roboarmy )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x300000, REGION_GFX2, 0 )
+	ROM_REGION( 0x300000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "rarmy_c1.rom", 0x000000, 0x080000, 0xe17fa618 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "rarmy_c2.rom", 0x000001, 0x080000, 0xd5ebdb4d ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "rarmy_c3.rom", 0x100000, 0x080000, 0xaa4d7695 ) /* Plane 0,1 */
@@ -1943,7 +1932,7 @@ ROM_START( fatfury1 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "ffry_c1.rom", 0x000000, 0x100000, 0x74317e54 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "ffry_c2.rom", 0x000001, 0x100000, 0x5bb952f3 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "ffry_c3.rom", 0x200000, 0x100000, 0x9b714a7c ) /* Plane 0,1 */
@@ -1964,7 +1953,7 @@ ROM_START( fbfrenzy )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x300000, REGION_GFX2, 0 )
+	ROM_REGION( 0x300000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "fbfr_c1.rom", 0x000000, 0x100000, 0x91c56e78 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "fbfr_c2.rom", 0x000001, 0x100000, 0x9743ea2f ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "fbfr_c3.rom", 0x200000, 0x080000, 0xe5aa65f5 ) /* Plane 0,1 */
@@ -1985,7 +1974,7 @@ ROM_START( bakatono )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "036-c1.bin", 0x000000, 0x100000, 0xfe7f1010 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "036-c2.bin", 0x000001, 0x100000, 0xbbf003f5 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "036-c3.bin", 0x200000, 0x100000, 0x9ac0708e ) /* Plane 0,1 */
@@ -2005,7 +1994,7 @@ ROM_START( crsword )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "csrd_c1.rom", 0x000000, 0x100000, 0x09df6892 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "csrd_c2.rom", 0x000001, 0x100000, 0xac122a78 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "csrd_c3.rom", 0x200000, 0x100000, 0x9d7ed1ca ) /* Plane 0,1 */
@@ -2027,7 +2016,7 @@ ROM_START( trally )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x300000, REGION_GFX2, 0 )
+	ROM_REGION( 0x300000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "tral_c1.rom", 0x000000, 0x100000, 0xc58323d4 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "tral_c2.rom", 0x000001, 0x100000, 0xbba9c29e ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "tral_c3.rom", 0x200000, 0x080000, 0x3bb7b9d6 ) /* Plane 0,1 */
@@ -2049,7 +2038,7 @@ ROM_START( kotm2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x800000, REGION_GFX2, 0 )
+	ROM_REGION( 0x800000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "kotm2_c1.rom", 0x000000, 0x100000, 0x6d1c4aa9 ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x400000, 0x100000 )
 	ROM_LOAD16_BYTE( "kotm2_c2.rom", 0x000001, 0x100000, 0xf7b75337 ) /* Plane 2,3 */
@@ -2076,7 +2065,7 @@ ROM_START( sengoku2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x800000, REGION_GFX2, 0 )
+	ROM_REGION( 0x800000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "goku2_c1.rom", 0x000000, 0x200000, 0x3cacd552 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "goku2_c2.rom", 0x000001, 0x200000, 0xe2aadef3 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "goku2_c3.rom", 0x400000, 0x200000, 0x037614d5 ) /* Plane 0,1 */
@@ -2098,7 +2087,7 @@ ROM_START( bstars2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "star2_c1.rom", 0x000000, 0x100000, 0xb39a12e1 )
 	ROM_LOAD16_BYTE( "star2_c2.rom", 0x000001, 0x100000, 0x766cfc2f )
 	ROM_LOAD16_BYTE( "star2_c3.rom", 0x200000, 0x100000, 0xfb31339d )
@@ -2119,7 +2108,7 @@ ROM_START( quizdai2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x300000, REGION_GFX2, 0 )
+	ROM_REGION( 0x300000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "mein_c1.rom", 0x000000, 0x100000, 0xcb5809a1 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "mein_c2.rom", 0x000001, 0x100000, 0x1436dfeb ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "mein_c3.rom", 0x200000, 0x080000, 0xbcd4a518 ) /* Plane 0,1 */
@@ -2141,7 +2130,7 @@ ROM_START( 3countb )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x0800000, REGION_GFX2, 0 )
+	ROM_REGION( 0x0800000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "3cb_c1.rom", 0x0000000, 0x200000, 0xd290cc33 )
 	ROM_LOAD16_BYTE( "3cb_c2.rom", 0x0000001, 0x200000, 0x0b28095d )
 	ROM_LOAD16_BYTE( "3cb_c3.rom", 0x0400000, 0x200000, 0xbcc0cb35 )
@@ -2162,7 +2151,7 @@ ROM_START( aof )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x800000, REGION_GFX2, 0 )
+	ROM_REGION( 0x800000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "aof_c1.rom", 0x000000, 0x100000, 0xddab98a7 ) /* Plane 0,1 */
 	ROM_CONTINUE(      			 0x400000, 0x100000 )
 	ROM_LOAD16_BYTE( "aof_c2.rom", 0x000001, 0x100000, 0xd8ccd575 ) /* Plane 2,3 */
@@ -2189,7 +2178,7 @@ ROM_START( samsho )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x900000, REGION_GFX2, 0 )
+	ROM_REGION( 0x900000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "samsh_c1.rom", 0x000000, 0x200000, 0x2e5873a4 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "samsh_c2.rom", 0x000001, 0x200000, 0x04febb10 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "samsh_c3.rom", 0x400000, 0x200000, 0xf3dabd1e ) /* Plane 0,1 */
@@ -2215,7 +2204,7 @@ ROM_START( tophuntr )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x800000, REGION_GFX2, 0 )
+	ROM_REGION( 0x800000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "046-c1.bin", 0x000000, 0x100000, 0xfa720a4a ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "046-c2.bin", 0x000001, 0x100000, 0xc900c205 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "046-c3.bin", 0x200000, 0x100000, 0x880e3c25 ) /* Plane 0,1 */
@@ -2241,7 +2230,7 @@ ROM_START( fatfury2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x800000, REGION_GFX2, 0 )
+	ROM_REGION( 0x800000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "fury2_c1.rom", 0x000000, 0x100000, 0xf72a939e ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x400000, 0x100000 )
 	ROM_LOAD16_BYTE( "fury2_c2.rom", 0x000001, 0x100000, 0x05119a0d ) /* Plane 2,3 */
@@ -2265,7 +2254,7 @@ ROM_START( janshin )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "jans-c1.rom", 0x000000, 0x200000, 0x3fa890e9 )
 	ROM_LOAD16_BYTE( "jans-c2.rom", 0x000001, 0x200000, 0x59c48ad8 )
 ROM_END
@@ -2285,7 +2274,7 @@ ROM_START( androdun )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "adun_c1.rom", 0x000000, 0x100000, 0x7ace6db3 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "adun_c2.rom", 0x000001, 0x100000, 0xb17024f7 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "adun_c3.rom", 0x200000, 0x100000, 0x2e0f3f9a ) /* Plane 0,1 */
@@ -2306,7 +2295,7 @@ ROM_START( ncommand )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "050-c1.bin", 0x000000, 0x100000, 0x87421a0a ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "050-c2.bin", 0x000001, 0x100000, 0xc4cf5548 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "050-c3.bin", 0x200000, 0x100000, 0x03422c1e ) /* Plane 0,1 */
@@ -2327,7 +2316,7 @@ ROM_START( viewpoin )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x600000, REGION_GFX2, 0 )
+	ROM_REGION( 0x600000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "viewp_c1.rom", 0x000000, 0x100000, 0xd624c132 )
 	ROM_CONTINUE(      			   0x400000, 0x100000 )
 	ROM_LOAD16_BYTE( "viewp_c2.rom", 0x000001, 0x100000, 0x40d69f1e )
@@ -2347,7 +2336,7 @@ ROM_START( ssideki )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x600000, REGION_GFX2, 0 )
+	ROM_REGION( 0x600000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "sidek_c1.rom", 0x000000, 0x100000, 0x53e1c002 ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x400000, 0x100000 )
 	ROM_LOAD16_BYTE( "sidek_c2.rom", 0x000001, 0x100000, 0x776a2d1f ) /* Plane 2,3 */
@@ -2369,7 +2358,7 @@ ROM_START( wh1 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x600000, REGION_GFX2, 0 )
+	ROM_REGION( 0x600000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "wh_c1.rom", 0x000000, 0x100000, 0x85eb5bce ) /* Plane 0,1 */
 	ROM_CONTINUE(      			0x400000, 0x100000 )
 	ROM_LOAD16_BYTE( "wh_c2.rom", 0x000001, 0x100000, 0xec93b048 ) /* Plane 2,3 */
@@ -2394,7 +2383,7 @@ ROM_START( kof94 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "kof94_c1.rom", 0x000000, 0x200000, 0xb96ef460 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "kof94_c2.rom", 0x000001, 0x200000, 0x15e096a7 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "kof94_c3.rom", 0x400000, 0x200000, 0x54f66254 ) /* Plane 0,1 */
@@ -2420,7 +2409,7 @@ ROM_START( aof2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "aof2_c1.rom", 0x000000, 0x200000, 0x17b9cbd2 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "aof2_c2.rom", 0x000001, 0x200000, 0x5fd76b67 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "aof2_c3.rom", 0x400000, 0x200000, 0xd2c88768 ) /* Plane 0,1 */
@@ -2446,7 +2435,7 @@ ROM_START( wh2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0xc00000, REGION_GFX2, 0 )
+	ROM_REGION( 0xc00000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "hero2_c1.rom", 0x000000, 0x200000, 0x21c6bb91 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "hero2_c2.rom", 0x000001, 0x200000, 0xa3999925 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "hero2_c3.rom", 0x400000, 0x200000, 0xb725a219 ) /* Plane 0,1 */
@@ -2472,7 +2461,7 @@ ROM_START( fatfursp )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0xc00000, REGION_GFX2, 0 )
+	ROM_REGION( 0xc00000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "ffspe_c1.rom", 0x000000, 0x200000, 0x044ab13c ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "ffspe_c2.rom", 0x000001, 0x200000, 0x11e6bf96 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "ffspe_c3.rom", 0x400000, 0x200000, 0x6f7938d5 ) /* Plane 0,1 */
@@ -2492,12 +2481,12 @@ ROM_START( savagere )
 
 	ROM_REGION( 0x600000, REGION_SOUND1, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "savag_v1.rom", 0x000000, 0x200000, 0x530c50fd )
-	ROM_LOAD( "savag_v2.rom", 0x200000, 0x200000, BADCRC( 0xe79a9bd0 ) )
+	ROM_LOAD( "savag_v2.rom", 0x200000, 0x200000, BADCRC( 0xe79a9bd0 ) )	// FIXED BITS (1xxxxxxxxxxxxxxx)
 	ROM_LOAD( "savag_v3.rom", 0x400000, 0x200000, 0x7038c2f9 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "savag_c1.rom", 0x000000, 0x200000, 0x763ba611 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "savag_c2.rom", 0x000001, 0x200000, 0xe05e8ca6 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "savag_c3.rom", 0x400000, 0x200000, 0x3e4eba4b ) /* Plane 0,1 */
@@ -2523,7 +2512,7 @@ ROM_START( fightfev )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x0800000, REGION_GFX2, 0 )
+	ROM_REGION( 0x0800000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "ff_c1.rom", 0x0000000, 0x200000, 0x8908fff9 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "ff_c2.rom", 0x0000001, 0x200000, 0xc6649492 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "ff_c3.rom", 0x0400000, 0x200000, 0x0956b437 ) /* Plane 0,1 */
@@ -2544,7 +2533,7 @@ ROM_START( ssideki2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x800000, REGION_GFX2, 0 )
+	ROM_REGION( 0x800000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "kick2_c1.rom", 0x000000, 0x200000, 0xa626474f ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "kick2_c2.rom", 0x000001, 0x200000, 0xc3be42ae ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "kick2_c3.rom", 0x400000, 0x200000, 0x2a7b98b9 ) /* Plane 0,1 */
@@ -2565,7 +2554,7 @@ ROM_START( spinmast )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x800000, REGION_GFX2, 0 )
+	ROM_REGION( 0x800000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "spnm_c1.rom", 0x000000, 0x100000, 0xa9375aa2 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "spnm_c2.rom", 0x000001, 0x100000, 0x0e73b758 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "spnm_c3.rom", 0x200000, 0x100000, 0xdf51e465 ) /* Plane 0,1 */
@@ -2593,7 +2582,7 @@ ROM_START( samsho2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "sams2_c1.rom", 0x000000, 0x200000, 0x86cd307c ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "sams2_c2.rom", 0x000001, 0x200000, 0xcdfcc4ca ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "sams2_c3.rom", 0x400000, 0x200000, 0x7a63ccc7 ) /* Plane 0,1 */
@@ -2619,7 +2608,7 @@ ROM_START( wh2j )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "wh2j_c1.rom", 0x000000, 0x200000, 0x2ec87cea ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "wh2j_c2.rom", 0x000001, 0x200000, 0x526b81ab ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "wh2j_c3.rom", 0x400000, 0x200000, 0x436d1b31 ) /* Plane 0,1 */
@@ -2634,7 +2623,7 @@ ROM_START( wjammers )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "windj_p1.rom", 0x000000, 0x080000, 0xe81e7a31 )
 
-	NEO_SFIX_128K( "windj_s1.rom", 0x66cb96eb )
+	NEO_SFIX_128K( "windj_s1.rom", 0x074b5723 )
 
 	NEO_BIOS_SOUND_128K( "windj_m1.rom", 0x52c23cfc )
 
@@ -2646,7 +2635,7 @@ ROM_START( wjammers )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "windj_c1.rom", 0x000000, 0x100000, 0xc7650204 )
 	ROM_LOAD16_BYTE( "windj_c2.rom", 0x000001, 0x100000, 0xd9f3e71d )
 	ROM_LOAD16_BYTE( "windj_c3.rom", 0x200000, 0x100000, 0x40986386 )
@@ -2666,7 +2655,7 @@ ROM_START( karnovr )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0xc00000, REGION_GFX2, 0 )
+	ROM_REGION( 0xc00000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "karev_c1.rom", 0x000000, 0x200000, 0x09dfe061 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "karev_c2.rom", 0x000001, 0x200000, 0xe0f6682a ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "karev_c3.rom", 0x400000, 0x200000, 0xa673b4f7 ) /* Plane 0,1 */
@@ -2688,7 +2677,7 @@ ROM_START( gururin )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "gurin_c1.rom", 0x000000, 0x200000, 0x35866126 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "gurin_c2.rom", 0x000001, 0x200000, 0x9db64084 ) /* Plane 2,3 */
 ROM_END
@@ -2708,7 +2697,7 @@ ROM_START( pspikes2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x600000, REGION_GFX2, 0 )
+	ROM_REGION( 0x600000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "spike_c1.rom", 0x000000, 0x100000, 0x7f250f76 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "spike_c2.rom", 0x000001, 0x100000, 0x20912873 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "spike_c3.rom", 0x200000, 0x100000, 0x4b641ba1 ) /* Plane 0,1 */
@@ -2733,7 +2722,7 @@ ROM_START( fatfury3 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "069-c1.bin", 0x0000000, 0x400000, 0xe302f93c ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "069-c2.bin", 0x0000001, 0x400000, 0x1053a455 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "069-c3.bin", 0x0800000, 0x400000, 0x1c0fde2f ) /* Plane 0,1 */
@@ -2756,7 +2745,7 @@ ROM_START( panicbom )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x200000, REGION_GFX2, 0 )
+	ROM_REGION( 0x200000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "panic_c1.rom", 0x000000, 0x100000, 0x8582e1b5 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "panic_c2.rom", 0x000001, 0x100000, 0xe15a093b ) /* Plane 2,3 */
 ROM_END
@@ -2776,7 +2765,7 @@ ROM_START( aodk )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "aodk_c1.rom", 0x000000, 0x200000, 0xa0b39344 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "aodk_c2.rom", 0x000001, 0x200000, 0x203f6074 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "aodk_c3.rom", 0x400000, 0x200000, 0x7fff4d41 ) /* Plane 0,1 */
@@ -2802,7 +2791,7 @@ ROM_START( sonicwi2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x800000, REGION_GFX2, 0 )
+	ROM_REGION( 0x800000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "afig2_c1.rom", 0x000000, 0x200000, 0x3278e73e ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "afig2_c2.rom", 0x000001, 0x200000, 0xfe6355d6 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "afig2_c3.rom", 0x400000, 0x200000, 0xc1b438f1 ) /* Plane 0,1 */
@@ -2824,7 +2813,7 @@ ROM_START( zedblade )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x800000, REGION_GFX2, 0 )
+	ROM_REGION( 0x800000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "zedbl_c1.rom", 0x000000, 0x200000, 0x4d9cb038 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "zedbl_c2.rom", 0x000001, 0x200000, 0x09233884 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "zedbl_c3.rom", 0x400000, 0x200000, 0xd06431e3 ) /* Plane 0,1 */
@@ -2847,7 +2836,7 @@ ROM_START( galaxyfg )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0xe00000, REGION_GFX2, 0 )
+	ROM_REGION( 0xe00000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "galfi_c1.rom", 0x000000, 0x200000, 0xc890c7c0 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "galfi_c2.rom", 0x000001, 0x200000, 0xb6d25419 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "galfi_c3.rom", 0x400000, 0x200000, 0x9d87e761 ) /* Plane 0,1 */
@@ -2872,7 +2861,7 @@ ROM_START( strhoop )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x800000, REGION_GFX2, 0 )
+	ROM_REGION( 0x800000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "shoop_c1.rom", 0x000000, 0x200000, 0x0581c72a ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "shoop_c2.rom", 0x000001, 0x200000, 0x5b9b8fb6 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "shoop_c3.rom", 0x400000, 0x200000, 0xcd65bb62 ) /* Plane 0,1 */
@@ -2894,7 +2883,7 @@ ROM_START( quizkof )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x800000, REGION_GFX2, 0 )
+	ROM_REGION( 0x800000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "qkof-c1.rom",  0x000000, 0x200000, 0xea1d764a ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "qkof-c2.rom",  0x000001, 0x200000, 0xc78c49da ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "qkof-c3.rom",  0x400000, 0x200000, 0xb4851bfe ) /* Plane 0,1 */
@@ -2917,7 +2906,7 @@ ROM_START( ssideki3 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0xc00000, REGION_GFX2, 0 )
+	ROM_REGION( 0xc00000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "side3_c1.rom", 0x000000, 0x200000, 0x1fb68ebe ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "side3_c2.rom", 0x000001, 0x200000, 0xb28d928f ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "side3_c3.rom", 0x400000, 0x200000, 0x3b2572e8 ) /* Plane 0,1 */
@@ -2941,7 +2930,7 @@ ROM_START( doubledr )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0xe00000, REGION_GFX2, 0 )
+	ROM_REGION( 0xe00000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "ddrag_c1.rom", 0x000000, 0x200000, 0xb478c725 )
 	ROM_LOAD16_BYTE( "ddrag_c2.rom", 0x000001, 0x200000, 0x2857da32 )
 	ROM_LOAD16_BYTE( "ddrag_c3.rom", 0x400000, 0x200000, 0x8b0d378e )
@@ -2967,7 +2956,7 @@ ROM_START( pbobblen )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x100000, REGION_GFX2, 0 )
+	ROM_REGION( 0x100000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "puzzb_c5.rom", 0x000000, 0x080000, 0xe89ad494 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "puzzb_c6.rom", 0x000001, 0x080000, 0x4b42d7eb ) /* Plane 2,3 */
 ROM_END
@@ -2989,7 +2978,7 @@ ROM_START( kof95 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1a00000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1a00000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "kof95_c1.rom", 0x0400000, 0x200000, 0x33bf8657 ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x0000000, 0x200000 )
 	ROM_LOAD16_BYTE( "kof95_c2.rom", 0x0400001, 0x200000, 0xf21908a4 ) /* Plane 2,3 */
@@ -3019,7 +3008,7 @@ ROM_START( tws96 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0xa00000, REGION_GFX2, 0 )
+	ROM_REGION( 0xa00000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "tecmo_c1.rom", 0x400000, 0x200000, 0xd301a867 ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x000000, 0x200000 )
 	ROM_LOAD16_BYTE( "tecmo_c2.rom", 0x400001, 0x200000, 0x305fc74f ) /* Plane 2,3 */
@@ -3043,7 +3032,7 @@ ROM_START( samsho3 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1a00000, REGION_GFX2, 0 )	/* lowering this to 0x1900000 corrupts the graphics */
+	ROM_REGION( 0x1a00000, REGION_GFX3, 0 )	/* lowering this to 0x1900000 corrupts the graphics */
 	ROM_LOAD16_BYTE( "sams3_c1.rom", 0x0400000, 0x200000, 0xe079f767 ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x0000000, 0x200000 )
 	ROM_LOAD16_BYTE( "sams3_c2.rom", 0x0400001, 0x200000, 0xfc045909 ) /* Plane 2,3 */
@@ -3074,7 +3063,7 @@ ROM_START( stakwin )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x800000, REGION_GFX2, 0 )
+	ROM_REGION( 0x800000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "stakw_c1.rom", 0x000000, 0x200000, 0x6e733421 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "stakw_c2.rom", 0x000001, 0x200000, 0x4d865347 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "stakw_c3.rom", 0x400000, 0x200000, 0x8fa5a9eb ) /* Plane 0,1 */
@@ -3096,7 +3085,7 @@ ROM_START( pulstar )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1c00000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1c00000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "pstar_c1.rom", 0x0400000, 0x200000, 0x63020fc6 ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x0000000, 0x200000 )
 	ROM_LOAD16_BYTE( "pstar_c2.rom", 0x0400001, 0x200000, 0x260e9d4d ) /* Plane 2,3 */
@@ -3129,7 +3118,7 @@ ROM_START( whp )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1c00000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1c00000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "whp_c1.rom", 0x0400000, 0x200000, 0xaecd5bb1 )
 	ROM_CONTINUE(      			 0x0000000, 0x200000 )
 	ROM_LOAD16_BYTE( "whp_c2.rom", 0x0400001, 0x200000, 0x7566ffc0 )
@@ -3161,7 +3150,7 @@ ROM_START( kabukikl )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "klash_c1.rom", 0x400000, 0x200000, 0x4d896a58 ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x000000, 0x200000 )
 	ROM_LOAD16_BYTE( "klash_c2.rom", 0x400001, 0x200000, 0x3cf78a18 ) /* Plane 2,3 */
@@ -3187,7 +3176,7 @@ ROM_START( neobombe )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x900000, REGION_GFX2, 0 )
+	ROM_REGION( 0x900000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "bombm_c1.rom", 0x400000, 0x200000, 0xb90ebed4 ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x000000, 0x200000 )
 	ROM_LOAD16_BYTE( "bombm_c2.rom", 0x400001, 0x200000, 0x41e62b4f ) /* Plane 2,3 */
@@ -3212,7 +3201,7 @@ ROM_START( gowcaizr )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "vfgow_c1.rom", 0x000000, 0x200000, 0x042f6af5 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "vfgow_c2.rom", 0x000001, 0x200000, 0x0fbcd046 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "vfgow_c3.rom", 0x400000, 0x200000, 0x58bfbaa1 ) /* Plane 0,1 */
@@ -3239,7 +3228,7 @@ ROM_START( rbff1 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1c00000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1c00000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "069-c1.bin", 0x0000000, 0x400000, 0xe302f93c ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "069-c2.bin", 0x0000001, 0x400000, 0x1053a455 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "069-c3.bin", 0x0800000, 0x400000, 0x1c0fde2f ) /* Plane 0,1 */
@@ -3266,7 +3255,7 @@ ROM_START( aof3 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1c00000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1c00000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "aof3_c1.rom", 0x0400000, 0x200000, 0xf6c74731 ) /* Plane 0,1 */
 	ROM_CONTINUE(      			  0x0000000, 0x200000 )
 	ROM_LOAD16_BYTE( "aof3_c2.rom", 0x0400001, 0x200000, 0xf587f149 ) /* Plane 2,3 */
@@ -3298,7 +3287,7 @@ ROM_START( sonicwi3 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0xc00000, REGION_GFX2, 0 )
+	ROM_REGION( 0xc00000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "sonw3_c1.rom", 0x400000, 0x200000, 0x3ca97864 ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x000000, 0x200000 )
 	ROM_LOAD16_BYTE( "sonw3_c2.rom", 0x400001, 0x200000, 0x1da4b3a9 ) /* Plane 2,3 */
@@ -3324,7 +3313,7 @@ ROM_START( turfmast )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x800000, REGION_GFX2, 0 )
+	ROM_REGION( 0x800000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "turfm_c1.rom", 0x400000, 0x200000, 0x8c6733f2 ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x000000, 0x200000 )
 	ROM_LOAD16_BYTE( "turfm_c2.rom", 0x400001, 0x200000, 0x596cc256 ) /* Plane 2,3 */
@@ -3346,7 +3335,7 @@ ROM_START( mslug )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "mslug_c1.rom", 0x400000, 0x200000, 0xd00bd152 ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x000000, 0x200000 )
 	ROM_LOAD16_BYTE( "mslug_c2.rom", 0x400001, 0x200000, 0xddff1dea ) /* Plane 2,3 */
@@ -3370,7 +3359,7 @@ ROM_START( puzzledp )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x200000, REGION_GFX2, 0 )
+	ROM_REGION( 0x200000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "pdpon_c1.rom", 0x000000, 0x100000, 0xcc0095ef ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "pdpon_c2.rom", 0x000001, 0x100000, 0x42371307 ) /* Plane 2,3 */
 ROM_END
@@ -3388,7 +3377,7 @@ ROM_START( mosyougi )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "syoug_c1.rom",  0x000000, 0x200000, 0xbba9e8c0 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "syoug_c2.rom",  0x000001, 0x200000, 0x2574be03 ) /* Plane 2,3 */
 ROM_END
@@ -3407,7 +3396,7 @@ ROM_START( marukodq )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0xa00000, REGION_GFX2, 0 )
+	ROM_REGION( 0xa00000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "maru-c1.rom", 0x000000, 0x400000, 0x4bd5e70f ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "maru-c2.rom", 0x000001, 0x400000, 0x67dbe24d ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "maru-c3.rom", 0x800000, 0x100000, 0x79aa2b48 ) /* Plane 0,1 */
@@ -3427,7 +3416,7 @@ ROM_START( neomrdo )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "neomd-c1.rom", 0x000000, 0x200000, 0xc7541b9d )
 	ROM_LOAD16_BYTE( "neomd-c2.rom", 0x000001, 0x200000, 0xf57166d2 )
 ROM_END
@@ -3447,7 +3436,7 @@ ROM_START( sdodgeb )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x0c00000, REGION_GFX2, 0 )
+	ROM_REGION( 0x0c00000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "dodge_c1.rom", 0x0000000, 0x400000, 0x93d8619b ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "dodge_c2.rom", 0x0000001, 0x400000, 0x1c737bb6 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "dodge_c3.rom", 0x0800000, 0x200000, 0x14cb1703 ) /* Plane 0,1 */
@@ -3468,7 +3457,7 @@ ROM_START( goalx3 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0xa00000, REGION_GFX2, 0 )
+	ROM_REGION( 0xa00000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "goal!_c1.rom", 0x400000, 0x200000, 0xd061f1f5 ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x000000, 0x200000 )
 	ROM_LOAD16_BYTE( "goal!_c2.rom", 0x400001, 0x200000, 0x3f63c1a2 ) /* Plane 2,3 */
@@ -3491,7 +3480,7 @@ ROM_START( overtop )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "ovr_c1.rom", 0x0000000, 0x400000, 0x50f43087 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "ovr_c2.rom", 0x0000001, 0x400000, 0xa5b39807 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "ovr_c3.rom", 0x0800000, 0x400000, 0x9252ea02 ) /* Plane 0,1 */
@@ -3515,7 +3504,7 @@ ROM_START( neodrift )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x800000, REGION_GFX2, 0 )
+	ROM_REGION( 0x800000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "drift_c1.rom", 0x400000, 0x200000, 0x62c5edc9 ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x000000, 0x200000 )
 	ROM_LOAD16_BYTE( "drift_c2.rom", 0x400001, 0x200000, 0x9dc9c72a ) /* Plane 2,3 */
@@ -3538,7 +3527,7 @@ ROM_START( kof96 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x2000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x2000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "kof96_c1.rom", 0x0000000, 0x400000, 0x7ecf4aa2 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "kof96_c2.rom", 0x0000001, 0x400000, 0x05b54f37 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "kof96_c3.rom", 0x0800000, 0x400000, 0x64989a65 ) /* Plane 0,1 */
@@ -3565,7 +3554,7 @@ ROM_START( ssideki4 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "side4_c1.rom", 0x0400000, 0x200000, 0x288a9225 ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x0000000, 0x200000 )
 	ROM_LOAD16_BYTE( "side4_c2.rom", 0x0400001, 0x200000, 0x3fc9d1c4 ) /* Plane 2,3 */
@@ -3595,7 +3584,7 @@ ROM_START( kizuna )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1c00000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1c00000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "ke_c1.rom", 0x0000000, 0x200000, 0x763ba611 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "ke_c2.rom", 0x0000001, 0x200000, 0xe05e8ca6 ) /* Plane 2,3 */
 	/* 400000-7fffff empty */
@@ -3623,7 +3612,7 @@ ROM_START( ninjamas )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x2000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x2000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "ninjm_c1.rom", 0x0400000, 0x200000, 0x58f91ae0 ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x0000000, 0x200000 )
 	ROM_LOAD16_BYTE( "ninjm_c2.rom", 0x0400001, 0x200000, 0x4258147f ) /* Plane 2,3 */
@@ -3657,7 +3646,7 @@ ROM_START( ragnagrd )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x2000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x2000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "rgard_c1.rom", 0x0400000, 0x200000, 0x18f61d79 ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x0000000, 0x200000 )
 	ROM_LOAD16_BYTE( "rgard_c2.rom", 0x0400001, 0x200000, 0xdbf4ff4b ) /* Plane 2,3 */
@@ -3691,7 +3680,7 @@ ROM_START( pgoal )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0xc00000, REGION_GFX2, 0 )
+	ROM_REGION( 0xc00000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "pgoal_c1.rom", 0x0000000, 0x200000, 0x2dc69faf ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "pgoal_c2.rom", 0x0000001, 0x200000, 0x5db81811 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "pgoal_c3.rom", 0x0400000, 0x200000, 0x9dbfece5 ) /* Plane 0,1 */
@@ -3713,7 +3702,7 @@ ROM_START( magdrop2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x800000, REGION_GFX2, 0 )
+	ROM_REGION( 0x800000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "drop2_c1.rom", 0x000000, 0x400000, 0x1f862a14 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "drop2_c2.rom", 0x000001, 0x400000, 0x14b90536 ) /* Plane 2,3 */
 ROM_END
@@ -3735,7 +3724,7 @@ ROM_START( samsho4 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x2000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x2000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "sams4_c1.rom", 0x0400000, 0x200000, 0x289100fa ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x0000000, 0x200000 )
 	ROM_LOAD16_BYTE( "sams4_c2.rom", 0x0400001, 0x200000, 0xc2716ea0 ) /* Plane 2,3 */
@@ -3771,7 +3760,7 @@ ROM_START( rbffspec )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x2000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x2000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "rbffs_c1.rom", 0x0400000, 0x200000, 0x436edad4 ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x0000000, 0x200000 )
 	ROM_LOAD16_BYTE( "rbffs_c2.rom", 0x0400001, 0x200000, 0xcc7dc384 ) /* Plane 2,3 */
@@ -3805,7 +3794,7 @@ ROM_START( twinspri )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0xa00000, REGION_GFX2, 0 )
+	ROM_REGION( 0xa00000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "sprit_c1.rom", 0x400000, 0x200000, 0x73b2a70b ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x000000, 0x200000 )
 	ROM_LOAD16_BYTE( "sprit_c2.rom", 0x400001, 0x200000, 0x3a3e506c ) /* Plane 2,3 */
@@ -3829,7 +3818,7 @@ ROM_START( wakuwak7 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1800000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1800000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "waku7_c1.rom", 0x0400000, 0x200000, 0xd91d386f ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x0000000, 0x200000 )
 	ROM_LOAD16_BYTE( "waku7_c2.rom", 0x0400001, 0x200000, 0x36b5cf41 ) /* Plane 2,3 */
@@ -3859,7 +3848,7 @@ ROM_START( stakwin2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0xc00000, REGION_GFX2, 0 )
+	ROM_REGION( 0xc00000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "sw2_c1.rom", 0x0000000, 0x400000, 0x7d6c2af4 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "sw2_c2.rom", 0x0000001, 0x400000, 0x7e402d39 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "sw2_c3.rom", 0x0800000, 0x200000, 0x93dfd660 ) /* Plane 0,1 */
@@ -3881,7 +3870,7 @@ ROM_START( breakers )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "break_c1.rom", 0x000000, 0x400000, 0x68d4ae76 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "break_c2.rom", 0x000001, 0x400000, 0xfdee05cd ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "break_c3.rom", 0x800000, 0x400000, 0x645077f3 ) /* Plane 0,1 */
@@ -3901,7 +3890,7 @@ ROM_START( miexchng )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x500000, REGION_GFX2, 0 )
+	ROM_REGION( 0x500000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "miex-c1.rom", 0x000000, 0x200000, 0x6c403ba3 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "miex-c2.rom", 0x000001, 0x200000, 0x554bcd9b ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "miex-c3.rom", 0x400000, 0x080000, 0x14524eb5 ) /* Plane 0,1 */
@@ -3924,7 +3913,7 @@ ROM_START( kof97 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x2800000, REGION_GFX2, 0 )
+	ROM_REGION( 0x2800000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "kof97_c1.rom", 0x0000000, 0x800000, 0x5f8bf0a1 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "kof97_c2.rom", 0x0000001, 0x800000, 0xe4d45c81 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "kof97_c3.rom", 0x1000000, 0x800000, 0x581d6618 ) /* Plane 0,1 */
@@ -3947,7 +3936,7 @@ ROM_START( magdrop3 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "drop3_c1.rom", 0x400000, 0x200000, 0x734db3d6 ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x000000, 0x200000 )
 	ROM_LOAD16_BYTE( "drop3_c2.rom", 0x400001, 0x200000, 0xd78f50e5 ) /* Plane 2,3 */
@@ -3975,7 +3964,7 @@ ROM_START( lastblad )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x2400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x2400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "lb_c1.rom", 0x0000000, 0x800000, 0x9f7e2bd3 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "lb_c2.rom", 0x0000001, 0x800000, 0x80623d3c ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "lb_c3.rom", 0x1000000, 0x800000, 0x91ab1a30 ) /* Plane 0,1 */
@@ -3997,7 +3986,7 @@ ROM_START( puzzldpr )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x200000, REGION_GFX2, 0 )
+	ROM_REGION( 0x200000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "pdpon_c1.rom", 0x000000, 0x100000, 0xcc0095ef ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "pdpon_c2.rom", 0x000001, 0x100000, 0x42371307 ) /* Plane 2,3 */
 ROM_END
@@ -4014,7 +4003,7 @@ ROM_START( irrmaze )
 	ROM_REGION( 0x40000, REGION_CPU2, 0 )
 	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )  /* we don't use the BIOS anyway... */
 	ROM_LOAD( "im_m1.rom",  0x00000, 0x20000, 0x880a1abd )  /* so overwrite it with the real thing */
-	ROM_REGION( 0x10000, REGION_GFX3, 0 )
+	ROM_REGION( 0x10000, REGION_GFX4, 0 )
 	ROM_LOAD( "ng-lo.rom", 0x00000, 0x10000, 0xe09e253c )  /* Y zoom control */
 
 	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY )
@@ -4023,7 +4012,7 @@ ROM_START( irrmaze )
 	ROM_REGION( 0x100000, REGION_SOUND2, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "im_v2.rom", 0x000000, 0x100000, 0x1e843567 )
 
-	ROM_REGION( 0x0800000, REGION_GFX2, 0 )
+	ROM_REGION( 0x0800000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "im_c1.rom", 0x000000, 0x400000, 0xc1d47902 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "im_c2.rom", 0x000001, 0x400000, 0xe15f972e ) /* Plane 2,3 */
 ROM_END
@@ -4041,7 +4030,7 @@ ROM_START( popbounc )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "pnb-c1.rom", 0x000000, 0x200000, 0xeda42d66 )
 	ROM_LOAD16_BYTE( "pnb-c2.rom", 0x000001, 0x200000, 0x5e633c65 )
 ROM_END
@@ -4062,7 +4051,7 @@ ROM_START( shocktro )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x2000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x2000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "shock_c1.rom", 0x0400000, 0x200000, 0xaad087fc ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x0000000, 0x200000 )
 	ROM_LOAD16_BYTE( "shock_c2.rom", 0x0400001, 0x200000, 0x7e39df1f ) /* Plane 2,3 */
@@ -4097,7 +4086,7 @@ ROM_START( shocktrj )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x2000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x2000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "shock_c1.rom", 0x0400000, 0x200000, 0xaad087fc ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x0000000, 0x200000 )
 	ROM_LOAD16_BYTE( "shock_c2.rom", 0x0400001, 0x200000, 0x7e39df1f ) /* Plane 2,3 */
@@ -4131,7 +4120,7 @@ ROM_START( blazstar )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x2000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x2000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "bstar_c1.rom", 0x0400000, 0x200000, 0x754744e0 ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x0000000, 0x200000 )
 	ROM_LOAD16_BYTE( "bstar_c2.rom", 0x0400001, 0x200000, 0xaf98c037 ) /* Plane 2,3 */
@@ -4167,7 +4156,7 @@ ROM_START( rbff2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x3000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x3000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "rb2_c1.rom", 0x0000000, 0x800000, 0xeffac504 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "rb2_c2.rom", 0x0000001, 0x800000, 0xed182d44 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "rb2_c3.rom", 0x1000000, 0x800000, 0x22e0330a ) /* Plane 0,1 */
@@ -4191,7 +4180,7 @@ ROM_START( mslug2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x2000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x2000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "ms2_c1.rom", 0x0000000, 0x800000, 0x394b5e0d ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "ms2_c2.rom", 0x0000001, 0x800000, 0xe5806221 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "ms2_c3.rom", 0x1000000, 0x800000, 0x9f6bfa6f ) /* Plane 0,1 */
@@ -4215,7 +4204,7 @@ ROM_START( kof98 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x4000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x4000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "kof98_c1.rom", 0x0000000, 0x800000, 0xe564ecd6 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "kof98_c2.rom", 0x0000001, 0x800000, 0xbd959b60 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "kof98_c3.rom", 0x1000000, 0x800000, 0x22127b4f ) /* Plane 0,1 */
@@ -4243,7 +4232,7 @@ ROM_START( lastbld2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x3000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x3000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "lb2_c1.rom",  0x0000000, 0x800000, 0x5839444d ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "lb2_c2.rom",  0x0000001, 0x800000, 0xdd087428 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "lb2_c3.rom",  0x1000000, 0x800000, 0x6054cbe0 ) /* Plane 0,1 */
@@ -4267,7 +4256,7 @@ ROM_START( neocup98 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "nc98_c1.rom", 0x000000, 0x800000, 0xd2c40ec7 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "nc98_c2.rom", 0x000001, 0x800000, 0x33aa0f35 ) /* Plane 2,3 */
 ROM_END
@@ -4287,7 +4276,7 @@ ROM_START( breakrev )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "break_c1.rom", 0x0000000, 0x400000, 0x68d4ae76 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "break_c2.rom", 0x0000001, 0x400000, 0xfdee05cd ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "break_c3.rom", 0x0800000, 0x400000, 0x645077f3 ) /* Plane 0,1 */
@@ -4312,7 +4301,7 @@ ROM_START( shocktr2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x3000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x3000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "st2_c1.rom", 0x0000000, 0x800000, 0x47ac9ec5 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "st2_c2.rom", 0x0000001, 0x800000, 0x7bcab64f ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "st2_c3.rom", 0x1000000, 0x800000, 0xdb2f73e8 ) /* Plane 0,1 */
@@ -4334,7 +4323,7 @@ ROM_START( flipshot )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "flip_c1.rom",  0x000000, 0x200000, 0xc9eedcb2 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "flip_c2.rom",  0x000001, 0x200000, 0x7d6d6e87 ) /* Plane 2,3 */
 ROM_END
@@ -4353,7 +4342,7 @@ ROM_START( pbobbl2n )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0xa00000, REGION_GFX2, 0 )
+	ROM_REGION( 0xa00000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "pb2_c1.rom", 0x000000, 0x400000, 0xd9115327 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "pb2_c2.rom", 0x000001, 0x400000, 0x77f9fdac ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "pb2_c3.rom", 0x800000, 0x100000, 0x8890bf7c ) /* Plane 0,1 */
@@ -4375,7 +4364,7 @@ ROM_START( ctomaday )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x800000, REGION_GFX2, 0 )
+	ROM_REGION( 0x800000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "ctom_c1.rom",  0x000000, 0x400000, 0x041fb8ee ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "ctom_c2.rom",  0x000001, 0x400000, 0x74f3cdf4 ) /* Plane 2,3 */
 ROM_END
@@ -4396,7 +4385,7 @@ ROM_START( mslugx )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x3000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x3000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "msx_c1.rom", 0x0000000, 0x800000, 0x09a52c6f ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "msx_c2.rom", 0x0000001, 0x800000, 0x31679821 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "msx_c3.rom", 0x1000000, 0x800000, 0xfd602019 ) /* Plane 0,1 */
@@ -4407,16 +4396,15 @@ ROM_END
 
 ROM_START( kof99 ) /* Original Version - Encrypted Code & GFX */
 	ROM_REGION( 0x900000, REGION_CPU1, 0 )
-	ROM_LOAD16_WORD_SWAP( "251-p1.bin", 0x100000, 0x400000, 0x006e4532 )
-	ROM_LOAD16_WORD_SWAP( "251-p2.bin", 0x500000, 0x400000, 0x90175f15 )
-
-	ROM_REGION16_BE( 0x100000, REGION_USER2, ROMREGION_DISPOSE )
-	ROM_LOAD16_WORD_SWAP( "kf99_p1d.rom", 0x000000, 0x100000, 0x909b18c4 )	/* decrypted version until we work it out */
+	ROM_LOAD16_WORD_SWAP( "251-sma.bin", 0x0c0000, 0x040000, 0x7766d09e )	/* stored in the custom chip */
+	ROM_LOAD16_WORD_SWAP( "251-p1.bin",  0x100000, 0x400000, 0x006e4532 )
+	ROM_LOAD16_WORD_SWAP( "251-p2.bin",  0x500000, 0x400000, 0x90175f15 )
 
 	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from the Cx ROMs */
-	ROM_REGION( 0x40000, REGION_GFX1, 0 )
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )
 	ROM_FILL(                 0x000000, 0x20000, 0 )
-	ROM_LOAD( "ng-sfix.rom",  0x020000, 0x20000, 0x354029fc )
+	ROM_REGION( 0x20000, REGION_GFX2, 0 )
+	ROM_LOAD( "ng-sfix.rom",  0x000000, 0x20000, 0x354029fc )
 
 	NEO_BIOS_SOUND_128K( "251-m1.bin", 0x5e74539c )
 
@@ -4428,7 +4416,7 @@ ROM_START( kof99 ) /* Original Version - Encrypted Code & GFX */
 	ROM_REGION( 0x0200000, REGION_SOUND2, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "251-v4.bin", 0x000000, 0x200000, 0xb49e6178 )
 
-	ROM_REGION( 0x4000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x4000000, REGION_GFX3, 0 )
 	/* Encrypted */
 	ROM_LOAD16_BYTE( "251-c1.bin",   0x0000000, 0x800000, 0x0f9e93fe ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "251-c2.bin",   0x0000001, 0x800000, 0xe71e2ea3 ) /* Plane 2,3 */
@@ -4442,16 +4430,14 @@ ROM_END
 
 ROM_START( kof99n ) /* Original Version - Encrypted GFX */
 	ROM_REGION( 0x500000, REGION_CPU1, 0 )
-	ROM_LOAD16_WORD_SWAP( "kf99n_p1.rom", 0x000000, 0x100000, 0xf2c7ddfa )
-	ROM_LOAD16_WORD_SWAP( "kf99n_p2.rom", 0x100000, 0x400000, 0x274ef47a )
-
-	ROM_REGION16_BE( 0x100000, REGION_USER2, ROMREGION_DISPOSE )
-	ROM_LOAD16_WORD_SWAP( "kf99_p1d.rom", 0x000000, 0x100000, 0x909b18c4 )	/* decrypted version until we work it out */
+	ROM_LOAD16_WORD_SWAP( "152-p1.bin", 0x000000, 0x100000, 0xf2c7ddfa )
+	ROM_LOAD16_WORD_SWAP( "152-p2.bin", 0x100000, 0x400000, 0x274ef47a )
 
 	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from the Cx ROMs */
-	ROM_REGION( 0x40000, REGION_GFX1, 0 )
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )
 	ROM_FILL(                 0x000000, 0x20000, 0 )
-	ROM_LOAD( "ng-sfix.rom",  0x020000, 0x20000, 0x354029fc )
+	ROM_REGION( 0x20000, REGION_GFX2, 0 )
+	ROM_LOAD( "ng-sfix.rom",  0x000000, 0x20000, 0x354029fc )
 
 	NEO_BIOS_SOUND_128K( "251-m1.bin", 0x5e74539c )
 
@@ -4463,7 +4449,7 @@ ROM_START( kof99n ) /* Original Version - Encrypted GFX */
 	ROM_REGION( 0x0200000, REGION_SOUND2, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "251-v4.bin", 0x000000, 0x200000, 0xb49e6178 )
 
-	ROM_REGION( 0x4000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x4000000, REGION_GFX3, 0 )
 	/* Encrypted */
 	ROM_LOAD16_BYTE( "251-c1.bin",   0x0000000, 0x800000, 0x0f9e93fe ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "251-c2.bin",   0x0000001, 0x800000, 0xe71e2ea3 ) /* Plane 2,3 */
@@ -4494,7 +4480,7 @@ ROM_START( kof99p ) /* Prototype Version - Possibly Hacked */
 	ROM_REGION( 0x0200000, REGION_SOUND2, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "251-v4.bin", 0x000000, 0x200000, 0xb49e6178 )
 
-	ROM_REGION( 0x4000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x4000000, REGION_GFX3, 0 )
 	/* these are probably decrypted versions of the roms found in the final */
 	ROM_LOAD16_BYTE( "kf99p_c1.rom", 0x0000000, 0x800000, 0xe5d8ffa4 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "kf99p_c2.rom", 0x0000001, 0x800000, 0xd822778f ) /* Plane 2,3 */
@@ -4512,9 +4498,10 @@ ROM_START( ganryu ) /* Original Version - Encrypted GFX */
 	ROM_CONTINUE(						0x000000, 0x100000 )
 
 	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from the Cx ROMs */
-	ROM_REGION( 0x40000, REGION_GFX1, 0 )
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )
 	ROM_FILL(                 0x000000, 0x20000, 0 )
-	ROM_LOAD( "ng-sfix.rom",  0x020000, 0x20000, 0x354029fc )
+	ROM_REGION( 0x20000, REGION_GFX2, 0 )
+	ROM_LOAD( "ng-sfix.rom",  0x000000, 0x20000, 0x354029fc )
 
 	NEO_BIOS_SOUND_128K( "252-m1.bin", 0x30cc4099 )
 
@@ -4523,7 +4510,7 @@ ROM_START( ganryu ) /* Original Version - Encrypted GFX */
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1000000, REGION_GFX3, 0 )
 	/* Encrypted */
 	ROM_LOAD16_BYTE( "252-c1.bin", 0x0000000, 0x800000, 0x50ee7882 )
 	ROM_LOAD16_BYTE( "252-c2.bin", 0x0000001, 0x800000, 0x62585474 )
@@ -4531,15 +4518,17 @@ ROM_END
 
 ROM_START( garou )
 	ROM_REGION( 0x900000, REGION_CPU1, 0 )
-	ROM_LOAD16_WORD_SWAP( "253-ep1.p1", 0x100000, 0x200000, 0xea3171a4 )
-	ROM_LOAD16_WORD_SWAP( "253-ep2.p2", 0x300000, 0x200000, 0x382f704b )
-	ROM_LOAD16_WORD_SWAP( "253-ep3.p3", 0x500000, 0x200000, 0xe395bfdd )
-	ROM_LOAD16_WORD_SWAP( "253-ep4.p4", 0x700000, 0x200000, 0xda92c08e )
+	ROM_LOAD16_WORD_SWAP( "253-sma.bin", 0x0c0000, 0x040000, 0x98bc93dc )	/* stored in the custom chip */
+	ROM_LOAD16_WORD_SWAP( "253-ep1.p1",  0x100000, 0x200000, 0xea3171a4 )
+	ROM_LOAD16_WORD_SWAP( "253-ep2.p2",  0x300000, 0x200000, 0x382f704b )
+	ROM_LOAD16_WORD_SWAP( "253-ep3.p3",  0x500000, 0x200000, 0xe395bfdd )
+	ROM_LOAD16_WORD_SWAP( "253-ep4.p4",  0x700000, 0x200000, 0xda92c08e )
 
 	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from the Cx ROMs */
-	ROM_REGION( 0x40000, REGION_GFX1, 0 )
+	ROM_REGION( 0x80000, REGION_GFX1, 0 )	/* larger char set */
 	ROM_FILL(                 0x000000, 0x20000, 0 )
-	ROM_LOAD( "ng-sfix.rom",  0x020000, 0x20000, 0x354029fc )
+	ROM_REGION( 0x20000, REGION_GFX2, 0 )
+	ROM_LOAD( "ng-sfix.rom",  0x000000, 0x20000, 0x354029fc )
 
 	NEO_BIOS_SOUND_256K( "253-m1.bin", 0x36a806be )
 
@@ -4551,7 +4540,8 @@ ROM_START( garou )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x4000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x4000000, REGION_GFX3, 0 )
+	/* Encrypted */
 	ROM_LOAD16_BYTE( "253-c1.bin", 0x0000000, 0x800000, 0x0603e046 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "253-c2.bin", 0x0000001, 0x800000, 0x0917d2a4 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "253-c3.bin", 0x1000000, 0x800000, 0x6737c92d ) /* Plane 0,1 */
@@ -4564,13 +4554,15 @@ ROM_END
 
 ROM_START( garouo )
 	ROM_REGION( 0x900000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "253-smao.bin", 0x0c0000, 0x040000, 0x96c72233 )	/* stored in the custom chip */
 	ROM_LOAD16_WORD_SWAP( "garou_p1.rom", 0x100000, 0x400000, 0x18ae5d7e )
 	ROM_LOAD16_WORD_SWAP( "garou_p2.rom", 0x500000, 0x400000, 0xafffa779 )
 
 	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from the Cx ROMs */
-	ROM_REGION( 0x40000, REGION_GFX1, 0 )
+	ROM_REGION( 0x80000, REGION_GFX1, 0 )	/* larger char set */
 	ROM_FILL(                 0x000000, 0x20000, 0 )
-	ROM_LOAD( "ng-sfix.rom",  0x020000, 0x20000, 0x354029fc )
+	ROM_REGION( 0x20000, REGION_GFX2, 0 )
+	ROM_LOAD( "ng-sfix.rom",  0x000000, 0x20000, 0x354029fc )
 
 	NEO_BIOS_SOUND_256K( "253-m1.bin", 0x36a806be )
 
@@ -4582,7 +4574,8 @@ ROM_START( garouo )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x4000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x4000000, REGION_GFX3, 0 )
+	/* Encrypted */
 	ROM_LOAD16_BYTE( "253-c1.bin", 0x0000000, 0x800000, 0x0603e046 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "253-c2.bin", 0x0000001, 0x800000, 0x0917d2a4 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "253-c3.bin", 0x1000000, 0x800000, 0x6737c92d ) /* Plane 0,1 */
@@ -4610,7 +4603,7 @@ ROM_START( garoup ) /* Prototype Version, seems genuine */
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x4000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x4000000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "motwp_c1.rom", 0x0000000, 0x800000, 0x5bb5d137 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "motwp_c2.rom", 0x0000001, 0x800000, 0x5c8d2960 ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "motwp_c3.rom", 0x1000000, 0x800000, 0x234d16fc ) /* Plane 0,1 */
@@ -4621,29 +4614,36 @@ ROM_START( garoup ) /* Prototype Version, seems genuine */
 	ROM_LOAD16_BYTE( "motwp_c8.rom", 0x3000001, 0x800000, 0xf778fe99 ) /* Plane 2,3 */
 ROM_END
 
-ROM_START( s1945p ) /* Original Version, Encrypted GFX Roms -NOT DUMPED- */
+ROM_START( s1945p ) /* Original Version, Encrypted GFX Roms */
 	ROM_REGION( 0x500000, REGION_CPU1, 0 )
-	ROM_LOAD16_WORD_SWAP( "s1945_p1.rom", 0x000000, 0x100000, 0xff8efcff )
-	ROM_LOAD16_WORD_SWAP( "s1945_p2.rom", 0x100000, 0x400000, 0xefdfd4dd )
+	ROM_LOAD16_WORD_SWAP( "254-p1.bin", 0x000000, 0x100000, 0xff8efcff )
+	ROM_LOAD16_WORD_SWAP( "254-p2.bin", 0x100000, 0x400000, 0xefdfd4dd )
 
 	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from the Cx ROMs */
-	ROM_REGION( 0x40000, REGION_GFX1, 0 )
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )
 	ROM_FILL(                 0x000000, 0x20000, 0 )
-	ROM_LOAD( "ng-sfix.rom",  0x020000, 0x20000, 0x354029fc )
+	ROM_REGION( 0x20000, REGION_GFX2, 0 )
+	ROM_LOAD( "ng-sfix.rom",  0x000000, 0x20000, 0x354029fc )
 
-	NEO_BIOS_SOUND_128K( "s1945_m1.rom", 0x994b4487 )
+	NEO_BIOS_SOUND_128K( "254-m1.bin", 0x994b4487 )
 
 	ROM_REGION( 0x1000000, REGION_SOUND1, ROMREGION_SOUNDONLY )
-	ROM_LOAD( "s1945_v1.rom", 0x000000, 0x400000, 0x844f58fb )
-	ROM_LOAD( "s1945_v2.rom", 0x400000, 0x400000, 0xd9a248f0 )
-	ROM_LOAD( "s1945_v3.rom", 0x800000, 0x400000, 0x0b0d2d33 )
-	ROM_LOAD( "s1945_v4.rom", 0xc00000, 0x400000, 0x6d13dc91 )
+	ROM_LOAD( "254-v1.bin", 0x000000, 0x400000, 0x844f58fb )
+	ROM_LOAD( "254-v2.bin", 0x400000, 0x400000, 0xd9a248f0 )
+	ROM_LOAD( "254-v3.bin", 0x800000, 0x400000, 0x0b0d2d33 )
+	ROM_LOAD( "254-v4.bin", 0xc00000, 0x400000, 0x6d13dc91 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
-	ROM_LOAD16_BYTE( "s1945_c1.rom",   0x0000000, 0x800000, 0x00000000 ) /* Plane 0,1 */
-	ROM_LOAD16_BYTE( "s1945_c2.rom",   0x0000001, 0x800000, 0x00000000 ) /* Plane 2,3 */
+	ROM_REGION( 0x4000000, REGION_GFX3, 0 )
+	ROM_LOAD16_BYTE( "254-c1.bin", 0x0000000, 0x800000, 0xae6fc8ef ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "254-c2.bin", 0x0000001, 0x800000, 0x436fa176 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "254-c3.bin", 0x1000000, 0x800000, 0xe53ff2dc ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "254-c4.bin", 0x1000001, 0x800000, 0x818672f0 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "254-c5.bin", 0x2000000, 0x800000, 0x4580eacd ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "254-c6.bin", 0x2000001, 0x800000, 0xe34970fc ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "254-c7.bin", 0x3000000, 0x800000, 0xf2323239 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "254-c8.bin", 0x3000001, 0x800000, 0x66848c7d ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( preisle2 ) /* Original Version, Encrypted GFX */
@@ -4652,9 +4652,10 @@ ROM_START( preisle2 ) /* Original Version, Encrypted GFX */
 	ROM_LOAD16_WORD_SWAP( "pi2_p2.rom", 0x100000, 0x400000, 0x42050b80 )
 
 	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from the Cx ROMs */
-	ROM_REGION( 0x40000, REGION_GFX1, 0 )
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )
 	ROM_FILL(                 0x000000, 0x20000, 0 )
-	ROM_LOAD( "ng-sfix.rom",  0x020000, 0x20000, 0x354029fc )
+	ROM_REGION( 0x20000, REGION_GFX2, 0 )
+	ROM_LOAD( "ng-sfix.rom",  0x000000, 0x20000, 0x354029fc )
 
 	NEO_BIOS_SOUND_128K( "pi2_m1.rom", 0x8efd4014 )
 
@@ -4664,7 +4665,7 @@ ROM_START( preisle2 ) /* Original Version, Encrypted GFX */
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x3000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x3000000, REGION_GFX3, 0 )
 	/* Encrypted */
 	ROM_LOAD16_BYTE( "pi2_c1.rom",   0x0000000, 0x800000, 0xea06000b ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "pi2_c2.rom",   0x0000001, 0x800000, 0x04e67d79 ) /* Plane 2,3 */
@@ -4674,57 +4675,142 @@ ROM_START( preisle2 ) /* Original Version, Encrypted GFX */
 	ROM_LOAD16_BYTE( "pi2_c6.rom",   0x2000001, 0x800000, 0xb001bdd3 ) /* Plane 2,3 */
 ROM_END
 
-ROM_START( kof2000 ) /* Original Version, Encrypted GFX Roms -NOT DUMPED- */
-	ROM_REGION( 0x300000, REGION_CPU1, 0 )
-	ROM_LOAD16_WORD_SWAP( "kf2k_p1.rom",  0x000000, 0x100000, 0xb84c2b34 )
-	ROM_LOAD16_WORD_SWAP( "kf2k_p2a.rom", 0x100000, 0x100000, 0x561124f7 )
-	ROM_LOAD16_WORD_SWAP( "kf2k_p2b.rom", 0x200000, 0x100000, 0xdc5fc5a9 )
-
-	NEO_SFIX_128K( "kf2k_s1.rom", 0xcabc287b )
-
-	NEO_BIOS_SOUND_128K( "kf2k_m1.rom", 0xd2b0c788 )
-
-	ROM_REGION( 0x1000000, REGION_SOUND1, ROMREGION_SOUNDONLY )
-	ROM_LOAD( "kf2k_v1.rom", 0x000000, 0x400000, 0x45911f5c )
-	ROM_LOAD( "kf2k_v2.rom", 0x400000, 0x400000, 0x1afb20ff )
-	ROM_LOAD( "kf2k_v3.rom", 0x800000, 0x400000, 0x4605036a )
-	ROM_LOAD( "kf2k_v4.rom", 0xc00000, 0x400000, 0x764bbd6b )
-
-	NO_DELTAT_REGION
-
-	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
-	ROM_LOAD16_BYTE( "kf2k_c1.rom",   0x0000000, 0x800000, 0x00000000 ) /* Plane 0,1 */
-	ROM_LOAD16_BYTE( "kf2k_c2.rom",   0x0000001, 0x800000, 0x00000000 ) /* Plane 2,3 */
-ROM_END
-
 ROM_START( mslug3 ) /* Original Version - Encrypted Code & GFX */
 	ROM_REGION( 0x900000, REGION_CPU1, 0 )
-	ROM_LOAD16_WORD_SWAP( "ms3_p1.rom", 0x100000, 0x400000, 0xb07edfd5 )
-	ROM_LOAD16_WORD_SWAP( "ms3_p2.rom", 0x500000, 0x400000, 0x6097c26b )
+	ROM_LOAD16_WORD_SWAP( "256-sma.bin", 0x0c0000, 0x040000, 0x9cd55736 )	/* stored in the custom chip */
+	ROM_LOAD16_WORD_SWAP( "ms3_p1.rom",  0x100000, 0x400000, 0xb07edfd5 )
+	ROM_LOAD16_WORD_SWAP( "ms3_p2.rom",  0x500000, 0x400000, 0x6097c26b )
 
 	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from the Cx ROMs */
-	ROM_REGION( 0x40000, REGION_GFX1, 0 )
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )
 	ROM_FILL(                 0x000000, 0x20000, 0 )
-	ROM_LOAD( "ng-sfix.rom",  0x020000, 0x20000, 0x354029fc )
+	ROM_REGION( 0x20000, REGION_GFX2, 0 )
+	ROM_LOAD( "ng-sfix.rom",  0x000000, 0x20000, 0x354029fc )
 
 	NEO_BIOS_SOUND_512K( "ms3_m1.rom", 0xeaeec116 )
 
 	ROM_REGION( 0x1000000, REGION_SOUND1, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "ms3_v1.rom", 0x000000, 0x400000, 0xf2690241 )
-	ROM_LOAD( "ms3_v2.rom", 0x400000, 0x400000, 0x4cd5e822 )
+	ROM_LOAD( "ms3_v2.rom", 0x400000, 0x400000, 0x7e2a10bd )
 	ROM_LOAD( "ms3_v3.rom", 0x800000, 0x400000, 0x0eaec17c )
 	ROM_LOAD( "ms3_v4.rom", 0xc00000, 0x400000, 0x9b4b22d4 )
 
-	ROM_REGION( 0x4000000, REGION_GFX2, 0 )
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x4000000, REGION_GFX3, 0 )
 	/* Encrypted */
 	ROM_LOAD16_BYTE( "ms3_c1.rom",   0x0000000, 0x800000, 0x5a79c34e ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "ms3_c2.rom",   0x0000001, 0x800000, 0x944c362c ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "ms3_c3.rom",   0x1000000, 0x800000, 0x6e69d36f ) /* Plane 0,1 */
-	ROM_LOAD16_BYTE( "ms3_c4.rom",   0x1000001, 0x800000, 0x05f36b77 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "ms3_c4.rom",   0x1000001, 0x800000, 0xb755b4eb ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "ms3_c5.rom",   0x2000000, 0x800000, 0x7aacab47 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "ms3_c6.rom",   0x2000001, 0x800000, 0xc698fd5d ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "ms3_c7.rom",   0x3000000, 0x800000, 0xcfceddd2 ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "ms3_c8.rom",   0x3000001, 0x800000, 0x4d9be34c ) /* Plane 2,3 */
+ROM_END
+
+ROM_START( mslug3n ) /* Original Version - Encrypted GFX */
+	ROM_REGION( 0x500000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "256-ph1.rom",  0x000000, 0x100000, 0x9c42ca85 )
+	ROM_LOAD16_WORD_SWAP( "256-ph2.rom",  0x100000, 0x400000, 0x1f3d8ce8 )
+
+	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from the Cx ROMs */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* larger char set */
+	ROM_FILL(                 0x000000, 0x20000, 0 )
+	ROM_REGION( 0x20000, REGION_GFX2, 0 )
+	ROM_LOAD( "ng-sfix.rom",  0x000000, 0x20000, 0x354029fc )
+
+	NEO_BIOS_SOUND_512K( "ms3_m1.rom", 0xeaeec116 )
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "ms3_v1.rom", 0x000000, 0x400000, 0xf2690241 )
+	ROM_LOAD( "ms3_v2.rom", 0x400000, 0x400000, 0x7e2a10bd )
+	ROM_LOAD( "ms3_v3.rom", 0x800000, 0x400000, 0x0eaec17c )
+	ROM_LOAD( "ms3_v4.rom", 0xc00000, 0x400000, 0x9b4b22d4 )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x4000000, REGION_GFX3, 0 )
+	/* Encrypted */
+	ROM_LOAD16_BYTE( "ms3_c1.rom",   0x0000000, 0x800000, 0x5a79c34e ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "ms3_c2.rom",   0x0000001, 0x800000, 0x944c362c ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "ms3_c3.rom",   0x1000000, 0x800000, 0x6e69d36f ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "ms3_c4.rom",   0x1000001, 0x800000, 0xb755b4eb ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "ms3_c5.rom",   0x2000000, 0x800000, 0x7aacab47 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "ms3_c6.rom",   0x2000001, 0x800000, 0xc698fd5d ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "ms3_c7.rom",   0x3000000, 0x800000, 0xcfceddd2 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "ms3_c8.rom",   0x3000001, 0x800000, 0x4d9be34c ) /* Plane 2,3 */
+ROM_END
+
+ROM_START( kof2000 ) /* Original Version, Encrypted Code + Sound + GFX Roms */
+	ROM_REGION( 0x900000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "257-sma.bin", 0x0c0000, 0x040000, 0x71c6e6bb )	/* stored in the custom chip */
+	ROM_LOAD16_WORD_SWAP( "257-p1.bin",  0x100000, 0x400000, 0x60947b4c )
+	ROM_LOAD16_WORD_SWAP( "257-p2.bin",  0x500000, 0x400000, 0x1b7ec415 )
+
+	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from the Cx ROMs */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 )	/* larger char set */
+	ROM_FILL(                 0x000000, 0x20000, 0 )
+	ROM_REGION( 0x20000, REGION_GFX2, 0 )
+	ROM_LOAD( "ng-sfix.rom",  0x000000, 0x20000, 0x354029fc )
+
+	/* The M1 ROM is encrypted, we load it here for reference and replace it with a decrypted version */
+	ROM_REGION( 0x40000, REGION_USER4, 0 )
+	ROM_LOAD( "257-m1.bin", 0x00000, 0x40000, 0x4b749113 )
+	NEO_BIOS_SOUND_256K( "257-m1d.bin", 0xd404db70 )
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "257-v1.bin", 0x000000, 0x400000, 0x45911f5c )
+	ROM_LOAD( "257-v2.bin", 0x400000, 0x400000, 0x1afb20ff )
+	ROM_LOAD( "257-v3.bin", 0x800000, 0x400000, 0x4605036a )
+	ROM_LOAD( "257-v4.bin", 0xc00000, 0x400000, 0x764bbd6b )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x4000000, REGION_GFX3, 0 )
+	ROM_LOAD16_BYTE( "257-c1.bin",   0x0000000, 0x800000, 0xcef1cdfa ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "257-c2.bin",   0x0000001, 0x800000, 0xf7bf0003 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "257-c3.bin",   0x1000000, 0x800000, 0x101e6560 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "257-c4.bin",   0x1000001, 0x800000, 0xbd2fc1b1 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "257-c5.bin",   0x2000000, 0x800000, 0x89775412 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "257-c6.bin",   0x2000001, 0x800000, 0xfa7200d5 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "257-c7.bin",   0x3000000, 0x800000, 0x7da11fe4 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "257-c8.bin",   0x3000001, 0x800000, 0xb1afa60b ) /* Plane 2,3 */
+ROM_END
+
+ROM_START( kof2000n ) /* Original Version, Encrypted Sound + GFX Roms */
+	ROM_REGION( 0x500000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "257-p1n.bin",  0x000000, 0x100000, 0x5f809dbe )
+	ROM_LOAD16_WORD_SWAP( "257-p2n.bin",  0x100000, 0x400000, 0x693c2c5e )
+
+	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from the Cx ROMs */
+	ROM_REGION( 0x80000, REGION_GFX1, 0 )	/* larger char set */
+	ROM_FILL(                 0x000000, 0x20000, 0 )
+	ROM_REGION( 0x20000, REGION_GFX2, 0 )
+	ROM_LOAD( "ng-sfix.rom",  0x000000, 0x20000, 0x354029fc )
+
+	/* The M1 ROM is encrypted, we load it here for reference and replace it with a decrypted version */
+	ROM_REGION( 0x40000, REGION_USER4, 0 )
+	ROM_LOAD( "257-m1.bin", 0x00000, 0x40000, 0x4b749113 )
+	NEO_BIOS_SOUND_256K( "257-m1d.bin", 0xd404db70 )
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "257-v1.bin", 0x000000, 0x400000, 0x45911f5c )
+	ROM_LOAD( "257-v2.bin", 0x400000, 0x400000, 0x1afb20ff )
+	ROM_LOAD( "257-v3.bin", 0x800000, 0x400000, 0x4605036a )
+	ROM_LOAD( "257-v4.bin", 0xc00000, 0x400000, 0x764bbd6b )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x4000000, REGION_GFX3, 0 )
+	ROM_LOAD16_BYTE( "257-c1.bin",   0x0000000, 0x800000, 0xcef1cdfa ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "257-c2.bin",   0x0000001, 0x800000, 0xf7bf0003 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "257-c3.bin",   0x1000000, 0x800000, 0x101e6560 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "257-c4.bin",   0x1000001, 0x800000, 0xbd2fc1b1 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "257-c5.bin",   0x2000000, 0x800000, 0x89775412 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "257-c6.bin",   0x2000001, 0x800000, 0xfa7200d5 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "257-c7.bin",   0x3000000, 0x800000, 0x7da11fe4 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "257-c8.bin",   0x3000001, 0x800000, 0xb1afa60b ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( nitd ) /* Original Version - Encrypted GFX */
@@ -4732,9 +4818,10 @@ ROM_START( nitd ) /* Original Version - Encrypted GFX */
 	ROM_LOAD16_WORD_SWAP( "nitd_p1.rom", 0x000000, 0x080000, 0x61361082 )
 
 	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from the Cx ROMs */
-	ROM_REGION( 0x40000, REGION_GFX1, 0 )
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )
 	ROM_FILL(                 0x000000, 0x20000, 0 )
-	ROM_LOAD( "ng-sfix.rom",  0x020000, 0x20000, 0x354029fc )
+	ROM_REGION( 0x20000, REGION_GFX2, 0 )
+	ROM_LOAD( "ng-sfix.rom",  0x000000, 0x20000, 0x354029fc )
 
 	NEO_BIOS_SOUND_512K( "nitd_m1.rom", 0x6407c5e5 )
 
@@ -4743,7 +4830,7 @@ ROM_START( nitd ) /* Original Version - Encrypted GFX */
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1000000, REGION_GFX3, 0 )
 	/* Encrypted */
 	ROM_LOAD16_BYTE( "nitd_c1.rom", 0x0000000, 0x800000, 0x147b0c7f )
 	ROM_LOAD16_BYTE( "nitd_c2.rom", 0x0000001, 0x800000, 0xd2b04b0d )
@@ -4751,27 +4838,30 @@ ROM_END
 
 ROM_START( sengoku3 ) /* Original Version - Encrypted GFX */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_WORD_SWAP( "sen3_p1.rom", 0x100000, 0x100000, 0x5b557201 )
-	ROM_CONTINUE(						 0x000000, 0x100000 )
+	ROM_LOAD16_WORD_SWAP( "261-p1.bin", 0x100000, 0x100000, 0x5b557201 )
+	ROM_CONTINUE(                       0x000000, 0x100000 )
 
 	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from the Cx ROMs */
-	ROM_REGION( 0x40000, REGION_GFX1, 0 )
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )
 	ROM_FILL(                 0x000000, 0x20000, 0 )
-	ROM_LOAD( "ng-sfix.rom",  0x020000, 0x20000, 0x354029fc )
+	ROM_REGION( 0x20000, REGION_GFX2, 0 )
+	ROM_LOAD( "ng-sfix.rom",  0x000000, 0x20000, 0x354029fc )
 
-	NEO_BIOS_SOUND_128K( "sen3_m1.rom", 0x36ed9cdd )
+	NEO_BIOS_SOUND_128K( "261-m1.bin", 0x36ed9cdd )
 
-	ROM_REGION( 0x0c00000, REGION_SOUND1, ROMREGION_SOUNDONLY )
-	ROM_LOAD( "sen3_v1.rom", 0x000000, 0x400000, 0x64c30081 )
-	ROM_LOAD( "sen3_v2.rom", 0x400000, 0x400000, 0x392a9c47 )
-	ROM_LOAD( "sen3_v3.rom", 0x800000, 0x400000, 0xc1a7ebe3 )
+	ROM_REGION( 0x0e00000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "261-v1.bin", 0x000000, 0x400000, 0x64c30081 )
+	ROM_LOAD( "261-v2.bin", 0x400000, 0x400000, 0x392a9c47 )
+	ROM_LOAD( "261-v3.bin", 0x800000, 0x400000, 0xc1a7ebe3 )
+	ROM_LOAD( "261-v4.bin", 0xc00000, 0x200000, 0x9000d085 )
 
-	ROM_REGION( 0x0200000, REGION_SOUND2, ROMREGION_SOUNDONLY )
-	ROM_LOAD( "sen3_v4.rom", 0x000000, 0x200000, 0x9000d085 )
+	NO_DELTAT_REGION
 
-	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
-	ROM_LOAD16_BYTE( "sen3_c1.rom", 0x0000000, 0x800000, 0x00000000 )
-	ROM_LOAD16_BYTE( "sen3_c2.rom", 0x0000001, 0x800000, 0x00000000 )
+	ROM_REGION( 0x2000000, REGION_GFX3, 0 )
+	ROM_LOAD16_BYTE( "261-c1.bin", 0x0000000, 0x800000, 0xded84d9c )
+	ROM_LOAD16_BYTE( "261-c2.bin", 0x0000001, 0x800000, 0xb8eb4348 )
+	ROM_LOAD16_BYTE( "261-c3.bin", 0x1000000, 0x800000, 0x84e2034a )
+	ROM_LOAD16_BYTE( "261-c4.bin", 0x1000001, 0x800000, 0x0b45ae53 )
 ROM_END
 
 /******************************************************************************/
@@ -4784,11 +4874,13 @@ ROM_START( neogeo )
 	ROM_REGION( 0x40000, REGION_CPU2, 0 )
 	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )
 
-	ROM_REGION( 0x10000, REGION_GFX3, 0 )
+	ROM_REGION( 0x10000, REGION_GFX4, 0 )
 	ROM_LOAD( "ng-lo.rom", 0x00000, 0x10000, 0xe09e253c )  /* Y zoom control */
 
-	ROM_REGION( 0x40000, REGION_GFX1, 0 )
-	ROM_LOAD( "ng-sfix.rom",  0x020000, 0x20000, 0x354029fc )
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )
+	ROM_FILL(                 0x000000, 0x20000, 0 )
+	ROM_REGION( 0x20000, REGION_GFX2, 0 )
+	ROM_LOAD( "ng-sfix.rom",  0x000000, 0x20000, 0x354029fc )
 ROM_END
 
 
@@ -4818,51 +4910,138 @@ void init_kof99(void)
 
 	/* swap address lines & relocate fixed part */
 	rom = (data16_t *)memory_region(REGION_CPU1);
-	for (i = 0;i < 0x100000/2;i++)
+	for (i = 0;i < 0x0c0000/2;i++)
 	{
 		rom[i] = rom[0x700000/2 + BITSWAP24(i,23,22,21,20,19,18,11,6,14,17,16,5,8,10,12,0,4,3,2,7,9,15,13,1)];
 	}
 
-	/* where does this last part come from??? */
-	memcpy(rom + 0x0c0000/2,memory_region(REGION_USER2) + 0x0c0000,0x040000);
-
-	neogeo_gfx_decrypt(0x00);
-
+	kof99_neogeo_gfx_decrypt(0x00);
 	init_neogeo();
 }
 
-void init_preisle2(void)
+void init_garouo(void)
 {
-	neogeo_gfx_decrypt(0x9f);
+	data16_t *rom;
+	int i,j;
 
+	/* thanks to Razoola and Mr K for the info */
+	rom = (data16_t *)(memory_region(REGION_CPU1) + 0x100000);
+	/* swap data lines on the whole ROMs */
+	for (i = 0;i < 0x800000/2;i++)
+	{
+		rom[i] = BITSWAP16(rom[i],14,5,1,11,7,4,10,15,3,12,8,13,0,2,9,6);
+	}
+
+	/* swap address lines & relocate fixed part */
+	rom = (data16_t *)memory_region(REGION_CPU1);
+	for (i = 0;i < 0x0c0000/2;i++)
+	{
+		rom[i] = rom[0x7f8000/2 + BITSWAP24(i,23,22,21,20,19,18,5,16,11,2,6,7,17,3,12,8,14,4,0,9,1,10,15,13)];
+	}
+
+	/* swap address lines for the banked part */
+	rom = (data16_t *)(memory_region(REGION_CPU1) + 0x100000);
+	for (i = 0;i < 0x800000/2;i+=0x8000/2)
+	{
+		data16_t buffer[0x8000/2];
+		memcpy(buffer,&rom[i],0x8000);
+		for (j = 0;j < 0x8000/2;j++)
+		{
+			rom[i+j] = buffer[BITSWAP24(j,23,22,21,20,19,18,17,16,15,14,12,8,1,7,11,3,13,10,6,9,5,4,0,2)];
+		}
+	}
+
+	kof99_neogeo_gfx_decrypt(0x06);
 	init_neogeo();
 }
 
-void init_mslug3(void)
+void init_kof2000(void)
 {
-	neogeo_gfx_decrypt(0xad);
+	data16_t *rom;
+	int i,j;
 
+	/* thanks to Razoola and Mr K for the info */
+	rom = (data16_t *)(memory_region(REGION_CPU1) + 0x100000);
+	/* swap data lines on the whole ROMs */
+	for (i = 0;i < 0x800000/2;i++)
+	{
+		rom[i] = BITSWAP16(rom[i],12,8,11,3,15,14,7,0,10,13,6,5,9,2,1,4);
+	}
+
+	/* swap address lines for the banked part */
+	for (i = 0;i < 0x63a000/2; i+=0x800/2)
+	{
+		data16_t buffer[0x800/2];
+		memcpy(buffer,&rom[i],0x800);
+		for (j = 0;j < 0x800/2;j++)
+		{
+			rom[i+j] = buffer[BITSWAP24(j,23,22,21,20,19,18,17,16,15,14,13,12,11,10,4,1,3,8,6,2,7,0,9,5)];
+		}
+	}
+
+	/* swap address lines & relocate fixed part */
+	rom = (data16_t *)memory_region(REGION_CPU1);
+	for (i = 0;i < 0x0c0000/2;i++)
+	{
+		rom[i] = rom[0x73a000/2 + BITSWAP24(i,23,22,21,20,19,18,8,4,15,13,3,14,16,2,6,17,7,12,10,0,5,11,1,9)];
+	}
+
+	kof2000_neogeo_gfx_decrypt(0x00);
 	init_neogeo();
 }
 
-void init_nitd(void)
-{
-	neogeo_gfx_decrypt(0xff);
 
+void init_kof99n(void)
+{
+	kof99_neogeo_gfx_decrypt(0x00);
 	init_neogeo();
 }
 
 void init_ganryu(void)
 {
-	neogeo_gfx_decrypt(0x07);
-
+	kof99_neogeo_gfx_decrypt(0x07);
 	init_neogeo();
 }
 
-void init_gfxdec(void)
+void init_garou(void)
 {
-	neogeo_gfx_decrypt(0x00);
+	kof99_neogeo_gfx_decrypt(0x06);
+	init_neogeo();
+}
 
+void init_s1945p(void)
+{
+	kof99_neogeo_gfx_decrypt(0x05);
+	init_neogeo();
+}
+
+void init_preisle2(void)
+{
+	kof99_neogeo_gfx_decrypt(0x9f);
+	init_neogeo();
+}
+
+void init_mslug3(void)
+{
+	kof99_neogeo_gfx_decrypt(0xad);
+	init_neogeo();
+}
+
+void init_kof2000n(void)
+{
+	kof2000_neogeo_gfx_decrypt(0x00);
+	init_neogeo();
+}
+
+void init_nitd(void)
+{
+	kof99_neogeo_gfx_decrypt(0xff);
+	init_neogeo();
+}
+
+void init_sengoku3(void)
+{
+	kof99_neogeo_gfx_decrypt(0xfe);
 	init_neogeo();
 }
 
@@ -4944,15 +5123,16 @@ GAME( 1998, lastbld2, neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "The Las
 GAME( 1998, neocup98, neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Neo-Geo Cup '98 - The Road to the Victory" )
 GAME( 1999, mslugx,   neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Metal Slug X - Super Vehicle-001" )
 GAME( 1999, kof99,    neogeo,   raster, neogeo,  kof99,    ROT0, "SNK", "The King of Fighters '99 - Millennium Battle" ) /* Encrypted Code & GFX */
-GAME( 1999, kof99n,   kof99,    raster, neogeo,  gfxdec,   ROT0, "SNK", "The King of Fighters '99 - Millennium Battle (not encrypted)" )
+GAME( 1999, kof99n,   kof99,    raster, neogeo,  kof99n,   ROT0, "SNK", "The King of Fighters '99 - Millennium Battle (not encrypted)" )	/* Encrypted GFX */
 GAME( 1999, kof99p,   kof99,    raster, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters '99 - Millennium Battle (prototype)" )
-GAMEX(1999, garou,    neogeo,   raster, neogeo,  gfxdec,   ROT0, "SNK", "Garou - Mark of the Wolves (set 1)", GAME_NOT_WORKING ) /* Encrypted Code & GFX */
-GAMEX(1999, garouo,   garou,    raster, neogeo,  gfxdec,   ROT0, "SNK", "Garou - Mark of the Wolves (set 2))", GAME_NOT_WORKING ) /* Encrypted Code & GFX */
+GAMEX(1999, garou,    neogeo,   raster, neogeo,  garou,    ROT0, "SNK", "Garou - Mark of the Wolves (set 1)", GAME_NOT_WORKING ) /* Encrypted Code & GFX */
+GAME( 1999, garouo,   garou,    raster, neogeo,  garouo,   ROT0, "SNK", "Garou - Mark of the Wolves (set 2))" ) /* Encrypted Code & GFX */
 GAME( 1999, garoup,   garou,    raster, neogeo,  neogeo,   ROT0, "SNK", "Garou - Mark of the Wolves (prototype)" )
-GAMEX(1999, s1945p,   neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Strikers 1945+", GAME_NOT_WORKING ) /* Missing GFX */
-GAMEX(2000, mslug3,   neogeo,   neogeo, neogeo,  mslug3,   ROT0, "SNK", "Metal Slug 3", GAME_NOT_WORKING ) /* Encrypted Code & GFX */
-GAMEX(2000, kof2000,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters 2000", GAME_NOT_WORKING ) /* Special banking, missing GFX */
-GAMEX(2001, sengoku3, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Sengoku 3", GAME_NOT_WORKING ) /* Missing GFX */
+GAMEX(2000, mslug3,   neogeo,   raster, neogeo,  mslug3,   ROT0, "SNK", "Metal Slug 3", GAME_NOT_WORKING ) /* Encrypted Code & GFX */
+GAME( 2000, mslug3n,  mslug3,   raster, neogeo,  mslug3,   ROT0, "SNK", "Metal Slug 3 (not encrypted)" ) /* Encrypted GFX */
+GAME( 2000, kof2000,  neogeo,   neogeo, neogeo,  kof2000,  ROT0, "SNK", "The King of Fighters 2000" ) /* Encrypted Code & GFX */
+GAME( 2000, kof2000n, kof2000,  neogeo, neogeo,  kof2000n, ROT0, "SNK", "The King of Fighters 2000 (not encrypted)" ) /* Encrypted GFX */
+GAME( 2001, sengoku3, neogeo,   neogeo, neogeo,  sengoku3, ROT0, "SNK", "Sengoku 3" )	/* Encrypted GFX */
 
 /* Alpha Denshi Co. / ADK (changed name in 1993) */
 GAME( 1990, maglord,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Alpha Denshi Co.", "Magician Lord (set 1)" )
@@ -5006,6 +5186,9 @@ GAME( 1996, mslug,    neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Nazca", "Metal
 
 /* NMK */
 GAME( 1994, zedblade, neogeo,   raster, neogeo,  neogeo,   ROT0, "NMK", "Zed Blade / Operation Ragnarok" )
+
+/* Psikyo */
+GAME( 1999, s1945p,   neogeo,   neogeo, neogeo,  s1945p,   ROT0, "Psikyo", "Strikers 1945 Plus" )	/* Encrypted GFX */
 
 /* Sammy */
 GAME( 1992, viewpoin, neogeo,   raster, neogeo,  neogeo,   ROT0, "Sammy", "Viewpoint" )
@@ -5063,4 +5246,4 @@ GAME( 1997, puzzldpr, puzzledp, neogeo, neogeo,  neogeo,   ROT0, "Taito (Visco l
 GAME( 1998, breakrev, breakers, neogeo, neogeo,  neogeo,   ROT0, "Visco", "Breakers Revenge")
 GAME( 1998, flipshot, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Visco", "Battle Flip Shot" )
 GAME( 1999, ctomaday, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Visco", "Captain Tomaday" )
-GAME( 1999, ganryu,   neogeo,   neogeo, neogeo,  ganryu,   ROT0, "Visco", "Musashi Ganryuuki" )
+GAME( 1999, ganryu,   neogeo,   neogeo, neogeo,  ganryu,   ROT0, "Visco", "Musashi Ganryuuki" )	/* Encrypted GFX */

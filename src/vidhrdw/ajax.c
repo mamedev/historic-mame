@@ -114,7 +114,7 @@ void ajax_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
 
 	fillbitmap(priority_bitmap,0,NULL);
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,get_black_pen(),&Machine->visible_area);
 	K052109_tilemap_draw(bitmap,2,0,1);
 	if (ajax_priority)
 	{

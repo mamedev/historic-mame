@@ -135,6 +135,11 @@ static WRITE_HANDLER( zaxxon_screen_flip_w )
 	flip_screen_set(~data & 1);
 }
 
+static WRITE_HANDLER( razmataz_screen_flip_w )
+{
+	flip_screen_set(data & 1);
+}
+
 static READ_HANDLER( razmataz_unknown1_r )
 {
 	return rand() & 0xff;
@@ -259,7 +264,7 @@ static MEMORY_WRITE_START( razmataz_writemem )
 	{ 0xa000, 0xa0ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xc000, 0xc002, MWA_NOP },	/* coin enables */
 	{ 0xc003, 0xc004, zaxxon_coin_counter_w },
-	{ 0xc006, 0xc006, zaxxon_screen_flip_w },
+	{ 0xc006, 0xc006, razmataz_screen_flip_w },	/* ? */
 	{ 0xe0f0, 0xe0f0, interrupt_enable_w },
 	{ 0xe0f1, 0xe0f1, MWA_RAM, &zaxxon_char_color_bank },
 	{ 0xe0f8, 0xe0f9, MWA_RAM, &zaxxon_background_position },

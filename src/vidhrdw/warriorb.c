@@ -17,87 +17,27 @@ struct tempsprite
 };
 static struct tempsprite *spritelist;
 
+
+
 /**********************************************************/
-
-static int has_two_TC0100SCN(void)
-{
-	const struct Memory_WriteAddress16 *mwa;
-
-	/* scan the memory handlers and see if the second TC0100SCN is used */
-
-	mwa = Machine->drv->cpu[0].memory_write;
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if (mwa->handler == TC0100SCN_word_1_w)
-					return 1;
-			}
-			mwa++;
-		}
-	}
-
-	return 0;
-}
-
-static int has_TC0110PCR(void)
-{
-	const struct Memory_WriteAddress16 *mwa;
-
-	/* scan the memory handlers and see if the TC0110PCR is used */
-
-	mwa = Machine->drv->cpu[0].memory_write;
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if (mwa->handler == TC0110PCR_step1_word_w)
-					return 1;
-			}
-			mwa++;
-		}
-	}
-
-	return 0;
-}
-
-static int has_second_TC0110PCR(void)
-{
-	const struct Memory_WriteAddress16 *mwa;
-
-	/* scan the memory handlers and see if a second TC0110PCR is used */
-
-	mwa = Machine->drv->cpu[0].memory_write;
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if (mwa->handler == TC0110PCR_step1_word_1_w)
-					return 1;
-			}
-			mwa++;
-		}
-	}
-
-	return 0;
-}
-
 
 static int warriorb_core_vh_start (int x_offs,int multiscrn_xoffs)
 {
+	int chips;
 
 	spritelist = malloc(0x800 * sizeof(*spritelist));
 	if (!spritelist)
 		return 1;
 
-	if (TC0100SCN_vh_start(has_two_TC0100SCN() ? 2 : 1,TC0100SCN_GFX_NUM,x_offs,0,0,0,0,0,
-			multiscrn_xoffs))
+	chips = number_of_TC0100SCN();
+
+	if (chips <= 0)	/* we have an erroneous TC0100SCN configuration */
+	{
+		warriorb_vh_stop();
+		return 1;
+	}
+
+	if (TC0100SCN_vh_start(chips,TC0100SCN_GFX_NUM,x_offs,0,0,0,0,0,multiscrn_xoffs))
 	{
 		warriorb_vh_stop();
 		return 1;

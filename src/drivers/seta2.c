@@ -748,11 +748,23 @@ static struct GfxDecodeInfo seta2_gfxdecodeinfo[] =
 
 ***************************************************************************/
 
+static int seta_sh_start_16MHz(const struct MachineSound *msound)
+{
+	return seta_sh_start(msound, 16000000);
+}
+
+static struct CustomSound_interface seta_sound_intf_16MHz =
+{
+	seta_sh_start_16MHz,
+	0,
+	0,
+};
+
 /***************************************************************************
 								Puzzle De Bowling
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_pzlbowl =
+/*static*/ const struct MachineDriver machine_driver_pzlbowl =
 {
 	{
 		{
@@ -781,7 +793,7 @@ static const struct MachineDriver machine_driver_pzlbowl =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
 	}
 };
 
@@ -818,7 +830,7 @@ static const struct MachineDriver machine_driver_myangel =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
 	}
 };
 
@@ -855,7 +867,7 @@ static const struct MachineDriver machine_driver_myangel2 =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
 	}
 };
 

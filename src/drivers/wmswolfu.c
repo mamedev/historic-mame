@@ -41,69 +41,7 @@
 #include "cpu/tms34010/tms34010.h"
 #include "cpu/adsp2100/adsp2100.h"
 #include "sndhrdw/williams.h"
-
-
-/* these are accurate for MK Rev 5 according to measurements done by Bryan on a real board */
-/* due to the way the TMS34010 core operates, however, we need to use 0 for our VBLANK */
-/* duration (263ms is the measured value) */
-#define MKLA5_VBLANK_DURATION		0
-#define MKLA5_FPS					53.204950
-
-
-/* code-related variables */
-extern data16_t *wms_code_rom;
-extern data16_t *wms_scratch_ram;
-extern UINT8 *	wms_wolfu_decode_memory;
-
-/* CMOS-related variables */
-extern data16_t *wms_cmos_ram;
-
-
-/* driver-specific initialization */
-void init_mk3(void);
-void init_mk3r20(void);
-void init_mk3r10(void);
-void init_umk3(void);
-void init_umk3r11(void);
-void init_openice(void);
-void init_nbahangt(void);
-void init_rmpgwt(void);
-void init_wwfmania(void);
-
-/* general machine init */
-void wms_wolfu_init_machine(void);
-
-
-/* external read handlers */
-READ16_HANDLER( wms_wolfu_io_r );
-READ16_HANDLER( wms_tunit_dma_r );
-READ16_HANDLER( wms_tunit_vram_r );
-READ16_HANDLER( wms_wolfu_cmos_r );
-READ16_HANDLER( wms_wolfu_input_r );
-READ16_HANDLER( wms_wolfu_sound_r );
-READ16_HANDLER( wms_wolfu_gfxrom_r );
-READ16_HANDLER( wms_wolfu_control_r );
-READ16_HANDLER( wms_wolfu_security_r );
-
-/* external write handlers */
-WRITE16_HANDLER( wms_wolfu_io_w );
-WRITE16_HANDLER( wms_tunit_dma_w );
-WRITE16_HANDLER( wms_tunit_vram_w );
-WRITE16_HANDLER( wms_wolfu_cmos_w );
-WRITE16_HANDLER( wms_wolfu_cmos_enable_w );
-WRITE16_HANDLER( wms_wolfu_control_w );
-WRITE16_HANDLER( wms_wolfu_sound_w );
-WRITE16_HANDLER( wms_wolfu_security_w );
-WRITE16_HANDLER( wms_tunit_paletteram_w );
-
-
-/* external video routines */
-int wms_wolfu_vh_start(void);
-void wms_tunit_vh_stop(void);
-void wms_tunit_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void wms_tunit_to_shiftreg(offs_t address, unsigned short *shiftreg);
-void wms_tunit_from_shiftreg(offs_t address, unsigned short *shiftreg);
-void wms_tunit_display_addr_changed(UINT32 offs, int rowbytes, int scanline);
+#include "wmswolfu.h"
 
 
 
@@ -664,7 +602,7 @@ static struct tms34010_config cpu_config =
 	NULL,							/* generate interrupt */
 	wms_tunit_to_shiftreg,			/* write to shiftreg function */
 	wms_tunit_from_shiftreg,		/* read from shiftreg function */
-	wms_tunit_display_addr_changed,	/* display address changed */
+	0,								/* display address changed */
 	0								/* display interrupt callback */
 };
 

@@ -71,6 +71,8 @@ extern data16_t *neogeo_ram16;
 extern unsigned int neogeo_frame_counter;
 extern int neogeo_game_fix;
 
+/* in machine/neocrypt.c */
+extern int neogeo_fix_bank_type;
 
 /*
 	X zoom table - verified on real hardware
@@ -305,7 +307,7 @@ static void NeoMVSDrawGfxLine(UINT16 **line,const struct GfxElement *gfx,
 	UINT16 *bm = line[sy]+sx;
 	int col;
 	int mydword;
-	UINT8 *fspr = memory_region(REGION_GFX2);
+	UINT8 *fspr = memory_region(REGION_GFX3);
 	const pen_t *paldata = &gfx->colortable[gfx->color_granularity * color];
 
 	if (sx <= -16) return;
@@ -491,7 +493,8 @@ profiler_mark(PROFILER_VIDEO);
 
 		offs = count<<6;
 
-		zoomy_rom = memory_region(REGION_GFX3) + (zy << 8);
+		/* get pointer to table in zoom ROM (thanks to Miguel Angel Horna for the info) */
+		zoomy_rom = memory_region(REGION_GFX4) + (zy << 8);
 		drawn_lines = 0;
 
 		/* my holds the number of tiles in each vertical multisprite block */
@@ -503,16 +506,32 @@ profiler_mark(PROFILER_VIDEO);
 			{
 				int tile,yoffs;
 				int zoom_line;
+				int invert=0;
 
 				zoom_line = drawn_lines & 0xff;
 				if (drawn_lines & 0x100)
+				{
 					zoom_line ^= 0xff;
+					invert = 1;
+				}
+				if (my == 0x20)	/* fix for joyjoy, trally... */
+				{
+					if (zy)
+					{
+						zoom_line %= 2*zy;
+						if (zoom_line >= zy)
+						{
+							zoom_line = 2*zy-1 - zoom_line;
+							invert ^= 1;
+						}
+					}
+				}
 
 				yoffs = zoomy_rom[zoom_line] & 0x0f;
 
 				tile = zoomy_rom[zoom_line] >> 4;
 
-				if (drawn_lines & 0x100)
+				if (invert)
 				{
 					tile ^= 0x1f;
 					yoffs ^= 0x0f;
@@ -551,8 +570,32 @@ profiler_mark(PROFILER_VIDEO);
 	pen_usage=gfx->pen_usage;
 
 	/* Character foreground */
+	/* thanks to Mr K for the garou & kof2000 banking info */
 	{
 		int y,x;
+		int banked;
+		int garouoffsets[32];
+
+		banked = (fix_bank == 0 && Machine->gfx[0]->total_elements > 0x1000) ? 1 : 0;
+
+		/* Build line banking table for Garou & MS3 before starting render */
+		if (banked && neogeo_fix_bank_type == 1)
+		{
+			int garoubank = 0;
+			int k = 0;
+			y = 0;
+			while (y < 32)
+			{
+				if (neogeo_vidram16[(0xea00>>1)+k] == 0x0200 && (neogeo_vidram16[(0xeb00>>1)+k] & 0xff00) == 0xff00)
+				{
+					garoubank = neogeo_vidram16[(0xeb00>>1)+k] & 3;
+					garouoffsets[y++] = garoubank;
+				}
+				garouoffsets[y++] = garoubank;
+				k += 2;
+			}
+		}
+
 		for (y=clip->min_y / 8; y <= clip->max_y / 8; y++)
 		{
 			for (x = 0; x < 40; x++)
@@ -560,6 +603,20 @@ profiler_mark(PROFILER_VIDEO);
 				int byte1 = neogeo_vidram16[(0xe000 >> 1) + y + 32 * x];
 				int byte2 = byte1 >> 12;
 				byte1 = byte1 & 0xfff;
+
+				if (banked)
+				{
+					switch (neogeo_fix_bank_type)
+					{
+						case 1:
+							/* Garou, MSlug 3 */
+							byte1 += 0x1000 * (garouoffsets[(y-2)&31] ^ 3);
+							break;
+						case 2:
+							byte1 += 0x1000 * (((neogeo_vidram16[(0xea00 >> 1) + ((y-1)&31) + 32 * (x/6)] >> (5-(x%6))*2) & 3) ^ 3);
+							break;
+					}
+				}
 
 				if ((pen_usage[byte1] & ~1) == 0) continue;
 

@@ -250,7 +250,7 @@ void c1943_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			&Machine->visible_area,
 			TRANSPARENCY_NONE,0);
 	}
-	else fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	else fillbitmap(bitmap,get_black_pen(),&Machine->visible_area);
 
 
 	if (objon)

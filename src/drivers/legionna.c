@@ -8,30 +8,46 @@ David Graves
 Made from MAME D-con and Toki drivers (by Bryan McPhail, Jarek Parchanski)
 
 
-BK3 charsets
-------------
+Heated Barrel looks like a minor revision of the Legionnaire
+hardware. It has a graphics banking facility, which doubles the 0xfff
+different tiles available for use in the foreground layer.
 
-The GFX roms contain two odd sets of 256 16x16 tiles marked as BK3.
-It is not known which area includes tilemaps accessing the two BK3
-charsets. The 0x104000 area appears to be extra paletteram?
 
-Note that one BK3 is at end of GFX3. The other was scrambled in the
-char gfx, and so has a separate gfxdecode.
+Legionnaire BK3 charsets
+------------------------
+
+The GFX roms contain two odd sections of 256 16x16 tiles marked as BK3.
+These need to be brought together and decoded as a single section of
+0x200 tiles.
+
+The 0x104000 area appears to be extra paletteram?
 
 
 TODO
 ----
 
+Unemulated protection messes up both games.
+
+Seibu sound system mentioned in log.
+
+
+Legionnaire
+-----------
+
 Foreground tiles screwy (screen after character selection screen).
-Tile selection for 'working' layers may be wrong too - we are only
-accessing half the available 0x2000 tiles in each gfx set.
 
 Need 16 px off top of vis area?
 
-Unemulated protection (in attract demo things get weird; not playable)
 
-Inputs - all ok?
+Heated Barrel
+-------------
 
+Big problems with layers not being cleared, especially the text
+layer. There may be a write to the COP controlling layer clearance?
+
+Ends with Access violation when you die on round 1 boss. A lot of
+non-existent area reads in log - maybe because of bad reads from
+the COP.
 
 
 Preliminary COP MCU memory map
@@ -57,6 +73,7 @@ WRITE16_HANDLER( legionna_control_w );
 
 int legionna_vh_start(void);
 void legionna_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void heatbrl_setgfxbank(UINT16 data);
 
 extern data16_t *legionna_back_data,*legionna_fore_data,*legionna_mid_data,*legionna_scrollram16,*legionna_textram;
 static data16_t *mcu_ram;
@@ -79,7 +96,7 @@ static WRITE16_HANDLER( legionna_paletteram16_w )	/* xBBBBxRRRRxGGGGx */
 	palette_set_color(offset,r,g,b);
 }
 
-/* Mcu reads in attract in game demo
+/* Mcu reads in attract in Legionnaire game demo
 
 Guess the 0x400-0x5ff area of the COP is protection related.
 
@@ -111,6 +128,56 @@ CPU0 PC 0032a2 unknown MCU write offset: 0260 data: 987c
 CPU0 PC 0032a8 unknown MCU write offset: 0250 data: 0010
 CPU0 PC 003306 unknown MCU write offset: 0280 data: 8100
 CPU0 PC 00330c unknown MCU write offset: 0280 data: 8900
+
+
+Mcu reads in attract in Heated Barrel game demo (note
+partial similarity)
+
+(i) This sequence repeats a number of times early on:
+
+CPU0 PC 0085b4 unknown MCU write offset: 0210 data: 0064
+CPU0 PC 0085ba unknown MCU write offset: 0211 data: 0000
+CPU0 PC 0085be unknown MCU read offset: 02ca
+CPU0 PC 0085ee unknown MCU read offset: 02c9
+CPU0 PC 008622 unknown MCU read offset: 02c8
+
+(ii) This happens a few times:
+
+CPU0 PC 0017ac unknown MCU write offset: 0260 data: b6cc
+CPU0 PC 0017b2 unknown MCU write offset: 0250 data: 0010
+CPU0 PC 0017d2 unknown MCU write offset: 0261 data: babc
+CPU0 PC 0017d8 unknown MCU write offset: 0251 data: 0010
+CPU0 PC 00192c unknown MCU write offset: 0280 data: 138e
+CPU0 PC 001932 unknown MCU read offset: 02da
+CPU0 PC 001938 unknown MCU read offset: 02d8
+CPU0 PC 001976 unknown MCU write offset: 0280 data: 3bb0
+CPU0 PC 0017ac unknown MCU write offset: 0260 data: b6cc
+CPU0 PC 0017b2 unknown MCU write offset: 0250 data: 0010
+CPU0 PC 0017d2 unknown MCU write offset: 0261 data: bb9c
+CPU0 PC 0017d8 unknown MCU write offset: 0251 data: 0010
+CPU0 PC 00192c unknown MCU write offset: 0280 data: 138e
+CPU0 PC 001932 unknown MCU read offset: 02da
+CPU0 PC 001938 unknown MCU read offset: 02d8
+CPU0 PC 001976 unknown MCU write offset: 0280 data: 3bb0
+
+(iii) Later on this happens a lot:
+
+CPU0 PC 0017ac unknown MCU write offset: 0260 data: c61c
+CPU0 PC 0017b2 unknown MCU write offset: 0250 data: 0010
+CPU0 PC 0017d2 unknown MCU write offset: 0261 data: bb9c
+CPU0 PC 0017d8 unknown MCU write offset: 0251 data: 0010
+CPU0 PC 001a5c unknown MCU write offset: 0262 data: aa48
+CPU0 PC 001a62 unknown MCU write offset: 0252 data: 0003
+CPU0 PC 001a7c unknown MCU write offset: 0263 data: a0c8
+CPU0 PC 001a82 unknown MCU write offset: 0253 data: 0003
+CPU0 PC 001a86 unknown MCU write offset: 0280 data: a100
+CPU0 PC 001a8c unknown MCU write offset: 0280 data: b080
+CPU0 PC 001a92 unknown MCU write offset: 0280 data: a900
+CPU0 PC 001a98 unknown MCU write offset: 0280 data: b880
+CPU0 PC 001a9e unknown MCU read offset: 02c0
+CPU0 PC 001aa6 unknown MCU read offset: 02c2
+CPU0 PC 001ab2 unknown MCU read offset: 02c1
+
 */
 
 static READ16_HANDLER( mcu_r )
@@ -123,16 +190,16 @@ static READ16_HANDLER( mcu_r )
 				sometimes a bit is changed then it's poked back in... */
 			return (rand() &0xffff);
 
-		case (0x482/2):	/* read PC $3594 */
+		case (0x582/2):	/* read PC $3594 */
 			return (rand() &0xffff);
 
-		case (0x484/2):	/* read PC $3588 */
+		case (0x584/2):	/* read PC $3588 */
 			return (rand() &0xffff);
 
-		case (0x486/2):	/* read PC $35a0 */
+		case (0x586/2):	/* read PC $35a0 */
 			return (rand() &0xffff);
 
-		case (0x488/2):	/* read PC $3580 */
+		case (0x588/2):	/* read PC $3580 */
 			return (rand() &0xffff);
 
 		case (0x5b0/2):	/* bit 15 is branched on a few times in the $3300 area */
@@ -178,7 +245,7 @@ static WRITE16_HANDLER( mcu_w )
 
 	switch (offset)
 	{
-		// 61a bit 0 probably flipscreen
+		// 61a bit 0 is flipscreen
 		// 61c probably layer disables, like Dcon
 		// 620 - 62a scroll control;  is there a layer priority switch...?
 
@@ -237,6 +304,138 @@ logerror("CPU0 PC %06x unknown MCU write offset: %04x data: %04x\n",cpu_getprevi
 	}
 }
 
+static READ16_HANDLER( cop2_mcu_r )
+{
+	switch (offset)
+	{
+		/* Protection is not understood */
+
+		case (0x580/2):	/* read PC $1a9e */
+			return (rand() &0xffff);
+
+		case (0x582/2):	/* read PC $1ab2 */
+			return (rand() &0xffff);
+
+		case (0x584/2):	/* read PC $1aa6 */
+			return (rand() &0xffff);
+
+		case (0x590/2):	/* read PC $8622 */
+			return (rand() &0xffff);
+
+		case (0x592/2):	/* read PC $85ee */
+			return (rand() &0xffff);
+
+		case (0x594/2):	/* read PC $85be */
+			return (rand() &0xffff);
+
+		case (0x5b0/2):	/* bit 15 is branched on a few times in the $1938 area */
+			return (rand() &0xffff);
+
+		case (0x5b4/2):	/* read at $1932 and stored in ram before +0x5b0 bit 15 tested */
+			return (rand() &0xffff);
+
+		/* Non-protection reads */
+
+		case (0x7c8/2):	/* seibu sound */
+			return seibu_main_word_r(2,0);
+
+		case (0x7cc/2):
+			return seibu_main_word_r(3,0);
+
+		case (0x7d4/2):
+			return seibu_main_word_r(5,0);
+
+		/* Inputs */
+
+		case (0x740/2):
+			return input_port_1_word_r(0,0);
+
+		case (0x744/2):
+			return input_port_2_word_r(0,0);
+
+		case (0x748/2):
+			return input_port_4_word_r(0,0);
+
+		case (0x74c/2):
+			return input_port_3_word_r(0,0);
+
+	}
+logerror("CPU0 PC %06x unknown MCU read offset: %04x\n",cpu_getpreviouspc(),offset);
+
+	return mcu_ram[offset];
+}
+
+static WRITE16_HANDLER( cop2_mcu_w )
+{
+	COMBINE_DATA(&mcu_ram[offset]);
+
+	switch (offset)
+	{
+		case (0x470/2):
+		{
+			heatbrl_setgfxbank( mcu_ram[offset] );
+			break;
+		}
+
+		// 65a bit 0 is flipscreen
+		// 65c probably layer disables, like Dcon? Used on screen when you press P1-4 start (values 13, 11, 0 seen)
+		// 660 - 66a scroll control;  is there a layer priority switch...?
+
+		case (0x660/2):
+		{
+			legionna_scrollram16[0] = mcu_ram[offset];
+			break;
+		}
+		case (0x662/2):
+		{
+			legionna_scrollram16[1] = mcu_ram[offset];
+			break;
+		}
+		case (0x664/2):
+		{
+			legionna_scrollram16[2] = mcu_ram[offset];
+			break;
+		}
+		case (0x666/2):
+		{
+			legionna_scrollram16[3] = mcu_ram[offset];
+			break;
+		}
+		case (0x668/2):
+		{
+			legionna_scrollram16[4] = mcu_ram[offset];
+			break;
+		}
+		case (0x66a/2):
+		{
+			legionna_scrollram16[5] = mcu_ram[offset];
+			break;
+		}
+		case (0x7c0/2):	/* seibu(0) */
+		{
+			seibu_main_word_w(0,mcu_ram[offset],0xff00);
+			break;
+		}
+		case (0x7c4/2):	/* seibu(1) */
+		{
+			seibu_main_word_w(1,mcu_ram[offset],0xff00);
+			break;
+		}
+		case (0x7d0/2):	/* seibu(4) */
+		{
+			seibu_main_word_w(4,mcu_ram[offset],0xff00);
+			break;
+		}
+		case (0x7d8/2):	/* seibu(6) */
+		{
+			seibu_main_word_w(6,mcu_ram[offset],0xff00);
+			break;
+		}
+		default:
+logerror("CPU0 PC %06x unknown MCU write offset: %04x data: %04x\n",cpu_getpreviouspc(),offset,data);
+	}
+}
+
 /*****************************************************************************/
 
 static MEMORY_READ16_START( legionna_readmem )
@@ -250,8 +449,8 @@ static MEMORY_READ16_START( legionna_readmem )
 	/* The 4000-4fff area contains PALETTE words and may be extra paletteram? */
 	{ 0x104000, 0x104fff, MRA16_RAM },	/* palette mirror ? */
 //	{ 0x104000, 0x10401f, MRA16_RAM },	/* debugging... */
-//	{ 0x104200, 0x1043ff, MRA16_RAM },	/* BK3 (1) tilemap ??? */
-//	{ 0x104600, 0x1047ff, MRA16_RAM },	/* BK3 (2) tilemap ??? */
+//	{ 0x104200, 0x1043ff, MRA16_RAM },	/* ??? */
+//	{ 0x104600, 0x1047ff, MRA16_RAM },	/* ??? */
 //	{ 0x104800, 0x10481f, MRA16_RAM },	/* ??? */
 
 	{ 0x105000, 0x105fff, MRA16_RAM },	/* spriteram */
@@ -280,6 +479,30 @@ static MEMORY_WRITE16_START( legionna_writemem )
 	{ 0x106000, 0x106fff, MWA16_RAM },	/* is this used outside inits ?? */
 	{ 0x107000, 0x107fff, legionna_paletteram16_w, &paletteram16 },	/* palette xRRRRxGGGGxBBBBx ? */
 	{ 0x108000, 0x113fff, MWA16_RAM },
+MEMORY_END
+
+static MEMORY_READ16_START( heatbrl_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x1007ff, cop2_mcu_r },	/* COP mcu */
+	{ 0x100800, 0x100fff, MRA16_RAM },	/* 32x16 bg layer, 16x16 tiles */
+	{ 0x101000, 0x1017ff, MRA16_RAM },	/* 32x16 bg layer, 16x16 tiles */
+	{ 0x101800, 0x101fff, MRA16_RAM },	/* 32x16 bg layer, 16x16 tiles */
+	{ 0x102000, 0x102fff, MRA16_RAM },	/* 64x32 text/front layer, 8x8 tiles */
+	{ 0x103000, 0x103fff, MRA16_RAM },	/* spriteram */
+	{ 0x104000, 0x104fff, MRA16_RAM },	/* palette */
+	{ 0x108000, 0x11ffff, MRA16_RAM },	/* main ram */
+MEMORY_END
+
+static MEMORY_WRITE16_START( heatbrl_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x1007ff, cop2_mcu_w, &mcu_ram },	/* COP mcu */
+	{ 0x100800, 0x100fff, legionna_background_w, &legionna_back_data },
+	{ 0x101000, 0x1017ff, legionna_foreground_w, &legionna_fore_data },
+	{ 0x101800, 0x101fff, legionna_midground_w,  &legionna_mid_data },
+	{ 0x102000, 0x102fff, legionna_text_w, &legionna_textram },
+	{ 0x103000, 0x103fff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x104000, 0x104fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	{ 0x108000, 0x11ffff, MWA16_RAM },
 MEMORY_END
 
 
@@ -373,16 +596,114 @@ INPUT_PORTS_START( legionna )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( heatbrl )
+	SEIBU_COIN_INPUTS	/* Must be port 0: coin inputs read through sound cpu */
+
+	PORT_START
+	PORT_DIPNAME( 0x001f, 0x001f, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(      0x0015, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(      0x0017, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0019, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x001b, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 8C_3C ) )
+	PORT_DIPSETTING(      0x001d, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 5C_3C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(      0x001f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0009, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x0013, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0011, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x000f, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x000d, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x000b, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(      0x001e, "A 1/1 B 1/2" )
+	PORT_DIPSETTING(      0x0014, "A 2/1 B 1/3" )
+	PORT_DIPSETTING(      0x000a, "A 3/1 B 1/5" )
+	PORT_DIPSETTING(      0x0000, "A 5/1 B 1/6" )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, "Freeze" )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0200, "1" )
+	PORT_DIPSETTING(      0x0300, "2" )
+	PORT_DIPSETTING(      0x0100, "3" )
+	PORT_BITX( 0,         0x0000, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x0400, 0x0400, "Extend" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x2000, "Easy" )
+	PORT_DIPSETTING(      0x3000, "Medium" )
+	PORT_DIPSETTING(      0x1000, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x4000, 0x4000, "Allow Continue" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( On ) )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW,  IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW,  IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW,  IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW,  IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW,  IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW,  IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW,  IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW,  IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_START4 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN4 )	// haven't found coin4, maybe it doesn't exist
+//	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW,  IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW,  IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW,  IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW,  IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER3  )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER3  )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW,  IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW,  IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW,  IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW,  IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER4 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER4 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+INPUT_PORTS_END
+
 
 /*****************************************************************************/
 
-/* There's something weird with the tilemap gfx for Legionnaire. It looks
-   from the contents of the tilemap layers that Tad stuck to 1 word per
-   tile with top four bits as color bank. This leaves only 0xfff tiles to
-   address, but the bg gfx set has twice this many. It also seems to be
-   three sets in one, with the last just comprising 0xff tiles.
-   The char gfx is also weird, it looks to need various tile sizes and
-   decoding schemes. */
 
 static struct GfxLayout legionna_charlayout =
 {
@@ -394,6 +715,18 @@ static struct GfxLayout legionna_charlayout =
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
 	16*8
 };
+
+static struct GfxLayout heatbrl_charlayout =
+{
+	8,8,
+	RGN_FRAC(1,2),	/* second half is junk, like legionna we may need a different decode */
+	4,
+	{ 0, 4, 4096*16*8+0, 4096*16*8+4 },
+	{ 3, 2, 1, 0, 8+3, 8+2, 8+1, 8+0 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
+	16*8
+};
+
 
 static struct GfxLayout legionna_char2layout =
 {
@@ -417,9 +750,9 @@ static struct GfxLayout legionna_tilelayout =
 	4,
 	{ 2*4, 3*4, 0*4, 1*4 },
 	{ 3, 2, 1, 0, 16+3, 16+2, 16+1, 16+0,
-			64*8+3, 64*8+2, 64*8+1, 64*8+0, 64*8+16+3, 64*8+16+2, 64*8+16+1, 64*8+16+0 },
+	  64*8+3, 64*8+2, 64*8+1, 64*8+0, 64*8+16+3, 64*8+16+2, 64*8+16+1, 64*8+16+0 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
-			8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
+	  8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
 	128*8
 };
 
@@ -440,9 +773,21 @@ static struct GfxDecodeInfo legionna_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &legionna_charlayout,   48*16, 16 },
 	{ REGION_GFX3, 0, &legionna_tilelayout,    0*16, 16 },
-	{ REGION_GFX4, 0, &legionna_char2layout,  32*16, 16 },
-	{ REGION_GFX3, 0, &legionna_tilelayout,   16*16, 16 },
-	{ REGION_GFX2, 0, &legionna_spritelayout , 0*16, 8*16 },
+	{ REGION_GFX4, 0, &legionna_char2layout,  32*16, 16 },	/* example BK3 decode */
+	{ REGION_GFX2, 0, &legionna_spritelayout,  0*16, 8*16 },
+	{ REGION_GFX5, 0, &legionna_tilelayout,   32*16, 16 },	/* this should be the BK3 decode */
+	{ REGION_GFX6, 0, &legionna_tilelayout,   16*16, 16 },
+	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo heatbrl_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &heatbrl_charlayout,    48*16, 16 },
+	{ REGION_GFX3, 0, &legionna_tilelayout,    0*16, 16 },
+	{ REGION_GFX4, 0, &legionna_char2layout,  32*16, 16 },	/* unused */
+	{ REGION_GFX2, 0, &legionna_spritelayout,  0*16, 8*16 },
+	{ REGION_GFX5, 0, &legionna_tilelayout,   32*16, 16 },
+	{ REGION_GFX6, 0, &legionna_tilelayout,   16*16, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -474,9 +819,46 @@ static const struct MachineDriver machine_driver_legionna =
 	seibu_sound_init_1, /* init machine */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },	// maybe topy is 2*8 ??
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 
 	legionna_gfxdecodeinfo,
+	128*16, 0,
+	0,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
+	0,
+	legionna_vh_start,
+	0,
+	legionna_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
+	}
+};
+
+static const struct MachineDriver machine_driver_heatbrl =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			20000000/2, 	/* ??? */
+			heatbrl_readmem,heatbrl_writemem,0,0,
+			m68_level4_irq,1 /* VBL */
+		},
+		{
+			SEIBU_SOUND_SYSTEM_CPU(14318180/4)
+		},
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	seibu_sound_init_1, /* init machine */
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
+
+	heatbrl_gfxdecodeinfo,
 	128*16, 0,
 	0,
 	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
@@ -501,6 +883,40 @@ static const struct MachineDriver machine_driver_legionna =
 
 ROM_START( legionna )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD32_BYTE( "1",           0x00000, 0x20000, 0x9e2d3ec8 )
+	ROM_LOAD32_BYTE( "2",           0x00001, 0x20000, 0x35c8a28f )
+	ROM_LOAD32_BYTE( "3",           0x00002, 0x20000, 0x553fc7c0 )
+	ROM_LOAD32_BYTE( "legion4.bin", 0x00003, 0x20000, 0x2cc36c98 )
+
+	ROM_REGION( 0x20000*2, REGION_CPU2, 0 )	/* Z80 code, banked data */
+	ROM_LOAD( "6",   0x00000, 0x08000, 0xfe7b8d06 )
+	ROM_CONTINUE(    0x10000, 0x08000 )	/* banked stuff */
+
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "7",   0x000000, 0x10000, 0x88e26809 )	/* chars, some BK3 tiles too */
+	ROM_LOAD( "8",   0x010000, 0x10000, 0x06e35407 )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "obj1",     0x000000, 0x100000, 0xd35602f5 )	/* sprites */
+	ROM_LOAD( "obj2",     0x100000, 0x100000, 0x351d3917 )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "back",     0x000000, 0x100000, 0x58280989 )	/* 3 sets of tiles ('MBK','LBK','BK3') */
+
+	ROM_REGION( 0x020000, REGION_GFX4, ROMREGION_DISPOSE )	/* example BK3 decode */
+	ROM_COPY( REGION_GFX1, 0x00000, 0x00000, 0x20000 )
+
+	ROM_REGION( 0x020000, REGION_GFX5, ROMREGION_DISPOSE )	/* we _should_ decode all BK3 tiles here */
+
+	ROM_REGION( 0x080000, REGION_GFX6, ROMREGION_DISPOSE )	/* LBK tiles (plus BK3 at end) */
+	ROM_COPY( REGION_GFX3, 0x80000, 0x00000, 0x80000 )
+
+	ROM_REGION( 0x020000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "5",   0x00000, 0x20000, 0x21d09bde )
+ROM_END
+
+ROM_START( legionnu )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 68000 code */
 	ROM_LOAD32_BYTE( "1",   0x00000, 0x20000, 0x9e2d3ec8 )
 	ROM_LOAD32_BYTE( "2",   0x00001, 0x20000, 0x35c8a28f )
 	ROM_LOAD32_BYTE( "3",   0x00002, 0x20000, 0x553fc7c0 )
@@ -508,30 +924,143 @@ ROM_START( legionna )
 
 	ROM_REGION( 0x20000*2, REGION_CPU2, 0 )	/* Z80 code, banked data */
 	ROM_LOAD( "6",   0x00000, 0x08000, 0xfe7b8d06 )
-	ROM_CONTINUE(    0x10000, 0x08000 )	/* banked stuff ?? */
+	ROM_CONTINUE(    0x10000, 0x08000 )	/* banked stuff */
 
 	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "7",   0x000000, 0x10000, 0x88e26809 )	/* chars */
-	ROM_LOAD( "8",   0x010000, 0x10000, 0x06e35407 )	/* chars */
+	ROM_LOAD( "7",   0x000000, 0x10000, 0x88e26809 )	/* chars, some BK3 tiles too */
+	ROM_LOAD( "8",   0x010000, 0x10000, 0x06e35407 )
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "obj1",     0x000000, 0x100000, 0xd35602f5 )	/* sprites */
 	ROM_LOAD( "obj2",     0x100000, 0x100000, 0x351d3917 )
 
 	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "back",     0x000000, 0x100000, 0x58280989 )	/* tiles... (a BK3 set at end) */
+	ROM_LOAD( "back",     0x000000, 0x100000, 0x58280989 )	/* 3 sets of tiles ('MBK','LBK','BK3') */
 
-	ROM_REGION( 0x020000, REGION_GFX4, ROMREGION_DISPOSE )	/* for BK3 decode */
-	ROM_COPY( REGION_GFX1, 0x00000, 0x00000, 0x20000)
+	ROM_REGION( 0x020000, REGION_GFX4, ROMREGION_DISPOSE )	/* example BK3 decode */
+	ROM_COPY( REGION_GFX1, 0x00000, 0x00000, 0x20000 )
+
+	ROM_REGION( 0x020000, REGION_GFX5, ROMREGION_DISPOSE )	/* we _should_ decode all BK3 tiles here */
+
+	ROM_REGION( 0x080000, REGION_GFX6, ROMREGION_DISPOSE )	/* LBK tiles (plus BK3 at end) */
+	ROM_COPY( REGION_GFX3, 0x80000, 0x00000, 0x80000 )
 
 	ROM_REGION( 0x020000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "5",   0x00000, 0x20000, 0x21d09bde )
 ROM_END
 
+ROM_START( heatbrl )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD32_BYTE( "1e_ver2.9k",   0x00000, 0x20000, 0xb30bd632 )
+	ROM_LOAD32_BYTE( "2e_ver2.9m",   0x00001, 0x20000, 0xf3a23056 )
+	ROM_LOAD32_BYTE( "3e_ver2.9f",   0x00002, 0x20000, 0xa2c41715 )
+	ROM_LOAD32_BYTE( "4e_ver2.9h",   0x00003, 0x20000, 0xa50f4f08 )
+
+	ROM_REGION( 0x20000*2, REGION_CPU2, 0 )	/* Z80 code, banked data */
+	ROM_LOAD( "barrel.7",   0x00000, 0x08000, 0x0784dbd8 )
+	ROM_CONTINUE(    0x10000, 0x08000 )	/* banked stuff */
+
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "barrel.6",   0x000000, 0x10000, 0xbea3c581 )	/* chars */
+	ROM_LOAD( "barrel.5",   0x010000, 0x10000, 0x5604d155 )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "obj1",     0x000000, 0x100000, 0xf7a7c31c )	/* sprites */
+	ROM_LOAD( "obj2",     0x100000, 0x100000, 0x24236116 )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* MBK tiles */
+	ROM_LOAD( "bg-1",     0x000000, 0x100000, 0x2f5d8baa )
+
+	ROM_REGION( 0x020000, REGION_GFX4, ROMREGION_DISPOSE )	/* not used */
+
+	ROM_REGION( 0x080000, REGION_GFX5, ROMREGION_DISPOSE )	/* BK3 tiles */
+	ROM_LOAD( "bg-3",     0x000000, 0x080000, 0x83850e2d )
+
+	ROM_REGION( 0x080000, REGION_GFX6, ROMREGION_DISPOSE )	/* LBK tiles */
+	ROM_LOAD( "bg-2",     0x000000, 0x080000, 0x77ee4c6f )
+
+	ROM_REGION( 0x020000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "barrel.8",  0x00000, 0x20000, 0x489e5b1d )
+ROM_END
+
+ROM_START( heatbrlo )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD32_BYTE( "barrel.1h",   0x00000, 0x20000, 0xd5a85c36 )
+	ROM_LOAD32_BYTE( "barrel.2h",   0x00001, 0x20000, 0x5104d463 )
+	ROM_LOAD32_BYTE( "barrel.3h",   0x00002, 0x20000, 0x823373a0 )
+	ROM_LOAD32_BYTE( "barrel.4h",   0x00003, 0x20000, 0x19a8606b )
+
+	ROM_REGION( 0x20000*2, REGION_CPU2, 0 )	/* Z80 code, banked data */
+	ROM_LOAD( "barrel.7",   0x00000, 0x08000, 0x0784dbd8 )
+	ROM_CONTINUE(    0x10000, 0x08000 )	/* banked stuff */
+
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "barrel.6",   0x000000, 0x10000, 0xbea3c581 )	/* chars */
+	ROM_LOAD( "barrel.5",   0x010000, 0x10000, 0x5604d155 )
+
+/* Sprite + tilemap gfx roms not dumped, for now we use ones from heatbrlu
+Readme mentions as undumped:
+barrel1,2,3,4.OBJ
+barrel1,2,3,4.BG */
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "obj1",     0x000000, 0x100000, 0xf7a7c31c )	/* sprites */
+	ROM_LOAD( "obj2",     0x100000, 0x100000, 0x24236116 )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* MBK tiles */
+	ROM_LOAD( "bg-1",     0x000000, 0x100000, 0x2f5d8baa )
+
+	ROM_REGION( 0x020000, REGION_GFX4, ROMREGION_DISPOSE )	/* not used */
+
+	ROM_REGION( 0x080000, REGION_GFX5, ROMREGION_DISPOSE )	/* BK3 tiles */
+	ROM_LOAD( "bg-3",     0x000000, 0x080000, 0x83850e2d )
+
+	ROM_REGION( 0x080000, REGION_GFX6, ROMREGION_DISPOSE )	/* LBK tiles */
+	ROM_LOAD( "bg-2",     0x000000, 0x080000, 0x77ee4c6f )
+
+	ROM_REGION( 0x020000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "barrel.8",  0x00000, 0x20000, 0x489e5b1d )
+ROM_END
+
+ROM_START( heatbrlu )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD32_BYTE( "1e_ver2.9k",   0x00000, 0x20000, 0xb30bd632 )
+	ROM_LOAD32_BYTE( "2u",           0x00001, 0x20000, 0x289dd629 )
+	ROM_LOAD32_BYTE( "3e_ver2.9f",   0x00002, 0x20000, 0xa2c41715 )
+	ROM_LOAD32_BYTE( "4e_ver2.9h",   0x00003, 0x20000, 0xa50f4f08 )
+
+	ROM_REGION( 0x20000*2, REGION_CPU2, 0 )	/* Z80 code, banked data */
+	ROM_LOAD( "barrel.7",   0x00000, 0x08000, 0x0784dbd8 )
+	ROM_CONTINUE(    0x10000, 0x08000 )	/* banked stuff */
+
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "barrel.6",   0x000000, 0x10000, 0xbea3c581 )	/* chars */
+	ROM_LOAD( "barrel.5",   0x010000, 0x10000, 0x5604d155 )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "obj1",     0x000000, 0x100000, 0xf7a7c31c )	/* sprites */
+	ROM_LOAD( "obj2",     0x100000, 0x100000, 0x24236116 )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* MBK tiles */
+	ROM_LOAD( "bg-1",     0x000000, 0x100000, 0x2f5d8baa )
+
+	ROM_REGION( 0x020000, REGION_GFX4, ROMREGION_DISPOSE )	/* not used */
+
+	ROM_REGION( 0x080000, REGION_GFX5, ROMREGION_DISPOSE )	/* BK3 tiles */
+	ROM_LOAD( "bg-3",     0x000000, 0x080000, 0x83850e2d )
+
+	ROM_REGION( 0x080000, REGION_GFX6, ROMREGION_DISPOSE )	/* LBK tiles */
+	ROM_LOAD( "bg-2",     0x000000, 0x080000, 0x77ee4c6f )
+
+	ROM_REGION( 0x020000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "barrel.8",  0x00000, 0x20000, 0x489e5b1d )
+ROM_END
 
 
 static void init_legionna(void)
 {
+	/* Unscramble gfx: quarters 1&2 swapped, quarters 3&4 swapped */
+
 	data8_t *gfx = memory_region(REGION_GFX1);
 	int len = memory_region_length(REGION_GFX1)/2;
 	int a,i;
@@ -550,5 +1079,8 @@ static void init_legionna(void)
 
 
 
-GAMEX( 1992, legionna, 0, legionna, legionna, legionna, ROT0, "Tad (Fabtek license)", "Legionnaire (US)", GAME_UNEMULATED_PROTECTION )
-
+GAMEX( 1992, legionna, 0,        legionna, legionna, legionna, ROT0, "Tad", "Legionnaire (World)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1992, legionnu, legionna, legionna, legionna, legionna, ROT0, "Tad (Fabtek license)", "Legionnaire (US)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1992, heatbrl,  0,        heatbrl,  heatbrl,  0,        ROT0, "Tad", "Heated Barrel (World)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1992, heatbrlo, heatbrl,  heatbrl,  heatbrl,  0,        ROT0, "Tad", "Heated Barrel (World old version)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1992, heatbrlu, heatbrl,  heatbrl,  heatbrl,  0,        ROT0, "Tad", "Heated Barrel (US)", GAME_UNEMULATED_PROTECTION )

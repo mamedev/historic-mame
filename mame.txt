@@ -124,7 +124,7 @@ is). DON'T SEND THEM TO NICOLA - they will be ignored.
 Nicola Salmoria    MC6489@mclink.it
 
 Mike Balfour       mab22@po.cwru.edu
-Aaron Giles        agiles@sirius.com
+Aaron Giles        agiles@mame.net
 Chris Moore        chris.moore@writeme.com
 Brad Oliver        bradman@pobox.com
 Andrew Scott       ascott@utkux.utcc.utk.edu
@@ -200,7 +200,7 @@ Video modes created using Tweak 1.6b by Robert Schmidt, who also wrote
 "inflate" code for zip file support by Mark Adler.
 
 DOS executable compressed with UPX by Markus F.X.J. Oberhumer & Laszlo Molnar,
-    http://upx.tsx.org/
+    http://upx.sourceforge.net/
 
 Big thanks to Gary Walton (garyw@excels-w.demon.co.uk) for too many things
    to mention.

@@ -655,9 +655,9 @@ static int subwoofer_sh_start(const struct MachineSound *msound)
 	/* The 150 Hz is a common top frequency played by a generic */
 	/* subwoofer, the real Arcade Machine may differs */
 
-	mixer_set_lowpass_frequency(0,100);
-	mixer_set_lowpass_frequency(1,100);
-	mixer_set_lowpass_frequency(2,100);
+	mixer_set_lowpass_frequency(0,20);
+	mixer_set_lowpass_frequency(1,20);
+	mixer_set_lowpass_frequency(2,20);
 
 	return 0;
 }

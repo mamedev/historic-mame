@@ -23,6 +23,7 @@ static UINT8 gfxreg;
 static UINT8 flipscreen;
 
 static UINT8 crtc_register;
+static UINT8 crtc_data[0x10];
 static void *crtc_timer;
 
 static struct tilemap *bg_tilemap, *fg_tilemap;
@@ -35,7 +36,7 @@ static struct tilemap *bg_tilemap, *fg_tilemap;
  *
  *************************************/
 
-INLINE void get_tile_info(int tile_index,int layer)
+INLINE void get_fromance_tile_info(int tile_index,int layer)
 {
 	int tile = ((local_videoram[layer][0x0000 + tile_index] & 0x80) << 9) |
 				(local_videoram[layer][0x1000 + tile_index] << 8) |
@@ -45,8 +46,20 @@ INLINE void get_tile_info(int tile_index,int layer)
 	SET_TILE_INFO(layer, tile, color, 0);
 }
 
-static void get_bg_tile_info(int tile_index) { get_tile_info(tile_index, 0); }
-static void get_fg_tile_info(int tile_index) { get_tile_info(tile_index, 1); }
+static void get_fromance_bg_tile_info(int tile_index) { get_fromance_tile_info(tile_index, 0); }
+static void get_fromance_fg_tile_info(int tile_index) { get_fromance_tile_info(tile_index, 1); }
+
+INLINE void get_nekkyoku_tile_info(int tile_index,int layer)
+{
+	int tile = (local_videoram[layer][0x0000 + tile_index] << 8) |
+				local_videoram[layer][0x1000 + tile_index];
+	int color = local_videoram[layer][tile_index + 0x2000] & 0x3f;
+
+	SET_TILE_INFO(layer, tile, color, 0);
+}
+
+static void get_nekkyoku_bg_tile_info(int tile_index) { get_nekkyoku_tile_info(tile_index, 0); }
+static void get_nekkyoku_fg_tile_info(int tile_index) { get_nekkyoku_tile_info(tile_index, 1); }
 
 
 
@@ -59,8 +72,36 @@ static void get_fg_tile_info(int tile_index) { get_tile_info(tile_index, 1); }
 int fromance_vh_start(void)
 {
 	/* allocate tilemaps */
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE,      8,4, 64,64);
-	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,4, 64,64);
+	bg_tilemap = tilemap_create(get_fromance_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE,      8,4, 64,64);
+	fg_tilemap = tilemap_create(get_fromance_fg_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,4, 64,64);
+
+	/* allocate local videoram */
+	local_videoram[0] = malloc(0x1000 * 3);
+	local_videoram[1] = malloc(0x1000 * 3);
+
+	/* allocate local palette RAM */
+	local_paletteram = malloc(0x800 * 2);
+
+	/* handle failure */
+	if (!bg_tilemap || !fg_tilemap || !local_videoram[0] || !local_videoram[1] || !local_paletteram)
+	{
+		fromance_vh_stop();
+		return 1;
+	}
+
+	/* configure tilemaps */
+	tilemap_set_transparent_pen(fg_tilemap,15);
+
+	/* reset the timer */
+	crtc_timer = NULL;
+	return 0;
+}
+
+int nekkyoku_vh_start(void)
+{
+	/* allocate tilemaps */
+	bg_tilemap = tilemap_create(get_nekkyoku_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE,      8,4, 64,64);
+	fg_tilemap = tilemap_create(get_nekkyoku_fg_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,4, 64,64);
 
 	/* allocate local videoram */
 	local_videoram[0] = malloc(0x1000 * 3);
@@ -251,6 +292,8 @@ static void crtc_interrupt_gen(int param)
 
 WRITE_HANDLER( fromance_crtc_data_w )
 {
+	crtc_data[crtc_register] = data;
+
 	switch (crtc_register)
 	{
 		/* only register we know about.... */

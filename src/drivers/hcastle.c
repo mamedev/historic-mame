@@ -431,6 +431,6 @@ ROM_END
 
 
 
-GAMEX( 1988, hcastle,  0,       hcastle, hcastle, 0, ROT0, "Konami", "Haunted Castle (set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1988, hcastlea, hcastle, hcastle, hcastle, 0, ROT0, "Konami", "Haunted Castle (set 2)", GAME_NO_COCKTAIL )
-GAMEX( 1988, hcastlej, hcastle, hcastle, hcastle, 0, ROT0, "Konami", "Akuma-Jou Dracula (Japan)", GAME_NO_COCKTAIL )
+GAME( 1988, hcastle,  0,       hcastle, hcastle, 0, ROT0, "Konami", "Haunted Castle (set 1)" )
+GAME( 1988, hcastlea, hcastle, hcastle, hcastle, 0, ROT0, "Konami", "Haunted Castle (set 2)" )
+GAME( 1988, hcastlej, hcastle, hcastle, hcastle, 0, ROT0, "Konami", "Akuma-Jou Dracula (Japan)" )

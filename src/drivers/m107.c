@@ -346,7 +346,7 @@ INPUT_PORTS_END
 static struct GfxLayout charlayout =
 {
 	8,8,
-	0x20000,
+	RGN_FRAC(1,1),
 	4,
 	{ 8, 0, 24, 16 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
@@ -357,9 +357,9 @@ static struct GfxLayout charlayout =
 static struct GfxLayout spritelayout =
 {
 	16,16,
-	0x8000,
+	RGN_FRAC(1,4),
 	4,
-	{ 0x300000*8, 0x200000*8, 0x100000*8, 0x000000*8 },
+	{ RGN_FRAC(3,4), RGN_FRAC(2,4), RGN_FRAC(1,4), RGN_FRAC(0,4) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 		16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
@@ -370,9 +370,9 @@ static struct GfxLayout spritelayout =
 static struct GfxLayout spritelayout2 =
 {
 	16,16,
-	0x8000,
+	RGN_FRAC(1,4),
 	4,
-	{ 0x300000*8, 0x200000*8, 0x100000*8, 0x000000*8 },
+	{ RGN_FRAC(3,4), RGN_FRAC(2,4), RGN_FRAC(1,4), RGN_FRAC(0,4) },
 	{ 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
 			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
@@ -579,7 +579,7 @@ ROM_START( firebarr )
 	ROM_LOAD16_BYTE( "f4-sh0", 0x000001, 0x10000, 0x30a8e232 )
 	ROM_LOAD16_BYTE( "f4-sl0", 0x000000, 0x10000, 0x204b5f1f )
 
-	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD16_BYTE( "f4-c00", 0x000000, 0x80000, 0x50cab384 )
 	ROM_LOAD16_BYTE( "f4-c10", 0x000001, 0x80000, 0x330c6df2 )
 	ROM_LOAD16_BYTE( "f4-c01", 0x100000, 0x80000, 0x12a698c8 )
@@ -605,20 +605,20 @@ ROM_END
 
 ROM_START( dsoccr94 )
 	ROM_REGION( 0x180000, REGION_CPU1, 0 ) /* v30 main cpu */
-	ROM_LOAD16_BYTE("ds_h0-c.rom",  0x000001, 0x040000, 0xd01d3fd7 )
-	ROM_LOAD16_BYTE("ds_l0-c.rom",  0x000000, 0x040000, 0x8af0afe2 )
-	ROM_LOAD16_BYTE("ds_h1-c.rom",  0x100001, 0x040000, 0x6109041b )
-	ROM_LOAD16_BYTE("ds_l1-c.rom",  0x100000, 0x040000, 0x97a01f6b )
+	ROM_LOAD16_BYTE( "ds_h0-c.rom",  0x000001, 0x040000, 0xd01d3fd7 )
+	ROM_LOAD16_BYTE( "ds_l0-c.rom",  0x000000, 0x040000, 0x8af0afe2 )
+	ROM_LOAD16_BYTE( "ds_h1-c.rom",  0x100001, 0x040000, 0x6109041b )
+	ROM_LOAD16_BYTE( "ds_l1-c.rom",  0x100000, 0x040000, 0x97a01f6b )
 
 	ROM_REGION( 0x100000 * 2, REGION_CPU2, 0 )
-	ROM_LOAD16_BYTE("ds_sh0.rom",   0x000001, 0x010000, 0x23fe6ffc )
-	ROM_LOAD16_BYTE("ds_sl0.rom",   0x000000, 0x010000, 0x768132e5 )
+	ROM_LOAD16_BYTE( "ds_sh0.rom",   0x000001, 0x010000, 0x23fe6ffc )
+	ROM_LOAD16_BYTE( "ds_sl0.rom",   0x000000, 0x010000, 0x768132e5 )
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
-	ROM_LOAD16_BYTE("ds_c00.rom",   0x000000, 0x100000, 0x2d31d418 )
-	ROM_LOAD16_BYTE("ds_c10.rom",   0x000001, 0x100000, 0x57f7bcd3 )
-	ROM_LOAD16_BYTE("ds_c01.rom",   0x200000, 0x100000, 0x9d31a464 )
-	ROM_LOAD16_BYTE("ds_c11.rom",   0x200001, 0x100000, 0xa372e79f )
+	ROM_LOAD16_BYTE( "ds_c00.rom",   0x000000, 0x100000, 0x2d31d418 )
+	ROM_LOAD16_BYTE( "ds_c10.rom",   0x000001, 0x100000, 0x57f7bcd3 )
+	ROM_LOAD16_BYTE( "ds_c01.rom",   0x200000, 0x100000, 0x9d31a464 )
+	ROM_LOAD16_BYTE( "ds_c11.rom",   0x200001, 0x100000, 0xa372e79f )
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "ds_000.rom",   0x000000, 0x100000, 0x366b3e29 )
@@ -630,9 +630,38 @@ ROM_START( dsoccr94 )
 	ROM_LOAD( "ds_da0.rom" ,  0x000000, 0x100000, 0x67fc52fd )
 ROM_END
 
+ROM_START( wpksoc )
+	ROM_REGION( 0x180000, REGION_CPU1, 0 ) /* v30 main cpu */
+	ROM_LOAD16_BYTE( "pkeurd.h0",    0x000001, 0x040000, 0xb4917788 )
+	ROM_LOAD16_BYTE( "pkeurd.l0",    0x000000, 0x040000, 0x03816bae )
+
+	ROM_REGION( 0x100000 * 2, REGION_CPU2, 0 )
+	ROM_LOAD16_BYTE( "pkos.sh0",     0x000001, 0x010000, 0x1145998c )
+	ROM_LOAD16_BYTE( "pkos.sl0",     0x000000, 0x010000, 0x542ee1c7 )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
+	ROM_LOAD16_BYTE( "pkos.c00", 0x000000, 0x80000, 0x42ae3d73 )
+	ROM_LOAD16_BYTE( "pkos.c10", 0x000001, 0x80000, 0x86acf45c )
+	ROM_LOAD16_BYTE( "pkos.c01", 0x100000, 0x80000, 0xb0d33f87 )
+	ROM_LOAD16_BYTE( "pkos.c11", 0x100001, 0x80000, 0x19de7d63 )
+
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD16_BYTE( "pk.o00", 0x000000, 0x80000, 0x165ce027 )
+	ROM_LOAD16_BYTE( "pk.o01", 0x000001, 0x80000, 0xe2745147 )
+	ROM_LOAD16_BYTE( "pk.o10", 0x100000, 0x80000, 0x6c171b73 )
+	ROM_LOAD16_BYTE( "pk.o11", 0x100001, 0x80000, 0x471c0bf4 )
+	ROM_LOAD16_BYTE( "pk.o20", 0x200000, 0x80000, 0xc886dad1 )
+	ROM_LOAD16_BYTE( "pk.o21", 0x200001, 0x80000, 0x91e877ff )
+	ROM_LOAD16_BYTE( "pk.o30", 0x300000, 0x80000, 0x3390621c )
+	ROM_LOAD16_BYTE( "pk.o31", 0x300001, 0x80000, 0x4d322804 )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, ROMREGION_SOUNDONLY )	 /* ADPCM samples */
+	ROM_LOAD( "pk.da0",       0x000000, 0x80000, 0x26a34cf4 )
+ROM_END
+
 /***************************************************************************/
 
-static void init_m107(void)
+static void init_firebarr(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -669,7 +698,26 @@ static void init_dsoccr94(void)
 	raster_enable=0;
 }
 
+static void init_wpksoc(void)
+{
+	unsigned char *RAM = memory_region(REGION_CPU1);
+
+	memcpy(RAM+0xffff0,RAM+0x7fff0,0x10); /* Start vector */
+	cpu_setbank(1,&RAM[0xa0000]); /* Initial bank */
+
+	RAM = memory_region(REGION_CPU2);
+	memcpy(RAM+0xffff0,RAM+0x1fff0,0x10); /* Sound cpu Start vector */
+
+	irem_cpu_decrypt(1,leagueman_decryption_table);
+
+	m107_irq_vectorbase=0x80;
+	m107_spritesystem = 0;
+
+	raster_enable=0;
+}
+
 /***************************************************************************/
 
-GAMEX(1993, firebarr, 0, firebarr, firebarr, m107,     ROT270, "Irem", "Fire Barrel (Japan)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX(1993, firebarr, 0, firebarr, firebarr, firebarr, ROT270, "Irem", "Fire Barrel (Japan)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAME( 1994, dsoccr94, 0, dsoccr94, dsoccr94, dsoccr94, ROT0,   "Irem (Data East Corporation license)", "Dream Soccer '94" )
+GAMEX(1995, wpksoc,   0, firebarr, dsoccr94, wpksoc,   ROT0,   "Jaleco", "World PK Soccer", GAME_NOT_WORKING )

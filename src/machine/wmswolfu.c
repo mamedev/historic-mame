@@ -12,6 +12,7 @@
 #include "cpu/tms34010/tms34010.h"
 #include "cpu/m6809/m6809.h"
 #include "sndhrdw/williams.h"
+#include "wmswolfu.h"
 
 
 /* speedup installation macros */
@@ -39,19 +40,15 @@
 
 
 /* code-related variables */
-extern data16_t *wms_code_rom;
        UINT8 *	wms_wolfu_decode_memory;
 
 /* CMOS-related variables */
-extern data16_t *wms_cmos_ram;
 static UINT8	cmos_write_enable;
-
-/* graphics-related variables */
-extern UINT8 *	wms_gfx_rom;
-extern size_t	wms_gfx_rom_size;
 
 /* I/O-related variables */
 static data16_t	iodata[8];
+static UINT8	ioshuffle[16];
+static UINT8	revx_analog_port;
 
 /* protection-related variables */
 static UINT8	security_data[16];
@@ -60,20 +57,13 @@ static UINT8	security_index;
 static UINT8	security_status;
 static UINT8	security_bits;
 
-/* speedup-related variables */
-extern offs_t 	wms_speedup_pc;
-extern offs_t 	wms_speedup_offset;
-extern offs_t 	wms_speedup_spin[3];
-extern data16_t *wms_speedup_base;
+/* UART-related variables */
+static UINT8	uart[8];
 
 
 /* prototype */
 static READ16_HANDLER( wms_wolfu_sound_state_r );
-
-/* speedup-related prototypes */
-extern READ16_HANDLER( wms_generic_speedup_1_16bit );
-extern READ16_HANDLER( wms_generic_speedup_1_32bit );
-extern READ16_HANDLER( wms_generic_speedup_3 );
+static void revx_dcs_notify(int state);
 
 
 
@@ -109,7 +99,6 @@ WRITE16_HANDLER( revx_cmos_w )
 
 READ16_HANDLER( wms_wolfu_cmos_r )
 {
-	logerror("%08X:CMOS R @ %05X\n", cpu_get_pc(), offset);
 	return wms_cmos_ram[offset];
 }
 
@@ -186,6 +175,13 @@ WRITE16_HANDLER( revx_io_w )
 }
 
 
+WRITE16_HANDLER( revx_unknown_w )
+{
+	int offs = offset / 0x40000;
+	if (ACCESSING_LSB && offset % 0x40000 == 0)
+		logerror("%08X:revx_unknown_w @ %d = %02X\n", cpu_get_pc(), offs, data & 0xff);
+}
+
 
 /*************************************
  *
@@ -195,7 +191,8 @@ WRITE16_HANDLER( revx_io_w )
 
 READ16_HANDLER( wms_wolfu_io_r )
 {
-	offset %= 8;
+	/* apply I/O shuffling */
+	offset = ioshuffle[offset % 16];
 
 	switch (offset)
 	{
@@ -228,21 +225,150 @@ READ16_HANDLER( revx_io_r )
 		case 3:
 			return readinputport(offset);
 
-		case 4:
-			return 0;
-//			return (security_status << 12) | wms_wolfu_sound_state_r(0);
-
 		default:
-//			logerror("%08X:Unknown I/O read from %d\n", cpu_get_pc(), offset);
+			logerror("%08X:Unknown I/O read from %d\n", cpu_get_pc(), offset);
 			break;
 	}
 	return ~0;
 }
 
 
+READ16_HANDLER( revx_analog_r )
+{
+	return readinputport(revx_analog_port);
+}
+
+
+WRITE16_HANDLER( revx_analog_select_w )
+{
+	if (offset == 0 && ACCESSING_LSB)
+		revx_analog_port = data - 8 + 4;
+}
+
+
 READ16_HANDLER( revx_status_r )
 {
-	return security_status << 1;
+	/* low bit indicates whether the ADC is done reading the current input */
+	return (security_status << 1) | 1;
+}
+
+
+
+/*************************************
+ *
+ *	Revolution X UART
+ *
+ *************************************/
+
+void revx_dcs_notify(int state)
+{
+	/* only signal if not in loopback state */
+	if (uart[1] != 0x66)
+		cpu_set_irq_line(1, 1, state ? ASSERT_LINE : CLEAR_LINE);
+}
+
+
+READ16_HANDLER( revx_uart_r )
+{
+	int result = 0;
+
+	/* convert to a byte offset */
+	if (offset & 1)
+		return 0;
+	offset /= 2;
+
+	/* switch off the offset */
+	switch (offset)
+	{
+		case 0:	/* register 0 must return 0x13 in order to pass the self test */
+			result = 0x13;
+			break;
+
+		case 1:	/* register 1 contains the status */
+
+			/* loopback case: data always ready, and always ok to send */
+			if (uart[1] == 0x66)
+				result |= 5;
+
+			/* non-loopback case: bit 0 means data ready, bit 2 means ok to send */
+			else
+			{
+				int temp = wms_wolfu_sound_state_r(0, 0);
+				result |= (temp & 0x800) >> 9;
+				result |= (~temp & 0x400) >> 10;
+				timer_set(TIME_NOW, 0, 0);
+			}
+			break;
+
+		case 3:	/* register 3 contains the data read */
+
+			/* loopback case: feed back last data wrtten */
+			if (uart[1] == 0x66)
+				result = uart[3];
+
+			/* non-loopback case: read from the DCS system */
+			else
+				result = wms_wolfu_sound_r(0, 0);
+			break;
+
+		case 5:	/* register 5 seems to be like 3, but with in/out swapped */
+
+			/* loopback case: data always ready, and always ok to send */
+			if (uart[1] == 0x66)
+				result |= 5;
+
+			/* non-loopback case: bit 0 means data ready, bit 2 means ok to send */
+			else
+			{
+				int temp = wms_wolfu_sound_state_r(0, 0);
+				result |= (temp & 0x800) >> 11;
+				result |= (~temp & 0x400) >> 8;
+				timer_set(TIME_NOW, 0, 0);
+			}
+			break;
+
+		default: /* everyone else reads themselves */
+			result = uart[offset];
+			break;
+	}
+
+/*	logerror("%08X:UART R @ %X = %02X\n", cpu_get_pc(), offset, result);*/
+	return result;
+}
+
+
+WRITE16_HANDLER( revx_uart_w )
+{
+	/* convert to a byte offset, ignoring MSB writes */
+	if ((offset & 1) || !ACCESSING_LSB)
+		return;
+	offset /= 2;
+	data &= 0xff;
+
+	/* switch off the offset */
+	switch (offset)
+	{
+		case 3:	/* register 3 contains the data to be sent */
+
+			/* loopback case: don't feed through */
+			if (uart[1] == 0x66)
+				uart[3] = data;
+
+			/* non-loopback case: send to the DCS system */
+			else
+				wms_wolfu_sound_w(0, data, mem_mask);
+			break;
+
+		case 5:	/* register 5 write seems to reset things */
+			williams_dcs_data_r();
+			break;
+
+		default: /* everyone else just stores themselves */
+			uart[offset] = data;
+			break;
+	}
+
+/*	logerror("%08X:UART W @ %X = %02X\n", cpu_get_pc(), offset, data);*/
 }
 
 
@@ -429,10 +555,62 @@ static READ16_HANDLER( wms_generic_speedup_1_address )
 	return value;
 }
 
+static WRITE16_HANDLER( wwfmania_io_0_w )
+{
+	int i;
+
+	/* start with the originals */
+	for (i = 0; i < 16; i++)
+		ioshuffle[i] = i % 8;
+
+	/* based on the data written, shuffle */
+	switch (data)
+	{
+		case 0:
+			break;
+
+		case 1:
+			ioshuffle[4] = 0;
+			ioshuffle[8] = 1;
+			ioshuffle[1] = 2;
+			ioshuffle[9] = 3;
+			ioshuffle[2] = 4;
+			break;
+
+		case 2:
+			ioshuffle[8] = 0;
+			ioshuffle[2] = 1;
+			ioshuffle[4] = 2;
+			ioshuffle[6] = 3;
+			ioshuffle[1] = 4;
+			break;
+
+		case 3:
+			ioshuffle[1] = 0;
+			ioshuffle[8] = 1;
+			ioshuffle[2] = 2;
+			ioshuffle[10] = 3;
+			ioshuffle[5] = 4;
+			break;
+
+		case 4:
+			ioshuffle[2] = 0;
+			ioshuffle[4] = 1;
+			ioshuffle[1] = 2;
+			ioshuffle[7] = 3;
+			ioshuffle[8] = 4;
+			break;
+	}
+	logerror("Changed I/O swiching to %d\n", data);
+}
+
 void init_wwfmania(void)
 {
 	/* common init */
 	init_wolfu_generic();
+
+	/* enable I/O shuffling */
+	install_mem_write16_handler(0, TOBYTE(0x01800000), TOBYTE(0x0180000f), wwfmania_io_0_w);
 
 	/* serial prefixes 430, 528 */
 	generate_serial(528);
@@ -492,8 +670,21 @@ void init_revx(void)
 
 void wms_wolfu_init_machine(void)
 {
+	int i;
+
 	/* reset sound */
 	williams_dcs_init(1);
+
+	/* reset I/O shuffling */
+	for (i = 0; i < 16; i++)
+		ioshuffle[i] = i % 8;
+}
+
+
+void revx_init_machine(void)
+{
+	wms_wolfu_init_machine();
+	williams_dcs_set_notify(revx_dcs_notify);
 }
 
 
@@ -564,12 +755,14 @@ READ16_HANDLER( wms_wolfu_sound_r )
 	return 0x0000;
 }
 
+
 READ16_HANDLER( wms_wolfu_sound_state_r )
 {
 	if (Machine->sample_rate)
 		return williams_dcs_control_r();
 	return 0x0800;
 }
+
 
 WRITE16_HANDLER( wms_wolfu_sound_w )
 {

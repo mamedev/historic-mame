@@ -548,7 +548,7 @@ static struct MachineDriver machine_driver_niyanpai =
 			0, 0, daisy_chain_sound
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	60, DEFAULT_60HZ_VBLANK_DURATION,
 	1,
 	niyanpai_init_machine,
 

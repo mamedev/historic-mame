@@ -26,6 +26,9 @@
 #if (HAS_Z80)
 #include "cpu/z80/z80.h"
 #endif
+#if (HAS_Z80)
+#include "cpu/z180/z180.h"
+#endif
 #if (HAS_8080 || HAS_8085A)
 #include "cpu/i8085/i8085.h"
 #endif
@@ -357,6 +360,9 @@ const struct cpu_interface cpuintrf[] =
 	CPU0(DUMMY,    dummy,	 1,  0,1.00,-1,			    8, 16,	  0,16,LE,1, 1	),
 #if (HAS_Z80)
 	CPU1(Z80,	   z80, 	 1,255,1.00,-1000,          8, 16,	  0,16,LE,1, 4	),
+#endif
+#if (HAS_Z180)
+	CPU1(Z180,	   z180, 	 1,255,1.00,-1000,          8, 20,	  0,20,LE,1, 4	),
 #endif
 #if (HAS_8080)
 	CPU0(8080,	   i8080,	 4,255,1.00,I8080_INTR_LINE,8, 16,	  0,16,LE,1, 3	),
@@ -845,6 +851,9 @@ int convert_type_to_irq_line(int cpunum, int num, int *vector)
 	{
 #if (HAS_Z80)
 		case CPU_Z80:				irqline = 0; break;
+#endif
+#if (HAS_Z180)
+		case CPU_Z180:				irqline = 0; break;
 #endif
 #if (HAS_I86)
 		case CPU_I86:				irqline = 0; break;

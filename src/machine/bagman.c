@@ -13,7 +13,7 @@
 /*Creation date: 98-02-18 */
 /*  A few words of comment:
 **
-**   What's inside of this file is a PAL16r6 emulator. Maybe someday we will
+**   What's inside of this file is a PAL16R6 emulator. Maybe someday we will
 **need to use it for some other game too. We will need to make it more exact
 **then (some of the functionality of this chip IS NOT implemented). However I
 **have bought a book about PALs and I'm able to improve it. Just LMK.
@@ -33,7 +33,7 @@ static unsigned char outvalue[8];
 
 /*		64 rows x 32 columns
 **  1 - fuse blown: disconnected from input (equal to 1)
-**  0 - fuse not blown: connected to input (ie. not x, x, not q, q accordingly)
+**  0 - fuse not blown: connected to input (ie. x, not x, q, not q accordingly)
 */
 static unsigned char fusemap[64*32]=
 {
@@ -211,21 +211,21 @@ WRITE_HANDLER( bagman_pal16r6_w )
 {
 unsigned char line;
 
-	line = (offset+1)<<2;
-	columnvalue[line  ] = 1-(data&1);
-	columnvalue[line+1] = data&1;
+	line = offset*4;
+	columnvalue[line  ] = data&1;
+	columnvalue[line+1] = 1-(data&1);
 }
 
 void bagman_machine_init(void)
 {
-	bagman_pal16r6_w(0,1);
-	bagman_pal16r6_w(1,1);
-	bagman_pal16r6_w(2,1);
-	bagman_pal16r6_w(3,1);
-	bagman_pal16r6_w(4,1);
-	bagman_pal16r6_w(5,1);
-	bagman_pal16r6_w(6,1);
-	bagman_pal16r6_w(7,1);
+	bagman_pal16r6_w(0,1);	/*pin 2*/
+	bagman_pal16r6_w(1,1);	/*pin 3*/
+	bagman_pal16r6_w(2,1);	/*pin 4*/
+	bagman_pal16r6_w(3,1);	/*pin 5*/
+	bagman_pal16r6_w(4,1);	/*pin 6*/
+	bagman_pal16r6_w(5,1);	/*pin 7*/
+	bagman_pal16r6_w(6,1);	/*pin 8*/
+	bagman_pal16r6_w(7,1);	/*pin 9*/
 	update_pal();
 }
 

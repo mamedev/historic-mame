@@ -13,6 +13,7 @@
 /*----------- defined in vidhrdw/fromance.c -----------*/
 
 int fromance_vh_start(void);
+int nekkyoku_vh_start(void);
 void fromance_vh_stop(void);
 void fromance_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 void pipedrm_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
@@ -29,5 +30,3 @@ WRITE_HANDLER( fromance_paletteram_w );
 
 READ_HANDLER( fromance_videoram_r );
 WRITE_HANDLER( fromance_videoram_w );
-
-

@@ -335,8 +335,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,      0, 128 },
-	{ REGION_GFX2, 0, &spritelayout, 64*4, 256 },
+	{ REGION_GFX1, 0, &charlayout,       0, 128 },
+	{ REGION_GFX2, 0, &spritelayout, 128*4,  64 },
 	{ -1 } /* end of array */
 };
 
@@ -394,7 +394,7 @@ static struct MachineDriver machine_driver_toypop =
 	/* video hardware */
 	18*16, 14*16, { 0*16, 18*16-1, 0*16, 14*16-1 },
 	gfxdecodeinfo,
-	256,256+256,
+	256,128*4+64*4,
 	toypop_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,

@@ -2,6 +2,8 @@
 #include "vidhrdw/konamiic.h"
 
 
+int spy_video_enable;
+
 static int layer_colorbase[3],sprite_colorbase;
 
 
@@ -79,6 +81,10 @@ void spy_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	K052109_tilemap_update();
 
 	fillbitmap(bitmap,Machine->pens[16 * layer_colorbase[0]],&Machine->visible_area);
+
+	if (!spy_video_enable)
+		return;
+
 	K051960_sprites_draw(bitmap,1,1);	/* are these used? */
 	K052109_tilemap_draw(bitmap,1,0,0);
 	K051960_sprites_draw(bitmap,0,0);

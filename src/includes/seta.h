@@ -64,6 +64,26 @@ WRITE16_HANDLER( seta_sound_word_w );
 
 void seta_sound_enable_w(int);
 
-int seta_sh_start(const struct MachineSound *msound);
+int seta_sh_start(const struct MachineSound *msound, UINT32 clock);
 
-struct CustomSound_interface seta_sound_interface;
+extern struct CustomSound_interface seta_sound_interface;
+
+
+/* Variables and functions defined in vidhrdw/ssv.c */
+
+extern data16_t *ssv_scroll;
+
+extern int ssv_special;
+
+extern int ssv_tile_code[16];
+
+extern int ssv_sprites_offsx, ssv_sprites_offsy;
+extern int ssv_tilemap_offsx, ssv_tilemap_offsy;
+
+READ16_HANDLER( ssv_vblank_r );
+WRITE16_HANDLER( ssv_scroll_w );
+WRITE16_HANDLER( paletteram16_xrgb_swap_word_w );
+void ssv_enable_video(int enable);
+
+void ssv_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void ssv_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);

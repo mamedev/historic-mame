@@ -101,6 +101,8 @@ extern void init_balonfgt(void);
 extern void init_vsbball(void);
 extern void init_iceclmrj(void);
 extern void init_xevious(void);
+extern void init_btlecity(void);
+extern void init_vstetris(void);
 
 
 extern READ_HANDLER( vsnes_in0_r );
@@ -912,13 +914,13 @@ INPUT_PORTS_START( rbibb )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR(Demo_Sounds ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	/*Note the 3 dips below are docuemtned as required to be off in the manual */
-	/* Turning them on messes with the colors */
-	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-
-
+	PORT_DIPNAME( 0xe0,0x80, "Color Palette" )
+	PORT_DIPSETTING(	0x80, "Normal" )
+	PORT_DIPSETTING(  0x00, "Wrong 1" )
+	PORT_DIPSETTING(	0x40, "Wrong 2" )
+	PORT_DIPSETTING(	0x20, "Wrong 3" )
+	PORT_DIPSETTING(  0xc0, "Wrong 4" )
+	/* 0x60,0xa0,0xe0:again "Wrong 3"*/
 INPUT_PORTS_END
 
 INPUT_PORTS_START( btlecity )
@@ -943,11 +945,11 @@ INPUT_PORTS_START( btlecity )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0xc0, 0x00, "Color Palette" )
-	PORT_DIPSETTING(	0x00, "1" )
-	PORT_DIPSETTING(	0x40, "2" )
-	PORT_DIPSETTING(	0x80, "3" )
-	PORT_DIPSETTING(	0xc0, "4" )
+	PORT_DIPNAME( 0xc0, 0x80, "Color Palette" )
+	PORT_DIPSETTING(	0x80, "Normal" )
+	PORT_DIPSETTING(	0x00, "Wrong 1" )
+	PORT_DIPSETTING(	0x40, "Wrong 2" )
+	PORT_DIPSETTING(	0xc0, "Wrong 3" )
 INPUT_PORTS_END
 
 
@@ -1123,7 +1125,7 @@ INPUT_PORTS_START( suprmrio )
 	PORT_DIPSETTING(	0x30, "250" )
 	PORT_DIPNAME(0x40, 0x00, "Timer")
 	PORT_DIPSETTING(	0x00, "Slow")
-	PORT_DIPSETTING(	0x40, "FAST")
+	PORT_DIPSETTING(	0x40, "Fast")
 	PORT_DIPNAME(0x80, 0x00, "Continue Lives" )
 	PORT_DIPSETTING(	0x00, "4" )
 	PORT_DIPSETTING(	0x80, "3" )
@@ -1244,17 +1246,13 @@ INPUT_PORTS_START( vstetris )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
-
-
+	PORT_DIPNAME( 0xe0,0x80, "Color Palette" )
+	PORT_DIPSETTING(	0x80, "Normal" )
+	PORT_DIPSETTING(  0x00, "Wrong 1" )
+	PORT_DIPSETTING(	0x40, "Wrong 2" )
+	PORT_DIPSETTING(	0x20, "Wrong 3" )
+	PORT_DIPSETTING(  0xc0, "Wrong 4" )
+	/* 0x60,0xa0,0xe0:again "Wrong 3"*/
 INPUT_PORTS_END
 
 INPUT_PORTS_START( vsskykid )
@@ -1971,7 +1969,7 @@ ROM_END
 /******************************************************************************/
 
 /*    YEAR  NAME      PARENT    MACHINE  INPUT     INIT  	   MONITOR  */
-GAMEX(1985, btlecity, 0,	    vsnes,   btlecity, vsnormal, ROT0, "Namco",     "Battle City",GAME_WRONG_COLORS )
+GAME(1985, btlecity, 0,	    vsnes,   btlecity, btlecity, ROT0, "Namco",     "Battle City" )
 GAME( 1985, starlstr, 0,        vsnes,   vsnes,    vsnormal, ROT0, "Namco",  	  "Star Luster" )
 GAME( 1987,	cstlevna, 0,	    vsnes,   cstlevna, cstlevna, ROT0, "Konami",    "Vs. Castlevania" )
 GAME( 1984, cluclu,   0,	    vsnes,   cluclu,   suprmrio, ROT0, "Nintendo",  "Clu Clu Land" )
@@ -1984,7 +1982,7 @@ GAME( 1985, hogalley, 0,        vsnes,   hogalley, hogalley, ROT0, "Nintendo",  
 GAME( 1984, iceclimb, 0,        vsnes,   iceclimb, suprmrio, ROT0, "Nintendo",  "Ice Climber" )
 GAME( 1984, ladygolf, 0,        vsnes,   golf,     machridr, ROT0, "Nintendo",  "Stroke and Match Golf (Ladies Version)" )
 GAME( 1985, machridr, 0,        vsnes,   machridr, machridr, ROT0, "Nintendo",  "Mach Rider" )
-GAME( 1986, rbibb,	  0,	    vsnes,   rbibb,    rbibb,    ROT0, "Namco",  	   "Atari RBI Baseball")
+GAME( 1986, rbibb,	  0,	    vsnes,   rbibb,    rbibb,    ROT0, "Namco",  	   "Atari RBI Baseball" )
 GAME( 1986, suprmrio, 0,        vsnes,   suprmrio, suprmrio, ROT0, "Nintendo",  "Vs. Super Mario Bros" )
 GAME( 1985, vsskykid, 0,	    vsnes,   vsskykid, vsskykid, ROT0, "Namco",     "Super SkyKid"  )
 GAMEX(1987,tkoboxng, 0,         vsnes,   vsnes,    tkoboxng, ROT0, "Namco LTD.", "Vs. TKO Boxing", GAME_WRONG_COLORS )
@@ -1996,7 +1994,7 @@ GAME( 1986, vsslalom, 0,        vsnes,   vsnes,    vsslalom, ROT0, "Rare LTD.", 
 GAME( 1985, vssoccer, 0,        vsnes,   vsnes,    excitebk, ROT0, "Nintendo",  "Soccer" )
 GAME( 1986, vsgradus, 0,        vsnes,   vsnes,    vsgradus, ROT0, "Konami",  "Vs. Gradius" )
 GAMEX(1987, platoon,  0,        vsnes,   platoon,  platoon,  ROT0, "Ocean Software Limited", 	"Platoon", GAME_WRONG_COLORS )
-GAMEX(1987, vstetris, 0,        vsnes,   vstetris, vspinbal, ROT0, "Academysoft-Elory",  "Vs. Tetris",GAME_WRONG_COLORS )
+GAMEX(1987, vstetris, 0,        vsnes,   vstetris, vstetris, ROT0, "Academysoft-Elory",  "Vs. Tetris" , GAME_IMPERFECT_COLORS )
 
 /* Dual games */
 GAME( 1984, vstennis, 0,        vsdual,  vstennis, vstennis, ROT0, "Nintendo",		  "Vs. Tennis"  )
@@ -2011,7 +2009,7 @@ GAME( 1984, iceclmrj, 0,        vsdual,  iceclmrj, iceclmrj, ROT0, "Nintendo",  
 
 /* are these using the correct mappers? */
 
-GAMEX(19??, topgun,   0,	    vsnes,   vsnes,    vstopgun, ROT0, "Nintendo",  "VS Topgun", GAME_NOT_WORKING )
-GAMEX(19??, jajamaru, 0,        vsnes,   vsnes,    vsnormal, ROT0, "Nintendo",  "JAJARU", GAME_NOT_WORKING )
-GAMEX(19??, vsxevus,  0,        vsnes,   vsnes,	   xevious,  ROT0, "Namco?", 	"Xevious", GAME_NOT_WORKING )
+GAMEX(19??, topgun,   0,	  vsnes,   vsnes,    vstopgun, ROT0, "Konami",  "Vs. Topgun", GAME_NOT_WORKING )
+GAMEX(19??, jajamaru, 0,        vsnes,   vsnes,    vsnormal, ROT0, "Jaleco",  "Vs. Jajamaru Kun", GAME_NOT_WORKING )
+GAMEX(19??, vsxevus,  0,        vsnes,   vsnes,	   xevious,  ROT0, "Namco?", 	"Vs. Xevious", GAME_NOT_WORKING )
 

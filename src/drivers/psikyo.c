@@ -33,6 +33,35 @@ To Do:
 
 ***************************************************************************/
 
+/***** Gun Bird Japan Crash Notes
+
+The Following Section of Code in Gunbird causes reads from the
+0x080000 - 0x0fffff region
+
+002894: E2817000           asr.l   #1, D1
+002896: 70001030           moveq   #$0, D0
+002898: 10301804           move.b  ($4,A0,D1.l), D0   <-- *
+00289C: 60183202           bra     28b6
+00289E: 3202C2C7           move.w  D2, D1
+0028A0: C2C77000           mulu.w  D7, D1
+0028A2: 70003005           moveq   #$0, D0
+0028A4: 3005D280           move.w  D5, D0
+0028A6: D280E281           add.l   D0, D1
+0028A8: E2812071           asr.l   #1, D1
+0028AA: 20713515           movea.l ([A1],D3.w*4), A0
+0028AE: 70001030           moveq   #$0, D0
+0028B0: 10301804           move.b  ($4,A0,D1.l), D0   <-- *
+0028B4: E880720F           asr.l   #4, D0
+0028B6: 720FC041           moveq   #$f, D1
+
+This causes Gunbird to crash if the ROM Region Size
+allocated during loading is smaller than the MRA32_ROM
+region as it trys to read beyond the allocated rom region
+
+This was pointed out by Bart Puype
+
+*****/
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
@@ -951,6 +980,7 @@ static const struct MachineDriver machine_driver_s1945 =
 
 /***************************************************************************
 
+								Gun Bird (Korea)
 								Gun Bird (Japan)
 							Battle K-Road (Japan)
 
@@ -968,7 +998,41 @@ Chips:	PS2001B
 
 ROM_START( gunbird )
 
-	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_LOAD32_WORD_SWAP( "1k-u46.bin", 0x000000, 0x080000, 0x745cee52 ) // 1&0
+	ROM_LOAD32_WORD_SWAP( "2k-u39.bin", 0x000002, 0x080000, 0x669632fb ) // 3&2
+
+	ROM_REGION( 0x030000, REGION_CPU2, 0 )		/* Sound CPU Code */
+	ROM_LOAD( "k3-u71.bin", 0x00000, 0x20000, 0x11994055 )
+	ROM_RELOAD(            0x10000, 0x20000             )
+
+	ROM_REGION( 0x700000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "u14.bin",  0x000000, 0x200000, 0x7d7e8a00 )
+	ROM_LOAD( "u24.bin",  0x200000, 0x200000, 0x5e3ffc9d )
+	ROM_LOAD( "u15.bin",  0x400000, 0x200000, 0xa827bfb5 )
+	ROM_LOAD( "u25.bin",  0x600000, 0x100000, 0xef652e0c )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "u33.bin",  0x000000, 0x200000, 0x54494e6b )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "u33.bin",  0x000000, 0x100000, 0x54494e6b )
+	ROM_CONTINUE(         0x000000, 0x100000             )
+
+	ROM_REGION( 0x080000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* DELTA-T Samples */
+	ROM_LOAD( "u64.bin",  0x000000, 0x080000, 0xe187ed4f )
+
+	ROM_REGION( 0x100000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* ADPCM Samples */
+	ROM_LOAD( "u56.bin",  0x000000, 0x100000, 0x9e07104d )
+
+	ROM_REGION( 0x040000, REGION_USER1, 0 )	/* Sprites LUT */
+	ROM_LOAD( "u3.bin",  0x000000, 0x040000, 0x0905aeb2 )
+
+ROM_END
+
+ROM_START( gunbirdj )
+
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* Main CPU Code */
 	ROM_LOAD32_WORD_SWAP( "1-u46.bin", 0x000000, 0x040000, 0x474abd69 ) // 1&0
 	ROM_LOAD32_WORD_SWAP( "2-u39.bin", 0x000002, 0x040000, 0x3e3e661f ) // 3&2
 
@@ -1003,7 +1067,7 @@ ROM_END
 
 ROM_START( btlkrodj )
 
-	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* Main CPU Code */
 	ROM_LOAD32_WORD_SWAP( "4-u46.bin", 0x000000, 0x040000, 0x8a7a28b4 ) // 1&0
 	ROM_LOAD32_WORD_SWAP( "5-u39.bin", 0x000002, 0x040000, 0x933561fa ) // 3&2
 
@@ -1064,7 +1128,7 @@ fe0252.w:	country code (0 = Japan)
 
 ROM_START( sngkace )
 
-	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* Main CPU Code */
 	ROM_LOAD32_WORD_SWAP( "1-u127.bin", 0x000000, 0x040000, 0x6c45b2f8 ) // 1&0
 	ROM_LOAD32_WORD_SWAP( "2-u126.bin", 0x000002, 0x040000, 0x845a6760 ) // 3&2
 
@@ -1204,7 +1268,7 @@ Chips:	PS2001B
 
 ROM_START( s1945 )
 
-	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* Main CPU Code */
 	ROM_LOAD32_WORD_SWAP( "1-u40.bin", 0x000000, 0x040000, 0xc00eb012 ) // 1&0
 	ROM_LOAD32_WORD_SWAP( "2-u41.bin", 0x000002, 0x040000, 0x3f5a134b ) // 3&2
 
@@ -1264,9 +1328,10 @@ void init_s1945(void)
 ***************************************************************************/
 
 /* Working Games */
-GAME ( 1993, sngkace,  0, sngkace,  sngkace,  sngkace,  ROT270, "Psikyo", "Sengoku Ace (Japan)"   ) // Banpresto?
-GAME ( 1994, gunbird,  0, gunbird,  gunbird,  gunbird,  ROT270, "Psikyo", "Gun Bird (Japan)"      )
-GAME ( 1994, btlkrodj, 0, gunbird,  btlkrodj, gunbird,  ROT0,   "Psikyo", "Battle K-Road (Japan)" )
+GAME ( 1993, sngkace,  0,       sngkace,  sngkace,  sngkace,  ROT270, "Psikyo", "Sengoku Ace (Japan)"   ) // Banpresto?
+GAME ( 1994, gunbird,  0,       gunbird,  gunbird,  gunbird,  ROT270, "Psikyo", "Gun Bird (Korea)"      )
+GAME ( 1994, gunbirdj, gunbird, gunbird,  gunbird,  gunbird,  ROT270, "Psikyo", "Gun Bird (Japan)"      )
+GAME ( 1994, btlkrodj, 0,       gunbird,  btlkrodj, gunbird,  ROT0,   "Psikyo", "Battle K-Road (Japan)" )
 
 /* Non Working Games: Protected (the PIC16C57 code isn't dumped) */
 GAMEX( 1995, s1945,    0, s1945,    gunbird,  s1945,    ROT270, "Psikyo", "Strikers 1945 (Japan)", GAME_NOT_WORKING )

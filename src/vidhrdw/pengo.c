@@ -297,3 +297,87 @@ void pengo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 				&spritevisiblearea,TRANSPARENCY_COLOR,0);
     }
 }
+
+
+WRITE_HANDLER( vanvan_bgcolor_w )
+{
+	if (data & 1) palette_set_color(0,0xaa,0xaa,0xaa);
+	else          palette_set_color(0,0x00,0x00,0x00);
+}
+
+
+void vanvan_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+{
+	int offs;
+
+	for (offs = videoram_size - 1; offs > 0; offs--)
+	{
+		if (dirtybuffer[offs])
+		{
+			int mx,my,sx,sy;
+
+			dirtybuffer[offs] = 0;
+            mx = offs % 32;
+			my = offs / 32;
+
+			if (my < 2)
+			{
+				if (mx < 2 || mx >= 30) continue; /* not visible */
+				sx = my + 34;
+				sy = mx - 2;
+			}
+			else if (my >= 30)
+			{
+				if (mx < 2 || mx >= 30) continue; /* not visible */
+				sx = my - 30;
+				sy = mx - 2;
+			}
+			else
+			{
+				sx = mx + 2;
+				sy = my - 2;
+			}
+
+			if (flipscreen)
+			{
+				sx = 35 - sx;
+				sy = 27 - sy;
+			}
+
+			drawgfx(tmpbitmap,Machine->gfx[gfx_bank*2],
+					videoram[offs],
+					colorram[offs] & 0x1f,
+					flipscreen,flipscreen,
+					sx*8,sy*8,
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
+        }
+	}
+
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+
+    /* Draw the sprites. Note that it is important to draw them exactly in this */
+	/* order, to have the correct priorities. */
+	for (offs = spriteram_size - 2;offs >= 0;offs -= 2)
+	{
+		int sx,sy;
+
+
+		sx = 272 - spriteram_2[offs + 1];
+		sy = spriteram_2[offs] - 31;
+
+		drawgfx(bitmap,Machine->gfx[gfx_bank*2+1],
+				spriteram[offs] >> 2,
+				spriteram[offs + 1] & 0x1f,
+				spriteram[offs] & 1,spriteram[offs] & 2,
+				sx,sy,
+				&spritevisiblearea,TRANSPARENCY_PEN,0);
+
+        /* also plot the sprite with wraparound (tunnel in Crush Roller) */
+        drawgfx(bitmap,Machine->gfx[gfx_bank*2+1],
+				spriteram[offs] >> 2,
+				spriteram[offs + 1] & 0x1f,
+				spriteram[offs] & 1,spriteram[offs] & 2,
+				sx - 256,sy,
+				&spritevisiblearea,TRANSPARENCY_PEN,0);
+	}
+}

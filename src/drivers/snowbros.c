@@ -1,8 +1,8 @@
 /***************************************************************************
 
- Snow Brothers
+  Snow Brothers by ToaPlan
 
- driver by Mike Coates
+  driver by Mike Coates
 
 ***************************************************************************/
 
@@ -11,6 +11,8 @@
 #include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
 
+
+WRITE16_HANDLER( snowbros_flipscreen_w );
 void snowbros_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void wintbob_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
@@ -20,7 +22,6 @@ static int snowbros_interrupt(void)
 {
 	return cpu_getiloops() + 2;	/* IRQs 4, 3, and 2 */
 }
-
 
 
 /* Sound Routines */
@@ -71,7 +72,7 @@ static MEMORY_WRITE16_START( writemem )
 	{ 0x100000, 0x103fff, MWA16_RAM },
 	{ 0x200000, 0x200001, watchdog_reset16_w },
 	{ 0x300000, 0x300001, snowbros_68000_sound_w },
-//	{ 0x400000, 0x400001, snowbros_interrupt_enable_w },
+	{ 0x400000, 0x400001, snowbros_flipscreen_w },
 	{ 0x600000, 0x6001ff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
 	{ 0x700000, 0x701dff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x800000, 0x800001, MWA16_NOP },	/* IRQ 4 acknowledge? */
@@ -104,9 +105,9 @@ PORT_END
 
 INPUT_PORTS_START( snowbros )
 	PORT_START	/* 500001 */
-	PORT_DIPNAME( 0x01, 0x01, "Country (Affects Coinage)" )
-	PORT_DIPSETTING(    0x01, "America" )
+	PORT_DIPNAME( 0x01, 0x00, "Country (Affects Coinage)" )
 	PORT_DIPSETTING(    0x00, "Europe" )
+	PORT_DIPSETTING(    0x01, "America (Romstar license)" )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -115,16 +116,16 @@ INPUT_PORTS_START( snowbros )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 /* Better to implement a coin mode 1-2 stuff later */
-	PORT_DIPNAME( 0x30, 0x30, "Coin A America/Europe" )
-	PORT_DIPSETTING(    0x10, "2C/1C 3C/1C" )
+	PORT_DIPNAME( 0x30, 0x30, "Coin A Europe/America" )
+	PORT_DIPSETTING(    0x00, "4C/1C 2C/3C" )
+	PORT_DIPSETTING(    0x10, "3C/1C 2C/1C" )
+	PORT_DIPSETTING(    0x20, "2C/1C 1C/2C" )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, "2C/3C 4C/1C" )
-	PORT_DIPSETTING(    0x20, "1C/2C 2C/1C" )
-	PORT_DIPNAME( 0xc0, 0xc0, "Coin B America/Europe" )
-	PORT_DIPSETTING(    0x40, "2C/1C 1C/4C" )
-	PORT_DIPSETTING(    0xc0, "1C/1C 1C/2C" )
-	PORT_DIPSETTING(    0x00, "2C/3C 1C/6C" )
-	PORT_DIPSETTING(    0x80, "1C/2C 1C/3C" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Coin B Europe/America" )
+	PORT_DIPSETTING(    0xc0, "1C/2C 1C/1C" )
+	PORT_DIPSETTING(    0x80, "1C/3C 1C/2C" )
+	PORT_DIPSETTING(    0x40, "1C/4C 2C/1C" )
+	PORT_DIPSETTING(    0x00, "1C/6C 2C/3C" )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -132,8 +133,8 @@ INPUT_PORTS_START( snowbros )
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 )
-	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Must be low or game stops! */
-                                               /* probably VBlank */
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Must be low or game stops! */
+													/* probably VBlank */
 
 	PORT_START	/* 500003 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
@@ -177,6 +178,79 @@ INPUT_PORTS_START( snowbros )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( snowbroj )
+	PORT_START	/* 500001 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Must be low or game stops! */
+													/* probably VBlank */
+
+	PORT_START	/* 500003 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x03, "Normal" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x04, "100k and every 200k " )
+	PORT_DIPSETTING(    0x0c, "100k Only" )
+	PORT_DIPSETTING(    0x08, "200k Only" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x20, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x10, "4" )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* 500005 */
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
 
 static struct GfxLayout tilelayout =
 {
@@ -404,8 +478,8 @@ ROM_START( wintbob )
 ROM_END
 
 
-GAME( 1990, snowbros, 0,        snowbros, snowbros, 0, ROT0, "Toaplan (Romstar license)", "Snow Bros. - Nick & Tom (set 1)" )
-GAME( 1990, snowbroa, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan (Romstar license)", "Snow Bros. - Nick & Tom (set 2)" )
-GAME( 1990, snowbrob, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan (Romstar license)", "Snow Bros. - Nick & Tom (set 3)" )
-GAME( 1990, snowbroj, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan (Romstar license)", "Snow Bros. - Nick & Tom (Japan)" )
+GAME( 1990, snowbros, 0,        snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (set 1)" )
+GAME( 1990, snowbroa, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (set 2)" )
+GAME( 1990, snowbrob, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (set 3)" )
+GAME( 1990, snowbroj, snowbros, snowbros, snowbroj, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (Japan)" )
 GAME( 1990, wintbob,  snowbros, wintbob,  snowbros, 0, ROT0, "bootleg", "The Winter Bobble" )

@@ -48,6 +48,8 @@ int RF5C68_sh_start( const struct MachineSound *msound )
 	if(pcmbuf==NULL) pcmbuf=(unsigned char *)malloc(0x10000);
 	if(pcmbuf==NULL) return 1;
 
+	memset(pcmbuf, 0xff, 0x10000);
+
 	intf = inintf;
 	buffer_len = rate / Machine->drv->frames_per_second;
 	emulation_rate = buffer_len * Machine->drv->frames_per_second;
@@ -186,7 +188,6 @@ WRITE_HANDLER( RF5C68_reg_w )
 
 	wreg[offset] = data;			/* stock write data */
 	/**** set PCM registers ****/
-	if( (wreg[0x07]&0x40) )  reg_port = wreg[0x07]&0x07;	/* select port # */
 
 	switch( offset )
 	{
@@ -220,12 +221,12 @@ WRITE_HANDLER( RF5C68_reg_w )
 			rpcm.addr[reg_port] = rpcm.start[reg_port];
 			break;
 		case 0x07:
-			if( (data&0xc0) == 0xc0 )
+			reg_port = wreg[0x07]&0x07;
+			if( data&0x80 )
 			{
-				i = data&0x07;		/* register port */
-				rpcm.pcmx[0][i] = 0;
-				rpcm.pcmx[1][i] = 0;
-				rpcm.flag[i] |= RF_START;
+				rpcm.pcmx[0][reg_port] = 0;
+				rpcm.pcmx[1][reg_port] = 0;
+				rpcm.flag[reg_port] |= RF_START;
 			}
 			break;
 
@@ -252,7 +253,7 @@ WRITE_HANDLER( RF5C68_reg_w )
 READ_HANDLER( RF5C68_r )
 {
 	unsigned int  bank;
-	bank = ((unsigned int)(wreg[0x07]&0x0f))<<(8+4);
+	bank = wreg[0x7] & 0x40 ? rpcm.start[reg_port] >> BASE_SHIFT : (wreg[0x7] & 0xf) << 12;
 	return pcmbuf[bank + offset];
 }
 /************************************************/
@@ -261,7 +262,7 @@ READ_HANDLER( RF5C68_r )
 WRITE_HANDLER( RF5C68_w )
 {
 	unsigned int  bank;
-	bank = ((unsigned int)(wreg[0x07]&0x0f))<<(8+4);
+	bank = wreg[0x7] & 0x40 ? rpcm.start[reg_port] >> BASE_SHIFT : (wreg[0x7] & 0xf) << 12;
 	pcmbuf[bank + offset] = data;
 }
 

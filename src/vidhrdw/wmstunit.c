@@ -6,7 +6,7 @@
 
 #include "driver.h"
 #include "cpu/tms34010/tms34010.h"
-
+#include "wmstunit.h"
 
 
 /* compile-time options */
@@ -40,8 +40,6 @@ enum
 
 
 /* graphics-related variables */
-extern UINT8 *	wms_gfx_rom;
-extern size_t	wms_gfx_rom_size;
        UINT8	wms_gfx_rom_large;
 static data16_t	wms_control;
 static UINT8	wms_using_34020;
@@ -81,10 +79,6 @@ static struct
 	UINT16		ystep;			/* 8.8 fixed number scale y factor */
 } dma_state;
 
-
-
-/* prototypes */
-void wms_tunit_vh_stop(void);
 
 
 /* macros */
@@ -358,6 +352,19 @@ WRITE16_HANDLER( wms_tunit_paletteram_w )
 	b = (b << 3) | (b >> 2);
 
 	palette_set_color(offset, r, g, b);
+}
+
+
+WRITE16_HANDLER( revx_paletteram_w )
+{
+	if (!(offset & 1))
+		wms_tunit_paletteram_w(offset / 2, data, mem_mask);
+}
+
+
+READ16_HANDLER( revx_paletteram_r )
+{
+	return paletteram16_word_r(offset / 2, 0);
 }
 
 
@@ -881,18 +888,6 @@ skipdma:
 
 /*************************************
  *
- *	34010 display address callback
- *
- *************************************/
-
-void wms_tunit_display_addr_changed(UINT32 offs, int rowbytes, int scanline)
-{
-}
-
-
-
-/*************************************
- *
  *	Core refresh routine
  *
  *************************************/
@@ -904,10 +899,9 @@ void wms_tunit_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 
 	/* determine the base of the videoram */
 	if (wms_using_34020)
-		offset = (tms34020_get_DPYSTRT(0) >> 5) & 0x3ffff;
+		offset = (tms34020_get_DPYSTRT(0) >> 3) & 0x3ffff;
 	else
 		offset = ((~tms34010_get_DPYSTRT(0) & 0x1ff0) << 5) & 0x3ffff;
-	logerror("Screen offset = %06X\n", offset);
 
 	/* determine how many pixels to copy */
 	xoffs = Machine->visible_area.min_x;

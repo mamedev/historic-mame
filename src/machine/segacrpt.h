@@ -16,8 +16,9 @@ void nprinces_decode(void);
 void seganinj_decode(void);
 void imsorry_decode(void);
 void teddybb_decode(void);
-void hvymetal_decode(void);
 void myheroj_decode(void);
+void hvymetal_decode(void);
+void lvcards_decode(void);
 
 void fdwarrio_decode(void);
 void astrofl_decode(void);

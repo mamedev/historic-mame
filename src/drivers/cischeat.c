@@ -1508,15 +1508,14 @@ static struct OKIM6295interface scudhamm_okim6295_intf =
 	3]			game
 	4]	 		== 3
 */
-#define INTERRUPT_NUM_SCUDHAMM		2
+#define INTERRUPT_NUM_SCUDHAMM		30
 int interrupt_scudhamm(void)
 {
 	switch ( cpu_getiloops() )
 	{
-		case 0:		return 2;	// "real" vblank. It just sets a flag that
+		case 0:		return 3;	// update palette, layers etc. Not the sprites.
+		case 14:	return 2;	// "real" vblank. It just sets a flag that
 								// the main loop polls before updating the sprites.
-
-		case 1:		return 3;	// update palette, layers etc. Not the sprites.
 
 		default:	return ignore_interrupt();
 	}

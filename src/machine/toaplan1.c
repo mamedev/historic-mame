@@ -1,8 +1,10 @@
 /***************************************************************************
-					ToaPlan  (1988-1991 hardware)
+				ToaPlan game hardware from 1988-1991
+				------------------------------------
  ***************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 #include "cpu/m68000/m68000.h"
 #include "cpu/tms32010/tms32010.h"
 
@@ -10,16 +12,17 @@
 #define ASSERT 1
 
 
-int toaplan1_coin_count; /* coin count increments on startup ? , so dont count it */
+static int toaplan1_coin_count; /* coin count increments on startup ? , so dont count it */
+static int toaplan1_int_enable;
 
-int toaplan1_int_enable;
-static int unk;
-static int credits;
-static int latch;
-static int dsp_execute;
-static unsigned int dsp_addr_w, main_ram_seg;
+static int dsp_execute;							/* Demon world */
+static unsigned int dsp_addr_w, main_ram_seg;	/* Demon world */
+static int credits;		/* Vimana */
+static int latch;		/* Vimana */
 
-unsigned char *toaplan1_sharedram;
+int toaplan1_unk_reset_port;
+
+data8_t *toaplan1_sharedram;
 
 
 
@@ -134,12 +137,6 @@ WRITE16_HANDLER( toaplan1_int_enable_w )
 	}
 }
 
-READ16_HANDLER( toaplan1_unk_r )
-{
-	unk ^= 1;
-	return unk & 0xff;
-}
-
 READ16_HANDLER( samesame_port_6_word_r )
 {
 	/* Bit 0x80 is secondary CPU (HD647180) ready signal */
@@ -175,15 +172,9 @@ READ16_HANDLER( vimana_mcu_r )
 	int data = 0 ;
 	switch (offset)
 	{
-		case 0:
-			data = 0xff;
-			break;
-		case 1:
-			data = 0;
-			break;
-		case 2:
-			data = credits;
-			break;
+		case 0:  data = 0xff; break;
+		case 1:  data = 0; break;
+		case 2:  data = credits; break;
 	}
 	return data & 0xff;
 }
@@ -191,13 +182,9 @@ WRITE16_HANDLER( vimana_mcu_w )
 {
 	switch (offset)
 	{
-		case 0:
-			break;
-		case 1:
-			break;
-		case 2:
-			if (ACCESSING_LSB) credits = data & 0xff;
-			break;
+		case 0:  break;
+		case 1:  break;
+		case 2:  if (ACCESSING_LSB) credits = data & 0xff; break;
 	}
 }
 
@@ -214,16 +201,54 @@ WRITE16_HANDLER( toaplan1_shared_w )
 	}
 }
 
+WRITE16_HANDLER( toaplan1_reset_sound )
+{
+	/* Reset the secondary CPU and sound chip during soft resets */
+
+	if (ACCESSING_LSB && (data == 0))
+	{
+		logerror("PC:%04x  Resetting Sound CPU and Sound chip (%08x)\n",cpu_getpreviouspc(),data);
+		if (Machine->drv->sound[0].sound_type == SOUND_YM3812)
+			YM3812_sh_reset();
+		if (Machine->drv->cpu[1].cpu_type == CPU_Z80)
+			cpu_set_reset_line(1,PULSE_LINE);
+	}
+}
+
 void toaplan1_init_machine(void)
 {
-	dsp_addr_w = dsp_execute = 0;
-	main_ram_seg = 0;
 	toaplan1_int_enable = 0;
-	unk = 0;
+	toaplan1_coin_count = 0;
+	toaplan1_unk_reset_port = 0;
+	coin_lockout_global_w(0);
+	state_save_register_int("toaplan1", 0, "Int enable", &toaplan1_int_enable);
+	state_save_register_int("toaplan1", 0, "Coin counter", &toaplan1_coin_count);
+}
+
+void zerozone_init_machine(void)	/* Hack for ZeroWing and OutZone. See the video driver */
+{
+	toaplan1_init_machine();
+	toaplan1_unk_reset_port = 1;
+}
+
+void demonwld_init_machine(void)
+{
+	dsp_addr_w = 0;
+	dsp_execute = 0;
+	main_ram_seg = 0;
+	state_save_register_int("demonwld", 0, "DSP_execute", &dsp_execute);
+	state_save_register_UINT32("demonwld", 0, "DSP address", &dsp_addr_w, 1);
+	state_save_register_UINT32("demonwld", 0, "DSP to 68K RAM bank", &main_ram_seg, 1);
+	toaplan1_init_machine();
+}
+
+void vimana_init_machine(void)
+{
 	credits = 0;
 	latch = 0;
-	toaplan1_coin_count = 0;
-	coin_lockout_global_w(0);
+	state_save_register_int("vimana", 0, "Credits count", &credits);
+	state_save_register_int("vimana", 0, "MCU latch", &latch);
+	toaplan1_init_machine();
 }
 
 WRITE_HANDLER( rallybik_coin_w )

@@ -168,6 +168,7 @@ static char loadsave_schedule_id;
  *************************************/
 
 static void cpu_inittimers(void);
+static void cpu_removetimers(void);
 static void cpu_vblankreset(void);
 static void cpu_vblankcallback(int param);
 static void cpu_updatecallback(int param);
@@ -260,7 +261,6 @@ int cpu_init(void)
 
 	/* init the timer system */
 	timer_init();
-	timeslice_timer = refresh_timer = vblank_timer = NULL;
 
 	return 0;
 }
@@ -340,6 +340,9 @@ static void cpu_pre_run(void)
 
 static void cpu_post_run(void)
 {
+	/* remove any timers */
+	cpu_removetimers();
+
 	/* write hi scores to disk - No scores saving if cheat */
 	hs_close();
 
@@ -1121,6 +1124,9 @@ void cpu_set_irq_line(int cpunum, int irqline, int state)
 
 void cpu_set_irq_line_and_vector(int cpunum, int irqline, int state, int vector)
 {
+	int activecpu = cpu_getactivecpu();
+	int param;
+
 	/* don't trigger interrupts on suspended CPUs */
 	if (cpu_getstatus(cpunum) == 0)
 		return;
@@ -1128,7 +1134,11 @@ void cpu_set_irq_line_and_vector(int cpunum, int irqline, int state, int vector)
 	LOG(("cpu_set_irq_line(%d,%d,%d,%02x)\n", cpunum, irqline, state, vector));
 
 	/* set a timer to go off */
-	timer_set(TIME_NOW, (cpunum & 0x0f) | ((state & 0x0f) << 4) | ((irqline & 0x7f) << 8) | (1 << 15) | (vector << 16), cpu_manualirqcallback);
+	param = (cpunum & 0x0f) | ((state & 0x0f) << 4) | ((irqline & 0x7f) << 8) | (1 << 15) | (vector << 16);
+	if (activecpu == -1 || (cpunum == activecpu && state == CLEAR_LINE))
+		cpu_manualirqcallback(param);
+	else
+		timer_set(TIME_NOW, param, cpu_manualirqcallback);
 }
 
 
@@ -1674,14 +1684,6 @@ static void cpu_inittimers(void)
 	double first_time;
 	int cpunum, max, ipf;
 
-	/* remove old timers */
-	if (timeslice_timer)
-		timer_remove(timeslice_timer);
-	if (refresh_timer)
-		timer_remove(refresh_timer);
-	if (vblank_timer)
-		timer_remove(vblank_timer);
-
 	/* allocate a dummy timer at the minimum frequency to break things up */
 	ipf = Machine->drv->cpu_slices_per_frame;
 	if (ipf <= 0)
@@ -1791,3 +1793,27 @@ static void cpu_inittimers(void)
 	}
 	vblank_timer = timer_set(first_time, 0, cpu_firstvblankcallback);
 }
+
+
+
+/*************************************
+ *
+ *	Remove all the core timers
+ *
+ *************************************/
+
+static void cpu_removetimers(void)
+{
+	if (timeslice_timer)
+		timer_remove(timeslice_timer);
+	timeslice_timer = NULL;
+
+	if (refresh_timer)
+		timer_remove(refresh_timer);
+	refresh_timer = NULL;
+
+	if (vblank_timer)
+		timer_remove(vblank_timer);
+	vblank_timer = NULL;
+}
+

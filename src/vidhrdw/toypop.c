@@ -51,21 +51,22 @@ void toypop_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		palette[3*i + 2] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 	}
 
-	// characters
 	for (i = 0;i < 256;i++)
-		colortable[i] = color_prom[i + 0x300] | 0x70;
-
-	// sprites
-	for (i = 256;i < Machine->drv->color_table_len;i++)
-		colortable[i] = color_prom[i + 0x400];	// 0x500-5ff
+	{
+		// characters
+		colortable[i]     = color_prom[i + 0x300] | 0x70;
+		colortable[i+256] = color_prom[i + 0x300] | 0xf0;
+		// sprites
+		colortable[i+512] = color_prom[i + 0x500];
+	}
 }
 
 WRITE_HANDLER( toypop_palettebank_w )
 {
 	if (offset)
-		palettebank = 0xe0;
+		palettebank = 1;
 	else
-		palettebank = 0x60;
+		palettebank = 0;
 }
 
 WRITE16_HANDLER( toypop_flipscreen_w )
@@ -117,7 +118,7 @@ void draw_background_and_characters(struct mame_bitmap *bitmap)
 				scanline[x+1] = data >> 8;
 				offs--;
 			}
-			draw_scanline8(bitmap, 0, y, 288, scanline, &Machine->pens[palettebank], -1);
+			draw_scanline8(bitmap, 0, y, 288, scanline, &Machine->pens[0x60 + 0x80*palettebank], -1);
 		}
 	}
 	else
@@ -132,7 +133,7 @@ void draw_background_and_characters(struct mame_bitmap *bitmap)
 				scanline[x+1] = data;
 				offs++;
 			}
-			draw_scanline8(bitmap, 0, y, 288, scanline, &Machine->pens[palettebank], -1);
+			draw_scanline8(bitmap, 0, y, 288, scanline, &Machine->pens[0x60 + 0x80*palettebank], -1);
 		}
 	}
 
@@ -155,7 +156,7 @@ void draw_background_and_characters(struct mame_bitmap *bitmap)
 			x = 280 - x;
 			y = 216 - y;
 		}
-		drawgfx(bitmap,Machine->gfx[0],videoram[offs],colorram[offs],flipscreen,flipscreen,x,y,0,TRANSPARENCY_PEN,0);
+		drawgfx(bitmap,Machine->gfx[0],videoram[offs],colorram[offs] + 64*palettebank,flipscreen,flipscreen,x,y,0,TRANSPARENCY_PEN,0);
 	}
 }
 

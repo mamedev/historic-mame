@@ -38,7 +38,10 @@
 	Mahjong Banana Dream (Medal Type)
 	(c)1989 DIGITAL SOFT
 
-	Mahjong CLUB 90's
+	Mahjong CLUB 90's (set 1)
+	(c)1990 Nihon Bussan Co.,Ltd.
+
+	Mahjong CLUB 90's (set 2)
 	(c)1990 Nihon Bussan Co.,Ltd.
 
 	Mahjong THE LADY HUNTER
@@ -86,7 +89,7 @@ Memo:
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
-#include "machine/nb1413m3.h"
+#include "nb1413m3.h"
 
 
 #define	SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC
@@ -1742,7 +1745,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			nb1413m3_interrupt, _intcnt_ \
 		} \
 	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
+	60, DEFAULT_60HZ_VBLANK_DURATION, \
 	1, \
 	nb1413m3_init_machine, \
 \
@@ -1784,7 +1787,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			nb1413m3_interrupt, _intcnt_ \
 		} \
 	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
+	60, DEFAULT_60HZ_VBLANK_DURATION, \
 	1, \
 	nb1413m3_init_machine, \
 \
@@ -1826,7 +1829,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			nb1413m3_interrupt, _intcnt_ \
 		} \
 	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
+	60, DEFAULT_60HZ_VBLANK_DURATION, \
 	1, \
 	nb1413m3_init_machine, \
 \
@@ -1868,7 +1871,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			nb1413m3_interrupt, _intcnt_ \
 		} \
 	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
+	60, DEFAULT_60HZ_VBLANK_DURATION, \
 	1, \
 	nb1413m3_init_machine, \
 \
@@ -1910,7 +1913,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			nb1413m3_interrupt, _intcnt_ \
 		} \
 	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
+	60, DEFAULT_60HZ_VBLANK_DURATION, \
 	1, \
 	nb1413m3_init_machine, \
 \
@@ -1952,7 +1955,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			nb1413m3_interrupt, _intcnt_ \
 		} \
 	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
+	60, DEFAULT_60HZ_VBLANK_DURATION, \
 	1, \
 	nb1413m3_init_machine, \
 \
@@ -1986,13 +1989,13 @@ static struct MachineDriver machine_driver_##_name_ = \
 
 //	      NAME, INT,  MAIN_RM,  MAIN_WM,  MAIN_RP,  MAIN_WP, NV_RAM
 NBMJDRV1( gionbana, 132, gionbana, gionbana, gionbana, gionbana, 0 )
-NBMJDRV2( hanamomo, 132, hanamomo, hanamomo, gionbana, hanamomo, 0 )
-NBMJDRV2(  msjiken, 144, gionbana, gionbana, gionbana,  msjiken, 0 )
-NBMJDRV2(  scandal, 132, scandalm, scandalm, gionbana,  scandal, 0 )
-NBMJDRV3( telmahjn, 144, gionbana, gionbana, gionbana, gionbana, 0 )
-NBMJDRV3(  mgmen89, 132, gionbana, gionbana, gionbana, gionbana, 0 )
-NBMJDRV4(  mjfocus, 132, gionbana, gionbana, gionbana, gionbana, 0 )
-NBMJDRV4( peepshow, 132, gionbana, gionbana, gionbana, gionbana, 0 )
+NBMJDRV2( hanamomo, 128, hanamomo, hanamomo, gionbana, hanamomo, 0 )
+NBMJDRV2(  msjiken, 142, gionbana, gionbana, gionbana,  msjiken, 0 )
+NBMJDRV2(  scandal, 128, scandalm, scandalm, gionbana,  scandal, 0 )
+NBMJDRV3( telmahjn, 142, gionbana, gionbana, gionbana, gionbana, 0 )
+NBMJDRV3(  mgmen89, 128, gionbana, gionbana, gionbana, gionbana, 0 )
+NBMJDRV4(  mjfocus, 128, gionbana, gionbana, gionbana, gionbana, 0 )
+NBMJDRV4( peepshow, 128, gionbana, gionbana, gionbana, gionbana, 0 )
 NBMJDRV5( mjnanpas, 132,  club90s,  club90s, gionbana, gionbana, 0 )
 NBMJDRV5(  club90s, 132,  club90s,  club90s, gionbana, gionbana, 0 )
 NBMJDRV5( mladyhtr, 132,  club90s,  club90s, gionbana, gionbana, 0 )
@@ -2398,6 +2401,25 @@ ROM_START( club90s )
 	ROM_LOAD( "c90s_11.bin", 0x160000, 0x20000, 0x56ca8768 )
 ROM_END
 
+ROM_START( club90sa )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
+	ROM_LOAD( "c90s_23.bin", 0x00000, 0x10000, 0x60433c11 )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
+	ROM_LOAD( "c90s_02.bin", 0x00000, 0x10000, 0xb7938ed8 )
+	ROM_LOAD( "c90s_01.bin", 0x10000, 0x10000, 0xbaaf17bd )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* gfx */
+	ROM_LOAD( "c90s_04.bin", 0x080000, 0x20000, 0x2c7d74ef )
+	ROM_LOAD( "c90s_05.bin", 0x0a0000, 0x20000, 0x98d1f969 )
+	ROM_LOAD( "c90s_06.bin", 0x0c0000, 0x20000, 0x509c1499 )
+	ROM_LOAD( "c90s_07.bin", 0x0e0000, 0x20000, 0x8a8e2301 )
+	ROM_LOAD( "c90s_08.bin", 0x100000, 0x20000, 0x60fb6006 )
+	ROM_LOAD( "c90s_09.bin", 0x120000, 0x20000, 0x2fb74265 )
+	ROM_LOAD( "c90s_10.bin", 0x140000, 0x20000, 0xca858e2c )
+	ROM_LOAD( "c90s_11.bin", 0x160000, 0x20000, 0x56ca8768 )
+ROM_END
+
 ROM_START( mladyhtr )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "mlht_03.bin", 0x00000, 0x10000, 0xbda76c24 )
@@ -2495,22 +2517,22 @@ ROM_START( hanaoji )
 ROM_END
 
 
-//     YEAR,     NAME,   PARENT,  MACHINE,    INPUT,     INIT,    MONITOR, COMPANY, FULLNAME, FLAGS
-GAME( 1988, hanamomo,        0, hanamomo, hanamomo, hanamomo,       ROT0, "Nichibutsu", "Mahjong Hana no Momoko gumi (Japan)" )
-GAME( 1988,  msjiken,        0,  msjiken,  msjiken,  msjiken,     ROT270, "Nichibutsu", "Mahjong Satsujin Jiken (Japan)" )
-GAME( 1988, telmahjn,        0, telmahjn, telmahjn, telmahjn,     ROT270, "Nichibutsu", "Telephone Mahjong (Japan)" )
-GAME( 1989, gionbana,        0, gionbana, gionbana, gionbana,       ROT0, "Nichibutsu", "Gionbana (Japan)" )
-GAME( 1989,  mgmen89,        0,  mgmen89,  mgmen89,  mgmen89,       ROT0, "Nichibutsu", "Mahjong G-MEN'89 (Japan)" )
-GAME( 1989,  mjfocus,        0,  mjfocus,  mjfocus,  mjfocus,       ROT0, "Nichibutsu", "Mahjong Focus (Japan)" )
-GAME( 1989, mjfocusm,  mjfocus, mjfocusm, mjfocusm, mjfocusm,       ROT0, "Nichibutsu", "Mahjong Focus [BET] (Japan)" )
-GAME( 1989, peepshow,  mjfocus, peepshow, peepshow, peepshow,       ROT0, "AC", "Nozokimeguri Mahjong Peep Show (Japan)" )
-GAME( 1989,  scandal,        0,  scandal,  scandal,  scandal,       ROT0, "Nichibutsu", "Scandal Mahjong (Japan)" )
-GAME( 1989, scandalm,  scandal, scandalm, scandalm, scandalm,       ROT0, "Nichibutsu", "Scandal Mahjong [BET] (Japan)" )
-GAME( 1989, mjnanpas,        0, mjnanpas, mjnanpas, mjnanpas,       ROT0, "BROOKS", "Mahjong Nanpa Story (Japan)" )
-GAME( 1989, mjnanpaa, mjnanpas, mjnanpas, mjnanpaa, mjnanpas,       ROT0, "BROOKS", "Mahjong Nanpa Story (Japan old version)" )
-GAME( 1989, bananadr,        0, bananadr, bananadr, bananadr,       ROT0, "DIGITAL SOFT", "Mahjong Banana Dream [BET] (Japan)" )
-GAME( 1990,  club90s,        0,  club90s,  club90s,  club90s,       ROT0, "Nichibutsu", "Mahjong CLUB 90's (Japan)" )
-GAME( 1990, mladyhtr,        0, mladyhtr, mladyhtr, mladyhtr,       ROT0, "Nichibutsu", "Mahjong THE LADY HUNTER (Japan)" )
-GAME( 1990, chinmoku,        0, chinmoku, chinmoku, chinmoku,       ROT0, "Nichibutsu", "Mahjong Chinmoku no Hentai (Japan)" )
-GAME( 1990,    maiko,        0,    maiko,    maiko,    maiko,       ROT0, "Nichibutsu", "Maikobana (Japan)" )
-GAME( 1991,  hanaoji,        0,  hanaoji,  hanaoji,  hanaoji,       ROT0, "Nichibutsu", "Hana to Ojisan [BET]" )
+GAME( 1988, hanamomo,        0, hanamomo, hanamomo, hanamomo,   ROT0, "Nichibutsu", "Mahjong Hana no Momoko gumi (Japan)" )
+GAME( 1988,  msjiken,        0,  msjiken,  msjiken,  msjiken, ROT270, "Nichibutsu", "Mahjong Satsujin Jiken (Japan)" )
+GAME( 1988, telmahjn,        0, telmahjn, telmahjn, telmahjn, ROT270, "Nichibutsu", "Telephone Mahjong (Japan)" )
+GAME( 1989, gionbana,        0, gionbana, gionbana, gionbana,   ROT0, "Nichibutsu", "Gionbana (Japan)" )
+GAME( 1989,  mgmen89,        0,  mgmen89,  mgmen89,  mgmen89,   ROT0, "Nichibutsu", "Mahjong G-MEN'89 (Japan)" )
+GAME( 1989,  mjfocus,        0,  mjfocus,  mjfocus,  mjfocus,   ROT0, "Nichibutsu", "Mahjong Focus (Japan)" )
+GAME( 1989, mjfocusm,  mjfocus, mjfocusm, mjfocusm, mjfocusm,   ROT0, "Nichibutsu", "Mahjong Focus [BET] (Japan)" )
+GAME( 1989, peepshow,  mjfocus, peepshow, peepshow, peepshow,   ROT0, "AC", "Nozokimeguri Mahjong Peep Show (Japan)" )
+GAME( 1989,  scandal,        0,  scandal,  scandal,  scandal,   ROT0, "Nichibutsu", "Scandal Mahjong (Japan)" )
+GAME( 1989, scandalm,  scandal, scandalm, scandalm, scandalm,   ROT0, "Nichibutsu", "Scandal Mahjong [BET] (Japan)" )
+GAME( 1989, mjnanpas,        0, mjnanpas, mjnanpas, mjnanpas,   ROT0, "BROOKS", "Mahjong Nanpa Story (Japan)" )
+GAME( 1989, mjnanpaa, mjnanpas, mjnanpas, mjnanpaa, mjnanpas,   ROT0, "BROOKS", "Mahjong Nanpa Story (Japan old version)" )
+GAME( 1989, bananadr,        0, bananadr, bananadr, bananadr,   ROT0, "DIGITAL SOFT", "Mahjong Banana Dream [BET] (Japan)" )
+GAME( 1990,  club90s,        0,  club90s,  club90s,  club90s,   ROT0, "Nichibutsu", "Mahjong CLUB 90's (Japan) (set 1)" )
+GAME( 1990, club90sa,  club90s,  club90s,  club90s,  club90s,   ROT0, "Nichibutsu", "Mahjong CLUB 90's (Japan) (set 2)" )
+GAME( 1990, mladyhtr,        0, mladyhtr, mladyhtr, mladyhtr,   ROT0, "Nichibutsu", "Mahjong THE LADY HUNTER (Japan)" )
+GAME( 1990, chinmoku,        0, chinmoku, chinmoku, chinmoku,   ROT0, "Nichibutsu", "Mahjong Chinmoku no Hentai (Japan)" )
+GAME( 1990,    maiko,        0,    maiko,    maiko,    maiko,   ROT0, "Nichibutsu", "Maikobana (Japan)" )
+GAME( 1991,  hanaoji,        0,  hanaoji,  hanaoji,  hanaoji,   ROT0, "Nichibutsu", "Hana to Ojisan [BET]" )

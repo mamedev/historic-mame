@@ -70,6 +70,7 @@ int gaiden_vh_start(void)
 	tilemap_set_transparent_pen(background,0);
 	tilemap_set_transparent_pen(foreground,0);
 	tilemap_set_transparent_pen(text_layer,0);
+
 	return 0;
 }
 
@@ -130,6 +131,13 @@ WRITE16_HANDLER( gaiden_videoram3_w )
 	if (oldword != gaiden_videoram3[offset])
 		tilemap_mark_tile_dirty(background,offset&0x7ff);
 }
+
+WRITE16_HANDLER( gaiden_flip_w )
+{
+	if (ACCESSING_LSB)
+		flip_screen_set(data & 1);
+}
+
 
 READ16_HANDLER( gaiden_videoram3_r )
 {
@@ -224,6 +232,17 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 			/* wraparound */
 			if( xpos >= 256) xpos -= 512;
 			if( ypos >= 256) ypos -= 512;
+			if (flip_screen)
+			{
+				flipx = !flipx;
+				flipy = !flipy;
+
+				xpos = 256 - (8 * size) - xpos;
+				ypos = 256 - (8 * size) - ypos;
+
+				if( xpos <= -256) xpos += 512;
+				if( ypos <= -256) ypos += 512;
+			}
 
 			/* bg: 1; fg:2; text: 4 */
 			switch( priority )

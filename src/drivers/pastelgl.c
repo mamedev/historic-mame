@@ -23,13 +23,13 @@ Memo:
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
-#include "machine/nb1413m3.h"
+#include "nb1413m3.h"
 
 
 #define	SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC
 
 
-void pastelgl_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
+void pastelgl_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
 void pastelgl_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 int pastelgl_vh_start(void);
 void pastelgl_vh_stop(void);
@@ -68,7 +68,6 @@ int pastelgl_sndrom_r(int offset)
 static void init_pastelgl(void)
 {
 	nb1413m3_type = NB1413M3_PASTELGL;
-	nb1413m3_int_count = 96;
 }
 
 
@@ -242,7 +241,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			nb1413m3_interrupt, _intcnt_ \
 		} \
 	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
+	60, DEFAULT_60HZ_VBLANK_DURATION, \
 	1, \
 	0, \
 \
@@ -250,7 +249,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	256, 256, { 0, 256-1, 16, 240-1 }, \
 	0, \
 	32, 0, \
-	pastelgl_init_palette, \
+	pastelgl_vh_convert_color_prom, \
 \
 	VIDEO_TYPE_RASTER, \
 	0, \

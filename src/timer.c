@@ -166,6 +166,20 @@ INLINE void timer_list_insert(timer_entry *timer)
 	double expire = timer->enabled ? timer->expire : TIME_NEVER;
 	timer_entry *t, *lt = NULL;
 
+#ifdef MAME_DEBUG // LBO - new code in this block
+	int tnum = 0;
+	/* loop over the timer list */
+	for (t = timer_head; t; t = t->next)
+	{
+		tnum ++;
+		if (t == timer)
+		{
+			printf ("This timer is already inserted in the list!");
+			return;
+		}
+	}
+#endif
+
 	/* loop over the timer list */
 	for (t = timer_head; t; lt = t, t = t->next)
 	{

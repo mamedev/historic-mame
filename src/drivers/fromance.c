@@ -20,6 +20,9 @@
 	Idol-Mahjong Housoukyoku
 	(c)1988 System Service Co.,Ltd.
 
+	Rettou Juudan Nekkyoku Janshi - Higashi Nippon Hen
+	(c)1988 Video System Co.,Ltd.
+
 	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2001/02/04 -
 	and Nicola Salmoria, Aaron Giles
 
@@ -142,7 +145,7 @@ static WRITE_HANDLER( fromance_rombank_w )
 
 static WRITE_HANDLER( fromance_adpcm_reset_w )
 {
-	fromance_adpcm_reset = data;
+	fromance_adpcm_reset = (data & 0x01);
 	fromance_vclk_left = 0;
 
 	MSM5205_reset_w(0, !(data & 0x01));
@@ -228,6 +231,27 @@ static WRITE_HANDLER( fromance_coinctr_w )
  *
  *************************************/
 
+static MEMORY_READ_START( nekkyoku_readmem_main )
+	{ 0x0000, 0xbfff, MRA_ROM },
+	{ 0xc000, 0xdfff, MRA_RAM },
+	{ 0xf000, 0xf000, input_port_0_r },
+	{ 0xf001, 0xf001, fromance_keymatrix_r },
+	{ 0xf002, 0xf002, input_port_1_r },
+	{ 0xf003, 0xf003, fromance_busycheck_main_r },
+	{ 0xf004, 0xf004, input_port_3_r },
+	{ 0xf005, 0xf005, input_port_2_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( nekkyoku_writemem_main )
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xdfff, MWA_RAM },
+	{ 0xf000, 0xf000, fromance_portselect_w },
+	{ 0xf001, 0xf001, MWA_NOP },
+	{ 0xf002, 0xf002, fromance_coinctr_w },
+	{ 0xf003, 0xf003, fromance_commanddata_w },
+MEMORY_END
+
+
 static MEMORY_READ_START( fromance_readmem_main )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc000, 0xdfff, MRA_RAM },
@@ -256,6 +280,23 @@ MEMORY_END
  *
  *************************************/
 
+static MEMORY_READ_START( nekkyoku_readmem_sub )
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0xbfff, MRA_BANK1 },
+	{ 0xc000, 0xefff, fromance_videoram_r },
+	{ 0xf000, 0xf7ff, MRA_RAM },
+	{ 0xf800, 0xffff, fromance_paletteram_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( nekkyoku_writemem_sub )
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0x8000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xefff, fromance_videoram_w },
+	{ 0xf000, 0xf7ff, MWA_RAM },
+	{ 0xf800, 0xffff, fromance_paletteram_w },
+MEMORY_END
+
+
 static MEMORY_READ_START( fromance_readmem_sub )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
@@ -263,7 +304,6 @@ static MEMORY_READ_START( fromance_readmem_sub )
 	{ 0xc800, 0xcfff, fromance_paletteram_r },
 	{ 0xd000, 0xffff, fromance_videoram_r },
 MEMORY_END
-
 
 static MEMORY_WRITE_START( fromance_writemem_sub )
 	{ 0x0000, 0x7fff, MWA_ROM },
@@ -281,12 +321,30 @@ MEMORY_END
  *
  *************************************/
 
+static PORT_READ_START( nekkyoku_readport_sub )
+	{ 0x12, 0x12, IORP_NOP },				// unknown
+	{ 0xe1, 0xe1, fromance_busycheck_sub_r },
+	{ 0xe6, 0xe6, fromance_commanddata_r },
+PORT_END
+
+static PORT_WRITE_START( nekkyoku_writeport_sub )
+	{ 0x10, 0x10, fromance_crtc_data_w },
+	{ 0x11, 0x11, fromance_crtc_register_w },
+	{ 0xe0, 0xe0, fromance_rombank_w },
+	{ 0xe1, 0xe1, fromance_gfxreg_w },
+	{ 0xe2, 0xe5, fromance_scroll_w },
+	{ 0xe6, 0xe6, fromance_busycheck_sub_w },
+	{ 0xe7, 0xe7, fromance_adpcm_reset_w },
+	{ 0xe8, 0xe8, fromance_adpcm_w },
+	{ 0xe9, 0xe9, AY8910_write_port_0_w },
+	{ 0xea, 0xea, AY8910_control_port_0_w },
+PORT_END
+
 static PORT_READ_START( fromance_readport_sub )
 	{ 0x12, 0x12, IORP_NOP },				// unknown
 	{ 0x21, 0x21, fromance_busycheck_sub_r },
 	{ 0x26, 0x26, fromance_commanddata_r },
 PORT_END
-
 
 static PORT_WRITE_START( idolmj_writeport_sub )
 	{ 0x10, 0x10, fromance_crtc_data_w },
@@ -300,7 +358,6 @@ static PORT_WRITE_START( idolmj_writeport_sub )
 	{ 0x29, 0x29, AY8910_write_port_0_w },
 	{ 0x2a, 0x2a, AY8910_control_port_0_w },
 PORT_END
-
 
 static PORT_WRITE_START( fromance_writeport_sub )
 	{ 0x10, 0x10, fromance_crtc_data_w },
@@ -377,6 +434,87 @@ PORT_END
 	PORT_BITX(0x20, IP_ACTIVE_LOW, 0, "P1 Small", KEYCODE_BACKSPACE, IP_JOY_NONE ) \
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+
+INPUT_PORTS_START( nekkyoku )
+	PORT_START	/* (0) TEST SW */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* (1) COIN SW */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )		// COIN1
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* (2) DIPSW-1 */
+	PORT_DIPNAME( 0x01, 0x00, "DIPSW 1-1" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, "DIPSW 1-2" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, "DIPSW 1-3" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, "DIPSW 1-4" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, "DIPSW 1-5" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, "DIPSW 1-6" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, "DIPSW 1-7" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, "DIPSW 1-8" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START	/* (3) DIPSW-2 */
+	PORT_DIPNAME( 0x01, 0x00, "DIPSW 2-1" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, "DIPSW 2-2" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, "DIPSW 2-3" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, "DIPSW 2-4" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, "DIPSW 2-5" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, "DIPSW 2-6" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	FROMANCE_KEYMATRIX1	/* (4) PORT 1-0 */
+	FROMANCE_KEYMATRIX2	/* (5) PORT 1-1 */
+	FROMANCE_KEYMATRIX3	/* (6) PORT 1-2 */
+	FROMANCE_KEYMATRIX4	/* (7) PORT 1-3 */
+	FROMANCE_KEYMATRIX5	/* (8) PORT 1-4 */
+INPUT_PORTS_END
 
 
 INPUT_PORTS_START( idolmj )
@@ -940,6 +1078,48 @@ static struct MSM5205interface fromance_msm5205_interface =
  *
  *************************************/
 
+static struct MachineDriver machine_driver_nekkyoku =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			12000000/2,		/* 6.00 Mhz ? */
+			nekkyoku_readmem_main,nekkyoku_writemem_main,0,0,
+			interrupt,1
+		},
+		{
+			CPU_Z80,
+			12000000/2,		/* 6.00 Mhz ? */
+			nekkyoku_readmem_sub,nekkyoku_writemem_sub,nekkyoku_readport_sub,nekkyoku_writeport_sub,
+			ignore_interrupt,1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+	fromance_init_machine,
+
+	/* video hardware */
+	512, 256, { 0, 352-1, 0, 240-1 },
+	fromance_gfxdecodeinfo,
+	1024, 0,
+	0,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	nekkyoku_vh_start,
+	fromance_vh_stop,
+	fromance_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{ SOUND_AY8910, &ay8910_interface },
+		{ SOUND_MSM5205, &msm5205_interface }
+	}
+};
+
+
 static struct MachineDriver machine_driver_idolmj =
 {
 	/* basic machine hardware */
@@ -1030,6 +1210,34 @@ static struct MachineDriver machine_driver_fromance =
  *	ROM definitions
  *
  *************************************/
+
+ROM_START( nekkyoku )
+	ROM_REGION( 0x010000, REGION_CPU1, 0 )
+	ROM_LOAD( "1-ic1a.bin",  0x000000, 0x008000, 0xbb52d959 )
+	ROM_LOAD( "2-ic2a.bin",  0x008000, 0x008000, 0x61848d8b )
+
+	ROM_REGION( 0x210000, REGION_CPU2, 0 )
+	ROM_LOAD( "3-ic3a.bin",  0x000000, 0x008000, 0xa13da011 )
+	ROM_LOAD( "ic4a.bin",    0x010000, 0x080000, 0x1cc4d31b )
+	ROM_LOAD( "ic5a.bin",    0x090000, 0x080000, 0x8b0945a1 )
+	ROM_LOAD( "ic6a.bin",    0x110000, 0x080000, 0xd5615e1d )
+	ROM_LOAD( "4-ic7a.bin",  0x190000, 0x008000, 0xe259cfbb )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic11a.bin",   0x000000, 0x080000, 0x2bc2b1d0 )
+	ROM_LOAD( "ic12a.bin",   0x080000, 0x040000, 0xcac93dc0 )
+	ROM_LOAD( "6-ic13a.bin", 0x0c0000, 0x008000, 0x84830e34 )
+	ROM_FILL(                0x0c8000, 0x038000, 0xff )
+	ROM_FILL(                0x100000, 0x100000, 0xff )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic8a.bin",    0x000000, 0x080000, 0x599790d8 )
+	ROM_LOAD( "ic9a.bin",    0x080000, 0x040000, 0x78c1906f )
+	ROM_LOAD( "5-ic10a.bin", 0x0c0000, 0x008000, 0x2e78515f )
+	ROM_FILL(                0x0c8000, 0x038000, 0xff )
+	ROM_FILL(                0x100000, 0x100000, 0xff )
+ROM_END
+
 
 ROM_START( idolmj )
 	ROM_REGION( 0x010000, REGION_CPU1, 0 )
@@ -1182,6 +1390,7 @@ ROM_END
  *
  *************************************/
 
+GAMEX(1988, nekkyoku, 0, nekkyoku, nekkyoku, 0, ROT0, "Video System", "Rettou Juudan Nekkyoku Janshi - Higashi Nippon Hen (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1988, idolmj,   0, idolmj,   idolmj,   0, ROT0, "System Service", "Idol-Mahjong Housoukyoku (Japan)" )
 GAME( 1989, mjnatsu,  0, fromance, mjnatsu,  0, ROT0, "Video System", "Mahjong Natsu Monogatari (Japan)" )
 GAME( 1989, mfunclub, 0, fromance, mfunclub, 0, ROT0, "Video System", "Mahjong Fun Club - Idol Saizensen (Japan)" )

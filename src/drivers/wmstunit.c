@@ -31,71 +31,12 @@
 #include "cpu/tms34010/tms34010.h"
 #include "cpu/adsp2100/adsp2100.h"
 #include "sndhrdw/williams.h"
-
-
-/* these are accurate for MK Rev 5 according to measurements done by Bryan on a real board */
-/* due to the way the TMS34010 core operates, however, we need to use 0 for our VBLANK */
-/* duration (263ms is the measured value) */
-#define MKLA5_VBLANK_DURATION		0
-#define MKLA5_FPS					53.204950
-
-
-/* code-related variables */
-extern data16_t *wms_code_rom;
-extern data16_t *wms_scratch_ram;
-
-/* CMOS-related variables */
-extern data16_t *wms_cmos_ram;
-
-/* graphics-related variables */
-extern UINT8 *	wms_gfx_rom;
-extern size_t 	wms_gfx_rom_size;
-
-
-/* driver-specific initialization */
-void init_mk(void);
-void init_mk2(void);
-void init_mk2r14(void);
-void init_nbajam(void);
-void init_nbajam20(void);
-void init_nbajamte(void);
-
-/* general machine init */
-void wms_tunit_init_machine(void);
-
-
-/* external read handlers */
-READ16_HANDLER( wms_tunit_dma_r );
-READ16_HANDLER( wms_tunit_vram_r );
-READ16_HANDLER( wms_tunit_cmos_r );
-READ16_HANDLER( wms_tunit_input_r );
-READ16_HANDLER( wms_tunit_gfxrom_r );
-READ16_HANDLER( wms_tunit_sound_r );
-READ16_HANDLER( wms_tunit_sound_state_r );
-
-/* external write handlers */
-WRITE16_HANDLER( wms_tunit_dma_w );
-WRITE16_HANDLER( wms_tunit_vram_w );
-WRITE16_HANDLER( wms_tunit_cmos_w );
-WRITE16_HANDLER( wms_tunit_cmos_enable_w );
-WRITE16_HANDLER( wms_tunit_control_w );
-WRITE16_HANDLER( wms_tunit_sound_w );
-WRITE16_HANDLER( wms_tunit_paletteram_w );
-
-
-/* external video routines */
-int wms_tunit_vh_start(void);
-void wms_tunit_vh_stop(void);
-void wms_tunit_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void wms_tunit_to_shiftreg(offs_t address, unsigned short *shiftreg);
-void wms_tunit_from_shiftreg(offs_t address, unsigned short *shiftreg);
-void wms_tunit_display_addr_changed(UINT32 offs, int rowbytes, int scanline);
-
+#include "wmstunit.h"
 
 
 /*************************************
  *
- *	CMOS read/write
+ *	NVRAM handling
  *
  *************************************/
 
@@ -456,7 +397,7 @@ static struct tms34010_config cpu_config =
 	NULL,							/* generate interrupt */
 	wms_tunit_to_shiftreg,			/* write to shiftreg function */
 	wms_tunit_from_shiftreg,		/* read from shiftreg function */
-	wms_tunit_display_addr_changed,	/* display address changed */
+	0,								/* display address changed */
 	0								/* display interrupt callback */
 };
 

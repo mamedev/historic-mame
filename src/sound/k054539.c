@@ -15,13 +15,12 @@
 /* Registers:
    00..ff: 20 bytes/channel, 8 channels
      00..02: pitch (lsb, mid, msb)
-	 03:     volume (0=max, 0x40=-36dB)
-     04:
-	 05:     pan (1-f right, 10 middle, 11-1f left)
-	 06:
-	 07:
-	 08..0a: loop (lsb, mid, msb)
-	 0c..0e: start (lsb, mid, msb) (and current position ?)
+         03: volume (0=max, 0x40=-36dB)
+         04: reverb volume (idem)
+	 05: pan (1-f right, 10 middle, 11-1f left)
+     06..07: reverb delay (0=max, current computation non-trusted)
+     08..0a: loop (lsb, mid, msb)
+     0c..0e: start (lsb, mid, msb) (and current position ?)
 
    100.1ff: effects?
      13f: pan of the analog input (1-1f)
@@ -35,7 +34,14 @@
    22c: channel active? ""
    22d: data read/write port
    22e: rom/ram select (00..7f == rom banks, 80 = ram)
-   22f: enable pcm (b0), disable registers updating (b7)
+   22f: enable pcm (b0), disable register ram updating (b7)
+
+   The chip has a 0x4000 bytes reverb buffer (the ram from 0x22e).
+   The reverb delay is actually an offset in this buffer.  This driver
+   uses some tricks (doubling the buffer size so that the longest
+   reverbs don't fold over the sound to output, and adding a space at
+   the end to fold back overflows in) to be able to do frame-based
+   rendering instead of sample-based.
 */
 
 #define MAX_K054539 2
@@ -49,6 +55,8 @@ static struct {
 	struct K054539_chip {
 		unsigned char regs[0x230];
 		unsigned char *ram;
+		int reverb_pos;
+
 		int cur_ptr;
 		int cur_limit;
 		unsigned char *cur_zone;
@@ -91,43 +99,59 @@ static void K054539_update(int chip, INT16 **buffer, int length)
 		-64<<8, -49<<8, -36<<8, -25<<8, -16<<8, -9<<8, -4<<8, -1<<8
 	};
 
-	int ch;
+	int ch, reverb_pos;
+	short *rev_max;
+	short *rbase, *rbuffer, *rev_top;
 	unsigned char *samples;
 	UINT32 rom_mask;
 
-	if(!Machine->sample_rate)
-		return;
+	reverb_pos = K054539_chips.chip[chip].reverb_pos;
+	rbase = (short *)(K054539_chips.chip[chip].ram);
+	rbuffer = rbase + reverb_pos;
+	rev_max = rev_top = rbase + 0x4000;
 
 	memset(buffer[0], 0, length*2);
 	memset(buffer[1], 0, length*2);
 
-	if(!(K054539_chips.chip[chip].regs[0x22f] & 1))
-		return;
-
 	samples = K054539_chips.chip[chip].rom;
 	rom_mask = K054539_chips.chip[chip].rom_mask;
 
+	if(!(K054539_chips.chip[chip].regs[0x22f] & 1))
+		return;
+
+	K054539_chips.chip[chip].reverb_pos = (reverb_pos + length) & 0x3fff;
+
 	for(ch=0; ch<8; ch++)
 		if(K054539_chips.chip[chip].regs[0x22c] & (1<<ch)) {
-			unsigned char *base1 = K054539_chips.chip[chip].regs + 0x20*ch;
-			unsigned char *base2 = K054539_chips.chip[chip].regs + 0x200 + 0x2*ch;
-			struct K054539_channel *chan = K054539_chips.chip[chip].channels + ch;
+			unsigned char *base1, *base2;
+			struct K054539_channel *chan;
+			unsigned short rdelta;
+			short *bufl, *bufr, *revb;
+			int cur_pos, cur_pfrac, cur_val, cur_pval;
+			int delta, fdelta, pdelta;
 
-			INT16 *bufl = buffer[0];
-			INT16 *bufr = buffer[1];
+			int pan, vol, bval;
+			double rbvol, lvol, rvol;
 
-			UINT32 cur_pos = (base1[0x0c] | (base1[0x0d] << 8) | (base1[0x0e] << 16)) & rom_mask;
-			INT32 cur_pfrac;
-			INT32 cur_val, cur_pval, rval;
+			base1 = K054539_chips.chip[chip].regs + 0x20*ch;
+			base2 = K054539_chips.chip[chip].regs + 0x200 + 0x2*ch;
+			chan = K054539_chips.chip[chip].channels + ch;
+			rdelta = (base1[6] | (base1[7] << 8)) >> 3;
+			rdelta = (reverb_pos + (int)((rdelta - 0x2000) * K054539_chips.freq_ratio)) & 0x3fff;
 
-			INT32 delta = (base1[0x00] | (base1[0x01] << 8) | (base1[0x02] << 16)) * K054539_chips.freq_ratio;
-			INT32 fdelta;
-			int pdelta;
+			bufl = buffer[0];
+			bufr = buffer[1];
+			revb = rbase + rdelta;
 
-			int pan = base1[0x05] >= 0x11 && base1[0x05] <= 0x1f ? base1[0x05] - 0x11 : 0x18 - 0x11;
-			int vol = base1[0x03] & 0x7f;
-			double lvol = K054539_chips.voltab[vol] * K054539_chips.pantab[pan];
-			double rvol = K054539_chips.voltab[vol] * K054539_chips.pantab[0xe - pan];
+			cur_pos = (base1[0x0c] | (base1[0x0d] << 8) | (base1[0x0e] << 16)) & rom_mask;
+
+			delta = (base1[0x00] | (base1[0x01] << 8) | (base1[0x02] << 16)) * K054539_chips.freq_ratio;
+			pan = base1[0x05] >= 0x11 && base1[0x05] <= 0x1f ? base1[0x05] - 0x11 : 0x18 - 0x11;
+			vol = base1[0x03];
+			bval = vol+base1[0x04] >= 256 ? 255 : vol+base1[0x04];
+			rbvol = K054539_chips.voltab[bval];
+			lvol = K054539_chips.voltab[vol] * K054539_chips.pantab[pan];
+			rvol = K054539_chips.voltab[vol] * K054539_chips.pantab[0xe - pan];
 
 			if(base2[0] & 0x20) {
 				delta = -delta;
@@ -151,9 +175,9 @@ static void K054539_update(int chip, INT16 **buffer, int length)
 
 #define UPDATE_CHANNELS																	\
 			do {																		\
-				rval = (cur_pval*cur_pfrac + cur_val*(0x10000 - cur_pfrac)) >> 16;		\
-				*bufl++ += (INT16)(rval*lvol);											\
-				*bufr++ += (INT16)(rval*rvol);											\
+				*bufl++ += (INT16)(cur_val*lvol);										\
+				*bufr++ += (INT16)(cur_val*rvol);										\
+				*revb++ += (INT16)(cur_val*rbvol);										\
 			} while(0)
 
 			switch(base2[0] & 0xc) {
@@ -275,7 +299,32 @@ static void K054539_update(int chip, INT16 **buffer, int length)
 				base1[0x0d] = (cur_pos >> 8) & 0xff;
 				base1[0x0e] = (cur_pos >> 16) & 0xff;
 			}
+
+			if(revb > rev_max)
+				rev_max = revb;
 		}
+
+	while(rev_max >= rev_top) {
+		rev_max[-0x4000] += rev_max[0];
+		rev_max[0] = 0;
+		rev_max--;
+	}
+
+	{
+		int i;
+		for(i=0; i<length; i++) {
+			short val = rbase[(i+reverb_pos) & 0x3fff];
+			buffer[0][i] += val;
+			buffer[1][i] += val;
+		}
+	}
+
+	if(rbuffer+length > rev_top) {
+		int delta = rev_top-rbuffer;
+		memset(rbuffer, 0, delta*2);
+		memset(rbase, 0, (length-delta)*2);
+	} else
+		memset(rbuffer, 0, length*2);
 }
 
 
@@ -293,8 +342,12 @@ static void K054539_init_chip(int chip, const struct MachineSound *msound)
 	int i;
 
 	memset(K054539_chips.chip[chip].regs, 0, sizeof(K054539_chips.chip[chip].regs));
-	K054539_chips.chip[chip].ram = malloc(0x4000);
+	// Real size of 0x4000, the addon is to simplify the reverb buffer computations
+	K054539_chips.chip[chip].ram = malloc(0x4000*2+48000/55*2);
+	K054539_chips.chip[chip].reverb_pos = 0;
 	K054539_chips.chip[chip].cur_ptr = 0;
+	memset(K054539_chips.chip[chip].ram, 0, 0x4000*2+48000/55*2);
+
 	K054539_chips.chip[chip].rom = memory_region(K054539_chips.intf->region[chip]);
 	K054539_chips.chip[chip].rom_size = memory_region_length(K054539_chips.intf->region[chip]);
 	K054539_chips.chip[chip].rom_mask = 0xffffffffU;
@@ -439,9 +492,9 @@ int K054539_sh_start(const struct MachineSound *msound)
 	// Pan table for the left channel
 	// Right channel is identical with inverted index
 	// Formula is such that pan[i]**2+pan[0xe-i]**2 = 1 (constant output power)
-	// and pan[0] = 1 (full panning)
+	// and pan[0xe] = 1 (full panning)
 	for(i=0; i<0xf; i++)
-		K054539_chips.pantab[i] = sqrt(0xe - i) / sqrt(0xe);
+		K054539_chips.pantab[i] = sqrt(i) / sqrt(0xe);
 
 	for(i=0; i<K054539_chips.intf->num; i++)
 		K054539_init_chip(i, msound);

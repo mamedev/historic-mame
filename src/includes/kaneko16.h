@@ -70,3 +70,35 @@ void berlwall_vh_stop(void);
 void kaneko16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 void kaneko16_init_machine(void);
+
+
+/* in drivers/galpani2.c */
+
+void galpani2_mcu_run(void);
+
+/* in vidhrdw/galpani2.c */
+
+extern data16_t *galpani2_bg8_0,         *galpani2_bg8_1;
+extern data16_t *galpani2_palette_0,     *galpani2_palette_1;
+extern data16_t *galpani2_bg8_regs_0,    *galpani2_bg8_regs_1;
+extern data16_t *galpani2_bg8_0_scrollx, *galpani2_bg8_1_scrollx;
+extern data16_t *galpani2_bg8_0_scrolly, *galpani2_bg8_1_scrolly;
+
+extern data16_t *galpani2_bg15;
+
+void galpani2_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+int  galpani2_vh_start(void);
+void galpani2_vh_stop(void);
+void galpani2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+
+WRITE16_HANDLER( galpani2_palette_0_w );
+WRITE16_HANDLER( galpani2_palette_1_w );
+
+READ16_HANDLER ( galpani2_bg8_regs_0_r );
+READ16_HANDLER ( galpani2_bg8_regs_1_r );
+WRITE16_HANDLER( galpani2_bg8_regs_0_w );
+WRITE16_HANDLER( galpani2_bg8_regs_1_w );
+WRITE16_HANDLER( galpani2_bg8_0_w );
+WRITE16_HANDLER( galpani2_bg8_1_w );
+
+WRITE16_HANDLER( galpani2_bg15_w );

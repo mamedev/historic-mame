@@ -10,9 +10,15 @@
 data16_t *dcon_back_data,*dcon_fore_data,*dcon_mid_data,*dcon_scroll_ram,*dcon_textram;
 
 static struct tilemap *background_layer,*foreground_layer,*midground_layer,*text_layer;
-static int dcon_enable;
+static data16_t dcon_enable;
+static int dcon_gfx_bank_select;
 
 /******************************************************************************/
+
+READ16_HANDLER( dcon_control_r )
+{
+	return dcon_enable;
+}
 
 WRITE16_HANDLER( dcon_control_w )
 {
@@ -34,6 +40,14 @@ WRITE16_HANDLER( dcon_control_w )
 		else
 			tilemap_set_enable(background_layer,1);
 	}
+}
+
+WRITE16_HANDLER( dcon_gfxbank_w )
+{
+	if (data&1)
+		dcon_gfx_bank_select=0x1000;
+	else
+		dcon_gfx_bank_select=0;
 }
 
 WRITE16_HANDLER( dcon_background_w )
@@ -105,7 +119,7 @@ static void get_mid_tile_info(int tile_index)
 
 	SET_TILE_INFO(
 			3,
-			tile,
+			tile|dcon_gfx_bank_select,
 			color,
 			0)
 }
@@ -138,6 +152,8 @@ int dcon_vh_start(void)
 	tilemap_set_transparent_pen(foreground_layer,15);
 	tilemap_set_transparent_pen(text_layer,15);
 
+	dcon_gfx_bank_select = 0;
+
 	return 0;
 }
 
@@ -162,17 +178,23 @@ static void draw_sprites(struct mame_bitmap *bitmap,int pri)
 		else y&=0x1ff;
 
 		color = spriteram16[offs+0]&0x3f;
-		fx = 0; /* To do */
-		fy = 0; /* To do */
+		fx = spriteram16[offs+0]&0x4000;
+		fy = 0; /* To do - probably 0x2000 */
 		dy=((spriteram16[offs+0]&0x0380)>>7)+1;
 		dx=((spriteram16[offs+0]&0x1c00)>>10)+1;
 
 		for (ax=0; ax<dx; ax++)
 			for (ay=0; ay<dy; ay++) {
-				drawgfx(bitmap,Machine->gfx[4],
-				sprite++,
-				color,fx,fy,x+ax*16,y+ay*16,
-				&Machine->visible_area,TRANSPARENCY_PEN,15);
+				if (!fx)
+					drawgfx(bitmap,Machine->gfx[4],
+						sprite++,
+						color,fx,fy,x+ax*16,y+ay*16,
+						&Machine->visible_area,TRANSPARENCY_PEN,15);
+				else
+					drawgfx(bitmap,Machine->gfx[4],
+						sprite++,
+						color,fx,fy,x+(dx-1-ax)*16,y+ay*16,
+						&Machine->visible_area,TRANSPARENCY_PEN,15);
 			}
 	}
 }
@@ -190,7 +212,40 @@ void dcon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	if ((dcon_enable&1)!=1)
 		tilemap_draw(bitmap,background_layer,0,0);
 	else
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[15],&Machine->visible_area); /* Should always be black, not pen 15 */
+
+	draw_sprites(bitmap,2);
+	tilemap_draw(bitmap,midground_layer,0,0);
+	draw_sprites(bitmap,1);
+	tilemap_draw(bitmap,foreground_layer,0,0);
+	draw_sprites(bitmap,0);
+	draw_sprites(bitmap,3);
+	tilemap_draw(bitmap,text_layer,0,0);
+}
+
+void sdgndmps_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+{
+	static int last_gfx_bank=0;
+
+	/* Gfx banking */
+	if (last_gfx_bank!=dcon_gfx_bank_select)
+		tilemap_mark_all_tiles_dirty(midground_layer);
+	last_gfx_bank=dcon_gfx_bank_select;
+
+	/* Setup the tilemaps */
+	tilemap_set_scrollx( background_layer,0, dcon_scroll_ram[0]+128 );
+	tilemap_set_scrolly( background_layer,0, dcon_scroll_ram[1] );
+	tilemap_set_scrollx( midground_layer, 0, dcon_scroll_ram[2]+128 );
+	tilemap_set_scrolly( midground_layer, 0, dcon_scroll_ram[3] );
+	tilemap_set_scrollx( foreground_layer,0, dcon_scroll_ram[4]+128 );
+	tilemap_set_scrolly( foreground_layer,0, dcon_scroll_ram[5] );
+	tilemap_set_scrollx( text_layer,0, /*dcon_scroll_ram[6] + */ 128 );
+	tilemap_set_scrolly( text_layer,0, /*dcon_scroll_ram[7] + */ 0 );
+
+	if ((dcon_enable&1)!=1)
+		tilemap_draw(bitmap,background_layer,0,0);
+	else
+		fillbitmap(bitmap,Machine->pens[15],&Machine->visible_area); /* Should always be black, not pen 15 */
 
 	draw_sprites(bitmap,2);
 	tilemap_draw(bitmap,midground_layer,0,0);

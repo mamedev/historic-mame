@@ -281,7 +281,14 @@ void rainbow_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 					flipx, flipy,
 					sx,sy,
 					&Machine->visible_area,TRANSPARENCY_PEN,0);
-			else
+			else if (tile < 5120)
+			/*
+			There is a bug in Rainbow Islands that affects the secret room on
+			the last island. The routine which is responsible for displaying
+			the treasure sprites also copies 16 bytes of program code to
+			sprite RAM (see 0x5488). To avoid junk sprites on the screen, we
+			must not draw sprites with tile numbers above 5120.
+			*/
 				drawgfx(bitmap,Machine->gfx[2],
 					tile-4096,
 					color,

@@ -5811,11 +5811,13 @@ void illegal_opcode(void)
 	fprintf(fp, "\t\t mov [_illegal_op],ecx\n");
 	fprintf(fp, "\t\t mov [_illegal_pc],esi\n");
 
+#if 0
 #ifdef MAME_DEBUG
 	fprintf(fp, "\t\t jmp ecx\n");
 	fprintf(fp, "\t\t pushad\n");
 	fprintf(fp, "\t\t call _m68k_illegal_opcode\n");
 	fprintf(fp, "\t\t popad\n");
+#endif
 #endif
 
 	Exception(4,0xFFFE);

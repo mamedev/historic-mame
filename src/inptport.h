@@ -73,6 +73,11 @@ enum { IPT_END=1,IPT_PORT,
 /* input bits to this, the bit will be inverted while a vertical blank is happening. */
 	IPT_VBLANK,
 	IPT_UNKNOWN,
+	IPT_OSD_RESERVED,
+	IPT_OSD_1,
+	IPT_OSD_2,
+	IPT_OSD_3,
+	IPT_OSD_4,
 	IPT_EXTENSION,	/* this is an extension on the previous InputPort, not a real inputport. */
 					/* It is used to store additional parameters for analog inputs */
 

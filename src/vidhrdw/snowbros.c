@@ -1,8 +1,7 @@
 /***************************************************************************
 
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
+  Snow Brothers by ToaPlan - GFX driver.
+  GFX processor - PX79C480FP-3 (KANEKO, Pandora-Chip)
 
 ***************************************************************************/
 
@@ -10,18 +9,25 @@
 #include "vidhrdw/generic.h"
 
 
+WRITE16_HANDLER( snowbros_flipscreen_w )
+{
+	if (ACCESSING_MSB)
+		flip_screen_set(~data & 0x8000);
+}
+
+
 void snowbros_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
-	int x=0,y=0,offs;
+	int sx=0, sy=0, x=0, y=0, offs;
 
 
 	/*
 	 * Sprite Tile Format
 	 * ------------------
 	 *
-	 * Byte(s) | Bit(s)   | Use
-	 * --------+-76543210-+----------------
-	 *  0-5	| -------- | ?
+	 * Byte | Bit(s)   | Use
+	 * -----+-76543210-+----------------
+	 *	0-5	| -------- | ?
 	 *	6	| -------- | ?
 	 *	7	| xxxx.... | Palette Bank
 	 *	7	| .......x | XPos - Sign Bit
@@ -39,44 +45,53 @@ void snowbros_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	/* This clears & redraws the entire screen each pass */
 
-  	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,get_black_pen(),&Machine->visible_area);
 
 	for (offs = 0;offs < spriteram_size/2;offs += 8)
 	{
-		int sx = spriteram16[offs+4] & 0xff;
-		int sy = spriteram16[offs+5] & 0xff;
+		int dx = spriteram16[offs+4] & 0xff;
+		int dy = spriteram16[offs+5] & 0xff;
 		int tilecolour = spriteram16[offs+3];
+		int attr = spriteram16[offs+7];
+		int flipx =   attr & 0x80;
+		int flipy =  (attr & 0x40) << 1;
+		int tile  = ((attr & 0x0f) << 8) + (spriteram16[offs+6] & 0xff);
 
-		if (tilecolour & 1) sx = -1 - (sx ^ 0xff);
-
-		if (tilecolour & 2) sy = -1 - (sy ^ 0xff);
-
+		if (tilecolour & 1) dx = -1 - (dx ^ 0xff);
+		if (tilecolour & 2) dy = -1 - (dy ^ 0xff);
 		if (tilecolour & 4)
 		{
-			x += sx;
-			y += sy;
+			x += dx;
+			y += dy;
 		}
 		else
 		{
-			x = sx;
-			y = sy;
+			x = dx;
+			y = dy;
 		}
 
 		if (x > 511) x &= 0x1ff;
 		if (y > 511) y &= 0x1ff;
 
-		if ((x>-16) && (y>0) && (x<256) && (y<240))
+		if (flip_screen)
 		{
-			int attr = spriteram16[offs+7];
-			int tile = ((attr & 0x0f) << 8) + (spriteram16[offs+6] & 0xff);
-
-			drawgfx(bitmap,Machine->gfx[0],
-					tile,
-					(tilecolour & 0xf0) >> 4,
-					attr & 0x80, attr & 0x40,
-					x,y,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+			sx = 240 - x;
+			sy = 240 - y;
+			flipx = !flipx;
+			flipy = !flipy;
 		}
+		else
+		{
+			sx = x;
+			sy = y;
+		}
+
+		drawgfx(bitmap,Machine->gfx[0],
+				tile,
+				(tilecolour & 0xf0) >> 4,
+				flipx, flipy,
+				sx,sy,
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -84,7 +99,7 @@ void wintbob_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,get_black_pen(),&Machine->visible_area);
 
 	for (offs = 0;offs < spriteram_size/2;offs += 8)
 	{
@@ -96,17 +111,25 @@ void wintbob_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		int wrapr = spriteram16[offs+1] & 0x08;
 		int colr  = (spriteram16[offs+1] & 0xf0) >> 4;
 		int tilen = (spriteram16[offs+2] << 8) + (spriteram16[offs+3] & 0xff);
-		int flipy = spriteram16[offs+2] & 0x80;
-		int flipx = spriteram16[offs+2] & 0x40;
+		int flipx = spriteram16[offs+2] & 0x80;
+		int flipy = (spriteram16[offs+2] & 0x40) << 1;
 
 		if (wrapr == 8) xpos -= 256;
+
+		if (flip_screen)
+		{
+			xpos = 240 - xpos;
+			ypos = 240 - ypos;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
 
 		if ((xpos > -16) && (ypos > 0) && (xpos < 256) && (ypos < 240) && (disbl !=2))
 		{
 			drawgfx(bitmap,Machine->gfx[0],
 					tilen,
 					colr,
-					flipy, flipx,
+					flipx, flipy,
 					xpos,ypos,
 					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}

@@ -17,92 +17,49 @@ Supported games:
 	truxton		TP-013B		Truxton/Tatsujin
 	hellfire	TP-???		HellFire
 	zerowing	TP-015		Zero Wing
-	demonwld	TP-016		Demon's World/Horror Story
-	samesame	TP-017		Same Same Same! (Japan)	 [1989]
+	demonwld	TP-016		Demon's World/Horror Story [1990]
+	demonwl1	TP-016		Demon's World/Horror Story [1989] (Taito license)
 	fireshrk	TP-017		Fire Shark (World)		 [1990]
+	samesame	TP-017		Same Same Same! (Japan)	 [1989]
 	outzone		TP-018		Out Zone
+	outzonea	TP-018		Out Zone
 	vimana		TP-019		Vimana
-	vimana2		TP-019		Vimana (alternate)
+	vimana1		TP-019		Vimana (older version)
 	vimanan		TP-019		Vimana (Nova Apparate GMBH & Co  license)
+
+
+Notes:
+	OutZone (set 2) has a bug in the 68K code. An Jump instruction at $3E6
+	goes to to an invalid instruction at $13DA4. It should really jump to
+	$13DAA. This bad jump is executed by flicking the 'Service DSW' while
+	after the game has booted. The other Outzone set correctly goes to
+	service mode, but this set just loses the plot.
+
+	OutZone sprite priorities are unusual. On level 4, a character with
+	low priority (6) is hidden by a higher priority (8) character, yet it
+	shouldn't be. The character is a shooting enemy hidden by a sliding
+	left to right platform (which he should be standing on).
+	So how does the real hardware deal with this ?
+
+	OutZone (set 2) uses different enemies in some stages and has extra
+	bonuses compared to set 1. The music sequences are also in different
+	orders between the sets. So which is the newest version ?
+
+	Demonwld (Toaplan copyright) is a newer version, and has a different game
+	level sequence compared to the Taito licensed version.
+
 
 To Do:
 	Add support for HD647180 (Z180) sound CPUs (once their internal
 	ROMS are dumped). These are:
-		Fire Shark
+		Fire Shark/Same! Same! Same!
 		Vimana
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
-
-/**************** Machine stuff ******************/
-int  toaplan1_interrupt(void);
-WRITE16_HANDLER( toaplan1_int_enable_w );
-READ16_HANDLER( toaplan1_shared_r );
-WRITE16_HANDLER( toaplan1_shared_w );
-READ16_HANDLER( toaplan1_unk_r );
-READ16_HANDLER( samesame_port_6_word_r );
-READ16_HANDLER( vimana_mcu_r );
-WRITE16_HANDLER( vimana_mcu_w );
-READ16_HANDLER( vimana_input_port_5_word_r );
-
-READ16_HANDLER( demonwld_dsp_r );
-WRITE16_HANDLER( demonwld_dsp_w );
-WRITE16_HANDLER( demonwld_dsp_ctrl_w );
-
-void toaplan1_init_machine(void);
-
-WRITE_HANDLER( rallybik_coin_w );
-WRITE_HANDLER( toaplan1_coin_w );
-WRITE16_HANDLER( samesame_coin_w );
-
-extern unsigned char *toaplan1_sharedram;
-
-
-/**************** Video stuff ******************/
-READ16_HANDLER( toaplan1_vblank_r );
-WRITE16_HANDLER( toaplan1_flipscreen_w );
-
-READ16_HANDLER ( toaplan1_spriteram16_r );
-WRITE16_HANDLER( toaplan1_spriteram16_w );
-READ16_HANDLER ( toaplan1_spritesizeram16_r );
-WRITE16_HANDLER( toaplan1_spritesizeram16_w );
-READ16_HANDLER ( rallybik_tileram16_r );
-READ16_HANDLER ( toaplan1_tileram16_r );
-WRITE16_HANDLER( toaplan1_tileram16_w );
-READ16_HANDLER ( toaplan1_colorram1_r );
-WRITE16_HANDLER( toaplan1_colorram1_w );
-READ16_HANDLER ( toaplan1_colorram2_r );
-WRITE16_HANDLER( toaplan1_colorram2_w );
-
-READ16_HANDLER ( toaplan1_spriteram_offs_r );
-WRITE16_HANDLER( toaplan1_spriteram_offs_w );
-READ16_HANDLER ( toaplan1_tileram_offs_r );
-WRITE16_HANDLER( toaplan1_tileram_offs_w );
-READ16_HANDLER ( toaplan1_scroll_regs_r );
-WRITE16_HANDLER( toaplan1_scroll_regs_w );
-WRITE16_HANDLER( toaplan1_tile_offsets_w );
-WRITE16_HANDLER( toaplan1_layers_offset_w );
-
-void toaplan1_eof_callback(void);
-void rallybik_eof_callback(void);
-void samesame_eof_callback(void);
-int  toaplan1_vh_start(void);
-void toaplan1_vh_stop(void);
-int  rallybik_vh_start(void);
-void rallybik_vh_stop(void);
-void toaplan1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void zerowing_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void demonwld_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void rallybik_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-
-extern data16_t *toaplan1_colorram1;
-extern data16_t *toaplan1_colorram2;
-extern size_t toaplan1_colorram1_size;
-extern size_t toaplan1_colorram2_size;
-
+#include "toaplan1.h"
 
 
 
@@ -122,59 +79,67 @@ static MEMORY_WRITE16_START( rallybik_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x080000, 0x083fff, MWA16_RAM },
 	{ 0x0c0000, 0x0c0fff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x100000, 0x100001, rallybik_bcu_flipscreen_w },
 	{ 0x100002, 0x100003, toaplan1_tileram_offs_w },
 	{ 0x100004, 0x100007, toaplan1_tileram16_w },
 	{ 0x100010, 0x10001f, toaplan1_scroll_regs_w },
-	{ 0x140000, 0x140001, toaplan1_int_enable_w },
-	{ 0x140008, 0x14000f, toaplan1_layers_offset_w },
+//	{ 0x140000, 0x140001, ?? video frame related ??  },
+	{ 0x140002, 0x140003, toaplan1_int_enable_w },
+	{ 0x140008, 0x14000f, toaplan1_bcu_control_w },
 	{ 0x144000, 0x1447ff, toaplan1_colorram1_w, &toaplan1_colorram1, &toaplan1_colorram1_size },
 	{ 0x146000, 0x1467ff, toaplan1_colorram2_w, &toaplan1_colorram2, &toaplan1_colorram2_size },
 	{ 0x180000, 0x180fff, toaplan1_shared_w },
 	{ 0x1c0000, 0x1c0003, toaplan1_tile_offsets_w },
+	{ 0x1c8000, 0x1c8001, toaplan1_reset_sound },
 MEMORY_END
 
 static MEMORY_READ16_START( truxton_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x000000, 0x03ffff, MRA16_ROM },
 	{ 0x080000, 0x083fff, MRA16_RAM },
-	{ 0x0c0000, 0x0c0001, input_port_0_word_r },
+	{ 0x0c0000, 0x0c0001, toaplan1_frame_done_r },
 	{ 0x0c0002, 0x0c0003, toaplan1_spriteram_offs_r },
 	{ 0x0c0004, 0x0c0005, toaplan1_spriteram16_r },
 	{ 0x0c0006, 0x0c0007, toaplan1_spritesizeram16_r },
 	{ 0x100002, 0x100003, toaplan1_tileram_offs_r },
 	{ 0x100004, 0x100007, toaplan1_tileram16_r },
 	{ 0x100010, 0x10001f, toaplan1_scroll_regs_r },
+	{ 0x140000, 0x140001, input_port_0_word_r },
 	{ 0x144000, 0x1447ff, toaplan1_colorram1_r },
 	{ 0x146000, 0x1467ff, toaplan1_colorram2_r },
 	{ 0x180000, 0x180fff, toaplan1_shared_r },
 MEMORY_END
 static MEMORY_WRITE16_START( truxton_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x080000, 0x083fff, MWA16_RAM },
 	{ 0x0c0002, 0x0c0003, toaplan1_spriteram_offs_w },
 	{ 0x0c0004, 0x0c0005, toaplan1_spriteram16_w },
 	{ 0x0c0006, 0x0c0007, toaplan1_spritesizeram16_w },
+	{ 0x100000, 0x100001, toaplan1_bcu_flipscreen_w },
 	{ 0x100002, 0x100003, toaplan1_tileram_offs_w },
 	{ 0x100004, 0x100007, toaplan1_tileram16_w },
 	{ 0x100010, 0x10001f, toaplan1_scroll_regs_w },
-	{ 0x140000, 0x140001, toaplan1_int_enable_w },
-	{ 0x140008, 0x14000f, toaplan1_layers_offset_w },
+//	{ 0x140000, 0x140001, ?? video frame related ??  },
+	{ 0x140002, 0x140003, toaplan1_int_enable_w },
+	{ 0x140008, 0x14000f, toaplan1_bcu_control_w },
 	{ 0x144000, 0x1447ff, toaplan1_colorram1_w, &toaplan1_colorram1, &toaplan1_colorram1_size },
 	{ 0x146000, 0x1467ff, toaplan1_colorram2_w, &toaplan1_colorram2, &toaplan1_colorram2_size },
 	{ 0x180000, 0x180fff, toaplan1_shared_w },
 	{ 0x1c0000, 0x1c0003, toaplan1_tile_offsets_w },
-	{ 0x1c0006, 0x1c0007, toaplan1_flipscreen_w },
+	{ 0x1c0006, 0x1c0007, toaplan1_fcu_flipscreen_w },
+	{ 0x1d0000, 0x1d0001, toaplan1_reset_sound },
 MEMORY_END
 
 static MEMORY_READ16_START( hellfire_readmem )
 	{ 0x000000, 0x03ffff, MRA16_ROM },
 	{ 0x040000, 0x047fff, MRA16_RAM },
+	{ 0x080000, 0x080001, input_port_0_word_r },
 	{ 0x084000, 0x0847ff, toaplan1_colorram1_r },
 	{ 0x086000, 0x0867ff, toaplan1_colorram2_r },
 	{ 0x0c0000, 0x0c0fff, toaplan1_shared_r },
 	{ 0x100002, 0x100003, toaplan1_tileram_offs_r },
 	{ 0x100004, 0x100007, toaplan1_tileram16_r },
 	{ 0x100010, 0x10001f, toaplan1_scroll_regs_r },
-	{ 0x140000, 0x140001, input_port_0_word_r },
+	{ 0x140000, 0x140001, toaplan1_frame_done_r },
 	{ 0x140002, 0x140003, toaplan1_spriteram_offs_r },
 	{ 0x140004, 0x140005, toaplan1_spriteram16_r },
 	{ 0x140006, 0x140007, toaplan1_spritesizeram16_r },
@@ -182,11 +147,13 @@ MEMORY_END
 static MEMORY_WRITE16_START( hellfire_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x040000, 0x047fff, MWA16_RAM },
+/*	{ 0x080000, 0x080001, ?? video frame related ??  },	*/
 	{ 0x080002, 0x080003, toaplan1_int_enable_w },
-	{ 0x080008, 0x08000f, toaplan1_layers_offset_w },
+	{ 0x080008, 0x08000f, toaplan1_bcu_control_w },
 	{ 0x084000, 0x0847ff, toaplan1_colorram1_w, &toaplan1_colorram1, &toaplan1_colorram1_size },
 	{ 0x086000, 0x0867ff, toaplan1_colorram2_w, &toaplan1_colorram2, &toaplan1_colorram2_size },
 	{ 0x0c0000, 0x0c0fff, toaplan1_shared_w },
+	{ 0x100000, 0x100001, toaplan1_bcu_flipscreen_w },
 	{ 0x100002, 0x100003, toaplan1_tileram_offs_w },
 	{ 0x100004, 0x100007, toaplan1_tileram16_w },
 	{ 0x100010, 0x10001f, toaplan1_scroll_regs_w },
@@ -194,20 +161,21 @@ static MEMORY_WRITE16_START( hellfire_writemem )
 	{ 0x140004, 0x140005, toaplan1_spriteram16_w },
 	{ 0x140006, 0x140007, toaplan1_spritesizeram16_w },
 	{ 0x180000, 0x180003, toaplan1_tile_offsets_w },
-	{ 0x180006, 0x180007, toaplan1_flipscreen_w },
+	{ 0x180006, 0x180007, toaplan1_fcu_flipscreen_w },
+	{ 0x180008, 0x180009, toaplan1_reset_sound },
 MEMORY_END
 
 static MEMORY_READ16_START( zerowing_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
 	{ 0x080000, 0x087fff, MRA16_RAM },
-	{ 0x400000, 0x400005, toaplan1_unk_r },
+	{ 0x400000, 0x400001, input_port_0_word_r },
 	{ 0x404000, 0x4047ff, toaplan1_colorram1_r },
 	{ 0x406000, 0x4067ff, toaplan1_colorram2_r },
 	{ 0x440000, 0x440fff, toaplan1_shared_r },
 	{ 0x480002, 0x480003, toaplan1_tileram_offs_r },
 	{ 0x480004, 0x480007, toaplan1_tileram16_r },
 	{ 0x480010, 0x48001f, toaplan1_scroll_regs_r },
-	{ 0x4c0000, 0x4c0001, input_port_0_word_r },
+	{ 0x4c0000, 0x4c0001, toaplan1_frame_done_r },
 	{ 0x4c0002, 0x4c0003, toaplan1_spriteram_offs_r },
 	{ 0x4c0004, 0x4c0005, toaplan1_spriteram16_r },
 	{ 0x4c0006, 0x4c0007, toaplan1_spritesizeram16_r },
@@ -216,12 +184,14 @@ static MEMORY_WRITE16_START( zerowing_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x080000, 0x087fff, MWA16_RAM },
 	{ 0x0c0000, 0x0c0003, toaplan1_tile_offsets_w },
-	{ 0x0c0006, 0x0c0007, toaplan1_flipscreen_w },
+	{ 0x0c0006, 0x0c0007, toaplan1_fcu_flipscreen_w },
+/*	{ 0x400000, 0x400001, ?? video frame related ??  },	*/
 	{ 0x400002, 0x400003, toaplan1_int_enable_w },
-	{ 0x400008, 0x40000f, toaplan1_layers_offset_w },
+	{ 0x400008, 0x40000f, toaplan1_bcu_control_w },
 	{ 0x404000, 0x4047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &toaplan1_colorram1_size },
 	{ 0x406000, 0x4067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &toaplan1_colorram2_size },
 	{ 0x440000, 0x440fff, toaplan1_shared_w },
+	{ 0x480000, 0x480001, toaplan1_bcu_flipscreen_w },
 	{ 0x480002, 0x480003, toaplan1_tileram_offs_w },
 	{ 0x480004, 0x480007, toaplan1_tileram16_w },
 	{ 0x480010, 0x48001f, toaplan1_scroll_regs_w },
@@ -239,7 +209,7 @@ static MEMORY_READ16_START( demonwld_readmem )
 	{ 0x800002, 0x800003, toaplan1_tileram_offs_r },
 	{ 0x800004, 0x800007, toaplan1_tileram16_r },
 	{ 0x800010, 0x80001f, toaplan1_scroll_regs_r },
-	{ 0xa00000, 0xa00001, input_port_0_word_r },
+	{ 0xa00000, 0xa00001, toaplan1_frame_done_r },
 	{ 0xa00002, 0xa00003, toaplan1_spriteram_offs_r },
 	{ 0xa00004, 0xa00005, toaplan1_spriteram16_r },
 	{ 0xa00006, 0xa00007, toaplan1_spritesizeram16_r },
@@ -247,20 +217,23 @@ static MEMORY_READ16_START( demonwld_readmem )
 MEMORY_END
 static MEMORY_WRITE16_START( demonwld_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x340006, 0x340007, toaplan1_flipscreen_w },
+/*	{ 0x400000, 0x400001, ?? video frame related ??  },	*/
+	{ 0x400002, 0x400003, toaplan1_int_enable_w },
+	{ 0x400008, 0x40000f, toaplan1_bcu_control_w },
 	{ 0x404000, 0x4047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &toaplan1_colorram1_size },
 	{ 0x406000, 0x4067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &toaplan1_colorram2_size },
 	{ 0x600000, 0x600fff, toaplan1_shared_w },
+	{ 0x800000, 0x800001, toaplan1_bcu_flipscreen_w },
 	{ 0x800002, 0x800003, toaplan1_tileram_offs_w },
 	{ 0x800004, 0x800007, toaplan1_tileram16_w },
 	{ 0x800010, 0x80001f, toaplan1_scroll_regs_w },
-	{ 0x400000, 0x400001, toaplan1_int_enable_w },
-	{ 0x400008, 0x40000f, toaplan1_layers_offset_w },
 	{ 0xa00002, 0xa00003, toaplan1_spriteram_offs_w },
 	{ 0xa00004, 0xa00005, toaplan1_spriteram16_w },
 	{ 0xa00006, 0xa00007, toaplan1_spritesizeram16_w },
 	{ 0xc00000, 0xc03fff, MWA16_RAM },
 	{ 0xe00000, 0xe00003, toaplan1_tile_offsets_w },
+	{ 0xe00006, 0xe00007, toaplan1_fcu_flipscreen_w },
+	{ 0xe00008, 0xe00009, toaplan1_reset_sound },
 	{ 0xe0000a, 0xe0000b, demonwld_dsp_ctrl_w },	/* DSP Comms control */
 MEMORY_END
 
@@ -268,7 +241,7 @@ static MEMORY_READ16_START( samesame_readmem )
 	{ 0x000000, 0x00ffff, MRA16_ROM },
 	{ 0x040000, 0x07ffff, MRA16_ROM },
 	{ 0x0c0000, 0x0c3fff, MRA16_RAM },
-	{ 0x100000, 0x100001, toaplan1_vblank_r },
+	{ 0x100000, 0x100001, input_port_0_word_r },
 	{ 0x104000, 0x1047ff, toaplan1_colorram1_r },
 	{ 0x106000, 0x1067ff, toaplan1_colorram2_r },
 	{ 0x140000, 0x140001, input_port_1_word_r },
@@ -280,7 +253,7 @@ static MEMORY_READ16_START( samesame_readmem )
 	{ 0x180002, 0x180003, toaplan1_tileram_offs_r },
 	{ 0x180004, 0x180007, toaplan1_tileram16_r },
 	{ 0x180010, 0x18001f, toaplan1_scroll_regs_r },
-	{ 0x1c0000, 0x1c0001, input_port_0_word_r },
+	{ 0x1c0000, 0x1c0001, toaplan1_frame_done_r },
 	{ 0x1c0002, 0x1c0003, toaplan1_spriteram_offs_r },
 	{ 0x1c0004, 0x1c0005, toaplan1_spriteram16_r },
 	{ 0x1c0006, 0x1c0007, toaplan1_spritesizeram16_r },
@@ -289,15 +262,16 @@ static MEMORY_WRITE16_START( samesame_writemem )
 	{ 0x000000, 0x00ffff, MWA16_ROM },
 	{ 0x040000, 0x07ffff, MWA16_ROM },
 	{ 0x080000, 0x080003, toaplan1_tile_offsets_w },
-	{ 0x080006, 0x080007, toaplan1_flipscreen_w },
+	{ 0x080006, 0x080007, toaplan1_fcu_flipscreen_w },
 	{ 0x0c0000, 0x0c3fff, MWA16_RAM },			/* Frame done at $c1ada */
-/*	{ 0x100000, 0x100001, ??? },				disable palette refresh ? */
+/*	{ 0x100000, 0x100001, ?? video frame related ??  },	*/
 	{ 0x100002, 0x100003, toaplan1_int_enable_w },
-	{ 0x100008, 0x10000f, toaplan1_layers_offset_w },
+	{ 0x100008, 0x10000f, toaplan1_bcu_control_w },
 	{ 0x104000, 0x1047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &toaplan1_colorram1_size },
 	{ 0x106000, 0x1067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &toaplan1_colorram2_size },
 	{ 0x14000c, 0x14000d, samesame_coin_w },	/* Coin counter/lockout */
 //	{ 0x14000e, 0x14000f, samesame_mcu_w },		/* Commands sent to HD647180 */
+	{ 0x180000, 0x180001, toaplan1_bcu_flipscreen_w },
 	{ 0x180002, 0x180003, toaplan1_tileram_offs_w },
 	{ 0x180004, 0x180007, toaplan1_tileram16_w },
 	{ 0x180010, 0x18001f, toaplan1_scroll_regs_w },
@@ -308,8 +282,8 @@ static MEMORY_WRITE16_START( samesame_writemem )
 MEMORY_END
 
 static MEMORY_READ16_START( outzone_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x100000, 0x100001, input_port_0_word_r },
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x100000, 0x100001, toaplan1_frame_done_r },
 	{ 0x100002, 0x100003, toaplan1_spriteram_offs_r },
 	{ 0x100004, 0x100005, toaplan1_spriteram16_r },
 	{ 0x100006, 0x100007, toaplan1_spritesizeram16_r },
@@ -318,35 +292,37 @@ static MEMORY_READ16_START( outzone_readmem )
 	{ 0x200004, 0x200007, toaplan1_tileram16_r },
 	{ 0x200010, 0x20001f, toaplan1_scroll_regs_r },
 	{ 0x240000, 0x243fff, MRA16_RAM },
-	{ 0x300000, 0x300001, toaplan1_vblank_r },
+	{ 0x300000, 0x300001, input_port_0_word_r },
 	{ 0x304000, 0x3047ff, toaplan1_colorram1_r },
 	{ 0x306000, 0x3067ff, toaplan1_colorram2_r },
 MEMORY_END
 static MEMORY_WRITE16_START( outzone_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x100002, 0x100003, toaplan1_spriteram_offs_w },
 	{ 0x100004, 0x100005, toaplan1_spriteram16_w },
 	{ 0x100006, 0x100007, toaplan1_spritesizeram16_w },
 	{ 0x140000, 0x140fff, toaplan1_shared_w },
+	{ 0x200000, 0x200001, toaplan1_bcu_flipscreen_w },
 	{ 0x200002, 0x200003, toaplan1_tileram_offs_w },
 	{ 0x200004, 0x200007, toaplan1_tileram16_w },
 	{ 0x200010, 0x20001f, toaplan1_scroll_regs_w },
 	{ 0x240000, 0x243fff, MWA16_RAM },
-	{ 0x300000, 0x300001, toaplan1_int_enable_w },
-	{ 0x300008, 0x30000f, toaplan1_layers_offset_w },
+/*	{ 0x300000, 0x300001, ?? video frame related ??  },	*/
+	{ 0x300002, 0x300003, toaplan1_int_enable_w },
+	{ 0x300008, 0x30000f, toaplan1_bcu_control_w },
 	{ 0x304000, 0x3047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &toaplan1_colorram1_size },
 	{ 0x306000, 0x3067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &toaplan1_colorram2_size },
 	{ 0x340000, 0x340003, toaplan1_tile_offsets_w },
-	{ 0x340006, 0x340007, toaplan1_flipscreen_w },
+	{ 0x340006, 0x340007, toaplan1_fcu_flipscreen_w },
 MEMORY_END
 
 static MEMORY_READ16_START( vimana_readmem )
 	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x0c0000, 0x0c0001, input_port_0_word_r },
+	{ 0x0c0000, 0x0c0001, toaplan1_frame_done_r },
 	{ 0x0c0002, 0x0c0003, toaplan1_spriteram_offs_r },
 	{ 0x0c0004, 0x0c0005, toaplan1_spriteram16_r },
 	{ 0x0c0006, 0x0c0007, toaplan1_spritesizeram16_r },
-	{ 0x400000, 0x400001, toaplan1_vblank_r },
+	{ 0x400000, 0x400001, input_port_0_word_r },
 	{ 0x404000, 0x4047ff, toaplan1_colorram1_r },
 	{ 0x406000, 0x4067ff, toaplan1_colorram2_r },
 	{ 0x440000, 0x440005, vimana_mcu_r },
@@ -357,7 +333,6 @@ static MEMORY_READ16_START( vimana_readmem )
 	{ 0x44000e, 0x44000f, input_port_4_word_r },
 	{ 0x440010, 0x440011, input_port_6_word_r },
 	{ 0x480000, 0x487fff, MRA16_RAM },
-	{ 0x4c0000, 0x4c0001, toaplan1_unk_r },
 	{ 0x4c0002, 0x4c0003, toaplan1_tileram_offs_r },
 	{ 0x4c0004, 0x4c0007, toaplan1_tileram16_r },
 	{ 0x4c0010, 0x4c001f, toaplan1_scroll_regs_r },
@@ -365,16 +340,18 @@ MEMORY_END
 static MEMORY_WRITE16_START( vimana_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x080000, 0x080003, toaplan1_tile_offsets_w },
-	{ 0x080006, 0x080007, toaplan1_flipscreen_w },
+	{ 0x080006, 0x080007, toaplan1_fcu_flipscreen_w },
 	{ 0x0c0002, 0x0c0003, toaplan1_spriteram_offs_w },
 	{ 0x0c0004, 0x0c0005, toaplan1_spriteram16_w },
 	{ 0x0c0006, 0x0c0007, toaplan1_spritesizeram16_w },
-	{ 0x400002, 0x400003, toaplan1_int_enable_w },	/* IRQACK? */
-	{ 0x400008, 0x40000f, toaplan1_layers_offset_w },
+/*	{ 0x400000, 0x400001, ?? video frame related ??  },	*/
+	{ 0x400002, 0x400003, toaplan1_int_enable_w },
+	{ 0x400008, 0x40000f, toaplan1_bcu_control_w },
 	{ 0x404000, 0x4047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &toaplan1_colorram1_size },
 	{ 0x406000, 0x4067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &toaplan1_colorram2_size },
 	{ 0x440000, 0x440005, vimana_mcu_w },
 	{ 0x480000, 0x487fff, MWA16_RAM },
+	{ 0x4c0000, 0x4c0001, toaplan1_bcu_flipscreen_w },
 	{ 0x4c0002, 0x4c0003, toaplan1_tileram_offs_w },
 	{ 0x4c0004, 0x4c0007, toaplan1_tileram16_w },
 	{ 0x4c0010, 0x4c001f, toaplan1_scroll_regs_w },
@@ -493,10 +470,10 @@ static PORT_WRITE16_START( DSP_writeport )
 PORT_END
 
 
+
 /*****************************************************************************
 	Input Port definitions
 *****************************************************************************/
-
 
 #define  TOAPLAN1_PLAYER_INPUT( player, button3 )										\
 	PORT_START																	\
@@ -518,14 +495,16 @@ PORT_END
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )		\
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )	\
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )	\
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
+#define  TOAPLAN1_VBLANK_INPUT						\
+	PORT_START										\
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )	\
+	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 
 INPUT_PORTS_START( rallybik )
-	PORT_START		/* VBlank */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	TOAPLAN1_VBLANK_INPUT
 
 	TOAPLAN1_PLAYER_INPUT( IPF_PLAYER1, IPT_UNKNOWN )
 
@@ -582,9 +561,7 @@ INPUT_PORTS_START( rallybik )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( truxton )
-	PORT_START		/* VBlank */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	TOAPLAN1_VBLANK_INPUT
 
 	TOAPLAN1_PLAYER_INPUT( IPF_PLAYER1, IPT_UNKNOWN )
 
@@ -667,9 +644,7 @@ INPUT_PORTS_START( truxton )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( hellfire )
-	PORT_START		/* VBlank */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	TOAPLAN1_VBLANK_INPUT
 
 	TOAPLAN1_PLAYER_INPUT( IPF_PLAYER1, IPT_UNKNOWN )
 
@@ -738,9 +713,7 @@ INPUT_PORTS_START( hellfire )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( zerowing )
-	PORT_START		/* VBlank */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	TOAPLAN1_VBLANK_INPUT
 
 	TOAPLAN1_PLAYER_INPUT( IPF_PLAYER1, IPT_UNKNOWN )
 
@@ -809,9 +782,7 @@ INPUT_PORTS_START( zerowing )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( demonwld )
-	PORT_START		/* VBlank */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	TOAPLAN1_VBLANK_INPUT
 
 	TOAPLAN1_PLAYER_INPUT( IPF_PLAYER1, IPT_BUTTON3 )
 
@@ -847,7 +818,77 @@ INPUT_PORTS_START( demonwld )
 	PORT_DIPSETTING(    0x03, "Hardest" )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "30K, every 100K" )
-    PORT_DIPSETTING(    0x04, "50K and 100K" )
+	PORT_DIPSETTING(    0x04, "50K and 100K" )
+	PORT_DIPSETTING(    0x08, "100K only" )
+	PORT_DIPSETTING(    0x0c, "None" )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x30, "1" )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x10, "5" )
+	PORT_BITX(    0x40, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	TOAPLAN1_SYSTEM_INPUTS
+
+	PORT_START		/* Territory Jumper Block */
+	PORT_DIPNAME( 0x01, 0x01, "Territory/Copyright" )
+	PORT_DIPSETTING(    0x01, "Toaplan" )
+	PORT_DIPSETTING(    0x00, "Japan/Taito Corp" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( demonwl1 )
+	TOAPLAN1_VBLANK_INPUT
+
+	TOAPLAN1_PLAYER_INPUT( IPF_PLAYER1, IPT_BUTTON3 )
+
+	TOAPLAN1_PLAYER_INPUT( IPF_PLAYER2, IPT_BUTTON3 )
+
+	PORT_START		/* DSW A */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_HIGH )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
+
+	PORT_START		/* DSW B */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x01, "Easy" )
+	PORT_DIPSETTING(    0x00, "Medium" )
+	PORT_DIPSETTING(    0x02, "Hard" )
+	PORT_DIPSETTING(    0x03, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "30K, every 100K" )
+	PORT_DIPSETTING(    0x04, "50K and 100K" )
 	PORT_DIPSETTING(    0x08, "100K only" )
 	PORT_DIPSETTING(    0x0c, "None" )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
@@ -880,9 +921,7 @@ INPUT_PORTS_START( demonwld )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( samesame )
-	PORT_START		/* VBlank */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	TOAPLAN1_VBLANK_INPUT
 
 	TOAPLAN1_PLAYER_INPUT( IPF_PLAYER1, IPT_UNKNOWN )
 
@@ -966,9 +1005,7 @@ INPUT_PORTS_START( samesame )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( fireshrk )
-	PORT_START		/* VBlank */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	TOAPLAN1_VBLANK_INPUT
 
 	TOAPLAN1_PLAYER_INPUT( IPF_PLAYER1, IPT_UNKNOWN )
 
@@ -1036,9 +1073,7 @@ INPUT_PORTS_START( fireshrk )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( outzone )
-	PORT_START		/* VBlank */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	TOAPLAN1_VBLANK_INPUT
 
 	TOAPLAN1_PLAYER_INPUT( IPF_PLAYER1, IPT_BUTTON3 )
 
@@ -1106,9 +1141,7 @@ INPUT_PORTS_START( outzone )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( vimana )
-	PORT_START		/* VBlank */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	TOAPLAN1_VBLANK_INPUT
 
 	TOAPLAN1_PLAYER_INPUT( IPF_PLAYER1, IPT_BUTTON3 )
 
@@ -1183,9 +1216,7 @@ INPUT_PORTS_START( vimana )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( vimanan )
-	PORT_START		/* VBlank */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	TOAPLAN1_VBLANK_INPUT
 
 	TOAPLAN1_PLAYER_INPUT( IPF_PLAYER1, IPT_BUTTON3 )
 
@@ -1377,7 +1408,7 @@ static const struct MachineDriver machine_driver_rallybik =
 	/* video hardware */
 	320, 240, { 0, 319, 0, 239 },
 	rallybik_gfxdecodeinfo,
-	2048, 0,
+	(64*16)+(64*16), 0,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
@@ -1420,7 +1451,7 @@ static const struct MachineDriver machine_driver_truxton =
 	/* video hardware */
 	320, 240, { 0, 319, 0, 239 },
 	gfxdecodeinfo,
-	2048, 0,
+	(64*16)+(64*16), 0,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
@@ -1463,14 +1494,14 @@ static const struct MachineDriver machine_driver_hellfire =
 	/* video hardware */
 	320, 256, { 0, 319, 16, 255 },
 	gfxdecodeinfo,
-	2048, 0,
+	(64*16)+(64*16), 0,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	toaplan1_eof_callback,
 	toaplan1_vh_start,
 	toaplan1_vh_stop,
-	zerowing_vh_screenrefresh,
+	toaplan1_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1501,12 +1532,12 @@ static const struct MachineDriver machine_driver_zerowing =
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
-	toaplan1_init_machine,
+	zerozone_init_machine,
 
 	/* video hardware */
 	320, 256, { 0, 319, 16, 255 },
 	gfxdecodeinfo,
-	2048, 0,
+	(64*16)+(64*16), 0,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
@@ -1545,17 +1576,17 @@ static const struct MachineDriver machine_driver_demonwld =
 			CPU_TMS320C10,
 			28000000/8,		/* 3.5 MHz */
 			DSP_readmem,DSP_writemem,DSP_readport,DSP_writeport,
-			ignore_interrupt,0	/* IRQs are caused by 68000 */
+			ignore_interrupt,0	/* IRQs are caused by the 68000 */
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
-	toaplan1_init_machine,
+	demonwld_init_machine,
 
 	/* video hardware */
 	320, 256, { 0, 319, 16, 255 },
 	gfxdecodeinfo,
-	2048, 0,
+	(64*16)+(64*16), 0,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
@@ -1592,14 +1623,14 @@ static const struct MachineDriver machine_driver_samesame =
 	/* video hardware */
 	320, 240, { 0, 319, 0, 239 },
 	gfxdecodeinfo,
-	2048, 0,
+	(64*16)+(64*16), 0,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	samesame_eof_callback,
 	toaplan1_vh_start,
 	toaplan1_vh_stop,
-	zerowing_vh_screenrefresh,
+	toaplan1_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1630,12 +1661,12 @@ static const struct MachineDriver machine_driver_outzone =
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
-	toaplan1_init_machine,
+	zerozone_init_machine,
 
 	/* video hardware */
 	320, 240, {0, 319, 0, 239 },
 	outzone_gfxdecodeinfo,
-	2048, 0,
+	(64*16)+(64*16), 0,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
@@ -1667,19 +1698,19 @@ static const struct MachineDriver machine_driver_vimana =
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
-	toaplan1_init_machine,
+	vimana_init_machine,
 
 	/* video hardware */
 	320, 240, { 0, 319, 0, 239 },
 	vm_gfxdecodeinfo,
-	2048, 0,
+	(64*16)+(64*16), 0,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	toaplan1_eof_callback,
 	toaplan1_vh_start,
 	toaplan1_vh_stop,
-	zerowing_vh_screenrefresh,
+	toaplan1_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1796,6 +1827,35 @@ ROM_END
 
 ROM_START( demonwld )
 	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
+	ROM_LOAD16_BYTE( "rom10.v2",  0x000000, 0x20000, 0xca8194f3 )
+	ROM_LOAD16_BYTE( "rom09.v2",  0x000001, 0x20000, 0x7baea7ba )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
+	ROM_LOAD( "rom11.v2",  0x0000, 0x8000, 0xdbe08c85 )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* Co-Processor TMS320C10 MCU code */
+	ROM_LOAD16_BYTE( "dsp_21.bin",  0x8000, 0x0800, 0x2d135376 )
+	ROM_LOAD16_BYTE( "dsp_22.bin",  0x8001, 0x0800, 0x79389a71 )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "rom05",  0x00000, 0x20000, 0x6506c982 )
+	ROM_LOAD( "rom07",  0x20000, 0x20000, 0xa3a0d993 )
+	ROM_LOAD( "rom06",  0x40000, 0x20000, 0x4fc5e5f3 )
+	ROM_LOAD( "rom08",  0x60000, 0x20000, 0xeb53ab09 )
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "rom01",  0x00000, 0x20000, 0x1b3724e9 )
+	ROM_LOAD( "rom02",  0x20000, 0x20000, 0x7b20a44d )
+	ROM_LOAD( "rom03",  0x40000, 0x20000, 0x2cacdcd0 )
+	ROM_LOAD( "rom04",  0x60000, 0x20000, 0x76fd3201 )
+
+	ROM_REGION( 0x40, REGION_PROMS, 0 )		/* nibble bproms, lo/hi order to be determined */
+	ROM_LOAD( "prom12.bpr",  0x00, 0x20, 0xbc88cced )	/* sprite attribute (flip/position) ?? */
+	ROM_LOAD( "prom13.bpr",  0x20, 0x20, 0xa1e17492 )	/* ??? */
+ROM_END
+
+ROM_START( demonwl1 )
+	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
 	ROM_LOAD16_BYTE( "rom10",  0x000000, 0x20000, 0x036ee46c )
 	ROM_LOAD16_BYTE( "rom09",  0x000001, 0x20000, 0xbed746e3 )
 
@@ -1901,7 +1961,7 @@ ROM_START( outzonea )
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "rom5.bin",  0x00000, 0x80000, 0xc64ec7b6 )
 	ROM_LOAD( "rom6.bin",  0x80000, 0x80000, 0x64b6c5ac )
-/* one pirate board uses the same data in a different layout
+/* a pirate board exists using the same data in a different layout
 	ROM_LOAD16_BYTE( "04.bin",  0x000000, 0x10000, 0x3d11eae0 )
 	ROM_LOAD16_BYTE( "08.bin",  0x000001, 0x10000, 0xc7628891 )
 	ROM_LOAD16_BYTE( "13.bin",  0x080000, 0x10000, 0xb23dd87e )
@@ -1929,8 +1989,8 @@ ROM_END
 
 ROM_START( vimana )
 	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
-	ROM_LOAD16_BYTE( "vim07.bin",  0x000000, 0x20000, 0x1efaea84 )
-	ROM_LOAD16_BYTE( "vim08.bin",  0x000001, 0x20000, 0xe45b7def )
+	ROM_LOAD16_BYTE( "tp019-7a.bin",  0x000000, 0x20000, 0x5a4bf73e )
+	ROM_LOAD16_BYTE( "tp019-8a.bin",  0x000001, 0x20000, 0x03ba27e8 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound HD647180 code */
 	/* sound CPU is a HD647180 (Z180) with internal ROM - not yet supported */
@@ -1951,10 +2011,10 @@ ROM_START( vimana )
 	ROM_LOAD( "tp019-10.bpr",  0x20, 0x20, 0xa1e17492 )	/* ??? */
 ROM_END
 
-ROM_START( vimana2 )
+ROM_START( vimana1 )
 	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
-	ROM_LOAD16_BYTE( "vimana07.bin",  0x000000, 0x20000, 0x5a4bf73e )
-	ROM_LOAD16_BYTE( "vimana08.bin",  0x000001, 0x20000, 0x03ba27e8 )
+	ROM_LOAD16_BYTE( "vim07.bin",  0x000000, 0x20000, 0x1efaea84 )
+	ROM_LOAD16_BYTE( "vim08.bin",  0x000001, 0x20000, 0xe45b7def )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound HD647180 code */
 	/* sound CPU is a HD647180 (Z180) with internal ROM - not yet supported */
@@ -2005,11 +2065,12 @@ GAME ( 1988, rallybik, 0,        rallybik, rallybik, 0, ROT270, "[Toaplan] Taito
 GAME ( 1988, truxton,  0,        truxton,  truxton,  0, ROT270, "[Toaplan] Taito Corporation", "Truxton / Tatsujin" )
 GAME ( 1989, hellfire, 0,        hellfire, hellfire, 0, ROT0,   "Toaplan (Taito license)", "Hellfire" )
 GAME ( 1989, zerowing, 0,        zerowing, zerowing, 0, ROT0,   "Toaplan", "Zero Wing" )
-GAME ( 1989, demonwld, 0,        demonwld, demonwld, 0, ROT0,   "Toaplan (Taito license)", "Demon's World / Horror Story" )
+GAME ( 1990, demonwld, 0,        demonwld, demonwld, 0, ROT0,   "Toaplan", "Demon's World / Horror Story" )
+GAME ( 1989, demonwl1, demonwld, demonwld, demonwl1, 0, ROT0,   "Toaplan (Taito license)", "Demon's World / Horror Story (Taito license)" )
 GAMEX( 1990, fireshrk, 0,        samesame, fireshrk, 0, ROT270, "Toaplan", "Fire Shark", GAME_NO_SOUND )
 GAMEX( 1989, samesame, fireshrk, samesame, samesame, 0, ROT270, "Toaplan", "Same! Same! Same!", GAME_NO_SOUND )
 GAME ( 1990, outzone,  0,        outzone,  outzone,  0, ROT270, "Toaplan", "Out Zone (set 1)" )
-GAME ( 1990, outzonea, outzone,  outzone,  outzone,  0, ROT270, "bootleg", "Out Zone (set 2)" )
-GAMEX( 1991, vimana,   0,        vimana,   vimana,   0, ROT270, "Toaplan", "Vimana (set 1)", GAME_NO_SOUND )
-GAMEX( 1991, vimana2,  vimana,   vimana,   vimana,   0, ROT270, "Toaplan", "Vimana (set 2)", GAME_NO_SOUND )
+GAME ( 1990, outzonea, outzone,  outzone,  outzone,  0, ROT270, "Toaplan", "Out Zone (set 2)" )
+GAMEX( 1991, vimana,   0,        vimana,   vimana,   0, ROT270, "Toaplan", "Vimana", GAME_NO_SOUND )
+GAMEX( 1991, vimana1,  vimana,   vimana,   vimana,   0, ROT270, "Toaplan", "Vimana (old set)", GAME_NO_SOUND )
 GAMEX( 1991, vimanan,  vimana,   vimana,   vimanan,  0, ROT270, "Toaplan (Nova Apparate GMBH & Co license)", "Vimana (Nova Apparate GMBH & Co)", GAME_NO_SOUND )

@@ -340,7 +340,7 @@ static void init_machine(void)
 	master_int_timer = timer_set(cpu_getscanlinetime(8), 8, interrupt_callback);
 
 	/* reset globals */
-	leland_gfx_control = 0;
+	leland_gfx_control = 0xff;
 	wcol_enable = 0;
 
 	dangerz_x = 512;
@@ -2638,19 +2638,18 @@ ROM_END
 
 ROM_START( aafb )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )
-	ROM_LOAD( "aafbu58t.bin",   0x00000, 0x10000, 0xfa75a4a0 )
-	ROM_LOAD( "aafbu59t.bin",   0x10000, 0x10000, 0xab6a606f )
+	ROM_LOAD( "03-28011.u58",   0x00000, 0x10000, 0xfa75a4a0 )
+	ROM_LOAD( "03-28012.u59",   0x10000, 0x10000, 0xab6a606f )
 
-	/* Everything from here down may be from the wrong version */
 	ROM_REGION( 0x80000, REGION_CPU2, 0 )
-	ROM_LOAD( "24000-02.u3",   0x00000, 0x02000, 0x52df0354 )
-	ROM_LOAD( "24001-02.u2t",  0x10000, 0x10000, 0x9b20697d )
+	ROM_LOAD( "03-28000.u3",   0x00000, 0x02000, 0xcb531986 )
+	ROM_LOAD( "26001-01.2t",   0x10000, 0x10000, 0xf118b9b4 )
 	ROM_LOAD( "24002-02.u3t",  0x20000, 0x10000, 0xbbb92184 )
 	ROM_LOAD( "15603-01.u4t",  0x30000, 0x10000, 0xcdc9c09d )
 	ROM_LOAD( "15604-01.u5t",  0x40000, 0x10000, 0x3c03e92e )
 	ROM_LOAD( "15605-01.u6t",  0x50000, 0x10000, 0xcdf7d19c )
 	ROM_LOAD( "15606-01.u7t",  0x60000, 0x10000, 0x8eeb007c )
-	ROM_LOAD( "24002-02.u8t",  0x70000, 0x10000, 0x3d9747c9 )
+	ROM_LOAD( "03-28002.u8",   0x70000, 0x10000, 0xc3e09811 )
 
 	ROM_REGION( 0x100000, REGION_CPU3, 0 )
     ROM_LOAD16_BYTE( "24019-01.u25", 0x040001, 0x10000, 0x9e344768 )
@@ -2660,19 +2659,20 @@ ROM_START( aafb )
     ROM_LOAD16_BYTE( "24021-01.u27", 0x0e0001, 0x10000, 0x94081899 )
     ROM_LOAD16_BYTE( "24018-01.u15", 0x0e0000, 0x10000, 0x76eb6077 )
 
-	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "24011-02.u93", 0x00000, 0x08000, BADCRC( 0x71f4425b ))
-	ROM_LOAD( "24012-02.u94", 0x08000, 0x08000, BADCRC( 0xb2499547 ))
-	ROM_LOAD( "24013-02.u95", 0x10000, 0x08000, BADCRC( 0x0a604e0d ))
+	ROM_REGION( 0x0c000, REGION_GFX1, ROMREGION_DISPOSE )
+	/* 93 = empty */
+	ROM_FILL(                 0x00000, 0x04000, 0x00 )
+	ROM_LOAD( "03-28009.u94", 0x04000, 0x04000, 0x669791ac )
+	ROM_LOAD( "03-28010.u95", 0x08000, 0x04000, 0xbd62aa8a )
 
 	ROM_REGION( 0x20000, REGION_USER1, 0 )   /* Ordering: 70/92/69/91/68/90/67/89 */
-	ROM_LOAD( "24007-01.u70",  0x00000, 0x4000, 0x40e46aa4 )
-	ROM_LOAD( "24010-01.u92",  0x04000, 0x4000, 0x78705f42 )
-	ROM_LOAD( "24006-01.u69",  0x08000, 0x4000, 0x6a576aa9 )
-	ROM_LOAD( "24009-02.u91",  0x0c000, 0x4000, 0xb857a1ad )
-	ROM_LOAD( "24005-02.u68",  0x10000, 0x4000, 0x8ea75319 )
-	ROM_LOAD( "24008-01.u90",  0x14000, 0x4000, 0x4538bc58 )
-	ROM_LOAD( "24004-02.u67",  0x18000, 0x4000, 0xcd7a3338 )
+	ROM_LOAD( "03-28005.u70",  0x00000, 0x4000, 0x5ca6f4e2 )
+	ROM_LOAD( "03-28007.u92",  0x04000, 0x4000, 0x1d9e33c2 )
+	ROM_LOAD( "03-28004.u69",  0x08000, 0x4000, 0xd4b8a471 )
+	/* 91 = empty */
+	/* 68 = empty */
+	ROM_LOAD( "03-28006.u90",  0x14000, 0x4000, 0xe68c8b6e )
+	ROM_LOAD( "03-28003.u67",  0x18000, 0x4000, 0xc92f6357 )
 	/* 89 = empty */
 
     ROM_REGION( battery_ram_size, REGION_USER2, 0 ) /* extra RAM regions */

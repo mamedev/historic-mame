@@ -1108,7 +1108,7 @@ tryagain:
 		TICKER start = ticker(), stop;
 #endif
 
-		IDirectDrawSurface_Flip(primary_surface, NULL, DDFLIP_NOVSYNC);
+		IDirectDrawSurface_Flip(primary_surface, NULL, DDFLIP_WAIT);
 
 #if SHOW_FLIP_TIMES
 		stop = ticker();
@@ -1267,7 +1267,7 @@ tryagain:
 		TICKER start = ticker(), stop;
 #endif
 
-		IDirectDrawSurface_Flip(primary_surface, NULL, DDFLIP_NOVSYNC);
+		IDirectDrawSurface_Flip(primary_surface, NULL, DDFLIP_WAIT);
 
 #if SHOW_FLIP_TIMES
 		stop = ticker();

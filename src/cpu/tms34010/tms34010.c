@@ -157,8 +157,7 @@ int	tms34010_ICount;
 
 /* internal state */
 static tms34010_regs 	state;
-static tms34010_regs *	host_interface_context;
-static UINT8 			host_interface_cpu;
+static int				cpu_executing;
 static void *			dpyint_timer[MAX_CPU];		  /* Display interrupt timer */
 static void *			vsblnk_timer[MAX_CPU];		  /* VBLANK start timer */
 
@@ -837,6 +836,7 @@ static void check_interrupt(void)
 
 void tms34010_init(void)
 {
+	cpu_executing = -1;
 }
 
 void tms34010_reset(void *param)
@@ -851,12 +851,9 @@ void tms34010_reset(void *param)
 	state.shiftreg = malloc(SHIFTREG_SIZE);
 
 	/* fetch the initial PC and reset the state */
-	PC = RLONG(0xffffffe0);
+	PC = RLONG(0xffffffe0) & 0xfffffff0;
 	change_pc29lew(TOBYTE(PC));
 	RESET_ST();
-
-	/* reset the host interface */
-	host_interface_context = NULL;
 
 	/* HALT the CPU if requested, and remember to re-read the starting PC */
 	/* the first time we are run */
@@ -867,6 +864,7 @@ void tms34010_reset(void *param)
 
 void tms34020_init(void)
 {
+	cpu_executing = -1;
 }
 
 void tms34020_reset(void *param)
@@ -1114,7 +1112,7 @@ void tms34010_set_irq_line(int irqline, int linestate)
 			else
 				IOREG(REG_INTPEND) &= ~TMS34010_INT1;
 			break;
-			
+
 		case 1:
 			if (linestate != CLEAR_LINE)
 				IOREG(REG_INTPEND) |= TMS34010_INT2;
@@ -1163,7 +1161,7 @@ static void internal_interrupt_callback(int param)
 	LOG(("TMS34010#%d set internal interrupt $%04x\n", cpu_getactivecpu(), type));
 	check_interrupt();
 	cpuintrf_pop_context();
-	
+
 	/* generate triggers so that spin loops can key off them */
 	cpu_triggerint(cpunum);
 }
@@ -1189,6 +1187,7 @@ int tms34010_execute(int cycles)
 
 	/* execute starting now */
 	tms34010_ICount = cycles;
+	cpu_executing = cpu_getactivecpu();
 	change_pc29lew(TOBYTE(PC));
 	do
 	{
@@ -1217,6 +1216,7 @@ int tms34010_execute(int cycles)
 		(*opcode_table[state.op >> 4])();
 
 	} while (tms34010_ICount > 0);
+	cpu_executing = -1;
 
 	return cycles - tms34010_ICount;
 }
@@ -1381,19 +1381,19 @@ static data32_t (*pixel_read_ops[5])(offs_t offset) =
 };
 
 
-static void set_pixel_function(tms34010_regs *context)
+static void set_pixel_function(void)
 {
 	UINT32 i1,i2;
 
-	if (CONTEXT_IOREG(context, REG_DPYCTL) & 0x0800)
+	if (IOREG(REG_DPYCTL) & 0x0800)
 	{
 		/* Shift Register Transfer */
-		context->pixel_write = write_pixel_shiftreg;
-		context->pixel_read  = read_pixel_shiftreg;
+		state.pixel_write = write_pixel_shiftreg;
+		state.pixel_read  = read_pixel_shiftreg;
 		return;
 	}
 
-	switch (CONTEXT_IOREG(context, REG_PSIZE))
+	switch (IOREG(REG_PSIZE))
 	{
 		default:
 		case 0x01: i2 = 0; break;
@@ -1403,13 +1403,13 @@ static void set_pixel_function(tms34010_regs *context)
 		case 0x10: i2 = 4; break;
 	}
 
-	if (context->transparency)
-		i1 = context->raster_op ? 3 : 2;
+	if (state.transparency)
+		i1 = state.raster_op ? 3 : 2;
 	else
-		i1 = context->raster_op ? 1 : 0;
+		i1 = state.raster_op ? 1 : 0;
 
-	context->pixel_write = pixel_write_ops[i1][i2];
-	context->pixel_read  = pixel_read_ops [i2];
+	state.pixel_write = pixel_write_ops[i1][i2];
+	state.pixel_read  = pixel_read_ops [i2];
 }
 
 
@@ -1431,9 +1431,9 @@ static INT32 (*raster_ops[32]) (INT32 newpix, INT32 oldpix) =
 };
 
 
-static void set_raster_op(tms34010_regs *context)
+static void set_raster_op(void)
 {
-	context->raster_op = raster_ops[(IOREG(REG_CONTROL) >> 10) & 0x1f];
+	state.raster_op = raster_ops[(IOREG(REG_CONTROL) >> 10) & 0x1f];
 }
 
 
@@ -1442,48 +1442,48 @@ static void set_raster_op(tms34010_regs *context)
 **	VIDEO TIMING HELPERS
 **#################################################################################################*/
 
-INLINE int scanline_to_vcount(tms34010_regs *context, int scanline)
+INLINE int scanline_to_vcount(int scanline)
 {
 	if (Machine->visible_area.min_y == 0)
-		scanline += CONTEXT_IOREG(context, REG_VEBLNK);
-	if (scanline > CONTEXT_IOREG(context, REG_VTOTAL))
-		scanline -= CONTEXT_IOREG(context, REG_VTOTAL);
+		scanline += SMART_IOREG(VEBLNK);
+	if (scanline > SMART_IOREG(VTOTAL))
+		scanline -= SMART_IOREG(VTOTAL);
 	return scanline;
 }
 
 
-INLINE int vcount_to_scanline(tms34010_regs *context, int vcount)
+INLINE int vcount_to_scanline(int vcount)
 {
 	if (Machine->visible_area.min_y == 0)
-		vcount -= CONTEXT_IOREG(context, REG_VEBLNK);
+		vcount -= SMART_IOREG(VEBLNK);
 	if (vcount < 0)
-		vcount += CONTEXT_IOREG(context, REG_VTOTAL);
+		vcount += SMART_IOREG(VTOTAL);
 	if (vcount > Machine->visible_area.max_y)
 		vcount = 0;
 	return vcount;
 }
 
 
-static void update_display_address(tms34010_regs *context, int vcount)
+static void update_display_address(int vcount)
 {
-	UINT32 dpyadr = CONTEXT_IOREG(context, REG_DPYADR) & 0xfffc;
-	UINT32 dpytap = CONTEXT_IOREG(context, REG_DPYTAP) & 0x3fff;
-	INT32 dudate = CONTEXT_IOREG(context, REG_DPYCTL) & 0x03fc;
-	int org = CONTEXT_IOREG(context, REG_DPYCTL) & 0x0400;
-	int scans = (CONTEXT_IOREG(context, REG_DPYSTRT) & 3) + 1;
+	UINT32 dpyadr = IOREG(REG_DPYADR) & 0xfffc;
+	UINT32 dpytap = IOREG(REG_DPYTAP) & 0x3fff;
+	INT32 dudate = IOREG(REG_DPYCTL) & 0x03fc;
+	int org = IOREG(REG_DPYCTL) & 0x0400;
+	int scans = (IOREG(REG_DPYSTRT) & 3) + 1;
 
 	/* anytime during VBLANK is effectively the start of the next frame */
-	if (vcount >= CONTEXT_IOREG(context, REG_VSBLNK) || vcount <= CONTEXT_IOREG(context, REG_VEBLNK))
-		context->last_update_vcount = vcount = CONTEXT_IOREG(context, REG_VEBLNK);
+	if (vcount >= SMART_IOREG(VSBLNK) || vcount <= SMART_IOREG(VEBLNK))
+		state.last_update_vcount = vcount = SMART_IOREG(VEBLNK);
 
 	/* otherwise, compute the updated address */
 	else
 	{
-		int rows = vcount - context->last_update_vcount;
-		if (rows < 0) rows += CONTEXT_IOREG(context, REG_VCOUNT);
+		int rows = vcount - state.last_update_vcount;
+		if (rows < 0) rows += SMART_IOREG(VCOUNT);
 		dpyadr -= rows * dudate / scans;
-		CONTEXT_IOREG(context, REG_DPYADR) = dpyadr | (CONTEXT_IOREG(context, REG_DPYADR) & 0x0003);
-		context->last_update_vcount = vcount;
+		IOREG(REG_DPYADR) = dpyadr | (IOREG(REG_DPYADR) & 0x0003);
+		state.last_update_vcount = vcount;
 	}
 
 	/* now compute the actual address */
@@ -1492,43 +1492,50 @@ static void update_display_address(tms34010_regs *context, int vcount)
 	dpyadr |= dpytap << 4;
 
 	/* callback */
-	if (context->config->display_addr_changed)
+	if (state.config->display_addr_changed)
 	{
 		if (org != 0) dudate = -dudate;
-		(*context->config->display_addr_changed)(dpyadr & 0x00ffffff, (dudate << 8) / scans, vcount_to_scanline(context, vcount));
+		(*state.config->display_addr_changed)(dpyadr & 0x00ffffff, (dudate << 8) / scans, vcount_to_scanline(vcount));
 	}
 }
 
 
 static void vsblnk_callback(int cpunum)
 {
-	/* reset timer for next frame */
 	double interval = TIME_IN_HZ(Machine->drv->frames_per_second);
-	tms34010_regs *context = FINDCONTEXT(cpunum);
+	cpuintrf_push_context(cpunum);
+
+	/* reset timer for next frame */
 	vsblnk_timer[cpunum] = timer_set(interval, cpunum, vsblnk_callback);
-	CONTEXT_IOREG(context, REG_DPYADR) = CONTEXT_IOREG(context, REG_DPYSTRT);
-	update_display_address(context, CONTEXT_IOREG(context, REG_VSBLNK));
+	IOREG(REG_DPYADR) = IOREG(REG_DPYSTRT);
+	update_display_address(SMART_IOREG(VSBLNK));
+
+	cpuintrf_pop_context();
 }
 
 
 static void dpyint_callback(int cpunum)
 {
-	/* reset timer for next frame */
-	tms34010_regs *context = FINDCONTEXT(cpunum);
 	double interval = TIME_IN_HZ(Machine->drv->frames_per_second);
+	cpuintrf_push_context(cpunum);
+
+	/* reset timer for next frame */
 	dpyint_timer[cpunum] = timer_set(interval, cpunum, dpyint_callback);
 	timer_set(TIME_NOW, cpunum | (TMS34010_DI << 8), internal_interrupt_callback);
 
 	/* allow a callback so we can update before they are likely to do nasty things */
-	if (context->config->display_int_callback)
-		(*context->config->display_int_callback)(vcount_to_scanline(context, CONTEXT_IOREG(context, REG_DPYINT)));
+	if (state.config->display_int_callback)
+		(*state.config->display_int_callback)(vcount_to_scanline(IOREG(REG_DPYINT)));
+
+	cpuintrf_pop_context();
 }
 
 
-static void update_timers(int cpunum, tms34010_regs *context)
+static void update_timers(void)
 {
-	int dpyint = CONTEXT_IOREG(context, REG_DPYINT);
-	int vsblnk = CONTEXT_IOREG(context, REG_VSBLNK);
+	int cpunum = cpu_getactivecpu();
+	int dpyint = IOREG(REG_DPYINT);
+	int vsblnk = SMART_IOREG(VSBLNK);
 
 	/* remove any old timers */
 	if (dpyint_timer[cpunum])
@@ -1537,8 +1544,8 @@ static void update_timers(int cpunum, tms34010_regs *context)
 		timer_remove(vsblnk_timer[cpunum]);
 
 	/* set new timers */
-	dpyint_timer[cpunum] = timer_set(cpu_getscanlinetime(vcount_to_scanline(context, dpyint)), cpunum, dpyint_callback);
-	vsblnk_timer[cpunum] = timer_set(cpu_getscanlinetime(vcount_to_scanline(context, vsblnk)), cpunum, vsblnk_callback);
+	dpyint_timer[cpunum] = timer_set(cpu_getscanlinetime(vcount_to_scanline(dpyint)), cpunum, dpyint_callback);
+	vsblnk_timer[cpunum] = timer_set(cpu_getscanlinetime(vcount_to_scanline(vsblnk)), cpunum, vsblnk_callback);
 }
 
 
@@ -1560,49 +1567,50 @@ static const char *ioreg_name[] =
 	"HCOUNT", "VCOUNT", "DPYADR", "REFCNT"
 };
 
-static void common_io_register_w(int cpunum, tms34010_regs *context, int reg, int data)
+WRITE16_HANDLER( tms34010_io_register_w )
 {
+	int cpunum = cpu_getactivecpu();
 	int oldreg, newreg;
 
 	/* Set register */
-	oldreg = CONTEXT_IOREG(context, reg);
-	CONTEXT_IOREG(context, reg) = data;
+	oldreg = IOREG(offset);
+	IOREG(offset) = data;
 
-	switch (reg)
+	switch (offset)
 	{
 		case REG_DPYINT:
 			if (data != oldreg || !dpyint_timer[cpunum])
-				update_timers(cpunum, context);
+				update_timers();
 			break;
 
 		case REG_VSBLNK:
 			if (data != oldreg || !vsblnk_timer[cpunum])
-				update_timers(cpunum, context);
+				update_timers();
 			break;
 
 		case REG_VEBLNK:
 			if (data != oldreg)
-				update_timers(cpunum, context);
+				update_timers();
 			break;
 
 		case REG_CONTROL:
-			context->transparency = data & 0x20;
-			context->window_checking = (data >> 6) & 0x03;
-			set_raster_op(context);
-			set_pixel_function(context);
+			state.transparency = data & 0x20;
+			state.window_checking = (data >> 6) & 0x03;
+			set_raster_op();
+			set_pixel_function();
 			break;
 
 		case REG_PSIZE:
-			set_pixel_function(context);
+			set_pixel_function();
 
 			switch (data)
 			{
 				default:
-				case 0x01: context->pixelshift = 0; break;
-				case 0x02: context->pixelshift = 1; break;
-				case 0x04: context->pixelshift = 2; break;
-				case 0x08: context->pixelshift = 3; break;
-				case 0x10: context->pixelshift = 4; break;
+				case 0x01: state.pixelshift = 0; break;
+				case 0x02: state.pixelshift = 1; break;
+				case 0x04: state.pixelshift = 2; break;
+				case 0x08: state.pixelshift = 3; break;
+				case 0x10: state.pixelshift = 4; break;
 			}
 			break;
 
@@ -1611,32 +1619,32 @@ static void common_io_register_w(int cpunum, tms34010_regs *context, int reg, in
 			break;
 
 		case REG_DPYCTL:
-			set_pixel_function(context);
+			set_pixel_function();
 			if ((oldreg ^ data) & 0x03fc)
-				update_display_address(context, scanline_to_vcount(context, cpu_getscanline()));
+				update_display_address(scanline_to_vcount(cpu_getscanline()));
 			break;
 
 		case REG_DPYADR:
 			if (data != oldreg)
 			{
-				context->last_update_vcount = scanline_to_vcount(context, cpu_getscanline());
-				update_display_address(context, context->last_update_vcount);
+				state.last_update_vcount = scanline_to_vcount(cpu_getscanline());
+				update_display_address(state.last_update_vcount);
 			}
 			break;
 
 		case REG_DPYSTRT:
 			if (data != oldreg)
-				update_display_address(context, scanline_to_vcount(context, cpu_getscanline()));
+				update_display_address(scanline_to_vcount(cpu_getscanline()));
 			break;
 
 		case REG_DPYTAP:
 			if ((oldreg ^ data) & 0x3fff)
-				update_display_address(context, scanline_to_vcount(context, cpu_getscanline()));
+				update_display_address(scanline_to_vcount(cpu_getscanline()));
 			break;
 
 		case REG_HSTCTLH:
 			/* if the CPU is halting itself, stop execution right away */
-			if ((data & 0x8000) && context == &state)
+			if ((data & 0x8000) && cpunum == cpu_executing)
 				tms34010_ICount = 0;
 			cpu_set_halt_line(cpunum, (data & 0x8000) ? ASSERT_LINE : CLEAR_LINE);
 
@@ -1647,7 +1655,7 @@ static void common_io_register_w(int cpunum, tms34010_regs *context, int reg, in
 
 		case REG_HSTCTLL:
 			/* the TMS34010 can change MSGOUT, can set INTOUT, and can clear INTIN */
-			if (cpunum == cpu_getactivecpu())
+			if (cpunum == cpu_executing)
 			{
 				newreg = (oldreg & 0xff8f) | (data & 0x0070);
 				newreg |= data & 0x0080;
@@ -1661,51 +1669,43 @@ static void common_io_register_w(int cpunum, tms34010_regs *context, int reg, in
 				newreg &= data | ~0x0080;
 				newreg |= data & 0x0008;
 			}
-			CONTEXT_IOREG(context, reg) = newreg;
+			IOREG(offset) = newreg;
 
 			/* the TMS34010 can set output interrupt? */
 			if (!(oldreg & 0x0080) && (newreg & 0x0080))
 			{
-				if (context->config->output_int)
-					(*context->config->output_int)(1);
+				if (state.config->output_int)
+					(*state.config->output_int)(1);
 			}
 			else if ((oldreg & 0x0080) && !(newreg & 0x0080))
 			{
-				if (context->config->output_int)
-					(*context->config->output_int)(0);
+				if (state.config->output_int)
+					(*state.config->output_int)(0);
 			}
 
 			/* input interrupt? (should really be state-based, but the functions don't exist!) */
 			if (!(oldreg & 0x0008) && (newreg & 0x0008))
 				timer_set(TIME_NOW, cpunum | (TMS34010_HI << 8), internal_interrupt_callback);
 			else if ((oldreg & 0x0008) && !(newreg & 0x0008))
-				CONTEXT_IOREG(context, REG_INTPEND) &= ~TMS34010_HI;
+				IOREG(REG_INTPEND) &= ~TMS34010_HI;
 			break;
 
 		case REG_CONVSP:
-			context->convsp = 1 << (~data & 0x1f);
+			state.convsp = 1 << (~data & 0x1f);
 			break;
 
 		case REG_CONVDP:
-			context->convdp = 1 << (~data & 0x1f);
+			state.convdp = 1 << (~data & 0x1f);
 			break;
 
 		case REG_INTENB:
-			if (CONTEXT_IOREG(context, REG_INTENB) & CONTEXT_IOREG(context, REG_INTPEND))
+			if (IOREG(REG_INTENB) & IOREG(REG_INTPEND))
 				check_interrupt();
 			break;
 	}
 
 	if (LOG_CONTROL_REGS)
-		logerror("CPU#%d: %s = %04X (%d)\n", cpunum, ioreg_name[reg], CONTEXT_IOREG(context, reg), cpu_getscanline());
-}
-
-WRITE16_HANDLER( tms34010_io_register_w )
-{
-	if (!host_interface_context)
-		common_io_register_w(cpu_getactivecpu(), &state, offset, data);
-	else
-		common_io_register_w(host_interface_cpu, host_interface_context, offset, data);
+		logerror("CPU#%d: %s = %04X (%d)\n", cpunum, ioreg_name[offset], IOREG(offset), cpu_getscanline());
 }
 
 
@@ -1732,53 +1732,157 @@ static const char *ioreg020_name[] =
 	"IHOST3L", "IHOST3H", "IHOST4L", "IHOST4H"
 };
 
-static void common_020_io_register_w(int cpunum, tms34010_regs *context, int reg, int data)
+WRITE16_HANDLER( tms34020_io_register_w )
 {
-	int oldreg;
-
-	if (LOG_CONTROL_REGS)
-		logerror("CPU#%d: %s = %04X (%d)\n", cpunum, ioreg020_name[reg], CONTEXT_IOREG(context, reg), cpu_getscanline());
+	int cpunum = cpu_getactivecpu();
+	int oldreg, newreg;
 
 	/* Set register */
-	oldreg = CONTEXT_IOREG(context, reg);
-	CONTEXT_IOREG(context, reg) = data;
+	oldreg = IOREG(offset);
+	IOREG(offset) = data;
 
-	switch (reg)
+	if (LOG_CONTROL_REGS)
+		logerror("CPU#%d: %s = %04X (%d)\n", cpunum, ioreg020_name[offset], IOREG(offset), cpu_getscanline());
+
+	switch (offset)
 	{
+		case REG020_DPYINT:
+			if (data != oldreg || !dpyint_timer[cpunum])
+				update_timers();
+			break;
+
+		case REG020_VSBLNK:
+			if (data != oldreg || !vsblnk_timer[cpunum])
+				update_timers();
+			break;
+
+		case REG020_VEBLNK:
+			if (data != oldreg)
+				update_timers();
+			break;
+
+		case REG020_CONTROL:
+		case REG020_CONTROL2:
+			IOREG(REG020_CONTROL) = data;
+			IOREG(REG020_CONTROL2) = data;
+			state.transparency = data & 0x20;
+			state.window_checking = (data >> 6) & 0x03;
+			set_raster_op();
+			set_pixel_function();
+			break;
+
+		case REG020_PSIZE:
+			set_pixel_function();
+
+			switch (data)
+			{
+				default:
+				case 0x01: state.pixelshift = 0; break;
+				case 0x02: state.pixelshift = 1; break;
+				case 0x04: state.pixelshift = 2; break;
+				case 0x08: state.pixelshift = 3; break;
+				case 0x10: state.pixelshift = 4; break;
+			}
+			break;
+
+		case REG020_PMASKL:
+		case REG020_PMASKH:
+			if (data) logerror("Plane masking not supported. PC=%08X\n", activecpu_get_pc());
+			break;
+
+		case REG020_DPYCTL:
+			set_pixel_function();
+			if ((oldreg ^ data) & 0x03fc)
+				update_display_address(scanline_to_vcount(cpu_getscanline()));
+			break;
+
+		case REG020_HSTCTLH:
+			/* if the CPU is halting itself, stop execution right away */
+			if ((data & 0x8000) && cpunum == cpu_executing)
+				tms34010_ICount = 0;
+			cpu_set_halt_line(cpunum, (data & 0x8000) ? ASSERT_LINE : CLEAR_LINE);
+
+			/* NMI issued? */
+			if (data & 0x0100)
+				timer_set(TIME_NOW, cpunum | (TMS34010_NMI << 8), internal_interrupt_callback);
+			break;
+
+		case REG020_HSTCTLL:
+			/* the TMS34010 can change MSGOUT, can set INTOUT, and can clear INTIN */
+			if (cpunum == cpu_executing)
+			{
+				newreg = (oldreg & 0xff8f) | (data & 0x0070);
+				newreg |= data & 0x0080;
+				newreg &= data | ~0x0008;
+			}
+
+			/* the host can change MSGIN, can set INTIN, and can clear INTOUT */
+			else
+			{
+				newreg = (oldreg & 0xfff8) | (data & 0x0007);
+				newreg &= data | ~0x0080;
+				newreg |= data & 0x0008;
+			}
+			IOREG(offset) = newreg;
+
+			/* the TMS34010 can set output interrupt? */
+			if (!(oldreg & 0x0080) && (newreg & 0x0080))
+			{
+				if (state.config->output_int)
+					(*state.config->output_int)(1);
+			}
+			else if ((oldreg & 0x0080) && !(newreg & 0x0080))
+			{
+				if (state.config->output_int)
+					(*state.config->output_int)(0);
+			}
+
+			/* input interrupt? (should really be state-based, but the functions don't exist!) */
+			if (!(oldreg & 0x0008) && (newreg & 0x0008))
+				timer_set(TIME_NOW, cpunum | (TMS34010_HI << 8), internal_interrupt_callback);
+			else if ((oldreg & 0x0008) && !(newreg & 0x0008))
+				IOREG(REG020_INTPEND) &= ~TMS34010_HI;
+			break;
+
+		case REG020_INTENB:
+			if (IOREG(REG020_INTENB) & IOREG(REG020_INTPEND))
+				check_interrupt();
+			break;
+
 		case REG020_CONVSP:
 			if (data & 0x001f)
 			{
 				if (data & 0x1f00)
-					context->convsp = (1 << (~data & 0x1f)) + (1 << (~(data >> 8) & 0x1f));
+					state.convsp = (1 << (~data & 0x1f)) + (1 << (~(data >> 8) & 0x1f));
 				else
-					context->convsp = 1 << (~data & 0x1f);
+					state.convsp = 1 << (~data & 0x1f);
 			}
 			else
-				context->convsp = data;
+				state.convsp = data;
 			break;
 
 		case REG020_CONVDP:
 			if (data & 0x001f)
 			{
 				if (data & 0x1f00)
-					context->convdp = (1 << (~data & 0x1f)) + (1 << (~(data >> 8) & 0x1f));
+					state.convdp = (1 << (~data & 0x1f)) + (1 << (~(data >> 8) & 0x1f));
 				else
-					context->convdp = 1 << (~data & 0x1f);
+					state.convdp = 1 << (~data & 0x1f);
 			}
 			else
-				context->convdp = data;
+				state.convdp = data;
 			break;
 
 		case REG020_CONVMP:
 			if (data & 0x001f)
 			{
 				if (data & 0x1f00)
-					context->convmp = (1 << (~data & 0x1f)) + (1 << (~(data >> 8) & 0x1f));
+					state.convmp = (1 << (~data & 0x1f)) + (1 << (~(data >> 8) & 0x1f));
 				else
-					context->convmp = 1 << (~data & 0x1f);
+					state.convmp = 1 << (~data & 0x1f);
 			}
 			else
-				context->convmp = data;
+				state.convmp = data;
 			break;
 
 		case REG020_DPYSTRT:
@@ -1790,27 +1894,11 @@ static void common_020_io_register_w(int cpunum, tms34010_regs *context, int reg
 		case REG020_DPYSTH:
 			if (data != oldreg)
 			{
-				context->last_update_vcount = scanline_to_vcount(context, cpu_getscanline());
-				update_display_address(context, context->last_update_vcount);
+				state.last_update_vcount = scanline_to_vcount(cpu_getscanline());
+				update_display_address(state.last_update_vcount);
 			}
 			break;
-
-		case REG020_CONTROL2:
-			common_io_register_w(cpunum, context, REG_CONTROL, data);
-			break;
-
-		default:
-			common_io_register_w(cpunum, context, reg, data);
-			break;
 	}
-}
-
-WRITE16_HANDLER( tms34020_io_register_w )
-{
-	if (!host_interface_context)
-		common_020_io_register_w(cpu_getactivecpu(), &state, offset, data);
-	else
-		common_020_io_register_w(host_interface_cpu, host_interface_context, offset, data);
 }
 
 
@@ -1819,27 +1907,27 @@ WRITE16_HANDLER( tms34020_io_register_w )
 **	I/O REGISTER READS
 **#################################################################################################*/
 
-static int common_io_register_r(int cpunum, tms34010_regs *context, int reg)
+READ16_HANDLER( tms34010_io_register_r )
 {
+	int cpunum = cpu_getactivecpu();
 	int result, total;
 
 	if (LOG_CONTROL_REGS)
-		logerror("CPU#%d: read %s\n", cpunum, ioreg_name[reg]);
+		logerror("CPU#%d: read %s\n", cpunum, ioreg_name[offset]);
 
-	switch (reg)
+	switch (offset)
 	{
 		case REG_VCOUNT:
-			return scanline_to_vcount(context, cpu_getscanline());
+			return scanline_to_vcount(cpu_getscanline());
 
 		case REG_HCOUNT:
-
 			/* scale the horizontal position from screen width to HTOTAL */
 			result = cpu_gethorzbeampos();
-			total = CONTEXT_IOREG(context, REG_HTOTAL);
+			total = IOREG(REG_HTOTAL);
 			result = result * total / Machine->drv->screen_width;
 
 			/* offset by the HBLANK end */
-			result += CONTEXT_IOREG(context, REG_HEBLNK);
+			result += IOREG(REG_HEBLNK);
 
 			/* wrap around */
 			if (result > total)
@@ -1847,36 +1935,47 @@ static int common_io_register_r(int cpunum, tms34010_regs *context, int reg)
 			return result;
 
 		case REG_DPYADR:
-			update_display_address(context, scanline_to_vcount(context, cpu_getscanline()));
+			update_display_address(scanline_to_vcount(cpu_getscanline()));
 			break;
 	}
 
-	return CONTEXT_IOREG(context, reg);
+	return IOREG(offset);
 }
 
-
-READ16_HANDLER( tms34010_io_register_r )
-{
-	if (!host_interface_context)
-		return common_io_register_r(cpu_getactivecpu(), &state, offset);
-	else
-		return common_io_register_r(host_interface_cpu, host_interface_context, offset);
-}
-
-
-static int common_020_io_register_r(int cpunum, tms34010_regs *context, int reg)
-{
-	if (LOG_CONTROL_REGS)
-		logerror("CPU#%d: read %s\n", cpunum, ioreg020_name[reg]);
-	return common_io_register_r(cpunum, context, reg);
-}
 
 READ16_HANDLER( tms34020_io_register_r )
 {
-	if (!host_interface_context)
-		return common_020_io_register_r(cpu_getactivecpu(), &state, offset);
-	else
-		return common_020_io_register_r(host_interface_cpu, host_interface_context, offset);
+	int cpunum = cpu_getactivecpu();
+	int result, total;
+
+	if (LOG_CONTROL_REGS)
+		logerror("CPU#%d: read %s\n", cpunum, ioreg_name[offset]);
+
+	switch (offset)
+	{
+		case REG020_VCOUNT:
+			return scanline_to_vcount(cpu_getscanline());
+
+		case REG020_HCOUNT:
+			/* scale the horizontal position from screen width to HTOTAL */
+			result = cpu_gethorzbeampos();
+			total = IOREG(REG020_HTOTAL);
+			result = result * total / Machine->drv->screen_width;
+
+			/* offset by the HBLANK end */
+			result += IOREG(REG020_HEBLNK);
+
+			/* wrap around */
+			if (result > total)
+				result -= total;
+			return result;
+
+		case REG020_DPYADR:
+			update_display_address(scanline_to_vcount(cpu_getscanline()));
+			break;
+	}
+
+	return IOREG(offset);
 }
 
 
@@ -1938,8 +2037,8 @@ void tms34010_state_load(int cpunum, void *f)
 	change_pc29lew(TOBYTE(PC));
 	SET_FW();
 	tms34010_io_register_w(REG_DPYINT,IOREG(REG_DPYINT),0);
-	set_raster_op(&state);
-	set_pixel_function(&state);
+	set_raster_op();
+	set_pixel_function();
 
 	state.shiftreg      = shiftreg_save;
 
@@ -1976,18 +2075,15 @@ void tms34010_host_w(int cpunum, int reg, int data)
 			cpuintrf_push_context(cpunum);
 
 			/* write to the address */
-			host_interface_cpu = cpunum;
-			host_interface_context = context;
-			addr = (CONTEXT_IOREG(context, REG_HSTADRH) << 16) | CONTEXT_IOREG(context, REG_HSTADRL);
+			addr = (IOREG(REG_HSTADRH) << 16) | IOREG(REG_HSTADRL);
 			TMS34010_WRMEM_WORD(TOBYTE(addr), data);
-			host_interface_context = NULL;
 
 			/* optional postincrement */
-			if (CONTEXT_IOREG(context, REG_HSTCTLH) & 0x0800)
+			if (IOREG(REG_HSTCTLH) & 0x0800)
 			{
 				addr += 0x10;
-				CONTEXT_IOREG(context, REG_HSTADRH) = addr >> 16;
-				CONTEXT_IOREG(context, REG_HSTADRL) = (UINT16)addr;
+				IOREG(REG_HSTADRH) = addr >> 16;
+				IOREG(REG_HSTADRL) = (UINT16)addr;
 			}
 
 			/* swap back */
@@ -1997,8 +2093,10 @@ void tms34010_host_w(int cpunum, int reg, int data)
 
 		/* control register */
 		case TMS34010_HOST_CONTROL:
-			common_io_register_w(cpunum, context, REG_HSTCTLH, data & 0xff00);
-			common_io_register_w(cpunum, context, REG_HSTCTLL, data & 0x00ff);
+			cpuintrf_push_context(cpunum);
+			tms34010_io_register_w(REG_HSTCTLH, data & 0xff00, 0);
+			tms34010_io_register_w(REG_HSTCTLL, data & 0x00ff, 0);
+			cpuintrf_pop_context();
 			break;
 
 		/* error case */
@@ -2037,19 +2135,16 @@ int tms34010_host_r(int cpunum, int reg)
 			cpuintrf_push_context(cpunum);
 
 			/* read from the address */
-			host_interface_cpu = cpunum;
-			host_interface_context = context;
-			addr = (CONTEXT_IOREG(context, REG_HSTADRH) << 16) | CONTEXT_IOREG(context, REG_HSTADRL);
+			addr = (IOREG(REG_HSTADRH) << 16) | IOREG(REG_HSTADRL);
 			result = TMS34010_RDMEM_WORD(TOBYTE(addr));
-			host_interface_context = NULL;
 
 			/* optional postincrement (it says preincrement, but data is preloaded, so it
 			   is effectively a postincrement */
-			if (CONTEXT_IOREG(context, REG_HSTCTLH) & 0x1000)
+			if (IOREG(REG_HSTCTLH) & 0x1000)
 			{
 				addr += 0x10;
-				CONTEXT_IOREG(context, REG_HSTADRH) = addr >> 16;
-				CONTEXT_IOREG(context, REG_HSTADRL) = (UINT16)addr;
+				IOREG(REG_HSTADRH) = addr >> 16;
+				IOREG(REG_HSTADRL) = (UINT16)addr;
 			}
 
 			/* swap back */

@@ -239,6 +239,13 @@ $84fc0 and neighbouring routines poke col scroll area.
 
 
 
+TC0150ROD
+---------
+Road generator. Two roads allow for forking. Gfx data fetched from ROM.
+Refer to notes below.
+
+
+
 TC0280GRD
 TC0430GRW
 ---------
@@ -546,12 +553,295 @@ INLINE void bryan_drawscanline(
 
 
 
+/***************************************************************************/
+
+/* Note: various assumptions are made in these routines, typically that
+   only CPU#0 is of interest. If in doubt, check the routine. */
+
+
+int number_of_TC0100SCN(void)
+{
+	int has_chip[3] = {0,0,0};
+	const struct Memory_WriteAddress16 *mwa;
+
+	/* scan the memory handlers and see how many TC0100SCN are used */
+
+	mwa = Machine->drv->cpu[0].memory_write;
+	if (mwa)
+	{
+		while (!IS_MEMPORT_END(mwa))
+		{
+			if (!IS_MEMPORT_MARKER(mwa))
+			{
+				if ((mwa->handler == TC0100SCN_word_0_w) ||
+					(mwa->handler == TC0100SCN_dual_screen_w) ||
+					(mwa->handler == TC0100SCN_triple_screen_w))
+				has_chip[0] = 1;
+			}
+			mwa++;
+		}
+	}
+
+	mwa = Machine->drv->cpu[0].memory_write;
+	if (mwa)
+	{
+		while (!IS_MEMPORT_END(mwa))
+		{
+			if (!IS_MEMPORT_MARKER(mwa))
+			{
+				if (mwa->handler == TC0100SCN_word_1_w)
+					has_chip[1] = 1;
+			}
+			mwa++;
+		}
+	}
+
+	mwa = Machine->drv->cpu[0].memory_write;
+	if (mwa)
+	{
+		while (!IS_MEMPORT_END(mwa))
+		{
+			if (!IS_MEMPORT_MARKER(mwa))
+			{
+				if (mwa->handler == TC0100SCN_word_2_w)
+					has_chip[2] = 1;
+			}
+			mwa++;
+		}
+	}
+
+	/* Catch illegal configurations */
+	/* TODO: we should give an appropriate warning */
+
+	if (!has_chip[0] && (has_chip[1] || has_chip[2]))
+		return -1;
+
+	if (!has_chip[1] && has_chip[2])
+		return -1;
+
+	return (has_chip[0] + has_chip[1] + has_chip[2]);
+}
+
+
+int has_TC0110PCR(void)
+{
+	const struct Memory_WriteAddress16 *mwa;
+
+	/* scan the memory handlers and see if the TC0110PCR is used */
+
+	mwa = Machine->drv->cpu[0].memory_write;
+	if (mwa)
+	{
+		while (!IS_MEMPORT_END(mwa))
+		{
+			if (!IS_MEMPORT_MARKER(mwa))
+			{
+				if ((mwa->handler == TC0110PCR_word_w) || (mwa->handler == TC0110PCR_step1_word_w) ||
+					(mwa->handler == TC0110PCR_step1_rbswap_word_w) || (mwa->handler == TC0110PCR_step1_4bpg_word_w))
+					return 1;
+			}
+			mwa++;
+		}
+	}
+
+	return 0;
+}
+
+int has_second_TC0110PCR(void)
+{
+	const struct Memory_WriteAddress16 *mwa;
+
+	/* scan the memory handlers and see if a second TC0110PCR is used */
+
+	mwa = Machine->drv->cpu[0].memory_write;
+	if (mwa)
+	{
+		while (!IS_MEMPORT_END(mwa))
+		{
+			if (!IS_MEMPORT_MARKER(mwa))
+			{
+				if (mwa->handler == TC0110PCR_step1_word_1_w)
+					return 1;
+			}
+			mwa++;
+		}
+	}
+
+	return 0;
+}
+
+int has_third_TC0110PCR(void)
+{
+	const struct Memory_WriteAddress16 *mwa;
+
+	/* scan the memory handlers and see if a third TC0110PCR is used */
+
+	mwa = Machine->drv->cpu[0].memory_write;
+	if (mwa)
+	{
+		while (!IS_MEMPORT_END(mwa))
+		{
+			if (!IS_MEMPORT_MARKER(mwa))
+			{
+				if (mwa->handler == TC0110PCR_step1_word_2_w)
+					return 1;
+			}
+			mwa++;
+		}
+	}
+
+	return 0;
+}
+
+
+int has_TC0150ROD(void)
+{
+	const struct Memory_WriteAddress16 *mwa;
+
+	/* scan the memory handlers for cpus 0-2 and see if the TC0150ROD is used */
+
+	mwa = Machine->drv->cpu[0].memory_write;
+	if (mwa)
+	{
+		while (!IS_MEMPORT_END(mwa))
+		{
+			if (!IS_MEMPORT_MARKER(mwa))
+			{
+				if (mwa->handler == TC0150ROD_word_w)
+					return 1;
+			}
+			mwa++;
+		}
+	}
+
+	mwa = Machine->drv->cpu[1].memory_write;
+	if (mwa)
+	{
+		while (!IS_MEMPORT_END(mwa))
+		{
+			if (!IS_MEMPORT_MARKER(mwa))
+			{
+				if (mwa->handler == TC0150ROD_word_w)
+					return 1;
+			}
+			mwa++;
+		}
+	}
+
+	mwa = Machine->drv->cpu[2].memory_write;	/* needed if Z80 sandwiched between 68Ks */
+	if (mwa)
+	{
+		while (!IS_MEMPORT_END(mwa))
+		{
+			if (!IS_MEMPORT_MARKER(mwa))
+			{
+				if (mwa->handler == TC0150ROD_word_w)
+					return 1;
+			}
+			mwa++;
+		}
+	}
+
+	return 0;
+}
+
+
+int has_TC0280GRD(void)
+{
+	const struct Memory_WriteAddress16 *mwa;
+
+	/* scan the memory handlers and see if the TC0280GRD is used */
+	mwa = Machine->drv->cpu[0].memory_write;
+	if (mwa)
+	{
+		while (!IS_MEMPORT_END(mwa))
+		{
+			if (!IS_MEMPORT_MARKER(mwa))
+			{
+				if (mwa->handler == TC0280GRD_word_w)
+					return 1;
+			}
+			mwa++;
+		}
+	}
+
+	return 0;
+}
+
+
+int has_TC0360PRI(void)
+{
+	const struct Memory_WriteAddress16 *mwa;
+
+	/* scan the memory handlers and see if the TC0360PRI is used */
+	mwa = Machine->drv->cpu[0].memory_write;
+	if (mwa)
+	{
+		while (!IS_MEMPORT_END(mwa))
+		{
+			if (!IS_MEMPORT_MARKER(mwa))
+			{
+				if ((mwa->handler == TC0360PRI_halfword_w) ||
+						(mwa->handler == TC0360PRI_halfword_swap_w))
+					return 1;
+			}
+			mwa++;
+		}
+	}
+
+	return 0;
+}
+
+
+int has_TC0430GRW(void)
+{
+	const struct Memory_WriteAddress16 *mwa;
+
+	/* scan the memory handlers and see if the TC0430GRW is used */
+	mwa = Machine->drv->cpu[0].memory_write;
+	if (mwa)
+	{
+		while (!IS_MEMPORT_END(mwa))
+		{
+			if (!IS_MEMPORT_MARKER(mwa))
+			{
+				if (mwa->handler == TC0430GRW_word_w)
+					return 1;
+			}
+			mwa++;
+		}
+	}
+
+	return 0;
+}
+
+
+int has_TC0480SCP(void)
+{
+	const struct Memory_WriteAddress16 *mwa;
+
+	/* scan the memory handlers and see if the TC0480SCP is used */
+
+	mwa = Machine->drv->cpu[0].memory_write;
+	if (mwa)
+	{
+		while (!IS_MEMPORT_END(mwa))
+		{
+			if (!IS_MEMPORT_MARKER(mwa))
+			{
+				if (mwa->handler == TC0480SCP_word_w)
+					return 1;
+			}
+			mwa++;
+		}
+	}
+
+	return 0;
+}
 
 
 
-
-
-
+/***************************************************************************/
 
 
 
@@ -3650,7 +3940,6 @@ static void TC0480SCP_bg01_draw(struct mame_bitmap *bitmap,int layer,int flags,U
 
 			x_step = zoomx;
 
-/*** NEW ***/
 			if (flags & TILEMAP_IGNORE_TRANSPARENCY)
 			{
 				for (i=0; i<screen_width; i++)
@@ -3670,27 +3959,11 @@ static void TC0480SCP_bg01_draw(struct mame_bitmap *bitmap,int layer,int flags,U
 					x_index += x_step;
 				}
 			}
-/***********/
 
-//				while (x_index<x_max)
-//				{
-//					*dst16++ = src16[(x_index >> 16) &width_mask];
-//					x_index += x_step;
-//				}
-//
-//				if ((rot &ORIENTATION_FLIP_X)!=0)
-//					pdraw_scanline16(bitmap,512 - screen_width/2,y,screen_width,
-//						scanline,0,0,rot,priority);
-//				else
-//					pdraw_scanline16(bitmap,0,y,screen_width,
-//						scanline,0,0,rot,priority);
-
-/*** NEW ***/
-				if (flags & TILEMAP_IGNORE_TRANSPARENCY)
-					bryan_drawscanline(bitmap,0,y,screen_width,scanline,0,rot,priority);
-				else
-					bryan_drawscanline(bitmap,0,y,screen_width,scanline,1,rot,priority);
-/***********/
+			if (flags & TILEMAP_IGNORE_TRANSPARENCY)
+				bryan_drawscanline(bitmap,0,y,screen_width,scanline,0,rot,priority);
+			else
+				bryan_drawscanline(bitmap,0,y,screen_width,scanline,1,rot,priority);
 
 			y_index += zoomy;
 			if (!machine_flip) y++; else y--;
@@ -3857,7 +4130,6 @@ static void TC0480SCP_bg23_draw(struct mame_bitmap *bitmap,int layer,int flags,U
 		tsrc  = (UINT8 *)transbitmap->line[src_y_index];
 		dst16 = scanline;
 
-/*** NEW ***/
 		if (flags & TILEMAP_IGNORE_TRANSPARENCY)
 		{
 			for (i=0; i<screen_width; i++)
@@ -3877,27 +4149,11 @@ static void TC0480SCP_bg23_draw(struct mame_bitmap *bitmap,int layer,int flags,U
 				x_index += x_step;
 			}
 		}
-/***********/
 
-//			while (x_index<x_max)
-//			{
-//				*dst16++ = src16[(x_index >> 16) &width_mask];
-//				x_index += x_step;
-//			}
-//
-//			if ((rot &ORIENTATION_FLIP_X)!=0)
-//				pdraw_scanline16(bitmap,512 - screen_width/2,y,screen_width,
-//					scanline,0,0,rot,priority);
-//			else
-//				pdraw_scanline16(bitmap,0,y,screen_width,
-//					scanline,0,0,rot,priority);
-
-/*** NEW ***/
-			if (flags & TILEMAP_IGNORE_TRANSPARENCY)
-				bryan_drawscanline(bitmap,0,y,screen_width,scanline,0,rot,priority);
-			else
-				bryan_drawscanline(bitmap,0,y,screen_width,scanline,1,rot,priority);
-/***********/
+		if (flags & TILEMAP_IGNORE_TRANSPARENCY)
+			bryan_drawscanline(bitmap,0,y,screen_width,scanline,0,rot,priority);
+		else
+			bryan_drawscanline(bitmap,0,y,screen_width,scanline,1,rot,priority);
 
 		y_index += zoomy;
 		if (!machine_flip) y++; else y--;
@@ -3932,47 +4188,7 @@ void TC0480SCP_tilemap_draw(struct mame_bitmap *bitmap,int layer,int flags,UINT3
 	}
 }
 
-/***************************************************************
-
-Old TC0480SCP bg layer priority table (kept for reference)
-
-	mb = seen during metal black game
-	ss = seen during slap shot game
-	{ 0, 1, 2, 3, },	// 0x00  00000  mb ss [text screens, but Deadconx confirms layer order]
-	{ 0, 1, 2, 3, },	// 0x01  00001
-	{ 0, 1, 2, 3, },	// 0x02  00010
-	{ 0, 1, 2, 3, },	// 0x03  00011  mb    [all boss dies]
-	{ 0, 1, 2, 3, },	// 0x04  00100
-	{ 0, 1, 2, 3, },	// 0x05  00101
-	{ 0, 1, 2, 3, },	// 0x06  00110
-	{ 0, 1, 2, 3, },	// 0x07  00111
-	{ 0, 1, 2, 3, },	// 0x08  01000
-	{ 0, 1, 2, 3, },	// 0x09  01001
-	{ 0, 1, 2, 3, },	// 0x0a  01010
-	{ 0, 1, 2, 3, },	// 0x0b  01011
-	{ 3, 0, 1, 2, },	// 0x0c  01100  mb    [round3 boss; bg0 undefined (was 0312)]
-	{ 3, 0, 1, 2, },	// 0x0d  01101
-	{ 3, 0, 1, 2, },	// 0x0e  01110
-	{ 3, 0, 1, 2, },	// 0x0f  01111  mb    [second part of round5]
-	{ 3, 2, 1, 0, },	// 0x10  10000  mb ss [round 6 start (was 3012; 0/1 or 1/0?)]
-	{ 3, 2, 1, 0, },	// 0x11  10001     ss (1/0 or 0/1?)
-	{ 3, 2, 1, 0, },	// 0x12  10010  mb    [round1 start]
-	{ 3, 2, 1, 0, },	// 0x13  10011  mb    [final boss, round2/4 start & demo bonus] (2/1 then 0, bg3 undefined)
-	{ 0, 1, 2, 3, },	// 0x14  10100  mb    [copyright screen, bg0 undefined]
-	{ 0, 1, 2, 3, },	// 0x15  10101
-	{ 0, 1, 2, 3, },	// 0x16  10110
-	{ 0, 1, 2, 3, },	// 0x17  10111  mb    [round4 boss; bg0/1 undefined]
-	{ 0, 1, 2, 3, },	// 0x18  11000
-	{ 0, 1, 2, 3, },	// 0x19  11001
-	{ 0, 1, 2, 3, },	// 0x1a  11010
-	{ 0, 1, 2, 3, },	// 0x1b  11011
-	{ 0, 3, 2, 1, },	// 0x1c  11100  mb    [late round 3; bg1/2/3 posns interchangeable (was 0123)]
-	{ 0, 3, 2, 1, },	// 0x1d  11101
-	{ 0, 3, 2, 1, },	// 0x1e  11110  mb    [first part of round5]
-	{ 0, 3, 2, 1, },	// 0x1f  11111  mb    [first part of round3]
-};
-
-**************************************************************/
+/* For evidence table of TC0480SCP bg layer priorities, refer to mame55 source */
 
 static UINT16 TC0480SCP_bg_pri_lookup[8] =
 {
@@ -3991,6 +4207,825 @@ int TC0480SCP_get_bg_priority(void)
 	return TC0480SCP_bg_pri_lookup[(TC0480SCP_pri_reg &0x1c) >> 2];
 }
 
+
+/****************************************************************
+                            TC0150ROD
+****************************************************************/
+
+static data16_t *TC0150ROD_ram;
+#define TC0150ROD_RAM_SIZE 0x2000
+
+READ16_HANDLER( TC0150ROD_word_r )
+{
+	return TC0150ROD_ram[offset];
+}
+
+WRITE16_HANDLER( TC0150ROD_word_w )
+{
+	COMBINE_DATA(&TC0150ROD_ram[offset]);
+}
+
+int TC0150ROD_vh_start(void)
+{
+	TC0150ROD_ram = malloc(TC0150ROD_RAM_SIZE);
+
+	if (!TC0150ROD_ram) return 1;
+
+	state_save_register_UINT16("TC0150ROD", 0, "memory", TC0150ROD_ram, TC0150ROD_RAM_SIZE/2);
+	return 0;
+}
+
+void TC0150ROD_vh_stop(void)
+{
+	free(TC0150ROD_ram);
+	TC0150ROD_ram = 0;
+}
+
+
+/******************************************************************************
+
+	Memory map for TC0150ROD
+	------------------------
+
+	0000-07ff  Road A, bank 0   [all are 256 lines]
+	0800-0fff  Road A, bank 1
+	1000-17ff  Road B, bank 0
+	1800-1fff  Road B, bank 1
+
+	1ffe-1fff  Control word
+
+	           Contcirc: 08 0d   [bifurcating]
+	           ChaseHQ:  00 05   [08 0d when road rejoins]
+	           SCI:      09 0c   [when road bifurcates]
+	           Nightstr: 08 0d   [both bifurcating and not...]
+	           Aquajack: 04      [always?]
+	           Dblaxle:  08 0d
+
+	           1000 1101
+	           1001 1100
+	           0000 0101
+
+
+	Road ram line layout (thanks to Raine for original table)
+	--------------------
+
+	-----+-----------------+----------------------------------------
+	Word | Bit(s)          |  Info
+	-----+-----------------+----------------------------------------
+	  0  |x....... ........|  Draw background outside road edge on LHS
+	  0  |.x...... ........|  Left road edge from road A has priority over road B ?? (+)
+	  0  |..x..... ........|  Left road edge from road A has priority over road B ?? (*)
+	  0  |...x.... ........|  Left edge/background palette entry offset  (set = +2)
+	  0  |......xx xxxxxxxx|  Left edge   [pixels from road center] (@)
+	     |                 |
+	  1  |x....... ........|  Draw background outside road edge on RHS
+	  1  |.x...... ........|  Right road edge from road A has priority over road B ??
+	  1  |..x..... ........|  Right road edge from road A has priority over road B ?? (*)
+	  1  |...x.... ........|  Right edge/background palette entry offset  (set = +2)
+	  1  |......xx xxxxxxxx|  Right edge   [pixels from road center] (@)
+	     |                 |
+	  2  |x....... ........|  Set for either road a/b used lines in all games (Aquajack varies)
+	  2  |.x...... ........|  Road line body from Road A has higher priority than Road B ??
+	  2  |..x..... ........|  Road line body from Road A has higher priority than Road B ??
+	  2  |...x.... ........|  Palette entry offset   (set = +2)
+	  2  |....?... ........|  ? unknown, maybe line enable (always set?)
+	  2  |.....xxx xxxxxxxx|  X Offset   [offset is inverted] (^)
+	     |                 |
+	  3  |xxxx.... ........|  Color Bank  (selects group of 4 palette entries used for line)
+	  3  |......xx xxxxxxxx|  Road Gfx Tile number
+	-----+-----------------+-----------------------------------------
+
+	@ size of bitmask suggested by Nightstr stage C when boss appears
+	^ bitmask confirmed in ChaseHQ code
+
+	* see Nightstr "stage choice tunnel"
+	+ see Contcirc track at race start
+
+	These priority bits have a different meaning in road B ram. They appear to mean
+	that the relevant part of road B slips under road A. I.e. in road A they raise
+	priority, in road B they lower it.
+
+	We need a screenshot of Nightstr "stage choice tunnel" showing exactly what effect
+	happens at top and bottom of screen while tunnel bifurcates.
+
+
+Priority Levels - used by this code to represent the way the TC0150ROD appears to work
+---------------
+
+To speed up the code, three bits in the existing pixel-color map are used to store
+priority information:
+
+x....... ........ = transparency
+.xxx.... ........ = pixel priority
+....xxxx xxxxxxxx = pixel pen
+
+There's a problem if any TaitoZ games using twice the palette space turn
+up that also use TC0150ROD. This seems unlikely.
+
+Pixel priority levels
+---------------------
+0 = bottom (used for off-edge i.e. background)
+1,2,3,4 = ascending priority levels
+
+
+Priority bits refer to: (edge a, body a, edge b, body b)
+
+Standard:  bits=(0,0,0,0)
+     edge a, body a, edge b, body b
+     1       2       3       4
+
+Contcirc:  bits=(0,1,0,0) (body a up by 2)
+     edge a, edge b, body b, body a
+     1       3       4       4
+
+Nightstr bottom half:  bits=(0,1,1,0) (Contcirc PLUS edge b down by 2)
+     edge b, edge a, body b, body a
+     1       1       4       4
+
+Nightstr top half:  bits=(1,0,0,1) (edge b down by 1, body a up by 1)
+     edge a, edge b, body a, body b
+     1       2       3       4
+
+When numbers are the same, A goes on top...
+
+These may need revising once Nightstr / Contcirc screenshots showing road
+intersections are obtained.
+
+
+
+Road info
+---------
+
+Road gfx is 2bpp, each word holds 8 pixels in this format:
+xxxxxxxx ........  lo 8 bits
+........ xxxxxxxx  hi 8 bits
+
+The line gfx is back to front: this is why we call 'left' 'right' and vice versa in
+this code: when the pixels are poked in they are done in reverse order, restoring
+the orientation.
+
+Each road gfx tile is 0x200 long in the rom. This comprises TWO road lines each
+of 1024x1 pixels.
+
+The first is the "edge" graphic. The second is the road body graphic. This means
+separate sets of colors can be used for road edge and road body, giving greater
+color variety.
+
+The edge graphic is stored with the edges touching each other. So we must pull LHS
+and RHS out separately to draw them.
+
+Gfx lines: generally 0-0x1ff are the standard group (higher tile number indexes
+wider lines). However this is just the way the games are: NOT a function of the
+TC0150ROD.
+
+Proof of background palette entry offset is in Contcirc in the tunnel on
+Monaco level, the flyer screenshot shows different background colors on left
+and right.
+
+To investigate the weird road A/B priority system look at Nightstr and also
+Contcirc. Contcirc: the "pit entry lane" in road B looks completely wrong if it is
+allowed on top of road A body.
+
+Aquajack road requires correct bank selection, or it goes crazy.
+
+Should pen0 in Road A body be transparent? It seems necessary for Bshark round 6
+and it makes Aquajack roads look much better. However, in Nightstr stage C
+this results in a black band in the middle of the water. Also, it leaves
+transparent areas in Dblaxle road which look obviously wrong. For time being a
+parameter has been added to select which games use the transparency.
+
+TODO
+----
+
+Contcirc: is road really meant to be so ugly when going uphill?
+
+ChaseHQ: take right fork on level 1, at either edge of road you can see black
+edge. Not obvious what is going wrong here. What color is it meant to be?
+
+Nightstr: is the choice tunnel split correct? Need verification from machine.
+
+Dblaxle: some stray background lines at top of road on occasional frames.
+
+Sprite/road Y positions sometimes don't match. Maybe we need to use a zoom
+lookup table from rom for the TaitoZ sprites.
+
+
+******************************************************************************/
+
+void TC0150ROD_draw(struct mame_bitmap *bitmap,int y_offs,int palette_offs,int type,int road_trans,UINT32 priority)
+{
+#ifdef MAME_DEBUG
+	static int dislayer[6];	/* Road Layer toggles to help get road correct */
+	char buf[80];
+#endif
+
+	int x_offs = 0xa7;	/* Increasing this shifts road to right */
+	UINT16 scanline[512];
+	UINT16 roada_line[512],roadb_line[512];
+	data16_t *dst16;
+	data16_t *roada,*roadb;
+	data16_t *roadgfx = (data16_t *)memory_region(REGION_GFX3);
+
+	UINT16 pixel,color,gfx_word;
+	UINT16 roada_clipl,roada_clipr,roada_bodyctrl;
+	UINT16 roadb_clipl,roadb_clipr,roadb_bodyctrl;
+	UINT16 pri,pixpri;
+	UINT8 priorities[6];
+	int x_index,roadram_index,roadram2_index,i;
+	int xoffset,paloffs,palloffs,palroffs;
+	int road_gfx_tilenum,colbank,road_center;
+	int road_ctrl = TC0150ROD_ram[0xfff];
+	int left_edge,right_edge,begin,end,right_over,left_over;
+	int line_needs_drawing,draw_top_road_line,background_only;
+
+	int rot=Machine->orientation;
+	int min_x = Machine->visible_area.min_x;
+	int max_x = Machine->visible_area.max_x;
+	int min_y = Machine->visible_area.min_y;
+	int max_y = Machine->visible_area.max_y;
+	int screen_width = max_x - min_x + 1;
+
+	int y = min_y;
+
+	int twin_road = 0;
+
+	int road_A_address = y_offs * 4;	/* Index into roadram for road A */
+	int road_B_address = y_offs * 4 + ((type == 2) ? 0 : 0x800);	/* Aquajack has road B in road A area */
+
+#ifdef MAME_DEBUG
+	if (keyboard_pressed_memory (KEYCODE_X))
+	{
+		dislayer[0] ^= 1;
+		sprintf(buf,"RoadA body: %01x",dislayer[0]);
+		usrintf_showmessage(buf);
+	}
+
+	if (keyboard_pressed_memory (KEYCODE_C))
+	{
+		dislayer[1] ^= 1;
+		sprintf(buf,"RoadA l-edge: %01x",dislayer[1]);
+		usrintf_showmessage(buf);
+	}
+
+	if (keyboard_pressed_memory (KEYCODE_V))
+	{
+		dislayer[2] ^= 1;
+		sprintf(buf,"RoadA r-edge: %01x",dislayer[2]);
+		usrintf_showmessage(buf);
+	}
+
+	if (keyboard_pressed_memory (KEYCODE_B))
+	{
+		dislayer[3] ^= 1;
+		sprintf(buf,"RoadB body: %01x",dislayer[3]);
+		usrintf_showmessage(buf);
+	}
+
+	if (keyboard_pressed_memory (KEYCODE_N))
+	{
+		dislayer[4] ^= 1;
+		sprintf(buf,"RoadB l-edge: %01x",dislayer[4]);
+		usrintf_showmessage(buf);
+	}
+	if (keyboard_pressed_memory (KEYCODE_M))
+	{
+		dislayer[5] ^= 1;
+		sprintf(buf,"RoadB r-edge: %01x",dislayer[5]);
+		usrintf_showmessage(buf);
+	}
+#endif
+
+#if 0
+	if (1)
+	{
+		char buf3[80];
+		sprintf(buf3,"road control: %04x",road_ctrl);
+		usrintf_showmessage(buf3);
+	}
+#endif
+
+	/* Check which bank Road A should be drawn from */
+	if ((road_ctrl &0x100))	road_A_address += 0x400;
+
+	/* Check which bank Road B should be drawn from */
+	if ((road_ctrl &0x400))	road_B_address += 0x400;
+
+	do
+	{
+		line_needs_drawing = 0;
+
+		roadram_index  = road_A_address + y * 4;	/* in case there is some switching mechanism (unlikely) */
+		roadram2_index = road_B_address + y * 4;
+
+		roada = roada_line;
+		roadb = roadb_line;
+
+		for (i=0;i<screen_width;i++)	/* Default transparency fill */
+		{
+			*roada++ = 0x8000;
+			*roadb++ = 0x8000;
+		}
+
+		/* l-edge a, r-edge a, body a, l-edge b, r-edge-b, body b */
+		priorities[0] = 1;
+		priorities[1] = 1;
+		priorities[2] = 2;
+		priorities[3] = 3;
+		priorities[4] = 3;
+		priorities[5] = 4;
+
+		roada_clipr    = TC0150ROD_ram[roadram_index];
+		roada_clipl    = TC0150ROD_ram[roadram_index+1];
+		roada_bodyctrl = TC0150ROD_ram[roadram_index+2];
+		roadb_clipr    = TC0150ROD_ram[roadram2_index];
+		roadb_clipl    = TC0150ROD_ram[roadram2_index+1];
+		roadb_bodyctrl = TC0150ROD_ram[roadram2_index+2];
+
+		/* Not very logical, but seems to work */
+		if (roada_bodyctrl & 0x2000)	priorities[2] += 2;
+		if (roadb_bodyctrl & 0x2000)	priorities[2] += 1;
+		if (roada_clipl    & 0x2000)	priorities[3] -= 1;
+		if (roadb_clipl    & 0x2000)	priorities[3] -= 2;
+		if (roada_clipr    & 0x2000)	priorities[4] -= 1;
+		if (roadb_clipr    & 0x2000)	priorities[4] -= 2;
+
+		if (priorities[4] == 0)	priorities[4]++;	/* Fixes Aquajack LH edge dropping below background */
+
+		if ((roada_bodyctrl &0x8000) || (roadb_bodyctrl &0x8000))
+			twin_road ++;
+
+		/********************************************************/
+		/*                        ROAD A                        */
+            /********************************************************/
+
+		palroffs =(roada_clipr &0x1000) >> 11;
+		palloffs =(roada_clipl &0x1000) >> 11;
+		xoffset  = roada_bodyctrl &0x7ff;
+		paloffs  =(roada_bodyctrl &0x1800) >> 11;
+		colbank  =(TC0150ROD_ram[roadram_index+3] &0xf000) >> 10;
+		road_gfx_tilenum = TC0150ROD_ram[roadram_index+3] &0x3ff;
+		right_over = 0;
+		left_over = 0;
+
+		road_center = 0x5ff - ((-xoffset + x_offs) &0x7ff);
+		left_edge = road_center - (roada_clipl &0x3ff);		/* start pixel for left edge */
+		right_edge = road_center + 1 + (roada_clipr &0x3ff);	/* start pixel for right edge */
+
+		if ((roada_clipl) || (roada_clipr))	line_needs_drawing = 1;
+
+		/* Main road line is drawn from 'begin' to 'end'-1 */
+
+		begin = left_edge + 1;
+		if (begin < 0)
+		{
+			begin = 0;	/* can't begin off edge of screen */
+		}
+
+		end = right_edge;
+		if (end > screen_width)
+		{
+			end = screen_width;	/* can't end off edge of screen */
+		}
+
+		/* We need to offset start pixel we draw for road edge when edge of
+		   road is partially or wholly offscreen on the opposite side
+		   e.g. Contcirc attract */
+
+		if (right_edge < 0)
+		{
+			right_over = -right_edge;
+			right_edge = 0;
+		}
+		if (left_edge >= screen_width)
+		{
+			left_over = left_edge - screen_width + 1;
+			left_edge = screen_width - 1;
+		}
+
+		/* If road is way off to right we only need to plot background */
+		background_only = (road_center > (screen_width - 2 + 1024/2)) ? 1 : 0;
+
+
+		/********* Draw main part of road *********/
+
+		color = ((palette_offs + colbank + paloffs) << 4) + ((type) ? (1) : (4));
+		pri = priorities[2] << 12;
+
+#ifdef MAME_DEBUG
+	if (!dislayer[0])
+#endif
+		{
+		/* Is this calculation imperfect ?  (0xa0 = screen width/2) */
+		x_index = (-xoffset + x_offs + begin) &0x7ff;
+
+		roada = roada_line + screen_width - 1 - begin;
+
+		if ((line_needs_drawing) && (begin < end))
+		{
+			for (i=begin; i<end; i++)
+			{
+				if (road_gfx_tilenum)	/* fixes Nightstr round C */
+				{
+					gfx_word = roadgfx[(road_gfx_tilenum << 8) + (x_index >> 3)];
+					pixel = ((gfx_word >> (7-(x_index % 8) + 8)) &0x1) * 2 + ((gfx_word >> (7-(x_index % 8))) &0x1);
+
+					if ((pixel) || !(road_trans))
+					{
+						if (type)	pixel = (pixel-1)&3;
+						*roada-- = (color + pixel) | pri;
+					}
+					else	*roada-- = 0xf000;	/* priority transparency, fixes Bshark round 6 + Aquajack */
+				}
+				else roada--;
+
+				x_index++;
+				x_index &= 0x7ff;
+			}
+		}
+		}
+
+
+		/********* Draw 'left' road edge *********/
+
+		color = ((palette_offs + colbank + palloffs) << 4) + ((type) ? (1) : (4));
+		pri = priorities[0] << 12;
+
+#ifdef MAME_DEBUG
+	if (!dislayer[2])
+#endif
+		{
+		if (background_only)	/* The "road edge" line is entirely off screen so can't be drawn */
+		{
+			if (roada_clipl &0x8000)	/* but we may need to fill in the background color */
+			{
+				roada = roada_line;
+				for (i=0;i<screen_width;i++)
+				{
+					*roada++ = (color + (type ? (3) : (0)));
+				}
+			}
+		}
+		else
+		{
+			if ((left_edge >= 0) && (left_edge < screen_width))
+			{
+				x_index = (1024/2 - 1 - left_over) &0x7ff;
+
+				roada = roada_line + screen_width - 1 - left_edge;
+
+				if (line_needs_drawing)
+				{
+					for (i=left_edge; i>=0; i--)
+					{
+						gfx_word = roadgfx[(road_gfx_tilenum << 8) + (x_index >> 3)];
+						pixel = ((gfx_word >> (7-(x_index % 8) + 8)) &0x1) * 2 + ((gfx_word >> (7-(x_index % 8))) &0x1);
+
+						pixpri = (pixel==0) ? (0) : (pri);	/* off edge has low priority */
+
+						if ((pixel==0) && !(roada_clipl &0x8000))
+						{
+							roada++;
+						}
+						else
+						{
+							if (type)	pixel = (pixel-1)&3;
+							*roada++ = (color + pixel) | pixpri;
+						}
+
+						x_index--;
+						x_index &= 0x7ff;
+					}
+				}
+			}
+		}
+		}
+
+
+		/********* Draw 'right' road edge *********/
+
+		color = ((palette_offs + colbank + palroffs) << 4) + ((type) ? (1) : (4));
+		pri = priorities[1] << 12;
+
+#ifdef MAME_DEBUG
+	if (!dislayer[1])
+#endif
+		{
+		if ((right_edge < screen_width) && (right_edge >= 0))
+		{
+			x_index = (1024/2 + right_over) &0x7ff;
+
+			roada = roada_line + screen_width - 1 - right_edge;
+
+			if (line_needs_drawing)
+			{
+				for (i=right_edge; i<screen_width; i++)
+				{
+					gfx_word = roadgfx[(road_gfx_tilenum << 8) + (x_index >> 3)];
+					pixel = ((gfx_word >> (7-(x_index % 8) + 8)) &0x1) * 2 + ((gfx_word >> (7-(x_index % 8))) &0x1);
+
+					pixpri = (pixel==0) ? (0) : (pri);	/* off edge has low priority */
+
+					if ((pixel==0) && !(roada_clipr &0x8000))
+					{
+						roada--;
+					}
+					else
+					{
+						if (type)	pixel = (pixel-1)&3;
+						*roada-- = (color + pixel) | pixpri;
+					}
+
+					x_index++;
+					x_index &= 0x7ff;
+				}
+			}
+		}
+		}
+
+
+		/********************************************************/
+		/*                        ROAD B                        */
+            /********************************************************/
+
+		palroffs = (roadb_clipr &0x1000) >> 11;
+		palloffs = (roadb_clipl &0x1000) >> 11;
+		xoffset  =  roadb_bodyctrl &0x7ff;
+		paloffs  = (roadb_bodyctrl &0x1800) >> 11;
+		colbank  = (TC0150ROD_ram[roadram2_index+3] &0xf000) >> 10;
+		road_gfx_tilenum = TC0150ROD_ram[roadram2_index+3] &0x3ff;
+		right_over = 0;
+		left_over = 0;
+
+		road_center = 0x5ff - ((-xoffset + x_offs) &0x7ff);
+
+// ChaseHQ glitches on right when road rejoins:
+// de7, de8 causes problems => 5e7/e8
+// 5ff - (a7 - 5e7)
+// 5ff - 2c0 = 33f / 340 which is not quite > screenwidth + 1024/2: so we subtract 2 more, fixed
+
+
+// ChaseHQ glitches on right when road rejoins:
+// 0a6 and lower => 0x5ff 5fe etc.
+// 35c => 575 right road edge wraps back onto other side of screen
+// 5ff-54a     thru    5ff-331
+// b6          thru    2ce
+// 2a6 thru 0 thru 5a7 ??
+
+		left_edge = road_center - (roadb_clipl &0x3ff);		/* start pixel for left edge */
+		right_edge = road_center + 1 + (roadb_clipr &0x3ff);	/* start pixel for right edge */
+
+		if (((roadb_clipl) || (roadb_clipr)) && ((road_ctrl &0x800) || (type==2)))
+		{
+			draw_top_road_line = 1;
+			line_needs_drawing = 1;
+		}
+		else	draw_top_road_line = 0;
+
+		/* Main road line is drawn from 'begin' to 'end'-1 */
+
+		begin = left_edge + 1;
+		if (begin < 0)
+		{
+			begin = 0;	/* can't begin off edge of screen */
+		}
+
+		end = right_edge;
+		if (end > screen_width)
+		{
+			end = screen_width;	/* can't end off edge of screen */
+		}
+
+		/* We need to offset start pixel we draw for road edge when edge of
+		   road is partially or wholly offscreen on the opposite side
+		   e.g. Contcirc attract */
+
+		if (right_edge < 0)
+		{
+			right_over = -right_edge;
+			right_edge = 0;
+		}
+		if (left_edge >= screen_width)
+		{
+			left_over = left_edge - screen_width + 1;
+			left_edge = screen_width - 1;
+		}
+
+		/* If road is way off to right we only need to plot background */
+		background_only = (road_center > (screen_width - 2 + 1024/2)) ? 1 : 0;
+
+
+		/********* Draw main part of road *********/
+
+		color = ((palette_offs + colbank + paloffs) << 4) + ((type) ? (1) : (4));
+		pri = priorities[5] << 12;
+
+#ifdef MAME_DEBUG
+	if (!dislayer[3])
+#endif
+		{
+		/* Is this calculation imperfect ?  (0xa0 = screen width/2) */
+		x_index = (-xoffset + x_offs + begin) &0x7ff;
+
+		if (x_index > 0x3ff)	/* Second half of gfx contains the road body line */
+		{
+			roadb = roadb_line + screen_width - 1 - begin;
+
+			if (draw_top_road_line && road_gfx_tilenum && (begin < end))
+			{
+				for (i=begin; i<end; i++)
+				{
+					gfx_word = roadgfx[(road_gfx_tilenum << 8) + (x_index >> 3)];
+					pixel = ((gfx_word >> (7-(x_index % 8) + 8)) &0x1) * 2 + ((gfx_word >> (7-(x_index % 8))) &0x1);
+
+					if ((pixel) || !(road_trans))
+					{
+						if (type)	pixel = (pixel-1)&3;
+						*roadb-- = (color + pixel) | pri;
+					}
+					else	*roadb-- = 0xf000;	/* high priority transparency, fixes Aquajack */
+
+					x_index++;
+					x_index &= 0x7ff;
+				}
+			}
+		}
+		}
+
+
+		/********* Draw 'left' road edge *********/
+
+		color = ((palette_offs + colbank + palloffs) << 4) + ((type) ? (1) : (4));
+		pri = priorities[3] << 12;
+
+#ifdef MAME_DEBUG
+	if (!dislayer[5])
+#endif
+		{
+		if (background_only)	/* The "road edge" line is entirely off screen so can't be drawn */
+		{
+			if ((roadb_clipl &0x8000) && draw_top_road_line)	/* but we may need to fill in the background color */
+			{
+				roadb = roadb_line;
+				for (i=0;i<screen_width;i++)
+				{
+					*roadb++ = (color + (type ? (3) : (0)));
+				}
+			}
+		}
+		else
+		{
+			if ((left_edge >= 0) && (left_edge < screen_width))
+			{
+				x_index = (1024/2 - 1 - left_over) &0x7ff;
+
+				roadb = roadb_line + screen_width - 1 - left_edge;
+
+				if (draw_top_road_line)		// rename to draw_roadb_line !?
+				{
+					for (i=left_edge; i>=0; i--)
+					{
+						gfx_word = roadgfx[(road_gfx_tilenum << 8) + (x_index >> 3)];
+						pixel = ((gfx_word >> (7-(x_index % 8) + 8)) &0x1) * 2 + ((gfx_word >> (7-(x_index % 8))) &0x1);
+
+						pixpri = (pixel==0) ? (0) : (pri);	/* off edge has low priority */
+
+						if ((pixel==0) && !(roadb_clipl &0x8000))	/* test for background disabled */
+						{
+							roadb++;
+						}
+						else
+						{
+							if (type)	pixel = (pixel-1)&3;
+							*roadb++ = (color + pixel) | pixpri;
+						}
+
+						x_index--;
+						if (x_index < 0)	break;
+					}
+				}
+			}
+		}
+		}
+
+
+		/********* Draw 'right' road edge *********/
+
+		color = ((palette_offs + colbank + palroffs) << 4) + ((type) ? (1) : (4));
+		pri = priorities[4] << 12;
+
+#ifdef MAME_DEBUG
+	if (!dislayer[4])
+#endif
+		{
+		if ((right_edge < screen_width) && (right_edge >= 0))
+		{
+			x_index = (1024/2 + right_over) &0x7ff;
+
+			roadb = roadb_line + screen_width - 1 - right_edge;
+
+			if (draw_top_road_line)
+			{
+				for (i=right_edge; i<screen_width; i++)
+				{
+					gfx_word = roadgfx[(road_gfx_tilenum << 8) + (x_index >> 3)];
+					pixel = ((gfx_word >> (7-(x_index % 8) + 8)) &0x1) * 2 + ((gfx_word >> (7-(x_index % 8))) &0x1);
+
+					pixpri = (pixel==0) ? (0) : (pri);	/* off edge has low priority */
+
+					if ((pixel==0) && !(roadb_clipr &0x8000))	/* test for background disabled */
+					{
+						roadb--;
+					}
+					else
+					{
+						if (type)	pixel = (pixel-1)&3;
+						*roadb-- =  (color + pixel) | pixpri;
+					}
+
+					x_index++;
+					if (x_index > 0x3ff)	break;
+				}
+			}
+		}
+		}
+
+
+		/******** Combine the two lines according to pixel priorities ********/
+
+		if (line_needs_drawing)
+		{
+
+			if (rot & ORIENTATION_FLIP_X)
+			{
+				dst16 = scanline + screen_width - 1;
+
+				for (i=0;i<screen_width;i++)
+				{
+					if (roada_line[i] == 0x8000)	/* road A pixel transparent */
+					{
+						*dst16-- = roadb_line[i] & 0x8fff;
+					}
+					else if (roadb_line[i] == 0x8000)	/* road B pixel transparent */
+					{
+						*dst16-- = roada_line[i] & 0x8fff;
+					}
+					else	/* two competing pixels, which has highest priority... */
+					{
+						if ((roadb_line[i] & 0x7000) > (roada_line[i] & 0x7000))
+						{
+							*dst16-- = roadb_line[i] & 0x8fff;
+						}
+						else
+ 						{
+							*dst16-- = roada_line[i] & 0x8fff;
+						}
+					}
+				}
+			}
+			else	/* standard non-flipped case */
+			{
+				dst16 = scanline;
+
+				for (i=0;i<screen_width;i++)
+				{
+					if (roada_line[i] == 0x8000)	/* road A pixel transparent */
+					{
+						*dst16++ = roadb_line[i] & 0x8fff;
+					}
+					else if (roadb_line[i] == 0x8000)	/* road B pixel transparent */
+					{
+						*dst16++ = roada_line[i] & 0x8fff;
+					}
+					else	/* two competing pixels, which has highest priority... */
+					{
+						if ((roadb_line[i] & 0x7000) > (roada_line[i] & 0x7000))
+						{
+							*dst16++ = roadb_line[i] & 0x8fff;
+						}
+						else
+ 						{
+							*dst16++ = roada_line[i] & 0x8fff;
+						}
+					}
+				}
+			}
+
+			bryan_drawscanline(bitmap,0,y,screen_width,scanline,1,rot,priority);
+		}
+
+		y++;
+	}
+	while (y <= max_y);
+
+#if 0
+	if (twin_road)	// I don't know what this means, actually...
+	{
+		char buf2[80];
+		sprintf(buf2,"Road twinned for %04x lines",twin_road);
+		usrintf_showmessage(buf2);
+	}
+#endif
+}
 
 /***************************************************************************/
 

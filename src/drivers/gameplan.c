@@ -141,11 +141,6 @@ static MEMORY_WRITE_START( writemem_snd )
 
 MEMORY_END
 
-int gameplan_interrupt(void)
-{
-	return 1;
-}
-
 INPUT_PORTS_START( kaos )
 	PORT_START      /* IN0 - from "TEST NO.7 - status locator - coin-door" */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
@@ -529,13 +524,13 @@ static const struct MachineDriver machine_driver_gameplan =
 			CPU_M6502,
 			3579000 / 4,		/* 3.579 / 4 MHz */
 			readmem, writemem, 0, 0,
-			gameplan_interrupt,1 /* 1 interrupt per frame */
+			interrupt,1 /* 1 interrupt per frame */
 		},
 		{
             CPU_M6502 | CPU_AUDIO_CPU,
 			3579000 / 4,		/* 3.579 / 4 MHz */
 			readmem_snd,writemem_snd,0,0,
-			gameplan_interrupt,1
+			interrupt,1
 		},
 	},
 	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */

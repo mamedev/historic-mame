@@ -95,30 +95,30 @@ enum
 	REG020_HSBLNK,
 	REG020_VTOTAL,
 	REG020_HTOTAL,
-	REG020_DPYCTL,
-	REG020_DPYSTRT,
-	REG020_DPYINT,
-	REG020_CONTROL,
-	REG020_HSTDATA,
-	REG020_HSTADRL,
-	REG020_HSTADRH,
-	REG020_HSTCTLL,
+	REG020_DPYCTL,		/* matches 010 */
+	REG020_DPYSTRT,		/* matches 010 */
+	REG020_DPYINT,		/* matches 010 */
+	REG020_CONTROL,		/* matches 010 */
+	REG020_HSTDATA,		/* matches 010 */
+	REG020_HSTADRL,		/* matches 010 */
+	REG020_HSTADRH,		/* matches 010 */
+	REG020_HSTCTLL,		/* matches 010 */
 
-	REG020_HSTCTLH,
-	REG020_INTENB,
-	REG020_INTPEND,
-	REG020_CONVSP,
-	REG020_CONVDP,
-	REG020_PSIZE,
+	REG020_HSTCTLH,		/* matches 010 */
+	REG020_INTENB,		/* matches 010 */
+	REG020_INTPEND,		/* matches 010 */
+	REG020_CONVSP,		/* matches 010 */
+	REG020_CONVDP,		/* matches 010 */
+	REG020_PSIZE,		/* matches 010 */
 	REG020_PMASKL,
 	REG020_PMASKH,
 	REG020_CONVMP,
 	REG020_CONTROL2,
 	REG020_CONFIG,
-	REG020_DPYTAP,
+	REG020_DPYTAP,		/* matches 010 */
 	REG020_VCOUNT,
 	REG020_HCOUNT,
-	REG020_DPYADR,
+	REG020_DPYADR,		/* matches 010 */
 	REG020_REFADR,
 
 	REG020_DPYSTL,
@@ -165,10 +165,12 @@ enum
 #define TMS34010_WV          0x0800    /* Window Violation Interrupt */
 
 /* IO registers accessor */
-#define IOREG(reg)				(state.IOregs[reg])
-#define CONTEXT_IOREG(c,reg)	((c)->IOregs[reg])
-#define PBH 					(IOREG(REG_CONTROL) & 0x0100)
-#define PBV 					(IOREG(REG_CONTROL) & 0x0200)
+#define IOREG(reg)					(state.IOregs[reg])
+#define SMART_IOREG(reg)			(state.IOregs[state.is_34020 ? REG020_##reg : REG_##reg])
+#define CONTEXT_IOREG(c,reg)		((c)->IOregs[reg])
+#define CONTEXT_SMART_IOREG(c,reg)	((c)->IOregs[(c)->is_34020 ? REG020_##reg : REG_##reg])
+#define PBH 						(IOREG(REG_CONTROL) & 0x0100)
+#define PBV 						(IOREG(REG_CONTROL) & 0x0200)
 
 
 

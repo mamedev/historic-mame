@@ -149,23 +149,27 @@ void centiped_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	{
 		if (dirtybuffer[offs])
 		{
-			int sx,sy;
+			int sx,sy,flipx,flipy;
 
 
 			dirtybuffer[offs] = 0;
 
 			sx = offs % 32;
 			sy = offs / 32;
+			flipx = videoram[offs] & 0x40;
+			flipy = videoram[offs] & 0x80;
 
 			if (flip_screen)
 			{
 				sy += 2;
+				flipx = !flipx;
+				flipy = !flipy;
 			}
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					(videoram[offs] & 0x3f) + 0x40,
 					(sy + 1) / 8,	/* support midframe palette changes in test mode */
-					flip_screen,flip_screen,
+					flipx,flipy,
 					8*sx,8*sy,
 					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}

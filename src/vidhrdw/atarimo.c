@@ -491,13 +491,6 @@ void atarimo_render(int map, struct mame_bitmap *bitmap, ataripf_overrender_cb c
 	mo->overrender0 = callback1;
 	mo->overrender1 = callback2;
 	mo_process(mo, mo_render_callback, bitmap, NULL);
-
-	/* set a timer to call the eof function on scanline 0 */
-	if (!mo->timerallocated)
-	{
-		timer_set(cpu_getscanlinetime(0), 0 | (map << 16), mo_scanline_callback);
-		mo->timerallocated = 1;
-	}
 }
 
 
@@ -822,6 +815,14 @@ static void mo_update(struct atarimo_data *mo, int scanline)
 	UINT8 spritevisit[ATARIMO_MAXPERBANK];
 	int match = 0, link;
 
+	/* set a timer to call the eof function on scanline 0 */
+	/* we need this to clear the cache, even if the mo's are not rendered */
+	if (!mo->timerallocated && cpu_getcurrentframe() > 0)
+	{
+		timer_set(cpu_getscanlinetime(0), 0 | ((mo - &atarimo[0]) << 16), mo_scanline_callback);
+		mo->timerallocated = 1;
+	}
+
 	/* skip if the scanline is past the bottom of the screen */
 	if (scanline > Machine->visible_area.max_y)
 		return;
@@ -844,6 +845,13 @@ static void mo_update(struct atarimo_data *mo, int scanline)
 			current = new_previous = previous;
 		else
 			match = 1;
+	}
+
+	/* bounds checking */
+	if (current >= mo->endcache)
+	{
+		logerror("Motion object list exceeded maximum\n");
+		return;
 	}
 
 	/* set up the first entry with scroll and banking information */
@@ -1025,7 +1033,7 @@ static void mo_render_callback(struct atarimo_data *mo, const struct atarimo_ent
 					drawgfx(priority_bitmap, gfx, code, 0, hflip, vflip, sx, sy, &mo->process_clip, TRANSPARENCY_NONE_RAW, mo->transpen);
 
 				/* track the total usage */
-				total_usage |= usage[code];
+				total_usage |= usage[code % gfx->total_elements];
 			}
 		}
 	}
@@ -1060,7 +1068,7 @@ static void mo_render_callback(struct atarimo_data *mo, const struct atarimo_ent
 					drawgfx(priority_bitmap, gfx, code, 0, hflip, vflip, sx, sy, &mo->process_clip, TRANSPARENCY_NONE_RAW, mo->transpen);
 
 				/* track the total usage */
-				total_usage |= usage[code];
+				total_usage |= usage[code % gfx->total_elements];
 			}
 		}
 	}

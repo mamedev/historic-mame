@@ -13,7 +13,7 @@
 #include "cpu/m6809/m6809.h"
 #include "6821pia.h"
 #include "sndhrdw/williams.h"
-
+#include "wmsyunit.h"
 
 
 /* constant definitions */
@@ -80,14 +80,6 @@ static UINT8	term2_analog_select;
        data16_t *wms_cmos_ram;
        UINT32 	wms_cmos_page;
 static UINT8	cmos_w_enable;
-
-/* graphics-related variables */
-extern struct rectangle wms_visible_area;
-extern UINT8 *	wms_gfx_rom;
-extern size_t	wms_gfx_rom_size;
-
-/* update-related variables */
-extern UINT8	wms_partial_update_offset;
 
 /* sound-related variables */
 static UINT8	sound_type;

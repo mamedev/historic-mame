@@ -10,23 +10,89 @@
 #include "vidhrdw/generic.h"
 
 
-static struct mame_bitmap *fromanc2_tmpbitmapx[2];
-static struct mame_bitmap *fromanc2_tmpbitmap[2][4];
-static data16_t *fromanc2_videoram[2][4];
-static data8_t *fromanc2_dirty[2][4];
-static data16_t *fromanc2_paletteram[2];
+static int fromanc2_dispvram, fromanc2_dispvram_old;
 static int fromanc2_scrollx[2][4], fromanc2_scrolly[2][4];
 static int fromanc2_gfxbank[2][4];
+static data16_t *fromanc2_paletteram[2];
+static data16_t *fromanc2_videoram[2][4];
+static struct tilemap *fromanc2_tilemap[2][4];
 
 
 void fromanc2_vh_stop(void);
 void fromancr_vh_stop(void);
+void fromanc4_vh_stop(void);
 
 
 /******************************************************************************
 
 
+
 ******************************************************************************/
+void fromanc2_set_dispvram_w(int vram)
+{
+	fromanc2_dispvram = (vram ? 1 : 0);
+
+	if (fromanc2_dispvram_old != fromanc2_dispvram)
+	{
+		fromanc2_dispvram_old = fromanc2_dispvram;
+
+		if (fromanc2_tilemap[fromanc2_dispvram][0]) tilemap_mark_all_tiles_dirty(fromanc2_tilemap[fromanc2_dispvram][0]);
+		if (fromanc2_tilemap[fromanc2_dispvram][1]) tilemap_mark_all_tiles_dirty(fromanc2_tilemap[fromanc2_dispvram][1]);
+		if (fromanc2_tilemap[fromanc2_dispvram][2]) tilemap_mark_all_tiles_dirty(fromanc2_tilemap[fromanc2_dispvram][2]);
+		if (fromanc2_tilemap[fromanc2_dispvram][3]) tilemap_mark_all_tiles_dirty(fromanc2_tilemap[fromanc2_dispvram][3]);
+	}
+}
+
+/******************************************************************************
+
+  Callbacks for the TileMap code
+
+******************************************************************************/
+
+INLINE void fromanc2_get_tile_info(int tile_index, int vram, int layer)
+{
+	int tile, color;
+
+	tile  = ((fromanc2_videoram[vram][layer][tile_index] & 0x3fff) | (fromanc2_gfxbank[vram][layer] << 14));
+	color = (((fromanc2_videoram[vram][layer][tile_index] & 0xc000) >> 14) | (0x10 * vram));
+
+	SET_TILE_INFO(layer, tile, color, 0)
+}
+
+static void fromanc2_get_v0_l0_tile_info(int tile_index) { fromanc2_get_tile_info(tile_index, 0, 0); }
+static void fromanc2_get_v0_l1_tile_info(int tile_index) { fromanc2_get_tile_info(tile_index, 0, 1); }
+static void fromanc2_get_v0_l2_tile_info(int tile_index) { fromanc2_get_tile_info(tile_index, 0, 2); }
+static void fromanc2_get_v0_l3_tile_info(int tile_index) { fromanc2_get_tile_info(tile_index, 0, 3); }
+static void fromanc2_get_v1_l0_tile_info(int tile_index) { fromanc2_get_tile_info(tile_index, 1, 0); }
+static void fromanc2_get_v1_l1_tile_info(int tile_index) { fromanc2_get_tile_info(tile_index, 1, 1); }
+static void fromanc2_get_v1_l2_tile_info(int tile_index) { fromanc2_get_tile_info(tile_index, 1, 2); }
+static void fromanc2_get_v1_l3_tile_info(int tile_index) { fromanc2_get_tile_info(tile_index, 1, 3); }
+
+
+INLINE void fromancr_get_tile_info(int tile_index, int vram, int layer)
+{
+	int tile, color;
+
+	tile  = (fromanc2_videoram[vram][layer][tile_index] | (fromanc2_gfxbank[vram][layer] << 16));
+	color = vram;
+
+	SET_TILE_INFO(layer, tile, color, 0)
+}
+
+static void fromancr_get_v0_l0_tile_info(int tile_index) { fromancr_get_tile_info(tile_index, 0, 0); }
+static void fromancr_get_v0_l1_tile_info(int tile_index) { fromancr_get_tile_info(tile_index, 0, 1); }
+static void fromancr_get_v0_l2_tile_info(int tile_index) { fromancr_get_tile_info(tile_index, 0, 2); }
+static void fromancr_get_v1_l0_tile_info(int tile_index) { fromancr_get_tile_info(tile_index, 1, 0); }
+static void fromancr_get_v1_l1_tile_info(int tile_index) { fromancr_get_tile_info(tile_index, 1, 1); }
+static void fromancr_get_v1_l2_tile_info(int tile_index) { fromancr_get_tile_info(tile_index, 1, 2); }
+
+
+/******************************************************************************
+
+  Memory handlers
+
+******************************************************************************/
+
 READ16_HANDLER( fromanc2_paletteram_0_r )
 {
 	return fromanc2_paletteram[0][offset];
@@ -39,8 +105,8 @@ READ16_HANDLER( fromanc2_paletteram_1_r )
 
 WRITE16_HANDLER( fromanc2_paletteram_0_w )
 {
-	int color;
-	int r, g, b;
+	UINT16 color;
+	UINT8 r, g, b;
 
 	COMBINE_DATA(&fromanc2_paletteram[0][offset]);
 
@@ -59,8 +125,8 @@ WRITE16_HANDLER( fromanc2_paletteram_0_w )
 
 WRITE16_HANDLER( fromanc2_paletteram_1_w )
 {
-	int color;
-	int r, g, b;
+	UINT16 color;
+	UINT8 r, g, b;
 
 	COMBINE_DATA(&fromanc2_paletteram[1][offset]);
 
@@ -77,6 +143,7 @@ WRITE16_HANDLER( fromanc2_paletteram_1_w )
 	palette_set_color((0x100 + color), r, g, b);
 }
 
+
 READ16_HANDLER( fromancr_paletteram_0_r )
 {
 	return fromanc2_paletteram[0][offset];
@@ -89,8 +156,8 @@ READ16_HANDLER( fromancr_paletteram_1_r )
 
 WRITE16_HANDLER( fromancr_paletteram_0_w )
 {
-	int color;
-	int r, g, b;
+	UINT16 color;
+	UINT8 r, g, b;
 
 	COMBINE_DATA(&fromanc2_paletteram[0][offset]);
 
@@ -109,8 +176,8 @@ WRITE16_HANDLER( fromancr_paletteram_0_w )
 
 WRITE16_HANDLER( fromancr_paletteram_1_w )
 {
-	int color;
-	int r, g, b;
+	UINT16 color;
+	UINT8 r, g, b;
 
 	COMBINE_DATA(&fromanc2_paletteram[1][offset]);
 
@@ -127,141 +194,70 @@ WRITE16_HANDLER( fromancr_paletteram_1_w )
 	palette_set_color((0x100 + color), r, g, b);
 }
 
-/******************************************************************************
 
-
-******************************************************************************/
-WRITE16_HANDLER( fromanc2_videoram_0_w )
+READ16_HANDLER( fromanc4_paletteram_0_r )
 {
-#if 0
-	if (offset < 0x1000)
-	{
-		COMBINE_DATA(&fromanc2_videoram[0][0][(offset & 0x0fff)]);
-		fromanc2_dirty[0][0][(offset & 0x0fff)] = 1;
-	}
-	else
-	{
-		COMBINE_DATA(&fromanc2_videoram[1][0][(offset & 0x0fff)]);
-		fromanc2_dirty[1][0][(offset & 0x0fff)] = 1;
-	}
-#else
-		COMBINE_DATA(&fromanc2_videoram[0][0][(offset & 0x1fff)]);
-		fromanc2_dirty[0][0][(offset & 0x1fff)] = 1;
-#endif
+	return fromanc2_paletteram[0][offset];
 }
 
-WRITE16_HANDLER( fromanc2_videoram_1_w )
+READ16_HANDLER( fromanc4_paletteram_1_r )
 {
-#if 0
-	if (offset < 0x1000)
-	{
-		COMBINE_DATA(&fromanc2_videoram[0][1][(offset & 0x0fff)]);
-		fromanc2_dirty[0][1][(offset & 0x0fff)] = 1;
-	}
-	else
-	{
-		COMBINE_DATA(&fromanc2_videoram[1][1][(offset & 0x0fff)]);
-		fromanc2_dirty[1][1][(offset & 0x0fff)] = 1;
-	}
-#else
-		COMBINE_DATA(&fromanc2_videoram[0][1][(offset & 0x1fff)]);
-		fromanc2_dirty[0][1][(offset & 0x1fff)] = 1;
-#endif
+	return fromanc2_paletteram[1][offset];
 }
 
-WRITE16_HANDLER( fromanc2_videoram_2_w )
+WRITE16_HANDLER( fromanc4_paletteram_0_w )
 {
-#if 0
-	if (offset < 0x1000)
-	{
-		COMBINE_DATA(&fromanc2_videoram[0][2][(offset & 0x0fff)]);
-		fromanc2_dirty[0][2][(offset & 0x0fff)] = 1;
-	}
-	else
-	{
-		COMBINE_DATA(&fromanc2_videoram[1][2][(offset & 0x0fff)]);
-		fromanc2_dirty[1][2][(offset & 0x0fff)] = 1;
-	}
-#else
-		COMBINE_DATA(&fromanc2_videoram[0][2][(offset & 0x1fff)]);
-		fromanc2_dirty[0][2][(offset & 0x1fff)] = 1;
-#endif
+	UINT16 color;
+	UINT8 r, g, b;
+
+	COMBINE_DATA(&fromanc2_paletteram[0][offset]);
+
+	// xRRR_RRGG_GGGB_BBBB
+	r = ((data >> 10) & 0x1f);
+	g = ((data >>  5) & 0x1f);
+	b = ((data >>  0) & 0x1f);
+
+	r = ((r << 3) | (r >> 2));
+	g = ((g << 3) | (g >> 2));
+	b = ((b << 3) | (b >> 2));
+
+	color = (((offset & 0x0700) << 1) + (offset & 0x00ff));
+	palette_set_color((0x000 + color), r, g, b);
 }
 
-WRITE16_HANDLER( fromanc2_videoram_3_w )
+WRITE16_HANDLER( fromanc4_paletteram_1_w )
 {
-#if 0
-	if (offset < 0x1000)
-	{
-		COMBINE_DATA(&fromanc2_videoram[0][3][(offset & 0x0fff)]);
-		fromanc2_dirty[0][3][(offset & 0x0fff)] = 1;
-	}
-	else
-	{
-		COMBINE_DATA(&fromanc2_videoram[1][3][(offset & 0x0fff)]);
-		fromanc2_dirty[1][3][(offset & 0x0fff)] = 1;
-	}
-#else
-		COMBINE_DATA(&fromanc2_videoram[0][3][(offset & 0x1fff)]);
-		fromanc2_dirty[0][3][(offset & 0x1fff)] = 1;
-#endif
+	UINT16 color;
+	UINT8 r, g, b;
+
+	COMBINE_DATA(&fromanc2_paletteram[1][offset]);
+
+	// xRRR_RRGG_GGGB_BBBB
+	r = ((data >> 10) & 0x1f);
+	g = ((data >>  5) & 0x1f);
+	b = ((data >>  0) & 0x1f);
+
+	r = ((r << 3) | (r >> 2));
+	g = ((g << 3) | (g >> 2));
+	b = ((b << 3) | (b >> 2));
+
+	color = (((offset & 0x0700) << 1) + (offset & 0x00ff));
+	palette_set_color((0x100 + color), r, g, b);
 }
 
-WRITE16_HANDLER( fromancr_videoram_0_w )
+
+INLINE void fromanc2_dispvram_w(offs_t offset, data16_t data, data16_t mem_mask, int vram, int layer)
 {
-	if (offset < 0x1000)
-	{
-		COMBINE_DATA(&fromanc2_videoram[0][0][(offset & 0x0fff)]);
-		fromanc2_dirty[0][0][(offset & 0x0fff)] = 1;
-	}
-	else
-	{
-		COMBINE_DATA(&fromanc2_videoram[1][0][(offset & 0x0fff)]);
-		fromanc2_dirty[1][0][(offset & 0x0fff)] = 1;
-	}
+	layer += ((offset < 0x1000) ? 0 : 1);
+
+	COMBINE_DATA(&fromanc2_videoram[vram][layer][offset & 0x0fff]);
+	tilemap_mark_tile_dirty(fromanc2_tilemap[vram][layer], offset & 0x0fff);
 }
 
-WRITE16_HANDLER( fromancr_videoram_1_w )
-{
-	if (offset < 0x1000)
-	{
-		COMBINE_DATA(&fromanc2_videoram[0][1][(offset & 0x0fff)]);
-		fromanc2_dirty[0][1][(offset & 0x0fff)] = 1;
-	}
-	else
-	{
-		COMBINE_DATA(&fromanc2_videoram[1][1][(offset & 0x0fff)]);
-		fromanc2_dirty[1][1][(offset & 0x0fff)] = 1;
-	}
-}
-
-WRITE16_HANDLER( fromancr_videoram_2_w )
-{
-	if (offset < 0x1000)
-	{
-		COMBINE_DATA(&fromanc2_videoram[0][2][(offset & 0x0fff)]);
-		fromanc2_dirty[0][2][(offset & 0x0fff)] = 1;
-	}
-	else
-	{
-		COMBINE_DATA(&fromanc2_videoram[1][2][(offset & 0x0fff)]);
-		fromanc2_dirty[1][2][(offset & 0x0fff)] = 1;
-	}
-}
-
-WRITE16_HANDLER( fromancr_videoram_3_w )
-{
-	if (offset < 0x1000)
-	{
-		COMBINE_DATA(&fromanc2_videoram[0][3][(offset & 0x0fff)]);
-		fromanc2_dirty[0][3][(offset & 0x0fff)] = 1;
-	}
-	else
-	{
-		COMBINE_DATA(&fromanc2_videoram[1][3][(offset & 0x0fff)]);
-		fromanc2_dirty[1][3][(offset & 0x0fff)] = 1;
-	}
-}
+WRITE16_HANDLER( fromanc2_videoram_0_w ) { fromanc2_dispvram_w(offset, data, mem_mask, 0, 0); }
+WRITE16_HANDLER( fromanc2_videoram_1_w ) { fromanc2_dispvram_w(offset, data, mem_mask, 0, 2); }
+WRITE16_HANDLER( fromanc2_videoram_2_w ) { fromanc2_dispvram_w(offset, data, mem_mask, 1, 0); }
+WRITE16_HANDLER( fromanc2_videoram_3_w ) { fromanc2_dispvram_w(offset, data, mem_mask, 1, 2); }
 
 WRITE16_HANDLER( fromanc2_gfxreg_0_w )
 {
@@ -315,6 +311,43 @@ WRITE16_HANDLER( fromanc2_gfxreg_3_w )
 	}
 }
 
+WRITE16_HANDLER( fromanc2_gfxbank_0_w )
+{
+	fromanc2_gfxbank[0][0] = ((data & 0x000f) >>  0);
+	fromanc2_gfxbank[0][1] = ((data & 0x00f0) >>  4);
+	fromanc2_gfxbank[0][2] = ((data & 0x0f00) >>  8);
+	fromanc2_gfxbank[0][3] = ((data & 0xf000) >> 12);
+	tilemap_mark_all_tiles_dirty(fromanc2_tilemap[0][0]);
+	tilemap_mark_all_tiles_dirty(fromanc2_tilemap[0][1]);
+	tilemap_mark_all_tiles_dirty(fromanc2_tilemap[0][2]);
+	tilemap_mark_all_tiles_dirty(fromanc2_tilemap[0][3]);
+}
+
+WRITE16_HANDLER( fromanc2_gfxbank_1_w )
+{
+	fromanc2_gfxbank[1][0] = ((data & 0x000f) >>  0);
+	fromanc2_gfxbank[1][1] = ((data & 0x00f0) >>  4);
+	fromanc2_gfxbank[1][2] = ((data & 0x0f00) >>  8);
+	fromanc2_gfxbank[1][3] = ((data & 0xf000) >> 12);
+	tilemap_mark_all_tiles_dirty(fromanc2_tilemap[1][0]);
+	tilemap_mark_all_tiles_dirty(fromanc2_tilemap[1][1]);
+	tilemap_mark_all_tiles_dirty(fromanc2_tilemap[1][2]);
+	tilemap_mark_all_tiles_dirty(fromanc2_tilemap[1][3]);
+}
+
+
+INLINE void fromancr_vram_w(offs_t offset, data16_t data, data16_t mem_mask, int layer)
+{
+	int vram = ((offset < 0x1000) ? 0 : 1);
+
+	COMBINE_DATA(&fromanc2_videoram[vram][layer][offset & 0x0fff]);
+	tilemap_mark_tile_dirty(fromanc2_tilemap[vram][layer], offset & 0x0fff);
+}
+
+WRITE16_HANDLER( fromancr_videoram_0_w ) { fromancr_vram_w(offset, data, mem_mask, 1); }
+WRITE16_HANDLER( fromancr_videoram_1_w ) { fromancr_vram_w(offset, data, mem_mask, 0); }
+WRITE16_HANDLER( fromancr_videoram_2_w ) { fromancr_vram_w(offset, data, mem_mask, 2); }
+
 WRITE16_HANDLER( fromancr_gfxreg_0_w )
 {
 	switch(offset)
@@ -341,71 +374,124 @@ WRITE16_HANDLER( fromancr_gfxreg_1_w )
 	}
 }
 
-WRITE16_HANDLER( fromanc2_gfxbank_0_w )
+void fromancr_gfxbank_w(int data)
 {
-	fromanc2_gfxbank[0][0] = ((data & 0x000f) >>  0);	// G (1P)
-	fromanc2_gfxbank[0][1] = ((data & 0x00f0) >>  4);	// G (1P)
-	fromanc2_gfxbank[0][2] = ((data & 0x0f00) >>  8);	// G (1P)
-	fromanc2_gfxbank[0][3] = ((data & 0xf000) >> 12);	// G (1P)
-}
-
-WRITE16_HANDLER( fromanc2_gfxbank_1_w )
-{
-	fromanc2_gfxbank[1][0] = ((data & 0x000f) >>  0);	// G (2P)
-	fromanc2_gfxbank[1][1] = ((data & 0x00f0) >>  4);	// G (2P)
-	fromanc2_gfxbank[1][2] = ((data & 0x0f00) >>  8);	// G (2P)
-	fromanc2_gfxbank[1][3] = ((data & 0xf000) >> 12);	// G (2P)
-}
-
-WRITE16_HANDLER( fromancr_gfxbank_w )
-{
-	fromanc2_gfxbank[0][0] = ((data & 0x00f0) >>  4);	// BG (1P)
+	fromanc2_gfxbank[0][0] = ((data & 0x0010) >>  4);	// BG (1P)
 	fromanc2_gfxbank[0][1] = ((data & 0xf000) >> 12);	// FG (1P)
-//	fromanc2_gfxbank[1][0] = ((data & 0x000f) >>  0);	// BG (2P)
-	fromanc2_gfxbank[1][0] = ((data & 0x0008) >>  3); /*?*/	// BG (2P)
+	fromanc2_gfxbank[1][0] = ((data & 0x0008) >>  3);	// BG (2P)
 	fromanc2_gfxbank[1][1] = ((data & 0x0f00) >>  8);	// FG (2P)
+	tilemap_mark_all_tiles_dirty(fromanc2_tilemap[0][0]);
+	tilemap_mark_all_tiles_dirty(fromanc2_tilemap[0][1]);
+	tilemap_mark_all_tiles_dirty(fromanc2_tilemap[1][0]);
+	tilemap_mark_all_tiles_dirty(fromanc2_tilemap[1][1]);
 }
+
+
+INLINE void fromanc4_vram_w(offs_t offset, data16_t data, data16_t mem_mask, int layer)
+{
+	int vram = ((offset < 0x4000) ? 0 : 1);
+
+	COMBINE_DATA(&fromanc2_videoram[vram][layer][offset & 0x3fff]);
+	tilemap_mark_tile_dirty(fromanc2_tilemap[vram][layer], offset & 0x3fff);
+}
+
+WRITE16_HANDLER( fromanc4_videoram_0_w ) { fromanc4_vram_w(offset, data, mem_mask, 2); }
+WRITE16_HANDLER( fromanc4_videoram_1_w ) { fromanc4_vram_w(offset, data, mem_mask, 1); }
+WRITE16_HANDLER( fromanc4_videoram_2_w ) { fromanc4_vram_w(offset, data, mem_mask, 0); }
+
+WRITE16_HANDLER( fromanc4_gfxreg_0_w )
+{
+	switch(offset)
+	{
+		case	0x00:	fromanc2_scrollx[0][2] = -(data - 0xfbb); break;
+		case	0x01:	fromanc2_scrolly[0][2] = -(data - 0x1e4); break;
+		case	0x02:	fromanc2_scrollx[1][2] = -(data - 0xfbb); break;
+		case	0x03:	fromanc2_scrolly[1][2] = -(data - 0x1e4); break;
+		case	0x05:	fromanc2_gfxbank[0][2] = ((data & 0x000f) >> 0);
+				fromanc2_gfxbank[1][2] = ((data & 0x0f00) >> 8);
+				tilemap_mark_all_tiles_dirty(fromanc2_tilemap[0][2]);
+				tilemap_mark_all_tiles_dirty(fromanc2_tilemap[1][2]);
+				break;
+		// offset 0x04, 0x06 - 0x11 unknown
+		default:	break;
+	}
+}
+
+WRITE16_HANDLER( fromanc4_gfxreg_1_w )
+{
+	switch(offset)
+	{
+		case	0x00:	fromanc2_scrollx[0][1] = -(data - 0xfba); break;
+		case	0x01:	fromanc2_scrolly[0][1] = -(data - 0x1e4); break;
+		case	0x02:	fromanc2_scrollx[1][1] = -(data - 0xfba); break;
+		case	0x03:	fromanc2_scrolly[1][1] = -(data - 0x1e4); break;
+		case	0x05:	fromanc2_gfxbank[0][1] = ((data & 0x000f) >> 0);
+				fromanc2_gfxbank[1][1] = ((data & 0x0f00) >> 8);
+				tilemap_mark_all_tiles_dirty(fromanc2_tilemap[0][1]);
+				tilemap_mark_all_tiles_dirty(fromanc2_tilemap[1][1]);
+				break;
+		// offset 0x04, 0x06 - 0x11 unknown
+		default:	break;
+	}
+}
+
+WRITE16_HANDLER( fromanc4_gfxreg_2_w )
+{
+	switch(offset)
+	{
+		case	0x00:	fromanc2_scrollx[0][0] = -(data - 0xfbb); break;
+		case	0x01:	fromanc2_scrolly[0][0] = -(data - 0x1e4); break;
+		case	0x02:	fromanc2_scrollx[1][0] = -(data - 0xfbb); break;
+		case	0x03:	fromanc2_scrolly[1][0] = -(data - 0x1e4); break;
+		case	0x05:	fromanc2_gfxbank[0][0] = ((data & 0x000f) >> 0);
+				fromanc2_gfxbank[1][0] = ((data & 0x0f00) >> 8);
+				tilemap_mark_all_tiles_dirty(fromanc2_tilemap[0][0]);
+				tilemap_mark_all_tiles_dirty(fromanc2_tilemap[1][0]);
+				break;
+		// offset 0x04, 0x06 - 0x11 unknown
+		default:	break;
+	}
+}
+
 
 /******************************************************************************
 
+  Start the video hardware emulation.
 
 ******************************************************************************/
+
 int fromanc2_vh_start(void)
 {
-	fromanc2_videoram[0][0] = malloc(0x2000*2);
-	fromanc2_videoram[0][1] = malloc(0x2000*2);
-	fromanc2_videoram[0][2] = malloc(0x2000*2);
-	fromanc2_videoram[0][3] = malloc(0x2000*2);
-	fromanc2_videoram[1][0] = malloc(0x2000*2);
-	fromanc2_videoram[1][1] = malloc(0x2000*2);
-	fromanc2_videoram[1][2] = malloc(0x2000*2);
-	fromanc2_videoram[1][3] = malloc(0x2000*2);
+	fromanc2_tilemap[0][0] = tilemap_create(fromanc2_get_v0_l0_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE,      8, 8, 64, 64);
+	fromanc2_tilemap[0][1] = tilemap_create(fromanc2_get_v0_l1_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
+	fromanc2_tilemap[0][2] = tilemap_create(fromanc2_get_v0_l2_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
+	fromanc2_tilemap[0][3] = tilemap_create(fromanc2_get_v0_l3_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
+	fromanc2_tilemap[1][0] = tilemap_create(fromanc2_get_v1_l0_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE,      8, 8, 64, 64);
+	fromanc2_tilemap[1][1] = tilemap_create(fromanc2_get_v1_l1_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
+	fromanc2_tilemap[1][2] = tilemap_create(fromanc2_get_v1_l2_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
+	fromanc2_tilemap[1][3] = tilemap_create(fromanc2_get_v1_l3_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
 
-	fromanc2_tmpbitmapx[0] = bitmap_alloc(352, 240);
-	fromanc2_tmpbitmapx[1] = bitmap_alloc(352, 240);
+	fromanc2_videoram[0][0] = malloc((64 * 64) * sizeof(data16_t));
+	fromanc2_videoram[0][1] = malloc((64 * 64) * sizeof(data16_t));
+	fromanc2_videoram[0][2] = malloc((64 * 64) * sizeof(data16_t));
+	fromanc2_videoram[0][3] = malloc((64 * 64) * sizeof(data16_t));
+	fromanc2_videoram[1][0] = malloc((64 * 64) * sizeof(data16_t));
+	fromanc2_videoram[1][1] = malloc((64 * 64) * sizeof(data16_t));
+	fromanc2_videoram[1][2] = malloc((64 * 64) * sizeof(data16_t));
+	fromanc2_videoram[1][3] = malloc((64 * 64) * sizeof(data16_t));
 
-	fromanc2_tmpbitmap[0][0] = bitmap_alloc(512, 512);
-	fromanc2_tmpbitmap[0][1] = bitmap_alloc(512, 512);
-	fromanc2_tmpbitmap[0][2] = bitmap_alloc(512, 512);
-	fromanc2_tmpbitmap[0][3] = bitmap_alloc(512, 512);
-	fromanc2_tmpbitmap[1][0] = bitmap_alloc(512, 512);
-	fromanc2_tmpbitmap[1][1] = bitmap_alloc(512, 512);
-	fromanc2_tmpbitmap[1][2] = bitmap_alloc(512, 512);
-	fromanc2_tmpbitmap[1][3] = bitmap_alloc(512, 512);
+	fromanc2_paletteram[0] = malloc(0x800 * 2);
+	fromanc2_paletteram[1] = malloc(0x800 * 2);
 
-	fromanc2_dirty[0][0] = malloc(0x2000*2);
-	fromanc2_dirty[0][1] = malloc(0x2000*2);
-	fromanc2_dirty[0][2] = malloc(0x2000*2);
-	fromanc2_dirty[0][3] = malloc(0x2000*2);
-	fromanc2_dirty[1][0] = malloc(0x2000*2);
-	fromanc2_dirty[1][1] = malloc(0x2000*2);
-	fromanc2_dirty[1][2] = malloc(0x2000*2);
-	fromanc2_dirty[1][3] = malloc(0x2000*2);
-
-	fromanc2_paletteram[0] = malloc(0x1000);
-	fromanc2_paletteram[1] = malloc(0x1000);
-
-	if ((!fromanc2_videoram[0][0]) ||
+	if ((!fromanc2_tilemap[0][0]) ||
+	    (!fromanc2_tilemap[0][1]) ||
+	    (!fromanc2_tilemap[0][2]) ||
+	    (!fromanc2_tilemap[0][3]) ||
+	    (!fromanc2_tilemap[1][0]) ||
+	    (!fromanc2_tilemap[1][1]) ||
+	    (!fromanc2_tilemap[1][2]) ||
+	    (!fromanc2_tilemap[1][3]) ||
+	    (!fromanc2_videoram[0][0]) ||
 	    (!fromanc2_videoram[0][1]) ||
 	    (!fromanc2_videoram[0][2]) ||
 	    (!fromanc2_videoram[0][3]) ||
@@ -413,24 +499,6 @@ int fromanc2_vh_start(void)
 	    (!fromanc2_videoram[1][1]) ||
 	    (!fromanc2_videoram[1][2]) ||
 	    (!fromanc2_videoram[1][3]) ||
-	    (!fromanc2_tmpbitmapx[0]) ||
-	    (!fromanc2_tmpbitmapx[1]) ||
-	    (!fromanc2_tmpbitmap[0][0]) ||
-	    (!fromanc2_tmpbitmap[0][1]) ||
-	    (!fromanc2_tmpbitmap[0][2]) ||
-	    (!fromanc2_tmpbitmap[0][3]) ||
-	    (!fromanc2_tmpbitmap[1][0]) ||
-	    (!fromanc2_tmpbitmap[1][1]) ||
-	    (!fromanc2_tmpbitmap[1][2]) ||
-	    (!fromanc2_tmpbitmap[1][3]) ||
-	    (!fromanc2_dirty[0][0]) ||
-	    (!fromanc2_dirty[0][1]) ||
-	    (!fromanc2_dirty[0][2]) ||
-	    (!fromanc2_dirty[0][3]) ||
-	    (!fromanc2_dirty[1][0]) ||
-	    (!fromanc2_dirty[1][1]) ||
-	    (!fromanc2_dirty[1][2]) ||
-	    (!fromanc2_dirty[1][3]) ||
 	    (!fromanc2_paletteram[0]) ||
 	    (!fromanc2_paletteram[1]))
 	{
@@ -438,23 +506,14 @@ int fromanc2_vh_start(void)
 		return 1;
 	}
 
-	memset(fromanc2_videoram[0][0], 0, 0x2000*2);
-	memset(fromanc2_videoram[0][1], 0, 0x2000*2);
-	memset(fromanc2_videoram[0][2], 0, 0x2000*2);
-	memset(fromanc2_videoram[0][3], 0, 0x2000*2);
-	memset(fromanc2_videoram[1][0], 0, 0x2000*2);
-	memset(fromanc2_videoram[1][1], 0, 0x2000*2);
-	memset(fromanc2_videoram[1][2], 0, 0x2000*2);
-	memset(fromanc2_videoram[1][3], 0, 0x2000*2);
+	tilemap_set_transparent_pen(fromanc2_tilemap[0][1], 0x000);
+	tilemap_set_transparent_pen(fromanc2_tilemap[0][2], 0x000);
+	tilemap_set_transparent_pen(fromanc2_tilemap[0][3], 0x000);
+	tilemap_set_transparent_pen(fromanc2_tilemap[1][1], 0x000);
+	tilemap_set_transparent_pen(fromanc2_tilemap[1][2], 0x000);
+	tilemap_set_transparent_pen(fromanc2_tilemap[1][3], 0x000);
 
-	memset(fromanc2_dirty[0][0], 1, 0x2000*2);
-	memset(fromanc2_dirty[0][1], 1, 0x2000*2);
-	memset(fromanc2_dirty[0][2], 1, 0x2000*2);
-	memset(fromanc2_dirty[0][3], 1, 0x2000*2);
-	memset(fromanc2_dirty[1][0], 1, 0x2000*2);
-	memset(fromanc2_dirty[1][1], 1, 0x2000*2);
-	memset(fromanc2_dirty[1][2], 1, 0x2000*2);
-	memset(fromanc2_dirty[1][3], 1, 0x2000*2);
+	fromanc2_dispvram = 0;
 
 	return 0;
 }
@@ -465,45 +524,6 @@ void fromanc2_vh_stop(void)
 	fromanc2_paletteram[1] = 0;
 	if (fromanc2_paletteram[0]) free(fromanc2_paletteram[0]);
 	fromanc2_paletteram[0] = 0;
-
-	if (fromanc2_dirty[1][3]) free(fromanc2_dirty[1][3]);
-	fromanc2_dirty[1][3] = 0;
-	if (fromanc2_dirty[1][2]) free(fromanc2_dirty[1][2]);
-	fromanc2_dirty[1][2] = 0;
-	if (fromanc2_dirty[1][1]) free(fromanc2_dirty[1][1]);
-	fromanc2_dirty[1][1] = 0;
-	if (fromanc2_dirty[1][0]) free(fromanc2_dirty[1][0]);
-	fromanc2_dirty[1][0] = 0;
-	if (fromanc2_dirty[0][3]) free(fromanc2_dirty[0][3]);
-	fromanc2_dirty[0][3] = 0;
-	if (fromanc2_dirty[0][2]) free(fromanc2_dirty[0][2]);
-	fromanc2_dirty[0][2] = 0;
-	if (fromanc2_dirty[0][1]) free(fromanc2_dirty[0][1]);
-	fromanc2_dirty[0][1] = 0;
-	if (fromanc2_dirty[0][0]) free(fromanc2_dirty[0][0]);
-	fromanc2_dirty[0][0] = 0;
-
-	if (fromanc2_tmpbitmap[1][3]) bitmap_free(fromanc2_tmpbitmap[1][3]);
-	fromanc2_tmpbitmap[1][3] = 0;
-	if (fromanc2_tmpbitmap[1][2]) bitmap_free(fromanc2_tmpbitmap[1][2]);
-	fromanc2_tmpbitmap[1][2] = 0;
-	if (fromanc2_tmpbitmap[1][1]) bitmap_free(fromanc2_tmpbitmap[1][1]);
-	fromanc2_tmpbitmap[1][1] = 0;
-	if (fromanc2_tmpbitmap[1][0]) bitmap_free(fromanc2_tmpbitmap[1][0]);
-	fromanc2_tmpbitmap[1][0] = 0;
-	if (fromanc2_tmpbitmap[0][3]) bitmap_free(fromanc2_tmpbitmap[0][3]);
-	fromanc2_tmpbitmap[0][3] = 0;
-	if (fromanc2_tmpbitmap[0][2]) bitmap_free(fromanc2_tmpbitmap[0][2]);
-	fromanc2_tmpbitmap[0][2] = 0;
-	if (fromanc2_tmpbitmap[0][1]) bitmap_free(fromanc2_tmpbitmap[0][1]);
-	fromanc2_tmpbitmap[0][1] = 0;
-	if (fromanc2_tmpbitmap[0][0]) bitmap_free(fromanc2_tmpbitmap[0][0]);
-	fromanc2_tmpbitmap[0][0] = 0;
-
-	if (fromanc2_tmpbitmapx[1]) bitmap_free(fromanc2_tmpbitmapx[1]);
-	fromanc2_tmpbitmapx[1] = 0;
-	if (fromanc2_tmpbitmapx[0]) bitmap_free(fromanc2_tmpbitmapx[0]);
-	fromanc2_tmpbitmapx[0] = 0;
 
 	if (fromanc2_videoram[1][3]) free(fromanc2_videoram[1][3]);
 	fromanc2_videoram[1][3] = 0;
@@ -525,53 +545,37 @@ void fromanc2_vh_stop(void)
 
 int fromancr_vh_start(void)
 {
-	fromanc2_videoram[0][0] = malloc(0x2000);
-	fromanc2_videoram[0][1] = malloc(0x2000);
-	fromanc2_videoram[0][2] = malloc(0x2000);
-	fromanc2_videoram[1][0] = malloc(0x2000);
-	fromanc2_videoram[1][1] = malloc(0x2000);
-	fromanc2_videoram[1][2] = malloc(0x2000);
+	fromanc2_tilemap[0][0] = tilemap_create(fromancr_get_v0_l0_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE,      8, 8, 64, 64);
+	fromanc2_tilemap[0][1] = tilemap_create(fromancr_get_v0_l1_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
+	fromanc2_tilemap[0][2] = tilemap_create(fromancr_get_v0_l2_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
+	fromanc2_tilemap[0][3] = 0;
+	fromanc2_tilemap[1][0] = tilemap_create(fromancr_get_v1_l0_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE,      8, 8, 64, 64);
+	fromanc2_tilemap[1][1] = tilemap_create(fromancr_get_v1_l1_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
+	fromanc2_tilemap[1][2] = tilemap_create(fromancr_get_v1_l2_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
+	fromanc2_tilemap[1][3] = 0;
 
-	fromanc2_tmpbitmapx[0] = bitmap_alloc(352, 240);
-	fromanc2_tmpbitmapx[1] = bitmap_alloc(352, 240);
+	fromanc2_videoram[0][0] = malloc((64 * 64) * sizeof(data16_t));
+	fromanc2_videoram[0][1] = malloc((64 * 64) * sizeof(data16_t));
+	fromanc2_videoram[0][2] = malloc((64 * 64) * sizeof(data16_t));
+	fromanc2_videoram[1][0] = malloc((64 * 64) * sizeof(data16_t));
+	fromanc2_videoram[1][1] = malloc((64 * 64) * sizeof(data16_t));
+	fromanc2_videoram[1][2] = malloc((64 * 64) * sizeof(data16_t));
 
-	fromanc2_tmpbitmap[0][0] = bitmap_alloc(512, 512);
-	fromanc2_tmpbitmap[0][1] = bitmap_alloc(512, 512);
-	fromanc2_tmpbitmap[0][2] = bitmap_alloc(512, 512);
-	fromanc2_tmpbitmap[1][0] = bitmap_alloc(512, 512);
-	fromanc2_tmpbitmap[1][1] = bitmap_alloc(512, 512);
-	fromanc2_tmpbitmap[1][2] = bitmap_alloc(512, 512);
+	fromanc2_paletteram[0] = malloc(0x800 * 2);
+	fromanc2_paletteram[1] = malloc(0x800 * 2);
 
-	fromanc2_dirty[0][0] = malloc(0x2000);
-	fromanc2_dirty[0][1] = malloc(0x2000);
-	fromanc2_dirty[0][2] = malloc(0x2000);
-	fromanc2_dirty[1][0] = malloc(0x2000);
-	fromanc2_dirty[1][1] = malloc(0x2000);
-	fromanc2_dirty[1][2] = malloc(0x2000);
-
-	fromanc2_paletteram[0] = malloc(0x1000);
-	fromanc2_paletteram[1] = malloc(0x1000);
-
-	if ((!fromanc2_videoram[0][0]) ||
+	if ((!fromanc2_tilemap[0][0]) ||
+	    (!fromanc2_tilemap[0][1]) ||
+	    (!fromanc2_tilemap[0][2]) ||
+	    (!fromanc2_tilemap[1][0]) ||
+	    (!fromanc2_tilemap[1][1]) ||
+	    (!fromanc2_tilemap[1][2]) ||
+	    (!fromanc2_videoram[0][0]) ||
 	    (!fromanc2_videoram[0][1]) ||
 	    (!fromanc2_videoram[0][2]) ||
 	    (!fromanc2_videoram[1][0]) ||
 	    (!fromanc2_videoram[1][1]) ||
 	    (!fromanc2_videoram[1][2]) ||
-	    (!fromanc2_tmpbitmapx[0]) ||
-	    (!fromanc2_tmpbitmapx[1]) ||
-	    (!fromanc2_tmpbitmap[0][0]) ||
-	    (!fromanc2_tmpbitmap[0][1]) ||
-	    (!fromanc2_tmpbitmap[0][2]) ||
-	    (!fromanc2_tmpbitmap[1][0]) ||
-	    (!fromanc2_tmpbitmap[1][1]) ||
-	    (!fromanc2_tmpbitmap[1][2]) ||
-	    (!fromanc2_dirty[0][0]) ||
-	    (!fromanc2_dirty[0][1]) ||
-	    (!fromanc2_dirty[0][2]) ||
-	    (!fromanc2_dirty[1][0]) ||
-	    (!fromanc2_dirty[1][1]) ||
-	    (!fromanc2_dirty[1][2]) ||
 	    (!fromanc2_paletteram[0]) ||
 	    (!fromanc2_paletteram[1]))
 	{
@@ -579,19 +583,12 @@ int fromancr_vh_start(void)
 		return 1;
 	}
 
-	memset(fromanc2_videoram[0][0], 0, 0x2000);
-	memset(fromanc2_videoram[0][1], 0, 0x2000);
-	memset(fromanc2_videoram[0][2], 0, 0x2000);
-	memset(fromanc2_videoram[1][0], 0, 0x2000);
-	memset(fromanc2_videoram[1][1], 0, 0x2000);
-	memset(fromanc2_videoram[1][2], 0, 0x2000);
+	tilemap_set_transparent_pen(fromanc2_tilemap[0][1], 0x0ff);
+	tilemap_set_transparent_pen(fromanc2_tilemap[0][2], 0x0ff);
+	tilemap_set_transparent_pen(fromanc2_tilemap[1][1], 0x0ff);
+	tilemap_set_transparent_pen(fromanc2_tilemap[1][2], 0x0ff);
 
-	memset(fromanc2_dirty[0][0], 1, 0x2000);
-	memset(fromanc2_dirty[0][1], 1, 0x2000);
-	memset(fromanc2_dirty[0][2], 1, 0x2000);
-	memset(fromanc2_dirty[1][0], 1, 0x2000);
-	memset(fromanc2_dirty[1][1], 1, 0x2000);
-	memset(fromanc2_dirty[1][2], 1, 0x2000);
+	fromanc2_dispvram = 0;
 
 	return 0;
 }
@@ -603,36 +600,77 @@ void fromancr_vh_stop(void)
 	if (fromanc2_paletteram[0]) free(fromanc2_paletteram[0]);
 	fromanc2_paletteram[0] = 0;
 
-	if (fromanc2_dirty[1][2]) free(fromanc2_dirty[1][2]);
-	fromanc2_dirty[1][2] = 0;
-	if (fromanc2_dirty[1][1]) free(fromanc2_dirty[1][1]);
-	fromanc2_dirty[1][1] = 0;
-	if (fromanc2_dirty[1][0]) free(fromanc2_dirty[1][0]);
-	fromanc2_dirty[1][0] = 0;
-	if (fromanc2_dirty[0][2]) free(fromanc2_dirty[0][2]);
-	fromanc2_dirty[0][2] = 0;
-	if (fromanc2_dirty[0][1]) free(fromanc2_dirty[0][1]);
-	fromanc2_dirty[0][1] = 0;
-	if (fromanc2_dirty[0][0]) free(fromanc2_dirty[0][0]);
-	fromanc2_dirty[0][0] = 0;
+	if (fromanc2_videoram[1][2]) free(fromanc2_videoram[1][2]);
+	fromanc2_videoram[1][2] = 0;
+	if (fromanc2_videoram[1][1]) free(fromanc2_videoram[1][1]);
+	fromanc2_videoram[1][1] = 0;
+	if (fromanc2_videoram[1][0]) free(fromanc2_videoram[1][0]);
+	fromanc2_videoram[1][0] = 0;
+	if (fromanc2_videoram[0][2]) free(fromanc2_videoram[0][2]);
+	fromanc2_videoram[0][2] = 0;
+	if (fromanc2_videoram[0][1]) free(fromanc2_videoram[0][1]);
+	fromanc2_videoram[0][1] = 0;
+	if (fromanc2_videoram[0][0]) free(fromanc2_videoram[0][0]);
+	fromanc2_videoram[0][0] = 0;
+}
 
-	if (fromanc2_tmpbitmap[1][2]) bitmap_free(fromanc2_tmpbitmap[1][2]);
-	fromanc2_tmpbitmap[1][2] = 0;
-	if (fromanc2_tmpbitmap[1][1]) bitmap_free(fromanc2_tmpbitmap[1][1]);
-	fromanc2_tmpbitmap[1][1] = 0;
-	if (fromanc2_tmpbitmap[1][0]) bitmap_free(fromanc2_tmpbitmap[1][0]);
-	fromanc2_tmpbitmap[1][0] = 0;
-	if (fromanc2_tmpbitmap[0][2]) bitmap_free(fromanc2_tmpbitmap[0][2]);
-	fromanc2_tmpbitmap[0][2] = 0;
-	if (fromanc2_tmpbitmap[0][1]) bitmap_free(fromanc2_tmpbitmap[0][1]);
-	fromanc2_tmpbitmap[0][1] = 0;
-	if (fromanc2_tmpbitmap[0][0]) bitmap_free(fromanc2_tmpbitmap[0][0]);
-	fromanc2_tmpbitmap[0][0] = 0;
 
-	if (fromanc2_tmpbitmapx[1]) bitmap_free(fromanc2_tmpbitmapx[1]);
-	fromanc2_tmpbitmapx[1] = 0;
-	if (fromanc2_tmpbitmapx[0]) bitmap_free(fromanc2_tmpbitmapx[0]);
-	fromanc2_tmpbitmapx[0] = 0;
+int fromanc4_vh_start(void)
+{
+	fromanc2_tilemap[0][0] = tilemap_create(fromancr_get_v0_l0_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE,      8, 8, 256, 64);
+	fromanc2_tilemap[0][1] = tilemap_create(fromancr_get_v0_l1_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 256, 64);
+	fromanc2_tilemap[0][2] = tilemap_create(fromancr_get_v0_l2_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 256, 64);
+	fromanc2_tilemap[0][3] = 0;
+	fromanc2_tilemap[1][0] = tilemap_create(fromancr_get_v1_l0_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE,      8, 8, 256, 64);
+	fromanc2_tilemap[1][1] = tilemap_create(fromancr_get_v1_l1_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 256, 64);
+	fromanc2_tilemap[1][2] = tilemap_create(fromancr_get_v1_l2_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 256, 64);
+	fromanc2_tilemap[1][3] = 0;
+
+	fromanc2_videoram[0][0] = malloc((256 * 64) * sizeof(data16_t));
+	fromanc2_videoram[0][1] = malloc((256 * 64) * sizeof(data16_t));
+	fromanc2_videoram[0][2] = malloc((256 * 64) * sizeof(data16_t));
+	fromanc2_videoram[1][0] = malloc((256 * 64) * sizeof(data16_t));
+	fromanc2_videoram[1][1] = malloc((256 * 64) * sizeof(data16_t));
+	fromanc2_videoram[1][2] = malloc((256 * 64) * sizeof(data16_t));
+
+	fromanc2_paletteram[0] = malloc(0x800 * 2);
+	fromanc2_paletteram[1] = malloc(0x800 * 2);
+
+	if ((!fromanc2_tilemap[0][0]) ||
+	    (!fromanc2_tilemap[0][1]) ||
+	    (!fromanc2_tilemap[0][2]) ||
+	    (!fromanc2_tilemap[1][0]) ||
+	    (!fromanc2_tilemap[1][1]) ||
+	    (!fromanc2_tilemap[1][2]) ||
+	    (!fromanc2_videoram[0][0]) ||
+	    (!fromanc2_videoram[0][1]) ||
+	    (!fromanc2_videoram[0][2]) ||
+	    (!fromanc2_videoram[1][0]) ||
+	    (!fromanc2_videoram[1][1]) ||
+	    (!fromanc2_videoram[1][2]) ||
+	    (!fromanc2_paletteram[0]) ||
+	    (!fromanc2_paletteram[1]))
+	{
+		fromanc4_vh_stop();
+		return 1;
+	}
+
+	tilemap_set_transparent_pen(fromanc2_tilemap[0][1], 0x000);
+	tilemap_set_transparent_pen(fromanc2_tilemap[0][2], 0x000);
+	tilemap_set_transparent_pen(fromanc2_tilemap[1][1], 0x000);
+	tilemap_set_transparent_pen(fromanc2_tilemap[1][2], 0x000);
+
+	fromanc2_dispvram = 0;
+
+	return 0;
+}
+
+void fromanc4_vh_stop(void)
+{
+	if (fromanc2_paletteram[1]) free(fromanc2_paletteram[1]);
+	fromanc2_paletteram[1] = 0;
+	if (fromanc2_paletteram[0]) free(fromanc2_paletteram[0]);
+	fromanc2_paletteram[0] = 0;
 
 	if (fromanc2_videoram[1][2]) free(fromanc2_videoram[1][2]);
 	fromanc2_videoram[1][2] = 0;
@@ -650,233 +688,34 @@ void fromancr_vh_stop(void)
 
 /******************************************************************************
 
+  Display refresh
 
 ******************************************************************************/
+
 void fromanc2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
-	int vram;
-//	int layer;
-	int offs;
-
-	if (full_refresh)
+	if (fromanc2_tilemap[fromanc2_dispvram][0])
 	{
-		memset(fromanc2_dirty[0][0], 1, 0x2000);
-		memset(fromanc2_dirty[0][1], 1, 0x2000);
-		memset(fromanc2_dirty[0][2], 1, 0x2000);
-		memset(fromanc2_dirty[0][3], 1, 0x2000);
-		memset(fromanc2_dirty[1][0], 1, 0x2000);
-		memset(fromanc2_dirty[1][1], 1, 0x2000);
-		memset(fromanc2_dirty[1][2], 1, 0x2000);
-		memset(fromanc2_dirty[1][3], 1, 0x2000);
+		tilemap_set_scrollx(fromanc2_tilemap[fromanc2_dispvram][0], 0, -fromanc2_scrollx[fromanc2_dispvram][0]);
+		tilemap_set_scrolly(fromanc2_tilemap[fromanc2_dispvram][0], 0, -fromanc2_scrolly[fromanc2_dispvram][0]);
+	 	tilemap_draw(bitmap, fromanc2_tilemap[fromanc2_dispvram][0], 0, 0);
 	}
-
-#if 1
-	for (vram = 0; vram < 2; vram++)
+	if (fromanc2_tilemap[fromanc2_dispvram][1])
 	{
-			for (offs = 0; offs < (0x2000 / sizeof(short)); offs++)
-			{
-				// 4TH (BG) Layer
-				if (fromanc2_dirty[0][1 + (vram * 2)][offs])
-				{
-					int tile;
-					int color;
-					int sx, sy;
-					int flipx, flipy;
-
-					fromanc2_dirty[0][1 + (vram * 2)][offs] = 0;
-
-					tile  = ((fromanc2_videoram[0][1 + (vram * 2)][offs] & 0x3fff) | (fromanc2_gfxbank[vram][0] << 14));
-					color = ((fromanc2_videoram[0][1 + (vram * 2)][offs] & 0xc000) >> 14);
-					color |= (0x10 * vram);
-					flipx = 0;
-					flipy = 0;
-					sx = (offs % 64);
-					sy = (offs / 64);
-
-					drawgfx(fromanc2_tmpbitmap[vram][0], Machine->gfx[0],
-						tile,
-						color,
-						flipx, flipy,
-						(8 * sx), (8 * sy),
-						0, TRANSPARENCY_NONE, 0);
-				}
-			}
+		tilemap_set_scrollx(fromanc2_tilemap[fromanc2_dispvram][1], 0, -fromanc2_scrollx[fromanc2_dispvram][1]);
+		tilemap_set_scrolly(fromanc2_tilemap[fromanc2_dispvram][1], 0, -fromanc2_scrolly[fromanc2_dispvram][1]);
+	 	tilemap_draw(bitmap, fromanc2_tilemap[fromanc2_dispvram][1], 0, 0);
 	}
-#endif
-
-#if 1
-	for (vram = 0; vram < 2; vram++)
+	if (fromanc2_tilemap[fromanc2_dispvram][2])
 	{
-			for (offs = 0; offs < (0x2000 / sizeof(short)); offs++)
-			{
-				// 3RD Layer
-				if (fromanc2_dirty[0][1 + (vram * 2)][offs + 0x1000])
-				{
-					int tile;
-					int color;
-					int sx, sy;
-					int flipx, flipy;
-
-					fromanc2_dirty[0][1 + (vram * 2)][offs + 0x1000] = 0;
-
-					tile  = ((fromanc2_videoram[0][1 + (vram * 2)][offs + 0x1000] & 0x3fff) | (fromanc2_gfxbank[vram][1] << 14));
-					color = ((fromanc2_videoram[0][1 + (vram * 2)][offs + 0x1000] & 0xc000) >> 14);
-					color |= (0x10 * vram);
-					flipx = 0;
-					flipy = 0;
-					sx = (offs % 64);
-					sy = (offs / 64);
-
-					drawgfx(fromanc2_tmpbitmap[vram][1], Machine->gfx[1],
-						tile,
-						color,
-						flipx, flipy,
-						(8 * sx), (8 * sy),
-						0, TRANSPARENCY_NONE, 0);
-				}
-			}
+		tilemap_set_scrollx(fromanc2_tilemap[fromanc2_dispvram][2], 0, -fromanc2_scrollx[fromanc2_dispvram][2]);
+		tilemap_set_scrolly(fromanc2_tilemap[fromanc2_dispvram][2], 0, -fromanc2_scrolly[fromanc2_dispvram][2]);
+	 	tilemap_draw(bitmap, fromanc2_tilemap[fromanc2_dispvram][2], 0, 0);
 	}
-#endif
-
-#if 1
-	for (vram = 0; vram < 2; vram++)
+	if (fromanc2_tilemap[fromanc2_dispvram][3])
 	{
-			for (offs = 0; offs < (0x2000 / sizeof(short)); offs++)
-			{
-				// 2ND Layer
-				if (fromanc2_dirty[0][vram * 2][offs])
-				{
-					int tile;
-					int color;
-					int sx, sy;
-					int flipx, flipy;
-
-					fromanc2_dirty[0][vram * 2][offs] = 0;
-
-					tile  = ((fromanc2_videoram[0][vram * 2][offs] & 0x3fff) | (fromanc2_gfxbank[vram][2] << 14));;
-					color = ((fromanc2_videoram[0][vram * 2][offs] & 0xc000) >> 14);
-					color |= (0x10 * vram);
-					flipx = 0;
-					flipy = 0;
-					sx = (offs % 64);
-					sy = (offs / 64);
-
-					drawgfx(fromanc2_tmpbitmap[vram][2], Machine->gfx[2],
-						tile,
-						color,
-						flipx, flipy,
-						(8 * sx), (8 * sy),
-						0, TRANSPARENCY_NONE, 0);
-				}
-			}
+		tilemap_set_scrollx(fromanc2_tilemap[fromanc2_dispvram][3], 0, -fromanc2_scrollx[fromanc2_dispvram][3]);
+		tilemap_set_scrolly(fromanc2_tilemap[fromanc2_dispvram][3], 0, -fromanc2_scrolly[fromanc2_dispvram][3]);
+	 	tilemap_draw(bitmap, fromanc2_tilemap[fromanc2_dispvram][3], 0, 0);
 	}
-#endif
-
-#if 1
-	for (vram = 0; vram < 2; vram++)
-	{
-			for (offs = 0; offs < (0x2000 / sizeof(short)); offs++)
-			{
-				// 1ST (TOP) Layer
-				if (fromanc2_dirty[0][vram * 2][offs + 0x1000])
-				{
-					int tile;
-					int color;
-					int sx, sy;
-					int flipx, flipy;
-
-					fromanc2_dirty[0][vram * 2][offs + 0x1000] = 0;
-
-					tile  = ((fromanc2_videoram[0][vram * 2][offs + 0x1000] & 0x3fff) | (fromanc2_gfxbank[vram][3] << 14));
-					color = ((fromanc2_videoram[0][vram * 2][offs + 0x1000] & 0xc000) >> 14);
-					color |= (0x10 * vram);
-					flipx = 0;
-					flipy = 0;
-					sx = (offs % 64);
-					sy = (offs / 64);
-
-					drawgfx(fromanc2_tmpbitmap[vram][3], Machine->gfx[3],
-						tile,
-						color,
-						flipx, flipy,
-						(8 * sx), (8 * sy),
-						0, TRANSPARENCY_NONE, 0);
-				}
-			}
-	}
-#endif
-
-	copyscrollbitmap(fromanc2_tmpbitmapx[0], fromanc2_tmpbitmap[0][0], 1, &fromanc2_scrollx[0][0],  1, &fromanc2_scrolly[0][0], 0, TRANSPARENCY_NONE, 0);
-	if (!keyboard_pressed(KEYCODE_DEL))  copyscrollbitmap(fromanc2_tmpbitmapx[0], fromanc2_tmpbitmap[0][1], 1, &fromanc2_scrollx[0][1],  1, &fromanc2_scrolly[0][1], 0, TRANSPARENCY_COLOR, 0x200);
-	if (!keyboard_pressed(KEYCODE_END))  copyscrollbitmap(fromanc2_tmpbitmapx[0], fromanc2_tmpbitmap[0][2], 1, &fromanc2_scrollx[0][2],  1, &fromanc2_scrolly[0][2], 0, TRANSPARENCY_COLOR, 0x400);
-	if (!keyboard_pressed(KEYCODE_PGDN)) copyscrollbitmap(fromanc2_tmpbitmapx[0], fromanc2_tmpbitmap[0][3], 1, &fromanc2_scrollx[0][3],  1, &fromanc2_scrolly[0][3], 0, TRANSPARENCY_COLOR, 0x600);
-
-	copyscrollbitmap(fromanc2_tmpbitmapx[1], fromanc2_tmpbitmap[1][0], 1, &fromanc2_scrollx[1][0],  1, &fromanc2_scrolly[1][0], 0, TRANSPARENCY_NONE, 0);
-	if (!keyboard_pressed(KEYCODE_DEL))  copyscrollbitmap(fromanc2_tmpbitmapx[1], fromanc2_tmpbitmap[1][1], 1, &fromanc2_scrollx[1][1],  1, &fromanc2_scrolly[1][1], 0, TRANSPARENCY_COLOR, 0x300);
-	if (!keyboard_pressed(KEYCODE_END))  copyscrollbitmap(fromanc2_tmpbitmapx[1], fromanc2_tmpbitmap[1][2], 1, &fromanc2_scrollx[1][2],  1, &fromanc2_scrolly[1][2], 0, TRANSPARENCY_COLOR, 0x500);
-	if (!keyboard_pressed(KEYCODE_PGDN)) copyscrollbitmap(fromanc2_tmpbitmapx[1], fromanc2_tmpbitmap[1][3], 1, &fromanc2_scrollx[1][3],  1, &fromanc2_scrolly[1][3], 0, TRANSPARENCY_COLOR, 0x700);
-
-	copybitmap(bitmap, fromanc2_tmpbitmapx[0], 0, 0,   0, 0, 0, TRANSPARENCY_NONE, 0);
-	copybitmap(bitmap, fromanc2_tmpbitmapx[1], 0, 0, 352, 0, 0, TRANSPARENCY_NONE, 0);
-}
-
-void fromancr_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
-{
-	int vram;
-	int layer;
-	int offs;
-
-	if (full_refresh)
-	{
-		memset(fromanc2_dirty[0][0], 1, 0x2000);
-		memset(fromanc2_dirty[0][1], 1, 0x2000);
-		memset(fromanc2_dirty[0][2], 1, 0x2000);
-		memset(fromanc2_dirty[1][0], 1, 0x2000);
-		memset(fromanc2_dirty[1][1], 1, 0x2000);
-		memset(fromanc2_dirty[1][2], 1, 0x2000);
-	}
-
-	for (vram = 0; vram < 2; vram++)
-	{
-		for (layer = 0; layer < 3; layer++)
-		{
-			for (offs = 0; offs < (0x2000 / sizeof(short)); offs++)
-			{
-				if (fromanc2_dirty[vram][layer][offs])
-				{
-					int tile;
-					int color;
-					int sx, sy;
-					int flipx, flipy;
-
-					fromanc2_dirty[vram][layer][offs] = 0;
-
-					tile  = (fromanc2_videoram[vram][layer][offs] | (fromanc2_gfxbank[vram][layer] << 16));
-					color = vram;
-					flipx = 0;
-					flipy = 0;
-					sx = (offs % 64);
-					sy = (offs / 64);
-
-					drawgfx(fromanc2_tmpbitmap[vram][layer], Machine->gfx[layer],
-						tile,
-						color,
-						flipx, flipy,
-						(8 * sx), (8 * sy),
-						0, TRANSPARENCY_NONE, 0);
-				}
-			}
-		}
-	}
-
-	copyscrollbitmap(fromanc2_tmpbitmapx[0], fromanc2_tmpbitmap[0][0], 1, &fromanc2_scrollx[0][0],  1, &fromanc2_scrolly[0][0], 0, TRANSPARENCY_NONE, 0);
-	copyscrollbitmap(fromanc2_tmpbitmapx[0], fromanc2_tmpbitmap[0][1], 1, &fromanc2_scrollx[0][1],  1, &fromanc2_scrolly[0][1], 0, TRANSPARENCY_COLOR, 0x2ff);
-	copybitmap(fromanc2_tmpbitmapx[0], fromanc2_tmpbitmap[0][2], 0, 0, 0, 0, 0, TRANSPARENCY_COLOR, 0x0ff);
-
-	copyscrollbitmap(fromanc2_tmpbitmapx[1], fromanc2_tmpbitmap[1][0], 1, &fromanc2_scrollx[1][0],  1, &fromanc2_scrolly[1][0], 0, TRANSPARENCY_NONE, 0);
-	copyscrollbitmap(fromanc2_tmpbitmapx[1], fromanc2_tmpbitmap[1][1], 1, &fromanc2_scrollx[1][1],  1, &fromanc2_scrolly[1][1], 0, TRANSPARENCY_COLOR, 0x3ff);
-	copybitmap(fromanc2_tmpbitmapx[1], fromanc2_tmpbitmap[1][2], 0, 0, 0, 0, 0, TRANSPARENCY_COLOR, 0x1ff);
-
-	copybitmap(bitmap, fromanc2_tmpbitmapx[0], 0, 0,   0, 0, 0, TRANSPARENCY_NONE, 0);
-	copybitmap(bitmap, fromanc2_tmpbitmapx[1], 0, 0, 352, 0, 0, TRANSPARENCY_NONE, 0);
 }

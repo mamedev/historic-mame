@@ -48,8 +48,8 @@ static int thunderx_interrupt( void )
 
 
 static int palette_selected;
-static int bank;
-static unsigned char *ram,*cdram;
+static int rambank,pmcbank;
+static unsigned char *ram,*pmcram;
 
 static READ_HANDLER( scontra_bankedram_r )
 {
@@ -69,35 +69,113 @@ static WRITE_HANDLER( scontra_bankedram_w )
 
 static READ_HANDLER( thunderx_bankedram_r )
 {
-	if ((bank & 0x01) == 0)
+	if (rambank & 0x01)
+		return ram[offset];
+	else if (rambank & 0x10)
 	{
-		if (bank & 0x10)
+		if (pmcbank)
 		{
-//			debug_signal_breakpoint(0);
-			return cdram[offset];
+//			logerror("%04x read pmcram %04x\n",cpu_get_pc(),offset);
+			return pmcram[offset];
 		}
 		else
-			return paletteram_r(offset);
+		{
+			logerror("%04x read pmc internal ram %04x\n",cpu_get_pc(),offset);
+			return 0;
+		}
 	}
 	else
-		return ram[offset];
+		return paletteram_r(offset);
 }
 
 static WRITE_HANDLER( thunderx_bankedram_w )
 {
-	if ((bank & 0x01) == 0)
+	if (rambank & 0x01)
+		ram[offset] = data;
+	else if (rambank & 0x10)
 	{
-		if (bank & 0x10)
-		{
 //			if (offset == 0x200)	debug_signal_breakpoint(1);
-			cdram[offset] = data;
+		if (pmcbank)
+		{
+			logerror("%04x pmcram %04x = %02x\n",cpu_get_pc(),offset,data);
+			pmcram[offset] = data;
 		}
 		else
-			paletteram_xBBBBBGGGGGRRRRR_swap_w(offset,data);
+			logerror("%04x pmc internal ram %04x = %02x\n",cpu_get_pc(),offset,data);
 	}
 	else
-		ram[offset] = data;
+		paletteram_xBBBBBGGGGGRRRRR_swap_w(offset,data);
 }
+
+/*
+this is the data written to internal ram on startup:
+US version						Japan version
+e7 00 00 ad 08					e7 00 00 ad 08
+1f 80 05 a0 0c		<---->		5f 80 05 a0 0c
+42 7e 00 8b 04
+df 8e 00 cb 04		<---->		df 00 e2 8b 08
+5f 80 07 a0 0c		<---->		5f 80 06 a0 0c
+df 7e 00 cb 08					df 7e 00 cb 08
+1b 80 00 a0 0c					1b 80 00 a0 0c
+df 10 00 cb 08					df 10 00 cb 08
+5f 80 03 a0 0c					5f 80 03 a0 0c
+1f 20 00 cb 08					1f 20 00 cb 08
+c4 00 00 ab 0c					c4 00 00 ab 0c
+df 20 00 cb 08					df 20 00 cb 08
+c4 00 00 ab 0c					c4 00 00 ab 0c
+df 30 00 cb 08					df 30 00 cb 08
+c4 00 00 ab 0c					c4 00 00 ab 0c
+df 40 00 cb 08					df 40 00 cb 08
+c4 00 00 ab 0c					c4 00 00 ab 0c
+df 50 00 cb 08					df 50 00 cb 08
+60 22 36 e9 08		<---->		60 22 35 e9 08
+44 0e 00 ab 08					44 0e 00 ab 08
+df 60 00 cb 08					df 60 00 cb 08
+5f 80 04 a0 0c					5f 80 04 a0 0c
+1f 60 00 cb 08					1f 60 00 cb 08
+60 6c 32 e9 08		<---->		60 6c 31 e9 08
+45 8e 01 a0 0c					45 8e 01 a0 0c
+c5 64 00 cb 08					c5 64 00 cb 08
+45 8e 03 a0 0c					45 8e 03 a0 0c
+67 00 00 cb 0c					67 00 00 cb 0c
+15 48 5e c9 0c		<---->		15 48 5d c9 0c
+12 00 00 eb 0c					12 00 00 eb 0c
+48 6c 72 e9 0c		<---->		48 6c 71 e9 0c
+45 8e 02 a0 0c					45 8e 02 a0 0c
+c5 66 00 cb 08					c5 66 00 cb 08
+45 8e 04 a0 0c					45 8e 04 a0 0c
+67 00 00 cb 0c					67 00 00 cb 0c
+15 5a 65 c9 0c		<---->		15 5a 64 c9 0c
+12 00 00 eb 0c					12 00 00 eb 0c
+48 6c 72 e9 0c		<---->		48 6c 71 e9 0c
+e5 92 9b e0 0c					e5 92 9b e0 0c
+dd 92 10 e0 0c					dd 92 10 e0 0c
+5c fe 00 a0 0c					5c fe 00 a0 0c
+df 60 00 d3 08					df 60 00 d3 08
+e5 ec 9f e0 0c					e5 ec 9f e0 0c
+dd ec 10 00 0c					dd ec 10 00 0c
+25 ec 04 c0 0c					25 ec 04 c0 0c
+18 82 00 00 0c					18 82 00 00 0c
+4d 80 03 a0 0c					4d 80 03 a0 0c
+df e0 36 e1 0c		<---->		df e0 e6 e0 0c
+49 60 76 f1 08		<---->		49 60 75 f1 08
+67 00 36 cd 08		<---->		67 00 35 cd 08
+c5 fe 05 e0 0c					c5 fe 05 e0 0c
+5f 80 02 a0 0c					5f 80 02 a0 0c
+1f 00 00 cb 08					1f 00 00 cb 08
+48 6e 53 c9 0c		<---->		48 6e 52 c9 0c
+c4 00 00 ab 0c					c4 00 00 ab 0c
+27 00 00 ab 0c					27 00 00 ab 0c
+42 00 00 8b 04					42 00 00 8b 04
+1f 00 00 cb 00					1f 00 00 cb 00
+48 00 44 c9 00		<---->		48 00 43 c9 00
+5f fe 00 e0 08					5f fe 00 e0 08
+5f 7e 00 ed 08					5f 7e 00 ed 08
+ff 04 00 ff 06					ff 04 00 ff 06
+05 07 ff 02 03					05 07 ff 02 03
+01 00 60 00 a0		<---->		01 01 e0 02 6c
+								03 6c 04 40 04
+*/
 
 // run_collisions
 //
@@ -121,7 +199,7 @@ static void run_collisions(int s0, int e0, int s1, int e1, int cm, int hm)
 	unsigned char*	p1;
 	int				ii,jj;
 
-	p0 = &cdram[16 + 5*s0];
+	p0 = &pmcram[16 + 5*s0];
 	for (ii = s0; ii < e0; ii++, p0 += 5)
 	{
 		int	l0,r0,b0,t0;
@@ -135,7 +213,7 @@ static void run_collisions(int s0, int e0, int s1, int e1, int cm, int hm)
 		t0 = p0[4] - p0[2];
 		b0 = p0[4] + p0[2];
 
-		p1 = &cdram[16 + 5*s1];
+		p1 = &pmcram[16 + 5*s1];
 		for (jj = s1; jj < e1; jj++,p1 += 5)
 		{
 			int	l1,r1,b1,t1;
@@ -191,39 +269,41 @@ static void calculate_collisions( void )
 	// hit mask is 40 to set bit on object 0 and object 1
 	// hit mask is 20 to set bit on object 1 only
 
-	Y0 = cdram[0];
-	Y0 = (Y0 << 8) + cdram[1];
+	Y0 = pmcram[0];
+	Y0 = (Y0 << 8) + pmcram[1];
 	Y0 = (Y0 - 15) / 5;
-	Y1 = (cdram[2] - 15) / 5;
+	Y1 = (pmcram[2] - 15) / 5;
 
-	if (cdram[5] < 16)
+	if (pmcram[5] < 16)
 	{
 		// US Thunder Cross uses this form
-		X0 = cdram[5];
-		X0 = (X0 << 8) + cdram[6];
+		X0 = pmcram[5];
+		X0 = (X0 << 8) + pmcram[6];
 		X0 = (X0 - 16) / 5;
-		X1 = (cdram[7] - 16) / 5;
+		X1 = (pmcram[7] - 16) / 5;
 	}
 	else
 	{
 		// Japan Thunder Cross uses this form
-		X0 = (cdram[5] - 16) / 5;
-		X1 = (cdram[6] - 16) / 5;
+		X0 = (pmcram[5] - 16) / 5;
+		X1 = (pmcram[6] - 16) / 5;
 	}
 
-	CM = cdram[3];
-	HM = cdram[4];
+	CM = pmcram[3];
+	HM = pmcram[4];
 
 	run_collisions(X0,Y0,X1,Y1,CM,HM);
 }
 
 static WRITE_HANDLER( thunderx_1f98_w )
 {
+// logerror("%04x: 1f98_w %02x\n",cpu_get_pc(),data);
+
 	/* bit 0 = enable char ROM reading through the video RAM */
 	K052109_set_RMRD_line((data & 0x01) ? ASSERT_LINE : CLEAR_LINE);
 
-	/* bit 1 = reset for collision MCU??? */
-	/* we don't need it, anyway */
+	/* bit 1 = PMC-BK */
+	pmcbank = (data & 0x02) >> 1;
 
 	/* bit 2 = do collision detection when 0->1 */
 	if ((data & 4) && !(unknown_enable & 4))
@@ -262,7 +342,7 @@ static WRITE_HANDLER( thunderx_videobank_w )
 	/* 0x01 = work RAM at 4000-5fff */
 	/* 0x00 = palette at 5800-5fff */
 	/* 0x10 = unknown RAM at 5800-5fff */
-	bank = data;
+	rambank = data;
 
 	/* bits 1/2 coin counters */
 	coin_counter_w(0,data & 0x02);
@@ -924,7 +1004,7 @@ static void thunderx_init_machine( void )
 	cpu_setbank( 1, &RAM[0x10000] ); /* init the default bank */
 
 	paletteram = &RAM[0x28000];
-	cdram = &RAM[0x28800];
+	pmcram = &RAM[0x28800];
 }
 
 static void init_scontra(void)

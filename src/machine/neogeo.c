@@ -86,7 +86,7 @@ void init_neogeo(void)
 	data8_t *mem08;
 	int tileno,numtiles;
 
-	numtiles = memory_region_length(REGION_GFX2)/128;
+	numtiles = memory_region_length(REGION_GFX3)/128;
 	for (tileno = 0;tileno < numtiles;tileno++)
 	{
 		unsigned char swap[128];
@@ -94,7 +94,7 @@ void init_neogeo(void)
 		int x,y;
 		unsigned int pen;
 
-		gfxdata = &memory_region(REGION_GFX2)[128 * tileno];
+		gfxdata = &memory_region(REGION_GFX3)[128 * tileno];
 
 		memcpy(swap,gfxdata,128);
 
@@ -296,6 +296,7 @@ static READ16_HANDLER( popbounc_sfix_16_r )
 }
 
 
+
 static WRITE16_HANDLER( kof99_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -328,6 +329,84 @@ static WRITE16_HANDLER( kof99_bankswitch_w )
 }
 
 
+static WRITE16_HANDLER( garouo_bankswitch_w )
+{
+	/* thanks to Razoola and Mr K for the info */
+	unsigned char *RAM = memory_region(REGION_CPU1);
+	int bankaddress;
+	static int bankoffset[64] =
+	{
+		0x000000, 0x100000, 0x200000, 0x300000, // 00
+		0x280000, 0x380000, 0x2d0000, 0x3d0000, // 04
+		0x2c8000, 0x3c8000, 0x400000, 0x500000, // 08
+		0x420000, 0x520000, 0x440000, 0x540000, // 12
+		0x598000, 0x698000, 0x5a0000, 0x6a0000, // 16
+		0x5a8000, 0x6a8000, 0x5b0000, 0x6b0000, // 20
+		0x5b8000, 0x6b8000, 0x5c0000, 0x6c0000, // 24
+		0x5c8000, 0x6c8000, 0x5d0000, 0x6d0000, // 28
+		0x458000, 0x558000, 0x460000, 0x560000, // 32
+		0x468000, 0x568000, 0x470000, 0x570000, // 36
+		0x478000, 0x578000, 0x480000, 0x580000, // 40
+		0x488000, 0x588000, 0x490000, 0x590000, // 44
+		0x5d8000, 0x6d8000, 0x5e0000, 0x6e0000, // 48
+		0x5e8000, 0x6e8000, 0x6e8000, 0x000000, // 52
+		0x000000, 0x000000, 0x000000, 0x000000, // 56
+		0x000000, 0x000000, 0x000000, 0x000000, // 60
+	};
+
+	/* unscramble bank number */
+	data =
+		(((data>> 4)&1)<<0)+
+		(((data>> 8)&1)<<1)+
+		(((data>>14)&1)<<2)+
+		(((data>> 2)&1)<<3)+
+		(((data>>11)&1)<<4)+
+		(((data>>13)&1)<<5);
+
+	bankaddress = 0x100000 + bankoffset[data];
+
+	cpu_setbank(4,&RAM[bankaddress]);
+}
+
+
+static WRITE16_HANDLER( kof2000_bankswitch_w )
+{
+	/* thanks to Razoola and Mr K for the info */
+	unsigned char *RAM = memory_region(REGION_CPU1);
+	int bankaddress;
+	static int bankoffset[64] =
+	{
+		0x000000, 0x100000, 0x200000, 0x300000, // 00
+		0x3f7800, 0x4f7800, 0x3ff800, 0x4ff800, // 04
+		0x407800, 0x507800, 0x40f800, 0x50f800, // 08
+		0x416800, 0x516800, 0x41d800, 0x51d800, // 12
+		0x424000, 0x524000, 0x523800, 0x623800, // 16
+		0x526000, 0x626000, 0x528000, 0x628000, // 20
+		0x52a000, 0x62a000, 0x52b800, 0x62b800, // 24
+		0x52d000, 0x62d000, 0x52e800, 0x62e800, // 28
+		0x618000, 0x619000, 0x61a000, 0x61a800, // 32
+	};
+
+	/* unscramble bank number */
+	data =
+		(((data>>15)&1)<<0)+
+		(((data>>14)&1)<<1)+
+		(((data>> 7)&1)<<2)+
+		(((data>> 3)&1)<<3)+
+		(((data>>10)&1)<<4)+
+		(((data>> 5)&1)<<5);
+
+	bankaddress = 0x100000 + bankoffset[data];
+
+	cpu_setbank(4,&RAM[bankaddress]);
+}
+
+static READ16_HANDLER( prot_9a37_r )
+{
+	return 0x9a37;
+}
+
+
 static void neogeo_custom_memory(void)
 {
 	/* Individual games can go here... */
@@ -341,12 +420,29 @@ static void neogeo_custom_memory(void)
 
 	if (!strcmp(Machine->gamedrv->name,"kof99"))
 	{
-		/* Fix for end of game protection which causes freeze. */
-//		data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
-//		mem16[0x1d8a/2] = 0x67b6;
-
 		/* special ROM banking handler */
 		install_mem_write16_handler(0, 0x2ffff0, 0x2ffff1, kof99_bankswitch_w);
+
+		/* additional protection */
+		install_mem_read16_handler(0, 0x2fe446, 0x2fe447, prot_9a37_r);
+	}
+
+	if (!strcmp(Machine->gamedrv->name,"garouo"))
+	{
+		/* special ROM banking handler */
+		install_mem_write16_handler(0, 0x2fffc0, 0x2fffc1, garouo_bankswitch_w);
+
+		/* additional protection */
+		install_mem_read16_handler(0, 0x2fe446, 0x2fe447, prot_9a37_r);
+	}
+
+	if (!strcmp(Machine->gamedrv->name,"kof2000"))
+	{
+		/* special ROM banking handler */
+		install_mem_write16_handler(0, 0x2fffec, 0x2fffed, kof2000_bankswitch_w);
+
+		/* additional protection */
+		install_mem_read16_handler(0, 0x2fe446, 0x2fe447, prot_9a37_r);
 	}
 
 	/* hacks to make the games which do protection checks run in arcade mode */
@@ -366,11 +462,13 @@ static void neogeo_custom_memory(void)
 			!strcmp(Machine->gamedrv->name,"kof99n") ||
 			!strcmp(Machine->gamedrv->name,"kof99p") ||
 			!strcmp(Machine->gamedrv->name,"kof2000") ||
+			!strcmp(Machine->gamedrv->name,"kof2000n") ||
 			!strcmp(Machine->gamedrv->name,"kizuna") ||
 			!strcmp(Machine->gamedrv->name,"lastblad") ||
 			!strcmp(Machine->gamedrv->name,"lastbld2") ||
 			!strcmp(Machine->gamedrv->name,"rbff2") ||
 			!strcmp(Machine->gamedrv->name,"mslug2") ||
+			!strcmp(Machine->gamedrv->name,"garouo") ||
 			!strcmp(Machine->gamedrv->name,"garoup"))
 		sram_protection_hack = 0x100/2;
 

@@ -15,9 +15,9 @@
 #define ZEXTEND(val,width) if (width) (val) &= ((UINT32)0xffffffff >> (32 - (width)))
 #define SEXTEND(val,width) if (width) (val) = (INT32)((val) << (32 - (width))) >> (32 - (width))
 
-#define SXYTOL(val)	((((INT32)(UINT16)(val).y * state.convsp) | ((INT32)(UINT16)(val).x << state.pixelshift)) + OFFSET)
-#define DXYTOL(val)	((((INT32)(UINT16)(val).y * state.convdp) | ((INT32)(UINT16)(val).x << state.pixelshift)) + OFFSET)
-#define MXYTOL(val)	((((INT32)(UINT16)(val).y * state.convmp) | ((INT32)(UINT16)(val).x << state.pixelshift)) + OFFSET)
+#define SXYTOL(val)	((((INT16)(val).y * state.convsp) + ((INT16)(val).x << state.pixelshift)) + OFFSET)
+#define DXYTOL(val)	((((INT16)(val).y * state.convdp) + ((INT16)(val).x << state.pixelshift)) + OFFSET)
+#define MXYTOL(val)	((((INT16)(val).y * state.convmp) + ((INT16)(val).x << state.pixelshift)) + OFFSET)
 
 #define COUNT_CYCLES(x)	tms34010_ICount -= x
 #define COUNT_UNKNOWN_CYCLES(x) COUNT_CYCLES(x)
@@ -226,12 +226,15 @@ static void pixt_ixyixy_b(void) { PIXT_IXYIXY(B); }
 
 #define DRAV(R)			              			      		\
 {															\
-	if (state.window_checking)								\
+	if (state.window_checking != 0 && state.window_checking != 3) \
 	{														\
 		logerror("DRAV  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);	\
 	}														\
 															\
-	WPIXEL(DXYTOL(R##REG_XY(R##DSTREG)),COLOR1);			\
+	if (state.window_checking != 3 ||						\
+		(R##REG_X(R##DSTREG) >= WSTART_X && R##REG_X(R##DSTREG) <= WEND_X &&		\
+		 R##REG_Y(R##DSTREG) >= WSTART_Y && R##REG_Y(R##DSTREG) <= WEND_Y))			\
+		WPIXEL(DXYTOL(R##REG_XY(R##DSTREG)),COLOR1);		\
 															\
 	R##REG_X(R##DSTREG) += R##REG_X(R##SRCREG);				\
 	R##REG_Y(R##DSTREG) += R##REG_Y(R##SRCREG);				\
@@ -2222,7 +2225,6 @@ static void linit(void)
 static void mwait(void)
 {
 	if (!state.is_34020) { unimpl(); return; }
-	logerror("020:mwait\n");
 }
 
 static void pfill_xy(void)
@@ -2243,17 +2245,26 @@ static void retm(void)
 	logerror("020:retm\n");
 }
 
-static void rmo_a(void)
-{
-	if (!state.is_34020) { unimpl(); return; }
-	logerror("020:rmo_a\n");
+#define RMO(R)			       		       			    		\
+{																\
+	UINT32 res = 0;												\
+	UINT32 rs  = R##REG(R##SRCREG);								\
+	 INT32 *rd = &R##REG(R##DSTREG);							\
+	SET_Z(rs);													\
+	if (rs)														\
+	{															\
+		while (!(rs & 0x00000001))								\
+		{														\
+			res++;												\
+			rs >>= 1;											\
+		}														\
+	}															\
+	*rd = res;													\
+	COUNT_CYCLES(1);											\
 }
 
-static void rmo_b(void)
-{
-	if (!state.is_34020) { unimpl(); return; }
-	logerror("020:rmo_b\n");
-}
+static void rmo_a(void) { RMO(A); }
+static void rmo_b(void) { RMO(B); }
 
 #define RPIX(R)									\
 {												\

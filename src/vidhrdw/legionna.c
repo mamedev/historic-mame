@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Legion video hardware (copied from D-Con)
+	Legionnaire / Heated Barrel video hardware (derived from D-Con)
 
 ***************************************************************************/
 
@@ -13,6 +13,14 @@ static struct tilemap *background_layer,*foreground_layer,*midground_layer,*text
 //static int legionna_enable;
 
 /******************************************************************************/
+
+static UINT16 gfx_bank = 0;
+
+void heatbrl_setgfxbank(UINT16 data)
+{
+	gfx_bank = (data &0x4000) >> 2;
+}
+
 
 WRITE16_HANDLER( legionna_control_w )
 {
@@ -76,6 +84,7 @@ static void get_back_tile_info(int tile_index)
 	int color=(tile>>12)&0xf;
 
 	tile &= 0xfff;
+	tile |= gfx_bank;		/* Heatbrl uses banking */
 
 	SET_TILE_INFO(1,tile,color,0)
 }
@@ -86,9 +95,8 @@ static void get_mid_tile_info(int tile_index)
 	int color=(tile>>12)&0xf;
 
 	tile &= 0xfff;
-	tile |= 0x1000;
 
-	SET_TILE_INFO(3,tile,color,0)
+	SET_TILE_INFO(5,tile,color,0)
 }
 
 static void get_fore_tile_info(int tile_index)	/* this is giving bad tiles... */
@@ -96,11 +104,10 @@ static void get_fore_tile_info(int tile_index)	/* this is giving bad tiles... */
 	int tile=legionna_fore_data[tile_index];
 	int color=(tile>>12)&0xf;
 
-	// tile numbers / gfx set wrong, see screen after coin insertion
+	// legionnaire tile numbers / gfx set wrong, see screen after coin insertion
 	tile &= 0xfff;
-	tile |= 0x1000;
 
-	SET_TILE_INFO(3,tile,color,0)	// gfx 1 ???
+	SET_TILE_INFO(4,tile,color,0)
 }
 
 static void get_text_tile_info(int tile_index)
@@ -199,7 +206,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,int pri)
 			for (ax=0; ax<dx; ax++)
 				for (ay=0; ay<dy; ay++)
 				{
-					drawgfx(bitmap,Machine->gfx[4],
+					drawgfx(bitmap,Machine->gfx[3],
 					sprite++,
 					color,fx,fy,x+ax*16,y+ay*16,
 					&Machine->visible_area,TRANSPARENCY_PEN,15);
@@ -210,7 +217,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,int pri)
 			for (ax=0; ax<dx; ax++)
 				for (ay=0; ay<dy; ay++)
 				{
-					drawgfx(bitmap,Machine->gfx[4],
+					drawgfx(bitmap,Machine->gfx[3],
 					sprite++,
 					color,fx,fy,x+(dx-ax-1)*16,y+ay*16,
 					&Machine->visible_area,TRANSPARENCY_PEN,15);
@@ -277,19 +284,20 @@ void legionna_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
 
 #ifdef MAME_DEBUG
+	if (dislayer[2]==0)
+#endif
+	tilemap_draw(bitmap,foreground_layer,TILEMAP_IGNORE_TRANSPARENCY,0);
+
+#ifdef MAME_DEBUG
 	if (dislayer[1]==0)
 #endif
-	tilemap_draw(bitmap,midground_layer,TILEMAP_IGNORE_TRANSPARENCY,0);
+	tilemap_draw(bitmap,midground_layer,0,0);
 
 #ifdef MAME_DEBUG
 	if (dislayer[0]==0)
 #endif
 	tilemap_draw(bitmap,background_layer,0,0);
 
-#ifdef MAME_DEBUG
-	if (dislayer[2]==0)
-#endif
-	tilemap_draw(bitmap,foreground_layer,0,0);
 	draw_sprites(bitmap,2);
 	draw_sprites(bitmap,1);
 	draw_sprites(bitmap,0);

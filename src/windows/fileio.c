@@ -949,20 +949,20 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int openf
 		break;
 
 	case OSD_FILETYPE_STATE:
-		sprintf (name, "%s/%s.sta", stadir, gamename);
+		sprintf (name, "%s/%s-%s.sta", stadir, gamename, filename);
 		f->file = fopen (name, openforwrite ? "wb" : "rb");
 		found = !(f->file == 0);
 		if( !found )
 		{
 			/* try with a .zip directory (if ZipMagic is installed) */
-			sprintf (name, "%s.zip/%s.sta", stadir, gamename);
+			sprintf (name, "%s.zip/%s-%s.sta", stadir, gamename, filename);
 			f->file = fopen (name, openforwrite ? "wb" : "rb");
 			found = !(f->file == 0);
 		}
 		if( !found )
 		{
 			/* try with a .zif directory (if ZipFolders is installed) */
-			sprintf (name, "%s.zif/%s.sta", stadir, gamename);
+			sprintf (name, "%s.zif/%s-%s.sta", stadir, gamename, filename);
 			f->file = fopen (name, openforwrite ? "wb" : "rb");
 			found = !(f->file == 0);
 		}

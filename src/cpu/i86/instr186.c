@@ -19,7 +19,7 @@
 static void PREFIX186(_pusha)(void)    /* Opcode 0x60 */
 {
 	unsigned tmp=I.regs.w[SP];
-	
+
 	ICOUNT -= cycles.pusha;
 	PUSH(I.regs.w[AX]);
 	PUSH(I.regs.w[CX]);
@@ -127,7 +127,7 @@ static void PREFIX186(_outsb)(void)    /* Opcode 0x6e */
 {
 	ICOUNT -= cycles.outs8;
 	write_port(I.regs.w[DX],GetMemB(DS,I.regs.w[SI]));
-	I.regs.w[DI] += I.DirVal;
+	I.regs.w[SI] += I.DirVal; /* GOL 11/27/01 */
 }
 
 static void PREFIX186(_outsw)(void)    /* Opcode 0x6f */
@@ -135,7 +135,7 @@ static void PREFIX186(_outsw)(void)    /* Opcode 0x6f */
 	ICOUNT -= cycles.outs16;
 	write_port(I.regs.w[DX],GetMemB(DS,I.regs.w[SI]));
 	write_port(I.regs.w[DX]+1,GetMemB(DS,I.regs.w[SI]+1));
-	I.regs.w[DI] += 2 * I.DirVal;
+	I.regs.w[SI] += 2 * I.DirVal; /* GOL 11/27/01 */
 }
 
 static void PREFIX186(_rotshft_bd8)(void)    /* Opcode 0xc0 */

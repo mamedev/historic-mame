@@ -119,7 +119,9 @@ WRITE_HANDLER( ironhors_palettebank_w )
 	coin_counter_w(0,data & 0x10);
 	coin_counter_w(1,data & 0x20);
 
-if (data & 0xc8) usrintf_showmessage("ironhors_palettebank_w %02x",data);
+	/* bit 6 unknown - set after game over */
+
+if (data & 0x88) usrintf_showmessage("ironhors_palettebank_w %02x",data);
 }
 
 

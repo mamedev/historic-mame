@@ -11,6 +11,7 @@ source was very helpful in many areas particularly the sprites.)
 
 - Changes Log -
 
+10-17-01 TC0150ROD support improved (e.g. Aquajack)
 09-01-01 Preliminary TC0150ROD support
 08-28-01 Fixed uncentered steer inputs, Nightstr controls
 05-27-01 Inputs through taitoic ioc routines, contcirc subwoofer filter
@@ -290,12 +291,14 @@ Chips:	uPD72105C
 TODO Lists
 ==========
 
-Add cpu idle time skip to improve speed.
+Add cpu idle time skip to improve speed...
 
 Is the no-Z80 sound handling correct: some voices in Bshark
 aren't that clear.
 
 Make taitosnd cpu-independent so we can restore Z80 to CPU3.
+
+Cockpit hardware
 
 DIPs
 
@@ -303,7 +306,8 @@ DIPs
 Continental Circus
 ------------------
 
-Road colors entirely wrong.
+Road priority incompletely understood - e.g. start barrier should
+be darkening LH edge of road as well as RH edge.
 
 The 8 level accel / brake should be possible to control with
 analogue pedal. Don't think mame can do this.
@@ -311,48 +315,52 @@ analogue pedal. Don't think mame can do this.
 Junk (?) stuff often written in high byte of sound word.
 
 Speculative YM2610 a/b/c channel filtering as these may be
-outputs to subwoofer (vibration). They sound better now.
+outputs to subwoofer (vibration). They sound better, anyway.
 
 
 Chasehq
 -------
 
-Road needs clipping, colors dubious.
-
-Used to have junk sprites when you reach criminal car (the 'criminals
-here' indicator): due to two bits above tile number being used in
-this sprite entry. What effect is desired... sprite flicker?
+Missing engine sound after helicopter flys up on later levels.
+(Bug fixed by S.J. September 2001)
 
 Motor CPU: appears to be identical to one in Topspeed.
+
+[Used to have junk sprites when you reach criminal car (the 'criminals
+here' sprite): two bits above tile number are used. Are these
+meaningless, or is some effect missing?]
 
 
 Battle Shark
 ------------
 
-Road looks odd.
+Is road on the road stages correct? Hard to tell.
+
+Does the original have the "seeking" crosshair effect, making it a
+challenge to control?
 
 
-Chasehq2
---------
+SCI
+---
 
-Road needs clipping, colors dubious.
+Road seems ok, but are the green bushes in round 1 a little too far
+to the edge of the interroad verge?
 
-Sprite frames were plotted in opposite order so flickered.
-Reversing this has lost us alternate frames: we may have
-to buffer sprite ram by one frame to solve this?
+Sprite frames were plotted in opposite order so flickered. Reversing
+this has lost us alternate frames: probably need to buffer sprite
+ram by one frame to solve this?
 
 
 Night Striker
 -------------
 
-Road needs clipping, colors dubious.
+Road A/B priority problems are obvious in the choice tunnels. Please
+can someone provide a screenshot of exactly what happens at the road
+split point.
 
-Control stick imperfect: the "dead patch" around stick center has been
-alleviated with a lookup table.
-
-Strange page in test mode which lets you alter all sorts of settings
-that may relate to the game's sit-in cockpit? Can't find a dip that
-disables this - perhaps only cockpit version existed.
+Strange page in test mode which lets you alter all sorts of settings,
+may relate to sit-in cockpit version. Can't find a dip that disables
+this.
 
 Does a variety of writes to TC0220IOC offset 3... significant?
 
@@ -360,17 +368,16 @@ Does a variety of writes to TC0220IOC offset 3... significant?
 Aqua Jack
 ---------
 
-Sprites left on screen under hiscore table. Maybe there is a
-sprite disable bit somewhere.
+Sprites left on screen under hiscore table. Deliberate? Or is there
+a sprite disable bit somewhere.
 
-Road needs clipping, colors dubious.
+Should road body be largely transparent as I've implemented it?
 
-Not sure of visible screen size (your boat seems slightly
-cut off at bottom, but that was needed so the grey garage as you
-start game stretches properly to bottom of screen).
+Sprite/sprite priorities often look bad. Sprites go to max size for
+a frame before they explode - surely a bug.
 
 Hangs briefly fairly often without massive cpu interleaving (500).
-Even now I don't think the keys are very responsive in test mode.
+Keys aren't very responsive in test mode.
 
 The problem code is this:
 
@@ -405,7 +412,9 @@ Light gun interrupt timing arbitrary.
 Double Axle
 -----------
 
-Road needs clipping, colors dubious.
+Road occasionally has incorrectly unclipped line appearing at top
+(ice stage). Also road 'ghost' often remains on screen - also an
+interrupt issue I presume.
 
 Double Axle has poor sound: one ADPCM rom should be twice as long?
 [In log we saw stuff like this, suggesting extra ADPCM rom needed:
@@ -419,11 +428,6 @@ though their entries in spriteram are being overwritten. (Perhaps
 an int6 timing/number issue: sprites seem to be ChaseHQ2ish with
 a spriteframe toggle - currently this never changes which may be
 wrong.)
-
-No sprite/tile variable priority implemented, I'm hoping it is
-only sprite/road priority that changes - but it's probaby more
-complicated.
-
 
 ***************************************************************************/
 
@@ -1072,13 +1076,13 @@ static WRITE16_HANDLER( taitoz_sound_w )
 		taitosound_comm_w (0, data & 0xff);
 
 #ifdef MAME_DEBUG
-	if (data & 0xff00)
-	{
-		char buf[80];
-
-		sprintf(buf,"taitoz_sound_w to high byte: %04x",data);
-		usrintf_showmessage(buf);
-	}
+//	if (data & 0xff00)
+//	{
+//		char buf[80];
+//
+//		sprintf(buf,"taitoz_sound_w to high byte: %04x",data);
+//		usrintf_showmessage(buf);
+//	}
 #endif
 }
 
@@ -1527,7 +1531,7 @@ MEMORY_END
 
 INPUT_PORTS_START( contcirc )
 	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )	// Stops digital accelerator working, analogue pedal?
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
@@ -1556,16 +1560,16 @@ INPUT_PORTS_START( contcirc )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Default screen type" )
+	PORT_DIPSETTING(    0x20, "3D" )
+	PORT_DIPSETTING(    0x00, "Normal" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1596,7 +1600,6 @@ INPUT_PORTS_START( contcirc )
 	PORT_START      /* IN2, unused */
 
 	PORT_START      /* IN3, "handle" i.e. steering */
-//	PORT_ANALOG( 0xffff, 0x8000, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 50, 15, 0xff9f, 0x60)
 	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 50, 15, 0x00, 0xff)
 
 	PORT_START      /* IN4, fake allowing digital steer */
@@ -1716,8 +1719,7 @@ INPUT_PORTS_START( chasehq )	// IN3-6 perhaps used with cockpit setup? //
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN7, steering */
-//	PORT_ANALOG( 0xffff, 0x8000, IPT_AD_STICK_X | IPF_PLAYER1, 50, 25, 0xff80, 0x7f )
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 50, 25, 0x00, 0xff )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 50, 15, 0x00, 0xff )
 
 	PORT_START      /* IN8, fake allowing digital steer */
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER1 )
@@ -1925,12 +1927,11 @@ INPUT_PORTS_START( nightstr )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
+	PORT_DIPNAME( 0x30, 0x30, "Shields" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x10, "4" )
+	PORT_DIPSETTING(    0x20, "6" )
+	PORT_DIPSETTING(    0x30, "5" )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
@@ -1961,12 +1962,10 @@ INPUT_PORTS_START( nightstr )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 
 	PORT_START
-//	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_X | IPF_PLAYER1, 20, 10, 0xb8, 0x49)
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 40, 10, 0x00, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 60, 15, 0x00, 0xff)
 
 	PORT_START
-//	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_Y | IPF_REVERSE | IPF_PLAYER1, 20, 10, 0xb8, 0x49)
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_REVERSE | IPF_PLAYER1, 40, 10, 0x00, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_REVERSE | IPF_PLAYER1, 60, 15, 0x00, 0xff)
 
 	PORT_START	/* X offset */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -2138,9 +2137,9 @@ INPUT_PORTS_START( dblaxle )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Gear shift" )
+	PORT_DIPSETTING(    0x02, "Normal" )
+	PORT_DIPSETTING(    0x00, "Inverted" )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
@@ -2165,13 +2164,13 @@ INPUT_PORTS_START( dblaxle )
 	PORT_DIPNAME( 0x04, 0x00, "Multi-machine hookup ?" )	// doesn't boot if on
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, "Nitros Stocked ???" )
-	PORT_DIPSETTING(    0x10, "3" )
-	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x08, 0x08, "Player Truck" )
+	PORT_DIPSETTING(    0x08, "Red" )
+	PORT_DIPSETTING(    0x00, "Blue" )
+	PORT_DIPNAME( 0x10, 0x10, "Back button" )
+	PORT_DIPSETTING(    0x10, "Normal" )
+	PORT_DIPSETTING(    0x00, "Inverted" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )	// causes "Root CPU Error" on "Icy Road" (Tourniquet)
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
@@ -2204,7 +2203,6 @@ INPUT_PORTS_START( dblaxle )
 	PORT_START      /* IN2, unused */
 
 	PORT_START      /* IN3, steering */
-//	PORT_ANALOG( 0xffff, 0x8000, IPT_AD_STICK_X | IPF_PLAYER1, 20, 10, 0xffc0, 0x3f )
 	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 40, 10, 0x00, 0xff )
 
 	PORT_START      /* IN4, fake allowing digital steer */
@@ -2372,18 +2370,30 @@ static struct CustomSound_interface subwoofer_interface =
 /***********************************************************
                       MACHINE DRIVERS
 
-Chasehq2 needs high interleaving to have sound.
+CPU Interleaving
+----------------
+
+Chasehq2 needs high interleaving to have sound (not checked
+since May 2001 - may have changed).
+
 Bshark needs the high cpu interleaving to run test mode.
-Nightstr needed the high cpu interleaving to get through init.
+
+Nightstr needs the high cpu interleaving to get through init.
+
 Aquajack has it VERY high to cure frequent sound-related
 hangs.
-Dblaxle has 10 to boot up reliably.
 
-Suspect minimum interleaving of 10 or so may be needed to
-avoid road glitches: mostly it's CPUB which writes to road
-chip, so presumably syncing between it and the master CPUA
-is important.
+Dblaxle has 10 to boot up reliably but very occasionally gets
+a "root cpu error" still.
+
+Mostly it's the 2nd 68K which writes to road chip, so syncing
+between it and the master 68K may be important. Contcirc
+and ChaseHQ have interleave of only 1 - possible cause of
+Contcirc road glitchiness in attract?
+
 ***********************************************************/
+
+/* Contcirc vis area seems narrower than the other games... */
 
 static struct MachineDriver machine_driver_contcirc =
 {
@@ -2412,7 +2422,7 @@ static struct MachineDriver machine_driver_contcirc =
 	0,
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
+	40*8, 32*8, { 0*8, 40*8-1, 3*8, 31*8-1 },
 
 	taitoz_gfxdecodeinfo,
 	4096, 0,
@@ -3484,12 +3494,8 @@ static void init_bshark(void)
 }
 
 
-/* Working Games */
 
-// Spacegun will come after Aquajack in release date order //
-GAME ( 1990, spacegun, 0,        spacegun, spacegun, bshark,   ORIENTATION_FLIP_X, "Taito Corporation Japan", "Space Gun (World)" )
-
-/* Busted Games, release date order: contcirc 1989 (c) date is bogus */
+/* Release date order: contcirc 1989 (c) date is bogus */
 
 GAMEX( 1989, contcirc, 0,        contcirc, contcirc, taitoz,   ROT0,               "Taito Corporation Japan", "Continental Circus (World)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1987, contcrcu, contcirc, contcirc, contcirc, taitoz,   ROT0,               "Taito America Corporation", "Continental Circus (US)", GAME_IMPERFECT_GRAPHICS )
@@ -3503,5 +3509,6 @@ GAMEX( 1989, sciu,     sci,      sci,      sci,      taitoz,   ROT0,            
 GAMEX( 1989, nightstr, 0,        nightstr, nightstr, taitoz,   ROT0,               "Taito America Corporation", "Night Striker (US)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1990, aquajack, 0,        aquajack, aquajack, taitoz,   ROT0,               "Taito Corporation Japan", "Aqua Jack (World)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1990, aquajckj, aquajack, aquajack, aquajack, taitoz,   ROT0,               "Taito Corporation", "Aqua Jack (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAME ( 1990, spacegun, 0,        spacegun, spacegun, bshark,   ORIENTATION_FLIP_X, "Taito Corporation Japan", "Space Gun (World)" )
 GAMEX( 1991, dblaxle,  0,        dblaxle,  dblaxle,  taitoz,   ROT0,               "Taito America Corporation", "Double Axle (US)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1991, pwheelsj, dblaxle,  dblaxle,  dblaxle,  taitoz,   ROT0,               "Taito Corporation", "Power Wheels (Japan)", GAME_IMPERFECT_GRAPHICS )

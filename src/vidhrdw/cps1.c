@@ -255,9 +255,9 @@ static struct CPS1config cps1_config_table[]=
 	{"mercs",   CPS_B_12, 0,0,0, 0x0600,0x5bff,0x0700,0x17ff, 4 },	/* (uses port 74) */
 	{"mercsu",  CPS_B_12, 0,0,0, 0x0600,0x5bff,0x0700,0x17ff, 4 },	/* (uses port 74) */
 	{"mercsj",  CPS_B_12, 0,0,0, 0x0600,0x5bff,0x0700,0x17ff, 4 },	/* (uses port 74) */
-	{"msword",  CPS_B_13, 0,0,0, 0x2800,0x37ff,0x0000,0xffff },	/* CPSB ID not checked, but it's the same as sf2j */
-	{"mswordu", CPS_B_13, 0,0,0, 0x2800,0x37ff,0x0000,0xffff },	/* CPSB ID not checked, but it's the same as sf2j */
-	{"mswordj", CPS_B_13, 0,0,0, 0x2800,0x37ff,0x0000,0xffff },	/* CPSB ID not checked, but it's the same as sf2j */
+	{"msword",  CPS_B_13, 0,0,0, 0x2800,0x37ff,0x0000,0xffff, 3 },	/* CPSB ID not checked, but it's the same as sf2j */
+	{"mswordu", CPS_B_13, 0,0,0, 0x2800,0x37ff,0x0000,0xffff, 3 },	/* CPSB ID not checked, but it's the same as sf2j */
+	{"mswordj", CPS_B_13, 0,0,0, 0x2800,0x37ff,0x0000,0xffff, 3 },	/* CPSB ID not checked, but it's the same as sf2j */
 	{"mtwins",  CPS_B_14, 0,0,0, 0x0000,0x3fff,0x0e00,0xffff },
 	{"chikij",  CPS_B_14, 0,0,0, 0x0000,0x3fff,0x0e00,0xffff },
 	{"nemo",    CPS_B_15, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
@@ -295,9 +295,9 @@ static struct CPS1config cps1_config_table[]=
 	{"sf2red",  NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2v004", NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2accp2",NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
-	{"varth",   BATTRY_5, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* CPSB test has been patched out (60=0008) */
-	{"varthu",  BATTRY_5, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* CPSB test has been patched out (60=0008) */
-	{"varthj",  BATTRY_6, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* CPSB test has been patched out (72=0001) */
+	{"varth",   BATTRY_5, 0,0,0, 0x0000,0xffff,0x0c00,0x0fff },	/* CPSB test has been patched out (60=0008) */
+	{"varthu",  BATTRY_5, 0,0,0, 0x0000,0xffff,0x0c00,0x0fff },	/* CPSB test has been patched out (60=0008) */
+	{"varthj",  BATTRY_6, 0,0,0, 0x0000,0xffff,0x0c00,0x0fff },	/* CPSB test has been patched out (72=0001) */
 	{"cworld2j",BATTRY_7, 0,0,0, 0x0000,0xffff,0x0000,0xffff },  /* The 0x76 priority values are incorrect values */
 	{"wof",     CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* bootleg? */
 	{"wofa",    CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* bootleg? */
@@ -341,6 +341,7 @@ static struct CPS1config cps1_config_table[]=
 	{"ssf2ta",  NOBATTRY, 4,4,0, 0x0000,0xffff,0x0000,0xffff, 9 },
 	{"ssf2xj",  NOBATTRY, 4,4,0, 0x0000,0xffff,0x0000,0xffff, 9 },
 	{"xmcota",  NOBATTRY, 4,4,4, 0x0000,0xffff,0x0000,0xffff, 8 },
+	{"xmcotau", NOBATTRY, 4,4,4, 0x0000,0xffff,0x0000,0xffff, 8 },
 	{"xmcotah", NOBATTRY, 4,4,4, 0x0000,0xffff,0x0000,0xffff, 8 },
 	{"xmcotaj", NOBATTRY, 4,4,4, 0x0000,0xffff,0x0000,0xffff, 8 },
 	{"xmcotaj1",NOBATTRY, 4,4,4, 0x0000,0xffff,0x0000,0xffff, 8 },
@@ -926,9 +927,9 @@ static void get_tile0_info(int tile_index)
 	int attr = cps1_scroll1[2*tile_index+1];
 
 
-	/* knights; the real space is 0x8820 */
+	/* knights & msword */
 	if (cps1_game_config->kludge == 3)
-		if (code == 0xf020) code = 0x8820;
+		if (code == 0xf020) code = 0x0020;
 
 	SET_TILE_INFO(
 			0,

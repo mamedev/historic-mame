@@ -2,7 +2,7 @@
 
 
 static data8_t *vram[2],*unkram;
-static int bankctrl,rambank,gfxrom_select;
+static int bankctrl,rambank,pmcbank,gfxrom_select;
 static struct tilemap *tilemap[2];
 
 
@@ -82,6 +82,8 @@ WRITE_HANDLER( hexion_bankswitch_w )
 		memset(vram[bank],unkram[1],0x2000);
 		tilemap_mark_all_tiles_dirty(tilemap[bank]);
 	}
+	/* bit 7 = PMC-BK */
+	pmcbank = (data & 0x80) >> 7;
 
 	/* other bits unknown */
 if (data & 0x30)
@@ -120,17 +122,27 @@ WRITE_HANDLER( hexion_bankedram_w )
 	}
 	else if (bankctrl == 0)
 	{
-//logerror("%04x: bankedram_w offset %04x, data %02x, bankctrl = %02x\n",cpu_get_pc(),offset,data,bankctrl);
-		if (vram[rambank][offset] != data)
+		if (pmcbank)
 		{
-			vram[rambank][offset] = data;
-			tilemap_mark_tile_dirty(tilemap[rambank],offset/4);
+//logerror("%04x: bankedram_w offset %04x, data %02x, bankctrl = %02x\n",cpu_get_pc(),offset,data,bankctrl);
+			if (vram[rambank][offset] != data)
+			{
+				vram[rambank][offset] = data;
+				tilemap_mark_tile_dirty(tilemap[rambank],offset/4);
+			}
 		}
+		else
+			logerror("%04x pmc internal ram %04x = %02x\n",cpu_get_pc(),offset,data);
 	}
 	else if (bankctrl == 2 && offset < 0x800)
 	{
+		if (pmcbank)
+		{
 //logerror("%04x: unkram_w offset %04x, data %02x, bankctrl = %02x\n",cpu_get_pc(),offset,data,bankctrl);
-		unkram[offset] = data;
+			unkram[offset] = data;
+		}
+		else
+			logerror("%04x pmc internal ram %04x = %02x\n",cpu_get_pc(),offset,data);
 	}
 	else
 logerror("%04x: bankedram_w offset %04x, data %02x, bankctrl = %02x\n",cpu_get_pc(),offset,data,bankctrl);

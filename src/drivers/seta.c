@@ -33,6 +33,7 @@ P1-049-A				89 Meta Fox						Taito / RomStar
 P0-053-1				89 Castle of Dragon/Dragon Unit	Taito / RomStar / Athena
 P0-053-A				91 Strike Gunner S.T.G			Athena / Tecmo
 P0-053-A				92 Quiz Kokology				Tecmo
+P0-055-B				89 Wit's						Athena
 P0-055-D				90 Thunder & Lightning			Romstar / Visco
 P0-063-A				91 Rezon						Allumer
 P0-068-B (M6100723A)	92 Block Carnival				Visco
@@ -45,6 +46,7 @@ P0-079-A				94 Eight Forces					Tecmo
 ?        (93111A)		93 War Of Aero					Yang Cheng
 P0-081-A				93 Mobile Suit Gundam(3)		Banpresto
 P0-097-A				93 Oishii Puzzle ..				Sunsoft + Atlus
+P0-100-A				93 Quiz Kokology 2				Tecmo
 P0-101-1				94 Pro Mahjong Kiwame			Athena
 P0-114-A (SKB-001)		94 Krazy Bowl					American Sammy
 P0-117-A (DH-01)		95 Extreme Downhill				Sammy Japan
@@ -72,6 +74,39 @@ To Do:
 /* Variables and functions only used here */
 
 static unsigned char *sharedram;
+
+
+/***************************************************************************
+
+
+									Sound
+
+
+***************************************************************************/
+
+static int seta_sh_start_8MHz(const struct MachineSound *msound)
+{
+	return seta_sh_start(msound, 8000000);
+}
+
+static int seta_sh_start_16MHz(const struct MachineSound *msound)
+{
+	return seta_sh_start(msound, 16000000);
+}
+
+static struct CustomSound_interface seta_sound_intf_8MHz =
+{
+	seta_sh_start_8MHz,
+	0,
+	0,
+};
+static struct CustomSound_interface seta_sound_intf_16MHz =
+{
+	seta_sh_start_16MHz,
+	0,
+	0,
+};
+
 
 /***************************************************************************
 
@@ -490,11 +525,12 @@ MEMORY_END
 
 
 /***************************************************************************
-				Dragon Unit, Quiz Kokology, Strike Gunner
+		Dragon Unit, Quiz Kokology, Quiz Kokology 2, Strike Gunner
 ***************************************************************************/
 
 static MEMORY_READ16_START( drgnunit_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM				},	// ROM
+	{ 0x080000, 0x0bffff, MRA16_RAM				},	// ROM (qzkklgy2)
 	{ 0xf00000, 0xf0ffff, MRA16_RAM				},	// RAM (qzkklogy)
 	{ 0xffc000, 0xffffff, MRA16_RAM				},	// RAM (drgnunit,stg)
 	{ 0x100000, 0x1000ff, seta_sound_word_r		},	// Sound
@@ -515,11 +551,12 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( drgnunit_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
+	{ 0x080000, 0x0bffff, MWA16_RAM						},	// ROM (qzkklgy2)
 	{ 0xf00000, 0xf0ffff, MWA16_RAM						},	// RAM (qzkklogy)
 	{ 0xffc000, 0xffffff, MWA16_RAM						},	// RAM (drgnunit,stg)
 	{ 0x100000, 0x1000ff, seta_sound_word_w				},	// Sound
 	{ 0x100100, 0x103fff, MWA16_RAM						},	//
-	{ 0x200000, 0x200001, MWA16_NOP						},	// ? Watchdog
+	{ 0x200000, 0x200001, MWA16_NOP						},	// Watchdog
 	{ 0x300000, 0x300001, MWA16_NOP						},	// ? IRQ Ack
 	{ 0x500000, 0x500001, seta_vregs_w, &seta_vregs		},	// Coin Lockout + Video Registers
 	{ 0x700000, 0x7003ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
@@ -837,7 +874,7 @@ MEMORY_END
 
 
 /***************************************************************************
-							Thunder & Lightning
+						Thunder & Lightning / Wit's
 ***************************************************************************/
 
 static READ16_HANDLER( thunderl_protection_r )
@@ -862,10 +899,13 @@ static MEMORY_READ16_START( thunderl_readmem )
 	{ 0xb00000, 0xb00001, input_port_0_word_r	},	// P1
 	{ 0xb00002, 0xb00003, input_port_1_word_r	},	// P2
 	{ 0xb00004, 0xb00005, input_port_2_word_r	},	// Coins
-	{ 0xb0000c, 0xb0000d, thunderl_protection_r	},	// Protection
+	{ 0xb0000c, 0xb0000d, thunderl_protection_r	},	// Protection (not in wits)
+	{ 0xb00008, 0xb00009, input_port_4_word_r	},	// P3 (wits)
+	{ 0xb0000a, 0xb0000b, input_port_5_word_r	},	// P4 (wits)
 /**/{ 0xc00000, 0xc00001, MRA16_RAM				},	// ? 0x4000
 /**/{ 0xd00000, 0xd00607, MRA16_RAM				},	// Sprites Y
 	{ 0xe00000, 0xe03fff, MRA16_RAM				},	// Sprites Code + X + Attr
+	{ 0xe04000, 0xe07fff, MRA16_RAM				},	// (wits)
 MEMORY_END
 
 static MEMORY_WRITE16_START( thunderl_writemem )
@@ -875,12 +915,13 @@ static MEMORY_WRITE16_START( thunderl_writemem )
 	{ 0x100100, 0x10ffff, MWA16_RAM					},	//
 	{ 0x200000, 0x200001, MWA16_NOP					},	// ?
 	{ 0x300000, 0x300001, MWA16_NOP					},	// ?
-	{ 0x400000, 0x40ffff, thunderl_protection_w		},	// Protection
+	{ 0x400000, 0x40ffff, thunderl_protection_w		},	// Protection (not in wits)
 	{ 0x500000, 0x500001, seta_vregs_w, &seta_vregs	},	// Coin Lockout
 	{ 0x700000, 0x7003ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
 	{ 0xc00000, 0xc00001, MWA16_RAM					},	// ? 0x4000
 	{ 0xd00000, 0xd00607, MWA16_RAM, &spriteram16	},	// Sprites Y
 	{ 0xe00000, 0xe03fff, MWA16_RAM, &spriteram16_2	},	// Sprites Code + X + Attr
+	{ 0xe04000, 0xe07fff, MWA16_RAM					},	// (wits)
 MEMORY_END
 
 
@@ -2599,7 +2640,7 @@ INPUT_PORTS_START( qzkklogy )
 	PORT_DIPSETTING(      0x0001, "1" )
 	PORT_DIPSETTING(      0x0002, "2" )
 	PORT_DIPSETTING(      0x0003, "3" )
-	PORT_DIPNAME( 0x0004, 0x0004, "Unknown 1-2*" )
+	PORT_BITX(    0x0004, 0x0004, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Highlight Right Answer", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0008, 0x0008, "Unknown 1-3" )
@@ -2640,6 +2681,85 @@ INPUT_PORTS_START( qzkklogy )
 	PORT_DIPSETTING(      0x0000, "5" )
 INPUT_PORTS_END
 
+
+
+/***************************************************************************
+								Quiz Kokology 2
+***************************************************************************/
+
+INPUT_PORTS_START( qzkklgy2 )
+	PORT_START	// IN0 - Player 1 - $b00001.b
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START1  )
+
+	PORT_START	// IN1 - Player 2 - $b00003.b
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START2  )
+
+	PORT_START	// IN2 - Coins - $b00005.b
+	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 5 )
+	PORT_BIT_IMPULSE( 0x0002, IP_ACTIVE_LOW, IPT_COIN2, 5 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+
+	PORT_START	// IN3 - 2 DSWs - $600001 & 3.b
+	PORT_DIPNAME( 0x0003, 0x0003, "Unknown 1-0&1*" )
+	PORT_DIPSETTING(      0x0000, "0" )
+	PORT_DIPSETTING(      0x0001, "1" )
+	PORT_DIPSETTING(      0x0002, "2" )
+	PORT_DIPSETTING(      0x0003, "3" )
+	PORT_BITX(    0x0004, 0x0004, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Highlight Right Answer", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, "Unknown 1-3" )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, "Unknown 1-4" )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_SERVICE( 0x0020, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_DIPNAME( 0x0700, 0x0700, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0500, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0600, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0700, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x0300, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x3000, "Easy" )
+	PORT_DIPSETTING(      0x2000, "Normal" )
+	PORT_DIPSETTING(      0x1000, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0xc000, 0xc000, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x8000, "2" )
+	PORT_DIPSETTING(      0xc000, "3" )
+	PORT_DIPSETTING(      0x4000, "4" )
+	PORT_DIPSETTING(      0x0000, "5" )
+INPUT_PORTS_END
 
 
 /***************************************************************************
@@ -3308,82 +3428,6 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Zing Zing Zip
-***************************************************************************/
-
-INPUT_PORTS_START( zingzip )
-	PORT_START	// IN0 - Player 1 - $400000.w
-	JOY_TYPE1_2BUTTONS(1)
-
-	PORT_START	// IN1 - Player 2 - $400002.w
-	JOY_TYPE1_2BUTTONS(2)
-
-	PORT_START	// IN2 - Coins - $400004.w
-	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 5 )
-	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN  ) // no coin 2
-	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_TILT     )
-	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN  )
-	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN  )
-	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN  )
-	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN  )
-
-	PORT_START	// IN3 - 2 DSWs - $600001 & 3.b
-	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004, 0x0004, "Unknown 1-2" )	// remaining switches seem unused
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, "Unknown 1-3" )
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0010, "Unknown 1-4" )
-	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0020, "Unknown 1-5" )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0040, "Unknown 1-6" )
-	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
-
-	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) )
-	PORT_DIPSETTING(      0x0200, "2" )
-	PORT_DIPSETTING(      0x0300, "3" )
-	PORT_DIPSETTING(      0x0100, "4" )
-	PORT_DIPSETTING(      0x0000, "5" )
-	PORT_DIPNAME( 0x0c00, 0x0c00, "Unknown 2-2&3" )
-	PORT_DIPSETTING(      0x0800, "01" )
-	PORT_DIPSETTING(      0x0c00, "08" )
-	PORT_DIPSETTING(      0x0400, "10" )
-	PORT_DIPSETTING(      0x0000, "18" )
-	PORT_DIPNAME( 0xf000, 0xf000, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(      0xa000, DEF_STR( 6C_1C ) )
-	PORT_DIPSETTING(      0xb000, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(      0xc000, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(      0xd000, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( 8C_3C ) )
-	PORT_DIPSETTING(      0xe000, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( 5C_3C ) )
-	PORT_DIPSETTING(      0x3000, DEF_STR( 3C_2C ) )
-	PORT_DIPSETTING(      0xf000, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(      0x9000, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(      0x7000, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(      0x6000, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(      0x5000, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
-INPUT_PORTS_END
-
-
-
-/***************************************************************************
 								War of Aero
 ***************************************************************************/
 
@@ -3460,6 +3504,159 @@ INPUT_PORTS_END
 
 
 
+/***************************************************************************
+									Wit's
+***************************************************************************/
+
+INPUT_PORTS_START( wits )
+	PORT_START	// IN0 - Player 1
+	JOY_TYPE1_2BUTTONS(1)
+
+	PORT_START	// IN1 - Player 2
+	JOY_TYPE1_2BUTTONS(2)
+
+	PORT_START	// IN2 - Coins + DSW
+	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 5 )
+	PORT_BIT_IMPULSE( 0x0002, IP_ACTIVE_LOW, IPT_COIN2, 5 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_TILT     )
+	PORT_DIPNAME( 0x0010, 0x0010, "Unknown 3-4*" )	// Jumpers, I guess
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, "Unknown 3-5*" )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x00c0, 0x0040, "License" )
+	PORT_DIPSETTING(      0x00c0, "Romstar" )
+	PORT_DIPSETTING(      0x0080, "Seta U.S.A" )
+	PORT_DIPSETTING(      0x0040, "Visco (Japan Only)" )
+	PORT_DIPSETTING(      0x0000, "Athena (Japan Only)" )
+
+	PORT_START	// IN3 - 2 DSWs - $600003 & 1.b
+	PORT_DIPNAME( 0x0003, 0x0003, "Unknown 1-0&1*" )
+	PORT_DIPSETTING(      0x0002, "0" )
+	PORT_DIPSETTING(      0x0003, "4" )
+	PORT_DIPSETTING(      0x0001, "8" )
+	PORT_DIPSETTING(      0x0000, "c" )
+	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(      0x0008, "150k, 350k" )
+	PORT_DIPSETTING(      0x000c, "200k, 500k" )
+	PORT_DIPSETTING(      0x0004, "300k, 600k" )
+	PORT_DIPSETTING(      0x0000, "400k" )
+	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0000, "1" )
+	PORT_DIPSETTING(      0x0010, "2" )
+	PORT_DIPSETTING(      0x0030, "3" )
+	PORT_DIPSETTING(      0x0020, "5" )
+	PORT_DIPNAME( 0x0040, 0x0040, "Max Players" )
+	PORT_DIPSETTING(      0x0040, "2" )
+	PORT_DIPSETTING(      0x0000, "4" )
+	PORT_DIPNAME( 0x0080, 0x0080, "Unknown 1-7*" )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_DIPNAME( 0x0100, 0x0100, "Unknown 2-0" )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, "Unknown 2-2*" )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_SERVICE( 0x0800, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x3000, 0x3000, "Unknown 2-4&5*" )
+	PORT_DIPSETTING(      0x3000, "11" )
+	PORT_DIPSETTING(      0x2000, "10" )
+	PORT_DIPSETTING(      0x1000, "01" )
+	PORT_DIPSETTING(      0x0000, "00" )
+	PORT_DIPNAME( 0xc000, 0xc000, "Unknown 2-6&7*" )
+	PORT_DIPSETTING(      0xc000, "11" )
+	PORT_DIPSETTING(      0x8000, "10" )
+	PORT_DIPSETTING(      0x4000, "01" )
+	PORT_DIPSETTING(      0x0000, "00" )
+
+	PORT_START	// IN4 - Player 3
+	JOY_TYPE1_2BUTTONS(3)
+
+	PORT_START	// IN5 - Player 4
+	JOY_TYPE1_2BUTTONS(4)
+INPUT_PORTS_END
+
+
+/***************************************************************************
+								Zing Zing Zip
+***************************************************************************/
+
+INPUT_PORTS_START( zingzip )
+	PORT_START	// IN0 - Player 1 - $400000.w
+	JOY_TYPE1_2BUTTONS(1)
+
+	PORT_START	// IN1 - Player 2 - $400002.w
+	JOY_TYPE1_2BUTTONS(2)
+
+	PORT_START	// IN2 - Coins - $400004.w
+	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 5 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN  ) // no coin 2
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_TILT     )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+
+	PORT_START	// IN3 - 2 DSWs - $600001 & 3.b
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, "Unknown 1-2" )	// remaining switches seem unused
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, "Unknown 1-3" )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, "Unknown 1-4" )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, "Unknown 1-5" )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, "Unknown 1-6" )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
+
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0200, "2" )
+	PORT_DIPSETTING(      0x0300, "3" )
+	PORT_DIPSETTING(      0x0100, "4" )
+	PORT_DIPSETTING(      0x0000, "5" )
+	PORT_DIPNAME( 0x0c00, 0x0c00, "Unknown 2-2&3" )
+	PORT_DIPSETTING(      0x0800, "01" )
+	PORT_DIPSETTING(      0x0c00, "08" )
+	PORT_DIPSETTING(      0x0400, "10" )
+	PORT_DIPSETTING(      0x0000, "18" )
+	PORT_DIPNAME( 0xf000, 0xf000, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(      0xa000, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(      0xb000, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0xc000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0xd000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( 8C_3C ) )
+	PORT_DIPSETTING(      0xe000, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( 5C_3C ) )
+	PORT_DIPSETTING(      0x3000, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(      0xf000, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x9000, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x7000, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x6000, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x5000, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
+INPUT_PORTS_END
 
 
 /***************************************************************************
@@ -3609,6 +3806,17 @@ static struct GfxDecodeInfo msgundam_gfxdecodeinfo[] =
 };
 
 /***************************************************************************
+								Quiz Kokology 2
+***************************************************************************/
+
+static struct GfxDecodeInfo qzkklgy2_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &layout_planes_2roms,	512*0, 32 }, // [0] Sprites
+	{ REGION_GFX2, 0, &layout_packed, 		512*0, 32 }, // [1] Layer 1
+	{ -1 }
+};
+
+/***************************************************************************
 								Thundercade
 ***************************************************************************/
 
@@ -3728,7 +3936,7 @@ static struct MachineDriver machine_driver_atehate =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
 	}
 };
 
@@ -3777,7 +3985,7 @@ static const struct MachineDriver machine_driver_blandia =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
 	}
 };
 
@@ -3815,7 +4023,7 @@ static struct MachineDriver machine_driver_blockcar =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
 	}
 };
 
@@ -3882,7 +4090,7 @@ static const struct MachineDriver machine_driver_calibr50 =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
 	}
 };
 
@@ -3928,7 +4136,7 @@ static const struct MachineDriver machine_driver_downtown =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_8MHz }
 	}
 };
 
@@ -3974,7 +4182,43 @@ static const struct MachineDriver machine_driver_drgnunit =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
+	}
+};
+
+/*	Same as qzkklogy, but with a 16MHz CPU and different
+	layout for the layer's tiles	*/
+
+static const struct MachineDriver machine_driver_qzkklgy2 =
+{
+	{
+		{
+			CPU_M68000,
+			16000000,
+			drgnunit_readmem, drgnunit_writemem,0,0,
+			seta_interrupt_1_and_2, SETA_INTERRUPTS_NUM
+		},
+	},
+	60,DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	400, 256 -16, { 16+1, 400-1+1, 0, 256-1 -16},	// a little offset
+	qzkklgy2_gfxdecodeinfo,
+	512, 0,
+	0,
+
+	VIDEO_TYPE_RASTER,
+	seta_buffer_sprites,	/* qzkklogy uses sprite buffering */
+	seta_vh_start_1_layer,
+	0,
+	seta_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
 	}
 };
 
@@ -4012,7 +4256,7 @@ static const struct MachineDriver machine_driver_eightfrc =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
 	}
 };
 
@@ -4055,7 +4299,7 @@ static const struct MachineDriver machine_driver_extdwnhl =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
 	}
 };
 
@@ -4097,7 +4341,7 @@ static const struct MachineDriver machine_driver_gundhara =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
 	}
 };
 
@@ -4139,7 +4383,7 @@ static const struct MachineDriver machine_driver_jjsquawk =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
 	}
 };
 
@@ -4177,7 +4421,7 @@ static struct MachineDriver machine_driver_krzybowl =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
 	}
 };
 
@@ -4223,7 +4467,7 @@ static const struct MachineDriver machine_driver_metafox =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
 	}
 };
 
@@ -4265,7 +4509,7 @@ static const struct MachineDriver machine_driver_msgundam =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
 	}
 };
 
@@ -4305,7 +4549,7 @@ static struct MachineDriver machine_driver_oisipuzl =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
 	}
 };
 
@@ -4344,7 +4588,7 @@ static struct MachineDriver machine_driver_kiwame =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
 	}
 };
 
@@ -4385,14 +4629,14 @@ static const struct MachineDriver machine_driver_rezon =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
 	}
 };
 
 
 
 /***************************************************************************
-							Thunder & Lightning
+						Thunder & Lightning / Wit's
 ***************************************************************************/
 
 /*	thunderl lev 2 = lev 3 - other levels lead to an error */
@@ -4404,7 +4648,7 @@ static struct MachineDriver machine_driver_thunderl =
 			CPU_M68000,
 			8000000,
 			thunderl_readmem, thunderl_writemem,0,0,
-			m68_level3_irq, 1
+			m68_level2_irq, 1
 		}
 	},
 	60,DEFAULT_60HZ_VBLANK_DURATION,
@@ -4412,7 +4656,7 @@ static struct MachineDriver machine_driver_thunderl =
 	0,
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
+	400, 256 -16, { 16, 400-1, 0, 256-1 -16 },
 	tndrcade_gfxdecodeinfo,
 	512, 0,	/* sprites only */
 	0,
@@ -4426,7 +4670,40 @@ static struct MachineDriver machine_driver_thunderl =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
+	}
+};
+
+static struct MachineDriver machine_driver_wits =
+{
+	{
+		{
+			CPU_M68000,
+			8000000,
+			thunderl_readmem, thunderl_writemem,0,0,
+			m68_level2_irq, 1
+		}
+	},
+	60,DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	400, 256 -16, { 16, 400-1, 0, 256-1 -16 },
+	tndrcade_gfxdecodeinfo,
+	512, 0,	/* sprites only */
+	0,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	seta_vh_start_no_layers,
+	0,
+	seta_vh_screenrefresh_no_layers, /* just draw the sprites */
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{ SOUND_CUSTOM, &seta_sound_intf_8MHz }
 	}
 };
 
@@ -4563,7 +4840,7 @@ static const struct MachineDriver machine_driver_twineagl =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
 	}
 };
 
@@ -4601,7 +4878,7 @@ static struct MachineDriver machine_driver_umanclub =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
 	}
 };
 
@@ -4651,7 +4928,7 @@ static const struct MachineDriver machine_driver_usclssic =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
 	}
 };
 
@@ -4733,7 +5010,7 @@ static const struct MachineDriver machine_driver_wrofaero =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
 	}
 };
 
@@ -4778,7 +5055,7 @@ static const struct MachineDriver machine_driver_zingzip =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
+		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
 	}
 };
 
@@ -5759,6 +6036,50 @@ ROM_END
 
 /***************************************************************************
 
+								Quiz Koko-logy 2
+
+(c)1992 Tecmo
+
+P0-100A
+
+CPU  : MC68HC000B16
+Sound: X1-010
+OSC  : 16.000MHz
+
+FN001001.106 - Main program (27C4096)
+FN001003.107 / (40pin 2M mask)
+
+FN001004.100 - OBJ chr. (42pin mask)
+FN001005.104 - BG chr. (42pin mask)
+FN001006.105 - Samples (32pin mask)
+
+Custom chips:	X1-001A		X1-002A
+				X1-004
+				X1-006
+				X1-007
+				X1-010
+				X1-011		X1-012
+
+***************************************************************************/
+
+ROM_START( qzkklgy2 )
+	ROM_REGION( 0x0c0000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_WORD_SWAP( "fn001001.106", 0x000000, 0x080000, 0x7bf8eb17 )
+	ROM_LOAD16_WORD_SWAP( "fn001003.107", 0x080000, 0x040000, 0xee6ef111 )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "fn001004.100", 0x000000, 0x100000, 0x5ba139a2 )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "fn001005.104", 0x000000, 0x200000, 0x95726a63 )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "fn001006.105", 0x000000, 0x100000, 0x83f201e6 )
+ROM_END
+
+
+/***************************************************************************
+
 								Rezon (Japan)
 
 PCB 	: PO-063A
@@ -6195,7 +6516,97 @@ ROM_START( usclssic )
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "ue001005.132", 0x000000, 0x080000, 0xc5fea37c )
 ROM_END
+/***************************************************************************
 
+							   War of Aero
+							Project M E I O U
+
+93111A	YANG CHENG
+
+CPU   : TOSHIBA TMP68HC000N-16
+Sound : Allumer X1-010
+OSC   : 16.000000MHz
+Other : Allumer
+			X1-001A  X1-002A
+			X1-004
+			X1-007
+			X1-011 x 2
+			X1-012 x 2
+		NEC
+			C324C
+			D71054C
+
+***************************************************************************/
+
+ROM_START( wrofaero )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "u3.bin",  0x000000, 0x040000, 0x9b896a97 )
+	ROM_LOAD16_BYTE( "u4.bin",  0x000001, 0x040000, 0xdda84846 )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "u64.bin",  0x000000, 0x080000, 0xf06ccd78 )
+	ROM_LOAD( "u63.bin",  0x080000, 0x080000, 0x2a602a1b )
+
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "u66.bin",  0x000000, 0x080000, 0xc9fc6a0c )
+
+	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "u68.bin",  0x000000, 0x080000, 0x25c0c483 )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "u69.bin",  0x000000, 0x080000, 0x957ecd41 )
+	ROM_LOAD( "u70.bin",  0x080000, 0x080000, 0x8d756fdf )
+ROM_END
+
+
+
+
+/***************************************************************************
+
+									Wit's
+
+(c)1989 Athena (distributed by Visco)
+P0-055B (board is made by Seta)
+
+CPU  : TMP68000N-8
+Sound: X1-010
+OSC  : 16.000MHz
+
+ROMs:
+UN001001.U1 - Main program (27256)
+UN001002.U4 - Main program (27256)
+
+UN001003.10A - Samples (28pin mask)
+UN001004.12A /
+
+UN001005.2L - Graphics (28pin mask)
+UN001006.4L |
+UN001007.5L |
+UN001008.7L /
+
+Custom chips:	X1-001A		X1-002A
+				X1-004 (x2)
+				X1-006
+				X1-007
+				X1-010
+
+***************************************************************************/
+
+ROM_START( wits )
+	ROM_REGION( 0x010000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "un001001.u1", 0x000000, 0x008000, 0x416c567e )
+	ROM_LOAD16_BYTE( "un001002.u4", 0x000001, 0x008000, 0x497a3fa6 )
+
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD16_BYTE( "un001008.7l", 0x000000, 0x020000, 0x1d5d0b2b )
+	ROM_LOAD16_BYTE( "un001007.5l", 0x000001, 0x020000, 0x9e1e6d51 )
+	ROM_LOAD16_BYTE( "un001006.4l", 0x040000, 0x020000, 0x98a980d4 )
+	ROM_LOAD16_BYTE( "un001005.2l", 0x040001, 0x020000, 0x6f2ce3c0 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "un001004.12a", 0x000000, 0x020000, 0xa15ff938 )
+	ROM_LOAD( "un001003.10a", 0x020000, 0x020000, 0x3f4b9e55 )
+ROM_END
 
 
 
@@ -6250,51 +6661,6 @@ ROM_END
 
 /***************************************************************************
 
-							   War of Aero
-							Project M E I O U
-
-93111A	YANG CHENG
-
-CPU   : TOSHIBA TMP68HC000N-16
-Sound : Allumer X1-010
-OSC   : 16.000000MHz
-Other : Allumer
-			X1-001A  X1-002A
-			X1-004
-			X1-007
-			X1-011 x 2
-			X1-012 x 2
-		NEC
-			C324C
-			D71054C
-
-***************************************************************************/
-
-ROM_START( wrofaero )
-	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 Code */
-	ROM_LOAD16_BYTE( "u3.bin",  0x000000, 0x040000, 0x9b896a97 )
-	ROM_LOAD16_BYTE( "u4.bin",  0x000001, 0x040000, 0xdda84846 )
-
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
-	ROM_LOAD( "u64.bin",  0x000000, 0x080000, 0xf06ccd78 )
-	ROM_LOAD( "u63.bin",  0x080000, 0x080000, 0x2a602a1b )
-
-	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
-	ROM_LOAD( "u66.bin",  0x000000, 0x080000, 0xc9fc6a0c )
-
-	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 2 */
-	ROM_LOAD( "u68.bin",  0x000000, 0x080000, 0x25c0c483 )
-
-	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
-	ROM_LOAD( "u69.bin",  0x000000, 0x080000, 0x957ecd41 )
-	ROM_LOAD( "u70.bin",  0x080000, 0x080000, 0x8d756fdf )
-ROM_END
-
-
-
-
-/***************************************************************************
-
 								Game Drivers
 
 ***************************************************************************/
@@ -6310,6 +6676,7 @@ GAMEX( 1989, downtown, 0,        downtown, downtown, downtown, ROT270, "Seta",  
 GAMEX( 1989, usclssic, 0,        usclssic, usclssic, 0,        ROT270, "Seta",                   "U.S. Classic",                   GAME_IMPERFECT_SOUND | GAME_WRONG_COLORS ) // Country/License: DSW
 GAMEX( 1989, arbalest, 0,        metafox,  arbalest, arbalest, ROT270, "Seta",                   "Arbalester",                     GAME_IMPERFECT_SOUND ) // Country/License: DSW
 GAMEX( 1989, metafox,  0,        metafox,  metafox,  metafox,  ROT270, "Seta",                   "Meta Fox",                       GAME_IMPERFECT_SOUND ) // Country/License: DSW
+GAMEX( 1989, wits,     0,        wits,     wits,     0,        ROT0,   "Athena (Visco license)", "Wit's (Japan)",                  GAME_IMPERFECT_SOUND ) // Country/License: DSW
 GAMEX( 1990, thunderl, 0,        thunderl, thunderl, 0,        ROT270, "Seta",                   "Thunder & Lightning",            GAME_IMPERFECT_SOUND ) // Country/License: DSW
 GAMEX( 1991, rezon,    0,        rezon,    rezon,    rezon,    ROT0,   "Allumer",                "Rezon",                          GAME_IMPERFECT_SOUND )
 GAMEX( 1991, stg,      0,        drgnunit, stg,      0,        ROT270, "Athena / Tecmo",         "Strike Gunner S.T.G",            GAME_IMPERFECT_SOUND )
@@ -6321,6 +6688,7 @@ GAMEX( 1992, zingzip,  0,        zingzip,  zingzip,  0,        ROT270, "Allumer 
 GAMEX( 1993, atehate,  0,        atehate,  atehate,  0,        ROT0,   "Athena",                 "Athena no Hatena ?",             GAME_IMPERFECT_SOUND )
 GAMEX( 1993, msgundam, 0,        msgundam, msgundam, 0,        ROT0,   "Banpresto",              "Mobile Suit Gundam",             GAME_IMPERFECT_SOUND )
 GAMEX( 1993, oisipuzl, 0,        oisipuzl, oisipuzl, 0,        ROT0,   "Sunsoft + Atlus",        "Oishii Puzzle Ha Irimasenka",    GAME_IMPERFECT_SOUND )
+GAMEX( 1993, qzkklgy2, 0,        qzkklgy2, qzkklgy2, 0,        ROT0,   "Tecmo",                  "Quiz Kokology 2",                GAME_IMPERFECT_SOUND )
 GAMEX( 1993, wrofaero, 0,        wrofaero, wrofaero, 0,        ROT270, "Yang Cheng",             "War of Aero - Project MEIOU",    GAME_IMPERFECT_SOUND )
 GAMEX( 1993, jjsquawk, 0,        jjsquawk, jjsquawk, 0,        ROT0,   "Athena / Able",          "J. J. Squawkers",                GAME_IMPERFECT_SOUND )
 GAMEX( 1994, eightfrc, 0,        eightfrc, eightfrc, eightfrc, ROT90,  "Tecmo",                  "Eight Forces",                   GAME_IMPERFECT_SOUND )

@@ -141,6 +141,8 @@ struct dcs_state
 	UINT32	sample_position;
 	INT16	current_sample;
 	UINT16	latch_control;
+
+	void	(*notify)(int);
 };
 
 
@@ -326,7 +328,7 @@ MEMORY_END
 MEMORY_READ16_START( williams_dcs_readmem )
 	{ ADSP_DATA_ADDR_RANGE(0x0000, 0x1fff), MRA16_RAM },					/* ??? */
 	{ ADSP_DATA_ADDR_RANGE(0x2000, 0x2fff), williams_dcs_bank_r },			/* banked roms read */
-	{ ADSP_DATA_ADDR_RANGE(0x3400, 0x3400), williams_dcs_latch_r },			/* soundlatch read */
+	{ ADSP_DATA_ADDR_RANGE(0x3400, 0x3403), williams_dcs_latch_r },			/* soundlatch read */
 	{ ADSP_DATA_ADDR_RANGE(0x3800, 0x39ff), MRA16_RAM },					/* internal data ram */
 	{ ADSP_PGM_ADDR_RANGE (0x0000, 0x1fff), MRA16_RAM },					/* internal/external program ram */
 MEMORY_END
@@ -335,7 +337,31 @@ MEMORY_END
 MEMORY_WRITE16_START( williams_dcs_writemem )
 	{ ADSP_DATA_ADDR_RANGE(0x0000, 0x1fff), MWA16_RAM },					/* ??? */
 	{ ADSP_DATA_ADDR_RANGE(0x3000, 0x3000), williams_dcs_bank_select_w },	/* bank selector */
-	{ ADSP_DATA_ADDR_RANGE(0x3400, 0x3400), williams_dcs_latch_w },			/* soundlatch write */
+	{ ADSP_DATA_ADDR_RANGE(0x3400, 0x3403), williams_dcs_latch_w },			/* soundlatch write */
+	{ ADSP_DATA_ADDR_RANGE(0x3800, 0x39ff), MWA16_RAM },					/* internal data ram */
+	{ ADSP_DATA_ADDR_RANGE(0x3fe0, 0x3fff), williams_dcs_control_w },		/* adsp control regs */
+	{ ADSP_PGM_ADDR_RANGE (0x0000, 0x1fff), MWA16_RAM },					/* internal/external program ram */
+MEMORY_END
+
+
+/* DCS with UART readmem/writemem structures */
+MEMORY_READ16_START( williams_dcs_uart_readmem )
+	{ ADSP_DATA_ADDR_RANGE(0x0000, 0x1fff), MRA16_RAM },					/* ??? */
+	{ ADSP_DATA_ADDR_RANGE(0x2000, 0x2fff), williams_dcs_bank_r },			/* banked roms read */
+	{ ADSP_DATA_ADDR_RANGE(0x3400, 0x3402), MRA16_NOP },					/* UART (ignored) */
+	{ ADSP_DATA_ADDR_RANGE(0x3403, 0x3403), williams_dcs_latch_r },			/* soundlatch read */
+	{ ADSP_DATA_ADDR_RANGE(0x3404, 0x3405), MRA16_NOP },					/* UART (ignored) */
+	{ ADSP_DATA_ADDR_RANGE(0x3800, 0x39ff), MRA16_RAM },					/* internal data ram */
+	{ ADSP_PGM_ADDR_RANGE (0x0000, 0x1fff), MRA16_RAM },					/* internal/external program ram */
+MEMORY_END
+
+
+MEMORY_WRITE16_START( williams_dcs_uart_writemem )
+	{ ADSP_DATA_ADDR_RANGE(0x0000, 0x1fff), MWA16_RAM },					/* ??? */
+	{ ADSP_DATA_ADDR_RANGE(0x3000, 0x3000), williams_dcs_bank_select_w },	/* bank selector */
+	{ ADSP_DATA_ADDR_RANGE(0x3400, 0x3402), MWA16_NOP },					/* UART (ignored) */
+	{ ADSP_DATA_ADDR_RANGE(0x3403, 0x3403), williams_dcs_latch_w },			/* soundlatch write */
+	{ ADSP_DATA_ADDR_RANGE(0x3404, 0x3405), MWA16_NOP },					/* UART (ignored) */
 	{ ADSP_DATA_ADDR_RANGE(0x3800, 0x39ff), MWA16_RAM },					/* internal data ram */
 	{ ADSP_DATA_ADDR_RANGE(0x3fe0, 0x3fff), williams_dcs_control_w },		/* adsp control regs */
 	{ ADSP_PGM_ADDR_RANGE (0x0000, 0x1fff), MWA16_RAM },					/* internal/external program ram */
@@ -764,7 +790,7 @@ void williams_dcs_init(int cpunum)
 	dcs.ireg = 0;
 
 	/* initialize the ADSP control regs */
-	for( i = 0; i < sizeof(dcs.control_regs) / sizeof(dcs.control_regs[0]); i++ )
+	for (i = 0; i < sizeof(dcs.control_regs) / sizeof(dcs.control_regs[0]); i++)
 		dcs.control_regs[i] = 0;
 
 	/* initialize banking */
@@ -796,9 +822,13 @@ void williams_dcs_init(int cpunum)
 	/* initialize the comm bits */
 	dcs.latch_control = 0x0c00;
 
+	/* disable notification by default */
+	dcs.notify = NULL;
+
 	/* boot */
 	williams_dcs_boot();
 }
+
 
 static void init_audio_state(int first_time)
 {
@@ -1172,9 +1202,17 @@ WRITE_HANDLER( williams_narc_command2_w )
 	DCS COMMUNICATIONS
 ****************************************************************************/
 
+void williams_dcs_set_notify(void (*callback)(int))
+{
+	dcs.notify = callback;
+}
+
+
 int williams_dcs_data_r(void)
 {
 	/* data is actually only 8 bit (read from d8-d15) */
+	if (!(dcs.latch_control & 0x0400) && dcs.notify)
+		(*dcs.notify)(0);
 	dcs.latch_control |= 0x0400;
 
 	return soundlatch2_r( 0 ) & 0xff;
@@ -1228,6 +1266,8 @@ static READ16_HANDLER( williams_dcs_latch_r )
 
 static WRITE16_HANDLER( williams_dcs_latch_w )
 {
+	if ((dcs.latch_control & 0x0400) && dcs.notify)
+		(*dcs.notify)(1);
 	dcs.latch_control &= ~0x400;
 	soundlatch2_w( 0, data );
 }

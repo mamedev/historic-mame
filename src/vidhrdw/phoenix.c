@@ -178,6 +178,10 @@ int phoenix_vh_start(void)
 		return 1;
 
 	tilemap_set_transparent_pen(fg_tilemap,0);
+	tilemap_set_scrolldx(fg_tilemap,0,8);
+	tilemap_set_scrolldy(fg_tilemap,0,48);
+	tilemap_set_scrolldx(bg_tilemap,0,8);
+	tilemap_set_scrolldy(bg_tilemap,0,48);
 
 	return 0;
 }

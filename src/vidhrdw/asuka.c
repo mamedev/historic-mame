@@ -12,7 +12,7 @@ static UINT16 sprites_flipscreen = 0;
 
 /**********************************************************/
 
-int asuka_core_vh_start (int x_offs)
+int asuka_core_vh_start(int x_offs)
 {
 	if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,x_offs,0,0,0,0,0,0))
 	{
@@ -32,17 +32,17 @@ int asuka_core_vh_start (int x_offs)
 	return 0;
 }
 
-int asuka_vh_start (void)
+int asuka_vh_start(void)
 {
 	return (asuka_core_vh_start(0));
 }
 
-int galmedes_vh_start (void)
+int galmedes_vh_start(void)
 {
 	return (asuka_core_vh_start(1));
 }
 
-void asuka_vh_stop (void)
+void asuka_vh_stop(void)
 {
 	TC0100SCN_vh_stop();
 
@@ -131,7 +131,6 @@ static void asuka_draw_sprites(struct mame_bitmap *bitmap)
 	int offs;
 	int sprite_colbank = (sprite_ctrl & 0x3c) << 2;
 
-	/* Mofflot sets this, I haven't seen the other games do so */
 	int priority = (sprite_ctrl & 0x2000) >> 13;	/* 1 = sprites under top bg layer */
 
 	for (offs = 0;offs < spriteram_size/2;offs += 4)
@@ -140,21 +139,21 @@ static void asuka_draw_sprites(struct mame_bitmap *bitmap)
 		int x, y;
 		int data,code,color;
 
-		data = spriteram16[offs+0];
+		data = buffered_spriteram16[offs+0];
 		flipy = (data & 0x8000) >> 15;
 		flipx = (data & 0x4000) >> 14;
 		color = (data & 0x000f) | sprite_colbank;
 
-		code = spriteram16[offs+2] & 0x1fff;
-		x = spriteram16[offs+3] & 0x1ff;   // correct mask?
-		y = spriteram16[offs+1] & 0x1ff;   // correct mask?
+		code = buffered_spriteram16[offs+2] & 0x1fff;
+		x = buffered_spriteram16[offs+3] & 0x1ff;   // correct mask?
+		y = buffered_spriteram16[offs+1] & 0x1ff;   // correct mask?
 		y += 8;
 
 		/* treat coords as signed */
 		if (x>0x140) x -= 0x200;
 		if (y>0x140) y -= 0x200;
 
-		if ((sprites_flipscreen &1) == 0)
+		if ((sprites_flipscreen & 1) == 0)
 		{
 			x = 320 - x - 16;
 			y = 256 - y;

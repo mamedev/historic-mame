@@ -54,9 +54,8 @@ static UINT8 rp2c04002_colortable[] =
 /* check 0x0f, 0x2e */
 static UINT8 rp2c04003_colortable[] =
 {
-
 	0xff, 0xff, 0xff, 0x10, 0x1a, 0x30, 0x31, 0x09, /* 0x00 - 0x07 */
-	0x01, 0x0f, 0x36, 0x08, 0x15, 0xff, 0xff, 0x30, /* 0x08 - 0x0f */
+	0x01, 0x0f, 0x36, 0x08, 0x15, 0xff, 0xff, 0xf0, /* 0x08 - 0x0f */
 	0x22, 0x1c, 0xff, 0x12, 0x19, 0x18, 0x17, 0xff, /* 0x10 - 0x17 */
 	0x00, 0xff, 0xff, 0x02, 0x16, 0x06, 0xff, 0x35, /* 0x18 - 0x1f */
 	0x23, 0xff, 0x8b, 0xf7, 0xff, 0x27, 0x26, 0x20, /* 0x20 - 0x27 */
@@ -70,13 +69,13 @@ static UINT8 rp2c04003_colortable[] =
 static UINT8 rp2c05004_colortable[] =
 {
 	0x18, 0xff, 0x1c, 0x89, 0xff, 0xff, 0x01, 0x17, /* 0x00 - 0x07 */
-	0x10, 0xff, 0x2a, 0xff, 0x36, 0x37, 0x1a, 0xff, /* 0x08 - 0x0f */
+	0x10, 0x0f, 0x2a, 0xff, 0x36, 0x37, 0x1a, 0xff, /* 0x08 - 0x0f */
 	0x25, 0xff, 0x12, 0xff, 0x0f, 0xff, 0xff, 0x26, /* 0x10 - 0x17 */
 	0xff, 0xff, 0x22, 0xff, 0xff, 0x0f, 0x3a, 0x21, /* 0x18 - 0x1f */
 	0x05, 0x0a, 0x07, 0xc2, 0x13, 0xff, 0x00, 0x15, /* 0x20 - 0x27 */
 	0x0c, 0xff, 0x11, 0xff, 0xff, 0x38, 0xff, 0xff, /* 0x28 - 0x2f */
 	0xff, 0xff, 0x08, 0x45, 0xff, 0xff, 0x30, 0x3c, /* 0x30 - 0x37 */
-	0x0f, 0x27, 0xff, 0x60, 0x29, 0xff, 0xff, 0x09  /* 0x38 - 0x3f */
+	0x0f, 0x27, 0xff, 0x60, 0x29, 0xff, 0x30, 0x09  /* 0x38 - 0x3f */
 };
 
 
@@ -741,7 +740,7 @@ static WRITE_HANDLER( topgun_security_w )
 void init_vstopgun( void )
 {
 	/* when starting a mmc1 game , the 1st 16k and the last 16k are loaded into the 2 banks */
-	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x28000], 0x8000 );
+	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x28000], 0x8000 );/*memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x28000], 0x8000 );*/
 
    	/* banking is done with writes to the $8000-$ffff area */
 	install_mem_write_handler( 0, 0x8000, 0xffff, castlevania_rom_banking );
@@ -790,25 +789,24 @@ if (offset == 0)
 		return 0xFF;
 
 	}
-
-	else{
-
+else
+	{
 	switch(VSindex++)
     		{
 
     		case 9:
     		return 0x6F;
-			break;
+		break;
 
-			case 14:
-			return 0x94;
-			break;
+		case 14:
+		return 0x94;
+		break;
 
     		default:
     		return 0xB4;
-			break;
+		break;
     		}
-		}
+	}
 }
 
 static WRITE_HANDLER( rbibb_rom_switch_w )
@@ -826,8 +824,8 @@ static WRITE_HANDLER( rbibb_rom_switch_w )
 			if ( last_bank != ( data & 0xc0 ) )
 			{
 				/* reset the banks */
-				memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x1c000], 0x4000 );
-				memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[0x1c000], 0x4000 );
+				memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x1c000], 0x2000 );
+				memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[0x1c000], 0x2000 );
 
 				last_bank = data & 0xc0;
 			}
@@ -845,7 +843,6 @@ static WRITE_HANDLER( rbibb_rom_switch_w )
 						data &= 0xfe;
 						page ^= ( cmd << 1 );
 						ppu2c03b_set_videorom_bank( 0, page, 2, data, 64 );
-
 
 					break;
 
@@ -922,8 +919,8 @@ void init_rbibb( void )
 {
 	/* We do manual banking, in case the code falls through */
 	/* Copy the initial banks */
-	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x2c000], 0x4000 );
-	memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[0x10000], 0x4000 );
+	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x1c000], 0x4000 );
+	memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[0x1c000], 0x4000 );
 
 	/* RBI Base ball hack */
 	install_mem_read_handler(0,0x5e00, 0x5e01, rbi_hack_r) ;
@@ -937,7 +934,7 @@ void init_rbibb( void )
 
 	/* common init */
 	init_vsnes();
-
+	remapped_colortable = rp2c04003_colortable;
 }
 
 
@@ -1271,6 +1268,26 @@ void init_iceclmrj(void)
 remapped_colortable = rp2c05004_colortable;
 
 }
+
+/**********************************************************************/
+/* Battle City */
+void init_btlecity(void)
+{
+	init_vsnes();
+	init_vsnormal();
+	remapped_colortable = rp2c04003_colortable;
+}
+
+/***********************************************************************/
+/* Tetris */
+void init_vstetris(void)
+{
+	init_vsnes();
+	init_vsnormal();
+	remapped_colortable = rp2c04003_colortable;
+}
+
+/***********************************************************************/
 
 //remapped_colortable = rp2c04002_colortable;
 //remapped_colortable = rp2c04003_colortable;

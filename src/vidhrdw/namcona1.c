@@ -1,27 +1,26 @@
 /*	Namco System NA1/2 Video Hardware */
+
 #include "vidhrdw/generic.h"
+#include "namcona1.h"
 
-#define NAMCO_MAX_TILEMAPS 4
-
-void namcona1_vh_stop( void ); /* forward reference */
+#define NAMCONA1_NUM_TILEMAPS 4
 
 /* public variables */
 data16_t *namcona1_vreg;
 data16_t *namcona1_scroll;
 data16_t *namcona1_workram;
+data16_t *namcona1_sparevram;
 
-extern int cgang_hack( void );
-
+/* private variables */
 static char *dirtychar;
 static char dirtygfx;
 static data16_t *shaperam;
 static data16_t *cgram;
+static struct tilemap *tilemap[NAMCONA1_NUM_TILEMAPS];
+static int tilemap_palette_bank[NAMCONA1_NUM_TILEMAPS];
 
-static struct tilemap *tilemap[NAMCO_MAX_TILEMAPS];
-static int tilemap_palette_bank[NAMCO_MAX_TILEMAPS];
-
-
-static void tilemap_get_info(int tile_index,const data16_t *tilemap_videoram,int tilemap_color)
+static void tilemap_get_info(
+	int tile_index,const data16_t *tilemap_videoram,int tilemap_color )
 {
 #ifdef LSB_FIRST
 	data16_t *source;
@@ -31,34 +30,34 @@ static void tilemap_get_info(int tile_index,const data16_t *tilemap_videoram,int
 	int data = tilemap_videoram[tile_index];
 	int tile = data&0xfff;
 
-	SET_TILE_INFO(
-			0,
-			tile,
-			tilemap_color,
-			0)
-
+	if( data&0x8000 )
+	{
+		SET_TILE_INFO( 0,tile,tilemap_color,TILE_IGNORE_TRANSPARENCY );
+	}
+	else
+	{
+		SET_TILE_INFO( 0,tile,tilemap_color,0 );
 #ifdef LSB_FIRST
-/* hack for tilemap manager */
-	source = shaperam+4*tile;
-	mask_data[0] = source[0]>>8;
-	mask_data[1] = source[0]&0xff;
-	mask_data[2] = source[1]>>8;
-	mask_data[3] = source[1]&0xff;
-	mask_data[4] = source[2]>>8;
-	mask_data[5] = source[2]&0xff;
-	mask_data[6] = source[3]>>8;
-	mask_data[7] = source[3]&0xff;
-	tile_info.mask_data = mask_data;
+		source = shaperam+4*tile;
+		mask_data[0] = source[0]>>8;
+		mask_data[1] = source[0]&0xff;
+		mask_data[2] = source[1]>>8;
+		mask_data[3] = source[1]&0xff;
+		mask_data[4] = source[2]>>8;
+		mask_data[5] = source[2]&0xff;
+		mask_data[6] = source[3]>>8;
+		mask_data[7] = source[3]&0xff;
+		tile_info.mask_data = mask_data;
 #else
-	tile_info.mask_data = (UINT8 *)(shaperam+4*tile);
+		tile_info.mask_data = (UINT8 *)(shaperam+4*tile);
 #endif
-}
+	}
+} /* tilemap_get_info */
 
-static void tilemap_get_info0(int tile_index) { tilemap_get_info(tile_index,0*0x1000+videoram16,tilemap_palette_bank[0]); }
-static void tilemap_get_info1(int tile_index) { tilemap_get_info(tile_index,1*0x1000+videoram16,tilemap_palette_bank[1]); }
-static void tilemap_get_info2(int tile_index) { tilemap_get_info(tile_index,2*0x1000+videoram16,tilemap_palette_bank[2]); }
-static void tilemap_get_info3(int tile_index) { tilemap_get_info(tile_index,3*0x1000+videoram16,tilemap_palette_bank[3]); }
-
+static void tilemap_get_info0(int tile_index){ tilemap_get_info(tile_index,0*0x1000+videoram16,tilemap_palette_bank[0]); }
+static void tilemap_get_info1(int tile_index){ tilemap_get_info(tile_index,1*0x1000+videoram16,tilemap_palette_bank[1]); }
+static void tilemap_get_info2(int tile_index){ tilemap_get_info(tile_index,2*0x1000+videoram16,tilemap_palette_bank[2]); }
+static void tilemap_get_info3(int tile_index){ tilemap_get_info(tile_index,3*0x1000+videoram16,tilemap_palette_bank[3]); }
 
 /*************************************************************************/
 
@@ -66,19 +65,19 @@ WRITE16_HANDLER( namcona1_videoram_w )
 {
 	COMBINE_DATA( &videoram16[offset] );
 	tilemap_mark_tile_dirty( tilemap[offset/0x1000], offset&0xfff );
-}
+} /* namcona1_videoram_w */
 
 READ16_HANDLER( namcona1_videoram_r )
 {
 	return videoram16[offset];
-}
+} /* namcona1_videoram_r */
 
 /*************************************************************************/
 
 READ16_HANDLER( namcona1_paletteram_r )
 {
 	return paletteram16[offset];
-}
+} /* namcona1_paletteram_r */
 
 WRITE16_HANDLER( namcona1_paletteram_w )
 {
@@ -97,7 +96,7 @@ WRITE16_HANDLER( namcona1_paletteram_w )
 
 	/* shadow */
 	palette_set_color( offset+0x1000, r/2,g/2,b/2 );
-}
+} /* namcona1_paletteram_w */
 
 /*************************************************************************/
 
@@ -114,7 +113,7 @@ static struct GfxLayout shape_layout =
 	{ 8*0,8*1,8*2,8*3,8*4,8*5,8*6,8*7 },
 #endif
 	8*8
-};
+}; /* shape_layout */
 
 static struct GfxLayout cg_layout =
 {
@@ -129,12 +128,13 @@ static struct GfxLayout cg_layout =
 #endif
 	{ 64*0,64*1,64*2,64*3,64*4,64*5,64*6,64*7 },
 	64*8
-};
+}; /* cg_layout */
 
 READ16_HANDLER( namcona1_gfxram_r )
 {
 	data16_t type = namcona1_vreg[0x0c/2];
-	if( type == 0x03 ){
+	if( type == 0x03 )
+	{
 		if( offset<0x4000 )
 		{
 			return shaperam[offset];
@@ -145,13 +145,15 @@ READ16_HANDLER( namcona1_gfxram_r )
 		return cgram[offset];
 	}
 	return 0x0000;
-}
+} /* namcona1_gfxram_r */
 
 WRITE16_HANDLER( namcona1_gfxram_w )
 {
 	data16_t type = namcona1_vreg[0x0c/2];
 	data16_t old_word;
-	if( type == 0x03 ){
+
+	if( type == 0x03 )
+	{
 		if( offset<0x4000 )
 		{
 			old_word = shaperam[offset];
@@ -163,7 +165,8 @@ WRITE16_HANDLER( namcona1_gfxram_w )
 			}
 		}
 	}
-	else if( type == 0x02 ){
+	else if( type == 0x02 )
+	{
 		old_word = cgram[offset];
 		COMBINE_DATA( &cgram[offset] );
 		if( cgram[offset]!=old_word )
@@ -172,11 +175,11 @@ WRITE16_HANDLER( namcona1_gfxram_w )
 			dirtychar[offset/0x20] = 1;
 		}
 	}
-}
+} /* namcona1_gfxram_w */
 
 static void update_gfx( void )
 {
-	const data16_t *source = videoram16;
+	const data16_t *pSource = videoram16;
 	int page;
 	int i;
 
@@ -186,13 +189,12 @@ static void update_gfx( void )
 		{
 			for( i=0; i<0x1000; i++ )
 			{
-				if( dirtychar[*source++ & 0xfff] )
+				if( dirtychar[*pSource++ & 0xfff] )
 				{
 					tilemap_mark_tile_dirty( tilemap[page], i );
 				}
 			}
 		}
-
 		for( i = 0;i < 0x1000;i++ )
 		{
 			if( dirtychar[i] )
@@ -204,34 +206,34 @@ static void update_gfx( void )
 		}
 		dirtygfx = 0;
 	}
-}
+} /* update_gfx */
 
 int namcona1_vh_start( void )
 {
 	int i;
+	struct GfxElement *gfx0,*gfx1;
 	static void (*get_info[4])(int tile_index) =
 	{ tilemap_get_info0, tilemap_get_info1, tilemap_get_info2, tilemap_get_info3 };
 
-	for( i=0; i<NAMCO_MAX_TILEMAPS; i++ )
+	for( i=0; i<NAMCONA1_NUM_TILEMAPS; i++ )
 	{
 		tilemap[i] = tilemap_create(
 			get_info[i],
 			tilemap_scan_rows,
 			TILEMAP_BITMASK,8,8,64,64 );
 
-		if( tilemap[i]==NULL ) return 1; /* error */
+		if( tilemap[i]==NULL ) return -1;
 		tilemap_palette_bank[i] = -1;
 	}
 
-	shaperam = malloc( 0x1000*4*2 );
-	cgram = malloc( 0x1000*0x20*2 );
-	dirtychar = malloc( 0x1000 );
+	shaperam		= malloc( 0x1000*4*2 );
+	cgram			= malloc( 0x1000*0x20*2 );
+	dirtychar		= malloc( 0x1000 );
 
 	if( shaperam && cgram && dirtychar )
 	{
-		struct GfxElement *gfx0 = decodegfx( (UINT8 *)cgram,&cg_layout );
-		struct GfxElement *gfx1 = decodegfx( (UINT8 *)shaperam,&shape_layout );
-
+		gfx0 = decodegfx( (UINT8 *)cgram,&cg_layout );
+		gfx1 = decodegfx( (UINT8 *)shaperam,&shape_layout );
 		if( gfx0 && gfx1 )
 		{
 			gfx0->colortable = Machine->remapped_colortable;
@@ -245,166 +247,211 @@ int namcona1_vh_start( void )
 			return 0;
 		}
 	}
-
 	namcona1_vh_stop();
 	return -1; /* error */
-}
+} /* namcona1_vh_start */
 
 void namcona1_vh_stop( void )
 {
 	free( shaperam );
 	free( cgram );
 	free( dirtychar );
-}
+} /* namcona1_vh_stop */
 
 /*************************************************************************/
 
 static void pdraw_masked_tile(
 		struct mame_bitmap *bitmap,
-		int code,
+		unsigned int code,
 		int color,
 		int sx, int sy,
 		int flipx, int flipy,
 		int priority,
 		int bShadow )
 {
+	const struct GfxElement *gfx,*mask;
+	const pen_t *paldata;
+	data8_t *gfx_addr;
+	int gfx_pitch;
+	data8_t *mask_addr;
+	int mask_pitch;
+	int x,y;
 	/*
-	**	custom blitter for drawing a masked 8x8x8BPP tile
-	**	- doesn't yet handle screen orientation (needed particularly for F/A, a vertical game)
-	**	- assumes there is an 8 pixel overdraw region on the screen bitmap for clipping
-	*/
-	const struct GfxElement *gfx = Machine->gfx[0];
-	const struct GfxElement *mask = Machine->gfx[1];
+	 *	custom blitter for drawing a masked 8x8x8BPP tile
+	 *	- doesn't yet handle screen orientation (needed particularly for F/A, a vertical game)
+	 *	- assumes there is an 8 pixel overdraw region on the screen bitmap for clipping
+	 */
+	if( sx > -8 &&
+		sy > -8 &&
+		sx < bitmap->width &&
+		sy < bitmap->height ) /* all-or-nothing clip */
+	{
+		gfx = Machine->gfx[0];
+		mask = Machine->gfx[1];
+		code %= gfx->total_elements;
+		color %= gfx->total_colors;
+		paldata = &gfx->colortable[gfx->color_granularity * color];
+		gfx_addr = gfx->gfxdata + code * gfx->char_modulo;
+		gfx_pitch = gfx->line_modulo;
+		mask_addr = mask->gfxdata + code * mask->char_modulo;
+		mask_pitch = mask->line_modulo;
 
-	code %= gfx->total_elements;
-	color %= gfx->total_colors;
+		/* The way we render shadows makes some Emeralda text invisible.
+		 * The relevant text is composed of sprites with the shadow bit set,
+		 * displayed over a black backdrop.
+		 *
+		 * For now, just disable shadows in all games.
+		 */
+		if( 0 && bShadow )
+		{
+			for( y=0; y<8; y++ )
+			{
+				int ypos = sy+(flipy?7-y:y);
+				data8_t *pri = (data8_t *)priority_bitmap->line[ypos];
+				UINT16 *dest = (UINT16 *)bitmap->line[ypos];
+				if( flipx )
+				{
+					dest += sx+7;
+					pri += sx+7;
+					for( x=0; x<8; x++ )
+					{
+						if( mask_addr[x] )
+						{ /* sprite pixel is opaque */
+							if( priority>=pri[-x] )
+							{
+								dest[-x] |= 0x1000;
+							}
+							pri[-x] = 0xff;
+						}
+					}
+				}
+				else
+				{
+					dest += sx;
+					pri += sx;
+					for( x=0; x<8; x++ )
+					{
+						if( mask_addr[x] )
+						{ /* sprite pixel is opaque */
+							if( priority>=pri[x] )
+							{
+								dest[x] |= 0x1000;
+							}
+							pri[x] = 0xff;
+						}
+					}
+				}
+				mask_addr += mask_pitch;
+			}
+		} /* render translucent sprite */
+		else
+		{
+			for( y=0; y<8; y++ )
+			{
+				int ypos = sy+(flipy?7-y:y);
+				data8_t *pri = (data8_t *)priority_bitmap->line[ypos];
+				UINT16 *dest = (UINT16 *)bitmap->line[ypos];
+				if( flipx )
+				{
+					dest += sx+7;
+					pri += sx+7;
+					for( x=0; x<8; x++ )
+					{
+						if( mask_addr[x] )
+						{ /* sprite pixel is opaque */
+							if( priority>=pri[-x] )
+							{
+								dest[-x] = paldata[gfx_addr[x]];
+							}
+							pri[-x] = 0xff;
+						}
+					}
+				}
+				else
+				{
+					dest += sx;
+					pri += sx;
+					for( x=0; x<8; x++ )
+					{
+						if( mask_addr[x] )
+						{ /* sprite pixel is opaque */
+							if( priority>=pri[x] )
+							{
+								dest[x] = paldata[gfx_addr[x]];
+							}
+							pri[x] = 0xff;
+						}
+					} /* next x */
+				} /* !flipx */
+				gfx_addr += gfx_pitch;
+				mask_addr += mask_pitch;
+			} /* next y */
+		} /* render normal sprite (no translucency) */
+	}
+} /* pdraw_masked_tile */
+
+static void pdraw_opaque_tile(
+		struct mame_bitmap *bitmap,
+		unsigned int code,
+		int color,
+		int sx, int sy,
+		int flipx, int flipy,
+		int priority,
+		int bShadow )
+{
+	const struct GfxElement *gfx;
+	const pen_t *paldata;
+	data8_t *gfx_addr;
+	int gfx_pitch;
+	int x,y;
 
 	if( sx > -8 &&
 		sy > -8 &&
 		sx < bitmap->width &&
 		sy < bitmap->height ) /* all-or-nothing clip */
 	{
-		const pen_t *paldata = &gfx->colortable[gfx->color_granularity * color];
-		data8_t *gfx_addr = gfx->gfxdata + code * gfx->char_modulo;
-		int gfx_pitch = gfx->line_modulo;
+		gfx = Machine->gfx[0];
+		code %= gfx->total_elements;
+		color %= gfx->total_colors;
+		paldata = &gfx->colortable[gfx->color_granularity * color];
+		gfx_addr = gfx->gfxdata + code * gfx->char_modulo;
+		gfx_pitch = gfx->line_modulo;
 
-		data8_t *mask_addr = mask->gfxdata + code * mask->char_modulo;
-		int mask_pitch = mask->line_modulo;
-
-		int x,y;
-
-		if( Machine->color_depth == 8 )
+		for( y=0; y<8; y++ )
 		{
-			for( y=0; y<8; y++ )
+			int ypos = sy+(flipy?7-y:y);
+			data8_t *pri = (data8_t *)priority_bitmap->line[ypos];
+			UINT16 *dest = (UINT16 *)bitmap->line[ypos];
+			if( flipx )
 			{
-				int ypos = sy+(flipy?7-y:y);
-				data8_t *pri = (data8_t *)priority_bitmap->line[ypos];
-				data8_t *dest = bitmap->line[ypos];
-				if( flipx )
+				dest += sx+7;
+				pri += sx+7;
+				for( x=0; x<8; x++ )
 				{
-					dest += sx+7;
-					pri += sx+7;
-					for( x=0; x<8; x++ )
+					if( priority>=pri[-x] )
 					{
-						if( mask_addr[x] )
-						{
-							if( priority>=pri[-x] ) dest[-x] = paldata[gfx_addr[x]];
-							pri[-x] = 0xff;
-						}
+						dest[-x] = paldata[gfx_addr[x]];
 					}
+					pri[-x] = 0xff;
 				}
-				else
-				{
-					dest += sx;
-					pri += sx;
-					for( x=0; x<8; x++ )
-					{
-						if( mask_addr[x] )
-						{
-							if( priority>=pri[x] ) dest[x] = paldata[gfx_addr[x]];
-							pri[x] = 0xff;
-						}
-					}
-				}
-				gfx_addr += gfx_pitch;
-				mask_addr += mask_pitch;
 			}
-		}
-		else if( bShadow )
-		{
-			for( y=0; y<8; y++ )
+			else
 			{
-				int ypos = sy+(flipy?7-y:y);
-				data8_t *pri = (data8_t *)priority_bitmap->line[ypos];
-				UINT16 *dest = (UINT16 *)bitmap->line[ypos];
-				if( flipx )
+				dest += sx;
+				pri += sx;
+				for( x=0; x<8; x++ )
 				{
-					dest += sx+7;
-					pri += sx+7;
-					for( x=0; x<8; x++ )
+					if( priority>=pri[x] )
 					{
-						if( mask_addr[x] )
-						{ /* sprite pixel is opaque */
-							if( priority>=pri[-x] ) dest[-x] |= 0x1000;
-							pri[-x] = 0xff;
-						}
+						dest[x] = paldata[gfx_addr[x]];
 					}
-				}
-				else
-				{
-					dest += sx;
-					pri += sx;
-					for( x=0; x<8; x++ )
-					{
-						if( mask_addr[x] )
-						{ /* sprite pixel is opaque */
-							if( priority>=pri[x] ) dest[x] |= 0x1000;
-							pri[x] = 0xff;
-						}
-					}
-				}
-				mask_addr += mask_pitch;
-			}
-		}
-		else
-		{ /* 16 bit color */
-			for( y=0; y<8; y++ )
-			{
-				int ypos = sy+(flipy?7-y:y);
-				data8_t *pri = (data8_t *)priority_bitmap->line[ypos];
-				UINT16 *dest = (UINT16 *)bitmap->line[ypos];
-				if( flipx )
-				{
-					dest += sx+7;
-					pri += sx+7;
-					for( x=0; x<8; x++ )
-					{
-						if( mask_addr[x] )
-						{ /* sprite pixel is opaque */
-							if( priority>=pri[-x] ) dest[-x] = paldata[gfx_addr[x]];
-							pri[-x] = 0xff;
-						}
-					}
-				}
-				else
-				{
-					dest += sx;
-					pri += sx;
-					for( x=0; x<8; x++ )
-					{
-						if( mask_addr[x] )
-						{ /* sprite pixel is opaque */
-							if( priority>=pri[x] ) dest[x] = paldata[gfx_addr[x]];
-							pri[x] = 0xff;
-						}
-					}
-				}
-				gfx_addr += gfx_pitch;
-				mask_addr += mask_pitch;
-			}
-		}
+					pri[x] = 0xff;
+				} /* next x */
+			} /* !flipx */
+			gfx_addr += gfx_pitch;
+		} /* next y */
 	}
-}
+} /* pdraw_opaque_tile */
 
 static const data8_t pri_mask[8] = { 0x00,0x01,0x03,0x07,0x0f,0x1f,0x3f,0x7f };
 
@@ -412,14 +459,26 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 {
 	int which;
 	const data16_t *source = spriteram16;
-	if( namcona1_vreg[0x22/2]&1 ) source += 0x400; /* alternate spriteram bank */
+	void (*drawtile)(
+		struct mame_bitmap *,
+		unsigned int code,
+		int color,
+		int sx, int sy,
+		int flipx, int flipy,
+		int priority,
+		int bShadow );
+	data16_t sprite_control;
+
+	sprite_control = namcona1_vreg[0x22/2];
+
+	if( sprite_control&1 ) source += 0x400; /* alternate spriteram bank */
 
 	for( which=0; which<0x100; which++ )
-	{ /* 256 sprites */
-		data16_t xpos = source[3];	/* -------X XXXXXXXX */
-		data16_t ypos = source[0];	/* FHHH---- YYYYYYYY */
-		data16_t tile = source[1];	/* ----TTTT TTTTTTTT */
-		data16_t color = source[2];	/* FSWW???? CCCC?PPP	flipx, shadow, width, color, pri*/
+	{ /* max 256 sprites */
+		data16_t ypos	= source[0];	/* FHHH---E YYYYYYYY	flipy, height, ypos */
+		data16_t tile	= source[1];	/* O???TTTT TTTTTTTT	opaque tile */
+		data16_t color	= source[2];	/* FSWW???B CCCC?PPP	flipx, shadow, width, color, pri*/
+		data16_t xpos	= source[3];	/* -------X XXXXXXXX	xpos */
 
 		int priority = pri_mask[color&0x7];
 		int width = ((color>>12)&0x3)+1;
@@ -428,6 +487,19 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 		int flipx = color&0x8000;
 		int row,col;
 
+		if( ypos&0x0100 )
+		{
+			return; /* end-of-list marker? */
+		}
+
+		if( (tile&0x8000)==0 )
+		{
+			drawtile = pdraw_masked_tile;
+		}
+		else
+		{
+			drawtile = pdraw_opaque_tile;
+		}
 		for( row=0; row<height; row++ )
 		{
 			int sy = (ypos&0x1ff)-30+32;
@@ -450,7 +522,7 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 				{
 					sx+=col*8;
 				}
-				pdraw_masked_tile(
+				drawtile(
 					bitmap,
 					tile + row*64+col,
 					(color>>4)&0xf,
@@ -459,24 +531,49 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 					flipx,flipy,
 					priority,
 					color&0x4000 /* shadow */ );
-			}
-		}
+			} /* next col */
+		} /* next row */
 		source += 4;
 	}
-}
+} /* draw_sprites */
+
+static void draw_pixel_line( UINT16 *pDest, UINT8 *pPri, data16_t *pSource, const pen_t *paldata )
+{
+	int x;
+	data16_t data;
+
+	memset( pPri, 0xff, 38*8 );
+	for( x=0; x<38*8; x+=2 )
+	{
+		data = *pSource++;
+		pDest[x] = paldata[data>>8];
+		pDest[x+1] = paldata[data&0xff];
+	} /* next x */
+} /* draw_pixel_line */
 
 static void draw_background( struct mame_bitmap *bitmap, int which, int primask )
 {
-	int adjust = 0x3a - which*2;
+	/*			scrollx	lineselect
+	 *	tmap0	ffe000	ffe200
+	 *	tmap1	ffe400	ffe600
+	 *	tmap2	ffe800	ffea00
+	 *	tmap3	ffec00	ffee00
+	 */
+	int xadjust = 0x3a - which*2;
 	const data16_t *scroll = namcona1_scroll+0x200*which;
 	int line;
+	data16_t xdata, ydata;
 	int scrollx, scrolly;
 	struct rectangle clip;
+	const pen_t *paldata;
+	struct GfxElement *pGfx;
+
+	pGfx = Machine->gfx[0];
+	paldata = &pGfx->colortable[pGfx->color_granularity * tilemap_palette_bank[which]];
 
 	/* draw one scanline at a time */
 	clip.min_x = 0;
 	clip.max_x = 38*8-1;
-
 	scrollx = 0;
 	scrolly = 0;
 	for( line=0; line<256; line++ )
@@ -484,86 +581,69 @@ static void draw_background( struct mame_bitmap *bitmap, int which, int primask 
 		clip.min_y = line;
 		clip.max_y = line;
 		tilemap_set_clip( tilemap[which], &clip );
-
-		if( scroll[line] )
+		xdata = scroll[line];
+		if( xdata )
 		{
 			/* screenwise linescroll */
-			scrollx = scroll[line] + adjust;
+			scrollx = xadjust+xdata;
 		}
-
-		if( scroll[line+0x100]&0x4000 )
+		ydata = scroll[line+0x100];
+		if( ydata&0x4000 )
 		{
-			/* line select (adjust to an appropriate tilemap scrolly) */
-			scrolly = (scroll[line+0x100] - line)&0x1ff;
+			/* line select: dword offset from 0xff000 or tilemap source line */
+			scrolly = (ydata - line)&0x1ff;
 		}
-
-		tilemap_set_scrollx( tilemap[which], 0, scrollx );
-		tilemap_set_scrolly( tilemap[which], 0, scrolly );
-		tilemap_draw( bitmap, tilemap[which], 0, primask );
+		if( xdata == 0xc001 )
+		{
+			/* This is a simplification, but produces the correct behavior for the only game that uses this
+			 * feature, Numan Athletics.
+			 */
+			draw_pixel_line(
+				bitmap->line[line],
+				priority_bitmap->line[line],
+				namcona1_sparevram + (ydata-0x4000) + 25,
+				paldata );
+		}
+		else
+		{
+			tilemap_set_scrollx( tilemap[which], 0, scrollx );
+			tilemap_set_scrolly( tilemap[which], 0, scrolly );
+			tilemap_draw( bitmap, tilemap[which], 0, primask );
+		}
 	}
-}
+} /* draw_background */
 
 void namcona1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
-	int bg_to_show = -1;
 	int which;
 	int priority;
+	/* int flipscreen = namcona1_vreg[0x98/2]; (TBA) */
 
-//	if( keyboard_pressed( KEYCODE_Q ) ) bg_to_show = 0;
-//	if( keyboard_pressed( KEYCODE_W ) ) bg_to_show = 1;
-//	if( keyboard_pressed( KEYCODE_E ) ) bg_to_show = 2;
-//	if( keyboard_pressed( KEYCODE_R ) ) bg_to_show = 3;
-
-//	int flipscreen = namcona1_vreg[0x98/2];
-	/* cocktail not yet implemented */
-
-/*
-	if( keyboard_pressed( KEYCODE_Z ) )
-	{
-		while( keyboard_pressed( KEYCODE_Z ) ){}
-		for( i=0; i<0x100/2; i++ )
+	if( namcona1_vreg[0x8e/2] )
+	{ /* gfx enabled */
+		update_gfx();
+		for( which=0; which<NAMCONA1_NUM_TILEMAPS; which++ )
 		{
-			if( i%8 == 0 ) logerror( "\n%02x: ",i );
-			if( namcona1_vreg[i] )
+			static int tilemap_color;
+			tilemap_color = namcona1_vreg[0x58+(which&3)]&0xf;
+			if( tilemap_color!=tilemap_palette_bank[which] )
 			{
-				logerror( "%04x ", namcona1_vreg[i] );
+				tilemap_mark_all_tiles_dirty( tilemap[which] );
+				tilemap_palette_bank[which] = tilemap_color;
 			}
-			else {
-				logerror( "---- " );
-			}
-		}
-		logerror( "\n" );
-	}
-*/
-	update_gfx();
-
-	for( which=0; which<NAMCO_MAX_TILEMAPS; which++ )
-	{
-		static int tilemap_color;
-
-		tilemap_color = namcona1_vreg[0x58+(which&3)]&0xf;
-
-		if( tilemap_color!=tilemap_palette_bank[which] )
+		} /* next tilemap */
+		fillbitmap( priority_bitmap,0,NULL );
+		fillbitmap( bitmap,get_black_pen(),&Machine->visible_area );
+		for( priority = 0; priority<8; priority++ )
 		{
-			tilemap_mark_all_tiles_dirty( tilemap[which] );
-			tilemap_palette_bank[which] = tilemap_color;
-		}
-	}
-
-	fillbitmap( priority_bitmap,0,NULL );
-	fillbitmap( bitmap,Machine->pens[0],&Machine->visible_area ); /* ? */
-
-	for( priority = 0; priority<8; priority++ )
-	{
-		for( which=NAMCO_MAX_TILEMAPS-1; which>=0; which-- )
-		{
-			if( namcona1_vreg[0x50+which] == priority )
+			for( which=NAMCONA1_NUM_TILEMAPS-1; which>=0; which-- )
 			{
-				if( bg_to_show == -1 || bg_to_show == which )
-				draw_background( bitmap,which,pri_mask[priority] );
-			}
-		}
-	}
-
-	draw_sprites( bitmap );
-}
+				if( namcona1_vreg[0x50+which] == priority )
+				{
+					draw_background( bitmap,which,pri_mask[priority] );
+				}
+			} /* next tilemap */
+		} /* next priority level */
+		draw_sprites( bitmap );
+	} /* gfx enabled */
+} /* namcona1_vh_screenrefresh */

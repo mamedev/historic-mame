@@ -1419,6 +1419,16 @@ READ_HANDLER( ES5506_data_1_r )
 	return es5506_reg_read(&es5506[1], offset);
 }
 
+READ16_HANDLER( ES5506_data_0_word_r )
+{
+	return es5506_reg_read(&es5506[0], offset);
+}
+
+READ16_HANDLER( ES5506_data_1_word_r )
+{
+	return es5506_reg_read(&es5506[1], offset);
+}
+
 
 
 /**********************************************************************************************
@@ -1435,6 +1445,18 @@ WRITE_HANDLER( ES5506_data_0_w )
 WRITE_HANDLER( ES5506_data_1_w )
 {
 	es5506_reg_write(&es5506[1], offset, data);
+}
+
+WRITE16_HANDLER( ES5506_data_0_word_w )
+{
+	if (ACCESSING_LSB)
+		es5506_reg_write(&es5506[0], offset, data);
+}
+
+WRITE16_HANDLER( ES5506_data_1_word_w )
+{
+	if (ACCESSING_LSB)
+		es5506_reg_write(&es5506[1], offset, data);
 }
 
 

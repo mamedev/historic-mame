@@ -46,18 +46,18 @@
 /* the screen is red above this Y coordinate */
 #define BZONE_TOP 0x0050
 #define BZONE_CLIP \
-	vector_add_clip (xmin<<VEC_SHIFT, BZONE_TOP<<VEC_SHIFT, \
+	vector_add_clip(xmin<<VEC_SHIFT, BZONE_TOP<<VEC_SHIFT, \
 					xmax<<VEC_SHIFT, ymax<<VEC_SHIFT)
 #define BZONE_NOCLIP \
-	vector_add_clip (xmin<<VEC_SHIFT, ymin <<VEC_SHIFT, \
+	vector_add_clip(xmin<<VEC_SHIFT, ymin <<VEC_SHIFT, \
 					xmax<<VEC_SHIFT, ymax<<VEC_SHIFT)
 
 #define MHAVOC_YWINDOW 0x0048
 #define MHAVOC_CLIP \
-	vector_add_clip (xmin<<VEC_SHIFT, MHAVOC_YWINDOW<<VEC_SHIFT, \
+	vector_add_clip(xmin<<VEC_SHIFT, MHAVOC_YWINDOW<<VEC_SHIFT, \
 					xmax<<VEC_SHIFT, ymax<<VEC_SHIFT)
 #define MHAVOC_NOCLIP \
-	vector_add_clip (xmin<<VEC_SHIFT, ymin <<VEC_SHIFT, \
+	vector_add_clip(xmin<<VEC_SHIFT, ymin <<VEC_SHIFT, \
 					xmax<<VEC_SHIFT, ymax<<VEC_SHIFT)
 
 static int vectorEngine = USE_DVG;
@@ -124,15 +124,15 @@ static unsigned char *vectorbank[NUM_BANKS];
 
 INLINE void vector_timer (int deltax, int deltay)
 {
-	deltax = abs (deltax);
-	deltay = abs (deltay);
+	deltax = abs(deltax);
+	deltay = abs(deltay);
 	if (deltax > deltay)
 		total_length += deltax >> VEC_SHIFT;
 	else
 		total_length += deltay >> VEC_SHIFT;
 }
 
-INLINE void dvg_vector_timer (int scale)
+INLINE void dvg_vector_timer(int scale)
 {
 	total_length += scale;
 }
@@ -181,15 +181,15 @@ static void dvg_generate_vector_list(void)
 		}
 #endif
 
-		firstwd = memrdwd (map_addr (pc));
+		firstwd = memrdwd(map_addr(pc));
 		opcode = firstwd >> 12;
 #ifdef VG_DEBUG
-		logerror("%4x: %4x ", map_addr (pc), firstwd);
+		logerror("%4x: %4x ", map_addr(pc), firstwd);
 #endif
 		pc++;
 		if ((opcode >= 0 /* DVCTR */) && (opcode <= DLABS))
 		{
-			secondwd = memrdwd (map_addr (pc));
+			secondwd = memrdwd(map_addr(pc));
 			pc++;
 #ifdef VG_DEBUG
 			logerror("%s ", dvg_mnem [opcode]);
@@ -204,7 +204,7 @@ static void dvg_generate_vector_list(void)
 		{
 			case 0:
 #ifdef VG_DEBUG
-	 			logerror("Error: DVG opcode 0!  Addr %4x Instr %4x %4x\n", map_addr (pc-2), firstwd, secondwd);
+	 			logerror("Error: DVG opcode 0!  Addr %4x Instr %4x %4x\n", map_addr(pc-2), firstwd, secondwd);
 				done = 1;
 				break;
 #endif
@@ -241,13 +241,13 @@ static void dvg_generate_vector_list(void)
 					z = z * BRIGHTNESS;
 				else
 					if (z) z = (z << 4) | 0x0f;
-				vector_add_point (currentx, currenty, VECTOR_COLOR111(colorram[1]), z);
+				vector_add_point(currentx, currenty, VECTOR_COLOR444(colorram[1]), z);
 
 				break;
 
 			case DLABS:
-				x = twos_comp_val (secondwd, 12);
-				y = twos_comp_val (firstwd, 12);
+				x = twos_comp_val(secondwd, 12);
+				y = twos_comp_val(firstwd, 12);
 	  			scale = (secondwd >> 12);
 				currentx = ((x-xmin) << VEC_SHIFT);		/* ASG 080497 */
 				currenty = ((ymax-y) << VEC_SHIFT);		/* ASG 080497 */
@@ -332,7 +332,7 @@ static void dvg_generate_vector_list(void)
 					z = z * BRIGHTNESS;
 				else
 					if (z) z = (z << 4) | 0x0f;
-				vector_add_point (currentx, currenty, VECTOR_COLOR111(colorram[1]), z);
+				vector_add_point(currentx, currenty, VECTOR_COLOR444(colorram[1]), z);
 				break;
 
 			default:
@@ -403,7 +403,7 @@ Star Wars:
         STAT bits 10, 9, and 8 are used directly for R, G, and B.
 */
 
-static void avg_generate_vector_list (void)
+static void avg_generate_vector_list(void)
 {
 
 	int pc;
@@ -437,13 +437,13 @@ static void avg_generate_vector_list (void)
 
 	if (flipword)
 	{
-		firstwd = memrdwd_flip (map_addr (pc));
-		secondwd = memrdwd_flip (map_addr (pc+1));
+		firstwd = memrdwd_flip(map_addr(pc));
+		secondwd = memrdwd_flip(map_addr(pc+1));
 	}
 	else
 	{
-		firstwd = memrdwd (map_addr (pc));
-		secondwd = memrdwd (map_addr (pc+1));
+		firstwd = memrdwd(map_addr(pc));
+		secondwd = memrdwd(map_addr(pc+1));
 	}
 	if ((firstwd == 0) && (secondwd == 0))
 	{
@@ -468,18 +468,18 @@ static void avg_generate_vector_list (void)
 		if (vg_step) getchar();
 #endif
 
-		if (flipword) firstwd = memrdwd_flip (map_addr (pc));
-		else          firstwd = memrdwd      (map_addr (pc));
+		if (flipword) firstwd = memrdwd_flip(map_addr(pc));
+		else          firstwd = memrdwd     (map_addr(pc));
 
 		opcode = firstwd >> 13;
 #ifdef VG_DEBUG
-		logerror("%4x: %4x ", map_addr (pc), firstwd);
+		logerror("%4x: %4x ", map_addr(pc), firstwd);
 #endif
 		pc++;
 		if (opcode == VCTR)
 		{
-			if (flipword) secondwd = memrdwd_flip (map_addr (pc));
-			else          secondwd = memrdwd      (map_addr (pc));
+			if (flipword) secondwd = memrdwd_flip(map_addr(pc));
+			else          secondwd = memrdwd     (map_addr(pc));
 			pc++;
 #ifdef VG_DEBUG
 			logerror("%4x  ", secondwd);
@@ -502,14 +502,14 @@ static void avg_generate_vector_list (void)
 
 				if (vectorEngine == USE_AVG_QUANTUM)
 				{
-					x = twos_comp_val (secondwd, 12);
-					y = twos_comp_val (firstwd, 12);
+					x = twos_comp_val(secondwd, 12);
+					y = twos_comp_val(firstwd, 12);
 				}
 				else
 				{
 					/* These work for all other games. */
-					x = twos_comp_val (secondwd, 13);
-					y = twos_comp_val (firstwd, 13);
+					x = twos_comp_val(secondwd, 13);
+					y = twos_comp_val(firstwd, 13);
 				}
 				z = (secondwd >> 12) & ~0x01;
 
@@ -557,7 +557,7 @@ static void avg_generate_vector_list (void)
 						color = 2;
 				}
 
-				vector_add_point (currentx, currenty, VECTOR_COLOR111(colorram[color]), z);
+				vector_add_point(currentx, currenty, VECTOR_COLOR444(colorram[color]), z);
 
 #ifdef VG_DEBUG
 				logerror("VCTR x:%d y:%d z:%d statz:%d", x, y, z, statz);
@@ -565,8 +565,8 @@ static void avg_generate_vector_list (void)
 				break;
 
 			case SVEC:
-				x = twos_comp_val (firstwd, 5) << 1;
-				y = twos_comp_val (firstwd >> 8, 5) << 1;
+				x = twos_comp_val(firstwd, 5) << 1;
+				y = twos_comp_val(firstwd >> 8, 5) << 1;
 				z = ((firstwd >> 4) & 0x0e);
 
 				if (vectorEngine == USE_AVG_SWARS)
@@ -600,7 +600,7 @@ static void avg_generate_vector_list (void)
 					color = rand() & 0x07;
 				}
 
-				vector_add_point (currentx, currenty, VECTOR_COLOR111(colorram[color]), z);
+				vector_add_point(currentx, currenty, VECTOR_COLOR444(colorram[color]), z);
 
 #ifdef VG_DEBUG
 				logerror("SVEC x:%d y:%d z:%d statz:%d", x, y, z, statz);
@@ -689,7 +689,7 @@ static void avg_generate_vector_list (void)
 #endif
 				currentx = xcenter ;  /* ASG 080497 */ /*.ac JAN2498 */
 				currenty = ycenter ;  /* ASG 080497 */ /*.ac JAN2498 */
-				vector_add_point (currentx, currenty, 0, 0);
+				vector_add_point(currentx, currenty, 0, 0);
 				break;
 
 			case RTSL:
@@ -763,7 +763,7 @@ static void avg_generate_vector_list (void)
 }
 
 
-int avgdvg_done (void)
+int avgdvg_done(void)
 {
 	if (busy)
 		return 0;
@@ -771,7 +771,7 @@ int avgdvg_done (void)
 		return 1;
 }
 
-static void avgdvg_clr_busy (int dummy)
+static void avgdvg_clr_busy(int dummy)
 {
 	busy = 0;
 }
@@ -788,13 +788,13 @@ WRITE_HANDLER( avgdvg_go_w )
 	if (vectorEngine == USE_DVG)
 	{
 		dvg_generate_vector_list();
-		timer_set (TIME_IN_NSEC(4500) * total_length, 1, avgdvg_clr_busy);
+		timer_set(TIME_IN_NSEC(4500) * total_length, 1, avgdvg_clr_busy);
 	}
 	else
 	{
 		avg_generate_vector_list();
 		if (total_length > 1)
-			timer_set (TIME_IN_NSEC(1500) * total_length, 1, avgdvg_clr_busy);
+			timer_set(TIME_IN_NSEC(1500) * total_length, 1, avgdvg_clr_busy);
 		/* this is for Major Havoc */
 		else
 		{
@@ -819,7 +819,7 @@ WRITE16_HANDLER( avgdvg_reset_word_w )
 	avgdvg_clr_busy(0);
 }
 
-int avgdvg_init (int vgType)
+int avgdvg_init(int vgType)
 {
 	int i;
 
@@ -865,7 +865,7 @@ int avgdvg_init (int vgType)
 	xcenter=((xmax+xmin)/2) << VEC_SHIFT; /*.ac JAN2498 */
 	ycenter=((ymax+ymin)/2) << VEC_SHIFT; /*.ac JAN2498 */
 
-	vector_set_shift (VEC_SHIFT);
+	vector_set_shift(VEC_SHIFT);
 
 	if (vector_vh_start())
 		return 1;
@@ -873,144 +873,96 @@ int avgdvg_init (int vgType)
 	return 0;
 }
 
+
+
+/***************************************************************************
+
+  Color handling.
+
+***************************************************************************/
+
 /*
  * These functions initialise the colors for all atari games.
  */
 
-#define VEC_PAL_WHITE	1
-#define VEC_PAL_AQUA	2
-#define VEC_PAL_BZONE	3
-#define VEC_PAL_MULTI	4
-#define VEC_PAL_SWARS	5
-#define VEC_PAL_ASTDELUX	6
+/* Black and White vector colors for Asteroids, Lunar Lander, Omega Race */
+void avg_init_palette_white(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+{
+	colorram[0] = 0x000;
+	colorram[1] = 0xfff;
+}
 
-/* Helper function to construct the color palette for the Atari vector
- * games. DO NOT reference this function from the Gamedriver or
- * MachineDriver. Use "avg_init_palette_XXXXX" instead. */
-void avg_init_palette (int paltype, unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+/* Monochrome Aqua vector colors for Red Baron */
+void avg_init_palette_aqua(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+{
+	colorram[0] = 0x4ff;
+	colorram[1] = 0x000;
+}
+
+/* Monochrome Aqua vector colors for Asteroids Deluxe */
+void avg_init_palette_astdelux(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+{
+	/* Use backdrop if present MLR OCT0598 */
+	backdrop_load("bzone.png", 256);
+	colorram[0] = 0x000;
+	colorram[1] = 0x4ff;
+}
+
+/* Basic 8 rgb vector colors for Tempest, Gravitar, Major Havoc etc. */
+void avg_init_palette_multi(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
 {
 	int i;
 
 	/* initialize the colorram */
 	for (i = 0; i < 16; i++)
-		colorram[i] = i & 0x07;
-
-	/* fill the rest of the 256 color entries depending on the game */
-	switch (paltype)
 	{
-		/* Black and White vector colors (Asteroids,Omega Race) .ac JAN2498 */
-		case  VEC_PAL_WHITE:
-			colorram[1] = 7; /* BW games use only color 1 (== white) */
-			break;
-
-		/* Monochrome Aqua colors (Asteroids Deluxe,Red Baron) .ac JAN2498 */
-		case  VEC_PAL_ASTDELUX:
-			/* Use backdrop if present MLR OCT0598 */
-			backdrop_load("astdelux.png", 256);
-			colorram[1] =  3; /* for Asteroids */
-			break;
-
-		case  VEC_PAL_AQUA:
-			colorram[0] =  3; /* for Red Baron */
-			break;
-
-		/* Monochrome Green/Red vector colors (Battlezone) .ac JAN2498 */
-		case  VEC_PAL_BZONE:
-			/* Use backdrop if present MLR OCT0598 */
-			backdrop_load("bzone.png", 256);
-			break;
-
-		default:
-			logerror("Wrong palette type in avgdvg.c");
-			break;
+		int r = (i & 4) ? 0x0f : 0x00;
+		int g = (i & 2) ? 0x0f : 0x00;
+		int b = (i & 1) ? 0x0f : 0x00;
+		colorram[i] = (r << 8) | (g << 4) | b;
 	}
 }
 
-/* A macro for the palette_init functions */
-#define VEC_PAL_INIT(name, paltype) \
-void avg_init_palette_##name (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom) \
-{ avg_init_palette (paltype, palette, colortable, color_prom); }
-
-/* The functions referenced from gamedriver */
-VEC_PAL_INIT(white,    VEC_PAL_WHITE)
-VEC_PAL_INIT(aqua ,    VEC_PAL_AQUA )
-VEC_PAL_INIT(bzone,    VEC_PAL_BZONE)
-VEC_PAL_INIT(multi,    VEC_PAL_MULTI)
-VEC_PAL_INIT(swars,    VEC_PAL_SWARS)
-VEC_PAL_INIT(astdelux, VEC_PAL_ASTDELUX )
-
-
-/* If you want to use the next two functions, please make sure that you have
- * a fake GfxLayout, otherwise you'll crash */
-static WRITE_HANDLER( colorram_w )
-{
-	colorram[offset & 0x0f] = data & 0x0f;
-}
 
 /*
  * Tempest, Major Havoc and Quantum select colors via a 16 byte colorram.
  * What's more, they have a different ordering of the rgbi bits than the other
  * color avg games.
- * We need translation tables.
  */
 
 WRITE_HANDLER( tempest_colorram_w )
 {
-#if 0 /* with low intensity bit */
-	static const int trans[]= { 7, 15, 3, 11, 6, 14, 2, 10, 5, 13, 1,  9, 4, 12, 0,  8 };
-#else /* high intensity */
-	static const int trans[]= { 7,  7, 3,  3, 6,  6, 2,  2, 5,  5, 1,  1, 4,  4, 0,  0 };
-#endif
-	colorram_w (offset, trans[data & 0x0f]);
+	int i = (data & 1) ? 0x0f : 0x08;
+	int r = (data & 2) ? 0x00 : i;
+	int g = (data & 8) ? 0x00 : i;
+	int b = (data & 4) ? 0x00 : i;
+
+	colorram[offset & 0x0f] = (r << 8) | (g << 4) | b;
 }
 
 WRITE_HANDLER( mhavoc_colorram_w )
 {
-#if 0 /* with low intensity bit */
-	static const int trans[]= { 7, 6, 5, 4, 15, 14, 13, 12, 3, 2, 1, 0, 11, 10, 9, 8 };
-#else /* high intensity */
-	static const int trans[]= { 7, 6, 5, 4,  7,  6,  5,  4, 3, 2, 1, 0,  3,  2, 1, 0 };
-#endif
-	logerror("colorram: %02x: %02x\n", offset, data);
-	colorram_w (offset , trans[data & 0x0f]);
-}
+	int i = (data & 4) ? 0x0f : 0x08;
+	int r = (data & 8) ? 0x00 : i;
+	int g = (data & 2) ? 0x00 : i;
+	int b = (data & 1) ? 0x00 : i;
 
+	colorram[offset & 0x0f] = (r << 8) | (g << 4) | b;
+}
 
 WRITE16_HANDLER( quantum_colorram_w )
 {
-/* Notes on colors:
-offset:				color:			color (game):
-0 - score, some text		0 - black?
-1 - nothing?			1 - blue
-2 - nothing?			2 - green
-3 - Quantum, streaks		3 - cyan
-4 - text/part 1 player		4 - red
-5 - part 2 of player		5 - purple
-6 - nothing?			6 - yellow
-7 - part 3 of player		7 - white
-8 - stars			8 - black
-9 - nothing?			9 - blue
-10 - nothing?			10 - green
-11 - some text, 1up, like 3	11 - cyan
-12 - some text, like 4
-13 - nothing?			13 - purple
-14 - nothing?
-15 - nothing?
-
-1up should be blue
-score should be red
-high score - white? yellow?
-level # - green
-*/
-
 	if (ACCESSING_LSB)
 	{
-		static const int trans[]= { 7/*white*/, 0, 3, 1/*blue*/, 2/*green*/, 5, 6, 4/*red*/,
-			       7/*white*/, 0, 3, 1/*blue*/, 2/*green*/, 5, 6, 4/*red*/};
+		int r  = (data & 8) ? 0x00 : 0x0f;
+		int b  = (data & 4) ? 0x00 : 0x0f;
+		int g  = (data & 2) ? 0x00 : 0x0a;
+		    g |= (data & 1) ? 0x00 : 0x05;
 
-		colorram_w(offset, trans[data & 0x0f]);
+		colorram[offset & 0x0f] = (r << 8) | (g << 4) | b;
 	}
 }
+
 
 /***************************************************************************
 
@@ -1022,42 +974,42 @@ level # - green
 
 int dvg_start(void)
 {
-	return avgdvg_init (USE_DVG);
+	return avgdvg_init(USE_DVG);
 }
 
 int avg_start(void)
 {
-	return avgdvg_init (USE_AVG);
+	return avgdvg_init(USE_AVG);
 }
 
 int avg_start_starwars(void)
 {
-	return avgdvg_init (USE_AVG_SWARS);
+	return avgdvg_init(USE_AVG_SWARS);
 }
 
 int avg_start_tempest(void)
 {
-	return avgdvg_init (USE_AVG_TEMPEST);
+	return avgdvg_init(USE_AVG_TEMPEST);
 }
 
 int avg_start_mhavoc(void)
 {
-	return avgdvg_init (USE_AVG_MHAVOC);
+	return avgdvg_init(USE_AVG_MHAVOC);
 }
 
 int avg_start_bzone(void)
 {
-	return avgdvg_init (USE_AVG_BZONE);
+	return avgdvg_init(USE_AVG_BZONE);
 }
 
 int avg_start_quantum(void)
 {
-	return avgdvg_init (USE_AVG_QUANTUM);
+	return avgdvg_init(USE_AVG_QUANTUM);
 }
 
 int avg_start_redbaron(void)
 {
-	return avgdvg_init (USE_AVG_RBARON);
+	return avgdvg_init(USE_AVG_RBARON);
 }
 
 void avg_stop(void)

@@ -301,7 +301,7 @@ if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) )
 #endif
 
 	if (layers_ctrl & 1)	tilemap_draw(bitmap,tilemap_0,0,0);
-	else					fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	else					fillbitmap(bitmap,get_black_pen(),&Machine->visible_area);
 
 	if (layers_ctrl & 2) 	afega_draw_sprites(bitmap);
 

@@ -619,6 +619,10 @@ struct tilemap *tilemap_create(
 		num_tiles = num_cols*num_rows;
 		tilemap->num_logical_cols = num_cols;
 		tilemap->num_logical_rows = num_rows;
+		tilemap->logical_tile_width = tile_width;
+		tilemap->logical_tile_height = tile_height;
+		tilemap->logical_colscroll = calloc(num_cols*tile_width,sizeof(int));
+		tilemap->logical_rowscroll = calloc(num_rows*tile_height,sizeof(int));
 		if( Machine->orientation & ORIENTATION_SWAP_XY )
 		{
 			SWAP( num_cols, num_rows )
@@ -628,8 +632,6 @@ struct tilemap *tilemap_create(
 		tilemap->num_cached_rows = num_rows;
 		tilemap->num_tiles = num_tiles;
 		tilemap->num_pens = tile_width*tile_height;
-		tilemap->logical_tile_width = tile_width;
-		tilemap->logical_tile_height = tile_height;
 		tilemap->cached_tile_width = tile_width;
 		tilemap->cached_tile_height = tile_height;
 		tilemap->cached_width = tile_width*num_cols;
@@ -648,9 +650,7 @@ struct tilemap *tilemap_create(
 		tilemap->tile_granularity = 0;
 		tilemap->tile_dirty_map = 0;
 
-		tilemap->logical_rowscroll	= calloc(tilemap->cached_height,sizeof(int));
 		tilemap->cached_rowscroll	= calloc(tilemap->cached_height,sizeof(int));
-		tilemap->logical_colscroll	= calloc(tilemap->cached_width, sizeof(int));
 		tilemap->cached_colscroll	= calloc(tilemap->cached_width, sizeof(int));
 
 		tilemap->transparency_data = malloc( num_tiles );
@@ -1352,6 +1352,92 @@ profiler_mark(PROFILER_TILEMAP_DRAW_ROZ);
 	} /* tilemap->enable */
 profiler_mark(PROFILER_END);
 }
+
+
+
+UINT32 tilemap_count( void )
+{
+	UINT32 count = 0;
+	struct tilemap *tilemap = first_tilemap;
+	while( tilemap )
+	{
+		count++;
+		tilemap = tilemap->next;
+	}
+	return count;
+}
+
+static struct tilemap *tilemap_nb_find( int number )
+{
+	struct tilemap *tilemap = first_tilemap;
+	while( number-- )
+		tilemap = tilemap->next;
+	return tilemap;
+}
+
+void tilemap_nb_size( UINT32 number, UINT32 *width, UINT32 *height )
+{
+	struct tilemap *tilemap = tilemap_nb_find( number );
+	*width  = tilemap->cached_width;
+	*height = tilemap->cached_height;
+}
+
+void tilemap_nb_draw( struct mame_bitmap *dest, UINT32 number, UINT32 scrollx, UINT32 scrolly )
+{
+	int xpos,ypos;
+	struct tilemap *tilemap = tilemap_nb_find( number );
+
+	blit.screen_bitmap = dest;
+	blit.screen_bitmap_pitch_line = ((UINT8 *)dest->line[1]) - ((UINT8 *)dest->line[0]);
+	switch( dest->depth )
+	{
+	case 32:
+		blit.draw_masked = (blitmask_t)pdt32;
+		blit.draw_opaque = (blitopaque_t)pdo32;
+		blit.screen_bitmap_pitch_line /= 4;
+		break;
+
+	case 15:
+		blit.draw_masked = (blitmask_t)pdt15;
+		blit.draw_opaque = (blitopaque_t)pdo15;
+		blit.screen_bitmap_pitch_line /= 2;
+		break;
+
+	case 16:
+		blit.draw_masked = (blitmask_t)pdt16;
+		blit.draw_opaque = (blitopaque_t)pdo16;
+		blit.screen_bitmap_pitch_line /= 2;
+		break;
+
+	default:
+		exit(1);
+		break;
+	}
+	blit.screen_bitmap_pitch_row = blit.screen_bitmap_pitch_line*tilemap->cached_tile_height;
+	blit.tilemap_priority_code = 0;
+	scrollx = tilemap->cached_width  - scrollx % tilemap->cached_width;
+	scrolly = tilemap->cached_height - scrolly % tilemap->cached_height;
+
+	blit.clip_left		= 0;
+	blit.clip_top		= 0;
+	blit.clip_right		= dest->width;
+	blit.clip_bottom	= dest->height;
+
+	for(
+		ypos = scrolly - tilemap->cached_height;
+		ypos < blit.clip_bottom;
+		ypos += tilemap->cached_height )
+	{
+		for(
+			xpos = scrollx - tilemap->cached_width;
+			xpos < blit.clip_right;
+			xpos += tilemap->cached_width )
+		{
+			tilemap->draw( tilemap, xpos, ypos, 0, 0 );
+		}
+	}
+}
+
 
 /***********************************************************************************/
 

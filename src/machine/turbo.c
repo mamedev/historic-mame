@@ -1,13 +1,14 @@
 /*************************************************************************
 
-	 Turbo - Sega - 1981
-
-	 Machine Hardware
+	Turbo - Sega - 1981
+	Subroc 3D - Sega - 1982
+	Buck Rogers: Planet of Zoom - Sega - 1982
 
 *************************************************************************/
 
 #include "driver.h"
 #include "machine/8255ppi.h"
+#include "turbo.h"
 
 /* globals */
 UINT8 turbo_opa, turbo_opb, turbo_opc;
@@ -16,12 +17,18 @@ UINT8 turbo_fbpla, turbo_fbcol;
 UINT8 turbo_segment_data[32];
 UINT8 turbo_speed;
 
+UINT8 subroc3d_col, subroc3d_ply, subroc3d_chofs;
+
+UINT8 buckrog_fchg, buckrog_mov, buckrog_obch;
+
 /* local data */
 static UINT8 segment_address, segment_increment;
 static UINT8 osel, bsel, accel;
+static UINT8 port_8279;
 
-/* prototypes */
-extern UINT8 turbo_collision;
+static UINT8 buckrog_status;
+static UINT8 buckrog_command;
+
 
 
 /*******************************************
@@ -42,14 +49,14 @@ static void update_samples(void)
 	else if (bsel != 3 && !sample_playing(6))
 		sample_start(6, 7, 1);
 	if (sample_playing(6))
-//		sample_set_freq(6, 44100 * (accel & 0x3f) / 7 + 44100);
 		sample_set_freq(6, 44100 * (accel & 0x3f) / 5.25 + 44100);
 }
 
 
+
 /*******************************************
 
-	8255 PPI handling
+	Turbo 8255 PPI handling
 
 *******************************************/
 /*
@@ -60,39 +67,43 @@ static void update_samples(void)
 	3 = IC6 - CPU Board, Sheet 5, D7
 */
 
-static WRITE_HANDLER(chip0_portA_w)
+static WRITE_HANDLER( turbo_opa_w )
 {
 	turbo_opa = data;	/* signals 0PA0 to 0PA7 */
 }
 
-static WRITE_HANDLER(chip0_portB_w)
+
+static WRITE_HANDLER( turbo_opb_w )
 {
 	turbo_opb = data;	/* signals 0PB0 to 0PB7 */
 }
 
-static WRITE_HANDLER(chip0_portC_w)
+
+static WRITE_HANDLER( turbo_opc_w )
 {
 	turbo_opc = data;	/* signals 0PC0 to 0PC7 */
 }
 
 
-static WRITE_HANDLER(chip1_portA_w)
+static WRITE_HANDLER( turbo_ipa_w )
 {
 	turbo_ipa = data;	/* signals 1PA0 to 1PA7 */
 }
 
-static WRITE_HANDLER(chip1_portB_w)
+
+static WRITE_HANDLER( turbo_ipb_w )
 {
 	turbo_ipb = data;	/* signals 1PB0 to 1PB7 */
 }
 
-static WRITE_HANDLER(chip1_portC_w)
+
+static WRITE_HANDLER( turbo_ipc_w )
 {
 	turbo_ipc = data;	/* signals 1PC0 to 1PC7 */
 }
 
 
-static WRITE_HANDLER(chip2_portA_w)
+static WRITE_HANDLER( turbo_sound_A_w )
 {
 	/*
 		2PA0 = /CRASH
@@ -115,7 +126,8 @@ static WRITE_HANDLER(chip2_portA_w)
 	update_samples();
 }
 
-static WRITE_HANDLER(chip2_portB_w)
+
+static WRITE_HANDLER( turbo_sound_B_w )
 {
 	/*
 		2PB0 = ACC0
@@ -141,7 +153,8 @@ static WRITE_HANDLER(chip2_portB_w)
 	if (!(data & 0x80)) sample_start(3, 6, 0);
 }
 
-static WRITE_HANDLER(chip2_portC_w)
+
+static WRITE_HANDLER( turbo_sound_C_w )
 {
 	/*
 		2PC0 = OSEL1
@@ -160,7 +173,7 @@ static WRITE_HANDLER(chip2_portC_w)
 }
 
 
-static WRITE_HANDLER(chip3_portC_w)
+static WRITE_HANDLER( turbo_pla_col_w )
 {
 	/* bit 0-3 = signals PLA0 to PLA3 */
 	/* bit 4-6 = signals COL0 to COL2 */
@@ -170,15 +183,140 @@ static WRITE_HANDLER(chip3_portC_w)
 }
 
 
-static ppi8255_interface intf =
+static ppi8255_interface turbo_8255_intf =
 {
-	4, /* 4 chips */
-	{0, 0, 0, input_port_4_r}, /* Port A read */
-	{0, 0, 0, input_port_2_r}, /* Port B read */
-	{0, 0, 0, 0}, /* Port C read */
-	{chip0_portA_w, chip1_portA_w, chip2_portA_w, 0}, /* Port A write */
-	{chip0_portB_w, chip1_portB_w, chip2_portB_w, 0}, /* Port B write */
-	{chip0_portC_w, chip1_portC_w, chip2_portC_w, chip3_portC_w} /* Port C write */
+	4,
+	{ NULL,        NULL,        NULL,            input_port_4_r },
+	{ NULL,        NULL,        NULL,            input_port_2_r },
+	{ NULL,        NULL,        NULL,            NULL },
+	{ turbo_opa_w, turbo_ipa_w, turbo_sound_A_w, NULL },
+	{ turbo_opb_w, turbo_ipb_w, turbo_sound_B_w, NULL },
+	{ turbo_opc_w, turbo_ipc_w, turbo_sound_C_w, turbo_pla_col_w }
+};
+
+
+
+/*******************************************
+
+	Subroc3D 8255 PPI handling
+
+*******************************************/
+
+static WRITE_HANDLER( subroc3d_sprite_pri_w )
+{
+	subroc3d_ply = data & 0x0f;
+}
+
+
+static WRITE_HANDLER( subroc3d_coin_led_w )
+{
+	coin_counter_w(0, data & 0x01);
+	coin_counter_w(1, data & 0x02);
+	set_led_status(0, data & 0x04);
+	subroc3d_chofs = ((data >> 4) & 1) * 3;
+}
+
+
+static WRITE_HANDLER( subroc3d_palette_w )
+{
+	subroc3d_col = data & 0x0f;
+}
+
+
+static WRITE_HANDLER( subroc3d_sound_A_w )
+{
+	/* sound controls */
+}
+
+
+static WRITE_HANDLER( subroc3d_sound_B_w )
+{
+	/* sound controls */
+}
+
+
+static WRITE_HANDLER( subroc3d_sound_C_w )
+{
+	/* sound controls */
+}
+
+
+static ppi8255_interface subroc3d_8255_intf =
+{
+	2,
+	{ NULL,                  NULL },
+	{ NULL,                  NULL },
+	{ NULL,                  NULL },
+	{ subroc3d_sprite_pri_w, subroc3d_sound_A_w },
+	{ subroc3d_coin_led_w,   subroc3d_sound_B_w },
+	{ subroc3d_palette_w,    subroc3d_sound_C_w }
+};
+
+
+
+/*******************************************
+
+	Buck Rogers 8255 PPI handling
+
+*******************************************/
+
+static READ_HANDLER( buckrog_cpu2_status_r )
+{
+	return buckrog_status;
+}
+
+
+static WRITE_HANDLER( buckrog_cpu2_command_w )
+{
+	buckrog_status &= ~0x80;
+	buckrog_command = data;
+	cpu_cause_interrupt(1, Z80_IRQ_INT);
+}
+
+
+static WRITE_HANDLER( buckrog_back_palette_w )
+{
+	buckrog_mov = data & 0x1f;
+}
+
+
+static WRITE_HANDLER( buckrog_fore_palette_w )
+{
+	buckrog_fchg = data & 0x07;
+}
+
+
+static WRITE_HANDLER( buckrog_sound_A_w )
+{
+	/* sound controls */
+}
+
+
+static WRITE_HANDLER( buckrog_sound_B_w )
+{
+	/* sound controls */
+}
+
+
+static WRITE_HANDLER( buckrog_extra_w )
+{
+	buckrog_obch = data & 0x07;
+	coin_counter_w(0, data & 0x10);
+	coin_counter_w(1, data & 0x20);
+	set_led_status(0, data & 0x40);
+	// NOUSE = data & 0x80 -> body sonic???
+}
+
+
+static ppi8255_interface buckrog_8255_intf =
+{
+	2,
+	{ NULL,                   NULL },
+	{ NULL,                   NULL },
+	{ buckrog_cpu2_status_r,  NULL },
+	{ buckrog_cpu2_command_w, buckrog_sound_A_w },
+	{ buckrog_back_palette_w, buckrog_sound_B_w },
+	{ buckrog_fore_palette_w, buckrog_extra_w }
 };
 
 
@@ -191,9 +329,28 @@ static ppi8255_interface intf =
 
 void turbo_init_machine(void)
 {
-	ppi8255_init(&intf);
+	ppi8255_init(&turbo_8255_intf);
+	segment_address = segment_increment = 0;
+	port_8279 = 1;
+}
+
+
+void subroc3d_init_machine(void)
+{
+	ppi8255_init(&subroc3d_8255_intf);
 	segment_address = segment_increment = 0;
 }
+
+
+void buckrog_init_machine(void)
+{
+	ppi8255_init(&buckrog_8255_intf);
+	segment_address = segment_increment = 0;
+	buckrog_status = 0x80;
+	buckrog_command = 0x00;
+	port_8279 = 1;
+}
+
 
 
 /*******************************************
@@ -244,9 +401,10 @@ WRITE_HANDLER( turbo_8279_w )
 }
 
 
+
 /*******************************************
 
-	Misc handling
+	Turbo misc handling
 
 *******************************************/
 
@@ -255,10 +413,12 @@ READ_HANDLER( turbo_collision_r )
 	return readinputport(3) | (turbo_collision & 15);
 }
 
+
 WRITE_HANDLER( turbo_collision_clear_w )
 {
 	turbo_collision = 0;
 }
+
 
 WRITE_HANDLER( turbo_coin_and_lamp_w )
 {
@@ -278,4 +438,159 @@ WRITE_HANDLER( turbo_coin_and_lamp_w )
 		default:
 			break;
 	}
+}
+
+
+
+/*******************************************
+
+	Turbo ROM decoding
+
+*******************************************/
+
+void turbo_rom_decode(void)
+{
+/*
+ * The table is arranged this way (second half is mirror image of first)
+ *
+ *		0  1  2	 3	4  5  6	 7	8  9  A	 B	C  D  E	 F
+ *
+ * 0   00 00 00 00 01 01 01 01 02 02 02 02 03 03 03 03
+ * 1   04 04 04 04 05 05 05 05 06 06 06 06 07 07 07 07
+ * 2   08 08 08 08 09 09 09 09 0A 0A 0A 0A 0B 0B 0B 0B
+ * 3   0C 0C 0C 0C 0D 0D 0D 0D 0E 0E 0E 0E 0F 0F 0F 0F
+ * 4   10 10 10 10 11 11 11 11 12 12 12 12 13 13 13 13
+ * 5   14 14 14 14 15 15 15 15 16 16 16 16 17 17 17 17
+ * 6   18 18 18 18 19 19 19 19 1A 1A 1A 1A 1B 1B 1B 1B
+ * 7   1C 1C 1C 1C 1D 1D 1D 1D 1E 1E 1E 1E 1F 1F 1F 1F
+ * 8   1F 1F 1F 1F 1E 1E 1E 1E 1D 1D 1D 1D 1C 1C 1C 1C
+ * 9   1B 1B 1B 1B 1A 1A 1A 1A 19 19 19 19 18 18 18 18
+ * A   17 17 17 17 16 16 16 16 15 15 15 15 14 14 14 14
+ * B   13 13 13 13 12 12 12 12 11 11 11 11 10 10 10 10
+ * C   0F 0F 0F 0F 0E 0E 0E 0E 0D 0D 0D 0D 0C 0C 0C 0C
+ * D   0B 0B 0B 0B 0A 0A 0A 0A 09 09 09 09 08 08 08 08
+ * E   07 07 07 07 06 06 06 06 05 05 05 05 04 04 04 04
+ * F   03 03 03 03 02 02 02 02 01 01 01 01 00 00 00 00
+ *
+ */
+
+	static const UINT8 xortable[4][32]=
+	{
+		/* Table 0 */
+		/* 0x0000-0x3ff */
+		/* 0x0800-0xbff */
+		/* 0x4000-0x43ff */
+		/* 0x4800-0x4bff */
+		{ 0x00,0x44,0x0c,0x48,0x00,0x44,0x0c,0x48,
+		  0xa0,0xe4,0xac,0xe8,0xa0,0xe4,0xac,0xe8,
+		  0x60,0x24,0x6c,0x28,0x60,0x24,0x6c,0x28,
+		  0xc0,0x84,0xcc,0x88,0xc0,0x84,0xcc,0x88 },
+
+		/* Table 1 */
+		/* 0x0400-0x07ff */
+		/* 0x0c00-0x0fff */
+		/* 0x1400-0x17ff */
+		/* 0x1c00-0x1fff */
+		/* 0x2400-0x27ff */
+		/* 0x2c00-0x2fff */
+		/* 0x3400-0x37ff */
+		/* 0x3c00-0x3fff */
+		/* 0x4400-0x47ff */
+		/* 0x4c00-0x4fff */
+		/* 0x5400-0x57ff */
+		/* 0x5c00-0x5fff */
+		{ 0x00,0x44,0x18,0x5c,0x14,0x50,0x0c,0x48,
+		  0x28,0x6c,0x30,0x74,0x3c,0x78,0x24,0x60,
+		  0x60,0x24,0x78,0x3c,0x74,0x30,0x6c,0x28,
+		  0x48,0x0c,0x50,0x14,0x5c,0x18,0x44,0x00 }, //0x00 --> 0x10 ?
+
+		/* Table 2 */
+		/* 0x1000-0x13ff */
+		/* 0x1800-0x1bff */
+		/* 0x5000-0x53ff */
+		/* 0x5800-0x5bff */
+		{ 0x00,0x00,0x28,0x28,0x90,0x90,0xb8,0xb8,
+		  0x28,0x28,0x00,0x00,0xb8,0xb8,0x90,0x90,
+		  0x00,0x00,0x28,0x28,0x90,0x90,0xb8,0xb8,
+		  0x28,0x28,0x00,0x00,0xb8,0xb8,0x90,0x90 },
+
+		/* Table 3 */
+		/* 0x2000-0x23ff */
+		/* 0x2800-0x2bff */
+		/* 0x3000-0x33ff */
+		/* 0x3800-0x3bff */
+		{ 0x00,0x14,0x88,0x9c,0x30,0x24,0xb8,0xac,
+		  0x24,0x30,0xac,0xb8,0x14,0x00,0x9c,0x88,
+		  0x48,0x5c,0xc0,0xd4,0x78,0x6c,0xf0,0xe4,
+		  0x6c,0x78,0xe4,0xf0,0x5c,0x48,0xd4,0xc0 }
+	};
+
+	int findtable[]=
+	{
+		0,1,0,1, /* 0x0000-0x0fff */
+		2,1,2,1, /* 0x1000-0x1fff */
+		3,1,3,1, /* 0x2000-0x2fff */
+		3,1,3,1, /* 0x3000-0x3fff */
+		0,1,0,1, /* 0x4000-0x4fff */
+		2,1,2,1	 /* 0x5000-0x5fff */
+	};
+
+	UINT8 *RAM = memory_region(REGION_CPU1);
+	int offs, i, j;
+	UINT8 src;
+
+	for (offs = 0x0000; offs < 0x6000; offs++)
+	{
+		src = RAM[offs];
+		i = findtable[offs >> 10];
+		j = src >> 2;
+		if (src & 0x80) j ^= 0x3f;
+		RAM[offs] = src ^ xortable[i][j];
+	}
+}
+
+
+
+/*******************************************
+
+	Buck Rogers misc handling
+
+*******************************************/
+
+READ_HANDLER( buckrog_cpu2_command_r )
+{
+	buckrog_status |= 0x80;
+	return buckrog_command;
+}
+
+
+READ_HANDLER( buckrog_port_2_r )
+{
+	int inp1 = readinputport(2);
+	int inp2 = readinputport(3);
+
+	return  (((inp2 >> 6) & 1) << 7) |
+			(((inp2 >> 4) & 1) << 6) |
+			(((inp2 >> 3) & 1) << 5) |
+			(((inp2 >> 0) & 1) << 4) |
+			(((inp1 >> 6) & 1) << 3) |
+			(((inp1 >> 4) & 1) << 2) |
+			(((inp1 >> 3) & 1) << 1) |
+			(((inp1 >> 0) & 1) << 0);
+}
+
+
+READ_HANDLER( buckrog_port_3_r )
+{
+	int inp1 = readinputport(2);
+	int inp2 = readinputport(3);
+
+	return  (((inp2 >> 7) & 1) << 7) |
+			(((inp2 >> 5) & 1) << 6) |
+			(((inp2 >> 2) & 1) << 5) |
+			(((inp2 >> 1) & 1) << 4) |
+			(((inp1 >> 7) & 1) << 3) |
+			(((inp1 >> 5) & 1) << 2) |
+			(((inp1 >> 2) & 1) << 1) |
+			(((inp1 >> 1) & 1) << 0);
 }

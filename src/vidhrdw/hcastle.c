@@ -165,6 +165,10 @@ WRITE_HANDLER( hcastle_pf1_control_w )
 		else
 			buffer_spriteram(spriteram,0x800);
 	}
+	else if (offset == 7)
+	{
+		tilemap_set_flip(fg_tilemap, (data & 0x08) ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+	}
 	K007121_ctrl_0_w(offset,data);
 }
 
@@ -176,6 +180,10 @@ WRITE_HANDLER( hcastle_pf2_control_w )
 			buffer_spriteram_2(spriteram_2+0x800,0x800);
 		else
 			buffer_spriteram_2(spriteram_2,0x800);
+	}
+	else if (offset == 7)
+	{
+		tilemap_set_flip(bg_tilemap, (data & 0x08) ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 	}
 	K007121_ctrl_1_w(offset,data);
 }

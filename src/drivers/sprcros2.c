@@ -1,0 +1,389 @@
+/*
+Super Cross II (JPN Ver.)
+(c)1986 GM Shoji
+
+C2-00172-D
+CPU  :Z80B
+Sound:SN76489 x3
+
+SCS-24.4E
+SCS-25.4C
+SCS-26.4B
+SCS-27.5K
+SCS-28.5J
+SCS-29.5H
+SCS-30.5F
+
+SC-62.3A
+SC-63.3B
+SC-64.6A
+
+C2-00171-D
+CPU  :Z80B
+OSC  :10.000MHz
+
+SCM-00.10L
+SCM-01.10K
+SCM-02.10J
+SCM-03.10G
+SCM-20.5K
+SCM-21.5G
+SCM-22.5E
+SCM-23.5B
+
+SC-60.4K
+SC-61.5A
+
+Notes:
+
+- sprites pop in at the wrong place sometimes before entering the screen
+
+- correct drawing/animation of bg is very sensitive to cpu speed/interrupts/
+  interleave, current settings aren't correct but don't think there's any
+  visible problems
+
+- engine rev sound may not be completely correct
+
+- bg not using second half of prom, of interest is this half is identical to
+  the second half of a bankp/appoooh prom, hardware is similar to bankp/appoooh
+  in a few ways, there's also an unused SEGA logo in the bg graphics
+
+- fg not using odd colours, shouldn't matter as the colours are duplicated
+
+- sprite priorities are wrong when bikes are jumping as they are ordered on
+  vertical position only, assume this is original behaviour
+*/
+
+#include "driver.h"
+#include "state.h"
+
+extern data8_t *sprcros2_fgvideoram, *sprcros2_spriteram, *sprcros2_bgvideoram;
+extern size_t sprcros2_spriteram_size;
+
+WRITE_HANDLER( sprcros2_fgvideoram_w );
+WRITE_HANDLER( sprcros2_bgvideoram_w );
+WRITE_HANDLER( sprcros2_bgscrollx_w );
+WRITE_HANDLER( sprcros2_bgscrolly_w );
+
+void sprcros2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+int  sprcros2_vh_start(void);
+void sprcros2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+static data8_t *sprcros2_sharedram;
+int sprcros2_m_port7 = 0;
+static int sprcros2_s_port3 = 0;
+
+static READ_HANDLER( sprcros2_sharedram_r )
+{
+	return sprcros2_sharedram[offset];
+}
+
+static WRITE_HANDLER( sprcros2_sharedram_w )
+{
+	sprcros2_sharedram[offset]=data;
+}
+
+static WRITE_HANDLER( sprcros2_m_port7_w )
+{
+	unsigned char *RAM = memory_region(REGION_CPU1);
+
+	//76543210
+	//x------- unused
+	//-x------ bankswitch halves of scm-01.10k into c000-dfff
+	//--xx---- unused
+    //----x--- irq enable
+	//-----x-- ?? off with title flash and screen clears, possibly layer/sprite enable
+	//------x- flip screen
+	//-------x nmi enable
+
+	if((sprcros2_m_port7^data)&0x40)
+		cpu_setbank(1,&RAM[0x10000+((data&0x40)<<7)]);
+
+	tilemap_set_flip( ALL_TILEMAPS,data&0x02?(TILEMAP_FLIPX|TILEMAP_FLIPY):0 );
+
+	sprcros2_m_port7 = data;
+}
+
+static WRITE_HANDLER( sprcros2_s_port3_w )
+{
+	unsigned char *RAM = memory_region(REGION_CPU2);
+
+	//76543210
+	//xxxx---- unused
+	//----x--- bankswitch halves of scs-27.5k into c000-dfff
+	//-----xx- unused
+	//-------x nmi enable
+
+	if((sprcros2_s_port3^data)&0x08)
+		cpu_setbank(2,&RAM[0x10000+((data&0x08)<<10)]);
+
+	sprcros2_s_port3 = data;
+}
+
+static MEMORY_READ_START( sprcros2_m_readmem )
+	{ 0x0000, 0xbfff, MRA_ROM },
+	{ 0xc000, 0xdfff, MRA_BANK1 },
+	{ 0xe000, 0xf7ff, MRA_RAM },
+	{ 0xf800, 0xffff, MRA_RAM },						//shared with slave cpu
+MEMORY_END
+
+static MEMORY_WRITE_START( sprcros2_m_writemem )
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xdfff, MWA_BANK1 },
+	{ 0xe000, 0xe7ff, sprcros2_fgvideoram_w, &sprcros2_fgvideoram },
+	{ 0xe800, 0xe817, MWA_RAM },						//always zero
+	{ 0xe818, 0xe83f, MWA_RAM, &sprcros2_spriteram, &sprcros2_spriteram_size },
+	{ 0xe840, 0xefff, MWA_RAM },						//always zero
+	{ 0xf000, 0xf7ff, MWA_RAM },
+	{ 0xf800, 0xffff, MWA_RAM, &sprcros2_sharedram },	//shared with slave cpu
+MEMORY_END
+
+static PORT_READ_START( sprcros2_m_readport )
+	{ 0x00, 0x00, input_port_0_r },
+	{ 0x01, 0x01, input_port_1_r },
+	{ 0x02, 0x02, input_port_2_r },
+	{ 0x04, 0x04, input_port_3_r },
+	{ 0x05, 0x05, input_port_4_r },
+PORT_END
+
+static PORT_WRITE_START( sprcros2_m_writeport )
+	{ 0x00, 0x00, SN76496_0_w },
+	{ 0x01, 0x01, SN76496_1_w },
+	{ 0x02, 0x02, SN76496_2_w },
+	{ 0x07, 0x07, sprcros2_m_port7_w },
+PORT_END
+
+static MEMORY_READ_START( sprcros2_s_readmem )
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0xbfff, MRA_ROM },
+	{ 0xc000, 0xdfff, MRA_BANK2 },
+	{ 0xe000, 0xf7ff, MRA_RAM },
+	{ 0xf800, 0xffff, sprcros2_sharedram_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( sprcros2_s_writemem )
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0x8000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xdfff, MWA_BANK2 },
+	{ 0xe000, 0xe7ff, sprcros2_bgvideoram_w, &sprcros2_bgvideoram },
+	{ 0xe800, 0xefff, MWA_RAM },						//always zero
+	{ 0xf000, 0xf7ff, MWA_RAM },
+	{ 0xf800, 0xffff, sprcros2_sharedram_w },
+MEMORY_END
+
+static PORT_WRITE_START( sprcros2_s_writeport )
+	{ 0x00, 0x00, sprcros2_bgscrollx_w },
+	{ 0x01, 0x01, sprcros2_bgscrolly_w },
+	{ 0x03, 0x03, sprcros2_s_port3_w },
+PORT_END
+
+INPUT_PORTS_START( sprcros2 )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* IN3 */
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_6C ) )
+	PORT_BIT( 0xf8, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* IN4 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x0e, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x70, IP_ACTIVE_HIGH, IPT_UNUSED )			//unused coinage bits
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+INPUT_PORTS_END
+
+static struct GfxLayout sprcros2_bglayout =
+{
+	8,8,
+	RGN_FRAC(1,3),
+	3,
+	{ RGN_FRAC(0,3), RGN_FRAC(1,3), RGN_FRAC(2,3) },
+	{ STEP8(0,1) },
+	{ STEP8(0,8) },
+	8*8
+};
+
+static struct GfxLayout sprcros2_spritelayout =
+{
+	32,32,
+	RGN_FRAC(1,3),
+	3,
+	{ RGN_FRAC(0,3), RGN_FRAC(1,3), RGN_FRAC(2,3) },
+	{ STEP8(0,1), STEP8(256,1), STEP8(512,1), STEP8(768,1) },
+	{ STEP16(0,8), STEP16(128,8) },
+	32*32
+};
+
+static struct GfxLayout sprcros2_fglayout =
+{
+	8,8,
+	RGN_FRAC(1,1),
+	2,
+	{ 0, 4 },
+	{ STEP4(64,1), STEP4(0,1) },
+	{ STEP8(0,8) },
+	8*8*2
+};
+
+static struct GfxDecodeInfo sprcros2_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &sprcros2_bglayout,     0,   16 },
+	{ REGION_GFX2, 0, &sprcros2_spritelayout, 256, 6  },
+	{ REGION_GFX3, 0, &sprcros2_fglayout,     512, 64 },
+	{ -1 } /* end of array */
+};
+
+static struct SN76496interface sprcros2_sn76496_interface =
+{
+	3,
+	{ 10000000/4, 10000000/4, 10000000/4 },
+	{ 50, 50, 50 }
+};
+
+static int sprcros2_m_interrupt(void)
+{
+	if (cpu_getiloops() == 0)
+	{
+		if(sprcros2_m_port7&0x01)
+			return nmi_interrupt();
+	}
+	else
+	{
+		if(sprcros2_m_port7&0x08)
+			return interrupt();
+	}
+
+	return ignore_interrupt();
+}
+
+static int sprcros2_s_interrupt(void)
+{
+	if(sprcros2_s_port3&0x01)
+		return nmi_interrupt();
+	else
+		return ignore_interrupt();
+}
+
+static const struct MachineDriver machine_driver_sprcros2 =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			10000000/2,
+			sprcros2_m_readmem,sprcros2_m_writemem,sprcros2_m_readport,sprcros2_m_writeport,
+			sprcros2_m_interrupt,2,	//1 nmi + 1 irq
+		},
+		{
+			CPU_Z80,
+			10000000/2,
+			sprcros2_s_readmem,sprcros2_s_writemem,0,sprcros2_s_writeport,
+			sprcros2_s_interrupt,2	//2 nmis
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
+	sprcros2_gfxdecodeinfo,
+	18,768,
+	sprcros2_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	sprcros2_vh_start,
+	0,
+	sprcros2_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SN76496,
+			&sprcros2_sn76496_interface
+		}
+	}
+};
+
+static void init_sprcros2(void)
+{
+	state_save_register_int("main", 0, "m_cpu_port7", &sprcros2_m_port7);
+	state_save_register_int("main", 0, "s_cpu_port3", &sprcros2_s_port3);
+}
+
+ROM_START( sprcros2 )
+	ROM_REGION( 0x14000, REGION_CPU1, 0 )
+	ROM_LOAD( "scm-03.10g", 0x00000, 0x4000, 0xb9757908 )
+	ROM_LOAD( "scm-02.10j", 0x04000, 0x4000, 0x849c5c87 )
+	ROM_LOAD( "scm-01.10k", 0x08000, 0x4000, 0x385a62de )
+
+	ROM_LOAD( "scm-00.10l", 0x10000, 0x4000, 0x13fa3684 )	//banked into c000-dfff
+
+	ROM_REGION( 0x14000, REGION_CPU2, 0 )
+	ROM_LOAD( "scs-30.5f",  0x00000, 0x4000, 0xc0a40e41 )
+	ROM_LOAD( "scs-29.5h",  0x04000, 0x4000, 0x83d49fa5 )
+	ROM_LOAD( "scs-28.5j",  0x08000, 0x4000, 0x480d351f )
+
+	ROM_LOAD( "scs-27.5k",  0x10000, 0x4000, 0x2cf720cb )	//banked into c000-dfff
+
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )	//bg
+	ROM_LOAD( "scs-26.4b",   0x0000, 0x4000, 0xf958b56d )
+	ROM_LOAD( "scs-25.4c",   0x4000, 0x4000, 0xd6fd7ba5 )
+	ROM_LOAD( "scs-24.4e",   0x8000, 0x4000, 0x87783c36 )
+
+	ROM_REGION( 0xc000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "scm-23.5b",   0x0000, 0x4000, 0xab42f8e3 )	//sprites
+	ROM_LOAD( "scm-22.5e",   0x4000, 0x4000, 0x0cad254c )
+	ROM_LOAD( "scm-21.5g",   0x8000, 0x4000, 0xb6b68998 )
+
+	ROM_REGION( 0x4000, REGION_GFX3, ROMREGION_DISPOSE )	//fg
+	ROM_LOAD( "scm-20.5k",   0x0000, 0x4000, 0x67a099a6 )
+
+	ROM_REGION( 0x0420, REGION_PROMS, 0 )
+	ROM_LOAD( "sc-64.6a",    0x0000, 0x0020, 0x336dd1c0 )	//palette
+	ROM_LOAD( "sc-63.3b",    0x0020, 0x0100, 0x9034a059 )	//bg clut lo nibble
+	ROM_LOAD( "sc-62.3a",    0x0120, 0x0100, 0x3c78a14f )	//bg clut hi nibble
+	ROM_LOAD( "sc-61.5a",    0x0220, 0x0100, 0x2f71185d )	//sprite clut
+	ROM_LOAD( "sc-60.4k",    0x0320, 0x0100, 0xd7a4e57d )	//fg clut
+ROM_END
+
+GAME( 1986, sprcros2, 0, sprcros2, sprcros2, sprcros2, ROT0, "GM Shoji", "Super Cross 2 (Japan)" )

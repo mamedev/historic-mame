@@ -350,7 +350,9 @@ static char *addr_to_hex(UINT32 addr, int splitup) {
     if (fp_segment(addr)==0 || fp_offset(addr)==0xffff) /* 'coz of wraparound */
       sprintf(buffer, "%04X", (unsigned)fp_offset(addr) );
     else
-      sprintf(buffer, "%04X:%04X", (unsigned)fp_segment(addr), (unsigned)fp_offset(addr) );
+//      sprintf(buffer, "%04X:%04X", (unsigned)fp_segment(addr), (unsigned)fp_offset(addr) );
+      sprintf(buffer, "%04X:%04X", (unsigned)addr >> 4, (unsigned)addr - ((addr >> 4) << 4) );
+
   } else {
     if (fp_segment(addr)==0 || fp_segment(addr)==0xffff) /* 'coz of wraparound */
       sprintf(buffer, "%04X", (unsigned)fp_offset(addr) );
@@ -669,8 +671,7 @@ static void percent(char type, char subtype)
             break;
        case 2:
             vofs = getbyte();
-            vofs += getbyte()<<8;
-            vofs = (INT16)vofs;
+            vofs |= getbyte()<<8;
             break;
        case 4:
             vofs = (UINT32)getbyte();           /* yuk! */

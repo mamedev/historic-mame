@@ -628,7 +628,7 @@ static const struct MachineDriver machine_driver_bssoccer =
 	/* video hardware */
 	256, 256, { 0, 256-1, 0+16, 256-16-1 },
 	suna16_gfxdecodeinfo,
-	512+1, 0,		/* 2 banks of 256 colors, plus one entry for background black */
+	512, 0,
 	0,
 	VIDEO_TYPE_RASTER,
 	0,
@@ -699,7 +699,7 @@ static const struct MachineDriver machine_driver_uballoon =
 	/* video hardware */
 	256, 256, { 0, 256-1, 0+16, 256-16-1 },
 	suna16_gfxdecodeinfo,
-	512+1, 0,		/* 2 banks of 256 colors, plus one entry for background black */
+	512, 0,
 	0,
 	VIDEO_TYPE_RASTER,
 	0,

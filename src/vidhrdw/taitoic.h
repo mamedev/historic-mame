@@ -2,6 +2,20 @@
 				Taito Custom Chips
 ***************************************************************************/
 
+
+int number_of_TC0100SCN(void);
+int has_TC0110PCR(void);
+int has_second_TC0110PCR(void);
+int has_third_TC0110PCR(void);
+int has_TC0150ROD(void);
+int has_TC0280GRD(void);
+int has_TC0360PRI(void);
+int has_TC0430GRW(void);
+int has_TC0480SCP(void);
+
+
+/***************************************************************************/
+
 int PC080SN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int y_invert,int opaque,int dblwidth);
 void PC080SN_vh_stop(void);
 READ16_HANDLER ( PC080SN_word_0_r );
@@ -113,6 +127,7 @@ WRITE16_HANDLER( TC0430GRW_ctrl_word_w );
 void TC0430GRW_tilemap_update(int base_color);
 void TC0430GRW_zoom_draw(struct mame_bitmap *bitmap,int xoffset,int yoffset,UINT32 priority);
 
+
 /***************************************************************************/
 
 /* When writing a driver, pass zero for the text and flip offsets initially:
@@ -142,6 +157,15 @@ int TC0480SCP_get_bg_priority(void);
 
 /* Undrfire needs to read this for a sprite/tile priority hack */
 extern int TC0480SCP_pri_reg;
+
+
+/***************************************************************************/
+
+READ16_HANDLER( TC0150ROD_word_r );
+WRITE16_HANDLER( TC0150ROD_word_w );
+int TC0150ROD_vh_start(void);
+void TC0150ROD_vh_stop(void);
+void TC0150ROD_draw(struct mame_bitmap *bitmap,int y_offs,int palette_offs,int type,int road_trans,UINT32 priority);
 
 
 /***************************************************************************/

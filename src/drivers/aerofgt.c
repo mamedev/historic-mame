@@ -29,6 +29,8 @@ turbofrc 352x240  57 63 69 71 1f 00  77 79 7b 7f 1f 00
 spinlbrk 352x240  57 68 6f 75 ff 01  77 78 7b 7f ff 00
 aerofgtb 320x224  4f 5d 63 71 1f 00  6f 70 72 7c 1f 02
 tail2nos 320x240  4f 5e 64 71 1f 09  7a 7c 7e 7f 1f 02
+welltris 352x240  57 63 69 71 1f 00  7a 7b 7e 7f 1f 00
+
 
 games with 8x4 tiles:
 

@@ -14,6 +14,8 @@ extern const struct Memory_ReadAddress williams_narc_slave_readmem[];
 extern const struct Memory_WriteAddress williams_narc_slave_writemem[];
 extern const struct Memory_ReadAddress16 williams_dcs_readmem[];
 extern const struct Memory_WriteAddress16 williams_dcs_writemem[];
+extern const struct Memory_ReadAddress16 williams_dcs_uart_readmem[];
+extern const struct Memory_WriteAddress16 williams_dcs_uart_writemem[];
 
 
 extern struct CustomSound_interface williams_custom_interface;
@@ -39,6 +41,7 @@ void williams_narc_data_w(int data);
 void williams_narc_reset_w(int state);
 
 void williams_dcs_init(int cpunum);
+void williams_dcs_set_notify(void (*callback)(int));
 int williams_dcs_data_r(void);
 int williams_dcs_control_r(void);
 void williams_dcs_data_w(int data);
@@ -130,11 +133,20 @@ void williams_dcs_reset_w(int state);
 		SOUND_HC55516,										\
 		&williams_cvsd_interface							\
 	}
+
 #define SOUND_CPU_WILLIAMS_DCS								\
 	{														\
 		CPU_ADSP2105 | CPU_AUDIO_CPU,						\
 		10240000,	/* 10.24 MHz */							\
 		williams_dcs_readmem,williams_dcs_writemem,0,0,		\
+		ignore_interrupt,0									\
+	}
+
+#define SOUND_CPU_WILLIAMS_DCS_UART							\
+	{														\
+		CPU_ADSP2105 | CPU_AUDIO_CPU,						\
+		10240000,	/* 10.24 MHz */							\
+		williams_dcs_uart_readmem,williams_dcs_uart_writemem,0,0,\
 		ignore_interrupt,0									\
 	}
 

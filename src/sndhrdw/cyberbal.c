@@ -118,7 +118,7 @@ int cyberbal_sound_68k_irq_gen(void)
 		fast_68k_int = 1;
 		update_sound_68k_interrupts();
 	}
-	return 0;
+	return ignore_interrupt();
 }
 
 

@@ -521,7 +521,7 @@ static const struct MachineDriver machine_driver_bzone =
 	400, 300, { 0, 580, 0, 400 },
 	0,
 	256+32768, 0,
-	avg_init_palette_bzone,
+	avg_init_palette_multi,
 
 	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
 	0,
@@ -589,7 +589,7 @@ static const struct MachineDriver machine_driver_redbaron =
 	/* video hardware */
 	400, 300, { 0, 520, 0, 400 },
 	0,
-	256, 0,
+	256+32768, 0,
 	avg_init_palette_aqua,
 
 	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,

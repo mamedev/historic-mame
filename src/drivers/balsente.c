@@ -4,8 +4,7 @@
 
     driver by Aaron Giles
 
-
-	Currently implemented:
+	Games supported:
 		* Chicken Shift
 		* Gimme a Break
 		* Goalie Ghost
@@ -16,6 +15,7 @@
 		* Off the Wall
 		* Rescue Raider
 		* Sente Diagnostic Cartridge
+		* Shrike Avenger
 		* Snacks'n Jaxson
 		* Snake Pit
 		* Spiker
@@ -31,13 +31,12 @@
 
 	Looking for ROMs for these:
 		* Euro Stocker
-		* Strike Avenger
 		* Team Hat Trick
-		* Trick Shot
 		* Trivial Pursuit (Spanish)
 
-	Unknowns:
-		* Snack Attack (may be another name for Snacks'n Jaxson)
+	Known bugs:
+		* CEM3394 emulation is not perfect
+		* Shrike Avenger doesn't work properly
 
 ****************************************************************************
 
@@ -142,97 +141,17 @@
 
 ***************************************************************************/
 
-
 #include "driver.h"
-#include "cpu/m6809/m6809.h"
 #include "vidhrdw/generic.h"
-#include <math.h>
+#include "balsente.h"
 
 
-#define LOG_CEM_WRITES		0
 
-
-/* video driver data & functions */
-int balsente_vh_start(void);
-void balsente_vh_stop(void);
-void balsente_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-WRITE_HANDLER( balsente_videoram_w );
-WRITE_HANDLER( balsente_paletteram_w );
-WRITE_HANDLER( balsente_palette_select_w );
-
-
-/* local prototypes */
-static void poly17_init(void);
-static void counter_set_out(int which, int gate);
-static WRITE_HANDLER( m6850_w );
-static WRITE_HANDLER( m6850_sound_w );
-static void counter_callback(int param);
-
-
-/* global data */
-UINT8 balsente_shooter;
-UINT8 balsente_shooter_x;
-UINT8 balsente_shooter_y;
-
-
-/* 8253 counter state */
-struct counter_state
-{
-	void *timer;
-	INT32 initial;
-	INT32 count;
-	UINT8 gate;
-	UINT8 out;
-	UINT8 mode;
-	UINT8 readbyte;
-	UINT8 writebyte;
-};
-
-static struct counter_state counter[3];
-
-/* manually clocked counter 0 states */
-static UINT8 counter_control;
-static UINT8 counter_0_ff;
-static void *counter_0_timer;
-
-/* random number generator states */
-static UINT8 *poly17 = NULL;
-static UINT8 *rand17 = NULL;
-
-/* ADC I/O states */
-static INT8 analog_input_data[4];
-static UINT8 adc_value;
-static UINT8 adc_shift;
-
-/* CEM3394 DAC control states */
-static UINT16 dac_value;
-static UINT8 dac_register;
-static UINT8 chip_select;
-
-/* main CPU 6850 states */
-static UINT8 m6850_status;
-static UINT8 m6850_control;
-static UINT8 m6850_input;
-static UINT8 m6850_output;
-static UINT8 m6850_data_ready;
-
-/* sound CPU 6850 states */
-static UINT8 m6850_sound_status;
-static UINT8 m6850_sound_control;
-static UINT8 m6850_sound_input;
-static UINT8 m6850_sound_output;
-
-/* noise generator states */
-static UINT32 noise_position[6];
-
-/* game-specific states */
-static UINT8 nstocker_bits;
-static UINT8 spiker_expand_color;
-static UINT8 spiker_expand_bgcolor;
-static UINT8 spiker_expand_bits;
-
-
+/*************************************
+ *
+ *	NVRAM handling
+ *
+ *************************************/
 
 static unsigned char *nvram;
 static size_t nvram_size;
@@ -240,1042 +159,11 @@ static size_t nvram_size;
 static void nvram_handler(void *file, int read_or_write)
 {
 	if (read_or_write)
-		osd_fwrite(file,nvram,nvram_size);
+		osd_fwrite(file, nvram, nvram_size);
+	else if (file)
+		osd_fread(file, nvram, nvram_size);
 	else
-	{
-		if (file)
-			osd_fread(file,nvram,nvram_size);
-		else
-			memset(nvram,0,nvram_size);
-	}
-}
-
-
-
-/*************************************
- *
- *	Interrupt handling
- *
- *************************************/
-
-static void irq_off(int param)
-{
-	cpu_set_irq_line(0, M6809_IRQ_LINE, CLEAR_LINE);
-}
-
-
-static void interrupt_timer(int param)
-{
-	/* next interrupt after scanline 256 is scanline 64 */
-	if (param == 256)
-		timer_set(cpu_getscanlinetime(64), 64, interrupt_timer);
-	else
-		timer_set(cpu_getscanlinetime(param + 64), param + 64, interrupt_timer);
-
-	/* IRQ starts on scanline 0, 64, 128, etc. */
-	cpu_set_irq_line(0, M6809_IRQ_LINE, ASSERT_LINE);
-
-	/* it will turn off on the next HBLANK */
-	timer_set(cpu_getscanlineperiod() * 0.9, 0, irq_off);
-
-	/* if we're a shooter, we do a little more work */
-	if (balsente_shooter)
-	{
-		UINT8 tempx, tempy;
-
-		/* we latch the beam values on the first interrupt after VBLANK */
-		if (param == 64 && balsente_shooter)
-		{
-			balsente_shooter_x = readinputport(8);
-			balsente_shooter_y = readinputport(9);
-		}
-
-		/* which bits get returned depends on which scanline we're at */
-		tempx = balsente_shooter_x << ((param - 64) / 64);
-		tempy = balsente_shooter_y << ((param - 64) / 64);
-		nstocker_bits = ((tempx >> 4) & 0x08) | ((tempx >> 1) & 0x04) |
-						((tempy >> 6) & 0x02) | ((tempy >> 3) & 0x01);
-	}
-}
-
-
-static void init_machine(void)
-{
-	/* create the polynomial tables */
-	poly17_init();
-
-	/* reset counters; counter 2's gate is tied high */
-	memset(counter, 0, sizeof(counter) );
-	counter[2].gate = 1;
-
-	/* reset the manual counter 0 clock */
-	counter_control = 0x00;
-	counter_0_ff = 0;
-	counter_0_timer = NULL;
-
-	/* reset the ADC states */
-	adc_value = 0;
-
-	/* reset the CEM3394 I/O states */
-	dac_value = 0;
-	dac_register = 0;
-	chip_select = 0x3f;
-
-	/* reset the 6850 chips */
-	m6850_w(0, 3);
-	m6850_sound_w(0, 3);
-
-	/* reset the noise generator */
-	memset(noise_position, 0, sizeof(noise_position) );
-
-	/* point the banks to bank 0 */
-	cpu_setbank(1, &memory_region(REGION_CPU1)[0x10000]);
-	cpu_setbank(2, &memory_region(REGION_CPU1)[0x12000]);
-
-	/* start a timer to generate interrupts */
-	timer_set(cpu_getscanlinetime(0), 0, interrupt_timer);
-}
-
-
-
-/*************************************
- *
- *	MM5837 noise generator
- *
- *	NOTE: this is stolen straight from
- *			POKEY.c
- *
- *************************************/
-
-#define POLY17_BITS 17
-#define POLY17_SIZE ((1 << POLY17_BITS) - 1)
-#define POLY17_SHL	7
-#define POLY17_SHR	10
-#define POLY17_ADD	0x18000
-
-static void poly17_init(void)
-{
-	UINT32 i, x = 0;
-	UINT8 *p, *r;
-
-	/* free stale memory */
-	if (poly17)
-		free(poly17);
-	poly17 = rand17 = NULL;
-
-	/* allocate memory */
-	p = poly17 = malloc(2 * (POLY17_SIZE + 1) );
-	if (!poly17)
-		return;
-	r = rand17 = poly17 + POLY17_SIZE + 1;
-
-	/* generate the polynomial */
-	for (i = 0; i < POLY17_SIZE; i++)
-	{
-        /* store new values */
-		*p++ = x & 1;
-		*r++ = x >> 3;
-
-        /* calculate next bit */
-		x = ((x << POLY17_SHL) + (x >> POLY17_SHR) + POLY17_ADD) & POLY17_SIZE;
-	}
-}
-
-
-static void noise_gen(int chip, int count, short *buffer)
-{
-	if (Machine->sample_rate)
-	{
-		/* noise generator runs at 100kHz */
-		UINT32 step = (100000 << 14) / Machine->sample_rate;
-		UINT32 noise_counter = noise_position[chip];
-
-		/* try to use the poly17 if we can */
-		if (poly17)
-		{
-			while (count--)
-			{
-				*buffer++ = poly17[(noise_counter >> 14) & POLY17_SIZE] << 12;
-				noise_counter += step;
-			}
-		}
-
-		/* otherwise just use random numbers */
-		else
-		{
-			while (count--)
-				*buffer++ = rand() & 0x1000;
-		}
-
-		/* remember the noise position */
-		noise_position[chip] = noise_counter;
-	}
-}
-
-
-
-/*************************************
- *
- *	Hardware random numbers
- *
- *************************************/
-
-static WRITE_HANDLER( random_reset_w )
-{
-	/* reset random number generator */
-}
-
-
-static READ_HANDLER( random_num_r )
-{
-	unsigned int cc;
-
-	/* CPU runs at 1.25MHz, noise source at 100kHz --> multiply by 12.5 */
-	cc = cpu_gettotalcycles();
-
-	/* 12.5 = 8 + 4 + 0.5 */
-	cc = (cc << 3) + (cc << 2) + (cc >> 1);
-	return rand17[cc & POLY17_SIZE];
-}
-
-
-
-/*************************************
- *
- *	ROM banking
- *
- *************************************/
-
-static WRITE_HANDLER( rombank_select_w )
-{
-	int bank_offset = 0x6000 * ((data >> 4) & 7);
-
-	/* the bank number comes from bits 4-6 */
-	cpu_setbank(1, &memory_region(REGION_CPU1)[0x10000 + bank_offset]);
-	cpu_setbank(2, &memory_region(REGION_CPU1)[0x12000 + bank_offset]);
-}
-
-
-static WRITE_HANDLER( rombank2_select_w )
-{
-	/* Night Stocker and Name that Tune only so far.... */
-	int bank = data & 7;
-
-	/* top bit controls which half of the ROMs to use (Name that Tune only) */
-	if (memory_region_length(REGION_CPU1) > 0x40000) bank |= (data >> 4) & 8;
-
-	/* when they set the AB bank, it appears as though the CD bank is reset */
-	if (data & 0x20)
-	{
-		cpu_setbank(1, &memory_region(REGION_CPU1)[0x10000 + 0x6000 * bank]);
-		cpu_setbank(2, &memory_region(REGION_CPU1)[0x12000 + 0x6000 * 6]);
-	}
-
-	/* set both banks */
-	else
-	{
-		cpu_setbank(1, &memory_region(REGION_CPU1)[0x10000 + 0x6000 * bank]);
-		cpu_setbank(2, &memory_region(REGION_CPU1)[0x12000 + 0x6000 * bank]);
-	}
-}
-
-
-
-/*************************************
- *
- *	Special outputs
- *
- *************************************/
-
-static WRITE_HANDLER( misc_output_w )
-{
-	offset = (offset / 4) % 8;
-	data >>= 7;
-
-	/* these are generally used to control the various lamps */
-	/* special case is offset 7, which recalls the NVRAM data */
-	if (offset == 7)
-	{
-		logerror("nvrecall_w=%d\n", data);
-	}
-	else
-	{
-//		set_led_status(offset, data);
-	}
-}
-
-
-
-/*************************************
- *
- *	6850 UART communications
- *
- *************************************/
-
-static void m6850_update_io(void)
-{
-	UINT8 new_state;
-
-	/* sound -> main CPU communications */
-	if (!(m6850_sound_status & 0x02) )
-	{
-		/* set the overrun bit if the data in the destination hasn't been read yet */
-		if (m6850_status & 0x01)
-			m6850_status |= 0x20;
-
-		/* copy the sound's output to our input */
-		m6850_input = m6850_sound_output;
-
-		/* set the receive register full bit */
-		m6850_status |= 0x01;
-
-		/* set the sound's trasmitter register empty bit */
-		m6850_sound_status |= 0x02;
-	}
-
-	/* main -> sound CPU communications */
-	if (m6850_data_ready)
-	{
-		/* set the overrun bit if the data in the destination hasn't been read yet */
-		if (m6850_sound_status & 0x01)
-			m6850_sound_status |= 0x20;
-
-		/* copy the main CPU's output to our input */
-		m6850_sound_input = m6850_output;
-
-		/* set the receive register full bit */
-		m6850_sound_status |= 0x01;
-
-		/* set the main CPU's trasmitter register empty bit */
-		m6850_status |= 0x02;
-		m6850_data_ready = 0;
-	}
-
-	/* check for reset states */
-	if ((m6850_control & 3) == 3)
-	{
-		m6850_status = 0x02;
-		m6850_data_ready = 0;
-	}
-	if ((m6850_sound_control & 3) == 3)
-		m6850_sound_status = 0x02;
-
-	/* check for transmit/receive IRQs on the main CPU */
-	new_state = 0;
-	if ((m6850_control & 0x80) && (m6850_status & 0x21) ) new_state = 1;
-	if ((m6850_control & 0x60) == 0x20 && (m6850_status & 0x02) ) new_state = 1;
-
-	/* apply the change */
-	if (new_state && !(m6850_status & 0x80) )
-	{
-		cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
-		m6850_status |= 0x80;
-	}
-	else if (!new_state && (m6850_status & 0x80) )
-	{
-		cpu_set_irq_line(0, M6809_FIRQ_LINE, CLEAR_LINE);
-		m6850_status &= ~0x80;
-	}
-
-	/* check for transmit/receive IRQs on the sound CPU */
-	new_state = 0;
-	if ((m6850_sound_control & 0x80) && (m6850_sound_status & 0x21) ) new_state = 1;
-	if ((m6850_sound_control & 0x60) == 0x20 && (m6850_sound_status & 0x02) ) new_state = 1;
-	if (!(counter_control & 0x20) ) new_state = 0;
-
-	/* apply the change */
-	if (new_state && !(m6850_sound_status & 0x80) )
-	{
-		cpu_set_nmi_line(1, ASSERT_LINE);
-		m6850_sound_status |= 0x80;
-	}
-	else if (!new_state && (m6850_sound_status & 0x80) )
-	{
-		cpu_set_nmi_line(1, CLEAR_LINE);
-		m6850_sound_status &= ~0x80;
-	}
-}
-
-
-
-/*************************************
- *
- *	6850 UART (main CPU)
- *
- *************************************/
-
-static READ_HANDLER( m6850_r )
-{
-	int result;
-
-	/* status register is at offset 0 */
-	if (offset == 0)
-	{
-		result = m6850_status;
-	}
-
-	/* input register is at offset 1 */
-	else
-	{
-		result = m6850_input;
-
-		/* clear the overrun and receive buffer full bits */
-		m6850_status &= ~0x21;
-		m6850_update_io();
-	}
-
-	return result;
-}
-
-
-static void m6850_data_ready_callback(int param)
-{
-	/* set the output data byte and indicate that we're ready to go */
-	m6850_output = param;
-	m6850_data_ready = 1;
-	m6850_update_io();
-}
-
-
-static void m6850_w_callback(int param)
-{
-	/* indicate that the transmit buffer is no longer empty and update the I/O state */
-	m6850_status &= ~0x02;
-	m6850_update_io();
-
-	/* set a timer for 500usec later to actually transmit the data */
-	/* (this is very important for several games, esp Snacks'n Jaxson) */
-	timer_set(TIME_IN_USEC(500), param, m6850_data_ready_callback);
-}
-
-
-static WRITE_HANDLER( m6850_w )
-{
-	/* control register is at offset 0 */
-	if (offset == 0)
-	{
-		m6850_control = data;
-
-		/* re-update since interrupt enables could have been modified */
-		m6850_update_io();
-	}
-
-	/* output register is at offset 1; set a timer to synchronize the CPUs */
-	else
-		timer_set(TIME_NOW, data, m6850_w_callback);
-}
-
-
-
-/*************************************
- *
- *	6850 UART (sound CPU)
- *
- *************************************/
-
-static READ_HANDLER( m6850_sound_r )
-{
-	int result;
-
-	/* status register is at offset 0 */
-	if (offset == 0)
-	{
-		result = m6850_sound_status;
-	}
-
-	/* input register is at offset 1 */
-	else
-	{
-		result = m6850_sound_input;
-
-		/* clear the overrun and receive buffer full bits */
-		m6850_sound_status &= ~0x21;
-		m6850_update_io();
-	}
-
-	return result;
-}
-
-
-static WRITE_HANDLER( m6850_sound_w )
-{
-	/* control register is at offset 0 */
-	if (offset == 0)
-		m6850_sound_control = data;
-
-	/* output register is at offset 1 */
-	else
-	{
-		m6850_sound_output = data;
-		m6850_sound_status &= ~0x02;
-	}
-
-	/* re-update since interrupt enables could have been modified */
-	m6850_update_io();
-}
-
-
-
-/*************************************
- *
- *	ADC handlers
- *
- *************************************/
-
-static int update_analog_inputs(void)
-{
-	int i;
-
-	/* the analog input system helpfully scales the value read by the percentage of time */
-	/* into the current frame we are; unfortunately, this is bad for us, since the analog */
-	/* ports are read once a frame, just at varying intervals. To get around this, we */
-	/* read all the analog inputs at VBLANK time and just return the cached values. */
-	for (i = 0; i < 4; i++)
-		analog_input_data[i] = readinputport(4 + i);
-
-	/* don't actually generate an interrupt here */
-	return ignore_interrupt();
-}
-
-
-static void adc_finished(int which)
-{
-	/* analog controls are read in two pieces; the lower port returns the sign */
-	/* and the upper port returns the absolute value of the magnitude */
-	int val = analog_input_data[which / 2] << adc_shift;
-
-	/* special case for Stompin' */
-	if (adc_shift == 32)
-	{
-		adc_value = analog_input_data[which];
-		return;
-	}
-
-	/* push everything out a little bit extra; most games seem to have a dead */
-	/* zone in the middle that feels unnatural with the mouse */
-	if (val < 0) val -= 8;
-	else if (val > 0) val += 8;
-
-	/* clip to 0xff maximum magnitude */
-	if (val < -0xff) val = -0xff;
-	else if (val > 0xff) val = 0xff;
-
-	/* return the sign */
-	if (!(which & 1) )
-		adc_value = (val < 0) ? 0xff : 0x00;
-
-	/* return the magnitude */
-	else
-		adc_value = (val < 0) ? -val : val;
-}
-
-
-static READ_HANDLER( adc_data_r )
-{
-	/* just return the last value read */
-	return adc_value;
-}
-
-
-static WRITE_HANDLER( adc_select_w )
-{
-	/* set a timer to go off and read the value after 50us */
-	/* it's important that we do this for Mini Golf */
-	timer_set(TIME_IN_USEC(50), offset & 7, adc_finished);
-}
-
-
-
-/*************************************
- *
- *	8253-5 timer utilities
- *
- *	NOTE: this is far from complete!
- *
- *************************************/
-
-INLINE void counter_start(int which)
-{
-	/* don't start a timer for channel 0; it is clocked manually */
-	if (which != 0)
-	{
-		/* only start a timer if we're gated and there is none already */
-		if (counter[which].gate && !counter[which].timer)
-			counter[which].timer = timer_set(TIME_IN_HZ(2000000) * (double)counter[which].count, which, counter_callback);
-	}
-}
-
-
-INLINE void counter_stop(int which)
-{
-	/* only stop the timer if it exists */
-	if (counter[which].timer)
-		timer_remove(counter[which].timer);
-	counter[which].timer = NULL;
-}
-
-
-INLINE void counter_update_count(int which)
-{
-	/* only update if the timer is running */
-	if (counter[which].timer)
-	{
-		/* determine how many 2MHz cycles are remaining */
-		int count = (int)(timer_timeleft(counter[which].timer) / TIME_IN_HZ(2000000) );
-		counter[which].count = (count < 0) ? 0 : count;
-	}
-}
-
-
-
-/*************************************
- *
- *	8253-5 timer internals
- *
- *	NOTE: this is far from complete!
- *
- *************************************/
-
-static void counter_set_gate(int which, int gate)
-{
-	int oldgate = counter[which].gate;
-
-	/* remember the gate state */
-	counter[which].gate = gate;
-
-	/* if the counter is being halted, update the count and remove the system timer */
-	if (!gate && oldgate)
-	{
-		counter_update_count(which);
-		counter_stop(which);
-	}
-
-	/* if the counter is being started, create the timer */
-	else if (gate && !oldgate)
-	{
-		/* mode 1 waits for the gate to trigger the counter */
-		if (counter[which].mode == 1)
-		{
-			counter_set_out(which, 0);
-
-			/* add one to the count; technically, OUT goes low on the next clock pulse */
-			/* and then starts counting down; it's important that we don't count the first one */
-			counter[which].count = counter[which].initial + 1;
-		}
-
-		/* start the counter */
-		counter_start(which);
-	}
-}
-
-
-static void counter_set_out(int which, int out)
-{
-	/* OUT on counter 2 is hooked to the /INT line on the Z80 */
-	if (which == 2)
-		cpu_set_irq_line(1, 0, out ? ASSERT_LINE : CLEAR_LINE);
-
-	/* OUT on counter 0 is hooked to the GATE line on counter 1 */
-	else if (which == 0)
-		counter_set_gate(1, !out);
-
-	/* remember the out state */
-	counter[which].out = out;
-}
-
-
-static void counter_callback(int param)
-{
-	/* reset the counter and the count */
-	counter[param].timer = NULL;
-	counter[param].count = 0;
-
-	/* set the state of the OUT line */
-	/* mode 0 and 1: when firing, transition OUT to high */
-	if (counter[param].mode == 0 || counter[param].mode == 1)
-		counter_set_out(param, 1);
-
-	/* no other modes handled currently */
-}
-
-
-
-/*************************************
- *
- *	8253-5 timer handlers
- *
- *	NOTE: this is far from complete!
- *
- *************************************/
-
-static READ_HANDLER( counter_8253_r )
-{
-	int which;
-
-	switch (offset & 3)
-	{
-		case 0:
-		case 1:
-		case 2:
-			/* warning: assumes LSB/MSB addressing and no latching! */
-			which = offset & 3;
-
-			/* update the count */
-			counter_update_count(which);
-
-			/* return the LSB */
-			if (counter[which].readbyte == 0)
-			{
-				counter[which].readbyte = 1;
-				return counter[which].count & 0xff;
-			}
-
-			/* write the MSB and reset the counter */
-			else
-			{
-				counter[which].readbyte = 0;
-				return (counter[which].count >> 8) & 0xff;
-			}
-			break;
-	}
-	return 0;
-}
-
-
-static WRITE_HANDLER( counter_8253_w )
-{
-	int which;
-
-	switch (offset & 3)
-	{
-		case 0:
-		case 1:
-		case 2:
-			/* warning: assumes LSB/MSB addressing and no latching! */
-			which = offset & 3;
-
-			/* if the counter is in mode 0, a write here will reset the OUT state */
-			if (counter[which].mode == 0)
-				counter_set_out(which, 0);
-
-			/* write the LSB */
-			if (counter[which].writebyte == 0)
-			{
-				counter[which].count = (counter[which].count & 0xff00) | (data & 0x00ff);
-				counter[which].initial = (counter[which].initial & 0xff00) | (data & 0x00ff);
-				counter[which].writebyte = 1;
-			}
-
-			/* write the MSB and reset the counter */
-			else
-			{
-				counter[which].count = (counter[which].count & 0x00ff) | ((data << 8) & 0xff00);
-				counter[which].initial = (counter[which].initial & 0x00ff) | ((data << 8) & 0xff00);
-				counter[which].writebyte = 0;
-
-				/* treat 0 as $10000 */
-				if (counter[which].count == 0) counter[which].count = counter[which].initial = 0x10000;
-
-				/* remove any old timer and set a new one */
-				counter_stop(which);
-
-				/* note that in mode 1, we have to wait for a rising edge of a gate */
-				if (counter[which].mode == 0)
-					counter_start(which);
-
-				/* if the counter is in mode 1, a write here will set the OUT state */
-				if (counter[which].mode == 1)
-					counter_set_out(which, 1);
-			}
-			break;
-
-		case 3:
-			/* determine which counter */
-			which = data >> 6;
-			if (which == 3) break;
-
-			/* if the counter was in mode 0, a write here will reset the OUT state */
-			if (((counter[which].mode >> 1) & 7) == 0)
-				counter_set_out(which, 0);
-
-			/* set the mode */
-			counter[which].mode = (data >> 1) & 7;
-
-			/* if the counter is in mode 0, a write here will reset the OUT state */
-			if (counter[which].mode == 0)
-				counter_set_out(which, 0);
-			break;
-	}
-}
-
-
-
-/*************************************
- *
- *	Sound CPU counter 0 emulation
- *
- *************************************/
-
-static void set_counter_0_ff(int newstate)
-{
-	/* the flip/flop output is inverted, so if we went high to low, that's a clock */
-	if (counter_0_ff && !newstate)
-	{
-		/* only count if gated and non-zero */
-		if (counter[0].count > 0 && counter[0].gate)
-		{
-			counter[0].count--;
-			if (counter[0].count == 0)
-				counter_callback(0);
-		}
-	}
-
-	/* remember the new state */
-	counter_0_ff = newstate;
-}
-
-
-static void clock_counter_0_ff(int param)
-{
-	/* clock the D value through the flip-flop */
-	set_counter_0_ff((counter_control >> 3) & 1);
-}
-
-
-static void update_counter_0_timer(void)
-{
-	double maxfreq = 0.0;
-	int i;
-
-	/* if there's already a timer, remove it */
-	if (counter_0_timer)
-		timer_remove(counter_0_timer);
-	counter_0_timer = NULL;
-
-	/* find the counter with the maximum frequency */
-	/* this is used to calibrate the timers at startup */
-	for (i = 0; i < 6; i++)
-		if (cem3394_get_parameter(i, CEM3394_FINAL_GAIN) < 10.0)
-		{
-			double tempfreq;
-
-			/* if the filter resonance is high, then they're calibrating the filter frequency */
-			if (cem3394_get_parameter(i, CEM3394_FILTER_RESONANCE) > 0.9)
-				tempfreq = cem3394_get_parameter(i, CEM3394_FILTER_FREQENCY);
-
-			/* otherwise, they're calibrating the VCO frequency */
-			else
-				tempfreq = cem3394_get_parameter(i, CEM3394_VCO_FREQUENCY);
-
-			if (tempfreq > maxfreq) maxfreq = tempfreq;
-		}
-
-	/* reprime the timer */
-	if (maxfreq > 0.0)
-		counter_0_timer = timer_pulse(TIME_IN_HZ(maxfreq), 0, clock_counter_0_ff);
-}
-
-
-
-/*************************************
- *
- *	Sound CPU counter handlers
- *
- *************************************/
-
-static READ_HANDLER( counter_state_r )
-{
-	/* bit D0 is the inverse of the flip-flop state */
-	int result = !counter_0_ff;
-
-	/* bit D1 is the OUT value from counter 0 */
-	if (counter[0].out) result |= 0x02;
-
-	return result;
-}
-
-
-static WRITE_HANDLER( counter_control_w )
-{
-	UINT8 diff_counter_control = counter_control ^ data;
-
-	/* set the new global value */
-	counter_control = data;
-
-	/* bit D0 enables/disables audio */
-	if (diff_counter_control & 0x01)
-	{
-		int ch;
-		for (ch = 0; ch < MIXER_MAX_CHANNELS; ch++)
-		{
-			const char *name = mixer_get_name(ch);
-			if (name && strstr(name, "3394") )
-				mixer_set_volume(ch, (data & 0x01) ? 100 : 0);
-		}
-	}
-
-	/* bit D1 is hooked to counter 0's gate */
-	/* if we gate on, start a pulsing timer to clock it */
-	if (!counter[0].gate && (data & 0x02) && !counter_0_timer)
-	{
-		update_counter_0_timer();
-	}
-
-	/* if we gate off, remove the timer */
-	else if (counter[0].gate && !(data & 0x02) && counter_0_timer)
-	{
-		timer_remove(counter_0_timer);
-		counter_0_timer = NULL;
-	}
-
-	/* set the actual gate afterwards, since we need to know the old value above */
-	counter_set_gate(0, (data >> 1) & 1);
-
-	/* bits D2 and D4 control the clear/reset flags on the flip-flop that feeds counter 0 */
-	if (!(data & 0x04) ) set_counter_0_ff(1);
-	if (!(data & 0x10) ) set_counter_0_ff(0);
-
-	/* bit 5 clears the NMI interrupt; recompute the I/O state now */
-	m6850_update_io();
-}
-
-
-
-/*************************************
- *
- *	Game-specific handlers
- *
- *************************************/
-
-static READ_HANDLER( nstocker_port2_r )
-{
-	return (readinputport(2) & 0xf0) | nstocker_bits;
-}
-
-
-static WRITE_HANDLER( spiker_expand_w )
-{
-	/* offset 0 is the bit pattern */
-	if (offset == 0)
-		spiker_expand_bits = data;
-
-	/* offset 1 is the background color (cleared on each read) */
-	else if (offset == 1)
-		spiker_expand_bgcolor = data;
-
-	/* offset 2 is the color */
-	else if (offset == 2)
-		spiker_expand_color = data;
-}
-
-
-static READ_HANDLER( spiker_expand_r )
-{
-	UINT8 left, right;
-
-	/* first rotate each nibble */
-	spiker_expand_bits = ((spiker_expand_bits << 1) & 0xee) | ((spiker_expand_bits >> 3) & 0x11);
-
-	/* compute left and right pixels */
-	left  = (spiker_expand_bits & 0x10) ? spiker_expand_color : spiker_expand_bgcolor;
-	right = (spiker_expand_bits & 0x01) ? spiker_expand_color : spiker_expand_bgcolor;
-
-	/* reset the background color */
-	spiker_expand_bgcolor = 0;
-
-	/* return the combined result */
-	return (left & 0xf0) | (right & 0x0f);
-}
-
-
-
-/*************************************
- *
- *	CEM3394 Interfaces
- *
- *************************************/
-
-static WRITE_HANDLER( chip_select_w )
-{
-	static const UINT8 register_map[8] =
-	{
-		CEM3394_VCO_FREQUENCY,
-		CEM3394_FINAL_GAIN,
-		CEM3394_FILTER_RESONANCE,
-		CEM3394_FILTER_FREQENCY,
-		CEM3394_MIXER_BALANCE,
-		CEM3394_MODULATION_AMOUNT,
-		CEM3394_PULSE_WIDTH,
-		CEM3394_WAVE_SELECT
-	};
-
-	double voltage = (double)dac_value * (8.0 / 4096.0) - 4.0;
-	int diffchip = data ^ chip_select, i;
-	int reg = register_map[dac_register];
-
-	/* remember the new select value */
-	chip_select = data;
-
-	/* check all six chip enables */
-	for (i = 0; i < 6; i++)
-		if ((diffchip & (1 << i) ) && (data & (1 << i) ) )
-		{
-			double temp = 0;
-
-			/* remember the previous value */
-			temp = cem3394_get_parameter(i, reg);
-
-			/* set the voltage */
-			cem3394_set_voltage(i, reg, voltage);
-
-			/* only log changes */
-#if LOG_CEM_WRITES
-			if (temp != cem3394_get_parameter(i, reg) )
-			{
-				static const char *names[] =
-				{
-					"VCO_FREQUENCY",
-					"FINAL_GAIN",
-					"FILTER_RESONANCE",
-					"FILTER_FREQENCY",
-					"MIXER_BALANCE",
-					"MODULATION_AMOUNT",
-					"PULSE_WIDTH",
-					"WAVE_SELECT"
-				};
-				logerror("s%04X:   CEM#%d:%s=%f\n", cpu_getpreviouspc(), i, names[dac_register], voltage);
-			}
-#endif
-		}
-
-	/* if a timer for counter 0 is running, recompute */
-	if (counter_0_timer)
-		update_counter_0_timer();
-}
-
-
-
-static WRITE_HANDLER( dac_data_w )
-{
-	/* LSB or MSB? */
-	if (offset & 1)
-		dac_value = (dac_value & 0xfc0) | ((data >> 2) & 0x03f);
-	else
-		dac_value = (dac_value & 0x03f) | ((data << 6) & 0xfc0);
-
-	/* if there are open channels, force the values in */
-	if ((chip_select & 0x3f) != 0x3f)
-	{
-		UINT8 temp = chip_select;
-		chip_select_w(0, 0x3f);
-		chip_select_w(0, temp);
-	}
-}
-
-
-static WRITE_HANDLER( register_addr_w )
-{
-	dac_register = data & 7;
+		memset(nvram, 0, nvram_size);
 }
 
 
@@ -1286,16 +174,15 @@ static WRITE_HANDLER( register_addr_w )
  *
  *************************************/
 
-/* CPU 1 read addresses */
 static MEMORY_READ_START( readmem_cpu1 )
 	{ 0x0000, 0x8fff, MRA_RAM },
-	{ 0x9400, 0x9400, adc_data_r },
+	{ 0x9400, 0x9401, balsente_adc_data_r },
 	{ 0x9900, 0x9900, input_port_0_r },
 	{ 0x9901, 0x9901, input_port_1_r },
 	{ 0x9902, 0x9902, input_port_2_r },
 	{ 0x9903, 0x9903, input_port_3_r },
-	{ 0x9a00, 0x9a03, random_num_r },
-	{ 0x9a04, 0x9a05, m6850_r },
+	{ 0x9a00, 0x9a03, balsente_random_num_r },
+	{ 0x9a04, 0x9a05, balsente_m6850_r },
 	{ 0x9b00, 0x9bff, MRA_RAM },		/* system NOVRAM */
 	{ 0x9c00, 0x9cff, MRA_RAM },		/* cart NOVRAM */
 	{ 0xa000, 0xbfff, MRA_BANK1 },
@@ -1303,21 +190,19 @@ static MEMORY_READ_START( readmem_cpu1 )
 MEMORY_END
 
 
-/* CPU 1 write addresses */
 static MEMORY_WRITE_START( writemem_cpu1 )
 	{ 0x0000, 0x07ff, MWA_RAM, &spriteram },
 	{ 0x0800, 0x7fff, balsente_videoram_w, &videoram, &videoram_size },
 	{ 0x8000, 0x8fff, balsente_paletteram_w, &paletteram },
-	{ 0x9000, 0x9007, adc_select_w },
-	{ 0x9800, 0x987f, misc_output_w },
-	{ 0x9880, 0x989f, random_reset_w },
-	{ 0x98a0, 0x98bf, rombank_select_w },
+	{ 0x9000, 0x9007, balsente_adc_select_w },
+	{ 0x9800, 0x987f, balsente_misc_output_w },
+	{ 0x9880, 0x989f, balsente_random_reset_w },
+	{ 0x98a0, 0x98bf, balsente_rombank_select_w },
 	{ 0x98c0, 0x98df, balsente_palette_select_w },
 	{ 0x98e0, 0x98ff, watchdog_reset_w },
 	{ 0x9903, 0x9903, MWA_NOP },
-	{ 0x9a04, 0x9a05, m6850_w },
+	{ 0x9a04, 0x9a05, balsente_m6850_w },
 	{ 0x9b00, 0x9cff, MWA_RAM, &nvram, &nvram_size },		/* system NOVRAM + cart NOVRAM */
-	{ 0x9f00, 0x9f00, rombank2_select_w },
 	{ 0xa000, 0xffff, MWA_ROM },
 MEMORY_END
 
@@ -1332,30 +217,53 @@ MEMORY_END
 static MEMORY_READ_START( readmem_cpu2 )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x5fff, MRA_RAM },
-	{ 0xe000, 0xffff, m6850_sound_r },
+	{ 0xe000, 0xffff, balsente_m6850_sound_r },
 MEMORY_END
 
 
 static MEMORY_WRITE_START( writemem_cpu2 )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x5fff, MWA_RAM },
-	{ 0x6000, 0x7fff, m6850_sound_w },
+	{ 0x6000, 0x7fff, balsente_m6850_sound_w },
 MEMORY_END
 
 
 static PORT_READ_START( readport_cpu2 )
-	{ 0x00, 0x03, counter_8253_r },
-	{ 0x08, 0x0f, counter_state_r },
+	{ 0x00, 0x03, balsente_counter_8253_r },
+	{ 0x08, 0x0f, balsente_counter_state_r },
 PORT_END
 
 
 static PORT_WRITE_START( writeport_cpu2 )
-	{ 0x00, 0x03, counter_8253_w },
-	{ 0x08, 0x09, counter_control_w },
-	{ 0x0a, 0x0b, dac_data_w },
-	{ 0x0c, 0x0d, register_addr_w },
-	{ 0x0e, 0x0f, chip_select_w },
+	{ 0x00, 0x03, balsente_counter_8253_w },
+	{ 0x08, 0x09, balsente_counter_control_w },
+	{ 0x0a, 0x0b, balsente_dac_data_w },
+	{ 0x0c, 0x0d, balsente_register_addr_w },
+	{ 0x0e, 0x0f, balsente_chip_select_w },
 PORT_END
+
+
+
+/*************************************
+ *
+ *	Shrike Avenger CPU memory handlers
+ *
+ *************************************/
+
+/* CPU 1 read addresses */
+static MEMORY_READ16_START( readmem_shrike68k )
+	{ 0x000000, 0x003fff, MRA16_ROM },
+	{ 0x010000, 0x01001f, shrike_shared_68k_r },
+	{ 0x018000, 0x018fff, MRA16_RAM },
+MEMORY_END
+
+
+/* CPU 1 write addresses */
+static MEMORY_WRITE16_START( writemem_shrike68k )
+	{ 0x000000, 0x003fff, MWA16_ROM },
+	{ 0x010000, 0x01001f, shrike_shared_68k_w, &shrike_shared },
+	{ 0x018000, 0x018fff, MWA16_RAM },
+MEMORY_END
 
 
 
@@ -2559,6 +1467,56 @@ INPUT_PORTS_START( rescraid )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( shrike )
+	PORT_START	/* IN0 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ))
+	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ))
+	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ))
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ))
+	PORT_DIPSETTING(    0x03, DEF_STR( Free_Play ))
+	PORT_BIT( 0x3c, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x40, 0x40, "Reset High Scores" )
+	PORT_DIPSETTING(    0x40, DEF_STR( No ))
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ))
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x03, 0x03, "Minimum Game Time" )
+	PORT_DIPSETTING(    0x00, "1:00" )
+	PORT_DIPSETTING(    0x01, "1:30" )
+	PORT_DIPSETTING(    0x02, "2:00" )
+	PORT_DIPSETTING(    0x03, "2:30" )
+	PORT_BIT( 0x7c, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )
+//	PORT_BIT( 0x3c, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x3c, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+
+	/* analog ports */
+	PORT_START
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 100, 20, 0x00, 0xff )
+	PORT_START
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER1, 100, 20, 0x00, 0xff )
+	UNUSED_ANALOG_X2
+INPUT_PORTS_END
+
+
 
 /*************************************
  *
@@ -2572,7 +1530,7 @@ static struct cem3394_interface cem_interface =
 	{ 90, 90, 90, 90, 90, 90 },
 	{ 431.894, 431.894, 431.894, 431.894, 431.894, 431.894 },
 	{ 1300.0, 1300.0, 1300.0, 1300.0, 1300.0, 1300.0 },
-	{ noise_gen, noise_gen, noise_gen, noise_gen, noise_gen, noise_gen }
+	{ balsente_noise_gen, balsente_noise_gen, balsente_noise_gen, balsente_noise_gen, balsente_noise_gen, balsente_noise_gen }
 };
 
 
@@ -2602,7 +1560,7 @@ static const struct MachineDriver machine_driver_balsente =
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
-	init_machine,
+	balsente_init_machine,
 
 	/* video hardware */
 	256, 240, { 0, 255, 0, 239 },
@@ -2613,7 +1571,7 @@ static const struct MachineDriver machine_driver_balsente =
 	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	balsente_vh_start,
-	balsente_vh_stop,
+	0,
 	balsente_vh_screenrefresh,
 
 	/* sound hardware */
@@ -2626,117 +1584,53 @@ static const struct MachineDriver machine_driver_balsente =
 };
 
 
-
-/*************************************
- *
- *	Driver initialization
- *
- *************************************/
-
-#define EXPAND_ALL		0x00
-#define EXPAND_NONE		0x3f
-#define SWAP_HALVES		0x80
-
-static void expand_roms(UINT8 cd_rom_mask)
+static const struct MachineDriver machine_driver_shrike =
 {
-	/* load AB bank data from 0x10000-0x20000 */
-	/* load CD bank data from 0x20000-0x2e000 */
-	/* load EF           from 0x2e000-0x30000 */
-	/* ROM region must be 0x40000 total */
-
-	UINT8 *temp = malloc(0x20000);
-	if (temp)
+	/* basic machine hardware */
 	{
-		UINT8 *rom = memory_region(REGION_CPU1);
-		UINT32 base;
-
-		for (base = 0x10000; base < memory_region_length(REGION_CPU1); base += 0x30000)
 		{
-			UINT8 *ab_base = &temp[0x00000];
-			UINT8 *cd_base = &temp[0x10000];
-			UINT8 *cd_common = &temp[0x1c000];
-			UINT8 *ef_common = &temp[0x1e000];
-			UINT32 dest;
-
-			for (dest = 0x00000; dest < 0x20000; dest += 0x02000)
-			{
-				if (cd_rom_mask & SWAP_HALVES)
-					memcpy(&temp[dest ^ 0x02000], &rom[base + dest], 0x02000);
-				else
-					memcpy(&temp[dest], &rom[base + dest], 0x02000);
-			}
-
-			memcpy(&rom[base + 0x2e000], ef_common, 0x2000);
-			memcpy(&rom[base + 0x2c000], cd_common, 0x2000);
-			memcpy(&rom[base + 0x2a000], &ab_base[0xe000], 0x2000);
-
-			memcpy(&rom[base + 0x28000], ef_common, 0x2000);
-			memcpy(&rom[base + 0x26000], cd_common, 0x2000);
-			memcpy(&rom[base + 0x24000], &ab_base[0xc000], 0x2000);
-
-			memcpy(&rom[base + 0x22000], ef_common, 0x2000);
-			memcpy(&rom[base + 0x20000], (cd_rom_mask & 0x20) ? &cd_base[0xa000] : cd_common, 0x2000);
-			memcpy(&rom[base + 0x1e000], &ab_base[0xa000], 0x2000);
-
-			memcpy(&rom[base + 0x1c000], ef_common, 0x2000);
-			memcpy(&rom[base + 0x1a000], (cd_rom_mask & 0x10) ? &cd_base[0x8000] : cd_common, 0x2000);
-			memcpy(&rom[base + 0x18000], &ab_base[0x8000], 0x2000);
-
-			memcpy(&rom[base + 0x16000], ef_common, 0x2000);
-			memcpy(&rom[base + 0x14000], (cd_rom_mask & 0x08) ? &cd_base[0x6000] : cd_common, 0x2000);
-			memcpy(&rom[base + 0x12000], &ab_base[0x6000], 0x2000);
-
-			memcpy(&rom[base + 0x10000], ef_common, 0x2000);
-			memcpy(&rom[base + 0x0e000], (cd_rom_mask & 0x04) ? &cd_base[0x4000] : cd_common, 0x2000);
-			memcpy(&rom[base + 0x0c000], &ab_base[0x4000], 0x2000);
-
-			memcpy(&rom[base + 0x0a000], ef_common, 0x2000);
-			memcpy(&rom[base + 0x08000], (cd_rom_mask & 0x02) ? &cd_base[0x2000] : cd_common, 0x2000);
-			memcpy(&rom[base + 0x06000], &ab_base[0x2000], 0x2000);
-
-			memcpy(&rom[base + 0x04000], ef_common, 0x2000);
-			memcpy(&rom[base + 0x02000], (cd_rom_mask & 0x01) ? &cd_base[0x0000] : cd_common, 0x2000);
-			memcpy(&rom[base + 0x00000], &ab_base[0x0000], 0x2000);
+			CPU_M6809,
+			5000000/4,                     /* 5MHz/4 */
+			readmem_cpu1,writemem_cpu1,0,0,
+			update_analog_inputs,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			4000000,                       /* 4MHz */
+			readmem_cpu2,writemem_cpu2,readport_cpu2,writeport_cpu2,
+			ignore_interrupt,1
+		},
+		{
+			CPU_M68000,
+			8000000,                       /* 8MHz??? */
+			readmem_shrike68k,writemem_shrike68k,0,0,
+			ignore_interrupt,1
 		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	100,
+	balsente_init_machine,
 
-		free(temp);
-	}
-}
+	/* video hardware */
+	256, 240, { 0, 255, 0, 239 },
+	0,
+	1025,1025,
+	0,
 
-static void init_sentetst(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
-static void init_cshift(void)   { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
-static void init_gghost(void)   { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 1; }
-static void init_hattrick(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
-static void init_otwalls(void)  { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 0; }
-static void init_snakepit(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 1; }
-static void init_snakjack(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 1; }
-static void init_stocker(void)  { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 0; }
-static void init_triviag1(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
-static void init_triviag2(void)
-{
-	memcpy(&memory_region(REGION_CPU1)[0x20000], &memory_region(REGION_CPU1)[0x28000], 0x4000);
-	memcpy(&memory_region(REGION_CPU1)[0x24000], &memory_region(REGION_CPU1)[0x28000], 0x4000);
-	expand_roms(EXPAND_NONE); balsente_shooter = 0; /* noanalog */
-}
-static void init_gimeabrk(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 1; }
-static void init_minigolf(void) { expand_roms(EXPAND_NONE); balsente_shooter = 0; adc_shift = 2; }
-static void init_minigol2(void) { expand_roms(0x0c);        balsente_shooter = 0; adc_shift = 2; }
-static void init_toggle(void)   { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
-static void init_nametune(void) { expand_roms(EXPAND_NONE | SWAP_HALVES); balsente_shooter = 0; /* noanalog */ }
-static void init_nstocker(void)
-{
-	install_mem_read_handler(0, 0x9902, 0x9902, nstocker_port2_r);
-	expand_roms(EXPAND_NONE | SWAP_HALVES); balsente_shooter = 1; adc_shift = 1;
-}
-static void init_sfootbal(void) { expand_roms(EXPAND_ALL  | SWAP_HALVES); balsente_shooter = 0; adc_shift = 0; }
-static void init_spiker(void)
-{
-	install_mem_write_handler(0, 0x9f80, 0x9f8f, spiker_expand_w);
-	install_mem_read_handler(0, 0x9f80, 0x9f8f, spiker_expand_r);
-	expand_roms(EXPAND_ALL  | SWAP_HALVES); balsente_shooter = 0; adc_shift = 1;
-}
-static void init_stompin(void)  { expand_roms(0x0c | SWAP_HALVES); balsente_shooter = 0; adc_shift = 32; }
-static void init_rescraid(void) { expand_roms(EXPAND_NONE); balsente_shooter = 0; /* noanalog */ }
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
+	0,
+	balsente_vh_start,
+	0,
+	balsente_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{ SOUND_CEM3394, &cem_interface }
+	},
+
+	nvram_handler
+};
 
 
 
@@ -3222,6 +2116,180 @@ ROM_START( rescrdsa )
 ROM_END
 
 
+ROM_START( shrike )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_LOAD( "savgu35.bin", 0x10000, 0x2000, 0xdd2230a0 )
+	ROM_LOAD( "savgu20.bin", 0x12000, 0x2000, 0x3d140edc )
+	ROM_LOAD( "savgu34.bin", 0x14000, 0x2000, 0x779eca9d )
+	ROM_LOAD( "savgu19.bin", 0x16000, 0x2000, 0x9ec89a80 )
+	ROM_LOAD( "savgu33.bin", 0x18000, 0x2000, 0x20596f48 )
+	ROM_LOAD( "savgu18.bin", 0x1a000, 0x2000, 0x7abc3f14 )
+	ROM_LOAD( "savgu32.bin", 0x1c000, 0x2000, 0x807f0a3b )
+	ROM_LOAD( "savgu17.bin", 0x1e000, 0x2000, 0xe0dbf6ad )
+	ROM_LOAD( "savgu21.bin", 0x2c000, 0x2000, 0xc22b93e1 )
+	ROM_LOAD( "savgu36.bin", 0x2e000, 0x2000, 0x28431c4a )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
+	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
+
+	ROM_REGION( 0x4000, REGION_CPU3, 0 )		/* 16k for M68000 */
+	ROM_LOAD16_BYTE( "savgu22.bin", 0x00000, 0x2000, 0xc7787162 )
+	ROM_LOAD16_BYTE( "savgu24.bin", 0x00001, 0x2000, 0xa9105ca8 )
+
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )		/* up to 64k of sprites */
+	ROM_LOAD( "savgu8.bin",  0x00000, 0x2000, 0x499a1d06 )
+	ROM_LOAD( "savgu7.bin",  0x02000, 0x2000, 0xce0607f9 )
+	ROM_LOAD( "savgu6.bin",  0x04000, 0x2000, 0x01d1b31e )
+	ROM_LOAD( "savgu5.bin",  0x06000, 0x2000, 0x8bc6d101 )
+	ROM_LOAD( "savgu4.bin",  0x08000, 0x2000, 0x72644753 )
+	ROM_LOAD( "savgu3.bin",  0x0a000, 0x2000, 0x606a9cfd )
+	ROM_LOAD( "savgu2.bin",  0x0c000, 0x2000, 0x69f600f6 )
+	ROM_LOAD( "savgu1.bin",  0x0e000, 0x2000, 0x303b8e7b )
+	ROM_LOAD( "savgu16.bin", 0x10000, 0x2000, 0xb8f60607 )
+	ROM_LOAD( "savgu15.bin", 0x12000, 0x2000, 0x6b332a5d )
+	ROM_LOAD( "savgu14.bin", 0x14000, 0x2000, 0x8d5117aa )
+	ROM_LOAD( "savgu13.bin", 0x16000, 0x2000, 0xd3ce645e )
+	ROM_LOAD( "savgu12.bin", 0x18000, 0x2000, 0xccdfedb1 )
+	ROM_LOAD( "savgu11.bin", 0x1a000, 0x2000, 0xdb11ff4c )
+	ROM_LOAD( "savgu10.bin", 0x1c000, 0x2000, 0x6f3d9aa1 )
+ROM_END
+
+
+
+/*************************************
+ *
+ *	Driver initialization
+ *
+ *************************************/
+
+#define EXPAND_ALL		0x00
+#define EXPAND_NONE		0x3f
+#define SWAP_HALVES		0x80
+
+static void expand_roms(UINT8 cd_rom_mask)
+{
+	/* load AB bank data from 0x10000-0x20000 */
+	/* load CD bank data from 0x20000-0x2e000 */
+	/* load EF           from 0x2e000-0x30000 */
+	/* ROM region must be 0x40000 total */
+
+	UINT8 *temp = malloc(0x20000);
+	if (temp)
+	{
+		UINT8 *rom = memory_region(REGION_CPU1);
+		UINT32 base;
+
+		for (base = 0x10000; base < memory_region_length(REGION_CPU1); base += 0x30000)
+		{
+			UINT8 *ab_base = &temp[0x00000];
+			UINT8 *cd_base = &temp[0x10000];
+			UINT8 *cd_common = &temp[0x1c000];
+			UINT8 *ef_common = &temp[0x1e000];
+			UINT32 dest;
+
+			for (dest = 0x00000; dest < 0x20000; dest += 0x02000)
+			{
+				if (cd_rom_mask & SWAP_HALVES)
+					memcpy(&temp[dest ^ 0x02000], &rom[base + dest], 0x02000);
+				else
+					memcpy(&temp[dest], &rom[base + dest], 0x02000);
+			}
+
+			memcpy(&rom[base + 0x2e000], ef_common, 0x2000);
+			memcpy(&rom[base + 0x2c000], cd_common, 0x2000);
+			memcpy(&rom[base + 0x2a000], &ab_base[0xe000], 0x2000);
+
+			memcpy(&rom[base + 0x28000], ef_common, 0x2000);
+			memcpy(&rom[base + 0x26000], cd_common, 0x2000);
+			memcpy(&rom[base + 0x24000], &ab_base[0xc000], 0x2000);
+
+			memcpy(&rom[base + 0x22000], ef_common, 0x2000);
+			memcpy(&rom[base + 0x20000], (cd_rom_mask & 0x20) ? &cd_base[0xa000] : cd_common, 0x2000);
+			memcpy(&rom[base + 0x1e000], &ab_base[0xa000], 0x2000);
+
+			memcpy(&rom[base + 0x1c000], ef_common, 0x2000);
+			memcpy(&rom[base + 0x1a000], (cd_rom_mask & 0x10) ? &cd_base[0x8000] : cd_common, 0x2000);
+			memcpy(&rom[base + 0x18000], &ab_base[0x8000], 0x2000);
+
+			memcpy(&rom[base + 0x16000], ef_common, 0x2000);
+			memcpy(&rom[base + 0x14000], (cd_rom_mask & 0x08) ? &cd_base[0x6000] : cd_common, 0x2000);
+			memcpy(&rom[base + 0x12000], &ab_base[0x6000], 0x2000);
+
+			memcpy(&rom[base + 0x10000], ef_common, 0x2000);
+			memcpy(&rom[base + 0x0e000], (cd_rom_mask & 0x04) ? &cd_base[0x4000] : cd_common, 0x2000);
+			memcpy(&rom[base + 0x0c000], &ab_base[0x4000], 0x2000);
+
+			memcpy(&rom[base + 0x0a000], ef_common, 0x2000);
+			memcpy(&rom[base + 0x08000], (cd_rom_mask & 0x02) ? &cd_base[0x2000] : cd_common, 0x2000);
+			memcpy(&rom[base + 0x06000], &ab_base[0x2000], 0x2000);
+
+			memcpy(&rom[base + 0x04000], ef_common, 0x2000);
+			memcpy(&rom[base + 0x02000], (cd_rom_mask & 0x01) ? &cd_base[0x0000] : cd_common, 0x2000);
+			memcpy(&rom[base + 0x00000], &ab_base[0x0000], 0x2000);
+		}
+
+		free(temp);
+	}
+}
+
+static void init_sentetst(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
+static void init_cshift(void)   { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
+static void init_gghost(void)   { expand_roms(EXPAND_ALL);  balsente_shooter = 0; balsente_adc_shift = 1; }
+static void init_hattrick(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
+static void init_otwalls(void)  { expand_roms(EXPAND_ALL);  balsente_shooter = 0; balsente_adc_shift = 0; }
+static void init_snakepit(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; balsente_adc_shift = 1; }
+static void init_snakjack(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; balsente_adc_shift = 1; }
+static void init_stocker(void)  { expand_roms(EXPAND_ALL);  balsente_shooter = 0; balsente_adc_shift = 0; }
+static void init_triviag1(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
+static void init_triviag2(void)
+{
+	memcpy(&memory_region(REGION_CPU1)[0x20000], &memory_region(REGION_CPU1)[0x28000], 0x4000);
+	memcpy(&memory_region(REGION_CPU1)[0x24000], &memory_region(REGION_CPU1)[0x28000], 0x4000);
+	expand_roms(EXPAND_NONE); balsente_shooter = 0; /* noanalog */
+}
+static void init_gimeabrk(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; balsente_adc_shift = 1; }
+static void init_minigolf(void) { expand_roms(EXPAND_NONE); balsente_shooter = 0; balsente_adc_shift = 2; }
+static void init_minigol2(void) { expand_roms(0x0c);        balsente_shooter = 0; balsente_adc_shift = 2; }
+static void init_toggle(void)   { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
+static void init_nametune(void)
+{
+	install_mem_write_handler(0, 0x9f00, 0x9f00, balsente_rombank2_select_w);
+	expand_roms(EXPAND_NONE | SWAP_HALVES); balsente_shooter = 0; /* noanalog */
+}
+static void init_nstocker(void)
+{
+	install_mem_read_handler(0, 0x9902, 0x9902, nstocker_port2_r);
+	install_mem_write_handler(0, 0x9f00, 0x9f00, balsente_rombank2_select_w);
+	expand_roms(EXPAND_NONE | SWAP_HALVES); balsente_shooter = 1; balsente_adc_shift = 1;
+}
+static void init_sfootbal(void)
+{
+	install_mem_write_handler(0, 0x9f00, 0x9f00, balsente_rombank2_select_w);
+	expand_roms(EXPAND_ALL  | SWAP_HALVES); balsente_shooter = 0; balsente_adc_shift = 0;
+}
+static void init_spiker(void)
+{
+	install_mem_write_handler(0, 0x9f80, 0x9f8f, spiker_expand_w);
+	install_mem_read_handler(0, 0x9f80, 0x9f8f, spiker_expand_r);
+	install_mem_write_handler(0, 0x9f00, 0x9f00, balsente_rombank2_select_w);
+	expand_roms(EXPAND_ALL  | SWAP_HALVES); balsente_shooter = 0; balsente_adc_shift = 1;
+}
+static void init_stompin(void)
+{
+	install_mem_write_handler(0, 0x9f00, 0x9f00, balsente_rombank2_select_w);
+	expand_roms(0x0c | SWAP_HALVES); balsente_shooter = 0; balsente_adc_shift = 32;
+}
+static void init_rescraid(void) { expand_roms(EXPAND_NONE); balsente_shooter = 0; /* noanalog */ }
+static void init_shrike(void)
+{
+	install_mem_read_handler(0, 0x9e00, 0x9fff, MRA_RAM);
+	install_mem_write_handler(0, 0x9e00, 0x9fff, MWA_RAM);
+	install_mem_read_handler(0, 0x9e00, 0x9e0f, shrike_shared_6809_r);
+	install_mem_write_handler(0, 0x9e00, 0x9e0f, shrike_shared_6809_w);
+	expand_roms(EXPAND_ALL);  balsente_shooter = 0; balsente_adc_shift = 32;
+}
+
+
 
 /*************************************
  *
@@ -3253,3 +2321,4 @@ GAME( 1986, spiker,   0,        balsente, spiker,   spiker,   ROT0, "Bally/Sente
 GAME( 1986, stompin,  0,        balsente, stompin,  stompin,  ROT0, "Bally/Sente", "Stompin'" )
 GAME( 1987, rescraid, 0,        balsente, rescraid, rescraid, ROT0, "Bally/Sente", "Rescue Raider" )
 GAME( 1987, rescrdsa, rescraid, balsente, rescraid, rescraid, ROT0, "Bally/Sente", "Rescue Raider (Stand-Alone)" )
+GAMEX(1987, shrike,   0,        shrike,   shrike,   shrike,   ROT0, "Bally/Sente", "Shrike Avenger (prototype)", GAME_NOT_WORKING )

@@ -25,7 +25,7 @@
 #include "mamedbg.h"
 #include "z180.h"
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #if VERBOSE
 #define LOG(x)	logerror x
@@ -753,8 +753,8 @@ INLINE void BURNODD(int cycles, int opcodes, int cyclesum)
 	}
 }
 
-static data_t z180_readcontrol(offs_t port);
-static void z180_writecontrol(offs_t port, data_t data);
+static data8_t z180_readcontrol(offs_t port);
+static void z180_writecontrol(offs_t port, data8_t data);
 static void z180_dma0(void);
 static void z180_dma1(void);
 
@@ -769,13 +769,13 @@ static void z180_dma1(void);
 #include "z180ed.c"
 #include "z180op.c"
 
-static data_t z180_readcontrol(offs_t port)
+static data8_t z180_readcontrol(offs_t port)
 {
 	/* normal external readport */
-	data_t data = cpu_readport(port);
+	data8_t data = cpu_readport16(port);
 
 	/* but ignore the data and read the internal register */
-	switch (port & 0x3f)
+	switch ((port & 0x3f) + Z180_CNTLA0)
 	{
 	case Z180_CNTLA0:
 		data = IO_CNTLA0 & Z180_CNTLA0_RMASK;
@@ -1130,12 +1130,12 @@ static data_t z180_readcontrol(offs_t port)
 	return data;
 }
 
-static void z180_writecontrol(offs_t port, data_t data)
+static void z180_writecontrol(offs_t port, data8_t data)
 {
 	/* normal external write port */
-	cpu_writeport(port, data);
+	cpu_writeport16(port, data);
 	/* store the data in the internal register */
-	switch (port & 0x3f)
+	switch ((port & 0x3f) + Z180_CNTLA0)
 	{
 	case Z180_CNTLA0:
 		LOG(("Z180 #%d CNTLA0 wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_CNTLA0_WMASK));
@@ -1620,16 +1620,16 @@ static void z180_dma1(void)
 	switch (IO_DCNTL & (Z180_DCNTL_DIM1 | Z180_DCNTL_DIM0))
 	{
 	case 0x00:	/* memory MAR1+1 to I/O IAR1 fixed */
-		cpu_writeport(iar1, cpu_readmem20(mar1++));
+		cpu_writeport16(iar1, cpu_readmem20(mar1++));
 		break;
 	case 0x01:	/* memory MAR1-1 to I/O IAR1 fixed */
-		cpu_writeport(iar1, cpu_readmem20(mar1--));
+		cpu_writeport16(iar1, cpu_readmem20(mar1--));
 		break;
 	case 0x02:	/* I/O IAR1 fixed to memory MAR1+1 */
-		cpu_writemem20(mar1++, cpu_readport(iar1));
+		cpu_writemem20(mar1++, cpu_readport16(iar1));
 		break;
 	case 0x03:	/* I/O IAR1 fixed to memory MAR1-1 */
-		cpu_writemem20(mar1--, cpu_readport(iar1));
+		cpu_writemem20(mar1--, cpu_readport16(iar1));
 		break;
 	}
 
@@ -1780,6 +1780,40 @@ static void z180_write_iolines(UINT32 data)
     }
 }
 
+
+void z180_init(void)
+{
+	int cpu = cpu_getactivecpu();
+
+	state_save_register_UINT16("z180", cpu, "AF", &Z180.AF.w.l, 1);
+	state_save_register_UINT16("z180", cpu, "BC", &Z180.BC.w.l, 1);
+	state_save_register_UINT16("z180", cpu, "DE", &Z180.DE.w.l, 1);
+	state_save_register_UINT16("z180", cpu, "HL", &Z180.HL.w.l, 1);
+	state_save_register_UINT16("z180", cpu, "IX", &Z180.IX.w.l, 1);
+	state_save_register_UINT16("z180", cpu, "IY", &Z180.IY.w.l, 1);
+	state_save_register_UINT16("z180", cpu, "PC", &Z180.PC.w.l, 1);
+	state_save_register_UINT16("z180", cpu, "SP", &Z180.SP.w.l, 1);
+	state_save_register_UINT16("z180", cpu, "AF2", &Z180.AF2.w.l, 1);
+	state_save_register_UINT16("z180", cpu, "BC2", &Z180.BC2.w.l, 1);
+	state_save_register_UINT16("z180", cpu, "DE2", &Z180.DE2.w.l, 1);
+	state_save_register_UINT16("z180", cpu, "HL2", &Z180.HL2.w.l, 1);
+	state_save_register_UINT8("z180", cpu, "R", &Z180.R, 1);
+	state_save_register_UINT8("z180", cpu, "R2", &Z180.R2, 1);
+	state_save_register_UINT8("z180", cpu, "IFF1", &Z180.IFF1, 1);
+	state_save_register_UINT8("z180", cpu, "IFF2", &Z180.IFF2, 1);
+	state_save_register_UINT8("z180", cpu, "HALT", &Z180.HALT, 1);
+	state_save_register_UINT8("z180", cpu, "IM", &Z180.IM, 1);
+	state_save_register_UINT8("z180", cpu, "I", &Z180.I, 1);
+	state_save_register_UINT8("z180", cpu, "irq_max", &Z180.irq_max, 1);
+	state_save_register_INT8("z180", cpu, "request_irq", &Z180.request_irq, 1);
+	state_save_register_INT8("z180", cpu, "service_irq", &Z180.service_irq, 1);
+	state_save_register_UINT8("z180", cpu, "int_state", Z180.int_state, 4);
+	state_save_register_UINT8("z180", cpu, "nmi_state", &Z180.nmi_state, 1);
+	state_save_register_UINT8("z180", cpu, "int0_state", &Z180.irq_state[0], 1);
+	state_save_register_UINT8("z180", cpu, "int1_state", &Z180.irq_state[1], 1);
+	state_save_register_UINT8("z180", cpu, "int2_state", &Z180.irq_state[2], 1);
+	/* daisy chain needs to be saved by z80ctc.c somehow */
+}
 
 /****************************************************************************
  * Reset registers to their initial values
@@ -2411,78 +2445,6 @@ void z180_set_irq_callback(int (*callback)(int))
 {
 	LOG(("Z180 #%d set_irq_callback $%08x\n",cpu_getactivecpu() , (int)callback));
 	Z180.irq_callback = callback;
-}
-
-/****************************************************************************
- * Save CPU state
- ****************************************************************************/
-void z180_state_save(void *file)
-{
-	int cpu = cpu_getactivecpu();
-	state_save_UINT16(file, "z180", cpu, "AF", &Z180.AF.w.l, 1);
-	state_save_UINT16(file, "z180", cpu, "BC", &Z180.BC.w.l, 1);
-	state_save_UINT16(file, "z180", cpu, "DE", &Z180.DE.w.l, 1);
-	state_save_UINT16(file, "z180", cpu, "HL", &Z180.HL.w.l, 1);
-	state_save_UINT16(file, "z180", cpu, "IX", &Z180.IX.w.l, 1);
-	state_save_UINT16(file, "z180", cpu, "IY", &Z180.IY.w.l, 1);
-	state_save_UINT16(file, "z180", cpu, "PC", &Z180.PC.w.l, 1);
-	state_save_UINT16(file, "z180", cpu, "SP", &Z180.SP.w.l, 1);
-	state_save_UINT16(file, "z180", cpu, "AF2", &Z180.AF2.w.l, 1);
-	state_save_UINT16(file, "z180", cpu, "BC2", &Z180.BC2.w.l, 1);
-	state_save_UINT16(file, "z180", cpu, "DE2", &Z180.DE2.w.l, 1);
-	state_save_UINT16(file, "z180", cpu, "HL2", &Z180.HL2.w.l, 1);
-	state_save_UINT8(file, "z180", cpu, "R", &Z180.R, 1);
-	state_save_UINT8(file, "z180", cpu, "R2", &Z180.R2, 1);
-	state_save_UINT8(file, "z180", cpu, "IFF1", &Z180.IFF1, 1);
-	state_save_UINT8(file, "z180", cpu, "IFF2", &Z180.IFF2, 1);
-	state_save_UINT8(file, "z180", cpu, "HALT", &Z180.HALT, 1);
-	state_save_UINT8(file, "z180", cpu, "IM", &Z180.IM, 1);
-	state_save_UINT8(file, "z180", cpu, "I", &Z180.I, 1);
-	state_save_UINT8(file, "z180", cpu, "irq_max", &Z180.irq_max, 1);
-	state_save_INT8(file, "z180", cpu, "request_irq", &Z180.request_irq, 1);
-	state_save_INT8(file, "z180", cpu, "service_irq", &Z180.service_irq, 1);
-	state_save_UINT8(file, "z180", cpu, "int_state", Z180.int_state, 4);
-	state_save_UINT8(file, "z180", cpu, "nmi_state", &Z180.nmi_state, 1);
-	state_save_UINT8(file, "z180", cpu, "int0_state", &Z180.irq_state[0], 1);
-	state_save_UINT8(file, "z180", cpu, "int1_state", &Z180.irq_state[1], 1);
-	state_save_UINT8(file, "z180", cpu, "int2_state", &Z180.irq_state[2], 1);
-	/* daisy chain needs to be saved by z80ctc.c somehow */
-}
-
-/****************************************************************************
- * Load CPU state
- ****************************************************************************/
-void z180_state_load(void *file)
-{
-	int cpu = cpu_getactivecpu();
-	state_load_UINT16(file, "z180", cpu, "AF", &Z180.AF.w.l, 1);
-	state_load_UINT16(file, "z180", cpu, "BC", &Z180.BC.w.l, 1);
-	state_load_UINT16(file, "z180", cpu, "DE", &Z180.DE.w.l, 1);
-	state_load_UINT16(file, "z180", cpu, "HL", &Z180.HL.w.l, 1);
-	state_load_UINT16(file, "z180", cpu, "IX", &Z180.IX.w.l, 1);
-	state_load_UINT16(file, "z180", cpu, "IY", &Z180.IY.w.l, 1);
-	state_load_UINT16(file, "z180", cpu, "PC", &Z180.PC.w.l, 1);
-	state_load_UINT16(file, "z180", cpu, "SP", &Z180.SP.w.l, 1);
-	state_load_UINT16(file, "z180", cpu, "AF2", &Z180.AF2.w.l, 1);
-	state_load_UINT16(file, "z180", cpu, "BC2", &Z180.BC2.w.l, 1);
-	state_load_UINT16(file, "z180", cpu, "DE2", &Z180.DE2.w.l, 1);
-	state_load_UINT16(file, "z180", cpu, "HL2", &Z180.HL2.w.l, 1);
-	state_load_UINT8(file, "z180", cpu, "R", &Z180.R, 1);
-	state_load_UINT8(file, "z180", cpu, "R2", &Z180.R2, 1);
-	state_load_UINT8(file, "z180", cpu, "IFF1", &Z180.IFF1, 1);
-	state_load_UINT8(file, "z180", cpu, "IFF2", &Z180.IFF2, 1);
-	state_load_UINT8(file, "z180", cpu, "HALT", &Z180.HALT, 1);
-	state_load_UINT8(file, "z180", cpu, "IM", &Z180.IM, 1);
-	state_load_UINT8(file, "z180", cpu, "I", &Z180.I, 1);
-	state_load_UINT8(file, "z180", cpu, "irq_max", &Z180.irq_max, 1);
-	state_load_INT8(file, "z180", cpu, "request_irq", &Z180.request_irq, 1);
-	state_load_INT8(file, "z180", cpu, "service_irq", &Z180.service_irq, 1);
-	state_load_UINT8(file, "z180", cpu, "int_state", Z180.int_state, 4);
-	state_load_UINT8(file, "z180", cpu, "nmi_state", &Z180.nmi_state, 1);
-	state_load_UINT8(file, "z180", cpu, "int0_state", &Z180.irq_state[0], 1);
-	state_load_UINT8(file, "z180", cpu, "int1_state", &Z180.irq_state[1], 1);
-	state_load_UINT8(file, "z180", cpu, "int2_state", &Z180.irq_state[2], 1);
-	/* daisy chain needs to be restored by z80ctc.c somehow */
 }
 
 /****************************************************************************

@@ -21,29 +21,8 @@ int wgp_piv_xoffs,wgp_piv_yoffs;
 void wgp_vh_stop(void);
 
 
-static int has_TC0110PCR(void)
-{
-	const struct Memory_WriteAddress16 *mwa;
 
-	/* scan the memory handlers and see if the TC0110PCR is used */
-
-	mwa = Machine->drv->cpu[0].memory_write;
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if ((mwa->handler == TC0110PCR_step1_word_w) || (mwa->handler == TC0110PCR_step1_rbswap_word_w))
-					return 1;
-			}
-			mwa++;
-		}
-	}
-
-	return 0;
-}
-
+/*******************************************************************/
 
 static void common_get_piv_tile_info(int num,int tile_index)
 {
@@ -316,12 +295,14 @@ Memory Map
 
 400000 - 40bfff : Sprite tile mapping area
 
-	Tile numbers (0-0x3fff) alternate with word containing
-	tile color/unknown bits.
+	Tile numbers (0-0x3fff) alternate with word containing tile
+	color/unknown bits. I'm _not_ 100% sure that only Wgp2 uses
+	the unknown bits.
 
-	xxxxxxxx x.x.....  unused ??
-	........ .x......  unknown (Wgp2 only)
-	........ ...x....  unknown (Wgp2 only)
+	xxxxxxxx x.......  unused ??
+	........ .x......  unknown (Wgp2 only: Taito tyre bridge on default course)
+	........ ..x.....  unknown (Wgp2 only)
+	........ ...x....  unknown (Wgp2 only: Direction signs just before hill # 1)
 	........ ....cccc  color (0-15)
 
 	Tile map for each standard big sprite is 64 bytes (16 tiles).
@@ -408,17 +389,18 @@ static UINT8 ylookup[16] =
 	  2, 2, 3, 3,
 	  2, 2, 3, 3 };
 
-static void wgp_draw_sprites(struct mame_bitmap *bitmap,int *primasks,int y_offs)
+static void wgp_draw_sprites(struct mame_bitmap *bitmap,int y_offs)
 {
 	int offs,i,j,k;
 	int x,y,curx,cury;
-	int zx,zy,zoomx,zoomy;
+	int zx,zy,zoomx,zoomy,priority=0;
 	UINT8 small_sprite,col,flipx,flipy;
 	UINT16 code,bigsprite,map_index;
 	UINT16 rotate=0;
 	UINT16 tile_mask = (Machine->gfx[0]->total_elements) - 1;
+	int primasks[2] = {0x0, 0xfffc};	/* fff0 => under rhs of road only */
 
-	for (offs = 0;offs <0x200;offs += 1)
+	for (offs = 0x1ff;offs >= 0;offs--)
 	{
 		code = (spriteram16[0xe00+offs]);
 
@@ -461,7 +443,8 @@ if (((spriteram16[i + 4]!=0xf800) && (spriteram16[i + 4]!=0xfff6))
 			map_index = bigsprite << 1;	/* now we access sprite tilemap */
 
 			/* don't know what selects 2x2 sprites: we use a nasty kludge
-			   which seems to work ok */
+			   which seems to work */
+
 			i = wgp_spritemap[map_index + 0xa];
 			j = wgp_spritemap[map_index + 0xc];
 			small_sprite = ((i > 0) & (i <=8) & (j > 0) & (j <=8));
@@ -473,6 +456,9 @@ if (((spriteram16[i + 4]!=0xf800) && (spriteram16[i + 4]!=0xfff6))
 					code = wgp_spritemap[(map_index + (i << 1))] &tile_mask;
 					col  = wgp_spritemap[(map_index + (i << 1) + 1)] &0xf;
 
+					/* not known what controls priority */
+					priority = (wgp_spritemap[(map_index + (i << 1) + 1)] &0x70) >> 4;
+
 					flipx=0;	// no flip xy?
 					flipy=0;
 
@@ -482,16 +468,17 @@ if (((spriteram16[i + 4]!=0xf800) && (spriteram16[i + 4]!=0xfff6))
 					curx = x + ((k*zoomx)/2);
 					cury = y + ((j*zoomy)/2);
 
-					zx= x + (((k+1)*zoomx)/2) - curx;
-					zy= y + (((j+1)*zoomy)/2) - cury;
+					zx = x + (((k+1)*zoomx)/2) - curx;
+					zy = y + (((j+1)*zoomy)/2) - cury;
 
-					drawgfxzoom(bitmap, Machine->gfx[0],
+					pdrawgfxzoom(bitmap, Machine->gfx[0],
 							code,
 							col,
 							flipx, flipy,
 							curx,cury,
 							&Machine->visible_area,TRANSPARENCY_PEN,0,
-							zx << 12, zy << 12);
+							zx << 12, zy << 12,
+							primasks[((priority >> 1) &1)]);	/* maybe >> 2 or 0...? */
 				}
 			}
 			else
@@ -500,6 +487,9 @@ if (((spriteram16[i + 4]!=0xf800) && (spriteram16[i + 4]!=0xfff6))
 				{
 					code = wgp_spritemap[(map_index + (i << 1))] &tile_mask;
 					col  = wgp_spritemap[(map_index + (i << 1) + 1)] &0xf;
+
+					/* not known what controls priority */
+					priority = (wgp_spritemap[(map_index + (i << 1) + 1)] &0x70) >> 4;
 
 					flipx=0;	// no flip xy?
 					flipy=0;
@@ -510,16 +500,17 @@ if (((spriteram16[i + 4]!=0xf800) && (spriteram16[i + 4]!=0xfff6))
 					curx = x + ((k*zoomx)/4);
 					cury = y + ((j*zoomy)/4);
 
-					zx= x + (((k+1)*zoomx)/4) - curx;
-					zy= y + (((j+1)*zoomy)/4) - cury;
+					zx = x + (((k+1)*zoomx)/4) - curx;
+					zy = y + (((j+1)*zoomy)/4) - cury;
 
-					drawgfxzoom(bitmap, Machine->gfx[0],
+					pdrawgfxzoom(bitmap, Machine->gfx[0],
 							code,
 							col,
 							flipx, flipy,
 							curx,cury,
 							&Machine->visible_area,TRANSPARENCY_PEN,0,
-							zx << 12, zy << 12);
+							zx << 12, zy << 12,
+							primasks[((priority >> 1) &1)]);	/* maybe >> 2 or 0...? */
 				}
 			}
 		}
@@ -627,17 +618,23 @@ static void wgp_piv_layer_draw(struct mame_bitmap *bitmap,int layer,int flags,UI
 
 	zoomx = 0x10000;	/* No overall X zoom, unlike TC0480SCP */
 
-	/* Y-axis zoom offers expansion/compression: 0x7f = no zoom, 0xff = max ??? */
+	/* Y-axis zoom offers expansion/compression: 0x7f = no zoom, 0xff = max ???
+	   In WGP see:  stage 4 (big spectator stand)
+	                stage 5 (cloud layer)
+	                stage 7 (two bits of background scenery)
+	                stage 8 (unknown - surely something should be appearing here...)
+	   In WGP2 see: road at big hill (default course) */
+
 	/* This calculation may be wrong, the y_index one too */
 	zoomy = 0x10000 - (((wgp_piv_ctrlram[0x08 + layer] &0xff) - 0x7f) * 512);
 
 	if (!flipscreen)
 	{
 		sx = ((wgp_piv_scrollx[layer]) << 16);
-		sx += (wgp_piv_xoffs) * zoomx;		// may be imperfect
+		sx += (wgp_piv_xoffs) * zoomx;		/* may be imperfect */
 
 		y_index = (wgp_piv_scrolly[layer] << 16);
-		y_index += (wgp_piv_yoffs) * zoomy;		// may be imperfect
+		y_index += (wgp_piv_yoffs) * zoomy;		/* may be imperfect */
 	}
 	else	/* piv tiles flipscreen n/a */
 	{
@@ -784,19 +781,19 @@ void wgp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 #ifdef MAME_DEBUG
 	if (dislayer[layer[0]]==0)
 #endif
-	wgp_piv_layer_draw(bitmap,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
+	wgp_piv_layer_draw(bitmap,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
 
 #ifdef MAME_DEBUG
 	if (dislayer[layer[1]]==0)
 #endif
-	wgp_piv_layer_draw(bitmap,layer[1],0,0);
+	wgp_piv_layer_draw(bitmap,layer[1],0,2);
 
 #ifdef MAME_DEBUG
 	if (dislayer[layer[2]]==0)
 #endif
-	wgp_piv_layer_draw(bitmap,layer[2],0,0);
+	wgp_piv_layer_draw(bitmap,layer[2],0,4);
 
-	wgp_draw_sprites(bitmap,0,16);
+	wgp_draw_sprites(bitmap,16);
 
 /* ... then here we should apply rotation from wgp_rotate_ctrl[] to
    the bitmap before we draw the TC0100SCN layers on it */

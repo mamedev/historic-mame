@@ -18,33 +18,131 @@ int spy_vh_start(void);
 void spy_vh_stop(void);
 void spy_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
+static data8_t *pmcram;
 
 
 static int spy_interrupt(void)
 {
 	if (K052109_is_IRQ_enabled())
-	{
-		if (cpu_getiloops()) return M6809_INT_FIRQ;	/* ??? */
-		else return interrupt();
-	}
-	else return ignore_interrupt();
+		return interrupt();
+	else
+		return ignore_interrupt();
 }
 
 
-static int rambank;
+static int rambank,pmcbank;
 static unsigned char *ram;
 
 static READ_HANDLER( spy_bankedram1_r )
 {
-	if (!rambank) return ram[offset];
-	else return paletteram_r(offset);
+	if (rambank & 1)
+	{
+		return paletteram_r(offset);
+	}
+	else if (rambank & 2)
+	{
+		if (pmcbank)
+		{
+			logerror("%04x read pmcram %04x\n",cpu_get_pc(),offset);
+			return pmcram[offset];
+		}
+		else
+		{
+			logerror("%04x read pmc internal ram %04x\n",cpu_get_pc(),offset);
+			return 0;
+		}
+	}
+	else
+		return ram[offset];
 }
 
 static WRITE_HANDLER( spy_bankedram1_w )
 {
-	if (!rambank) ram[offset] = data;
-	else paletteram_xBBBBBGGGGGRRRRR_swap_w(offset,data);
+	if (rambank & 1)
+	{
+		paletteram_xBBBBBGGGGGRRRRR_swap_w(offset,data);
+	}
+	else if (rambank & 2)
+	{
+		if (pmcbank)
+		{
+//			logerror("%04x pmcram %04x = %02x\n",cpu_get_pc(),offset,data);
+			pmcram[offset] = data;
+		}
+		else
+			logerror("%04x pmc internal ram %04x = %02x\n",cpu_get_pc(),offset,data);
+	}
+	else
+		ram[offset] = data;
 }
+
+/*
+this is the data written to internal ram on startup:
+e7 7e 38 fc 08
+df 36 38 dc 00
+df 12 3a dc 00
+df 00 38 dc 08
+1f 7e 00 db 00
+26 fe 00 ff 0c
+89 03 34 fc 0d
+81 03 34 fc 09
+81 03 34 fc 09
+81 03 34 fc 09
+81 03 2f fc 09
+cc 36 0e d9 08
+84 7e 00 ab 0c
+5f 7e 03 cd 08
+7f 80 fe ef 08
+5f 7e 0f fd 08
+e7 7e 38 fc 08
+df 00 3a dc 00
+df 12 0e d9 08
+df ec 10 e0 0c
+1f fe 03 e0 0c
+df fe 03 e0 0c
+dc 5e 3e fc 08
+df 12 2b d9 08
+67 25 38 fc 0c
+df 12 3c dc 00
+df 36 00 db 00
+c1 14 00 fb 08
+c1 34 38 fc 08
+c5 22 37 dc 00
+cd 12 3c dc 04
+c5 46 3b dc 00
+cd 36 00 db 04
+49 16 ed f9 0c
+c9 18 ea f9 0c
+dc 12 2a f9 08
+cc 5a 26 f9 08
+5f 7e 18 fd 08
+5a 7e 32 f8 08
+84 6c 33 9c 0c
+cc 00 0e d9 08
+5f 7e 14 fd 08
+0a 7e 24 fd 08
+c5 ec 0d e0 0c
+5f 7e 28 fd 08
+dc 16 00 fb 08
+dc 44 22 fd 08
+cd fe 02 e0 0c
+84 7e 00 bb 0c
+5a 7e 00 73 08
+84 7e 00 9b 0c
+5a 7e 00 36 08
+81 03 00 fb 09
+81 03 00 fb 09
+81 03 00 fe 09
+cd fe 01 e0 0c
+84 7e 00 ab 0c
+5f 7e 00 db 00
+84 7e 3f ad 0c
+cd ec 01 e0 0c
+84 6c 00 ab 0c
+5f 7e 00 db 00
+84 6c 00 ab 0c
+5f 7e 00 ce 08
+*/
 
 static WRITE_HANDLER( bankswitch_w )
 {
@@ -62,6 +160,47 @@ if ((data & 1) == 0) usrintf_showmessage("bankswitch RAM bank 0");
 
 static WRITE_HANDLER( spy_3f90_w )
 {
+	extern int spy_video_enable;
+	static int old;
+
+	/*********************************************************************
+	*
+	* Signals, from schematic:
+	*   Bit 0 - CTR1 0x01
+	*   Bit 1 - CTR2 0x02
+	*   Bit 2 - CHA-RD 0x04
+	*   Bit 3 - TV-KILL 0x08  +TV-KILL & COLORBLK to pin 7 of
+	*                                    052535 video chips
+	*
+	*   Bit 4 - COLORBK/RVBK 0x10
+	*   Bit 5 - PMCBK 0x20  GX857 053180 PAL20P Pin 7 (MCE1)
+	*   Bit 6 - PMC-START 0x40  PMC START
+	*   Bit 7 - PMC-BK 0x80  PMC BK
+	*
+	*   PMC takes AB0-AB12, D0-D7 from 6809E, outputs EA0-EA10, ED0-ED7,
+	*   tied to A and D bus of 2128SL
+	*
+	*   See "MCPU" page of S.P.Y schematics for more...
+	*
+	*    PMC ERWE -> ~WR of 2128SL
+	*    PMC ERCS -> ~CE of 2128SL
+	*    PMC EROE -> ~OE of 2128SL
+	*
+	*    PMCOUTO -> PMCFIRQ -> 6809E ~FIRQ and PORT4, bit 0x08
+	*
+	*   PMC selected by PMC/RVRAMCS signal: pin 16 of PAL20P 05318
+	*
+	*    AB0xC -> 0x1000, so if address & 0x1000, appears PMC is selected.
+	*
+	*   Other apparent selects:
+	*
+	*    0x0800 -> COLORCS (color enable?)
+	*    0x2000 -> ~CS1 on 6264W
+	*    0x4000 -> ~OE on S63 27512
+	*    0x8000 -> ~OE on S22 27512
+	*
+	********************************************************************/
+
 	/* bits 0/1 = coin counters */
 	coin_counter_w(0,data & 0x01);
 	coin_counter_w(1,data & 0x02);
@@ -69,10 +208,35 @@ static WRITE_HANDLER( spy_3f90_w )
 	/* bit 2 = enable char ROM reading through the video RAM */
 	K052109_set_RMRD_line((data & 0x04) ? ASSERT_LINE : CLEAR_LINE);
 
-	/* bit 4 = select RAM at 0000 */
-	rambank = data & 0x10;
+	/* bit 3 = disable video */
+	spy_video_enable = ~(data & 0x08);
 
-	/* other bits unknown */
+	/* bit 4 = read RAM at 0000 (if set) else read color palette RAM */
+	/* bit 5 = PMCBK */
+	rambank = (data & 0x30) >> 4;
+	/* bit 7 = PMC-BK */
+	pmcbank = (data & 0x80) >> 7;
+
+logerror("%04x: 3f90_w %02x\n",cpu_get_pc(),data);
+	/* bit 6 = PMC-START */
+	if ((data & 0x40) && !(old & 0x40))
+	{
+		/* we should handle collision here */
+int i;
+
+logerror("collision test:\n");
+for (i = 0;i < 0xfe;i++)
+{
+	logerror("%02x ",pmcram[i]);
+	if (i == 0x0f || (i > 0x10 && (i - 0x10) % 14 == 13))
+		logerror("\n");
+}
+
+
+		cpu_set_irq_line(0,M6809_FIRQ_LINE,HOLD_LINE);
+	}
+
+	old = data;
 }
 
 
@@ -154,7 +318,7 @@ INPUT_PORTS_START( spy )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 */
 
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START2 )
@@ -164,7 +328,7 @@ INPUT_PORTS_START( spy )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 */
 
 	PORT_START
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
@@ -208,14 +372,14 @@ INPUT_PORTS_START( spy )
 	PORT_DIPSETTING(    0x02, "3" )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x00, "7" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x18, 0x08, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x18, "10k and every 20k" )
 	PORT_DIPSETTING(    0x10, "20k and every 30k" )
-	PORT_DIPSETTING(    0x08, "20k" )
-	PORT_DIPSETTING(    0x00, "30k" )
+	PORT_DIPSETTING(    0x08, "20k only" )
+	PORT_DIPSETTING(    0x00, "30k only" )
 	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(	0x60, "Easy" )
 	PORT_DIPSETTING(	0x40, "Normal" )
@@ -228,12 +392,12 @@ INPUT_PORTS_START( spy )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SPECIAL )	/* PMCFIRQ signal from the PMC */
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
@@ -285,10 +449,10 @@ static const struct MachineDriver machine_driver_spy =
 {
 	{
 		{
-			CPU_HD6309,
+			CPU_M6809,
 			3000000, /* ? */
 			spy_readmem,spy_writemem,0,0,
-			spy_interrupt,2
+			spy_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -336,7 +500,7 @@ static const struct MachineDriver machine_driver_spy =
 ***************************************************************************/
 
 ROM_START( spy )
-	ROM_REGION( 0x28800, REGION_CPU1, 0 ) /* code + banked roms + space for banked ram */
+	ROM_REGION( 0x29000, REGION_CPU1, 0 ) /* code + banked roms + space for banked ram */
 	ROM_LOAD( "857m03.bin",   0x10000, 0x10000, 0x3bd87fa4 )
     ROM_LOAD( "857m02.bin",   0x20000, 0x08000, 0x306cc659 )
     ROM_CONTINUE(             0x08000, 0x08000 )
@@ -373,6 +537,7 @@ static void gfx_untangle(void)
 static void init_spy(void)
 {
 	paletteram = &memory_region(REGION_CPU1)[0x28000];
+	pmcram =     &memory_region(REGION_CPU1)[0x28800];
 	gfx_untangle();
 }
 

@@ -130,10 +130,12 @@ int pacman_vh_start(void);
 void pacman_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 WRITE_HANDLER( pengo_flipscreen_w );
 void pengo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void vanvan_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *pengo_soundregs;
 WRITE_HANDLER( pengo_sound_enable_w );
 WRITE_HANDLER( pengo_sound_w );
+WRITE_HANDLER( vanvan_bgcolor_w );
 
 extern void pacplus_decode(void);
 extern void jumpshot_decode(void);
@@ -392,6 +394,37 @@ static PORT_WRITE_START( writeport )
 	{ 0x00, 0x00, interrupt_vector_w },	/* Pac-Man only */
 PORT_END
 
+
+static MEMORY_READ_START( vanvan_readmem )
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
+	{ 0x4800, 0x4fff, MRA_RAM },	/* including sprite codes at 4ff0-4fff */
+	{ 0x5000, 0x5000, input_port_0_r },	/* IN0 */
+	{ 0x5040, 0x5040, input_port_1_r },	/* IN1 */
+	{ 0x5080, 0x5080, input_port_2_r },	/* DSW1 */
+	{ 0x50c0, 0x50c0, input_port_3_r },	/* DSW2 */
+	{ 0x8000, 0x8fff, MRA_ROM },
+MEMORY_END
+
+static MEMORY_WRITE_START( vanvan_writemem )
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
+	{ 0x4400, 0x47ff, colorram_w, &colorram },
+	{ 0x4800, 0x4fef, MWA_RAM },
+	{ 0x4ff0, 0x4fff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x5000, 0x5000, interrupt_enable_w },
+	{ 0x5001, 0x5001, vanvan_bgcolor_w },
+	{ 0x5003, 0x5003, pengo_flipscreen_w },
+	{ 0x5005, 0x5006, MWA_NOP },	/* always written together with 5001 */
+ 	{ 0x5007, 0x5007, pacman_coin_counter_w },
+	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 },
+	{ 0x5080, 0x5080, MWA_NOP },	/* ??? toggled before reading 5000 */
+	{ 0x50c0, 0x50c0, watchdog_reset_w },
+	{ 0x8000, 0x8fff, MWA_ROM },
+	{ 0xb800, 0xb87f, MWA_NOP },	/* probably a leftover from development: the Sanritsu version */
+									/* writes the color lookup table here, while the Karateko version */
+									/* writes garbage. */
+MEMORY_END
 
 static PORT_WRITE_START( vanvan_writeport )
 	{ 0x01, 0x01, SN76496_0_w },
@@ -1032,7 +1065,7 @@ INPUT_PORTS_START( vanvan )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )
 
 	/* The 2nd player controls are used even in upright mode */
 	PORT_START	/* IN1 */
@@ -1592,7 +1625,7 @@ static const struct MachineDriver machine_driver_vanvan =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 MHz */
-			readmem,writemem,0,vanvan_writeport,
+			vanvan_readmem,vanvan_writemem,0,vanvan_writeport,
 			nmi_interrupt,1
 		}
 	},
@@ -1601,7 +1634,7 @@ static const struct MachineDriver machine_driver_vanvan =
 	0,
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
+	36*8, 28*8, { 2*8, 34*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
 	16, 4*32,
 	pacman_vh_convert_color_prom,
@@ -1610,7 +1643,7 @@ static const struct MachineDriver machine_driver_vanvan =
 	0,
 	pacman_vh_start,
 	generic_vh_stop,
-	pengo_vh_screenrefresh,
+	vanvan_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -2434,11 +2467,11 @@ ROM_END
 
 ROM_START( vanvan )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "van1.bin",	  0x0000, 0x1000, 0x00f48295 )
+	ROM_LOAD( "van-1.50",     0x0000, 0x1000, 0xcf1b2df0 )
 	ROM_LOAD( "van-2.51",     0x1000, 0x1000, 0xdf58e1cb )
 	ROM_LOAD( "van-3.52",     0x2000, 0x1000, 0x15571e24 )
-	ROM_LOAD( "van4.bin",     0x3000, 0x1000, 0xf8b37ed5 )
-	ROM_LOAD( "van5.bin",     0x8000, 0x1000, 0xb8c1e089 )
+	ROM_LOAD( "van-4.53",     0x3000, 0x1000, 0xb724cbe0 )
+	ROM_LOAD( "van-5.39",     0x8000, 0x1000, 0xdb67414c )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "van-20.18",    0x0000, 0x1000, 0x60efbe66 )
@@ -2451,13 +2484,13 @@ ROM_START( vanvan )
 	ROM_LOAD( "6301-1.37",    0x0020, 0x0100, 0x4b803d9f )
 ROM_END
 
-ROM_START( vanvans )
+ROM_START( vanvank )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "van-1.50",     0x0000, 0x1000, 0xcf1b2df0 )
+	ROM_LOAD( "van1.bin",	  0x0000, 0x1000, 0x00f48295 )
 	ROM_LOAD( "van-2.51",     0x1000, 0x1000, 0xdf58e1cb )
 	ROM_LOAD( "van-3.52",     0x2000, 0x1000, 0x15571e24 )
-	ROM_LOAD( "van-4.53",     0x3000, 0x1000, 0xb724cbe0 )
-	ROM_LOAD( "van-5.39",     0x8000, 0x1000, 0xdb67414c )
+	ROM_LOAD( "van4.bin",     0x3000, 0x1000, 0xf8b37ed5 )
+	ROM_LOAD( "van5.bin",     0x8000, 0x1000, 0xb8c1e089 )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "van-20.18",    0x0000, 0x1000, 0x60efbe66 )
@@ -2774,8 +2807,8 @@ GAME( 1985, lizwiz,   0,        pacman,   lizwiz,   0,        ROT90,  "Techstar 
 GAME( 1983, theglobp, suprglob, theglobp, theglobp, 0,        ROT90,  "Epos Corporation", "The Glob (Pac-Man hardware)" )
 GAME( 1984, beastf,   suprglob, theglobp, theglobp, 0,        ROT90,  "Epos Corporation", "Beastie Feastie" )
 GAME( 1982, dremshpr, 0,        dremshpr, dremshpr, 0,        ROT270, "Sanritsu", "Dream Shopper" )
-GAME( 1983, vanvan,   0,        vanvan,   vanvan,   0,        ROT270, "Karateco", "Van Van Car" )
-GAME( 1983, vanvans,  vanvan,   vanvan,   vanvans,  0,        ROT270, "Sanritsu", "Van Van Car (Sanritsu)" )
+GAME( 1983, vanvan,   0,        vanvan,   vanvan,   0,        ROT270, "Sanritsu", "Van-Van Car" )
+GAME( 1983, vanvank,  vanvan,   vanvan,   vanvans,  0,        ROT270, "Karateco", "Van-Van Car (Karateco)" )
 GAME( 1982, alibaba,  0,        alibaba,  alibaba,  0,        ROT90,  "Sega", "Ali Baba and 40 Thieves" )
 GAME( 1985, jumpshot, 0,        pacman,   jumpshot, jumpshot, ROT90,  "Bally Midway", "Jump Shot" )
 GAME( 1985, shootbul, 0,        pacman,   shootbul, shootbul, ROT90,  "Bally Midway", "Shoot the Bull" )

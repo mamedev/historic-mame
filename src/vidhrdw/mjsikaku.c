@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "machine/nb1413m3.h"
+#include "nb1413m3.h"
 
 
 static int mjsikaku_scrolly;
@@ -43,14 +43,14 @@ static void crystal2_gfxdraw(void);
 
 
 ******************************************************************************/
-void mjsikaku_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+void mjsikaku_init_palette(unsigned char *obsolete, unsigned short *colortable, const unsigned char *color_prom)
 {
 	int i;
 
 	/* initialize 444 RGB lookup */
 	for (i = 0; i < 4096; i++)
 	{
-		int r,g,b;
+		int r, g, b;
 
 		// xxxxbbbb_ggggrrrr
 		r = ((i >> 0) & 0x0f);
@@ -61,11 +61,11 @@ void mjsikaku_init_palette(unsigned char *obsolete,unsigned short *colortable,co
 		g = ((g << 4) | g);
 		b = ((b << 4) | b);
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(i, r, g, b);
 	}
 }
 
-void seiha_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+void seiha_init_palette(unsigned char *obsolete, unsigned short *colortable, const unsigned char *color_prom)
 {
 	int i;
 
@@ -83,18 +83,18 @@ void seiha_init_palette(unsigned char *obsolete,unsigned short *colortable,const
 		g = ((g << 3) | (g >> 2));
 		b = ((b << 3) | (b >> 2));
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(i, r, g, b);
 	}
 }
 
-void crystal2_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+void crystal2_init_palette(unsigned char *obsolete, unsigned short *colortable, const unsigned char *color_prom)
 {
 	int i;
 
 	/* initialize 332 RGB lookup */
 	for (i = 0; i < 256; i++)
 	{
-		int bit0,bit1,bit2,r,g,b;
+		int bit0, bit1, bit2, r, g, b;
 
 		// xxxxxxxx_bbgggrrr
 		/* red component */
@@ -113,7 +113,7 @@ void crystal2_init_palette(unsigned char *obsolete,unsigned short *colortable,co
 		bit2 = ((i >> 7) & 0x01);
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(i, r, g, b);
 	}
 }
 
@@ -192,6 +192,7 @@ void mjsikaku_gfxflag1_w(int data)
 	    (nb1413m3_type == NB1413M3_BIJOKKOY) ||
 	    (nb1413m3_type == NB1413M3_HOUSEMNQ) ||
 	    (nb1413m3_type == NB1413M3_HOUSEMN2) ||
+	    (nb1413m3_type == NB1413M3_CRYSTALG) ||
 	    (nb1413m3_type == NB1413M3_CRYSTAL2) ||
 	    (nb1413m3_type == NB1413M3_APPAREL))
 	{

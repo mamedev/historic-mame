@@ -7,7 +7,7 @@ Mustang (bootleg)       UPL        68000 Z80           YM3812 OKIM6295
 Bio-ship Paladin        UPL        68000 <unknown cpu> YM2203(?) 2xOKIM6295
 Vandyke                 UPL        68000 NMK004        YM2203 2xOKIM6295
 Black Heart             UPL        68000 NMK004        YM2203 2xOKIM6295
-Acrobat Mission         UPL        68000 <unknown cpu> <unknown sound>
+Acrobat Mission         UPL        68000 NMK004        YM2203 2xOKIM6295
 Strahl                  UPL        68000 <unknown cpu> YM2203 2xOKIM6295
 Thunder Dragon          NMK/Tecmo  68000 <unknown cpu> YM2203 2xOKIM6295
 Hacha Mecha Fighter     NMK        68000 <unknown cpu> YM2203 2xOKIM6295
@@ -32,7 +32,7 @@ TODO:
 - Protection is patched in several games, it's the same chip as Macross/Task
   Force Harrier so it can probably be emulated.  I don't think it's an actual MCU,
   just some type of state machine (Bryan).
-- Input ports in Acrobat Mission, Bio-ship Paladin, Strahl
+- Input ports in Bio-ship Paladin, Strahl
 - Sound communication in Mustang might be incorrectly implemented
 - Several games use an unknown (custom?) CPU to drive sound and for protection.
   In macross and gunnail it's easy to work around, the others are more complex.
@@ -564,25 +564,26 @@ static MEMORY_WRITE_START( mustang_sound_writemem )
 	{ 0x8000, 0xffff, MWA_ROM },
 MEMORY_END
 
-
 static MEMORY_READ16_START( acrobatm_readmem )
 	{ 0x00000, 0x3ffff, MRA16_ROM },
-	{ 0x80000, 0x80fff, MRA16_RAM },
-	{ 0x81000, 0x8ffff, MRA16_RAM },
+	{ 0x80000, 0x8ffff, MRA16_RAM },
 	{ 0xc0000, 0xc0001, input_port_0_word_r },
 	{ 0xc0002, 0xc0003, input_port_1_word_r },
-	{ 0xc0004, 0xc0005, input_port_2_word_r },
+	{ 0xc0008, 0xc0009, input_port_2_word_r },
+	{ 0xc000a, 0xc000b, input_port_3_word_r },
 	{ 0xc4000, 0xc45ff, MRA16_RAM },
-	{ 0xc8000, 0xcbfff, nmk_bgvideoram_r },
+	{ 0xcc000, 0xcffff, nmk_bgvideoram_r },
 	{ 0xd4000, 0xd47ff, nmk_txvideoram_r },
 MEMORY_END
 
 static MEMORY_WRITE16_START( acrobatm_writemem )
 	{ 0x00000, 0x3ffff, MWA16_ROM },
-	{ 0x80000, 0x80fff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x81000, 0x8ffff, MWA16_RAM },
+	{ 0x88000, 0x88fff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x80000, 0x8ffff, MWA16_RAM },
+	{ 0xc0014, 0xc0015, nmk_flipscreen_w },
 	{ 0xc4000, 0xc45ff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
-	{ 0xc8000, 0xcbfff, nmk_bgvideoram_w, &nmk_bgvideoram },
+	{ 0xc8000, 0xc8007, nmk_scroll_w },
+	{ 0xcc000, 0xcffff, nmk_bgvideoram_w, &nmk_bgvideoram },
 	{ 0xd4000, 0xd47ff, nmk_txvideoram_w, &nmk_txvideoram },
 MEMORY_END
 
@@ -891,18 +892,16 @@ INPUT_PORTS_START( vandyke )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 ) //guess
 
 	PORT_START	/* DSW 1 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x01,  "3" )
+	PORT_DIPSETTING(      0x00,  "2" )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x08, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
@@ -923,11 +922,67 @@ INPUT_PORTS_START( vandyke )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x10, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x08, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x18, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x1c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0c, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x14, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x80, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x40, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0xc0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0xe0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x60, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0xa0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x20, DEF_STR( 1C_4C ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( blkheart )
+	PORT_START		/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* Maybe unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* Maybe unused */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* Maybe unused */
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 ) //guess
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 ) //guess
+
+	PORT_START	/* DSW 1 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x10, DEF_STR( Off ) )
@@ -935,12 +990,37 @@ INPUT_PORTS_START( vandyke )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x40, DEF_STR( Off ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x40,  "2" )
+	PORT_DIPSETTING(      0xc0,  "3" )
+	PORT_DIPSETTING(      0x80,  "4" )
+	PORT_DIPSETTING(      0x00,  "5" )
+
+	PORT_START	/* DSW 2 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x80, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x10, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x08, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x18, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x1c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0c, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x14, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x80, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x40, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0xc0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0xe0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x60, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0xa0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x20, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x00, DEF_STR( Free_Play ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( tharrier )
@@ -1266,6 +1346,83 @@ INPUT_PORTS_START( strahl )
 	PORT_DIPSETTING(    0x20, "300k and every 300k" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( acrobatm )
+	PORT_START		/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START /* DSW A */
+	PORT_DIPNAME( 0x0001, 0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x001C, 0x001C, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x001C, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x000C, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0014, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x00E0, 0x00E0, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x00C0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x00E0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0060, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x00A0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_4C ) )
+
+	PORT_START /* DSW B */
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x06, 0x06, "Extend" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x02, "50k, 100k" )
+	PORT_DIPSETTING(    0x06, "100k, 100k" )
+	PORT_DIPSETTING(    0x04, "100k, 200k" )
+	PORT_DIPNAME( 0x08, 0x00, "Language" )
+	PORT_DIPSETTING(    0x00, "English" )
+	PORT_DIPSETTING(    0x08, "Japanese" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x30, "Normal" )
+	PORT_DIPSETTING(    0x10, "Hard" )
+	PORT_DIPSETTING(    0x20, "Hardest" )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x40, "2" )
+	PORT_DIPSETTING(    0xc0, "3" )
+	PORT_DIPSETTING(    0x80, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( bioship )
@@ -2361,7 +2518,7 @@ static const struct MachineDriver machine_driver_acrobatm =
 	{
 		{
 			CPU_M68000,
-			10000000, /* 10 MHz ? */
+			10000000, /* 10 MHz ? 12 MHz? */
 			acrobatm_readmem,acrobatm_writemem,0,0,
 			nmk_interrupt,2,
 			m68_level1_irq,112	/* ???????? */
@@ -2872,23 +3029,31 @@ ROM_END
 
 ROM_START( acrobatm )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "2.bin",    0x00000, 0x20000, 0x3fe487f4 )
-	ROM_LOAD16_BYTE( "1.bin",    0x00001, 0x20000, 0x17175753 )
+	ROM_LOAD16_BYTE( "02_ic100.bin",    0x00000, 0x20000, 0x3fe487f4 )
+	ROM_LOAD16_BYTE( "01_ic101.bin",    0x00001, 0x20000, 0x17175753 )
 
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "3.bin",   0x000000, 0x10000, 0xd86c186e ) /* Characters */
+	ROM_LOAD( "03_ic79.bin",   0x000000, 0x10000, 0xd86c186e ) /* Characters */
 
-	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "gfx.01",  0x000000, 0x80000, 0x00000000 ) /* Foreground */
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "09_ic8.bin",  0x000000, 0x100000, 0x7c12afed ) /* Foreground */
 
-	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "gfx.02",  0x000000, 0x80000, 0x00000000 ) /* Sprites */
+	ROM_REGION( 0x180000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "07_ic42.bin",  0x000000, 0x100000, 0x5672bdaa ) /* Sprites */
+	ROM_LOAD( "08_ic29.bin",  0x100000, 0x080000, 0xb4c0ace3 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
-	ROM_LOAD( "4.bin",    0x00000, 0x10000, 0x176905fb )
+	ROM_LOAD( "04_ic74.bin",    0x00000, 0x10000, 0x176905fb )
 
-	ROM_REGION( 0x010000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "snd",    0x00000, 0x10000, 0x00000000 )
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "05_ic54.bin",    0x00000, 0x80000, 0x3b8c2b0e )
+
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "06_ic53.bin",    0x00000, 0x80000, 0xc1517cd4 )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "10_ic81.bin",    0x0000, 0x0100, 0xcfdbb86c )	/* unknown */
+	ROM_LOAD( "11_ic80.bin",    0x0100, 0x0100, 0x633ab1c9 )	/* unknown */
 ROM_END
 
 ROM_START( bioship )
@@ -3244,25 +3409,30 @@ ROM_START( sabotenb )
 ROM_END
 
 ROM_START( bjtwin )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* 68000 code */
-	ROM_LOAD16_BYTE( "bjt.77",  0x00000, 0x40000, 0x7830a465 )
-	ROM_LOAD16_BYTE( "bjt.76",  0x00001, 0x40000, 0x7cd4e72a )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )  /* 68000 code */
+	ROM_LOAD16_BYTE( "93087-1.bin",  0x00000, 0x20000, 0x93c84e2d )
+	ROM_LOAD16_BYTE( "93087-2.bin",  0x00001, 0x20000, 0x30ff678a )
 
 	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "bjt.35",		0x000000, 0x010000, 0xaa13df7c )	/* 8x8 tiles */
+	ROM_LOAD( "93087-3.bin",  0x000000, 0x010000, 0xaa13df7c ) /* 8x8 tiles */
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "bjt.32",		0x000000, 0x100000, 0x8a4f26d0 )	/* 16x16 tiles */
+	ROM_LOAD( "93087-4.bin",  0x000000, 0x100000, 0x8a4f26d0 ) /* 16x16 tiles */
 
 	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD16_WORD_SWAP( "bjt.100",	0x000000, 0x100000, 0xbb06245d )	/* Sprites */
+	ROM_LOAD16_WORD_SWAP( "93087-5.bin", 0x000000, 0x100000, 0xbb06245d ) /* Sprites */
 
-	ROM_REGION( 0x140000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "bjt.130",    0x040000, 0x100000, 0x372d46dd )	/* all banked */
+	ROM_REGION( 0x140000, REGION_SOUND1, 0 ) /* OKIM6295 samples */
+	ROM_LOAD( "93087-6.bin",    0x040000, 0x100000, 0x372d46dd ) /* all banked */
 
-	ROM_REGION( 0x140000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "bjt.127",    0x040000, 0x100000, 0x8da67808 )	/* all banked */
+	ROM_REGION( 0x140000, REGION_SOUND2, 0 ) /* OKIM6295 samples */
+	ROM_LOAD( "93087-7.bin",    0x040000, 0x100000, 0x8da67808 ) /* all banked */
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "8.bpr",      0x0000, 0x0100, 0x633ab1c9 ) /* unknown */
+	ROM_LOAD( "9.bpr",      0x0000, 0x0100, 0x435653a2 ) /* unknown */
 ROM_END
+
 
 ROM_START( nouryoku )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* 68000 code */
@@ -3437,6 +3607,11 @@ static void init_acrobatm(void)
 	RAM[0x724/2] = 0x4e71; /* Protection */
 	RAM[0x726/2] = 0x4e71;
 	RAM[0x728/2] = 0x4e71;
+
+	RAM[0x9d8/2] = 0x3e3C; /* Checksum */
+	RAM[0x9da/2] = 0x0;
+	RAM[0x97c/2] = 0x3e3C;
+	RAM[0x97e/2] = 0x0;
 }
 
 static void init_tdragonb(void)
@@ -3517,18 +3692,18 @@ GAMEX( 1990, mustangs, mustang, mustang,  mustang,  0,        ROT0,   "UPL (Seou
 GAMEX( 1990, mustangb, mustang, mustang,  mustang,  0,        ROT0,   "bootleg",						"US AAF Mustang (bootleg)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
 GAMEX( 1990, bioship,  0,       bioship,  bioship,  bioship,  ROT0,   "UPL (American Sammy license)",	"Bio-ship Paladin", GAME_NO_SOUND )
 GAMEX( 1990, vandyke,  0,       vandyke,  vandyke,  0,        ROT270, "UPL",							"Vandyke (Japan)",  GAME_NO_SOUND )
-GAMEX( 1991, blkheart, 0,       macross,  vandyke,  0,        ROT0,   "UPL",							"Black Heart", GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1991, blkhearj, blkheart,macross,  vandyke,  0,        ROT0,   "UPL",							"Black Heart (Japan)", GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1991, acrobatm, 0,       acrobatm, strahl,   acrobatm, ROT270, "UPL (Taito license)",			"Acrobat Mission", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1991, blkheart, 0,       macross,  blkheart, 0,        ROT0,   "UPL",							"Black Heart", GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1991, blkhearj, blkheart,macross,  blkheart, 0,        ROT0,   "UPL",							"Black Heart (Japan)", GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1991, acrobatm, 0,       acrobatm, acrobatm, acrobatm, ROT270, "UPL (Taito license)",			"Acrobat Mission", GAME_NO_SOUND )
 GAMEX( 1992, strahl,   0,       strahl,   strahl,   strahl,   ROT0,   "UPL",							"Koutetsu Yousai Strahl (Japan set 1)", GAME_NO_SOUND )
 GAMEX( 1992, strahla,  strahl,  strahl,   strahl,   strahl,   ROT0,   "UPL",							"Koutetsu Yousai Strahl (Japan set 2)", GAME_NO_SOUND )
 GAMEX( 1991, tdragon,  0,       tdragon,  tdragon,  tdragon,  ROT270, "NMK / Tecmo",					"Thunder Dragon", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1991, tdragonb, tdragon, tdragon,  tdragon,  tdragonb, ROT270, "NMK / Tecmo",					"Thunder Dragon (Bootleg)", GAME_NO_SOUND )
 GAMEX( 1991, hachamf,  0,       hachamf,  hachamf,  hachamf,  ROT0,   "NMK",							"Hacha Mecha Fighter", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
-GAMEX( 1992, macross,  0,       macross,  macross,  nmk,      ROT270, "Banpresto",					"Macross", GAME_NO_SOUND )
+GAMEX( 1992, macross,  0,       macross,  macross,  nmk,      ROT270, "Banpresto",						"Macross", GAME_NO_SOUND )
 GAMEX( 1993, gunnail,  0,       gunnail,  gunnail,  nmk,      ROT270, "NMK / Tecmo",					"GunNail", GAME_NO_SOUND )
-GAMEX( 1993, macross2, 0,       macross2, macross2, 0,        ROT0,   "Banpresto",					"Macross II", GAME_NO_COCKTAIL )
+GAMEX( 1993, macross2, 0,       macross2, macross2, 0,        ROT0,   "Banpresto",						"Macross II", GAME_NO_COCKTAIL )
 GAMEX( 1993, tdragon2, 0,       macross2, tdragon2, 0,        ROT270, "NMK",				         	"Thunder Dragon 2", GAME_NO_COCKTAIL )
 GAMEX( 1992, sabotenb, 0,       bjtwin,   sabotenb, nmk,      ROT0,   "NMK / Tecmo",					"Saboten Bombers", GAME_NO_COCKTAIL )
 GAMEX( 1993, bjtwin,   0,       bjtwin,   bjtwin,   bjtwin,   ROT270, "NMK",							"Bombjack Twin", GAME_NO_COCKTAIL )
-GAMEX( 1995, nouryoku, 0,       bjtwin,   nouryoku, nmk,      ROT0,   "Tecmo",						"Nouryoku Koujou Iinkai", GAME_NO_COCKTAIL )
+GAMEX( 1995, nouryoku, 0,       bjtwin,   nouryoku, nmk,      ROT0,   "Tecmo",							"Nouryoku Koujou Iinkai", GAME_NO_COCKTAIL )

@@ -108,6 +108,86 @@ Warriorb
 
 Colscroll effects?
 
+Please can someone make sense of these DIPs from
+http://www.funtom.com/dip.html
+
+DIP 1
+
+Item Contents 1 2 3 4 5 6 7 8 Each round
+When clearing
+Physical reconditioning quantity Normally
+It is little
+It is many
+Furthermore many OFF
+ON
+OFF
+ON OFF
+OFF
+ON
+ON Static test mode Normality play
+Static test mode OFF
+ON Demonstration sound Possession
+Nothing OFF
+ON Play fee
+COIN A 1 coin 1 play
+1 coin 2 play
+2 coins 1 play
+3 coins 1 play OFF
+ON
+OFF
+ON OFF
+OFF
+ON
+ON Play fee
+COIN B 1 coin 1 play
+1 coin 2 play
+2 coins 1 play
+3 coins 1 play OFF
+ON
+OFF
+ON OFF
+OFF
+ON
+ON
+
+DIP 2
+
+Item Contents 1 2 3 4 5 6 7 8 Degree of hardness setting
+Divination (A) - > difficulty (D) Ranking B
+Ranking A
+Ranking C
+Ranking D OFF
+ON
+OFF
+ON OFF
+OFF
+ON
+ON Gold ship
+Frequency of occurrence
+Note) 1 Only 50,000pts
+Every after 70,000 the 50,000pts OFF
+ON When starting
+Power of prayer
+Note) 2 Normal
+Full power OFF
+ON Old person of puzzle
+Condition of appearance
+Note) 3 Item (crystal) acquisition time
+Regular appearance OFF
+ON Continuing Possession
+Nothing OFF
+ON Round number
+Note) 4 Normal specification
+Long specification OFF
+ON Unused OFF
+
+Note) the gold ship of 1 item appears the point number where
+Note) round it clears 2 these games it is the game where the prayer becomes strong
+every.
+When starting it decides you start with either one.
+Note) the old person of 3 puzzles appears condition because
+Note) the numbers of 4 round with normal with play contents change in 10 - 14 stages.
+When it is long, 14 stages everything is possible.
 
 ***************************************************************************/
 
@@ -485,9 +565,9 @@ static int subwoofer_sh_start(const struct MachineSound *msound)
 {
 	/* Adjust the lowpass filter of the first three YM2610 channels */
 
-	mixer_set_lowpass_frequency(0,100);
-	mixer_set_lowpass_frequency(1,100);
-	mixer_set_lowpass_frequency(2,100);
+	mixer_set_lowpass_frequency(0,20);
+	mixer_set_lowpass_frequency(1,20);
+	mixer_set_lowpass_frequency(2,20);
 
 	return 0;
 }

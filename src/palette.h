@@ -93,6 +93,9 @@ void palette_set_brightness(int color,double bright);
 void palette_set_shadow_factor(double factor);
 void palette_set_highlight_factor(double factor);
 
+/* use this if you need to fillbitmap() the background with black */
+pen_t get_black_pen(void);
+
 
 /* here are some functions to handle commonly used palette layouts, so you don't
    have to write your own paletteram_w() function. */

@@ -13,13 +13,14 @@ TODO
 ====
 
 There are sprites and background graphics missing (screen refresh is
-incomplete). I can not guess how to draw them without schematics.
+incomplete).
 
-Sprites are of different sizes. There are at least four possible sizes,
-mixed in the graphics ROM. Seems like there is some kind of a blitter.
+I can not guess how to draw Tube Panic background without schematics.
 
-
-Some dip switches might be wrong aswell.
+We miss emulation of all the graphic PCB. In order to do that we need
+program dump of MS2010-A CPU located on that PCB. Unfortunately, this
+is a mask programmed part and getting its ROM dumped might not be
+possible.
 
 
 ----
@@ -91,7 +92,7 @@ TP-S.1 TP-S.2 TP-S.3 TP-B.1  8212 TP-B.2 TP-B.3          TP-B.4
   6MHz
                                      6116
                                                      TP-C.8
-  40PIN_CUST                   TP-G.4                TP-C.7
+  MS2010-A                     TP-G.4                TP-C.7
                                                      TP-C.6
   TP-G.8                        TP-G.3               TP-C.5
 
@@ -119,11 +120,16 @@ TP-S.1 TP-S.2 TP-S.3 TP-B.1  8212 TP-B.2 TP-B.3          TP-B.4
 
 void tubep_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
 void tubep_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+void rjammer_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
+void rjammer_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 int tubep_vh_start(void);
 void tubep_vh_stop(void);
 
+extern data8_t *rjammer_backgroundram;
 extern data8_t *tubep_textram;
 extern WRITE_HANDLER( tubep_textram_w );
+extern WRITE_HANDLER( rjammer_background_LS377_w );
+extern WRITE_HANDLER( rjammer_background_page_w );
 
 static data8_t *sharedram;
 static void *scanline_timer;
@@ -146,15 +152,15 @@ static READ_HANDLER ( sharedram_r )
 
 
 static MEMORY_READ_START( tubep_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },	//up to 9fff in rjammer
+	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xa000, 0xa7ff, MRA_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( tubep_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },	//up to 9fff in rjammer
-	{ 0xa000, 0xa7ff, MWA_RAM },							/* 6116 #0 */
-	{ 0xc000, 0xc7ff, tubep_textram_w, &tubep_textram }, 	/* 2147s  0x0-0x7ff  ?????? */
-	{ 0xe000, 0xe06a, sharedram_w },						/* 6116 #1 */
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0xa000, 0xa7ff, MWA_RAM },							/*  */
+	{ 0xc000, 0xc7ff, tubep_textram_w, &tubep_textram }, 	/*  */
+	{ 0xe000, 0xe7ff, sharedram_w },						/*  */
 MEMORY_END
 
 static PORT_READ_START( tubep_readport )
@@ -217,36 +223,6 @@ static PORT_WRITE_START( tubep_writeport )
 PORT_END
 
 
-static WRITE_HANDLER( rjammer_soundlatch_w )
-{
-	sound_latch = data;
-	//usrintf_showmessage("CPU 0 soundlatch=%4x", data );
-
-	cpu_set_nmi_line(2, PULSE_LINE);
-
-	logerror("RJAMMER SOUND COMM WRITE %2x\n",sound_latch);
-}
-
-static PORT_WRITE_START( rjammer_writeport )
-	//{ 0xd0, 0xd0, tubep_soundlatch_w },
-	{ 0xd5, 0xd5, tubep_port80_w },
-	{ 0xe0, 0xe0, tubep_port80_w },
-	{ 0xf0, 0xf0, rjammer_soundlatch_w },
-PORT_END
-
-static MEMORY_READ_START( rjammer_readmem )
-	{ 0x0000, 0x9fff, MRA_ROM },	//only up to 7fff in tube panic
-	{ 0xa000, 0xa7ff, MRA_RAM },
-	{ 0xe000, 0xe7ff, MRA_RAM },
-MEMORY_END
-
-static MEMORY_WRITE_START( rjammer_writemem )
-	{ 0x0000, 0x9fff, MWA_ROM },	//only up to 7fff in tube panic
-	{ 0xa000, 0xa7ff, MWA_RAM },							/* */
-	{ 0xe000, 0xe7ff, MWA_RAM },							/* */
-	{ 0xc000, 0xc7ff, tubep_textram_w, &tubep_textram }, 	/*  */
-MEMORY_END
-
 
 
 /****************************** Graph CPU ************************************/
@@ -269,9 +245,8 @@ static READ_HANDLER( tubep_g_fd4a_r )
 
 static MEMORY_READ_START( tubep_g_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xe000, 0xe07f, sharedram_r },
-	{ 0xe080, 0xe7ff, MRA_RAM },
-	{ 0xfd4a, 0xfd4b, tubep_g_fd4a_r }, /*could it be a bad ROM ???*/
+	{ 0xe000, 0xe7ff, sharedram_r },
+	{ 0xfd4a, 0xfd4b, tubep_g_fd4a_r }, /* ??? */
 MEMORY_END
 
 static WRITE_HANDLER( tubep_a000_w )
@@ -300,54 +275,13 @@ static MEMORY_WRITE_START( tubep_g_writemem )
 	{ 0xa000, 0xa000, tubep_a000_w },
 	{ 0xc000, 0xc000, tubep_c000_w },
 
-	{ 0xe000, 0xe07f, sharedram_w, &sharedram },	/* 6116 #1 */
-	{ 0xe080, 0xe7ff, MWA_RAM },					/* 6116 #1 */
+	{ 0xe000, 0xe7ff, sharedram_w, &sharedram },	/* 6116 #1 */
 
-	{ 0xe800, 0xebff, MWA_RAM },					/* 2147s 0x800 - 0xbff ?????? */
+	{ 0xe800, 0xebff, MWA_RAM, &rjammer_backgroundram },	/* ???? */
 
 	{ 0xf000, 0xf01f, MWA_NOP }, /* Background color lookup table ?? */
 	{ 0xfc00, 0xfcff, MWA_NOP }, /* program copies here part of shared ram ?? */
 MEMORY_END
-
-
-
-static MEMORY_READ_START( rjammer_g_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xa000, 0xa7ff, MRA_RAM },
-	{ 0xe000, 0xe0ff, MRA_RAM },
-
-	{ 0xf800, 0xf9ff, MRA_RAM },
-
-	//{ 0xe000, 0xe07f, sharedram_r },
-	//{ 0xe080, 0xe7ff, MRA_RAM },
-	//{ 0xfd4a, 0xfd4b, tubep_g_fd4a_r }, /* ??? */
-MEMORY_END
-
-
-static MEMORY_WRITE_START( rjammer_g_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xa000, 0xa7ff, MWA_RAM },		/*  */
-
-	{ 0xe000, 0xe0ff, MWA_RAM },
-
-	{ 0xe800, 0xefff, MWA_RAM },		/*  */
-
-	{ 0xf800, 0xf9ff, MWA_RAM },		/*  */
-
-	//{ 0xa000, 0xa000, tubep_a000_w },
-	//{ 0xc000, 0xc000, tubep_c000_w },
-
-//	{ 0xe000, 0xe07f, sharedram_w, &sharedram },	/* 6116 #1 */
-//	{ 0xe080, 0xe7ff, MWA_RAM },					/* 6116 #1 */
-//	{ 0xe800, 0xebff, MWA_RAM },					/* 2147s 0x800 - 0xbff ?????? */
-//	{ 0xf000, 0xf01f, MWA_NOP }, /* Background color lookup table ?? */
-//	{ 0xfc00, 0xfcff, MWA_NOP }, /* program copies here part of shared ram ?? */
-MEMORY_END
-
-
-
-/****************************** Sound CPU ************************************/
-
 
 static READ_HANDLER( tubep_soundlatch_r )
 {
@@ -373,12 +307,6 @@ static WRITE_HANDLER( tubep_sound_unknown )
 	return;
 }
 
-static WRITE_HANDLER( rjammer_sound_unknown_w )
-{
-	/*logerror("Sound CPU writes to port 0x80 - unknown function\n");*/
-	cpu_set_irq_line(2, 0, CLEAR_LINE); //?????
-	return;
-}
 
 static MEMORY_READ_START( tubep_sound_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
@@ -405,62 +333,6 @@ static PORT_WRITE_START( tubep_sound_writeport )
 	{ 0x07, 0x07, tubep_sound_unknown },
 PORT_END
 
-static READ_HANDLER( rjammer_soundlatch_r )
-{
- 	int res;
-
-	res = sound_latch;
-	sound_latch = 0; // not needed
-	//cpu_set_nmi_line(2, CLEAR_LINE);
-
-	logerror("RJAMMER SOUND COMM READ %2x\n",res);
-
-
-	return res;
-}
-
-static PORT_READ_START( rjammer_sound_readport )
-	{ 0x00, 0x00, rjammer_soundlatch_r },
-PORT_END
-
-static PORT_WRITE_START( rjammer_sound_writeport )
-	{ 0x90, 0x90, AY8910_control_port_0_w },
-	{ 0x91, 0x91, AY8910_write_port_0_w },
-	{ 0x92, 0x92, AY8910_control_port_1_w },
-	{ 0x93, 0x93, AY8910_write_port_1_w },
-	{ 0x94, 0x94, AY8910_control_port_2_w },
-	{ 0x95, 0x95, AY8910_write_port_2_w },
-	{ 0x10, 0x10, tubep_sound_unknown },
-	{ 0x80, 0x80, rjammer_sound_unknown_w },
-PORT_END
-
-
-static WRITE_HANDLER( ay8910_portA_0_w )
-{
-		//unknown sound control
-}
-static WRITE_HANDLER( ay8910_portB_0_w )
-{
-		//unknown sound control
-}
-static WRITE_HANDLER( ay8910_portA_1_w )
-{
-		//unknown sound control
-}
-static WRITE_HANDLER( ay8910_portB_1_w )
-{
-		//unknown sound control
-}
-static WRITE_HANDLER( ay8910_portA_2_w )
-{
-		//unknown sound control
-}
-static WRITE_HANDLER( ay8910_portB_2_w )
-{
-		//unknown sound control
-}
-
-
 static void scanline_callback(int scanline)
 {
 	cpu_set_irq_line(2,0,ASSERT_LINE);	/* sound cpu interrupt (music tempo) */
@@ -476,19 +348,278 @@ static void init_machine(void)
 	scanline_timer = timer_set(cpu_getscanlinetime( 64 ), 64, scanline_callback );
 }
 
-static void scanline_callback_rjammer (int scanline)
-{
-	cpu_set_irq_line(2,0,ASSERT_LINE);	/* sound cpu interrupt (music tempo) */
 
-	scanline += 8;
-	scanline &= 255;
 
-	scanline_timer = timer_set( cpu_getscanlinetime( scanline ), scanline, scanline_callback_rjammer );
-}
-static void init_machine_rjammer(void)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/****************************************************************/
+
+
+
+static WRITE_HANDLER( rjammer_LS259_w )
 {
-	scanline_timer = timer_set(cpu_getscanlinetime( 8 ), 8, scanline_callback_rjammer );
+	switch(offset)
+	{
+		case 0:
+		case 1:
+				coin_counter_w(offset,data&1);	/* bit 0 = coin counter */
+				break;
+		case 5:
+				//screen_flip_w(offset,data&1);	/* bit 0 = screen flip, active high */
+				break;
+		default:
+				break;
+	}
 }
+
+static WRITE_HANDLER( rjammer_soundlatch_w )
+{
+	sound_latch = data;
+	cpu_set_nmi_line(2, PULSE_LINE);
+}
+
+static PORT_READ_START( rjammer_readport )
+	{ 0x00, 0x00, input_port_2_r },	/* a bug in game code (during attract mode) */
+	{ 0x80, 0x80, input_port_2_r },
+	{ 0x90, 0x90, input_port_3_r },
+	{ 0xa0, 0xa0, input_port_4_r },
+	{ 0xb0, 0xb0, input_port_0_r },
+	{ 0xc0, 0xc0, input_port_1_r },
+PORT_END
+
+static PORT_WRITE_START( rjammer_writeport )
+	{ 0xd0, 0xd7, rjammer_LS259_w },
+	{ 0xe0, 0xe0, tubep_port80_w },	/* clear IRQ interrupt */
+	{ 0xf0, 0xf0, rjammer_soundlatch_w },
+PORT_END
+
+
+static MEMORY_READ_START( rjammer_readmem )
+	{ 0x0000, 0x9fff, MRA_ROM },
+	{ 0xa000, 0xa7ff, MRA_RAM },
+	{ 0xe000, 0xe7ff, sharedram_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( rjammer_writemem )
+	{ 0x0000, 0x9fff, MWA_ROM },
+	{ 0xa000, 0xa7ff, MWA_RAM },						/* MB8416 SRAM on daughterboard on main PCB (there are two SRAMs, this is the one on the left) */
+	{ 0xc000, 0xc7ff, tubep_textram_w, &tubep_textram },/* RAM on GFX PCB @B13 */
+	{ 0xe000, 0xe7ff, sharedram_w },					/* MB8416 SRAM on daughterboard (the one on the right) */
+MEMORY_END
+
+
+
+static PORT_WRITE_START( rjammer_slave_writeport )
+	{ 0xb0, 0xb0, rjammer_background_page_w },
+	{ 0xd0, 0xd0, rjammer_background_LS377_w },
+PORT_END
+
+static MEMORY_READ_START( rjammer_slave_readmem )
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0xa000, 0xa7ff, MRA_RAM },		/* M5M5117P @21G */
+	{ 0xe000, 0xe7ff, sharedram_r },	/* MB8416 on daughterboard (the one on the right) */
+	{ 0xe800, 0xefff, MRA_RAM },		/* M5M5117P @19B (background) */
+	//{ 0xf800, 0xf9ff, MRA_RAM },
+
+MEMORY_END
+
+static MEMORY_WRITE_START( rjammer_slave_writemem )
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0xa000, 0xa7ff, MWA_RAM },					/* M5M5117P @21G */
+	{ 0xe000, 0xe7ff, sharedram_w, &sharedram },	/* MB8416 on daughterboard (the one on the right) */
+	{ 0xe800, 0xefff, MWA_RAM, &rjammer_backgroundram },	/* M5M5117P @19B (background) */
+	{ 0xf800, 0xf9ff, MWA_RAM },		/*  */
+
+//	{ 0xf000, 0xf01f, MWA_NOP }, /* Background color lookup table ?? */
+//	{ 0xfc00, 0xfcff, MWA_NOP }, /* program copies here part of shared ram ?? */
+MEMORY_END
+
+
+
+
+/* NSC8105 (MS2010-A) */
+static MEMORY_READ_START( nsc_readmem )
+	{ 0x0000, 0x007f, MRA_RAM },
+	{ 0x8000, 0xffff, MRA_ROM },
+//	{ 0xf800, 0xffff, sharedram_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( nsc_writemem )
+	{ 0x0000, 0x007f, MWA_RAM },
+	{ 0x8000, 0xffff, MWA_ROM },
+//	{ 0xf800, 0xffff, sharedram_w },
+MEMORY_END
+
+
+
+
+
+/****************************** Sound CPU *******************************/
+
+
+
+
+static READ_HANDLER( rjammer_soundlatch_r )
+{
+ 	int res = sound_latch;
+	return res;
+}
+
+static WRITE_HANDLER( rjammer_voice_startstop_w )
+{
+	/* bit 0 of data selects voice start/stop (reset pin on MSM5205)*/
+	// 0 -stop; 1-start
+	MSM5205_reset_w (0, (data&1)^1 );
+
+	return;
+}
+static WRITE_HANDLER( rjammer_voice_frequency_select_w )
+{
+	/* bit 0 of data selects voice frequency on MSM5205 */
+	// 0 -4 KHz; 1- 8KHz
+	if (data&1)
+		MSM5205_playmode_w(0,MSM5205_S48_4B);	/* 8 KHz */
+	else
+		MSM5205_playmode_w(0,MSM5205_S96_4B);	/* 4 KHz */
+
+	return;
+}
+
+static int ls74 = 0;
+static int ls377 = 0;
+
+static void rjammer_adpcm_vck (int data)
+{
+	ls74 = (ls74+1) & 1;
+
+	if (ls74==1)
+	{
+		MSM5205_data_w(0, (ls377>>0) & 15 );
+		cpu_set_irq_line(2, 0, ASSERT_LINE );
+	}
+	else
+	{
+		MSM5205_data_w(0, (ls377>>4) & 15 );
+	}
+
+}
+
+static WRITE_HANDLER( rjammer_voice_input_w )
+{
+	/* 8 bits of adpcm data for MSM5205 */
+	/* need to buffer the data, and switch two nibbles on two following interrupts*/
+
+	ls377 = data;
+
+
+	/* NOTE: game resets interrupt line on ANY access to ANY I/O port.
+			I do it here because this port (0x80) is first one accessed
+			in the interrupt routine.
+	*/
+	cpu_set_irq_line(2, 0, CLEAR_LINE );
+	return;
+}
+
+static WRITE_HANDLER( rjammer_voice_intensity_control_w )
+{
+	/* 4 LSB bits select the intensity (analog circuit that alters the output from MSM5205) */
+	// need to buffer the data
+	return;
+}
+
+static MEMORY_READ_START( rjammer_sound_readmem )
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0xe000, 0xe7ff, MRA_RAM },
+MEMORY_END
+
+static MEMORY_WRITE_START( rjammer_sound_writemem )
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0xe000, 0xe7ff, MWA_RAM },	/* M5M5117P (M58125P @2C on schematics) */
+MEMORY_END
+
+static PORT_READ_START( rjammer_sound_readport )
+	{ 0x00, 0x00, rjammer_soundlatch_r },
+PORT_END
+
+static PORT_WRITE_START( rjammer_sound_writeport )
+	{ 0x10, 0x10, rjammer_voice_startstop_w },
+	{ 0x18, 0x18, rjammer_voice_frequency_select_w },
+	{ 0x80, 0x80, rjammer_voice_input_w },
+	{ 0x90, 0x90, AY8910_control_port_0_w },
+	{ 0x91, 0x91, AY8910_write_port_0_w },
+	{ 0x92, 0x92, AY8910_control_port_1_w },
+	{ 0x93, 0x93, AY8910_write_port_1_w },
+	{ 0x94, 0x94, AY8910_control_port_2_w },
+	{ 0x95, 0x95, AY8910_write_port_2_w },
+	{ 0x96, 0x96, rjammer_voice_intensity_control_w },
+PORT_END
+
+
+static WRITE_HANDLER( ay8910_portA_0_w )
+{
+		//analog sound control
+}
+static WRITE_HANDLER( ay8910_portB_0_w )
+{
+		//analog sound control
+}
+static WRITE_HANDLER( ay8910_portA_1_w )
+{
+		//analog sound control
+}
+static WRITE_HANDLER( ay8910_portB_1_w )
+{
+		//analog sound control
+}
+static WRITE_HANDLER( ay8910_portA_2_w )
+{
+		//analog sound control
+}
+static WRITE_HANDLER( ay8910_portB_2_w )
+{
+		//analog sound control
+}
+
 
 
 INPUT_PORTS_START( tubep )
@@ -601,51 +732,25 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( rjammer )
-	PORT_START	/* DSW3 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START	/* Player 2 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL  )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL )
-
 	PORT_START	/* Player 1 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON3 )
+
+	PORT_START	/* Player 2 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL  )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL )
 
 	PORT_START	/* DSW2 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )//ok
@@ -665,15 +770,15 @@ INPUT_PORTS_START( rjammer )
 	PORT_DIPNAME( 0x20, 0x20, "Time" )
 	PORT_DIPSETTING(    0x20, "40" )
 	PORT_DIPSETTING(    0x00, "50" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )//ok
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )//ok
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )//ok
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
@@ -689,22 +794,22 @@ INPUT_PORTS_START( rjammer )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START	/* Coin, Start */
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_SERVICE( 0x08, IP_ACTIVE_LOW )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON4 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -714,7 +819,7 @@ static struct GfxLayout charlayout =
 	512,	/* 512 characters */
 	1,		/* 1 bit per pixel */
 	{ 0 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 }, /* pretty straightforward layout */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8 /* every char takes 8 consecutive bytes */
 };
@@ -798,13 +903,25 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct AY8910interface ay8910_interface =
 {
 	3,			/* 3 chips */
-	16000000/8,		/* 2 MHz ??? */
-	{ 25, 25, 25 },
+	19968000 / 8 / 2,	/* Xtal3 div by LS669 Q2, then div by LS669 Q0 (signal RH1) */
+	{ 15, 15, 15 },
 	{ 0, 0, 0 }, /*read port A*/
 	{ 0, 0, 0 }, /*read port B*/
 	{ ay8910_portA_0_w, ay8910_portA_1_w, ay8910_portA_2_w }, /*write port A*/
 	{ ay8910_portB_0_w, ay8910_portB_1_w, ay8910_portB_2_w }  /*write port B*/
 };
+
+static struct MSM5205interface msm5205_interface =
+{
+	1,								/* 1 chip */
+	384000, 						/* 384 KHz */
+	{ rjammer_adpcm_vck },			/* VCK function */
+	{ MSM5205_S48_4B},				/* 8 KHz (changed at run time) */
+	{ 100 }							/* volume */
+};
+
+
+
 
 static const struct MachineDriver machine_driver_tubep =
 {
@@ -821,14 +938,12 @@ static const struct MachineDriver machine_driver_tubep =
 			tubep_g_readmem, tubep_g_writemem, 0, 0,
 			interrupt, 1
 		},
-#if 1
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			16000000/8,	/* 2 MHz ???*/
 			tubep_sound_readmem, tubep_sound_writemem, tubep_sound_readport, tubep_sound_writeport,
 			ignore_interrupt, 1
 		},
-#endif
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,
 	1,
@@ -862,40 +977,46 @@ static const struct MachineDriver machine_driver_rjammer =
 	{
 		{
 			CPU_Z80,
-			16000000/8,	/* 2 MHz ???*/
-			rjammer_readmem, rjammer_writemem, tubep_readport, rjammer_writeport,
+			16000000 / 4,	/* 4 MHz */
+			rjammer_readmem, rjammer_writemem, rjammer_readport, rjammer_writeport,
 			interrupt, 1
 		},
 		{
 			CPU_Z80,
-			16000000/8,	/* 2 MHz ??? */
-			rjammer_g_readmem, rjammer_g_writemem, 0, 0,
+			16000000 / 4,	/* 4 MHz */
+			rjammer_slave_readmem, rjammer_slave_writemem, 0, rjammer_slave_writeport,
 			interrupt, 1
 		},
-#if 1
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			16000000/8,	/* 2 MHz ???*/
-			tubep_sound_readmem, tubep_sound_writemem, rjammer_sound_readport, rjammer_sound_writeport,
+			19968000 / 8,	/* Xtal3 divided by LS669 (on Qc output) (signal RH0) */
+			rjammer_sound_readmem, rjammer_sound_writemem, rjammer_sound_readport, rjammer_sound_writeport,
 			ignore_interrupt, 1
 		},
+#if 0
+		{
+			CPU_NSC8105,
+			6000000/4,	/* 1.5 MHz */
+			nsc_readmem,nsc_writemem,0,0,
+			ignore_interrupt,1
+		}
 #endif
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,
 	1,
-	init_machine_rjammer,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	64, 2*16 + 16*2,
-	tubep_vh_convert_color_prom,
+	rjammer_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
 	tubep_vh_start,
 	tubep_vh_stop,
-	tubep_vh_screenrefresh,
+	rjammer_vh_screenrefresh,
 
 	/* sound hardware */
 	0, 0, 0, 0,
@@ -903,6 +1024,10 @@ static const struct MachineDriver machine_driver_rjammer =
 		{
 			SOUND_AY8910,
 			&ay8910_interface
+		},
+		{
+			SOUND_MSM5205,
+			&msm5205_interface
 		}
 	}
 };
@@ -910,13 +1035,13 @@ static const struct MachineDriver machine_driver_rjammer =
 
 
 ROM_START( tubep )
-	ROM_REGION( 0x10000,REGION_CPU1, 0 ) /* Z80 (main) cpu code */
+	ROM_REGION( 0x10000,REGION_CPU1, 0 ) /* Z80 (master) cpu code */
 	ROM_LOAD( "tp-p_5", 0x0000, 0x2000, 0xd5e0cc2f )
 	ROM_LOAD( "tp-p.6", 0x2000, 0x2000, 0x97b791a0 )
 	ROM_LOAD( "tp-p.7", 0x4000, 0x2000, 0xadd9983e )
 	ROM_LOAD( "tp-p.8", 0x6000, 0x2000, 0xb3793cb5 )
 
-	ROM_REGION( 0x10000,REGION_CPU2, 0 ) /* Z80 (graphics??) cpu code */
+	ROM_REGION( 0x10000,REGION_CPU2, 0 ) /* Z80 (slave) cpu code */
 	ROM_LOAD( "tp-p_1", 0x0000, 0x2000, 0xb4020fcc )
 	ROM_LOAD( "tp-p_2", 0x2000, 0x2000, 0xa69862d6 )
 	ROM_LOAD( "tp-p.3", 0x4000, 0x2000, 0xf1d86e00 )
@@ -961,33 +1086,42 @@ ROM_START( tubep )
 	ROM_LOAD( "tp-1.c13", 0x0020, 0x0020, 0xcd0910d6 ) /* background palette ??? */
 ROM_END
 
+
 ROM_START( rjammer )
-	ROM_REGION( 0x10000,REGION_CPU1, 0 ) /* Z80 (main) cpu code */
+	ROM_REGION( 0x10000,REGION_CPU1, 0 ) /* Z80 (master) cpu code */
 	ROM_LOAD( "tp-p.1", 0x0000, 0x2000, 0x93eeed67 )
 	ROM_LOAD( "tp-p.2", 0x2000, 0x2000, 0xed2830c4 )
 	ROM_LOAD( "tp-p.3", 0x4000, 0x2000, 0xe29f25e3 )
-	ROM_LOAD( "tp-p.4", 0x8000, 0x2000, 0x6ed71fbc ) /* 0x4000 !!!! */
+	ROM_LOAD( "tp-p.4", 0x8000, 0x2000, 0x6ed71fbc )
 	ROM_CONTINUE(       0x6000, 0x2000 )
 
-	ROM_REGION( 0x10000,REGION_CPU2, 0 ) /* Z80 (graphics??) cpu code */
+	ROM_REGION( 0x10000,REGION_CPU2, 0 ) /* Z80 (slave) cpu code */
 	ROM_LOAD( "tp-p.8", 0x0000, 0x2000, 0x388b9c66 )
 	ROM_LOAD( "tp-p.7", 0x2000, 0x2000, 0x595030bb )
 	ROM_LOAD( "tp-p.6", 0x4000, 0x2000, 0xb5aa0f89 )
 	ROM_LOAD( "tp-p.5", 0x6000, 0x2000, 0x56eae9ac )
 
 	ROM_REGION( 0x10000,REGION_CPU3, 0 ) /* Z80 (sound) cpu code */
-	ROM_LOAD( "tp-b.1", 0x0000, 0x2000, 0xb1c2525c )
-	ROM_LOAD( "tp-s.3", 0x2000, 0x2000, 0x90c9d0b9 )
-	ROM_LOAD( "tp-s.2", 0x4000, 0x2000, 0x444b6a1d )
-	ROM_LOAD( "tp-s.1", 0x6000, 0x2000, 0x391097cd )
+	ROM_LOAD( "tp-b1.6d", 0x0000, 0x2000, 0xb1c2525c )
+	ROM_LOAD( "tp-s3.4d", 0x2000, 0x2000, 0x90c9d0b9 )
+	ROM_LOAD( "tp-s2.2d", 0x4000, 0x2000, 0x444b6a1d )
+	ROM_LOAD( "tp-s1.1d", 0x6000, 0x2000, 0x391097cd )
 
-	ROM_REGION( 0x8000, REGION_GFX1, 0 ) /* */
-	ROM_LOAD( "tp-b.2", 0x0000, 0x2000, 0x8cd2c917 )
-	ROM_LOAD( "tp-b.3", 0x2000, 0x1000, 0xb80ef399 ) /* 0x1000 !!!!! */
-	ROM_LOAD( "tp-b.4", 0x4000, 0x2000, 0x6600f306 )
-	ROM_LOAD( "tp-b.5", 0x6000, 0x2000, 0x0f260bfe )
+//	ROM_REGION( 0x10000, REGION_CPU4, 0 )	/* 64k for the custom CPU */
 
-	ROM_REGION( 0x10000,REGION_GFX2, 0 ) /* */
+	ROM_REGION( 0x7000, REGION_USER1, 0 )
+	ROM_LOAD( "tp-b3.13d", 0x0000, 0x1000, 0xb80ef399 )
+	ROM_LOAD( "tp-b5.11b", 0x1000, 0x2000, 0x0f260bfe )
+	ROM_LOAD( "tp-b2.11d", 0x3000, 0x2000, 0x8cd2c917 )
+	ROM_LOAD( "tp-b4.19c", 0x5000, 0x2000, 0x6600f306 )
+
+	ROM_REGION( 0x8000, REGION_GFX1, 0 )				/* not used yet */
+	ROM_LOAD( "tp-g5.i2",  0x0000, 0x2000, 0x27e5e6c1 )
+	ROM_LOAD( "tp-g6.h2",  0x2000, 0x2000, 0x105cb9e4 )
+	ROM_LOAD( "tp-g7.e1",  0x4000, 0x2000, 0x9f375b27 )
+	ROM_LOAD( "tp-g8.d1",  0x6000, 0x2000, 0x2e619fec )
+
+	ROM_REGION( 0x10000,REGION_GFX2, 0 )				/* not used yet */
 	ROM_LOAD( "tp-c.1", 0x0000, 0x2000, 0xef573117 )
 	ROM_LOAD( "tp-c.2", 0x2000, 0x2000, 0x1d29f1e6 )
 	ROM_LOAD( "tp-c.3", 0x4000, 0x2000, 0x086511a7 )
@@ -997,21 +1131,15 @@ ROM_START( rjammer )
 	ROM_LOAD( "tp-c.7", 0xc000, 0x2000, 0xcbf093f1 )
 	ROM_LOAD( "tp-c.8", 0xe000, 0x2000, 0x9f31ecb5 )
 
-	ROM_REGION( 0x4000, REGION_GFX3, 0 ) /*  */
-	ROM_LOAD( "tp-g.4", 0x0000, 0x1000, 0x99e72549 )
-	ROM_LOAD( "tp-g.3", 0x1000, 0x1000, 0x1f2abec5 )
-	ROM_LOAD( "tp-g.2", 0x2000, 0x1000, 0x4a7407a2 )
-	ROM_LOAD( "tp-g.1", 0x3000, 0x1000, 0xf0b26c2e )
+	ROM_REGION( 0x4000, REGION_GFX3, 0 )
+	ROM_LOAD( "tp-g4.c10", 0x0000, 0x1000, 0x99e72549 )	/* text characters */
+	ROM_LOAD( "tp-g3.d10", 0x1000, 0x1000, 0x1f2abec5 )
+	ROM_LOAD( "tp-g2.e13", 0x2000, 0x1000, 0x4a7407a2 )
+	ROM_LOAD( "tp-g1.f13", 0x3000, 0x1000, 0xf0b26c2e )
 
-	ROM_REGION( 0x8000, REGION_GFX4, 0 ) /*  */
-	ROM_LOAD( "tp-g.5", 0x0000, 0x2000, 0x27e5e6c1 )
-	ROM_LOAD( "tp-g.6", 0x2000, 0x2000, 0x105cb9e4 )
-	ROM_LOAD( "tp-g.7", 0x4000, 0x2000, 0x9f375b27 )
-	ROM_LOAD( "tp-g.8", 0x6000, 0x2000, 0x2e619fec )
-
-	ROM_REGION( 0x100,   REGION_PROMS, 0 ) /* color proms */
-	ROM_LOAD( "16b",    0x0000, 0x0020, 0x9a12873a ) /* background palette ??? */
-	ROM_LOAD( "16a",    0x0020, 0x0020, 0x90222a71 ) /* text and sprites palette */
+	ROM_REGION( 0x100, REGION_PROMS, 0 ) /* color proms */
+	ROM_LOAD( "16b", 0x0000, 0x0020, 0x9a12873a ) /* text palette, sprites palette? */
+	ROM_LOAD( "16a", 0x0020, 0x0020, 0x90222a71 ) /* background palette */
 ROM_END
 
 /*     year  rom      parent  machine  inp   init */

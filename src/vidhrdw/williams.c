@@ -11,17 +11,13 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "williams.h"
 
 
 #define VIDEORAM_WIDTH		304
 #define VIDEORAM_HEIGHT		256
 #define VIDEORAM_SIZE		(VIDEORAM_WIDTH * VIDEORAM_HEIGHT)
 
-
-/* globals from machine/williams.c */
-extern UINT8 williams2_bank;
-extern UINT16 sinistar_clip;
-extern UINT8 williams_cocktail;
 
 /* RAM globals */
 UINT8 *williams_videoram;
@@ -994,9 +990,15 @@ static void BLITTER_NAME(int sstart, int dstart, int w, int h, int data)
 			}
 
 			sstart += syadv;
-			dstart += dyadv;
+
+			/* note that PlayBall! indicates the X coordinate doesn't wrap */
+			if (data & 0x02)
+				dstart = (dstart & 0xff00) | ((dstart + dyadv) & 0xff);
+			else
+				dstart += dyadv;
 		}
 	}
+
 	/* second case: shifted one pixel */
 	else
 	{
@@ -1038,7 +1040,12 @@ static void BLITTER_NAME(int sstart, int dstart, int w, int h, int data)
 			BLITTER_OP(dest, srcdata, shiftedmask);
 
 			sstart += syadv;
-			dstart += dyadv;
+
+			/* note that PlayBall! indicates the X coordinate doesn't wrap */
+			if (data & 0x02)
+				dstart = (dstart & 0xff00) | ((dstart + dyadv) & 0xff);
+			else
+				dstart += dyadv;
 		}
 	}
 }
