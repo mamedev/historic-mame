@@ -3610,6 +3610,32 @@ ROM_START( viofight )
 
 ROM_END
 
+ROM_START( viofighu )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )     /* 1M for 68000 code */
+	ROM_LOAD16_BYTE( "c16-11.42", 0x00000, 0x10000, CRC(23dbd388) SHA1(488f928826d16b201dcc4b491b09955d0af91f19) )
+	ROM_LOAD16_BYTE( "c16-13.bin",0x00001, 0x10000, CRC(ab947ffc) SHA1(103023cee4b20afa5086ba60522ea5aa723aebef) )
+	ROM_LOAD16_BYTE( "c16-07.41", 0x40000, 0x20000, CRC(64d1d059) SHA1(643ac7fa5076147b24810a8e1b925dfe09f75864) )
+	ROM_LOAD16_BYTE( "c16-06.22", 0x40001, 0x20000, CRC(043761d8) SHA1(4587cadd73b628b4b9ac5c537cec20f90fb4959d) )
+
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* 128k for Z80 code */
+	ROM_LOAD(  "c16-12.32", 0x00000, 0x04000, CRC(6fb028c7) SHA1(a808d82e872914f994652e95dca3fcad00ba02fc) )
+	ROM_CONTINUE(            0x10000, 0x0c000 ) /* banked stuff */
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "c16-01.1", 0x000000, 0x080000, CRC(7059ce83) SHA1(1e6825ab944254cd4ba6574762172245b3352319) )
+	ROM_LOAD( "c16-02.2", 0x080000, 0x080000, CRC(b458e905) SHA1(b712cbf4a4015e1fc2243871fe753e230f0172c2) )
+	ROM_LOAD( "c16-03.3", 0x100000, 0x080000, CRC(515a9431) SHA1(836be28614326d093be8841617cca83cef8d55cc) )
+	ROM_LOAD( "c16-04.4", 0x180000, 0x080000, CRC(ebf285e2) SHA1(0f806e42778e28e9687d85b2601ee08dd786869b) )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )
+	ROM_LOAD( "c16-05.47", 0x000000, 0x80000, CRC(a49d064a) SHA1(f9ed675cfaae69b68c99c7dce7c2a457b5b5c293) )
+
+//	ROM_REGION( 0x1000, REGION_USER1)	/* PALs */
+//	ROM_LOAD( "c16-08.34", 0x0000, 0x0001 )
+//	ROM_LOAD( "c16-09.35", 0x0000, 0x0001 )
+
+ROM_END
+
 ROM_START( masterw )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
 	ROM_LOAD16_BYTE( "b72-06.rom"   , 0x00000, 0x20000, CRC(ae848eff) SHA1(8715e64c5e03097aff5bf1a27e3809619a7731f0) )
@@ -3748,6 +3774,7 @@ GAME( 1989, crimecu,  crimec,  crimec,   crimecu,  0, ROT0,   "Taito America Cor
 GAME( 1989, crimecj,  crimec,  crimec,   crimecj,  0, ROT0,   "Taito Corporation", "Crime City (Japan)" )
 GAME( 1989, tetrist,  tetris,  tetrist,  tetrist,  0, ROT0,   "Sega", "Tetris (Japan, B-System)" )
 GAME( 1989, viofight, 0,       viofight, viofight, 0, ROT0,   "Taito Corporation Japan", "Violence Fight (World)" )
+GAME( 1989, viofighu, viofight,viofight, viofight, 0, ROT0,   "Taito America Corporation", "Violence Fight (US)" )
 GAME( 1990, ashura,   0,       ashura,   ashura,   0, ROT270, "Taito Corporation", "Ashura Blaster (Japan)" )
 GAME( 1990, ashurau,  ashura,  ashura,   ashurau,  0, ROT270, "Taito America Corporation", "Ashura Blaster (US)" )
 GAME( 1990, hitice,   0,       hitice,   hitice,   0, ROT0,   "Williams", "Hit the Ice (US)" )

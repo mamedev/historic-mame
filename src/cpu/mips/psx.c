@@ -2671,7 +2671,7 @@ static void mips_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void mips_get_info(UINT32 state, union cpuinfo *info)
+static void mips_get_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
 	{
@@ -2687,7 +2687,7 @@ void mips_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 40;							break;
 		
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 29;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;

@@ -103,13 +103,12 @@ out:
 Z80:(1)  Sound CPU
 0000-7fff Main ROM
 8000-807f RAM ???
-c000-cfff Sound RAM , $C000-C7FF shared with $C000-C7FF in Z80(0) ram
+c000-cfff Sound RAM, $C000-C7FF shared with $C000-C7FF in Z80(0) ram
 
 
 
 TMS320C10 DSP: Harvard type architecture. RAM and ROM on seperate data buses.
-0000-05ff ROM 16-bit opcodes (word access only). Moved to $8000-8bff for
-				 MAME compatibility. View this ROM in the debugger at $8000h
+0000-05ff ROM 16-bit opcodes (word access only).
 0000-0090 Internal RAM (words).
 
 in:
@@ -128,177 +127,72 @@ out:
 #include "vidhrdw/generic.h"
 #include "vidhrdw/crtc6845.h"
 #include "cpu/tms32010/tms32010.h"
+#include "twincobr.h"
 
 
 
-/******************** Machine stuff **********************/
-MACHINE_INIT( wardner );
-READ_HANDLER( wardner_mainram_r );
-WRITE_HANDLER( wardner_mainram_w );
-WRITE_HANDLER( wardner_control_w );
-WRITE_HANDLER( wardner_coin_dsp_w );
-READ16_HANDLER( twincobr_dsp_r );
-WRITE16_HANDLER( twincobr_dsp_w );
-READ16_HANDLER( twincobr_BIO_r );
-
-extern int wardner_membank;
-extern int twincobr_intenable;
-
-static data8_t *wardner_sharedram;
-static data8_t *wardner_spare_pal_ram;
-
-extern data8_t *wardner_mainram;
 
 
-/******************** Video stuff **********************/
-WRITE_HANDLER( wardner_videoram_w );
-READ_HANDLER ( wardner_videoram_r );
-WRITE_HANDLER( wardner_bglayer_w );
-WRITE_HANDLER( wardner_fglayer_w );
-WRITE_HANDLER( wardner_txlayer_w );
-WRITE_HANDLER( wardner_bgscroll_w );
-WRITE_HANDLER( wardner_fgscroll_w );
-WRITE_HANDLER( wardner_txscroll_w );
-WRITE_HANDLER( wardner_exscroll_w );
-
-VIDEO_START( toaplan0 );
-VIDEO_UPDATE( toaplan0 );
-VIDEO_EOF( toaplan0 );
-
-extern int twincobr_display_on;
-
-
-
-static INTERRUPT_GEN( wardner_interrupt )
+static WRITE_HANDLER( wardner_ramrom_bank_sw )
 {
-	if (twincobr_intenable) {
-		twincobr_intenable = 0;
-		cpu_set_irq_line(0, 0, HOLD_LINE);
-	}
-}
+	if (wardner_membank != data) {
+		int bankaddress = 0;
 
+		data8_t *RAM = memory_region(REGION_CPU1);
 
-static WRITE_HANDLER( CRTC_reg_sel_w )
-{
-	crtc6845_address_w(offset, data);
-}
+		wardner_membank = data;
 
-static WRITE_HANDLER( CRTC_data_w )
-{
-	crtc6845_register_w(0, data);
-	twincobr_display_on = 1;
-}
-
-static READ_HANDLER( wardner_sprite_r )
-{
-	int shift = (offset & 1) * 8;
-	return spriteram16[offset/2] >> shift;
-}
-
-static WRITE_HANDLER( wardner_sprite_w )
-{
-	if (offset & 1)
-		spriteram16[offset/2] = (spriteram16[offset/2] & 0x00ff) | (data << 8);
-	else
-		spriteram16[offset/2] = (spriteram16[offset/2] & 0xff00) | data;
-}
-
-static READ_HANDLER( wardner_sharedram_r )
-{
-	return wardner_sharedram[offset];
-}
-
-static WRITE_HANDLER( wardner_sharedram_w )
-{
-	wardner_sharedram[offset] = data;
-}
-
-static READ_HANDLER( wardner_spare_pal_ram_r )
-{
-	return wardner_spare_pal_ram[offset];
-}
-
-static WRITE_HANDLER( wardner_spare_pal_ram_w )
-{
-	wardner_spare_pal_ram[offset] = data;
-}
-
-static READ_HANDLER( wardner_ram_rom_r )
-{
-	int wardner_data = 0;
-
-	if (wardner_membank == 0)
-	{
-		int wardner_bank = offset + 0x8000;
-		offset &= 0xfff;
-
-		switch (wardner_bank & 0xe000)
-		{
-			case 0x8000: wardner_data = wardner_sprite_r(offset); break;
-			case 0xa000: if (offset < 0xe00) { wardner_data = paletteram_r(offset); }
-						 else { wardner_data = wardner_spare_pal_ram_r(offset & 0x1ff); }
-						 break;
-			case 0xc000: if (offset < 0x800) { wardner_data = wardner_sharedram_r(offset & 0x7ff); }
-						 break;
-			default:	 break;
+		if (data) {
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xffff, 0, MRA8_BANK1);
+			switch (data) {
+				case 2:  bankaddress = 0x10000; break;
+				case 3:  bankaddress = 0x18000; break;
+				case 4:  bankaddress = 0x20000; break;
+				case 5:  bankaddress = 0x28000; break;
+				case 7:  bankaddress = 0x38000; break;
+				case 1:  bankaddress = 0x08000; break; /* not used */
+				case 6:  bankaddress = 0x30000; break; /* not used */
+				default: bankaddress = 0x00000; break; /* not used */
+			}
+			cpu_setbank(1,&RAM[bankaddress]);
+		}
+		else {
+			cpu_setbank(1,&RAM[0x0000]);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x8fff, 0, wardner_sprite_r);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xadff, 0, paletteram_r);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xae00, 0xafff, 0, MRA8_RAM);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xc7ff, 0, MRA8_RAM);
 		}
 	}
-	else
-	{
-		unsigned char *wardner_rom = memory_region(REGION_CPU1);
-		int wardner_rombank = 0x8000 * wardner_membank;
-
-		wardner_data = wardner_rom[wardner_rombank + offset];
-	}
-	return wardner_data;
 }
 
-static WRITE_HANDLER( wardner_ramrom_banks_w )
+void wardner_restore_bank(void)
 {
-	wardner_membank = data;
+	wardner_ramrom_bank_sw(0,1);	/* Dummy value to ensure restoration */
+	wardner_ramrom_bank_sw(0,wardner_membank);
 }
 
 
+/***************************** Z80 Main Memory Map **************************/
 
-/* Z80 #1 memory/port maps */
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x6fff) AM_READ(MRA8_ROM)			/* Main CPU ROM code */
-	AM_RANGE(0x7000, 0x7fff) AM_READ(wardner_mainram_r)	/* Main RAM */
-	AM_RANGE(0x8000, 0xffff) AM_READ(wardner_ram_rom_r)	/* Overlapped RAM/Banked ROM - See below */
-	/* memory layout in bank 0 is really as follows */
-//	AM_RANGE(0x8000, 0x8fff) AM_READ(wardner_sprite_r)	/* Sprite RAM data */
-//	AM_RANGE(0x9000, 0x9fff) AM_READ(MRA8_ROM)			/* Banked ROM */
-//	AM_RANGE(0xa000, 0xadff) AM_READ(paletteram_r)		/* Palette RAM */
-//	AM_RANGE(0xae00, 0xafff) AM_READ(MRA8_BANK2)			/* Unused Palette RAM */
-//	AM_RANGE(0xb000, 0xbfff) AM_READ(MRA8_ROM)			/* Banked ROM */
-//	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_BANK3)			/* Shared RAM with Sound CPU RAM */
-//	AM_RANGE(0xc800, 0xffff) AM_READ(MRA8_ROM)			/* Banked ROM */
-ADDRESS_MAP_END
+static ADDRESS_MAP_START( main_program_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x6fff) AM_ROM
+	AM_RANGE(0x7000, 0x7fff) AM_RAM
 
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x6fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x7000, 0x7fff) AM_WRITE(wardner_mainram_w) AM_BASE(&wardner_mainram)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK1) /* Overlapped RAM/Banked ROM - See below */
+
 	AM_RANGE(0x8000, 0x8fff) AM_WRITE(wardner_sprite_w) AM_BASE((data8_t **)&spriteram16) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x9000, 0x9fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x9000, 0x9fff) AM_ROM
 	AM_RANGE(0xa000, 0xadff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)
-	AM_RANGE(0xae00, 0xafff) AM_WRITE(wardner_spare_pal_ram_w) AM_BASE(&wardner_spare_pal_ram)
-	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(wardner_sharedram_w) AM_BASE(&wardner_sharedram)
-	AM_RANGE(0xb000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc800, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xae00, 0xafff) AM_RAM
+	AM_RANGE(0xb000, 0xbfff) AM_ROM
+	AM_RANGE(0xc000, 0xc7ff) AM_RAM AM_SHARE(1)	/* Shared RAM with Sound Z80 */
+	AM_RANGE(0xc800, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x50, 0x50) AM_READ(input_port_3_r)			/* DSW A */
-	AM_RANGE(0x52, 0x52) AM_READ(input_port_4_r)			/* DSW B */
-	AM_RANGE(0x54, 0x54) AM_READ(input_port_1_r)			/* Player 1 */
-	AM_RANGE(0x56, 0x56) AM_READ(input_port_2_r)			/* Player 2 */
-	AM_RANGE(0x58, 0x58) AM_READ(input_port_0_r)			/* V-Blank/Coin/Start */
-	AM_RANGE(0x60, 0x65) AM_READ(wardner_videoram_r)		/* data from video layer RAM */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_WRITE(CRTC_reg_sel_w)
-	AM_RANGE(0x02, 0x02) AM_WRITE(CRTC_data_w)
+static ADDRESS_MAP_START( main_io_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(wardner_CRTC_reg_sel_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(wardner_CRTC_data_w)
 	AM_RANGE(0x10, 0x13) AM_WRITE(wardner_txscroll_w)		/* scroll text layer */
 	AM_RANGE(0x14, 0x15) AM_WRITE(wardner_txlayer_w)		/* offset in text video RAM */
 	AM_RANGE(0x20, 0x23) AM_WRITE(wardner_bgscroll_w)		/* scroll bg layer */
@@ -306,63 +200,49 @@ static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x30, 0x33) AM_WRITE(wardner_fgscroll_w)		/* scroll fg layer */
 	AM_RANGE(0x34, 0x35) AM_WRITE(wardner_fglayer_w)		/* offset in fg video RAM */
 	AM_RANGE(0x40, 0x43) AM_WRITE(wardner_exscroll_w)		/* scroll extra layer (not used) */
-	AM_RANGE(0x60, 0x65) AM_WRITE(wardner_videoram_w)		/* data for video layer RAM */
+	AM_RANGE(0x50, 0x50) AM_READ(input_port_3_r)			/* DSW A */
+	AM_RANGE(0x52, 0x52) AM_READ(input_port_4_r)			/* DSW B */
+	AM_RANGE(0x54, 0x54) AM_READ(input_port_1_r)			/* Player 1 */
+	AM_RANGE(0x56, 0x56) AM_READ(input_port_2_r)			/* Player 2 */
+	AM_RANGE(0x58, 0x58) AM_READ(input_port_0_r)			/* V-Blank/Coin/Start */
 	AM_RANGE(0x5a, 0x5a) AM_WRITE(wardner_coin_dsp_w)		/* Machine system control */
 	AM_RANGE(0x5c, 0x5c) AM_WRITE(wardner_control_w)		/* Machine system control */
-	AM_RANGE(0x70, 0x70) AM_WRITE(wardner_ramrom_banks_w)	/* ROM bank select */
+	AM_RANGE(0x60, 0x65) AM_READWRITE(wardner_videoram_r, wardner_videoram_w)		/* data from video layer RAM */
+	AM_RANGE(0x70, 0x70) AM_WRITE(wardner_ramrom_bank_sw)	/* ROM bank select */
 ADDRESS_MAP_END
 
 
-/* Z80 #2 memory/port maps */
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0x807f) AM_READ(MRA8_BANK4)
-	AM_RANGE(0xc000, 0xc7ff) AM_READ(wardner_sharedram_r)
-	AM_RANGE(0xc800, 0xcfff) AM_READ(MRA8_BANK5)
+/***************************** Z80 Sound Memory Map *************************/
+
+static ADDRESS_MAP_START( sound_program_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0x807f) AM_RAM
+	AM_RANGE(0xc000, 0xc7ff) AM_RAM AM_SHARE(1)	/* Shared RAM with Main Z80 */
+	AM_RANGE(0xc800, 0xcfff) AM_RAM
+
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x8000, 0x807f) AM_WRITE(MWA8_BANK4)
-	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(wardner_sharedram_w)
-	AM_RANGE(0xc800, 0xcfff) AM_WRITE(MWA8_BANK5)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_READ(YM3812_status_port_0_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_WRITE(YM3812_control_port_0_w)
+static ADDRESS_MAP_START( sound_io_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READWRITE(YM3812_status_port_0_r, YM3812_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM3812_write_port_0_w)
 ADDRESS_MAP_END
 
 
-/* TMS32010 memory/port maps */
-static ADDRESS_MAP_START( DSP_read_program, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000, 0x5ff) AM_READ(MRA16_ROM)	
+/***************************** TMS32010 Memory Map **************************/
+
+static ADDRESS_MAP_START( DSP_program_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000, 0x5ff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( DSP_write_program, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000, 0x5ff) AM_WRITE(MWA16_ROM)
-ADDRESS_MAP_END
+	/* $000 - 08F  TMS32010 Internal Data RAM in Data Address Space */
 
-static ADDRESS_MAP_START( DSP_read_data, ADDRESS_SPACE_DATA, 16 )
-	AM_RANGE(0x000, 0x08f) AM_READ(MRA16_RAM)	/* 90h words internal RAM */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( DSP_write_data, ADDRESS_SPACE_DATA, 16 )
-	AM_RANGE(0x000, 0x08f) AM_WRITE(MWA16_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( DSP_read_io, ADDRESS_SPACE_IO, 16 )
-	AM_RANGE(1, 1) AM_READ(twincobr_dsp_r)
+static ADDRESS_MAP_START( DSP_io_map, ADDRESS_SPACE_IO, 16 )
+	AM_RANGE(0, 0) AM_WRITE(wardner_dsp_addrsel_w)
+	AM_RANGE(1, 1) AM_READWRITE(wardner_dsp_r, wardner_dsp_w)
+	AM_RANGE(3, 3) AM_WRITE(twincobr_dsp_bio_w)
 	AM_RANGE(TMS32010_BIO, TMS32010_BIO) AM_READ(twincobr_BIO_r)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( DSP_write_io, ADDRESS_SPACE_IO, 16 )
-	AM_RANGE(0, 3) AM_WRITE(twincobr_dsp_w)
-ADDRESS_MAP_END
 
 
 
@@ -583,18 +463,18 @@ static MACHINE_DRIVER_START( wardner )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,24000000/4)			/* 6MHz ??? - Real board crystal is 24MHz */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_IO_MAP(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(main_program_map, 0)
+	MDRV_CPU_IO_MAP(main_io_map, 0)
 	MDRV_CPU_VBLANK_INT(wardner_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,24000000/7)			/* 3.43MHz ??? */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_program_map, 0)
+	MDRV_CPU_IO_MAP(sound_io_map, 0)
 
-	MDRV_CPU_ADD(TMS32010,14000000)			/* 14MHz Crystal CLKin */
-	MDRV_CPU_PROGRAM_MAP(DSP_read_program,DSP_write_program)
-	MDRV_CPU_DATA_MAP(DSP_read_data,DSP_write_data)
-	MDRV_CPU_IO_MAP(DSP_read_io,DSP_write_io)
+	MDRV_CPU_ADD(TMS32010,14000000/TMS32010_CLOCK_DIVIDER)	/* 14MHz Crystal CLKin */
+	MDRV_CPU_PROGRAM_MAP(DSP_program_map, 0)
+	/* Data Map is internal to the CPU */
+	MDRV_CPU_IO_MAP(DSP_io_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(56)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -637,7 +517,7 @@ ROM_START( wardner )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
 	ROM_LOAD( "b25-16.rom", 0x00000, 0x08000, CRC(e5202ff8) SHA1(15ae8c0bb16a20bee14e8d80d81c249404ab1463) )
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* Space for Co-Processor TMS320C10 */
+	ROM_REGION( 0x2000, REGION_CPU3, 0 )	/* Space for Co-Processor TMS320C10 */
 
 	ROM_REGION( 0x1000, REGION_USER1, 0 )	/* Co-Processor TMS320C10 MCU code */
 	ROM_LOAD_NIB_HIGH( "82s137.1d",  0x0000, 0x0400, CRC(cc5b3f53) SHA1(33589665ac995cc4645b56bbcd6d1c1cd5368f88) ) /* msb */
@@ -690,7 +570,7 @@ ROM_START( pyros )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
 	ROM_LOAD( "b25-16.rom", 0x00000, 0x08000, CRC(e5202ff8) SHA1(15ae8c0bb16a20bee14e8d80d81c249404ab1463) )
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* Space for Co-Processor TMS320C10 */
+	ROM_REGION( 0x2000, REGION_CPU3, 0 )	/* Space for Co-Processor TMS320C10 */
 
 	ROM_REGION( 0x1000, REGION_USER1, 0 )	/* Co-Processor TMS320C10 MCU code */
 	ROM_LOAD_NIB_HIGH( "82s137.1d",  0x0000, 0x0400, CRC(cc5b3f53) SHA1(33589665ac995cc4645b56bbcd6d1c1cd5368f88) ) /* msb */
@@ -743,7 +623,7 @@ ROM_START( wardnerj )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
 	ROM_LOAD( "b25-16.rom", 0x00000, 0x08000, CRC(e5202ff8) SHA1(15ae8c0bb16a20bee14e8d80d81c249404ab1463) )
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* Space for Co-Processor TMS320C10 */
+	ROM_REGION( 0x2000, REGION_CPU3, 0 )	/* Space for Co-Processor TMS320C10 */
 
 	ROM_REGION( 0x1000, REGION_USER1, 0 )	/* Co-Processor TMS320C10 MCU code */
 	ROM_LOAD_NIB_HIGH( "82s137.1d",  0x0000, 0x0400, CRC(cc5b3f53) SHA1(33589665ac995cc4645b56bbcd6d1c1cd5368f88) ) /* msb */
@@ -796,6 +676,8 @@ static DRIVER_INIT( wardner )
 	/* The ROM loader fixes the nibble images. Here we fix the byte ordering. */
 	for (A = 0;A < 0x0600;A++)
 		dest[A] = (source[A] << 8) | source[A + 0x800];
+
+	wardner_driver_savestate();	/* Save-State stuff in src/machine/twincobr.c */
 }
 
 

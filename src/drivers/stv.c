@@ -1,17 +1,36 @@
 /* Sega ST-V (Sega Titan Video)
 
-built to run the rom test mode only, don't consider anything here too accurate ;-)
-we only run 1 sh2, not both, vidhrdw is just made to display bios text, interrupts
-are mostly not done, most smpc commands not done, no scu / dsp stuff, no sound, you
-get the idea ;-) 40ghz pc recommended once driver is finished
+a.k.a. known as a Sega Saturn for the Arcades.
 
-any rom which has a non-plain loaded rom at 0x2200000 (or 0x2000000, i think it
-recognises a cart at either) appears to fail its self check, reason unknown, the roms
-are almost certainly not bad its a mystery.
+Driver by David Haywood,Angelo Salese,Olivier Galibert & Mariusz Wojcieszek
+SCSP driver provided by R.Belmont,based on ElSemi's SCSP sound chip emulator
+CD Block driver provided by ANY,based on sthief original emulator
+Many thanks to Guru & Runik for the help given.
 
+Hardware overview:
+------------------
+-two SH-2 CPUs,in a master/slave configuration.The master cpu is used to
+boot-up and to do the most of the work,the slave one does extra work that could be
+too much for a single cpu.They both shares all the existant devices;
+-a M68000 CPU,used to drive sound(the SCSP chip).The program is uploaded via the
+SH-2 cpus;
+-a SMPC (System Manager & Peripheral Control),used to drive all the
+devices on the board;
+-a SCU (System Control Unit),mainly used to do DMA operations and to drive interrupts,it
+also has a DSP;
+-an (optional for the ST-V) SH-1 CPU,used to be the CD driver;
+-An A-Bus,where the cart ROM area is located;
+-A B-Bus,where the Video Hardware & the SCU sections are located;
+-Two VDPs chips(named as 1 & 2),used for the video section:
+ -VDP1 is used to render sprites & polygons.
+ -VDP2 is for the tilemap system,there are 4 effective normal layers or 2 roz layers
+ + one back layer.
 this hardware comes above hell on the great list of hellish things as far as emulation goes anyway ;-)
 
-Preliminary Memory map:
+
+Memory map:
+-----------
+
 0x00000000, 0x0007ffff  BIOS ROM
 0x00080000, 0x000fffff  Unused
 0x00100000, 0x00100080  SMPC
@@ -46,46 +65,58 @@ Preliminary Memory map:
 0x06000000, 0x060fffff  Work Ram-H
 0x06100000, 0x07ffffff  Unused
 
-*the unused locations aren't known if they are really unused or not,needs verification...
+*the unused locations aren't known if they are really unused or not,needs verification,most
+of them seem just mirrors of the previous valid memory allocated.
 
-\-ToDo / Notes:
+ToDo / Notes:
+-------------
 
 (Main issues)
 -complete the Master/Slave communication.
 -fix properly the IC13 issue,some games still fails their booting.
+-any rom which has a non-plain loaded rom at 0x2200000 (or 0x2000000, i think it
+ recognises a cart at either) appears to fail its self check, reason unknown, the roms
+ are almost certainly not bad its a mystery.
 -SMPC:I don't know what the last three commands(NMI request/NMI disable/NMI enable)
  are really for.I suppose that they disable/enable the reset for the Slave and the
- sound CPU,but I'm not sure. -AS
+ sound CPU,I don't think that really use NMIs but I'm not sure... -AS
 -Clean-ups and split the various chips(SCU,SMPC)into their respective files.
 -CD block:complete it & add proper CD image support into MAME.
 -the Cart-Dev mode...why it hangs?
--some games increments *intentionally* the credit counter by two at every start-up.
- missing/wrong irq I guess,possibly HBLANK or a sound cpu issue.
+-fix some strange sound cpu memory accesses,there are various issues about this.
 -finish the DSP core.
+-Add window effect in VDP2 (in progress).
+-Finish the tilemap scaling.
 
 (per-game issues)
--groovef: hangs soon after loaded.
+-groovef: hangs soon after loaded,caused by two memory addresses in the Work RAM-H range.
+ Kludged for now to work.
 -various: find idle skip if possible.
 -vmahjong: locks up the emulation due to DMA/irq issues.
--shanhigw: maps & priorities are wrong...
--hanagumi: why do we get 2 credits on startup with sound enabled (game doesn't work
- with sound disabled but thats known, we removed the hacks)
+-shanhigw: register maps & priorities are wrong...
+-hanagumi + others: why do we get 2 credits on startup with sound enabled
+ (game doesn't work with sound disabled but thats known, we removed the hacks)
 -colmns97/puyosun/mausuke/cotton2/cottonbm: interrupt issues? we can't check the SCU mask
  on SMPC or controls fail
--shanhigw/shienryu: need to understand way vdp1 sprite colours work (vdp2 register related?)
 -mausuke/bakubaku/grdforce: need to sort out transparency on the colour mapped sprites
 -colmns97: corrupt background is lack of zooming, why is the top gem a bad colour tho?
 -bakubaku/colmns97/vfkids: no sound?
 -vfremix: game seems to start then waits for an address to change, another interrupt /
  stv timers issue?
 -most: static for sounds
--some games (rsgun,myfairld) don't pass the master/slave communication check if you
- enter then exit from the BIOS test mode,it is a recent issue as before wasn't like this...
+-some games (rsgun,myfairld) don't pass a sound ram address check if you
+ enter then exit from the BIOS test mode,it is a recent issue as before wasn't like
+ this...
 -grdforce: missing backgrounds(map issue? -AS)
 -ejihon: alpha effect is missing on the magifying glass.
 -kiwames: locks up after one match.
 -suikoenb: why the color RAM format doesn't change when you exit the test menu?
-
+-elandore: fix the bitmap transparency,heavily used (or not used) by this.
+-groovef: missing sprites
+-introdon: game initializes palette RAM *without* the IC13 hack
+-pblbeach: not working due to missing timer 1 irq.
+-decathlt: sets invalid DMA size for the sound cpu and crashes due of that
+.
 
 */
 
@@ -115,7 +146,7 @@ DRIVER_INIT(cottonbm);
 DRIVER_INIT(cotton2);
 DRIVER_INIT(fhboxers);
 DRIVER_INIT(dnmtdeka);
-
+DRIVER_INIT(groovef);
 
 /**************************************************************************************/
 /*to be added into a stv Header file,remember to remove all the static...*/
@@ -1828,7 +1859,7 @@ UINT8 PDR2;
 
 static void system_reset()
 {
-	/*Only backup ram and SMPC ram is retained after that this command is issued.*/
+	/*Only backup ram and SMPC ram are retained after that this command is issued.*/
 	memset(stv_scu      ,0x00,0x000100);
 	memset(scsp_regs    ,0x00,0x001000);
 	memset(stv_workram_h,0x00,0x100000);
@@ -2302,8 +2333,7 @@ READ32_HANDLER ( stv_io_r32 )
 		break;
 		case 7:
 		i++;
-		if(i > 7) { i = 0; }
-		return port_ad[i];
+		return port_ad[i & 7];
 		default:
 		return ioga[offset];
 	}
@@ -3068,7 +3098,7 @@ static ADDRESS_MAP_START( stv_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x01406f40, 0x01406f43) AM_WRITE(minit_w) // prikura seems to write here ..
 //	AM_RANGE(0x01000000, 0x01000003) AM_WRITE(minit_w) AM_MIRROR(0x0007ffffc)
 	AM_RANGE(0x01800000, 0x01800003) AM_WRITE(sinit_w)
-	AM_RANGE(0x02000000, 0x04ffffff) AM_ROMBANK(1) // cartridge
+	AM_RANGE(0x02000000, 0x04ffffff) AM_ROM AM_ROMBANK(1)// cartridge
 	AM_RANGE(0x05800000, 0x0589ffff) AM_READWRITE(cdregister_r, cdregister_w)
 	/* Sound */
 	AM_RANGE(0x05a00000, 0x05a7ffff) AM_READWRITE(stv_sh2_soundram_r, stv_sh2_soundram_w)
@@ -3380,7 +3410,6 @@ INPUT_PORTS_START( stvmp )
 	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "P2 I",   	KEYCODE_NONE,        IP_JOY_NONE )
 
 	PORT_START/*13*/
-	/*This one *might* be reach,damn cheap programmers ;-)*/
 	PORT_BITX( 0x01, IP_ACTIVE_LOW, 0, "P2 RON",    KEYCODE_NONE,        IP_JOY_NONE )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -3391,7 +3420,6 @@ INPUT_PORTS_START( stvmp )
 	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "P2 J",   	KEYCODE_NONE,        IP_JOY_NONE )
 
 	PORT_START/*14*/
-	/*Ditto from above(might be ron)*/
 	PORT_BITX( 0x01, IP_ACTIVE_LOW, 0, "P2 REACH",  KEYCODE_NONE,   IP_JOY_NONE )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -3562,10 +3590,10 @@ static struct GfxLayout tiles16x16x8_layout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tiles8x8x4_layout,   0x00, 0x80  },
-	{ REGION_GFX1, 0, &tiles16x16x4_layout,   0x00, 0x80  },
-	{ REGION_GFX1, 0, &tiles8x8x8_layout,   0x00, 0x10  },
-	{ REGION_GFX1, 0, &tiles16x16x8_layout,   0x00, 0x10  },
+	{ REGION_GFX1, 0, &tiles8x8x4_layout,   0x00, (0x80*(2+1))  },
+	{ REGION_GFX1, 0, &tiles16x16x4_layout,   0x00, (0x80*(2+1))  },
+	{ REGION_GFX1, 0, &tiles8x8x8_layout,   0x00, (0x10*(2+1))  },
+	{ REGION_GFX1, 0, &tiles16x16x8_layout,   0x00, (0x10*(2+1))  },
 
 	/* vdp1 .. pointless for drawing but can help us debug */
 	{ REGION_GFX2, 0, &tiles8x8x4_layout,   0x00, 0x100  },
@@ -3633,7 +3661,7 @@ static MACHINE_DRIVER_START( stv )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT )
 	MDRV_SCREEN_SIZE(1024, 1024)
 	MDRV_VISIBLE_AREA(0*8, 703, 0*8, 479) // we need to use a resolution as high as the max size it can change to
-	MDRV_PALETTE_LENGTH(2048)
+	MDRV_PALETTE_LENGTH(2048+(2048*2))//standard palette + extra memory for rgb brightness.
 	MDRV_GFXDECODE(gfxdecodeinfo)
 
 	MDRV_VIDEO_START(stv_vdp2)
@@ -3654,7 +3682,8 @@ MACHINE_DRIVER_END
 	ROM_LOAD16_WORD_SWAP_BIOS( 3, "20091.bin",      0x000000, 0x080000, CRC(59ed40f4) SHA1(eff0f54c70bce05ff3a289bf30b1027e1c8cd117) ) /* jp alt 2 */ \
 	ROM_LOAD16_WORD_SWAP_BIOS( 4, "mp17953a.ic8",   0x000000, 0x080000, CRC(a4c47570) SHA1(9efc73717ec8a13417e65c54344ded9fc25bf5ef) ) /* taiwan */ \
 	ROM_LOAD16_WORD_SWAP_BIOS( 5, "mp17954a.s",     0x000000, 0x080000, CRC(f7722da3) SHA1(af79cff317e5b57d49e463af16a9f616ed1eee08) ) /* Europe */ \
-	/*ROM_LOAD16_WORD_SWAP_BIOS( 6, "saturn.bin",   	0x000000, 0x080000, CRC(653ff2d8) SHA1(20994ae7ee177ddaf3a430b010c7620dca000fb4) )*/ /* Saturn Eu Bios */ \
+	ROM_LOAD16_WORD_SWAP_BIOS( 6, "stv110.bin",     0x000000, 0x080000, CRC(3dfeda92) SHA1(8eb33192a57df5f3a1dfb57263054867c6b2db6d) ) /* ?? */ \
+	/*ROM_LOAD16_WORD_SWAP_BIOS( 7, "saturn.bin",   	0x000000, 0x080000, CRC(653ff2d8) SHA1(20994ae7ee177ddaf3a430b010c7620dca000fb4) )*/ /* Saturn Eu Bios */ \
 	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* SH2 code */ \
 	ROM_COPY( REGION_CPU1,0,0,0x080000) \
 	ROM_REGION( 0x100000, REGION_CPU3, 0 ) /* 68000 code */ \
@@ -3672,6 +3701,7 @@ SYSTEM_BIOS_START( stvbios )
 	SYSTEM_BIOS_ADD( 3, "japanb",      "Japan (bios 20091)" )
 	SYSTEM_BIOS_ADD( 4, "taiwan",      "Taiwan (bios mp17953a)" )
 	SYSTEM_BIOS_ADD( 5, "europe",      "Europe (bios mp17954a)" )
+	SYSTEM_BIOS_ADD( 6, "unknown",      "unknown (debug?)" )
 //	SYSTEM_BIOS_ADD( 7, "saturn",      "Saturn bios :)" )
 	/*Korea*/
 	/*Asia (Pal Area)*/
@@ -4071,12 +4101,14 @@ ROM_END
 ROM_START( rsgun )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x1400000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x2000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD16_WORD_SWAP( "mpr20958.7",   0x0200000, 0x0200000, CRC(cbe5a449) SHA1(b4744ab71ccbadda1921ba43dd1148e57c0f84c5) ) // good (was .11s)
 	ROM_LOAD16_WORD_SWAP( "mpr20959.2",   0x0400000, 0x0400000, CRC(a953330b) SHA1(965274a7297cb88e281fcbdd3ec5025c6463cc7b) ) // good (was .12)
 	ROM_LOAD16_WORD_SWAP( "mpr20960.3",   0x0800000, 0x0400000, CRC(b5ab9053) SHA1(87c5d077eb1219c35fa65b4e11d5b62e826f5236) ) // good (was .13)
 	ROM_LOAD16_WORD_SWAP( "mpr20961.4",   0x0c00000, 0x0400000, CRC(0e06295c) SHA1(0ec2842622f3e9dc5689abd58aeddc7e5603b97a) ) // good (was .14)
 	ROM_LOAD16_WORD_SWAP( "mpr20962.5",   0x1000000, 0x0400000, CRC(f1e6c7fc) SHA1(0ba0972f1bc7c56f4e0589d3e363523cea988bb0) ) // good (was .15)
+	/*Without the following the game crashes,maybe we need to mirror the previous roms in this location?*/
+	ROM_FILL(                             0x1400000, 0x0c00000, 0x00 )
 ROM_END
 
 ROM_START( sandor )
@@ -4484,7 +4516,7 @@ GAMEBX( 1995, kiwames,   stvbios, stvbios, stv, stvmp,ic13,      ROT0,   "Athena
 
 /* Doing Something.. but not enough yet */
 GAMEBX( 1995, shanhigw,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sunsoft / Activision", "Shanghai - The Great Wall / Shanghai Triple Threat", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, groovef,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Atlus",      "Power Instinct 3 - Groove On Fight", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, groovef,   stvbios, stvbios, stv, stv,  groovef,   ROT0, "Atlus",      "Power Instinct 3 - Groove On Fight", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1999, danchih,   stvbios, stvbios, stv, stvmp,stv,       ROT0, "Altron (Tecmo license)", "Danchi de Hanafuoda", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, grdforce,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Success",    "Guardian Force", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, elandore,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sai-Mate",   "Fighting Dragon Legend Elan Doree", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )

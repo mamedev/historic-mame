@@ -226,17 +226,17 @@ struct data_accessors_t
 #define STATIC_BANK22			22						/* banked memory #22 */
 #define STATIC_BANK23			23						/* banked memory #23 */
 #define STATIC_BANK24			24						/* banked memory #24 */
-#define STATIC_RAM				25						/* RAM - standard reads/writes */
-#define STATIC_ROM				26						/* ROM - just like RAM, but writes to the bit-bucket */
-#define STATIC_RAMROM			27						/* RAMROM - use for access in encrypted 8-bit systems */
-#define STATIC_NOP				28						/* NOP - reads are 0, writes to the bit-bucket */
-#define STATIC_UNUSED1			29						/* unused - reserved for future use */
-#define STATIC_UNUSED2			30						/* unused - reserved for future use */
-#define STATIC_UNMAP			31						/* unmapped - all unmapped memory goes here */
-#define STATIC_COUNT			32						/* total number of static handlers */
+/* entries 25-58 are reserved for dynamically allocated internal banks */
+#define STATIC_RAM				59						/* RAM - standard reads/writes */
+#define STATIC_ROM				60						/* ROM - standard reads, no writes */
+#define STATIC_RAMROM			61						/* RAMROM - use for access in encrypted 8-bit systems */
+#define STATIC_NOP				62						/* unmapped - all unmapped memory goes here */
+#define STATIC_UNMAP			63						/* unmapped - all unmapped memory goes here */
+#define STATIC_COUNT			64						/* total number of static handlers */
 
 /* ----- banking constants ----- */
-#define MAX_BANKS				24						/* maximum number of banks */
+#define MAX_BANKS				58						/* maximum number of banks */
+#define MAX_EXPLICIT_BANKS		24						/* maximum number of explicitly-defined banks */
 #define STATIC_BANKMAX			(STATIC_RAM - 1)		/* handler constant of last bank */
 
 
@@ -280,7 +280,6 @@ struct data_accessors_t
 #define MRA8_NOP				((read8_handler)STATIC_NOP)
 #define MRA8_RAM				((read8_handler)STATIC_RAM)
 #define MRA8_ROM				((read8_handler)STATIC_ROM)
-#define MRA8_RAMROM				((read8_handler)STATIC_RAMROM)
 
 /* 8-bit writes */
 #define MWA8_BANK1				((write8_handler)STATIC_BANK1)

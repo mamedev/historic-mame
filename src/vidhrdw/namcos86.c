@@ -5,14 +5,10 @@ Rolling Thunder Video Hardware
 *******************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
-#define GFX_TILES1	0
-#define GFX_TILES2	1
-#define GFX_SPRITES	2
-
-unsigned char *rthunder_videoram1,*rthunder_videoram2;
-extern unsigned char *spriteram;
+data8_t *rthunder_videoram1, *rthunder_videoram2, *rthunder_spriteram;
 
 static int tilebank;
 static int xscroll[4], yscroll[4];	/* scroll + priority */
@@ -20,8 +16,7 @@ static int xscroll[4], yscroll[4];	/* scroll + priority */
 static struct tilemap *tilemap[4];
 
 static int backcolor;
-static int flipscreen;
-static const unsigned char *tile_address_prom;
+static const UINT8 *tile_address_prom;
 
 
 /***************************************************************************
@@ -109,7 +104,7 @@ PALETTE_INIT( namcos86 )
 
 INLINE void get_tile_info(int tile_index,int layer,data8_t *vram)
 {
-	unsigned char attr = vram[2*tile_index + 1];
+	int attr = vram[2*tile_index + 1];
 	int tile_offs;
 	if (layer & 2)
 		tile_offs = ((tile_address_prom[((layer & 1) << 4) + (attr & 0x03)] & 0xe0) >> 5) * 0x100;
@@ -117,7 +112,7 @@ INLINE void get_tile_info(int tile_index,int layer,data8_t *vram)
 		tile_offs = ((tile_address_prom[((layer & 1) << 4) + ((attr & 0x03) << 2)] & 0x0e) >> 1) * 0x100 + tilebank * 0x800;
 
 	SET_TILE_INFO(
-			(layer & 2) ? GFX_TILES2 : GFX_TILES1,
+			(layer & 2) ? 1 : 0,
 			vram[2*tile_index] + tile_offs,
 			attr,
 			0)
@@ -149,6 +144,8 @@ VIDEO_START( namcos86 )
 	tilemap_set_transparent_pen(tilemap[1],7);
 	tilemap_set_transparent_pen(tilemap[2],7);
 	tilemap_set_transparent_pen(tilemap[3],7);
+
+	spriteram = rthunder_spriteram + 0x1800;
 
 	return 0;
 }
@@ -189,21 +186,12 @@ WRITE_HANDLER( rthunder_videoram2_w )
 	}
 }
 
-WRITE_HANDLER( rthunder_tilebank_select_0_w )
+WRITE_HANDLER( rthunder_tilebank_select_w )
 {
-	if (tilebank != 0)
+	int bit = BIT(offset,10);
+	if (tilebank != bit)
 	{
-		tilebank = 0;
-		tilemap_mark_all_tiles_dirty(tilemap[0]);
-		tilemap_mark_all_tiles_dirty(tilemap[1]);
-	}
-}
-
-WRITE_HANDLER( rthunder_tilebank_select_1_w )
-{
-	if (tilebank != 1)
-	{
-		tilebank = 1;
+		tilebank = bit;
 		tilemap_mark_all_tiles_dirty(tilemap[0]);
 		tilemap_mark_all_tiles_dirty(tilemap[1]);
 	}
@@ -211,11 +199,6 @@ WRITE_HANDLER( rthunder_tilebank_select_1_w )
 
 static void scroll_w(int layer,int offset,int data)
 {
-	int xdisp[4] = { 36,34,37,35 };
-	int ydisp = 9;
-	int scrollx,scrolly;
-
-
 	switch (offset)
 	{
 		case 0:
@@ -228,16 +211,6 @@ static void scroll_w(int layer,int offset,int data)
 			yscroll[layer] = data;
 			break;
 	}
-
-	scrollx = xscroll[layer]+xdisp[layer];
-	scrolly = yscroll[layer]+ydisp;
-	if (flipscreen)
-	{
-		scrollx = -scrollx+256;
-		scrolly = -scrolly;
-	}
-	tilemap_set_scrollx(tilemap[layer],0,scrollx-16);
-	tilemap_set_scrolly(tilemap[layer],0,scrolly+16);
 }
 
 WRITE_HANDLER( rthunder_scroll0_w )
@@ -257,10 +230,26 @@ WRITE_HANDLER( rthunder_scroll3_w )
 	scroll_w(3,offset,data);
 }
 
-
 WRITE_HANDLER( rthunder_backcolor_w )
 {
 	backcolor = data;
+}
+
+
+static int copy_sprites;
+
+READ_HANDLER( rthunder_spriteram_r )
+{
+	return rthunder_spriteram[offset];
+}
+
+WRITE_HANDLER( rthunder_spriteram_w )
+{
+	rthunder_spriteram[offset] = data;
+
+	/* a write to this offset tells the sprite chip to buffer the sprite list */
+	if (offset == 0x1ff2)
+		copy_sprites = 1;
 }
 
 
@@ -270,97 +259,115 @@ WRITE_HANDLER( rthunder_backcolor_w )
 
 ***************************************************************************/
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int sprite_priority )
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int sprite_priority)
 {
-	/* note: sprites don't yet clip at the top of the screen properly */
-	const unsigned char *source = &spriteram[0x1400];
-	const unsigned char *finish = &spriteram[0x1c00-16];	/* the last is NOT a sprite */
+	const data8_t *source = &spriteram[0];
+	const data8_t *finish = &spriteram[0x0800-16];	/* the last is NOT a sprite */
 
-	int sprite_xoffs = spriteram[0x1bf5] - 256 * (spriteram[0x1bf4] & 1);
-	int sprite_yoffs = spriteram[0x1bf7] - 256 * (spriteram[0x1bf6] & 1);
+	int sprite_xoffs = spriteram[0x07f5] - 256 * (spriteram[0x07f4] & 1);
+	int sprite_yoffs = spriteram[0x07f7];
+
+	int bank_sprites = Machine->gfx[2]->total_elements / 8;
 
 	while( source<finish )
 	{
 /*
-	source[4]	S-FT -BBB
-	source[5]	TTTT TTTT
-	source[6]   CCCC CCCX
-	source[7]	XXXX XXXX
-	source[8]	PPPT -S-F
-	source[9]   YYYY YYYY
+	source[10] S-FT -BBB
+	source[11] TTTT TTTT
+	source[12] CCCC CCCX
+	source[13] XXXX XXXX
+	source[14] PPPT -S-F
+	source[15] YYYY YYYY
 */
-		unsigned char priority = source[8];
-		if( priority>>5 == sprite_priority )
+		int priority = (source[14] & 0xe0) >> 5;
+		if (priority == sprite_priority)
 		{
-			unsigned char attrs = source[4];
-			unsigned char color = source[6];
-			int sx = source[7] + (color&1)*256; /* need adjust for left clip */
-			int sy = -source[9];
-			int flipx = attrs&0x20;
-			int flipy = priority & 0x01;
-			int tall = (priority&0x04)?1:0;
-			int wide = (attrs&0x80)?1:0;
-			int sprite_bank = attrs&7;
-			int sprite_number = (source[5]&0xff)*4;
-			int row,col;
+			static int gfx_offs[2][2] =
+			{
+				{ 0, 1 },
+				{ 2, 3 }
+			};
+			int attr1 = source[10];
+			int attr2 = source[14];
+			int color = source[12];
+			int sx = source[13] + (color & 0x01)*256;
+			int sy = 240 - source[15];
+			int flipx = (attr1 & 0x20) >> 5;
+			int flipy = (attr2 & 0x01);
+			int sizex = (attr1 & 0x80) >> 7;
+			int sizey = (attr2 & 0x04) >> 2;
+			int sprite = (source[11] & 0xff)*4;
+			int sprite_bank = attr1 & 7;
+			int x,y;
 
-			if ((attrs & 0x10) && !wide) sprite_number += 1;
-			if ((priority & 0x10) && !tall) sprite_number += 2;
-			color = color>>1;
-
-			if (sx>512-32) sx -= 512;
-			if (sy < -209-16) sy += 256;
-
-			if (flipx && !wide) sx-=16;
-			if (!tall) sy+=16;
-//			if (flipy && !tall) sy+=16;
+			sprite &= bank_sprites-1;
+			sprite += sprite_bank * bank_sprites;
+			if ((attr1 & 0x10) && !sizex) sprite += 1;
+			if ((attr2 & 0x10) && !sizey) sprite += 2;
+			color = color >> 1;
 
 			sx += sprite_xoffs;
 			sy -= sprite_yoffs;
 
-			for( row=0; row<=tall; row++ )
+			sy -= 16 * sizey;
+
+			if (flip_screen)
 			{
-				for( col=0; col<=wide; col++ )
+				sx = 496 - 16 * sizex - sx;
+				sy = 240 - 16 * sizey - sy;
+				flipx ^= 1;
+				flipy ^= 1;
+			}
+
+			for (y = 0;y <= sizey;y++)
+			{
+				for (x = 0;x <= sizex;x++)
 				{
-					if (flipscreen)
-					{
-						drawgfx( bitmap, Machine->gfx[GFX_SPRITES+sprite_bank],
-							sprite_number+2*row+col,
-							color,
-							!flipx,!flipy,
-							512-16-67 - (sx+16*(flipx?1-col:col)),
-							64-16+209 - (sy+16*(flipy?1-row:row)),
-							cliprect,
-							TRANSPARENCY_PEN, 0xf );
-					}
-					else
-					{
-						drawgfx( bitmap, Machine->gfx[GFX_SPRITES+sprite_bank],
-							sprite_number+2*row+col,
-							color,
-							flipx,flipy,
-							-67 + (sx+16*(flipx?1-col:col)),
-							209 + (sy+16*(flipy?1-row:row)),
-							cliprect,
-							TRANSPARENCY_PEN, 0xf );
-					}
+					drawgfx( bitmap, Machine->gfx[2],
+						sprite + gfx_offs[y ^ (sizey * flipy)][x ^ (sizex * flipx)],
+						color,
+						flipx,flipy,
+						-67 + ((sx + 16*x) & 0x1ff),
+						1 + ((sy + 16*y) & 0xff),
+						cliprect,TRANSPARENCY_PEN,0xf);
 				}
 			}
 		}
+
 		source+=16;
 	}
 }
 
+
+static void set_scroll(int layer)
+{
+	int xdisp[4] = { 20, 18, 21, 19 };
+	int scrollx,scrolly;
+
+	scrollx = xscroll[layer] + xdisp[layer];
+	scrolly = yscroll[layer] + 9;
+	if (flip_screen)
+	{
+		scrollx = -scrollx;
+		scrolly = -scrolly;
+	}
+	tilemap_set_scrollx(tilemap[layer], 0, scrollx);
+	tilemap_set_scrolly(tilemap[layer], 0, scrolly);
+}
 
 
 VIDEO_UPDATE( namcos86 )
 {
 	int layer;
 
-	/* this is the global sprite Y offset, actually */
-	flipscreen = spriteram[0x1bf6] & 1;
-
-	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+	/* flip screen is embedded in the sprite control registers */
+	/* can't use flip_screen_set() because the visible area is asymmetrical */
+	flip_screen = spriteram[0x07f6] & 1;
+	tilemap_set_flip(ALL_TILEMAPS,flip_screen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+	set_scroll(0);
+	set_scroll(1);
+	set_scroll(2);
+	set_scroll(3);
 
 	fillbitmap(bitmap,Machine->gfx[0]->colortable[8*backcolor+7],cliprect);
 
@@ -376,20 +383,21 @@ VIDEO_UPDATE( namcos86 )
 
 		draw_sprites(bitmap,cliprect,layer);
 	}
-#if 0
-{
-	char buf[80];
-int b=keyboard_pressed(KEYCODE_Y)?8:0;
-	sprintf(buf,"%02x %02x %02x %02x %02x %02x %02x %02x",
-			spriteram[0x1bf0+b],
-			spriteram[0x1bf1+b],
-			spriteram[0x1bf2+b],
-			spriteram[0x1bf3+b],
-			spriteram[0x1bf4+b],
-			spriteram[0x1bf5+b],
-			spriteram[0x1bf6+b],
-			spriteram[0x1bf7+b]);
-	usrintf_showmessage(buf);
 }
-#endif
+
+
+VIDEO_EOF( namcos86 )
+{
+	if (copy_sprites)
+	{
+		int i,j;
+
+		for (i = 0;i < 0x800;i += 16)
+		{
+			for (j = 10;j < 16;j++)
+				spriteram[i+j] = spriteram[i+j - 6];
+		}
+
+		copy_sprites = 0;
+	}
 }

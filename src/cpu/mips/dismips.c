@@ -5,8 +5,13 @@
  *
  */
 
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "osd_cpu.h"
+#include "psx.h"
+extern unsigned dasmr3k(char *,unsigned);
+extern unsigned dasmmips3(char *,unsigned);
 
 struct 
 {
@@ -34,16 +39,26 @@ struct
 #define FORMAT_BIN ( 0 )
 #define FORMAT_PSX ( 1 )
 
+#define CPU_PSX ( 0 )
+#define CPU_R3000 ( 1 )
+#define CPU_R4000 ( 2 )
+
 static UINT8 *filebuf;
 static UINT32 offset;
 static UINT8 order[] = { 3, 2, 1, 0 };
 
-#define STANDALONE
-#include "mipsdasm.c"
+offs_t			opcode_memory_min;			/* opcode memory minimum */
+offs_t			opcode_memory_max;			/* opcode memory maximum */
+offs_t			opcode_mask;				/* mask to apply to the opcode address */
+UINT8 *			opcode_base;				/* opcode ROM base */
+
+void memory_set_opbase(offs_t pc)
+{
+}
 
 static char *Options[]=
 {
-	"begin", "end", "offset", "order", "format", 0
+	"begin", "end", "offset", "order", "format", "cpu", 0
 };
 
 static void usage (void)
@@ -55,7 +70,8 @@ static void usage (void)
 		" -end    - Specify end offset in file to disassemble in bytes [none]\n"
 		" -offset - Specify address to load program in bytes [0]\n"
 		" -order  - Specify byte order [3210]\n"
-		" -format - Specify file format bin|psx [bin]\n\n"
+		" -format - Specify file format bin|psx [bin]\n"
+		" -cpu    - Specify cpu psx|r3000|r4000 [psx]\n\n"
 		"All values should be entered in hexadecimal\n" );
 	exit( 1 );
 }
@@ -75,11 +91,13 @@ int main( int argc, char *argv[] )
 	char buf[ 80 ];
 	char *filename;
 	UINT32 format;
+	UINT32 cpu;
 
 	filename = NULL;
 	begin = 0;
 	end = 0xffffffff;
 	format = FORMAT_BIN;
+	cpu = CPU_PSX;
 
 	n = 0;
 	for( i = 1; i < argc; i++ )
@@ -170,6 +188,29 @@ int main( int argc, char *argv[] )
 					usage();
 				}
 				break;
+			case 5:
+				i++;
+				if( i > argc )
+				{
+					usage();
+				}
+				if( stricmp( argv[ i ], "psx" ) == 0 )
+				{
+					cpu = CPU_PSX;
+				}
+				else if( stricmp( argv[ i ], "r3000" ) == 0 )
+				{
+					cpu = CPU_R3000;
+				}
+				else if( stricmp( argv[ i ], "r4000" ) == 0 )
+				{
+					cpu = CPU_R4000;
+				}
+				else
+				{
+					usage();
+				}
+				break;
 			default:
 				usage();
 				break;
@@ -239,15 +280,44 @@ int main( int argc, char *argv[] )
 		return 4;
 	}
 	fclose (f);
+
 	pc = 0;
 	while( pc < len )
 	{
-		i = DasmMIPS( buf, pc + offset );
+		UINT32 op;
+		op = ( filebuf[ pc + order[ 0 ] ] << 24 ) |
+			( filebuf[ pc + order[ 1 ] ] << 16 ) |
+			( filebuf[ pc + order[ 2 ] ] << 8 ) |
+			( filebuf[ pc + order[ 3 ] ] );
+		*( (UINT32 *)&filebuf[ pc ] ) = op;
+		pc += 4;
+	}
+
+	opcode_mask = 0xffffffff;
+	opcode_base = filebuf - offset;
+	opcode_memory_min = 0;
+	opcode_memory_max = 0xffffffff;
+
+	pc = 0;
+	while( pc < len )
+	{
+		switch( cpu )
+		{
+		case CPU_PSX:
+			i = DasmMIPS( buf, pc + offset );
+			break;
+		case CPU_R3000:
+			i = dasmr3k( buf, pc + offset );
+			break;
+		case CPU_R4000:
+			i = dasmmips3( buf, pc + offset );
+			break;
+		}
 
 		printf( "%08x: ", pc + offset );
-		for( j = 0; j < i ;j++ )
+		for( j = 0; j < i; j++ )
 		{
-			printf( "%02x ", filebuf[ ( pc & ~3 ) + order[ pc & 3 ] ] );
+			printf( "%02x ", filebuf[ BYTE4_XOR_BE( pc ) ] );
 			pc++;
 		}
 		while( j < 10 )

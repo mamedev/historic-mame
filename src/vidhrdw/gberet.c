@@ -1,19 +1,11 @@
-/***************************************************************************
-
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
-
-***************************************************************************/
-
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
 
+UINT8 *gberet_scrollram;
 
-unsigned char *gberet_videoram,*gberet_colorram;
-unsigned char *gberet_spritebank;
-unsigned char *gberet_scrollram;
+static int gberet_spritebank;
+
 static struct tilemap *bg_tilemap;
 
 
@@ -42,11 +34,9 @@ PALETTE_INIT( gberet )
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
-
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		int bit0,bit1,bit2,r,g,b;
-
 
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
@@ -77,69 +67,21 @@ PALETTE_INIT( gberet )
 	}
 }
 
-
-
-/***************************************************************************
-
-  Callbacks for the TileMap code
-
-***************************************************************************/
-
-static void get_tile_info(int tile_index)
-{
-	unsigned char attr = gberet_colorram[tile_index];
-	SET_TILE_INFO(
-			0,
-			gberet_videoram[tile_index] + ((attr & 0x40) << 2),
-			attr & 0x0f,
-			TILE_FLIPYX((attr & 0x30) >> 4))
-	tile_info.priority = (attr & 0x80) >> 7;
-}
-
-
-
-/***************************************************************************
-
-  Start the video hardware emulation.
-
-***************************************************************************/
-
-VIDEO_START( gberet )
-{
-	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT_COLOR,8,8,64,32);
-
-	if (!bg_tilemap)
-		return 0;
-
-	tilemap_set_transparent_pen(bg_tilemap,0x10);
-	tilemap_set_scroll_rows(bg_tilemap,32);
-
-	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Memory handlers
-
-***************************************************************************/
-
 WRITE_HANDLER( gberet_videoram_w )
 {
-	if (gberet_videoram[offset] != data)
+	if (videoram[offset] != data)
 	{
-		gberet_videoram[offset] = data;
-		tilemap_mark_tile_dirty(bg_tilemap,offset);
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
 WRITE_HANDLER( gberet_colorram_w )
 {
-	if (gberet_colorram[offset] != data)
+	if (colorram[offset] != data)
 	{
-		gberet_colorram[offset] = data;
-		tilemap_mark_tile_dirty(bg_tilemap,offset);
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
@@ -150,8 +92,85 @@ WRITE_HANDLER( gberet_scroll_w )
 	gberet_scrollram[offset] = data;
 
 	scroll = gberet_scrollram[offset & 0x1f] | (gberet_scrollram[offset | 0x20] << 8);
-	tilemap_set_scrollx(bg_tilemap,offset & 0x1f,scroll);
+	tilemap_set_scrollx(bg_tilemap, offset & 0x1f, scroll);
 }
+
+WRITE_HANDLER( gberet_sprite_bank_w )
+{
+	gberet_spritebank = data;
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int attr = colorram[tile_index];
+	int code = videoram[tile_index] + ((attr & 0x40) << 2);
+	int color = attr & 0x0f;
+	int flags = TILE_FLIPYX((attr & 0x30) >> 4);
+
+	tile_info.priority = (attr & 0x80) >> 7;
+
+	SET_TILE_INFO(0, code, color, flags);
+}
+
+VIDEO_START( gberet )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_TRANSPARENT_COLOR, 8, 8, 64, 32);
+
+	if (!bg_tilemap)
+		return 0;
+
+	tilemap_set_transparent_pen(bg_tilemap, 0x10);
+	tilemap_set_scroll_rows(bg_tilemap, 32);
+
+	return 0;
+}
+
+static void gberet_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+{
+	int offs;
+	UINT8 *sr;
+
+	if (gberet_spritebank & 0x08)
+		sr = spriteram_2;
+	else
+		sr = spriteram;
+
+	for (offs = 0; offs < 0xc0; offs += 4)
+	{
+		if (sr[offs + 3])
+		{
+			int attr = sr[offs + 1];
+			int code = sr[offs+0] + ((attr & 0x40) << 2);
+			int color = attr & 0x0f;
+			int sx = sr[offs + 2] - 2 * (attr & 0x80);
+			int sy = sr[offs + 3];
+			int flipx = attr & 0x10;
+			int flipy = attr & 0x20;
+
+			if (flip_screen)
+			{
+				sx = 240 - sx;
+				sy = 240 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
+
+			drawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, sx, sy,
+				cliprect, TRANSPARENCY_COLOR, 0);
+		}
+	}
+}
+
+VIDEO_UPDATE( gberet )
+{
+	tilemap_draw(bitmap, cliprect, bg_tilemap, TILEMAP_IGNORE_TRANSPARENCY | 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, TILEMAP_IGNORE_TRANSPARENCY | 1, 0);
+	gberet_draw_sprites(bitmap, cliprect);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+}
+
+/* Green Beret (bootleg) */
 
 WRITE_HANDLER( gberetb_scroll_w )
 {
@@ -160,38 +179,25 @@ WRITE_HANDLER( gberetb_scroll_w )
 	scroll = data;
 	if (offset) scroll |= 0x100;
 
-	for (offset = 6;offset < 29;offset++)
-		tilemap_set_scrollx(bg_tilemap,offset,scroll + 64-8);
+	for (offset = 6; offset < 29; offset++)
+		tilemap_set_scrollx(bg_tilemap, offset, scroll + 64-8);
 }
 
-
-
-/***************************************************************************
-
-  Display refresh
-
-***************************************************************************/
-
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void gberetb_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	int offs;
-	unsigned char *sr;
 
-	if (*gberet_spritebank & 0x08)
-		sr = spriteram_2;
-	else sr = spriteram;
-
-	for (offs = 0;offs < 0xc0;offs += 4)
+	for (offs = spriteram_size - 4; offs >= 0; offs -= 4)
 	{
-		if (sr[offs+3])
+		if (spriteram[offs + 1])
 		{
-			int sx,sy,flipx,flipy;
-
-
-			sx = sr[offs+2] - 2*(sr[offs+1] & 0x80);
-			sy = sr[offs+3];
-			flipx = sr[offs+1] & 0x10;
-			flipy = sr[offs+1] & 0x20;
+			int attr = spriteram[offs + 3];
+			int code = spriteram[offs] + ((attr & 0x40) << 2);
+			int color = attr & 0x0f;
+			int sx = spriteram[offs + 2] - 2 * (attr & 0x80);
+			int sy = 240 - spriteram[offs + 1];
+			int flipx = attr & 0x10;
+			int flipy = attr & 0x20;
 
 			if (flip_screen)
 			{
@@ -201,69 +207,16 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 				flipy = !flipy;
 			}
 
-			drawgfx(bitmap,Machine->gfx[1],
-					sr[offs+0] + ((sr[offs+1] & 0x40) << 2),
-					sr[offs+1] & 0x0f,
-					flipx,flipy,
-					sx,sy,
-					cliprect,TRANSPARENCY_COLOR,0);
+			drawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, sx, sy,
+				cliprect, TRANSPARENCY_COLOR, 0);
 		}
 	}
-}
-
-static void draw_sprites_bootleg(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
-{
-	int offs;
-	unsigned char *sr;
-
-	sr = spriteram;
-
-	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
-	{
-		if (sr[offs+1])
-		{
-			int sx,sy,flipx,flipy;
-
-
-			sx = sr[offs+2] - 2*(sr[offs+3] & 0x80);
-			sy = sr[offs+1];
-			sy = 240 - sy;
-			flipx = sr[offs+3] & 0x10;
-			flipy = sr[offs+3] & 0x20;
-
-			if (flip_screen)
-			{
-				sx = 240 - sx;
-				sy = 240 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(bitmap,Machine->gfx[1],
-					sr[offs+0] + ((sr[offs+3] & 0x40) << 2),
-					sr[offs+3] & 0x0f,
-					flipx,flipy,
-					sx,sy,
-					cliprect,TRANSPARENCY_COLOR,0);
-		}
-	}
-}
-
-
-VIDEO_UPDATE( gberet )
-{
-	tilemap_set_flip(ALL_TILEMAPS, flip_screen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
-
-	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY|0,0);
-	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY|1,0);
-	draw_sprites(bitmap,cliprect);
-	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 }
 
 VIDEO_UPDATE( gberetb )
 {
-	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY|0,0);
-	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY|1,0);
-	draw_sprites_bootleg(bitmap,cliprect);
-	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, TILEMAP_IGNORE_TRANSPARENCY | 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, TILEMAP_IGNORE_TRANSPARENCY | 1, 0);
+	gberetb_draw_sprites(bitmap, cliprect);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 }

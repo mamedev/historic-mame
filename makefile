@@ -103,7 +103,7 @@ else
 CFLAGS += -DNDEBUG \
 	$(ARCH) -O3 -fomit-frame-pointer -fstrict-aliasing \
 	-Werror -Wall -Wno-sign-compare -Wunused \
-	-Wpointer-arith -Wbad-function-cast -Wcast-align -Waggregate-return \
+	-Wpointer-arith -Wbad-function-cast -Wcast-align \
 	-Wshadow -Wstrict-prototypes -Wundef \
 	-Wformat-security -Wwrite-strings \
 	-Wdisabled-optimization \

@@ -328,7 +328,6 @@
 #define DSP_FIR_C7		0x7F
 
 extern MACHINE_INIT( snes );
-extern MACHINE_STOP( snes );
 
 extern READ_HANDLER( snes_r_bank1 );
 extern READ_HANDLER( snes_r_bank2 );
@@ -340,10 +339,6 @@ extern WRITE_HANDLER( snes_w_bank1 );
 extern WRITE_HANDLER( snes_w_bank2 );
 extern WRITE_HANDLER( snes_w_bank4 );
 extern WRITE_HANDLER( snes_w_io );
-
-#ifdef MESS
-extern DEVICE_LOAD(snes_cart);
-#endif
 
 extern INTERRUPT_GEN(snes_scanline_interrupt);
 extern void snes_gdma( UINT8 channels );
@@ -430,5 +425,15 @@ extern void snes_sh_update( int param, INT16 **buffer, int length );
 /* Fake APU functions for when sound is disabled */
 extern READ_HANDLER( fakespc_port_r );
 extern WRITE_HANDLER( fakespc_port_w );
+extern int snes_validate_infoblock( UINT8 *infoblock, UINT16 offset );
+
+struct snes_cart_info
+{
+	UINT8  mode;		/* ROM memory mode */
+	UINT32 sram;		/* Amount of sram in cart */
+	UINT32 sram_max;	/* Maximum amount sram in cart (based on ROM mode) */
+};
+
+extern struct snes_cart_info snes_cart;
 
 #endif /* _SNES_H_ */

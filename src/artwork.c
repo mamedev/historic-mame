@@ -725,6 +725,18 @@ int artwork_create_display(struct osd_create_params *params, UINT32 *rgb_compone
 
 
 /*-------------------------------------------------
+	artwork_system_active - checks to see if the
+	artwork system is currently active
+-------------------------------------------------*/
+
+static int artwork_system_active(void)
+{
+	return artwork_list || uioverlay;
+}
+
+
+
+/*-------------------------------------------------
 	artwork_update_video_and_audio - update the
 	screen, adjusting for artwork
 -------------------------------------------------*/
@@ -736,7 +748,7 @@ void artwork_update_video_and_audio(struct mame_display *display)
 	int artwork_changed = 0, ui_visible = 0;
 
 	/* do nothing if no artwork */
-	if (!artwork_list && !uioverlay)
+	if (!artwork_system_active())
 	{
 		osd_update_video_and_audio(display);
 		return;
@@ -848,7 +860,7 @@ void artwork_update_video_and_audio(struct mame_display *display)
 
 void artwork_override_screenshot_params(struct mame_bitmap **bitmap, struct rectangle *rect, UINT32 *rgb_components)
 {
-	if ((*bitmap == Machine->scrbitmap || *bitmap == uioverlay) && artwork_list)
+	if ((*bitmap == Machine->scrbitmap || *bitmap == uioverlay) && artwork_system_active())
 	{
 		*rect = screenrect;
 

@@ -391,7 +391,7 @@ static z80dasm mnemonic_ed[256]= {
 	{_RP,zIN,"e,(c)"},  {_WP,zOUT,"(c),e"}, {_0, zADC,"hl,de"}, {_RM,zLD,"de,(W)"},
 	{_0, zMLT,"de"},    {_0, zRETI,0},      {_0, zIM,"2"},      {_0, zLD,"a,r"},
 	{_RP,zIN,"h,(c)"},  {_WP,zOUT,"(c),h"}, {_0, zSBC,"hl,hl"}, {_WM,zLD,"(W),hl"},
-	{_0, zNEG,"*"},     {_0, zRETN,0},      {_0, zIM,"0"},      {_RW,zRRD,"(hl)"},
+	{_0, zTST,"B"},     {_0, zRETN,0},      {_0, zIM,"0"},      {_RW,zRRD,"(hl)"},
 	{_RP,zIN,"l,(c)"},  {_WP,zOUT,"(c),l"}, {_0, zADC,"hl,hl"}, {_RM,zLD,"hl,(W)"},
 	{_0, zMLT,"hl"},    {_0, zRETI,0},      {_0, zIM,"0"},      {_RW,zRLD,"(hl)"},
 	{_RP,zIN,"0,(c)"},  {_WP,zOUT,"(c),0"}, {_0, zSBC,"hl,sp"}, {_WM,zLD,"(W),sp"},

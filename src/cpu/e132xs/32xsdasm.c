@@ -17,7 +17,8 @@
 #include "e132xs.h"
 
 const char *L_REG[] =
-{ "L0 ", "L1 ", "L2 ", "L3 ", "L4 ", "L5 ", "L6 ", "L7 ", "L8 ", "L9 ",
+{ 
+  "L0",  "L1",  "L2",  "L3",  "L4",  "L5",  "L6",  "L7",  "L8",  "L9",
   "L10", "L11", "L12", "L13", "L14", "L15", "L16", "L17", "L18", "L19",
   "L20", "L21", "L22", "L23", "L24", "L25", "L26", "L27", "L28", "L29",
   "L30", "L31", "L32", "L33", "L34", "L35", "L36", "L37", "L38", "L39",
@@ -27,14 +28,16 @@ const char *L_REG[] =
 };
 
 const char *G_REG[] =
-{ "PC ", "SR ", "FER", "G03", "G04", "G05", "G06", "G07", "G08", "G09",
-  "G10", "G11", "G12", "G13", "G14", "G15", "G16", "G17", "SP ", "UB ",
-  "BCR", "TPR", "TCR", "TR ", "WCR", "ISR", "FCR", "MCR", "G28", "G29",
+{ 
+  "PC",  "SR",  "FER", "G03", "G04", "G05", "G06", "G07", "G08", "G09",
+  "G10", "G11", "G12", "G13", "G14", "G15", "G16", "G17", "SP",  "UB",
+  "BCR", "TPR", "TCR", "TR",  "WCR", "ISR", "FCR", "MCR", "G28", "G29",
   "G30", "G31"
 };
 
 const char *SETxx[] =
-{ "SETADR",   "Reserved", "SET1",   "SET0",     "SETLE",  "SETGT",  "SETLT",  "SETGE",
+{ 
+  "SETADR",   "Reserved", "SET1",   "SET0",     "SETLE",  "SETGT",  "SETLT",  "SETGE",
   "SETSE",    "SETHT",    "SETST",  "SETHE",    "SETE",   "SETNE",  "SETV",   "SETNV",
   "Reserved", "Reserved", "SET1M",  "Reserved", "SETLEM", "SETGTM", "SETLTM", "SETGEM",
   "SETSEM",   "SETTHM",   "SETSTM", "SETHEM",   "SETEM",  "SETNEM", "SETVM",  "SETNVM"
@@ -317,7 +320,9 @@ INT32 PCrel_format(UINT16 op, unsigned pc)
 
 		size = 4;
 
-		next = READ_OP(pc + 2);
+		pc += 2;
+
+		next = READ_OP(pc);
 
 		ret = (op & 0x7f) << 16;
 
@@ -334,7 +339,7 @@ INT32 PCrel_format(UINT16 op, unsigned pc)
 			ret |= 0xffffff80; //ok?
 	}
 
-	return ret;
+	return (pc + ret);
 }
 
 UINT32 RRdis_format(char *source, char *dest, UINT16 op, UINT16 next_op, unsigned pc)

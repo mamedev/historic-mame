@@ -339,7 +339,7 @@ void cpu_set_irq_line_and_vector(int cpunum, int irqline, int state, int vector)
 		
 		/* if this is the first one, set the timer */
 		if (event_index == 0)
-			timer_set(TIME_NOW, cpunum, cpu_empty_event_queue);
+			mame_timer_set(time_zero, cpunum, cpu_empty_event_queue);
 	}
 	else
 		logerror("Exceeded pending IRQ event queue on CPU %d!\n", cpunum);
@@ -488,7 +488,7 @@ LOG(("CPU#%d interrupt_enable=%d\n", cpunum, enabled));
 
 	/* make sure there are no queued interrupts */
 	if (enabled == 0)
-		timer_set(TIME_NOW, cpunum, cpu_clearintcallback);
+		mame_timer_set(time_zero, cpunum, cpu_clearintcallback);
 }
 
 
@@ -515,6 +515,6 @@ WRITE_HANDLER( interrupt_vector_w )
 		interrupt_vector[activecpu][0] = data;
 
 		/* make sure there are no queued interrupts */
-		timer_set(TIME_NOW, activecpu, cpu_clearintcallback);
+		mame_timer_set(time_zero, activecpu, cpu_clearintcallback);
 	}
 }

@@ -261,6 +261,7 @@ static READ16_HANDLER( cave_sound_r )
 ***************************************************************************/
 
 static data8_t cave_default_eeprom_type1[16] =	{0x00,0x0C,0x11,0x0D,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x11,0x11,0xFF,0xFF,0xFF,0xFF};  /* DFeveron, Guwange */
+static data8_t cave_default_eeprom_type1feversos[18] =	{0x00,0x0C,0x16,0x27,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x11,0x11,0xFF,0xFF,0xFF,0xFF,0x05,0x19};  /* Fever SOS (code checks for the 0x0519 or it won't boot) */
 static data8_t cave_default_eeprom_type2[16] =	{0x00,0x0C,0xFF,0xFB,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};  /* Esprade, DonPachi, DDonPachi */
 static data8_t cave_default_eeprom_type3[16] =	{0x00,0x03,0x08,0x00,0xFF,0xFF,0xFF,0xFF,0x08,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF};  /* UoPoko */
 static data8_t cave_default_eeprom_type4[16] =	{0xF3,0xFE,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};  /* Hotdog Storm */
@@ -3636,6 +3637,18 @@ DRIVER_INIT( dfeveron )
 	time_vblank_irq = 100;
 }
 
+DRIVER_INIT( feversos )
+{
+	cave_default_eeprom = cave_default_eeprom_type1feversos;
+	cave_default_eeprom_length = sizeof(cave_default_eeprom_type1feversos);
+	cave_region_byte = -1;
+
+	unpack_sprites();
+	cave_spritetype = 0;	// "normal" sprites
+	cave_kludge = 2;
+	time_vblank_irq = 100;
+}
+
 DRIVER_INIT( ddonpach )
 {
 	cave_default_eeprom = cave_default_eeprom_type2;
@@ -3844,7 +3857,7 @@ GAME( 1996, hotdogst, 0,        hotdogst, cave,     hotdogst, ROT90,  "Marble", 
 GAME( 1997, ddonpach, 0,        ddonpach, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DoDonPachi (International)" )
 GAME( 1997, ddonpchj, ddonpach, ddonpach, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DoDonPachi (Japan)"         )
 GAME( 1998, dfeveron, 0,        dfeveron, cave,     dfeveron, ROT270, "Cave (Nihon System license)",          "Dangun Feveron (Japan)"     )
-GAMEX( 1998, feversos, dfeveron, dfeveron, cave,     dfeveron, ROT270, "Cave (Nihon System license)",          "Fever SOS (International)", GAME_NOT_WORKING     )
+GAME( 1998, feversos, dfeveron, dfeveron, cave,     feversos, ROT270, "Cave (Nihon System license)",          "Fever SOS (International)"  )
 GAME( 1998, esprade,  0,        esprade,  cave,     esprade,  ROT270, "Atlus/Cave",                           "ESP Ra.De. (International Ver 1998 4/22)" )
 GAME( 1998, espradej, esprade,  esprade,  cave,     esprade,  ROT270, "Atlus/Cave",                           "ESP Ra.De. (Japan Ver 1998 4/21)" )
 GAME( 1998, espradeo, esprade,  esprade,  cave,     esprade,  ROT270, "Atlus/Cave",                           "ESP Ra.De. (Japan Ver 1998 4/14)" )

@@ -130,7 +130,7 @@ static UINT32 dsp_get_source_mem_reg_value( UINT32 mode )
 			case 0x9:
 				return (dsp_reg.alu & 0x00000000ffffffff) >> 0;
 			case 0xA:
-				return (dsp_reg.alu & 0x0000ffff00000000) >> 32;
+				return (dsp_reg.alu & 0x0000ffff00000000LL) >> 32;
 		}
 	}
 	return 0;
@@ -333,7 +333,7 @@ static void dsp_operation(void)
 			if ( dsp_reg.alu & 0x80000000 )
 			{
 				SF_1;
-				dsp_reg.alu |= 0xffff00000000;	/* sign extension */
+				dsp_reg.alu |= 0xffff00000000LL;	/* sign extension */
 			}
 			else {SF_0;}
 			{CF_0;}
@@ -344,7 +344,7 @@ static void dsp_operation(void)
 			if ( dsp_reg.alu & 0x80000000 )
 			{
 				SF_1;
-				dsp_reg.alu |= 0xffff00000000;	/* sign extension */
+				dsp_reg.alu |= 0xffff00000000LL;	/* sign extension */
 			}
 			else {SF_0;}
 			{CF_0;}
@@ -355,7 +355,7 @@ static void dsp_operation(void)
 			if ( dsp_reg.alu & 0x80000000 )
 			{
 				SF_1;
-				dsp_reg.alu |= 0xffff00000000;	/* sign extension */
+				dsp_reg.alu |= 0xffff00000000LL;	/* sign extension */
 			}
 			else {SF_0;}
 			{CF_0;}
@@ -363,11 +363,11 @@ static void dsp_operation(void)
 		case 0x4:	/* ADD */
 			dsp_reg.alu = dsp_reg.acl + dsp_reg.pl;
 			if ( dsp_reg.alu == 0 ) {ZF_1;} else {ZF_0;}
-			if ( dsp_reg.alu & 0x100000000 ) { CF_1; } else { CF_0; };
+			if ( dsp_reg.alu & 0x100000000LL ) { CF_1; } else { CF_0; };
 			if ( dsp_reg.alu & 0x80000000 )
 			{
 				SF_1;
-				dsp_reg.alu |= 0xffff00000000;	/* sign extension */
+				dsp_reg.alu |= 0xffff00000000LL;	/* sign extension */
 			}
 			else {SF_0;}
 			/* TODO: V flag */
@@ -375,11 +375,11 @@ static void dsp_operation(void)
 		case 0x5:	/* SUB */
 			dsp_reg.alu = dsp_reg.acl - dsp_reg.pl;
 			if ( dsp_reg.alu == 0 ) {ZF_1;} else {ZF_0;}
-			if ( dsp_reg.alu & 0x100000000 ) { CF_1; } else { CF_0; };
+			if ( dsp_reg.alu & 0x100000000LL ) { CF_1; } else { CF_0; };
 			if ( dsp_reg.alu & 0x80000000 )
 			{
 				SF_1;
-				dsp_reg.alu |= 0xffff00000000;	/* sign extension */
+				dsp_reg.alu |= 0xffff00000000LL;	/* sign extension */
 			}
 			else {SF_0;}
 			/* TODO: V flag */
@@ -388,8 +388,8 @@ static void dsp_operation(void)
 			dsp_reg.alu = dsp_reg.acl + dsp_reg.pl;
 			dsp_reg.alu += ((UINT64)(dsp_reg.ach + dsp_reg.ph)) << 32;
 			if ( dsp_reg.alu == 0 ) {ZF_1;} else {ZF_0;}
-			if ( dsp_reg.alu & 0x800000000000 ) {SF_1;} else {SF_0;}
-			if ( dsp_reg.alu & 0x1000000000000 ) {CF_1; } else {CF_0;}
+			if ( dsp_reg.alu & 0x800000000000LL ) {SF_1;} else {SF_0;}
+			if ( dsp_reg.alu & 0x1000000000000LL ) {CF_1; } else {CF_0;}
 			/* TODO: V flag */
 			break;
 		case 0x7:	/* ??? */
@@ -403,7 +403,7 @@ static void dsp_operation(void)
 			if ( dsp_reg.alu & 0x80000000 )
 			{
 				SF_1;
-				dsp_reg.alu |= 0xffff00000000;	/* sign extension */
+				dsp_reg.alu |= 0xffff00000000LL;	/* sign extension */
 			}
 			else {SF_0;}
 			break;
@@ -415,7 +415,7 @@ static void dsp_operation(void)
 			if ( dsp_reg.alu & 0x80000000 )
 			{
 				SF_1;
-				dsp_reg.alu |= 0xffff00000000;	/* sign extension */
+				dsp_reg.alu |= 0xffff00000000LL;	/* sign extension */
 			}
 			else {SF_0;}
 			break;
@@ -426,7 +426,7 @@ static void dsp_operation(void)
 			if ( dsp_reg.alu & 0x80000000 )
 			{
 				SF_1;
-				dsp_reg.alu |= 0xffff00000000;	/* sign extension */
+				dsp_reg.alu |= 0xffff00000000LL;	/* sign extension */
 			}
 			else {SF_0;}
 			break;
@@ -438,7 +438,7 @@ static void dsp_operation(void)
 			if ( dsp_reg.alu & 0x80000000 )
 			{
 				SF_1;
-				dsp_reg.alu |= 0xffff00000000;	/* sign extension */
+				dsp_reg.alu |= 0xffff00000000LL;	/* sign extension */
 			}
 			else {SF_0;}
 			break;
@@ -455,7 +455,7 @@ static void dsp_operation(void)
 			if ( dsp_reg.alu & 0x80000000 )
 			{
 				SF_1;
-				dsp_reg.alu |= 0xffff00000000;	/* sign extension */
+				dsp_reg.alu |= 0xffff00000000LL;	/* sign extension */
 			}
 			else {SF_0;}
 			break;
@@ -474,7 +474,7 @@ static void dsp_operation(void)
 		case 0x1:	/* NOP ? */
 			break;
 		case 0x2:	/* MOV MUL,P */
-			dsp_reg.ph = ((dsp_reg.mul & 0x0000ffff00000000) >> 32);
+			dsp_reg.ph = ((dsp_reg.mul & 0x0000ffff00000000LL) >> 32);
 			dsp_reg.pl = ((dsp_reg.mul & 0x00000000ffffffff) >> 0);
 			break;
 		case 0x3:	/* MOV [s],P */
@@ -506,7 +506,7 @@ static void dsp_operation(void)
 			dsp_reg.ach = 0;
 			break;
 		case 0x2:	/* MOV ALU,A */
-			dsp_reg.ach = ((dsp_reg.alu & 0x0000ffff00000000) >> 32);
+			dsp_reg.ach = ((dsp_reg.alu & 0x0000ffff00000000LL) >> 32);
 			dsp_reg.acl = ((dsp_reg.alu & 0x00000000ffffffff) >> 0);
 			break;
 		case 0x3:	/* MOV [s], A */

@@ -42,7 +42,7 @@ enum
 	REG_CTRL3,		// read/write = control 3
 	REG_CTRL4,		// read/write = control 4
 	REG_XFERCNTHI,		// read = current xfer count hi byte, write = set xfer count hi byte
-	REG_DATAALIGN,		// data alignment (write only)
+	REG_DATAALIGN		// data alignment (write only)
 };
 
 READ32_HANDLER( am53cf96_r )

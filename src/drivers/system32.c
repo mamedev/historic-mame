@@ -522,6 +522,38 @@ static READ16_HANDLER(ga2_wakeup_protection_r)
 	return prot[offset];
 }
 
+
+// This code duplicates the actions of the protection device used in SegaSonic
+// arcade revision C, allowing the game to run correctly.
+#define CLEARED_LEVELS			0xE5C4
+#define CURRENT_LEVEL			0xF06E
+#define CURRENT_LEVEL_STATUS		0xF0BC
+#define LEVEL_ORDER_ARRAY		0x263A
+
+static WRITE16_HANDLER(sonic_level_load_protection)
+{
+	unsigned short level;
+//Perform write
+	system32_workram[CLEARED_LEVELS / 2] = (data & ~mem_mask) | (system32_workram[CLEARED_LEVELS / 2] & mem_mask);
+
+//Refresh current level
+		if (system32_workram[CLEARED_LEVELS / 2] == 0)
+		{
+			level = 0x0007;
+		}
+		else
+		{
+			level =  *((memory_region(REGION_CPU1) + LEVEL_ORDER_ARRAY) + (system32_workram[CLEARED_LEVELS / 2] * 2) - 1);
+			level |= *((memory_region(REGION_CPU1) + LEVEL_ORDER_ARRAY) + (system32_workram[CLEARED_LEVELS / 2] * 2) - 2) << 8;
+		}
+		system32_workram[CURRENT_LEVEL / 2] = level;
+
+//Reset level status
+		system32_workram[CURRENT_LEVEL_STATUS / 2] = 0x0000;
+		system32_workram[(CURRENT_LEVEL_STATUS + 2) / 2] = 0x0000;
+}
+
+
 // the protection board on many system32 games has full dma/bus access
 // and can write things into work RAM.  we simulate that here for burning rival.
 static READ16_HANDLER(brival_protection_r)
@@ -1964,7 +1996,7 @@ static void irq_handler(int irq)
 
 struct RF5C68interface sys32_rf5c68_interface =
 {
-  8000000,
+  9000000,		/* pitch matches real board, real speed is 8 MHz */
   55
 };
 
@@ -2976,6 +3008,7 @@ static DRIVER_INIT ( sonic )
 
 	install_mem_write16_handler(0, 0xc00040, 0xc00055, sonic_track_reset_w);
 	install_mem_read16_handler (0, 0xc00040, 0xc00055, sonic_track_r);
+	install_mem_write16_handler(0, 0x20E5C4, 0x20E5C5, sonic_level_load_protection);
 }
 
 static DRIVER_INIT ( radm )

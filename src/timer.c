@@ -33,6 +33,7 @@
 #include "cpuintrf.h"
 #include "driver.h"
 #include "timer.h"
+#include <math.h>
 
 
 #define MAX_TIMERS 256
@@ -45,6 +46,8 @@
 #else
 #define LOG(x)
 #endif
+
+
 
 
 
@@ -61,9 +64,9 @@ struct _mame_timer
 	int tag;
 	UINT8 enabled;
 	UINT8 temporary;
-	double period;
-	double start;
-	double expire;
+	mame_time period;
+	mame_time start;
+	mame_time expire;
 };
 
 
@@ -73,6 +76,8 @@ struct _mame_timer
 -------------------------------------------------*/
 
 /* conversion constants */
+subseconds_t subseconds_per_cycle[MAX_CPU];
+UINT32 cycles_per_second[MAX_CPU];
 double cycles_to_sec[MAX_CPU];
 double sec_to_cycles[MAX_CPU];
 
@@ -83,19 +88,22 @@ static mame_timer *timer_free_head;
 static mame_timer *timer_free_tail;
 
 /* other internal states */
-static double global_offset;
+static mame_time global_basetime;
 static mame_timer *callback_timer;
 static int callback_timer_modified;
-static double callback_timer_expire_time;
+static mame_time callback_timer_expire_time;
+
+/* other constant times */
+mame_time time_zero;
+mame_time time_never;
 
 
 
 /*-------------------------------------------------
-	get_relative_time - return the current time
-	relative to the global_offset
+	get_current_time - return the current time
 -------------------------------------------------*/
 
-INLINE double get_relative_time(void)
+INLINE mame_time get_current_time(void)
 {
 	int activecpu;
 
@@ -108,8 +116,8 @@ INLINE double get_relative_time(void)
 	if (callback_timer)
 		return callback_timer_expire_time;
 	
-	/* otherwise, return 0 */
-	return 0;
+	/* otherwise, return the current global base time */
+	return global_basetime;
 }
 
 
@@ -142,7 +150,7 @@ INLINE mame_timer *timer_new(void)
 
 INLINE void timer_list_insert(mame_timer *timer)
 {
-	double expire = timer->enabled ? timer->expire : TIME_NEVER;
+	mame_time expire = timer->enabled ? timer->expire : time_never;
 	mame_timer *t, *lt = NULL;
 
 	/* sanity checks for the debug build */
@@ -165,10 +173,7 @@ INLINE void timer_list_insert(mame_timer *timer)
 	for (t = timer_head; t; lt = t, t = t->next)
 	{
 		/* if the current list entry expires after us, we should be inserted before it */
-		/* note that due to floating point rounding, we need to allow a bit of slop here */
-		/* because two equal entries -- within rounding precision -- need to sort in */
-		/* the order they were inserted into the list */
-		if ((t->expire - expire) > TIME_IN_NSEC(1))
+		if (compare_mame_times(t->expire, expire) > 0)
 		{
 			/* link the new guy in before the current list entry */
 			timer->prev = t->prev;
@@ -233,8 +238,13 @@ void timer_init(void)
 {
 	int i;
 
+	/* init the constant times */
+	time_zero.seconds = time_zero.subseconds = 0;
+	time_never.seconds = MAX_SECONDS;
+	time_never.subseconds = MAX_SUBSECONDS - 1;
+
 	/* we need to wait until the first call to timer_cyclestorun before using real CPU times */
-	global_offset = 0.0;
+	global_basetime = time_zero;
 	callback_timer = NULL;
 	callback_timer_modified = 0;
 
@@ -280,14 +290,13 @@ void timer_free(void)
 
 
 /*-------------------------------------------------
-	timer_time_until_next_timer - return the
-	amount of time until the next timer fires
+	mame_timer_next_fire_time - return the
+	time when the next timer will fire
 -------------------------------------------------*/
 
-double timer_time_until_next_timer(void)
+mame_time mame_timer_next_fire_time(void)
 {
-	double time = get_relative_time();
-	return timer_head->expire - time;
+	return timer_head->expire;
 }
 
 
@@ -297,30 +306,23 @@ double timer_time_until_next_timer(void)
 	time; this is also where we fire the timers
 -------------------------------------------------*/
 
-void timer_adjust_global_time(double delta)
+void mame_timer_set_global_time(mame_time newbase)
 {
 	mame_timer *timer;
 
-	/* add the delta to the global offset */
-	global_offset += delta;
+	/* set the new global offset */
+	global_basetime = newbase;
 
-	/* scan the list and adjust the times */
-	for (timer = timer_head; timer != NULL; timer = timer->next)
-	{
-		timer->start -= delta;
-		timer->expire -= delta;
-	}
-
-	LOG(("timer_adjust_global_time: delta=%.9f head->expire=%.9f\n", delta, timer_head->expire));
+	LOG(("mame_timer_set_global_time: new=%.9f head->expire=%.9f\n", mame_time_to_double(newbase), mame_time_to_double(timer_head->expire)));
 
 	/* now process any timers that are overdue */
-	while (timer_head->expire < TIME_IN_NSEC(1))
+	while (compare_mame_times(timer_head->expire, global_basetime) <= 0)
 	{
 		int was_enabled = timer_head->enabled;
 
 		/* if this is a one-shot timer, disable it now */
 		timer = timer_head;
-		if (timer->period == 0)
+		if (compare_mame_times(timer->period, time_zero) == 0 || compare_mame_times(timer->period, time_never) == 0)
 			timer->enabled = 0;
 
 		/* set the global state of which callback we're in */
@@ -331,7 +333,7 @@ void timer_adjust_global_time(double delta)
 		/* call the callback */
 		if (was_enabled && timer->callback)
 		{
-			LOG(("Timer %08X fired (expire=%.9f)\n", (UINT32)timer, timer->expire));
+			LOG(("Timer %08X fired (expire=%.9f)\n", (UINT32)timer, mame_time_to_double(timer->expire)));
 			profiler_mark(PROFILER_TIMER_CALLBACK);
 			(*timer->callback)(timer->callback_param);
 			profiler_mark(PROFILER_END);
@@ -351,7 +353,7 @@ void timer_adjust_global_time(double delta)
 			else
 			{
 				timer->start = timer->expire;
-				timer->expire += timer->period;
+				timer->expire = add_mame_times(timer->expire, timer->period);
 
 				timer_list_remove(timer);
 				timer_list_insert(timer);
@@ -367,9 +369,9 @@ void timer_adjust_global_time(double delta)
 	isn't primed yet
 -------------------------------------------------*/
 
-mame_timer *timer_alloc(void (*callback)(int))
+mame_timer *mame_timer_alloc(void (*callback)(int))
 {
-	double time = get_relative_time();
+	mame_time time = get_current_time();
 	mame_timer *timer = timer_new();
 
 	/* fail if we can't allocate a new entry */
@@ -382,11 +384,11 @@ mame_timer *timer_alloc(void (*callback)(int))
 	timer->enabled = 0;
 	timer->temporary = 0;
 	timer->tag = get_resource_tag();
-	timer->period = 0;
+	timer->period = time_zero;
 
 	/* compute the time of the next firing and insert into the list */
 	timer->start = time;
-	timer->expire = TIME_NEVER;
+	timer->expire = time_never;
 	timer_list_insert(timer);
 
 	/* return a handle */
@@ -401,9 +403,9 @@ mame_timer *timer_alloc(void (*callback)(int))
 	fire periodically
 -------------------------------------------------*/
 
-void timer_adjust(mame_timer *which, double duration, int param, double period)
+void mame_timer_adjust(mame_timer *which, mame_time duration, int param, mame_time period)
 {
-	double time = get_relative_time();
+	mame_time time = get_current_time();
 
 	/* if this is the callback timer, mark it modified */
 	if (which == callback_timer)
@@ -415,7 +417,7 @@ void timer_adjust(mame_timer *which, double duration, int param, double period)
 
 	/* set the start and expire times */
 	which->start = time;
-	which->expire = time + duration;
+	which->expire = add_mame_times(time, duration);
 	which->period = period;
 
 	/* remove and re-insert the timer in its new order */
@@ -423,7 +425,7 @@ void timer_adjust(mame_timer *which, double duration, int param, double period)
 	timer_list_insert(which);
 
 	/* if this was inserted as the head, abort the current timeslice and resync */
-LOG(("timer_adjust %08X to expire @ %.9f\n", (UINT32)which, which->expire));
+LOG(("timer_adjust %08X to expire @ %.9f\n", (UINT32)which, mame_time_to_double(which->expire)));
 	if (which == timer_head && cpu_getexecutingcpu() >= 0)
 		activecpu_abort_timeslice();
 }
@@ -436,7 +438,7 @@ LOG(("timer_adjust %08X to expire @ %.9f\n", (UINT32)which, which->expire));
 	period
 -------------------------------------------------*/
 
-void timer_pulse(double period, int param, void (*callback)(int))
+void mame_timer_pulse(mame_time period, int param, void (*callback)(int))
 {
 	mame_timer *timer = timer_alloc(callback);
 
@@ -445,7 +447,7 @@ void timer_pulse(double period, int param, void (*callback)(int))
 		return;
 
 	/* adjust to our liking */
-	timer_adjust(timer, period, param, period);
+	mame_timer_adjust(timer, period, param, period);
 }
 
 
@@ -455,7 +457,7 @@ void timer_pulse(double period, int param, void (*callback)(int))
 	calls the callback after the given duration
 -------------------------------------------------*/
 
-void timer_set(double duration, int param, void (*callback)(int))
+void mame_timer_set(mame_time duration, int param, void (*callback)(int))
 {
 	mame_timer *timer = timer_alloc(callback);
 
@@ -467,7 +469,7 @@ void timer_set(double duration, int param, void (*callback)(int))
 	timer->temporary = 1;
 
 	/* adjust to our liking */
-	timer_adjust(timer, duration, param, 0);
+	mame_timer_adjust(timer, duration, param, time_zero);
 }
 
 
@@ -476,10 +478,10 @@ void timer_set(double duration, int param, void (*callback)(int))
 	timer_reset - reset the timing on a timer
 -------------------------------------------------*/
 
-void timer_reset(mame_timer *which, double duration)
+void mame_timer_reset(mame_timer *which, mame_time duration)
 {
 	/* adjust the timer */
-	timer_adjust(which, duration, which->callback_param, which->period);
+	mame_timer_adjust(which, duration, which->callback_param, which->period);
 }
 
 
@@ -488,7 +490,7 @@ void timer_reset(mame_timer *which, double duration)
 	timer_remove - remove a timer from the system
 -------------------------------------------------*/
 
-void timer_remove(mame_timer *which)
+void mame_timer_remove(mame_timer *which)
 {
 	/* error if this is an inactive timer */
 	if (which->tag == -1)
@@ -518,7 +520,7 @@ void timer_remove(mame_timer *which)
 	timer_enable - enable/disable a timer
 -------------------------------------------------*/
 
-int timer_enable(mame_timer *which, int enable)
+int mame_timer_enable(mame_timer *which, int enable)
 {
 	int old;
 
@@ -540,10 +542,9 @@ int timer_enable(mame_timer *which, int enable)
 	last trigger
 -------------------------------------------------*/
 
-double timer_timeelapsed(mame_timer *which)
+mame_time mame_timer_timeelapsed(mame_timer *which)
 {
-	double time = get_relative_time();
-	return time - which->start;
+	return sub_mame_times(get_current_time(), which->start);
 }
 
 
@@ -553,10 +554,9 @@ double timer_timeelapsed(mame_timer *which)
 	next trigger
 -------------------------------------------------*/
 
-double timer_timeleft(mame_timer *which)
+mame_time mame_timer_timeleft(mame_timer *which)
 {
-	double time = get_relative_time();
-	return which->expire - time;
+	return sub_mame_times(which->expire, get_current_time());
 }
 
 
@@ -565,9 +565,9 @@ double timer_timeleft(mame_timer *which)
 	timer_get_time - return the current time
 -------------------------------------------------*/
 
-double timer_get_time(void)
+mame_time mame_timer_get_time(void)
 {
-	return global_offset + get_relative_time();
+	return get_current_time();
 }
 
 
@@ -577,9 +577,9 @@ double timer_get_time(void)
 	timer started counting
 -------------------------------------------------*/
 
-double timer_starttime(mame_timer *which)
+mame_time mame_timer_starttime(mame_timer *which)
 {
-	return global_offset + which->start;
+	return which->start;
 }
 
 
@@ -589,7 +589,7 @@ double timer_starttime(mame_timer *which)
 	timer will fire next
 -------------------------------------------------*/
 
-double timer_firetime(mame_timer *which)
+mame_time mame_timer_firetime(mame_timer *which)
 {
-	return global_offset + which->expire;
+	return which->expire;
 }

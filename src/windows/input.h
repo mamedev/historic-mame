@@ -1,6 +1,6 @@
 //============================================================
 //
-//	input.c - Win32 implementation of MAME input routines
+//	input.h - Win32 implementation of MAME input routines
 //
 //============================================================
 
@@ -34,10 +34,18 @@ typedef struct _KEYBOARD_INDICATOR_PARAMETERS {
 
 } KEYBOARD_INDICATOR_PARAMETERS, *PKEYBOARD_INDICATOR_PARAMETERS;
 
+// table entry indices
+#define MAME_KEY		0
+#define DI_KEY			1
+#define VIRTUAL_KEY		2
+#define ASCII_KEY		3
+
 
 //============================================================
 //	PROTOTYPES
 //============================================================
+
+extern const int win_key_trans_table[][4];
 
 void start_led(void);
 void stop_led(void);

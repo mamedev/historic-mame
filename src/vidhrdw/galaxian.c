@@ -859,6 +859,15 @@ VIDEO_START( drivfrcg )
 	return 0;
 }
 
+VIDEO_START( bongo )
+{
+	int ret = video_start_galaxian_plain();
+
+	modify_spritecode = batman2_modify_spritecode;
+
+	return ret;
+}
+
 
 WRITE_HANDLER( galaxian_videoram_w )
 {

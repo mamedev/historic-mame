@@ -26,7 +26,7 @@ Supported games:
 	outzone		TP-018		Out Zone
 	outzonea	TP-018		Out Zone (From board serial number 2122)
 	vimana		TP-019		Vimana (From board serial number 1547.04 [July '94])
-	vimana1		TP-019		Vimana (older version)
+	vimana1		TP-019		Vimana (Older version)
 	vimanan		TP-019		Vimana (Nova Apparate GMBH & Co  license)
 
 
@@ -70,380 +70,263 @@ To Do:
 
 
 
-/* 68000 memory maps */
-static ADDRESS_MAP_START( rallybik_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x080000, 0x083fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x0c0000, 0x0c0fff) AM_READ(MRA16_RAM)				/* sprite ram data */
-	AM_RANGE(0x100002, 0x100003) AM_READ(toaplan1_tileram_offs_r)
-	AM_RANGE(0x100004, 0x100007) AM_READ(rallybik_tileram16_r)	/* tile layers */
-	AM_RANGE(0x100010, 0x10001f) AM_READ(toaplan1_scroll_regs_r)
-	AM_RANGE(0x140000, 0x140001) AM_READ(input_port_0_word_r)
-	AM_RANGE(0x144000, 0x1447ff) AM_READ(toaplan1_colorram1_r)
-	AM_RANGE(0x146000, 0x1467ff) AM_READ(toaplan1_colorram2_r)
-	AM_RANGE(0x180000, 0x180fff) AM_READ(toaplan1_shared_r)
-ADDRESS_MAP_END
+/***************************** 68000 Memory Map *****************************/
 
-static ADDRESS_MAP_START( rallybik_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x080000, 0x083fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x0c0000, 0x0c0fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+static ADDRESS_MAP_START( rallybik_main_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x00ffff) AM_ROM
+	AM_RANGE(0x040000, 0x07ffff) AM_ROM
+	AM_RANGE(0x080000, 0x083fff) AM_RAM
+	AM_RANGE(0x0c0000, 0x0c0fff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x100000, 0x100001) AM_WRITE(rallybik_bcu_flipscreen_w)
-	AM_RANGE(0x100002, 0x100003) AM_WRITE(toaplan1_tileram_offs_w)
-	AM_RANGE(0x100004, 0x100007) AM_WRITE(toaplan1_tileram16_w)
-	AM_RANGE(0x100010, 0x10001f) AM_WRITE(toaplan1_scroll_regs_w)
-//	AM_RANGE(0x140000, 0x140001) ?? video frame related ?? 
+	AM_RANGE(0x100002, 0x100003) AM_READWRITE(toaplan1_tileram_offs_r, toaplan1_tileram_offs_w)
+	AM_RANGE(0x100004, 0x100007) AM_READWRITE(rallybik_tileram16_r, toaplan1_tileram16_w)
+	AM_RANGE(0x100010, 0x10001f) AM_READWRITE(toaplan1_scroll_regs_r, toaplan1_scroll_regs_w)
+	AM_RANGE(0x140000, 0x140001) AM_READ(input_port_0_word_r)
+//	AM_RANGE(0x140000, 0x140001) AM_WRITE(?? video frame related ??)
 	AM_RANGE(0x140002, 0x140003) AM_WRITE(toaplan1_intenable_w)
 	AM_RANGE(0x140008, 0x14000f) AM_WRITE(toaplan1_bcu_control_w)
-	AM_RANGE(0x144000, 0x1447ff) AM_WRITE(toaplan1_colorram1_w) AM_BASE(&toaplan1_colorram1) AM_SIZE(&toaplan1_colorram1_size)
-	AM_RANGE(0x146000, 0x1467ff) AM_WRITE(toaplan1_colorram2_w) AM_BASE(&toaplan1_colorram2) AM_SIZE(&toaplan1_colorram2_size)
-	AM_RANGE(0x180000, 0x180fff) AM_WRITE(toaplan1_shared_w)
+	AM_RANGE(0x144000, 0x1447ff) AM_READWRITE(toaplan1_colorram1_r, toaplan1_colorram1_w) AM_BASE(&toaplan1_colorram1) AM_SIZE(&toaplan1_colorram1_size)
+	AM_RANGE(0x146000, 0x1467ff) AM_READWRITE(toaplan1_colorram2_r, toaplan1_colorram2_w) AM_BASE(&toaplan1_colorram2) AM_SIZE(&toaplan1_colorram2_size)
+	AM_RANGE(0x180000, 0x180fff) AM_READWRITE(toaplan1_shared_r, toaplan1_shared_w)
 	AM_RANGE(0x1c0000, 0x1c0003) AM_WRITE(toaplan1_tile_offsets_w)
 	AM_RANGE(0x1c8000, 0x1c8001) AM_WRITE(toaplan1_reset_sound)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( truxton_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x080000, 0x083fff) AM_READ(MRA16_RAM)
+static ADDRESS_MAP_START( truxton_main_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_ROM
+	AM_RANGE(0x080000, 0x083fff) AM_RAM
 	AM_RANGE(0x0c0000, 0x0c0001) AM_READ(toaplan1_frame_done_r)
-	AM_RANGE(0x0c0002, 0x0c0003) AM_READ(toaplan1_spriteram_offs_r)
-	AM_RANGE(0x0c0004, 0x0c0005) AM_READ(toaplan1_spriteram16_r)
-	AM_RANGE(0x0c0006, 0x0c0007) AM_READ(toaplan1_spritesizeram16_r)
-	AM_RANGE(0x100002, 0x100003) AM_READ(toaplan1_tileram_offs_r)
-	AM_RANGE(0x100004, 0x100007) AM_READ(toaplan1_tileram16_r)
-	AM_RANGE(0x100010, 0x10001f) AM_READ(toaplan1_scroll_regs_r)
-	AM_RANGE(0x140000, 0x140001) AM_READ(input_port_0_word_r)
-	AM_RANGE(0x144000, 0x1447ff) AM_READ(toaplan1_colorram1_r)
-	AM_RANGE(0x146000, 0x1467ff) AM_READ(toaplan1_colorram2_r)
-	AM_RANGE(0x180000, 0x180fff) AM_READ(toaplan1_shared_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( truxton_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x080000, 0x083fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x0c0002, 0x0c0003) AM_WRITE(toaplan1_spriteram_offs_w)
-	AM_RANGE(0x0c0004, 0x0c0005) AM_WRITE(toaplan1_spriteram16_w)
-	AM_RANGE(0x0c0006, 0x0c0007) AM_WRITE(toaplan1_spritesizeram16_w)
+	AM_RANGE(0x0c0002, 0x0c0003) AM_READWRITE(toaplan1_spriteram_offs_r, toaplan1_spriteram_offs_w)
+	AM_RANGE(0x0c0004, 0x0c0005) AM_READWRITE(toaplan1_spriteram16_r, toaplan1_spriteram16_w)
+	AM_RANGE(0x0c0006, 0x0c0007) AM_READWRITE(toaplan1_spritesizeram16_r, toaplan1_spritesizeram16_w)
 	AM_RANGE(0x100000, 0x100001) AM_WRITE(toaplan1_bcu_flipscreen_w)
-	AM_RANGE(0x100002, 0x100003) AM_WRITE(toaplan1_tileram_offs_w)
-	AM_RANGE(0x100004, 0x100007) AM_WRITE(toaplan1_tileram16_w)
-	AM_RANGE(0x100010, 0x10001f) AM_WRITE(toaplan1_scroll_regs_w)
-//	AM_RANGE(0x140000, 0x140001) ?? video frame related ??
+	AM_RANGE(0x100002, 0x100003) AM_READWRITE(toaplan1_tileram_offs_r, toaplan1_tileram_offs_w)
+	AM_RANGE(0x100004, 0x100007) AM_READWRITE(toaplan1_tileram16_r, toaplan1_tileram16_w)
+	AM_RANGE(0x100010, 0x10001f) AM_READWRITE(toaplan1_scroll_regs_r, toaplan1_scroll_regs_w)
+	AM_RANGE(0x140000, 0x140001) AM_READ(input_port_0_word_r)
+//	AM_RANGE(0x140000, 0x140001) AM_WRITE(?? video frame related ??)
 	AM_RANGE(0x140002, 0x140003) AM_WRITE(toaplan1_intenable_w)
 	AM_RANGE(0x140008, 0x14000f) AM_WRITE(toaplan1_bcu_control_w)
-	AM_RANGE(0x144000, 0x1447ff) AM_WRITE(toaplan1_colorram1_w) AM_BASE(&toaplan1_colorram1) AM_SIZE(&toaplan1_colorram1_size)
-	AM_RANGE(0x146000, 0x1467ff) AM_WRITE(toaplan1_colorram2_w) AM_BASE(&toaplan1_colorram2) AM_SIZE(&toaplan1_colorram2_size)
-	AM_RANGE(0x180000, 0x180fff) AM_WRITE(toaplan1_shared_w)
+	AM_RANGE(0x144000, 0x1447ff) AM_READWRITE(toaplan1_colorram1_r, toaplan1_colorram1_w) AM_BASE(&toaplan1_colorram1) AM_SIZE(&toaplan1_colorram1_size)
+	AM_RANGE(0x146000, 0x1467ff) AM_READWRITE(toaplan1_colorram2_r, toaplan1_colorram2_w) AM_BASE(&toaplan1_colorram2) AM_SIZE(&toaplan1_colorram2_size)
+	AM_RANGE(0x180000, 0x180fff) AM_READWRITE(toaplan1_shared_r, toaplan1_shared_w)
 	AM_RANGE(0x1c0000, 0x1c0003) AM_WRITE(toaplan1_tile_offsets_w)
 	AM_RANGE(0x1c0006, 0x1c0007) AM_WRITE(toaplan1_fcu_flipscreen_w)
 	AM_RANGE(0x1d0000, 0x1d0001) AM_WRITE(toaplan1_reset_sound)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( hellfire_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x040000, 0x047fff) AM_READ(MRA16_RAM)
+static ADDRESS_MAP_START( hellfire_main_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_ROM
+	AM_RANGE(0x040000, 0x047fff) AM_RAM
 	AM_RANGE(0x080000, 0x080001) AM_READ(input_port_0_word_r)
-	AM_RANGE(0x084000, 0x0847ff) AM_READ(toaplan1_colorram1_r)
-	AM_RANGE(0x086000, 0x0867ff) AM_READ(toaplan1_colorram2_r)
-	AM_RANGE(0x0c0000, 0x0c0fff) AM_READ(toaplan1_shared_r)
-	AM_RANGE(0x100002, 0x100003) AM_READ(toaplan1_tileram_offs_r)
-	AM_RANGE(0x100004, 0x100007) AM_READ(toaplan1_tileram16_r)
-	AM_RANGE(0x100010, 0x10001f) AM_READ(toaplan1_scroll_regs_r)
-	AM_RANGE(0x140000, 0x140001) AM_READ(toaplan1_frame_done_r)
-	AM_RANGE(0x140002, 0x140003) AM_READ(toaplan1_spriteram_offs_r)
-	AM_RANGE(0x140004, 0x140005) AM_READ(toaplan1_spriteram16_r)
-	AM_RANGE(0x140006, 0x140007) AM_READ(toaplan1_spritesizeram16_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( hellfire_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x040000, 0x047fff) AM_WRITE(MWA16_RAM)
-/*	AM_RANGE(0x080000, 0x080001) ?? video frame related ??  	*/
+//	AM_RANGE(0x080000, 0x080001) AM_WRITE(?? video frame related ??)
 	AM_RANGE(0x080002, 0x080003) AM_WRITE(toaplan1_intenable_w)
 	AM_RANGE(0x080008, 0x08000f) AM_WRITE(toaplan1_bcu_control_w)
-	AM_RANGE(0x084000, 0x0847ff) AM_WRITE(toaplan1_colorram1_w) AM_BASE(&toaplan1_colorram1) AM_SIZE(&toaplan1_colorram1_size)
-	AM_RANGE(0x086000, 0x0867ff) AM_WRITE(toaplan1_colorram2_w) AM_BASE(&toaplan1_colorram2) AM_SIZE(&toaplan1_colorram2_size)
-	AM_RANGE(0x0c0000, 0x0c0fff) AM_WRITE(toaplan1_shared_w)
+	AM_RANGE(0x084000, 0x0847ff) AM_READWRITE(toaplan1_colorram1_r, toaplan1_colorram1_w) AM_BASE(&toaplan1_colorram1) AM_SIZE(&toaplan1_colorram1_size)
+	AM_RANGE(0x086000, 0x0867ff) AM_READWRITE(toaplan1_colorram2_r, toaplan1_colorram2_w) AM_BASE(&toaplan1_colorram2) AM_SIZE(&toaplan1_colorram2_size)
+	AM_RANGE(0x0c0000, 0x0c0fff) AM_READWRITE(toaplan1_shared_r, toaplan1_shared_w)
 	AM_RANGE(0x100000, 0x100001) AM_WRITE(toaplan1_bcu_flipscreen_w)
-	AM_RANGE(0x100002, 0x100003) AM_WRITE(toaplan1_tileram_offs_w)
-	AM_RANGE(0x100004, 0x100007) AM_WRITE(toaplan1_tileram16_w)
-	AM_RANGE(0x100010, 0x10001f) AM_WRITE(toaplan1_scroll_regs_w)
-	AM_RANGE(0x140002, 0x140003) AM_WRITE(toaplan1_spriteram_offs_w)
-	AM_RANGE(0x140004, 0x140005) AM_WRITE(toaplan1_spriteram16_w)
-	AM_RANGE(0x140006, 0x140007) AM_WRITE(toaplan1_spritesizeram16_w)
+	AM_RANGE(0x100002, 0x100003) AM_READWRITE(toaplan1_tileram_offs_r, toaplan1_tileram_offs_w)
+	AM_RANGE(0x100004, 0x100007) AM_READWRITE(toaplan1_tileram16_r, toaplan1_tileram16_w)
+	AM_RANGE(0x100010, 0x10001f) AM_READWRITE(toaplan1_scroll_regs_r, toaplan1_scroll_regs_w)
+	AM_RANGE(0x140000, 0x140001) AM_READ(toaplan1_frame_done_r)
+	AM_RANGE(0x140002, 0x140003) AM_READWRITE(toaplan1_spriteram_offs_r, toaplan1_spriteram_offs_w)
+	AM_RANGE(0x140004, 0x140005) AM_READWRITE(toaplan1_spriteram16_r, toaplan1_spriteram16_w)
+	AM_RANGE(0x140006, 0x140007) AM_READWRITE(toaplan1_spritesizeram16_r, toaplan1_spritesizeram16_w)
 	AM_RANGE(0x180000, 0x180003) AM_WRITE(toaplan1_tile_offsets_w)
 	AM_RANGE(0x180006, 0x180007) AM_WRITE(toaplan1_fcu_flipscreen_w)
 	AM_RANGE(0x180008, 0x180009) AM_WRITE(toaplan1_reset_sound)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( zerowing_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x080000, 0x087fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_0_word_r)
-	AM_RANGE(0x404000, 0x4047ff) AM_READ(toaplan1_colorram1_r)
-	AM_RANGE(0x406000, 0x4067ff) AM_READ(toaplan1_colorram2_r)
-	AM_RANGE(0x440000, 0x440fff) AM_READ(toaplan1_shared_r)
-	AM_RANGE(0x480002, 0x480003) AM_READ(toaplan1_tileram_offs_r)
-	AM_RANGE(0x480004, 0x480007) AM_READ(toaplan1_tileram16_r)
-	AM_RANGE(0x480010, 0x48001f) AM_READ(toaplan1_scroll_regs_r)
-	AM_RANGE(0x4c0000, 0x4c0001) AM_READ(toaplan1_frame_done_r)
-	AM_RANGE(0x4c0002, 0x4c0003) AM_READ(toaplan1_spriteram_offs_r)
-	AM_RANGE(0x4c0004, 0x4c0005) AM_READ(toaplan1_spriteram16_r)
-	AM_RANGE(0x4c0006, 0x4c0007) AM_READ(toaplan1_spritesizeram16_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( zerowing_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x080000, 0x087fff) AM_WRITE(MWA16_RAM)
+static ADDRESS_MAP_START( zerowing_main_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x00ffff) AM_ROM
+	AM_RANGE(0x040000, 0x07ffff) AM_ROM
+	AM_RANGE(0x080000, 0x087fff) AM_RAM
 	AM_RANGE(0x0c0000, 0x0c0003) AM_WRITE(toaplan1_tile_offsets_w)
 	AM_RANGE(0x0c0006, 0x0c0007) AM_WRITE(toaplan1_fcu_flipscreen_w)
-/*	AM_RANGE(0x400000, 0x400001) ?? video frame related ??  	*/
-	AM_RANGE(0x400002, 0x400003) AM_WRITE(toaplan1_intenable_w)
-	AM_RANGE(0x400008, 0x40000f) AM_WRITE(toaplan1_bcu_control_w)
-	AM_RANGE(0x404000, 0x4047ff) AM_WRITE(toaplan1_colorram1_w) AM_BASE(&toaplan1_colorram1) AM_SIZE(&toaplan1_colorram1_size)
-	AM_RANGE(0x406000, 0x4067ff) AM_WRITE(toaplan1_colorram2_w) AM_BASE(&toaplan1_colorram2) AM_SIZE(&toaplan1_colorram2_size)
-	AM_RANGE(0x440000, 0x440fff) AM_WRITE(toaplan1_shared_w)
-	AM_RANGE(0x480000, 0x480001) AM_WRITE(toaplan1_bcu_flipscreen_w)
-	AM_RANGE(0x480002, 0x480003) AM_WRITE(toaplan1_tileram_offs_w)
-	AM_RANGE(0x480004, 0x480007) AM_WRITE(toaplan1_tileram16_w)
-	AM_RANGE(0x480010, 0x48001f) AM_WRITE(toaplan1_scroll_regs_w)
-	AM_RANGE(0x4c0002, 0x4c0003) AM_WRITE(toaplan1_spriteram_offs_w)
-	AM_RANGE(0x4c0004, 0x4c0005) AM_WRITE(toaplan1_spriteram16_w)
-	AM_RANGE(0x4c0006, 0x4c0007) AM_WRITE(toaplan1_spritesizeram16_w)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( demonwld_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_0_word_r)
-	AM_RANGE(0x404000, 0x4047ff) AM_READ(toaplan1_colorram1_r)
-	AM_RANGE(0x406000, 0x4067ff) AM_READ(toaplan1_colorram2_r)
-	AM_RANGE(0x600000, 0x600fff) AM_READ(toaplan1_shared_r)
-	AM_RANGE(0x800002, 0x800003) AM_READ(toaplan1_tileram_offs_r)
-	AM_RANGE(0x800004, 0x800007) AM_READ(toaplan1_tileram16_r)
-	AM_RANGE(0x800010, 0x80001f) AM_READ(toaplan1_scroll_regs_r)
-	AM_RANGE(0xa00000, 0xa00001) AM_READ(toaplan1_frame_done_r)
-	AM_RANGE(0xa00002, 0xa00003) AM_READ(toaplan1_spriteram_offs_r)
-	AM_RANGE(0xa00004, 0xa00005) AM_READ(toaplan1_spriteram16_r)
-	AM_RANGE(0xa00006, 0xa00007) AM_READ(toaplan1_spritesizeram16_r)
-	AM_RANGE(0xc00000, 0xc03fff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( demonwld_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-/*	AM_RANGE(0x400000, 0x400001) ?? video frame related ??  	*/
+//	AM_RANGE(0x400000, 0x400001) AM_WRITE(?? video frame related ??)
 	AM_RANGE(0x400002, 0x400003) AM_WRITE(toaplan1_intenable_w)
 	AM_RANGE(0x400008, 0x40000f) AM_WRITE(toaplan1_bcu_control_w)
-	AM_RANGE(0x404000, 0x4047ff) AM_WRITE(toaplan1_colorram1_w) AM_BASE(&toaplan1_colorram1) AM_SIZE(&toaplan1_colorram1_size)
-	AM_RANGE(0x406000, 0x4067ff) AM_WRITE(toaplan1_colorram2_w) AM_BASE(&toaplan1_colorram2) AM_SIZE(&toaplan1_colorram2_size)
-	AM_RANGE(0x600000, 0x600fff) AM_WRITE(toaplan1_shared_w)
+	AM_RANGE(0x404000, 0x4047ff) AM_READWRITE(toaplan1_colorram1_r, toaplan1_colorram1_w) AM_BASE(&toaplan1_colorram1) AM_SIZE(&toaplan1_colorram1_size)
+	AM_RANGE(0x406000, 0x4067ff) AM_READWRITE(toaplan1_colorram2_r, toaplan1_colorram2_w) AM_BASE(&toaplan1_colorram2) AM_SIZE(&toaplan1_colorram2_size)
+	AM_RANGE(0x440000, 0x440fff) AM_READWRITE(toaplan1_shared_r, toaplan1_shared_w)
+	AM_RANGE(0x480000, 0x480001) AM_WRITE(toaplan1_bcu_flipscreen_w)
+	AM_RANGE(0x480002, 0x480003) AM_READWRITE(toaplan1_tileram_offs_r, toaplan1_tileram_offs_w)
+	AM_RANGE(0x480004, 0x480007) AM_READWRITE(toaplan1_tileram16_r, toaplan1_tileram16_w)
+	AM_RANGE(0x480010, 0x48001f) AM_READWRITE(toaplan1_scroll_regs_r, toaplan1_scroll_regs_w)
+	AM_RANGE(0x4c0000, 0x4c0001) AM_READ(toaplan1_frame_done_r)
+	AM_RANGE(0x4c0002, 0x4c0003) AM_READWRITE(toaplan1_spriteram_offs_r, toaplan1_spriteram_offs_w)
+	AM_RANGE(0x4c0004, 0x4c0005) AM_READWRITE(toaplan1_spriteram16_r, toaplan1_spriteram16_w)
+	AM_RANGE(0x4c0006, 0x4c0007) AM_READWRITE(toaplan1_spritesizeram16_r, toaplan1_spritesizeram16_w)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( demonwld_main_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_ROM
+	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_0_word_r)
+//	AM_RANGE(0x400000, 0x400001) AM_WRITE(?? video frame related ??)
+	AM_RANGE(0x400002, 0x400003) AM_WRITE(toaplan1_intenable_w)
+	AM_RANGE(0x400008, 0x40000f) AM_WRITE(toaplan1_bcu_control_w)
+	AM_RANGE(0x404000, 0x4047ff) AM_READWRITE(toaplan1_colorram1_r, toaplan1_colorram1_w) AM_BASE(&toaplan1_colorram1) AM_SIZE(&toaplan1_colorram1_size)
+	AM_RANGE(0x406000, 0x4067ff) AM_READWRITE(toaplan1_colorram2_r, toaplan1_colorram2_w) AM_BASE(&toaplan1_colorram2) AM_SIZE(&toaplan1_colorram2_size)
+	AM_RANGE(0x600000, 0x600fff) AM_READWRITE(toaplan1_shared_r, toaplan1_shared_w)
 	AM_RANGE(0x800000, 0x800001) AM_WRITE(toaplan1_bcu_flipscreen_w)
-	AM_RANGE(0x800002, 0x800003) AM_WRITE(toaplan1_tileram_offs_w)
-	AM_RANGE(0x800004, 0x800007) AM_WRITE(toaplan1_tileram16_w)
-	AM_RANGE(0x800010, 0x80001f) AM_WRITE(toaplan1_scroll_regs_w)
-	AM_RANGE(0xa00002, 0xa00003) AM_WRITE(toaplan1_spriteram_offs_w)
-	AM_RANGE(0xa00004, 0xa00005) AM_WRITE(toaplan1_spriteram16_w)
-	AM_RANGE(0xa00006, 0xa00007) AM_WRITE(toaplan1_spritesizeram16_w)
-	AM_RANGE(0xc00000, 0xc03fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x800002, 0x800003) AM_READWRITE(toaplan1_tileram_offs_r, toaplan1_tileram_offs_w)
+	AM_RANGE(0x800004, 0x800007) AM_READWRITE(toaplan1_tileram16_r, toaplan1_tileram16_w)
+	AM_RANGE(0x800010, 0x80001f) AM_READWRITE(toaplan1_scroll_regs_r, toaplan1_scroll_regs_w)
+	AM_RANGE(0xa00000, 0xa00001) AM_READ(toaplan1_frame_done_r)
+	AM_RANGE(0xa00002, 0xa00003) AM_READWRITE(toaplan1_spriteram_offs_r, toaplan1_spriteram_offs_w)
+	AM_RANGE(0xa00004, 0xa00005) AM_READWRITE(toaplan1_spriteram16_r, toaplan1_spriteram16_w)
+	AM_RANGE(0xa00006, 0xa00007) AM_READWRITE(toaplan1_spritesizeram16_r, toaplan1_spritesizeram16_w)
+	AM_RANGE(0xc00000, 0xc03fff) AM_RAM
 	AM_RANGE(0xe00000, 0xe00003) AM_WRITE(toaplan1_tile_offsets_w)
 	AM_RANGE(0xe00006, 0xe00007) AM_WRITE(toaplan1_fcu_flipscreen_w)
 	AM_RANGE(0xe00008, 0xe00009) AM_WRITE(toaplan1_reset_sound)
 	AM_RANGE(0xe0000a, 0xe0000b) AM_WRITE(demonwld_dsp_ctrl_w)	/* DSP Comms control */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( samesame_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x040000, 0x07ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x0c0000, 0x0c3fff) AM_READ(MRA16_RAM)
+static ADDRESS_MAP_START( samesame_main_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x00ffff) AM_ROM
+	AM_RANGE(0x040000, 0x07ffff) AM_ROM
+	AM_RANGE(0x080000, 0x080003) AM_WRITE(toaplan1_tile_offsets_w)
+	AM_RANGE(0x080006, 0x080007) AM_WRITE(toaplan1_fcu_flipscreen_w)
+	AM_RANGE(0x0c0000, 0x0c3fff) AM_RAM			/* Frame done at $c1ada */
 	AM_RANGE(0x100000, 0x100001) AM_READ(input_port_0_word_r)
-	AM_RANGE(0x104000, 0x1047ff) AM_READ(toaplan1_colorram1_r)
-	AM_RANGE(0x106000, 0x1067ff) AM_READ(toaplan1_colorram2_r)
+//	AM_RANGE(0x100000, 0x100001) AM_WRITE(?? video frame related ??)
+	AM_RANGE(0x100002, 0x100003) AM_WRITE(toaplan1_intenable_w)
+	AM_RANGE(0x100008, 0x10000f) AM_WRITE(toaplan1_bcu_control_w)
+	AM_RANGE(0x104000, 0x1047ff) AM_READWRITE(toaplan1_colorram1_r, toaplan1_colorram1_w) AM_BASE(&toaplan1_colorram1) AM_SIZE(&toaplan1_colorram1_size)
+	AM_RANGE(0x106000, 0x1067ff) AM_READWRITE(toaplan1_colorram2_r, toaplan1_colorram2_w) AM_BASE(&toaplan1_colorram2) AM_SIZE(&toaplan1_colorram2_size)
 	AM_RANGE(0x140000, 0x140001) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x140002, 0x140003) AM_READ(input_port_2_word_r)
 	AM_RANGE(0x140004, 0x140005) AM_READ(input_port_3_word_r)
 	AM_RANGE(0x140006, 0x140007) AM_READ(input_port_4_word_r)
 	AM_RANGE(0x140008, 0x140009) AM_READ(input_port_5_word_r)
 	AM_RANGE(0x14000a, 0x14000b) AM_READ(samesame_port_6_word_r)	/* Territory, and MCU ready */
-	AM_RANGE(0x180002, 0x180003) AM_READ(toaplan1_tileram_offs_r)
-	AM_RANGE(0x180004, 0x180007) AM_READ(toaplan1_tileram16_r)
-	AM_RANGE(0x180010, 0x18001f) AM_READ(toaplan1_scroll_regs_r)
-	AM_RANGE(0x1c0000, 0x1c0001) AM_READ(toaplan1_frame_done_r)
-	AM_RANGE(0x1c0002, 0x1c0003) AM_READ(toaplan1_spriteram_offs_r)
-	AM_RANGE(0x1c0004, 0x1c0005) AM_READ(toaplan1_spriteram16_r)
-	AM_RANGE(0x1c0006, 0x1c0007) AM_READ(toaplan1_spritesizeram16_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( samesame_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x040000, 0x07ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x080000, 0x080003) AM_WRITE(toaplan1_tile_offsets_w)
-	AM_RANGE(0x080006, 0x080007) AM_WRITE(toaplan1_fcu_flipscreen_w)
-	AM_RANGE(0x0c0000, 0x0c3fff) AM_WRITE(MWA16_RAM)			/* Frame done at $c1ada */
-/*	AM_RANGE(0x100000, 0x100001) ?? video frame related ??  	*/
-	AM_RANGE(0x100002, 0x100003) AM_WRITE(toaplan1_intenable_w)
-	AM_RANGE(0x100008, 0x10000f) AM_WRITE(toaplan1_bcu_control_w)
-	AM_RANGE(0x104000, 0x1047ff) AM_WRITE(toaplan1_colorram1_w) AM_BASE(&toaplan1_colorram1) AM_SIZE(&toaplan1_colorram1_size)
-	AM_RANGE(0x106000, 0x1067ff) AM_WRITE(toaplan1_colorram2_w) AM_BASE(&toaplan1_colorram2) AM_SIZE(&toaplan1_colorram2_size)
 	AM_RANGE(0x14000c, 0x14000d) AM_WRITE(samesame_coin_w)	/* Coin counter/lockout */
-//	AM_RANGE(0x14000e, 0x14000f) AM_WRITE(samesame_mcu_w)		/* Commands sent to HD647180 */
+//	AM_RANGE(0x14000e, 0x14000f) AM_WRITE(samesame_mcu_w)	/* Commands sent to HD647180 */
 	AM_RANGE(0x180000, 0x180001) AM_WRITE(toaplan1_bcu_flipscreen_w)
-	AM_RANGE(0x180002, 0x180003) AM_WRITE(toaplan1_tileram_offs_w)
-	AM_RANGE(0x180004, 0x180007) AM_WRITE(toaplan1_tileram16_w)
-	AM_RANGE(0x180010, 0x18001f) AM_WRITE(toaplan1_scroll_regs_w)
-/*	AM_RANGE(0x1c0000, 0x1c0001) AM_WRITE(???)				disable sprite refresh ? */
-	AM_RANGE(0x1c0002, 0x1c0003) AM_WRITE(toaplan1_spriteram_offs_w)
-	AM_RANGE(0x1c0004, 0x1c0005) AM_WRITE(toaplan1_spriteram16_w)
-	AM_RANGE(0x1c0006, 0x1c0007) AM_WRITE(toaplan1_spritesizeram16_w)
+	AM_RANGE(0x180002, 0x180003) AM_READWRITE(toaplan1_tileram_offs_r, toaplan1_tileram_offs_w)
+	AM_RANGE(0x180004, 0x180007) AM_READWRITE(toaplan1_tileram16_r, toaplan1_tileram16_w)
+	AM_RANGE(0x180010, 0x18001f) AM_READWRITE(toaplan1_scroll_regs_r, toaplan1_scroll_regs_w)
+	AM_RANGE(0x1c0000, 0x1c0001) AM_READ(toaplan1_frame_done_r)
+//	AM_RANGE(0x1c0000, 0x1c0001) AM_WRITE(?? disable sprite refresh ??)
+	AM_RANGE(0x1c0002, 0x1c0003) AM_READWRITE(toaplan1_spriteram_offs_r, toaplan1_spriteram_offs_w)
+	AM_RANGE(0x1c0004, 0x1c0005) AM_READWRITE(toaplan1_spriteram16_r, toaplan1_spriteram16_w)
+	AM_RANGE(0x1c0006, 0x1c0007) AM_READWRITE(toaplan1_spritesizeram16_r, toaplan1_spritesizeram16_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( outzone_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+static ADDRESS_MAP_START( outzone_main_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_ROM
 	AM_RANGE(0x100000, 0x100001) AM_READ(toaplan1_frame_done_r)
-	AM_RANGE(0x100002, 0x100003) AM_READ(toaplan1_spriteram_offs_r)
-	AM_RANGE(0x100004, 0x100005) AM_READ(toaplan1_spriteram16_r)
-	AM_RANGE(0x100006, 0x100007) AM_READ(toaplan1_spritesizeram16_r)
-	AM_RANGE(0x140000, 0x140fff) AM_READ(toaplan1_shared_r)
-	AM_RANGE(0x200002, 0x200003) AM_READ(toaplan1_tileram_offs_r)
-	AM_RANGE(0x200004, 0x200007) AM_READ(toaplan1_tileram16_r)
-	AM_RANGE(0x200010, 0x20001f) AM_READ(toaplan1_scroll_regs_r)
-	AM_RANGE(0x240000, 0x243fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x300000, 0x300001) AM_READ(input_port_0_word_r)
-	AM_RANGE(0x304000, 0x3047ff) AM_READ(toaplan1_colorram1_r)
-	AM_RANGE(0x306000, 0x3067ff) AM_READ(toaplan1_colorram2_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( outzone_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x100002, 0x100003) AM_WRITE(toaplan1_spriteram_offs_w)
-	AM_RANGE(0x100004, 0x100005) AM_WRITE(toaplan1_spriteram16_w)
-	AM_RANGE(0x100006, 0x100007) AM_WRITE(toaplan1_spritesizeram16_w)
-	AM_RANGE(0x140000, 0x140fff) AM_WRITE(toaplan1_shared_w)
+	AM_RANGE(0x100002, 0x100003) AM_READWRITE(toaplan1_spriteram_offs_r, toaplan1_spriteram_offs_w)
+	AM_RANGE(0x100004, 0x100005) AM_READWRITE(toaplan1_spriteram16_r, toaplan1_spriteram16_w)
+	AM_RANGE(0x100006, 0x100007) AM_READWRITE(toaplan1_spritesizeram16_r, toaplan1_spritesizeram16_w)
+	AM_RANGE(0x140000, 0x140fff) AM_READWRITE(toaplan1_shared_r, toaplan1_shared_w)
 	AM_RANGE(0x200000, 0x200001) AM_WRITE(toaplan1_bcu_flipscreen_w)
-	AM_RANGE(0x200002, 0x200003) AM_WRITE(toaplan1_tileram_offs_w)
-	AM_RANGE(0x200004, 0x200007) AM_WRITE(toaplan1_tileram16_w)
-	AM_RANGE(0x200010, 0x20001f) AM_WRITE(toaplan1_scroll_regs_w)
-	AM_RANGE(0x240000, 0x243fff) AM_WRITE(MWA16_RAM)
-/*	AM_RANGE(0x300000, 0x300001) ?? video frame related ??  	*/
+	AM_RANGE(0x200002, 0x200003) AM_READWRITE(toaplan1_tileram_offs_r, toaplan1_tileram_offs_w)
+	AM_RANGE(0x200004, 0x200007) AM_READWRITE(toaplan1_tileram16_r, toaplan1_tileram16_w)
+	AM_RANGE(0x200010, 0x20001f) AM_READWRITE(toaplan1_scroll_regs_r, toaplan1_scroll_regs_w)
+	AM_RANGE(0x240000, 0x243fff) AM_RAM
+	AM_RANGE(0x300000, 0x300001) AM_READ(input_port_0_word_r)
+//	AM_RANGE(0x300000, 0x300001) AM_WRITE(?? video frame related ??)
 	AM_RANGE(0x300002, 0x300003) AM_WRITE(toaplan1_intenable_w)
 	AM_RANGE(0x300008, 0x30000f) AM_WRITE(toaplan1_bcu_control_w)
-	AM_RANGE(0x304000, 0x3047ff) AM_WRITE(toaplan1_colorram1_w) AM_BASE(&toaplan1_colorram1) AM_SIZE(&toaplan1_colorram1_size)
-	AM_RANGE(0x306000, 0x3067ff) AM_WRITE(toaplan1_colorram2_w) AM_BASE(&toaplan1_colorram2) AM_SIZE(&toaplan1_colorram2_size)
+	AM_RANGE(0x304000, 0x3047ff) AM_READWRITE(toaplan1_colorram1_r, toaplan1_colorram1_w) AM_BASE(&toaplan1_colorram1) AM_SIZE(&toaplan1_colorram1_size)
+	AM_RANGE(0x306000, 0x3067ff) AM_READWRITE(toaplan1_colorram2_r, toaplan1_colorram2_w) AM_BASE(&toaplan1_colorram2) AM_SIZE(&toaplan1_colorram2_size)
 	AM_RANGE(0x340000, 0x340003) AM_WRITE(toaplan1_tile_offsets_w)
 	AM_RANGE(0x340006, 0x340007) AM_WRITE(toaplan1_fcu_flipscreen_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( vimana_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+static ADDRESS_MAP_START( vimana_main_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_ROM
+	AM_RANGE(0x080000, 0x080003) AM_WRITE(toaplan1_tile_offsets_w)
+	AM_RANGE(0x080006, 0x080007) AM_WRITE(toaplan1_fcu_flipscreen_w)
 	AM_RANGE(0x0c0000, 0x0c0001) AM_READ(toaplan1_frame_done_r)
-	AM_RANGE(0x0c0002, 0x0c0003) AM_READ(toaplan1_spriteram_offs_r)
-	AM_RANGE(0x0c0004, 0x0c0005) AM_READ(toaplan1_spriteram16_r)
-	AM_RANGE(0x0c0006, 0x0c0007) AM_READ(toaplan1_spritesizeram16_r)
+	AM_RANGE(0x0c0002, 0x0c0003) AM_READWRITE(toaplan1_spriteram_offs_r, toaplan1_spriteram_offs_w)
+	AM_RANGE(0x0c0004, 0x0c0005) AM_READWRITE(toaplan1_spriteram16_r, toaplan1_spriteram16_w)
+	AM_RANGE(0x0c0006, 0x0c0007) AM_READWRITE(toaplan1_spritesizeram16_r, toaplan1_spritesizeram16_w)
 	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_0_word_r)
-	AM_RANGE(0x404000, 0x4047ff) AM_READ(toaplan1_colorram1_r)
-	AM_RANGE(0x406000, 0x4067ff) AM_READ(toaplan1_colorram2_r)
-	AM_RANGE(0x440000, 0x440005) AM_READ(vimana_mcu_r)
+//	AM_RANGE(0x400000, 0x400001) AM_WRITE(?? video frame related ??)
+	AM_RANGE(0x400002, 0x400003) AM_WRITE(toaplan1_intenable_w)
+	AM_RANGE(0x400008, 0x40000f) AM_WRITE(toaplan1_bcu_control_w)
+	AM_RANGE(0x404000, 0x4047ff) AM_READWRITE(toaplan1_colorram1_r, toaplan1_colorram1_w) AM_BASE(&toaplan1_colorram1) AM_SIZE(&toaplan1_colorram1_size)
+	AM_RANGE(0x406000, 0x4067ff) AM_READWRITE(toaplan1_colorram2_r, toaplan1_colorram2_w) AM_BASE(&toaplan1_colorram2) AM_SIZE(&toaplan1_colorram2_size)
+	AM_RANGE(0x440000, 0x440005) AM_READWRITE(vimana_mcu_r, vimana_mcu_w)
 	AM_RANGE(0x440006, 0x440007) AM_READ(input_port_3_word_r)
 	AM_RANGE(0x440008, 0x440009) AM_READ(vimana_input_port_5_word_r)
 	AM_RANGE(0x44000a, 0x44000b) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x44000c, 0x44000d) AM_READ(input_port_2_word_r)
 	AM_RANGE(0x44000e, 0x44000f) AM_READ(input_port_4_word_r)
 	AM_RANGE(0x440010, 0x440011) AM_READ(input_port_6_word_r)
-	AM_RANGE(0x480000, 0x487fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x4c0002, 0x4c0003) AM_READ(toaplan1_tileram_offs_r)
-	AM_RANGE(0x4c0004, 0x4c0007) AM_READ(toaplan1_tileram16_r)
-	AM_RANGE(0x4c0010, 0x4c001f) AM_READ(toaplan1_scroll_regs_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( vimana_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x080000, 0x080003) AM_WRITE(toaplan1_tile_offsets_w)
-	AM_RANGE(0x080006, 0x080007) AM_WRITE(toaplan1_fcu_flipscreen_w)
-	AM_RANGE(0x0c0002, 0x0c0003) AM_WRITE(toaplan1_spriteram_offs_w)
-	AM_RANGE(0x0c0004, 0x0c0005) AM_WRITE(toaplan1_spriteram16_w)
-	AM_RANGE(0x0c0006, 0x0c0007) AM_WRITE(toaplan1_spritesizeram16_w)
-/*	AM_RANGE(0x400000, 0x400001) ?? video frame related ??  	*/
-	AM_RANGE(0x400002, 0x400003) AM_WRITE(toaplan1_intenable_w)
-	AM_RANGE(0x400008, 0x40000f) AM_WRITE(toaplan1_bcu_control_w)
-	AM_RANGE(0x404000, 0x4047ff) AM_WRITE(toaplan1_colorram1_w) AM_BASE(&toaplan1_colorram1) AM_SIZE(&toaplan1_colorram1_size)
-	AM_RANGE(0x406000, 0x4067ff) AM_WRITE(toaplan1_colorram2_w) AM_BASE(&toaplan1_colorram2) AM_SIZE(&toaplan1_colorram2_size)
-	AM_RANGE(0x440000, 0x440005) AM_WRITE(vimana_mcu_w)
-	AM_RANGE(0x480000, 0x487fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x480000, 0x487fff) AM_RAM
 	AM_RANGE(0x4c0000, 0x4c0001) AM_WRITE(toaplan1_bcu_flipscreen_w)
-	AM_RANGE(0x4c0002, 0x4c0003) AM_WRITE(toaplan1_tileram_offs_w)
-	AM_RANGE(0x4c0004, 0x4c0007) AM_WRITE(toaplan1_tileram16_w)
-	AM_RANGE(0x4c0010, 0x4c001f) AM_WRITE(toaplan1_scroll_regs_w)
+	AM_RANGE(0x4c0002, 0x4c0003) AM_READWRITE(toaplan1_tileram_offs_r, toaplan1_tileram_offs_w)
+	AM_RANGE(0x4c0004, 0x4c0007) AM_READWRITE(toaplan1_tileram16_r, toaplan1_tileram16_w)
+	AM_RANGE(0x4c0010, 0x4c001f) AM_READWRITE(toaplan1_scroll_regs_r, toaplan1_scroll_regs_w)
 ADDRESS_MAP_END
 
 
+/***************************** Z80 Memory Map *******************************/
 
-/* Z80 memory/port maps */
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( toaplan1_sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0xffff) AM_RAM AM_BASE(&toaplan1_sharedram)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&toaplan1_sharedram)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( truxton_sound_readport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( rallybik_sound_io_map, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0x00) AM_READ(input_port_1_r)	/* Player 1 */
 	AM_RANGE(0x10, 0x10) AM_READ(input_port_2_r)	/* Player 2 */
 	AM_RANGE(0x20, 0x20) AM_READ(input_port_5_r)	/* Coin/Start inputs */
+	AM_RANGE(0x30, 0x30) AM_WRITE(rallybik_coin_w)	/* Coin counter/lockout */
 	AM_RANGE(0x40, 0x40) AM_READ(input_port_3_r)	/* DSW1 */
 	AM_RANGE(0x50, 0x50) AM_READ(input_port_4_r)	/* DSW2 */
-	AM_RANGE(0x60, 0x60) AM_READ(YM3812_status_port_0_r)
+	AM_RANGE(0x60, 0x60) AM_READWRITE(YM3812_status_port_0_r, YM3812_control_port_0_w)
+	AM_RANGE(0x61, 0x61) AM_WRITE(YM3812_write_port_0_w)
 	AM_RANGE(0x70, 0x70) AM_READ(input_port_6_r)	/* Territory Jumper Block for Truxton */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( truxton_sound_writeport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( truxton_sound_io_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_1_r)	/* Player 1 */
+	AM_RANGE(0x10, 0x10) AM_READ(input_port_2_r)	/* Player 2 */
+	AM_RANGE(0x20, 0x20) AM_READ(input_port_5_r)	/* Coin/Start inputs */
 	AM_RANGE(0x30, 0x30) AM_WRITE(toaplan1_coin_w)	/* Coin counter/lockout */
-	AM_RANGE(0x60, 0x60) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0x40, 0x40) AM_READ(input_port_3_r)	/* DSW1 */
+	AM_RANGE(0x50, 0x50) AM_READ(input_port_4_r)	/* DSW2 */
+	AM_RANGE(0x60, 0x60) AM_READWRITE(YM3812_status_port_0_r, YM3812_control_port_0_w)
 	AM_RANGE(0x61, 0x61) AM_WRITE(YM3812_write_port_0_w)
+	AM_RANGE(0x70, 0x70) AM_READ(input_port_6_r)	/* Territory Jumper Block for Truxton */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( rallybik_sound_writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x30, 0x30) AM_WRITE(rallybik_coin_w)	/* Coin counter/lockout */
-	AM_RANGE(0x60, 0x60) AM_WRITE(YM3812_control_port_0_w)
-	AM_RANGE(0x61, 0x61) AM_WRITE(YM3812_write_port_0_w)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( hellfire_sound_readport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( hellfire_sound_io_map, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0x00) AM_READ(input_port_3_r)	/* DSW1 */
 	AM_RANGE(0x10, 0x10) AM_READ(input_port_4_r)	/* DSW2 */
 	AM_RANGE(0x20, 0x20) AM_READ(input_port_6_r)	/* Territory Jumper Block */
+	AM_RANGE(0x30, 0x30) AM_WRITE(toaplan1_coin_w)	/* Coin counter/lockout */
 	AM_RANGE(0x40, 0x40) AM_READ(input_port_1_r)	/* Player 1 */
 	AM_RANGE(0x50, 0x50) AM_READ(input_port_2_r)	/* Player 2 */
 	AM_RANGE(0x60, 0x60) AM_READ(input_port_5_r)	/* Coin/Start inputs */
-	AM_RANGE(0x70, 0x70) AM_READ(YM3812_status_port_0_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( hellfire_sound_writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x30, 0x30) AM_WRITE(toaplan1_coin_w)	/* Coin counter/lockout */
-	AM_RANGE(0x70, 0x70) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0x70, 0x70) AM_READWRITE(YM3812_status_port_0_r, YM3812_control_port_0_w)
 	AM_RANGE(0x71, 0x71) AM_WRITE(YM3812_write_port_0_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( zerowing_sound_readport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( zerowing_sound_io_map, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0x00) AM_READ(input_port_1_r)	/* Player 1 */
 	AM_RANGE(0x08, 0x08) AM_READ(input_port_2_r)	/* Player 2 */
 	AM_RANGE(0x20, 0x20) AM_READ(input_port_3_r)	/* DSW1 */
 	AM_RANGE(0x28, 0x28) AM_READ(input_port_4_r)	/* DSW2 */
 	AM_RANGE(0x80, 0x80) AM_READ(input_port_5_r)	/* Coin/Start inputs */
 	AM_RANGE(0x88, 0x88) AM_READ(input_port_6_r)	/* Territory Jumper Block */
-	AM_RANGE(0xa8, 0xa8) AM_READ(YM3812_status_port_0_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( zerowing_sound_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0xa0, 0xa0) AM_WRITE(toaplan1_coin_w)	/* Coin counter/lockout */
-	AM_RANGE(0xa8, 0xa8) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0xa8, 0xa8) AM_READWRITE(YM3812_status_port_0_r, YM3812_control_port_0_w)
 	AM_RANGE(0xa9, 0xa9) AM_WRITE(YM3812_write_port_0_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( demonwld_sound_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_READ(YM3812_status_port_0_r)
+static ADDRESS_MAP_START( demonwld_sound_io_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READWRITE(YM3812_status_port_0_r, YM3812_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM3812_write_port_0_w)
 	AM_RANGE(0x20, 0x20) AM_READ(input_port_6_r)
+	AM_RANGE(0x40, 0x40) AM_WRITE(toaplan1_coin_w)	/* Coin counter/lockout */
 	AM_RANGE(0x60, 0x60) AM_READ(input_port_5_r)
 	AM_RANGE(0x80, 0x80) AM_READ(input_port_1_r)
 	AM_RANGE(0xa0, 0xa0) AM_READ(input_port_4_r)
@@ -451,41 +334,31 @@ static ADDRESS_MAP_START( demonwld_sound_readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0xe0, 0xe0) AM_READ(input_port_3_r)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( demonwld_sound_writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_WRITE(YM3812_control_port_0_w)
+static ADDRESS_MAP_START( outzone_sound_io_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READWRITE(YM3812_status_port_0_r, YM3812_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM3812_write_port_0_w)
-	AM_RANGE(0x40, 0x40) AM_WRITE(toaplan1_coin_w)	/* Coin counter/lockout */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( outzone_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x04, 0x04) AM_WRITE(toaplan1_coin_w)	/* Coin counter/lockout */
 	AM_RANGE(0x08, 0x08) AM_READ(input_port_3_r)
 	AM_RANGE(0x0c, 0x0c) AM_READ(input_port_4_r)
 	AM_RANGE(0x10, 0x10) AM_READ(input_port_5_r)
 	AM_RANGE(0x14, 0x14) AM_READ(input_port_1_r)
 	AM_RANGE(0x18, 0x18) AM_READ(input_port_2_r)
 	AM_RANGE(0x1c, 0x1c) AM_READ(input_port_6_r)
-	AM_RANGE(0x00, 0x00) AM_READ(YM3812_status_port_0_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( outzone_sound_writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_WRITE(YM3812_control_port_0_w)
-	AM_RANGE(0x01, 0x01) AM_WRITE(YM3812_write_port_0_w)
-	AM_RANGE(0x04, 0x04) AM_WRITE(toaplan1_coin_w)	/* Coin counter/lockout */
 ADDRESS_MAP_END
 
 
-/* TMS32010 memory/port maps */
+/***************************** TMS32010 Memory Map **************************/
+
 static ADDRESS_MAP_START( DSP_program_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000, 0x7ff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( DSP_data_map, ADDRESS_SPACE_DATA, 16 )
-	AM_RANGE(0x000, 0x08f) AM_RAM	/* 90h words internal RAM */
-ADDRESS_MAP_END
+	/* $000 - 08F  TMS32010 Internal Data RAM in Data Address Space */
 
 static ADDRESS_MAP_START( DSP_io_map, ADDRESS_SPACE_IO, 16 )
-	AM_RANGE(0, 3) AM_WRITE(demonwld_dsp_w)
-	AM_RANGE(1, 1) AM_READ(demonwld_dsp_r)
+	AM_RANGE(0, 0) AM_WRITE(demonwld_dsp_addrsel_w)
+	AM_RANGE(1, 1) AM_READWRITE(demonwld_dsp_r, demonwld_dsp_w)
+	AM_RANGE(3, 3) AM_WRITE(demonwld_dsp_bio_w)
 	AM_RANGE(TMS32010_BIO, TMS32010_BIO) AM_READ(demonwld_BIO_r)
 ADDRESS_MAP_END
 
@@ -1568,12 +1441,12 @@ static MACHINE_DRIVER_START( rallybik )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)
-	MDRV_CPU_PROGRAM_MAP(rallybik_readmem,rallybik_writemem)
+	MDRV_CPU_PROGRAM_MAP(rallybik_main_map, 0)
 	MDRV_CPU_VBLANK_INT(toaplan1_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,28000000/8)		/* 3.5MHz (28MHz Oscillator) */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-	MDRV_CPU_IO_MAP(truxton_sound_readport,rallybik_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(toaplan1_sound_map, 0)
+	MDRV_CPU_IO_MAP(rallybik_sound_io_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -1601,17 +1474,16 @@ static MACHINE_DRIVER_START( truxton )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)
-	MDRV_CPU_PROGRAM_MAP(truxton_readmem,truxton_writemem)
+	MDRV_CPU_PROGRAM_MAP(truxton_main_map, 0)
 	MDRV_CPU_VBLANK_INT(toaplan1_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,28000000/8)		/* 3.5MHz (28MHz Oscillator) */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-	MDRV_CPU_IO_MAP(truxton_sound_readport,truxton_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(toaplan1_sound_map, 0)
+	MDRV_CPU_IO_MAP(truxton_sound_io_map, 0)
 
 	MDRV_FRAMES_PER_SECOND( (28000000.0 / 4) / (450 * 270) )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
-
 
 	MDRV_MACHINE_INIT(toaplan1)
 
@@ -1635,12 +1507,12 @@ static MACHINE_DRIVER_START( hellfire )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)
-	MDRV_CPU_PROGRAM_MAP(hellfire_readmem,hellfire_writemem)
+	MDRV_CPU_PROGRAM_MAP(hellfire_main_map, 0)
 	MDRV_CPU_VBLANK_INT(toaplan1_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,28000000/8)		/* 3.5MHz (28MHz Oscillator) */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-	MDRV_CPU_IO_MAP(hellfire_sound_readport,hellfire_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(toaplan1_sound_map, 0)
+	MDRV_CPU_IO_MAP(hellfire_sound_io_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -1668,12 +1540,12 @@ static MACHINE_DRIVER_START( zerowing )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)
-	MDRV_CPU_PROGRAM_MAP(zerowing_readmem,zerowing_writemem)
+	MDRV_CPU_PROGRAM_MAP(zerowing_main_map, 0)
 	MDRV_CPU_VBLANK_INT(toaplan1_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,28000000/8)		/* 3.5MHz (28MHz Oscillator) */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-	MDRV_CPU_IO_MAP(zerowing_sound_readport,zerowing_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(toaplan1_sound_map, 0)
+	MDRV_CPU_IO_MAP(zerowing_sound_io_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -1701,16 +1573,15 @@ static MACHINE_DRIVER_START( demonwld )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)
-	MDRV_CPU_PROGRAM_MAP(demonwld_readmem,demonwld_writemem)
+	MDRV_CPU_PROGRAM_MAP(demonwld_main_map, 0)
 	MDRV_CPU_VBLANK_INT(toaplan1_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,28000000/8)		/* 3.5MHz (28MHz Oscillator) */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-	MDRV_CPU_IO_MAP(demonwld_sound_readport,demonwld_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(toaplan1_sound_map, 0)
+	MDRV_CPU_IO_MAP(demonwld_sound_io_map, 0)
 
-	MDRV_CPU_ADD(TMS32010,28000000/2)	/* 14MHz CLKin */
+	MDRV_CPU_ADD(TMS32010,(28000000/2)/TMS32010_CLOCK_DIVIDER)	/* 14MHz CLKin */
 	MDRV_CPU_PROGRAM_MAP(DSP_program_map,0)
-	MDRV_CPU_DATA_MAP(DSP_data_map,0)
 	MDRV_CPU_IO_MAP(DSP_io_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1739,7 +1610,7 @@ static MACHINE_DRIVER_START( samesame )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)
-	MDRV_CPU_PROGRAM_MAP(samesame_readmem,samesame_writemem)
+	MDRV_CPU_PROGRAM_MAP(samesame_main_map, 0)
 	MDRV_CPU_VBLANK_INT(toaplan1_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND( (28000000.0 / 4) / (450 * 270) )
@@ -1767,12 +1638,12 @@ static MACHINE_DRIVER_START( outzone )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)
-	MDRV_CPU_PROGRAM_MAP(outzone_readmem,outzone_writemem)
+	MDRV_CPU_PROGRAM_MAP(outzone_main_map, 0)
 	MDRV_CPU_VBLANK_INT(toaplan1_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,28000000/8)		/* 3.5MHz (28MHz Oscillator) */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-	MDRV_CPU_IO_MAP(outzone_sound_readport,outzone_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(toaplan1_sound_map, 0)
+	MDRV_CPU_IO_MAP(outzone_sound_io_map, 0)
 
 	MDRV_FRAMES_PER_SECOND( (28000000.0 / 4) / (450 * 282) )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -1800,7 +1671,7 @@ static MACHINE_DRIVER_START( vimana )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)
-	MDRV_CPU_PROGRAM_MAP(vimana_readmem,vimana_writemem)
+	MDRV_CPU_PROGRAM_MAP(vimana_main_map, 0)
 	MDRV_CPU_VBLANK_INT(toaplan1_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1971,7 +1842,7 @@ ROM_START( demonwld )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
 	ROM_LOAD( "rom11.v2",  0x0000, 0x8000, CRC(dbe08c85) SHA1(536a242bfe916d15744b079261507af6f12b5b50) )
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* Co-Processor TMS320C10 MCU code */
+	ROM_REGION( 0x2000, REGION_CPU3, 0 )	/* Co-Processor TMS320C10 MCU code */
 	ROM_LOAD16_BYTE( "dsp_21.bin",  0x0000, 0x0800, CRC(2d135376) SHA1(67a2cc774d272ee1cd6e6bc1c5fc33fc6968837e) )
 	ROM_LOAD16_BYTE( "dsp_22.bin",  0x0001, 0x0800, CRC(79389a71) SHA1(14ec4c1c9b06702319e89a7a250d0038393437f4) )
 
@@ -2000,7 +1871,7 @@ ROM_START( demonwl1 )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
 	ROM_LOAD( "rom11",  0x0000, 0x8000, CRC(397eca1b) SHA1(84073ff6d1bc46ec6162d66ec5de305700938380) )
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* Co-Processor TMS320C10 MCU code */
+	ROM_REGION( 0x2000, REGION_CPU3, 0 )	/* Co-Processor TMS320C10 MCU code */
 	ROM_LOAD16_BYTE( "dsp_21.bin",  0x0000, 0x0800, CRC(2d135376) SHA1(67a2cc774d272ee1cd6e6bc1c5fc33fc6968837e) )
 	ROM_LOAD16_BYTE( "dsp_22.bin",  0x0001, 0x0800, CRC(79389a71) SHA1(14ec4c1c9b06702319e89a7a250d0038393437f4) )
 
@@ -2242,19 +2113,37 @@ ROM_START( vimanan )
 ROM_END
 
 
+DRIVER_INIT( toaplan1 )
+{
+	toaplan1_driver_savestate();
+}
 
-GAME ( 1988, rallybik, 0,        rallybik, rallybik, 0, ROT270, "[Toaplan] Taito Corporation", "Rally Bike / Dash Yarou" )
-GAME ( 1988, truxton,  0,        truxton,  truxton,  0, ROT270, "[Toaplan] Taito Corporation", "Truxton / Tatsujin" )
-GAME ( 1989, hellfire, 0,        hellfire, hellfire, 0, ROT0,   "Toaplan (Taito license)", "Hellfire" )
-GAME ( 1989, hellfir1, hellfire, hellfire, hellfir1, 0, ROT0,   "Toaplan (Taito license)", "Hellfire (1P Ver.)" )
-GAME ( 1989, zerowing, 0,        zerowing, zerowing, 0, ROT0,   "Toaplan", "Zero Wing" )
-GAME ( 1990, demonwld, 0,        demonwld, demonwld, 0, ROT0,   "Toaplan", "Demon's World / Horror Story" )
-GAME ( 1989, demonwl1, demonwld, demonwld, demonwl1, 0, ROT0,   "Toaplan (Taito license)", "Demon's World / Horror Story (Taito license)" )
-GAMEX( 1990, fireshrk, 0,        samesame, fireshrk, 0, ROT270, "Toaplan", "Fire Shark", GAME_NO_SOUND )
-GAMEX( 1989, samesame, fireshrk, samesame, samesame, 0, ROT270, "Toaplan", "Same! Same! Same!", GAME_NO_SOUND )
-GAMEX( 1989, samesam2, fireshrk, samesame, samesam2, 0, ROT270, "Toaplan", "Same! Same! Same! (2P Ver.)", GAME_NO_SOUND )
-GAME ( 1990, outzone,  0,        outzone,  outzone,  0, ROT270, "Toaplan", "Out Zone (set 1)" )
-GAME ( 1990, outzonea, outzone,  outzone,  outzone,  0, ROT270, "Toaplan", "Out Zone (set 2)" )
-GAMEX( 1991, vimana,   0,        vimana,   vimana,   0, ROT270, "Toaplan", "Vimana", GAME_NO_SOUND )
-GAMEX( 1991, vimana1,  vimana,   vimana,   vimana,   0, ROT270, "Toaplan", "Vimana (old set)", GAME_NO_SOUND )
-GAMEX( 1991, vimanan,  vimana,   vimana,   vimanan,  0, ROT270, "Toaplan (Nova Apparate GMBH & Co license)", "Vimana (Nova Apparate GMBH & Co)", GAME_NO_SOUND )
+DRIVER_INIT( demonwld )
+{
+	toaplan1_driver_savestate();
+	demonwld_driver_savestate();
+}
+
+DRIVER_INIT( vimana )
+{
+	toaplan1_driver_savestate();
+	vimana_driver_savestate();
+}
+
+
+
+GAME ( 1988, rallybik, 0,        rallybik, rallybik, toaplan1, ROT270, "[Toaplan] Taito Corporation", "Rally Bike / Dash Yarou" )
+GAME ( 1988, truxton,  0,        truxton,  truxton,  toaplan1, ROT270, "[Toaplan] Taito Corporation", "Truxton / Tatsujin" )
+GAME ( 1989, hellfire, 0,        hellfire, hellfire, toaplan1, ROT0,   "Toaplan (Taito license)", "Hellfire" )
+GAME ( 1989, hellfir1, hellfire, hellfire, hellfir1, toaplan1, ROT0,   "Toaplan (Taito license)", "Hellfire (1P Ver.)" )
+GAME ( 1989, zerowing, 0,        zerowing, zerowing, toaplan1, ROT0,   "Toaplan", "Zero Wing" )
+GAME ( 1990, demonwld, 0,        demonwld, demonwld, demonwld, ROT0,   "Toaplan", "Demon's World / Horror Story" )
+GAME ( 1989, demonwl1, demonwld, demonwld, demonwl1, demonwld, ROT0,   "Toaplan (Taito license)", "Demon's World / Horror Story (Taito license)" )
+GAMEX( 1990, fireshrk, 0,        samesame, fireshrk, toaplan1, ROT270, "Toaplan", "Fire Shark", GAME_NO_SOUND )
+GAMEX( 1989, samesame, fireshrk, samesame, samesame, toaplan1, ROT270, "Toaplan", "Same! Same! Same!", GAME_NO_SOUND )
+GAMEX( 1989, samesam2, fireshrk, samesame, samesam2, toaplan1, ROT270, "Toaplan", "Same! Same! Same! (2P Ver.)", GAME_NO_SOUND )
+GAME ( 1990, outzone,  0,        outzone,  outzone,  toaplan1, ROT270, "Toaplan", "Out Zone (set 1)" )
+GAME ( 1990, outzonea, outzone,  outzone,  outzone,  toaplan1, ROT270, "Toaplan", "Out Zone (set 2)" )
+GAMEX( 1991, vimana,   0,        vimana,   vimana,   vimana,   ROT270, "Toaplan", "Vimana", GAME_NO_SOUND )
+GAMEX( 1991, vimana1,  vimana,   vimana,   vimana,   vimana,   ROT270, "Toaplan", "Vimana (old set)", GAME_NO_SOUND )
+GAMEX( 1991, vimanan,  vimana,   vimana,   vimanan,  vimana,   ROT270, "Toaplan (Nova Apparate GMBH & Co license)", "Vimana (Nova Apparate GMBH & Co)", GAME_NO_SOUND )

@@ -21,8 +21,6 @@ static int destroyr_attract;
 static int destroyr_motor_speed;
 static int destroyr_noise;
 
-static UINT8* destroyr_zero_page;
-
 
 static void destroyr_dial_callback(int dial)
 {
@@ -56,12 +54,6 @@ static void destroyr_frame_callback(int dummy)
 static MACHINE_INIT( destroyr )
 {
 	timer_pulse(cpu_getscanlinetime(0), 0, destroyr_frame_callback);
-}
-
-
-WRITE_HANDLER( destroyr_ram_w )
-{
-	destroyr_zero_page[offset & 0xff] = data;
 }
 
 
@@ -135,12 +127,6 @@ WRITE_HANDLER( destroyr_output_w )
 }
 
 
-READ_HANDLER( destroyr_ram_r )
-{
-	return destroyr_zero_page[offset & 0xff];
-}
-
-
 READ_HANDLER( destroyr_input_r )
 {
 	offset &= 15;
@@ -174,29 +160,19 @@ READ_HANDLER( destroyr_scanline_r )
 }
 
 
-static ADDRESS_MAP_START( destroyr_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0100, 0x0fff) AM_READ(destroyr_ram_r)
-	AM_RANGE(0x1000, 0x1fff) AM_READ(destroyr_input_r)
+static ADDRESS_MAP_START( destroyr_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(15) )
+	AM_RANGE(0x0000, 0x00ff) AM_MIRROR(0xf00) AM_RAM
+	AM_RANGE(0x1000, 0x1fff) AM_READWRITE(destroyr_input_r, destroyr_output_w)
 	AM_RANGE(0x2000, 0x2fff) AM_READ(input_port_2_r)
-	AM_RANGE(0x6000, 0x6fff) AM_READ(destroyr_scanline_r)
-	AM_RANGE(0x7000, 0x77ff) AM_READ(MRA8_NOP) /* missing translation ROMs */
-	AM_RANGE(0x7800, 0x7fff) AM_READ(MRA8_ROM) /* program */
-	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_ROM) /* program mirror */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( destroyr_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x00ff) AM_WRITE(MWA8_RAM) AM_BASE(&destroyr_zero_page)
-	AM_RANGE(0x0100, 0x0fff) AM_WRITE(destroyr_ram_w)
-	AM_RANGE(0x1000, 0x1fff) AM_WRITE(destroyr_output_w)
 	AM_RANGE(0x3000, 0x30ff) AM_WRITE(MWA8_RAM) AM_BASE(&destroyr_alpha_num_ram)
 	AM_RANGE(0x4000, 0x401f) AM_WRITE(MWA8_RAM) AM_BASE(&destroyr_major_obj_ram)
 	AM_RANGE(0x5000, 0x5000) AM_WRITE(destroyr_cursor_load_w)
 	AM_RANGE(0x5001, 0x5001) AM_WRITE(destroyr_interrupt_ack_w)
 	AM_RANGE(0x5002, 0x5007) AM_WRITE(MWA8_RAM) AM_BASE(&destroyr_minor_obj_ram)
-	AM_RANGE(0x7000, 0x77ff) AM_WRITE(MWA8_NOP) /* missing translation ROMs */
-	AM_RANGE(0x7800, 0x7fff) AM_WRITE(MWA8_ROM) /* program */
-	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_ROM) /* program mirror */
+	AM_RANGE(0x6000, 0x6fff) AM_READ(destroyr_scanline_r)
+	AM_RANGE(0x7000, 0x77ff) AM_NOP				/* missing translation ROMs */
+	AM_RANGE(0x7800, 0x7fff) AM_ROM				/* program */
 ADDRESS_MAP_END
 
 
@@ -356,7 +332,7 @@ static MACHINE_DRIVER_START( destroyr )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6800, 12096000 / 16)
-	MDRV_CPU_PROGRAM_MAP(destroyr_readmem, destroyr_writemem)
+	MDRV_CPU_PROGRAM_MAP(destroyr_map, 0)
 	MDRV_CPU_VBLANK_INT(irq0_line_assert, 4)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -378,9 +354,8 @@ MACHINE_DRIVER_END
 
 
 ROM_START( destroyr )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )                  /* program code */
+	ROM_REGION( 0x8000, REGION_CPU1, 0 )                  /* program code */
 	ROM_LOAD( "30146-01.c3", 0x7800, 0x0800, CRC(e560c712) SHA1(0505ab57eee5421b4ff4e87d14505e02b18fd54c) )
-	ROM_RELOAD(              0xF800, 0x0800 )
 
 	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )   /* alpha numerics */
 	ROM_LOAD( "30135-01.p4", 0x0000, 0x0400, CRC(184824cf) SHA1(713cfd1d41ef7b1c345ea0038b652c4ba3f08301) )

@@ -28,7 +28,7 @@
 #define M4510_MEM(addr) (m4510.mem[(addr)>>13]+(addr))
 
 #undef CHANGE_PC
-#define CHANGE_PC program_write_byte_8(M4510_MEM(PCD))
+#define CHANGE_PC change_pc(M4510_MEM(PCD))
 
 /***************************************************************
  *  RDOP    read an opcode

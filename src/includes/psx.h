@@ -21,8 +21,8 @@ READ32_HANDLER( psx_gpu_r );
 WRITE32_HANDLER( psx_gpu_w );
 
 /* machine */
-extern data32_t *psxram;
-extern size_t psxramsize;
+extern data32_t *g_p_n_psxram;
+extern size_t g_n_psxramsize;
 typedef void ( *psx_dma_read_handler )( UINT32, INT32 );
 typedef void ( *psx_dma_write_handler )( UINT32, INT32 );
 WRITE32_HANDLER( psx_irq_w );
@@ -36,7 +36,10 @@ WRITE32_HANDLER( psx_counter_w );
 READ32_HANDLER( psx_counter_r );
 WRITE32_HANDLER( psx_sio_w );
 READ32_HANDLER( psx_sio_r );
-typedef void ( *psx_sio_write_handler )( data8_t );
+typedef void ( *psx_sio_write_handler )( int, int );
+#define PSX_SIO_RESET ( 0 )
+#define PSX_SIO_DATA ( 1 )
+#define PSX_SIO_SEL ( 2 )
 extern void psx_sio_install_write_handler( int, psx_sio_write_handler );
 extern void psx_sio_send( int, data8_t );
 WRITE32_HANDLER( psx_mdec_w );

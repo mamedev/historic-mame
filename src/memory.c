@@ -125,8 +125,8 @@
 	The value from the table (192-255) is combined with the lower address
 	bits to form an index into a subtable.
 
-	Table values in the range 0-31 are reserved for internal handling
-	(such as RAM, ROM, NOP, and banking). Table values between 32 and 192
+	Table values in the range 0-63 are reserved for internal handling
+	(such as RAM, ROM, NOP, and banking). Table values between 64 and 192
 	are assigned dynamically at startup.
 
 ***************************************************************************/
@@ -255,7 +255,7 @@ UINT8		 				opcode_entry;					/* opcode readmem entry */
 
 struct address_space_t		address_space[ADDRESS_SPACES];	/* address space data */
 
-static UINT8 *				bank_ptr[STATIC_COUNT];			/* array of bank pointers */
+static UINT8 *				bank_ptr[MAX_BANKS + 1];		/* array of bank pointers */
 static void *				shared_ptr[MAX_SHARED_POINTERS];/* array of shared pointers */
 
 static struct memory_block_t memory_block[MAX_MEMORY_BLOCKS];/* array of memory blocks we are tracking */
@@ -266,7 +266,7 @@ static int					cur_context;					/* current CPU context */
 static opbase_handler		opbasefunc;						/* opcode base override */
 
 static struct cpu_data_t	cpudata[MAX_CPU];				/* data gathered for each CPU */
-static struct bank_data_t 	bankdata[MAX_BANKS+1];			/* data gathered for each bank */
+static struct bank_data_t 	bankdata[MAX_BANKS + 1];		/* data gathered for each bank */
 
 static struct data_accessors_t memory_accessors[ADDRESS_SPACES][4][2] =
 {
@@ -337,13 +337,12 @@ static struct data_accessors_t memory_accessors[ADDRESS_SPACES][4][2] =
 	PROTOTYPES
 -------------------------------------------------*/
 
-static int CLIB_DECL fatalerror(const char *string, ...);
 static int init_cpudata(void);
 static int init_addrspace(UINT8 cpunum, UINT8 spacenum);
 static int preflight_memory(void);
 static int populate_memory(void);
-static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int databits, int ismatchmask, offs_t start, offs_t end, offs_t mask, offs_t mirror, void *handler);
-static void *assign_dynamic_bank(int cpunum, int spacenum, offs_t start, offs_t mirror);
+static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int databits, int ismatchmask, offs_t start, offs_t end, offs_t mask, offs_t mirror, void *handler, int isfixed);
+static void *assign_dynamic_bank(int cpunum, int spacenum, offs_t start, offs_t mirror, int isfixed);
 static UINT8 get_handler_index(struct handler_data_t *table, void *handler, offs_t start, offs_t end, offs_t mask);
 static void populate_table_range(struct addrspace_data_t *space, int iswrite, offs_t start, offs_t stop, UINT8 handler);
 static void populate_table_match(struct addrspace_data_t *space, int iswrite, offs_t matchval, offs_t matchmask, UINT8 handler);
@@ -544,12 +543,10 @@ void memory_set_opbase(offs_t pc)
 	}
 
 	/* perform the lookup */
-//	VPRINTF(("memory_set_opbase(%X) -> ", pc));
 	pc &= address_space[ADDRESS_SPACE_PROGRAM].addrmask;
 	entry = address_space[ADDRESS_SPACE_PROGRAM].readlookup[LEVEL1_INDEX(pc)];
 	if (entry >= SUBTABLE_BASE)
 		entry = address_space[ADDRESS_SPACE_PROGRAM].readlookup[LEVEL2_INDEX(entry,pc)];
-//	VPRINTF(("%X (%02X) -> ", pc, entry));
 	opcode_entry = entry;
 
 	/* RAM/ROM/RAMROM */
@@ -576,7 +573,6 @@ void memory_set_opbase(offs_t pc)
 	opcode_memory_max = (entry >= STATIC_RAM && entry <= STATIC_RAMROM)
 		? cpudata[cpu_getactivecpu()].ramlength - 1
 		: address_space[ADDRESS_SPACE_PROGRAM].readhandlers[entry].top;
-//	VPRINTF(("msk=%X base=%08X arg=%08X\n", opcode_mask, (UINT32)opcode_base, (UINT32)opcode_arg_base));
 }
 
 
@@ -659,10 +655,10 @@ void *memory_get_write_ptr(int cpunum, int spacenum, offs_t offset)
 void memory_set_bankptr(int banknum, void *base)
 {
 	/* validation checks */
-	if (banknum < STATIC_BANK1 || banknum > STATIC_BANKMAX || !bankdata[banknum].used)
-		fatalerror("memory_set_bankptr called with invalid bank %d\n", banknum);
+	if (banknum < STATIC_BANK1 || banknum > MAX_EXPLICIT_BANKS || !bankdata[banknum].used)
+		osd_die("memory_set_bankptr called with invalid bank %d\n", banknum);
 	if (bankdata[banknum].dynamic)
-		fatalerror("memory_set_bankptr called with dynamic bank %d\n", banknum);
+		osd_die("memory_set_bankptr called with dynamic bank %d\n", banknum);
 
 	/* set the base */
 	bank_ptr[banknum] = base;
@@ -684,7 +680,7 @@ void memory_set_bankptr(int banknum, void *base)
 data8_t *memory_install_read8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, read8_handler handler)
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	install_mem_handler(space, 0, 8, 0, start, end, mask, 0, (void *)handler);
+	install_mem_handler(space, 0, 8, 0, start, end, mask, 0, (void *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
 }
@@ -692,7 +688,7 @@ data8_t *memory_install_read8_handler(int cpunum, int spacenum, offs_t start, of
 data16_t *memory_install_read16_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, read16_handler handler)
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	install_mem_handler(space, 0, 16, 0, start, end, mask, 0, (void *)handler);
+	install_mem_handler(space, 0, 16, 0, start, end, mask, 0, (void *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
 }
@@ -700,7 +696,7 @@ data16_t *memory_install_read16_handler(int cpunum, int spacenum, offs_t start, 
 data32_t *memory_install_read32_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, read32_handler handler)
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	install_mem_handler(space, 0, 32, 0, start, end, mask, 0, (void *)handler);
+	install_mem_handler(space, 0, 32, 0, start, end, mask, 0, (void *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
 }
@@ -708,7 +704,7 @@ data32_t *memory_install_read32_handler(int cpunum, int spacenum, offs_t start, 
 data64_t *memory_install_read64_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, read64_handler handler)
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	install_mem_handler(space, 0, 64, 0, start, end, mask, 0, (void *)handler);
+	install_mem_handler(space, 0, 64, 0, start, end, mask, 0, (void *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
 }
@@ -722,7 +718,7 @@ data64_t *memory_install_read64_handler(int cpunum, int spacenum, offs_t start, 
 data8_t *memory_install_write8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, write8_handler handler)
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	install_mem_handler(space, 1, 8, 0, start, end, mask, 0, (void *)handler);
+	install_mem_handler(space, 1, 8, 0, start, end, mask, 0, (void *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
 }
@@ -730,7 +726,7 @@ data8_t *memory_install_write8_handler(int cpunum, int spacenum, offs_t start, o
 data16_t *memory_install_write16_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, write16_handler handler)
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	install_mem_handler(space, 1, 16, 0, start, end, mask, 0, (void *)handler);
+	install_mem_handler(space, 1, 16, 0, start, end, mask, 0, (void *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
 }
@@ -738,7 +734,7 @@ data16_t *memory_install_write16_handler(int cpunum, int spacenum, offs_t start,
 data32_t *memory_install_write32_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, write32_handler handler)
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	install_mem_handler(space, 1, 32, 0, start, end, mask, 0, (void *)handler);
+	install_mem_handler(space, 1, 32, 0, start, end, mask, 0, (void *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
 }
@@ -746,7 +742,7 @@ data32_t *memory_install_write32_handler(int cpunum, int spacenum, offs_t start,
 data64_t *memory_install_write64_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, write64_handler handler)
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	install_mem_handler(space, 1, 64, 0, start, end, mask, 0, (void *)handler);
+	install_mem_handler(space, 1, 64, 0, start, end, mask, 0, (void *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
 }
@@ -760,22 +756,6 @@ struct address_map_t *construct_map_0(struct address_map_t *map)
 {
 	map->flags = AM_FLAGS_END;
 	return map;
-}
-
-
-/*-------------------------------------------------
-	fatalerror - display an error message and
-	exit immediately
--------------------------------------------------*/
-
-static int CLIB_DECL fatalerror(const char *string, ...)
-{
-	va_list arg;
-	va_start(arg, string);
-	vprintf(string, arg);
-	va_end(arg);
-	exit(1);
-	return 0;
 }
 
 
@@ -853,6 +833,7 @@ static int init_addrspace(UINT8 cpunum, UINT8 spacenum)
 	int abits = cputype_addrbus_width(cputype, spacenum);
 	int dbits = cputype_databus_width(cputype, spacenum);
 	int accessorindex = (dbits == 8) ? 0 : (dbits == 16) ? 1 : (dbits == 32) ? 2 : 3;
+	construct_map_t internal_map = (construct_map_t)cputype_get_info_ptr(cputype, CPUINFO_PTR_INTERNAL_MEMORY_MAP + spacenum);
 	int entrynum;
 
 	/* determine the address and data bits */
@@ -873,17 +854,24 @@ static int init_addrspace(UINT8 cpunum, UINT8 spacenum)
 	cpudata[cpunum].spacemask |= 1 << spacenum;
 
 	/* construct the combined memory map */
-	if (Machine->drv->cpu[cpunum].construct_map[spacenum][0] || Machine->drv->cpu[cpunum].construct_map[spacenum][1])
+	if (internal_map || Machine->drv->cpu[cpunum].construct_map[spacenum][0] || Machine->drv->cpu[cpunum].construct_map[spacenum][1])
 	{
 		/* allocate and clear memory for 2 copies of the map */
 		struct address_map_t *map = malloc(sizeof(space->map[0]) * MAX_ADDRESS_MAP_SIZE * 4);
 		if (!map)
-			return fatalerror("cpu #%d couldn't allocate memory map\n", cpunum);
+		{
+			osd_die("cpu #%d couldn't allocate memory map\n", cpunum);
+			return -1;
+		}
 		memset(map, 0, sizeof(space->map[0]) * MAX_ADDRESS_MAP_SIZE * 4);
 
 		/* make pointers to the standard and adjusted maps */
 		space->map = map;
 		space->adjmap = &map[MAX_ADDRESS_MAP_SIZE * 2];
+		
+		/* start by constructing the internal CPU map */
+		if (internal_map)
+			map = (*internal_map)(map);
 
 		/* construct the standard map */
 		if (Machine->drv->cpu[cpunum].construct_map[spacenum][0])
@@ -913,9 +901,15 @@ static int init_addrspace(UINT8 cpunum, UINT8 spacenum)
 	space->read.table = malloc(1 << LEVEL1_BITS);
 	space->write.table = malloc(1 << LEVEL1_BITS);
 	if (!space->read.table)
-		return fatalerror("cpu #%d couldn't allocate read table\n", cpunum);
+	{
+		osd_die("cpu #%d couldn't allocate read table\n", cpunum);
+		return -1;
+	}
 	if (!space->write.table)
-		return fatalerror("cpu #%d couldn't allocate write table\n", cpunum);
+	{
+		osd_die("cpu #%d couldn't allocate write table\n", cpunum);
+		return -1;
+	}
 
 	/* initialize everything to unmapped */
 	memset(space->read.table, STATIC_UNMAP, 1 << LEVEL1_BITS);
@@ -958,7 +952,10 @@ static int preflight_memory(void)
 						{
 							val = (flags & AMEF_SPACE_MASK) >> AMEF_SPACE_SHIFT;
 							if (val != spacenum)
-								return fatalerror("cpu #%d has address space %d handlers in place of address space %d handlers!\n", cpunum, val, spacenum);
+							{
+								osd_die("cpu #%d has address space %d handlers in place of address space %d handlers!\n", cpunum, val, spacenum);
+								return -1;
+							}
 						}
 
 						/* if we specify an databus width, make sure it matches the current address space's */
@@ -967,7 +964,10 @@ static int preflight_memory(void)
 							val = (flags & AMEF_DBITS_MASK) >> AMEF_DBITS_SHIFT;
 							val = (val + 1) * 8;
 							if (val != space->dbits)
-								return fatalerror("cpu #%d uses wrong %d-bit handlers for address space %d (should be %d-bit)!\n", cpunum, val, spacenum, space->dbits);
+							{
+								osd_die("cpu #%d uses wrong %d-bit handlers for address space %d (should be %d-bit)!\n", cpunum, val, spacenum, space->dbits);
+								return -1;
+							}
 						}
 
 						/* if we specify an addressbus width, adjust the mask */
@@ -994,7 +994,7 @@ static int preflight_memory(void)
 							bank = HANDLER_TO_BANK(map->write.handler);
 
 						/* if we got one, add the data */
-						if (bank != -1)
+						if (bank >= 1 && bank <= MAX_EXPLICIT_BANKS)
 						{
 							struct bank_data_t *bdata = &bankdata[bank];
 							bdata->used = 1;
@@ -1045,10 +1045,11 @@ static int populate_memory(void)
 						if (!IS_AMENTRY_EXTENDED(map))
 						{
 							int ismatchmask = ((map->flags & AM_FLAGS_MATCH_MASK) != 0);
+							int isfixed = (map->memory != NULL) || (map->share != 0);
 							if (map->read.handler)
-								install_mem_handler(space, 0, space->dbits, ismatchmask, map->start, map->end, map->mask, map->mirror, map->read.handler);
+								install_mem_handler(space, 0, space->dbits, ismatchmask, map->start, map->end, map->mask, map->mirror, map->read.handler, isfixed);
 							if (map->write.handler)
-								install_mem_handler(space, 1, space->dbits, ismatchmask, map->start, map->end, map->mask, map->mirror, map->write.handler);
+								install_mem_handler(space, 1, space->dbits, ismatchmask, map->start, map->end, map->mask, map->mirror, map->write.handler, isfixed);
 						}
 				}
 			}
@@ -1062,7 +1063,7 @@ static int populate_memory(void)
 	memory operations
 -------------------------------------------------*/
 
-static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int databits, int ismatchmask, offs_t start, offs_t end, offs_t mask, offs_t mirror, void *handler)
+static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int databits, int ismatchmask, offs_t start, offs_t end, offs_t mask, offs_t mirror, void *handler, int isfixed)
 {
 	struct table_data_t *tabledata = iswrite ? &space->write : &space->read;
 	offs_t mirrorbit[32], mirrorbits, mirrorcount;
@@ -1107,7 +1108,7 @@ static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int
 	/* assign banks for RAM/ROM areas */
 	if (HANDLER_IS_RAM(handler) || HANDLER_IS_ROM(handler))
 	{
-		handler = (void *)assign_dynamic_bank(space->cpunum, space->spacenum, start, mirror);
+		handler = (void *)assign_dynamic_bank(space->cpunum, space->spacenum, start, mirror, isfixed);
 		if (!bank_ptr[HANDLER_TO_BANK(handler)])
 			bank_ptr[HANDLER_TO_BANK(handler)] = memory_find_base(space->cpunum, space->spacenum, iswrite, start);
 	}
@@ -1148,7 +1149,7 @@ static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int
 	matching bank
 -------------------------------------------------*/
 
-static void *assign_dynamic_bank(int cpunum, int spacenum, offs_t start, offs_t mirror)
+static void *assign_dynamic_bank(int cpunum, int spacenum, offs_t start, offs_t mirror, int isfixed)
 {
 	int bank;
 
@@ -1157,7 +1158,8 @@ static void *assign_dynamic_bank(int cpunum, int spacenum, offs_t start, offs_t 
 	if (spacenum == ADDRESS_SPACE_PROGRAM && start < memory_region_length(REGION_CPU1 + cpunum))
 	{
 		/* ...unless it's mirrored, in which case, we need to use a bank anyway */
-		if (mirror == 0)
+		/* ...or unless we have a fixed pointer, in which case, we also need to use a bank */
+		if (mirror == 0 && !isfixed)
 			return (void *)STATIC_RAM;
 	}
 
@@ -1175,7 +1177,7 @@ static void *assign_dynamic_bank(int cpunum, int spacenum, offs_t start, offs_t 
 		}
 
 	/* if we got here, we failed */
-	fatalerror("cpu #%d: ran out of banks for RAM/ROM regions!\n", cpunum);
+	osd_die("cpu #%d: ran out of banks for RAM/ROM regions!\n", cpunum);
 	return NULL;
 }
 
@@ -1364,7 +1366,7 @@ static UINT8 allocate_subtable(struct table_data_t *tabledata)
 					tabledata->subtable_alloc += SUBTABLE_ALLOC;
 					tabledata->table = realloc(tabledata->table, (1 << LEVEL1_BITS) + (tabledata->subtable_alloc << LEVEL2_BITS));
 					if (!tabledata->table)
-						fatalerror("error: ran out of memory allocating memory subtable\n");
+						osd_die("error: ran out of memory allocating memory subtable\n");
 				}
 
 				/* bump the usecount and return */
@@ -1374,7 +1376,7 @@ static UINT8 allocate_subtable(struct table_data_t *tabledata)
 
 		/* merge any subtables we can */
 		if (!merge_subtables(tabledata))
-			fatalerror("Ran out of subtables!\n");
+			osd_die("Ran out of subtables!\n");
 	}
 
 	/* hopefully this never happens */
@@ -1452,7 +1454,7 @@ static void release_subtable(struct table_data_t *tabledata, UINT8 subentry)
 
 	/* sanity check */
 	if (tabledata->subtable[subindex].usecount <= 0)
-		fatalerror("Called release_subtable on a table with a usecount of 0\n");
+		osd_die("Called release_subtable on a table with a usecount of 0\n");
 
 	/* decrement the usecount and clear the checksum if we're at 0 */
 	tabledata->subtable[subindex].usecount--;
@@ -1529,8 +1531,6 @@ static int amentry_needs_backing_store(int cpunum, int spacenum, const struct ad
 		if (handler != STATIC_INVALID &&
 			handler != STATIC_ROM &&
 			handler != STATIC_NOP &&
-			handler != STATIC_UNUSED1 &&
-			handler != STATIC_UNUSED2 &&
 			handler != STATIC_UNMAP)
 			return 1;
 	}
@@ -1539,11 +1539,9 @@ static int amentry_needs_backing_store(int cpunum, int spacenum, const struct ad
 	if (handler >= 0 && handler < STATIC_COUNT)
 	{
 		if (handler != STATIC_INVALID &&
-			(handler < STATIC_BANK1 || handler > STATIC_BANK24) &&
+			(handler < STATIC_BANK1 || handler > STATIC_BANK1 + MAX_BANKS - 1) &&
 			(handler != STATIC_ROM || spacenum != ADDRESS_SPACE_PROGRAM || map->start >= memory_region_length(REGION_CPU1 + cpunum)) &&
 			handler != STATIC_NOP &&
-			handler != STATIC_UNUSED1 &&
-			handler != STATIC_UNUSED2 &&
 			handler != STATIC_UNMAP)
 			return 1;
 	}
@@ -1673,7 +1671,7 @@ static void *allocate_memory_block(int cpunum, int spacenum, offs_t start, offs_
 		memory = malloc(end - start + 1);
 		if (!memory)
 		{
-			fatalerror("Out of memory allocating %d bytes for CPU %d, space %d, range %X-%X\n", end - start + 1, cpunum, spacenum, start, end);
+			osd_die("Out of memory allocating %d bytes for CPU %d, space %d, range %X-%X\n", end - start + 1, cpunum, spacenum, start, end);
 			return NULL;
 		}
 		memset(memory, 0, end - start + 1);
@@ -2612,7 +2610,7 @@ static void *get_static_handler(int databits, int readorwrite, int spacenum, int
 		{  8, STATIC_NOP,    ADDRESS_SPACE_PROGRAM, (void *)mrh8_nop_program,   (void *)mwh8_nop },
 		{  8, STATIC_NOP,    ADDRESS_SPACE_DATA,    (void *)mrh8_nop_data,      (void *)mwh8_nop },
 		{  8, STATIC_NOP,    ADDRESS_SPACE_IO,      (void *)mrh8_nop_io,        (void *)mwh8_nop },
-		{  8, STATIC_RAMROM, 0xff,                  NULL,                       (void *)mwh8_ramrom },
+		{  8, STATIC_RAMROM, ADDRESS_SPACE_PROGRAM, NULL,                       (void *)mwh8_ramrom },
 
 		{ 16, STATIC_UNMAP,  ADDRESS_SPACE_PROGRAM, (void *)mrh16_unmap_program,(void *)mwh16_unmap_program },
 		{ 16, STATIC_UNMAP,  ADDRESS_SPACE_DATA,    (void *)mrh16_unmap_data,   (void *)mwh16_unmap_data },
@@ -2620,7 +2618,7 @@ static void *get_static_handler(int databits, int readorwrite, int spacenum, int
 		{ 16, STATIC_NOP,    ADDRESS_SPACE_PROGRAM, (void *)mrh16_nop_program,  (void *)mwh16_nop },
 		{ 16, STATIC_NOP,    ADDRESS_SPACE_DATA,    (void *)mrh16_nop_data,     (void *)mwh16_nop },
 		{ 16, STATIC_NOP,    ADDRESS_SPACE_IO,      (void *)mrh16_nop_io,       (void *)mwh16_nop },
-		{ 16, STATIC_RAMROM, 0xff,                  NULL,                       (void *)mwh16_ramrom },
+		{ 16, STATIC_RAMROM, ADDRESS_SPACE_PROGRAM, NULL,                       (void *)mwh16_ramrom },
 
 		{ 32, STATIC_UNMAP,  ADDRESS_SPACE_PROGRAM, (void *)mrh32_unmap_program,(void *)mwh32_unmap_program },
 		{ 32, STATIC_UNMAP,  ADDRESS_SPACE_DATA,    (void *)mrh32_unmap_data,   (void *)mwh32_unmap_data },
@@ -2628,7 +2626,7 @@ static void *get_static_handler(int databits, int readorwrite, int spacenum, int
 		{ 32, STATIC_NOP,    ADDRESS_SPACE_PROGRAM, (void *)mrh32_nop_program,  (void *)mwh32_nop },
 		{ 32, STATIC_NOP,    ADDRESS_SPACE_DATA,    (void *)mrh32_nop_data,     (void *)mwh32_nop },
 		{ 32, STATIC_NOP,    ADDRESS_SPACE_IO,      (void *)mrh32_nop_io,       (void *)mwh32_nop },
-		{ 32, STATIC_RAMROM, 0xff,                  NULL,                       (void *)mwh32_ramrom },
+		{ 32, STATIC_RAMROM, ADDRESS_SPACE_PROGRAM, NULL,                       (void *)mwh32_ramrom },
 
 		{ 64, STATIC_UNMAP,  ADDRESS_SPACE_PROGRAM, (void *)mrh64_unmap_program,(void *)mwh64_unmap_program },
 		{ 64, STATIC_UNMAP,  ADDRESS_SPACE_DATA,    (void *)mrh64_unmap_data,   (void *)mwh64_unmap_data },
@@ -2636,7 +2634,7 @@ static void *get_static_handler(int databits, int readorwrite, int spacenum, int
 		{ 64, STATIC_NOP,    ADDRESS_SPACE_PROGRAM, (void *)mrh64_nop_program,  (void *)mwh64_nop },
 		{ 64, STATIC_NOP,    ADDRESS_SPACE_DATA,    (void *)mrh64_nop_data,     (void *)mwh64_nop },
 		{ 64, STATIC_NOP,    ADDRESS_SPACE_IO,      (void *)mrh64_nop_io,       (void *)mwh64_nop },
-		{ 64, STATIC_RAMROM, 0xff,                  NULL,                       (void *)mwh64_ramrom }
+		{ 64, STATIC_RAMROM, ADDRESS_SPACE_PROGRAM, NULL,                       (void *)mwh64_ramrom }
 	};
 	int tablenum;
 

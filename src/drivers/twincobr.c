@@ -191,143 +191,75 @@ Shark	Zame
 #include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
 #include "cpu/tms32010/tms32010.h"
-
-
-
-/**************** Machine stuff ******************/
-MACHINE_INIT( fsharkbt_reset_8741_mcu );
-INTERRUPT_GEN  ( twincobr_interrupt );
-READ16_HANDLER ( fsharkbt_dsp_r );
-READ16_HANDLER ( twincobr_dsp_r );
-WRITE16_HANDLER( twincobr_dsp_w );
-READ16_HANDLER ( twincobr_BIO_r );
-WRITE_HANDLER  ( twincobr_coin_w );
-WRITE16_HANDLER( fshark_coin_dsp_w );
-READ16_HANDLER ( twincobr_68k_dsp_r );
-WRITE16_HANDLER( twincobr_68k_dsp_w );
-WRITE16_HANDLER( twincobr_control_w );
-READ16_HANDLER ( twincobr_sharedram_r );
-WRITE16_HANDLER( twincobr_sharedram_w );
-
-extern data16_t *twincobr_68k_dsp_ram;
-extern data8_t *twincobr_sharedram;
-
-
-/**************** Video stuff ******************/
-WRITE16_HANDLER( twincobr_txscroll_w );
-WRITE16_HANDLER( twincobr_bgscroll_w );
-WRITE16_HANDLER( twincobr_fgscroll_w );
-WRITE16_HANDLER( twincobr_exscroll_w );
-WRITE16_HANDLER( twincobr_txoffs_w );
-WRITE16_HANDLER( twincobr_bgoffs_w );
-WRITE16_HANDLER( twincobr_fgoffs_w );
-READ16_HANDLER ( twincobr_txram_r );
-READ16_HANDLER ( twincobr_bgram_r );
-READ16_HANDLER ( twincobr_fgram_r );
-WRITE16_HANDLER( twincobr_txram_w );
-WRITE16_HANDLER( twincobr_bgram_w );
-WRITE16_HANDLER( twincobr_fgram_w );
-WRITE16_HANDLER( twincobr_crtc_reg_sel_w );
-WRITE16_HANDLER( twincobr_crtc_data_w );
-
-VIDEO_START( toaplan0 );
-VIDEO_UPDATE( toaplan0 );
-VIDEO_EOF( toaplan0 );
+#include "twincobr.h"
 
 
 
 
-/* 68000 memory maps */
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x02ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x030000, 0x033fff) AM_READ(twincobr_68k_dsp_r)		/* 68K and DSP shared RAM */
-	AM_RANGE(0x040000, 0x040fff) AM_READ(MRA16_RAM)				/* sprite ram data */
-	AM_RANGE(0x050000, 0x050dff) AM_READ(paletteram16_word_r)
+
+/***************************** 68000 Memory Map *****************************/
+
+static ADDRESS_MAP_START( main_program_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x02ffff) AM_ROM
+	AM_RANGE(0x030000, 0x033fff) AM_RAM		/* 68K and DSP shared RAM */
+	AM_RANGE(0x040000, 0x040fff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x050000, 0x050dff) AM_READWRITE(paletteram16_word_r, paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x060000, 0x060001) AM_WRITE(twincobr_crtc_reg_sel_w)	/* 6845 CRT controller */
+	AM_RANGE(0x060002, 0x060003) AM_WRITE(twincobr_crtc_data_w)		/* 6845 CRT controller */
+	AM_RANGE(0x070000, 0x070003) AM_WRITE(twincobr_txscroll_w)	/* text layer scroll */
+	AM_RANGE(0x070004, 0x070005) AM_WRITE(twincobr_txoffs_w)	/* offset in text video RAM */
+	AM_RANGE(0x072000, 0x072003) AM_WRITE(twincobr_bgscroll_w)	/* bg layer scroll */
+	AM_RANGE(0x072004, 0x072005) AM_WRITE(twincobr_bgoffs_w)	/* offset in bg video RAM */
+	AM_RANGE(0x074000, 0x074003) AM_WRITE(twincobr_fgscroll_w)	/* fg layer scroll */
+	AM_RANGE(0x074004, 0x074005) AM_WRITE(twincobr_fgoffs_w)	/* offset in fg video RAM */
+	AM_RANGE(0x076000, 0x076003) AM_WRITE(twincobr_exscroll_w)	/* Spare layer scroll */
 	AM_RANGE(0x078000, 0x078001) AM_READ(input_port_3_word_r)	/* Flying Shark - DSW A */
 	AM_RANGE(0x078002, 0x078003) AM_READ(input_port_4_word_r)	/* Flying Shark - DSW B */
 	AM_RANGE(0x078004, 0x078005) AM_READ(input_port_1_word_r)	/* Player 1 inputs */
 	AM_RANGE(0x078006, 0x078007) AM_READ(input_port_2_word_r)	/* Player 2 inputs */
 	AM_RANGE(0x078008, 0x078009) AM_READ(input_port_0_word_r)	/* V-Blank & FShark Coin/Start */
-	AM_RANGE(0x07a000, 0x07abff) AM_READ(twincobr_sharedram_r)	/* 16-bit on 68000 side, 8-bit on Z80 side */
-	AM_RANGE(0x07e000, 0x07e001) AM_READ(twincobr_txram_r)		/* data from text video RAM */
-	AM_RANGE(0x07e002, 0x07e003) AM_READ(twincobr_bgram_r)		/* data from bg video RAM */
-	AM_RANGE(0x07e004, 0x07e005) AM_READ(twincobr_fgram_r)		/* data from fg video RAM */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x02ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x030000, 0x033fff) AM_WRITE(twincobr_68k_dsp_w) AM_BASE(&twincobr_68k_dsp_ram)	/* 68K and DSP shared RAM */
-	AM_RANGE(0x040000, 0x040fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)	/* sprite ram data */
-	AM_RANGE(0x050000, 0x050dff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x060000, 0x060001) AM_WRITE(twincobr_crtc_reg_sel_w)/* 6845 CRT controller */
-	AM_RANGE(0x060002, 0x060003) AM_WRITE(twincobr_crtc_data_w)	/* 6845 CRT controller */
-	AM_RANGE(0x070000, 0x070003) AM_WRITE(twincobr_txscroll_w)	/* text layer scroll */
-	AM_RANGE(0x070004, 0x070005) AM_WRITE(twincobr_txoffs_w)		/* offset in text video RAM */
-	AM_RANGE(0x072000, 0x072003) AM_WRITE(twincobr_bgscroll_w)	/* bg layer scroll */
-	AM_RANGE(0x072004, 0x072005) AM_WRITE(twincobr_bgoffs_w)		/* offset in bg video RAM */
-	AM_RANGE(0x074000, 0x074003) AM_WRITE(twincobr_fgscroll_w)	/* fg layer scroll */
-	AM_RANGE(0x074004, 0x074005) AM_WRITE(twincobr_fgoffs_w)		/* offset in fg video RAM */
-	AM_RANGE(0x076000, 0x076003) AM_WRITE(twincobr_exscroll_w)	/* Spare layer scroll */
-	AM_RANGE(0x07800a, 0x07800b) AM_WRITE(fshark_coin_dsp_w)		/* Flying Shark DSP Comms & coin stuff */
-	AM_RANGE(0x07800c, 0x07800d) AM_WRITE(twincobr_control_w)		/* Twin Cobra DSP Comms & system control */
-	AM_RANGE(0x07a000, 0x07afff) AM_WRITE(twincobr_sharedram_w)	/* 16-bit on 68000 side, 8-bit on Z80 side */
-	AM_RANGE(0x07e000, 0x07e001) AM_WRITE(twincobr_txram_w)		/* data for text video RAM */
-	AM_RANGE(0x07e002, 0x07e003) AM_WRITE(twincobr_bgram_w)		/* data for bg video RAM */
-	AM_RANGE(0x07e004, 0x07e005) AM_WRITE(twincobr_fgram_w)		/* data for fg video RAM */
+	AM_RANGE(0x07800a, 0x07800b) AM_WRITE(fshark_coin_dsp_w)	/* Flying Shark DSP Comms & coin stuff */
+	AM_RANGE(0x07800c, 0x07800d) AM_WRITE(twincobr_control_w)	/* Twin Cobra DSP Comms & system control */
+	AM_RANGE(0x07a000, 0x07afff) AM_READWRITE(twincobr_sharedram_r, twincobr_sharedram_w)	/* 16-bit on 68000 side, 8-bit on Z80 side */
+	AM_RANGE(0x07e000, 0x07e001) AM_READWRITE(twincobr_txram_r, twincobr_txram_w)	/* data for text video RAM */
+	AM_RANGE(0x07e002, 0x07e003) AM_READWRITE(twincobr_bgram_r, twincobr_bgram_w)	/* data for bg video RAM */
+	AM_RANGE(0x07e004, 0x07e005) AM_READWRITE(twincobr_fgram_r, twincobr_fgram_w)	/* data for fg video RAM */
 ADDRESS_MAP_END
 
 
-/* Z80 memory/port maps */
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+/***************************** Z80 Memory Map *******************************/
+
+static ADDRESS_MAP_START( sound_program_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0x87ff) AM_RAM AM_BASE(&twincobr_sharedram)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM) AM_BASE(&twincobr_sharedram)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_READ(YM3812_status_port_0_r)
+static ADDRESS_MAP_START( sound_io_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READWRITE(YM3812_status_port_0_r, YM3812_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM3812_write_port_0_w)
 	AM_RANGE(0x10, 0x10) AM_READ(input_port_5_r)		/* Twin Cobra - Coin/Start */
+	AM_RANGE(0x20, 0x20) AM_WRITE(twincobr_coin_w)		/* Twin Cobra coin count-lockout */
 	AM_RANGE(0x40, 0x40) AM_READ(input_port_3_r)		/* Twin Cobra - DSW A */
 	AM_RANGE(0x50, 0x50) AM_READ(input_port_4_r)		/* Twin Cobra - DSW B */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_WRITE(YM3812_control_port_0_w)
-	AM_RANGE(0x01, 0x01) AM_WRITE(YM3812_write_port_0_w)
-	AM_RANGE(0x20, 0x20) AM_WRITE(twincobr_coin_w)	/* Twin Cobra coin count-lockout */
+
+/***************************** TMS32010 Memory Map **************************/
+
+static ADDRESS_MAP_START( DSP_program_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000, 0x7ff) AM_ROM
 ADDRESS_MAP_END
 
+	/* $000 - 08F  TMS32010 Internal Data RAM in Data Address Space */
 
-/* TMS32010 memory/port maps */
-static ADDRESS_MAP_START( DSP_read_program, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000, 0x7ff) AM_READ(MRA16_ROM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( DSP_write_program, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000, 0x7ff) AM_WRITE(MWA16_ROM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( DSP_read_data, ADDRESS_SPACE_DATA, 16 )
-	AM_RANGE(0x000, 0x08f) AM_READ(MRA16_RAM)	/* 90h words internal RAM */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( DSP_write_data, ADDRESS_SPACE_DATA, 16 )
-	AM_RANGE(0x000, 0x08f) AM_WRITE(MWA16_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( DSP_read_io, ADDRESS_SPACE_IO, 16 )
-	AM_RANGE(1, 1) AM_READ(twincobr_dsp_r)
-	AM_RANGE(2, 2) AM_READ(fsharkbt_dsp_r)
+static ADDRESS_MAP_START( DSP_io_map, ADDRESS_SPACE_IO, 16 )
+	AM_RANGE(0, 0) AM_WRITE(twincobr_dsp_addrsel_w)
+	AM_RANGE(1, 1) AM_READWRITE(twincobr_dsp_r, twincobr_dsp_w)
+	AM_RANGE(2, 2) AM_READWRITE(fsharkbt_dsp_r, fsharkbt_dsp_w)
+	AM_RANGE(3, 3) AM_WRITE(twincobr_dsp_bio_w)
 	AM_RANGE(TMS32010_BIO, TMS32010_BIO) AM_READ(twincobr_BIO_r)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( DSP_write_io, ADDRESS_SPACE_IO, 16 )
-	AM_RANGE(0, 3) AM_WRITE(twincobr_dsp_w)
-ADDRESS_MAP_END
 
 
 
@@ -709,7 +641,7 @@ static void irqhandler(int linestate)
 
 static struct YM3812interface ym3812_interface =
 {
-	1,				/* 1 chip  */
+	1,				/* 1 chip */
 	28000000/8,		/* 3.5MHz */
 	{ 100 },		/* volume */
 	{ irqhandler },
@@ -721,27 +653,27 @@ static MACHINE_DRIVER_START( twincobr )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,28000000/4)			/* 7.0MHz - Main board Crystal is 28MHz */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(main_program_map, 0)
 	MDRV_CPU_VBLANK_INT(twincobr_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,28000000/8)			/* 3.5MHz */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_program_map, 0)
+	MDRV_CPU_IO_MAP(sound_io_map, 0)
 
-	MDRV_CPU_ADD(TMS32010,28000000/2)		/* 14MHz CLKin */
-	MDRV_CPU_PROGRAM_MAP(DSP_read_program,DSP_write_program)
-	MDRV_CPU_DATA_MAP(DSP_read_data,DSP_write_data)
-	MDRV_CPU_IO_MAP(DSP_read_io,DSP_write_io)
+	MDRV_CPU_ADD(TMS32010,(28000000/2)/TMS32010_CLOCK_DIVIDER)	/* 14MHz CLKin */
+	MDRV_CPU_PROGRAM_MAP(DSP_program_map, 0)
+	/* Data Map is internal to the CPU */
+	MDRV_CPU_IO_MAP(DSP_io_map, 0)
 
 	MDRV_FRAMES_PER_SECOND( (28000000.0 / 4) / (446 * 286) )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)
 
-	MDRV_MACHINE_INIT(fsharkbt_reset_8741_mcu)	/* Reset fshark bootleg 8741 MCU data */
+	MDRV_MACHINE_INIT(twincobr_reset)	/* Reset fshark bootleg 8741 MCU data */
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM)
-	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_SCREEN_SIZE(64*8, 64*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1792)
@@ -772,10 +704,10 @@ ROM_START( twincobr )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
 	ROM_LOAD( "tc12",			0x00000, 0x08000, CRC(e37b3c44) SHA1(5fed10b29c14e27aee0cd92ecde5c5cb422273b1) )	/* slightly different from the other two sets */
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* Co-Processor TMS320C10 MCU code */
+	ROM_REGION( 0x2000, REGION_CPU3, 0 )	/* Co-Processor TMS320C10 MCU code */
 	ROM_LOAD16_BYTE( "dsp_22.bin",	0x0001, 0x0800, CRC(79389a71) SHA1(14ec4c1c9b06702319e89a7a250d0038393437f4) )
 	ROM_LOAD16_BYTE( "dsp_21.bin",	0x0000, 0x0800, CRC(2d135376) SHA1(67a2cc774d272ee1cd6e6bc1c5fc33fc6968837e) )
-/******  The following are from a bootleg board. ******
+/****** The following are from a bootleg board. ******
 	A0 and A1 are swapped between the TMS320C10 and these BPROMs on the board.
 	ROM_LOAD16_BYTE( "tc1b",		0x0000, 0x0800, CRC(1757cc33) )
 	ROM_LOAD16_BYTE( "tc2a",		0x0001, 0x0800, CRC(d6d878c9) )
@@ -822,7 +754,7 @@ ROM_START( twincobu )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
 	ROM_LOAD( "b30-05",				0x00000, 0x08000, CRC(1a8f1e10) SHA1(0c37a7a50b2523506ad77ac03ae752eb94092ff6) )
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* Co-Processor TMS320C10 MCU code */
+	ROM_REGION( 0x2000, REGION_CPU3, 0 )	/* Co-Processor TMS320C10 MCU code */
 	ROM_LOAD16_BYTE( "dsp_22.bin",	0x0001, 0x0800, CRC(79389a71) SHA1(14ec4c1c9b06702319e89a7a250d0038393437f4) )
 	ROM_LOAD16_BYTE( "dsp_21.bin",	0x0000, 0x0800, CRC(2d135376) SHA1(67a2cc774d272ee1cd6e6bc1c5fc33fc6968837e) )
 
@@ -867,9 +799,9 @@ ROM_START( ktiger )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
 	ROM_LOAD( "b30-05",			0x00000, 0x08000, CRC(1a8f1e10) SHA1(0c37a7a50b2523506ad77ac03ae752eb94092ff6) )
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* Co-Processor TMS320C10 MCU code */
-	ROM_LOAD16_BYTE( "dsp-22",	0x0001, 0x0800, BAD_DUMP CRC(8a1d48d9) SHA1(f345c95a97adfbe89676f81ac83fbbec25703440)  )
-	ROM_LOAD16_BYTE( "dsp-21",	0x0000, 0x0800, BAD_DUMP CRC(33d99bc2) SHA1(9372dcfc2313abc4835365ae99842f732329d4e6)  )
+	ROM_REGION( 0x2000, REGION_CPU3, 0 )	/* Co-Processor TMS320C10 MCU code */
+	ROM_LOAD16_BYTE( "dsp-22",	0x0001, 0x0800, BAD_DUMP CRC(8a1d48d9) SHA1(f345c95a97adfbe89676f81ac83fbbec25703440) )
+	ROM_LOAD16_BYTE( "dsp-21",	0x0000, 0x0800, BAD_DUMP CRC(33d99bc2) SHA1(9372dcfc2313abc4835365ae99842f732329d4e6) )
 
 	ROM_REGION( 0x0c000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD( "tc11",			0x00000, 0x04000, CRC(0a254133) SHA1(17e9cc5e36fb4696012d0f9229fa172034cd843a) )
@@ -910,7 +842,7 @@ ROM_START( fshark )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
 	ROM_LOAD( "b02_16.rom",		0x0000, 0x8000, CRC(cdd1a153) SHA1(de9827a959039cf753ecac6756fb1925c37466d8) )
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* Space for Co-Processor TMS320C10 */
+	ROM_REGION( 0x2000, REGION_CPU3, 0 )	/* Space for Co-Processor TMS320C10 */
 
 	ROM_REGION( 0x1000, REGION_USER1, 0 )	/* Co-Processor TMS320C10 MCU code */
 	ROM_LOAD_NIB_HIGH( "82s137-1.mcu",  0x0000, 0x0400, CRC(cc5b3f53) SHA1(33589665ac995cc4645b56bbcd6d1c1cd5368f88) ) /* msb */
@@ -959,7 +891,7 @@ ROM_START( skyshark )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
 	ROM_LOAD( "b02_16.rom",		0x0000, 0x8000, CRC(cdd1a153) SHA1(de9827a959039cf753ecac6756fb1925c37466d8) )
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* Space for Co-Processor TMS320C10 */
+	ROM_REGION( 0x2000, REGION_CPU3, 0 )	/* Space for Co-Processor TMS320C10 */
 
 	ROM_REGION( 0x1000, REGION_USER1, 0 )	/* Co-Processor TMS320C10 MCU code */
 	ROM_LOAD_NIB_HIGH( "82s137-1.mcu",  0x0000, 0x0400, CRC(cc5b3f53) SHA1(33589665ac995cc4645b56bbcd6d1c1cd5368f88) ) /* msb */
@@ -1008,7 +940,7 @@ ROM_START( hishouza )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
 	ROM_LOAD( "b02_16.rom",		0x0000, 0x8000, CRC(cdd1a153) SHA1(de9827a959039cf753ecac6756fb1925c37466d8) )
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* Space for Co-Processor TMS320C10 */
+	ROM_REGION( 0x2000, REGION_CPU3, 0 )	/* Space for Co-Processor TMS320C10 */
 
 	ROM_REGION( 0x1000, REGION_USER1, 0 )	/* Co-Processor TMS320C10 MCU code */
 	ROM_LOAD_NIB_HIGH( "dsp-a1.bpr", 0x0000, 0x0400, CRC(45d4d1b1) SHA1(e776a056f0f72cbeb309c5a23f803330cb8b3763) ) /* msb */
@@ -1057,7 +989,7 @@ ROM_START( fsharkbt )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
 	ROM_LOAD( "b02_16.rom",		0x0000, 0x8000, CRC(cdd1a153) SHA1(de9827a959039cf753ecac6756fb1925c37466d8) )
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* Space for Co-Processor TMS320C10 */
+	ROM_REGION( 0x2000, REGION_CPU3, 0 )	/* Space for Co-Processor TMS320C10 */
 
 	ROM_REGION( 0x1000, REGION_USER1, 0 )	/* Co-Processor TMS320C10 MCU code */
 	ROM_LOAD_NIB_HIGH( "mcu-1.bpr",  0x0000, 0x0400, CRC(45d4d1b1) SHA1(e776a056f0f72cbeb309c5a23f803330cb8b3763) ) /* msb */
@@ -1100,15 +1032,22 @@ ROM_END
 
 ROM_START( gulfwar2 )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* Main 68K code */
-	ROM_LOAD16_BYTE( "07-u92.bin",  0x00001, 0x20000, CRC(b73e6b25) SHA1(53cde41e5a2e8f721c3f43abf1fff46479f658d8) )
 	ROM_LOAD16_BYTE( "08-u119.bin", 0x00000, 0x20000, CRC(41ebf9c0) SHA1(85207dda76abded727ed95717024a2ea2bd85dac) )
+	ROM_LOAD16_BYTE( "07-u92.bin",  0x00001, 0x20000, CRC(b73e6b25) SHA1(53cde41e5a2e8f721c3f43abf1fff46479f658d8) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
 	ROM_LOAD( "06-u51.bin",			0x00000, 0x08000, CRC(75504f95) SHA1(5bd23e700e1bd4f0fac622dfb7c8cc69ba764956) )
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* Co-Processor TMS320C10 MCU code */
-	ROM_LOAD16_BYTE( "02-u1.rom",	0x0001, 0x2000, CRC(abefe4ca) SHA1(f05f12a1ff19411f34f4eee98ce9ba450fec38f2) ) // Same code as Twin Cobra
-	ROM_LOAD16_BYTE( "01-u2.rom",	0x0000, 0x2000, CRC(01399b65) SHA1(4867ec815e22c9124c7aa00ebb6089c2611fa31f) ) // Same code as Twin Cobra
+	ROM_REGION( 0x2000, REGION_CPU3, 0 )	/* Co-Processor TMS320C10 MCU code */
+	/* ROMs are duplicated 4 times */
+	ROM_LOAD16_BYTE( "01-u2.rom",	0x000, 0x800, CRC(01399b65) SHA1(4867ec815e22c9124c7aa00ebb6089c2611fa31f) ) // Same code as Twin Cobra
+	ROM_CONTINUE(                   0x000, 0x800 )
+	ROM_CONTINUE(                   0x000, 0x800 )
+	ROM_CONTINUE(                   0x000, 0x800 )
+	ROM_LOAD16_BYTE( "02-u1.rom",	0x001, 0x800, CRC(abefe4ca) SHA1(f05f12a1ff19411f34f4eee98ce9ba450fec38f2) ) // Same code as Twin Cobra
+	ROM_CONTINUE(                   0x001, 0x800 )
+	ROM_CONTINUE(                   0x001, 0x800 )
+	ROM_CONTINUE(                   0x001, 0x800 )
 
 	ROM_REGION( 0x0c000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD( "03-u9.bin",			0x00000, 0x04000, CRC(1b7934b3) SHA1(c7f5ac364dec4c7843c30e098fd02e0901bdf4b7) )
@@ -1141,6 +1080,12 @@ ROM_START( gulfwar2 )
 	ROM_LOAD( "82s123.b24",	0x240, 0x020, CRC(4fb5df2a) SHA1(506ef2c8e4cf45c256d6831a0a5760732f2de422) )	/* tile to sprite priority ?? */
 ROM_END
 
+
+static DRIVER_INIT( twincobr )
+{
+	twincobr_driver_savestate();
+}
+
 static DRIVER_INIT( fshark )
 {
 	data8_t *source = memory_region(REGION_USER1);
@@ -1150,15 +1095,17 @@ static DRIVER_INIT( fshark )
 	/* The ROM loader fixes the nibble images. Here we fix the byte ordering. */
 	for (A = 0;A < 0x0800;A++)
 		dest[A] = (source[A] << 8) | source[A + 0x800];
+
+	twincobr_driver_savestate();	/* Save-State stuff in src/machine/twincobr.c */
 }
 
 
 
-GAME( 1987, twincobr, 0,        twincobr, twincobr, 0,      ROT270, "[Toaplan] Taito Corporation", "Twin Cobra (World)" )
-GAME( 1987, twincobu, twincobr, twincobr, twincobu, 0,      ROT270, "[Toaplan] Taito America Corporation (Romstar license)", "Twin Cobra (US)" )
-GAME( 1987, ktiger,   twincobr, twincobr, ktiger,   0,      ROT270, "[Toaplan] Taito Corporation", "Kyukyoku Tiger (Japan)" )
-GAME( 1987, fshark,   0,        twincobr, fshark,   fshark, ROT270, "[Toaplan] Taito Corporation", "Flying Shark (World)" )
-GAME( 1987, skyshark, fshark,   twincobr, skyshark, fshark, ROT270, "[Toaplan] Taito America Corporation (Romstar license)", "Sky Shark (US)" )
-GAME( 1987, hishouza, fshark,   twincobr, hishouza, fshark, ROT270, "[Toaplan] Taito Corporation", "Hishou Zame (Japan)" )
-GAME( 1987, fsharkbt, fshark,   twincobr, skyshark, fshark, ROT270, "bootleg", "Flying Shark (bootleg)" )
-GAME( 1991, gulfwar2, 0,        twincobr, gulfwar2, 0,      ROT270, "Comad", "Gulf War II" )
+GAME( 1987, twincobr, 0,        twincobr, twincobr, twincobr, ROT270, "[Toaplan] Taito Corporation", "Twin Cobra (World)" )
+GAME( 1987, twincobu, twincobr, twincobr, twincobu, twincobr, ROT270, "[Toaplan] Taito America Corporation (Romstar license)", "Twin Cobra (US)" )
+GAME( 1987, ktiger,   twincobr, twincobr, ktiger,   twincobr, ROT270, "[Toaplan] Taito Corporation", "Kyukyoku Tiger (Japan)" )
+GAME( 1987, fshark,   0,        twincobr, fshark,   fshark,   ROT270, "[Toaplan] Taito Corporation", "Flying Shark (World)" )
+GAME( 1987, skyshark, fshark,   twincobr, skyshark, fshark,   ROT270, "[Toaplan] Taito America Corporation (Romstar license)", "Sky Shark (US)" )
+GAME( 1987, hishouza, fshark,   twincobr, hishouza, fshark,   ROT270, "[Toaplan] Taito Corporation", "Hishou Zame (Japan)" )
+GAME( 1987, fsharkbt, fshark,   twincobr, skyshark, fshark,   ROT270, "bootleg", "Flying Shark (bootleg)" )
+GAME( 1991, gulfwar2, 0,        twincobr, gulfwar2, twincobr, ROT270, "Comad", "Gulf War II" )

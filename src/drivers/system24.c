@@ -997,6 +997,67 @@ INPUT_PORTS_START( bnzabros )
 	PORT_DIPSETTING(    0x00, "1" )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( sspirits )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	SYS16_COINAGE
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, "Monitor flip" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x04, "5" )
+	PORT_DIPSETTING(    0x00, "2" )
+	
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x30, "600K" )
+	PORT_DIPSETTING(    0x20, "500K" )
+	PORT_DIPSETTING(    0x10, "800K" )
+	PORT_DIPSETTING(    0x00, "None" )
+	
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0xc0, "Normal" )
+	PORT_DIPSETTING(    0x80, "Easy" )
+	PORT_DIPSETTING(    0x40, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+INPUT_PORTS_END
+
 
 INPUT_PORTS_START( qgh )
 	PORT_START
@@ -1454,10 +1515,10 @@ GAME( 1994, qgh,      0,        system24, qgh,      qgh,      ROT0,   "Sega", "Q
 GAME( 1994, quizmeku, 0,        system24, quizmeku, quizmeku, ROT0,   "Sega", "Quiz Mekurumeku Story")
 GAME( 1994, qrouka,   0,        system24, qgh,      qrouka,   ROT0,   "Sega", "Quiz Rouka Ni Tattenasai")
 GAME( 1994, mahmajn2, 0,        system24, mahmajn,  mahmajn2, ROT0,   "Sega", "Tokoro San no MahMahjan 2")
-GAME( 1988, sspirits, 0,        system24, bnzabros, sspirits, ROT270, "Sega", "Scramble Spirits" )
+GAME( 1988, sspirits, 0,        system24, sspirits, sspirits, ROT270, "Sega", "Scramble Spirits" )
 
 /* Encrypted */
-GAMEX( ????, sgmast,   0, system24, bnzabros, sgmast,   ROT0, "Sega", "Super Masters Golf", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION)
-GAMEX( ????, qsww,     0, system24, bnzabros, qsww,     ROT0, "Sega", "Quiz Syukudai wo Wasuremashita", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION)
-GAMEX( ????, gground,  0, system24, bnzabros, gground,  ROT0, "Sega", "Gain Ground", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION)
-GAMEX( ????, crkdown,  0, system24, bnzabros, crkdown,  ROT0, "Sega", "Crackdown", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION)
+GAMEX( ????, sgmast,   0, system24, bnzabros, sgmast,   ROT0,	"Sega", "Super Masters Golf", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION)
+GAMEX( ????, qsww,     0, system24, bnzabros, qsww,     ROT0, 	"Sega", "Quiz Syukudai wo Wasuremashita", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION)
+GAMEX( ????, gground,  0, system24, bnzabros, gground,  ROT270, "Sega", "Gain Ground", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION)
+GAMEX( ????, crkdown,  0, system24, bnzabros, crkdown,  ROT0,	"Sega", "Crackdown", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION)

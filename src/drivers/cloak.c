@@ -110,7 +110,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static UINT8 *cloak_sharedram;
 static int cloak_nvram_enabled;
 
 extern WRITE_HANDLER( cloak_videoram_w );
@@ -123,22 +122,6 @@ extern READ_HANDLER( graph_processor_r );
 extern VIDEO_START( cloak );
 extern VIDEO_UPDATE( cloak );
 
-
-/*************************************
- *
- *	Shared RAM I/O
- *
- *************************************/
-
-static READ_HANDLER( cloak_sharedram_r )
-{
-	return cloak_sharedram[offset];
-}
-
-static WRITE_HANDLER( cloak_sharedram_w )
-{
-	cloak_sharedram[offset] = data;
-}
 
 /*************************************
  *
@@ -181,40 +164,30 @@ static WRITE_HANDLER( cloak_nvram_enable_w )
  *
  *************************************/
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0800, 0x0fff) AM_READ(cloak_sharedram_r)
-	AM_RANGE(0x2800, 0x29ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x1000, 0x100f) AM_READ(pokey1_r)		/* DSW0 also */
+static ADDRESS_MAP_START( master_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_RAM
+	AM_RANGE(0x0400, 0x07ff) AM_READWRITE(MRA8_RAM, cloak_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x0800, 0x0fff) AM_RAM AM_SHARE(1)
+	AM_RANGE(0x1000, 0x100f) AM_READWRITE(pokey1_r, pokey1_w)		/* DSW0 also */
 //	AM_RANGE(0x1008, 0x1008) AM_READ(MRA8_RAM)
-	AM_RANGE(0x1800, 0x180f) AM_READ(pokey2_r)		/* DSW1 also */
+	AM_RANGE(0x1800, 0x180f) AM_READWRITE(pokey2_r, pokey2_w)		/* DSW1 also */
 	AM_RANGE(0x2000, 0x2000) AM_READ(input_port_0_r)	/* IN0 */
 	AM_RANGE(0x2200, 0x2200) AM_READ(input_port_1_r)	/* IN1 */
 	AM_RANGE(0x2400, 0x2400) AM_READ(input_port_2_r)	/* IN2 */
-	AM_RANGE(0x2800, 0x29ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x3000, 0x30ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0400, 0x07ff) AM_WRITE(cloak_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0x0800, 0x0fff) AM_WRITE(cloak_sharedram_w) AM_BASE(&cloak_sharedram)
-	AM_RANGE(0x1000, 0x100f) AM_WRITE(pokey1_w)
-	AM_RANGE(0x1800, 0x180f) AM_WRITE(pokey2_w)
 	AM_RANGE(0x2600, 0x2600) AM_WRITE(cloak_custom_w)
-	AM_RANGE(0x2800, 0x29ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
-	AM_RANGE(0x3000, 0x30ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x2800, 0x29ff) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x3000, 0x30ff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x3200, 0x327f) AM_WRITE(cloak_paletteram_w)
 	AM_RANGE(0x3800, 0x3801) AM_WRITE(cloak_coin_counter_w)
 	AM_RANGE(0x3803, 0x3803) AM_WRITE(cloak_flipscreen_w)
-	AM_RANGE(0x3805, 0x3805) AM_WRITE(MWA8_NOP)	// ???
+	AM_RANGE(0x3805, 0x3805) AM_WRITENOP	// ???
 	AM_RANGE(0x3806, 0x3807) AM_WRITE(cloak_led_w)
 	AM_RANGE(0x3a00, 0x3a00) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0x3c00, 0x3c00) AM_WRITE(cloak_irq_reset_0_w)
 	AM_RANGE(0x3e00, 0x3e00) AM_WRITE(cloak_nvram_enable_w)
-	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0xffff) AM_ROM
 ADDRESS_MAP_END
+
 
 /*************************************
  *
@@ -222,24 +195,17 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( readmem2, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0007) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0008, 0x000f) AM_READ(graph_processor_r)
-	AM_RANGE(0x0010, 0x07ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0800, 0x0fff) AM_READ(cloak_sharedram_r)
-	AM_RANGE(0x2000, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem2, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0007) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0008, 0x000f) AM_WRITE(graph_processor_w)
-	AM_RANGE(0x0010, 0x07ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0800, 0x0fff) AM_WRITE(cloak_sharedram_w)
+static ADDRESS_MAP_START( slave_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0007) AM_RAM
+	AM_RANGE(0x0008, 0x000f) AM_READWRITE(graph_processor_r, graph_processor_w)
+	AM_RANGE(0x0010, 0x07ff) AM_RAM
+	AM_RANGE(0x0800, 0x0fff) AM_RAM AM_SHARE(1)
 	AM_RANGE(0x1000, 0x1000) AM_WRITE(cloak_irq_reset_1_w)
 	AM_RANGE(0x1200, 0x1200) AM_WRITE(cloak_clearbmp_w)
 	AM_RANGE(0x1400, 0x1400) AM_WRITE(cloak_custom_w)
-	AM_RANGE(0x2000, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0xffff) AM_ROM
 ADDRESS_MAP_END
+
 
 /*************************************
  *
@@ -368,11 +334,11 @@ static MACHINE_DRIVER_START( cloak )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,1000000)		/* 1 MHz ???? */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(master_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 
 	MDRV_CPU_ADD(M6502,1250000)		/* 1.25 MHz ???? */
-	MDRV_CPU_PROGRAM_MAP(readmem2,writemem2)
+	MDRV_CPU_PROGRAM_MAP(slave_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -394,6 +360,7 @@ static MACHINE_DRIVER_START( cloak )
 	/* sound hardware */
 	MDRV_SOUND_ADD(POKEY, pokey_interface)
 MACHINE_DRIVER_END
+
 
 /*************************************
  *
@@ -503,7 +470,6 @@ ROM_START( cloakgr )
 	ROM_LOAD( "107.023",      0x0000, 0x1000, CRC(c42c84a4) SHA1(6f241e772f8b46c8d3acad2e967f1ab530886b11) )
 	ROM_LOAD( "108.023",      0x1000, 0x1000, CRC(4fe13d58) SHA1(b21a32b2ff5363ab35fd1438344a04deb4077dbc) )
 ROM_END
-
 
 
 /*************************************

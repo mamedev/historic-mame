@@ -1722,7 +1722,7 @@ void jaguargpu_get_info(UINT32 state, union cpuinfo *info)
 															jaguar.FLAGS & 0x0001 ? 'Z':'.'); break;
 
 		case CPUINFO_STR_REGISTER + JAGUAR_PC:  		sprintf(info->s = cpuintrf_temp_str(), "PC: %08X", jaguar.PC); break;
-
+		case CPUINFO_STR_REGISTER + JAGUAR_FLAGS:  		sprintf(info->s = cpuintrf_temp_str(), "FLAGS: %08X", jaguar.FLAGS); break;
 		case CPUINFO_STR_REGISTER + JAGUAR_R0:			sprintf(info->s = cpuintrf_temp_str(), "R0: %08X", jaguar.r[0]); break;
 		case CPUINFO_STR_REGISTER + JAGUAR_R1:			sprintf(info->s = cpuintrf_temp_str(), "R1: %08X", jaguar.r[1]); break;
 		case CPUINFO_STR_REGISTER + JAGUAR_R2:			sprintf(info->s = cpuintrf_temp_str(), "R2: %08X", jaguar.r[2]); break;

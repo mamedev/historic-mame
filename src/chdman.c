@@ -26,6 +26,10 @@
 #endif
 #endif
 
+#if defined(__MWERKS__) && macintosh
+#include <console.h>
+#endif
+
 
 /***************************************************************************
 	CONSTANTS & DEFINES
@@ -182,9 +186,11 @@ static const char *error_string(int err)
 static void error(void)
 {
 	printf("usage: chdman -info input.chd\n");
-	printf("   or: chdman -createhd inputhd.raw output.chd [inputoffs [cylinders heads sectors]]\n");
+	printf("   or: chdman -createhd inputhd.raw output.chd [inputoffs [cylinders heads sectors [sectorsize [hunksize]]]]\n");
+	printf("   or: chdman -createblankhd output.chd cylinders heads sectors [sectorsize [hunksize]]\n");
 //	printf("   or: chdman -createcd input.iso output.chd\n");
 //	printf("   or: chdman -createcd input.bin input.cue output.chd\n");
+	printf("   or: chdman -copydata input.chd output.chd\n");
 	printf("   or: chdman -extract input.chd output.raw\n");
 	printf("   or: chdman -verify input.chd\n");
 	printf("   or: chdman -verifyfix input.chd\n");
@@ -393,15 +399,14 @@ static void guess_chs(const char *filename, int offset, int sectorsize, UINT32 *
 static void do_createhd(int argc, char *argv[])
 {
 	const char *inputfile, *outputfile;
-	UINT32 sectorsize = IDE_SECTOR_SIZE;
-	UINT32 hunksize = (4096 / sectorsize) * sectorsize;
+	UINT32 sectorsize, hunksize;
 	UINT32 cylinders, heads, sectors, totalsectors;
 	struct chd_file *chd;
 	char metadata[256];
 	int offset, err;
 
-	/* require 4, 5, or 8 args total */
-	if (argc != 4 && argc != 5 && argc != 8)
+	/* require 4-5, or 8-10 args total */
+	if (argc != 4 && argc != 5 && argc != 8 && argc != 9 && argc != 10)
 		error();
 
 	/* extract the data */
@@ -416,9 +421,22 @@ static void do_createhd(int argc, char *argv[])
 		cylinders = atoi(argv[5]);
 		heads = atoi(argv[6]);
 		sectors = atoi(argv[7]);
+		if (argc >= 9)
+			sectorsize = atoi(argv[8]);
+		else
+			sectorsize = IDE_SECTOR_SIZE;
+		if (argc >= 10)
+			hunksize = atoi(argv[9]);
+		else
+			hunksize = (sectorsize > 4096) ? sectorsize : ((4096 / sectorsize) * sectorsize);
 	}
 	else
+	{
+		sectorsize = IDE_SECTOR_SIZE;
 		guess_chs(inputfile, offset, sectorsize, &cylinders, &heads, &sectors, &sectorsize);
+		hunksize = (sectorsize > 4096) ? sectorsize : ((4096 / sectorsize) * sectorsize);
+	}
+
 	totalsectors = cylinders * heads * sectors;
 
 	/* print some info */
@@ -474,7 +492,268 @@ static void do_createhd(int argc, char *argv[])
 	chd_close(chd);
 }
 
+/*
+	Create a new non-compressed hard disk image, with all hunks filled with 0s.
 
+	Example:
+		[program] -createblankhd out.hd 615 4 32 256 32768
+*/
+static void do_createblankhd(int argc, char *argv[])
+{
+	const char *outputfile;
+	UINT32 sectorsize, hunksize;
+	UINT32 cylinders, heads, sectors, totalsectors;
+	struct chd_file *chd;
+	char metadata[256];
+	int err;
+	int hunknum;
+	int totalhunks;
+	UINT8 *cache;
+	clock_t lastupdate;
+
+	/* require 6, 7, or 8 args total */
+	if (argc != 6 && argc != 7 && argc != 8)
+		error();
+
+	/* extract the data */
+	outputfile = argv[2];
+	cylinders = atoi(argv[3]);
+	heads = atoi(argv[4]);
+	sectors = atoi(argv[5]);
+	if (argc >= 7)
+		sectorsize = atoi(argv[6]);
+	else
+		sectorsize = IDE_SECTOR_SIZE;
+	if (argc >= 8)
+		hunksize = atoi(argv[7]);
+	else
+		hunksize = (sectorsize > 4096) ? sectorsize : ((4096 / sectorsize) * sectorsize);
+	totalsectors = cylinders * heads * sectors;
+
+	/* print some info */
+	printf("Output file:  %s\n", outputfile);
+	printf("Cylinders:    %d\n", cylinders);
+	printf("Heads:        %d\n", heads);
+	printf("Sectors:      %d\n", sectors);
+	printf("Bytes/sector: %d\n", sectorsize);
+	printf("Sectors/hunk: %d\n", hunksize / sectorsize);
+	printf("Logical size: %s\n", big_int_string((UINT64)totalsectors * (UINT64)sectorsize));
+
+	/* create the new hard drive */
+	err = chd_create(outputfile, (UINT64)totalsectors * (UINT64)sectorsize, hunksize, CHDCOMPRESSION_NONE, NULL);
+	if (err != CHDERR_NONE)
+	{
+		printf("Error creating CHD file: %s\n", error_string(err));
+		return;
+	}
+
+	/* open the new hard drive */
+	chd = chd_open(outputfile, 1, NULL);
+	if (!chd)
+	{
+		printf("Error opening new CHD file: %s\n", error_string(chd_get_last_error()));
+		remove(outputfile);
+		return;
+	}
+
+	/* write the metadata */
+	sprintf(metadata, HARD_DISK_METADATA_FORMAT, cylinders, heads, sectors, sectorsize);
+	err = chd_set_metadata(chd, HARD_DISK_STANDARD_METADATA, 0, metadata, strlen(metadata) + 1);
+	if (err != CHDERR_NONE)
+	{
+		printf("Error adding hard disk metadata: %s\n", error_string(chd_get_last_error()));
+		chd_close(chd);
+		remove(outputfile);
+		return;
+	}
+
+	/* alloc and zero buffer*/
+	cache = malloc(hunksize);
+	if (! cache)
+	{
+		printf("Error allocating memory buffer\n");
+		chd_close(chd);
+		remove(outputfile);
+		return;
+	}
+	memset(cache, 0, hunksize);
+
+	/* Zero every hunk */
+	totalhunks = (((UINT64)totalsectors * (UINT64)sectorsize) + hunksize - 1) / hunksize;
+	lastupdate = 0;
+	for (hunknum = 0; hunknum < totalhunks; hunknum++)
+	{
+		clock_t curtime = clock();
+
+		/* progress */
+		if (curtime - lastupdate > CLOCKS_PER_SEC / 2)
+		{
+			UINT64 sourcepos = (UINT64)hunknum * hunksize;
+			if (sourcepos)
+				progress("Zeroing hunk %d/%d...  \r", hunknum, totalhunks);
+			lastupdate = curtime;
+		}
+
+		/* write out the data */
+		if (chd_write(chd, hunknum, 1, cache) != 1)
+		{
+			printf("Error writing CHD file: %s\n", error_string(chd_get_last_error()));
+			chd_close(chd);
+			remove(outputfile);
+			return;
+		}
+	}
+	progress("Creation complete!                    \n");
+
+	/* free buffer */
+	free(cache);
+
+	/* success */
+	chd_close(chd);
+}
+
+/*
+	Compute the largest common divisor of two numbers.
+*/
+INLINE UINT32 lcd_u32(UINT32 a, UINT32 b)
+{
+	UINT32 c;
+
+	/* We use the traditional Euclid algorithm. */
+	while (b)
+	{
+		c = a % b;
+		a = b;
+		b = c;
+	}
+
+	return a;
+}
+
+/*-------------------------------------------------
+	Copy all hunks of data from one CHD file to another.  The hunk sizes do not
+	need to match.  If the source is shorter than the destination, the source
+	data will be padded with 0s.
+
+	Example
+		[program] -copydata in.hd out.hd
+-------------------------------------------------*/
+static void do_copydata(int argc, char *argv[])
+{
+	const char *inputfile, *outputfile;
+	struct chd_file *in_chd, *out_chd;
+	UINT32 in_hunksize, out_hunksize;
+	UINT32 in_totalhunks, out_totalhunks;
+	UINT32 in_hunknum, out_hunknum;
+	UINT8 *cache;
+	UINT32 cache_data_len;
+	clock_t lastupdate;
+
+	/* require 4 args total */
+	if (argc != 4)
+		error();
+
+	/* extract the data */
+	inputfile = argv[2];
+	outputfile = argv[3];
+
+	/* print some info */
+	printf("Input file:   %s\n", inputfile);
+	printf("Output file:  %s\n", outputfile);
+
+	/* open the src hard drive */
+	in_chd = chd_open(inputfile, 0, NULL);
+	if (!in_chd)
+	{
+		printf("Error opening src CHD file: %s\n", error_string(chd_get_last_error()));
+		return;
+	}
+	in_hunksize = chd_get_header(in_chd)->hunkbytes;
+	in_totalhunks = chd_get_header(in_chd)->totalhunks;
+
+	/* open the dest hard drive */
+	out_chd = chd_open(outputfile, 1, NULL);
+	if (!out_chd)
+	{
+		printf("Error opening dest CHD file: %s\n", error_string(chd_get_last_error()));
+		return;
+	}
+	out_hunksize = chd_get_header(out_chd)->hunkbytes;
+	out_totalhunks = chd_get_header(out_chd)->totalhunks;
+
+	/* alloc buffer */
+	cache = malloc(in_hunksize + out_hunksize - lcd_u32(in_hunksize, out_hunksize));
+	if (! cache)
+	{
+		printf("Error allocating memory buffer\n");
+		chd_close(out_chd);
+		chd_close(in_chd);
+		return;
+	}
+
+	/* copy data */
+	cache_data_len = 0;
+	in_hunknum = 0;
+	lastupdate = 0;
+	for (out_hunknum = 0; out_hunknum < out_totalhunks;)
+	{
+		clock_t curtime = clock();
+
+		/* progress */
+		if (curtime - lastupdate > CLOCKS_PER_SEC / 2)
+		{
+			if (out_hunknum)
+				progress("Copying hunk %d/%d...  \r", out_hunknum, out_totalhunks);
+			lastupdate = curtime;
+		}
+
+		/* read in the data */
+		while (cache_data_len < out_hunksize)
+		{
+			if (in_hunknum < in_totalhunks)
+			{	/* read data if available */
+				if (chd_read(in_chd, in_hunknum, 1, cache+cache_data_len) != 1)
+				{
+					printf("Error reading CHD file: %s\n", error_string(chd_get_last_error()));
+					chd_close(out_chd);
+					chd_close(in_chd);
+					return;
+				}
+				in_hunknum++;
+				cache_data_len += in_hunksize;
+			}
+			else
+			{	/* if beyond EOF, just zero the buffer */
+				memset(cache+cache_data_len, 0, out_hunksize-cache_data_len);
+				cache_data_len = out_hunksize;
+			}
+		}
+
+		/* write out the data */
+		while (cache_data_len >= out_hunksize)
+		{
+			if (chd_write(out_chd, out_hunknum, 1, cache) != 1)
+			{
+				printf("Error writing CHD file: %s\n", error_string(chd_get_last_error()));
+				chd_close(out_chd);
+				chd_close(in_chd);
+				return;
+			}
+			out_hunknum++;
+			cache_data_len -= out_hunksize;
+			if (cache_data_len)
+				memmove(cache, cache+out_hunksize, cache_data_len);
+		}
+	}
+	progress("Copy complete!                    \n");
+
+	/* free buffer */
+	free(cache);
+
+	/* success */
+	chd_close(out_chd);
+	chd_close(in_chd);
+}
 
 /*-------------------------------------------------
 	do_extract - extract a raw file from a
@@ -1504,6 +1783,10 @@ int main(int argc, char **argv)
 	extern char build_version[];
 	printf("chdman - MAME Compressed Hunks of Data (CHD) manager %s\n", build_version);
 
+#if defined(__MWERKS__) && macintosh
+	argc = ccommand(& argv);
+#endif
+
 	/* require at least 1 argument */
 	if (argc < 2)
 		error();
@@ -1514,6 +1797,10 @@ int main(int argc, char **argv)
 	/* handle the appropriate command */
 	if (!stricmp(argv[1], "-createhd"))
 		do_createhd(argc, argv);
+	if (!stricmp(argv[1], "-createblankhd"))
+		do_createblankhd(argc, argv);
+	if (!stricmp(argv[1], "-copydata"))
+		do_copydata(argc, argv);
 //	else if (!stricmp(argv[1], "-createcd"))
 //		do_createcd(argc, argv);
 	else if (!stricmp(argv[1], "-extract"))

@@ -10,7 +10,9 @@
 
 
 static struct tilemap *tilemap;
-UINT8 centiped_flipscreen;
+UINT8 centiped_flipscreen, *bullsdrt_tiles_bankram;
+
+static UINT8 bullsdrt_sprites_bank;
 
 
 
@@ -41,6 +43,20 @@ static void milliped_get_tile_info(int tile_index)
 	int bank = (data >> 6) & 1;
 	int color = (data >> 6) & 3;
 	SET_TILE_INFO(0, (data & 0x3f) + 0x40 + (bank * 0x80), color, 0);
+}
+
+
+static void bullsdrt_get_tile_info(int tile_index)
+{
+	int data, tilebank, tile;
+
+	data = videoram[tile_index];
+
+	tilebank = bullsdrt_tiles_bankram[tile_index & 0x1f] & 0x0f;
+
+	tile = (data & 0x3f) + 0x40 * tilebank;
+
+	SET_TILE_INFO(0, tile, 0, TILE_FLIPYX(data >> 6));
 }
 
 
@@ -84,6 +100,18 @@ VIDEO_START( milliped )
 }
 
 
+VIDEO_START( bullsdrt )
+{
+	tilemap = tilemap_create(bullsdrt_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 32,32);
+	if (!tilemap)
+		return 1;
+
+	centiped_flipscreen = 0;
+
+	return 0;
+}
+
+
 
 /*************************************
  *
@@ -108,6 +136,31 @@ WRITE_HANDLER( centiped_videoram_w )
 WRITE_HANDLER( centiped_flip_screen_w )
 {
 	centiped_flipscreen = data >> 7;
+}
+
+
+/*************************************
+ *
+ *	Tiles bank
+ *
+ *************************************/
+
+WRITE_HANDLER( bullsdrt_tilesbank_w )
+{
+	bullsdrt_tiles_bankram[offset] = data;
+	tilemap_mark_all_tiles_dirty(tilemap);
+}
+
+
+/*************************************
+ *
+ *	Sprites bank
+ *
+ *************************************/
+
+WRITE_HANDLER( bullsdrt_sprites_bank_w )
+{
+	bullsdrt_sprites_bank = data;
 }
 
 
@@ -378,4 +431,34 @@ VIDEO_UPDATE( warlords )
 		drawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, x, y,
 				cliprect, TRANSPARENCY_PEN, 0);
 	}
+}
+
+VIDEO_UPDATE( bullsdrt )
+{
+	struct rectangle spriteclip = *cliprect;
+
+	int offs;
+
+	/* draw the background */
+	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
+
+	/* apply the sprite clip */
+	if (centiped_flipscreen)
+		spriteclip.min_x += 8;
+	else
+		spriteclip.max_x -= 8;
+	
+	/* draw the sprites */
+	for (offs = 0; offs < 0x10; offs++)
+	{
+		int code = ((spriteram[offs] & 0x3e) >> 1) | ((spriteram[offs] & 0x01) << 6) | (bullsdrt_sprites_bank * 0x20);
+		int color = spriteram[offs + 0x30];
+		int flipy = spriteram[offs] & 0x80;
+		int x = spriteram[offs + 0x20];
+		int y = 240 - spriteram[offs + 0x10];
+
+		drawgfx(bitmap, Machine->gfx[1], code, color & 0x3f, 1, flipy, x, y,
+				&spriteclip, TRANSPARENCY_PEN, 0);
+	}
+
 }

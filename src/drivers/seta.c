@@ -34,6 +34,7 @@ P0-053-A				91 Strike Gunner S.T.G				Athena / Tecmo
 P0-053-A				92 Quiz Kokology					Tecmo
 P0-055-B				89 Wit's							Athena
 P0-055-D				90 Thunder & Lightning				Romstar / Visco
+Promat PCB				94 Wiggie Waggie(5)    				--
 P0-063-A				91 Rezon							Allumer
 P0-068-B (M6100723A)	92 Block Carnival					Visco
 P0-072-2 (prototype)	92 Blandia (prototype)				Allumer
@@ -68,6 +69,10 @@ PO-122-A (SZR-001)		95 Zombie Raid						American Sammy
     version?  the sound system has been replaced with an OKI M6295
     hardware is definitely bootleg. standard simple layout board with no
     custom chips and no manufacturer on the pcb.
+(5) The game code is based on Thunder and Lightning but the PCB is custom
+    there are a few gfx emulation bugs (flipping of some border tiles and
+    sprites not leaving the screen correctly) its possible the custom hw
+    doesn't behave *exactly* the same as the original seta hw
 
 Notes:
 - The NEC D4701 used by Caliber 50 is a mouse interface IC (uPD4701c).
@@ -2547,6 +2552,36 @@ static ADDRESS_MAP_START( thunderl_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xe04000, 0xe07fff) AM_WRITE(MWA16_RAM					)	// (wits)
 ADDRESS_MAP_END
 
+/***************************************************************************
+                    Wiggie Waggie
+***************************************************************************/
+
+static int wiggie_soundlatch;
+
+READ_HANDLER( wiggie_soundlatch_r )
+{
+	return wiggie_soundlatch;
+}
+
+static WRITE16_HANDLER( wiggie_soundlatch_w )
+{
+	wiggie_soundlatch = data >> 8;
+	cpu_set_irq_line(1,0, PULSE_LINE);
+}
+
+
+static ADDRESS_MAP_START( wiggie_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9800, 0x9800) AM_READ(OKIM6295_status_0_r)
+	AM_RANGE(0xa000, 0xa000) AM_READ(wiggie_soundlatch_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( wiggie_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x9800, 0x9800) AM_WRITE(OKIM6295_data_0_w)
+ADDRESS_MAP_END
 
 /***************************************************************************
 					Ultraman Club / SD Gundam Neo Battling
@@ -6052,6 +6087,33 @@ static struct GfxDecodeInfo tndrcade_gfxdecodeinfo[] =
 };
 
 /***************************************************************************
+                                Wiggie Waggle
+****************************************************************************/
+
+static struct GfxLayout wiggie_layout =
+{
+	16,16,
+	RGN_FRAC(1,4),
+	4,
+	{ RGN_FRAC(0,4),RGN_FRAC(1,4),RGN_FRAC(2,4),RGN_FRAC(3,4) },
+	{ 0,1,2,3,4,5,6,7,
+	 64,65,66,67,68,69,70,71 },
+	{ 0*8, 16*8, 4*8, 20*8,
+	  2*8, 18*8, 6*8, 22*8,
+	  1*8, 17*8, 5*8, 21*8,
+	  3*8, 19*8, 7*8, 23*8,	},
+	16*16
+};
+
+
+static struct GfxDecodeInfo wiggie_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &wiggie_layout,   0x0, 32  }, /* bg tiles */
+	{ -1 } /* end of array */
+};
+
+
+/***************************************************************************
 								U.S. Classic
 ***************************************************************************/
 
@@ -6312,7 +6374,7 @@ static MACHINE_DRIVER_START( usclssic )
 	MDRV_SCREEN_SIZE(64*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 48*8-1, 1*8, 31*8-1)
 	MDRV_GFXDECODE(usclssic_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(16*32)
+	MDRV_PALETTE_LENGTH(16*32+0x200)
 	MDRV_COLORTABLE_LENGTH(16*32 + 64*32)		/* sprites, layer */
 
 	MDRV_PALETTE_INIT(usclssic)	/* layer is 6 planes deep */
@@ -7099,6 +7161,43 @@ static MACHINE_DRIVER_START( thunderl )
 	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
 MACHINE_DRIVER_END
 
+static struct OKIM6295interface wiggie_okim6295_interface =
+{
+	1,						/* 1 chip */
+	{ 1000000/132 },	/* 1Mhz / 132 (pin 7 = 5v)*/
+	{ REGION_SOUND1 },		/* memory region */
+	{ 100 }
+};
+
+
+static MACHINE_DRIVER_START( wiggie )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_PROGRAM_MAP(thunderl_readmem,thunderl_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_PROGRAM_MAP(wiggie_sound_readmem,wiggie_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 48*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(wiggie_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)	/* sprites only */
+
+	MDRV_VIDEO_START(seta_no_layers)
+	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(OKIM6295, wiggie_okim6295_interface)
+MACHINE_DRIVER_END
+
+
 static MACHINE_DRIVER_START( wits )
 
 	/* basic machine hardware */
@@ -7461,6 +7560,10 @@ ROM_START( usclssic )
 	ROM_LOAD( "ue001020.130", 0x500000, 0x080000, CRC(bc07403f) SHA1(f994b6d1dee23f5dabdb328f955f4380a8ca9d52) )
 	ROM_LOAD( "ue001021.131", 0x580000, 0x080000, CRC(98c03efd) SHA1(761c51d5573e6f35c48b8b9ee5d88cbde02e92a7) )
 
+	ROM_REGION( 0x400, REGION_PROMS, 0 )	/* Extra Colours (not used yet) */
+	ROM_LOAD16_BYTE( "ue1-022.prm", 0x000, 0x200, CRC(1a23129e) SHA1(110eb54ab83ecb8375164a5c96f522b2737c379c) )
+	ROM_LOAD16_BYTE( "ue1-023.prm", 0x001, 0x200, CRC(a13192a4) SHA1(86e312e0f7400b7fa08fbe8fced1eb95a32502ca) )
+
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "ue001005.132", 0x000000, 0x080000, CRC(c5fea37c) SHA1(af4f09dd36af06e50262f607ff14eedc33beffd2) )
 ROM_END
@@ -7618,6 +7721,27 @@ ROM_START( thunderl )
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "r28", 0x000000, 0x080000, CRC(a043615d) SHA1(e483fa9fd8e922578a9d7b6ced0750643089ca78) )
 	ROM_LOAD( "r27", 0x080000, 0x080000, CRC(cb8425a3) SHA1(655afa295fbe99acc79c4004f03ed832560cff5b) )
+ROM_END
+
+/* Wiggie does NOT run on a seta board, but is a hack / bootleg of Thunder & Lightning (just like
+   Promat's Perestroika Girls is a hack / bootleg of Taito's Super Qix */
+
+ROM_START( wiggie )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "wiggie.f19", 0x00000, 0x10000, CRC(24b58f16) SHA1(96ef92ab79258da9322dd7e706bf05ac5143f7b7) )
+	ROM_LOAD16_BYTE( "wiggie.f21", 0x00001, 0x10000, CRC(83ba6edb) SHA1(fa74fb39599ed877317db73d02d14df5b475fc35) )
+
+	ROM_REGION( 0x40000, REGION_CPU2, 0 ) /* sound cpu code */
+	ROM_LOAD( "wiggie.a5", 0x00000, 0x10000, CRC(8078d77b) SHA1(4e6855d396a1bace2810b13b7dd08ccf5de89bd8) )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "wiggie.d1", 0x00000, 0x40000, CRC(27fbe12a) SHA1(73f476a03b321ed1ae89104f5b32d77153fabb82))
+
+	ROM_REGION( 0x80000, REGION_GFX1, 0 )
+	ROM_LOAD( "wiggie.k16", 0x00000, 0x20000, CRC(4fb40b8a) SHA1(120c9fd677071485a9f8accc2385117baf542b9c) )
+	ROM_LOAD( "wiggie.k18", 0x20000, 0x20000, CRC(ebc418e9) SHA1(a9af9bebce56608b0533d7d147191ebdceaca4e4) )
+	ROM_LOAD( "wiggie.k19", 0x40000, 0x20000, CRC(c073501b) SHA1(4b4cd0fed5efe12bcd10f98a71becc212e7e753a) )
+	ROM_LOAD( "wiggie.k21", 0x60000, 0x20000, CRC(22f6fa39) SHA1(d3e86e156434153335c5d2ce71417f35097f5ab7) )
 ROM_END
 
 ROM_START( rezon )
@@ -8420,6 +8544,37 @@ DRIVER_INIT( rezon )
 	install_mem_read16_handler(0, 0x500006, 0x500007, MRA16_NOP);	// irq ack?
 }
 
+static DRIVER_INIT(wiggie)
+{
+	data8_t *src;
+	int len;
+	data8_t temp[16];
+	int i,j;
+
+	src = memory_region(REGION_CPU1);
+	len = memory_region_length(REGION_CPU1);
+	for (i = 0;i < len;i += 16)
+	{
+		memcpy(temp,&src[i],16);
+		for (j = 0;j < 16;j++)
+		{
+			static int convtable[16] =
+			{
+				0x0, 0x1, 0x8, 0x9,
+				0x2, 0x3, 0xa, 0xb,
+				0x4, 0x5, 0xc, 0xd,
+				0x6, 0x7, 0xe, 0xf
+			};
+
+			src[i+j] = temp[convtable[j]];
+		}
+
+
+	}
+
+	install_mem_write16_handler(0, 0xB00008, 0xB00009, wiggie_soundlatch_w);
+
+}
 
 
 /***************************************************************************
@@ -8445,6 +8600,7 @@ GAME( 1989, metafox,  0,        metafox,  metafox,  metafox,  ROT270, "Seta",   
 GAME( 1989, drgnunit, 0,        drgnunit, drgnunit, 0,        ROT0,   "Seta",                   "Dragon Unit / Castle of Dragon" )
 GAME( 1989, wits,     0,        wits,     wits,     0,        ROT0,   "Athena (Visco license)", "Wit's (Japan)" ) // Country/License: DSW
 GAME( 1990, thunderl, 0,        thunderl, thunderl, 0,        ROT270, "Seta",                   "Thunder & Lightning" ) // Country/License: DSW
+GAME( 1994, wiggie,   0,        wiggie,   thunderl, wiggie,   ROT270, "Promat",                 "Wiggie Waggie" ) // hack of Thunder & Lightning
 GAME( 1991, rezon,    0,        rezon,    rezon,    rezon,    ROT0,   "Allumer",                "Rezon" )
 GAME( 1991, stg,      0,        drgnunit, stg,      0,        ROT270, "Athena / Tecmo",         "Strike Gunner S.T.G" )
 GAME( 1991, pairlove, 0,        pairlove, pairlove, 0,        ROT270, "Athena",                 "Pairs Love" )

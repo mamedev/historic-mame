@@ -26,14 +26,6 @@
 #include "osd_cpu.h"
 #include "m6502.h"
 
-#ifdef RUNTIME_LOADER
-# ifdef __cplusplus
-	extern "C" void m4510_runtime_loader_init(void);
-# else
-	extern void m4510_runtime_loader_init(void);
-# endif
-#endif
-
 
 enum {
 	M4510_PC=1, M4510_S, M4510_P, M4510_A, M4510_X, M4510_Y,
@@ -46,22 +38,8 @@ enum {
 
 #define M4510_IRQ_LINE					M6502_IRQ_LINE
 
-extern int m4510_ICount;				/* cycle count */
+void m4510_get_info(UINT32 state, union cpuinfo *info);
 
-extern void m4510_init(void);
-extern void m4510_reset(void *param);
-extern void m4510_exit(void);
-extern int	m4510_execute(int cycles);
-extern unsigned m4510_get_context (void *dst);
-extern void m4510_set_context (void *src);
-extern unsigned m4510_get_reg (int regnum);
-extern void m4510_set_reg (int regnum, unsigned val);
-extern void m4510_set_irq_line(int irqline, int state);
-extern void m4510_set_irq_callback(int (*callback)(int irqline));
-extern void m4510_state_save(void *file);
-extern void m4510_state_load(void *file);
-extern const char *m4510_info(void *context, int regnum);
-extern unsigned m4510_dasm(char *buffer, unsigned pc);
 
 #ifdef MAME_DEBUG
 extern unsigned Dasm4510( char *dst, unsigned pc );

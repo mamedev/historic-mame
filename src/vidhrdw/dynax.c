@@ -79,7 +79,7 @@ static int flipscreen;
 
 static int layer_layout;
 
-static int trigger_irq;	// some games trigger IRQ at blitter end, some don't
+static void (*update_irq_func)(void);	// some games trigger IRQ at blitter end, some don't
 
 // up to 8 layers, 2 images per layer (interleaved on screen)
 static UINT8 *dynax_pixmap[8][2];
@@ -525,10 +525,10 @@ static void dynax_blitter_start(int flags)
 					(blit_newsrc	&	 0x3fffff) ;
 
 	/* Generate an IRQ */
-	if (trigger_irq)
+	if (update_irq_func)
 	{
 		dynax_blitter_irq = 1;
-		sprtmtch_update_irq();
+		update_irq_func();
 	}
 }
 
@@ -554,10 +554,10 @@ static void jantouki_blitter_start(int flags)
 					(blit_newsrc	&	 0x3fffff) ;
 
 	/* Generate an IRQ */
-	if (trigger_irq)
+	if (update_irq_func)
 	{
 		dynax_blitter_irq = 1;
-		jantouki_update_irq();
+		update_irq_func();
 	}
 }
 
@@ -583,10 +583,10 @@ static void jantouki_blitter2_start(int flags)
 					(blit2_newsrc	&	 0x3fffff) ;
 
 	/* Generate an IRQ */
-	if (trigger_irq)
+	if (update_irq_func)
 	{
 		dynax_blitter2_irq = 1;
-		jantouki_update_irq();
+		update_irq_func();
 	}
 }
 
@@ -696,6 +696,7 @@ int *priority_table;
 //                           0       1       2       3       4       5       6       7
 int priority_hnoridur[8] = { 0x0231, 0x2103, 0x3102, 0x2031, 0x3021, 0x1302, 0x2310, 0x1023 };
 int priority_mcnpshnt[8] = { 0x3210, 0x2103, 0x3102, 0x2031, 0x3021, 0x1302, 0x2310, 0x1023 };
+int priority_mjelctrn[8] = { 0x0231, 0x0321, 0x2031, 0x2301, 0x3021, 0x3201 ,0x0000, 0x0000 };	// this game doesn't use (hasn't?) layer 1
 
 static void Video_Reset(void)
 {
@@ -704,7 +705,7 @@ static void Video_Reset(void)
 
 	hnoridur_layer_half2 = 0;
 
-	trigger_irq = 1;
+	update_irq_func = sprtmtch_update_irq;
 }
 
 VIDEO_START( hanamai )
@@ -787,6 +788,8 @@ VIDEO_START( jantouki )
 	Video_Reset();
 	layer_layout = LAYOUT_JANTOUKI;
 
+	update_irq_func = jantouki_update_irq;
+
 	return 0;
 }
 
@@ -798,11 +801,30 @@ VIDEO_START( mjdialq2 )
 	Video_Reset();
 	layer_layout = LAYOUT_MJDIALQ2;
 
-	trigger_irq = 0;
+	update_irq_func = 0;
 
 	return 0;
 }
 
+VIDEO_START( mjelctrn )
+{
+	if (video_start_hnoridur())	return 1;
+
+	priority_table = priority_mjelctrn;
+	update_irq_func = mjelctrn_update_irq;
+
+	return 0;
+}
+
+VIDEO_START( neruton )
+{
+	if (video_start_hnoridur())	return 1;
+
+//	priority_table = priority_mjelctrn;
+	update_irq_func = neruton_update_irq;
+
+	return 0;
+}
 
 /***************************************************************************
 
@@ -1031,7 +1053,7 @@ static int debug_mask(void)
 	T          -  Toggle viewer
 	I,O        -  Change palette (-,+)
 	J,K & N,M  -  Change "tile"  (-,+, slow & fast)
-	R          -  "tile" = 0	*/
+	R          -  move "tile" to the next 1/8th of the gfx	*/
 static int debug_viewer(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 #ifdef MAME_DEBUG
@@ -1040,11 +1062,11 @@ static int debug_viewer(struct mame_bitmap *bitmap,const struct rectangle *clipr
 	if (toggle)	{
 		data8_t *RAM	=	memory_region( REGION_GFX1 );
 		size_t size		=	memory_region_length( REGION_GFX1 );
-		static int i = 0, c = 0;
+		static int i = 0, c = 0, r = 0;
 
 		if (keyboard_pressed_memory(KEYCODE_I))	c = (c-1) & 0x1f;
 		if (keyboard_pressed_memory(KEYCODE_O))	c = (c+1) & 0x1f;
-		if (keyboard_pressed_memory(KEYCODE_R))	i = 0;
+		if (keyboard_pressed_memory(KEYCODE_R))	{ r = (r+1) & 0x7;	i = size/8 * r; }
 		if (keyboard_pressed(KEYCODE_M) | keyboard_pressed_memory(KEYCODE_K))	{
 			while( i < size && RAM[i] ) i++;		while( i < size && !RAM[i] ) i++;	}
 		if (keyboard_pressed(KEYCODE_N) | keyboard_pressed_memory(KEYCODE_J))	{

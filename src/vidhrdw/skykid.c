@@ -2,16 +2,15 @@
 #include "vidhrdw/generic.h"
 #include "tilemap.h"
 
-unsigned char *skykid_textram, *skykid_videoram;
+data8_t *skykid_textram, *skykid_videoram, *skykid_spriteram;
 
-static struct tilemap *background;
-static int priority;
-static int flipscreen;
+static struct tilemap *bg_tilemap,*tx_tilemap;
+static int priority,scroll_x,scroll_y;
 
 
 /***************************************************************************
 
-	Convert the color PROMs into a more useable format.
+	Convert the color PROMs.
 
 	The palette PROMs are connected to the RGB output this way:
 
@@ -69,55 +68,87 @@ PALETTE_INIT( skykid )
 	/* sprites lookup table */
 	for (i = 0;i < 64*8;i++)
 		*(colortable++) = *(color_prom++);
-
 }
+
+
 
 /***************************************************************************
 
-	Callbacks for the TileMap code
+  Callbacks for the TileMap code
 
 ***************************************************************************/
 
-static void get_tile_info_bg(int tile_index)
+/* convert from 32x32 to 36x28 */
+static UINT32 tx_tilemap_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 {
-	unsigned char code = skykid_videoram[tile_index];
-	unsigned char attr = skykid_videoram[tile_index+0x800];
+	int offs;
+
+	row += 2;
+	col -= 2;
+	if (col & 0x20)
+		offs = row + ((col & 0x1f) << 5);
+	else
+		offs = col + (row << 5);
+
+	return offs;
+}
+
+static void tx_get_tile_info(int tile_index)
+{
+	/* the hardware has two character sets, one normal and one flipped. When
+	   screen is flipped, character flip is done by selecting the 2nd character set.
+	   We reproduce this here, but since the tilemap system automatically flips
+	   characters when screen is flipped, we have to flip them back. */
+	SET_TILE_INFO(
+			0,
+			skykid_textram[tile_index] | (flip_screen ? 0x100 : 0),
+			skykid_textram[tile_index + 0x400] & 0x3f,
+			flip_screen ? (TILE_FLIPY | TILE_FLIPX) : 0)
+}
+
+
+static void bg_get_tile_info(int tile_index)
+{
+	int code = skykid_videoram[tile_index];
+	int attr = skykid_videoram[tile_index+0x800];
 
 	SET_TILE_INFO(
 			1,
-			code + 256*(attr & 0x01),
+			code + ((attr & 0x01) << 8),
 			((attr & 0x7e) >> 1) | ((attr & 0x01) << 6),
 			0)
 }
 
+
+
 /***************************************************************************
 
-	Start the video hardware emulation.
+  Start the video hardware emulation.
 
 ***************************************************************************/
 
 VIDEO_START( skykid )
 {
-	background = tilemap_create(get_tile_info_bg,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
+	tx_tilemap = tilemap_create(tx_get_tile_info,tx_tilemap_scan,  TILEMAP_TRANSPARENT,8,8,36,28);
+	bg_tilemap = tilemap_create(bg_get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,64,32);
 
-	if (!background)
+	if (!tx_tilemap || !bg_tilemap)
 		return 1;
 
-	{
-		unsigned char *RAM = memory_region(REGION_CPU1);
+	tilemap_set_transparent_pen(tx_tilemap, 0);
 
-		spriteram	= &RAM[0x4f80];
-		spriteram_2	= &RAM[0x4f80+0x0800];
-		spriteram_3	= &RAM[0x4f80+0x0800+0x0800];
-		spriteram_size = 0x80;
+	spriteram = skykid_spriteram + 0x780;
+	spriteram_2 = spriteram + 0x0800;
+	spriteram_3 = spriteram_2 + 0x0800;
 
-		return 0;
-	}
+	return 0;
 }
+
+
 
 /***************************************************************************
 
-	Memory handlers
+  Memory handlers
 
 ***************************************************************************/
 
@@ -128,135 +159,121 @@ READ_HANDLER( skykid_videoram_r )
 
 WRITE_HANDLER( skykid_videoram_w )
 {
-	if (skykid_videoram[offset] != data){
+	if (skykid_videoram[offset] != data)
+	{
 		skykid_videoram[offset] = data;
-		tilemap_mark_tile_dirty(background,offset & 0x7ff);
+		tilemap_mark_tile_dirty(bg_tilemap,offset & 0x7ff);
+	}
+}
+
+READ_HANDLER( skykid_textram_r )
+{
+	return skykid_textram[offset];
+}
+
+WRITE_HANDLER( skykid_textram_w )
+{
+	if (skykid_textram[offset] != data)
+	{
+		skykid_textram[offset] = data;
+		tilemap_mark_tile_dirty(tx_tilemap,offset & 0x3ff);
 	}
 }
 
 WRITE_HANDLER( skykid_scroll_x_w )
 {
-	if (flipscreen)
-		tilemap_set_scrollx(background, 0, (189 - (offset ^ 1)) & 0x1ff);
-	else
-		tilemap_set_scrollx(background, 0, ((offset) + 35) & 0x1ff);
+	scroll_x = offset;
 }
 
 WRITE_HANDLER( skykid_scroll_y_w )
 {
-	if (flipscreen)
-		tilemap_set_scrolly(background, 0, (261 - offset) & 0xff);
-	else
-		tilemap_set_scrolly(background, 0, (offset + 27) & 0xff);
+	scroll_y = offset;
 }
 
-WRITE_HANDLER( skykid_flipscreen_w )
+WRITE_HANDLER( skykid_flipscreen_priority_w )
 {
 	priority = data;
-	flipscreen = offset;
-	tilemap_set_flip(background,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+	flip_screen_set(offset & 1);
 }
+
+
 
 /***************************************************************************
 
-	Display Refresh
+  Display Refresh
 
 ***************************************************************************/
 
+/* the sprite generator IC is the same as Mappy */
 static void skykid_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 
-	for (offs = 0; offs < spriteram_size; offs += 2){
-		int number = spriteram[offs] | ((spriteram_3[offs] & 0x80) << 1);
-		int color = (spriteram[offs+1] & 0x3f);
-		int sx = (spriteram_2[offs+1]) + 0x100*(spriteram_3[offs+1] & 1) - 72;
-		int sy = 256 - spriteram_2[offs] - 57;
-		int flipy = spriteram_3[offs] & 0x02;
-		int flipx = spriteram_3[offs] & 0x01;
-		int width, height;
-
-		if (flipscreen){
-				flipx = !flipx;
-				flipy = !flipy;
-		}
-
-		if (number >= 128*3) continue;
-
-		switch (spriteram_3[offs] & 0x0c){
-			case 0x0c:	/* 2x both ways */
-				width = height = 2; number &= (~3); break;
-			case 0x08:	/* 2x vertical */
-				width = 1; height = 2; number &= (~2); break;
-			case 0x04:	/* 2x horizontal */
-				width = 2; height = 1; number &= (~1); sy += 16; break;
-			default:	/* normal sprite */
-				width = height = 1; sy += 16; break;
-		}
-
+	for (offs = 0;offs < 0x80;offs += 2)
+	{
+		static int gfx_offs[2][2] =
 		{
-			static int x_offset[2] = { 0x00, 0x01 };
-			static int y_offset[2] = { 0x00, 0x02 };
-			int x,y, ex, ey;
+			{ 0, 1 },
+			{ 2, 3 }
+		};
+		int sprite = spriteram[offs] + ((spriteram_3[offs] & 0x80) << 1);
+		int color = (spriteram[offs+1] & 0x3f);
+		int sx = (spriteram_2[offs+1]) + 0x100*(spriteram_3[offs+1] & 1) - 71;
+		int sy = 256 - spriteram_2[offs] - 7;
+		int flipx = (spriteram_3[offs] & 0x01);
+		int flipy = (spriteram_3[offs] & 0x02) >> 1;
+		int sizex = (spriteram_3[offs] & 0x04) >> 2;
+		int sizey = (spriteram_3[offs] & 0x08) >> 3;
+		int x,y;
 
-			for( y=0; y < height; y++ ){
-				for( x=0; x < width; x++ ){
-					ex = flipx ? (width-1-x) : x;
-					ey = flipy ? (height-1-y) : y;
+		sprite &= ~sizex;
+		sprite &= ~(sizey << 1);
 
-					drawgfx(bitmap,Machine->gfx[2+(number >> 7)],
-						(number)+x_offset[ex]+y_offset[ey],
-						color,
-						flipx, flipy,
-						sx+x*16,sy+y*16,
-						cliprect,
-						TRANSPARENCY_COLOR,255);
-				}
+		if (flip_screen)
+		{
+			flipx ^= 1;
+			flipy ^= 1;
+		}
+
+		sy -= 16 * sizey;
+		sy = (sy & 0xff) - 32;	// fix wraparound
+
+		for (y = 0;y <= sizey;y++)
+		{
+			for (x = 0;x <= sizex;x++)
+			{
+				drawgfx(bitmap,Machine->gfx[2],
+					sprite + gfx_offs[y ^ (sizey * flipy)][x ^ (sizex * flipx)],
+					color,
+					flipx,flipy,
+					sx + 16*x,sy + 16*y,
+					cliprect,TRANSPARENCY_COLOR,0xff);
 			}
 		}
 	}
 }
 
+
 VIDEO_UPDATE( skykid )
 {
-	int offs;
+	if (flip_screen)
+	{
+		tilemap_set_scrollx(bg_tilemap, 0, 189 - (scroll_x ^ 1));
+		tilemap_set_scrolly(bg_tilemap, 0, 7 - scroll_y);
+	}
+	else
+	{
+		tilemap_set_scrollx(bg_tilemap, 0, scroll_x + 35);
+		tilemap_set_scrolly(bg_tilemap, 0, scroll_y + 25);
+	}
 
-	tilemap_draw(bitmap,cliprect,background,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+
 	if ((priority & 0xf0) != 0x50)
 		skykid_draw_sprites(bitmap,cliprect);
 
-	for (offs = 0x400 - 1; offs > 0; offs--){
-		{
-			int mx,my,sx,sy;
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 
-            mx = offs % 32;
-			my = offs / 32;
-
-			if (my < 2)	{
-				if (mx < 2 || mx >= 30) continue; /* not visible */
-				sx = my + 34;
-				sy = mx - 2;
-			}
-			else if (my >= 30){
-				if (mx < 2 || mx >= 30) continue; /* not visible */
-				sx = my - 30;
-				sy = mx - 2;
-			}
-			else{
-				sx = mx + 2;
-				sy = my - 2;
-			}
-			if (flipscreen){
-				sx = 35 - sx;
-				sy = 27 - sy;
-			}
-
-			drawgfx(bitmap,Machine->gfx[0],	skykid_textram[offs] + (flipscreen << 8),
-					skykid_textram[offs+0x400] & 0x3f,
-					0,0,sx*8,sy*8,
-					cliprect,TRANSPARENCY_PEN,0);
-        }
-	}
 	if ((priority & 0xf0) == 0x50)
 		skykid_draw_sprites(bitmap,cliprect);
 }

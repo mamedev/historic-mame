@@ -20,9 +20,6 @@
 	CONSTANTS
 ****************************************************************************/
 
-#define DCS_BUFFER_SIZE				4096
-#define DCS_BUFFER_MASK				(DCS_BUFFER_SIZE - 1)
-
 #define LCTRL_OUTPUT_EMPTY			0x400
 #define LCTRL_INPUT_EMPTY			0x800
 
@@ -66,8 +63,8 @@ enum
 
 struct dcs_state
 {
-	int		stream;
 	UINT8	auto_ack;
+	UINT8	channels;
 
 	UINT8 * sounddata;
 	UINT16	size;
@@ -83,14 +80,6 @@ struct dcs_state
 	UINT16	srambank;
 	UINT16	drambank;
 	UINT16	drambank_count;
-	UINT8	enabled;
-
-	INT16 *	buffer;
-	INT16 *	buffer2;
-	UINT32	buffer_in;
-	UINT32	sample_step;
-	UINT32	sample_position;
-	INT16	current_sample;
 
 	UINT16	latch_control;
 	UINT16	input_data;
@@ -141,11 +130,6 @@ static UINT16 transfer_sum;
 	PROTOTYPES
 ****************************************************************************/
 
-static int dcs_custom_start(const struct MachineSound *msound);
-static int dcs2_custom_start(const struct MachineSound *msound);
-static void dcs_dac_update(int num, INT16 *buffer, int length);
-static void dcs2_dac_update(int num, INT16 **buffer, int length);
-
 static READ16_HANDLER( dcs_sdrc_asic_ver_r );
 
 static WRITE16_HANDLER( dcs_rombank_select_w );
@@ -178,92 +162,57 @@ static READ16_HANDLER( dcs_polling_r );
 ****************************************************************************/
 
 /* DCS readmem/writemem structures */
-ADDRESS_MAP_START( dcs_program_readmem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA32_RAM)					/* internal/external program ram */
-ADDRESS_MAP_END
-
-ADDRESS_MAP_START( dcs_program_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA32_RAM) AM_BASE(&dcs_program_ram) /* internal/external program ram */
+ADDRESS_MAP_START( dcs_program_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x0000, 0x1fff) AM_RAM	AM_BASE(&dcs_program_ram)		/* internal/external program ram */
 ADDRESS_MAP_END
 
 
-ADDRESS_MAP_START( dcs_data_readmem, ADDRESS_SPACE_DATA, 16 )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA16_RAM)					/* ??? */
+ADDRESS_MAP_START( dcs_data_map, ADDRESS_SPACE_DATA, 16 )
+	AM_RANGE(0x0000, 0x1fff) AM_RAM AM_BASE(&dcs_data_ram)		/* ??? */
 	AM_RANGE(0x2000, 0x2fff) AM_READ(dcs_rombank_data_r)		/* banked roms read */
-	AM_RANGE(0x3400, 0x3403) AM_READ(input_latch_r)				/* soundlatch read */
-	AM_RANGE(0x3800, 0x39ff) AM_READ(MRA16_RAM)					/* internal data ram */
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(dcs_rombank_select_w)		/* bank selector */
+	AM_RANGE(0x3400, 0x3403) AM_READWRITE(input_latch_r, output_latch_w) /* soundlatch read/write */
+	AM_RANGE(0x3800, 0x39ff) AM_RAM								/* internal data ram */
+	AM_RANGE(0x3fe0, 0x3fff) AM_WRITE(dcs_control_w)			/* adsp control regs */
 ADDRESS_MAP_END
-
-ADDRESS_MAP_START( dcs_data_writemem, ADDRESS_SPACE_DATA, 16 )
-	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA16_RAM) AM_BASE(&dcs_data_ram)	/* ??? */
-	AM_RANGE(0x3000, 0x3000) AM_WRITE(dcs_rombank_select_w)	/* bank selector */
-	AM_RANGE(0x3400, 0x3403) AM_WRITE(output_latch_w)		/* soundlatch write */
-	AM_RANGE(0x3800, 0x39ff) AM_WRITE(MWA16_RAM)			/* internal data ram */
-	AM_RANGE(0x3fe0, 0x3fff) AM_WRITE(dcs_control_w)		/* adsp control regs */
-ADDRESS_MAP_END
-
 
 
 /* DCS with UART readmem/writemem structures */
-ADDRESS_MAP_START( dcs_uart_data_readmem, ADDRESS_SPACE_DATA, 16 )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA16_RAM)					/* ??? */
+ADDRESS_MAP_START( dcs_uart_data_map, ADDRESS_SPACE_DATA, 16 )
+	AM_RANGE(0x0000, 0x1fff) AM_RAM AM_BASE(&dcs_data_ram)		/* ??? */
 	AM_RANGE(0x2000, 0x2fff) AM_READ(dcs_rombank_data_r)		/* banked roms read */
-	AM_RANGE(0x3400, 0x3402) AM_READ(MRA16_NOP)					/* UART (ignored) */
-	AM_RANGE(0x3403, 0x3403) AM_READ(input_latch_r)				/* soundlatch read */
-	AM_RANGE(0x3404, 0x3405) AM_READ(MRA16_NOP)					/* UART (ignored) */
-	AM_RANGE(0x3800, 0x39ff) AM_READ(MRA16_RAM)					/* internal data ram */
-ADDRESS_MAP_END
-
-ADDRESS_MAP_START( dcs_uart_data_writemem, ADDRESS_SPACE_DATA, 16 )
-	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA16_RAM) AM_BASE(&dcs_data_ram)	/* ??? */
-	AM_RANGE(0x3000, 0x3000) AM_WRITE(dcs_rombank_select_w)	/* bank selector */
-	AM_RANGE(0x3400, 0x3402) AM_WRITE(MWA16_NOP)				/* UART (ignored) */
-	AM_RANGE(0x3403, 0x3403) AM_WRITE(output_latch_w)		/* soundlatch write */
-	AM_RANGE(0x3404, 0x3405) AM_WRITE(MWA16_NOP)				/* UART (ignored) */
-	AM_RANGE(0x3800, 0x39ff) AM_WRITE(MWA16_RAM)				/* internal data ram */
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(dcs_rombank_select_w)		/* bank selector */
+	AM_RANGE(0x3400, 0x3402) AM_READNOP							/* UART (ignored) */
+	AM_RANGE(0x3400, 0x3402) AM_WRITENOP						/* UART (ignored) */
+	AM_RANGE(0x3403, 0x3403) AM_READWRITE(input_latch_r, output_latch_w) /* soundlatch read/write */
+	AM_RANGE(0x3404, 0x3405) AM_NOP								/* UART (ignored) */
+	AM_RANGE(0x3800, 0x39ff) AM_RAM								/* internal data ram */
 	AM_RANGE(0x3fe0, 0x3fff) AM_WRITE(dcs_control_w)			/* adsp control regs */
 ADDRESS_MAP_END
 
 
 
 /* DCS2-based readmem/writemem structures */
-ADDRESS_MAP_START( dcs2_program_readmem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA32_RAM)					/* internal/external program ram */
-ADDRESS_MAP_END
-
-ADDRESS_MAP_START( dcs2_program_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA32_RAM) AM_BASE(&dcs_program_ram) /* internal/external program ram */
+ADDRESS_MAP_START( dcs2_program_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x0000, 0x3fff) AM_RAM	AM_BASE(&dcs_program_ram) /* internal/external program ram */
 ADDRESS_MAP_END
 
 
-ADDRESS_MAP_START( dcs2_data_readmem, ADDRESS_SPACE_DATA, 16 )
-	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA16_BANK20)				/* D/RAM */
-	AM_RANGE(0x0400, 0x0400) AM_READ(input_latch_r)				/* input latch read */
-	AM_RANGE(0x0402, 0x0402) AM_READ(output_control_r)			/* secondary soundlatch read */
+ADDRESS_MAP_START( dcs2_data_map, ADDRESS_SPACE_DATA, 16 )
+	AM_RANGE(0x0000, 0x03ff) AM_RAMBANK(20)	AM_BASE(&dcs_data_ram) /* D/RAM */
+	AM_RANGE(0x0400, 0x0400) AM_READWRITE(input_latch_r, input_latch_ack_w) /* input latch read */
+	AM_RANGE(0x0401, 0x0401) AM_WRITE(output_latch_w)			/* soundlatch write */
+	AM_RANGE(0x0402, 0x0402) AM_READWRITE(output_control_r, output_control_w) /* secondary soundlatch read */
 	AM_RANGE(0x0403, 0x0403) AM_READ(latch_status_r)			/* latch status read */
 	AM_RANGE(0x0404, 0x0407) AM_READ(fifo_input_r)				/* FIFO input read */
-	AM_RANGE(0x0480, 0x0480) AM_READ(dcs_sram_bank_r)			/* S/RAM bank */
-	AM_RANGE(0x0481, 0x0481) AM_READ(MRA16_NOP)					/* LED in bit $2000 */
-	AM_RANGE(0x0482, 0x0482) AM_READ(dcs_dram_bank_r)			/* D/RAM bank */
+	AM_RANGE(0x0480, 0x0480) AM_READWRITE(dcs_sram_bank_r, dcs_sram_bank_w) /* S/RAM bank */
+	AM_RANGE(0x0481, 0x0481) AM_NOP								/* LED in bit $2000 */
+	AM_RANGE(0x0482, 0x0482) AM_READWRITE(dcs_dram_bank_r, dcs_dram_bank_w) /* D/RAM bank */
 	AM_RANGE(0x0483, 0x0483) AM_READ(dcs_sdrc_asic_ver_r)		/* SDRC version number */
-	AM_RANGE(0x0800, 0x17ff) AM_READ(MRA16_RAM)					/* S/RAM */
-	AM_RANGE(0x1800, 0x27ff) AM_READ(MRA16_BANK21)				/* banked S/RAM */
-	AM_RANGE(0x2800, 0x37ff) AM_READ(MRA16_RAM)					/* S/RAM */
-	AM_RANGE(0x3800, 0x39ff) AM_READ(MRA16_RAM)					/* internal data ram */
-ADDRESS_MAP_END
-
-ADDRESS_MAP_START( dcs2_data_writemem, ADDRESS_SPACE_DATA, 16 )
-	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA16_BANK20) AM_BASE(&dcs_data_ram)/* D/RAM */
-	AM_RANGE(0x0400, 0x0400) AM_WRITE(input_latch_ack_w)		/* input latch ack */
-	AM_RANGE(0x0401, 0x0401) AM_WRITE(output_latch_w)		/* soundlatch write */
-	AM_RANGE(0x0402, 0x0402) AM_WRITE(output_control_w)		/* secondary soundlatch write */
-	AM_RANGE(0x0480, 0x0480) AM_WRITE(dcs_sram_bank_w)		/* S/RAM bank */
-	AM_RANGE(0x0481, 0x0481) AM_WRITE(MWA16_NOP)				/* LED in bit $2000 */
-	AM_RANGE(0x0482, 0x0482) AM_WRITE(dcs_dram_bank_w)		/* D/RAM bank */
-	AM_RANGE(0x0800, 0x17ff) AM_WRITE(MWA16_RAM)				/* S/RAM */
-	AM_RANGE(0x1800, 0x27ff) AM_WRITE(MWA16_BANK21) AM_BASE(&dcs_sram_bank0)/* banked S/RAM */
-	AM_RANGE(0x2800, 0x37ff) AM_WRITE(MWA16_RAM)				/* S/RAM */
-	AM_RANGE(0x3800, 0x39ff) AM_WRITE(MWA16_RAM)				/* internal data ram */
+	AM_RANGE(0x0800, 0x17ff) AM_RAM								/* S/RAM */
+	AM_RANGE(0x1800, 0x27ff) AM_RAMBANK(21) AM_BASE(&dcs_sram_bank0) /* banked S/RAM */
+	AM_RANGE(0x2800, 0x37ff) AM_RAM								/* S/RAM */
+	AM_RANGE(0x3800, 0x39ff) AM_RAM								/* internal data ram */
 	AM_RANGE(0x3fe0, 0x3fff) AM_WRITE(dcs_control_w)			/* adsp control regs */
 ADDRESS_MAP_END
 
@@ -273,15 +222,16 @@ ADDRESS_MAP_END
 	AUDIO STRUCTURES
 ****************************************************************************/
 
-/* Custom structure (DCS variant) */
-static struct CustomSound_interface dcs_custom_interface =
+static struct dmadac_interface dcs_dmadac_interface =
 {
-	dcs_custom_start,0,0
+	1,
+	{ 100 }
 };
 
-static struct CustomSound_interface dcs2_custom_interface =
+static struct dmadac_interface dcs2_dmadac_interface =
 {
-	dcs2_custom_start,0,0
+	2,
+	{ MIXER(100, MIXER_PAN_RIGHT), MIXER(100, MIXER_PAN_LEFT) }
 };
 
 
@@ -293,10 +243,10 @@ static struct CustomSound_interface dcs2_custom_interface =
 MACHINE_DRIVER_START( dcs_audio )
 	MDRV_CPU_ADD_TAG("dcs", ADSP2105, 10000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_PROGRAM_MAP(dcs_program_readmem,dcs_program_writemem)
-	MDRV_CPU_DATA_MAP(dcs_data_readmem,dcs_data_writemem)
+	MDRV_CPU_PROGRAM_MAP(dcs_program_map,0)
+	MDRV_CPU_DATA_MAP(dcs_data_map,0)
 
-	MDRV_SOUND_ADD(CUSTOM, dcs_custom_interface)
+	MDRV_SOUND_ADD(DMADAC, dcs_dmadac_interface)
 MACHINE_DRIVER_END
 
 
@@ -304,18 +254,18 @@ MACHINE_DRIVER_START( dcs_audio_uart )
 	MDRV_IMPORT_FROM(dcs_audio)
 
 	MDRV_CPU_MODIFY("dcs")
-	MDRV_CPU_DATA_MAP(dcs_uart_data_readmem,dcs_uart_data_writemem)
+	MDRV_CPU_DATA_MAP(dcs_uart_data_map,0)
 MACHINE_DRIVER_END
 
 
 MACHINE_DRIVER_START( dcs2_audio )
 	MDRV_CPU_ADD_TAG("dcs2", ADSP2115, 16000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_PROGRAM_MAP(dcs2_program_readmem,dcs2_program_writemem)
-	MDRV_CPU_DATA_MAP(dcs2_data_readmem,dcs2_data_writemem)
+	MDRV_CPU_PROGRAM_MAP(dcs2_program_map,0)
+	MDRV_CPU_DATA_MAP(dcs2_data_map,0)
 
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(CUSTOM, dcs2_custom_interface)
+	MDRV_SOUND_ADD(DMADAC, dcs2_dmadac_interface)
 MACHINE_DRIVER_END
 
 
@@ -370,15 +320,6 @@ static void dcs_reset(void)
 		cpu_setbank(21, dcs_sram_bank0);
 	}
 
-	/* start with no sound output */
-	dcs.enabled = 0;
-
-	/* reset DAC generation */
-	dcs.buffer_in = 0;
-	dcs.sample_step = 0x10000;
-	dcs.sample_position = 0;
-	dcs.current_sample = 0;
-
 	/* initialize the ADSP Tx callback */
 	cpunum_set_info_ptr(dcs_cpunum, CPUINFO_PTR_ADSP2100_TX_HANDLER, (void *)sound_tx_callback);
 
@@ -409,6 +350,7 @@ void dcs_init(void)
 {
 	/* find the DCS CPU and the sound ROMs */
 	dcs_cpunum = mame_find_cpu_index("dcs");
+	dcs.channels = 1;
 	dcs.sounddata = memory_region(REGION_SOUND1);
 	
 	/* reset RAM-based variables */
@@ -436,6 +378,7 @@ void dcs2_init(offs_t polling_offset)
 
 	/* find the DCS CPU and the sound ROMs */
 	dcs_cpunum = mame_find_cpu_index("dcs2");
+	dcs.channels = 2;
 	dcs.sounddata = memory_region(REGION_SOUND1);
 
 	/* borrow memory for the extra 8k */
@@ -470,44 +413,6 @@ void dcs2_init(offs_t polling_offset)
 void dcs_set_auto_ack(int state)
 {
 	dcs.auto_ack = state;
-}
-
-
-
-/***************************************************************************
-	CUSTOM SOUND INTERFACES
-****************************************************************************/
-
-static int dcs_custom_start(const struct MachineSound *msound)
-{
-	/* allocate a DAC stream */
-	dcs.stream = stream_init("DCS DAC", 100, Machine->sample_rate, 0, dcs_dac_update);
-
-	/* allocate memory for our buffer */
-	dcs.buffer = auto_malloc(DCS_BUFFER_SIZE * sizeof(INT16));
-	dcs.buffer2 = NULL;
-	if (!dcs.buffer)
-		return 1;
-
-	return 0;
-}
-
-
-static int dcs2_custom_start(const struct MachineSound *msound)
-{
-	const char *names[] = { "DCS DAC R", "DCS DAC L" };
-	int vols[] = { MIXER(100, MIXER_PAN_RIGHT), MIXER(100, MIXER_PAN_LEFT) };
-
-	/* allocate a DAC stream */
-	dcs.stream = stream_init_multi(2, names, vols, Machine->sample_rate, 0, dcs2_dac_update);
-
-	/* allocate memory for our buffer */
-	dcs.buffer = auto_malloc(DCS_BUFFER_SIZE * sizeof(INT16));
-	dcs.buffer2 = auto_malloc(DCS_BUFFER_SIZE * sizeof(INT16));
-	if (!dcs.buffer || !dcs.buffer2)
-		return 1;
-
-	return 0;
 }
 
 
@@ -827,116 +732,6 @@ int dcs_data2_r(void)
 
 
 /***************************************************************************
-	SOUND GENERATION
-****************************************************************************/
-
-static void dcs_dac_update(int num, INT16 *buffer, int length)
-{
-	UINT32 current, step, indx;
-	INT16 *source;
-	int i;
-
-	/* DAC generation */
-	if (dcs.enabled)
-	{
-		source = dcs.buffer;
-		current = dcs.sample_position;
-		step = dcs.sample_step;
-
-		/* fill in with samples until we hit the end or run out */
-		for (i = 0; i < length; i++)
-		{
-			indx = current >> 16;
-			if (indx >= dcs.buffer_in)
-				break;
-			current += step;
-			*buffer++ = source[indx & DCS_BUFFER_MASK];
-		}
-
-		if (LOG_BUFFER_FILLING && i < length)
-			logerror("DCS ran out of input data\n");
-
-		/* fill the rest with the last sample */
-		for ( ; i < length; i++)
-			*buffer++ = source[(dcs.buffer_in - 1) & DCS_BUFFER_MASK];
-
-		/* mask off extra bits */
-		while (current >= (DCS_BUFFER_SIZE << 16))
-		{
-			current -= DCS_BUFFER_SIZE << 16;
-			dcs.buffer_in -= DCS_BUFFER_SIZE;
-		}
-
-		if (LOG_BUFFER_FILLING)
-			logerror("DCS dac update: bytes in buffer = %d\n", dcs.buffer_in - (current >> 16));
-
-		/* update the final values */
-		dcs.sample_position = current;
-	}
-	else
-		memset(buffer, 0, length * sizeof(INT16));
-}
-
-
-static void dcs2_dac_update(int num, INT16 **buffer, int length)
-{
-	INT16 *destl = buffer[0], *destr = buffer[1];
-	UINT32 current, step, indx;
-	INT16 *sourcel, *sourcer;
-	int i;
-
-	/* DAC generation */
-	if (dcs.enabled)
-	{
-		sourcel = dcs.buffer;
-		sourcer = dcs.buffer2;
-		current = dcs.sample_position;
-		step = dcs.sample_step;
-
-		/* fill in with samples until we hit the end or run out */
-		for (i = 0; i < length; i++)
-		{
-			indx = current >> 16;
-			if (indx >= dcs.buffer_in)
-				break;
-			current += step;
-			*destl++ = sourcel[indx & DCS_BUFFER_MASK];
-			*destr++ = sourcer[indx & DCS_BUFFER_MASK];
-		}
-
-		if (LOG_BUFFER_FILLING && i < length)
-			logerror("DCS ran out of input data\n");
-
-		/* fill the rest with the last sample */
-		for ( ; i < length; i++)
-		{
-			*destl++ = sourcel[(dcs.buffer_in - 1) & DCS_BUFFER_MASK];
-			*destr++ = sourcer[(dcs.buffer_in - 1) & DCS_BUFFER_MASK];
-		}
-
-		/* mask off extra bits */
-		while (current >= (DCS_BUFFER_SIZE << 16))
-		{
-			current -= DCS_BUFFER_SIZE << 16;
-			dcs.buffer_in -= DCS_BUFFER_SIZE;
-		}
-
-		if (LOG_BUFFER_FILLING)
-			logerror("DCS dac update: bytes in buffer = %d\n", dcs.buffer_in - (current >> 16));
-
-		/* update the final values */
-		dcs.sample_position = current;
-	}
-	else
-	{
-		memset(destl, 0, length * sizeof(INT16));
-		memset(destr, 0, length * sizeof(INT16));
-	}
-}
-
-
-
-/***************************************************************************
 	ADSP CONTROL & TRANSMIT CALLBACK
 ****************************************************************************/
 
@@ -974,20 +769,18 @@ static WRITE16_HANDLER( dcs_control_w )
 			}
 
 			/* see if SPORT1 got disabled */
-			stream_update(dcs.stream, 0);
 			if ((data & 0x0800) == 0)
 			{
-				dcs.enabled = 0;
+				dmadac_enable(0, dcs.channels, 0);
 				timer_adjust(dcs.reg_timer, TIME_NEVER, 0, 0);
 			}
 			break;
 
 		case S1_AUTOBUF_REG:
 			/* autobuffer off: nuke the timer, and disable the DAC */
-			stream_update(dcs.stream, 0);
 			if ((data & 0x0002) == 0)
 			{
-				dcs.enabled = 0;
+				dmadac_enable(0, dcs.channels, 0);
 				timer_adjust(dcs.reg_timer, TIME_NEVER, 0, 0);
 			}
 			break;
@@ -1012,25 +805,9 @@ static void dcs_irq(int state)
 	/* get the index register */
 	int reg = cpunum_get_reg(dcs_cpunum, ADSP2100_I0 + dcs.ireg);
 
-	/* translate into data memory bus address */
-	int source = reg;
-	int i;
-
 	/* copy the current data into the buffer */
-	if (!dcs.buffer2)
-	{
-		for (i = 0; i < dcs.size / 2; i += dcs.incs)
-			dcs.buffer[dcs.buffer_in++ & DCS_BUFFER_MASK] = dcs_data_ram[source + i];
-	}
-	else
-	{
-		for (i = 0; i < dcs.size / 2; i += dcs.incs * 2)
-		{
-			dcs.buffer[dcs.buffer_in & DCS_BUFFER_MASK] = dcs_data_ram[source + i];
-			dcs.buffer2[dcs.buffer_in & DCS_BUFFER_MASK] = dcs_data_ram[source + i + dcs.incs];
-			dcs.buffer_in++;
-		}
-	}
+	if (dcs.incs)
+		dmadac_transfer(0, dcs.channels, dcs.incs, dcs.channels * dcs.incs, (dcs.size / 2) / (dcs.channels * dcs.incs), (INT16 *)&dcs_data_ram[reg]);
 
 	/* increment it */
 	reg += dcs.size / 2;
@@ -1076,9 +853,7 @@ static void sound_tx_callback(int port, INT32 data)
 			/* get the autobuffer registers */
 			int		mreg, lreg;
 			UINT16	source;
-			int		sample_rate;
-
-			stream_update(dcs.stream, 0);
+			double	sample_rate;
 
 			dcs.ireg = (dcs.control_regs[S1_AUTOBUF_REG] >> 9) & 7;
 			mreg = (dcs.control_regs[S1_AUTOBUF_REG] >> 7) & 3;
@@ -1100,29 +875,21 @@ static void sound_tx_callback(int port, INT32 data)
 			/* save it as it is now */
 			dcs.ireg_base = source;
 
-			/* enable the dac playing */
-			dcs.enabled = 1;
-
 			/* calculate how long until we generate an interrupt */
 
 			/* frequency in Hz per each bit sent */
-			sample_rate = Machine->drv->cpu[dcs_cpunum].cpu_clock / (2 * (dcs.control_regs[S1_SCLKDIV_REG] + 1));
+			sample_rate = (double)Machine->drv->cpu[dcs_cpunum].cpu_clock / (double)(2 * (dcs.control_regs[S1_SCLKDIV_REG] + 1));
 
 			/* now put it down to samples, so we know what the channel frequency has to be */
-			sample_rate /= 16;
-			if (dcs.buffer2)
-				sample_rate /= 2;
+			sample_rate /= 16 * dcs.channels;
+			dmadac_set_frequency(0, dcs.channels, sample_rate);
+			dmadac_enable(0, dcs.channels, 1);
 
 			/* fire off a timer wich will hit every half-buffer */
-			if (!dcs.buffer2)
+			if (dcs.channels == 1)
 				timer_adjust(dcs.reg_timer, TIME_IN_HZ(sample_rate) * (dcs.size / (2 * dcs.incs)), 0, TIME_IN_HZ(sample_rate) * (dcs.size / (2 * dcs.incs)));
 			else
 				timer_adjust(dcs.reg_timer, TIME_IN_HZ(sample_rate) * (dcs.size / (4 * dcs.incs)), 0, TIME_IN_HZ(sample_rate) * (dcs.size / (4 * dcs.incs)));
-
-			/* configure the DAC generator */
-			dcs.sample_step = (int)(sample_rate * 65536.0 / (double)Machine->sample_rate);
-			dcs.sample_position = 0;
-			dcs.buffer_in = 0;
 
 			return;
 		}
@@ -1131,8 +898,7 @@ static void sound_tx_callback(int port, INT32 data)
 	}
 
 	/* if we get there, something went wrong. Disable playing */
-	stream_update(dcs.stream, 0);
-	dcs.enabled = 0;
+	dmadac_enable(0, dcs.channels, 0);
 
 	/* remove timer */
 	timer_adjust(dcs.reg_timer, TIME_NEVER, 0, 0);

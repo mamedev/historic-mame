@@ -140,11 +140,7 @@ WRITE_HANDLER( bankp_out_w )
 	interrupt_enable_w(0,(data & 0x10)>>4);
 
 	/* bit 5 controls screen flip */
-	if (flip_screen != (data & 0x20))
-	{
-		flip_screen_set(data & 0x20);
-		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
-	}
+	flip_screen_set(data & 0x20);
 
 	/* bits 6-7 unknown */
 }
@@ -206,18 +202,18 @@ VIDEO_UPDATE( bankp )
 	switch (priority)
 	{
 	case 0:
-		tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, TILEMAP_IGNORE_TRANSPARENCY, 0); // just a guess
+		tilemap_draw(bitmap, cliprect, bg_tilemap, TILEMAP_IGNORE_TRANSPARENCY, 0); // just a guess
 		break;
 	case 1:
-		tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, TILEMAP_IGNORE_TRANSPARENCY, 0);
-		tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
+		tilemap_draw(bitmap, cliprect, bg_tilemap, TILEMAP_IGNORE_TRANSPARENCY, 0);
+		tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
 		break;
 	case 2:
-		tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, TILEMAP_IGNORE_TRANSPARENCY, 0);
-		tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+		tilemap_draw(bitmap, cliprect, fg_tilemap, TILEMAP_IGNORE_TRANSPARENCY, 0);
+		tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 		break;
 	case 3:
-		tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, TILEMAP_IGNORE_TRANSPARENCY, 0); // just a guess
+		tilemap_draw(bitmap, cliprect, fg_tilemap, TILEMAP_IGNORE_TRANSPARENCY, 0); // just a guess
 		break;
 	}
 }

@@ -241,6 +241,41 @@ static PALETTE_INIT( poolshrk )
 /* poolshrk Sound System Analog emulation                               */
 /* Jan 2004, Derrick Renaud                                             */
 /************************************************************************/
+const struct discrete_dac_r1_ladder poolshrk_score_v_dac =
+{
+	4,		// size of ladder
+	{220000, 470000, 1000000, 2200000, 0,0,0,0},	// R57 - R60
+	5,		// vBias
+	100000,		// R61
+	1500000,	// R100
+	1.e-5		// C13
+};
+
+const struct discrete_555_cc_desc poolshrk_score_vco =
+{
+	DISC_555_OUT_SQW,
+	5,		// B+ voltage of 555
+	5.0 - 1.7,	// High output voltage of 555 (Usually v555 - 1.7)
+	5.0 * 2 / 3,	// threshold
+	5.0 /3,		// trigger
+	5,		// B+ voltage of the Constant Current source
+	0.7		// Q3 junction voltage
+};
+
+const struct discrete_mixer_desc poolshrk_mixer =
+{
+	DISC_MIXER_IS_RESISTOR,
+	4,						// 4 inputs
+	{330000, 330000, 330000, 82000 + 470, 0,0,0,0},	// R77, R75, R74, R76 + R53
+	{0,0,0,0,0,0,0,0},				// No variable resistor nodes
+	{0, 0, 0, 0, 0,0,0,0},				// No caps
+	0,						// No rI
+	1000,						// R78
+	0,						// No filtering
+	1e-7,						// C21
+	0,						// vBias not used for resistor network
+	1000000
+};
 
 /* Nodes - Inputs */
 #define POOLSHRK_BUMP_EN	NODE_01
@@ -254,23 +289,13 @@ static PALETTE_INIT( poolshrk )
 
 static DISCRETE_SOUND_START(poolshrk_sound_interface)
 	/************************************************/
-	/* poolshrk  Effects Relataive Gain Table       */
-	/*                                              */
-	/* Effect  V-ampIn  Gain ratio        Relative  */
-	/* Bump     3.8     1/(82+1)           1000.0   */
-	/* Scratch  3.8     1/(330+1)           250.8   */
-	/* Click    3.8     1/(330+1)           250.8   */
-	/* Score    3.8     1/(330+1)           250.8   */
-	/************************************************/
-
-	/************************************************/
 	/* Input register mapping for poolshrk          */
 	/************************************************/
-	/*                   NODE                 ADDR  MASK     GAIN      OFFSET  INIT */
-	DISCRETE_INPUT      (POOLSHRK_BUMP_EN,     0x00, 0x000f,                    0.0)
-	DISCRETE_INPUTX     (POOLSHRK_SCRATCH_SND, 0x01, 0x000f,  250.8,    0,      0.0)
-	DISCRETE_INPUT_PULSE(POOLSHRK_CLICK_EN,    0x02, 0x000f,                    0.0)
-	DISCRETE_INPUT_PULSE(POOLSHRK_SCORE_EN,    0x03, 0x000f,                    0.0)
+	/*                   NODE                  ADDR  MASK     GAIN    OFFSET  INIT */
+	DISCRETE_INPUT      (POOLSHRK_BUMP_EN,     0x00, 0x000f,                  0.0)
+	DISCRETE_INPUTX     (POOLSHRK_SCRATCH_SND, 0x01, 0x000f,  3.4,    0,      0.0)
+	DISCRETE_INPUT_PULSE(POOLSHRK_CLICK_EN,    0x02, 0x000f,                  0.0)
+	DISCRETE_INPUT_PULSE(POOLSHRK_SCORE_EN,    0x03, 0x000f,                  0.0)
 	/************************************************/
 
 	/************************************************/
@@ -282,32 +307,45 @@ static DISCRETE_SOUND_START(poolshrk_sound_interface)
 	/************************************************/
 	/* Bump is just a triggered 128V signal         */
 	/************************************************/
-	DISCRETE_SQUAREWFIX(NODE_20, POOLSHRK_BUMP_EN, 15750.0/2.0/128.0, 1000.0, 50.0, 1000.0/2, 0.0)	// 128V signal
+	DISCRETE_SQUAREWFIX(NODE_20, POOLSHRK_BUMP_EN, 15750.0/2.0/128.0, 3.4, 50.0, 3.4/2, 0.0)	// 128V signal 3.4V
 	DISCRETE_RCFILTER(POOLSHRK_BUMP_SND, 1, NODE_20, 470, 4.7e-6)	// Filtered by R53/C14
 
 	/************************************************/
 	/* Score is a triggered 0-15 count of the       */
 	/* 64V signal.  This then sets the frequency of */
 	/* the 555 timer (C9).  The final signal is /2  */
-	/* to set a 50% duty cycle.  We can just start  */
-	/* the frequency at half.                       */
+	/* to set a 50% duty cycle.                     */
 	/* NOTE: when first powered up the counter is   */
 	/* not at TC, so the score is counted once.     */
+	/* But because C13 is not charged, it limits    */
+	/* C16 voltage, causing the 555 timer (C9) to   */
+	/* not oscillate.                               */
 	/* This should also happen on the original PCB. */
 	/************************************************/
 	DISCRETE_COUNTER_FIX(NODE_30,		// Counter E8 (9316 is a 74161)
-	                     NODE_32,		// Clock enabled by F8, pin 13
+	                     NODE_31,		// Clock enabled by F8, pin 13
 	                     POOLSHRK_SCORE_EN,	// Reset/triggered by score
 	                     15750.0/2.0/64.0,	// 64V signal
 	                     15, 1,		// 4 bit binary up counter
 	                     0)			// Cleared to 0
-	DISCRETE_TRANSFORM2(NODE_31, 1, NODE_30, 15, "01=")	// TC output of E8, pin 15.
-	DISCRETE_LOGIC_INVERT(NODE_32, 1, NODE_31)	// TC output modified to function as F8 clock enable
-	DISCRETE_MULTADD(NODE_33, 1, NODE_31, 200, 100)	// Freqs not tested.
-	DISCRETE_SQUAREWAVE(POOLSHRK_SCORE_SND,		// D9, pin 3 is 1/2 of 555 timer C9
-				NODE_32,		// buffer B8, pin 2
-				NODE_33,		// frequency
-				250.8, 50.0, 250.8/2, 0.0)
+	DISCRETE_TRANSFORM2(NODE_31, 1, NODE_30, 15, "01=!")	// TC output of E8, pin 15. (inverted)
+
+	DISCRETE_DAC_R1(NODE_32, 1,	// Base of Q3
+			NODE_30,	// IC E8, Q0-Q3
+			3.4,		// TTL ON level = 3.4V
+			&poolshrk_score_v_dac)
+	DISCRETE_555_CC(NODE_33,	// IC C9, pin 3
+			NODE_31,	// reset by IC C9, pin 4
+			NODE_32,	// vIn from R-ladder
+			10000,		// R73
+			1.e-8,		// C16
+			0, 0, 0,	// No rBias, rGnd or rDischarge
+			&poolshrk_score_vco)
+	DISCRETE_COUNTER(NODE_34, 1, 0,	// IC D9, pin 9
+			NODE_33,	// from IC C9, pin 3
+			1, 1, 0, 1)	// /2 counter on rising edge
+	DISCRETE_GAIN(POOLSHRK_SCORE_SND, NODE_34, 3.4)
+
 
 	/*
 	 * The TC ouput of E8 is sent to a one shot made up by
@@ -317,12 +355,15 @@ static DISCRETE_SOUND_START(poolshrk_sound_interface)
 	DISCRETE_ONESHOT(NODE_39,	// buffer L9 pin 12
 			 NODE_31,	// from TC pin 15 of E8
 			 1, 0,		// output 0/1 for the minimum sample period
-			 DISC_ONESHOT_REDGE | DISC_ONESHOT_NORETRIG | DISC_OUT_ACTIVE_HIGH)
+			 DISC_ONESHOT_FEDGE | DISC_ONESHOT_NORETRIG | DISC_OUT_ACTIVE_HIGH)	// Real circuit is rising edge but we will take into account that we are using an inverted signal in the code
 
 	/************************************************/
 	/* Click is a triggered 0-15 count of the       */
 	/* 2V signal.  It is also triggered at the end  */
 	/* of the score sound.                          */
+	/* NOTE: when first powered up the counter is   */
+	/* not at TC, so the click is counted once.     */
+	/* This should also happen on the original PCB. */
 	/************************************************/
 	DISCRETE_LOGIC_OR(NODE_40 ,1 ,POOLSHRK_CLICK_EN , NODE_39)	// gate K9, pin 11
 	DISCRETE_COUNTER_FIX(NODE_41,		// Counter J9 (9316 is a 74161)
@@ -332,15 +373,13 @@ static DISCRETE_SOUND_START(poolshrk_sound_interface)
 	                     15, 1,		// 4 bit binary up counter
 	                     0)			// Cleared to 0
 	DISCRETE_TRANSFORM2(NODE_42, 1, NODE_41, 15, "01=!")	// TC output of J9, pin 15. Modified to function as F8 clock enable
-	DISCRETE_TRANSFORM3(POOLSHRK_CLICK_SND, 1, NODE_41, 1, 250.8, "01&2*")	// Q0 output of J9, pin 14.  Set to proper amplitude
+	DISCRETE_TRANSFORM3(POOLSHRK_CLICK_SND, 1, NODE_41, 1, 3.4, "01&2*")	// Q0 output of J9, pin 14.  Set to proper amplitude
 
 	/************************************************/
 	/* Final gain and ouput.                        */
 	/************************************************/
-	DISCRETE_ADDER4(NODE_90, 1, POOLSHRK_BUMP_SND, POOLSHRK_SCRATCH_SND, POOLSHRK_CLICK_SND, POOLSHRK_SCORE_SND)
-	DISCRETE_GAIN(NODE_91, NODE_90, 65534.0/(1000.0 + 250.8 + 250.8 + 250.8))
-	DISCRETE_CRFILTER(NODE_92, 1, NODE_91, 100000, 1e-7)	// C21 feeds amp, 100K is a guess at amp impedance.
-	DISCRETE_OUTPUT(NODE_92, 100)
+	DISCRETE_MIXER4(NODE_90, 1, POOLSHRK_SCRATCH_SND, POOLSHRK_CLICK_SND, POOLSHRK_SCORE_SND, POOLSHRK_BUMP_SND, &poolshrk_mixer)
+	DISCRETE_OUTPUT(NODE_90, 100)
 DISCRETE_SOUND_END
 
 

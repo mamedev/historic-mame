@@ -17,6 +17,7 @@
 
 extern data32_t *namconb1_workram32;
 extern data32_t *namconb1_spritebank32;
+extern data32_t *namconb1_tilebank32;
 extern data32_t *namconb1_scrollram32;
 extern data32_t *namconb1_spritepos32;
 

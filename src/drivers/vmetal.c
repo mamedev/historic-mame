@@ -7,17 +7,32 @@ Notes:
 It has Sega and Taito logos in the roms ?!
 
 whats going on with the dipswitches
-how should the rom reading work
+also has a strange sound chip + oki
 
-are the gfx roms ok
+scrolling behavior is incorrect, see background on second attract demo
+tilemap priorities can change
 
-sprites are non tile based
+spriteram clear or list markers? (i clear it after drawing each sprite at the moment)
 
-can't figure out the how the tiles work (again are the gfx roms ok?)
+cleanup
 
-strange text layer .. skiiping tiles .. bleah ...
 
-also has a strange sound chip
+---
+
+Excellent Systems 'Varia Metal'
+board ID ES-9309B-B
+
+main cpu 68000 @ 16Mhz
+
+sound oki m6295 (rom VM8)
+      es8712    (rom VM7)
+
+program roms VM5 and VM6
+
+graphics VM1-VM4
+
+roms are 23C160 except for code and OKI 27C4001
+
 
 */
 
@@ -26,6 +41,9 @@ also has a strange sound chip
 data16_t *vmetal_texttileram;
 data16_t *vmetal_mid1tileram;
 data16_t *vmetal_mid2tileram;
+data16_t *vmetal_tlookup;
+data16_t *vmetal_videoregs;
+
 
 static struct tilemap *vmetal_texttilemap;
 static struct tilemap *vmetal_mid1tilemap;
@@ -33,9 +51,161 @@ static struct tilemap *vmetal_mid2tilemap;
 
 static data16_t *varia_spriteram16;
 
+READ16_HANDLER ( varia_crom_read )
+{
+	/* game reads the cgrom, result is 7772, verified to be correct on the real board */
+
+	data8_t *cgrom = memory_region(REGION_GFX1);
+	data16_t retdat;
+	offset = offset << 1;
+	offset |= (vmetal_videoregs[0x0ab/2]&0x7f) << 16;
+	retdat = (cgrom[offset] <<8)| (cgrom[offset+1]);
+	usrintf_showmessage("varia romread offset %06x data %04x",offset, retdat);
+
+	return retdat;
+}
+
+
 READ16_HANDLER ( varia_random )
 {
-	return rand();
+//	return rand();  // dips etc.. weird
+	return 0xffff;
+}
+
+
+
+static void get_vmetal_tlookup(UINT16 data, UINT16 *tileno, UINT16 *color)
+{
+	int idx = ((data & 0x7fff) >> 4)*2;
+	UINT32 lookup = (vmetal_tlookup[idx]<<16) | vmetal_tlookup[idx+1];
+	*tileno = (data & 0xf) | ((lookup>>2) & 0xfff0);
+	*color = (lookup>>20) & 0xff;
+}
+
+/* sprite format
+
+sprites are non-tile based
+
+4 words per sprite
+
+ -------- --------    -------- --------    -------- --------    -------- --------
+       xx xxxxxxxx           y yyyyyyyy    Ff             oo    oooooooo oooooooo
+
+
+  x = xpos
+  y = ypos
+  f = flipy
+  F = flipx
+  o = offset (64 byte sprite gfxdata boundaries)
+
+
+
+
+*/
+
+static void varia_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+{
+
+	data16_t *finish = varia_spriteram16;
+	data16_t *source = finish + 0x1000/2;
+
+	UINT16 *destline;
+
+	const struct GfxElement *gfx = Machine->gfx[0];
+
+	data8_t *srcgfx;
+
+	int gfxoffs;
+
+	while( source>finish )
+	{
+		int x,y,xloop,yloop;
+		UINT16 height, width;
+		int tile;
+		int flipy, flipx;
+		int colour;
+		source -= 0x04;
+		x = source[0]&0x3ff;
+		y = source[1]& 0x1ff;
+		flipy = source[2]&0x4000;
+		flipx = source[2]&0x8000;
+		gfxoffs = 0;
+		tile=(source[3]) | ((source[2]&0x3)<<16);
+		srcgfx= gfx->gfxdata+(64*tile);
+		width = (((source[2]&0x3000) >> 12)+1)*16;
+		height =(((source[2]&0x0600) >> 9)+1)*16;
+		colour =((source[2]&0x00f0) >> 4);
+
+		y-=64;
+		x-=64;
+
+
+		for (yloop=0; yloop<height; yloop++)
+		{
+			UINT16 drawypos;
+
+			if (!flipy) {drawypos = y+yloop;} else {drawypos = (y+height-1)-yloop;}
+
+			destline = (UINT16 *)(bitmap->line[drawypos]);
+
+
+			for (xloop=0; xloop<width; xloop++)
+			{
+				UINT16 drawxpos;
+				int pixdata;
+				pixdata = srcgfx[gfxoffs];
+
+				if (!flipx) { drawxpos = x+xloop; } else { drawxpos = (x+width-1)-xloop; }
+
+				if ((drawxpos >= cliprect->min_x) && (drawxpos <= cliprect->max_x) && (drawypos >= cliprect->min_y) && (drawypos <= cliprect->max_y) && (pixdata!=15))
+					destline[drawxpos] = pixdata + ((0x80+colour)*16);
+
+
+				gfxoffs++;
+			}
+
+
+		}
+
+		/* I see no end of list marker or register ... so I'm clearing the sprite ram after I draw each sprite */
+	//	source[0] = source[1] = source[2] = source[3] = 0;
+	// done in VIDEO_EOF
+	}
+}
+
+WRITE16_HANDLER( vmetal_texttileram_w )
+{
+	COMBINE_DATA(&vmetal_texttileram[offset]);
+	tilemap_mark_tile_dirty(vmetal_texttilemap,offset);
+}
+
+WRITE16_HANDLER( vmetal_mid1tileram_w )
+{
+	COMBINE_DATA(&vmetal_mid1tileram[offset]);
+	tilemap_mark_tile_dirty(vmetal_mid1tilemap,offset);
+}
+WRITE16_HANDLER( vmetal_mid2tileram_w )
+{
+	COMBINE_DATA(&vmetal_mid2tileram[offset]);
+	tilemap_mark_tile_dirty(vmetal_mid2tilemap,offset);
+}
+
+WRITE16_HANDLER( paletteram16_GGGGGRRRRRBBBBBx_word_w )
+{
+	int r,g,b;
+	UINT16 datax;
+	COMBINE_DATA(&paletteram16[offset]);
+	datax = paletteram16[offset];
+
+	r = (datax >>  6) & 0x1f;
+	g = (datax >> 11) & 0x1f;
+	b = (datax >>  1) & 0x1f;
+
+	r = (r << 3) | (r >> 2);
+	g = (g << 3) | (g >> 2);
+	b = (b << 3) | (b >> 2);
+
+	palette_set_color(offset,r,g,b);
 }
 
 static ADDRESS_MAP_START( varia_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -44,7 +214,7 @@ static ADDRESS_MAP_START( varia_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x120000, 0x13ffff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x140000, 0x15ffff) AM_READ(MRA16_RAM)
 
-	AM_RANGE(0x160000, 0x16ffff) AM_READ(varia_random) // cgrom read window ..
+	AM_RANGE(0x160000, 0x16ffff) AM_READ(varia_crom_read) // cgrom read window ..
 
 	AM_RANGE(0x170000, 0x171fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x172000, 0x173fff) AM_READ(MRA16_RAM)
@@ -53,7 +223,7 @@ static ADDRESS_MAP_START( varia_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x200000, 0x200001) AM_READ(input_port_0_word_r )
 	AM_RANGE(0x200002, 0x200003) AM_READ(input_port_1_word_r )
 
-	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_2_word_r )
+	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_2_word_r ) // sound reads?
 
 	/* i have no idea whats meant to be going on here .. it seems to read one bit of the dips from some of them, protection ??? */
 
@@ -82,43 +252,6 @@ static ADDRESS_MAP_START( varia_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM)
 ADDRESS_MAP_END
 
-static void varia_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
-{
-	const struct GfxElement *gfx = Machine->gfx[1];
-	data16_t *source = varia_spriteram16;
-	data16_t *finish = source + 0x1000/2;
-
-	while( source<finish )
-	{
-		int x,y;
-
-		x = source[0]&0x1ff;
-		y = source[1]& 0x1ff;
-
-
-		drawgfx(bitmap,gfx,rand(),1,0,0,x,y,cliprect,TRANSPARENCY_PEN,0);
-
-
-		source += 0x04;
-	}
-}
-
-WRITE16_HANDLER( vmetal_texttileram_w )
-{
-	COMBINE_DATA(&vmetal_texttileram[offset]);
-	tilemap_mark_tile_dirty(vmetal_texttilemap,offset);
-}
-
-WRITE16_HANDLER( vmetal_mid1tileram_w )
-{
-	COMBINE_DATA(&vmetal_mid1tileram[offset]);
-	tilemap_mark_tile_dirty(vmetal_mid1tilemap,offset);
-}
-WRITE16_HANDLER( vmetal_mid2tileram_w )
-{
-	COMBINE_DATA(&vmetal_mid2tileram[offset]);
-	tilemap_mark_tile_dirty(vmetal_mid2tilemap,offset);
-}
 
 static ADDRESS_MAP_START( varia_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
@@ -127,11 +260,13 @@ static ADDRESS_MAP_START( varia_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x140000, 0x15ffff) AM_WRITE(vmetal_mid2tileram_w) AM_BASE(&vmetal_mid2tileram)
 
 	AM_RANGE(0x170000, 0x171fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x172000, 0x173fff) AM_WRITE(paletteram16_RRRRRGGGGGBBBBBx_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x172000, 0x173fff) AM_WRITE(paletteram16_GGGGGRRRRRBBBBBx_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x174000, 0x174fff) AM_WRITE(MWA16_RAM) AM_BASE(&varia_spriteram16)
-	AM_RANGE(0x175000, 0x17ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x175000, 0x177fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x178000, 0x1787ff) AM_WRITE(MWA16_RAM) AM_BASE(&vmetal_tlookup)
+	AM_RANGE(0x178800, 0x17ffff) AM_WRITE(MWA16_RAM) AM_BASE(&vmetal_videoregs)
 
-	AM_RANGE(0x200000, 0x200001) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x200000, 0x200001) AM_WRITE(MWA16_NOP) // sound writes?
 
 	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM)
 
@@ -250,7 +385,7 @@ INPUT_PORTS_START( varia )
 INPUT_PORTS_END
 
 
-static struct GfxLayout charlayout =
+static struct GfxLayout char16x16layout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -261,7 +396,7 @@ static struct GfxLayout charlayout =
 	16*16
 };
 
-static struct GfxLayout charxlayout =
+static struct GfxLayout char8x8layout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -274,8 +409,8 @@ static struct GfxLayout charxlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,   0x0, 512  }, /* bg tiles */
-	{ REGION_GFX1, 0, &charxlayout,   0x0, 512  }, /* bg tiles */
+	{ REGION_GFX1, 0, &char16x16layout,   0x0, 512  }, /* bg tiles */
+	{ REGION_GFX1, 0, &char8x8layout,   0x0, 512  }, /* bg tiles */
 	{ -1 } /* end of array */
 };
 
@@ -290,62 +425,65 @@ static struct OKIM6295interface okim6295_interface =
 
 static void get_vmetal_texttilemap_tile_info(int tile_index)
 {
-	int tileno;
-	tileno = vmetal_texttileram[tile_index] & 0x7ff;
-
-	// this tile layout in the roms is *strange*
-
-	tileno = (tileno & 0x0f) | ((tileno & 0xff0) << 1);
-
-	SET_TILE_INFO(1,tileno+0x1f000,0xf0,0)
+	UINT32 tile;
+	UINT16 color, data = vmetal_texttileram[tile_index];
+	int idx = ((data & 0x7fff) >> 4)*2;
+	UINT32 lookup = (vmetal_tlookup[idx]<<16) | vmetal_tlookup[idx+1];
+	tile = (data & 0xf) | (lookup & 0x7fff0);
+	color = ((lookup>>20) & 0x1f)+0xe0;
+	if (data & 0x8000) tile = 0;
+	SET_TILE_INFO(1, tile, color, TILE_FLIPYX(0x0));
 }
 
-int tbb;
 
 static void get_vmetal_mid1tilemap_tile_info(int tile_index)
 {
-	int tileno;
-	tileno = vmetal_mid1tileram[tile_index] & 0xff;
-
-
-	SET_TILE_INFO(0,tileno+tbb*0x100,1,TILE_FLIPYX(0x0))
+	UINT16 tile, color, data = vmetal_mid1tileram[tile_index];
+	get_vmetal_tlookup(data, &tile, &color);
+	if (data & 0x8000) tile = 0;
+	SET_TILE_INFO(0, tile, color, TILE_FLIPYX(0x0));
 }
 static void get_vmetal_mid2tilemap_tile_info(int tile_index)
 {
-	int tileno;
-	tileno = vmetal_mid2tileram[tile_index] & 0x0ff;
-
-
-
-	SET_TILE_INFO(0,tileno+tbb*0x100,1,TILE_FLIPYX(0x0))
+	UINT16 tile, color, data = vmetal_mid2tileram[tile_index];
+	get_vmetal_tlookup(data, &tile, &color);
+	if (data & 0x8000) tile = 0;
+	SET_TILE_INFO(0, tile, color, TILE_FLIPYX(0x0));
 }
 
 VIDEO_START(varia)
 {
 	vmetal_texttilemap = tilemap_create(get_vmetal_texttilemap_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,      8, 8, 256,256);
-	vmetal_mid1tilemap = tilemap_create(get_vmetal_mid1tilemap_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,      16,16, 256,256);
-	vmetal_mid2tilemap = tilemap_create(get_vmetal_mid2tilemap_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,      16,16, 256,256);
+	vmetal_mid1tilemap = tilemap_create(get_vmetal_mid1tilemap_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,      16,16, 256,256);
+	vmetal_mid2tilemap = tilemap_create(get_vmetal_mid2tilemap_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,      16,16, 256,256);
 	tilemap_set_transparent_pen(vmetal_texttilemap,15);
+	tilemap_set_transparent_pen(vmetal_mid1tilemap,15);
+	tilemap_set_transparent_pen(vmetal_mid2tilemap,15);
 
 	return 0;
 }
 
 VIDEO_UPDATE(varia)
 {
+	fillbitmap(bitmap, get_black_pen(), cliprect);
+
+	tilemap_set_scrollx(vmetal_mid2tilemap,0, vmetal_videoregs[0x06a/2] /*+ vmetal_videoregs[0x066/2]*/);
+	tilemap_set_scrollx(vmetal_mid1tilemap,0, vmetal_videoregs[0x07a/2] /*+ vmetal_videoregs[0x076/2]*/);
+
+
+	tilemap_draw(bitmap,cliprect,vmetal_mid1tilemap,0,0);
+
 	tilemap_draw(bitmap,cliprect,vmetal_mid2tilemap,0,0);
-
-	tilemap_draw(bitmap,cliprect,vmetal_texttilemap,0,0);
-
-	if ( keyboard_pressed_memory(KEYCODE_W) )
-	{
-		tbb ++;
-		tilemap_mark_all_tiles_dirty (vmetal_mid1tilemap);
-		tilemap_mark_all_tiles_dirty (vmetal_mid2tilemap);
-
-	}
 
 	varia_drawsprites (bitmap,cliprect);
 
+	tilemap_draw(bitmap,cliprect,vmetal_texttilemap,0,0);
+
+}
+
+VIDEO_EOF(varia)
+{
+	memset(varia_spriteram16, 0, 0x1000);
 }
 
 static MACHINE_DRIVER_START( varia )
@@ -359,11 +497,12 @@ static MACHINE_DRIVER_START( varia )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(2048, 2048)
-	MDRV_VISIBLE_AREA(0, 511, 0, 511)
+	MDRV_VISIBLE_AREA(0, 319, 0, 223)
 	MDRV_PALETTE_LENGTH(0x1000)
 
 	MDRV_VIDEO_START(varia)
 	MDRV_VIDEO_UPDATE(varia)
+	MDRV_VIDEO_EOF(varia)
 
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
@@ -390,4 +529,4 @@ ROM_START( vmetal )
 	ROM_LOAD( "vm7.bin", 0x00000, 0x200000, CRC(a88c52f1) SHA1(d74a5a11f84ba6b1042b33a2c156a1071b6fbfe1) )
 ROM_END
 
-GAMEX( 1995, vmetal, 0, varia, varia, 0, ROT270, "Excellent Systems", "Varia Metal", GAME_NOT_WORKING )
+GAMEX( 1995, vmetal, 0, varia, varia, 0, ROT270, "Excellent Systems", "Varia Metal", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )

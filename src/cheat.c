@@ -7920,7 +7920,6 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 
 #ifndef MESS
 #ifndef TINY_COMPILE
-#ifndef CPSMAME
 
 			{
 				extern struct GameDriver	driver_neogeo;
@@ -7933,7 +7932,6 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 					return 1;
 			}
 
-#endif
 #endif
 #endif
 

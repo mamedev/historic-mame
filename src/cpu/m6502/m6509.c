@@ -42,13 +42,11 @@ addresses take place.
 #include "state.h"
 #include "mamedbg.h"
 #include "m6509.h"
-#include "m6502.h"
+#include "m6509.h"
 
 #include "ops02.h"
 #include "ill02.h"
 #include "ops09.h"
-
-#define CORE_M6509
 
 #define M6502_NMI_VEC	0xfffa
 #define M6502_RST_VEC	0xfffc
@@ -65,23 +63,12 @@ addresses take place.
 #define LOG(x)
 #endif
 
-#ifdef RUNTIME_LOADER
-struct cpu_interface
-m6509_interface=
-CPU0(M6509,    m6509,    1,  0,1.00,M6509_INT_NONE,    M6509_INT_IRQ,  M6509_INT_NMI,  8, 20,     0,20,LE,1, 3 );
-
-extern void m6509_runtime_loader_init(void)
-{
-	cpuintf[CPU_M6509]=m6509_interface;
-}
-#endif
-
 
 /* Layout of the registers in the debugger */
-static UINT8 m6509_reg_layout[] = {
+static UINT8 m6509_reg_layout[] =
+{
 	M6509_A,M6509_X,M6509_Y,M6509_S,M6509_PC, M6509_P,-1,
-	M6509_PC_BANK, M6509_IND_BANK, M6509_EA, M6509_ZP, -1,
-	M6509_NMI_STATE, M6509_IRQ_STATE, M6509_SO_STATE, 0
+	M6509_PC_BANK, M6509_IND_BANK, M6509_EA, M6509_ZP, -1, 0
 };
 
 /* Layout of the debugger windows x,y,w,h */
@@ -116,7 +103,7 @@ typedef struct {
 	int 	(*irq_callback)(int irqline);	/* IRQ callback */
 }	m6509_Regs;
 
-int m6509_ICount = 0;
+static int m6509_ICount = 0;
 
 static m6509_Regs m6509;
 
@@ -126,29 +113,38 @@ static m6509_Regs m6509;
 
 #include "t6509.c"
 
-READ_HANDLER( m6509_read_00000 )
+static READ_HANDLER( m6509_read_00000 )
 {
 	return m6509.pc_bank.b.h2;
 }
 
-READ_HANDLER( m6509_read_00001 )
+static READ_HANDLER( m6509_read_00001 )
 {
 	return m6509.ind_bank.b.h2;
 }
 
-WRITE_HANDLER( m6509_write_00000 )
+static WRITE_HANDLER( m6509_write_00000 )
 {
 	m6509.pc_bank.b.h2=data&0xf;
 	m6509.pc.w.h=m6509.pc_bank.w.h;
-	program_write_byte_8(PCD);
+	change_pc(PCD);
 }
 
-WRITE_HANDLER( m6509_write_00001 )
+static WRITE_HANDLER( m6509_write_00001 )
 {
 	m6509.ind_bank.b.h2=data&0xf;
 }
 
-void m6509_reset (void *param)
+static ADDRESS_MAP_START(m6509_mem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x00000, 0x00000) AM_MIRROR(0xF0000) AM_READWRITE(m6509_read_00000, m6509_write_00000)
+	AM_RANGE(0x00001, 0x00001) AM_MIRROR(0xF0000) AM_READWRITE(m6509_read_00001, m6509_write_00001)
+ADDRESS_MAP_END
+
+static void m6509_init(void)
+{
+}
+
+static void m6509_reset (void *param)
 {
 	m6509.insn = insn6509;
 
@@ -166,75 +162,30 @@ void m6509_reset (void *param)
 	m6509.after_cli = 0;	/* pending IRQ and last insn cleared I */
 	m6509.irq_callback = NULL;
 
-	program_write_byte_8(PCD);
+	change_pc(PCD);
 }
 
-void m6509_exit(void)
+static void m6509_exit(void)
 {
 	/* nothing to do yet */
 }
 
-unsigned m6509_get_context (void *dst)
+static void m6509_get_context (void *dst)
 {
 	if( dst )
 		*(m6509_Regs*)dst = m6509;
-	return sizeof(m6509_Regs);
 }
 
-void m6509_set_context (void *src)
+static void m6509_set_context (void *src)
 {
 	if( src )
 	{
 		m6509 = *(m6509_Regs*)src;
-		program_write_byte_8(PCD);
+		change_pc(PCD);
 	}
 }
 
-unsigned m6509_get_reg (int regnum)
-{
-	switch( regnum )
-	{
-		case REG_PC: return PCD;
-		case M6509_PC: return m6509.pc.d;
-		case REG_SP: return S;
-		case M6509_S: return m6509.sp.b.l;
-		case M6509_P: return m6509.p;
-		case M6509_A: return m6509.a;
-		case M6509_X: return m6509.x;
-		case M6509_Y: return m6509.y;
-		case M6509_PC_BANK: return m6509.pc_bank.b.h2;
-		case M6509_IND_BANK: return m6509.ind_bank.b.h2;
-		case M6509_EA: return m6509.ea.d;
-		case M6509_ZP: return m6509.zp.b.l;
-		case M6509_NMI_STATE: return m6509.nmi_state;
-		case M6509_IRQ_STATE: return m6509.irq_state;
-		case M6509_SO_STATE: return m6509.so_state;
-		case REG_PREVIOUSPC: return m6509.ppc.w.l;
-	}
-	return 0;
-}
 
-void m6509_set_reg (int regnum, unsigned val)
-{
-	switch( regnum )
-	{
-		case REG_PC: PCW = val&0xffff; program_write_byte_8(PCD); break;
-		case M6509_PC: m6509.pc.w.l = val; break;
-		case REG_SP: S = val; break;
-		case M6509_S: m6509.sp.b.l = val; break;
-		case M6509_P: m6509.p = val; break;
-		case M6509_A: m6509.a = val; break;
-		case M6509_X: m6509.x = val; break;
-		case M6509_Y: m6509.y = val; break;
-		case M6509_PC_BANK: m6509.pc_bank.b.h2 = val; break;
-		case M6509_IND_BANK: m6509.ind_bank.b.h2 = val; break;
-		case M6509_EA: m6509.ea.d = val; break;
-		case M6509_ZP: m6509.zp.b.l = val; break;
-		case M6509_NMI_STATE: m6509_set_irq_line( IRQ_LINE_NMI, val ); break;
-		case M6509_IRQ_STATE: m6509_set_irq_line( 0, val ); break;
-		case M6509_SO_STATE: m6509_set_irq_line( M6509_SET_OVERFLOW, val ); break;
-	}
-}
 
 INLINE void m6509_take_irq(void)
 {
@@ -252,16 +203,16 @@ INLINE void m6509_take_irq(void)
 		LOG(("M6509#%d takes IRQ ($%04x)\n", cpu_getactivecpu(), PCD));
 		/* call back the cpuintrf to let it clear the line */
 		if (m6509.irq_callback) (*m6509.irq_callback)(0);
-		program_write_byte_8(PCD);
+		change_pc(PCD);
 	}
 	m6509.pending_irq = 0;
 }
 
-int m6509_execute(int cycles)
+static int m6509_execute(int cycles)
 {
 	m6509_ICount = cycles;
 
-	program_write_byte_8(PCD);
+	change_pc(PCD);
 
 	do
 	{
@@ -301,7 +252,7 @@ int m6509_execute(int cycles)
 	return cycles - m6509_ICount;
 }
 
-void m6509_set_irq_line(int irqline, int state)
+static void m6509_set_irq_line(int irqline, int state)
 {
 	if (irqline == IRQ_LINE_NMI)
 	{
@@ -320,7 +271,7 @@ void m6509_set_irq_line(int irqline, int state)
 			PCL = RDMEM(EAD);
 			PCH = RDMEM(EAD+1);
 			LOG(("M6509#%d takes NMI ($%04x)\n", cpu_getactivecpu(), PCD));
-			program_write_byte_8(PCD);
+			change_pc(PCD);
 		}
 	}
 	else
@@ -344,66 +295,7 @@ void m6509_set_irq_line(int irqline, int state)
 	}
 }
 
-void m6509_set_irq_callback(int (*callback)(int))
-{
-	m6509.irq_callback = callback;
-}
-
-/****************************************************************************
- * Return a formatted string for a register
- ****************************************************************************/
-const char *m6509_info(void *context, int regnum)
-{
-	static char buffer[16][47+1];
-	static int which = 0;
-	m6509_Regs *r = context;
-
-	which = (which+1) % 16;
-	buffer[which][0] = '\0';
-	if( !context )
-		r = &m6509;
-
-	switch( regnum )
-	{
-		case CPU_INFO_REG+M6509_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
-		case CPU_INFO_REG+M6509_S: sprintf(buffer[which], "S:%02X", r->sp.b.l); break;
-		case CPU_INFO_REG+M6509_P: sprintf(buffer[which], "P:%02X", r->p); break;
-		case CPU_INFO_REG+M6509_A: sprintf(buffer[which], "A:%02X", r->a); break;
-		case CPU_INFO_REG+M6509_X: sprintf(buffer[which], "X:%02X", r->x); break;
-		case CPU_INFO_REG+M6509_Y: sprintf(buffer[which], "Y:%02X", r->y); break;
-		case CPU_INFO_REG+M6509_PC_BANK: sprintf(buffer[which], "0:%01X", r->pc_bank.b.h2); break;
-		case CPU_INFO_REG+M6509_IND_BANK: sprintf(buffer[which], "1:%01X", r->ind_bank.b.h2); break;
-		case CPU_INFO_REG+M6509_EA: sprintf(buffer[which], "EA:%05X", r->ea.d); break;
-		case CPU_INFO_REG+M6509_ZP: sprintf(buffer[which], "ZP:%05X", r->zp.d); break;
-		case CPU_INFO_REG+M6509_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
-		case CPU_INFO_REG+M6509_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
-		case CPU_INFO_REG+M6509_SO_STATE: sprintf(buffer[which], "SO:%X", r->so_state); break;
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->p & 0x80 ? 'N':'.',
-				r->p & 0x40 ? 'V':'.',
-				r->p & 0x20 ? 'R':'.',
-				r->p & 0x10 ? 'B':'.',
-				r->p & 0x08 ? 'D':'.',
-				r->p & 0x04 ? 'I':'.',
-				r->p & 0x02 ? 'Z':'.',
-				r->p & 0x01 ? 'C':'.');
-			break;
-		case CPU_INFO_NAME: return "M6509";
-		case CPU_INFO_FAMILY: return "MOS Technology 6509";
-		case CPU_INFO_VERSION: return "1.0beta";
-		case CPU_INFO_CREDITS:
-			return "Copyright (c) 1998 Juergen Buchmueller\n"
-				"Copyright (c) 2000 Peter Trauner\n"
-				"all rights reserved.";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_REG_LAYOUT: return (const char*)m6509_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)m6509_win_layout;
-	}
-	return buffer[which];
-}
-
-unsigned m6509_dasm(char *buffer, unsigned pc)
+static offs_t m6509_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
 	return Dasm6509( buffer, pc );
@@ -413,7 +305,132 @@ unsigned m6509_dasm(char *buffer, unsigned pc)
 #endif
 }
 
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void m6509_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + M6509_IRQ_LINE:	m6509_set_irq_line(M6509_IRQ_LINE, info->i); break;
+		case CPUINFO_INT_IRQ_STATE + M6509_SET_OVERFLOW:m6509_set_irq_line(M6509_SET_OVERFLOW, info->i); break;
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		m6509_set_irq_line(IRQ_LINE_NMI, info->i); break;
+
+		case CPUINFO_INT_PC:							PCW = info->i; change_pc(PCD);		break;
+		case CPUINFO_INT_REGISTER + M6509_PC:			m6509.pc.w.l = info->i;					break;
+		case CPUINFO_INT_SP:							S = info->i;							break;
+		case CPUINFO_INT_REGISTER + M6509_S:			m6509.sp.b.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + M6509_P:			m6509.p = info->i;						break;
+		case CPUINFO_INT_REGISTER + M6509_A:			m6509.a = info->i;						break;
+		case CPUINFO_INT_REGISTER + M6509_X:			m6509.x = info->i;						break;
+		case CPUINFO_INT_REGISTER + M6509_Y:			m6509.y = info->i;						break;
+		case CPUINFO_INT_REGISTER + M6509_PC_BANK:		m6509.pc_bank.b.h2 = info->i;			break;
+		case CPUINFO_INT_REGISTER + M6509_IND_BANK:		m6509.ind_bank.b.h2 = info->i;			break;
+		case CPUINFO_INT_REGISTER + M6509_EA:			m6509.ea.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + M6509_ZP:			m6509.zp.w.l = info->i;					break;
+		
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_IRQ_CALLBACK:					m6509.irq_callback = info->irqcallback;	break;
+	}
+}
 
 
-void m6509_init(void){ return; }
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+void m6509_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(m6502);				break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 2;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 3;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 10;							break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 20;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+		case CPUINFO_INT_IRQ_STATE + M6509_IRQ_LINE:	info->i = m6509.irq_state;				break;
+		case CPUINFO_INT_IRQ_STATE + M6509_SET_OVERFLOW:info->i = m6509.so_state;				break;
+		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		info->i = m6509.nmi_state;				break;
+
+		case CPUINFO_INT_PREVIOUSPC:					info->i = m6509.ppc.w.l;				break;
+
+		case CPUINFO_INT_PC:							info->i = PCD;							break;
+		case CPUINFO_INT_REGISTER + M6509_PC:			info->i = m6509.pc.w.l;					break;
+		case CPUINFO_INT_SP:							info->i = S;							break;
+		case CPUINFO_INT_REGISTER + M6509_S:			info->i = m6509.sp.b.l;					break;
+		case CPUINFO_INT_REGISTER + M6509_P:			info->i = m6509.p;						break;
+		case CPUINFO_INT_REGISTER + M6509_A:			info->i = m6509.a;						break;
+		case CPUINFO_INT_REGISTER + M6509_X:			info->i = m6509.x;						break;
+		case CPUINFO_INT_REGISTER + M6509_Y:			info->i = m6509.y;						break;
+		case CPUINFO_INT_REGISTER + M6509_PC_BANK:		info->i = m6509.pc_bank.b.h2;			break;
+		case CPUINFO_INT_REGISTER + M6509_IND_BANK:		info->i = m6509.ind_bank.b.h2;			break;
+		case CPUINFO_INT_REGISTER + M6509_EA:			info->i = m6509.ea.w.l;					break;
+		case CPUINFO_INT_REGISTER + M6509_ZP:			info->i = m6509.zp.w.l;					break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = m6509_set_info;			break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = m6509_get_context;	break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = m6509_set_context;	break;
+		case CPUINFO_PTR_INIT:							info->init = m6509_init;				break;
+		case CPUINFO_PTR_RESET:							info->reset = m6509_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = m6509_exit;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = m6509_execute;			break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m6509_dasm;			break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = m6509.irq_callback;	break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m6509_ICount;			break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m6509_reg_layout;				break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m6509_win_layout;				break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP:			info->p = (void *) construct_map_m6509_mem;	break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6509"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "MOS Technology 6509"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0beta"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) 1998 Juergen Buchmueller\nCopyright (c) 2000 Peter Trauner\nall rights reserved."); break;
+
+		case CPUINFO_STR_FLAGS:
+			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+				m6509.p & 0x80 ? 'N':'.',
+				m6509.p & 0x40 ? 'V':'.',
+				m6509.p & 0x20 ? 'R':'.',
+				m6509.p & 0x10 ? 'B':'.',
+				m6509.p & 0x08 ? 'D':'.',
+				m6509.p & 0x04 ? 'I':'.',
+				m6509.p & 0x02 ? 'Z':'.',
+				m6509.p & 0x01 ? 'C':'.');
+			break;
+
+		case CPUINFO_STR_REGISTER + M6509_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", m6509.pc.w.l); break;
+		case CPUINFO_STR_REGISTER + M6509_S:			sprintf(info->s = cpuintrf_temp_str(), "S:%02X", m6509.sp.b.l); break;
+		case CPUINFO_STR_REGISTER + M6509_P:			sprintf(info->s = cpuintrf_temp_str(), "P:%02X", m6509.p); break;
+		case CPUINFO_STR_REGISTER + M6509_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%02X", m6509.a); break;
+		case CPUINFO_STR_REGISTER + M6509_X:			sprintf(info->s = cpuintrf_temp_str(), "X:%02X", m6509.x); break;
+		case CPUINFO_STR_REGISTER + M6509_Y:			sprintf(info->s = cpuintrf_temp_str(), "Y:%02X", m6509.y); break;
+		case CPUINFO_STR_REGISTER + M6509_PC_BANK:		sprintf(info->s = cpuintrf_temp_str(), "0:%01X", m6509.pc_bank.b.h2); break;
+		case CPUINFO_STR_REGISTER + M6509_IND_BANK:		sprintf(info->s = cpuintrf_temp_str(), "1:%01X", m6509.ind_bank.b.h2); break;
+		case CPUINFO_STR_REGISTER + M6509_EA:			sprintf(info->s = cpuintrf_temp_str(), "EA:%04X", m6509.ea.w.l); break;
+		case CPUINFO_STR_REGISTER + M6509_ZP:			sprintf(info->s = cpuintrf_temp_str(), "ZP:%03X", m6509.zp.w.l); break;
+	}
+}
 

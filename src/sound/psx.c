@@ -6,10 +6,24 @@
 
 	preliminary version by smf.
 
+	very bad sound
+
 ***************************************************************************/
 
+/*
+ * Modified For OpenVMS By:  Robert Alan Byer
+ *                           byer@mail.ourservers.net
+ *                           Jun. 15, 2004
+ */
+
 #include "driver.h"
-#include "includes/psx.h"
+
+#if defined(__DECC) && defined(VMS)
+#  include "../src/includes/psx.h"
+#else
+#  include "includes/psx.h"
+#endif
+
 #include "state.h"
 
 #define VERBOSE_LEVEL ( 0 )
@@ -27,8 +41,10 @@ INLINE void verboselog( int n_level, const char *s_fmt, ... )
 	}
 }
 
-static UINT8 *m_p_n_ram;
-static size_t m_n_ramsize;
+#define MAX_CHANNEL ( 24 )
+#define SPU_RAM_SIZE ( 512 * 1024 )
+#define SAMPLES_PER_BLOCK ( 28 )
+#define PITCH_SHIFT ( 12 )
 
 static data16_t m_n_mainvolumeleft;
 static data16_t m_n_mainvolumeright;
@@ -42,6 +58,7 @@ static data32_t m_n_reverbmode;
 static data32_t m_n_channelonoff;
 static data16_t m_n_reverbworkareastart;
 static data16_t m_n_irqaddress;
+static data16_t m_n_dmaaddress;
 static data16_t m_n_spudata;
 static data16_t m_n_spucontrol;
 static data16_t m_n_spustatus;
@@ -49,28 +66,153 @@ static data16_t m_n_cdvolumeleft;
 static data16_t m_n_cdvolumeright;
 static data16_t m_n_externalvolumeleft;
 static data16_t m_n_externalvolumeright;
-static data16_t m_p_n_volumeleft[ 24 ];
-static data16_t m_p_n_volumeright[ 24 ];
-static data16_t m_p_n_pitch[ 24 ];
-static data16_t m_p_n_address[ 24 ];
-static data16_t m_p_n_attackdecaysustain[ 24 ];
-static data16_t m_p_n_sustainrelease[ 24 ];
-static data16_t m_p_n_adsrvolume[ 24 ];
-static data16_t m_p_n_repeataddress[ 24 ];
+static data16_t m_p_n_volumeleft[ MAX_CHANNEL ];
+static data16_t m_p_n_volumeright[ MAX_CHANNEL ];
+static data16_t m_p_n_pitch[ MAX_CHANNEL ];
+static data16_t m_p_n_address[ MAX_CHANNEL ];
+static data16_t m_p_n_attackdecaysustain[ MAX_CHANNEL ];
+static data16_t m_p_n_sustainrelease[ MAX_CHANNEL ];
+static data16_t m_p_n_adsrvolume[ MAX_CHANNEL ];
+static data16_t m_p_n_repeataddress[ MAX_CHANNEL ];
 static data32_t m_p_n_effect[ 16 ];
-static data32_t *m_p_n_spuram;
+static data16_t *m_p_n_spuram;
+static data32_t m_p_n_blockaddress[ MAX_CHANNEL ];
+static data32_t m_p_n_blockoffset[ MAX_CHANNEL ];
+static data32_t m_p_n_blockstatus[ MAX_CHANNEL ];
+static data16_t m_p_n_blockbuffer[ MAX_CHANNEL * SAMPLES_PER_BLOCK ];
+
+/* FILE *f[ MAX_CHANNEL ]; */
+/* todo: save these... */
+static int m_p_n_s1[ MAX_CHANNEL ];
+static int m_p_n_s2[ MAX_CHANNEL ];
+static data32_t m_n_loop[ MAX_CHANNEL ];
 
 #define SPU_REG( a ) ( ( a - 0xc00 ) / 4 )
 #define SPU_CHANNEL_REG( a ) ( a / 4 )
 
-INLINE data32_t psxreadlong( data32_t n_address )
+INLINE UINT16 psxreadword( UINT32 n_address )
 {
-	return *( (data32_t *)&m_p_n_ram[ n_address ] );
+	return *( (UINT16 *)( (UINT8 *)g_p_n_psxram + WORD_XOR_LE( n_address ) ) );
 }
 
-INLINE void psxwritelong( data32_t n_address, data32_t n_data )
+INLINE void psxwriteword( data32_t n_address, data16_t n_data )
 {
-	*( (data32_t *)&m_p_n_ram[ n_address ] ) = n_data;
+	*( (UINT16 *)( (UINT8 *)g_p_n_psxram + WORD_XOR_LE( n_address ) ) ) = n_data;
+}
+
+static int volume( data16_t n_volume )
+{
+	if( ( n_volume & 0x8000 ) != 0 )
+	{
+		n_volume = ( n_volume & 0x7f ) * 0x80;
+	}
+	else if( ( n_volume & 0x4000 ) != 0 )
+	{
+		n_volume = -( n_volume & 0x3fff );
+	}
+	return n_volume;
+}
+
+static void PSXSPU_update(int num, INT16 **buffer, int length)
+{
+	int v;
+	int voll;
+	int volr;
+	int n_channel;
+	int n_sample;
+	int n_word;
+	int n_shift;
+	int n_predict;
+	int n_flags;
+	int n_nibble;
+	int n_packed;
+	int n_unpacked;
+
+	static const int f[ 5 ][ 2 ] =
+	{
+		{   0,   0  },
+		{  60,   0  },
+		{ 115, -52 },
+		{  98, -55 },
+		{ 122, -60 }
+	};
+
+	memset( buffer[ 0 ], 0, length * 2 );
+	memset( buffer[ 1 ], 0, length * 2 );
+
+	for( n_channel = 0; n_channel < MAX_CHANNEL; n_channel++ )
+	{
+		voll = volume( m_p_n_volumeleft[ n_channel ] );
+		volr = volume( m_p_n_volumeright[ n_channel ] );
+
+		for( n_sample = 0; n_sample < length; n_sample++ )
+		{
+			if( m_p_n_blockoffset[ n_channel ] >= ( SAMPLES_PER_BLOCK << PITCH_SHIFT ) )
+			{
+				if( !m_p_n_blockstatus[ n_channel ] )
+				{
+					break;
+				}
+				if( ( m_n_spucontrol & 0x40 ) != 0 &&
+					( m_n_irqaddress * 4 ) >= m_p_n_blockaddress[ n_channel ] &&
+					( m_n_irqaddress * 4 ) <= m_p_n_blockaddress[ n_channel ] + 7 )
+				{
+					psx_irq_set( 0x0200 );
+				}
+
+/*				fwrite( &m_p_n_spuram[ m_p_n_blockaddress[ n_channel ] ], 2, 8, f[ n_channel ] ); */
+				n_shift =   ( m_p_n_spuram[ m_p_n_blockaddress[ n_channel ] ] >> 0 ) & 0x0f;
+				n_predict = ( m_p_n_spuram[ m_p_n_blockaddress[ n_channel ] ] >> 4 ) & 0x0f;
+				n_flags =   ( m_p_n_spuram[ m_p_n_blockaddress[ n_channel ] ] >> 8 ) & 0xff;
+				if( ( n_flags & 4 ) != 0 )
+				{
+					m_n_loop[ n_channel ] = m_p_n_blockaddress[ n_channel ];
+				}
+				m_p_n_blockaddress[ n_channel ]++;
+				m_p_n_blockaddress[ n_channel ] %= ( SPU_RAM_SIZE / 2 );
+
+				for( n_word = 0; n_word < 7; n_word++ )
+				{
+					n_packed = m_p_n_spuram[ m_p_n_blockaddress[ n_channel ] ];
+					m_p_n_blockaddress[ n_channel ]++;
+					m_p_n_blockaddress[ n_channel ] %= ( SPU_RAM_SIZE / 2 );
+
+					for( n_nibble = 0; n_nibble < 4; n_nibble++ )
+					{
+						n_unpacked = ( ( n_packed & 0xf ) << 12 );
+						if( ( n_unpacked & 0x8000 ) != 0 )
+						{
+							n_unpacked |= 0xffff0000;
+						}
+						n_unpacked = ( n_unpacked >> n_shift ) +
+							( ( m_p_n_s1[ n_channel ] * f[ n_predict ][ 0 ] ) >> 6 ) +
+							( ( m_p_n_s2[ n_channel ] * f[ n_predict ][ 1 ] ) >> 6 );
+						m_p_n_s2[ n_channel ] = m_p_n_s1[ n_channel ];
+						m_p_n_s1[ n_channel ] = n_unpacked;
+
+						m_p_n_blockbuffer[ ( n_channel * SAMPLES_PER_BLOCK ) + ( n_word * 4 ) + n_nibble ] = n_unpacked;
+						n_packed >>= 4;
+					}
+				}
+				if( ( n_flags & 1 ) != 0 )
+				{
+					if( n_flags != 3 )
+					{
+						m_p_n_blockstatus[ n_channel ] = 0;
+					}
+					else
+					{
+						m_p_n_blockaddress[ n_channel ] = m_n_loop[ n_channel ];
+					}
+				}
+				m_p_n_blockoffset[ n_channel ] %= ( SAMPLES_PER_BLOCK << PITCH_SHIFT );
+			}
+			v = m_p_n_blockbuffer[ ( n_channel * SAMPLES_PER_BLOCK ) + ( m_p_n_blockoffset[ n_channel ] >> PITCH_SHIFT ) ];
+			m_p_n_blockoffset[ n_channel ] += m_p_n_pitch[ n_channel ];
+			buffer[ 0 ][ n_sample ] += ( v * voll ) / 0x4000;
+			buffer[ 1 ][ n_sample ] += ( v * volr ) / 0x4000;
+		}
+	}
 }
 
 static void spu_read( UINT32 n_address, INT32 n_size )
@@ -79,12 +221,14 @@ static void spu_read( UINT32 n_address, INT32 n_size )
 
 	verboselog( 1, "spu_read( %08x, %08x )\n", n_address, n_size );
 
-	n_spuoffset = m_n_irqaddress * 2;
+	n_spuoffset = m_n_dmaaddress * 4;
+	n_size *= 2;
 	while( n_size > 0 )
 	{
-		psxwritelong( n_address, m_p_n_spuram[ n_spuoffset ] );
+		psxwriteword( n_address, m_p_n_spuram[ n_spuoffset ] );
+		verboselog( 2, "%08x > %04x\n", n_spuoffset, m_p_n_spuram[ n_spuoffset ] );
 		n_spuoffset++;
-		n_address += 4;
+		n_address += 2;
 		n_size--;
 	}
 }
@@ -95,12 +239,14 @@ static void spu_write( UINT32 n_address, INT32 n_size )
 
 	verboselog( 1, "spu_write( %08x, %08x )\n", n_address, n_size );
 
-	n_spuoffset = m_n_irqaddress * 2;
+	n_spuoffset = m_n_dmaaddress * 4;
+	n_size *= 2;
 	while( n_size > 0 )
 	{
-		m_p_n_spuram[ n_spuoffset ] = psxreadlong( n_address );
+		m_p_n_spuram[ n_spuoffset ] = psxreadword( n_address );
+		verboselog( 2, "%08x < %04x\n", n_spuoffset, m_p_n_spuram[ n_spuoffset ] );
 		n_spuoffset++;
-		n_address += 4;
+		n_address += 2;
 		n_size--;
 	}
 }
@@ -109,9 +255,9 @@ int PSX_sh_start( const struct MachineSound *msound )
 {
 	int n_effect;
 	int n_channel;
-
-	m_p_n_ram = memory_region( REGION_CPU1 );
-	m_n_ramsize = memory_region_length( REGION_CPU1 ) - 1;
+	struct PSXSPUinterface *intf = msound->sound_interface;
+	const char *name[2];
+	int vol[2];
 
 	m_n_mainvolumeleft = 0;
 	m_n_mainvolumeright = 0;
@@ -125,6 +271,7 @@ int PSX_sh_start( const struct MachineSound *msound )
 	m_n_channelonoff = 0;
 	m_n_reverbworkareastart = 0;
 	m_n_irqaddress = 0;
+	m_n_dmaaddress = 0;
 	m_n_spudata = 0;
 	m_n_spucontrol = 0;
 	m_n_spustatus = 0;
@@ -133,7 +280,7 @@ int PSX_sh_start( const struct MachineSound *msound )
 	m_n_externalvolumeleft = 0;
 	m_n_externalvolumeright = 0;
 
-	for( n_channel = 0; n_channel < 24; n_channel++ )
+	for( n_channel = 0; n_channel < MAX_CHANNEL; n_channel++ )
 	{
 		m_p_n_volumeleft[ n_channel ] = 0;
 		m_p_n_volumeright[ n_channel ] = 0;
@@ -143,6 +290,14 @@ int PSX_sh_start( const struct MachineSound *msound )
 		m_p_n_sustainrelease[ n_channel ] = 0;
 		m_p_n_adsrvolume[ n_channel ] = 0;
 		m_p_n_repeataddress[ n_channel ] = 0;
+		m_p_n_blockaddress[ n_channel ] = 0;
+		m_p_n_blockoffset[ n_channel ] = 0;
+		m_p_n_blockstatus[ n_channel ] = 0;
+		{
+			char s[ 1024 ];
+			sprintf( s, "SPU%d", n_channel );
+/*			f[ n_channel ] = fopen( s, "wb" ); */
+		}
 	}
 
 	for( n_effect = 0; n_effect < 16; n_effect++ )
@@ -150,7 +305,7 @@ int PSX_sh_start( const struct MachineSound *msound )
 		m_p_n_effect[ n_effect ] = 0;
 	}
 
-	m_p_n_spuram = malloc( 0x80000 );
+	m_p_n_spuram = malloc( SPU_RAM_SIZE );
 	if( m_p_n_spuram == NULL )
 	{
 		return 1;
@@ -158,8 +313,6 @@ int PSX_sh_start( const struct MachineSound *msound )
 
 	state_save_register_UINT16( "psx", 0, "m_n_mainvolumeleft", &m_n_mainvolumeleft, 1 );
 	state_save_register_UINT16( "psx", 0, "m_n_mainvolumeright", &m_n_mainvolumeright, 1 );
-	state_save_register_UINT16( "psx", 0, "m_n_reverberationdepthleft", &m_n_reverberationdepthleft, 1 );
-	state_save_register_UINT16( "psx", 0, "m_n_reverberationdepthright", &m_n_reverberationdepthright, 1 );
 	state_save_register_UINT16( "psx", 0, "m_n_reverberationdepthleft", &m_n_reverberationdepthleft, 1 );
 	state_save_register_UINT16( "psx", 0, "m_n_reverberationdepthright", &m_n_reverberationdepthright, 1 );
 	state_save_register_UINT32( "psx", 0, "m_n_voiceon", &m_n_voiceon, 1 );
@@ -170,6 +323,7 @@ int PSX_sh_start( const struct MachineSound *msound )
 	state_save_register_UINT32( "psx", 0, "m_n_channelonoff", &m_n_channelonoff, 1 );
 	state_save_register_UINT16( "psx", 0, "m_n_reverbworkareastart", &m_n_reverbworkareastart, 1 );
 	state_save_register_UINT16( "psx", 0, "m_n_irqaddress", &m_n_irqaddress, 1 );
+	state_save_register_UINT16( "psx", 0, "m_n_dmaaddress", &m_n_dmaaddress, 1 );
 	state_save_register_UINT16( "psx", 0, "m_n_spudata", &m_n_spudata, 1 );
 	state_save_register_UINT16( "psx", 0, "m_n_spucontrol", &m_n_spucontrol, 1 );
 	state_save_register_UINT16( "psx", 0, "m_n_spustatus", &m_n_spustatus, 1 );
@@ -177,20 +331,30 @@ int PSX_sh_start( const struct MachineSound *msound )
 	state_save_register_UINT16( "psx", 0, "m_n_cdvolumeright", &m_n_cdvolumeright, 1 );
 	state_save_register_UINT16( "psx", 0, "m_n_externalvolumeleft", &m_n_externalvolumeleft, 1 );
 	state_save_register_UINT16( "psx", 0, "m_n_externalvolumeright", &m_n_externalvolumeright, 1 );
-	state_save_register_UINT16( "psx", 0, "m_p_n_volumeleft", m_p_n_volumeleft, 24 );
-	state_save_register_UINT16( "psx", 0, "m_p_n_volumeright", m_p_n_volumeright, 24 );
-	state_save_register_UINT16( "psx", 0, "m_p_n_pitch", m_p_n_pitch, 24 );
-	state_save_register_UINT16( "psx", 0, "m_p_n_address", m_p_n_address, 24 );
-	state_save_register_UINT16( "psx", 0, "m_p_n_attackdecaysustain", m_p_n_attackdecaysustain, 24 );
-	state_save_register_UINT16( "psx", 0, "m_p_n_sustainrelease", m_p_n_sustainrelease, 24 );
-	state_save_register_UINT16( "psx", 0, "m_p_n_adsrvolume", m_p_n_adsrvolume, 24 );
-	state_save_register_UINT16( "psx", 0, "m_p_n_repeataddress", m_p_n_repeataddress, 24 );
+	state_save_register_UINT16( "psx", 0, "m_p_n_volumeleft", m_p_n_volumeleft, MAX_CHANNEL );
+	state_save_register_UINT16( "psx", 0, "m_p_n_volumeright", m_p_n_volumeright, MAX_CHANNEL );
+	state_save_register_UINT16( "psx", 0, "m_p_n_pitch", m_p_n_pitch, MAX_CHANNEL );
+	state_save_register_UINT16( "psx", 0, "m_p_n_address", m_p_n_address, MAX_CHANNEL );
+	state_save_register_UINT16( "psx", 0, "m_p_n_attackdecaysustain", m_p_n_attackdecaysustain, MAX_CHANNEL );
+	state_save_register_UINT16( "psx", 0, "m_p_n_sustainrelease", m_p_n_sustainrelease, MAX_CHANNEL );
+	state_save_register_UINT16( "psx", 0, "m_p_n_adsrvolume", m_p_n_adsrvolume, MAX_CHANNEL );
+	state_save_register_UINT16( "psx", 0, "m_p_n_repeataddress", m_p_n_repeataddress, MAX_CHANNEL );
 	state_save_register_UINT32( "psx", 0, "m_p_n_effect", m_p_n_effect, 16 );
-	state_save_register_UINT32( "psx", 0, "m_p_n_spuram", m_p_n_spuram, 0x80000 / 4 );
+	state_save_register_UINT16( "psx", 0, "m_p_n_spuram", m_p_n_spuram, SPU_RAM_SIZE / 2 );
+
+	state_save_register_UINT32( "psx", 0, "m_p_n_blockaddress", m_p_n_blockaddress, MAX_CHANNEL );
+	state_save_register_UINT32( "psx", 0, "m_p_n_blockoffset", m_p_n_blockoffset, MAX_CHANNEL );
+	state_save_register_UINT32( "psx", 0, "m_p_n_blockstatus", m_p_n_blockstatus, MAX_CHANNEL );
+	state_save_register_UINT16( "psx", 0, "m_p_n_blockbuffer", m_p_n_blockbuffer, MAX_CHANNEL * SAMPLES_PER_BLOCK );
 
 	psx_dma_install_read_handler( 4, spu_read );
 	psx_dma_install_write_handler( 4, spu_write );
 
+	name[ 0 ] = "PSX SPU L";
+	name[ 1 ] = "PSX SPU R";
+	vol[ 0 ] = MIXER( intf->mixing_level, MIXER_PAN_LEFT );
+	vol[ 1 ] = MIXER( intf->mixing_level, MIXER_PAN_RIGHT );
+	stream_init_multi( 2, name, vol, 44100, 0, PSXSPU_update );
 	return 0;
 }
 
@@ -198,14 +362,6 @@ void PSX_sh_stop( void )
 {
 	free( m_p_n_spuram );
 	m_p_n_spuram = NULL;
-}
-
-void PSX_sh_update( void )
-{
-}
-
-void PSX_sh_reset( void )
-{
 }
 
 READ32_HANDLER( psx_spu_delay_r )
@@ -218,10 +374,20 @@ READ32_HANDLER( psx_spu_r )
 {
 	int n_channel;
 	n_channel = offset / 4;
-	if( n_channel < 24 )
+	if( n_channel < MAX_CHANNEL )
 	{
 		switch( offset % 4 )
 		{
+		case SPU_CHANNEL_REG( 0x8 ):
+			if( ACCESSING_LSW32 )
+			{
+				verboselog( 1, "psx_spu_r() channel %d attack/decay/sustain = %04x\n", n_channel, m_p_n_attackdecaysustain[ n_channel ] );
+			}
+			if( ACCESSING_MSW32 )
+			{
+				verboselog( 1, "psx_spu_r() channel %d sustain/release = %04x\n", n_channel, m_p_n_sustainrelease[ n_channel ] );
+			}
+			return ( m_p_n_sustainrelease[ n_channel ] << 16 ) | m_p_n_attackdecaysustain[ n_channel ];
 		case SPU_CHANNEL_REG( 0xc ):
 			if( ACCESSING_LSW32 )
 			{
@@ -247,12 +413,18 @@ READ32_HANDLER( psx_spu_r )
 		case SPU_REG( 0xd8c ):
 			verboselog( 1, "psx_spu_r() voice off = %08x\n", m_n_voiceoff );
 			return m_n_voiceoff;
+		case SPU_REG( 0xd90 ):
+			verboselog( 1, "psx_spu_r() modulation mode = %08x\n", m_n_modulationmode );
+			return m_n_modulationmode;
+		case SPU_REG( 0xd94 ):
+			verboselog( 1, "psx_spu_r() noise mode = %08x\n", m_n_noisemode );
+			return m_n_noisemode;
 		case SPU_REG( 0xd98 ):
 			verboselog( 1, "psx_spu_r() reverb mode = %08x\n", m_n_reverbmode );
 			return m_n_reverbmode;
 		case SPU_REG( 0xda4 ):
-			verboselog( 1, "psx_spu_r() irq address = %08x\n", m_n_irqaddress << 16 );
-			return m_n_irqaddress << 16;
+			verboselog( 1, "psx_spu_r() dma/irq address = %08x\n", ( m_n_dmaaddress << 16 ) | m_n_irqaddress );
+			return ( m_n_dmaaddress << 16 ) | m_n_irqaddress;
 		case SPU_REG( 0xda8 ):
 			verboselog( 1, "psx_spu_r() spu data/control = %08x\n", m_n_spudata | ( m_n_spucontrol << 16 ) );
 			return m_n_spudata | ( m_n_spucontrol << 16 );
@@ -270,55 +442,55 @@ WRITE32_HANDLER( psx_spu_w )
 {
 	int n_channel;
 	n_channel = offset / 4;
-	if( n_channel < 24 )
+	if( n_channel < MAX_CHANNEL )
 	{
 		switch( offset % 4 )
 		{
 		case SPU_CHANNEL_REG( 0x0 ):
 			if( ACCESSING_LSW32 )
 			{
-				m_p_n_volumeleft[ n_channel ] = offset & 0xffff;
+				m_p_n_volumeleft[ n_channel ] = data & 0xffff;
 				verboselog( 1, "psx_spu_w() channel %d volume left = %04x\n", n_channel, m_p_n_volumeleft[ n_channel ] );
 			}
 			if( ACCESSING_MSW32 )
 			{
-				m_p_n_volumeright[ n_channel ] = offset >> 16;
+				m_p_n_volumeright[ n_channel ] = data >> 16;
 				verboselog( 1, "psx_spu_w() channel %d volume right = %04x\n", n_channel, m_p_n_volumeright[ n_channel ] );
 			}
 			break;
 		case SPU_CHANNEL_REG( 0x4 ):
 			if( ACCESSING_LSW32 )
 			{
-				m_p_n_pitch[ n_channel ] = offset & 0xffff;
+				m_p_n_pitch[ n_channel ] = data & 0xffff;
 				verboselog( 1, "psx_spu_w() channel %d pitch = %04x\n", n_channel, m_p_n_pitch[ n_channel ] );
 			}
 			if( ACCESSING_MSW32 )
 			{
-				m_p_n_address[ n_channel ] = offset >> 16;
+				m_p_n_address[ n_channel ] = data >> 16;
 				verboselog( 1, "psx_spu_w() channel %d address = %04x\n", n_channel, m_p_n_address[ n_channel ] );
 			}
 			break;
 		case SPU_CHANNEL_REG( 0x8 ):
 			if( ACCESSING_LSW32 )
 			{
-				m_p_n_attackdecaysustain[ n_channel ] = offset & 0xffff;
+				m_p_n_attackdecaysustain[ n_channel ] = data & 0xffff;
 				verboselog( 1, "psx_spu_w() channel %d attack/decay/sustain = %04x\n", n_channel, m_p_n_attackdecaysustain[ n_channel ] );
 			}
 			if( ACCESSING_MSW32 )
 			{
-				m_p_n_sustainrelease[ n_channel ] = offset >> 16;
+				m_p_n_sustainrelease[ n_channel ] = data >> 16;
 				verboselog( 1, "psx_spu_w() channel %d sustain/release = %04x\n", n_channel, m_p_n_sustainrelease[ n_channel ] );
 			}
 			break;
 		case SPU_CHANNEL_REG( 0xc ):
 			if( ACCESSING_LSW32 )
 			{
-				m_p_n_adsrvolume[ n_channel ] = offset & 0xffff;
+				m_p_n_adsrvolume[ n_channel ] = data & 0xffff;
 				verboselog( 1, "psx_spu_w() channel %d adsr volume = %04x\n", n_channel, m_p_n_adsrvolume[ n_channel ] );
 			}
 			if( ACCESSING_MSW32 )
 			{
-				m_p_n_repeataddress[ n_channel ] = offset >> 16;
+				m_p_n_repeataddress[ n_channel ] = data >> 16;
 				verboselog( 1, "psx_spu_w() channel %d repeat address = %04x\n", n_channel, m_p_n_repeataddress[ n_channel ] );
 			}
 			break;
@@ -356,10 +528,23 @@ WRITE32_HANDLER( psx_spu_w )
 			}
 			break;
 		case SPU_REG( 0xd88 ):
+			m_n_voiceon = 0;
 			COMBINE_DATA( &m_n_voiceon );
 			verboselog( 1, "psx_spu_w() voice on = %08x\n", m_n_voiceon );
+			for( n_channel = 0; n_channel < 32; n_channel++ )
+			{
+				if( ( m_n_voiceon & ( 1 << n_channel ) ) != 0 )
+				{
+					m_p_n_blockaddress[ n_channel ] = ( m_p_n_address[ n_channel ] * 4 ) % ( SPU_RAM_SIZE / 2 );
+					m_p_n_blockoffset[ n_channel ] = ( SAMPLES_PER_BLOCK << PITCH_SHIFT );
+					m_p_n_s1[ n_channel ] = 0;
+					m_p_n_s2[ n_channel ] = 0;
+					m_p_n_blockstatus[ n_channel ] = 1;
+				}
+			}
 			break;
 		case SPU_REG( 0xd8c ):
+			m_n_voiceoff = 0;
 			COMBINE_DATA( &m_n_voiceoff );
 			verboselog( 1, "psx_spu_w() voice off = %08x\n", m_n_voiceoff );
 			break;
@@ -393,12 +578,13 @@ WRITE32_HANDLER( psx_spu_w )
 		case SPU_REG( 0xda4 ):
 			if( ACCESSING_LSW32 )
 			{
-				verboselog( 0, "psx_spu_w( %08x, %08x, %08x ) %08x\n", offset, mem_mask, data, 0xc00 + ( offset * 4 ) ); 
+				m_n_irqaddress = data & 0xffff;
+				verboselog( 1, "psx_spu_w() irq address = %04x\n", m_n_irqaddress );
 			}
 			if( ACCESSING_MSW32 )
 			{
-				m_n_irqaddress = data >> 16;
-				verboselog( 1, "psx_spu_w() irq address = %04x\n", m_n_irqaddress );
+				m_n_dmaaddress = data >> 16;
+				verboselog( 1, "psx_spu_w() dma address = %04x\n", m_n_dmaaddress );
 			}
 			break;
 		case SPU_REG( 0xda8 ):

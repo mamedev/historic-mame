@@ -16,8 +16,6 @@
 extern UINT8 *battlane_spriteram;
 extern UINT8 *battlane_tileram;
 
-extern struct tilemap *bg_tilemap;
-
 extern WRITE_HANDLER( battlane_palette_w );
 extern WRITE_HANDLER( battlane_scrollx_w );
 extern WRITE_HANDLER( battlane_scrolly_w );
@@ -48,10 +46,7 @@ WRITE_HANDLER( battlane_cpu_command_w )
         0x01    = Y Scroll MSB
 	*/
 
-	if (flip_screen != (data & 0x80)) {
-		flip_screen_set(data & 0x80);
-		tilemap_mark_all_tiles_dirty(bg_tilemap);
-	}
+	flip_screen_set(data & 0x80);
 
 	/*
         I think that the NMI is an inhibitor. It is constantly set
@@ -94,47 +89,19 @@ WRITE_HANDLER( battlane_cpu_command_w )
 	cpu_set_irq_line(1, M6809_IRQ_LINE, data & 0x02 ? CLEAR_LINE : HOLD_LINE);
 }
 
-/* Both CPUs share the same memory */
-
-WRITE_HANDLER( battlane_shared_ram_w )
-{
-	UINT8 *RAM = memory_region(REGION_CPU1);
-	RAM[offset] = data;
-}
-
-READ_HANDLER( battlane_shared_ram_r )
-{
-	UINT8 *RAM = memory_region(REGION_CPU1);
-	return RAM[offset];
-}
-
-
-static ADDRESS_MAP_START( battlane_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_READ(battlane_shared_ram_r)
-    AM_RANGE(0x1000, 0x17ff) AM_READ(MRA8_RAM)
-    AM_RANGE(0x1800, 0x18ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x1c00, 0x1c00) AM_READ(input_port_0_r)
-    AM_RANGE(0x1c01, 0x1c01) AM_READ(input_port_1_r)   /* VBLANK port */
-	AM_RANGE(0x1c02, 0x1c02) AM_READ(input_port_2_r)
-	AM_RANGE(0x1c03, 0x1c03) AM_READ(input_port_3_r)
-	AM_RANGE(0x1c04, 0x1c04) AM_READ(YM3526_status_port_0_r)
-	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( battlane_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_WRITE(battlane_shared_ram_w)
-    AM_RANGE(0x1000, 0x17ff) AM_WRITE(battlane_tileram_w) AM_BASE(&battlane_tileram)
-    AM_RANGE(0x1800, 0x18ff) AM_WRITE(battlane_spriteram_w) AM_BASE(&battlane_spriteram)
-	AM_RANGE(0x1c00, 0x1c00) AM_WRITE(battlane_video_ctrl_w)
-    AM_RANGE(0x1c01, 0x1c01) AM_WRITE(battlane_scrollx_w)
-    AM_RANGE(0x1c02, 0x1c02) AM_WRITE(battlane_scrolly_w)
-    AM_RANGE(0x1c03, 0x1c03) AM_WRITE(battlane_cpu_command_w)
-	AM_RANGE(0x1c04, 0x1c04) AM_WRITE(YM3526_control_port_0_w)
+static ADDRESS_MAP_START( battlane_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_RAM AM_SHARE(1)
+    AM_RANGE(0x1000, 0x17ff) AM_RAM AM_WRITE(battlane_tileram_w) AM_BASE(&battlane_tileram)
+    AM_RANGE(0x1800, 0x18ff) AM_RAM AM_WRITE(battlane_spriteram_w) AM_BASE(&battlane_spriteram)
+	AM_RANGE(0x1c00, 0x1c00) AM_READWRITE(input_port_0_r, battlane_video_ctrl_w)
+    AM_RANGE(0x1c01, 0x1c01) AM_READWRITE(input_port_1_r, battlane_scrollx_w)
+	AM_RANGE(0x1c02, 0x1c02) AM_READWRITE(input_port_2_r, battlane_scrolly_w)
+	AM_RANGE(0x1c03, 0x1c03) AM_READWRITE(input_port_3_r, battlane_cpu_command_w)
+	AM_RANGE(0x1c04, 0x1c04) AM_READWRITE(YM3526_status_port_0_r, YM3526_control_port_0_w)
 	AM_RANGE(0x1c05, 0x1c05) AM_WRITE(YM3526_write_port_0_w)
 	AM_RANGE(0x1e00, 0x1e3f) AM_WRITE(battlane_palette_w)
-	AM_RANGE(0x2000, 0x3fff) AM_WRITE(battlane_bitmap_w)
-	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x3fff) AM_RAM AM_WRITE(battlane_bitmap_w)
+	AM_RANGE(0x4000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -201,14 +168,14 @@ INPUT_PORTS_START( battlane )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x0c, "20000 50000" )
-	PORT_DIPSETTING(    0x08, "20000 70000" )
-	PORT_DIPSETTING(    0x04, "20000 90000" )
+	PORT_DIPSETTING(    0x0c, "20K 50K+" )
+	PORT_DIPSETTING(    0x08, "20K 70K+" )
+	PORT_DIPSETTING(    0x04, "20K 90K+" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )
 INPUT_PORTS_END
 
 
@@ -295,11 +262,11 @@ static MACHINE_DRIVER_START( battlane )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 1250000)        /* 1.25 MHz ? */
-	MDRV_CPU_PROGRAM_MAP(battlane_readmem, battlane_writemem)
+	MDRV_CPU_PROGRAM_MAP(battlane_map, 0)
 	MDRV_CPU_VBLANK_INT(battlane_cpu1_interrupt, 1)
 
 	MDRV_CPU_ADD(M6809, 1250000)        /* 1.25 MHz ? */
-	MDRV_CPU_PROGRAM_MAP(battlane_readmem, battlane_writemem)
+	MDRV_CPU_PROGRAM_MAP(battlane_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

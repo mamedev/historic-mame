@@ -8,6 +8,8 @@
  *        anti-alias code by Andrew Caldwell
  *        (still more to add)
  *
+ * 040227 Fixed miny clip scaling which was breaking in mhavoc. AREK
+ * 010903 added support for direct RGB modes MLR
  * 980611 use translucent vectors. Thanks to Peter Hirschberg
  *        and Neil Bradley for the inspiration. BW
  * 980307 added cleverer dirty handling. BW, ASG
@@ -25,7 +27,6 @@
  *        modified avgdvg.c and sega.c to support new line draw routine
  *        added two new tables Tinten and Tmerge (for 256 color support)
  *        added find_color routine to build above tables .ac
- * 010903 added support for direct RGB modes MLR
  *
  **************************************************************************** */
 
@@ -595,6 +596,8 @@ void vector_set_clip (int x1, int yy1, int x2, int y2)
 	}
 
 	/* scale coordinates to display */
+	x1 = (int)(vector_scale_x*x1);
+	yy1= (int)(vector_scale_y*yy1);
 	x2 = (int)(vector_scale_x*x2);
 	y2 = (int)(vector_scale_y*y2);
 

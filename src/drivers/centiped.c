@@ -6,6 +6,7 @@
 		* Centipede (5 sets)
 		* Warlords
 		* Millipede
+		* Bulls Eye Darts
 
 	Known bugs:
 		* are coins supposed to take over a second to register?
@@ -272,6 +273,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "cpu/s2650/s2650.h"
 #include "vidhrdw/generic.h"
 #include "machine/atari_vg.h"
 #include "centiped.h"
@@ -401,6 +403,19 @@ static WRITE_HANDLER( input_select_w )
 }
 
 
+static READ_HANDLER( bullsdrt_data_port_r )
+{
+	switch (activecpu_get_pc())
+	{
+		case 0x0033:
+		case 0x6b19:
+			return 0x01;
+	}
+	
+	return 0;
+}
+
+
 
 /*************************************
  *
@@ -423,6 +438,12 @@ static READ_HANDLER( centipdb_rand_r )
 static WRITE_HANDLER( coin_count_w )
 {
 	coin_counter_w(offset, data);
+}
+
+
+static WRITE_HANDLER( bullsdrt_coin_count_w )
+{
+	coin_counter_w(0, data);
 }
 
 
@@ -564,6 +585,43 @@ ADDRESS_MAP_END
 
 
 
+/****************************************
+ *
+ *	Bulls Eye Darts CPU memory handlers
+ *
+ ****************************************/
+
+static ADDRESS_MAP_START( bullsdrt_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_ROM
+	AM_RANGE(0x1000, 0x1000) AM_MIRROR(0x6000) AM_READ(input_port_3_r)
+	AM_RANGE(0x1080, 0x1080) AM_MIRROR(0x6000) AM_READ(centiped_IN0_r)
+	AM_RANGE(0x1081, 0x1081) AM_MIRROR(0x6000) AM_READ(input_port_1_r)
+	AM_RANGE(0x1082, 0x1082) AM_MIRROR(0x6000) AM_READ(centiped_IN2_r)
+	AM_RANGE(0x1200, 0x123f) AM_MIRROR(0x6000) AM_READWRITE(atari_vg_earom_r, atari_vg_earom_w)
+	AM_RANGE(0x1280, 0x1280) AM_MIRROR(0x6000) AM_WRITE(atari_vg_earom_ctrl_w)
+	AM_RANGE(0x1300, 0x1300) AM_MIRROR(0x6000) AM_READ(input_port_4_r)
+	AM_RANGE(0x1400, 0x140f) AM_MIRROR(0x6000) AM_WRITE(centiped_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0x1481, 0x1481) AM_MIRROR(0x6000) AM_WRITE(bullsdrt_coin_count_w)
+	AM_RANGE(0x1483, 0x1484) AM_MIRROR(0x6000) AM_WRITE(led_w)
+	AM_RANGE(0x1487, 0x1487) AM_MIRROR(0x6000) AM_WRITE(centiped_flip_screen_w)
+	AM_RANGE(0x1500, 0x1500) AM_MIRROR(0x6000) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x1580, 0x1580) AM_MIRROR(0x6000) AM_NOP
+	AM_RANGE(0x1800, 0x1bbf) AM_MIRROR(0x6000) AM_WRITE(centiped_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x1bc0, 0x1bff) AM_MIRROR(0x6000) AM_RAM AM_BASE(&spriteram)
+	AM_RANGE(0x1c00, 0x1fff) AM_MIRROR(0x6000) AM_RAM
+	AM_RANGE(0x2000, 0x2fff) AM_ROM
+	AM_RANGE(0x4000, 0x4fff) AM_ROM
+	AM_RANGE(0x6000, 0x6fff) AM_ROM
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( bullsdrt_port_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(bullsdrt_sprites_bank_w)
+	AM_RANGE(0x20, 0x3f) AM_WRITE(bullsdrt_tilesbank_w) AM_BASE(&bullsdrt_tiles_bankram)
+	AM_RANGE(S2650_DATA_PORT, S2650_DATA_PORT) AM_READWRITE(bullsdrt_data_port_r, SN76496_0_w)
+ADDRESS_MAP_END
+
+
+
 /*************************************
  *
  *	Port definitions
@@ -593,7 +651,7 @@ INPUT_PORTS_START( GAMENAME )													\
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_TILT )									\
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )									\
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )									\
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )									\
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )								\
 																				\
 	PORT_START	/* IN2 */														\
 	PORT_BIT( 0x0f, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* trackball data */		\
@@ -1032,6 +1090,91 @@ INPUT_PORTS_START( warlords )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( bullsdrt )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x0f, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* trackball data */
+	PORT_BIT( 0x30, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* trackball sign bit */
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x0f, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* trackball data */
+	PORT_BIT( 0x70, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* trackball sign bit */
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Award Free Game" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START
+	/* not used */
+
+	PORT_START	/* IN6, fake trackball input port. */
+	PORT_ANALOG( 0xff, 0x80, IPT_TRACKBALL_X | IPF_REVERSE, 50, 10, 0x1d, 0xcb )
+
+	PORT_START	/* IN7, fake trackball input port. */
+	PORT_ANALOG( 0xff, 0x80, IPT_TRACKBALL_Y, 50, 10, 0x1d, 0xcb )
+INPUT_PORTS_END
+
+
 /*************************************
  *
  *	Graphics layouts: Centipede/Millipede
@@ -1190,6 +1333,14 @@ static struct POKEYinterface warlords_pokey_interface =
 };
 
 
+static struct SN76496interface sn76496_interface =
+{
+	1,
+	{ 12096000/8 },
+	{ 100 }
+};
+
+
 /*************************************
  *
  *	Machine drivers
@@ -1296,6 +1447,35 @@ static MACHINE_DRIVER_START( warlords )
 
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("pokey", POKEY, warlords_pokey_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( bullsdrt )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(S2650, 12096000/8)
+	MDRV_CPU_PROGRAM_MAP(bullsdrt_map,0)
+	MDRV_CPU_IO_MAP(bullsdrt_port_map,0)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(1460)
+
+	MDRV_NVRAM_HANDLER(atari_vg)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(centiped_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4+4)
+	MDRV_COLORTABLE_LENGTH(4+4*4*4*4)
+	MDRV_PALETTE_INIT(centiped)
+
+	MDRV_VIDEO_START(bullsdrt)
+	MDRV_VIDEO_UPDATE(bullsdrt)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
 MACHINE_DRIVER_END
 
 
@@ -1433,6 +1613,21 @@ ROM_START( warlords )
 	ROM_LOAD( "warlord.clr",  0x0000, 0x0100, CRC(a2c5c277) SHA1(f04de9fb6ee9619b4a4aae10c92b16b3123046cf) )
 ROM_END
 
+ROM_START( bullsdrt )
+	ROM_REGION( 0x8000, REGION_CPU1, 0 )	/* 32k for code */
+	ROM_LOAD( "27128.bin", 0x0000, 0x1000, CRC(2729f585) SHA1(6ffbfa5b62c497c3932ab71d0e3f407cae99cb59) )
+	ROM_CONTINUE(          0x2000, 0x1000 )
+	ROM_CONTINUE(          0x4000, 0x1000 )
+	ROM_CONTINUE(          0x6000, 0x1000 )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "2764_b.bin",   0x0000, 0x2000, CRC(49a19aba) SHA1(77869b7a7aae24dcbc4c7f1a3d4bcd26ea3f4fac) )
+	ROM_LOAD( "2764_a.bin",   0x2000, 0x2000, CRC(361ff09d) SHA1(4b57417085bc9ee174196ca638dc7e6d3626f801) )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 ) /* unknown */
+	ROM_LOAD( "82s147.bin",   0x0000, 0x0200, CRC(d841b7e0) SHA1(aab32645a613cd027aed98437db24704763cc147) )
+ROM_END
+
 
 /*************************************
  *
@@ -1456,6 +1651,12 @@ static DRIVER_INIT( magworm )
 }
 
 
+static DRIVER_INIT( bullsdrt )
+{
+	dsw_select = 0;
+}
+
+
 
 /*************************************
  *
@@ -1473,3 +1674,5 @@ GAME( 1980, magworm,  centiped, magworm,  magworm,  magworm,  ROT270, "bootleg",
 GAME( 1982, milliped, 0,        milliped, milliped, 0,        ROT270, "Atari",   "Millipede" )
 
 GAME( 1980, warlords, 0,        warlords, warlords, 0,        ROT0,   "Atari",   "Warlords" )
+
+GAMEX(1985, bullsdrt, 0,        bullsdrt, bullsdrt, bullsdrt, ROT270, "Shinkai Inc. (Magic Eletronics Inc. licence)", "Bulls Eye Darts", GAME_IMPERFECT_COLORS )

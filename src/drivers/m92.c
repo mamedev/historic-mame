@@ -96,6 +96,101 @@ Fire Barrel                   1993  Rev 3.52 M92
 Dream Soccer '94              1994  Rev 3.53 M92
 Gunforce 2                    1994  Rev 3.53 M92
 
+Gun Force
+1991, Irem Corp.
+
+PCB Layout
+----------
+
+Top board (Standard M92 Main Board)
+
+M92-A-B   05C04170B1
+|---------------------------|-----|--------------------|
+|         MC3403  MC3403    |NANAO|                    |
+|   064D                    |GA20 |         DSW3       |
+|         MC3403  MC3403    |-----|                    |
+|                             YM2151                   |
+|   MC3403              YM3014                         |
+|                                                      |
+|J      CN6                           |-------|        |
+|                      D71059C        |NEC    |        |
+|A              6264                  |D71036L|        |
+|                      62256   18MHz  |V33    |        |
+|M                                    |-------|        |
+|               6264   62256                           |
+|M                           M92A-7J-.41(PAL)          |
+|                                     M92A-9J-.51(PAL) |
+|A                                                     |
+|                               |-----|     |-----|    |
+| CN4(4P)                       |NANAO|     |NANAO|    |
+|                               |GA21 |     |GA22 |    |
+|       M92A-3M-.11(PAL)        |-----|     |-----|    |
+|                                                      |
+|                       6264      6116                 |
+| CN5(3P)                                              |
+|       DSW2    DSW1    6264      6116      26.66666MHz|
+|------------------------------------------------------|
+Notes:
+      V33 clock   : 9.000MHz
+      GA20 clock  : 3.579545MHz (pin38)
+      YM2151 clock: 3.579545MHz
+      VSync       : 60Hz
+
+      6116 : 2K x8 SRAM
+      6264 : 8K x8 SRAM
+      62256: 32K x8 SRAM
+
+      CN4: Connector for 4th player controls
+      CN5: Connector for 3rd player controls
+      CN6: Connector for 2nd speaker (for stereo output)
+
+      Custom chips:
+                   NANAO GA20 (QFP80) - Sound chip
+                   NANAO GA21 (QFP136)
+                   NANAO GA22 (QFP160)
+
+
+
+Bottom board (Game Board, differs per game)
+
+M92-B-B   05C04171B1
+|--------------------------------------------------------|
+|              ROM_C0.9          ROM_001.29*  ROM_000.38 |
+|                        |-----|                         |
+|14.31818MHz   ROM_C1.10 |NANAO| ROM_011.30*  ROM_010.39 |
+|                        |GA23 |                         |
+| |----------| ROM_C2.11 |-----| ROM_021.31*  ROM_020.40 |
+| |NANAO     |                                           |
+| |08J27261A1| ROM_C3.12         ROM_031.32*  ROM_030.41 |
+| |011       |                                           |
+| |9108KK700 |                                           |
+| |----------|                                           |
+|                                                        |
+|               GF_B-SH0-.14                             |
+|                                                        |
+|                                       M92_B-7H-.43(PAL)|
+|                                                        |
+|               6264                  GF_B-L0-C.25       |
+|                                                        |
+|                                     GF_B-L1-C.26       |
+|               6264        62256                        |
+|  M92B-2L-.7(PAL)                    GF_B-H1-C.27       |
+|                           62256                        |
+|  ROM_DA.8     GF_B-SL0.17           GF_B-H0-C.28       |
+|                                                        |
+|--------------------------------------------------------|
+Notes:
+      *: Unpopulated position (shown for reference for other M92 games)
+
+      6264 : 8K x8 SRAM
+      62256: 32K x8 SRAM
+
+      Custom chips:
+                   NANAO 08J27261A1 (PLCC84, encrypted V30 sound CPU, clocked at 14.31818MHz on pins 78 & 79)
+                   NANAO GA23 (QFP180)
+
+
+
 *****************************************************************************/
 
 #include "driver.h"
@@ -2354,7 +2449,7 @@ static DRIVER_INIT( lethalth )
 	install_mem_read_handler(0, 0xe001e, 0xe001f, lethalth_cycle_r);
 	init_m92(lethalth_decryption_table, 0);
 	m92_irq_vectorbase=0x20;
-	
+
 	/* NOP out the bankswitcher */
 	install_port_write_handler(0, 0x20, 0x21, MWA8_NOP);
 

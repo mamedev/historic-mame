@@ -1411,6 +1411,10 @@ VIDEO_UPDATE( system32 ) {
 		sys32mon_old8 = sys32mon_old4 = -1;
 	#endif
 
+
+
+
+
 	// if the windows number used by a tilemap use change then that window of the tilemap needs to be considered dirty
 	for (tm = 0; tm < 4; tm++) {
 		system32_windows[tm][0] = (sys32_videoram[(0x01FF40+4*tm)/2] & 0x007f);
@@ -1548,6 +1552,45 @@ VIDEO_UPDATE( system32 ) {
 
 	fillbitmap(bitmap, 0, 0);
 
+	/* Rad Rally (title screen) and Rad Mobile (Winners don't use drugs) use a bitmap ... */
+	/* i think this is wrong tho, rad rally enables it on the 2nd title screen when the
+	   data isn't complete */
+
+	if (sys32_videoram[0x01FF00/2] & 0x0800)  // wrong?
+	{
+		int xcnt, ycnt;
+		static UINT32 *destline;
+		struct GfxElement *gfx=Machine->gfx[0];
+
+		const pen_t *paldata = &gfx->colortable[0];
+
+//		if ( keyboard_pressed_memory(KEYCODE_C) )
+//		{
+//			ppp++;
+//
+//		}
+
+		for ( ycnt = 0 ; ycnt < 224 ; ycnt ++ )
+		{
+			destline = (UINT32 *)(bitmap->line[ycnt]);
+
+
+			for ( xcnt = 0 ; xcnt < 160 ; xcnt ++ )
+			{
+				int data2;
+
+				data2 = sys32_videoram[256*ycnt+xcnt];
+
+
+				destline[xcnt*2+1] = paldata[(data2 >> 8)+(0x100*0x1d)]; // 1d00
+				destline[xcnt*2] = paldata[(data2 &0xff)+(0x100*0x1d)];
+			}
+
+		}
+	}
+
+
+
 	// Priority loop.  Draw layers 1 and 3 on Multi32's Monitor B
 	if (sys32_displayenable & 0x0002) {
 		for (priloop=0; priloop < 0x10; priloop++) {
@@ -1567,6 +1610,39 @@ VIDEO_UPDATE( system32 ) {
 		}
 	}
 	system32_draw_text_layer (bitmap, cliprect);
+
+#if 0
+	{
+
+		// custom log
+
+		static FILE *sys32_logfile;
+
+		/* provide errorlog from here on */
+		sys32_logfile = fopen("sys32vid.log","wa");
+
+		int x;
+
+	//	x = rand();
+
+		fprintf(sys32_logfile,"Video Regs 0x31ff00 - 0x31ffff\n");
+		for (x = 0x1ff00; x< 0x20000; x+=2)
+		{
+			fprintf(sys32_logfile, "%04x\n", sys32_videoram[x/2] ) ;
+
+		}
+		fprintf(sys32_logfile,"Mixer Regs 0x610000 - 0x6100ff\n");
+		for (x = 0x00; x< 0x100; x+=2)
+		{
+			fprintf(sys32_logfile, "%04x\n", system32_mixerregs[0][x/2] ) ;
+
+		}
+
+
+		fclose (sys32_logfile);
+	}
+#endif
+
 }
 
 

@@ -885,6 +885,31 @@ ROM_START( kungfut )
 	ROM_LOAD( "82s129.2", 0x0200, 0x0100, CRC(c31eb3e6) SHA1(94fb8c6d83432c5f456510d628971147d373faf5) )
 ROM_END
 
+ROM_START( kungfuta )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "kungfu.01",  0x0000, 0x4000, CRC(48dada70) SHA1(a90901d2aef73d4fa9d9c80769b82a3fead0a0f9) )
+	ROM_LOAD( "kungfu.02",  0x4000, 0x4000, CRC(c08c5152) SHA1(c5db3ee1ee165708d93d296b51a5bb43265ac75f) )
+	ROM_LOAD( "kungfu.03",  0x8000, 0x4000, CRC(09b8670c) SHA1(170e7cbf87727d940e959fa7a0328b4cc1aba195) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "kungfu.04",  0x0000, 0x2000,  CRC(352bff48) SHA1(87d2408d31e1326ec810debcb2c724d1f003ae7b) )
+
+	ROM_REGION( 0x6000,  REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "kungfu.08",  0x0000, 0x2000, CRC(60b91d2f) SHA1(4a3337bb8f475a40b9b7f31d4b42e73179177763) )
+	ROM_LOAD( "kungfu.09",  0x2000, 0x2000, CRC(121ba029) SHA1(4e4375cb9e93af45dd16e2a295fa88753201e6e8) )
+	ROM_LOAD( "kungfu.10",  0x4000, 0x2000, CRC(146df9de) SHA1(8dcc33bc281f1e5b069b52645123de62037261e6) )
+
+	ROM_REGION( 0x6000,  REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "kungfu.07",  0x0000, 0x2000, CRC(1df48de5) SHA1(e620ea55a1ed2dc934878d077d5cd6437e833a6d) )
+	ROM_LOAD( "kungfu.06",  0x2000, 0x2000, CRC(1921d49b) SHA1(fcc5500c8c1605e571b203828d6a7de36ad76fab) )
+	ROM_LOAD( "kungfu.05",  0x4000, 0x2000, CRC(ff9aced4) SHA1(b13f8ea4131b54bdd2888841f52f1482b02b6624) )
+
+	ROM_REGION( 0x0300,  REGION_PROMS, 0 )
+	ROM_LOAD( "82s129.0", 0x0000, 0x0100, CRC(eb823177) SHA1(a28233dbf87744a9896fe675b76603557e7f596b) ) // ic.23
+	ROM_LOAD( "82s129.1", 0x0100, 0x0100, CRC(6eec5dd9) SHA1(e846209c167b2a7d790faacea082a7edc1338e47) ) // ic.24
+	ROM_LOAD( "82s129.2", 0x0200, 0x0100, CRC(c31eb3e6) SHA1(94fb8c6d83432c5f456510d628971147d373faf5) ) // ic.25
+ROM_END
+
 ROM_START( wiz )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "ic07_01.bin",  0x0000, 0x4000, CRC(c05f2c78) SHA1(98b93234684a3a228552ef41a08512fef1befedd) )
@@ -1106,5 +1131,6 @@ GAMEX(1983, stinger2, stinger, stinger, stinger2, stinger, ROT90,  "Seibu Denshi
 GAMEX(1984, scion,    0,       scion,   scion,    0,       ROT0,   "Seibu Denshi", "Scion", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_COLORS )
 GAMEX(1984, scionc,   scion,   scion,   scion,    0,       ROT0,   "Seibu Denshi (Cinematronics license)", "Scion (Cinematronics)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_COLORS )
 GAME( 1984, kungfut,  0,       kungfut, kungfut,  0,       ROT0,   "Seibu Kaihatsu Inc.", "Kung-Fu Taikun" )
+GAME( 1984, kungfuta, kungfut, kungfut, kungfut,  0,       ROT0,   "Seibu Kaihatsu Inc.", "Kung-Fu Taikun (alt)" ) /* board was a bootleg but set might still be original */
 GAME( 1985, wiz,      0,       wiz,     wiz,      wiz,     ROT270, "Seibu Kaihatsu Inc.", "Wiz" )
 GAME( 1985, wizt,     wiz,     wiz,     wiz,      wiz,     ROT270, "[Seibu] (Taito license)", "Wiz (Taito)" )

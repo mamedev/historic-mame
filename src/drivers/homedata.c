@@ -567,6 +567,7 @@ ADDRESS_MAP_START( mrokumei_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_RAM) /* videoram */
 	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x6000, 0x6fff) AM_READ(MRA8_RAM) /* work ram */
+	AM_RANGE(0x7000, 0x77ff) AM_READ(MRA8_RAM) /* hourouki expects this to act as RAM */
 	AM_RANGE(0x7800, 0x7800) AM_READ(MRA8_RAM) /* only used to store the result of the ROM check */
 	AM_RANGE(0x7801, 0x7802) AM_READ(mrokumei_keyboard_r)	// also vblank and active page
 	AM_RANGE(0x7803, 0x7803) AM_READ(input_port_2_r)	// coin, service
@@ -580,6 +581,7 @@ ADDRESS_MAP_START( mrokumei_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_WRITE(mrokumei_videoram_w) AM_BASE(&videoram)
 	AM_RANGE(0x4000, 0x5fff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x6000, 0x6fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x7000, 0x77ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x7800, 0x7800) AM_WRITE(MWA8_RAM) /* only used to store the result of the ROM check */
 	AM_RANGE(0x7ff0, 0x7ffd) AM_WRITE(MWA8_RAM) AM_BASE(&homedata_vreg)
 	AM_RANGE(0x8000, 0x8000) AM_WRITE(mrokumei_blitter_start_w)	// in some games also ROM bank switch to access service ROM

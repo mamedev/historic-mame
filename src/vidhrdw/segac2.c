@@ -105,7 +105,7 @@ static UINT8		window_down;				/* window Y direction */
 static UINT32		window_vpos;				/* window Y position */
 static UINT8		window_right;				/* window X direction */
 static UINT32		window_hpos;				/* window X position */
-
+static UINT8		window_width;				/* window width */
 
 #define GEN_TILEMAP_WIP			0
 
@@ -235,7 +235,7 @@ VIDEO_START( segac2 )
 	segac2_bg_palbase = 0x000;
 	segac2_sp_palbase = 0x100;
 	segac2_palbank    = 0x000;
-	
+
 	scanbase = 0;
 
 	/* reset VDP */
@@ -331,10 +331,9 @@ VIDEO_START( megatech )
 	segac2_sp_palbase = 0x000;	// same palettes for sprites and bg
 	display_enable = 1;
 
-
 	if (start_megatech_video_normal())
 		return 1;
-	scanbase = 192;
+	scanbase = 256*2;
 
 	return 0;
 }
@@ -494,7 +493,7 @@ if (keyboard_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
 
 	/* sms display should be on second monitor, for now we control it with a fake dipswitch while
 	   the driver is in development */
-	/*if (readinputport(5)&0x01)*/	
+	/*if (readinputport(5)&0x01)*/
 		update_megatech_video_normal(bitmap, cliprect);
 
 }
@@ -529,14 +528,14 @@ if (keyboard_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
 
 
 
-	/* generate the final screen - control which screen is 
+	/* generate the final screen - control which screen is
 	   shown by a keystroke for now */
 	if(keyboard_pressed(KEYCODE_G))
 	{
 		for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 			drawline((UINT16 *)bitmap->line[y], y);
 	}
-	else 
+	else
 		update_megatech_video_normal(bitmap, cliprect);
 	segac2_bg_palbase = old_bg;
 	segac2_sp_palbase = old_sp;
@@ -878,8 +877,10 @@ static void vdp_register_w(int data)
 		}
 
 		case 0x0c: /* video modes */
-/*			if (!(regdat & 1))
-				usrintf_showmessage("Video width = 256!"); */
+			/*if (!(regdat & 1))
+				usrintf_showmessage("Video width = 256!");*/
+			/*This will change the visible area too...*/
+			window_width = regdat & 1;/*maybe bit 7?*/
 			break;
 
 		case 0x0d: /* HScroll Base */
@@ -1199,7 +1200,7 @@ static void get_window_tiles(int line, UINT32 scrollbase, UINT32 *tiles)
 	for (column = 0; column < 40; column++)
 	{
 		/* determine the base of the tilemap row */
-		int temp = (line / 8) * 64 + column;
+		int temp = (line / 8) * ((window_width) ? 64 : 32) + column;
 		int tilebase = scrollbase + 2 * temp;
 
 		/* get the tile info */

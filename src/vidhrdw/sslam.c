@@ -97,9 +97,9 @@ WRITE16_HANDLER( sslam_tx_tileram_w )
 static void get_sslam_md_tile_info(int tile_index)
 {
 	int code = sslam_md_tileram[tile_index] & 0x0fff;
-	int colr = sslam_md_tileram[tile_index] & 0xe000;
+	int colr = sslam_md_tileram[tile_index] & 0xf000;
 
-	SET_TILE_INFO(1,code+0x2000 ,colr >> 13,0)
+	SET_TILE_INFO(1,code+0x2000 ,colr >> 12,0)
 }
 
 WRITE16_HANDLER( sslam_md_tileram_w )
@@ -107,6 +107,8 @@ WRITE16_HANDLER( sslam_md_tileram_w )
 	COMBINE_DATA(&sslam_md_tileram[offset]);
 	tilemap_mark_tile_dirty(sslam_md_tilemap,offset);
 }
+
+/* Background Layer */
 
 static void get_sslam_bg_tile_info(int tile_index)
 {

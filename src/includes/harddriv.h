@@ -25,6 +25,9 @@ extern data16_t *hddsk_zram;
 extern data16_t *hd68k_slapstic_base;
 extern data16_t *st68k_sloop_alt_base;
 
+extern data16_t *hdadsp_data_memory;
+extern data32_t *hdadsp_pgm_memory;
+
 extern data16_t *hdgsp_protection;
 extern data16_t *stmsp_sync[2];
 

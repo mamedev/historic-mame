@@ -223,14 +223,8 @@ static struct KeyboardInfo keylist[MAX_KEYS];
 #define VKCODE(keycode)				(((keycode) >> 8) & 0xff)
 #define ASCIICODE(keycode)			(((keycode) >> 16) & 0xff)
 
-// table entry indices
-#define MAME_KEY		0
-#define DI_KEY			1
-#define VIRTUAL_KEY		2
-#define ASCII_KEY		3
-
 // master translation table
-static int key_trans_table[][4] =
+const int win_key_trans_table[][4] =
 {
 	// MAME key				dinput key			virtual key		ascii
 	{ KEYCODE_ESC, 			DIK_ESCAPE,			VK_ESCAPE,	 	27 },
@@ -338,7 +332,8 @@ static int key_trans_table[][4] =
 	{ KEYCODE_DEL, 			DIK_DELETE,			VK_DELETE, 		0 },
 	{ KEYCODE_LWIN, 		DIK_LWIN,			VK_LWIN, 		0 },
 	{ KEYCODE_RWIN, 		DIK_RWIN,			VK_RWIN, 		0 },
-	{ KEYCODE_MENU, 		DIK_APPS,			VK_APPS, 		0 }
+	{ KEYCODE_MENU, 		DIK_APPS,			VK_APPS, 		0 },
+	{ -1 }
 };
 
 
@@ -1068,17 +1063,17 @@ static void init_keylist(void)
 				int entry;
 
 				// find the table entry, if there is one
-				for (entry = 0; entry < ELEMENTS(key_trans_table); entry++)
-					if (key_trans_table[entry][DI_KEY] == key)
+				for (entry = 0; win_key_trans_table[entry][0] >= 0; entry++)
+					if (win_key_trans_table[entry][DI_KEY] == key)
 						break;
 
 				// compute the code, which encodes DirectInput, virtual, and ASCII codes
 				code = KEYCODE(key, 0, 0);
 				standardcode = KEYCODE_OTHER;
-				if (entry < ELEMENTS(key_trans_table))
+				if (entry < win_key_trans_table[entry][0] >= 0)
 				{
-					code = KEYCODE(key, key_trans_table[entry][VIRTUAL_KEY], key_trans_table[entry][ASCII_KEY]);
-					standardcode = key_trans_table[entry][MAME_KEY];
+					code = KEYCODE(key, win_key_trans_table[entry][VIRTUAL_KEY], win_key_trans_table[entry][ASCII_KEY]);
+					standardcode = win_key_trans_table[entry][MAME_KEY];
 				}
 
 				// fill in the key description

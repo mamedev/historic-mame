@@ -21,17 +21,6 @@ extern "C" {
 
 /*************************************
  *
- *	CPU cycle timing arrays
- *
- *************************************/
-
-extern double cycles_to_sec[];
-extern double sec_to_cycles[];
-
-
-
-/*************************************
- *
  *	CPU description for drivers
  *
  *************************************/
@@ -177,8 +166,8 @@ int cpunum_is_suspended(int cpunum, int reason);
 /* Aborts the timeslice for the active CPU */
 void activecpu_abort_timeslice(void);
 
-/* Returns the current local time for a CPU, relative to the current timeslice */
-double cpunum_get_localtime(int cpunum);
+/* Returns the current local time for a CPU */
+mame_time cpunum_get_localtime(int cpunum);
 
 /* Returns the current scaling factor for a CPU's clock speed */
 double cpunum_get_clockscale(int cpunum);
@@ -253,9 +242,11 @@ int cpu_getcurrentframe(void);
 int cpu_getscanline(void);
 
 /* Returns the amount of time until a given scanline */
+mame_time cpu_getscanlinetime_mt(int scanline);
 double cpu_getscanlinetime(int scanline);
 
 /* Returns the duration of a single scanline */
+mame_time cpu_getscanlineperiod_mt(void);
 double cpu_getscanlineperiod(void);
 
 /* Returns the current horizontal beam position in pixels */

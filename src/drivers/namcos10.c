@@ -5,7 +5,7 @@
   Driver by smf
 
   Only one rom for Mr Driller 2 is dumped, it is encrypted using an xor and then a bitswap.
-  All it currently does is try to access the controller port.
+  All it currently does is try to access the link port.
 
 */
 
@@ -13,16 +13,11 @@
 #include "cpu/mips/psx.h"
 #include "includes/psx.h"
 
-static INTERRUPT_GEN( namcos10_vblank )
-{
-}
-
 static ADDRESS_MAP_START( namcos10_map, ADDRESS_SPACE_PROGRAM, 32 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(29) )
-	AM_RANGE(0x00000000, 0x003fffff) AM_RAM AM_BASE(&psxram) AM_SIZE(&psxramsize)    /* ram */
-	AM_RANGE(0x1f800000, 0x1f8003ff) AM_RAM				  /* scratchpad */
+	AM_RANGE(0x00000000, 0x003fffff) AM_RAM AM_SHARE(1) AM_BASE(&g_p_n_psxram) AM_SIZE(&g_n_psxramsize) /* ram */
+	AM_RANGE(0x1f800000, 0x1f8003ff) AM_RAM /* scratchpad */
 	AM_RANGE(0x1f801000, 0x1f801007) AM_WRITENOP
-	AM_RANGE(0x1f801008, 0x1f80100b) AM_RAM    /* ?? */
+	AM_RANGE(0x1f801008, 0x1f80100b) AM_RAM /* ?? */
 	AM_RANGE(0x1f80100c, 0x1f80102f) AM_WRITENOP
 	AM_RANGE(0x1f801010, 0x1f801013) AM_READNOP
 	AM_RANGE(0x1f801014, 0x1f801017) AM_READNOP
@@ -34,17 +29,22 @@ static ADDRESS_MAP_START( namcos10_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x1f801810, 0x1f801817) AM_READWRITE(psx_gpu_r, psx_gpu_w)
 	AM_RANGE(0x1f801820, 0x1f801827) AM_READWRITE(psx_mdec_r, psx_mdec_w)
 	AM_RANGE(0x1f801c00, 0x1f801dff) AM_NOP
-	AM_RANGE(0x1f802020, 0x1f802033) AM_RAM
+	AM_RANGE(0x1f802020, 0x1f802033) AM_RAM /* ?? */
 	AM_RANGE(0x1f802040, 0x1f802043) AM_WRITENOP
-	AM_RANGE(0x1fc00000, 0x1fffffff) AM_ROM AM_REGION(REGION_USER2, 0)    /* bios mirror */
+	AM_RANGE(0x1fc00000, 0x1fffffff) AM_ROM AM_SHARE(2) AM_REGION(REGION_USER1, 0) /* bios */
+	AM_RANGE(0x80000000, 0x803fffff) AM_RAM AM_SHARE(1) /* ram mirror */
+	AM_RANGE(0x9fc00000, 0x9fffffff) AM_ROM AM_SHARE(2) /* bios mirror */
+	AM_RANGE(0xa0000000, 0xa03fffff) AM_RAM AM_SHARE(1) /* ram mirror */
+	AM_RANGE(0xbfc00000, 0xbfffffff) AM_ROM AM_SHARE(2) /* bios mirror */
+	AM_RANGE(0xfffe0130, 0xfffe0133) AM_WRITENOP
 ADDRESS_MAP_END
 
 static DRIVER_INIT( namcos10 )
 {
 	int i;
-	data16_t *RAM = (data16_t *)memory_region( REGION_USER2 );
+	data16_t *RAM = (data16_t *)memory_region( REGION_USER1 );
 
-	for( i = 0; i < memory_region_length( REGION_USER2 ) / 2; i++ )
+	for( i = 0; i < memory_region_length( REGION_USER1 ) / 2; i++ )
 	{
 		RAM[ i ] = BITSWAP16( RAM[ i ] ^ 0xaaaa,
 			0xc, 0xd, 0xf, 0xe, 0xb, 0xa, 0x9, 0x8,
@@ -61,7 +61,7 @@ static MACHINE_DRIVER_START( namcos10 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD( PSXCPU, 33868800 / 2 ) /* 33MHz ?? */
 	MDRV_CPU_PROGRAM_MAP( namcos10_map, 0 )
-	MDRV_CPU_VBLANK_INT( namcos10_vblank, 1 )
+	MDRV_CPU_VBLANK_INT( psx_vblank, 1 )
 
 	MDRV_FRAMES_PER_SECOND( 60 )
 	MDRV_VBLANK_DURATION( 0 )
@@ -142,7 +142,7 @@ INPUT_PORTS_START( namcos10 )
 INPUT_PORTS_END
 
 ROM_START( mrdrilr2 )
-	ROM_REGION32_LE( 0x800000, REGION_USER2, 0 ) /* main prg */
+	ROM_REGION32_LE( 0x800000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD( "dr21vera.1a",  0x000000, 0x800000, CRC(f93532a2) SHA1(8b72f2868978be1f0e0abd11425a3c8b2b0c4e99) )
 ROM_END
 

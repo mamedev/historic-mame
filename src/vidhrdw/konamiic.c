@@ -5214,6 +5214,11 @@ static void K054157_change_rambank(void)
 	K054157_cur_offset  = K054157_offsetl[bank];
 }
 
+int K054157_get_current_rambank(void)
+{
+	return ((K054157_regs[0x19]>>2) & 6) | (K054157_regs[0x19] & 1);
+}
+
 static void K054157_change_splayer(void)
 {
 	int bank = ((K054157_regs[0x18]>>2) & 6) | (K054157_regs[0x18] & 1);
@@ -5399,8 +5404,6 @@ READ16_HANDLER( K054157_rom_word_8000_r )
 
 //	usrintf_showmessage("%04x: addr %06x",activecpu_get_pc(),addr);
 
-//	printf("rd @ %x (bank %x, final %x)\n", offset*2, K054157_cur_rombank, addr);
-
 	return K054157_rombase[addr+1] | (K054157_rombase[addr] << 8);
 }
 
@@ -5422,6 +5425,36 @@ WRITE16_HANDLER( K054157_ram_half_word_w )
 	COMBINE_DATA(adr);
 	if(*adr != old)
 		tilemap_mark_tile_dirty(K054157_cur_tilemap, (offset & 0x7ff) + K054157_cur_offset);
+}
+
+READ_HANDLER( K054157_ram_code_r )
+{
+	data16_t *adr = K054157_cur_rambase + offset;
+
+	return *adr & 0xff;
+}
+
+READ_HANDLER( K054157_ram_attr_r )
+{
+	data16_t *adr = K054157_cur_rambase + offset;
+
+	return *adr>>8;
+}
+
+WRITE_HANDLER( K054157_ram_code_w )
+{
+	data16_t *adr = K054157_cur_rambase + offset;
+
+	*adr &= 0xff00;
+	*adr |= data;
+}
+
+WRITE_HANDLER( K054157_ram_attr_w )
+{
+	data16_t *adr = K054157_cur_rambase + offset;
+
+	*adr &= 0x00ff;
+	*adr |= data<<8;
 }
 
 WRITE16_HANDLER( K054157_word_w )
@@ -5470,9 +5503,33 @@ WRITE16_HANDLER( K054157_word_w )
 	}
 }
 
+WRITE_HANDLER( K054157_w )
+{
+	if (offset & 1)
+	{
+		K054157_word_w((offset>>1)+1, data, 0xff00);
+	}
+	else
+	{
+		K054157_word_w((offset>>1), data<<8, 0x00ff);
+	}
+}
+
 WRITE16_HANDLER( K054157_b_word_w )
 {
 	COMBINE_DATA (K054157_regsb + offset);
+}
+
+WRITE_HANDLER( K054157_b_w )
+{
+	if (offset & 1)
+	{
+		K054157_b_word_w((offset>>1)+1, data, 0xff00);
+	}
+	else
+	{
+		K054157_b_word_w((offset>>1), data<<8, 0x00ff);
+	}
 }
 
 void K054157_tilemap_update(void)
@@ -6087,9 +6144,6 @@ READ16_HANDLER( K056832_rom_word_r )
 
 	ofs16 += (K056832_CurGfxBank*5*1024);
 	ofs8 += (K056832_CurGfxBank*10*1024);
-
-//	if (!offset)
-//		printf("CurGfxBank = %x\n", K056832_CurGfxBank);
 
 	if (!K056832_rombase)
 	{

@@ -4266,6 +4266,20 @@ ROM_START( spacefev )
 	ROM_LOAD( "f5.bpr",       0x0000, 0x0020, CRC(c5914ec1) SHA1(198875fcab36d09c8726bb21e2fdff9882f6721a) )
 ROM_END
 
+ROM_START( spacefva )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )             /* 64k for code */
+	ROM_LOAD( "hs_f1.f1",     0x0000, 0x0400, CRC(7fa305e8) SHA1(cda9fc9c76f57800de25ddf65f69fef19fd28481) )
+	ROM_LOAD( "hs_f2.f2",     0x0400, 0x0400, CRC(7c1429aa) SHA1(8d8e0a4fc09fb1ecbfb86c67c20000ef30ab3fac) )
+	ROM_LOAD( "hs_g1.g1",     0x0800, 0x0400, CRC(75f6efc1) SHA1(286bc75e35e8ad6277e9db7377e90731b9c2ec97) )
+	ROM_LOAD( "hs_g2.g2",     0x0c00, 0x0400, CRC(fb6bcf4a) SHA1(3edea04d67c2f3b1a6a73adadea83ddda0be3842) )
+	ROM_LOAD( "hs_h1.h1",     0x1000, 0x0400, CRC(3beef037) SHA1(4bcc157e7d721b3a9e16e7a2efa807303d4be8ac) )
+	ROM_LOAD( "hs_h2.h2",     0x1400, 0x0400, CRC(bddbc94f) SHA1(f90cbc3cd0f695cbb9ae03b608f4bf5a4a000c64) )
+	ROM_LOAD( "hs_i1.i1",     0x1800, 0x0400, CRC(437786c5) SHA1(2ccdb0d48dbbfe47ae82e970ca37970602405cf6) )
+
+	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* Sound 8035 + 76477 Sound Generator */
+	ROM_LOAD( "hs_sound.ic2", 0x0000, 0x0400, CRC(95c2c1ee) SHA1(42a3a382fc7d2782052372d71f6d0e8a153e74d0) )
+ROM_END
+
 ROM_START( sfeverbw )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )             /* 64k for code */
 	ROM_LOAD( "spacefev.f1",  0x0000, 0x0400, CRC(b8887351) SHA1(ccd49937f1cbd7a157b3715474ccc3e8fdcea2b2) )
@@ -4279,6 +4293,36 @@ ROM_START( sfeverbw )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* Sound 8035 + 76477 Sound Generator */
 	ROM_LOAD( "ss3.ic2",      0x0000, 0x0400, CRC(95c2c1ee) SHA1(42a3a382fc7d2782052372d71f6d0e8a153e74d0) )
+ROM_END
+
+ROM_START( sfevrbwa )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )             /* 64k for code */
+	ROM_LOAD( "sf_f1.f1",     0x0000, 0x0400, CRC(b8887351) SHA1(ccd49937f1cbd7a157b3715474ccc3e8fdcea2b2) )
+	ROM_LOAD( "sf_f2.f2",     0x0400, 0x0400, CRC(cda933a7) SHA1(a0447c8c98e24674081c9bf4b1ef07dc186c6e2b) )
+	ROM_LOAD( "sf_g1.g1",     0x0800, 0x0400, CRC(de17578a) SHA1(d9d5dbf38331f212d2a566c60756a788e169104d) )
+	ROM_LOAD( "sf_g2.g2",     0x0c00, 0x0400, CRC(f1a90948) SHA1(850f27b42ca12bcba4aa95a1ad3e66206fa63554) )
+	ROM_LOAD( "sf_h1.h1",     0x1000, 0x0400, CRC(b0505da3) SHA1(f7b1f3a6dd06ff0cdeb6b13c948b7a262592514a) )
+	ROM_LOAD( "sf_h2.h2",     0x1400, 0x0400, CRC(e91703e8) SHA1(f58606b0c7d945e94c3fccc7ebe17ca25675e6a0) )
+	ROM_LOAD( "sf_i1.i1",     0x1800, 0x0400, CRC(aa36b25d) SHA1(28f555aab27b206a8c6f550b6caa938cece6e204) )
+	ROM_LOAD( "sf_i2.i2",     0x1c00, 0x0400, CRC(515b8932) SHA1(e5175adae74aa93d81a27d734d82d5ab90401d67) )
+
+	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* Sound 8035 + 76477 Sound Generator */
+	ROM_LOAD( "sf_sound.ic2", 0x0000, 0x0400, CRC(939e01d4) SHA1(7c9ccd24e5da03831cd0aa821da17e3b81cd8381) )
+ROM_END
+
+ROM_START( spacelnc )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )             /* 64k for code */
+	ROM_LOAD( "sl_f1.f1",     0x0000, 0x0400, CRC(6ad59e40) SHA1(d416f7e6f5f55178df5c390548cd299650853022) )
+	ROM_LOAD( "sl_f2.f2",     0x0400, 0x0400, CRC(2de568e2) SHA1(f13740d3d9bf7434b7760e9286ef6e2ede40845f) )
+	ROM_LOAD( "sl_g1.g1",     0x0800, 0x0400, CRC(06d0ab36) SHA1(bf063100b065dbf511d6f32da169fb461568d15d) )
+	ROM_LOAD( "sl_g2.g2",     0x0c00, 0x0400, CRC(73ac4fe6) SHA1(7fa8c09692446bdf804900158e040f0b875a2e32) )
+	ROM_LOAD( "sl_h1.h1",     0x1000, 0x0400, CRC(7f42a94b) SHA1(ad85706de5e3f952b12756275be1ea1276a10666) )
+	ROM_LOAD( "sl_h2.h2",     0x1400, 0x0400, CRC(04b7a5f9) SHA1(589b0a0c8dcb1300623fe8478f1d7173b2bc575f) )
+	ROM_LOAD( "sl_i1.i1",     0x1800, 0x0400, CRC(d30007a3) SHA1(9e5905df8f7822385daef159a07f0e8257cb862a) )
+	ROM_LOAD( "sl_i2.i2",     0x1c00, 0x0400, CRC(640ffd2f) SHA1(65c21396c39dc99ec263f66f400a8e4c7712b20a) )
+
+	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* Sound 8035 + 76477 Sound Generator */
+	ROM_LOAD( "sl_sound.ic2", 0x0000, 0x0400, CRC(8e1ff929) SHA1(5c7da97b05fb8fff242158978199f5d35b234426) )
 ROM_END
 
 ROM_START( sstrangr )
@@ -4360,8 +4404,11 @@ ROM_END
 /* Nintendo games */
 
 	  GAMEX(1979, sheriff,  0,        sheriff,  sheriff,  8080bw,	ROT270, "Nintendo", "Sheriff", GAME_IMPERFECT_SOUND | GAME_WRONG_COLORS )
-	  GAMEX(1979, spacefev, 0,        sheriff,  spacefev, 8080bw,	ROT270, "Nintendo", "Space Fever (color)", GAME_IMPERFECT_SOUND )
-	  GAMEX(1979, sfeverbw, spacefev, sheriff,  spacefev, 8080bw,	ROT270, "Nintendo", "Space Fever (black and white)", GAME_IMPERFECT_SOUND )
+	  GAMEX(1979, spacefev, 0,        sheriff,  spacefev, 8080bw,	ROT270, "Nintendo", "Space Fever (color set 1)", GAME_IMPERFECT_SOUND )
+	  GAMEX(1979, spacefva, spacefev, sheriff,  spacefev, 8080bw,	ROT270, "Nintendo", "Space Fever (color set 2)", GAME_IMPERFECT_SOUND )
+	  GAMEX(1979, sfeverbw, spacefev, sheriff,  spacefev, 8080bw,	ROT270, "Nintendo", "Space Fever (black and white set 1)", GAME_IMPERFECT_SOUND )
+	  GAMEX(1979, sfevrbwa, spacefev, sheriff,  spacefev, 8080bw,	ROT270, "Nintendo", "Space Fever (black and white set 2)", GAME_IMPERFECT_SOUND )
+	  GAMEX(1979, spacelnc, 0,        sheriff,  spacefev, 8080bw,	ROT270, "Nintendo", "Space Launcher", GAME_IMPERFECT_SOUND )
 	  GAMEX(1980, bandido,  sheriff,  sheriff,  bandido,  bandido,	ROT270, "Exidy", "Bandido", GAME_IMPERFECT_SOUND )
 	  GAMEX(1980, helifire, 0,        helifire, helifire, helifire,	ROT270, "Nintendo", "HeliFire (revision B)", GAME_IMPERFECT_SOUND )
 	  GAMEX(1980, helifira, helifire, helifire, helifire, helifire,	ROT270, "Nintendo", "HeliFire (revision A)", GAME_IMPERFECT_SOUND )

@@ -14,6 +14,8 @@ extern UINT8 dynax_blitter_irq,	dynax_blitter2_irq;
 
 void sprtmtch_update_irq(void);
 void jantouki_update_irq(void);
+void mjelctrn_update_irq(void);
+void neruton_update_irq(void);
 
 /***************************************************************************
 
@@ -59,6 +61,8 @@ VIDEO_START( mcnpshnt );
 VIDEO_START( sprtmtch );
 VIDEO_START( mjdialq2 );
 VIDEO_START( jantouki );
+VIDEO_START( mjelctrn );
+VIDEO_START( neruton );
 
 VIDEO_UPDATE( hanamai );
 VIDEO_UPDATE( hnoridur );

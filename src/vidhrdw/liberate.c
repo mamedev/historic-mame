@@ -223,8 +223,7 @@ static void liberate_drawsprites(struct mame_bitmap *bitmap)
 //		if (pri==1 && color==0) continue;
 
 		fx = spriteram[offs+0] & 0x04;
-		fy = spriteram[offs+0] & 0x08;//2;//8;
-//if (fy) fy=0; else fy=1;
+		fy = spriteram[offs+0] & 0x08; // or 0x02 ?
 		multi = spriteram[offs+0] & 0x10;
 
 
@@ -234,6 +233,7 @@ static void liberate_drawsprites(struct mame_bitmap *bitmap)
 			sy=240-sy;
 			sx=240-sx;
 			if (fx) fx=0; else fx=1;
+			if (fy) fy=0; else fy=1;
 			sy2=sy-16;
 		}
 		else sy2=sy+16;

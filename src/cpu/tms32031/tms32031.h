@@ -24,6 +24,7 @@ struct tms32031_config
 	UINT32		bootoffset;
 	void		(*xf0_w)(UINT8 val);
 	void		(*xf1_w)(UINT8 val);
+	void		(*iack_w)(UINT8 val, offs_t addr);
 };
 
 

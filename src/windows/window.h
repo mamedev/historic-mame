@@ -147,6 +147,9 @@ void win_compute_multipliers(const RECT *rect, int *xmult, int *ymult);
 
 void win_set_debugger_focus(int focus);
 
+LRESULT CALLBACK win_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
+
+
 #if HAS_WINDOW_MENU
 int win_create_menu(HMENU *menus);
 #endif

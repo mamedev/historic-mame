@@ -166,6 +166,13 @@ static UINT8 s1945_table[256] = {
 	0x00, 0x00, 0x32, 0x90, 0x00, 0x00, 0xac, 0x5c, 0x00, 0x00, 0x2b, 0xc0
 };
 
+
+static UINT8 s1945a_table[256] = {
+	0x00, 0x00, 0x64, 0xbe, 0x00, 0x00, 0x26, 0x2c, 0x00, 0x00, 0x2c, 0xda, 0x00, 0x00, 0x2c, 0xbc,
+	0x00, 0x00, 0x2c, 0x9e, 0x00, 0x00, 0x2f, 0x0e, 0x00, 0x00, 0x31, 0x10, 0x00, 0x00, 0xc7, 0x2a,
+	0x00, 0x00, 0x32, 0x90, 0x00, 0x00, 0xad, 0x4c, 0x00, 0x00, 0x2b, 0xc0
+};
+
 static UINT8 s1945j_table[256] = {
 	0x00, 0x00, 0x64, 0xb6, 0x00, 0x00, 0x26, 0x2c, 0x00, 0x00, 0x2c, 0xda, 0x00, 0x00, 0x2c, 0xbc,
 	0x00, 0x00, 0x2c, 0x9e, 0x00, 0x00, 0x2f, 0x0e, 0x00, 0x00, 0x31, 0x10, 0x00, 0x00, 0xc5, 0x92,
@@ -1163,7 +1170,7 @@ INPUT_PORTS_START( s1945 )
 
 	Came from a Japan board apparently!!!
 	Japan is listed in the code but how do you activate it?
-	No effect on set s1945
+	No effect on set s1945j
 
 	************************************************/
 
@@ -1173,6 +1180,101 @@ INPUT_PORTS_START( s1945 )
 	PORT_DIPSETTING(      0x000d, "Korea" )
 	PORT_DIPSETTING(      0x000b, "Hong Kong" )
 	PORT_DIPSETTING(      0x0007, "Taiwan" )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_VBLANK  )	// vblank
+
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )	// tested!
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )	// tested!
+
+INPUT_PORTS_END
+
+INPUT_PORTS_START( s1945a )
+
+	PORT_START	// IN0 - c00000&1
+	PSIKYO_PORT_PLAYER2
+
+	PSIKYO_PORT_PLAYER1
+
+	PORT_START	// IN1 - c00002&3
+	PSIKYO_PORT_COIN
+
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN2 - c00004&5
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0008, "Easy" )
+	PORT_DIPSETTING(      0x000c, "Normal" )
+	PORT_DIPSETTING(      0x0004, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0020, "1" )
+	PORT_DIPSETTING(      0x0010, "2" )
+	PORT_DIPSETTING(      0x0030, "3" )
+	PORT_DIPSETTING(      0x0000, "4" )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(      0x0040, "600K" )
+	PORT_DIPSETTING(      0x0000, "800K" )
+	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
+
+	PORT_DIPNAME( 0x0100, 0x0100, "Credits/Coinage" )	// No freeplay for s1945
+	PORT_DIPSETTING(      0x0100, "A+B/A&B" )
+	PORT_DIPSETTING(      0x0000, "A&B/A" )
+	PORT_DIPNAME( 0x0e00, 0x0e00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0a00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0c00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0e00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0600, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x7000, 0x7000, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x5000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x6000, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x7000, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x3000, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x8000, 0x8000, "2C Start, 1C Continue" )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) ) // Forces 1C_1C
+
+	PORT_START	// IN3 - c00006&7
+
+	/***********************************************
+
+	This Dip port is bit based:
+
+	Bit 0 1 2 3
+		1 1 1 1 Japan, anything but 0x0f = "World"
+	************************************************/
+
+	PORT_DIPNAME( 0x000f, 0x000e, "Country" )
+	PORT_DIPSETTING(      0x000f, "Japan" )
+	PORT_DIPSETTING(      0x000e, "World" )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1964,6 +2066,36 @@ ROM_START( s1945 )
 
 ROM_END
 
+ROM_START( s1945a )
+
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_LOAD32_WORD_SWAP( "4-u40.bin", 0x000000, 0x040000, CRC(29ffc217) SHA1(12dc3cb32253c3908f4c440c627a0e1b32ee7cac) ) // 1&0
+	ROM_LOAD32_WORD_SWAP( "5-u41.bin", 0x000002, 0x040000, CRC(c3d3fb64) SHA1(4388586bc0a6f3d62366b3c38b8b23f8a03dbf15) ) // 3&2
+
+	ROM_REGION( 0x030000, REGION_CPU2, 0 )		/* Sound CPU Code */
+	ROM_LOAD( "3-u63.bin", 0x00000, 0x20000, CRC(42d40ae1) SHA1(530a5a3f78ac489b84a631ea6ce21010a4f4d31b) )
+	ROM_RELOAD(            0x10000, 0x20000             )
+
+	ROM_REGION( 0x000100, REGION_CPU3, 0 )		/* MCU? */
+	 //	ROM_LOAD( "4-u59.bin", 0x00000, 0x00100, NO_DUMP )
+
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "u20.bin",  0x000000, 0x200000, CRC(28a27fee) SHA1(913f3bc4d0c6fb6b776a020c8099bf96f16fd06f) )
+	ROM_LOAD( "u22.bin",  0x200000, 0x200000, CRC(ca152a32) SHA1(63efee83cb5982c77ca473288b3d1a96b89e6388) )
+	ROM_LOAD( "u21.bin",  0x400000, 0x200000, CRC(c5d60ea9) SHA1(e5ce90788211c856172e5323b01b2c7ab3d3fe50) )
+	ROM_LOAD( "u23.bin",  0x600000, 0x200000, CRC(48710332) SHA1(db38b732a09b31ce55a96ec62987baae9b7a00c1) )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 + 1 */
+	ROM_LOAD( "u34.bin",  0x000000, 0x200000, CRC(aaf83e23) SHA1(1c75d09ff42c0c215f8c66c699ca75688c95a05e) )
+
+	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "u61.bin",  0x000000, 0x200000, CRC(a839cf47) SHA1(e179eb505c80d5bb3ccd9e228f2cf428c62b72ee) )	// 8 bit signed pcm (16KHz)
+
+	ROM_REGION( 0x040000, REGION_USER1, 0 )	/* */
+	ROM_LOAD( "u1.bin",  0x000000, 0x040000, CRC(dee22654) SHA1(5df05b0029ff7b1f7f04b41da7823d2aa8034bd2) )
+
+ROM_END
+
 ROM_START( s1945j )
 
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* Main CPU Code */
@@ -2005,6 +2137,21 @@ DRIVER_INIT( s1945 )
 	/* protection and tile bank switching */
 	install_mem_write32_handler(0, 0xc00004, 0xc0000b, s1945_mcu_w);
 	s1945_mcu_init(s1945_table);
+
+	psikyo_ka302c_banking = 0; // Banking is controlled by mcu
+}
+
+DRIVER_INIT( s1945a )
+{
+	/* input ports */
+	install_mem_read32_handler(0, 0xc00000, 0xc0000b, s1945_input_r);
+
+	/* sound latch */
+	install_mem_write32_handler(0, 0xc00010, 0xc00013, s1945_soundlatch_w);
+
+	/* protection and tile bank switching */
+	install_mem_write32_handler(0, 0xc00004, 0xc0000b, s1945_mcu_w);
+	s1945_mcu_init(s1945a_table);
 
 	psikyo_ka302c_banking = 0; // Banking is controlled by mcu
 }
@@ -2107,6 +2254,7 @@ GAME ( 1994, gunbirdk, gunbird,  gunbird,  gunbirdj, gunbird,  ROT270, "Psikyo",
 GAME ( 1994, gunbirdj, gunbird,  gunbird,  gunbirdj, gunbird,  ROT270, "Psikyo", "Gunbird (Japan)"      )
 GAME ( 1994, btlkroad, 0,        gunbird,  btlkroad, gunbird,  ROT0,   "Psikyo", "Battle K-Road" )
 GAME ( 1995, s1945,    0,        s1945,    s1945,    s1945,    ROT270, "Psikyo", "Strikers 1945" )
+GAME ( 1995, s1945a,   s1945,    s1945,    s1945a,   s1945a,   ROT270, "Psikyo", "Strikers 1945 (Alt)" ) // Region dip - 0x0f=Japan, anything else=World
 GAME ( 1995, s1945j,   s1945,    s1945,    s1945j,   s1945j,   ROT270, "Psikyo", "Strikers 1945 (Japan)" )
 GAME ( 1995, s1945jn,  s1945,    gunbird,  s1945j,   s1945jn,  ROT270, "Psikyo", "Strikers 1945 (Japan, unprotected)" )
 GAME ( 1996, tengai,   0,        s1945,    tengai,   tengai,   ROT0,   "Psikyo", "Tengai / Sengoku Blade: Sengoku Ace Episode II" )

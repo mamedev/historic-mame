@@ -382,7 +382,6 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf200, 0xf7ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
 ADDRESS_MAP_END
-WRITE_HANDLER(peek_w){usrintf_showmessage("offset %u data %u", offset, data);}
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)

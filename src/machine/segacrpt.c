@@ -179,7 +179,7 @@
 
 #include "driver.h"
 
-
+	
 #ifdef MAME_DEBUG
 static void lfkp(int mask)
 {
@@ -968,22 +968,39 @@ void lvcards_decode(void)
   the permutation and XOR as if it were at address .1.1..0..0..0..0
 
 ******************************************************************************/
+static const unsigned char swaptable[24][4] =
+	{
+		{ 6,4,2,0 },
+		{ 4,6,2,0 },
+		{ 2,4,6,0 },
+		{ 0,4,2,6 },
+		{ 6,2,4,0 },
+		{ 6,0,2,4 },
+		{ 6,4,0,2 },
+		{ 2,6,4,0 },
+
+		{ 4,2,6,0 },
+		{ 4,6,0,2 },
+		{ 6,0,4,2 },
+		{ 0,6,4,2 },
+		{ 4,0,6,2 },
+		{ 0,4,6,2 },
+		{ 6,2,0,4 },
+		{ 2,6,0,4 },
+
+		{ 0,6,2,4 },
+		{ 2,0,6,4 },
+		{ 0,2,6,4 },
+		{ 4,2,0,6 },
+		{ 2,4,0,6 },
+		{ 4,0,2,6 },
+		{ 2,0,4,6 },
+		{ 0,2,4,6 }
+	};
+
 
 void fdwarrio_decode(void)
 {
-	static const unsigned char swaptable[8+1][4] =
-	{
-		/* note that this is a subset of the astrofl table */
-		{ 6,2,4,0 },	/* .0.0..0..x..x..x */
-		{ 6,0,2,4 },	/* .0.0..1..x..x..x */
-		{ 6,4,0,2 },	/* .0.1..0..x..x..x */
-		{ 2,6,4,0 },	/* .0.1..1..x..x..x */
-		{ 4,2,6,0 },	/* .1.0..0..x..x..x */
-		{ 4,6,0,2 },	/* .1.0..1..x..x..x */
-		{ 6,0,4,2 },	/* .1.1..0..x..x..x */
-		{ 0,6,4,2 },	/* .1.1..1..x..x..x */
-		{ 4,0,6,2 }		/* extra line for data decode */
-	};
 	int A;
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
@@ -1005,7 +1022,7 @@ void fdwarrio_decode(void)
 				+ (((A >> 9) & 1) << 3) + (((A >> 12) & 1) << 4) + (((A >> 14) & 1) << 5);
 
 		/* decode the opcodes */
-		tbl = swaptable[row >> 3];
+		tbl = swaptable[(row >> 3)+4];
 		rom[A + diff] = BITSWAP8(src,7,tbl[0],5,tbl[1],3,tbl[2],1,tbl[3]) ^ 0x40;
 		if (row & 1) rom[A + diff] ^= 0x10;
 		if (row & 2) rom[A + diff] ^= 0x04;
@@ -1013,7 +1030,7 @@ void fdwarrio_decode(void)
 
 		/* decode the data */
 		row++;	/* the data permutation table is shifted by one position!!!! */
-		tbl = swaptable[row >> 3];
+		tbl = swaptable[(row >> 3)+4];
 		rom[A] = BITSWAP8(src,7,tbl[0],5,tbl[1],3,tbl[2],1,tbl[3]);
 		if (row & 1) rom[A] ^= 0x10;
 		if (row & 2) rom[A] ^= 0x04;
@@ -1067,35 +1084,6 @@ void astrofl_decode(void)
 		7,7,7,8,8,9,9,10,10,10,11,11,12,12,12,13,
 	};
 
-	static const unsigned char swaptable[22][4] =
-	{
-		{ 6,4,2,0 },
-		{ 4,6,2,0 },
-		{ 2,4,6,0 },
-		{ 0,4,2,6 },
-		{ 6,2,4,0 },
-		{ 6,0,2,4 },
-		{ 6,4,0,2 },
-		{ 2,6,4,0 },
-
-		{ 4,2,6,0 },
-		{ 4,6,0,2 },
-		{ 6,0,4,2 },
-		{ 0,6,4,2 },
-		{ 4,0,6,2 },
-		{ 0,4,6,2 },
-		{ 6,2,0,4 },
-		{ 2,6,0,4 },
-
-		{ 0,6,2,4 },
-		{ 2,0,6,4 },
-		{ 0,2,6,4 },
-		{ 4,2,0,6 },
-		{ 2,4,0,6 },
-		{ 4,0,2,6 }
-//		{ 2,0,4,6 }
-//		{ 0,2,4,6 }
-	};
 	int A;
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
@@ -1169,29 +1157,6 @@ void wboy2_decode(void)
 		6,2,6,2
 	};
 
-	static const unsigned char swaptable[17][4] =
-	{
-		/* note that this is a subset of the astrofl table */
-		{ 6,4,2,0 },
-		{ 4,6,2,0 },
-		{ 2,4,6,0 },
-		{ 0,4,2,6 },
-		{ 6,2,4,0 },
-		{ 6,0,2,4 },
-		{ 6,4,0,2 },
-		{ 2,6,4,0 },
-
-		{ 4,2,6,0 },
-		{ 4,6,0,2 },
-		{ 6,0,4,2 },
-		{ 0,6,4,2 },
-		{ 4,0,6,2 },
-		{ 0,4,6,2 },
-		{ 6,2,0,4 },
-		{ 2,6,0,4 },
-
-		{ 0,6,2,4 }
-	};
 	int A;
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
@@ -1260,19 +1225,6 @@ void spcpostn_decode(void)
 		0,0,0,0,0,0,0,0
 	};
 
-	static const unsigned char swaptable[9][4] =
-	{
-		{ 6,4,2,0 },
-		{ 6,4,2,0 },
-		{ 6,4,2,0 },
-		{ 6,4,2,0 },
-		{ 6,4,2,0 },
-		{ 6,4,2,0 },
-		{ 6,4,2,0 },
-		{ 6,4,2,0 },
-
-		{ 6,4,2,0 }
-	};
 	int A;
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
@@ -1357,35 +1309,6 @@ void gardia_decode(void)
 		0,0,0,0,0,0,0,0
 	};
 
-	static const unsigned char swaptable[24][4] =
-	{
-		{ 6,4,2,0 },
-		{ 4,6,2,0 },
-		{ 2,4,6,0 },
-		{ 0,4,2,6 },
-		{ 6,2,4,0 },
-		{ 6,0,2,4 },
-		{ 6,4,0,2 },
-		{ 2,6,4,0 },
-
-		{ 4,2,6,0 },
-		{ 4,6,0,2 },
-		{ 6,0,4,2 },
-		{ 0,6,4,2 },
-		{ 4,0,6,2 },
-		{ 0,4,6,2 },
-		{ 6,2,0,4 },
-		{ 2,6,0,4 },
-
-		{ 0,6,2,4 },
-		{ 2,0,6,4 },
-		{ 0,2,6,4 },
-		{ 4,2,0,6 },
-		{ 2,4,0,6 },
-		{ 4,0,2,6 },
-		{ 2,0,4,6 },
-		{ 0,2,4,6 }
-	};
 	int A;
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
@@ -1470,35 +1393,6 @@ void gardiab_decode(void)
 		0,0,0,0,0,0,0,0
 	};
 
-	static const unsigned char swaptable[24][4] =
-	{
-		{ 6,4,2,0 },
-		{ 4,6,2,0 },
-		{ 2,4,6,0 },
-		{ 0,4,2,6 },
-		{ 6,2,4,0 },
-		{ 6,0,2,4 },
-		{ 6,4,0,2 },
-		{ 2,6,4,0 },
-
-		{ 4,2,6,0 },
-		{ 4,6,0,2 },
-		{ 6,0,4,2 },
-		{ 0,6,4,2 },
-		{ 4,0,6,2 },
-		{ 0,4,6,2 },
-		{ 6,2,0,4 },
-		{ 2,6,0,4 },
-
-		{ 0,6,2,4 },
-		{ 2,0,6,4 },
-		{ 0,2,6,4 },
-		{ 4,2,0,6 },
-		{ 2,4,0,6 },
-		{ 4,0,2,6 },
-		{ 2,0,4,6 },
-		{ 0,2,4,6 }
-	};
 	int A;
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
@@ -1526,6 +1420,88 @@ void gardiab_decode(void)
 		/* decode the data */
 		tbl = swaptable[data_swap_select[row]];
 		rom[A] = BITSWAP8(src,7,tbl[0],5,tbl[1],3,tbl[2],1,tbl[3]) ^ data_xor[row];
+	}
+
+	/* copy the opcodes from the not encrypted part of the ROMs */
+	for (A = 0x8000;A < diff;A++)
+		rom[A + diff] = rom[A];
+}
+
+
+
+void robowres_decode(void)
+{
+	static unsigned char opcode_xor[64] =
+	{
+		0x00,0x41,0x10,0x51,0x04,0x45,0x14,0x00, 0x41,0x10,0x51,0x04,0x45,0x14,0x55,0x01,
+		0x40,0x11,0x50,0x05,0x44,0x15,0x01,0x40, 0x11,0x50,0x05,0x44,0x15,0x54,0x00,0x41,
+
+		0x50,0x05,0x44,0x15,0x54,0x00,0x41,0x50, 0x05,0x44,0x15,0x54,0x00,0x41,0x10,0x51,
+		0x04,0x45,0x14,0x55,0x01,0x40,0x51,0x04, 0x45,0x14,0x55,0x01,0x40,0x11,0x50,0x05
+	};
+	
+	static unsigned char data_xor[64] =
+	{
+		0x45,0x14,0x55,0x01,0x40,0x11,0x50,0x05, 0x44,0x15,0x54,0x00,0x41,0x10,0x05,0x44,
+ 		0x15,0x54,0x00,0x41,0x10,0x51,0x04,0x45, 0x14,0x55,0x01,0x40,0x11,0x04,0x45,0x14,
+ 		
+ 		0x00,0x41,0x10,0x51,0x04,0x45,0x14,0x55, 0x01,0x40,0x11,0x50,0x05,0x44,0x55,0x01,
+ 		0x40,0x11,0x50,0x05,0x44,0x15,0x54,0x00, 0x41,0x10,0x51,0x04,0x45,0x54,0x00,0x41
+	};
+
+	static const int opcode_swap_select[64] =
+	{
+		8,11,15,2, 6,9,13,1,
+		4,8,11,15, 2,6,9,13,
+		1,4,8,11, 15,2,6,10,
+		13,1,4,8, 11,15,3,6,
+
+		7,2,6,1, 5,1,4,0,
+		3,7,2,6, 2,5,1,4,
+		0,3,7,2, 6,2,5,1,
+		4,0,3,7, 3,6,2,5
+	};
+	
+	static const int data_swap_select[64] =
+	{
+		9,13,0,4, 8,11,15,2,
+  		6,9,13,1, 4,8,11,15,
+   		2,6,10,13, 1,4,8,11,
+   		15,2,6,10, 13,1,4,8,
+
+   		1,4,0,3, 7,2,6,1,
+   		5,1,4,0, 3,7,2,6,
+   		2,5,1,4, 0,3,7,3,
+   		6,2,5,1, 4,0,4,7
+	};
+	
+	int A;
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
+
+	memory_set_opcode_base(0,rom+diff);
+
+	for (A = 0x0000;A < 0x8000;A++)
+	{
+		int row;
+		unsigned char src;
+		const unsigned char *tbl;
+
+
+		src = rom[A];
+
+		/* pick the translation table from bits 0, 3, 6, 9, 12 and 14 of the address */
+		row = (A & 1) + (((A >> 3) & 1) << 1) + (((A >> 6) & 1) << 2)
+				+ (((A >> 9) & 1) << 3) + (((A >> 12) & 1) << 4) + (((A >> 14) & 1) << 5);
+
+		/* decode the opcodes */
+		tbl = swaptable[opcode_swap_select[row]];
+		rom[A + diff] = BITSWAP8(src,7,tbl[0],5,tbl[1],3,tbl[2],1,tbl[3]) ^ opcode_xor[row];
+
+		/* decode the data */
+		tbl = swaptable[data_swap_select[row]];
+		rom[A] = BITSWAP8(src,7,tbl[0],5,tbl[1],3,tbl[2],1,tbl[3]) ^ data_xor[row];
+		
 	}
 
 	/* copy the opcodes from the not encrypted part of the ROMs */

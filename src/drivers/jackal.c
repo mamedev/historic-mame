@@ -25,42 +25,33 @@ TODO:
 #include "cpu/m6809/m6809.h"
 
 
-extern unsigned char *jackal_videoctrl;
+extern UINT8 *jackal_videoctrl;
 
-MACHINE_INIT( jackal );
-VIDEO_START( jackal );
+extern MACHINE_INIT( jackal );
 
-READ_HANDLER( jackal_zram_r );
-READ_HANDLER( jackal_commonram_r );
-READ_HANDLER( jackal_commonram1_r );
-READ_HANDLER( jackal_voram_r );
-READ_HANDLER( jackal_spriteram_r );
+extern READ_HANDLER( jackal_zram_r );
+extern READ_HANDLER( jackal_voram_r );
+extern READ_HANDLER( jackal_spriteram_r );
 
-WRITE_HANDLER( jackal_rambank_w );
-WRITE_HANDLER( jackal_zram_w );
-WRITE_HANDLER( jackal_commonram_w );
-WRITE_HANDLER( jackal_commonram1_w );
-WRITE_HANDLER( jackal_voram_w );
-WRITE_HANDLER( jackal_spriteram_w );
+extern WRITE_HANDLER( jackal_rambank_w );
+extern WRITE_HANDLER( jackal_zram_w );
+extern WRITE_HANDLER( jackal_voram_w );
+extern WRITE_HANDLER( jackal_spriteram_w );
 
-PALETTE_INIT( jackal );
-VIDEO_UPDATE( jackal );
-
-
-
-static READ_HANDLER( rotary_0_r )
-{
-	return (1 << (readinputport(5) * 8 / 256)) ^ 0xff;
-}
-
-static READ_HANDLER( rotary_1_r )
-{
-	return (1 << (readinputport(6) * 8 / 256)) ^ 0xff;
-}
+extern PALETTE_INIT( jackal );
+extern VIDEO_START( jackal );
+extern VIDEO_UPDATE( jackal );
 
 static int irq_enable;
 
-static WRITE_HANDLER( ctrl_w )
+
+static READ_HANDLER( topgunbl_rotary_r )
+{
+	return (1 << (readinputport(5 + offset) * 8 / 256)) ^ 0xff;
+}
+
+
+static WRITE_HANDLER( jackal_flipscreen_w )
 {
 	irq_enable = data & 0x02;
 	flip_screen_set(data & 0x08);
@@ -74,49 +65,32 @@ INTERRUPT_GEN( jackal_interrupt )
 
 
 
-static ADDRESS_MAP_START( jackal_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( master_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0003) AM_RAM AM_BASE(&jackal_videoctrl)	// scroll + other things
+	AM_RANGE(0x0004, 0x0004) AM_WRITE(jackal_flipscreen_w)
 	AM_RANGE(0x0010, 0x0010) AM_READ(input_port_0_r)
 	AM_RANGE(0x0011, 0x0011) AM_READ(input_port_1_r)
 	AM_RANGE(0x0012, 0x0012) AM_READ(input_port_2_r)
 	AM_RANGE(0x0013, 0x0013) AM_READ(input_port_3_r)
-	AM_RANGE(0x0014, 0x0014) AM_READ(rotary_0_r)
-	AM_RANGE(0x0015, 0x0015) AM_READ(rotary_1_r)
+	AM_RANGE(0x0014, 0x0015) AM_READ(topgunbl_rotary_r)
 	AM_RANGE(0x0018, 0x0018) AM_READ(input_port_4_r)
-	AM_RANGE(0x0020, 0x005f) AM_READ(jackal_zram_r)	/* MAIN   Z RAM,SUB    Z RAM */
-	AM_RANGE(0x0060, 0x1fff) AM_READ(jackal_commonram_r)	/* M COMMON RAM,S COMMON RAM */
-	AM_RANGE(0x2000, 0x2fff) AM_READ(jackal_voram_r)	/* MAIN V O RAM,SUB  V O RAM */
-	AM_RANGE(0x3000, 0x3fff) AM_READ(jackal_spriteram_r)	/* MAIN V O RAM,SUB  V O RAM */
-	AM_RANGE(0x4000, 0xbfff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( jackal_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0003) AM_WRITE(MWA8_RAM) AM_BASE(&jackal_videoctrl)	/* scroll + other things */
-	AM_RANGE(0x0004, 0x0004) AM_WRITE(ctrl_w)
-	AM_RANGE(0x0019, 0x0019) AM_WRITE(MWA8_NOP)	/* possibly watchdog reset */
+	AM_RANGE(0x0019, 0x0019) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0x001c, 0x001c) AM_WRITE(jackal_rambank_w)
-	AM_RANGE(0x0020, 0x005f) AM_WRITE(jackal_zram_w)
-	AM_RANGE(0x0060, 0x1fff) AM_WRITE(jackal_commonram_w)
-	AM_RANGE(0x2000, 0x2fff) AM_WRITE(jackal_voram_w)
-	AM_RANGE(0x3000, 0x3fff) AM_WRITE(jackal_spriteram_w)
-	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x0020, 0x005f) AM_READWRITE(jackal_zram_r, jackal_zram_w)				// MAIN   Z RAM,SUB    Z RAM
+	AM_RANGE(0x0060, 0x1fff) AM_RAM AM_SHARE(1)										// M COMMON RAM,S COMMON RAM
+	AM_RANGE(0x2000, 0x2fff) AM_READWRITE(jackal_voram_r, jackal_voram_w)			// MAIN V O RAM,SUB  V O RAM
+	AM_RANGE(0x3000, 0x3fff) AM_READWRITE(jackal_spriteram_r, jackal_spriteram_w)	// MAIN V O RAM,SUB  V O RAM
+	AM_RANGE(0x4000, 0xbfff) AM_ROMBANK(1)
+	AM_RANGE(0xc000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( jackal_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x2001, 0x2001) AM_READ(YM2151_status_port_0_r)
-	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)		/* COLOR RAM (Self test only check 0x4000-0x423f */
-	AM_RANGE(0x6000, 0x605f) AM_READ(MRA8_RAM)		/* SOUND RAM (Self test check 0x6000-605f, 0x7c00-0x7fff */
-	AM_RANGE(0x6060, 0x7fff) AM_READ(jackal_commonram1_r) /* COMMON RAM */
-	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( jackal_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( slave_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x2000, 0x2000) AM_WRITE(YM2151_register_port_0_w)
-	AM_RANGE(0x2001, 0x2001) AM_WRITE(YM2151_data_port_0_w)
-	AM_RANGE(0x4000, 0x43ff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)
-	AM_RANGE(0x6000, 0x605f) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x6060, 0x7fff) AM_WRITE(jackal_commonram1_w)
-	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2001, 0x2001) AM_READWRITE(YM2151_status_port_0_r, YM2151_data_port_0_w)
+	AM_RANGE(0x4000, 0x43ff) AM_RAM AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)	// COLOR RAM (Self test only check 0x4000-0x423f)
+	AM_RANGE(0x6000, 0x605f) AM_RAM																	// SOUND RAM (Self test check 0x6000-605f, 0x7c00-0x7fff)
+	AM_RANGE(0x6060, 0x7fff) AM_RAM AM_SHARE(1)
+	AM_RANGE(0x8000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -156,18 +130,15 @@ INPUT_PORTS_START( jackal )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-	PORT_DIPSETTING(    0x00, "Invalid" )
 
 	PORT_START	/* IN1 */
-	/* note that button 3 for player 1 and 2 are exchanged */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )	// fire
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )	// bomb
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
@@ -176,8 +147,7 @@ INPUT_PORTS_START( jackal )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -188,8 +158,12 @@ INPUT_PORTS_START( jackal )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x40, 0x00, "Sound Adjustment" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x00, "Sound Mode" )
+	PORT_DIPSETTING(    0x80, "Mono" )
+	PORT_DIPSETTING(    0x00, "Stereo" )
 
 	PORT_START	/* DSW2 */
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
@@ -197,19 +171,17 @@ INPUT_PORTS_START( jackal )
 	PORT_DIPSETTING(    0x02, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x00, "7" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x18, "30000 150000" )
-	PORT_DIPSETTING(    0x10, "50000 200000" )
-	PORT_DIPSETTING(    0x08, "30000" )
-	PORT_DIPSETTING(    0x00, "50000" )
-	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x18, "30K 150K" )
+	PORT_DIPSETTING(    0x10, "50K 200K" )
+	PORT_DIPSETTING(    0x08, "30K" )
+	PORT_DIPSETTING(    0x00, "50K" )
+	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x60, "Easy" )
-	PORT_DIPSETTING(    0x40, "Medium" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x20, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Very Difficult" )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -251,18 +223,15 @@ INPUT_PORTS_START( topgunbl )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-	PORT_DIPSETTING(    0x00, "Invalid" )
 
 	PORT_START	/* IN1 */
-	/* note that button 3 for player 1 and 2 are exchanged */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )	// fire
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )	// bomb
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
@@ -271,8 +240,7 @@ INPUT_PORTS_START( topgunbl )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -283,8 +251,7 @@ INPUT_PORTS_START( topgunbl )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW2 */
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
@@ -292,27 +259,25 @@ INPUT_PORTS_START( topgunbl )
 	PORT_DIPSETTING(    0x02, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x00, "7" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x18, "30000 150000" )
-	PORT_DIPSETTING(    0x10, "50000 200000" )
-	PORT_DIPSETTING(    0x08, "30000" )
-	PORT_DIPSETTING(    0x00, "50000" )
-	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x18, "30K 150K" )
+	PORT_DIPSETTING(    0x10, "50K 200K" )
+	PORT_DIPSETTING(    0x08, "30K" )
+	PORT_DIPSETTING(    0x00, "50K" )
+	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x60, "Easy" )
-	PORT_DIPSETTING(    0x40, "Medium" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x20, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Very Difficult" )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START	/* player 1 8-way rotary control - converted in rotary_0_r() */
+	PORT_START	/* player 1 8-way rotary control - converted in topgunbl_rotary_r() */
 	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL, 25, 10, 0, 0, KEYCODE_Z, KEYCODE_X, IP_JOY_NONE, IP_JOY_NONE )
 
-	PORT_START	/* player 2 8-way rotary control - converted in rotary_1_r() */
+	PORT_START	/* player 2 8-way rotary control - converted in topgunbl_rotary_r() */
 	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_PLAYER2, 25, 10, 0, 0, KEYCODE_N, KEYCODE_M, IP_JOY_NONE, IP_JOY_NONE )
 INPUT_PORTS_END
 
@@ -353,7 +318,7 @@ static struct GfxLayout spritelayout8 =
 	32*8
 };
 
-static struct GfxDecodeInfo jackal_gfxdecodeinfo[] =
+static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &charlayout,               0, 16 },	/* colors 256-511 with lookup */
 	{ REGION_GFX1, 0x20000, &spritelayout,        256*16, 16 },	/* colors   0- 15 with lookup */
@@ -378,11 +343,11 @@ static MACHINE_DRIVER_START( jackal )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 2000000)	/* 2 MHz???? */
-	MDRV_CPU_PROGRAM_MAP(jackal_readmem,jackal_writemem)
-	MDRV_CPU_VBLANK_INT(jackal_interrupt,1)
+	MDRV_CPU_PROGRAM_MAP(master_map, 0)
+	MDRV_CPU_VBLANK_INT(jackal_interrupt, 1)
 
 	MDRV_CPU_ADD(M6809, 2000000)	/* 2 MHz???? */
-	MDRV_CPU_PROGRAM_MAP(jackal_sound_readmem,jackal_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(slave_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -394,7 +359,7 @@ static MACHINE_DRIVER_START( jackal )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(jackal_gfxdecodeinfo)
+	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(512)
 	MDRV_COLORTABLE_LENGTH(256*16+16*16+16*16)
 
@@ -517,7 +482,7 @@ ROM_END
 
 
 
-GAMEX( 1986, jackal,   0,      jackal, jackal,   0, ROT90, "Konami", "Jackal (World)", GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )
-GAMEX( 1986, topgunr,  jackal, jackal, jackal,   0, ROT90, "Konami", "Top Gunner (US)", GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )
-GAMEX( 1986, jackalj,  jackal, jackal, jackal,   0, ROT90, "Konami", "Tokushu Butai Jackal (Japan)", GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )
-GAMEX( 1986, topgunbl, jackal, jackal, topgunbl, 0, ROT90, "bootleg", "Top Gunner (bootleg)", GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )
+GAMEX( 1986, jackal,   0,      jackal, jackal,   0, ROT90, "Konami", "Jackal (World)", GAME_IMPERFECT_COLORS )
+GAMEX( 1986, topgunr,  jackal, jackal, jackal,   0, ROT90, "Konami", "Top Gunner (US)", GAME_IMPERFECT_COLORS )
+GAMEX( 1986, jackalj,  jackal, jackal, jackal,   0, ROT90, "Konami", "Tokushu Butai Jackal (Japan)", GAME_IMPERFECT_COLORS )
+GAMEX( 1986, topgunbl, jackal, jackal, topgunbl, 0, ROT90, "bootleg", "Top Gunner (bootleg)", GAME_IMPERFECT_COLORS )

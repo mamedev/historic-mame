@@ -39,6 +39,10 @@
 #include "input.h"
 #include "../window.h"
 
+#ifdef MESS
+#include "menu.h"
+#endif /* MESS */
+
 
 
 //============================================================
@@ -108,6 +112,7 @@ int win_sync_refresh;
 float win_gfx_brightness;
 int win_blit_effect;
 float win_screen_aspect = (4.0 / 3.0);
+int win_suspend_directx;
 
 // windows
 HWND win_video_window;
@@ -203,7 +208,6 @@ static struct win_effect_data effect_table[] =
 
 static void compute_multipliers_internal(const RECT *rect, int visible_width, int visible_height, int *xmult, int *ymult);
 static void update_system_menu(void);
-static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
 static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update);
 
 static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update);
@@ -431,7 +435,11 @@ int win_init_window(void)
 		// initialize the description of the window class
 		wc.lpszClassName 	= TEXT("MAME");
 		wc.hInstance 		= GetModuleHandle(NULL);
-		wc.lpfnWndProc		= video_window_proc;
+#ifdef MESS
+		wc.lpfnWndProc		= win_mess_window_proc;
+#else
+		wc.lpfnWndProc		= win_video_window_proc;
+#endif
 		wc.hCursor			= LoadCursor(NULL, IDC_ARROW);
 		wc.hIcon			= LoadIcon(NULL, IDI_APPLICATION);
 		wc.lpszMenuName		= NULL;
@@ -733,7 +741,7 @@ static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, const struct
 
 	// if we have a blit surface, use that
 
-	if (win_use_directx)
+	if (win_use_directx && !win_suspend_directx)
 	{
 		if (win_use_directx == USE_D3D)
 		{
@@ -754,10 +762,10 @@ static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, const struct
 
 
 //============================================================
-//	video_window_proc
+//	win_video_window_proc
 //============================================================
 
-static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
+LRESULT CALLBACK win_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
 	extern void win_timer_enable(int enabled);
 
@@ -1424,9 +1432,11 @@ int win_process_events(void)
 			// ignore keyboard messages
 			case WM_SYSKEYUP:
 			case WM_SYSKEYDOWN:
+#ifndef MESS
 			case WM_KEYUP:
 			case WM_KEYDOWN:
 			case WM_CHAR:
+#endif
 				break;
 
 			case WM_LBUTTONDOWN:

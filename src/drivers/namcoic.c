@@ -15,6 +15,7 @@ static void zdrawgfxzoom(
 	{
 		if( gfx && gfx->colortable )
 		{
+			int shadow_offset = (Machine->drv->video_attributes&VIDEO_HAS_SHADOWS)?Machine->drv->total_colors:0;
 			const pen_t *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)];
 			UINT8 *source_base = gfx->gfxdata + (code % gfx->total_elements) * gfx->char_modulo;
 			int sprite_screen_height = (scaley*gfx->height+0x8000)>>16;
@@ -97,7 +98,14 @@ static void zdrawgfxzoom(
 									{
 										if( pri[x]<=zpos )
 										{
-											dest[x] = pal[c];
+											if( c==0xfe && shadow_offset )
+											{
+												dest[x] |= shadow_offset;
+											}
+											else
+											{
+												dest[x] = pal[c];
+											}
 											pri[x] = zpos;
 										}
 									}
@@ -288,28 +296,6 @@ draw_spriteC355( struct mame_bitmap *bitmap, const struct rectangle *cliprect, c
 	hpos -= xscroll;
 	vpos -= yscroll;
 	pWinAttr = &spriteram16[0x2400/2+((palette>>8)&0xf)*4];
-	/**
-	 * 0026 0145 0019 00f8 (lucky&wild)
-	 * 0025 0145 0019 00f8 (point blank)
-	 * 0080 026f 0000 01ff (starblade)
-	 *
-	 * 00f8 02f7 0000 01ff (cybersled)
-	 * 01b8 0248 0078 01b8
-	 * 0260 02e0 00d0 01e0
-	 * 0278 02c8 0168 01d8
-	 * 0125 0199 01a6 01e1
-	 * 0256 02da 003f 008f
-	 * 0138 0198 0078 0198
-	 * 0268 02c8 0078 0198
-	 * 0100 01c0 0020 00b0
-	 * 0270 02f0 0030 00e0
-	 * 01b0 0280 0030 00e0
-	 * 01b0 0270 00d0 0190
-	 * 0120 0270 0180 01e0
-	 * 0118 019e 002e 006e
-	 * 0118 016a 006e 008e
-	 * 0190 0257 0096 018f
-	 */
 	clip.min_x = pWinAttr[0] - xscroll;
 	clip.max_x = pWinAttr[1] - xscroll;
 	clip.min_y = pWinAttr[2] - yscroll;
@@ -318,7 +304,6 @@ draw_spriteC355( struct mame_bitmap *bitmap, const struct rectangle *cliprect, c
 	if( clip.min_y < cliprect->min_y ){ clip.min_y = cliprect->min_y; }
 	if( clip.max_x > cliprect->max_x ){ clip.max_x = cliprect->max_x; }
 	if( clip.max_y > cliprect->max_y ){ clip.max_y = cliprect->max_y; }
-
 	hpos&=0x7ff; if( hpos&0x400 ) hpos |= ~0x7ff; /* sign extend */
 	vpos&=0x7ff; if( vpos&0x400 ) vpos |= ~0x7ff; /* sign extend */
 
@@ -331,9 +316,8 @@ draw_spriteC355( struct mame_bitmap *bitmap, const struct rectangle *cliprect, c
 
 	if( num_cols == 0 ) num_cols = 0x10;
 	flipx = (hsize&0x8000)?1:0;
-	hsize &= 0x1ff;
+	hsize &= 0x3ff;//0x1ff;
 	if( hsize == 0 ) return;
-
 	zoomx = (hsize<<16)/(num_cols*16);
 	dx = (dx*zoomx+0x8000)>>16;
 	if( flipx )
@@ -347,9 +331,8 @@ draw_spriteC355( struct mame_bitmap *bitmap, const struct rectangle *cliprect, c
 
 	if( num_rows == 0 ) num_rows = 0x10;
 	flipy = (vsize&0x8000)?1:0;
-	vsize&=0x1ff;
+	vsize &= 0x3ff;
 	if( vsize == 0 ) return;
-
 	zoomy = (vsize<<16)/(num_rows*16);
 	dy = (dy*zoomy+0x8000)>>16;
 	if( flipy )
@@ -468,9 +451,8 @@ namco_obj_draw( struct mame_bitmap *bitmap, const struct rectangle *cliprect, in
 {
 	if( pri==0 )
 	{
-		fillbitmap( priority_bitmap, 0, NULL );
+		fillbitmap( priority_bitmap, 0, cliprect );
 	}
-
 	DrawObjectList( bitmap,cliprect,pri,&spriteram16[0x02000/2], &spriteram16[0x00000/2] );
 	DrawObjectList( bitmap,cliprect,pri,&spriteram16[0x14000/2], &spriteram16[0x10000/2] );
 } /* namco_obj_draw */
@@ -515,22 +497,37 @@ static data16_t *rozcontrol16;
 static int mRozGfxBank;
 static int mRozMaskRegion;
 static struct tilemap *mRozTilemap[2];
-static int mRozPage[2];		/* base addr for tilemap */
+static int mRozPage[2]; /* base addr for tilemap */
 
-/* It looks like the ROZ tilemap attributes also encode
- * the source size.  Right now, the implementation assumes ROZ
- * layers are always 128x128 tiles.
+/* RozMask and RozSize are used to dynamically construct a smaller ROZ tilemap, mirroring
+ * the upper left quadrant.
+ *
+ * The ROZ tilemaps normally contain a full 128x128 tiles, but occasionally need to be
+ * rendered as smaller (i.e. 16x16) tilemaps, with wrapping.
+ *
+ * The exact mapping of control registers for this purpose is not yet understood.
  */
+static int mRozMask[2];
+static int mRozSize[2]; /* 32, 64, or 128 */
+
+static void
+SetRozSize( int which, int size )
+{
+	if( mRozSize[which]!=size )
+	{
+		mRozSize[which] = size;
+		mRozMask[which] = (size-1);
+		mRozMask[which] |= (mRozMask[which]<<7);
+		tilemap_mark_all_tiles_dirty( mRozTilemap[which] );
+	}
+}
+
 static void
 roz_get_info( int tile_index,int which )
 {
-	data16_t tile;
+	data16_t tile = rozvideoram16[mRozPage[which]+(tile_index&mRozMask[which])];
 	int bank;
 	int mangle;
-	/* when size control is understood, we can simulate it by masking column and row, which will
-	 * mirror the contents of the ROZ tilemap.
-	 */
-	tile = rozvideoram16[mRozPage[which]+tile_index];
 
 	switch( namcos2_gametype )
 	{
@@ -585,11 +582,13 @@ roz_get_info( int tile_index,int which )
 	tile_info.mask_data = 32*tile + (UINT8 *)memory_region( mRozMaskRegion );
 } /* roz_get_info */
 
-static void roz_get_info0( int tile_index )
+static void
+roz_get_info0( int tile_index )
 {
 	roz_get_info( tile_index,0 );
 }
-static void roz_get_info1( int tile_index )
+static void
+roz_get_info1( int tile_index )
 {
 	roz_get_info( tile_index,1 );
 }
@@ -616,6 +615,8 @@ namco_roz_init( int gfxbank, int maskregion )
 				TILEMAP_BITMASK,16,16,128,128 );
 
 			if( mRozTilemap[i] == NULL ) return 1; /* error */
+	
+			SetRozSize( i,128 );
 		}
 		return 0;
 	}
@@ -625,7 +626,7 @@ namco_roz_init( int gfxbank, int maskregion )
 /**
  * ROZ control attributes:
  *
- * unk  attr   xx   xy   yx   yy   x0   y0
+ * unk  attr  xx   xy   yx   yy   x0   y0
  *
  * Lucky & Wild:
  * 0000 080e 2100 0000 0000 0100 38e0 fde0	0:badge
@@ -641,17 +642,23 @@ namco_roz_init( int gfxbank, int maskregion )
  * 0000 0252 0101 4000 0000 0101 0fc4 d6d7 (stage)
  *
  * Mach Breakers:
- * 1000 0871 4100 0000 0000 0100 f4d0 f8e0
- * 0000 0210 0100 0000 0000 0100 40d0 38e0
- * 0000 0000 0100 0000 0000 0100 f4d0 f8e0 // charsel (512x512)
+ * 0000 0000 0100 0000 0000 0100 f4d0 f8e0 // character select
  * 0000 0020 0100 0000 0000 0100 f4d0 f8e0 // map
+ * 1000 0871 40b5 8f4a 00b6 00b5 7804 0994 // (pri=4) skater
+ * 0000 0210 0100 0000 0000 0100 40d0 38e0 // (pri=3) ramp
+ * 0000 0377 0100 0000 0000 0100 fdd0 c0e0 // monsterpull floor
+ * 1000 0370 0100 0000 0000 0100 fdd0 26e0 // (pri=1) shooting gallery
+ * 8000 0a30 4080 0000 0000 0080 a268 42f1 // steel earth dive
+ * 0000 0210 0100 0000 0000 0100 f4d0 f8e0 // dirt earth dive
+ *
+ * unk  attr  xx   xy   yx   yy   x0   y0
  */
 void namco_roz_draw(
 	struct mame_bitmap *bitmap,
 	const struct rectangle *cliprect,
 	int pri )
 {
-	const int xoffset = 38-2,yoffset = 3;
+	const int xoffset = 36,yoffset = 3;
 	int which;
 	for( which=0; which<2; which++ )
 	{
@@ -662,7 +669,6 @@ void namco_roz_draw(
 			int color = attrs&0xf;
 			int page;
 			int roz_pri;
-			//int roz_size = 128;
 			switch( namcos2_gametype )
 			{
 			case NAMCONB2_OUTFOXIES:
@@ -674,6 +680,39 @@ void namco_roz_draw(
 			case NAMCONB2_MACH_BREAKERS:
 				roz_pri = 4-which; /* ? */
 				page = (pSource[2]&0x6000)*2;
+
+				if( (pSource[0]==0x1000 && pSource[1]==0x0871) || /* hyper glide: player */
+					(pSource[0]==0x8000 && pSource[1]==0x0887) )  /* monster pull: monster */
+				{
+					SetRozSize( which, 64 );
+				}
+				else if( (pSource[0] == 0x8000 && pSource[1] == 0x0a30) || /* dirt dive */
+					     (pSource[0] == 0x8000 && pSource[1] == 0x0a90)    /* bomb's away */ )
+				{
+					roz_pri = 5;
+				}
+				else if( pSource[0] == 0x1000 && pSource[1] == 0x0370 )
+				{ /* shooting gallery */
+					roz_pri = 1;
+				}
+				else if( pSource[0] == 0x0000 &&
+				   (pSource[1] == 0x0000 || pSource[1]==0x0020) &&
+					pSource[2] == 0x0100 &&
+					pSource[3] == 0x0000 &&
+					pSource[4] == 0x0000 &&
+					pSource[5] == 0x0100 &&
+					pSource[6] == 0xf4d0 &&
+					pSource[7] == 0xf8e0 )
+				{ /* backdrop for character select screen */
+					SetRozSize( which, 32 );
+					roz_pri = 1; /* or 2? */
+				}
+				else
+				{
+					SetRozSize( which,128 );
+				}
+				//if( keyboard_pressed(KEYCODE_LSHIFT) )
+				//	roz_pri = pSource[0]&0xf;
 				break;
 
 			case NAMCOS2_LUCKY_AND_WILD:
@@ -722,9 +761,18 @@ void namco_roz_draw(
 					mRozPage[which] = page;
 					bDirty = 1;
 				}
+
 				if( bDirty )
 				{
 					tilemap_mark_all_tiles_dirty( mRozTilemap[which] );
+				}
+
+				if( mRozSize[which]==32 )
+				{ /* hack */
+					incxx<<=1;
+					incyy<<=1;
+					startx>>=1; if( startx&0x4000 ) startx|=0x8000;
+					starty>>=1; if( starty&0x4000 ) starty|=0x8000;
 				}
 
 				tilemap_draw_roz(bitmap,cliprect,mRozTilemap[which],
@@ -736,7 +784,7 @@ void namco_roz_draw(
 					incyy << 8,
 					1,	/* copy with wraparound */
 					0,0);
-			}
+			} /* roz_pri==pri */
 		}
 	}
 } /* namco_roz_draw */
@@ -779,7 +827,21 @@ static void writerozvideo( int offset, data16_t data )
 		{
 			if( mRozPage[i]==(offset&0xc000) )
 			{
-				tilemap_mark_tile_dirty( mRozTilemap[i], offset&0x3fff );
+				int col,row;
+				col = offset&0x7f;
+				row = (offset/0x80)&0x7f;
+				if( col<mRozSize[i] && row<mRozSize[i] )
+				{
+					while( row<128 )
+					{
+						int c;
+						for( c=col; c<128; c+=mRozSize[i] )
+						{
+							tilemap_mark_tile_dirty( mRozTilemap[i], row*128+c );
+						}
+						row += mRozSize[i];
+					}
+				}
 			}
 		}
 	}

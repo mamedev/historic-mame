@@ -33,4 +33,4 @@ void i286_set_address_mask(offs_t mask);
 #define WriteWord(ea,val) { program_write_byte_8((ea)&AMASK,(BYTE)(val)); program_write_byte_8(((ea)+1)&AMASK,(val)>>8); }
 
 #undef CHANGE_PC
-#define CHANGE_PC(addr) change_pc24(addr)
+#define CHANGE_PC(addr) change_pc(addr)

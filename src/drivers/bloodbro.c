@@ -24,7 +24,8 @@ view DIP descriptions.
 
 Game does not appear to have cocktail mode. The screen hardware
 is undoubtedly capable of flipscreen and layer priority flipping
-however.
+however.(which is why we have GAME_NO_COCKTAIL despite the games
+being upright)
 
 Dumpers Notes
 =============
@@ -93,98 +94,67 @@ Stephh's notes (based on the games M68000 code and some tests) :
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "cpu/z80/z80.h"
 #include "sndhrdw/seibu.h"
+#include "cpu/z80/z80.h"
+
+
+extern UINT16 *bloodbro_bgvideoram, *bloodbro_fgvideoram;
+extern UINT16 *bloodbro_txvideoram;
+extern UINT16 *bloodbro_scroll;
+
+WRITE16_HANDLER( bloodbro_bgvideoram_w );
+WRITE16_HANDLER( bloodbro_fgvideoram_w );
+WRITE16_HANDLER( bloodbro_txvideoram_w );
 
 extern VIDEO_UPDATE( bloodbro );
 extern VIDEO_UPDATE( weststry );
 extern VIDEO_UPDATE( skysmash );
 extern VIDEO_START( bloodbro );
 
-WRITE16_HANDLER( bloodbro_bgvideoram_w );
-WRITE16_HANDLER( bloodbro_fgvideoram_w );
-WRITE16_HANDLER( bloodbro_txvideoram_w );
 
-extern data16_t *bloodbro_bgvideoram,*bloodbro_fgvideoram;
-extern data16_t *bloodbro_txvideoram;
-extern data16_t *bloodbro_scroll;
+/* Memory Maps */
 
-/***************************************************************************/
-
-static ADDRESS_MAP_START( readmem_cpu, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x080000, 0x08afff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x08b000, 0x08bfff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x08c000, 0x08c3ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x08c400, 0x08cfff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x08d000, 0x08d3ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x08d400, 0x08d7ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x08d800, 0x08dfff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x08e000, 0x08e7ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x08e800, 0x08f7ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x08f800, 0x08ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x0a0000, 0x0a000d) AM_READ(seibu_main_word_r)
-	AM_RANGE(0x0c0000, 0x0c007f) AM_READ(MRA16_RAM)
+static ADDRESS_MAP_START( bloodbro_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_ROM
+	AM_RANGE(0x080000, 0x08afff) AM_RAM
+	AM_RANGE(0x08b000, 0x08bfff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x08c000, 0x08c3ff) AM_RAM AM_WRITE(bloodbro_bgvideoram_w) AM_BASE(&bloodbro_bgvideoram)
+	AM_RANGE(0x08c400, 0x08cfff) AM_RAM
+	AM_RANGE(0x08d000, 0x08d3ff) AM_RAM AM_WRITE(bloodbro_fgvideoram_w) AM_BASE(&bloodbro_fgvideoram)
+	AM_RANGE(0x08d400, 0x08d7ff) AM_RAM
+	AM_RANGE(0x08d800, 0x08dfff) AM_RAM AM_WRITE(bloodbro_txvideoram_w) AM_BASE(&bloodbro_txvideoram)
+	AM_RANGE(0x08e000, 0x08e7ff) AM_RAM
+	AM_RANGE(0x08e800, 0x08f7ff) AM_RAM AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x08f800, 0x08ffff) AM_RAM
+	AM_RANGE(0x0a0000, 0x0a000d) AM_READWRITE(seibu_main_word_r, seibu_main_word_w)
+	AM_RANGE(0x0c0000, 0x0c007f) AM_RAM AM_BASE(&bloodbro_scroll)
+	AM_RANGE(0x0c0080, 0x0c0081) AM_WRITENOP // ??? IRQ Ack VBL?
+	AM_RANGE(0x0c00c0, 0x0c00c1) AM_WRITENOP // ??? watchdog?
+	AM_RANGE(0x0c0100, 0x0c0101) AM_WRITENOP // ??? written once
 	AM_RANGE(0x0e0000, 0x0e0001) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x0e0002, 0x0e0003) AM_READ(input_port_2_word_r)
 	AM_RANGE(0x0e0004, 0x0e0005) AM_READ(input_port_3_word_r)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writemem_cpu, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x080000, 0x08afff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x08b000, 0x08bfff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x08c000, 0x08c3ff) AM_WRITE(bloodbro_bgvideoram_w) AM_BASE(&bloodbro_bgvideoram)
-	AM_RANGE(0x08c400, 0x08cfff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x08d000, 0x08d3ff) AM_WRITE(bloodbro_fgvideoram_w) AM_BASE(&bloodbro_fgvideoram)
-	AM_RANGE(0x08d400, 0x08d7ff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x08d800, 0x08dfff) AM_WRITE(bloodbro_txvideoram_w) AM_BASE(&bloodbro_txvideoram)
-	AM_RANGE(0x08e000, 0x08e7ff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x08e800, 0x08f7ff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x08f800, 0x08ffff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x0a0000, 0x0a000d) AM_WRITE(seibu_main_word_w)
-	AM_RANGE(0x0c0000, 0x0c007f) AM_WRITE(MWA16_RAM) AM_BASE(&bloodbro_scroll)
-	AM_RANGE(0x0c0080, 0x0c0081) AM_WRITE(MWA16_NOP) /* IRQ Ack VBL? */
-	AM_RANGE(0x0c00c0, 0x0c00c1) AM_WRITE(MWA16_NOP) /* watchdog? */
-//	AM_RANGE(0x0c0100, 0x0c0100) AM_WRITE(MWA16_NOP) /* ?? Written 1 time */
-ADDRESS_MAP_END
-
-/**** West Story Memory Map ********************************************/
-
-static ADDRESS_MAP_START( weststry_readmem_cpu, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x080000, 0x08afff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x08b000, 0x08bfff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x08c000, 0x08c3ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x08c400, 0x08cfff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x08d000, 0x08d3ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x08d400, 0x08dfff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x08d800, 0x08dfff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x08e000, 0x08ffff) AM_READ(MRA16_RAM)
+static ADDRESS_MAP_START( weststry_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_ROM
+	AM_RANGE(0x080000, 0x08afff) AM_RAM
+	AM_RANGE(0x08b000, 0x08bfff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x08c000, 0x08c3ff) AM_RAM AM_WRITE(bloodbro_bgvideoram_w) AM_BASE(&bloodbro_bgvideoram)
+	AM_RANGE(0x08c400, 0x08cfff) AM_RAM
+	AM_RANGE(0x08d000, 0x08d3ff) AM_RAM AM_WRITE(bloodbro_fgvideoram_w) AM_BASE(&bloodbro_fgvideoram)
+	AM_RANGE(0x08d400, 0x08d7ff) AM_RAM
+	AM_RANGE(0x08d800, 0x08dfff) AM_RAM AM_WRITE(bloodbro_txvideoram_w) AM_BASE(&bloodbro_txvideoram)
+	AM_RANGE(0x08e000, 0x08ffff) AM_RAM
 	AM_RANGE(0x0c1000, 0x0c1001) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x0c1002, 0x0c1003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x0c1004, 0x0c1005) AM_READ(input_port_2_word_r)
-	AM_RANGE(0x0c1000, 0x0c17ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x128000, 0x1287ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x120000, 0x128fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0c1000, 0x0c17ff) AM_RAM
+	AM_RANGE(0x128000, 0x1287ff) AM_RAM AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x120000, 0x128fff) AM_RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( weststry_writemem_cpu, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x080000, 0x08afff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x08b000, 0x08bfff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x08c000, 0x08c3ff) AM_WRITE(bloodbro_bgvideoram_w) AM_BASE(&bloodbro_bgvideoram)
-	AM_RANGE(0x08c400, 0x08cfff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x08d000, 0x08d3ff) AM_WRITE(bloodbro_fgvideoram_w) AM_BASE(&bloodbro_fgvideoram)
-	AM_RANGE(0x08d400, 0x08d7ff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x08d800, 0x08dfff) AM_WRITE(bloodbro_txvideoram_w) AM_BASE(&bloodbro_txvideoram)
-	AM_RANGE(0x08e000, 0x08ffff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x0c1000, 0x0c17ff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x128000, 0x1287ff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x120000, 0x128fff) AM_WRITE(MWA16_RAM)
-ADDRESS_MAP_END
-
-/******************************************************************************/
+/* Input Ports */
 
 INPUT_PORTS_START( bloodbro )
 	SEIBU_COIN_INPUTS	/* Must be port 0: coin inputs read through sound cpu */
@@ -226,27 +196,22 @@ INPUT_PORTS_START( bloodbro )
 	PORT_DIPNAME( 0x0020, 0x0020, "Starting Coin" )
 	PORT_DIPSETTING(      0x0020, "Normal" )
 	PORT_DIPSETTING(      0x0000, "x2" )
-	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )	// see notes
-	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )	// see notes
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT( 0x00c0, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x0000, "1" )
 	PORT_DIPSETTING(      0x0200, "2" )
 	PORT_DIPSETTING(      0x0300, "3" )
 	PORT_DIPSETTING(      0x0100, "5" )
 	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(      0x0c00, "300k then every 500k" )
-	PORT_DIPSETTING(      0x0800, "Every 500k" )
-	PORT_DIPSETTING(      0x0400, "500k only" )
+	PORT_DIPSETTING(      0x0c00, "300K 500K+" )
+	PORT_DIPSETTING(      0x0800, "500K+" )
+	PORT_DIPSETTING(      0x0400, "500K" )
 	PORT_DIPSETTING(      0x0000, "None" )
 	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x2000, "Easy" )
 	PORT_DIPSETTING(      0x3000, "Normal" )
 	PORT_DIPSETTING(      0x1000, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0000, "Very Hard" )
 	PORT_DIPNAME( 0x4000, 0x4000, "Allow Continue" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Yes ) )
@@ -270,7 +235,7 @@ INPUT_PORTS_START( bloodbro )
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )	// "Fire"
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )	// "Roll"
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )	// "Dynamite"
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* tested - check code at 0x0005fe - VBKANK ? */
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* tested - check code at 0x0005fe - VBLANK ? */
 
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
@@ -282,7 +247,6 @@ INPUT_PORTS_START( bloodbro )
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0xe000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
-
 
 INPUT_PORTS_START( weststry )
 	PORT_START
@@ -322,27 +286,22 @@ INPUT_PORTS_START( weststry )
 	PORT_DIPNAME( 0x0020, 0x0020, "Starting Coin" )
 	PORT_DIPSETTING(      0x0020, "Normal" )
 	PORT_DIPSETTING(      0x0000, "x2" )
-	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )	// see notes
-	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )	// see notes
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT( 0x00c0, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x0000, "1" )
 	PORT_DIPSETTING(      0x0200, "2" )
 	PORT_DIPSETTING(      0x0300, "3" )
 	PORT_DIPSETTING(      0x0100, "5" )
 	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(      0x0c00, "300k then every 500k" )
-	PORT_DIPSETTING(      0x0800, "Every 500k" )
-	PORT_DIPSETTING(      0x0400, "500k only" )
+	PORT_DIPSETTING(      0x0c00, "300K 500K+" )
+	PORT_DIPSETTING(      0x0800, "500K+" )
+	PORT_DIPSETTING(      0x0400, "500K" )
 	PORT_DIPSETTING(      0x0000, "None" )
 	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x2000, "Easy" )
 	PORT_DIPSETTING(      0x3000, "Normal" )
 	PORT_DIPSETTING(      0x1000, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0000, "Very Hard" )
 	PORT_DIPNAME( 0x4000, 0x4000, "Allow Continue" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Yes ) )
@@ -418,27 +377,22 @@ INPUT_PORTS_START( skysmash )
 	PORT_DIPNAME( 0x0020, 0x0020, "Starting Coin" )
 	PORT_DIPSETTING(      0x0020, "Normal" )
 	PORT_DIPSETTING(      0x0000, "x2" )
-	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unused ) )	// see notes
-	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )	// see notes
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT( 0x00c0, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x0200, "2" )
 	PORT_DIPSETTING(      0x0300, "3" )
 	PORT_DIPSETTING(      0x0100, "5" )
-	PORT_BITX( 0,         0x0000, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(      0x0000, "Infinite" )
 	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(      0x0c00, "120k then every 200k" )
-	PORT_DIPSETTING(      0x0800, "Every 200k" )
-	PORT_DIPSETTING(      0x0400, "Every 250k" )
-	PORT_DIPSETTING(      0x0000, "200k only" )
+	PORT_DIPSETTING(      0x0c00, "120K 200K+" )
+	PORT_DIPSETTING(      0x0800, "200K+" )
+	PORT_DIPSETTING(      0x0400, "250K+" )
+	PORT_DIPSETTING(      0x0000, "200K" )
 	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x0000, "Easy" )
 	PORT_DIPSETTING(      0x3000, "Normal" )
 	PORT_DIPSETTING(      0x2000, "Hard" )
-	PORT_DIPSETTING(      0x1000, "Hardest" )
+	PORT_DIPSETTING(      0x1000, "Very Hard" )
 	PORT_DIPNAME( 0x4000, 0x4000, "Allow Continue" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Yes ) )
@@ -475,8 +429,7 @@ INPUT_PORTS_START( skysmash )
 	PORT_BIT( 0xe000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-
-/**** Blood Bros, Skysmash gfx decode ************************************/
+/* Graphics Layouts */
 
 static struct GfxLayout textlayout =
 {
@@ -515,17 +468,6 @@ static struct GfxLayout spritelayout =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxDecodeInfo bloodbro_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0x00000, &textlayout,   0x70*16,  0x10 }, /* Text */
-	{ REGION_GFX2, 0x00000, &backlayout,   0x40*16,  0x10 }, /* Background */
-	{ REGION_GFX2, 0x80000, &backlayout,   0x50*16,  0x10 }, /* Foreground */
-	{ REGION_GFX3, 0x00000, &spritelayout, 0x00*16,  0x10 }, /* Sprites */
-	{ -1 }
-};
-
-/**** West Story gfx decode *********************************************/
-
 static struct GfxLayout weststry_textlayout =
 {
 	8,8,	/* 8*8 sprites */
@@ -563,6 +505,17 @@ static struct GfxLayout weststry_spritelayout =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
+/* Graphics Decode Info */
+
+static struct GfxDecodeInfo bloodbro_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0x00000, &textlayout,   0x70*16,  0x10 }, /* Text */
+	{ REGION_GFX2, 0x00000, &backlayout,   0x40*16,  0x10 }, /* Background */
+	{ REGION_GFX2, 0x80000, &backlayout,   0x50*16,  0x10 }, /* Foreground */
+	{ REGION_GFX3, 0x00000, &spritelayout, 0x00*16,  0x10 }, /* Sprites */
+	{ -1 }
+};
+
 static struct GfxDecodeInfo weststry_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &weststry_textlayout,     16*16,  0x10 },
@@ -572,25 +525,27 @@ static struct GfxDecodeInfo weststry_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-/**** Blood Bros Interrupt & Driver Machine  ****************************/
+/* Sound Interfaces */
 
-/* Parameters: YM3812 frequency, Oki frequency, Oki memory region */
-SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4,8000,REGION_SOUND1);
+// Parameters: YM3812 frequency, Oki frequency, Oki memory region
+SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4, 8000, REGION_SOUND1);
+
+/* Machine Drivers */
 
 static MACHINE_DRIVER_START( bloodbro )
-
-	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 10000000) /* 10 MHz */
-	MDRV_CPU_PROGRAM_MAP(readmem_cpu,writemem_cpu)
-	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+	// basic machine hardware
+	MDRV_CPU_ADD_TAG("main", M68000, 10000000) // 10 MHz
+	MDRV_CPU_PROGRAM_MAP(bloodbro_map, 0)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold, 1)
 
 	SEIBU_SOUND_SYSTEM_CPU(14318180/4)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
 	MDRV_MACHINE_INIT(seibu_sound_1)
 
-	/* video hardware */
+	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
@@ -600,65 +555,33 @@ static MACHINE_DRIVER_START( bloodbro )
 	MDRV_VIDEO_START(bloodbro)
 	MDRV_VIDEO_UPDATE(bloodbro)
 
-	/* sound hardware */
-	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
-MACHINE_DRIVER_END
-
-static MACHINE_DRIVER_START( skysmash )
-
-	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 10000000) /* 10 MHz */
-	MDRV_CPU_PROGRAM_MAP(readmem_cpu,writemem_cpu)
-	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
-
-	SEIBU_SOUND_SYSTEM_CPU(14318180/4)
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(seibu_sound_1)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(bloodbro_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(2048)
-
-	MDRV_VIDEO_START(bloodbro)
-	MDRV_VIDEO_UPDATE(skysmash)
-
-	/* sound hardware */
+	// sound hardware
 	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( weststry )
+	MDRV_IMPORT_FROM(bloodbro)
 
-	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 10000000) /* 10 MHz */
-	MDRV_CPU_PROGRAM_MAP(weststry_readmem_cpu,weststry_writemem_cpu)
-	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(weststry_map, 0)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold, 1)
 
-	SEIBU_SOUND_SYSTEM_CPU(14318180/4)
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(seibu_sound_1)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(256, 256)
-	MDRV_VISIBLE_AREA(0, 255, 16, 239)
 	MDRV_GFXDECODE(weststry_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024)
 
-	MDRV_VIDEO_START(bloodbro)
 	MDRV_VIDEO_UPDATE(weststry)
-
-	/* sound hardware */
-	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( skysmash )
+	MDRV_IMPORT_FROM(bloodbro)
 
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_VBLANK_INT(irq2_line_hold, 1)
+
+	MDRV_VIDEO_UPDATE(skysmash)
+MACHINE_DRIVER_END
+
+/* ROMs */
 
 ROM_START( bloodbro )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )
@@ -758,20 +681,19 @@ ROM_START( skysmash )
 	ROM_LOAD( "rom1",    0x00000, 0x20000, CRC(e69986f6) SHA1(de38bf2d5638cb40740882e1abccf7928e43a5a6) )
 ROM_END
 
-
-/***************************************************************************/
+/* Driver Initialization */
 
 static DRIVER_INIT( weststry )
 {
 	UINT8 *gfx = memory_region(REGION_GFX3);
 	int i;
 
-	/* invert sprite data */
-	for (i = 0;i < memory_region_length(REGION_GFX3);i++)
+	// invert sprite data
+	for (i = 0; i < memory_region_length(REGION_GFX3); i++)
 		gfx[i] = ~gfx[i];
 }
 
-/***************************************************************************/
+/* Game Drivers */
 
 GAMEX(1990, bloodbro, 0,        bloodbro, bloodbro, 0,        ROT0,   "Tad", "Blood Bros.", GAME_NO_COCKTAIL )
 GAMEX(1990, weststry, bloodbro, weststry, weststry, weststry, ROT0,   "bootleg", "West Story", GAME_NO_COCKTAIL | GAME_NO_SOUND )

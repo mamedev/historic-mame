@@ -197,21 +197,23 @@ static WRITE_HANDLER( vendetta_K052109_w ) {
 	K052109_w( offset + 0x2000, data );
 }
 
+static offs_t video_banking_base;
+
 static void vendetta_video_banking( int select )
 {
 	if ( select & 1 )
 	{
-		install_mem_read_handler ( 0, 0x6000, 0x6fff, paletteram_r );
-		install_mem_write_handler( 0, 0x6000, 0x6fff, paletteram_xBBBBBGGGGGRRRRR_swap_w );
-		install_mem_read_handler ( 0, 0x4000, 0x4fff, K053247_r );
-		install_mem_write_handler( 0, 0x4000, 0x4fff, K053247_w );
+		install_mem_read_handler ( 0, video_banking_base + 0x2000, video_banking_base + 0x2fff, paletteram_r );
+		install_mem_write_handler( 0, video_banking_base + 0x2000, video_banking_base + 0x2fff, paletteram_xBBBBBGGGGGRRRRR_swap_w );
+		install_mem_read_handler ( 0, video_banking_base + 0x0000, video_banking_base + 0x0fff, K053247_r );
+		install_mem_write_handler( 0, video_banking_base + 0x0000, video_banking_base + 0x0fff, K053247_w );
 	}
 	else
 	{
-		install_mem_read_handler ( 0, 0x6000, 0x6fff, vendetta_K052109_r );
-		install_mem_write_handler( 0, 0x6000, 0x6fff, vendetta_K052109_w );
-		install_mem_read_handler ( 0, 0x4000, 0x4fff, K052109_r );
-		install_mem_write_handler( 0, 0x4000, 0x4fff, K052109_w );
+		install_mem_read_handler ( 0, video_banking_base + 0x2000, video_banking_base + 0x2fff, vendetta_K052109_r );
+		install_mem_write_handler( 0, video_banking_base + 0x2000, video_banking_base + 0x2fff, vendetta_K052109_w );
+		install_mem_read_handler ( 0, video_banking_base + 0x0000, video_banking_base + 0x0fff, K052109_r );
+		install_mem_write_handler( 0, video_banking_base + 0x0000, video_banking_base + 0x0fff, K052109_w );
 	}
 }
 
@@ -784,7 +786,7 @@ static void vendetta_banking( int lines )
 
 static MACHINE_INIT( vendetta )
 {
-	cpunum_set_info_ptr(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, vendetta_banking);
+	cpunum_set_info_ptr(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (void *)vendetta_banking);
 
 	paletteram = &memory_region(REGION_CPU1)[0x48000];
 	irq_enabled = 0;
@@ -797,6 +799,14 @@ static MACHINE_INIT( vendetta )
 
 static DRIVER_INIT( vendetta )
 {
+	video_banking_base = 0x4000;
+	konami_rom_deinterleave_2(REGION_GFX1);
+	konami_rom_deinterleave_4(REGION_GFX2);
+}
+
+static DRIVER_INIT( esckids )
+{
+	video_banking_base = 0x2000;
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_4(REGION_GFX2);
 }
@@ -809,4 +819,4 @@ GAME( 1991, vendet2p, vendetta, vendetta, vendetta, vendetta, ROT0, "Konami", "V
 GAME( 1991, vendetas, vendetta, vendetta, vendetta, vendetta, ROT0, "Konami", "Vendetta (Asia 2 Players ver. U)" )
 GAME( 1991, vendtaso, vendetta, vendetta, vendetta, vendetta, ROT0, "Konami", "Vendetta (Asia 2 Players ver. D)" )
 GAME( 1991, vendettj, vendetta, vendetta, vendetta, vendetta, ROT0, "Konami", "Crime Fighters 2 (Japan 2 Players ver. P)" )
-GAME( 1991, esckids,  0,        esckids,  esckids,  vendetta, ROT0, "Konami", "Escape Kids (Japan 2 Players)" )
+GAME( 1991, esckids,  0,        esckids,  esckids,  esckids,  ROT0, "Konami", "Escape Kids (Japan 2 Players)" )

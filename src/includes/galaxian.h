@@ -104,6 +104,7 @@ VIDEO_START( newsin7 );
 VIDEO_START( sfx );
 VIDEO_START( rockclim );
 VIDEO_START( drivfrcg );
+VIDEO_START( bongo );
 
 VIDEO_UPDATE( galaxian );
 

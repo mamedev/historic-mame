@@ -1522,15 +1522,21 @@ ADDRESS_MAP_END
 
 /* MEGATECH specific */
 
+UINT8 mt_ram;
+
 static READ_HANDLER( megatech_instr_r )
 {
-	unsigned char* instr = memory_region(REGION_USER1);
-	unsigned char* ram = memory_region(REGION_CPU3);
+	data8_t* instr = memory_region(REGION_USER1);
 
-	if(ram[0x6404] == 0)
+	if(mt_ram == 0)
 		return instr[offset/2];
 	else
-		return 0xFF;
+		return 0xff;
+}
+
+static WRITE_HANDLER( megatech_instr_w )
+{
+	mt_ram = data;
 }
 
 unsigned char bios_ctrl[6];
@@ -1557,6 +1563,8 @@ static WRITE_HANDLER( bios_ctrl_w )
 	}
 	bios_ctrl[offset] = data;
 }
+
+/*MEGAPLAY specific*/
 
 static READ_HANDLER( megaplay_bios_banksel_r )
 {
@@ -1585,9 +1593,9 @@ static WRITE_HANDLER( megaplay_bios_gamesel_w )
 
 static READ_HANDLER( bank_r )
 {
-	unsigned char* bank = memory_region(REGION_CPU3);
+	data8_t* bank = memory_region(REGION_CPU3);
 //	unsigned char* instr = memory_region(REGION_USER1);
-	unsigned char* game = memory_region(REGION_CPU1);
+	data8_t* game = memory_region(REGION_CPU1);
 
 	if(game_banksel == 0x142) // Genesis I/O
 		return megaplay_genesis_io_r((offset/2) & 0x1f, 0xffff);
@@ -1705,6 +1713,7 @@ static ADDRESS_MAP_START( megatech_bios_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x4000, 0x4fff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x5000, 0x5fff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x6000, 0x63ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x6404, 0x6404) AM_WRITE(megatech_instr_w)
 	AM_RANGE(0x6802, 0x6807) AM_WRITE(bios_ctrl_w)
 	AM_RANGE(0x6808, 0x6fff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x7000, 0x7fff) AM_WRITE(MWA8_RAM)

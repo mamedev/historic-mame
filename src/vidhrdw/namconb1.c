@@ -13,11 +13,13 @@
 static int tilemap_palette_bank[6];
 static UINT8 *mpMaskData;
 static struct tilemap *background[6];
+static data32_t tilemap_tile_bank[4];
 
 /* nth_word32 is a general-purpose utility function, which allows us to
  * read from 32-bit aligned memory as if it were an array of 16 bit words.
  */
-INLINE data16_t nth_word32( const data32_t *source, int which )
+INLINE data16_t
+nth_word32( const data32_t *source, int which )
 {
 	source += which/2;
 	if( which&1 )
@@ -46,7 +48,8 @@ nth_byte32( const data32_t *pSource, int which )
 		}
 } /* nth_byte32 */
 
-INLINE void tilemapNB1_get_info(int tile_index,int tilemap_color,const data32_t *tilemap_videoram)
+INLINE void
+tilemapNB1_get_info(int tile_index,int tilemap_color,const data32_t *tilemap_videoram)
 {
 	data16_t tile = nth_word32( tilemap_videoram, tile_index );
 	SET_TILE_INFO(
@@ -101,7 +104,8 @@ WRITE32_HANDLER( namconb1_videoram_w )
 	}
 }
 
-static void namconb1_install_palette( void )
+static void
+namconb1_install_palette( void )
 {
 	int pen, page, dword_offset, byte_offset;
 	data32_t r,g,b;
@@ -193,10 +197,8 @@ video_update_common( struct mame_bitmap *bitmap, const struct rectangle *cliprec
 
 	handle_mcu();
 	namconb1_install_palette();
-	fillbitmap(priority_bitmap,0,NULL); /* not actually used (yet) */
 
-	/* I have no idea what the background color should be, but I doubt it ever pokes through. */
-	fillbitmap( bitmap, 0, 0 );
+	fillbitmap( bitmap, get_black_pen(), cliprect );
 
 	for( i=0; i<6; i++ )
 	{
@@ -219,12 +221,18 @@ video_update_common( struct mame_bitmap *bitmap, const struct rectangle *cliprec
 		{
 			namco_roz_draw( bitmap,cliprect,pri );
 		}
-
 		for( i=0; i<6; i++ )
 		{
 			if( nth_word32( &namconb1_scrollram32[0x20/4],i ) == pri )
 			{
-				tilemap_draw( bitmap,cliprect,background[i],0,0/*1<<pri*/ );
+				if( namcos2_gametype == NAMCONB1_NEBULRAY && i==3 )
+				{
+					/* HACK; don't draw this tilemap - it contains garbage */
+				}
+				else
+				{
+					tilemap_draw( bitmap,cliprect,background[i],0,0/*1<<pri*/ );
+				}
 			}
 		}
 		namco_obj_draw( bitmap, cliprect, pri );
@@ -251,7 +259,8 @@ VIDEO_UPDATE( namconb1 )
 	}
 }
 
-static int NB1objcode2tile( int code )
+static int
+NB1objcode2tile( int code )
 {
 	int bank;
 	bank = nth_word32( namconb1_spritebank32, code>>11 );
@@ -298,22 +307,27 @@ VIDEO_START( namconb1 )
 INLINE void
 tilemapNB2_get_info(int tile_index,int which,const data32_t *tilemap_videoram)
 {
-	data16_t tile = nth_word32( tilemap_videoram, tile_index );
+	int code = nth_word32( tilemap_videoram, tile_index );
 	int mangle;
 
 	if( namcos2_gametype == NAMCONB2_MACH_BREAKERS )
 	{
-		mangle = tile;
+		/*	00010203 04050607 00010203 04050607 (normal) */
+		/*	00010718 191a1b07 00010708 090a0b07 (alt bank) */
+		int bank = nth_byte32( namconb1_tilebank32, (code>>13)+8 );
+		code &= 0x1fff;
+		code += bank*0x2000;
+		mangle = code;
 	}
 	else
 	{
 		/* the pixmap index is mangled, the transparency bitmask index is not */
-		mangle = tile&~(0x140);
-		if( tile&0x100 ) mangle |= 0x040;
-		if( tile&0x040 ) mangle |= 0x100;
+		mangle = code&~(0x140);
+		if( code&0x100 ) mangle |= 0x040;
+		if( code&0x040 ) mangle |= 0x100;
 	}
 	SET_TILE_INFO( NAMCONB1_TILEGFX,mangle,tilemap_palette_bank[which],0)
-	tile_info.mask_data = 8*tile + mpMaskData;
+	tile_info.mask_data = 8*code + mpMaskData;
 } /* tilemapNB2_get_info */
 
 static void tilemapNB2_get_info0(int tile_index) { tilemapNB2_get_info(tile_index,0,&videoram32[0x0000/4]); }
@@ -325,13 +339,31 @@ static void tilemapNB2_get_info5(int tile_index) { tilemapNB2_get_info(tile_inde
 
 VIDEO_UPDATE( namconb2 )
 {
+	if( paletteram32[0x1800/4]==0x00db00db &&
+		paletteram32[0x1804/4]==0x00910091 )
+	{ /* HACK: adds screen blanking for Outfoxies.
+	   * I'm not sure the exact behavior of these registers.
+	   */
+		fillbitmap( bitmap, get_black_pen(), cliprect );
+		return;
+	}
+
+	if( memcmp(tilemap_tile_bank,namconb1_tilebank32,sizeof(tilemap_tile_bank))!=0 )
+	{
+		int i;
+		for( i=0; i<6; i++ )
+		{
+			tilemap_mark_all_tiles_dirty( background[i] );
+		}
+		memcpy(tilemap_tile_bank,namconb1_tilebank32,sizeof(tilemap_tile_bank));
+	}
 	video_update_common( bitmap, cliprect, 1 );
 } /* namconb2_vh_screenrefresh */
 
-static int NB2objcode2tile( int code )
+static int
+NB2objcode2tile( int code )
 {
-	int bank;
-	bank = nth_byte32( namconb1_spritebank32, (code>>11)&0xf );
+	int bank = nth_byte32( namconb1_spritebank32, (code>>11)&0xf );
 	code &= 0x7ff;
 	if( namcos2_gametype == NAMCONB2_MACH_BREAKERS )
 	{

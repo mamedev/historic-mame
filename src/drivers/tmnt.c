@@ -2467,6 +2467,15 @@ static struct K053260_interface k053260_interface_nmi =
 //	{ sound_nmi_callback },
 };
 
+static struct K053260_interface dtk053260_interface_nmi =
+{
+	1,
+	{ 3579545 },
+	{ REGION_SOUND1 }, /* memory region */
+	{ { MIXER(75,MIXER_PAN_LEFT), MIXER(75,MIXER_PAN_RIGHT) } },
+//	{ sound_nmi_callback },
+};
+
 static struct K053260_interface k053260_interface =
 {
 	1,
@@ -2667,7 +2676,7 @@ static MACHINE_DRIVER_START( detatwin )
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K053260, k053260_interface_nmi)
+	MDRV_SOUND_ADD(K053260, dtk053260_interface_nmi)
 MACHINE_DRIVER_END
 
 
@@ -2831,7 +2840,7 @@ static MACHINE_DRIVER_START( ssriders )
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K053260, k053260_interface_nmi)
+	MDRV_SOUND_ADD(K053260, dtk053260_interface_nmi)
 MACHINE_DRIVER_END
 
 
@@ -3008,6 +3017,40 @@ ROM_START( tmntu )
 	ROM_LOAD16_BYTE( "963-r24",      0x00001, 0x20000, CRC(661e056a) SHA1(4773883a66540c07dbc969881689184697355537) )
 	ROM_LOAD16_BYTE( "963-r21",      0x40000, 0x10000, CRC(de047bb6) SHA1(d41d11f1b7dfd3824308f7fff43a5a7ced432ec2) )
 	ROM_LOAD16_BYTE( "963-r22",      0x40001, 0x10000, CRC(d86a0888) SHA1(c761b3e8acc45a36ae691758c639eb826a8ab5b2) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "963-e20",      0x00000, 0x08000, CRC(1692a6d6) SHA1(68c3419012b2863e91a7d7e479fce5ceabb10b88) )
+
+	ROM_REGION( 0x100000, REGION_GFX1, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "963-a28",      0x000000, 0x80000, CRC(db4769a8) SHA1(810811914f9c1fbf2320d5a9030cbf124f6d78cf) )        /* 8x8 tiles */
+	ROM_LOAD( "963-a29",      0x080000, 0x80000, CRC(8069cd2e) SHA1(54095d3546119ccd1e8814d692aceb1327c9369f) )        /* 8x8 tiles */
+
+	ROM_REGION( 0x200000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "963-a17",      0x000000, 0x80000, CRC(b5239a44) SHA1(84e94807e7c51aa652b4e4b827b36be59a53d0d6) )        /* sprites */
+	ROM_LOAD( "963-a18",      0x080000, 0x80000, CRC(dd51adef) SHA1(5010c0911b0b9e4f23a785e8a751a0bde5be5be0) )        /* sprites */
+	ROM_LOAD( "963-a15",      0x100000, 0x80000, CRC(1f324eed) SHA1(971a675578518fffa341a943d0cc4fdea005fde0) )        /* sprites */
+	ROM_LOAD( "963-a16",      0x180000, 0x80000, CRC(d4bd9984) SHA1(d780ae7f72e16767c3a492544f02f0f1a332ab22) )        /* sprites */
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "963-a30",      0x0000, 0x0100, CRC(abd82680) SHA1(945a71e6ec65202f13209b45d45b616372d6c0f5) )	/* sprite address decoder */
+	ROM_LOAD( "963-a31",      0x0100, 0x0100, CRC(f8004a1c) SHA1(ed6694b8eebfe0238b50ebd05007d519f6e57b1b) )	/* priority encoder (not used) */
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* 128k for the samples */
+	ROM_LOAD( "963-a26",      0x00000, 0x20000, CRC(e2ac3063) SHA1(5bb294c46fb5eaba9935a18c0aa5d3931168f474) ) /* samples for 007232 */
+
+	ROM_REGION( 0x20000, REGION_SOUND2, 0 )	/* 128k for the samples */
+	ROM_LOAD( "963-a27",      0x00000, 0x20000, CRC(2dfd674b) SHA1(bbec5896c70056964fbc972a84bd5b0dfc6af257) ) /* samples for UPD7759C */
+
+	ROM_REGION( 0x80000, REGION_SOUND3, 0 )	/* 512k for the title music sample */
+	ROM_LOAD( "963-a25",      0x00000, 0x80000, CRC(fca078c7) SHA1(3e1124d72c9db4cb11d8de6c44b7aeca967f44e1) )
+ROM_END
+
+ROM_START( tmntua )
+	ROM_REGION( 0x60000, REGION_CPU1, 0 )	/* 2*128k and 2*64k for 68000 code */
+	ROM_LOAD16_BYTE( "963j23.bin",      0x00000, 0x20000, CRC(f77314e2) SHA1(aeb7a397a17b6ff587e3c536286a4942975e7a20) )
+	ROM_LOAD16_BYTE( "963j24.bin",      0x00001, 0x20000, CRC(47f662d3) SHA1(d26e932b13920ca23a654a647b1e02097a264a3a) )
+	ROM_LOAD16_BYTE( "963j21.bin",      0x40000, 0x10000, CRC(7bee9fe8) SHA1(1489cbd81176a586d21442d3e9cf4e585ca72bb4) )
+	ROM_LOAD16_BYTE( "963j22.bin",      0x40001, 0x10000, CRC(2efed09f) SHA1(be84f71a076b360708f15b555ffb8612eb7f0f08) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "963-e20",      0x00000, 0x08000, CRC(1692a6d6) SHA1(68c3419012b2863e91a7d7e479fce5ceabb10b88) )
@@ -4060,7 +4103,8 @@ GAME( 1989, mia,      0,        mia,      mia,      mia,      ROT0,  "Konami", "
 GAME( 1989, mia2,     mia,      mia,      mia,      mia,      ROT0,  "Konami", "M.I.A. - Missing in Action (version S)" )
 
 GAME( 1989, tmnt,     0,        tmnt,     tmnt,     tmnt,     ROT0,  "Konami", "Teenage Mutant Ninja Turtles (World 4 Players)" )
-GAME( 1989, tmntu,    tmnt,     tmnt,     tmnt,     tmnt,     ROT0,  "Konami", "Teenage Mutant Ninja Turtles (US 4 Players)" )
+GAME( 1989, tmntu,    tmnt,     tmnt,     tmnt,     tmnt,     ROT0,  "Konami", "Teenage Mutant Ninja Turtles (US 4 Players, set 1)" )
+GAME( 1989, tmntua,   tmnt,     tmnt,     tmnt,     tmnt,     ROT0,  "Konami", "Teenage Mutant Ninja Turtles (US 4 Players, set 2)" )
 GAME( 1989, tmht,     tmnt,     tmnt,     tmnt,     tmnt,     ROT0,  "Konami", "Teenage Mutant Hero Turtles (UK 4 Players)" )
 GAME( 1990, tmntj,    tmnt,     tmnt,     tmnt,     tmnt,     ROT0,  "Konami", "Teenage Mutant Ninja Turtles (Japan 4 Players)" )
 GAME( 1989, tmht2p,   tmnt,     tmnt,     tmnt2p,   tmnt,     ROT0,  "Konami", "Teenage Mutant Hero Turtles (UK 2 Players)" )

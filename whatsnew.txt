@@ -1,693 +1,540 @@
-0.79
+0.80
 
 General Source Changes
 ----------------------
 
-Fixed most of the bugs caused by changes made in the .78 u cycle, please check any you
-reported to make sure [Aaron Giles + Various]
-
-Updated many Atari / Midway drivers to use new style Memory Maps and cleaned them 
-up [Aaron Giles]
-	
-YMF278b update, improving sound in Asura Blade [R.Belmont]
-
-Fixed a problem with the SH2 speedup previously added [Olivier Galibert]
-
-Updated ST-V driver to use new memory system, cleaning up the map [Olivier Galibert]
-
-Fixed ASM 68k core to compile again [BUT]
-
-Warning screens are now skipped if running with -ftr for less than 5
-minutes [Aaron Giles]
-
-Fixed Black Dragon & Money Money filenames [chaneman]
-
-Fixed poolshrk078u6yel [Stefan Jokisch]
-
-Fixed crash when taking screenshots of rotated vector games [Stefan Jokish]
-
-Multiple Session fixes (for Mame32 etc.) [Nathan Woods]
-
-unaligned SCU direct mode DMA fix [R.Belmont]
-
-Fixed a problem with Star Wars [Aaron Giles]
-
-Various compiler specific fixes [Olivier Galibert, smf]
-
-
-New Games supported or promoted from GAME_NOT_WORKING status:
--------------------------------------------------------------
-
-Scramble Spirits
-Triv Four (1985 Status) [Pierpaolo Prazzoli]
-Super Triv III (1986 Status) [Pierpaolo Prazzoli]
-Winning Spike [R.Belmont]
-Whizz [Chris Hardy, David Haywood, Pierpaolo Prazzoli]
-More More Plus
-Pairs Love [David Haywood]
-
-New Clones supported or promoted from GAME_NOT_WORKING status:
---------------------------------------------------------------
-
-Perestrokia Girls (without Fuuki license)
-Changes (EME license) [Stefan Jokisch]
-VS. Tennis (Japan) [Pierpaolo Prazzoli]
-Dual Assault [Pierpaolo Prazzoli]
-
-New Non-Working games / clones supported
-----------------------------------------
-
-Varia Metal [David Haywood]
-Denjin Makai (protected)
-Super Hang On Limited Edition [Brian Troha]
-Plasma Sword (parent to Star Gladiator 2) [Brian Troha]
-
-0.78u6
-------
-
-General Source Changes
-----------------------
-
-Another big memory change. [Aaron Giles]
-
-The biggest change is the way address maps are declared in the drivers. Rather than having 
-separate read and write address maps, there is now support for a single, merged map. In order to 
-minimize the amount of code churn, there is currently still support for two separate address 
-maps per address space, but they are combined into one internally early on in the memory 
-initialization and setup.
-
-Because of this change, the 'start' macro for address maps has changed. The old set of macros:
-
-   PROGRAM_READ*_MAP_START(name)
-   DATA_READ*_MAP_START(name)
-   IO_READ*_MAP_START(name)
-
-has been replaced by a single macro:
-
-   ADDRESS_MAP_START(name, address_space, bits)
-
-and all drivers have been updated to use this new mechanism. In addition, all the PROGRAM_*, DATA_*,
-and IO_* synonyms are now merged into a single ADDRESS_* macro. For example, PROGRAM_MAP_FLAGS is
-now just ADDRESS_MAP_FLAGS.
-
-The next big change is that the address maps, in addition to being unified, are no longer static
-arrays. Rather, they are constructed in much the same way the machine drivers are constructed.
-Through a series of macros, the address maps are built up in code and type-checked along the way.
-All existing MAME drivers have been updated to the new macros.
-
-In addition, there are many new options available to support extra features like mirroring, 
-automatic pointer assignment, and shared memory pointers. As of this version, only seattle.c and
-system24.c have been updated to support the new constructs. Use these as examples of what can be
-done. Also, see the top of memory.c for an explanation of all the new macros.
-
-Once again, the way memory is automatically allocated has changed. It is now done based on the
-memory maps, like it used to be, but with the added support for shared pointers and hard-coded
-pointers into memory regions.
-
-Save states should now work, but once again, they are saving more data than is strictly
-necessary.
-
-Internally, the way address map lookup tables has changed, so that subtables can be reused. This
-is important if a small memory region is mirrored across a large address space; the old code
-didn't coalesce identical subtables, which would have blown up in a big way with tricky mirrors.
-
-Renamed a bunch of internal memory state, including OP_ROM, OP_RAM, and several others.
-
-Added save state support for 64-bit data types. [Olivier Galibert]
-
-
-
-0.78u5
-------
-
-Some updates before Aaron changes things again :-)
-
-
-General Source Changes
-----------------------
-
-Fixed some bad colours in Shienryu [Mariusz Wojcieszek]
-	src/vidhrdw/stvvdp1.c
-
-Discrete Sound SYstem Updates [Derrick Renaud]
-
-	Discrete Sound Changes
-	======================
-	* fixed/added more documentation of functions at top of discrete.h
-	* DISCRETE_RCFILTER - fixed bug that allowed module to use nodes not available to it.
-	  Can't beleive it did not crash before.
-
-	New Discrete Modules Added
-	==========================
-	* DISCRETE_CRFILTER - high pass R/C filter.
-	* DISCRETE_COUNTER - Presettable up/down counter, external clock with selectable count edge.
-	* DISCRETE_COUNTER_FIX - Presettable up/down counter with bult-in frequency generator.
-	* DISCRETE_ONESHOT - Fixed it. Added selectable: edge trigger; re-trigger; output active state.
-	* DISCRETE_ONESHOTR - Same as DISCRETE_ONESHOT but with reset.
-
-	Game Driver Changes
-	===================
-	* poolshrk - Discrete sound emulation added.
-	* bsktball - changed bounce sound to use DISCRETE_CRFILTER.
-
-Updates to the Gameplan driver [Nicola Salmoria]
-	- rewritten using machine/6522via.c and machine/6532riot.c, which weren't
-	  available at the time it was created. This fixed the gfx problems and bad
-	  sound.
-	- vidhrdw/gameplan.c is no longer needed.
-	- machine/6532riot: added PA7 adge detect and irq callback
-	- machine/6522via: fixed port writes so that pins set as input are pulled
-	  high. This is required by the gameplan games and is confirmed by the 65422
-	  data sheet. Added support for CA2 pulse handshake.
-
-System 21 updates [Phil Stroffolino]
-	- hooked up preliminary support for System21's "depth bias" feature,
-	  used as a corrective factor when sorting polygons by representative z
-	  value.  It's not perfect, but a step in the right direction.
-	- improved polygon colors in CyberSled
-	- better parsing of CyberSled's display list; title screen and ingame
-	  graphics now appear and are mostly correct
-	- hooked up CyberSled input ports; they can be configured with the
-	  usual mechanism: hold the 'service' key while flipping the test
-	  dipswitch
-	- added near-plane clipping for System21's flat-shaded polygons
-	- hooked up the view transform, used in Starblade to tilt the screen
-	  when player is targeting the edges of the playfield
-	- hooked up a private (placeholder) implementation of zdrawgfx() for
-	  C355 sprite rendering, adding sprite-tilemap orthogonality for all
-	  games using that chip.  This fixes MAMEtesters bug ptblank056gre.
-	- C355 sprite rendering no longer relies on game-specific hacks for XY
-	  placement or cropping
-	- some rudimentary work has been done for "Winning Run '91"; this game
-	  runs on prototype System21 hardware, and as such is quite different
-	  from the other titles.  It uses a 3rd 68k CPU to render graphics to a
-	  bitmap layer (there is no sprite chip), but still appears to rely on
-	  DSPs for 3d graphics.
-	- updated System21 notes/comments.
-
-Fixed the following bugs created / revealed by Aaron's updates
-	VSNes dual games not working [Pierpaolo Prazzoli]
-	warning messages on decocass.c, tnzs.c, cvs.c
-	raiga sound
-	gsword bad ram message
-	gberet bad ram message [Stefan Jokisch]
-	MX5000 / Flak Attack bad ram [R.Belmont]
-	
-Fixed DIPS
-	Indoor Soccer [Brian A. Troha]
-	Radical Radial [Stefan Jokisch]
-
-SUpport USB Keyboard LEDs [smf]
-	-led_mode ps/2 is the default and uses DeviceIOControl
-	-led_mode usb uses keybd_event()
-
-	This only affects windows nt/2000/xp.
-
-	There might be a way of using DeviceIOControl to change the led's on usb
-	keyboards, but I can't find it.
-	Using keybd_event() may have problems restoring on exit, but at least it
-	does work.
-
-Save state loading from command line [smf]
-	Adds -state to the windows version. The code was already in the core to
-	handle it, all this patch does is allows you to set options.savegame
-	Not sure how reliable it is, it worked for galaxian.
-
-Fixed Discrete sound system crash with -nosound [R.Belmont]
-
-Added extra roms to alibaba [Pierpaolo Prazzoli]
-
-Attempt to fix Space Thunderbird gfx [Pierpaolo Prazzoli]
-
-Removed some 'smart' code from CHD filename handling [Olivier Galibert]
-
-
-New Games supported or promoted from GAME_NOT_WORKING status:
--------------------------------------------------------------
-
-Hard Head 2 [Luca Elia]
-	src/drivers/suna8.c
-	src/vidhrdw/suna8.c
-
-New Clones supported or promoted from GAME_NOT_WORKING status:
---------------------------------------------------------------
-
-Outrun (Japan Prototype?)
-Xevious (Atari set 3)  [Pierpaolo Prazzoli]
-Strafe Bomb (scramble bootleg) [Pierpaolo Prazzoli]
-Dogou Souken (Joystick bootleg) [Pierpaolo Prazzoli]
-
-
-
-0.78u4
-------
-
-Please continue testing, it is rather important during periods like this.
-
-Phase 2 of Aaron's Updates [Aaron Giles]
-----------------------------------------
-
-Changes:
-* CPUs with an implicit address shift (e.g., the TMS34010 shifts addresses
-right 3 bits; the TMS32031 shifts addresses left 2 bits) now automatically
-get that shift applied to addresses in their memory maps and in calls to
-install_memory_read/write_handler(). This eliminates many ugly macros in the
-memory maps. Affected CPU cores are the ADSP210x, CCPU, PIC16C5x, TMS3201x,
-TMS3202x, TMS32031, and TMS340x0. Note that the CPU cores themselves still
-need to pass shifted values to the core read/write routines. All drivers
-using these cores have had their icky macros and bitshifts removed.
-
-* Harvard architecture CPUs now have data memory fully implemented now.
-Affected CPUs are the ADSP210x, TMS3201x, TMS3202x, PIC16C5x, and CCPU. All
-cores have been modified to fully split program and data memory. All drivers
-using these cores now specify explicit program and data memory maps. This
-also gets rid of a ton of ugly macros used in memory maps.
-
-* The memory_set_bankhandler calls are now officially history. There were
-fewer than a dozen drivers using them, and they all have been converted over
-to using install_mem_read_handler instead where appropriate. This eliminates
-the last 8-bit-specific hack in the memory system. As a result, RAM reads
-and writes out of banked memory should be slightly faster on 8-bit CPUs
-because they are handled inline.
-
-* New dynamic memory allocation scheme. The previous method relied on
-parsing the read/write handlers. The new method simply looks at the
-top-level memory map after it has been populated, and allocates memory for
-any mapped 16k chunk. This will likely cause more memory to be allocated
-than before, but the process is less error prone. Also, checks are now in to
-make sure that the memory_region for the program address space is the
-minimum necessary to support non-sparse address spaces.
-
-* Fully integrated save/restore memory blocks. Before, the save/restore
-system had its own memory map walking routines. That's gone now. Instead,
-memory blocks are registered as they are allocated by the dynamic memory
-allocator. Note that this will likely cause save states to be bigger than
-they were before (and certainly, they will not be compatible), but disk
-space is cheap, live with it.
-
-* Address spaces are now determined dynamically based on whether a given CPU
-returns a non-zero value for the address bus width for a given space.
-
-* Fixed incorrect address bus widths on the I8039 CPU core.
-
-* Added a TMS32026 entry and reworked the handling of internal RAM to work
-in the new system. This means the Taito Air system is now back to its former
-state.
-
-* Fixed the memory handlers in gottlieb.c to use address space masking
-instead of mapping extra mirrored areas.
-
-
-General Source Changes
-----------------------
-
-Some ST-V alpha blending [Mariusz Wojcieszek]
-	see bakubaku playfield, mausuke playfield, shienryu clouds etc.
-
-Huge Namco Mappy Era Systems Update [Nicola Salmoria]
-
-- Most games merged into mappy.c, so the following files are no longer
-needed:
-drivers/superpac.c vidhrdw/superpac.c machine/superpac.c
-drivers/grobda.c vidhrdw/grobda.c machine/grobda.c
-drivers/phozon.c vidhrdw/phozon.c machine/phozon.c
-machine/mappy.c
-- one new file: machine/namcoio.c. This implements the 56XX and 58XX I/O
-custom chips used by all the games. The I/O chips are now accurately
-simulated, fixing subtle nuances during normal operation and not-so-subtle
-ones in test mode; e.g. you can now scroll the grid in Mappy's test mode.
-- fixed and verified inputs and dip switches for all games.
-- found and documented the Easter eggs in all games except Toy Pop.
-- fixed interrupt and sub cpu reset handling, which caused some games to
-report errors when entering test mode without resetting.
-- added detailed memory maps where schematics allowed.
-- all drivers converted to tilemaps
-- cocktail mode in Phozon, and non-hack implementation in Gaplus
-- fixed priorities in superpac. With the previos code, ghost eyes had
-priority over everything else, even other sprites, giving wrong results when
-two ghosts overlapped.
-- round advance dip switch in Gaplus available & working
-- fixed a missing sound effect in Phozon that nobody would have ever
-noticed.
-- MAME testers bugs fixed:
-mappy37b4gre
-mappy37b8gre
-phozon37b8gre
-motos054gre
-- I've also included a revised warpwarp.c, converted to tilemaps and with
-the Warp Warp Easter egg documented.
-
-Some slight SH-2 speedups [Carlos Santillan]
-
-Improved sound in Miss Bubble 2 and Power Instinct (bootleg set 2) [Quench]
-
-Discrete Sound in Sky Diver [Derrick Renaud]
-
-Attempted to Improve Birdie Try sprites [Pierpaolo Prazzoli]
-
-Fixed last minute compgolf bug in u3 [Pierpaolo Prazzoli]
-
-Dipswitch in cross Pang [Pierpaolo Prazzoli]
-
-
-0.78u3
-------
-
-General Source Changes
-----------------------
-
-The following bugs created by the changes in u2 have now been fixed
-	cpuintrf compile bug with DJGPP [smf]
-	CPU_M6809E typo in cpuintf.c [Aaron Giles]
-	HD63705 address bus width (namcos2 crash) [Aaron Giles]
-	namcos1 crash [Aaron Giles]
-	namcos21 crash [Aaron Giles]
-	mpatrol crash [Aaron Giles]
-	inability to compile with asm 68k [Aaron Giles]
-	boblbobl not working [David Haywood]
-	circusc 'Ram Bad' error [David Haywood]
-	crospang sound handler [Pierpaolo Prazzoli]
-
-Please update to this version and continue to test and report any new bugs you find
-
-
-New Games supported or promoted from GAME_NOT_WORKING status:
--------------------------------------------------------------
-
-Jong Tou Ki [Luca Elia]
-	src/drivers/dynax.c
-
-Competition Golf [Pierpaolo Prazzoli, Bryan McPhail]
-	src/drivers/compgolf.c
-	src/vidhrdw/compgolf.c
-
-
-New Clones supported or promoted from GAME_NOT_WORKING status:
---------------------------------------------------------------
-
-Golden Tee Golf (Trackball, v1.0) [Bryan Troha]
-	src/drivers/itech8.c
-
-Yosaku To Donbei (set 2) [Stefan Jokisch]
-	src/drivers/8080bw.c
-
-Miss Mister World '96 Nude [Taucher]
-	src/drivers/galpanic.
-
-Space Thunderbird (clone of Moon Cresta) [Pierpaolo Prazzoli]
-	src/drivers/galaxian.c
-
-0.78u2
-------
-
-The only change in u2 is the overhaul of the memory system mentioned below, no new drivers have been
-added
- 
-General Source Changes
-----------------------
- 
-Significant overhaul of the memory system. This is the first of several phases, but it lays the 
-groundwork for future improvements. This first change will also be the most disruptive, touching every
-CPU core and every driver file [Aaron Giles]
-
-Memory system changes
----------------------
-The biggest change is the introduction of the concept of address spaces. Each CPU can have up to 3 
-separate address spaces now, with the possibility of easily adding more in the future. Each address 
-space has its own addressing semantics, including databus width, address bus width, address shift, and 
-unmapped memory value.
-
-The three existing address spaces are defined to be program, data, and I/O. The program address space is 
-where code is assumed to live; it is also where all memory lives in standard von Neumann architecture 
-CPUs. The data address space is for Harvard architecture CPUs, and will be used in the future to do 
-proper program/data separation for the CCPU, PIC16C5x, ADSP210x, TMS32010, and TMS32025. The I/O address 
-space is used for port accesses, such as those performed by the Z80 and x86 CPUs.
-
-The read/write handlers used by CPUs to access memory have all been renamed in the shuffle, both in order
-to match the address space naming conventions (program/data/io) and in order to make it clearer what they
-do. In addition, they have been unified to a large degree. Instead of separate memory accessors based on 
-both the address bus width and the data bus width, there is now just one shared set of memory accessors 
-for each data bus width. Here are some examples of how older functions map to newer ones:
-
-   cpu_readmem16, cpu_readmem17, cpu_readmem20,     -> program_read_byte_8
-   cpu_readmem21, cpu_readmem24
-
-   cpu_writemem_16bew_word, cpu_writemem18bew_word, -> program_write_word_16be
-   cpu_writemem_24bew_word, cpu_writemem32bew_word
-
-   cpu_readport                                     -> io_read_byte_8
-
-A common annoyance used to be that drivers would need to know which of these functions to call in order
-to read memory. A table of accessors is now included as part of the memory context switch, which allows
-the addition of generic functions that can be used by the drivers to access memory. For example, a driver
-trying to read a word from a 68000's address space used to have to call cpu_readmem24bew_word(). Now the
-driver can just call program_read_word(), and the memory system will do the right thing.
-
-In addition, there is now a single change_pc() macro used by all CPU cores, regardless of the databus or
-address bus width.
-
-Along with these changes, the macros for defining memory maps has changed for consistency as well, as
-follows:
-
-   MEMORY_READ_START                -> PROGRAM_READ8_MAP_START
-   MEMORY_READ16_START              -> PROGRAM_READ16_MAP_START
-   MEMORY_READ32_START              -> PROGRAM_READ32_MAP_START
-   MEMORY_WRITE_START               -> PROGRAM_WRITE8_MAP_START
-   MEMORY_WRITE16_START             -> PROGRAM_WRITE16_MAP_START
-   MEMORY_WRITE32_START             -> PROGRAM_WRITE32_MAP_START
-   MEMORY_END                       -> PROGRAM_MAP_END
-
-   PORT_READ_START                  -> IO_READ8_MAP_START
-   PORT_READ16_START                -> IO_READ16_MAP_START
-   PORT_READ32_START                -> IO_READ32_MAP_START
-   PORT_WRITE_START                 -> IO_WRITE8_MAP_START
-   PORT_WRITE16_START               -> IO_WRITE16_MAP_START
-   PORT_WRITE32_START               -> IO_WRITE32_MAP_START
-   PORT_END                         -> IO_MAP_END
-
-Along the way, support has been also added for CPUs with a 64-bit data bus, so there are also macros for
-PROGRAM_READ64_MAP_START, etc.
-
-One of the future goals of the memory system is to support not just ranges of memory, but also better
-support for mirrors and more complicated situations where addressing is repeated at regular intervals.
-In order to facilitate this, macros have been created that must be used when defining a memory map:
-
-   MEMORY_READ_START                                  PROGRAM_READ8_MAP_START
-     { 0x0000, 0xffff, MRA_RAM },                  ->   READ_RANGE( 0x0000, 0xffff, MRA8_RAM )
-   MEMORY_END                                         PROGRAM_MAP_END
-
-   MEMORY_WRITE_START                                 PROGRAM_WRITE8_MAP_START
-     { 0x0000, 0x0fff, MRA_RAM },                       WRITE_RANGE   ( 0x0000, 0x0fff, MRA_RAM )
-     { 0x1000, 0x7fff, MRA_RAM, &foo },            ->   WRITE_RANGE_P ( 0x1000, 0x7fff, MRA_RAM, &foo )
-     { 0x8000, 0xffff, MRA_RAM, &bar, &bar_size },      WRITE_RANGE_PS( 0x8000, 0xffff, MRA_RAM, &bar, &bar_size )
-   MEMORY_END                                         PROGRAM_MAP_END
-
-Since all the memory maps were changing anyway, static 8-bit handlers have been renamed for consistency.
-This means that MRA_NOP becomes MRA8_NOP, etc.
-
-Prior versions of MAME allowed special entries in the read/write maps to control the number of effective
-address bits. This mechanism has changed so that you can supply an arbitrary combination of flags:
-
-   MEMORY_ADDRESS_BITS(20)          -> PROGRAM_MAP_FLAGS( MEMORY_ABITS(20) )
-
-and it has been enhanced to also allow you to specify the unmapped memory value:
-  
-   PROGRAM_MAP_FLAGS( MEMORY_UNMAPPED_0 ) /* unmapped reads return all 0's */
-   PROGRAM_MAP_FLAGS( MEMORY_UNMAPPED_1 ) /* unmapped reads return all 1's */
-
-Because of this mechanism, the old function memory_set_unmap_value() has been deprecated. All drivers
-using this have been updated to use the new mechanism instead. Also note that the MRA_NOP handlers have
-been changed to return the unmapped value as well, instead of always returning 0.
-
-Another "feature" that has changed is that unmapped reads and writes to address spaces of less than 20
-bits no longer act like RAM. This may break some drivers, but it ends the special treatment of 8-bit
-address spaces.
-
-In the machine driver macros, the address space is now explicitly specified:
-
-   MDRV_CPU_MEMORY(read,write)     -> MDRV_CPU_PROGRAM_MAP(read,write)
-   /* not applicable */            -> MDRV_CPU_DATA_MAP(read,write)
-   MDRV_CPU_PORTS(read,write)      -> MDRV_CPU_IO_MAP(read,write)
-
-
-CPU Interface Changes
----------------------
-
-The other significant change in this release is the way CPUs are defined and referenced. Previously,
-the file cpuintrf.c contained a huge table with many pointers into each CPU, and a bunch of data about
-each CPU type. This was problematic to maintain, and left a bunch of data out of the CPU core to be
-defined by MAME instead.
-
-The new release defines a new function that every CPU core must implement, of the form:
-
-   <cputype>_get_info(UINT32 state, union cpuinfo *info)
-
-This is the only public function defined for each CPU core. The table in cpuintrf.c now simply consists
-of an enumerated index for the CPU type, followed by the pointer to the actual CPU's get_info function.
-The flexible get_info function is then responsible for providing pointers to all the remaining functions.
-In addition, the number of other functions has been greatly reduced:
-
-   void   set_info(UINT32 state, union cpuinfo *info);
-   void   get_context(void *context);
-   void   set_context(void *context);
-   void   init(void);
-   void   reset(void *param);
-   void   exit(void);
-   int    execute(int cycles);
-   void   burn(int cycles);
-   offs_t disassemble(char *buffer, offs_t pc);
-
-The old functions get_reg, set_reg, set_irq_line, set_irq_callback, info, get_cycle_table, set_cycle_table
-have all been incorporated into get_info and set_info.
-
-All the existing MAME CPU cores have been updated to work with this new system. Also, for most cores, all
-functions and the icount global variable have been made static apart from the get_info function. A number
-of selectors for get_info/set_info have been defined to return information about the CPU, including the
-address and data bus sizes for all address spaces, clock dividers, IRQ line size, context size, etc.
-
-NOTE TO PORTERS: the cpuintrf[] array is now populated dynamically by the cpuintrf_init() function. This
-means that if you have informational code or other code that relies on the CPU information being present
-(i.e., if you call any of the cputype_* functions) before calling run_game(), you must manually call 
-cpuintrf_init() first. Don't worry, it is safe to call cpuintrf_init() multiple times.
-
-0.78u1
-------
-
-General Source Changes
-----------------------
-
-Fixed OKI Sound (and a few other things) in the following [Quench]
-	Diverboy (diverboy.c)
-	Bakuretsu Breaker (kaneko16.c)
-	Aquarium (aquarium.c)
-	Funny Bubble (funybubl.c)
-
-Full Sound and Music in Asura Blade [R.Belmont]
-
-Discrete Sound in Video Pinball [Derrick Renaud]
-
-DAC Sound in TrucoTron [Tomasz Slanina]
-
-Fixed Graphics and Added Suond to Cross Pang [Pierpaolo Prazzoli]
-
-Added additional unused PROMs to the following [Stefan Jokisch]
-	rallyx (rallyx.c)
-	acedrvrw (namcos22.c)
-	millpac (centiped.c)
-	sci (taito_z.c)
-
-Various Updates to the Moon Patrol driver [Stefan Jokisch]
-	- added the new PROM dump for the Williams set
-	- changed the size of the PROM dump for the IREM set
-	- renamed ROMs
-	- converted the driver to the tilemap system
-	- simplified background drawing by creating a 256x64 gfx layout
-	- minor fixes to the video section based on schems
-
-Mobile Suit Gundam EX Revue Fixes [Tomasz Slanina]
-	- hooked up EEPROM (68301 parallel port) and added EEPROM initialisation
-	- added missing language selection dipswitch
-
-Improvements to ST-V Emulation [Mariusz Wojcieszek]
-	- Changes to sprites color calculation. I fixed it using in color bank modes by using color
-	  offset register from VDP2. Now shienryu kludge is no longer needed and also sprite colors
-	  in Winter Heat and Virtua Fighter Kids are correct.
-	- Changes for Princess Clara Daisakusen (prikura) so that game is playable now (as far I
-	  tested it).
-	- Prikura tried to render distorted sprites with xsize = 0 or ysize = 0 and this caused
-	  crash. As these values are prohibited according to manual, I ignore distorted sprites with
-	  xsize = 0 or ysize = 0.
-        - I found that missing MINIT for slave to run the sprites is done by using address 0x01406f40
-	  instead of 0x01000000. I'm not sure if my change is a hack or real hardware behaves in that
-	  way, but in my opinion it is possible that whole range of addresses (0x01000000 - 0x017fffff)
-	  is used for MINIT. I added MINIT only for one address used by prikura.
-	- Bad sprite colors were fixed in point 1.
-	- Small change for vdp2: commented out a call to usrintf_showmessage().
-
-Data East MLC Improvements [Bryan McPhail]
-	Many aspects of the Video Rendering have been improved, Avengers in Galactic storm is playable
-	with some characters now, however there seems to be a CPU core bug affecting various aspects
-	of the game, most notably the flipping of Captain America.  Help tracking down and fixing this
-	wwould be welcome.  Several Non-Working sets were also added
-
-Update to allow drivers to dynamically change the refresh rate during execution [Aaron Giles]
-
-Namco 8080 Cleanup [Nicola Salmoria]
-	- merged geebee.c and warpwarp.c since they are variations of the same hardware design.
-	  drivers/geebee.c, machine/geebee.c and vidhrdw/geebee.c are no longer needed.
-	- renamed Navalone -> Navarone. I guess that's the correct name, as in "the guns of Navarone".
-	- renamed kaitein -> kaitei and kaitei -> kaiteik; made the Namco set the main one. I don't
-	  recall if this was already discussed, but I believe kaiteik is a prototype developed by a
-	  third party and sold to Namco, where it was completely rewritten.
-	- fixed inputs and dip switches in all games.
-	- fixed "ball" size in sos and kaitein - the harpoon in kaitein no longer looks like a rock.
-	- removed a hack in Warp Warp that didn't draw the ball in the bottom left corner. The flyer
-	  confirms that the ball is supposed to be there.
+Large Namco Update [Nicola Salmoria]
+- pacland: fixed sprite RAM, it was too big and included normal program RAM, causing sprites
+  to be drawn twice.
+- pacland: fixed irq enable
+- pacland: fixed tilemap scroll offsets and sprite positions
+- pacland: accurate emulation of tile/sprite priority (including fix of bugs introduced when
+  the driver was converted to tilemaps) and sprite visibility area
+- pacland36b16 is not a bug - colors match the real game
+- added SOUND_NAMCO_CUS30 for better documentation (alias for the standard SOUND_NAMCO)
+- drgnbstr36rc2gre
+- skykidd works with a patch (a dump of the CUS60A internal ROM is needed to do without the
+  patch)
+- metrocross: fixed irq enable, this fixes inputs in service mode
+- baraduke060gre
+- baraduke36rc2gre, it is improved, there are still gaps left but this is correct behaviour
+  verified on the real board
+- baraduke, system86: understood how sprite RAM buffering works, this fixes sprite lag but
+  causes a glitch in rthunder (which might be correct behaviour)
+- system86: totally rewritten the 63701X emulation and moved it to a separate module.  Fixed 
+  silence compression, this improves quality in some samples; supported volume control.
+  -genpeitd067gre
+- rthundro37b14red I think is fixed; but the game still sometimes crashes when you die
+- rthunder, genpetid: fixed watchdog emulation, this allows entering service mode without
+  resetting
+
+Various ST-V Improvements (brightness controls) [Angelo Salese]
+
+Various Hyperstone core improvements [Pierpaolo Prazzoli]
 
 Misc Fixes [Nathan Woods]
-	src/chd.c:
-    	- Adds workaround for deficiency in Metrowerks compiler
+	src/cpu/hd6309/6309ops.c:
+	- Fixed the ABCD opcode
 
-	src/x86drc.c:
-	src/x86drc.h:
-    	- Adds a few more instruction declarations
-    	- Adds a call to retrieve CPU feature flags from CPUID
+	src/sndintrf.c:
+	- Fixed a small typo in the DMADAC interface line
 
-	src/windows/ticker.c:
-    	- Compiler specific assembler code for feature reading replaced by call added above
+	src/sound/tms5220.c:
+	- Added a security margin in the estimate of the delay for speech 
+	synthesis ready line to come low (needed for a MESS side bug fix)
 
-Removed final traces of TESTDRIVER code [Paul Priest]
+	src/chdman.c:
+	- Added some completion messages, and fixed the code that was 
+	falsely assuming that progress() was a function pointer
 
-BIOS Roms no longer need to be added to info.c [Paul Priest]
+	src/windows/window.c:
+	src/windows/window.h:
+	- Changed video_window_proc() to win_video_window_proc() and made 
+	non-static so that MESS's window proc can call it.
+	- Changed win_init_window() to use MESS's window proc (within #ifdef 
+	MESS of course)
+	- Added a win_suspend_directx global variable to temporarily turn 
+	off DirectX usage (used in MESS)
+	- Added a few minor MESS specific #ifdefs
 
-Final Lap 2 now loads the right object roms [Brian Troha]
+	src/rules.mak:
+	src/cpuintrf.c:
+	- Added an entry for the TMS99100 processor
 
-Now using correct Black Dragon (bootleg) Roms [Stefan Jokisch]
+	src/cpuexec.c:
+	src/cpuexec.h:
+	- Introduces cpu_getscanlinetime_mt() and 
+	cpu_getscanlineperiod_mt(); variants on their namesake calls except they 
+	return mame_time instead of double
 
-Samples in space Firebird [Chris Hardy]
+Improved 053260 and NES APU emulation [Oliver Achten]
 
-Removed a few IPF_CHEAT in toaplan drivers so mame doesn't hide the dipswitches [Mamesick]
+Various Gaelco3D Improvements [Aaron Giles]
 
-Fixed Difficulty Dipswitch in ladyfrog [Nicola Salmoria]
+ZN Cleanups [smf]
+
+Misc 32010 related updates [Quench]
+	TMS32010 CPU core
+	- Added internal Data memory map
+	- Fixed Overflow on the ADDH instruction
+
+	Twin Cobra / Wardner
+	- Converted to Tilemaps
+	- Corrected Savestate setup
+	- Little cleanups to the Machine code
+	- Adjustments for TMS32010 internal data map
+
+	Toaplan1
+	- Corrected Savestate setup
+	- Adjustments for TMS32010 internal data map
+
+	HardDrivin
+	- Adjustments for TMS32010 internal data map
+
+Fixed Vector clipping bug in mhavoc [Alex Eddy]
+
+Fixed some GCC warnings [Lawrence Gold]
+	src/vidhrdw/rallyx.c: In function `plot_star':
+	src/vidhrdw/rallyx.c:395: warning: ISO C89 forbids mixed declarations 
+	and code
+
+	src/vidhrdw/ksayakyu.c: In function `draw_sprites':
+	src/vidhrdw/ksayakyu.c:92: warning: ISO C89 forbids mixed declarations 
+	and code
+
+	src/drivers/system32.c: In function `sonic_level_load_protection':
+	src/drivers/system32.c:539: warning: ISO C89 forbids mixed declarations 
+	and code
+
+	src/drivers/madalien.c: In function `video_start_madalien':
+	src/drivers/madalien.c:273: warning: ISO C89 forbids mixed declarations 
+	and code
+
+	src/machine/am53cf96.c:46: warning: comma at end of enumerator list
+
+	src/drivers/vmetal.c: In function `varia_drawsprites':
+	src/drivers/vmetal.c:124: warning: ISO C89 forbids mixed declarations 
+	and code
+
+Discrete Sound Updates [Derrick Renaud]
+
+Discrete Sound Changes
+======================
+* fixed/added more documentation of functions at top of discrete.h
+* DISCRETE_555_ASTABLE - changed to use common options with DISCRETE_555_CC.
+* DISCRETE_TRANSFORMx - fixed bug that preformed math in the wrong order.
+Also added more math functions.
+
+New Discrete Modules Added
+==========================
+* DISCRETE_555_CC - Constant Current based 555 VCO with 8 main configurations,
+that automatically configure from components used.
+* DISCRETE_566 - NE566 simulation.
+* DISCRETE_COMP_ADDER - Multiple parallel capacitor/resistor circuit.
+* DISCRETE_DAC_R1 - R1 Ladder DAC that automatically configures from
+components used.
+* DISCRETE_MIXERx - Resistor/Op Amp mixer stage with filtering that calulates
+proper gains & filtering. It automatically configure from components used.
+* DISCRETE_SCHMITT_OSCILLATOR - VCO based on a Schmitt Inverter.
+
+Game Driver Changes
+===================
+* poolshrk - Converted to new component value only code.
+* firetrk, montecar, superbug - Converted to new component value only code.
+Pulled discrete code out and put in sndhrdw\ataridis.c.  montecar still needs
+filtering on crash sound.
+* atarifb, canyon & skydiver - minor changes to work with new code.
+* triplhnt - added component value discrete sound, but have not figured out
+Shot and Bear Roar video memory locations.  These are needed to make sound
+effects work.
+
 
 New Games supported or promoted from GAME_NOT_WORKING status:
 -------------------------------------------------------------
 
-Princess Clara Daisakusen [Mariusz Wojcieszek]
-	src/drivers/stv.c
+Radikal Bikers [Aaron Giles]
+Surf Planet [Aaron Giles]
 
-Wild Pilot [Pierpaolo Prazzoli]
-	src/drivers/cischeat.c
-	various graphical problems, service buttons = start buttons
+Wiggie Waggie [David Haywood]
 
-Target Balls [Luca Elia]
-	src/drivers/paradise.c
-
-International Cup '94 / Hat Trick Hero '94 [David Haywood]
-	also changed the parent / clone relationships a bit on the football games
-	src/drivers/taito_f3.c
-
-New Clones supported or promoted from GAME_NOT_WORKING status:
---------------------------------------------------------------
-
-A Few PGM Clones
-
-Additional Run & Gun sets [Brian Troha]
-
-Q*Bert (Us Set 2) [Smitdogg]
-
-Games / Sets Removed
---------------------
-
-New Rally-X (vertical hack) [removed by Stefan Jokisch]
-	graphic hack (rotated tiles + display) not worth supporting
-
+Zintrick (hack / bootleg)
+	This was thought to be a prototype but actually appears to be a from
+        an unofficial bootleg made from the CD version (see notes in driver),
+	supported for reference incase a real prototype shows up one day.
 
 New Non-Working games / clones supported
 ----------------------------------------
 
-Stadium Hero 96 [Bryan McPhail]
-Skull Fang [Bryan McPhail]
-	src/drivers/deco_mlc.c
-	Encrypted (Deco 156)
+Lethal Enforcers [R.Belmont]
+	Hardware is an ugly kludge with an 8-bit CPU using 16-bit video chips, as a result
+        there is a lot of strange banking going on making it very difficult to emulate.
+
+0.79u4
+
+General Source Changes
+----------------------
+
+Fixed sound pitch / balance in Asterix [Oliver Achten]
+
+Fixed a problem when resetting various games caused by the timer updates [Aaron Giles]
+
+Fixed some Quasar Dipswitches [Pierpaolo Prazzoli]
+
+0.79u3
+
+General Source Changes
+----------------------
+
+Misc Changes [Nathan Woods]
+	src/cpu/i86/i286.c:
+	src/cpu/i86/i286.h:
+	src/cpu/i86/i286intf.h:
+	- Updated I286 CPU core to MAME 0.79 
+
+	src/cpu/jaguar/jaguar.c:
+	- Adding a missing case to jaguargpu_get_info() 
+
+	src/cpu/m6502/m4510.c:
+	src/cpu/m6502/m4510.h:
+	src/cpu/m6502/m6509.c:
+	src/cpu/m6502/m6509.h:
+	src/cpu/m6502/ops09.h:
+	src/cpu/m6502/ops4510.h:
+	src/cpu/m6502/t65ce02.h:
+	- Updated m4510 and m6509 CPU cores to MAME 0.79 
+
+	src/sndhrdw/snes.c:
+	- Removed a duplicate global variable definition 
+
+	src/cheat.c:
+	src/info.c:
+	src/usrintrf.c:
+	- Removed NEOMAME and CPSMAME declarations 
+	
+	src/mame.c:
+	- Added a new consistency check on CPUs to check for the existence of 
+	certain get_info cases needed for debugging.  This consistency check
+	is currently only enabled for MESS. 
+
+	src/windows/input.c:
+	src/windows/input.h:
+	- Changed key_trans_table to be non static and renamed to 
+	win_key_trans_table (this table is now used in MAME32) 
+
+	src/memory.c:
+	- Changed all fatalerror() calls to osd_die() 
+
+	src/chdman.c:
+	- Added -createblankhd and -copydata commands
+	- Added new arguments to -createhd
+	- Ported to Macintosh
+
+	src/artwork.c:
+	- Changed artwork_override_screenshot_params() so that its 
+	functionality will kick in whenever the artwork system is active, even 
+	without artwork pieces
+	- Introduced a static artwork_system_active(); a call to check to 
+	see if the artwork system is active.
+
+Misc PSX cleanups [smf]
+
+Removed some memory system test code [Aaron Giles]
+
+Fixed a TMS32031 bug that was causing some problems in Radikal bikers [Aaron Giles]
+
+
+New Games supported or promoted from GAME_NOT_WORKING status:
+-------------------------------------------------------------
+
+Quasar [Mike Coates, Pierpaolo Prazzoli]
+	(other Zaccaria games are still being worked on)
+
+New Clones supported or promoted from GAME_NOT_WORKING status:
+--------------------------------------------------------------
+
+FX (bootleg of SRD mission) [Pierpaolo Prazzoli]
+
+0.79u2
+
+General Source Changes
+----------------------
+
+Timer System Update [Aaron Giles]
+
+The timer system is now integer-based instead of floating-point based. It requires
+64-bit ints. I've defined a new type 'mame_time' which is a 96-bit time value.
+There are 32 bits for counting full seconds, and 64 bits for counting subseconds.
+This type is used extensively in the core timer system and the CPU scheduler.
+
+The accuracy of the new system is down to 1 attosecond (10^-18 seconds).
+This may seem excessive, but for a 100MHz CPU, each clock cycle is 10^10
+attoseconds. That works nicely because 100MHz divides evenly. For a 96MHz
+CPU, each clock cycle is 1.041666667 * 10^10 attoseconds. Rounding, we lose
+1/3 of an attosecond per cycle in error. Multiply that error by 96000000 and
+you end up with an error of 32000000 attoseconds. Fortunately, that's only
+0.032ns, but if I had much less accuracy than this, the errors would start
+to add up in a more significant way.
+
+All the existing APIs are still around, and doubles can still be passed as
+arguments. But they are all immediately connverted to 'mame_time' values for
+processing.
+
+The old system had some drifting errors due to FP rounding which are gone
+now.
+
+
+
+Fixed Unix compile (renamed rand_r in namconb1 driver) [R.Belmont]
+
+Misc Fixes [Nathan Woods]
+	src/cpuintrf.c:
+	src/cpuintrf.h:
+	    - Fixups for the CP1610 core
+	    - Fixed the declaration of activecpu_set_irq_callback()
+
+	src/mame.c:
+	    - Added a new consistency check for drivers that use non-existent 
+	      CPU cores
+
+	src/machine/snes.c:
+	src/includes/snes.c:
+	    - Refactored to remove MESS specific code
+
+	src/machine/idectrl.c:
+	src/machine/idectrl.h:
+	    - Added ide_bus_0_r() call to access the bus directly
+
+	src/cpu/z80/z80.c:
+	    - This patch changes the Z80 CPU core to set the Z80 cycle tables to 
+  	      their defaults on startup.  This removes any need for drivers to reset 
+	      the Z80 cycle tables back to their defaults on exit.
+
+Cleaned up some itech32 notes [Brian Troha]
+
+Fixed some firebatl dips [B.S.Ruggeri]
+
+CPU Specific Memory Map fix [Aaron Giles]
+
+Fixed targ filenames and added proms [chaneman]
+
+Updated PIC core + drivers to use internal memory maps [QUench]
+
+Added support for the IACK and IDLE commands in the TMS32031 core [Aaron Giles]
+
+Various Updates [Curt Coder]
+
+Updated NeoGeo sets to use correct roms [HPMAN]
+
+Psikyo.c video fixes [Leon van Rooij]
+  - glitch in gunbird attract mode (tilemaps can be opaque);
+  - glitch in s1945, when the planes are shown (sprite-tilemap priorities);
+  - glitch in s1945, lvl 7 (there is an additional per-tile rowscroll mode). This solves     mametesters s1945066gre.
+
+Fixed m68kdasm bug [Leon van Rooij]
+
+Decode information for custom cpu used by robowrest2001 [Dave Widel]
+
+Fixed Irem GA-20 pitch [R.Belmont]
+
+Added support for DMA based DAC 'sound chip' and updated DCS / CAGE to use it. [Aaron Giles]
+
+Enigma 2 fixes [Tomasz Slanina]
+- sound
+- bg starfield in enigma2
+- cocktail mode
+- fixed some bugs (protection?)
+- colors
+
+Sample Support in Tailgunner [Erik Ruud]
+
+New Games supported or promoted from GAME_NOT_WORKING status:
+-------------------------------------------------------------
+
+Kusayakyuu [Tomasz Slanina]
+	incomplete driver, various sound / gfx issues
+Botanic [David Haywood]
+Bongo [Pierpaolo Prazzoli]
+Pro Yakyuu Nyuudan Test Tryout [Pierpaolo Prazzoli, Bryan McPhail]
+Mad Alien [Norbert Kehrer]
+
+
+New Clones supported or promoted from GAME_NOT_WORKING status:
+--------------------------------------------------------------
+
+Area 51 (newer 68020 Version) [Brian Troha]
+Zoom909 [Tomasz Slanina]
+Strikers 1945 (alt) [Brian Troha]
+Hunchback (galaxian hardware) [Pierpaolo Prazzoli]
+
+New Non-Working games / clones supported
+----------------------------------------
+
+Gaelco 3D games (Radikal Bikers, Surf Planet) [Aaron Giles]
+	incomplete emulation of 3D Hardware
+Microprose 3D (botss, stankatk etc.) [David Haywood]
+	skeleton driver, just loads the roms 
+
+0.79u1
+
+General Source Changes
+----------------------
+
+Big 80s Namco Update [Nicola Salmoria]
+
+this affects the first Namco games that used custom I/O chips.
+- these files are no longer needed and should be removed: drivers/bosco.c,
+  drivers/xevious.c, drivers/digdug.c, machine/digdug.c, machine/galaga.c,
+  machine/bosco.c, machine/polepos.c, sndhrdw/bosco.c
+- added three new sound chips: NAMCO_15XX, NAMCO_52XX, NAMCO_54XX, and
+  changed drivers to use them (NAMCO_54XX is just a placeholder playing
+  samples, until the chip is reverse engineered).
+- MAME testers bugs fixed: digdug063gre, galaga057gre, bosco071u2gre,
+  poleposc059gra
+- added EAROM support to digdug
+- fixed the polepos2 title screen which had been broken since day 1, strange
+  that nobody noticed.
+- fixed various mistakes in the polepos ROM loading (one missing speech ROM
+  in polepos,  polepos2 was using the wrong engine sound ROMs (it's turbo!),
+  added missing vertical scaling PROMs).
+- extensive documentation of ROM names and placement, and differences
+  between Namco and licensed versions.
+- converted all drivers to tilemaps, and made gfx emulation more accurate
+  according to schematics
+- polepos sprite zooming should now be closer to the hardware.
+- IP_KEY_PREVIOUS and IP_JOY_PREVIOUS are no longer used by any driver: they
+  may be removed from the core.
+- support for start lamps, coin counters and coin lockout (all
+  internallyhandled by the custom I/O chip)
+- toggling the test switch while the game is running enters test mode
+  without need to manually reset.
+- found and documented test mode Easter eggs in all games except Xevious.
+- bosconian now uses a different sound PROM, which seems more correct.
+- galaga uses better dumps of the PROMs, with the unused top 4 bits set to
+  0.
+- correct handling of 52XX sample start/end pointers in ROM.
+- better emulation of 50XX custom, no more need for hacks in bosconian.
+- swapped digdug and digdugb, the main set should be the newer one.
+- removed these galaga clones: nebulbee (copyright/name change), galagab2
+  (mix 'n match of ROMs from other sets), galaga84 (copyright/gfx change),
+  galagads (1-byte hack to get fast shoot,
+  reproducible with this line in cheat.dat:
+  galaga:1:070D:0D:100:Fast Shoot)
+- added Galaga rev. B, which is now the main set, renamed the other galagao.
+- added galagamk, a different Midway version.
+- removed various bad dumps from polepos2b and poleps2c, they turned out to
+  be the same version so poleps2c is removed.
+- drivers/locomotn.c is no longer needed and should be removed
+- converted to tilemaps, consolidated as much as I could
+- fixed: jungler37b3gre
+- correct tile/sprite priority handling (also in Bosconian)
+- documented the Easter egg in Rally X
+- added starfield in Tactician
+- fixed the RC filter control in the games with Konami sound
+
+Big Namco NB1 update [Phil Stroffolino]
+Various improvements for System NB emulation, including:
+- new driver: Greatest Slugger '93 (Japan)
+- hardware shadow support (used heavily in Greatest Slugger)
+- dedicated random number generator chip
+- sprite stretch glitch (affects Outfoxies intro)
+- tilemap tile banking feature (used by Mach Breakers)
+- removed several game-specific hacks; now uses dedicated CPU registers
+  for interrupts
+- preliminary support for screen blanking (hides garbage in Outfoxies)
+- proper POSIRQ handling, for scanline effects.  Fixes the water
+  effects in Outfoxies.  This same feature needs to be folded into System
+  2 emulation, but I haven't gotten around to it yet.
+- various Mach Breaker-specific hacks for interpretting the ROZ layer
+  registers; these aren't yet fully understood.  In particular, the
+  "Monster Pull" stage is missing a "3d floor."
+
+  Changes should fix mametesters bugs:
+  machbrkr068gre, nebulray066gre, ptblank056gre, sws9637b16yel
+
+
+
+Fixed a bug with AM_SHARE [Aaron Giles]
+
+Various PSX file updates / cleanups [smf]
+
+VSNes Filename Fixes [chaneman]
+
+Updated Hard Drivin' driver and fixed Steel Talons / HD Airborne again [Aaron Giles]
+
+Various Fixes [CUrt Coder]
+	problems created when pacland was converted to tilemaps
+	converted Jackal to tilemaps
+	fixed guardians of the hood p3 controls
+	fixed heat barrel dips
+	fixed shot rider dips
+	fixed firebattle dips
+	updated docastle.c memory maps
+	added MSM5205 to idsoccer
+
+
+Cleaned up / Merged various Atari drivers [Aaron Giles]
+	(clayshoo.c, cloak.c, cloud9.c, copsnrob.c, cyberbal.c, destroyr.c, eprom.c
+	fastfred.c, firetrk.c, flyball.c, foodf.c)
+
+Protection fix for Sonic Arcade [Roger Sanders]
+	(still crashes due to video emulation bug)
+
+Misc Fixes [Nathan Woods]
+	src/cpu/hd6309/6309tbl.c:
+	src/cpu/hd6309/hd6309.c:
+	- Minor timing enhancements, and changed a few indexing modes to be illegal
+
+	src/cpuintrf.c:
+	- Renamed CPU_CP1600 to CPU_CP1610
+
+	src/sound/k051649.c:
+	src/sound/k051649.h:
+	- Enhancements to the K051649 sound system
+
+Fixed sspirits dips [B.S.Ruggeri]
+
+Fixed Mortal Kombat damage that was broken in .79 [Aaron Giles]
+
+Simulated Sound in Super Slam [Quench]
+
+Fixed 'bad colour RAM' error in hyrda / pitfight [Aaron Giles]
+
+'Fixed' escape kids so it boots again [Aaron Giles]
+
+Support for CPU-specific internal memory maps [Aaron Giles]
+
+Reverted RF5c68 to old version [R.Belmont]
+
+Fixed outrundx sound (was checking for outrunp) [Santeri Saarimaa]
+
+New Games supported or promoted from GAME_NOT_WORKING status:
+-------------------------------------------------------------
+
+Drivers Edge [Aaron Giles]
+Varia Metal [David Haywood] - no sound, some gfx issues
+Mahjong Electron Base [Luca Elia, yong]
+Mahjong Neruton Haikujirada [Luca Elia]
+Space Launcher [Pierpaolo Prazzoli]
+Bulls Eye Darts [Pierpaolo Prazzoli] - colour problems
+
+New Clones supported or promoted from GAME_NOT_WORKING status:
+--------------------------------------------------------------
+
+Time Pilot (Atari license) [Chris Hardy]
+Battle Garegga (older Hong Kong version) [Brian Troha]
+Atari Tetris (bootleg set 2) [Kevin Eshbach]
+Martial Champion (US UAD version) [R.Belmont]
+Quiz 365 (Japan) [Luca Elia]
+Kung Fu Taikun (alt) [Taucher]
+Fever SOS
+Sorcer Striker (alt dump) [Brian Troha] (one dump migh be bad)
+Space Fever (color set 2, b&w set 2) [Pierpaolo Prazzoli]
+Liberation (bootleg) [Pierpaolo Prazzoli]
+
+New Non-Working games / clones supported
+----------------------------------------
+
+Double Cheese [Pierpaolo Prazzoli]
+Talbot [Pierpaolo Prazzoli]
+
 

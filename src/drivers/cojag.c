@@ -5,7 +5,7 @@
 	driver by Aaron Giles
 
 	Games supported:
-		* Area 51
+		* Area 51 (2 Sets)
 		* Maximum Force (2 Sets)
 		* Area 51/Maximum Force Duo (2 Sets)
 		* Vicious Circle
@@ -16,6 +16,10 @@
 
 	To do:
 		* map out unused RAM per-game via MRA8_NOP/MWA8_NOP
+
+	Note: There is a R3000 version of Area 51 labeled as version "2-C" that
+		is currently not dumped, but confirmed to exist.
+
 
 ****************************************************************************
 
@@ -889,7 +893,20 @@ MACHINE_DRIVER_END
  *
  *************************************/
 
-ROM_START( area51 ) /* 68020 based, Area51 v?? Date: Oct 25, 1995 */
+ROM_START( area51 ) /* 68020 based, Area51 v?? Date: Nov 15, 1995 */
+	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* 4MB for RAM at 0 */
+
+	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 2MB for 68020 code */
+	ROM_LOAD32_BYTE( "3h.bin", 0x00000, 0x80000, CRC(e70a97c4) SHA1(39dabf6bf3dc6f717a587f362d040bfb332be9e1) )
+	ROM_LOAD32_BYTE( "3p.bin", 0x00001, 0x80000, CRC(e9c9f4bd) SHA1(7c6c50372d45dca8929767241b092339f3bab4d2) )
+	ROM_LOAD32_BYTE( "3m.bin", 0x00002, 0x80000, CRC(6f135a81) SHA1(2d9660f240b14481e8c46bc98713e9dc12035063) )
+	ROM_LOAD32_BYTE( "3k.bin", 0x00003, 0x80000, CRC(94f50c14) SHA1(a54552e3ac5c4f481ba4f2fc7d724534576fe76c) )
+
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE( "area51", 0, MD5(130b330eff59403f8fc3433ff501852b) SHA1(9ea749404c9a5d44f407cdb8803293ec0d61410d) )
+ROM_END
+
+ROM_START( area51a ) /* 68020 based, Area51 v?? Date: Oct 25, 1995 */
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* 4MB for RAM at 0 */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 2MB for 68020 code */
@@ -901,7 +918,6 @@ ROM_START( area51 ) /* 68020 based, Area51 v?? Date: Oct 25, 1995 */
 	DISK_REGION( REGION_DISKS )
 	DISK_IMAGE( "area51", 0, MD5(130b330eff59403f8fc3433ff501852b) SHA1(9ea749404c9a5d44f407cdb8803293ec0d61410d) )
 ROM_END
-
 
 ROM_START( maxforce ) /* R3000 based, labeled as "Maximum Force 5-23-97 v1.05" */
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* 4MB for RAM at 0 */
@@ -1078,7 +1094,8 @@ static DRIVER_INIT( vcircle )
  *
  *************************************/
 
-GAME( 1995, area51,   0,        cojag68k,  area51,   area51,   ROT0, "Atari Games", "Area 51" )
+GAME( 1995, area51,   0,        cojag68k,  area51,   area51,   ROT0, "Atari Games", "Area 51 (Nov 15, 1995)" )
+GAME( 1995, area51a,  area51,   cojag68k,  area51,   area51,   ROT0, "Atari Games", "Area 51 (Oct 25, 1995)" )
 GAME( 1996, maxforce, 0,        r3knarrow, area51,   maxforce, ROT0, "Atari Games", "Maximum Force v1.05" )
 GAME( 1996, maxf_102, maxforce, r3knarrow, area51,   maxforce, ROT0, "Atari Games", "Maximum Force v1.02" )
 GAME( 1998, area51mx, 0,        cojag68k,  area51,   area51mx, ROT0, "Atari Games", "Area 51 / Maximum Force Duo v2.0" )

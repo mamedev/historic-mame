@@ -62,6 +62,8 @@ static int gfx_offsetscan;
 static INT8 gfx_finescroll;
 static UINT8 gfx_palettebank;
 
+static int last_rendered_scanline;
+
 
 
 /*************************************
@@ -217,7 +219,10 @@ void hdgsp_read_from_shiftreg(UINT32 address, UINT16 *shiftreg)
 void hdgsp_display_update(UINT32 offs, int rowbytes, int scanline)
 {
 	if (scanline == 0) scanline--;
-	force_partial_update(scanline);
+	if (scanline <= 0 && last_rendered_scanline < Machine->visible_area.max_y)
+		force_partial_update(Machine->visible_area.max_y);
+	else
+		force_partial_update(scanline);
 	gfx_offset = offs >> hdgsp_multisync;
 	gfx_offsetscan = scanline + 1;
 	gfx_rowbytes = rowbytes >> hdgsp_multisync;
@@ -483,6 +488,8 @@ VIDEO_UPDATE( harddriv )
 	offs_t adjusted_offs;
 	int start, end, x, y;
 	int lzero, rzero, draw;
+
+	last_rendered_scanline = cliprect->max_y;
 
 	/* check for disabled video */
 	if (tms34010_io_display_blanked(1))

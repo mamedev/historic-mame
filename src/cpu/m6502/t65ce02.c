@@ -237,7 +237,7 @@ OP(4b) {		  m65ce02_ICount-=1;		 TAZ;		  } /* 2 TAZ */
 OP(6b) {		  m65ce02_ICount-=1;		 TZA;		  } /* 2 TZA */
 OP(8b) { int tmp; m65ce02_ICount-=4;		 STY; WR_ABX; } /* 5 STY ABX */
 OP(ab) { int tmp; m65ce02_ICount-=4; RD_ABS; LDZ;		  } /* 4 LDZ ABS */
-OP(cb) { PAIR tmp; m65ce02_ICount-=7; RD_ABS_WORD; ASW; WB_EA_WORD;  } /* ? ASW ABS */
+OP(cb) { PAIR tmp; tmp.d = 0; m65ce02_ICount-=7; RD_ABS_WORD; ASW; WB_EA_WORD;  } /* ? ASW ABS */
 OP(eb) { PAIR tmp; m65ce02_ICount-=6; RD_ABS_WORD; ROW; WB_EA_WORD;  } /* ? roW ABS */
 
 OP(1b) {		  m65ce02_ICount-=1;		 INZ;		  } /* 2 INZ */

@@ -173,6 +173,7 @@ static struct x_offset game_offsets[] =
 	{ "tndrcadj", { -1,  0 } },				// correct (wall at beginning of game)
 	{ "wits",     {  0,  0 } },				// unknown
 	{ "thunderl", {  0,  0 } },				// unknown
+	{ "wiggie",   {  0,  0 } },				// some problems but they seem y co-ordinate related?
 	{ "blockcar", {  0,  0 } },				// unknown
 	{ "umanclub", {  0,  0 } },				// unknown
 	{ "atehate",  {  0,  0 } },				// correct (test grid)
@@ -604,9 +605,34 @@ PALETTE_INIT( zingzip )
 PALETTE_INIT( usclssic )
 {
 	int color, pen;
+	unsigned char *PROM = memory_region(REGION_PROMS);
+	int x;
+
+	/* DECODE PROM - we don't use the colours yet */
+	for (x = 0; x < 0x200 ; x++)
+	{
+		int r,g,b;
+		int data;
+
+		data = (PROM[x*2] <<8) | PROM[x*2+1];
+
+		r = (data >> 10) & 0x1f;
+		g = (data >>  5) & 0x1f;
+		b = (data >>  0) & 0x1f;
+
+		r = (r << 3) | (r >> 2);
+		g = (g << 3) | (g >> 2);
+		b = (b << 3) | (b >> 2);
+
+		palette_set_color(x+0x200,r,g,b);
+	}
+
 	for( color = 0; color < 32; color++ )
 		for( pen = 0; pen < 64; pen++ )
 			colortable[color * 64 + pen + 512] = (((color & 0xf) * 16 + pen)%(512));
+
+
+
 }
 
 

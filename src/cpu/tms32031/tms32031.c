@@ -108,10 +108,12 @@ typedef struct
 	UINT8			delayed;
 	UINT8			irq_pending;
 	UINT8			mcu_mode;
+	UINT8			is_idling;
 	int				interrupt_cycles;
 
 	void			(*xf0_w)(UINT8 val);
 	void			(*xf1_w)(UINT8 val);
+	void			(*iack_w)(UINT8 val, offs_t addr);
 	int				(*irq_callback)(int state);
 } tms32031_regs;
 
@@ -146,12 +148,12 @@ static tms32031_regs tms32031;
 **	MEMORY ACCESSORS
 **#################################################################################################*/
 
-#define ROPCODE(pc)		cpu_readop32((pc) * 4)
+#define ROPCODE(pc)		cpu_readop32((pc) << 2)
 #define OP				tms32031.op
 
-#define RMEM(addr)		program_read_dword_32le(((addr) & 0xffffff) * 4)
-#define WMEM(addr,data)	program_write_dword_32le(((addr) & 0xffffff) * 4, data)
-#define UPDATEPC(addr)	change_pc(((addr) & 0xffffff) * 4)
+#define RMEM(addr)		program_read_dword_32le((addr) << 2)
+#define WMEM(addr,data)	program_write_dword_32le((addr) << 2, data)
+#define UPDATEPC(addr)	change_pc((addr) << 2)
 
 
 
@@ -294,6 +296,7 @@ static void check_irqs(void)
 
 		if (whichtrap)
 		{
+			tms32031.is_idling = 0;
 			if (!tms32031.delayed)
 			{
 				trap(whichtrap);
@@ -381,6 +384,7 @@ static void tms32031_reset(void *param)
 	{
 		tms32031.xf0_w = config->xf0_w;
 		tms32031.xf1_w = config->xf1_w;
+		tms32031.iack_w = config->iack_w;
 	}
 
 	/* reset some registers */
@@ -391,6 +395,7 @@ static void tms32031_reset(void *param)
 
 	/* reset internal stuff */
 	tms32031.delayed = tms32031.irq_pending = 0;
+	tms32031.is_idling = 0;
 }
 
 
@@ -431,13 +436,15 @@ static int tms32031_execute(int cycles)
 
 	/* check IRQs up front */
 	check_irqs();
+	
+	/* if we're idling, just eat the cycles */
+	if (tms32031.is_idling)
+		return tms32031_icount;
 
 	while (tms32031_icount > 0)
 	{
-		if ((IREG(TMR_ST) & RMFLAG) && tms32031.pc == IREG(TMR_RE))
+		if ((IREG(TMR_ST) & RMFLAG) && tms32031.pc == IREG(TMR_RE) + 1)
 		{
-			execute_one();
-
 			if ((INT32)--IREG(TMR_RC) >= 0)
 				tms32031.pc = IREG(TMR_RS);
 			else
@@ -530,19 +537,21 @@ static UINT32 boot_loader(UINT32 boot_rom_addr)
 {
 	UINT32 bits, control, advance;
 	UINT32 start_offset = 0;
+	UINT32 datamask;
 	int first = 1, i;
 
 	/* read the size of the data */
 	bits = RMEM(boot_rom_addr);
 	if (bits != 8 && bits != 16 && bits != 32)
 		return 0;
+	datamask = 0xffffffffUL >> (32 - bits);
 	advance = 32 / bits;
 	boot_rom_addr += advance;
 
 	/* read the control register */
-	control = RMEM(boot_rom_addr++);
+	control = RMEM(boot_rom_addr++) & datamask;
 	for (i = 1; i < advance; i++)
-		control |= RMEM(boot_rom_addr++) << (bits * i);
+		control |= (RMEM(boot_rom_addr++) & datamask) << (bits * i);
 
 	/* now parse the data */
 	while (1)
@@ -550,18 +559,18 @@ static UINT32 boot_loader(UINT32 boot_rom_addr)
 		UINT32 offs, len;
 
 		/* read the length of this section */
-		len = RMEM(boot_rom_addr++);
+		len = RMEM(boot_rom_addr++) & datamask;
 		for (i = 1; i < advance; i++)
-			len |= RMEM(boot_rom_addr++) << (bits * i);
+			len |= (RMEM(boot_rom_addr++) & datamask) << (bits * i);
 
 		/* stop at 0 */
 		if (len == 0)
 			return start_offset;
 
 		/* read the destination offset of this section */
-		offs = RMEM(boot_rom_addr++);
+		offs = RMEM(boot_rom_addr++) & datamask;
 		for (i = 1; i < advance; i++)
-			offs |= RMEM(boot_rom_addr++) << (bits * i);
+			offs |= (RMEM(boot_rom_addr++) & datamask) << (bits * i);
 
 		/* if this is the first block, that's where we boot to */
 		if (first)
@@ -576,9 +585,9 @@ static UINT32 boot_loader(UINT32 boot_rom_addr)
 			UINT32 data;
 
 			/* extract the 32-bit word */
-			data = RMEM(boot_rom_addr++);
+			data = RMEM(boot_rom_addr++) & datamask;
 			for (i = 1; i < advance; i++)
-				data |= RMEM(boot_rom_addr++) << (bits * i);
+				data |= (RMEM(boot_rom_addr++) & datamask) << (bits * i);
 
 			/* write it out */
 			WMEM(offs++, data);
@@ -656,6 +665,14 @@ static void tms32031_set_info(UINT32 state, union cpuinfo *info)
 	}
 }
 
+
+/**************************************************************************
+ * Internal memory map
+ **************************************************************************/
+
+static ADDRESS_MAP_START( internal, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x809800, 0x809fff) AM_RAM
+ADDRESS_MAP_END
 
 
 /**************************************************************************
@@ -757,6 +774,7 @@ void tms32031_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tms32031_icount;		break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = tms32031_reg_layout;			break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = tms32031_win_layout;			break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = construct_map_internal; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "TMS32031"); break;

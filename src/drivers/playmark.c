@@ -215,100 +215,64 @@ static READ_HANDLER( PIC16C5X_T0_clk_r )
 }
 
 
+/***************************** 68000 Memory Maps ****************************/
 
-static ADDRESS_MAP_START( bigtwin_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x440000, 0x4403ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x700010, 0x700011) AM_READ(input_port_0_word_r)
-	AM_RANGE(0x700012, 0x700013) AM_READ(input_port_1_word_r)
-	AM_RANGE(0x700014, 0x700015) AM_READ(input_port_2_word_r)
-	AM_RANGE(0x70001a, 0x70001b) AM_READ(input_port_3_word_r)
-	AM_RANGE(0x70001c, 0x70001d) AM_READ(input_port_4_word_r)
-	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( bigtwin_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x304000, 0x304001) AM_WRITE(MWA16_NOP)	/* watchdog? irq ack? */
-	AM_RANGE(0x440000, 0x4403ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+static ADDRESS_MAP_START( bigtwin_main_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_RAM
+	AM_RANGE(0x304000, 0x304001) AM_NOP				/* watchdog? irq ack? */
+	AM_RANGE(0x440000, 0x4403ff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x500000, 0x5007ff) AM_WRITE(wbeachvl_fgvideoram_w) AM_BASE(&wbeachvl_videoram2)
-AM_RANGE(0x500800, 0x501fff) AM_WRITE(MWA16_NOP)	/* unused RAM? */
+	AM_RANGE(0x500800, 0x501fff) AM_WRITE(MWA16_NOP)	/* unused RAM? */
 	AM_RANGE(0x502000, 0x503fff) AM_WRITE(wbeachvl_txvideoram_w) AM_BASE(&wbeachvl_videoram1)
-AM_RANGE(0x504000, 0x50ffff) AM_WRITE(MWA16_NOP)	/* unused RAM? */
+	AM_RANGE(0x504000, 0x50ffff) AM_WRITE(MWA16_NOP)	/* unused RAM? */
 	AM_RANGE(0x510000, 0x51000b) AM_WRITE(bigtwin_scroll_w)
 	AM_RANGE(0x51000c, 0x51000d) AM_WRITE(MWA16_NOP)	/* always 3? */
 	AM_RANGE(0x600000, 0x67ffff) AM_WRITE(bigtwin_bgvideoram_w) AM_BASE(&bigtwin_bgvideoram) AM_SIZE(&bigtwin_bgvideoram_size)
+	AM_RANGE(0x700010, 0x700011) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x700012, 0x700013) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x700014, 0x700015) AM_READ(input_port_2_word_r)
 	AM_RANGE(0x700016, 0x700017) AM_WRITE(coinctrl_w)
+	AM_RANGE(0x70001a, 0x70001b) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x70001c, 0x70001d) AM_READ(input_port_4_word_r)
 	AM_RANGE(0x70001e, 0x70001f) AM_WRITE(playmark_snd_command_w)
 	AM_RANGE(0x780000, 0x7807ff) AM_WRITE(bigtwin_paletteram_w) AM_BASE(&paletteram16)
-//	{ 0xe00000, 0xe00001, ?? written on startup
-	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM)
+//	AM_RANGE(0xe00000, 0xe00001) ?? written on startup
+	AM_RANGE(0xff0000, 0xffffff) AM_RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( wbeachvl_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x440000, 0x440fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x500000, 0x501fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x504000, 0x505fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x508000, 0x509fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM)
+
+static ADDRESS_MAP_START( wbeachvl_main_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_ROM
+	AM_RANGE(0x440000, 0x440fff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x500000, 0x501fff) AM_READWRITE(MRA16_RAM, wbeachvl_bgvideoram_w) AM_BASE(&wbeachvl_videoram3)
+	AM_RANGE(0x504000, 0x505fff) AM_READWRITE(MRA16_RAM, wbeachvl_fgvideoram_w) AM_BASE(&wbeachvl_videoram2)
+	AM_RANGE(0x508000, 0x509fff) AM_READWRITE(MRA16_RAM, wbeachvl_txvideoram_w) AM_BASE(&wbeachvl_videoram1)
+	AM_RANGE(0x510000, 0x51000b) AM_WRITE(wbeachvl_scroll_w)
+	AM_RANGE(0x51000c, 0x51000d) AM_WRITE(MWA16_NOP)	/* always 3? */
+//	AM_RANGE(0x700000, 0x700001) ?? written on startup
 	AM_RANGE(0x710010, 0x710011) AM_READ(wbeachvl_port0_r)
 	AM_RANGE(0x710012, 0x710013) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x710014, 0x710015) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x710016, 0x710017) AM_WRITE(wbeachvl_coin_eeprom_w)
 	AM_RANGE(0x710018, 0x710019) AM_READ(input_port_3_word_r)
 	AM_RANGE(0x71001a, 0x71001b) AM_READ(input_port_4_word_r)
 //	AM_RANGE(0x71001c, 0x71001d) AM_READ(playmark_snd_status???)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( wbeachvl_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x440000, 0x440fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x500000, 0x501fff) AM_WRITE(wbeachvl_bgvideoram_w) AM_BASE(&wbeachvl_videoram3)
-	AM_RANGE(0x504000, 0x505fff) AM_WRITE(wbeachvl_fgvideoram_w) AM_BASE(&wbeachvl_videoram2)
-	AM_RANGE(0x508000, 0x509fff) AM_WRITE(wbeachvl_txvideoram_w) AM_BASE(&wbeachvl_videoram1)
-	AM_RANGE(0x510000, 0x51000b) AM_WRITE(wbeachvl_scroll_w)
-	AM_RANGE(0x51000c, 0x51000d) AM_WRITE(MWA16_NOP)	/* always 3? */
-//	{ 0x700000, 0x700001, ?? written on startup
-	AM_RANGE(0x710016, 0x710017) AM_WRITE(wbeachvl_coin_eeprom_w)
 	AM_RANGE(0x71001e, 0x71001f) AM_WRITE(MWA16_NOP)//playmark_snd_command_w },
 	AM_RANGE(0x780000, 0x780fff) AM_WRITE(paletteram16_RRRRRGGGGGBBBBBx_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM)
-#if 0
-	AM_RANGE(0x700016, 0x700017) AM_WRITE(coinctrl_w)
-#endif
+	AM_RANGE(0xff0000, 0xffffff) AM_RAM
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( playmark_sound_read_program, ADDRESS_SPACE_PROGRAM, 16 )
- 	PIC16C57_PROGRAM_MEMORY_READ
-		/* $000 - 7FF  Program ROM for PIC16C57. Note: code is 12bits wide */
-		/*             View the ROM at $1000 in the debugger memory windows */
-ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( playmark_sound_write_program, ADDRESS_SPACE_PROGRAM, 16 )
-	PIC16C57_PROGRAM_MEMORY_WRITE
-ADDRESS_MAP_END
+/***************************** PIC16C57 Memory Map **************************/
 
-static ADDRESS_MAP_START( playmark_sound_read_data, ADDRESS_SPACE_DATA, 8 )
- 	PIC16C57_DATA_MEMORY_READ
-		/* $000 - 07F  Internal memory mapped registers */
-ADDRESS_MAP_END
+	/* $000 - 7FF  PIC16C57 Internal Program ROM. Note: code is 12bits wide */
+	/* $000 - 07F  PIC16C57 Internal Data RAM */
 
-static ADDRESS_MAP_START( playmark_sound_write_data, ADDRESS_SPACE_DATA, 8 )
-	PIC16C57_DATA_MEMORY_WRITE
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( playmark_sound_read_io, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_READ(MRA8_NOP)				/* 4 bit port */
-	AM_RANGE(0x01, 0x01) AM_READ(playmark_snd_command_r)
-	AM_RANGE(0x02, 0x02) AM_READ(playmark_snd_flag_r)
+static ADDRESS_MAP_START( playmark_sound_io_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READWRITE(playmark_snd_command_r, playmark_oki_w)
+	AM_RANGE(0x02, 0x02) AM_READWRITE(playmark_snd_flag_r, playmark_snd_control_w)
 	AM_RANGE(PIC16C5x_T0, PIC16C5x_T0) AM_READ(PIC16C5X_T0_clk_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( playmark_sound_write_io, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP)				/* 4 bit port */
-	AM_RANGE(0x01, 0x01) AM_WRITE(playmark_oki_w)
-	AM_RANGE(0x02, 0x02) AM_WRITE(playmark_snd_control_w)
 ADDRESS_MAP_END
 
 
@@ -583,13 +547,12 @@ static MACHINE_DRIVER_START( bigtwin )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz? */
-	MDRV_CPU_PROGRAM_MAP(bigtwin_readmem,bigtwin_writemem)
+	MDRV_CPU_PROGRAM_MAP(bigtwin_main_map, 0)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	MDRV_CPU_ADD(PIC16C57, ((32000000/8)/PIC16C5x_CLOCK_DIVIDER))	/* 4MHz ? */
-	MDRV_CPU_PROGRAM_MAP(playmark_sound_read_program,playmark_sound_write_program)
-	MDRV_CPU_DATA_MAP(playmark_sound_read_data,playmark_sound_write_data)
-	MDRV_CPU_IO_MAP(playmark_sound_read_io,playmark_sound_write_io)
+	/* Program and Data Maps are internal to the MCU */
+	MDRV_CPU_IO_MAP(playmark_sound_io_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -613,7 +576,7 @@ static MACHINE_DRIVER_START( wbeachvl )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz? */
-	MDRV_CPU_PROGRAM_MAP(wbeachvl_readmem,wbeachvl_writemem)
+	MDRV_CPU_PROGRAM_MAP(wbeachvl_main_map, 0)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -647,7 +610,7 @@ ROM_START( bigtwin )
 	ROM_LOAD16_BYTE( "2.302",        0x000000, 0x80000, CRC(e6767f60) SHA1(ec0ba1c786e6fde04601c2f3f619e3c6545f9239) )
 	ROM_LOAD16_BYTE( "3.301",        0x000001, 0x80000, CRC(5aba6990) SHA1(4f664a91819fdd27821fa607425701d83fcbd8ce) )
 
-	ROM_REGION( 0x4000, REGION_CPU2, 0 )	/* sound (PIC16C57) */
+	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound (PIC16C57) */
 //	ROM_LOAD( "16c57hs.bin",  0x0000, 0x1000, CRC(b4c95cc3) SHA1(7fc9b141e7782aa5c17310ee06db99d884537c30) )
 	/* ROM will be copied here by the init code from REGION_USER1 */
 
@@ -675,7 +638,7 @@ ROM_START( wbeachvl )
 	ROM_LOAD16_BYTE( "wbv_02.bin",   0x000000, 0x40000, CRC(c7cca29e) SHA1(03af361081d688c4204a95f7f5babcc598b72c23) )
 	ROM_LOAD16_BYTE( "wbv_03.bin",   0x000001, 0x40000, CRC(db4e69d5) SHA1(119bf35a463d279ddde67ab08f6f1bab9f05cf0c) )
 
-	ROM_REGION( 0x4000, REGION_CPU2, 0 )	/* sound (missing) */
+	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound (missing) */
 	ROM_LOAD( "pic16c57",     0x0000, 0x1000, NO_DUMP )
 
 	ROM_REGION( 0x600000, REGION_GFX1, ROMREGION_DISPOSE )

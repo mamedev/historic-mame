@@ -37,6 +37,7 @@ Supported games:
 	battleg		RA9503		Raizing/8ing	Battle Garegga (Type 2)
 	battlega	RA9503		Raizing/8ing	Battle Garegga
 	battlegb	RA9503		Raizing/8ing	Battle Garegga (New Version?)
+	battlegc	RA9503		Raizing/8ing	Battle Garegga
 	batrider	RA9704		Raizing/8ing	Armed Police Batrider - Rev B (Japan - Ver. Fri Feb 13 1998)
 	batridra	RA9704		Raizing/8ing	Armed Police Batrider (Japan - Ver. Mon Dec 22 1997)
 	batridrk	RA9704		Raizing/8ing	Armed Police Batrider (Korea - Ver. Fri Feb 13 1998)
@@ -4687,6 +4688,8 @@ ROM_END
 
 /* -------------------------- Raizing games ------------------------- */
 
+/* one of these sstriker sets might be bad .. they're very similar */
+
 ROM_START( sstriker )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
 	ROM_LOAD16_WORD_SWAP( "ra-ma-01.01", 0x000000, 0x080000, CRC(92259f84) SHA1(127e62e407d95efd360bfe2cac9577f326abf6ef) )
@@ -4704,6 +4707,25 @@ ROM_START( sstriker )
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )			/* ADPCM Samples */
 	ROM_LOAD( "ra_ma_01.06", 0x00000, 0x40000, CRC(6edb2ab8) SHA1(e3032e8eda2686f30df4b7a088c5a4d4d45782ed) )
 ROM_END
+
+ROM_START( sstrikra )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
+	ROM_LOAD16_WORD_SWAP( "rama1_01.bin", 0x000000, 0x080000, CRC(708fd51d) SHA1(167186d4cf13af37ec0fa6a59c738c54dbbf3c7c) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound Z80 code */
+	ROM_LOAD( "ra_ma_01.02", 0x00000, 0x10000, CRC(eabfa46d) SHA1(402c99ebf88f9025f74f0a28ced22b7882a65eb3) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ra_ma_01.03",  0x000000, 0x100000, CRC(54e2bd95) SHA1(341359dd46152615675bb90e8a184216c8feebff) )
+	ROM_LOAD( "ra_ma_01.04",  0x100000, 0x100000, CRC(21cd378f) SHA1(e1695bccec949d18b1c03e9c42dca384554b0d7c) )
+
+	ROM_REGION( 0x008000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "ra-ma-01.05",  0x000000, 0x008000, CRC(88b58841) SHA1(1d16b538c11a291bd1f46a510bfbd6259b45a0b5) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )			/* ADPCM Samples */
+	ROM_LOAD( "ra_ma_01.06", 0x00000, 0x40000, CRC(6edb2ab8) SHA1(e3032e8eda2686f30df4b7a088c5a4d4d45782ed) )
+ROM_END
+
 
 ROM_START( mahoudai )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
@@ -4809,6 +4831,28 @@ ROM_START( battlegb )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )			/* Main 68K code */
 	ROM_LOAD16_BYTE( "prg_0.bin", 0x000000, 0x080000, CRC(951ecc07) SHA1(a82e4b59e4a974566e59f3ab2fbae1aec7d88a2b) )
 	ROM_LOAD16_BYTE( "prg_1.bin", 0x000001, 0x080000, CRC(729a60c6) SHA1(cb6f5d138bb82c32910f42d8ee16fa573a23cef3) )
+
+	ROM_REGION( 0x28000, REGION_CPU2, 0 )			/* Sound Z80 code + bank */
+	ROM_LOAD( "snd.bin", 0x00000, 0x08000, CRC(68632952) SHA1(fb834db83157948e2b420b6051102a9c6ac3969b) )
+	ROM_CONTINUE(        0x10000, 0x18000 )
+
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "rom4.bin",  0x000000, 0x200000, CRC(b333d81f) SHA1(5481465f1304334fd55798be2f44324c57c2dbcb) )
+	ROM_LOAD( "rom3.bin",  0x200000, 0x200000, CRC(51b9ebfb) SHA1(30e0c326f5175aa436df8dba08f6f4e08130b92f) )
+	ROM_LOAD( "rom2.bin",  0x400000, 0x200000, CRC(b330e5e2) SHA1(5d48e9d56f99d093b6390e0af1609fd796df2d35) )
+	ROM_LOAD( "rom1.bin",  0x600000, 0x200000, CRC(7eafdd70) SHA1(7c8da8e86c3f9491719b1d7d5d285568d7614f38) )
+
+	ROM_REGION( 0x010000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "text.u81", 0x00000, 0x08000, CRC(e67fd534) SHA1(987d0edffc2c243a13d4567319ea3d185eaadbf8) )
+
+	ROM_REGION( 0x140000, REGION_SOUND1, 0 )		/* ADPCM Samples */
+	ROM_LOAD( "rom5.bin", 0x040000, 0x100000, CRC(f6d49863) SHA1(3a3c354852adad06e8a051511abfab7606bce382) )
+ROM_END
+
+ROM_START( battlegc )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )			/* Main 68K code */
+	ROM_LOAD16_BYTE( "prg_0.rom", 0x000000, 0x080000, CRC(26e0019e) SHA1(5197001f5d59246b137e19ed1952a8207b25d4c0) )
+	ROM_LOAD16_BYTE( "prg_1.rom", 0x000001, 0x080000, CRC(2ccfdd1e) SHA1(7a9f11f851854f3f8389b9c3c0906ebb8dc28712) )
 
 	ROM_REGION( 0x28000, REGION_CPU2, 0 )			/* Sound Z80 code + bank */
 	ROM_LOAD( "snd.bin", 0x00000, 0x08000, CRC(68632952) SHA1(fb834db83157948e2b420b6051102a9c6ac3969b) )
@@ -4970,11 +5014,13 @@ GAMEX( 1993, batugnsp, batsugun, batsugun, batsugun, T2_Zx80,  ROT270, "Toaplan"
 GAME ( 1994, snowbro2, 0,        snowbro2, snowbro2, T2_noZ80, ROT0,   "[Toaplan] Hanafram", "Snow Bros. 2 - With New Elves / Otenki Paradise" )
 GAME ( 1993, mahoudai, 0,        mahoudai, mahoudai, T2_Z80,   ROT270, "Raizing (Able license)", "Mahou Daisakusen (Japan)" )
 GAME ( 1993, sstriker, mahoudai, mahoudai, sstriker, T2_Z80,   ROT270, "Raizing", "Sorcer Striker (World)" ) // from korean board
+GAME ( 1993, sstrikra, mahoudai, mahoudai, sstriker, T2_Z80,   ROT270, "Raizing", "Sorcer Striker (World, alt)" ) // from korean board
 GAME ( 1994, shippumd, 0,        shippumd, shippumd, T2_Z80,   ROT270, "Raizing / Eighting", "Shippu Mahou Daisakusen (Japan)" )
 GAME ( 1994, kingdmgp, shippumd, shippumd, kingdmgp, T2_Z80,   ROT270, "Raizing / Eighting", "Kingdom Grandprix (World)" ) // from korean board, missing letters on credits screen but this is correct
 GAME ( 1996, battleg,  0,        battleg,  battleg,  battleg,  ROT270, "Raizing / Eighting", "Battle Garegga - Type 2 (Denmark / China) (Tue Apr 2 1996)" )
 GAME ( 1996, battlega, battleg,  battleg,  battlega, battleg,  ROT270, "Raizing / Eighting", "Battle Garegga (Europe / USA / Japan / Asia) (Sat Feb 3 1996)" )
 GAME ( 1996, battlegb, battleg,  battleg,  battlegb, battleg,  ROT270, "Raizing / Eighting", "Battle Garegga (Austria / Hong Kong) (Sat Mar 2 1996)" ) // displays New Version when set to HK
+GAME ( 1996, battlegc, battleg,  battleg,  battlegb, battleg,  ROT270, "Raizing / Eighting", "Battle Garegga (Austria / Hong Kong) (Sat Feb 3 1996)" )
 GAME ( 1998, batrider, 0,        batrider, batrider, battleg,  ROT270, "Raizing / Eighting", "Armed Police Batrider (Japan, version B)" )
 GAME ( 1998, batridra, batrider, batrider, batrider, battleg,  ROT270, "Raizing / Eighting", "Armed Police Batrider (Japan, version A)" )
 GAME ( 1998, batridrk, batrider, batrider, batrider, battleg,  ROT270, "Raizing / Eighting", "Armed Police Batrider (Korea, version B)" )

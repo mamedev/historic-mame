@@ -54,27 +54,16 @@ static READ_HANDLER( jumpcoas_custom_io_r )
 }
 
 
-static ADDRESS_MAP_START( fastfred_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xd000, 0xd3ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xd800, 0xd8ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xe000) AM_READ(input_port_0_r)
+static ADDRESS_MAP_START( fastfred_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_ROM
+	AM_RANGE(0xc000, 0xc7ff) AM_RAM
+	AM_RANGE(0xd000, 0xd3ff) AM_MIRROR(0x400) AM_READWRITE(MRA8_RAM, fastfred_videoram_w) AM_BASE(&fastfred_videoram)
+	AM_RANGE(0xd800, 0xd83f) AM_READWRITE(MRA8_RAM, fastfred_attributes_w) AM_BASE(&fastfred_attributesram)
+	AM_RANGE(0xd840, 0xd85f) AM_RAM AM_BASE(&fastfred_spriteram) AM_SIZE(&fastfred_spriteram_size)
+	AM_RANGE(0xd860, 0xdbff) AM_RAM // Unused, but initialized
+	AM_RANGE(0xe000, 0xe000) AM_READWRITE(input_port_0_r, fastfred_background_color_w)
 	AM_RANGE(0xe800, 0xe800) AM_READ(input_port_1_r)
-	AM_RANGE(0xf000, 0xf000) AM_READ(input_port_2_r)
-	AM_RANGE(0xf800, 0xf800) AM_READ(watchdog_reset_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( fastfred_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xd000, 0xd3ff) AM_WRITE(fastfred_videoram_w) AM_BASE(&fastfred_videoram)
-	AM_RANGE(0xd400, 0xd7ff) AM_WRITE(fastfred_videoram_w)  // Mirrored for above
-	AM_RANGE(0xd800, 0xd83f) AM_WRITE(fastfred_attributes_w) AM_BASE(&fastfred_attributesram)
-	AM_RANGE(0xd840, 0xd85f) AM_WRITE(MWA8_RAM) AM_BASE(&fastfred_spriteram) AM_SIZE(&fastfred_spriteram_size)
-	AM_RANGE(0xd860, 0xdbff) AM_WRITE(MWA8_RAM) // Unused, but initialized
-	AM_RANGE(0xe000, 0xe000) AM_WRITE(fastfred_background_color_w)
-	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP) // Unused, but initialized
+	AM_RANGE(0xf000, 0xf000) AM_READWRITE(input_port_2_r, MWA8_NOP)
 	AM_RANGE(0xf001, 0xf001) AM_WRITE(interrupt_enable_w)
 	AM_RANGE(0xf002, 0xf002) AM_WRITE(fastfred_colorbank1_w)
 	AM_RANGE(0xf003, 0xf003) AM_WRITE(fastfred_colorbank2_w)
@@ -84,33 +73,22 @@ static ADDRESS_MAP_START( fastfred_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf007, 0xf007) AM_WRITE(fastfred_flip_screen_y_w)
 	AM_RANGE(0xf116, 0xf116) AM_WRITE(fastfred_flip_screen_x_w)
 	AM_RANGE(0xf117, 0xf117) AM_WRITE(fastfred_flip_screen_y_w)
-	AM_RANGE(0xf800, 0xf800) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xf800, 0xf800) AM_READWRITE(watchdog_reset_r, soundlatch_w)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( jumpcoas_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xd000, 0xd3ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xd800, 0xdbff) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( jumpcoas_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0xc000, 0xc7ff) AM_RAM
+	AM_RANGE(0xd000, 0xd03f) AM_READWRITE(MRA8_RAM, fastfred_attributes_w) AM_BASE(&fastfred_attributesram)
+	AM_RANGE(0xd040, 0xd05f) AM_RAM AM_BASE(&fastfred_spriteram) AM_SIZE(&fastfred_spriteram_size)
+	AM_RANGE(0xd060, 0xd3ff) AM_RAM
+	AM_RANGE(0xd800, 0xdbff) AM_MIRROR(0x400) AM_READWRITE(MRA8_RAM, fastfred_videoram_w) AM_BASE(&fastfred_videoram)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(fastfred_background_color_w)
 	AM_RANGE(0xe800, 0xe800) AM_READ(input_port_0_r)
 	AM_RANGE(0xe801, 0xe801) AM_READ(input_port_1_r)
 	AM_RANGE(0xe802, 0xe802) AM_READ(input_port_2_r)
 	AM_RANGE(0xe803, 0xe803) AM_READ(input_port_3_r)
-	//AM_RANGE(0xf800, 0xf800) AM_READ(watchdog_reset_r)  // Why doesn't this work???
-	AM_RANGE(0xf800, 0xf800) AM_READ(MRA8_NOP)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( jumpcoas_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xd000, 0xd03f) AM_WRITE(fastfred_attributes_w) AM_BASE(&fastfred_attributesram)
-	AM_RANGE(0xd040, 0xd05f) AM_WRITE(MWA8_RAM) AM_BASE(&fastfred_spriteram) AM_SIZE(&fastfred_spriteram_size)
-	AM_RANGE(0xd060, 0xd3ff) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0xd800, 0xdbff) AM_WRITE(fastfred_videoram_w) AM_BASE(&fastfred_videoram)
-	AM_RANGE(0xdc00, 0xdfff) AM_WRITE(fastfred_videoram_w)	/* mirror address, used in the name entry screen */
-	AM_RANGE(0xe000, 0xe000) AM_WRITE(fastfred_background_color_w)
 	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP) // Unused, but initialized
 	AM_RANGE(0xf001, 0xf001) AM_WRITE(interrupt_enable_w)
 	AM_RANGE(0xf002, 0xf002) AM_WRITE(fastfred_colorbank1_w)
@@ -121,35 +99,25 @@ static ADDRESS_MAP_START( jumpcoas_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf007, 0xf007) AM_WRITE(fastfred_flip_screen_y_w)
 	AM_RANGE(0xf116, 0xf116) AM_WRITE(fastfred_flip_screen_x_w)
 	AM_RANGE(0xf117, 0xf117) AM_WRITE(fastfred_flip_screen_y_w)
-	AM_RANGE(0xf800, 0xf800) AM_WRITE(AY8910_control_port_0_w)
+	//AM_RANGE(0xf800, 0xf800) AM_READ(watchdog_reset_r)  // Why doesn't this work???
+	AM_RANGE(0xf800, 0xf800) AM_READWRITE(MRA8_NOP, AY8910_control_port_0_w)
 	AM_RANGE(0xf801, 0xf801) AM_WRITE(AY8910_write_port_0_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( imago_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x2000, 0x6fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xb000, 0xb3ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xc800, 0xcbff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xd000, 0xd3ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xd800, 0xd8ff) AM_READ(MRA8_RAM)
+
+static ADDRESS_MAP_START( imago_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_ROM
+	AM_RANGE(0x2000, 0x6fff) AM_ROM
+	AM_RANGE(0xb000, 0xb3ff) AM_RAM
+	AM_RANGE(0xc000, 0xc7ff) AM_RAM
+	AM_RANGE(0xc800, 0xcbff) AM_MIRROR(0x400) AM_READWRITE(MRA8_RAM, imago_fg_videoram_w) AM_BASE(&imago_fg_videoram)
+	AM_RANGE(0xd000, 0xd3ff) AM_MIRROR(0x400) AM_READWRITE(MRA8_RAM, fastfred_videoram_w) AM_BASE(&fastfred_videoram)
+	AM_RANGE(0xd800, 0xd83f) AM_READWRITE(MRA8_RAM, fastfred_attributes_w) AM_BASE(&fastfred_attributesram)
+	AM_RANGE(0xd840, 0xd85f) AM_RAM AM_BASE(&fastfred_spriteram) AM_SIZE(&fastfred_spriteram_size)
+	AM_RANGE(0xd860, 0xd8ff) AM_RAM // Unused, but initialized
 	AM_RANGE(0xe000, 0xe000) AM_READ(input_port_0_r)
 	AM_RANGE(0xe800, 0xe800) AM_READ(input_port_1_r)
-	AM_RANGE(0xf000, 0xf000) AM_READ(input_port_2_r)
-	AM_RANGE(0xf800, 0xf800) AM_READ(MRA8_NOP)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( imago_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x2000, 0x6fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xb000, 0xb3ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xc800, 0xcbff) AM_WRITE(imago_fg_videoram_w) AM_BASE(&imago_fg_videoram)
-	AM_RANGE(0xd000, 0xd3ff) AM_WRITE(fastfred_videoram_w) AM_BASE(&fastfred_videoram)
-	AM_RANGE(0xd800, 0xd83f) AM_WRITE(fastfred_attributes_w) AM_BASE(&fastfred_attributesram)
-	AM_RANGE(0xd840, 0xd85f) AM_WRITE(MWA8_RAM) AM_BASE(&fastfred_spriteram) AM_SIZE(&fastfred_spriteram_size)
-	AM_RANGE(0xd860, 0xd8ff) AM_WRITE(MWA8_RAM) // Unused, but initialized
-	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP) // writes 1 when level starts, 0 when game over
+	AM_RANGE(0xf000, 0xf000) AM_READWRITE(input_port_2_r, MWA8_NOP) // writes 1 when level starts, 0 when game over
 	AM_RANGE(0xf001, 0xf001) AM_WRITE(interrupt_enable_w)
 	AM_RANGE(0xf002, 0xf002) AM_WRITE(fastfred_colorbank1_w)
 	AM_RANGE(0xf003, 0xf003) AM_WRITE(fastfred_colorbank2_w)
@@ -157,26 +125,20 @@ static ADDRESS_MAP_START( imago_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf005, 0xf005) AM_WRITE(imago_charbank_w)
 	AM_RANGE(0xf006, 0xf006) AM_WRITE(MWA8_NOP) // always 0
 	AM_RANGE(0xf007, 0xf007) AM_WRITE(MWA8_NOP) // always 0
-	AM_RANGE(0xf800, 0xf800) AM_WRITE(soundlatch_w)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x2000, 0x23ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x3000, 0x3000) AM_READ(soundlatch_r)
-	AM_RANGE(0x7000, 0x7000) AM_READ(MRA8_NOP) // only for Imago, read but not used
+	AM_RANGE(0xf800, 0xf800) AM_READWRITE(MRA8_NOP, soundlatch_w)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x2000, 0x23ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x3000, 0x3000) AM_WRITE(interrupt_enable_w)
+static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_ROM
+	AM_RANGE(0x2000, 0x23ff) AM_RAM
+	AM_RANGE(0x3000, 0x3000) AM_READWRITE(soundlatch_r, interrupt_enable_w)
 	AM_RANGE(0x4000, 0x4000) AM_WRITE(MWA8_RAM)  // Reset PSG's
 	AM_RANGE(0x5000, 0x5000) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x5001, 0x5001) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x6000, 0x6000) AM_WRITE(AY8910_control_port_1_w)
 	AM_RANGE(0x6001, 0x6001) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x7000, 0x7000) AM_READ(MRA8_NOP) // only for Imago, read but not used
 ADDRESS_MAP_END
 
 
@@ -557,12 +519,12 @@ static MACHINE_DRIVER_START( fastfred )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, CLOCK/6)     /* 3.072 MHz */
-	MDRV_CPU_PROGRAM_MAP(fastfred_readmem,fastfred_writemem)
+	MDRV_CPU_PROGRAM_MAP(fastfred_map,0)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD_TAG("audio", Z80, CLOCK/12)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)    /* 1.536 MHz */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,4)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -589,7 +551,7 @@ static MACHINE_DRIVER_START( jumpcoas )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(fastfred)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(jumpcoas_readmem,jumpcoas_writemem)
+	MDRV_CPU_PROGRAM_MAP(jumpcoas_map,0)
 
 	MDRV_CPU_REMOVE("audio")
 
@@ -605,7 +567,7 @@ static MACHINE_DRIVER_START( imago )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(fastfred)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(imago_readmem,imago_writemem)
+	MDRV_CPU_PROGRAM_MAP(imago_map,0)
 
 	/* video hardware */
 	MDRV_GFXDECODE(imago_gfxdecodeinfo)

@@ -1601,6 +1601,46 @@ static void ide_bus_master_write(struct ide_state *ide, offs_t offset, int size,
 
 /*************************************
  *
+ *	IDE direct handlers (16-bit)
+ *
+ *************************************/
+
+/*
+	ide_bus_0_r()
+
+	Read a 16-bit word from the IDE bus directly.
+
+	select: 0->CS1Fx active, 1->CS3Fx active
+	offset: register offset (state of DA2-DA0)
+*/
+int ide_bus_0_r(int select, int offset)
+{
+	offset += select ? 0x3f0 : 0x1f0;
+	return ide_controller_read(&idestate[0], offset, (offset == 0x1f0) ? 2 : 1);
+}
+
+/*
+	ide_bus_0_w()
+
+	Write a 16-bit word to the IDE bus directly.
+
+	select: 0->CS1Fx active, 1->CS3Fx active
+	offset: register offset (state of DA2-DA0)
+	data: data written (state of D0-D15 or D0-D7)
+*/
+void ide_bus_0_w(int select, int offset, int data)
+{
+	offset += select ? 0x3f0 : 0x1f0;
+	if (offset == 0x1f0)
+		ide_controller_write(&idestate[0], offset, 2, data);
+	else
+		ide_controller_write(&idestate[0], offset, 1, data & 0xff);
+}
+
+
+
+/*************************************
+ *
  *	32-bit IDE handlers
  *
  *************************************/

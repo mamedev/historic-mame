@@ -354,6 +354,7 @@ static char* get_ea_mode_str(uint instruction, uint size)
 	uint postindex;
 	uint comma = 0;
 	uint temp_value;
+	char invalid_mode = 0;
 
 	/* Switch buffers so we don't clobber on a double-call to this function */
 	mode = mode == b1 ? b2 : b1;
@@ -388,13 +389,26 @@ static char* get_ea_mode_str(uint instruction, uint size)
 		/* address register indirect with index */
 			extension = read_imm_16();
 
+			if((g_cpu_type & M68010_LESS) && EXT_INDEX_SCALE(extension))
+			{
+				invalid_mode = 1;
+				break;
+			}
+
 			if(EXT_FULL(extension))
 			{
+				if(g_cpu_type & M68010_LESS)
+				{
+					invalid_mode = 1;
+					break;
+				}
+
 				if(EXT_EFFECTIVE_ZERO(extension))
 				{
 					strcpy(mode, "0");
 					break;
 				}
+
 				base = EXT_BASE_DISPLACEMENT_PRESENT(extension) ? (EXT_BASE_DISPLACEMENT_LONG(extension) ? read_imm_32() : read_imm_16()) : 0;
 				outer = EXT_OUTER_DISPLACEMENT_PRESENT(extension) ? (EXT_OUTER_DISPLACEMENT_LONG(extension) ? read_imm_32() : read_imm_16()) : 0;
 				if(EXT_BASE_REGISTER_PRESENT(extension))
@@ -480,8 +494,20 @@ static char* get_ea_mode_str(uint instruction, uint size)
 		/* program counter with index */
 			extension = read_imm_16();
 
+			if((g_cpu_type & M68010_LESS) && EXT_INDEX_SCALE(extension))
+			{
+				invalid_mode = 1;
+				break;
+			}
+
 			if(EXT_FULL(extension))
 			{
+				if(g_cpu_type & M68010_LESS)
+				{
+					invalid_mode = 1;
+					break;
+				}
+
 				if(EXT_EFFECTIVE_ZERO(extension))
 				{
 					strcpy(mode, "0");
@@ -559,8 +585,12 @@ static char* get_ea_mode_str(uint instruction, uint size)
 			sprintf(mode, "%s", get_imm_str_u(size));
 			break;
 		default:
-			sprintf(mode, "INVALID %x", instruction & 0x3f);
+			invalid_mode = 1;
 	}
+
+	if(invalid_mode)
+		sprintf(mode, "INVALID %x", instruction & 0x3f);
+
 	return mode;
 }
 

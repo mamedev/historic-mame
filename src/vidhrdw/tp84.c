@@ -165,20 +165,12 @@ WRITE_HANDLER( tp84_scroll_y_w )
 
 WRITE_HANDLER( tp84_flipscreen_x_w )
 {
-	if (flip_screen_x != (data & 0x01))
-	{
-		flip_screen_x_set(data & 0x01);
-		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
-	}
+	flip_screen_x_set(data & 0x01);
 }
 
 WRITE_HANDLER( tp84_flipscreen_y_w )
 {
-	if (flip_screen_y != (data & 0x01))
-	{
-		flip_screen_y_set(data & 0x01);
-		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
-	}
+	flip_screen_y_set(data & 0x01);
 }
 
 /*****

@@ -105,146 +105,35 @@ void pic16c5x_config(int data);
 
 
 #if (HAS_PIC16C54)
-/****************************************************************************
- *	PIC16C54
- ****************************************************************************/
-#define pic16C54_icount			pic16C5x_icount
-#define PIC16C54_RESET_VECTOR	0x1ff
-
-#define PIC16C54_PROGRAM_MEMORY_READ			\
-	AM_RANGE(0x000, 0x1ff) AM_READ(MRA16_ROM)
-
-#define PIC16C54_PROGRAM_MEMORY_WRITE			\
-	AM_RANGE(0x000, 0x1ff) AM_WRITE(MWA16_ROM)
-
-#define PIC16C54_DATA_MEMORY_READ				\
-	AM_RANGE(0x00, 0x1f) AM_READ(MRA8_RAM)
-
-#define PIC16C54_DATA_MEMORY_WRITE				\
-	AM_RANGE(0x00, 0x1f) AM_WRITE(MWA8_RAM)
-
 void pic16C54_get_info(UINT32 state, union cpuinfo *info);
-
-#ifdef MAME_DEBUG
-extern unsigned Dasm16C5x(char *buffer, unsigned pc);
 #endif
-
-#endif
-
 
 
 #if (HAS_PIC16C55)
-/****************************************************************************
- *	PIC16C55
- ****************************************************************************/
-#define pic16C55_icount			pic16C5x_icount
-#define PIC16C55_RESET_VECTOR	0x1ff
-
-#define PIC16C55_PROGRAM_MEMORY_READ			\
-	AM_RANGE(0x000, 0x1ff) AM_READ(MRA16_ROM)
-
-#define PIC16C55_PROGRAM_MEMORY_WRITE			\
-	AM_RANGE(0x000, 0x1ff) AM_WRITE(MWA16_ROM)
-
-#define PIC16C55_DATA_MEMORY_READ				\
-	AM_RANGE(0x00, 0x1f) AM_READ(MRA8_RAM)
-
-#define PIC16C55_DATA_MEMORY_WRITE				\
-	AM_RANGE(0x00, 0x1f) AM_WRITE(MWA8_RAM)
-
 void pic16C55_get_info(UINT32 state, union cpuinfo *info);
-
-#ifdef MAME_DEBUG
-extern unsigned Dasm16C5x(char *buffer, unsigned pc);
 #endif
-
-#endif
-
 
 
 #if (HAS_PIC16C56)
-/****************************************************************************
- *	PIC16C56
- ****************************************************************************/
-#define pic16C56_icount			pic16C5x_icount
-#define PIC16C56_RESET_VECTOR	0x3ff
-
-#define PIC16C56_PROGRAM_MEMORY_READ			\
-	AM_RANGE(0x000, 0x3ff) AM_READ(MRA16_ROM)
-
-#define PIC16C56_PROGRAM_MEMORY_WRITE			\
-	AM_RANGE(0x000, 0x3ff) AM_WRITE(MWA16_ROM)
-
-#define PIC16C56_DATA_MEMORY_READ				\
-	AM_RANGE(0x00, 0x1f) AM_READ(MRA8_RAM)
-
-#define PIC16C56_DATA_MEMORY_WRITE				\
-	AM_RANGE(0x00, 0x1f) AM_WRITE(MWA8_RAM)
-
 void pic16C56_get_info(UINT32 state, union cpuinfo *info);
-
-#ifdef MAME_DEBUG
-extern unsigned Dasm16C5x(char *buffer, unsigned pc);
 #endif
-
-#endif
-
 
 
 #if (HAS_PIC16C57)
-/****************************************************************************
- *	PIC16C57
- ****************************************************************************/
-#define pic16C57_icount			pic16C5x_icount
-#define PIC16C57_RESET_VECTOR	0x7ff
-
-#define PIC16C57_PROGRAM_MEMORY_READ			\
-	AM_RANGE(0x000, 0x7ff) AM_READ(MRA16_ROM)
-
-#define PIC16C57_PROGRAM_MEMORY_WRITE			\
-	AM_RANGE(0x000, 0x7ff) AM_WRITE(MWA16_ROM)
-
-#define PIC16C57_DATA_MEMORY_READ				\
-	AM_RANGE(0x00, 0x7f) AM_READ(MRA8_RAM)
-
-#define PIC16C57_DATA_MEMORY_WRITE				\
-	AM_RANGE(0x00, 0x7f) AM_WRITE(MWA8_RAM)
-
 void pic16C57_get_info(UINT32 state, union cpuinfo *info);
-
-#ifdef MAME_DEBUG
-extern unsigned Dasm16C5x(char *buffer, unsigned pc);
 #endif
-
-#endif
-
 
 
 #if (HAS_PIC16C58)
-/****************************************************************************
- *	PIC16C58
- ****************************************************************************/
-#define pic16C58_icount			pic16C5x_icount
-#define PIC16C58_RESET_VECTOR	0x7ff
-
-#define PIC16C57_PROGRAM_MEMORY_READ			\
-	AM_RANGE(0x000, 0x7ff) AM_READ(MRA16_ROM)
-
-#define PIC16C57_PROGRAM_MEMORY_WRITE			\
-	AM_RANGE(0x000, 0x7ff) AM_WRITE(MWA16_ROM)
-
-#define PIC16C57_DATA_MEMORY_READ				\
-	AM_RANGE(0x00, 0x7f) AM_READ(MRA8_RAM)
-
-#define PIC16C57_DATA_MEMORY_WRITE				\
-	AM_RANGE(0x00, 0x7f) AM_WRITE(MWA8_RAM)
-
 void pic16C58_get_info(UINT32 state, union cpuinfo *info);
+#endif
 
+
+#if (HAS_PIC16C54) || (HAS_PIC16C55) || (HAS_PIC16C56) || (HAS_PIC16C57) || (HAS_PIC16C58)
 #ifdef MAME_DEBUG
 extern unsigned Dasm16C5x(char *buffer, unsigned pc);
 #endif
-
 #endif
+
 
 #endif	/* _PIC16C5X_H */

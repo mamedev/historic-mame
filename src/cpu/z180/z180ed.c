@@ -119,7 +119,7 @@ OP(ed,60) { _H = IN(_BC); _F = (_F & CF) | SZP[_H]; 				} /* IN   H,(C) 	  */
 OP(ed,61) { OUT(_BC,_H);											} /* OUT  (C),H 	  */
 OP(ed,62) { SBC16( HL );											} /* SBC  HL,HL 	  */
 OP(ed,63) { EA = ARG16(); WM16( EA, &Z180.HL ); 					} /* LD   (w),HL	  */
-OP(ed,64) { NEG;													} /* NEG			  */
+OP(ed,64) { unsigned m = ARG(); TST( m );							} /* TST  m 		  */
 OP(ed,65) { RETN;													} /* RETN;			  */
 OP(ed,66) { _IM = 0;												} /* IM   0 		  */
 OP(ed,67) { RRD;													} /* RRD  (HL)		  */

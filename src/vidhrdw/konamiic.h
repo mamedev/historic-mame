@@ -254,12 +254,20 @@ READ16_HANDLER( K054157_rom_word_r );
 READ16_HANDLER( K054157_rom_word_8000_r );
 WRITE16_HANDLER( K054157_word_w );
 WRITE16_HANDLER( K054157_b_word_w );
+READ_HANDLER( K054157_ram_code_r );
+READ_HANDLER( K054157_ram_attr_r );
+WRITE_HANDLER( K054157_ram_code_w );
+WRITE_HANDLER( K054157_ram_attr_w );
+WRITE_HANDLER( K054157_w );
+WRITE_HANDLER( K054157_b_w );
+
 void K054157_tilemap_update(void);
 void K054157_tilemap_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int num, int flags, UINT32 priority);
 void K054157_tilemap_draw_alpha(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int num, int flags, int alpha);
 int K054157_is_IRQ_enabled(void);
 int K054157_get_lookup(int bits);
 void K054157_set_tile_bank(int bank);	/* Asterix */
+int K054157_get_current_rambank(void);
 
 int K056832_vh_start(int gfx_memory_region, int bpp, int big,
 			int (*scrolld)[4][2],

@@ -827,6 +827,7 @@ static data8_t z180_readcontrol(offs_t port)
 
 	case Z180_STAT0:
 		data = IO_STAT0 & Z180_STAT0_RMASK;
+data |= 0x02; // kludge for 20pacgal
 		LOG(("Z180 #%d STAT0  rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
@@ -2177,7 +2178,7 @@ static void set_irq_line(int irqline, int state)
 	}
 	else
 	{
-		LOG(("Z180 #%d set_irq_line %d\n",cpu_getactivecpu() , state));
+		LOG(("Z180 #%d set_irq_line %d = %d\n",cpu_getactivecpu() , irqline,state));
 		Z180.irq_state[irqline] = state;
 		if( state == CLEAR_LINE ) return;
 
@@ -2248,6 +2249,10 @@ static void z180_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_IRQ_STATE + Z180_INT0:			set_irq_line(Z180_INT0, info->i);		break;
 		case CPUINFO_INT_IRQ_STATE + Z180_INT1:			set_irq_line(Z180_INT1, info->i);		break;
 		case CPUINFO_INT_IRQ_STATE + Z180_INT2:			set_irq_line(Z180_INT2, info->i);		break;
+
+/* TODO: timer interrupts are triggered internally, this is just a kludge to get 20pacgal running */
+		case CPUINFO_INT_IRQ_STATE + Z180_INT_PRT0:		set_irq_line(Z180_INT_PRT0, info->i);	break;
+
 
 		case CPUINFO_INT_PC:							_PC = info->i; z180_change_pc(_PCD);	break;
 		case CPUINFO_INT_REGISTER + Z180_PC:			Z180.PC.w.l = info->i;					break;
@@ -2338,7 +2343,7 @@ static void z180_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + Z180_OMCR:			Z180.io[0x3e] = info->i;				break;
 		case CPUINFO_INT_REGISTER + Z180_IOCR:			Z180.io[0x3f] = info->i;				break;
 		case CPUINFO_INT_REGISTER + Z180_IOLINES:		z180_write_iolines(info->i);			break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					Z180.irq_callback = info->irqcallback;	break;
 		case CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_op: cc[Z180_TABLE_op] = info->p;			break;
@@ -2369,7 +2374,7 @@ void z180_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 16;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 20;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;

@@ -34,7 +34,7 @@
 #define IB		m6509.ind_bank.d
 
 #undef CHANGE_PC
-#define CHANGE_PC program_write_byte_8(PCD|PB)
+#define CHANGE_PC change_pc(PCD|PB)
 
 /***************************************************************
  *  RDOP    read an opcode

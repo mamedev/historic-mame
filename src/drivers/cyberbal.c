@@ -157,43 +157,29 @@ static WRITE16_HANDLER( p2_reset_w )
  *
  *************************************/
 
-static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0xfc0000, 0xfc0fff) AM_READ(atarigen_eeprom_r)
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_ROM
+	AM_RANGE(0xfc0000, 0xfc0fff) AM_READWRITE(atarigen_eeprom_r, atarigen_eeprom_w) AM_BASE(&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
 	AM_RANGE(0xfc8000, 0xfcffff) AM_READ(atarigen_sound_upper_r)
-	AM_RANGE(0xfe0000, 0xfe0fff) AM_READ(special_port0_r)
-	AM_RANGE(0xfe1000, 0xfe1fff) AM_READ(input_port_1_word_r)
-	AM_RANGE(0xfe8000, 0xfe8fff) AM_READ(cyberbal_paletteram_1_r)
-	AM_RANGE(0xfec000, 0xfecfff) AM_READ(cyberbal_paletteram_0_r)
-	AM_RANGE(0xff0000, 0xff37ff) AM_READ(MRA16_BANK1)	/* shared */
-	AM_RANGE(0xff3800, 0xff3fff) AM_READ(MRA16_BANK2)	/* shared */
-	AM_RANGE(0xff4000, 0xff77ff) AM_READ(MRA16_BANK3)	/* shared */
-	AM_RANGE(0xff7800, 0xff9fff) AM_READ(MRA16_BANK4)	/* shared */
-	AM_RANGE(0xffa000, 0xffbfff) AM_READ(MRA16_BANK5)	/* shared */
-	AM_RANGE(0xffc000, 0xffffff) AM_READ(MRA16_BANK6)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0xfc0000, 0xfc0fff) AM_WRITE(atarigen_eeprom_w) AM_BASE(&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
 	AM_RANGE(0xfd0000, 0xfd1fff) AM_WRITE(atarigen_eeprom_enable_w)
 	AM_RANGE(0xfd2000, 0xfd3fff) AM_WRITE(atarigen_sound_reset_w)
 	AM_RANGE(0xfd4000, 0xfd5fff) AM_WRITE(watchdog_reset16_w)
 	AM_RANGE(0xfd6000, 0xfd7fff) AM_WRITE(p2_reset_w)
 	AM_RANGE(0xfd8000, 0xfd9fff) AM_WRITE(atarigen_sound_upper_w)
-	AM_RANGE(0xfe8000, 0xfe8fff) AM_WRITE(cyberbal_paletteram_1_w) AM_BASE(&cyberbal_paletteram_1)
-	AM_RANGE(0xfec000, 0xfecfff) AM_WRITE(cyberbal_paletteram_0_w) AM_BASE(&cyberbal_paletteram_0)
-	AM_RANGE(0xff0000, 0xff1fff) AM_WRITE(atarigen_playfield2_w) AM_BASE(&atarigen_playfield2)
-	AM_RANGE(0xff2000, 0xff2fff) AM_WRITE(atarigen_alpha2_w) AM_BASE(&atarigen_alpha2)
-	AM_RANGE(0xff3000, 0xff37ff) AM_WRITE(atarimo_1_spriteram_w) AM_BASE(&atarimo_1_spriteram)
-	AM_RANGE(0xff3800, 0xff3fff) AM_WRITE(MWA16_BANK2)
-	AM_RANGE(0xff4000, 0xff5fff) AM_WRITE(atarigen_playfield_w) AM_BASE(&atarigen_playfield)
-	AM_RANGE(0xff6000, 0xff6fff) AM_WRITE(atarigen_alpha_w) AM_BASE(&atarigen_alpha)
-	AM_RANGE(0xff7000, 0xff77ff) AM_WRITE(atarimo_0_spriteram_w) AM_BASE(&atarimo_0_spriteram)
-	AM_RANGE(0xff7800, 0xff9fff) AM_WRITE(MWA16_BANK4)
-	AM_RANGE(0xffa000, 0xffbfff) AM_WRITE(MWA16_NOP)
-	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(MWA16_BANK6)
+	AM_RANGE(0xfe0000, 0xfe0fff) AM_READ(special_port0_r)
+	AM_RANGE(0xfe1000, 0xfe1fff) AM_READ(input_port_1_word_r)
+	AM_RANGE(0xfe8000, 0xfe8fff) AM_READWRITE(MRA16_RAM, cyberbal_paletteram_1_w) AM_SHARE(1) AM_BASE(&cyberbal_paletteram_1)
+	AM_RANGE(0xfec000, 0xfecfff) AM_READWRITE(MRA16_RAM, cyberbal_paletteram_0_w) AM_SHARE(2) AM_BASE(&cyberbal_paletteram_0)
+	AM_RANGE(0xff0000, 0xff1fff) AM_READWRITE(MRA16_RAM, atarigen_playfield2_w)   AM_SHARE(3) AM_BASE(&atarigen_playfield2)
+	AM_RANGE(0xff2000, 0xff2fff) AM_READWRITE(MRA16_RAM, atarigen_alpha2_w)       AM_SHARE(4) AM_BASE(&atarigen_alpha2)
+	AM_RANGE(0xff3000, 0xff37ff) AM_READWRITE(MRA16_RAM, atarimo_1_spriteram_w)   AM_SHARE(5) AM_BASE(&atarimo_1_spriteram)
+	AM_RANGE(0xff3800, 0xff3fff) AM_RAM                                           AM_SHARE(6)
+	AM_RANGE(0xff4000, 0xff5fff) AM_READWRITE(MRA16_RAM, atarigen_playfield_w)    AM_SHARE(7) AM_BASE(&atarigen_playfield)
+	AM_RANGE(0xff6000, 0xff6fff) AM_READWRITE(MRA16_RAM, atarigen_alpha_w)        AM_SHARE(8) AM_BASE(&atarigen_alpha)
+	AM_RANGE(0xff7000, 0xff77ff) AM_READWRITE(MRA16_RAM, atarimo_0_spriteram_w)   AM_SHARE(9) AM_BASE(&atarimo_0_spriteram)
+	AM_RANGE(0xff7800, 0xff9fff) AM_RAM                                           AM_SHARE(10)
+	AM_RANGE(0xffa000, 0xffbfff) AM_ROM                                           AM_SHARE(11)
+	AM_RANGE(0xffc000, 0xffffff) AM_RAM                                           AM_SHARE(12)
 ADDRESS_MAP_END
 
 
@@ -204,36 +190,23 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( extra_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+static ADDRESS_MAP_START( extra_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_ROM
+	AM_RANGE(0xfc0000, 0xfdffff) AM_WRITE(atarigen_video_int_ack_w)
 	AM_RANGE(0xfe0000, 0xfe0fff) AM_READ(special_port0_r)
 	AM_RANGE(0xfe1000, 0xfe1fff) AM_READ(input_port_1_word_r)
-	AM_RANGE(0xfe8000, 0xfe8fff) AM_READ(cyberbal_paletteram_1_r)
-	AM_RANGE(0xfec000, 0xfecfff) AM_READ(cyberbal_paletteram_0_r)
-	AM_RANGE(0xff0000, 0xff37ff) AM_READ(MRA16_BANK1)
-	AM_RANGE(0xff3800, 0xff3fff) AM_READ(MRA16_BANK2)
-	AM_RANGE(0xff4000, 0xff77ff) AM_READ(MRA16_BANK3)
-	AM_RANGE(0xff7800, 0xff9fff) AM_READ(MRA16_BANK4)
-	AM_RANGE(0xffa000, 0xffbfff) AM_READ(MRA16_BANK5)
-	AM_RANGE(0xffc000, 0xffffff) AM_READ(MRA16_BANK6)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( extra_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0xfc0000, 0xfdffff) AM_WRITE(atarigen_video_int_ack_w)
-	AM_RANGE(0xfe8000, 0xfe8fff) AM_WRITE(cyberbal_paletteram_1_w)
-	AM_RANGE(0xfec000, 0xfecfff) AM_WRITE(cyberbal_paletteram_0_w)
-	AM_RANGE(0xff0000, 0xff1fff) AM_WRITE(atarigen_playfield2_w)
-	AM_RANGE(0xff2000, 0xff2fff) AM_WRITE(atarigen_alpha2_w)
-	AM_RANGE(0xff3000, 0xff37ff) AM_WRITE(atarimo_1_spriteram_w)
-	AM_RANGE(0xff3800, 0xff3fff) AM_WRITE(MWA16_BANK2)
-	AM_RANGE(0xff4000, 0xff5fff) AM_WRITE(atarigen_playfield_w)
-	AM_RANGE(0xff6000, 0xff6fff) AM_WRITE(atarigen_alpha_w)
-	AM_RANGE(0xff7000, 0xff77ff) AM_WRITE(atarimo_0_spriteram_w)
-	AM_RANGE(0xff7800, 0xff9fff) AM_WRITE(MWA16_BANK4)
-	AM_RANGE(0xffa000, 0xffbfff) AM_WRITE(MWA16_BANK5)
-	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0xfe8000, 0xfe8fff) AM_READWRITE(MRA16_RAM, cyberbal_paletteram_1_w) AM_SHARE(1)
+	AM_RANGE(0xfec000, 0xfecfff) AM_READWRITE(MRA16_RAM, cyberbal_paletteram_0_w) AM_SHARE(2)
+	AM_RANGE(0xff0000, 0xff1fff) AM_READWRITE(MRA16_RAM, atarigen_playfield2_w)   AM_SHARE(3)
+	AM_RANGE(0xff2000, 0xff2fff) AM_READWRITE(MRA16_RAM, atarigen_alpha2_w)       AM_SHARE(4)
+	AM_RANGE(0xff3000, 0xff37ff) AM_READWRITE(MRA16_RAM, atarimo_1_spriteram_w)   AM_SHARE(5)
+	AM_RANGE(0xff3800, 0xff3fff) AM_RAM                                           AM_SHARE(6)
+	AM_RANGE(0xff4000, 0xff5fff) AM_READWRITE(MRA16_RAM, atarigen_playfield_w)    AM_SHARE(7)
+	AM_RANGE(0xff6000, 0xff6fff) AM_READWRITE(MRA16_RAM, atarigen_alpha_w)        AM_SHARE(8)
+	AM_RANGE(0xff7000, 0xff77ff) AM_READWRITE(MRA16_RAM, atarimo_0_spriteram_w)   AM_SHARE(9)
+	AM_RANGE(0xff7800, 0xff9fff) AM_RAM                                           AM_SHARE(10)
+	AM_RANGE(0xffa000, 0xffbfff) AM_RAM                                           AM_SHARE(11)
+	AM_RANGE(0xffc000, 0xffffff) AM_ROM                                           AM_SHARE(12)
 ADDRESS_MAP_END
 
 
@@ -244,28 +217,20 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x2000, 0x2001) AM_READ(YM2151_status_port_0_r)
-	AM_RANGE(0x2802, 0x2803) AM_READ(atarigen_6502_irq_ack_r)
+ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_RAM
+	AM_RANGE(0x2000, 0x2000) AM_READWRITE(YM2151_status_port_0_r, YM2151_register_port_0_w)
+	AM_RANGE(0x2001, 0x2001) AM_READWRITE(YM2151_status_port_0_r, YM2151_data_port_0_w)
+	AM_RANGE(0x2800, 0x2801) AM_WRITE(cyberbal_sound_68k_6502_w)
+	AM_RANGE(0x2802, 0x2803) AM_READWRITE(atarigen_6502_irq_ack_r, atarigen_6502_irq_ack_w)
+	AM_RANGE(0x2804, 0x2805) AM_WRITE(atarigen_6502_sound_w)
+	AM_RANGE(0x2806, 0x2807) AM_WRITE(cyberbal_sound_bank_select_w)
 	AM_RANGE(0x2c00, 0x2c01) AM_READ(atarigen_6502_sound_r)
 	AM_RANGE(0x2c02, 0x2c03) AM_READ(cyberbal_special_port3_r)
 	AM_RANGE(0x2c04, 0x2c05) AM_READ(cyberbal_sound_68k_6502_r)
 	AM_RANGE(0x2c06, 0x2c07) AM_READ(cyberbal_sound_6502_stat_r)
-	AM_RANGE(0x3000, 0x3fff) AM_READ(MRA8_BANK8)
-	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-
-ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x2000, 0x2000) AM_WRITE(YM2151_register_port_0_w)
-	AM_RANGE(0x2001, 0x2001) AM_WRITE(YM2151_data_port_0_w)
-	AM_RANGE(0x2800, 0x2801) AM_WRITE(cyberbal_sound_68k_6502_w)
-	AM_RANGE(0x2802, 0x2803) AM_WRITE(atarigen_6502_irq_ack_w)
-	AM_RANGE(0x2804, 0x2805) AM_WRITE(atarigen_6502_sound_w)
-	AM_RANGE(0x2806, 0x2807) AM_WRITE(cyberbal_sound_bank_select_w)
-	AM_RANGE(0x3000, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x3000, 0x3fff) AM_ROMBANK(8)
+	AM_RANGE(0x4000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -276,19 +241,13 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( sound_68k_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+static ADDRESS_MAP_START( sound_68k_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_ROM
 	AM_RANGE(0xff8000, 0xff87ff) AM_READ(cyberbal_sound_68k_r)
-	AM_RANGE(0xfff000, 0xffffff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( sound_68k_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0xff8800, 0xff8fff) AM_WRITE(cyberbal_sound_68k_w)
 	AM_RANGE(0xff9000, 0xff97ff) AM_WRITE(cyberbal_io_68k_irq_ack_w)
 	AM_RANGE(0xff9800, 0xff9fff) AM_WRITE(cyberbal_sound_68k_dac_w)
-	AM_RANGE(0xfff000, 0xffffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0xfff000, 0xffffff) AM_RAM
 ADDRESS_MAP_END
 
 
@@ -299,32 +258,24 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( cyberb2p_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+static ADDRESS_MAP_START( cyberb2p_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_ROM
 	AM_RANGE(0xfc0000, 0xfc0003) AM_READ(input_port_0_word_r)
 	AM_RANGE(0xfc2000, 0xfc2003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0xfc4000, 0xfc4003) AM_READ(special_port2_r)
 	AM_RANGE(0xfc6000, 0xfc6003) AM_READ(atarigen_sound_upper_r)
-	AM_RANGE(0xfc8000, 0xfc8fff) AM_READ(atarigen_eeprom_r)
-	AM_RANGE(0xfca000, 0xfcafff) AM_READ(MRA16_RAM)
-	AM_RANGE(0xfe0000, 0xfe0003) AM_READ(sound_state_r)
-	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( cyberb2p_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0xfc8000, 0xfc8fff) AM_WRITE(atarigen_eeprom_w) AM_BASE(&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
-	AM_RANGE(0xfca000, 0xfcafff) AM_WRITE(atarigen_666_paletteram_w) AM_BASE(&paletteram16)
+	AM_RANGE(0xfc8000, 0xfc8fff) AM_READWRITE(atarigen_eeprom_r, atarigen_eeprom_w) AM_BASE(&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
+	AM_RANGE(0xfca000, 0xfcafff) AM_READWRITE(MRA16_RAM, atarigen_666_paletteram_w) AM_BASE(&paletteram16)
 	AM_RANGE(0xfd0000, 0xfd0003) AM_WRITE(atarigen_eeprom_enable_w)
 	AM_RANGE(0xfd2000, 0xfd2003) AM_WRITE(atarigen_sound_reset_w)
 	AM_RANGE(0xfd4000, 0xfd4003) AM_WRITE(watchdog_reset16_w)
 	AM_RANGE(0xfd6000, 0xfd6003) AM_WRITE(atarigen_video_int_ack_w)
 	AM_RANGE(0xfd8000, 0xfd8003) AM_WRITE(atarigen_sound_upper_w)
-	AM_RANGE(0xff0000, 0xff1fff) AM_WRITE(atarigen_playfield_w) AM_BASE(&atarigen_playfield)
-	AM_RANGE(0xff2000, 0xff2fff) AM_WRITE(atarigen_alpha_w) AM_BASE(&atarigen_alpha)
-	AM_RANGE(0xff3000, 0xff37ff) AM_WRITE(atarimo_0_spriteram_w) AM_BASE(&atarimo_0_spriteram)
-	AM_RANGE(0xff3800, 0xffffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0xfe0000, 0xfe0003) AM_READ(sound_state_r)
+	AM_RANGE(0xff0000, 0xff1fff) AM_READWRITE(MRA16_RAM, atarigen_playfield_w) AM_BASE(&atarigen_playfield)
+	AM_RANGE(0xff2000, 0xff2fff) AM_READWRITE(MRA16_RAM, atarigen_alpha_w) AM_BASE(&atarigen_alpha)
+	AM_RANGE(0xff3000, 0xff37ff) AM_READWRITE(MRA16_RAM, atarimo_0_spriteram_w) AM_BASE(&atarimo_0_spriteram)
+	AM_RANGE(0xff3800, 0xffffff) AM_RAM
 ADDRESS_MAP_END
 
 
@@ -520,18 +471,18 @@ static MACHINE_DRIVER_START( cyberbal )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
-	MDRV_CPU_PROGRAM_MAP(main_readmem,main_writemem)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	
 	MDRV_CPU_ADD(M6502, ATARI_CLOCK_14MHz/8)
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_PERIODIC_INT(atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_14MHz/4/4/16/16/14)))
 	
 	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
-	MDRV_CPU_PROGRAM_MAP(extra_readmem,extra_writemem)
+	MDRV_CPU_PROGRAM_MAP(extra_map,0)
 	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
 	
 	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
-	MDRV_CPU_PROGRAM_MAP(sound_68k_readmem,sound_68k_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_68k_map,0)
 	MDRV_CPU_PERIODIC_INT(cyberbal_sound_68k_irq_gen,10000)
 	
 	MDRV_FRAMES_PER_SECOND(60)
@@ -568,7 +519,7 @@ static MACHINE_DRIVER_START( cyberb2p )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
-	MDRV_CPU_PROGRAM_MAP(cyberb2p_readmem,cyberb2p_writemem)
+	MDRV_CPU_PROGRAM_MAP(cyberb2p_map,0)
 	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
 	
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1063,10 +1014,6 @@ static DRIVER_INIT( cyberbal )
 {
 	atarigen_eeprom_default = default_eeprom;
 	atarigen_slapstic_init(0, 0x018000, 0);
-
-	/* make sure the banks are pointing to the correct location */
-	cpu_setbank(1, atarigen_playfield2);
-	cpu_setbank(3, atarigen_playfield);
 }
 
 
@@ -1074,10 +1021,6 @@ static DRIVER_INIT( cyberbt )
 {
 	atarigen_eeprom_default = default_eeprom;
 	atarigen_slapstic_init(0, 0x018000, 116);
-
-	/* make sure the banks are pointing to the correct location */
-	cpu_setbank(1, atarigen_playfield2);
-	cpu_setbank(3, atarigen_playfield);
 }
 
 

@@ -196,8 +196,6 @@ enum
 /* OP_COP0 */
 #define CF_RFE ( 16 )
 
-extern void mips_get_info(UINT32 state, union cpuinfo *info);
-
 #ifdef MAME_DEBUG
 extern unsigned DasmMIPS(char *buff, unsigned _pc);
 #endif

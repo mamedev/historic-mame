@@ -23,7 +23,7 @@ They can be divided in three "families":
    There is no information about the custom ICs used by this board. The video
    section is probably more similar to Gaplus than to Supr Pacman: the sprite
    generator might be a 21XX (though Gaplus doesn't use 8x8 sprites), and the
-   00XX and 04XX address generators are probably replaced by the single 20XX
+   00XX and 04XX address generators are probably replaced by the single CUS20
    (which also handles the flip screen flag).
 3) Mappy runs on a revised design of the Super Pacman board, where the 00XX
    custom is replaced by a 17XX, which provides a scrolling tilemap. The larger
@@ -31,36 +31,32 @@ They can be divided in three "families":
    sprites are 4bpp instead of 2bpp, so the final stage of video generation is
    a little different as well, though the custom ICs are still the same.
    Dig Dig II and Motos are almost the same, apart from larger ROMs.
-   Tower of Druaga also has 4x the amount of sprite color combinations so is
+   Tower of Druaga also has 4x the amount of sprite color combinations so it's
    the most different of the four.
 
 
 Custom ICs (Super Pacman and Mappy):
 -----------------------------------
-00XX tilemap address generator with scrolling capability (only Super Pacman)
-04XX sprite address generator
-07XX (x2) timing generator
-11XX gfx data shifter and mixer (16-bit in, 4-bit out) [1]
-12XX sprite generator
-15XX sound control
-16XX I/O control
-17XX tilemap address generator with scrolling capability (only Mappy)
-99XX sound volume (only Mappy, Super Pacman uses a standard LS273)
+CPU board:
+07XX     clock divider
+15XX     sound control
+16XX     I/O control
+5xXX(x2) I/O
+99XX     sound volume (only Mappy, Super Pacman uses a standard LS273)
+
+Video board:
+00XX     tilemap address generator with scrolling capability (only Super Pacman)
+04XX     sprite address generator
+07XX     clock divider
+11XX     gfx data shifter and mixer (16-bit in, 4-bit out) [1]
+12XX     sprite generator
+17XX     tilemap address generator with scrolling capability (only Mappy)
 
 [1] Used differently: in Super Pacman it merges the 2bpp tilemap with the 2bpp
 sprites; in Mappy it handles the 4bpp sprites, while the tilemap is handled by
 standard LS components.
 
-The I/O interface chips vary from game to game:
-Super Pacman     56XX 56XX
-Pac & Pal        56XX ????
-Grobda           58XX 56XX
-Phozon           58XX 56XX
-Mappy            58XX 58XX
-Tower of Druaga  58XX 56XX
-Dig Dug 2        58XX 56XX
-Motos            56XX 56XX
-
+The I/O interface chips vary from game to game (see machine/namcoio.c)
 
 
 Super Pac-Man memory map
@@ -82,7 +78,7 @@ Address          Dir Data     Name      Description
 000111111xxxxxxx R/W xxxxxxxx           portion holding sprite registers (x msb, flip, size)
 00100----------- R/W -------x FLIP      screen flip (reading this address sets the bit, done by pacnpal)
 01000-xxxxxxxxxx R/W xxxxxxxx SOUND     RAM (shared with sound CPU)
-01000-----xxxxxx R/W xxxxxxxx           portion holding the sound registers
+01000-0000xxxxxx R/W xxxxxxxx           portion holding the sound registers
 01001-----xxxxxx R/W ----xxxx FBIT      I/O chips [1]
 01010-------000x r/W -------- INT ON 2  sound CPU irq enable (data is in A0)
 01010-------001x r/W -------- INT ON    main CPU irq enable (data is in A0)
@@ -105,7 +101,7 @@ SOUND CPU:
 Address          Dir Data     Name      Description
 ---------------- --- -------- --------- -----------------------
 000---xxxxxxxxxx R/W xxxxxxxx RAM 3K/3L work RAM (shared with main CPU)
-000-------xxxxxx R/W xxxxxxxx           portion holding the sound registers
+000---0000xxxxxx R/W xxxxxxxx           portion holding the sound registers
 001---------000x   W -------- INT ON 2  sound CPU irq enable (data is in A0)
 001---------001x   W -------- INT ON    main CPU irq enable (data is in A0)
 001---------010x   W -------- n.c.
@@ -142,7 +138,7 @@ Address          Dir Data     Name      Description
 001001111xxxxxxx R/W xxxxxxxx           portion holding sprite registers (x msb, flip, size)
 00111xxxxxxxx---   W -------- POSIV		tilemap scroll (data is in A3-A10)
 01000-xxxxxxxxxx R/W xxxxxxxx SOUND     RAM (shared with sound CPU)
-01000-----xxxxxx R/W xxxxxxxx           portion holding the sound registers
+01000-0000xxxxxx R/W xxxxxxxx           portion holding the sound registers
 01001-----xxxxxx R/W ----xxxx FBIT      I/O chips [1]
 01010-------000x   W -------- INT ON 2  sound CPU irq enable (data is in A0)
 01010-------001x   W -------- INT ON    main CPU irq enable (data is in A0)
@@ -168,7 +164,7 @@ SOUND CPU:
 Address          Dir Data     Name      Description
 ---------------- --- -------- --------- -----------------------
 000---xxxxxxxxxx R/W xxxxxxxx RAM 3K/3L work RAM (shared with main CPU)
-000-------xxxxxx R/W xxxxxxxx           portion holding the sound registers
+000---0000xxxxxx R/W xxxxxxxx           portion holding the sound registers
 001---------000x   W -------- INT ON 2  sound CPU irq enable (data is in A0)
 001---------001x   W -------- INT ON    main CPU irq enable (data is in A0)
 001---------010x   W -------- FLIP      screen flip (data is in A0)
@@ -395,10 +391,10 @@ Notes:
   crash. This seems to be the correct behaviour: there is no data for levels
   after that one, and using the level select dip switch to jump to level 35
   (="22") causes the same crash. I think being able to complete level 34 is a
-  bug, it should be impossible because there shouldn't be anouth molecules so
+  bug, it should be impossible because there shouldn't be enough molecules so
   you would play it forever.
 
-- Phozon: if you enter service mode and press press service coin something
+- Phozon: if you enter service mode and press service coin something
   like the following is written at the bottom of the screen:
   99,99999,9999,9999,9999
   99,99999,9999,9999,999999
@@ -561,15 +557,15 @@ static DRIVER_INIT( 58_56 )
 
 static READ8_HANDLER( mappy_snd_sharedram_r )
 {
-	return mappy_soundregs[offset];
+	return namco_soundregs[offset];
 }
 
 static WRITE8_HANDLER( mappy_snd_sharedram_w )
 {
 	if (offset < 0x40)
-		mappy_sound_w(offset,data);
+		namco_15xx_w(offset,data);
 	else
-		mappy_soundregs[offset] = data;
+		namco_soundregs[offset] = data;
 }
 
 static WRITE8_HANDLER( superpac_latch_w )
@@ -707,7 +703,7 @@ static MACHINE_INIT( superpac )
 {
 	int i;
 
-	/* Reset all flags */
+	/* Reset all latches */
 	for (i = 0;i < 0x10;i += 2)
 		superpac_latch_w(i,0);
 }
@@ -716,7 +712,7 @@ static MACHINE_INIT( phozon )
 {
 	int i;
 
-	/* Reset all flags */
+	/* Reset all latches */
 	for (i = 0;i < 0x10;i += 2)
 		phozon_latch_w(i,0);
 }
@@ -725,7 +721,7 @@ static MACHINE_INIT( mappy )
 {
 	int i;
 
-	/* Reset all flags */
+	/* Reset all latches */
 	for (i = 0;i < 0x10;i += 2)
 		mappy_latch_w(i,0);
 }
@@ -808,7 +804,7 @@ static ADDRESS_MAP_START( readmem_superpac_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem_superpac_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x03ff) AM_WRITE(mappy_snd_sharedram_w) AM_BASE(&mappy_soundregs) /* shared RAM with the main CPU (also sound registers) */
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(mappy_snd_sharedram_w) AM_BASE(&namco_soundregs) /* shared RAM with the main CPU (also sound registers) */
 	AM_RANGE(0x2000, 0x200f) AM_WRITE(superpac_latch_w)                        /* various control bits */
 	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
@@ -820,7 +816,7 @@ static ADDRESS_MAP_START( readmem_phozon_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem_phozon_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x03ff) AM_WRITE(mappy_snd_sharedram_w) AM_BASE(&mappy_soundregs)	/* shared RAM with the main CPU + sound registers */
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(mappy_snd_sharedram_w) AM_BASE(&namco_soundregs)	/* shared RAM with the main CPU + sound registers */
 	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_ROM)									/* ROM */
 ADDRESS_MAP_END
 
@@ -831,7 +827,7 @@ static ADDRESS_MAP_START( readmem_mappy_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem_mappy_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x03ff) AM_WRITE(mappy_snd_sharedram_w) AM_BASE(&mappy_soundregs)	/* shared RAM with the main CPU (also sound registers) */
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(mappy_snd_sharedram_w) AM_BASE(&namco_soundregs)	/* shared RAM with the main CPU (also sound registers) */
 	AM_RANGE(0x2000, 0x200f) AM_WRITE(mappy_latch_w)								/* various control bits */
 	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_ROM)									/* ROM code */
 ADDRESS_MAP_END
@@ -1669,7 +1665,7 @@ static MACHINE_DRIVER_START( superpac )
 	MDRV_VIDEO_UPDATE(superpac)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(NAMCO_15XX, namco_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( grobda )
@@ -1716,7 +1712,7 @@ static MACHINE_DRIVER_START( phozon )
 	MDRV_VIDEO_UPDATE(phozon)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(NAMCO_15XX, namco_interface)
 MACHINE_DRIVER_END
 
 
@@ -1750,7 +1746,7 @@ static MACHINE_DRIVER_START( mappy )
 	MDRV_VIDEO_UPDATE(mappy)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(NAMCO_15XX, namco_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( todruaga )

@@ -184,8 +184,8 @@ void adsp2115_get_info(UINT32 state, union cpuinfo *info);
 #if (HAS_CDP1802)
 #include "cpu/cdp1802/cdp1802.h"
 #endif
-#if (HAS_CP1600)
-#include "cpu/cp1600/cp1600.h"
+#if (HAS_CP1610)
+#include "cpu/cp1610/cp1610.h"
 #endif
 #if (HAS_F8)
 #include "cpu/f8/f8.h"
@@ -546,7 +546,7 @@ const struct
 	{ CPU_ADSP2115, adsp2115_get_info },
 #endif
 #if (HAS_PSXCPU)
-	{ CPU_PSXCPU, mips_get_info },
+	{ CPU_PSXCPU, psxcpu_get_info },
 #endif
 #if (HAS_ASAP)
 	{ CPU_ASAP, asap_get_info },
@@ -614,8 +614,8 @@ const struct
 #if (HAS_CDP1802)
 	{ CPU_CDP1802, cdp1802_get_info },
 #endif
-#if (HAS_CP1600)
-	{ CPU_CP1600, cp1600_get_info },
+#if (HAS_CP1610)
+	{ CPU_CP1610, cp1610_get_info },
 #endif
 #if (HAS_F8)
 	{ CPU_F8, f8_get_info },
@@ -871,7 +871,7 @@ int cpuintrf_init_cpu(int cpunum, int cputype)
 	if (cpu[cpunum].context == NULL)
 	{
 		/* that's really bad :( */
-		logerror("CPU #%d failed to allocate context buffer (%d bytes)!\n", cpunum, cpu[cpunum].intf.context_size);
+		logerror("CPU #%d failed to allocate context buffer (%d bytes)!\n", cpunum, (int)cpu[cpunum].intf.context_size);
 		return 1;
 	}
 
@@ -930,6 +930,7 @@ INT64 activecpu_get_info_int(UINT32 state)
 	union cpuinfo info;
 	
 	VERIFY_ACTIVECPU(0, activecpu_get_info_int);
+	info.i = 0;
 	(*cpu[activecpu].intf.get_info)(state, &info);
 	return info.i;
 }
@@ -939,6 +940,7 @@ void *activecpu_get_info_ptr(UINT32 state)
 	union cpuinfo info;
 	
 	VERIFY_ACTIVECPU(0, activecpu_get_info_ptr);
+	info.p = NULL;
 	(*cpu[activecpu].intf.get_info)(state, &info);
 	return info.p;
 }
@@ -948,6 +950,7 @@ const char *activecpu_get_info_string(UINT32 state)
 	union cpuinfo info;
 	
 	VERIFY_ACTIVECPU(0, activecpu_get_info_string);
+	info.s = NULL;
 	(*cpu[activecpu].intf.get_info)(state, &info);
 	return info.s;
 }
@@ -1133,6 +1136,7 @@ INT64 cpunum_get_info_int(int cpunum, UINT32 state)
 	
 	VERIFY_CPUNUM(0, cpunum_get_info_int);
 	cpuintrf_push_context(cpunum);
+	info.i = 0;
 	(*cpu[cpunum].intf.get_info)(state, &info);
 	cpuintrf_pop_context();
 	return info.i;
@@ -1144,6 +1148,7 @@ void *cpunum_get_info_ptr(int cpunum, UINT32 state)
 	
 	VERIFY_CPUNUM(0, cpunum_get_info_ptr);
 	cpuintrf_push_context(cpunum);
+	info.p = NULL;
 	(*cpu[cpunum].intf.get_info)(state, &info);
 	cpuintrf_pop_context();
 	return info.p;
@@ -1155,6 +1160,7 @@ const char *cpunum_get_info_string(int cpunum, UINT32 state)
 	
 	VERIFY_CPUNUM(0, cpunum_get_info_string);
 	cpuintrf_push_context(cpunum);
+	info.s = NULL;
 	(*cpu[cpunum].intf.get_info)(state, &info);
 	cpuintrf_pop_context();
 	return info.s;
@@ -1332,6 +1338,7 @@ INT64 cputype_get_info_int(int cputype, UINT32 state)
 	union cpuinfo info;
 	
 	VERIFY_CPUTYPE(0, cputype_get_info_int);
+	info.i = 0;
 	(*cpuintrf[cputype].get_info)(state, &info);
 	return info.i;
 }
@@ -1341,6 +1348,7 @@ void *cputype_get_info_ptr(int cputype, UINT32 state)
 	union cpuinfo info;
 	
 	VERIFY_CPUTYPE(0, cputype_get_info_ptr);
+	info.p = NULL;
 	(*cpuintrf[cputype].get_info)(state, &info);
 	return info.p;
 }
@@ -1350,6 +1358,7 @@ const char *cputype_get_info_string(int cputype, UINT32 state)
 	union cpuinfo info;
 	
 	VERIFY_CPUTYPE(0, cputype_get_info_string);
+	info.s = NULL;
 	(*cpuintrf[cputype].get_info)(state, &info);
 	return info.s;
 }

@@ -1088,7 +1088,7 @@ INLINE void fetch_effective_address( void )
 
 	case 0x90: EA=W;								EAD=RM16(EAD);		break;
 	case 0x91: EA=X;	X+=2;						EAD=RM16(EAD);		break;
-	case 0x92: X--; 	EA=X;						EAD=RM16(EAD);		break;
+	case 0x92: IIError();												break;
 	case 0x93: X-=2;	EA=X;						EAD=RM16(EAD);		break;
 	case 0x94: EA=X;								EAD=RM16(EAD);		break;
 	case 0x95: EA=X+SIGNED(B);						EAD=RM16(EAD);		break;
@@ -1122,7 +1122,7 @@ INLINE void fetch_effective_address( void )
 
 	case 0xb0: IMMWORD(ea); 	EA+=W;				EAD=RM16(EAD);		break;
 	case 0xb1: EA=Y;	Y+=2;						EAD=RM16(EAD);		break;
-	case 0xb2: Y--; 	EA=Y;						EAD=RM16(EAD);		break;
+	case 0xb2: IIError();												break;
 	case 0xb3: Y-=2;	EA=Y;						EAD=RM16(EAD);		break;
 	case 0xb4: EA=Y;								EAD=RM16(EAD);		break;
 	case 0xb5: EA=Y+SIGNED(B);						EAD=RM16(EAD);		break;
@@ -1135,7 +1135,7 @@ INLINE void fetch_effective_address( void )
 	case 0xbc: IMMBYTE(EA); 	EA=PC+SIGNED(EA);	EAD=RM16(EAD);		break;
 	case 0xbd: IMMWORD(ea); 	EA+=PC; 			EAD=RM16(EAD);		break;
 	case 0xbe: EA=Y+W;								EAD=RM16(EAD);		break;
-	case 0xbf: IMMWORD(ea); 						EAD=RM16(EAD);		break;
+	case 0xbf: IIError();												break;
 
 	case 0xc0: EA=U;			U++;									break;
 	case 0xc1: EA=U;			U+=2;									break;
@@ -1156,7 +1156,7 @@ INLINE void fetch_effective_address( void )
 
 	case 0xd0: EA=W;	W+=2;						EAD=RM16(EAD);		break;
 	case 0xd1: EA=U;	U+=2;						EAD=RM16(EAD);		break;
-	case 0xd2: U--; 	EA=U;						EAD=RM16(EAD);		break;
+	case 0xd2: IIError();												break;
 	case 0xd3: U-=2;	EA=U;						EAD=RM16(EAD);		break;
 	case 0xd4: EA=U;								EAD=RM16(EAD);		break;
 	case 0xd5: EA=U+SIGNED(B);						EAD=RM16(EAD);		break;
@@ -1169,7 +1169,7 @@ INLINE void fetch_effective_address( void )
 	case 0xdc: IMMBYTE(EA); 	EA=PC+SIGNED(EA);	EAD=RM16(EAD);		break;
 	case 0xdd: IMMWORD(ea); 	EA+=PC; 			EAD=RM16(EAD);		break;
 	case 0xde: EA=U+W;								EAD=RM16(EAD);		break;
-	case 0xdf: IMMWORD(ea); 						EAD=RM16(EAD);		break;
+	case 0xdf: IIError();												break;
 
 	case 0xe0: EA=S;	S++;											break;
 	case 0xe1: EA=S;	S+=2;											break;
@@ -1190,7 +1190,7 @@ INLINE void fetch_effective_address( void )
 
 	case 0xf0: W-=2;	EA=W;						EAD=RM16(EAD);		break;
 	case 0xf1: EA=S;	S+=2;						EAD=RM16(EAD);		break;
-	case 0xf2: S--; 	EA=S;						EAD=RM16(EAD);		break;
+	case 0xf2: IIError();												break;
 	case 0xf3: S-=2;	EA=S;						EAD=RM16(EAD);		break;
 	case 0xf4: EA=S;								EAD=RM16(EAD);		break;
 	case 0xf5: EA=S+SIGNED(B);						EAD=RM16(EAD);		break;
@@ -1203,7 +1203,7 @@ INLINE void fetch_effective_address( void )
 	case 0xfc: IMMBYTE(EA); 	EA=PC+SIGNED(EA);	EAD=RM16(EAD);		break;
 	case 0xfd: IMMWORD(ea); 	EA+=PC; 			EAD=RM16(EAD);		break;
 	case 0xfe: EA=S+W;								EAD=RM16(EAD);		break;
-	case 0xff: IMMWORD(ea); 						EAD=RM16(EAD);		break;
+	case 0xff: IIError();												break;
 	}
 
 	hd6309_ICount -= index_cycle[postbyte];

@@ -1152,7 +1152,7 @@ static MACHINE_DRIVER_START( segar )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(16*4+1)
 	MDRV_COLORTABLE_LENGTH(16*4+1)
-	
+
 	MDRV_PALETTE_INIT(segar)
 	MDRV_VIDEO_START(segar)
 	MDRV_VIDEO_UPDATE(segar)
@@ -1491,7 +1491,8 @@ ROM_END
 
 ROM_START( pignewt )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "cpu.u25",    0x0000, 0x0800, NO_DUMP ) /* U25 */
+//	ROM_LOAD( "cpu.u25",    0x0000, 0x0800, NO_DUMP ) /* U25 */ why was it NO_DUMP not BAD_DUMP?
+	ROM_LOAD( "cpu.u25",    0x0000, 0x0800, BAD_DUMP CRC(eccc814d) SHA1(d999d7d433bde5d7773cd7afaf3e673089ba2544)) /* U25 */
 	ROM_LOAD( "1888c",      0x0800, 0x0800, CRC(fd18ed09) SHA1(8bba49d93ae72dbc0497a5a24991c5da26d169d3) ) /* U1 */
 	ROM_LOAD( "1889c",      0x1000, 0x0800, CRC(f633f5ff) SHA1(b647bebfd8a2093b0b0b7587f7c816aade796b26) ) /* U2 */
 	ROM_LOAD( "1890c",      0x1800, 0x0800, CRC(22009d7f) SHA1(2c90460ecf8d9fd9fab4a4e6e78ec634ad5f84ef) ) /* U3 */
@@ -1529,7 +1530,8 @@ ROM_END
 
 ROM_START( pignewta )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "cpu.u25",    0x0000, 0x0800, NO_DUMP ) /* U25 */
+//	ROM_LOAD( "cpu.u25",    0x0000, 0x0800, NO_DUMP ) /* U25 */ why was it NO_DUMP not BAD_DUMP?
+	ROM_LOAD( "cpu.u25",    0x0000, 0x0800, BAD_DUMP CRC(eccc814d) SHA1(d999d7d433bde5d7773cd7afaf3e673089ba2544)) /* U25 */
 	ROM_LOAD( "1888a",      0x0800, 0x0800, CRC(491c0835) SHA1(65c917ebcfa8e5199e9923c04626c067fda3c637) ) /* U1 */
 	ROM_LOAD( "1889a",      0x1000, 0x0800, CRC(0dcf0af2) SHA1(788c24c87f44f9206c994286c7ba093d365f056f) ) /* U2 */
 	ROM_LOAD( "1890a",      0x1800, 0x0800, CRC(640b8b2e) SHA1(838c3283ad92eb4390e9935e420322c4b0426800) ) /* U3 */

@@ -260,6 +260,93 @@ static MACHINE_DRIVER_START( splash )
 MACHINE_DRIVER_END
 
 
+
+/***************************************************************************
+
+The Return of Lady Frog
+Microhard, 1993
+
+PCB Layout
+----------
+
+
+YM2203                            68000
+YM3014    6116           **       2   6
+          6116          6116      3   7
+6264                              4   8
+1  Z80           MACH130          5   9
+                 681000        6264  6264
+
+
+DSW2              2148                10
+DSW1              2148  6264  30MHz   11
+                  2148  6264  24MHz   12
+                  2148                13
+
+Notes:
+      68000 Clock = >10MHz (my meter can only read up to 10.000MHz)
+        Z80 Clock = 3MHz
+               ** = possibly PLD (surface is scratched, type PLCC44)
+    Vertical Sync = 60Hz
+      Horiz. Sync = 15.56kHz
+
+
+
+
+
+Lady Frog is a protected bootleg of splash, and the program jumps straight away
+to an unmapped memory address (crashing at 0x00401E72)...
+
+roldfrog.001 contains
+VIDEO COMPUTER SYSTEM  (C)1989 DYNAX INC  NAGOYA JAPAN  DRAGON PUNCH  VER. 1.30
+
+***************************************************************************/
+
+ROM_START( roldfrog )
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE( "roldfrog.002",	0x000000, 0x080000, CRC(724cf022) SHA1(f8cddfb785ae7900cb95b854811ec3fb250fa7fe) )
+	ROM_LOAD16_BYTE( "roldfrog.006",	0x000001, 0x080000, CRC(e52a7ae2) SHA1(5c6ecbc2711376afdd7b8da11f84d36ffc464c8a) )
+	ROM_LOAD16_BYTE( "roldfrog.003",	0x100000, 0x080000, CRC(a1d49967) SHA1(54d73c1db1090b7d5109906525ce95ee8c00ad1f) )
+	ROM_LOAD16_BYTE( "roldfrog.007",	0x100001, 0x080000, CRC(e5805c4e) SHA1(5691807b711ea5137f91afd6033fcd734d2b5ad0) )
+	ROM_LOAD16_BYTE( "roldfrog.004",	0x200000, 0x080000, CRC(709281f5) SHA1(01453168df4dc84069346cecd1fba9adeae6fcb8) )
+	ROM_LOAD16_BYTE( "roldfrog.008",	0x200001, 0x080000, CRC(39adcba4) SHA1(6c8c945b6383fa2549e6654b427a7ce4c7ff46b5) )
+	ROM_LOAD16_BYTE( "roldfrog.005",	0x300000, 0x080000, CRC(b683160c) SHA1(526a772108a6bf71207a7b6de7cbd14f8e9496bc) )
+	ROM_LOAD16_BYTE( "roldfrog.009",	0x300001, 0x080000, CRC(e475fb76) SHA1(9ab56db86530647ea4a5d2109a02119710ff9b7e) )
+
+	ROM_REGION( 0x90000, REGION_CPU2, 0 )	/* Z80 Code */
+	ROM_LOAD( "roldfrog.001", 0x00000, 0x20000, CRC(ba9eb1c6) SHA1(649d1103f3188554eaa3fc87a1f52c53233932b2) )
+	ROM_RELOAD(               0x20000, 0x20000 )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "roldfrog.010",       0x00000, 0x20000, CRC(51fd0e1a) SHA1(940c4231b21d16c62cad47c22fe735b18662af4a) )
+	ROM_LOAD( "roldfrog.011",       0x20000, 0x20000, CRC(610bf6f3) SHA1(04a7efac2e83c6747d4bd480b1f3118eb44a1f76) )
+	ROM_LOAD( "roldfrog.012",       0x40000, 0x20000, CRC(466ede67) SHA1(2d44dba1e76e5ceebf33fa6fc148ed665701a7ff) )
+	ROM_LOAD( "roldfrog.013",       0x60000, 0x20000, CRC(fad3e8be) SHA1(eccd7b1440d3a0d433c92ff33213326e0d57422a) )
+ROM_END
+
+ROM_START( roldfrga )
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE( "roldfrog.002",	0x000000, 0x080000, CRC(724cf022) SHA1(f8cddfb785ae7900cb95b854811ec3fb250fa7fe) )
+	ROM_LOAD16_BYTE( "roldfrog.006",	0x000001, 0x080000, CRC(e52a7ae2) SHA1(5c6ecbc2711376afdd7b8da11f84d36ffc464c8a) )
+	ROM_LOAD16_BYTE( "roldfrog.003",	0x100000, 0x080000, CRC(a1d49967) SHA1(54d73c1db1090b7d5109906525ce95ee8c00ad1f) )
+	ROM_LOAD16_BYTE( "roldfrog.007",	0x100001, 0x080000, CRC(e5805c4e) SHA1(5691807b711ea5137f91afd6033fcd734d2b5ad0) )
+	ROM_LOAD16_BYTE( "roldfrog.004",	0x200000, 0x080000, CRC(709281f5) SHA1(01453168df4dc84069346cecd1fba9adeae6fcb8) )
+	ROM_LOAD16_BYTE( "roldfrog.008",	0x200001, 0x080000, CRC(39adcba4) SHA1(6c8c945b6383fa2549e6654b427a7ce4c7ff46b5) )
+	ROM_LOAD16_BYTE( "roldfrog.005",	0x300000, 0x080000, CRC(b683160c) SHA1(526a772108a6bf71207a7b6de7cbd14f8e9496bc) )
+	ROM_LOAD16_BYTE( "9",	            0x300001, 0x080000, CRC(fd515b58) SHA1(7926ab9afbc260219351a02b56b82ede883f9aab) )	// differs with roldfrog.009 by 1 byte
+
+	ROM_REGION( 0x90000, REGION_CPU2, 0 )	/* Z80 Code */
+	ROM_LOAD( "roldfrog.001", 0x00000, 0x20000, CRC(ba9eb1c6) SHA1(649d1103f3188554eaa3fc87a1f52c53233932b2) )
+	ROM_RELOAD(               0x20000, 0x20000 )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "roldfrog.010",       0x00000, 0x20000, CRC(51fd0e1a) SHA1(940c4231b21d16c62cad47c22fe735b18662af4a) )
+	ROM_LOAD( "roldfrog.011",       0x20000, 0x20000, CRC(610bf6f3) SHA1(04a7efac2e83c6747d4bd480b1f3118eb44a1f76) )
+	ROM_LOAD( "roldfrog.012",       0x40000, 0x20000, CRC(466ede67) SHA1(2d44dba1e76e5ceebf33fa6fc148ed665701a7ff) )
+	ROM_LOAD( "roldfrog.013",       0x60000, 0x20000, CRC(fad3e8be) SHA1(eccd7b1440d3a0d433c92ff33213326e0d57422a) )
+ROM_END
+
+
 ROM_START( splash )
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )	/* 68000 code + gfx */
 	ROM_LOAD16_BYTE(	"4g",	0x000000, 0x020000, CRC(b38fda40) SHA1(37ddf4b6f9f2f6cc58efefc277bc3ae9dc71e6d0) )
@@ -282,4 +369,7 @@ ROM_START( splash )
 ROM_END
 
 
-GAME( 1992, splash, 0, splash, splash, 0, ROT0, "Gaelco", "Splash! (Ver. 1.2 World)" )
+GAME( 1992, splash,   0,        splash, splash, 0, ROT0, "Gaelco",    "Splash! (Ver. 1.2 World)" )
+
+GAMEX(1993, roldfrog, 0,        splash, splash, 0, ROT0, "Microhard", "The Return of Lady Frog", GAME_NOT_WORKING )
+GAMEX(1993, roldfrga, roldfrog, splash, splash, 0, ROT0, "Microhard", "The Return of Lady Frog (set 2)", GAME_NOT_WORKING )

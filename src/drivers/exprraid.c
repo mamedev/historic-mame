@@ -80,16 +80,17 @@ extern VIDEO_UPDATE( exprraid );
 /* Emulate Protection ( only for original express raider, code is cracked on the bootleg */
 /*****************************************************************************************/
 
-static READ_HANDLER( exprraid_prot_0_r )
+static READ_HANDLER( exprraid_protection_r )
 {
-	UINT8 *RAM = memory_region(REGION_CPU1);
+	switch (offset)
+	{
+	case 0:
+		return memory_region(REGION_CPU1)[0x02a9];
+	case 1:
+		return 0x02;
+	}
 
-	return RAM[0x02a9];
-}
-
-static READ_HANDLER( exprraid_prot_1_r )
-{
-	return 0x02;
+	return 0;
 }
 
 static WRITE_HANDLER( sound_cpu_command_w )
@@ -98,7 +99,8 @@ static WRITE_HANDLER( sound_cpu_command_w )
     cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 }
 
-static READ_HANDLER( vblank_r ) {
+static READ_HANDLER( vblank_r )
+{
 	int val = readinputport( 0 );
 
 	if ( ( val & 0x02 ) )
@@ -107,52 +109,40 @@ static READ_HANDLER( vblank_r ) {
 	return val;
 }
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( master_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x00ff, 0x00ff) AM_READ(vblank_r) /* HACK!!!! see init_exprraid below */
-    AM_RANGE(0x0000, 0x05ff) AM_READ(MRA8_RAM)
-    AM_RANGE(0x0600, 0x07ff) AM_READ(MRA8_RAM) /* sprites */
-    AM_RANGE(0x0800, 0x0bff) AM_READ(MRA8_RAM)
-    AM_RANGE(0x0c00, 0x0fff) AM_READ(MRA8_RAM)
+    AM_RANGE(0x0000, 0x05ff) AM_RAM
+    AM_RANGE(0x0600, 0x07ff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+    AM_RANGE(0x0800, 0x0bff) AM_RAM AM_WRITE(exprraid_videoram_w) AM_BASE(&videoram)
+    AM_RANGE(0x0c00, 0x0fff) AM_RAM AM_WRITE(exprraid_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x1317, 0x1317) AM_READNOP // ???
+	AM_RANGE(0x1700, 0x1700) AM_READNOP // ???
     AM_RANGE(0x1800, 0x1800) AM_READ(input_port_1_r) /* DSW 0 */
     AM_RANGE(0x1801, 0x1801) AM_READ(input_port_2_r) /* Controls */
     AM_RANGE(0x1802, 0x1802) AM_READ(input_port_3_r) /* Coins */
     AM_RANGE(0x1803, 0x1803) AM_READ(input_port_4_r) /* DSW 1 */
-	AM_RANGE(0x2800, 0x2800) AM_READ(exprraid_prot_0_r) /* protection */
-	AM_RANGE(0x2801, 0x2801) AM_READ(exprraid_prot_1_r) /* protection */
-    AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-    AM_RANGE(0x0000, 0x05ff) AM_WRITE(MWA8_RAM)
-    AM_RANGE(0x0600, 0x07ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size) /* sprites */
-    AM_RANGE(0x0800, 0x0bff) AM_WRITE(exprraid_videoram_w) AM_BASE(&videoram)
-    AM_RANGE(0x0c00, 0x0fff) AM_WRITE(exprraid_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x2000, 0x2000) AM_WRITENOP // ???
     AM_RANGE(0x2001, 0x2001) AM_WRITE(sound_cpu_command_w)
 	AM_RANGE(0x2002, 0x2002) AM_WRITE(exprraid_flipscreen_w)
+	AM_RANGE(0x2003, 0x2003) AM_WRITENOP // ???
+	AM_RANGE(0x2800, 0x2801) AM_READ(exprraid_protection_r)
     AM_RANGE(0x2800, 0x2803) AM_WRITE(exprraid_bgselect_w)
     AM_RANGE(0x2804, 0x2804) AM_WRITE(exprraid_scrolly_w)
     AM_RANGE(0x2805, 0x2806) AM_WRITE(exprraid_scrollx_w)
-    AM_RANGE(0x2807, 0x2807) AM_WRITE(MWA8_NOP)	// Scroll related ?
-    AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+    AM_RANGE(0x2807, 0x2807) AM_WRITENOP	// Scroll related ?
+    AM_RANGE(0x4000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-    AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
-    AM_RANGE(0x2000, 0x2000) AM_READ(YM2203_status_port_0_r)
-	AM_RANGE(0x2001, 0x2001) AM_READ(YM2203_read_port_0_r)
-    AM_RANGE(0x4000, 0x4000) AM_READ(YM3526_status_port_0_r)
-	AM_RANGE(0x6000, 0x6000) AM_READ(soundlatch_r)
-    AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-    AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_RAM)
-    AM_RANGE(0x2000, 0x2000) AM_WRITE(YM2203_control_port_0_w)
-	AM_RANGE(0x2001, 0x2001) AM_WRITE(YM2203_write_port_0_w)
-    AM_RANGE(0x4000, 0x4000) AM_WRITE(YM3526_control_port_0_w)
+static ADDRESS_MAP_START( slave_map, ADDRESS_SPACE_PROGRAM, 8 )
+    AM_RANGE(0x0000, 0x1fff) AM_RAM
+    AM_RANGE(0x2000, 0x2000) AM_READWRITE(YM2203_status_port_0_r, YM2203_control_port_0_w)
+	AM_RANGE(0x2001, 0x2001) AM_READWRITE(YM2203_read_port_0_r, YM2203_write_port_0_w)
+    AM_RANGE(0x4000, 0x4000) AM_READWRITE(YM3526_status_port_0_r, YM3526_control_port_0_w)
     AM_RANGE(0x4001, 0x4001) AM_WRITE(YM3526_write_port_0_w)
-    AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6000, 0x6000) AM_READ(soundlatch_r)
+    AM_RANGE(0x8000, 0xffff) AM_ROM
 ADDRESS_MAP_END
+
 
 INPUT_PORTS_START( exprraid )
 	PORT_START /* IN 0 - 0x3800 */
@@ -169,24 +159,20 @@ INPUT_PORTS_START( exprraid )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START /* IN 1 - 0x1801 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
@@ -194,9 +180,9 @@ INPUT_PORTS_START( exprraid )
 
 	PORT_START /* IN 2 - 0x1802 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -207,24 +193,19 @@ INPUT_PORTS_START( exprraid )
 	PORT_DIPSETTING(    0x01, "1" )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, "Infinite" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x04, "Every 50000" )
-	PORT_DIPSETTING(    0x00, "50000 80000" )
+	PORT_DIPSETTING(    0x04, "50K+" )
+	PORT_DIPSETTING(    0x00, "50K 80K" )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x10, "Easy" )
 	PORT_DIPSETTING(    0x18, "Normal" )
 	PORT_DIPSETTING(    0x08, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x00, "Very Hard" )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )	/* This one has to be set for coin up */
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -337,11 +318,11 @@ static MACHINE_DRIVER_START( exprraid )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 4000000)        /* 4 MHz ??? */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(master_map, 0)
 	MDRV_CPU_VBLANK_INT(exprraid_interrupt,1)
 
 	MDRV_CPU_ADD(M6809, 2000000)        /* 2 MHz ??? */
-	MDRV_CPU_PROGRAM_MAP(sub_readmem,sub_writemem)
+	MDRV_CPU_PROGRAM_MAP(slave_map, 0)
 								/* IRQs are caused by the YM3526 */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

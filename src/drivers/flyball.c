@@ -20,7 +20,7 @@ extern UINT8* flyball_playfield_ram;
 static UINT8 flyball_potmask;
 static UINT8 flyball_potsense;
 
-static UINT8* flyball_zero_page;
+static data8_t *rombase;
 
 
 static void flyball_joystick_callback(int potsense)
@@ -69,17 +69,12 @@ static MACHINE_INIT( flyball )
 
 	/* address bits 0 through 8 are inverted */
 
-	UINT8* ROM = memory_region(REGION_CPU1);
+	UINT8* ROM = memory_region(REGION_CPU1) + 0x2000;
 
 	for (i = 0; i < 0x1000; i++)
-	{
-		ROM[0x1000 + i] = ROM[0x10000 + (i ^ 0x1ff)];
-		ROM[0xF000 + i] = ROM[0x10000 + (i ^ 0x1ff)];
-	}
+		rombase[i] = ROM[i ^ 0x1ff];
 
 	timer_set(cpu_getscanlinetime(0), 0, flyball_quarter_callback);
-
-	flyball_zero_page = auto_malloc(0x100);
 }
 
 
@@ -100,19 +95,9 @@ READ_HANDLER( flyball_potsense_r )
 	return flyball_potsense & ~flyball_potmask;
 }
 
-READ_HANDLER( flyball_ram_r )
-{
-	return flyball_zero_page[offset & 0xff];
-}
-
 WRITE_HANDLER( flyball_potmask_w )
 {
 	flyball_potmask |= data & 0xf;
-}
-
-WRITE_HANDLER( flyball_ram_w )
-{
-	flyball_zero_page[offset & 0xff] = data;
 }
 
 WRITE_HANDLER( flyball_pitcher_pic_w )
@@ -168,29 +153,22 @@ WRITE_HANDLER( flyball_misc_w )
 }
 
 
-static ADDRESS_MAP_START( flyball_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x01ff) AM_READ(flyball_ram_r)
-	AM_RANGE(0x0800, 0x0800) AM_READ(MRA8_NOP)
+static ADDRESS_MAP_START( flyball_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(13) )
+	AM_RANGE(0x0000, 0x00ff) AM_MIRROR(0x100) AM_RAM
+	AM_RANGE(0x0800, 0x0800) AM_NOP
+	AM_RANGE(0x0801, 0x0801) AM_WRITE(flyball_pitcher_pic_w)
 	AM_RANGE(0x0802, 0x0802) AM_READ(flyball_scanline_r)
 	AM_RANGE(0x0803, 0x0803) AM_READ(flyball_potsense_r)
-	AM_RANGE(0x0b00, 0x0b00) AM_READ(flyball_input_r)
-	AM_RANGE(0x1000, 0x1fff) AM_READ(MRA8_ROM) /* program */
-	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM) /* program mirror */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( flyball_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x01ff) AM_WRITE(flyball_ram_w)
-	AM_RANGE(0x0800, 0x0800) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0x0801, 0x0801) AM_WRITE(flyball_pitcher_pic_w)
 	AM_RANGE(0x0804, 0x0804) AM_WRITE(flyball_ball_vert_w)
 	AM_RANGE(0x0805, 0x0805) AM_WRITE(flyball_ball_horz_w)
 	AM_RANGE(0x0806, 0x0806) AM_WRITE(flyball_pitcher_vert_w)
 	AM_RANGE(0x0807, 0x0807) AM_WRITE(flyball_pitcher_horz_w)
 	AM_RANGE(0x0900, 0x0900) AM_WRITE(flyball_potmask_w)
 	AM_RANGE(0x0a00, 0x0a07) AM_WRITE(flyball_misc_w)
+	AM_RANGE(0x0b00, 0x0b00) AM_READ(flyball_input_r)
 	AM_RANGE(0x0d00, 0x0eff) AM_WRITE(MWA8_RAM) AM_BASE(&flyball_playfield_ram)
-	AM_RANGE(0x1000, 0x1fff) AM_WRITE(MWA8_ROM) /* program */
-	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM) /* program mirror */
+	AM_RANGE(0x1000, 0x1fff) AM_ROM AM_BASE(&rombase) /* program */
 ADDRESS_MAP_END
 
 
@@ -283,7 +261,7 @@ static MACHINE_DRIVER_START( flyball )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 12096000 / 16)
-	MDRV_CPU_PROGRAM_MAP(flyball_readmem, flyball_writemem)
+	MDRV_CPU_PROGRAM_MAP(flyball_map, 0)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -307,15 +285,15 @@ MACHINE_DRIVER_END
 
 
 ROM_START( flyball )
-	ROM_REGION( 0x11000, REGION_CPU1, 0 )                  /* program */
-	ROM_LOAD( "6129.d5", 0x10000, 0x0200, CRC(17eda069) SHA1(e4ef0bf4546cf00668d759a188e0989a4f003825) )
-	ROM_LOAD( "6130.f5", 0x10200, 0x0200, CRC(a756955b) SHA1(220b7f1789bba4481d595b36b4bae25f98d3ad8d) )
-	ROM_LOAD( "6131.h5", 0x10400, 0x0200, CRC(a9c7e858) SHA1(aee4a359d6a5729dc1be5b8ce8fbe54d032d12b0) )
-	ROM_LOAD( "6132.j5", 0x10600, 0x0200, CRC(31fefd8a) SHA1(97e3ef278ce2175cd33c0f3147bdf7974752c836) )
-	ROM_LOAD( "6133.k5", 0x10800, 0x0200, CRC(6fdb09b1) SHA1(04ad412b437bb24739b3e31fa5a413e63d5897f8) )
-	ROM_LOAD( "6134.m5", 0x10A00, 0x0200, CRC(7b526c73) SHA1(e47c8f33b7edc143ab1713556c59b93571933daa) )
-	ROM_LOAD( "6135.n5", 0x10C00, 0x0200, CRC(b352cb51) SHA1(39b9062fb51d0a78a47dcd470ceae47fcdbd7891) )
-	ROM_LOAD( "6136.r5", 0x10E00, 0x0200, CRC(1622d890) SHA1(9ad342aefdc02e022eb79d84d1c856bed538bebe) )
+	ROM_REGION( 0x3000, REGION_CPU1, 0 )                  /* program */
+	ROM_LOAD( "6129.d5", 0x2000, 0x0200, CRC(17eda069) SHA1(e4ef0bf4546cf00668d759a188e0989a4f003825) )
+	ROM_LOAD( "6130.f5", 0x2200, 0x0200, CRC(a756955b) SHA1(220b7f1789bba4481d595b36b4bae25f98d3ad8d) )
+	ROM_LOAD( "6131.h5", 0x2400, 0x0200, CRC(a9c7e858) SHA1(aee4a359d6a5729dc1be5b8ce8fbe54d032d12b0) )
+	ROM_LOAD( "6132.j5", 0x2600, 0x0200, CRC(31fefd8a) SHA1(97e3ef278ce2175cd33c0f3147bdf7974752c836) )
+	ROM_LOAD( "6133.k5", 0x2800, 0x0200, CRC(6fdb09b1) SHA1(04ad412b437bb24739b3e31fa5a413e63d5897f8) )
+	ROM_LOAD( "6134.m5", 0x2A00, 0x0200, CRC(7b526c73) SHA1(e47c8f33b7edc143ab1713556c59b93571933daa) )
+	ROM_LOAD( "6135.n5", 0x2C00, 0x0200, CRC(b352cb51) SHA1(39b9062fb51d0a78a47dcd470ceae47fcdbd7891) )
+	ROM_LOAD( "6136.r5", 0x2E00, 0x0200, CRC(1622d890) SHA1(9ad342aefdc02e022eb79d84d1c856bed538bebe) )
 
 	ROM_REGION( 0x0C00, REGION_GFX1, ROMREGION_DISPOSE )   /* tiles */
 	ROM_LOAD( "6142.l2", 0x0000, 0x0200, CRC(65650cfa) SHA1(7d17455146fc9def22c7bd06f7fde32df0a0c2bc) )

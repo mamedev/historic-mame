@@ -816,7 +816,7 @@ static void print_game_driver(int OUTPUT_XML, FILE* out, const struct GameDriver
 	expand_machine_driver(game->drv, &driver);
 
 	fprintf(out, SELECT(L1P "driver" L2B, "\t\t<driver"));
-	if (game->flags & GAME_NOT_WORKING)
+	if (game->flags & (GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION))
 		fprintf(out, SELECT(L2P "status preliminary" L2N, " status=\"preliminary\""));
 	else
 		fprintf(out, SELECT(L2P "status good" L2N, " status=\"good\""));
@@ -925,7 +925,7 @@ static void print_game_info(int OUTPUT_XML, FILE* out, const struct GameDriver* 
 	fprintf(out, SELECT(L1E, "\t</" XML_TOP ">\n"));
 }
 
-#if !defined(MESS) && !defined(TINY_COMPILE) && !defined(CPSMAME) && !defined(MMSND)
+#if !defined(MESS) && !defined(TINY_COMPILE) && !defined(MMSND)
 /* Print the resource info */
 static void print_resource_info(int OUTPUT_XML, FILE* out, const struct GameDriver* game)
 {
@@ -1007,7 +1007,7 @@ static void print_mame_data(int OUTPUT_XML, FILE* out, const struct GameDriver* 
 	for(j=0;games[j];++j)
 		print_game_info(OUTPUT_XML, out, games[j]);
 
-#if !defined(MESS) && !defined(TINY_COMPILE) && !defined(CPSMAME) && !defined(MMSND)
+#if !defined(MESS) && !defined(TINY_COMPILE) && !defined(MMSND)
 	/* print resources */
 	print_resources_data(OUTPUT_XML, out, games);
 #endif

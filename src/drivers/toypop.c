@@ -130,15 +130,15 @@ static data8_t *toypop_m68000_sharedram;
 
 READ8_HANDLER( toypop_sound_sharedram_r )
 {
-	return mappy_soundregs[offset];
+	return namco_soundregs[offset];
 }
 
 WRITE8_HANDLER( toypop_sound_sharedram_w )
 {
 	if (offset < 0x40)
-		mappy_sound_w(offset,data);
+		namco_15xx_w(offset,data);
 	else
-		mappy_soundregs[offset] = data;
+		namco_soundregs[offset] = data;
 }
 
 READ16_HANDLER( toypop_m68000_sharedram_r )
@@ -603,7 +603,7 @@ static MACHINE_DRIVER_START( liblrabl )
 	MDRV_VIDEO_UPDATE(toypop)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(NAMCO_15XX, namco_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( toypop )

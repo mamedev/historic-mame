@@ -675,11 +675,6 @@ static MACHINE_DRIVER_START( semiprot )
 	MDRV_MACHINE_INIT ( semiprot )
 MACHINE_DRIVER_END
 
-static MACHINE_DRIVER_START( _4in1 )
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(semicom)
-	MDRV_GFXDECODE(gfxdecodeinfo)
-MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -842,22 +837,6 @@ ROM_START( 3in1semi )
 	ROM_LOAD( "u77", 0x100000, 0x80000, CRC(d44211e3) SHA1(53af19dec03e76912632450414cdbcbb31cc094c) )
 	ROM_LOAD( "u78", 0x180000, 0x80000, CRC(af596afc) SHA1(875d7a51ff5c741cae4483d8da33df9cae8de52a) )
 ROM_END
-
-ROM_START( 4in1boot ) /* snow bros, tetris, hyperman 1, pacman 2 */
-	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_BYTE( "u52",  0x00001, 0x80000, CRC(71815878) SHA1(e3868f5687c1d8ec817671c50ade6c56ee83bfa1) )
-	ROM_LOAD16_BYTE( "u74",  0x00000, 0x80000, CRC(e22d3fa2) SHA1(020ab92d8cbf37a9f8186a81934abb97088c16f9) )
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
-	ROM_LOAD( "u35", 0x00000, 0x10000 , CRC(c894ac80) SHA1(ee896675b5205ab2dbd0cbb13db16aa145391d06) )
-
-	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
-	ROM_LOAD( "u14", 0x00000, 0x40000, CRC(94b09b0e) SHA1(414de3e36eff85126038e8ff74145b35076e0a43) )
-
-	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* Sprites */
-	ROM_LOAD( "u78", 0x000000, 0x200000, CRC(6c1fbc9c) SHA1(067f32cae89fd4d57b90be659d2d648e557c11df) )
-ROM_END
-
 
 ROM_START( cookbib2 )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
@@ -1259,47 +1238,6 @@ static DRIVER_INIT( hyperpac )
 	hyperpac_ram[0xe086/2] = 0x3210;
 }
 
-READ16_HANDLER ( _4in1_02_read )
-{
-	return 0x0202;
-}
-
-static DRIVER_INIT(4in1boot)
-{
-	unsigned char *buffer;
-	data8_t *src = memory_region(REGION_CPU1);
-	int len = memory_region_length(REGION_CPU1);
-
-	/* strange order */
-	if ((buffer = malloc(len)))
-	{
-		int i;
-		for (i = 0;i < len; i++)
-			if (i&1) buffer[i] = BITSWAP8(src[i],6,7,5,4,3,2,1,0);
-			else buffer[i] = src[i];
-
-		memcpy(src,buffer,len);
-		free(buffer);
-	}
-
-	src = memory_region(REGION_CPU2);
-	len = memory_region_length(REGION_CPU2);
-
-	/* strange order */
-	if ((buffer = malloc(len)))
-	{
-		int i;
-		for (i = 0;i < len; i++)
-			buffer[i] = src[i^0x4000];
-		memcpy(src,buffer,len);
-		free(buffer);
-	}
-
-	install_mem_read16_handler (0, 0x200000, 0x200001, _4in1_02_read );
-
-
-}
-
 GAME( 1990, snowbros, 0,        snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (set 1)" )
 GAME( 1990, snowbroa, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (set 2)" )
 GAME( 1990, snowbrob, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (set 3)" )
@@ -1314,5 +1252,3 @@ GAME( 1999, moremorp, 0,        semiprot, hyperpac, moremorp, ROT0, "SemiCom / E
 /* the following don't work, they either point the interrupts at an area of ram probably shared by
    some kind of mcu which puts 68k code there, or jump to the area in the interrupts */
 GAMEX(1997, 3in1semi, 0,        semicom, hyperpac, 0,        ROT0, "SemiCom", "3-in-1 (SemiCom)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-/* bad dump */
-GAMEX(199?, 4in1boot, 0,        _4in1,    snowbros, 4in1boot, ROT0, "bootleg", "4-in-1 bootleg", GAME_NOT_WORKING ) // gfx rom is half the size it should be, pacman 2 and snowbros are playable tho

@@ -97,12 +97,14 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xd000, 0xdbff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xdc00, 0xdfff) AM_READ(speedbal_sharedram_r) // shared with MAIN CPU
 	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_RAM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xd000, 0xdbff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xdc00, 0xdfff) AM_WRITE(speedbal_sharedram_w) // shared with MAIN CPU
 	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM)
 ADDRESS_MAP_END

@@ -338,7 +338,7 @@ int tms5220_cycles_to_ready(void)
 	{
 		int val;
 
-		answer = 200-sample_count+1;
+		answer = 200-sample_count+8;
 
 		/* total number of bits available in current byte is (8 - fifo_bits_taken) */
 		/* if more than 4 are available, we need to check the energy */

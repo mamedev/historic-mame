@@ -12,19 +12,20 @@
 Known Dumps
 -----------
 
-Game       Description                             CPU board           Mother board             Daughter board          Keycus
+Game       Description                              CPU board           Mother board             Daughter board          Keycus
 
-tekken3    Tekken 3 (TET1/VER.E)                   COH 700             ?                        SYSTEM12 M8F2           ?
-soulclbr   Soul Calibur (SOC1/VER.A)               COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M5F2           KC020
-ehrgeiz    Ehrgeiz (EG3/VER.A)                     COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M4F6           KC021
-mdhorse    Derby Quiz My Dream Horse (MDH1/VER.A)  COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M10X64         KC035
-fgtlayer   Fighting Layer (FTL1/VER.A)             COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M5F4           KC037
-pacapp     Paca Paca Passion (PPP1/VER.A)          COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M8F2           KC038
-sws99      Super World Stadium '99 (SS91/VER.A)    COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M5F4           KC043
-tekkentt   Tekken Tag Tournament (TEG3/VER.B)      COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M8F4           KC044
-mrdrillr   Mr Driller (DRI1/VER.A)                 COH 700             SYSTEM12 MOTHER(C)       SYSTEM12 M8F2           KC048
-aquarush   Aqua Rush (AQ1/VER.A)                   COH 700             SYSTEM12 MOTHER(C)       SYSTEM12 M5F2           KC053
-golgo13    Golgo 13 (GLG1/VER.A)                   COH 700             ?                        SYSTEM12 M8F6           ?
+tekken3    Tekken 3 (TET1/VER.E1)                   COH 700             ?                        SYSTEM12 M8F2           ?
+soulclbr   Soul Calibur (SOC14/VER.C)               COH 700             SYSTEM12 MOTHER          no markings             -----
+soulclba   Soul Calibur (SOC11/VER.A2)              COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M5F2           KC020
+ehrgeiz    Ehrgeiz (EG3/VER.A)                      COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M4F6           KC021
+mdhorse    Derby Quiz My Dream Horse (MDH1/VER.A2)  COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M10X64         KC035
+fgtlayer   Fighting Layer (FTL0/VER.A)              COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M5F4           KC037
+pacapp     Paca Paca Passion (PPP1/VER.A2)          COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M8F2           KC038
+sws99      Super World Stadium '99 (SS91/VER.A3)    COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M5F4           KC043
+tekkentt   Tekken Tag Tournament (TEG3/VER.B)       COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M8F4           KC044
+mrdrillr   Mr Driller (DRI1/VER.A2)                 COH 700             SYSTEM12 MOTHER(C)       SYSTEM12 M8F2           KC048
+aquarush   Aqua Rush (AQ1/VER.A1)                   COH 700             SYSTEM12 MOTHER(C)       SYSTEM12 M5F2           KC053
+golgo13    Golgo 13 (GLG1/VER.A)                    COH 700             ?                        SYSTEM12 M8F6           ?
 
 COH 700
 
@@ -116,18 +117,16 @@ static INTERRUPT_GEN( namcos12_vblank )
 	/* kludge: protection hacks */
 	if( strcmp( Machine->gamedrv->name, "fgtlayer" ) == 0 )
 	{
-		data8_t *RAM = (data8_t *)psxram;
-		if( *( (data32_t *)&RAM[ 0x2ac494 ] ) == 0x080ab125 )
+		if( g_p_n_psxram[ 0x2ac494 / 4 ] == 0x080ab125 )
 		{
-			*( (data32_t *)&RAM[ 0x2ac494 ] ) = 0;
+			g_p_n_psxram[ 0x2ac494 / 4 ] = 0;
 		}
 	}
 	else if( strcmp( Machine->gamedrv->name, "pacapp" ) == 0 )
 	{
-		data8_t *RAM = (data8_t *)psxram;
-		if( *( (data32_t *)&RAM[ 0x16d50 ] ) == 0x08005b54 )
+		if( g_p_n_psxram[ 0x16d50 / 4 ] == 0x08005b54 )
 		{
-			*( (data32_t *)&RAM[ 0x16d50 ] ) = 0;
+			g_p_n_psxram[ 0x16d50 / 4 ] = 0;
 		}
 	}
 }
@@ -138,7 +137,7 @@ static WRITE32_HANDLER( bankoffset_w )
 {
 	m_n_bankoffset = data;
 
-	cpu_setbank( 1, memory_region( REGION_USER3 ) + ( m_n_bankoffset * 0x200000 ) );
+	cpu_setbank( 1, memory_region( REGION_USER2 ) + ( m_n_bankoffset * 0x200000 ) );
 
 	verboselog( 1, "bankoffset_w( %08x, %08x, %08x ) %08x\n", offset, data, mem_mask, m_n_bankoffset );
 }
@@ -164,16 +163,16 @@ static void namcos12_rom_read( UINT32 n_address, INT32 n_size )
 
 	if( m_n_dmaoffset >= 0x80000000 )
 	{
-		p_n_src = (data32_t *)( memory_region( REGION_USER2 ) + ( m_n_dmaoffset & 0x003fffff ) );
+		p_n_src = (data32_t *)( memory_region( REGION_USER1 ) + ( m_n_dmaoffset & 0x003fffff ) );
 	}
 	else
 	{
-		p_n_src = (data32_t *)( memory_region( REGION_USER3 ) + ( m_n_dmaoffset & 0x7fffffff ) );
+		p_n_src = (data32_t *)( memory_region( REGION_USER2 ) + ( m_n_dmaoffset & 0x7fffffff ) );
 	}
 
-	p_n_dst = (data32_t *)( (UINT8 *)psxram + n_address );
+	p_n_dst = &g_p_n_psxram[ n_address / 4 ];
 
-	n_left = ( psxramsize - n_address ) / 4;
+	n_left = ( g_n_psxramsize - n_address ) / 4;
 	if( n_size > n_left )
 	{
 		n_size = n_left;
@@ -186,8 +185,7 @@ static void namcos12_rom_read( UINT32 n_address, INT32 n_size )
 }
 
 static ADDRESS_MAP_START( namcos12_map, ADDRESS_SPACE_PROGRAM, 32 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(29) )
-	AM_RANGE(0x00000000, 0x003fffff) AM_RAM AM_BASE(&psxram) AM_SIZE(&psxramsize)    /* ram */
+	AM_RANGE(0x00000000, 0x003fffff) AM_RAM	AM_SHARE(1) AM_BASE(&g_p_n_psxram) AM_SIZE(&g_n_psxramsize) /* ram */
 	AM_RANGE(0x1f000000, 0x1f000003) AM_READWRITE(MRA32_NOP, bankoffset_w)			/* banking */
 	AM_RANGE(0x1f008000, 0x1f008003) AM_WRITENOP    /* ?? */
 	AM_RANGE(0x1f010000, 0x1f010003) AM_WRITENOP    /* ?? */
@@ -196,9 +194,9 @@ static ADDRESS_MAP_START( namcos12_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x1f140000, 0x1f141fff) AM_RAM AM_BASE((data32_t **)&generic_nvram) AM_SIZE(&generic_nvram_size) /* flash */
 	AM_RANGE(0x1f1bff08, 0x1f1bff0f) AM_WRITENOP    /* ?? */
 	AM_RANGE(0x1f700000, 0x1f70ffff) AM_WRITE(dmaoffset_w)  /* dma */
-	AM_RANGE(0x1f800000, 0x1f8003ff) AM_RAM			/* scratchpad */
+	AM_RANGE(0x1f800000, 0x1f8003ff) AM_RAM /* scratchpad */
 	AM_RANGE(0x1f801000, 0x1f801007) AM_WRITENOP
-	AM_RANGE(0x1f801008, 0x1f80100b) AM_RAM			/* ?? */
+	AM_RANGE(0x1f801008, 0x1f80100b) AM_RAM /* ?? */
 	AM_RANGE(0x1f80100c, 0x1f80102f) AM_WRITENOP
 	AM_RANGE(0x1f801010, 0x1f801013) AM_READNOP
 	AM_RANGE(0x1f801014, 0x1f801017) AM_READNOP
@@ -210,10 +208,15 @@ static ADDRESS_MAP_START( namcos12_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x1f801810, 0x1f801817) AM_READWRITE(psx_gpu_r, psx_gpu_w)
 	AM_RANGE(0x1f801820, 0x1f801827) AM_READWRITE(psx_mdec_r, psx_mdec_w)
 	AM_RANGE(0x1f801c00, 0x1f801dff) AM_NOP
-	AM_RANGE(0x1f802020, 0x1f802033) AM_RAM
+	AM_RANGE(0x1f802020, 0x1f802033) AM_RAM /* ?? */
 	AM_RANGE(0x1f802040, 0x1f802043) AM_WRITENOP
-	AM_RANGE(0x1fa00000, 0x1fbfffff) AM_ROMBANK(1)			/* banked roms */
-	AM_RANGE(0x1fc00000, 0x1fffffff) AM_ROM AM_REGION(REGION_USER2, 0)    /* bios */
+	AM_RANGE(0x1fa00000, 0x1fbfffff) AM_ROMBANK(1) /* banked roms */
+	AM_RANGE(0x1fc00000, 0x1fffffff) AM_ROM AM_SHARE(2) AM_REGION(REGION_USER1, 0) /* bios */
+	AM_RANGE(0x80000000, 0x803fffff) AM_RAM AM_SHARE(1) /* ram mirror */
+	AM_RANGE(0x9fc00000, 0x9fffffff) AM_ROM AM_SHARE(2) /* bios mirror */
+	AM_RANGE(0xa0000000, 0xa03fffff) AM_RAM AM_SHARE(1) /* ram mirror */
+	AM_RANGE(0xbfc00000, 0xbfffffff) AM_ROM AM_SHARE(2) /* bios mirror */
+	AM_RANGE(0xfffe0130, 0xfffe0133) AM_WRITENOP
 ADDRESS_MAP_END
 
 
@@ -233,7 +236,7 @@ static DRIVER_INIT( namcos12 )
 		strcmp( Machine->gamedrv->name, "mrdrillr" ) == 0 ||
 		strcmp( Machine->gamedrv->name, "pacapp" ) == 0 )
 	{
-		data8_t *RAM = memory_region( REGION_USER2 );
+		data8_t *RAM = memory_region( REGION_USER1 );
 
 		*( (data32_t *)&RAM[ 0x20280 ] ) = 0;
 		*( (data32_t *)&RAM[ 0x20284 ] ) = 0;
@@ -357,11 +360,11 @@ INPUT_PORTS_START( namcos12 )
 INPUT_PORTS_END
 
 ROM_START( aquarush )
-	ROM_REGION32_LE( 0x00400000, REGION_USER2, 0 ) /* main prg */
+	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "aq1vera.2l",  0x0000000, 0x200000, CRC(91eb9258) SHA1(30e225eb551bfe1bed6b342dd6d597345d64b677) )
 	ROM_LOAD16_BYTE( "aq1vera.2p",  0x0000001, 0x200000, CRC(a92f21aa) SHA1(bde33f1f66aaa55031c6b2972b042eef87047cce) )
 
-	ROM_REGION32_LE( 0x1000000, REGION_USER3, 0 ) /* main data */
+	ROM_REGION32_LE( 0x1000000, REGION_USER2, 0 ) /* main data */
 	ROM_LOAD(        "aq1rm0.7",    0x000000, 0x800000, CRC(3e64dd33) SHA1(dce3bb84c3069bc202d04f24d7702158dd3194d4) )
 	ROM_LOAD(        "aq1rm1.8",    0x800000, 0x800000, CRC(e4d415cf) SHA1(bbd244adaf704d7daf7341ff3b0a92162927a59b) )
 
@@ -373,11 +376,11 @@ ROM_START( aquarush )
 ROM_END
 
 ROM_START( ehrgeiz )
-	ROM_REGION32_LE( 0x00400000, REGION_USER2, 0 ) /* main prg */
+	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "eg3vera.2l",  0x0000000, 0x200000, CRC(64c00ff0) SHA1(fc7980bc8d98c810aed2eb6b3265d150784dfc15) )
 	ROM_LOAD16_BYTE( "eg3vera.2p",  0x0000001, 0x200000, CRC(e722c030) SHA1(4669a7861c14d97048728989708a0fa3733f83a8) )
 
-	ROM_REGION32_LE( 0x1c00000, REGION_USER3, 0 ) /* main data */
+	ROM_REGION32_LE( 0x1c00000, REGION_USER2, 0 ) /* main data */
 	ROM_LOAD16_BYTE( "eg1rm0l.12",  0x0000000, 0x800000, CRC(fe11a48e) SHA1(bdb2af5949bb4a324dab01489e9488aa5b9bd129) )
 	ROM_LOAD16_BYTE( "eg1rm0u.11",  0x0000001, 0x800000, CRC(7cb90c25) SHA1(0ff6f7bf8b7eb2e0706bd235fcb9a95ea639fae6) )
 	ROM_LOAD16_BYTE( "eg1fl1l.9",   0x1000000, 0x200000, CRC(dd4cac2b) SHA1(f49d0055303b3d8639e94f93bce6bf160cc99913) )
@@ -395,11 +398,11 @@ ROM_START( ehrgeiz )
 ROM_END
 
 ROM_START( fgtlayer )
-	ROM_REGION32_LE( 0x00400000, REGION_USER2, 0 ) /* main prg */
+	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "ftl1vera.2e", 0x0000000, 0x200000, CRC(f4156e79) SHA1(cedb917940be8c74fa4ddb48213ce6917444e306) )
 	ROM_LOAD16_BYTE( "ftl1vera.2j", 0x0000001, 0x200000, CRC(c65b57c0) SHA1(0051aa46d09fbe9d896ae5f534e21955373f1d46) )
 
-	ROM_REGION32_LE( 0x2000000, REGION_USER3, 0 ) /* main data */
+	ROM_REGION32_LE( 0x2000000, REGION_USER2, 0 ) /* main data */
 	ROM_LOAD(        "ftl1rm0.9",   0x0000000, 0x800000, CRC(e33ce365) SHA1(f7e5b98d2e8e5f233265909477c84331f016ebfb) )
 	ROM_LOAD(        "ftl1rm1.10",  0x0800000, 0x800000, CRC(a1ec7d08) SHA1(e693a0b16235c44d4165b2f53dc25d5288297c27) )
 	ROM_LOAD(        "ftl1rm2.11",  0x1000000, 0x800000, CRC(204be858) SHA1(95b22b678b7d11b0ec907698c18cebd84437c656) )
@@ -417,11 +420,11 @@ ROM_START( fgtlayer )
 ROM_END
 
 ROM_START( golgo13 )
-	ROM_REGION32_LE( 0x00400000, REGION_USER2, 0 ) /* main prg */
+	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "glg1vera.2l", 0x0000000, 0x200000, CRC(aa15abfe) SHA1(e82b408746e01c50c5cb0dcef804974d1e97078a) )
 	ROM_LOAD16_BYTE( "glg1vera.2p", 0x0000001, 0x200000, CRC(37a4cf90) SHA1(b5470d44036e9de8220b669f71b50bcec42d9a18) )
 
-	ROM_REGION32_LE( 0x3c00000, REGION_USER3, 0 ) /* main data */
+	ROM_REGION32_LE( 0x3c00000, REGION_USER2, 0 ) /* main data */
 	ROM_LOAD16_BYTE( "glg1rm0l.10", 0x0000000, 0x800000, CRC(2837524e) SHA1(81d811c2cf8121854ed6046dc421cda7fcd44014) )
 	ROM_LOAD16_BYTE( "glg1rm0u.14", 0x0000001, 0x800000, CRC(4482deff) SHA1(03dcd12633b167d9af664ae826fc2c2ff096c0a6) )
 	ROM_LOAD16_BYTE( "glg1rm1l.11", 0x1000000, 0x800000, CRC(080f3550) SHA1(40a5257baeb366e32ff51f571efb12a556f93430) )
@@ -444,11 +447,11 @@ ROM_START( golgo13 )
 ROM_END
 
 ROM_START( mdhorse )
-	ROM_REGION32_LE( 0x00400000, REGION_USER2, 0 ) /* main prg */
+	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "mdh1vera.2l", 0x0000000, 0x200000, CRC(fbb567b2) SHA1(899dccdfbc8dcbcdaf9b5df93e249a36f8cbf999) )
 	ROM_LOAD16_BYTE( "mdh1vera.2p", 0x0000001, 0x200000, CRC(a0f182ab) SHA1(70c789ea88248c1f810f9fdb3feaf808acbaa8cd) )
 
-	ROM_REGION32_LE( 0x3000000, REGION_USER3, 0 ) /* main data */
+	ROM_REGION32_LE( 0x3000000, REGION_USER2, 0 ) /* main data */
 	ROM_LOAD16_BYTE( "mdh1rm0l",    0x0000000, 0x800000, CRC(ca5bf806) SHA1(8c88b1f29c96a0696ac9428c411cde10faacce35) )
 	ROM_LOAD16_BYTE( "mdh1rm0u",    0x0000001, 0x800000, CRC(315e9539) SHA1(340fcd196f53f64b3f56ef73101eddc9e142d907) )
 	ROM_LOAD16_BYTE( "mdh1rm1l",    0x1000000, 0x800000, CRC(9f610211) SHA1(8459733c52d1c62033a4aeb9985b4a6e863a62d0) )
@@ -464,11 +467,11 @@ ROM_START( mdhorse )
 ROM_END
 
 ROM_START( mrdrillr )
-	ROM_REGION32_LE( 0x00400000, REGION_USER2, 0 ) /* main prg */
+	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "dri1vera.2l", 0x0000000, 0x200000, CRC(751ca21d) SHA1(1c271bba83d387c797ce8daa43885bcb6e1a51a6) )
 	ROM_LOAD16_BYTE( "dri1vera.2p", 0x0000001, 0x200000, CRC(2a2b0704) SHA1(5a8b40c6cf0adc43ca2ee0c576ec82f314aacd2c) )
 
-	ROM_REGION32_LE( 0x0800000, REGION_USER3, 0 ) /* main data */
+	ROM_REGION32_LE( 0x0800000, REGION_USER2, 0 ) /* main data */
 	ROM_LOAD16_BYTE( "dri1rm0l.6",  0x0000000, 0x400000, CRC(021bb2fa) SHA1(bfe3e46e9728d5b5a692f432515267ff8b8255e7) )
 	ROM_LOAD16_BYTE( "dri1rm0u.9",  0x0000001, 0x400000, CRC(5aae85ea) SHA1(a54dcc050c12ed3d77efc328e366e99c392eb139) )
 
@@ -480,11 +483,11 @@ ROM_START( mrdrillr )
 ROM_END
 
 ROM_START( pacapp )
-	ROM_REGION32_LE( 0x00400000, REGION_USER2, 0 ) /* main prg */
+	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "ppp1vera.2l", 0x0000000, 0x200000, CRC(6e74bd05) SHA1(41a2e06538cea3bced2992f5858a3f0cd1c0b4aa) )
 	ROM_LOAD16_BYTE( "ppp1vera.2p", 0x0000001, 0x200000, CRC(b7a2f724) SHA1(820ae04ec416b8394a1d919279748bde3460cb96) )
 
-	ROM_REGION32_LE( 0x1800000, REGION_USER3, 0 ) /* main data */
+	ROM_REGION32_LE( 0x1800000, REGION_USER2, 0 ) /* main data */
 	ROM_LOAD16_BYTE( "ppp1rm0l.6",  0x0000000, 0x400000, CRC(b152fdd8) SHA1(23c5c07680a62e941a7b1a28897f986dd9399801) )
 	ROM_LOAD16_BYTE( "ppp1rm0u.9",  0x0000001, 0x400000, CRC(c615c26e) SHA1(db1aae37ebee2a74636415e4b1b0b17790a6a67e) )
 	ROM_LOAD16_BYTE( "ppp1rm1l.7",  0x0800000, 0x400000, CRC(46eaedbd) SHA1(afe3c966fcf083d89b45d44d871bed1b8caa3014) )
@@ -501,11 +504,30 @@ ROM_START( pacapp )
 ROM_END
 
 ROM_START( soulclbr )
-	ROM_REGION32_LE( 0x00400000, REGION_USER2, 0 ) /* main prg */
+	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
+	ROM_LOAD16_BYTE( "soc14verc.2e", 0x0000000, 0x200000, CRC(c40e9614) SHA1(dc20469f0d657423e472fdf5897852ab9fb8bb73) )
+	ROM_LOAD16_BYTE( "soc14verc.2j", 0x0000001, 0x200000, CRC(80c41446) SHA1(e5620a4f0ffba913169a779df73384b7ca8780b9) )
+
+	ROM_REGION32_LE( 0x2000000, REGION_USER2, 0 ) /* main data */
+	ROM_LOAD(        "soc1rm0.7",   0x0000000, 0x800000, CRC(cdc47b55) SHA1(315ea6b819de5c4883aa400f1b9f4172637757bf) )
+	ROM_LOAD(        "soc1rm1.8",   0x0800000, 0x800000, CRC(30d2dd5a) SHA1(1c0c467ba339e0241efb8d5c3b025a046b2ca676) )
+	ROM_LOAD(        "soc1rm2.9",   0x1000000, 0x800000, CRC(dbb93955) SHA1(624cd8ad94e8ae53206f798bff81784afe95e5f1) )
+	ROM_LOAD(        "soc1fl3.6",   0x1800000, 0x400000, CRC(24d94c38) SHA1(0f9b9ab11dd4e02086d7b9104ce2f5d4e93cd696) )
+	ROM_LOAD(        "soc1fl4.5",   0x1c00000, 0x400000, CRC(6212090e) SHA1(ed5e50771180935a0c2e760e7369673098722201) )
+
+	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
+	ROM_LOAD( "soc1vera.11s", 0x0000000, 0x080000, CRC(52aa206a) SHA1(5abe9d6f800fa1b9623aa08b16e9b959b840e50b) )
+
+	ROM_REGION( 0x0800000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "soc1wav0.2",   0x0000000, 0x800000, CRC(c100618d) SHA1(b87f88ee42ad9c5affa674e5f816d902143fed99) )
+ROM_END
+
+ROM_START( soulclba )
+	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "soc1vera.2l", 0x0000000, 0x200000, CRC(37e0a203) SHA1(3915b5e530c8e70a07aa8ccedeb66633ae5f670e) )
 	ROM_LOAD16_BYTE( "soc1vera.2p", 0x0000001, 0x200000, CRC(7cd87a35) SHA1(5a4837b6f6a49c88126a0ddbb8059a4da77127bc) )
 
-	ROM_REGION32_LE( 0x2000000, REGION_USER3, 0 ) /* main data */
+	ROM_REGION32_LE( 0x2000000, REGION_USER2, 0 ) /* main data */
 	ROM_LOAD(        "soc1rm0.7",   0x0000000, 0x800000, CRC(cdc47b55) SHA1(315ea6b819de5c4883aa400f1b9f4172637757bf) )
 	ROM_LOAD(        "soc1rm1.8",   0x0800000, 0x800000, CRC(30d2dd5a) SHA1(1c0c467ba339e0241efb8d5c3b025a046b2ca676) )
 	ROM_LOAD(        "soc1rm2.9",   0x1000000, 0x800000, CRC(dbb93955) SHA1(624cd8ad94e8ae53206f798bff81784afe95e5f1) )
@@ -520,11 +542,11 @@ ROM_START( soulclbr )
 ROM_END
 
 ROM_START( sws99 )
-	ROM_REGION32_LE( 0x00400000, REGION_USER2, 0 ) /* main prg */
+	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "ss91vera.2e", 0x0000000, 0x200000, CRC(4dd928d7) SHA1(d76c0f52d1a2cd101a6879e6ff57ed1c52b5e228) )
 	ROM_LOAD16_BYTE( "ss91vera.2j", 0x0000001, 0x200000, CRC(40777a48) SHA1(6e3052ddbe3943eb2418cd50102cead88b850240) )
 
-	ROM_REGION32_LE( 0x2000000, REGION_USER3, 0 ) /* main data */
+	ROM_REGION32_LE( 0x2000000, REGION_USER2, 0 ) /* main data */
 	ROM_LOAD(        "ss91rm0.9",   0x0000000, 0x800000, CRC(db5bc50d) SHA1(b8b59f6db3a374277871c39b3657cb193525e558) )
 	ROM_LOAD(        "ss91rm1.10",  0x0800000, 0x800000, CRC(4d71f29f) SHA1(3ccc8410d383bfd9fde44574ebb9c24a235cc734) )
 	ROM_FILL(                       0x1000000, 0x800000, 0 )
@@ -542,11 +564,11 @@ ROM_START( sws99 )
 ROM_END
 
 ROM_START( tekken3 )
-	ROM_REGION32_LE( 0x00400000, REGION_USER2, 0 ) /* main prg */
+	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "tet1vere.2e", 0x0000000, 0x200000, CRC(8b01113b) SHA1(45fdfd58293641ed16bc59c633a85a9cf64ccbaf) )
 	ROM_LOAD16_BYTE( "tet1vere.2j", 0x0000001, 0x200000, CRC(df4c96fb) SHA1(2e223045bf5b80ccf615106e869760c5b7aa8d44) )
 
-	ROM_REGION32_LE( 0x1c00000, REGION_USER3, 0 ) /* main data */
+	ROM_REGION32_LE( 0x1c00000, REGION_USER2, 0 ) /* main data */
 	ROM_LOAD16_BYTE( "tet1rm0l.6",  0x0000000, 0x400000, CRC(2886bb32) SHA1(08ad9da2df25ad8c933a812ac238c81135072929) )
 	ROM_LOAD16_BYTE( "tet1rm0u.9",  0x0000001, 0x400000, CRC(c5705b92) SHA1(20df20c8d18eb4712d565a3df9a8d9270dee6aaa) )
 	ROM_LOAD16_BYTE( "tet1rm1l.7",  0x0800000, 0x400000, CRC(0397d283) SHA1(ebafcd14cdb2601214129a84fc6830846f5cd274) )
@@ -565,11 +587,11 @@ ROM_START( tekken3 )
 ROM_END
 
 ROM_START( tekkentt )
-	ROM_REGION32_LE( 0x00400000, REGION_USER2, 0 ) /* main prg */
+	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "teg3verb.2l", 0x0000000, 0x200000, CRC(1efb7b85) SHA1(0623bb6571caf046ff7b4f83f11ee84a92c4b462) )
 	ROM_LOAD16_BYTE( "teg3verb.2p", 0x0000001, 0x200000, CRC(7caef9b2) SHA1(5c56d69ba2f723d0a4fbe4902196efc6ba9d5094) )
 
-	ROM_REGION32_LE( 0x3800000, REGION_USER3, 0 ) /* main data */
+	ROM_REGION32_LE( 0x3800000, REGION_USER2, 0 ) /* main data */
 	ROM_LOAD32_WORD( "teg3rm0e.9",  0x0000000, 0x800000, CRC(c962a373) SHA1(d662dbd89ef62c5ac3150a018fc2d35ef2ee94ac) )
 	ROM_LOAD32_WORD( "teg3rm0o.13", 0x0000002, 0x800000, CRC(badb7dcf) SHA1(8c0bf7f6351c5a2a0996df371a901cf90c68cd8c) )
 	ROM_LOAD32_WORD( "teg3rm1e.10", 0x1000000, 0x800000, CRC(b3d56124) SHA1(4df20c74ba63f7362caf15e9b8949fab655704fb) )
@@ -589,14 +611,15 @@ ROM_START( tekkentt )
 	ROM_LOAD( "teg3wav1.12",  0x0800000, 0x800000, CRC(dbc74fff) SHA1(601b7e7361ea744b34e3fa1fc39d88641de7f4c6) )
 ROM_END
 
-GAMEX( 1996, tekken3,   0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken 3 (TET1/VER.E)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1998, soulclbr,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Soul Calibur (SOC1/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1996, tekken3,   0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken 3 (TET1/VER.E1)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1998, soulclbr,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Soul Calibur (SOC14/VER.C)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1998, soulclba,  soulclbr, coh700, namcos12, namcos12, ROT0, "Namco",         "Soul Calibur (SOC11/VER.A2)", GAME_NOT_WORKING | GAME_NO_SOUND )
 GAMEX( 1998, ehrgeiz,   0,        coh700, namcos12, namcos12, ROT0, "Square/Namco",  "Ehrgeiz (EG3/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1998, mdhorse,   0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Derby Quiz My Dream Horse (MDH1/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1998, fgtlayer,  0,        coh700, namcos12, namcos12, ROT0, "Arika/Namco",   "Fighting Layer (FTL1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1999, pacapp,    0,        coh700, namcos12, namcos12, ROT0, "Produce/Namco", "Paca Paca Passion (PPP1/VERA)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1999, sws99,     0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Super World Stadium '99 (SS91/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1998, mdhorse,   0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Derby Quiz My Dream Horse (MDH1/VER.A2)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1998, fgtlayer,  0,        coh700, namcos12, namcos12, ROT0, "Arika/Namco",   "Fighting Layer (FTL0/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1999, pacapp,    0,        coh700, namcos12, namcos12, ROT0, "Produce/Namco", "Paca Paca Passion (PPP1/VER.A2)", GAME_NOT_WORKING | GAME_NO_SOUND ) /* id */
+GAMEX( 1999, sws99,     0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Super World Stadium '99 (SS91/VER.A3)", GAME_NOT_WORKING | GAME_NO_SOUND ) /* id */
 GAMEX( 1999, tekkentt,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken Tag Tournament (TEG3/VER.B)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1999, mrdrillr,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Mr Driller (DRI1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1999, aquarush,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Aqua Rush (AQ1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1999, golgo13,   0,        coh700, namcos12, namcos12, ROT0, "Raizing/Namco", "Golgo 13 (GLG1/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1999, mrdrillr,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Mr Driller (DRI1/VER.A2)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1999, aquarush,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Aqua Rush (AQ1/VER.A1)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1999, golgo13,   0,        coh700, namcos12, namcos12, ROT0, "Raizing/Namco", "Golgo 13 (GLG1/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND ) /* id */

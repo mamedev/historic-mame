@@ -332,7 +332,7 @@ static const UINT8 cc_ex[0x100] = {
  6, 0, 0, 0, 7, 0, 0, 2, 6, 0, 0, 0, 7, 0, 0, 2,
  6, 0, 0, 0, 7, 0, 0, 2, 6, 0, 0, 0, 7, 0, 0, 2};
 
-static const UINT8 *cc[6] = { cc_op, cc_cb, cc_ed, cc_xy, cc_xycb, cc_ex };
+static const UINT8 *cc[6];
 #define Z80_TABLE_dd	Z80_TABLE_xy
 #define Z80_TABLE_fd	Z80_TABLE_xy
 
@@ -3996,6 +3996,15 @@ static void z80_init(void)
 {
 	int cpu = cpu_getactivecpu();
 	int i, p;
+
+	/* setup cycle tables */
+	cc[Z80_TABLE_op] = cc_op;
+	cc[Z80_TABLE_cb] = cc_cb;
+	cc[Z80_TABLE_ed] = cc_ed;
+	cc[Z80_TABLE_xy] = cc_xy;
+	cc[Z80_TABLE_xycb] = cc_xycb;
+	cc[Z80_TABLE_ex] = cc_ex;
+
 #if BIG_FLAGS_ARRAY
 	if( !SZHVC_add || !SZHVC_sub )
 	{

@@ -590,6 +590,7 @@ static void neogeo_custom_memory(void)
 	sram_protection_hack = ~0;
 	if (	!strcmp(Machine->gamedrv->name,"fatfury3") ||
 			!strcmp(Machine->gamedrv->name,"samsho3") ||
+			!strcmp(Machine->gamedrv->name,"samsho3a") ||
 			!strcmp(Machine->gamedrv->name,"samsho4") ||
 			!strcmp(Machine->gamedrv->name,"aof3") ||
 			!strcmp(Machine->gamedrv->name,"rbff1") ||

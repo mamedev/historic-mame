@@ -68,7 +68,7 @@
 	except that is has space for extra serial ROM data. The "DS III" is
 	an advanced design that contains space for a bunch of complex sound
 	circuitry that was not used on Steel Talons, but was used for the
-	prototype Street Drivin'. The "DS IV" looks to have the same board 
+	prototype Street Drivin'. The "DS IV" looks to have the same board
 	layout as the "DS III", but the sound circuitry is actually populated.
 
 	-----------------------------------------------------------------------
@@ -222,77 +222,44 @@ static struct dsp32_config dsp32c_config =
  *
  *************************************/
 
-static ADDRESS_MAP_START( driver_readmem_68k, ADDRESS_SPACE_PROGRAM, 16 )
+static ADDRESS_MAP_START( driver_68k_map, ADDRESS_SPACE_PROGRAM, 16 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x000000, 0x0fffff) AM_ROM
 	AM_RANGE(0x600000, 0x603fff) AM_READ(hd68k_port0_r)
-	AM_RANGE(0xa80000, 0xafffff) AM_READ(input_port_1_word_r)
-	AM_RANGE(0xb00000, 0xb7ffff) AM_READ(hd68k_adc8_r)
-	AM_RANGE(0xb80000, 0xbfffff) AM_READ(hd68k_adc12_r)
-	AM_RANGE(0xc00000, 0xc03fff) AM_READ(hd68k_gsp_io_r)
-	AM_RANGE(0xc04000, 0xc07fff) AM_READ(hd68k_msp_io_r)
-	AM_RANGE(0xff0000, 0xff001f) AM_READ(hd68k_duart_r)
-	AM_RANGE(0xff4000, 0xff4fff) AM_READ(hd68k_zram_r)
-	AM_RANGE(0xff8000, 0xffffff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( driver_writemem_68k, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x604000, 0x607fff) AM_WRITE(hd68k_nwr_w)
 	AM_RANGE(0x608000, 0x60bfff) AM_WRITE(watchdog_reset16_w)
 	AM_RANGE(0x60c000, 0x60ffff) AM_WRITE(hd68k_irq_ack_w)
 	AM_RANGE(0xa00000, 0xa7ffff) AM_WRITE(hd68k_wr0_write)
-	AM_RANGE(0xa80000, 0xafffff) AM_WRITE(hd68k_wr1_write)
-	AM_RANGE(0xb00000, 0xb7ffff) AM_WRITE(hd68k_wr2_write)
-	AM_RANGE(0xb80000, 0xbfffff) AM_WRITE(hd68k_adc_control_w)
-	AM_RANGE(0xc00000, 0xc03fff) AM_WRITE(hd68k_gsp_io_w)
-	AM_RANGE(0xc04000, 0xc07fff) AM_WRITE(hd68k_msp_io_w)
-	AM_RANGE(0xff0000, 0xff001f) AM_WRITE(hd68k_duart_w)
-	AM_RANGE(0xff4000, 0xff4fff) AM_WRITE(hd68k_zram_w) AM_BASE(&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
-	AM_RANGE(0xff8000, 0xffffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0xa80000, 0xafffff) AM_READWRITE(input_port_1_word_r, hd68k_wr1_write)
+	AM_RANGE(0xb00000, 0xb7ffff) AM_READWRITE(hd68k_adc8_r, hd68k_wr2_write)
+	AM_RANGE(0xb80000, 0xbfffff) AM_READWRITE(hd68k_adc12_r, hd68k_adc_control_w)
+	AM_RANGE(0xc00000, 0xc03fff) AM_READWRITE(hd68k_gsp_io_r, hd68k_gsp_io_w)
+	AM_RANGE(0xc04000, 0xc07fff) AM_READWRITE(hd68k_msp_io_r, hd68k_msp_io_w)
+	AM_RANGE(0xff0000, 0xff001f) AM_READWRITE(hd68k_duart_r, hd68k_duart_w)
+	AM_RANGE(0xff4000, 0xff4fff) AM_READWRITE(hd68k_zram_r, hd68k_zram_w) AM_BASE(&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
+	AM_RANGE(0xff8000, 0xffffff) AM_RAM
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( driver_readmem_gsp, ADDRESS_SPACE_PROGRAM, 16 )
+static ADDRESS_MAP_START( driver_gsp_map, ADDRESS_SPACE_PROGRAM, 16 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x00000000, 0x0000200f) AM_READ(MRA16_NOP)	/* used during self-test */
-	AM_RANGE(0x02000000, 0x0207ffff) AM_READ(hdgsp_vram_2bpp_r)
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
-	AM_RANGE(0xf4000000, 0xf40000ff) AM_READ(hdgsp_control_lo_r)
-	AM_RANGE(0xf4800000, 0xf48000ff) AM_READ(hdgsp_control_hi_r)
-	AM_RANGE(0xf5000000, 0xf5000fff) AM_READ(hdgsp_paletteram_lo_r)
-	AM_RANGE(0xf5800000, 0xf5800fff) AM_READ(hdgsp_paletteram_hi_r)
-	AM_RANGE(0xff800000, 0xffffffff) AM_READ(MRA16_BANK1)
+	AM_RANGE(0x00000000, 0x0000200f) AM_NOP					/* hit during self-test */
+	AM_RANGE(0x02000000, 0x0207ffff) AM_READWRITE(hdgsp_vram_2bpp_r, hdgsp_vram_1bpp_w)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READWRITE(tms34010_io_register_r, hdgsp_io_w)
+	AM_RANGE(0xf4000000, 0xf40000ff) AM_READWRITE(hdgsp_control_lo_r, hdgsp_control_lo_w) AM_BASE(&hdgsp_control_lo)
+	AM_RANGE(0xf4800000, 0xf48000ff) AM_READWRITE(hdgsp_control_hi_r, hdgsp_control_hi_w) AM_BASE(&hdgsp_control_hi)
+	AM_RANGE(0xf5000000, 0xf5000fff) AM_READWRITE(hdgsp_paletteram_lo_r, hdgsp_paletteram_lo_w) AM_BASE(&hdgsp_paletteram_lo)
+	AM_RANGE(0xf5800000, 0xf5800fff) AM_READWRITE(hdgsp_paletteram_hi_r, hdgsp_paletteram_hi_w) AM_BASE(&hdgsp_paletteram_hi)
+	AM_RANGE(0xff800000, 0xffffffff) AM_RAM AM_BASE((data16_t **)&hdgsp_vram) AM_SIZE(&hdgsp_vram_size)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( driver_writemem_gsp, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x00000000, 0x0000200f) AM_WRITE(MWA16_NOP)	/* used during self-test */
-	AM_RANGE(0x02000000, 0x0207ffff) AM_WRITE(hdgsp_vram_1bpp_w)
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(hdgsp_io_w)
-	AM_RANGE(0xf4000000, 0xf40000ff) AM_WRITE(hdgsp_control_lo_w) AM_BASE(&hdgsp_control_lo)
-	AM_RANGE(0xf4800000, 0xf48000ff) AM_WRITE(hdgsp_control_hi_w) AM_BASE(&hdgsp_control_hi)
-	AM_RANGE(0xf5000000, 0xf5007fff) AM_WRITE(hdgsp_paletteram_lo_w) AM_BASE(&hdgsp_paletteram_lo)
-	AM_RANGE(0xf5800000, 0xf5807fff) AM_WRITE(hdgsp_paletteram_hi_w) AM_BASE(&hdgsp_paletteram_hi)
-	AM_RANGE(0xff800000, 0xffffffff) AM_WRITE(MWA16_BANK1) AM_BASE((data16_t **)&hdgsp_vram) AM_SIZE(&hdgsp_vram_size)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( driver_readmem_msp, ADDRESS_SPACE_PROGRAM, 16 )
+static ADDRESS_MAP_START( driver_msp_map, ADDRESS_SPACE_PROGRAM, 16 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x00000000, 0x000fffff) AM_READ(MRA16_BANK2)
-	AM_RANGE(0x00700000, 0x007fffff) AM_READ(MRA16_BANK3)
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
-	AM_RANGE(0xfff00000, 0xffffffff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( driver_writemem_msp, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x00000000, 0x000fffff) AM_WRITE(MWA16_BANK2)
-	AM_RANGE(0x00700000, 0x007fffff) AM_WRITE(MWA16_BANK3)
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(tms34010_io_register_w)
-	AM_RANGE(0xfff00000, 0xffffffff) AM_WRITE(MWA16_RAM) AM_BASE(&hdmsp_ram)
+	AM_RANGE(0x00000000, 0x000fffff) AM_RAM AM_SHARE(1) AM_BASE(&hdmsp_ram)
+	AM_RANGE(0x00700000, 0x007fffff) AM_RAM AM_SHARE(1)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READWRITE(tms34010_io_register_r, tms34010_io_register_w)
+	AM_RANGE(0xfff00000, 0xffffffff) AM_RAM AM_SHARE(1)
 ADDRESS_MAP_END
 
 
@@ -303,65 +270,35 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( multisync_readmem_68k, ADDRESS_SPACE_PROGRAM, 16 )
+static ADDRESS_MAP_START( multisync_68k_map, ADDRESS_SPACE_PROGRAM, 16 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x600000, 0x603fff) AM_READ(atarigen_sound_upper_r)
-	AM_RANGE(0x604000, 0x607fff) AM_READ(hd68k_sound_reset_r)
-	AM_RANGE(0x60c000, 0x60ffff) AM_READ(hd68k_port0_r)
-	AM_RANGE(0xa80000, 0xafffff) AM_READ(input_port_1_word_r)
-	AM_RANGE(0xb00000, 0xb7ffff) AM_READ(hd68k_adc8_r)
-	AM_RANGE(0xb80000, 0xbfffff) AM_READ(hd68k_adc12_r)
-	AM_RANGE(0xc00000, 0xc03fff) AM_READ(hd68k_gsp_io_r)
-	AM_RANGE(0xc04000, 0xc07fff) AM_READ(hd68k_msp_io_r)
-	AM_RANGE(0xff0000, 0xff001f) AM_READ(hd68k_duart_r)
-	AM_RANGE(0xff4000, 0xff4fff) AM_READ(hd68k_zram_r)
-	AM_RANGE(0xff8000, 0xffffff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( multisync_writemem_68k, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x600000, 0x603fff) AM_WRITE(atarigen_sound_upper_w)
-	AM_RANGE(0x604000, 0x607fff) AM_WRITE(hd68k_nwr_w)
+	AM_RANGE(0x000000, 0x0fffff) AM_ROM
+	AM_RANGE(0x600000, 0x603fff) AM_READWRITE(atarigen_sound_upper_r, atarigen_sound_upper_w)
+	AM_RANGE(0x604000, 0x607fff) AM_READWRITE(hd68k_sound_reset_r, hd68k_nwr_w)
 	AM_RANGE(0x608000, 0x60bfff) AM_WRITE(watchdog_reset16_w)
-	AM_RANGE(0x60c000, 0x60ffff) AM_WRITE(hd68k_irq_ack_w)
+	AM_RANGE(0x60c000, 0x60ffff) AM_READWRITE(hd68k_port0_r, hd68k_irq_ack_w)
 	AM_RANGE(0xa00000, 0xa7ffff) AM_WRITE(hd68k_wr0_write)
-	AM_RANGE(0xa80000, 0xafffff) AM_WRITE(hd68k_wr1_write)
-	AM_RANGE(0xb00000, 0xb7ffff) AM_WRITE(hd68k_wr2_write)
-	AM_RANGE(0xb80000, 0xbfffff) AM_WRITE(hd68k_adc_control_w)
-	AM_RANGE(0xc00000, 0xc03fff) AM_WRITE(hd68k_gsp_io_w)
-	AM_RANGE(0xc04000, 0xc07fff) AM_WRITE(hd68k_msp_io_w)
-	AM_RANGE(0xff0000, 0xff001f) AM_WRITE(hd68k_duart_w)
-	AM_RANGE(0xff4000, 0xff4fff) AM_WRITE(hd68k_zram_w) AM_BASE(&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
-	AM_RANGE(0xff8000, 0xffffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0xa80000, 0xafffff) AM_READWRITE(input_port_1_word_r, hd68k_wr1_write)
+	AM_RANGE(0xb00000, 0xb7ffff) AM_READWRITE(hd68k_adc8_r, hd68k_wr2_write)
+	AM_RANGE(0xb80000, 0xbfffff) AM_READWRITE(hd68k_adc12_r, hd68k_adc_control_w)
+	AM_RANGE(0xc00000, 0xc03fff) AM_READWRITE(hd68k_gsp_io_r, hd68k_gsp_io_w)
+	AM_RANGE(0xc04000, 0xc07fff) AM_READWRITE(hd68k_msp_io_r, hd68k_msp_io_w)
+	AM_RANGE(0xff0000, 0xff001f) AM_READWRITE(hd68k_duart_r, hd68k_duart_w)
+	AM_RANGE(0xff4000, 0xff4fff) AM_READWRITE(hd68k_zram_r, hd68k_zram_w) AM_BASE(&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
+	AM_RANGE(0xff8000, 0xffffff) AM_RAM
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( multisync_readmem_gsp, ADDRESS_SPACE_PROGRAM, 16 )
+static ADDRESS_MAP_START( multisync_gsp_map, ADDRESS_SPACE_PROGRAM, 16 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x00000000, 0x0000200f) AM_READ(MRA16_NOP)	/* used during self-test */
-	AM_RANGE(0x02000000, 0x020fffff) AM_READ(hdgsp_vram_2bpp_r)
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
-	AM_RANGE(0xf4000000, 0xf40000ff) AM_READ(hdgsp_control_lo_r)
-	AM_RANGE(0xf4800000, 0xf48000ff) AM_READ(hdgsp_control_hi_r)
-	AM_RANGE(0xf5000000, 0xf5000fff) AM_READ(hdgsp_paletteram_lo_r)
-	AM_RANGE(0xf5800000, 0xf5800fff) AM_READ(hdgsp_paletteram_hi_r)
-	AM_RANGE(0xff800000, 0xffbfffff) AM_READ(MRA16_BANK1)
-	AM_RANGE(0xffc00000, 0xffffffff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( multisync_writemem_gsp, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x00000000, 0x00afffff) AM_WRITE(MWA16_NOP)	/* hit during self-test */
-	AM_RANGE(0x02000000, 0x020fffff) AM_WRITE(hdgsp_vram_2bpp_w)
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(hdgsp_io_w)
-	AM_RANGE(0xf4000000, 0xf40000ff) AM_WRITE(hdgsp_control_lo_w) AM_BASE(&hdgsp_control_lo)
-	AM_RANGE(0xf4800000, 0xf48000ff) AM_WRITE(hdgsp_control_hi_w) AM_BASE(&hdgsp_control_hi)
-	AM_RANGE(0xf5000000, 0xf5007fff) AM_WRITE(hdgsp_paletteram_lo_w) AM_BASE(&hdgsp_paletteram_lo)
-	AM_RANGE(0xf5800000, 0xf5807fff) AM_WRITE(hdgsp_paletteram_hi_w) AM_BASE(&hdgsp_paletteram_hi)
-	AM_RANGE(0xff800000, 0xffbfffff) AM_WRITE(MWA16_BANK1)
-	AM_RANGE(0xffc00000, 0xffffffff) AM_WRITE(MWA16_RAM) AM_BASE((data16_t **)&hdgsp_vram) AM_SIZE(&hdgsp_vram_size)
+	AM_RANGE(0x00000000, 0x0000200f) AM_NOP					/* hit during self-test */
+	AM_RANGE(0x02000000, 0x020fffff) AM_READWRITE(hdgsp_vram_2bpp_r, hdgsp_vram_2bpp_w)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READWRITE(tms34010_io_register_r, hdgsp_io_w)
+	AM_RANGE(0xf4000000, 0xf40000ff) AM_READWRITE(hdgsp_control_lo_r, hdgsp_control_lo_w) AM_BASE(&hdgsp_control_lo)
+	AM_RANGE(0xf4800000, 0xf48000ff) AM_READWRITE(hdgsp_control_hi_r, hdgsp_control_hi_w) AM_BASE(&hdgsp_control_hi)
+	AM_RANGE(0xf5000000, 0xf5000fff) AM_READWRITE(hdgsp_paletteram_lo_r, hdgsp_paletteram_lo_w) AM_BASE(&hdgsp_paletteram_lo)
+	AM_RANGE(0xf5800000, 0xf5800fff) AM_READWRITE(hdgsp_paletteram_hi_r, hdgsp_paletteram_hi_w) AM_BASE(&hdgsp_paletteram_hi)
+	AM_RANGE(0xff800000, 0xffbfffff) AM_MIRROR(0x0400000) AM_RAM AM_BASE((data16_t **)&hdgsp_vram) AM_SIZE(&hdgsp_vram_size)
 ADDRESS_MAP_END
 
 
@@ -372,62 +309,35 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( multisync2_readmem_68k, ADDRESS_SPACE_PROGRAM, 16 )
+static ADDRESS_MAP_START( multisync2_68k_map, ADDRESS_SPACE_PROGRAM, 16 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x60c000, 0x60ffff) AM_READ(hd68k_port0_r)
-	AM_RANGE(0xa80000, 0xafffff) AM_READ(input_port_1_word_r)
-	AM_RANGE(0xb00000, 0xb7ffff) AM_READ(hd68k_adc8_r)
-	AM_RANGE(0xb80000, 0xbfffff) AM_READ(hd68k_adc12_r)
-	AM_RANGE(0xc00000, 0xc03fff) AM_READ(hd68k_gsp_io_r)
-	AM_RANGE(0xc04000, 0xc07fff) AM_READ(hd68k_msp_io_r)
-	AM_RANGE(0xfc0000, 0xfc001f) AM_READ(hd68k_duart_r)
-	AM_RANGE(0xfd0000, 0xfd0fff) AM_READ(hd68k_zram_r)
-	AM_RANGE(0xfd4000, 0xfd4fff) AM_READ(hd68k_zram_r)
-	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( multisync2_writemem_68k, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x000000, 0x1fffff) AM_ROM
 	AM_RANGE(0x604000, 0x607fff) AM_WRITE(hd68k_nwr_w)
 	AM_RANGE(0x608000, 0x60bfff) AM_WRITE(watchdog_reset16_w)
-	AM_RANGE(0x60c000, 0x60ffff) AM_WRITE(hd68k_irq_ack_w)
+	AM_RANGE(0x60c000, 0x60ffff) AM_READWRITE(hd68k_port0_r, hd68k_irq_ack_w)
 	AM_RANGE(0xa00000, 0xa7ffff) AM_WRITE(hd68k_wr0_write)
-	AM_RANGE(0xa80000, 0xafffff) AM_WRITE(hd68k_wr1_write)
-	AM_RANGE(0xb00000, 0xb7ffff) AM_WRITE(hd68k_wr2_write)
-	AM_RANGE(0xb80000, 0xbfffff) AM_WRITE(hd68k_adc_control_w)
-	AM_RANGE(0xc00000, 0xc03fff) AM_WRITE(hd68k_gsp_io_w)
-	AM_RANGE(0xc04000, 0xc07fff) AM_WRITE(hd68k_msp_io_w)
-	AM_RANGE(0xfc0000, 0xfc001f) AM_WRITE(hd68k_duart_w)
-	AM_RANGE(0xfd0000, 0xfd0fff) AM_WRITE(hd68k_zram_w) AM_BASE(&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
-	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0xa80000, 0xafffff) AM_READWRITE(input_port_1_word_r, hd68k_wr1_write)
+	AM_RANGE(0xb00000, 0xb7ffff) AM_READWRITE(hd68k_adc8_r, hd68k_wr2_write)
+	AM_RANGE(0xb80000, 0xbfffff) AM_READWRITE(hd68k_adc12_r, hd68k_adc_control_w)
+	AM_RANGE(0xc00000, 0xc03fff) AM_READWRITE(hd68k_gsp_io_r, hd68k_gsp_io_w)
+	AM_RANGE(0xc04000, 0xc07fff) AM_READWRITE(hd68k_msp_io_r, hd68k_msp_io_w)
+	AM_RANGE(0xfc0000, 0xfc001f) AM_READWRITE(hd68k_duart_r, hd68k_duart_w)
+	AM_RANGE(0xfd0000, 0xfd0fff) AM_MIRROR(0x004000) AM_READWRITE(hd68k_zram_r, hd68k_zram_w) AM_BASE(&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
+	AM_RANGE(0xff0000, 0xffffff) AM_RAM
 ADDRESS_MAP_END
 
 
 /* GSP is identical to original multisync */
-static ADDRESS_MAP_START( multisync2_readmem_gsp, ADDRESS_SPACE_PROGRAM, 16 )
+static ADDRESS_MAP_START( multisync2_gsp_map, ADDRESS_SPACE_PROGRAM, 16 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x00000000, 0x0000200f) AM_READ(MRA16_NOP)	/* used during self-test */
-	AM_RANGE(0x02000000, 0x020fffff) AM_READ(hdgsp_vram_2bpp_r)
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
-	AM_RANGE(0xf4000000, 0xf40000ff) AM_READ(hdgsp_control_lo_r)
-	AM_RANGE(0xf4800000, 0xf48000ff) AM_READ(hdgsp_control_hi_r)
-	AM_RANGE(0xf5000000, 0xf5000fff) AM_READ(hdgsp_paletteram_lo_r)
-	AM_RANGE(0xf5800000, 0xf5800fff) AM_READ(hdgsp_paletteram_hi_r)
-	AM_RANGE(0xff800000, 0xffffffff) AM_READ(MRA16_BANK1)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( multisync2_writemem_gsp, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x00000000, 0x00afffff) AM_WRITE(MWA16_NOP)	/* hit during self-test */
-	AM_RANGE(0x02000000, 0x020fffff) AM_WRITE(hdgsp_vram_2bpp_w)
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(hdgsp_io_w)
-	AM_RANGE(0xf4000000, 0xf40000ff) AM_WRITE(hdgsp_control_lo_w) AM_BASE(&hdgsp_control_lo)
-	AM_RANGE(0xf4800000, 0xf48000ff) AM_WRITE(hdgsp_control_hi_w) AM_BASE(&hdgsp_control_hi)
-	AM_RANGE(0xf5000000, 0xf5007fff) AM_WRITE(hdgsp_paletteram_lo_w) AM_BASE(&hdgsp_paletteram_lo)
-	AM_RANGE(0xf5800000, 0xf5807fff) AM_WRITE(hdgsp_paletteram_hi_w) AM_BASE(&hdgsp_paletteram_hi)
-	AM_RANGE(0xff800000, 0xffffffff) AM_WRITE(MWA16_BANK1) AM_BASE((data16_t **)&hdgsp_vram) AM_SIZE(&hdgsp_vram_size)
+	AM_RANGE(0x00000000, 0x0000200f) AM_NOP					/* hit during self-test */
+	AM_RANGE(0x02000000, 0x020fffff) AM_READWRITE(hdgsp_vram_2bpp_r, hdgsp_vram_2bpp_w)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READWRITE(tms34010_io_register_r, hdgsp_io_w)
+	AM_RANGE(0xf4000000, 0xf40000ff) AM_READWRITE(hdgsp_control_lo_r, hdgsp_control_lo_w) AM_BASE(&hdgsp_control_lo)
+	AM_RANGE(0xf4800000, 0xf48000ff) AM_READWRITE(hdgsp_control_hi_r, hdgsp_control_hi_w) AM_BASE(&hdgsp_control_hi)
+	AM_RANGE(0xf5000000, 0xf5000fff) AM_READWRITE(hdgsp_paletteram_lo_r, hdgsp_paletteram_lo_w) AM_BASE(&hdgsp_paletteram_lo)
+	AM_RANGE(0xf5800000, 0xf5800fff) AM_READWRITE(hdgsp_paletteram_hi_r, hdgsp_paletteram_hi_w) AM_BASE(&hdgsp_paletteram_hi)
+	AM_RANGE(0xff800000, 0xffffffff) AM_RAM AM_BASE((data16_t **)&hdgsp_vram) AM_SIZE(&hdgsp_vram_size)
 ADDRESS_MAP_END
 
 
@@ -438,27 +348,16 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( adsp_program_readmem, ADDRESS_SPACE_PROGRAM, 32 )
+static ADDRESS_MAP_START( adsp_program_map, ADDRESS_SPACE_PROGRAM, 32 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x0000, 0x1fff) AM_RAM AM_BASE(&hdadsp_pgm_memory)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( adsp_program_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA32_RAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( adsp_data_readmem, ADDRESS_SPACE_DATA, 16 )
+static ADDRESS_MAP_START( adsp_data_map, ADDRESS_SPACE_DATA, 16 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x2000, 0x2fff) AM_READ(hdadsp_special_r)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( adsp_data_writemem, ADDRESS_SPACE_DATA, 16 )
-	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x2000, 0x2fff) AM_WRITE(hdadsp_special_w)
+	AM_RANGE(0x0000, 0x1fff) AM_RAM AM_BASE(&hdadsp_data_memory)
+	AM_RANGE(0x2000, 0x2fff) AM_READWRITE(hdadsp_special_r, hdadsp_special_w)
 ADDRESS_MAP_END
 
 
@@ -469,50 +368,32 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( ds3_program_readmem, ADDRESS_SPACE_PROGRAM, 32 )
+static ADDRESS_MAP_START( ds3_program_map, ADDRESS_SPACE_PROGRAM, 32 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x0000, 0x3fff) AM_RAM AM_BASE(&hdadsp_pgm_memory)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( ds3_program_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA32_RAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( ds3_data_readmem, ADDRESS_SPACE_DATA, 16 )
+static ADDRESS_MAP_START( ds3_data_map, ADDRESS_SPACE_DATA, 16 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x3800, 0x3bff) AM_READ(MRA16_RAM)		/* internal RAM */
-	AM_RANGE(0x3fe0, 0x3fff) AM_READ(hdds3_control_r)	/* adsp control regs */
-	AM_RANGE(0x2000, 0x3fff) AM_READ(hdds3_special_r)
+	AM_RANGE(0x0000, 0x1fff) AM_RAM AM_BASE(&hdadsp_data_memory)
+	AM_RANGE(0x3800, 0x3bff) AM_RAM						/* internal RAM */
+	AM_RANGE(0x3fe0, 0x3fff) AM_READWRITE(hdds3_control_r, hdds3_control_w)	/* adsp control regs */
+	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(hdds3_special_r, hdds3_special_w)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( ds3_data_writemem, ADDRESS_SPACE_DATA, 16 )
-	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x3800, 0x3bff) AM_WRITE(MWA16_RAM)		/* internal RAM */
-	AM_RANGE(0x3fe0, 0x3fff) AM_WRITE(hdds3_control_w)	/* adsp control regs */
-	AM_RANGE(0x2000, 0x3fff) AM_WRITE(hdds3_special_w)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( ds3snd_program_readmem, ADDRESS_SPACE_PROGRAM, 32 )
+static ADDRESS_MAP_START( ds3snd_program_map, ADDRESS_SPACE_PROGRAM, 32 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x0000, 0x3fff) AM_RAM
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( ds3snd_program_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA32_RAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( ds3snd_data_readmem, ADDRESS_SPACE_DATA, 16 )
+static ADDRESS_MAP_START( ds3snd_data_map, ADDRESS_SPACE_DATA, 16 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x3800, 0x3bff) AM_READ(MRA16_RAM)		/* internal RAM */
-	AM_RANGE(0x3fe0, 0x3fff) AM_READ(hdds3_control_r)	/* adsp control regs */
+	AM_RANGE(0x0000, 0x1fff) AM_RAM
+	AM_RANGE(0x3800, 0x3bff) AM_RAM						/* internal RAM */
+	AM_RANGE(0x3fe0, 0x3fff) AM_READWRITE(hdds3_control_r, hdds3_control_w)	/* adsp control regs */
 //
 //	/SIRQ2 = IRQ2
 //	/SRES -> RESET
@@ -538,13 +419,6 @@ static ADDRESS_MAP_START( ds3snd_data_readmem, ADDRESS_SPACE_DATA, 16 )
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( ds3snd_data_writemem, ADDRESS_SPACE_DATA, 16 )
-	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x3800, 0x3bff) AM_WRITE(MWA16_RAM)		/* internal RAM */
-	AM_RANGE(0x3fe0, 0x3fff) AM_WRITE(hdds3_control_w)	/* adsp control regs */
-ADDRESS_MAP_END
-
-
 
 /*************************************
  *
@@ -552,18 +426,11 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( dsk_readmem_dsp32, ADDRESS_SPACE_PROGRAM, 32 )
+static ADDRESS_MAP_START( dsk_dsp32_map, ADDRESS_SPACE_PROGRAM, 32 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x000000, 0x001fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x600000, 0x63ffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0xfff800, 0xffffff) AM_READ(MRA32_RAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( dsk_writemem_dsp32, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x001fff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x600000, 0x63ffff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0xfff800, 0xffffff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x000000, 0x001fff) AM_RAM
+	AM_RANGE(0x600000, 0x63ffff) AM_RAM
+	AM_RANGE(0xfff800, 0xffffff) AM_RAM
 ADDRESS_MAP_END
 
 
@@ -574,20 +441,12 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( dsk2_readmem_dsp32, ADDRESS_SPACE_PROGRAM, 32 )
+static ADDRESS_MAP_START( dsk2_dsp32_map, ADDRESS_SPACE_PROGRAM, 32 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x000000, 0x001fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x200000, 0x23ffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x400000, 0x5fffff) AM_READ(MRA32_BANK4)
-	AM_RANGE(0xfff800, 0xffffff) AM_READ(MRA32_RAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( dsk2_writemem_dsp32, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x001fff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x200000, 0x23ffff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x400000, 0x5fffff) AM_WRITE(MWA32_ROM)
-	AM_RANGE(0xfff800, 0xffffff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x000000, 0x001fff) AM_RAM
+	AM_RANGE(0x200000, 0x23ffff) AM_RAM
+	AM_RANGE(0x400000, 0x5fffff) AM_ROM AM_REGION(REGION_USER4, 0)
+	AM_RANGE(0xfff800, 0xffffff) AM_RAM
 ADDRESS_MAP_END
 
 
@@ -598,70 +457,39 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( driversnd_readmem_68k, ADDRESS_SPACE_PROGRAM, 16 )
+static ADDRESS_MAP_START( driversnd_68k_map, ADDRESS_SPACE_PROGRAM, 16 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x000000, 0x01ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0xff0000, 0xff0fff) AM_READ(hdsnd68k_data_r)
-	AM_RANGE(0xff1000, 0xff1fff) AM_READ(hdsnd68k_switches_r)
-	AM_RANGE(0xff2000, 0xff2fff) AM_READ(hdsnd68k_320port_r)
-	AM_RANGE(0xff3000, 0xff3fff) AM_READ(hdsnd68k_status_r)
-	AM_RANGE(0xff4000, 0xff5fff) AM_READ(hdsnd68k_320ram_r)
-	AM_RANGE(0xff6000, 0xff7fff) AM_READ(hdsnd68k_320ports_r)
-	AM_RANGE(0xff8000, 0xffbfff) AM_READ(hdsnd68k_320com_r)
-	AM_RANGE(0xffc000, 0xffffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x000000, 0x01ffff) AM_ROM
+	AM_RANGE(0xff0000, 0xff0fff) AM_READWRITE(hdsnd68k_data_r, hdsnd68k_data_w)
+	AM_RANGE(0xff1000, 0xff1fff) AM_READWRITE(hdsnd68k_switches_r, hdsnd68k_latches_w)
+	AM_RANGE(0xff2000, 0xff2fff) AM_READWRITE(hdsnd68k_320port_r, hdsnd68k_speech_w)
+	AM_RANGE(0xff3000, 0xff3fff) AM_READWRITE(hdsnd68k_status_r, hdsnd68k_irqclr_w)
+	AM_RANGE(0xff4000, 0xff5fff) AM_READWRITE(hdsnd68k_320ram_r, hdsnd68k_320ram_w)
+	AM_RANGE(0xff6000, 0xff7fff) AM_READWRITE(hdsnd68k_320ports_r, hdsnd68k_320ports_w)
+	AM_RANGE(0xff8000, 0xffbfff) AM_READWRITE(hdsnd68k_320com_r, hdsnd68k_320com_w)
+	AM_RANGE(0xffc000, 0xffffff) AM_RAM
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( driversnd_writemem_68k, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x01ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0xff0000, 0xff0fff) AM_WRITE(hdsnd68k_data_w)
-	AM_RANGE(0xff1000, 0xff1fff) AM_WRITE(hdsnd68k_latches_w)
-	AM_RANGE(0xff2000, 0xff2fff) AM_WRITE(hdsnd68k_speech_w)
-	AM_RANGE(0xff3000, 0xff3fff) AM_WRITE(hdsnd68k_irqclr_w)
-	AM_RANGE(0xff4000, 0xff5fff) AM_WRITE(hdsnd68k_320ram_w)
-	AM_RANGE(0xff6000, 0xff7fff) AM_WRITE(hdsnd68k_320ports_w)
-	AM_RANGE(0xff8000, 0xffbfff) AM_WRITE(hdsnd68k_320com_w)
-	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(MWA16_RAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( driversnd_read_program_dsp, ADDRESS_SPACE_PROGRAM, 16 )
+static ADDRESS_MAP_START( driversnd_dsp_program_map, ADDRESS_SPACE_PROGRAM, 16 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x000, 0xfff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x000, 0xfff) AM_RAM AM_BASE(&hdsnddsp_ram)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( driversnd_write_program_dsp, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000, 0xfff) AM_WRITE(MWA16_RAM) AM_BASE(&hdsnddsp_ram)
-ADDRESS_MAP_END
+	/* $000 - 08F  TMS32010 Internal Data RAM in Data Address Space */
 
 
-static ADDRESS_MAP_START( driversnd_read_data_dsp, ADDRESS_SPACE_DATA, 16 )
-	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x000, 0x0ff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( driversnd_write_data_dsp, ADDRESS_SPACE_DATA, 16 )
-	AM_RANGE(0x000, 0x0ff) AM_WRITE(MWA16_RAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( driversnd_read_io_dsp, ADDRESS_SPACE_IO, 16 )
-	AM_RANGE(0, 0) AM_READ(hdsnddsp_rom_r)
+static ADDRESS_MAP_START( driversnd_dsp_io_map, ADDRESS_SPACE_IO, 16 )
+	AM_RANGE(0, 0) AM_READWRITE(hdsnddsp_rom_r, hdsnddsp_dac_w)
 	AM_RANGE(1, 1) AM_READ(hdsnddsp_comram_r)
 	AM_RANGE(2, 2) AM_READ(hdsnddsp_compare_r)
-	AM_RANGE(TMS32010_BIO, TMS32010_BIO) AM_READ(hdsnddsp_get_bio)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( driversnd_write_io_dsp, ADDRESS_SPACE_IO, 16 )
-	AM_RANGE(0, 0) AM_WRITE(hdsnddsp_dac_w)
-	AM_RANGE(1, 2) AM_WRITE(MWA16_NOP)
+	AM_RANGE(1, 2) AM_WRITENOP
 	AM_RANGE(3, 3) AM_WRITE(hdsnddsp_comport_w)
 	AM_RANGE(4, 4) AM_WRITE(hdsnddsp_mute_w)
 	AM_RANGE(5, 5) AM_WRITE(hdsnddsp_gen68kirq_w)
 	AM_RANGE(6, 7) AM_WRITE(hdsnddsp_soundaddr_w)
+	AM_RANGE(TMS32010_BIO, TMS32010_BIO) AM_READ(hdsnddsp_get_bio)
 ADDRESS_MAP_END
 
 
@@ -1072,12 +900,12 @@ static MACHINE_DRIVER_START( driver_nomsp )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68010, 32000000/4)
-	MDRV_CPU_PROGRAM_MAP(driver_readmem_68k,driver_writemem_68k)
+	MDRV_CPU_PROGRAM_MAP(driver_68k_map,0)
 	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
 	MDRV_CPU_PERIODIC_INT(hd68k_irq_gen,244)
 
 	MDRV_CPU_ADD_TAG("gsp", TMS34010, 48000000/TMS34010_CLOCK_DIVIDER)
-	MDRV_CPU_PROGRAM_MAP(driver_readmem_gsp,driver_writemem_gsp)
+	MDRV_CPU_PROGRAM_MAP(driver_gsp_map,0)
 	MDRV_CPU_CONFIG(gsp_config)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1105,7 +933,7 @@ static MACHINE_DRIVER_START( driver_msp )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("msp", TMS34010, 50000000/TMS34010_CLOCK_DIVIDER)
-	MDRV_CPU_PROGRAM_MAP(driver_readmem_msp,driver_writemem_msp)
+	MDRV_CPU_PROGRAM_MAP(driver_msp_map,0)
 	MDRV_CPU_CONFIG(msp_config)
 
 	/* video hardware */
@@ -1119,10 +947,10 @@ static MACHINE_DRIVER_START( multisync_nomsp )
 
 	/* basic machine hardware */
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(multisync_readmem_68k,multisync_writemem_68k)
+	MDRV_CPU_PROGRAM_MAP(multisync_68k_map,0)
 
 	MDRV_CPU_MODIFY("gsp")
-	MDRV_CPU_PROGRAM_MAP(multisync_readmem_gsp,multisync_writemem_gsp)
+	MDRV_CPU_PROGRAM_MAP(multisync_gsp_map,0)
 
 	MDRV_VBLANK_DURATION((1000000 * (307 - 288)) / (60 * 307))
 
@@ -1138,7 +966,7 @@ static MACHINE_DRIVER_START( multisync_msp )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("msp", TMS34010, 50000000/TMS34010_CLOCK_DIVIDER)
-	MDRV_CPU_PROGRAM_MAP(driver_readmem_msp,driver_writemem_msp)
+	MDRV_CPU_PROGRAM_MAP(driver_msp_map,0)
 	MDRV_CPU_CONFIG(msp_config)
 MACHINE_DRIVER_END
 
@@ -1149,10 +977,10 @@ static MACHINE_DRIVER_START( multisync2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(multisync2_readmem_68k,multisync2_writemem_68k)
+	MDRV_CPU_PROGRAM_MAP(multisync2_68k_map,0)
 
 	MDRV_CPU_MODIFY("gsp")
-	MDRV_CPU_PROGRAM_MAP(multisync2_readmem_gsp,multisync2_writemem_gsp)
+	MDRV_CPU_PROGRAM_MAP(multisync2_gsp_map,0)
 MACHINE_DRIVER_END
 
 
@@ -1168,8 +996,8 @@ static MACHINE_DRIVER_START( adsp )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("adsp", ADSP2100, 8000000)
-	MDRV_CPU_PROGRAM_MAP(adsp_program_readmem,adsp_program_writemem)
-	MDRV_CPU_DATA_MAP(adsp_data_readmem,adsp_data_writemem)
+	MDRV_CPU_PROGRAM_MAP(adsp_program_map,0)
+	MDRV_CPU_DATA_MAP(adsp_data_map,0)
 MACHINE_DRIVER_END
 
 
@@ -1178,9 +1006,9 @@ static MACHINE_DRIVER_START( ds3 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("adsp", ADSP2101, 12000000)
-	MDRV_CPU_PROGRAM_MAP(ds3_program_readmem,ds3_program_writemem)
-	MDRV_CPU_DATA_MAP(ds3_data_readmem,ds3_data_writemem)
-	
+	MDRV_CPU_PROGRAM_MAP(ds3_program_map,0)
+	MDRV_CPU_DATA_MAP(ds3_data_map,0)
+
 	MDRV_INTERLEAVE(1000)
 MACHINE_DRIVER_END
 
@@ -1190,16 +1018,16 @@ static MACHINE_DRIVER_START( ds4 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("adsp", ADSP2101, 12000000)
-	MDRV_CPU_PROGRAM_MAP(ds3_program_readmem,ds3_program_writemem)
-	MDRV_CPU_DATA_MAP(ds3_data_readmem,ds3_data_writemem)
+	MDRV_CPU_PROGRAM_MAP(ds3_program_map,0)
+	MDRV_CPU_DATA_MAP(ds3_data_map,0)
 
 //	MDRV_CPU_ADD_TAG("sound", ADSP2105, 10000000)
 //	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-//	MDRV_CPU_PROGRAM_MAP(ds3snd_readmem,ds3snd_writemem)
+//	MDRV_CPU_PROGRAM_MAP(ds3snd_program_map,0)
 
 //	MDRV_CPU_ADD_TAG("sounddsp", ADSP2105, 10000000)
 //	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-//	MDRV_CPU_PROGRAM_MAP(ds3snd_readmem,ds3snd_writemem)
+//	MDRV_CPU_PROGRAM_MAP(ds3snd_program_map,0)
 
 	MDRV_SOUND_ADD(DAC, dac2_interface)
 MACHINE_DRIVER_END
@@ -1218,7 +1046,7 @@ static MACHINE_DRIVER_START( dsk )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("dsp32", DSP32C, 40000000)
 	MDRV_CPU_CONFIG(dsp32c_config)
-	MDRV_CPU_PROGRAM_MAP(dsk_readmem_dsp32,dsk_writemem_dsp32)
+	MDRV_CPU_PROGRAM_MAP(dsk_dsp32_map,0)
 MACHINE_DRIVER_END
 
 
@@ -1228,7 +1056,7 @@ static MACHINE_DRIVER_START( dsk2 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("dsp32", DSP32C, 40000000)
 	MDRV_CPU_CONFIG(dsp32c_config)
-	MDRV_CPU_PROGRAM_MAP(dsk2_readmem_dsp32,dsk2_writemem_dsp32)
+	MDRV_CPU_PROGRAM_MAP(dsk2_dsp32_map,0)
 MACHINE_DRIVER_END
 
 
@@ -1244,13 +1072,13 @@ static MACHINE_DRIVER_START( driversnd )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("sound", M68000, 16000000/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_PROGRAM_MAP(driversnd_readmem_68k,driversnd_writemem_68k)
+	MDRV_CPU_PROGRAM_MAP(driversnd_68k_map,0)
 
-	MDRV_CPU_ADD_TAG("sounddsp", TMS32010, 20000000)
+	MDRV_CPU_ADD_TAG("sounddsp", TMS32010, 20000000/TMS32010_CLOCK_DIVIDER)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_PROGRAM_MAP(driversnd_read_program_dsp,driversnd_write_program_dsp)
-	MDRV_CPU_DATA_MAP(driversnd_read_data_dsp,driversnd_write_data_dsp)
-	MDRV_CPU_IO_MAP(driversnd_read_io_dsp,driversnd_write_io_dsp)
+	MDRV_CPU_PROGRAM_MAP(driversnd_dsp_program_map,0)
+	/* Data Map is internal to the CPU */
+	MDRV_CPU_IO_MAP(driversnd_dsp_io_map,0)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(DAC, dac_interface)
@@ -3980,7 +3808,7 @@ static void steeltal_init_common(offs_t ds3_transfer_pc, int proto_sloop)
 	/* set up adsp speedup handlers */
 	memory_install_read16_handler(hdcpu_adsp, ADDRESS_SPACE_DATA, 0x1fff, 0x1fff, 0, hdadsp_speedup_r);
 	memory_install_read16_handler(hdcpu_adsp, ADDRESS_SPACE_DATA, 0x1f99, 0x1f99, 0, hdds3_speedup_r);
-	hdds3_speedup_addr = (data16_t *)memory_get_read_ptr(hdcpu_adsp, ADDRESS_SPACE_DATA, 0x1f99);
+	hdds3_speedup_addr = &hdadsp_data_memory[0x1f99];
 	hdds3_speedup_pc = 0xff;
 	hdds3_transfer_pc = ds3_transfer_pc;
 }
@@ -4010,7 +3838,7 @@ static DRIVER_INIT( hdrivair )
 	/* set up adsp speedup handlers */
 	memory_install_read16_handler(hdcpu_adsp, ADDRESS_SPACE_DATA, 0x1fff, 0x1fff, 0, hdadsp_speedup_r);
 	memory_install_read16_handler(hdcpu_adsp, ADDRESS_SPACE_DATA, 0x1f99, 0x1f99, 0, hdds3_speedup_r);
-	hdds3_speedup_addr = (data16_t *)memory_get_read_ptr(hdcpu_adsp, ADDRESS_SPACE_DATA, 0x1f99);
+	hdds3_speedup_addr = &hdadsp_data_memory[0x1f99];
 	hdds3_speedup_pc = 0x2da;
 	hdds3_transfer_pc = 0x407b8;
 }
@@ -4035,7 +3863,7 @@ static DRIVER_INIT( hdrivaip )
 	/* set up adsp speedup handlers */
 	memory_install_read16_handler(hdcpu_adsp, ADDRESS_SPACE_DATA, 0x1fff, 0x1fff, 0, hdadsp_speedup_r);
 	memory_install_read16_handler(hdcpu_adsp, ADDRESS_SPACE_DATA, 0x1f9a, 0x1f9a, 0, hdds3_speedup_r);
-	hdds3_speedup_addr = (data16_t *)memory_get_read_ptr(hdcpu_adsp, ADDRESS_SPACE_DATA, 0x1f9a);
+	hdds3_speedup_addr = &hdadsp_data_memory[0x1f9a];
 	hdds3_speedup_pc = 0x2d9;
 	hdds3_transfer_pc = 0X407da;
 }

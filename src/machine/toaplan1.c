@@ -14,12 +14,12 @@
 
 static int toaplan1_coin_count; /* coin count increments on startup ? , so dont count it */
 static int toaplan1_intenable;
+static int vimana_credits;
+static int vimana_latch;
+static int demonwld_dsp_on;
 static int demonwld_dsp_BIO;
-
 static int dsp_execute;							/* Demon world */
 static unsigned int dsp_addr_w, main_ram_seg;	/* Demon world */
-static int credits;		/* Vimana */
-static int latch;		/* Vimana */
 
 int toaplan1_unk_reset_port;
 
@@ -42,15 +42,28 @@ WRITE16_HANDLER( toaplan1_intenable_w )
 }
 
 
+WRITE16_HANDLER( demonwld_dsp_addrsel_w )
+{
+	/* This sets the main CPU RAM address the DSP should */
+	/*	read/write, via the DSP IO port 0 */
+	/* Top three bits of data need to be shifted left 9 places */
+	/*	to select which memory bank from main CPU address */
+	/*	space to use */
+	/* Lower thirteen bits of this data is shifted left one position */
+	/*	to move it to an even address word boundary */
+
+	main_ram_seg = ((data & 0xe000) << 9);
+	dsp_addr_w   = ((data & 0x1fff) << 1);
+	logerror("DSP PC:%04x IO write %04x (%08x) at port 0\n",activecpu_get_previouspc(),data,main_ram_seg + dsp_addr_w);
+}
+
 READ16_HANDLER( demonwld_dsp_r )
 {
 	/* DSP can read data from main CPU RAM via DSP IO port 1 */
 
-	unsigned int input_data = 0;
-
+	data16_t input_data = 0;
 	switch (main_ram_seg) {
 		case 0xc00000:	cpuintrf_push_context(0); input_data = program_read_word(main_ram_seg + dsp_addr_w); cpuintrf_pop_context(); break;
-
 		default:		logerror("DSP PC:%04x Warning !!! IO reading from %08x (port 1)\n",activecpu_get_previouspc(),main_ram_seg + dsp_addr_w);
 	}
 	logerror("DSP PC:%04x IO read %04x at %08x (port 1)\n",activecpu_get_previouspc(),input_data,main_ram_seg + dsp_addr_w);
@@ -59,49 +72,65 @@ READ16_HANDLER( demonwld_dsp_r )
 
 WRITE16_HANDLER( demonwld_dsp_w )
 {
-	if (offset == 0) {
-		/* This sets the main CPU RAM address the DSP should */
-		/*		read/write, via the DSP IO port 0 */
-		/* Top three bits of data need to be shifted left 9 places */
-		/*		to select which memory bank from main CPU address */
-		/*		space to use */
-		/* Lower thirteen bits of this data is shifted left one position */
-		/*		to move it to an even address word boundary */
+	/* Data written to main CPU RAM via DSP IO port 1 */
+	dsp_execute = 0;
+	switch (main_ram_seg) {
+		case 0xc00000:	if ((dsp_addr_w < 3) && (data == 0)) dsp_execute = 1;
+						cpuintrf_push_context(0);
+						program_write_word(main_ram_seg + dsp_addr_w, data);
+						cpuintrf_pop_context(); break;
+		default:		logerror("DSP PC:%04x Warning !!! IO writing to %08x (port 1)\n",activecpu_get_previouspc(),main_ram_seg + dsp_addr_w);
+	}
+	logerror("DSP PC:%04x IO write %04x at %08x (port 1)\n",activecpu_get_previouspc(),data,main_ram_seg + dsp_addr_w);
+}
 
-		dsp_addr_w = ((data & 0x1fff) << 1);
-		main_ram_seg = ((data & 0xe000) << 9);
-		logerror("DSP PC:%04x IO write %04x (%08x) at port 0\n",activecpu_get_previouspc(),data,main_ram_seg + dsp_addr_w);
+WRITE16_HANDLER( demonwld_dsp_bio_w )
+{
+	/* data 0xffff	means inhibit BIO line to DSP and enable */
+	/*				communication to main processor */
+	/*				Actually only DSP data bit 15 controls this */
+	/* data 0x0000	means set DSP BIO line active and disable */
+	/*				communication to main processor*/
+	logerror("DSP PC:%04x IO write %04x at port 3\n",activecpu_get_previouspc(),data);
+	if (data & 0x8000) {
+		demonwld_dsp_BIO = CLEAR_LINE;
 	}
-	if (offset == 1) {
-		/* Data written to main CPU RAM via DSP IO port 1*/
+	if (data == 0) {
+		if (dsp_execute) {
+			logerror("Turning 68000 on\n");
+			timer_suspendcpu(0, CLEAR, SUSPEND_REASON_HALT);
+			dsp_execute = 0;
+		}
+		demonwld_dsp_BIO = ASSERT_LINE;
+	}
+}
 
-		dsp_execute = 0;
-		switch (main_ram_seg) {
-			case 0xc00000:	cpuintrf_push_context(0); program_write_word(main_ram_seg + dsp_addr_w, data); cpuintrf_pop_context();
-							if ((dsp_addr_w < 3) && (data == 0)) dsp_execute = 1; break;
-			default:		logerror("DSP PC:%04x Warning !!! IO writing to %08x (port 1)\n",activecpu_get_previouspc(),main_ram_seg + dsp_addr_w);
-		}
-		logerror("DSP PC:%04x IO write %04x at %08x (port 1)\n",activecpu_get_previouspc(),data,main_ram_seg + dsp_addr_w);
+READ16_HANDLER ( demonwld_BIO_r )
+{
+	return demonwld_dsp_BIO;
+}
+
+
+static void demonwld_dsp(int enable)
+{
+	demonwld_dsp_on = enable;
+	if (enable)
+	{
+		logerror("Turning DSP on and 68000 off\n");
+		timer_suspendcpu(2, CLEAR, SUSPEND_REASON_HALT);
+		cpu_set_irq_line(2, 0, ASSERT_LINE); /* TMS32010 INT */
+		timer_suspendcpu(0, ASSERT, SUSPEND_REASON_HALT);
 	}
-	if (offset == 3) {
-		/* data 0xffff	means inhibit BIO line to DSP and enable  */
-		/*				communication to main processor */
-		/*				Actually only DSP data bit 15 controls this */
-		/* data 0x0000	means set DSP BIO line active and disable */
-		/*				communication to main processor*/
-		logerror("DSP PC:%04x IO write %04x at port 3\n",activecpu_get_previouspc(),data);
-		if (data & 0x8000) {
-			demonwld_dsp_BIO = CLEAR_LINE;
-		}
-		if (data == 0) {
-			if (dsp_execute) {
-				logerror("Turning 68000 on\n");
-				timer_suspendcpu(0, CLEAR, SUSPEND_REASON_HALT);
-				dsp_execute = 0;
-			}
-			demonwld_dsp_BIO = ASSERT_LINE;
-		}
+	else
+	{
+		logerror("Turning DSP off\n");
+		cpu_set_irq_line(2, 0, CLEAR_LINE); /* TMS32010 INT */
+		timer_suspendcpu(2, ASSERT, SUSPEND_REASON_HALT);
 	}
+}
+static void demonwld_restore_dsp(void)
+{
+	demonwld_dsp(demonwld_dsp_on);
 }
 
 WRITE16_HANDLER( demonwld_dsp_ctrl_w )
@@ -114,30 +143,15 @@ WRITE16_HANDLER( demonwld_dsp_ctrl_w )
 	{
 		switch (data)
 		{
-			case 0x00: 	/* This means assert the INT line to the DSP */
-						logerror("Turning DSP on and 68000 off\n");
-						timer_suspendcpu(2, CLEAR, SUSPEND_REASON_HALT);
-						cpu_set_irq_line(2, 0, ASSERT_LINE); /* TMS32020 INT */
-						timer_suspendcpu(0, ASSERT, SUSPEND_REASON_HALT);
-						break;
-			case 0x01:	/* This means inhibit the INT line to the DSP */
-						logerror("Turning DSP off\n");
-						cpu_set_irq_line(2, 0, CLEAR_LINE); /* TMS32020 INT */
-						timer_suspendcpu(2, ASSERT, SUSPEND_REASON_HALT);
-						break;
-			default:	logerror("68000:%04x  writing unknown command %08x to %08x\n",activecpu_get_previouspc() ,data ,0xe0000a + offset);
+			case 0x00:	demonwld_dsp(1); break;	/* Enable the INT line to the DSP */
+			case 0x01:	demonwld_dsp(0); break;	/* Inhibit the INT line to the DSP */
+			default:	logerror("68000:%04x  Writing unknown command %08x to %08x\n",activecpu_get_previouspc() ,data ,0xe0000a + offset); break;
 		}
 	}
 	else
 	{
-		logerror("68000:%04x  writing unknown command %08x to %08x\n",activecpu_get_previouspc() ,data ,0xe0000a + offset);
+		logerror("68000:%04x  Writing unknown command %08x to %08x\n",activecpu_get_previouspc() ,data ,0xe0000a + offset);
 	}
-}
-
-
-READ16_HANDLER ( demonwld_BIO_r )
-{
-	return demonwld_dsp_BIO;
 }
 
 
@@ -153,20 +167,17 @@ READ16_HANDLER( vimana_input_port_5_word_r )
 	int data, p;
 
 	p = input_port_5_word_r(0,0);
-
-	latch ^= p;
-	data = (latch & p );
+	vimana_latch ^= p;
+	data = (vimana_latch & p );
 
 	/* simulate the mcu keeping track of credits */
 	/* latch so it doesn't add more than one */
 	/* credit per keypress */
-
 	if (data & 0x18)
 	{
-		credits++ ;
+		vimana_credits++ ;
 	}
-
-	latch = p;
+	vimana_latch = p;
 
 	return p & 0xffff;
 }
@@ -178,17 +189,18 @@ READ16_HANDLER( vimana_mcu_r )
 	{
 		case 0:  data = 0xff; break;
 		case 1:  data = 0; break;
-		case 2:  data = credits; break;
+		case 2:  data = vimana_credits; break;
 	}
 	return data & 0xff;
 }
+
 WRITE16_HANDLER( vimana_mcu_w )
 {
 	switch (offset)
 	{
 		case 0:  break;
 		case 1:  break;
-		case 2:  if (ACCESSING_LSB) credits = data & 0xff; break;
+		case 2:  if (ACCESSING_LSB) vimana_credits = data & 0xff; break;
 	}
 }
 
@@ -205,6 +217,7 @@ WRITE16_HANDLER( toaplan1_shared_w )
 	}
 }
 
+
 WRITE16_HANDLER( toaplan1_reset_sound )
 {
 	/* Reset the secondary CPU and sound chip during soft resets */
@@ -219,41 +232,6 @@ WRITE16_HANDLER( toaplan1_reset_sound )
 	}
 }
 
-MACHINE_INIT( toaplan1 )
-{
-	toaplan1_intenable = 0;
-	toaplan1_coin_count = 0;
-	toaplan1_unk_reset_port = 0;
-	coin_lockout_global_w(0);
-	state_save_register_INT32("toaplan1", 0, "Int_enable", &toaplan1_intenable, 1);
-	state_save_register_INT32("toaplan1", 0, "Coin_counter", &toaplan1_coin_count, 1);
-}
-
-MACHINE_INIT( zerozone )	/* Hack for ZeroWing and OutZone. See the video driver */
-{
-	machine_init_toaplan1();
-	toaplan1_unk_reset_port = 1;
-}
-
-MACHINE_INIT( demonwld )
-{
-	dsp_addr_w = 0;
-	dsp_execute = 0;
-	main_ram_seg = 0;
-	state_save_register_INT32("demonwld", 0, "DSP_execute", &dsp_execute, 1);
-	state_save_register_UINT32("demonwld", 0, "DSP_out_addr", &dsp_addr_w, 1);
-	state_save_register_UINT32("demonwld", 0, "DSP_to_68K_RAM_bank", &main_ram_seg, 1);
-	machine_init_toaplan1();
-}
-
-MACHINE_INIT( vimana )
-{
-	credits = 0;
-	latch = 0;
-	state_save_register_INT32("vimana", 0, "Credits count", &credits, 1);
-	state_save_register_INT32("vimana", 0, "MCU_latch", &latch, 1);
-	machine_init_toaplan1();
-}
 
 WRITE_HANDLER( rallybik_coin_w )
 {
@@ -310,4 +288,54 @@ WRITE16_HANDLER( samesame_coin_w )
 	{
 		logerror("PC:%04x  Writing unknown MSB data (%04x) to coin count/lockout port\n",activecpu_get_previouspc(),data);
 	}
+}
+
+
+MACHINE_INIT( toaplan1 )
+{
+	toaplan1_intenable = 0;
+	toaplan1_coin_count = 0;
+	toaplan1_unk_reset_port = 0;
+	coin_lockout_global_w(0);
+}
+void toaplan1_driver_savestate(void)
+{
+	state_save_register_INT32("toaplan1", 0, "Int_enable", &toaplan1_intenable, 1);
+	state_save_register_INT32("toaplan1", 0, "Coin_counter", &toaplan1_coin_count, 1);
+	state_save_register_INT32("outzwing", 0, "Unk_Reset", &toaplan1_unk_reset_port, 1);
+}
+
+MACHINE_INIT( zerozone )	/* Hack for ZeroWing and OutZone. See the video driver */
+{
+	machine_init_toaplan1();
+	toaplan1_unk_reset_port = 1;
+}
+
+MACHINE_INIT( demonwld )
+{
+	machine_init_toaplan1();
+	dsp_addr_w = 0;
+	main_ram_seg = 0;
+	dsp_execute = 0;
+}
+void demonwld_driver_savestate(void)
+{
+	state_save_register_INT32( "demonwld", 0, "DSP_Running", &demonwld_dsp_on, 1);
+	state_save_register_UINT32("demonwld", 0, "DSP_out_addr", &dsp_addr_w, 1);
+	state_save_register_UINT32("demonwld", 0, "DSP_to_68K_RAM_bank", &main_ram_seg, 1);
+	state_save_register_INT32( "demonwld", 0, "DSP_BIO_pin", &demonwld_dsp_BIO, 1);
+	state_save_register_INT32( "demonwld", 0, "DSP_execute", &dsp_execute, 1);
+	state_save_register_func_postload(demonwld_restore_dsp);
+}
+
+MACHINE_INIT( vimana )
+{
+	machine_init_toaplan1();
+	vimana_credits = 0;
+	vimana_latch = 0;
+}
+void vimana_driver_savestate(void)
+{
+	state_save_register_INT32("vimana", 0, "Credits count", &vimana_credits, 1);
+	state_save_register_INT32("vimana", 0, "MCU_latch", &vimana_latch, 1);
 }

@@ -1079,7 +1079,7 @@ static MACHINE_INIT( outrun ){
 	if (!strcmp(Machine->gamedrv->name,"outrun")) sys16_patch_code( 0x55ed, 0x00);
 	if (!strcmp(Machine->gamedrv->name,"outruna")) sys16_patch_code( 0x5661, 0x00);
 	if (!strcmp(Machine->gamedrv->name,"outrunb")) sys16_patch_code( 0x5661, 0x00);
-	if (!strcmp(Machine->gamedrv->name,"outrunp")) sys16_patch_code( 0x559f, 0x00);
+	if (!strcmp(Machine->gamedrv->name,"outrundx")) sys16_patch_code( 0x559f, 0x00);
 
      cpu_set_m68k_reset(0, outrun_reset);
 

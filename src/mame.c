@@ -1797,6 +1797,7 @@ static int validitychecks(void)
 				region_length[j] = 0;
 			}
 
+			/* consistency checks on ROMs */
 			while (!ROMENTRY_ISEND(romp))
 			{
 				const char *c;
@@ -1858,11 +1859,71 @@ static int validitychecks(void)
 			}
 
 
+			/* consistency checks on CPUs */
 			for (cpu = 0;cpu < MAX_CPU;cpu++)
 			{
 				if (drv.cpu[cpu].cpu_type)
 				{
 					int space,mapnum;
+					extern void dummy_get_info(UINT32 state, union cpuinfo *info);
+
+					/* checks to see if this driver is using a dummy CPU */
+					if (cputype_get_interface(drv.cpu[cpu].cpu_type)->get_info == dummy_get_info)
+					{
+						printf("%s: %s uses non-present CPU\n",drivers[i]->source_file,drivers[i]->name);
+						error = 1;
+					}
+					else
+					{
+#ifdef MESS
+						/* check to make sure that this CPU core has the necessities filled out */
+						const struct cpu_interface *cpuintrf;
+						union cpuinfo info;
+						const INT8 *reg;
+						int incomplete_cpu_core = 0;
+						static const int required_info[] =
+						{
+							CPUINFO_STR_NAME, CPUINFO_STR_CORE_FAMILY, CPUINFO_STR_CORE_FILE,
+							CPUINFO_PTR_REGISTER_LAYOUT
+						};
+
+						cpuintrf = cputype_get_interface(drv.cpu[cpu].cpu_type);
+						for (j = 0; j < sizeof(required_info) / sizeof(required_info[0]); j++)
+						{
+							memset(&info, 0, sizeof(info));
+							cpuintrf->get_info(required_info[j], &info);
+							if (!info.s)
+								incomplete_cpu_core = 1;
+						}
+
+						memset(&info, 0, sizeof(info));
+						cpuintrf->get_info(CPUINFO_PTR_REGISTER_LAYOUT, &info);
+						reg = (const INT8 *) info.p;
+						if (reg)
+						{
+							for (j = 0; reg[j]; j++)
+							{
+								if (reg[j] != -1)
+								{
+									memset(&info, 0, sizeof(info));
+									cpuintrf->get_info(CPUINFO_STR_REGISTER + reg[j], &info);
+									if (!info.s)
+										incomplete_cpu_core = 1;
+								}
+							}
+						}
+
+						if (incomplete_cpu_core)
+						{
+							memset(&info, 0, sizeof(info));
+							cpuintrf->get_info(CPUINFO_STR_NAME, &info);
+							printf("%s: %s uses incomplete CPU core %s\n",drivers[i]->source_file, drivers[i]->name,
+								info.s);
+							error = 1;
+						}
+#endif /* MESS */
+					}
+
 					for (space = 0;space < ADDRESS_SPACES;space++)
 						for (mapnum = 0;mapnum < 2;mapnum++)
 						{
@@ -1930,6 +1991,7 @@ static int validitychecks(void)
 			}
 
 
+			/* consistency chekcs on GfxDecodeInfo */
 			if (drv.gfxdecodeinfo)
 			{
 				for (j = 0;j < MAX_GFX_ELEMENTS && drv.gfxdecodeinfo[j].memory_region != -1;j++)

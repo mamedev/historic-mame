@@ -379,3 +379,25 @@ DRIVER_INIT(bakubaku)
 
 	init_ic13();
 }
+
+static READ32_HANDLER( groovef_hack1_r )
+{
+	if(activecpu_get_pc() == 0x6005e7e) stv_workram_h[0x0fffcc/4] = 0x00000000;
+//	usrintf_showmessage("1 %08x",activecpu_get_pc());
+	return stv_workram_h[0x0fffcc/4];
+}
+
+static READ32_HANDLER( groovef_hack2_r )
+{
+	if(activecpu_get_pc() == 0x6005e88) stv_workram_h[0x0ca6cc/4] = 0x00000000;
+//	usrintf_showmessage("2 %08x",activecpu_get_pc());
+	return stv_workram_h[0x0ca6cc/4];
+}
+
+DRIVER_INIT( groovef )
+{
+	install_mem_read32_handler(0, 0x60ca6cc, 0x60ca6cf, groovef_hack2_r );
+	install_mem_read32_handler(0, 0x60fffcc, 0x60fffcf, groovef_hack1_r );
+
+	init_stv();
+}

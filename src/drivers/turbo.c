@@ -945,6 +945,45 @@ ROM_START( buckrogn )
 ROM_END
 
 
+ROM_START( zoom909 )
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 ) /* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "epr-5217b.3", 0x0000, 0x4000, CRC(1b56e7dd) SHA1(ccf638c318ebce754ac9628271d2064e05ced35c) )	/* encrypted */
+	ROM_LOAD( "epr-5218b.4", 0x4000, 0x4000, CRC(77dfd911) SHA1(cc1d4aac863b2d6b52eff7de2b8233be21aac3c9) )	/* encrypted */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for code */
+	ROM_LOAD( "5200.66", 0x0000, 0x1000, CRC(0d58b154) SHA1(9f3951eb7ea1fa9ff914738462e4b4f755d60802) )
+
+	ROM_REGION( 0x40000, REGION_GFX1, 0 ) /* sprite data */
+	ROM_LOAD( "5216.100",    0x00000, 0x2000, CRC(8155bd73) SHA1(b6814f03eafe16457655598685b4827456b86335) )	/* level 0 */
+	ROM_LOAD( "5213.84",     0x08000, 0x2000, CRC(fd78dda4) SHA1(4328b5782cbe692765eac43a8eba40bdf2e41921) )	/* level 1 */
+	ROM_LOAD( "epr-5231.68", 0x10000, 0x4000, CRC(f00385fc) SHA1(88f64159fdd9b0b8b6a26e7c52da74189f529eb4) )	/* level 2 */
+	ROM_LOAD( "epr-5207.52", 0x18000, 0x4000, CRC(644f29d8) SHA1(301b94a522bf7a79195d96ca7a4c2ec6f63d45d2) )	/* level 3 */
+	ROM_LOAD( "epr-5206.43", 0x20000, 0x4000, CRC(049dc998) SHA1(8184a92895b04ea140f073c2345284c23fba7fd4) )	/* level 4 */
+	ROM_LOAD( "epr-5209.59", 0x28000, 0x4000, CRC(0ff9ff71) SHA1(9038949b657269a3b3287ad526c0e14ebe87525a) )	/* level 5 */
+	ROM_LOAD( "5208.58",     0x2c000, 0x2000, CRC(d181fed2) SHA1(fd46e609b7e04d0661c84ad0faa616d75b8ba89f) )
+	ROM_LOAD( "epr-5212.75", 0x30000, 0x4000, CRC(9359ec4f) SHA1(4783527b9961df259e7fbbf8db0b599882dd1207) )	/* level 6 */
+	ROM_LOAD( "epr-5211.74", 0x34000, 0x2000, CRC(d181fed2) SHA1(fd46e609b7e04d0661c84ad0faa616d75b8ba89f) )
+	ROM_LOAD( "epr-5215.91", 0x38000, 0x4000, CRC(f5dacc53) SHA1(fe536d16ccb249c26a046f60dc804f5d3be430dc) )	/* level 7 */
+	ROM_LOAD( "epr-5214.90", 0x3c000, 0x2000, CRC(68306dd6) SHA1(63644e38b36512d93464280d73344c97d9ec1f78) )
+
+	ROM_REGION( 0x01000, REGION_GFX2, 0 )	/* foreground data */
+	ROM_LOAD( "5201.102",  0x0000, 0x0800, CRC(7f21b0a4) SHA1(b6d784031ffecb36863ae1d81eeaaf8f76ab83df) )
+	ROM_LOAD( "5202.103",  0x0800, 0x0800, CRC(43f3e5a7) SHA1(2714943b6720311c5d226db3b6fe95d072677793) )
+
+	ROM_REGION( 0x2000, REGION_GFX3, 0 )	/* background color data */
+	ROM_LOAD( "5203.91", 0x0000, 0x2000, CRC(631f5b65) SHA1(ce8b23cf97f7e08a13f426964ef140a20a884335) )
+
+	ROM_REGION( 0x0a40, REGION_PROMS, 0 )	/* various PROMs */
+	ROM_LOAD( "pr-5199.95", 0x0000, 0x0400, CRC(f3cd9254) SHA1(5fc5e4137fa260f5463395719449e4a542f1b08c) ) /* sprite colortable */
+	ROM_LOAD( "5198.93",    0x0400, 0x0200, CRC(32e74bc8) SHA1(dd2c812efd7b8f6b31a45e698d6453ea6bec132e) ) /* char colortable */
+	
+	/* unknown */
+	ROM_LOAD( "pr-5194.39", 0x0600, 0x0020, CRC(bc88cced) SHA1(5055362710c0f58823c05fb4c0e0eec638b91e3d) )
+	ROM_LOAD( "pr-5195.53", 0x0620, 0x0020, CRC(181c6d23) SHA1(4749b205cbaa513ee65a644946235d2cfe275648) )
+	ROM_LOAD( "pr-5196.10", 0x0640, 0x0200, CRC(04204bcf) SHA1(5636eb184463ac58fcfd20012d13d14fb0769124) )
+	ROM_LOAD( "pr-5197.78", 0x0840, 0x0200, CRC(a42674af) SHA1(db3590dd0d0f8a85d4ba32ac4ee33f2f4ee4c348) )
+	
+ROM_END
 
 /*************************************
  *
@@ -976,4 +1015,5 @@ GAMEX( 1981, turboa,   turbo,   turbo,    turbo,    decode_turbo,   ROT270,     
 GAMEX( 1981, turbob,   turbo,   turbo,    turbo,    decode_turbo,   ROT270,             "Sega", "Turbo (encrypted set 2)", GAME_NO_COCKTAIL )
 GAME ( 1982, subroc3d, 0,       subroc3d, subroc3d, 0,              ORIENTATION_FLIP_X, "Sega", "Subroc-3D" )
 GAME ( 1982, buckrog,  0,       buckrog,  buckrog,  decode_buckrog, ROT0,               "Sega", "Buck Rogers: Planet of Zoom" )
+GAME ( 1982, zoom909,  buckrog, buckrog,  buckrog,  decode_buckrog, ROT0,               "Sega", "Zoom 909" )
 GAME ( 1982, buckrogn, buckrog, buckrog,  buckrog,  0,              ROT0,               "Sega", "Buck Rogers: Planet of Zoom (not encrypted)" )

@@ -4151,7 +4151,7 @@ INLINE void adcd_im( void )
 	UINT32	r;
 	IMMWORD(t);
 	r = D + t.w.l + (CC & CC_C);
-	CLR_HNZVC;
+	CLR_NZVC;
 	SET_FLAGS16(D,t.w.l,r);
 	D = r;
 }
@@ -4493,11 +4493,13 @@ INLINE void adcb_di( void )
 /* $1099 adcd direct ***** */
 INLINE void adcd_di( void )
 {
-	UINT32 t,r;
-	DIRBYTE(t);
-	r = D + t + (CC & CC_C);
-	CLR_HNZVC;
-	SET_FLAGS16(D,t,r);
+	UINT32	r;
+	PAIR	t;
+	
+	DIRWORD(t);
+	r = D + t.w.l + (CC & CC_C);
+	CLR_NZVC;
+	SET_FLAGS16(D,t.w.l,r);
 	D = r;
 }
 
@@ -4884,12 +4886,13 @@ INLINE void adcb_ix( void )
 /* $10a9 ADCD indexed ***** */
 INLINE void adcd_ix( void )
 {
-	UINT32 t,r;
+	UINT32	r;
+	PAIR	t;
 	fetch_effective_address();
-	t = RM(EAD);
-	r = D + t + (CC & CC_C);
-	CLR_HNZVC;
-	SET_FLAGS16(D,t,r);
+	t.d = RM16(EAD);
+	r = D + t.d + (CC & CC_C);
+	CLR_NZVC;
+	SET_FLAGS16(D,t.d,r);
 	D = r;
 }
 
@@ -5263,11 +5266,12 @@ INLINE void adcb_ex( void )
 /* $10b9 ADCD extended ***** */
 INLINE void adcd_ex( void )
 {
-	UINT32 t,r;
-	EXTBYTE(t);
-	r = D + t + (CC & CC_C);
-	CLR_HNZVC;
-	SET_FLAGS16(D,t,r);
+	UINT32	r;
+	PAIR	t;
+	EXTWORD(t);
+	r = D + t.w.l + (CC & CC_C);
+	CLR_NZVC;
+	SET_FLAGS16(D,t.w.l,r);
 	D = r;
 }
 

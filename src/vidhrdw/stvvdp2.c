@@ -65,6 +65,7 @@ data32_t* stv_vdp2_cram;
 extern void video_update_vdp1(struct mame_bitmap *bitmap, const struct rectangle *cliprect);
 extern int stv_vdp1_start ( void );
 static void stv_vdp2_dynamic_res_change(void);
+static void stv_vdp2_fade_effects(void);
 
 /*
 
@@ -1394,7 +1395,7 @@ static void stv_vdp2_dynamic_res_change(void);
 	#define STV_VDP2_S7PRIN		((STV_VDP2_PRISD & 0x0700) >> 8)
 	#define STV_VDP2_S6PRIN		((STV_VDP2_PRISD & 0x0007) >> 0)
 
-	
+
 /* 1800f8 - PRINA - Priority Number (NBG 0,1)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
@@ -1520,12 +1521,30 @@ static void stv_vdp2_dynamic_res_change(void);
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
 
+	#define STV_VDP2_CLOFEN ((stv_vdp2_regs[0x110/4] >> 16)&0x0000ffff)
+	#define STV_VDP2_N0COEN ((STV_VDP2_CLOFEN & 0x01) >> 0)
+	#define STV_VDP2_N1COEN ((STV_VDP2_CLOFEN & 0x02) >> 1)
+	#define STV_VDP2_N2COEN ((STV_VDP2_CLOFEN & 0x04) >> 2)
+	#define STV_VDP2_N3COEN ((STV_VDP2_CLOFEN & 0x08) >> 3)
+	#define STV_VDP2_R0COEN ((STV_VDP2_CLOFEN & 0x10) >> 4)
+	#define STV_VDP2_BKCOEN ((STV_VDP2_CLOFEN & 0x20) >> 5)
+	#define STV_VDP2_SPCOEN ((STV_VDP2_CLOFEN & 0x40) >> 6)
+
 /* 180112 - Colour Offset Select
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
+
+	#define STV_VDP2_CLOFSL ((stv_vdp2_regs[0x110/4] >> 0)&0x0000ffff)
+	#define STV_VDP2_N0COSL ((STV_VDP2_CLOFSL & 0x01) >> 0)
+	#define STV_VDP2_N1COSL ((STV_VDP2_CLOFSL & 0x02) >> 1)
+	#define STV_VDP2_N2COSL ((STV_VDP2_CLOFSL & 0x04) >> 2)
+	#define STV_VDP2_N3COSL ((STV_VDP2_CLOFSL & 0x08) >> 3)
+	#define STV_VDP2_R0COSL ((STV_VDP2_CLOFSL & 0x10) >> 4)
+	#define STV_VDP2_BKCOSL ((STV_VDP2_CLOFSL & 0x20) >> 5)
+	#define STV_VDP2_SPCOSL ((STV_VDP2_CLOFSL & 0x40) >> 6)
 
 /* 180114 - Colour Offset A (Red)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
@@ -1534,12 +1553,15 @@ static void stv_vdp2_dynamic_res_change(void);
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
 
+	#define STV_VDP2_COAR ((stv_vdp2_regs[0x114/4] >> 16)&0x0000ffff)
+
 /* 180116 - Colour Offset A (Green)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
+	#define STV_VDP2_COAG ((stv_vdp2_regs[0x114/4] >> 0)&0x0000ffff)
 
 /* 180118 - Colour Offset A (Blue)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
@@ -1548,12 +1570,15 @@ static void stv_vdp2_dynamic_res_change(void);
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
 
+	#define STV_VDP2_COAB ((stv_vdp2_regs[0x118/4] >> 16)&0x0000ffff)
+
 /* 18011a - Colour Offset B (Red)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
+	#define STV_VDP2_COBR ((stv_vdp2_regs[0x118/4] >> 0)&0x0000ffff)
 
 /* 18011b - Colour Offset B (Green)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
@@ -1561,6 +1586,7 @@ static void stv_vdp2_dynamic_res_change(void);
        |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
+	#define STV_VDP2_COBG ((stv_vdp2_regs[0x11c/4] >> 16)&0x0000ffff)
 
 /* 18011c - Colour Offset B (Blue)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
@@ -1568,6 +1594,7 @@ static void stv_vdp2_dynamic_res_change(void);
        |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
+	#define STV_VDP2_COBB ((stv_vdp2_regs[0x11c/4] >> 0)&0x0000ffff)
 
 /* Not sure if to use this for the rotating tilemaps as well or just use different draw functions, might add too much bloat */
 static struct stv_vdp2_tilemap_capabilities
@@ -1596,6 +1623,7 @@ static struct stv_vdp2_tilemap_capabilities
 
 	UINT8  plane_size;
 	UINT8  colour_ram_address_offset;
+	UINT8  fade_control;
 
 	UINT8  real_map_offset[16];
 
@@ -1997,7 +2025,7 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 //	if (stv2_current_tilemap.layer_name==3) usrintf_showmessage ("well this is a bit  %08x %08x %08x %08x", stv2_current_tilemap.plane_size, pgtiles_x, pltiles_x, mptiles_x);
 
 	if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
-	
+
 	/* most things we need (or don't need) to work out are now worked out */
 
 	for (y = 0; y<mptiles_y; y++) {
@@ -2082,6 +2110,13 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 
 			pal += stv2_current_tilemap.colour_ram_address_offset<< 4; // bios uses this ..
 
+			/*Enable fading bit*/
+			if(stv2_current_tilemap.fade_control & 1)
+			{
+						 /*Select fading bit*/
+				pal += ((stv2_current_tilemap.fade_control & 2) ? (0x100) : (0x80));
+			}
+
 			if (stv2_current_tilemap.colour_depth != 0)
 			{
 				tilecode = tilecode >> 1;
@@ -2126,14 +2161,16 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 /* DRAW! */
 			if(stv2_current_tilemap.scalex_i != 1 || stv2_current_tilemap.scaley_i != 1)
 			{
+				/*We need the H/V Counters,initialize them*/
+				stv_vdp2_regs[0x8/4] = (((Machine->visible_area.max_x - 1)<<16)&0x3ff0000)|(((Machine->visible_area.max_y - 1)<<0)&0x3ff);
 
 				if(stv2_current_tilemap.scalex_i == 0)
-					scalex = stv2_current_tilemap.scalex_f /** STV_VDP2_HCNT*/ * 0x2c0*2;
+					scalex = stv2_current_tilemap.scalex_f * STV_VDP2_HCNT * 2;
 				else
 					scalex = 0xffff;
 
 				if(stv2_current_tilemap.scaley_i == 0)
-					scaley = stv2_current_tilemap.scaley_f * STV_VDP2_VCNT * 0x100;
+					scaley = stv2_current_tilemap.scaley_f * STV_VDP2_VCNT * 2;
 				else
 					scaley = 0xffff;
 
@@ -2312,6 +2349,7 @@ static void stv_vdp2_draw_NBG0(struct mame_bitmap *bitmap, const struct rectangl
 
 	stv2_current_tilemap.plane_size = STV_VDP2_N0PLSZ;
 	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_N0CAOS;
+	stv2_current_tilemap.fade_control = (STV_VDP2_N0COEN * 1) | (STV_VDP2_N0COSL * 2);
 
 	stv2_current_tilemap.layer_name=0;
 
@@ -2379,6 +2417,7 @@ static void stv_vdp2_draw_NBG1(struct mame_bitmap *bitmap, const struct rectangl
 
 	stv2_current_tilemap.plane_size = STV_VDP2_N1PLSZ;
 	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_N1CAOS;
+	stv2_current_tilemap.fade_control = (STV_VDP2_N1COEN * 1) | (STV_VDP2_N1COSL * 2);
 
 	stv2_current_tilemap.layer_name=1;
 
@@ -2454,6 +2493,7 @@ static void stv_vdp2_draw_NBG2(struct mame_bitmap *bitmap, const struct rectangl
 	stv2_current_tilemap.scaley_f = 0;
 
 	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_N2CAOS;
+	stv2_current_tilemap.fade_control = (STV_VDP2_N2COEN * 1) | (STV_VDP2_N2COSL * 2);
 
 	stv2_current_tilemap.layer_name=2;
 
@@ -2526,6 +2566,7 @@ static void stv_vdp2_draw_NBG3(struct mame_bitmap *bitmap, const struct rectangl
 	stv2_current_tilemap.scaley_f = 0;
 
 	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_N3CAOS;
+	stv2_current_tilemap.fade_control = (STV_VDP2_N3COEN * 1) | (STV_VDP2_N3COSL * 2);
 
 	stv2_current_tilemap.layer_name=3;
 
@@ -2681,7 +2722,7 @@ READ32_HANDLER ( stv_vdp2_regs_r )
 		case 0x8/4:
 		/*H/V Counter Register*/
 								     /*H-Counter                               V-Counter                                         */
-			stv_vdp2_regs[offset] = (((Machine->visible_area.max_x - 1)<<16)&0x3ff)|(((Machine->visible_area.max_y - 1)<<0)&0x3ff);
+			stv_vdp2_regs[offset] = (((Machine->visible_area.max_x - 1)<<16)&0x3ff0000)|(((Machine->visible_area.max_y - 1)<<0)&0x3ff);
 			logerror("CPU #%d PC(%08x) = VDP2: H/V counter read : %08x\n",cpu_getactivecpu(),activecpu_get_pc(),stv_vdp2_regs[offset]);
 		break;
 	}
@@ -2750,6 +2791,55 @@ static void stv_vdp2_dynamic_res_change()
 	set_visible_area(0*8, horz-1,0*8, vert-1);
 }
 
+/*This is for calculating the rgb brightness*/
+/*TODO: Optimize this...*/
+static void	stv_vdp2_fade_effects()
+{
+	/*
+	Note:We have to use temporary storages because palette_get_color must use
+	variables setted with unsigned int8
+	*/
+	INT16 t_r,t_g,t_b;
+	UINT8 r,g,b;
+	int i;
+	//usrintf_showmessage("%04x %04x",STV_VDP2_CLOFEN,STV_VDP2_CLOFSL);
+	for(i=0;i<2048;i++)
+	{
+		/*Fade A*/
+		palette_get_color(i, &r, &g, &b);
+		t_r = (STV_VDP2_COAR & 0x100) ? (r - (0x100 - (STV_VDP2_COAR & 0xff))) : ((STV_VDP2_COAR & 0xff) + r);
+		t_g = (STV_VDP2_COAG & 0x100) ? (g - (0x100 - (STV_VDP2_COAG & 0xff))) : ((STV_VDP2_COAG & 0xff) + g);
+		t_b = (STV_VDP2_COAB & 0x100) ? (b - (0x100 - (STV_VDP2_COAB & 0xff))) : ((STV_VDP2_COAB & 0xff) + b);
+		if(t_r < 0) 	{ t_r = 0; }
+		if(t_r > 0xff) 	{ t_r = 0xff; }
+		if(t_g < 0) 	{ t_g = 0; }
+		if(t_g > 0xff) 	{ t_g = 0xff; }
+		if(t_b < 0) 	{ t_b = 0; }
+		if(t_b > 0xff) 	{ t_b = 0xff; }
+		r = t_r;
+		g = t_g;
+		b = t_b;
+		palette_set_color(i+(2048*1),r,g,b);
+
+		/*Fade B*/
+		palette_get_color(i, &r, &g, &b);
+		t_r = (STV_VDP2_COBR & 0x100) ? (r - (0xff - (STV_VDP2_COBR & 0xff))) : ((STV_VDP2_COBR & 0xff) + r);
+		t_g = (STV_VDP2_COBG & 0x100) ? (g - (0xff - (STV_VDP2_COBG & 0xff))) : ((STV_VDP2_COBG & 0xff) + g);
+		t_b = (STV_VDP2_COBB & 0x100) ? (b - (0xff - (STV_VDP2_COBB & 0xff))) : ((STV_VDP2_COBB & 0xff) + b);
+		if(t_r < 0) 	{ t_r = 0; }
+		if(t_r > 0xff) 	{ t_r = 0xff; }
+		if(t_g < 0) 	{ t_g = 0; }
+		if(t_g > 0xff) 	{ t_g = 0xff; }
+		if(t_b < 0) 	{ t_b = 0; }
+		if(t_b > 0xff) 	{ t_b = 0xff; }
+		r = t_r;
+		g = t_g;
+		b = t_b;
+		palette_set_color(i+(2048*2),r,g,b);
+	}
+	//usrintf_showmessage("%04x %04x %04x %04x %04x %04x",STV_VDP2_COAR,STV_VDP2_COAG,STV_VDP2_COAB,STV_VDP2_COBR,STV_VDP2_COBG,STV_VDP2_COBB);
+}
+
 extern data32_t *stv_vdp1_vram;
 
 VIDEO_UPDATE( stv_vdp2 )
@@ -2759,6 +2849,8 @@ VIDEO_UPDATE( stv_vdp2 )
 //#ifndef MAME_DEBUG
 	stv_vdp2_dynamic_res_change();
 //#endif
+
+	stv_vdp2_fade_effects();
 
 	stv_vdp2_draw_back(bitmap,cliprect);
 
@@ -2862,321 +2954,6 @@ VIDEO_UPDATE( stv_vdp2 )
 /* below is some old code we might use .. */
 
 #if 0
-/*
-One of the features of Sega ST-V is that the Color RAM could use two+one
-different formats of Paletteram:
-(1)Mode 0:RGB up to 5 bits per color,for 1024 possible combinations.16-bit format.
-(2)Mode 1:Same as mode 0 but with 2048 possible combinations.
-(3)Mode 2:RGB up to 8 bits per color,for 1024 possible combinations.32-bit format.
-Notice that if it's currently using the mode 0/1,the first three bits (aka bits 0,1 and 2)
-aren't used in output data(they are filled with 0).
-The MSB in any mode is known to be used as "Color Calculation"(transparency).
-
-TODO: we have to refresh the entire palette when it change color mode.
-*/
-
-/**********************************************************************************
-VDP2 Registers Table
-(registers are in 16-bit format,h=high word,l=low word):
-===================================================================================
-0h  	00 		TV Screen Mode
-0l  	02		External Signal Enable Register
-1h  	04		Screen Status(VBlank)
-1l  	06		Vram Size
-
-2h  	08		H Counter
-2l		0a		V Counter
-3h		0c			< Reserved >
-3l		0e		Ram Control
------------------------------------------------------------------------------------
-4h 	 	10		Vram Cycle Pattern (Bank A0) [1/2]
-4l		12		Vram Cycle Pattern (Bank A0) [2/2]
-5h		14		Vram Cycle Pattern (Bank A1) [1/2]
-5l		16		Vram Cycle Pattern (Bank A1) [2/2]
-
-6h		18		Vram Cycle Pattern (Bank B0) [1/2]
-6l		1a		Vram Cycle Pattern (Bank B0) [2/2]
-7h		1c		Vram Cycle Pattern (Bank B1) [1/2]
-7l		1e		Vram Cycle Pattern (Bank B1) [2/2]
------------------------------------------------------------------------------------
-8h		20		Screen Display Enable
-8l		22		Mosaic Control
-9h		24		Special Function Code Select
-9l		26		Special Function Code
-
-10h		28		Character Control (NBG0,NBG1)
-10l		2a		Character Control (NBG2,NBG3,RBG0)
-11h		2c		Bitmap Palette Number (NBG0, NBG1)
-11l		2e		Bitmap Palette Number (RBG0)
------------------------------------------------------------------------------------
-12h		30		Pattern Name Control (NBG0)
-12l		32		Pattern Name Control (NBG1)
-13h		34		Pattern Name Control (NBG2)
-13l		36		Pattern Name Control (NBG3)
-
-14h		38		Pattern Name Control (RBG0)
-14l		3a		Plane Size
-15h		3c		Map Offset (NBG0-NBG3)
-15l		3e		Map Offset (Rotation Parameter A,B)
------------------------------------------------------------------------------------
-16h		40		Map
-16l		42
-17h		44
-17l		46
-
-18h		48
-18l		4a
-19h		4c
-19l		4e
------------------------------------------------------------------------------------
-20h		50		Map (Rotation Parameter A)
-20l		52
-21h		54
-21l		56
-
-22h		58
-22l		5a
-23h		5c
-23l		5e
------------------------------------------------------------------------------------
-24h		60		Map (Rotation Parameter B)
-24l		62
-25h		64
-25l		66
-
-26h		68
-26l		6a
-27h		6c
-27l		6e
------------------------------------------------------------------------------------
-28h		70		Screen Scroll Value (NBG0,H integer)
-28l		72		Screen Scroll Value (NBG0,H fractional)
-29h		74		Screen Scroll Value (NBG0,V integer)
-29l		76		Screen Scroll Value (NBG0,V fractional)
-
-30h		78		Coordinate Increment (NBG0,H integer)
-30l		7a		Coordinate Increment (NBG0,H fractional)
-31h		7c		Coordinate Increment (NBG0,V integer)
-31l		7e		Coordinate Increment (NBG0,V fractional)
------------------------------------------------------------------------------------
-32h		80		Screen Scroll Value (NBG1,H integer)
-32l		82		Screen Scroll Value (NBG1,H fractional)
-33h		84		Screen Scroll Value (NBG1,V integer)
-33l		86		Screen Scroll Value (NBG1,V fractional)
-
-34h		88		Coordinate Increment (NBG1,H integer)
-34l		8a		Coordinate Increment (NBG1,H fractional)
-35h		8c		Coordinate Increment (NBG1,V integer)
-35l		8e		Coordinate Increment (NBG1,V fractional)
------------------------------------------------------------------------------------
-36h		90		Screen Scroll Value (NBG2,H)
-36l		92		Screen Scroll Value (NBG2,V)
-37h		94		Screen Scroll Value (NBG3,H)
-37l		96		Screen Scroll Value (NBG3,V)
-
-38h		98		Reduction Enable
-38l		9a		Line and Vertical Cell Scroll Control (NBG0,NBG1)
-39h		9c		Vertical Cell Scroll Table Address (NBG0,NBG1) [1/2]
-39l		9e		Vertical Cell Scroll Table Address (NBG0,NBG1) [2/2]
------------------------------------------------------------------------------------
-40h		a0		Line Scroll Table Address (NBG0) [1/2]
-40l		a2		Line Scroll Table Address (NBG0) [2/2]
-41h		a4		Line Scroll Table Address (NBG1) [1/2]
-41l		a6		Line Scroll Table Address (NBG1) [2/2]
-
-42h		a8		Line Color Screen Table Address [1/2]
-42l		aa		Line Color Screen Table Address [2/2]
-43h		ac		Back Screen Table Address [1/2]
-43l		ae		Back Screen Table Address [2/2]
------------------------------------------------------------------------------------
-44h		b0		Rotation Parameter Mode
-44l		b2		Rotation Parameter Read Control
-45h		b4		Coefficient Table Control
-45l		b6		Coefficient Table Address Offset
-
-46h		b8		Screen Over Pattern Name (Rotation Parameter A)
-46l		ba		Screen Over Pattern Name (Rotation Parameter B)
-47h		bc		Rotation Parameter Table Address [1/2]
-47l		be		Rotation Parameter Table Address [2/2]
------------------------------------------------------------------------------------
-48h		c0		Window Position (W0 H start point)
-48l		c2		Window Position (W0 H end point)
-49h		c4		Window Position (W0 V start point)
-49l		c6		Window Position (W0 V end point)
-
-50h		c8		Window Position (W1 H start point)
-50l		ca		Window Position (W1 H end point)
-51h		cc		Window Position (W1 V start point)
-51l		ce		Window Position (W1 V end point)
------------------------------------------------------------------------------------
-52h		d0		Window Control (NBG0,NBG1)
-52l		d2		Window Control (NBG2,NBG3)
-53h		d4		Window Control (RBG0,SPRITE)
-53l		d6		Window Control (Misc.)
-
-54h		d8		Line Window Table Address (W0) [1/2]
-54l		da		Line Window Table Address (W0) [2/2]
-55h		dc		Line Window Table Address (W1) [1/2]
-55l		de		Line Window Table Address (W1) [2/2]
------------------------------------------------------------------------------------
-56h		e0		Sprite Control
-56l		e2		Shadow Control
-57h		e4		Color RAM Address Offset (NBG0-NBG3)
-57l		e6		Color RAM Address Offset (RBG0-SPRITE)
-
-58h		e8		Line Color Screen Enable
-58l		ea		Special Priority Mode
-59h		ec		Color Calculation Control
-59l		ee		Special Color Calculation Mode
------------------------------------------------------------------------------------
-60h		f0		Priority Number (SPRITE)
-60l		f2
-61h		f4
-61l		f6
-
-62h		f8		Priority Number (NBG0,NBG1)
-62l		fa		Priority Number (NBG2,NBG3)
-63h		fc		Priority Number (RBG0)
-63l		fe			< Reserved >
------------------------------------------------------------------------------------
-64h	   	100		Color Calculation Ratio (SPRITE)
-64l		102
-65h		104
-65l		106
-
-66h		108		Color Calculation Ratio (NBG0,NBG1)
-66l		10a		Color Calculation Ratio (NBG2,NBG3)
-67h		10c		Color Calculation Ratio (RBG0)
-67l		10e		Color Calculation Ratio (LINE,BACK)
------------------------------------------------------------------------------------
-68h		110		Color Offset Enable
-68l		112		Color Offset Select
-69h		114		Color Offset A R
-69l		116		Color Offset A G
-
-70h		118		Color Offset A B
-70l		11a		Color Offset B R
-71h		11c		Color Offset B G
-71l		11e		Color Offset B B
------------------------------------------------------------------------------------
-**********************************************************************************/
-
-/*An empty comment at the start of a line means             *
- *that the corrispetive bit isn't used by the driver ATM.   */
-static READ32_HANDLER ( stv_vdp2_regs_r32 )
-{
-//	if (offset!=1) logerror ("VDP2: Read from Registers, Offset %04x\n",offset);
-	switch(offset)
-	{
-		case 1:
-		/*Screen Status Register*/
-		/*VBLANK & HBLANK(bit 3 & 2 of high word),fake for now*/
-		/*VBLANK is always one when the DISP is 0*/
-			stv_vdp2_regs[offset] ^= 0x000c0000;
-		break;
-		case 3:
-		/*(V)RAM Control Register*/
-		/*Color RAM Mode (bit 13 & 12) (CRMD1 & CRMD0) */
-			CRMD = ((stv_vdp2_regs[offset] & 0x00003000) >> 12);
-		break;
-	}
-	return stv_vdp2_regs[offset];
-}
-
-static WRITE32_HANDLER ( stv_vdp2_regs_w32 )
-{
-	COMBINE_DATA(&stv_vdp2_regs[offset]);
-
-	switch(offset)
-	{
-		/*r/w*/
-		case 0:
-			/*TV screen display bit*/
-/**/		DISP = ((stv_vdp2_regs[offset] & 0x80000000) >> 31);
-			/*Border Color mode bit*/
-			BDCLMD = ((stv_vdp2_regs[offset] & 0x01000000) >> 24);
-			/*Interlace mode bit*/
-/**/		LSMD = ((stv_vdp2_regs[offset] & 0x00c00000) >> 22);
-			/*Vertical/Horizontal Resolution bits*/
-			VRES = ((stv_vdp2_regs[offset] & 0x00300000) >> 20);
-			HRES = ((stv_vdp2_regs[offset] & 0x00070000) >> 16);
-			res_change();
-		break;
-		case 3:
-			/*Vram mode bits (partitioning)*/
-			VRAMD =((stv_vdp2_regs[offset] & 0x00000300) >> 8);
-			/*Color RAM mode*/
-			CRMD = ((stv_vdp2_regs[offset] & 0x00003000) >> 12);
-		break;
-		case 4: VCPA0 = (stv_vdp2_regs[4]); break;
-		case 5: VCPA1 = (stv_vdp2_regs[5]); break;
-		case 6: VCPB0 = (stv_vdp2_regs[6]); break;
-		case 7: VCPB1 = (stv_vdp2_regs[7]); break;
-		case 8:
-		/*Screen Display enable bit*/
-/**/		TPON = ((stv_vdp2_regs[offset] & 0x1f000000) >> 24);
-/**/	 	SDON = ((stv_vdp2_regs[offset] & 0x003f0000) >> 16);
-		break;
-		case 10:
-		/*Character Control Register*/
-		/*These needs to be added into a struct*/
-			CHCTLN0 = ((stv_vdp2_regs[offset] & 0x007f0000) >> 16);
-			CHCTLN1 = ((stv_vdp2_regs[offset] & 0x3f000000) >> 24);
-/**/		CHCTLN2 = ((stv_vdp2_regs[offset] & 0x00000003) >> 0);
-/**/		CHCTLN3 = ((stv_vdp2_regs[offset] & 0x00000030) >> 4);
-		break;
-		case 12:
-		/*Pattern Name Control Register*/
-/**/		PNCN0 = ((stv_vdp2_regs[offset] & 0xffff0000) >> 16);
-/**/		PNCN1 = ((stv_vdp2_regs[offset] & 0x0000ffff) >> 0);
-		break;
-		case 13:
-/**/		PNCN2 = ((stv_vdp2_regs[offset] & 0xffff0000) >> 16);
-/**/		PNCN3 = ((stv_vdp2_regs[offset] & 0x0000ffff) >> 0);
-		break;
-		case 14:
-/**/		PLSZ = ((stv_vdp2_regs[offset] & 0x0000ffff) >> 0);
-		break;
-		case 43:
-/**/		BKCLMD = ((stv_vdp2_regs[offset] & 0x80000000) >> 31);
-/**/		BKTA   = ((stv_vdp2_regs[offset] & 0x0007ffff) >> 0);
-		break;
-		/* Color Offset Enable/Select Register */
-		case 68:
-			CLOFEN = ((stv_vdp2_regs[offset] & 0x007f0000) >> 16);
-			CLOFSL = ((stv_vdp2_regs[offset] & 0x0000007f) >> 0);
-		break;
-		case 69:
-		/* Color Offset Registers*/
-			COAR = ((stv_vdp2_regs[offset] & 0x01ff0000) >> 16);
-			COAG = ((stv_vdp2_regs[offset] & 0x000001ff) >> 0);
-		break;
-		case 70:
-			COAB = ((stv_vdp2_regs[offset] & 0x01ff0000) >> 16);
-			stv_bright();
-		break;
-		case 71:
-		break;
-		}
-}
-
-/*
-**
-** Functions to emulate some aspects of the VDP-2.
-**
-*/
-
-/*This is WRONG,the actual brightness control is much more complex than this...*/
-static void stv_bright()
-{
-	double brt = (COAR & 0x100) ? (COAR & 0xff) / 256.0 : (COAR + 0x100) / 256.0;
-
-	/*apply only if NBG3 needs it...*/
-	if(CLOFEN & 8 && (!(CLOFSL & 8)))
-		palette_set_global_brightness(brt);
-	else
-		palette_set_global_brightness(1.00);
-}
 
 static void stv_dump_ram()
 {

@@ -1,8 +1,29 @@
 /***************************************************************************
 
-  vidhrdw.c
+The video mixer of this hardware is peculiar.
 
-  Functions to emulate the video hardware of the machine.
+There are two 16-colors palette banks: the first is used for characters and
+sprites, the second for "bullets".
+
+When a bullet is on screen, it selects the second palette bank and replaces
+the bottom 2 bits of the tile palette entry with its own, while leaving the
+other 2 bits untouched. Therefore, in theory a bullet could have 4 different
+colors depending on the color of the background it is drawn over; but none
+of the games use this peculiarity, since the bullet palette is just the same
+colors repeated four time. This is NOT emulated.
+
+When there is a sprite under the bullet, the palette bank is changed, but the
+palette entry number is NOT changed; therefore, the sprite pixels that are
+covered by the bullet just change bank. This is emulated by first drawing the
+bullets normally, then drawing the sprites (with pdrawgfx so they are not
+drawn over high priority tiles), then drawing the pullets again in
+TRANSPARENCY_PEN_TABLE mode, so that bullets not covered by sprites remain
+the same while the others alter the sprite color.
+
+
+The tile/sprite priority is controlled by the top bit of the tile color code.
+This feature seems to be disabled in Jungler, probably because that game
+needs more color combination to render its graphics.
 
 ***************************************************************************/
 
@@ -11,33 +32,66 @@
 
 
 
-unsigned char *rallyx_videoram2,*rallyx_colorram2;
-unsigned char *rallyx_radarx,*rallyx_radary,*rallyx_radarattr;
-size_t rallyx_radarram_size;
-unsigned char *rallyx_scrollx,*rallyx_scrolly;
-static unsigned char *dirtybuffer2;	/* keep track of modified portions of the screen */
-											/* to speed up video refresh */
-static struct mame_bitmap *tmpbitmap1;
+data8_t *rallyx_videoram,*rallyx_radarattr;
 
+static data8_t *rallyx_radarx,*rallyx_radary;
+static int video_type, spriteram_base;
 
+static struct tilemap *bg_tilemap,*fg_tilemap;
 
-static struct rectangle radarvisiblearea =
+#define MAX_STARS 1000
+#define STARS_COLOR_BASE 32
+
+static int stars_enable;
+
+struct star
 {
-	28*8, 36*8-1,
-	0*8, 28*8-1
+	int x,y,color;
+};
+static struct star stars[MAX_STARS];
+static int total_stars;
+
+
+enum
+{
+	TYPE_RALLYX,
+	TYPE_JUNGLER,
+	TYPE_TACTCIAN,
+	TYPE_LOCOMOTN,
+	TYPE_COMMSEGA
 };
 
-static struct rectangle radarvisibleareaflip =
+
+DRIVER_INIT( rallyx )
 {
-	0*8, 8*8-1,
-	0*8, 28*8-1
-};
+	video_type = TYPE_RALLYX;
+}
+
+DRIVER_INIT( jungler )
+{
+	video_type = TYPE_JUNGLER;
+}
+
+DRIVER_INIT( tactcian )
+{
+	video_type = TYPE_TACTCIAN;
+}
+
+DRIVER_INIT( locomotn )
+{
+	video_type = TYPE_LOCOMOTN;
+}
+
+DRIVER_INIT( commsega )
+{
+	video_type = TYPE_COMMSEGA;
+}
 
 
 
 /***************************************************************************
 
-  Convert the color PROMs into a more useable format.
+  Convert the color PROMs.
 
   Rally X has one 32x8 palette PROM and one 256x4 color lookup table PROM.
   The palette PROM is connected to the RGB output this way:
@@ -62,7 +116,7 @@ PALETTE_INIT( rallyx )
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	for (i = 0;i < Machine->drv->total_colors;i++)
+	for (i = 0;i < 32;i++)
 	{
 		int bit0,bit1,bit2,r,g,b;
 
@@ -78,10 +132,19 @@ PALETTE_INIT( rallyx )
 		bit2 = (*color_prom >> 5) & 0x01;
 		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
-		bit0 = 0;
-		bit1 = (*color_prom >> 6) & 0x01;
-		bit2 = (*color_prom >> 7) & 0x01;
-		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		if (video_type == TYPE_RALLYX)
+		{
+			bit0 = 0;
+			bit1 = (*color_prom >> 6) & 0x01;
+			bit2 = (*color_prom >> 7) & 0x01;
+			b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		}
+		else
+		{
+			bit0 = (*color_prom >> 6) & 0x01;
+			bit1 = (*color_prom >> 7) & 0x01;
+			b = 0x50 * bit0 + 0xab * bit1;
+		}
 
 		palette_set_color(i,r,g,b);
 
@@ -92,7 +155,6 @@ PALETTE_INIT( rallyx )
 
 	/* character lookup table */
 	/* sprites use the same color lookup table as characters */
-	/* characters use colors 0-15 */
 	for (i = 0;i < TOTAL_COLORS(0);i++)
 		COLOR(0,i) = *(color_prom++) & 0x0f;
 
@@ -100,53 +162,88 @@ PALETTE_INIT( rallyx )
 	/* they use colors 16-19 */
 	for (i = 0;i < 4;i++)
 		COLOR(2,i) = 16 + i;
+
+	/* Rally X doesn't have the optional starfield generator */
+	if (video_type != TYPE_RALLYX)
+	{
+		/* now the stars */
+		for (i = 0;i < 64;i++)
+		{
+			int bits,r,g,b;
+			int map[4] = { 0x00, 0x47, 0x97, 0xde };
+
+			bits = (i >> 0) & 0x03;
+			r = map[bits];
+			bits = (i >> 2) & 0x03;
+			g = map[bits];
+			bits = (i >> 4) & 0x03;
+			b = map[bits];
+
+			palette_set_color(i + 32,r,g,b);
+		}
+	}
 }
 
-PALETTE_INIT( locomotn )
+
+
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+/* the video RAM has space for 32x32 tiles and is only partially used for the radar */
+static UINT32 fg_tilemap_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 {
-	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-
-
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		int bit0,bit1,bit2,r,g,b;
-
-
-		/* red component */
-		bit0 = (*color_prom >> 0) & 0x01;
-		bit1 = (*color_prom >> 1) & 0x01;
-		bit2 = (*color_prom >> 2) & 0x01;
-		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		/* green component */
-		bit0 = (*color_prom >> 3) & 0x01;
-		bit1 = (*color_prom >> 4) & 0x01;
-		bit2 = (*color_prom >> 5) & 0x01;
-		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		/* blue component */
-		bit0 = (*color_prom >> 6) & 0x01;
-		bit1 = (*color_prom >> 7) & 0x01;
-		b = 0x50 * bit0 + 0xab * bit1;
-
-		palette_set_color(i,r,g,b);
-
-		color_prom++;
-	}
-
-	/* color_prom now points to the beginning of the lookup table */
-
-	/* character lookup table */
-	/* sprites use the same color lookup table as characters */
-	/* characters use colors 0-15 */
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = *(color_prom++) & 0x0f;
-
-	/* radar dots lookup table */
-	/* they use colors 16-19 */
-	for (i = 0;i < 4;i++)
-		COLOR(2,i) = 16 + i;
+	return col + (row << 5);
 }
+
+
+static void rallyx_get_tile_info(int ram_offs,int tile_index)
+{
+	UINT8 attr = rallyx_videoram[ram_offs + tile_index + 0x800];
+	tile_info.priority = (attr & 0x20) >> 5;
+	SET_TILE_INFO(
+			0,
+			rallyx_videoram[ram_offs + tile_index],
+			attr & 0x3f,
+			TILE_FLIPYX(attr >> 6) ^ TILE_FLIPX)
+}
+
+static void rallyx_bg_get_tile_info(int tile_index)
+{
+	rallyx_get_tile_info(0x400,tile_index);
+}
+
+static void rallyx_fg_get_tile_info(int tile_index)
+{
+	rallyx_get_tile_info(0x000,tile_index);
+}
+
+
+static void locomotn_get_tile_info(int ram_offs,int tile_index)
+{
+	UINT8 attr = rallyx_videoram[ram_offs + tile_index + 0x800];
+	int code = rallyx_videoram[ram_offs + tile_index];
+	code = (code & 0x7f) + 2*(attr & 0x40) + 2*(code & 0x80);
+	tile_info.priority = (attr & 0x20) >> 5;
+	SET_TILE_INFO(
+			0,
+			code,
+			attr & 0x3f,
+			(attr & 0x80) ? (TILE_FLIPX | TILE_FLIPY) : 0)
+}
+
+static void locomotn_bg_get_tile_info(int tile_index)
+{
+	locomotn_get_tile_info(0x400,tile_index);
+}
+
+static void locomotn_fg_get_tile_info(int tile_index)
+{
+	locomotn_get_tile_info(0x000,tile_index);
+}
+
 
 
 /***************************************************************************
@@ -154,54 +251,127 @@ PALETTE_INIT( locomotn )
   Start the video hardware emulation.
 
 ***************************************************************************/
+
 VIDEO_START( rallyx )
 {
-	if (video_start_generic() != 0)
+	int i;
+
+	if (video_type == TYPE_RALLYX || video_type == TYPE_JUNGLER)
+	{
+		bg_tilemap = tilemap_create(rallyx_bg_get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
+		fg_tilemap = tilemap_create(rallyx_fg_get_tile_info,fg_tilemap_scan,  TILEMAP_OPAQUE,8,8, 8,32);
+	}
+	else
+	{
+		bg_tilemap = tilemap_create(locomotn_bg_get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
+		fg_tilemap = tilemap_create(locomotn_fg_get_tile_info,fg_tilemap_scan,  TILEMAP_OPAQUE,8,8, 8,32);
+	}
+
+	if (!bg_tilemap || !fg_tilemap)
 		return 1;
 
-	if ((dirtybuffer2 = auto_malloc(videoram_size)) == 0)
-		return 1;
-	memset(dirtybuffer2,1,videoram_size);
+	/* the scrolling tilemap is slightly misplaced in Rally X */
+	if (video_type == TYPE_RALLYX)
+		tilemap_set_scrolldx(bg_tilemap,3,3);
 
-	if ((tmpbitmap1 = auto_bitmap_alloc(32*8,32*8)) == 0)
-		return 1;
+	/* commsega has more sprites and bullets than the other games */
+	if (video_type == TYPE_COMMSEGA)
+		spriteram_base = 0x00;
+	else
+		spriteram_base = 0x14;
+	spriteram = rallyx_videoram + 0x00;
+	spriteram_2 = spriteram + 0x800;
+	rallyx_radarx = rallyx_videoram + 0x20;
+	rallyx_radary = rallyx_radarx + 0x800;
+
+	for (i = 0;i < 16;i++)
+		palette_shadow_table[i] = i+16;
+	for (i = 16;i < 32;i++)
+		palette_shadow_table[i] = i;
+	for (i = 0;i < 3;i++)
+		gfx_drawmode_table[i] = DRAWMODE_SHADOW;
+	gfx_drawmode_table[3] = DRAWMODE_NONE;
+
+
+	/* Rally X doesn't have the optional starfield generator */
+	if (video_type != TYPE_RALLYX)
+	{
+		int generator;
+		int x,y;
+
+		/* precalculate the star background */
+		/* this comes from the Galaxian hardware, Bosconian is probably different */
+		total_stars = 0;
+		generator = 0;
+
+		for (y = 0;y < 256;y++)
+		{
+			for (x = 0;x < 288;x++)
+			{
+				int bit1,bit2;
+
+
+				generator <<= 1;
+				bit1 = (~generator >> 17) & 1;
+				bit2 = (generator >> 5) & 1;
+
+				if (bit1 ^ bit2) generator |= 1;
+
+				if (((~generator >> 16) & 1) &&
+						(generator & 0xfe) == 0xfe)
+				{
+					int color;
+
+					color = (~(generator >> 8)) & 0x3f;
+					if (color && total_stars < MAX_STARS)
+					{
+						stars[total_stars].x = x;
+						stars[total_stars].y = y;
+						stars[total_stars].color = Machine->pens[color + STARS_COLOR_BASE];
+
+						total_stars++;
+					}
+				}
+			}
+		}
+	}
 
 	return 0;
 }
 
 
 
-WRITE_HANDLER( rallyx_videoram2_w )
-{
-	if (rallyx_videoram2[offset] != data)
-	{
-		dirtybuffer2[offset] = 1;
+/***************************************************************************
 
-		rallyx_videoram2[offset] = data;
+  Memory handlers
+
+***************************************************************************/
+
+WRITE8_HANDLER( rallyx_videoram_w )
+{
+	if (rallyx_videoram[offset] != data)
+	{
+		rallyx_videoram[offset] = data;
+		if (offset & 0x400)
+			tilemap_mark_tile_dirty(bg_tilemap,offset & 0x3ff);
+		else
+			tilemap_mark_tile_dirty(fg_tilemap,offset & 0x3ff);
 	}
 }
 
-
-WRITE_HANDLER( rallyx_colorram2_w )
+WRITE8_HANDLER( rallyx_scrollx_w )
 {
-	if (rallyx_colorram2[offset] != data)
-	{
-		dirtybuffer2[offset] = 1;
-
-		rallyx_colorram2[offset] = data;
-	}
+	tilemap_set_scrollx(bg_tilemap,0,data);
 }
 
-
-
-WRITE_HANDLER( rallyx_flipscreen_w )
+WRITE8_HANDLER( rallyx_scrolly_w )
 {
-	if (flip_screen != (data & 1))
-	{
-		flip_screen_set(data & 1);
-		memset(dirtybuffer,1,videoram_size);
-		memset(dirtybuffer2,1,videoram_size);
-	}
+	tilemap_set_scrolly(bg_tilemap,0,data);
+}
+
+WRITE_HANDLER( tactcian_starson_w )
+{
+	stars_enable = data & 1;
 }
 
 
@@ -214,422 +384,151 @@ WRITE_HANDLER( rallyx_flipscreen_w )
 
 ***************************************************************************/
 
-VIDEO_UPDATE( rallyx )
+static void plot_star(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int x, int y, int color)
 {
-	int offs,sx,sy;
-	int scrollx,scrolly;
-const int displacement = 1;
+	int bpen = Machine->pens[0];
 
+	if (y < cliprect->min_y ||
+		y > cliprect->max_y ||
+		x < cliprect->min_x ||
+		x > cliprect->max_x)
+		return;
 
-	if (flip_screen)
+	if (flip_screen_x)
 	{
-		scrollx = (*rallyx_scrollx - displacement) + 32;
-		scrolly = (*rallyx_scrolly + 16) - 32;
+		x = 255 - x;
 	}
-	else
+	if (flip_screen_y)
 	{
-		scrollx = -(*rallyx_scrollx - 3*displacement);
-		scrolly = -(*rallyx_scrolly + 16);
-	}
-
-
-	/* draw the below sprite priority characters */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (rallyx_colorram2[offs] & 0x20)  continue;
-
-		if (dirtybuffer2[offs])
-		{
-			int flipx,flipy;
-
-
-			dirtybuffer2[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-			flipx = ~rallyx_colorram2[offs] & 0x40;
-			flipy = rallyx_colorram2[offs] & 0x80;
-			if (flip_screen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(tmpbitmap1,Machine->gfx[0],
-					rallyx_videoram2[offs],
-					rallyx_colorram2[offs] & 0x3f,
-					flipx,flipy,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
+		y = 255 - y;
 	}
 
-	/* update radar */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int flipx,flipy;
+	if (read_pixel(bitmap, x, y) == bpen)
+		plot_pixel(bitmap, x, y, Machine->pens[STARS_COLOR_BASE + color]);
+}
 
+static void draw_stars( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+{
+	int offs;
 
-			dirtybuffer[offs] = 0;
-
-			sx = (offs % 32) ^ 4;
-			sy = offs / 32 - 2;
-			flipx = ~colorram[offs] & 0x40;
-			flipy = colorram[offs] & 0x80;
-			if (flip_screen)
-			{
-				sx = 7 - sx;
-				sy = 27 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs],
-					colorram[offs] & 0x3f,
-					flipx,flipy,
-					8*sx,8*sy,
-					&radarvisibleareaflip,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the temporary bitmap to the screen */
-	copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-
-	/* draw the sprites */
-	for (offs = 0;offs < spriteram_size;offs += 2)
-	{
-		sx = spriteram[offs + 1] + ((spriteram_2[offs + 1] & 0x80) << 1) - displacement;
-		sy = 225 - spriteram_2[offs] - displacement;
-
-		drawgfx(bitmap,Machine->gfx[1],
-				(spriteram[offs] & 0xfc) >> 2,
-				spriteram_2[offs + 1] & 0x3f,
-				spriteram[offs] & 1,spriteram[offs] & 2,
-				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_COLOR,0);
-	}
-
-
-	/* draw the above sprite priority characters */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		int flipx,flipy;
-
-
-		if (!(rallyx_colorram2[offs] & 0x20))  continue;
-
-		sx = offs % 32;
-		sy = offs / 32;
-		flipx = ~rallyx_colorram2[offs] & 0x40;
-		flipy = rallyx_colorram2[offs] & 0x80;
-		if (flip_screen)
-		{
-			sx = 31 - sx;
-			sy = 31 - sy;
-			flipx = !flipx;
-			flipy = !flipy;
-		}
-
-		drawgfx(bitmap,Machine->gfx[0],
-				rallyx_videoram2[offs],
-				rallyx_colorram2[offs] & 0x3f,
-				flipx,flipy,
-				(8*sx + scrollx) & 0xff,(8*sy + scrolly) & 0xff,
-				0,TRANSPARENCY_NONE,0);
-		drawgfx(bitmap,Machine->gfx[0],
-				rallyx_videoram2[offs],
-				rallyx_colorram2[offs] & 0x3f,
-				flipx,flipy,
-				((8*sx + scrollx) & 0xff) - 256,(8*sy + scrolly) & 0xff,
-				0,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* radar */
-	if (flip_screen)
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&radarvisibleareaflip,TRANSPARENCY_NONE,0);
-	else
-		copybitmap(bitmap,tmpbitmap,0,0,28*8,0,&radarvisiblearea,TRANSPARENCY_NONE,0);
-
-
-	/* draw the cars on the radar */
-	for (offs = 0; offs < rallyx_radarram_size;offs++)
+	for (offs = 0;offs < total_stars;offs++)
 	{
 		int x,y;
 
-		x = rallyx_radarx[offs] + ((~rallyx_radarattr[offs] & 0x01) << 8);
-		y = 237 - rallyx_radary[offs];
-		if (flip_screen) x -= 3;
 
-		drawgfx(bitmap,Machine->gfx[2],
-				((rallyx_radarattr[offs] & 0x0e) >> 1) ^ 0x07,
-				0,
-				0,0,
-				x,y,
-				&Machine->visible_area,TRANSPARENCY_PEN,3);
+		x = stars[offs].x;
+		y = stars[offs].y;
+
+		if ((y & 0x01) ^ ((x >> 3) & 0x01))
+		{
+			plot_star(bitmap, cliprect, x, y, stars[offs].color);
+		}
 	}
 }
 
 
-
-VIDEO_UPDATE( jungler )
+static void rallyx_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int displacement )
 {
-	int offs,sx,sy;
-	int scrollx,scrolly;
-const int displacement = 0;
+	int offs;
 
-
-	if (flip_screen)
+	for (offs = 0x20-2;offs >= spriteram_base;offs -= 2)
 	{
-		scrollx = (*rallyx_scrollx - displacement) + 32;
-		scrolly = (*rallyx_scrolly + 16) - 32;
-	}
-	else
-	{
-		scrollx = -(*rallyx_scrollx - 3*displacement);
-		scrolly = -(*rallyx_scrolly + 16);
-	}
+		int sx = spriteram[offs + 1] + ((spriteram_2[offs + 1] & 0x80) << 1) - displacement;
+		int sy = 241 - spriteram_2[offs] - displacement;
+		int flipx = spriteram[offs] & 1;
+		int flipy = spriteram[offs] & 2;
+		if (flip_screen) sx -= 2*displacement;
 
-
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer2[offs])
-		{
-			int flipx,flipy;
-
-
-			dirtybuffer2[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-			flipx = ~rallyx_colorram2[offs] & 0x40;
-			flipy = rallyx_colorram2[offs] & 0x80;
-			if (flip_screen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(tmpbitmap1,Machine->gfx[0],
-					rallyx_videoram2[offs],
-					rallyx_colorram2[offs] & 0x3f,
-					flipx,flipy,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	/* update radar */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int flipx,flipy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = (offs % 32) ^ 4;
-			sy = offs / 32 - 2;
-			flipx = ~colorram[offs] & 0x40;
-			flipy = colorram[offs] & 0x80;
-			if (flip_screen)
-			{
-				sx = 7 - sx;
-				sy = 27 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs],
-					colorram[offs] & 0x3f,
-					flipx,flipy,
-					8*sx,8*sy,
-					&radarvisibleareaflip,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the temporary bitmap to the screen */
-	copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-
-	/* draw the sprites */
-	for (offs = 0;offs < spriteram_size;offs += 2)
-	{
-		sx = spriteram[offs + 1] + ((spriteram_2[offs + 1] & 0x80) << 1) - displacement;
-		sy = 225 - spriteram_2[offs] - displacement;
-
-		drawgfx(bitmap,Machine->gfx[1],
+		pdrawgfx(bitmap,Machine->gfx[1],
 				(spriteram[offs] & 0xfc) >> 2,
 				spriteram_2[offs + 1] & 0x3f,
-				spriteram[offs] & 1,spriteram[offs] & 2,
+				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_COLOR,0);
-	}
-
-
-	/* radar */
-	if (flip_screen)
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&radarvisibleareaflip,TRANSPARENCY_NONE,0);
-	else
-		copybitmap(bitmap,tmpbitmap,0,0,28*8,0,&radarvisiblearea,TRANSPARENCY_NONE,0);
-
-
-	/* draw the cars on the radar */
-	for (offs = 0; offs < rallyx_radarram_size;offs++)
-	{
-		int x,y;
-
-		x = rallyx_radarx[offs] + ((~rallyx_radarattr[offs] & 0x08) << 5);
-		y = 237 - rallyx_radary[offs];
-
-		drawgfx(bitmap,Machine->gfx[2],
-				(rallyx_radarattr[offs] & 0x07) ^ 0x07,
-				0,
-				0,0,
-				x,y,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				cliprect,TRANSPARENCY_COLOR,0,0x02);
 	}
 }
 
-
-
-VIDEO_UPDATE( locomotn )
+static void locomotn_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int displacement )
 {
-	int offs,sx,sy;
-const int displacement = 0;
+	int offs;
 
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
+	for (offs = 0x20-2;offs >= spriteram_base;offs -= 2)
 	{
-		if (dirtybuffer2[offs])
-		{
-			int flipx,flipy;
-
-
-			dirtybuffer2[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-			/* not a mistake, one bit selects both  flips */
-			flipx = rallyx_colorram2[offs] & 0x80;
-			flipy = rallyx_colorram2[offs] & 0x80;
-			if (flip_screen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(tmpbitmap1,Machine->gfx[0],
-					(rallyx_videoram2[offs]&0x7f) + 2*(rallyx_colorram2[offs]&0x40) + 2*(rallyx_videoram2[offs]&0x80),
-					rallyx_colorram2[offs] & 0x3f,
-					flipx,flipy,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	/* update radar */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int flipx,flipy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = (offs % 32) ^ 4;
-			sy = offs / 32 - 2;
-			/* not a mistake, one bit selects both  flips */
-			flipx = colorram[offs] & 0x80;
-			flipy = colorram[offs] & 0x80;
-			if (flip_screen)
-			{
-				sx = 7 - sx;
-				sy = 27 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					(videoram[offs]&0x7f) + 2*(colorram[offs]&0x40) + 2*(videoram[offs]&0x80),
-					colorram[offs] & 0x3f,
-					flipx,flipy,
-					8*sx,8*sy,
-					&radarvisibleareaflip,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the temporary bitmap to the screen */
-	{
-		int scrollx,scrolly;
-
-
-		if (flip_screen)
-		{
-			scrollx = (*rallyx_scrollx) + 32;
-			scrolly = (*rallyx_scrolly + 16) - 32;
-		}
-		else
-		{
-			scrollx = -(*rallyx_scrollx);
-			scrolly = -(*rallyx_scrolly + 16);
-		}
-
-		copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* radar */
-	if (flip_screen)
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&radarvisibleareaflip,TRANSPARENCY_NONE,0);
-	else
-		copybitmap(bitmap,tmpbitmap,0,0,28*8,0,&radarvisiblearea,TRANSPARENCY_NONE,0);
-
-
-	/* draw the sprites */
-	for (offs = 0;offs < spriteram_size;offs += 2)
-	{
-		sx = spriteram[offs + 1] + ((spriteram_2[offs + 1] & 0x80) << 1) - displacement;
-		sy = 225 - spriteram_2[offs] - displacement;
+		int sx = spriteram[offs + 1] + ((spriteram_2[offs + 1] & 0x80) << 1);
+		int sy = 241 - spriteram_2[offs] - displacement;
+		int flip = spriteram[offs] & 2;
 
 		/* handle reduced visible area in some games */
 		if (flip_screen && Machine->drv->default_visible_area.max_x == 32*8-1) sx += 32;
 
-		drawgfx(bitmap,Machine->gfx[1],
+		pdrawgfx(bitmap,Machine->gfx[1],
 				((spriteram[offs] & 0x7c) >> 2) + 0x20*(spriteram[offs] & 0x01) + ((spriteram[offs] & 0x80) >> 1),
 				spriteram_2[offs + 1] & 0x3f,
-				spriteram[offs] & 2,spriteram[offs] & 2,
+				flip,flip,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_COLOR,0);
+				cliprect,TRANSPARENCY_COLOR,0,0x02);
 	}
+}
 
+static void rallyx_draw_bullets( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int transparency )
+{
+	int offs;
 
-	/* draw the cars on the radar */
-	for (offs = 0; offs < rallyx_radarram_size;offs++)
+	for (offs = spriteram_base; offs < 0x20;offs++)
 	{
 		int x,y;
 
-		x = rallyx_radarx[offs] + ((~rallyx_radarattr[offs] & 0x08) << 5);
-		y = 237 - rallyx_radary[offs];
+		x = rallyx_radarx[offs] + ((~rallyx_radarattr[offs & 0x0f] & 0x01) << 8);
+		y = 253 - rallyx_radary[offs];
 		if (flip_screen) x -= 3;
+
+		drawgfx(bitmap,Machine->gfx[2],
+				((rallyx_radarattr[offs & 0x0f] & 0x0e) >> 1) ^ 0x07,
+				0,
+				0,0,
+				x,y,
+				cliprect,transparency,3);
+	}
+}
+
+static void jungler_draw_bullets( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int transparency )
+{
+	int offs;
+
+	for (offs = spriteram_base; offs < 0x20;offs++)
+	{
+		int x,y;
+
+		x = rallyx_radarx[offs] + ((~rallyx_radarattr[offs & 0x0f] & 0x08) << 5);
+		y = 253 - rallyx_radary[offs];
+
+		drawgfx(bitmap,Machine->gfx[2],
+				(rallyx_radarattr[offs & 0x0f] & 0x07) ^ 0x07,
+				0,
+				0,0,
+				x,y,
+				cliprect,transparency,3);
+	}
+}
+
+static void locomotn_draw_bullets( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int transparency )
+{
+	int offs;
+
+	for (offs = spriteram_base; offs < 0x20;offs++)
+	{
+		int x,y;
+
+
+		/* it looks like in commsega the addresses used are
+		   a000-a003  a004-a00f
+		   8020-8023  8034-803f
+		   8820-8823  8834-883f
+		   so 8024-8033 and 8824-8833 are not used
+		*/
+
+		x = rallyx_radarx[offs] + ((~rallyx_radarattr[offs & 0x0f] & 0x08) << 5);
+		y = 252 - rallyx_radary[offs];
 
 		/* handle reduced visible area in some games */
 		if (flip_screen && Machine->drv->default_visible_area.max_x == 32*8-1) x += 32;
@@ -639,160 +538,60 @@ const int displacement = 0;
 				0,
 				0,0,
 				x,y,
-				&Machine->visible_area,TRANSPARENCY_PEN,3);
+				cliprect,transparency,3);
 	}
 }
 
 
-
-VIDEO_UPDATE( commsega )
+VIDEO_UPDATE( rallyx )
 {
-	int offs,sx,sy;
-
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer2[offs])
-		{
-			int flipx,flipy;
-
-
-			dirtybuffer2[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-			/* not a mistake, one bit selects both  flips */
-			flipx = rallyx_colorram2[offs] & 0x80;
-			flipy = rallyx_colorram2[offs] & 0x80;
-			if (flip_screen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(tmpbitmap1,Machine->gfx[0],
-					(rallyx_videoram2[offs]&0x7f) + 2*(rallyx_colorram2[offs]&0x40) + 2*(rallyx_videoram2[offs]&0x80),
-					rallyx_colorram2[offs] & 0x3f,
-					flipx,flipy,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	/* update radar */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int flipx,flipy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = (offs % 32) ^ 4;
-			sy = offs / 32 - 2;
-			/* not a mistake, one bit selects both  flips */
-			flipx = colorram[offs] & 0x80;
-			flipy = colorram[offs] & 0x80;
-			if (flip_screen)
-			{
-				sx = 7 - sx;
-				sy = 27 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					(videoram[offs]&0x7f) + 2*(colorram[offs]&0x40) + 2*(videoram[offs]&0x80),
-					colorram[offs] & 0x3f,
-					flipx,flipy,
-					8*sx,8*sy,
-					&radarvisibleareaflip,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the temporary bitmap to the screen */
-	{
-		int scrollx,scrolly;
-
-
-		if (flip_screen)
-		{
-			scrollx = (*rallyx_scrollx) + 32;
-			scrolly = (*rallyx_scrolly + 16) - 32;
-		}
-		else
-		{
-			scrollx = -(*rallyx_scrollx);
-			scrolly = -(*rallyx_scrolly + 16);
-		}
-
-		copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* radar */
+	/* the radar tilemap is just 8x32. We rely on the tilemap code to repeat it across
+	   the screen, and clip it to only the position where it is supposed to be shown */
+	struct rectangle fg_clip = *cliprect;
+	struct rectangle bg_clip = *cliprect;
 	if (flip_screen)
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&radarvisibleareaflip,TRANSPARENCY_NONE,0);
+	{
+		bg_clip.min_x = 8*8;
+		fg_clip.max_x = 8*8-1;
+	}
 	else
-		copybitmap(bitmap,tmpbitmap,0,0,28*8,0,&radarvisiblearea,TRANSPARENCY_NONE,0);
-
-
-	/* draw the sprites */
-	for (offs = 0;offs < spriteram_size;offs += 2)
 	{
-		int flipx,flipy;
-
-
-		sx = spriteram[offs + 1] - 1;
-		sy = 224 - spriteram_2[offs];
-if (flip_screen) sx += 32;
-		flipx = ~spriteram[offs] & 1;
-		flipy = ~spriteram[offs] & 2;
-		if (flip_screen)
-		{
-			flipx = !flipx;
-			flipy = !flipy;
-		}
-
-		if (spriteram[offs] & 0x01)	/* ??? */
-			drawgfx(bitmap,Machine->gfx[1],
-					((spriteram[offs] & 0x7c) >> 2) + 0x20*(spriteram[offs] & 0x01) + ((spriteram[offs] & 0x80) >> 1),
-					spriteram_2[offs + 1] & 0x3f,
-					flipx,flipy,
-					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_COLOR,0);
+		bg_clip.max_x = 28*8-1;
+		fg_clip.min_x = 28*8;
 	}
 
+	fillbitmap(priority_bitmap,0,cliprect);
 
-	/* draw the cars on the radar */
-	for (offs = 0; offs < rallyx_radarram_size;offs++)
+	tilemap_draw(bitmap,&bg_clip,bg_tilemap,0,0);
+	tilemap_draw(bitmap,&fg_clip,fg_tilemap,0,0);
+	/* tile priority doesn't seem to be supported in Jungler */
+	tilemap_draw(bitmap,&bg_clip,bg_tilemap,1,video_type == TYPE_JUNGLER ? 0 : 1);
+	tilemap_draw(bitmap,&fg_clip,fg_tilemap,1,video_type == TYPE_JUNGLER ? 0 : 1);
+
+	switch (video_type)
 	{
-		int x,y;
+		case TYPE_RALLYX:
+			rallyx_draw_bullets(bitmap,cliprect,TRANSPARENCY_PEN);
+			rallyx_draw_sprites(bitmap,cliprect,1);
+			rallyx_draw_bullets(bitmap,cliprect,TRANSPARENCY_PEN_TABLE);
+			break;
 
+		case TYPE_JUNGLER:
+			jungler_draw_bullets(bitmap,cliprect,TRANSPARENCY_PEN);
+			rallyx_draw_sprites(bitmap,cliprect,0);
+			jungler_draw_bullets(bitmap,cliprect,TRANSPARENCY_PEN_TABLE);
+			break;
 
-		/* it looks like the addresses used are
-		   a000-a003  a004-a00f
-		   8020-8023  8034-803f
-		   8820-8823  8834-883f
-		   so 8024-8033 and 8824-8833 are not used
-		*/
-
-		x = rallyx_radarx[offs] + ((~rallyx_radarattr[offs & 0x0f] & 0x08) << 5);
-		if (flip_screen) x += 32;
-		y = 237 - rallyx_radary[offs];
-
-
-		drawgfx(bitmap,Machine->gfx[2],
-				(rallyx_radarattr[offs & 0x0f] & 0x07) ^ 0x07,
-				0,
-				0,0,
-				x,y,
-				&Machine->visible_area,TRANSPARENCY_PEN,3);
+		case TYPE_TACTCIAN:
+		case TYPE_LOCOMOTN:
+		case TYPE_COMMSEGA:
+			locomotn_draw_bullets(bitmap,cliprect,TRANSPARENCY_PEN);
+			locomotn_draw_sprites(bitmap,cliprect,0);
+			locomotn_draw_bullets(bitmap,cliprect,TRANSPARENCY_PEN_TABLE);
+			break;
 	}
+
+	/* Rally X doesn't have the optional starfield generator */
+	if (video_type != TYPE_RALLYX)
+		if (stars_enable) draw_stars(bitmap,cliprect);
 }

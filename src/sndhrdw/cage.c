@@ -7,16 +7,11 @@
 
 #define LOG_COMM			(0)
 #define LOG_32031_IOPORTS	(0)
-#define LOG_WAVE			(0)
 
 
 #include "driver.h"
 #include "cpu/tms32031/tms32031.h"
 #include "cage.h"
-
-#if (LOG_WAVE)
-#include "sound/wavwrite.h"
-#endif
 
 
 
@@ -27,10 +22,7 @@
  *************************************/
 
 #define DAC_BUFFER_CHANNELS		4
-#define DAC_BUFFER_FRAMES		4096
-#define DAC_BUFFER_SAMPLES		(DAC_BUFFER_FRAMES * DAC_BUFFER_CHANNELS)
-#define DAC_BUFFER_FRAMES_MASK	(DAC_BUFFER_FRAMES - 1)
-#define DAC_BUFFER_SAMPLES_MASK	(DAC_BUFFER_SAMPLES - 1)
+#define STACK_SOUND_BUFSIZE		(1024)
 
 
 
@@ -40,7 +32,6 @@
  *
  *************************************/
 
-static int sound_stream;
 static int cage_cpu;
 static double cage_cpu_clock_period;
 static double cage_cpu_h1_clock;
@@ -50,12 +41,10 @@ static UINT8 cage_to_cpu_ready;
 
 static void (*cage_irqhandler)(int);
 
-static INT16 *sound_buffer;
-static UINT32 buffer_in, buffer_out, buffer_out_step;
-
 static double serial_time_per_word;
 
 static UINT8 dma_enabled;
+static UINT8 dma_timer_enabled;
 static void *dma_timer;
 
 static UINT8 timer_enabled[2];
@@ -67,10 +56,6 @@ static UINT16 cage_from_main;
 static UINT16 cage_control;
 
 static data32_t *speedup_ram;
-
-#if (LOG_WAVE)
-static void *wavfile;
-#endif
 
 
 
@@ -181,8 +166,6 @@ void cage_init(int boot_region, offs_t speedup)
 	timer[0] = timer_alloc(timer_callback);
 	timer[1] = timer_alloc(timer_callback);
 	
-	buffer_in = buffer_out = 0;
-	
 	if (speedup)
 		speedup_ram = install_mem_write32_handler(cage_cpu, speedup, speedup, speedup_w);
 }
@@ -205,109 +188,23 @@ void cage_reset_w(int state)
 
 /*************************************
  *
- *	DAC update routine
- *
- *************************************/
-
-static void dac_update(int num, INT16 **buffer, int length)
-{
-	INT16 *dest[DAC_BUFFER_CHANNELS];
-	UINT32 current = buffer_out;
-	UINT32 step = buffer_out_step;
-	int i, j;
-	
-	for (j = 0; j < DAC_BUFFER_CHANNELS; j++)
-		dest[j] = buffer[j];
-
-	/* fill in with samples until we hit the end or run out */
-	for (i = 0; i < length; i++)
-	{
-		UINT32 indx = (current >> 16) * DAC_BUFFER_CHANNELS;
-		if (indx + DAC_BUFFER_CHANNELS - 1 >= buffer_in)
-			break;
-		current += step;
-		for (j = 0; j < DAC_BUFFER_CHANNELS; j++)
-			*dest[j]++ = sound_buffer[(indx + j) & DAC_BUFFER_SAMPLES_MASK];
-	}
-
-	/* fill the rest with the last sample */
-	for ( ; i < length; i++)
-	{
-		UINT32 indx = ((buffer_in - 1) / DAC_BUFFER_CHANNELS) * DAC_BUFFER_CHANNELS;
-		for (j = 0; j < DAC_BUFFER_CHANNELS; j++)
-			*dest[j]++ = sound_buffer[(indx + j) & DAC_BUFFER_SAMPLES_MASK];
-	}
-
-	/* mask off extra bits */
-	while (current >= (DAC_BUFFER_FRAMES << 16))
-	{
-		current -= DAC_BUFFER_FRAMES << 16;
-		buffer_in -= DAC_BUFFER_SAMPLES;
-	}
-
-	/* update the final values */
-	buffer_out = current;
-
-#if (LOG_WAVE)
-#if (DAC_BUFFER_CHANNELS == 4)
-	wav_add_data_16lr(wavfile, buffer[0], buffer[1], length);
-#else
-	wav_add_data_16lr(wavfile, (buffer[0] + buffer[2]) / 2, (buffer[1] + buffer[3]) / 2, length);
-#endif
-#endif
-}
-
-
-
-/*************************************
- *
- *	Custom sound start/stop
- *
- *************************************/
-
-static int custom_start(const struct MachineSound *msound)
-{
-#if (DAC_BUFFER_CHANNELS == 4)
-	const char *names[] = { "Forward R", "Back L", "Forward L", "Back R" };
-	int mixing_levels[] = { MIXER(50, MIXER_PAN_RIGHT), MIXER(50, MIXER_PAN_LEFT), MIXER(50, MIXER_PAN_LEFT), MIXER(50, MIXER_PAN_RIGHT) };
-#else
-	const char *names[] = { "DAC L", "DAC R" };
-	int mixing_levels[] = { MIXER(100, MIXER_PAN_LEFT), MIXER(100, MIXER_PAN_RIGHT)) };
-#endif
-
-	/* allocate a DAC stream */
-	sound_stream = stream_init_multi(DAC_BUFFER_CHANNELS, names, mixing_levels, Machine->sample_rate, 0, dac_update);
-
-	/* allocate memory for our buffers */
-	sound_buffer = auto_malloc(DAC_BUFFER_SAMPLES * sizeof(INT16));
-	if (!sound_buffer)
-		return 1;
-
-#if (LOG_WAVE)
-	wavfile = wav_open("cage.wav", Machine->sample_rate, 2);
-#endif
-
-	return 0;
-}
-
-
-static void custom_stop(void)
-{
-#if (LOG_WAVE)
-	wav_close(wavfile);
-#endif
-}
-
-
-
-/*************************************
- *
  *	DMA timers
  *
  *************************************/
 
 static void dma_timer_callback(int param)
 {
+	/* if we weren't enabled, don't do anything, just shut ourself off */
+	if (!dma_enabled)
+	{
+		if (dma_timer_enabled)
+		{
+			timer_adjust(dma_timer, TIME_NEVER, 0, TIME_NEVER);
+			dma_timer_enabled = 0;
+		}
+		return;
+	}
+			
 	/* set the final count to 0 and the source address to the final address */
 	tms32031_io_regs[DMA_TRANSFER_COUNT] = 0;
 	tms32031_io_regs[DMA_SOURCE_ADDR] = param;
@@ -326,6 +223,7 @@ static void update_dma_state(void)
 	/* see if we turned on */
 	if (enabled && !dma_enabled)
 	{
+		INT16 sound_data[STACK_SOUND_BUFSIZE];
 		UINT32 addr, inc;
 		int i;
 		
@@ -340,19 +238,27 @@ static void update_dma_state(void)
 		inc = (tms32031_io_regs[DMA_GLOBAL_CTL] >> 4) & 1;
 		for (i = 0; i < tms32031_io_regs[DMA_TRANSFER_COUNT]; i++)
 		{
-			sound_buffer[(buffer_in + i) & DAC_BUFFER_SAMPLES_MASK] = program_read_dword(addr * 4);
+			sound_data[i % STACK_SOUND_BUFSIZE] = program_read_dword(addr * 4);
 			addr += inc;
+			if (i % STACK_SOUND_BUFSIZE == STACK_SOUND_BUFSIZE - 1)
+				dmadac_transfer(0, DAC_BUFFER_CHANNELS, 1, DAC_BUFFER_CHANNELS, STACK_SOUND_BUFSIZE / DAC_BUFFER_CHANNELS, sound_data);
 		}
-		buffer_in += tms32031_io_regs[DMA_TRANSFER_COUNT];
+		if (tms32031_io_regs[DMA_TRANSFER_COUNT] % STACK_SOUND_BUFSIZE != 0)
+			dmadac_transfer(0, DAC_BUFFER_CHANNELS, 1, DAC_BUFFER_CHANNELS, (tms32031_io_regs[DMA_TRANSFER_COUNT] % STACK_SOUND_BUFSIZE) / DAC_BUFFER_CHANNELS, sound_data);
 
 		/* compute the time of the interrupt and set the timer */
-		timer_adjust(dma_timer, serial_time_per_word * tms32031_io_regs[DMA_TRANSFER_COUNT], addr, TIME_NEVER);
+		if (!dma_timer_enabled)
+		{
+			timer_adjust(dma_timer, serial_time_per_word * tms32031_io_regs[DMA_TRANSFER_COUNT], addr, serial_time_per_word * tms32031_io_regs[DMA_TRANSFER_COUNT]);
+			dma_timer_enabled = 1;
+		}
 	}
 	
 	/* see if we turned off */
 	else if (!enabled && dma_enabled)
 	{
 		timer_adjust(dma_timer, TIME_NEVER, 0, TIME_NEVER);
+		dma_timer_enabled = 0;
 	}
 	
 	/* set the new state */
@@ -430,7 +336,8 @@ static void update_serial(void)
 	serial_time_per_word = bit_clock * 8.0 * (double)(((tms32031_io_regs[SPORT_GLOBAL_CTL] >> 18) & 3) + 1);
 
 	/* compute the step value to stretch this to the Machine->sample_rate */
-	buffer_out_step = (UINT32)(65536.0 / (serial_time_per_word * DAC_BUFFER_CHANNELS * (double)Machine->sample_rate));
+	dmadac_set_frequency(0, DAC_BUFFER_CHANNELS, 1.0 / (serial_time_per_word * DAC_BUFFER_CHANNELS));
+	dmadac_enable(0, DAC_BUFFER_CHANNELS, 1);
 }
 
 
@@ -631,6 +538,7 @@ void cage_control_w(UINT16 data)
 		cpu_set_reset_line(cage_cpu, ASSERT_LINE);
 		
 		dma_enabled = 0;
+		dma_timer_enabled = 0;
 		timer_adjust(dma_timer, TIME_NEVER, 0, TIME_NEVER);
 		
 		timer_enabled[0] = 0;
@@ -678,47 +586,27 @@ static struct tms32031_config cage_config =
 };
 
 
-static ADDRESS_MAP_START( readmem_cage, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x400000, 0x47ffff) AM_READ(MRA32_BANK10)
-	AM_RANGE(0x808000, 0x8080ff) AM_READ(tms32031_io_r)
-	AM_RANGE(0x809800, 0x809fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0xa00000, 0xa00000) AM_READ(cage_from_main_r)
-	AM_RANGE(0xc00000, 0xffffff) AM_READ(MRA32_BANK11)
+static ADDRESS_MAP_START( cage_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x00ffff) AM_RAM
+	AM_RANGE(0x200000, 0x200000) AM_WRITENOP
+	AM_RANGE(0x400000, 0x47ffff) AM_ROMBANK(10)
+	AM_RANGE(0x808000, 0x8080ff) AM_READWRITE(tms32031_io_r, tms32031_io_w) AM_BASE(&tms32031_io_regs)
+	AM_RANGE(0x809800, 0x809fff) AM_RAM
+	AM_RANGE(0xa00000, 0xa00000) AM_READWRITE(cage_from_main_r, cage_to_main_w)
+	AM_RANGE(0xc00000, 0xffffff) AM_ROMBANK(11)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( writemem_cage, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x200000, 0x200000) AM_WRITE(MWA32_NOP)
-	AM_RANGE(0x400000, 0x47ffff) AM_WRITE(MWA32_ROM)
-	AM_RANGE(0x808000, 0x8080ff) AM_WRITE(tms32031_io_w) AM_BASE(&tms32031_io_regs)
-	AM_RANGE(0x809800, 0x809fff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0xa00000, 0xa00000) AM_WRITE(cage_to_main_w)
-	AM_RANGE(0xc00000, 0xffffff) AM_WRITE(MWA32_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( readmem_cage_seattle, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x400000, 0x47ffff) AM_READ(MRA32_BANK10)
-	AM_RANGE(0x808000, 0x8080ff) AM_READ(tms32031_io_r)
-	AM_RANGE(0x809800, 0x809fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0xa00000, 0xa00000) AM_READ(cage_from_main_r)
-	AM_RANGE(0xa00003, 0xa00003) AM_READ(cage_io_status_r)
-	AM_RANGE(0xc00000, 0xffffff) AM_READ(MRA32_BANK11)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( writemem_cage_seattle, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x200000, 0x200000) AM_WRITE(MWA32_NOP)
-	AM_RANGE(0x400000, 0x47ffff) AM_WRITE(MWA32_ROM)
-	AM_RANGE(0x808000, 0x8080ff) AM_WRITE(tms32031_io_w) AM_BASE(&tms32031_io_regs)
-	AM_RANGE(0x809800, 0x809fff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0xa00000, 0xa00000) AM_WRITE(cage_from_main_ack_w)
+static ADDRESS_MAP_START( cage_map_seattle, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x00ffff) AM_RAM
+	AM_RANGE(0x200000, 0x200000) AM_WRITENOP
+	AM_RANGE(0x400000, 0x47ffff) AM_ROMBANK(10)
+	AM_RANGE(0x808000, 0x8080ff) AM_READWRITE(tms32031_io_r, tms32031_io_w) AM_BASE(&tms32031_io_regs)
+	AM_RANGE(0x809800, 0x809fff) AM_RAM
+	AM_RANGE(0xa00000, 0xa00000) AM_READWRITE(cage_from_main_r, cage_from_main_ack_w)
 	AM_RANGE(0xa00001, 0xa00001) AM_WRITE(cage_to_main_w)
-	AM_RANGE(0xc00000, 0xffffff) AM_WRITE(MWA32_ROM)
+	AM_RANGE(0xa00003, 0xa00003) AM_READ(cage_io_status_r)
+	AM_RANGE(0xc00000, 0xffffff) AM_ROMBANK(11)
 ADDRESS_MAP_END
 
 
@@ -730,9 +618,14 @@ ADDRESS_MAP_END
  *************************************/
 
 /* Custom structure */
-struct CustomSound_interface cage_custom_interface =
+struct dmadac_interface cage_dmadac_interface =
 {
-	custom_start,custom_stop,0
+	DAC_BUFFER_CHANNELS,
+#if (DAC_BUFFER_CHANNELS == 4)
+	{ MIXER(50, MIXER_PAN_RIGHT), MIXER(50, MIXER_PAN_LEFT), MIXER(50, MIXER_PAN_LEFT), MIXER(50, MIXER_PAN_RIGHT) }
+#else
+	{ MIXER(100, MIXER_PAN_LEFT), MIXER(100, MIXER_PAN_RIGHT)) }
+#endif
 };
 
 
@@ -742,11 +635,11 @@ MACHINE_DRIVER_START( cage )
 	MDRV_CPU_ADD_TAG("cage", TMS32031, 33868800)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_CONFIG(cage_config)
-	MDRV_CPU_PROGRAM_MAP(readmem_cage,writemem_cage)
+	MDRV_CPU_PROGRAM_MAP(cage_map,0)
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(CUSTOM, cage_custom_interface)
+	MDRV_SOUND_ADD(DMADAC, cage_dmadac_interface)
 MACHINE_DRIVER_END
 
 
@@ -754,5 +647,5 @@ MACHINE_DRIVER_START( cage_seattle )
 	MDRV_IMPORT_FROM(cage)
 	
 	MDRV_CPU_MODIFY("cage")
-	MDRV_CPU_PROGRAM_MAP(readmem_cage_seattle,writemem_cage_seattle)
+	MDRV_CPU_PROGRAM_MAP(cage_map_seattle,0)
 MACHINE_DRIVER_END

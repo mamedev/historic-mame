@@ -1249,7 +1249,7 @@ static void sblk(void)
 		CALCULATE_SUB_OVERFLOW(R.ALU.d);
 		CALCULATE_SUB_CARRY();
 }
-static void sbrk(void)
+static void tms_sbrk(void)
 {
 		R.AR[ARP] -= R.opcode.b.l;
 }
@@ -1587,7 +1587,7 @@ static opcode_fn opcode_main[256]=
 /*60*/ sacl,		sacl,		sacl,		sacl,		sacl,		sacl,		sacl,		sacl,
 /*68*/ sach,		sach,		sach,		sach,		sach,		sach,		sach,		sach,
 /*70*/ sar_ar0,		sar_ar1,	sar_ar2,	sar_ar3,	sar_ar4,	sar_ar5,	sar_ar6,	sar_ar7,
-/*78*/ sst,			sst1,		popd,		zalr,		spl,		sph,		adrk,		sbrk,
+/*78*/ sst,			sst1,		popd,		zalr,		spl,		sph,		adrk,		tms_sbrk,
 /*80*/ in,			in,			in,			in,			in,			in,			in,			in,
 /*88*/ in,			in,			in,			in,			in,			in,			in,			in,
 /*90*/ bit,			bit,		bit,		bit,		bit,		bit,		bit,		bit,

@@ -25,31 +25,20 @@
  *
  *************************************/
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x2000, 0x23ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xc800, 0xc800) AM_READ(clayshoo_analog_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x2000, 0x23ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_ROM)
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_ROM
+	AM_RANGE(0x2000, 0x23ff) AM_RAM
+	AM_RANGE(0x4000, 0x47ff) AM_ROM
 	AM_RANGE(0x8000, 0x97ff) AM_WRITE(clayshoo_videoram_w)	 /* 6k of video ram according to readme */
 	AM_RANGE(0x9800, 0xa800) AM_WRITE(MWA8_NOP)				 /* not really mapped, but cleared */
-	AM_RANGE(0xc800, 0xc800) AM_WRITE(clayshoo_analog_reset_w)
+	AM_RANGE(0xc800, 0xc800) AM_READWRITE(clayshoo_analog_r, clayshoo_analog_reset_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x20, 0x23) AM_READ(ppi8255_0_r)
-	AM_RANGE(0x30, 0x33) AM_READ(ppi8255_1_r)
-ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( main_io_map, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0x00) AM_WRITE(watchdog_reset_w)
-	AM_RANGE(0x20, 0x23) AM_WRITE(ppi8255_0_w)
-	AM_RANGE(0x30, 0x33) AM_WRITE(ppi8255_1_w)
+	AM_RANGE(0x20, 0x23) AM_READWRITE(ppi8255_0_r, ppi8255_0_w)
+	AM_RANGE(0x30, 0x33) AM_READWRITE(ppi8255_1_r, ppi8255_1_w)
 ADDRESS_MAP_END
 
 
@@ -128,8 +117,8 @@ static MACHINE_DRIVER_START( clayshoo )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,5068000/4)		/* 5.068/4 Mhz (divider is a guess) */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_IO_MAP(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
+	MDRV_CPU_IO_MAP(main_io_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

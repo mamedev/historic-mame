@@ -14,6 +14,40 @@
 extern "C" {
 #endif
 
+
+/*-------------------------------------------------
+	mame_time definitions
+-------------------------------------------------*/
+
+#define MAX_SUBSECONDS				((subseconds_t)1000000000 * (subseconds_t)1000000000)
+#define MAX_SECONDS					((seconds_t)1000000000)
+
+#define SUBSECONDS_TO_DOUBLE(x)		((double)(x) * (1.0 / (double)MAX_SUBSECONDS))
+#define DOUBLE_TO_SUBSECONDS(x)		((subseconds_t)((x) * (double)MAX_SUBSECONDS))
+
+typedef INT64 subseconds_t;
+typedef INT32 seconds_t;
+
+typedef struct
+{
+	seconds_t		seconds;
+	subseconds_t	subseconds;
+} mame_time;
+
+extern mame_time time_zero;
+extern mame_time time_never;
+
+extern subseconds_t subseconds_per_cycle[];
+extern UINT32 cycles_per_second[];
+
+#define MAME_TIME_TO_CYCLES(cpu,t) ((t).seconds * cycles_per_second[cpu] + (t).subseconds / subseconds_per_cycle[cpu])
+#define MAME_TIME_IN_CYCLES(c,cpu) (make_mame_time((c) / cycles_per_second[cpu], (c) * subseconds_per_cycle[cpu]))
+
+
+/*-------------------------------------------------
+	timing macros
+-------------------------------------------------*/
+
 extern double cycles_to_sec[];
 extern double sec_to_cycles[];
 
@@ -32,22 +66,216 @@ extern double sec_to_cycles[];
 typedef struct _mame_timer mame_timer;
 
 
+
+/*-------------------------------------------------
+	core functions
+-------------------------------------------------*/
+
 void timer_init(void);
 void timer_free(void);
-double timer_time_until_next_timer(void);
-void timer_adjust_global_time(double delta);
-mame_timer *timer_alloc(void (*callback)(int));
-void timer_adjust(mame_timer *which, double duration, int param, double period);
-void timer_pulse(double period, int param, void (*callback)(int));
-void timer_set(double duration, int param, void (*callback)(int));
-void timer_reset(mame_timer *which, double duration);
-void timer_remove(mame_timer *which);
-int timer_enable(mame_timer *which, int enable);
-double timer_timeelapsed(mame_timer *which);
-double timer_timeleft(mame_timer *which);
-double timer_get_time(void);
-double timer_starttime(mame_timer *which);
-double timer_firetime(mame_timer *which);
+
+mame_time mame_timer_next_fire_time(void);
+void mame_timer_set_global_time(mame_time newbase);
+mame_timer *mame_timer_alloc(void (*callback)(int));
+void mame_timer_adjust(mame_timer *which, mame_time duration, int param, mame_time period);
+void mame_timer_pulse(mame_time period, int param, void (*callback)(int));
+void mame_timer_set(mame_time duration, int param, void (*callback)(int));
+void mame_timer_reset(mame_timer *which, mame_time duration);
+void mame_timer_remove(mame_timer *which);
+int mame_timer_enable(mame_timer *which, int enable);
+mame_time mame_timer_timeelapsed(mame_timer *which);
+mame_time mame_timer_timeleft(mame_timer *which);
+mame_time mame_timer_get_time(void);
+mame_time mame_timer_starttime(mame_timer *which);
+mame_time mame_timer_firetime(mame_timer *which);
+
+
+
+/*-------------------------------------------------
+	old functions mapped to new ones
+-------------------------------------------------*/
+
+#define timer_alloc(c)					mame_timer_alloc(c)
+#define timer_adjust(w,d,p,e)			mame_timer_adjust(w, double_to_mame_time(d), p, double_to_mame_time(e))
+#define timer_pulse(e,p,c)				mame_timer_pulse(double_to_mame_time(e), p, c)
+#define timer_set(d,p,c)				mame_timer_set(double_to_mame_time(d), p, c)
+#define timer_reset(w,d)				mame_timer_reset(w, double_to_mame_time(d))
+#define timer_remove(w)					mame_timer_remove(w)
+#define timer_enable(w,e)				mame_timer_enable(w,e)
+#define timer_timeelapsed(w)			mame_time_to_double(mame_timer_timeelapsed(w))
+#define timer_timeleft(w)				mame_time_to_double(mame_timer_timeleft(w))
+#define timer_get_time()				mame_time_to_double(mame_timer_get_time())
+#define timer_starttime(w)				mame_time_to_double(mame_timer_starttime(w))
+#define timer_firetime(w)				mame_time_to_double(mame_timer_firetime(w))
+
+
+
+/*-------------------------------------------------
+	make a MAME time
+-------------------------------------------------*/
+
+INLINE mame_time make_mame_time(seconds_t _secs, subseconds_t _subsecs)
+{
+	mame_time result;
+	result.seconds = _secs;
+	result.subseconds = _subsecs;
+	return result;
+}
+
+
+/*-------------------------------------------------
+	convert from mame_time to double
+-------------------------------------------------*/
+
+INLINE double mame_time_to_double(mame_time _time)
+{
+	return (double)_time.seconds + SUBSECONDS_TO_DOUBLE(_time.subseconds);
+}
+
+
+/*-------------------------------------------------
+	convert from double to mame_time
+-------------------------------------------------*/
+
+INLINE mame_time double_to_mame_time(double _time)
+{
+	mame_time abstime;
+	
+	/* special case for TIME_NEVER */
+	if (_time >= TIME_NEVER)
+		return time_never;
+	
+	/* set seconds to the integral part */
+	abstime.seconds = (INT64)_time;
+	
+	/* set subseconds to the fractional part */
+	_time -= (double)abstime.seconds;
+	abstime.subseconds = DOUBLE_TO_SUBSECONDS(_time);
+	return abstime;
+}
+
+
+/*-------------------------------------------------
+	add two mame_times
+-------------------------------------------------*/
+
+INLINE mame_time add_mame_times(mame_time _time1, mame_time _time2)
+{
+	mame_time result;
+	
+	/* if one of the items is time_never, return time_never */
+	if (_time1.seconds >= MAX_SECONDS || _time2.seconds >= MAX_SECONDS)
+		return time_never;
+	
+	/* add the seconds and subseconds */
+	result.subseconds = _time1.subseconds + _time2.subseconds;
+	result.seconds = _time1.seconds + _time2.seconds;
+	
+	/* normalize and return */
+	if (result.subseconds >= MAX_SUBSECONDS)
+	{
+		result.subseconds -= MAX_SUBSECONDS;
+		result.seconds++;
+	}
+	return result;
+}
+
+
+/*-------------------------------------------------
+	add subseconds to a mame_time
+-------------------------------------------------*/
+
+INLINE mame_time add_subseconds_to_mame_time(mame_time _time1, subseconds_t _subseconds)
+{
+	mame_time result;
+	
+	/* if one of the items is time_never, return time_never */
+	if (_time1.seconds >= MAX_SECONDS)
+		return time_never;
+	
+	/* add the seconds and subseconds */
+	result.subseconds = _time1.subseconds + _subseconds;
+	result.seconds = _time1.seconds;
+	
+	/* normalize and return */
+	if (result.subseconds >= MAX_SUBSECONDS)
+	{
+		result.subseconds -= MAX_SUBSECONDS;
+		result.seconds++;
+	}
+	return result;
+}
+
+
+/*-------------------------------------------------
+	subtract two mame_times
+-------------------------------------------------*/
+
+INLINE mame_time sub_mame_times(mame_time _time1, mame_time _time2)
+{
+	mame_time result;
+
+	/* if time1 is time_never, return time_never */
+	if (_time1.seconds >= MAX_SECONDS)
+		return time_never;
+	
+	/* add the seconds and subseconds */
+	result.subseconds = _time1.subseconds - _time2.subseconds;
+	result.seconds = _time1.seconds - _time2.seconds;
+
+	/* normalize and return */
+	if (result.subseconds < 0)
+	{
+		result.subseconds += MAX_SUBSECONDS;
+		result.seconds--;
+	}
+	return result;
+}
+
+
+/*-------------------------------------------------
+	subtract subseconds from a mame_time
+-------------------------------------------------*/
+
+INLINE mame_time sub_subseconds_from_mame_time(mame_time _time1, subseconds_t _subseconds)
+{
+	mame_time result;
+
+	/* if time1 is time_never, return time_never */
+	if (_time1.seconds >= MAX_SECONDS)
+		return time_never;
+	
+	/* add the seconds and subseconds */
+	result.subseconds = _time1.subseconds - _subseconds;
+	result.seconds = _time1.seconds;
+
+	/* normalize and return */
+	if (result.subseconds < 0)
+	{
+		result.subseconds += MAX_SUBSECONDS;
+		result.seconds--;
+	}
+	return result;
+}
+
+
+/*-------------------------------------------------
+	compare two mame_times
+-------------------------------------------------*/
+
+INLINE int compare_mame_times(mame_time _time1, mame_time _time2)
+{
+	if (_time1.seconds > _time2.seconds)
+		return 1;
+	if (_time1.seconds < _time2.seconds)
+		return -1;
+	if (_time1.subseconds > _time2.subseconds)
+		return 1;
+	if (_time1.subseconds < _time2.subseconds)
+		return -1;
+	return 0;
+}
+
 
 #ifdef __cplusplus
 }

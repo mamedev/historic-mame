@@ -37,7 +37,6 @@ struct star
 static struct star stars[MAX_STARS];
 static int    total_stars;
 static int    scroll[8];
-static int    CollisionRegister=0;
 static int    stars_on=0;
 static int 	  character_mode=0;
 static int    character_page=0;
@@ -60,9 +59,11 @@ struct mame_bitmap *collision_bitmap;
 struct mame_bitmap *collision_background;
 struct mame_bitmap *scrolled_background;
 
-static unsigned char s2636_1_dirty[4];
-static unsigned char s2636_2_dirty[4];
-static unsigned char s2636_3_dirty[4];
+unsigned char s2636_1_dirty[4];
+unsigned char s2636_2_dirty[4];
+unsigned char s2636_3_dirty[4];
+
+int CollisionRegister=0;
 
 static int ModeOffset[4] = {223,191,255,127};
 

@@ -933,7 +933,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 		win_set_debugger_focus(display->debug_focus);
 
 	// if the game palette has changed, update it
-	if (display->changed_flags & GAME_PALETTE_CHANGED)
+	if (palette_lookups_invalid || (display->changed_flags & GAME_PALETTE_CHANGED))
 		update_palette(display);
 
 	// if we're not skipping this frame, draw it

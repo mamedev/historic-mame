@@ -1,7 +1,7 @@
  /**************************************************************************\
  *				   Texas Instruments TMS32010 DSP Emulator					*
  *																			*
- *					Copyright (C) 1999-2002+ Tony La Porta					*
+ *					Copyright (C) 1999-2004+ Tony La Porta					*
  *		You are not allowed to distribute this software commercially.		*
  *						Written for the MAME project.						*
  *																			*
@@ -41,7 +41,9 @@
  *	ASG (24-Sep-2002) Ver 1.20												*
  *	 - Fixed overflow handling												*
  *	 - Simplified logic in a few locations									*
- *	 - Added macros for specifying address and port ranges					*
+ *	TLP (22-Feb-2004) Ver 1.21												*
+ *	 - Overflow for ADDH only affects upper 16bits (was modifying 32 bits)	*
+ *	 - Internal Data Memory map is assigned here now						*
  *																			*
  \**************************************************************************/
 
@@ -57,7 +59,12 @@
 #include "tms32010.h"
 
 
-#define CLK 4	/* 1 cycle equals 4 clock ticks */
+/* 1 cycle equals 4 clock ticks */
+#if 0
+#define CLK  TMS32010_CLOCK_DIVIDER
+#else
+#define CLK  1		/* Moved the clock timing back into the driver */
+#endif
 
 
 #ifndef INLINE
@@ -74,7 +81,6 @@
 #define P_IN(A)			TMS32010_In(A)
 #define P_OUT(A,V)		TMS32010_Out(A,V)
 #define BIO_IN			TMS32010_BIO_In
-#define ADDR_MASK		TMS32010_ADDR_MASK
 
 
 static UINT8 tms32010_reg_layout[] = {
@@ -116,6 +122,7 @@ static tms32010_Regs R;
 static PAIR oldacc;
 static UINT16 memaccess;
 static int tms32010_icount;
+static int addr_mask;
 typedef void (*opcode_fn) (void);
 
 
@@ -172,14 +179,14 @@ INLINE UINT16 POP_STACK(void)
 	R.STACK[3] = R.STACK[2];
 	R.STACK[2] = R.STACK[1];
 	R.STACK[1] = R.STACK[0];
-	return (data & ADDR_MASK);
+	return (data & addr_mask);
 }
 INLINE void PUSH_STACK(UINT16 data)
 {
 	R.STACK[0] = R.STACK[1];
 	R.STACK[1] = R.STACK[2];
 	R.STACK[2] = R.STACK[3];
-	R.STACK[3] = (data & ADDR_MASK);
+	R.STACK[3] = (data & addr_mask);
 }
 
 INLINE void GET_MEM_ADDR(UINT16 DMA)
@@ -282,358 +289,362 @@ static void addh(void)		{ getdata(0,0); R.ACC.d += (R.ALU.d << 16); }
 
 static void add_sh(void)
 {
-		oldacc.d = R.ACC.d;
-		getdata((R.opcode.b.h & 0xf),1);
-		R.ACC.d += R.ALU.d;
-		CALCULATE_ADD_OVERFLOW(R.ALU.d);
+	oldacc.d = R.ACC.d;
+	getdata((R.opcode.b.h & 0xf),1);
+	R.ACC.d += R.ALU.d;
+	CALCULATE_ADD_OVERFLOW(R.ALU.d);
 }
 static void addh(void)
 {
-		oldacc.d = R.ACC.d;
-		getdata(16,0);
-		R.ACC.d += R.ALU.d;
-		CALCULATE_ADD_OVERFLOW(R.ALU.d);
+	oldacc.d = R.ACC.d;
+	getdata(0,0);
+	R.ACC.w.h += R.ALU.w.l;
+	if ((INT16)(~(oldacc.w.h ^ R.ALU.w.h) & (oldacc.w.h ^ R.ACC.w.h)) < 0) {
+		SET(OV_FLAG);
+		if (OVM)
+			R.ACC.w.h = ((INT16)oldacc.w.h < 0) ? 0x8000 : 0x7fff;
+	}
 }
 static void adds(void)
 {
-		oldacc.d = R.ACC.d;
-		getdata(0,0);
-		R.ACC.d += R.ALU.d;
-		CALCULATE_ADD_OVERFLOW(R.ALU.d);
+	oldacc.d = R.ACC.d;
+	getdata(0,0);
+	R.ACC.d += R.ALU.d;
+	CALCULATE_ADD_OVERFLOW(R.ALU.d);
 }
 static void and(void)
 {
-		getdata(0,0);
-		R.ACC.d &= R.ALU.d;
+	getdata(0,0);
+	R.ACC.d &= R.ALU.d;
 }
 static void apac(void)
 {
-		oldacc.d = R.ACC.d;
-		R.ACC.d += R.Preg.d;
-		CALCULATE_ADD_OVERFLOW(R.Preg.d);
+	oldacc.d = R.ACC.d;
+	R.ACC.d += R.Preg.d;
+	CALCULATE_ADD_OVERFLOW(R.Preg.d);
 }
 static void br(void)
 {
-		R.PC = M_RDOP_ARG(R.PC);
+	R.PC = M_RDOP_ARG(R.PC);
 }
 static void banz(void)
 {
-		if (R.AR[ARP] & 0x01ff)
-			R.PC = M_RDOP_ARG(R.PC);
-		else
-			R.PC++ ;
-		R.ALU.w.l = R.AR[ARP];
-		R.ALU.w.l-- ;
-		R.AR[ARP] = (R.AR[ARP] & 0xfe00) | (R.ALU.w.l & 0x01ff);
+	if (R.AR[ARP] & 0x01ff)
+		R.PC = M_RDOP_ARG(R.PC);
+	else
+		R.PC++ ;
+	R.ALU.w.l = R.AR[ARP];
+	R.ALU.w.l-- ;
+	R.AR[ARP] = (R.AR[ARP] & 0xfe00) | (R.ALU.w.l & 0x01ff);
 }
 static void bgez(void)
 {
-		if ( (INT32)(R.ACC.d) >= 0 )
-			R.PC = M_RDOP_ARG(R.PC);
-		else
-			R.PC++ ;
+	if ( (INT32)(R.ACC.d) >= 0 )
+		R.PC = M_RDOP_ARG(R.PC);
+	else
+		R.PC++ ;
 }
 static void bgz(void)
 {
-		if ( (INT32)(R.ACC.d) > 0 )
-			R.PC = M_RDOP_ARG(R.PC);
-		else
-			R.PC++ ;
+	if ( (INT32)(R.ACC.d) > 0 )
+		R.PC = M_RDOP_ARG(R.PC);
+	else
+		R.PC++ ;
 }
 static void bioz(void)
 {
-		if (BIO_IN != CLEAR_LINE)
-			R.PC = M_RDOP_ARG(R.PC);
-		else
-			R.PC++ ;
+	if (BIO_IN != CLEAR_LINE)
+		R.PC = M_RDOP_ARG(R.PC);
+	else
+		R.PC++ ;
 }
 static void blez(void)
 {
-		if ( (INT32)(R.ACC.d) <= 0 )
-			R.PC = M_RDOP_ARG(R.PC);
-		else
-			R.PC++ ;
+	if ( (INT32)(R.ACC.d) <= 0 )
+		R.PC = M_RDOP_ARG(R.PC);
+	else
+		R.PC++ ;
 }
 static void blz(void)
 {
-		if ( (INT32)(R.ACC.d) <  0 )
-			R.PC = M_RDOP_ARG(R.PC);
-		else
-			R.PC++ ;
+	if ( (INT32)(R.ACC.d) <  0 )
+		R.PC = M_RDOP_ARG(R.PC);
+	else
+		R.PC++ ;
 }
 static void bnz(void)
 {
-		if (R.ACC.d != 0)
-			R.PC = M_RDOP_ARG(R.PC);
-		else
-			R.PC++ ;
+	if (R.ACC.d != 0)
+		R.PC = M_RDOP_ARG(R.PC);
+	else
+		R.PC++ ;
 }
 static void bv(void)
 {
-		if (OV) {
-			R.PC = M_RDOP_ARG(R.PC);
-			CLR(OV_FLAG);
-		}
-		else
-			R.PC++ ;
+	if (OV) {
+		R.PC = M_RDOP_ARG(R.PC);
+		CLR(OV_FLAG);
+	}
+	else
+		R.PC++ ;
 }
 static void bz(void)
 {
-		if (R.ACC.d == 0)
-			R.PC = M_RDOP_ARG(R.PC);
-		else
-			R.PC++ ;
+	if (R.ACC.d == 0)
+		R.PC = M_RDOP_ARG(R.PC);
+	else
+		R.PC++ ;
 }
 static void cala(void)
 {
-		PUSH_STACK(R.PC);
-		R.PC = R.ACC.w.l & ADDR_MASK;
+	PUSH_STACK(R.PC);
+	R.PC = R.ACC.w.l & addr_mask;
 }
 static void call(void)
 {
-		R.PC++ ;
-		PUSH_STACK(R.PC);
-		R.PC = M_RDOP_ARG((R.PC - 1)) & ADDR_MASK;
+	R.PC++ ;
+	PUSH_STACK(R.PC);
+	R.PC = M_RDOP_ARG((R.PC - 1)) & addr_mask;
 }
 static void dint(void)
 {
-		SET(INTM_FLAG);
+	SET(INTM_FLAG);
 }
 static void dmov(void)
 {
-		getdata(0,0);
-		M_WRTRAM((memaccess + 1),R.ALU.w.l);
+	getdata(0,0);
+	M_WRTRAM((memaccess + 1),R.ALU.w.l);
 }
 static void eint(void)
 {
-		CLR(INTM_FLAG);
+	CLR(INTM_FLAG);
 }
 static void in_p(void)
 {
-		R.ALU.w.l = P_IN( (R.opcode.b.h & 7) );
-		putdata(R.ALU.w.l);
+	R.ALU.w.l = P_IN( (R.opcode.b.h & 7) );
+	putdata(R.ALU.w.l);
 }
 static void lac_sh(void)
 {
-		getdata((R.opcode.b.h & 0x0f),1);
-		R.ACC.d = R.ALU.d;
+	getdata((R.opcode.b.h & 0x0f),1);
+	R.ACC.d = R.ALU.d;
 }
 static void lack(void)
 {
-		R.ACC.d = R.opcode.b.l;
+	R.ACC.d = R.opcode.b.l;
 }
 static void lar_ar0(void)
 {
-		getdata(0,0);
-		R.AR[0] = R.ALU.w.l;
+	getdata(0,0);
+	R.AR[0] = R.ALU.w.l;
 }
 static void lar_ar1(void)
 {
-		getdata(0,0);
-		R.AR[1] = R.ALU.w.l;
+	getdata(0,0);
+	R.AR[1] = R.ALU.w.l;
 }
 static void lark_ar0(void)
 {
-		R.AR[0] = R.opcode.b.l;
+	R.AR[0] = R.opcode.b.l;
 }
 static void lark_ar1(void)
 {
-		R.AR[1] = R.opcode.b.l;
+	R.AR[1] = R.opcode.b.l;
 }
 static void larp_mar(void)
 {
-		if (R.opcode.b.l & 0x80) {
-			UPDATE_AR();
-			UPDATE_ARP();
-		}
+	if (R.opcode.b.l & 0x80) {
+		UPDATE_AR();
+		UPDATE_ARP();
+	}
 }
 static void ldp(void)
 {
-		getdata(0,0);
-		if (R.ALU.d & 1)
-			SET(DP_REG);
-		else
-			CLR(DP_REG);
+	getdata(0,0);
+	if (R.ALU.d & 1)
+		SET(DP_REG);
+	else
+		CLR(DP_REG);
 }
 static void ldpk(void)
 {
-		if (R.opcode.b.l & 1)
-			SET(DP_REG);
-		else
-			CLR(DP_REG);
+	if (R.opcode.b.l & 1)
+		SET(DP_REG);
+	else
+		CLR(DP_REG);
 }
 static void lst(void)
 {
-		R.opcode.b.l |= 0x08; /* Next arp not supported here, so mask it */
-		getdata(0,0);
-		R.ALU.w.l &= (~INTM_FLAG);	/* Must not affect INTM */
-		R.STR &= INTM_FLAG;
-		R.STR |= R.ALU.w.l;
-		R.STR |= 0x1efe;
+	R.opcode.b.l |= 0x08; /* Next arp not supported here, so mask it */
+	getdata(0,0);
+	R.ALU.w.l &= (~INTM_FLAG);	/* Must not affect INTM */
+	R.STR &= INTM_FLAG;
+	R.STR |= R.ALU.w.l;
+	R.STR |= 0x1efe;
 }
 static void lt(void)
 {
-		getdata(0,0);
-		R.Treg = R.ALU.w.l;
+	getdata(0,0);
+	R.Treg = R.ALU.w.l;
 }
 static void lta(void)
 {
-		oldacc.d = R.ACC.d;
-		getdata(0,0);
-		R.Treg = R.ALU.w.l;
-		R.ACC.d += R.Preg.d;
-		CALCULATE_ADD_OVERFLOW(R.Preg.d);
+	oldacc.d = R.ACC.d;
+	getdata(0,0);
+	R.Treg = R.ALU.w.l;
+	R.ACC.d += R.Preg.d;
+	CALCULATE_ADD_OVERFLOW(R.Preg.d);
 }
 static void ltd(void)
 {
-		oldacc.d = R.ACC.d;
-		getdata(0,0);
-		R.Treg = R.ALU.w.l;
-		M_WRTRAM((memaccess + 1),R.ALU.w.l);
-		R.ACC.d += R.Preg.d;
-		CALCULATE_ADD_OVERFLOW(R.Preg.d);
+	oldacc.d = R.ACC.d;
+	getdata(0,0);
+	R.Treg = R.ALU.w.l;
+	M_WRTRAM((memaccess + 1),R.ALU.w.l);
+	R.ACC.d += R.Preg.d;
+	CALCULATE_ADD_OVERFLOW(R.Preg.d);
 }
 static void mpy(void)
 {
-		getdata(0,0);
-		R.Preg.d = (INT16)R.ALU.w.l * (INT16)R.Treg;
-		if (R.Preg.d == 0x40000000) R.Preg.d = 0xc0000000;
+	getdata(0,0);
+	R.Preg.d = (INT16)R.ALU.w.l * (INT16)R.Treg;
+	if (R.Preg.d == 0x40000000) R.Preg.d = 0xc0000000;
 }
 static void mpyk(void)
 {
-		R.Preg.d = (INT16)R.Treg * ((INT16)(R.opcode.w.l << 3) >> 3);
+	R.Preg.d = (INT16)R.Treg * ((INT16)(R.opcode.w.l << 3) >> 3);
 }
 static void nop(void)
 {
-		/* Nothing to do */
+	/* Nothing to do */
 }
 static void or(void)
 {
-		getdata(0,0);
-		R.ACC.w.l |= R.ALU.w.l;
+	getdata(0,0);
+	R.ACC.w.l |= R.ALU.w.l;
 }
 static void out_p(void)
 {
-		getdata(0,0);
-		P_OUT( (R.opcode.b.h & 7), R.ALU.w.l );
+	getdata(0,0);
+	P_OUT( (R.opcode.b.h & 7), R.ALU.w.l );
 }
 static void pac(void)
 {
-		R.ACC.d = R.Preg.d;
+	R.ACC.d = R.Preg.d;
 }
 static void pop(void)
 {
-		R.ACC.w.l = POP_STACK();
-		R.ACC.w.h = 0x0000;
+	R.ACC.w.l = POP_STACK();
+	R.ACC.w.h = 0x0000;
 }
 static void push(void)
 {
-		PUSH_STACK(R.ACC.w.l);
+	PUSH_STACK(R.ACC.w.l);
 }
 static void ret(void)
 {
-		R.PC = POP_STACK();
+	R.PC = POP_STACK();
 }
 static void rovm(void)
 {
-		CLR(OVM_FLAG);
+	CLR(OVM_FLAG);
 }
 static void sach_sh(void)
 {
-		R.ALU.d = (R.ACC.d << (R.opcode.b.h & 7));
-		putdata(R.ALU.w.h);
+	R.ALU.d = (R.ACC.d << (R.opcode.b.h & 7));
+	putdata(R.ALU.w.h);
 }
 static void sacl(void)
 {
-		putdata(R.ACC.w.l);
+	putdata(R.ACC.w.l);
 }
 static void sar_ar0(void)
 {
-		putdata_sar(0);
+	putdata_sar(0);
 }
 static void sar_ar1(void)
 {
-		putdata_sar(1);
+	putdata_sar(1);
 }
 static void sovm(void)
 {
-		SET(OVM_FLAG);
+	SET(OVM_FLAG);
 }
 static void spac(void)
 {
-		oldacc.d = R.ACC.d;
-		R.ACC.d -= R.Preg.d;
-		CALCULATE_SUB_OVERFLOW(R.Preg.d);
+	oldacc.d = R.ACC.d;
+	R.ACC.d -= R.Preg.d;
+	CALCULATE_SUB_OVERFLOW(R.Preg.d);
 }
 static void sst(void)
 {
-		putdata_sst(R.STR);
+	putdata_sst(R.STR);
 }
 static void sub_sh(void)
 {
-		oldacc.d = R.ACC.d;
-		getdata((R.opcode.b.h & 0x0f),1);
-		R.ACC.d -= R.ALU.d;
-		CALCULATE_SUB_OVERFLOW(R.ALU.d);
+	oldacc.d = R.ACC.d;
+	getdata((R.opcode.b.h & 0x0f),1);
+	R.ACC.d -= R.ALU.d;
+	CALCULATE_SUB_OVERFLOW(R.ALU.d);
 }
 static void subc(void)
 {
-		oldacc.d = R.ACC.d;
-		getdata(15,0);
-		R.ALU.d -= R.ALU.d;
-		if ((INT32)((oldacc.d ^ R.ALU.d) & (oldacc.d ^ R.ACC.d)) < 0)
-			SET(OV_FLAG);
-		if ( (INT32)(R.ALU.d) >= 0 )
-			R.ACC.d = ((R.ALU.d << 1) + 1);
-		else
-			R.ACC.d = (R.ACC.d << 1);
+	oldacc.d = R.ACC.d;
+	getdata(15,0);
+	R.ALU.d -= R.ALU.d;
+	if ((INT32)((oldacc.d ^ R.ALU.d) & (oldacc.d ^ R.ACC.d)) < 0)
+		SET(OV_FLAG);
+	if ( (INT32)(R.ALU.d) >= 0 )
+		R.ACC.d = ((R.ALU.d << 1) + 1);
+	else
+		R.ACC.d = (R.ACC.d << 1);
 }
 static void subh(void)
 {
-		oldacc.d = R.ACC.d;
-		getdata(16,0);
-		R.ACC.d -= R.ALU.d;
-		CALCULATE_SUB_OVERFLOW(R.ALU.d);
+	oldacc.d = R.ACC.d;
+	getdata(16,0);
+	R.ACC.d -= R.ALU.d;
+	CALCULATE_SUB_OVERFLOW(R.ALU.d);
 }
 static void subs(void)
 {
-		oldacc.d = R.ACC.d;
-		getdata(0,0);
-		R.ACC.d -= R.ALU.d;
-		CALCULATE_SUB_OVERFLOW(R.ALU.d);
+	oldacc.d = R.ACC.d;
+	getdata(0,0);
+	R.ACC.d -= R.ALU.d;
+	CALCULATE_SUB_OVERFLOW(R.ALU.d);
 }
 static void tblr(void)
 {
-		R.ALU.d = M_RDROM((R.ACC.w.l & ADDR_MASK));
-		putdata(R.ALU.w.l);
-		R.STACK[0] = R.STACK[1];
+	R.ALU.d = M_RDROM((R.ACC.w.l & addr_mask));
+	putdata(R.ALU.w.l);
+	R.STACK[0] = R.STACK[1];
 }
 static void tblw(void)
 {
-		getdata(0,0);
-		M_WRTROM(((R.ACC.w.l & ADDR_MASK)),R.ALU.w.l);
-		R.STACK[0] = R.STACK[1];
+	getdata(0,0);
+	M_WRTROM(((R.ACC.w.l & addr_mask)),R.ALU.w.l);
+	R.STACK[0] = R.STACK[1];
 }
 static void xor(void)
 {
-		getdata(0,0);
-		R.ACC.w.l ^= R.ALU.w.l;
+	getdata(0,0);
+	R.ACC.w.l ^= R.ALU.w.l;
 }
 static void zac(void)
 {
-		R.ACC.d = 0;
+	R.ACC.d = 0;
 }
 static void zalh(void)
 {
-		getdata(0,0);
-		R.ACC.w.h = R.ALU.w.l;
-		R.ACC.w.l = 0x0000;
+	getdata(0,0);
+	R.ACC.w.h = R.ALU.w.l;
+	R.ACC.w.l = 0x0000;
 }
 static void zals(void)
 {
-		getdata(0,0);
-		R.ACC.w.l = R.ALU.w.l;
-		R.ACC.w.h = 0x0000;
+	getdata(0,0);
+	R.ACC.w.l = R.ALU.w.l;
+	R.ACC.w.h = 0x0000;
 }
 
 
@@ -751,6 +762,10 @@ static void tms32010_reset (void *param)
 	R.STR   = 0xfefe;
 	R.ACC.d = 0;
 	R.INTF  = TMS32010_INT_NONE;
+	addr_mask = 0x0fff;	/* TMS32010 can only address 0x0fff */
+						/* however other TMS3201x devices	*/
+						/* can address up to 0xffff (incase */
+						/* their support is ever added).	*/
 }
 
 
@@ -775,7 +790,7 @@ static int Ext_IRQ(void)
 		SET(INTM_FLAG);
 		PUSH_STACK(R.PC);
 		R.PC = 0x0002;
-		return (3*CLK);  /* 3 cycles used due to PUSH and DINT operation ? */
+		return (3*CLK);	/* 3 cycles used due to PUSH and DINT operation ? */
 	}
 	return (0*CLK);
 }
@@ -857,9 +872,18 @@ static offs_t tms32010_dasm(char *buffer, offs_t pc)
 }
 
 
+/****************************************************************************
+ *	Internal Memory Map
+ ****************************************************************************/
+
+static ADDRESS_MAP_START( tms32010_ram, ADDRESS_SPACE_DATA, 16 )
+	AM_RANGE(0x00, 0x7f) AM_RAM		/* Page 0 */
+	AM_RANGE(0x80, 0x8f) AM_RAM		/* Page 1 */
+ADDRESS_MAP_END
+
 
 /**************************************************************************
- * Generic set_info
+ *	Generic set_info
  **************************************************************************/
 
 static void tms32010_set_info(UINT32 state, union cpuinfo *info)
@@ -881,7 +905,7 @@ static void tms32010_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + TMS32010_TREG:		R.Treg   = info->i;						break;
 		case CPUINFO_INT_REGISTER + TMS32010_AR0:		R.AR[0]  = info->i;						break;
 		case CPUINFO_INT_REGISTER + TMS32010_AR1:		R.AR[1]  = info->i;						break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					/* not supported */						break;
 	}
@@ -890,7 +914,7 @@ static void tms32010_set_info(UINT32 state, union cpuinfo *info)
 
 
 /**************************************************************************
- * Generic get_info
+ *	Generic get_info
  **************************************************************************/
 
 void tms32010_get_info(UINT32 state, union cpuinfo *info)
@@ -902,20 +926,20 @@ void tms32010_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_IRQ_LINES:						info->i = 1;							break;
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
-		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = TMS32010_CLOCK_DIVIDER;		break;
 		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 2;							break;
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1*CLK;						break;
-		case CPUINFO_INT_MAX_CYCLES:					info->i = 5*CLK;						break;
-		
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 3*CLK;						break;
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 12;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = -1;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 16;					break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 12;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = -1;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 16;					break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 9;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 5;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = -1;					break;
 
 		case CPUINFO_INT_IRQ_STATE + 0:					info->i = (R.INTF & TMS32010_INT_PENDING) ? ASSERT_LINE : CLEAR_LINE;	break;
@@ -948,13 +972,14 @@ void tms32010_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tms32010_icount;		break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = tms32010_reg_layout;			break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = tms32010_win_layout;			break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:	info->internal_map = construct_map_tms32010_ram; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "TMS32010"); break;
 		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Texas Instruments TMS32010"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.20"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.21"); break;
 		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C)1999-2002+ by Tony La Porta"); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C)1999-2004+ by Tony La Porta"); break;
 
 		case CPUINFO_STR_FLAGS:
 			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",

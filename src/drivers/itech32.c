@@ -4,12 +4,13 @@
 	(32-bit blitter variant)
 
     driver by Aaron Giles
+    thanks to Brian Troha for tracking down all the variants
 
     Games supported:
 		* Time Killers (2 sets)
 		* Bloodstorm (4 sets)
 		* Hard Yardage (2 sets)
-		* Pairs
+		* Pairs (2 sets)
 		* Driver's Edge (not working)
 		* World Class Bowling (4 sets)
 		* Street Fighter: The Movie (4 sets)
@@ -22,11 +23,39 @@
 		* Golden Tee Golf '98 (4 sets)
 		* Golden Tee Golf '99 (3 Sets)
 		* Golden Tee Golf 2K  (2 Sets)
-		* Golden Tee Classic  (2 Sets)
+		* Golden Tee Classic  (3 Sets)
 
 ****************************************************************************
 
 	Memory map TBD
+
+****************************************************************************
+
+	Memory sizes:
+		Time Killers:
+			2 * MS6264L    = 2 *   8k =   16k (main RAM)
+			6 * V52C8126K  = 6 * 128k =  768k (video RAM)
+			3 * NMS64X8AM  = 3 *  32k =   96k (palette RAM)
+
+		Hard Yardage:
+			2 * MS62256    = 2 *  32k =   64k (main RAM)
+			4 * V52C8128K  = 4 * 128k =  512k (video RAM)
+			3 * MB84256    = 3 *  32k =   96k (palette RAM)
+
+		Bloodstorm:
+			2 * MS62256    = 2 *  32k =   64k (main RAM)
+			6 * V52C8128K  = 6 * 128k =  768k (video RAM)
+			3 * MB84256    = 3 *  32k =   96k (palette RAM)
+
+		Driver's Edge:
+			4 * CXK58258   = 4 *  32k =  128k (main RAM)
+			4 * CY7C199    = 4 *  32k =  128k (main RAM)
+			8 * V52C8128K  = 8 * 128k = 1024k (video RAM)
+			3 * CXK58257AM = 3 *  32k =   96k (palette RAM)
+			8 * CY7C141    = 8 *   1k =    8k (dual ported shared RAM btw 68k and TMS)
+			8 * CXK581000AM= 8 * 128k = 1024k (TMS1 RAM)
+			4 * CY7C185    = 4 *   8k =   32k (TMS1 RAM)
+			8 * CY7C199    = 8 *  32k =  256k (TMS2 RAM)
 
 ***************************************************************************/
 
@@ -34,6 +63,7 @@
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
 #include "cpu/m68000/m68000.h"
+#include "machine/6522via.h"
 #include "machine/ticket.h"
 #include "vidhrdw/generic.h"
 #include "itech32.h"
@@ -59,12 +89,8 @@ static UINT8 xint_state;
 static UINT8 qint_state;
 
 static data8_t sound_data;
+static data8_t sound_return;
 static UINT8 sound_int_state;
-
-static data8_t *via6522;
-static data16_t via6522_timer_count[2];
-static void *via6522_timer[2];
-static data8_t via6522_int_state;
 
 static data16_t *main_rom;
 static data16_t *main_ram;
@@ -74,10 +100,14 @@ static size_t nvram_size;
 
 static offs_t itech020_prot_address;
 
-static data8_t *sound_speedup_data;
-static data16_t sound_speedup_pc;
-
 static UINT8 is_drivedge;
+
+static data32_t *tms1_ram, *tms2_ram;
+static data32_t *tms1_boot;
+static UINT8 tms_spinning[2];
+
+#define START_TMS_SPINNING(n) do { cpu_spinuntil_trigger(7351 + n); tms_spinning[n] = 1; } while (0)
+#define STOP_TMS_SPINNING(n)  do { cpu_trigger(7351 + n); tms_spinning[n] = 0; } while (0)
 
 
 
@@ -124,7 +154,7 @@ static INTERRUPT_GEN( generate_int1 )
 {
 	/* signal the NMI */
 	itech32_update_interrupts(1, -1, -1);
-	if (FULL_LOGGING) logerror("------------ VBLANK (%d) --------------", cpu_getscanline());
+	if (FULL_LOGGING) logerror("------------ VBLANK (%d) --------------\n", cpu_getscanline());
 }
 
 
@@ -141,26 +171,29 @@ static WRITE16_HANDLER( int1_ack_w )
  *
  *************************************/
 
-static void via6522_timer_callback(int which);
-
 static MACHINE_INIT( itech32 )
 {
 	vint_state = xint_state = qint_state = 0;
 	sound_data = 0;
+	sound_return = 0;
 	sound_int_state = 0;
 
 	/* reset the VIA chip (if used) */
-	via6522_timer_count[0] = via6522_timer_count[1] = 0;
-	via6522_timer[0] = timer_alloc(via6522_timer_callback);
-	via6522_timer[1] = 0;
-	via6522_int_state = 0;
+	via_reset();
 
 	/* reset the ticket dispenser */
 	ticket_dispenser_init(200, TICKET_MOTOR_ACTIVE_HIGH, TICKET_STATUS_ACTIVE_HIGH);
+}
 
-	/* map the mirrored RAM in Driver's Edge */
-	if (is_drivedge)
-		cpu_setbank(2, main_ram);
+
+static MACHINE_INIT( drivedge )
+{
+	machine_init_itech32();
+
+	cpu_set_reset_line(2, ASSERT_LINE);
+	cpu_set_reset_line(3, ASSERT_LINE);
+	STOP_TMS_SPINNING(0);
+	STOP_TMS_SPINNING(1);
 }
 
 
@@ -283,6 +316,21 @@ static READ32_HANDLER( trackball32_4bit_p2_r )
 }
 
 
+static READ32_HANDLER( drivedge_steering_r )
+{
+	int val = readinputport(5) * 2 - 0x100;
+	if (val < 0) val = 0x100 | (-val);
+	return val << 16;
+}
+
+
+static READ32_HANDLER( drivedge_gas_r )
+{
+	int val = readinputport(6);
+	return val << 16;
+}
+
+
 
 /*************************************
  *
@@ -313,7 +361,6 @@ static READ32_HANDLER( itech020_prot_result_r )
 
 static WRITE_HANDLER( sound_bank_w )
 {
-	logerror("sound bank = %02x", data);
 	cpu_setbank(1, &memory_region(REGION_CPU2)[0x10000 + data * 0x4000]);
 }
 
@@ -330,7 +377,6 @@ static void delayed_sound_data_w(int data)
 	sound_data = data;
 	sound_int_state = 1;
 	cpu_set_irq_line(1, M6809_IRQ_LINE, ASSERT_LINE);
-	logerror("sound_data_w() = %02x", sound_data);
 }
 
 
@@ -338,6 +384,12 @@ static WRITE16_HANDLER( sound_data_w )
 {
 	if (ACCESSING_LSB)
 		timer_set(TIME_NOW, data & 0xff, delayed_sound_data_w);
+}
+
+
+static READ32_HANDLER( sound_data32_r )
+{
+	return sound_return << 16;
 }
 
 
@@ -350,10 +402,15 @@ static WRITE32_HANDLER( sound_data32_w )
 
 static READ_HANDLER( sound_data_r )
 {
-	logerror("sound_data_r() = %02x", sound_data);
 	cpu_set_irq_line(1, M6809_IRQ_LINE, CLEAR_LINE);
 	sound_int_state = 0;
 	return sound_data;
+}
+
+
+static WRITE_HANDLER( sound_return_w )
+{
+	sound_return = data;
 }
 
 
@@ -370,23 +427,39 @@ static READ_HANDLER( sound_data_buffer_r )
  *
  *************************************/
 
+static WRITE_HANDLER( drivedge_portb_out )
+{
+//	logerror("PIA port B write = %02x\n", data);
+
+	/* bit 0 controls the fan light */
+	/* bit 1 controls the tow light */
+	/* bit 2 controls the horn light */
+	/* bit 4 controls the ticket dispenser */
+	/* bit 5 controls the coin counter */
+	/* bit 6 controls the diagnostic sound LED */
+	set_led_status(1, data & 0x01);
+	set_led_status(2, data & 0x02);
+	set_led_status(3, data & 0x04);
+	ticket_dispenser_w(0, (data & 0x10) << 3);
+	coin_counter_w(0, (data & 0x20) >> 5);
+}
+
+
+static WRITE_HANDLER( drivedge_turbo_light )
+{
+	set_led_status(0, data);
+}
+
+
 static WRITE_HANDLER( pia_portb_out )
 {
-	logerror("PIA port B write = %02x", data);
+//	logerror("PIA port B write = %02x\n", data);
 
 	/* bit 4 controls the ticket dispenser */
 	/* bit 5 controls the coin counter */
 	/* bit 6 controls the diagnostic sound LED */
 	ticket_dispenser_w(0, (data & 0x10) << 3);
 	coin_counter_w(0, (data & 0x20) >> 5);
-}
-
-
-static WRITE_HANDLER( sound_output_w )
-{
-	logerror("sound output write = %02x", data);
-
-	coin_counter_w(0, (~data & 0x20) >> 5);
 }
 
 
@@ -397,80 +470,31 @@ static WRITE_HANDLER( sound_output_w )
  *
  *************************************/
 
-INLINE void update_via_int(void)
+static void via_irq(int state)
 {
-	/* if interrupts are enabled and one is pending, set the line */
-	if ((via6522[14] & 0x80) && (via6522_int_state & via6522[14]))
+	if (state)
 		cpu_set_irq_line(1, M6809_FIRQ_LINE, ASSERT_LINE);
 	else
 		cpu_set_irq_line(1, M6809_FIRQ_LINE, CLEAR_LINE);
 }
 
 
-static void via6522_timer_callback(int which)
+static struct via6522_interface via_interface =
 {
-	via6522_int_state |= 0x40 >> which;
-	update_via_int();
-}
+	/*inputs : A/B         */ 0, 0,
+	/*inputs : CA/B1,CA/B2 */ 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2   */ 0, pia_portb_out, 0, 0,
+	/*irq                  */ via_irq
+};
 
 
-static WRITE_HANDLER( via6522_w )
+static struct via6522_interface drivedge_via_interface =
 {
-	double period;
-
-	/* update the data */
-	via6522[offset] = data;
-
-	/* switch off the offset */
-	switch (offset)
-	{
-		case 0:		/* write to port B */
-			pia_portb_out(0, data);
-			break;
-
-		case 5:		/* write into high order timer 1 */
-			via6522_timer_count[0] = (via6522[5] << 8) | via6522[4];
-			period = TIME_IN_HZ(CLOCK_8MHz/4) * (double)via6522_timer_count[0];
-			timer_adjust(via6522_timer[0], period, 0, period);
-
-			via6522_int_state &= ~0x40;
-			update_via_int();
-			break;
-
-		case 13:	/* write interrupt flag register */
-			via6522_int_state &= ~data;
-			update_via_int();
-			break;
-
-		default:	/* log everything else */
-			if (FULL_LOGGING) logerror("VIA write(%02x) = %02x", offset, data);
-			break;
-	}
-
-}
-
-
-static READ_HANDLER( via6522_r )
-{
-	int result = 0;
-
-	/* switch off the offset */
-	switch (offset)
-	{
-		case 4:		/* read low order timer 1 */
-			via6522_int_state &= ~0x40;
-			update_via_int();
-			break;
-
-		case 13:	/* interrupt flag register */
-			result = via6522_int_state & 0x7f;
-			if (via6522_int_state & via6522[14]) result |= 0x80;
-			break;
-	}
-
-	if (FULL_LOGGING) logerror("VIA read(%02x) = %02x", offset, result);
-	return result;
-}
+	/*inputs : A/B         */ 0, 0,
+	/*inputs : CA/B1,CA/B2 */ 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2   */ 0, drivedge_portb_out, 0, drivedge_turbo_light,
+	/*irq                  */ via_irq
+};
 
 
 
@@ -489,21 +513,77 @@ static WRITE_HANDLER( firq_clear_w )
 
 /*************************************
  *
- *	Speedups
+ *	Driver's Edge stuff
  *
  *************************************/
 
-static READ_HANDLER( sound_speedup_r )
+static WRITE32_HANDLER( tms_reset_assert_w )
 {
-	if (sound_speedup_data[0] == sound_speedup_data[1] && activecpu_get_previouspc() == sound_speedup_pc)
-		cpu_spinuntil_int();
-	return sound_speedup_data[0];
+	cpu_set_reset_line(2, ASSERT_LINE);
+	cpu_set_reset_line(3, ASSERT_LINE);
 }
 
 
-static WRITE32_HANDLER( itech020_watchdog_w )
+static WRITE32_HANDLER( tms_reset_clear_w )
 {
-	watchdog_reset_w(0,0);
+	/* kludge to prevent crash on first boot */
+	if ((tms1_ram[0] & 0xff000000) == 0)
+	{
+		cpu_set_reset_line(2, CLEAR_LINE);
+		STOP_TMS_SPINNING(0);
+	}
+	if ((tms2_ram[0] & 0xff000000) == 0)
+	{
+		cpu_set_reset_line(3, CLEAR_LINE);
+		STOP_TMS_SPINNING(1);
+	}
+}
+
+
+static WRITE32_HANDLER( tms1_68k_ram_w )
+{
+	COMBINE_DATA(&tms1_ram[offset]);
+	if (offset == 0) COMBINE_DATA(tms1_boot);
+	if (offset == 0x382 && tms_spinning[0]) STOP_TMS_SPINNING(0);
+	if (!tms_spinning[0])
+		cpu_boost_interleave(TIME_IN_HZ(CLOCK_25MHz/256), TIME_IN_USEC(20));
+}
+
+
+static WRITE32_HANDLER( tms2_68k_ram_w )
+{
+	COMBINE_DATA(&tms2_ram[offset]);
+	if (offset == 0x382 && tms_spinning[1]) STOP_TMS_SPINNING(1);
+	if (!tms_spinning[1])
+		cpu_boost_interleave(TIME_IN_HZ(CLOCK_25MHz/256), TIME_IN_USEC(20));
+}
+
+
+static WRITE32_HANDLER( tms1_trigger_w )
+{
+	COMBINE_DATA(&tms1_ram[offset]);
+	cpu_boost_interleave(TIME_IN_HZ(CLOCK_25MHz/256), TIME_IN_USEC(20));
+}
+
+
+static WRITE32_HANDLER( tms2_trigger_w )
+{
+	COMBINE_DATA(&tms2_ram[offset]);
+	cpu_boost_interleave(TIME_IN_HZ(CLOCK_25MHz/256), TIME_IN_USEC(20));
+}
+
+
+static READ32_HANDLER( drivedge_tms1_speedup_r )
+{
+	if (tms1_ram[0x382] == 0 && activecpu_get_pc() == 0xee) START_TMS_SPINNING(0);
+	return tms1_ram[0x382];
+}
+
+
+static READ32_HANDLER( drivedge_tms2_speedup_r )
+{
+	if (tms2_ram[0x382] == 0 && activecpu_get_pc() == 0x809808) START_TMS_SPINNING(1);
+	return tms2_ram[0x382];
 }
 
 
@@ -537,11 +617,6 @@ static READ32_HANDLER( input_port_3_msw_r )
 static READ32_HANDLER( input_port_4_msw_r )
 {
 	return special_port4_r(offset,0) << 16;
-}
-
-static READ32_HANDLER( input_port_5_msw_r )
-{
-	return input_port_5_word_r(offset,0) << 16;
 }
 
 static WRITE32_HANDLER( int1_ack32_w )
@@ -593,158 +668,101 @@ static NVRAM_HANDLER( itech020 )
  *************************************/
 
 /*------ Time Killers memory layout ------*/
-static ADDRESS_MAP_START( timekill_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x003fff) AM_READ(MRA16_RAM)
+static ADDRESS_MAP_START( timekill_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x003fff) AM_RAM AM_BASE(&main_ram) AM_SIZE(&main_ram_size)
 	AM_RANGE(0x040000, 0x040001) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x048000, 0x048001) AM_READ(input_port_1_word_r)
-	AM_RANGE(0x050000, 0x050001) AM_READ(input_port_2_word_r)
-	AM_RANGE(0x058000, 0x058001) AM_READ(special_port3_r)
-	AM_RANGE(0x080000, 0x08007f) AM_READ(itech32_video_r)
-	AM_RANGE(0x0c0000, 0x0c7fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x100000, 0x17ffff) AM_READ(MRA16_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( timekill_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x003fff) AM_WRITE(MWA16_RAM) AM_BASE(&main_ram) AM_SIZE(&main_ram_size)
-	AM_RANGE(0x050000, 0x050001) AM_WRITE(timekill_intensity_w)
-	AM_RANGE(0x058000, 0x058001) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0x050000, 0x050001) AM_READWRITE(input_port_2_word_r, timekill_intensity_w)
+	AM_RANGE(0x058000, 0x058001) AM_READWRITE(special_port3_r, watchdog_reset16_w)
 	AM_RANGE(0x060000, 0x060001) AM_WRITE(timekill_colora_w)
 	AM_RANGE(0x068000, 0x068001) AM_WRITE(timekill_colorbc_w)
-	AM_RANGE(0x070000, 0x070001) AM_WRITE(MWA16_NOP)	/* noisy */
+	AM_RANGE(0x070000, 0x070001) AM_WRITENOP	/* noisy */
 	AM_RANGE(0x078000, 0x078001) AM_WRITE(sound_data_w)
-	AM_RANGE(0x080000, 0x08007f) AM_WRITE(itech32_video_w) AM_BASE(&itech32_video)
+	AM_RANGE(0x080000, 0x08007f) AM_READWRITE(itech32_video_r, itech32_video_w) AM_BASE(&itech32_video)
 	AM_RANGE(0x0a0000, 0x0a0001) AM_WRITE(int1_ack_w)
-	AM_RANGE(0x0c0000, 0x0c7fff) AM_WRITE(timekill_paletteram_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x100000, 0x17ffff) AM_WRITE(MWA16_ROM) AM_BASE(&main_rom)
+	AM_RANGE(0x0c0000, 0x0c7fff) AM_READWRITE(MRA16_RAM, timekill_paletteram_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x100000, 0x17ffff) AM_ROM AM_REGION(REGION_USER1, 0) AM_BASE(&main_rom)
 ADDRESS_MAP_END
 
 
 /*------ BloodStorm and later games memory layout ------*/
-static ADDRESS_MAP_START( bloodstm_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x080000, 0x080001) AM_READ(input_port_0_word_r)
+static ADDRESS_MAP_START( bloodstm_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x00ffff) AM_RAM AM_BASE(&main_ram) AM_SIZE(&main_ram_size)
+	AM_RANGE(0x080000, 0x080001) AM_READWRITE(input_port_0_word_r, int1_ack_w)
 	AM_RANGE(0x100000, 0x100001) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x180000, 0x180001) AM_READ(input_port_2_word_r)
-	AM_RANGE(0x200000, 0x200001) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x200000, 0x200001) AM_READWRITE(input_port_3_word_r, watchdog_reset16_w)
 	AM_RANGE(0x280000, 0x280001) AM_READ(special_port4_r)
-	AM_RANGE(0x500000, 0x5000ff) AM_READ(bloodstm_video_r)
-	AM_RANGE(0x580000, 0x59ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x780000, 0x780001) AM_READ(input_port_5_word_r)
-	AM_RANGE(0x800000, 0x87ffff) AM_READ(MRA16_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( bloodstm_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA16_RAM) AM_BASE(&main_ram) AM_SIZE(&main_ram_size)
-	AM_RANGE(0x080000, 0x080001) AM_WRITE(int1_ack_w)
-	AM_RANGE(0x200000, 0x200001) AM_WRITE(watchdog_reset16_w)
 	AM_RANGE(0x300000, 0x300001) AM_WRITE(bloodstm_color1_w)
 	AM_RANGE(0x380000, 0x380001) AM_WRITE(bloodstm_color2_w)
 	AM_RANGE(0x400000, 0x400001) AM_WRITE(watchdog_reset16_w)
 	AM_RANGE(0x480000, 0x480001) AM_WRITE(sound_data_w)
-	AM_RANGE(0x500000, 0x5000ff) AM_WRITE(bloodstm_video_w) AM_BASE(&itech32_video)
-	AM_RANGE(0x580000, 0x59ffff) AM_WRITE(bloodstm_paletteram_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x500000, 0x5000ff) AM_READWRITE(bloodstm_video_r, bloodstm_video_w) AM_BASE(&itech32_video)
+	AM_RANGE(0x580000, 0x59ffff) AM_READWRITE(MRA16_RAM, bloodstm_paletteram_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x700000, 0x700001) AM_WRITE(bloodstm_plane_w)
-	AM_RANGE(0x800000, 0x87ffff) AM_WRITE(MWA16_ROM) AM_BASE(&main_rom)
-ADDRESS_MAP_END
-
-
-/*------ Pairs memory layout ------*/
-static ADDRESS_MAP_START( pairs_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x080000, 0x080001) AM_READ(input_port_0_word_r)
-	AM_RANGE(0x100000, 0x100001) AM_READ(input_port_1_word_r)
-	AM_RANGE(0x180000, 0x180001) AM_READ(input_port_2_word_r)
-	AM_RANGE(0x200000, 0x200001) AM_READ(input_port_3_word_r)
-	AM_RANGE(0x280000, 0x280001) AM_READ(special_port4_r)
-	AM_RANGE(0x500000, 0x5000ff) AM_READ(bloodstm_video_r)
-	AM_RANGE(0x580000, 0x59ffff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x780000, 0x780001) AM_READ(input_port_5_word_r)
-	AM_RANGE(0xd00000, 0xd7ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x800000, 0x87ffff) AM_MIRROR(0x700000) AM_ROM AM_REGION(REGION_USER1, 0) AM_BASE(&main_rom)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( pairs_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA16_RAM) AM_BASE(&main_ram) AM_SIZE(&main_ram_size)
-	AM_RANGE(0x080000, 0x080001) AM_WRITE(int1_ack_w)
-	AM_RANGE(0x200000, 0x200001) AM_WRITE(watchdog_reset16_w)
-	AM_RANGE(0x300000, 0x300001) AM_WRITE(bloodstm_color1_w)
-	AM_RANGE(0x380000, 0x380001) AM_WRITE(bloodstm_color2_w)
-	AM_RANGE(0x400000, 0x400001) AM_WRITE(watchdog_reset16_w)
-	AM_RANGE(0x480000, 0x480001) AM_WRITE(sound_data_w)
-	AM_RANGE(0x500000, 0x5000ff) AM_WRITE(bloodstm_video_w) AM_BASE(&itech32_video)
-	AM_RANGE(0x580000, 0x59ffff) AM_WRITE(bloodstm_paletteram_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x700000, 0x700001) AM_WRITE(bloodstm_plane_w)
-	AM_RANGE(0xd00000, 0xd7ffff) AM_WRITE(MWA16_ROM) AM_BASE(&main_rom)
-ADDRESS_MAP_END
-
-
-/*------ Driver's Edge memory layout ------*/
-static ADDRESS_MAP_START( drivedge_readmem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x040000, 0x07ffff) AM_READ(MRA32_BANK2)
-	AM_RANGE(0x08c000, 0x08c003) AM_READ(input_port_0_msw_r)
-	AM_RANGE(0x08e000, 0x08e003) AM_READ(input_port_1_msw_r)
-	AM_RANGE(0x1a0000, 0x1bffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x1e0000, 0x1e00ff) AM_READ(itech020_video_r)
-	AM_RANGE(0x200000, 0x200003) AM_READ(input_port_2_msw_r)
-	AM_RANGE(0x280000, 0x280fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x300000, 0x300fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x600000, 0x607fff) AM_READ(MRA32_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( drivedge_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA32_RAM) AM_BASE((data32_t **)&main_ram) AM_SIZE(&main_ram_size)
-	AM_RANGE(0x040000, 0x07ffff) AM_WRITE(MWA32_BANK2)
-	AM_RANGE(0x084000, 0x084003) AM_WRITE(sound_data32_w)
-//	AM_RANGE(0x100000, 0x10000f) AM_WRITE(???_w)	= 4 longwords (TMS control?)
+/*------ Driver's Edge memory layouts ------*/
+static ADDRESS_MAP_START( drivedge_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x03ffff) AM_MIRROR(0x40000) AM_RAM AM_BASE((data32_t **)&main_ram) AM_SIZE(&main_ram_size)
+	AM_RANGE(0x080000, 0x080003) AM_READ(input_port_3_msw_r)
+	AM_RANGE(0x082000, 0x082003) AM_READ(input_port_4_msw_r)
+	AM_RANGE(0x084000, 0x084003) AM_READWRITE(sound_data32_r, sound_data32_w)
+//	AM_RANGE(0x086000, 0x08623f) AM_RAM -- networking -- first 0x40 bytes = our data, next 0x40*8 bytes = their data, r/w on IRQ2
+	AM_RANGE(0x088000, 0x088003) AM_READ(drivedge_steering_r)
+	AM_RANGE(0x08a000, 0x08a003) AM_READWRITE(drivedge_gas_r, MWA32_NOP)
+	AM_RANGE(0x08c000, 0x08c003) AM_READWRITE(input_port_0_msw_r, MWA32_NOP)
+	AM_RANGE(0x08e000, 0x08e003) AM_READWRITE(input_port_1_msw_r, MWA32_NOP)
+	AM_RANGE(0x100000, 0x10000f) AM_WRITE(drivedge_zbuf_control_w) AM_BASE(&drivedge_zbuf_control)
 	AM_RANGE(0x180000, 0x180003) AM_WRITE(drivedge_color0_w)
-	AM_RANGE(0x1a0000, 0x1bffff) AM_WRITE(itech020_paletteram_w) AM_BASE(&paletteram32)
-//	AM_RANGE(0x1c0000, 0x1c0001) AM_WRITE(???_w)	= 0x64
-	AM_RANGE(0x1e0000, 0x1e00ff) AM_WRITE(itech020_video_w) AM_BASE((data32_t **)&itech32_video)
-//	AM_RANGE(0x1e4000, 0x1e4003) AM_WRITE(???_w)	= 0x1ffff
-	AM_RANGE(0x280000, 0x280fff) AM_WRITE(MWA32_RAM)	// initialized to zero
-	AM_RANGE(0x300000, 0x300fff) AM_WRITE(MWA32_RAM)	// initialized to zero
-	AM_RANGE(0x380000, 0x380003) AM_WRITE(MWA32_NOP)	// watchdog
-	AM_RANGE(0x600000, 0x607fff) AM_WRITE(MWA32_ROM) AM_BASE((data32_t **)&main_rom)
+	AM_RANGE(0x1a0000, 0x1bffff) AM_READWRITE(MRA32_RAM, itech020_paletteram_w) AM_BASE(&paletteram32)
+	AM_RANGE(0x1c0000, 0x1c0003) AM_WRITENOP
+	AM_RANGE(0x1e0000, 0x1e0113) AM_READWRITE(itech020_video_r, itech020_video_w) AM_BASE((data32_t **)&itech32_video)
+	AM_RANGE(0x1e4000, 0x1e4003) AM_WRITE(tms_reset_assert_w)
+	AM_RANGE(0x1ec000, 0x1ec003) AM_WRITE(tms_reset_clear_w)
+	AM_RANGE(0x200000, 0x200003) AM_READ(input_port_2_msw_r)
+	AM_RANGE(0x280000, 0x280fff) AM_READWRITE(MRA32_RAM, tms1_68k_ram_w) AM_SHARE(1)
+	AM_RANGE(0x300000, 0x300fff) AM_READWRITE(MRA32_RAM, tms2_68k_ram_w) AM_SHARE(2)
+	AM_RANGE(0x380000, 0x380003) AM_WRITENOP // AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0x600000, 0x607fff) AM_ROM AM_REGION(REGION_USER1, 0) AM_BASE((data32_t **)&main_rom)
 ADDRESS_MAP_END
 
-// 0x10000c/0/4/8 = $8000/$0/$0/$ffff1e
-// 0x100008/c     = $ffffff/$8000
+static ADDRESS_MAP_START( drivedge_tms1_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x001fff) AM_RAM AM_BASE(&tms1_boot)
+	AM_RANGE(0x008000, 0x0083ff) AM_MIRROR(0x400) AM_READWRITE(MRA32_RAM, tms1_trigger_w) AM_SHARE(1) AM_BASE(&tms1_ram)
+	AM_RANGE(0x080000, 0x0bffff) AM_RAM
+	AM_RANGE(0x809800, 0x809fff) AM_RAM
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( drivedge_tms2_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x008000, 0x0083ff) AM_MIRROR(0x8400) AM_READWRITE(MRA32_RAM, tms2_trigger_w) AM_SHARE(2) AM_BASE(&tms2_ram)
+	AM_RANGE(0x080000, 0x08ffff) AM_RAM
+	AM_RANGE(0x809800, 0x809fff) AM_RAM
+ADDRESS_MAP_END
 
 
 /*------ 68EC020-based memory layout ------*/
-static ADDRESS_MAP_START( itech020_readmem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x007fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x080000, 0x080003) AM_READ(input_port_0_msw_r)
+static ADDRESS_MAP_START( itech020_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x007fff) AM_RAM AM_BASE((data32_t **)&main_ram) AM_SIZE(&main_ram_size)
+	AM_RANGE(0x080000, 0x080003) AM_READWRITE(input_port_0_msw_r, int1_ack32_w)
 	AM_RANGE(0x100000, 0x100003) AM_READ(input_port_1_msw_r)
 	AM_RANGE(0x180000, 0x180003) AM_READ(input_port_2_msw_r)
 	AM_RANGE(0x200000, 0x200003) AM_READ(input_port_3_msw_r)
 	AM_RANGE(0x280000, 0x280003) AM_READ(input_port_4_msw_r)
-	AM_RANGE(0x500000, 0x5000ff) AM_READ(itech020_video_r)
-	AM_RANGE(0x578000, 0x57ffff) AM_READ(MRA32_NOP)				/* touched by protection */
-	AM_RANGE(0x580000, 0x59ffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x600000, 0x603fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x680000, 0x680003) AM_READ(itech020_prot_result_r)
-	AM_RANGE(0x800000, 0x9fffff) AM_READ(MRA32_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( itech020_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x007fff) AM_WRITE(MWA32_RAM) AM_BASE((data32_t **)&main_ram) AM_SIZE(&main_ram_size)
-	AM_RANGE(0x080000, 0x080003) AM_WRITE(int1_ack32_w)
 	AM_RANGE(0x300000, 0x300003) AM_WRITE(itech020_color1_w)
 	AM_RANGE(0x380000, 0x380003) AM_WRITE(itech020_color2_w)
-	AM_RANGE(0x400000, 0x400003) AM_WRITE(itech020_watchdog_w)
+	AM_RANGE(0x400000, 0x400003) AM_WRITE(watchdog_reset32_w)
 	AM_RANGE(0x480000, 0x480003) AM_WRITE(sound_data32_w)
-	AM_RANGE(0x500000, 0x5000ff) AM_WRITE(itech020_video_w) AM_BASE((data32_t **)&itech32_video)
-	AM_RANGE(0x580000, 0x59ffff) AM_WRITE(itech020_paletteram_w) AM_BASE(&paletteram32)
-	AM_RANGE(0x600000, 0x603fff) AM_WRITE(MWA32_RAM) AM_BASE(&nvram) AM_SIZE(&nvram_size)
-	AM_RANGE(0x680000, 0x680003) AM_WRITE(MWA32_NOP)				/* written by protection */
+	AM_RANGE(0x500000, 0x5000ff) AM_READWRITE(itech020_video_r, itech020_video_w) AM_BASE((data32_t **)&itech32_video)
+	AM_RANGE(0x578000, 0x57ffff) AM_READNOP				/* touched by protection */
+	AM_RANGE(0x580000, 0x59ffff) AM_READWRITE(MRA32_RAM, itech020_paletteram_w) AM_BASE(&paletteram32)
+	AM_RANGE(0x600000, 0x603fff) AM_RAM AM_BASE(&nvram) AM_SIZE(&nvram_size)
+	AM_RANGE(0x680000, 0x680003) AM_READWRITE(itech020_prot_result_r, MWA32_NOP)
 	AM_RANGE(0x700000, 0x700003) AM_WRITE(itech020_plane_w)
-	AM_RANGE(0x800000, 0x9fffff) AM_WRITE(MWA32_ROM) AM_BASE((data32_t **)&main_rom)
+	AM_RANGE(0x800000, 0x9fffff) AM_ROM AM_REGION(REGION_USER1, 0) AM_BASE((data32_t **)&main_rom)
 ADDRESS_MAP_END
 
 
@@ -756,50 +774,30 @@ ADDRESS_MAP_END
  *************************************/
 
 /*------ Rev 1 sound board memory layout ------*/
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0000) AM_WRITE(sound_return_w)
 	AM_RANGE(0x0400, 0x0400) AM_READ(sound_data_r)
-	AM_RANGE(0x0800, 0x083f) AM_READ(ES5506_data_0_r)
+	AM_RANGE(0x0800, 0x083f) AM_MIRROR(0x80) AM_READWRITE(ES5506_data_0_r, ES5506_data_0_w)
 	AM_RANGE(0x0880, 0x08bf) AM_READ(ES5506_data_0_r)
-	AM_RANGE(0x1400, 0x140f) AM_READ(via6522_r)
-	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0800, 0x083f) AM_WRITE(ES5506_data_0_w)
-	AM_RANGE(0x0880, 0x08bf) AM_WRITE(ES5506_data_0_w)
 	AM_RANGE(0x0c00, 0x0c00) AM_WRITE(sound_bank_w)
-	AM_RANGE(0x1000, 0x1000) AM_WRITE(MWA8_NOP)	/* noisy */
-	AM_RANGE(0x1400, 0x140f) AM_WRITE(via6522_w) AM_BASE(&via6522)
-	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1000, 0x1000) AM_WRITENOP	/* noisy */
+	AM_RANGE(0x1400, 0x140f) AM_READWRITE(via_0_r, via_0_w)
+	AM_RANGE(0x2000, 0x3fff) AM_RAM
+	AM_RANGE(0x4000, 0x7fff) AM_ROMBANK(1)
+	AM_RANGE(0x8000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 
 /*------ Rev 2 sound board memory layout ------*/
-static ADDRESS_MAP_START( sound_020_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0000) AM_READ(sound_data_r)
-	AM_RANGE(0x0400, 0x0400) AM_READ(sound_data_r)
-	AM_RANGE(0x0800, 0x083f) AM_READ(ES5506_data_0_r)
-	AM_RANGE(0x0880, 0x08bf) AM_READ(ES5506_data_0_r)
-	AM_RANGE(0x1800, 0x1800) AM_READ(sound_data_buffer_r)
-	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( sound_020_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0800, 0x083f) AM_WRITE(ES5506_data_0_w)
-	AM_RANGE(0x0880, 0x08bf) AM_WRITE(ES5506_data_0_w)
+static ADDRESS_MAP_START( sound_020_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0000) AM_MIRROR(0x400) AM_READ(sound_data_r)
+	AM_RANGE(0x0800, 0x083f) AM_MIRROR(0x80) AM_READWRITE(ES5506_data_0_r, ES5506_data_0_w)
 	AM_RANGE(0x0c00, 0x0c00) AM_WRITE(sound_bank_w)
 	AM_RANGE(0x1400, 0x1400) AM_WRITE(firq_clear_w)
-	AM_RANGE(0x1800, 0x1800) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0x1c00, 0x1c00) AM_WRITE(sound_output_w)
-	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1800, 0x1800) AM_READWRITE(sound_data_buffer_r, MWA8_NOP)
+	AM_RANGE(0x2000, 0x3fff) AM_RAM
+	AM_RANGE(0x4000, 0x7fff) AM_ROMBANK(1)
+	AM_RANGE(0x8000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -1030,6 +1028,59 @@ INPUT_PORTS_START( pairs )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( drivedge )
+	PORT_START	/* 8C000 */
+	PORT_BIT ( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT ( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BITX( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON7 | IPF_PLAYER1, "Gear 1", KEYCODE_Z, IP_JOY_DEFAULT )
+	PORT_BITX( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON8 | IPF_PLAYER1, "Gear 2", KEYCODE_X, IP_JOY_DEFAULT )
+	PORT_BITX( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON9 | IPF_PLAYER1, "Gear 3", KEYCODE_C, IP_JOY_DEFAULT )
+	PORT_BITX( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON10 | IPF_PLAYER1, "Gear 4", KEYCODE_V, IP_JOY_DEFAULT )
+	PORT_SERVICE_NO_TOGGLE( 0x0040, IP_ACTIVE_LOW )
+	PORT_BIT ( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 8E000 */
+	PORT_BITX( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1, "Fan",         KEYCODE_F, IP_JOY_DEFAULT )
+	PORT_BITX( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1, "Tow Truck",   KEYCODE_T, IP_JOY_DEFAULT )
+	PORT_BITX( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1, "Horn",        KEYCODE_SPACE, IP_JOY_DEFAULT )
+	PORT_BITX( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1, "Turbo Boost", KEYCODE_B, IP_JOY_DEFAULT )
+	PORT_BITX( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1, "Network On",  KEYCODE_N, IP_JOY_DEFAULT )
+	PORT_BITX( 0x0020, IP_ACTIVE_LOW, IPT_START1,                "Key",         IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BIT ( 0x0040, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT ( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 200000 */
+	PORT_SERVICE_NO_TOGGLE( 0x0100, IP_ACTIVE_LOW )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_SPECIAL )
+	PORT_DIPNAME( 0x7000, 0x0000, "Network Number" )
+	PORT_DIPSETTING(      0x0000, "1" )
+	PORT_DIPSETTING(      0x1000, "2" )
+	PORT_DIPSETTING(      0x2000, "3" )
+	PORT_DIPSETTING(      0x3000, "4" )
+	PORT_DIPSETTING(      0x4000, "5" )
+	PORT_DIPSETTING(      0x5000, "6" )
+	PORT_DIPSETTING(      0x6000, "7" )
+	PORT_DIPSETTING(      0x7000, "8" )
+	PORT_DIPNAME( 0x8000, 0x0000, DEF_STR( Service_Mode ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( On ) )
+
+	PORT_START	/* 80000 */
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER3, 2, 100, 0x00, 0x06 )
+
+	PORT_START	/* 82000 */
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2, 2, 40, 0x00, 0x06 )
+
+	PORT_START	/* 88000 */
+	PORT_ANALOG( 0xff, 0x80, IPT_PADDLE, 25, 5, 0x10, 0xf0 )
+
+	PORT_START	/* 8A000 */
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER1, 1, 20, 0x00, 0x0c )
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( wcbowl )
 	PORT_START	/* 080000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -1138,67 +1189,6 @@ INPUT_PORTS_START( wcbowln ) /* WCB version 1.66 supports cocktail mode */
 
 	PORT_START	/* analog */
     PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER2 | IPF_COCKTAIL, 25, 32, 0, 255 )
-INPUT_PORTS_END
-
-
-INPUT_PORTS_START( drivedge )
-	PORT_START	/* 40000 */
-	PORT_BIT ( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT ( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BITX( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON7 | IPF_PLAYER1, "Gear 1", KEYCODE_Z, IP_JOY_DEFAULT )
-	PORT_BITX( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON8 | IPF_PLAYER1, "Gear 2", KEYCODE_X, IP_JOY_DEFAULT )
-	PORT_BITX( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON9 | IPF_PLAYER1, "Gear 3", KEYCODE_C, IP_JOY_DEFAULT )
-	PORT_BITX( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON10 | IPF_PLAYER1, "Gear 4", KEYCODE_V, IP_JOY_DEFAULT )
-	PORT_SERVICE_NO_TOGGLE( 0x0040, IP_ACTIVE_LOW )
-	PORT_BIT ( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* 48000 */
-	PORT_BITX( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1, "Fan",         KEYCODE_F, IP_JOY_DEFAULT )
-	PORT_BITX( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1, "Tow Truck",   KEYCODE_T, IP_JOY_DEFAULT )
-	PORT_BITX( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1, "Horn",        KEYCODE_SPACE, IP_JOY_DEFAULT )
-	PORT_BITX( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1, "Turbo Boost", KEYCODE_Z, IP_JOY_DEFAULT )
-	PORT_BITX( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1, "Network On",  KEYCODE_N, IP_JOY_DEFAULT )
-	PORT_BITX( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1, "Key",         KEYCODE_K, IP_JOY_DEFAULT )
-	PORT_BIT ( 0x0040, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT ( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* 48000 */
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER3 )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER3 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER3 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON4        | IPF_PLAYER3 )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER3 )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER3 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER3 )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER3 )
-
-	PORT_START	/* 50000 */
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON5        | IPF_PLAYER1 )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON5        | IPF_PLAYER2 )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* 58000 */
-	PORT_SERVICE_NO_TOGGLE( 0x0001, IP_ACTIVE_LOW )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_VBLANK )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_SPECIAL )
-	PORT_DIPNAME( 0x0070, 0x0000, "Network Number" )
-	PORT_DIPSETTING(      0x0000, "1" )
-	PORT_DIPSETTING(      0x0010, "2" )
-	PORT_DIPSETTING(      0x0020, "3" )
-	PORT_DIPSETTING(      0x0030, "4" )
-	PORT_DIPSETTING(      0x0040, "5" )
-	PORT_DIPSETTING(      0x0050, "6" )
-	PORT_DIPSETTING(      0x0060, "7" )
-	PORT_DIPSETTING(      0x0070, "8" )
-	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Service_Mode ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -1408,11 +1398,11 @@ static MACHINE_DRIVER_START( timekill )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68000, CLOCK_12MHz)
-	MDRV_CPU_PROGRAM_MAP(timekill_readmem,timekill_writemem)
+	MDRV_CPU_PROGRAM_MAP(timekill_map,0)
 	MDRV_CPU_VBLANK_INT(generate_int1,1)
 
 	MDRV_CPU_ADD_TAG("sound", M6809, CLOCK_8MHz/4)
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((int)(((263. - 240.) / 263.) * 1000000. / 60.))
@@ -1440,20 +1430,10 @@ static MACHINE_DRIVER_START( bloodstm )
 	MDRV_IMPORT_FROM(timekill)
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(bloodstm_readmem,bloodstm_writemem)
+	MDRV_CPU_PROGRAM_MAP(bloodstm_map,0)
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(32768)
-MACHINE_DRIVER_END
-
-
-static MACHINE_DRIVER_START( pairs )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(bloodstm)
-
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(pairs_readmem,pairs_writemem)
 MACHINE_DRIVER_END
 
 
@@ -1473,10 +1453,19 @@ static MACHINE_DRIVER_START( drivedge )
 	MDRV_IMPORT_FROM(bloodstm)
 
 	MDRV_CPU_REPLACE("main", M68EC020, CLOCK_25MHz)
-	MDRV_CPU_PROGRAM_MAP(drivedge_readmem,drivedge_writemem)
+	MDRV_CPU_PROGRAM_MAP(drivedge_map,0)
 	MDRV_CPU_VBLANK_INT(NULL,0)
 
-	MDRV_NVRAM_HANDLER(itech020)
+	MDRV_CPU_ADD(TMS32031, 40000000)
+	MDRV_CPU_PROGRAM_MAP(drivedge_tms1_map,0)
+
+	MDRV_CPU_ADD(TMS32031, 40000000)
+	MDRV_CPU_PROGRAM_MAP(drivedge_tms2_map,0)
+
+//	MDRV_CPU_ADD(M6803, 8000000/4) -- network CPU
+
+	MDRV_MACHINE_INIT(drivedge)
+	MDRV_INTERLEAVE(100)
 MACHINE_DRIVER_END
 
 
@@ -1486,10 +1475,10 @@ static MACHINE_DRIVER_START( sftm )
 	MDRV_IMPORT_FROM(bloodstm)
 
 	MDRV_CPU_REPLACE("main", M68EC020, CLOCK_25MHz)
-	MDRV_CPU_PROGRAM_MAP(itech020_readmem,itech020_writemem)
+	MDRV_CPU_PROGRAM_MAP(itech020_map,0)
 
 	MDRV_CPU_MODIFY("sound")
-	MDRV_CPU_PROGRAM_MAP(sound_020_readmem,sound_020_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_020_map,0)
 	MDRV_CPU_VBLANK_INT(irq1_line_assert,4)
 
 	MDRV_NVRAM_HANDLER(itech020)
@@ -1507,9 +1496,7 @@ MACHINE_DRIVER_END
  *************************************/
 
 ROM_START( timekill )
-	ROM_REGION( 0x4000, REGION_CPU1, 0 )
-
-	ROM_REGION16_BE( 0x80000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_REGION16_BE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_BYTE( "tk00v132.u54", 0x00000, 0x40000, CRC(68c74b81) SHA1(acdf677f82d7428acc6cf01076d43dd6330e9cb3) )
 	ROM_LOAD16_BYTE( "tk01v132.u53", 0x00001, 0x40000, CRC(2158d8ef) SHA1(14aa66e020a9fa890fadbaf0936dfdc4e272f543) )
 
@@ -1535,9 +1522,7 @@ ROM_END
 
 
 ROM_START( timek131 )
-	ROM_REGION( 0x4000, REGION_CPU1, 0 )
-
-	ROM_REGION16_BE( 0x80000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_REGION16_BE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_BYTE( "tk00v131.u54", 0x00000, 0x40000, CRC(e09ae32b) SHA1(b090a38600d0499f7b4cb80a2715f27216d408b0) )
 	ROM_LOAD16_BYTE( "tk01v131.u53", 0x00001, 0x40000, CRC(c29137ec) SHA1(4dcfba13b6f865a256bcb0406b6c83c309b17313) )
 
@@ -1563,9 +1548,7 @@ ROM_END
 
 
 ROM_START( bloodstm )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-
-	ROM_REGION16_BE( 0x80000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_REGION16_BE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_BYTE( "bld02.bin", 0x00000, 0x40000, CRC(95f36db6) SHA1(72ec5ca93aed8fb12d5e5b7ff3d07c5cf1dab4bb) )
 	ROM_LOAD16_BYTE( "bld01.bin", 0x00001, 0x40000, CRC(fcc04b93) SHA1(7029d68f20196b6c2c30339500c7da54f2b5b054) )
 
@@ -1603,9 +1586,7 @@ ROM_END
 
 
 ROM_START( bloods22 )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-
-	ROM_REGION16_BE( 0x80000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_REGION16_BE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_BYTE( "bld00v22.u83", 0x00000, 0x40000, CRC(904e9208) SHA1(12e96027724b905140250db969130d90b1afec83) )
 	ROM_LOAD16_BYTE( "bld01v22.u88", 0x00001, 0x40000, CRC(78336a7b) SHA1(76002ce4a2d83ceae10d9c9c123013832a081150) )
 
@@ -1643,9 +1624,7 @@ ROM_END
 
 
 ROM_START( bloods21 )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-
-	ROM_REGION16_BE( 0x80000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_REGION16_BE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_BYTE( "bld00v21.u83", 0x00000, 0x40000, CRC(71215c8e) SHA1(ee0f94c3a2619d7e3cc1ba5e1888a97b0c75a3ae) )
 	ROM_LOAD16_BYTE( "bld01v21.u88", 0x00001, 0x40000, CRC(da403da6) SHA1(0f09f38ae932acb4ddbb6323bce58be7284cb24b) )
 
@@ -1683,9 +1662,7 @@ ROM_END
 
 
 ROM_START( bloods11 )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-
-	ROM_REGION16_BE( 0x80000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_REGION16_BE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_BYTE( "bld00-11.u83", 0x00000, 0x40000, CRC(4fff8f9b) SHA1(90f450497935322b0082a70e10abf758fc441dd0) )
 	ROM_LOAD16_BYTE( "bld01-11.u88", 0x00001, 0x40000, CRC(59ce23ea) SHA1(6aa02fff07f5ec6dff4f6db9ea7878a722079f81) )
 
@@ -1723,9 +1700,7 @@ ROM_END
 
 
 ROM_START( hardyard )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-
-	ROM_REGION16_BE( 0x80000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_REGION16_BE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_BYTE( "fb00v12.u83", 0x00000, 0x40000, CRC(c7497692) SHA1(6c11535cf011e15dd7ffb5eba8e8da557c38277e) )
 	ROM_LOAD16_BYTE( "fb00v12.u88", 0x00001, 0x40000, CRC(3320c79a) SHA1(d1d32048c541782e60c525d9789fe12607a6df3a) )
 
@@ -1757,9 +1732,7 @@ ROM_END
 
 
 ROM_START( hardyd10 )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-
-	ROM_REGION16_BE( 0x80000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_REGION16_BE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_BYTE( "hrdyrd.u83", 0x00000, 0x40000, CRC(f839393c) SHA1(ba06172bc4781f7738ce43019031715fee4b344c) )
 	ROM_LOAD16_BYTE( "hrdyrd.u88", 0x00001, 0x40000, CRC(ca444702) SHA1(49bcc0994da9cd2c31c0cd78b822aceeaffd035f) )
 
@@ -1791,9 +1764,7 @@ ROM_END
 
 
 ROM_START( pairs )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-
-	ROM_REGION16_BE( 0x40000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_REGION16_BE( 0x40000, REGION_USER1, 0 )
 	ROM_LOAD16_BYTE( "pair0.u83", 0x00000, 0x20000, CRC(a9c761d8) SHA1(2618c9c3f336cf30f760fd88f12c09985cfd4ee7) )
 	ROM_LOAD16_BYTE( "pair1.u88", 0x00001, 0x20000, CRC(5141eb86) SHA1(3bb10d588e6334a33e5c2c468651699e84f46cdc) )
 
@@ -1818,10 +1789,9 @@ ROM_START( pairs )
 	ROM_LOAD16_BYTE( "srom0.bin", 0x000000, 0x80000, CRC(19a857f9) SHA1(2515b4c127191d52d3b5a72477384847d8cabad3) )
 ROM_END
 
-ROM_START( pairsa )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 
-	ROM_REGION16_BE( 0x40000, REGION_USER1, ROMREGION_DISPOSE )
+ROM_START( pairsa )
+	ROM_REGION16_BE( 0x40000, REGION_USER1, 0 )
 	ROM_LOAD16_BYTE( "pair0", 0x00000, 0x20000, CRC(774995a3) SHA1(93df91378b56802d14c105f7f48ed8a4f7bafffd) )
 	ROM_LOAD16_BYTE( "pair1", 0x00001, 0x20000, CRC(85d0b73a) SHA1(48a6ac6de94be13e407da13e3e2440d858714b4b) )
 
@@ -1848,9 +1818,7 @@ ROM_END
 
 
 ROM_START( wcbowl )		/* Version 1.66 (PCB P/N 1082 Rev 2) */
-	ROM_REGION( 0x8000, REGION_CPU1, 0 )
-
-	ROM_REGION32_BE( 0x80000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_REGION32_BE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD32_BYTE( "wcb_prm0.166", 0x00000, 0x20000, CRC(f6774112) SHA1(cb09bb3e40490b3cdc3a5f7d18168384b5b29d85) )
 	ROM_LOAD32_BYTE( "wcb_prm1.166", 0x00001, 0x20000, CRC(931821ae) SHA1(328cd78ba70fe3cb0bdbc53833fe6fb153aceaea) )
 	ROM_LOAD32_BYTE( "wcb_prm2.166", 0x00002, 0x20000, CRC(c54f5e40) SHA1(2cd92ba1db74b24e908d10f733757801db180dd0) )
@@ -1882,9 +1850,7 @@ ROM_END
 
 
 ROM_START( wcbwl165 )	/* Version 1.65 (PCB P/N 1082 Rev 2) */
-	ROM_REGION( 0x8000, REGION_CPU1, 0 )
-
-	ROM_REGION32_BE( 0x80000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_REGION32_BE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD32_BYTE( "wcb_prm0.165", 0x00000, 0x20000, CRC(cf0f6c25) SHA1(90685288994dce73d5b1070a55fca3f1713c5bb6) )
 	ROM_LOAD32_BYTE( "wcb_prm1.165", 0x00001, 0x20000, CRC(076ab158) SHA1(e6d8a6726e27ba6916d4711dff88f26f1dc162e1) )
 	ROM_LOAD32_BYTE( "wcb_prm2.165", 0x00002, 0x20000, CRC(47259009) SHA1(78a6e70e747030a5ed43d49384061e53f4a77675) )
@@ -1916,9 +1882,7 @@ ROM_END
 
 
 ROM_START( wcbwl161 )	/* Version 1.61 (PCB P/N 1082 Rev 2) */
-	ROM_REGION( 0x8000, REGION_CPU1, 0 )
-
-	ROM_REGION32_BE( 0x80000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_REGION32_BE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD32_BYTE( "wcb_prm0.161", 0x00000, 0x20000, CRC(b879d4a7) SHA1(8b5af3f4d3522bdb8e1d6092b2e311fbfaec2bd0) )
 	ROM_LOAD32_BYTE( "wcb_prm1.161", 0x00001, 0x20000, CRC(49f3ed6a) SHA1(6c6857bd3fbfe0cfeaf0e512bbbd795376a21472) )
 	ROM_LOAD32_BYTE( "wcb_prm2.161", 0x00002, 0x20000, CRC(47259009) SHA1(78a6e70e747030a5ed43d49384061e53f4a77675) )
@@ -1951,9 +1915,7 @@ ROM_END
 
 ROM_START( wcbwl12 )	/* Version 1.2 (unique Hardware, 3-tier type board) */
 	/* v1.3 & v1.5 for this platform has been confirmed, but not dumped */
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-
-	ROM_REGION16_BE( 0x40000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_REGION16_BE( 0x40000, REGION_USER1, 0 )
 	ROM_LOAD16_BYTE( "wcb_prgm.u83", 0x00000, 0x20000, CRC(0602c5ce) SHA1(4339f77301f9c607c6f1dc81270d03681e874e69) )
 	ROM_LOAD16_BYTE( "wcb_prgm.u88", 0x00001, 0x20000, CRC(49573493) SHA1(42813573f4ab951cd830193c0ffe2ce7d79c354b) )
 
@@ -1982,16 +1944,14 @@ ROM_END
 
 
 ROM_START( drivedge )
-	ROM_REGION( 0x40000, REGION_CPU1, 0 )
-
-	ROM_REGION32_BE( 0x8000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_REGION32_BE( 0x8000, REGION_USER1, 0 )
 	ROM_LOAD( "de-u130.bin", 0x00000, 0x8000, CRC(873579b0) SHA1(ce7fcbea780aee376c2f4c659a75fcf6b7abbdb4) )
 
 	ROM_REGION( 0x28000, REGION_CPU2, 0 )
 	ROM_LOAD( "desndu17.bin", 0x10000, 0x18000, CRC(6e8ca8bc) SHA1(98ad36877b40123b0396943754234df8de183687) )
 	ROM_CONTINUE(             0x08000, 0x08000 )
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )
+	ROM_REGION( 0x10000, REGION_CPU5, 0 )
 	ROM_LOAD( "de-u7net.bin", 0x08000, 0x08000, CRC(dea8b9de) SHA1(46ba3a549522d7e6a32792814a04fd34839c7e55) )
 
 	ROM_REGION( 0xa00000, REGION_GFX1, 0 )
@@ -2026,9 +1986,7 @@ ROM_END
 
 
 ROM_START( sftm )	/* Version 1.12 */
-	ROM_REGION( 0x8000, REGION_CPU1, 0 )
-
-	ROM_REGION32_BE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_REGION32_BE( 0x100000, REGION_USER1, 0 )
 	ROM_LOAD32_BYTE( "sftmrom0.112", 0x00000, 0x40000, CRC(9d09355c) SHA1(ca8c31d580e4b18b630c38e4ac1c353cf27ab4a2) )
 	ROM_LOAD32_BYTE( "sftmrom1.112", 0x00001, 0x40000, CRC(a58ac6a9) SHA1(a481a789c397151efcbec7ad9983daa30f289d4e) )
 	ROM_LOAD32_BYTE( "sftmrom2.112", 0x00002, 0x40000, CRC(2f21a4f6) SHA1(66b158c40375a0f729d44fd4c888cf6a5bbe2bf1) )
@@ -2061,9 +2019,7 @@ ROM_END
 
 
 ROM_START( sftm111 )	/* Version 1.11 */
-	ROM_REGION( 0x8000, REGION_CPU1, 0 )
-
-	ROM_REGION32_BE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_REGION32_BE( 0x100000, REGION_USER1, 0 )
 	ROM_LOAD32_BYTE( "sftmrom0.111", 0x00000, 0x40000, CRC(28187ddc) SHA1(7e4fa285be9389c913fca849098a7c0d9404df7a) )
 	ROM_LOAD32_BYTE( "sftmrom1.111", 0x00001, 0x40000, CRC(ec2ce6fa) SHA1(b79aebb73ba77c2ebe081142853e81473743ac46) )
 	ROM_LOAD32_BYTE( "sftmrom2.111", 0x00002, 0x40000, CRC(be20510e) SHA1(52e154fe4b77e461961fa23593383ef9b6dfb92f) )
@@ -2096,9 +2052,7 @@ ROM_END
 
 
 ROM_START( sftm110 )	/* Version 1.10 */
-	ROM_REGION( 0x8000, REGION_CPU1, 0 )
-
-	ROM_REGION32_BE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_REGION32_BE( 0x100000, REGION_USER1, 0 )
 	ROM_LOAD32_BYTE( "sftmrom0.110", 0x00000, 0x40000, CRC(00c0c63c) SHA1(39f614cca51fe7843c2158b6d9abdc52dc1b0bef) )
 	ROM_LOAD32_BYTE( "sftmrom1.110", 0x00001, 0x40000, CRC(d4d2a67e) SHA1(88069caf171bb9c5602bc493f1f1dafa26d2fc78) )
 	ROM_LOAD32_BYTE( "sftmrom2.110", 0x00002, 0x40000, CRC(d7b36c92) SHA1(fbdb6f3636b84b76cf42351392492b791429a0e4) )
@@ -2131,9 +2085,7 @@ ROM_END
 
 
 ROM_START( sftmj )	/* Version 1.12N (Japan) */
-	ROM_REGION( 0x8000, REGION_CPU1, 0 )
-
-	ROM_REGION32_BE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_REGION32_BE( 0x100000, REGION_USER1, 0 )
 	ROM_LOAD32_BYTE( "sfmprom0.12n", 0x00000, 0x40000, CRC(640a04a8) SHA1(adc7f5880962cbcc5f9f28e72a84070da6e2ec36) )
 	ROM_LOAD32_BYTE( "sfmprom1.12n", 0x00001, 0x40000, CRC(2a27b690) SHA1(f63c3665ec030ecc2d7a10ead182941ade1c79d0) )
 	ROM_LOAD32_BYTE( "sfmprom2.12n", 0x00002, 0x40000, CRC(cec1dd7b) SHA1(4c4cf14bc17ddef216d16a7fbcef2e4694b45eb4) )
@@ -2166,9 +2118,7 @@ ROM_END
 
 
 ROM_START( shufshot )	/* Version 1.39 (PCB P/N 1082 Rev 2) */
-	ROM_REGION( 0x8000, REGION_CPU1, 0 )
-
-	ROM_REGION32_BE( 0x80000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_REGION32_BE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD32_BYTE( "shotprm0.139", 0x00000, 0x20000, CRC(e811fc4a) SHA1(9e1d8f64ac89ac865929f6a23f66d95eeeda3ac9) )
 	ROM_LOAD32_BYTE( "shotprm1.139", 0x00001, 0x20000, CRC(f9d120c5) SHA1(f94216f1fb6d810ddee98479e83f0719b30b768f) )
 	ROM_LOAD32_BYTE( "shotprm2.139", 0x00002, 0x20000, CRC(9f12414d) SHA1(c1120079173f7ed6118f7105443afd7d38d8af94) )
@@ -2203,9 +2153,7 @@ ROM_END
 
 
 ROM_START( sshot137 )	/* Version 1.37 (PCB P/N 1082 Rev 2) */
-	ROM_REGION( 0x8000, REGION_CPU1, 0 )
-
-	ROM_REGION32_BE( 0x80000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_REGION32_BE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD32_BYTE( "shotprm0.137", 0x00000, 0x20000, CRC(6499c76f) SHA1(60fdaefb09088ac609addd40569bd7fab12593bc) )
 	ROM_LOAD32_BYTE( "shotprm1.137", 0x00001, 0x20000, CRC(64fb47a4) SHA1(32ce9d91b16b8aaf545c0a22842ad8d806727a17) )
 	ROM_LOAD32_BYTE( "shotprm2.137", 0x00002, 0x20000, CRC(e0df3025) SHA1(edff5c5c4486981ac0783f337a0845854d0217f0) )
@@ -2247,22 +2195,15 @@ ROM_END
 
 static void init_program_rom(void)
 {
-	memcpy(main_rom, memory_region(REGION_USER1), memory_region_length(REGION_USER1));
-	memcpy(memory_region(REGION_CPU1), memory_region(REGION_USER1), 0x80);
-}
-
-
-static void init_sound_speedup(offs_t offset, offs_t pc)
-{
-	sound_speedup_data = install_mem_read_handler(1, offset, offset, sound_speedup_r);
-	sound_speedup_pc = pc;
+	memcpy(main_ram, main_rom, 0x80);
 }
 
 
 static DRIVER_INIT( timekill )
 {
 	init_program_rom();
-	init_sound_speedup(0x2010, 0x8c54);
+	via_config(0, &via_interface);
+	via_set_clock(0, CLOCK_8MHz/4);
 	itech32_vram_height = 512;
 	itech32_planes = 2;
 	is_drivedge = 0;
@@ -2272,7 +2213,8 @@ static DRIVER_INIT( timekill )
 static DRIVER_INIT( hardyard )
 {
 	init_program_rom();
-	init_sound_speedup(0x2010, 0x8e16);
+	via_config(0, &via_interface);
+	via_set_clock(0, CLOCK_8MHz/4);
 	itech32_vram_height = 1024;
 	itech32_planes = 1;
 	is_drivedge = 0;
@@ -2282,17 +2224,33 @@ static DRIVER_INIT( hardyard )
 static DRIVER_INIT( bloodstm )
 {
 	init_program_rom();
-	init_sound_speedup(0x2011, 0x8ebf);
+	via_config(0, &via_interface);
+	via_set_clock(0, CLOCK_8MHz/4);
 	itech32_vram_height = 1024;
 	itech32_planes = 1;
 	is_drivedge = 0;
 }
 
 
+static DRIVER_INIT( drivedge )
+{
+	init_program_rom();
+	via_config(0, &drivedge_via_interface);
+	via_set_clock(0, CLOCK_8MHz/4);
+	itech32_vram_height = 1024;
+	itech32_planes = 1;
+	is_drivedge = 1;
+
+	install_mem_read32_handler(2, 0x8382, 0x8382, drivedge_tms1_speedup_r);
+	install_mem_read32_handler(3, 0x8382, 0x8382, drivedge_tms2_speedup_r);
+}
+
+
 static DRIVER_INIT( wcbowl )
 {
 	init_program_rom();
-	init_sound_speedup(0x2011, 0x8f93);
+	via_config(0, &via_interface);
+	via_set_clock(0, CLOCK_8MHz/4);
 	itech32_vram_height = 1024;
 	itech32_planes = 1;
 
@@ -2304,20 +2262,9 @@ static DRIVER_INIT( wcbowl )
 }
 
 
-static DRIVER_INIT( drivedge )
+static void init_sftm_common(int prot_addr)
 {
 	init_program_rom();
-//	init_sound_speedup(0x2011, 0x8ebf);
-	itech32_vram_height = 1024;
-	itech32_planes = 1;
-	is_drivedge = 1;
-}
-
-
-static void init_sftm_common(int prot_addr, int sound_pc)
-{
-	init_program_rom();
-	init_sound_speedup(0x2011, sound_pc);
 	itech32_vram_height = 1024;
 	itech32_planes = 1;
 	is_drivedge = 0;
@@ -2331,30 +2278,24 @@ static void init_sftm_common(int prot_addr, int sound_pc)
 
 static DRIVER_INIT( sftm )
 {
-	init_sftm_common(0x7a6a, 0x905f);
+	init_sftm_common(0x7a6a);
 }
 
 
 static DRIVER_INIT( sftm110 )
 {
-	init_sftm_common(0x7a66, 0x9059);
+	init_sftm_common(0x7a66);
 }
 
 
-static void init_shuffle_bowl_common(int prot_addr, int sound_pc)
+static DRIVER_INIT( shufshot )
 {
-	/*
-		The newest versions of World Class Bowling are on the same exact
-		platform as Shuffle Shot. So We'll use the same general INIT
-		routine for these two programs.  IE: PCB P/N 1082 Rev 2
-	*/
 	init_program_rom();
-	init_sound_speedup(0x2011, sound_pc);
 	itech32_vram_height = 1024;
 	itech32_planes = 1;
 	is_drivedge = 0;
 
-	itech020_prot_address = prot_addr;
+	itech020_prot_address = 0x111a;
 
 	install_mem_write32_handler(0, 0x300000, 0x300003, itech020_color2_w);
 	install_mem_write32_handler(0, 0x380000, 0x380003, itech020_color1_w);
@@ -2362,15 +2303,22 @@ static void init_shuffle_bowl_common(int prot_addr, int sound_pc)
 	install_mem_read32_handler(0, 0x181000, 0x181003, trackball32_4bit_p2_r);
 }
 
-static DRIVER_INIT( shufshot )	/* PIC 16C54 labeled as ITSHF-1 */
-{
-	init_shuffle_bowl_common(0x111a, 0x906c);
-}
 
 static DRIVER_INIT( wcbowln )	/* PIC 16C54 labeled as ITBWL-3 */
+				/* The security PROM is NOT interchangable between the Deluxe and "normal" versions. */
 {
-	/* The security PROM is NOT interchangable between the Deluxe and "normal" versions. */
-	init_shuffle_bowl_common(0x1116, 0x9067);
+	init_program_rom();
+	itech32_vram_height = 1024;
+	itech32_planes = 1;
+	is_drivedge = 0;
+
+	itech020_prot_address = 0x1116;
+
+	install_mem_write32_handler(0, 0x300000, 0x300003, itech020_color2_w);
+	install_mem_write32_handler(0, 0x380000, 0x380003, itech020_color1_w);
+	install_mem_read32_handler(0, 0x180800, 0x180803, trackball32_4bit_r);
+	install_mem_read32_handler(0, 0x181000, 0x181003, trackball32_4bit_p2_r);
+
 }
 
 
@@ -2390,9 +2338,9 @@ GAME( 1994, bloodstm, 0,        bloodstm, bloodstm, bloodstm, ROT0, "Strata/Incr
 GAME( 1994, bloods22, bloodstm, bloodstm, bloodstm, bloodstm, ROT0, "Strata/Incredible Technologies", "Blood Storm (v2.20)" )
 GAME( 1994, bloods21, bloodstm, bloodstm, bloodstm, bloodstm, ROT0, "Strata/Incredible Technologies", "Blood Storm (v2.10)" )
 GAME( 1994, bloods11, bloodstm, bloodstm, bloodstm, bloodstm, ROT0, "Strata/Incredible Technologies", "Blood Storm (v1.10)" )
-GAME( 1994, pairs,    0,        pairs,    pairs,    bloodstm, ROT0, "Strata/Incredible Technologies", "Pairs (V1.2, 09/30/94)" )
-GAME( 1994, pairsa,   pairs,    pairs,    pairs,    bloodstm, ROT0, "Strata/Incredible Technologies", "Pairs (09/07/94)" )
-GAMEX(1994, drivedge, 0,        drivedge, drivedge, drivedge, ROT0, "Strata/Incredible Technologies", "Driver's Edge", GAME_NOT_WORKING )
+GAME( 1994, pairs,    0,        bloodstm, pairs,    bloodstm, ROT0, "Strata/Incredible Technologies", "Pairs (V1.2, 09/30/94)" )
+GAME( 1994, pairsa,   pairs,    bloodstm, pairs,    bloodstm, ROT0, "Strata/Incredible Technologies", "Pairs (09/07/94)" )
+GAMEX(1994, drivedge, 0,        drivedge, drivedge, drivedge, ROT0, "Strata/Incredible Technologies", "Driver's Edge", GAME_IMPERFECT_GRAPHICS )
 GAME( 1995, wcbowl,   0,        sftm,     wcbowln,  wcbowln,  ROT0, "Incredible Technologies", "World Class Bowling (v1.66)" ) /* PIC 16C54 labeled as ITBWL-3 */
 GAME( 1995, wcbwl165, wcbowl,   sftm,     shufbowl, wcbowln,  ROT0, "Incredible Technologies", "World Class Bowling (v1.65)" ) /* PIC 16C54 labeled as ITBWL-3 */
 GAME( 1995, wcbwl161, wcbowl,   sftm,     shufbowl, wcbowln,  ROT0, "Incredible Technologies", "World Class Bowling (v1.61)" ) /* PIC 16C54 labeled as ITBWL-3 */

@@ -32,12 +32,9 @@ static INT16 vram_fg_offset;	/* Fullgraphic offset */
 UINT8  spc_port_in[4];	/* Port for sending data to the SPC700 */
 UINT8  spc_port_out[4];	/* Port for receiving data from the SPC700 */
 static UINT8 snes_hdma_chnl;	/* channels enabled for HDMA */
-static struct
-{
-	UINT8  mode;		/* ROM memory mode */
-	UINT32 sram;		/* Amount of sram in cart */
-	UINT32 sram_max;	/* Maximum amount sram in cart (based on ROM mode) */
-} cart = { SNES_MODE_20, 0x40000, 0x40000 };
+
+struct snes_cart_info snes_cart = { SNES_MODE_20, 0x40000, 0x40000 };
+
 static struct
 {
 	UINT8 low;
@@ -78,69 +75,6 @@ static void snes_init_ram(void)
 }
 
 /* should we treat this as nvram in MAME? */
-#ifdef MESS
-/* Loads the battery backed RAM into the appropriate memory area */
-static void snes_load_sram(void)
-{
-	UINT8 ii;
-	UINT8 *battery_ram, *ptr;
-
-	battery_ram = (UINT8 *)malloc( cart.sram_max );
-	ptr = battery_ram;
-	image_battery_load( image_from_devtype_and_index(IO_CARTSLOT,0), battery_ram, cart.sram_max );
-
-	if( cart.mode == SNES_MODE_20 )
-	{
-		for( ii = 0; ii < 8; ii++ )
-		{
-			memcpy( &snes_ram[0x700000 + (ii * 0x010000)], ptr, 0x7fff );
-			ptr += 0x7fff;
-		}
-	}
-	else
-	{
-		for( ii = 0; ii < 16; ii++ )
-		{
-			memcpy( &snes_ram[0x306000 + (ii * 0x010000)], ptr, 0x1fff );
-			ptr += 0x1fff;
-		}
-	}
-
-	free( battery_ram );
-}
-
-/* Saves the battery backed RAM from the appropriate memory area */
-static void snes_save_sram(void)
-{
-	UINT8 ii;
-	UINT8 *battery_ram, *ptr;
-
-	battery_ram = (UINT8 *)malloc( cart.sram_max );
-	ptr = battery_ram;
-
-	if( cart.mode == SNES_MODE_20 )
-	{
-		for( ii = 0; ii < 8; ii++ )
-		{
-			memcpy( ptr, &snes_ram[0x700000 + (ii * 0x010000)], 0x7fff );
-			ptr += 0x7fff;
-		}
-	}
-	else
-	{
-		for( ii = 0; ii < 16; ii++ )
-		{
-			memcpy( ptr, &snes_ram[0x306000 + (ii * 0x010000)], 0x1fff );
-			ptr += 0x1fff;
-		}
-	}
-
-	image_battery_save( image_from_devtype_and_index(IO_CARTSLOT,0), battery_ram, cart.sram_max );
-
-	free( battery_ram );
-}
-#endif	/* MESS */
-
 MACHINE_INIT( snes )
 {
 	snes_init_ram();
@@ -152,22 +86,13 @@ MACHINE_INIT( snes )
 		snes_ram[STAT78] = SNES_PAL;
 }
 
-#ifdef MESS
-MACHINE_STOP( snes )
-{
-	/* Save SRAM */
-	if( cart.sram > 0 )
-		snes_save_sram();
-}
-#endif	/* MESS */
-
 /* Handle reading of Mode 20 SRAM */
 /* 0x700000 - 0x77ffff */
 READ_HANDLER( snes_r_sram )
 {
 	UINT8 value = 0xff;
 
-	if( cart.sram > 0 )
+	if( snes_cart.sram > 0 )
 	{
 		value = snes_ram[0x700000 + offset];
 	}
@@ -188,7 +113,7 @@ READ_HANDLER( snes_r_bank1 )
 		return 0xff;
 	else
 	{
-		if( cart.mode == SNES_MODE_20 )
+		if( snes_cart.mode == SNES_MODE_20 )
 			return snes_ram[offset];
 		else	/* MODE_21 */
 			return snes_ram[0xc00000 + offset];
@@ -208,14 +133,14 @@ READ_HANDLER( snes_r_bank2 )
 		return snes_r_io( address );
 	else if( address >= 0x6000 && address <= 0x7fff )
 	{
-		if( cart.mode == SNES_MODE_20 )
+		if( snes_cart.mode == SNES_MODE_20 )
 			return 0xff;						/* Reserved */
 		else	/* MODE_21 */
 			return snes_ram[0x300000 + offset];	/* sram */
 	}
 	else
 	{
-		if( cart.mode == SNES_MODE_20 )
+		if( snes_cart.mode == SNES_MODE_20 )
 			return snes_ram[0x300000 + offset];
 		else	/* MODE_21 */
 			return snes_ram[0xf00000 + offset];
@@ -229,7 +154,7 @@ READ_HANDLER( snes_r_bank3 )
 {
 	UINT16 address = offset & 0xffff;
 
-	if( cart.mode == SNES_MODE_20 )
+	if( snes_cart.mode == SNES_MODE_20 )
 	{
 		if( address <= 0x7fff )
 			return 0xff;		/* Reserved */
@@ -247,7 +172,7 @@ READ_HANDLER( snes_r_bank3 )
 /* 0x800000 - 0xffffff */
 READ_HANDLER( snes_r_bank4 )
 {
-	if( cart.mode == SNES_MODE_20 )
+	if( snes_cart.mode == SNES_MODE_20 )
 	{
 		if( offset <= 0x5fffff )
 			return program_read_byte(offset );
@@ -291,7 +216,7 @@ WRITE_HANDLER( snes_w_bank2 )
 		snes_w_io( address, data );
 	else if( address >= 0x6000 && address <= 0x7fff )
 	{
-		if( cart.mode == SNES_MODE_20 )			/* Reserved */
+		if( snes_cart.mode == SNES_MODE_20 )			/* Reserved */
 			logerror( "Attempt to write to reserved address: %X\n", offset );
 		else /* MODE_21 */
 			snes_ram[0x300000 + offset] = data;  /* sram */
@@ -303,7 +228,7 @@ WRITE_HANDLER( snes_w_bank2 )
 /* 0x800000 - 0xffffff */
 WRITE_HANDLER( snes_w_bank4 )
 {
-	if( cart.mode == SNES_MODE_20 )
+	if( snes_cart.mode == SNES_MODE_20 )
 	{
 		if( offset <= 0x2fffff )
 			snes_w_bank1( offset, data );
@@ -1126,7 +1051,7 @@ WRITE_HANDLER( snes_w_io )
 
 /* This function checks everything is in a valid range and returns how
  * 'valid' this section is as an information block. */
-static int snes_validate_infoblock( UINT8 *infoblock, UINT16 offset )
+int snes_validate_infoblock( UINT8 *infoblock, UINT16 offset )
 {
 	INT8 valid = 6;
 
@@ -1165,215 +1090,8 @@ static int snes_validate_infoblock( UINT8 *infoblock, UINT16 offset )
 	return valid;
 }
 
-#ifdef MESS
-DEVICE_LOAD(snes_cart)
-{
-	int i;
-	UINT16 totalblocks, readblocks;
-	UINT32 offset;
-	UINT8 header[512], sample[0xffff];
-	UINT8 valid_mode20, valid_mode21;
-
-	/* Cart types */
-	static struct
-	{
-		INT8 Code;
-		char *Name;
-	} CartTypes[] =
-	{
-		{  0, "ROM"             },
-		{  1, "ROM,RAM"         },
-		{  2, "ROM,SRAM"        },
-		{  3, "ROM,DSP1"        },
-		{  4, "ROM,RAM,DSP1"    },
-		{  5, "ROM,SRAM,DSP1"   },
-		{ 19, "ROM,SuperFX"     },
-		{ 21, "ROM,SRAM,SuperFX"},
-		{ 69, "ROM,SRAM,S-DD1"  },
-		{227, "ROM,Z80GB"       },
-		{243, "ROM,?(1)"        },
-		{246, "ROM,DSP2"        },
-		{ -1, "UNKNOWN"         }
-	};
-
-	/* Some known countries */
-	const char *countries[] =
-	{
-		"Japan (NTSC)",
-		"USA (NTSC)",
-		"Australia, Europe, Oceania & Asia (PAL)",
-		"Sweden (PAL)",
-		"Finland (PAL)",
-		"Denmark (PAL)",
-		"France (PAL)",
-		"Holland (PAL)",
-		"Spain (PAL)",
-		"Germany, Austria & Switzerland (PAL)",
-		"Italy (PAL)",
-		"Hong Kong & China (PAL)",
-		"Indonesia (PAL)",
-		"Korea (PAL)",
-		"UNKNOWN"
-	};
-
-	if( new_memory_region(REGION_CPU1, 0x1000000,0) )
-	{
-		logerror("Memory allocation failed reading rom!\n");
-		return INIT_FAIL;
-	}
-
-	snes_ram = memory_region( REGION_CPU1 );
-	memset( snes_ram, 0, 0x1000000 );
-
-	/* Check for a header (512 bytes) */
-	offset = 512;
-	mame_fread( file, header, 512 );
-	if( (header[8] == 0xaa) && (header[9] == 0xbb) && (header[10] == 0x04) )
-	{
-		/* Found an SWC identifier */
-		logerror( "Found header(SWC) - Skipped\n" );
-	}
-	else if( (header[0] | (header[1] << 8)) == (((mame_fsize(file) - 512) / 1024) / 8) )
-	{
-		/* Some headers have the rom size at the start, if this matches with the
-		 * actual rom size, we probably have a header */
-		logerror( "Found header(size) - Skipped\n" );
-	}
-	else if( (image_length(image) % 0x8000) == 512 )
-	{
-		/* As a last check we'll see if there's exactly 512 bytes extra to this
-		 * image. */
-		logerror( "Found header(extra) - Skipped\n" );
-	}
-	else
-	{
-		/* No header found so go back to the start of the file */
-		logerror( "No header found.\n" );
-		offset = 0;
-		mame_fseek( file, offset, SEEK_SET );
-	}
-
-	/* We need to take a sample of 128kb to test what mode we need to be in */
-	mame_fread( file, sample, 0xffff );
-	mame_fseek( file, offset, SEEK_SET );	/* Rewind */
-	/* Now to determine if this is a lo-ROM or a hi-ROM */
-	valid_mode20 = snes_validate_infoblock( sample, 0x7fc0 );
-	valid_mode21 = snes_validate_infoblock( sample, 0xffc0 );
-	if( valid_mode20 >= valid_mode21 )
-	{
-		cart.mode = SNES_MODE_20;
-		cart.sram_max = 0x40000;
-	}
-	else if( valid_mode21 > valid_mode20 )
-	{
-		cart.mode = SNES_MODE_21;
-		cart.sram_max = 0x20000;
-	}
-
-	/* Find the number of blocks in this ROM */
-	totalblocks = ((mame_fsize(file) - offset) >> (cart.mode == SNES_MODE_20 ? 15 : 16));
-
-	/* FIXME: Insert crc check here */
-
-	readblocks = 0;
-	if( cart.mode == SNES_MODE_20 )
-	{
-		/* In mode 20, all blocks are 32kb. There are upto 96 blocks, giving a
-		 * total of 24mbit(3mb) of ROM.
-		 * The first 48 blocks are located in banks 0x00 to 0x2f at address
-		 * 0x8000.  They are mirrored in banks 0x80 to 0xaf.
-		 * The next 16 blocks are located in banks 0x30 to 0x3f at address
-		 * 0x8000.  They are mirrored in banks 0xb0 to 0xbf.
-		 * The final 32 blocks are located in banks 0x40 - 0x5f at address
-		 * 0x8000.  They are mirrored in banks 0xc0 to 0xdf.
-		 */
-		i = 0;
-		while( i < 96 && readblocks <= totalblocks )
-		{
-			mame_fread( file, &snes_ram[(i++ * 0x10000) + 0x8000], 0x8000);
-			readblocks++;
-		}
-	}
-	else	/* Mode 21 */
-	{
-		/* In mode 21, all blocks are 64kb. There are upto 96 blocks, giving a
-		 * total of 48mbit(6mb) of ROM.
-		 * The first 64 blocks are located in banks 0xc0 to 0xff. The MSB of
-		 * each bank is mirrored in banks 0x00 to 0x3f.
-		 * The final 32 blocks are located in banks 0x40 to 0x5f.
-		 */
-
-		/* read first 64 blocks */
-		i = 0;
-		while( i < 64 && readblocks <= totalblocks )
-		{
-			mame_fread( file, &snes_ram[0xc00000 + (i++ * 0x10000)], 0x10000);
-			readblocks++;
-		}
-		/* read the next 32 blocks */
-		i = 0;
-		while( i < 32 && readblocks <= totalblocks )
-		{
-			mame_fread( file, &snes_ram[0x400000 + (i++ * 0x10000)], 0x10000);
-			readblocks++;
-		}
-	}
-
-	/* Find the amount of sram */
-	cart.sram = snes_r_bank1(0x00ffd8);
-	if( cart.sram > 0 )
-	{
-		cart.sram = ((1 << (cart.sram + 3)) / 8);
-		if( cart.sram > cart.sram_max )
-			cart.sram = cart.sram_max;
-	}
-
-	/* Log cart information */
-	{
-		char title[21], romid[4], companyid[2];
-		UINT8 country;
-		logerror( "ROM DETAILS\n" );
-		logerror( "\tTotal blocks:  %d (%dmb)\n", totalblocks, totalblocks / (cart.mode == SNES_MODE_20 ? 32 : 16) );
-		logerror( "\tROM bank size: %s (LoROM: %d , HiROM: %d)\n", (cart.mode == SNES_MODE_20) ? "LoROM" : "HiROM", valid_mode20, valid_mode21 );
-		for( i = 0; i < 2; i++ )
-			companyid[i] = snes_r_bank1(0x00ffb0 + i);
-		logerror( "\tCompany ID:    %s\n", companyid );
-		for( i = 0; i < 4; i++ )
-			romid[i] = snes_r_bank1(0x00ffb2 + i);
-		logerror( "\tROM ID:        %s\n", romid );
-		logerror( "HEADER DETAILS\n" );
-		for( i = 0; i < 21; i++ )
-			title[i] = snes_r_bank1(0x00ffc0 + i);
-		logerror( "\tName:          %s\n", title );
-		logerror( "\tSpeed:         %s [%d]\n", ((snes_r_bank1(0x00ffd5) & 0xf0)) ? "FastROM" : "SlowROM", (snes_r_bank1(0x00ffd5) & 0xf0) >> 4 );
-		logerror( "\tBank size:     %s [%d]\n", (snes_r_bank1(0x00ffd5) & 0xf) ? "HiROM" : "LoROM", snes_r_bank1(0x00ffd5) & 0xf );
-		for( i = 0; i < 12; i++ )
-		{
-			if( CartTypes[i].Code == snes_r_bank1(0x00ffd6) )
-				break;
-		}
-		logerror( "\tType:          %s [%d]\n", CartTypes[i].Name, snes_r_bank1(0x00ffd6) );
-		logerror( "\tSize:          %d megabits [%d]\n", 1 << (snes_r_bank1(0x00ffd7) - 7), snes_r_bank1(0x00ffd7) );
-		logerror( "\tSRAM:          %d kilobits [%d]\n", cart.sram * 8, snes_ram[0xffd8] );
-		country = snes_r_bank1(0x00ffd9);
-		if( country > 14 )
-			country = 14;
-		logerror( "\tCountry:       %s [%d]\n", countries[country], snes_r_bank1(0x00ffd9) );
-		logerror( "\tLicense:       %s [%X]\n", "", snes_r_bank1(0x00ffda) );
-		logerror( "\tVersion:       1.%d\n", snes_r_bank1(0x00ffdb) );
-		logerror( "\tInv Checksum:  %X %X\n", snes_r_bank1(0x00ffdd), snes_r_bank1(0x00ffdc) );
-		logerror( "\tChecksum:      %X %X\n", snes_r_bank1(0x00ffdf), snes_r_bank1(0x00ffde) );
-		logerror( "\tNMI Address:   %2X%2Xh\n", snes_r_bank1(0x00fffb), snes_r_bank1(0x00fffa) );
-		logerror( "\tStart Address: %2X%2Xh\n", snes_r_bank1(0x00fffd), snes_r_bank1(0x00fffc) );
-	}
-
-	/* Load SRAM */
-	snes_load_sram();
-
-	/* All done */
-	return INIT_PASS;
-}
-#else /* for mame we use an init, maybe we will need more for the different games */
+#ifndef MESS
+/* for mame we use an init, maybe we will need more for the different games */
 DRIVER_INIT( snes )
 {
 	int i;
@@ -1385,11 +1103,11 @@ DRIVER_INIT( snes )
 	memset( snes_ram, 0, 0x1000000 );
 
 	/* all NSS games seem to use MODE 20 */
-	cart.mode = SNES_MODE_20;
-	cart.sram_max = 0x40000;
+	snes_cart.mode = SNES_MODE_20;
+	snes_cart.sram_max = 0x40000;
 
 	/* Find the number of blocks in this ROM */
-	//totalblocks = ((mame_fsize(file) - offset) >> (cart.mode == MODE_20 ? 15 : 16));
+	//totalblocks = ((mame_fsize(file) - offset) >> (snes_cart.mode == MODE_20 ? 15 : 16));
 	totalblocks = (memory_region_length(REGION_USER3) / 0x8000) - 1;
 
 	/* FIXME: Insert crc check here */
@@ -1416,12 +1134,12 @@ DRIVER_INIT( snes )
 	}
 
 	/* Find the amount of sram */
-	cart.sram = snes_r_bank1(0x00ffd8);
-	if( cart.sram > 0 )
+	snes_cart.sram = snes_r_bank1(0x00ffd8);
+	if( snes_cart.sram > 0 )
 	{
-		cart.sram = ((1 << (cart.sram + 3)) / 8);
-		if( cart.sram > cart.sram_max )
-			cart.sram = cart.sram_max;
+		snes_cart.sram = ((1 << (snes_cart.sram + 3)) / 8);
+		if( snes_cart.sram > snes_cart.sram_max )
+			snes_cart.sram = snes_cart.sram_max;
 	}
 
 	free_memory_region(REGION_USER3);
