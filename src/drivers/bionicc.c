@@ -340,7 +340,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,                      /* 1 chip */
 	3579580,                /* 3.579580 MHz ? */
-	{ 255 },
+	{ 60 },
 	{ 0 }
 };
 
@@ -382,7 +382,7 @@ static struct MachineDriver machine_driver =
 	bionicc_vh_stop,
 	bionicc_vh_screenrefresh,
 
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		 { SOUND_YM2151,  &ym2151_interface },
 	}
@@ -472,7 +472,7 @@ static int hiload(void)
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
         {
 			int hi;
-			osd_fread(f,&ram_bc[0x39e2],10*8);
+			osd_fread_msbfirst(f,&ram_bc[0x39e2],10*8);
 			osd_fclose(f);
 			ram_bc[0x57a]=ram_bc[0x39e2];
             ram_bc[0x57b]=ram_bc[0x39e3];
@@ -515,15 +515,13 @@ static int hiload(void)
 
 static void hisave(void)
 {
-        void *f;
+	void *f;
 
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-
-
-				osd_fwrite(f,&ram_bc[0x39e2],10*8);
-				osd_fclose(f);
-        }
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite_msbfirst(f,&ram_bc[0x39e2],10*8);
+		osd_fclose(f);
+	}
 }
 
 

@@ -51,9 +51,9 @@ static void timer_callback_2610(int param)
 }
 
 /* TimerHandler from fm.c */
-static void TimerHandler(int n,int c,double timeSec)
+static void TimerHandler(int n,int c,int count,double stepTime)
 {
-	if( timeSec == 0 )
+	if( count == 0 )
 	{	/* Reset FM Timer */
 		if( Timer[n][c] )
 		{
@@ -64,6 +64,8 @@ static void TimerHandler(int n,int c,double timeSec)
 	}
 	else
 	{	/* Start FM Timer */
+		double timeSec = (double)count * stepTime;
+
 		if( Timer[n][c] == 0 )
 		{
 			double slack;
@@ -86,7 +88,6 @@ static void FMTimerInit( void )
 
 	for( i = 0 ; i < MAX_2610 ; i++ )
 		Timer[i][0] = Timer[i][1] = 0;
-	FMSetTimerHandler( TimerHandler , 0 );
 }
 
 /* update request from fm.c */
@@ -139,12 +140,12 @@ int YM2610_sh_start(struct YM2610interface *interface ){
 		for( j=0 ; j < YM2610_NUMBUF ; j++ )
 		{
 			stream_set_volume(stream[i]+j,vol);
-			stream_set_pan(stream[i]+j,(j&1)?100:-100);
+			stream_set_pan(stream[i]+j,(j&1)?OSD_PAN_RIGHT:OSD_PAN_LEFT);
 		}
 	}
 
 	/**** initialize YM2610 ****/
-	if (YM2610Init(intf->num,intf->baseclock,rate,Machine->sample_bits, intf->pcmroma, intf->pcmromb) == 0)
+	if (YM2610Init(intf->num,intf->baseclock,rate,Machine->sample_bits, intf->pcmroma, intf->pcmromb,TimerHandler,0) == 0)
 		return 0;
 
 	/* error */

@@ -366,7 +366,7 @@ static void irem_draw_sprites( struct osd_bitmap *bitmap ){
 		int tile_number = source[4]+(attributes&0x7)*256;
 		int color = source[0];
 		int sy = 256-(source[2]+256*source[3]);
-		int sx = source[7]*256+source[6]-64;
+		int sx = (source[7]&1)*256+source[6]-64;
 		int flipx = attributes&0x40;
 		int flipy = attributes&0x80;
 

@@ -15,16 +15,22 @@ J Clegg
 #include "vidhrdw/generic.h"
 
 
-unsigned char *trace_scroll_x_low;
-unsigned char *trace_scroll_x_high;
-unsigned char *trace_scroll_y_low;
-unsigned char *trace_sprite_priority; /* JB 970912 */
+unsigned char *travrusa_scroll_x_low;
+unsigned char *travrusa_scroll_x_high;
+unsigned char *travrusa_scroll_y_low;
+unsigned char *travrusa_sprite_priority; /* JB 970912 */
+static int flipscreen;
 
 
 static struct rectangle spritevisiblearea =
 {
 	1*8, 31*8-1,
 	0*8, 24*8-1
+};
+static struct rectangle spritevisibleareaflip =
+{
+	1*8, 31*8-1,
+	8*8, 32*8-1
 };
 
 
@@ -51,7 +57,7 @@ static struct rectangle spritevisiblearea =
   bit 0 -- 1  kohm resistor  -- BLUE
 
 ***************************************************************************/
-void trace_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void travrusa_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -129,7 +135,7 @@ void trace_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
   Start the video hardware emulation.
 
 ***************************************************************************/
-int trace_vh_start(void)
+int travrusa_vh_start(void)
 {
 	if ((dirtybuffer = malloc(videoram_size)) == 0)
 		return 1;
@@ -151,10 +157,24 @@ int trace_vh_start(void)
   Stop the video hardware emulation.
 
 ***************************************************************************/
-void trace_vh_stop(void)
+void travrusa_vh_stop(void)
 {
 	free(dirtybuffer);
 	osd_free_bitmap(tmpbitmap);
+}
+
+
+
+void travrusa_flipscreen_w(int offset,int data)
+{
+	/* screen flip is handled both by software and hardware */
+	data ^= ~readinputport(4) & 1;
+
+	if (flipscreen != (data & 1))
+	{
+		flipscreen = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
 }
 
 
@@ -166,7 +186,7 @@ void trace_vh_stop(void)
   the main emulation engine.
 
 ***************************************************************************/
-void trace_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void travrusa_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -177,18 +197,27 @@ void trace_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		if (dirtybuffer[offs] || dirtybuffer[offs+1])
 		{
-			int sx,sy;
+			int sx,sy,flipx,flipy;
 
 
 			dirtybuffer[offs] = dirtybuffer[offs+1] = 0;
 
 			sx = (offs/2) % 64;
 			sy = (offs/2) / 64;
+			flipx = videoram[offs+1] & 0x20;
+			flipy = videoram[offs+1] & 0x10;
+			if (flipscreen)
+			{
+				sx = 63 - sx;
+				sy = 31 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + 4 * (videoram[offs+1] & 0xc0),
 					videoram[offs+1] & 0x0f,
-					videoram[offs+1] & 0x20,videoram[offs+1] & 0x10,
+					flipx,flipy,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -200,10 +229,20 @@ void trace_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		int scroll[32];
 
 
-		for (offs = 0;offs < 24;offs++)
-			scroll[offs] = -(*trace_scroll_x_high * 0x100 + *trace_scroll_x_low);
-		for (offs = 24;offs < 32;offs++)
-			scroll[offs] = 0;
+		if (flipscreen)
+		{
+			for (offs = 0;offs < 24;offs++)
+				scroll[31-offs] = 256 + (*travrusa_scroll_x_high * 0x100 + *travrusa_scroll_x_low);
+			for (offs = 24;offs < 32;offs++)
+				scroll[31-offs] = 256;
+		}
+		else
+		{
+			for (offs = 0;offs < 24;offs++)
+				scroll[offs] = -(*travrusa_scroll_x_high * 0x100 + *travrusa_scroll_x_low);
+			for (offs = 24;offs < 32;offs++)
+				scroll[offs] = 0;
+		}
 
 		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
@@ -212,11 +251,26 @@ void trace_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* copy the sprites */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
+		int sx,sy,flipx,flipy;
+
+
+		sx = spriteram[offs + 3];
+		sy = 240 - spriteram[offs];
+		flipx = spriteram[offs + 1] & 0x40;
+		flipy = spriteram[offs + 1] & 0x80;
+		if (flipscreen)
+		{
+			sx = 240 - sx;
+			sy = 240 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
+
 		drawgfx(bitmap,Machine->gfx[1],
 				spriteram[offs + 2],
 				spriteram[offs + 1] & 0x0f,
-				spriteram[offs + 1] & 0x40,spriteram[offs + 1] & 0x80,
-				spriteram[offs + 3],240 - spriteram[offs],
-				&spritevisiblearea,TRANSPARENCY_PEN,0);
+				flipx,flipy,
+				sx,sy,
+				flipscreen ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_PEN,0);
 	}
 }

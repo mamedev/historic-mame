@@ -80,22 +80,11 @@ int msdos_init_sound(void)
 	/* always use 16 bit mixing if possible - better quality and same speed of 8 bit */
 	info.wFormat = AUDIO_FORMAT_16BITS | AUDIO_FORMAT_MONO;
 
-	/* use stereo output for YM2151 and YM2610 */
+	/* use stereo output if supported */
 	if (usestereo)
 	{
-		int totalsound = 0;
-
-
-		while (Machine->drv->sound[totalsound].sound_type != 0 && totalsound < MAX_SOUND)
-		{
-			if (Machine->drv->sound[totalsound].sound_type == SOUND_YM2151
-					|| Machine->drv->sound[totalsound].sound_type == SOUND_YM2610)
-			{
-				info.wFormat = AUDIO_FORMAT_16BITS | AUDIO_FORMAT_STEREO;
-			}
-
-			totalsound++;
-		}
+		if (Machine->drv->sound_attributes & SOUND_SUPPORTS_STEREO)
+			info.wFormat = AUDIO_FORMAT_16BITS | AUDIO_FORMAT_STEREO;
 	}
 
 	info.nSampleRate = Machine->sample_rate;
@@ -279,7 +268,7 @@ void osd_update_audio(void)
 	if (Machine->sample_rate == 0) return;
 
 	osd_profiler(OSD_PROFILE_SOUND);
-	AUpdateAudio();
+	AUpdateAudioEx(Machine->sample_rate / Machine->drv->frames_per_second);
 	osd_profiler(OSD_PROFILE_END);
 }
 
@@ -360,6 +349,8 @@ static void playstreamedsample(int channel,signed char *data,int len,int freq,in
 	/* backwards compatibility with old 0-255 volume range */
 	if (volume > 100) volume = volume * 25 / 255;
 
+	if (pan != OSD_PAN_CENTER) volume /= 2;
+
 	if (Machine->sample_rate == 0 || channel >= NUMVOICES) return;
 
 	if (!playing[channel])
@@ -428,7 +419,12 @@ static void playstreamedsample(int channel,signed char *data,int len,int freq,in
 
 
 	ASetVoiceVolume(hVoice[channel],volume * 64 / 100);
-	ASetVoicePanning(hVoice[channel],(pan + 100) * 255 / 200);
+	if (pan == OSD_PAN_CENTER)
+		ASetVoicePanning(hVoice[channel],128);
+	else if (pan == OSD_PAN_LEFT)
+		ASetVoicePanning(hVoice[channel],0);
+	else if (pan == OSD_PAN_RIGHT)
+		ASetVoicePanning(hVoice[channel],255);
 }
 
 void osd_play_streamed_sample(int channel,signed char *data,int len,int freq,int volume,int pan)
@@ -517,7 +513,7 @@ void osd_set_mastervolume(int _attenuation)
 
 	attenuation = _attenuation;
 
-	volume = 256.0;	/* range is 0-256 */
+ 	volume = 256.0;	/* range is 0-256 */
 	while (_attenuation++ < 0)
 		volume /= 1.122018454;	/* = (10 ^ (1/20)) = 1dB */
 

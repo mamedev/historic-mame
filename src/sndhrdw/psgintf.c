@@ -1,5 +1,6 @@
 #define NICK_BUBLBOBL_CHANGE
 
+#include <math.h>
 #include "driver.h"
 #include "ay8910.h"
 #include "fm.h"
@@ -7,6 +8,8 @@
 extern unsigned char No_FM;
 
 static int stream[MAX_2203];
+
+static double syncTime[MAX_2203];
 
 static struct YM2203interface *intf;
 
@@ -18,9 +21,9 @@ static void *Timer[MAX_2203][2];
 static void (*timer_callback)(int param);
 
 /* TimerHandler from fm.c */
-static void TimerHandler(int n,int c,double timeSec)
+static void TimerHandler(int n,int c,int count,double stepTime)
 {
-	if( timeSec == 0 )
+	if( count == 0 )
 	{	/* Reset FM Timer */
 		if( Timer[n][c] )
 		{
@@ -32,7 +35,16 @@ static void TimerHandler(int n,int c,double timeSec)
 	{	/* Start FM Timer */
 		if( Timer[n][c] == 0 )
 		{
-			Timer[n][c] = timer_set (timeSec, (c<<7)|n, timer_callback );
+			double timeNow;
+			double timeSec;
+			/* Syncronus Start Timming */
+			timeSec = ( (double)count * stepTime );
+			timeNow = timer_get_time();
+			if (syncTime[n] < timeNow)
+			{
+				syncTime[n] =  timeNow + (stepTime-fmod(timeNow-syncTime[n],stepTime));
+			}
+			Timer[n][c] = timer_set (timeSec+(syncTime[n]-timeNow), (c<<7)|n, timer_callback );
 		}
 	}
 }
@@ -43,7 +55,6 @@ static void FMTimerInit( void )
 
 	for( i = 0 ; i < MAX_2203 ; i++ )
 		Timer[i][0] = Timer[i][1] = 0;
-	FMSetTimerHandler( TimerHandler , 0 );
 }
 
 
@@ -122,7 +133,7 @@ int YM2203_sh_start(struct YM2203interface *interface)
 		stream_set_volume(stream[i],volume);
 	}
 	/* Initialize FM emurator */
-	if (YM2203Init(intf->num,intf->baseclock,Machine->sample_rate,Machine->sample_bits) == 0)
+	if (YM2203Init(intf->num,intf->baseclock,Machine->sample_rate,Machine->sample_bits,TimerHandler,0) == 0)
 	{
 		/* Ready */
 		return 0;

@@ -179,6 +179,16 @@ struct GfxElement *builduifont(void)
 		{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 		8*8	/* every char takes 8 consecutive bytes */
 	};
+	static struct GfxLayout fontlayout12x8 =
+	{
+		12,8,	/* 12*8 characters */
+		128,    /* 128 characters */
+		1,	/* 1 bit per pixel */
+		{ 0 },
+		{ 0,0, 1,1, 2,2, 3,3, 4,4, 5,5, 6,6, 7,7 },	/* straightforward layout */
+		{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+		8*8	/* every char takes 8 consecutive bytes */
+	};
 	static struct GfxLayout fontlayout12x16 =
 	{
 		12,16,	/* 6*8 characters */
@@ -209,7 +219,10 @@ struct GfxElement *builduifont(void)
 	trueorientation = Machine->orientation;
 	Machine->orientation = ORIENTATION_DEFAULT;
 
-	if (Machine->uiwidth >= 420 && Machine->uiheight >= 420)
+	if ((Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
+			== VIDEO_PIXEL_ASPECT_RATIO_1_2)
+		font = decodegfx(fontdata6x8,&fontlayout12x8);
+	else if (Machine->uiwidth >= 420 && Machine->uiheight >= 420)
 		font = decodegfx(fontdata6x8,&fontlayout12x16);
 	else
 		font = decodegfx(fontdata6x8,&fontlayout6x8);
@@ -644,6 +657,12 @@ static void displaymessagewindow(const char *text)
 
 
 
+extern int no_of_tiles;
+void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx,
+		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
+        int zx,int zy);
+extern struct GameDriver neogeo_bios;
+
 static void showcharset(void)
 {
 	int i,cpx,cpy;
@@ -652,11 +671,14 @@ static void showcharset(void)
 	int bank,color,line, maxline=0;
 	int trueorientation;
 	int changed;
+	int game_is_neogeo=0;
 
 
 	if ((Machine->drv->gfxdecodeinfo == 0) ||
 			(Machine->drv->gfxdecodeinfo[0].memory_region == -1))
 		return;	/* no gfx sets, return */
+
+	if(Machine->gamedrv->clone_of == &neogeo_bios) game_is_neogeo=1;
 
 
 	/* hack: force the display into standard orientation to avoid */
@@ -680,16 +702,33 @@ static void showcharset(void)
 			cpx = Machine->uiwidth / Machine->gfx[bank]->width;
 			cpy = Machine->uiheight / Machine->gfx[bank]->height;
 
-			maxline = (Machine->drv->gfxdecodeinfo[bank].gfxlayout->total + cpx - 1) / cpx;
-
-			for (i = 0; i+(line*cpx) < Machine->drv->gfxdecodeinfo[bank].gfxlayout->total ; i++)
+			if(bank!=2 || !game_is_neogeo)
 			{
-				drawgfx(Machine->scrbitmap,Machine->gfx[bank],
-					i+(line*cpx),color,  /*sprite num, color*/
-					0,0,
-					(i % cpx) * Machine->gfx[bank]->width + Machine->uixmin,
-					Machine->uifont->height+1 + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
-					0,TRANSPARENCY_NONE,0);
+				maxline = (Machine->drv->gfxdecodeinfo[bank].gfxlayout->total + cpx - 1) / cpx;
+
+				for (i = 0; i+(line*cpx) < Machine->drv->gfxdecodeinfo[bank].gfxlayout->total && i<cpx*cpy; i++)
+				{
+					drawgfx(Machine->scrbitmap,Machine->gfx[bank],
+						i+(line*cpx),color,  /*sprite num, color*/
+						0,0,
+						(i % cpx) * Machine->gfx[bank]->width + Machine->uixmin,
+						Machine->uifont->height+1 + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
+						0,TRANSPARENCY_NONE,0);
+				}
+			}
+			else	/* neogeo sprite tiles */
+			{
+				maxline = (no_of_tiles + cpx - 1) / cpx;
+
+				for (i = 0; i+(line*cpx) < no_of_tiles && i<cpx*cpy; i++)
+				{
+					NeoMVSDrawGfx(Machine->scrbitmap->line,Machine->gfx[bank],
+						i+(line*cpx),color,  /*sprite num, color*/
+						0,0,
+						(i % cpx) * Machine->gfx[bank]->width + Machine->uixmin,
+						Machine->uifont->height+1 + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
+						16,16);
+				}
 			}
 
 			sprintf(buf,"GFXSET %d COLOR %d LINE %d ",bank,color,line);
@@ -703,6 +742,7 @@ static void showcharset(void)
 			changed = 0;
 		}
 
+		osd_skip_this_frame(0);	/* keep the Mac code happy */
 		osd_update_display();
 
 
@@ -904,6 +944,9 @@ static int setdipswitches(int selected)
 						!(nocheat && ((in+1)->type & IPF_CHEAT)))
 					entry[sel]->default_value = (in+1)->default_value & entry[sel]->mask;
 			}
+
+			/* tell updatescreen() to clean after us (in case the window changes size) */
+			need_to_clear_bitmap = 1;
 		}
 	}
 
@@ -925,6 +968,9 @@ static int setdipswitches(int selected)
 						!(nocheat && ((in-1)->type & IPF_CHEAT)))
 					entry[sel]->default_value = (in-1)->default_value & entry[sel]->mask;
 			}
+
+			/* tell updatescreen() to clean after us (in case the window changes size) */
+			need_to_clear_bitmap = 1;
 		}
 	}
 
@@ -1013,6 +1059,9 @@ static int setkeysettings(int selected)
 				entry[sel]->keyboard = IP_KEY_DEFAULT;
 			else
 				entry[sel]->keyboard = newkey;
+
+			/* tell updatescreen() to clean after us (in case the window changes size) */
+			need_to_clear_bitmap = 1;
 		}
 
 		return sel + 1;
@@ -1036,7 +1085,13 @@ static int setkeysettings(int selected)
 	if (osd_key_pressed_memory(OSD_KEY_ENTER))
 	{
 		if (sel == total - 1) sel = -1;
-		else sel |= 0x100;	/* we'll ask for a key */
+		else
+		{
+			sel |= 0x100;	/* we'll ask for a key */
+
+			/* tell updatescreen() to clean after us (in case the window changes size) */
+			need_to_clear_bitmap = 1;
+		}
 	}
 
 	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
@@ -1120,6 +1175,9 @@ static int setjoysettings(int selected)
 		{
 			sel &= 0xff;
 			entry[sel]->joystick = IP_JOY_DEFAULT;
+
+			/* tell updatescreen() to clean after us (in case the window changes size) */
+			need_to_clear_bitmap = 1;
 		}
 
 		/* Allows for "All buttons" */
@@ -1127,17 +1185,26 @@ static int setjoysettings(int selected)
 		{
 			sel &= 0xff;
 			entry[sel]->joystick = OSD_JOY_FIRE;
+
+			/* tell updatescreen() to clean after us (in case the window changes size) */
+			need_to_clear_bitmap = 1;
 		}
 		if (osd_key_pressed_memory(OSD_KEY_B))
 		{
 			sel &= 0xff;
 			entry[sel]->joystick = OSD_JOY2_FIRE;
+
+			/* tell updatescreen() to clean after us (in case the window changes size) */
+			need_to_clear_bitmap = 1;
 		}
 		/* Clears entry "None" */
 		if (osd_key_pressed_memory(OSD_KEY_N))
 		{
 			sel &= 0xff;
 			entry[sel]->joystick = 0;
+
+			/* tell updatescreen() to clean after us (in case the window changes size) */
+			need_to_clear_bitmap = 1;
 		}
 
 		for (joyindex = 1; joyindex < OSD_MAX_JOY; joyindex++)
@@ -1147,6 +1214,9 @@ static int setjoysettings(int selected)
 			{
 				sel &= 0xff;
 				entry[sel]->joystick = joyindex;
+
+				/* tell updatescreen() to clean after us (in case the window changes size) */
+				need_to_clear_bitmap = 1;
 				break;
 			}
 		}
@@ -1172,7 +1242,13 @@ static int setjoysettings(int selected)
 	if (osd_key_pressed_memory(OSD_KEY_ENTER))
 	{
 		if (sel == total - 1) sel = -1;
-		else sel |= 0x100;	/* we'll ask for a joy */
+		else
+		{
+			sel |= 0x100;	/* we'll ask for a joy */
+
+			/* tell updatescreen() to clean after us (in case the window changes size) */
+			need_to_clear_bitmap = 1;
+		}
 	}
 
 	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
@@ -1613,14 +1689,15 @@ int showcopyright(void)
 
 	key = osd_read_key(1);
 	while (osd_key_pressed(key)) ;	/* wait for key release */
+
+	osd_clearbitmap(Machine->scrbitmap);
+	osd_update_display();
+
 	if (key == OSD_KEY_FAST_EXIT ||
 		key == OSD_KEY_CANCEL ||
 		key == OSD_KEY_ESC)
 		return 1;
 #endif
-
-	osd_clearbitmap(Machine->scrbitmap);
-	osd_update_display();
 
 	return 0;
 }
@@ -1736,7 +1813,11 @@ static int displaygameinfo(int selected)
 		i++;
 	}
 
-	sprintf(&buf[strlen(buf)],"\nSound:\n");
+	strcat(buf,"\nSound");
+	if (Machine->drv->sound_attributes & SOUND_SUPPORTS_STEREO)
+		sprintf(&buf[strlen(buf)]," (stereo)");
+	strcat(buf,":\n");
+
 	i = 0;
 	while (i < MAX_SOUND && Machine->drv->sound[i].sound_type)
 	{
@@ -1781,7 +1862,7 @@ static int displaygameinfo(int selected)
 		else strcat(buf,"(static)\n");
 	}
 
-	strcat(buf,"\n\n\tMAME ");	/* \t means that the line will be centered */
+	strcat(buf,"\n\tMAME ");	/* \t means that the line will be centered */
 	strcat(buf,mameversion);
 
 

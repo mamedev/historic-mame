@@ -364,48 +364,31 @@ ROM_START( cloak_rom )
 	ROM_LOAD( "136023.515",   0xe000, 0x2000, 0x835438a0 )
 ROM_END
 
+
 static int hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	void *f;
 
 
-	/* wait for "HIGH SCORE" to be on screen */
-             if (memcmp(&RAM[0x04AC],"GAM",3) == 0)
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 	{
-		void *f;
-
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-	 	        osd_fread(f,&RAM[0x2800],512); /* saves the NV RAM */
-                        osd_fread(f,&RAM[0x0f35],160); /* bottom 2/3 of the high score table (not saved by nvram) */
-
-			/* also copy the high score to the screen, otherwise it won't be */
-			/* updated */
-
-			osd_fclose(f);
-		}
-
-		return 1;
+		osd_fread(f,&cloak_nvRAM[0],512); /* load the NV RAM */
+		osd_fclose(f);
 	}
-	else return 0;	/* we can't load the hi scores yet */
+
+	return 1;
 }
-
-
 
 static void hisave(void)
 {
 	void *f;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		osd_fwrite(f,&RAM[0x2800],512); /* saves the NV RAM */
-                osd_fwrite(f,&RAM[0x0f35],160); /* bottom 2/3 of the high score table (not saved by nvram) */
-		osd_fclose(f);
-                RAM[0x04AC] = 0;
+		osd_fwrite(f,&cloak_nvRAM[0],512); /* save the NV RAM */
+      	osd_fclose(f);
 	}
 }
 

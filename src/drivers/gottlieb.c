@@ -152,7 +152,7 @@ void riot_ram_w(int offset, int data);
 void gottlieb_riot_w(int offset, int data);
 void gottlieb_speech_w(int offset, int data);
 void gottlieb_speech_clock_DAC_w(int offset, int data);
-int gottlieb_sh_init (const char *gamename);
+int gottlieb_sh_start(void);
 int stooges_sound_input_r(int offset);
 void stooges_8910_latch_w(int offset,int data);
 void stooges_sound_control_w(int offset,int data);
@@ -1237,7 +1237,7 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 	gottlieb_vh_screenrefresh,										\
 																	\
 	/* sound hardware */                                        	\
-	gottlieb_sh_init,0,0,0,                                        	\
+	0,gottlieb_sh_start,0,0,                                       	\
 	{                                                           	\
 		{                                                   		\
 			SOUND_DAC,												\

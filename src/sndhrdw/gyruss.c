@@ -41,6 +41,21 @@ int gyruss_portA_r(int offset)
 
 
 
+int gyruss_sh_start(void)
+{
+	int i;
+
+
+	for (i = 0;i < 3;i++) stream_set_pan(3*0+i,OSD_PAN_RIGHT);	/* AY8910 #0 */
+	for (i = 0;i < 3;i++) stream_set_pan(3*1+i,OSD_PAN_LEFT);	/* AY8910 #1 */
+	for (i = 0;i < 3;i++) stream_set_pan(3*2+i,OSD_PAN_RIGHT);	/* AY8910 #2 */
+	for (i = 0;i < 3;i++) stream_set_pan(3*3+i,OSD_PAN_RIGHT);	/* AY8910 #3 */
+	for (i = 0;i < 3;i++) stream_set_pan(3*4+i,OSD_PAN_LEFT);	/* AY8910 #4 */
+	stream_set_pan(15,OSD_PAN_LEFT);							/* DAC */
+
+	return 0;
+}
+
 static void filter_w(int chip,int data)
 {
 	int i;

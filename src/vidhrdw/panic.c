@@ -9,6 +9,43 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+
+
+/*
+ * Bit 0 = RED, Bit 1 = GREEN, Bit 2 = BLUE
+ *
+ * First 8 colours are normal intensities
+ *
+ * But, bit 3 can be used to pull Blue via a 2k resistor to 5v
+ * (1k to ground) so second version of table has blue set to 2/3
+ *
+ * I think there is also an output line that can be used for this
+ */
+void panic_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		*(palette++) = 0xff * ((i >> 0) & 1);
+		*(palette++) = 0xff * ((i >> 1) & 1);
+		if ((i & 0x0c) == 0x08)
+			*(palette++) = 0xaa;
+		else
+			*(palette++) = 0xff * ((i >> 2) & 1);
+	}
+
+
+	/* characters and sprites use the same palette */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = *(color_prom++) & 0x0f;
+}
+
+
+
 /* Sprite number - Bank conversion */
 
 static const unsigned char Remap[64][2] = {
@@ -79,8 +116,6 @@ unsigned char *panic_videoram;
 
 static int ColourMap;
 
-
-
 /***************************************************************************
 
   Start the video hardware emulation.
@@ -93,7 +128,7 @@ int panic_vh_start(void)
 
 	/* initialize the bitmap to our background color */
 
-	fillbitmap(tmpbitmap,Machine->gfx[0]->colortable[0],&Machine->drv->visible_area);
+	fillbitmap(tmpbitmap,Machine->pens[0],&Machine->drv->visible_area);
 
 	return 0;
 }
@@ -136,14 +171,14 @@ void panic_videoram_w(int offset,int data)
 
             if(RAM[0x700C] == 0x80 && ColourMap == 0)
 			{
-			    col = Machine->gfx[0]->colortable[30];   /* Green */
+			    col = Machine->pens[10];   /* Green + Blue */
             }
             else
             {
 	            ColTab = RAM[CLT[ColourMap][0] + Band[y / 8] + x / 8 - 2];
 
-    	        if (CLT[ColourMap][1] == 1) col = Machine->gfx[0]->colortable[20+(ColTab >> 4)];
-        	    else col = Machine->gfx[0]->colortable[20+(ColTab & 0x0F)];
+    	        if (CLT[ColourMap][1] == 1) col = Machine->pens[ColTab >> 4];
+        	    else col = Machine->pens[ColTab & 0x0F];
             }
 
             /* Allow Rotate */
@@ -160,7 +195,7 @@ void panic_videoram_w(int offset,int data)
 			        for (i = 0;i < 8;i++)
 			        {
 				        if (data & 0x01) tmpbitmap->line[x][y] = col;
-				        else tmpbitmap->line[x][y] = Machine->gfx[0]->colortable[0]; /* black */
+				        else tmpbitmap->line[x][y] = Machine->pens[0]; /* black */
 
 				        y++;
 				        data >>= 1;
@@ -174,7 +209,7 @@ void panic_videoram_w(int offset,int data)
 			        for (i = 0;i < 8;i++)
 			        {
 				        if (data & 0x01) tmpbitmap->line[x][y] = col;
-				        else tmpbitmap->line[x][y] = Machine->gfx[0]->colortable[0]; /* black */
+				        else tmpbitmap->line[x][y] = Machine->pens[0]; /* black */
 
 				        y--;
 				        data >>= 1;
@@ -195,7 +230,7 @@ void panic_videoram_w(int offset,int data)
 			        for (i = 0;i < 8;i++)
 			        {
 				        if (data & 0x01) tmpbitmap->line[y][x] = col;
-				        else tmpbitmap->line[y][x] = Machine->gfx[0]->colortable[0]; /* black */
+				        else tmpbitmap->line[y][x] = Machine->pens[0]; /* black */
 
 				        y++;
 				        data >>= 1;
@@ -209,7 +244,7 @@ void panic_videoram_w(int offset,int data)
 			        for (i = 0;i < 8;i++)
 			        {
 				        if (data & 0x01) tmpbitmap->line[y][x] = col;
-				        else tmpbitmap->line[y][x] = Machine->gfx[0]->colortable[0]; /* black */
+				        else tmpbitmap->line[y][x] = Machine->pens[0]; /* black */
 
 				        y--;
 				        data >>= 1;
@@ -244,12 +279,12 @@ void panic_videoram_w(int offset,int data)
                             else
                             	ey = 255 - y;
 
-                            if(tmpbitmap->line[ex][ey] != Machine->gfx[0]->colortable[0])
+                            if(tmpbitmap->line[ex][ey] != Machine->pens[0])
                             {
                                 ColTab = RAM[CLT[ColourMap][0] + Band[y / 8] + x / 8 - 2];
 
-                                if (CLT[ColourMap][1] == 1) col = Machine->gfx[0]->colortable[20+(ColTab >> 4)];
-                                else col = Machine->gfx[0]->colortable[20+(ColTab & 0x0F)];
+                                if (CLT[ColourMap][1] == 1) col = Machine->pens[ColTab >> 4];
+                                else col = Machine->pens[ColTab & 0x0F];
 
                                 tmpbitmap->line[ex][ey] = col;
                             }
@@ -274,12 +309,12 @@ void panic_videoram_w(int offset,int data)
                             else
                             	ey = y;
 
-                            if(tmpbitmap->line[ey][ex] != Machine->gfx[0]->colortable[0])
+                            if(tmpbitmap->line[ey][ex] != Machine->pens[0])
                             {
                                 ColTab = RAM[CLT[ColourMap][0] + Band[y / 8] + x / 8 - 2];
 
-                                if (CLT[ColourMap][1] == 1) col = Machine->gfx[0]->colortable[20+(ColTab >> 4)];
-                                else col = Machine->gfx[0]->colortable[20+(ColTab & 0x0F)];
+                                if (CLT[ColourMap][1] == 1) col = Machine->pens[ColTab >> 4];
+                                else col = Machine->pens[ColTab & 0x0F];
 
                                 tmpbitmap->line[ey][ex] = col;
                             }
@@ -327,7 +362,7 @@ void panic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		    drawgfx(bitmap,Machine->gfx[Bank],
 				    Sprite,
-				    spriteram[offs+3] & 0x07,
+				    7 - (spriteram[offs+3] & 0x07),
 				    Rotate,0,
 				    spriteram[offs+1]+16,spriteram[offs+2]-16,
 				    &Machine->drv->visible_area,TRANSPARENCY_PEN,0);

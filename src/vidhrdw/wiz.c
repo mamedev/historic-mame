@@ -30,26 +30,27 @@ unsigned char *wiz_attributesram2;
 static int flipx, flipy;
 
 unsigned char *wiz_sprite_bank;
-static unsigned char background_bank[2];
+static unsigned char char_bank[2];
+static unsigned char palbank[2];
+static int palette_bank;
 
 
 /***************************************************************************
 
   Convert the color PROMs into a more useable format.
 
-  I'm assuming 1942 resistor values
+  Stinger has three 256x4 palette PROMs (one per gun).
+  The palette PROMs are connected to the RGB output this way:
 
-  bit 3 -- 220 ohm resistor  -- RED/GREEN/BLUE
-	-- 470 ohm resistor  -- RED/GREEN/BLUE
-	-- 1  kohm resistor  -- RED/GREEN/BLUE
-  bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
+  bit 3 -- 100 ohm resistor  -- RED/GREEN/BLUE
+        -- 220 ohm resistor  -- RED/GREEN/BLUE
+        -- 470 ohm resistor  -- RED/GREEN/BLUE
+  bit 0 -- 1  kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
 void wiz_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
@@ -61,48 +62,65 @@ void wiz_vh_convert_color_prom(unsigned char *palette, unsigned short *colortabl
 		bit1 = (color_prom[0] >> 1) & 0x01;
 		bit2 = (color_prom[0] >> 2) & 0x01;
 		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x42 * bit2 + 0x90 * bit3;
 		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x42 * bit2 + 0x90 * bit3;
 		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x42 * bit2 + 0x90 * bit3;
 
 		color_prom++;
 	}
+}
 
-
-	/* characters and sprites use the same palette */
-	for (i = 0;i < TOTAL_COLORS(0);i++)
+void wiz_attributes_w(int offset,int data)
+{
+	if ((offset & 1) && wiz_attributesram[offset] != data)
 	{
-		COLOR(0,i) = i;
+		int i;
+
+
+		for (i = offset / 2;i < videoram_size;i += 32)
+		{
+			dirtybuffer[i] = 1;
+		}
+	}
+
+	wiz_attributesram[offset] = data;
+}
+
+void wiz_palettebank_w(int offset,int data)
+{
+	if (palbank[offset] != (data & 1))
+	{
+		palbank[offset] = data & 1;
+		palette_bank = palbank[0] + 2 * palbank[1];
+
+		memset(dirtybuffer,1,videoram_size);
 	}
 }
 
-
-void wiz_background_bank_select_w (int offset, int data)
+void wiz_char_bank_select_w(int offset,int data)
 {
-    if (background_bank[offset] != data)
-    {
-	background_bank[offset] = data;
-
-	memset(dirtybuffer, 1, videoram_size);
-    }
+	if (char_bank[offset] != (data & 1))
+	{
+		char_bank[offset] = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
 }
-
 
 void wiz_flipx_w (int offset, int data)
 {
     if (flipx != data)
     {
-	flipx = data;
+		flipx = data;
 
-	memset(dirtybuffer, 1, videoram_size);
+		memset(dirtybuffer, 1, videoram_size);
     }
 }
 
@@ -111,52 +129,50 @@ void wiz_flipy_w (int offset, int data)
 {
     if (flipy != data)
     {
-	flipy = data;
+		flipy = data;
 
-	memset(dirtybuffer, 1, videoram_size);
+		memset(dirtybuffer, 1, videoram_size);
     }
 }
 
-/***************************************************************************
-
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-void wiz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+static void draw_background(struct osd_bitmap *bitmap, int bank, int colortype)
 {
-	int i,offs,bank;
+	int i,offs;
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-
-	bank = 3 + ((background_bank[0] << 1) | background_bank[1]);
 
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{
-			int sx,sy;
+			int sx,sy,col;
 
 			dirtybuffer[offs] = 0;
 
 			sx = offs % 32;
 			sy = offs / 32;
 
+			if (colortype)
+			{
+				col = (wiz_attributesram[2 * sx + 1] & 0x07);
+			}
+			else
+			{
+				col = (colorram[offs] & 0x07);
+			}
+
 			if (flipx) sx = 31 - sx;
 			if (flipy) sy = 31 - sy;
 
-			// Background seem to be a single color
 			drawgfx(tmpbitmap,Machine->gfx[bank],
 				videoram[offs],
-				0,
+				(wiz_attributesram[2 * (offs % 32) + 1] & 0x07) + 8 * palette_bank,
 				flipx,flipy,
 				8*sx,8*sy,
 				0,TRANSPARENCY_NONE,0);
 		}
 	}
-
 
 	/* copy the temporary bitmap to the screen */
 	{
@@ -183,19 +199,29 @@ void wiz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 	}
+}
 
+static void draw_foreground(struct osd_bitmap *bitmap, int colortype)
+{
+	int offs;
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites. */
-	/* This playfield scrolls, so I tried using copyscrollbitmap, but couldn't make */
-	/* the characters transparent, even when using TRANSPARENCY_PEN. Maybe someone  */
-	/* could enlighten me as to what I'm missing.  */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		int scroll,sx,sy;
+		int scroll,sx,sy,col;
 
 
 		sx = offs % 32;
 		sy = offs / 32;
+
+		if (colortype)
+		{
+			col = (wiz_attributesram2[2 * sx + 1] & 0x07);
+		}
+		else
+		{
+			col = (wiz_colorram2[offs] & 0x07);
+		}
 
 		scroll = (8*sy + 256 - wiz_attributesram2[2 * sx]) % 256;
 		if (flipy)
@@ -205,78 +231,78 @@ void wiz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		if (flipx) sx = 31 - sx;
 
 
-		drawgfx(bitmap,Machine->gfx[background_bank[1]],
+		drawgfx(bitmap,Machine->gfx[char_bank[1]],
 			wiz_videoram2[offs],
-			wiz_colorram2[offs] & 0x07,
+			col + 8 * palette_bank,
 			flipx,flipy,
 			8*sx,scroll,
 			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
+}
 
+static void draw_sprites(struct osd_bitmap *bitmap, unsigned char* sprite_ram,
+                         int bank, const struct rectangle* visible_area)
+{
+	int offs;
 
-	/* Draw the sprites */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
-		int spriteflipy,sx,sy;
+		int sx,sy;
 
-		sx = spriteram[offs + 3];
-		sy = 240 - spriteram[offs];
 
-		// The flipy bit is backwards compared to Galaxian,
-		// either that, or the 2 sprite ROMS use a different
-		// layout
-		spriteflipy = ~spriteram[offs + 1] & 0x80 ;
+		sx = sprite_ram[offs + 3];
+		sy = sprite_ram[offs];
 
-		if (flipx)
-		{
-			sx = 240 - sx;
-		}
-		if (flipy)
-		{
-			sy = 240 - sy;
-			spriteflipy = !spriteflipy;
-		}
+		if (!sx || !sy) continue;
 
-		drawgfx(bitmap,Machine->gfx[2],
-				spriteram[offs + 1] & 0x7f,
-				spriteram[offs + 2] & 0x07,
-				flipx,spriteflipy,
-				sx,sy,
-				flipx ? &spritevisibleareaflipx : &spritevisiblearea,TRANSPARENCY_PEN,0);
-	}
-
-	for (offs = spriteram_2_size - 4;offs >= 0;offs -= 4)
-	{
-		int sx,sy,spritecode;
-
-		sx = spriteram_2[offs + 3];
-		sy = 240 - spriteram_2[offs];
-
-		if (flipx)
-		{
-			sx = 240 - sx;
-		}
-		if (flipy)
-		{
-			sy = 240 - sy;
-		}
-
-		spritecode = spriteram_2[offs + 1];
-		if (spritecode & 0x80)
-		{
-		    bank = 7 + *wiz_sprite_bank;
-		    spritecode &= 0x7f;
-		}
-		else
-		{
-		    bank = 9;   // Dragon boss
-		}
+		if ( flipx) sx = 240 - sx;
+		if (!flipy) sy = 240 - sy;
 
 		drawgfx(bitmap,Machine->gfx[bank],
-				spritecode,
-				spriteram_2[offs + 2] & 0x07,
+				sprite_ram[offs + 1],
+				(sprite_ram[offs + 2] & 0x07) + 8 * palette_bank,
 				flipx,flipy,
 				sx,sy,
-				flipx ? &spritevisibleareaflipx : &spritevisiblearea,TRANSPARENCY_PEN,0);
+				visible_area,TRANSPARENCY_PEN,0);
 	}
+}
+
+/***************************************************************************
+
+  Draw the game screen in the given osd_bitmap.
+  Do NOT call osd_update_display() from this function, it will be called by
+  the main emulation engine.
+
+***************************************************************************/
+void wiz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int bank;
+	const struct rectangle* visible_area;
+
+	draw_background(bitmap, 2 + ((char_bank[0] << 1) | char_bank[1]), 0);
+	draw_foreground(bitmap, 0);
+
+	visible_area = flipx ? &spritevisibleareaflipx : &spritevisiblearea;
+
+	/* I seriously doubt that the real hardware works this way */
+	if ((spriteram[1] & 0x80) || !spriteram[3] || !spriteram[0])
+	{
+	    bank = 7 + *wiz_sprite_bank;
+	}
+	else
+	{
+		bank = 8;	// Dragon boss
+	}
+
+	draw_sprites(bitmap, spriteram_2, 6,    visible_area);
+	draw_sprites(bitmap, spriteram  , bank, visible_area);
+}
+
+
+void stinger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	draw_background(bitmap, 2 + char_bank[0], 1);
+	draw_foreground(bitmap, 1);
+	draw_sprites(bitmap, spriteram_2, 4, &Machine->drv->visible_area);
+	draw_sprites(bitmap, spriteram  , 5, &Machine->drv->visible_area);
 }

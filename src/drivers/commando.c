@@ -244,7 +244,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	1500000,	/* 1.5 MHz */
-	{ YM2203_VOL(128,255), YM2203_VOL(128,255) },
+	{ YM2203_VOL(20,20), YM2203_VOL(20,20) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -454,6 +454,7 @@ static void hisave(void)
 	{
 		osd_fwrite(f,&RAM[0xee00],13*7);
 		osd_fclose(f);
+		RAM[0xee01]=0;
 	}
 }
 

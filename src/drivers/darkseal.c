@@ -31,6 +31,7 @@ Driver notes:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+static unsigned char *ram_drkseal; /* used by high scores */
 
 int  darkseal_vh_start(void);
 void darkseal_vh_stop(void);
@@ -73,20 +74,13 @@ static void darkseal_control_w(int offset,int data)
   if (errorlog) fprintf(errorlog,"Warning - %02x written to control %02x\n",data,offset);
 }
 
-static int darkseal_cycle_r(int offset)
-{
-	if (cpu_getpc()==0x1610) cpu_spinuntil_int();
-
-	return READ_WORD(&darkseal_ram[6]);
-}
 
 /******************************************************************************/
 
 static struct MemoryReadAddress darkseal_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x100006, 0x100007, darkseal_cycle_r },
-	{ 0x100000, 0x103fff, MRA_BANK1 },
+	{ 0x100000, 0x103fff, MRA_BANK1, &ram_drkseal},
 	{ 0x120000, 0x1207ff, MRA_BANK2 },
 	{ 0x140000, 0x140fff, darkseal_palette_24bit_rg_r },
 	{ 0x141000, 0x141fff, darkseal_palette_24bit_b_r },
@@ -432,6 +426,40 @@ ADPCM_SAMPLE(0x64,0x1c6f8,0x0600*2)
 ADPCM_SAMPLE(0x65,0x1ccf8,0x2000*2)
 ADPCM_SAMPLES_END
 
+
+
+/* hi load / save added 12/02/98 HSC */
+
+static int hiload(void)
+{
+    void *f;
+    /* check if the hi score table has already been initialized */
+    if (READ_WORD(&ram_drkseal[0x3e00])==0x50 && READ_WORD(&ram_drkseal[0x3e04])==0x50 && READ_WORD(&ram_drkseal[0x3e32])==0x4800 && READ_WORD(&ram_drkseal[0x3e34])==0x462e)
+    {
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+        {
+			osd_fread_msbfirst(f,&ram_drkseal[0x3e00],56);
+			osd_fclose(f);
+
+		}
+
+		return 1;
+	}
+    else return 0;  /* we can't load the hi scores yet */
+}
+
+static void hisave(void)
+{
+        void *f;
+
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+        {
+				osd_fwrite_msbfirst(f,&ram_drkseal[0x3e00],56);
+				osd_fclose(f);
+        }
+}
+
+
 struct GameDriver darkseal_driver =
 {
 	__FILE__,
@@ -454,7 +482,7 @@ struct GameDriver darkseal_driver =
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	hiload , hisave  /* hsc 12/02/98 */
 };
 
 struct GameDriver gatedoom_driver =
@@ -479,6 +507,6 @@ struct GameDriver gatedoom_driver =
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	hiload , hisave /* hsc 12/02/98 */
 };
 

@@ -12,6 +12,8 @@ extern unsigned char *blockout_videoram;
 extern unsigned char *blockout_frontvideoram;
 extern unsigned char *blockout_frontcolor;
 
+static unsigned char *ram_blockout; /* used by high scores */
+
 void blockout_videoram_w(int offset, int data);
 int blockout_videoram_r(int offset);
 void blockout_frontvideoram_w(int offset, int data);
@@ -71,7 +73,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x100000, 0x10000b, blockout_input_r },
 	{ 0x180000, 0x1bffff, blockout_videoram_r },
-	{ 0x1d4000, 0x1dffff, MRA_BANK1 },	/* work RAM */
+	{ 0x1d4000, 0x1dffff, MRA_BANK1, &ram_blockout },	/* work RAM */
 	{ 0x1f4000, 0x1fffff, MRA_BANK2 },	/* work RAM */
 	{ 0x200000, 0x207fff, blockout_frontvideoram_r },
 	{ 0x208000, 0x21ffff, MRA_BANK3 },	/* ??? */
@@ -201,7 +203,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3582071,	/* seems to be the standard */
-	{ 255 },
+	{ 60 },
 	{ blockout_irq_handler }
 };
 
@@ -210,7 +212,7 @@ static struct OKIM6295interface okim6295_interface =
 	1,              /* 1 chip */
 	8000,           /* 8000Hz frequency */
 	3,              /* memory region 3 */
-	{ 255 }
+	{ 50 }
 };
 
 
@@ -251,7 +253,7 @@ static struct MachineDriver machine_driver =
 	blockout_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151_ALT,
@@ -288,6 +290,38 @@ ROM_START( blockout_rom )
 ROM_END
 
 
+/* hi load / save added 12/01/98 HSC */
+
+static int hiload(void)
+{
+
+    void *f;
+    /* check if the hi score table has already been initialized */
+    if (READ_WORD(&ram_blockout[0x1fa4])==0x322d && READ_WORD(&ram_blockout[0x1fa6])==0x2b00 && READ_WORD(&ram_blockout[0x2012])==0x15 && READ_WORD(&ram_blockout[0x2016])==0x10)
+    {
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+        {
+			osd_fread_msbfirst(f,&ram_blockout[0x1fa4],120);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+    else return 0;  /* we can't load the hi scores yet */
+}
+
+static void hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite_msbfirst(f,&ram_blockout[0x1fa4],120);
+		osd_fclose(f);
+	}
+}
+
+
 
 struct GameDriver blockout_driver =
 {
@@ -311,5 +345,5 @@ struct GameDriver blockout_driver =
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	hiload, hisave /* hsc 12/1/98 */
 };

@@ -19,6 +19,8 @@
 #include "fm.h"
 #include "ym3812.h"
 
+#define OPL3CONVERTFREQUENCY
+
 /* Main emulated vs non-emulated switch */
 /* default : Use emulated YM3812 */
 int use_emulated_ym3812 = 1;
@@ -32,14 +34,17 @@ static int sample_bits;
 static FMSAMPLE *buffer;
 static int channel;
 
+
 /* Non-Emulated YM3812 variables and defines */
 #define MASTER_CLOCK_BASE 3600000
 static int pending_register;
+static int register_0xbd;
 static unsigned char status_register;
 static unsigned char timer_register;
 static unsigned int timer1_val;
 static unsigned int timer2_val;
 static double timer_scale;
+static int aOPLFreqArray[16];		// Up to 9 channels..
 
 /* These ones are used by both */
 struct YM3812interface *intf;
@@ -123,14 +128,57 @@ void nonemu_YM3812_control_port_0_w(int offset,int data)
 	pending_register = data;
 
 	/* pass through all non-timer registers */
-	if (data < 2 || data > 4)
+#ifdef OPL3CONVERTFREQUENCY
+	if ( ((data==0xbd)||((data&0xe0)!=0xa0)) && ((data<2)||(data>4)) )
+#else
+	if ( ((data<2)||(data>4)) )
+#endif
 		osd_ym3812_control(data);
+}
+
+void nonemu_WriteConvertedFrequency( int nFrq, int nCh )
+{
+	int		nRealOctave;
+	double	vRealFrq;
+
+	vRealFrq = (((nFrq&0x3ff)<<((nFrq&0x7000)>>12))) * (double)intf->baseclock / (double)ym3812_StdClock;
+	nRealOctave = 0;
+
+	while( (vRealFrq>1023.0)&&(nRealOctave<7) )
+	{
+		vRealFrq /= 2.0;
+		nRealOctave++;
+	}
+	osd_ym3812_control(0xa0|nCh);
+	osd_ym3812_write(((int)vRealFrq)&0xff);
+	osd_ym3812_control(0xb0|nCh);
+	osd_ym3812_write( ((((int)vRealFrq)>>8)&3)|(nRealOctave<<2)|((nFrq&0x8000)>>10) );
 }
 
 void nonemu_YM3812_write_port_0_w(int offset,int data)
 {
-	if (pending_register < 2 || pending_register > 4)
-		osd_ym3812_write(data);
+//	if (pending_register < 2 || pending_register > 4)
+	int nCh = pending_register&0x0f;
+
+	if( pending_register == 0xbd ) register_0xbd = data;
+#ifdef OPL3CONVERTFREQUENCY
+	if( (nCh<9) )// if( (((~register_0xbd)&0x20)||(nCh<6)) )
+	{
+		if( (pending_register&0xf0) == 0xa0 )
+		{
+			aOPLFreqArray[nCh] = (aOPLFreqArray[nCh] & 0xf300)|(data&0xff);
+			nonemu_WriteConvertedFrequency( aOPLFreqArray[nCh], nCh );
+			return;
+		}
+		else if( (pending_register&0xf0)==0xb0 )
+		{
+			aOPLFreqArray[pending_register&0xf] = (aOPLFreqArray[nCh] & 0x00ff)|((data&0x3)<<8)|((data&0x1c)<<10)|((data&0x20)<<10);
+			nonemu_WriteConvertedFrequency( aOPLFreqArray[nCh], nCh );
+			return;
+		}
+	}
+#endif
+	if ( (pending_register<2)||(pending_register>4) ) osd_ym3812_write(data);
 	else
 	{
 		switch (pending_register)

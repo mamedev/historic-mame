@@ -1153,20 +1153,20 @@ INPUT_PORTS_END
 static struct DACinterface dac_interface =
 {
 	3, /* DAC, CVSD, DAC2 (narc only) */
-	{ 255, 255, 255 }
+	{ 30, 30, 30 }
 };
 static struct YM2151interface ym2151_interface =
 {
 	1,          /* 1 chip */
 	3579545,    /* 3.579545 MHz */
-	{ 144 },
+	{ 30 },
 	{ smashtv_ym2151_int }
 };
 static struct YM2151interface narc_ym2151_interface =
 {
 	1,          /* 1 chip */
 	3579545,    /* 3.579545 MHz */
-	{ 144 },
+	{ 30 },
 	{ narc_ym2151_int }
 };
 static struct OKIM6295interface okim6295_interface =
@@ -1174,7 +1174,7 @@ static struct OKIM6295interface okim6295_interface =
 	1,          /* 1 chip */
 	8000,       /* 8000 Hz frequency */
 	4,          /* memory region 4 */
-	{ 255 }
+	{ 50 }
 };
 
 void mk_adpcm_bs_w(int offset, int data)
@@ -1235,7 +1235,7 @@ static struct MachineDriver smashtv_machine_driver =
 	wms_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_DAC,
@@ -1293,7 +1293,7 @@ static struct MachineDriver narc_machine_driver =
 	wms_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_DAC,
@@ -1343,7 +1343,7 @@ static struct MachineDriver trog_machine_driver =
 	wms_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_DAC,
@@ -1394,7 +1394,7 @@ static struct MachineDriver mk_machine_driver =
 	wms_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_DAC,
@@ -1482,7 +1482,7 @@ static struct MachineDriver nbajam_machine_driver =
 	wms_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_DAC,
@@ -2014,7 +2014,7 @@ ROM_START( totcarn_rom )
 
 	ROM_REGION(0x50000) /* sound CPU */
 	ROM_LOAD (  "tcu3.bin", 0x10000, 0x20000, 0x5bdb4665 )
-/*	ROM_RELOAD (            0x30000, 0x20000 ) */
+	ROM_RELOAD (            0x30000, 0x20000 )
 
 	ROM_REGION(0x80000) /* ADPCM samples */
 	ROM_LOAD ( "tcu12.bin", 0x00000, 0x40000, 0xd0000ac7 )
@@ -2059,7 +2059,7 @@ ROM_START( totcarnp_rom )
 
 	ROM_REGION(0x50000) /* sound CPU */
 	ROM_LOAD (  "tcu3.bin", 0x10000, 0x20000, 0x5bdb4665 )
-/*	ROM_RELOAD (            0x30000, 0x20000 ) */
+	ROM_RELOAD (            0x30000, 0x20000 )
 
 	ROM_REGION(0x80000) /* ADPCM samples */
 	ROM_LOAD ( "tcu12.bin", 0x00000, 0x40000, 0xd0000ac7 )

@@ -436,7 +436,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3582071,	/* seems to be the standard */
-	{ 255 },
+	{ 60 },
 	{ dd_irq_handler }
 };
 
@@ -446,7 +446,7 @@ static struct ADPCMinterface adpcm_interface =
 	8000,       /* 8000Hz playback */
 	4,			/* memory region 4 */
 	0,			/* init function */
-	{ 255, 255 }
+	{ 50, 50 }
 };
 
 static struct OKIM6295interface okim6295_interface =
@@ -454,7 +454,7 @@ static struct OKIM6295interface okim6295_interface =
 	1,              /* 1 chip */
 	8000,           /* frequency (Hz) */
 	4,              /* memory region */
-	{ 128 }
+	{ 15 }
 };
 
 static int dd_interrupt(void)
@@ -506,7 +506,7 @@ static struct MachineDriver ddragon_machine_driver =
 	dd_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151_ALT,
@@ -561,7 +561,7 @@ static struct MachineDriver ddragonb_machine_driver =
 	dd_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151_ALT,
@@ -617,7 +617,7 @@ static struct MachineDriver ddragon2_machine_driver =
 	dd_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151_ALT,

@@ -398,7 +398,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579580,	/* seems to be the standard */
-	{ 30 },
+	{ 60 },
 	{ 0 }
 };
 
@@ -447,7 +447,7 @@ static struct MachineDriver gauntlet_machine_driver =
 	gauntlet_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -502,7 +502,7 @@ static struct MachineDriver gaunt2p_machine_driver =
 	gauntlet_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -557,7 +557,7 @@ static struct MachineDriver gauntlet2_machine_driver =
 	gauntlet_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,

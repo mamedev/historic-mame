@@ -5,6 +5,9 @@ static unsigned char *biosbank;
 unsigned char *neogeo_ram;
 unsigned char *neogeo_sram;
 
+static int sram_locked;
+static int sram_protection_hack;
+
 int neogeo_game_fix;
 extern int neogeo_red_mask,neogeo_green_mask,neogeo_blue_mask; /* From vidhrdw */
 
@@ -91,22 +94,20 @@ void neogeo_onetime_init_machine(void)
 
     /* Allocate ram banks */
 	neogeo_ram = malloc (0x10000);
-    neogeo_sram = malloc (0x10000);
-	cpu_setbank (1, neogeo_ram);
-	cpu_setbank (2, neogeo_sram);
+	cpu_setbank(1, neogeo_ram);
 
 	/* Set the biosbank */
-	cpu_setbank (3, Machine->memory_region[4]);
+	cpu_setbank(3, Machine->memory_region[4]);
 
 	/* Set the 2nd ROM bank */
     RAM = Machine->memory_region[0];
 	if (Machine->memory_region_length[0] > 0x100000)
 	{
-		cpu_setbank (4, &RAM[0x100000]);
+		cpu_setbank(4, &RAM[0x100000]);
 	}
 	else
 	{
-		cpu_setbank (4, &RAM[0]);
+		cpu_setbank(4, &RAM[0]);
 	}
 
 	/* Set the sound CPU ROM banks */
@@ -118,10 +119,19 @@ void neogeo_onetime_init_machine(void)
 
 	/* Allocate and point to the memcard - bank 5 */
  //	memcard = calloc (0x1000, 1);
- //	cpu_setbank (5, memcard);
+ //	cpu_setbank(2, memcard);
+
+
+	RAM = Machine->memory_region[4];
+
+	/* Remove memory check for now */
+    WRITE_WORD(&RAM[0x11b00],0x4e71);
+    WRITE_WORD(&RAM[0x11b02],0x4e71);
+    WRITE_WORD(&RAM[0x11b16],0x4ef9);
+    WRITE_WORD(&RAM[0x11b18],0x00c1);
+    WRITE_WORD(&RAM[0x11b1a],0x1b6a);
 
 	/* Patch bios rom, for Calendar errors */
-	RAM = Machine->memory_region[4];
     WRITE_WORD(&RAM[0x11c14],0x4e71);
     WRITE_WORD(&RAM[0x11c16],0x4e71);
     WRITE_WORD(&RAM[0x11c1c],0x4e71);
@@ -130,13 +140,6 @@ void neogeo_onetime_init_machine(void)
     /* Rom internal checksum fails for now.. */
     WRITE_WORD(&RAM[0x11c62],0x4e71);
     WRITE_WORD(&RAM[0x11c64],0x4e71);
-
-	/* Remove memory check for now */
-    WRITE_WORD(&RAM[0x11b00],0x4ef9);
-    WRITE_WORD(&RAM[0x11b02],0x00c1);
-    WRITE_WORD(&RAM[0x11b04],0x1b6a);
-
-//	WRITE_WORD(&RAM[0x11c58],0x4e71); /* Rom test */
 
 	/* Install custom memory handlers */
 	neogeo_custom_memory();
@@ -380,7 +383,7 @@ static int maglord_cycle_sr(int offset)
 static void neogeo_custom_memory(void)
 {
 	/* NeoGeo intro screen cycle skip, used by all games */
-	install_mem_read_handler(0, 0x10fe8c, 0x10fe8d, bios_cycle_skip_r);
+//	install_mem_read_handler(0, 0x10fe8c, 0x10fe8d, bios_cycle_skip_r);
 
     /* Individual games can go here... */
 
@@ -523,20 +526,24 @@ static void neogeo_custom_memory(void)
 
 	/* hacks to make the games which do protection checks run in arcade mode */
 	/* we write protect a SRAM location so it cannot be set to 1 */
+	sram_protection_hack = -1;
 	if (!strcmp(Machine->gamedrv->name,"fatfury3") ||
-			 !strcmp(Machine->gamedrv->name,"realbou2") ||
 			 !strcmp(Machine->gamedrv->name,"samsho3") ||
 			 !strcmp(Machine->gamedrv->name,"samsho4") ||
+			 !strcmp(Machine->gamedrv->name,"aof3") ||
+			 !strcmp(Machine->gamedrv->name,"rbff1") ||
+			 !strcmp(Machine->gamedrv->name,"rbffspec") ||
 			 !strcmp(Machine->gamedrv->name,"kof95") ||
 			 !strcmp(Machine->gamedrv->name,"kof96") ||
 			 !strcmp(Machine->gamedrv->name,"kof97") ||
-			 !strcmp(Machine->gamedrv->name,"mslug2") ||
+			 !strcmp(Machine->gamedrv->name,"kizuna") ||
 			 !strcmp(Machine->gamedrv->name,"lastblad") ||
-			 !strcmp(Machine->gamedrv->name,"kizuna"))
-		install_mem_read_handler(0, 0xd00100, 0xd00101, MWA_NOP );
+			 !strcmp(Machine->gamedrv->name,"realbou2") ||
+			 !strcmp(Machine->gamedrv->name,"mslug2"))
+		sram_protection_hack = 0x100;
 
 	if (!strcmp(Machine->gamedrv->name,"pulstar"))
-		install_mem_read_handler(0, 0xd0035a, 0xd0035b, MWA_NOP );
+		sram_protection_hack = 0x35a;
 
 	/* Improve games which don't work in 8 bit colour very well */
     neogeo_red_mask=0xf;
@@ -544,6 +551,73 @@ static void neogeo_custom_memory(void)
 	neogeo_blue_mask=0xf;
 	if (!strcmp(Machine->gamedrv->name,"blazstar")) neogeo_blue_mask=0xe;
 	if (!strcmp(Machine->gamedrv->name,"karnov_r")) neogeo_blue_mask=0xe;
+	if (!strcmp(Machine->gamedrv->name,"kof96")) {neogeo_blue_mask=neogeo_red_mask=0xe;}
 	if (!strcmp(Machine->gamedrv->name,"kof97")) {neogeo_blue_mask=neogeo_red_mask=neogeo_green_mask=0xe;}
 	if (!strcmp(Machine->gamedrv->name,"ragnagrd")) {neogeo_blue_mask=neogeo_red_mask=neogeo_green_mask=0xe;}
+	if (!strcmp(Machine->gamedrv->name,"whp")) {neogeo_blue_mask=neogeo_red_mask=0xe;}
+}
+
+
+
+void neogeo_sram_lock_w(int offset,int data)
+{
+	sram_locked = 1;
+}
+
+void neogeo_sram_unlock_w(int offset,int data)
+{
+	sram_locked = 0;
+}
+
+int neogeo_sram_r(int offset)
+{
+	return READ_WORD(&neogeo_sram[offset]);
+}
+
+void neogeo_sram_w(int offset,int data)
+{
+	if (sram_locked)
+	{
+if (errorlog) fprintf(errorlog,"PC %06x: warning: write %02x to SRAM %04x while it was protected\n",cpu_getpc(),data,offset);
+	}
+	else
+	{
+		if (offset == sram_protection_hack)
+		{
+			if (data == 0x0001 || data == 0xff000001)
+				return;	/* fake protection pass */
+		}
+
+		COMBINE_WORD_MEM(&neogeo_sram[offset],data);
+	}
+}
+
+int neogeo_sram_load(void)
+{
+	void *f;
+
+
+    /* Load the SRAM settings for this game */
+	memset(neogeo_sram,0,0x10000);
+	f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
+	if (f)
+	{
+		osd_fread_msbfirst(f,neogeo_sram,0x2000);
+		osd_fclose(f);
+	}
+
+	return 1;
+}
+
+void neogeo_sram_save(void)
+{
+    void *f;
+
+
+    /* Save the SRAM settings */
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite_msbfirst(f,neogeo_sram,0x2000);
+		osd_fclose(f);
+	}
 }

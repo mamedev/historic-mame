@@ -170,9 +170,6 @@ int sound_start(void)
 	if (streams_sh_start() != 0)
 		return 1;
 
-	if (Machine->drv->sh_start && (*Machine->drv->sh_start)() != 0)
-		return 1;
-
 	while (Machine->drv->sound[totalsound].sound_type != 0 && totalsound < MAX_SOUND)
 	{
 		switch (Machine->drv->sound[totalsound].sound_type)
@@ -268,6 +265,11 @@ int sound_start(void)
 		totalsound++;
 	}
 
+	/* call the custom initialization AFTER initializing the standard sections, */
+	/* so it can tweak the default parameters (like panning) */
+	if (Machine->drv->sh_start && (*Machine->drv->sh_start)() != 0)
+		return 1;
+
 	return 0;
 
 
@@ -282,6 +284,8 @@ void sound_stop(void)
 {
 	int totalsound = 0;
 
+
+	if (Machine->drv->sh_stop) (*Machine->drv->sh_stop)();
 
 	while (Machine->drv->sound[totalsound].sound_type != 0 && totalsound < MAX_SOUND)
 	{
@@ -356,8 +360,6 @@ void sound_stop(void)
 		}
 		totalsound++;
 	}
-
-	if (Machine->drv->sh_stop) (*Machine->drv->sh_stop)();
 
 	streams_sh_stop();
 }

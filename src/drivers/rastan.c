@@ -366,7 +366,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	4000000,	/* 4 MHz ? */
-	{ 255 },
+	{ 50 },
 	{ rastan_irq_handler },
 	{ rastan_bankswitch_w }
 };
@@ -377,7 +377,7 @@ static struct ADPCMinterface adpcm_interface =
 	8000,       /* 8000Hz playback */
 	3,			/* memory region 3 */
 	0,			/* init function */
-	{ 255 }
+	{ 60 }
 };
 
 
@@ -418,7 +418,7 @@ static struct MachineDriver machine_driver =
 	rastan_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151_ALT,
@@ -458,9 +458,10 @@ ROM_START( rastan_rom )
 	ROM_LOAD( "ic28_06.bin",  0xc0000, 0x20000, 0x002ccf39 )        /* sprites 1b */
 	ROM_LOAD( "ic27_08.bin",  0xe0000, 0x20000, 0xfeafca05 )        /* sprites 3b */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "ic49_19.bin", 0x0000, 0x10000, 0xee81fdd8 )   /* Audio CPU is a Z80  */
-													 /* sound chip is YM2151*/
+	ROM_REGION(0x1c000)	/* 64k for the audio CPU */
+	ROM_LOAD( "ic49_19.bin", 0x00000, 0x4000, 0xee81fdd8 )
+	ROM_CONTINUE(            0x10000, 0xc000 )
+
 	ROM_REGION(0x10000)	/* 64k for the samples */
 	ROM_LOAD( "ic76_20.bin", 0x0000, 0x10000, 0xfd1a34cc ) /* samples are 4bit ADPCM */
 ROM_END
@@ -484,9 +485,10 @@ ROM_START( rastsaga_rom )
 	ROM_LOAD( "ic28_06.bin",  0xc0000, 0x20000, 0x002ccf39 )        /* sprites 1b */
 	ROM_LOAD( "ic27_08.bin",  0xe0000, 0x20000, 0xfeafca05 )        /* sprites 3b */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "ic49_19.bin", 0x0000, 0x10000, 0xee81fdd8 )   /* Audio CPU is a Z80  */
-													 /* sound chip is YM2151*/
+	ROM_REGION(0x1c000)	/* 64k for the audio CPU */
+	ROM_LOAD( "ic49_19.bin", 0x00000, 0x4000, 0xee81fdd8 )
+	ROM_CONTINUE(            0x10000, 0xc000 )
+
 	ROM_REGION(0x10000)	/* 64k for the samples */
 	ROM_LOAD( "ic76_20.bin", 0x0000, 0x10000, 0xfd1a34cc ) /* samples are 4bit ADPCM */
 ROM_END
@@ -686,7 +688,7 @@ static struct MachineDriver rastmu_driver =
 	rastan_vhmus_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 //			SOUND_YM2151_ALT,
@@ -852,7 +854,7 @@ static struct MachineDriver ymcym_driver =
 	ymcym_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151_ALT,

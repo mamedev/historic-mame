@@ -298,9 +298,9 @@ static struct GfxDecodeInfo blstroid_gfxdecodeinfo[] =
 
 static struct TMS5220interface tms5220_interface =
 {
-    640000,     /* clock speed (80*samplerate) */
-    255,        /* volume */
-    0 /* irq handler */
+	640000,     /* clock speed (80*samplerate) */
+	100,        /* volume */
+	0 /* irq handler */
 };
 
 
@@ -308,7 +308,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579580,	/* 3.58 MHZ ? */
-	{ 255 },
+	{ 60 },
 	{ 0 }
 };
 
@@ -350,14 +350,15 @@ static struct MachineDriver blstroid_machine_driver =
 	512,512,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK |
+			VIDEO_SUPPORTS_DIRTY | VIDEO_PIXEL_ASPECT_RATIO_1_2,
 	0,
 	blstroid_vh_start,
 	blstroid_vh_stop,
 	blstroid_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,

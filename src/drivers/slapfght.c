@@ -661,7 +661,8 @@ static struct MachineDriver tigerh_machine_driver =
 		}
 	},
 	60,				/* fps - frames per second */
-	DEFAULT_REAL_60HZ_VBLANK_DURATION,
+//	DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	5000,	/* wrong, but fixes graphics glitches */
 	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	slapfight_init_machine,
 
@@ -710,7 +711,8 @@ static struct MachineDriver slapfigh_machine_driver =
 		}
 	},
 	60,				/* fps - frames per second */
-	DEFAULT_REAL_60HZ_VBLANK_DURATION,
+//	DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	5000,	/* wrong, but fixes graphics glitches */
 	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	slapfight_init_machine,
 
@@ -760,7 +762,8 @@ static struct MachineDriver slapbtuk_machine_driver =
 		}
 	},
 	60,				/* fps - frames per second */
-	DEFAULT_REAL_60HZ_VBLANK_DURATION,
+//	DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	5000,	/* wrong, but fixes graphics glitches */
 	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	slapfight_init_machine,
 

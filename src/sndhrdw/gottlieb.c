@@ -147,7 +147,7 @@ static void *nmi_timer;
 static int nmi_rate, nmi_enabled;
 static int ym2151_port;
 
-int gottlieb_sh_init (const char *gamename)
+int gottlieb_sh_start(void)
 {
 	nmi_timer = NULL;
 	return 0;

@@ -37,18 +37,18 @@
 static void cps1_irq_handler_mus (void) {  cpu_cause_interrupt (1, 0xff ); }
 static struct YM2151interface ym2151_interface =
 {
-        1,                      /* 1 chip */
-        3579580,                /* 3.579580 MHz ? */
-        { 255 },
-        { cps1_irq_handler_mus }
+	1,                      /* 1 chip */
+	3579580,                /* 3.579580 MHz ? */
+	{ 60 },
+	{ cps1_irq_handler_mus }
 };
 
 static struct OKIM6295interface okim6295_interface =
 {
-        1,              /* 1 chip */
-        7600,           /* hand tuned to match the real SF2 */
-        3,              /* memory region 3 */
-        { 255 }
+	1,              /* 1 chip */
+	7600,           /* hand tuned to match the real SF2 */
+	3,              /* memory region 3 */
+	{ 50 }
 };
 
 void cps1_snd_bankswitch_w(int offset,int data)
@@ -161,9 +161,9 @@ static struct MachineDriver CPS1_DRVNAME =                             \
                         ignore_interrupt,0                               \
                 }                                                        \
         },                                                               \
-        60, DEFAULT_60HZ_VBLANK_DURATION,                                \
+        60, 4000, /* wrong, but reduces jerkiness */                     \
         1,                                                               \
-        cps1_init_machine,                                              \
+        0,					                                             \
                                                                          \
         /* video hardware */                                             \
         0x30*8, 0x1e*8, { 0*8, 0x30*8-1, 2*8, 0x1e*8-1 },                    \
@@ -180,9 +180,9 @@ static struct MachineDriver CPS1_DRVNAME =                             \
         cps1_vh_screenrefresh,                                           \
                                                                          \
         /* sound hardware */                                             \
-        cps1_sh_init,0,0,0,                                              \
-        { { SOUND_YM2151,  &ym2151_interface },                            \
-          { SOUND_OKIM6295,  &okim6295_interface }                    \
+        SOUND_SUPPORTS_STEREO,0,0,0,                                     \
+        { { SOUND_YM2151,  &ym2151_interface },                          \
+          { SOUND_OKIM6295,  &okim6295_interface }                       \
         }                            \
 };
 
@@ -294,65 +294,68 @@ static struct CPS1config cps1_config_table[]=
   {"sf2ce",        0,     0,0x2800,0x0400,13, 0x4020,0x2800,0x0400,0x00,0x0000},
   {"sf2cej",       0,     0,0x2800,0x0400,13, 0x4020,0x2800,0x0400,0x00,0x0000},
   {"sf2rb",        0,     0,0x2800,0x0400,13, 0x4020,0x2800,0x0400,0x00,0x0000},
-  {"megaman",      0,0x0c00,0xb000,0x3400, 0, 0x0020,0xb000,0x3400,0x00,0x0000},
-  {"rockmanj",     0,0x0c00,0xb000,0x3400, 0, 0x0020,0xb000,0x3400,0x00,0x0000},
+  {"megaman",      0,0x0c00,0xb000,0x3400,14, 0x0020,0xb000,0x3400,0x00,0x0000},
+  {"rockmanj",     0,0x0c00,0xb000,0x3400,14, 0x0020,0xb000,0x3400,0x00,0x0000},
   /* End of table (default values) */
   {0,              0,     0,     0,     0, 0,     -1,    -1,    -1,0x00,0x0000},
 };
 
-static int cps1_sh_init(const char *gamename)
-{
-        unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-        struct CPS1config *pCFG=&cps1_config_table[0];
-        while(pCFG->name)
-        {
-                if (strcmp(pCFG->name, gamename) == 0)
-                {
-                        break;
-                }
-                pCFG++;
-        }
-        cps1_game_config=pCFG;
-
-        if (strcmp(gamename, "cawing")==0 || strcmp(gamename, "cawingj")==0)
-        {
-                /* Quick hack (NOP out CPSB test) */
-                if (errorlog)
-                {
-                   fprintf(errorlog, "Patching CPSB test\n");
-                }
-                WRITE_WORD(&RAM[0x04ca], 0x4e71);
-                WRITE_WORD(&RAM[0x04cc], 0x4e71);
-        }
-        else if (strcmp(gamename, "mercs")==0 || strcmp(gamename, "mercsu")==0 || strcmp(gamename, "mercsj")==0)
-        {
-                /*
-                Quick hack (NOP out CPSB test)
-                Game writes to port before reading, destroying the value
-                setup.
-                */
-                if (errorlog)
-                {
-                   fprintf(errorlog, "Patching CPSB test\n");
-                }
-                                WRITE_WORD(&RAM[0x0700], 0x4e71);
-                                WRITE_WORD(&RAM[0x0702], 0x4e71);
-        }
-        else if (strcmp(gamename, "ghouls")==0)
-        {
-                /* Patch out self-test... it takes forever */
-                WRITE_WORD(&RAM[0x61964+0], 0x4ef9);
-                WRITE_WORD(&RAM[0x61964+2], 0x0000);
-                WRITE_WORD(&RAM[0x61964+4], 0x0400);
-        }
-        return 0;
-}
-
 static void cps1_init_machine(void)
 {
+	const char *gamename = Machine->gamedrv->name;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	struct CPS1config *pCFG=&cps1_config_table[0];
+	while(pCFG->name)
+	{
+		if (strcmp(pCFG->name, gamename) == 0)
+		{
+			break;
+		}
+		pCFG++;
+	}
+	cps1_game_config=pCFG;
+
+	if (strcmp(gamename, "cawing")==0 || strcmp(gamename, "cawingj")==0)
+	{
+		/* Quick hack (NOP out CPSB test) */
+		if (errorlog)
+		{
+			fprintf(errorlog, "Patching CPSB test\n");
+		}
+		WRITE_WORD(&RAM[0x04ca], 0x4e71);
+		WRITE_WORD(&RAM[0x04cc], 0x4e71);
+	}
+	else if (strcmp(gamename, "mercs")==0 || strcmp(gamename, "mercsu")==0 || strcmp(gamename, "mercsj")==0)
+	{
+		/*
+		Quick hack (NOP out CPSB test)
+		Game writes to port before reading, destroying the value
+		setup.
+		*/
+		if (errorlog)
+		{
+			fprintf(errorlog, "Patching CPSB test\n");
+		}
+		WRITE_WORD(&RAM[0x0700], 0x4e71);
+		WRITE_WORD(&RAM[0x0702], 0x4e71);
+	}
+	else if (strcmp(gamename, "ghouls")==0)
+	{
+		/* Patch out self-test... it takes forever */
+		WRITE_WORD(&RAM[0x61964+0], 0x4ef9);
+		WRITE_WORD(&RAM[0x61964+2], 0x0000);
+		WRITE_WORD(&RAM[0x61964+4], 0x0400);
+	}
+	else if (strcmp(gamename, "kod")==0)
+	{
+		WRITE_WORD(&RAM[0xdd58], 0xccfc);
+		WRITE_WORD(&RAM[0xdd5a], 0x0400);
+		WRITE_WORD(&RAM[0xdd5c], 0x4e71);
+	}
 }
+
 
 static void cps1_hisave (void)
 {
@@ -605,52 +608,52 @@ ROM_END
 
 struct GameDriver strider_driver =
 {
-        __FILE__,
-        0,
-        "strider",
-        "Strider (US)",
-        "1989",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
-        0,
-        &strider_machine_driver,
-                0,
+	__FILE__,
+	0,
+	"strider",
+	"Strider (US)",
+	"1989",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
+	0,
+	&strider_machine_driver,
+	cps1_init_machine,
 
-        strider_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	strider_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
-        input_ports_strider,
-        NULL, 0, 0,
+	input_ports_strider,
+	NULL, 0, 0,
 
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 struct GameDriver striderj_driver =
 {
-        __FILE__,
-        &strider_driver,
-        "striderj",
-        "Strider (Japan)",
-        "1989",
-        "Capcom",
-        CPS1_CREDITS ("Marco Cassili (Game Driver)"),
-        0,
-        &strider_machine_driver,
-                0,
+	__FILE__,
+	&strider_driver,
+	"striderj",
+	"Strider (Japan)",
+	"1989",
+	"Capcom",
+	CPS1_CREDITS ("Marco Cassili (Game Driver)"),
+	0,
+	&strider_machine_driver,
+	cps1_init_machine,
 
-        striderj_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	striderj_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
-        input_ports_strider,
-        NULL, 0, 0,
+	input_ports_strider,
+	NULL, 0, 0,
 
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 
@@ -863,52 +866,52 @@ ROM_END
 
 struct GameDriver willow_driver =
 {
-        __FILE__,
-        0,
-        "willow",
-        "Willow (Japan, English)",
-        "1989",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
-        0,
-        &willow_machine_driver,
-                0,
+	__FILE__,
+	0,
+	"willow",
+	"Willow (Japan, English)",
+	"1989",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
+	0,
+	&willow_machine_driver,
+	cps1_init_machine,
 
-        willow_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	willow_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
-        input_ports_willow,
-        NULL, 0, 0,
+	input_ports_willow,
+	NULL, 0, 0,
 
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 struct GameDriver willowj_driver =
 {
-        __FILE__,
-        &willow_driver,
-        "willowj",
-        "Willow (Japan, Japanese)",
-        "1989",
-        "Capcom",
-        CPS1_CREDITS ("Marco Cassili (Game Driver)"),
-        0,
-        &willow_machine_driver,
-                0,
+	__FILE__,
+	&willow_driver,
+	"willowj",
+	"Willow (Japan, Japanese)",
+	"1989",
+	"Capcom",
+	CPS1_CREDITS ("Marco Cassili (Game Driver)"),
+	0,
+	&willow_machine_driver,
+	cps1_init_machine,
 
-        willowj_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	willowj_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
-        input_ports_willow,
-        NULL, 0, 0,
+	input_ports_willow,
+	NULL, 0, 0,
 
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 
@@ -1107,52 +1110,52 @@ ROM_END
 
 struct GameDriver ffight_driver =
 {
-        __FILE__,
-        0,
-        "ffight",
-        "Final Fight (World)",
-        "1989",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
-        0,
-        &ffight_machine_driver,
-                0,
+	__FILE__,
+	0,
+	"ffight",
+	"Final Fight (World)",
+	"1989",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
+	0,
+	&ffight_machine_driver,
+	cps1_init_machine,
 
-        ffight_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	ffight_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
-        input_ports_ffight,
-        NULL, 0, 0,
+	input_ports_ffight,
+	NULL, 0, 0,
 
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 struct GameDriver ffightj_driver =
 {
-        __FILE__,
-        &ffight_driver,
-        "ffightj",
-        "Final Fight (Japan)",
-        "1989",
-        "Capcom",
-        CPS1_CREDITS("Marco Cassili (Game Driver)"),
-        0,
-        &ffight_machine_driver,
-                0,
+	__FILE__,
+	&ffight_driver,
+	"ffightj",
+	"Final Fight (Japan)",
+	"1989",
+	"Capcom",
+	CPS1_CREDITS("Marco Cassili (Game Driver)"),
+	0,
+	&ffight_machine_driver,
+	cps1_init_machine,
 
-        ffightj_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	ffightj_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
-        input_ports_ffight,
-        NULL, 0, 0,
+	input_ports_ffight,
+	NULL, 0, 0,
 
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 
@@ -1323,52 +1326,52 @@ ROM_END
 
 struct GameDriver unsquad_driver =
 {
-        __FILE__,
-        0,
-        "unsquad",
-        "UN Squadron",
-        "1989",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
-        0,
-        &unsquad_machine_driver,
-                0,
+	__FILE__,
+	0,
+	"unsquad",
+	"UN Squadron",
+	"1989",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
+	0,
+	&unsquad_machine_driver,
+	cps1_init_machine,
 
-        unsquad_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	unsquad_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
-        input_ports_unsquad,
-        NULL, 0, 0,
+	input_ports_unsquad,
+	NULL, 0, 0,
 
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 struct GameDriver area88_driver =
 {
-        __FILE__,
-        &unsquad_driver,
-        "area88",
-        "Area 88",
-        "1989",
-        "Capcom",
-        CPS1_CREDITS("Santeri Saarimaa (Game Driver)\nMarco Cassili (dip switches)"),
-        0,
-        &unsquad_machine_driver,
-                0,
+	__FILE__,
+	&unsquad_driver,
+	"area88",
+	"Area 88",
+	"1989",
+	"Capcom",
+	CPS1_CREDITS("Santeri Saarimaa (Game Driver)\nMarco Cassili (dip switches)"),
+	0,
+	&unsquad_machine_driver,
+	cps1_init_machine,
 
-        area88_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	area88_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
-        input_ports_unsquad,
-        NULL, 0, 0,
+	input_ports_unsquad,
+	NULL, 0, 0,
 
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 /********************************************************************
@@ -1557,52 +1560,52 @@ ROM_END
 
 struct GameDriver mtwins_driver =
 {
-        __FILE__,
-        0,
-        "mtwins",
-        "Mega Twins / Chiki Chiki Boys (World)",
-        "1990",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
-        0,
-        &mtwins_machine_driver,
-                0,
+	__FILE__,
+	0,
+	"mtwins",
+	"Mega Twins / Chiki Chiki Boys (World)",
+	"1990",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
+	0,
+	&mtwins_machine_driver,
+	cps1_init_machine,
 
-        mtwins_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	mtwins_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
-        input_ports_mtwins,
-        NULL, 0, 0,
+	input_ports_mtwins,
+	NULL, 0, 0,
 
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 struct GameDriver chikij_driver =
 {
-        __FILE__,
-        &mtwins_driver,
-        "chikij",
-        "Mega Twins / Chiki Chiki Boys (Japan)",
-        "1990",
-        "Capcom",
-        CPS1_CREDITS("Marco Cassili (Game Driver)"),
-        0,
-        &mtwins_machine_driver,
-                0,
+	__FILE__,
+	&mtwins_driver,
+	"chikij",
+	"Mega Twins / Chiki Chiki Boys (Japan)",
+	"1990",
+	"Capcom",
+	CPS1_CREDITS("Marco Cassili (Game Driver)"),
+	0,
+	&mtwins_machine_driver,
+	cps1_init_machine,
 
-        chikij_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	chikij_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
-        input_ports_mtwins,
-        NULL, 0, 0,
+	input_ports_mtwins,
+	NULL, 0, 0,
 
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 /********************************************************************
@@ -1790,52 +1793,52 @@ ROM_END
 
 struct GameDriver nemo_driver =
 {
-        __FILE__,
-        0,
-        "nemo",
-        "Nemo (World)",
-        "1990",
-        "Capcom",
-        CPS1_CREDITS("Darren Olafson (Game Driver)\nMarco Cassili (Dip Switches)\nPaul Leaman"),
-        0,
-        &nemo_machine_driver,
-                0,
+	__FILE__,
+	0,
+	"nemo",
+	"Nemo (World)",
+	"1990",
+	"Capcom",
+	CPS1_CREDITS("Darren Olafson (Game Driver)\nMarco Cassili (Dip Switches)\nPaul Leaman"),
+	0,
+	&nemo_machine_driver,
+	cps1_init_machine,
 
-        nemo_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	nemo_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
-        input_ports_nemo,
-        NULL, 0, 0,
+	input_ports_nemo,
+	NULL, 0, 0,
 
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 struct GameDriver nemoj_driver =
 {
-        __FILE__,
-        &nemo_driver,
-        "nemoj",
-        "Nemo (Japan)",
-        "1990",
-        "Capcom",
-        CPS1_CREDITS("Sawat Pontree (Game Driver)\nMarco Cassili (dip switches)\nPaul Leman"),
-        0,
-        &nemo_machine_driver,
-                0,
+	__FILE__,
+	&nemo_driver,
+	"nemoj",
+	"Nemo (Japan)",
+	"1990",
+	"Capcom",
+	CPS1_CREDITS("Sawat Pontree (Game Driver)\nMarco Cassili (dip switches)\nPaul Leman"),
+	0,
+	&nemo_machine_driver,
+	cps1_init_machine,
 
-        nemoj_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	nemoj_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
-        input_ports_nemo,
-        NULL, 0, 0,
+	input_ports_nemo,
+	NULL, 0, 0,
 
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 
@@ -2023,52 +2026,52 @@ ROM_END
 
 struct GameDriver c1941_driver =
 {
-        __FILE__,
-        0,
-        "1941",
-        "1941 (World)",
-        "1990",
-        "Capcom",
-        CPS1_CREDITS("Darren Olafson (Game Driver)\nMarco Cassili (Dip Switches)\nPaul Leaman"),
-        0,
-        &c1941_machine_driver,
-                0,
+	__FILE__,
+	0,
+	"1941",
+	"1941 (World)",
+	"1990",
+	"Capcom",
+	CPS1_CREDITS("Darren Olafson (Game Driver)\nMarco Cassili (Dip Switches)\nPaul Leaman"),
+	0,
+	&c1941_machine_driver,
+	cps1_init_machine,
 
-        c1941_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	c1941_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
-        input_ports_1941,
-        NULL, 0, 0,
+	input_ports_1941,
+	NULL, 0, 0,
 
-        ORIENTATION_ROTATE_270,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_ROTATE_270,
+	cps1_hiload, cps1_hisave
 };
 
 struct GameDriver c1941j_driver =
 {
-        __FILE__,
-        &c1941_driver,
-        "1941j",
-        "1941 (Japan)",
-        "1990",
-        "Capcom",
-        CPS1_CREDITS("Marco Cassili (Game Driver)\nPaul Leaman"),
-        0,
-        &c1941_machine_driver,
-                0,
+	__FILE__,
+	&c1941_driver,
+	"1941j",
+	"1941 (Japan)",
+	"1990",
+	"Capcom",
+	CPS1_CREDITS("Marco Cassili (Game Driver)\nPaul Leaman"),
+	0,
+	&c1941_machine_driver,
+	cps1_init_machine,
 
-        c1941j_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	c1941j_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
-        input_ports_1941,
-        NULL, 0, 0,
+	input_ports_1941,
+	NULL, 0, 0,
 
-        ORIENTATION_ROTATE_270,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_ROTATE_270,
+	cps1_hiload, cps1_hisave
 };
 
 
@@ -2277,27 +2280,27 @@ ROM_END
 
 struct GameDriver dwj_driver =
 {
-        __FILE__,
-        0,
-        "dwj",
-        "Tenchi o Kurau (Japan)",
-        "1989",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman"),
-        0,
-        &dynwars_machine_driver,
-                0,
+	__FILE__,
+	0,
+	"dwj",
+	"Tenchi o Kurau (Japan)",
+	"1989",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman"),
+	0,
+	&dynwars_machine_driver,
+	cps1_init_machine,
 
-        dwj_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	dwj_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
-        input_ports_dynwars,
-        NULL, 0, 0,
+	input_ports_dynwars,
+	NULL, 0, 0,
 
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 
@@ -2518,12 +2521,12 @@ struct GameDriver msword_driver =
 	CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
 	0,
 	&msword_machine_driver,
-	0,
+	cps1_init_machine,
 
 	msword_rom,
+	0, 0,
 	0,
-	0,0,
-	0,      /* sound_prom */
+	0,	/* sound_prom */
 
 	input_ports_msword,
 	NULL, 0, 0,
@@ -2543,12 +2546,12 @@ struct GameDriver mswordu_driver =
 	CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
 	0,
 	&msword_machine_driver,
-	0,
+	cps1_init_machine,
 
 	mswordu_rom,
+	0, 0,
 	0,
-	0,0,
-	0,      /* sound_prom */
+	0,	/* sound_prom */
 
 	input_ports_msword,
 	NULL, 0, 0,
@@ -2568,12 +2571,12 @@ struct GameDriver mswordj_driver =
 	CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
 	0,
 	&msword_machine_driver,
-	0,
+	cps1_init_machine,
 
 	mswordj_rom,
+	0, 0,
 	0,
-	0,0,
-	0,      /* sound_prom */
+	0,	/* sound_prom */
 
 	input_ports_msword,
 	NULL, 0, 0,
@@ -2840,12 +2843,12 @@ struct GameDriver mercs_driver =
 	CPS1_CREDITS("Paul Leaman\n"),
 	0,
 	&mercs_machine_driver,
-	0,
+	cps1_init_machine,
 
 	mercs_rom,
+	0, 0,
 	0,
-	0,0,
-	0,      /* sound_prom */
+	0,	/* sound_prom */
 
 	input_ports_mercs,
 	NULL, 0, 0,
@@ -2865,12 +2868,12 @@ struct GameDriver mercsu_driver =
 	CPS1_CREDITS("Paul Leaman\n"),
 	0,
 	&mercs_machine_driver,
-	0,
+	cps1_init_machine,
 
 	mercsu_rom,
+	0, 0,
 	0,
-	0,0,
-	0,      /* sound_prom */
+	0,	/* sound_prom */
 
 	input_ports_mercs,
 	NULL, 0, 0,
@@ -2890,12 +2893,12 @@ struct GameDriver mercsj_driver =
 	CPS1_CREDITS("Paul Leaman\n"),
 	0,
 	&mercs_machine_driver,
-	0,
+	cps1_init_machine,
 
 	mercsj_rom,
+	0, 0,
 	0,
-	0,0,
-	0,      /* sound_prom */
+	0,	/* sound_prom */
 
 	input_ports_mercs,
 	NULL, 0, 0,
@@ -3089,27 +3092,27 @@ ROM_END
 
 struct GameDriver pnickj_driver =
 {
-        __FILE__,
-        0,
-        "pnickj",
-        "Pnickies (Japan)",
-        "1994",
-        "Capcom (Compile license)",
-        CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
-        0,
-        &pnickj_machine_driver,
-                0,
+	__FILE__,
+	0,
+	"pnickj",
+	"Pnickies (Japan)",
+	"1994",
+	"Capcom (Compile license)",
+	CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
+	0,
+	&pnickj_machine_driver,
+	cps1_init_machine,
 
-        pnickj_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	pnickj_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
-        input_ports_pnickj,
-        NULL, 0, 0,
+	input_ports_pnickj,
+	NULL, 0, 0,
 
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 
@@ -3280,27 +3283,27 @@ ROM_END
 
 struct GameDriver knights_driver =
 {
-        __FILE__,
-        0,
-        "knights",
-        "Knights of the Round (World)",
-        "1991",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
-        GAME_NOT_WORKING,
-        &knights_machine_driver,
-                0,
+	__FILE__,
+	0,
+	"knights",
+	"Knights of the Round (World)",
+	"1991",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
+	GAME_NOT_WORKING,
+	&knights_machine_driver,
+	cps1_init_machine,
 
-        knights_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	knights_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
-        input_ports_knights,
-        NULL, 0, 0,
+	input_ports_knights,
+	NULL, 0, 0,
 
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 /********************************************************************
@@ -3532,12 +3535,12 @@ struct GameDriver ghouls_driver =
 	CPS1_CREDITS("Paul Leaman\nMarco Cassili (dip switches)"),
 	0,
 	&ghouls_machine_driver,
-			0,
+	cps1_init_machine,
 
 	ghouls_rom,
+	0, 0,
 	0,
-	0,0,
-	0,      /* sound_prom */
+	0,	/* sound_prom */
 
 	input_ports_ghouls,
 	NULL, 0, 0,
@@ -3557,12 +3560,12 @@ struct GameDriver ghoulsj_driver =
 	CPS1_CREDITS("Paul Leaman\nMarco Cassili (dip switches)"),
 	0,
 	&ghouls_machine_driver,
-			0,
+	cps1_init_machine,
 
 	ghoulsj_rom,
+	0, 0,
 	0,
-	0,0,
-	0,      /* sound_prom */
+	0,	/* sound_prom */
 
 	input_ports_ghouls,
 	NULL, 0, 0,
@@ -3799,12 +3802,12 @@ struct GameDriver cawing_driver =
 	CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
 	GAME_NOT_WORKING,
 	&cawing_machine_driver,
-	0,
+	cps1_init_machine,
 
 	cawing_rom,
+	0, 0,
 	0,
-	0,0,
-	0,      /* sound_prom */
+	0,	/* sound_prom */
 
 	input_ports_cawing,
 	NULL, 0, 0,
@@ -3824,12 +3827,12 @@ struct GameDriver cawingj_driver =
 	CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
 	GAME_NOT_WORKING,
 	&cawing_machine_driver,
-	0,
+	cps1_init_machine,
 
 	cawingj_rom,
+	0, 0,
 	0,
-	0,0,
-	0,      /* sound_prom */
+	0,	/* sound_prom */
 
 	input_ports_cawing,
 	NULL, 0, 0,
@@ -4029,23 +4032,27 @@ ROM_END
 
 struct GameDriver sf2_driver =
 {
-        __FILE__,
-        0,
-        "sf2",
-        "Street Fighter 2 (World)",
-        "1991",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman\nMarco Cassili (dip switches)"),
-        0,
-        &sf2_machine_driver,
-        0,
+	__FILE__,
+	0,
+	"sf2",
+	"Street Fighter 2 (World)",
+	"1991",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman\nMarco Cassili (dip switches)"),
+	0,
+	&sf2_machine_driver,
+	cps1_init_machine,
 
-        sf2_rom,
-        0,0,0,0,
-        input_ports_sf2,
-        NULL, 0, 0,
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	sf2_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports_sf2,
+	NULL, 0, 0,
+
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 
@@ -4092,23 +4099,27 @@ ROM_END
 
 struct GameDriver sf2j_driver =
 {
-        __FILE__,
-        &sf2_driver,
-        "sf2j",
-        "Street Fighter 2 (Japan)",
-        "1991",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman"),
-        0,
-        &sf2_machine_driver,
-        0,
+	__FILE__,
+	&sf2_driver,
+	"sf2j",
+	"Street Fighter 2 (Japan)",
+	"1991",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman"),
+	0,
+	&sf2_machine_driver,
+	cps1_init_machine,
 
-        sf2j_rom,
-        0,0,0,0,
-        input_ports_sf2,
-        NULL, 0, 0,
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	sf2j_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports_sf2,
+	NULL, 0, 0,
+
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 
@@ -4149,23 +4160,27 @@ ROM_END
 
 struct GameDriver sf2t_driver =
 {
-        __FILE__,
-        0,
-        "sf2t",
-        "Street Fighter 2 (Hyper Fighting)",
-        "1991",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman"),
-        GAME_NOT_WORKING,
-        &sf2_machine_driver,
-        0,
+	__FILE__,
+	0,
+	"sf2t",
+	"Street Fighter 2 (Hyper Fighting)",
+	"1991",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman"),
+	GAME_NOT_WORKING,
+	&sf2_machine_driver,
+	cps1_init_machine,
 
-        sf2t_rom,
-        0,0,0,0,
-        input_ports_sf2,
-        NULL, 0, 0,
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	sf2t_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports_sf2,
+	NULL, 0, 0,
+
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 ROM_START( sf2tj_rom )
@@ -4205,23 +4220,27 @@ ROM_END
 
 struct GameDriver sf2tj_driver =
 {
-        __FILE__,
-        &sf2t_driver,
-        "sf2tj",
-        "Street Fighter 2 Turbo (Japanese)",
-        "1991",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman"),
-        GAME_NOT_WORKING,
-        &sf2_machine_driver,
-        0,
+	__FILE__,
+	&sf2t_driver,
+	"sf2tj",
+	"Street Fighter 2 Turbo (Japanese)",
+	"1991",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman"),
+	GAME_NOT_WORKING,
+	&sf2_machine_driver,
+	cps1_init_machine,
 
-        sf2tj_rom,
-        0,0,0,0,
-        input_ports_sf2,
-        NULL, 0, 0,
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	sf2tj_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports_sf2,
+	NULL, 0, 0,
+
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 
@@ -4261,23 +4280,27 @@ ROM_END
 
 struct GameDriver sf2ce_driver =
 {
-        __FILE__,
-        &sf2t_driver,
-        "sf2ce",
-        "Street Fighter 2 (Champion Edition)",
-        "1992",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman"),
-        GAME_NOT_WORKING,
-        &sf2_machine_driver,
-        0,
+	__FILE__,
+	&sf2t_driver,
+	"sf2ce",
+	"Street Fighter 2 (Champion Edition)",
+	"1992",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman"),
+	GAME_NOT_WORKING,
+	&sf2_machine_driver,
+	cps1_init_machine,
 
-        sf2ce_rom,
-        0,0,0,0,
-        input_ports_sf2,
-        NULL, 0, 0,
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	sf2ce_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports_sf2,
+	NULL, 0, 0,
+
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 ROM_START( sf2cej_rom )
@@ -4316,23 +4339,27 @@ ROM_END
 
 struct GameDriver sf2cej_driver =
 {
-        __FILE__,
-        &sf2t_driver,
-        "sf2cej",
-        "Street Fighter 2 (Japanese Championship Edition)",
-        "1992",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman"),
-        GAME_NOT_WORKING,
-        &sf2_machine_driver,
-        0,
+	__FILE__,
+	&sf2t_driver,
+	"sf2cej",
+	"Street Fighter 2 (Japanese Championship Edition)",
+	"1992",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman"),
+	GAME_NOT_WORKING,
+	&sf2_machine_driver,
+	cps1_init_machine,
 
-        sf2cej_rom,
-        0,0,0,0,
-        input_ports_sf2,
-        NULL, 0, 0,
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	sf2cej_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports_sf2,
+	NULL, 0, 0,
+
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 ROM_START( sf2rb_rom )
@@ -4373,23 +4400,27 @@ ROM_END
 
 struct GameDriver sf2rb_driver =
 {
-        __FILE__,
-        &sf2cej_driver,
-        "sf2rb",
-        "Street Fighter 2 (Rainbow Edition)",
-        "1991",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman"),
-        GAME_NOT_WORKING,
-        &sf2_machine_driver,
-        0,
+	__FILE__,
+	&sf2cej_driver,
+	"sf2rb",
+	"Street Fighter 2 (Rainbow Edition)",
+	"1991",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman"),
+	GAME_NOT_WORKING,
+	&sf2_machine_driver,
+	cps1_init_machine,
 
-        sf2rb_rom,
-        0,0,0,0,
-        input_ports_sf2,
-        NULL, 0, 0,
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	sf2rb_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports_sf2,
+	NULL, 0, 0,
+
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 
@@ -4606,53 +4637,53 @@ ROM_END
 
 struct GameDriver megaman_driver =
 {
-        __FILE__,
-        0,
-        "megaman",
-        "Mega Man - The Power Battle (Asia)",
-        "1995",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman\nTJ Grant\nMarco Cassili (dip switches)"),
-        0,
-        &rockman_machine_driver,
-        0,
+	__FILE__,
+	0,
+	"megaman",
+	"Mega Man - The Power Battle (Asia)",
+	"1995",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman\nTJ Grant\nMarco Cassili (dip switches)"),
+	0,
+	&rockman_machine_driver,
+	cps1_init_machine,
 
-        megaman_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	megaman_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
-        input_ports_rockman,
-        NULL, 0, 0,
+	input_ports_rockman,
+	NULL, 0, 0,
 
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 
 struct GameDriver rockmanj_driver =
 {
-        __FILE__,
-        &megaman_driver,
-        "rockmanj",
-        "Rockman - The Power Battle (Japan)",
-        "1995",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman\nTJ Grant\nMarco Cassili (dip switches)"),
-        0,
-        &rockman_machine_driver,
-        0,
+	__FILE__,
+	&megaman_driver,
+	"rockmanj",
+	"Rockman - The Power Battle (Japan)",
+	"1995",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman\nTJ Grant\nMarco Cassili (dip switches)"),
+	0,
+	&rockman_machine_driver,
+	cps1_init_machine,
 
-        rockmanj_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	rockmanj_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
-        input_ports_rockman,
-        NULL, 0, 0,
+	input_ports_rockman,
+	NULL, 0, 0,
 
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 
@@ -4822,23 +4853,27 @@ ROM_END
 
 struct GameDriver captcomm_driver =
 {
-        __FILE__,
-        0,
-        "captcomm",
-        "Captain Commando (World)",
-        "1991",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman\nMarco Cassili (dip switches)"),
-        0,
-        &captcomm_machine_driver,
-        0,
+	__FILE__,
+	0,
+	"captcomm",
+	"Captain Commando (World)",
+	"1991",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman\nMarco Cassili (dip switches)"),
+	0,
+	&captcomm_machine_driver,
+	cps1_init_machine,
 
-        captcomm_rom,
-        0,0,0,0,
-        input_ports_captcomm,
-        NULL, 0, 0,
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	captcomm_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports_captcomm,
+	NULL, 0, 0,
+
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 
@@ -5010,23 +5045,27 @@ ROM_END
 
 struct GameDriver c3wonders_driver =
 {
-        __FILE__,
-        0,
-        "3wonders",
-        "3 Wonders",
-        "1991",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman"),
-        GAME_NOT_WORKING,
-        &c3wonders_machine_driver,
-                0,
+	__FILE__,
+	0,
+	"3wonders",
+	"3 Wonders",
+	"1991",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman"),
+	GAME_NOT_WORKING,
+	&c3wonders_machine_driver,
+	cps1_init_machine,
 
-        c3wonders_rom,
-        0,0,0,0,
-        input_ports_3wonders,
-        NULL, 0, 0,
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	c3wonders_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports_3wonders,
+	NULL, 0, 0,
+
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 /********************************************************************
@@ -5213,23 +5252,27 @@ ROM_END
 
 struct GameDriver kod_driver =
 {
-        __FILE__,
-        0,
-        "kod",
-        "King Of Dragons (World)",
-        "1991",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman\nMarco Cassili (dip switches)"),
-        GAME_NOT_WORKING,
-        &kod_machine_driver,
-        0,
+	__FILE__,
+	0,
+	"kod",
+	"King Of Dragons (World)",
+	"1991",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman\nMarco Cassili (dip switches)"),
+	GAME_NOT_WORKING,
+	&kod_machine_driver,
+	cps1_init_machine,
 
-        kod_rom,
-        0,0,0,0,
-        input_ports_kod,
-        NULL, 0, 0,
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	kod_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports_kod,
+	NULL, 0, 0,
+
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 
@@ -5263,23 +5306,27 @@ ROM_END
 
 struct GameDriver kodb_driver =
 {
-        __FILE__,
-        &kod_driver,
-        "kodb",
-        "King Of Dragons (bootleg)",
-        "1991",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman\nMarco Cassili (dip switches)"),
-        GAME_NOT_WORKING,
-        &kod_machine_driver,
-        0,
+	__FILE__,
+	&kod_driver,
+	"kodb",
+	"King Of Dragons (bootleg)",
+	"1991",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman\nMarco Cassili (dip switches)"),
+	GAME_NOT_WORKING,
+	&kod_machine_driver,
+	cps1_init_machine,
 
-        kodb_rom,
-        0,0,0,0,
-        input_ports_kod,
-        NULL, 0, 0,
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	kodb_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports_kod,
+	NULL, 0, 0,
+
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 /********************************************************************
@@ -5444,25 +5491,25 @@ ROM_END
 
 struct GameDriver varth_driver =
 {
-        __FILE__,
-        0,
-        "varth",
-        "Varth (World)",
-        "1992",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman\nMarco Cassili (dip switches)"),
-        0,
-        &varth_machine_driver,
-                0,
+	__FILE__,
+	0,
+	"varth",
+	"Varth (World)",
+	"1992",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman\nMarco Cassili (dip switches)"),
+	0,
+	&varth_machine_driver,
+	cps1_init_machine,
 
-        varth_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	varth_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
-        input_ports_varth,
-        NULL, 0, 0,
+	input_ports_varth,
+	NULL, 0, 0,
 
-        ORIENTATION_ROTATE_270,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_ROTATE_270,
+	cps1_hiload, cps1_hisave
 };

@@ -154,7 +154,7 @@ void shaolins_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	for (offs = spriteram_size-32; offs >= 0; offs-=32 ) /* max 24 sprites */
 	{
-		if( spriteram[offs] ) /* visibility flag */
+		if (spriteram[offs] && spriteram[offs+6]) /* stop rogue sprites on high score screen */
 		{
 			drawgfx(bitmap,Machine->gfx[1],
 					spriteram[offs+8], 		/* sprite index: 0..255 */

@@ -1,7 +1,7 @@
 #include "driver.h"
 
 
-char mameversion[] = "0.34 BETA 8 ("__DATE__")";
+char mameversion[] = "0.34 RC 1 ("__DATE__")";
 
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
@@ -196,10 +196,6 @@ int init_machine(void)
 	}
 
 	if (gamedrv->driver_init) (*gamedrv->driver_init)();
-
-	if (Machine->drv->sh_init && (*Machine->drv->sh_init)(gamedrv->name) != 0)
-		/* TODO: should also free the resources allocated before */
-		return 1;
 
 	return 0;
 }

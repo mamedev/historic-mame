@@ -53,17 +53,25 @@ static void update_screen_dirty1_vga(void);
 static void update_screen_dirty1_vesa_16bpp_double_scanlines(void);
 static void update_screen_dirty1_vesa_16bpp_double_noscanlines(void);
 static void update_screen_dirty1_vesa_16bpp_single(void);
+static void update_screen_dirty1_vesa_16bpp_hsingle_vdouble_scanlines(void);
+static void update_screen_dirty1_vesa_16bpp_hsingle_vdouble_noscanlines(void);
 static void update_screen_dirty1_vesa_8bpp_double_scanlines(void);
 static void update_screen_dirty1_vesa_8bpp_double_noscanlines(void);
 static void update_screen_dirty1_vesa_8bpp_single(void);
+static void update_screen_dirty1_vesa_8bpp_hsingle_vdouble_scanlines(void);
+static void update_screen_dirty1_vesa_8bpp_hsingle_vdouble_noscanlines(void);
 /* dirty mode 0 (no osd_mark_dirty calls) */
 static void update_screen_dirty0_vga(void);
 static void update_screen_dirty0_vesa_16bpp_double_scanlines(void);
 static void update_screen_dirty0_vesa_16bpp_double_noscanlines(void);
 static void update_screen_dirty0_vesa_16bpp_single(void);
+static void update_screen_dirty0_vesa_16bpp_hsingle_vdouble_scanlines(void);
+static void update_screen_dirty0_vesa_16bpp_hsingle_vdouble_noscanlines(void);
 static void update_screen_dirty0_vesa_8bpp_double_scanlines(void);
 static void update_screen_dirty0_vesa_8bpp_double_noscanlines(void);
 static void update_screen_dirty0_vesa_8bpp_single(void);
+static void update_screen_dirty0_vesa_8bpp_hsingle_vdouble_scanlines(void);
+static void update_screen_dirty0_vesa_8bpp_hsingle_vdouble_noscanlines(void);
 
 static void update_screen_dummy(void);
 void (*update_screen)(void) = update_screen_dummy;
@@ -114,6 +122,7 @@ static int gfx_yoffset;
 static int gfx_display_lines;
 static int gfx_display_columns;
 static int doubling = 0;
+static int vdoubling = 0;
 int throttle = 1;       /* toggled by F10 */
 
 static int gone_to_gfx_mode;
@@ -306,7 +315,6 @@ static void select_display_mode(void)
 
 
 	auto_resolution = 0;
-	doubling = use_double;
 
 	if (vector_game)
 	{
@@ -317,6 +325,16 @@ static void select_display_mode(void)
 	{
 		width = Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x + 1;
 		height = Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1;
+	}
+
+	doubling = use_double;
+	vdoubling = 0;
+	if ((Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
+			== VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	{
+		doubling = 0;
+		vdoubling = 1;
+		height *= 2;
 	}
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
@@ -507,27 +525,31 @@ static void adjust_display (int xmin, int ymin, int xmax, int ymax)
 	else
 		doubling = 1;
 
-	if (doubling == 0)
+	gfx_display_lines = visheight;
+	gfx_display_columns = viswidth;
+	if (doubling || vdoubling)
 	{
-		gfx_yoffset = (gfx_height - visheight) / 2;
-		gfx_xoffset = (gfx_width - viswidth) / 2;
-		gfx_display_lines = visheight;
-		gfx_display_columns = viswidth;
-		if (gfx_display_lines > gfx_height)
-			gfx_display_lines = gfx_height;
-		if (gfx_display_columns > gfx_width)
-			gfx_display_columns = gfx_width;
+		gfx_yoffset = (gfx_height - visheight * 2) / 2;
+		if (gfx_display_lines > gfx_height / 2)
+			gfx_display_lines = gfx_height / 2;
 	}
 	else
 	{
-		gfx_yoffset = (gfx_height - visheight * 2) / 2;
+		gfx_yoffset = (gfx_height - visheight) / 2;
+		if (gfx_display_lines > gfx_height)
+			gfx_display_lines = gfx_height;
+	}
+	if (doubling)
+	{
 		gfx_xoffset = (gfx_width - viswidth * 2) / 2;
-		gfx_display_lines = visheight;
-		gfx_display_columns = viswidth;
-		if (gfx_display_lines > gfx_height / 2)
-			gfx_display_lines = gfx_height / 2;
 		if (gfx_display_columns > gfx_width / 2)
 			gfx_display_columns = gfx_width / 2;
+	}
+	else
+	{
+		gfx_xoffset = (gfx_width - viswidth) / 2;
+		if (gfx_display_columns > gfx_width)
+			gfx_display_columns = gfx_width;
 	}
 
 	skiplinesmin = ymin;
@@ -662,8 +684,21 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 					if (errorlog) fprintf (errorlog, "update_screen_dirty1_vesa_16bpp_double_noscanlines\n");
                 }
 			} else {
-				update_screen = update_screen_dirty1_vesa_16bpp_single;
-				if (errorlog) fprintf (errorlog, "update_screen_dirty1_vesa_16bpp_single\n");
+				if (vdoubling)
+				{
+					if (scanlines) {
+						update_screen = update_screen_dirty1_vesa_16bpp_hsingle_vdouble_scanlines;
+						if (errorlog) fprintf (errorlog, "update_screen_dirty1_vesa_16bpp_hsingle_vdouble_scanlines\n");
+					} else {
+						update_screen = update_screen_dirty1_vesa_16bpp_hsingle_vdouble_noscanlines;
+						if (errorlog) fprintf (errorlog, "update_screen_dirty1_vesa_16bpp_hsingle_vdouble_noscanlines\n");
+					}
+				}
+				else
+				{
+					update_screen = update_screen_dirty1_vesa_16bpp_single;
+					if (errorlog) fprintf (errorlog, "update_screen_dirty1_vesa_16bpp_single\n");
+				}
             }
 		} else {
 			if (doubling) {
@@ -675,8 +710,21 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 					if (errorlog) fprintf (errorlog, "update_screen_dirty1_vesa_8bpp_double_noscanlines\n");
                 }
 			} else {
-				update_screen = update_screen_dirty1_vesa_8bpp_single;
-				if (errorlog) fprintf (errorlog, "update_screen_dirty1_vesa_8bpp_single\n");
+				if (vdoubling)
+				{
+					if (scanlines) {
+						update_screen = update_screen_dirty1_vesa_8bpp_hsingle_vdouble_scanlines;
+						if (errorlog) fprintf (errorlog, "update_screen_dirty1_vesa_8bpp_hsingle_vdouble_scanlines\n");
+					} else {
+						update_screen = update_screen_dirty1_vesa_8bpp_hsingle_vdouble_noscanlines;
+						if (errorlog) fprintf (errorlog, "update_screen_dirty1_vesa_8bpp_hsingle_vdouble_noscanlines\n");
+					}
+				}
+				else
+				{
+					update_screen = update_screen_dirty1_vesa_8bpp_single;
+					if (errorlog) fprintf (errorlog, "update_screen_dirty1_vesa_8bpp_single\n");
+				}
             }
 		}
 	}
@@ -699,8 +747,21 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 					if (errorlog) fprintf (errorlog, "update_screen_dirty0_vesa_16bpp_double_noscanlines\n");
                 }
 			} else {
-				update_screen = update_screen_dirty0_vesa_16bpp_single;
-				if (errorlog) fprintf (errorlog, "update_screen_dirty0_vesa_16bpp_single\n");
+				if (vdoubling)
+				{
+					if (scanlines) {
+						update_screen = update_screen_dirty0_vesa_16bpp_hsingle_vdouble_scanlines;
+						if (errorlog) fprintf (errorlog, "update_screen_dirty0_vesa_16bpp_hsingle_vdouble_scanlines\n");
+					} else {
+						update_screen = update_screen_dirty0_vesa_16bpp_hsingle_vdouble_noscanlines;
+						if (errorlog) fprintf (errorlog, "update_screen_dirty0_vesa_16bpp_hsingle_vdouble_noscanlines\n");
+					}
+				}
+				else
+				{
+					update_screen = update_screen_dirty0_vesa_16bpp_single;
+					if (errorlog) fprintf (errorlog, "update_screen_dirty0_vesa_16bpp_single\n");
+				}
             }
 		}
 		else
@@ -714,8 +775,21 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 					if (errorlog) fprintf (errorlog, "update_screen_dirty0_vesa_8bpp_double_noscanlines\n");
                 }
 			} else {
-				update_screen = update_screen_dirty0_vesa_8bpp_single;
-				if (errorlog) fprintf (errorlog, "update_screen_dirty0_vesa_8bpp_single\n");
+				if (vdoubling)
+				{
+					if (scanlines) {
+						update_screen = update_screen_dirty0_vesa_8bpp_hsingle_vdouble_scanlines;
+						if (errorlog) fprintf (errorlog, "update_screen_dirty0_vesa_8bpp_hsingle_vdouble_scanlines\n");
+					} else {
+						update_screen = update_screen_dirty0_vesa_8bpp_hsingle_vdouble_noscanlines;
+						if (errorlog) fprintf (errorlog, "update_screen_dirty0_vesa_8bpp_hsingle_vdouble_noscanlines\n");
+					}
+				}
+				else
+				{
+					update_screen = update_screen_dirty0_vesa_8bpp_single;
+					if (errorlog) fprintf (errorlog, "update_screen_dirty0_vesa_8bpp_single\n");
+				}
             }
 		}
     }
@@ -1368,6 +1442,94 @@ void update_screen_dirty1_vesa_16bpp_single(void)
     }
 }
 
+void update_screen_dirty1_vesa_16bpp_hsingle_vdouble_scanlines(void)
+{
+	short src_seg, dest_seg;
+	int x, y, vesa_line, width4, columns4, skipcol2;
+	unsigned long *lb, address;
+	int xoffs;
+
+	src_seg = _my_ds();
+	dest_seg = screen->seg;
+	vesa_line = gfx_yoffset;
+	width4 = (scrbitmap->line[1] - scrbitmap->line[0]) / 4;
+	xoffs = 2 * gfx_xoffset;
+	columns4 = gfx_display_columns/2;
+	skipcol2 = skipcolumns*2;
+	lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcol2 );
+	for (y = 0; y < gfx_display_lines; y += 16)
+	{
+		for (x = 0; x < gfx_display_columns; /* */ )
+		{
+			int w = 16;
+			if (ISDIRTY(x,y))
+            {
+				unsigned long src = (unsigned long)lb + x*2;
+				int vesa_line0 = vesa_line, h;
+				while (x + w < gfx_display_columns && ISDIRTY(x+w,y))
+                    w += 16;
+				if (x + w > gfx_display_columns)
+                    w = gfx_display_columns - x;
+				for (h = 0; h < 16 && y + h < gfx_display_lines; h++)
+                {
+					address = bmp_write_line (screen, vesa_line0) + xoffs + 2*x;
+					_movedatal(src_seg, src, dest_seg, address, w/2);
+					vesa_line0 += 2;
+					src += 4 * width4;
+				}
+            }
+			x += w;
+        }
+		vesa_line += 16 * 2;
+		lb += 16 * width4;
+    }
+}
+
+void update_screen_dirty1_vesa_16bpp_hsingle_vdouble_noscanlines(void)
+{
+	short src_seg, dest_seg;
+	int x, y, vesa_line, width4, columns4, skipcol2;
+	unsigned long *lb, address;
+	int xoffs;
+
+	src_seg = _my_ds();
+	dest_seg = screen->seg;
+	vesa_line = gfx_yoffset;
+	width4 = (scrbitmap->line[1] - scrbitmap->line[0]) / 4;
+	xoffs = 2 * gfx_xoffset;
+	columns4 = gfx_display_columns/2;
+	skipcol2 = skipcolumns*2;
+	lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcol2 );
+	for (y = 0; y < gfx_display_lines; y += 16)
+	{
+		for (x = 0; x < gfx_display_columns; /* */ )
+		{
+			int w = 16;
+			if (ISDIRTY(x,y))
+            {
+				unsigned long src = (unsigned long)lb + x*2;
+				int vesa_line0 = vesa_line, h;
+				while (x + w < gfx_display_columns && ISDIRTY(x+w,y))
+                    w += 16;
+				if (x + w > gfx_display_columns)
+                    w = gfx_display_columns - x;
+				for (h = 0; h < 16 && y + h < gfx_display_lines; h++)
+                {
+					address = bmp_write_line (screen, vesa_line0) + xoffs + 2*x;
+					_movedatal(src_seg, src, dest_seg, address, w/2);
+					address = bmp_write_line (screen, vesa_line0+1) + xoffs + 2*x;
+					_movedatal(src_seg, src, dest_seg, address, w/2);
+					vesa_line0 += 2;
+					src += 4 * width4;
+				}
+            }
+			x += w;
+        }
+		vesa_line += 16 * 2;
+		lb += 16 * width4;
+    }
+}
+
 void update_screen_dirty1_vesa_8bpp_double_scanlines(void)
 {
 	short dest_seg;
@@ -1494,6 +1656,92 @@ void update_screen_dirty1_vesa_8bpp_single(void)
 	}
 }
 
+void update_screen_dirty1_vesa_8bpp_hsingle_vdouble_scanlines(void)
+{
+    short src_seg, dest_seg;
+	int x, y, vesa_line, width4, columns4;
+	unsigned long *lb, address;
+	int xoffs;
+
+	src_seg = _my_ds();
+	dest_seg = screen->seg;
+	vesa_line = gfx_yoffset;
+	width4 = (scrbitmap->line[1] - scrbitmap->line[0]) / 4;
+	xoffs = gfx_xoffset;
+	columns4 = gfx_display_columns/4;
+	lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcolumns);
+	for (y = 0; y < gfx_display_lines; y += 16)
+	{
+		for (x = 0; x < gfx_display_columns; /* */ )
+		{
+			int w = 16;
+			if (ISDIRTY(x,y))
+            {
+				unsigned long src = (unsigned long)lb + x;
+                int vesa_line0 = vesa_line, h;
+				while (x + w < gfx_display_columns && ISDIRTY(x+w,y))
+                    w += 16;
+				if (x + w > gfx_display_columns)
+					w = gfx_display_columns - x;
+				for (h = 0; h < 16 && y + h < gfx_display_lines; h++)
+                {
+					address = bmp_write_line (screen, vesa_line0) + xoffs + x;
+					_movedatal(src_seg, src, dest_seg, address, w/4);
+					vesa_line0 += 2;
+					src += 4 * width4;
+				}
+			}
+			x += w;
+		}
+		vesa_line += 16 * 2;
+		lb += 16 * width4;
+	}
+}
+
+void update_screen_dirty1_vesa_8bpp_hsingle_vdouble_noscanlines(void)
+{
+    short src_seg, dest_seg;
+	int x, y, vesa_line, width4, columns4;
+	unsigned long *lb, address;
+	int xoffs;
+
+	src_seg = _my_ds();
+	dest_seg = screen->seg;
+	vesa_line = gfx_yoffset;
+	width4 = (scrbitmap->line[1] - scrbitmap->line[0]) / 4;
+	xoffs = gfx_xoffset;
+	columns4 = gfx_display_columns/4;
+	lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcolumns);
+	for (y = 0; y < gfx_display_lines; y += 16)
+	{
+		for (x = 0; x < gfx_display_columns; /* */ )
+		{
+			int w = 16;
+			if (ISDIRTY(x,y))
+            {
+				unsigned long src = (unsigned long)lb + x;
+                int vesa_line0 = vesa_line, h;
+				while (x + w < gfx_display_columns && ISDIRTY(x+w,y))
+                    w += 16;
+				if (x + w > gfx_display_columns)
+					w = gfx_display_columns - x;
+				for (h = 0; h < 16 && y + h < gfx_display_lines; h++)
+                {
+					address = bmp_write_line (screen, vesa_line0) + xoffs + x;
+					_movedatal(src_seg, src, dest_seg, address, w/4);
+					address = bmp_write_line (screen, vesa_line0+1) + xoffs + x;
+					_movedatal(src_seg, src, dest_seg, address, w/4);
+					vesa_line0 += 2;
+					src += 4 * width4;
+				}
+			}
+			x += w;
+		}
+		vesa_line += 16 * 2;
+		lb += 16 * width4;
+	}
+}
+
 void update_screen_dirty0_vga(void)
 {
 	int width4,y,columns4;
@@ -1590,6 +1838,58 @@ void update_screen_dirty0_vesa_16bpp_single(void)
 	}
 }
 
+void update_screen_dirty0_vesa_16bpp_hsingle_vdouble_scanlines(void)
+{
+	short src_seg, dest_seg;
+	int y, vesa_line, width4, columns4, skipcol2;
+	unsigned long *lb, address;
+	int xoffs;
+
+	src_seg = _my_ds();
+	dest_seg = screen->seg;
+	vesa_line = gfx_yoffset;
+	width4 = (scrbitmap->line[1] - scrbitmap->line[0]) / 4;
+	xoffs = 2 * gfx_xoffset;
+	columns4 = gfx_display_columns/2;
+	skipcol2 = skipcolumns*2;
+	lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcol2 );
+	for (y = 0; y < gfx_display_lines; y++)
+	{
+		address = bmp_write_line (screen, vesa_line) + xoffs;
+		_movedatal(src_seg,(unsigned long)lb,dest_seg,address,columns4);
+
+		vesa_line += 2;
+		lb+=width4;
+	}
+}
+
+void update_screen_dirty0_vesa_16bpp_hsingle_vdouble_noscanlines(void)
+{
+	short src_seg, dest_seg;
+	int y, vesa_line, width4, columns4, skipcol2;
+	unsigned long *lb, address;
+	int xoffs;
+
+	src_seg = _my_ds();
+	dest_seg = screen->seg;
+	vesa_line = gfx_yoffset;
+	width4 = (scrbitmap->line[1] - scrbitmap->line[0]) / 4;
+	xoffs = 2 * gfx_xoffset;
+	columns4 = gfx_display_columns/2;
+	skipcol2 = skipcolumns*2;
+	lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcol2 );
+	for (y = 0; y < gfx_display_lines; y++)
+	{
+		address = bmp_write_line (screen, vesa_line) + xoffs;
+		_movedatal(src_seg,(unsigned long)lb,dest_seg,address,columns4);
+		address = bmp_write_line (screen, vesa_line+1) + xoffs;
+		_movedatal(src_seg,(unsigned long)lb,dest_seg,address,columns4);
+
+		vesa_line += 2;
+		lb+=width4;
+	}
+}
+
 void update_screen_dirty0_vesa_8bpp_double_scanlines(void)
 {
 	short dest_seg;
@@ -1664,6 +1964,60 @@ void update_screen_dirty0_vesa_8bpp_single(void)
 		_movedatal(src_seg,(unsigned long)lb,dest_seg,address,columns4);
 
 		vesa_line++;
+		lb+=width4;
+	}
+}
+
+void update_screen_dirty0_vesa_8bpp_hsingle_vdouble_scanlines(void)
+{
+	short src_seg, dest_seg;
+	int y, vesa_line, width4, columns4, skipcol2;
+	unsigned long *lb, address;
+	int xoffs;
+
+	src_seg = _my_ds();
+	dest_seg = screen->seg;
+	vesa_line = gfx_yoffset;
+	width4 = (scrbitmap->line[1] - scrbitmap->line[0]) / 4;
+	xoffs = gfx_xoffset;
+	columns4 = gfx_display_columns/4;
+	skipcol2 = skipcolumns;
+
+	lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcol2 );
+	for (y = 0; y < gfx_display_lines; y++)
+	{
+		address = bmp_write_line (screen, vesa_line) + xoffs;
+		_movedatal(src_seg,(unsigned long)lb,dest_seg,address,columns4);
+
+		vesa_line += 2;
+		lb+=width4;
+	}
+}
+
+void update_screen_dirty0_vesa_8bpp_hsingle_vdouble_noscanlines(void)
+{
+	short src_seg, dest_seg;
+	int y, vesa_line, width4, columns4, skipcol2;
+	unsigned long *lb, address;
+	int xoffs;
+
+	src_seg = _my_ds();
+	dest_seg = screen->seg;
+	vesa_line = gfx_yoffset;
+	width4 = (scrbitmap->line[1] - scrbitmap->line[0]) / 4;
+	xoffs = gfx_xoffset;
+	columns4 = gfx_display_columns/4;
+	skipcol2 = skipcolumns;
+
+	lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcol2 );
+	for (y = 0; y < gfx_display_lines; y++)
+	{
+		address = bmp_write_line (screen, vesa_line) + xoffs;
+		_movedatal(src_seg,(unsigned long)lb,dest_seg,address,columns4);
+		address = bmp_write_line (screen, vesa_line+1) + xoffs;
+		_movedatal(src_seg,(unsigned long)lb,dest_seg,address,columns4);
+
+		vesa_line += 2;
 		lb+=width4;
 	}
 }

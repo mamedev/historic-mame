@@ -746,7 +746,44 @@ static void dorunrun_hisave(void)
 		osd_fclose(f);
 	}
 }
+/* HSC 12/5/98 NOTE: spiero does NOT save a high score table like dorunrun does */
+/* it only keeps a top score */
 
+
+static int spiero_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x2010],"\x00\x10\x00",3) == 0)
+
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x2010],3);
+			osd_fclose(f);
+		}
+
+	return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void spiero_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x2010],3);
+		osd_fclose(f);
+	}
+}
 
 
 struct GameDriver dowild_driver =
@@ -850,7 +887,7 @@ struct GameDriver spiero_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
-	dorunrun_hiload, dorunrun_hisave
+	spiero_hiload, spiero_hisave
 };
 
 struct GameDriver kickridr_driver =

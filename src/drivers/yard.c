@@ -16,62 +16,56 @@ Loosely based on the Kung Fu Master driver.
 extern unsigned char *yard_scroll_x_low;
 extern unsigned char *yard_scroll_x_high;
 extern unsigned char *yard_scroll_y_low;
-extern unsigned char *yard_sprite_priority; /* JB 970912 */
+extern unsigned char *yard_score_panel_disabled;
 
 void yard_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int yard_vh_start(void);
 void yard_vh_stop(void);
+void yard_flipscreen_w(int offset,int data);
+void yard_scroll_panel_w(int offset,int data);
 void yard_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void mpatrol_io_w(int offset, int value);
-int mpatrol_io_r(int offset);
-void mpatrol_adpcm_reset_w(int offset,int value);
-void mpatrol_sound_cmd_w(int offset, int value);
+extern struct AY8910interface irem_ay8910_interface;
+extern struct MSM5205interface irem_msm5205_interface;
+void irem_io_w(int offset, int value);
+int irem_io_r(int offset);
+void irem_sound_cmd_w(int offset, int value);
 
-void mpatrol_adpcm_int(int data);
+int mpatrol_input_port_3_r(int offset);
 
 
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x9fff, MRA_RAM },         /* Video and Color ram */
-	{ 0xd000, 0xd000, input_port_0_r },	/* IN0 */
-	{ 0xd001, 0xd001, input_port_1_r },	/* IN1 */
-	{ 0xd002, 0xd002, input_port_2_r },	/* IN2 */
-	{ 0xd003, 0xd003, input_port_3_r },	/* DSW1 */
-	{ 0xd004, 0xd004, input_port_4_r },	/* DSW2 */
+	{ 0x0000, 0x5fff, MRA_ROM },
+	{ 0x8000, 0x8fff, MRA_RAM },        /* Video and Color ram */
+	{ 0xd000, 0xd000, input_port_0_r },	        /* IN0 */
+	{ 0xd001, 0xd001, input_port_1_r },	        /* IN1 */
+	{ 0xd002, 0xd002, input_port_2_r },	        /* IN2 */
+	{ 0xd003, 0xd003, mpatrol_input_port_3_r },	/* DSW1 */
+	{ 0xd004, 0xd004, input_port_4_r },	        /* DSW2 */
 	{ 0xe000, 0xefff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x9fff, videoram_w, &videoram, &videoram_size },
+	{ 0x8000, 0x8fff, videoram_w, &videoram, &videoram_size },
+	{ 0x9000, 0x9fff, yard_scroll_panel_w },
 	{ 0xc820, 0xc87f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xa000, 0xa000, MWA_RAM, &yard_scroll_x_low },
 	{ 0xa200, 0xa200, MWA_RAM, &yard_scroll_x_high },
 	{ 0xa400, 0xa400, MWA_RAM, &yard_scroll_y_low },
-	{ 0xa800, 0xa800, MWA_RAM, &yard_sprite_priority }, /* JB 970912 */
-	{ 0xd000, 0xd001, mpatrol_sound_cmd_w }, /* JB 971012 */
+	{ 0xa800, 0xa800, MWA_RAM, &yard_score_panel_disabled },
+	{ 0xd000, 0xd000, irem_sound_cmd_w },
+	{ 0xd001, 0xd001, yard_flipscreen_w },
 	{ 0xe000, 0xefff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
-
-static struct IOReadPort readport[] =
-{
-	{ -1 }	/* end of table */
-};
-
-static struct IOWritePort writeport[] =
-{
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryReadAddress sound_readmem[] =
 {
-	{ 0x0000, 0x001f, mpatrol_io_r },
+	{ 0x0000, 0x001f, irem_io_r },
 	{ 0x0080, 0x00ff, MRA_RAM },
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
@@ -79,10 +73,10 @@ static struct MemoryReadAddress sound_readmem[] =
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
-	{ 0x0000, 0x001f, mpatrol_io_w },
+	{ 0x0000, 0x001f, irem_io_w },
 	{ 0x0080, 0x00ff, MWA_RAM },
 	{ 0x0801, 0x0802, MSM5205_data_w },
-	{ 0x8000, 0xffff, MWA_ROM },
+	{ 0x9000, 0x9000, MWA_NOP },    /* IACK */
 	{ -1 }	/* end of table */
 };
 
@@ -93,8 +87,7 @@ INPUT_PORTS_START( yard_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	/* coin input must be active for 19 frames to be consistently recognized */
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE,
-		"Coin Aux", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 19 )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE, "Coin Aux", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 19 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -133,21 +126,7 @@ INPUT_PORTS_START( yard_input_ports )
 	PORT_DIPSETTING( 0x08, "x 1.3" )
 	PORT_DIPSETTING( 0x04, "x 1.5" )
 	PORT_DIPSETTING( 0x00, "x 1.8" )
-	/* TODO: support the different settings which happen in Coin Mode 2 */
-	PORT_DIPNAME( 0xf0, 0xf0, "Coinage", IP_KEY_NONE ) /* mapped on coin mode 1 */
-	PORT_DIPSETTING(    0xa0, "6 Coins/1 Credit" )
-	PORT_DIPSETTING(    0xb0, "5 Coins/1 Credit" )
-	PORT_DIPSETTING(    0xc0, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0xd0, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0xe0, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x70, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x60, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x50, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x40, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x30, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
-	/* settings 0x10, 0x20, 0x80, 0x90 all give 1 Coin/1 Credit */
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Gets filled in based on the coin mode */
 
 	PORT_START	/* DSW2 */
 	PORT_DIPNAME( 0x01, 0x01, "Flip Screen", IP_KEY_NONE )
@@ -176,6 +155,33 @@ INPUT_PORTS_START( yard_input_ports )
 	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
+
+	/* Fake port to support the two different coin modes */
+	PORT_START
+	PORT_DIPNAME( 0x0f, 0x0f, "Coinage Mode 1", IP_KEY_NONE ) /* mapped on coin mode 1 */
+	PORT_DIPSETTING(    0x0a, "6 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0b, "5 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0c, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0d, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0e, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x07, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x06, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x05, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x03, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	/* settings 0x10, 0x20, 0x80, 0x90 all give 1 Coin/1 Credit */
+ 	PORT_DIPNAME( 0x30, 0x30, "Coin A  Mode 2", IP_KEY_NONE )   /* mapped on coin mode 2 */
+	PORT_DIPSETTING(    0x10, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x20, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Coin B  Mode 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0xc0, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x80, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x40, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x00, "1 Coin/6 Credits" )
 INPUT_PORTS_END
 
 /* exactly the same as yard, only difference is the Allow Continue dip switch */
@@ -225,21 +231,7 @@ INPUT_PORTS_START( vsyard_input_ports )
 	PORT_DIPSETTING( 0x08, "x 1.3" )
 	PORT_DIPSETTING( 0x04, "x 1.5" )
 	PORT_DIPSETTING( 0x00, "x 1.8" )
-	/* TODO: support the different settings which happen in Coin Mode 2 */
-	PORT_DIPNAME( 0xf0, 0xf0, "Coinage", IP_KEY_NONE ) /* mapped on coin mode 1 */
-	PORT_DIPSETTING(    0xa0, "6 Coins/1 Credit" )
-	PORT_DIPSETTING(    0xb0, "5 Coins/1 Credit" )
-	PORT_DIPSETTING(    0xc0, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0xd0, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0xe0, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x70, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x60, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x50, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x40, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x30, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
-	/* settings 0x10, 0x20, 0x80, 0x90 all give 1 Coin/1 Credit */
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Gets filled in based on the coin mode */
 
 	PORT_START	/* DSW2 */
 	PORT_DIPNAME( 0x01, 0x01, "Flip Screen", IP_KEY_NONE )
@@ -268,6 +260,33 @@ INPUT_PORTS_START( vsyard_input_ports )
 	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
+
+	/* Fake port to support the two different coin modes */
+	PORT_START
+	PORT_DIPNAME( 0x0f, 0x0f, "Coinage Mode 1", IP_KEY_NONE ) /* mapped on coin mode 1 */
+	PORT_DIPSETTING(    0x0a, "6 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0b, "5 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0c, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0d, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0e, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x07, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x06, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x05, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x03, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	/* settings 0x10, 0x20, 0x80, 0x90 all give 1 Coin/1 Credit */
+ 	PORT_DIPNAME( 0x30, 0x30, "Coin A  Mode 2", IP_KEY_NONE )   /* mapped on coin mode 2 */
+	PORT_DIPSETTING(    0x10, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x20, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Coin B  Mode 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0xc0, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x80, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x40, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x00, "1 Coin/6 Credits" )
 INPUT_PORTS_END
 
 
@@ -319,26 +338,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct AY8910interface ay8910_interface =
-{
-	2,	/* 2 chips */
-	910000,	/* .91 MHZ ?? */
-	{ 160, 160 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0, mpatrol_adpcm_reset_w }
-};
-
-static struct MSM5205interface msm5205_interface =
-{
-	2,			/* 2 chips */
-	4000,       /* 4000Hz playback */
-	mpatrol_adpcm_int,/* interrupt function */
-	{ 255, 255 }
-};
-
-
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -347,10 +346,9 @@ static struct MachineDriver machine_driver =
 			CPU_Z80,
 			4000000,	/* 4 Mhz (?) */
 			0,
-			readmem,writemem,readport,writeport,
+			readmem,writemem,0,0,
 			interrupt,1
 		},
-		/* JB 971012 */
 		{
 			CPU_M6803 | CPU_AUDIO_CPU,
 			1000000,	/* 1.0 Mhz ? */
@@ -382,11 +380,11 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			SOUND_AY8910,
-			&ay8910_interface
+			&irem_ay8910_interface
 		},
 		{
 			SOUND_MSM5205,
-			&msm5205_interface
+			&irem_msm5205_interface
 		}
 	}
 };
@@ -470,7 +468,7 @@ static int hiload(void)
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0xe600],"\x00\x65\x03",3) == 0 &&
-			(RAM[0xe684] | RAM[0xe685] | RAM[0xe686]) != 0)	/* JB 971014 */
+		(RAM[0xe684] | RAM[0xe685] | RAM[0xe686]) != 0)
 	{
 		void *f;
 
@@ -490,7 +488,6 @@ static int hiload(void)
 }
 
 
-/* JB 971009 */
 static void hisave(void)
 {
 	void *f;
@@ -502,7 +499,7 @@ static void hisave(void)
 		osd_fwrite(f,&RAM[0xe600],6*23);
 		osd_fclose(f);
 	}
-	memset(&RAM[0xe600], 0, 6*23);	/* JB 971014 */
+	memset(&RAM[0xe600], 0, 6*23);
 }
 
 

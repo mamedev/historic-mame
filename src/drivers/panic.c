@@ -41,12 +41,13 @@ write:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+void panic_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void panic_videoram_w(int offset,int data);
 int panic_interrupt(void);
 
 extern unsigned char *panic_videoram;
 
-int panic_vh_start(void);
+int  panic_vh_start(void);
 void panic_vh_stop(void);
 void panic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -137,7 +138,7 @@ static struct GfxLayout spritelayout0 =
 	16,16,	/* 16*16 sprites */
 	48 ,	/* 64 sprites */
 	2,	    /* 2 bits per pixel */
-	{ 0, 4096*8 },	/* the two bitplanes are separated */
+	{ 4096*8, 0 },	/* the two bitplanes are separated */
 	{ 15*8, 14*8, 13*8, 12*8, 11*8, 10*8, 9*8, 8*8, 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
   	{ 16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0, 7, 6, 5, 4, 3, 2, 1, 0 },
 	32*8	/* every sprite takes 32 consecutive bytes */
@@ -150,7 +151,7 @@ static struct GfxLayout spritelayout1 =
 	16,16,	/* 16*16 sprites */
 	16 ,	/* 16 sprites */
 	2,	    /* 2 bits per pixel */
-	{ 0, 4096*8 },	/* the two bitplanes are separated */
+	{ 4096*8, 0 },	/* the two bitplanes are separated */
 	{ 15*8, 14*8, 13*8, 12*8, 11*8, 10*8, 9*8, 8*8, 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0, 7, 6, 5, 4, 3, 2, 1, 0,  },
 	32*8	/* every sprite takes 32 consecutive bytes */
@@ -159,43 +160,10 @@ static struct GfxLayout spritelayout1 =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x0A00, &spritelayout0, 0, 8 },	/* Monsters             */
-	{ 1, 0x0200, &spritelayout0, 0, 8 },    /* Monsters eating Man  */
-	{ 1, 0x0800, &spritelayout1, 0, 8 },    /* Man                  */
+	{ 1, 0x0200, &spritelayout0, 0, 8 },	/* Monsters eating Man  */
+	{ 1, 0x0800, &spritelayout1, 0, 8 },	/* Man                  */
 	{ -1 } /* end of array */
 };
-
-static unsigned char palette[] =
-{
-	0x00,0x00,0x00,   /* black  */
-	0x00,0x00,0xd8,   /* blue   */
-	0xf8,0x00,0x00,   /* red    */
-	0xff,0x00,0xff,   /* purple */
-	0x00,0xf8,0x00,   /* green  */
-	0x00,0xff,0xff,   /* cyan   */
-	0xf8,0xf8,0x00,   /* yellow */
-	0xff,0xff,0xff,   /* white  */
-	0xf8,0x94,0x44,   /* orange */
-};
-
-enum
-{
-	black, blue, red, purple, green, cyan, yellow, white, orange
-};
-
-static unsigned short colortable[] =
-{
-	black, yellow,    red,        white,        /* 1 Drop Monster */
-	black, green,     purple,     white,        /* 3 Drop Monster */
-	black, red,       white,      yellow,       /* Man */
-	black, white,     white,      white,        /* Not Used? */
-	black, blue,      green,      white,        /* 2 Drop Monster */
-
-	black, blue,         0,          0,         /* Screen Colours */
-	0,     purple,       orange,     0,
-	0,     0,            green,      cyan,
-        0,     0,            0,          white
-};
-
 
 
 static struct MachineDriver machine_driver =
@@ -217,8 +185,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
   	32*8, 32*8, { 6*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	16, 8*4,
+	panic_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -290,13 +258,16 @@ ROM_START( panic_rom )
 	ROM_LOAD( "spcpanic.5",   0x2000, 0x0800, 0x5b80f277 )
 	ROM_LOAD( "spcpanic.6",   0x2800, 0x0800, 0xb73babf0 )
 	ROM_LOAD( "spcpanic.7",   0x3000, 0x0800, 0xfc27f4e5 )
-	ROM_LOAD( "spcpanic.8",   0x3800, 0x0800, 0x7da0b321 )         /* Colour Table */
+	ROM_LOAD( "spcpanic.8",   0x3800, 0x0800, 0x7da0b321 )         /* Colour Map */
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "spcpanic.9",   0x0000, 0x0800, 0xeec78b4c )
 	ROM_LOAD( "spcpanic.10",  0x0800, 0x0800, 0xc9631c2d )
 	ROM_LOAD( "spcpanic.12",  0x1000, 0x0800, 0xe83423d0 )
 	ROM_LOAD( "spcpanic.11",  0x1800, 0x0800, 0xacea9df4 )
+
+	ROM_REGION(0x0080)	/* color PROM */
+	ROM_LOAD( "82S123.SP",    0x0000, 0x0020, 0x35d43d2f )
 ROM_END
 
 ROM_START( panica_rom )
@@ -308,15 +279,38 @@ ROM_START( panica_rom )
 	ROM_LOAD( "spcpanic.5",   0x2000, 0x0800, 0x5b80f277 )
 	ROM_LOAD( "spcpanic.6",   0x2800, 0x0800, 0xb73babf0 )
 	ROM_LOAD( "panica.7",     0x3000, 0x0800, 0x3641cb7f )
-	ROM_LOAD( "spcpanic.8",   0x3800, 0x0800, 0x7da0b321 )         /* Colour Table */
+	ROM_LOAD( "spcpanic.8",   0x3800, 0x0800, 0x7da0b321 )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "spcpanic.9",   0x0000, 0x0800, 0xeec78b4c )
 	ROM_LOAD( "spcpanic.10",  0x0800, 0x0800, 0xc9631c2d )
 	ROM_LOAD( "spcpanic.12",  0x1000, 0x0800, 0xe83423d0 )
 	ROM_LOAD( "spcpanic.11",  0x1800, 0x0800, 0xacea9df4 )
+
+	ROM_REGION(0x0080)	/* color PROM */
+	ROM_LOAD( "82S123.SP",    0x0000, 0x0020, 0x35d43d2f )
 ROM_END
 
+ROM_START( panicger_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "spacepan.001", 0x0000, 0x0800, 0xa6d9515a )         /* Code */
+	ROM_LOAD( "spacepan.002", 0x0800, 0x0800, 0xcfc22663 )
+	ROM_LOAD( "spacepan.003", 0x1000, 0x0800, 0xe1f36893 )
+	ROM_LOAD( "spacepan.004", 0x1800, 0x0800, 0x01be297c )
+	ROM_LOAD( "spacepan.005", 0x2000, 0x0800, 0xe0d54805 )
+	ROM_LOAD( "spacepan.006", 0x2800, 0x0800, 0xaae1458e )
+	ROM_LOAD( "spacepan.007", 0x3000, 0x0800, 0x14e46e70 )
+	ROM_LOAD( "spcpanic.8",   0x3800, 0x0800, 0x7da0b321 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "spcpanic.9",   0x0000, 0x0800, 0xeec78b4c )
+	ROM_LOAD( "spcpanic.10",  0x0800, 0x0800, 0xc9631c2d )
+	ROM_LOAD( "spcpanic.12",  0x1000, 0x0800, 0xe83423d0 )
+	ROM_LOAD( "spcpanic.11",  0x1800, 0x0800, 0xacea9df4 )
+
+	ROM_REGION(0x0020)	/* color PROMs */
+	ROM_LOAD( "82S123.SP",    0x0000, 0x0020, 0x35d43d2f )
+ROM_END
 
 
 struct GameDriver panic_driver =
@@ -339,7 +333,7 @@ struct GameDriver panic_driver =
 
 	input_ports,
 
-	0, palette, colortable,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	panic_hiload, panic_hisave
@@ -365,7 +359,33 @@ struct GameDriver panica_driver =
 
 	input_ports,
 
-	0, palette, colortable,
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	panic_hiload, panic_hisave
+};
+
+struct GameDriver panicger_driver =
+{
+	__FILE__,
+	&panic_driver,
+	"panicger",
+	"Space Panic (German)",
+	"1980",
+	"Universal (ADP Automaten license)",
+	"Mike Coates (MAME driver)\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	panicger_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	panic_hiload, panic_hisave

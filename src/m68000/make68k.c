@@ -2179,7 +2179,7 @@ void dump_bit_dynamic( int sreg, int type, int mode, int dreg )
 
 	if ( allow[Dest&0xf] != '-' )
 	{
-		if ( mode == 0 ) // long
+		if ( mode == 0 ) /* long*/
 		{
         	/* Modify register memory directly */
 
@@ -2242,19 +2242,19 @@ void dump_bit_dynamic( int sreg, int type, int mode, int dreg )
 
 			switch ( type )
 			{
-				case 0: // btst
+				case 0: /* btst*/
 					break;
 
-				case 1: // bchg
+				case 1: /* bchg*/
 					fprintf(fp,"\t\t xor   %s,%s\n",EAXReg,ECXReg);
 					break;
 
-				case 2: // bclr
+				case 2: /* bclr*/
 					fprintf(fp,"\t\t not   ecx\n");
 					fprintf(fp,"\t\t and   %s,%s\n",EAXReg,ECXReg);
 					break;
 
-				case 3: // bset
+				case 3: /* bset*/
 					fprintf(fp,"\t\t or    %s,%s\n",EAXReg,ECXReg);
 					break;
 			}
@@ -2269,7 +2269,7 @@ void dump_bit_dynamic( int sreg, int type, int mode, int dreg )
 	}
 }
 
-void bitdynamic(void) // dynamic non-immediate bit operations
+void bitdynamic(void) /* dynamic non-immediate bit operations*/
 {
 	int type, sreg, mode, dreg ;
 
@@ -2304,7 +2304,7 @@ void dump_bit_static(int type, int mode, int dreg )
 
 	if ( allow[Dest&0xf] != '-' )
 	{
-		if ( mode == 0 ) // long
+		if ( mode == 0 ) /* long*/
 		{
         	/* Modify register memory directly */
 
@@ -2365,19 +2365,19 @@ void dump_bit_static(int type, int mode, int dreg )
 
 			switch ( type )
 			{
-				case 0: // btst
+				case 0: /* btst*/
 					break;
 
-				case 1: // bchg
+				case 1: /* bchg*/
 					fprintf(fp,"\t\t xor   %s,%s\n",EAXReg,ECXReg);
 					break;
 
-				case 2: // bclr
+				case 2: /* bclr*/
 					fprintf(fp,"\t\t not   ecx\n");
 					fprintf(fp,"\t\t and   %s,%s\n",EAXReg,ECXReg);
 					break;
 
-				case 3: // bset
+				case 3: /* bset*/
 					fprintf(fp,"\t\t or    %s,%s\n",EAXReg,ECXReg);
 					break;
 			}
@@ -2392,7 +2392,7 @@ void dump_bit_static(int type, int mode, int dreg )
 	}
 }
 
-void bitstatic(void) // static non-immediate bit operations
+void bitstatic(void) /* static non-immediate bit operations*/
 {
 	int type, mode, dreg ;
 
@@ -2444,7 +2444,7 @@ void movep(void)
 						fprintf(fp, "\t\t and   ecx,byte 7\n");
 
 
-						if ( dir == 0 ) // from memory to register
+						if ( dir == 0 ) /* from memory to register*/
 						{
                         	Memory_Read('B',EDI,"-BC-SDB",2);		/* mask first call */
 							fprintf(fp,"\t\t mov   bh,al\n");
@@ -2452,11 +2452,11 @@ void movep(void)
                         	Memory_Read('B',EDI,"-BC-SDB",0);		/* not needed then */
 							fprintf(fp,"\t\t mov   bl,al\n");
 
-							if ( leng == 0 ) // word d(Ax) into Dx.W
+							if ( leng == 0 ) /* word d(Ax) into Dx.W*/
 							{
 								fprintf(fp,"\t\t mov   [%s+ecx*4],bx\n",REG_DAT);
 							}
-							else // long d(Ax) into Dx.L
+							else /* long d(Ax) into Dx.L*/
 							{
 								fprintf(fp,"\t\t add   edi,byte 2\n");
 								fprintf(fp,"\t\t shl   ebx,16\n");
@@ -2468,7 +2468,7 @@ void movep(void)
 								fprintf(fp,"\t\t mov   [%s+ecx*4],ebx\n",REG_DAT);
 							}
 						}
-                        else // Register to Memory
+                        else /* Register to Memory*/
                         {
 							fprintf(fp,"\t\t mov   eax,[%s+ecx*4]\n",REG_DAT);
 
@@ -2483,7 +2483,7 @@ void movep(void)
 							fprintf(fp,"\t\t add   edi,byte 2\n");
 							fprintf(fp,"\t\t rol   eax,byte 8\n");
 
-                            if ( leng == 1 ) // long
+                            if ( leng == 1 ) /* long*/
                             {
 								Memory_Write('B',EDI,EAX,"A---SDB",0);
 							    fprintf(fp,"\t\t add   edi,byte 2\n");
@@ -2681,7 +2681,7 @@ void moveinstructions(void)
 
 	/* Register transfers first */
 
-//  movereg();
+/*  movereg();*/
 
     /* For Byte */
 
@@ -3270,26 +3270,26 @@ void dumpx( int start, int reg, int type, char * Op, int dir, int leng, int mode
 
 	switch (type)
 	{
-		case 0: // or and
+		case 0: /* or and*/
 			if ( dir == 0 )
 				allow = allowtypes[0];
 			else
 				allow = allowtypes[1];
 			break ;
 
-		case 1: // cmp
+		case 1: /* cmp*/
 			allow = allowtypes[2] ;
 			break ;
 
-		case 2: // eor
+		case 2: /* eor*/
 			allow = allowtypes[3] ;
 			break ;
 
-		case 3: // adda suba cmpa
+		case 3: /* adda suba cmpa*/
 			allow = allowtypes[2] ;
 			break ;
 
-		case 4: // sub add
+		case 4: /* sub add*/
 			if ( dir == 0 )
 				allow = allowtypes[0] ;
 			else
@@ -3299,7 +3299,7 @@ void dumpx( int start, int reg, int type, char * Op, int dir, int leng, int mode
 
 	if ( (type == 4) && (dir == 0) && (leng > 0) )
 	{
-		allow = allowtypes[2] ; // word and long ok
+		allow = allowtypes[2] ; /* word and long ok*/
 	}
 
 	Opcode = start | (reg << 9 ) | (dir<<8) | (leng<<6) | (mode<<3) | sreg;
@@ -5732,7 +5732,7 @@ void divides(void)
 					fprintf(fp, "\t\t cdq\n");
 				else
 					{
-//					fprintf(fp, "\t\t and   eax,0FFFFH\n");
+/*					fprintf(fp, "\t\t and   eax,0FFFFH\n");*/
 					fprintf(fp, "\t\t movzx ebx,bx\n");
 					fprintf(fp, "\t\t xor   edx,edx\n");
 					}
@@ -6124,7 +6124,11 @@ void CodeSegmentEnd(void)
 
 	fprintf(fp, "; RLE Compressed Jump Table\n\n");
 	fprintf(fp, "COMPTABLE\n\n");
+#ifdef UNIX
+	fprintf(fp, "%cinclude 'obj/m68000/comptab.asm'\n\n",'%');
+#else
 	fprintf(fp, "%cinclude 'obj\\m68000\\comptab.asm'\n\n",'%');
+#endif
 	fprintf(fp, "\t\tDD   0,0\n\n");
     fprintf(fp, "\t\tSECTION .bss\n\n");
 	fprintf(fp, "OPCODETABLE\tRESD  65536\n\n");
@@ -6233,7 +6237,6 @@ int main(int argc, char **argv)
     /* output Jump table to separate file */
 
     JumpTable();
-	fclose(fp);
 
     exit(0);
 }

@@ -264,10 +264,12 @@ void osd_set_brightness(int brightness);
 int osd_get_brightness(void);
 void osd_save_snapshot(void);
 
+#define OSD_PAN_CENTER 0
+#define OSD_PAN_LEFT   1
+#define OSD_PAN_RIGHT  2
 void osd_update_audio(void);
 void osd_play_sample(int channel,signed char *data,int len,int freq,int volume,int loop);
 void osd_play_sample_16(int channel,signed short *data,int len,int freq,int volume,int loop);
-/* pan is in the range -100..100. 0 = center; -100 = full left; 100 = full right */
 void osd_play_streamed_sample(int channel,signed char *data,int len,int freq,int volume,int pan);
 void osd_play_streamed_sample_16(int channel,signed short *data,int len,int freq,int volume,int pan);
 void osd_adjust_sample(int channel,int freq,int volume);
@@ -313,15 +315,28 @@ void osd_analogjoy_read(int *analog_x, int *analog_y);
 /* samples. If 'write' is not 0, the file is opened for write. Otherwise */
 /* it is opened for read. */
 
-int osd_faccess (const char *filename, int filetype);
-void *osd_fopen (const char *gamename,const char *filename,int filetype,int write);
-int osd_fread (void *file,void *buffer,int length);
-int osd_fwrite (void *file,const void *buffer,int length);
-int osd_fseek (void *file,int offset,int whence);
-void osd_fclose (void *file);
-int osd_fchecksum (const char *gamename, const char *filename, unsigned int *length, unsigned int *sum);
-int osd_fsize (void *file);
-unsigned int osd_fcrc (void *file);
+int osd_faccess(const char *filename, int filetype);
+void *osd_fopen(const char *gamename,const char *filename,int filetype,int write);
+int osd_fread(void *file,void *buffer,int length);
+int osd_fwrite(void *file,const void *buffer,int length);
+int osd_fread_swap(void *file,void *buffer,int length);
+int osd_fwrite_swap(void *file,const void *buffer,int length);
+#if LSB_FIRST
+#define osd_fread_msbfirst osd_fread_swap
+#define osd_fwrite_msbfirst osd_fwrite_swap
+#define osd_fread_lsbfirst osd_fread
+#define osd_fwrite_lsbfirst osd_fwrite
+#else
+#define osd_fread_msbfirst osd_fread
+#define osd_fwrite_msbfirst osd_fwrite
+#define osd_fread_lsbfirst osd_fread_swap
+#define osd_fwrite_lsbfirst osd_fwrite_swap
+#endif
+int osd_fseek(void *file,int offset,int whence);
+void osd_fclose(void *file);
+int osd_fchecksum(const char *gamename, const char *filename, unsigned int *length, unsigned int *sum);
+int osd_fsize(void *file);
+unsigned int osd_fcrc(void *file);
 
 /* control keyboard leds or other indicators */
 void osd_led_w(int led,int on);

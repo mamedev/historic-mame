@@ -13,20 +13,22 @@ Loosely based on the our previous 10 Yard Fight driver.
 #include "vidhrdw/generic.h"
 
 
-extern unsigned char *trace_scroll_x_low;
-extern unsigned char *trace_scroll_x_high;
+extern unsigned char *travrusa_scroll_x_low;
+extern unsigned char *travrusa_scroll_x_high;
 
-void trace_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int trace_vh_start(void);
-void trace_vh_stop(void);
-void trace_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void travrusa_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+int travrusa_vh_start(void);
+void travrusa_vh_stop(void);
+void travrusa_flipscreen_w(int offset,int data);
+void travrusa_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void mpatrol_io_w(int offset, int value);
-int mpatrol_io_r(int offset);
-void mpatrol_adpcm_reset_w(int offset,int value);
-void mpatrol_sound_cmd_w(int offset, int value);
+extern struct AY8910interface irem_ay8910_interface;
+extern struct MSM5205interface irem_msm5205_interface;
+void irem_io_w(int offset, int value);
+int irem_io_r(int offset);
+void irem_sound_cmd_w(int offset, int value);
 
-void mpatrol_adpcm_int(int data);
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -45,17 +47,18 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x8fff, videoram_w, &videoram, &videoram_size },
-	{ 0x9000, 0x9000, MWA_RAM, &trace_scroll_x_low },
-	{ 0xa000, 0xa000, MWA_RAM, &trace_scroll_x_high },
+	{ 0x9000, 0x9000, MWA_RAM, &travrusa_scroll_x_low },
+	{ 0xa000, 0xa000, MWA_RAM, &travrusa_scroll_x_high },
 	{ 0xc800, 0xc9ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd000, 0xd001, mpatrol_sound_cmd_w }, /* JB 971012 */
+	{ 0xd000, 0xd000, irem_sound_cmd_w },
+	{ 0xd001, 0xd001, travrusa_flipscreen_w },
 	{ 0xe000, 0xefff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryReadAddress sound_readmem[] =
 {
-	{ 0x0000, 0x001f, mpatrol_io_r },
+	{ 0x0000, 0x001f, irem_io_r },
 	{ 0x0080, 0x00ff, MRA_RAM },
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
@@ -63,7 +66,7 @@ static struct MemoryReadAddress sound_readmem[] =
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
-	{ 0x0000, 0x001f, mpatrol_io_w },
+	{ 0x0000, 0x001f, irem_io_w },
 	{ 0x0080, 0x00ff, MWA_RAM },
 	{ 0x0801, 0x0802, MSM5205_data_w },
 	{ 0x8000, 0xffff, MWA_ROM },
@@ -135,9 +138,9 @@ INPUT_PORTS_START( input_ports )
 	/* PORT_DIPSETTING( 0x00, "INVALID" ) */
 
 	PORT_START	/* DSW2 */
-	PORT_DIPNAME( 0x01, 0x01, "SW1B", IP_KEY_NONE )
-	PORT_DIPSETTING( 0x01, "Off" )
-	PORT_DIPSETTING( 0x00, "On" )
+	PORT_DIPNAME( 0x01, 0x01, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x02, 0x00, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING( 0x00, "Upright" )
 	PORT_DIPSETTING( 0x02, "Cocktail" )
@@ -195,26 +198,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct AY8910interface ay8910_interface =
-{
-	2,	/* 2 chips */
-	910000,	/* .91 MHZ ?? */
-	{ 160, 160 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0, mpatrol_adpcm_reset_w }
-};
-
-static struct MSM5205interface msm5205_interface =
-{
-	2,			/* 2 chips */
-	4000,       /* 4000Hz playback */
-	mpatrol_adpcm_int,/* interrupt function */
-	{ 255, 255 }
-};
-
-
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -244,24 +227,24 @@ static struct MachineDriver machine_driver =
 	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	128+32, 16*8+16*8,
-	trace_vh_convert_color_prom,
+	travrusa_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
-	trace_vh_start,
-	trace_vh_stop,
-	trace_vh_screenrefresh,
+	travrusa_vh_start,
+	travrusa_vh_stop,
+	travrusa_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
 	{
 		{
 			SOUND_AY8910,
-			&ay8910_interface
+			&irem_ay8910_interface
 		},
 		{
 			SOUND_MSM5205,
-			&msm5205_interface
+			&irem_msm5205_interface
 		}
 	}
 };
@@ -385,6 +368,10 @@ static int hiload(void)
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
 			osd_fread(f,&RAM[0xe07c],74);
+			RAM[0xE008] = RAM[0xE07C];
+			RAM[0xE009] = RAM[0xE07D];
+			RAM[0xE00A] = RAM[0xE07E];
+
 			osd_fclose(f);
 		}
 

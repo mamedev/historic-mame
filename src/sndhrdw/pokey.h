@@ -94,12 +94,15 @@
    the pitch of the output.  With these numbers, the pitch will be low
    by 0.127%.  (More than likely, an actual unit will vary by this much!) */
 
-#define FREQ_17_EXACT	  1789790	/* exact 1.79 MHz clock freq */
-#define FREQ_17_APPROX	  1787520	/* approximate 1.79 MHz clock freq */
+#define FREQ_17_EXACT	1789790 /* exact 1.79 MHz clock freq */
+#define FREQ_17_APPROX	1787520 /* approximate 1.79 MHz clock freq */
 
-#define MAXPOKEYS		  4 		/* max number of emulated chips */
+#define MAXPOKEYS	4	/* max number of emulated chips */
 
-#define CLIP						/* required to force clipping */
+#define CLIP			/* required to force clipping */
+
+#define USE_SAMP_N_MAX	0	/* limit max. frequency to playback rate */
+
 
 #define NO_CLIP   0
 #define USE_CLIP  1
@@ -112,7 +115,7 @@ extern "C" {
 
 struct POKEYinterface {
     int num;    /* total number of pokeys in the machine */
-	int baseclock;
+    int baseclock;
     int volume;
     int gain;
     int clip;               /* determines if pokey.c will clip the sample range */
@@ -120,8 +123,8 @@ struct POKEYinterface {
      * Handlers for reading the pot values.
      * Some Atari games use ALLPOT to return
      * dipswitch settings and other things
-	 * New function pointers for serin/serout
-	 * and a interrupt callback.
+     * New function pointers for serin/serout
+     * and a interrupt callback.
      *******************************************/
     int (*pot0_r[MAXPOKEYS])(int offset);
     int (*pot1_r[MAXPOKEYS])(int offset);
@@ -132,9 +135,9 @@ struct POKEYinterface {
     int (*pot6_r[MAXPOKEYS])(int offset);
     int (*pot7_r[MAXPOKEYS])(int offset);
     int (*allpot_r[MAXPOKEYS])(int offset);
-	int (*serin_r[MAXPOKEYS])(int offset);
-	void (*serout_w[MAXPOKEYS])(int offset, int data);
-	void (*interrupt_cb[MAXPOKEYS])(int mask);
+    int (*serin_r[MAXPOKEYS])(int offset);
+    void (*serout_w[MAXPOKEYS])(int offset, int data);
+    void (*interrupt_cb[MAXPOKEYS])(int mask);
 };
 
 /* ASG 980126 - added a return parameter to indicate failure */

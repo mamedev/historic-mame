@@ -546,7 +546,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,
+			4250000,	/* hand tuned to fix the tempo */
 			2,
 			sound_readmem,sound_writemem,0,sound_writeport,
 			interrupt,3

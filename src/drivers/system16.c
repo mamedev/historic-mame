@@ -261,7 +261,7 @@ static struct MachineDriver GAMENAME = \
 	sys16_vh_start, \
 	sys16_vh_stop, \
 	sys16_vh_screenrefresh, \
-	0,0,0,0, \
+	SOUND_SUPPORTS_STEREO,0,0,0, \
 	{ \
 		{ \
 			SOUND_YM2151, \
@@ -321,7 +321,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	4096000,	/* 3.58 MHZ ? */
-	{ 255 },
+	{ 60 },
 	{ irq_handler_mus }
 };
 

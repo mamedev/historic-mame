@@ -97,11 +97,14 @@ void bosco_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 extern unsigned char *bosco_videoram2,*bosco_colorram2;
 extern unsigned char *bosco_radarx,*bosco_radary,*bosco_radarattr;
 extern int bosco_radarram_size;
-extern unsigned char *bosco_scrollx,*bosco_scrolly;
-extern unsigned char *bosco_starcontrol,*bosco_staronoff;
-extern unsigned char *bosco_flipvideo,*bosco_starblink;
+extern unsigned char *bosco_staronoff;
+extern unsigned char *bosco_starblink;
 void bosco_videoram2_w(int offset,int data);
 void bosco_colorram2_w(int offset,int data);
+void bosco_flipscreen_w(int offset,int data);
+void bosco_scrollx_w(int offset,int data);
+void bosco_scrolly_w(int offset,int data);
+void bosco_starcontrol_w(int offset,int data);
 int  bosco_vh_start(void);
 void bosco_vh_stop(void);
 void bosco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -116,94 +119,95 @@ extern int  HiScore;
 
 static struct MemoryReadAddress readmem_cpu1[] =
 {
-	{ 0x7800, 0x9fff, bosco_sharedram_r, &bosco_sharedram },
+	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x6800, 0x6807, bosco_dsw_r },
 	{ 0x7000, 0x700f, bosco_customio_data_r_1 },
 	{ 0x7100, 0x7100, bosco_customio_r_1 },
-	{ 0x0000, 0x3fff, MRA_ROM },
-
+	{ 0x7800, 0x97ff, bosco_sharedram_r, &bosco_sharedram },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryReadAddress readmem_cpu2[] =
 {
+	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x6800, 0x6807, bosco_dsw_r },
 	{ 0x9000, 0x900f, bosco_customio_data_r_2 },
 	{ 0x9100, 0x9100, bosco_customio_r_2 },
-	{ 0x7800, 0x9fff, bosco_sharedram_r },
-	{ 0x6800, 0x6807, bosco_dsw_r },
-	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x7800, 0x97ff, bosco_sharedram_r },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryReadAddress readmem_cpu3[] =
 {
-	{ 0x7800, 0x9fff, bosco_sharedram_r },
-	{ 0x6800, 0x6807, bosco_dsw_r },
 	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x6800, 0x6807, bosco_dsw_r },
+	{ 0x7800, 0x97ff, bosco_sharedram_r },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem_cpu1[] =
 {
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x6800, 0x681f, pengo_sound_w, &pengo_soundregs },
+	{ 0x6820, 0x6820, bosco_interrupt_enable_1_w },
+	{ 0x6822, 0x6822, bosco_interrupt_enable_3_w },
+	{ 0x6823, 0x6823, bosco_halt_w },
+	{ 0x6830, 0x6830, watchdog_reset_w },
+	{ 0x7000, 0x700f, bosco_customio_data_w_1 },
+	{ 0x7100, 0x7100, bosco_customio_w_1 },
+
 	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
 	{ 0x8400, 0x87ff, bosco_videoram2_w, &bosco_videoram2 },
 	{ 0x8800, 0x8bff, colorram_w, &colorram },
 	{ 0x8c00, 0x8fff, bosco_colorram2_w, &bosco_colorram2 },
 
-	{ 0x7800, 0x9fff, bosco_sharedram_w },
-
-	{ 0x6800, 0x681f, pengo_sound_w, &pengo_soundregs },
-	{ 0x7000, 0x700f, bosco_customio_data_w_1 },
-	{ 0x7100, 0x7100, bosco_customio_w_1 },
-	{ 0x6820, 0x6820, bosco_interrupt_enable_1_w },
-	{ 0x6822, 0x6822, bosco_interrupt_enable_3_w },
-	{ 0x6823, 0x6823, bosco_halt_w },
-/*	{ 0x6830, 0x6830, watchdog_reset_w },	*/
-	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x7800, 0x97ff, bosco_sharedram_w },
 
 	{ 0x83d4, 0x83df, MWA_RAM, &spriteram, &spriteram_size },	/* these are here just to initialize */
 	{ 0x8bd4, 0x8bdf, MWA_RAM, &spriteram_2 },	                /* the pointers. */
 	{ 0x83f4, 0x83ff, MWA_RAM, &bosco_radarx, &bosco_radarram_size },	/* ditto */
 	{ 0x8bf4, 0x8bff, MWA_RAM, &bosco_radary },
-	{ 0x9810, 0x9810, MWA_RAM, &bosco_scrollx },
-	{ 0x9820, 0x9820, MWA_RAM, &bosco_scrolly },
-	{ 0x9830, 0x9830, MWA_RAM, &bosco_starcontrol },
-	{ 0x9840, 0x9840, MWA_RAM, &bosco_staronoff },
-	{ 0x9870, 0x9870, MWA_RAM, &bosco_flipvideo },
-	{ 0x9874, 0x9875, MWA_RAM, &bosco_starblink },
-	{ 0x9804, 0x980f, MWA_RAM, &bosco_radarattr },
 
+	{ 0x9810, 0x9810, bosco_scrollx_w },
+	{ 0x9820, 0x9820, bosco_scrolly_w },
+	{ 0x9830, 0x9830, bosco_starcontrol_w },
+	{ 0x9840, 0x9840, MWA_RAM, &bosco_staronoff },
+	{ 0x9870, 0x9870, bosco_flipscreen_w },
+	{ 0x9804, 0x980f, MWA_RAM, &bosco_radarattr },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem_cpu2[] =
 {
+	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x6821, 0x6821, bosco_interrupt_enable_2_w },
+
 	{ 0x8000, 0x83ff, videoram_w },
 	{ 0x8400, 0x87ff, bosco_videoram2_w },
 	{ 0x8800, 0x8bff, colorram_w },
 	{ 0x8c00, 0x8fff, bosco_colorram2_w },
-
 	{ 0x9000, 0x900f, bosco_customio_data_w_2 },
 	{ 0x9100, 0x9100, bosco_customio_w_2 },
-	{ 0x7800, 0x9fff, bosco_sharedram_w },
-	{ 0x6821, 0x6821, bosco_interrupt_enable_2_w },
-/*	{ 0x6830, 0x6830, watchdog_reset_w },	*/
-	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x7800, 0x97ff, bosco_sharedram_w },
+
+	{ 0x9810, 0x9810, bosco_scrollx_w },
+	{ 0x9820, 0x9820, bosco_scrolly_w },
+	{ 0x9830, 0x9830, bosco_starcontrol_w },
+	{ 0x9874, 0x9875, MWA_RAM, &bosco_starblink },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem_cpu3[] =
 {
+	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x6800, 0x681f, pengo_sound_w },
+	{ 0x6822, 0x6822, bosco_interrupt_enable_3_w },
+
 	{ 0x8000, 0x83ff, videoram_w },
 	{ 0x8400, 0x87ff, bosco_videoram2_w },
 	{ 0x8800, 0x8bff, colorram_w },
 	{ 0x8c00, 0x8fff, bosco_colorram2_w },
-
-	{ 0x7800, 0x9fff, bosco_sharedram_w },
-	{ 0x6800, 0x681f, pengo_sound_w },
-	{ 0x6822, 0x6822, bosco_interrupt_enable_3_w },
-/*	{ 0x6830, 0x6830, watchdog_reset_w },	*/
-	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x7800, 0x97ff, bosco_sharedram_w },
 	{ -1 }	/* end of table */
 };
 

@@ -208,7 +208,8 @@ obj/mcr.a: \
          obj/machine/mcr68.o obj/vidhrdw/mcr68.o obj/drivers/mcr68.o
 
 obj/irem.a: \
-         obj/vidhrdw/mpatrol.o  obj/sndhrdw/mpatrol.o obj/drivers/mpatrol.o \
+         obj/sndhrdw/irem.o \
+         obj/vidhrdw/mpatrol.o obj/drivers/mpatrol.o \
          obj/vidhrdw/yard.o obj/drivers/yard.o \
          obj/vidhrdw/kungfum.o obj/drivers/kungfum.o \
          obj/vidhrdw/travrusa.o obj/drivers/travrusa.o \
@@ -300,7 +301,7 @@ obj/btime.a: \
          obj/vidhrdw/tagteam.o obj/drivers/tagteam.o
 
 obj/dataeast.a: \
-         obj/vidhrdw/astrof.o obj/drivers/astrof.o \
+         obj/vidhrdw/astrof.o obj/sndhrdw/astrof.o obj/drivers/astrof.o \
          obj/vidhrdw/kchamp.o obj/drivers/kchamp.o \
          obj/vidhrdw/firetrap.o obj/drivers/firetrap.o \
          obj/vidhrdw/brkthru.o obj/drivers/brkthru.o \
@@ -355,7 +356,7 @@ obj/tmnt.a: \
          obj/vidhrdw/tmnt.o obj/drivers/tmnt.o
 
 obj/exidy.a: \
-         obj/machine/exidy.o obj/vidhrdw/exidy.o obj/drivers/exidy.o \
+         obj/machine/exidy.o obj/vidhrdw/exidy.o obj/sndhrdw/exidy.o obj/drivers/exidy.o \
          obj/sndhrdw/targ.o \
          obj/vidhrdw/circus.o obj/drivers/circus.o \
          obj/machine/starfire.o obj/vidhrdw/starfire.o obj/drivers/starfire.o
@@ -454,7 +455,6 @@ obj/valadon.a: \
          obj/machine/bagman.o obj/vidhrdw/bagman.o obj/drivers/bagman.o
 
 obj/seibu.a: \
-         obj/vidhrdw/stinger.o obj/drivers/stinger.o \
          obj/vidhrdw/wiz.o obj/drivers/wiz.o
 
 obj/nichibut.a: \

@@ -154,7 +154,7 @@ static struct IOWritePort sound_writeport_3526[] =
 {
 	{ 0x00, 0x00, YM3526_control_port_0_w },
 	{ 0x01, 0x01, YM3526_write_port_0_w },
-	{ 0x02, 0x03, DAC_data_w },	/* 2 channels */
+	{ 0x02, 0x03, DAC_signed_data_w },	/* 2 channels */
 	{ -1 }	/* end of table */
 };
 
@@ -162,7 +162,7 @@ static struct IOWritePort sound_writeport_2203[] =
 {
 	{ 0x00, 0x00, YM2203_control_port_0_w },
 	{ 0x01, 0x01, YM2203_write_port_0_w },
-	{ 0x02, 0x03, DAC_data_w },	/* 2 channels */
+	{ 0x02, 0x03, DAC_signed_data_w },	/* 2 channels */
 	{ -1 }	/* end of table */
 };
 
@@ -303,7 +303,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM3526interface ym3526_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3000000,	/* 3 MHz ? (partially supported) */
+	4600000,	/* 4.6 MHz ? (hand tuned) */
 	{ 255 }		/* (not supported) */
 };
 
@@ -311,7 +311,7 @@ static struct YM2203interface ym2203_interface =
 {
 	1,			/* 1 chip */
 	3000000,	/* 3 MHz ???? */
-	{ YM2203_VOL(80,40), YM2203_VOL(80,40) },
+	{ YM2203_VOL(40,20), YM2203_VOL(40,20) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -321,7 +321,7 @@ static struct YM2203interface ym2203_interface =
 static struct DACinterface dac_interface =
 {
 	2,	/* 2 channels */
-	{ 100, 100 }
+	{ 80, 80 }
 };
 
 int terracre_interrupt(void)

@@ -1,5 +1,5 @@
 #include "driver.h"
-#include "strings.h"
+#include "info.h"
 #include "audit.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -263,7 +263,7 @@ void romident(const char* name,int enter_dirs) {
 }
 
 
-enum { LIST_LIST = 1, LIST_LISTFULL, LIST_LISTSAMDIR, LIST_LISTROMS, LIST_LISTSAMPLES,
+enum { LIST_LIST = 1, LIST_LISTINFO, LIST_LISTFULL, LIST_LISTSAMDIR, LIST_LISTROMS, LIST_LISTSAMPLES,
 		LIST_LMR, LIST_LISTDETAILS, LIST_LISTGAMES, LIST_LISTCLONES,
 		LIST_WRONGORIENTATION, LIST_LISTCRC, LIST_LISTDUPCRC };
 
@@ -301,6 +301,7 @@ int frontend_help (int argc, char **argv)
 	{
 		/* check for front-end utilities */
 		if (!stricmp(argv[i],"-list")) list = LIST_LIST;
+ 		if (!stricmp(argv[i],"-listinfo")) list = LIST_LISTINFO;
 		if (!stricmp(argv[i],"-listfull")) list = LIST_LISTFULL;
         if (!stricmp(argv[i],"-listdetails")) list = LIST_LISTDETAILS; /* A detailed MAMELIST.TXT type roms lister */
 		if (!stricmp(argv[i],"-listgames")) list = LIST_LISTGAMES;
@@ -670,6 +671,10 @@ int frontend_help (int argc, char **argv)
 			}
 			return 0;
 			break;
+
+		case LIST_LISTINFO: /* list all info */
+			print_mame_info( stdout, drivers );
+			return 0;
 	}
 
 	if (verify)  /* "verify" utilities */

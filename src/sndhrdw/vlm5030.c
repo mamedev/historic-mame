@@ -633,7 +633,7 @@ void VLM5030_sh_update( void )
 		if (sample_pos < buffer_len)
 			vlm5030_process (outbuffer + sample_pos, buffer_len - sample_pos);
 		sample_pos = 0;
-		osd_play_streamed_sample(channel,(signed char *)outbuffer,buffer_len,emulation_rate,intf->volume,0);
+		osd_play_streamed_sample(channel,(signed char *)outbuffer,buffer_len,emulation_rate,intf->volume,OSD_PAN_CENTER);
 	}
 }
 

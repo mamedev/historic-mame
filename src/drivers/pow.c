@@ -48,7 +48,7 @@ static void pow_sound_w(int offset, int data)
 	int mybyte=(data>>8)&0xff;
 
 	if (mybyte>0xbf) {
-//		ADPCM_trigger(0,mybyte);
+                ADPCM_trigger(0,mybyte);
 	}
 	else {
 		soundlatch_w(0,mybyte);
@@ -368,7 +368,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3000000,	/* 3 MHz ? (not supported) */
+	4250000,	/* 4.25 MHz ? (hand tuned) */
 	{ 255 }		/* (not supported) */
 };
 
@@ -406,11 +406,11 @@ static struct MachineDriver pow_machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3579000,
+			4000000,	/* ?? */
 			2,
 			pow_sound_readmem,pow_sound_writemem,
 			pow_sound_readport,pow_sound_writeport,
-			interrupt,1
+			interrupt,3	/* ?? hand tuned */
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,

@@ -201,7 +201,19 @@ static struct AY8910interface ay8910_interface =
 	{ 0 }	/* port Bwrite */
 };
 
+int sqix_interrupt(void)
+{
+	static int loop=0;
 
+	loop++;
+
+	if(loop>2) {
+		if(loop==6) loop=0;
+		return nmi_interrupt();
+	}
+	else
+		return 0;
+}
 
 static struct MachineDriver machine_driver =
 {
@@ -209,10 +221,12 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80 | CPU_16BIT_PORT,
-			10000000,	/* 10 Mhz ? */
+//			10000000,	/* 10 Mhz ? */
+			6000000,	/* 6 Mhz ? */
 			0,
 			readmem,writemem,readport,writeport,
-			nmi_interrupt,3	/* ??? */
+//			nmi_interrupt,3	/* ??? */
+			sqix_interrupt,6	/* ??? */
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -364,5 +378,5 @@ struct GameDriver sqixbl_driver =
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-        superqix_hiload, superqix_hisave
+	superqix_hiload, superqix_hisave
 };

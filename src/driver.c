@@ -167,6 +167,7 @@ extern struct GameDriver cosmica_driver;
 extern struct GameDriver cheekyms_driver;
 extern struct GameDriver panic_driver;
 extern struct GameDriver panica_driver;
+extern struct GameDriver panicger_driver;
 extern struct GameDriver ladybug_driver;
 extern struct GameDriver ladybugb_driver;
 extern struct GameDriver snapjack_driver;
@@ -641,7 +642,7 @@ extern struct GameDriver lnc_driver;
 extern struct GameDriver zoar_driver;
 extern struct GameDriver btime_driver;
 extern struct GameDriver btimea_driver;
-extern struct GameDriver hamburge_driver;
+extern struct GameDriver cookrace_driver;
 extern struct GameDriver bnj_driver;
 extern struct GameDriver brubber_driver;
 extern struct GameDriver caractn_driver;
@@ -1337,6 +1338,7 @@ const struct GameDriver *drivers[] =
 	&cheekyms_driver,	/* (c) [1980?] */
 	&panic_driver,		/* (c) 1980 */
 	&panica_driver,		/* (c) 1980 */
+	&panicger_driver,	/* (c) 1980 */
 	&ladybug_driver,	/* (c) 1981 */
 	&ladybugb_driver,	/* bootleg */
 	&snapjack_driver,	/* (c) */
@@ -1752,7 +1754,7 @@ Six Flags (?)
 	/* Jul 1996: Megaman 2 - The Power Fighters (CPS2) */
 	/* Aug 1996: Street Fighter Zero 2 Alpha (CPS2) */
 	/* Sep 1996: "niji" */
-	/* Sep 1996: X-Men vs. Street Fighter */
+	/* Sep 1996: X-Men vs. Street Fighter (CPS2) */
 	/* Oct 1996: War-Zard */
 	/* Dec 1996: Street Fighter EX */
 	/* Feb 1997: Street Fighter III */
@@ -1930,7 +1932,7 @@ DokiDoki Penguin Land *not confirmed
 	&zoar_driver,		/* (c) 1982 */
 	&btime_driver,		/* (c) 1982 + Midway */
 	&btimea_driver,		/* (c) 1982 */
-	&hamburge_driver,	/* bootleg */
+	&cookrace_driver,	/* bootleg */
 	&bnj_driver,		/* (c) 1982 + Midway */
 	&brubber_driver,	/* (c) 1982 */
 	&caractn_driver,	/* bootleg */

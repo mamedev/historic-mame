@@ -82,7 +82,18 @@ Targ:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "machine/6821pia.h"
 
+
+/* These are defined in sndhrdw/exidy.c */
+void exidy_shriot_w(int offset,int data);
+int exidy_shriot_r(int offset);
+
+void exidy_sh8253_w(int offset,int data);
+int exidy_sh8253_r(int offset);
+
+extern int exidy_sh_start(void);
+extern void exidy_sh_stop(void);
 
 /* These are defined in vidhrdw/exidy.c */
 
@@ -110,6 +121,8 @@ extern void fax_bank_select_w(int offset,int data);
 extern int exidy_input_port_2_r(int offset);
 extern void exidy_init_machine(void);
 extern int venture_interrupt(void);
+extern int venture_shinterrupt(void);
+
 extern int exidy_interrupt(void);
 
 extern unsigned char exidy_collision_mask;
@@ -132,6 +145,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x5101, 0x5101, input_port_1_r }, /* IN0 */
 	{ 0x5103, 0x5103, exidy_input_port_2_r, &exidy_collision }, /* IN1 */
 	{ 0x5105, 0x5105, input_port_4_r }, /* IN3 - Targ, Spectar only */
+	{ 0x5200, 0x520F, pia_1_r },
 	{ 0x5213, 0x5213, input_port_3_r }, 	/* IN2 */
 	{ 0x6000, 0x6fff, MRA_RAM }, /* Pepper II only */
 	{ 0x8000, 0xffff, MRA_ROM },
@@ -150,6 +164,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x50C0, 0x50C0, MWA_RAM, &exidy_sprite2_ypos },
 	{ 0x5100, 0x5100, MWA_RAM, &exidy_sprite_no },
 	{ 0x5101, 0x5101, MWA_RAM, &exidy_sprite_enable },
+	{ 0x5200, 0x520F, pia_1_w },
 	{ 0x5210, 0x5212, exidy_color_w, &exidy_color_latch },
 	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -182,7 +197,7 @@ static struct MemoryWriteAddress pepper2_writemem[] =
 	{ 0x50C0, 0x50C0, MWA_RAM, &exidy_sprite2_ypos },
 	{ 0x5100, 0x5100, MWA_RAM, &exidy_sprite_no },
 	{ 0x5101, 0x5101, MWA_RAM, &exidy_sprite_enable },
-	{ 0x5200, 0x5201, targ_sh_w },
+	{ 0x5200, 0x520F, pia_1_w },
 	{ 0x5210, 0x5212, exidy_color_w, &exidy_color_latch },
 	{ 0x5213, 0x5217, MWA_NOP }, /* empty control lines on color/sound board */
 	{ 0x6000, 0x6fff, exidy_characterram_w, &exidy_characterram }, /* two 6116 character RAMs */
@@ -201,6 +216,7 @@ static struct MemoryReadAddress fax_readmem[] =
 	{ 0x5100, 0x5100, input_port_0_r }, /* DSW */
 	{ 0x5101, 0x5101, input_port_1_r }, /* IN0 */
 	{ 0x5103, 0x5103, exidy_input_port_2_r, &exidy_collision }, /* IN1 */
+	{ 0x5200, 0x520F, pia_1_r },
 	{ 0x5213, 0x5213, input_port_3_r }, 	/* IN2 */
 	{ 0x6000, 0x6fff, MRA_RAM }, /* Fax, Pepper II only */
 	{ 0x8000, 0xffff, MRA_ROM },
@@ -219,6 +235,7 @@ static struct MemoryWriteAddress fax_writemem[] =
 	{ 0x50C0, 0x50C0, MWA_RAM, &exidy_sprite2_ypos },
 	{ 0x5100, 0x5100, MWA_RAM, &exidy_sprite_no },
 	{ 0x5101, 0x5101, MWA_RAM, &exidy_sprite_enable },
+	{ 0x5200, 0x520F, pia_1_w },
 	{ 0x5210, 0x5212, exidy_color_w, &exidy_color_latch },
 	{ 0x5213, 0x5217, MWA_NOP }, /* empty control lines on color/sound board */
 	{ 0x6000, 0x6fff, exidy_characterram_w, &exidy_characterram }, /* two 6116 character RAMs */
@@ -227,10 +244,13 @@ static struct MemoryWriteAddress fax_writemem[] =
 };
 
 
-
 static struct MemoryReadAddress sound_readmem[] =
 {
-	{ 0x0000, 0x57ff, MRA_RAM },
+    { 0x0000, 0x07ff, MRA_RAM },
+    { 0x0800, 0x0FFF, exidy_shriot_r },
+    { 0x1000, 0x100F, pia_2_r },
+    { 0x1800, 0x1FFF, exidy_sh8253_r },
+    { 0x2000, 0x3FFF, MRA_RAM },
 	{ 0x5800, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xf7ff, MRA_RAM },
 	{ 0xf800, 0xffff, MRA_ROM },
@@ -239,8 +259,12 @@ static struct MemoryReadAddress sound_readmem[] =
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
-	{ 0x0000, 0x57ff, MWA_RAM },
-	{ 0x5800, 0x7fff, MWA_ROM },
+    { 0x0000, 0x07FF, MWA_RAM },
+    { 0x0800, 0x0FFF, exidy_shriot_w },
+    { 0x1000, 0x100F, pia_2_w },
+    { 0x1800, 0x1FFF, exidy_sh8253_w },
+    { 0x2000, 0x3FFF, MWA_RAM },
+    { 0x5800, 0x7fff, MWA_ROM },
 	{ 0x8000, 0xf7ff, MWA_RAM },
 	{ 0xf800, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -590,7 +614,7 @@ INPUT_PORTS_START( fax_input_ports )
 	PORT_DIPSETTING(	0x20, "1:04/:48" )
 	PORT_DIPSETTING(	0x00, "1:12/1:04" )
 	PORT_DIPNAME( 0x98, 0x98, "Coins/Credit", IP_KEY_NONE )
-	PORT_DIPSETTING(	0x00, "L-2/1 R-1/3" )
+    PORT_DIPSETTING(    0x00, "L-2/1 R-1/3" )
 	PORT_DIPSETTING(	0x08, "L-1/1 R-1/4" )
 	PORT_DIPSETTING(	0x10, "L-1/1 R-1/5" )
 	PORT_DIPSETTING(	0x18, "1/3 or 2/7" )
@@ -858,7 +882,7 @@ static struct CustomSound_interface targ_custom_interface =
 static struct DACinterface targ_DAC_interface =
 {
 	1,
-	{ 100 }
+    { 100 }
 };
 
 
@@ -915,21 +939,21 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M6502,
-			1000000,	/* 1 Mhz ???? */
+			11289000/16,
 			0,
 			readmem,writemem,0,0,
 			exidy_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			1000000,	/* 1 Mhz ???? */
+			3579545/4,
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,1
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10, /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+    32, /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	exidy_init_machine,
 
 	/* video hardware */
@@ -950,6 +974,18 @@ static struct MachineDriver machine_driver =
 	0,
 	0,
 
+};
+
+static struct CustomSound_interface exidy_custom_interface =
+{
+    exidy_sh_start,
+    exidy_sh_stop,
+	0
+};
+
+static struct Samplesinterface venture_samples_interface=
+{
+	3	/* 3 Channels */
 };
 
 static struct MachineDriver venture_machine_driver =
@@ -958,17 +994,17 @@ static struct MachineDriver venture_machine_driver =
 	{
 		{
 			CPU_M6502,
-			1000000,	/* 1 Mhz ???? */
+			11289000/16,
 			0,
 			readmem,writemem,0,0,
 			venture_interrupt,32 /* Need to have multiple IRQs per frame if there's a collision */
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			1000000,	/* 1 Mhz ???? */
+			3579545/4,
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			interrupt,1
+			ignore_interrupt,0
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -988,11 +1024,19 @@ static struct MachineDriver venture_machine_driver =
 	exidy_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	0,
-	0,
-	0
+        0,0,0,0,
+	{
+		{
+			SOUND_SAMPLES,
+                        &venture_samples_interface
+                },
+		{
+			SOUND_CUSTOM,
+                        &exidy_custom_interface
+                }
+        }
 };
+
 
 static struct MachineDriver pepper2_machine_driver =
 {
@@ -1000,17 +1044,17 @@ static struct MachineDriver pepper2_machine_driver =
 	{
 		{
 			CPU_M6502,
-			1000000,	/* 1 Mhz ???? */
+			11289000/16,
 			0,
 			readmem,pepper2_writemem,0,0,
 			exidy_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			1000000,	/* 1 Mhz ???? */
+			3579545/4,
 			2,
 			sound_readmem,sound_writemem,0,0,
-			interrupt,1
+			ignore_interrupt,0
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -1030,11 +1074,20 @@ static struct MachineDriver pepper2_machine_driver =
 	exidy_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	0,
-	0,
-	0
+	0,0,0,0,
+	{
+		{
+			SOUND_SAMPLES,
+                        &venture_samples_interface
+                },
+		{
+			SOUND_CUSTOM,
+                        &exidy_custom_interface
+                }
+        }
+
 };
+
 
 static struct MachineDriver fax_machine_driver =
 {
@@ -1042,17 +1095,17 @@ static struct MachineDriver fax_machine_driver =
 	{
 		{
 			CPU_M6502,
-			1000000,	/* 1 Mhz ???? */
+			11289000/16,
 			0,
 			fax_readmem,fax_writemem,0,0,
 			exidy_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			1000000,	/* 1 Mhz ???? */
+			3579545/4,
 			2,
 			sound_readmem,sound_writemem,0,0,
-			interrupt,1
+			ignore_interrupt,0
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -1072,10 +1125,18 @@ static struct MachineDriver fax_machine_driver =
 	exidy_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	0,
-	0,
-	0
+	0,0,0,0,
+	{
+		{
+			SOUND_SAMPLES,
+                        &venture_samples_interface
+                },
+		{
+			SOUND_CUSTOM,
+                        &exidy_custom_interface
+                }
+        }
+
 };
 
 
@@ -1323,6 +1384,15 @@ ROM_END
 static int mtrap_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	static int firsttime;
+		/* the high score table is intialized to all 0, so first of all */
+		/* we dirty it, then we wait for it to be cleared again */
+		if (firsttime == 0)
+		{
+			memset(&RAM[0x0380],0xff,5+6*5);	/* high score */
+			firsttime = 1;
+		}
+
 
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0x0380],"\x00\x06\x0C\x12\x18",5) == 0) &&
@@ -1335,7 +1405,7 @@ static int mtrap_hiload(void)
 			osd_fread(f,&RAM[0x0380],5+6*5);
 			osd_fclose(f);
 		}
-
+		firsttime = 0;
 		return 1;
 	}
 	else return 0;	/* we can't load the hi scores yet */
@@ -1393,9 +1463,19 @@ static void venture_hisave(void)
 static int pepper2_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	static int firsttime;
+		/* the high score table is intialized to all 0, so first of all */
+		/* we dirty it, then we wait for it to be cleared again */
+		if (firsttime == 0)
+		{
+			memset(&RAM[0x0360],0xff,5+6*5);	/* high score */
+			firsttime = 1;
+		}
+
+
 
 	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x0360],"\x00\x06\x0C\x12\x18",5) == 0) &&
+	if ((memcmp(&RAM[0x0365],"\x00\x07\x65",3) == 0) &&
 		(memcmp(&RAM[0x0380],"\x15\x20\x11",3) == 0))
 	{
 		void *f;
@@ -1405,7 +1485,7 @@ static int pepper2_hiload(void)
 			osd_fread(f,&RAM[0x0360],5+6*5);
 			osd_fclose(f);
 		}
-
+		firsttime = 0;
 		return 1;
 	}
 	else return 0;	/* we can't load the hi scores yet */
@@ -1460,10 +1540,18 @@ static void targ_hisave(void)
 static int fax_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	static int firsttime;
+		/* the high score table is intialized to all 0, so first of all */
+		/* we dirty it, then we wait for it to be cleared again */
+		if (firsttime == 0)
+		{
+			memset(&RAM[0x02b4],0xff,7*50);	/* high score */
+			firsttime = 1;
+		}
 
-	/* Wait long enough for the hi score table to have been cleared */
-	/* (should be OK by the time execution hits $C8CB I think?) */
-	if (memcmp(&RAM[0x01F7],"\x9E\x94",2) == 0)
+
+
+	if (memcmp(&RAM[0x0360],"\x00\x00\x00",3) == 0 && memcmp(&RAM[0x040f],"\x00\x00\x00",3) == 0)
 	{
 		void *f;
 
@@ -1472,7 +1560,7 @@ static int fax_hiload(void)
 			osd_fread(f,&RAM[0x02B4],7*50);
 			osd_fclose(f);
 		}
-
+		firsttime =0;
 		return 1;
 	}
 	else return 0;	/* we can't load the hi scores yet */
@@ -1487,6 +1575,48 @@ static void fax_hisave(void)
 	{
 		/* 7 characters per hi score, 50 hi scores */
 		osd_fwrite(f,&RAM[0x02B4],7*50);
+		osd_fclose(f);
+	}
+}
+
+static int sidetrac_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	static int firsttime;
+		/* the high score table is intialized to all 0, so first of all */
+		/* we dirty it, then we wait for it to be cleared again */
+		if (firsttime == 0)
+		{
+			memset(&RAM[0x000a],0xff,8);	/* high score */
+			firsttime = 1;
+		}
+
+
+
+	/* Check for high score init. */
+	if (memcmp(&RAM[0x000f],"\x00\x00",2) == 0 && memcmp(&RAM[0x000a],"\x00\x00",2) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x000f],2);
+			osd_fclose(f);
+		}
+		firsttime = 0;
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void sidetrac_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x000f],2);
 		osd_fclose(f);
 	}
 }
@@ -1520,7 +1650,7 @@ struct GameDriver sidetrac_driver =
 
 	ORIENTATION_DEFAULT,
 
-	0,0
+	sidetrac_hiload, sidetrac_hisave
 };
 
 struct GameDriver targ_driver =
@@ -1757,7 +1887,7 @@ struct GameDriver hardhat_driver =
 	0, palette, pepper2_colortable,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	pepper2_hiload,pepper2_hisave
 };
 
 struct GameDriver fax_driver =

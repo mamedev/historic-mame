@@ -509,7 +509,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579580,	/* 3.58 MHZ ? */
-	{ 15 },
+	{ 30 },
 	{ 0 }
 };
 
@@ -565,7 +565,7 @@ static struct MachineDriver eprom_machine_driver =
 	eprom_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,

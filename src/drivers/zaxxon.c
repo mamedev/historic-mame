@@ -674,31 +674,26 @@ static void hisave(void)
 
 static int futspy_hiload(void)
 {
-
-      unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-      if (memcmp(&RAM[0x0427],"\x00\x00\x01",3) == 0 &&
-              memcmp(&RAM[0x0460],"\x49\x44\x41",3) == 0 &&
-              memcmp(&RAM[0x6419],"\x00\x00\x01",3) == 0 &&
-              memcmp(&RAM[0x6450],"\x10\x00\x49",3) == 0 )
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
+	if (memcmp(&RAM[0x0427],"\x00\x00\x01",3) == 0 &&
+			memcmp(&RAM[0x0460],"\x49\x44\x41",3) == 0 &&
+			memcmp(&RAM[0x6419],"\x00\x00\x01",3) == 0 &&
+			memcmp(&RAM[0x6450],"\x10\x00\x49",3) == 0 )
+	{
+		void *f;
 
-  {
-              void *f;
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x6419],60);
+			osd_fclose(f);
+		}
 
-              if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-              {
-                      osd_fread(f,&RAM[0x6419],60);
-                      osd_fclose(f);
-              }
-
-              return 1;
-      }
-      else return 0;   /* we can't load the hi scores yet */
- }
-
-
+		return 1;
+	}
+	else return 0;   /* we can't load the hi scores yet */
+}
 
 static void futspy_hisave(void)
 {
@@ -708,10 +703,12 @@ static void futspy_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-                osd_fwrite(f,&RAM[0x6419],60);
+		osd_fwrite(f,&RAM[0x6419],60);
 		osd_fclose(f);
 	}
 }
+
+
 
 struct GameDriver zaxxon_driver =
 {

@@ -167,7 +167,7 @@ void namco_sh_update(void)
 	namco_update(&output_buffer[sample_pos],buffer_len - sample_pos);
 	sample_pos = 0;
 
-	osd_play_streamed_sample(channel,output_buffer,buffer_len,emulation_rate,interface->volume,0);
+	osd_play_streamed_sample(channel,output_buffer,buffer_len,emulation_rate,interface->volume,OSD_PAN_CENTER);
 }
 
 

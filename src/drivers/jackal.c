@@ -396,7 +396,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,
 	3580000,
-	{ 256 },
+	{ 50 },
 	{ 0 },
 };
 
@@ -437,7 +437,7 @@ static struct MachineDriver machine_driver =
 	jackal_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -483,7 +483,7 @@ static struct MachineDriver topgunbl_machine_driver =
 	jackal_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,

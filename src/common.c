@@ -12,6 +12,7 @@
 extern unsigned int dispensed_tickets;
 unsigned int coins[COIN_COUNTERS];
 unsigned int lastcoin[COIN_COUNTERS];
+unsigned int coinlockedout[COIN_COUNTERS];
 
 /* LBO */
 #ifdef LSB_FIRST
@@ -497,6 +498,23 @@ void coin_counter_w (int offset, int data)
 	lastcoin[offset] = data;
 }
 
+void coin_lockout_w (int offset, int data)
+{
+	if (offset >= COIN_COUNTERS) return;
+
+	coinlockedout[offset] = data;
+}
+
+/* Locks out all the coin inputs */
+void coin_lockout_global_w (int offset, int data)
+{
+	int i;
+
+	for (i = 0; i < COIN_COUNTERS; i++)
+	{
+		coin_lockout_w(i, data);
+	}
+}
 
 /***************************************************************************
 

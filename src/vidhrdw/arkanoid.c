@@ -83,8 +83,9 @@ void arkanoid_d008_w(int offset,int data)
 	/* bit 2 selects the input paddle */
     arkanoid_paddle_select = data & 0x04;
 
-	/* bit 3 is coin lockout */
-    arkanoid_coin_lockout = !(data & 0x08);
+	/* bit 3 is coin lockout (but not the service coin) */
+	coin_lockout_w(0, !(data & 0x08));
+	coin_lockout_w(1, !(data & 0x08));
 
 	/* bit 4 is unknown */
 

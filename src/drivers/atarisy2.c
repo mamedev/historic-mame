@@ -700,7 +700,7 @@ static struct POKEYinterface pokey_interface =
 {
 	2,	/* 2 chips */
 	1789790,	/* ? */
-	30,
+	60,
 	POKEY_DEFAULT_GAIN,
 	USE_CLIP,
 	/* The 8 pot handlers */
@@ -721,7 +721,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579580,	/* 3.58 MHZ ? */
-	{ 20 },
+	{ 40 },
 	{ 0 }
 };
 
@@ -770,7 +770,7 @@ static struct MachineDriver paperboy_machine_driver =
 	atarisys2_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -825,7 +825,7 @@ static struct MachineDriver apb_machine_driver =
 	atarisys2_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -880,7 +880,7 @@ static struct MachineDriver a720_machine_driver =
 	atarisys2_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -935,7 +935,7 @@ static struct MachineDriver ssprint_machine_driver =
 	atarisys2_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -986,7 +986,7 @@ static struct MachineDriver csprint_machine_driver =
 	atarisys2_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,

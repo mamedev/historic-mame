@@ -132,7 +132,7 @@ void tmnt_s_9000_w(int offset,int data)
 	if (data & 4) sample_start(0,0,0);
 }
 
-int tmnt_decode_sample(const char *gamename)
+int tmnt_decode_sample(void)
 {
 	int i;
 	signed short *dest;
@@ -768,7 +768,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579545,	/* 3.579545 MHz */
-	{ 255 },
+	{ 60 },
 	{ 0 }
 };
 
@@ -815,8 +815,8 @@ static struct MachineDriver tmnt_machine_driver =
 	tmnt_vh_screenrefresh,
 
 	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,
 	tmnt_decode_sample,
-	0,
 	0,
 	0,
 	{
@@ -871,7 +871,7 @@ static struct MachineDriver punkshot_machine_driver =
 	punkshot_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,

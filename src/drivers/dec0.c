@@ -863,7 +863,7 @@ static struct YM2203interface ym2203_interface =
 static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3600000,	/* 3.600000 MHz ? (partially supported) */
+	3250000,	/* 3.25 MHz ? (hand tuned) */
 	{ 255 },	/* (not supported) */
 	sound_irq,
 };
@@ -1856,11 +1856,12 @@ static int robocopp_hiload(void)
 
         /* check if the hi score table has already been initialized */
 
-        if (memcmp(&ram_robo[0x0ed8],"UMPR",4) == 0)
+        if (READ_WORD(&ram_robo[0x0ed8]) == 0x4d55 && READ_WORD(&ram_robo[0x0eda]) == 0x5250 &&
+			READ_WORD(&ram_robo[0x0f68]) == 0x504f && READ_WORD(&ram_robo[0x0f6a]) == 0x4c49 )
         {
                 if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
                 {
-                        osd_fread(f,&ram_robo[0x0ed8],16*10);
+                        osd_fread_msbfirst(f,&ram_robo[0x0ed8],16*10);
                         ram_robo[0x3522]=ram_robo[0x0ee0];
                         ram_robo[0x3523]=ram_robo[0x0ee1];
                         ram_robo[0x3524]=ram_robo[0x0ee2];
@@ -1879,8 +1880,9 @@ static void robocopp_hisave(void)
 
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
         {
-                osd_fwrite(f,&ram_robo[0x0ed8],16*10);
+                osd_fwrite_msbfirst(f,&ram_robo[0x0ed8],16*10);
                 osd_fclose(f);
+				ram_robo[0x0ed8]=0;
         }
 }
 
@@ -1890,12 +1892,13 @@ static int hbarrel_hiload(void)
 
         /* check if the hi score table has already been initialized */
 
-        if (memcmp(&ram_gen[0x3e9c],"\x10\x00\x00",3) == 0)
+        if (READ_WORD(&ram_gen[0x3e9c]) == 0x10 && READ_WORD(&ram_gen[0x3ea0]) == 0x09 &&
+			READ_WORD(&ram_gen[0x3ef0]) == 0x55 && READ_WORD(&ram_gen[0x3ef2]) == 0x4d26)
         {
                 if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
                 {
-                        osd_fread(f,&ram_gen[0x3e9c],4*10);
-                        osd_fread(f,&ram_gen[0x3ecc],4*10);
+                        osd_fread_msbfirst(f,&ram_gen[0x3e9c],4*10);
+                        osd_fread_msbfirst(f,&ram_gen[0x3ecc],4*10);
                         osd_fclose(f);
                 }
                 return 1;
@@ -1910,8 +1913,8 @@ static void hbarrel_hisave(void)
 
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
         {
-                osd_fwrite(f,&ram_gen[0x3e9c],4*10);
-                osd_fwrite(f,&ram_gen[0x3ecc],4*10);
+                osd_fwrite_msbfirst(f,&ram_gen[0x3e9c],4*10);
+                osd_fwrite_msbfirst(f,&ram_gen[0x3ecc],4*10);
                 osd_fclose(f);
         }
 }
@@ -1922,12 +1925,13 @@ static int hbarrelj_hiload(void)
 
         /* check if the hi score table has already been initialized */
 
-        if (memcmp(&ram_gen[0x3e78],"\x10\x00\x00",3) == 0)
+        if (READ_WORD(&ram_gen[0x3e78]) == 0x10 && READ_WORD(&ram_gen[0x3e7c]) == 0x09 &&
+			READ_WORD(&ram_gen[0x3ecc]) == 0x55 && READ_WORD(&ram_gen[0x3ece]) == 0x4d26 )
         {
                 if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
                 {
-                        osd_fread(f,&ram_gen[0x3e78],4*10);
-                        osd_fread(f,&ram_gen[0x3ea8],4*10);
+                        osd_fread_msbfirst(f,&ram_gen[0x3e78],4*10);
+                        osd_fread_msbfirst(f,&ram_gen[0x3ea8],4*10);
                         osd_fclose(f);
                 }
                 return 1;
@@ -1942,8 +1946,8 @@ static void hbarrelj_hisave(void)
 
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
         {
-                osd_fwrite(f,&ram_gen[0x3e78],4*10);
-                osd_fwrite(f,&ram_gen[0x3ea8],4*10);
+                osd_fwrite_msbfirst(f,&ram_gen[0x3e78],4*10);
+                osd_fwrite_msbfirst(f,&ram_gen[0x3ea8],4*10);
                 osd_fclose(f);
         }
 }
@@ -1954,11 +1958,12 @@ static int baddudes_hiload(void)
 
         /* check if the hi score table has already been initialized */
 
-        if (memcmp(&ram_gen[0x28fe],"IM",2) == 0 )
+        if (READ_WORD(&ram_gen[0x28fe]) == 0x4d49 && READ_WORD(&ram_gen[0x2900]) == 0x4e00 &&
+			READ_WORD(&ram_gen[0x299E]) == 0x444d && READ_WORD(&ram_gen[0x29a0]) == 0x5900 )
         {
                 if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
                 {
-                        osd_fread(f,&ram_gen[0x28fe],8*20);
+                        osd_fread_msbfirst(f,&ram_gen[0x28fe],8*20);
                         ram_gen[0x01d4]=ram_gen[0x2903];
                         ram_gen[0x01d7]=ram_gen[0x2902];
                         ram_gen[0x01d6]=ram_gen[0x2905];
@@ -1976,7 +1981,7 @@ static void baddudes_hisave(void)
 
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
         {
-                osd_fwrite(f,&ram_gen[0x28fe],8*20);
+                osd_fwrite_msbfirst(f,&ram_gen[0x28fe],8*20);
                 osd_fclose(f);
         }
 }
@@ -1987,11 +1992,12 @@ static int drgninja_hiload(void)
 
         /* check if the hi score table has already been initialized */
 
-        if (memcmp(&ram_gen[0x28f8],"IM",2) == 0 )
+        if (READ_WORD(&ram_gen[0x28f8]) == 0x4d49 && READ_WORD(&ram_gen[0x28fa]) == 0x4e00 &&
+			READ_WORD(&ram_gen[0x2998]) == 0x444d && READ_WORD(&ram_gen[0x299a]) == 0x5900)
         {
                 if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
                 {
-                        osd_fread(f,&ram_gen[0x28f8],8*20);
+                        osd_fread_msbfirst(f,&ram_gen[0x28f8],8*20);
                         ram_gen[0x01d4]=ram_gen[0x28fd];
                         ram_gen[0x01d7]=ram_gen[0x28fc];
                         ram_gen[0x01d6]=ram_gen[0x28ff];
@@ -2008,7 +2014,7 @@ static void drgninja_hisave(void)
 
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
         {
-                osd_fwrite(f,&ram_gen[0x28f8],8*20);
+                osd_fwrite_msbfirst(f,&ram_gen[0x28f8],8*20);
                 osd_fclose(f);
         }
 }
@@ -2019,11 +2025,12 @@ static int hippodrm_hiload(void)
 
         /* check if the hi score table has already been initialized */
 
-        if (memcmp(&ram_hippo[0x3e00],"\x00\x08\x00",3) == 0 )
+        if (READ_WORD(&ram_hippo[0x3e00]) == 0x0800 && READ_WORD(&ram_hippo[0x3e04]) == 0x0700  &&
+			READ_WORD(&ram_hippo[0x3e4c]) == 0x4352 && READ_WORD(&ram_hippo[0x3e4e]) == 0x5801  )
         {
                 if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
                 {
-                        osd_fread(f,&ram_hippo[0x3e00],80);
+                        osd_fread_msbfirst(f,&ram_hippo[0x3e00],80);
                         osd_fclose(f);
                 }
                 return 1;
@@ -2037,7 +2044,7 @@ static void hippodrm_hisave(void)
 
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
         {
-                osd_fwrite(f,&ram_hippo[0x3e00],80);
+                osd_fwrite_msbfirst(f,&ram_hippo[0x3e00],80);
                 osd_fclose(f);
         }
 }
@@ -2048,11 +2055,12 @@ static int slyspy_hiload(void)
 
         /* check if the hi score table has already been initialized */
 
-        if (memcmp(&ram_sly[0x50],"00",2) == 0 )
+        if (READ_WORD(&ram_sly[0x0000]) == 0x30 && READ_WORD(&ram_sly[0x0004]) == 0x28 &&
+			READ_WORD(&ram_sly[0x0098]) == 0x3030 && READ_WORD(&ram_sly[0x009c]) == 0x3030)
         {
                 if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
                 {
-                        osd_fread(f,&ram_sly[0],160);
+                        osd_fread_msbfirst(f,&ram_sly[0],160);
                         ram_sly[0x2adc]=ram_sly[0];
                         ram_sly[0x2add]=ram_sly[1];
                         ram_sly[0x2ade]=ram_sly[2];
@@ -2070,8 +2078,9 @@ static void slyspy_hisave(void)
 
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
         {
-                osd_fwrite(f,&ram_sly[0],160);
+                osd_fwrite_msbfirst(f,&ram_sly[0],160);
                 osd_fclose(f);
+				ram_sly[0x0098] = 0;
         }
 }
 
@@ -2081,11 +2090,12 @@ static int midres_hiload(void)
 
         /* check if the hi score table has already been initialized */
 
-        if (memcmp(&ram_midres[0x2714],"EK",2) == 0 )
+        if (READ_WORD(&ram_midres[0x26ea]) == 0x10 && READ_WORD(&ram_midres[0x26ee]) == 0x09 &&
+			READ_WORD(&ram_midres[0x2736]) == 0x55 && READ_WORD(&ram_midres[0x2738]) == 0x4d26)
         {
                 if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
                 {
-                        osd_fread(f,&ram_midres[0x26ea],80);
+                        osd_fread_msbfirst(f,&ram_midres[0x26ea],80);
                         osd_fclose(f);
                 }
                 return 1;
@@ -2099,7 +2109,7 @@ static void midres_hisave(void)
 
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
         {
-                osd_fwrite(f,&ram_midres[0x26ea],80);
+                osd_fwrite_msbfirst(f,&ram_midres[0x26ea],80);
                 osd_fclose(f);
         }
 }

@@ -15,7 +15,6 @@
 unsigned char *astrof_color;
 unsigned char *tomahawk_protection;
 
-static int astrof_col_hardware;  // Which flavor of color hardware we're emulating
 static int flipscreen = 0;
 static int force_refresh = 0;
 static int do_modify_palette = 0;
@@ -23,16 +22,6 @@ static int palette_bank = -1, red_on = -1;
 static int protection_value;
 static const unsigned char *prom;
 
-
-void astrof_init_machine(void)
-{
-	astrof_col_hardware = 1;
-}
-
-void tomahawk_init_machine(void)
-{
-	astrof_col_hardware = 0;
-}
 
 /* Just save the colorprom pointer */
 void astrof_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
@@ -58,34 +47,26 @@ void astrof_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
   resistor for each color gun, this is one of the concievable settings
 
 ***************************************************************************/
-static void modify_palette(int palette_bank_, int red_on_)
+static void modify_palette(void)
 {
 	int i, col_index;
 
-	if (astrof_col_hardware)
-	{
-		// Astro Fighter has a global palette select bit
-		col_index = (palette_bank_ ? 16 : 0);
-	}
-	else
-	{
-		col_index = 0;
-	}
+	col_index = (palette_bank ? 16 : 0);
 
 	for (i = 0;i < Machine->drv->total_colors; i++)
 	{
 		int bit0,bit1,r,g,b;
 
-		bit0 = (red_on_ ? 0x01 : (prom[col_index] >> 0) & 0x01);
-		bit1 = (red_on_ ? 0x01 : (prom[col_index] >> 1) & 0x01);
+		bit0 = ((prom[col_index] >> 0) & 0x01) | (red_on >> 3);
+		bit1 = ((prom[col_index] >> 1) & 0x01) | (red_on >> 3);
 		r = 0xc0 * bit0 + 0x3f * bit1;
 
-		bit0 = (prom[col_index] >> 2) & 0x01;
-		bit1 = (prom[col_index] >> 3) & 0x01;
+		bit0 = ( prom[col_index] >> 2) & 0x01;
+		bit1 = ( prom[col_index] >> 3) & 0x01;
 		g = 0xc0 * bit0 + 0x3f * bit1;
 
-		bit0 = (prom[col_index] >> 4) & 0x01;
-		bit1 = (prom[col_index] >> 5) & 0x01;
+		bit0 = ( prom[col_index] >> 4) & 0x01;
+		bit1 = ( prom[col_index] >> 5) & 0x01;
 		b = 0xc0 * bit0 + 0x3f * bit1;
 
 		col_index++;
@@ -120,29 +101,17 @@ void astrof_vh_stop(void)
 
 
 
-
-void astrof_videoram_w(int offset,int data)
+static void common_videoram_w(int offset,int data,int palette)
 {
 	/* DO NOT try to optimize this by comparing if the value actually changed.
 	   The game writes the same bytes with different colors. For example, the
 	   fuel meter doesn't work with that 'optimization' */
 
-	int i,x,y,dy,fore,back,color,palette;
+	int i,x,y,dy,fore,back,color;
 
 	videoram[offset] = data;
 
 	color = *astrof_color & 0x0e;
-
-	if (astrof_col_hardware)
-	{
-		// Astro Fighter's palette is set in astrof_video_control2_w, D0 is unused
-		palette = 0;
-	}
-	else
-	{
-		// Tomahawk's palette is set per byte
-		palette = (*astrof_color & 0x01) << 4;
-	}
 
 	fore = Machine->pens[color | palette | 1];
 	back = Machine->pens[color | palette    ];
@@ -170,6 +139,20 @@ void astrof_videoram_w(int offset,int data)
 		y += dy;
 		data >>= 1;
 	}
+}
+
+void astrof_videoram_w(int offset,int data)
+{
+	// Astro Fighter's palette is set in astrof_video_control2_w, D0 is unused
+	common_videoram_w(offset, data, 0);
+}
+
+void tomahawk_videoram_w(int offset,int data)
+{
+	// Tomahawk's palette is set per byte
+	int palette = (*astrof_color & 0x01) << 4;
+
+	common_videoram_w(offset, data, palette);
 }
 
 
@@ -212,23 +195,20 @@ void astrof_video_control1_w(int offset,int data)
 }
 
 
+// Video control register 2
+//
+// Bit 0     = Hooked up to a connector called OUT0, don't know what it does
+// Bit 1     = Hooked up to a connector called OUT1, don't know what it does
+// Bit 2     = Palette select in Astro Fighter, unused in Tomahawk
+// Bit 3     = Turns on RED color gun regardless of what the value is
+// 			   in the color PROM
+// Bit 4-7   = Not hooked up
+
 void astrof_video_control2_w(int offset,int data)
 {
-	if (errorlog) fprintf(errorlog, "Video2: %02X\n", data);
-
-	// Video control register 2
-	//
-	// Bit 0     = Hooked up to a connector called OUT0, don't know what it does
-	// Bit 1     = Hooked up to a connector called OUT1, don't know what it does
-	// Bit 2     = Palette select in Astro Fighter, unused in Tomahawk
-	// Bit 3     = Turns on RED color guns regardless of what the value is
-	// 			   in the color PROM
-	// Bit 4-7   = Not hooked up
-
-	if ( astrof_col_hardware &&
-	    (palette_bank != (data & 0x04)))
+	if (palette_bank != (data & 0x04))
 	{
-		palette_bank = data & 0x04;
+		palette_bank = (data & 0x04);
 		do_modify_palette = 1;
 	}
 
@@ -240,6 +220,24 @@ void astrof_video_control2_w(int offset,int data)
 
 	/* Defer changing the colors to avoid flicker */
 }
+
+void tomahawk_video_control2_w(int offset,int data)
+{
+	if (palette_bank == -1)
+	{
+		palette_bank = 0;
+		do_modify_palette = 1;
+	}
+
+	if (red_on != (data & 0x08))
+	{
+		red_on = data & 0x08;
+		do_modify_palette = 1;
+	}
+
+	/* Defer changing the colors to avoid flicker */
+}
+
 
 int tomahawk_protection_r(int offset)
 {
@@ -268,18 +266,19 @@ int tomahawk_protection_r(int offset)
 ***************************************************************************/
 void astrof_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	if (!full_refresh && !force_refresh && !do_modify_palette)
-		return;
-
 	if (do_modify_palette)
 	{
-		modify_palette(palette_bank, red_on);
+		modify_palette();
 
 		do_modify_palette = 0;
 	}
+
+	if (!full_refresh && !force_refresh)
+		return;
 
 	/* copy the character mapped graphics */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 	force_refresh = 0;
 }
+

@@ -13,6 +13,8 @@
 #define MAXFREQ_B1 44100*4
 #define MAXFREQ_B2 44100*4
 
+#define MAX_VOLUME 20
+
 /* for voice A effects */
 #define SW_INTERVAL 4
 #define MOD_RATE 0.14
@@ -55,30 +57,6 @@ static unsigned char waveform2[] =
 };
 
 
-int pleiads_sh_init (const char *gamename)
-{
-	if (Machine->samples != 0 && Machine->samples->sample[0] != 0)
-		noisemulate = 0;
-	else
-		noisemulate = 1;
-
-	/* Clear all the variables */
-	{
-		int i;
-		for (i = 0; i < 3; i ++)
-		{
-			sound_play[i] = 0;
-			sound_vol[i] = 0;
-			sound_freq[i] = SAFREQ; /* The B voices use the same constant for now */
-		}
-		noise_vol = 0;
-		noise_freq = 1000;
-		pitch_a = pitch_b1 = pitch_b2 = 0;
-		portBstatus = 0;
-	}
-	return 0;
-}
-
 
 void pleiads_sound_control_a_w (int offset,int data)
 {
@@ -96,7 +74,7 @@ void pleiads_sound_control_a_w (int offset,int data)
 
 	if (freq != 0x0f)
 	{
-		osd_adjust_sample (0, MAXFREQ_A/(16-sound_freq[0]), 85*(3-vol));
+		osd_adjust_sample (0, MAXFREQ_A/(16-sound_freq[0]), MAX_VOLUME*(3-vol));
 		sound_play[0] = 1;
 	}
 	else
@@ -113,7 +91,7 @@ void pleiads_sound_control_a_w (int offset,int data)
 			noise_vol = 85*noise;
 		}
 
-		if (noise) osd_adjust_sample (3,noise_freq,noise_vol);
+		if (noise) osd_adjust_sample (3,noise_freq,noise_vol/4);
 		else
 		{
 			osd_adjust_sample (3,1000,0);
@@ -163,7 +141,7 @@ void pleiads_sound_control_b_w (int offset,int data)
 
 	if (freq < 0x0e) /* LBO clip both 0xe and 0xf to get rid of whine in Pop Flamer */
 	{
-		osd_adjust_sample (portBstatus + 1, MAXFREQ_B1/(16-sound_freq[portBstatus + 1]), 85*(3-vol));
+		osd_adjust_sample (portBstatus + 1, MAXFREQ_B1/(16-sound_freq[portBstatus + 1]), MAX_VOLUME*(3-vol));
 		sound_play[portBstatus + 1] = 1;
 	}
 	else
@@ -179,10 +157,31 @@ void pleiads_sound_control_b_w (int offset,int data)
 
 int pleiads_sh_start (void)
 {
+	if (Machine->samples != 0 && Machine->samples->sample[0] != 0)
+		noisemulate = 0;
+	else
+		noisemulate = 1;
+
+	/* Clear all the variables */
+	{
+		int i;
+		for (i = 0; i < 3; i ++)
+		{
+			sound_play[i] = 0;
+			sound_vol[i] = 0;
+			sound_freq[i] = SAFREQ; /* The B voices use the same constant for now */
+		}
+		noise_vol = 0;
+		noise_freq = 1000;
+		pitch_a = pitch_b1 = pitch_b2 = 0;
+		portBstatus = 0;
+	}
+
 	osd_play_sample (0,(signed char *)waveform1,32,1000,0,1);
 	osd_play_sample (1,(signed char *)waveform1,32,1000,0,1);
 	osd_play_sample (2,(signed char *)waveform1,32,1000,0,1);
 	osd_play_sample (3,(signed char *)waveform2,128,1000,0,1);
+
 	return 0;
 }
 
@@ -225,15 +224,15 @@ if (sound_b_vol==3 || (last_b_freq==15&&sound_b_freq==12) || (last_b_freq!=14&&s
   */
 
 	if (sound_play[0])
-		osd_adjust_sample (0, pitch_a, 85*(3-sound_vol[0]));
+		osd_adjust_sample (0, pitch_a, MAX_VOLUME*(3-sound_vol[0]));
 	if (sound_play[1])
-		osd_adjust_sample (1, pitch_b1, 85*(3-sound_vol[1]));
+		osd_adjust_sample (1, pitch_b1, MAX_VOLUME*(3-sound_vol[1]));
 	if (sound_play[2])
-		osd_adjust_sample (2, pitch_b2, 85*(3-sound_vol[2]));
+		osd_adjust_sample (2, pitch_b2, MAX_VOLUME*(3-sound_vol[2]));
 
 	if ((noise_vol) && (noisemulate))
 	{
-		osd_adjust_sample (3,noise_freq,noise_vol);
+		osd_adjust_sample (3,noise_freq,noise_vol/4);
 		noise_vol-=3;
 	}
 }

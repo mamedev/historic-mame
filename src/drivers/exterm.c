@@ -255,14 +255,14 @@ INPUT_PORTS_END
 static struct DACinterface dac_interface =
 {
 	2, 			/* 2 channels on 1 chip */
-	{ 255, 255 },
+	{ 50, 50 },
 };
 
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	4000000,	/* 4 MHz */
-	{ 255 },
+	{ 50 },
 	{ 0 }
 };
 
@@ -321,7 +321,7 @@ static struct MachineDriver machine_driver =
 	exterm_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_DAC,

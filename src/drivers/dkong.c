@@ -1205,6 +1205,54 @@ static const char *dkongjr_sample_names[] =
 };
 
 
+static int radarscp_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	/* check if the hi score table has already been initialized */
+	if (	memcmp(&RAM[0x6307],"\x00\x00\x07",3) == 0 &&
+			memcmp(&RAM[0x631c],"\x00\x50\x76",3) == 0 &&
+			memcmp(&RAM[0x63a7],"\x00\xfc\x76",3) == 0 &&
+			memcmp(&RAM[0x60a8],"\x50\x76\x00",3) == 0) 	/* high score */
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x6307],162);
+			osd_fclose(f);
+			RAM[0x60a7]	= RAM[0x631d];
+			RAM[0x60a8]	= RAM[0x631e];
+			RAM[0x60a9]	= RAM[0x631f];
+	/* also have to copy the score to video ram so it displays on startup */
+			RAM[0x7641] = RAM[0x6307];
+			RAM[0x7621] = RAM[0x6308];
+			RAM[0x7601] = RAM[0x6309];
+			RAM[0x75e1] = RAM[0x630a];
+			RAM[0x75c1] = RAM[0x630b];
+			RAM[0x75a1] = RAM[0x630c];
+
+		}
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void radarscp_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x6307],162);
+		osd_fclose(f);
+	}
+}
+
+
 
 static int hiload(void)
 {
@@ -1257,11 +1305,22 @@ static void hisave(void)
 static int dkong3_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	static int firsttime;
+	/* check if the hi score table has already been initialized */
+	/* the high score table is intialized to all 0, so first of all */
+	/* we dirty it, then we wait for it to be cleared again */
+	if (firsttime == 0)
+	{
+		memset(&RAM[0x6b00],0xff,34*5);
+		firsttime = 1;
+	}
+
+
 
 
 	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x6b1d],"\x00\x20\x01",3) == 0 &&
-	    memcmp(&RAM[0x6ba5],"\x00\x32\x00",3) == 0)
+	if (memcmp(&RAM[0x6b00],"\xf3\x76\xe8",3) == 0 &&
+	    memcmp(&RAM[0x6ba7],"\x00\x5b\x76",3) == 0)
 	{
 		void *f;
 
@@ -1276,11 +1335,12 @@ static int dkong3_hiload(void)
 			osd_fread(f,&RAM[0x6c16],4);
 			osd_fclose(f);
 		}
-
+		firsttime = 0;
 		return 1;
 	}
 	else return 0;	/* we can't load the hi scores yet */
 }
+
 
 static void dkong3_hisave(void)
 {
@@ -1295,6 +1355,44 @@ static void dkong3_hisave(void)
 		osd_fwrite(f,&RAM[0x6c16],4);
 		osd_fclose(f);
 	}
+}
+
+
+static int dkngjrjp_hiload(void)
+{
+
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x611d],"\x00\x18\x01",3) == 0 &&
+			memcmp(&RAM[0x61a5],"\x00\x57\x00",3) == 0 &&
+			memcmp(&RAM[0x60b8],"\x00\x18\x01",3) == 0)	/* high score */
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x6100],34*5);
+			osd_fclose(f);
+			RAM[0x60b8] = RAM[0x611d];
+			RAM[0x60b9] = RAM[0x611e];
+			RAM[0x60ba] = RAM[0x611f];
+
+			/* also copy the high score to the screen, otherwise it won't be */
+			/* updated until a new game is started */
+			videoram_w(0x0241,RAM[0x6107]);
+			videoram_w(0x0221,RAM[0x6108]);
+			videoram_w(0x0201,RAM[0x6109]);
+			videoram_w(0x01e1,RAM[0x610a]);
+			videoram_w(0x01c1,RAM[0x610b]);
+			videoram_w(0x01a1,RAM[0x610c]);
+
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
 }
 
 
@@ -1322,7 +1420,7 @@ struct GameDriver radarscp_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	radarscp_hiload,radarscp_hisave
 };
 
 struct GameDriver dkong_driver =
@@ -1426,7 +1524,7 @@ struct GameDriver dkngjrjp_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	dkngjrjp_hiload,hisave
 };
 
 struct GameDriver dkjrjp_driver =

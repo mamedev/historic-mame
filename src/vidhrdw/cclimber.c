@@ -185,17 +185,19 @@ void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 			palette[3*j + 2] = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 		}
 
+		if (i % 8 && j == 0) j = 1; /* avoid undesired transparency */
+
 		COLOR(0,i) = j;
 
-		// Black background for the side panel
+		/* Black background for the side panel */
 		if (i % 8)
 		{
 		    COLOR(0,i+realcnt) = j;
 		}
 		else
 		{
-		    // Opaque black
-		    COLOR(0,i+realcnt) = 1;
+			/* Opaque black */
+			COLOR(0,i+realcnt) = 1;
 		}
 	}
 

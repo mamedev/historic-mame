@@ -265,6 +265,7 @@ INLINE void pang_refresh_palette( void )
 		if (pang_used_colors[i])
 		{
 			memset(palette_used_colors+i*16, PALETTE_COLOR_USED, 16);
+			palette_used_colors[i*16+15]=PALETTE_COLOR_TRANSPARENT;
 		}
 	}
 	if (palette_recalc())
@@ -305,32 +306,13 @@ void pang_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					pang_video_dirty[offs+1]=0;
 					pang_color_dirty[offsclr]=0;
 
-					if (color==0x7f || !color)
-					{
-						/*
-							 Blank rectangle
-							 Otherwise we get dark a grey
-							 background on the title screen
-							 when the game boots up.
-						*/
-
-						struct rectangle rect;
-						rect.min_x=8*sx;
-						rect.min_y=8*sy;
-						rect.max_x=rect.min_x+8;
-						rect.max_y=rect.min_y+8;
-						fillbitmap(pang_tmpbitmap,Machine->pens[0],&rect);
-					}
-					else
-					{
-						drawgfx(pang_tmpbitmap,Machine->gfx[0],
-								code,
-								color,
-								attrib & 0x80,0,
-								8*sx,8*sy,
-								NULL,
-								TRANSPARENCY_NONE,0);
-					}
+					drawgfx(pang_tmpbitmap,Machine->gfx[0],
+							code,
+							color,
+							attrib & 0x80,0,
+							8*sx,8*sy,
+							NULL,
+							TRANSPARENCY_NONE,0);
 				}
 				offs+=2;
 				offsclr++;

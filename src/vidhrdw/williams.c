@@ -760,44 +760,12 @@ static void sinistar_opaque_solid_blitter_w (int offset, int data, int keepmask)
 
 void blaster_vh_convert_color_prom (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
-	int i;
-	unsigned char *pal;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-
-	pal = palette;
-
-	/* Set all the 256 colors because we need them to remap the color 0 */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		int bit0,bit1,bit2;
-
-		/* red component */
-		bit0 = (i >> 0) & 0x01;
-		bit1 = (i >> 1) & 0x01;
-		bit2 = (i >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		/* green component */
-		bit0 = (i >> 3) & 0x01;
-		bit1 = (i >> 4) & 0x01;
-		bit2 = (i >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		/* blue component */
-		bit0 = 0;
-		bit1 = (i >> 6) & 0x01;
-		bit2 = (i >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-	}
-
-	/* Keep at least the pure red ones since the first 16 will be used for the game */
-	/* This important because the Robot grid uses those reds */
-	for (i = 0; i < 16*3; i++)
-		pal[i+64*3] = pal[i];
-
 	/* Expand the lookup table so that we do one lookup per byte */
 	williams_remap_lookup = malloc (256 * 256);
 	if (williams_remap_lookup)
 	{
+		int i;
+
 		for (i = 0; i < 256; i++)
 		{
 			const unsigned char *table = color_prom + (i & 0x7f) * 16;
@@ -817,11 +785,17 @@ void blaster_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int i, j;
 	int back_color;
-	int pen0 = Machine->pens[0];
+	int pen0 = palette_transparent_pen;
 	int back_pen;
 	int first = -1;
 
 	/* Recalculate palette */
+	for (j = 0; j < 0x100; j++)
+	{
+		paletteram_BBGGGRRR_w(j + 16,blaster_color_zero_table[j] ^ 0xff);
+	}
+
+
 	if (palette_recalc ())
 	{
 		for (i = 0; i < 0x9800; i++)
@@ -842,10 +816,9 @@ void blaster_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			if ((blaster_color_zero_flags[j] & 0x01) != 0)
 			{
-				back_color = blaster_color_zero_table[j] ^ 0xff;
-				if (back_color != 0)
-					if (back_color < 16)
-						back_color += 64; /* Since we lose the 16 first colors point elsewhere */
+				if ((blaster_color_zero_table[j] ^ 0xff) == 0)
+					back_color = 0;
+				else back_color = 16 + j;
 			}
 
 			/* Update the dirty marking */
@@ -876,4 +849,32 @@ void blaster_video_bits_w (int offset, int data)
 {
 	*blaster_video_bits = data;
 	blaster_erase_screen = data & 0x02;
+}
+
+int blaster_vh_start(void)
+{
+	int i;
+
+
+	/* mark color 0 as transparent. We will draw the rainbow background behind it. */
+	palette_used_colors[0] = PALETTE_COLOR_TRANSPARENT;
+	for (i = 0;i < 256;i++)
+	{
+		/* mark as used only the colors used for the visible background lines */
+		if (i < Machine->drv->visible_area.min_y ||
+				i > Machine->drv->visible_area.max_y)
+			palette_used_colors[16 + i] = PALETTE_COLOR_UNUSED;
+
+		/* TODO: this leaves us with a total of 255+1 colors used, which is just */
+		/* a bit too much for the palette system to handle them efficiently. */
+		/* As a quick workaround, I set the top three lines to be always black. */
+		/* To do it correctly, vh_screenrefresh() should group the background */
+		/* lines of the same color and mark the others as COLOR_UNUSED. */
+		/* The background is very redundant so this can be done easily. */
+		palette_used_colors[16 + Machine->drv->visible_area.min_y] = PALETTE_COLOR_TRANSPARENT;
+		palette_used_colors[16 + 1+Machine->drv->visible_area.min_y] = PALETTE_COLOR_TRANSPARENT;
+		palette_used_colors[16 + 2+Machine->drv->visible_area.min_y] = PALETTE_COLOR_TRANSPARENT;
+	}
+
+	return williams_vh_start_sc2();
 }

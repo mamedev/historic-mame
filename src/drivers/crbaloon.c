@@ -352,6 +352,55 @@ ROM_START( crbalon2_rom )
 	ROM_LOAD( "cl08.bin",     0x0800, 0x0800, 0xba898659 )
 ROM_END
 
+/* HSC 12/02/98 */
+static int hiload(void)
+{
+
+	static int firsttime =0;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	if (firsttime == 0)
+		{
+			memset(&RAM[0x4014],0xff,5); /* hi score */
+			memset(&RAM[0x417d],0xff,12); /* name */
+			firsttime = 1;
+		}
+
+    /* check if the hi score table has already been initialized */
+    if (memcmp(&RAM[0x4014],"\x00\x00\x00\x00\x00",5) == 0 &&
+		memcmp(&RAM[0x417f],"\x11\x12\x29\x1c\x0c\x18\x1b\x0e\x00\x00",10) == 0  )
+    {
+        void *f;
+
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+        {
+            osd_fread(f,&RAM[0x4014],5);
+			osd_fread(f,&RAM[0x417d],12);
+			osd_fclose(f);
+        }
+		firsttime = 0;
+        return 1;
+    }
+    else return 0;  /* we can't load the hi scores yet */
+}
+
+static void hisave(void)
+{
+    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+    {
+	 	osd_fwrite(f,&RAM[0x4014],5);
+		osd_fwrite(f,&RAM[0x417d],12);
+        osd_fclose(f);
+    	memset(&RAM[0x4014],0xff,5); /* hi score */
+		memset(&RAM[0x417d],0xff,12); /* name */
+
+	}
+}
+
+
 
 struct GameDriver crbaloon_driver =
 {
@@ -376,7 +425,7 @@ struct GameDriver crbaloon_driver =
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	hiload,hisave /* hsc 12/02/98 */
 };
 
 struct GameDriver crbalon2_driver =
@@ -402,5 +451,5 @@ struct GameDriver crbalon2_driver =
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	hiload , hisave /* hsc 12/02/98 */
 };

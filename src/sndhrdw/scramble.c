@@ -57,3 +57,25 @@ void scramble_sh_irqtrigger_w(int offset,int data)
 
 	last = data & 0x08;
 }
+
+
+static void filter_w(int chip, int channel, int data)
+{
+	int C;
+
+
+	C = 0;
+	if (data & 1) C += 220000;	/* 220000pF = 0.220uF */
+	if (data & 2) C +=  47000;	/*  47000pF = 0.047uF */
+	set_RC_filter(3*chip + channel,1000,5100,0,C);
+}
+
+void scramble_filter_w(int offset,int data)
+{
+	filter_w(1, 0, (offset >>  0) & 3);
+	filter_w(1, 1, (offset >>  2) & 3);
+	filter_w(1, 2, (offset >>  4) & 3);
+	filter_w(0, 0, (offset >>  6) & 3);
+	filter_w(0, 1, (offset >>  8) & 3);
+	filter_w(0, 2, (offset >> 10) & 3);
+}

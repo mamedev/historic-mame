@@ -119,18 +119,15 @@ void naughtyb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 // Let's skip the sound for now.. ;)
 // void naughtyb_sound_control_a_w(int offset, int data);
 // void naughtyb_sound_control_b_w(int offset, int data);
-// int naughtyb_sh_init(const char *gamename);
 // int naughtyb_sh_start(void);
 // void naughtyb_sh_update(void);
 
 void phoenix_sound_control_a_w(int offset, int data);
 void phoenix_sound_control_b_w(int offset, int data);
-int phoenix_sh_init(const char *gamename);
 int phoenix_sh_start(void);
 void phoenix_sh_update(void);
 void pleiads_sound_control_a_w(int offset, int data);
 void pleiads_sound_control_b_w(int offset, int data);
-int pleiads_sh_init(const char *gamename);
 int pleiads_sh_start(void);
 void pleiads_sh_update(void);
 
@@ -324,7 +321,7 @@ static struct MachineDriver machine_driver =
 	naughtyb_vh_screenrefresh,
 
 	/* sound hardware */
-	pleiads_sh_init,
+	0,
 	pleiads_sh_start,
 	0,
 	pleiads_sh_update
@@ -360,7 +357,7 @@ static struct MachineDriver popflame_machine_driver =
 	naughtyb_vh_screenrefresh,
 
 	/* sound hardware */
-	pleiads_sh_init,
+	0,
 	pleiads_sh_start,
 	0,
 	pleiads_sh_update

@@ -69,14 +69,15 @@ static unsigned char *neogeo_paletteram;       /* pointer to 1 of the 2 palette 
 static unsigned char *pal_bank1;		/* 0x100*16 2 byte palette entries */
 static unsigned char *pal_bank2;		/* 0x100*16 2 byte palette entries */
 static int palno,modulo,where,high_tile,vhigh_tile,vvhigh_tile;
-static int no_of_tiles,palette_swap_pending,fix_bank;
+int no_of_tiles;
+static int palette_swap_pending,fix_bank;
 
-extern unsigned char *neogeo_sram,*neogeo_ram;
+extern unsigned char *neogeo_ram;
 extern unsigned int neogeo_frame_counter;
 extern int neogeo_game_fix;
 int neogeo_red_mask,neogeo_green_mask,neogeo_blue_mask;
 
-static void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx,
+void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
         int zx,int zy);
 
@@ -160,10 +161,9 @@ void neogeo_vh_stop(void)
    	if (pal_bank1) free (pal_bank1);
 	if (pal_bank2) free (pal_bank2);
 	if (vidram) free (vidram);
-    if (neogeo_sram) free (neogeo_sram);
     if (neogeo_ram) free (neogeo_ram);
 
-	pal_bank1=pal_bank2=vidram=neogeo_sram=neogeo_ram=0;
+	pal_bank1=pal_bank2=vidram=neogeo_ram=0;
 }
 
 static int common_vh_start(void)
@@ -245,8 +245,6 @@ static const unsigned char *neogeo_palette(void)
 		t1 = READ_WORD( &vidram[0x10400 + count] );
 		t2 = READ_WORD( &vidram[0x10800 + count] );
 
-		if(neogeo_game_fix==7 && t1==0x147f) continue;				// Gururin Bodge fix
-
         /* If this bit is set this new column is placed next to last one */
 		if (t1 & 0x40) {
 			sx += rzx;
@@ -254,19 +252,19 @@ static const unsigned char *neogeo_palette(void)
 				sx -= 0x200;
 
             /* Get new zoom for this column */
-			if(neogeo_game_fix!=7 || (t3!=0 && t3!=0x147f))			// Gururin Bodge fix
-			    zx = (t3 >> 8) & 0x0f;
+		    zx = (t3 >> 8) & 0x0f;
+if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))         // Gururin Bodge fix
+	zx=0xf;
 			sy = oy;
 		} else {	/* nope it is a new block */
         	/* Sprite scaling */
 			zx = (t3 >> 8) & 0x0f;
 			rzy = t3 & 0xff;
-
-			if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))			// Gururin Bodge fix
-			{
-				zx=0xf;
-				rzy=0xff;
-			}
+if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))			// Gururin Bodge fix
+{
+	zx=0xf;
+	rzy=0xff;
+}
 
 			sx = (t2 >> 7);
 			if ( sx >= 0x1F0 )
@@ -275,7 +273,8 @@ static const unsigned char *neogeo_palette(void)
             /* Number of tiles in this strip */
             my = t1 & 0x3f;
 			if (my == 0x20) fullmode = 1;
-			else if (my == 0x21) fullmode = 2;
+			else if (my >= 0x21) fullmode = 2;	/* most games use 0x21, but */
+												/* Alpha Mission II uses 0x3f */
 			else fullmode = 0;
 
 			sy = 0x1F0 - (t1 >> 7);
@@ -483,7 +482,7 @@ INLINE int read_dword(int *address)
 #define WL1 0
 #endif
 
-static void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx, /* AJP */
+void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx, /* AJP */
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
         int zx,int zy)
 {
@@ -869,8 +868,6 @@ if (!dotiles) { 					/* debug */
 		t1 = READ_WORD( &vidram[0x10400 + count] );
 		t2 = READ_WORD( &vidram[0x10800 + count] );
 
-if(neogeo_game_fix==7 && t1==0x147f) continue;                // Gururin Bodge kludge
-
         /* If this bit is set this new column is placed next to last one */
 		if (t1 & 0x40) {
 			sx += rzx;
@@ -878,8 +875,9 @@ if(neogeo_game_fix==7 && t1==0x147f) continue;                // Gururin Bodge k
 				sx -= 0x200;
 
             /* Get new zoom for this column */
-if(neogeo_game_fix!=7 || (t3!=0 && t3!=0x147f))         // Gururin Bodge fix
-	            zx = (t3 >> 8) & 0x0f;
+            zx = (t3 >> 8) & 0x0f;
+if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))         // Gururin Bodge fix
+	zx=0xf;
 			sy = oy;
 		} else {	/* nope it is a new block */
         	/* Sprite scaling */
@@ -898,7 +896,8 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))         // Gururin Bodge fix
             /* Number of tiles in this strip */
             my = t1 & 0x3f;
 			if (my == 0x20) fullmode = 1;
-			else if (my == 0x21) fullmode = 2;
+			else if (my >= 0x21) fullmode = 2;	/* most games use 0x21, but */
+												/* Alpha Mission II uses 0x3f */
 			else fullmode = 0;
 
 			sy = 0x1F0 - (t1 >> 7);

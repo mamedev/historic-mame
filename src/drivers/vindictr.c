@@ -475,7 +475,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579580,	/* 3.58 MHZ ? */
-	{ 40 },
+	{ 80 },
 	{ 0 }
 };
 
@@ -524,7 +524,7 @@ static struct MachineDriver vindictr_machine_driver =
 	vindictr_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,

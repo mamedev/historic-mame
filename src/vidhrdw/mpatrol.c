@@ -13,9 +13,10 @@
 
 #define BGHEIGHT (64)
 
-static unsigned char scrollreg[4];
+static unsigned char scrollreg[16];
 static unsigned char bg1xpos,bg1ypos,bg2xpos,bg2ypos,bgcontrol;
-static struct osd_bitmap *bgbitmap;
+static struct osd_bitmap *bgbitmap[3];
+static int flipscreen;
 
 
 
@@ -197,26 +198,32 @@ int mpatrol_vh_start(void)
 	if (generic_vh_start() != 0)
 		return 1;
 
-	/* temp bitmap for the three background images */
-	if ((bgbitmap = osd_create_bitmap(256,BGHEIGHT*3)) == 0)
-	{
-		generic_vh_stop();
-		return 1;
-	}
-
 	/* prepare the background graphics */
 	for (i = 0;i < 3;i++)
 	{
+		/* temp bitmap for the three background images */
+		if ((bgbitmap[i] = osd_create_bitmap(256,BGHEIGHT)) == 0)
+		{
+			generic_vh_stop();
+			return 1;
+		}
+
 		for (j = 0;j < 8;j++)
+		{
 			for (k = 0;k < 2;k++)
-				drawgfx(bgbitmap,Machine->gfx[2 + 2 * i + k],
+			{
+				drawgfx(bgbitmap[i],Machine->gfx[2 + 2 * i + k],
 						j,0,
 						0,0,
-						32 * j,BGHEIGHT * i + (BGHEIGHT / 2) * k,
+						32 * j,(BGHEIGHT / 2) * k,
 						0,TRANSPARENCY_NONE,0);
+			}
+		}
 
-		for (j = 0;j < BGHEIGHT-64;j++)
-			memset(bgbitmap->line[BGHEIGHT*i + 64 + j],Machine->gfx[2+i]->colortable[3],256);
+		for (j = 64;j < BGHEIGHT;j++)
+		{
+			memset(bgbitmap[i]->line[j],Machine->gfx[2+i]->colortable[3],256);
+		}
 	}
 
 	return 0;
@@ -231,7 +238,9 @@ int mpatrol_vh_start(void)
 ***************************************************************************/
 void mpatrol_vh_stop(void)
 {
-	osd_free_bitmap(bgbitmap);
+	osd_free_bitmap(bgbitmap[0]);
+	osd_free_bitmap(bgbitmap[1]);
+	osd_free_bitmap(bgbitmap[2]);
 	generic_vh_stop();
 }
 
@@ -279,6 +288,76 @@ void mpatrol_bgcontrol_w(int offset,int data)
 
 
 
+void mpatrol_flipscreen_w(int offset,int data)
+{
+	/* screen flip is handled both by software and hardware */
+	data ^= ~readinputport(4) & 1;
+
+	if (flipscreen != (data & 1))
+	{
+		flipscreen = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
+
+
+int mpatrol_input_port_3_r(int offset)
+{
+	int ret = input_port_3_r(0);
+
+	/* Based on the coin mode fill in the upper bits */
+	if (input_port_4_r(0) & 0x04)
+	{
+		/* Mode 1 */
+		ret	|= (input_port_5_r(0) << 4);
+	}
+	else
+	{
+		/* Mode 2 */
+		ret	|= (input_port_5_r(0) & 0xf0);
+	}
+
+	return ret;
+}
+
+
+
+static void get_clip(struct rectangle *clip, int min_y, int max_y)
+{
+	clip->min_x = Machine->drv->visible_area.min_x;
+	clip->max_x = Machine->drv->visible_area.max_x;
+
+	if (flipscreen)
+	{
+		clip->min_y = Machine->drv->screen_height - 1 - max_y;
+		clip->max_y = Machine->drv->screen_height - 1 - min_y;
+	}
+	else
+	{
+		clip->min_y = min_y;
+		clip->max_y = max_y;
+	}
+}
+
+static void draw_background(struct osd_bitmap *bitmap,
+                            int xpos, int ypos, int ypos_end, int image,
+							int transparency)
+{
+	struct rectangle clip1, clip2;
+
+	get_clip(&clip1, ypos,            ypos + BGHEIGHT - 1);
+	get_clip(&clip2, ypos + BGHEIGHT, ypos_end);
+
+	if (flipscreen)
+	{
+		xpos = 256 - xpos;
+		ypos = Machine->drv->screen_height - BGHEIGHT - ypos;
+	}
+	copybitmap(bitmap,bgbitmap[image],flipscreen,flipscreen,xpos,      ypos,&clip1,transparency,128);
+	copybitmap(bitmap,bgbitmap[image],flipscreen,flipscreen,xpos - 256,ypos,&clip1,transparency,128);
+	fillbitmap(bitmap,Machine->gfx[image*2+2]->colortable[3],&clip2);
+}
+
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -308,10 +387,16 @@ void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			color = colorram[offs] & 0x1f;
 			if (sy >= 7) color += 32;	/* lines 7-31 are transparent */
 
+			if (flipscreen)
+			{
+				sx = 31 - sx;
+				sy = 31 - sy;
+			}
+
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + 2 * (colorram[offs] & 0x80),
 					color,
-					0,0,
+					flipscreen,flipscreen,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -319,65 +404,16 @@ void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 	/* copy the background */
-	if (bgcontrol == 0x04)
+	if ((bgcontrol == 0x04) || (bgcontrol == 0x03))
 	{
 		struct rectangle clip;
 
-
-		clip.min_x = Machine->drv->visible_area.min_x;
-		clip.max_x = Machine->drv->visible_area.max_x;
-
-		clip.min_y = 7*8;
-		clip.max_y = bg2ypos-1;
+		get_clip(&clip, 7*8, bg2ypos-1);
 		fillbitmap(bitmap,Machine->pens[0],&clip);
 
-		clip.min_y = bg2ypos;
-		clip.max_y = bg2ypos + BGHEIGHT-1;
-		copybitmap(bitmap,bgbitmap,0,0,bg2xpos,bg2ypos,&clip,TRANSPARENCY_NONE,0);
-		copybitmap(bitmap,bgbitmap,0,0,bg2xpos - 256,bg2ypos,&clip,TRANSPARENCY_NONE,0);
-
-		clip.min_y = bg2ypos + BGHEIGHT;
-		clip.max_y = bg1ypos + BGHEIGHT-1;
-		fillbitmap(bitmap,Machine->gfx[2]->colortable[3],&clip);
-
-		clip.min_y = bg1ypos;
-		clip.max_y = bg1ypos + BGHEIGHT-1;
-		copybitmap(bitmap,bgbitmap,0,0,bg1xpos,bg1ypos-BGHEIGHT,&clip,TRANSPARENCY_COLOR,128);
-		copybitmap(bitmap,bgbitmap,0,0,bg1xpos - 256,bg1ypos-BGHEIGHT,&clip,TRANSPARENCY_COLOR,128);
-
-		clip.min_y = bg1ypos + BGHEIGHT;
-		clip.max_y = Machine->drv->visible_area.max_y;
-		fillbitmap(bitmap,Machine->gfx[4]->colortable[3],&clip);
-	}
-	else if (bgcontrol == 0x03)
-	{
-		struct rectangle clip;
-
-
-		clip.min_x = Machine->drv->visible_area.min_x;
-		clip.max_x = Machine->drv->visible_area.max_x;
-
-		clip.min_y = 7*8;
-		clip.max_y = bg2ypos-1;
-		fillbitmap(bitmap,Machine->pens[0],&clip);
-
-		clip.min_y = bg2ypos;
-		clip.max_y = bg2ypos + BGHEIGHT-1;
-		copybitmap(bitmap,bgbitmap,0,0,bg2xpos,bg2ypos,&clip,TRANSPARENCY_NONE,0);
-		copybitmap(bitmap,bgbitmap,0,0,bg2xpos - 256,bg2ypos,&clip,TRANSPARENCY_NONE,0);
-
-		clip.min_y = bg2ypos + BGHEIGHT;
-		clip.max_y = bg1ypos + BGHEIGHT-1;
-		fillbitmap(bitmap,Machine->gfx[2]->colortable[3],&clip);
-
-		clip.min_y = bg1ypos;
-		clip.max_y = bg1ypos + BGHEIGHT-1;
-		copybitmap(bitmap,bgbitmap,0,0,bg1xpos,bg1ypos-BGHEIGHT*2,&clip,TRANSPARENCY_COLOR,128);
-		copybitmap(bitmap,bgbitmap,0,0,bg1xpos - 256,bg1ypos-BGHEIGHT*2,&clip,TRANSPARENCY_COLOR,128);
-
-		clip.min_y = bg1ypos + BGHEIGHT;
-		clip.max_y = Machine->drv->visible_area.max_y;
-		fillbitmap(bitmap,Machine->gfx[6]->colortable[3],&clip);
+		draw_background(bitmap, bg2xpos, bg2ypos, bg1ypos + BGHEIGHT - 1, 0, TRANSPARENCY_NONE);
+		draw_background(bitmap, bg1xpos, bg1ypos, Machine->drv->visible_area.max_y,
+		                (bgcontrol == 0x04) ? 1 : 2, TRANSPARENCY_COLOR);
 	}
 	else fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
 
@@ -391,39 +427,83 @@ void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		clip.min_x = Machine->drv->visible_area.min_x;
 		clip.max_x = Machine->drv->visible_area.max_x;
 
-		clip.min_y = 0;
-		clip.max_y = 7 * 8 - 1;
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_NONE,0);
+		if (flipscreen)
+		{
+			clip.min_y = 25 * 8;
+			clip.max_y = 32 * 8 - 1;
+			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_NONE,0);
 
-		clip.min_y = 7 * 8;
-		clip.max_y = 32 * 8 - 1;
+			clip.min_y = 0;
+			clip.max_y = 25 * 8 - 1;
 
-		for (i = 0;i < 24;i++)
-			scroll[i] = 0;
-		for (i = 24;i < 32;i++)
-			scroll[i] = scrollreg[0];
+			for (i = 0;i < 32;i++)
+				scroll[31-i] = -scrollreg[i/2];
 
-		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&clip,TRANSPARENCY_COLOR,0);
+			copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&clip,TRANSPARENCY_COLOR,0);
+		}
+		else
+		{
+			clip.min_y = 0;
+			clip.max_y = 7 * 8 - 1;
+			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_NONE,0);
+
+			clip.min_y = 7 * 8;
+			clip.max_y = 32 * 8 - 1;
+
+			for (i = 0;i < 32;i++)
+				scroll[i] = scrollreg[i/2];
+
+			copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&clip,TRANSPARENCY_COLOR,0);
+		}
 	}
 
 
 	/* Draw the sprites. */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
+		int sx,sy,flipx,flipy;
+
+
+		sx = spriteram_2[offs + 3];
+		sy = 241 - spriteram_2[offs];
+		flipx = spriteram_2[offs + 1] & 0x40;
+		flipy = spriteram_2[offs + 1] & 0x80;
+		if (flipscreen)
+		{
+			flipx = !flipx;
+			flipy = !flipy;
+			sx = 240 - sx;
+			sy = 240 - sy;
+		}
+
 		drawgfx(bitmap,Machine->gfx[1],
 				spriteram_2[offs + 2],
 				spriteram_2[offs + 1] & 0x3f,
-				spriteram_2[offs + 1] & 0x40,spriteram_2[offs + 1] & 0x80,
-				spriteram_2[offs + 3],241 - spriteram_2[offs],
+				flipx,flipy,
+				sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_COLOR,128+32);
 	}
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
+		int sx,sy,flipx,flipy;
+
+		sx = spriteram[offs + 3];
+		sy = 241 - spriteram[offs];
+		flipx = spriteram[offs + 1] & 0x40;
+		flipy = spriteram[offs + 1] & 0x80;
+		if (flipscreen)
+		{
+			flipx = !flipx;
+			flipy = !flipy;
+			sx = 240 - sx;
+			sy = 240 - sy;
+		}
+
 		drawgfx(bitmap,Machine->gfx[1],
 				spriteram[offs + 2],
 				spriteram[offs + 1] & 0x3f,
-				spriteram[offs + 1] & 0x40,spriteram[offs + 1] & 0x80,
-				spriteram[offs + 3],241 - spriteram[offs],
+				flipx,flipy,
+				sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_COLOR,128+32);
 	}
 }

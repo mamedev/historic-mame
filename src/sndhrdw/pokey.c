@@ -1,6 +1,6 @@
 /*****************************************************************************/
 /*                                                                           */
-/* Module:	POKEY Chip Emulator, V3.0										 */
+/* Module:	POKEY Chip Emulator, V3.1										 */
 /* Purpose: To emulate the sound generation hardware of the Atari POKEY chip.*/
 /* Author:  Ron Fries                                                        */
 /*                                                                           */
@@ -143,18 +143,11 @@
 #define REGISTER register
 #endif
 
-#define VERBOSE 		0
+#define VERBOSE         0
 #define VERBOSE_SOUND	0
 #define VERBOSE_TIMER	0
+#define VERBOSE_POLY	0
 #define VERBOSE_RANDOM	0
-
-/* LBO - changed for cross-platform support */
-#ifndef FALSE
-#define FALSE       0
-#endif
-#ifndef TRUE
-#define TRUE        1
-#endif
 
 /* CONSTANT DEFINITIONS */
 
@@ -187,9 +180,9 @@
 #define POLY5_BITS  5
 #define POLY9_BITS  9
 #define POLY17_BITS 17
-#define POLY4_SIZE  ((1<<POLY4_BITS)-1)
-#define POLY5_SIZE  ((1<<POLY5_BITS)-1)
-#define POLY9_SIZE  ((1<<POLY9_BITS)-1)
+#define POLY4_SIZE	((1<<POLY4_BITS)-1)
+#define POLY5_SIZE	((1<<POLY5_BITS)-1)
+#define POLY9_SIZE	((1<<POLY9_BITS)-1)
 #define POLY17_SIZE ((1<<POLY17_BITS)-1)
 
 #define POLY4_SHL   3
@@ -289,8 +282,6 @@ static UINT8 Outbit[4 * MAXPOKEYS]; /* last output volume for each channel */
 
 
 static UINT8 RANDOM[MAXPOKEYS]; 	/* The random number for each pokey */
-static UINT32 RNGOFFS[MAXPOKEYS];	/* The current offset into the rand17
-									   table for each chip */
 
 /* Initialze the bit patterns for the polynomials. */
 
@@ -398,13 +389,23 @@ static UINT8  clip; /* LBO 101297 */
 static void Poly_init(UINT8 *p, int size, int a, int b, int c)
 {
 UINT32 i, x = 0;
+#if VERBOSE_POLY
+	if (errorlog) fprintf(errorlog, "Poly %05x %d %d %05x\n", size, a, b, c);
+#endif
     for (i = 0; i < size; i++)
 	{
-		/* store new value */
-		*p++ = x & 1;
-		/* calculate next bit */
-		x = ((x >> a) + (x << b) + c) & size;
+	UINT8 bit = x & 1;
+        /* store new value */
+		*p++ = bit;
+#if VERBOSE_POLY
+        if (errorlog) fprintf(errorlog, "%d%s", bit, ((i&63)==63)?"\n":"");
+#endif
+        /* calculate next bit */
+		x = ((x << a) + (x >> b) + c) & size;
 	}
+#if VERBOSE_POLY
+    if (errorlog) fprintf(errorlog, "\n");
+#endif
 }
 
 static void Rand_init(UINT8 *p, int size, int a, int b, int c)
@@ -413,11 +414,13 @@ UINT32 i, x = 0;
     for (i = 0; i < size; i++)
 	{
 	UINT8 rnd = x >> 3;
-//		if (errorlog) fprintf(errorlog, "%02x%s", rnd, ((i&31)==31)?"\n":" ");
-		/* store the 8 bits of the new value */
+#if VERBOSE_RANDOM
+        if (errorlog) fprintf(errorlog, "%02x%s", rnd, ((i&31)==31)?"\n":" ");
+#endif
+        /* store the 8 bits of the new value */
 		*p++ = rnd;
 		/* calculate next bit */
-		x = ((x >> a) + (x << b) + c) & size;
+		x = ((x << a) + (x >> b) + c) & size;
 	}
 }
 
@@ -443,11 +446,11 @@ int Pokey_sound_init (int freq17, int playback_freq, int volume, int num_pokeys,
 	int chip, chan;
 
 	/* ASG 980126 - dynamically allocate this array */
-    poly17 = malloc (POLY17_SIZE);
+	poly17 = malloc (POLY17_SIZE+1);
 	if (!poly17) return 1;
 
     /* HJB 980706 - random numbers are the upper 8 bits of poly 17 */
-    rand17 = malloc (POLY17_SIZE);
+	rand17 = malloc (POLY17_SIZE+1);
 	if (!rand17) return 1;
 
 	/* Initialize the poly counters */
@@ -486,7 +489,6 @@ int Pokey_sound_init (int freq17, int playback_freq, int volume, int num_pokeys,
         IRQEN[chip] = 0;
         SKSTAT[chip] = 0;
         SKCTL[chip] = SK_RESET;             /* let the RNG run after reset */
-        RNGOFFS[chip] = 0;
     }
 
 	for (chan = 0; chan < (MAXPOKEYS * 4); chan++) {
@@ -552,6 +554,62 @@ int chip;
     }
 }
 
+#if VERBOSE_SOUND
+static char *audc2str(int val)
+{
+	static char buff[80];
+	if (val & NOTPOLY5) {
+		if (val & PURE) {
+			strcpy(buff,"pure");
+		} else if (val & POLY4) {
+			strcpy(buff,"poly4");
+        } else {
+			strcpy(buff,"poly9/17");
+		}
+	} else {
+		if (val & PURE) {
+			strcpy(buff,"poly5");
+		} else if (val & POLY4) {
+			strcpy(buff,"poly4+poly5");
+        } else {
+			strcpy(buff,"poly9/17+poly5");
+        }
+    }
+	return buff;
+}
+
+static char *audctl2str(int val)
+{
+	static char buff[80];
+	if (val & POLY9) {
+		strcpy(buff,"poly9");
+	} else {
+		strcpy(buff,"poly17");
+    }
+	if (val & CH1_179) {
+		strcpy(buff,"+ch1hi");
+    }
+	if (val & CH3_179) {
+		strcpy(buff,"+ch3hi");
+    }
+	if (val & CH1_CH2) {
+		strcpy(buff,"+ch1/2");
+    }
+	if (val & CH3_CH4) {
+		strcpy(buff,"+ch3/4");
+    }
+	if (val & CH1_FILTER) {
+		strcpy(buff,"+ch1filter");
+    }
+	if (val & CH2_FILTER) {
+		strcpy(buff,"+ch2filter");
+    }
+	if (val & CLOCK_15) {
+		strcpy(buff,"+clk15");
+    }
+    return buff;
+}
+#endif
 
 /*****************************************************************************/
 /* Module:	Pokey_SerinReady(int param) 									 */
@@ -628,7 +686,7 @@ void Update_pokey_sound (int addr, int val, int chip, int gain)
 			if (val == AUDC[CHAN1 + chip_offs])
 				return;
 #if VERBOSE_SOUND
-            if (errorlog) fprintf(errorlog, "POKEY #%d AUDC1  $%02x\n", chip, val);
+			if (errorlog) fprintf(errorlog, "POKEY #%d AUDC1  $%02x (%s)\n", chip, val, audc2str(val));
 #endif
             AUDC[CHAN1 + chip_offs] = val;
 			AUDV[CHAN1 + chip_offs] = (val & VOLUME_MASK) * gain;
@@ -649,7 +707,7 @@ void Update_pokey_sound (int addr, int val, int chip, int gain)
 			if (val == AUDC[CHAN2 + chip_offs])
 				return;
 #if VERBOSE_SOUND
-            if (errorlog) fprintf(errorlog, "POKEY #%d AUDC2  $%02x\n", chip, val);
+			if (errorlog) fprintf(errorlog, "POKEY #%d AUDC2  $%02x (%s)\n", chip, val, audc2str(val));
 #endif
             AUDC[CHAN2 + chip_offs] = val;
 			AUDV[CHAN2 + chip_offs] = (val & VOLUME_MASK) * gain;
@@ -673,7 +731,7 @@ void Update_pokey_sound (int addr, int val, int chip, int gain)
 			if (val == AUDC[CHAN3 + chip_offs])
 				return;
 #if VERBOSE_SOUND
-            if (errorlog) fprintf(errorlog, "POKEY #%d AUDC3  $%02x\n", chip, val);
+			if (errorlog) fprintf(errorlog, "POKEY #%d AUDC3  $%02x (%s)\n", chip, val, audc2str(val));
 #endif
             AUDC[CHAN3 + chip_offs] = val;
 			AUDV[CHAN3 + chip_offs] = (val & VOLUME_MASK) * gain;
@@ -694,7 +752,7 @@ void Update_pokey_sound (int addr, int val, int chip, int gain)
 			if (val == AUDC[CHAN4 + chip_offs])
 				return;
 #if VERBOSE_SOUND
-            if (errorlog) fprintf(errorlog, "POKEY #%d AUDC4  $%02x\n", chip, val);
+			if (errorlog) fprintf(errorlog, "POKEY #%d AUDC4  $%02x (%s)\n", chip, val, audc2str(val));
 #endif
             AUDC[CHAN4 + chip_offs] = val;
 			AUDV[CHAN4 + chip_offs] = (val & VOLUME_MASK) * gain;
@@ -705,7 +763,7 @@ void Update_pokey_sound (int addr, int val, int chip, int gain)
 			if (val == AUDCTL[chip])
 				return;
 #if VERBOSE_SOUND
-            if (errorlog) fprintf(errorlog, "POKEY #%d AUDCTL $%02x\n", chip, val);
+			if (errorlog) fprintf(errorlog, "POKEY #%d AUDCTL $%02x (%s)\n", chip, val, audctl2str(val));
 #endif
             AUDCTL[chip] = val;
 			chan_mask = 15; 	  /* all channels */
@@ -895,6 +953,7 @@ void Update_pokey_sound (int addr, int val, int chip, int gain)
 			{
 				Update_pokey_sound(IRQEN_C,  0, chip, gain);
                 Update_pokey_sound(SKREST_C, 0, chip, gain);
+#if 0	/* reset does not seem to change the AUDxx registers!? */
                 Update_pokey_sound(AUDCTL_C, 0, chip, gain);
                 Update_pokey_sound(AUDC4_C,  0, chip, gain);
                 Update_pokey_sound(AUDF4_C,  0, chip, gain);
@@ -904,6 +963,7 @@ void Update_pokey_sound (int addr, int val, int chip, int gain)
                 Update_pokey_sound(AUDF2_C,  0, chip, gain);
                 Update_pokey_sound(AUDC1_C,  0, chip, gain);
                 Update_pokey_sound(AUDF1_C,  0, chip, gain);
+#endif
             }
 			break;
     }
@@ -1046,31 +1106,35 @@ void Update_pokey_sound (int addr, int val, int chip, int gain)
 			   that the hardware can't reproduce.  I've also disabled
 			   processing if the volume is zero. */
 
-			/* if the channel is volume only */
+            /* if the channel is volume only */
 			/* or the channel is off (volume == 0) */
 			/* or the channel freq is greater than the playback freq */
 			if ((AUDC[chan + chip_offs] & VOL_ONLY) ||
-			   !(AUDC[chan + chip_offs] & VOLUME_MASK) ||
-			   (Div_n_max[chan + chip_offs] < (Samp_n_max >> 8)))
+			   !(AUDC[chan + chip_offs] & VOLUME_MASK)
+#if USE_SAMP_N_MAX
+				|| (Div_n_max[chan + chip_offs] < (Samp_n_max >> 8)) */
+#endif
+               )
 			{
-				/* indicate the channel is 'on' */
+                /* indicate the channel is 'on' */
 				Outbit[chan + chip_offs] = 1;
 				/* can only ignore channel if filtering off */
 				if ((chan == CHAN3 && !(AUDCTL[chip] & CH1_FILTER)) ||
 					(chan == CHAN4 && !(AUDCTL[chip] & CH2_FILTER)) ||
 					(chan == CHAN1) ||
-					(chan == CHAN2) ||
-					(Div_n_max[chan + chip_offs] < (Samp_n_max >> 8)))
+					(chan == CHAN2)
+#if USE_SAMP_N_MAX
+					|| (Div_n_max[chan + chip_offs] < (Samp_n_max >> 8))
+#endif
+                   )
 				{
 					/* and set channel freq to max to reduce processing */
 					Div_n_max[chan + chip_offs] = 0x7fffffffL;
 					Div_n_cnt[chan + chip_offs] = 0x7fffffffL;
 				}
-			}
-		}
+            }
+        }
     }
-
-/*    _enable();*/      /* RSF - removed for portability 31-MAR-97 */
 }
 
 
@@ -1096,15 +1160,13 @@ void Pokey_process (int chip, void *buffer, int n)
 	REGISTER UINT32 *div_n_ptr;
 	REGISTER UINT32 event_min;
 	REGISTER UINT8 next_event;
-#ifdef CLIP 					/* if clipping is selected */
-	REGISTER INT16 cur_val; 	/* then we have to count as 16-bit */
-	REGISTER UINT16 *vol_ptr;
-#else
-	REGISTER INT8 cur_val;		/* otherwise we'll simplify as 8-bit */
-	REGISTER UINT8 *vol_ptr;
-#endif
-	REGISTER UINT8 *out_ptr;
+	REGISTER UINT16 chip_offs;
 	REGISTER UINT8 *buf_ptr;
+#ifdef CLIP 					/* if clipping is selected */
+    REGISTER INT16 cur_val;     /* then we have to count as 16-bit */
+#else
+    REGISTER INT8 cur_val;      /* otherwise we'll simplify as 8-bit */
+#endif
 
 /* GSL 980313 B'zarre defines to handle optimised non-dword-aligned load/stores on ARM etc processors */
 /* HDG 980501 Removed and replaced by cleaner solution without ifdef's,
@@ -1115,34 +1177,16 @@ void Pokey_process (int chip, void *buffer, int n)
 		return;
 	}
 
-    /* set a pointer for optimization */
-	out_ptr = &Outbit[chip * 4];
-	vol_ptr = &AUDV[chip * 4];
+	chip_offs = chip << 2;
 
     /* The current output is pre-determined and then adjusted based on each */
     /* output change for increased performance (less over-all math). */
     /* add the output values of all 4 channels */
-	cur_val = 0;
 
-	cur_val -= *vol_ptr / 2;
-	if (*out_ptr++)
-		cur_val += *vol_ptr;
-	vol_ptr++;
-
-	cur_val -= *vol_ptr / 2;
-	if (*out_ptr++)
-		cur_val += *vol_ptr;
-	vol_ptr++;
-
-	cur_val -= *vol_ptr / 2;
-	if (*out_ptr++)
-		cur_val += *vol_ptr;
-	vol_ptr++;
-
-	cur_val -= *vol_ptr / 2;
-	if (*out_ptr++)
-		cur_val += *vol_ptr;
-	vol_ptr++;
+	cur_val = (Outbit[chip_offs+CHAN1]?AUDV[chip_offs+CHAN1]:-AUDV[chip_offs+CHAN1]) / 2 +
+			  (Outbit[chip_offs+CHAN2]?AUDV[chip_offs+CHAN2]:-AUDV[chip_offs+CHAN2]) / 2 +
+			  (Outbit[chip_offs+CHAN3]?AUDV[chip_offs+CHAN3]:-AUDV[chip_offs+CHAN3]) / 2 +
+			  (Outbit[chip_offs+CHAN4]?AUDV[chip_offs+CHAN4]:-AUDV[chip_offs+CHAN4]) / 2;
 
 	buf_ptr = buffer;
 
@@ -1158,46 +1202,31 @@ void Pokey_process (int chip, void *buffer, int n)
         next_event = SAMPLE;
         event_min = Samp_n_cnt[0];
 
-		div_n_ptr = &Div_n_cnt[chip << 2];
+		if (Div_n_cnt[chip_offs+CHAN1] <= event_min) {
+			event_min = Div_n_cnt[chip_offs+CHAN1];
+			next_event = chip_offs + CHAN1;
+		}
+		if (Div_n_cnt[chip_offs+CHAN2] <= event_min) {
+			event_min = Div_n_cnt[chip_offs+CHAN2];
+			next_event = chip_offs + CHAN2;
+        }
+		if (Div_n_cnt[chip_offs+CHAN3] <= event_min) {
+			event_min = Div_n_cnt[chip_offs+CHAN3];
+			next_event = chip_offs + CHAN3;
+        }
+		if (Div_n_cnt[chip_offs+CHAN4] <= event_min) {
+			event_min = Div_n_cnt[chip_offs+CHAN4];
+			next_event = chip_offs + CHAN4;
+        }
 
-		/* Though I could have used a loop here, this is faster */
-		if (*div_n_ptr <= event_min)
-		{
-			event_min = *div_n_ptr;
-			next_event = CHAN1 + (chip<<2);
-		}
-		div_n_ptr++;
-		if (*div_n_ptr <= event_min)
-		{
-			event_min = *div_n_ptr;
-			next_event = CHAN2 + (chip<<2);
-		}
-		div_n_ptr++;
-		if (*div_n_ptr <= event_min)
-		{
-			event_min = *div_n_ptr;
-			next_event = CHAN3 + (chip<<2);
-		}
-		div_n_ptr++;
-		if (*div_n_ptr <= event_min)
-		{
-			event_min = *div_n_ptr;
-			next_event = CHAN4 + (chip<<2);
-		}
-		div_n_ptr++;
+        /* decrement all counters by the smallest count found */
 
-		/* decrement all counters by the smallest count found */
-		/* again, no loop for efficiency */
-		div_n_ptr--;
-		*div_n_ptr -= event_min;
-		div_n_ptr--;
-		*div_n_ptr -= event_min;
-		div_n_ptr--;
-		*div_n_ptr -= event_min;
-		div_n_ptr--;
-		*div_n_ptr -= event_min;
+		Div_n_cnt[chip_offs+CHAN1] -= event_min;
+		Div_n_cnt[chip_offs+CHAN2] -= event_min;
+		Div_n_cnt[chip_offs+CHAN3] -= event_min;
+		Div_n_cnt[chip_offs+CHAN4] -= event_min;
 
-		Samp_n_cnt[0] -= event_min;
+        Samp_n_cnt[0] -= event_min;
 
 		/* since the polynomials require a mod (%) function which is
 		   division, I don't adjust the polynomials on the SAMPLE events,
@@ -1228,13 +1257,10 @@ void Pokey_process (int chip, void *buffer, int n)
 			audc = AUDC[next_event];
 
 			/* get the current chips AUDCTL */
-            audctl = AUDCTL[next_event >> 2];
-
-            /* set a pointer to the current output (for opt...) */
-			out_ptr = &Outbit[next_event];
+			audctl = AUDCTL[next_event>>2];
 
 			/* assume no changes to the output */
-			toggle = FALSE;
+			toggle = 0;
 
 			/* From here, a good understanding of the hardware is required */
 			/* to understand what is happening.  I won't be able to provide */
@@ -1246,31 +1272,31 @@ void Pokey_process (int chip, void *buffer, int n)
 				/* if the PURE bit is set */
 				if (audc & PURE) {
 					/* simply toggle the output */
-					toggle = TRUE;
+					toggle = 1;
 				} else if (audc & POLY4) {
-                /* otherwise if POLY4 is selected */
+					/* otherwise if POLY4 is selected */
 					/* then compare to the poly4 bit */
-					toggle = (poly4[P4] != *out_ptr);
+					toggle = poly4[P4] == !Outbit[next_event];
 				} else {
 					/* if 9-bit poly is selected on this chip */
 					if (audctl & POLY9) {
 						/* compare to the poly9 bit */
-						toggle = (poly9[P9] != *out_ptr);
+						toggle = poly9[P9] == !Outbit[next_event];
 					} else {
 						/* otherwise compare to the poly17 bit 0 */
-						toggle = (poly17[P17] != *out_ptr);
+						toggle = poly17[P17] == !Outbit[next_event];
 					}
 				}
 			}
 
-			/* check channel 1 filter (clocked by channel 3) */
+            /* check channel 1 filter (clocked by channel 3) */
 			if (audctl & CH1_FILTER) {
 				/* if we're processing channel 3 */
 				if ((next_event & 3) == CHAN3) {
 					/* check output of channel 1 on same chip */
-					if (out_ptr[-2]) {
+					if (Outbit[next_event-2]) {
 						/* if on, turn it off */
-						out_ptr[-2] = 0;
+						Outbit[next_event-2] = 0;
 						cur_val -= AUDV[next_event & ~2];
 					}
 				}
@@ -1281,9 +1307,9 @@ void Pokey_process (int chip, void *buffer, int n)
 				/* if we're processing channel 4 */
 				if ((next_event & 3) == CHAN4) {
 					/* check output of channel 2 on same chip */
-					if (out_ptr[-2]) {
+					if (Outbit[next_event-2]) {
 						/* if on, turn it off */
-						out_ptr[-2] = 0;
+						Outbit[next_event-2] = 0;
 						cur_val -= AUDV[next_event & ~2];
 					}
 				}
@@ -1291,15 +1317,15 @@ void Pokey_process (int chip, void *buffer, int n)
 
             /* if the current output bit has changed */
 			if (toggle) {
-				if (*out_ptr) {
+				if (Outbit[next_event]) {
 					/* remove this channel from the signal */
 					cur_val -= AUDV[next_event];
 
 					/* and turn the output off */
-					*out_ptr = 0;
+					Outbit[next_event] = 0;
 				} else {
 					/* turn the output on */
-					*out_ptr = 1;
+					Outbit[next_event] = 1;
 
 					/* and add it to the output signal */
 					cur_val += AUDV[next_event];
@@ -1378,46 +1404,39 @@ static void update_pokeys(void)
 
 int Read_pokey_regs (int addr, int chip)
 {
-/* return 0xff for a read from unsupported ports */
-int data = 0xff;
+	int data = 0;	/* note: not returning 0 for unsupported ports breaks */
+					/* Quantum and Food Fight */
+
+
     switch (addr & 0x0f)
     {
         case POT0_C:
-			if (intf->pot0_r[chip])
-				data = (*intf->pot0_r[chip])(addr);
+			if (intf->pot0_r[chip]) data = (*intf->pot0_r[chip])(addr);
             break;
         case POT1_C:
-			if (intf->pot1_r[chip])
-				data = (*intf->pot1_r[chip])(addr);
+			if (intf->pot1_r[chip]) data = (*intf->pot1_r[chip])(addr);
             break;
         case POT2_C:
-			if (intf->pot2_r[chip])
-				data = (*intf->pot2_r[chip])(addr);
+			if (intf->pot2_r[chip]) data = (*intf->pot2_r[chip])(addr);
             break;
         case POT3_C:
-			if (intf->pot3_r[chip])
-				data = (*intf->pot3_r[chip])(addr);
+			if (intf->pot3_r[chip]) data = (*intf->pot3_r[chip])(addr);
             break;
         case POT4_C:
-			if (intf->pot4_r[chip])
-				data = (*intf->pot4_r[chip])(addr);
+			if (intf->pot4_r[chip]) data = (*intf->pot4_r[chip])(addr);
             break;
         case POT5_C:
-			if (intf->pot5_r[chip])
-				data = (*intf->pot5_r[chip])(addr);
+			if (intf->pot5_r[chip]) data = (*intf->pot5_r[chip])(addr);
             break;
         case POT6_C:
-			if (intf->pot6_r[chip])
-				data = (*intf->pot6_r[chip])(addr);
+			if (intf->pot6_r[chip]) data = (*intf->pot6_r[chip])(addr);
             break;
         case POT7_C:
-			if (intf->pot7_r[chip])
-				data = (*intf->pot7_r[chip])(addr);
+			if (intf->pot7_r[chip]) data = (*intf->pot7_r[chip])(addr);
             break;
 
         case ALLPOT_C:
-			if (intf->allpot_r[chip])
-				data = (*intf->allpot_r[chip])(addr);
+			if (intf->allpot_r[chip]) data = (*intf->allpot_r[chip])(addr);
             break;
 
         case KBCODE_C:
@@ -1438,11 +1457,11 @@ int data = 0xff;
 				/* save the absolute time of this read */
                 if (SKCTL[chip] & SK_RESET)
 				{
-					RNGOFFS[chip] = (UINT32)(timer_get_time() * intf->baseclock) % POLY17_SIZE;
+					UINT32 rngoffs = (UINT32)(timer_get_time() * intf->baseclock) % POLY17_SIZE;
 					/* and get the random value */
-					RANDOM[chip] = rand17[RNGOFFS[chip]];
+					RANDOM[chip] = rand17[rngoffs];
 #if VERBOSE_RANDOM
-					if (errorlog) fprintf (errorlog, "POKEY #%d rand17[$%05x]: $%02x\n", chip, RNGOFFS[chip], RANDOM[chip]);
+					if (errorlog) fprintf (errorlog, "POKEY #%d rand17[$%05x]: $%02x\n", chip, rngoffs, RANDOM[chip]);
 #endif
 				}
 				else
@@ -1456,8 +1475,7 @@ int data = 0xff;
             break;
 
         case SERIN_C:
-			if (intf->serin_r[chip])
-				SERIN[chip] = (*intf->serin_r[chip])(addr);
+			if (intf->serin_r[chip]) SERIN[chip] = (*intf->serin_r[chip])(addr);
 			data = SERIN[chip];
 #if VERBOSE
             if (errorlog) fprintf (errorlog, "POKEY #%d SERIN  $%02x\n", chip, data);
@@ -1597,8 +1615,7 @@ void pokey_break_w(int chip, int shift)
 	else
 		SKSTAT[chip] &= ~SK_SHIFT;
 	/* check if the break IRQ is enabled */
-    if (IRQEN[chip] & IRQ_BREAK)
-    {
+	if (IRQEN[chip] & IRQ_BREAK) {
 		/* set break IRQ status and call back the interrupt handler */
         IRQST[chip] |= IRQ_BREAK;
 		if (intf->interrupt_cb[chip])
@@ -1629,16 +1646,14 @@ void pokey4_break_w(int shift)
 void pokey_kbcode_w(int chip, int kbcode, int make)
 {
 	/* make code ? */
-	if (make)
-	{
+	if (make) {
         KBCODE[chip] = kbcode;
         SKSTAT[chip] |= SK_KEYBD;
 		if (kbcode & 0x40)			/* shift code ? */
 			SKSTAT[chip] |= SK_SHIFT;
 		else
 			SKSTAT[chip] &= ~SK_SHIFT;
-		if (IRQEN[chip] & IRQ_KEYBD)
-		{
+		if (IRQEN[chip] & IRQ_KEYBD) {
 			/* last interrupt not acknowledged ? */
 			if (IRQST[chip] & IRQ_KEYBD)
 				SKSTAT[chip] |= SK_KBERR;
@@ -1646,9 +1661,7 @@ void pokey_kbcode_w(int chip, int kbcode, int make)
 			if (intf->interrupt_cb[chip])
 				(*intf->interrupt_cb[chip])(IRQ_KEYBD);
 		}
-	}
-	else
-	{
+	} else {
 		KBCODE[chip] = kbcode;
 		SKSTAT[chip] &= ~SK_KEYBD;
     }

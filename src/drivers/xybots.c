@@ -24,9 +24,6 @@ XYBOTS 6502 MEMORY MAP
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/pokey.h"
-#include "sndhrdw/5220intf.h"
-#include "sndhrdw/2151intf.h"
 
 
 int xybots_playfieldram_r (int offset);
@@ -356,7 +353,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	4000000,	/* 4MHz */
-	{ 40 },
+	{ 80 | YM2151_STEREO_REVERSE },
 	{ 0 }
 };
 
@@ -405,7 +402,7 @@ static struct MachineDriver xybots_machine_driver =
 	xybots_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,

@@ -10,6 +10,8 @@
 /* PI isn't in the ANSI standard, so we'll define an instance here */
 #define PHX_PI (3.14159265358979323846L)
 
+#define MAX_VOLUME 20
+
 /* A nice macro which saves us a lot of typing */
 #define M_OSD_PLAY_SAMPLE(channel, soundnum, loop) { \
 	if (Machine->samples->sample[soundnum] != 0) \
@@ -81,18 +83,6 @@ static unsigned char waveform2[] =
 
 
 
-int phoenix_sh_init(const char *gamename)
-{
-	x = PHX_PI/2;
-
-	if (Machine->samples != 0 && Machine->samples->sample[0] != 0)    /* We should check also that Samplename[0] = 0 */
-		noisemulate = 0;
-	else
-		noisemulate = 1;
-
-	return 0;
-}
-
 
 void phoenix_sound_control_a_w(int offset,int data)
 {
@@ -113,7 +103,7 @@ void phoenix_sound_control_a_w(int offset,int data)
 
 	if (freq != 0x0f)
 	{
-		osd_adjust_sample(0,MAXFREQ_A/(16-sound_a_freq),85*(3-vol));
+		osd_adjust_sample(0,MAXFREQ_A/(16-sound_a_freq),MAX_VOLUME*(3-vol));
 		sound_a_play = 1;
 	}
 	else
@@ -130,7 +120,7 @@ void phoenix_sound_control_a_w(int offset,int data)
 			noise_vol = 85*noise;
 		}
 
-		if (noise) osd_adjust_sample(2,noise_freq,noise_vol);
+		if (noise) osd_adjust_sample(2,noise_freq,noise_vol/4);
 		else
 		{
 			osd_adjust_sample(2,1000,0);
@@ -171,7 +161,7 @@ void phoenix_sound_control_b_w(int offset,int data)
 
 	if (freq != 0x0f)
 	{
-		osd_adjust_sample(1,MAXFREQ_B/(16-sound_b_freq),85*(3-vol));
+		osd_adjust_sample(1,MAXFREQ_B/(16-sound_b_freq),MAX_VOLUME*(3-vol));
 		sound_b_play = 1;
 	}
 	else
@@ -213,10 +203,18 @@ void phoenix_sound_control_b_w(int offset,int data)
 
 int phoenix_sh_start(void)
 {
+	x = PHX_PI/2;
+
+	if (Machine->samples != 0 && Machine->samples->sample[0] != 0)    /* We should check also that Samplename[0] = 0 */
+		noisemulate = 0;
+	else
+		noisemulate = 1;
+
 	osd_play_sample(0,(signed char*)waveform1,32,1000,0,1);
 	osd_play_sample(1,(signed char*)waveform1,32,1000,0,1);
 	osd_play_sample(2,(signed char*)waveform2,128,1000,0,1);
 	song_playing = 0;
+
 	return 0;
 }
 
@@ -267,13 +265,13 @@ void phoenix_sh_update(void)
 
 
 	if (sound_a_play)
-		osd_adjust_sample(0,pitch_a,85*(3-sound_a_vol));
+		osd_adjust_sample(0,pitch_a,MAX_VOLUME*(3-sound_a_vol));
 	if (sound_b_play)
-		osd_adjust_sample(1,pitch_b,85*(3-sound_b_vol));
+		osd_adjust_sample(1,pitch_b,MAX_VOLUME*(3-sound_b_vol));
 
 	if ((noise_vol) && (noisemulate))
 	{
-		osd_adjust_sample(2,noise_freq,noise_vol);
+		osd_adjust_sample(2,noise_freq,noise_vol/4);
 		noise_vol-=3;
 	}
 

@@ -280,7 +280,7 @@ struct MachineDriver
 	void (*vh_update)(struct osd_bitmap *bitmap,int full_refresh);
 
 	/* sound hardware */
-	int (*sh_init)(const char *gamename);
+	int sound_attributes;
 	int (*sh_start)(void);
 	void (*sh_stop)(void);
 	void (*sh_update)(void);
@@ -311,6 +311,8 @@ struct MachineDriver
 
 
 
+/* flags for video_attributes */
+
 /* bit 0 of the video attributes indicates raster or vector video hardware */
 #define	VIDEO_TYPE_RASTER			0x0000
 #define	VIDEO_TYPE_VECTOR			0x0001
@@ -331,6 +333,17 @@ struct MachineDriver
 /*       you are caching data during the video frame and want to update the screen before */
 /*       the game starts calculating the next frame. */
 #define	VIDEO_UPDATE_BEFORE_VBLANK	0x0010
+
+/* In most cases we assume pixels are square (1:1 aspect ratio) but some games need */
+/* different proportions, e.g. 1:2 for Blasteroids, 3:2 for Moon Patrol */
+#define VIDEO_PIXEL_ASPECT_RATIO_MASK 0x0060
+#define VIDEO_PIXEL_ASPECT_RATIO_1_1 0x0000
+#define VIDEO_PIXEL_ASPECT_RATIO_1_2 0x0020
+#define VIDEO_PIXEL_ASPECT_RATIO_3_2 0x0040
+
+
+/* flags for sound_attributes */
+#define	SOUND_SUPPORTS_STEREO		0x0001
 
 
 

@@ -399,88 +399,6 @@ static struct MachineDriver frenzy_machine_driver =
 
 
 
-static int berzerk_hiload(void)
-{
-        unsigned char *RAM = Machine->memory_region[0];
-
-        void *f;
-
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-            osd_fread(f,&RAM[0x0800],0x0800);
-            osd_fclose(f);
-        }
-
-        return 1;
-}
-
-
-
-static void berzerk_hisave(void)
-{
-        void *f;
-        unsigned char *RAM = Machine->memory_region[0];
-
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite(f,&RAM[0x0800],0x800);
-                osd_fclose(f);
-        }
-}
-
-static int frenzy_hiload(void)
-{
-	static int firsttime = 0;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x406f],0xff,59);
-		firsttime = 1;
-	}
-
-	if (memcmp(&RAM[0x406F],"\x00\x00\x00",3) == 0 &&
-		memcmp(&RAM[0x40A7],"\x00\x00\x00",3) == 0 &&
- 		 memcmp (&RAM[0x5c81],"\x04\x10\x80",3)==0 )
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x406f],59);
-			osd_fclose(f);
-		}
-
-		firsttime = 0;
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-
-
-static void frenzy_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x406f],59);
-		osd_fclose(f);
-	}
-}
-
-
-
 /***************************************************************************
 
   Game driver(s)
@@ -563,6 +481,85 @@ static const char *berzerk_sample_names[] =
 	"34.sam", // kill human (cheat)
 	0	/* end of array */
 };
+
+
+
+static int berzerk_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[0];
+	void *f;
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+	{
+		osd_fread(f,&RAM[0x0800],0x0800);
+		osd_fclose(f);
+	}
+
+	return 1;
+}
+
+static void berzerk_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x0800],0x800);
+		osd_fclose(f);
+	}
+}
+
+static int frenzy_hiload(void)
+{
+	static int firsttime = 0;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* check if the hi score table has already been initialized */
+	/* the high score table is intialized to all 0, so first of all */
+	/* we dirty it, then we wait for it to be cleared again */
+	if (firsttime == 0)
+	{
+		memset(&RAM[0x406f],0xff,59);
+		firsttime = 1;
+	}
+
+	if (memcmp(&RAM[0x406F],"\x00\x00\x00",3) == 0 &&
+			memcmp(&RAM[0x40A7],"\x00\x00\x00",3) == 0 &&
+			memcmp (&RAM[0x5c81],"\x04\x10\x80",3)==0 )
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x406f],59);
+			osd_fclose(f);
+		}
+
+		firsttime = 0;
+		return 1;
+	}
+	else return 0;   /* we can't load the hi scores yet */
+}
+
+static void frenzy_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x406f],59);
+		osd_fclose(f);
+	}
+}
+
+
 
 struct GameDriver berzerk_driver =
 {

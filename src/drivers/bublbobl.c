@@ -377,7 +377,7 @@ static void irqhandler(void)
 static struct YM2203interface ym2203_interface =
 {
 	1,			/* 1 chip */
-	3000000,	/* 3 MHz ??? */
+	3600000,	/* 3.6 MHz ??? (hand tuned) */
 	{ YM2203_VOL(255,255) },
 	{ 0 },
 	{ 0 },

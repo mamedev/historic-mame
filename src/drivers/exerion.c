@@ -456,14 +456,27 @@ static void exerionb_decode(void)
 static int hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	static int firsttime;
 
 
 	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x86cc],"\x5c",1) == 0) /* Look for 1UP on screen */
+	/* the high score table is intialized to all 0, so first of all */
+	/* we dirty it, then we wait for it to be cleared again */
+	if (firsttime == 0)
+	{
+		memset(&RAM[0x6600],0xff,10);	/* high score */
+		memset(&RAM[0x6700],0xff,40);
+		firsttime = 1;
+	}
+
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x6600],"\x00\x00\x00",3) == 0 &&
+		memcmp(&RAM[0x6700],"\x00\x00\x00",3) == 0 &&
+		memcmp(&RAM[0x6725],"\x00\x00\x00",3) == 0)
 	{
 		void *f;
-
-
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
 			int writing = 0;
@@ -483,7 +496,7 @@ static int hiload(void)
 			if (!writing) writing = (RAM[0x6601] & 0x0f);
 			videoram_w (0x3cd, writing ? (RAM[0x6601] & 0x0f) | 0x30 : ' ');
 		}
-
+		firsttime = 0;
 		return 1;
 	}
 	else return 0;  /* we can't load the hi scores yet */

@@ -183,12 +183,13 @@ int kungfum_vh_start(void);
 void kungfum_vh_stop(void);
 void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void mpatrol_io_w(int offset, int value);
-int mpatrol_io_r(int offset);
-void mpatrol_adpcm_reset_w(int offset,int value);
-void mpatrol_sound_cmd_w(int offset, int value);
 
-void mpatrol_adpcm_int(int data);
+extern struct AY8910interface irem_ay8910_interface;
+extern struct MSM5205interface irem_msm5205_interface;
+void irem_io_w(int offset, int value);
+int irem_io_r(int offset);
+void irem_sound_cmd_w(int offset, int value);
+
 
 
 static struct MemoryReadAddress readmem[] =
@@ -224,7 +225,7 @@ static struct IOReadPort readport[] =
 
 static struct IOWritePort writeport[] =
 {
-	{ 0x00, 0x00, mpatrol_sound_cmd_w },
+	{ 0x00, 0x00, irem_sound_cmd_w },
 	{ 0x01, 0x01, kungfum_flipscreen_w },
 	{ -1 }	/* end of table */
 };
@@ -232,7 +233,7 @@ static struct IOWritePort writeport[] =
 
 static struct MemoryReadAddress sound_readmem[] =
 {
-	{ 0x0000, 0x001f, mpatrol_io_r },
+	{ 0x0000, 0x001f, irem_io_r },
 	{ 0x0080, 0x00ff, MRA_RAM },
 	{ 0xa000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
@@ -240,7 +241,7 @@ static struct MemoryReadAddress sound_readmem[] =
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
-	{ 0x0000, 0x001f, mpatrol_io_w },
+	{ 0x0000, 0x001f, irem_io_w },
 	{ 0x0080, 0x00ff, MWA_RAM },
 	{ 0x0801, 0x0802, MSM5205_data_w },
 	{ 0x9000, 0x9000, MWA_NOP },    /* IACK */
@@ -371,26 +372,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct AY8910interface ay8910_interface =
-{
-	2,	/* 2 chips */
-	910000,	/* .91 MHZ ?? */
-	{ 160, 160 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0, mpatrol_adpcm_reset_w }
-};
-
-static struct MSM5205interface msm5205_interface =
-{
-	2,			/* 2 chips */
-	4000,       /* 4000Hz playback */
-	mpatrol_adpcm_int,/* interrupt function */
-	{ 255, 255 }
-};
-
-
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -433,11 +414,11 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			SOUND_AY8910,
-			&ay8910_interface
+			&irem_ay8910_interface
 		},
 		{
 			SOUND_MSM5205,
-			&msm5205_interface
+			&irem_msm5205_interface
 		}
 	}
 };

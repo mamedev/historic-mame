@@ -1056,6 +1056,7 @@ static void rpatrolb_hisave(void)
 		osd_fwrite(f,&RAM[0x92ba],6);
 
 		osd_fclose(f);
+		RAM[0x92fa] = 0;
 	}
 }
 
@@ -1775,23 +1776,31 @@ static void swimmer_hisave(void)
 	{
 		osd_fwrite(f,&RAM[0x84e0],9*5);
 		osd_fclose(f);
+		RAM[0x84e6] = 0;
 	}
 }
 
 
 static int guzzler_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM=Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	static int firsttime;
 
 
 	/* check if the hi score table has already been initialized */
+	/* the high score table is intialized to all 0, so first of all */
+	/* we dirty it, then we wait for it to be cleared again */
+	if (firsttime == 0)
+	{
+		memset(&RAM[0x8584],0xff,16*5);
+		firsttime = 1;
+	}
+	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x8584],"\x00\x03\x00",3) == 0 &&
-			memcmp(&RAM[0x858c],"\x48\x4b\x41",3) == 0)
+			memcmp(&RAM[0x85c4],"\x00\x03\x00",3) == 0)
 	{
 		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		if ((f =osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
 			osd_fread(f,&RAM[0x8584],16*5);
 			RAM[0x8007]=RAM[0x8584];
@@ -1802,7 +1811,7 @@ static int guzzler_hiload(void)
 			RAM[0x800C]=RAM[0x8589];
 			osd_fclose(f);
 		}
-
+		firsttime = 0;
 		return 1;
 	}
 	else return 0;  /* we can't load the hi scores yet */

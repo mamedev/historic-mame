@@ -338,7 +338,7 @@ static int cop01_hiload(void)
 
               if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
               {
-                      osd_fread(f,&RAM[0xC46E],39);
+                      osd_fread(f,&RAM[0xC46d],40);
                       osd_fclose(f);
               }
 
@@ -357,7 +357,7 @@ static void cop01_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-                osd_fwrite(f,&RAM[0xC46E],39);
+                osd_fwrite(f,&RAM[0xC46d],40);
 		osd_fclose(f);
 	}
 }
@@ -374,7 +374,7 @@ static int cop01a_hiload(void)
 
               if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
               {
-                      osd_fread(f,&RAM[0xC46F],39);
+                      osd_fread(f,&RAM[0xC46e],40);
                       osd_fclose(f);
               }
 
@@ -393,7 +393,7 @@ static void cop01a_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-                osd_fwrite(f,&RAM[0xC46F],39);
+                osd_fwrite(f,&RAM[0xC46e],40);
 		osd_fclose(f);
 	}
 }

@@ -107,8 +107,8 @@ int  invaders_interrupt(void);
 int  boothill_shift_data_r(int offset);                  /* MJC 310198 */
 int  boothill_port_0_r(int offset);                      /* MJC 310198 */
 int  boothill_port_1_r(int offset);                      /* MJC 310198 */
-void boothill_sh_port3_w(int offset, int data);          /* HC 4/14/98 */
-void boothill_sh_port5_w(int offset, int data);          /* HC 4/14/98 */
+void boothill_sh_port3_w(int offset, int data);          /* HSC 4/14/98 */
+void boothill_sh_port5_w(int offset, int data);          /* HSC 4/14/98 */
 
 int  gray6bit_controller0_r(int offset);
 int  gray6bit_controller1_r(int offset);
@@ -125,6 +125,7 @@ void invdelux_videoram_w(int offset,int data);   /* V.V */
 void invrvnge_videoram_w(int offset,int data);   /* V.V */
 void lrescue_videoram_w(int offset,int data);    /* V.V */
 void rollingc_videoram_w(int offset,int data);   /* L.T */
+void astinvad_videoram_w(int offset,int data);   /* HSC used for astinv (z80bw.c)*/
 
 int  invaders_vh_start(void);
 void invaders_vh_stop(void);
@@ -167,7 +168,7 @@ enum { BLACK,RED,GREEN,YELLOW,WHITE,CYAN,PURPLE }; /* V.V */
 /*				case 1 : horizontal using colors from lrescue				*/
 /*				case 2 : plain vertical										*/
 /*				case 3 : inverted vertical									*/
-
+/* 				case 4 : astinvad horizontal (z80bw.c)						*/
 
 /* HSC 11/16/98 */
 void mix_hiscoreprint(int x, int y, int value, int width,int size, int adjust,int romarea, int offset, int type)
@@ -182,23 +183,27 @@ void mix_hiscoreprint(int x, int y, int value, int width,int size, int adjust,in
 	switch (type)
 		{
 		case 0:
-		invaders_videoram_w((31-y) + (i+adjust)*32 + j*256,
-								Machine->memory_region[0][romarea+offset+disp+i]);
+			invaders_videoram_w((31-y) + (i+adjust)*32 + j*256,
+			Machine->memory_region[0][romarea+offset+disp+i]);
 		break;
 
 		case 1:
-					lrescue_videoram_w((31-y) + (i+adjust)*32 + j*256,
-								Machine->memory_region[0][romarea+offset+disp+i]);
+			lrescue_videoram_w((31-y) + (i+adjust)*32 + j*256,
+			Machine->memory_region[0][romarea+offset+disp+i]);
 		break;
 
 		case 2:
-					boothill_videoram_w((31-j) + (i+adjust)*32 + y*256,
-								Machine->memory_region[0][romarea+offset+disp+i]);
+			boothill_videoram_w((31-j) + (i+adjust)*32 + y*256,
+			Machine->memory_region[0][romarea+offset+disp+i]);
 		break;
 
 		case 3:
-		boothill_videoram_w((31-j) + (i+adjust)*32 + y*256,
-										~(Machine->memory_region[0][romarea+offset+disp+i]));
+			boothill_videoram_w((31-j) + (i+adjust)*32 + y*256,
+			~(Machine->memory_region[0][romarea+offset+disp+i]));
+		break;
+		case 4:
+			astinvad_videoram_w((31-y) + (i+adjust)*32 + j*256,
+			Machine->memory_region[0][romarea+offset+disp+i]);
 		break;
 		}
 

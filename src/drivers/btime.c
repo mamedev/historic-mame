@@ -5,6 +5,13 @@ Burger Time hardware description:
 Actually Lock'n'Chase is (C)1981 while Burger Time is (C)1982, so it might
 be more accurate to say 'Lock'n'Chase hardware'.
 
+The bootleg called Cook Race runs on hardware similar but different. The fact
+that it addresses the program ROMs in the range 0500-3fff instead of the usual
+c000-ffff makes me suspect that it is a bootleg of the *tape system* version.
+Little is known about that system, but it is quite likely that it would have
+RAM in the range 0000-3fff and load the program there from tape.
+
+
 This hardware is pretty straightforward, but has a couple of interesting
 twists. There are two ports to the video and color RAMs, one normal access,
 and one with X and Y coordinates swapped. The sprite RAM occupies the
@@ -55,6 +62,7 @@ int  bnj_vh_start (void);
 void bnj_vh_stop (void);
 
 void btime_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void cookrace_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void bnj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void lnc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void eggs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -203,6 +211,47 @@ static struct MemoryWriteAddress btime_writemem[] =
 	{ -1 }  /* end of table */
 };
 
+static struct MemoryReadAddress cookrace_readmem[] =
+{
+	{ 0x0000, 0x03ff, MRA_RAM },
+	{ 0x0500, 0x3fff, MRA_ROM },
+	{ 0xc000, 0xc7ff, MRA_RAM },
+	{ 0xc800, 0xcbff, btime_mirrorvideoram_r },
+	{ 0xcc00, 0xcfff, btime_mirrorcolorram_r },
+	{ 0xd000, 0xd0ff, MRA_RAM },	/* background */
+	{ 0xd100, 0xd3ff, MRA_RAM },	/* ? */
+	{ 0xd400, 0xd7ff, MRA_RAM },	/* background? */
+	{ 0xe000, 0xe000, input_port_3_r },     /* DSW1 */
+	{ 0xe300, 0xe300, input_port_3_r },     /* mirror address used on high score name enter */
+											/* screen - could also be a bad ROM read */
+	{ 0xe001, 0xe001, input_port_4_r },     /* DSW2 */
+	{ 0xe002, 0xe002, input_port_0_r },     /* IN0 */
+	{ 0xe003, 0xe003, input_port_1_r },     /* IN1 */
+	{ 0xe004, 0xe004, input_port_2_r },     /* coin */
+	{ 0xfff9, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress cookrace_writemem[] =
+{
+	{ 0x0000, 0x03ff, MWA_RAM },
+	{ 0x0500, 0x3fff, MWA_ROM },
+	{ 0xc000, 0xc3ff, videoram_w, &videoram, &videoram_size },
+	{ 0xc400, 0xc7ff, colorram_w, &colorram },
+	{ 0xc800, 0xcbff, btime_mirrorvideoram_w },
+	{ 0xcc00, 0xcfff, btime_mirrorcolorram_w },
+	{ 0xd000, 0xd0ff, MWA_RAM, &bnj_backgroundram, &bnj_backgroundram_size },
+	{ 0xd000, 0xd0ff, MWA_RAM },	/* background? */
+	{ 0xd100, 0xd3ff, MWA_RAM },	/* ? */
+	{ 0xd400, 0xd7ff, MWA_RAM, &bnj_backgroundram, &bnj_backgroundram_size },
+	{ 0xe000, 0xe000, bnj_video_control_w },
+	{ 0xe001, 0xe001, sound_command_w },
+#if 0
+	{ 0x4004, 0x4004, bnj_scroll1_w },
+#endif
+	{ 0xfff9, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
 
 static struct MemoryReadAddress zoar_readmem[] =
 {
@@ -331,19 +380,22 @@ static struct MemoryWriteAddress bnj_writemem[] =
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0xf000, 0xffff, MRA_ROM },
+	{ 0x0200, 0x0fff, MRA_ROM },	/* Cook Race */
 	{ 0xa000, 0xafff, soundlatch_r },
+	{ 0xf000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
+	{ 0x0200, 0x0fff, MWA_ROM },	/* Cook Race */
 	{ 0x2000, 0x2fff, AY8910_write_port_0_w },
 	{ 0x4000, 0x4fff, AY8910_control_port_0_w },
 	{ 0x6000, 0x6fff, AY8910_write_port_1_w },
 	{ 0x8000, 0x8fff, AY8910_control_port_1_w },
 	{ 0xc000, 0xcfff, interrupt_enable_w },
+	{ 0xf000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
 
@@ -456,10 +508,10 @@ INPUT_PORTS_START( btime_input_ports )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x06, 0x06, "Bonus Life", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x06, "10,000" )
-	PORT_DIPSETTING(    0x04, "15,000" )
-	PORT_DIPSETTING(    0x02, "20,000"  )
-	PORT_DIPSETTING(    0x00, "30,000"  )
+	PORT_DIPSETTING(    0x06, "10000" )
+	PORT_DIPSETTING(    0x04, "15000" )
+	PORT_DIPSETTING(    0x02, "20000"  )
+	PORT_DIPSETTING(    0x00, "30000"  )
 	PORT_DIPNAME( 0x08, 0x08, "Enemies", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x00, "6" )
@@ -477,6 +529,84 @@ INPUT_PORTS_START( btime_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( cookrace_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH,IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH,IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH,IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH,IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH,IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH,IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH,IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH,IPT_UNUSED )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH,IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH,IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH,IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH,IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH,IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH,IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH,IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH,IPT_UNUSED )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH,IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH,IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH,IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH,IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH,IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH,IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x01, "1 Coin/3 Credits" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x40, "Cocktail" )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK  )
+
+	PORT_START      /* DSW2 */
+	PORT_DIPNAME( 0x01, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x06, 0x06, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x06, "20000" )
+	PORT_DIPSETTING(    0x04, "30000" )
+	PORT_DIPSETTING(    0x02, "40000"  )
+	PORT_DIPSETTING(    0x00, "50000"  )
+	PORT_DIPNAME( 0x08, 0x08, "Enemies", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x00, "6" )
+	PORT_DIPNAME( 0x10, 0x10, "End of Level Pepper", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "No" )
+	PORT_DIPSETTING(    0x00, "Yes" )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
 
 INPUT_PORTS_START( zoar_input_ports )
 	PORT_START      /* IN0 */
@@ -535,10 +665,10 @@ INPUT_PORTS_START( zoar_input_ports )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x06, 0x06, "Bonus Life", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x06, "5,000" )
-	PORT_DIPSETTING(    0x04, "10,000" )
-	PORT_DIPSETTING(    0x02, "15,000"  )
-	PORT_DIPSETTING(    0x00, "20,000"  )
+	PORT_DIPSETTING(    0x06, "5000" )
+	PORT_DIPSETTING(    0x04, "10000" )
+	PORT_DIPSETTING(    0x02, "15000"  )
+	PORT_DIPSETTING(    0x00, "20000"  )
 	PORT_DIPNAME( 0x08, 0x08, "Difficulty", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x08, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
@@ -600,9 +730,9 @@ INPUT_PORTS_START( eggs_input_ports )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x06, 0x04, "Bonus Life", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "30,000" )
-	PORT_DIPSETTING(    0x02, "50,000" )
-	PORT_DIPSETTING(    0x00, "70,000"  )
+	PORT_DIPSETTING(    0x04, "30000" )
+	PORT_DIPSETTING(    0x02, "50000" )
+	PORT_DIPSETTING(    0x00, "70000"  )
 	PORT_DIPSETTING(    0x06, "Never"  )
 	PORT_BIT( 0x78, 0x78, IPT_UNKNOWN )     /* almost certainly unused */
 	PORT_DIPNAME( 0x80, 0x80, "Difficulty", IP_KEY_NONE )
@@ -660,9 +790,9 @@ INPUT_PORTS_START( lnc_input_ports )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x06, 0x06, "Bonus Life", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x06, "15,000" )
-	PORT_DIPSETTING(    0x04, "20,000" )
-	PORT_DIPSETTING(    0x02, "30,000" )
+	PORT_DIPSETTING(    0x06, "15000" )
+	PORT_DIPSETTING(    0x04, "20000" )
+	PORT_DIPSETTING(    0x02, "30000" )
 	PORT_DIPSETTING(    0x00, "Never" )
 	PORT_DIPNAME( 0x08, 0x08, "Game Speed", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x08, "Slow" )
@@ -730,10 +860,10 @@ INPUT_PORTS_START( bnj_input_ports )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x06, 0x06, "Bonus Life", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x06, "Every 30,000" )
-	PORT_DIPSETTING(    0x04, "Every 70,000" )
-	PORT_DIPSETTING(    0x02, "20,000 Only"  )
-	PORT_DIPSETTING(    0x00, "30,000 Only"  )
+	PORT_DIPSETTING(    0x06, "Every 30000" )
+	PORT_DIPSETTING(    0x04, "Every 70000" )
+	PORT_DIPSETTING(    0x02, "20000 Only"  )
+	PORT_DIPSETTING(    0x00, "30000 Only"  )
 	PORT_DIPNAME( 0x08, 0x00, "Allow Continue", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x08, "No" )
 	PORT_DIPSETTING(    0x00, "Yes" )
@@ -803,6 +933,17 @@ static struct GfxLayout btime_tilelayout =
 	32*8    /* every tile takes 32 consecutive bytes */
 };
 
+static struct GfxLayout cookrace_tilelayout =
+{
+	8,8,  /* 8*8 characters */
+	256,    /* 256 characters */
+	3,      /* 3 bits per pixel */
+	{ 0, 256*8*8, 2*256*8*8 },    /* the bitplanes are separated */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	{ 7, 6, 5, 4, 3, 2, 1, 0 },
+	8*8    /* every tile takes 8 consecutive bytes */
+};
+
 static struct GfxLayout bnj_tilelayout =
 {
 	16,16,  /* 16*16 characters */
@@ -821,6 +962,14 @@ static struct GfxDecodeInfo btime_gfxdecodeinfo[] =
 	{ 1, 0x0000, &charlayout,       0, 1 }, /* char set #1 */
 	{ 1, 0x0000, &spritelayout,     0, 1 }, /* sprites */
 	{ 1, 0x6000, &btime_tilelayout, 8, 1 }, /* background tiles */
+	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo cookrace_gfxdecodeinfo[] =
+{
+	{ 1, 0x0000, &charlayout,          0, 1 }, /* char set #1 */
+	{ 1, 0x0000, &spritelayout,        0, 1 }, /* sprites */
+	{ 1, 0x6000, &cookrace_tilelayout, 8, 1 }, /* background tiles */
 	{ -1 } /* end of array */
 };
 
@@ -867,23 +1016,28 @@ static struct AY8910interface ay8910_interface =
 *
 ********************************************************************/
 
-#define bnj_vh_convert_color_prom    0
-#define eggs_vh_convert_color_prom   btime_vh_convert_color_prom
-#define zoar_vh_convert_color_prom   btime_vh_convert_color_prom
+#define cookrace_vh_convert_color_prom   btime_vh_convert_color_prom
+#define bnj_vh_convert_color_prom        0
+#define eggs_vh_convert_color_prom       btime_vh_convert_color_prom
+#define zoar_vh_convert_color_prom       btime_vh_convert_color_prom
 
-#define btime_init_machine  0
-#define bnj_init_machine    0
-#define zoar_init_machine   0
+#define btime_init_machine     0
+#define cookrace_init_machine  0
+#define bnj_init_machine       0
+#define zoar_init_machine      0
 
-#define btime_vh_start  generic_vh_start
-#define zoar_vh_start   generic_vh_start
-#define eggs_vh_start   generic_vh_start
-#define lnc_vh_start    generic_vh_start
+#define btime_vh_start     generic_vh_start
+#define cookrace_vh_start  generic_vh_start
+#define zoar_vh_start      generic_vh_start
+#define eggs_vh_start      generic_vh_start
+#define lnc_vh_start       generic_vh_start
 
-#define btime_vh_stop   generic_vh_stop
-#define zoar_vh_stop    generic_vh_stop
-#define eggs_vh_stop    generic_vh_stop
-#define lnc_vh_stop     generic_vh_stop
+#define btime_vh_stop      generic_vh_stop
+#define cookrace_vh_stop   generic_vh_stop
+#define zoar_vh_stop       generic_vh_stop
+#define eggs_vh_stop       generic_vh_stop
+#define lnc_vh_stop        generic_vh_stop
+
 
 #define MACHINE_DRIVER(GAMENAME, CLOCK, MAIN_IRQ, SOUND_IRQ, GFX, COLOR)   \
 																	\
@@ -975,6 +1129,8 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 
 MACHINE_DRIVER(btime, 1500000, btime_irq_interrupt, nmi_interrupt, btime_gfxdecodeinfo, 16);
 
+MACHINE_DRIVER(cookrace, 1500000, btime_nmi_interrupt, nmi_interrupt, cookrace_gfxdecodeinfo, 16);
+
 EGGS_MACHINE_DRIVER(eggs, 1500000, interrupt, nmi_interrupt, lnc_gfxdecodeinfo, 8);
 
 MACHINE_DRIVER(lnc, 1500000, btime_nmi_interrupt, lnc_sound_interrupt, lnc_gfxdecodeinfo, 8);
@@ -1040,33 +1196,51 @@ ROM_START( btimea_rom )
 	ROM_LOAD( "ab03.6b",      0x0000, 0x0800, 0xd26bc1f3 )
 ROM_END
 
-ROM_START( hamburge_rom )
+ROM_START( cookrace_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	/* the following might be wrong - ROMs seem encrypted */
-	ROM_LOAD( "inc.1",        0xc000, 0x2000, 0x68759d32 )
-	ROM_LOAD( "inc.2",        0xe000, 0x2000, 0xbe7d72d1 )
+	/* code is in the range 0500-3fff, encrypted */
+	ROM_LOAD( "inc.1",        0x0000, 0x2000, 0x68759d32 )
+	ROM_LOAD( "inc.2",        0x2000, 0x2000, 0xbe7d72d1 )
 
 	ROM_REGION_DISPOSE(0x7800)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "inc.9",        0x0000, 0x2000, 0xd0d94477 ) /* charset #1 */
 	ROM_LOAD( "inc.8",        0x2000, 0x2000, 0x1104f497 )
 	ROM_LOAD( "inc.7",        0x4000, 0x2000, 0xa1a0d5a6 )
 	ROM_LOAD( "inc.5",        0x6000, 0x0800, 0x611c686f ) /* garbage?? */
-	ROM_CONTINUE(      0x6000, 0x0800 )             /* charset #2 */
+	ROM_CONTINUE(             0x6000, 0x0800 )             /* charset #2 */
 	ROM_LOAD( "inc.4",        0x6800, 0x0800, 0x7742e771 ) /* garbage?? */
-	ROM_CONTINUE(      0x6800, 0x0800 )
+	ROM_CONTINUE(             0x6800, 0x0800 )
 	ROM_LOAD( "inc.3",        0x7000, 0x0800, 0x28609a75 ) /* garbage?? */
-	ROM_CONTINUE(      0x7000, 0x0800 )
+	ROM_CONTINUE(             0x7000, 0x0800 )
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
 	ROM_LOAD( "inc.6",        0x0000, 0x1000, 0x6b8e0272 ) /* starts at 0000, not f000; 0000-01ff is RAM */
-	ROM_RELOAD(        0xf000, 0x1000 )     /* for the reset/interrupt vectors */
-
-	ROM_REGION(0x0800)      /* background graphics */
-	/* this ROM is missing? maybe the hardware works differently */
+	ROM_RELOAD(               0xf000, 0x1000 )     /* for the reset/interrupt vectors */
 
     ROM_REGION(0x0020)
     ROM_LOAD( "hamburge.clr", 0x0000, 0x0020, 0xc2348c1d )
 ROM_END
+
+static void cookrace_decode(void)
+{
+	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	for (A = 0;A < 0x4000;A++)
+		ROM[A] = (RAM[A] & 0x9f) | ((RAM[A] & 0x20) << 1) | ((RAM[A] & 0x40) >> 1);
+
+	/* fill in the reset/interrupt vectors */
+	ROM[0xfff9] = 0x40;
+
+	RAM[0xfffa] = 0x00;
+	RAM[0xfffb] = 0x05;
+	RAM[0xfffc] = 0x03;
+	RAM[0xfffd] = 0x05;
+	RAM[0xfffe] = 0xF9;
+	RAM[0xffff] = 0xFF;
+}
+
 
 ROM_START( eggs_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
@@ -1577,30 +1751,30 @@ struct GameDriver btimea_driver =
 	btime_hiload, btime_hisave
 };
 
-struct GameDriver hamburge_driver =
+struct GameDriver cookrace_driver =
 {
 	__FILE__,
 	&btime_driver,
-	"hamburge",
-	"Hamburger",
+	"cookrace",
+	"Cook Race",
 	"1982",
 	"bootleg",
 	"Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)",
-	GAME_NOT_WORKING,
-	&btime_machine_driver,
+	0,
+	&cookrace_machine_driver,
 	0,
 
-	hamburge_rom,
-	0, 0,
+	cookrace_rom,
+	0, cookrace_decode,
 	0,
 	0,	/* sound_prom */
 
-	btime_input_ports,
+	cookrace_input_ports,
 
-    PROM_MEMORY_REGION(4), 0, 0,
+    PROM_MEMORY_REGION(3), 0, 0,
 	ORIENTATION_DEFAULT,
 
-	btime_hiload, btime_hisave
+	0, 0
 };
 
 struct GameDriver eggs_driver =

@@ -364,9 +364,9 @@ void ADPCM_sh_update (void)
 
 		/* play the result */
 		if (Machine->sample_bits == 16)
-			osd_play_streamed_sample_16 (voice->channel, voice->buffer, 2*buffer_len, emulation_rate, voice->volume,0);
+			osd_play_streamed_sample_16 (voice->channel, voice->buffer, 2*buffer_len, emulation_rate, voice->volume,OSD_PAN_CENTER);
 		else
-			osd_play_streamed_sample (voice->channel, voice->buffer, buffer_len, emulation_rate, voice->volume,0);
+			osd_play_streamed_sample (voice->channel, voice->buffer, buffer_len, emulation_rate, voice->volume,OSD_PAN_CENTER);
 
 		/* reset the buffer position */
 		voice->bufpos = 0;

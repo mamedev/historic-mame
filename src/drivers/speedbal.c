@@ -353,6 +353,40 @@ static void speedbal_decode (void)
 }
 
 
+static int hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if  (memcmp(&RAM[0xF800],"\x20\x38\x76",3) == 0 &&
+			memcmp(&RAM[0xF843],"\x56\x41\x50",3) == 0 )
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0xF800],70);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;   /* we can't load the hi scores yet */
+}
+
+static void hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0xF800],70);
+		osd_fclose(f);
+	}
+}
+
 
 struct GameDriver speedbal_driver =
 {
@@ -377,5 +411,5 @@ struct GameDriver speedbal_driver =
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	0, 0
+	hiload, hisave
 };

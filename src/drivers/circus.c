@@ -518,6 +518,7 @@ static void crash_hisave(void)
 	{
 		osd_fwrite(f,&RAM[0x000F],2);
 		osd_fclose(f);
+		RAM[0x004B] =0;
 	}
 }
 

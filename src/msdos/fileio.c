@@ -497,6 +497,28 @@ int osd_fread(void *file,void *buffer,int length)
 	return 0;
 }
 
+int osd_fread_swap(void *file,void *buffer,int length)
+{
+	int i;
+	unsigned char *buf;
+	unsigned char temp;
+	int res;
+
+
+	res = osd_fread(file,buffer,length);
+
+	buf = buffer;
+	for (i = 0;i < length;i+=2)
+	{
+		temp = buf[i];
+		buf[i] = buf[i+1];
+		buf[i+1] = temp;
+	}
+
+	return res;
+}
+
+
 /* AM 980919 update */
 int osd_fwrite(void *file,const void *buffer,int length)
 {
@@ -510,6 +532,35 @@ int osd_fwrite(void *file,const void *buffer,int length)
 			return 0;
 	}
 }
+
+int osd_fwrite_swap(void *file,const void *buffer,int length)
+{
+	int i;
+	unsigned char *buf;
+	unsigned char temp;
+	int res;
+
+
+	buf = (unsigned char *)buffer;
+	for (i = 0;i < length;i+=2)
+	{
+		temp = buf[i];
+		buf[i] = buf[i+1];
+		buf[i+1] = temp;
+	}
+
+	res = osd_fwrite(file,buffer,length);
+
+	for (i = 0;i < length;i+=2)
+	{
+		temp = buf[i];
+		buf[i] = buf[i+1];
+		buf[i+1] = temp;
+	}
+
+	return res;
+}
+
 
 /* JB 980920 update */
 int osd_fseek(void *file,int offset,int whence)

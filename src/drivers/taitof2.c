@@ -197,16 +197,15 @@ int megab_input_r (int offset)
 	}
 }
 
+void liquidk_interrupt5(int x)
+{
+	cpu_cause_interrupt(0,MC68000_IRQ_5);
+}
+
 static int liquidk_interrupt(void)
 {
-	static int flip;
-
-	flip ^= 1;
-
-	if (flip)
-		return MC68000_IRQ_5;
-	else
-		return MC68000_IRQ_6;
+	timer_set(TIME_IN_CYCLES(200000-5000,0),0,liquidk_interrupt5);
+	return MC68000_IRQ_6;
 }
 
 void taitof2_sound_w(int offset,int data)
@@ -383,20 +382,20 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 INPUT_PORTS_START( input_ports )
 	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1)
 
 	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -655,7 +654,7 @@ static struct YM2610interface ym2610_interface =
 {
 	1,	/* 1 chip */
 	8000000,	/* 8 MHz ?????? */
-	{ YM2203_VOL(255,255) },
+	{ YM2203_VOL(60,30) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -673,10 +672,10 @@ static struct MachineDriver liquidk_machine_driver =
 	{
 		{
 			CPU_M68000,
-			6000000,	/* 6 MHz ??? */
+			12000000,	/* 12 MHz ??? */
 			0,
 			liquidk_readmem, liquidk_writemem, 0, 0,
-			liquidk_interrupt, 2
+			liquidk_interrupt, 1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -686,7 +685,7 @@ static struct MachineDriver liquidk_machine_driver =
 			ignore_interrupt, 0	/* IRQs are triggered by the YM2610 */
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, 2000,	/* frames per second, vblank duration hand tuned to avoid flicker */
 	1,
 	0,
 
@@ -704,7 +703,7 @@ static struct MachineDriver liquidk_machine_driver =
 	taitof2_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2610,
@@ -719,10 +718,10 @@ static struct MachineDriver finalb_machine_driver =
 	{
 		{
 			CPU_M68000,
-			6000000,	/* 6 MHz ??? */
+			12000000,	/* 12 MHz ??? */
 			0,
 			liquidk_readmem, liquidk_writemem, 0, 0,
-			liquidk_interrupt, 2
+			liquidk_interrupt, 1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -750,7 +749,7 @@ static struct MachineDriver finalb_machine_driver =
 	taitof2_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2610,
@@ -765,10 +764,10 @@ static struct MachineDriver growl_machine_driver =
 	{
 		{
 			CPU_M68000,
-			6000000,	/* 6 MHz ??? */
+			12000000,	/* 12 MHz ??? */
 			0,
 			growl_readmem, growl_writemem, 0, 0,
-			liquidk_interrupt, 2
+			liquidk_interrupt, 1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -796,7 +795,7 @@ static struct MachineDriver growl_machine_driver =
 	taitof2_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2610,
@@ -811,10 +810,10 @@ static struct MachineDriver megab_machine_driver =
 	{
 		{
 			CPU_M68000,
-			6000000,	/* 6 MHz ??? */
+			12000000,	/* 12 MHz ??? */
 			0,
 			megab_readmem, megab_writemem, 0, 0,
-			liquidk_interrupt, 2
+			liquidk_interrupt, 1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -842,7 +841,7 @@ static struct MachineDriver megab_machine_driver =
 	taitof2_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2610,

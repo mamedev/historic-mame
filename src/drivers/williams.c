@@ -436,6 +436,7 @@ extern unsigned char *williams_remap_select;
 void williams_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int williams_vh_start(void);
 int williams_vh_start_sc2(void);
+int blaster_vh_start(void);
 void williams_vh_stop(void);
 void williams_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void williams_videoram_w(int offset,int data);
@@ -1584,13 +1585,13 @@ static struct MachineDriver blaster_machine_driver =
 	304, 256,                               /* screen_width, screen_height */
 	{ 6, 298-1, 7, 247-1 },                 /* struct rectangle visible_area */
 	0,                          /* GfxDecodeInfo * */
-	256,                                  /* total colors */
+	16+256,	/* 16 colors for the real palette, 256 colors for the background */
 	0,                                      /* color table length */
 	blaster_vh_convert_color_prom,         /* convert color prom routine */
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
 	0,                                      /* vh_init routine */
-	williams_vh_start_sc2,                  /* vh_start routine */
+	blaster_vh_start,                  /* vh_start routine */
 	williams_vh_stop,                       /* vh_stop routine */
 	blaster_vh_screenrefresh,               /* vh_update routine */
 

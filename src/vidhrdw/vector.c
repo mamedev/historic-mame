@@ -28,7 +28,8 @@
  *
  **************************************************************************** */
 
-#ifndef xgl  /* GLmame provides its own vector implementation */
+/* GLmame and FXmame provide their own vector implementations */
+#if !(defined xgl) && !(defined xfx) && !(defined svgafx)
 
 #include <math.h>
 #include "osinline.h"
@@ -1034,4 +1035,4 @@ void vector_vh_update_artwork(struct osd_bitmap *bitmap, struct artwork *o, stru
 	}
 }
 
-#endif /* ifndef xgl */
+#endif /* if !(defined xgl) && !(defined xfx) && !(defined svgafx) */

@@ -358,6 +358,8 @@ static struct MachineDriver machine_driver =
 	}
 };
 
+
+
 /***************************************************************************
 
   Game driver(s)
@@ -479,6 +481,7 @@ static void exprraid_gfx_expand( void ) {
 	}
 }
 
+
 static void wexpress_decode_rom( void )
 {
 	unsigned char *RAM = Machine->memory_region[0];
@@ -518,6 +521,49 @@ static void exprraid_decode_rom( void )
 	wexpress_decode_rom();
 }
 
+
+
+static int hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	static int resetcount;
+
+
+	/* during a reset, leave time to the game to clear the screen */
+	if (++resetcount < 10) return 0;
+
+	if(memcmp(&RAM[0x0240],"\x20\x31\x53",3) == 0 &&
+			memcmp(&RAM[0x028D],"\x00\x77\x00",3) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x0240],80);
+			osd_fclose(f);
+		}
+
+		resetcount = 0;
+
+		return 1;
+	}
+	else return 0;   /* we can't load the hi scores yet */
+}
+
+static void hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x0240],80);
+		osd_fclose(f);
+	}
+}
+
+
+
 struct GameDriver exprraid_driver =
 {
 	__FILE__,
@@ -541,7 +587,7 @@ struct GameDriver exprraid_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };
 
 struct GameDriver wexpress_driver =
@@ -567,7 +613,7 @@ struct GameDriver wexpress_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };
 
 struct GameDriver wexpresb_driver =
@@ -593,5 +639,5 @@ struct GameDriver wexpresb_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };

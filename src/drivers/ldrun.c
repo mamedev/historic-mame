@@ -18,12 +18,12 @@ void ldrun2p_scroll_w(int offset,int data);
 void ldrun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void ldrun2p_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void mpatrol_io_w(int offset, int value);
-int mpatrol_io_r(int offset);
-void mpatrol_adpcm_reset_w(int offset,int value);
-void mpatrol_sound_cmd_w(int offset, int value);
+extern struct AY8910interface irem_ay8910_interface;
+extern struct MSM5205interface irem_msm5205_interface;
+void irem_io_w(int offset, int value);
+int irem_io_r(int offset);
+void irem_sound_cmd_w(int offset, int value);
 
-void mpatrol_adpcm_int(int data);
 
 
 void ldrun2p_bankswitch_w(int offset,int data)
@@ -67,7 +67,7 @@ static struct IOReadPort readport[] =
 
 static struct IOWritePort writeport[] =
 {
-	{ 0x00, 0x00, mpatrol_sound_cmd_w },
+	{ 0x00, 0x00, irem_sound_cmd_w },
 //	{ 0x01, 0x01, kungfum_flipscreen_w },
 	{ -1 }	/* end of table */
 };
@@ -93,7 +93,7 @@ static struct MemoryWriteAddress ldrun2p_writemem[] =
 
 static struct IOWritePort ldrun2p_writeport[] =
 {
-	{ 0x00, 0x00, mpatrol_sound_cmd_w },
+	{ 0x00, 0x00, irem_sound_cmd_w },
 //	{ 0x01, 0x01, kungfum_flipscreen_w },	/* coin counter? */
 	{ 0x82, 0x83, ldrun2p_scroll_w },
 	{ -1 }	/* end of table */
@@ -102,15 +102,15 @@ static struct IOWritePort ldrun2p_writeport[] =
 
 static struct MemoryReadAddress sound_readmem[] =
 {
-	{ 0x0000, 0x001f, mpatrol_io_r },
+	{ 0x0000, 0x001f, irem_io_r },
 	{ 0x0080, 0x00ff, MRA_RAM },
-	{ 0x4000, 0xffff, MRA_ROM },
+	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
-	{ 0x0000, 0x001f, mpatrol_io_w },
+	{ 0x0000, 0x001f, irem_io_w },
 	{ 0x0080, 0x00ff, MWA_RAM },
 	{ 0x0801, 0x0802, MSM5205_data_w },
 	{ 0x9000, 0x9000, MWA_NOP },    /* IACK */
@@ -358,26 +358,6 @@ static struct GfxDecodeInfo ldrun2p_gfxdecodeinfo[] =
 
 
 
-static struct AY8910interface ay8910_interface =
-{
-	2,	/* 2 chips */
-	910000,	/* .91 MHZ ?? */
-	{ 255, 255 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0, mpatrol_adpcm_reset_w }
-};
-
-static struct MSM5205interface msm5205_interface =
-{
-	2,			/* 2 chips */
-	4000,       /* 4000Hz playback */
-	mpatrol_adpcm_int,/* interrupt function */
-	{ 255, 255 }
-};
-
-
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -418,11 +398,11 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			SOUND_AY8910,
-			&ay8910_interface
+			&irem_ay8910_interface
 		},
 		{
 			SOUND_MSM5205,
-			&msm5205_interface
+			&irem_msm5205_interface
 		}
 	}
 };
@@ -467,16 +447,14 @@ static struct MachineDriver ldrun2p_machine_driver =
 	{
 		{
 			SOUND_AY8910,
-			&ay8910_interface
+			&irem_ay8910_interface
 		},
 		{
 			SOUND_MSM5205,
-			&msm5205_interface
+			&irem_msm5205_interface
 		}
 	}
 };
-
-
 
 /***************************************************************************
 
@@ -577,6 +555,75 @@ ROM_START( ldrun2p_rom )
 ROM_END
 
 
+static int ldrun_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if (memcmp(&RAM[0xE5E5],"\x01\x01\x00",3) == 0 &&
+			memcmp(&RAM[0xE6AA],"\x20\x20\x04",3) == 0 )
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0xE5E5],200);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;   /* we can't load the hi scores yet */
+}
+
+static void ldrun_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0xE5E5],200);
+		osd_fclose(f);
+	}
+}
+
+
+static int ldrun2p_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if (memcmp(&RAM[0xE735],"\x00\x28\x76",3) == 0 &&
+			memcmp(&RAM[0xE7FA],"\x20\x20\x06",3) == 0 )
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0xE735],200);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;   /* we can't load the hi scores yet */
+}
+
+static void ldrun2p_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0xE735],200);
+		osd_fclose(f);
+	}
+}
+
 
 struct GameDriver ldrun_driver =
 {
@@ -601,7 +648,7 @@ struct GameDriver ldrun_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	ldrun_hiload, ldrun_hisave
 };
 
 struct GameDriver ldruna_driver =
@@ -627,7 +674,7 @@ struct GameDriver ldruna_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	ldrun_hiload, ldrun_hisave
 };
 
 struct GameDriver ldrun2p_driver =
@@ -653,7 +700,7 @@ struct GameDriver ldrun2p_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	ldrun2p_hiload, ldrun2p_hisave
 };
 
 
@@ -703,7 +750,7 @@ static void background_tilemap_w( int offset, int data ){
 	dirtybuffer[offset/2] = 1;
 }
 
-INPUT_PORTS_START( irem_input_ports )
+INPUT_PORTS_START( kidniki_input_ports )
 	PORT_START
 	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -717,9 +764,9 @@ INPUT_PORTS_START( irem_input_ports )
 	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
 	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
 	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
 	PORT_START
 	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL  )
@@ -770,12 +817,12 @@ INPUT_PORTS_START( irem_input_ports )
 	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME /* | IPF_CHEAT*/, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Test Mode", IP_KEY_NONE )
-	PORT_DIPSETTING(	0x80, "Off" )
-	PORT_DIPSETTING(	0x00, "On" )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
 static struct IOReadPort irem_readport[] = {
@@ -800,7 +847,7 @@ static void kidniki_bankswitch_w(int offset,int data){
 
 static struct IOWritePort kidniki_writeport[] =
 {
-	{ 0x00, 0x00, mpatrol_sound_cmd_w },
+	{ 0x00, 0x00, irem_sound_cmd_w },
 	/* 0x01 is most likely screen flip */
 	{ 0x80, 0x81, irem_background_hscroll_w },
 	{ 0x82, 0x83, irem_text_vscroll_w },
@@ -916,14 +963,16 @@ static struct MachineDriver kidniki_machine_driver =
 	{
 		{
 			SOUND_AY8910,
-			&ay8910_interface
+			&irem_ay8910_interface
 		},
 		{
 			SOUND_MSM5205,
-			&msm5205_interface
+			&irem_msm5205_interface
 		},
 	}
 };
+
+
 
 ROM_START( kidniki_rom )
 	ROM_REGION( 0x30000 )	/* main CPU */
@@ -981,6 +1030,42 @@ ROM_START( kidniki_rom )
 */
 ROM_END
 
+
+static int kidniki_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if (memcmp(&RAM[0xE062],"\x00\x10\x00",3) == 0 &&
+			memcmp(&RAM[0xE0CE],"\x20\x20\x00",3) == 0 )
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0xE062],111);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;   /* we can't load the hi scores yet */
+}
+
+static void kidniki_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0xE062],111);
+		osd_fclose(f);
+	}
+}
+
+
 struct GameDriver kidniki_driver =
 {
 	__FILE__,
@@ -999,12 +1084,12 @@ struct GameDriver kidniki_driver =
 	0,
 	0,	/* sound_prom */
 
-	irem_input_ports,
+	kidniki_input_ports,
 
 	PROM_MEMORY_REGION(MEM_COLOR), 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	kidniki_hiload, kidniki_hisave
 };
 
 static struct GfxLayout spelunk2_char_layout =
@@ -1079,7 +1164,7 @@ static struct MemoryWriteAddress spelunk2_writemem[] = {
 
 static struct IOWritePort spelunk2_writeport[] =
 {
-	{ 0x00, 0x00, mpatrol_sound_cmd_w },
+	{ 0x00, 0x00, irem_sound_cmd_w },
 	/* 0x01: flip? */
 	{ -1 }	/* end of table */
 };
@@ -1127,14 +1212,16 @@ static struct MachineDriver spelunk2_machine_driver =
 	{
 		{
 			SOUND_AY8910,
-			&ay8910_interface
+			&irem_ay8910_interface
 		},
 		{
 			SOUND_MSM5205,
-			&msm5205_interface
+			&irem_msm5205_interface
 		},
 	}
 };
+
+
 
 ROM_START( spelunk2_rom )
 	ROM_REGION( 0x24000 )	/* main CPU */
@@ -1189,6 +1276,42 @@ ROM_START( spelunk2_rom )
 */
 ROM_END
 
+
+static int spelunk2_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if (memcmp(&RAM[0xE066],"\x99\x11\x59",3) == 0 &&
+			memcmp(&RAM[0xE0C7],"\x49\x4e\x3f",3) == 0 )
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0xE066],100);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;   /* we can't load the hi scores yet */
+}
+
+static void spelunk2_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0xE066],100);
+		osd_fclose(f);
+	}
+}
+
+
 struct GameDriver spelunk2_driver =
 {
 	__FILE__,
@@ -1212,5 +1335,5 @@ struct GameDriver spelunk2_driver =
 	PROM_MEMORY_REGION(MEM_COLOR), 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	spelunk2_hiload, spelunk2_hisave
 };

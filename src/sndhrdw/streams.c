@@ -253,7 +253,7 @@ int stream_init(const char *name,int sample_rate,int sample_bits,
 	stream_sample_rate[channel] = sample_rate;
 	stream_sample_bits[channel] = sample_bits;
 	stream_volume[channel] = 100;
-	stream_pan[channel] = 0;
+	stream_pan[channel] = OSD_PAN_CENTER;
 	stream_buffer_pos[channel] = 0;
 	if (sample_rate)
 		stream_sample_length[channel] = 1000000 / sample_rate;

@@ -69,6 +69,7 @@ void gyruss_flipscreen_w(int offset, int data);
 void gyruss_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
+int gyruss_sh_start(void);
 int gyruss_portA_r(int offset);
 void gyruss_filter0_w(int offset,int data);
 void gyruss_filter1_w(int offset,int data);
@@ -435,7 +436,7 @@ static struct AY8910interface ay8910_interface =
 {
 	5,	/* 5 chips */
 	1789772,	/* 1.789772727 MHz */
-	{ 0x28bf, 0x28bf, 0x28bf, 0x28bf, 0x28bf },
+	{ 0x201e, 0x201e, 0x3023, 0x3023, 0x3023 },
 	/*  R       L   |   R       R       L */
 	/*   effects    |         music       */
 	{ 0, 0, gyruss_portA_r },
@@ -448,7 +449,7 @@ static struct AY8910interface ay8910_interface =
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 0x10ff }
+	{ 80 }
 };
 #else
 static struct Samplesinterface samples_interface =
@@ -503,7 +504,7 @@ static struct MachineDriver machine_driver =
 	gyruss_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,gyruss_sh_start,0,0,
 	{
 		{
 			SOUND_AY8910,

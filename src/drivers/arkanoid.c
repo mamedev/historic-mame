@@ -49,7 +49,6 @@ int arkanoid_68705_stat_r (int offset);
 void arkanoid_68705_stat_w (int offset, int data);
 
 int arkanoid_68705_input_0_r (int offset);
-int arkanoid_input_0_r (int offset);
 int arkanoid_input_2_r (int offset);
 
 
@@ -87,7 +86,7 @@ static struct MemoryReadAddress boot_readmem[] =
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, MRA_RAM },
 	{ 0xd001, 0xd001, AY8910_read_port_0_r },
-	{ 0xd00c, 0xd00c, arkanoid_input_0_r },
+	{ 0xd00c, 0xd00c, input_port_0_r },
 	{ 0xd010, 0xd010, input_port_1_r },
 	{ 0xd018, 0xd018, arkanoid_input_2_r },
 	{ 0xe000, 0xefff, MRA_RAM },

@@ -38,13 +38,14 @@ void srumbler_bankswitch_w(int offset,int data)
 
 int srumbler_interrupt(void)
 {
-	/* Force an FIRQ to service the sound output. */
-
-	/* I'm not sure if this is the best place to do this,
-	   however it seems to work */
-	cpu_cause_interrupt(0, M6809_INT_FIRQ);
-
-	return interrupt();
+	if (cpu_getiloops()==0)
+	{
+		return interrupt();
+	}
+	else
+	{
+		return M6809_INT_FIRQ;
+	}
 }
 
 
@@ -59,7 +60,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x400c, 0x400c, input_port_4_r },
 	{ 0x5000, 0xdfff, MRA_BANK1},  /* Banked ROM */
 	{ 0xe000, 0xffff, MRA_ROM },   /* ROM */
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 /*
@@ -86,7 +87,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x6000, 0x6fff, MWA_RAM }, /* Video RAM 2 ??? (not used) */
 	{ 0x7100, 0x73ff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram },
 	{ 0x7400, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryReadAddress sound_readmem[] =
@@ -94,7 +95,7 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0xe000, 0xe000, soundlatch_r },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0x0000, 0x7fff, MRA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
@@ -105,12 +106,12 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xa000, 0xa000, YM2203_control_port_1_w },
 	{ 0xa001, 0xa001, YM2203_write_port_1_w },
 	{ 0x0000, 0x7fff, MWA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 
 INPUT_PORTS_START( input_ports )
-	PORT_START	/* IN0 */
+	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -120,7 +121,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-	PORT_START	/* IN1 */
+	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -130,7 +131,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* IN2 */
+	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
@@ -140,7 +141,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* DSW0 */
+	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x07, 0x07, "Coin B", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x01, "3 Coins/1 Credit" )
@@ -194,9 +195,9 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
+	8,8,    /* 8*8 characters */
 	1024,   /* 1024 characters */
-	2,	/* 2 bits per pixel */
+	2,      /* 2 bits per pixel */
 	{ 4, 0 },
 	{ 0, 1, 2, 3, 8+0,8+1, 8+2, 8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
@@ -207,7 +208,7 @@ static struct GfxLayout tilelayout =
 {
 	16,16,  /* 16*16 tiles */
 	2048,   /* 2048  tiles */
-	4,	/* 4 bits per pixel */
+	4,      /* 4 bits per pixel */
 	{ 0x20000*8+4, 0x20000*8+0, 4, 0 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
 			32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
@@ -233,9 +234,9 @@ static struct GfxLayout spritelayout =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	/*   start    pointer       colour start   number of colours */
-	{ 1, 0x00000, &charlayout,   320, 16 },	/* colors 320 - 383 */
-	{ 1, 0x10000, &tilelayout,     0,  8 },	/* colors   0 - 127 */
-	{ 1, 0x50000, &spritelayout, 128,  8 },	/* colors 128 - 255 */
+	{ 1, 0x00000, &charlayout,   320, 16 }, /* colors 320 - 383 */
+	{ 1, 0x10000, &tilelayout,     0,  8 }, /* colors   0 - 127 */
+	{ 1, 0x50000, &spritelayout, 128,  8 }, /* colors 128 - 255 */
 	{ -1 } /* end of array */
 };
 
@@ -336,21 +337,21 @@ static void srumbler_init_machine(void)
     /* Region 5000-dfff contains paged ROMS */
     for (j=0; j<16; j++)        /* 16 Pages */
     {
-        for (i=0; i<9; i++)     /* 9 * 0x1000 blocks */
-        {
-            int nADDR=page_table[j][i];
-            unsigned char *p=&RAM[0x10000+0x09000*j+i*0x1000];
+	for (i=0; i<9; i++)     /* 9 * 0x1000 blocks */
+	{
+	    int nADDR=page_table[j][i];
+	    unsigned char *p=&RAM[0x10000+0x09000*j+i*0x1000];
 
-            if (nADDR == 0xfffff)
-            {
-                /* Fill unassigned regions with an illegal M6809 opcode (1) */
-                memset(p, 1, 0x1000);
-            }
-            else
-            {
-                memcpy(p, pROM+nADDR, 0x01000);
-            }
-        }
+	    if (nADDR == 0xfffff)
+	    {
+		/* Fill unassigned regions with an illegal M6809 opcode (1) */
+		memset(p, 1, 0x1000);
+	    }
+	    else
+	    {
+		memcpy(p, pROM+nADDR, 0x01000);
+	    }
+	}
     }
 
     /* Patch out startup test */
@@ -363,7 +364,7 @@ static void srumbler_init_machine(void)
 
 static struct YM2203interface ym2203_interface =
 {
-	2,			/* 2 chips */
+	2,                      /* 2 chips */
 	2000000,        /* 2.0 MHz (? hand tuned to match the real board) */
 	{ YM2203_VOL(255,255), YM2203_VOL(255,255) },
 	{ 0 },
@@ -383,19 +384,19 @@ static struct MachineDriver machine_driver =
 			1500000,        /* 1.5 Mhz (?) */
 			0,
 			readmem,writemem,0,0,
-			srumbler_interrupt,1
+			srumbler_interrupt,2
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,        /* 3 Mhz ??? */
-			2,	/* memory region #2 */
+			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
 	},
-	60, 2500,	/* frames per second, vblank duration */
+	60, 2500,       /* frames per second, vblank duration */
 				/* hand tuned to get rid of sprite lag */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	srumbler_init_machine,
 
 	/* video hardware */
@@ -434,8 +435,8 @@ ROM_START( srumbler_rom )
 	/* empty, will be filled later */
 
 	ROM_REGION_DISPOSE(0x90000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "6g_sr10.bin",  0x00000, 0x4000, 0xadabe271 )	/* characters */
-	ROM_LOAD( "11a_sr11.bin", 0x10000, 0x8000, 0x5fa042ba )	/* tiles */
+	ROM_LOAD( "6g_sr10.bin",  0x00000, 0x4000, 0xadabe271 ) /* characters */
+	ROM_LOAD( "11a_sr11.bin", 0x10000, 0x8000, 0x5fa042ba ) /* tiles */
 	ROM_LOAD( "13a_sr12.bin", 0x18000, 0x8000, 0xa2db64af )
 	ROM_LOAD( "14a_sr13.bin", 0x20000, 0x8000, 0xf1df5499 )
 	ROM_LOAD( "15a_sr14.bin", 0x28000, 0x8000, 0xb22b31b3 )
@@ -443,7 +444,7 @@ ROM_START( srumbler_rom )
 	ROM_LOAD( "13c_sr16.bin", 0x38000, 0x8000, 0xc49a4a11 )
 	ROM_LOAD( "14c_sr17.bin", 0x40000, 0x8000, 0xaa80aaab )
 	ROM_LOAD( "15c_sr18.bin", 0x48000, 0x8000, 0xce67868e )
-	ROM_LOAD( "15e_sr20.bin", 0x50000, 0x8000, 0x3924c861 )	/* sprites */
+	ROM_LOAD( "15e_sr20.bin", 0x50000, 0x8000, 0x3924c861 ) /* sprites */
 	ROM_LOAD( "14e_sr19.bin", 0x58000, 0x8000, 0xff8f9129 )
 	ROM_LOAD( "15f_sr22.bin", 0x60000, 0x8000, 0xab64161c )
 	ROM_LOAD( "14f_sr21.bin", 0x68000, 0x8000, 0xfd64bcd1 )
@@ -464,20 +465,21 @@ ROM_START( srumbler_rom )
 	ROM_LOAD( "13f_sr08.bin", 0x28000, 0x08000, 0x838369a6 )  /* RC8 */
 	ROM_LOAD( "12f_sr07.bin", 0x30000, 0x08000, 0xde785076 )  /* RC7 */
 	ROM_LOAD( "11f_sr06.bin", 0x38000, 0x08000, 0xa70f4fd4 )  /* RC6 */
+
+	ROM_REGION(0x0300) /* Proms (not used for now.. Transparency???) */
+	ROM_LOAD( "63s141.12a",   0x00000, 0x00100, 0x8421786f )
+	ROM_LOAD( "63s141.13a",   0x00100, 0x00100, 0x6048583f )
+	ROM_LOAD( "63s141.8j",    0x00200, 0x00100, 0x1a89a7ff )
 ROM_END
 
 
-/*
-Alternative ROM set with different sound and program ROMS.
-The start button doesn't work on this version.
-*/
 ROM_START( srumblr2_rom )
 	ROM_REGION(0x10000+0x9000*16)  /* 64k for code + banked ROM images */
 	/* empty, will be filled later */
 
 	ROM_REGION_DISPOSE(0x90000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "6g_sr10.bin",  0x00000, 0x4000, 0xadabe271 )	/* characters */
-	ROM_LOAD( "11a_sr11.bin", 0x10000, 0x8000, 0x5fa042ba )	/* tiles */
+	ROM_LOAD( "6g_sr10.bin",  0x00000, 0x4000, 0xadabe271 ) /* characters */
+	ROM_LOAD( "11a_sr11.bin", 0x10000, 0x8000, 0x5fa042ba ) /* tiles */
 	ROM_LOAD( "13a_sr12.bin", 0x18000, 0x8000, 0xa2db64af )
 	ROM_LOAD( "14a_sr13.bin", 0x20000, 0x8000, 0xf1df5499 )
 	ROM_LOAD( "15a_sr14.bin", 0x28000, 0x8000, 0xb22b31b3 )
@@ -485,7 +487,7 @@ ROM_START( srumblr2_rom )
 	ROM_LOAD( "13c_sr16.bin", 0x38000, 0x8000, 0xc49a4a11 )
 	ROM_LOAD( "14c_sr17.bin", 0x40000, 0x8000, 0xaa80aaab )
 	ROM_LOAD( "15c_sr18.bin", 0x48000, 0x8000, 0xce67868e )
-	ROM_LOAD( "15e_sr20.bin", 0x50000, 0x8000, 0x3924c861 )	/* sprites */
+	ROM_LOAD( "15e_sr20.bin", 0x50000, 0x8000, 0x3924c861 ) /* sprites */
 	ROM_LOAD( "14e_sr19.bin", 0x58000, 0x8000, 0xff8f9129 )
 	ROM_LOAD( "15f_sr22.bin", 0x60000, 0x8000, 0xab64161c )
 	ROM_LOAD( "14f_sr21.bin", 0x68000, 0x8000, 0xfd64bcd1 )
@@ -506,9 +508,12 @@ ROM_START( srumblr2_rom )
 	ROM_LOAD( "rc08.13f",     0x28000, 0x08000, 0x74c71007 )  /* RC8 (different) */
 	ROM_LOAD( "12f_sr07.bin", 0x30000, 0x08000, 0xde785076 )  /* RC7 */
 	ROM_LOAD( "11f_sr06.bin", 0x38000, 0x08000, 0xa70f4fd4 )  /* RC6 */
+
+	ROM_REGION(0x0300) /* Proms (not used for now.. Transparency???) */
+	ROM_LOAD( "63s141.12a",   0x00000, 0x00100, 0x8421786f )
+	ROM_LOAD( "63s141.13a",   0x00100, 0x00100, 0x6048583f )
+	ROM_LOAD( "63s141.8j",    0x00200, 0x00100, 0x1a89a7ff )
 ROM_END
-
-
 
 struct GameDriver srumbler_driver =
 {
@@ -545,7 +550,7 @@ struct GameDriver srumblr2_driver =
 	"1986",
 	"Capcom",
 	"Paul Leaman",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
 

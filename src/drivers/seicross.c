@@ -23,6 +23,13 @@ I/O ports:
 1         8910 write
 4         8910 read
 
+
+There is a microcontroller on the board. Nichibutsu custom part marked
+NSC81050-102  8127 E37 and labeled No. 00363.  It's a 40-pin IC at location 4F
+on the (Seicross-) board. Looks like it is linked to the dips (and those are
+on a very small daughterboard).
+It's on the schematic, and it has a VMA pin, so I assume it must be a 68xx family part
+
 ***************************************************************************/
 
 #include "driver.h"

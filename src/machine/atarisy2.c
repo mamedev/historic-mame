@@ -72,10 +72,12 @@ static void atarisys2_init_machine (int slapstic)
 	/* set panning for the two pokey chips */
 	for (ch = 0;ch < MAX_STREAM_CHANNELS;ch++)
 	{
-		if (!strcmp(stream_get_name(ch),"Pokey #0"))
-			stream_set_pan(ch,-100);
-		if (!strcmp(stream_get_name(ch),"Pokey #1"))
-			stream_set_pan(ch,100);
+		if (stream_get_name(ch) != 0 &&
+				!strcmp(stream_get_name(ch),"Pokey #0"))
+			stream_set_pan(ch,OSD_PAN_LEFT);
+		if (stream_get_name(ch) != 0 &&
+				!strcmp(stream_get_name(ch),"Pokey #1"))
+			stream_set_pan(ch,OSD_PAN_RIGHT);
 	}
 	which_adc = 0;
 	pedal_value[0] = pedal_value[1] = pedal_value[2] = 0;
@@ -92,7 +94,7 @@ void paperboy_init_machine (void)
 void apb_init_machine (void)
 {
 	atarisys2_init_machine (110);
-        pedal_count = 1;
+	pedal_count = 1;
 }
 
 

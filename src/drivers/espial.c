@@ -251,7 +251,7 @@ static struct MachineDriver machine_driver =
 			espial_interrupt,2
 		},
 		{
-			CPU_Z80 | CPU_AUDIO_CPU,
+			CPU_Z80,
 			3072000,	/* 2 Mhz?????? */
 			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,sound_writeport,

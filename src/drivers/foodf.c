@@ -57,11 +57,9 @@ Audio 2                            AC0000-AC001F  R/W  D0-D7
 
 extern int foodf_playfieldram_size;
 extern int foodf_spriteram_size;
-int foodf_nvram_size;
 
 extern unsigned char *foodf_spriteram;
 extern unsigned char *foodf_playfieldram;
-extern unsigned char *foodf_nvram;
 
 int foodf_playfieldram_r (int offset);
 int foodf_nvram_r (int offset);
@@ -79,6 +77,9 @@ void foodf_paletteram_w (int offset, int data);
 void foodf_pokey1_w (int offset, int data);
 void foodf_pokey2_w (int offset, int data);
 void foodf_pokey3_w (int offset, int data);
+
+int foodf_nvram_load(void);
+void foodf_nvram_save(void);
 
 int foodf_interrupt(void);
 
@@ -106,7 +107,7 @@ static struct MemoryReadAddress foodf_readmem[] =
 	{ 0x014000, 0x01bfff, MRA_BANK1 },
 	{ 0x01c000, 0x01cfff, MRA_BANK2, &foodf_spriteram, &foodf_spriteram_size },
 	{ 0x800000, 0x8007ff, foodf_playfieldram_r, &foodf_playfieldram, &foodf_playfieldram_size },
-	{ 0x900000, 0x9001ff, foodf_nvram_r, &foodf_nvram, &foodf_nvram_size },
+	{ 0x900000, 0x9001ff, foodf_nvram_r },
 	{ 0x940000, 0x940007, foodf_analog_r },
 	{ 0x948000, 0x948003, foodf_digital_r },
 	{ 0x94c000, 0x94c003, MRA_NOP }, /* Used from PC 0x776E */
@@ -261,61 +262,6 @@ static struct MachineDriver machine_driver =
 
 /***************************************************************************
 
-  High score save/load
-
-***************************************************************************/
-
-static int hiload (void)
-{
-   void *f;
-
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
-	if (f)
-	{
-		osd_fread (f, foodf_nvram, foodf_nvram_size);
-		osd_fclose (f);
-	}
-	else
-	{
-		static unsigned char factory_nvram[] =
-		{
-			0x10,0x00,0x10,0x00,0xf1,0x00,0xca,0xb8,0x00,0x00,0x10,0x20,0x00,0x00,0x00,0x00,
-			0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-			0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-			0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-			0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xa1,0x20,0x00,0x00,0xcd,0x10,
-			0x14,0xa4,0x49,0x10,0x02,0x75,0x45,0x84,0x00,0xa4,0x24,0x25,0xe0,0x00,0xf0,0x00,
-			0x10,0x00,0xd0,0x00,0x50,0x00,0x10,0x00,0x10,0x00,0x41,0x00,0x10,0x00,0x10,0x00,
-			0x00,0x00,0x00,0x00,0x08,0x08,0x00,0x00,0x08,0x08,0x08,0x08,0x00,0x00,0x08,0x08
-		};
-		int i;
-
-		/* reset to factory defaults */
-		memset (foodf_nvram, 0, foodf_nvram_size);
-		for (i = 0; i < foodf_nvram_size; i += 4)
-		{
-			WRITE_WORD (&foodf_nvram[i], factory_nvram[i/4] >> 4);
-			WRITE_WORD (&foodf_nvram[i+2], factory_nvram[i/4] & 0x0f);
-		}
-	}
-	return 1;
-}
-
-static void hisave (void)
-{
-   void *f;
-
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
-   if (f)
-   {
-      osd_fwrite (f, foodf_nvram, foodf_nvram_size);
-      osd_fclose (f);
-   }
-}
-
-
-/***************************************************************************
-
   Game driver(s)
 
 ***************************************************************************/
@@ -336,6 +282,8 @@ ROM_START( foodf_rom )
 	ROM_LOAD( "foodf.4e",     0x2000, 0x2000, 0x84372edf )
 	ROM_LOAD( "foodf.6lm",    0x4000, 0x2000, 0xc13c90eb )
 ROM_END
+
+
 
 struct GameDriver foodf_driver =
 {
@@ -359,5 +307,5 @@ struct GameDriver foodf_driver =
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
-	hiload, hisave
+	foodf_nvram_load,foodf_nvram_save
 };

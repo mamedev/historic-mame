@@ -364,12 +364,10 @@ void astrocade_sh_update(void)
 		sample_pos[num] = 0;
 		/* play sound */
 		if( Machine->sample_bits == 16 )
-			osd_play_streamed_sample_16(channel+num,astrocade_buffer[num],2*buffer_len,emulation_rate,volume[num],0);
+			osd_play_streamed_sample_16(channel+num,astrocade_buffer[num],2*buffer_len,emulation_rate,volume[num],OSD_PAN_CENTER);
 		else
 		{
-			osd_play_streamed_sample(channel+num,astrocade_buffer[num],buffer_len,emulation_rate,volume[num],0);
-
-
+			osd_play_streamed_sample(channel+num,astrocade_buffer[num],buffer_len,emulation_rate,volume[num],OSD_PAN_CENTER);
 		}
 	}
 

@@ -12,6 +12,8 @@ struct YM2151interface
 	void (*portwritehandler[MAX_2151])(int,int);
 };
 
+#define YM2151_STEREO_REVERSE 0x100
+
 int YM2151_status_port_0_r(int offset);
 int YM2151_status_port_1_r(int offset);
 int YM2151_status_port_2_r(int offset);

@@ -73,13 +73,17 @@ void segar_wr(int offset, int data)
 		segar_bcolortable_w(off - 0xF040,data);
 	}
 	/* MWA_RAM */
-        else if ((off>=0xF080) && (off<=0xF7FF))
+	else if ((off>=0xF080) && (off<=0xF7FF))
 	{
 		segar_mem[off]=data;
 	}
-        else if ((off>=0xF800) && (off<=0xFFFF))
+	else if ((off>=0xF800) && (off<=0xFFFF))
 	{
-                segar_characterram2_w(off - 0xF800,data);
+		segar_characterram2_w(off - 0xF800,data);
+	}
+	else
+	{
+		if (errorlog) fprintf(errorlog, "unmapped write at %04X:%02X\n",off,data);
 	}
 }
 
@@ -412,9 +416,9 @@ void sega_security(int chip)
 		case 82:
 			sega_decrypt=sega_decrypt82;
 			break;
-                default:
-                        sega_decrypt=sega_decrypt0;
-                        break;
+		default:
+			sega_decrypt=sega_decrypt0;
+			break;
 	}
 }
 

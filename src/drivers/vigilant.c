@@ -316,7 +316,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579645,	/* 3.579645 MHz */
-	{ 30 },
+	{ 60 },
 	{ vigilant_irq_handler }
 };
 
@@ -366,7 +366,7 @@ static struct MachineDriver machine_driver =
 	vigilant_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,

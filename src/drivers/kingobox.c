@@ -660,6 +660,7 @@ static struct MachineDriver machine_driver =
 	}
 };
 
+
 /* Ring King */
 static struct MachineDriver rk_machine_driver =
 {
@@ -724,8 +725,6 @@ static struct MachineDriver rk_machine_driver =
 		}
 	}
 };
-
-
 
 
 /***************************************************************************
@@ -893,6 +892,78 @@ ROM_START( ringkin2_rom )
 ROM_END
 
 
+
+static int kingofb_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
+
+	if  (memcmp(&RAM[0x8048],"\x00\x15\x00",3) == 0 &&
+			memcmp(&RAM[0x80D1],"\x10\x11\x12",3) == 0 )
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x8048],140);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;   /* we can't load the hi scores yet */
+}
+
+static void kingofb_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x8048],140);
+		osd_fclose(f);
+	}
+}
+
+
+static int ringking_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
+
+	if  (memcmp(&RAM[0x8049],"\x00\x15\x00",3) == 0 &&
+			memcmp(&RAM[0x80D2],"\x10\x11\x12",3) == 0 )
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x8049],140);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;   /* we can't load the hi scores yet */
+}
+
+static void ringking_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x8049],140);
+		osd_fclose(f);
+	}
+}
+
+
+
 struct GameDriver kingofb_driver =
 {
 	__FILE__,
@@ -916,7 +987,7 @@ struct GameDriver kingofb_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	kingofb_hiload, kingofb_hisave
 };
 
 struct GameDriver kingofbj_driver =
@@ -942,7 +1013,7 @@ struct GameDriver kingofbj_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	kingofb_hiload, kingofb_hisave
 };
 
 /* Ring King */
@@ -969,7 +1040,7 @@ struct GameDriver ringking_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	ringking_hiload, ringking_hisave
 };
 
 struct GameDriver ringkin2_driver =
@@ -995,5 +1066,5 @@ struct GameDriver ringkin2_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	kingofb_hiload, kingofb_hisave
 };

@@ -485,6 +485,8 @@ static void update_foreground( void ){
 
 					int pen_usage = gfx->pen_usage[tile_number];
 
+					osd_mark_dirty(sx, sy, sx+TILEMAP_WIDTH-1, sy+TILEMAP_HEIGHT-1, 0);
+
 					if( pen_usage==1 ){
 						fg_transparency[page][0][row][col] = 1;
 						fg_transparency[page][1][row][col] = 1;
@@ -519,7 +521,6 @@ static void update_foreground( void ){
 							sx, sy,
 							0, /* no need to clip */
 							TRANSPARENCY_PEN, 0 );
-						osd_mark_dirty(sx, sy, sx+TILEMAP_WIDTH-1, sy+TILEMAP_HEIGHT-1, 0);
 
 						{ /* now, update the fatmask - one byte (0x00 or 0xff) for each pixel */
 							int x,y;

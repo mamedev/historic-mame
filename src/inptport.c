@@ -27,6 +27,7 @@ extern void *playback;
 extern unsigned int dispensed_tickets;
 extern unsigned int coins[COIN_COUNTERS];
 extern unsigned int lastcoin[COIN_COUNTERS];
+extern unsigned int coinlockedout[COIN_COUNTERS];
 
 static unsigned char input_port_value[MAX_INPUT_PORTS];
 static unsigned char input_vblank[MAX_INPUT_PORTS];
@@ -180,9 +181,9 @@ int load_input_port_settings(void)
 			in++;
 		}
 
-		/* Clear the coin & ticket counters - LBO 042898 */
+		/* Clear the coin & ticket counters/flags - LBO 042898 */
 		for (i = 0; i < COIN_COUNTERS; i ++)
-			coins[i] = lastcoin[i] = 0;
+			coins[i] = lastcoin[i] = coinlockedout[i] = 0;
 		dispensed_tickets = 0;
 
 		/* read in the coin/ticket counters */
@@ -739,8 +740,9 @@ osd_net_sync();
 		}
 
 		/* now get back to the beginning of the input port and check the input bits. */
-		in = start;
-		while (in->type != IPT_END && in->type != IPT_PORT)
+		for (in = start;
+			 in->type != IPT_END && in->type != IPT_PORT;
+			 in++, ib++)
 		{
 			if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING &&	/* skip dipswitch definitions */
 					(in->type & IPF_UNUSED) == 0 &&	/* skip unused bits */
@@ -776,6 +778,14 @@ if (errorlog && Machine->drv->vblank_duration == 0)
 					if ((key != 0 && key != IP_KEY_NONE && osd_key_pressed(key)) ||
 							(joy != 0 && joy != IP_JOY_NONE && osd_joy_pressed(joy)))
 					{
+						/* skip if coin input and it's locked out */
+						if ((in->type & ~IPF_MASK) >= IPT_COIN1 &&
+							(in->type & ~IPF_MASK) <= IPT_COIN4 &&
+                            coinlockedout[(in->type & ~IPF_MASK) - IPT_COIN1])
+						{
+							continue;
+						}
+
 						/* if IPF_RESET set, reset the first CPU */
 						if (in->type & IPF_RESETCPU && waspressed[ib] == 0)
 							cpu_reset(0);
@@ -875,9 +885,6 @@ if (errorlog && in->arg == 0)
 					}
 				}
 			}
-
-			in++;
-			ib++;
 		}
 
 		port++;

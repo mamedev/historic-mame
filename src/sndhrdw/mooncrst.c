@@ -13,7 +13,9 @@
 #define NOISE_LENGTH 8000
 #define NOISE_RATE 1000
 #define TOOTHSAW_LENGTH 16
-#define TOOTHSAW_VOLUME 180
+#define TOOTHSAW_VOLUME 36
+#define LFO_VOLUME 8
+#define NOISE_VOLUME 50
 #define WAVE_AMPLITUDE 70
 #define MAXFREQ 200
 #define MINFREQ 80
@@ -90,7 +92,7 @@ void mooncrst_noise_w(int offset,int data)
         }
         else
         {
-  	  if (data & 1) osd_adjust_sample(channel+1,NOISE_RATE,255);
+  	  if (data & 1) osd_adjust_sample(channel+1,NOISE_RATE,NOISE_VOLUME);
 	  else osd_adjust_sample(channel+1,NOISE_RATE,0);
         }
 }
@@ -195,8 +197,8 @@ void mooncrst_sh_update(void)
 {
     if (lfo_active)
     {
-      osd_adjust_sample(channel+3,freq*32,32);
-      osd_adjust_sample(channel+4,(freq+60)*32,32);
+      osd_adjust_sample(channel+3,freq*32,LFO_VOLUME);
+      osd_adjust_sample(channel+4,(freq+60)*32,LFO_VOLUME);
       if (t==0)
          freq-=lfo_rate;
       if (freq<=MINFREQ)

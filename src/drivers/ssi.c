@@ -233,7 +233,7 @@ static struct YM2610interface ym2610_interface =
 {
 	1,	/* 1 chip */
 	8000000,	/* 8 MHz ?????? */
-	{ YM2203_VOL(255,255) },
+	{ YM2203_VOL(60,30) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -282,7 +282,7 @@ static struct MachineDriver machine_driver =
 	ssi_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2610,

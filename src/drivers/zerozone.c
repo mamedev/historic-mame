@@ -269,12 +269,13 @@ static int hiload(void)
 
 	/* check if the hi score table has already been initialized */
 
-    if (READ_WORD(&ram[0x17cc]) == 0x0053)
+    if (READ_WORD(&ram[0x17cc]) == 0x0053 && READ_WORD(&ram[0x1840]) == 0x0700 && READ_WORD(&ram[0x23da]) == 0x03 )
 	{
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			osd_fread(f,&ram[0x17cc],0x7a);
+			osd_fread_msbfirst(f,&ram[0x17cc],0x78);
 			osd_fclose(f);
+			memcpy(&ram[0x23da],&ram[0x17d2],6);	/* copy high score */
 		}
 		return 1;
 	}
@@ -287,7 +288,7 @@ static void hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		osd_fwrite(f,&ram[0x17cc],0x7a);
+		osd_fwrite_msbfirst(f,&ram[0x17cc],0x78);
 		osd_fclose(f);
 	}
 }

@@ -642,7 +642,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579580,	/* 3.58 MHZ ? */
-	{ 20 },
+	{ 40 },
 	{ atarisys1_sound_interrupt }
 };
 
@@ -690,7 +690,7 @@ static struct MachineDriver marble_machine_driver =
 	atarisys1_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -740,7 +740,7 @@ static struct MachineDriver peterpak_machine_driver =
 	atarisys1_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -790,7 +790,7 @@ static struct MachineDriver indytemp_machine_driver =
 	atarisys1_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -844,7 +844,7 @@ static struct MachineDriver roadrunn_machine_driver =
 	atarisys1_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -898,7 +898,7 @@ static struct MachineDriver roadblst_machine_driver =
 	roadblst_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,

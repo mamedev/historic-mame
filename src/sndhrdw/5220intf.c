@@ -94,7 +94,7 @@ void tms5220_sh_update (void)
     sample_pos = 0;
 
     /* play this sample */
-    osd_play_streamed_sample (channel, (signed char *)buffer, buffer_len, emulation_rate, intf->volume,0);
+    osd_play_streamed_sample (channel, (signed char *)buffer, buffer_len, emulation_rate, intf->volume,OSD_PAN_CENTER);
 }
 
 

@@ -614,3 +614,40 @@ void bnj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		drawsprites(bitmap, 0, 0, 0);
 	}
 }
+
+
+
+void cookrace_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs;
+
+
+	/*
+	 *  For each character in the background RAM, check if it has been
+	 *  modified since last time and update it accordingly.
+	 */
+	for (offs = bnj_backgroundram_size-1; offs >=0; offs--)
+	{
+		int sx,sy;
+
+		sx = offs % 32;
+		sy = offs / 32;
+
+		if (flipscreen)
+		{
+			sx = 31 - sx;
+			sy = 31 - sy;
+		}
+
+		drawgfx(bitmap, Machine->gfx[2],
+				bnj_backgroundram[offs],
+				0,
+				flipscreen, flipscreen,
+				8*sx,8*sy,
+				0, TRANSPARENCY_NONE, 0);
+	}
+
+	drawchars(bitmap, 0, 1);
+
+	drawsprites(bitmap, 0, 0, 0);
+}

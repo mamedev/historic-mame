@@ -312,7 +312,7 @@ static struct MachineDriver machine_driver =
 	256, 256,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_PIXEL_ASPECT_RATIO_1_2,
 	0,
 	goldstar_vh_start,
 	goldstar_vh_stop,
@@ -356,7 +356,7 @@ static struct MachineDriver goldstbl_machine_driver =
 	256, 256,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_PIXEL_ASPECT_RATIO_1_2,
 	0,
 	goldstar_vh_start,
 	goldstar_vh_stop,

@@ -43,17 +43,19 @@ void astinvad_sh_port4_w(int offset,int data);
 void astinvad_sh_port5_w(int offset,int data);
 void astinvad_sh_update(void);
 
+/* HSC 12/04/98  see drivers/8080bw.c */
+void mix_hiscoreprint(int x, int y, int value, int width,int size, int adjust,int romarea, int offset, int type);
+
 
 
 static struct MemoryWriteAddress astinvad_writemem[] = /* L.T */ /* Whole function */
 {
 	{ 0x1c00, 0x23ff, MWA_RAM },
-        { 0x2400, 0x3fff, astinvad_videoram_w, &astinvad_videoram },
+    { 0x2400, 0x3fff, astinvad_videoram_w, &astinvad_videoram },
 	{ 0x4000, 0x4fff, MWA_RAM, },
 	{ 0x0000, 0x1bff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
-
 
 static struct MemoryReadAddress astinvad_readmem[] =
 {
@@ -205,39 +207,51 @@ static const char *astinvad_sample_names[] =
 };
 
 /*****************************************************************************/
-/* Highscore save and load HSC 11/04/98										 */
+/* Highscore save and load HSC 12/04/98										 */
 
 
-static int astinvad_hiload(void)
+static int hiload(void)
 {
+	static int firsttime =0;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-/*		RAM[0x1fc9]=1;
-		RAM[0x1fca]=1;
-		RAM[0x1fcb]=1;
-*/
+
+	/* check if the hi score table has already been initialized */
+	/* the high score table is intialized to all 0, so first of all */
+	/* we dirty it, then we wait for it to be cleared again */
+	if (firsttime == 0)
+	{
+		memset(&RAM[0x1fc9],0xff,20);
+		RAM[0x301d] = 0xff;
+		firsttime = 1;
+	}
 
 
-
-
-	if (memcmp(&RAM[0x1cff],"\x08\x20\x03",3) == 0 )
+	if (memcmp(&RAM[0x1fc9],"\x00\x00\x00",3) == 0 && memcmp(&RAM[0x1fd9],"\x00\x00\x00",3) == 0 &&
+		memcmp(&RAM[0x301d],"\x3e",1) == 0 )
     {
         void *f;
-
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
         {
-            osd_fread(f,&RAM[0x1fc9],19);
-            osd_fclose(f);
+			int hi;
+			osd_fread(f,&RAM[0x1fc9],20);
+			osd_fclose(f);
+
+			hi = (RAM[0x1fca] & 0x0f) +
+				 (RAM[0x1fca] >> 4) * 10 +
+				 (RAM[0x1fc9] & 0x0f) * 100 +
+				 (RAM[0x1fc9] >> 4) * 1000;
+
+		mix_hiscoreprint(11,2, hi,4,5,0,0x0c00, 0x36a, 4 ) ;
+
         }
-
-        return 1;
+		firsttime =  0;
+		return 1;
     }
-
-    else
-    return 0;  /* we can't load the hi scores yet */
+    else return 0;  /* we can't load the hi scores yet */
 }
 
-static void astinvad_hisave(void)
+static void hisave(void)
 {
     void *f;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -245,13 +259,66 @@ static void astinvad_hisave(void)
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
     {
-		osd_fwrite(f,&RAM[0x1fc9],19);
-        //osd_fwrite(f,&RAM[0x1c00],2047);
-		//{ 0x4000, 0x4fff, MWA_RAM, },
-		//osd_fwrite(f,&RAM[0x4000],4095);
+		osd_fwrite(f,&RAM[0x1fc9],20);
         osd_fclose(f);
     }
 }
+
+
+static int kamikaze_hiload(void)
+{
+	static int firsttime =0;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* check if the hi score table has already been initialized */
+	/* the high score table is intialized to all 0, so first of all */
+	/* we dirty it, then we wait for it to be cleared again */
+	if (firsttime == 0)
+	{
+		memset(&RAM[0x1fc5],0xff,20);
+		RAM[0x301d] = 0xff;
+		firsttime = 1;
+	}
+
+
+	if (memcmp(&RAM[0x1fc5],"\x00\x00\x00",3) == 0 && memcmp(&RAM[0x1fd4],"\x00\x00\x00",3) == 0 &&
+		memcmp(&RAM[0x301d],"\x3e",1) == 0 )
+    {
+        void *f;
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+        {
+			int hi;
+			osd_fread(f,&RAM[0x1fc5],20);
+			osd_fclose(f);
+
+			hi = (RAM[0x1fc5] & 0x0f) +
+				 (RAM[0x1fc5] >> 4) * 10 +
+				 (RAM[0x1fc6] & 0x0f) * 100 +
+				 (RAM[0x1fc6] >> 4) * 1000;
+
+		mix_hiscoreprint(11,2, hi,4,5,0,0x0800, 0x6fd, 4 ) ;
+
+        }
+		firsttime =  0;
+		return 1;
+    }
+    else return 0;  /* we can't load the hi scores yet */
+}
+
+static void kamikaze_hisave(void)
+{
+    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+    {
+		osd_fwrite(f,&RAM[0x1fc5],20);
+        osd_fclose(f);
+    }
+}
+
 
 /* LT 20-3-1998 */
 struct GameDriver astinvad_driver =
@@ -277,7 +344,7 @@ struct GameDriver astinvad_driver =
 	0, astinvad_palette, 0,
 	ORIENTATION_ROTATE_270,
 
-	astinvad_hiload,astinvad_hisave
+	hiload,hisave
 };
 
 /* LT 20 - 3 19978 */
@@ -304,6 +371,6 @@ struct GameDriver kamikaze_driver =
 	0, astinvad_palette, 0,
 	ORIENTATION_ROTATE_270,
 
-	0,0
+	kamikaze_hiload, kamikaze_hisave
 };
 

@@ -309,7 +309,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3582071,	/* seems to be the standard */
-	{ 255 },
+	{ 60 },
 	{ 0 }
 };
 
@@ -351,7 +351,7 @@ static struct MachineDriver contra_machine_driver =
 	contra_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,

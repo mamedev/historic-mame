@@ -52,6 +52,10 @@ int quantum_trackball_r (int offset);
 int quantum_input_1_r(int offset);
 int quantum_input_2_r(int offset);
 
+int foodf_nvram_r(int offset);
+void foodf_nvram_w(int offset,int data);
+int foodf_nvram_load(void);
+void foodf_nvram_save(void);
 
 static unsigned char *quantum_nvram;
 static int quantum_nvram_size;
@@ -64,7 +68,7 @@ struct MemoryReadAddress quantum_read[] =
 	{ 0x018000, 0x01cfff, MRA_BANK1 },
 	{ 0x800000, 0x801fff, MRA_BANK2 },
 	{ 0x840000, 0x84003f, quantum_snd_read },
-	{ 0x900000, 0x9001ff, MRA_BANK3 },
+	{ 0x900000, 0x9001ff, foodf_nvram_r },
 	{ 0x940000, 0x940001, quantum_trackball_r }, /* trackball */
 	{ 0x948000, 0x948001, quantum_switches_r },
 	{ 0x978000, 0x978001, MRA_NOP },	/* ??? */
@@ -77,7 +81,7 @@ struct MemoryWriteAddress quantum_write[] =
 	{ 0x018000, 0x01cfff, MWA_BANK1 },
 	{ 0x800000, 0x801fff, MWA_BANK2, &vectorram, &vectorram_size },
 	{ 0x840000, 0x84003f, quantum_snd_write },
-	{ 0x900000, 0x9001ff, MWA_BANK3, &quantum_nvram, &quantum_nvram_size },
+	{ 0x900000, 0x9001ff, foodf_nvram_w },
 	{ 0x950000, 0x95001f, quantum_colorram_w },
 	{ 0x958000, 0x958001, quantum_led_write },
 	{ 0x960000, 0x960001, MWA_NOP },	/* enable NVRAM? */
@@ -222,19 +226,11 @@ static struct MachineDriver machine_driver =
 
 
 
-ROM_START( quantum1_rom )
-	ROM_REGION(0x014000)
-    ROM_LOAD_EVEN( "136016.101",   0x000000, 0x002000, 0x5af0bd5b )
-    ROM_LOAD_ODD ( "136016.106",   0x000000, 0x002000, 0xf9724666 )
-    ROM_LOAD_EVEN( "136016.102",   0x004000, 0x002000, 0x408d34f4 )
-    ROM_LOAD_ODD ( "136016.107",   0x004000, 0x002000, 0x63154484 )
-    ROM_LOAD_EVEN( "136016.103",   0x008000, 0x002000, 0x948f228b )
-    ROM_LOAD_ODD ( "136016.108",   0x008000, 0x002000, 0xe4c48e4e )
-    ROM_LOAD_EVEN( "136016.104",   0x00C000, 0x002000, 0xbf271e5c )
-    ROM_LOAD_ODD ( "136016.109",   0x00C000, 0x002000, 0xd2894424 )
-    ROM_LOAD_EVEN( "136016.105",   0x010000, 0x002000, 0x13ec512c )
-    ROM_LOAD_ODD ( "136016.110",   0x010000, 0x002000, 0xacb50363 )
-ROM_END
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
 
 ROM_START( quantum_rom )
 	ROM_REGION(0x014000)
@@ -250,39 +246,19 @@ ROM_START( quantum_rom )
     ROM_LOAD_ODD ( "136016.110",   0x010000, 0x002000, 0xacb50363 )
 ROM_END
 
-
-
-/* we are saving 512 bytes, but the NVRAM data is actually only accessed */
-/* at even addresses and 4 bits at a time, si it just contains 128 bytes. */
-static int nvram_load(void)
-{
-	void *f;
-
-
-	/* Try loading static RAM */
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		/* just load in everything, the game will overwrite what it doesn't want */
-		osd_fread(f,quantum_nvram,quantum_nvram_size);
-		osd_fclose(f);
-	}
-	/* Invalidate the static RAM to force reset to factory settings */
-	else memset(quantum_nvram,0xff,quantum_nvram_size);
-
-	return 1;
-}
-
-static void nvram_save(void)
-{
-	void *f;
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,quantum_nvram,quantum_nvram_size);
-		osd_fclose(f);
-	}
-}
+ROM_START( quantum1_rom )
+	ROM_REGION(0x014000)
+    ROM_LOAD_EVEN( "136016.101",   0x000000, 0x002000, 0x5af0bd5b )
+    ROM_LOAD_ODD ( "136016.106",   0x000000, 0x002000, 0xf9724666 )
+    ROM_LOAD_EVEN( "136016.102",   0x004000, 0x002000, 0x408d34f4 )
+    ROM_LOAD_ODD ( "136016.107",   0x004000, 0x002000, 0x63154484 )
+    ROM_LOAD_EVEN( "136016.103",   0x008000, 0x002000, 0x948f228b )
+    ROM_LOAD_ODD ( "136016.108",   0x008000, 0x002000, 0xe4c48e4e )
+    ROM_LOAD_EVEN( "136016.104",   0x00C000, 0x002000, 0xbf271e5c )
+    ROM_LOAD_ODD ( "136016.109",   0x00C000, 0x002000, 0xd2894424 )
+    ROM_LOAD_EVEN( "136016.105",   0x010000, 0x002000, 0x13ec512c )
+    ROM_LOAD_ODD ( "136016.110",   0x010000, 0x002000, 0xacb50363 )
+ROM_END
 
 
 
@@ -310,7 +286,7 @@ struct GameDriver quantum_driver =
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	nvram_load, nvram_save
+	foodf_nvram_load, foodf_nvram_save
 };
 
 struct GameDriver quantum1_driver =
@@ -337,5 +313,5 @@ struct GameDriver quantum1_driver =
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	nvram_load, nvram_save
+	foodf_nvram_load, foodf_nvram_save
 };

@@ -217,7 +217,7 @@ static int jb_interrupt_nmi( void ) {
 static struct SN76496interface sn76496_interface =
 {
 	1,	/* 1 chip */
-	1000000,	/*  1.0 MHz ? */
+	1500000,	/*  1.5 MHz ? (hand tuned) */
 	{ 100 }
 };
 
@@ -272,6 +272,7 @@ static struct MachineDriver machine_driver =
 	}
 };
 
+
 /***************************************************************************
 
   Game driver(s)
@@ -313,6 +314,43 @@ void jailbrek_decode( void ) {
 		ROM[i] = KonamiDecode(RAM[i],i);
 }
 
+
+static int jailbrek_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if (memcmp(&RAM[0x1620],"\x00\x25\x30",3) == 0 &&
+			memcmp(&RAM[0x166D],"\x1F\x1B\x11",3) == 0 )
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x1620],80);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;   /* we can't load the hi scores yet */
+}
+
+static void jailbrek_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x1620],80);
+		osd_fclose(f);
+	}
+}
+
+
+
 struct GameDriver jailbrek_driver =
 {
 	__FILE__,
@@ -335,5 +373,5 @@ struct GameDriver jailbrek_driver =
     PROM_MEMORY_REGION(2), 0, 0,
     ORIENTATION_DEFAULT,
 
-    0, 0
+    jailbrek_hiload, jailbrek_hisave
 };
