@@ -258,7 +258,7 @@ int bublbobl_read_f66e(int offset)
 
 
 
-int boblbobl_init(const char *gamename)
+void boblbobl_init(void)
 {
     /* set level 0 to have just one baby */
     /* MOD_PAGE(1, 0xA73E, 0x00);
@@ -284,13 +284,11 @@ int boblbobl_init(const char *gamename)
     MODIFY_ROM(0x00fb, 0); MODIFY_ROM(0x00fc, 0); MODIFY_ROM(0x00fc, 0);
     MODIFY_ROM(0x0102, 0); MODIFY_ROM(0x0103, 0); MODIFY_ROM(0x0104, 0);
     MODIFY_ROM(0x0108, 0); MODIFY_ROM(0x0109, 0); MODIFY_ROM(0x010a, 0);
-
-    return 0;
 }
 
 
 
-int bublbobl_init(const char *gamename)
+void bublbobl_init(void)
 {
     /* LOG_PAGE(1, 0xA73E); LOG_PAGE(1, 0xA73F); LOG_PAGE(1, 0xA740); */
 
@@ -358,8 +356,6 @@ int bublbobl_init(const char *gamename)
     MOD_PAGE(2, 0x9368, 0x76); MOD_PAGE(2, 0x96E5, 0x76);
     MOD_PAGE(2, 0xA2FB, 0x76); MOD_PAGE(2, 0xA81E, 0x76);
     MOD_PAGE(2, 0xB4F0, 0x76); MOD_PAGE(2, 0xBB0E, 0x76);
-
-    return 0;
 }
 
 void bublbobl_play_sound(int offset, int data)

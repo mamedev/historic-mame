@@ -17,8 +17,6 @@
 #define GFX_SPRITE 2
 
 unsigned char *gng_paletteram;
-static const unsigned char *colors;
-static unsigned char dirtycolor[8];	/* keep track of modified background colors */
 
 unsigned char *gng_bgvideoram,*gng_bgcolorram;
 int gng_bgvideoram_size;
@@ -27,6 +25,8 @@ static unsigned char *dirtybuffer2;
 static unsigned char *spritebuffer1,*spritebuffer2;
 static struct osd_bitmap *tmpbitmap2;
 
+
+void gng_paletteram_w(int offset,int data);
 
 
 /***************************************************************************
@@ -59,43 +59,20 @@ static struct osd_bitmap *tmpbitmap2;
 void gng_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
-	#define COLOR(gfx,offs) (colortable[Machine->drv->gfxdecodeinfo[gfx].color_codes_start + offs])
 
 
-	colors = color_prom;	/* we'll need the colors later to dynamically remap the characters */
-
+	/* the palette will be initialized by the game. We just set it to some */
+	/* pre-cooked values so the startup copyright notice can be displayed. */
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2,bit3;
-
-
-		bit0 = (color_prom[2*i] >> 4) & 0x01;
-		bit1 = (color_prom[2*i] >> 5) & 0x01;
-		bit2 = (color_prom[2*i] >> 6) & 0x01;
-		bit3 = (color_prom[2*i] >> 7) & 0x01;
-		palette[3*i] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[2*i] >> 0) & 0x01;
-		bit1 = (color_prom[2*i] >> 1) & 0x01;
-		bit2 = (color_prom[2*i] >> 2) & 0x01;
-		bit3 = (color_prom[2*i] >> 3) & 0x01;
-		palette[3*i + 1] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[2*i+1] >> 4) & 0x01;
-		bit1 = (color_prom[2*i+1] >> 5) & 0x01;
-		bit2 = (color_prom[2*i+1] >> 6) & 0x01;
-		bit3 = (color_prom[2*i+1] >> 7) & 0x01;
-		palette[3*i + 2] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		*(palette++) = ((i & 1) >> 0) * 0xff;
+		*(palette++) = ((i & 2) >> 1) * 0xff;
+		*(palette++) = ((i & 4) >> 2) * 0xff;
 	}
 
-	/* initialize the colortable so the power on self test can be seen */
+	/* initialize the color table */
 	for (i = 0;i < Machine->drv->color_table_len;i++)
-	{
-		int j;
-
-
-		j = rand() % Machine->drv->total_colors;
-		gng_paletteram[i] = colors[2*j];
-		gng_paletteram[i + 0x100] = colors[2*j+1];
-	}
+		colortable[i] = i;
 }
 
 
@@ -189,13 +166,32 @@ void gng_bgcolorram_w(int offset,int data)
 
 void gng_paletteram_w(int offset,int data)
 {
-	if (gng_paletteram[offset] != data)
-	{
-		if ((offset & 0xff) < 64)
-			dirtycolor[(offset & 0xff) / 8] = 1;
+	int bit0,bit1,bit2,bit3;
+	int r,g,b,val;
 
-		gng_paletteram[offset] = data;
-	}
+	gng_paletteram[offset] = data;
+
+	val = gng_paletteram[offset & ~0x100];
+	bit0 = (val >> 4) & 0x01;
+	bit1 = (val >> 5) & 0x01;
+	bit2 = (val >> 6) & 0x01;
+	bit3 = (val >> 7) & 0x01;
+	r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	bit0 = (val >> 0) & 0x01;
+	bit1 = (val >> 1) & 0x01;
+	bit2 = (val >> 2) & 0x01;
+	bit3 = (val >> 3) & 0x01;
+	g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	val = gng_paletteram[offset | 0x100];
+	bit0 = (val >> 4) & 0x01;
+	bit1 = (val >> 5) & 0x01;
+	bit2 = (val >> 6) & 0x01;
+	bit3 = (val >> 7) & 0x01;
+	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	osd_modify_pen(Machine->pens[(offset & ~0x100)],r,g,b);
 }
 
 
@@ -222,38 +218,7 @@ int gng_interrupt(void)
 ***************************************************************************/
 void gng_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int i,j,offs;
-
-
-	/* rebuild the color lookup table */
-	for (j = 0;j < 3;j++)
-	{
-		int conv[3] = {GFX_TILE, GFX_SPRITE, GFX_CHAR };
-		/*
-        00-3f:  background palettes. (8x8 colours)
-        40-7f:  sprites palettes. (4*16 colours)
-        80-bf:  characters palettes (16*4 colours)
-		*/
-
-		for (i = 0;i < 64;i++)
-		{
-			offs = Machine->drv->total_colors - 1;
-			while (offs > 0)
-			{
-				if (gng_paletteram[64*j+i] == colors[2*offs] &&
-						(gng_paletteram[64*j+i + 0x100] & 0xf0) == colors[2*offs+1])
-					break;
-
-				offs--;
-			}
-
-if (errorlog && offs == 0 && (gng_paletteram[64*j+i] || gng_paletteram[64*j+i + 0x100]))
-	fprintf(errorlog,"warning: unknown color %02x %02x\n",
-			gng_paletteram[64*j+i],gng_paletteram[64*j+i + 0x100]);
-
-			Machine->gfx[conv[j]]->colortable[i] = Machine->pens[offs];
-		}
-	}
+	int offs;
 
 
 	for (offs = gng_bgvideoram_size - 1;offs >= 0;offs--)
@@ -261,7 +226,7 @@ if (errorlog && offs == 0 && (gng_paletteram[64*j+i] || gng_paletteram[64*j+i + 
 		int sx,sy;
 
 
-		if (dirtybuffer2[offs] || dirtycolor[gng_bgcolorram[offs] & 0x07])
+		if (dirtybuffer2[offs])
 		{
 			dirtybuffer2[offs] = 0;
 
@@ -276,10 +241,6 @@ if (errorlog && offs == 0 && (gng_paletteram[64*j+i] || gng_paletteram[64*j+i + 
 					0,TRANSPARENCY_NONE,0);
 		}
 	}
-
-
-	for (i = 0;i < 8;i++)
-		dirtycolor[i] = 0;
 
 
 	/* copy the background graphics */

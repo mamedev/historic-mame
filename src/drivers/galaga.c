@@ -68,7 +68,6 @@ CPU #3 NMI (@120Hz)
 #include "vidhrdw/generic.h"
 
 extern unsigned char *galaga_sharedram;
-int galaga_reset_r(int offset);
 int galaga_hiscore_print_r(int offset);
 int galaga_sharedram_r(int offset);
 void galaga_sharedram_w(int offset,int data);
@@ -76,15 +75,19 @@ int galaga_dsw_r(int offset);
 void galaga_interrupt_enable_1_w(int offset,int data);
 void galaga_interrupt_enable_2_w(int offset,int data);
 void galaga_interrupt_enable_3_w(int offset,int data);
-void galaga_halt_w(int offset,int data);
 int galaga_customio_r(int offset);
+int galaga_customio_data_r(int offset);
 void galaga_customio_w(int offset,int data);
+void galaga_customio_data_w(int offset,int data);
+void galaga_halt_w(int offset,int data);
 int galaga_interrupt_1(void);
 int galaga_interrupt_2(void);
 int galaga_interrupt_3(void);
+void galaga_init_machine(void);
+
 
 extern unsigned char *galaga_starcontrol;
-void galaga_cpu_reset_w(int offset, int data);
+void galaga_flipscreen_w(int offset,int data);
 int galaga_vh_start(void);
 void galaga_vh_screenrefresh(struct osd_bitmap *bitmap);
 void galaga_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
@@ -100,10 +103,10 @@ static struct MemoryReadAddress readmem_cpu1[] =
 {
 	{ 0x8000, 0x9fff, galaga_sharedram_r, &galaga_sharedram },
 	{ 0x6800, 0x6807, galaga_dsw_r },
+	{ 0x7000, 0x700f, galaga_customio_data_r },
 	{ 0x7100, 0x7100, galaga_customio_r },
         { 0x02b9, 0x02bd, galaga_hiscore_print_r },
-        { 0x0000, 0x0000, galaga_reset_r },
-	{ 0x0001, 0x3fff, MRA_ROM },
+	{ 0x0000, 0x3fff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -127,11 +130,13 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 {
 	{ 0x8000, 0x9fff, galaga_sharedram_w },
 	{ 0x6830, 0x6830, MWA_NOP },
+	{ 0x7000, 0x700f, galaga_customio_data_w },
 	{ 0x7100, 0x7100, galaga_customio_w },
 	{ 0xa000, 0xa005, MWA_RAM, &galaga_starcontrol },
 	{ 0x6820, 0x6820, galaga_interrupt_enable_1_w },
 	{ 0x6822, 0x6822, galaga_interrupt_enable_3_w },
 	{ 0x6823, 0x6823, galaga_halt_w },
+	{ 0xa007, 0xa007, galaga_flipscreen_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8b80, 0x8bff, MWA_RAM, &spriteram, &spriteram_size },	/* these three are here just to initialize */
 	{ 0x9380, 0x93ff, MWA_RAM, &spriteram_2 },	/* the pointers. The actual writes are */
@@ -160,62 +165,186 @@ static struct MemoryWriteAddress writemem_cpu3[] =
 
 
 
-static struct InputPort input_ports[] =
-{
-	{	/* DSW1 */
-		0x97,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW2 */
-		0xf7,
-		{ 0, 0, 0, 0, 0, OSD_KEY_F1, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN0 */
-		0xff,
-		{ 0, OSD_KEY_RIGHT, 0, OSD_KEY_LEFT, OSD_KEY_CONTROL, 0, 0, 0 },
-		{ 0, OSD_JOY_RIGHT, 0, OSD_JOY_LEFT, OSD_JOY_FIRE, 0, 0, 0 },
-	},
-	{ -1 }	/* end of table */
-};
+INPUT_PORTS_START( galaga_input_ports )
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x07, 0x07, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x02, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x06, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x07, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x01, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x03, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x05, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	/* TODO: bonus scores are different for 5 lives */
+	PORT_DIPNAME( 0x38, 0x38, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "20K 60K 60K" )
+	PORT_DIPSETTING(    0x18, "20K 60K" )
+	PORT_DIPSETTING(    0x10, "20K 70K 70K" )
+	PORT_DIPSETTING(    0x30, "20K 80K 80K" )
+	PORT_DIPSETTING(    0x38, "30K 80K" )
+	PORT_DIPSETTING(    0x08, "30K 100K 100K" )
+	PORT_DIPSETTING(    0x28, "30K 120K 120K" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0xc0, 0x80, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x80, "3" )
+	PORT_DIPSETTING(    0x40, "4" )
+	PORT_DIPSETTING(    0xc0, "5" )
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x01, 0x01, "2 Credits Game", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Player" )
+	PORT_DIPSETTING(    0x01, "2 Players" )
+	PORT_DIPNAME( 0x06, 0x06, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x06, "Easy" )
+	PORT_DIPSETTING(    0x00, "Medium" )
+	PORT_DIPSETTING(    0x02, "Hard" )
+	PORT_DIPSETTING(    0x04, "Hardest" )
+	PORT_DIPNAME( 0x08, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Freeze", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
 
+	PORT_START	/* FAKE */
+	/* The player inputs are not memory mapped, they are handled by an I/O chip. */
+	/* These fake input ports are read by galaga_customio_data_r() */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-static struct KEYSet keys[] =
-{
-        { 2, 3, "MOVE LEFT"  },
-        { 2, 1, "MOVE RIGHT" },
-        { 2, 4, "FIRE"       },
-        { -1 }
-};
+	PORT_START	/* FAKE */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE | IPF_COCKTAIL,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
 
+	PORT_START	/* FAKE */
+	/* the button here is used to trigger the sound in the test screen */
+	PORT_BITX(0x03, IP_ACTIVE_LOW, IPT_BUTTON1,	0, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_START1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_START2 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
 
-static struct DSW galaga_dsw[] =
-{
-	{ 0, 0xc0, "LIVES", { "2", "4", "3", "5" } },
- 	{ 0, 0x38, "BONUS", { "NONE", "30K 100K 100K", "20K 70K 70K", "20K 60K", "20K 60K 60K", "30K 120K 120K", "20K 80K 80K", "30K 80K" }, 1 },
-	{ 1, 0x06, "DIFFICULTY", { "MEDIUM", "HARD", "HARDEST", "EASY" }, 1 },
-	{ 1, 0x08, "DEMO SOUNDS", { "ON", "OFF" }, 1 },
-	{ 1, 0x01, "2 CREDITS GAME", { "1 PLAYER", "2 PLAYERS" }, 1 },
-	{ 1, 0x40, "CONFIGURATION", { "ON", "OFF" }, 1 },
-	{ -1 }
-};
+/* same as galaga, dip switches are slightly different */
+INPUT_PORTS_START( galaganm_input_ports )
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x07, 0x07, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x02, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x06, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x07, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x01, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x03, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x05, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	/* TODO: bonus scores are different for 5 lives */
+	PORT_DIPNAME( 0x38, 0x38, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "20K 60K 60K" )
+	PORT_DIPSETTING(    0x18, "20K 60K" )
+	PORT_DIPSETTING(    0x10, "20K 70K 70K" )
+	PORT_DIPSETTING(    0x30, "20K 80K 80K" )
+	PORT_DIPSETTING(    0x38, "30K 80K" )
+	PORT_DIPSETTING(    0x08, "30K 100K 100K" )
+	PORT_DIPSETTING(    0x28, "30K 120K 120K" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0xc0, 0x80, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x80, "3" )
+	PORT_DIPSETTING(    0x40, "4" )
+	PORT_DIPSETTING(    0xc0, "5" )
 
-static struct DSW galagabl_dsw[] =
-{
-	{ 0, 0xc0, "LIVES", { "2", "4", "3", "5" } },
- 	{ 0, 0x38, "BONUS", { "NONE", "30K 100K 100K", "20K 70K 70K", "20K 60K", "20K 60K 60K", "30K 120K 120K", "20K 80K 80K", "30K 80K" }, 1 },
-	{ 1, 0x03, "DIFFICULTY", { "MEDIUM", "HARD", "HARDEST", "EASY" }, 1 },
-	{ 1, 0x08, "DEMO SOUNDS", { "ON", "OFF" }, 1 },
-	{ 1, 0x04, "SW3B", { "ON", "OFF" }, 1 },
-	{ 1, 0x40, "SW7B", { "ON", "OFF" }, 1 },
-	{ -1 }
-};
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "Easy" )
+	PORT_DIPSETTING(    0x00, "Medium" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x02, "Hardest" )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Freeze", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+
+	PORT_START	/* FAKE */
+	/* The player inputs are not memory mapped, they are handled by an I/O chip. */
+	/* These fake input ports are read by galaga_customio_data_r() */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* FAKE */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE | IPF_COCKTAIL,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* FAKE */
+	/* the button here is used to trigger the sound in the test screen */
+	PORT_BITX(0x03, IP_ACTIVE_LOW, IPT_BUTTON1,	0, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_START1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_START2 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
 
 
 
@@ -321,7 +450,7 @@ static struct MachineDriver machine_driver =
 			3125000,	/* 3.125 Mhz */
 			0,
 			readmem_cpu1,writemem_cpu1,0,0,
-			galaga_interrupt_1,1
+			galaga_interrupt_1,100
 		},
 		{
 			CPU_Z80,
@@ -339,7 +468,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
-	0,
+	galaga_init_machine,
 
 	/* video hardware */
 	28*8, 36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },
@@ -347,6 +476,7 @@ static struct MachineDriver machine_driver =
 	32+64,64*4,	/* 32 for the characters, 64 for the stars */
 	galaga_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER,
 	0,
 	galaga_vh_start,
 	generic_vh_stop,
@@ -453,6 +583,7 @@ static const char *galaga_sample_names[] =
 };
 
 
+
 static int hiload(const char *name)
 {
    FILE *f;
@@ -498,18 +629,17 @@ struct GameDriver galaga_driver =
 {
 	"Galaga (Midway)",
 	"galaga",
-	"MARTIN SCRAGG\nNICOLA SALMORIA\nMIRKO BUFFONI",
+	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)",
 	&machine_driver,
 
 	galaga_rom,
 	0, 0,
 	galaga_sample_names,
 
-	input_ports, trak_ports, galaga_dsw, keys,
+	0/*TBR*/,galaga_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	color_prom, 0, 0,
-
-	8*11, 8*20,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
@@ -518,18 +648,17 @@ struct GameDriver galaganm_driver =
 {
 	"Galaga (Namco)",
 	"galaganm",
-	"MARTIN SCRAGG\nNICOLA SALMORIA\nMIRKO BUFFONI",
+	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)",
 	&machine_driver,
 
 	galaganm_rom,
 	0, 0,
 	galaga_sample_names,
 
-	input_ports, trak_ports, galagabl_dsw, keys,
+	0/*TBR*/,galaganm_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	color_prom, 0, 0,
-
-	8*11, 8*20,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
@@ -538,18 +667,17 @@ struct GameDriver galagabl_driver =
 {
 	"Galaga (bootleg)",
 	"galagabl",
-	"MARTIN SCRAGG\nNICOLA SALMORIA\nMIRKO BUFFONI",
+	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)",
 	&machine_driver,
 
 	galagabl_rom,
 	0, 0,
 	galaga_sample_names,
 
-	input_ports, trak_ports, galagabl_dsw, keys,
+	0/*TBR*/,galaganm_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	color_prom, 0, 0,
-
-	8*11, 8*20,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
@@ -558,18 +686,17 @@ struct GameDriver gallag_driver =
 {
 	"Gallag (bootleg Galaga)",
 	"gallag",
-	"MARTIN SCRAGG\nNICOLA SALMORIA\nMIRKO BUFFONI",
+	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)",
 	&machine_driver,
 
 	gallag_rom,
 	0, 0,
 	galaga_sample_names,
 
-	input_ports, trak_ports, galagabl_dsw, keys,
+	0/*TBR*/,galaganm_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	color_prom, 0, 0,
-
-	8*11, 8*20,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };

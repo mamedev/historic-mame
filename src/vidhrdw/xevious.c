@@ -41,43 +41,58 @@ static int flip;
 void xevious_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	for (i = 0;i < 256;i++)
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		int bit0,bit1,bit2,bit3;
 
 
-		bit0 = (color_prom[i] >> 0) & 0x01;
-		bit1 = (color_prom[i] >> 1) & 0x01;
-		bit2 = (color_prom[i] >> 2) & 0x01;
-		bit3 = (color_prom[i] >> 3) & 0x01;
-		palette[3*i] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[i+256] >> 0) & 0x01;
-		bit1 = (color_prom[i+256] >> 1) & 0x01;
-		bit2 = (color_prom[i+256] >> 2) & 0x01;
-		bit3 = (color_prom[i+256] >> 3) & 0x01;
-		palette[3*i + 1] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[i+256*2] >> 0) & 0x01;
-		bit1 = (color_prom[i+256*2] >> 1) & 0x01;
-		bit2 = (color_prom[i+256*2] >> 2) & 0x01;
-		bit3 = (color_prom[i+256*2] >> 3) & 0x01;
-		palette[3*i + 2] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		/* red component */
+		bit0 = (color_prom[0] >> 0) & 0x01;
+		bit1 = (color_prom[0] >> 1) & 0x01;
+		bit2 = (color_prom[0] >> 2) & 0x01;
+		bit3 = (color_prom[0] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		/* green component */
+		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		/* blue component */
+		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+		color_prom++;
 	}
 
+	color_prom += 2*Machine->drv->total_colors;
+	/* color_prom now points to the beginning of the lookup table */
+
 	/* background tiles */
-	for (i = 0;i < 128*4;i++)
-		colortable[i] = color_prom[i + 256*3];
+	for (i = 0;i < TOTAL_COLORS(1);i++)
+		COLOR(1,i) = *(color_prom++);
 
 	/* sprites */
-	for (i = 128*4;i < 128*4+64*8;i++)
-		colortable[i] = color_prom[i + 256*3];
+	for (i = 0;i < TOTAL_COLORS(2);i++)
+	{
+		if (i % 8 == 0) COLOR(2,i) = 0x80; 	/* transparent */
+		else COLOR(2,i) = *color_prom;
+
+		color_prom++;
+	}
 
 	/* foreground characters */
-	for (i = 0;i < 64;i++)
+	for (i = 0;i < TOTAL_COLORS(0);i++)
 	{
-		colortable[128*4+64*8 + 2*i] = 0;
-		colortable[128*4+64*8 + 2*i + 1] = i;
+		if (i % 2 == 0) COLOR(0,i) = 0;
+		else COLOR(0,i) = i / 2;
 	}
 }
 
@@ -94,23 +109,15 @@ void xevious_vh_latch_w(int offset, int data)
 	{
 	case 0:		/* BG Y scroll position */
 		bg_y_pos = data;
-		if (errorlog)
-		  fprintf(errorlog,"BG-Y: %03x\n",data);
 		break;
 	case 2:		/* BG X scroll position ?? */
 		bg_x_pos = data;
-		if (errorlog)
-		  fprintf(errorlog,"BG-X: %03x\n",data);
 		break;
 	case 1:		/* FONT Y scroll position ??*/
 		fo_y_pos = data;
-		if (errorlog)
-		  fprintf(errorlog,"FONT-Y: %03x\n",data);
 		break;
 	case 3:		/* FONT X scroll position ?? */
 		fo_x_pos = data;
-		if (errorlog)
-		  fprintf(errorlog,"FONT-X: %03x\n",data);
 		break;
 	case 7:		/* DISPLAY XY FLIP ?? */
 		flip = data&1;
@@ -306,52 +313,55 @@ void xevious_vh_screenrefresh(struct osd_bitmap *bitmap)
 			int bank,code,color,flipx,flipy,sx,sy;
 
 
-			bank = ((spriteram[offs] & 0x80) >> 7) + ((spriteram_3[offs] & 0x80) >> 6);
+			bank = 2 + ((spriteram[offs] & 0x80) >> 7) + ((spriteram_3[offs] & 0x80) >> 6);
 			code = spriteram[offs] & 0x7f;
-			color = spriteram[offs + 1] & 0x3f;
+			color = spriteram[offs + 1] & 0x7f;
 			flipx = spriteram_3[offs] & 4;
 			flipy = spriteram_3[offs + 1] & 4;
 			sx = spriteram_2[offs] - 15;
 			sy = spriteram_2[offs + 1] - 40 + 0x100*(spriteram_3[offs + 1] & 1);
-
 			if (spriteram_3[offs] & 2)	/* double width (?) */
 			{
-				drawgfx(bitmap,Machine->gfx[2 + bank],
-						code+2,color,flipx,flipy,
-						flipx ? sx+16 : sx,flipy ? sy+16 : sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-				drawgfx(bitmap,Machine->gfx[2 + bank],
-						code,color,flipx,flipy,
-						flipx ? sx : sx+16,flipy ? sy+16 : sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-
 				if (spriteram_3[offs] & 1)	/* double width, double height */
 				{
-					drawgfx(bitmap,Machine->gfx[2 + bank],
+					code &= 0x7c;
+					drawgfx(bitmap,Machine->gfx[bank],
 							code+3,color,flipx,flipy,
 							flipx ? sx+16 : sx,flipy ? sy : sy+16,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-					drawgfx(bitmap,Machine->gfx[2 + bank],
+							&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x80);
+					drawgfx(bitmap,Machine->gfx[bank],
 							code+1,color,flipx,flipy,
 							flipx ? sx : sx+16,flipy ? sy : sy+16,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x80);
 				}
+				code &= 0x7d;
+				drawgfx(bitmap,Machine->gfx[bank],
+						code+2,color,flipx,flipy,
+						flipx ? sx+16 : sx,flipy ? sy+16 : sy,
+						&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x80);
+				drawgfx(bitmap,Machine->gfx[bank],
+						code,color,flipx,flipy,
+						flipx ? sx : sx+16,flipy ? sy+16 : sy,
+						&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x80);
 			}
 			else if (spriteram_3[offs] & 1)	/* double height */
 			{
-				drawgfx(bitmap,Machine->gfx[2 + bank],
+				code &= 0x7e;
+				drawgfx(bitmap,Machine->gfx[bank],
 						code,color,flipx,flipy,
 						flipx ? sx+16 : sx,flipy ? sy+16 : sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-				drawgfx(bitmap,Machine->gfx[2 + bank],
+						&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x80);
+				drawgfx(bitmap,Machine->gfx[bank],
 						code+1,color,flipx,flipy,
 						flipx ? sx+16 : sx,flipy ? sy : sy+16,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x80);
 			}
 			else	/* normal */
-				drawgfx(bitmap,Machine->gfx[2 + bank],
+			{
+				drawgfx(bitmap,Machine->gfx[bank],
 						code,color,flipx,flipy,sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x80);
+			}
 		}
 	}
 

@@ -55,6 +55,7 @@
 extern byte *RAM;
 extern byte *ROM;
 #define Z80_RDOP(A) (ROM[A])
+/*#define Z80_RDOP(A) ((unsigned)cpu_readmem(A))*/
 
 /****************************************************************************/
 /* Z80_RDOP_ARG() is identical to Z80_RDOP() except it is used for reading  */
@@ -63,6 +64,7 @@ extern byte *ROM;
 /****************************************************************************/
 /*#define Z80_RDOP_ARG(A)		Z80_RDOP(A)*/
 #define Z80_RDOP_ARG(A) (RAM[A])
+/*#define Z80_RDOP_ARG(A) ((unsigned)cpu_readmem(A))*/
 
 /****************************************************************************/
 /* Z80_RDSTACK() is identical to Z80_RDMEM() except it is used for reading  */

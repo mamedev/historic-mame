@@ -290,6 +290,7 @@ static struct MachineDriver machine_driver =
 	256, 256,
 	atari_vg_init_colors,
 
+	VIDEO_TYPE_VECTOR,
 	0,
 	atari_vg_avg_start,
 	atari_vg_stop,
@@ -338,10 +339,10 @@ struct GameDriver redbaron_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	140, 110,     /* paused_x, paused_y */
+	ORIENTATION_DEFAULT,
 
 	atari_vg_earom_load, atari_vg_earom_save
 };

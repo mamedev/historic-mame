@@ -1,19 +1,4 @@
 /*** m6809: Portable 6809 emulator ******************************************/
-/***                                                                      ***/
-/***                                 m6809.h                              ***/
-/***                                                                      ***/
-/*** This file contains the function prototypes and variable declarations ***/
-/***                                                                      ***/
-/*** Copyright (C) DS 1997                                                ***/
-/*** Portions Copyright (C) Marcel de Kogel 1996,1997                     ***/
-/*** Portions Copyright (C) Nicola Salmoria 1997                          ***/
-/***                                                                      ***/
-/***     You are not allowed to distribute this software commercially     ***/
-/****************************************************************************/
-
-/*	Changes since MAME 0.21:
-	18-MAY-97  JB	- define INT_FIRQ 2
-*/
 
 #ifndef _M6809_H
 #define _M6809_H
@@ -23,9 +8,6 @@
 /* sizeof(byte)=1, sizeof(word)=2, sizeof(dword)>=4                         */
 /****************************************************************************/
 #include "types.h"	/* -NS- */
-
-typedef byte Byte;
-typedef word Word;
 
 /* 6809 Registers */
 typedef struct
@@ -43,9 +25,9 @@ typedef struct
 #endif
 
 
-#define INT_NONE  0            /* No interrupt required */
-#define INT_IRQ	  1            /* Standard IRQ interrupt */
-#define INT_FIRQ  2				/* Fast IRQ */
+#define INT_NONE  0			/* No interrupt required */
+#define INT_IRQ	  1 		/* Standard IRQ interrupt */
+#define INT_FIRQ  2			/* Fast IRQ */
 
 /* PUBLIC FUNCTIONS */
 void m6809_SetRegs(m6809_Regs *Regs);
@@ -110,4 +92,3 @@ extern int m6809_Flags;
 #endif
 
 #endif /* _M6809_H */
-

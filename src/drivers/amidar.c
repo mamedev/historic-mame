@@ -13,58 +13,14 @@ a800      watchdog reset
 b000      IN0
 b010      IN1
 b020      IN2
-b820      DSW2 (not Turtles)
-
-*
- * IN0 (all bits are inverted)
- * bit 7 : COIN 1
- * bit 6 : COIN 2
- * bit 5 : LEFT player 1
- * bit 4 : RIGHT player 1
- * bit 3 : FIRE player 1
- * bit 2 : CREDIT
- * bit 1 : ?
- * bit 0 : UP player 2 (TABLE only)
- *
-*
- * IN1 (all bits are inverted)
- * bit 7 : START 1
- * bit 6 : START 2
- * bit 5 : LEFT player 2 (TABLE only)
- * bit 4 : RIGHT player 2 (TABLE only)
- * bit 3 : FIRE player 2 (TABLE only)
- * bit 2 : ?
- * bit 1 : \ lives
- * bit 0 : / (turtles)
-*
- * IN2 (all bits are inverted)
- * bit 7 : ?
- * bit 6 : DOWN player 1
- * bit 5 : ?
- * bit 4 : UP player 1
- * bit 3 : COCKTAIL or UPRIGHT cabinet (0 = UPRIGHT)
- * bit 2 : bonus  0 = 30000 1 = 50000 (amidar)
- * bit 1 : demo sounds (amidar)
- * bit 2 :\ coins per play
- * bit 1 :/ (turtles)
- * bit 0 : DOWN player 2 (TABLE only)
- *
-*
- * DSW2 (all bits are inverted)
- * bit 7 :\
- * bit 6 :|  right coin slot
- * bit 5 :|
- * bit 4 :/  all 0 = free play
- * bit 3 :\
- * bit 2 :|  left coin slot
- * bit 1 :|
- * bit 0 :/
- *
+b820      DSW (not Turtles)
+see the input_ports definition below for details on the input bits
 
 write:
 a008      interrupt enable
-a010      ?
-a018      ?
+a010/a018 flip screen X & Y (I don't know which is which)
+a030      coin counter A
+a038      coin counter B
 b800      To AY-3-8910 port A (commands for the audio CPU)
 b810      bit 3 = interrupt trigger on audio CPU
 
@@ -72,6 +28,10 @@ b810      bit 3 = interrupt trigger on audio CPU
 SOUND BOARD:
 0000-1fff ROM
 8000-83ff RAM
+
+write:
+9000      ?
+9080      ?
 
 I/0 ports:
 read:
@@ -98,6 +58,8 @@ interrupt mode 1 triggered by the main CPU
 
 extern unsigned char *amidar_attributesram;
 void amidar_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void amidar_flipx_w(int offset,int data);
+void amidar_flipy_w(int offset,int data);
 void amidar_attributes_w(int offset,int data);
 void amidar_vh_screenrefresh(struct osd_bitmap *bitmap);
 
@@ -108,41 +70,33 @@ int amidar_sh_start(void);
 
 static struct MemoryReadAddress amidar_readmem[] =
 {
+	{ 0x0000, 0x4fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x9000, 0x93ff, MRA_RAM },
 	{ 0x9800, 0x985f, MRA_RAM },
-	{ 0x0000, 0x4fff, MRA_ROM },
+	{ 0xa800, 0xa800, MRA_NOP },
 	{ 0xb000, 0xb000, input_port_0_r },	/* IN0 */
 	{ 0xb010, 0xb010, input_port_1_r },	/* IN1 */
 	{ 0xb020, 0xb020, input_port_2_r },	/* IN2 */
-	{ 0xb820, 0xb820, input_port_3_r },	/* DSW2 */
-	{ 0xa800, 0xa800, MRA_NOP },
-	{ -1 }	/* end of table */
-};
-static struct MemoryReadAddress turtles_readmem[] =
-{
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0x9000, 0x93ff, MRA_RAM },
-	{ 0x9800, 0x985f, MRA_RAM },
-	{ 0x0000, 0x4fff, MRA_ROM },
-	{ 0xb000, 0xb000, input_port_0_r },	/* IN0 */
-	{ 0xb010, 0xb010, input_port_4_r },	/* IN1 */
-	{ 0xb020, 0xb020, input_port_2_r },	/* IN2 */
-	{ 0xb820, 0xb820, input_port_3_r },	/* DSW2 */
-	{ 0xa800, 0xa800, MRA_NOP },
+	{ 0xb820, 0xb820, input_port_3_r },	/* DSW */
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
+	{ 0x0000, 0x4fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
 	{ 0x9800, 0x983f, amidar_attributes_w, &amidar_attributesram },
 	{ 0x9840, 0x985f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x9860, 0x987f, MWA_NOP },
 	{ 0xa008, 0xa008, interrupt_enable_w },
+	{ 0xa010, 0xa010, amidar_flipx_w },
+	{ 0xa018, 0xa018, amidar_flipy_w },
+	{ 0xa030, 0xa030, MWA_NOP },
+	{ 0xa038, 0xa038, MWA_NOP },
 	{ 0xb800, 0xb800, sound_command_w },
-	{ 0x0000, 0x4fff, MWA_ROM },
+	{ 0xb810, 0xb810, MWA_NOP },
 	{ -1 }	/* end of table */
 };
 
@@ -150,15 +104,17 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct MemoryReadAddress sound_readmem[] =
 {
-	{ 0x8000, 0x83ff, MRA_RAM },
 	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x8000, 0x83ff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
-	{ 0x8000, 0x83ff, MWA_RAM },
 	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x8000, 0x83ff, MWA_RAM },
+{ 0x9000, 0x9000, MWA_NOP },
+{ 0x9080, 0x9080, MWA_NOP },
 	{ -1 }	/* end of table */
 };
 
@@ -182,86 +138,177 @@ static struct IOWritePort sound_writeport[] =
 
 
 
-static struct InputPort input_ports[] =
-{
-	{	/* IN0 */
-		0xff,
-		{ 0, 0, OSD_KEY_3, OSD_KEY_CONTROL, OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_4, OSD_KEY_5 },
-		{ 0, 0, 0, OSD_JOY_FIRE, OSD_JOY_RIGHT, OSD_JOY_LEFT, 0, 0 }
-	},
-	{	/* IN1 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, OSD_KEY_2, OSD_KEY_1 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN2 */
-		0xf1,
-		{ 0, 0, 0, 0, OSD_KEY_UP, 0, OSD_KEY_DOWN, 0 },
-		{ 0, 0, 0, 0, OSD_JOY_UP, 0, OSD_JOY_DOWN, 0 }
-	},
-	{	/* DSW2 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN1 for Turtles (different default value) */
-		0xfd,
-		{ 0, 0, 0, 0, 0, 0, OSD_KEY_2, OSD_KEY_1 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+INPUT_PORTS_START( amidar_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably space for button 2 */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x00, "255" )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably space for player 2 button 2 */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x04, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "30000 70000" )
+	PORT_DIPSETTING(    0x04, "50000 80000" )
+	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_DIPNAME( 0x20, 0x00, "unknown1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_DIPNAME( 0x80, 0x00, "unknown2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 
+	PORT_START	/* DSW */
+	PORT_DIPNAME( 0x0f, 0x0f, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0a, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x02, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x08, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x0c, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x0e, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x07, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
+	PORT_DIPSETTING(    0x0b, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x03, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x05, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0xf0, 0xf0, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xa0, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x20, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x80, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0xe0, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x70, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )
+	PORT_DIPSETTING(    0xb0, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x30, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0xd0, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x50, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x00, "Disable All Coins" )
+INPUT_PORTS_END
 
-static struct KEYSet amidar_keys[] =
-{
-        { 2, 4, "MOVE UP" },
-        { 0, 5, "MOVE LEFT"  },
-        { 0, 4, "MOVE RIGHT" },
-        { 2, 6, "MOVE DOWN" },
-        { 0, 3, "JUMP" },
-        { -1 }
-};
+/* similar to Amidar, dip swtiches are different and port 3, which in Amidar */
+/* selects coins per credit, is not used. */
+INPUT_PORTS_START( turtles_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably space for button 2 */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
-static struct KEYSet turtles_keys[] =
-{
-        { 2, 4, "MOVE UP" },
-        { 0, 5, "MOVE LEFT"  },
-        { 0, 4, "MOVE RIGHT" },
-        { 2, 6, "MOVE DOWN" },
-        { 0, 3, "BOMB" },
-        { -1 }
-};
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x03, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x03, "126" )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably space for player 2 button 2 */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x06, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "A 1/1 B 2/1 C 1/1" )
+	PORT_DIPSETTING(    0x02, "A 1/2 B 1/1 C 1/2" )
+	PORT_DIPSETTING(    0x04, "A 1/3 B 3/1 C 1/3" )
+	PORT_DIPSETTING(    0x06, "A 1/4 B 4/1 C 1/4" )
+	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_DIPNAME( 0x20, 0x00, "unknown1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_DIPNAME( 0x80, 0x00, "unknown2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
 
+/* same as Turtles, but dip switches are different. */
+INPUT_PORTS_START( turpin_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably space for button 2 */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
-static struct DSW amidar_dsw[] =
-{
-	{ 1, 0x03, "LIVES", { "255", "5", "4", "3" }, 1 },
-	{ 2, 0x04, "BONUS", { "30000 70000", "50000 80000" } },
-	{ 2, 0x02, "DEMO SOUNDS", { "ON", "OFF" }, 1 },
-	{ -1 }
-};
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x03, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "6" )
+	PORT_DIPSETTING(    0x03, "126" )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably space for player 2 button 2 */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
-
-
-static struct DSW turtles_dsw[] =
-{
-	{ 4, 0x03, "LIVES", { "2", "3", "4", "126" } },
-	{ -1 }
-};
-
-static struct DSW turpin_dsw[] =
-{
-	{ 4, 0x03, "LIVES", { "2", "4", "6", "126" } },
-	{ -1 }
-};
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x06, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x06, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x02, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x04, "1 Coin/2 Credits" )
+	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_DIPNAME( 0x20, 0x00, "unknown1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_DIPNAME( 0x80, 0x00, "unknown2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
 
 
 
@@ -271,8 +318,8 @@ static struct GfxLayout charlayout =
 	256,	/* 256 characters */
 	2,	/* 2 bits per pixel */
 	{ 0, 256*8*8 },	/* the two bitplanes are separated */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
 static struct GfxLayout spritelayout =
@@ -281,10 +328,10 @@ static struct GfxLayout spritelayout =
 	64,	/* 64 sprites */
 	2,	/* 2 bits per pixel */
 	{ 0, 64*16*16 },	/* the two bitplanes are separated */
-	{ 23*8, 22*8, 21*8, 20*8, 19*8, 18*8, 17*8, 16*8,
-			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
@@ -317,7 +364,7 @@ static unsigned char turtles_color_prom[] =
 
 
 
-static struct MachineDriver amidar_machine_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -333,59 +380,19 @@ static struct MachineDriver amidar_machine_driver =
 			2100000,	/* 2 Mhz?????? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			amidar_sh_interrupt,1
+			amidar_sh_interrupt,10
 		}
 	},
 	60,
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	32,32,
 	amidar_vh_convert_color_prom,
 
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	amidar_vh_screenrefresh,
-
-	/* sound hardware */
-	0,
-	0,
-	amidar_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
-};
-
-static struct MachineDriver turtles_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
-			0,
-			turtles_readmem,writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			2100000,	/* 2 Mhz?????? */
-			2,	/* memory region #2 */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			amidar_sh_interrupt,1
-		}
-	},
-	60,
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	32,32,
-	amidar_vh_convert_color_prom,
-
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -438,6 +445,22 @@ ROM_START( amidarjp_rom )
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "amidar.5c", 0x0000, 0x1000, 0xcdfaa8be )
 	ROM_LOAD( "amidar.5d", 0x1000, 0x1000, 0xc84cdcfc )
+ROM_END
+
+ROM_START( amigo_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "2732.a1", 0x0000, 0x1000, 0x43d647a4 )
+	ROM_LOAD( "2732.a2", 0x1000, 0x1000, 0x3f1c500a )
+	ROM_LOAD( "2732.a3", 0x2000, 0x1000, 0xa698c12c )
+	ROM_LOAD( "2732.a4", 0x3000, 0x1000, 0x3c6d621d )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "2716.a6", 0x0000, 0x0800, 0xe09ed6c8 )
+	ROM_LOAD( "2716.a5", 0x0800, 0x0800, 0x3355a22f )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "2732.a7", 0x0000, 0x1000, 0x2fd961f7 )
+	ROM_LOAD( "2732.a8", 0x1000, 0x1000, 0xfa4bd265 )
 ROM_END
 
 ROM_START( turtles_rom )
@@ -527,17 +550,17 @@ struct GameDriver amidar_driver =
 {
 	"Amidar (US version)",
 	"amidar",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nALAN J MCCORMICK",
-	&amidar_machine_driver,
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
+	&machine_driver,
 
 	amidar_rom,
 	0, 0,
 	0,
 
-	input_ports, trak_ports, amidar_dsw, amidar_keys,
+	0/*TBR*/,amidar_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	amidar_color_prom, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_ROTATE_90,
 
 	amidar_hiload, amidar_hisave
 };
@@ -546,17 +569,36 @@ struct GameDriver amidarjp_driver =
 {
 	"Amidar (Japanese version)",
 	"amidarjp",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nALAN J MCCORMICK",
-	&amidar_machine_driver,
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
+	&machine_driver,
 
 	amidarjp_rom,
 	0, 0,
 	0,
 
-	input_ports, trak_ports, amidar_dsw, amidar_keys,
+	0/*TBR*/,amidar_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	amidar_color_prom, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_ROTATE_90,
+
+	amidar_hiload, amidar_hisave
+};
+
+struct GameDriver amigo_driver =
+{
+	"Amigo (Amidar US bootleg)",
+	"amigo",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)\nDavid Winter (game driver)",
+	&machine_driver,
+
+	amigo_rom,
+	0, 0,
+	0,
+
+	0/*TBR*/,amidar_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+
+	amidar_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
 
 	amidar_hiload, amidar_hisave
 };
@@ -565,17 +607,17 @@ struct GameDriver turtles_driver =
 {
 	"Turtles",
 	"turtles",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nALAN J MCCORMICK",
-	&turtles_machine_driver,
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
+	&machine_driver,
 
 	turtles_rom,
 	0, 0,
 	0,
 
-	input_ports, trak_ports, turtles_dsw, turtles_keys,
+	0/*TBR*/,turtles_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	turtles_color_prom, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_ROTATE_90,
 
 	0, 0
 };
@@ -584,17 +626,17 @@ struct GameDriver turpin_driver =
 {
 	"Turpin",
 	"turpin",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nALAN J MCCORMICK",
-	&turtles_machine_driver,
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
+	&machine_driver,
 
 	turpin_rom,
 	0, 0,
 	0,
 
-	input_ports, trak_ports, turpin_dsw, turtles_keys,
+	0/*TBR*/,turpin_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	turtles_color_prom, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_ROTATE_90,
 
 	0, 0
 };

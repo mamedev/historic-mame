@@ -143,8 +143,9 @@ void qix_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable
 void qix_vh_screenrefresh(struct osd_bitmap *bitmap);
 int qix_vh_start(void);
 void qix_vh_stop(void);
-int qix_init_machine(const char *gamename);
+void qix_init_machine(void);
 
+int qix_data_interrupt(void);	/* JB 970825 */
 
 
 static struct MemoryReadAddress readmem_cpu_data[] =
@@ -276,8 +277,8 @@ static struct MachineDriver machine_driver =
 			writemem_cpu_data,	/* MemoryWriteAddress */
 			0,			/* IOReadPort */
 			0,			/* IOWritePort */
-			interrupt,		/* interrupt routine */
-			8			/* interrupts per frame */
+			qix_data_interrupt,		/* JB 970825 - custom interrupt routine */
+			1						/* JB 970825 - true interrupts per frame is only 1 */
 		},
 		{
 			CPU_M6809,
@@ -299,6 +300,7 @@ static struct MachineDriver machine_driver =
 	0,			/* color table length */
 	qix_vh_convert_color_prom,					/* convert color prom routine */
 
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,					/* vh_init routine */
 	qix_vh_start,				/* vh_start routine */ /* JB 970524 */
 	qix_vh_stop,				/* vh_stop routine */ /* JB 970524 */
@@ -395,9 +397,10 @@ struct GameDriver qix_driver =
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
 
-	input_ports, trak_ports, qix_dsw, keys,
+	input_ports, 0, trak_ports, qix_dsw, keys,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	128-(8*3), 128-4,   /* Paused message displayed at X,Y  */
+	ORIENTATION_DEFAULT,
+
 	hiload, hisave	       /* High score load and save */
 };

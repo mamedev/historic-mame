@@ -321,14 +321,14 @@ static struct MachineDriver machine_driver =
 			readmem,writemem,0,0,
 			interrupt,1
 		},
-                {
-                        CPU_Z80 | CPU_AUDIO_CPU,
-                        2000000,        /* 2 Mhz */
-                        2,
-                        sound_readmem,sound_writemem,
-                        sound_readport,sound_writeport,
-                        starforce_sh_interrupt,3
-                }
+		{
+				CPU_Z80 | CPU_AUDIO_CPU,
+				2000000,        /* 2 Mhz */
+				2,
+				sound_readmem,sound_writemem,
+				sound_readport,sound_writeport,
+				starforce_sh_interrupt,10
+		}
 	},
 	60,
 	0,
@@ -339,6 +339,7 @@ static struct MachineDriver machine_driver =
 	256, 48*8,
 	starforc_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,
 	starforc_vh_start,
 	starforc_vh_stop,
@@ -436,10 +437,10 @@ struct GameDriver starforc_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	0, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	/* TODO: high score load doesn't work */
 	hiload, hisave

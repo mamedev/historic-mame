@@ -268,6 +268,7 @@ static struct MachineDriver machine_driver =
 	256,4*144,
 	mrdo_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER,
 	0,
 	mrdo_vh_start,
 	mrdo_vh_stop,
@@ -386,10 +387,10 @@ struct GameDriver mrdo_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	8*17, 8*29,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
@@ -405,10 +406,10 @@ struct GameDriver mrdot_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	8*17, 8*29,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
@@ -424,10 +425,10 @@ struct GameDriver mrlo_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	8*17, 8*29,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };

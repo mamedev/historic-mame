@@ -6,12 +6,11 @@
 
 static int frogger_portB_r(int offset)
 {
-	int clockticks,clock;
+	int clock;
 
 #define TIMER_RATE 170
 
-	clockticks = cpu_getfcount();
-	clock = clockticks / TIMER_RATE;
+	clock = cpu_gettotalcycles() / TIMER_RATE;
 
 #if 0	/* temporarily removed */
 	/* to speed up the emulation, detect when the program is looping waiting */
@@ -56,7 +55,7 @@ int frogger_sh_interrupt(void)
 static struct AY8910interface interface =
 {
 	1,	/* 1 chip */
-	10,	/* 1 updates per video frame (good quality) */
+	10,	/* 10 updates per video frame (good quality) */
 	1789750000,	/* 1.78975 MHZ ?? */
 	{ 255 },
 	{ sound_command_latch_r },

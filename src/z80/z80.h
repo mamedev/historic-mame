@@ -97,6 +97,8 @@ typedef struct
   z80_pair AF,BC,DE,HL,IX,IY,PC,SP;	/* -NS- */
   z80_pair AF2,BC2,DE2,HL2;	/* -NS- */
   unsigned IFF1,IFF2,HALT,IM,I,R,R2;
+
+  int pending_irq,pending_nmi;
 } Z80_Regs;
 
 /****************************************************************************/
@@ -110,9 +112,9 @@ void Z80_Debug(Z80_Regs *R);
 #endif
 
 extern int Z80_Running;      /* When 0, emulation terminates                */
-extern int Z80_IPeriod;      /* Number of T-states per interrupt            */
+/*extern int Z80_IPeriod; */ /* NS 970904 */     /* Number of T-states per interrupt            */
 extern int Z80_ICount;       /* T-state count                               */
-extern int Z80_IRQ;          /* Current IRQ status. Checked after EI occurs */
+/* extern int Z80_IRQ;*/  /* NS 970904 */          /* Current IRQ status. Checked after EI occurs */
 #define Z80_IGNORE_INT  -1   /* Ignore interrupt                            */
 #define Z80_NMI_INT     -2   /* Execute NMI                                 */
 
@@ -120,8 +122,9 @@ unsigned Z80_GetPC (void);         /* Get program counter                   */
 void Z80_GetRegs (Z80_Regs *Regs); /* Get registers                         */
 void Z80_SetRegs (Z80_Regs *Regs); /* Set registers                         */
 void Z80_Reset (void);             /* Reset registers to the initial values */
-int  Z80_Execute (void);           /* Execute IPeriod T-States              */
-word Z80 (void);                   /* Execute until Z80_Running==0          */
+/*int  Z80_Execute (void);*/ /* NS 970904 */           /* Execute IPeriod T-States              */
+int  Z80_Execute(int cycles);           /* Execute cycles T-States - returns number of cycles actually run */
+/*word Z80 (void);*/ /* NS 970904 */                   /* Execute until Z80_Running==0          */
 void Z80_RegisterDump (void);      /* Prints a dump to stdout               */
 void Z80_Patch (Z80_Regs *Regs);   /* Called when ED FE occurs. Can be used */
                                    /* to emulate disk access etc.           */
@@ -130,8 +133,11 @@ void Z80_Patch (Z80_Regs *Regs);   /* Called when ED FE occurs. Can be used */
                                    /* Z80_IGNORE_INT, Z80_NMI_INT or a byte */
                                    /* identifying the device (most often    */
                                    /* 0xFF)                                 */
-int cpu_interrupt(void);
-#define Z80_Interrupt() (cpu_interrupt())
+/*int cpu_interrupt(void);
+#define Z80_Interrupt() (cpu_interrupt()) */  /* NS 970904 */
+
+void Z80_Cause_Interrupt(int type);	/* NS 970904 */
+void Z80_Clear_Pending_Interrupts(void);	/* NS 970904 */
 
 void Z80_Reti (void);              /* Called when RETI occurs               */
 void Z80_Retn (void);              /* Called when RETN occurs               */

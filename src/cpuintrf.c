@@ -12,6 +12,7 @@
 #include "Z80.h"
 #include "M6502.h"
 #include "M6809.h"
+#include "M68000.h"
 
 void I86_Execute();
 void I86_Reset(unsigned char *mem,int cycles);
@@ -21,37 +22,38 @@ static int activecpu,totalcpu;
 static int iloops,iperiod;
 static int cpurunning[MAX_CPU];
 static int totalcycles[MAX_CPU];
+static int have_to_reset;
 
+static int have_24bit_address_space; /* LBO 090597 */
+static int lookup_shift; /* LBO 090597 */
+static int lookup_entries; /* LBO 090597 */
 
 static const struct MemoryReadAddress *memoryread;
 static const struct MemoryWriteAddress *memorywrite;
-#define MH_ENTRIES 64
-#define MH_SHIFT 10	/* entry = address >> MH_SHIFT */
-static int (*memoryreadhandler[MH_ENTRIES])(int address);
-static int memoryreadoffset[MH_ENTRIES];
-static void (*memorywritehandler[MH_ENTRIES])(int address,int data);
-static int memorywriteoffset[MH_ENTRIES];
 
+/* LBO 090597 start */
+/* Lookup constants for CPUs using a 16-bit address space */
+#define MH_SHIFT_16		8
+#define MH_ENTRIES_16	(1<<(16-MH_SHIFT_16))
+
+/* Lookup constants for CPUs using a 24-bit address space */
+#define MH_SHIFT_24		10
+#define MH_ENTRIES_24	(1<<(24-MH_SHIFT_24))
+/* LBO 090597 end */
+
+static int (*memoryreadhandler[MH_ENTRIES_24])(int address);
+static int memoryreadoffset[MH_ENTRIES_24];
+static void (*memorywritehandler[MH_ENTRIES_24])(int address,int data);
+static int memorywriteoffset[MH_ENTRIES_24];
 
 /* TODO: this should be static, but currently the Qix driver needs it */
 unsigned char cpucontext[MAX_CPU][100];	/* enough to accomodate the cpu status */
 static unsigned char *ramptr[MAX_CPU],*romptr[MAX_CPU];
 
+/* JB 970825 - Qix driver is a pain in the neck. Needs these new globals. */
+int yield_cpu;
+int saved_icount;
 
-extern struct KEYSet *MM_DirectKEYSet;
-extern unsigned char MM_PatchedPort;
-extern unsigned char MM_OldPortValue;
-extern unsigned char MM_LastChangedValue;
-
-extern unsigned char MM_updir;
-extern unsigned char MM_leftdir;
-extern unsigned char MM_rightdir;
-extern unsigned char MM_downdir;
-extern unsigned char MM_orizdir;
-extern unsigned char MM_lrdir;
-extern unsigned char MM_totale;
-extern unsigned char MM_inverted;
-extern unsigned char MM_dir4;
 
 
 struct z80context
@@ -59,7 +61,6 @@ struct z80context
 	Z80_Regs regs;
 	int icount;
 	int iperiod;
-	int irq;
 };
 
 /* DS...*/
@@ -77,226 +78,12 @@ struct m6809context
 
 /***************************************************************************
 
-  Input ports handling
-
-***************************************************************************/
-static int input_port_value[MAX_INPUT_PORTS];
-static int input_vblank[MAX_INPUT_PORTS];
-
-
-static void update_input_ports(void)
-{
-	int port;
-
-
-	/* scan all the input ports */
-	port = 0;
-	while (Machine->gamedrv->input_ports[port].default_value != -1)
-	{
-		int temp_res, res, i;
-		struct InputPort *in;
-
-
-		in = &Machine->gamedrv->input_ports[port];
-
-		res = in->default_value;
-		input_vblank[port] = 0;
-
-		for (i = 7;i >= 0;i--)
-		{
-			int c;
-
-
-			c = in->keyboard[i];
-			if (c == IPB_VBLANK)
-			{
-				res ^= (1 << i);
-				input_vblank[port] ^= (1 << i);
-			}
-			else
-			{
-				if (c && osd_key_pressed(c))
-					res ^= (1 << i);
-				else
-				{
-					c = in->joystick[i];
-					if (c && osd_joy_pressed(c))
-						res ^= (1 << i);
-				}
-			}
-		}
-
-			if (MM_dir4 && (port == MM_PatchedPort))
-			{
-				if (res != MM_LastChangedValue)
-				{
-					MM_LastChangedValue = res;
-					if (MM_inverted)
-					{
-						res = ~res;
-						MM_OldPortValue = ~MM_OldPortValue;
-					};
-					temp_res = res & MM_totale;
-
-					if (MM_downdir & temp_res)                  /* DOWN control       */
-					{
-					   if ((MM_lrdir & temp_res) >= MM_orizdir) /* Left & Right?      */
-					   {
-						  if (MM_downdir & MM_OldPortValue)     /* changed direction? */
-							 res=(~MM_downdir) & res;           /* DOWN off           */
-						  else
-							 res=(~MM_lrdir) & res;             /* Left & Right off   */
-					   }
-					}
-					if (MM_updir & temp_res)                    /* UP control         */
-					{
-					   if ((MM_lrdir & temp_res) >= MM_orizdir)
-					   {
-						  if (MM_updir & MM_OldPortValue)
-							 res=(~MM_updir) & res;
-						  else
-							 res=(~MM_lrdir) & res;
-					   }
-					}
-					if (MM_inverted) res = ~res;
-
-					MM_OldPortValue = res; //Valore a valle delle modifiche
-				}
-				else  res = MM_OldPortValue;
-			};
-
-		input_port_value[port] = res;
-		port++;
-	}
-}
-
-
-
-int readinputport(int port)
-{
-	if (input_vblank[port])
-	{
-		int fperiod;
-
-
-		fperiod = Machine->drv->cpu[activecpu].cpu_clock / Machine->drv->frames_per_second;
-
-		/* I'm not yet sure about how long the vertical blanking should last, */
-		/* I think it should be about 1/12th of the frame. */
-		if (cpu_getfcount() < fperiod * 11 / 12)
-		{
-			input_port_value[port] ^= input_vblank[port];
-			input_vblank[port] = 0;
-		}
-	}
-
-	return input_port_value[port];
-}
-
-int input_port_0_r(int offset)
-{
-	return readinputport(0);
-}
-
-int input_port_1_r(int offset)
-{
-	return readinputport(1);
-}
-
-int input_port_2_r(int offset)
-{
-	return readinputport(2);
-}
-
-int input_port_3_r(int offset)
-{
-	return readinputport(3);
-}
-
-int input_port_4_r(int offset)
-{
-	return readinputport(4);
-}
-
-int input_port_5_r(int offset)
-{
-	return readinputport(5);
-}
-
-int input_port_6_r(int offset)
-{
-	return readinputport(6);
-}
-
-int input_port_7_r(int offset)
-{
-	return readinputport(7);
-}
-
-
-
-int readtrakport(int port) {
-  int axis;
-  int read;
-  struct TrakPort *in;
-
-  in = &Machine->gamedrv->trak_ports[port];
-  axis = in->axis;
-
-  read = osd_trak_read(axis);
-
-  if(read == NO_TRAK) {
-    return(NO_TRAK);
-  }
-
-  if(in->centered) {
-    switch(axis) {
-    case X_AXIS:
-      osd_trak_center_x();
-      break;
-    case Y_AXIS:
-      osd_trak_center_y();
-      break;
-    }
-  }
-
-  if(in->conversion) {
-    return((*in->conversion)(read*in->scale));
-  }
-
-  return(read*in->scale);
-}
-
-int input_trak_0_r(int offset) {
-  return(readtrakport(0));
-}
-
-int input_trak_1_r(int offset) {
-  return(readtrakport(1));
-}
-
-int input_trak_2_r(int offset) {
-  return(readtrakport(2));
-}
-
-int input_trak_3_r(int offset) {
-  return(readtrakport(3));
-}
-
-
-
-/***************************************************************************
-
   Memory handling
 
 ***************************************************************************/
 int mrh_error(int address)
 {
 	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read unmapped memory address %04x\n",activecpu,cpu_getpc(),address);
-	return RAM[address];
-}
-int mrh_ram(int address)
-{
 	return RAM[address];
 }
 int mrh_nop(int address)
@@ -332,10 +119,6 @@ int mrh_readmem(int address)
 void mwh_error(int address,int data)
 {
 	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",activecpu,cpu_getpc(),data,address);
-	RAM[address] = data;
-}
-void mwh_ram(int address,int data)
-{
 	RAM[address] = data;
 }
 void mwh_ramrom(int address,int data)
@@ -389,7 +172,17 @@ static void initmemoryhandlers(void)
 	memoryread = Machine->drv->cpu[activecpu].memory_read;
 	memorywrite = Machine->drv->cpu[activecpu].memory_write;
 
-	for (i = 0;i < MH_ENTRIES;i++)
+	/* LBO 090597 */
+	if (have_24bit_address_space) {
+		lookup_entries = MH_ENTRIES_24;
+		lookup_shift = MH_SHIFT_24;
+		}
+	else {
+		lookup_entries = MH_ENTRIES_16;
+		lookup_shift = MH_SHIFT_16;
+		}
+
+	for (i = 0;i < lookup_entries;i++)
 	{
 		memoryreadhandler[i] = mrh_error;
 		memoryreadoffset[i] = 0;
@@ -407,10 +200,10 @@ static void initmemoryhandlers(void)
 	/* the handler set by the lower priority one. */
 	while (mra >= memoryread)
 	{
-		s = mra->start >> MH_SHIFT;
-		a = mra->start ? ((mra->start-1) >> MH_SHIFT) + 1 : 0;
-		b = ((mra->end+1) >> MH_SHIFT) - 1;
-		e = mra->end >> MH_SHIFT;
+		s = mra->start >> lookup_shift;
+		a = mra->start ? ((mra->start-1) >> lookup_shift) + 1 : 0;
+		b = ((mra->end+1) >> lookup_shift) - 1;
+		e = mra->end >> lookup_shift;
 
 		/* first of all make all the entries point to the general purpose handler... */
 		for (i = s;i <= e;i++)
@@ -431,7 +224,7 @@ static void initmemoryhandlers(void)
 			}
 			else if (handler == MRA_RAM || handler == MRA_ROM)
 			{
-				memoryreadhandler[i] = mrh_ram;
+				memoryreadhandler[i] = 0;	/* special case handled by cpu_readmem() */
 				memoryreadoffset[i] = 0;
 			}
 			else
@@ -454,10 +247,10 @@ static void initmemoryhandlers(void)
 	/* the handler set by the lower priority one. */
 	while (mwa >= memorywrite)
 	{
-		s = mwa->start >> MH_SHIFT;
-		a = mwa->start ? ((mwa->start-1) >> MH_SHIFT) + 1 : 0;
-		b = ((mwa->end+1) >> MH_SHIFT) - 1;
-		e = mwa->end >> MH_SHIFT;
+		s = mwa->start >> lookup_shift;
+		a = mwa->start ? ((mwa->start-1) >> lookup_shift) + 1 : 0;
+		b = ((mwa->end+1) >> lookup_shift) - 1;
+		e = mwa->end >> lookup_shift;
 
 		/* first of all make all the entries point to the general purpose handler... */
 		for (i = s;i <= e;i++)
@@ -478,7 +271,7 @@ static void initmemoryhandlers(void)
 			}
 			else if (handler == MWA_RAM)
 			{
-				memorywritehandler[i] = mwh_ram;
+				memorywritehandler[i] = 0;	/* special case handled by cpu_writemem() */
 				memorywriteoffset[i] = 0;
 			}
 			else if (handler == MWA_RAMROM)
@@ -503,6 +296,9 @@ void cpu_init(void)
 {
 	/* count how many CPUs we have to emulate */
 	totalcpu = 0;
+
+	have_24bit_address_space = 0; /* LBO 090597 */
+
 	while (totalcpu < MAX_CPU)
 	{
 		const struct MemoryReadAddress *mra;
@@ -510,6 +306,10 @@ void cpu_init(void)
 
 
 		if (Machine->drv->cpu[totalcpu].cpu_type == 0) break;
+
+		/* If we are using a 24-bit address space, we must use the larger mem lookup tables */
+		if (Machine->drv->cpu[totalcpu].cpu_type == CPU_M68000)
+			have_24bit_address_space = 1; /* LBO 090597 */
 
 		ramptr[totalcpu] = Machine->memory_region[Machine->drv->cpu[totalcpu].memory_region];
 
@@ -546,6 +346,8 @@ void cpu_run(void)
 
 
 reset:
+	have_to_reset = 0;
+
 	for (activecpu = 0;activecpu < totalcpu;activecpu++)
 	{
 		/* if sound is disabled, don't emulate the audio CPU */
@@ -556,6 +358,10 @@ reset:
 
 		totalcycles[activecpu] = 0;
 	}
+
+	/* do this AFTER the above so init_machine() can use cpu_halt() to hold the */
+	/* execution of some CPUs */
+	if (Machine->drv->init_machine) (*Machine->drv->init_machine)();
 
 	for (activecpu = 0;activecpu < totalcpu;activecpu++)
 	{
@@ -581,7 +387,6 @@ reset:
 					Z80_GetRegs(&ctxt->regs);
 					ctxt->icount = cycles;
 					ctxt->iperiod = cycles;
-					ctxt->irq = Z80_IGNORE_INT;
 				}
 				break;
 			case CPU_M6502:
@@ -612,6 +417,11 @@ reset:
 				}
 				break;
 			/* ...DS */
+			case CPU_M68000:
+				{
+					MC68000_reset(cycles);
+				}
+				break;
 		}
 	}
 
@@ -622,6 +432,8 @@ reset:
 
 		for (activecpu = 0;activecpu < totalcpu;activecpu++)
 		{
+			if (have_to_reset) goto reset;	/* machine_reset() was called, have to reset */
+
 			if (cpurunning[activecpu])
 			{
 				RAM = ramptr[activecpu];
@@ -639,17 +451,19 @@ reset:
 
 							Z80_SetRegs(&ctxt->regs);
 							Z80_ICount = ctxt->icount;
-							iperiod = Z80_IPeriod = ctxt->iperiod;
-							Z80_IRQ = ctxt->irq;
+							iperiod = ctxt->iperiod;
 
 							for (iloops = Machine->drv->cpu[activecpu].interrupts_per_frame - 1;
 									iloops >= 0;iloops--)
-								Z80_Execute();
+							{
+							/* TODO: keep track of differences between the requested number */
+							/* of cycles and the actual cycles executed. */
+								totalcycles[activecpu] += Z80_Execute(iperiod);
+								cpu_cause_interrupt(activecpu,cpu_interrupt());
+							}
 
 							Z80_GetRegs(&ctxt->regs);
 							ctxt->icount = Z80_ICount;
-							ctxt->iperiod = Z80_IPeriod;
-							ctxt->irq = Z80_IRQ;
 						}
 						break;
 
@@ -657,14 +471,22 @@ reset:
 							iperiod = ((M6502 *)cpucontext[activecpu])->IPeriod;
 							for (iloops = Machine->drv->cpu[activecpu].interrupts_per_frame - 1;
 									iloops >= 0;iloops--)
-								Run6502((M6502 *)cpucontext[activecpu]);
+							{
+							/* TODO: keep track of differences between the requested number */
+							/* of cycles and the actual cycles executed. */
+								totalcycles[activecpu] += Run6502((M6502 *)cpucontext[activecpu],iperiod);
+								cpu_cause_interrupt(activecpu,cpu_interrupt());
+							}
 						break;
 
 					case CPU_I86:
 /* TODO: retrieve iperiod from the CPU context (needed by cpu_getfcount()) */
 							for (iloops = Machine->drv->cpu[activecpu].interrupts_per_frame - 1;
 									iloops >= 0;iloops--)
+							{
 								I86_Execute();
+								totalcycles[activecpu] += iperiod;
+							}
 						break;
 					/* DS... */
 					case CPU_M6809:
@@ -680,7 +502,10 @@ reset:
 
 							for (iloops = Machine->drv->cpu[activecpu].interrupts_per_frame - 1;
 									iloops >= 0;iloops--)
+							{
 								m6809_execute();
+								totalcycles[activecpu] += iperiod;
+							}
 
 							m6809_GetRegs(&ctxt->regs);
 							ctxt->icount = m6809_ICount;
@@ -689,21 +514,60 @@ reset:
 						}
 						break;
 					/* ...DS */
+					case CPU_M68000:
+						{
+							for (iloops = Machine->drv->cpu[activecpu].interrupts_per_frame - 1;
+									iloops >= 0;iloops--)
+							{
+								MC68000_Execute();
+								totalcycles[activecpu] += iperiod;
+							}
+						}
+						break;
+
+
 				}
 
 				/* keep track of changes to RAM and ROM pointers (bank switching) */
 				ramptr[activecpu] = RAM;
 				romptr[activecpu] = ROM;
-
-				/* increase the total cycles counter */
-				totalcycles[activecpu] += Machine->drv->cpu[activecpu].cpu_clock / Machine->drv->frames_per_second;
 			}
 		}
 
-		usres = updatescreen();
-		if (usres == 2)	/* user asked to reset the machine */
-			goto reset;
+		/* JB 970825 - qix driver needs to yield a cpu without causing an update */
+		if (yield_cpu)
+		{
+			usres = 0;
+			yield_cpu = FALSE;
+		}
+		else
+		{
+			usres = updatescreen();
+		}
 	} while (usres == 0);
+}
+
+
+
+/***************************************************************************
+
+  This function resets the machine (the reset will not take place
+  immediately, it will be performed at the end of the active CPU's time
+  slice)
+
+***************************************************************************/
+void machine_reset(void)
+{
+	extern int hiscoreloaded;
+	extern char hiscorename[];
+
+
+	/* write hi scores to disk */
+	if (hiscoreloaded != 0 && Machine->gamedrv->hiscore_save)
+		(*Machine->gamedrv->hiscore_save)(hiscorename);
+	hiscoreloaded = 0;
+
+	have_to_reset = 1;
 }
 
 
@@ -834,12 +698,7 @@ int cpu_getreturnpc(void)
 ***************************************************************************/
 int cpu_gettotalcycles(void)
 {
-	int fperiod;
-
-
-	fperiod = Machine->drv->cpu[activecpu].cpu_clock / Machine->drv->frames_per_second;
-
-	return totalcycles[activecpu] + fperiod - cpu_getfcount();
+	return totalcycles[activecpu] + iperiod - cpu_geticount();
 }
 
 
@@ -868,8 +727,8 @@ int cpu_geticount(void)
 		/* ...DS */
 
 		default:
-	if (errorlog) fprintf(errorlog,"cpu_geticycles: unsupported CPU type %02x\n",Machine->drv->cpu[activecpu].cpu_type);
-			return -1;
+	if (errorlog) fprintf(errorlog,"cpu_geticount: unsupported CPU type %02x\n",Machine->drv->cpu[activecpu].cpu_type);
+			return 0;
 			break;
 	}
 }
@@ -904,6 +763,18 @@ int cpu_getfcount(void)
 			return -1;
 			break;
 	}
+}
+
+
+
+/***************************************************************************
+
+  Returns the number of CPU cycles in one video frame
+
+***************************************************************************/
+int cpu_getfperiod(void)
+{
+	return Machine->drv->cpu[activecpu].cpu_clock / Machine->drv->frames_per_second;
 }
 
 
@@ -956,7 +827,92 @@ int cpu_getiloops(void)
 
 ***************************************************************************/
 
-int Z80_IRQ;	/* needed by the CPU emulation */
+/***************************************************************************
+
+  Use this function to cause an interrupt immediately (don't have to wait
+  until the next call to the interrupt handler)
+
+***************************************************************************/
+void cpu_cause_interrupt(int cpu,int type)
+{
+	switch(Machine->drv->cpu[cpu].cpu_type & ~CPU_FLAGS_MASK)
+	{
+		case CPU_Z80:
+			if (cpu == activecpu)
+				Z80_Cause_Interrupt(type);
+			else
+			{
+				struct z80context *ctxt;
+				Z80_Regs regs;
+
+
+				ctxt = (struct z80context *)cpucontext[cpu];
+
+				Z80_GetRegs(&regs);
+				Z80_SetRegs(&ctxt->regs);
+				Z80_Cause_Interrupt(type);
+				Z80_GetRegs(&ctxt->regs);
+				Z80_SetRegs(&regs);
+			}
+			break;
+
+		case CPU_M6502:
+			{
+				M6502 *ctxt;
+
+
+				ctxt = (M6502 *)cpucontext[cpu];
+				M6502_Cause_Interrupt(ctxt,type);
+			}
+			break;
+
+		default:
+if (errorlog) fprintf(errorlog,"cpu_cause_interrupt: unsupported CPU type %02x\n",Machine->drv->cpu[activecpu].cpu_type);
+			break;
+	}
+}
+
+
+
+void cpu_clear_pending_interrupts(int cpu)
+{
+	switch(Machine->drv->cpu[activecpu].cpu_type & ~CPU_FLAGS_MASK)
+	{
+		case CPU_Z80:
+			if (cpu == activecpu)
+				Z80_Clear_Pending_Interrupts();
+			else
+			{
+				struct z80context *ctxt;
+				Z80_Regs regs;
+
+
+				ctxt = (struct z80context *)cpucontext[cpu];
+
+				Z80_GetRegs(&regs);
+				Z80_SetRegs(&ctxt->regs);
+				Z80_Clear_Pending_Interrupts();
+				Z80_GetRegs(&ctxt->regs);
+				Z80_SetRegs(&regs);
+			}
+			break;
+
+		case CPU_M6502:
+			{
+				M6502 *ctxt;
+
+
+				ctxt = (M6502 *)cpucontext[cpu];
+				M6502_Clear_Pending_Interrupts(ctxt);
+			}
+			break;
+
+		default:
+if (errorlog) fprintf(errorlog,"clear_pending_interrupts: unsupported CPU type %02x\n",Machine->drv->cpu[activecpu].cpu_type);
+			break;
+	}
+}
+
 
 
 /* start with interrupts enabled, so the generic routine will work even if */
@@ -968,16 +924,21 @@ void interrupt_enable_w(int offset,int data)
 {
 	interrupt_enable = data;
 
-	if (data == 0) Z80_IRQ = Z80_IGNORE_INT;	/* make sure there are no queued interrupts */
+	/* make sure there are no queued interrupts */
+	if (data == 0) cpu_clear_pending_interrupts(activecpu);
 }
 
 
 
 void interrupt_vector_w(int offset,int data)
 {
-	interrupt_vector = data;
+	if (interrupt_vector != data)
+	{
+		interrupt_vector = data;
 
-	Z80_IRQ = Z80_IGNORE_INT;	/* make sure there are no queued interrupts */
+		/* make sure there are no queued interrupts */
+		cpu_clear_pending_interrupts(activecpu);
+	}
 }
 
 
@@ -1069,9 +1030,12 @@ if (errorlog) fprintf(errorlog,"interrupt: unsupported CPU type %02x\n",Machine-
 ***************************************************************************/
 int cpu_readmem(int address)
 {
-	int i = address >> MH_SHIFT;
+	int i = address >> lookup_shift;
+	int (*handler)() = memoryreadhandler[i];
 
-	return (memoryreadhandler[i])(address - memoryreadoffset[i]);
+
+	if (handler == 0) return RAM[address];	/* special case */
+	else return handler(address - memoryreadoffset[i]);
 }
 
 
@@ -1083,9 +1047,12 @@ int cpu_readmem(int address)
 ***************************************************************************/
 void cpu_writemem(int address,int data)
 {
-	int i = address >> MH_SHIFT;
+	int i = address >> lookup_shift;
+	void (*handler)() = memorywritehandler[i];
 
-	(memorywritehandler[i])(address - memorywriteoffset[i],data);
+
+	if (handler == 0) RAM[address] = data;	/* special case */
+	else handler(address - memorywriteoffset[i],data);
 }
 
 

@@ -15,20 +15,30 @@ struct z80pio_f {
 	int out[2];			/* output port */
 };
 
+#define MAX_IRQ	20
+
+typedef struct pendirq_f PendIRQ;
+struct pendirq_f {
+	unsigned long time;
+	int irq;
+};
+
 typedef struct z80ctc_f Z80CTC;
 struct z80ctc_f {
-	char mode[4];		/* controll word */
-	char irq[4];		/* interrupt request count */
-	int timec[4];		/* time constant * 256 */
-	int cnt[4];			/* counter */
-	int vector;			/* interrupt vector */
-	int sys_clk;		/* system clock */
+	int vector;					/* interrupt vector */
+	int sys_clk;				/* system clock */
+	int mode[4];				/* current mode */
+	int tconst[4];				/* time constant * 256 */
+	int down[4];				/* down counter * 256 */
+	unsigned long fall[4];	/* time of the next falling edge */
+	unsigned long last[4];	/* time of the last update */
+	PendIRQ irq[MAX_IRQ];	/* pending IRQ's */
 };
 
 void z80ctc_reset( Z80CTC *ctc , int system_clock );
 void z80ctc_w( Z80CTC *ctc , int ch , int data );
 int  z80ctc_r( Z80CTC *ctc , int ch );
-int  z80ctc_update( Z80CTC *ctc , int ch , int sys_clk , int cntclk );
+int  z80ctc_update( Z80CTC *ctc , int ch , int cntclk , int cnthold );
 int  z80ctc_irq_r( Z80CTC *ctc );
 
 void z80pio_reset( Z80PIO *pio );

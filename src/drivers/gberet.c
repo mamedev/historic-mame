@@ -264,6 +264,7 @@ static struct MachineDriver machine_driver =
 	32,2*16*16,
 	gberet_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER,
 	0,
 	gberet_vh_start,
 	gberet_vh_stop,
@@ -365,10 +366,10 @@ struct GameDriver gberet_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
@@ -384,10 +385,10 @@ struct GameDriver rushatck_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };

@@ -222,9 +222,10 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	256, 3*8,
+	1+24, 3*8,
 	mystston_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,
 	mystston_vh_start,
 	mystston_vh_stop,
@@ -272,21 +273,66 @@ ROM_END
 
 
 
+static int hiload(const char *name)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+	/* check if the hi score table has already been initialized */
+        if ((memcmp(&RAM[0x0308],"\x00\x00\x21",3) == 0) &&
+		(memcmp(&RAM[0x033C],"\x0C\x1D\x0C",3) == 0))
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+                        fread(&RAM[0x0308],1,11*5,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+                fwrite(&RAM[0x0308],1,11*5,f);
+		fclose(f);
+	}
+
+}
+
+
+
 struct GameDriver mystston_driver =
 {
 	"Mysterious Stones",
 	"mystston",
-	"NICOLA SALMORIA",
+	"NICOLA SALMORIA\nMIKE BALFOUR",
 	&machine_driver,
 
 	mystston_rom,
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	0, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };

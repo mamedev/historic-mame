@@ -14,87 +14,21 @@ memory mapped ports:
 read:
 9000      IN0
 9001      IN1
-9002      DSW1
-9003      DSW2
-e000      IN2
+9002      DSW0
+9003      DSW1
+e000      IN2 (not used by Lady Bug)
 8000      interrupt enable? (toggle)?
-
-*
- * IN0 (all bits are inverted)
- * bit 7 : TILT if this is 0 coins are not accepted
- * bit 6 : START 2
- * bit 5 : START 1
- * bit 4 : FIRE player 1
- * bit 3 : UP player 1
- * bit 2 : RIGHT player 1
- * bit 1 : DOWN player 1
- * bit 0 : LEFT player 1
- *
-*
- * IN1 (player input bits are inverted)
- * bit 7 : VBLANK
- * bit 6 : VBLANK inverted
- * bit 5 :
- * bit 4 : FIRE player 2 (TABLE only)
- * bit 3 : UP player 2 (TABLE only)
- * bit 2 : RIGHT player 2 (TABLE only)
- * bit 1 : DOWN player 2 (TABLE only)
- * bit 0 : LEFT player 2 (TABLE only)
- *
-*
- * IN2 (all bits are inverted)
- * bit 7 :
- * bit 6 :
- * bit 5 :
- * bit 4 : BOMB player 2 (TABLE only)
- * bit 3 :
- * bit 2 :
- * bit 1 :
- * bit 0 : BOMB player 1
- *
-*
- * DSW1 (all bits are inverted)
- * bit 7 : DIP SWITCH 8  0 = 5 lives 1 = 3 lives
- * bit 6 : DIP SWITCH 7  Free Play
- * bit 5 : DIP SWITCH 6  TABLE or STANDUP (0 = STANDUP)
- * bit 4 : DIP SWITCH 5  Pause
- * bit 3 : DIP SWITCH 4  RACK TEST
- * bit 2 : DIP SWITCH 3  0 = 3 letter initials 1 = 10 letter initials
- * bit 1 : DIP SWITCH 2\ Difficulty level
- * bit 0 : DIP SWITCH 1/ 11 = 1st (easy) 10 = 2nd 01 = 3rd 00 = 4th (hard)
- *
-*
- * DSW2 (all bits are inverted)
- * bit 7 : DIP SWITCH 8\
- * bit 6 : DIP SWITCH 7| Left coin slot
- * bit 5 : DIP SWITCH 6|
- * bit 4 : DIP SWITCH 5/
- * bit 3 : DIP SWITCH 4\
- * bit 2 : DIP SWITCH 3| Right coin slot
- * bit 1 : DIP SWITCH 2|
- * bit 0 : DIP SWITCH 1/
- *                       1111 = 1 coin 1 play
- *                       1110 = 1 coin 2 plays
- *                       1101 = 1 coin 3 plays
- *                       1100 = 1 coin 4 plays
- *                       1011 = 1 coin 5 plays
- *                       1010 = 2 coins 1 play
- *                       1001 = 2 coins 3 plays
- *                       1000 = 3 coins 1 play
- *                       0111 = 3 coins 2 plays
- *                       0110 = 4 coins 1 play
- *                 all others = 1 coin 1 play
- *
+see the input_ports definition below for details on the input bits
 
 write:
 7000-73ff sprites
-a000      watchdog reset?
+a000      flip screen
 b000      sound port 1
 c000      sound port 2
 
 interrupts:
 There is no vblank interrupt. The vblank status is read from IN1.
-Coin insertion in left slot generates an interrupt, in right slot a NMI.
+Coin insertion in left slot generates a NMI, in right slot an IRQ.
 
 ***************************************************************************/
 
@@ -108,6 +42,7 @@ int ladybug_IN1_r(int offset);
 int ladybug_interrupt(void);
 
 void ladybug_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void ladybug_flipscreen_w(int offset,int data);
 void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 void ladybug_sound1_w(int offset,int data);
@@ -121,88 +56,326 @@ void ladybug_sh_update(void);
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x9001, 0x9001, input_port_1_r },	/* IN1 */
-	{ 0x6000, 0x6fff, MRA_RAM },
 	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0xd000, 0xd7ff, MRA_RAM },	/* video and color RAM */
-//	{ 0x9000, 0x9000, ladybug_IN0_r },	/* IN0 */
-	{ 0x9000, 0x9000, input_port_0_r },	/* IN0 */
-	{ 0x9002, 0x9002, input_port_2_r },	/* DSW1 */
-	{ 0x9003, 0x9003, input_port_3_r },	/* DSW2 */
-	{ 0xe000, 0xe000, input_port_4_r },	/* IN2 */
+	{ 0x6000, 0x6fff, MRA_RAM },
 	{ 0x8000, 0x8fff, MRA_NOP },
+	{ 0x9000, 0x9000, input_port_0_r },	/* IN0 */
+	{ 0x9002, 0x9002, input_port_3_r },	/* DSW0 */
+	{ 0x9003, 0x9003, input_port_4_r },	/* DSW1 */
+	{ 0xd000, 0xd7ff, MRA_RAM },	/* video and color RAM */
+	{ 0xe000, 0xe000, input_port_2_r },	/* IN2 */
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
+	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x6000, 0x6fff, MWA_RAM },
-	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd400, 0xd7ff, colorram_w, &colorram },
 	{ 0x7000, 0x73ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xa000, 0xa000, ladybug_flipscreen_w },
 	{ 0xb000, 0xbfff, ladybug_sound1_w },
 	{ 0xc000, 0xcfff, ladybug_sound2_w },
-	{ 0xa000, 0xafff, MWA_NOP },
-	{ 0x0000, 0x5fff, MWA_ROM },
+	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
+	{ 0xd400, 0xd7ff, colorram_w, &colorram },
 	{ -1 }	/* end of table */
 };
 
 
 
-static struct InputPort input_ports[] =
+/***************************************************************************
+
+  Lady Bug doesn't have VBlank interrupts.
+  Interrupts are still used by the game: but they are related to coin
+  slots. Left slot generates a NMI, Right slot an IRQ.
+
+***************************************************************************/
+int ladybug_interrupt(void)
 {
-	{	/* IN0 */
-		0xff,
-		{ OSD_KEY_LEFT, OSD_KEY_DOWN, OSD_KEY_RIGHT, OSD_KEY_UP,
-				OSD_KEY_CONTROL, OSD_KEY_1, OSD_KEY_2, 0 },
-		{ OSD_JOY_LEFT, OSD_JOY_DOWN, OSD_JOY_RIGHT, OSD_JOY_UP,
-				OSD_JOY_FIRE1, 0, 0, 0 }
-	},
-	{	/* IN1 */
-		0x7f,
-		{ 0, 0, 0, 0, 0, 0, IPB_VBLANK, IPB_VBLANK },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW1 */
-		0xdf,
-		{ 0, 0, 0, OSD_KEY_F1, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW2 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN2 */
-		0xff,
-		{ OSD_KEY_ALT, 0, 0, 0, 0, 0, 0, 0 },
-		{ OSD_JOY_FIRE2, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+	if (readinputport(5) & 1)	/* Left Coin */
+		return nmi_interrupt();
+	else if (readinputport(5) & 2)	/* Right Coin */
+		return interrupt();
+	else return ignore_interrupt();
+}
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+INPUT_PORTS_START( ladybug_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_TILT )
 
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	/* This should be connected to the 4V clock. I don't think the game uses it. */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	/* Note that there are TWO VBlank inputs, one is active low, the other active */
+	/* high. There are probably other differencies in the hardware, but emulating */
+	/* them this way is enough to get the game running. */
+	PORT_BIT( 0xc0, 0x40, IPT_VBLANK )
 
-static struct KEYSet keys[] =
-{
-        { 0, 3, "MOVE UP" },
-        { 0, 0, "MOVE LEFT"  },
-        { 0, 2, "MOVE RIGHT" },
-        { 0, 1, "MOVE DOWN" },
-        { -1 }
-};
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_UNUSED )
+	PORT_BIT( 0x0e, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
 
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "Easy" )
+	PORT_DIPSETTING(    0x02, "Medium" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x04, 0x04, "High Score Names", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3 Letters" )
+	PORT_DIPSETTING(    0x04, "10 Letters" )
+	PORT_BITX(    0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Freeze", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x20, "Cocktail" )
+	PORT_DIPNAME( 0x40, 0x40, "Free Play", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "No" )
+	PORT_DIPSETTING(    0x00, "Yes" )
+	PORT_DIPNAME( 0x80, 0x80, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
 
-static struct DSW dsw[] =
-{
-	{ 2, 0x80, "LIVES", { "5", "3" }, 1 },
-	{ 2, 0x03, "DIFFICULTY", { "HARDEST", "HARD", "MEDIUM", "EASY" }, 1 },
-	{ 2, 0x04, "INITIALS", { "3 LETTERS", "10 LETTERS" } },
-	{ -1 }
-};
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x0f, 0x0f, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x06, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0a, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x07, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x09, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
+	/* settings 0x00 thru 0x05 all give 1 Coin/1 Credit */
+	PORT_DIPNAME( 0xf0, 0xf0, "Left Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x60, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x80, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xa0, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x70, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x90, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
+	/* settings 0x00 thru 0x50 all give 1 Coin/1 Credit */
+
+	PORT_START	/* FAKE */
+	/* The coin slots are not memory mapped. Coin Left causes a NMI, */
+	/* Coin Right an IRQ. This fake input port is used by the interrupt */
+	/* handler to be notified of coin insertions. We use IPF_IMPULSE to */
+	/* trigger exactly one interrupt, without having to check when the */
+	/* user releases the key. */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE,
+			"Coin Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE,
+			"Coin Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( snapjack_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_TILT )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	/* This should be connected to the 4V clock. I don't think the game uses it. */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	/* Note that there are TWO VBlank inputs, one is active low, the other active */
+	/* high. There are probably other differencies in the hardware, but emulating */
+	/* them this way is enough to get the game running. */
+	PORT_BIT( 0xc0, 0x40, IPT_VBLANK )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_UNUSED  )
+	PORT_BIT( 0x0e, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "Easy" )
+	PORT_DIPSETTING(    0x02, "Medium" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x04, 0x04, "High Score Names", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3 Letters" )
+	PORT_DIPSETTING(    0x04, "10 Letters" )
+	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_DIPNAME( 0x10, 0x00, "unused1?", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x00, "unused2?", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0xc0, "3" )
+	PORT_DIPSETTING(    0x80, "4" )
+	PORT_DIPSETTING(    0x40, "5" )
+
+	PORT_START	/* DSW1 */
+	/* coinage is slightly different from Lady Bug and Cosmic Avenger */
+	PORT_DIPNAME( 0x0f, 0x0f, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x05, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x07, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0a, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x06, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x09, "2 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x08, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
+	/* settings 0x00 thru 0x04 all give 1 Coin/1 Credit */
+	PORT_DIPNAME( 0xf0, 0xf0, "Left Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x50, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x70, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xa0, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x60, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x90, "2 Coins/2 Credits" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x80, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
+	/* settings 0x00 thru 0x04 all give 1 Coin/1 Credit */
+
+	PORT_START	/* FAKE */
+	/* The coin slots are not memory mapped. Coin Left causes a NMI, */
+	/* Coin Right an IRQ. This fake input port is used by the interrupt */
+	/* handler to be notified of coin insertions. We use IPF_IMPULSE to */
+	/* trigger exactly one interrupt, without having to check when the */
+	/* user releases the key. */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE,
+			"Coin Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE,
+			"Coin Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( cavenger_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_TILT )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	/* This should be connected to the 4V clock. I don't think the game uses it. */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	/* Note that there are TWO VBlank inputs, one is active low, the other active */
+	/* high. There are probably other differencies in the hardware, but emulating */
+	/* them this way is enough to get the game running. */
+	PORT_BIT( 0xc0, 0x40, IPT_VBLANK )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x0e, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "Easy" )
+	PORT_DIPSETTING(    0x02, "Medium" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x04, 0x04, "High Score Names", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3 Letters" )
+	PORT_DIPSETTING(    0x04, "10 Letters" )
+	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_DIPNAME( 0x30, 0x00, "Initial High Score", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "0" )
+	PORT_DIPSETTING(    0x30, "5000" )
+	PORT_DIPSETTING(    0x20, "8000" )
+	PORT_DIPSETTING(    0x10, "10000" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0xc0, "3" )
+	PORT_DIPSETTING(    0x80, "4" )
+	PORT_DIPSETTING(    0x40, "5" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x0f, 0x0f, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x06, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0a, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x07, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x09, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
+	/* settings 0x00 thru 0x05 all give 1 Coin/1 Credit */
+	PORT_DIPNAME( 0xf0, 0xf0, "Left Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x60, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x80, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xa0, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x70, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x90, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
+	/* settings 0x00 thru 0x50 all give 1 Coin/1 Credit */
+
+	PORT_START	/* FAKE */
+	/* The coin slots are not memory mapped. Coin Left causes a NMI, */
+	/* Coin Right an IRQ. This fake input port is used by the interrupt */
+	/* handler to be notified of coin insertions. We use IPF_IMPULSE to */
+	/* trigger exactly one interrupt, without having to check when the */
+	/* user releases the key. */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE,
+			"Coin Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE,
+			"Coin Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+INPUT_PORTS_END
 
 
 
@@ -212,8 +385,8 @@ static struct GfxLayout charlayout =
 	512,	/* 512 characters */
 	2,	/* 2 bits per pixel */
 	{ 0, 512*8*8 },	/* the two bitplanes are separated */
+	{ 7, 6, 5, 4, 3, 2, 1, 0 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
 static struct GfxLayout spritelayout =
@@ -222,22 +395,30 @@ static struct GfxLayout spritelayout =
 	128,	/* 128 sprites */
 	2,	/* 2 bits per pixel */
 	{ 1, 0 },	/* the two bitplanes are packed in two consecutive bits */
+	{ 0, 2, 4, 6, 8, 10, 12, 14,
+			8*16+0, 8*16+2, 8*16+4, 8*16+6, 8*16+8, 8*16+10, 8*16+12, 8*16+14 },
 	{ 23*16, 22*16, 21*16, 20*16, 19*16, 18*16, 17*16, 16*16,
 			7*16, 6*16, 5*16, 4*16, 3*16, 2*16, 1*16, 0*16 },
-	{ 8*16+14, 8*16+12, 8*16+10, 8*16+8, 8*16+6, 8*16+4, 8*16+2, 8*16+0,
-			14, 12, 10, 8, 6, 4, 2, 0 },
 	64*8	/* every sprite takes 64 consecutive bytes */
 };
-
-
+static struct GfxLayout spritelayout2 =
+{
+	8,8,	/* 8*8 sprites */
+	512,	/* 512 sprites */
+	2,	/* 2 bits per pixel */
+	{ 1, 0 },	/* the two bitplanes are packed in two consecutive bits */
+	{ 0, 2, 4, 6, 8, 10, 12, 14 },
+	{ 7*16, 6*16, 5*16, 4*16, 3*16, 2*16, 1*16, 0*16 },
+	16*8	/* every sprite takes 16 consecutive bytes */
+};
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,     0,  8 },
-	{ 1, 0x2000, &spritelayout, 4*8, 16 },
+	{ 1, 0x0000, &charlayout,      0,  8 },
+	{ 1, 0x2000, &spritelayout,  4*8, 16 },
+	{ 1, 0x2000, &spritelayout2, 4*8, 16 },
 	{ -1 } /* end of array */
 };
-
 
 
 static unsigned char ladybug_color_prom[] =
@@ -288,11 +469,12 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 4*8, 28*8-1, 1*8, 31*8-1 },
+	32*8, 32*8, { 1*8, 31*8-1, 4*8, 28*8-1 },
 	gfxdecodeinfo,
 	32,4*24,
 	ladybug_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -364,7 +546,7 @@ ROM_END
 
 
 
-static int hiload(const char *name)
+static int ladybug_hiload(const char *name)
 {
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x6073],"\x01\x00\x00",3) == 0 &&
@@ -387,7 +569,7 @@ static int hiload(const char *name)
 
 
 
-static void hisave(const char *name)
+static void ladybug_hisave(const char *name)
 {
 	FILE *f;
 
@@ -402,59 +584,132 @@ static void hisave(const char *name)
 
 
 
+static int cavenger_hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+        if ((memcmp(&RAM[0x6025],"\x01\x00\x00",3) == 0) &&
+		(memcmp(&RAM[0x6063],"\x0A\x15\x28",3) == 0))
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+                        fread(&RAM[0x6025],1,0x41,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void cavenger_hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+                fwrite(&RAM[0x6025],1,0x41,f);
+		fclose(f);
+	}
+
+}
+
+static int snapjack_hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+        if ((memcmp(&RAM[0x6A94],"\x01\x00\x00",3) == 0) &&
+		(memcmp(&RAM[0x6AA0],"\x01\x00\x00\x1E",4) == 0) &&
+		(memcmp(&RAM[0x6AD2],"\x0A\x15\x24",3) == 0))
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+                        fread(&RAM[0x6A94],1,0x41,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void snapjack_hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+                fwrite(&RAM[0x6A94],1,0x41,f);
+		fclose(f);
+	}
+
+}
+
+
+
 struct GameDriver ladybug_driver =
 {
 	"Lady Bug",
 	"ladybug",
-	"NICOLA SALMORIA",
+	"Nicola Salmoria",
 	&machine_driver,
 
 	ladybug_rom,
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	0/*TBR*/,ladybug_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	ladybug_color_prom, 0, 0,
-	8*13, 8*30,
+	ORIENTATION_ROTATE_270,
 
-	hiload, hisave
+	ladybug_hiload, ladybug_hisave
 };
 
 struct GameDriver snapjack_driver =
 {
 	"Snap Jack",
 	"snapjack",
-	"NICOLA SALMORIA",
+	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
 	&machine_driver,
 
 	snapjack_rom,
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	0/*TBR*/,snapjack_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	snapjack_color_prom, 0, 0,
-	8*13, 8*30,
+	ORIENTATION_DEFAULT,
 
-	0, 0
+	snapjack_hiload, snapjack_hisave
 };
 
 struct GameDriver cavenger_driver =
 {
 	"Cosmic Avenger",
 	"cavenger",
-	"NICOLA SALMORIA",
+	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
 	&machine_driver,
 
 	cavenger_rom,
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	0/*TBR*/,cavenger_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	cavenger_color_prom, 0, 0,
-	8*13, 8*30,
+	ORIENTATION_DEFAULT,
 
-	0, 0
+	cavenger_hiload, cavenger_hisave
 };

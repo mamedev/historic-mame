@@ -41,14 +41,16 @@ interrupts:
 INTR not connected
 NMI connected to vertical blank
 
+Sound processor memory map:
+just some guesses for now, obtained with a fast overlook at the sound rom
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
 int stooges_vh_start(void);
-void gottlieb_vh_init_basic_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-void gottlieb_sh_w(int offset, int data);
+void gottlieb_vh_init_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void gottlieb_sh2_w(int offset, int data);
 void gottlieb_sh_update(void);
 extern const char *gottlieb_sample_names[];
 void gottlieb_output(int offset, int data);
@@ -60,6 +62,19 @@ void gottlieb_characterram_w(int offset,int data);
 void gottlieb_paletteram_w(int offset,int data);
 void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
 
+int gottlieb_sh_start(void);
+void gottlieb_sh_stop(void);
+void gottlieb_sh_update(void);
+int gottlieb_sh_interrupt(void);
+int riot_ram_r(int offset);
+int gottlieb_riot_r(int offset);
+int gottlieb_sound_expansion_socket_r(int offset);
+void riot_ram_w(int offset, int data);
+void gottlieb_riot_w(int offset, int data);
+void gottlieb_amplitude_DAC_w(int offset, int data);
+void gottlieb_speech_w(int offset, int data);
+void gottlieb_speech_clock_DAC_w(int offset, int data);
+void gottlieb_sound_expansion_socket_w(int offset, int data);
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -79,18 +94,40 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x2fff, MWA_ROM },
-	{ 0x3000, 0x37ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x3800, 0x3fff, videoram_w, &videoram, &videoram_size },
+	{ 0x3000, 0x30ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x3800, 0x3bff, videoram_w, &videoram, &videoram_size },
 	{ 0x4000, 0x4fff, gottlieb_characterram_w, &gottlieb_characterram },
-	{ 0x5000, 0x57ff, gottlieb_paletteram_w, &gottlieb_paletteram },
+	{ 0x5000, 0x501f, gottlieb_paletteram_w, &gottlieb_paletteram },
 	{ 0x5800, 0x5800, MWA_RAM },    /* watchdog timer clear */
 	{ 0x5801, 0x5801, MWA_RAM },    /* trackball output not used */
-	{ 0x5802, 0x5802, gottlieb_sh_w }, /* sound/speech command */
+	{ 0x5802, 0x5802, gottlieb_sh2_w }, /* sound/speech command */
 	{ 0x5803, 0x5803, gottlieb_output },       /* OUT1 */
 	{ 0x5804, 0x5804, MWA_RAM },    /* OUT2 */
 	{ 0x6000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
+
+#if 0
+/* Wrong guesses here 8-) */
+static struct MemoryReadAddress stooges_sound_readmem[] =
+{
+	{ 0x0000, 0x0fff, MRA_RAM },
+	{ 0x8000, 0x801f, gottlieb_riot_r },
+	{ 0xe000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+struct MemoryWriteAddress stooges_sound_writemem[] =
+{
+	{ 0x0000, 0x0fff, MWA_RAM },
+	{ 0x4000, 0x4000, gottlieb_speech_w }, /* not sure... */
+	{ 0x4001, 0x4001, gottlieb_amplitude_DAC_w },
+	{ 0x8000, 0x801f, gottlieb_riot_w },
+	{ 0xe000, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+#endif
+
 
 static struct InputPort input_ports[] =
 {
@@ -126,13 +163,13 @@ static struct InputPort input_ports[] =
 	{       /* joystick 1 (Curly) */
 		0x00,
 		{ OSD_KEY_E, OSD_KEY_F, OSD_KEY_D, OSD_KEY_S,
-		0,OSD_KEY_CONTROL,0,0 },	/* Larry fire */
+		0,OSD_KEY_CONTROL,0,0 },        /* Larry fire */
 		{ 0, 0, 0, 0, 0, OSD_JOY_FIRE, 0, 0 }
 	},
 	{       /* joystick 3 (Larry) */
 		0x00,
 		{ OSD_KEY_UP, OSD_KEY_RIGHT, OSD_KEY_DOWN, OSD_KEY_LEFT,
-		0,0,OSD_KEY_ENTER,0 },	/* Curly fire */
+		0,0,OSD_KEY_ENTER,0 },  /* Curly fire */
 		{ OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_DOWN, OSD_JOY_LEFT, 0, 0, 0, 0 }
 	},
 	{ -1 }  /* end of table */
@@ -140,7 +177,7 @@ static struct InputPort input_ports[] =
 
 static struct TrakPort trak_ports[] =
 {
-        { -1 }
+	{ -1 }
 };
 
 static struct KEYSet keys[] =
@@ -199,7 +236,7 @@ static struct GfxLayout spritelayout =
 	{ 0, 0x2000*8, 0x4000*8, 0x6000*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-		8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
+			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
 	32*8    /* every sprite takes 32 consecutive bytes */
 };
 
@@ -221,27 +258,28 @@ static const struct MachineDriver machine_driver =
 			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
-		}
-	},
+		},
+},
 	60,     /* frames / second */
 	0,      /* init machine */
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	256,256,        /* 256 for colormap, 1*16 for the game, 2*16 for the dsw menu. Silly, isn't it ? */
-	gottlieb_vh_init_basic_color_palette,
+	1+16,256,
+	gottlieb_vh_init_color_palette,
 
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
 	0,      /* init vh */
 	stooges_vh_start,
 	generic_vh_stop,
 	gottlieb_vh_screenrefresh,
 
 	/* sound hardware */
-	0,      /* samples */
 	0,
 	0,
-	0,
+	gottlieb_sh_start,
+	gottlieb_sh_stop,
 	gottlieb_sh_update
 };
 
@@ -259,6 +297,10 @@ ROM_START( stooges_rom )
 	ROM_LOAD( "GV113FG2", 0x2000, 0x2000, 0x5bde03f8 )       /* sprites */
 	ROM_LOAD( "GV113FG1", 0x4000, 0x2000, 0x3904746a )       /* sprites */
 	ROM_LOAD( "GV113FG0", 0x6000, 0x2000, 0xa2b57805 )       /* sprites */
+
+	ROM_REGION(0x10000)      /* 64k for sound cpu */
+//      ROM_LOAD( "DROM", 0xe000, 0x2000, 0x3aa5d107 )
+//      ROM_RELOAD(0x6000, 0x2000) /* A15 not decoded ?? */
 ROM_END
 
 static int hiload(const char *name)
@@ -296,12 +338,10 @@ struct GameDriver stooges_driver =
 	0, 0,   /* rom decode and opcode decode functions */
 	gottlieb_sample_names,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
-	(char *)1,
-	0,0,    /* palette, colortable */
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
 
-	8*11,8*20,
-
-        hiload, hisave
+	hiload, hisave
 };

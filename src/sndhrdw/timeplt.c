@@ -7,12 +7,11 @@
 
 static int timeplt_portB_r(int offset)
 {
-	int clockticks,clock;
+	int clock;
 
 #define TIMER_RATE 32
 
-	clockticks = cpu_getfcount();
-	clock = clockticks / TIMER_RATE;
+	clock = cpu_gettotalcycles() / TIMER_RATE;
 
 #if 0	/* temporarily removed */
 	/* to speed up the emulation, detect when the program is looping waiting */

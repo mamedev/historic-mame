@@ -14,7 +14,6 @@
 unsigned char *bublbobl_objectram;
 unsigned char *bublbobl_paletteram;
 int bublbobl_objectram_size;
-static unsigned char dirtycolor[16];	/* keep track of modified colors */
 
 
 
@@ -54,26 +53,18 @@ void bublbobl_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 	int i;
 
 
-	/* for now, map the 4x4x4 color space to a 3x3x2 one. We will use an accurate */
-	/* palette later. */
-	for (i = 0;i < 256;i++)
+	/* the palette will be initialized by the game. We just set it to some */
+	/* pre-cooked values so the startup copyright notice can be displayed. */
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
-
-
-		bit0 = (i >> 0) & 0x01;
-		bit1 = (i >> 1) & 0x01;
-		bit2 = (i >> 2) & 0x01;
-		palette[3*i] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		bit0 = (i >> 3) & 0x01;
-		bit1 = (i >> 4) & 0x01;
-		bit2 = (i >> 5) & 0x01;
-		palette[3*i + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		bit0 = 0;
-		bit1 = (i >> 6) & 0x01;
-		bit2 = (i >> 7) & 0x01;
-		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		*(palette++) = ((i & 1) >> 0) * 0xff;
+		*(palette++) = ((i & 2) >> 1) * 0xff;
+		*(palette++) = ((i & 4) >> 2) * 0xff;
 	}
+
+	/* initialize the color table */
+	for (i = 0;i < Machine->drv->total_colors;i++)
+		colortable[i] = i;
 }
 
 
@@ -141,11 +132,37 @@ void bublbobl_objectram_w(int offset,int data)
 
 void bublbobl_paletteram_w(int offset,int data)
 {
-	if (bublbobl_paletteram[offset] != data)
-	{
-		dirtycolor[offset / 32] = 1;
-		bublbobl_paletteram[offset] = data;
-	}
+	int bit0,bit1,bit2,bit3;
+	int r,g,b,val;
+
+
+	bublbobl_paletteram[offset] = data;
+
+	/* red component */
+	val = bublbobl_paletteram[offset & ~1];
+	bit0 = (val >> 4) & 0x01;
+	bit1 = (val >> 5) & 0x01;
+	bit2 = (val >> 6) & 0x01;
+	bit3 = (val >> 7) & 0x01;
+	r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	/* green component */
+	val = bublbobl_paletteram[offset & ~1];
+	bit0 = (val >> 0) & 0x01;
+	bit1 = (val >> 1) & 0x01;
+	bit2 = (val >> 2) & 0x01;
+	bit3 = (val >> 3) & 0x01;
+	g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	/* blue component */
+	val = bublbobl_paletteram[offset | 1];
+	bit0 = (val >> 4) & 0x01;
+	bit1 = (val >> 5) & 0x01;
+	bit2 = (val >> 6) & 0x01;
+	bit3 = (val >> 7) & 0x01;
+	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	osd_modify_pen(Machine->pens[(offset / 2) ^ 0x0f],r,g,b);
 }
 
 
@@ -162,21 +179,6 @@ void bublbobl_vh_screenrefresh(struct osd_bitmap *bitmap)
 	int offs;
 	int sx,sy,xc,yc;
 	int gfx_num,gfx_code,gfx_offs;
-
-
-	/* rebuild the color lookup table */
-	for (offs = 0;offs < 256;offs++)
-	{
-		int r,g,b;
-
-
-		r = (bublbobl_paletteram[2*offs] >> 4) & 0x0f;
-		g = (bublbobl_paletteram[2*offs] >> 0) & 0x0f;
-		b = (bublbobl_paletteram[2*offs + 1] >> 4) & 0x0f;
-
-		Machine->gfx[0]->colortable[offs ^ 0x0f] =
-				Machine->pens[(r >> 1) + ((g >> 1) << 3) + ((b >> 2) << 6)];
-	}
 
 
 	/* Bubble Bobble doesn't have a real video RAM. All graphics (characters */
@@ -200,7 +202,7 @@ void bublbobl_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 				goffs = gfx_offs + xc * 0x40 + yc * 0x02;
 				color = (videoram[goffs + 1] & 0x3c) >> 2;
-				if (dirtybuffer[goffs / 2] || dirtycolor[color])
+				if (dirtybuffer[goffs / 2])
 				{
 					dirtybuffer[goffs / 2] = 0;
 
@@ -214,8 +216,6 @@ void bublbobl_vh_screenrefresh(struct osd_bitmap *bitmap)
 			}
 		}
 	}
-
-	memset(dirtycolor,0,16);
 
 
 	/* copy the background graphics to the screen */

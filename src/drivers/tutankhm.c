@@ -180,7 +180,7 @@ int tutankhm_sh_interrupt(void);
 int tut_bankedrom_r( int offset );
 void tut_bankselect_w( int offset,int data );
 int tut_rnd_r( int offset );
-int tutankhm_init_machine( const char *gamename );
+void tutankhm_init_machine(void);
 int tutankhm_interrupt(void);
 
 void tut_videoram_w( int offset, int data );
@@ -330,6 +330,25 @@ static struct KEYSet keys[] =
 };
 
 
+/* there's nothing here, this is just a placeholder to let the video hardware */
+/* pick the background color table. */
+static struct GfxLayout fakelayout =
+{
+	1,1,
+	0,
+	4,	/* 4 bits per pixel */
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	0
+};
+
+
+static struct GfxDecodeInfo gfxdecodeinfo[] =
+{
+	{ 0, 0, &fakelayout, 0, 1 },
+	{ -1 } /* end of array */
+};
 
 static struct MachineDriver machine_driver =
 {
@@ -355,7 +374,7 @@ static struct MachineDriver machine_driver =
 			0,				/* IOReadPort */
 			0,				/* IOWritePort */
 			tutankhm_sh_interrupt, 		/* interrupt routine */
-			1			        /* interrupts per frame */
+			10			        /* interrupts per frame */
 		}
 	},
 	60,						/* frames per second */
@@ -364,10 +383,12 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8,			                /* screen_width, screen_height */
 	{ 2, 8*32-3, 0*32, 8*32-1 },			/* struct rectangle visible_area */
-	0,					/* GfxDecodeInfo * */
-	256, 0,
+	gfxdecodeinfo,					/* GfxDecodeInfo * */
+	1+16,                                  /* total colors */
+	16,                                      /* color table length */
 	tut_vh_convert_color_prom,			/* convert color prom routine */
 
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,						/* vh_init routine */
 	generic_vh_start,					/* vh_start routine */
 	generic_vh_stop,					/* vh_stop routine */
@@ -451,16 +472,17 @@ struct GameDriver tutankhm_driver =
 {
         "Tutankham",
 	"tutankhm",
-        "MIRKO BUFFONI\nDAVID DAHL",
+        "MIRKO BUFFONI\nDAVID DAHL\nAARON GILES",
 	&machine_driver,
 
 	tutankhm_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	128-(8*3), 128-4+(8*3),
+	ORIENTATION_DEFAULT,
+
 	hiload, hisave		        /* High score load and save */
 };

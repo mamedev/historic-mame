@@ -4,6 +4,8 @@
 
   Functions to emulate the video hardware of the machine.
 
+  This file is used by the Crazy Climber and Crazy Kong drivers.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -20,6 +22,7 @@ unsigned char *cclimber_bigspriteram;
 unsigned char *cclimber_column_scroll;
 static unsigned char *bsdirtybuffer;
 static struct osd_bitmap *bsbitmap;
+static int flipscreen[2];
 
 
 
@@ -88,7 +91,7 @@ int cclimber_vh_start(void)
 		generic_vh_stop();
 		return 1;
 	}
-	memset(bsdirtybuffer,0,cclimber_bsvideoram_size);
+	memset(bsdirtybuffer,1,cclimber_bsvideoram_size);
 
 	if ((bsbitmap = osd_create_bitmap(BIGSPRITE_WIDTH,BIGSPRITE_HEIGHT)) == 0)
 	{
@@ -112,6 +115,17 @@ void cclimber_vh_stop(void)
 	osd_free_bitmap(bsbitmap);
 	free(bsdirtybuffer);
 	generic_vh_stop();
+}
+
+
+
+void cclimber_flipscreen_w(int offset,int data)
+{
+	if (flipscreen[offset] != (data & 1))
+	{
+		flipscreen[offset] = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
 }
 
 
@@ -154,6 +168,28 @@ void cclimber_bigsprite_videoram_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
+static void drawbigsprite(struct osd_bitmap *bitmap)
+{
+	int sx,sy,flipx,flipy;
+
+
+	sx = 136 - cclimber_bigspriteram[3];
+	sy = 128 - cclimber_bigspriteram[2];
+	flipx = cclimber_bigspriteram[1] & 0x10;
+	flipy = cclimber_bigspriteram[1] & 0x20;
+	if (flipscreen[1])	/* only the Y direction has to be flipped */
+	{
+		sy = 128 - sy;
+		flipy = !flipy;
+	}
+
+	copybitmap(bitmap,bsbitmap,
+			flipx,flipy,
+			sx,sy,
+			&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+}
+
+
 void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs;
@@ -165,19 +201,31 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		if (dirtybuffer[offs])
 		{
-			int sx,sy;
+			int sx,sy,flipx,flipy;
 
 
 			dirtybuffer[offs] = 0;
 
-			sx = 8 * (offs % 32);
-			sy = 8 * (offs / 32);
+			sx = offs % 32;
+			sy = offs / 32;
+			flipx = colorram[offs] & 0x40;
+			flipy = colorram[offs] & 0x80;
+			if (flipscreen[0])
+			{
+				sx = 31 - sx;
+				flipx = !flipx;
+			}
+			if (flipscreen[1])
+			{
+				sy = 31 - sy;
+				flipy = !flipy;
+			}
 
 			drawgfx(tmpbitmap,Machine->gfx[(colorram[offs] & 0x10) ? 1 : 0],
-					videoram[offs],
+					videoram[offs] + 8 * (colorram[offs] & 0x20),
 					colorram[offs] & 0x0f,
-					colorram[offs] & 0x40,colorram[offs] & 0x80,
-					sx,sy,
+					flipx,flipy,
+					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
 	}
@@ -195,7 +243,7 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 	}
 
 
-	/* draw the "big sprite" */
+	/* update the "big sprite" */
 	{
 		int newcol;
 		static int lastcol;
@@ -203,7 +251,6 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 		newcol = cclimber_bigspriteram[1] & 0x07;
 
-		/* first of all, update it. */
 		for (offs = cclimber_bsvideoram_size - 1;offs >= 0;offs--)
 		{
 			int sx,sy;
@@ -213,33 +260,58 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 			{
 				bsdirtybuffer[offs] = 0;
 
-				sx = 8 * (offs % 16);
-				sy = 8 * (offs / 16);
+				sx = offs % 16;
+				sy = offs / 16;
 
 				drawgfx(bsbitmap,Machine->gfx[2],
 						cclimber_bsvideoram[offs],newcol,
-						0,0,sx,sy,
+						0,0,
+						8*sx,8*sy,
 						0,TRANSPARENCY_NONE,0);
 			}
 
 		}
 
 		lastcol = newcol;
-
-		copybitmap(bitmap,bsbitmap,
-				cclimber_bigspriteram[1] & 0x10,cclimber_bigspriteram[1] & 0x20,
-				136 - cclimber_bigspriteram[3],128 - cclimber_bigspriteram[2],
-				&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 	}
 
 
-	/* draw sprites (must be done after the "big sprite" to obtain the correct priority) */
+	if (cclimber_bigspriteram[0] & 1)
+		/* draw the "big sprite" below sprites */
+		drawbigsprite(bitmap);
+
+
+	/* draw sprites */
 	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
+		int sx,sy,flipx,flipy;
+
+
+		sx = spriteram[offs + 3];
+		sy = 240 - spriteram[offs + 2];
+		flipx = spriteram[offs] & 0x40;
+		flipy = spriteram[offs] & 0x80;
+		if (flipscreen[0])
+		{
+			sx = 240 - sx;
+			flipx = !flipx;
+		}
+		if (flipscreen[1])
+		{
+			sy = 240 - sy;
+			flipy = !flipy;
+		}
+
 		drawgfx(bitmap,Machine->gfx[spriteram[offs + 1] & 0x10 ? 4 : 3],
-				spriteram[offs] & 0x3f,spriteram[offs + 1] & 0x0f,
-				spriteram[offs] & 0x40,spriteram[offs] & 0x80,
-				spriteram[offs + 3],240 - spriteram[offs + 2],
+				(spriteram[offs] & 0x3f) + 2 * (spriteram[offs + 1] & 0x20),
+				spriteram[offs + 1] & 0x0f,
+				flipx,flipy,
+				sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
+
+
+	if ((cclimber_bigspriteram[0] & 1) == 0)
+		/* draw the "big sprite" over sprites */
+		drawbigsprite(bitmap);
 }

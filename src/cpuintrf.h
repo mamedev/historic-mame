@@ -5,11 +5,13 @@
 void cpu_init(void);
 void cpu_run(void);
 
+/* Use this function to reset the machine */
+void machine_reset(void);
+
 /* Use this function to stop and restart CPUs */
 void cpu_halt(int cpunum,int running);
 /* This function returns CPUNUM current status (running or halted) */
 int  cpu_getstatus(int cpunum);
-
 
 int cpu_getpc(void);
 int cpu_getpreviouspc(void);  /* -RAY- */
@@ -20,6 +22,8 @@ int cpu_gettotalcycles(void);
 int cpu_geticount(void);
 /* Returns the number of CPU cycles before the end of the current video frame */
 int cpu_getfcount(void);
+/* Returns the number of CPU cycles in one video frame */
+int cpu_getfperiod(void);
 void cpu_seticount(int cycles);
 /*
   Returns the number of times the interrupt handler will be called before
@@ -37,29 +41,13 @@ int cpu_readport(int Port);
 void cpu_writeport(int Port,int Value);
 
 
+/* cause an interrupt on a CPU */
+void cpu_cause_interrupt(int cpu,int type);
+void cpu_clear_pending_interrupts(int cpu);
 void interrupt_enable_w(int offset,int data);
 void interrupt_vector_w(int offset,int data);
 int interrupt(void);
 int nmi_interrupt(void);
 int ignore_interrupt(void);
-
-/* input ports handling */
-#define MAX_INPUT_PORTS 8
-
-int readinputport(int port);
-int input_port_0_r(int offset);
-int input_port_1_r(int offset);
-int input_port_2_r(int offset);
-int input_port_3_r(int offset);
-int input_port_4_r(int offset);
-int input_port_5_r(int offset);
-int input_port_6_r(int offset);
-int input_port_7_r(int offset);
-
-int readtrakport(int port);
-int input_trak_0_r(int offset);
-int input_trak_1_r(int offset);
-int input_trak_2_r(int offset);
-int input_trak_3_r(int offset);
 
 #endif

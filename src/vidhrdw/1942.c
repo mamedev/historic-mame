@@ -17,6 +17,7 @@ unsigned char *c1942_scroll;
 unsigned char *c1942_palette_bank;
 static unsigned char *dirtybuffer2;
 static struct osd_bitmap *tmpbitmap2;
+static int flipscreen;
 
 
 
@@ -37,46 +38,55 @@ static struct osd_bitmap *tmpbitmap2;
 void c1942_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	for (i = 0;i < 256;i++)
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		int bit0,bit1,bit2,bit3;
 
 
-		bit0 = (color_prom[i] >> 0) & 0x01;
-		bit1 = (color_prom[i] >> 1) & 0x01;
-		bit2 = (color_prom[i] >> 2) & 0x01;
-		bit3 = (color_prom[i] >> 3) & 0x01;
-		palette[3*i] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[i+256] >> 0) & 0x01;
-		bit1 = (color_prom[i+256] >> 1) & 0x01;
-		bit2 = (color_prom[i+256] >> 2) & 0x01;
-		bit3 = (color_prom[i+256] >> 3) & 0x01;
-		palette[3*i + 1] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[i+256*2] >> 0) & 0x01;
-		bit1 = (color_prom[i+256*2] >> 1) & 0x01;
-		bit2 = (color_prom[i+256*2] >> 2) & 0x01;
-		bit3 = (color_prom[i+256*2] >> 3) & 0x01;
-		palette[3*i + 2] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[0] >> 0) & 0x01;
+		bit1 = (color_prom[0] >> 1) & 0x01;
+		bit2 = (color_prom[0] >> 2) & 0x01;
+		bit3 = (color_prom[0] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+		color_prom++;
 	}
+
+	color_prom += 2*Machine->drv->total_colors;
+	/* color_prom now points to the beginning of the lookup table */
+
 
 	/* characters use colors 128-143 */
-	for (i = 0;i < 64*4;i++)
-		colortable[i] = color_prom[i + 256*3] + 128;
-
-	/* sprites use colors 64-79 */
-	for (i = 64*4;i < 64*4+16*16;i++)
-		colortable[i] = color_prom[i + 256*3] + 64;
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = *(color_prom++) + 128;
 
 	/* background tiles use colors 0-63 in four banks */
-	for (i = 64*4+16*16;i < 64*4+16*16+32*8;i++)
+	for (i = 0;i < TOTAL_COLORS(1)/4;i++)
 	{
-		colortable[i] = color_prom[i + 256*3];
-		colortable[i+32*8] = color_prom[i + 256*3] + 16;
-		colortable[i+2*32*8] = color_prom[i + 256*3] + 32;
-		colortable[i+3*32*8] = color_prom[i + 256*3] + 48;
+		COLOR(1,i) = *color_prom;
+		COLOR(1,i+32*8) = *color_prom + 16;
+		COLOR(1,i+2*32*8) = *color_prom + 32;
+		COLOR(1,i+3*32*8) = *color_prom + 48;
+		color_prom++;
 	}
+
+	/* sprites use colors 64-79 */
+	for (i = 0;i < TOTAL_COLORS(2);i++)
+		COLOR(2,i) = *(color_prom++) + 64;
 }
 
 
@@ -98,8 +108,9 @@ int c1942_vh_start(void)
 	}
 	memset(dirtybuffer2,1,c1942_backgroundram_size);
 
-	/* the background area is twice as tall as the screen */
-	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
+	/* the background area is twice as wide as the screen (actually twice as tall, */
+	/* because this is a vertical game) */
+	if ((tmpbitmap2 = osd_create_bitmap(2*Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer2);
 		generic_vh_stop();
@@ -148,6 +159,17 @@ void c1942_palette_bank_w(int offset,int data)
 
 
 
+void c1942_flipscreen_w(int offset,int data)
+{
+	if (flipscreen != (data & 0x80))
+	{
+		flipscreen = data & 0x80;
+		memset(dirtybuffer2,1,c1942_backgroundram_size);
+	}
+}
+
+
+
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -157,26 +179,36 @@ void c1942_palette_bank_w(int offset,int data)
 ***************************************************************************/
 void c1942_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int offs,sx,sy;
+	int offs;
 
 
-	for (sy = 0;sy < 32;sy++)
+	for (offs = c1942_backgroundram_size - 1;offs >= 0;offs--)
 	{
-		for (sx = 0;sx < 16;sx++)
+		if ((offs & 0x10) == 0 && (dirtybuffer2[offs] != 0 || dirtybuffer2[offs + 16] != 0))
 		{
-			offs = 32 * (31 - sy) + sx;
+			int sx,sy,flipx,flipy;
 
-			if (dirtybuffer2[offs] != 0 || dirtybuffer2[offs + 16] != 0)
+
+			dirtybuffer2[offs] = dirtybuffer2[offs + 16] = 0;
+
+			sx = offs / 32;
+			sy = offs % 32;
+			flipx = c1942_backgroundram[offs + 16] & 0x20;
+			flipy = c1942_backgroundram[offs + 16] & 0x40;
+			if (flipscreen)
 			{
-				dirtybuffer2[offs] = dirtybuffer2[offs + 16] = 0;
-
-				drawgfx(tmpbitmap2,Machine->gfx[(c1942_backgroundram[offs + 16] & 0x80) ? 2 : 1],
-						c1942_backgroundram[offs],
-						(c1942_backgroundram[offs + 16] & 0x1f) + 32 * *c1942_palette_bank,
-						c1942_backgroundram[offs + 16] & 0x40,(c1942_backgroundram[offs + 16] & 0x20),
-						16 * sx,16 * sy,
-						0,TRANSPARENCY_NONE,0);
+				sx = 31 - sx;
+				sy = 15 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
 			}
+
+			drawgfx(tmpbitmap2,Machine->gfx[1],
+					c1942_backgroundram[offs] + 2*(c1942_backgroundram[offs + 16] & 0x80),
+					(c1942_backgroundram[offs + 16] & 0x1f) + 32 * *c1942_palette_bank,
+					flipx,flipy,
+					16 * sx,16 * sy,
+					0,TRANSPARENCY_NONE,0);
 		}
 	}
 
@@ -186,36 +218,42 @@ void c1942_vh_screenrefresh(struct osd_bitmap *bitmap)
 		int scroll;
 
 
-		scroll = c1942_scroll[0] + 256 * c1942_scroll[1] - 256;
+		scroll = -(c1942_scroll[0] + 256 * c1942_scroll[1]);
+		if (flipscreen) scroll = 256-scroll;
 
-		copyscrollbitmap(bitmap,tmpbitmap2,0,0,1,&scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap2,1,&scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
 	/* Draw the sprites. */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
-		int bank,i,code,col,sx,sy;
+		int i,code,col,sx,sy,dir;
 
 
-		bank = 3;
-		if (spriteram[offs] & 0x80) bank++;
-		if (spriteram[offs + 1] & 0x20) bank += 2;
-
-		code = spriteram[offs] & 0x7f;
+		code = (spriteram[offs] & 0x7f) + 4*(spriteram[offs + 1] & 0x20)
+				+ 2*(spriteram[offs] & 0x80);
 		col = spriteram[offs + 1] & 0x0f;
-		sx = spriteram[offs + 2];
-		sy = 240 - spriteram[offs + 3] + 0x10 * (spriteram[offs + 1] & 0x10);
+		sx = spriteram[offs + 3] - 0x10 * (spriteram[offs + 1] & 0x10);
+		sy = spriteram[offs + 2];
+		dir = 1;
+		if (flipscreen)
+		{
+			sx = 240 - sx;
+			sy = 240 - sy;
+			dir = -1;
+		}
 
+		/* handle double / quadruple height (actually width because this is a rotated game) */
 		i = (spriteram[offs + 1] & 0xc0) >> 6;
 		if (i == 2) i = 3;
 
 		do
 		{
-			drawgfx(bitmap,Machine->gfx[bank],
+			drawgfx(bitmap,Machine->gfx[2],
 					code + i,col,
-					0, 0,
-					sx + 16 * i,sy,
+					flipscreen,flipscreen,
+					sx,sy + 16 * i * dir,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
 
 			i--;
@@ -231,13 +269,19 @@ void c1942_vh_screenrefresh(struct osd_bitmap *bitmap)
 			int sx,sy;
 
 
-			sx = 8 * (offs / 32);
-			sy = 8 * (31 - offs % 32);
+			sx = offs % 32;
+			sy = offs / 32;
+			if (flipscreen)
+			{
+				sx = 31 - sx;
+				sy = 31 - sy;
+			}
 
 			drawgfx(bitmap,Machine->gfx[0],
 					videoram[offs] + 2 * (colorram[offs] & 0x80),
 					colorram[offs] & 0x3f,
-					0,0,sx,sy,
+					flipscreen,flipscreen,
+					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}

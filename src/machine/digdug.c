@@ -17,13 +17,11 @@ static unsigned char interrupt_enable_1,interrupt_enable_2,interrupt_enable_3;
 unsigned char digdug_hiscoreloaded;
 
 
-int digdig_init_machine(const char *gamename)
+void digdig_init_machine(void)
 {
 	/* halt the slave CPUs until they're reset */
 	cpu_halt(1,0);
 	cpu_halt(2,0);
-
-	return 0;
 }
 
 

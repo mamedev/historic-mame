@@ -322,7 +322,8 @@ void williams_sh_w(int offset,int data);
 void williams_sh_update(void);
 void williams_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 
-int williams_init_machine(const char *gamename);
+void williams_init_machine(void);
+void williams_nofastop_init_machine(void);
 
 extern unsigned char *robotron_videoram;
 void williams_videoram_w(int offset,int data);
@@ -336,9 +337,15 @@ void williams_BlasterStartBlitter(int offset,int data);
 int williams_vh_start(void);
 void williams_vh_stop(void);
 void williams_vh_screenrefresh(struct osd_bitmap *bitmap);
-void defender_vh_screenrefresh(struct osd_bitmap *bitmap);
 void blaster_vh_screenrefresh(struct osd_bitmap *bitmap);
 void Williams_Palette_w(int offset,int data);
+
+int defender_catch_loop_r(int offset); /* JB 970823 */
+int stargate_catch_loop_r(int offset); /* JB 970823 */
+int joust_catch_loop_r(int offset); /* JB 970823 */
+int robotron_catch_loop_r(int offset); /* JB 970823 */
+int blaster_catch_loop_r(int offset); /* JB 970823 */
+int splat_catch_loop_r(int offset); /* JB 970823 */
 
 int defender_bank_r(int offset);
 void defender_bank_w(int offset,int data);
@@ -358,10 +365,47 @@ int input_port_2_3(int offset);
 int blaster_input_port_0(int offset);
 
 
+/*	JB 970823 - separate Stargate for busy loop optimization
+ *   Read mem for Stargate
+ */
 
+static struct MemoryReadAddress stargate_readmem[] =
+{
+	{ 0x0000, 0x97ff, williams_videoram_r },
+	{ 0x9c39, 0x9c39, stargate_catch_loop_r }, /* JB 970823 */
+	{ 0x9800, 0xbfff, MRA_RAM },
+	{ 0xc804, 0xc804, input_port_0_r },     /* IN0 */
+	{ 0xc806, 0xc806, input_port_1_r },     /* IN1 */
+	{ 0xc80c, 0xc80c, input_port_2_r },     /* IN2 */
+	{ 0xc80e, 0xc80e, MRA_RAM },            /* not used? */
+	{ 0xcb00, 0xcb00, video_counter_r },
+	{ 0xCC00, 0xCFFF, MRA_RAM },            /* CMOS */
+	{ 0xd000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+
+/*	JB 970823 - separate Robotron for busy loop optimization
+ *   Read mem for Robotron
+ */
+
+static struct MemoryReadAddress robotron_readmem[] =
+{
+	{ 0x0000, 0x97ff, williams_videoram_r },
+	{ 0x9810, 0x9810, robotron_catch_loop_r }, /* JB 970823 */
+	{ 0x9800, 0xbfff, MRA_RAM },
+	{ 0xc804, 0xc804, input_port_0_r },     /* IN0 */
+	{ 0xc806, 0xc806, input_port_1_r },     /* IN1 */
+	{ 0xc80c, 0xc80c, input_port_2_r },     /* IN2 */
+	{ 0xc80e, 0xc80e, MRA_RAM },            /* not used? */
+	{ 0xcb00, 0xcb00, video_counter_r },
+	{ 0xCC00, 0xCFFF, MRA_RAM },            /* CMOS */
+	{ 0xd000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
 
 /*
- *   Read mem for Robotron Stargate Bubbles Splat
+ *   Read mem for [Robotron] [Stargate] Bubbles Splat
  */
 
 static struct MemoryReadAddress readmem[] =
@@ -413,6 +457,7 @@ static struct MemoryReadAddress joust_readmem[] =
 	{ 0xc80e, 0xc80e, MRA_RAM },                 /* not used? */
 	{ 0xcb00, 0xcb00, video_counter_r },
 	{ 0xCC00, 0xCFFF, MRA_RAM },                 /* CMOS */
+//	{ 0xe0f2, 0xe0f2, joust_catch_loop_r },		/* JB 970823 */
 	{ 0xd000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -425,6 +470,7 @@ static struct MemoryReadAddress joust_readmem[] =
 static struct MemoryReadAddress splat_readmem[] =
 {
 	{ 0x0000, 0x97ff, williams_videoram_r },
+	{ 0x984b, 0x984b, splat_catch_loop_r },		/* JB 970823 */
 	{ 0x9800, 0xbfff, MRA_RAM },
 	{ 0xc804, 0xc804, input_port_0_1 },          /* IN0-1 */
 	{ 0xc806, 0xc806, input_port_2_3 },          /* IN2-3*/
@@ -504,6 +550,7 @@ static struct MemoryWriteAddress sinistar_writemem[] =
 static struct MemoryReadAddress blaster_readmem[] =
 {
 	{ 0x0000, 0x96ff, blaster_videoram_r },
+//	{ 0x9700, 0x9700, blaster_catch_loop_r },		/* JB 970823 */
 	{ 0x9700, 0xbfff, MRA_RAM },
 	{ 0xc804, 0xc804, blaster_input_port_0 },    /* IN0 */
 	{ 0xc806, 0xc806, input_port_1_r },          /* IN1 */
@@ -545,6 +592,7 @@ static struct MemoryWriteAddress blaster_writemem[] =
 
 static struct MemoryReadAddress defender_readmem[] =
 {
+	{ 0xa05d, 0xa05d, defender_catch_loop_r }, /* JB 970823 */
 	{ 0x0000, 0xbfff, MRA_RAM },
 	{ 0xc000, 0xcfff, defender_bank_r },
 	{ 0xd000, 0xffff, MRA_ROM },
@@ -953,6 +1001,27 @@ static struct KEYSet keys[] =
 };
 
 
+/* there's nothing here, this is just a placeholder to let the video hardware */
+/* pick the background color table. */
+static struct GfxLayout fakelayout =
+{
+	1,1,
+	0,
+	4,	/* 4 bits per pixel */
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	0
+};
+
+
+static struct GfxDecodeInfo gfxdecodeinfo[] =
+{
+	{ 0, 0, &fakelayout, 0, 1 },
+	{ -1 } /* end of array */
+};
+
+
 
 static struct MachineDriver robotron_machine_driver =
 {
@@ -962,7 +1031,7 @@ static struct MachineDriver robotron_machine_driver =
 			CPU_M6809,
 			1000000,                /* ? Mhz */
 			0,                      /* memory region */
-			readmem,                /* MemoryReadAddress */
+			robotron_readmem,       /* MemoryReadAddress */ /* JB 970823 */
 			writemem,               /* MemoryWriteAddress */
 			0,                      /* IOReadPort */
 			0,                      /* IOWritePort */
@@ -981,11 +1050,12 @@ static struct MachineDriver robotron_machine_driver =
 	304, 256,                               /* screen_width, screen_height */
 	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
 #endif
-	0,                          /* GfxDecodeInfo * */
-	256,                                    /* total colors */
-	6,                                      /* color table length */
+	gfxdecodeinfo,                          /* GfxDecodeInfo * */
+	1+16,                                  /* total colors */
+	16,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
 
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,                                      /* vh_init routine */
 	williams_vh_start,                      /* vh_start routine */
 	williams_vh_stop,                       /* vh_stop routine */
@@ -1029,11 +1099,12 @@ static struct MachineDriver joust_machine_driver =
 	304, 256,                               /* screen_width, screen_height */
 	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
 #endif
-	0,                          /* GfxDecodeInfo * */
-	256,                                    /* total colors */
-	6,                                      /* color table length */
+	gfxdecodeinfo,                          /* GfxDecodeInfo * */
+	1+16,                                  /* total colors */
+	16,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
 
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,                                      /* vh_init routine */
 	williams_vh_start,                      /* vh_start routine */
 	williams_vh_stop,                       /* vh_stop routine */
@@ -1058,7 +1129,7 @@ static struct MachineDriver stargate_machine_driver =
 			CPU_M6809,
 			1000000,                /* ? Mhz */ /*Stargate do not like 1 mhz*/
 			0,                      /* memory region */
-			readmem,                /* MemoryReadAddress */
+			stargate_readmem,       /* MemoryReadAddress */ /* JB 970823 */
 			writemem,               /* MemoryWriteAddress */
 			0,                      /* IOReadPort */
 			0,                      /* IOWritePort */
@@ -1077,11 +1148,12 @@ static struct MachineDriver stargate_machine_driver =
 	304, 256,                               /* screen_width, screen_height */
 	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
 #endif
-	0,                          /* GfxDecodeInfo * */
-	256,                                    /* total colors */
-	6,                                      /* color table length */
+	gfxdecodeinfo,                          /* GfxDecodeInfo * */
+	1+16,                                  /* total colors */
+	16,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
 
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,                                      /* vh_init routine */
 	williams_vh_start,                      /* vh_start routine */
 	williams_vh_stop,                       /* vh_stop routine */
@@ -1125,11 +1197,12 @@ static struct MachineDriver sinistar_machine_driver =
 	304, 256,                               /* screen_width, screen_height */
 	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
 #endif
-	0,                          /* GfxDecodeInfo * */
-	256,                                    /* total colors */
-	6,                                      /* color table length */
+	gfxdecodeinfo,                          /* GfxDecodeInfo * */
+	1+16,                                  /* total colors */
+	16,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
 
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,                                      /* vh_init routine */
 	williams_vh_start,                      /* vh_start routine */
 	williams_vh_stop,                       /* vh_stop routine */
@@ -1163,7 +1236,7 @@ static struct MachineDriver defender_machine_driver =
 		}
 	},
 	60,                                     /* frames per second */
-	williams_init_machine,          /* init machine routine */
+	williams_nofastop_init_machine,          /* init machine routine */
 
 	/* video hardware */
 #ifdef HEIGHT_240
@@ -1173,15 +1246,16 @@ static struct MachineDriver defender_machine_driver =
 	304, 256,                               /* screen_width, screen_height */
 	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
 #endif
-	0,                          /* GfxDecodeInfo * */
-	256,                                    /* total colors */
-	6,                                      /* color table length */
+	gfxdecodeinfo,                          /* GfxDecodeInfo * */
+	1+16,                                  /* total colors */
+	16,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
 
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,                                      /* vh_init routine */
 	williams_vh_start,                      /* vh_start routine */
 	williams_vh_stop,                       /* vh_stop routine */
-	defender_vh_screenrefresh,              /* vh_update routine */
+	williams_vh_screenrefresh,              /* vh_update routine */
 
 	/* sound hardware */
 	0,                                      /* pointer to samples */
@@ -1221,11 +1295,12 @@ static struct MachineDriver splat_machine_driver =
 	304, 256,                               /* screen_width, screen_height */
 	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
 #endif
-	0,                          /* GfxDecodeInfo * */
-	256,                                    /* total colors */
-	6,                                      /* color table length */
+	gfxdecodeinfo,                          /* GfxDecodeInfo * */
+	1+16,                                  /* total colors */
+	16,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
 
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,                                      /* vh_init routine */
 	williams_vh_start,                      /* vh_start routine */
 	williams_vh_stop,                       /* vh_stop routine */
@@ -1269,11 +1344,12 @@ static struct MachineDriver bubbles_machine_driver =
 	304, 256,                               /* screen_width, screen_height */
 	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
 #endif
-	0,                          /* GfxDecodeInfo * */
-	256,                                    /* total colors */
-	6,                                      /* color table length */
+	gfxdecodeinfo,                          /* GfxDecodeInfo * */
+	1+16,                                  /* total colors */
+	16,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
 
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,                                      /* vh_init routine */
 	williams_vh_start,                      /* vh_start routine */
 	williams_vh_stop,                       /* vh_stop routine */
@@ -1307,7 +1383,7 @@ static struct MachineDriver blaster_machine_driver =
 		}
 	},
 	60,                                     /* frames per second */
-	williams_init_machine,          /* init machine routine */
+	williams_nofastop_init_machine,          /* init machine routine */
 
 	/* video hardware */
 #ifdef HEIGHT_240
@@ -1317,11 +1393,12 @@ static struct MachineDriver blaster_machine_driver =
 	304, 256,                               /* screen_width, screen_height */
 	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
 #endif
-	0,                          /* GfxDecodeInfo * */
-	256,                                    /* total colors */
-	6,                                      /* color table length */
+	gfxdecodeinfo,                          /* GfxDecodeInfo * */
+	1+16,                                  /* total colors */
+	16,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
 
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,                                      /* vh_init routine */
 	williams_vh_start,                      /* vh_start routine */
 	williams_vh_stop,                       /* vh_stop routine */
@@ -1543,20 +1620,20 @@ struct GameDriver robotron_driver =
 {
 	"robotron",
 	"robotron",
-	"MARC LAFONTAINE\nSTEVEN HUGG\nMIRKO BUFFONI",
+	"MARC LAFONTAINE\nSTEVEN HUGG\nMIRKO BUFFONI\nAARON GILES",
 	&robotron_machine_driver,       /* MachineDriver * */
 
 	robotron_rom,                   /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
 	williams_sample_names,          /* samplenames */
 
-	robotron_input_ports,           /* InputPort  */
+	robotron_input_ports, 0,           /* InputPort  */
         trak_ports,                     /* TrackBall  */
 	williams_dsw,                   /* DSW        */
 	robotron_keys,                  /* KEY def    */
 
 	0, 0, 0,
-	140, 110,
+	ORIENTATION_DEFAULT,
 
 	cmos_load, cmos_save
 };
@@ -1583,20 +1660,20 @@ struct GameDriver joust_driver =
 {
 	"joust",
 	"joust",
-	"MARC LAFONTAINE\nSTEVEN HUGG\nMIRKO BUFFONI",
+	"MARC LAFONTAINE\nSTEVEN HUGG\nMIRKO BUFFONI\nAARON GILES",
 	&joust_machine_driver,          /* MachineDriver * */
 
 	joust_rom,                      /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
 	williams_sample_names,          /* samplenames */
 
-	joust_input_ports,              /* InputPort  */
+	joust_input_ports, 0,              /* InputPort  */
         trak_ports,                     /* TrackBall  */
 	williams_dsw,                   /* DSW        */
 	joust_keys,                     /* KEY def    */
 
 	0, 0, 0,
-	140, 110,
+	ORIENTATION_DEFAULT,
 
 	cmos_load, cmos_save
 };
@@ -1622,20 +1699,20 @@ struct GameDriver sinistar_driver =
 {
 	"sinistar",
 	"sinistar",
-	"MARC LAFONTAINE\nSTEVEN HUGG\nMIRKO BUFFONI",
+	"MARC LAFONTAINE\nSTEVEN HUGG\nMIRKO BUFFONI\nAARON GILES",
 	&sinistar_machine_driver,       /* MachineDriver * */
 
 	sinistar_rom,                   /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
 	williams_sample_names,          /* samplenames */
 
-	sinistar_input_ports,           /* InputPort  */
+	sinistar_input_ports, 0,           /* InputPort  */
         trak_ports,                     /* TrackBall  */
 	williams_dsw,                   /* DSW        */
 	keys,                           /* KEY def    */
 
 	0, 0, 0,
-	140, 110,
+	ORIENTATION_DEFAULT,
 
 	cmos_load, cmos_save
 };
@@ -1662,20 +1739,20 @@ struct GameDriver bubbles_driver =
 {
 	"bubbles",
 	"bubbles",
-	"MARC LAFONTAINE\nSTEVEN HUGG\nMIRKO BUFFONI",
+	"MARC LAFONTAINE\nSTEVEN HUGG\nMIRKO BUFFONI\nAARON GILES",
 	&bubbles_machine_driver,        /* MachineDriver * */
 
 	bubbles_rom,                    /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
 	williams_sample_names,          /* samplenames */
 
-	bubbles_input_ports,            /* InputPort  */
+	bubbles_input_ports, 0,            /* InputPort  */
         trak_ports,                     /* TrackBall  */
 	williams_dsw,                   /* DSW        */
 	keys,                           /* KEY def    */
 
 	0, 0, 0,
-	140, 110,
+	ORIENTATION_DEFAULT,
 
 	cmos_load, cmos_save
 };
@@ -1702,20 +1779,20 @@ struct GameDriver stargate_driver =
 {
 	"stargate",
 	"stargate",
-	"MARC LAFONTAINE\nSTEVEN HUGG\nMIRKO BUFFONI",
+	"MARC LAFONTAINE\nSTEVEN HUGG\nMIRKO BUFFONI\nAARON GILES",
 	&stargate_machine_driver,       /* MachineDriver * */
 
 	stargate_rom,                   /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
 	williams_sample_names,          /* samplenames */
 
-	stargate_input_ports,           /* InputPort  */
+	stargate_input_ports, 0,           /* InputPort  */
         trak_ports,                     /* TrackBall  */
 	williams_dsw,                   /* DSW        */
 	stargate_keys,                  /* KEY def    */
 
 	0, 0, 0,
-	140, 110,
+	ORIENTATION_DEFAULT,
 
 	cmos_load, cmos_save
 };
@@ -1743,20 +1820,20 @@ struct GameDriver defender_driver =
 {
 	"defender",
 	"defender",
-	"MARC LAFONTAINE\nSTEVEN HUGG\nMIRKO BUFFONI",
+	"MARC LAFONTAINE\nSTEVEN HUGG\nMIRKO BUFFONI\nAARON GILES",
 	&defender_machine_driver,       /* MachineDriver * */
 
 	defender_rom,                   /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
 	williams_sample_names,          /* samplenames */
 
-	defender_input_ports,           /* InputPort  */
+	defender_input_ports, 0,           /* InputPort  */
         trak_ports,                     /* TrackBall  */
 	williams_dsw,                   /* DSW        */
 	defender_keys,                  /* KEY def    */
 
 	0, 0, 0,
-	140, 110,
+	ORIENTATION_DEFAULT,
 
 	defender_cmos_load, defender_cmos_save
 };
@@ -1786,20 +1863,20 @@ struct GameDriver splat_driver =
 {
 	"splat",
 	"splat",
-	"MARC LAFONTAINE\nSTEVEN HUGG\nMIRKO BUFFONI",
+	"MARC LAFONTAINE\nSTEVEN HUGG\nMIRKO BUFFONI\nAARON GILES",
 	&splat_machine_driver,          /* MachineDriver * */
 
 	splat_rom,                      /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
 	williams_sample_names,          /* samplenames */
 
-	splat_input_ports,              /* InputPort  */
+	splat_input_ports, 0,              /* InputPort  */
         trak_ports,                     /* TrackBall  */
 	williams_dsw,                   /* DSW        */
 	splat_keys,                     /* KEY def    */
 
 	0, 0, 0,
-	140, 110,
+	ORIENTATION_DEFAULT,
 
   cmos_load, cmos_save
 };
@@ -1836,20 +1913,20 @@ struct GameDriver blaster_driver =
 {
 	"blaster",
 	"blaster",
-	"MARC LAFONTAINE\nSTEVEN HUGG\nMIRKO BUFFONI",
+	"MARC LAFONTAINE\nSTEVEN HUGG\nMIRKO BUFFONI\nAARON GILES",
 	&blaster_machine_driver,        /* MachineDriver * */
 
 	blaster_rom,                    /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
 	williams_sample_names,          /* samplenames */
 
-	blaster_input_ports,            /* InputPort  */
+	blaster_input_ports, 0,            /* InputPort  */
         trak_ports,                     /* TrackBall  */
 	williams_dsw,                   /* DSW        */
 	blaster_keys,                   /* KEY def    */
 
 	0, 0, 0,
-	140, 110,
+	ORIENTATION_DEFAULT,
 
 	cmos_load, cmos_save
 };

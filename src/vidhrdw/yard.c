@@ -106,7 +106,7 @@ int yard_vh_start(void)
 {
 	if ((dirtybuffer = malloc(videoram_size)) == 0)
 		return 1;
-	memset(dirtybuffer,0,videoram_size);
+	memset(dirtybuffer,1,videoram_size);
 
 	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width*2,Machine->drv->screen_height)) == 0)
 	{
@@ -191,10 +191,10 @@ void yard_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = ( ( offs - 0x1000 ) % 16 ) * 4 + ( 24 * 8 ) ;
 			sy = ( ( offs - 0x1000 ) / 16 ) ;
 			n = videoram [ offs ] ;
-			bitmap->line[sy][sx + 3] = ( ( n & 0x80 ) ? 0x10 : 0x00 ) | ( ( n & 0x08 ) ? 0x01 : 0x00 ) ;
-			bitmap->line[sy][sx + 2] = ( ( n & 0x40 ) ? 0x10 : 0x00 ) | ( ( n & 0x04 ) ? 0x01 : 0x00 ) ;
-			bitmap->line[sy][sx + 1] = ( ( n & 0x20 ) ? 0x10 : 0x00 ) | ( ( n & 0x02 ) ? 0x01 : 0x00 ) ;
-			bitmap->line[sy][sx + 0] = ( ( n & 0x10 ) ? 0x10 : 0x00 ) | ( ( n & 0x01 ) ? 0x01 : 0x00 ) ;
+			bitmap->line[sy][sx + 3] = Machine->pens[( ( n & 0x80 ) ? 0x10 : 0x00 ) | ( ( n & 0x08 ) ? 0x01 : 0x00 )] ;
+			bitmap->line[sy][sx + 2] = Machine->pens[( ( n & 0x40 ) ? 0x10 : 0x00 ) | ( ( n & 0x04 ) ? 0x01 : 0x00 )] ;
+			bitmap->line[sy][sx + 1] = Machine->pens[( ( n & 0x20 ) ? 0x10 : 0x00 ) | ( ( n & 0x02 ) ? 0x01 : 0x00 )] ;
+			bitmap->line[sy][sx + 0] = Machine->pens[( ( n & 0x10 ) ? 0x10 : 0x00 ) | ( ( n & 0x01 ) ? 0x01 : 0x00 )] ;
 		}
 	}
 

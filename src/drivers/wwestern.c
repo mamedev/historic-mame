@@ -357,6 +357,7 @@ static struct MachineDriver machine_driver =
 	33, 16*8,
 	taito_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,
 	wwestern_vh_start,
 	taito_vh_stop,
@@ -440,10 +441,10 @@ struct GameDriver wwestern_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_ROTATE_270,
 
 	0, 0
 };
@@ -459,10 +460,10 @@ struct GameDriver frontlin_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_ROTATE_270,
 
 	0, 0
 };

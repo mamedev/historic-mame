@@ -171,22 +171,24 @@ High Scores:
 #include "sndhrdw/pokyintf.h"
 
 
+int tempest_freakout(int data);
 int tempest_IN0_r(int offset);
-int tempest_IN3_r(int offset);
+int tempest_IN1_r(int offset);
 int tempest_spinner(int offset);
 
 static struct MemoryReadAddress readmem[] =
 {
+//	{ 0x011f, 0x011f, tempest_freakout },	/* hack to avoid lockup at 150,000 points */
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x9000, 0xdfff, MRA_ROM },
 	{ 0x3000, 0x3fff, MRA_ROM },
 	{ 0xf000, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
 	{ 0x2000, 0x2fff, MRA_RAM, &vectorram },
 	{ 0x0c00, 0x0c00, tempest_IN0_r },	/* IN0 */
-	{ 0x0d00, 0x0d00, input_port_1_r },	/* DSW1 */
-	{ 0x0e00, 0x0e00, input_port_2_r },	/* DSW2 */
-	{ 0x60c8, 0x60c8, tempest_IN3_r },	/* IN3 */
-	{ 0x60d8, 0x60d8, input_port_4_r },	/* IN4 */
+	{ 0x60c8, 0x60c8, tempest_IN1_r },	/* IN1/DSW0 */
+	{ 0x60d8, 0x60d8, input_port_2_r },	/* IN2 */
+	{ 0x0d00, 0x0d00, input_port_3_r },	/* DSW1 */
+	{ 0x0e00, 0x0e00, input_port_4_r },	/* DSW2 */
 	{ 0x6040, 0x6040, mb_status_r },
 	{ 0x6050, 0x6050, atari_vg_earom_r },
 	{ 0x6060, 0x6060, mb_lo_r },
@@ -216,38 +218,103 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN3)
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2)
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_COIN1)
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_TILT)
+	PORT_DIPNAME ( 0x10, 0x10, "Test", OSD_KEY_F2 )
+	PORT_DIPSETTING(     0x10, "Off" )
+	PORT_DIPSETTING(     0x00, "On" )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	/* bit 6 is the VG HALT bit */
+	/* bit 7 is tied to a 3khz (?) clock */
+	/* they are both handled by tempest_IN0_r() */
 
+	PORT_START	/* IN1/DSW0 */
+	/* The four lower bits are for the spinner. We cheat here
+	 * by asking for joystick/keyboard input. It might be a good
+	 * idea to have generic IPT-definitions for trackball support
+	 */
+	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* spinner bit 2 */
+	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* spinner bit 3 */
+	/* The next one is reponsible for cocktail mode.
+	 * According to the documentation, this is not a switch, although
+	 * it may have been planned to put it on the Math Box PCB, D/E2 )
+	 */
+	PORT_DIPNAME( 0x10, 0x10, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-static struct InputPort input_ports[] =
-{
-	{       /* IN0 */
-		0xff,
-		{ OSD_KEY_3, 0, 0, OSD_KEY_F1, OSD_KEY_F2, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* DSW1 */
-		/*	0x42,*/
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* DSW2 */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* IN2/DSW3 */
-		0x00,
-		{ OSD_KEY_LEFT, OSD_KEY_RIGHT, 0, 0, 0, 0, 0, 0 },
-		{ OSD_JOY_LEFT, OSD_JOY_RIGHT, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* IN4 */
-		0x00,
-		{ 0, 0, 0, OSD_KEY_ALT, OSD_KEY_CONTROL, OSD_KEY_1, OSD_KEY_2, 0 },
-		{ 0, 0, 0, OSD_JOY_FIRE2, OSD_JOY_FIRE1, 0, 0, 0 }
-	},
-	{ -1 }
-};
+	PORT_START	/* IN2 */
+	PORT_DIPNAME ( 0x03, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(     0x01, "Easy" )
+	PORT_DIPSETTING(     0x00, "Medium1" )
+	PORT_DIPSETTING(     0x03, "Medium2" )
+	PORT_DIPSETTING(     0x02, "Hard" )
+	PORT_DIPNAME ( 0x04, 0x00, "Rating", IP_KEY_NONE )
+	PORT_DIPSETTING(     0x00, "1, 3, 5, 7, 9" )
+	PORT_DIPSETTING(     0x04, "tied to high score" )
+	PORT_BIT (0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT (0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT (0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT (0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT (0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* DSW1 - (N13 on analog vector generator PCB */
+	PORT_DIPNAME (0x03, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x01, "2 Coins/1 Credit" )
+	PORT_DIPSETTING (   0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING (   0x03, "1 Coin/2 Credits" )
+	PORT_DIPSETTING (   0x02, "Free Play" )
+	PORT_DIPNAME (0x0c, 0x00, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "*1" )
+	PORT_DIPSETTING (   0x04, "*4" )
+	PORT_DIPSETTING (   0x08, "*5" )
+	PORT_DIPSETTING (   0x0c, "*6" )
+	PORT_DIPNAME (0x10, 0x00, "Left Coin", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "*1" )
+	PORT_DIPSETTING (   0x10, "*2" )
+	PORT_DIPNAME (0xe0, 0x00, "Bonus Coins", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "None" )
+	PORT_DIPSETTING (   0x80, "1 each 5" )
+	PORT_DIPSETTING (   0x40, "1 each 4 (+Demo)" )
+	PORT_DIPSETTING (   0xa0, "1 each 3" )
+	PORT_DIPSETTING (   0x60, "2 each 4 (+Demo)" )
+	PORT_DIPSETTING (   0x20, "1 each 2" )
+	PORT_DIPSETTING (   0xc0, "Freeze Mode" )
+	PORT_DIPSETTING (   0xe0, "Freeze Mode" )
+
+	PORT_START	/* DSW2 - (L12 on analog vector generator PCB */
+	PORT_DIPNAME (0x01, 0x00, "Minimum", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "1 Credit" )
+	PORT_DIPSETTING (   0x01, "2 Credit" )
+	PORT_DIPNAME (0x06, 0x00, "Language", IP_KEY_NONE)
+	PORT_DIPSETTING (   0x00, "English" )
+	PORT_DIPSETTING (   0x02, "French" )
+	PORT_DIPSETTING (   0x04, "German" )
+	PORT_DIPSETTING (   0x06, "Spanish" )
+	PORT_DIPNAME (0x38, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x08, "10000" )
+	PORT_DIPSETTING (   0x00, "20000" )
+	PORT_DIPSETTING (   0x10, "30000" )
+	PORT_DIPSETTING (   0x18, "40000" )
+	PORT_DIPSETTING (   0x20, "50000" )
+	PORT_DIPSETTING (   0x28, "60000" )
+	PORT_DIPSETTING (   0x30, "70000" )
+	PORT_DIPSETTING (   0x38, "None" )
+	PORT_DIPNAME (0xc0, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING (   0xc0, "2" )
+	PORT_DIPSETTING (   0x00, "3" )
+	PORT_DIPSETTING (   0x40, "4" )
+	PORT_DIPSETTING (   0x80, "5" )
+INPUT_PORTS_END
 
 static struct TrakPort trak_ports[] =
 {
@@ -258,33 +325,6 @@ static struct TrakPort trak_ports[] =
 		tempest_spinner
 	},
         { -1 }
-};
-
-
-static struct KEYSet keys[] =
-{
-	{ 3, 0, "TURN CLOCKWISE" },
-	{ 3, 1, "TURN ANTICLOCKWISE" },
-        { 4, 4, "FIRE" },
-	{ 4, 3, "SUPER ZAPPER" },
-        { -1 }
-};
-
-
-static struct DSW dsw[] =
-{
-	{ 1, 0x03, "MODE", { "1 COIN 1 PLAY", "2 COINS 1 PLAY",
-			      "FREEPLAY", "1 COIN 2 PLAYS" } },
-	{ 2, 0xc0, "LIVES", { "3", "4", "5", "2" } },
-	{ 2, 0x38, "BONUS EVERY", { "20000", "10000", "30000", "40000",
-				    "50000", "60000", "70000", "NONE" } },
-	{ 2, 0x06, "LANGUAGE", { "ENGLISH", "FRENCH", "GERMAN", "SPANISH" } },
-	{ 4, 0x04, "MINIMUM RATING", { "1-9", "HIGHSCORE" } },
-	{ 4, 0x03, "DIFFICULTY", { "MEDIUM", "EASY", "HARD", "MEDIUM" } },
-	{ 1, 0x80, "N13/SW1", { "ON", "OFF" } },
-	{ 1, 0x40, "N13/SW2", { "ON", "OFF" } },
-	{ 1, 0x20, "N13/SW3", { "ON", "OFF" } },
-	{ -1 }
 };
 
 /*
@@ -354,6 +394,7 @@ static struct MachineDriver machine_driver =
 	256,256,
 	atari_vg_init_colors,
 
+	VIDEO_TYPE_VECTOR,
 	0,
 	atari_vg_avg_start,
 	atari_vg_stop,
@@ -445,18 +486,27 @@ struct GameDriver tempest_driver =
 {
 	"Tempest",
 	"tempest",
-	"BRAD OLIVER\nBERND WIEBELT\nALLARD VAN DER BAS\n"
-	"NEIL BRADLEY\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH",
+	"Al Kossow\n"
+	"Hedley Rainnie\n"
+	"Eric Smith\n"
+	"  (original VECSIM code)\n"
+	"Brad Oliver\n"
+	"  (MAME driver)\n"
+	"Bernd Wiebelt\n"
+	"Allard van der Bas\n"
+	"  (additional work)\n"
+	"Neil Bradley\n"
+	"  (critical bug fix)\n",
 	&machine_driver,
 
 	tempest_rom,
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	0/*TBR*/,input_ports, trak_ports,0/*TBR*/,0/*TBR*/,
 
 	color_prom, 0, 0,
-	140, 110,      /* paused_x, paused_y */
+	ORIENTATION_DEFAULT,
 
 	atari_vg_earom_load, atari_vg_earom_save
 };

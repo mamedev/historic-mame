@@ -190,7 +190,9 @@ void Reset6502(M6502 *R)
   R->PC.B.l=Rd6502(0xFFFC);
   R->PC.B.h=Rd6502(0xFFFD);
   R->ICount=R->IPeriod;
-  R->IRequest=INT_NONE;
+/*  R->IRequest=INT_NONE; */	/* NS 970904 */
+  R->pending_irq = 0;	/* NS 970904 */
+  R->pending_nmi = 0;	/* NS 970904 */
   R->AfterCLI=0;
 }
 
@@ -222,36 +224,66 @@ word Exec6502(M6502 *R)
 /** INT_NMI will cause a non-maskable interrupt. INT_IRQ    **/
 /** will cause a normal interrupt, unless I_FLAG set in R.  **/
 /*************************************************************/
-void Int6502(M6502 *R,byte Type)
+static void Int6502(M6502 *R/*,byte Type*/)	/* NS 970904 */
 {
   register pair J;
 
-  if((Type==INT_NMI)||((Type==INT_IRQ)&&!(R->P&I_FLAG)))
+/*  if((Type==INT_NMI)||((Type==INT_IRQ)&&!(R->P&I_FLAG)))*/
+  if((R->pending_nmi != 0)||((R->pending_irq != 0)&&!(R->P&I_FLAG)))	/* NS 970904 */
   {
     R->ICount-=7;
     M_PUSH(R->PC.B.h);
     M_PUSH(R->PC.B.l);
     M_PUSH(R->P&~B_FLAG);
     R->P&=~D_FLAG;
-    if(Type==INT_NMI) J.W=0xFFFA; else { R->P|=I_FLAG;J.W=0xFFFE; }
+/*    if(Type==INT_NMI)*/ /* NS 970904 */
+	if (R->pending_nmi != 0)	/* NS 970904 */
+	{
+		R->pending_nmi = 0;	/* NS 970904 */
+		J.W=0xFFFA;
+	}
+	else
+	{
+		R->pending_irq = 0;	/* NS 970904 */
+		R->P|=I_FLAG;J.W=0xFFFE;
+	}
     R->PC.B.l=Rd6502(J.W++);
     R->PC.B.h=Rd6502(J.W);
   }
+#if 0	/* NS 970904 */
   else if ((Type==INT_IRQ)&&(R->P&I_FLAG))	/* -NS- */
        R->IRequest = Type;	/* -NS- */
+#endif
 }
+
+
+void M6502_Cause_Interrupt(M6502 *R,int type)	/* NS 970904 */
+{
+	if (type == INT_NMI)
+		R->pending_nmi = 1;
+	else if (type == INT_IRQ)
+		R->pending_irq = 1;
+}
+void M6502_Clear_Pending_Interrupts(M6502 *R)	/* NS 970904 */
+{
+	R->pending_irq = 0;
+	R->pending_nmi = 0;
+}
+
 
 /** Run6502() ************************************************/
 /** This function will run 6502 code until Loop6502() call  **/
 /** returns INT_QUIT. It will return the PC at which        **/
 /** emulation stopped, and current register values in R.    **/
 /*************************************************************/
-word Run6502(M6502 *R)
+word Run6502(M6502 *R,int cycles)	/* NS 970904 */
 {
   register pair J,K;
   register byte I;
 
-  for(;;)
+ R->ICount=cycles;	/* NS 970904 */
+
+  do
   {
 #ifdef DEBUG
     /* Turn tracing on when reached trap address */
@@ -271,6 +303,21 @@ word Run6502(M6502 *R)
 #include "Codes.h"
     }
 
+
+/* NS 970904 - all new */
+	if (R->AfterCLI) R->AfterCLI = 0;
+	else
+	{
+		if (R->pending_irq != 0 || R->pending_nmi != 0)
+			Int6502(R);
+	}
+ }
+ while (R->ICount>0);
+
+ return cycles - R->ICount;	/* NS 970904 */
+
+
+#if 0	/* NS 970904 */
     /* If cycle counter expired... */
     if(R->ICount<=0)
     {
@@ -279,6 +326,7 @@ word Run6502(M6502 *R)
       if(R->AfterCLI)
       {
         I=R->IRequest;            /* Get pending interrupt     */
+        R->IRequest = INT_NONE;	/* -FF- */
         R->ICount+=R->IBackup-1;  /* Restore the ICount        */
         R->AfterCLI=0;            /* Done with AfterCLI state  */
       }
@@ -293,8 +341,8 @@ word Run6502(M6502 *R)
       if(I) Int6502(R,I);              /* Interrupt if needed  */
   return(R->PC.W);	/* -NS- */
     }
-  }
 
   /* Execution stopped */
   return(R->PC.W);
+#endif
 }

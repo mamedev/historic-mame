@@ -240,6 +240,7 @@ static struct MachineDriver machine_driver =
 	16, 2*4,
 	warlord_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -302,10 +303,10 @@ struct GameDriver warlord_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	0, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	0, 0
 };

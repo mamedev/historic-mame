@@ -34,7 +34,7 @@ static struct AY8910interface interface =
 {
 	2,	/* 2 chips */
 	10,	/* 10 updates per video frame (good quality) */
-	1789750000,	/* 1.78975 MHZ ?? */
+	1789750000,	/* 1.78975 Mhz (? the crystal is 14.318 MHz) */
 	{ 255, 255 },
 	{ sound_command_r },
 	{ scramble_portB_r },

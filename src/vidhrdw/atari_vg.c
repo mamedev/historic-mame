@@ -36,6 +36,28 @@ void atari_vg_init_colors (unsigned char *palette, unsigned char *colortable,con
 	}
 }
 
+
+void sw_vg_init_colors (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+{
+	int c,i,e;   	/* (c)olor, (i)ntensity, palette (e)ntry */
+	int r,g,b;
+	for (c=0; c<8; c++)
+	{
+		for (i=0; i<32; i++)
+		{
+			e=c+i*8;
+			colortable[e]=e;
+			r=color_prom[3*c  ]*i*8.25;
+			g=color_prom[3*c+1]*i*8.25;
+			b=color_prom[3*c+2]*i*8.25;
+			palette[3*e  ]=(r < 256) ? r : 0xff;
+			palette[3*e+1]=(g < 256) ? g : 0xff;
+			palette[3*e+2]=(b < 256) ? b : 0xff;
+		}
+	}
+}
+
+
 /* If you want to use this, please make sure that you have
  * a fake GfxLayout, otherwise you'll crash */
 void atari_vg_colorram_w (int offset, int data)

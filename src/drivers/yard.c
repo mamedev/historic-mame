@@ -299,6 +299,7 @@ static struct MachineDriver machine_driver =
 	256,32*8+32*8,
 	yard_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER,
 	0,
 	yard_vh_start,
 	yard_vh_stop,
@@ -370,10 +371,10 @@ struct GameDriver yard_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	0, 0
 };

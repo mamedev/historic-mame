@@ -11,7 +11,6 @@
 #include "vidhrdw\generic.h"
 #include "Z80.h"
 
-
 unsigned char *xevious_sharedram;
 unsigned char *xevious_vlatches;
 static unsigned char interrupt_enable_1,interrupt_enable_2,interrupt_enable_3;
@@ -22,8 +21,26 @@ static unsigned char *rom2b;
 static unsigned char *rom2c;
 static int xevious_bs[2];
 
+/* namco stick number array */
+/*
+  Input bitmap
+    bit0 = UP    KEY
+    bit1 = RIGHT KEY
+    bit2 = DOWN  KEY
+    bit3 = LEFT  KEY
 
-int xevious_init_machine(const char *gamename)
+  Output direction
+	      0
+	    7   1
+	  6   8   2
+	    5   3
+	      4
+ */
+unsigned char namco_key[16] =
+/*  LDRU,LDR,LDU,LD ,LRU,LR ,LU , L ,DRU,DR ,DU , D ,RU , R , U ,NON  */
+  {   5 , 5 , 5 , 5 , 7 , 6 , 7 , 6 , 3 , 3 , 4 , 4 , 1 , 2 , 0 , 8 };
+
+void xevious_init_machine(void)
 {
 	/* halt the slave CPUs until they're reset */
 	cpu_halt(1,0);
@@ -36,7 +53,13 @@ int xevious_init_machine(const char *gamename)
 	rom2b = Machine->memory_region[4]+0x1000;
 	rom2c = Machine->memory_region[4]+0x3000;
 
-	return 0;
+#if 0		/* bypass initial rom & ram test , goto hot start(namco) */
+	Machine->memory_region[0][0x15f] = 0xc3;	/* check sum break */
+	Machine->memory_region[0][0x160] = 0xee;	/* check sum break */
+	Machine->memory_region[0][0x161] = 0x01;	/* check sum break */
+
+	Machine->memory_region[0][0x268] = 0xfe;	/* check sum break */
+#endif
 }
 
 /* emulation for schematic 9B */
@@ -98,14 +121,11 @@ int xevious_dsw_r(int offset)
 {
 	int bit0,bit1;
 
-
 	bit0 = (input_port_0_r(0) >> offset) & 1;
 	bit1 = (input_port_1_r(0) >> offset) & 1;
 
 	return bit0 | (bit1 << 1);
 }
-
-
 
 /***************************************************************************
 
@@ -117,206 +137,216 @@ int xevious_dsw_r(int offset)
  emulate the behaviour of the NMI interrupt.
 
 ***************************************************************************/
-void xevious_customio_w(int offset,int data)
+static int customio_command;
+static int mode,credits;
+static int auxcoinpercred,auxcredpercoin;
+static int leftcoinpercred,leftcredpercoin;
+static int rightcoinpercred,rightcredpercoin;
+static unsigned char customio[16];
+
+
+void xevious_customio_data_w(int offset,int data)
 {
-	static int mode,credits;
-	static int protect;
-	Z80_Regs regs;
+	customio[offset] = data;
 
+if (errorlog) fprintf(errorlog,"%04x: custom IO offset %02x data %02x\n",cpu_getpc(),offset,data);
 
-	Z80_GetRegs(&regs);
-
-        if (errorlog) fprintf(errorlog,"%04x: custom IO command %02x, HL = %04x DE = %04x BC = %04x  %02x %02x %02x\n",
-	   cpu_getpc(),data,regs.HL2.D,regs.DE2.D,regs.BC2.D, RAM[regs.HL2.D], RAM[(regs.HL2.D)+1], RAM[(regs.HL2.D)+2]);
-
-	/* read data function */
-	/* set data to memory 7000- */
-	switch (data)
+	switch (customio_command)
 	{
-		case 0x10:	/* nop */
-			return;
-
-		case 0x71:
-			{
-				static int coin,start1,start2,fire1,fire2;
-				int in, dir,stsw;
-
-				in = readinputport(0);
-				/* check if the user inserted a coin */
-				if ( !(in&0x10) )
-				{
-					if (coin == 0 && credits < 99) credits++;
-					coin = 1;
-				}
-				else coin = 0;
-
-				stsw = 0;
-				/* check for 1 player start button */
-				if ( !(in&0x01) )
-				{
-					if (start1 == 0 && credits >= 1)
-					{
-					 credits--;
-					 stsw = 0xff; /* ?? */
-					}
-					start1 = 1;
-				}
-				else start1 = 0;
-
-				/* check for 2 players start button */
-				if ( !(in&0x02) )
-				{
-					if (start2 == 0 && credits >= 2)
-					{
-					 credits -= 2;
-					 stsw = 0xfe;	/* ?? */
-					}
-					start2 = 1;
-				}
-				else start2 = 0;
-
-				in = readinputport(1);
-
-			/*
-				  Direction is returned as shown below:
-				      0
-				    7   1
-				  6   8   2
-				    5   3
-				      4
-				  For the previous direction return 8.
-			 */
-				dir = 8;
-				if ((in & 0x08) == 0)		/* up */
-				{
-					if ((in & 0x01) == 0)	/* right */
-						dir = 1;
-					else if ((in & 0x02) == 0) /* left */
-						dir = 7;
-					else
-						dir = 0;
-				}
-				else if ((in & 0x04) == 0)	/* down */
-				{
-					if ((in & 0x01) == 0)	/* right */
-						dir = 3;
-					else if ((in & 0x02) == 0) /* left */
-						dir = 5;
-					else
-						dir = 4;
-				}
-				else if ((in & 0x01) == 0)	/* right */
-					dir = 2;
-				else if ((in & 0x02) == 0) /* left */
-					dir = 6;
-
-				/* check fire */
-				dir |= 0x10;
-				if ((in & 0x10) == 0)
-				{
-					if (!fire1)
-						dir &= ~0x10;	/* blaster */
-					else
-						fire1 = 1;
-				}
-				else
-				{
-					fire1 = 0;
-				}
-
-				/* check fire2 */
-				dir |= 0xe0;
-				if ((in & 0x20) == 0)
-				{
-					if (!fire2)
-						dir &= ~0x20;		/*zapper */
-					else
-						fire2 = 1;
-				}
-				else
-				{
-					fire2 = 0;
-				}
-
-				if( stsw )
-				{
-					cpu_writemem(0x7000, 0x7e);
-					cpu_writemem(0x7000 + 1,stsw);	/* PL1 */
-					cpu_writemem(0x7000 + 2,stsw);	/* PL2 */
-				}
-				else
-				{
-					cpu_writemem(0x7000, 0x80);
-					cpu_writemem(0x7000 + 1,dir);	/* PL1 */
-					cpu_writemem(0x7000 + 2,dir);	/* PL2 */
-				}
-			}
-			break;
-
-		case 0x61:
-			mode = 1;
-			break;
-
-		case 0x91:
-			cpu_writemem(0x7000,0);
-			cpu_writemem(0x7000 + 1,0);
-			cpu_writemem(0x7000 + 2,0);
-			mode = 0;
-			break;
-		case 0x74:		/* protect data read ? */
-			if( protect == 0x80 ){
-				cpu_writemem(0x7000 + 3,0x05);	/* 1st check */
-			}else{
-				cpu_writemem(0x7000 + 3,0x95);  /* 2nd check */
-			}
-			cpu_writemem(0x7000,0);
-			cpu_writemem(0x7000 + 1,0);
-			cpu_writemem(0x7000 + 2,0);
-			mode = 0;
-			break;
-
-		default:
-                        if (errorlog) fprintf(errorlog,"%04x: custom IO command %02x, HL = %04x DE = %04x BC = %04x\n",
-		           cpu_getpc(),data,regs.HL2.D,regs.DE2.D,regs.BC2.D);
-			break;
-	}
-
-	/* copy all of the data into the destination, just like the NMI */
-	Z80_GetRegs(&regs);
-	while (regs.BC2.D > 0)
-	{
-		cpu_writemem(regs.DE2.D,cpu_readmem(regs.HL2.D));
-		++regs.DE2.W.l;
-		++regs.HL2.W.l;
-		--regs.BC2.W.l;
-	}
-	Z80_SetRegs(&regs);
-	/* data write functions */
-	switch (data)
-	{
-		case 0x64:		/* protect data calculate ? */
-			protect = cpu_readmem(0x7000);
-			break;
-		case 0x68:
-			/* case 1:30,40,00,02,df,10,10 */
-			/* case 1:40,40,40,01,ff,20,20 */
-			break;
 		case 0xa1:
-			/* write 6 byte 5,5,5,5,5,5 */
-			/* write 8 byte 1,1,1,1,1,4,2,2 */
-			mode = 1;
+			if (offset == 0)
+			{
+				if (data == 0x05)
+					mode = 1;	/* go into switch mode */
+				else	/* go into credit mode */
+				{
+					credits = 0;	/* this is a good time to reset the credits counter */
+					mode = 0;
+				}
+			}
+			else if (offset == 7)
+			{
+				auxcoinpercred = customio[1];
+				auxcredpercoin = customio[2];
+				leftcoinpercred = customio[3];
+				leftcredpercoin = customio[4];
+				rightcoinpercred = customio[5];
+				rightcredpercoin = customio[6];
+			}
 			break;
-		default:
+
+		case 0x68:
+			if (offset == 6)
+			{
+				/* it is not known how the parameters control the explosion. */
+				/* We just use samples. */
+				if (memcmp(customio,"\x40\x40\x40\x01\xff\x00\x20",7) == 0)
+				{
+					/* ground target explosion */
+					if (Machine->samples && Machine->samples->sample[0])
+					{
+						osd_play_sample(7,Machine->samples->sample[0]->data,
+								Machine->samples->sample[0]->length,
+								Machine->samples->sample[0]->smpfreq,
+								Machine->samples->sample[0]->volume,0);
+					}
+				}
+				else if (memcmp(customio,"\x30\x40\x00\x02\xdf\x00\x10",7) == 0)
+				{
+					/* Solvalou explosion */
+					if (Machine->samples && Machine->samples->sample[0])
+					{
+						osd_play_sample(7,Machine->samples->sample[1]->data,
+								Machine->samples->sample[1]->length,
+								Machine->samples->sample[1]->smpfreq,
+								Machine->samples->sample[1]->volume,0);
+					}
+				}
+			}
 			break;
 	}
 }
 
 
+int xevious_customio_data_r(int offset)
+{
+if (errorlog && customio_command != 0x71) fprintf(errorlog,"%04x: custom IO read offset %02x\n",cpu_getpc(),offset);
+
+	switch (customio_command)
+	{
+		case 0x71:	/* read input */
+		case 0xb1:	/* only issued after 0xe1 (go into credit mode) */
+			if (offset == 0)
+			{
+				if (mode)	/* switch mode */
+				{
+					/* bit 7 is the service switch */
+					return readinputport(4);
+				}
+				else	/* credits mode: return number of credits in BCD format */
+				{
+					int in;
+					static int leftcoininserted;
+					static int rightcoininserted;
+					static int auxcoininserted;
+
+
+					in = readinputport(4);
+
+					/* check if the user inserted a coin */
+					if (leftcoinpercred > 0)
+					{
+						if ((in & 0x10) == 0 && credits < 99)
+						{
+							leftcoininserted++;
+							if (leftcoininserted >= leftcoinpercred)
+							{
+								credits += leftcredpercoin;
+								leftcoininserted = 0;
+							}
+						}
+						if ((in & 0x20) == 0 && credits < 99)
+						{
+							rightcoininserted++;
+							if (rightcoininserted >= rightcoinpercred)
+							{
+								credits += rightcredpercoin;
+								rightcoininserted = 0;
+							}
+						}
+						if ((in & 0x40) == 0 && credits < 99)
+						{
+							auxcoininserted++;
+							if (auxcoininserted >= auxcoinpercred)
+							{
+								credits += auxcredpercoin;
+								auxcoininserted = 0;
+							}
+						}
+					}
+					else credits = 2;
+
+
+					/* check for 1 player start button */
+					if ((in & 0x04) == 0)
+						if (credits >= 1) credits--;
+
+					/* check for 2 players start button */
+					if ((in & 0x08) == 0)
+						if (credits >= 2) credits -= 2;
+
+					return (credits / 10) * 16 + credits % 10;
+				}
+			}
+			else if (offset == 1)
+			{
+				int in;
+				static int fire;
+
+
+				in = readinputport(2);	/* player 1 input */
+				in = namco_key[in & 0x0f] | (in & 0xf0);
+				if ((in & 0x20) == 0)
+				{
+					if (fire == 0) in &= ~0x10;	/* fire button impulse */
+					fire = 1;
+				}
+				else fire = 0;
+				return in;
+			}
+			else if (offset == 2)
+			{
+				int in;
+				static int fire;
+
+
+				in = readinputport(3);	/* player 2 input */
+				in = namco_key[in & 0x0f] | (in & 0xf0);
+				if ((in & 0x20) == 0)
+				{
+					if (fire == 0) in &= ~0x10;	/* fire button impulse */
+					fire = 1;
+				}
+				else fire = 0;
+				return in;
+			}
+
+			break;
+
+		case 0x74:		/* protect data read ? */
+			if (offset == 3)
+			{
+				if (customio[0] == 0x80 || customio[0] == 0x10)
+					return 0x05;	/* 1st check */
+				else
+					return 0x95;  /* 2nd check */
+			}
+			else return 0x00;
+			break;
+	}
+
+	return -1;
+}
+
+
 int xevious_customio_r(int offset)
 {
-        /* return 00h -> free  custom_io */
-        /* return e0h -> busy  cusrom_io */
-	return 0x00;	/* everything is handled by customio_w() */
+	return customio_command;
+}
+
+
+void xevious_customio_w(int offset,int data)
+{
+if (errorlog && data != 0x10 && data != 0x71) fprintf(errorlog,"%04x: custom IO command %02x\n",cpu_getpc(),data);
+
+	customio_command = data;
+
+	switch (data)
+	{
+		case 0x10:
+			return;	/* nop */
+			break;
+	}
 }
 
 
@@ -338,36 +368,42 @@ void xevious_interrupt_enable_1_w(int offset,int data)
 
 int xevious_interrupt_1(void)
 {
-	if (interrupt_enable_1) return 0xff;
-	else return Z80_IGNORE_INT;
+	if (cpu_getiloops() == 0)
+	{
+		if (interrupt_enable_1) return interrupt();
+	}
+	else if (customio_command != 0x10)
+		return nmi_interrupt();
+
+	return ignore_interrupt();
 }
 
 
 
 void xevious_interrupt_enable_2_w(int offset,int data)
 {
-	interrupt_enable_2 = (data&1);
+	interrupt_enable_2 = data & 1;
 }
 
 
 
 int xevious_interrupt_2(void)
 {
-	if (interrupt_enable_2) return 0xff;
-	else return Z80_IGNORE_INT;
+	if (interrupt_enable_2) return interrupt();
+	else return ignore_interrupt();
 }
 
 
 
 void xevious_interrupt_enable_3_w(int offset,int data)
 {
-	interrupt_enable_3 = (data&1);
+	interrupt_enable_3 = !(data & 1);
 }
 
 
 
 int xevious_interrupt_3(void)
 {
-	if (interrupt_enable_3) return Z80_IGNORE_INT;
-	else return Z80_NMI_INT;
+	if (interrupt_enable_3) return nmi_interrupt();
+	else return ignore_interrupt();
 }

@@ -9,7 +9,6 @@ See drivers\starwars.c for notes
 
 ***************************************************************************/
 
-int starwars_init_machine(const char *);
 int starwars_trakball_r(int data);
 int starwars_interrupt(void);
 
@@ -19,10 +18,6 @@ int input_bank_1_r(int);
 int opt_0_r(int);
 int opt_1_r(int);
 int adc_r(int);
-int main_read_r(int); 
-int main_ready_flag_r(int);
-void main_wr_w(int, int);
-void sound_ready_w(int, int);
 void evggo(int, int);
 void evgres(int, int);
 void wdclr(int, int);
@@ -36,6 +31,5 @@ void nstore(int, int);
 void adcstart0(int, int);
 void adcstart1(int, int);
 void adcstart2(int, int);
-void soundrst(int, int);
 
 

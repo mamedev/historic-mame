@@ -41,24 +41,20 @@ void mystston_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 	int i;
 
 
-	for (i = 0;i < 256;i++)
+	/* the palette will be initialized by the game. We just set it to some */
+	/* pre-cooked values so the startup copyright notice can be displayed. */
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
-
-
-		bit0 = (i >> 0) & 0x01;
-		bit1 = (i >> 1) & 0x01;
-		bit2 = (i >> 2) & 0x01;
-		palette[3*i] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		bit0 = (i >> 3) & 0x01;
-		bit1 = (i >> 4) & 0x01;
-		bit2 = (i >> 5) & 0x01;
-		palette[3*i + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		bit0 = 0;
-		bit1 = (i >> 6) & 0x01;
-		bit2 = (i >> 7) & 0x01;
-		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		*(palette++) = ((i & 1) >> 0) * 0xff;
+		*(palette++) = ((i & 2) >> 1) * 0xff;
+		*(palette++) = ((i & 4) >> 2) * 0xff;
 	}
+
+	/* initialize the color table */
+	/* we reserve pen 0 for the background black which makes the */
+	/* MS-DOS version look better */
+	for (i = 0;i < Machine->drv->color_table_len;i++)
+		colortable[i] = i + 1;
 }
 
 
@@ -101,12 +97,29 @@ void mystston_vh_stop(void)
 
 void mystston_paletteram_w(int offset,int data)
 {
-	if (mystston_paletteram[offset] != data)
-	{
-		if (offset > 16) memset(dirtybuffer,1,videoram_size);
+	int bit0,bit1,bit2;
+	int r,g,b;
 
-		mystston_paletteram[offset] = data;
-	}
+	mystston_paletteram[offset] = data;
+
+	bit0 = (data >> 0) & 0x01;
+	bit1 = (data >> 1) & 0x01;
+	bit2 = (data >> 2) & 0x01;
+	r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+	bit0 = (data >> 3) & 0x01;
+	bit1 = (data >> 4) & 0x01;
+	bit2 = (data >> 5) & 0x01;
+	g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+	bit0 = 0;
+	bit1 = (data >> 6) & 0x01;
+	bit2 = (data >> 7) & 0x01;
+	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+	/* we reserve pen 0 for the background black which makes the */
+	/* MS-DOS version look better */
+	osd_modify_pen(Machine->pens[offset + 1],r,g,b);
 }
 
 
@@ -121,34 +134,6 @@ void mystston_paletteram_w(int offset,int data)
 void mystston_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs;
-
-
-	/* rebuild the color lookup table */
-	for (offs = 0;offs < 8;offs++)
-	{
-		int col;
-
-
-		col = Machine->pens[mystston_paletteram[offs]];
-		Machine->gfx[2]->colortable[offs] = col;
-	}
-	for (offs = 0;offs < 8;offs++)
-	{
-		int col;
-
-
-		col = Machine->pens[mystston_paletteram[offs + 8]];
-		Machine->gfx[0]->colortable[offs] = col;
-	}
-	for (offs = 0;offs < 8;offs++)
-	{
-		int col;
-
-
-		col = Machine->pens[mystston_paletteram[offs + 2*8]];
-		Machine->gfx[4]->colortable[offs] = col;
-	}
-
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */

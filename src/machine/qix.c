@@ -25,11 +25,47 @@ struct m6809context
 unsigned char *qix_sharedram;
 
 static int lastcheck2;
+extern int yield_cpu;		/* JB 970824 */
+extern int saved_icount;	/* JB 970824 */
 
 
+/* JB 970824 - don't interrupt when we're just yielding */
+int qix_data_interrupt(void)
+{
+	if( yield_cpu )
+		return INT_NONE;
+	else
+		return INT_IRQ;
+}
 
 int qix_sharedram_r_1(int offset)
 {
+	word pc;
+
+	pc = cpu_getpc();
+	/* JB 970824 - trap all occurrences where the main cpu is waiting for the video */
+	/*             cpu and yield immediately                                        */
+	if(pc==0xdd54 || pc==0xcf16 || pc==0xdd5a)
+	{
+		yield_cpu = TRUE;
+		saved_icount = cpu_geticount();
+		cpu_seticount (0);
+	}
+	/* JB 970824 - waiting for an IRQ */
+	else if(pc==0xdd4b && RAM[0x8520])
+		cpu_seticount (0);
+
+	/* JB 970825 - these loop optimizations work, but incorrectly affect the gameplay */
+	/*               (even with speed throttling, play is too fast)                   */
+	#if 0
+	if(pc==0xdd6b || pc==0xdd73 || pc==0xdd62)
+	{
+		yield_cpu = TRUE;
+		saved_icount = cpu_geticount();
+		cpu_seticount (0);
+	}
+	#endif
+
 	return qix_sharedram[offset];
 }
 
@@ -49,7 +85,6 @@ int qix_sharedram_r_2(int offset)
 		else
 			lastcheck2 = count;
 	}
-
 	return qix_sharedram[offset];
 }
 
@@ -99,13 +134,11 @@ int qix_scanline_r(int offset)
 
 
 
-int qix_init_machine(const char *gamename)
+void qix_init_machine(void)
 {
 	/* Set OPTIMIZATION FLAGS FOR M6809 */
 	m6809_Flags = M6809_FAST_OP | M6809_FAST_S;/* | M6809_FAST_U;*/
 
 	/* Reset the checking flags */
 	lastcheck2 = 0x7fffffff;
-
-	return 0;
 }

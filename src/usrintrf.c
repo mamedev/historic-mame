@@ -10,7 +10,7 @@
 
 
 
-static int findbestcolor(int totalcolors,const unsigned char *palette,unsigned char r,unsigned char g,unsigned char b)
+static int findbestcolor(unsigned char r,unsigned char g,unsigned char b)
 {
 	int i;
 	int best,mindist;
@@ -19,14 +19,16 @@ static int findbestcolor(int totalcolors,const unsigned char *palette,unsigned c
 	mindist = 200000;
 	best = 0;
 
-	for (i = 0;i < totalcolors;i++)
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
+		unsigned char r1,g1,b1;
 		int d1,d2,d3,dist;
 
 
-		d1 = palette[3*i] - r;
-		d2 = palette[3*i + 1] - g;
-		d3 = palette[3*i + 2] - b;
+		osd_get_pen(Machine->pens[i],&r1,&g1,&b1);
+		d1 = (int)r1 - r;
+		d2 = (int)g1 - g;
+		d3 = (int)b1 - b;
 		dist = d1*d1 + d2*d2 + d3*d3;
 
 		if (dist < mindist)
@@ -36,12 +38,12 @@ static int findbestcolor(int totalcolors,const unsigned char *palette,unsigned c
 		}
 	}
 
-	return best;
+	return Machine->pens[best];
 }
 
 
 
-struct GfxElement *builduifont(int totalcolors,const unsigned char *palette,const unsigned char *pens)
+struct GfxElement *builduifont(void)
 {
 	static unsigned char fontdata[] =
 	{
@@ -186,25 +188,22 @@ struct GfxElement *builduifont(int totalcolors,const unsigned char *palette,cons
 	};
 	struct GfxElement *font;
 	static unsigned char colortable[4*3];
+	int trueorientation;
 
+
+	/* hack: force the display into standard orientation to avoid */
+	/* creating a rotated font */
+	trueorientation = Machine->orientation;
+	Machine->orientation = ORIENTATION_DEFAULT;
 
 	if ((font = decodegfx(fontdata,&fontlayout)) != 0)
 	{
-		colortable[0] = pens[0];
-		colortable[1] = pens[findbestcolor(totalcolors,palette,0x00,0x00,0xff)];	/* blue */
-		colortable[2] = pens[findbestcolor(totalcolors,palette,0xff,0xff,0xff)];	/* white */
-		colortable[3] = pens[findbestcolor(totalcolors,palette,0x00,0x00,0x00)];	/* unused */
-		colortable[4] = pens[0];
-		colortable[5] = pens[findbestcolor(totalcolors,palette,0xff,0x00,0x00)];	/* red */
-		colortable[6] = pens[findbestcolor(totalcolors,palette,0xff,0xff,0x00)];	/* yellow */
-		colortable[7] = pens[findbestcolor(totalcolors,palette,0x00,0x00,0x00)];	/* unused */
-		colortable[8] = pens[0];
-		colortable[9] = pens[findbestcolor(totalcolors,palette,0x00,0x00,0x00)];	/* black */
-		colortable[10] = pens[findbestcolor(totalcolors,palette,0xff,0x00,0x00)];	/* red */
-		colortable[11] = pens[findbestcolor(totalcolors,palette,0x00,0x00,0x00)];	/* unused */
+		/* colortable will be set at run time */
 		font->colortable = colortable;
 		font->total_colors = 3;
 	}
+
+	Machine->orientation = trueorientation;
 
 	return font;
 }
@@ -219,6 +218,30 @@ struct GfxElement *builduifont(int totalcolors,const unsigned char *palette,cons
 ***************************************************************************/
 void displaytext(const struct DisplayText *dt,int erase)
 {
+	int trueorientation;
+
+
+	/* hack: force the display into standard orientation to avoid */
+	/* rotating the user interface */
+	trueorientation = Machine->orientation;
+	Machine->orientation = ORIENTATION_DEFAULT;
+
+
+	/* look for appropriate colors and update the colortable. This is necessary */
+	/* for dynamic palette games */
+	Machine->uifont->colortable[0] = findbestcolor(0x00,0x00,0x00);	/* black */
+	Machine->uifont->colortable[1] = findbestcolor(0x00,0x00,0xff);	/* blue */
+	Machine->uifont->colortable[2] = findbestcolor(0xff,0xff,0xff);	/* white */
+
+	Machine->uifont->colortable[4] = findbestcolor(0x00,0x00,0x00);	/* black */
+	Machine->uifont->colortable[5] = findbestcolor(0xff,0x00,0x00);	/* red */
+	Machine->uifont->colortable[6] = findbestcolor(0xff,0xff,0x00);	/* yellow */
+
+	Machine->uifont->colortable[8] = findbestcolor(0x00,0x00,0x00);	/* black */
+	Machine->uifont->colortable[9] = findbestcolor(0x00,0x00,0x00);	/* black */
+	Machine->uifont->colortable[10] = findbestcolor(0xff,0x00,0x00);	/* red */
+
+
 	if (erase) clearbitmap(Machine->scrbitmap);
 
 	while (dt->text)
@@ -260,7 +283,7 @@ void displaytext(const struct DisplayText *dt,int erase)
 
 					/* word wrap */
 
-					if (x + nextlen >= Machine->drv->screen_width)
+					if (x + nextlen > Machine->scrbitmap->width)
 					{
 						x = dt->x;
 						y += Machine->uifont->height + 1;
@@ -280,7 +303,11 @@ void displaytext(const struct DisplayText *dt,int erase)
 	}
 
 	osd_update_display();
+
+	Machine->orientation = trueorientation;
 }
+
+
 
 
 void displayset (const struct DisplayText *dt,int total,int s)
@@ -288,26 +315,30 @@ void displayset (const struct DisplayText *dt,int total,int s)
 	struct DisplayText ds[80];
 	int i,ofs;
 
-	if (((3*Machine->uifont->height * (total+1))/2) > (Machine->drv->screen_height-Machine->uifont->height))
-		    {  /* MENU SCROLL */
-		     ofs=(Machine->drv->screen_height)/2-dt[2*s].y;
-		     for (i = 0;i < total*2+2;i++)
+	if (((3*Machine->uifont->height * (total+1))/2) > (Machine->scrbitmap->height-Machine->uifont->height))
+	{  /* MENU SCROLL */
+		ofs = (Machine->scrbitmap->height)/2-dt[2*s].y;
+		if (dt[0].y + ofs > 0) ofs = -dt[0].y;
+		if (dt[2*total-2].y + ofs < Machine->scrbitmap->height-Machine->uifont->height)
+			ofs = Machine->scrbitmap->height-Machine->uifont->height - dt[2*total-2].y;
+
+		for (i = 0;i < 2*total-1;i++)
+		{
+			ds[i].color = dt[i].color;
+			ds[i].text = dt[i].text;
+			ds[i].x = dt[i].x;
+			ds[i].y = dt[i].y + ofs;
+			if ((ds[i].y<0) || (ds[i].y>(Machine->scrbitmap->height-Machine->uifont->height)))
 			{
-			 ds[i].color = dt[i].color;
-			 ds[i].text = dt[i].text;
-			 ds[i].x = dt[i].x;
-			 ds[i].y = dt[i].y + ofs;
-			 if ((ds[i].y<0) || (ds[i].y>(Machine->drv->screen_height-Machine->uifont->height)))
-			 {
-			  ds[i].x=0;
-			  ds[i].y=0;
-			  ds[i].text="  ";
-			 }
+				ds[i].x=0;
+				ds[i].y=0;
+				ds[i].text="  ";
 			}
-		    ds[total*2+1].text=0;
-		    displaytext (ds,1);
-		    }
-		else displaytext(dt,1);
+		}
+		ds[total*2-1].text=0;
+		displaytext(ds,1);
+	}
+	else displaytext(dt,1);
 }
 
 
@@ -317,11 +348,19 @@ int showcharset(void)
 	struct DisplayText dt[2];
 	char buf[80];
 	int bank,color,line, maxline;
+	int trueorientation;
 
 
 	if ((Machine->drv->gfxdecodeinfo == 0) ||
 			(Machine->drv->gfxdecodeinfo[0].memory_region == -1))
 		return 0;	/* no gfx sets, return */
+
+
+	/* hack: force the display into standard orientation to avoid */
+	/* rotating the user interface */
+	trueorientation = Machine->orientation;
+	Machine->orientation = ORIENTATION_DEFAULT;
+
 
 	bank = 0;
 	color = 0;
@@ -398,13 +437,15 @@ int showcharset(void)
 	/* clear the screen before returning */
 	clearbitmap(Machine->scrbitmap);
 
+	Machine->orientation = trueorientation;
+
 	return 0;
 }
 
 
 
 
-static int setdipswitches(void)
+static int old_setdipswitches(void)
 {
 	struct DisplayText dt[40];
 	int settings[20];
@@ -438,12 +479,12 @@ static int setdipswitches(void)
 	{
 		dt[2 * i].text = dswsettings[i].name;
 		dt[2 * i].x = 2*Machine->uifont->width;
-		dt[2 * i].y = 2*Machine->uifont->height * i + (Machine->drv->screen_height - 2*Machine->uifont->height * (total + 1)) / 2;
+		dt[2 * i].y = 2*Machine->uifont->height * i + (Machine->scrbitmap->height - 2*Machine->uifont->height * (total + 1)) / 2;
 	}
 
 	dt[2 * total].text = "RETURN TO MAIN MENU";
-	dt[2 * total].x = (Machine->drv->screen_width - Machine->uifont->width * strlen(dt[2 * total].text)) / 2;
-	dt[2 * total].y = 2*Machine->uifont->height * (total+1) + (Machine->drv->screen_height - 2*Machine->uifont->height * (total + 1)) / 2;
+	dt[2 * total].x = (Machine->scrbitmap->width - Machine->uifont->width * strlen(dt[2 * total].text)) / 2;
+	dt[2 * total].y = 2*Machine->uifont->height * (total+1) + (Machine->scrbitmap->height - 2*Machine->uifont->height * (total + 1)) / 2;
 	dt[2 * total + 1].text = 0;	/* terminate array */
 	total++;
 
@@ -458,7 +499,7 @@ static int setdipswitches(void)
 			{
 				dt[2 * i + 1].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
 				dt[2 * i + 1].text = dswsettings[i].values[settings[i]];
-				dt[2 * i + 1].x = Machine->drv->screen_width - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * i + 1].text);
+				dt[2 * i + 1].x = Machine->scrbitmap->width - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * i + 1].text);
 				dt[2 * i + 1].y = dt[2 * i].y;
 			}
 		}
@@ -546,9 +587,7 @@ static int setdipswitches(void)
 	else return 0;
 }
 
-
-
-static int setkeysettings(void)
+static int old_setkeysettings(void)
 {
 	struct DisplayText dt[80];
 	int i,s,key,done;
@@ -567,12 +606,12 @@ static int setkeysettings(void)
 	{
 		dt[2 * i].text = keysettings[i].name;
 		dt[2 * i].x = 2*Machine->uifont->width;
-		dt[2 * i].y = (3*Machine->uifont->height * i)/2 + (Machine->drv->screen_height - (3*Machine->uifont->height * (total + 1))/2) / 2;
+		dt[2 * i].y = (3*Machine->uifont->height * i)/2 + (Machine->scrbitmap->height - (3*Machine->uifont->height * (total + 1))/2) / 2;
 	}
 
 	dt[2 * total].text = "RETURN TO MAIN MENU";
-	dt[2 * total].x = (Machine->drv->screen_width - Machine->uifont->width * strlen(dt[2 * total].text)) / 2;
-	dt[2 * total].y = (3*Machine->uifont->height * (total+1))/2 + (Machine->drv->screen_height - (3*Machine->uifont->height * (total + 1))/2) / 2;
+	dt[2 * total].x = (Machine->scrbitmap->width - Machine->uifont->width * strlen(dt[2 * total].text)) / 2;
+	dt[2 * total].y = (3*Machine->uifont->height * (total+1))/2 + (Machine->scrbitmap->height - (3*Machine->uifont->height * (total + 1))/2) / 2;
 	dt[2 * total + 1].text = 0;	/* terminate array */
 	total++;
 
@@ -587,7 +626,7 @@ static int setkeysettings(void)
 			{
 				dt[2 * i + 1].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
 				dt[2 * i + 1].text = osd_key_name( Machine->gamedrv->input_ports[ keysettings[i].num ].keyboard[ keysettings[i].mask ] );
-				dt[2 * i + 1].x = Machine->drv->screen_width - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * i + 1].text);
+				dt[2 * i + 1].x = Machine->scrbitmap->width - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * i + 1].text);
 				dt[2 * i + 1].y = dt[2 * i].y;
 			}
 		}
@@ -616,7 +655,7 @@ static int setkeysettings(void)
 
 
 					dt[2 * s + 1].text = "            ";
-					dt[2 * s + 1].x = Machine->drv->screen_width - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * s + 1].text);
+					dt[2 * s + 1].x = Machine->scrbitmap->width - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * s + 1].text);
 					displayset(dt,total,s);
 					newkey = osd_read_key();
 					if (newkey != OSD_KEY_ESC)
@@ -647,9 +686,7 @@ static int setkeysettings(void)
 	else return 0;
 }
 
-
-
-static int setjoysettings(void)
+static int old_setjoysettings(void)
 {
 	struct DisplayText dt[80];
 	int i,s,key,done;
@@ -668,12 +705,12 @@ static int setjoysettings(void)
 	{
 		dt[2 * i].text = keysettings[i].name;
 		dt[2 * i].x = 2*Machine->uifont->width;
-		dt[2 * i].y = (3*Machine->uifont->height * i)/2 + (Machine->drv->screen_height - (3*Machine->uifont->height * (total + 1))/2) / 2;
+		dt[2 * i].y = (3*Machine->uifont->height * i)/2 + (Machine->scrbitmap->height - (3*Machine->uifont->height * (total + 1))/2) / 2;
 	}
 
 	dt[2 * total].text = "RETURN TO MAIN MENU";
-	dt[2 * total].x = (Machine->drv->screen_width - Machine->uifont->width * strlen(dt[2 * total].text)) / 2;
-	dt[2 * total].y = (3*Machine->uifont->height * (total+1))/2 + (Machine->drv->screen_height - (3*Machine->uifont->height * (total + 1))/2) / 2;
+	dt[2 * total].x = (Machine->scrbitmap->width - Machine->uifont->width * strlen(dt[2 * total].text)) / 2;
+	dt[2 * total].y = (3*Machine->uifont->height * (total+1))/2 + (Machine->scrbitmap->height - (3*Machine->uifont->height * (total + 1))/2) / 2;
 	dt[2 * total + 1].text = " ";
 	dt[2 * total + 1].text = 0;     /* terminate array */
 	total++;
@@ -689,7 +726,7 @@ static int setjoysettings(void)
 			{
 				dt[2 * i + 1].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
 				dt[2 * i + 1].text = osd_joy_name( Machine->gamedrv->input_ports[ keysettings[i].num ].joystick[ keysettings[i].mask ] );
-				dt[2 * i + 1].x = Machine->drv->screen_width - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * i + 1].text);
+				dt[2 * i + 1].x = Machine->scrbitmap->width - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * i + 1].text);
 				dt[2 * i + 1].y = dt[2 * i].y;
 			}
 		}
@@ -719,7 +756,7 @@ static int setjoysettings(void)
                               		extern volatile int joy_left,joy_right,joy_up,joy_down,
                                                   joy_b1,joy_b2,joy_b3,joy_b4;
 					dt[2 * s + 1].text = "            ";
-					dt[2 * s + 1].x = Machine->drv->screen_width - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * s + 1].text);
+					dt[2 * s + 1].x = Machine->scrbitmap->width - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * s + 1].text);
 					displayset(dt,total,s);
 
 					/* Check all possible joystick values for switch or button press */
@@ -770,6 +807,415 @@ static int setjoysettings(void)
 }
 
 
+
+static int setdipswitches(void)
+{
+	struct DisplayText dt[80];
+	struct NewInputPort *entry[40];
+	int i,s,key,done;
+	struct NewInputPort *in;
+	int total;
+const char *default_name(const struct NewInputPort *in);
+
+
+if (Machine->input_ports == 0)
+	return old_setdipswitches();
+
+
+	in = Machine->input_ports;
+
+	total = 0;
+	while (in->type != IPT_END)
+	{
+		if ((in->type & ~IPF_MASK) == IPT_DIPSWITCH_NAME && default_name(in) != 0 &&
+				(in->type & IPF_UNUSED) == 0)
+		{
+			entry[total] = in;
+
+			total++;
+		}
+
+		in++;
+	}
+
+	if (total == 0) return 0;
+
+	dt[2 * total].text = "Return to Main Menu";
+	dt[2 * total].x = (Machine->scrbitmap->width - Machine->uifont->width * strlen(dt[2 * total].text)) / 2;
+	dt[2 * total].y = (3*Machine->uifont->height * (total+1))/2 + (Machine->scrbitmap->height - (3*Machine->uifont->height * (total + 1))/2) / 2;
+	dt[2 * total + 1].text = 0;	/* terminate array */
+	total++;
+
+	s = 0;
+	done = 0;
+	do
+	{
+		for (i = 0;i < total;i++)
+		{
+			dt[2 * i].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
+			if (i < total - 1)
+			{
+				dt[2 * i].text = default_name(entry[i]);
+				dt[2 * i].x = 0;
+				dt[2 * i].y = (3*Machine->uifont->height * i)/2 + (Machine->scrbitmap->height - (3*Machine->uifont->height * (total + 1))/2) / 2;
+
+				dt[2 * i + 1].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
+
+				in = entry[i] + 1;
+				while ((in->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
+						in->default_value != entry[i]->default_value)
+					in++;
+
+				if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING)
+					dt[2 * i + 1].text = "INVALID";
+				else dt[2 * i + 1].text = default_name(in);
+
+				dt[2 * i + 1].x = Machine->scrbitmap->width - Machine->uifont->width*strlen(dt[2 * i + 1].text);
+				dt[2 * i + 1].y = dt[2 * i].y;
+			}
+		}
+
+		displaytext(dt,1);
+
+		key = osd_read_keyrepeat();
+
+		switch (key)
+		{
+			case OSD_KEY_DOWN:
+				if (s < total - 1) s++;
+				else s = 0;
+				break;
+
+			case OSD_KEY_UP:
+				if (s > 0) s--;
+				else s = total - 1;
+				break;
+
+			case OSD_KEY_RIGHT:
+				if (s < total - 1)
+				{
+					in = entry[s] + 1;
+					while ((in->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
+							in->default_value != entry[s]->default_value)
+						in++;
+
+					if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING)
+						/* invalid setting: revert to a valid one */
+						entry[s]->default_value = (entry[s]+1)->default_value & entry[s]->mask;
+					else
+					{
+						if (((in+1)->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING)
+							entry[s]->default_value = (in+1)->default_value & entry[s]->mask;
+					}
+				}
+				break;
+
+			case OSD_KEY_LEFT:
+				if (s < total - 1)
+				{
+					in = entry[s] + 1;
+					while ((in->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
+							in->default_value != entry[s]->default_value)
+						in++;
+
+					if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING)
+						/* invalid setting: revert to a valid one */
+						entry[s]->default_value = (entry[s]+1)->default_value & entry[s]->mask;
+					else
+					{
+						if (((in-1)->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING)
+							entry[s]->default_value = (in-1)->default_value & entry[s]->mask;
+					}
+				}
+				break;
+
+			case OSD_KEY_ENTER:
+				if (s == total - 1) done = 1;
+				break;
+
+			case OSD_KEY_ESC:
+			case OSD_KEY_TAB:
+				done = 1;
+				break;
+		}
+	} while (done == 0);
+
+	while (osd_key_pressed(key));	/* wait for key release */
+
+
+	/* clear the screen before returning */
+	clearbitmap(Machine->scrbitmap);
+
+	if (done == 2) return 1;
+	else return 0;
+}
+
+
+
+static int setkeysettings(void)
+{
+	struct DisplayText dt[80];
+	struct NewInputPort *entry[40];
+	int i,s,key,done;
+	struct NewInputPort *in;
+	int total;
+const char *default_name(const struct NewInputPort *in);
+int default_key(const struct NewInputPort *in);
+
+
+if (Machine->input_ports == 0)
+	return old_setkeysettings();
+
+
+	in = Machine->input_ports;
+
+	total = 0;
+	while (in->type != IPT_END)
+	{
+		if (default_name(in) != 0 && default_key(in) != IP_KEY_NONE &&
+				(in->type & IPF_UNUSED) == 0)
+		{
+			entry[total] = in;
+
+			total++;
+		}
+
+		in++;
+	}
+
+	if (total == 0) return 0;
+
+	dt[2 * total].text = "Return to Main Menu";
+	dt[2 * total].x = (Machine->scrbitmap->width - Machine->uifont->width * strlen(dt[2 * total].text)) / 2;
+	dt[2 * total].y = (3*Machine->uifont->height * (total+1))/2 + (Machine->scrbitmap->height - (3*Machine->uifont->height * (total + 1))/2) / 2;
+	dt[2 * total + 1].text = 0;	/* terminate array */
+	total++;
+
+	s = 0;
+	done = 0;
+	do
+	{
+		for (i = 0;i < total;i++)
+		{
+			dt[2 * i].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
+			if (i < total - 1)
+			{
+				dt[2 * i].text = default_name(entry[i]);
+				dt[2 * i].x = 0;
+				dt[2 * i].y = (3*Machine->uifont->height * i)/2 + (Machine->scrbitmap->height - (3*Machine->uifont->height * (total + 1))/2) / 2;
+				dt[2 * i + 1].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
+				dt[2 * i + 1].text = osd_key_name(default_key(entry[i]));
+				dt[2 * i + 1].x = Machine->scrbitmap->width - Machine->uifont->width*strlen(dt[2 * i + 1].text);
+				dt[2 * i + 1].y = dt[2 * i].y;
+
+				in++;
+			}
+		}
+
+		displayset(dt,total,s);
+
+		key = osd_read_keyrepeat();
+
+		switch (key)
+		{
+			case OSD_KEY_DOWN:
+				if (s < total - 1) s++;
+				else s = 0;
+				break;
+
+			case OSD_KEY_UP:
+				if (s > 0) s--;
+				else s = total - 1;
+				break;
+
+			case OSD_KEY_ENTER:
+				if (s == total - 1) done = 1;
+				else
+				{
+					int newkey;
+
+
+					dt[2 * s + 1].text = "            ";
+					dt[2 * s + 1].x = Machine->scrbitmap->width - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * s + 1].text);
+					displayset(dt,total,s);
+					newkey = osd_read_key();
+					switch (newkey)
+					{
+						case OSD_KEY_ESC:
+							entry[s]->keyboard = IP_KEY_DEFAULT;
+							break;
+
+						case OSD_KEY_P:
+						case OSD_KEY_F3:
+						case OSD_KEY_F4:
+						case OSD_KEY_TAB:
+						case OSD_KEY_F8:
+						case OSD_KEY_F9:
+						case OSD_KEY_F10:
+						case OSD_KEY_F11:
+						case OSD_KEY_F12:
+							entry[s]->keyboard = IP_KEY_NONE;
+							break;
+
+						default:
+							entry[s]->keyboard = newkey;
+							break;
+					}
+				}
+				break;
+
+			case OSD_KEY_ESC:
+			case OSD_KEY_TAB:
+				done = 1;
+				break;
+		}
+	} while (done == 0);
+
+	while (osd_key_pressed(key));	/* wait for key release */
+
+	/* clear the screen before returning */
+	clearbitmap(Machine->scrbitmap);
+
+	if (done == 2) return 1;
+	else return 0;
+}
+
+
+
+static int setjoysettings(void)
+{
+	struct DisplayText dt[80];
+	struct NewInputPort *entry[40];
+	int i,s,key,done;
+	struct NewInputPort *in;
+	int total;
+const char *default_name(const struct NewInputPort *in);
+int default_joy(const struct NewInputPort *in);
+
+
+if (Machine->input_ports == 0)
+	return old_setjoysettings();
+
+
+	in = Machine->input_ports;
+
+	total = 0;
+	while (in->type != IPT_END)
+	{
+		if (default_name(in) != 0 && default_joy(in) != IP_JOY_NONE &&
+				(in->type & IPF_UNUSED) == 0)
+		{
+			entry[total] = in;
+
+			total++;
+		}
+
+		in++;
+	}
+
+	if (total == 0) return 0;
+
+	dt[2 * total].text = "Return to Main Menu";
+	dt[2 * total].x = (Machine->scrbitmap->width - Machine->uifont->width * strlen(dt[2 * total].text)) / 2;
+	dt[2 * total].y = (3*Machine->uifont->height * (total+1))/2 + (Machine->scrbitmap->height - (3*Machine->uifont->height * (total + 1))/2) / 2;
+	dt[2 * total + 1].text = 0;	/* terminate array */
+	total++;
+
+	s = 0;
+	done = 0;
+	do
+	{
+		for (i = 0;i < total;i++)
+		{
+			dt[2 * i].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
+			if (i < total - 1)
+			{
+				dt[2 * i].text = default_name(entry[i]);
+				dt[2 * i].x = 0;
+				dt[2 * i].y = (3*Machine->uifont->height * i)/2 + (Machine->scrbitmap->height - (3*Machine->uifont->height * (total + 1))/2) / 2;
+				dt[2 * i + 1].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
+				dt[2 * i + 1].text = osd_joy_name(default_joy(entry[i]));
+				dt[2 * i + 1].x = Machine->scrbitmap->width - Machine->uifont->width*strlen(dt[2 * i + 1].text);
+				dt[2 * i + 1].y = dt[2 * i].y;
+
+				in++;
+			}
+		}
+
+		displayset(dt,total,s);
+
+		key = osd_read_keyrepeat();
+
+		switch (key)
+		{
+			case OSD_KEY_DOWN:
+				if (s < total - 1) s++;
+				else s = 0;
+				break;
+
+			case OSD_KEY_UP:
+				if (s > 0) s--;
+				else s = total - 1;
+				break;
+
+			case OSD_KEY_ENTER:
+				if (s == total - 1) done = 1;
+				else
+				{
+					int newjoy;
+                              		int joyindex, joypressed;
+					dt[2 * s + 1].text = "            ";
+					dt[2 * s + 1].x = Machine->scrbitmap->width - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * s + 1].text);
+					displayset(dt,total,s);
+
+					/* Check all possible joystick values for switch or button press */
+                              		joypressed = 0;
+                              		while (!joypressed) {
+                                          if (osd_key_pressed(OSD_KEY_ESC))
+                                              joypressed = 1;
+					  osd_poll_joystick();
+
+                                        /* Allows for "All buttons" */
+                                        if (osd_key_pressed(OSD_KEY_A)) {
+                                          entry[s]->joystick = OSD_MAX_JOY;
+                                          joypressed = 1;
+                                        }
+                                        /* Clears entry "None" */
+                                        if (osd_key_pressed(OSD_KEY_N)) {
+                                          entry[s]->joystick = IP_JOY_NONE;
+                                          joypressed = 1;
+                                        }
+
+				  	  for (joyindex = 1; joyindex < OSD_MAX_JOY; joyindex++) {
+					    newjoy = osd_joy_pressed(joyindex);
+					    if (newjoy) {
+					      entry[s]->joystick = joyindex;
+                                    	      joypressed = 1;
+					      break;
+					    }
+					  }
+                              }
+				}
+				break;
+
+			case OSD_KEY_ESC:
+			case OSD_KEY_TAB:
+				done = 1;
+				break;
+		}
+	} while (done == 0);
+
+	while (osd_key_pressed(key));	/* wait for key release */
+
+	/* clear the screen before returning */
+	clearbitmap(Machine->scrbitmap);
+
+	if (done == 2) return 1;
+	else return 0;
+}
+
+
+
 static int settraksettings(void)
 {
 	struct DisplayText dt[40];
@@ -796,12 +1242,12 @@ static int settraksettings(void)
 		  break;
 		}
 		dt[2 * i].x = 2*Machine->uifont->width;
-		dt[2 * i].y = 2*Machine->uifont->height * i + (Machine->drv->screen_height - 2*Machine->uifont->height * (total + 1)) / 2;
+		dt[2 * i].y = 2*Machine->uifont->height * i + (Machine->scrbitmap->height - 2*Machine->uifont->height * (total + 1)) / 2;
 	}
 
 	dt[2 * total].text = "RETURN TO MAIN MENU";
-	dt[2 * total].x = (Machine->drv->screen_width - Machine->uifont->width * strlen(dt[2 * total].text)) / 2;
-	dt[2 * total].y = 2*Machine->uifont->height * (total+1) + (Machine->drv->screen_height - 2*Machine->uifont->height * (total + 1)) / 2;
+	dt[2 * total].x = (Machine->scrbitmap->width - Machine->uifont->width * strlen(dt[2 * total].text)) / 2;
+	dt[2 * total].y = 2*Machine->uifont->height * (total+1) + (Machine->scrbitmap->height - 2*Machine->uifont->height * (total + 1)) / 2;
 	dt[2 * total + 1].text = 0;     /* terminate array */
 	total++;
 
@@ -817,7 +1263,7 @@ static int settraksettings(void)
 				dt[2 * i + 1].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
 				sprintf(number[i],"%3.1f",traksettings[i].scale);
 				dt[2 * i + 1].text = number[i];
-				dt[2 * i + 1].x = Machine->drv->screen_width - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * i + 1].text);
+				dt[2 * i + 1].x = Machine->scrbitmap->width - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * i + 1].text);
 				dt[2 * i + 1].y = dt[2 * i].y;
 			}
 		}
@@ -881,14 +1327,14 @@ static int settraksettings(void)
 }
 
 
-static int showcredits(void)
+int showcredits(void)
 {
 	int key;
 	struct DisplayText dt[2];
 	char buf[256];
 
 
-	strcpy(buf,"THE FOLLOWING PEOPLE CONTRIBUTED TO THIS DRIVER\n\n");
+	strcpy(buf,"The following people contributed to this driver:\n\n");
 	strcat(buf,Machine->gamedrv->credits);
 	dt[0].text = buf;
 	dt[0].color = DT_COLOR_WHITE;
@@ -921,8 +1367,8 @@ int setup_menu(void)
 	dt[5].text = "RETURN TO GAME";
 	for (i = 0;i < total;i++)
 	{
-		dt[i].x = (Machine->drv->screen_width - Machine->uifont->width * strlen(dt[i].text)) / 2;
-		dt[i].y = i * 2*Machine->uifont->height + (Machine->drv->screen_height - 2*Machine->uifont->height * (total - 1)) / 2;
+		dt[i].x = (Machine->scrbitmap->width - Machine->uifont->width * strlen(dt[i].text)) / 2;
+		dt[i].y = i * 2*Machine->uifont->height + (Machine->scrbitmap->height - 2*Machine->uifont->height * (total - 1)) / 2;
 		if (i == total-1) dt[i].y += 2*Machine->uifont->height;
 	}
 	dt[6].text = 0; /* terminate array */

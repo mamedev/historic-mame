@@ -32,34 +32,43 @@ static struct osd_bitmap *tmpbitmap1;
   bit 0 -- 390 ohm resistor  -- BLUE
 
 ***************************************************************************/
-void docastle_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+static void convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom,
+		int priority)
 {
 	int i,j;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	for (i = 0;i < 256;i++)
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		int bit0,bit1,bit2;
 
 
-		bit0 = (color_prom[i] >> 5) & 0x01;
-		bit1 = (color_prom[i] >> 6) & 0x01;
-		bit2 = (color_prom[i] >> 7) & 0x01;
-		palette[3*i] = 0x23 * bit0 + 0x4b * bit1 + 0x91 * bit2;
-		bit0 = (color_prom[i] >> 2) & 0x01;
-		bit1 = (color_prom[i] >> 3) & 0x01;
-		bit2 = (color_prom[i] >> 4) & 0x01;
-		palette[3*i + 1] = 0x23 * bit0 + 0x4b * bit1 + 0x91 * bit2;
+		/* red component */
+		bit0 = (*color_prom >> 5) & 0x01;
+		bit1 = (*color_prom >> 6) & 0x01;
+		bit2 = (*color_prom >> 7) & 0x01;
+		*(palette++) = 0x23 * bit0 + 0x4b * bit1 + 0x91 * bit2;
+		/* green component */
+		bit0 = (*color_prom >> 2) & 0x01;
+		bit1 = (*color_prom >> 3) & 0x01;
+		bit2 = (*color_prom >> 4) & 0x01;
+		*(palette++) = 0x23 * bit0 + 0x4b * bit1 + 0x91 * bit2;
+		/* blue component */
 		bit0 = 0;
-		bit1 = (color_prom[i] >> 0) & 0x01;
-		bit2 = (color_prom[i] >> 1) & 0x01;
-		palette[3*i + 2] = 0x23 * bit0 + 0x4b * bit1 + 0x91 * bit2;
+		bit1 = (*color_prom >> 0) & 0x01;
+		bit2 = (*color_prom >> 1) & 0x01;
+		*(palette++) = 0x23 * bit0 + 0x4b * bit1 + 0x91 * bit2;
+
+		color_prom++;
 	}
 
 
 	/* characters */
 	/* characters have 4 bitplanes, but they actually have only 8 colors. The fourth */
-	/* plane is used to select priority over sprites. */
+	/* plane is used to select priority over sprites. The meaning of the high bit is */
+	/* reversed in Do's Castle wrt the other games. */
 
 	/* first create a table with all colors, used to draw the background */
 	for (i = 0;i < 32;i++)
@@ -76,8 +85,16 @@ void docastle_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 	{
 		for (j = 0;j < 8;j++)
 		{
-			colortable[32*16+16*i+j] = 0;	/* high bit clear means less priority than sprites */
-			colortable[32*16+16*i+j+8] = 8*i+j;
+			if (priority == 0)	/* Do's Castle */
+			{
+				colortable[32*16+16*i+j] = 0;	/* high bit clear means less priority than sprites */
+				colortable[32*16+16*i+j+8] = 8*i+j;
+			}
+			else	/* Do Wild Ride, Do Run Run, Kick Rider */
+			{
+				colortable[32*16+16*i+j] = 8*i+j;
+				colortable[32*16+16*i+j+8] = 0;	/* high bit set means less priority than sprites */
+			}
 		}
 	}
 
@@ -101,74 +118,14 @@ void docastle_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 
 
 
-/* this is exactly the same as docastle_vh_convert_color_prom(), the only */
-/* difference being that the meaning of the high bit of character data (priority */
-/* over sprites) is reversed. */
-void dowild_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void docastle_vh_convert_color_prom(unsigned char *palette,unsigned char *colortable,const unsigned char *color_prom)
 {
-	int i,j;
+	convert_color_prom(palette,colortable,color_prom,0);
+}
 
-
-	for (i = 0;i < 256;i++)
-	{
-		int bit0,bit1,bit2;
-
-
-		bit0 = (color_prom[i] >> 5) & 0x01;
-		bit1 = (color_prom[i] >> 6) & 0x01;
-		bit2 = (color_prom[i] >> 7) & 0x01;
-		palette[3*i] = 0x23 * bit0 + 0x4b * bit1 + 0x91 * bit2;
-		bit0 = (color_prom[i] >> 2) & 0x01;
-		bit1 = (color_prom[i] >> 3) & 0x01;
-		bit2 = (color_prom[i] >> 4) & 0x01;
-		palette[3*i + 1] = 0x23 * bit0 + 0x4b * bit1 + 0x91 * bit2;
-		bit0 = 0;
-		bit1 = (color_prom[i] >> 0) & 0x01;
-		bit2 = (color_prom[i] >> 1) & 0x01;
-		palette[3*i + 2] = 0x23 * bit0 + 0x4b * bit1 + 0x91 * bit2;
-	}
-
-
-	/* characters */
-	/* characters have 4 bitplanes, but they actually have only 8 colors. The fourth */
-	/* plane is used to select priority over sprites. */
-
-	/* first create a table with all colors, used to draw the background */
-	for (i = 0;i < 32;i++)
-	{
-		for (j = 0;j < 8;j++)
-		{
-			colortable[16*i+j] = 8*i+j;
-			colortable[16*i+j+8] = 8*i+j;
-		}
-	}
-	/* now create a table with only the colors which have priority over sprites, used */
-	/* to draw the foreground. */
-	for (i = 0;i < 32;i++)
-	{
-		for (j = 0;j < 8;j++)
-		{
-			colortable[32*16+16*i+j] = 8*i+j;
-			colortable[32*16+16*i+j+8] = 0;	/* high bit set means less priority than sprites */
-		}
-	}
-
-	/* sprites */
-	/* sprites have 4 bitplanes, but they actually have only 8 colors. The fourth */
-	/* plane is used for transparency. */
-	for (i = 0;i < 32;i++)
-	{
-		for (j = 0;j < 8;j++)
-		{
-			colortable[64*16+16*i+j] = 0;	/* high bit clear means transparent */
-			colortable[64*16+16*i+j+8] = 8*i+j;
-		}
-	}
-
-	/* find a non trasparent black */
-	i = 1;
-	while (color_prom[i] != 0) i++;
-	colortable[64*16+8] = i;	/* replace pen 0 with a non trasparent black */
+void dowild_vh_convert_color_prom(unsigned char *palette,unsigned char *colortable,const unsigned char *color_prom)
+{
+	convert_color_prom(palette,colortable,color_prom,1);
 }
 
 
@@ -230,14 +187,14 @@ void docastle_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			dirtybuffer[offs] = 0;
 
-			sx = 8 * (offs / 32);
-			sy = 8 * (31 - offs % 32);
+			sx = offs % 32;
+			sy = offs / 32;
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + 8*(colorram[offs] & 0x20),
 					colorram[offs] & 0x1f,
 					0,0,
-					sx,sy,
+					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 			/* also draw the part of the character which has priority over the */
@@ -246,69 +203,7 @@ void docastle_vh_screenrefresh(struct osd_bitmap *bitmap)
 					videoram[offs] + 8*(colorram[offs] & 0x20),
 					32 + (colorram[offs] & 0x1f),
 					0,0,
-					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
-
-	/* Draw the sprites. Note that it is important to draw them exactly in this */
-	/* order, to have the correct priorities. */
-	for (offs = 0;offs < spriteram_size;offs += 4)
-	{
-		drawgfx(bitmap,Machine->gfx[1],
-			spriteram[offs + 3],
-			spriteram[offs + 2] & 0x1f,
-			spriteram[offs + 2] & 0x80,spriteram[offs + 2] & 0x40,
-			spriteram[offs],240 - spriteram[offs + 1],
-			&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
-	}
-
-
-	/* now redraw the portions of the background which have priority over sprites */
-	copybitmap(bitmap,tmpbitmap1,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
-}
-
-
-
-/* this is exactly the same as docastle_vh_screenrefresh(), only rotate 90 degrees. */
-void dowild_vh_screenrefresh(struct osd_bitmap *bitmap)
-{
-	int offs;
-
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = 8 * (offs % 32);
-			sy = 8 * (offs / 32);
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + 8*(colorram[offs] & 0x20),
-					colorram[offs] & 0x1f,
-					0,0,
-					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
-			/* also draw the part of the character which has priority over the */
-			/* sprites in another bitmap */
-			drawgfx(tmpbitmap1,Machine->gfx[0],
-					videoram[offs] + 8*(colorram[offs] & 0x20),
-					32 + (colorram[offs] & 0x1f),
-					0,0,
-					sx,sy,
+					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}

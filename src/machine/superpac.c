@@ -22,7 +22,7 @@ static int crednum[] = { 1, 2, 3, 6, 7, 1, 3, 1 };
 static int credden[] = { 1, 1, 1, 1, 1, 2, 2, 3 };
 
 
-int superpac_init_machine(const char *gamename)
+void superpac_init_machine(void)
 {
 	/* Reset all flags */
 	coin = credits = fire = start = 0;
@@ -32,8 +32,6 @@ int superpac_init_machine(const char *gamename)
 
 	/* Set optimization flags for M6809 */
 	m6809_Flags = M6809_FAST_OP | M6809_FAST_S | M6809_FAST_U;
-
-	return 0;
 }
 
 
@@ -164,7 +162,7 @@ int superpac_customio_r_1(int offset)
 						else credits -= 2 * credden[temp], start = 1;
 					}
 					else start = 0;
-					
+
 					/* I don't know the exact mix, but the low bit is used both for
 					   the fire button and for player 1 start; I'm just ORing for now */
 					val |= readinputport (2) >> 4;
@@ -347,7 +345,7 @@ void pacnpal_interrupt_enable_2_w(int offset,int data)
 	/* note: only used by Pac & Pal */
 	if (offset == 1 && cpu_getpc () == 0xf2cd && cpu_geticount () > 100)
 		cpu_seticount (100);
-	
+
 	interrupt_enable_2 = offset;
 }
 

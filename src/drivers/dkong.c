@@ -1,11 +1,14 @@
 /***************************************************************************
 
-Donkey Kong memory map (preliminary)
+Donkey Kong and Donkey Kong Jr. memory map (preliminary) (DKong 3 follows)
 
-0000-3fff ROM (Donkey Kong Jr.: 0000-5fff)
+0000-3fff ROM (Donkey Kong Jr.and Donkey Kong 3: 0000-5fff)
 6000-6fff RAM
+6900-6a7f sprites
 7000-73ff ?
 7400-77ff Video RAM
+8000-9fff ROM (DK3 only)
+
 
 
 memory mapped ports:
@@ -13,7 +16,7 @@ memory mapped ports:
 read:
 7c00      IN0
 7c80      IN1
-7d00      IN2
+7d00      IN2 (DK3: DSW2)
 7d80      DSW1
 
 *
@@ -62,7 +65,6 @@ read:
  *
 
 write:
-6900-6a7f sprites
 7800-7803 ?
 7808      ?
 7c00      Background sound/music select:
@@ -96,8 +98,64 @@ write:
 7d83      ?
 7d84      interrupt enable
 7d85      0/1 toggle
-7d86      sound processor control?
-7d87      sound processor control?
+7d86-7d87 palette bank selector (only bit 0 is significant: 7d86 = bit 0 7d87 = bit 1)
+
+
+Donkey Kong 3 memory map (preliminary):
+
+RAM and read ports same as above;
+
+write:
+7d00      ?
+7d80      ?
+7e00      ?
+7e80
+7e81      char bank selector
+7e82-7e83 ?
+7e84      interrupt enable
+7e85      ?
+7e86      \  bit 1  Seleziona probabilmente la musica per lo schema
+7e87      /  bit 0
+
+
+I/O ports
+
+write:
+00        ?
+
+*
+ * IN0 (bits NOT inverted)
+ * bit 7 : TEST
+ * bit 6 : START 2
+ * bit 5 : START 1
+ * bit 4 : JUMP player 1
+ * bit 3 : ? DOWN player 1 ?
+ * bit 2 : ? UP player 1 ?
+ * bit 1 : LEFT player 1
+ * bit 0 : RIGHT player 1
+ *
+*
+ * IN1 (bits NOT inverted)
+ * bit 7 : ?
+ * bit 6 : COIN 2
+ * bit 5 : COIN 1
+ * bit 4 : JUMP player 2
+ * bit 3 : ? DOWN player 2 ?
+ * bit 2 : ? UP player 2 ?
+ * bit 1 : LEFT player 2
+ * bit 0 : RIGHT player 2
+ *
+*
+ * DSW1 (bits NOT inverted)
+ * bit 7 : \ difficulty
+ * bit 6 : / 00 = easy  01 = medium  10 = hard  11 = hardest
+ * bit 5 : \ bonus
+ * bit 4 : / 00 = 20000  01 = 30000  10 = 40000  11 = none
+ * bit 3 : \ coins per play
+ * bit 2 : /
+ * bit 1 : \ 00 = 3 lives  01 = 4 lives
+ * bit 0 : / 10 = 5 lives  11 = 6 lives
+ *
 
 ***************************************************************************/
 
@@ -107,9 +165,12 @@ write:
 
 
 void dkongjr_gfxbank_w(int offset,int data);
+void dkong3_gfxbank_w(int offset,int data);
+void dkong_palettebank_w(int offset,int data);
 void dkong_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 int dkong_vh_start(void);
 void dkong_vh_screenrefresh(struct osd_bitmap *bitmap);
+void dkongjr_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 void dkong_sh1_w(int offset,int data);
 void dkong_sh2_w(int offset,int data);
@@ -118,62 +179,65 @@ void dkong_sh_update(void);
 
 
 
-static struct MemoryReadAddress dkong_readmem[] =
+static struct MemoryReadAddress readmem[] =
 {
+	{ 0x0000, 0x5fff, MRA_ROM },	/* DK: 0000-3fff */
 	{ 0x6000, 0x6fff, MRA_RAM },	/* including sprites RAM */
-	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x7400, 0x77ff, MRA_RAM },	/* video RAM */
 	{ 0x7c00, 0x7c00, input_port_0_r },	/* IN0 */
 	{ 0x7c80, 0x7c80, input_port_1_r },	/* IN1 */
-	{ 0x7d00, 0x7d00, input_port_2_r },	/* IN2 */
+	{ 0x7d00, 0x7d00, input_port_2_r },	/* IN2/DSW2 */
 	{ 0x7d80, 0x7d80, input_port_3_r },	/* DSW1 */
-	{ 0x7400, 0x77ff, MRA_RAM },	/* video RAM */
-	{ -1 }	/* end of table */
-};
-static struct MemoryReadAddress dkongjr_readmem[] =
-{
-	{ 0x6000, 0x6fff, MRA_RAM },	/* including sprites RAM */
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x7c00, 0x7c00, input_port_0_r },	/* IN0 */
-	{ 0x7c80, 0x7c80, input_port_1_r },	/* IN1 */
-	{ 0x7d00, 0x7d00, input_port_2_r },	/* IN2 */
-	{ 0x7d80, 0x7d80, input_port_3_r },	/* DSW1 */
-	{ 0x7400, 0x77ff, MRA_RAM },	/* video RAM */
+	{ 0x8000, 0x9fff, MRA_ROM },	/* DK3 only */
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress dkong_writemem[] =
 {
+	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x6000, 0x68ff, MWA_RAM },
-	{ 0x6a80, 0x6fff, MWA_RAM },
 	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x7d84, 0x7d84, interrupt_enable_w },
+	{ 0x6a80, 0x6fff, MWA_RAM },
 	{ 0x7400, 0x77ff, videoram_w, &videoram, &videoram_size },
-	{ 0x7c80, 0x7c80, dkongjr_gfxbank_w },
-	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x7800, 0x7803, MWA_RAM },	/* ???? */
 	{ 0x7808, 0x7808, MWA_RAM },	/* ???? */
 	{ 0x7c00, 0x7c00, dkong_sh2_w },    	/* ???? */
+	{ 0x7c80, 0x7c80, dkongjr_gfxbank_w },
 	{ 0x7d00, 0x7d07, dkong_sh1_w },    /* ???? */
 	{ 0x7d80, 0x7d80, dkong_sh3_w },
 	{ 0x7d81, 0x7d83, MWA_RAM },	/* ???? */
-	{ 0x7d85, 0x7d87, MWA_RAM },	/* ???? */
+	{ 0x7d84, 0x7d84, interrupt_enable_w },
+	{ 0x7d85, 0x7d85, MWA_RAM },
+	{ 0x7d86, 0x7d87, dkong_palettebank_w },
 	{ -1 }	/* end of table */
 };
 static struct MemoryWriteAddress dkongjr_writemem[] =
 {
-	{ 0x6000, 0x68ff, MWA_RAM },
-	{ 0x6a80, 0x6fff, MWA_RAM },
-	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x7d84, 0x7d84, interrupt_enable_w },
-	{ 0x7400, 0x77ff, videoram_w, &videoram, &videoram_size },
-	{ 0x7c80, 0x7c80, dkongjr_gfxbank_w },
 	{ 0x0000, 0x5fff, MWA_ROM },
+	{ 0x6000, 0x68ff, MWA_RAM },
+	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x6a80, 0x6fff, MWA_RAM },
+	{ 0x7400, 0x77ff, videoram_w, &videoram, &videoram_size },
 	{ 0x7800, 0x7803, MWA_RAM },	/* ???? */
 	{ 0x7808, 0x7808, MWA_RAM },	/* ???? */
 	{ 0x7c00, 0x7c00, MWA_RAM },	/* ???? */
+	{ 0x7c80, 0x7c80, dkongjr_gfxbank_w },
 	{ 0x7d00, 0x7d07, MWA_RAM },	/* ???? */
 	{ 0x7d80, 0x7d83, MWA_RAM },	/* ???? */
+	{ 0x7d84, 0x7d84, interrupt_enable_w },
 	{ 0x7d85, 0x7d87, MWA_RAM },	/* ???? */
+	{ -1 }	/* end of table */
+};
+static struct MemoryWriteAddress dkong3_writemem[] =
+{
+	{ 0x0000, 0x5fff, MWA_ROM },
+	{ 0x6000, 0x68ff, MWA_RAM },
+	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x6a80, 0x6fff, MWA_RAM },
+	{ 0x7400, 0x77ff, videoram_w, &videoram, &videoram_size },
+	{ 0x7e81, 0x7e81, dkong3_gfxbank_w },
+	{ 0x7e84, 0x7e84, interrupt_enable_w },
+	{ 0x8000, 0x9fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -206,6 +270,33 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct InputPort dkong3_input_ports[] =
+{
+	{	/* IN0 */
+		0x00,
+		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_UP, OSD_KEY_DOWN,
+				OSD_KEY_CONTROL, OSD_KEY_1, OSD_KEY_2, OSD_KEY_F1 },
+		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_UP, OSD_JOY_DOWN,
+				OSD_JOY_FIRE, 0, 0, 0 },
+	},
+	{	/* IN1 */
+		0x00,
+		{ 0, 0, 0, 0, 0, OSD_KEY_3, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* DSW2 */
+		0x00,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* DSW1 */
+		0x00,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{ -1 }	/* end of table */
+};
+
 static struct TrakPort trak_ports[] =
 {
         { -1 }
@@ -229,6 +320,15 @@ static struct DSW dsw[] =
 	{ -1 }
 };
 
+static struct DSW dkong3_dsw[] =
+{
+	{ 3, 0x03, "LIVES", { "3", "4", "5", "6" } },
+	{ 3, 0x0c, "BONUS", { "30000", "40000", "50000", "NONE" } },
+	{ 3, 0x30, "ADDITIONAL BONUS", { "30000", "40000", "50000", "NONE" } },
+	{ 3, 0xc0, "DIFFICULTY", { "EASY", "MEDIUM", "HARD", "HARDEST" } },
+	{ -1 }
+};
+
 
 static struct GfxLayout dkong_charlayout =
 {
@@ -236,8 +336,8 @@ static struct GfxLayout dkong_charlayout =
 	256,	/* 256 characters */
 	2,	/* 2 bits per pixel */
 	{ 256*8*8, 0 },	/* the two bitplanes are separated */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* pretty straightforward layout */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
 static struct GfxLayout dkongjr_charlayout =
@@ -246,20 +346,32 @@ static struct GfxLayout dkongjr_charlayout =
 	512,	/* 512 characters */
 	2,	/* 2 bits per pixel */
 	{ 0, 512*8*8 },	/* the two bitplanes are separated */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* pretty straightforward layout */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
-static struct GfxLayout spritelayout =
+static struct GfxLayout dkong_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	128,	/* 128 sprites */
 	2,	/* 2 bits per pixel */
 	{ 128*16*16, 0 },	/* the two bitplanes are separated */
-	{ 15*8, 14*8, 13*8, 12*8, 11*8, 10*8, 9*8, 8*8,
-			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7,	/* the two halves of the sprite are separated */
 			64*16*16+0, 64*16*16+1, 64*16*16+2, 64*16*16+3, 64*16*16+4, 64*16*16+5, 64*16*16+6, 64*16*16+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	16*8	/* every sprite takes 16 consecutive bytes */
+};
+static struct GfxLayout dkong3_spritelayout =
+{
+	16,16,	/* 16*16 sprites */
+	256,	/* 256 sprites */
+	2,	/* 2 bits per pixel */
+	{ 256*16*16, 0 },	/* the two bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7,	/* the two halves of the sprite are separated */
+			128*16*16+0, 128*16*16+1, 128*16*16+2, 128*16*16+3, 128*16*16+4, 128*16*16+5, 128*16*16+6, 128*16*16+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
 	16*8	/* every sprite takes 16 consecutive bytes */
 };
 
@@ -267,14 +379,20 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo dkong_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &dkong_charlayout,   0, 64 },
-	{ 1, 0x1000, &spritelayout,    64*4, 16 },
+	{ 1, 0x0000, &dkong_charlayout,      0, 64 },
+	{ 1, 0x1000, &dkong_spritelayout,    0, 64 },
 	{ -1 } /* end of array */
 };
 static struct GfxDecodeInfo dkongjr_gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &dkongjr_charlayout,     0, 128 },
-	{ 1, 0x2000, &spritelayout,       128*4,  16 },
+	{ 1, 0x2000, &dkong_spritelayout, 128*4,  16 },
+	{ -1 } /* end of array */
+};
+static struct GfxDecodeInfo dkong3_gfxdecodeinfo[] =
+{
+	{ 1, 0x0000, &dkongjr_charlayout,     0, 64 },
+	{ 1, 0x2000, &dkong3_spritelayout, 64*4, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -316,7 +434,7 @@ static unsigned char dkong_color_prom[] =
 	0xFF,0xFC,0xF0,0xFB,0xFF,0xFC,0xF0,0xFB,0xFF,0xFC,0xF0,0xFB,0xFF,0xFF,0xFA,0xF0,
 	0xFF,0xFF,0xFA,0xF3,0xFF,0xF0,0xF3,0xF5,0xFF,0xFD,0xF0,0xF5,0xFF,0xFC,0xF3,0xFA,
 	0xFF,0xF0,0xF0,0xFC,0xFF,0xFF,0xFB,0xF3,0xFF,0xFE,0xFA,0xFC,0xFF,0xFB,0xFF,0xFF,
-	/* 5f - lookup table??? */
+	/* 5f - character color codes on a per-column basis */
 	0xF0,0xF1,0xF1,0xF2,0xF6,0xF6,0xF4,0xF6,0xF6,0xF6,0xF6,0xF3,0xF6,0xF3,0xF4,0xF3,
 	0xF6,0xF6,0xF6,0xF6,0xF4,0xF3,0xF4,0xF5,0xF4,0xF6,0xF5,0xF3,0xF5,0xF3,0xF6,0xF3,
 	0xF0,0xF1,0xF1,0xF2,0xF6,0xF6,0xF4,0xF6,0xF6,0xF6,0xF6,0xF3,0xF6,0xF3,0xF4,0xF3,
@@ -337,7 +455,7 @@ static unsigned char dkong_color_prom[] =
 
 
 
-static unsigned char palette[] =
+static unsigned char dkongjr_palette[] =
 {
 	0x00,0x00,0x00, /* BLACK */
 	0xff,0xff,0xff, /* WHITE */
@@ -514,6 +632,222 @@ static unsigned char dkongjr_colortable[] =
 };
 
 
+static unsigned char dkong3_palette[] =
+{
+	0x00,0x00,0x00,	/* BLACK */
+	0xdb,0x00,0x00,	/* RED */
+	0xdb,0x92,0x49,	/* BROWN */
+	0xff,0xb6,0xdb,	/* PINK */
+	0x00,0xdb,0x00,	/* UNUSED */
+	0x00,0xdb,0xdb,	/* CYAN */
+	0x49,0xb6,0xdb,	/* DKCYAN */
+	0xff,0xb6,0x49,	/* DKORANGE */
+	0x88,0x88,0x88,	/* UNUSED */
+	0xdb,0xdb,0x00,	/* YELLOW */
+	0xff,0x00,0xdb,	/* UNUSED */
+	0x24,0x24,0xdb,	/* BLUE */
+	0x00,0xdb,0x00,	/* GREEN */
+	0x49,0xb6,0x92,	/* DKGREEN */
+	0xff,0xb6,0x92,	/* LTORANGE */
+	0xdb,0xdb,0xdb	/* GREY */
+};
+
+enum { DK3_BLACK,DK3_RED,DK3_BROWN,DK3_PINK,DK3_UNUSED1,DK3_CYAN,DK3_DKCYAN,
+		DK3_DKORANGE,DK3_UNUSED2,DK3_YELLOW,DK3_UNUSED3,DK3_BLUE,DK3_GREEN,
+		DK3_DKGREEN,DK3_LTORANGE,DK3_GREY };
+
+/* Used for common colors (much easier to change them here!) */
+#define DK_LEAVE_MIDDLE     11
+#define DK_VINES_EDGE       13
+#define LEAVE_EDGE          12
+#define LEAVE_MIDDLE_LEV2   6
+#define LEAVE_EDGE_LEV2     11
+#define TRUNK_LEV2          13
+
+static unsigned char dkong3_colortable[] =
+{
+    /* chars */
+    /* (#0-3) NUMBERS, 1UP/2UP, TREE TRUNK on Level 2. */
+    DK3_BLACK,DK3_UNUSED1,DK3_UNUSED2,DK3_GREY, /* #0. ?,?,0123 */
+    DK3_BLACK,DK3_UNUSED1,DK3_UNUSED2,DK3_GREY, /* #1. ?,?,4567 */
+    DK3_BLACK,DK3_UNUSED1,DK3_RED,DK3_GREY,     /* #2. ?,color of part of "1UP",89 */
+
+    /* 2=color of tree trunk on level 2, 3=color of "UP 2UP",
+       4=tree trunk on level 2  */
+    DK3_BLACK,LEAVE_EDGE_LEV2,DK3_RED,TRUNK_LEV2,
+
+    /* (#4-12) A-Z, "TOP", & top vines on Level 1. */
+    DK3_BLACK,DK3_RED,DK3_RED,DK3_RED,
+    DK3_BLACK,DK3_RED,DK3_RED,DK3_RED,
+    DK3_BLACK,DK3_RED,DK3_RED,DK3_RED,
+    DK3_BLACK,DK3_RED,DK3_RED,DK3_RED,
+    DK3_BLACK,DK3_RED,DK3_RED,DK3_RED,
+    DK3_BLACK,DK3_RED,DK3_RED,DK3_RED,
+    DK3_BLACK,DK_VINES_EDGE,DK3_RED,DK3_RED, /* #10. "T" in TOP, XYZ */
+
+    /* 2="OP" & top vines in level 1, 3="OP" & top vines in level 1
+       4=top vines in level 1.  */
+    DK3_BLACK,DK_VINES_EDGE,DK_VINES_EDGE,DK_VINES_EDGE,
+
+    /* 2=top-vines, 3=???, 4=top-vines */
+    DK3_BLACK,DK_VINES_EDGE,DK3_UNUSED3,DK_VINES_EDGE,
+
+    /* (#13-15) TIME display and the 2-color box around it. */
+    DK3_BLACK,DK3_RED,DK3_BLUE,DK3_GREY,        /* #13. outerborder, innerborder, ??? */
+    DK3_BLACK,DK3_BLUE,DK3_BLUE,DK3_GREY,       /* #14. "TIME" display, line under time, ??? */
+    DK3_BLACK,DK3_RED,DK3_BLUE,DK3_GREY,        /* #15. outerborder, innerborder, ??? */
+
+    /* (#16-22) 2=shadow of "3", 3=outline of "3" & vines, 4=middle of "3" */
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,  /* 3=vertical vines  */
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,  /* 3=horizontal vines */
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,  /* 2=box on bottom, 3=vines in box. */
+
+    /* 2=shadow of "3" & middle of DK-logo & middle of box on bottom
+       3=outline of "3" & outline of DK-logo & vines in box on bottom
+       4=middle of "3"  */
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#23-47) DK-LOGO
+       2=middle of DK-logo & line on top of boxes on side of levels,
+       3=boxes on side of level & outline of DK-logo, 4=boxes on side of levels  */
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#28) 2=middle of DK-logo & leaves, 3=outline of DK-logo, 4=edge of leaves */
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#32) 2=middle of leaves & shadow of "3", 3=outline of "3",
+       4=edge of leaves & middle of "3"  */
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#33) 2=middle of leaves & shadow of "3", 4=edge of leaves */
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#34-36) 2=middle of DK-logo & middle of leaves, 3=outline of DK-logo,
+       4=edge of leaves */
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#37-38) 2=middle of DK-logo, 3=outline of DK-logo */
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#39) 2=middle of DK-logo & color of DK's hanging vines, 3=outline of
+       DK-logo, 4=color of DK's hanging vines (mixed w/color 2).  */
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#40-41) 2=middle of DK-logo & boxes near bottom, 3=outline of DK-logo &
+       lines in boxes near bottom. */
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#42) 2=middle of DK-logo & boxes near bottom, 3=outline of DK-logo &
+       lines in boxes near bottom, 4=boxes on side of levels  */
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#43-46) DK-Logo, ANGLED pieces on side of levels.
+       2=middle of DK-logo, 3=outline of DK-logo, 4=boxes on side of levels */
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#47) 2=leave middle, 4=leave edge & boxes on side of levels */
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#48-53) LEAVES on Level 1, LETTERS on title screen.
+       2=leave middle, 4=leave edges & some letters  */
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#54-57) LEAVES on Level 1, (56-57) LETTERS on title screen
+       2=leave middle, 4=leave edges  */
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    /* 2=some letters on title screen  */
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#58) 2=tree trunk & some letters on title screen & angled pieces
+       on Level 2, 4=tree trunk & tops of angulars on Level 2.  */
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#59) 2=some letters on title screen */
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#60) 2=some letters on title screen & vines on level 2, 3=side bar,
+       4=vines on level 2.  */
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#61) 2=some letters on title screen & angulars on level 2,
+     4=top of angled pieces on level 2.  */
+    DK3_BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#62-63) LEAVES ON LEVEL 2.
+       2=middle of leaves on level 2, 4=edges of leaves on level 2.  */
+    DK3_BLACK,LEAVE_MIDDLE_LEV2,DK3_UNUSED3,LEAVE_EDGE_LEV2,
+    DK3_BLACK,LEAVE_MIDDLE_LEV2,DK3_UNUSED3,LEAVE_EDGE_LEV2,
+
+    /* sprites */
+    /* #0. Donkey Kong's head. */
+    DK3_BLACK,DK3_BROWN,DK3_RED,DK3_GREY,
+
+    DK3_BLACK,DK3_UNUSED1,DK3_UNUSED2,DK3_UNUSED3,       /* ???? */
+    DK3_BLACK,DK3_UNUSED2,DK3_UNUSED1,DK3_UNUSED3,       /* ???? */
+
+    /* #3. Middle-vertical-vines on level 2. */
+    DK3_BLACK,DK_VINES_EDGE,DK_LEAVE_MIDDLE,LEAVE_EDGE,
+
+    DK3_BLACK,DK3_UNUSED3,DK3_UNUSED2,DK3_UNUSED1,       /* ???? */
+
+    /* #5. Box on the bottom-middle of level #1, 2=box color, 3=lines in box, 4=???  */
+    DK3_BLACK,DK_VINES_EDGE,DK_LEAVE_MIDDLE,DK3_GREY,
+
+    DK3_BLACK,DK3_UNUSED1,DK3_UNUSED3,DK3_UNUSED2,       /* ???? */
+
+    /* #7. Mario's body? */
+    DK3_BLACK,DK3_RED,DK3_DKGREEN,DK3_BLUE,
+    /* #8. Mario's head */
+    DK3_BLACK,DK3_BROWN,DK3_LTORANGE,DK3_BLUE,
+
+    /* #9. Mario's BULLETS (weak gun) */
+    DK3_BLACK,DK3_GREEN,DK3_RED,DK3_BLUE,
+
+    /* #10. Bee hives & 2-hit bugs (level 3) (EYES,WINGS/FEET,BODY/ANTENNA)
+            also color of SHOTS & PLAYER when player gets spray bottle. */
+    DK3_BLACK,DK3_BROWN,DK3_RED,DK3_YELLOW,
+
+    /* #11. Bugs-common ones (EYES,WINGS/FEET,BODY/ANTENNA) */
+    DK3_BLACK,DK3_GREEN,DK3_DKGREEN,DK3_BLUE,
+
+    /* #12. Bugs */
+    DK3_BLACK,DK3_BLUE,DK3_DKGREEN,DK3_GREEN,
+
+    /* #13. Worm (BODY,EYES/STRIPES,STRIPES) */
+    DK3_BLACK,DK3_RED,DK3_DKCYAN,DK3_YELLOW,
+
+    /* #14. Spray Bottle & flowers? (near DK on level 1) */
+    DK3_BLACK,DK3_GREEN,DK3_RED,DK3_GREY,
+
+    /* #15. Donkey Kong's body. (BODY,CHEST,EDGES), also BALL on level 2. */
+    DK3_BLACK,DK3_BROWN,DK3_RED,DK3_RED
+};
+
+
 
 static struct MachineDriver dkong_machine_driver =
 {
@@ -523,7 +857,7 @@ static struct MachineDriver dkong_machine_driver =
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz (?) */
 			0,
-			dkong_readmem,dkong_writemem,0,0,
+			readmem,dkong_writemem,0,0,
 			nmi_interrupt,1
 		}
 	},
@@ -531,11 +865,12 @@ static struct MachineDriver dkong_machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	dkong_gfxdecodeinfo,
-	256, 64*4+16*4,
+	256, 64*4,
 	dkong_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
 	dkong_vh_start,
 	generic_vh_stop,
@@ -549,8 +884,6 @@ static struct MachineDriver dkong_machine_driver =
 	dkong_sh_update
 };
 
-
-
 static struct MachineDriver dkongjr_machine_driver =
 {
 	/* basic machine hardware */
@@ -559,7 +892,7 @@ static struct MachineDriver dkongjr_machine_driver =
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz (?) */
 			0,
-			dkongjr_readmem,dkongjr_writemem,0,0,
+			readmem,dkongjr_writemem,0,0,
 			nmi_interrupt,1
 		}
 	},
@@ -567,15 +900,51 @@ static struct MachineDriver dkongjr_machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	dkongjr_gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(dkongjr_colortable),
+	sizeof(dkongjr_palette)/3,sizeof(dkongjr_colortable),
 	0,
 
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
 	dkong_vh_start,
 	generic_vh_stop,
-	dkong_vh_screenrefresh,
+	dkongjr_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	0,
+	0,
+	0
+};
+
+static struct MachineDriver dkong3_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			4000000,	/* 4 Mhz ? */
+			0,
+			readmem,dkong3_writemem,0,0,
+			nmi_interrupt,1
+		}
+	},
+	60,
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	dkong3_gfxdecodeinfo,
+	sizeof(dkong3_palette)/3,sizeof(dkong3_colortable),
+	0,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	dkong_vh_start,
+	generic_vh_stop,
+	dkongjr_vh_screenrefresh,
 
 	/* sound hardware */
 	0,
@@ -599,6 +968,7 @@ ROM_START( dkong_rom )
 	ROM_LOAD( "dk.5c",  0x1000, 0x1000, 0x36320606 )
 	ROM_LOAD( "dk.5b",  0x2000, 0x1000, 0x57b81038 )
 	ROM_LOAD( "dk.5a",  0x3000, 0x1000, 0xe2f03e46 )
+	/* space for diagnostic ROM */
 
 	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "dk.3n",  0x0000, 0x0800, 0x5947fc8f )
@@ -656,6 +1026,26 @@ ROM_START( dkongjr_rom )
 
 	ROM_REGION(0x1000)	/* sound? */
 	ROM_LOAD( "dkj.3h",  0x0000, 0x1000, 0x65e71f9f )
+ROM_END
+
+ROM_START( dkong3_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "dk3c.7b", 0x0000, 0x2000, 0x1f48b2d8 )
+	ROM_LOAD( "dk3c.7c", 0x2000, 0x2000, 0x02129a26 )
+	ROM_LOAD( "dk3c.7d", 0x4000, 0x2000, 0xf6ac38f8 )
+	ROM_LOAD( "dk3c.7e", 0x8000, 0x2000, 0x9aa51d95 )
+
+	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "dk3v.3n", 0x0000, 0x1000, 0xce64f6d0 )
+	ROM_LOAD( "dk3v.3p", 0x1000, 0x1000, 0x06537143 )
+	ROM_LOAD( "dk3v.7c", 0x2000, 0x1000, 0xfdc2c044 )
+	ROM_LOAD( "dk3v.7d", 0x3000, 0x1000, 0x79ed16db )
+	ROM_LOAD( "dk3v.7e", 0x4000, 0x1000, 0x233a64e8 )
+	ROM_LOAD( "dk3v.7f", 0x5000, 0x1000, 0x4381b33d )
+
+	ROM_REGION(0x4000)	/* sound */
+	ROM_LOAD( "dk3c.5l", 0x0000, 0x2000, 0x34813d8d )
+	ROM_LOAD( "dk3c.6h", 0x2000, 0x2000, 0xe2c9caa7 )
 ROM_END
 
 
@@ -739,21 +1129,64 @@ static void hisave(const char *name)
 
 
 
+static int dkong3_hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x6b1d],"\x00\x20\x01",3) == 0 &&
+			memcmp(&RAM[0x6ba5],"\x00\x32\x00",3) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x6b00],1,34*5,f);	/* hi scores */
+			RAM[0x68f3] = RAM[0x6b1f];
+			RAM[0x68f4] = RAM[0x6b1e];
+			RAM[0x68f5] = RAM[0x6b1d];
+			fread(&RAM[0x6c20],1,0x40,f);	/* distributions */
+			fread(&RAM[0x6c16],1,4,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void dkong3_hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x6b00],1,34*5,f);	/* hi scores */
+		fwrite(&RAM[0x6c20],1,0x40,f);	/* distribution */
+		fwrite(&RAM[0x6c16],1,4,f);
+		fclose(f);
+	}
+}
+
+
+
 struct GameDriver dkong_driver =
 {
 	"Donkey Kong (US version)",
 	"dkong",
-	"GARY SHEPHERDSON\nBRAD THOMAS\nEDWARD MASSEY\nNICOLA SALMORIA\nRON FRIES\nPAUL BERBERICH",
+	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nEdward Massey (MageX emulator)\nNicola Salmoria (MAME driver)\nRon Fries (sound)\nGary Walton (color info)\nSimon Walls (color info)",
 	&dkong_machine_driver,
 
 	dkong_rom,
 	0, 0,
 	sample_names,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	dkong_color_prom, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
@@ -762,17 +1195,17 @@ struct GameDriver dkongjp_driver =
 {
 	"Donkey Kong (Japanese version)",
 	"dkongjp",
-	"GARY SHEPHERDSON\nBRAD THOMAS\nEDWARD MASSEY\nNICOLA SALMORIA\nRON FRIES\nPAUL BERBERICH",
+	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nEdward Massey (MageX emulator)\nNicola Salmoria (MAME driver)\nRon Fries (sound)\nGary Walton (color info)\nSimon Walls (color info)",
 	&dkong_machine_driver,
 
 	dkongjp_rom,
 	0, 0,
 	sample_names,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	dkong_color_prom, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
@@ -781,17 +1214,36 @@ struct GameDriver dkongjr_driver =
 {
 	"Donkey Kong Jr.",
 	"dkongjr",
-	"GARY SHEPHERDSON\nBRAD THOMAS\nNICOLA SALMORIA\nPAUL BERBERICH",
+	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nNicola Salmoria (MAME driver)\nPaul Berberich (colors)\nMarc Vergoossen (colors)",
 	&dkongjr_machine_driver,
 
 	dkongjr_rom,
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
-	0, palette, dkongjr_colortable,
-	8*13, 8*16,
+	0, dkongjr_palette, dkongjr_colortable,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver dkong3_driver =
+{
+	"Donkey Kong 3",
+	"dkong3",
+	"Mirko Buffoni (MAME driver)\nNicola Salmoria (additional code)\nMatthew Hillmer (colors)",
+	&dkong3_machine_driver,
+
+	dkong3_rom,
+	0, 0,
+	0,
+
+	dkong3_input_ports, 0, trak_ports, dkong3_dsw, keys,
+
+	0, dkong3_palette, dkong3_colortable,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };

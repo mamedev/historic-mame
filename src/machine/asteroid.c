@@ -121,13 +121,13 @@ int asteroid_DSW1_r (int offset) {
 void asteroid_bank_switch_w (int offset,int data) {
 
 	int newbank;
-	
+
 	newbank = (data >> 2) & 1;
 	if (bank != newbank) {
 		/* Perform bankswitching on page 1 and page 2 */
 		int temp;
 		int i;
-		
+
 		bank = newbank;
 		for (i = 0; i < 0x100; i++) {
 			temp = RAM[0x100 + i];
@@ -136,11 +136,11 @@ void asteroid_bank_switch_w (int offset,int data) {
 			}
 		}
 	}
-	
+
 void astdelux_bank_switch_w (int offset,int data) {
 
 	int newbank;
-	
+
 	switch (offset & 0x07) {
 		case 0: /* Player 1 start LED */
 			break;
@@ -156,7 +156,7 @@ void astdelux_bank_switch_w (int offset,int data) {
 				/* Perform bankswitching on page 1 and page 2 */
 				int temp;
 				int i;
-		
+
 				bank = newbank;
 				for (i = 0; i < 0x100; i++) {
 					temp = RAM[0x100 + i];
@@ -173,9 +173,9 @@ void astdelux_bank_switch_w (int offset,int data) {
 			break;
 		}
 	}
-	
-int asteroid_init_machine(const char *gamename) {
+
+void asteroid_init_machine(void)
+{
 	bank = 0;
-	return 0;
-	}
-	
+}
+

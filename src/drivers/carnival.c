@@ -197,6 +197,7 @@ static struct MachineDriver machine_driver =
 	64,32*2,
 	carnival_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -257,21 +258,64 @@ static const char *carnival_sample_names[] =					/* MJC */
 
 
 
+static int hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+        if ((memcmp(&RAM[0xE397],"\x00\x00\x00",3) == 0) &&
+		(memcmp(&RAM[0xE5A2],"   ",3) == 0))
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			/* Read the scores */
+                        fread(&RAM[0xE397],1,2*30,f);
+			/* Read the initials */
+                        fread(&RAM[0xE5A2],1,9,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		/* Save the scores */
+                fwrite(&RAM[0xE397],1,2*30,f);
+		/* Save the initials */
+                fwrite(&RAM[0xE5A2],1,9,f);
+		fclose(f);
+	}
+
+}
+
+
+
 struct GameDriver carnival_driver =
 {
 	"Carnival",
 	"carnival",
-	"MIKE COATES\nRICHARD DAVIES\nNICOLA SALMORIA",
+	"MIKE COATES\nRICHARD DAVIES\nNICOLA SALMORIA\nMIKE BALFOUR",
 	&machine_driver,
 
 	carnival_rom,
 	0, 0,
 	carnival_sample_names,										/* MJC */
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };

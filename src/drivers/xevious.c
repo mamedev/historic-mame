@@ -75,6 +75,8 @@ Xevious memory map (preliminary)
                       A0-2 : bit select(6800H=bit0 , 6801=bit1,6807=bit7)
                       D0   : DIP SW.A bit read
                       D1   : DIP SW.B bit read
+                    DIP SW.A
+                      Bit0 = BLASTER SWITCH
     6800H-680FH R   shadow(6800H-6807H)
     6800H-681FH W   Sound RAM0 (same to DIGDUG ?)
                       D0-3:data
@@ -214,15 +216,17 @@ int  xevious_dsw_r(int offset);
 void xevious_interrupt_enable_1_w(int offset,int data);
 void xevious_interrupt_enable_2_w(int offset,int data);
 void xevious_interrupt_enable_3_w(int offset,int data);
-void xevious_halt_w(int offset,int data);
-int  xevious_customio_r(int offset);
-void xevious_customio_w(int offset,int data);
 void xevious_bs_w(int offset,int data);
 int  xevious_bb_r(int offset);
+int xevious_customio_r(int offset);
+int xevious_customio_data_r(int offset);
+void xevious_customio_w(int offset,int data);
+void xevious_customio_data_w(int offset,int data);
+void xevious_halt_w(int offset,int data);
 int  xevious_interrupt_1(void);
 int  xevious_interrupt_2(void);
 int  xevious_interrupt_3(void);
-int  xevious_init_machine(const char *gamename);
+void xevious_init_machine(void);
 
 extern unsigned char *xevious_vlatches;
 void xevious_vh_latch_w(int offset, int data);
@@ -245,7 +249,7 @@ extern unsigned char *pengo_soundregs;
 static struct MemoryReadAddress readmem_cpu1[] =
 {
 	{ 0x6800, 0x6807, xevious_dsw_r },
-	{ 0x7000, 0x700f, MRA_RAM },
+	{ 0x7000, 0x700f, xevious_customio_data_r },
 	{ 0x7100, 0x7100, xevious_customio_r },
 	{ 0x7800, 0xcfff, xevious_sharedram_r },
 	{ 0xf000, 0xffff, xevious_bb_r },
@@ -256,8 +260,6 @@ static struct MemoryReadAddress readmem_cpu1[] =
 static struct MemoryReadAddress readmem_cpu2[] =
 {
 	{ 0x6800, 0x6807, xevious_dsw_r },
-	{ 0x7000, 0x700f, MRA_RAM },
-	{ 0x7100, 0x7100, xevious_customio_r },
 	{ 0x7800, 0xcfff, xevious_sharedram_r },
 	{ 0xf000, 0xffff, xevious_bb_r },
 	{ 0x0000, 0x1fff, MRA_ROM },
@@ -278,7 +280,7 @@ static struct MemoryWriteAddress writemem_cpu1[] =
         { 0x6822, 0x6822, xevious_interrupt_enable_3_w },
 	{ 0x6823, 0x6823, xevious_halt_w },			/* reset controll */
 	{ 0x6830, 0x683f, MWA_NOP },				/* watch dock reset */
-	{ 0x7000, 0x700f, MWA_RAM },
+	{ 0x7000, 0x700f, xevious_customio_data_w },
 	{ 0x7100, 0x7100, xevious_customio_w },
 	{ 0x7800, 0xafff, xevious_sharedram_w, &xevious_sharedram },
 	{ 0xb000, 0xb7ff, colorram_w, &colorram },
@@ -301,8 +303,6 @@ static struct MemoryWriteAddress writemem_cpu2[] =
         { 0x6822, 0x6822, xevious_interrupt_enable_3_w },
 	{ 0x6823, 0x6823, xevious_halt_w },			/* reset controll */
 	{ 0x6830, 0x683f, MWA_NOP },				/* watch dock reset */
-	{ 0x7000, 0x700f, MWA_RAM },
-	{ 0x7100, 0x7100, xevious_customio_w },
 	{ 0x7800, 0xafff, xevious_sharedram_w },
 	{ 0xb000, 0xb7ff, colorram_w },
 	{ 0xb800, 0xbfff, xevious_colorram2_w },
@@ -325,63 +325,272 @@ static struct MemoryWriteAddress writemem_cpu3[] =
 
 
 
+INPUT_PORTS_START( xevious_input_ports )
+	PORT_START	/* DSW0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x08, "1 Coin/2 Credit" )
+	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x00, "1 Coin/6 Credits" )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x60, 0x60, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Easy" )
+	PORT_DIPSETTING(    0x60, "Normal" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	/* when switch is on Namco, high score names are 10 letters long */
+	PORT_DIPNAME( 0x80, 0x80, "Copyright", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Namco" )
+	PORT_DIPSETTING(    0x80, "Atari/Namco" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Left Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
+	/* TODO: bonus scores are different for 5 lives */
+	PORT_DIPNAME( 0x1c, 0x1c, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x18, "10000 40000" )
+	PORT_DIPSETTING(    0x14, "10000 50000" )
+	PORT_DIPSETTING(    0x10, "20000 50000" )
+	PORT_DIPSETTING(    0x0c, "20000 70000" )
+	PORT_DIPSETTING(    0x08, "20000 80000" )
+	PORT_DIPSETTING(    0x1c, "20000 60000" )
+	PORT_DIPSETTING(    0x04, "20000 and 60000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x60, 0x60, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "1" )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x60, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+
+	PORT_START	/* FAKE */
+	/* The player inputs are not memory mapped, they are handled by an I/O chip. */
+	/* These fake input ports are read by galaga_customio_data_r() */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )	/* there's a BUTTON1 | IMPULSE here, */
+												/* handled by galaga_customio_data_r() */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* FAKE */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY  | IPF_COCKTAIL)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY  | IPF_COCKTAIL)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY  | IPF_COCKTAIL)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY  | IPF_COCKTAIL)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )	/* there's a BUTTON1 | IMPULSE here, */
+												/* handled by galaga_customio_data_r() */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* FAKE */
+	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_START1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_START2 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
+
+/* same as xevious, the only difference is DSW0 bit 7 */
+INPUT_PORTS_START( xeviousn_input_ports )
+	PORT_START	/* DSW0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x08, "1 Coin/2 Credit" )
+	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x00, "1 Coin/6 Credits" )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x60, 0x60, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Easy" )
+	PORT_DIPSETTING(    0x60, "Normal" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x80, 0x80, "Freeze?", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Left Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
+	/* TODO: bonus scores are different for 5 lives */
+	PORT_DIPNAME( 0x1c, 0x1c, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x18, "10000 40000" )
+	PORT_DIPSETTING(    0x14, "10000 50000" )
+	PORT_DIPSETTING(    0x10, "20000 50000" )
+	PORT_DIPSETTING(    0x0c, "20000 70000" )
+	PORT_DIPSETTING(    0x08, "20000 80000" )
+	PORT_DIPSETTING(    0x1c, "20000 60000" )
+	PORT_DIPSETTING(    0x04, "20000 and 60000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x60, 0x60, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "1" )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x60, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+
+	PORT_START	/* FAKE */
+	/* The player inputs are not memory mapped, they are handled by an I/O chip. */
+	/* These fake input ports are read by galaga_customio_data_r() */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )	/* there's a BUTTON1 | IMPULSE here, */
+												/* handled by galaga_customio_data_r() */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* FAKE */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY  | IPF_COCKTAIL)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY  | IPF_COCKTAIL)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY  | IPF_COCKTAIL)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY  | IPF_COCKTAIL)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )	/* there's a BUTTON1 | IMPULSE here, */
+												/* handled by galaga_customio_data_r() */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* FAKE */
+	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_START1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_START2 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
+
+/* same as xevious, the only difference is DSW0 bit 7. Note that the bit is */
+/* inverted wrt xeviousn. */
+INPUT_PORTS_START( sxevious_input_ports )
+	PORT_START	/* DSW0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x08, "1 Coin/2 Credit" )
+	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x00, "1 Coin/6 Credits" )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x60, 0x60, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Easy" )
+	PORT_DIPSETTING(    0x60, "Normal" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x80, 0x00, "Freeze?", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x80, "On" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Left Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
+	/* TODO: bonus scores are different for 5 lives */
+	PORT_DIPNAME( 0x1c, 0x1c, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x18, "10000 40000" )
+	PORT_DIPSETTING(    0x14, "10000 50000" )
+	PORT_DIPSETTING(    0x10, "20000 50000" )
+	PORT_DIPSETTING(    0x0c, "20000 70000" )
+	PORT_DIPSETTING(    0x08, "20000 80000" )
+	PORT_DIPSETTING(    0x1c, "20000 60000" )
+	PORT_DIPSETTING(    0x04, "20000 and 60000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x60, 0x60, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "1" )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x60, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+
+	PORT_START	/* FAKE */
+	/* The player inputs are not memory mapped, they are handled by an I/O chip. */
+	/* These fake input ports are read by galaga_customio_data_r() */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )	/* there's a BUTTON1 | IMPULSE here, */
+												/* handled by galaga_customio_data_r() */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* FAKE */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY  | IPF_COCKTAIL)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY  | IPF_COCKTAIL)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY  | IPF_COCKTAIL)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY  | IPF_COCKTAIL)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )	/* there's a BUTTON1 | IMPULSE here, */
+												/* handled by galaga_customio_data_r() */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* FAKE */
+	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_START1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_START2 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
 
 
-static struct InputPort input_ports[] =
-{
-	{	/* IN0 */
-		0xff,
-		{ OSD_KEY_ALT/*OSD_KEY_1*/, OSD_KEY_2, 0, 0, OSD_KEY_3, 0, 0, 0 },
-		{ OSD_JOY_FIRE2, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN1 */
-		0xff,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_DOWN, OSD_KEY_UP,
-				OSD_KEY_ALT, OSD_KEY_CONTROL, 0, 0 },
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_DOWN, OSD_JOY_UP,
-				OSD_JOY_FIRE2, OSD_JOY_FIRE1, 0, 0 }
-	},
-	{	/* IN2 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW1 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW2 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
-
-
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
-
-static struct KEYSet keys[] =
-{
-        { 1, 3, "MOVE UP" },
-        { 1, 1, "MOVE LEFT"  },
-        { 1, 0, "MOVE RIGHT" },
-        { 1, 2, "MOVE DOWN" },
-        { 1, 5, "FIRE" },
-        { 1, 4, "BOMB" },
-        { -1 }
-};
-
-
-
-static struct DSW dsw[] =
-{
-	{ -1 }
-};
 
 /* foreground characters */
 static struct GfxLayout charlayout =
@@ -546,6 +755,8 @@ static unsigned char color_prom[] =
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 	/* 3Llow/3Mhigh: sprite lookup table */
+	/* These are probably not the original PROMs. The transparency information */
+	/* (bit 7) is missing. The 0x80 bytes are mine, needed to fix the targeting cursor */
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x09,0x05,0x25,0x01,0x44,0x26,0x65,
 	0x00,0x26,0x00,0x66,0x67,0x34,0x68,0x69,0x00,0x2F,0x00,0x66,0x67,0x34,0x68,0x69,
 	0x00,0x47,0x00,0x66,0x67,0x34,0x68,0x69,0x00,0x48,0x00,0x66,0x67,0x34,0x68,0x69,
@@ -562,12 +773,12 @@ static unsigned char color_prom[] =
 	0x00,0x3C,0x76,0x76,0x77,0x77,0x00,0x3C,0x00,0x6D,0x78,0x78,0x79,0x79,0x00,0x6D,
 	0x00,0x6E,0x7A,0x7A,0x7B,0x7B,0x00,0x6E,0x00,0x3D,0x00,0x66,0x67,0x34,0x68,0x69,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x09,0x46,0x09,0x00,0x00,0x00,0x00,0x00,0x09,0x00,0x09,0x00,0x00,0x00,0x00,
-	0x00,0x64,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x3D,0x26,0x46,0x00,0x00,0x00,0x00,
+	0x00,0x09,0x46,0x09,0x00,0x00,0x00,0x00,0x00,0x09,0x80,0x09,0x00,0x00,0x00,0x00,
+	0x00,0x64,0x80,0x80,0x00,0x00,0x00,0x00,0x00,0x3D,0x26,0x46,0x00,0x00,0x00,0x00,
 	0x00,0x05,0x26,0x46,0x00,0x00,0x00,0x00,0x00,0x3D,0x26,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x26,0x3D,0x00,0x00,0x00,0x00,0x00,0x00,0x3D,0x46,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x46,0x3D,0x00,0x00,0x00,0x00,0x00,0x00,0x09,0x46,0x26,0x00,0x00,0x00,0x00,
-	0x00,0x09,0x00,0x26,0x00,0x00,0x00,0x00,0x00,0x05,0x01,0x63,0x00,0x00,0x00,0x00,
+	0x00,0x09,0x80,0x26,0x00,0x00,0x00,0x00,0x00,0x05,0x01,0x63,0x00,0x00,0x00,0x00,
 	0x00,0x25,0x44,0x00,0x00,0x00,0x00,0x00,0x00,0x3D,0x09,0x05,0x25,0x01,0x44,0x69,
 	0x00,0x3D,0x09,0x05,0x7C,0x7D,0x69,0x00,0x00,0x3D,0x7C,0x7D,0x5B,0x5C,0x7E,0x26,
 	0x00,0x5D,0x26,0x2F,0x05,0x25,0x01,0x44,0x00,0x58,0x5C,0x2F,0x64,0x5E,0x01,0x00,
@@ -632,7 +843,7 @@ static struct MachineDriver machine_driver =
 			3125000,	/* 3.125 Mhz (?) */
 			0,
 			readmem_cpu1,writemem_cpu1,0,0,
-			xevious_interrupt_1,1
+			xevious_interrupt_1,100
 		},
 		{
 			CPU_Z80,
@@ -658,6 +869,7 @@ static struct MachineDriver machine_driver =
 	256,128*4+64*8+64*2,
 	xevious_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER,
 	0,
 	xevious_vh_start,
 	xevious_vh_stop,
@@ -765,23 +977,32 @@ ROM_END
 
 
 
+static const char *xevious_sample_names[] =
+{
+	"explo1.sam",	/* ground target explosion */
+	"explo2.sam",	/* Solvalou explosion */
+	0	/* end of array */
+};
+
+
 struct GameDriver xevious_driver =
 {
 	"Xevious (Atari/Namco copyright)",
 	"xevious",
-	"MIRKO BUFFONI\nTATSUYUKI SATOH\nNICOLA SALMORIA",
+	"Mirko Buffoni\nTatsuyuki Satoh\nNicola Salmoria",
 	&machine_driver,
 
 	xevious_rom,
 	0, 0,
-	0,
+	xevious_sample_names,
 
-	input_ports, trak_ports, dsw, keys,
+	0/*TBR*/,xevious_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
 
-	8*13, 8*16,
-
+	/* to whomever will add high score support: remember that the table can hold 10 */
+	/* letters. The Copyright dip switch selects 3 for Atari/Namco, 10 for Namco. */
 	0, 0
 };
 
@@ -789,18 +1010,17 @@ struct GameDriver xeviousn_driver =
 {
 	"Xevious (Namco copyright)",
 	"xeviousn",
-	"MIRKO BUFFONI\nTATSUYUKI SATOH\nNICOLA SALMORIA",
+	"Mirko Buffoni\nTatsuyuki Satoh\nNicola Salmoria",
 	&machine_driver,
 
 	xeviousn_rom,
 	0, 0,
-	0,
+	xevious_sample_names,
 
-	input_ports, trak_ports, dsw, keys,
+	0/*TBR*/,xeviousn_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	color_prom, 0, 0,
-
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	0, 0
 };
@@ -809,18 +1029,17 @@ struct GameDriver sxevious_driver =
 {
 	"Super Xevious",
 	"sxevious",
-	"MIRKO BUFFONI\nTATSUYUKI SATOH\nNICOLA SALMORIA",
+	"Mirko Buffoni\nTatsuyuki Satoh\nNicola Salmoria",
 	&machine_driver,
 
 	sxevious_rom,
 	0, 0,
-	0,
+	xevious_sample_names,
 
-	input_ports, trak_ports, dsw, keys,
+	0/*TBR*/,sxevious_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	color_prom, 0, 0,
-
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	0, 0
 };

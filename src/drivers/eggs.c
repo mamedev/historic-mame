@@ -201,6 +201,7 @@ static struct MachineDriver machine_driver =
 	sizeof(palette)/3,sizeof(colortable),
 	0,
 
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -242,21 +243,60 @@ ROM_END
 
 
 
+static int hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+        if (	(memcmp(&RAM[0x0400],"\x17\x25\x19",3)==0) &&
+		(memcmp(&RAM[0x041B],"\x00\x47\x00",3) == 0))
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+                        fread(&RAM[0x0400],1,0x1E,f);
+			/* Fix hi score at top */
+			memcpy(&RAM[0x0015],&RAM[0x0403],3);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+                fwrite(&RAM[0x0400],1,0x1E,f);
+		fclose(f);
+	}
+
+}
+
+
+
 struct GameDriver eggs_driver =
 {
 	"Eggs",
 	"eggs",
-	"NICOLA SALMORIA",
+	"NICOLA SALMORIA\nMIKE BALFOUR",
 	&machine_driver,
 
 	eggs_rom,
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	0, palette, colortable,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };

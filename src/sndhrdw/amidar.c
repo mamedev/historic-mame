@@ -7,13 +7,13 @@
 
 static int amidar_portB_r(int offset)
 {
-	int clockticks,clock;
+	int clock;
 
 #define TIMER_RATE 25
 
-	clockticks = (Z80_IPeriod - cpu_geticount());
-	clock = clockticks / TIMER_RATE;
+	clock = cpu_gettotalcycles() / TIMER_RATE;
 
+#if 0	/* temporarily removed */
 	/* to speed up the emulation, detect when the program is looping waiting */
 	/* for the timer, and skip the necessary CPU cycles in that case */
 	if (cpu_getpc() == 0x029c	/* Turtles */
@@ -38,6 +38,7 @@ static int amidar_portB_r(int offset)
 			cpu_seticount(Z80_IPeriod - clockticks);
 		}
 	}
+#endif
 
 	return clock;
 }
@@ -46,8 +47,10 @@ static int amidar_portB_r(int offset)
 
 int amidar_sh_interrupt(void)
 {
-	if (pending_commands) return 0xff;
-	else return Z80_IGNORE_INT;
+	AY8910_update();
+
+	if (pending_commands) return interrupt();
+	else return ignore_interrupt();
 }
 
 
@@ -55,8 +58,8 @@ int amidar_sh_interrupt(void)
 static struct AY8910interface interface =
 {
 	2,	/* 2 chips */
-	1,	/* 1 update per video frame (low quality) */
-	1789750000,	/* 1.78975 MHZ ?? */
+	10,	/* 10 updates per video frame (good quality) */
+	1789750000,	/* 1.78975 Mhz (? the crystal is 14.318 MHz) */
 	{ 255, 255 },
 	{ sound_command_r },
 	{ amidar_portB_r },

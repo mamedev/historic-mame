@@ -7,15 +7,19 @@ Q*bert Qubes: same as Q*bert with two banks of sprites
 #include "vidhrdw/generic.h"
 
 int qbert_vh_start(void);
-void gottlieb_vh_init_optimized_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void gottlieb_vh_init_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void gottlieb_sh_w(int offset, int data);
-void gottlieb_sh_update(void);
 void gottlieb_output(int offset, int data);
 int qbert_IN1_r(int offset);
 extern unsigned char *gottlieb_paletteram;
 void gottlieb_paletteram_w(int offset,int data);
 void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
 extern const char *gottlieb_sample_names[];
+
+int gottlieb_sh_start(void);
+void gottlieb_sh_stop(void);
+void gottlieb_sh_update(void);
+int gottlieb_sh_interrupt(void);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -33,10 +37,10 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x2fff, MWA_RAM },
-	{ 0x3000, 0x37ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x3800, 0x3fff, videoram_w, &videoram, &videoram_size },
+	{ 0x3000, 0x30ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x3800, 0x3bff, videoram_w, &videoram, &videoram_size },
 	{ 0x4000, 0x4fff, MWA_RAM }, /* bg object ram... ? not used ? */
-	{ 0x5000, 0x57ff, gottlieb_paletteram_w, &gottlieb_paletteram },
+	{ 0x5000, 0x501f, gottlieb_paletteram_w, &gottlieb_paletteram },
 	{ 0x5800, 0x5800, MWA_RAM },    /* watchdog timer clear */
 	{ 0x5801, 0x5801, MWA_RAM },    /* trackball: not used */
 	{ 0x5802, 0x5802, gottlieb_sh_w }, /* sound/speech command */
@@ -125,8 +129,8 @@ static struct GfxLayout charlayout =
 	256,    /* 256 characters */
 	4,      /* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
+	{ 0, 4, 8, 12, 16, 20, 24, 28},
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
-	{ 28, 24, 20, 16, 12, 8, 4, 0},
 	32*8    /* every char takes 32 consecutive bytes */
 };
 
@@ -136,9 +140,9 @@ static struct GfxLayout spritelayout =
 	512,    /* 512 sprites */
 	4,      /* 4 bits per pixel */
 	{ 0, 0x4000*8, 0x8000*8, 0xC000*8 },
-	{ 0 * 16, 1 * 16, 2 * 16, 3 * 16, 4 * 16, 5 * 16, 6 * 16, 7 * 16,
-		8 * 16, 9 * 16, 10 * 16, 11 * 16, 12 * 16, 13 * 16, 14 * 16, 15 * 16 },
-	{ 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
+			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
 	32*8    /* every sprite takes 32 consecutive bytes */
 };
 
@@ -169,11 +173,12 @@ static const struct MachineDriver machine_driver =
 	0,      /* init machine */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 30*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 16,
-	gottlieb_vh_init_optimized_color_palette,
+	1+16, 16,
+	gottlieb_vh_init_color_palette,
 
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
 	0,      /* init vh */
 	qbert_vh_start,
 	generic_vh_stop,
@@ -182,8 +187,8 @@ static const struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,      /* samples */
 	0,
-	0,
-	0,
+	gottlieb_sh_start,
+	gottlieb_sh_stop,
 	gottlieb_sh_update
 };
 
@@ -205,41 +210,6 @@ ROM_START( qbertqub_rom )
 	ROM_LOAD( "qq-fg0.bin", 0xE000, 0x4000, 0x65b1f0f1 )       /* sprites */
 ROM_END
 
-
-
-static unsigned short qbertqub_colors[256]={
-	0x000, 0xff0, 0xfff,
-	0x001, 0x002, 0x003, 0x004, 0x005, 0x006, 0x007,
-	0x008, 0x009, 0x00a, 0x00b, 0x00f, 0x010, 0x011, 0x013,
-	0x017, 0x018, 0x01a, 0x020, 0x022, 0x024, 0x028, 0x029,
-	0x02b, 0x030, 0x033, 0x035, 0x039, 0x03a, 0x03c, 0x040,
-	0x044, 0x045, 0x046, 0x047, 0x048, 0x049, 0x04a, 0x04b,
-	0x04c, 0x04d, 0x050, 0x055, 0x057, 0x05b, 0x05c, 0x060,
-	0x066, 0x068, 0x06c, 0x06d, 0x070, 0x077, 0x078, 0x079,
-	0x07d, 0x07f, 0x080, 0x088, 0x08e, 0x090, 0x099, 0x09a,
-	0x09b, 0x09c, 0x09d, 0x09e, 0x09f, 0x0f0, 0x0f7, 0x0ff,
-	0x100, 0x101, 0x104, 0x10c, 0x110, 0x111, 0x112, 0x113,
-	0x170, 0x200, 0x202, 0x20d, 0x212, 0x215, 0x220, 0x222,
-	0x280, 0x300, 0x301, 0x303, 0x313, 0x320, 0x323, 0x324,
-	0x325, 0x326, 0x330, 0x332, 0x333, 0x390, 0x400, 0x402,
-	0x404, 0x410, 0x414, 0x420, 0x434, 0x440, 0x442, 0x443,
-	0x444, 0x4a0, 0x4b0, 0x500, 0x503, 0x504, 0x505, 0x510,
-	0x514, 0x520, 0x535, 0x543, 0x549, 0x550, 0x552, 0x553,
-	0x555, 0x560, 0x570, 0x580, 0x590, 0x5a0, 0x5b0, 0x600,
-	0x604, 0x606, 0x614, 0x620, 0x621, 0x630, 0x631, 0x636,
-	0x643, 0x650, 0x653, 0x662, 0x666, 0x700, 0x701, 0x704,
-	0x705, 0x706, 0x707, 0x715, 0x730, 0x732, 0x737, 0x740,
-	0x742, 0x743, 0x750, 0x753, 0x767, 0x772, 0x777, 0x800,
-	0x804, 0x806, 0x808, 0x812, 0x826, 0x837, 0x840, 0x843,
-	0x850, 0x853, 0x867, 0x882, 0x888, 0x900, 0x901, 0x904,
-	0x923, 0x937, 0x950, 0x960, 0x967, 0x992, 0x999, 0xa00,
-	0xa02, 0xa04, 0xa10, 0xa34, 0xa50, 0xa60, 0xa67, 0xa70,
-	0xa92, 0xaaa, 0xb00, 0xb03, 0xb04, 0xb20, 0xb45, 0xb50,
-	0xb67, 0xb70, 0xb81, 0xb92, 0xbbb, 0xc00, 0xc04, 0xc20,
-	0xc30, 0xc50, 0xc56, 0xc67, 0xc80, 0xc92, 0xccc, 0xd00,
-	0xd40, 0xd50, 0xd67, 0xd90, 0xddd, 0xe00, 0xe50, 0xea0,
-	0xeee, 0xf00, 0xf07, 0xf0f, 0xf70, 0xf86, 0xfb0
-};
 
 
 static int hiload(const char *name)
@@ -281,10 +251,10 @@ struct GameDriver qbertqub_driver =
 	0, 0,   /* rom decode and opcode decode functions */
 	gottlieb_sample_names,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
-	(char *)qbertqub_colors, 0, 0,    /* palette, colortable */
-	8*11, 8*20,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
 
 	hiload,hisave     /* hi-score load and save */
 };

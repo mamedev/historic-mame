@@ -12,6 +12,7 @@
 
 
 unsigned char *amidar_attributesram;
+static int flipscreen[2];
 
 
 
@@ -35,32 +36,60 @@ unsigned char *amidar_attributesram;
 void amidar_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	for (i = 0;i < 32;i++)
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		int bit0,bit1,bit2;
 
 
-		bit0 = (color_prom[i] >> 0) & 0x01;
-		bit1 = (color_prom[i] >> 1) & 0x01;
-		bit2 = (color_prom[i] >> 2) & 0x01;
-		palette[3*i + 0] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		bit0 = (color_prom[i] >> 3) & 0x01;
-		bit1 = (color_prom[i] >> 4) & 0x01;
-		bit2 = (color_prom[i] >> 5) & 0x01;
-		palette[3*i + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* red component */
+		bit0 = (*color_prom >> 0) & 0x01;
+		bit1 = (*color_prom >> 1) & 0x01;
+		bit2 = (*color_prom >> 2) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = (*color_prom >> 3) & 0x01;
+		bit1 = (*color_prom >> 4) & 0x01;
+		bit2 = (*color_prom >> 5) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
 		bit0 = 0;
-		bit1 = (color_prom[i] >> 6) & 0x01;
-		bit2 = (color_prom[i] >> 7) & 0x01;
-		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit1 = (*color_prom >> 6) & 0x01;
+		bit2 = (*color_prom >> 7) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		color_prom++;
 	}
 
 
-	for (i = 0;i < 4 * 8;i++)
+	/* characters and sprites use the same palette */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
 	{
-		if (i & 3) colortable[i] = i;
-		else colortable[i] = 0;
+		if (i & 3) COLOR(0,i) = i;
+		else COLOR(0,i) = 0;	/* 00 is always black, regardless of the contents of the PROM */
+	}
+}
+
+
+
+void amidar_flipx_w(int offset,int data)
+{
+	if (flipscreen[0] != (data & 1))
+	{
+		flipscreen[0] = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
+
+void amidar_flipy_w(int offset,int data)
+{
+	if (flipscreen[1] != (data & 1))
+	{
+		flipscreen[1] = data & 1;
+		memset(dirtybuffer,1,videoram_size);
 	}
 }
 
@@ -105,13 +134,17 @@ void amidar_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			dirtybuffer[offs] = 0;
 
-			sx = (31 - offs / 32);
-			sy = (offs % 32);
+			sx = offs % 32;
+			sy = offs / 32;
+
+			if (flipscreen[0]) sx = 31 - sx;
+			if (flipscreen[1]) sy = 31 - sy;
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs],
-					amidar_attributesram[2 * sy + 1],
-					0,0,8*sx,8*sy,
+					amidar_attributesram[2 * (offs % 32) + 1] & 0x07,
+					flipscreen[0],flipscreen[1],
+					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
@@ -125,11 +158,37 @@ void amidar_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* order, to have the correct priorities. */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
+		int flipx,flipy,sx,sy;
+
+
+		flipx = spriteram[offs + 1] & 0x40;
+		flipy = spriteram[offs + 1] & 0x80;
+		sx = (spriteram[offs + 3] + 1) & 0xff;	/* ??? */
+		sy = 240 - spriteram[offs];
+
+		if (flipscreen[0])
+		{
+			flipx = !flipx;
+			sx = 241 - sx;	/* note: 241, not 240 */
+		}
+		if (flipscreen[1])
+		{
+			flipy = !flipy;
+			sy = 240 - sy;
+		}
+
+		/* Sprites #0, #1 and #2 need to be offset one pixel to be correctly */
+		/* centered on the ladders in Turtles (we move them down, but since this */
+		/* is a rotated game, we actually move them left). */
+		/* Note that the adjustement must be done AFTER handling flipscreen, thus */
+		/* proving that this is a hardware related "feature" */
+		if (offs <= 2*4) sy++;
+
 		drawgfx(bitmap,Machine->gfx[1],
 				spriteram[offs + 1] & 0x3f,
-				spriteram[offs + 2],
-				spriteram[offs + 1] & 0x80,spriteram[offs + 1] & 0x40,
-				spriteram[offs],((spriteram[offs + 3] + 8) & 0xff) - 8,
+				spriteram[offs + 2] & 0x07,
+				flipx,flipy,
+				sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

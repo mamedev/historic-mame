@@ -50,7 +50,7 @@ Memory map
 #include "vidhrdw/generic.h"
 
 void yiear_vh_screenrefresh(struct osd_bitmap *bitmap);
-int yiear_init_machine(const char *gamename);
+void yiear_init_machine(void);
 void yiear_videoram_w(int offset,int data);
 
 static struct MemoryReadAddress readmem[] =
@@ -241,6 +241,7 @@ static struct MachineDriver machine_driver =
 	32,						/* color table length */
 	0,						/* convert color prom routine */
 
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,						/* vh_init routine */
 	generic_vh_start,		/* vh_start routine */
 	generic_vh_stop,		/* vh_stop routine */
@@ -277,21 +278,62 @@ ROM_END
 
 
 
+static int hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+        if ((memcmp(&RAM[0x5520],"\x00\x36\x70",3) == 0) &&
+		(memcmp(&RAM[0x55A9],"\x10\x10\x10",3) == 0))
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			/* Read the scores */
+                        fread(&RAM[0x5520],1,14*10,f);
+			/* reset score at top */
+			memcpy(&RAM[0x521C],&RAM[0x5520],3);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		/* Save the scores */
+                fwrite(&RAM[0x5520],1,14*10,f);
+		fclose(f);
+	}
+
+}
+
+
+
 struct GameDriver yiear_driver =
 {
 	"Yie Ar Kung Fu (Konami)",
 	"yiear",
-	"ENRIQUE SANCHEZ\nPHILIP STROFFOLINO",
+	"ENRIQUE SANCHEZ\nPHILIP STROFFOLINO\nMIKE BALFOUR",
 	&machine_driver,
 
 	yiear_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	0, palette, colortable,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
 
-	128-(8*3), 128-4,
-	0, 0			/* High score load and save */
+	hiload, hisave
 };

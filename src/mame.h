@@ -28,13 +28,16 @@ struct RunningMachine
 	const struct GameDriver *gamedrv;	/* contains the definition of the game machine */
 	const struct MachineDriver *drv;	/* same as gamedrv->drv */
 	struct GameSamples *samples;	/* samples loaded from disk */
+	struct NewInputPort *input_ports;	/* the input ports definition from the driver */
+								/* is copied here and modified (load settings from disk, */
+								/* remove cheat commands, and so on) */
+	int orientation;	/* see #defines in driver.h */
 };
 
 
 extern struct RunningMachine *Machine;
 extern unsigned char *RAM;	/* pointer to the memory region of the active CPU */
 extern unsigned char *ROM;
-extern int frameskip;	/* as specified by the -frameskip command line parameter */
 extern int throttle;	/* toggled by F10 */
 
 

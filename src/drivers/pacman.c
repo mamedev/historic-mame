@@ -13,45 +13,8 @@ memory mapped ports:
 read:
 5000      IN0
 5040      IN1
-5080      DSW1
-
-
-*
- * IN0 (all bits are inverted)
- * bit 7 : CREDIT
- * bit 6 : COIN 2
- * bit 5 : COIN 1
- * bit 4 : RACK TEST
- * bit 3 : DOWN player 1
- * bit 2 : RIGHT player 1
- * bit 1 : LEFT player 1
- * bit 0 : UP player 1
- *
-*
- * IN1 (all bits are inverted)
- * bit 7 : COCKTAIL or UPRIGHT cabinet (1 = UPRIGHT)
- * bit 6 : START 2
- * bit 5 : START 1
- * bit 4 : TEST SWITCH (not Crush Roller)
- * bit 3 : DOWN player 2 (TABLE only)
- * bit 2 : RIGHT player 2 (TABLE only)
- * bit 1 : LEFT player 2 (TABLE only)
- * bit 0 : UP player 2 (TABLE ony)
- *
-*
- * DSW1 (all bits are inverted)
- * bit 7 :  (PacMan only) selects the names for the ghosts
- *          1 = Normal 0 = Alternate
- * bit 6 :  difficulty level
- *          1 = Normal  0 = Harder
- * bit 5 :\ bonus pac at xx000 pts
- * bit 4 :/ 00 = 10000  01 = 15000  10 = 20000  11 = none
- * bit 3 :\ nr of lives
- * bit 2 :/ 00 = 1  01 = 2  10 = 3  11 = 5
- * bit 1 :\ play mode
- * bit 0 :/ 00 = free play   01 = 1 coin 1 credit
- *          10 = 1 coin 2 credits   11 = 2 coins 1 credit
- *
+5080      DSW
+see the input_ports definition below for details on the input bits
 
 write:
 4ff2-4ffd 6 pairs of two bytes:
@@ -83,47 +46,6 @@ write:
 I/O ports:
 OUT on port $0 sets the interrupt vector
 
-
-
-
-Crush Roller:
-
-*
- * IN0 (all bits are inverted)
- * bit 7 : CREDIT
- * bit 6 : COIN 2
- * bit 5 : COIN 1
- * bit 4 : COCKTAIL or UPRIGHT cabinet (0 = UPRIGHT)
- * bit 3 : DOWN player 1
- * bit 2 : RIGHT player 1
- * bit 1 : LEFT player 1
- * bit 0 : UP player 1
- *
-*
- * IN1 (all bits are inverted)
- * bit 7 : ??
- * bit 6 : START 2
- * bit 5 : START 1
- * bit 4 : ??
- * bit 3 : DOWN player 2 (TABLE only)
- * bit 2 : RIGHT player 2 (TABLE only)
- * bit 1 : LEFT player 2 (TABLE only)
- * bit 0 : UP player 2 (TABLE ony)
- *
-*
- * DSW1 (all bits are inverted)
- * bit 7 :  ??
- * bit 6 :  difficulty level
- *                       1 = Normal  0 = Harder
- * bit 5 : Teleport holes 0 = on 1 = off
- * bit 4 : First pattern difficulty 1 = easy 0 = hard
- * bit 3 :\ nr of lives
- * bit 2 :/ 00 = 3  01 = 4  10 = 5  11 = 6
- * bit 1 :\ play mode
- * bit 0 :/ 00 = free play   01 = 1 coin 1 credit
- *          10 = 1 coin 2 credits   11 = 2 coins 1 credit
- *
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -131,15 +53,16 @@ Crush Roller:
 
 
 
-int pacman_init_machine(const char *gamename);
+void pacman_init_machine(void);
 int pacman_interrupt(void);
 
-void pacman_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-void pacman_vh_screenrefresh(struct osd_bitmap *bitmap);
+void pengo_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void pengo_flipscreen_w(int offset,int data);
+int pacman_vh_start(void);
+void pengo_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 extern unsigned char *pengo_soundregs;
 void pengo_sound_enable_w(int offset,int data);
-
 void pengo_sound_w(int offset,int data);
 void pengo_sh_update(void);
 
@@ -147,32 +70,34 @@ void pengo_sh_update(void);
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x4c00, 0x4fff, MRA_RAM },	/* including sprite codes at 4ff0-4fff */
-	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
 	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x8000, 0x9fff, MRA_ROM },	/* Ms. Pac Man only */
+	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
+	{ 0x4c00, 0x4fff, MRA_RAM },	/* including sprite codes at 4ff0-4fff */
 	{ 0x5000, 0x503f, input_port_0_r },	/* IN0 */
 	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
-	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
+	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW */
+	{ 0x8000, 0x9fff, MRA_ROM },	/* Ms. Pac Man only */
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x4c00, 0x4fef, MWA_RAM },
+	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
 	{ 0x4400, 0x47ff, colorram_w, &colorram },
-	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
+	{ 0x4c00, 0x4fef, MWA_RAM },
 	{ 0x4ff0, 0x4fff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x5000, 0x5000, interrupt_enable_w },
+	{ 0x5001, 0x5001, pengo_sound_enable_w },
+	{ 0x5002, 0x5002, MWA_NOP },
+	{ 0x5003, 0x5003, pengo_flipscreen_w },
+	{ 0x5004, 0x5007, MWA_NOP },
+	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
 	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 },
+	{ 0x50c0, 0x50c0, MWA_NOP },
+	{ 0x8000, 0x9fff, MWA_ROM },	/* Ms. Pac Man only */
 	{ 0xc000, 0xc3ff, videoram_w },	/* mirror address for video ram, */
 	{ 0xc400, 0xc7ef, colorram_w },	/* used to display HIGH SCORE and CREDITS */
-	{ 0x5000, 0x5000, interrupt_enable_w },
-	{ 0x50c0, 0x50c0, MWA_NOP },
-	{ 0x5001, 0x5001, pengo_sound_enable_w },
-	{ 0x5002, 0x5007, MWA_NOP },
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x8000, 0x9fff, MWA_ROM },	/* Ms. Pac Man only */
 	{ -1 }	/* end of table */
 };
 
@@ -186,91 +111,173 @@ static struct IOWritePort writeport[] =
 
 
 
-static struct InputPort pacman_input_ports[] =
-{
-	{	/* IN0 */
-		0xff,
-		{ OSD_KEY_UP, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_DOWN,
-				OSD_KEY_F1, 0, 0, OSD_KEY_3 },
-		{ OSD_JOY_UP, OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_DOWN,
-				0, 0, 0, 0 }
-	},
-	{	/* IN1 */
-		0xff,
-		{ 0, 0, 0, 0, OSD_KEY_F2, OSD_KEY_1, OSD_KEY_2, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW1 */
-		0xe9,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+INPUT_PORTS_START( pacman_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
 
-static struct KEYSet keys[] =
-{
-        { 0, 0, "MOVE UP" },
-        { 0, 1, "MOVE LEFT"  },
-        { 0, 2, "MOVE RIGHT" },
-        { 0, 3, "MOVE DOWN" },
-        { -1 }
-};
+	PORT_START	/* DSW */
+ 	PORT_DIPNAME( 0x03, 0x01, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0x0c, 0x08, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x04, "2" )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_DIPSETTING(    0x0c, "5" )
+	PORT_DIPNAME( 0x30, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "10000" )
+	PORT_DIPSETTING(    0x10, "15000" )
+	PORT_DIPSETTING(    0x20, "20000" )
+	PORT_DIPSETTING(    0x30, "None" )
+	PORT_DIPNAME( 0x40, 0x40, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x80, 0x80, "Ghost Names", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Normal" )
+	PORT_DIPSETTING(    0x00, "Alternate" )
 
+	PORT_START	/* FAKE */
+	/* This fake input port is used to get the status of the fire button */
+	/* and activate the speedup cheat if it is. */
+	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Speedup Cheat", OSD_KEY_CONTROL, OSD_JOY_FIRE1, 0 )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x01, "On" )
+INPUT_PORTS_END
 
-static struct InputPort crush_input_ports[] =
-{
-	{	/* IN0 */
-		0xef,	/* standup cabinet */
-		{ OSD_KEY_UP, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_DOWN,
-				0, 0, 0, OSD_KEY_3 },
-		{ OSD_JOY_UP, OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_DOWN,
-				0, 0, 0, 0 }
-	},
-	{	/* IN1 */
-		0xff,
-		{ 0, 0, 0, 0, 0, OSD_KEY_1, OSD_KEY_2, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW1 */
-		0xf1,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+/* Ms. Pac Man input ports are identical to Pac Man, the only difference is */
+/* the missing Ghost Names dip switch. */
+INPUT_PORTS_START( mspacman_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
 
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
 
+	PORT_START	/* DSW */
+ 	PORT_DIPNAME( 0x03, 0x01, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0x0c, 0x08, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x04, "2" )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_DIPSETTING(    0x0c, "5" )
+	PORT_DIPNAME( 0x30, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "10000" )
+	PORT_DIPSETTING(    0x10, "15000" )
+	PORT_DIPSETTING(    0x20, "20000" )
+	PORT_DIPSETTING(    0x30, "None" )
+	PORT_DIPNAME( 0x40, 0x40, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-static struct DSW pacman_dsw[] =
-{
-	{ 2, 0x0c, "LIVES", { "1", "2", "3", "5" } },
-	{ 2, 0x30, "BONUS", { "10000", "15000", "20000", "NONE" } },
-	{ 2, 0x40, "DIFFICULTY", { "HARD", "NORMAL" }, 1 },
-	{ 2, 0x80, "GHOST NAMES", { "ALTERNATE", "NORMAL" }, 1 },
-	{ -1 }
-};
+	PORT_START	/* FAKE */
+	/* This fake input port is used to get the status of the fire button */
+	/* and activate the speedup cheat if it is. */
+	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Speedup Cheat", OSD_KEY_CONTROL, OSD_JOY_FIRE1, 0 )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x01, "On" )
+INPUT_PORTS_END
 
-static struct DSW mspacman_dsw[] =
-{
-	{ 2, 0x0c, "LIVES", { "1", "2", "3", "5" } },
-	{ 2, 0x30, "BONUS", { "10000", "15000", "20000", "NONE" } },
-	{ 2, 0x40, "DIFFICULTY", { "HARD", "NORMAL" }, 1 },
-	{ -1 }
-};
+INPUT_PORTS_START( crush_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_DIPNAME( 0x10, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x10, "Cocktail" )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
 
-static struct DSW crush_dsw[] =
-{
-	{ 2, 0x0c, "LIVES", { "3", "4", "5", "6" }, },
-	{ 2, 0x20, "TELEPORT HOLES", { "ON", "OFF" }, 1 },
-	{ 2, 0x10, "FIRST PATTERN", { "HARD", "EASY" }, 1 },
-	{ -1 }
-};
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+
+	PORT_START	/* DSW */
+ 	PORT_DIPNAME( 0x03, 0x01, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0x0c, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x08, "5" )
+	PORT_DIPSETTING(    0x0c, "6" )
+	PORT_DIPNAME( 0x10, 0x10, "First Pattern", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x20, 0x20, "Teleport holes", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown 3", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 4", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
 
 
 
@@ -404,12 +411,13 @@ static struct MachineDriver machine_driver =
 	28*8, 36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },
 	gfxdecodeinfo,
 	16,4*32,
-	pacman_vh_convert_color_prom,
+	pengo_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
-	generic_vh_start,
+	pacman_vh_start,
 	generic_vh_stop,
-	pacman_vh_screenrefresh,
+	pengo_vh_screenrefresh,
 
 	/* sound hardware */
 	samples,
@@ -716,17 +724,17 @@ struct GameDriver pacman_driver =
 {
 	"Pac Man (Midway)",
 	"pacman",
-	"ALLARD VAN DER BAS\nNICOLA SALMORIA",
+	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)",
 	&machine_driver,
 
 	pacman_rom,
 	0, 0,
 	0,
 
-	pacman_input_ports, trak_ports, pacman_dsw, keys,
+	0/*TBR*/,pacman_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	pacman_color_prom, 0, 0,
-	8*11, 8*20,
+	ORIENTATION_DEFAULT,
 
 	pacman_hiload, pacman_hisave
 };
@@ -735,17 +743,17 @@ struct GameDriver namcopac_driver =
 {
 	"Pac Man (Namco)",
 	"namcopac",
-	"ALLARD VAN DER BAS\nNICOLA SALMORIA",
+	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)",
 	&machine_driver,
 
 	namcopac_rom,
 	0, 0,
 	0,
 
-	pacman_input_ports, trak_ports, pacman_dsw, keys,
+	0/*TBR*/,pacman_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	pacman_color_prom, 0, 0,
-	8*11, 8*20,
+	ORIENTATION_DEFAULT,
 
 	pacman_hiload, pacman_hisave
 };
@@ -754,17 +762,17 @@ struct GameDriver pacmanjp_driver =
 {
 	"Pac Man (Namco, alternate)",
 	"pacmanjp",
-	"ALLARD VAN DER BAS\nNICOLA SALMORIA",
+	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)",
 	&machine_driver,
 
 	pacmanjp_rom,
 	0, 0,
 	0,
 
-	pacman_input_ports, trak_ports, pacman_dsw, keys,
+	0/*TBR*/,pacman_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	pacman_color_prom, 0, 0,
-	8*11, 8*20,
+	ORIENTATION_DEFAULT,
 
 	pacman_hiload, pacman_hisave
 };
@@ -773,17 +781,17 @@ struct GameDriver pacmod_driver =
 {
 	"Pac Man (modified)",
 	"pacmod",
-	"ALLARD VAN DER BAS\nNICOLA SALMORIA",
+	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)",
 	&machine_driver,
 
 	pacmod_rom,
 	0, 0,
 	0,
 
-	pacman_input_ports, trak_ports, pacman_dsw, keys,
+	0/*TBR*/,pacman_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	pacman_color_prom, 0, 0,
-	8*11, 8*20,
+	ORIENTATION_DEFAULT,
 
 	pacman_hiload, pacman_hisave
 };
@@ -792,17 +800,17 @@ struct GameDriver pacplus_driver =
 {
 	"Pac Man with Pac Man Plus graphics",
 	"pacplus",
-	"ALLARD VAN DER BAS\nNICOLA SALMORIA",
+	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)",
 	&machine_driver,
 
 	pacplus_rom,
 	0, 0,
 	0,
 
-	pacman_input_ports, trak_ports, pacman_dsw, keys,
+	0/*TBR*/,pacman_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	pacplus_color_prom, 0, 0,
-	8*11, 8*20,
+	ORIENTATION_DEFAULT,
 
 	pacman_hiload, pacman_hisave
 };
@@ -811,17 +819,17 @@ struct GameDriver hangly_driver =
 {
 	"Hangly Man",
 	"hangly",
-	"ALLARD VAN DER BAS\nNICOLA SALMORIA",
+	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)",
 	&machine_driver,
 
 	hangly_rom,
 	0, 0,
 	0,
 
-	pacman_input_ports, trak_ports, pacman_dsw, keys,
+	0/*TBR*/,pacman_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	pacman_color_prom, 0, 0,
-	8*11, 8*20,
+	ORIENTATION_DEFAULT,
 
 	pacman_hiload, pacman_hisave
 };
@@ -830,17 +838,17 @@ struct GameDriver puckman_driver =
 {
 	"Puck Man",
 	"puckman",
-	"ALLARD VAN DER BAS\nNICOLA SALMORIA",
+	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)",
 	&machine_driver,
 
 	puckman_rom,
 	0, 0,
 	0,
 
-	pacman_input_ports, trak_ports, pacman_dsw, keys,
+	0/*TBR*/,pacman_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	pacman_color_prom, 0, 0,
-	8*11, 8*20,
+	ORIENTATION_DEFAULT,
 
 	pacman_hiload, pacman_hisave
 };
@@ -849,17 +857,17 @@ struct GameDriver piranha_driver =
 {
 	"Piranha",
 	"piranha",
-	"ALLARD VAN DER BAS\nNICOLA SALMORIA",
+	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)",
 	&machine_driver,
 
 	piranha_rom,
 	0, 0,
 	0,
 
-	pacman_input_ports, trak_ports, pacman_dsw, keys,
+	0/*TBR*/,mspacman_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	pacman_color_prom, 0, 0,
-	8*11, 8*20,
+	ORIENTATION_DEFAULT,
 
 	pacman_hiload, pacman_hisave
 };
@@ -868,17 +876,17 @@ struct GameDriver mspacman_driver =
 {
 	"Ms. Pac Man",
 	"mspacman",
-	"ALLARD VAN DER BAS\nNICOLA SALMORIA",
+	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)",
 	&machine_driver,
 
 	mspacman_rom,
 	0, 0,
 	0,
 
-	pacman_input_ports, trak_ports, mspacman_dsw, keys,
+	0/*TBR*/,mspacman_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	pacman_color_prom, 0, 0,
-	8*11, 8*20,
+	ORIENTATION_DEFAULT,
 
 	pacman_hiload, pacman_hisave
 };
@@ -887,17 +895,17 @@ struct GameDriver mspacatk_driver =
 {
 	"Ms. Pac Man Attacks",
 	"mspacatk",
-	"ALLARD VAN DER BAS\nNICOLA SALMORIA",
+	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)",
 	&machine_driver,
 
 	mspacatk_rom,
 	0, 0,
 	0,
 
-	pacman_input_ports, trak_ports, mspacman_dsw, keys,
+	0/*TBR*/,mspacman_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	pacman_color_prom, 0, 0,
-	8*11, 8*20,
+	ORIENTATION_DEFAULT,
 
 	pacman_hiload, pacman_hisave
 };
@@ -906,17 +914,17 @@ struct GameDriver crush_driver =
 {
 	"Crush Roller",
 	"crush",
-	"ALLARD VAN DER BAS\nNICOLA SALMORIA\nGARY WALTON",
+	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)",
 	&machine_driver,
 
 	crush_rom,
 	0, 0,
 	0,
 
-	crush_input_ports, trak_ports, crush_dsw, keys,
+	0/*TBR*/,crush_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	crush_color_prom, 0, 0,
-	8*11, 8*19,
+	ORIENTATION_DEFAULT,
 
 	crush_hiload, crush_hisave
 };

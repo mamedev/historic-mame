@@ -93,7 +93,7 @@ OUT on port $0 sets the interrupt vector
 #include "vidhrdw/generic.h"
 
 
-int jrpacman_init_machine(const char *gamename);
+void jrpacman_init_machine(void);
 int jrpacman_interrupt(void);
 
 extern unsigned char *jrpacman_scroll,*jrpacman_bgpriority;
@@ -322,6 +322,7 @@ static struct MachineDriver machine_driver =
 	32,128*4,
 	jrpacman_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER,
 	0,
 	jrpacman_vh_start,
 	jrpacman_vh_stop,
@@ -489,10 +490,10 @@ struct GameDriver jrpacman_driver =
 	jrpacman_decode, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	8*11, 8*19,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };

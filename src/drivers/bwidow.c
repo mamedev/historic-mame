@@ -528,6 +528,7 @@ static struct MachineDriver bwidow_machine_driver =
 	256, 256,
 	atari_vg_init_colors,
 
+	VIDEO_TYPE_VECTOR,
 	0,
 	atari_vg_avg_start,
 	atari_vg_stop,
@@ -561,6 +562,7 @@ static struct MachineDriver gravitar_machine_driver =
 	256, 256,
 	atari_vg_init_colors,
 
+	VIDEO_TYPE_VECTOR,
 	0,
 	atari_vg_avg_start,
 	atari_vg_stop,
@@ -595,6 +597,7 @@ static struct MachineDriver spacduel_machine_driver =
 	256, 256,
 	atari_vg_init_colors,
 
+	VIDEO_TYPE_VECTOR,
 	0,
 	atari_vg_avg_start,
 	atari_vg_stop,
@@ -685,10 +688,10 @@ struct GameDriver bwidow_driver =
 	0, 0,
 	0,
 
-	bwidow_input_ports, trak_ports, bwidow_dsw, bwidow_keys,
+	bwidow_input_ports, 0, trak_ports, bwidow_dsw, bwidow_keys,
 
 	color_prom, 0,0,
-	140, 110,     /* paused_x, paused_y */
+	ORIENTATION_DEFAULT,
 
 	bwidow_hiload, bwidow_hisave
 };
@@ -734,10 +737,10 @@ struct GameDriver gravitar_driver =
 	0, 0,
 	0,
 
-	gravitar_input_ports, trak_ports, gravitar_dsw, gravitar_keys,
+	gravitar_input_ports, 0, trak_ports, gravitar_dsw, gravitar_keys,
 
 	color_prom, 0, 0,
-	140, 110,     /* paused_x, paused_y */
+	ORIENTATION_DEFAULT,
 
 	atari_vg_earom_load, atari_vg_earom_save
 };
@@ -785,10 +788,10 @@ struct GameDriver spacduel_driver =
 	0, 0,
 	0,
 
-	spacduel_input_ports, trak_ports, spacduel_dsw, spacduel_keys,
+	spacduel_input_ports, 0, trak_ports, spacduel_dsw, spacduel_keys,
 
 	color_prom, 0, 0,
-	140, 110,     /* paused_x, paused_y */
+	ORIENTATION_DEFAULT,
 
 	atari_vg_earom_load, atari_vg_earom_save
 };

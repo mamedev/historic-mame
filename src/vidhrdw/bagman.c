@@ -12,6 +12,18 @@
 
 
 unsigned char *bagman_video_enable;
+static int flipscreen[2];
+
+
+
+void bagman_flipscreen_w(int offset,int data)
+{
+	if ((data & 1) != flipscreen[offset])
+	{
+		flipscreen[offset] = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
 
 
 
@@ -46,14 +58,16 @@ void bagman_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			dirtybuffer[offs] = 0;
 
-			sx = 8 * (31 - offs / 32);
-			sy = 8 * (offs % 32);
+			sx = offs % 32;
+			if (flipscreen[0]) sx = 31 - sx;
+			sy = offs / 32;
+			if (flipscreen[1]) sy = 31 - sy;
 
 			drawgfx(tmpbitmap,Machine->gfx[colorram[offs] & 0x10 ? 1 : 0],
 					videoram[offs] + 8 * (colorram[offs] & 0x20),
 					colorram[offs] & 0x0f,
-					0,0,
-					sx,sy,
+					flipscreen[0],flipscreen[1],
+					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
@@ -66,12 +80,30 @@ void bagman_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* Draw the sprites. */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
+		int sx,sy,flipx,flipy;
+
+
+		sx = spriteram[offs + 3];
+		sy = 240 - spriteram[offs + 2];
+		flipx = spriteram[offs] & 0x40;
+		flipy = spriteram[offs] & 0x80;
+		if (flipscreen[0])
+		{
+			sx = 240 - sx +1;	/* compensate misplacement */
+			flipx = !flipx;
+		}
+		if (flipscreen[1])
+		{
+			sy = 240 - sy;
+			flipy = !flipy;
+		}
+
 		if (spriteram[offs + 2] && spriteram[offs + 3])
 			drawgfx(bitmap,Machine->gfx[2],
 					(spriteram[offs] & 0x3f) + 2 * (spriteram[offs + 1] & 0x20),
 					spriteram[offs + 1] & 0x1f,
-					spriteram[offs] & 0x80,spriteram[offs] & 0x40,
-					spriteram[offs + 2] + 1,spriteram[offs + 3] - 1,
+					flipx,flipy,
+					sx,sy+1,	/* compensate misplacement */
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

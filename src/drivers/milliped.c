@@ -274,6 +274,7 @@ static struct MachineDriver machine_driver =
 	sizeof(palette)/3,sizeof(colortable),
 	0,
 
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -357,10 +358,10 @@ struct GameDriver milliped_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	0, palette, colortable,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };

@@ -62,40 +62,138 @@ write:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+/* These are defined in vidhrdw/exidy.c */
+extern unsigned char *exidy_characterram;
+extern unsigned char *exidy_color_lookup;
+void exidy_characterram_w(int offset,int data);
+void exidy_vh_screenrefresh(struct osd_bitmap *bitmap);
+
+extern unsigned char *exidy_sprite_no;
+extern unsigned char *exidy_sprite_enable;
+extern unsigned char *exidy_sprite1_xpos;
+extern unsigned char *exidy_sprite1_ypos;
+extern unsigned char *exidy_sprite2_xpos;
+extern unsigned char *exidy_sprite2_ypos;
+
+unsigned char *venture_ir2;
 
 
-extern unsigned char *venture_characterram;
-void venture_characterram_w(int offset,int data);
-void venture_vh_screenrefresh(struct osd_bitmap *bitmap);
+void venture_pos_change(void)
+{
+	int x,y;
+	int cv[4];
+	static int lcv0=0;
+	static int lcv1=0;
+	static int lcv2=0;
+	static int lcv3=0;
 
-extern unsigned char *venture_sprite_no;
-extern unsigned char *venture_sprite_enable;
+	if (!(*venture_ir2&0x80))
+	{
+		x=(236 - *exidy_sprite1_xpos)>>3;
+		y=(244 - *exidy_sprite1_ypos)>>3;
+		cv[0]=videoram[(y<<5)+x];
+		cv[1]=videoram[(y<<5)+x+1];
+		cv[2]=videoram[((y+1)<<5)+x];
+		cv[3]=videoram[((y+1)<<5)+x+1];
+
+		if (cv[0] || cv[1] || cv[2] || cv[3])
+		{
+			if (	(cv[0]!=lcv0) ||
+				(cv[1]!=lcv1) ||
+				(cv[2]!=lcv2) ||
+				(cv[3]!=lcv3))
+			{
+				*venture_ir2 = 0x80;
+				lcv0=cv[0];
+				lcv1=cv[1];
+				lcv2=cv[2];
+				lcv3=cv[3];
+			}
+		}
+		else
+			*venture_ir2 = 0x00;
+	}
+
+	return;
+}
+
+void venture_x_pos_change(int offset, int data)
+{
+	exidy_sprite1_xpos[offset]=data;
+	venture_pos_change();
+	return;
+}
+
+void venture_y_pos_change(int offset, int data)
+{
+	exidy_sprite1_ypos[offset]=data;
+	venture_pos_change();
+	return;
+}
+
+
+int venture_input_port_2_r(int offset)
+{
+	int value;
+
+	/* Get 2 coin keys */
+	value=input_port_2_r(offset) & 0x60;
+
+	/* Combine with memory */
+	value=value | (venture_ir2[offset] & 0x9F);
+
+	/* Clear memory now that we've got it */
+	venture_ir2[offset]=0x00;
+
+	return value;
+}
 
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x0000, 0x03ff, MRA_RAM },
+	{ 0x0000, 0x3fff, MRA_RAM },
 	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x4800, 0x4fff, MRA_RAM },
 	{ 0x5100, 0x5100, input_port_0_r },	/* DSW */
 	{ 0x5101, 0x5101, input_port_1_r },	/* IN0 */
-	{ 0x5103, 0x5103, input_port_2_r },	/* IN1 */
-	{ 0x5213, 0x5213, input_port_3_r },	/* IN2 */
+	{ 0x5103, 0x5103, venture_input_port_2_r, &venture_ir2 },	/* IN1 */
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0x03ff, MWA_RAM },
+	{ 0x0000, 0x3fff, MWA_RAM },
 	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
-	{ 0x4800, 0x4fff, venture_characterram_w, &venture_characterram },
-	{ 0x5100, 0x5100, MWA_RAM, &venture_sprite_no },
-	{ 0x5101, 0x5101, MWA_RAM, &venture_sprite_enable },
+	{ 0x4800, 0x4fff, exidy_characterram_w, &exidy_characterram },
+	{ 0x5000, 0x5000, venture_x_pos_change, &exidy_sprite1_xpos },
+	{ 0x5040, 0x5040, venture_y_pos_change, &exidy_sprite1_ypos },
+	{ 0x5080, 0x5080, MWA_RAM, &exidy_sprite2_xpos },
+	{ 0x50C0, 0x50C0, MWA_RAM, &exidy_sprite2_ypos },
+	{ 0x5100, 0x5100, MWA_RAM, &exidy_sprite_no },
+	{ 0x5101, 0x5101, MWA_RAM, &exidy_sprite_enable },
 	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
+
+static struct MemoryReadAddress sound_readmem[] =
+{
+	{ 0x0000, 0x57ff, MRA_RAM },
+	{ 0x5800, 0x7fff, MRA_ROM },
+	{ 0x8000, 0xf7ff, MRA_RAM },
+	{ 0xf800, 0xffff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress sound_writemem[] =
+{
+	{ 0x0000, 0x57ff, MWA_RAM },
+	{ 0x5800, 0x7fff, MWA_ROM },
+	{ 0x8000, 0xf7ff, MWA_RAM },
+	{ 0xf800, 0xffff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
 
 
 static struct InputPort input_ports[] =
@@ -114,13 +212,8 @@ static struct InputPort input_ports[] =
 	},
 	{	/* IN1 */
 		0x00,
-		{ 0, 0, OSD_KEY_7, 0, OSD_KEY_8, OSD_KEY_4, OSD_KEY_3, 0 },
+		{ 0, 0, 0, 0, 0, OSD_KEY_4, OSD_KEY_3, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN2 */
-		0xff,
-		{ OSD_KEY_Z, OSD_KEY_X, OSD_KEY_E, OSD_KEY_C, 0, 0, 0, 0 },
-		{ OSD_JOY_FIRE2, OSD_JOY_FIRE3, OSD_KEY_E, OSD_JOY_FIRE4, 0, 0, 0, 0 },
 	},
 	{ -1 }	/* end of table */
 };
@@ -133,22 +226,22 @@ static struct TrakPort trak_ports[] =
 
 static struct KEYSet keys[] =
 {
+        { 1, 5, "MOVE UP" },
+        { 1, 3, "MOVE LEFT"  },
+        { 1, 2, "MOVE RIGHT" },
+        { 1, 6, "MOVE DOWN" },
+	{ 1, 4, "FIRE BUTTON" },
         { -1 }
 };
 
 
 
-static struct DSW venture_dsw[] =
-{
-	{ 0, 0x60, "LIVES", { "2", "3", "4", "5" } },
-	{ 0, 0x06, "BONUS", { "20000", "30000", "40000", "50000" } },
-	{ -1 }
-};
 
-static struct DSW mtrap_dsw[] =
+static struct DSW dsw[] =
 {
 	{ 0, 0x60, "LIVES", { "2", "3", "4", "5" } },
 	{ 0, 0x06, "BONUS", { "20000", "30000", "40000", "50000" } },
+	{ 0, 0x18, "COIN SELECT", { "1 COIN 4 CREDITS", "1 COIN 2 CREDITS", "2 COINS 1 CREDIT", "1 COIN 1 CREDIT" } },
 	{ -1 }
 };
 
@@ -158,8 +251,8 @@ static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
-	1,	/* 1 bit per pixel */
-	{ 0 },
+	1,	/* 1 bits per pixel */
+	{ 0 }, /* No info needed for bit offsets */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
@@ -177,69 +270,163 @@ static struct GfxLayout spritelayout =
 
 
 
-static struct GfxDecodeInfo venture_gfxdecodeinfo[] =
+static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0, 0x4800, &charlayout,     0, 4 },	/* the game dynamically modifies this */
-	{ 1, 0x0000, &spritelayout, 4*2, 2 },  /* Sprites */
+	{ 0, 0x4800, &charlayout,   0,       6*2 },	/* the game dynamically modifies this */
+	{ 1, 0x0000, &spritelayout, (6*2)*2, 2*2 },  /* Sprites */
 	{ -1 } /* end of array */
 };
-
-static struct GfxDecodeInfo mtrap_gfxdecodeinfo[] =
-{
-	{ 0, 0x4800, &charlayout,     0, 4 },	/* the game dynamically modifies this */
-	{ 1, 0x0000, &spritelayout, 4*2, 2 },  /* Sprites */
-	{ -1 } /* end of array */
-};
-
 
 
 static unsigned char palette[] =
 {
 	0x00,0x00,0x00,   /* black      */
-	0x94,0x00,0xd8,   /* darkpurple */
-	0xd8,0x00,0x00,   /* darkred    */
+	0x80,0x00,0x80,   /* darkpurple */
+	0x80,0x00,0x00,   /* darkred    */
 	0xf8,0x64,0xd8,   /* pink       */
-	0x00,0xd8,0x00,   /* darkgreen  */
-	0x00,0xf8,0xd8,   /* darkcyan   */
-	0xd8,0xd8,0x94,   /* darkyellow */
-	0xd8,0xf8,0xd8,   /* darkwhite  */
+	0x00,0x80,0x00,   /* darkgreen  */
+	0x00,0x80,0x80,   /* darkcyan   */
+	0x80,0x80,0x00,   /* darkyellow */
+	0x80,0x80,0x80,   /* grey  */
 	0xf8,0x94,0x44,   /* orange     */
-	0x00,0x00,0xd8,   /* blue   */
-	0xf8,0x00,0x00,   /* red    */
+	0x00,0x00,0xff,   /* blue   */
+	0xff,0x00,0x00,   /* red    */
 	0xff,0x00,0xff,   /* purple */
-	0x00,0xf8,0x00,   /* green  */
+	0x00,0xff,0x00,   /* green  */
 	0x00,0xff,0xff,   /* cyan   */
-	0xf8,0xf8,0x00,   /* yellow */
+	0xff,0xff,0x00,   /* yellow */
 	0xff,0xff,0xff    /* white  */
 };
 
 enum
 {
 	black, darkpurple, darkred, pink, darkgreen, darkcyan, darkyellow,
-		darkwhite, orange, blue, red, purple, green, cyan, yellow, white
+		grey, orange, blue, red, purple, green, cyan, yellow, white
 };
 
-static unsigned char venture_colortable[] =
+static unsigned char colortable[] =
 {
-	black, yellow,
-	black, cyan,
+	/* text */
 	black, white,
+	black, white,
+
+	/* wall */
+	black, purple,
 	black, purple,
 
+	/* goblin */
 	black, cyan,
-	black, yellow,
-};
+	black, cyan,
 
-static unsigned char mtrap_colortable[] =
-{
-	black, yellow,
-	black, blue,
+	/* Hall Monster */
 	black, green,
+	black, green,
+
+	/* "?" box */
+	black, cyan,
+	black, cyan,
+
+	/* door */
+	black, white,
+	black, white,
+
+	/* Winky */
+	black, red,
 	black, red,
 
-	black, cyan,
-	black, purple,
+	/* Arrow */
+	black, yellow,
+	black, yellow,
+
 };
+
+enum
+{
+	c_text, c_wall, c_gbln, c_mstr, c_qbox, c_door
+};
+
+static unsigned char venture_color_lookup[] =
+{
+	/* 0x00-0x0F */
+	c_gbln, c_gbln, c_gbln, c_gbln, c_gbln, c_gbln, c_gbln, c_gbln,
+	c_gbln, c_gbln, c_gbln, c_gbln, c_gbln, c_gbln, c_gbln, c_gbln,
+	/* 0x10-0x1F */
+	c_gbln, c_gbln, c_gbln, c_gbln, c_gbln, c_gbln, c_gbln, c_gbln,
+	c_gbln, c_gbln, c_gbln, c_gbln, c_gbln, c_gbln, c_gbln, c_gbln,
+	/* 0x20-0x2F */
+	c_gbln, c_gbln, c_gbln, c_gbln, c_gbln, c_gbln, c_gbln, c_gbln,
+	c_gbln, c_gbln, c_gbln, c_gbln, c_gbln, c_gbln, c_gbln, c_gbln,
+	/* 0x30-0x3F */
+	c_gbln, c_gbln, c_gbln, c_gbln, c_gbln, c_gbln, c_gbln, c_gbln,
+	c_gbln, c_gbln, c_gbln, c_gbln, c_gbln, c_gbln, c_gbln, c_gbln,
+	/* 0x40-0x4F */
+	c_text, c_text, c_text, c_text, c_text, c_text, c_text, c_text,
+	c_text, c_text, c_text, c_text, c_text, c_text, c_text, c_text,
+	/* 0x50-0x5F */
+	c_text, c_text, c_text, c_text, c_text, c_text, c_text, c_text,
+	c_text, c_text, c_text, c_text, c_text, c_text, c_text, c_text,
+	/* 0x60-0x6F */
+	c_text, c_text, c_text, c_text, c_text, c_text, c_text, c_text,
+	c_text, c_text, c_text, c_text, c_text, c_text, c_text, c_text,
+	/* 0x70-0x7F */
+	c_text, c_text, c_text, c_text, c_text, c_text, c_text, c_text,
+	c_text, c_text, c_text, c_text, c_text, c_text, c_text, c_text,
+	/* 0x80-0x8F */
+	c_wall, c_wall, c_wall, c_wall, c_wall, c_wall, c_wall, c_wall,
+	c_wall, c_wall, c_wall, c_wall, c_wall, c_wall, c_wall, c_wall,
+	/* 0x90-0x9F */
+	c_wall, c_wall, c_wall, c_wall, c_wall, c_wall, c_wall, c_wall,
+	c_wall, c_wall, c_wall, c_wall, c_wall, c_wall, c_wall, c_wall,
+	/* 0xA0-0xAF */
+	c_wall, c_wall, c_wall, c_wall, c_wall, c_wall, c_wall, c_wall,
+	c_wall, c_wall, c_wall, c_wall, c_wall, c_wall, c_wall, c_wall,
+	/* 0xB0-0xBF */
+	c_wall, c_wall, c_wall, c_wall, c_wall, c_wall, c_wall, c_wall,
+	c_wall, c_wall, c_wall, c_wall, c_wall, c_wall, c_wall, c_wall,
+	/* 0xC0-0xCF */
+	c_mstr, c_mstr, c_mstr, c_mstr, c_mstr, c_mstr, c_mstr, c_mstr,
+	c_mstr, c_mstr, c_mstr, c_mstr, c_mstr, c_mstr, c_mstr, c_mstr,
+	/* 0xD0-0xDF */
+	c_mstr, c_mstr, c_mstr, c_mstr, c_mstr, c_mstr, c_mstr, c_mstr,
+	c_mstr, c_mstr, c_mstr, c_mstr, c_mstr, c_mstr, c_mstr, c_mstr,
+	/* 0xE0-0xEF */
+	c_mstr, c_mstr, c_mstr, c_mstr, c_mstr, c_mstr, c_mstr, c_mstr,
+	c_mstr, c_mstr, c_mstr, c_mstr, c_mstr, c_mstr, c_mstr, c_mstr,
+	/* 0xF0-0xFF */
+	c_mstr, c_mstr, c_mstr, c_mstr, c_mstr, c_mstr, c_mstr, c_mstr,
+	c_mstr, c_mstr, c_mstr, c_mstr, c_mstr, c_mstr, c_mstr, c_mstr,
+};
+
+
+void venture_init_machine(void)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+	/* Disable ROM Check for quicker startup */
+	RAM[0x8AF4]=0xEA;
+	RAM[0x8AF5]=0xEA;
+	RAM[0x8AF6]=0xEA;
+
+	/* Unlike MouseTrap and Pepper II, we have to do a CLD and an SEI ourselves. */
+	/* To accomplish this, we put it in unused memory and force a jump to it. */
+	/* VERY ugly!  */
+	/* If we ever have the chance to play with the CPU flags at init time, this can */
+	/* be replaced with P Reg = P Reg | I_FLAG & (~D_FLAG) ... */
+
+	RAM[0x7000]=0xD8;
+	RAM[0x7001]=0x78;
+	RAM[0x7002]=0x4C;
+	RAM[0x7003]=RAM[0xFFFC];
+	RAM[0x7004]=RAM[0xFFFD];
+	RAM[0xFFFC]=0x00;
+	RAM[0xFFFD]=0x70;
+
+	/* Set color lookup table to point to us */
+	exidy_color_lookup=venture_color_lookup;
+}
+
 
 
 
@@ -253,55 +440,29 @@ static struct MachineDriver venture_machine_driver =
 			0,
 			readmem,writemem,0,0,
 			interrupt,1
-		}
-	},
-	60,
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
-	venture_gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(venture_colortable),
-	0,
-
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	venture_vh_screenrefresh,
-
-	/* sound hardware */
-	0,
-	0,
-	0,
-	0,
-	0
-};
-
-static struct MachineDriver mtrap_machine_driver =
-{
-	/* basic machine hardware */
-	{
+		},
 		{
-			CPU_M6502,
+			CPU_M6502 | CPU_AUDIO_CPU,
 			1000000,	/* 1 Mhz ???? */
-			0,
-			readmem,writemem,0,0,
+			2,	/* memory region #2 */
+			sound_readmem,sound_writemem,0,0,
 			interrupt,1
 		}
 	},
 	60,
-	0,
+	venture_init_machine,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
-	mtrap_gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(mtrap_colortable),
+	gfxdecodeinfo,
+	sizeof(palette)/3,sizeof(colortable),
 	0,
 
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
-	venture_vh_screenrefresh,
+	exidy_vh_screenrefresh,
 
 	/* sound hardware */
 	0,
@@ -332,20 +493,61 @@ ROM_START( venture_rom )
 
 	ROM_REGION(0x0800)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "11D-CPU", 0x0000, 0x0800, 0xceb42d02 )
+
+	ROM_REGION(0x10000)	/* 64k for audio */
+	ROM_LOAD( "3a-ac", 0x5800, 0x0800, 0x6098790a )
+	ROM_LOAD( "4a-ac", 0x6000, 0x0800, 0x9bd6ad80 )
+	ROM_LOAD( "5a-ac", 0x6800, 0x0800, 0xee5c9752 )
+	ROM_LOAD( "6a-ac", 0x7000, 0x0800, 0x9559adbb )
+	ROM_LOAD( "7a-ac", 0x7800, 0x0800, 0x9c5601b0 )
+	ROM_LOAD( "7a-ac", 0xF800, 0x0800, 0x9c5601b0 )
 ROM_END
 
-ROM_START( mtrap_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "mtl11a.bin", 0xA000, 0x1000, 0xb4e109f7 )
-	ROM_LOAD( "mtl10a.bin", 0xB000, 0x1000, 0xe890bac6 )
-	ROM_LOAD( "mtl9a.bin",  0xC000, 0x1000, 0x06628e86 )
-	ROM_LOAD( "mtl8a.bin",  0xD000, 0x1000, 0xa12b0c55 )
-	ROM_LOAD( "mtl7a.bin",  0xE000, 0x1000, 0xb5c75a2f )
-	ROM_LOAD( "mtl6a.bin",  0xF000, 0x1000, 0x2e7f499b )
 
-	ROM_REGION(0x0800)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mtl11D.bin", 0x0000, 0x0800, 0x389ef2ec )
-ROM_END
+static int hiload(const char *name)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+	/* check if the hi score table has already been initialized */
+        if ((memcmp(&RAM[0x0380],"\x00\x06\x0C\x12\x18",5) == 0) &&
+		(memcmp(&RAM[0x03A0],"DJS",3) == 0))
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+                        fread(&RAM[0x0380],1,5+6*5,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		/* 5 bytes for score order, 6 bytes per score/initials */
+                fwrite(&RAM[0x0380],1,5+6*5,f);
+		fclose(f);
+	}
+
+}
+
 
 
 
@@ -353,36 +555,18 @@ struct GameDriver venture_driver =
 {
 	"Venture",
 	"venture",
-	"MARC LAFONTAINE\nNICOLA SALMORIA",
+	"MARC LAFONTAINE\nNICOLA SALMORIA\nBRIAN LEVINE\nMIKE BALFOUR",
 	&venture_machine_driver,
 
 	venture_rom,
 	0, 0,
 	0,
 
-	input_ports, trak_ports, venture_dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
-	0, palette, venture_colortable,
-	8*13, 8*16,
+	0, palette, colortable,
+	ORIENTATION_DEFAULT,
 
-	0,0
+	hiload,hisave
 };
 
-struct GameDriver mtrap_driver =
-{
-	"Mouse Trap",
-	"mtrap",
-	"MARC LAFONTAINE",
-	&mtrap_machine_driver,
-
-	mtrap_rom,
-	0, 0,
-	0,
-
-	input_ports, trak_ports, mtrap_dsw, keys,
-
-	0, palette, mtrap_colortable,
-	8*13, 8*16,
-
-	0,0
-};

@@ -23,30 +23,16 @@ int strcasecmp(const char *a,const char *b)
 #endif
 #endif
 
-static char mameversion[8] = "0.27";   /* M.Z.: current version */
+static char mameversion[8] = "0.28";   /* M.Z.: current version */
 
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
 static const struct GameDriver *gamedrv;
 static const struct MachineDriver *drv;
 
-static int hiscoreloaded;
-static char hiscorename[50];
+int hiscoreloaded;
+char hiscorename[50];
 
-
-struct KEYSet *MM_DirectKEYSet;
-unsigned char MM_PatchedPort;
-unsigned char MM_OldPortValue=0;
-unsigned char MM_LastChangedValue=0;
-unsigned char MM_updir=1;
-unsigned char MM_leftdir=1;
-unsigned char MM_rightdir=1;
-unsigned char MM_downdir=1;
-unsigned char MM_orizdir=1;     /* Minimum between ldir and rdir */
-unsigned char MM_lrdir=1;
-unsigned char MM_totale;
-unsigned char MM_inverted=0;
-unsigned char MM_dir4=0;
 
 
 int frameskip;
@@ -95,7 +81,7 @@ int main(int argc,char **argv)
 	if (help)    /* brief help - useful to get current version info */
 	{
 		printf("M.A.M.E. v%s - Multiple Arcade Machine Emulator\n"
-		       "Copyright (C) 1997  by Nicola Salmoria and Mirko Buffoni\n\n",mameversion);
+		       "Copyright (C) 1997  by Nicola Salmoria and the MAME team\n\n",mameversion);
 		showdisclaimer();
 		printf("Usage:  MAME gamename [options]\n");
 
@@ -207,6 +193,7 @@ int main(int argc,char **argv)
 int init_machine(const char *gamename,int argc,char **argv)
 {
 	int i;
+	int nocheat;
 
 
 	frameskip = 0;
@@ -224,6 +211,14 @@ int init_machine(const char *gamename,int argc,char **argv)
 		}
 	}
 
+	nocheat = 1;
+	for (i = 1;i < argc;i++)
+	{
+		if (stricmp(argv[i],"-cheat") == 0)
+			nocheat = 0;
+	}
+
+
 	i = 0;
 	while (drivers[i] && stricmp(gamename,drivers[i]->name) != 0)
 		i++;
@@ -237,8 +232,77 @@ int init_machine(const char *gamename,int argc,char **argv)
 	Machine->gamedrv = gamedrv = drivers[i];
 	Machine->drv = drv = gamedrv->drv;
 
+
+Machine->orientation = gamedrv->orientation;
+for (i = 1;i < argc;i++)
+{
+	if (stricmp(argv[i],"-ror") == 0)
+	{
+		if (Machine->orientation & ORIENTATION_SWAP_XY)
+			Machine->orientation ^= ORIENTATION_ROTATE_180;
+
+		Machine->orientation ^= ORIENTATION_ROTATE_90;
+	}
+}
+for (i = 1;i < argc;i++)
+{
+	if (stricmp(argv[i],"-rol") == 0)
+	{
+		if (Machine->orientation & ORIENTATION_SWAP_XY)
+			Machine->orientation ^= ORIENTATION_ROTATE_180;
+
+		Machine->orientation ^= ORIENTATION_ROTATE_270;
+	}
+}
+for (i = 1;i < argc;i++)
+{
+	if (stricmp(argv[i],"-flipx") == 0)
+		Machine->orientation ^= ORIENTATION_FLIP_X;
+}
+for (i = 1;i < argc;i++)
+{
+	if (stricmp(argv[i],"-flipy") == 0)
+		Machine->orientation ^= ORIENTATION_FLIP_Y;
+}
+
+
+	if (gamedrv->new_input_ports)
+	{
+		int total;
+		const struct NewInputPort *from;
+		struct NewInputPort *to;
+
+		from = gamedrv->new_input_ports;
+
+		total = 0;
+		do
+		{
+			total++;
+		} while ((from++)->type != IPT_END);
+
+		if ((Machine->input_ports = malloc(total * sizeof(struct NewInputPort))) == 0)
+			return 1;
+
+		from = gamedrv->new_input_ports;
+		to = Machine->input_ports;
+
+		do
+		{
+			memcpy(to,from,sizeof(struct NewInputPort));
+			if (nocheat && (to->type & IPF_CHEAT))
+			{
+				to->type = IPT_UNUSED;	/* disable cheats */
+			}
+
+			to++;
+		} while ((from++)->type != IPT_END);
+	}
+
 	if (readroms(gamedrv->rom,gamename) != 0)
+	{
+		free(Machine->input_ports);
 		return 1;
+	}
 
 	RAM = Machine->memory_region[drv->cpu[0].memory_region];
 	ROM = RAM;
@@ -256,7 +320,11 @@ int init_machine(const char *gamename,int argc,char **argv)
 		while (Machine->memory_region[j]) j++;
 
 		if ((ROM = malloc(0x10000)) == 0)
+		{
+			free(Machine->input_ports);
+			/* TODO: should also free the allocated memory regions */
 			return 1;
+		}
 
 		Machine->memory_region[j] = ROM;
 
@@ -272,30 +340,13 @@ int init_machine(const char *gamename,int argc,char **argv)
 	/* other initialization routines */
 	cpu_init();
 
-	if (*drv->init_machine && (*drv->init_machine)(gamename) != 0)
+	if (drv->vh_init && (*drv->vh_init)(gamename) != 0)
+		/* TODO: should also free the resources allocated before */
 		return 1;
 
-	if (*drv->vh_init && (*drv->vh_init)(gamename) != 0)
+	if (drv->sh_init && (*drv->sh_init)(gamename) != 0)
+		/* TODO: should also free the resources allocated before */
 		return 1;
-
-	if (*drv->sh_init && (*drv->sh_init)(gamename) != 0)
-		return 1;
-
-        for (i = 1;i < argc;i++) if (stricmp(argv[i],"-dir4") == 0) MM_dir4 = 1;
-
-        if (MM_dir4)
-        {
-                MM_PatchedPort = Machine->gamedrv->keysettings[0].num;
-                MM_updir <<= (Machine->gamedrv->keysettings[0].mask);
-                MM_leftdir <<= (Machine->gamedrv->keysettings[1].mask);
-                MM_rightdir <<= (Machine->gamedrv->keysettings[2].mask);
-                MM_downdir <<= (Machine->gamedrv->keysettings[3].mask);
-                MM_lrdir = MM_leftdir + MM_rightdir;
-                MM_totale = MM_lrdir + MM_updir + MM_downdir;
-                MM_orizdir = MM_leftdir;
-                if (MM_rightdir < MM_orizdir) MM_orizdir = MM_rightdir;
-                if (Machine->gamedrv->input_ports[MM_PatchedPort].default_value == 0xff) MM_inverted = 1;
-        };
 
 	return 0;
 }
@@ -309,6 +360,7 @@ void shutdown_machine(void)
 
 	/* free audio samples */
 	freesamples(Machine->samples);
+	Machine->samples = 0;
 
 	/* free the memory allocated for ROM and RAM */
 	for (i = 0;i < MAX_MEMORY_REGIONS;i++)
@@ -316,6 +368,10 @@ void shutdown_machine(void)
 		free(Machine->memory_region[i]);
 		Machine->memory_region[i] = 0;
 	}
+
+	/* free the memory allocated for input ports definition */
+	free(Machine->input_ports);
+	Machine->input_ports = 0;
 }
 
 
@@ -340,31 +396,11 @@ int vh_open(void)
 	unsigned char convtable[MAX_COLOR_TUPLE*MAX_COLOR_CODES];
 
 
-	if ((Machine->scrbitmap = osd_create_display(drv->screen_width,drv->screen_height)) == 0)
-		return 1;
-
-	if (drv->vh_convert_color_prom)
-	{
-		(*drv->vh_convert_color_prom)(convpalette,convtable,gamedrv->color_prom);
-		palette = convpalette;
-		colortable = convtable;
-	}
-	else
-	{
-		palette = gamedrv->palette;
-		colortable = gamedrv->colortable;
-	}
-
-	for (i = 0;i < drv->total_colors;i++)
-		Machine->pens[i] = osd_obtain_pen(palette[3*i],palette[3*i+1],palette[3*i+2]);
-
-	for (i = 0;i < drv->color_table_len;i++)
-		remappedtable[i] = Machine->pens[colortable[i]];
-
-
 	for (i = 0;i < MAX_GFX_ELEMENTS;i++) Machine->gfx[i] = 0;
 	Machine->uifont = 0;
 
+	/* convert the gfx ROMs into character sets. This is done BEFORE calling the driver's */
+	/* convert_color_prom() routine because it might need to check the Machine->gfx[] data */
 	if (drv->gfxdecodeinfo)
 	{
 		for (i = 0;i < MAX_GFX_ELEMENTS && drv->gfxdecodeinfo[i].memory_region != -1;i++)
@@ -381,7 +417,34 @@ int vh_open(void)
 		}
 	}
 
-	if ((Machine->uifont = builduifont(drv->total_colors,palette,Machine->pens)) == 0)
+
+	/* convert the palette */
+	if (drv->vh_convert_color_prom)
+	{
+		(*drv->vh_convert_color_prom)(convpalette,convtable,gamedrv->color_prom);
+		palette = convpalette;
+		colortable = convtable;
+	}
+	else
+	{
+		palette = gamedrv->palette;
+		colortable = gamedrv->colortable;
+	}
+
+
+	/* create the display bitmap, and allocate the palette */
+	if ((Machine->scrbitmap = osd_create_display(drv->screen_width,drv->screen_height,drv->video_attributes)) == 0)
+		return 1;
+
+	for (i = 0;i < drv->total_colors;i++)
+		Machine->pens[i] = osd_obtain_pen(palette[3*i],palette[3*i+1],palette[3*i+2]);
+
+	for (i = 0;i < drv->color_table_len;i++)
+		remappedtable[i] = Machine->pens[colortable[i]];
+
+
+	/* build our private user interface font */
+	if ((Machine->uifont = builduifont()) == 0)
 	{
 		vh_close();
 		return 1;
@@ -409,7 +472,7 @@ int updatescreen(void)
 
 
 	/* read hi scores from disk */
-	if (hiscoreloaded == 0 && *gamedrv->hiscore_load)
+	if (hiscoreloaded == 0 && gamedrv->hiscore_load)
 		hiscoreloaded = (*gamedrv->hiscore_load)(hiscorename);
 
 	/* if the user pressed ESC, stop the emulation */
@@ -418,12 +481,7 @@ int updatescreen(void)
 	/* if the user pressed F3, reset the emulation */
 	if (osd_key_pressed(OSD_KEY_F3))
 	{
-		/* write hi scores to disk */
-		if (hiscoreloaded != 0 && *gamedrv->hiscore_save)
-			(*gamedrv->hiscore_save)(hiscorename);
-		hiscoreloaded = 0;
-
-		return 2;
+		machine_reset();
 	}
 
         if (osd_key_pressed(OSD_KEY_F9)) {
@@ -431,7 +489,7 @@ int updatescreen(void)
 		CurrentVolume = (4-VolumePTR)*25;  /* M.Z.: array no more needed */
                 osd_set_mastervolume(CurrentVolume);
 		while (osd_key_pressed(OSD_KEY_F9)) {
-                  if (*drv->sh_update) {
+                  if (drv->sh_update) {
 		     (*drv->sh_update)();	/* update sound */
 		     osd_update_audio();
                   }
@@ -464,13 +522,12 @@ int updatescreen(void)
 	if (osd_key_pressed(OSD_KEY_P)) /* pause the game */
 	{
 		struct DisplayText dt[2];
-		int key;
 
 
 		dt[0].text = "PAUSED";
 		dt[0].color = DT_COLOR_RED;
-		dt[0].x = gamedrv->paused_x;
-		dt[0].y = gamedrv->paused_y;
+		dt[0].x = (Machine->scrbitmap->width - Machine->uifont->width * strlen(dt[0].text)) / 2;
+		dt[0].y = (Machine->scrbitmap->height - Machine->uifont->height) / 2;
 		dt[1].text = 0;
 		displaytext(dt,0);
 
@@ -479,21 +536,20 @@ int updatescreen(void)
 		while (osd_key_pressed(OSD_KEY_P))
 			osd_update_audio();	/* give time to the sound hardware to apply the volume change */
 
-		do
+		while (osd_key_pressed(OSD_KEY_P) == 0 && osd_key_pressed(OSD_KEY_ESC) == 0)
 		{
-			key = osd_read_key();
+			if (osd_key_pressed(OSD_KEY_TAB)) setup_menu();	/* call the configuration menu */
 
-			/* if (key == OSD_KEY_ESC) return 1;
-			else */                                /* Do not quit with ESC */
-                        if (key == OSD_KEY_TAB)
-			{
-				if (setup_menu()) return 1;
-				(*drv->vh_update)(Machine->scrbitmap);	/* redraw screen */
-				displaytext(dt,0);
-			}
-		} while ((key == 0) || (key == OSD_KEY_TAB) || (key == OSD_KEY_ALT));    /* MAURY_BEGIN: any key restarts */
-		if ((key == OSD_KEY_ESC) || (key == OSD_KEY_P))
-			while (osd_key_pressed(key));            /* MAURY_END: Filter ESC or P */
+			clearbitmap(Machine->scrbitmap);
+			(*drv->vh_update)(Machine->scrbitmap);	/* redraw screen */
+
+			if (uclock() % UCLOCKS_PER_SEC < UCLOCKS_PER_SEC/2)
+				displaytext(dt,0);	/* make PAUSED blink */
+			osd_update_display();
+		}
+
+		while (osd_key_pressed(OSD_KEY_ESC));	/* wait for jey release */
+		while (osd_key_pressed(OSD_KEY_P));	/* ditto */
 
 			osd_set_mastervolume(CurrentVolume);
 			clearbitmap(Machine->scrbitmap);
@@ -530,10 +586,10 @@ int updatescreen(void)
 	{
 		static int showfps,f11pressed;
 		static int f10pressed;
-		uclock_t curr,mtpf;
+		uclock_t curr;
 		#define MEMORY 10
 		static uclock_t prev[MEMORY];
-		static int i,fps;
+		static int i,speed;
 
 
 		framecount = 0;
@@ -558,7 +614,7 @@ int updatescreen(void)
 		if (showvoltemp)
 		{
 			showvoltemp--;
-			if (!showfpstemp) clearbitmap(Machine->scrbitmap);
+			if (!showvoltemp) clearbitmap(Machine->scrbitmap);
 		}                        /* MAURY_END: nuove opzioni */
 
 		if (osd_key_pressed(OSD_KEY_F10))
@@ -573,9 +629,23 @@ int updatescreen(void)
 
 		if (showfps || showfpstemp) /* MAURY: nuove opzioni */
 		{
-			drawgfx(Machine->scrbitmap,Machine->uifont,(fps%1000)/100+'0',DT_COLOR_WHITE,0,0,0,0,0,TRANSPARENCY_NONE,0);
-			drawgfx(Machine->scrbitmap,Machine->uifont,(fps%100)/10+'0',DT_COLOR_WHITE,0,0,Machine->uifont->width,0,0,TRANSPARENCY_NONE,0);
-			drawgfx(Machine->scrbitmap,Machine->uifont,fps%10+'0',DT_COLOR_WHITE,0,0,2*Machine->uifont->width,0,0,TRANSPARENCY_NONE,0);
+			int trueorientation;
+			int fps,i,l;
+			char buf[30];
+
+
+			/* hack: force the display into standard orientation to avoid */
+			/* rotating the text */
+			trueorientation = Machine->orientation;
+			Machine->orientation = ORIENTATION_DEFAULT;
+
+			fps = (Machine->drv->frames_per_second * speed + 50) / 100;
+			sprintf(buf," %d%% (%-3dfps)",speed,fps);
+			l = strlen(buf);
+			for (i = 0;i < l;i++)
+				drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],DT_COLOR_WHITE,0,0,Machine->scrbitmap->width-(l-i)*Machine->uifont->width,0,0,TRANSPARENCY_NONE,0);
+
+			Machine->orientation = trueorientation;
 		}
 
 		if (showvoltemp)      /* MAURY_BEGIN: nuove opzioni */
@@ -605,14 +675,19 @@ int updatescreen(void)
 
 		i = (i+1) % MEMORY;
 
-		mtpf = ((curr - prev[i])/(MEMORY))/2;
-		if (mtpf) fps = (UCLOCKS_PER_SEC+mtpf)/2/mtpf;
+		if (curr - prev[i])
+		{
+			int divdr = drv->frames_per_second * (curr - prev[i]) / (100 * MEMORY);
+
+
+			speed = (UCLOCKS_PER_SEC * (frameskip+1) + divdr/2) / divdr;
+		}
 
 		prev[i] = curr;
 	}
 
 	/* update audio. Do it after the speed throttling to be in better sync. */
-	if (*drv->sh_update)
+	if (drv->sh_update)
 	{
 		(*drv->sh_update)();
 		osd_update_audio();
@@ -633,19 +708,15 @@ int updatescreen(void)
 int run_machine(const char *gamename)
 {
 	int res = 1;
-	float temp;
 
 
 	if (vh_open() == 0)
 	{
-		if (*drv->vh_start == 0 || (*drv->vh_start)() == 0)	/* start the video hardware */
+		if (drv->vh_start == 0 || (*drv->vh_start)() == 0)	/* start the video hardware */
 		{
-			if (*drv->sh_start == 0 || (*drv->sh_start)() == 0)	/* start the audio hardware */
+			if (drv->sh_start == 0 || (*drv->sh_start)() == 0)	/* start the audio hardware */
 			{
-				FILE *f;
-				char name[100];
-				unsigned int i,j;
-				unsigned int len,incount,keycount,trakcount;
+				unsigned int i;
 				struct DisplayText dt[2];
 
 
@@ -666,102 +737,18 @@ int run_machine(const char *gamename)
 				while (osd_key_pressed(i));	        /* wait for key release */
 				if (i != OSD_KEY_ESC)
 				{
-					clearbitmap(Machine->scrbitmap);	/* initialize the bitmap to the correct background color */
+					char cfgname[100];
+
+
+					showcredits();	/* show the driver credits */
+
+					clearbitmap(Machine->scrbitmap);
 					osd_update_display();
 
 
-					incount = 0;
-					while (gamedrv->input_ports[incount].default_value != -1) incount++;
-
-					keycount = 0;
-					while (gamedrv->keysettings[keycount].num != -1) keycount++;
-
-									trakcount = 0;
-									while (gamedrv->trak_ports[trakcount].axis != -1) trakcount++;
-
-									/* find the configuration file */
-									sprintf(name,"%s/%s.cfg",gamename,gamename);
-									if ((f = fopen(name,"rb")) != 0)
-									{
-									  for (j=0; j < 4; j++)
-									  {
-										 if ((len = fread(name,1,4,f)) == 4)
-										 {
-											len = (unsigned char)name[3];
-											name[3] = '\0';
-											if (stricmp(name,"dsw") == 0) {
-											  if ((len == incount) && (fread(name,1,incount,f) == incount))
-						  {
-							  for (i = 0;i < incount;i++)
-								  gamedrv->input_ports[i].default_value = ((unsigned char)name[i]);
-						  }
-											} else if (stricmp(name,"key") == 0) {
-											  if ((len == keycount) && (fread(name,1,keycount,f) == keycount))
-						  {
-							  for (i = 0;i < keycount;i++)
-								  gamedrv->input_ports[ gamedrv->keysettings[i].num ].keyboard[ gamedrv->keysettings[i].mask ] = ((unsigned char)name[i]);
-						  }
-											} else if (stricmp(name,"joy") == 0) {
-											  if ((len == keycount) && (fread(name,1,keycount,f) == keycount))
-						  {
-							  for (i = 0;i < keycount;i++)
-								  gamedrv->input_ports[ gamedrv->keysettings[i].num ].joystick[ gamedrv->keysettings[i].mask ] = ((unsigned char)name[i]);
-											  }
-											} else if (stricmp(name,"trk") == 0) {
-											  if ((len == trakcount) && (fread(name,sizeof(float),trakcount,f) == trakcount))
-						  {
-							  for (i = 0;i < trakcount;i++) {
-														  memcpy(&temp, &name[i*sizeof(float)], sizeof(float));
-								  gamedrv->trak_ports[i].scale = temp;
-													  }
-											  }
-						}
-										 }
-									  }
-									  fclose(f);
-									}
-									else
-									{
-					   /* read dipswitch settings from disk */
-					   sprintf(name,"%s/%s.dsw",gamename,gamename);
-					   if ((f = fopen(name,"rb")) != 0)
-					   {
-						   /* use name as temporary buffer */
-						   if (fread(name,1,incount,f) == incount)
-						   {
-							   for (i = 0;i < incount;i++)
-								   gamedrv->input_ports[i].default_value = ((unsigned char)name[i]);
-						   }
-						   fclose(f);
-					   }
-
-					   /* read keysettings from disk */
-					   sprintf(name,"%s/%s.key",gamename,gamename);
-					   if ((f = fopen(name,"rb")) != 0)
-					   {
-						   /* use name as temporary buffer */
-						   if (fread(name,1,keycount,f) == keycount)
-						   {
-							   for (i = 0;i < keycount;i++)
-								   gamedrv->input_ports[ gamedrv->keysettings[i].num ].keyboard[ gamedrv->keysettings[i].mask ] = ((unsigned char)name[i]);
-						   }
-						   fclose(f);
-					   }
-
-
-					   /* read joystick settings from disk */
-					   sprintf(name,"%s/%s.joy",gamename,gamename);
-					   if ((f = fopen(name,"rb")) != 0)
-					   {
-						   /* use name as temporary buffer */
-						   if (fread(name,1,keycount,f) == keycount)
-						   {
-							   for (i = 0;i < keycount;i++)
-								   gamedrv->input_ports[ gamedrv->keysettings[i].num ].joystick[ gamedrv->keysettings[i].mask ] = ((unsigned char)name[i]);
-						   }
-						   fclose(f);
-					   }
-									}
+					sprintf(cfgname,"%s/%s.cfg",gamename,gamename);
+					/* load input ports settings (keys, dip switches, and so on) */
+					load_input_port_settings(cfgname);
 
 					/* we have to load the hi scores, but this will be done while */
 					/* the game is running */
@@ -770,87 +757,15 @@ int run_machine(const char *gamename)
 
 					cpu_run();	/* run the emulation! */
 
-					if (*drv->sh_stop) (*drv->sh_stop)();
-					if (*drv->vh_stop) (*drv->vh_stop)();
+					if (drv->sh_stop) (*drv->sh_stop)();
+					if (drv->vh_stop) (*drv->vh_stop)();
 
 					/* write hi scores to disk */
-					if (hiscoreloaded != 0 && *gamedrv->hiscore_save)
+					if (hiscoreloaded != 0 && gamedrv->hiscore_save)
 						(*gamedrv->hiscore_save)(hiscorename);
 
-									/* write the configuration file */
-									sprintf(name,"%s/%s.cfg",gamename,gamename);
-									if ((f = fopen(name,"wb")) != 0)
-									{
-											sprintf(name, "dsw ");
-											name[3] = incount;
-											fwrite(name,1,4,f);
-						/* use name as temporary buffer */
-						for (i = 0;i < incount;i++)
-							name[i] = gamedrv->input_ports[i].default_value;
-						fwrite(name,1,incount,f);
-
-											sprintf(name, "key ");
-											name[3] = keycount;
-											fwrite(name,1,4,f);
-						/* use name as temporary buffer */
-						for (i = 0;i < keycount;i++)
-							name[i] = gamedrv->input_ports[ gamedrv->keysettings[i].num ].keyboard[ gamedrv->keysettings[i].mask ];
-						fwrite(name,1,keycount,f);
-
-											sprintf(name, "joy ");
-											name[3] = keycount;
-											fwrite(name,1,4,f);
-						/* use name as temporary buffer */
-						for (i = 0;i < keycount;i++)
-							name[i] = gamedrv->input_ports[ gamedrv->keysettings[i].num ].joystick[ gamedrv->keysettings[i].mask ];
-						fwrite(name,1,keycount,f);
-
-											sprintf(name, "trk ");
-											name[3] = trakcount;
-											fwrite(name,1,4,f);
-						/* use name as temporary buffer */
-						for (i = 0;i < trakcount;i++)
-												memcpy(&name[i*sizeof(float)], &gamedrv->trak_ports[i].scale, sizeof(float));
-						fwrite(name,sizeof(float),trakcount,f);
-											fclose(f);
-									}
-#if 0
-					/* write dipswitch settings to disk */
-					sprintf(name,"%s/%s.dsw",gamename,gamename);
-					if ((f = fopen(name,"wb")) != 0)
-					{
-						/* use name as temporary buffer */
-						for (i = 0;i < incount;i++)
-							name[i] = gamedrv->input_ports[i].default_value;
-
-						fwrite(name,1,incount,f);
-						fclose(f);
-					}
-
-					/* write key settings to disk */
-					sprintf(name,"%s/%s.key",gamename,gamename);
-					if ((f = fopen(name,"wb")) != 0)
-					{
-						/* use name as temporary buffer */
-						for (i = 0;i < keycount;i++)
-							name[i] = gamedrv->input_ports[ gamedrv->keysettings[i].num ].keyboard[ gamedrv->keysettings[i].mask ];
-
-						fwrite(name,1,keycount,f);
-						fclose(f);
-					}
-
-					/* write joy settings to disk */
-					sprintf(name,"%s/%s.joy",gamename,gamename);
-					if ((f = fopen(name,"wb")) != 0)
-					{
-						/* use name as temporary buffer */
-						for (i = 0;i < keycount;i++)
-							name[i] = gamedrv->input_ports[ gamedrv->keysettings[i].num ].joystick[ gamedrv->keysettings[i].mask ];
-
-						fwrite(name,1,keycount,f);
-						fclose(f);
-					}
-#endif
+					/* save input ports settings */
+					save_input_port_settings(cfgname);
 				}
 
 				res = 0;

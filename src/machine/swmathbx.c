@@ -187,7 +187,9 @@ case C_ACC_M_HLT:
 case LDC:
 /* Writing to C triggers the calculation */
    C = RAMWORD;
-   ACC=ACC+(  ( (long)((A-B)*C) )>>14  );
+/*   ACC=ACC+(  ( (long)((A-B)*C) )>>14  ); */
+	/* round the result - this fixes bad tranch vectors in Star Wars */
+   ACC=ACC+(  ( (((long)((A-B)*C) )>>13)+1)>>1  );
    break;
 
 case LDB:
@@ -199,6 +201,8 @@ case LDC_M_HLT:
    M_STOP=0;
    C = RAMWORD;
    ACC=ACC+(  ( (long)((A-B)*C) )>>14  );
+	/* round the result - this fixes bad tranch vectors in Star Wars */
+   ACC=ACC+(  ( (((long)((A-B)*C) )>>13)+1)>>1  );
    break;
 
 case LDB_M_HLT:
@@ -332,10 +336,13 @@ void swmathbx(int offset, int data)
         mw2(0,data);
         break;
 
-      case 4: /* dvsrh */
-        DIVISOR = ((DIVISOR & 0x00ff) | (data<<8));
-        if(DIVISOR!=0)          RESULT = (int)(((long)DIVIDEND<<14)/(long)DIVISOR);
-        break;
+	case 4: /* dvsrh */
+	  DIVISOR = ((DIVISOR & 0x00ff) | (data<<8));
+	  if(DIVISOR!=0)
+		  RESULT = (int)(((long)DIVIDEND<<14)/(long)DIVISOR);
+	  else
+		  RESULT = (int)-1;
+	  break;
 
       case 5: /* dvsrl */
         DIVISOR = ((DIVISOR & 0xff00) | (data));
@@ -353,4 +360,3 @@ void swmathbx(int offset, int data)
         break;
       }
    }
-

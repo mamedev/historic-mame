@@ -27,24 +27,24 @@ unsigned char *tut_scrollx;
 void tut_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
-	for( i = 0; i < 256; i++ )
+
+	/* the palette will be initialized by the game. We just set it to some */
+	/* pre-cooked values so the startup copyright notice can be displayed. */
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0, bit1, bit2;
-
-		bit0 = ( i >> 0 ) & 0x01;
-		bit1 = ( i >> 1 ) & 0x01;
-		bit2 = ( i >> 2 ) & 0x01;
-		palette[ 3 * i ] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		bit0 = ( i >> 3 ) & 0x01;
-		bit1 = ( i >> 4 ) & 0x01;
-		bit2 = ( i >> 5 ) & 0x01;
-		palette[ 3 * i + 1 ] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		bit0 = 0;
-		bit1 = ( i >> 6 ) & 0x01;
-		bit2 = ( i >> 7 ) & 0x01;
-		palette[ 3 * i + 2 ] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		*(palette++) = ((i & 1) >> 0) * 0xff;
+		*(palette++) = ((i & 2) >> 1) * 0xff;
+		*(palette++) = ((i & 4) >> 2) * 0xff;
 	}
+
+	/* initialize the color table */
+	/* we reserve pen 0 for the background black which makes the */
+	/* MS-DOS version look better */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = i + 1;
 }
 
 
@@ -52,65 +52,48 @@ void tut_videoram_w(int offset,int data)
 {
 	if (videoram[offset] != data)
 	{
+		unsigned char *lookup = Machine->gfx[0]->colortable;
 		unsigned char x, y;
 
 		/* bitmap is rotated -90 deg. */
 		x = ( offset >> 7 );
 		y = ( ( ~offset ) & 0x7f ) << 1;
 
-#if defined(MSDOS_ONLY) || defined(WIN32)
-		tmpbitmap->line[ y ][ x ] = data >> 4;
-		tmpbitmap->line[ y + 1 ][ x ] = data & 0x0f;
-#else
-		tmpbitmap->line[ y ][ x ] = tut_paletteram[ data >> 4 ];
-		tmpbitmap->line[ y + 1 ][ x ] = tut_paletteram[ data & 0x0f ];
-#endif
+		tmpbitmap->line[ y ][ x ] = lookup[data >> 4];
+		tmpbitmap->line[ y + 1 ][ x ] = lookup[data & 0x0f];
+
 		videoram[offset] = data;
 	}
 }
 
 
-
-#ifdef MSDOS_ONLY
-#include <allegro.h>       /*  for RGB  */
-
-/*
- *  This is not portable, it access the allegro library that is
- *  used on IBM.
- */
-
 void tut_palette_w(int offset,int data)
 {
-	RGB rgb;
+	int r, g, b;
+	int bit0,bit1,bit2;
 
-        tut_paletteram[offset] = data;
 
-	      rgb.r = ((data & 0x07)<<3);
-        if(rgb.r != 0)
-  	      rgb.r += 7;
-	      rgb.g = (((data>>3) & 0x07)<<3);
-        if(rgb.g != 0)
-  	      rgb.g += 7;
-	      rgb.b = (((data>>6) & 0x03)<<4);
-        if(rgb.b != 0)
-  	      rgb.b += 3;
+	tut_paletteram[offset] = data;
 
-	set_color(offset,&rgb);
+	/* red component */
+	bit0 = (data >> 0) & 0x01;
+	bit1 = (data >> 1) & 0x01;
+	bit2 = (data >> 2) & 0x01;
+	r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+	/* green component */
+	bit0 = (data >> 3) & 0x01;
+	bit1 = (data >> 4) & 0x01;
+	bit2 = (data >> 5) & 0x01;
+	g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+	/* blue component */
+	bit0 = 0;
+	bit1 = (data >> 6) & 0x01;
+	bit2 = (data >> 7) & 0x01;
+	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+	osd_modify_pen (Machine->gfx[0]->colortable[offset], r, g, b);
 }
-#else
-#ifdef WIN32
-void tut_palette_w(int offset,int data)
-{
-   tut_paletteram[offset] = data;
-   osd_win32_set_color(offset,data);
-}
-#else
-void tut_palette_w(int offset,int data)
-{
-        tut_paletteram[offset] = data;
-}
-#endif
-#endif
+
 
 /***************************************************************************
 

@@ -4,6 +4,11 @@
 
   Functions to emulate the video hardware of the machine.
 
+  This file is used by the Pengo and Pac Man drivers.
+  They are almost identical, the only differences being the extra gfx bank
+  in Pengo, and the need to compensate for an hardware sprite positioning
+  "bug" in Pac Man.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -12,11 +17,13 @@
 
 
 static int gfx_bank;
+static int flipscreen;
+static int xoffsethack;
 
 
 static struct rectangle spritevisiblearea =
 {
-	0, 28*8-1,
+	0*8, 28*8-1,
 	2*8, 34*8-1
 };
 
@@ -26,8 +33,11 @@ static struct rectangle spritevisiblearea =
 
   Convert the color PROMs into a more useable format.
 
+  Pac Man has a 16 bytes palette PROM and a 128 bytes color lookup table PROM.
+
   Pengo has a 32 bytes palette PROM and a 256 bytes color lookup table PROM
   (actually that's 512 bytes, but the high address bit is grounded).
+
   The palette PROM is connected to the RGB output this way:
 
   bit 7 -- 220 ohm resistor  -- BLUE
@@ -43,43 +53,91 @@ static struct rectangle spritevisiblearea =
 void pengo_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	for (i = 0;i < 32;i++)
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		int bit0,bit1,bit2;
 
 
-		bit0 = (color_prom[i] >> 0) & 0x01;
-		bit1 = (color_prom[i] >> 1) & 0x01;
-		bit2 = (color_prom[i] >> 2) & 0x01;
-		palette[3*i] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		bit0 = (color_prom[i] >> 3) & 0x01;
-		bit1 = (color_prom[i] >> 4) & 0x01;
-		bit2 = (color_prom[i] >> 5) & 0x01;
-		palette[3*i + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* red component */
+		bit0 = (*color_prom >> 0) & 0x01;
+		bit1 = (*color_prom >> 1) & 0x01;
+		bit2 = (*color_prom >> 2) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = (*color_prom >> 3) & 0x01;
+		bit1 = (*color_prom >> 4) & 0x01;
+		bit2 = (*color_prom >> 5) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
 		bit0 = 0;
-		bit1 = (color_prom[i] >> 6) & 0x01;
-		bit2 = (color_prom[i] >> 7) & 0x01;
-		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit1 = (*color_prom >> 6) & 0x01;
+		bit2 = (*color_prom >> 7) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		color_prom++;
 	}
 
-	for (i = 0;i < 4 * 32;i++)
-		colortable[i] = color_prom[i + 32];
-	for (i = 4 * 32;i < 8 * 32;i++)
+	/* color_prom now points to the beginning of the lookup table */
+
+	/* character lookup table */
+	/* sprites use the same color lookup table as characters */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = *(color_prom++);
+
+	if (Machine->gfx[2])	/* only Pengo has the second gfx bank */
 	{
-		if (color_prom[i + 32]) colortable[i] = color_prom[i + 32] + 0x10;
-		else colortable[i] = 0;
+		/* second bank character lookup table */
+		/* sprites use the same color lookup table as characters */
+		for (i = 0;i < TOTAL_COLORS(2);i++)
+		{
+			if (*color_prom) COLOR(2,i) = *color_prom + 0x10;	/* second palette bank */
+			else COLOR(2,i) = 0;	/* preserve transparency */
+
+			color_prom++;
+		}
 	}
 }
 
 
 
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
 int pengo_vh_start(void)
 {
 	gfx_bank = 0;
+	flipscreen = 0;
+	xoffsethack = 0;
 
 	return generic_vh_start();
+}
+
+int pacman_vh_start(void)
+{
+	gfx_bank = 0;
+	flipscreen = 0;
+	/* In the Pac Man based games (NOT Pengo) the first two sprites must be offset */
+	/* one pixel to the left to get a more correct placement */
+	xoffsethack = 1;
+
+	return generic_vh_start();
+}
+
+
+
+void pengo_flipscreen_w(int offset,int data)
+{
+	if (flipscreen != (data & 1))
+	{
+		flipscreen = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
 }
 
 
@@ -90,7 +148,7 @@ void pengo_gfxbank_w(int offset,int data)
 	/* table, and chars/sprites. However the game always set them together (and */
 	/* the only place where this is used is the intro screen) so I don't bother */
 	/* emulating the whole thing. */
-	gfx_bank = data;
+	gfx_bank = data & 1;
 }
 
 
@@ -109,7 +167,7 @@ void pengo_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = videoram_size-1;offs >= 0;offs--)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{
@@ -143,10 +201,17 @@ void pengo_vh_screenrefresh(struct osd_bitmap *bitmap)
 				sy = my + 2;
 			}
 
-			drawgfx(tmpbitmap,Machine->gfx[gfx_bank ? 2 : 0],
+			if (flipscreen)
+			{
+				sx = 27 - sx;
+				sy = 35 - sy;
+			}
+
+			drawgfx(tmpbitmap,Machine->gfx[2 * gfx_bank],
 					videoram[offs],
 					colorram[offs],
-					0,0,8*sx,8*sy,
+					flipscreen,flipscreen,
+					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
@@ -158,12 +223,38 @@ void pengo_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
-	for (offs = spriteram_size - 2;offs >= 0;offs -= 2)
+	for (offs = spriteram_size - 2;offs > 2*2;offs -= 2)
 	{
-		drawgfx(bitmap,Machine->gfx[gfx_bank ? 3 : 1],
+		drawgfx(bitmap,Machine->gfx[1 + 2 * gfx_bank],
 				spriteram[offs] >> 2,spriteram[offs + 1],
 				spriteram[offs] & 2,spriteram[offs] & 1,
 				239 - spriteram_2[offs],272 - spriteram_2[offs + 1],
+				&spritevisiblearea,TRANSPARENCY_COLOR,0);
+
+		/* also plot the sprite 256 pixels higher for vertical wraparound (tunnel in */
+		/* Crush Roller) */
+		drawgfx(bitmap,Machine->gfx[1 + 2 * gfx_bank],
+				spriteram[offs] >> 2,spriteram[offs + 1],
+				spriteram[offs] & 2,spriteram[offs] & 1,
+				239 - spriteram_2[offs],272-256 - spriteram_2[offs + 1],
+				&spritevisiblearea,TRANSPARENCY_COLOR,0);
+	}
+	/* In the Pac Man based games (NOT Pengo) the first two sprites must be offset */
+	/* one pixel to the left to get a more correct placement */
+	for (offs = 2*2;offs >= 0;offs -= 2)
+	{
+		drawgfx(bitmap,Machine->gfx[1 + 2 * gfx_bank],
+				spriteram[offs] >> 2,spriteram[offs + 1],
+				spriteram[offs] & 2,spriteram[offs] & 1,
+				239 - xoffsethack - spriteram_2[offs],272 - spriteram_2[offs + 1],
+				&spritevisiblearea,TRANSPARENCY_COLOR,0);
+
+		/* also plot the sprite 256 pixels higher for vertical wraparound (tunnel in */
+		/* Crush Roller) */
+		drawgfx(bitmap,Machine->gfx[1 + 2 * gfx_bank],
+				spriteram[offs] >> 2,spriteram[offs + 1],
+				spriteram[offs] & 2,spriteram[offs] & 1,
+				239 - xoffsethack - spriteram_2[offs],272-256 - spriteram_2[offs + 1],
 				&spritevisiblearea,TRANSPARENCY_COLOR,0);
 	}
 }

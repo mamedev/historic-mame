@@ -39,7 +39,7 @@ struct RomModule
 /* restart loading the previous ROM to a new address */
 #define ROM_RELOAD(offset,length) { (char *)-1, offset, length, 0 },
 /* end of table */
-#define ROM_END { 0, 0, 0, 0 }	};
+#define ROM_END { 0, 0, 0, 0 } };
 
 
 
@@ -117,7 +117,7 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 void copybitmap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color);
 void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
-		int rows,int *rowscroll,int cols,int *colscroll,
+		int rows,const int *rowscroll,int cols,const int *colscroll,
 		const struct rectangle *clip,int transparency,int transparent_color);
 void clearbitmap(struct osd_bitmap *bitmap);
 

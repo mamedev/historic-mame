@@ -5,6 +5,7 @@
 #include "common.h"
 #include "mame.h"
 #include "cpuintrf.h"
+#include "inptport.h"
 #include "usrintrf.h"
 
 
@@ -98,6 +99,109 @@ struct InputPort
 /* inverted while a vertical blank is happening. */
 #define IPB_VBLANK	(-1)
 
+struct NewInputPort
+{
+	unsigned char mask;	/* bits affected */
+	unsigned char default_value;	/* default value for the bits affected */
+							/* you can also use one of the IP_ACTIVE defines below */
+	int type;	/* see defines below */
+	const char *name;	/* name to display */
+	int keyboard;	/* key affecting the input bits */
+	int joystick;	/* joystick command affecting the input bits */
+	int arg;	/* extra argument needed in some cases */
+};
+
+
+#define IP_ACTIVE_HIGH 0x00
+#define IP_ACTIVE_LOW 0xff
+
+enum { IPT_END=1,IPT_PORT,
+	/* use IPT_JOYSTICK for panels where the player has one single joystick */
+	IPT_JOYSTICK_UP, IPT_JOYSTICK_DOWN, IPT_JOYSTICK_LEFT, IPT_JOYSTICK_RIGHT,
+	/* use IPT_JOYSTICKLEFT and IPT_JOYSTICKRIGHT for dual joystick panels */
+	IPT_JOYSTICKRIGHT_UP, IPT_JOYSTICKRIGHT_DOWN, IPT_JOYSTICKRIGHT_LEFT, IPT_JOYSTICKRIGHT_RIGHT,
+	IPT_JOYSTICKLEFT_UP, IPT_JOYSTICKLEFT_DOWN, IPT_JOYSTICKLEFT_LEFT, IPT_JOYSTICKLEFT_RIGHT,
+	IPT_BUTTON1, IPT_BUTTON2, IPT_BUTTON3, IPT_BUTTON4,	/* action buttons */
+	IPT_BUTTON5, IPT_BUTTON6, IPT_BUTTON7, IPT_BUTTON8,
+
+	/* analog inputs */
+	/* the "arg" field contains the default sensitivity expressed as a percentage */
+	/* (100 = default, 50 = half, 200 = twice) */
+	IPT_DIAL, IPT_TRACKBALL_X, IPT_TRACKBALL_Y,
+
+	IPT_COIN1, IPT_COIN2, IPT_COIN3, IPT_COIN4,	/* coin slots */
+	IPT_START1, IPT_START2, IPT_START3, IPT_START4,	/* start buttons */
+	IPT_SERVICE, IPT_TILT,
+	IPT_DIPSWITCH_NAME, IPT_DIPSWITCH_SETTING,
+	IPT_VBLANK,
+	IPT_UNKNOWN
+};
+
+#define IPT_UNUSED     IPF_UNUSED
+
+#define IPF_MASK       0xffff0000
+#define IPF_UNUSED     0x80000000	/* The bit is not used by this game, but is used */
+									/* by other games running on the same hardware. */
+									/* This is different from IPT_UNUSED, which marks */
+									/* bits not connected to anything. */
+#define IPF_COCKTAIL   IPF_UNUSED	/* the bit is used in cocktail mode only */
+
+#define IPF_CHEAT      0x40000000	/* Indicates that the input bit is a "cheat" key */
+									/* (providing invulnerabilty, level advance, and */
+									/* so on). MAME will not recognize it when the */
+									/* -nocheat command line option is specified. */
+
+#define IPF_PLAYERMASK 0x00030000	/* use IPF_PLAYERn if more than one person can */
+#define IPF_PLAYER1    0         	/* play at the same time. The IPT_ should be the same */
+#define IPF_PLAYER2    0x00010000	/* for all players (e.g. IPT_BUTTON1 | IPF_PLAYER2) */
+#define IPF_PLAYER3    0x00020000	/* IPF_PLAYER1 is the default and can be left out to */
+#define IPF_PLAYER4    0x00030000	/* increase readability. */
+
+#define IPF_8WAY       0         	/* Joystick modes of operation. 8WAY is the default, */
+#define IPF_4WAY       0x00080000	/* it prevents left/right or up/down to be pressed at */
+#define IPF_2WAY       0         	/* the same time. 4WAY prevents diagonal directions. */
+									/* 2WAY should be used for joysticks wich move only */
+                                 	/* on one axis (e.g. Battle Zone) */
+
+#define IPF_IMPULSE    0x00100000	/* When this is set, when the key corrisponding to */
+									/* the input bit is pressed it will be reported as */
+									/* pressed for a certain number of video frames and */
+									/* then released, regardless of the real status of */
+									/* the key. This is useful e.g. for some coin inputs. */
+									/* The number of frames the signal should stay active */
+									/* is specified in the "arg" field. */
+#define IPF_TOGGLE     0x00200000	/* When this is set, the key acts as a toggle - press */
+									/* it once and it goes on, press it again and it goes off. */
+									/* useful e.g. for sone Test Mode dip switches. */
+#define IPF_REVERSE    0x00400000	/* By default, analog inputs like IPT_TRACKBALL increase */
+									/* when going right/up. This flag inverts them. */
+
+
+#define IP_NAME_DEFAULT ((const char *)-1)
+
+#define IP_KEY_DEFAULT -1
+#define IP_KEY_NONE -2
+
+#define IP_JOY_DEFAULT -1
+#define IP_JOY_NONE -2
+
+/* start of table */
+#define INPUT_PORTS_START(name) static struct NewInputPort name[] = {
+/* end of table */
+#define INPUT_PORTS_END { 0, 0, IPT_END, 0, 0 } };
+/* start of a new input port */
+#define PORT_START { 0, 0, IPT_PORT, 0, 0, 0, 0 },
+/* input bit definition */
+#define PORT_BIT(mask,default,type) { mask, default, type, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 },
+/* input bit definition with extended fields */
+#define PORT_BITX(mask,default,type,name,key,joy,arg) { mask, default, type, name, key, joy, arg },
+/* analog input */
+#define PORT_ANALOG(mask,default,type,sensitivity) { mask, default, type, IP_NAME_DEFAULT, 0, 0, sensitivity },
+/* dip switch definition */
+#define PORT_DIPNAME(mask,default,name,key) { mask, default, IPT_DIPSWITCH_NAME, name, key, IP_JOY_NONE, 0 },
+#define PORT_DIPSETTING(default,name) { -1, default, IPT_DIPSWITCH_SETTING, name, IP_KEY_NONE, IP_JOY_NONE, 0 },
+
+
 
 
 /*
@@ -174,6 +278,7 @@ struct MachineCPU
 #define CPU_M6502  2
 #define CPU_I86    3
 #define CPU_M6809  4
+#define CPU_M68000 5 /* LBO */
 
 /* set this if the CPU is used as a slave for audio. It will not be emulated if */
 /* play_sound == 0, therefore speeding up a lot the emulation. */
@@ -182,7 +287,21 @@ struct MachineCPU
 #define CPU_FLAGS_MASK 0xff00
 
 
-#define MAX_CPU 4
+#define MAX_CPU 5 /* LBO */
+
+
+/* ASG 081897 -- added these flags for the video hardware */
+
+/* bit 0 of the video attributes indicates raster or vector video hardware */
+#define	VIDEO_TYPE_RASTER			0x0000
+#define	VIDEO_TYPE_VECTOR			0x0001
+
+/* bit 1 of the video attributes indicates whether or not dirty rectangles will work */
+#define	VIDEO_SUPPORTS_DIRTY		0x0002
+
+/* bit 2 of the video attributes indicates whether or not the driver modifies the palette */
+#define	VIDEO_MODIFIES_PALETTE	0x0004
+
 
 
 struct MachineDriver
@@ -190,7 +309,7 @@ struct MachineDriver
 	/* basic machine hardware */
 	struct MachineCPU cpu[MAX_CPU];
 	int frames_per_second;
-	int (*init_machine)(const char *gamename);
+	void (*init_machine)(void);
 
 	/* video hardware */
 	int screen_width,screen_height;
@@ -200,6 +319,7 @@ struct MachineDriver
 	int color_table_len;	/* length in bytes of the color lookup table */
 	void (*vh_convert_color_prom)(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 
+	int video_attributes;	/* ASG 081897 */
 	int (*vh_init)(const char *gamename);
 	int (*vh_start)(void);
 	void (*vh_stop)(void);
@@ -230,7 +350,8 @@ struct GameDriver
 						/* drivers can retrieve them in Machine->samples */
 
 	struct InputPort *input_ports;
-        struct TrakPort *trak_ports;
+	struct NewInputPort *new_input_ports;
+	struct TrakPort *trak_ports;
 	const struct DSW *dswsettings;
 	const struct KEYSet *keysettings;
 
@@ -242,14 +363,26 @@ struct GameDriver
 	const unsigned char *color_prom;
 	const unsigned char *palette;
 	const unsigned char *colortable;
-
-	int paused_x,paused_y;	/* used to print PAUSED on the screen */
+	int orientation;	/* orientation of the monitor; see defines below */
 
 	int (*hiscore_load)(const char *name);	/* will be called every vblank until it */
 						/* returns nonzero */
-	void (*hiscore_save)(const char *name);	/* will not be loaded if hiscore_load() hasn't yet */
+	void (*hiscore_save)(const char *name);	/* will not be called if hiscore_load() hasn't yet */
 						/* returned nonzero, to avoid saving an invalid table */
 };
+
+
+#define	ORIENTATION_DEFAULT		0x00
+#define	ORIENTATION_FLIP_X		0x01	/* mirror everything in the X direction */
+#define	ORIENTATION_FLIP_Y		0x02	/* mirror everything in the Y direction */
+#define ORIENTATION_SWAP_XY		0x04	/* mirror along the top-left/bottom-rigth diagonal */
+#define	ORIENTATION_ROTATE_90	(ORIENTATION_SWAP_XY|ORIENTATION_FLIP_X)	/* rotate clockwise 90 degrees */
+#define	ORIENTATION_ROTATE_180	(ORIENTATION_FLIP_X|ORIENTATION_FLIP_Y)	/* rotate 180 degrees */
+#define	ORIENTATION_ROTATE_270	(ORIENTATION_SWAP_XY|ORIENTATION_FLIP_Y)	/* rotate counter-clockwise 90 degrees */
+/* IMPORTANT: to perform more than one transformation, DO NOT USE |, use ^ instead. */
+/* For example, to rotate 90 degrees counterclockwise and flip horizontally, use: */
+/* ORIENTATION_ROTATE_270 ^ ORIENTATION_FLIP_X */
+/* FLIP is performed *after* SWAP_XY. */
 
 
 

@@ -26,8 +26,8 @@ extern unsigned char *bublbobl_sharedram;
 int bublbobl_interrupt(void);
 int bublbobl_sharedram_r(int offset);
 int bublbobl_read_f66e(int offset);
-int boblbobl_init(const char *gamename);
-int bublbobl_init(const char *gamename);
+void boblbobl_init(void);
+void bublbobl_init(void);
 void bublbobl_play_sound(int offset, int data);
 void bublbobl_sharedram_w(int offset, int data);
 void bublbobl_write_f7fe(int offset, int data);
@@ -210,6 +210,7 @@ static struct MachineDriver boblbobl_machine_driver =
     16*16,		/* color_table_len */
     bublbobl_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
     0,
 	bublbobl_vh_start,
 	bublbobl_vh_stop,
@@ -251,6 +252,7 @@ static struct MachineDriver bublbobl_machine_driver =
     16*16,		/* color_table_len */
     bublbobl_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
     0,
 	bublbobl_vh_start,
 	bublbobl_vh_stop,
@@ -404,11 +406,12 @@ struct GameDriver boblbobl_driver =
 	"boblbobl",
 	"CHRIS MOORE\nOLIVER WHITE\nNICOLA SALMORIA",
 	&boblbobl_machine_driver, boblbobl_rom, 0, 0, 0,
-	bublbobl_input_ports, trak_ports, /* input_ports, trak_ports */
+	bublbobl_input_ports, 0, trak_ports, /* input_ports, 0, trak_ports */
 	dsw, keys,
 
 	0, 0, 0,
-	8*13, 8*16,			/* paused_x, paused_y */
+	ORIENTATION_DEFAULT,
+
 	hiload, hisave
 };
 
@@ -418,10 +421,11 @@ struct GameDriver bublbobl_driver =
 	"bublbobl",
 	"CHRIS MOORE\nOLIVER WHITE\nNICOLA SALMORIA",
 	&bublbobl_machine_driver, bublbobl_rom, 0, 0, 0,
-	bublbobl_input_ports, trak_ports, /* input_ports, trak_ports */
+	bublbobl_input_ports, 0, trak_ports, /* input_ports, 0, trak_ports */
 	dsw, keys,
 
 	0, 0, 0,
-	8*13, 8*16,			/* paused_x, paused_y */
+	ORIENTATION_DEFAULT,
+
 	hiload, hisave
 };

@@ -384,6 +384,7 @@ static struct MachineDriver machine_driver =
 	sizeof(palette)/3,sizeof(colortable),
 	0,
 
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,
         kangaroo_vh_start,
         kangaroo_vh_stop,
@@ -439,10 +440,10 @@ struct GameDriver kangaroo_driver =
 	0, 0,
 	0,
 
-        k_input_ports, trak_ports, dsw, keys,
+        k_input_ports, 0, trak_ports, dsw, keys,
 
 	0, palette, colortable,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
         kangaroo_hiload, kangaroo_hisave
 };

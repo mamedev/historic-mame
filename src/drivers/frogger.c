@@ -287,6 +287,7 @@ static struct MachineDriver machine_driver =
 	32,64,
 	frogger_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -419,10 +420,10 @@ struct GameDriver frogger_driver =
 	frogger_decode, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
@@ -440,10 +441,10 @@ struct GameDriver frogsega_driver =
 	frogger_decode, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };

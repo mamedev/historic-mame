@@ -83,7 +83,7 @@ void bosco_customio_w_2(int offset,int data);
 int  bosco_interrupt_1(void);
 int  bosco_interrupt_2(void);
 int  bosco_interrupt_3(void);
-int  bosco_init_machine(const char *gamename);
+void bosco_init_machine(void);
 
 void bosco_cpu_reset_w(int offset, int data);
 int  bosco_vh_start(void);
@@ -391,6 +391,7 @@ static struct MachineDriver machine_driver =
 	32+64,64*4,	/* 32 for the characters, 64 for the stars */
 	bosco_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER,
 	0,
 	bosco_vh_start,
 	bosco_vh_stop,
@@ -506,7 +507,7 @@ static void hisave(const char *name)
 
 struct GameDriver bosco_driver =
 {
-	"bosco",
+	"Bosconian",
 	"bosco",
 	"MARTIN SCRAGG\nAARON GILES\nNICOLA SALMORIA\nMIRKO BUFFONI",
 	&machine_driver,
@@ -515,11 +516,10 @@ struct GameDriver bosco_driver =
 	0, 0,
 	bosco_sample_names,
 
-	input_ports, trak_ports, bosco_dsw, keys,
+	input_ports, 0, trak_ports, bosco_dsw, keys,
 
 	color_prom, 0, 0,
-
-	8*17, 8*14,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };

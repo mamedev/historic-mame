@@ -52,10 +52,12 @@ void asteroid_explode_w (int offset,int data) {
 					sound = kExplode3;
 					break;
 				}
-			osd_play_sample (6,Machine->samples->sample[sound]->data,
-				Machine->samples->sample[sound]->length,
-				Machine->samples->sample[sound]->smpfreq,
-				Machine->samples->sample[sound]->volume,0);
+
+			if (Machine->samples->sample[sound] != 0)
+				osd_play_sample (6,Machine->samples->sample[sound]->data,
+					Machine->samples->sample[sound]->length,
+					Machine->samples->sample[sound]->smpfreq,
+					Machine->samples->sample[sound]->volume,0);
 			}
 		explosion = explosion2;
 		}
@@ -74,10 +76,11 @@ void asteroid_thump_w (int offset,int data) {
 			sound = kHighThump;
 		else
 			sound = kLowThump;
-		osd_play_sample (0,Machine->samples->sample[sound]->data,
-			Machine->samples->sample[sound]->length,
-			Machine->samples->sample[sound]->smpfreq,
-			Machine->samples->sample[sound]->volume,0);
+		if (Machine->samples->sample[sound] != 0)
+			osd_play_sample (0,Machine->samples->sample[sound]->data,
+				Machine->samples->sample[sound]->length,
+				Machine->samples->sample[sound]->smpfreq,
+				Machine->samples->sample[sound]->volume,0);
 		}
 	}
 
@@ -96,18 +99,21 @@ void asteroid_sounds_w (int offset,int data) {
 					sound = kLargeSaucer;
 				else
 					sound = kSmallSaucer;
-				osd_play_sample (1,Machine->samples->sample[sound]->data,
-					Machine->samples->sample[sound]->length,
-					Machine->samples->sample[sound]->smpfreq,
-					Machine->samples->sample[sound]->volume,0);
+
+				if (Machine->samples->sample[sound] != 0)
+					osd_play_sample (1,Machine->samples->sample[sound]->data,
+						Machine->samples->sample[sound]->length,
+						Machine->samples->sample[sound]->smpfreq,
+						Machine->samples->sample[sound]->volume,0);
 				}
 			break;
 		case 1: /* Saucer fire */
 			if (data & 0x80) {
-				osd_play_sample (3,Machine->samples->sample[kSaucerFire]->data,
-					Machine->samples->sample[kSaucerFire]->length,
-					Machine->samples->sample[kSaucerFire]->smpfreq,
-					Machine->samples->sample[kSaucerFire]->volume,0);
+				if (Machine->samples->sample[kSaucerFire] != 0)
+					osd_play_sample (3,Machine->samples->sample[kSaucerFire]->data,
+						Machine->samples->sample[kSaucerFire]->length,
+						Machine->samples->sample[kSaucerFire]->smpfreq,
+						Machine->samples->sample[kSaucerFire]->volume,0);
 				}
 			break;
 		case 2: /* Saucer sound select */
@@ -115,10 +121,11 @@ void asteroid_sounds_w (int offset,int data) {
 			break;
 		case 3: /* Player thrust */
 			if (data & 0x80) {
-				osd_play_sample (4,Machine->samples->sample[kThrust]->data,
-					Machine->samples->sample[kThrust]->length,
-					Machine->samples->sample[kThrust]->smpfreq,
-					Machine->samples->sample[kThrust]->volume,0);
+				if (Machine->samples->sample[kThrust] != 0)
+					osd_play_sample (4,Machine->samples->sample[kThrust]->data,
+						Machine->samples->sample[kThrust]->length,
+						Machine->samples->sample[kThrust]->smpfreq,
+						Machine->samples->sample[kThrust]->volume,0);
 				}
 			break;
 		case 4: /* Player fire */
@@ -127,19 +134,21 @@ void asteroid_sounds_w (int offset,int data) {
 			if (fire2 != fire) {
 				osd_stop_sample (2);
 				if (fire2)
-					osd_play_sample (2,Machine->samples->sample[kFire]->data,
-						Machine->samples->sample[kFire]->length,
-						Machine->samples->sample[kFire]->smpfreq,
-						Machine->samples->sample[kFire]->volume,0);
+					if (Machine->samples->sample[kFire] != 0)
+						osd_play_sample (2,Machine->samples->sample[kFire]->data,
+							Machine->samples->sample[kFire]->length,
+							Machine->samples->sample[kFire]->smpfreq,
+							Machine->samples->sample[kFire]->volume,0);
 				}
 			fire = fire2;
 			break;
 		case 5: /* life sound */
 			if (data & 0x80) {
-				osd_play_sample (5,Machine->samples->sample[kLife]->data,
-					Machine->samples->sample[kLife]->length,
-					Machine->samples->sample[kLife]->smpfreq,
-					Machine->samples->sample[kLife]->volume,0);
+				if (Machine->samples->sample[kLife] != 0)
+					osd_play_sample (5,Machine->samples->sample[kLife]->data,
+						Machine->samples->sample[kLife]->length,
+						Machine->samples->sample[kLife]->smpfreq,
+						Machine->samples->sample[kLife]->volume,0);
 				}
 			break;
 		}

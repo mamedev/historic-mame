@@ -124,7 +124,7 @@ void sega_sh_update(void);
 
 void sega_init_colors (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 int sega_vh_start (void);
-int tacscan_vh_start (void);
+int tacscan_vh_start(void);
 void sega_vh_stop (void);
 void sega_vh_screenrefresh(struct osd_bitmap *bitmap);
 
@@ -502,6 +502,7 @@ static struct MachineDriver machine_driver =
 	256,256,
 	sega_init_colors,
 
+	VIDEO_TYPE_VECTOR,
 	0,
 	sega_vh_start,
 	sega_vh_stop,
@@ -528,10 +529,10 @@ struct GameDriver spacfury_driver =
 	0, 0,
 	spacfury_sample_names,
 
-	spacfury_input_ports, trak_ports, dsw, keys,
+	spacfury_input_ports, 0, trak_ports, dsw, keys,
 
 	0, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	0, 0
 };
@@ -608,11 +609,12 @@ static struct MachineDriver zektor_machine_driver =
 	0,
 
 	/* video hardware */
-	256, 232, { 512, 1536, 512, 1536 },
+	256, 232, { 510, 1540, 600, 1400 },
 	gfxdecodeinfo,
 	256,256,
 	sega_init_colors,
 
+	VIDEO_TYPE_VECTOR,
 	0,
 	sega_vh_start,
 	sega_vh_stop,
@@ -639,10 +641,10 @@ struct GameDriver zektor_driver =
 	0, 0,
 	zektor_sample_names,
 
-	zektor_input_ports, spinner_trak_ports, dsw, zektor_keys,
+	zektor_input_ports, 0, spinner_trak_ports, dsw, zektor_keys,
 
 	0, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	0, 0
 };
@@ -695,11 +697,12 @@ static struct MachineDriver tacscan_machine_driver =
 	0,
 
 	/* video hardware */
-	256, 232, { 512, 1536, 512, 1536 },
+	224, 288, { 500, 1600, 1500, 2500 },
 	gfxdecodeinfo,
 	256,256,
 	sega_init_colors,
 
+	VIDEO_TYPE_VECTOR,
 	0,
 	tacscan_vh_start,
 	sega_vh_stop,
@@ -724,10 +727,10 @@ struct GameDriver tacscan_driver =
 	0, 0,
 	0,
 
-	zektor_input_ports, spinner_trak_ports, dsw, tacscan_keys,
+	zektor_input_ports, 0, spinner_trak_ports, dsw, tacscan_keys,
 
 	0, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	0, 0
 };
@@ -772,11 +775,12 @@ static struct MachineDriver elim2_machine_driver =
 	0,
 
 	/* video hardware */
-	256, 232, { 512, 1536, 512, 1536 },
+	256, 232, { 510, 1540, 600, 1450 },
 	gfxdecodeinfo,
 	256,256,
 	sega_init_colors,
 
+	VIDEO_TYPE_VECTOR,
 	0,
 	sega_vh_start,
 	sega_vh_stop,
@@ -801,10 +805,10 @@ struct GameDriver elim2_driver =
 	0, 0,
 	0,
 
-	elim2_input_ports, trak_ports, dsw, elim2_keys,
+	elim2_input_ports, 0, trak_ports, dsw, elim2_keys,
 
 	0, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	0, 0
 };
@@ -887,11 +891,12 @@ static struct MachineDriver startrek_machine_driver =
 	0,
 
 	/* video hardware */
-	256, 232, { 512, 1536, 512, 1536 },
+	256, 232, { 500, 1600, 600, 1450 },
 	gfxdecodeinfo,
 	256,256,
 	sega_init_colors,
 
+	VIDEO_TYPE_VECTOR,
 	0,
 	sega_vh_start,
 	sega_vh_stop,
@@ -916,10 +921,10 @@ struct GameDriver startrek_driver =
 	0, 0,
 	startrek_sample_names,
 
-	startrek_input_ports, startrek_spinner_ports, dsw, startrek_keys,
+	startrek_input_ports, 0, startrek_spinner_ports, dsw, startrek_keys,
 
 	0, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	0, 0
 };

@@ -43,6 +43,8 @@ c800 Sound command
 c804 Coin ack ?
 c806 ?
 d800-d83f only seems to use:
+	d800-d801 near background y-scroll
+	d802-d803 near background x-scroll
         d804-d805 8x? tile vertical scroll
         d806-d807 ?
 
@@ -148,19 +150,22 @@ Exed Exes Switch Settings (from Dave's Video Game Classics)
 void c1942_bankswitch_w(int offset,int data);
 int c1942_bankedrom_r(int offset);
 int c1942_interrupt(void);
-int c1942_sh_interrupt(void);
 
 extern unsigned char *exedexes_backgroundram;
 extern int exedexes_backgroundram_size;
 extern unsigned char *exedexes_bg_scroll;
+extern unsigned char *exedexes_nbg_yscroll;
+extern unsigned char *exedexes_nbg_xscroll;
 extern unsigned char *exedexes_palette_bank;
 void exedexes_background_w(int offset,int data);
+int exedexes_vh_init(const char *name);
 int exedexes_vh_start(void);
 void exedexes_vh_stop(void);
 void exedexes_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void exedexes_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int c1942_sh_start(void);
+int capcom_sh_start(void);
+int capcom_sh_interrupt(void);
 
 
 
@@ -187,8 +192,11 @@ static struct MemoryWriteAddress writemem[] =
         { 0xc800, 0xc800, sound_command_w },
 //        { 0xc804, 0xc804, exedexes_palette_bank_w, &exedexes_palette_bank },
 //        { 0xc806, 0xc806, MWA_RAM },  /* Bank switch... usually zero! */
+        { 0xd800, 0xd801, MWA_RAM, &exedexes_nbg_yscroll },
+        { 0xd802, 0xd803, MWA_RAM, &exedexes_nbg_xscroll },
         { 0xd804, 0xd805, MWA_RAM, &exedexes_bg_scroll },
-        { 0xd800, 0xd83f, MWA_RAM },  /* Unused Write Ports */
+/*        { 0xd806, 0xd807, MWA_RAM, ... }  unknown */
+        { 0xd808, 0xd83f, MWA_RAM },  /* Unused Write Ports */
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -362,6 +370,7 @@ static unsigned char color_prom[] =
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+
 	0x00,0x02,0x03,0x04,0x06,0x05,0x06,0x07,0x09,0x03,0x04,0x05,0x06,0x07,0x08,0x00,
 	0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,
 	0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,
@@ -496,7 +505,7 @@ static struct MachineDriver machine_driver =
 			3000000,	/* 3 Mhz ??? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			c1942_sh_interrupt,12
+			capcom_sh_interrupt,12
 		}
 	},
 	60,
@@ -508,7 +517,8 @@ static struct MachineDriver machine_driver =
 	256,64*4+64*4+16*16+16*16,
 	exedexes_vh_convert_color_prom,
 
-	0,
+	VIDEO_TYPE_RASTER,
+	exedexes_vh_init,
 	exedexes_vh_start,
 	exedexes_vh_stop,
 	exedexes_vh_screenrefresh,
@@ -516,7 +526,7 @@ static struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,
 	0,
-	c1942_sh_start,
+	capcom_sh_start,
 	AY8910_sh_stop,
 	AY8910_sh_update
 };
@@ -529,10 +539,9 @@ ROM_START( exedexes_rom )
 	ROM_LOAD( "10m_ee03.bin", 0x4000, 0x4000, 0xe52f8109 )
 	ROM_LOAD( "09m_ee02.bin", 0x8000, 0x4000, 0xe7ee4e3e )
 
-	/*ROM_LOAD( "c01_ee07.bin", 0x10000, 0x4000, 0x00000000 )
-	ROM_LOAD( "h04_ee09.bin", 0x14000, 0x2000, 0x00000000 )
+	/*ROM_LOAD( "h04_ee09.bin", 0x14000, 0x2000, 0x00000000 )
 	ROM_LOAD( "09m_ee02.bin", 0x18000, 0x4000, 0x00000000 )*/
-	/* might use bank switching, not sure about e7 and e9 */
+	/* might use bank switching, not sure about ee2 and ee9 */
 
 	ROM_REGION(0x16000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "05c_ee00.bin", 0x00000, 0x2000, 0x21890673 ) /* Characters */
@@ -544,25 +553,76 @@ ROM_START( exedexes_rom )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "11e_ee01.bin", 0x00000, 0x4000, 0x65d4f412 )
+
+        ROM_REGION(0x4000)      /* For Tile background */
+	ROM_LOAD( "c01_ee07.bin", 0x00000, 0x4000, 0x1ffca036 ) /* Tile Map */
+
 ROM_END
+
+
+
+static int hiload(const char *name)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+	/* check if the hi score table has already been initialized */
+        if ((memcmp(&RAM[0xE680],"\x00\x00\x00",3) == 0) &&
+		(memcmp(&RAM[0xE6CD],"\x24\x1E\x19",3) == 0))
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0xE680],1,0x50,f);
+			/* fix the score at the top */
+			memcpy(&RAM[0xE600],&RAM[0xE680],8);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0xE680],1,0x50,f);
+		fclose(f);
+	}
+
+}
 
 
 
 struct GameDriver exedexes_driver =
 {
-        "Exed Exes",
-        "exedexes",
-        "RICHARD DAVIES\nPAUL LEAMAN\nNICOLA SALMORIA\nMIRKO BUFFONI\nPAUL SWAN",
-        &machine_driver,
+	"Exed Exes",
+	"exedexes",
+	"RICHARD DAVIES\nPAUL LEAMAN\nNICOLA SALMORIA\nMIRKO BUFFONI\nPAUL SWAN\nMIKE BALFOUR",
+	&machine_driver,
 
-        exedexes_rom,
+	exedexes_rom,
 	0, 0,
 	0,
 
-        input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-        8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
-        0, 0
+	hiload, hisave
 };

@@ -15,11 +15,11 @@ unsigned char *bosco_sharedram;
 static unsigned char interrupt_enable_1,interrupt_enable_2,interrupt_enable_3;
 static int do_nmi;
 unsigned char bosco_hiscoreloaded;
-int	HiScore;
+int		HiScore;
 
 void bosco_sample_play(int, int);
 
-int bosco_init_machine(const char *gamename)
+void bosco_init_machine(void)
 {
 	/* halt the slave CPUs until they're reset */
 	cpu_halt(1,0);
@@ -27,8 +27,6 @@ int bosco_init_machine(const char *gamename)
 
 	Machine->memory_region[0][0x8c00] = 1;
 	Machine->memory_region[0][0x8c01] = 1;
-
-	return 0;
 }
 
 

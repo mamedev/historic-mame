@@ -12,9 +12,6 @@
 #define CPU_CLOCK 2000000
 static Z80PIO pio;
 static Z80CTC ctc;
-/* cyc systemclocks per interrupt                */
-/* = CPU_CLOCK / framerate / number of framerate */
-#define UPCLK (CPU_CLOCK/60/3)
 
 /* single tone generator */
 #define SINGLE_LENGTH 10000
@@ -25,7 +22,7 @@ static single_rate = 1000;
 static single_volume = 0;
 
 /* sound chips */
-#define SND_CLOCK CPU_CLOCK
+#define SND_CLOCK (Machine->drv->cpu[1].cpu_clock)
 #define CHIPS 3
 static struct SN76496 sn[CHIPS];
 #define buffer_len 350
@@ -81,13 +78,13 @@ int starforce_sh_interrupt(void)
 	int irq = 0;
 
 	/* ctc2 timer single tone generator frequency */
-	single_rate = CPU_CLOCK / ctc.timec[2] * ((ctc.mode[2]&0x20)? 1:16);
+	single_rate = Machine->drv->cpu[1].cpu_clock / ctc.tconst[2] * ((ctc.mode[2]&0x20)? 1:16);
 #if 0
-	z80ctc_update( &ctc,2,UPCLK, 1);	/* tone freq. */
-	ctc_update(&ctc,3,UPCLK,0);			/* not use    */
+	z80ctc_update( &ctc,2, 1,0);	/* tone freq. */
+	ctc_update(&ctc,3,0,0);			/* not use    */
 #endif
 	/* ctc_0 cascade to ctc_1 , interval interrupt */
-	if( z80ctc_update(&ctc,1,UPCLK, z80ctc_update(&ctc,0,UPCLK,1) ) ){
+	if( z80ctc_update(&ctc,1,z80ctc_update(&ctc,0,1,0),0 ) ){
 		/* interrupt check */
 		if( (irq = z80ctc_irq_r(&ctc)) != Z80_IGNORE_INT ) return irq;
 	}
@@ -105,7 +102,7 @@ int starforce_sh_start(void)
 
 	pending_commands = 0;
 
-	z80ctc_reset( &ctc , CPU_CLOCK );
+	z80ctc_reset( &ctc , Machine->drv->cpu[1].cpu_clock );
 	z80pio_reset( &pio );
 
 	if ((sample = malloc(buffer_len)) == 0)

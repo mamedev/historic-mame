@@ -73,7 +73,7 @@ XXX0XXXX   Center coin mech * 2
 #include "sndhrdw/pokyintf.h"
 
 
-int asteroid_init_machine(const char *gamename);
+void asteroid_init_machine(void);
 int asteroid_IN0_r(int offset);
 int asteroid_IN1_r(int offset);
 int asteroid_DSW1_r(int offset);
@@ -321,11 +321,12 @@ static struct MachineDriver machine_driver =
 	asteroid_init_machine,
 
 	/* video hardware */
-	288, 224, { -30, 1030, 50, 900 },
+	288, 224, { -20, 1020, 70, 950 },
 	gfxdecodeinfo,
 	256, 256,
 	atari_vg_init_colors,
 
+	VIDEO_TYPE_VECTOR,
 	0,
 	atari_vg_dvg_start,
 	atari_vg_stop,
@@ -355,11 +356,12 @@ static struct MachineDriver astdelux_machine_driver =
 	asteroid_init_machine,
 
 	/* video hardware */
-	288, 224, { -30, 1030, 50,900 },
+	288, 224, { -20, 1020, 70, 950 },
 	gfxdecodeinfo,
 	256, 256,
 	atari_vg_init_colors,
 
+	VIDEO_TYPE_VECTOR,
 	0,
 	atari_vg_dvg_start,
 	atari_vg_stop,
@@ -429,10 +431,10 @@ struct GameDriver asteroid_driver =
 	0, 0,
 	asteroid_sample_names,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	140, 110,      /* paused_x, paused_y */
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
@@ -449,10 +451,10 @@ struct GameDriver asteroi2_driver =
 	0, 0,
 	asteroid_sample_names,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	140, 110,      /* paused_x, paused_y */
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
@@ -496,10 +498,10 @@ struct GameDriver astdelux_driver =
 	0, 0,
 	asteroid_sample_names,
 
-	astdelux_input_ports, trak_ports, astdelux_dsw, keys,
+	astdelux_input_ports, 0, trak_ports, astdelux_dsw, keys,
 
 	color_prom, 0, 0,
-	140, 110,      /* paused_x, paused_y */
+	ORIENTATION_DEFAULT,
 
 	atari_vg_earom_load, atari_vg_earom_save
 };
@@ -516,10 +518,10 @@ struct GameDriver astdelu1_driver =
 	0, 0,
 	asteroid_sample_names,
 
-	astdelux_input_ports, trak_ports, astdelux_dsw, keys,
+	astdelux_input_ports, 0, trak_ports, astdelux_dsw, keys,
 
 	color_prom, 0, 0,
-	140, 110,      /* paused_x, paused_y */
+	ORIENTATION_DEFAULT,
 
 	atari_vg_earom_load, atari_vg_earom_save
 };

@@ -42,13 +42,13 @@ void vanguard_sh_update(void)
         /* play musical tones according to tunes stored in ROM */
 
      if (!NoSound0 && Machine->memory_region[2][Sound0Offset]!=0xff)
-        osd_adjust_sample(0, (44100 / (256-Machine->memory_region[2][Sound0Offset])) * 16, 128);
+        osd_adjust_sample(0, (32000 / (256-Machine->memory_region[2][Sound0Offset])) * 16, 128);
      else
         osd_adjust_sample(0, 1000, 0);
      Sound0Offset++;
 
      if (!NoSound1 && Machine->memory_region[2][Sound1Offset]!=0xff)
-        osd_adjust_sample(1, (44100 / (256-Machine->memory_region[2][Sound1Offset])) * 16, 128);
+        osd_adjust_sample(1, (32000 / (256-Machine->memory_region[2][Sound1Offset])) * 16, 128);
      else
         osd_adjust_sample(1, 1000, 0);
      Sound1Offset++;

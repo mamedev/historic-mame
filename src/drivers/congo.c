@@ -21,61 +21,6 @@ c002      DSW1
 c003      DSW2
 c008      IN2
 
-*
- * IN0 (bits NOT inverted)
- * bit 7 : ?
- * bit 6 : ?
- * bit 5 : ?
- * bit 4 : FIRE player 1
- * bit 3 : DOWN player 1
- * bit 2 : UP player 1
- * bit 1 : LEFT player 1
- * bit 0 : RIGHT player 1
- *
-*
- * IN1 (bits NOT inverted)
- * bit 7 : ?
- * bit 6 : ?
- * bit 5 : ?
- * bit 4 : FIRE player 2 (TABLE only)
- * bit 3 : DOWN player 2 (TABLE only)
- * bit 2 : UP player 2 (TABLE only)
- * bit 1 : LEFT player 2 (TABLE only)
- * bit 0 : RIGHT player 2 (TABLE ony)
- *
-*
- * IN2 (bits NOT inverted)
- * bit 7 : CREDIT
- * bit 6 : COIN 2
- * bit 5 : COIN 1
- * bit 4 : ?
- * bit 3 : START 2
- * bit 2 : START 1
- * bit 1 : ?
- * bit 0 : ?
- *
-*
- * DSW1 (bits NOT inverted)
- * bit 7 :  COCKTAIL or UPRIGHT cabinet (0 = UPRIGHT)
- * bit 6 :  sound  0 = off  1 = on
- * bit 5 :\ lives
- * bit 4 :/ 00 = infinite  01 = 4  10 = 5  11 = 3
- * bit 3 :\  Difficulty
- * bit 2 :/ 00 = hardest   10 = hard 11 = medium 01 = easy
- * bit 1 :\ bonus
- * bit 0 :/ 00 = 40000  01 = 20000  10 = 30000  11 = 10000
- *
- * DSW2 (bits NOT inverted)
- * bit 7 :\
- * bit 6 :|  right coin slot
- * bit 5 :|
- * bit 4 :/
- * bit 3 :\
- * bit 2 :|  left coin slot
- * bit 1 :|
- * bit 0 :/
- *
-
 write:
 c000-c002 ?
 c006      ?
@@ -96,8 +41,6 @@ NMI causes a ROM/RAM test.
 
 
 
-int zaxxon_IN2_r(int offset);
-
 extern unsigned char *congo_background_position;
 extern unsigned char *congo_background_enable;
 void congo_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
@@ -109,15 +52,15 @@ void congo_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 static struct MemoryReadAddress readmem[] =
 {
-        { 0x8000, 0x8fff, MRA_RAM },
-        { 0xa000, 0x83ff, MRA_RAM },
-        { 0xa000, 0xa7ff, MRA_RAM },
+	{ 0x8000, 0x8fff, MRA_RAM },
+	{ 0xa000, 0x83ff, MRA_RAM },
+	{ 0xa000, 0xa7ff, MRA_RAM },
 	{ 0xc000, 0xc000, input_port_0_r },
 	{ 0xc001, 0xc001, input_port_1_r },
-        { 0xc008, 0xc008, zaxxon_IN2_r },
+	{ 0xc008, 0xc008, input_port_2_r },
 	{ 0xc002, 0xc002, input_port_3_r },
 	{ 0xc003, 0xc003, input_port_4_r },
-        { 0x0000, 0x7fff, MRA_ROM },
+	{ 0x0000, 0x7fff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
 
@@ -136,64 +79,122 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-static struct InputPort input_ports[] =
+/***************************************************************************
+
+  Congo Bongo uses NMI to trigger the self test. We use a fake input port
+  to tie that event to a keypress.
+
+***************************************************************************/
+static int congo_interrupt(void)
 {
-	{	/* IN0 */
-		0x00,
-                { OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_UP, OSD_KEY_DOWN,
-				OSD_KEY_CONTROL, 0, 0, 0 },
-                { OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_UP, OSD_JOY_DOWN,
-				OSD_JOY_FIRE, 0, 0, 0 }
-	},
-	{	/* IN1 */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN2 */
-		0x00,
-		{ 0, 0, OSD_KEY_1, OSD_KEY_2,
-				0, 0, 0, OSD_KEY_3 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW1 */
-		0x7f,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW2 */
-		0x3f,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+	if (readinputport(5) & 1)	/* get status of the F2 key */
+		return nmi_interrupt();	/* trigger self test */
+	else return interrupt();
+}
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+/* almost the same as Zaxxon; UP and DOWN are inverted, and the joystick is 4 way. */
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
 
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
 
-static struct KEYSet keys[] =
-{
-        { 0, 1, "MOVE LEFT UP" },
-        { 0, 2, "MOVE RIGHT UP"  },
-        { 0, 0, "MOVE RIGHT DOWN" },
-        { 0, 3, "MOVE LEFT DOWN" },
-        { 0, 4, "JUMP" },
-        { -1 }
-};
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
+	/* the coin inputs must stay active for exactly one frame, otherwise */
+	/* the game will keep inserting coins. */
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE,
+			"Coin A", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE,
+			"Coin B", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	/* Coin Aux doesn't need IMPULSE to pass the test, but it still needs it */
+	/* to avoid the freeze. */
+	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_COIN3 | IPF_IMPULSE,
+			"Coin Aux", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
 
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x03, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "10000" )
+	PORT_DIPSETTING(    0x01, "20000" )
+	PORT_DIPSETTING(    0x02, "30000" )
+	PORT_DIPSETTING(    0x00, "40000" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty???", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0c, "Easy?" )
+	PORT_DIPSETTING(    0x04, "Medium?" )
+	PORT_DIPSETTING(    0x08, "Hard?" )
+	PORT_DIPSETTING(    0x00, "Hardest?" )
+	PORT_DIPNAME( 0x30, 0x30, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x10, "4" )
+	PORT_DIPSETTING(    0x20, "5" )
+	PORT_DIPSETTING(    0x00, "Infinite" )
+	PORT_DIPNAME( 0x40, 0x40, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPNAME( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x80, "Cocktail" )
 
-static struct DSW dsw[] =
-{
-	{ 3, 0x30, "LIVES", { "INFINITE", "4", "5", "3" }, 1 },
-	{ 3, 0x03, "BONUS", { "40000", "20000", "30000", "10000" }, 1 },
-	{ 3, 0x0c, "DIFFICULTY", { "HARDEST", "MEDIUM", "HARD", "EASY" }, 1 },
-	{ 3, 0x40, "SOUND", { "OFF", "ON" } },
-	{ -1 }
-};
+	PORT_START	/* DSW1 */
+ 	PORT_DIPNAME( 0x0f, 0x03, "B Coin/Cred", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0f, "4/1" )
+	PORT_DIPSETTING(    0x07, "3/1" )
+	PORT_DIPSETTING(    0x0b, "2/1" )
+	PORT_DIPSETTING(    0x06, "2/1+Bonus each 5" )
+	PORT_DIPSETTING(    0x0a, "2/1+Bonus each 2" )
+	PORT_DIPSETTING(    0x03, "1/1" )
+	PORT_DIPSETTING(    0x02, "1/1+Bonus each 5" )
+	PORT_DIPSETTING(    0x0c, "1/1+Bonus each 4" )
+	PORT_DIPSETTING(    0x04, "1/1+Bonus each 2" )
+	PORT_DIPSETTING(    0x0d, "1/2" )
+	PORT_DIPSETTING(    0x08, "1/2+Bonus each 5" )
+	PORT_DIPSETTING(    0x00, "1/2+Bonus each 4" )
+	PORT_DIPSETTING(    0x05, "1/3" )
+	PORT_DIPSETTING(    0x09, "1/4" )
+	PORT_DIPSETTING(    0x01, "1/5" )
+	PORT_DIPSETTING(    0x0e, "1/6" )
+	PORT_DIPNAME( 0xf0, 0x30, "A Coin/Cred", IP_KEY_NONE )
+	PORT_DIPSETTING(    0xf0, "4/1" )
+	PORT_DIPSETTING(    0x70, "3/1" )
+	PORT_DIPSETTING(    0xb0, "2/1" )
+	PORT_DIPSETTING(    0x60, "2/1+Bonus each 5" )
+	PORT_DIPSETTING(    0xa0, "2/1+Bonus each 2" )
+	PORT_DIPSETTING(    0x30, "1/1" )
+	PORT_DIPSETTING(    0x20, "1/1+Bonus each 5" )
+	PORT_DIPSETTING(    0xc0, "1/1+Bonus each 4" )
+	PORT_DIPSETTING(    0x40, "1/1+Bonus each 2" )
+	PORT_DIPSETTING(    0xd0, "1/2" )
+	PORT_DIPSETTING(    0x80, "1/2+Bonus each 5" )
+	PORT_DIPSETTING(    0x00, "1/2+Bonus each 4" )
+	PORT_DIPSETTING(    0x50, "1/3" )
+	PORT_DIPSETTING(    0x90, "1/4" )
+	PORT_DIPSETTING(    0x10, "1/5" )
+	PORT_DIPSETTING(    0xe0, "1/6" )
+
+	PORT_START	/* FAKE */
+	/* This fake input port is used to get the status of the F2 key, */
+	/* and activate the test mode, which is triggered by a NMI */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+INPUT_PORTS_END
 
 
 
@@ -356,8 +357,8 @@ static unsigned char colortable[] =
  BROWN4,BROWN1,BROWN2,BROWN3,DKCYAN,BROWN0,WHITE,BROWN3, /* Brown wood:stage 1 bridge, stage 2 */
  BROWN4,BROWN1,BROWN2,BROWN3,DKCYAN,GRASSGREEN,LTGRAY,DKGREEN, /* stage 2 green */
  BLACK,BROWN1,BROWN2,BROWN3,DKCYAN,BROWN3,WHITE,LTGRAY, /* stage 1 under the skeleton, stage 3 */
-        0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,
+ 0,DKGRAY,LTBLUE,LTGRAY,BLUE,WHITE,WHITE,BLACK,      /* bird on the mountain at the end of level 2 */
+ 0,BROWN1,BROWN3,BROWN2,BROWN2,BROWN3,BROWN3,BROWN2, /* two tiles on top right of level 3 */
 };
 
 
@@ -370,7 +371,7 @@ static struct MachineDriver machine_driver =
 			3072000,	/* 3.072 Mhz */
 			0,
 			readmem,writemem,0,0,
-			interrupt,1
+			congo_interrupt,1
 		}
 	},
 	60,
@@ -382,6 +383,7 @@ static struct MachineDriver machine_driver =
 	sizeof(palette)/3,sizeof(colortable),
 	0,
 
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
 	congo_vh_start,
 	congo_vh_stop,
@@ -467,13 +469,18 @@ static int hiload(const char *name)
 
 static void hisave(const char *name)
 {
-	FILE *f;
-
-
-	if ((f = fopen(name,"wb")) != 0)
+	/* make sure that the high score table is still valid (entering the */
+	/* test mode corrupts it) */
+	if (memcmp(&RAM[0x8030],"\x00\x00\x00",3) != 0)
 	{
-		fwrite(&RAM[0x8020],1,21*6,f);
-		fclose(f);
+		FILE *f;
+
+
+		if ((f = fopen(name,"wb")) != 0)
+		{
+			fwrite(&RAM[0x8020],1,21*6,f);
+			fclose(f);
+		}
 	}
 }
 
@@ -483,17 +490,17 @@ struct GameDriver congo_driver =
 {
 	"Congo Bongo",
 	"congo",
-	"VILLE LAITINEN\nNICOLA SALMORIA\nMARC LAFONTAINE\nPAUL BERBERICH",
+	"Ville Laitinen (MAME driver)\nNicola Salmoria (Zaxxon driver)\nMarc Lafontaine (colors)\nPaul Berberich (colors)",
 	&machine_driver,
 
 	congo_rom,
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	0, palette, colortable,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };

@@ -14,16 +14,14 @@
 
 unsigned char *galaga_sharedram;
 static unsigned char interrupt_enable_1,interrupt_enable_2,interrupt_enable_3;
-static int do_nmi;
-unsigned char galaga_hiscoreloaded,testdone;
+unsigned char galaga_hiscoreloaded;
+
+void galaga_vh_interrupt(void);
 
 
-int galaga_reset_r(int offset)
+void galaga_init_machine(void)
 {
-        galaga_hiscoreloaded = 0;
-        testdone = 0;
-
-	return RAM[offset];
+	galaga_hiscoreloaded = 0;
 }
 
 
@@ -48,18 +46,10 @@ int galaga_sharedram_r(int offset)
 
 void galaga_sharedram_w(int offset,int data)
 {
-        if (offset < 0x800)                   /* Speed up video hack */
-          dirtybuffer[offset & 0x3ff] = 1;
+	if (offset < 0x800)		/* write to video RAM */
+		dirtybuffer[offset & 0x3ff] = 1;
 
 	galaga_sharedram[offset] = data;
-        if (offset == 0x1ab9 && Machine->samples) {
-          if (data && testdone && Machine->samples->sample[0]) {
-                osd_play_sample(7,Machine->samples->sample[0]->data,
-                        Machine->samples->sample[0]->length,
-                        Machine->samples->sample[0]->smpfreq,
-                        Machine->samples->sample[0]->volume,0);
-          }
-        }
 }
 
 
@@ -81,116 +71,134 @@ int galaga_dsw_r(int offset)
 
  Emulate the custom IO chip.
 
- In the real Galaga machine, the chip would cause an NMI on CPU #1 to ask
- for data to be transferred. We don't bother causing the NMI, we just look
- into the CPU register to see where the data has to be read/written to, and
- emulate the behaviour of the NMI interrupt.
-
 ***************************************************************************/
-void galaga_customio_w(int offset,int data)
+static int customio_command;
+static int mode,credits;
+static int coinpercred,credpercoin;
+static unsigned char customio[16];
+
+
+void galaga_customio_data_w(int offset,int data)
 {
-	static int mode,credits;
-	Z80_Regs regs;
+	customio[offset] = data;
 
+if (errorlog) fprintf(errorlog,"%04x: custom IO offset %02x data %02x\n",cpu_getpc(),offset,data);
 
-	Z80_GetRegs(&regs);
-
-	switch (data)
+	switch (customio_command)
 	{
-		case 0x10:	/* nop */
-			break;
-
-		case 0x71:
+		case 0xa8:
+			if (offset == 3 && data == 0x20)	/* total hack */
 			{
-				static int coin,start1,start2,fire;
-				int in;
-
-
-				/* check if the user inserted a coin */
-				if (osd_key_pressed(OSD_KEY_3))
+		        if (Machine->samples && Machine->samples->sample[0])
 				{
-					if (coin == 0 && credits < 99) credits++;
-					coin = 1;
+					osd_play_sample(7,Machine->samples->sample[0]->data,
+							Machine->samples->sample[0]->length,
+							Machine->samples->sample[0]->smpfreq,
+							Machine->samples->sample[0]->volume,0);
 				}
-				else coin = 0;
-
-				/* check for 1 player start button */
-				if (osd_key_pressed(OSD_KEY_1))
-				{
-					if (start1 == 0 && credits >= 1) credits--;
-					start1 = 1;
-				}
-				else start1 = 0;
-
-				/* check for 2 players start button */
-				if (osd_key_pressed(OSD_KEY_2))
-				{
-					if (start2 == 0 && credits >= 2) credits -= 2;
-					start2 = 1;
-				}
-				else start2 = 0;
-
-				in = readinputport(2);
-				/* check fire */
-				if ((in & 0x10) == 0)
-				{
-					if (fire) in |= 0x10;
-					else fire = 1;
-				}
-				else fire = 0;
-
-				if (mode)	/* switch mode */
-/* TODO: investigate what each bit does. bit 7 is the service switch */
-					cpu_writemem(regs.DE2.D,0x80);
-				else	/* credits mode: return number of credits in BCD format */
-					cpu_writemem(regs.DE2.D,(credits / 10) * 16 + credits % 10);
-
-				cpu_writemem(regs.DE2.D + 1,in);
-				cpu_writemem(regs.DE2.D + 2,0xff);
 			}
 			break;
 
-		case 0xb1:	/* status? */
-                        testdone = 1;
-			credits = 0;	/* this is a good time to reset the credits counter */
-			cpu_writemem(regs.DE2.D,0);
-			cpu_writemem(regs.DE2.D + 1,0);
-			cpu_writemem(regs.DE2.D + 2,0);
-			break;
-
-#if 0
-                case 0xa8:
-                        testdone = 0;
-                        if (Machine->samples->sample[0])
-                         osd_play_sample(7,Machine->samples->sample[0]->data,
-                                      Machine->samples->sample[0]->length,
-                                      Machine->samples->sample[0]->smpfreq,
-                                      Machine->samples->sample[0]->volume,0);
-                        break;
-#endif
-		case 0xa1:	/* go into switch mode */
-			mode = 1;
-			break;
-
-		case 0xe1:	/* go into credit mode */
-			mode = 0;
-			break;
-
-		case 0x61:	/* generate an NMI to recover from DI/HALT */
-			do_nmi = 1;
-			break;
-
-		default:
-if (errorlog) fprintf(errorlog,"%04x: warning: unknown custom IO command %02x\n",cpu_getpc(),data);
+		case 0xe1:
+			if (offset == 7)
+			{
+				coinpercred = customio[1];
+				credpercoin = customio[2];
+			}
 			break;
 	}
 }
 
 
+int galaga_customio_data_r(int offset)
+{
+if (errorlog && customio_command != 0x71) fprintf(errorlog,"%04x: custom IO read offset %02x\n",cpu_getpc(),offset);
+
+	switch (customio_command)
+	{
+		case 0x71:	/* read input */
+		case 0xb1:	/* only issued after 0xe1 (go into credit mode) */
+			if (offset == 0)
+			{
+				if (mode)	/* switch mode */
+				{
+					/* bit 7 is the service switch */
+					return readinputport(4);
+				}
+				else	/* credits mode: return number of credits in BCD format */
+				{
+					int in;
+					static int coininserted;
+
+
+					in = readinputport(4);
+
+					/* check if the user inserted a coin */
+					if (coinpercred > 0)
+					{
+						if ((in & 0x70) != 0x70 && credits < 99)
+						{
+							coininserted++;
+							if (coininserted >= coinpercred)
+							{
+								credits += credpercoin;
+								coininserted = 0;
+							}
+						}
+					}
+					else credits = 2;
+
+
+					/* check for 1 player start button */
+					if ((in & 0x04) == 0)
+						if (credits >= 1) credits--;
+
+					/* check for 2 players start button */
+					if ((in & 0x08) == 0)
+						if (credits >= 2) credits -= 2;
+
+					return (credits / 10) * 16 + credits % 10;
+				}
+			}
+			else if (offset == 1)
+				return readinputport(2);	/* player 1 input */
+			else if (offset == 2)
+				return readinputport(3);	/* player 2 input */
+
+			break;
+	}
+
+	return -1;
+}
+
 
 int galaga_customio_r(int offset)
 {
-	return 0x10;	/* everything is handled by customio_w() */
+	return customio_command;
+}
+
+
+void galaga_customio_w(int offset,int data)
+{
+if (errorlog && data != 0x10 && data != 0x71) fprintf(errorlog,"%04x: custom IO command %02x\n",cpu_getpc(),data);
+
+	customio_command = data;
+
+	switch (data)
+	{
+		case 0x10:
+			return;	/* nop */
+			break;
+
+		case 0xa1:	/* go into switch mode */
+			mode = 1;
+			break;
+
+		case 0xe1:	/* go into credit mode */
+			credits = 0;	/* this is a good time to reset the credits counter */
+			mode = 0;
+			break;
+	}
 }
 
 
@@ -205,49 +213,51 @@ void galaga_halt_w(int offset,int data)
 
 void galaga_interrupt_enable_1_w(int offset,int data)
 {
-	interrupt_enable_1 = data;
+	interrupt_enable_1 = data & 1;
 }
 
 
 
 int galaga_interrupt_1(void)
 {
-	if (do_nmi)
+	if (cpu_getiloops() == 0)
 	{
-		do_nmi = 0;
-		return Z80_NMI_INT;
-	}
+		galaga_vh_interrupt();	/* update the background stars position */
 
-	if (interrupt_enable_1) return 0xff;
-	else return Z80_IGNORE_INT;
+		if (interrupt_enable_1) return interrupt();
+	}
+	else if (customio_command != 0x10)
+		return nmi_interrupt();
+
+	return ignore_interrupt();
 }
 
 
 
 void galaga_interrupt_enable_2_w(int offset,int data)
 {
-	interrupt_enable_2 = data;
+	interrupt_enable_2 = data & 1;
 }
 
 
 
 int galaga_interrupt_2(void)
 {
-	if (interrupt_enable_2) return 0xff;
-	else return Z80_IGNORE_INT;
+	if (interrupt_enable_2) return interrupt();
+	else return ignore_interrupt();
 }
 
 
 
 void galaga_interrupt_enable_3_w(int offset,int data)
 {
-	interrupt_enable_3 = data;
+	interrupt_enable_3 = !(data & 1);
 }
 
 
 
 int galaga_interrupt_3(void)
 {
-	if (interrupt_enable_3) return Z80_IGNORE_INT;
-	else return Z80_NMI_INT;
+	if (interrupt_enable_3) return nmi_interrupt();
+	else return ignore_interrupt();
 }

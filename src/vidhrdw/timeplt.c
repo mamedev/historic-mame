@@ -49,42 +49,48 @@ static struct rectangle spritevisiblearea =
 void timeplt_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	for (i = 0;i < 32;i++)
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		int bit0,bit1,bit2,bit3,bit4;
 
 
-		bit0 = (color_prom[i+32] >> 1) & 0x01;
-		bit1 = (color_prom[i+32] >> 2) & 0x01;
-		bit2 = (color_prom[i+32] >> 3) & 0x01;
-		bit3 = (color_prom[i+32] >> 4) & 0x01;
-		bit4 = (color_prom[i+32] >> 5) & 0x01;
-		palette[3*i] = 0x19 * bit0 + 0x24 * bit1 + 0x35 * bit2 + 0x40 * bit3 + 0x4d * bit4;
-		bit0 = (color_prom[i+32] >> 6) & 0x01;
-		bit1 = (color_prom[i+32] >> 7) & 0x01;
-		bit2 = (color_prom[i] >> 0) & 0x01;
-		bit3 = (color_prom[i] >> 1) & 0x01;
-		bit4 = (color_prom[i] >> 2) & 0x01;
-		palette[3*i + 1] = 0x19 * bit0 + 0x24 * bit1 + 0x35 * bit2 + 0x40 * bit3 + 0x4d * bit4;
-		bit0 = (color_prom[i] >> 3) & 0x01;
-		bit1 = (color_prom[i] >> 4) & 0x01;
-		bit2 = (color_prom[i] >> 5) & 0x01;
-		bit3 = (color_prom[i] >> 6) & 0x01;
-		bit4 = (color_prom[i] >> 7) & 0x01;
-		palette[3*i + 2] = 0x19 * bit0 + 0x24 * bit1 + 0x35 * bit2 + 0x40 * bit3 + 0x4d * bit4;
+		bit0 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
+		bit2 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
+		bit3 = (color_prom[Machine->drv->total_colors] >> 4) & 0x01;
+		bit4 = (color_prom[Machine->drv->total_colors] >> 5) & 0x01;
+		*(palette++) = 0x19 * bit0 + 0x24 * bit1 + 0x35 * bit2 + 0x40 * bit3 + 0x4d * bit4;
+		bit0 = (color_prom[Machine->drv->total_colors] >> 6) & 0x01;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 7) & 0x01;
+		bit2 = (color_prom[0] >> 0) & 0x01;
+		bit3 = (color_prom[0] >> 1) & 0x01;
+		bit4 = (color_prom[0] >> 2) & 0x01;
+		*(palette++) = 0x19 * bit0 + 0x24 * bit1 + 0x35 * bit2 + 0x40 * bit3 + 0x4d * bit4;
+		bit0 = (color_prom[0] >> 3) & 0x01;
+		bit1 = (color_prom[0] >> 4) & 0x01;
+		bit2 = (color_prom[0] >> 5) & 0x01;
+		bit3 = (color_prom[0] >> 6) & 0x01;
+		bit4 = (color_prom[0] >> 7) & 0x01;
+		*(palette++) = 0x19 * bit0 + 0x24 * bit1 + 0x35 * bit2 + 0x40 * bit3 + 0x4d * bit4;
+
+		color_prom++;
 	}
 
+	color_prom += Machine->drv->total_colors;
+	/* color_prom now points to the beginning of the lookup table */
 
-	/* characters */
-	colortable[0] = 0x10;	/* according to the PROM this should be white, but it isn't */
-	for (i = 1;i < 32*4;i++)
-		colortable[i] = (color_prom[i + 64] & 0x0f) + 0x10;
 
 	/* sprites */
-	for (i = 32*4;i < 32*4+64*4;i++)
-		colortable[i] = color_prom[i + 64] & 0x0f;
+	for (i = 0;i < TOTAL_COLORS(1);i++)
+		COLOR(1,i) = *(color_prom++) & 0x0f;
+
+	/* characters */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = (*(color_prom++) & 0x0f) + 0x10;
 }
 
 

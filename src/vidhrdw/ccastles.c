@@ -48,33 +48,66 @@ static unsigned char ycoor;
 void ccastles_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	/* for now, map the 3x3x3 color space to a 3x3x2 one. We will use an accurate */
-	/* palette later. */
-	for (i = 0;i < 256;i++)
+	/* the palette will be initialized by the game. We just set it to some */
+	/* pre-cooked values so the startup copyright notice can be displayed. */
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
-
-
-		bit0 = (i >> 0) & 0x01;
-		bit1 = (i >> 1) & 0x01;
-		bit2 = (i >> 2) & 0x01;
-		palette[3*i] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		bit0 = (i >> 3) & 0x01;
-		bit1 = (i >> 4) & 0x01;
-		bit2 = (i >> 5) & 0x01;
-		palette[3*i + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		bit0 = 0;
-		bit1 = (i >> 6) & 0x01;
-		bit2 = (i >> 7) & 0x01;
-		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		*(palette++) = ((i & 1) >> 0) * 0xff;
+		*(palette++) = ((i & 2) >> 1) * 0xff;
+		*(palette++) = ((i & 4) >> 2) * 0xff;
 	}
 
-	/* clear the colortable for startup, it will be initialized by the game */
-	/* after the initial tests */
-	for (i = 0;i < 32;i++)
-		colortable[i] = 0;
+
+	/* sprites */
+	/* we should use colors 0-15, but we swap them with 16-31 to have a black color 0 */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = i + 16;
+	/* background */
+	for (i = 0;i < TOTAL_COLORS(1);i++)
+		COLOR(1,i) = i;
+}
+
+
+
+void ccastles_paletteram_w(int offset,int data)
+{
+	int r,g,b;
+	int bit0,bit1,bit2;
+
+
+	/* we swap colors 0-15 with colors 16-31 because color 0 is red and color */
+	/* 16 is black. The MS-DOS version looks better with a black color 0. */
+	offset ^= 0x10;
+
+	r = (data & 0xC0) >> 6;
+	b = (data & 0x38) >> 3;
+	g = (data & 0x07);
+	/* a write to offset 32-63 means to set the msb of the red component */
+	if (offset & 0x20) r += 4;
+
+	/* bits are inverted */
+	r = 7-r;
+	g = 7-g;
+	b = 7-b;
+
+	bit0 = (r >> 0) & 0x01;
+	bit1 = (r >> 1) & 0x01;
+	bit2 = (r >> 2) & 0x01;
+	r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+	bit0 = (g >> 0) & 0x01;
+	bit1 = (g >> 1) & 0x01;
+	bit2 = (g >> 2) & 0x01;
+	g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+	bit0 = (b >> 0) & 0x01;
+	bit1 = (b >> 1) & 0x01;
+	bit2 = (b >> 2) & 0x01;
+	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+	osd_modify_pen(Machine->pens[offset & 0x1f],r,g,b);
 }
 
 
@@ -117,38 +150,6 @@ void ccastles_vh_stop(void)
 	osd_free_bitmap(sprite_bm);
 	osd_free_bitmap(maskbitmap);
 	osd_free_bitmap(tmpbitmap);
-}
-
-
-
-
-void ccastles_paletteram_w(int offset,int data)
-{
-	int r,g,b,pen,gfx;
-
-
-	r = (data & 0xC0) >> 6;
-	b = (data & 0x38) >> 3;
-	g = (data & 0x07);
-	/* a write to offset 32-63 means to set the msb of the red component */
-	if (offset & 0x20) r += 4;
-
-	/* bits are inverted */
-	r = 7-r;
-	g = 7-g;
-	b = 7-b;
-
-	/* update the color lookup table */
-	pen = Machine->pens[r + (g << 3) + ((b >> 1) << 6)];
-	if ((offset & 0x10) == 0)
-		gfx = 0;	/* sprites */
-	else gfx = 1;	/* background */
-
-	if (Machine->gfx[gfx]->colortable[offset & 0x0f] != pen)
-	{
-		Machine->gfx[gfx]->colortable[offset & 0x0f] = pen;
-		dirtypalette = 1;	/* remember that we have to redraw the whole screen */
-	}
 }
 
 

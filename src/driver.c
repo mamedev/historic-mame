@@ -24,6 +24,7 @@ extern struct GameDriver mrdo_driver;
 extern struct GameDriver mrdot_driver;
 extern struct GameDriver mrlo_driver;
 extern struct GameDriver docastle_driver;
+extern struct GameDriver docastl2_driver;
 extern struct GameDriver dounicorn_driver;
 extern struct GameDriver dowild_driver;
 extern struct GameDriver dorunrun_driver;
@@ -79,6 +80,7 @@ extern struct GameDriver frogger_driver;
 extern struct GameDriver frogsega_driver;
 extern struct GameDriver amidar_driver;
 extern struct GameDriver amidarjp_driver;
+extern struct GameDriver amigo_driver;
 extern struct GameDriver turtles_driver;
 extern struct GameDriver turpin_driver;
 extern struct GameDriver rallyx_driver;
@@ -136,6 +138,12 @@ extern struct GameDriver panic_driver;
 extern struct GameDriver panica_driver;
 extern struct GameDriver arabian_driver;
 extern struct GameDriver c1942_driver;
+extern struct GameDriver vulgus_driver;
+extern struct GameDriver commando_driver;
+extern struct GameDriver commandj_driver;
+extern struct GameDriver gng_driver;
+extern struct GameDriver sonson_driver;
+extern struct GameDriver exedexes_driver;
 extern struct GameDriver popeyebl_driver;
 extern struct GameDriver warpwarp_driver;
 extern struct GameDriver gyruss_driver;
@@ -146,9 +154,6 @@ extern struct GameDriver galaga_driver;
 extern struct GameDriver galaganm_driver;
 extern struct GameDriver galagabl_driver;
 extern struct GameDriver gallag_driver;
-extern struct GameDriver commando_driver;
-extern struct GameDriver vulgus_driver;
-extern struct GameDriver gng_driver;
 extern struct GameDriver gngcross_driver;
 extern struct GameDriver diamond_driver;
 extern struct GameDriver kungfum_driver;
@@ -166,6 +171,7 @@ extern struct GameDriver blaster_driver;
 
 extern struct GameDriver starforc_driver;
 extern struct GameDriver naughtyb_driver;
+extern struct GameDriver popflame_driver;
 extern struct GameDriver mystston_driver;
 extern struct GameDriver frontlin_driver;
 extern struct GameDriver wwestern_driver;
@@ -190,8 +196,6 @@ extern struct GameDriver spacduel_driver;
 extern struct GameDriver tempest_driver;
 extern struct GameDriver starwars_driver;
 extern struct GameDriver missile_driver;
-extern struct GameDriver sonson_driver;
-extern struct GameDriver exedexes_driver;
 extern struct GameDriver bublbobl_driver;
 extern struct GameDriver boblbobl_driver;
 extern struct GameDriver eggs_driver;
@@ -203,9 +207,33 @@ extern struct GameDriver zektor_driver;
 extern struct GameDriver tacscan_driver;
 extern struct GameDriver elim2_driver;
 extern struct GameDriver startrek_driver;
+extern struct GameDriver omegrace_driver;
 extern struct GameDriver xevious_driver;
 extern struct GameDriver xeviousn_driver;
 extern struct GameDriver sxevious_driver;
+extern struct GameDriver bankp_driver;
+extern struct GameDriver sbasketb_driver;
+
+/* MCR games */
+extern struct GameDriver kick_driver;
+extern struct GameDriver solarfox_driver;
+extern struct GameDriver tron_driver;
+extern struct GameDriver twotiger_driver;
+extern struct GameDriver domino_driver;
+extern struct GameDriver shollow_driver;
+extern struct GameDriver wacko_driver;
+extern struct GameDriver kroozr_driver;
+extern struct GameDriver journey_driver;
+extern struct GameDriver tapper_driver;
+extern struct GameDriver dotron_driver;
+extern struct GameDriver destderb_driver;
+extern struct GameDriver timber_driver;
+extern struct GameDriver spyhunt_driver;
+extern struct GameDriver rampage_driver;
+/* end of MCR games */
+extern struct GameDriver espial_driver;
+extern struct GameDriver tp84_driver;
+extern struct GameDriver rastan_driver;
 
 
 const struct GameDriver *drivers[] =
@@ -232,6 +260,7 @@ const struct GameDriver *drivers[] =
 	&mrdot_driver,
 	&mrlo_driver,
 	&docastle_driver,
+	&docastl2_driver,
 	&dounicorn_driver,
 	&dowild_driver,
 	&dorunrun_driver,
@@ -287,6 +316,7 @@ const struct GameDriver *drivers[] =
 	&frogsega_driver,
 	&amidar_driver,
 	&amidarjp_driver,
+	&amigo_driver,
 	&turtles_driver,
 	&turpin_driver,
 	&rallyx_driver,
@@ -344,6 +374,12 @@ const struct GameDriver *drivers[] =
 	&popeyebl_driver,
 	&warpwarp_driver,
 	&c1942_driver,
+	&vulgus_driver,
+	&commando_driver,
+	&commandj_driver,
+	&gng_driver,
+	&sonson_driver,
+	&exedexes_driver,
 	&gyruss_driver,
 	&superpac_driver,
 	&pacnpal_driver,
@@ -352,9 +388,6 @@ const struct GameDriver *drivers[] =
 	&galaganm_driver,
 	&galagabl_driver,
 	&gallag_driver,
-	&commando_driver,
-	&vulgus_driver,
-	&gng_driver,
 	&gngcross_driver,
 	&diamond_driver,
 	&kungfum_driver,
@@ -370,6 +403,7 @@ const struct GameDriver *drivers[] =
 	&blaster_driver,
 	&starforc_driver,
 	&naughtyb_driver,
+	&popflame_driver,
 	&mystston_driver,
 	&frontlin_driver,
 	&wwestern_driver,
@@ -394,8 +428,6 @@ const struct GameDriver *drivers[] =
 	&tempest_driver,
 	&starwars_driver,
 	&missile_driver,
-	&sonson_driver,
-	&exedexes_driver,
 	&bublbobl_driver,
 	&boblbobl_driver,
 	&eggs_driver,
@@ -407,8 +439,31 @@ const struct GameDriver *drivers[] =
 	&tacscan_driver,
 	&elim2_driver,
 	&startrek_driver,
+	&omegrace_driver,
 	&xevious_driver,
 	&xeviousn_driver,
 	&sxevious_driver,
+	&bankp_driver,
+	&sbasketb_driver,
+	/* MCR games */
+	&kick_driver,
+	&solarfox_driver,
+	&tron_driver,
+	&twotiger_driver,
+	&domino_driver,
+	&shollow_driver,
+	&wacko_driver,
+	&kroozr_driver,
+	&journey_driver,
+	&tapper_driver,
+	&dotron_driver,
+	&destderb_driver,
+	&timber_driver,
+	&spyhunt_driver,
+	&rampage_driver,
+	/* end of MCR games */
+	&espial_driver,
+	&tp84_driver,
+	&rastan_driver,
 	0	/* end of array */
 };

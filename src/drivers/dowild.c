@@ -53,7 +53,7 @@ int docastle_interrupt2(void);
 void dowild_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 int docastle_vh_start(void);
 void docastle_vh_stop(void);
-void dowild_vh_screenrefresh(struct osd_bitmap *bitmap);
+void docastle_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 void docastle_sound1_w(int offset,int data);
 void docastle_sound2_w(int offset,int data);
@@ -105,7 +105,6 @@ static struct MemoryReadAddress readmem2[] =
 { 0xc082,0xc082,pup},
 { 0xc083,0xc083,pup},
 { 0xc084,0xc084,pup},
-{ 0xc085,0xc085,pup},
 { 0xc087,0xc087,pup},
 	{ 0xe000, 0xe008, docastle_shared1_r },
 	{ 0x0000, 0x3fff, MRA_ROM },
@@ -337,10 +336,11 @@ static struct MachineDriver machine_driver =
 	256, 96*16,
 	dowild_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
 	docastle_vh_start,
 	docastle_vh_stop,
-	dowild_vh_screenrefresh,
+	docastle_vh_screenrefresh,
 
 	/* sound hardware */
 	0,
@@ -514,10 +514,10 @@ struct GameDriver dowild_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, dowild_keys,
+	input_ports, 0, trak_ports, dsw, dowild_keys,
 
 	dowild_color_prom, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	dowild_hiload, dowild_hisave
 };
@@ -533,10 +533,10 @@ struct GameDriver dorunrun_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, dorunrun_keys,
+	input_ports, 0, trak_ports, dsw, dorunrun_keys,
 
 	dorunrun_color_prom, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	dorunrun_hiload, dorunrun_hisave
 };
@@ -552,10 +552,10 @@ struct GameDriver kickridr_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, kickridr_keys,
+	input_ports, 0, trak_ports, dsw, kickridr_keys,
 
 	kickridr_color_prom, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	dowild_hiload, dowild_hisave
 };

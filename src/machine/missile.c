@@ -112,11 +112,9 @@ int missile_4A00_r(int offset)
 
 
 /********************************************************************************************/
-int missile_init_machine(const char *gamename)
+void missile_init_machine(void)
 {
-
 	h_pos = v_pos = 0;
-	return 0;
 }
 
 

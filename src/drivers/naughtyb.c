@@ -66,6 +66,37 @@ Naughty Boy Switch Settings
 |       |       |Cktail |   |   |   |   |   |   |   |off|
  ------------------------ -------------------------------
 
+*
+* Pop Flamer
+*
+
+Pop Flamer appears to run on identical hardware as Naughty Boy.
+The dipswitches are even identical. Spooky.
+
+                        1   2   3   4   5   6   7   8
+-------------------------------------------------------
+Number of Mr. Mouse 2 |ON |ON |   |   |   |   |   |   |
+                    3 |OFF|ON |   |   |   |   |   |   |
+                    4 |ON |OFF|   |   |   |   |   |   |
+                    5 |OFF|OFF|   |   |   |   |   |   |
+-------------------------------------------------------
+Extra Mouse    10,000 |   |   |ON |ON |   |   |   |   |
+               30,000 |   |   |OFF|ON |   |   |   |   |
+               50,000 |   |   |ON |OFF|   |   |   |   |
+               70,000 |   |   |OFF|OFF|   |   |   |   |
+-------------------------------------------------------
+Credit  2 coin 1 play |   |   |   |   |ON |ON |   |   |
+        1 coin 1 play |   |   |   |   |OFF|ON |   |   |
+        1 coin 2 play |   |   |   |   |ON |OFF|   |   |
+        1 coin 3 play |   |   |   |   |OFF|OFF|   |   |
+-------------------------------------------------------
+Skill          Easier |   |   |   |   |   |   |ON |   |
+               Harder |   |   |   |   |   |   |OFF|   |
+-------------------------------------------------------
+Game style      Table |   |   |   |   |   |   |   |OFF|
+              Upright |   |   |   |   |   |   |   |ON |
+
+
  ***************************************************************************/
 
 #include "driver.h"
@@ -119,48 +150,41 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
 
-static struct InputPort input_ports[] =
-{
-	{       /* IN0 */
-		0xff,
-		{ OSD_KEY_1, OSD_KEY_2, 0, OSD_KEY_CONTROL,
-				OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_RIGHT, OSD_KEY_LEFT },
-		{ 0, 0, 0, OSD_JOY_FIRE,
-				OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_RIGHT, OSD_JOY_LEFT }
-	},
-	{       /* DSW */
-		0x15,
-		{ 0, 0, 0, 0, 0, 0, 0, IPB_VBLANK },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }  /* end of table */
-};
+	PORT_START	/* DSW0 & VBLANK */
+	PORT_DIPNAME( 0x03, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPNAME( 0x0c, 0x04, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "10000" )
+	PORT_DIPSETTING(    0x04, "30000" )
+	PORT_DIPSETTING(    0x08, "50000" )
+	PORT_DIPSETTING(    0x0c, "70000" )
+	PORT_DIPNAME( 0x30, 0x10, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x10, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x20, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x30, "1 Coin/3 Credits" )
+	PORT_DIPNAME( 0x40, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x40, "Hard" )
+	/* This is a bit of a mystery. Bit 0x80 is read as the vblank, but
+	   it apparently also controls cocktail/table mode. */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
-
-
-static struct KEYSet keys[] =
-{
-	{ 0, 4, "MOVE UP" },
-	{ 0, 7, "MOVE LEFT"  },
-	{ 0, 6, "MOVE RIGHT" },
-	{ 0, 5, "MOVE DOWN" },
-	{ 0, 3, "FIRE" },
-	{ -1 }
-};
-
-
-static struct DSW dsw[] =
-{
-	{ 1, 0x03, "LIVES", { "2", "3", "4", "5" } },
-	{ 1, 0x0c, "BONUS", { "10000", "30000", "50000", "70000" } },
-	{ 1, 0x40, "DIFFICULTY", { "EASY", "HARD" } },
-	{ -1 }
-};
+INPUT_PORTS_END
 
 
 
@@ -186,10 +210,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-/* "What is the palette doing here", you might ask, "it's not a ROM!" */
-/* Well, actually the palette and lookup table were stored in PROMs, whose */
-/* image, unfortunately, is usually unavailable. So we have to supply our */
-/* own. */
 const unsigned char palette[] =
 {
 	0x00,0x00,0x00,	/* BLACK */
@@ -261,6 +281,7 @@ static struct MachineDriver machine_driver =
 	sizeof(palette)/3,sizeof(colortable),
 	0,
 
+	VIDEO_TYPE_RASTER,
 	0,
 	naughtyb_vh_start,
 	naughtyb_vh_stop,
@@ -390,17 +411,53 @@ struct GameDriver naughtyb_driver =
 {
 	"Naughty Boy",
 	"naughtyb",
-	"SAL AND JOHN BUGLIARISI\nMIRKO BUFFONI\nNICOLA SALMORIA",
+	"Sal and John Bugliarisi (MAME driver)\nMirko Buffoni (additional code)\nNicola Salmoria (additional code)",
 	&machine_driver,
 
 	naughtyb_rom,
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	0, palette, colortable,
-	8*11, 8*18,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
+};
+
+
+ROM_START( popflame_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "ic86.pop", 0x0000, 0x1000, 0x3874201e )
+	ROM_LOAD( "ic80.pop", 0x1000, 0x1000, 0x62c9e875 )
+	ROM_LOAD( "ic94.pop", 0x2000, 0x1000, 0xef0139a5 )
+	ROM_LOAD( "ic100.pop", 0x3000, 0x1000, 0x782f7f4d )
+
+	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic29.pop", 0x0000, 0x1000, 0x8244c820 )
+	ROM_LOAD( "ic38.pop", 0x1000, 0x1000, 0x19ed84eb )
+	ROM_LOAD( "ic3.pop", 0x2000, 0x1000, 0xde7c7614 )
+	ROM_LOAD( "ic13.pop", 0x3000, 0x1000, 0xb40c561a )
+ROM_END
+
+
+
+struct GameDriver popflame_driver =
+{
+	"Pop Flamer",
+	"popflame",
+	"Brad Oliver (MAME driver)\nSal and John Bugliarisi (Naughty Boy driver)\nMirko Buffoni (additional code)\nNicola Salmoria (additional code)",
+	&machine_driver,
+
+	popflame_rom,
+	0, 0,
+	0,
+
+	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+
+	0, palette, colortable,
+	ORIENTATION_DEFAULT,
+
+	0, 0
 };

@@ -229,8 +229,8 @@ static struct GfxLayout charlayout =
 	512,    /* 512 characters */
 	4,      /* 4 bits per pixel */
 	{ 0, 1, 2, 3 }, /* the bitplanes are packed in one nibble */
+	{ 0, 4, 8, 12, 16, 20, 24, 28 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
-	{ 28, 24, 20, 16, 12, 8, 4, 0 },
 	32*8   /* every char takes 32 consecutive bytes */
 };
 static struct GfxLayout spritelayout =
@@ -239,10 +239,10 @@ static struct GfxLayout spritelayout =
 	256,    /* 256 sprites */
 	4,      /* 4 bits per pixel */
 	{ 0, 1, 2, 3 }, /* the bitplanes are packed in one nibble */
+	{ 0, 4, 8, 12, 16, 20, 24, 28,
+			32, 36, 40, 44, 48, 52, 56, 60 },
 	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64,
 			8*64, 9*64, 10*64, 11*64, 12*64, 13*64, 14*64, 15*64 },
-	{ 60, 56, 52, 48, 44, 40, 36, 32,
-			28, 24, 20, 16, 12, 8, 4, 0 },
 	128*8  /* every sprite takes 128 consecutive bytes */
 };
 
@@ -302,11 +302,12 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 4*8, 28*8-1, 1*8, 31*8-1 },
+	32*8, 32*8, { 1*8, 31*8-1, 4*8, 28*8-1 },
 	gfxdecodeinfo,
 	256, 96*16,
 	docastle_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
 	docastle_vh_start,
 	docastle_vh_stop,
@@ -346,6 +347,23 @@ ROM_START( docastle_rom )
 	ROM_LOAD( "A10", 0x0000, 0x4000, 0xda659397 )
 ROM_END
 
+ROM_START( docastl2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "01P_A1.BIN", 0x0000, 0x2000, 0xd80a3ed2 )
+	ROM_LOAD( "01N_A2.BIN", 0x2000, 0x2000, 0x5c022c7a )
+	ROM_LOAD( "01L_A3.BIN", 0x4000, 0x2000, 0x8e6aea18 )
+	ROM_LOAD( "01K_A4.BIN", 0x6000, 0x2000, 0x38d8dc40 )
+
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "03A_A5.BIN", 0x0000, 0x4000, 0x85e90c0d )
+	ROM_LOAD( "04M_A6.BIN", 0x4000, 0x2000, 0xc53b3bc7 )
+	ROM_LOAD( "04L_A7.BIN", 0x6000, 0x2000, 0x3ed9763d )
+	ROM_LOAD( "04J_A8.BIN", 0x8000, 0x2000, 0xc159accb )
+	ROM_LOAD( "04H_A9.BIN", 0xa000, 0x2000, 0x4d6a5692 )
+
+	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_LOAD( "07N_A0.BIN", 0x0000, 0x4000, 0xe955939f )
+ROM_END
 
 ROM_START( dounicorn_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -421,29 +439,48 @@ struct GameDriver docastle_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave
+};
+
+struct GameDriver docastl2_driver =
+{
+	"Mr. Do's Castle (alternate version)",
+	"docastl2",
+	"MIRKO BUFFONI\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS",
+	&machine_driver,
+
+	docastl2_rom,
+	0, 0,
+	0,
+
+	input_ports, 0, trak_ports, dsw, keys,
+
+	color_prom, 0, 0,
+	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
 
 struct GameDriver dounicorn_driver =
 {
-        "Mr. Do VS The Unicorns",
-        "douni",
-        "MIRKO BUFFONI\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nLEE TAYLOR",
+	"Mr. Do VS The Unicorns",
+	"douni",
+	"MIRKO BUFFONI\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nLEE TAYLOR",
 	&machine_driver,
 
-        dounicorn_rom,
+	dounicorn_rom,
 	0, 0,
 	0,
 
-        input_ports, trak_ports, dsw_unicorn, keys,
+	input_ports, 0, trak_ports, dsw_unicorn, keys,
 
 	color_prom, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };

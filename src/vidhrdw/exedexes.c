@@ -14,9 +14,14 @@
 unsigned char *exedexes_backgroundram;
 int exedexes_backgroundram_size;
 unsigned char *exedexes_bg_scroll;
+
+unsigned char *exedexes_nbg_yscroll;
+unsigned char *exedexes_nbg_xscroll;
+
 static unsigned char *dirtybuffer2;
 static struct osd_bitmap *tmpbitmap2;
 
+#define TileMap(offs) (Machine->memory_region[3][offs])
 
 
 /***************************************************************************
@@ -84,6 +89,17 @@ void exedexes_vh_convert_color_prom(unsigned char *palette, unsigned char *color
   Start the video hardware emulation.
 
 ***************************************************************************/
+int exedexes_vh_init(const char *name)
+{
+	if(!Machine->memory_region[1])
+	{
+		printf("Region Erased!\n");
+		return 1;
+	}
+
+	return 0;
+}
+
 int exedexes_vh_start(void)
 {
 	if (generic_vh_start() != 0)
@@ -144,7 +160,7 @@ void exedexes_background_w(int offset,int data)
 ***************************************************************************/
 void exedexes_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int offs,sx,sy;
+	int offs,sx,sy,x,y;
 
 
 	for (sy = 0;sy < 32;sy++)
@@ -181,6 +197,29 @@ void exedexes_vh_screenrefresh(struct osd_bitmap *bitmap)
 		bg_scroll = exedexes_bg_scroll[0] + 256 * exedexes_bg_scroll[1] - 256;
 
 		copyscrollbitmap(bitmap,tmpbitmap2,0,0,1,&bg_scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
+
+
+	for (y=0;y<=16;y++)
+	{
+		for (x=0;x<16;x++)
+		{
+	   		int xo,yo,tile,Chr;
+         		xo=((exedexes_nbg_xscroll[1])<<8)+exedexes_nbg_xscroll[0]+x*16;
+         		yo=((exedexes_nbg_yscroll[1])<<8)+exedexes_nbg_yscroll[0]+y*16;
+
+         		tile = ((yo & 0xf0) >> 4) + (xo & 0xF0) +
+                               (yo & 0x700) + ((xo & 0xe00) << 3);
+
+			Chr=TileMap(tile);
+         		if(Chr)
+				drawgfx(bitmap,Machine->gfx[2],
+					Chr,
+					0,
+					0,0,
+					x*16-(xo&0xF),240-y*16+(yo&0xF),
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		}
 	}
 
 

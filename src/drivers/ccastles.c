@@ -205,7 +205,7 @@ static struct GfxLayout fakelayout =
 {
 	1,1,
 	0,
-	1,
+	4,	/* 4 bits per pixel */
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -238,9 +238,10 @@ static struct MachineDriver ccastles_machine = {
   0,
   256, 232, { 0, 255, 0, 231 },
   gfxdecodeinfo,
-  256,16+16,
+  32, 16+16,
   ccastles_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
   0,
   ccastles_vh_start,
   ccastles_vh_stop,
@@ -306,23 +307,22 @@ static void hisave(const char *name)
 
 
 
-struct GameDriver ccastles_driver = {
-  "Crystal Castles",
-  "ccastles",
-  "PAT LAWRENCE\nCHRIS HARDY\nSTEVE CLYNES\nNICOLA SALMORIA",
-  &ccastles_machine,
+struct GameDriver ccastles_driver =
+{
+	"Crystal Castles",
+	"ccastles",
+	"PAT LAWRENCE\nCHRIS HARDY\nSTEVE CLYNES\nNICOLA SALMORIA",
+	&ccastles_machine,
 
-  ccastles_rom,
-  0, 0,
-  0,
+	ccastles_rom,
+	0, 0,
+	0,
 
-  ccastles_input_ports, ccastles_trak_ports,
-  ccastles_dsw, ccastles_keys,
+	ccastles_input_ports, 0, ccastles_trak_ports,
+	ccastles_dsw, ccastles_keys,
 
-  0, 0, 0,
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
 
-  8*13, 8*16,
-
-  /* Not sure where the high scores are saved in RAM... */
-  hiload, hisave
+	hiload, hisave
 };

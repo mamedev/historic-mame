@@ -142,7 +142,7 @@ Off Off                         1 coin 2 plays
 #include "driver.h"
 #include "sndhrdw/pokyintf.h"
 
-int missile_init_machine(const char *gamename);
+void missile_init_machine(void);
 int  missile_r(int offset);
 void missile_w(int offset, int data);
 
@@ -333,6 +333,8 @@ static struct MachineDriver machine_driver =
 	gfxdecodeinfo,
 	sizeof(palette)/3, 0,
 	0,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	missile_vh_start,
 	missile_vh_stop,
@@ -409,11 +411,10 @@ struct GameDriver missile_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	0, palette, 0,
-
-	8*13, 8*12,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };

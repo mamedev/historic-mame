@@ -66,9 +66,11 @@ typedef struct
 
   int IPeriod,ICount; /* Set IPeriod to number of CPU cycles */
                       /* between calls to Loop6502()         */
-  byte IRequest;      /* Set to the INT_IRQ when pending IRQ */
+/*  byte IRequest; */     /* Set to the INT_IRQ when pending IRQ */
+byte pending_irq;	/* NS 970904 */
+byte pending_nmi;	/* NS 970904 */
   byte AfterCLI;      /* Private, don't touch                */
-  int IBackup;        /* Private, don't touch                */
+/*  int IBackup; */ /* NS 970904 */       /* Private, don't touch                */
   void *User;         /* Arbitrary user data (ID,RAM*,etc.)  */
   byte TrapBadOps;    /* Set to 1 to warn of illegal opcodes */
   word Trap;          /* Set Trap to address to trace from   */
@@ -94,14 +96,14 @@ word Exec6502(register M6502 *R);
 /** INT_NMI will cause a non-maskable interrupt. INT_IRQ    **/
 /** will cause a normal interrupt, unless I_FLAG set in R.  **/
 /*************************************************************/
-void Int6502(register M6502 *R,register byte Type);
+/*void Int6502(register M6502 *R,register byte Type);*/	/* NS 970904 */
 
 /** Run6502() ************************************************/
 /** This function will run 6502 code until Loop6502() call  **/
 /** returns INT_QUIT. It will return the PC at which        **/
 /** emulation stopped, and current register values in R.    **/
 /*************************************************************/
-word Run6502(register M6502 *R);
+word Run6502(register M6502 *R,int cycles);	/* NS 970904 */
 
 /** Rd6502()/Wr6502/Op6502() *********************************/
 /** These functions are called when access to RAM occurs.   **/
@@ -139,5 +141,9 @@ byte Debug6502(register M6502 *R);
 /*byte Loop6502(register M6502 *R);*/
 int cpu_interrupt(void);
 #define Loop6502(R) ((byte)cpu_interrupt())
+
+void M6502_Cause_Interrupt(M6502 *R,int type);	/* NS 970904 */
+void M6502_Clear_Pending_Interrupts(M6502 *R);	/* NS 970904 */
+
 
 #endif /* M6502_H */

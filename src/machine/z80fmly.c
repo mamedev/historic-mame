@@ -10,6 +10,9 @@
 
   This version are tested starforce driver.
 
+  8/21/97 -- Heavily modified by Aaron Giles to be much more accurate for the MCR games
+  8/27/97 -- Rewritten a second time by Aaron Giles, with the datasheets in hand
+
 pending:
 	Z80CTC , Counter mode & Timer with Trigrt start :not support Triger level
 
@@ -21,115 +24,276 @@ pending:
 
 #define DEBUG
 
-void z80ctc_reset( Z80CTC *ctc , int system_clock )
+/* these are the bits of the incoming commands to the CTC */
+#define INTERRUPT			0x80
+#define INTERRUPT_ON 	0x80
+#define INTERRUPT_OFF	0x00
+
+#define MODE				0x40
+#define MODE_TIMER		0x00
+#define MODE_COUNTER		0x40
+
+#define PRESCALER			0x20
+#define PRESCALER_256	0x20
+#define PRESCALER_16		0x00
+
+#define EDGE				0x10
+#define EDGE_FALLING		0x00
+#define EDGE_RISING		0x10
+
+#define TRIGGER			0x08
+#define TRIGGER_AUTO		0x00
+#define TRIGGER_CLOCK	0x08
+
+#define CONSTANT			0x04
+#define CONSTANT_LOAD	0x04
+#define CONSTANT_NONE	0x00
+
+#define RESET				0x02
+#define RESET_CONTINUE	0x00
+#define RESET_ACTIVE		0x02
+
+#define CONTROL			0x01
+#define CONTROL_VECTOR	0x00
+#define CONTROL_WORD		0x01
+
+/* these extra bits help us keep things accurate */
+#define WAITING_FOR_TRIG	0x100
+
+
+void z80ctc_reset (Z80CTC *ctc, int system_clock)
 {
 	int ch;
 
-	for( ch = 0 ; ch <= 3 ; ch ++ ){
-		ctc->mode[ch] &= 0x03;
-		ctc->timec[ch] = 0x10000;
-		ctc->cnt[ch] = 0;
+	/* erase everything */
+	memset (ctc, 0, sizeof (*ctc));
+
+	/* insert default timers */
+	for (ch = 0; ch < 4; ch++)
+	{
+		ctc->mode[ch] = RESET_ACTIVE;
+		ctc->down[ch] = 0x7fffffff;
+		ctc->last[ch] = cpu_gettotalcycles();
+		ctc->tconst[ch] = 0x100;
 	}
+
+	/* set the system clock */
 	ctc->sys_clk = system_clock;
 }
 
-void z80ctc_w( Z80CTC *ctc , int ch , int data )
+
+void z80ctc_w (Z80CTC *ctc, int ch, int data)
 {
-	if( ctc->mode[ch]&0x04 ){	/* time constact */
-		ctc->timec[ch] = (data?data:0x100)<<8; /* 1 - 256 */
-		ctc->cnt[ch] = 0;
-		ctc->mode[ch] &= 0xf9;
-		if (errorlog) fprintf(errorlog,"CTC Ch.%d TIMER %02x\n" , ch , ctc->timec[ch]>>8 );
-#if 1
-		/* This routine are abnoemal case , used by starforce sound cpu */
-		/* ctc2.tc pending & ctc0.tc write , ctc2.tc is fix. */
-		/* ctc3.tc pending & ctc1.tc write , ctc3.tc is fix. */
-		ch ^= 0x02;
-		if( ctc->mode[ch]&0x04 ){	/* time constact */
-			ctc->timec[ch] = (data?data:0x100)<<8; /* 1 - 256 */
-			ctc->cnt[ch] = 0;
-			ctc->mode[ch] &= 0xf9;	/* clear constant & start ctc */
-			if (errorlog) fprintf(errorlog,"CTC Ch.%d TIMER %02x\n" , ch , ctc->timec[ch]>>8 );
+	int mode, i;
+
+	/* keep channel within range, and get the current mode */
+	ch &= 3;
+	mode = ctc->mode[ch];
+
+	/* if we're waiting for a time constant, this is it */
+	if ((mode & CONSTANT) == CONSTANT_LOAD)
+	{
+		/* set the time constant (0 -> 0x100) */
+		ctc->tconst[ch] = data ? data : 0x100;
+
+		/* clear the internal mode -- we're no longer waiting */
+		ctc->mode[ch] &= ~CONSTANT;
+
+		/* also clear the reset, since the constant gets it going again */
+		ctc->mode[ch] &= ~RESET;
+
+		/* if we're in timer mode.... */
+		if ((mode & MODE) == MODE_TIMER)
+		{
+			/* if we're triggering on the time constant, reset the down counter now */
+			if ((mode & TRIGGER) == TRIGGER_AUTO)
+				ctc->down[ch] = ctc->tconst[ch] << 8;
+
+			/* else set the bit indicating that we're waiting for the appropriate trigger */
+			else
+			{
+				unsigned long delta = ctc->fall[ch] - cpu_gettotalcycles ();
+
+				/* if we're waiting for the falling edge and we know when that is, set it up */
+				if ((mode & EDGE) == EDGE_FALLING && delta < ctc->sys_clk)
+					ctc->down[ch] = (ctc->tconst[ch] << 8) + delta;
+
+				/* otherwise, just indicate that we're waiting for a trigger */
+				else
+					ctc->mode[ch] |= WAITING_FOR_TRIG;
+			}
 		}
-#endif
+
+		/* else just set the down counter now */
+		else
+			ctc->down[ch] = ctc->tconst[ch] << 8;
+
+		/* all done here */
 		return;
 	}
 
-	if( data & 0x01 ){			/* control word */
+	/* if we're writing the interrupt vector, handle it specially */
+	if ((data & CONTROL) == CONTROL_VECTOR && ch == 0)
+	{
+		ctc->vector = data & 0xf8;
+		if (errorlog) fprintf (errorlog, "CTC Vector = %02x\n", ctc->vector);
+		return;
+	}
+
+	/* this must be a control word */
+	if ((data & CONTROL) == CONTROL_WORD)
+	{
+		/* set the new mode */
 		ctc->mode[ch] = data;
-		if (errorlog) fprintf(errorlog,"CTC ch.%d mode %02x\n" , ch , data );
-	}else{					/* interrupt vector */
-		if( !(ch&0x02) ){
-			/* channel 0 or 2 abavle ( zilog Z80A ) */
-			ctc->vector = (data&0xf8);
-			if (errorlog) fprintf(errorlog,"CTC Vector %02x\n" , data );
-		}
-	}
-}
+		if (errorlog) fprintf (errorlog,"CTC ch.%d mode = %02x\n", ch, data);
 
-int z80ctc_r( Z80CTC *ctc , int ch )
-{
-	if (errorlog) fprintf(errorlog,"CTC-%c read \n",'0'+ch );
-	return ( (ctc->timec[ch&0x03]-ctc->cnt[ch&0x03]) >>8);
-}
-
-/* 
-		sysclk = update system clocks.
-		cntclk = update clocks in 'CLKIN' pin. ( external clock )
-*/
-int z80ctc_update( Z80CTC *ctc , int ch , int sysclk , int cntclk )
-{
-	int upclk,zco;
-
-	ch = ch & 0x03;
-
-	/* enable check */
-	if( (ctc->mode[ch] & 0x02) ) return 0;
-	/* select clock */
-	if( ctc->mode[ch] & 0x40 ) upclk = cntclk<<8;
-	else
-	{		/* timer mode */
-		if( !(ctc->mode[ch]&0x10) )
+		/* if we're being reset, clear out any pending interrupts for this channel */
+		if ((data & RESET) == RESET_ACTIVE)
 		{
-			if( cntclk ) ctc->mode[ch]&= 0xef;	/* Start */
-			else return 0; /* Wait Trigrt */
+			for (i = 0; i < MAX_IRQ; i++)
+				if (ctc->irq[i].irq == ctc->vector + (ch << 1))
+					ctc->irq[i].irq = 0;
 		}
-		upclk = sysclk;
-		if( !(ctc->mode[ch]&0x20) ) upclk = upclk<<4; /* priscaler = /16 */
-	}
-	if( !upclk ) return 0;
 
-	/* counter update & calcrate zco plus */
-	upclk += ctc->cnt[ch];
-	zco = upclk / ctc->timec[ch];
-	ctc->cnt[ch] = upclk % ctc->timec[ch];
-	/* interrupt check */
-	if( zco && (ctc->mode[ch]&0x80) ){
-		ctc->irq[ch] += zco;	/* interrupt request */
+		/* all done here */
+		return;
 	}
+}
+
+
+int z80ctc_r (Z80CTC *ctc, int ch)
+{
+	/* keep channel within range */
+	ch &= 3;
+
+	/* return the current down counter value */
+	return ctc->down[ch] >> 8;
+}
+
+
+int z80ctc_update (Z80CTC *ctc, int ch, int cntclk, int cnthold)
+{
+	unsigned long time = cpu_gettotalcycles ();
+	int mode, zco = 0;
+	int upclk, sysclk, i;
+
+	/* keep channel within range, and get the current mode */
+	ch &= 3;
+	mode = ctc->mode[ch];
+
+	/* increment the last timer update */
+	sysclk = time - ctc->last[ch];
+	ctc->last[ch] = time;
+
+	/* if we got an external clock, handle it */
+	if (cntclk)
+	{
+		/* set the time of the falling edge here */
+		ctc->fall[ch] = time + cnthold;
+
+		/* if this timer is waiting for a trigger, we can resolve it now */
+		if (mode & WAITING_FOR_TRIG)
+		{
+			/* first clear the waiting flag */
+			ctc->mode[ch] &= ~WAITING_FOR_TRIG;
+			mode &= ~WAITING_FOR_TRIG;
+
+			/* rising edge? */
+			if ((mode & EDGE) == EDGE_RISING)
+				ctc->down[ch] = ctc->tconst[ch] << 8;
+
+			/* falling edge? */
+			else
+				ctc->down[ch] = (ctc->tconst[ch] << 8) + cnthold;
+		}
+	}
+
+	/* if this channel is reset, we're done */
+	if ((mode & RESET) == RESET_ACTIVE)
+		return 0;
+
+	/* if this channel is in timer mode waiting for a trigger, we're done */
+	if (mode & WAITING_FOR_TRIG)
+		return 0;
+
+	/* select the clock to use */
+	if ((mode & MODE) == MODE_TIMER)
+	{
+		if ((mode & PRESCALER) == PRESCALER_16)
+			upclk = sysclk << 4;
+		else
+			upclk = sysclk;
+	}
+	else
+		upclk = cntclk << 8;
+
+	/* if the clock isn't updated this time, bail */
+	if (!upclk)
+		return 0;
+
+	/* decrement the counter and count zero crossings */
+	ctc->down[ch] -= upclk;
+	while (ctc->down[ch] <= 0)
+	{
+		/* if we're doing interrupts, add a pending one */
+		if ((mode & INTERRUPT) == INTERRUPT_ON)
+		{
+			for (i = 0; i < MAX_IRQ; i++)
+				if (!ctc->irq[i].irq)
+				{
+					ctc->irq[i].irq = ctc->vector + (ch << 1);
+					ctc->irq[i].time = time + ctc->down[ch];
+					break;
+				}
+		}
+
+		/* update the counters */
+		zco += 1;
+		ctc->down[ch] += ctc->tconst[ch] << 8;
+	}
+
+	/* log it */
+	if (errorlog && zco)
+	{
+		if ((mode & MODE) == MODE_COUNTER)
+			fprintf (errorlog, "CTC Ch.%d trigger\n", ch);
+		else
+			fprintf (errorlog, "CTC Ch.%d rollover x%d\n", ch, zco);
+	}
+
+	/* return the number of zero crossings */
 	return zco;
 }
 
-int z80ctc_irq_r( Z80CTC *ctc )
+
+int z80ctc_irq_r (Z80CTC *ctc)
 {
-	if( ctc->irq[0] ){
-		ctc->irq[0]--;
-		return ctc->vector;
-	}
-	if( ctc->irq[1] ){
-		ctc->irq[1]--;
-		return ctc->vector+2;
-	}
-	if( ctc->irq[2] ){
-		ctc->irq[2]--;
-		return ctc->vector+4;
-	}
-	if( ctc->irq[3] ){
-		ctc->irq[3]--;
-		return ctc->vector+6;
-	}
-	return Z80_IGNORE_INT;
+	unsigned long basetime = cpu_gettotalcycles () - ctc->sys_clk;	/* no more than 1 second behind! */
+	unsigned long time, earliestTime = 0xffffffff;
+	int i, earliest = -1;
+
+	/* find the earliest IRQ */
+	for (i = 0; i < MAX_IRQ; i++)
+		if (ctc->irq[i].irq)
+		{
+			time = ctc->irq[i].time - basetime;
+			if (time < earliestTime)
+			{
+				earliest = i;
+				earliestTime = time;
+			}
+		}
+
+	/* if none, bail */
+	if (earliest == -1)
+		return Z80_IGNORE_INT;
+
+	/* otherwise, return the IRQ and clear it */
+	i = ctc->irq[earliest].irq;
+	ctc->irq[earliest].irq = 0;
+	return i;
 }
+
 
 void z80pio_reset( Z80PIO *pio )
 {
@@ -153,7 +317,7 @@ void z80pio_w( Z80PIO *pio , int ch , int cd , int data )
 			pio->dir[ch] = data;
 			pio->mode[ch] = 0x03;
 			return;
-		}		
+		}
 		if( pio->enable[ch] & 0x10 ){	/* mask folows */
 			pio->mask[ch] = data;
 			pio->enable[ch] &= 0xef;

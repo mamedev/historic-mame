@@ -122,7 +122,7 @@ struct {
 };
 #endif
 
-int jrpacman_init_machine(const char *gamename)
+void jrpacman_init_machine(void)
 {
 #ifndef PreDecryptedRoms
 	s0 = 1;
@@ -133,7 +133,6 @@ int jrpacman_init_machine(const char *gamename)
 	memset(shadowROM,0,sizeof(shadowROM));
 	memset(used,0,sizeof(used));
 #endif
-	return 0;
 }
 
 

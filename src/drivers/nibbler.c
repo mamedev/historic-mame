@@ -66,7 +66,7 @@ write:
 2200      ?
 2300      ?
 
-Interrupts: VBlank causes an IRQ (one every two frames?). Coin insertion causes a NMI.
+Interrupts: VBlank causes an IRQ. Coin insertion causes a NMI.
 
 ***************************************************************************/
 
@@ -84,6 +84,10 @@ void nibbler_characterram_w(int offset,int data);
 void nibbler_vh_screenrefresh(struct osd_bitmap *bitmap);
 void vanguard_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 
+void vanguard_sound0_w(int offset,int data);
+void vanguard_sound1_w(int offset,int data);
+int vanguard_sh_start(void);
+void vanguard_sh_update(void);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -105,6 +109,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0800, 0x0bff, nibbler_videoram2_w, &nibbler_videoram2 },
 	{ 0x0c00, 0x0fff, colorram_w, &colorram },
 	{ 0x1000, 0x1fff, nibbler_characterram_w, &nibbler_characterram },
+	{ 0x2100, 0x2100, vanguard_sound0_w },
+	{ 0x2101, 0x2101, vanguard_sound1_w },
 	{ 0x3000, 0xbfff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -194,16 +200,21 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static unsigned char color_prom[] =
 {
-        /* foreground colors */
-        0x00, 0x07, 0xff, 0xC5, 0x00, 0x38, 0xad, 0xA8,
-        0x00, 0xad, 0x3f, 0xC0, 0x00, 0xff, 0x07, 0xFF,
-        0x00, 0x3f, 0xc0, 0xAD, 0x00, 0xff, 0xc5, 0x3F,
-        0x00, 0xff, 0x3f, 0x07, 0x00, 0x07, 0xc5, 0x3F,
-        /* background colors */
-        0x00, 0x3f, 0xff, 0xC0, 0x00, 0xc7, 0x38, 0x05,
-        0x00, 0x07, 0xc0, 0x3F, 0x00, 0x3f, 0xe0, 0x05,
-        0x00, 0x07, 0xac, 0xC0, 0x00, 0xff, 0xc5, 0x2F,
-        0x00, 0xc0, 0x05, 0x2F, 0x00, 0x3f, 0x05, 0xC7
+	/* foreground colors */
+	0x00,0x07,0xff,0xC5,0x00,0x38,0xad,0xA8,0x00,0xad,0x3f,0xC0,0x00,0xff,0x07,0xFF,
+	0x00,0x3f,0xc0,0xAD,0x00,0xff,0xc5,0x3F,0x00,0xff,0x3f,0x07,0x00,0x07,0xc5,0x3F,
+	/* background colors */
+	0x00,0x3f,0xff,0xC0,0x00,0xc7,0x38,0x05,0x00,0x07,0xc0,0x3F,0x00,0x3f,0xe0,0x05,
+	0x00,0x07,0xac,0xC0,0x00,0xff,0xc5,0x2F,0x00,0xc0,0x05,0x2F,0x00,0x3f,0x05,0xC7
+};
+
+
+static unsigned char samples[32] =
+{
+   0x88, 0x88, 0x88, 0x88, 0xaa, 0xaa, 0xaa, 0xaa,
+   0xcc, 0xcc, 0xcc, 0xcc, 0xee, 0xee, 0xee, 0xee,
+   0x11, 0x11, 0x11, 0x11, 0x22, 0x22, 0x22, 0x22,
+   0x44, 0x44, 0x44, 0x44, 0x66, 0x66, 0x66, 0x66
 };
 
 
@@ -228,17 +239,18 @@ static struct MachineDriver machine_driver =
 	16*4,16*4,
 	vanguard_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
 	nibbler_vh_screenrefresh,
 
 	/* sound hardware */
+	samples,
 	0,
+	vanguard_sh_start,
 	0,
-	0,
-	0,
-	0
+	vanguard_sh_update
 };
 
 
@@ -266,9 +278,9 @@ ROM_START( nibbler_rom )
 	ROM_LOAD( "IC50", 0x0000, 0x1000, 0x2bc0b3f0 )
 	ROM_LOAD( "IC51", 0x1000, 0x1000, 0x27bd8de9 )
 
-	/* sound */
-/*	ROM_LOAD( "IC52", 0x????, 0x0800 ) */
-/*	ROM_LOAD( "IC53", 0x????, 0x0800 ) */
+	ROM_REGION(0x1000)	/* space for the sound ROMs */
+	ROM_LOAD( "IC52", 0x0000, 0x0800, 0x9ad746f9 )
+	ROM_LOAD( "IC53", 0x0800, 0x0800, 0xbe207f5e )
 ROM_END
 
 ROM_START( fantasy_rom )
@@ -288,13 +300,14 @@ ROM_START( fantasy_rom )
 	ROM_LOAD( "ic50.vid", 0x0000, 0x1000, 0xcfa87668 )
 	ROM_LOAD( "ic51.vid", 0x1000, 0x1000, 0xf9730c57 )
 
-	/* sound? */
-/*	ROM_LOAD( "ic51.cpu", 0x????, 0x0800 ) */
-/*	ROM_LOAD( "ic52.cpu", 0x????, 0x0800 ) */
-/*	ROM_LOAD( "ic53.cpu", 0x????, 0x0800 ) */
-/*	ROM_LOAD( "ic07.dau", 0x????, 0x0800 ) */
-/*	ROM_LOAD( "ic08.dau", 0x????, 0x0800 ) */
-/*	ROM_LOAD( "ic11.dau", 0x????, 0x0800 ) */
+	ROM_REGION(0x1000)	/* space for the sound ROMs */
+	ROM_LOAD( "ic51.cpu", 0x0000, 0x0800, 0xf433dd21 )
+	ROM_LOAD( "ic52.cpu", 0x0800, 0x0800, 0xd968fa48 )
+
+/*	ROM_LOAD( "ic53.cpu", 0x????, 0x0800 ) ?? */
+/*	ROM_LOAD( "ic07.dau", 0x????, 0x0800 ) ?? */
+/*	ROM_LOAD( "ic08.dau", 0x????, 0x0800 ) ?? */
+/*	ROM_LOAD( "ic11.dau", 0x????, 0x0800 ) ?? */
 ROM_END
 
 
@@ -348,10 +361,10 @@ struct GameDriver nibbler_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
@@ -367,10 +380,10 @@ struct GameDriver fantasy_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	0, 0
 };

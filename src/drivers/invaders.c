@@ -339,6 +339,7 @@ static struct MachineDriver machine_driver =
 	sizeof(palette)/3, 0,
 	0,
 
+	VIDEO_TYPE_RASTER,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -374,6 +375,7 @@ static struct MachineDriver lrescue_machine_driver = /* V.V */ /* Whole function
 	sizeof(palette)/3, 0,
 	0,
 
+	VIDEO_TYPE_RASTER,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -409,6 +411,7 @@ static struct MachineDriver invrvnge_machine_driver = /* V.V */ /* Whole functio
 	sizeof(palette)/3, 0,
 	0,
 
+	VIDEO_TYPE_RASTER,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -445,6 +448,7 @@ static struct MachineDriver invdelux_machine_driver =
 	sizeof(palette)/3, 0,
 	0,
 
+	VIDEO_TYPE_RASTER,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -694,10 +698,10 @@ struct GameDriver invaders_driver =
 	0, 0,
 	invaders_sample_names,
 
-	input_ports, trak_ports, invaders_dsw, invaders_keys,
+	input_ports, 0, trak_ports, invaders_dsw, invaders_keys,
 
 	0, palette, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	invaders_hiload, invaders_hisave
 };
@@ -713,10 +717,10 @@ struct GameDriver earthinv_driver =
 	0, 0,
 	invaders_sample_names,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	0, palette, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	0, 0
 };
@@ -733,10 +737,10 @@ struct GameDriver spaceatt_driver =
 	0, 0,
 	invaders_sample_names,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	0, palette, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	0, 0
 };
@@ -752,10 +756,10 @@ struct GameDriver invrvnge_driver =
 	0, 0,
 	invaders_sample_names,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	0, palette, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	0, 0
 };
@@ -771,10 +775,10 @@ struct GameDriver invdelux_driver =
 	0, 0,
 	invaders_sample_names,
 
-	invdelux_input_ports, trak_ports, invdelux_dsw, invdelux_keys,
+	invdelux_input_ports, 0, trak_ports, invdelux_dsw, invdelux_keys,
 
 	0, palette, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	invdelux_hiload, invdelux_hisave
 };
@@ -790,10 +794,10 @@ struct GameDriver galxwars_driver =
 	0, 0,
 	invaders_sample_names,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	0, palette, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	0, 0
 };
@@ -809,10 +813,10 @@ struct GameDriver lrescue_driver =
 	0, 0,
 	invaders_sample_names,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	0, palette, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	lrescue_hiload, lrescue_hisave  /* V.V */
 };
@@ -829,10 +833,10 @@ struct GameDriver desterth_driver =
 	0, 0,
 	invaders_sample_names,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	0, palette, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	desterth_hiload, lrescue_hisave
 };

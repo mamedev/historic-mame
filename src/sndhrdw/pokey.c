@@ -396,7 +396,7 @@ void Update_pokey_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain)
        /* If the 2 least significant bits of SKCTL are 0, the random number generator is
           disabled. Thanks to Eric Smith for pointing out this critical bit of info! */
 	   case SKCTL_C:
-		  if (val & 0x02)
+		  if (val & 0x03)
 		     rng[chip] = TRUE;
 		  else rng[chip] = FALSE;
 		  break;

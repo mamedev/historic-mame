@@ -22,9 +22,10 @@ struct DisplayText
 #define DT_COLOR_RED 2
 
 
-struct GfxElement *builduifont(int totalcolors,const unsigned char *palette,const unsigned char *pens);
+struct GfxElement *builduifont(void);
 void displaytext(const struct DisplayText *dt,int erase);
 int showcharset(void);
+int showcredits(void);
 int setup_menu(void);
 
 #endif

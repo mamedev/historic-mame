@@ -12,8 +12,6 @@
 
 
 unsigned char *bombjack_paletteram;
-static const unsigned char *colors;
-static unsigned char dirtycolor[16];	/* keep track of modified colors */
 static int background_image;
 
 
@@ -54,41 +52,55 @@ void bombjack_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 	int i;
 
 
-	colors = color_prom;	/* we'll need the colors later to dynamically remap the characters */
-
+	/* the palette will be initialized by the game. We just set it to some */
+	/* pre-cooked values so the startup copyright notice can be displayed. */
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2,bit3;
-
-
-		bit0 = (color_prom[2*i] >> 0) & 0x01;
-		bit1 = (color_prom[2*i] >> 1) & 0x01;
-		bit2 = (color_prom[2*i] >> 2) & 0x01;
-		bit3 = (color_prom[2*i] >> 3) & 0x01;
-		palette[3*i] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[2*i] >> 4) & 0x01;
-		bit1 = (color_prom[2*i] >> 5) & 0x01;
-		bit2 = (color_prom[2*i] >> 6) & 0x01;
-		bit3 = (color_prom[2*i] >> 7) & 0x01;
-		palette[3*i + 1] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[2*i+1] >> 0) & 0x01;
-		bit1 = (color_prom[2*i+1] >> 1) & 0x01;
-		bit2 = (color_prom[2*i+1] >> 2) & 0x01;
-		bit3 = (color_prom[2*i+1] >> 3) & 0x01;
-		palette[3*i + 2] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		*(palette++) = ((i & 1) >> 0) * 0xff;
+		*(palette++) = ((i & 2) >> 1) * 0xff;
+		*(palette++) = ((i & 4) >> 2) * 0xff;
 	}
+
+	/* initialize the color table */
+	for (i = 0;i < Machine->drv->total_colors;i++)
+		colortable[i] = i;
 }
 
 
 
 void bombjack_paletteram_w(int offset,int data)
 {
-	if (bombjack_paletteram[offset] != data)
-	{
-		dirtycolor[offset / 16] = 1;
+	int bit0,bit1,bit2,bit3;
+	int r,g,b,val;
 
-		bombjack_paletteram[offset] = data;
-	}
+
+	bombjack_paletteram[offset] = data;
+
+	/* red component */
+	val = bombjack_paletteram[offset & ~1];
+	bit0 = (val >> 0) & 0x01;
+	bit1 = (val >> 1) & 0x01;
+	bit2 = (val >> 2) & 0x01;
+	bit3 = (val >> 3) & 0x01;
+	r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	/* green component */
+	val = bombjack_paletteram[offset & ~1];
+	bit0 = (val >> 4) & 0x01;
+	bit1 = (val >> 5) & 0x01;
+	bit2 = (val >> 6) & 0x01;
+	bit3 = (val >> 7) & 0x01;
+	g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	/* blue component */
+	val = bombjack_paletteram[offset | 1];
+	bit0 = (val >> 0) & 0x01;
+	bit1 = (val >> 1) & 0x01;
+	bit2 = (val >> 2) & 0x01;
+	bit3 = (val >> 3) & 0x01;
+	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	osd_modify_pen(Machine->pens[offset / 2],r,g,b);
 }
 
 
@@ -113,32 +125,7 @@ void bombjack_background_w(int offset,int data)
 ***************************************************************************/
 void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int i,offs,base;
-
-
-	/* rebuild the color lookup table */
-	for (i = 0;i < 16*8;i++)
-	{
-		if (dirtycolor[i / 8])
-		{
-			offs = Machine->drv->total_colors - 1;
-			while (offs > 0)
-			{
-				if (bombjack_paletteram[2*i] == colors[2*offs] &&
-						(bombjack_paletteram[2*i+1] & 0x0f) == colors[2*offs+1])
-					break;
-
-				offs--;
-			}
-
-if (errorlog && offs == 0 &&
-				(bombjack_paletteram[2*i] || bombjack_paletteram[2*i+1]))
-		fprintf(errorlog,"warning: unknown color %02x %02x\n",
-				bombjack_paletteram[2*i],bombjack_paletteram[2*i+1]);
-
-			Machine->gfx[0]->colortable[i] = Machine->pens[offs];
-		}
-	}
+	int offs,base;
 
 
 	base = 0x200 * (background_image & 0x07);
@@ -174,31 +161,25 @@ if (errorlog && offs == 0 &&
 			bx = by = tileattribute = 0;	/* avoid compiler warning */
 		}
 
-		if (dirtybuffer[offs] || dirtycolor[colorram[offs] & 0x0f] ||
-				(tilecode != 0xff && dirtycolor[tileattribute & 0x0f]))
+		if (dirtybuffer[offs])
 		{
 			/* draw the background (this can be handled better) */
 			if (tilecode != 0xff)
 			{
-			/* don't redraw the background if only the foreground color has changed */
-				if (dirtybuffer[offs] ||
-						dirtycolor[tileattribute & 0x0f])
-				{
-					struct rectangle clip;
+				struct rectangle clip;
 
 
-					clip.min_x = sx;
-					clip.max_x = sx+7;
-					clip.min_y = sy;
-					clip.max_y = sy+7;
+				clip.min_x = sx;
+				clip.max_x = sx+7;
+				clip.min_y = sy;
+				clip.max_y = sy+7;
 
-					drawgfx(tmpbitmap,Machine->gfx[1],
-							tilecode,
-							tileattribute & 0x0f,
-							tileattribute & 0x80,0,
-							bx,by,
-							&clip,TRANSPARENCY_NONE,0);
-				}
+				drawgfx(tmpbitmap,Machine->gfx[1],
+						tilecode,
+						tileattribute & 0x0f,
+						tileattribute & 0x80,0,
+						bx,by,
+						&clip,TRANSPARENCY_NONE,0);
 
 				drawgfx(tmpbitmap,Machine->gfx[0],
 							videoram[offs] + 16 * (colorram[offs] & 0x10),
@@ -219,10 +200,6 @@ if (errorlog && offs == 0 &&
 			dirtybuffer[offs] = 0;
 		}
 	}
-
-
-	for (i = 0;i < 16;i++)
-		dirtycolor[i] = 0;
 
 
 	/* copy the character mapped graphics */

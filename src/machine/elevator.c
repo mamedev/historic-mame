@@ -12,7 +12,7 @@
 
 static int bank;
 
-int elevator_init_machine(const char *gamename)
+void elevator_init_machine(void)
 {
 	bank = 0x00;
 
@@ -30,7 +30,6 @@ int elevator_init_machine(const char *gamename)
 	RAM[0x0073] = 0xc9;
 	RAM[0x007f] = 0xc9;
 #endif
-	return 0;
 }
 
 unsigned char *elevator_protection;

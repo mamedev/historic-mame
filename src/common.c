@@ -405,7 +405,7 @@ void freesamples(struct GameSamples *samples)
   dissimilar from the characters.
 
 ***************************************************************************/
-int readbit(const unsigned char *src,int bitnum)
+static int readbit(const unsigned char *src,int bitnum)
 {
 	int bit;
 
@@ -429,21 +429,43 @@ void decodechar(struct GfxElement *gfx,int num,const unsigned char *src,const st
 
 
 		offs = num * gl->charincrement + gl->planeoffset[plane];
-		for (y = 0;y < gl->height;y++)
+
+		for (y = 0;y < gfx->height;y++)
 		{
 			int x;
+			unsigned char *dp;
 
 
-			for (x = 0;x < gl->width;x++)
+			dp = gfx->gfxdata->line[num * gfx->height + y];
+
+			for (x = 0;x < gfx->width;x++)
 			{
-				unsigned char *dp;
+				int xoffs,yoffs;
 
 
-				dp = gfx->gfxdata->line[num * gl->height + y];
 				if (plane == 0) dp[x] = 0;
 				else dp[x] <<= 1;
 
-				dp[x] += readbit(src,offs + gl->yoffset[y] + gl->xoffset[x]);
+				xoffs = x;
+				yoffs = y;
+
+				if (Machine->orientation & ORIENTATION_FLIP_X)
+					xoffs = gfx->width-1 - xoffs;
+
+				if (Machine->orientation & ORIENTATION_FLIP_Y)
+					yoffs = gfx->height-1 - yoffs;
+
+				if (Machine->orientation & ORIENTATION_SWAP_XY)
+				{
+					int temp;
+
+
+					temp = xoffs;
+					xoffs = yoffs;
+					yoffs = temp;
+				}
+
+				dp[x] += readbit(src,offs + gl->yoffset[yoffs] + gl->xoffset[xoffs]);
 			}
 		}
 	}
@@ -458,15 +480,32 @@ struct GfxElement *decodegfx(const unsigned char *src,const struct GfxLayout *gl
 	struct GfxElement *gfx;
 
 
-	if ((bm = osd_create_bitmap(gl->width,gl->total * gl->height)) == 0)
-		return 0;
 	if ((gfx = malloc(sizeof(struct GfxElement))) == 0)
-	{
-		osd_free_bitmap(bm);
 		return 0;
+
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		gfx->width = gl->height;
+		gfx->height = gl->width;
+
+		if ((bm = osd_create_bitmap(gl->total * gfx->height,gfx->width)) == 0)
+		{
+			free(gfx);
+			return 0;
+		}
 	}
-	gfx->width = gl->width;
-	gfx->height = gl->height;
+	else
+	{
+		gfx->width = gl->width;
+		gfx->height = gl->height;
+
+		if ((bm = osd_create_bitmap(gfx->width,gl->total * gfx->height)) == 0)
+		{
+			free(gfx);
+			return 0;
+		}
+	}
+
 	gfx->total_elements = gl->total;
 	gfx->color_granularity = 1 << gl->planes;
 	gfx->gfxdata = bm;
@@ -514,9 +553,65 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	const unsigned char *sd;
 	unsigned char *bm;
 	int col;
+	struct rectangle myclip;
 
 
 	if (!gfx) return;
+
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		int temp;
+
+		temp = sx;
+		sx = sy;
+		sy = temp;
+
+		temp = flipx;
+		flipx = flipy;
+		flipy = temp;
+
+		if (clip)
+		{
+			myclip.min_x = clip->min_y;
+			myclip.max_x = clip->max_y;
+			myclip.min_y = clip->min_x;
+			myclip.max_y = clip->max_x;
+			clip = &myclip;
+		}
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_X)
+	{
+		sx = dest->width - gfx->width - sx;
+		if (clip)
+		{
+			int temp;
+
+
+			temp = clip->min_x;
+			myclip.min_x = dest->width-1 - clip->max_x;
+			myclip.max_x = dest->width-1 - temp;
+			myclip.min_y = clip->min_y;
+			myclip.max_y = clip->max_y;
+			clip = &myclip;
+		}
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_Y)
+	{
+		int temp;
+
+
+		sy = dest->height - gfx->height - sy;
+		if (clip)
+		{
+			myclip.min_x = clip->min_x;
+			myclip.max_x = clip->max_x;
+			temp = clip->min_y;
+			myclip.min_y = dest->height-1 - clip->max_y;
+			myclip.max_y = dest->height-1 - temp;
+			clip = &myclip;
+		}
+	}
+
 
 	/* check bounds */
 	ox = sx;
@@ -954,9 +1049,24 @@ void copybitmap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int fli
 
 ***************************************************************************/
 void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
-		int rows,int *rowscroll,int cols,int *colscroll,
+		int rows,const int *rowscroll,int cols,const int *colscroll,
 		const struct rectangle *clip,int transparency,int transparent_color)
 {
+	int srcwidth,srcheight;
+
+
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		srcwidth = src->height;
+		srcheight = src->width;
+	}
+	else
+	{
+		srcwidth = src->width;
+		srcheight = src->height;
+	}
+
+
 	if (rows == 0)
 	{
 		/* scrolling columns */
@@ -964,7 +1074,7 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 		struct rectangle myclip;
 
 
-		colwidth = src->width / cols;
+		colwidth = srcwidth / cols;
 
 		myclip.min_y = clip->min_y;
 		myclip.max_y = clip->max_y;
@@ -981,8 +1091,8 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 			while (col + cons < cols &&	colscroll[col + cons] == scroll)
 				cons++;
 
-			if (scroll < 0) scroll = src->height - (-scroll) % src->height;
-			else scroll %= src->height;
+			if (scroll < 0) scroll = srcheight - (-scroll) % srcheight;
+			else scroll %= srcheight;
 
 			myclip.min_x = col * colwidth;
 			if (myclip.min_x < clip->min_x) myclip.min_x = clip->min_x;
@@ -990,7 +1100,7 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 			if (myclip.max_x > clip->max_x) myclip.max_x = clip->max_x;
 
 			copybitmap(dest,src,0,0,0,scroll,&myclip,transparency,transparent_color);
-			copybitmap(dest,src,0,0,0,scroll - src->height,&myclip,transparency,transparent_color);
+			copybitmap(dest,src,0,0,0,scroll - srcheight,&myclip,transparency,transparent_color);
 
 			col += cons;
 		}
@@ -1002,7 +1112,7 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 		struct rectangle myclip;
 
 
-		rowheight = src->height / rows;
+		rowheight = srcheight / rows;
 
 		myclip.min_x = clip->min_x;
 		myclip.max_x = clip->max_x;
@@ -1019,8 +1129,8 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 			while (row + cons < rows &&	rowscroll[row + cons] == scroll)
 				cons++;
 
-			if (scroll < 0) scroll = src->width - (-scroll) % src->width;
-			else scroll %= src->width;
+			if (scroll < 0) scroll = srcwidth - (-scroll) % srcwidth;
+			else scroll %= srcwidth;
 
 			myclip.min_y = row * rowheight;
 			if (myclip.min_y < clip->min_y) myclip.min_y = clip->min_y;
@@ -1028,7 +1138,7 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 			if (myclip.max_y > clip->max_y) myclip.max_y = clip->max_y;
 
 			copybitmap(dest,src,0,0,scroll,0,&myclip,transparency,transparent_color);
-			copybitmap(dest,src,0,0,scroll - src->width,0,&myclip,transparency,transparent_color);
+			copybitmap(dest,src,0,0,scroll - srcwidth,0,&myclip,transparency,transparent_color);
 
 			row += cons;
 		}
@@ -1039,16 +1149,16 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 		int scrollx,scrolly;
 
 
-		if (rowscroll[0] < 0) scrollx = src->width - (-rowscroll[0]) % src->width;
-		else scrollx = rowscroll[0] % src->width;
+		if (rowscroll[0] < 0) scrollx = srcwidth - (-rowscroll[0]) % srcwidth;
+		else scrollx = rowscroll[0] % srcwidth;
 
-		if (colscroll[0] < 0) scrolly = src->height - (-colscroll[0]) % src->height;
-		else scrolly = colscroll[0] % src->height;
+		if (colscroll[0] < 0) scrolly = srcheight - (-colscroll[0]) % srcheight;
+		else scrolly = colscroll[0] % srcheight;
 
 		copybitmap(dest,src,0,0,scrollx,scrolly,clip,transparency,transparent_color);
-		copybitmap(dest,src,0,0,scrollx,scrolly - src->height,clip,transparency,transparent_color);
-		copybitmap(dest,src,0,0,scrollx - src->width,scrolly,clip,transparency,transparent_color);
-		copybitmap(dest,src,0,0,scrollx - src->width,scrolly - src->height,clip,transparency,transparent_color);
+		copybitmap(dest,src,0,0,scrollx,scrolly - srcheight,clip,transparency,transparent_color);
+		copybitmap(dest,src,0,0,scrollx - srcwidth,scrolly,clip,transparency,transparent_color);
+		copybitmap(dest,src,0,0,scrollx - srcwidth,scrolly - srcheight,clip,transparency,transparent_color);
 	}
 	else if (rows == 1)
 	{
@@ -1058,10 +1168,10 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 		struct rectangle myclip;
 
 
-		if (rowscroll[0] < 0) scrollx = src->width - (-rowscroll[0]) % src->width;
-		else scrollx = rowscroll[0] % src->width;
+		if (rowscroll[0] < 0) scrollx = srcwidth - (-rowscroll[0]) % srcwidth;
+		else scrollx = rowscroll[0] % srcwidth;
 
-		colwidth = src->width / cols;
+		colwidth = srcwidth / cols;
 
 		myclip.min_y = clip->min_y;
 		myclip.max_y = clip->max_y;
@@ -1078,8 +1188,8 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 			while (col + cons < cols &&	colscroll[col + cons] == scroll)
 				cons++;
 
-			if (scroll < 0) scroll = src->height - (-scroll) % src->height;
-			else scroll %= src->height;
+			if (scroll < 0) scroll = srcheight - (-scroll) % srcheight;
+			else scroll %= srcheight;
 
 			myclip.min_x = col * colwidth + scrollx;
 			if (myclip.min_x < clip->min_x) myclip.min_x = clip->min_x;
@@ -1087,15 +1197,15 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 			if (myclip.max_x > clip->max_x) myclip.max_x = clip->max_x;
 
 			copybitmap(dest,src,0,0,scrollx,scroll,&myclip,transparency,transparent_color);
-			copybitmap(dest,src,0,0,scrollx,scroll - src->height,&myclip,transparency,transparent_color);
+			copybitmap(dest,src,0,0,scrollx,scroll - srcheight,&myclip,transparency,transparent_color);
 
-			myclip.min_x = col * colwidth + scrollx - src->width;
+			myclip.min_x = col * colwidth + scrollx - srcwidth;
 			if (myclip.min_x < clip->min_x) myclip.min_x = clip->min_x;
-			myclip.max_x = (col + cons) * colwidth - 1 + scrollx - src->width;
+			myclip.max_x = (col + cons) * colwidth - 1 + scrollx - srcwidth;
 			if (myclip.max_x > clip->max_x) myclip.max_x = clip->max_x;
 
-			copybitmap(dest,src,0,0,scrollx - src->width,scroll,&myclip,transparency,transparent_color);
-			copybitmap(dest,src,0,0,scrollx - src->width,scroll - src->height,&myclip,transparency,transparent_color);
+			copybitmap(dest,src,0,0,scrollx - srcwidth,scroll,&myclip,transparency,transparent_color);
+			copybitmap(dest,src,0,0,scrollx - srcwidth,scroll - srcheight,&myclip,transparency,transparent_color);
 
 			col += cons;
 		}
@@ -1108,10 +1218,10 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 		struct rectangle myclip;
 
 
-		if (colscroll[0] < 0) scrolly = src->height - (-colscroll[0]) % src->height;
-		else scrolly = colscroll[0] % src->height;
+		if (colscroll[0] < 0) scrolly = srcheight - (-colscroll[0]) % srcheight;
+		else scrolly = colscroll[0] % srcheight;
 
-		rowheight = src->height / rows;
+		rowheight = srcheight / rows;
 
 		myclip.min_x = clip->min_x;
 		myclip.max_x = clip->max_x;
@@ -1128,8 +1238,8 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 			while (row + cons < rows &&	rowscroll[row + cons] == scroll)
 				cons++;
 
-			if (scroll < 0) scroll = src->width - (-scroll) % src->width;
-			else scroll %= src->width;
+			if (scroll < 0) scroll = srcwidth - (-scroll) % srcwidth;
+			else scroll %= srcwidth;
 
 			myclip.min_y = row * rowheight + scrolly;
 			if (myclip.min_y < clip->min_y) myclip.min_y = clip->min_y;
@@ -1137,15 +1247,15 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 			if (myclip.max_y > clip->max_y) myclip.max_y = clip->max_y;
 
 			copybitmap(dest,src,0,0,scroll,scrolly,&myclip,transparency,transparent_color);
-			copybitmap(dest,src,0,0,scroll - src->width,scrolly,&myclip,transparency,transparent_color);
+			copybitmap(dest,src,0,0,scroll - srcwidth,scrolly,&myclip,transparency,transparent_color);
 
-			myclip.min_y = row * rowheight + scrolly - src->height;
+			myclip.min_y = row * rowheight + scrolly - srcheight;
 			if (myclip.min_y < clip->min_y) myclip.min_y = clip->min_y;
-			myclip.max_y = (row + cons) * rowheight - 1 + scrolly - src->height;
+			myclip.max_y = (row + cons) * rowheight - 1 + scrolly - srcheight;
 			if (myclip.max_y > clip->max_y) myclip.max_y = clip->max_y;
 
-			copybitmap(dest,src,0,0,scroll,scrolly - src->height,&myclip,transparency,transparent_color);
-			copybitmap(dest,src,0,0,scroll - src->width,scrolly - src->height,&myclip,transparency,transparent_color);
+			copybitmap(dest,src,0,0,scroll,scrolly - srcheight,&myclip,transparency,transparent_color);
+			copybitmap(dest,src,0,0,scroll - srcwidth,scrolly - srcheight,&myclip,transparency,transparent_color);
 
 			row += cons;
 		}

@@ -23,6 +23,27 @@ static int command_queue[QUEUE_LENGTH];
 int pending_commands;
 
 
+
+/***************************************************************************
+
+  Add a command to the queue.
+
+***************************************************************************/
+void sound_command_w(int offset,int data)
+{
+	if (pending_commands < QUEUE_LENGTH)
+	{
+		command_queue[pending_commands] = data;
+		pending_commands++;
+	}
+	else
+	{
+		if (errorlog) fprintf(errorlog,"error: sound command queue overflow!\n");
+	}
+}
+
+
+
 /***************************************************************************
 
   This function reads a command from the sound queue. If the queue is empty,
@@ -81,15 +102,14 @@ int sound_command_latch_r(int offset)
 
 
 
-void sound_command_w(int offset,int data)
+/***************************************************************************
+
+  This function returns 0xff if there are commands waiting in the queue,
+  0 otherwise.
+
+***************************************************************************/
+int sound_pending_commands_r(int offset)
 {
-	if (pending_commands < QUEUE_LENGTH)
-	{
-		command_queue[pending_commands] = data;
-		pending_commands++;
-	}
-	else
-	{
-		if (errorlog) fprintf(errorlog,"error: sound command queue overflow!\n");
-	}
+	if (pending_commands > 0) return 0xff;
+	else return 0;
 }

@@ -18,10 +18,6 @@
 #include <audio.h>
 #include "ym2203.h"
 
-
-#define ROL -1
-#define ROR 1
-
 struct osd_bitmap *bitmap;
 int first_free_pen;
 
@@ -32,7 +28,6 @@ int use_joystick;
 int use_alternate;
 int vector_game;
 
-int rotation;
 int vesa_mode;
 int vesa_width;
 int vesa_height;
@@ -127,7 +122,6 @@ int osd_init(int argc,char **argv)
 	vesa_height = 600;
 	noscanlines = 0;
 	nodouble = 0;
-	rotation = 0;
 	videofreq = 0;
 	video_sync = 0;
 	play_sound = 1;
@@ -163,10 +157,6 @@ int osd_init(int argc,char **argv)
 				break;
 			}
 		}
-		if (stricmp(argv[i],"-ror") == 0)
-			rotation=ROR;
-		if (stricmp(argv[i],"-rol") == 0)
-			rotation=ROL;
 		if (stricmp(argv[i],"-noscanlines") == 0)
 			noscanlines = 1;
 		if (stricmp(argv[i],"-nodouble") == 0)
@@ -375,6 +365,14 @@ struct osd_bitmap *osd_create_bitmap(int width,int height)
 {
 	struct osd_bitmap *bitmap;
 
+        if (Machine->orientation & ORIENTATION_SWAP_XY)
+        {
+                int temp;
+
+                temp = width;
+                width = height;
+                height = temp;
+        }
 
 	if ((bitmap = malloc(sizeof(struct osd_bitmap) + (height-1)*sizeof(unsigned char *))) != 0)
 	{
@@ -451,33 +449,6 @@ Register scr224x288scanlines[] =
 	{ 0x3d4, 0x17, 0xa3},{ 0x3c4, 0x01, 0x01},{ 0x3c4, 0x04, 0x0e},
 	{ 0x3ce, 0x05, 0x40},{ 0x3ce, 0x06, 0x05},{ 0x3c0, 0x10, 0x41},
 	{ 0x3c0, 0x13, 0x00}
-};
-
-
-Register scr256x232[] =
-{
-        { 0x3c2, 0x00, 0xe3},{ 0x3d4, 0x00, 0x5f},{ 0x3d4, 0x01, 0x3f},
-        { 0x3d4, 0x02, 0x40},{ 0x3d4, 0x03, 0x82},{ 0x3d4, 0x04, 0x4a},
-        { 0x3d4, 0x05, 0x9a},{ 0x3d4, 0x06, 0x11},{ 0x3d4, 0x07, 0x3e},
-        { 0x3d4, 0x08, 0x00},{ 0x3d4, 0x09, 0x41},{ 0x3d4, 0x10, 0xe5},
-        { 0x3d4, 0x11, 0x9c},{ 0x3d4, 0x12, 0xcf},{ 0x3d4, 0x13, 0x20},
-        { 0x3d4, 0x14, 0x40},{ 0x3d4, 0x15, 0xd7},{ 0x3d4, 0x16, 0x04},
-        { 0x3d4, 0x17, 0xa3},{ 0x3c4, 0x01, 0x01},{ 0x3c4, 0x04, 0x0e},
-        { 0x3ce, 0x05, 0x40},{ 0x3ce, 0x06, 0x05},{ 0x3c0, 0x10, 0x41},
-        { 0x3c0, 0x13, 0x00}
-};
-
-Register scr256x232scanlines[] =
-{
-        { 0x3c2, 0x00, 0xe3},{ 0x3d4, 0x00, 0x5f},{ 0x3d4, 0x01, 0x3f},
-        { 0x3d4, 0x02, 0x40},{ 0x3d4, 0x03, 0x82},{ 0x3d4, 0x04, 0x4a},
-        { 0x3d4, 0x05, 0x9a},{ 0x3d4, 0x06, 0x12},{ 0x3d4, 0x07, 0x1d},
-        { 0x3d4, 0x08, 0x00},{ 0x3d4, 0x09, 0x60},{ 0x3d4, 0x10, 0x00},
-        { 0x3d4, 0x11, 0xac},{ 0x3d4, 0x12, 0xe7},{ 0x3d4, 0x13, 0x20},
-        { 0x3d4, 0x14, 0x40},{ 0x3d4, 0x15, 0x07},{ 0x3d4, 0x16, 0x1a},
-        { 0x3d4, 0x17, 0xa3},{ 0x3c4, 0x01, 0x01},{ 0x3c4, 0x04, 0x0e},
-        { 0x3ce, 0x05, 0x40},{ 0x3ce, 0x06, 0x05},{ 0x3c0, 0x10, 0x41},
-        { 0x3c0, 0x13, 0x00}
 };
 
 
@@ -576,19 +547,24 @@ Register scr240x272[] =
 /* of the given dimensions. I don't do any test here (224x288 will just do */
 /* for now) but one could e.g. open a window of the exact dimensions */
 /* provided. Return a osd_bitmap pointer or 0 in case of error. */
-struct osd_bitmap *osd_create_display(int width,int height)
+struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 {
 	Register *reg = 0;
 	int reglen = 0;
 
 	double x_scale, y_scale, scale;
-	if (vector_game) {
-		if (!rotation) {
+
+	if (vector_game)
+	{
+		if (Machine->orientation & ORIENTATION_SWAP_XY)
+		{
+			x_scale=(double)vesa_width/(double)(height);
+			y_scale=(double)vesa_height/(double)(width);
+		}
+		else
+		{
 			x_scale=(double)vesa_width/(double)(width);
 			y_scale=(double)vesa_height/(double)(height);
-		} else {
-			x_scale=(double)vesa_height/(double)(width);
-			y_scale=(double)vesa_width/(double)(height);
 		}
 		if (x_scale<y_scale)
 			scale=x_scale;
@@ -601,12 +577,15 @@ struct osd_bitmap *osd_create_display(int width,int height)
 	}
 	bitmap = osd_create_bitmap(width,height);
 
-        if (rotation)
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
-		int t;
-		if (!vesa_mode) vesa_mode = GFX_VESA1;
-		t = width; width = height; height = t;
+		int temp;
+
+		temp = width;
+		width = height;
+		height = temp;
 	}
+
 
  	/* Check if there exists a tweaked mode to fit
            the screen in, otherwise use VESA */
@@ -695,13 +674,13 @@ struct osd_bitmap *osd_create_display(int width,int height)
 		{
 			if (noscanlines)
 			{
-			        reg = scr256x232;
-				reglen = sizeof(scr256x232)/sizeof(Register);
+			        reg = scr256x256;
+				reglen = sizeof(scr256x256)/sizeof(Register);
 			}
 			else
 			{
-				reg = scr256x232scanlines;
-				reglen = sizeof(scr256x232scanlines)/sizeof(Register);
+				reg = scr256x256scanlines;
+				reglen = sizeof(scr256x256scanlines)/sizeof(Register);
 			}
 		}
 		else if (width == 288 && height == 224)
@@ -780,6 +759,33 @@ int osd_obtain_pen(unsigned char red, unsigned char green, unsigned char blue)
 }
 
 
+/* ASG 081897 -- begin */
+void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue)
+{
+	RGB rgb;
+
+	rgb.r = red >> 2;
+	rgb.g = green >> 2;
+	rgb.b = blue >> 2;
+
+	set_color(pen,&rgb);
+}
+/* ASG 081897 -- end */
+
+
+void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue)
+{
+	RGB rgb;
+
+	get_color(pen,&rgb);
+
+	*red = (rgb.r << 2) | (rgb.r >> 4);
+	*green = (rgb.g << 2) | (rgb.g >> 4);
+	*blue = (rgb.b << 2) | (rgb.b >> 4);
+}
+
+
+
 inline void double_pixels(unsigned long *lb, short seg,
 			  unsigned long address, int width4)
 {
@@ -846,124 +852,6 @@ inline void update_vesa(void)
 	}
 }
 
-inline void rotate(unsigned char *lb, short seg,
-			  unsigned long address, int offset, int width4)
-{
-	__asm__ __volatile__ ("						\
-	pushw %%es		;					\
-	movw %%dx, %%es		;					\
-	.align 4		;					\
-	0:			;					\
-	lodsb			;					\
-	rorl $8, %%eax		;					\
-	addl %%ebx, %%esi	;					\
-	lodsb			;					\
-	rorl $8, %%eax		;					\
-	addl %%ebx, %%esi	;					\
-	lodsb			;					\
-	rorl $8, %%eax		;					\
-	addl %%ebx, %%esi	;					\
-	lodsb			;					\
-	rorl $8, %%eax		;					\
-	addl %%ebx, %%esi	;					\
-	stosl			;					\
-	loop 0b			;					\
-	popw %%ax		;					\
-	movw %%ax, %%es		;					\
-	"								\
-	::								\
-	"d" (seg),							\
-	"c" (width4),							\
-	"b" (offset),							\
-	"S" (lb),							\
-	"D" (address):							\
-	"ax", "bx", "cx", "dx", "si", "di", "cc", "memory");		\
-}
-inline void rotate_double(unsigned char *lb, short seg,
-			  unsigned long address, int offset, int width4)
-{
-	__asm__ __volatile__ ("						\
-	pushw %%es		;					\
-	movw %%dx, %%es		;					\
-	.align 4		;					\
-	0:			;					\
-	lodsb			;					\
-	movb %%al, %%ah		;					\
-	rorl $16, %%eax		;					\
-	addl %%ebx, %%esi	;					\
-	lodsb			;					\
-	movb %%al, %%ah		;					\
-	rorl $16, %%eax		;					\
-	stosl			;					\
-	addl %%ebx, %%esi	;					\
-	lodsb			;					\
-	movb %%al, %%ah		;					\
-	rorl $16, %%eax		;					\
-	addl %%ebx, %%esi	;					\
-	lodsb			;					\
-	movb %%al, %%ah	;						\
-	rorl $16, %%eax		;					\
-	addl %%ebx, %%esi	;					\
-	stosl			;					\
-	loop 0b			;					\
-	popw %%ax		;					\
-	movw %%ax, %%es		;					\
-	"								\
-	::								\
-	"d" (seg),							\
-	"c" (width4),							\
-	"b" (offset),							\
-	"S" (lb),							\
-	"D" (address):							\
-	"ax", "bx", "cx", "dx", "si", "di", "cc", "memory");		\
-}
-
-inline void update_rotate(void)
-{
-	short src_seg, dest_seg;
-	int y, vesa_line, offset, width4;
-	unsigned char *lb;
-	unsigned long address;
-
- 	src_seg	= _my_ds();
-	dest_seg = screen->seg;
-	vesa_line = vesa_yoffset;
-	width4 = bitmap->height/4;
-
-	if (rotation == ROR)
-	{
-		lb = bitmap->_private + (bitmap->height-1)*bitmap->width+skiplines;
-		offset = -bitmap->width-1;
-	}
-	else
-	{
-		lb = bitmap->_private + bitmap->width -1 -skiplines;
-		offset = bitmap->width-1;
-	}
-
-	for (y = vesa_display_lines;y !=0 ; y--)
-	{
-		address = bmp_write_line (screen, vesa_line)+vesa_xoffset;
-		if (!nodouble)
-		{
-			rotate_double (lb, dest_seg, address, offset, width4);
-			if (noscanlines)
-			{
-				address = bmp_write_line (screen, vesa_line+1)+vesa_xoffset;
-				rotate_double (lb, dest_seg, address, offset, width4);
-			}
-		vesa_line+=2;
-		lb+=rotation;
-		}
-		else
-		{
-			rotate (lb, dest_seg, address, offset, width4);
-			vesa_line++;
-			lb+=rotation;
-		}
-	}
-}
-
 /* Update the display. */
 /* As an additional bonus, this function also saves the screen as a PCX file */
 /* when the user presses F5. This is not required for porting. */
@@ -973,21 +861,11 @@ void osd_update_display(void)
 
 	if (vesa_mode)
 	{
-		int height;
-		if (rotation)
-		{
-			update_rotate();
-			height = bitmap->width;
-		}
-		else
-		{
-			update_vesa();
-			height = bitmap->height;
-		}
-		/* Check for PGUP, PGDN and scroll screen */
+		update_vesa();
 
+		/* Check for PGUP, PGDN and scroll screen */
 		if (osd_key_pressed(OSD_KEY_PGDN) &&
-			(skiplines+vesa_display_lines < height))
+			(skiplines+vesa_display_lines < bitmap->height))
 			skiplines++;
 		if (osd_key_pressed(OSD_KEY_PGUP) && (skiplines>0))
 			skiplines--;
@@ -1624,8 +1502,16 @@ void open_page (int *x_res, int *y_res, int step)
 	int i;
 	unsigned char bg;
 
-	*x_res=bitmap->width;
-	*y_res=bitmap->height;
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		*y_res=bitmap->width;
+		*x_res=bitmap->height;
+	}
+	else
+	{
+		*x_res=bitmap->width;
+		*y_res=bitmap->height;
+	}
 	bg=Machine->pens[0];
 	for (i=p_index; i>=0; i--)
 	{
@@ -1643,7 +1529,7 @@ void draw_to (int x2, int y2, int col)
 	static int x1=0;
 	static int y1=0;
 
-	int temp_x, temp_y;
+	int temp_x, temp_y, orientation;
 	int dx,dy,cx,cy,sx,sy;
 
 #if 0
@@ -1653,6 +1539,24 @@ void draw_to (int x2, int y2, int col)
 		 x1,y1,x2,y2,col);
 #endif
 
+	orientation = Machine->orientation;
+
+	if (orientation != ORIENTATION_DEFAULT)
+	{
+		if (orientation & ORIENTATION_SWAP_XY)
+		{
+			int temp;
+			temp = x2;
+			x2 = y2;
+			y2 = temp;
+		}
+		if (orientation & ORIENTATION_FLIP_X)
+			x2 = bitmap->width-1-x2;
+		if (orientation & ORIENTATION_FLIP_Y)
+			y2 = bitmap->height-1-y2;
+	}
+
+	temp_x = x2; temp_y = y2;
 	if (col<0)
 	{
 		x1=x2;
@@ -1661,7 +1565,6 @@ void draw_to (int x2, int y2, int col)
 	} else
 		col=Machine->gfx[0]->colortable[col];
 
-	temp_x = x2; temp_y = y2;
 
 
 	dx=abs(x1-x2);
@@ -1669,9 +1572,9 @@ void draw_to (int x2, int y2, int col)
 
 	if ((dx>=dy && x1>x2) || (dy>dx && y1>y2))
 	{
-		int t;
-		t = x1; x1 = x2; x2 = t;
-		t = y1; y1 = y2; y2 = t;
+		int temp;
+		temp = x1; x1 = x2; x2 = temp;
+		temp = y1; y1 = y2; y2 = temp;
 	}
 	sx = ((x1 <= x2) ? 1 : -1);
 	sy = ((y1 <= y2) ? 1 : -1);

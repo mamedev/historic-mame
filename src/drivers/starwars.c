@@ -21,12 +21,6 @@ Seems to cut out some music prematurely, when there are other sounds going,
 but otherwise ok.  Attract mode music may not work quite right either.
 No speech yet.
 
-(If anyone has a proper data sheet for the 6532A PIA chip, please
-contact me.)  Star Wars writes to some registers which I don't have
-docs on.        -Frank Palazzolo
-                 palazzol@tir.com
-
-
 Release 1.0:
 
 This is the first release of my Star Wars driver for MAME. This is also my
@@ -100,10 +94,9 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryReadAddress readmem2[] =
 {
         { 0x0800, 0x0fff, sin_r }, /* SIN Read */
-        { 0x1000, 0x107f, MRA_RAM },  /* PIA RAM */
 
-        { 0x1080, 0x1083, PIA_port_r },
-        { 0x1084, 0x109f, PIA_timer_r },
+        { 0x1000, 0x107f, MRA_RAM },  /* 6532 RAM */
+        { 0x1080, 0x109f, m6532_r },
 
         { 0x2000, 0x27ff, MRA_RAM }, /* program RAM */
         { 0x4000, 0x7fff, MRA_ROM }, /* sound roms */
@@ -150,10 +143,9 @@ static struct MemoryWriteAddress writemem[] =
 static struct MemoryWriteAddress writemem2[] =
 {
         { 0x0000, 0x07ff, sout_w },
-        { 0x1000, 0x107f, MWA_RAM }, /* PIA ram */
 
-        { 0x1080, 0x1083, PIA_port_w },
-        { 0x1084, 0x109f, PIA_timer_w },
+        { 0x1000, 0x107f, MWA_RAM }, /* 6532 ram */
+        { 0x1080, 0x109f, m6532_w },
 
         { 0x1800, 0x181f, starwars_pokey_sound_w },
         { 0x1820, 0x183f, starwars_pokey_ctl_w },
@@ -262,14 +254,6 @@ static unsigned char color_prom[] =
           0x01,0x00,0x00,
           0x01,0x00,0x01,
           0x01,0x01,0x00,
-          0x01,0x01,0x01,
-          0x00,0x00,0x00,
-          0x00,0x00,0x01,
-          0x00,0x01,0x00,
-          0x00,0x01,0x01,
-          0x01,0x00,0x00,
-          0x01,0x00,0x01,
-          0x01,0x01,0x00,
           0x01,0x01,0x01      };
 
 /*********************************/
@@ -296,7 +280,7 @@ static struct MachineDriver machine_driver =
                 {
                         CPU_M6809 | CPU_AUDIO_CPU,
                         1500000,                        /* 1.5 Mhz CPU clock (Don't know what speed it should be) */
-      /*JB 970809 */    2,                              /* Memory region #2 */
+                        2,                              /* Memory region #2 */
                         readmem2,writemem2,0,0,
                         starwars_snd_interrupt,12       /* Interrupt handler, and interrupts per frame (usually 1) */
                         /* Interrupts are to attempt to get */
@@ -306,14 +290,15 @@ static struct MachineDriver machine_driver =
 
 	},
         60,                     /* Target Frames per Second */
-        starwars_init_machine,  /* Name of initialisation handler */
+        0,  /* Name of initialisation handler */
 
 	/* video hardware */
 	288, 224, { 0, 240, 0, 280 },
 	gfxdecodeinfo,
         256,256, /* Number of colours, length of colour lookup table */
-	atari_vg_init_colors,
+	sw_vg_init_colors,
 
+	VIDEO_TYPE_VECTOR,
         0,  /* Handler to initialise video handware */
 	atari_vg_avg_flip_start,	/* Start video hardware */
 	atari_vg_stop,			/* Stop video hardware */
@@ -365,7 +350,9 @@ ROM_START( starwars_rom )
 
         ROM_LOAD( "136021.114", 0x10000, 0x4000, 0x8fddcf2b )   /* ROM 0 bank pages 0 and 1 */
 
-		ROM_REGION(0x100) /* JB 970809 - MAME always throws away region 1 in vh_open() */
+	ROM_REGION(0x0400)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "136021.113",0x0000,0x0400, 0x4d20bcd2 ) /* not needed - could be removed */
+
 
         /* Sound ROMS */
         ROM_REGION(0x10000)     /* Really only 32k, but it looks like 64K */
@@ -374,7 +361,7 @@ ROM_START( starwars_rom )
         ROM_RELOAD(           0xc000,0x2000) /* Copied again for */
         ROM_LOAD("136021.208",0x6000,0x2000, 0xa000bc38) /* Sound ROM 0 */
         ROM_RELOAD(           0xe000,0x2000) /* proper int vecs */
-ROM_END  
+ROM_END
 #endif
 
 /* ****************** EMPIRE *********************************** */
@@ -436,6 +423,10 @@ static void novram_save(const char *name)
 #endif
 
 
+
+/* in machine/swmathbx.c */
+void translate_proms(void);
+
 struct GameDriver starwars_driver =
 {
 	"Star Wars",
@@ -444,16 +435,16 @@ struct GameDriver starwars_driver =
 	&machine_driver,
 
         starwars_rom,
-        0, 0,  /* ROM decryption, Opcode decryption */
+        translate_proms, 0,  /* ROM decryption, Opcode decryption */
         0,     /* Sample Array (optional) */
 
-        input_ports, trak_ports, dsw, keys,
+        input_ports, 0, trak_ports, dsw, keys,
 
         color_prom, /* Colour PROM */
         0,          /* palette */
         0,          /* colourtable */
+	ORIENTATION_DEFAULT,
 
-        128, 128,  /* `Paused' x, y */
         novram_load, novram_save /* Highscore load, save */
 };
 

@@ -147,7 +147,9 @@ static struct InputPort input_ports[] =
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{	/* This is just a fake to play BZONE with only one joystick */
-		0x00,
+		/* And to get the "directors cut" switch */
+		/* Director's cut (red/green) is activated! */
+		0x80,
 		{ OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_CONTROL, 0, 0, 0 },
 		{ OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_FIRE, 0, 0, 0 },
 	},
@@ -182,6 +184,7 @@ static struct DSW dsw[] =
 	{ 1, 0x0c, "MISSILE APPEARS AT", { "5000", "10000", "20000", "30000" } },
 	{ 1, 0x30, "BONUS TANK", { "NONE", "15K AND 100K", "20K AND 100K", "50K AND 100K" } },
 	{ 1, 0xc0, "LANGUAGE", { "ENGLISH", "GERMAN", "FRENCH", "SPANISH" } },
+	{ 4, 0x80, "COLORS", { "GREENISH", "DIRECTOR'S CUT" } },
 	{ -1 }
 };
 
@@ -209,7 +212,7 @@ static unsigned char color_prom[] =
 	0x00,0x01,0x00, /* GREEN */
 	0x00,0x01,0x01, /* CYAN */
 	0x00,0x00,0x01, /* BLUE */
-	0x00,0x01,0x00, /* GREEN again */
+	0x01,0x00,0x00, /* RED */
 	0x01,0x00,0x01, /* MAGENTA */
 	0x01,0x01,0x00, /* YELLOW */
 	0x01,0x01,0x01,	/* WHITE */
@@ -217,7 +220,7 @@ static unsigned char color_prom[] =
 	0x00,0x01,0x00, /* GREEN */
 	0x00,0x01,0x01, /* CYAN */
 	0x00,0x00,0x01, /* BLUE */
-	0x00,0x01,0x00, /* GREEN again */
+	0x01,0x00,0x00, /* RED */
 	0x01,0x00,0x01, /* MAGENTA */
 	0x01,0x01,0x00, /* YELLOW */
 	0x01,0x01,0x01,	/* WHITE */
@@ -281,6 +284,7 @@ static struct MachineDriver machine_driver =
 	256, 256,
 	atari_vg_init_colors,
 
+	VIDEO_TYPE_VECTOR,
 	0,
 	atari_vg_avg_start,
 	atari_vg_stop,
@@ -343,10 +347,10 @@ struct GameDriver bzone_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	140, 110,      /* paused_x, paused_y */
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
@@ -363,10 +367,10 @@ struct GameDriver bzone2_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	140, 110,      /* paused_x, paused_y */
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };

@@ -61,7 +61,7 @@ void pacnpal_interrupt_enable_2_w(int offset,int data);
 
 int superpac_vh_start(void);
 void superpac_vh_screenrefresh(struct osd_bitmap *bitmap);
-int superpac_init_machine(const char *gamename);
+void superpac_init_machine(void);
 void superpac_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 
 
@@ -456,6 +456,7 @@ static struct MachineDriver superpac_machine_driver =
 	4*(64+64),                 /* color table length */
 	superpac_vh_convert_color_prom, /* convert color prom routine */
 
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,                         /* vh_init routine */
 	generic_vh_start,          /* vh_start routine */
 	generic_vh_stop,           /* vh_stop routine */
@@ -507,6 +508,7 @@ static struct MachineDriver pacnpal_machine_driver =
 	4*(64+64),                 /* color table length */
 	superpac_vh_convert_color_prom, /* convert color prom routine */
 
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,                         /* vh_init routine */
 	generic_vh_start,          /* vh_start routine */
 	generic_vh_stop,           /* vh_stop routine */
@@ -690,7 +692,7 @@ struct GameDriver superpac_driver =
 	0, 0,                     /* ROM decrypt routines */
 	0,                        /* samplenames */
 
-	superpac_input_ports,     /* InputPort  */
+	superpac_input_ports, 0,     /* InputPort  */
 	trak_ports,
 	superpac_dsw,             /* DSW        */
         keys,                     /* KEY def    */
@@ -698,8 +700,7 @@ struct GameDriver superpac_driver =
 	superpac_color_prom,		  /* color prom */
 	0,                        /* palette */
 	0,                        /* color table */
-
-	8*11, 8*20,               /* paused_x, paused_y, paused_color for PAUSED */
+	ORIENTATION_DEFAULT,
 
 	superpac_hiload, superpac_hisave /* hi score save/load */
 };
@@ -715,7 +716,7 @@ struct GameDriver pacnpal_driver =
 	0, 0,                     /* ROM decrypt routines */
 	0,                        /* samplenames */
 
-	pacnpal_input_ports,      /* InputPort  */
+	pacnpal_input_ports, 0,      /* InputPort  */
 	trak_ports,
 	pacnpal_dsw,              /* DSW        */
         keys,                     /* KEY def    */
@@ -723,8 +724,7 @@ struct GameDriver pacnpal_driver =
 	pacnpal_color_prom,       /* color prom */
 	0,                        /* palette */
 	0,                        /* color table */
-
-	8*11, 8*20,               /* paused_x, paused_y, paused_color for PAUSED */
+	ORIENTATION_DEFAULT,
 
 	pacnpal_hiload, pacnpal_hisave /* hi score save/load */
 };

@@ -19,9 +19,10 @@ int y_res;	/* Y-resolution of the display device */
 /* This struct holds the actual X/Y coordinates the vector game uses.
  * Gets initialized in vg_init().
  */
-struct { int width; int height;
+static struct { int width; int height;
 	 int x_cent; int y_cent;
-	 int x_min; int y_min; } vg_video;
+	 int x_min; int x_max;
+	 int y_min; int y_max; } vg_video;
 
 int flip_word;	/* determines the endian-ness of the words read from vectorram */
 
@@ -86,14 +87,14 @@ static void vector_timer (int deltax, int deltay)
 	deltax = abs (deltax);
 	deltay = abs (deltay);
 /*	vg_done_cyc += max (deltax, deltay) >> 17;*/
-	vg_done_cyc += max (deltax, deltay) >> (AVG_SHIFT-1);
+	vg_done_cyc += max (deltax, deltay) >> (AVG_SHIFT+1);
 }
 
 
 static void dvg_vector_timer (int scale)
 {
 /*	vg_done_cyc += 4 << scale;*/
-	vg_done_cyc += (DVG_SHIFT-6) << scale;
+	vg_done_cyc += (DVG_SHIFT-8) << scale;
 }
 
 
@@ -120,7 +121,7 @@ static void dvg_draw_vector_list (void)
 	int a;
 
 	int deltax, deltay;
-	
+
 	pc = 0;
 	sp = 0;
 	scale = 0;
@@ -131,15 +132,15 @@ static void dvg_draw_vector_list (void)
 #else
 	open_page (&x_res,&y_res,0);
 #endif
-	
+
 	xscale = (x_res << RES_SHIFT)/vg_video.width;		/* ASG 080497 */
 	yscale = (y_res << RES_SHIFT)/vg_video.height;		/* ASG 080497 */
-	
+
 	currentx = 0;
 	currenty = 0;
-	
+
   	while (!done)
-	{  
+	{
 		vg_done_cyc += 8;
 #ifdef VG_DEBUG
 		if (vg_step)
@@ -224,8 +225,8 @@ static void dvg_draw_vector_list (void)
 				x = twos_comp_val (secondwd, 12);
 				y = twos_comp_val (firstwd, 12);
 	  			scale = (secondwd >> 12);
-				currentx = (x+vg_video.x_min) << DVG_SHIFT;		/* ASG 080497 */
-				currenty = (vg_video.y_min+(vg_video.height-y)) << DVG_SHIFT;		/* ASG 080497 */
+				currentx = ((x-vg_video.x_min) << DVG_SHIFT);		/* ASG 080497 */
+				currenty = ((vg_video.y_max-y) << DVG_SHIFT);		/* ASG 080497 */
 #ifdef VG_DEBUG
 				if (errorlog)
 					fprintf (errorlog,"(%d,%d) scal: %d", x, y, secondwd >> 12);
@@ -257,7 +258,7 @@ static void dvg_draw_vector_list (void)
 					sp++;
 				pc = a;
 				break;
-	
+
 			case DRTSL:
 #ifdef VG_DEBUG
 				if (errorlog && ((firstwd & 0x0fff) != 0))
@@ -282,7 +283,7 @@ static void dvg_draw_vector_list (void)
 #endif
 				pc = a;
 				break;
-	
+
 			case DSVEC:
 				y = firstwd & 0x0300;
 				if (firstwd & 0x0400)
@@ -334,6 +335,9 @@ static void avg_draw_vector_list (void)
 
 	int scale;
 	int statz;
+
+	int z_inline; // SJB 17/8/97
+
 	int color;
 
 	int currentx, currenty;
@@ -382,7 +386,7 @@ static void avg_draw_vector_list (void)
 		if (vg_step)
 			getchar();
 #endif
-		
+
 		if (flip_word)
 			firstwd = memrdwd_flip (map_addr (pc), 0, 0);
 		else
@@ -421,7 +425,8 @@ static void avg_draw_vector_list (void)
 		case VCTR:
 			x = twos_comp_val (secondwd,13);
 			y = twos_comp_val (firstwd,13);
-			z = 2 * (secondwd >> 13);
+			z_inline = (secondwd >>13); // SJB 17/8/97
+			z = z_inline+z_inline;  // SJB 17/8/97
 #ifdef VG_DEBUG
 			if (errorlog)
 				fprintf (errorlog,"%d,%d,", x, y);
@@ -431,7 +436,9 @@ static void avg_draw_vector_list (void)
 			if (errorlog)
 				fprintf (errorlog,"blank");
 #endif
-			} else if (z == 2) {
+			}
+			else if ((z == 2 && flip_word == 0) || flip_word == 1) // SJB 17/8/97
+			{
 				z = statz;
 #ifdef VG_DEBUG
 				if (errorlog)
@@ -448,13 +455,17 @@ static void avg_draw_vector_list (void)
 			currenty -= deltay;
 			vector_timer (deltax, deltay);
 			/* ASG 080497 */
-			draw_to (AVG_X (currentx, xscale), AVG_Y (currenty, yscale), z ? color+(z<<4) : -1);
+			if(flip_word)
+				draw_to (AVG_X (currentx, xscale), AVG_Y (currenty, yscale), z ? color+( ((z_inline*z)>>3) & 0xf8 ) : -1); // SJB 17/8/97
+			else
+				draw_to (AVG_X (currentx, xscale), AVG_Y (currenty, yscale), z ? color+(z<<4) : -1);
 			break;
-	
+
 		case SVEC:
 			x = twos_comp_val (firstwd, 5) << 1;
 			y = twos_comp_val (firstwd >> 8, 5) << 1;
-			z = 2 * ((firstwd >> 5) & 7);
+			z_inline = ((firstwd >> 5) & 7);
+			z = z_inline+z_inline; // SJBNEW
 #ifdef VG_DEBUG
 			if (errorlog)
 				fprintf (errorlog,"%d,%d,", x, y);
@@ -464,7 +475,9 @@ static void avg_draw_vector_list (void)
 				if (errorlog)
 					fprintf (errorlog,"blank");
 #endif
-			} else if (z == 2) {
+			}
+			else if ((z == 2 && flip_word == 0) || flip_word == 1) // SJB 17/8/97
+			{
 				z = statz;
 #ifdef VG_DEBUG
 				if (errorlog) fprintf (errorlog,"stat");
@@ -480,13 +493,16 @@ static void avg_draw_vector_list (void)
 			currenty -= deltay;
 			vector_timer (deltax,deltay);
 			/* ASG 080497 */
-			draw_to (AVG_X (currentx, xscale), AVG_Y (currenty, yscale), z ? color+(z<<4) : -1);
+			if(flip_word)
+				draw_to (AVG_X (currentx, xscale), AVG_Y (currenty, yscale), z ? color+( ((z_inline*z)>>3) & 0xf8 ) : -1); // SJB 17/8/97
+			else
+				draw_to (AVG_X (currentx, xscale), AVG_Y (currenty, yscale), z ? color+(z<<4) : -1);
 			break;
-	
+
 		case STAT:
 			if (flip_word) {
 				color=(char)((firstwd & 0x0700)>>8); /* Colour code 0-7 stored in top 3 bits of `colour'*/
-				statz = firstwd & 0x0f;
+				statz = (firstwd &0xff); // SJB 17/8/97
 			} else {
 				color = firstwd & 0x0f;
 				statz = (firstwd >> 4) & 0x0f;
@@ -497,7 +513,7 @@ static void avg_draw_vector_list (void)
 #endif
 			/* should do e, h, i flags here! */
 			break;
-      
+
 		case SCAL:
 			b = ((firstwd >> 8) & 0x07)+8;
 			l = (~firstwd) & 0xff;
@@ -514,7 +530,7 @@ static void avg_draw_vector_list (void)
 			}
 #endif
 			break;
-	
+
 		case CNTR:
 			d = firstwd & 0xff;
 #ifdef VG_DEBUG
@@ -527,7 +543,7 @@ static void avg_draw_vector_list (void)
 			/* ASG 080497 */
 			draw_to (AVG_X (currentx, xscale), AVG_Y (currenty, yscale), -1);
 			break;
-	
+
 		case RTSL:
 #ifdef VG_DEBUG
 			if (errorlog && ((firstwd & 0x1fff) != 0))
@@ -563,7 +579,7 @@ static void avg_draw_vector_list (void)
 			else
 				pc = a;
 			break;
-	
+
 		case JSRL:
 			a = firstwd & 0x1fff;
 #ifdef VG_DEBUG
@@ -586,7 +602,7 @@ static void avg_draw_vector_list (void)
 				pc = a;
 			}
 			break;
-	
+
 		default:
 			if (errorlog)
 				fprintf (errorlog,"internal error\n");
@@ -614,7 +630,7 @@ void vg_go (int cyc)
 			vgo_count, cpu_gettotalcycles(), vg_done_cyc);
 	}
 	last_vgo_cyc=cyc;
-	vg_busy=1;	
+	vg_busy=1;
 	vg_done_cyc = 8;
 	if (dvg)
 		dvg_draw_vector_list ();
@@ -637,12 +653,20 @@ int vg_init (int len, int usingDvg, int flip)
 		dvg = 0;
 	flip_word = flip;
 
+	vg_step = 0;
+	last_vgo_cyc = 0;
+	vgo_count = 0;
+	vg_busy = 0;
+	vg_done_cyc = 0;
+
 	vg_video.width =Machine->drv->visible_area.max_x-Machine->drv->visible_area.min_x;
 	vg_video.height=Machine->drv->visible_area.max_y-Machine->drv->visible_area.min_y;
 	vg_video.x_cent=(Machine->drv->visible_area.max_x+Machine->drv->visible_area.min_x)/2;
 	vg_video.y_cent=(Machine->drv->visible_area.max_y+Machine->drv->visible_area.min_y)/2;
 	vg_video.x_min=Machine->drv->visible_area.min_x;
 	vg_video.y_min=Machine->drv->visible_area.min_y;
+	vg_video.x_max=Machine->drv->visible_area.max_x;
+	vg_video.y_max=Machine->drv->visible_area.max_y;
 
 	return 0;
 }

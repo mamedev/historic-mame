@@ -10,6 +10,7 @@
 ***************************************************************************/
 
 void atari_vg_init_colors (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void sw_vg_init_colors(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void atari_vg_stop(void);
 void atari_vg_screenrefresh(struct osd_bitmap *bitmap);
 void atari_vg_colorram_w(int offset, int data);

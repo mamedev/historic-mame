@@ -233,6 +233,7 @@ static struct MachineDriver machine_driver =
 	32+64, 32,	/* 32 for the characters, 64 for the stars */
 	jumpbug_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER,
 	0,
 	jumpbug_vh_start,
 	generic_vh_stop,
@@ -309,10 +310,10 @@ struct GameDriver jumpbug_driver =
 	jumpbug_decode, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	0, 0
 };
@@ -328,10 +329,10 @@ struct GameDriver jbugsega_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	0, 0
 };

@@ -32,5 +32,5 @@ int vanguard_interrupt(void)
 
 		return ignore_interrupt();
 	}
-	return interrupt();
+	else return interrupt();	/* one IRQ per frame */
 }

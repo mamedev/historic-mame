@@ -1,26 +1,22 @@
-/* Bally interrupt system's */
+/**************************************************************************
+
+	Interrupt System Hardware for Bally/Midway games
+
+ 	Mike@Dissfulfils.co.uk
+
+**************************************************************************/
 
 #include "driver.h"
-#include "z80.h"
+#include "Z80.h"
 
+extern void CopyLine(int Line);
+extern void Gorf_CopyLine(int Line);
+extern int interrupt(void);
 extern int Z80_IRQ;
 
-/* Standard machine stuff */
-
-void colour_register_w(int offset, int data)
-{
-	/* Colour registers are not implemented yet */
-}
-
-void paging_register_w(int offset, int data)
-{
-	/* Don't know what this does - ignored at the moment */
-}
-
-
-/*
- * Scanline Interrupt System **
- */
+/****************************************************************************
+ * Scanline Interrupt System
+ ****************************************************************************/
 
 int NextScanInt=0;			/* Normal */
 int CurrentScan=0;
@@ -30,17 +26,18 @@ int Controller1=32;			/* Seawolf II */
 int Controller2=32;
 
 int GorfDelay;				/* Gorf */
+int Countdown=0;
 
 void wow_interrupt_enable_w(int offset, int data)
 {
- InterruptFlag = data;
+    InterruptFlag = data;
 
-    if (data == 0) Z80_IRQ=Z80_IGNORE_INT;
+    if (data & 0x01)					/* Disable Interrupts? */
+  	    interrupt_enable_w(0,0);
+    else
+  		interrupt_enable_w(0,1);
 
-    /* Does bit 0 enable/disable interrupts? */
-
-    if (data & 0x01) interrupt_enable_w(0,0);
-    else interrupt_enable_w(0,1);
+    /* Gorf Special interrupt */
 
     if (data & 0x10)
  	{
@@ -50,15 +47,14 @@ void wow_interrupt_enable_w(int offset, int data)
 
         if ((NextScanInt > CurrentScan) && (NextScanInt < GorfDelay))
         {
-        	GorfDelay = NextScanInt - 1;
+          	GorfDelay = NextScanInt - 1;
         }
 
-     if (errorlog) fprintf(errorlog,"Gorf Delay set to %02x\n",GorfDelay);
+        if (errorlog) fprintf(errorlog,"Gorf Delay set to %02x\n",GorfDelay);
     }
 
- if (errorlog) fprintf(errorlog,"Interrupt flag set to %02x\n",data);
+    if (errorlog) fprintf(errorlog,"Interrupt Flag set to %02x\n",InterruptFlag);
 }
-
 
 void wow_interrupt_w(int offset, int data)
 {
@@ -76,12 +72,12 @@ int wow_interrupt(void)
 
     CurrentScan++;
 
-    if (CurrentScan == 230)
+    if (CurrentScan == Machine->drv->cpu[0].interrupts_per_frame)
 	{
 		CurrentScan = 0;
 
     	/*
-		 * Seawolf2 needs to emulate a rotary port
+		 * Seawolf2 needs to emulate rotary ports
          *
          * Checked each flyback, takes 1 second to traverse screen
          */
@@ -103,15 +99,19 @@ int wow_interrupt(void)
 			Controller2++;
     }
 
+    if (CurrentScan < 204) CopyLine(CurrentScan);
+
     /* Scanline interrupt enabled ? */
 
     if ((InterruptFlag & 0x08) && (CurrentScan == NextScanInt))
-    {
 		res = interrupt();
-    }
 
     return res;
 }
+
+/****************************************************************************
+ * Gorf - Interrupt routine and Timer hack
+ ****************************************************************************/
 
 int gorf_interrupt(void)
 {
@@ -124,22 +124,52 @@ int gorf_interrupt(void)
 		CurrentScan=0;
     }
 
+    if (CurrentScan < 204) Gorf_CopyLine(CurrentScan);
+
     /* Scanline interrupt enabled ? */
 
     if ((InterruptFlag & 0x08) && (CurrentScan == NextScanInt))
-    {
 		res = interrupt();
-    }
 
-    /* Gorf Unknown Interrupts */
+
+    /* Gorf Special Bits */
+
+    if (Countdown>0) Countdown--;
 
     if ((InterruptFlag & 0x10) && (CurrentScan==GorfDelay))
-	{
-   	    res = interrupt() & 0xF0;
-	}
+		res = interrupt() & 0xF0;
+
+	cpu_clear_pending_interrupts(0);
 
     return res;
 }
+
+int gorf_timer_r(int offset)
+{
+	static int Skip=0;
+
+	if ((RAM[0x5A93]==160) || (RAM[0x5A93]==4)) 	/* INVADERS AND    */
+	{												/* GALAXIAN SCREEN */
+        if (cpu_getpc()==0x3086)
+        {
+    	    if(--Skip==-1)
+            {
+                Skip=2;
+            }
+        }
+
+	   	return Skip;
+    }
+    else
+    {
+    	return RAM[0xD0A5];
+    }
+
+}
+
+/****************************************************************************
+ * Seawolf Controllers
+ ****************************************************************************/
 
 /*
  * Seawolf2 uses rotary controllers on input ports 10 + 11
@@ -171,3 +201,4 @@ int seawolf2_controller2_r(int offset)
 {
     return (input_port_1_r(0) & 0x80) + ControllerTable[Controller2];
 }
+

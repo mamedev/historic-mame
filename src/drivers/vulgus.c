@@ -357,6 +357,7 @@ static struct MachineDriver machine_driver =
 	256,64*4+16*16+4*32*8,
 	vulgus_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER,
 	0,
 	vulgus_vh_start,
 	vulgus_vh_stop,
@@ -463,10 +464,10 @@ struct GameDriver vulgus_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };

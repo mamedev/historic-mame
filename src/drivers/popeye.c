@@ -298,6 +298,7 @@ static struct MachineDriver machine_driver =
 	256,32*2+32+64*4,
 	popeye_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER,
 	0,
 	popeye_vh_start,
 	popeye_vh_stop,
@@ -401,10 +402,10 @@ struct GameDriver popeyebl_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	16*13, 16*16,
+	ORIENTATION_DEFAULT,
 
 	hiload,hisave
 };

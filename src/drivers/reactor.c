@@ -27,14 +27,14 @@ write:
 7001    trackball output (optional)
 7002    Outputs 20-27
 7003    Flipflop outputs:
-                b7: F/B priority
-                b6: horiz. flipflop
-                b5: vert. flipflop
-                b4: Output 33
-                b3: coin meter
-                b2: knocker
-                b1: coin 1
-                b0: coin lockout
+		b7: F/B priority
+		b6: horiz. flipflop
+		b5: vert. flipflop
+		b4: Output 33
+		b3: coin meter
+		b2: knocker
+		b1: coin 1
+		b0: coin lockout
 7004    Outputs 40-47
 
 interrupts:
@@ -64,7 +64,7 @@ to 22kHz)
 #include "vidhrdw/generic.h"
 
 int reactor_vh_start(void);
-void gottlieb_vh_init_basic_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void gottlieb_vh_init_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void gottlieb_sh_w(int offset, int data);
 void gottlieb_characterram_w(int offset, int data);
 int gottlieb_sh_init(const char *gamename);
@@ -79,6 +79,14 @@ extern unsigned char *gottlieb_paletteram;
 extern unsigned char *gottlieb_characterram;
 void gottlieb_paletteram_w(int offset,int data);
 void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
+
+
+extern struct MemoryReadAddress gottlieb_sound_readmem[];
+extern struct MemoryWriteAddress gottlieb_sound_writemem[];
+int gottlieb_sh_start(void);
+void gottlieb_sh_stop(void);
+void gottlieb_sh_update(void);
+int gottlieb_sh_interrupt(void);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -96,10 +104,10 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x2fff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x3000, 0x37ff, videoram_w, &videoram, &videoram_size },
+	{ 0x2000, 0x20ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x3000, 0x33ff, videoram_w, &videoram, &videoram_size },
 	{ 0x4000, 0x4fff, gottlieb_characterram_w, &gottlieb_characterram }, /* bg object ram */
-	{ 0x6000, 0x67ff, gottlieb_paletteram_w, &gottlieb_paletteram },
+	{ 0x6000, 0x601f, gottlieb_paletteram_w, &gottlieb_paletteram },
 	{ 0x7000, 0x7000, MWA_RAM },    /* watchdog timer clear */
 	{ 0x7001, 0x7001, MWA_RAM },    /* trackball: not used */
 	{ 0x7002, 0x7002, gottlieb_sh_w }, /* sound/speech command */
@@ -161,11 +169,11 @@ static struct TrakPort trak_ports[] = {
 
 static struct KEYSet keys[] =
 {
-        { 4, 1, "PLAYER 1 DECOY" },
-        { 4, 0, "PLAYER 1 ENERGY" },
-        { 4, 2, "PLAYER 2 DECOY" },
-        { 4, 3, "PLAYER 2 ENERGY" },
-        { -1 }
+	{ 4, 1, "PLAYER 1 DECOY" },
+	{ 4, 0, "PLAYER 1 ENERGY" },
+	{ 4, 2, "PLAYER 2 DECOY" },
+	{ 4, 3, "PLAYER 2 ENERGY" },
+	{ -1 }
 };
 
 
@@ -180,7 +188,7 @@ static struct DSW dsw[] =
 	{ 0, 0x02, "BOUNCE CHAMBERS PTS", { "10", "15" } },
 	{ 0, 0xC0, "BONUS SHIP AT", { "10000", "12000", "20000", "15000" } },
 /* the following switch must be connected to the IP16 line */
-/*	{ 1, 0x2, "TEST MODE", {"ON", "OFF"} },*/
+/*      { 1, 0x2, "TEST MODE", {"ON", "OFF"} },*/
 	{ -1 }
 };
 
@@ -203,8 +211,8 @@ static struct GfxLayout spritelayout =
 	4,      /* 4 bits per pixel */
 	{ 0, 0x1000*8, 0x2000*8, 0x3000*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 },
-	{ 0 * 16, 1 * 16, 2 * 16, 3 * 16, 4 * 16, 5 * 16, 6 * 16, 7 * 16,
-		8 * 16, 9 * 16, 10 * 16, 11 * 16, 12 * 16, 13 * 16, 14 * 16, 15 * 16 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
+			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
 	32*8    /* every sprite takes 32 consecutive bytes */
 };
 
@@ -226,6 +234,13 @@ static const struct MachineDriver machine_driver =
 			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
+		},
+		{
+			CPU_M6502 | CPU_AUDIO_CPU ,
+			3579545/4,        /* could it be /2 ? */
+			2,             /* memory region #2 */
+			gottlieb_sound_readmem,gottlieb_sound_writemem,0,0,
+			gottlieb_sh_interrupt,1
 		}
 	},
 	60,     /* frames / second */
@@ -234,9 +249,10 @@ static const struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 16,
-	gottlieb_vh_init_basic_color_palette,
+	1+16, 16,
+	gottlieb_vh_init_color_palette,
 
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
 	0,      /* init vh */
 	reactor_vh_start,
 	generic_vh_stop,
@@ -245,8 +261,8 @@ static const struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,      /* samples */
 	0,
-	0,
-	0,
+	gottlieb_sh_start,
+	gottlieb_sh_stop,
 	gottlieb_sh_update
 };
 
@@ -266,6 +282,12 @@ ROM_START( reactor_rom )
 	ROM_LOAD( "FG1", 0x1000, 0x1000, 0x0577a58b )       /* sprites */
 	ROM_LOAD( "FG2", 0x2000, 0x1000, 0xe1ecaede )       /* sprites */
 	ROM_LOAD( "FG3", 0x3000, 0x1000, 0x50087b04 )       /* sprites */
+
+	ROM_REGION(0x10000)      /* 64k for sound cpu */
+	ROM_LOAD( "SND1", 0xf000, 0x800, 0x1367334b )
+		ROM_RELOAD(0x7000, 0x800) /* A15 is not decoded */
+	ROM_LOAD( "SND2", 0xf800, 0x800, 0x10e64e0a )
+		ROM_RELOAD(0x7800, 0x800) /* A15 is not decoded */
 ROM_END
 
 static int hiload(const char *name)
@@ -304,12 +326,10 @@ struct GameDriver reactor_driver =
 	0, 0,   /* rom decode and opcode decode functions */
 	gottlieb_sample_names,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
-	(char *)1,
-	0,0,    /* palette, colortable */
-
-	8*11,8*20,
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
 
 	hiload,hisave     /* hi-score load and save */
 };

@@ -11,10 +11,9 @@
 #include "M6809.h"
 
 
-int yiear_init_machine(const char *gamename)
+void yiear_init_machine(void)
 {
 	/* Set OPTIMIZATION FLAGS FOR M6809 */
 	m6809_Flags = M6809_FAST_OP | M6809_FAST_S;
-	return 0;
 }
 

@@ -123,7 +123,7 @@ void digdug_customio_w(int offset,int data);
 int digdug_interrupt_1(void);
 int digdug_interrupt_2(void);
 int digdug_interrupt_3(void);
-int digdig_init_machine(const char *gamename);
+void digdig_init_machine(void);
 
 extern unsigned char *digdug_vlatches;
 void digdug_cpu_reset_w(int offset, int data);
@@ -403,6 +403,7 @@ static struct MachineDriver machine_driver =
 	32,8*2+64*4+64*4,
 	digdug_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
 	digdug_vh_start,
 	digdug_vh_stop,
@@ -531,11 +532,10 @@ struct GameDriver digdugnm_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, digdug_dsw, keys,
+	input_ports, 0, trak_ports, digdug_dsw, keys,
 
 	color_prom, 0, 0,
-
-	8*11, 8*20,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
@@ -552,11 +552,10 @@ struct GameDriver digdugat_driver =
 	0, 0,
 	0,
 
-	input_ports, trak_ports, digdug_dsw, keys,
+	input_ports, 0, trak_ports, digdug_dsw, keys,
 
 	color_prom, 0, 0,
-
-	8*11, 8*20,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };

@@ -24,12 +24,10 @@ int tutankhm_interrupt(void)
 	else return INT_NONE;
 }
 
-int tutankhm_init_machine(const char *gamename)
+void tutankhm_init_machine(void)
 {
 	/* Set optimization flags for M6809 */
 	m6809_Flags = M6809_FAST_OP | M6809_FAST_S;    /* thanks to Dave Dahl for suggestion */
-
-	return 0;
 }
 
 

@@ -104,7 +104,7 @@ int AY8910_sh_start(struct AY8910interface *interface)
 		memset(buffer[i],0x80,buffer_len * intf->updates_per_frame);
 	}
 
-	if (AYInit(intf->num,intf->clock,emulation_rate,buffer_len,0) == 0)
+	if (AYInit(intf->num,intf->clock,emulation_rate,buffer_len,buffer[i]) == 0)
 	{
 		AYSetPortHandler(0,AY_PORTA,porthandler0);
 		AYSetPortHandler(0,AY_PORTB,porthandler0);

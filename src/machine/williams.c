@@ -125,24 +125,19 @@ int video_counter_r(int offset)
 /**************
  *
  */
-int williams_init_machine(const char *gamename)
+void williams_nofastop_init_machine(void)
 {
-  if(strcmp(gamename,"blaster") == 0){
 /*So we do not have to copy the roms in RAM[] when bank switching
    On my system its much faster.*/
+/* used with Balster and Defender */
     m6809_Flags = M6809_FAST_NONE;
-    return 0;
-  }
-  if(strcmp(gamename,"defender") == 0){
-/*So we do not have to copy the roms in RAM[] when bank switching*/
-    m6809_Flags = M6809_FAST_NONE;
-    return 0;
-  }
+}
 
+int williams_init_machine(void)
+{
 /*The cpu will fetch its instructions directly in RAM[]*/
   m6809_Flags = M6809_FAST_OP;
   return 0;
-
 }
 
 
@@ -262,6 +257,85 @@ void defender_bank_select_w(int offset,int data)
 	defender_bank = data;
         bank_address = data*0x1000 + 0x10000; /*Address of the ROM */
 }
+
+/* JB 970823 - speed up very busy loop in Defender */
+/*    E7C3: LDA   $5D    ; dp=a0
+      E7C5: BEQ   $E7C3   */
+int defender_catch_loop_r(int offset)
+{
+	unsigned char t;
+
+	t = RAM[0xa05d];
+	if( cpu_getpc()==0xe7c5 && t==0 ) cpu_seticount(0);
+    return t;
+}
+
+/* JB 970823 - speed up very busy loop in Stargate */
+/*    0011: LDA   $39    ; dp=9c
+      0013: BEQ   $0011   */
+int stargate_catch_loop_r(int offset)
+{
+	unsigned char t;
+
+	t = RAM[0x9c39];
+	if( cpu_getpc()==0x0013 && t==0 ) cpu_seticount(0);
+    return t;
+}
+
+/* JB 970823 - speed up very busy loop in Robotron */
+/*    D19B: LDA   $10    ; dp=98
+      D19D: CMPA  #$02
+      D19F: BCS   $D19B  ; (BLO)   */
+int robotron_catch_loop_r(int offset)
+{
+	unsigned char t;
+
+	t = RAM[0x9810];
+	if( cpu_getpc()==0xd19d && t<2 ) cpu_seticount(0);
+    return t;
+}
+
+#if 0 /* the fix for Blaster is more expensive than the loop */
+/* JB 970823 - speed up very busy loop in Blaster */
+/*    D184: LDA   $00    ; dp=97
+      D186: CMPA  #$02
+      D188: BCS   $D184  ; (BLO)   */
+int blaster_catch_loop_r(int offset)
+{
+	unsigned char t;
+
+	t = RAM[0x9700];
+	if( cpu_getpc()==0xd186 && t<2 ) cpu_seticount(0);
+    return t;
+}
+#endif
+
+/* JB 970823 - speed up very busy loop in Splat */
+/*    D04F: LDA   $4B    ; dp=98
+      D051: BEQ   $D04F   */
+int splat_catch_loop_r(int offset)
+{
+	unsigned char t;
+
+	t = RAM[0x984B];
+	if( cpu_getpc()==0xd051 && t==0 ) cpu_seticount(0);
+    return t;
+}
+
+#if 0 /* the fix for Joust is more expensive than the loop */
+/* JB 970823 - speed up very busy loop in Joust */
+/*    e0f0: TST   ,X     ; x={ac21,a9c0,?}
+      e0f2: BNE   $E0F0   */
+int joust_catch_loop_r(int offset)
+{
+	m6809_Regs r;
+
+	/* since X is not static, just check whether branch will be taken */
+	m6809_GetRegs(&r);
+	if( !(r.cc & 0x04) ) cpu_seticount(0);
+    return RAM[0xe0f2];
+}
+#endif
 
 /*
  *  Blaster bank select

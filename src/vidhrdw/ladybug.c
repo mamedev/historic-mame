@@ -11,6 +11,10 @@
 
 
 
+static int flipscreen;
+
+
+
 /***************************************************************************
 
   Convert the color PROMs into a more useable format.
@@ -83,6 +87,17 @@ void ladybug_vh_convert_color_prom(unsigned char *palette, unsigned char *colort
 
 
 
+void ladybug_flipscreen_w(int offset,int data)
+{
+	if (flipscreen != (data & 1))
+	{
+		flipscreen = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
+
+
+
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -106,13 +121,20 @@ void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			dirtybuffer[offs] = 0;
 
-			sx = 8 * (offs / 32);
-			sy = 8 * (31 - offs % 32);
+			sx = offs % 32;
+			sy = offs / 32;
+
+			if (flipscreen)
+			{
+				sx = 31 - sx;
+				sy = 31 - sy;
+			}
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + 32 * (colorram[offs] & 8),
 					colorram[offs],
-					0,0,sx,sy,
+					flipscreen,flipscreen,
+					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
 	}
@@ -128,10 +150,14 @@ void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap)
 		{
 			sx = offs % 4;
 			sy = offs / 4;
-			scroll[offs] = videoram[32 * sx + sy];
+
+			if (flipscreen)
+				scroll[31-offs] = -videoram[32 * sx + sy];
+			else
+				scroll[offs] = -videoram[32 * sx + sy];
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -147,27 +173,39 @@ void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap)
 		while (i > 0)
 		{
 /*
- aabbcccc ddddddee fffghhhh iiiiiiii
+ abccdddd eeeeeeee fffghhhh iiiiiiii
 
- aa unknown
- bb flip
- cccc x offset
- dddddd sprite code
- ee unknown
+ a enable?
+ b size (0 = 8x8, 1 = 16x16)
+ cc flip
+ dddd y offset
+ eeeeeeee sprite code (shift right 2 bits for 16x16 sprites)
  fff unknown
  g sprite bank
  hhhh color
- iiiiiiii y position
+ iiiiiiii x position
 */
 			i -= 4;
 
-			drawgfx(bitmap,Machine->gfx[1],
-					(spriteram[offs + i + 1] >> 2) + 4 * (spriteram[offs + i + 2] & 0x10),
-					spriteram[offs + i + 2] & 0x0f,
-					spriteram[offs + i] & 0x10,spriteram[offs + i] & 0x20,
-					offs / 4 - 8 + (spriteram[offs + i] & 0x0f),
-					240 - spriteram[offs + i + 3],
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			if (spriteram[offs + i] & 0x80)
+			{
+				if (spriteram[offs + i] & 0x40)	/* 16x16 */
+					drawgfx(bitmap,Machine->gfx[1],
+							(spriteram[offs + i + 1] >> 2) + 4 * (spriteram[offs + i + 2] & 0x10),
+							spriteram[offs + i + 2] & 0x0f,
+							spriteram[offs + i] & 0x20,spriteram[offs + i] & 0x10,
+							spriteram[offs + i + 3],
+							offs / 4 - 8 + (spriteram[offs + i] & 0x0f),
+							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				else	/* 8x8 */
+					drawgfx(bitmap,Machine->gfx[2],
+							spriteram[offs + i + 1] + 4 * (spriteram[offs + i + 2] & 0x10),
+							spriteram[offs + i + 2] & 0x0f,
+							spriteram[offs + i] & 0x20,spriteram[offs + i] & 0x10,
+							spriteram[offs + i + 3],
+							offs / 4 + (spriteram[offs + i] & 0x0f),
+							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			}
 		}
 	}
 }

@@ -122,7 +122,7 @@ write:
 extern unsigned char *elevator_protection;
 int elevator_protection_r(int offset);
 int elevator_protection_t_r(int offset);
-int elevator_init_machine(const char *gamename);
+void elevator_init_machine(void);
 void elevatob_bankswitch_w(int offset,int data);
 
 extern unsigned char *taito_videoram2,*taito_videoram3;
@@ -378,6 +378,7 @@ static struct MachineDriver machine_driver =
 	37, 16*8,
 	taito_vh_convert_color_prom,
 
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,
 	elevator_vh_start,
 	taito_vh_stop,
@@ -462,40 +463,83 @@ ROM_END
 
 
 
+static int hiload(const char *name)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+	/* wait for the high score to initialize */
+	if (memcmp(&RAM[0x8350],"\x00\x00\x01",3) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x8350],1,3,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x8350],1,3,f);
+		fclose(f);
+	}
+}
+
+
+
 struct GameDriver elevator_driver =
 {
 	"Elevator Action",
 	"elevator",
-	"NICOLA SALMORIA\nTATSUYUKI SATOH",
+	"NICOLA SALMORIA\nTATSUYUKI SATOH\nMIKE BALFOUR",
 	&machine_driver,
 
 	elevator_rom,
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom,0,0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };
 
 struct GameDriver elevatob_driver =
 {
 	"Elevator Action (bootleg)",
 	"elevatob",
-	"NICOLA SALMORIA\nTATSUYUKI SATOH",
+	"NICOLA SALMORIA\nTATSUYUKI SATOH\nMIKE BALFOUR",
 	&machine_driver,
 
 	elevatob_rom,
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	color_prom,0,0,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };

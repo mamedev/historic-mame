@@ -297,6 +297,7 @@ static struct MachineDriver machine_driver =
 	sizeof(palette)/3,sizeof(colortable),
 	0,
 
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -340,21 +341,66 @@ ROM_END
 
 
 
+static int hiload(const char *name)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+	/* check if the hi score table has already been initialized */
+        if ((memcmp(&RAM[0x8100],"\x00\x00\x00",3) == 0) &&
+		(memcmp(&RAM[0x813B],"\x90\x90\x90",3) == 0))
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+                        fread(&RAM[0x8100],1,0x3E,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+                fwrite(&RAM[0x8100],1,0x3E,f);
+		fclose(f);
+	}
+
+}
+
+
+
 struct GameDriver blueprnt_driver =
 {
 	"Blue Print",
 	"blueprnt",
-	"NICOLA SALMORIA",
+	"NICOLA SALMORIA\nMIKE BALFOUR",
 	&machine_driver,
 
 	blueprnt_rom,
 	0, 0,
 	0,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	0, palette, colortable,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };

@@ -13,7 +13,6 @@ See drivers\starwars.c for notes
 
 #include "driver.h"
 #include "pokey.h"
-#include "cpuintrf.h"   /* for cpu_getpc() */
 #include "starwars.h"
 
 /* These lines were modified from milliped.c */
@@ -22,11 +21,22 @@ See drivers\starwars.c for notes
 #define buffer_len (emulation_rate/Machine->drv->frames_per_second)
 
 #define SNDDEBUG 0
-#define SOUND_SELF_TEST 0
+#define FIFODEBUG 0
 
-/* These three are exported so machine\starwars.c can get to them */
+/* Sound commands from the main CPU are stored in a single byte */
+/* register.  However, because the main CPU cannot interrupt    */
+/* the sound CPU in MAME, the sound CPU cannot respond fast     */
+/* enough to new commands.  I have implemented a FIFO to        */
+/* replace the byte register as a workaround.                   */
 
-int sw_port_A = 0;       /* PIA port A data register */
+#define MAX_COMMANDS 8          /* will probably never need to be this big */
+int mainwrite[MAX_COMMANDS];    /* Main CPU write register */
+int mainread = 0;               /* Main CPU read register */
+int fifo_head = 0;
+int fifo_tail = 0;
+int items_in_fifo = 0;
+
+int port_A = 0;          /* 6532 port A data register */
 
                          /* Configured as follows:           */
                          /* d7 (in)  Main Ready Flag         */
@@ -34,18 +44,20 @@ int sw_port_A = 0;       /* PIA port A data register */
                          /* d5 (out) Mute Speech             */
                          /* d4 (in)  Not Sound Self Test     */
                          /* d3 (out) Hold Main CPU in Reset? */
+                         /*          + enable delay circuit? */
                          /* d2 (in)  TMS5220 Not Ready       */
                          /* d1 (out) TMS5220 Not Read        */
                          /* d0 (out) TMS5220 Not Write       */
 
-int sw_mainwrite = 0;    /* Main CPU write register */
-int sw_mainread = 0;     /* Main CPU read register */
+int port_B = 0;          /* 6532 port B data register        */
+                         /* (interfaces to TMS5220 data bus) */
 
 unsigned char timer = 0; /* # of snd_interrupts until timeout */
 int timer_running = 0;   /* is the timer running ? */
+int interrupt_flags = 0; /* 6532 interrupt flag register */
 
-int port_A_ddr = 0;      /* PIA Data Direction Register A */
-int port_B_ddr = 0;      /* PIA Data Direction Register B */
+int port_A_ddr = 0;      /* 6532 Data Direction Register A */
+int port_B_ddr = 0;      /* 6532 Data Direction Register B */
                          /* for each bit, 0 = input, 1 = output */
 
 int starwars_sh_start(void)
@@ -97,9 +109,10 @@ int starwars_snd_interrupt(void)
 	/* has expired.  If so - IRQ, otherwise ignore            */
 	if (timer_running)
 	{
-		if (--timer == 0)
+                if (--timer == 0)
 		{
 			timer_running = 0;
+                        interrupt_flags |= 0x80; /* set timer interrupt flag */
 			return interrupt();
 		}
 	}
@@ -108,118 +121,230 @@ int starwars_snd_interrupt(void)
 }
 /********************************************************/
 
-int sin_r(int offset)
+int m6532_r(int offset)
 {
-    sw_port_A &= 0x7f;   /* reset main ready flag */
-    return sw_mainwrite;
-}
-/********************************************************/
-
-int PIA_port_r(int offset)
-{
-    static int rv;
+    static int temp;
 
     switch (offset)
     {
-        case 0:
-            sw_port_A = sw_port_A | ((SOUND_SELF_TEST ^ 1)<<4);
-            rv = sw_port_A;
-            break;
+        case 0: /* 0x80 - Read Port A */
 
-        case 1:
-            rv = port_A_ddr;
-            break;
+            /* if the fifo is empty, the main ready flag (bit 7) looks */
+            /* reset to the sound board.  If not, flag appears set     */
+            
+            /* Note: bit 4 is always set to avoid sound self test */
 
-        case 2:
-            rv = 0;  /* speech data read? */
-            break;
-
-        case 3:
-            rv = port_B_ddr;
-            break;
-    }
-    return rv;
-}
-/********************************************************/
-
-int PIA_timer_r(int offset)
-{
-    switch (offset)
-    {
-        case 1:
-            if (timer_running)
-                return timer;
+            if (items_in_fifo == 0)
+                return (port_A&0x7f)|0x10;  
             else
-                return 0xff;    /* This is a hack because timer should */
-                                /* be counting down below zero every PIA */
-                                /* clock now */
+                return (port_A&0x7f)|0x90;
 
-                                /* Since we can't do this, at least make */
-                                /* it less than zero so that in the IRQ  */
-                                /* handler, it looks like it's > 0       */
+        case 1: /* 0x81 - Read Port A DDR */
+            return port_A_ddr;
+
+        case 2: /* 0x82 - Read Port B */
+            return port_B;  /* speech data read? */
+
+        case 3: /* 0x83 - Read Port B DDR */
+            return port_B_ddr;
+
+        case 5: /* 0x85 - Read Interrupt Flag Register */
+            temp = interrupt_flags;
+            interrupt_flags = 0;   /* Clear int flags */
+            return temp;
 
         default:
             return 0;
     }
+
+    return 0; /* will never execute this */
 }
 /********************************************************/
+
+void m6532_w(int offset, int data)
+{
+    switch (offset)
+    {
+        case 0: /* 0x80 - Port A Write */
+            port_A = (port_A&(~port_A_ddr))|(data&port_A_ddr);
+
+            /* Write to speech chip on PA0 falling edge */
+
+            return;
+
+        case 1: /* 0x81 - Port A DDR Write */
+            port_A_ddr = data;
+            return;
+
+        case 2: /* 0x82 - Port B Write */
+            /* TMS5220 Speech Data on port B */
+
+            /* ignore DDR for now */
+            port_B = data;
+
+            return;
+
+        case 3: /* 0x83 - Port B DDR Write */
+            port_B_ddr = data;
+            return;
+
+        case 7: /* 0x87 - Enable Interrupt on PA7 Transitions */
+
+            /* This feature is not emulated.  When the Main CPU  */
+            /* writes to mainwrite, it should send an IRQ to the */
+            /* sound CPU.  Because this is not supported in MAME */
+            /* yet, a small FIFO is used for mainwrite in place  */
+            /* of the single byte buffer in the actual game.     */
+            /* The net effect is that the PA7 main_ready_flag is */
+            /* no longer a single bit.  Each CPU reads it's own  */
+            /* version of the flag based on the state of the     */
+            /* FIFO:                                             */
+            /*                                                   */
+            /* FIFO State:   Main CPU   Sound CPU                */
+            /*               Reads:      Reads:                  */
+            /* FULL            1           1                     */
+            /* PART FULL       0           1                     */
+            /* EMPTY           0           0                     */
+
+            return;
+
+
+        case 0x1f: /* 0x9f - Set Timer to decrement every n*1024 clocks, */
+                   /*        With IRQ enabled on countdown               */
+
+            /* Should be decrementing every data*1024 6532 clock cycles */
+            /* 6532 runs at 1.5 Mhz */
+
+            /* instead we are decrementing at half that rate, so we'll */
+            /* cut the time in half */
+
+            timer = data>>1;
+
+            timer_running = 1;
+            return;
+
+       default:
+            return;
+     }
+
+    return; /* will never execute this */
+
+}
+
+/********************************************************/
+/* These routines are called by the Sound CPU to        */
+/* communicate with the Main CPU                        */
+/********************************************************/
+
+int sin_r(int offset)
+{
+    static int temp;
+
+    if (items_in_fifo == 0)
+    {
+    #if(FIFODEBUG==1)
+        printf("FIFO underrun!\n");
+    #endif
+        return mainwrite[fifo_head];
+    }
+
+    items_in_fifo--;
+    temp = mainwrite[fifo_head];
+    fifo_head = (fifo_head+1)%MAX_COMMANDS;
+
+    #if(FIFODEBUG==1)
+    printf("Items in FIFO - %d\n",items_in_fifo);
+    #endif
+
+    return temp;
+}
 
 void sout_w(int offset, int data)
 {
-    sw_mainread = data;
-    sw_port_A |= 0x40;  /* set sound ready flag */
+    mainread = data;
+    port_A |= 0x40;  /* set sound ready flag */
     return;
 }
+
+/********************************************************/
+/* The following routines are called from the Main CPU, */
+/* not the Sound CPU.                                   */
+/* They are here because they are all related to sound  */
+/* CPU communications                                   */
 /********************************************************/
 
-void PIA_port_w(int offset, int data)
-{
-    switch (offset)
-    {
-        case 0:
-            sw_port_A |= (data & port_A_ddr);
-            break;
+int main_read_r(int offset)
+   {
 
-        case 1:
-            port_A_ddr = data;
-            break;
+   #if(SNDDEBUG==1)
+   printf("main_read_r\n");
+   #endif
 
-        case 2:
-            /* TMS5220 Speech Data on port B */
-            break;
+   port_A &= 0xbf;  /* reset flag for sound ready */
+   return mainread;
+   }
 
-        case 3:
-            port_B_ddr = data;
-            break;
-     }
-    return;
-
-}
 /********************************************************/
 
-void PIA_timer_w(int offset, int data)
-{
-    switch (offset)
-    {
-         case 3:
-             break;
+int main_ready_flag_r(int offset)
+   {
+   #if(SNDDEBUG==1)
+   printf("main_ready_flag_r\n");
+   #endif
 
-         case 0x1b:
+   /* The only time the main CPU thinks it can't write to */
+   /* the sound one is if the FIFO is full.               */
 
-             /* Start the timer counting down */
+   if (items_in_fifo == MAX_COMMANDS)
+       return (port_A & 0x40) | 0x80; /* only upper two flag bits mapped */
+   else
+       return (port_A & 0x40);
+   }
 
-             /* Should be decrementing every data*1024 PIA clock cycles */
-             /* PIA runs at 1.5 Mhz */
+/********************************************************/
 
-             /* instead we are decrementing at half that rate, so we'll */
-             /* cut the time in half */
+void main_wr_w(int offset, int data)
+   {
+   #if(SNDDEBUG==1)
+   printf("main_wr_w\n");
+   #endif
 
-             timer = data>>1;
+   if (items_in_fifo == MAX_COMMANDS)
+   {
+   #if(FIFODEBUG==1)
+       printf("FIFO overrun!\n");
+   #endif
+       items_in_fifo = 1;
+       mainwrite[fifo_head] = data;
+       fifo_tail = (fifo_head+1)%MAX_COMMANDS;
+       return;
+   }
 
-             timer_running = 1;
-             break;
+   mainwrite[fifo_tail] = data;
+   fifo_tail = (fifo_tail+1)%MAX_COMMANDS;
+   items_in_fifo++;
 
-         return;
-    }
-}
+   #if(FIFODEBUG==1)
+   printf("Items in FIFO - %d\n",items_in_fifo);
+   #endif
+   }
+
+/********************************************************/
+
+void soundrst(int offset, int data)
+   {
+
+   #if(SNDDEBUG==1)
+   printf("soundrst\n");
+   #endif
+
+   mainread = 0;
+   fifo_head = fifo_tail = 0;
+   port_A &= 0x3f;
+   /* should reset sound CPU here  */
+   }
+
+
+
+
 

@@ -343,6 +343,7 @@ static struct MachineDriver machine_driver =
 	sizeof(palette)/3,sizeof(colortable),
 	0,
 
+	VIDEO_TYPE_RASTER,
 	0,
 	phoenix_vh_start,
 	phoenix_vh_stop,
@@ -377,6 +378,7 @@ static struct MachineDriver pleiads_machine_driver =
 	sizeof(palette)/3,sizeof(colortable),
 	0,
 
+	VIDEO_TYPE_RASTER,
 	0,
 	phoenix_vh_start,
 	phoenix_vh_stop,
@@ -554,10 +556,10 @@ struct GameDriver phoenix_driver =
 	0, 0,
 	phoenix_sample_names,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	0, palette, colortable,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
@@ -573,10 +575,10 @@ struct GameDriver phoenixt_driver =
 	0, 0,
 	phoenix_sample_names,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	0, palette, colortable,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
@@ -592,10 +594,10 @@ struct GameDriver phoenix3_driver =
 	0, 0,
 	phoenix_sample_names,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
 	0, palette, colortable,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
@@ -611,10 +613,10 @@ struct GameDriver pleiads_driver =
 	0, 0,
         phoenix_sample_names,
 
-	input_ports, trak_ports, dsw, keys,
+	input_ports, 0, trak_ports, dsw, keys,
 
         0, palette, pl_colortable,
-	8*13, 8*16,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };

@@ -21,15 +21,13 @@ static int crednum[] = { 1, 2, 3, 6, 1, 3, 1, 2 };
 static int credden[] = { 1, 1, 1, 1, 2, 2, 3, 3 };
 
 
-int mappy_init_machine(const char *gamename)
+void mappy_init_machine(void)
 {
 	/* Reset all flags */
 	credits = coin = fire1 = fire2 = start1 = start2 = 0;
 
 	/* Set optimization flags for M6809 */
 	m6809_Flags = M6809_FAST_OP | M6809_FAST_S | M6809_FAST_U;
-
-	return 0;
 }
 
 
@@ -111,7 +109,7 @@ int mappy_customio_r_1(int offset)
 			{
 				case 0:
 					val = readinputport (3) & 0x0f;
-					
+
 					/* bit 0 is a trigger for the coin slot */
 					if (val & 1)
 					{
@@ -141,17 +139,17 @@ int mappy_customio_r_1(int offset)
 					}
 					else start2 = 0;
 					break;
-					
+
 				case 2:
 					temp = readinputport (1) & 7;
 					val = (credits * crednum[temp] / credden[temp]) / 10;
 					break;
-					
+
 				case 3:
 					temp = readinputport (1) & 7;
 					val = (credits * crednum[temp] / credden[temp]) % 10;
 					break;
-					
+
 				case 4:
 					val = readinputport (2) & 0x0f;
 					break;
@@ -167,21 +165,21 @@ int mappy_customio_r_1(int offset)
 					}
 					else fire1 = 0;
 					break;
-					
+
 				case 6:
 				case 7:
 					val = 0;
 					break;
-					
+
 				default:
 					val = mappy_customio_1[offset];
 					break;
 			}
 			return val;
-			
+
 		case 5:
 			credits = 0;
-			if (offset >= 1 && offset <= 7) 
+			if (offset >= 1 && offset <= 7)
 				return testvals[offset - 1];
 			break;
 	}
@@ -215,7 +213,7 @@ int mappy_customio_r_2(int offset)
 				case 3:
 					val = 0;
 					break;
-					
+
 				case 4:
 					val = readinputport (0) >> 4;
 					break;
@@ -249,10 +247,10 @@ int mappy_customio_r_2(int offset)
 					break;
 			}
 			return val;
-			
+
 		case 5:
 			credits = 0;
-			if (offset >= 1 && offset <= 7) 
+			if (offset >= 1 && offset <= 7)
 				return testvals[offset - 1];
 	}
 	return mappy_customio_2[offset];

@@ -25,26 +25,6 @@ static int bankaddress = 0x10000; /* base address of banked ROM */
 
 static unsigned char ADC_VAL=0;
 
-/* See sndhrdw\starwars.c for descriptions */
-
-extern int sw_port_A;          /* PIA port A register */
-extern int sw_mainwrite;       /* main write register */
-extern int sw_mainread;        /* main read register */
-
-int starwars_init_machine(const char *gamename)
-{
-
-if (stricmp(gamename, "starwars") == 0)
-   {
-   #if(MACHDEBUG==1)
-   printf("starwars_init_machine\n");
-   #endif
-
-   translate_proms(); /* Convert Mathbox PROM's into useable form */
-   }
-   return 0;
-}
-
 /**********************************************************/
 /**********************************************************/
 /************** Read Handlers *****************************/
@@ -95,6 +75,12 @@ int input_bank_1_r(int offset)
 #if 0
    x=x|(0x40);  /* Set bit 6 to 1 (VGHALT) */
 #endif
+
+/* Kludge to enable Starwars Mathbox Self-test                  */
+/* The mathbox looks like it's running, from this address... :) */
+   if (cpu_getpc() == 0xf978)
+        x|=0x80; 
+
    if (vg_done(cpu_gettotalcycles()))
 	x|=0x40;
    else
@@ -138,39 +124,12 @@ int adc_r(int offset)
    #endif
    return ADC_VAL;
    }
-/********************************************************/
-int main_read_r(int offset)	
-   {
-   #if((MACHDEBUG==1) || (SNDDEBUG==1))
-   printf("main_read_r\n");
-   #endif
-   sw_port_A &= 0xbf;  /* reset flag for sound ready */
-   return sw_mainread;
-   }
-/********************************************************/
-int main_ready_flag_r(int offset)
-   {
-   #if((MACHDEBUG==1) || (SNDDEBUG==1))
-   printf("main_ready_flag_r\n");
-   #endif
-   return sw_port_A; /* only upper two flag bits mapped here */
-   }
-/********************************************************/
 
 
 /************************************************************/
 /************************************************************/
 /************** Write Handlers ******************************/
 
-/********************************************************/
-void main_wr_w(int offset, int data)
-   {
-   #if((MACHDEBUG==1) || (SNDDEBUG==1))
-   printf("main_wr_w\n");
-   #endif
-   sw_mainwrite = data;
-   sw_port_A |= 0x80;   /* set main ready flag */
-   }
 /********************************************************/
 void irqclr(int offset, int data)
    {
@@ -290,18 +249,6 @@ void adcstart2(int offset, int data)
    printf("adcstart2\n");
    #endif
    ADC_VAL=THRUST;
-   }
-/********************************************************/
-void soundrst(int offset, int data)
-   {
-   #if((MACHDEBUG==1) || (SNDDEBUG==1))
-   printf("soundrst\n");
-   #endif
-
-   sw_mainread = 0;
-   sw_mainwrite = 0;
-   sw_port_A &= 0x3f;
-   /* should reset sound CPU here, oh well */
    }
 /********************************************************/
 

@@ -1,5 +1,5 @@
 /***************************************************************************
-Warlords Driver by Lee Taylor and John Clegg 
+Warlords Driver by Lee Taylor and John Clegg
   vidhrdw.c
 
   Functions to emulate the video hardware of the machine.

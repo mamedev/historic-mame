@@ -16,6 +16,8 @@
 
 unsigned char *galaga_starcontrol;
 static unsigned int stars_scroll;
+static int flipscreen;
+
 
 struct star
 {
@@ -154,6 +156,17 @@ int galaga_vh_start(void)
 
 
 
+void galaga_flipscreen_w(int offset,int data)
+{
+	if (flipscreen != (data & 1))
+	{
+		flipscreen = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
+
+
+
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -202,10 +215,17 @@ void galaga_vh_screenrefresh(struct osd_bitmap *bitmap)
 				sy = my + 2;
 			}
 
+			if (flipscreen)
+			{
+				sx = 27 - sx;
+				sy = 35 - sy;
+			}
+
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs],
 					colorram[offs],
-					0,0,8*sx,8*sy,
+					flipscreen,flipscreen,
+					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
@@ -229,6 +249,12 @@ void galaga_vh_screenrefresh(struct osd_bitmap *bitmap)
 			flipy = spriteram_3[offs] & 1;
 			sx = spriteram_2[offs] - 16;
 			sy = spriteram_2[offs + 1] - 40 + 0x100*(spriteram_3[offs + 1] & 1);
+
+			if (flipscreen)
+			{
+				flipx = !flipx;
+				flipy = !flipy;
+			}
 
 			if (spriteram_3[offs] & 8)	/* double width */
 			{
@@ -268,8 +294,7 @@ void galaga_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* draw the stars */
 	{
-		int bpen,speed,s0,s1,s2;
-		int speeds[8] = { 2, 3, 4, 0, -4, -3, -2, 0 };
+		int bpen;
 
 
 		bpen = Machine->pens[0];
@@ -285,13 +310,21 @@ void galaga_vh_screenrefresh(struct osd_bitmap *bitmap)
 					(bitmap->line[y][x] == bpen))
 				bitmap->line[y][x] = stars[offs].col;
 		}
-
-		s0 = galaga_starcontrol[0] & 1;
-		s1 = galaga_starcontrol[1] & 1;
-		s2 = galaga_starcontrol[2] & 1;
-
-		speed = speeds[s0 + s1*2 + s2*4];
-
-		stars_scroll -= speed * (frameskip+1);
 	}
+}
+
+
+
+void galaga_vh_interrupt(void)
+{
+	/* this function is called by galaga_interrupt_1() */
+	int s0,s1,s2;
+	int speeds[8] = { 2, 3, 4, 0, -4, -3, -2, 0 };
+
+
+	s0 = galaga_starcontrol[0] & 1;
+	s1 = galaga_starcontrol[1] & 1;
+	s2 = galaga_starcontrol[2] & 1;
+
+	stars_scroll -= speeds[s0 + s1*2 + s2*4];
 }

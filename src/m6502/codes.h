@@ -24,6 +24,11 @@ case 0x70: if(R->P&V_FLAG) { M_JR; } else R->PC.W++; break; /* BVS * REL */
 /* RTI */
 case 0x40:
   M_POP(R->P);R->P|=R_FLAG;M_POP(R->PC.B.l);M_POP(R->PC.B.h);
+
+/* NS 970904 */
+  if((R->pending_irq!=0)&&(R->P&I_FLAG)==0)	/* NS 970904 */
+    R->AfterCLI=1;
+
   break;
 
 /* RTS */
@@ -60,11 +65,12 @@ case 0x00:
 
 /* CLI */
 case 0x58:
-  if((R->IRequest!=INT_NONE)&&(R->P&I_FLAG))
+/*  if((R->IRequest!=INT_NONE)&&(R->P&I_FLAG))*/
+  if((R->pending_irq!=0)&&(R->P&I_FLAG))	/* NS 970904 */
   {
     R->AfterCLI=1;
-    R->IBackup=R->ICount;
-    R->ICount=1;
+/*    R->IBackup=R->ICount;
+    R->ICount=1;*/ /* NS 970904 */
   }
   R->P&=~I_FLAG;
   break;
@@ -72,11 +78,12 @@ case 0x58:
 /* PLP */
 case 0x28:
   M_POP(I);
-  if((R->IRequest!=INT_NONE)&&((I^R->P)&~I&I_FLAG))
+/*  if((R->IRequest!=INT_NONE)&&((I^R->P)&~I&I_FLAG))*/
+  if((R->pending_irq!=0)&&((I^R->P)&~I&I_FLAG))	/* NS 970904 */
   {
     R->AfterCLI=1;
-    R->IBackup=R->ICount;
-    R->ICount=1;
+/*    R->IBackup=R->ICount;
+    R->ICount=1;*/ /* NS 970904 */
   }
   R->P=I|R_FLAG;
   break;
