@@ -99,6 +99,8 @@ int pengo_vh_start(void)
 	int i;
 
 
+	gfx_bank = 0;
+
 	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
@@ -214,18 +216,8 @@ void pengo_vh_screenrefresh(struct osd_bitmap *bitmap)
 		}
 	}
 
-{
-	struct GfxElement mygfx =
-	{
-		tmpbitmap->width,tmpbitmap->height,
-		tmpbitmap,
-		1,
-		1,0,1
-	};
-
-	/* copy the temporary bitmap to the screen */
-	drawgfx(bitmap,&mygfx,0,0,0,0,0,0,0,TRANSPARENCY_NONE,0);
-}
+	/* copy the character mapped graphics */
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,0,TRANSPARENCY_NONE,0);
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */

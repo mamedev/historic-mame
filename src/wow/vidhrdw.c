@@ -18,7 +18,7 @@
 
 
 unsigned char *wow_videoram;
-int mask,unknown;
+int mask,unknown,collision;
 
 static struct osd_bitmap *tmpbitmap;
 
@@ -59,10 +59,15 @@ void wow_vh_stop(void)
 
 
 
+int wow_collision_r(int offset)
+{
+	return collision;
+}
+
+
+
 void wow_videoram_w(int offset,int data)
 {
-	if (offset < 0 || offset >= 0x4000) return;
-
 	if (wow_videoram[offset] != data)
 	{
 		int i;
@@ -102,12 +107,19 @@ void wow_videoram_w(int offset,int data)
 
 void wow_masked_videoram_w(int offset,int data)
 {
+	if (offset < 0 || offset >= 0x4000) return;
+
 	if ((unknown & 0xf) == 8)
 	{
 		if (mask == 0) data = 0;
 		else if (mask == 4) data &= 0x55;
 		else if (mask == 8) data &= 0xaa;
 	}
+
+	if (unknown & 0x20) data ^= wow_videoram[offset];	/* draw in XOR mode */
+
+	if (wow_videoram[offset]) collision = 1;
+	else collision = 0;
 
 	wow_videoram_w(offset,data);
 }
@@ -256,14 +268,14 @@ if (errorlog) fprintf(errorlog,"%04x: blit src %04x mode %02x skip %d dest %04x 
 			{
 				for (j = 0;j < length;j++)
 				{
-					wow_videoram_w(dest + j,RAM[src+j] ^ wow_videoram[dest + j]);
+					wow_masked_videoram_w(dest + j,RAM[src+j]);
 				}
 				dest += skip + length;
 				src += length;
 			}
 		}
 //		else if (mode == 0x16)	/* copy 1 bitplane backwards */
-		else if (mode == 0x1c || mode == 0x0c)	/* copy 2 bitplanes backwards in XOR mode */
+		else if (mode == 0x0c || mode == 0x1c)	/* copy 2 bitplanes backwards in XOR mode */
 		{
 			for (i = 0; i <= loops;i++)
 			{
@@ -280,7 +292,7 @@ if (errorlog) fprintf(errorlog,"%04x: blit src %04x mode %02x skip %d dest %04x 
 						bits <<= 2;
 					}
 
-					wow_videoram_w(dest - j,stib ^ wow_videoram[dest - j]);
+					wow_masked_videoram_w(dest - j,stib);
 				}
 				dest += skip - length;
 				src += length;
@@ -300,17 +312,6 @@ if (errorlog) fprintf(errorlog,"%04x: blit src %04x mode %02x skip %d dest %04x 
 ***************************************************************************/
 void wow_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	/* copy the temp bitmap to the screen */
-{
-	struct GfxElement mygfx =
-	{
-		tmpbitmap->width,tmpbitmap->height,
-		tmpbitmap,
-		1,
-		1,0,1
-	};
-
-	/* copy the temporary bitmap to the screen */
-	drawgfx(bitmap,&mygfx,0,0,0,0,0,0,&visiblearea,TRANSPARENCY_NONE,0);
-}
+	/* copy the character mapped graphics */
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&visiblearea,TRANSPARENCY_NONE,0);
 }

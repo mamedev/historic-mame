@@ -17,7 +17,7 @@
 #include "common.h"
 #include "osdepend.h"
 
-#ifdef UNIX
+#if defined (UNIX) || defined (__MWERKS__)
 #define uclock_t clock_t
 #define	uclock clock
 #define UCLOCKS_PER_SEC CLOCKS_PER_SEC
@@ -163,8 +163,8 @@ int vh_open(void)
 		memset(Machine->scrbitmap->line[i],Machine->background_pen,Machine->scrbitmap->width);
 
 
-	for (i = 0;i < MAX_GFX_ELEMENTS;i++)
-		Machine->gfx[i++] = 0;
+	for (i = 0;i < MAX_GFX_ELEMENTS;i++) Machine->gfx[i] = 0;
+
 	for (i = 0;i < MAX_GFX_ELEMENTS && drv->gfxdecodeinfo[i].start != -1;i++)
 	{
 		if ((Machine->gfx[i] = decodegfx(RAM + drv->gfxdecodeinfo[i].start,
@@ -506,14 +506,15 @@ int Z80_Interrupt(void)
 
 	if (osd_key_pressed(OSD_KEY_P)) /* pause the game */
 	{
-		struct DisplayText dt[] =
-		{
-			{ "PAUSED", drv->paused_color, drv->paused_x, drv->paused_y },
-			{ 0 }
-		};
+		struct DisplayText dt[2];
 		int key;
 
 
+		dt[0].text = "PAUSED";
+		dt[0].color = drv->paused_color;
+		dt[0].x = drv->paused_x;
+		dt[0].y = drv->paused_y;
+		dt[1].text = 0;
 		displaytext(dt,0);
 
 		while (osd_key_pressed(OSD_KEY_P));	/* wait for key release */

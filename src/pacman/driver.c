@@ -90,24 +90,24 @@ OUT on port $0 sets the interrupt vector
 #include "common.h"
 
 
-int pacman_init_machine(const char *gamename);
-int pacman_interrupt(void);
+extern int pacman_init_machine(const char *gamename);
+extern int pacman_interrupt(void);
 
-unsigned char *pengo_videoram;
-unsigned char *pengo_colorram;
-unsigned char *pengo_spritecode;
-unsigned char *pengo_spritepos;
-unsigned char *pengo_soundregs;
-void pengo_videoram_w(int offset,int data);
-void pengo_colorram_w(int offset,int data);
-void pacman_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-int pengo_vh_start(void);
-void pengo_vh_stop(void);
-void pengo_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern unsigned char *pengo_videoram;
+extern unsigned char *pengo_colorram;
+extern unsigned char *pengo_spritecode;
+extern unsigned char *pengo_spritepos;
+extern unsigned char *pengo_soundregs;
+extern void pengo_videoram_w(int offset,int data);
+extern void pengo_colorram_w(int offset,int data);
+extern void pacman_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+extern int pengo_vh_start(void);
+extern void pengo_vh_stop(void);
+extern void pengo_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-void pengo_sound_enable_w(int offset,int data);
-void pengo_sound_w(int offset,int data);
-void pengo_sh_update(void);
+extern void pengo_sound_enable_w(int offset,int data);
+extern void pengo_sound_w(int offset,int data);
+extern void pengo_sh_update(void);
 
 
 

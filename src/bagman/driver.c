@@ -78,24 +78,24 @@ I/O C  ;AY-3-8910 Data Read Reg.
 
 
 
-int bagman_rand_r(int offset);
+extern int bagman_rand_r(int offset);
 
-unsigned char *bagman_videoram;
-unsigned char *bagman_colorram;
-unsigned char *bagman_spriteram;
-void bagman_videoram_w(int offset,int data);
-void bagman_colorram_w(int offset,int data);
-void bagman_video_enable_w(int offset,int data);
-int bagman_vh_start(void);
-void bagman_vh_stop(void);
-void bagman_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern unsigned char *bagman_videoram;
+extern unsigned char *bagman_colorram;
+extern unsigned char *bagman_spriteram;
+extern void bagman_videoram_w(int offset,int data);
+extern void bagman_colorram_w(int offset,int data);
+extern void bagman_video_enable_w(int offset,int data);
+extern int bagman_vh_start(void);
+extern void bagman_vh_stop(void);
+extern void bagman_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int cclimber_sh_read_port_r(int offset);
-void cclimber_sh_control_port_w(int offset,int data);
-void cclimber_sh_write_port_w(int offset,int data);
-int cclimber_sh_start(void);
-void cclimber_sh_stop(void);
-void cclimber_sh_update(void);
+extern int cclimber_sh_read_port_r(int offset);
+extern void cclimber_sh_control_port_w(int offset,int data);
+extern void cclimber_sh_write_port_w(int offset,int data);
+extern int cclimber_sh_start(void);
+extern void cclimber_sh_stop(void);
+extern void cclimber_sh_update(void);
 
 
 

@@ -239,50 +239,41 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 	}
 
 	/* draw the "big sprite" */
-{
-	struct GfxElement mygfx =
 	{
-		bsbitmap->width,bsbitmap->height,
-		bsbitmap,
-		1,
-		1,0,1
-	};
-	int newcol;
-	static int lastcol;
+		int newcol;
+		static int lastcol;
 
 
-	newcol = cclimber_bigspriteram[1] & 0x07;
+		newcol = cclimber_bigspriteram[1] & 0x07;
 
-	/* first of all, update it. */
-	for (offs = 0;offs < BIGSPRITE_SIZE;offs++)
-	{
-		int sx,sy;
-
-
-		if (bsdirtybuffer[offs] || newcol != lastcol)
+		/* first of all, update it. */
+		for (offs = 0;offs < BIGSPRITE_SIZE;offs++)
 		{
-			bsdirtybuffer[offs] = 0;
+			int sx,sy;
 
-			sx = 8 * (offs % 16);
-			sy = 8 * (offs / 16);
 
-			drawgfx(bsbitmap,Machine->gfx[2],
-					cclimber_bsvideoram[offs],newcol,
-					0,0,sx,sy,
-					0,TRANSPARENCY_NONE,0);
+			if (bsdirtybuffer[offs] || newcol != lastcol)
+			{
+				bsdirtybuffer[offs] = 0;
+
+				sx = 8 * (offs % 16);
+				sy = 8 * (offs / 16);
+
+				drawgfx(bsbitmap,Machine->gfx[2],
+						cclimber_bsvideoram[offs],newcol,
+						0,0,sx,sy,
+						0,TRANSPARENCY_NONE,0);
+			}
+
 		}
 
+		lastcol = newcol;
+
+		copybitmap(bitmap,bsbitmap,
+				cclimber_bigspriteram[1] & 0x10,cclimber_bigspriteram[1] & 0x20,
+				136 - cclimber_bigspriteram[3],128 - cclimber_bigspriteram[2],
+				&visiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
 	}
-
-	lastcol = newcol;
-
-	/* copy the temporary bitmap to the screen */
-	drawgfx(bitmap,&mygfx,
-			0,0,
-			cclimber_bigspriteram[1] & 0x10,cclimber_bigspriteram[1] & 0x20,
-			136 - cclimber_bigspriteram[3],128 - cclimber_bigspriteram[2],
-			&visiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
-}
 
 	/* draw sprites (must be done after the "big sprite" to obtain the correct priority) */
 	for (i = 0;i < 8*4;i+=4)

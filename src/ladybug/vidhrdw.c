@@ -197,18 +197,10 @@ void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap)
 		}
 	}
 
-{
-	struct GfxElement mygfx =
-	{
-		tmpbitmap->width,tmpbitmap->height,
-		tmpbitmap,
-		1,
-		1,0,1
-	};
 
-	/* copy the temporary bitmap to the screen */
-	drawgfx(bitmap,&mygfx,0,0,0,0,0,0,&visiblearea,TRANSPARENCY_NONE,0);
-}
+	/* copy the character mapped graphics */
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&visiblearea,TRANSPARENCY_NONE,0);
+
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */

@@ -16,6 +16,9 @@ OBJS   = obj/mame.o obj/common.o obj/machine.o obj/driver.o obj/osdepend.o \
          obj/dkong/vidhrdw.o obj/dkong/driver.o \
          obj/bagman/machine.o obj/bagman/vidhrdw.o obj/bagman/driver.o \
          obj/wow/vidhrdw.o obj/wow/driver.o \
+         obj/galaxian/driver.o \
+         obj/mooncrst/vidhrdw.o obj/mooncrst/sndhrdw.o obj/mooncrst/driver.o \
+         obj/theend/driver.o \
          obj/Z80/Z80.o
 
 VPATH = src src/z80
@@ -50,4 +53,7 @@ clean:
 	del obj\dkong\*.o
 	del obj\bagman\*.o
 	del obj\wow\*.o
+	del obj\galaxian\*.o
+	del obj\mooncrst\*.o
+	del obj\theend\*.o
 	del mame.exe

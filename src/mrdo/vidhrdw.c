@@ -288,30 +288,18 @@ void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap)
 		}
 	}
 
-{
-	struct GfxElement mygfx =
+
+	/* copy the character mapped graphics */
+	if (scroll_x)
 	{
-		tmpbitmap->width,tmpbitmap->height,
-		tmpbitmap,
-		1,
-		1,0,1
-	};
+		copybitmap(bitmap,tmpbitmap1,0,0,256-scroll_x,0,&visiblearea,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,tmpbitmap1,0,0,-scroll_x,0,&visiblearea,TRANSPARENCY_NONE,0);
 
-if (scroll_x)
-{
-mygfx.gfxdata = tmpbitmap1;
-	drawgfx(bitmap,&mygfx,0,0,0,0,256-scroll_x,0,&visiblearea,TRANSPARENCY_NONE,0);
-	drawgfx(bitmap,&mygfx,0,0,0,0,-scroll_x,0,&visiblearea,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&visiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
+	}
+	else
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&visiblearea,TRANSPARENCY_NONE,0);
 
-mygfx.gfxdata = tmpbitmap2;
-
-	/* copy the temporary bitmap to the screen */
-	drawgfx(bitmap,&mygfx,0,0,0,0,0,0,&visiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
-}
-else
-	/* copy the temporary bitmap to the screen */
-	drawgfx(bitmap,&mygfx,0,0,0,0,0,0,&visiblearea,TRANSPARENCY_NONE,0);
-}
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */

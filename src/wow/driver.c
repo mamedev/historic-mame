@@ -10,6 +10,7 @@ d000-d3ff STATIC RAM
 
 I/O ports:
 IN:
+08        collision detector?
 10        IN0
 11        IN1
 12        IN2
@@ -78,15 +79,16 @@ blitter registers:
 
 
 
-unsigned char *wow_videoram;
-void wow_videoram_w(int offset,int data);
-void wow_masked_videoram_w(int offset,int data);
-void wow_blitter_mask_w(int offset,int data);
-void wow_blitter_unknown_w(int offset,int data);
-void wow_blitter_w(int offset,int data);
-int wow_vh_start(void);
-void wow_vh_stop(void);
-void wow_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern unsigned char *wow_videoram;
+extern int wow_collision_r(int offset);
+extern void wow_videoram_w(int offset,int data);
+extern void wow_masked_videoram_w(int offset,int data);
+extern void wow_blitter_mask_w(int offset,int data);
+extern void wow_blitter_unknown_w(int offset,int data);
+extern void wow_blitter_w(int offset,int data);
+extern int wow_vh_start(void);
+extern void wow_vh_stop(void);
+extern void wow_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
 
@@ -110,8 +112,11 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
+
+
 static struct IOReadPort readport[] =
 {
+	{ 0x08, 0x08, wow_collision_r },
 	{ 0x10, 0x10, input_port_0_r },
 	{ 0x11, 0x11, input_port_1_r },
 	{ 0x12, 0x12, input_port_2_r },
@@ -140,12 +145,12 @@ static struct InputPort input_ports[] =
 	},
 	{	/* IN1 */
 		0xef,
-		{ OSD_KEY_E, OSD_KEY_D, OSD_KEY_S, OSD_KEY_F, 0, OSD_KEY_G, 0, 0 },
+		{ OSD_KEY_E, OSD_KEY_D, OSD_KEY_S, OSD_KEY_F, OSD_KEY_X, OSD_KEY_G, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{	/* IN2 */
 		0xef,
-		{ OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0, OSD_KEY_CONTROL, 0, 0 },
+		{ OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_ALT, OSD_KEY_CONTROL, 0, 0 },
 		{ OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_LEFT, OSD_JOY_RIGHT, 0, OSD_JOY_FIRE, 0, 0 }
 	},
 	{	/* DSW */

@@ -110,29 +110,29 @@ I/O C  ;AY-3-8910 Data Read Reg.
 #include "common.h"
 
 
-unsigned char *cclimber_videoram;
-unsigned char *cclimber_colorram;
-unsigned char *cclimber_bsvideoram;
-unsigned char *cclimber_spriteram;
-unsigned char *cclimber_bigspriteram;
-unsigned char *cclimber_column_scroll;
-void cclimber_videoram_w(int offset,int data);
-void cclimber_colorram_w(int offset,int data);
-void cclimber_bigsprite_videoram_w(int offset,int data);
-void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-int cclimber_vh_start(void);
-void cclimber_vh_stop(void);
-void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern unsigned char *cclimber_videoram;
+extern unsigned char *cclimber_colorram;
+extern unsigned char *cclimber_bsvideoram;
+extern unsigned char *cclimber_spriteram;
+extern unsigned char *cclimber_bigspriteram;
+extern unsigned char *cclimber_column_scroll;
+extern void cclimber_videoram_w(int offset,int data);
+extern void cclimber_colorram_w(int offset,int data);
+extern void cclimber_bigsprite_videoram_w(int offset,int data);
+extern void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+extern int cclimber_vh_start(void);
+extern void cclimber_vh_stop(void);
+extern void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int cclimber_sh_read_port_r(int offset);
-void cclimber_sh_control_port_w(int offset,int data);
-void cclimber_sh_write_port_w(int offset,int data);
-void cclimber_sample_trigger_w(int offset,int data);
-void cclimber_sample_rate_w(int offset,int data);
-void cclimber_sample_volume_w(int offset,int data);
-int cclimber_sh_start(void);
-void cclimber_sh_stop(void);
-void cclimber_sh_update(void);
+extern int cclimber_sh_read_port_r(int offset);
+extern void cclimber_sh_control_port_w(int offset,int data);
+extern void cclimber_sh_write_port_w(int offset,int data);
+extern void cclimber_sample_trigger_w(int offset,int data);
+extern void cclimber_sample_rate_w(int offset,int data);
+extern void cclimber_sample_volume_w(int offset,int data);
+extern int cclimber_sh_start(void);
+extern void cclimber_sh_stop(void);
+extern void cclimber_sh_update(void);
 
 
 

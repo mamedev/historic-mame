@@ -57,27 +57,27 @@ Notable differences are: (thanks to Ville Laitinen)
 #include "common.h"
 
 
-unsigned char *ckong_videoram;
-unsigned char *ckong_colorram;
-unsigned char *ckong_bsvideoram;
-unsigned char *ckong_spriteram;
-unsigned char *ckong_bigspriteram;
-void ckong_videoram_w(int offset,int data);
-void ckong_colorram_w(int offset,int data);
-void ckong_bigsprite_videoram_w(int offset,int data);
-int ckong_vh_start(void);
-void ckong_vh_stop(void);
-void ckong_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern unsigned char *ckong_videoram;
+extern unsigned char *ckong_colorram;
+extern unsigned char *ckong_bsvideoram;
+extern unsigned char *ckong_spriteram;
+extern unsigned char *ckong_bigspriteram;
+extern void ckong_videoram_w(int offset,int data);
+extern void ckong_colorram_w(int offset,int data);
+extern void ckong_bigsprite_videoram_w(int offset,int data);
+extern int ckong_vh_start(void);
+extern void ckong_vh_stop(void);
+extern void ckong_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int cclimber_sh_read_port_r(int offset);
-void cclimber_sh_control_port_w(int offset,int data);
-void cclimber_sh_write_port_w(int offset,int data);
-void cclimber_sample_trigger_w(int offset,int data);
-void cclimber_sample_rate_w(int offset,int data);
-void cclimber_sample_volume_w(int offset,int data);
-int cclimber_sh_start(void);
-void cclimber_sh_stop(void);
-void cclimber_sh_update(void);
+extern int cclimber_sh_read_port_r(int offset);
+extern void cclimber_sh_control_port_w(int offset,int data);
+extern void cclimber_sh_write_port_w(int offset,int data);
+extern void cclimber_sample_trigger_w(int offset,int data);
+extern void cclimber_sample_rate_w(int offset,int data);
+extern void cclimber_sample_volume_w(int offset,int data);
+extern int cclimber_sh_start(void);
+extern void cclimber_sh_stop(void);
+extern void cclimber_sh_update(void);
 
 
 

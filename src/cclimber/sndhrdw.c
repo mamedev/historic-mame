@@ -12,7 +12,7 @@
 
 
 #define UPDATES_PER_SECOND 60
-#define emulation_rate (800*UPDATES_PER_SECOND)
+#define emulation_rate (400*UPDATES_PER_SECOND)
 #define buffer_len (emulation_rate/UPDATES_PER_SECOND)
 
 

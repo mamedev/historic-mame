@@ -47,7 +47,7 @@ void Z80_WRMEM(dword A,byte V);
 /****************************************************************************/
 /*#define Z80_RDOP(A)		Z80_RDMEM(A)*/
 extern byte RAM[];
-unsigned (*opcode_decode)(dword A);
+extern unsigned (*opcode_decode)(dword A);
 #define Z80_RDOP(A) (opcode_decode ? (*opcode_decode)(A) : RAM[A])
 
 /****************************************************************************/

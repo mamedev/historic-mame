@@ -9,8 +9,15 @@ extern struct MachineDriver mrdo_driver;
 extern struct MachineDriver cclimber_driver;
 extern struct MachineDriver ckong_driver;
 extern struct MachineDriver dkong_driver;
+extern struct MachineDriver dkongjr_driver;
 extern struct MachineDriver bagman_driver;
 extern struct MachineDriver wow_driver;
+extern struct MachineDriver galaxian_driver;
+extern struct MachineDriver pisces_driver;
+extern struct MachineDriver japirem_driver;
+extern struct MachineDriver warofbug_driver;
+extern struct MachineDriver mooncrst_driver;
+extern struct MachineDriver theend_driver;
 
 
 static struct RomModule pacman_rom[] =
@@ -23,7 +30,7 @@ static struct RomModule pacman_rom[] =
 	/* gfx */
 	{ "%s.5e", 0x10000, 0x1000 },
 	{ "%s.5f", 0x11000, 0x1000 },
-	{ 0 }	/* end of table */
+	{ 0, 0, 0 }	/* end of table */
 };
 
 
@@ -38,7 +45,7 @@ static struct RomModule pacmod_rom[] =
 	/* gfx */
 	{ "5e",        0x10000, 0x1000 },
 	{ "5f",        0x11000, 0x1000 },
-	{ 0 }	/* end of table */
+	{ 0, 0, 0 }	/* end of table */
 };
 
 
@@ -55,7 +62,7 @@ static struct RomModule piranha_rom[] =
 	{ "pr7.cpu", 0x10800, 0x0800 },
 	{ "pr6.cpu", 0x11000, 0x0800 },
 	{ "pr8.cpu", 0x11800, 0x0800 },
-	{ 0 }	/* end of table */
+	{ 0, 0, 0 }	/* end of table */
 };
 
 
@@ -72,7 +79,7 @@ static struct RomModule mspacman_rom[] =
 	/* gfx */
 	{ "5e",    0x10000, 0x1000 },
 	{ "5f",    0x11000, 0x1000 },
-	{ 0 }	/* end of table */
+	{ 0, 0, 0 }	/* end of table */
 };
 
 
@@ -93,7 +100,7 @@ static struct RomModule crush_rom[] =
 	{ "CRC", 0x10800, 0x0800 },
 	{ "CRB", 0x11000, 0x0800 },
 	{ "CRD", 0x11800, 0x0800 },
-	{ 0 }	/* end of table */
+	{ 0, 0, 0 }	/* end of table */
 };
 
 
@@ -112,7 +119,7 @@ static struct RomModule pengo_rom[] =
 	/* gfx */
 	{ "pengopop.u92", 0x10000, 0x2000 },
 	{ "pengopop.105", 0x12000, 0x2000 },
-	{ 0 }	/* end of table */
+	{ 0, 0, 0 }	/* end of table */
 };
 
 
@@ -131,7 +138,7 @@ static struct RomModule penta_rom[] =
 	/* gfx */
 	{ "penta.u92", 0x10000, 0x2000 },
 	{ "penta.105", 0x12000, 0x2000 },
-	{ 0 }	/* end of table */
+	{ 0, 0, 0 }	/* end of table */
 };
 
 
@@ -150,7 +157,7 @@ static struct RomModule ladybug_rom[] =
 	{ "lb10.vid", 0x11000, 0x1000 },
 	{ "lb8.cpu",  0x12000, 0x1000 },
 	{ "lb7.cpu",  0x13000, 0x1000 },
-	{ 0 }	/* end of table */
+	{ 0, 0, 0 }	/* end of table */
 };
 
 
@@ -169,7 +176,7 @@ static struct RomModule mrdo_rom[] =
 	{ "D7", 0x13000, 0x1000 },
 	{ "D5", 0x14000, 0x1000 },
 	{ "D6", 0x15000, 0x1000 },
-	{ 0 }	/* end of table */
+	{ 0, 0, 0 }	/* end of table */
 };
 
 
@@ -188,7 +195,7 @@ static struct RomModule mrlo_rom[] =
 	{ "n8-07.bin", 0x13000, 0x1000 },
 	{ "h5-05.bin", 0x14000, 0x1000 },
 	{ "k5-06.bin", 0x15000, 0x1000 },
-	{ 0 }	/* end of table */
+	{ 0, 0, 0 }	/* end of table */
 };
 
 
@@ -211,7 +218,7 @@ static struct RomModule cclimber_rom[] =
 	/* samples */
 	{ "cc13", 0x18000, 0x1000 },
 	{ "cc12", 0x19000, 0x1000 },
-	{ 0 }	/* end of table */
+	{ 0, 0, 0 }	/* end of table */
 };
 
 
@@ -282,7 +289,7 @@ static struct RomModule ccboot_rom[] =
 	/* samples */
 	{ "m13.bin", 0x18000, 0x1000 },
 	{ "m12.bin", 0x19000, 0x1000 },
-	{ 0 }	/* end of table */
+	{ 0, 0, 0 }	/* end of table */
 };
 
 
@@ -354,7 +361,7 @@ static struct RomModule ckong_rom[] =
 	/* samples */
 	{ "14.dat", 0x18000, 0x1000 },
 	{ "13.dat", 0x19000, 0x1000 },
-	{ 0 }	/* end of table */
+	{ 0, 0, 0 }	/* end of table */
 };
 
 
@@ -374,9 +381,36 @@ static struct RomModule dkong_rom[] =
 	{ "dk.7e",  0x12000, 0x0800 },
 	{ "dk.7f",  0x12800, 0x0800 },
 	/* samples? */
-	{ "dk.3f",  0x18000, 0x0800 },
-	{ "dk.3h",  0x18800, 0x0800 },
-	{ 0 }	/* end of table */
+	{ "dk.3h",  0x18000, 0x0800 },
+	{ "dk.3f",  0x18800, 0x0800 },
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+static struct RomModule dkongjr_rom[] =
+{
+	/* code */
+	{ "dkj.5b",  0x00000, 0x1000 },
+	{ 0,         0x03000, 0x1000 },
+	{ "dkj.5c",  0x02000, 0x0800 },
+	{ 0,         0x04800, 0x0800 },
+	{ 0,         0x01000, 0x0800 },
+	{ 0,         0x05800, 0x0800 },
+	{ "dkj.5e",  0x04000, 0x0800 },
+	{ 0,         0x02800, 0x0800 },
+	{ 0,         0x05000, 0x0800 },
+	{ 0,         0x01800, 0x0800 },
+	/* gfx */
+	{ "dkj.3n",  0x10000, 0x1000 },
+	{ "dkj.3p",  0x11000, 0x1000 },
+	{ "dkj.7c",  0x12000, 0x0800 },
+	{ "dkj.7d",  0x12800, 0x0800 },
+	{ "dkj.7e",  0x13000, 0x0800 },
+	{ "dkj.7f",  0x13800, 0x0800 },
+	/* samples? */
+	{ "dkj.3h",  0x18000, 0x0800 },
+	{ 0, 0, 0 }	/* end of table */
 };
 
 
@@ -384,21 +418,21 @@ static struct RomModule dkong_rom[] =
 static struct RomModule bagman_rom[] =
 {
 	/* code */
-	{ "a4_9e.bin", 0x00000, 0x1000},
-	{ "a4_9f.bin", 0x01000, 0x1000},
-	{ "a4_9j.bin", 0x02000, 0x1000},
-	{ "a4_9k.bin", 0x03000, 0x1000},
-	{ "a4_9m.bin", 0x04000, 0x1000},
-	{ "a4_9n.bin", 0x05000, 0x1000},
+	{ "a4_9e.bin", 0x00000, 0x1000 },
+	{ "a4_9f.bin", 0x01000, 0x1000 },
+	{ "a4_9j.bin", 0x02000, 0x1000 },
+	{ "a4_9k.bin", 0x03000, 0x1000 },
+	{ "a4_9m.bin", 0x04000, 0x1000 },
+	{ "a4_9n.bin", 0x05000, 0x1000 },
 	/* gfx */
-	{ "a2_1e.bin", 0x10000, 0x1000},
-	{ "a2_1j.bin", 0x11000, 0x1000},
-	{ "a2_1c.bin", 0x12000, 0x1000},
-	{ "a2_1f.bin", 0x13000, 0x1000},
+	{ "a2_1e.bin", 0x10000, 0x1000 },
+	{ "a2_1j.bin", 0x11000, 0x1000 },
+	{ "a2_1c.bin", 0x12000, 0x1000 },
+	{ "a2_1f.bin", 0x13000, 0x1000 },
 	/* ??? */
-	{ "a1_9r.bin", 0x18000, 0x1000},
-	{ "a1_9t.bin", 0x19000, 0x1000},
-	{ 0 }	/* end of table */
+	{ "a1_9r.bin", 0x18000, 0x1000 },
+	{ "a1_9t.bin", 0x19000, 0x1000 },
+	{ 0, 0, 0 }	/* end of table */
 };
 
 
@@ -406,15 +440,199 @@ static struct RomModule bagman_rom[] =
 static struct RomModule wow_rom[] =
 {
 	/* code */
-	{ "wow.x1", 0x00000, 0x1000},
-	{ "wow.x2", 0x01000, 0x1000},
-	{ "wow.x3", 0x02000, 0x1000},
-	{ "wow.x4", 0x03000, 0x1000},
-	{ "wow.x5", 0x08000, 0x1000},
-	{ "wow.x6", 0x09000, 0x1000},
-	{ "wow.x7", 0x0a000, 0x1000},
-	{ 0,        0x0c000, 0x1000},	/* here would go the foreign language ROM */
-	{ 0 }	/* end of table */
+	{ "wow.x1", 0x00000, 0x1000 },
+	{ "wow.x2", 0x01000, 0x1000 },
+	{ "wow.x3", 0x02000, 0x1000 },
+	{ "wow.x4", 0x03000, 0x1000 },
+	{ "wow.x5", 0x08000, 0x1000 },
+	{ "wow.x6", 0x09000, 0x1000 },
+	{ "wow.x7", 0x0a000, 0x1000 },
+/*	{ "wow.x8", 0x0c000, 0x1000 },	here would go the foreign language ROM */
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+static struct RomModule robby_rom[] =
+{
+	/* code */
+	{ "robbya", 0x00000, 0x1000 },
+	{ "robbyb", 0x01000, 0x1000 },
+	{ "robbyc", 0x02000, 0x1000 },
+	{ "robbyd", 0x03000, 0x1000 },
+	{ "robbye", 0x08000, 0x1000 },
+	{ "robbyf", 0x09000, 0x1000 },
+	{ "robbyg", 0x0a000, 0x1000 },
+	{ "robbyh", 0x0b000, 0x1000 },
+	{ "robbyi", 0x0c000, 0x1000 },
+	{ "robbyj", 0x0d000, 0x1000 },
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+static struct RomModule gorf_rom[] =
+{
+	/* code */
+	{ "gorf.x01", 0x00000, 0x1000 },
+	{ "gorf.x03", 0x01000, 0x1000 },
+	{ "gorf.x05", 0x02000, 0x1000 },
+	{ "gorf.x07", 0x03000, 0x1000 },
+	{ "gorf.x11", 0x08000, 0x1000 },
+	{ "gorf.x13", 0x09000, 0x1000 },
+	{ "gorf.x15", 0x0a000, 0x1000 },
+	{ "gorf.x17", 0x0c000, 0x1000 },
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+static struct RomModule galaxian_rom[] =
+{
+	/* code */
+	{ "%s.u",  0x00000, 0x0800 },
+	{ "%s.v",  0x00800, 0x0800 },
+	{ "%s.w",  0x01000, 0x0800 },
+	{ "%s.y",  0x01800, 0x0800 },
+	{ "%s.z",  0x02000, 0x0800 },
+	/* gfx */
+	{ "%s.1j", 0x10000, 0x0800 },
+	{ "%s.1k", 0x10800, 0x0800 },
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+static struct RomModule galnamco_rom[] =
+{
+	/* code */
+	{ "galaxian.u",  0x00000, 0x0800 },
+	{ "galaxian.v",  0x00800, 0x0800 },
+	{ "galaxian.w",  0x01000, 0x0800 },
+	{ "galaxian.y",  0x01800, 0x0800 },
+	{ "galaxian.z",  0x02000, 0x0800 },
+	/* gfx */
+	{ "galaxian.1h", 0x10000, 0x0800 },
+	{ "galaxian.1k", 0x10800, 0x0800 },
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+static struct RomModule galapx_rom[] =
+{
+	/* code */
+	{ "galx.u",  0x00000, 0x0800 },
+	{ "galx.v",  0x00800, 0x0800 },
+	{ "galx.w",  0x01000, 0x0800 },
+	{ "galx.y",  0x01800, 0x0800 },
+	{ "galx.z",  0x02000, 0x0800 },
+	/* gfx */
+	{ "galx.1h", 0x10000, 0x0800 },
+	{ "galx.1k", 0x10800, 0x0800 },
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+static struct RomModule galap1_rom[] =
+{
+	/* code */
+	{ "galx_1.rom",   0x00000, 0x2800 },
+	/* gfx */
+	{ "galx_1c1.rom", 0x10000, 0x0800 },
+	{ "galx_1c2.rom", 0x10800, 0x0800 },
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+static struct RomModule galap4_rom[] =
+{
+	/* code */
+	{ "galx_4.rom",   0x00000, 0x2800 },
+	/* gfx */
+	{ "galx_4c1.rom", 0x10000, 0x0800 },
+	{ "galx_4c2.rom", 0x10800, 0x0800 },
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+static struct RomModule pisces_rom[] =
+{
+	/* code */
+	{ "pisces.a1", 0x00000, 0x0800 },
+	{ "pisces.a2", 0x00800, 0x0800 },
+	{ "pisces.b2", 0x01000, 0x0800 },
+	{ "pisces.c1", 0x01800, 0x0800 },
+	{ "pisces.d1", 0x02000, 0x0800 },
+	{ "pisces.e2", 0x02800, 0x0800 },
+	/* gfx */
+	{ "pisces.1j", 0x10000, 0x1000 },
+	{ "pisces.1k", 0x11000, 0x1000 },
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+static struct RomModule japirem_rom[] =
+{
+	/* code */
+	{ "f07_1a.bin",  0x00000, 0x0800 },
+	{ "h07_2a.bin",  0x00800, 0x0800 },
+	{ "k07_3a.bin",  0x01000, 0x0800 },
+	{ "m07_4a.bin",  0x01800, 0x0800 },
+	{ "d08p_5a.bin", 0x02000, 0x0800 },
+	{ "e08p_6a.bin", 0x02800, 0x0800 },
+	{ "m08p_7a.bin", 0x03000, 0x0800 },
+	{ "n08p_8a.bin", 0x03800, 0x0800 },
+	/* gfx */
+	{ "k01_1.bin",   0x10000, 0x0800 },
+	{ "k01_2.bin",   0x10800, 0x0800 },
+	{ "h01_1.bin",   0x11000, 0x0800 },
+	{ "h01_2.bin",   0x11800, 0x0800 },
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+static struct RomModule mooncrst_rom[] =
+{
+	/* code */
+	{ "EPR194", 0x00000, 0x0800 },
+	{ "EPR195", 0x00800, 0x0800 },
+	{ "EPR196", 0x01000, 0x0800 },
+	{ "EPR197", 0x01800, 0x0800 },
+	{ "EPR198", 0x02000, 0x0800 },
+	{ "EPR199", 0x02800, 0x0800 },
+	{ "EPR200", 0x03000, 0x0800 },
+	{ "EPR201", 0x03800, 0x0800 },
+	/* gfx */
+	{ "EPR202", 0x10000, 0x0800 },
+	{ "EPR171", 0x10800, 0x0800 },
+	{ "EPR203", 0x11000, 0x0800 },
+	{ "EPR172", 0x11800, 0x0800 },
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+static struct RomModule theend_rom[] =
+{
+	/* code */
+	{ "IC13", 0x00000, 0x0800 },
+	{ "IC14", 0x00800, 0x0800 },
+	{ "IC15", 0x01000, 0x0800 },
+	{ "IC16", 0x01800, 0x0800 },
+	{ "IC17", 0x02000, 0x0800 },
+	{ "IC18", 0x02800, 0x0800 },
+	{ "IC56", 0x03000, 0x0800 },
+	{ "IC55", 0x03800, 0x0800 },
+	/* gfx */
+	{ "IC30", 0x10000, 0x0800 },
+	{ "IC31", 0x10800, 0x0800 },
+	{ 0, 0, 0 }	/* end of table */
 };
 
 
@@ -438,7 +656,22 @@ struct GameDriver drivers[] =
 	{ "ccboot",   ccboot_rom,   ccboot_decode,   &cclimber_driver },
 	{ "ckong",    ckong_rom,    0,               &ckong_driver },
 	{ "dkong",    dkong_rom,    0,               &dkong_driver },
+	{ "dkongjr",  dkongjr_rom,  0,               &dkongjr_driver },
 	{ "bagman",   bagman_rom,   0,               &bagman_driver },
 	{ "wow",      wow_rom,      0,               &wow_driver },
+	{ "robby",    robby_rom,    0,               &wow_driver },
+	{ "gorf",     gorf_rom,     0,               &wow_driver },
+	{ "galaxian", galaxian_rom, 0,               &galaxian_driver },
+	{ "galnamco", galnamco_rom, 0,               &galaxian_driver },
+	{ "superg",   galnamco_rom, 0,               &galaxian_driver },
+	{ "galapx",   galapx_rom,   0,               &galaxian_driver },
+	{ "galap1",   galap1_rom,   0,               &galaxian_driver },
+	{ "galap4",   galap4_rom,   0,               &galaxian_driver },
+	{ "galturbo", galnamco_rom, 0,               &galaxian_driver },
+	{ "pisces",   pisces_rom,   0,               &pisces_driver },
+	{ "japirem",  japirem_rom,  0,               &japirem_driver },
+	{ "warofbug", galaxian_rom, 0,               &warofbug_driver },
+	{ "mooncrst", mooncrst_rom, 0,               &mooncrst_driver },
+	{ "theend",   theend_rom,   0,               &theend_driver },
 	{ 0	}	/* end of array */
 };

@@ -186,46 +186,38 @@ void ckong_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* draw the "big sprite" */
-{
-	struct GfxElement mygfx =
 	{
-		bsbitmap->width,bsbitmap->height,
-		bsbitmap,
-		1,
-		1,0,1
-	};
-	int newcol;
-	static int lastcol;
+		int newcol;
+		static int lastcol;
 
 
-	newcol = ckong_bigspriteram[1] & 0x07;
+		newcol = ckong_bigspriteram[1] & 0x07;
 
-	/* first of all, update it. */
-	for (offs = 0;offs < BIGSPRITE_SIZE;offs++)
-	{
-		int sx,sy;
-
-		if (bsdirtybuffer[offs] || newcol != lastcol)
+		/* first of all, update it. */
+		for (offs = 0;offs < BIGSPRITE_SIZE;offs++)
 		{
-			bsdirtybuffer[offs] = 0;
+			int sx,sy;
 
-			sx = 8 * (15 - offs / 16);
-			sy = 8 * (offs % 16);
+			if (bsdirtybuffer[offs] || newcol != lastcol)
+			{
+				bsdirtybuffer[offs] = 0;
 
-			drawgfx(bsbitmap,Machine->gfx[2],
-					ckong_bsvideoram[offs],newcol,
-					0,0,sx,sy,
-					0,TRANSPARENCY_NONE,0);
+				sx = 8 * (15 - offs / 16);
+				sy = 8 * (offs % 16);
+
+				drawgfx(bsbitmap,Machine->gfx[2],
+						ckong_bsvideoram[offs],newcol,
+						0,0,sx,sy,
+						0,TRANSPARENCY_NONE,0);
+			}
 		}
+
+		lastcol = newcol;
+
+		/* copy the temporary bitmap to the screen */
+		copybitmap(bitmap,bsbitmap,
+				ckong_bigspriteram[1] & 0x20,!(ckong_bigspriteram[1] & 0x10),
+				ckong_bigspriteram[2],ckong_bigspriteram[3] - 8,
+				&visiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
 	}
-
-	lastcol = newcol;
-
-	/* copy the temporary bitmap to the screen */
-	drawgfx(bitmap,&mygfx,
-			0,0,
-			ckong_bigspriteram[1] & 0x20,!(ckong_bigspriteram[1] & 0x10),
-			ckong_bigspriteram[2],ckong_bigspriteram[3] - 8,
-			&visiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
-}
 }

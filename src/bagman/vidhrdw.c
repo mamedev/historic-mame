@@ -141,19 +141,10 @@ void bagman_vh_screenrefresh(struct osd_bitmap *bitmap)
 		}
 	}
 
-	/* copy the character mapped graphics */
-{
-	struct GfxElement mygfx =
-	{
-		tmpbitmap->width,tmpbitmap->height,
-		tmpbitmap,
-		1,
-		1,0,1
-	};
 
-	/* copy the temporary bitmap to the screen */
-	drawgfx(bitmap,&mygfx,0,0,0,0,0,0,&visiblearea,TRANSPARENCY_NONE,0);
-}
+	/* copy the character mapped graphics */
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&visiblearea,TRANSPARENCY_NONE,0);
+
 
 	/* Draw the sprites. */
 	for (i = 4*7;i >= 0;i -= 4)

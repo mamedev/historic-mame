@@ -9,19 +9,27 @@
 Here is a quick list of ther currently supported games; read on for details.
 
 
-Game                     Playable?   Accurate colors?    Sound?
+Game                         Playable?   Accurate colors?    Sound?
 
-Pac Man                    Yes            Yes             Yes
-Ms Pac Man (bootleg)       Yes            Yes             Yes
-Crush Roller               Yes            No              Yes
-Pengo                      Yes            Yes             Yes
-Lady Bug                   Yes            Yes            Partial
-Mr. Do!                    Yes            Yes             Yes
-Crazy Climber              Yes            Yes             Yes
-Crazy Kong                 Yes            No              Yes
-Donkey Kong                Yes            No              No
-Bagman                Yes (slowdowns)     No           Music only
-Wizard of Wor              No            Maybe            No
+Pac Man                        Yes            Yes             Yes
+Ms Pac Man (bootleg)           Yes            Yes             Yes
+Crush Roller                   Yes             No             Yes
+Pengo                          Yes            Yes             Yes
+Lady Bug                       Yes            Yes           No noise
+Mr. Do!                        Yes            Yes             Yes
+Crazy Climber                  Yes            Yes             Yes
+Crazy Kong                     Yes             No             Yes
+Donkey Kong                    Yes             No              No
+Donkey Kong Jr.                Yes             No              No
+Bagman                    Yes (slowdowns)      No          Music only
+Wizard of Wor               Partially        Maybe             No
+The Adventures of Robby Roto         not implemented yet
+Galaxians                      Yes            Yes           Limited
+Pisces                         Yes            Yes           Limited
+"Japanese Irem game"           Yes            Yes           Limited
+War of the Bugs                Yes             No           Limited
+Moon Cresta                    Yes             No           Limited
+The End                        Yes             No              No
 
 
 
@@ -44,7 +52,7 @@ Video modes created using Tweak 1.6b by Robert Schmidt, who also wrote
    TwkUser.c. Thanks to Chuck Cochems for the help in making them more
    compatible.
 AY-3-8910 emulation by Ville Hallik (ville@physic.ut.ee) and Michael Cuddy
-  (mcuddy@FensEnde.com), modified by Andy Milne (andy@canetics.com).
+  (mcuddy@FensEnde.com).
 
 Very special thanks to Sergio Munoz for the precious information about the
    Pengo sound hardware and colors.
@@ -56,8 +64,11 @@ Information about the Crazy Climber machine hardware (including palette) and
 Thanks to Andy Milne (andy@canetics.com) for the information on the Crazy
    Climber sound roms.
 Crazy Kong emulation set up by Ville Laitinen (ville@sms.fi).
-Some information on Donkey Kong gathered from MageX by Edward Massey
-Some info on Bagman taken from Arcade Emulator by Robert Anschuetz
+Special thanks to Brad Thomas (bradt@nol.net) and Gary Shepherdson for the
+   extensive information on Donkey Kong and Donkey Kong Jr.
+Info on Bagman, Galaxians, Moon Cresta and many other games taken from Arcade
+   Emulator by Robert Anschuetz.
+Thanks to Dave W. for all his help.
 
 
 
@@ -243,6 +254,17 @@ Known issues:
 
 
 
+Donkey Kong Jr. ("dkongjr")
+---------------------------
+
+Arrows  Move around
+CTRL    Jump
+
+Known issues:
+- I can't find the color RAM!
+
+
+
 Bagman ("bagman")
 -----------------
 
@@ -261,6 +283,11 @@ Wizard of Wor ("wow")
 Arrows  Move around
 CTRL    Fire
 F2      Test mode (keep it pressed)
+The original machine had a special joystick which could be moved either
+partially or fully in a direction. Pushing it slightly would turn around the
+player without moking it move. The emulator assumes that you are always
+pushing the joystick fully, to simulate the "half press" you can press Alt.
+
 
 Known issues:
 - This game is completely different from anything else I have emulated before.
@@ -269,4 +296,109 @@ Known issues:
   to some custom circuitry on the board to do copies, fills, and so on.
   Understanding how the thing works without the schematics is tricky. There
   are no memory mapped ports, everything is done via IN and OUT instructions.
-  As of now, it is not playable because bullets don't work correctly.
+  As of now, it is somewhat playable but there are several faults.
+
+
+
+The Adventures of Robby Roto ("robby")
+--------------------------------------
+
+This game runs on the same hardware as Wizard of Wor, but doesn't work yet. I
+still haven to check the loading address of the ROMs.
+
+
+
+Galaxians ("galaxian")
+----------------------
+
+Arrows  Move around
+CTRL    Fire
+F2      Test mode
+
+There are so many clones here that I'm not even sure which is the "original"
+one. The dip switch menu might display wrong settings.
+  Namco Galaxians ("galnamco")
+  Super Galaxians ("superg")
+  Galaxians Part X ("galapx")
+  Galaxians Part 1 ("galap1")
+  Galaxians Part 4 ("galap4")
+  Galaxians Turbo ("galturbo")
+
+Knowns issues:
+- Only one sound channel is emulated, and I'm not sure it's correct
+- No star background
+- What does dip switch 6 do?
+
+
+
+Pisces ("pisces")
+-----------------
+
+This runs on a modified Galaxians board.
+
+Arrows  Move around
+CTRL    Fire
+
+Knowns issues:
+- Only one sound channel is emulated, and I'm not sure it's correct
+- No star background
+- What do the dip switches do?
+
+
+
+"Japanese Irem game" ("japirem")
+--------------------------------
+
+This runs on a modified Galaxians board.
+
+Arrows  Move around
+CTRL    Fire
+
+Knowns issues:
+- Only one sound channel is emulated, and I'm not sure it's correct
+- No star background
+- What does dip switch 6 do?
+
+
+
+War of the Bugs ("warofbug")
+----------------------------
+
+This runs on the same hardware as Galaxians.
+
+Arrows  Move around
+CTRL    Fire
+
+Knowns issues:
+- Only one sound channel is emulated, and I'm not sure it's correct
+- No star background (is it used?)
+- What do the dip switches do?
+
+
+
+Moon Cresta ("mooncrst")
+------------------------
+
+This runs on a hardware very similar to Galaxians.
+
+Arrows  Move around
+CTRL    Fire
+
+Knowns issues:
+- Only one sound channel is emulated, and I'm not sure it's correct
+- No star background
+- What do the dip switches do?
+
+
+
+The End ("theend")
+------------------
+
+This runs on a hardware very similar to Galaxians.
+
+Arrows  Move around
+CTRL    Fire
+
+Knowns issues:
+- I haven't yet had time to check what the various input bits and dip switches
+  do. Two players are not supported.

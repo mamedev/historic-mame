@@ -41,7 +41,7 @@ int readroms(unsigned char *dest,const struct RomModule *romp,const char *basena
 	char name[100];
 
 
-	while (romp->name)
+	while (romp->size)
 	{
 		sprintf(buf,romp->name,basename);
 		sprintf(name,"%s/%s",basename,buf);
@@ -51,15 +51,19 @@ int readroms(unsigned char *dest,const struct RomModule *romp,const char *basena
 			printf("Unable to open file %s\n",name);
 			return 1;
 		}
-		if (fread(dest + romp->offset,1,romp->size,f) != romp->size)
+		do
 		{
-			printf("Unable to read file %s\n",name);
-			fclose(f);
-			return 1;
-		}
-		fclose(f);
+			if (fread(dest + romp->offset,1,romp->size,f) != romp->size)
+			{
+				printf("Unable to read file %s\n",name);
+				fclose(f);
+				return 1;
+			}
 
-		romp++;
+			romp++;
+		} while (romp->size && romp->name == 0);
+
+		fclose(f);
 	}
 
 	return 0;
@@ -216,6 +220,8 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	unsigned char *bm;
 	int col;
 
+
+	if (!gfx) return;
 
 	/* check bounds */
 	ox = sx;
@@ -609,6 +615,29 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 
 
 
+/***************************************************************************
+
+  Use drawgfx() to copy a bitmap onto another at the given position.
+  This function will very likely change in the future.
+
+***************************************************************************/
+void copybitmap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int flipy,int sx,int sy,
+		struct rectangle *clip,int transparency,int transparent_color)
+{
+	static struct GfxElement mygfx =
+	{
+		0,0,0,	/* filled in later */
+		1,1,0,1
+	};
+
+	mygfx.width = src->width;
+	mygfx.height = src->height;
+	mygfx.gfxdata = src;
+	drawgfx(dest,&mygfx,0,0,flipx,flipy,sx,sy,clip,transparency,transparent_color);
+}
+
+
+
 void setdipswitches(void)
 {
 	struct DisplayText dt[40];
@@ -744,7 +773,7 @@ void displaytext(const struct DisplayText *dt,int erase)
 	while (dt->text)
 	{
 		int x;
-		const unsigned char *c;
+		const char *c;
 
 
 		x = dt->x;

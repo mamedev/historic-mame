@@ -15,9 +15,9 @@
 
 struct RomModule
 {
-	const char *name;	/* name of the file to load */
+	const char *name;	/* name of the file to load. If 0, continue reading the previous one. */
 	int offset;			/* offset to load it to */
-	int size;			/* length of the file */
+	int size;			/* length of the file. 0 marks the end of the array */
 };
 
 
@@ -60,7 +60,7 @@ struct rectangle
 
 struct DisplayText
 {
-	const unsigned char *text;	/* 0 marks the end of the array */
+	const char *text;	/* 0 marks the end of the array */
 	int color;
 	int x;
 	int y;
@@ -75,6 +75,8 @@ struct GfxElement *decodegfx(const unsigned char *src,const struct GfxLayout *gl
 void freegfx(struct GfxElement *gfx);
 void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
+		struct rectangle *clip,int transparency,int transparent_color);
+void copybitmap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int flipy,int sx,int sy,
 		struct rectangle *clip,int transparency,int transparent_color);
 void setdipswitches(void);
 void displaytext(const struct DisplayText *dt,int erase);

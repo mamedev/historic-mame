@@ -25,6 +25,7 @@ unsigned char *dkong_colorram;
 unsigned char *dkong_spriteram;
 static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
 											/* to speed up video refresh */
+static int gfx_bank;
 
 static struct osd_bitmap *tmpbitmap;
 
@@ -41,6 +42,8 @@ int dkong_vh_start(void)
 {
 	int i;
 
+
+	gfx_bank = 0;
 
 	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
@@ -89,6 +92,13 @@ void dkong_colorram_w(int offset,int data)
 
 
 
+void dkongjr_gfxbank_w(int offset,int data)
+{
+	gfx_bank = data;
+}
+
+
+
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -116,7 +126,7 @@ void dkong_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sy = 8 * (offs % 32);
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					dkong_videoram[offs],
+					dkong_videoram[offs] + 256 * gfx_bank,
 0,//					dkong_colorram[offs],
 					0,0,
 					sx,sy,
@@ -124,22 +134,13 @@ void dkong_vh_screenrefresh(struct osd_bitmap *bitmap)
 		}
 	}
 
-	/* copy the character mapped graphics */
-{
-	struct GfxElement mygfx =
-	{
-		tmpbitmap->width,tmpbitmap->height,
-		tmpbitmap,
-		1,
-		1,0,1
-	};
 
-	/* copy the temporary bitmap to the screen */
-	drawgfx(bitmap,&mygfx,0,0,0,0,0,0,&visiblearea,TRANSPARENCY_NONE,0);
-}
+	/* copy the character mapped graphics */
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&visiblearea,TRANSPARENCY_NONE,0);
+
 
 	/* Draw the sprites. */
-	for (i = 0;i < 4*96;i += 4)
+	for (i = 0;i < 4*80;i += 4)
 	{
 		if (dkong_spriteram[i])
 		{
