@@ -24,7 +24,10 @@ int bitmap_dirty;	/* set by osd_clearbitmap() */
 
 unsigned char *ROM;
 
-
+/* Used in vh_open */
+extern unsigned char *spriteram,*spriteram_2;
+extern unsigned char *buffered_spriteram,*buffered_spriteram_2;
+extern int spriteram_size,spriteram_2_size;
 
 int init_machine(void);
 void shutdown_machine(void);
@@ -346,6 +349,8 @@ int init_machine(void)
 	/* read audio samples if available */
 	Machine->samples = readsamples(gamedrv->samplenames,gamedrv->name);
 
+	/* Mish:  Multi-session safety - set spriteram size to zero before memory map is set up */
+	spriteram_size=spriteram_2_size=0;
 
 	/* first of all initialize the memory handlers, which could be used by the */
 	/* other initialization routines */
@@ -409,6 +414,13 @@ static void vh_close(void)
 	Machine->uifont = 0;
 	osd_close_display();
 	palette_stop();
+
+	if (drv->video_attributes & VIDEO_BUFFERS_SPRITERAM) {
+		if (buffered_spriteram) free(buffered_spriteram);
+		if (buffered_spriteram_2) free(buffered_spriteram_2);
+		buffered_spriteram=NULL;
+		buffered_spriteram_2=NULL;
+	}
 }
 
 
@@ -479,6 +491,20 @@ static int vh_open(void)
 		return 1;
 	}
 
+	/* create spriteram buffers if necessary */
+	if (drv->video_attributes & VIDEO_BUFFERS_SPRITERAM) {
+		if (spriteram_size!=0) {
+			buffered_spriteram= malloc(spriteram_size);
+			if (!buffered_spriteram) { vh_close(); return 1; }
+			if (spriteram_2_size!=0) buffered_spriteram_2 = malloc(spriteram_2_size);
+			if (spriteram_2_size && !buffered_spriteram_2) { vh_close(); return 1; }
+		} else {
+			if (errorlog) fprintf(errorlog,"vh_open():  Video buffers spriteram but spriteram_size is 0\n");
+			buffered_spriteram=NULL;
+			buffered_spriteram_2=NULL;
+		}
+	}
+
 	/* build our private user interface font */
 	/* This must be done AFTER osd_create_display() so the function knows the */
 	/* resolution we are running at and can pick a different font depending on it. */
@@ -525,7 +551,7 @@ int updatescreen(void)
 		profiler_mark(PROFILER_END);
 	}
 
-	/* the user interface must be called between vh_update() and update_display(), */
+	/* the user interface must be called between vh_update() and osd_update_video_and_audio(), */
 	/* to allow it to overlay things on the game display. We must call it even */
 	/* if the frame is skipped, to keep a consistent timing. */
 	if (handle_user_interface())
@@ -533,6 +559,8 @@ int updatescreen(void)
 		return 1;
 
 	osd_update_video_and_audio();
+
+	if (drv->vh_eof_callback) (*drv->vh_eof_callback)();
 
 	return 0;
 }

@@ -60,6 +60,7 @@ extern int spriteram_size;
 
 int bionicc_vh_start(void);
 void bionicc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void bionicc_eof_callback(void);
 
 void bionicc_readinputs(void);
 void bionicc_sound_cmd(int data);
@@ -384,8 +385,8 @@ static struct MachineDriver machine_driver =
 	1024, 1024,	/* but a lot are not used */
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	bionicc_eof_callback,
 	bionicc_vh_start,
 	0,
 	bionicc_vh_screenrefresh,

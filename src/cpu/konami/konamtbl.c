@@ -348,33 +348,35 @@ INLINE void absa( void );
 INLINE void absb( void );
 INLINE void absd( void );
 
+INLINE void opcode2( void );
+
 static void (*konami_main[0x100])(void) = {
 	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* 00 */
-	illegal,illegal,illegal,illegal,pshs   ,pshu   ,puls   ,pulu   ,
-	lda_im ,ldb_im ,illegal,illegal,adda_im,addb_im,illegal,illegal,	/* 10 */
-	adca_im,adcb_im,illegal,illegal,suba_im,subb_im,illegal,illegal,
-	sbca_im,sbcb_im,illegal,illegal,anda_im,andb_im,illegal,illegal,	/* 20 */
-	bita_im,bitb_im,illegal,illegal,eora_im,eorb_im,illegal,illegal,
-	ora_im ,orb_im ,illegal,illegal,cmpa_im,cmpb_im,illegal,illegal,	/* 30 */
-	setline_im,illegal,illegal,illegal,andcc,orcc  ,exg    ,tfr    ,
-	ldd_im ,illegal,ldx_im ,illegal,ldy_im ,illegal,ldu_im ,illegal,	/* 40 */
-	lds_im ,illegal,cmpd_im,illegal,cmpx_im,illegal,cmpy_im,illegal,
-	cmpu_im,illegal,cmps_im,illegal,addd_im,illegal,subd_im,illegal,	/* 50 */
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,
+	opcode2,opcode2,opcode2,opcode2,pshs   ,pshu   ,puls   ,pulu   ,
+	lda_im ,ldb_im ,opcode2,opcode2,adda_im,addb_im,opcode2,opcode2,	/* 10 */
+	adca_im,adcb_im,opcode2,opcode2,suba_im,subb_im,opcode2,opcode2,
+	sbca_im,sbcb_im,opcode2,opcode2,anda_im,andb_im,opcode2,opcode2,	/* 20 */
+	bita_im,bitb_im,opcode2,opcode2,eora_im,eorb_im,opcode2,opcode2,
+	ora_im ,orb_im ,opcode2,opcode2,cmpa_im,cmpb_im,opcode2,opcode2,	/* 30 */
+	setline_im,opcode2,opcode2,opcode2,andcc,orcc  ,exg    ,tfr    ,
+	ldd_im ,opcode2,ldx_im ,opcode2,ldy_im ,opcode2,ldu_im ,opcode2,	/* 40 */
+	lds_im ,opcode2,cmpd_im,opcode2,cmpx_im,opcode2,cmpy_im,opcode2,
+	cmpu_im,opcode2,cmps_im,opcode2,addd_im,opcode2,subd_im,opcode2,	/* 50 */
+	opcode2,opcode2,opcode2,opcode2,opcode2,illegal,illegal,illegal,
 	bra    ,bhi    ,bcc    ,bne    ,bvc    ,bpl    ,bge    ,bgt    ,	/* 60 */
 	lbra   ,lbhi   ,lbcc   ,lbne   ,lbvc   ,lbpl   ,lbge   ,lbgt   ,
 	brn    ,bls    ,bcs    ,beq    ,bvs    ,bmi    ,blt    ,ble    ,	/* 70 */
 	lbrn   ,lbls   ,lbcs   ,lbeq   ,lbvs   ,lbmi   ,lblt   ,lble   ,
-	clra   ,clrb   ,illegal,coma   ,comb   ,illegal,nega   ,negb   ,	/* 80 */
-	illegal,inca   ,incb   ,illegal,deca   ,decb   ,illegal,rts    ,
-	tsta   ,tstb   ,illegal,lsra   ,lsrb   ,illegal,rora   ,rorb   ,	/* 90 */
-	illegal,asra   ,asrb   ,illegal,asla   ,aslb   ,illegal,rti    ,
-	rola   ,rolb   ,illegal,illegal,illegal,illegal,illegal,illegal,	/* a0 */
-	illegal,illegal,bsr    ,lbsr   ,decbjnz,decxjnz,nop	   ,illegal,
+	clra   ,clrb   ,opcode2,coma   ,comb   ,opcode2,nega   ,negb   ,	/* 80 */
+	opcode2,inca   ,incb   ,opcode2,deca   ,decb   ,opcode2,rts    ,
+	tsta   ,tstb   ,opcode2,lsra   ,lsrb   ,opcode2,rora   ,rorb   ,	/* 90 */
+	opcode2,asra   ,asrb   ,opcode2,asla   ,aslb   ,opcode2,rti    ,
+	rola   ,rolb   ,opcode2,opcode2,opcode2,opcode2,opcode2,opcode2,	/* a0 */
+	opcode2,opcode2,bsr    ,lbsr   ,decbjnz,decxjnz,nop    ,illegal,
 	abx    ,daa	   ,sex    ,mul    ,lmul   ,divx   ,bmove  ,move   ,	/* b0 */
-	lsrd   ,illegal,rord   ,illegal,asrd   ,illegal,asld   ,illegal,
-	rold   ,illegal,clrd   ,illegal,negd   ,illegal,incd   ,illegal,	/* c0 */
-	decd   ,illegal,tstd   ,illegal,absa   ,absb   ,absd   ,bset   ,
+	lsrd   ,opcode2,rord   ,opcode2,asrd   ,opcode2,asld   ,opcode2,
+	rold   ,opcode2,clrd   ,opcode2,negd   ,opcode2,incd   ,opcode2,	/* c0 */
+	decd   ,opcode2,tstd   ,opcode2,absa   ,absb   ,absd   ,bset   ,
 	bset2  ,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* d0 */
 	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,
 	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* e0 */

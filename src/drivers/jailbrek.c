@@ -19,11 +19,9 @@ extern void jailbrek_vh_convert_color_prom(unsigned char *palette, unsigned shor
 
 static unsigned char *interrupt_control;
 
-static void jailbrek_machine_init( void ) {
+static void jailbrek_machine_init( void )
+{
 	interrupt_control[0] = 0;
-
-	/* Set OPTIMIZATION FLAGS FOR M6809 */
-	m6809_Flags = M6809_FAST_S;
 }
 
 static int jailbrek_speech_r( int offs ) {

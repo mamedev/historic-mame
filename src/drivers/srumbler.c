@@ -326,9 +326,6 @@ static void srumbler_init_machine(void)
     unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
     unsigned char *pROM = Machine->memory_region[3];
 
-    /* Set optimization flags for M6809 */
-    m6809_Flags = M6809_FAST_NONE;
-
     /* Resident ROM area e000-ffff */
     memcpy(&RAM[0xe000], pROM+0x0c000, 0x2000);
 

@@ -441,7 +441,7 @@ static char* get_ea_mode_str(uint instruction, uint size)
       /* program counter with displacement */
          temp_value = read_imm_16();
          sprintf(mode, "(%s,PC)", make_signed_hex_str_16(temp_value));
-         sprintf(g_helper_str, "; ($%x)", (make_int_16(temp_value) + g_cpu_pc) & 0xffffffff);
+         sprintf(g_helper_str, "; ($%x)", (make_int_16(temp_value) + g_cpu_pc-2) & 0xffffffff);
          break;
       case 0x3b:
       /* program counter with index */

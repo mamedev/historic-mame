@@ -194,12 +194,6 @@ extern struct AY8910interface timeplt_ay8910_interface;
 void timeplt_sh_irqtrigger_w(int offset,int data);
 
 
-void tutankhm_init_machine(void)
-{
-	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_S;
-}
-
 void tutankhm_bankselect_w(int offset,int data)
 {
 	int bankaddress;
@@ -360,7 +354,7 @@ static struct MachineDriver machine_driver =
 	},
 	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	tutankhm_init_machine,				/* init machine routine */
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },	/* not sure about the visible area */

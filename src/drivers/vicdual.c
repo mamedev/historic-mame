@@ -2012,7 +2012,7 @@ struct GameDriver tranqgun_driver =
 	"1980",
 	"Sega",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	GAME_IMPERFECT_COLORS | GAME_NO_SOUND,
+	GAME_NO_SOUND,
 	&vicdual_4ports_machine_driver,
 	0,
 

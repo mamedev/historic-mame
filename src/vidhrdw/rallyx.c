@@ -163,7 +163,6 @@ void rallyx_videoram2_w(int offset,int data)
 }
 
 
-
 void rallyx_colorram2_w(int offset,int data)
 {
 	if (rallyx_colorram2[offset] != data)
@@ -212,10 +211,11 @@ void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs,sx,sy;
 
 
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
+	/* draw the below sprite priority characters */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
+		if (rallyx_colorram2[offs] & 0x20)  continue;
+
 		if (dirtybuffer2[offs])
 		{
 			int flipx,flipy;
@@ -296,13 +296,6 @@ void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 
-	/* radar */
-	if (flipscreen)
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&radarvisibleareaflip,TRANSPARENCY_NONE,0);
-	else
-		copybitmap(bitmap,tmpbitmap,0,0,28*8,0,&radarvisiblearea,TRANSPARENCY_NONE,0);
-
-
 	/* draw the sprites */
 	for (offs = 0;offs < spriteram_size;offs += 2)
 	{
@@ -316,6 +309,42 @@ void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				sx,sy,
 				flipscreen ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_COLOR,0);
 	}
+
+
+	/* draw the above sprite priority characters */
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		int flipx,flipy;
+
+
+		if (!(rallyx_colorram2[offs] & 0x20))  continue;
+
+		sx = offs % 32;
+		sy = offs / 32;
+		flipx = ~rallyx_colorram2[offs] & 0x40;
+		flipy = rallyx_colorram2[offs] & 0x80;
+		if (flipscreen)
+		{
+			sx = 31 - sx;
+			sy = 31 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
+
+		drawgfx(bitmap,Machine->gfx[0],
+				rallyx_videoram2[offs],
+				rallyx_colorram2[offs] & 0x3f,
+				flipx,flipy,
+				8*sx,8*sy,
+				0,TRANSPARENCY_NONE,0);
+	}
+
+
+	/* radar */
+	if (flipscreen)
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&radarvisibleareaflip,TRANSPARENCY_NONE,0);
+	else
+		copybitmap(bitmap,tmpbitmap,0,0,28*8,0,&radarvisiblearea,TRANSPARENCY_NONE,0);
 
 
 	/* draw the cars on the radar */

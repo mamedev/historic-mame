@@ -19,8 +19,8 @@ static int gfx_bank,flipscreen;
 void lastduel_flip_w(int offset,int data)
 {
 	flipscreen=data&1;
-	/* Bit 0x10 - Coin A lockout */
-	/* Bit 0x20 - Coin B lockout */
+	coin_lockout_w(0,~data & 0x10);
+	coin_lockout_w(1,~data & 0x20);
 }
 
 void lastduel_scroll_w( int offset, int data )
@@ -222,8 +222,8 @@ void lastduel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	for (color = 0;color < 16;color++) colmask[color] = 0;
 	for(offs=0x500-8;offs>-1;offs-=8)
 	{
-		int attributes = READ_WORD(&spriteram[offs+2]);
-		code=READ_WORD(&spriteram[offs]);
+		int attributes = READ_WORD(&buffered_spriteram[offs+2]);
+		code=READ_WORD(&buffered_spriteram[offs]);
 		color = attributes&0xf;
 
 		colmask[color] |= pen_usage[code];
@@ -256,12 +256,12 @@ void lastduel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	for(offs=0x500-8;offs>=0;offs-=8)
 	{
 		int attributes,sy,sx,flipx,flipy;
-		code=READ_WORD(&spriteram[offs]);
+		code=READ_WORD(&buffered_spriteram[offs]);
 		if (!code) continue;
 
-		attributes = READ_WORD(&spriteram[offs+2]);
-		sy = READ_WORD(&spriteram[offs+4]) & 0x1ff;
-		sx = READ_WORD(&spriteram[offs+6]) & 0x1ff;
+		attributes = READ_WORD(&buffered_spriteram[offs+2]);
+		sy = READ_WORD(&buffered_spriteram[offs+4]) & 0x1ff;
+		sx = READ_WORD(&buffered_spriteram[offs+6]) & 0x1ff;
 
 		flipx = attributes&0x20;
 		flipy = attributes&0x40;
@@ -324,8 +324,8 @@ void ledstorm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	for (color = 0;color < 16;color++) colmask[color] = 0;
 	for(offs=0x800-8;offs>-1;offs-=8)
 	{
-		int attributes = READ_WORD(&spriteram[offs+2]);
-		code=READ_WORD(&spriteram[offs]);
+		int attributes = READ_WORD(&buffered_spriteram[offs+2]);
+		code=READ_WORD(&buffered_spriteram[offs]);
 		color = attributes&0xf;
 
 		colmask[color] |= pen_usage[code];
@@ -358,12 +358,12 @@ void ledstorm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	for(offs=0x800-8;offs>=0;offs-=8)
 	{
 		int attributes,sy,sx,flipx,flipy;
-		sy = READ_WORD(&spriteram[offs+4]) & 0x1ff;
+		sy = READ_WORD(&buffered_spriteram[offs+4]) & 0x1ff;
 		if (sy==0x180) continue;
 
-		code=READ_WORD(&spriteram[offs]);
-		attributes = READ_WORD(&spriteram[offs+2]);
-		sx = READ_WORD(&spriteram[offs+6]) & 0x1ff;
+		code=READ_WORD(&buffered_spriteram[offs]);
+		attributes = READ_WORD(&buffered_spriteram[offs+2]);
+		sx = READ_WORD(&buffered_spriteram[offs+6]) & 0x1ff;
 
 		flipx = attributes&0x20;
 		flipy = attributes&0x80; /* Different from Last Duel */
@@ -391,4 +391,13 @@ void ledstorm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_draw(bitmap,foreground_tilemap,TILEMAP_FRONT | 1);
 
 	tilemap_draw(bitmap,fix_tilemap,0);
+}
+
+
+void lastduel_eof_callback(void)
+{
+	/* Spriteram is always 1 frame ahead, suggesting buffering.  I can't find
+		a register to control this so I assume it happens automatically
+		every frame at the end of vblank */
+	buffer_spriteram_w(0,0);
 }

@@ -39,10 +39,10 @@ struct RomModule
 /* start of memory region */
 #define ROM_REGION(length) { 0, length, 0, 0 },
 /* start of disposable memory region */
-#define ROM_REGION_DISPOSE(length) { 0, length | ROMFLAG_DISPOSE, 0, 0 },
+#define ROM_REGION_DISPOSE(length) { 0, (length) | ROMFLAG_DISPOSE, 0, 0 },
 
 /* Optional */
-#define ROM_REGION_OPTIONAL(length) { 0, length | ROMFLAG_IGNORE, 0, 0 },
+#define ROM_REGION_OPTIONAL(length) { 0, (length) | ROMFLAG_IGNORE, 0, 0 },
 
 #define BADCRC( crc ) (~(crc))
 
@@ -55,22 +55,22 @@ struct RomModule
 #define ROM_RELOAD(offset,length) { (char *)-1, offset, length, 0 },
 
 /* These are for nibble-wide ROMs, can be used with code or data */
-#define ROM_LOAD_NIB_LOW(name,offset,length,crc) { name, offset, length | ROMFLAG_NIBBLE, crc },
-#define ROM_LOAD_NIB_HIGH(name,offset,length,crc) { name, offset, length | ROMFLAG_NIBBLE | ROMFLAG_ALTERNATE, crc },
-#define ROM_RELOAD_NIB_LOW(offset,length) { (char *)-1, offset, length | ROMFLAG_NIBBLE, 0 },
-#define ROM_RELOAD_NIB_HIGH(offset,length) { (char *)-1, offset, length | ROMFLAG_NIBBLE | ROMFLAG_ALTERNATE, 0 },
+#define ROM_LOAD_NIB_LOW(name,offset,length,crc) { name, offset, (length) | ROMFLAG_NIBBLE, crc },
+#define ROM_LOAD_NIB_HIGH(name,offset,length,crc) { name, offset, (length) | ROMFLAG_NIBBLE | ROMFLAG_ALTERNATE, crc },
+#define ROM_RELOAD_NIB_LOW(offset,length) { (char *)-1, offset, (length) | ROMFLAG_NIBBLE, 0 },
+#define ROM_RELOAD_NIB_HIGH(offset,length) { (char *)-1, offset, (length) | ROMFLAG_NIBBLE | ROMFLAG_ALTERNATE, 0 },
 
 /* The following ones are for code ONLY - don't use for graphics data!!! */
 /* load the ROM at even/odd addresses. Useful with 16 bit games */
-#define ROM_LOAD_EVEN(name,offset,length,crc) { name, offset & ~1, length | ROMFLAG_ALTERNATE, crc },
-#define ROM_RELOAD_EVEN(offset,length) { (char *)-1, offset & ~1, length | ROMFLAG_ALTERNATE, 0 },
-#define ROM_LOAD_ODD(name,offset,length,crc)  { name, offset |  1, length | ROMFLAG_ALTERNATE, crc },
-#define ROM_RELOAD_ODD(offset,length)  { (char *)-1, offset |  1, length | ROMFLAG_ALTERNATE, 0 },
+#define ROM_LOAD_EVEN(name,offset,length,crc) { name, (offset) & ~1, (length) | ROMFLAG_ALTERNATE, crc },
+#define ROM_RELOAD_EVEN(offset,length) { (char *)-1, (offset) & ~1, (length) | ROMFLAG_ALTERNATE, 0 },
+#define ROM_LOAD_ODD(name,offset,length,crc)  { name, (offset) |  1, (length) | ROMFLAG_ALTERNATE, crc },
+#define ROM_RELOAD_ODD(offset,length)  { (char *)-1, (offset) |  1, (length) | ROMFLAG_ALTERNATE, 0 },
 /* load the ROM at even/odd addresses. Useful with 16 bit games */
-#define ROM_LOAD_WIDE(name,offset,length,crc) { name, offset, length | ROMFLAG_WIDE, crc },
-#define ROM_RELOAD_WIDE(offset,length) { (char *)-1, offset, length | ROMFLAG_WIDE, 0 },
-#define ROM_LOAD_WIDE_SWAP(name,offset,length,crc) { name, offset, length | ROMFLAG_WIDE | ROMFLAG_SWAP, crc },
-#define ROM_RELOAD_WIDE_SWAP(offset,length) { (char *)-1, offset, length | ROMFLAG_WIDE | ROMFLAG_SWAP, 0 },
+#define ROM_LOAD_WIDE(name,offset,length,crc) { name, offset, (length) | ROMFLAG_WIDE, crc },
+#define ROM_RELOAD_WIDE(offset,length) { (char *)-1, offset, (length) | ROMFLAG_WIDE, 0 },
+#define ROM_LOAD_WIDE_SWAP(name,offset,length,crc) { name, offset, (length) | ROMFLAG_WIDE | ROMFLAG_SWAP, crc },
+#define ROM_RELOAD_WIDE_SWAP(offset,length) { (char *)-1, offset, (length) | ROMFLAG_WIDE | ROMFLAG_SWAP, 0 },
 
 #ifdef LSB_FIRST
 #define ROM_LOAD_V20_EVEN	ROM_LOAD_EVEN

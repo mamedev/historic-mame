@@ -20,7 +20,6 @@
 #include "memory.h"
 #include "osd_cpu.h"
 
-
 #ifdef MAME_DEBUG
 
 extern UINT8 H6280_debug_mmr[8];
@@ -109,37 +108,37 @@ static const char *token[]=
 
 static const unsigned char op6280[512]=
 {
-  _brk,_imp, _ora,_idx, _sxy,_imp, _st0,_imm, _tsb,_zpg, _ora,_zpg, _asl,_zpg, _rm0,_zrl, /* 00 */
+  _brk,_imp, _ora,_idx, _sxy,_imp, _st0,_imm, _tsb,_zpg, _ora,_zpg, _asl,_zpg, _rm0,_zpg, /* 00 */
   _php,_imp, _ora,_imm, _asl,_acc, _ill,_non, _tsb,_abs, _ora,_abs, _asl,_abs, _br0,_zrl,
-  _bpl,_rel, _ora,_idy, _ora,_zpi, _st1,_imm, _trb,_zpg, _ora,_zpx, _asl,_zpx, _rm1,_zrl, /* 10 */
+  _bpl,_rel, _ora,_idy, _ora,_zpi, _st1,_imm, _trb,_zpg, _ora,_zpx, _asl,_zpx, _rm1,_zpg, /* 10 */
   _clc,_imp, _ora,_aby, _ina,_imp, _ill,_non, _tsb,_abs, _ora,_abx, _asl,_abx, _br1,_zrl,
-  _jsr,_abs, _and,_idx, _sax,_imp, _st2,_imm, _bit,_zpg, _and,_zpg, _rol,_zpg, _rm2,_zrl, /* 20 */
+  _jsr,_abs, _and,_idx, _sax,_imp, _st2,_imm, _bit,_zpg, _and,_zpg, _rol,_zpg, _rm2,_zpg, /* 20 */
   _plp,_imp, _and,_imm, _rol,_acc, _ill,_non, _bit,_abs, _and,_abs, _rol,_abs, _br2,_zrl,
-  _bmi,_rel, _and,_idy, _and,_zpi, _ill,_non, _bit,_zpx, _and,_zpx, _rol,_zpx, _rm3,_zrl, /* 30 */
+  _bmi,_rel, _and,_idy, _and,_zpi, _ill,_non, _bit,_zpx, _and,_zpx, _rol,_zpx, _rm3,_zpg, /* 30 */
   _sec,_imp, _and,_aby, _dea,_imp, _ill,_non, _bit,_abx, _and,_abx, _rol,_abx, _br3,_zrl,
-  _rti,_imp, _eor,_idx, _say,_imp, _tma,_imm, _bsr,_rel, _eor,_zpg, _lsr,_zpg, _rm4,_zrl, /* 40 */
+  _rti,_imp, _eor,_idx, _say,_imp, _tma,_imm, _bsr,_rel, _eor,_zpg, _lsr,_zpg, _rm4,_zpg, /* 40 */
   _pha,_imp, _eor,_imm, _lsr,_acc, _ill,_non, _jmp,_abs, _eor,_abs, _lsr,_abs, _br4,_zrl,
-  _bvc,_rel, _eor,_idy, _eor,_zpi, _tam,_imm, _csl,_imp, _eor,_zpx, _lsr,_zpx, _rm5,_zrl, /* 50 */
+  _bvc,_rel, _eor,_idy, _eor,_zpi, _tam,_imm, _csl,_imp, _eor,_zpx, _lsr,_zpx, _rm5,_zpg, /* 50 */
   _cli,_imp, _eor,_aby, _phy,_imp, _ill,_non, _ill,_non, _eor,_abx, _lsr,_abx, _br5,_zrl,
-  _rts,_imp, _adc,_idx, _cla,_imp, _ill,_non, _stz,_zpg, _adc,_zpg, _ror,_zpg, _rm6,_zrl, /* 60 */
+  _rts,_imp, _adc,_idx, _cla,_imp, _ill,_non, _stz,_zpg, _adc,_zpg, _ror,_zpg, _rm6,_zpg, /* 60 */
   _pla,_imp, _adc,_imm, _ror,_acc, _ill,_non, _jmp,_ind, _adc,_abs, _ror,_abs, _br6,_zrl,
-  _bvs,_rel, _adc,_idy, _adc,_zpi, _tii,_blk, _stz,_zpx, _adc,_zpx, _ror,_zpx, _rm7,_zrl, /* 70 */
+  _bvs,_rel, _adc,_idy, _adc,_zpi, _tii,_blk, _stz,_zpx, _adc,_zpx, _ror,_zpx, _rm7,_zpg, /* 70 */
   _sei,_imp, _adc,_aby, _ply,_imp, _ill,_non, _jmp,_iax, _adc,_abx, _ror,_abx, _br7,_zrl,
-  _bra,_rel, _sta,_idx, _clx,_imp, _tst,_imz, _sty,_zpg, _sta,_zpg, _stx,_zpg, _sm0,_zrl, /* 80 */
+  _bra,_rel, _sta,_idx, _clx,_imp, _tst,_imz, _sty,_zpg, _sta,_zpg, _stx,_zpg, _sm0,_zpg, /* 80 */
   _dey,_imp, _bit,_imm, _txa,_imp, _ill,_non, _sty,_abs, _sta,_abs, _stx,_abs, _bs0,_zrl,
-  _bcc,_rel, _sta,_idy, _sta,_zpi, _tst,_ima, _sty,_zpx, _sta,_zpx, _stx,_zpy, _sm1,_zrl, /* 90 */
+  _bcc,_rel, _sta,_idy, _sta,_zpi, _tst,_ima, _sty,_zpx, _sta,_zpx, _stx,_zpy, _sm1,_zpg, /* 90 */
   _tya,_imp, _sta,_aby, _txs,_imp, _ill,_non, _stz,_abs, _sta,_abx, _stz,_abx, _bs1,_zrl,
-  _ldy,_imm, _lda,_idx, _ldx,_imm, _tst,_izx, _ldy,_zpg, _lda,_zpg, _ldx,_zpg, _sm2,_zrl, /* a0 */
+  _ldy,_imm, _lda,_idx, _ldx,_imm, _tst,_izx, _ldy,_zpg, _lda,_zpg, _ldx,_zpg, _sm2,_zpg, /* a0 */
   _tay,_imp, _lda,_imm, _tax,_imp, _ill,_non, _ldy,_abs, _lda,_abs, _ldx,_abs, _bs2,_zrl,
-  _bcs,_rel, _lda,_idy, _lda,_zpi, _tst,_imx, _ldy,_zpx, _lda,_zpx, _ldx,_zpy, _sm3,_zrl, /* b0 */
+  _bcs,_rel, _lda,_idy, _lda,_zpi, _tst,_imx, _ldy,_zpx, _lda,_zpx, _ldx,_zpy, _sm3,_zpg, /* b0 */
   _clv,_imp, _lda,_aby, _tsx,_imp, _ill,_non, _ldy,_abx, _lda,_abx, _ldx,_aby, _bs3,_zrl,
-  _cpy,_imm, _cmp,_idx, _cly,_imp, _tdd,_blk, _cpy,_zpg, _cmp,_zpg, _dec,_zpg, _sm4,_zrl, /* c0 */
+  _cpy,_imm, _cmp,_idx, _cly,_imp, _tdd,_blk, _cpy,_zpg, _cmp,_zpg, _dec,_zpg, _sm4,_zpg, /* c0 */
   _iny,_imp, _cmp,_imm, _dex,_imp, _ill,_non, _cpy,_abs, _cmp,_abs, _dec,_abs, _bs4,_zrl,
-  _bne,_rel, _cmp,_idy, _cmp,_zpi, _tin,_blk, _csh,_imp, _cmp,_zpx, _dec,_zpx, _sm5,_zrl, /* d0 */
+  _bne,_rel, _cmp,_idy, _cmp,_zpi, _tin,_blk, _csh,_imp, _cmp,_zpx, _dec,_zpx, _sm5,_zpg, /* d0 */
   _cld,_imp, _cmp,_aby, _phx,_imp, _ill,_non, _ill,_non, _cmp,_abx, _dec,_abx, _bs5,_zrl,
-  _cpx,_imm, _sbc,_idx, _ill,_non, _tia,_blk, _cpx,_zpg, _sbc,_zpg, _inc,_zpg, _sm6,_zrl, /* e0 */
+  _cpx,_imm, _sbc,_idx, _ill,_non, _tia,_blk, _cpx,_zpg, _sbc,_zpg, _inc,_zpg, _sm6,_zpg, /* e0 */
   _inx,_imp, _sbc,_imm, _nop,_imp, _ill,_non, _cpx,_abs, _sbc,_abs, _inc,_abs, _bs6,_zrl,
-  _beq,_rel, _sbc,_idy, _sbc,_zpi, _tai,_blk, _set,_imp, _sbc,_zpx, _inc,_zpx, _sm7,_zrl, /* f0 */
+  _beq,_rel, _sbc,_idy, _sbc,_zpi, _tai,_blk, _set,_imp, _sbc,_zpx, _inc,_zpx, _sm7,_zpg, /* f0 */
   _sed,_imp, _sbc,_aby, _plx,_imp, _ill,_non, _ill,_non, _sbc,_abx, _inc,_abx, _bs7,_zrl
 };
 
@@ -229,6 +228,7 @@ int Dasm6280(char *buffer, int pc)
 		case _imz:
 			sprintf(buffer,"%-5s#$%02X $%02X", token[opc], RDBYTE(PC), RDBYTE(PC+1));
 			PC+=2;
+			break;
 		case _izx:
 			sprintf(buffer,"%-5s#$%02X $%02X,x", token[opc], RDBYTE(PC), RDBYTE(PC+1));
 			PC+=2;
@@ -236,6 +236,7 @@ int Dasm6280(char *buffer, int pc)
 		case _ima:
 			sprintf(buffer,"%-5s#$%02X $%04X", token[opc], RDBYTE(PC), RDWORD(PC+1));
 			PC+=3;
+			break;
 		case _imx:
 			sprintf(buffer,"%-5s#$%02X $%04X,x", token[opc], RDBYTE(PC), RDWORD(PC+1));
 			PC+=3;

@@ -1268,7 +1268,7 @@ int osd_set_display(int width,int height, int attributes)
 					if(unchained)
 					{
 						/* for unchained modes, turn off dirty updates */
-						/* as any speed gain is lost in the complex mulit-page update needed */
+						/* as any speed gain is lost in the complex multi-page update needed */
 						/* plus - non-dirty updates remove unchained 'shearing' */
 						use_dirty = 0;
 					}
@@ -2136,32 +2136,30 @@ void osd_update_video_and_audio(void)
 			/* adjust speed to video refresh rate if vsync is on */
 			adjspeed = speed * Machine->drv->frames_per_second / vsync_frame_rate;
 
-			if (adjspeed < 60)
+			if (adjspeed >= 100)
 			{
-				frameskipadjust = 0;
-				frameskip += 3;
-				if (frameskip >= FRAMESKIP_LEVELS) frameskip = FRAMESKIP_LEVELS-1;
-			}
-			else if (adjspeed < 80)
-			{
-				frameskipadjust = 0;
-				frameskip += 2;
-				if (frameskip >= FRAMESKIP_LEVELS) frameskip = FRAMESKIP_LEVELS-1;
-			}
-			else if (adjspeed < 99) /* allow 99% speed */
-			{
-				frameskipadjust = 0;
-				/* don't push frameskip too far if we are close to 100% speed */
-				if (frameskip < 8) frameskip++;
-			}
-			else if (adjspeed >= 100)
-			{
-				/* increase frameskip quickly, decrease it slowly */
 				frameskipadjust++;
 				if (frameskipadjust >= 3)
 				{
 					frameskipadjust = 0;
 					if (frameskip > 0) frameskip--;
+				}
+			}
+			else
+			{
+				if (adjspeed < 80)
+					frameskipadjust -= (90 - adjspeed) / 5;
+				else
+				{
+					/* don't push frameskip too far if we are close to 100% speed */
+					if (frameskip < 8)
+						frameskipadjust--;
+				}
+
+				while (frameskipadjust <= -3)
+				{
+					frameskipadjust += 3;
+					if (frameskip < FRAMESKIP_LEVELS-1) frameskip++;
 				}
 			}
 		}

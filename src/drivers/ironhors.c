@@ -41,12 +41,6 @@ void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-static void ironhors_init_machine(void)
-{
-	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
-}
-
 static int ironhors_interrupt(void)
 {
 	if (cpu_getiloops() == 0)
@@ -371,7 +365,7 @@ static struct MachineDriver ironhors_machine_driver =
 	},
 	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	ironhors_init_machine,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
@@ -416,7 +410,7 @@ static struct MachineDriver farwest_machine_driver =
 	},
 	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	ironhors_init_machine,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },

@@ -6,38 +6,44 @@
 
 ***************************************************************************/
 
+/* uncomment this line to add/remove the tilemap manager support */
+
+#define NAMCOS2_USE_TILEMGR
+#define NAMCOS2_USE_REDUCED_PALETTE
+// #define NAMCOS2_DEBUG_MODE
+
 /* memory decode regions */
 
-#define MEM_CPU1		0
-#define MEM_CPU2		1
-#define MEM_CPU_SOUND	2
-#define MEM_CPU_MCU		3
-#define MEM_GFX_OBJ 	4
-#define MEM_GFX_CHR		5
-#define MEM_GFX_ROZ		6
-#define MEM_DATA		7
-#define MEM_VOICE		8
-#define MEM_SHAPE       9
+#define MEM_CPU1        0
+#define MEM_CPU2        1
+#define MEM_CPU_SOUND   2
+#define MEM_CPU_MCU     3
+#define MEM_GFX_OBJ     4
+#define MEM_GFX_CHR     5
+#define MEM_GFX_ROZ     6
+#define MEM_DATA        7
+#define MEM_VOICE       8
+#define MEM_GFX_MASK    9
 
 
 /* CPU reference numbers */
 
-#define NAMCOS2_CPU1	0
-#define NAMCOS2_CPU2	1
-#define NAMCOS2_CPU3	2
-#define NAMCOS2_CPU4	3
+#define NAMCOS2_CPU1    0
+#define NAMCOS2_CPU2    1
+#define NAMCOS2_CPU3    2
+#define NAMCOS2_CPU4    3
 
-#define CPU_MASTER	NAMCOS2_CPU1
-#define CPU_SLAVE	NAMCOS2_CPU2
-#define CPU_SOUND	NAMCOS2_CPU3
-#define CPU_MCU		NAMCOS2_CPU4
+#define CPU_MASTER  NAMCOS2_CPU1
+#define CPU_SLAVE   NAMCOS2_CPU2
+#define CPU_SOUND   NAMCOS2_CPU3
+#define CPU_MCU     NAMCOS2_CPU4
 
 /* VIDHRDW */
 
-#define GFX_OBJ1	0
+#define GFX_OBJ1    0
 #define GFX_OBJ2    1
-#define GFX_CHR		2
-#define GFX_ROZ		3
+#define GFX_CHR     2
+#define GFX_ROZ     3
 
 /*********************************************/
 /* IF GAME SPECIFIC HACKS ARE REQUIRED THEN  */
@@ -46,34 +52,36 @@
 /*********************************************/
 
 #define NAMCOS2_ASSAULT             0x1000
-#define NAMCOS2_ASSAULTJ            0x1001
+#define NAMCOS2_ASSAULT_JP          0x1001
 #define NAMCOS2_ASSAULT_PLUS        0x1002
 #define NAMCOS2_BUBBLE_TROUBLE      0x1003
 #define NAMCOS2_BURNING_FORCE       0x1004
 #define NAMCOS2_COSMO_GANG          0x1005
 #define NAMCOS2_COSMO_GANG_US       0x1006
 #define NAMCOS2_DIRT_FOX            0x1007
-#define NAMCOS2_DRAGON_SABER        0x1008
-#define NAMCOS2_FINAL_LAP           0x1009
-#define NAMCOS2_FINAL_LAP_2         0x100a
-#define NAMCOS2_FINAL_LAP_3         0x100b
-#define NAMCOS2_FINEST_HOUR         0x100c
-#define NAMCOS2_FOUR_TRAX           0x100d
-#define NAMCOS2_GOLLY_GHOST         0x100e
-#define NAMCOS2_LUCKY_AND_WILD      0x100f
-#define NAMCOS2_MARVEL_LAND         0x1010
-#define NAMCOS2_METAL_HAWK          0x1011
-#define NAMCOS2_MIRAI_NINJA         0x1012
-#define NAMCOS2_ORDYNE              0x1013
-#define NAMCOS2_PHELIOS             0x1014
-#define NAMCOS2_ROLLING_THUNDER_2   0x1015
-#define NAMCOS2_STEEL_GUNNER        0x1016
-#define NAMCOS2_STEEL_GUNNER_2      0x1017
-#define NAMCOS2_SUPER_WSTADIUM      0x1018
-#define NAMCOS2_SUPER_WSTADIUM_92   0x1019
-#define NAMCOS2_SUPER_WSTADIUM_93   0x101a
-#define NAMCOS2_SUZUKA_8_HOURS      0x101b
-#define NAMCOS2_WALKYRIE            0x101c
+#define NAMCOS2_DIRT_FOX_JP         0x1008
+#define NAMCOS2_DRAGON_SABER        0x1009
+#define NAMCOS2_DRAGON_SABER_JP     0x100a
+#define NAMCOS2_FINAL_LAP           0x100b
+#define NAMCOS2_FINAL_LAP_2         0x100c
+#define NAMCOS2_FINAL_LAP_3         0x100d
+#define NAMCOS2_FINEST_HOUR         0x100e
+#define NAMCOS2_FOUR_TRAX           0x100f
+#define NAMCOS2_GOLLY_GHOST         0x1010
+#define NAMCOS2_LUCKY_AND_WILD      0x1011
+#define NAMCOS2_MARVEL_LAND         0x1012
+#define NAMCOS2_METAL_HAWK          0x1013
+#define NAMCOS2_MIRAI_NINJA         0x1014
+#define NAMCOS2_ORDYNE              0x1015
+#define NAMCOS2_PHELIOS             0x1016
+#define NAMCOS2_ROLLING_THUNDER_2   0x1017
+#define NAMCOS2_STEEL_GUNNER        0x1018
+#define NAMCOS2_STEEL_GUNNER_2      0x1019
+#define NAMCOS2_SUPER_WSTADIUM      0x101a
+#define NAMCOS2_SUPER_WSTADIUM_92   0x101b
+#define NAMCOS2_SUPER_WSTADIUM_93   0x101c
+#define NAMCOS2_SUZUKA_8_HOURS      0x101d
+#define NAMCOS2_WALKYRIE            0x101e
 
 extern int namcos2_gametype;
 
@@ -88,17 +96,13 @@ void namcos2_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 void namcos2_init_machine(void);
 
-//int  namcos2_sound_interrupt(int irq);
-int  namcos2_sound_interrupt(void);
-void namcos2_sound_bankselect_w(int offset, int data);
-
 
 /**************************************************************/
 /* Dual port memory handlers                                  */
 /**************************************************************/
-int	 namcos2_dpram_byte_r(int offset);
+int  namcos2_dpram_byte_r(int offset);
 void namcos2_dpram_byte_w(int offset, int data);
-int	 namcos2_68k_dpram_word_r(int offset);
+int  namcos2_68k_dpram_word_r(int offset);
 void namcos2_68k_dpram_word_w(int offset, int data);
 
 extern unsigned char *namcos2_dpram;
@@ -120,23 +124,43 @@ extern int namcos2_sprite_bank;
 /**************************************************************/
 #define NAMCOS2_68K_EEPROM_W    namcos2_68k_eeprom_w, &namcos2_eeprom, &namcos2_eeprom_size
 #define NAMCOS2_68K_EEPROM_R    namcos2_68k_eeprom_r
-int		namcos2_hiload(void);
-void	namcos2_hisave(void);
-void 	namcos2_68k_eeprom_w( int offset, int data );
-int 	namcos2_68k_eeprom_r( int offset );
+int     namcos2_hiload(void);
+void    namcos2_hisave(void);
+void    namcos2_68k_eeprom_w( int offset, int data );
+int     namcos2_68k_eeprom_r( int offset );
 extern unsigned char *namcos2_eeprom;
 extern int namcos2_eeprom_size;
 
 /**************************************************************/
 /*  Shared video memory function handlers                     */
 /**************************************************************/
+void namcos2_68k_vram_w(int offset, int data);
+int  namcos2_68k_vram_r(int offset);
+
+extern int namcos2_68k_vram_size;
+
 int  namcos2_68k_vram_ctrl_r( int offset );
 void namcos2_68k_vram_ctrl_w( int offset, int data );
 
-#define NAMCOS2_68K_VIDEORAM_W  MWA_BANK1, &videoram
-#define NAMCOS2_68K_VIDEORAM_R  MRA_BANK1
 extern unsigned char namcos2_68k_vram_ctrl[];
 
+#ifdef NAMCOS2_USE_TILEMGR
+
+extern struct tilemap *namcos2_tilemap0;
+extern struct tilemap *namcos2_tilemap1;
+extern struct tilemap *namcos2_tilemap2;
+extern struct tilemap *namcos2_tilemap3;
+extern struct tilemap *namcos2_tilemap4;
+extern struct tilemap *namcos2_tilemap5;
+
+extern int namcos2_tilemap0_flip;
+extern int namcos2_tilemap1_flip;
+extern int namcos2_tilemap2_flip;
+extern int namcos2_tilemap3_flip;
+extern int namcos2_tilemap4_flip;
+extern int namcos2_tilemap5_flip;
+
+#endif
 
 /**************************************************************/
 /*  Shared video palette function handlers                    */
@@ -175,6 +199,12 @@ int  namcos2_68k_key_r( int offset );
 void namcos2_68k_key_w( int offset, int data );
 
 extern unsigned char namcos2_68k_key[];
+
+int  namcos2_68k_protect_r( int offset );
+void namcos2_68k_protect_w( int offset, int data );
+
+extern int namcos2_68k_protect;
+
 
 
 /**************************************************************/
@@ -225,12 +255,18 @@ extern unsigned char *namcos2_68k_slave_ram;
 
 
 /**************************************************************/
-/*  ROZ - Rotate & Zoom memory function handlers              */
+/* MYSTERY MEMORY BANK AT $880000 FOR FINAL LAP.....          */
 /**************************************************************/
 
-#define ROZ_CLEAN_TILE  0
-#define ROZ_DIRTY_TILE  1
-#define ROZ_REDRAW_ALL  2
+extern unsigned char *namcos2_68k_mystery_ram;
+
+#define NAMCOS2_68K_MYSTERY_RAM_W     MWA_BANK5, &namcos2_68k_mystery_ram
+#define NAMCOS2_68K_MYSTERY_RAM_R     MRA_BANK5
+
+
+/**************************************************************/
+/*  ROZ - Rotate & Zoom memory function handlers              */
+/**************************************************************/
 
 void namcos2_68k_roz_ctrl_w( int offset, int data );
 int  namcos2_68k_roz_ctrl_r( int offset );
@@ -239,21 +275,37 @@ extern unsigned char namcos2_68k_roz_ctrl[];
 void namcos2_68k_roz_ram_w( int offset, int data );
 int  namcos2_68k_roz_ram_r( int offset );
 int  namcos2_68k_roz_ram_size;
-int  namcos2_68k_roz_ram_dirty;
 extern unsigned char *namcos2_68k_roz_ram;
-extern unsigned char *namcos2_68k_roz_dirty_buffer;
 
 
 /**************************************************************/
 /*                                                            */
 /**************************************************************/
-#define BANKED_SOUND_ROM_R		MRA_BANK6
-#define CPU3_ROM1				6			/* Bank number */
+#define BANKED_SOUND_ROM_R      MRA_BANK6
+#define CPU3_ROM1               6           /* Bank number */
+
 
 
 /**************************************************************/
-/* MCU Specific memory handlers                               */
+/* Sound CPU support handlers - 6809                          */
 /**************************************************************/
+
+int  namcos2_sound_interrupt(void);
+void namcos2_sound_bankselect_w(int offset, int data);
+
+
+/**************************************************************/
+/* MCU Specific support handlers - HD63705                    */
+/**************************************************************/
+
+int  namcos2_mcu_interrupt(void);
 
 void namcos2_mcu_analog_ctrl_w( int offset, int data );
 int  namcos2_mcu_analog_ctrl_r( int offset );
+
+void namcos2_mcu_analog_port_w( int offset, int data );
+int  namcos2_mcu_analog_port_r( int offset );
+
+void namcos2_mcu_port_d_w( int offset, int data );
+int  namcos2_mcu_port_d_r( int offset );
+

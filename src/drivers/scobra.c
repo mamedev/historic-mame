@@ -1650,6 +1650,27 @@ ROM_END
 
 ROM_START( stratgyx_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "2c_1.bin",     0x0000, 0x1000, 0xeec01237 )
+	ROM_LOAD( "2e_2.bin",     0x1000, 0x1000, 0x926cb2d5 )
+	ROM_LOAD( "2f_3.bin",     0x2000, 0x1000, 0x849e2504 )
+	ROM_LOAD( "2h_4.bin",     0x3000, 0x1000, 0x8a64069b )
+	ROM_LOAD( "2j_5.bin",     0x4000, 0x1000, 0x78b9b898 )
+	ROM_LOAD( "2l_6.bin",     0x5000, 0x1000, 0x20bae414 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5f_c2.bin",    0x0000, 0x0800, 0x7121b679 )
+	ROM_LOAD( "5h_c1.bin",    0x0800, 0x0800, 0xd105ad91 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "strategy.6e",  0x0000, 0x0020, 0x51a629e1 )
+
+	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_LOAD( "s1.bin",       0x0000, 0x1000, 0x713a5db8 )
+	ROM_LOAD( "s2.bin",       0x1000, 0x1000, 0x46079411 )
+ROM_END
+
+ROM_START( stratgys_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2c.cpu",       0x0000, 0x1000, 0xf2aaaf2b )
 	ROM_LOAD( "2e.cpu",       0x1000, 0x1000, 0x5873fdc8 )
 	ROM_LOAD( "2f.cpu",       0x2000, 0x1000, 0x532d604f )
@@ -1665,29 +1686,8 @@ ROM_START( stratgyx_rom )
 	ROM_LOAD( "strategy.6e",  0x0000, 0x0020, 0x51a629e1 )
 
 	ROM_REGION(0x10000)	/* 64k for sound code */
-	ROM_LOAD( "5c.snd",       0x0000, 0x1000, 0x713a5db8 )
-	ROM_LOAD( "5d.snd",       0x1000, 0x1000, 0x46079411 )
-ROM_END
-
-ROM_START( stratgyb_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "st3",          0x0000, 0x1000, 0xc2f7268c )
-	ROM_LOAD( "st4",          0x1000, 0x1000, 0x0dded1ef )
-	ROM_LOAD( "st5",          0x2000, 0x1000, 0x849e2504 )
-	ROM_LOAD( "st6",          0x3000, 0x1000, 0x8a64069b )
-	ROM_LOAD( "st7",          0x4000, 0x1000, 0x78b9b898 )
-	ROM_LOAD( "st8",          0x5000, 0x1000, 0x20bae414 )
-
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "st9",          0x0000, 0x0800, 0x7121b679 )
-	ROM_LOAD( "st10",         0x0800, 0x0800, 0xd105ad91 )
-
-	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "strategy.6e",  0x0000, 0x0020, 0x51a629e1 )
-
-	ROM_REGION(0x10000)	/* 64k for sound code */
-	ROM_LOAD( "5c.snd",       0x0000, 0x1000, 0x713a5db8 )
-	ROM_LOAD( "5d.snd",       0x1000, 0x1000, 0x46079411 )
+	ROM_LOAD( "s1.bin",       0x0000, 0x1000, 0x713a5db8 )
+	ROM_LOAD( "s2.bin",       0x1000, 0x1000, 0x46079411 )
 ROM_END
 
 ROM_START( armorcar_rom )
@@ -2822,9 +2822,9 @@ struct GameDriver stratgyx_driver =
 	__FILE__,
 	0,
 	"stratgyx",
-	"Strategy X (Stern)",
+	"Strategy X",
 	"1981",
-	"[Konami] (Stern license)",
+	"Konami",
 	"Lee Taylor",
 	0,
 	&stratgyx_machine_driver,
@@ -2842,20 +2842,20 @@ struct GameDriver stratgyx_driver =
 	stratgyx_hiload, stratgyx_hisave
 };
 
-struct GameDriver stratgyb_driver =
+struct GameDriver stratgys_driver =
 {
 	__FILE__,
 	&stratgyx_driver,
-	"stratgyb",
-	"Strong X",
-	"1982",
-	"bootleg",
+	"stratgys",
+	"Strategy X (Stern)",
+	"1981",
+	"[Konami] (Stern license)",
 	"Lee Taylor",
 	0,
 	&stratgyx_machine_driver,
 	0,
 
-	stratgyb_rom,
+	stratgys_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

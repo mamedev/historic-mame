@@ -93,7 +93,7 @@ Points to note, known and proven information deleted from this map:
 #include "cpu/z80/z80.h"
 
 
-#define RASTER_LINES 262	/* guess! */
+#define RASTER_LINES 260	/* guess! */
 #define FIRST_VISIBLE_LINE 16
 #define LAST_VISIBLE_LINE 239
 #define RASTER_VBLANK_END (RASTER_LINES-(LAST_VISIBLE_LINE-FIRST_VISIBLE_LINE+1))
@@ -454,35 +454,28 @@ void neo_control_w(int offset, int data)
     }
 }
 
+
+int neogeo_irq2type;
+
 static void neo_irq2pos_w(int offset,int data)
 {
-    static int value,temp;
-    int line;
+	static int value;
+	int line;
 
-#if 0
-if (errorlog) fprintf(errorlog,"PC %06x: %06x = %02x\n",cpu_get_pc(),0x3c0008+offset,data);
-
-	if (offset == 0)
-		value = (value & 0x0000ffff) | (data << 16);
-	else
+	if (offset)
+	{
 		value = (value & 0xffff0000) | data;
-#else
-    if (offset == 0)
-        value = (temp & 0x0000ffff) | (data << 16);
-    else
-    {
-        if (irq2control == 0x30 || irq2control == 0x50)
-            value = (value & 0xffff0000) | data;
-        else
-            temp = data;
-    }
-#endif
+		if (neogeo_irq2type) return;
+	}
+	else
+	{
+		value = (value & 0x0000ffff) | (data << 16);
+		if (!neogeo_irq2type) return;
+	}
 
-    line = value / 0x180 + 1;
-
-    if (line <= 8) irq2repeat = line;
+	line = value / 0x180 + 1;
+	if (line <= 8) irq2repeat = line;
 	else irq2start = line;
-
 }
 
 
@@ -4675,7 +4668,7 @@ NEODRIVER(pulstar, "Pulstar","1995","Aicom",&neogeo_machine_driver)
 /* Data East Corporation */
 NEODRIVER(spinmast,"Spinmaster / Miracle Adventure","1993","Data East Corporation",&neogeo_machine_driver)
 NEODRIVER(wjammers,"Windjammers / Flying Power Disc","1994","Data East Corporation",&neogeo_machine_driver)
-NEODRIVER(karnovr, "Karnov's Revenge / Fighter's History Dynamite","1994","Data East Corporation",&neogeo_16bit_machine_driver)
+NEODRIVER(karnovr, "Karnov's Revenge / Fighter's History Dynamite","1994","Data East Corporation",&neogeo_raster_machine_driver)
 NEODRIVER(strhoop, "Street Hoop / Street Slam / Dunk Dream","1994","Data East Corporation",&neogeo_machine_driver)
 NEODRIVER(magdrop2,"Magical Drop II","1996","Data East Corporation",&neogeo_machine_driver)
 NEODRIVER(magdrop3,"Magical Drop III","1997","Data East Corporation",&neogeo_machine_driver)
@@ -4713,7 +4706,7 @@ NEODRIVER(shocktro,"Shock Troopers","1997","Saurus",&neogeo_16bit_machine_driver
 NEODRIVER(shocktr2,"Shock Troopers - 2nd Squad","1998","Saurus",&neogeo_16bit_machine_driver)
 
 /* Sunsoft */
-NEODRIVER(galaxyfg,"Galaxy Fight - Universal Warriors","1995","Sunsoft",&neogeo_machine_driver)
+NEODRIVER(galaxyfg,"Galaxy Fight - Universal Warriors","1995","Sunsoft",&neogeo_raster_machine_driver)
 NEODRIVER(wakuwak7,"Waku Waku 7","1996","Sunsoft",&neogeo_16bit_machine_driver)
 
 /* Taito */

@@ -586,11 +586,15 @@ int frontend_help (int argc, char **argv)
 
 					printf("%-8s ",drivers[i]->name);
 
+					#ifndef MESS
 					/* source file (skip the leading "src/drivers/" */
+                    printf("%-10s ",&drivers[i]->source_file[12]);
+                    #else
+					/* source file (skip the leading "src/mess/systems/" */
+					printf("%-10s ",&drivers[i]->source_file[17]);
+					#endif
 
-					printf("%-10s ",&drivers[i]->source_file[12]);
-
-					/* Then, cpus */
+                    /* Then, cpus */
 
 					for(j=0;j<MAX_CPU;j++)
 					{

@@ -111,18 +111,6 @@ extern unsigned m6309_dasm(char *buffer, unsigned pc);
 /****************************************************************************/
 #define M6809_RDOP_ARG(Addr) ((unsigned)cpu_readop_arg(Addr))
 
-/****************************************************************************/
-/* Flags for optimizing memory access. Game drivers should set m6809_Flags  */
-/* to a combination of these flags depending on what can be safely          */
-/* optimized. For example, if M6809_FAST_OP is set, opcodes are fetched     */
-/* directly from the ROM array, and cpu_readmem() is not called.            */
-/* The flags affect reads and writes.                                       */
-/****************************************************************************/
-extern int m6809_Flags;
-#define M6809_FAST_NONE	0x00	/* no memory optimizations */
-#define M6809_FAST_S	0x02	/* stack */
-#define M6809_FAST_U	0x04	/* user stack */
-
 #ifndef FALSE
 #    define FALSE 0
 #endif

@@ -1987,6 +1987,9 @@ void cpu_set_reset_line(int cpunum,int state)
   Use this function to stop and restart CPUs
 
 ***************************************************************************/
+
+#define TRIGGER_NEVER           0
+
 void cpu_halt(int cpunum,int running)
 {
 	if (cpunum >= MAX_CPU) return;
@@ -1995,7 +1998,13 @@ void cpu_halt(int cpunum,int running)
 	if (!CPU_AUDIO(cpunum) || Machine->sample_rate != 0)
 	{
 		cpu_running[cpunum] = running;
-		timer_suspendcpu (cpunum, !running);
+		if(!running)
+		{
+			/* suspend and clear suspend trigger */
+			timer_suspendcpu_trigger (cpunum, TRIGGER_NEVER);
+		}
+		else
+			timer_suspendcpu (cpunum, 0);
 	}
 }
 
@@ -3092,10 +3101,16 @@ static void cpu_resetcallback (int param)
 	else if (state == ASSERT_LINE)
 	{
 		cpu_reset_cpu (cpunum);
-		cpu_halt (cpunum, 0);
+		cpu_halt (cpunum, 0);	/* halt cpu */
 	}
 	else if (state == CLEAR_LINE)
-		cpu_halt (cpunum, 1);
+	{
+		if (cpu_getstatus(cpunum) == 0)
+		{
+			cpu_reset_cpu (cpunum);
+			cpu_halt (cpunum, 1);	/* restart cpu */
+		}
+	}
 }
 
 
@@ -3111,8 +3126,10 @@ static void cpu_vblankreset (void)
 	int i;
 
 	/* read hi scores from disk */
+profiler_mark(PROFILER_HISCORE);
 	if (hiscoreloaded == 0 && Machine->gamedrv->hiscore_load)
 		hiscoreloaded = (*Machine->gamedrv->hiscore_load)();
+profiler_mark(PROFILER_END);
 
 	/* read keyboard & update the status of the input ports */
 	update_input_ports ();

@@ -54,12 +54,6 @@ void sonson_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-void sonson_init_machine(void)
-{
-	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
-}
-
 void sonson_sh_irqtrigger_w(int offset,int data)
 {
 	static int last;
@@ -278,7 +272,7 @@ static struct MachineDriver machine_driver =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	sonson_init_machine,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },

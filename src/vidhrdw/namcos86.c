@@ -341,11 +341,12 @@ static void draw_sprites( struct osd_bitmap *bitmap, int sprite_priority )
 			if ((priority & 0x10) && !tall) sprite_number += 2;
 			color = color>>1;
 
-			if( sx>512-32 ) sx -= 512;
+			if (sx>512-32) sx -= 512;
+			if (sy < -209-32) sy += 256;
 
-			if( flipx && !wide ) sx-=16;
-			if( !tall ) sy+=16;
-//			if( flipy && !tall ) sy+=16;
+			if (flipx && !wide) sx-=16;
+			if (!tall) sy+=16;
+//			if (flipy && !tall) sy+=16;
 
 			sx += sprite_xoffs;
 			sy -= sprite_yoffs;
@@ -407,7 +408,7 @@ void namcos86_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		int i;
 
-		for (i = 0;i < 4;i++)
+		for (i = 3;i >= 0;i--)
 		{
 			if (((xscroll[i] & 0x0e00) >> 9) == layer)
 				tilemap_draw(bitmap,tilemap[i],0);

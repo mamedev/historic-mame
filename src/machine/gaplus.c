@@ -21,8 +21,6 @@ extern void gaplus_starfield_update( void );
 
 void gaplus_init_machine( void )
 {
-    /* Set optimization flags for M6809 */
-    m6809_Flags = M6809_FAST_S | M6809_FAST_U;
     int_enable_2 = int_enable_3 = 1;
     credits = coincounter1 = coincounter2 = 0;
 }

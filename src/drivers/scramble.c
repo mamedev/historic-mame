@@ -1475,6 +1475,27 @@ ROM_END
 
 ROM_START( theend_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "ic13_1t.bin",  0x0000, 0x0800, 0x93e555ba )
+	ROM_LOAD( "ic14_2t.bin",  0x0800, 0x0800, 0x2de7ad27 )
+	ROM_LOAD( "ic15_3t.bin",  0x1000, 0x0800, 0x035f750b )
+	ROM_LOAD( "ic16_4t.bin",  0x1800, 0x0800, 0x61286b5c )
+	ROM_LOAD( "ic17_5t.bin",  0x2000, 0x0800, 0x434a8f68 )
+	ROM_LOAD( "ic18_6t.bin",  0x2800, 0x0800, 0xdc4cc786 )
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics */
+	ROM_LOAD( "ic30_2c.bin",  0x0000, 0x0800, 0x68ccf7bf )
+	ROM_LOAD( "ic31_1c.bin",  0x0800, 0x0800, 0x4a48c999 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "6331-1j.86",   0x0000, 0x0020, 0x24652bc4 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "ic56_1.bin",   0x0000, 0x0800, 0x7a141f29 )
+	ROM_LOAD( "ic55_2.bin",   0x0800, 0x0800, 0x218497c1 )
+ROM_END
+
+ROM_START( theends_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic13",         0x0000, 0x0800, 0x90e5ab14 )
 	ROM_LOAD( "ic14",         0x0800, 0x0800, 0x950f0a07 )
 	ROM_LOAD( "ic15",         0x1000, 0x0800, 0x6786bcf5 )
@@ -2091,13 +2112,39 @@ struct GameDriver theend_driver =
 	"theend",
 	"The End",
 	"1980",
-	"[Konami] (Stern license)",
+	"Konami",
 	"Nicola Salmoria\nVille Laitinen\nMike Balfour",
 	0,
 	&theend_machine_driver,
 	0,
 
 	theend_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	theend_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	theend_hiload, theend_hisave
+};
+
+struct GameDriver theends_driver =
+{
+	__FILE__,
+	&theend_driver,
+	"theends",
+	"The End (Stern)",
+	"1980",
+	"[Konami] (Stern license)",
+	"Nicola Salmoria\nVille Laitinen\nMike Balfour",
+	0,
+	&theend_machine_driver,
+	0,
+
+	theends_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

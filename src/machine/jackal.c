@@ -21,9 +21,6 @@ unsigned char *jackal_spritebank = 0;
 
 void jackal_init_machine(void)
 {
-	/* Set optimization flags for M6809 */
-//	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
-
 	cpu_setbank(1,&((Machine->memory_region[0])[0x4000]));
  	jackal_rambank = &((Machine->memory_region[0])[0]);
 	jackal_spritebank = &((Machine->memory_region[0])[0]);

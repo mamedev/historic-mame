@@ -27,9 +27,6 @@ void superpac_init_machine(void)
 
 	/* Disable interrupts */
 	interrupt_enable_1 = interrupt_enable_2 = 0;
-
-	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
 }
 
 

@@ -275,10 +275,14 @@ INLINE void tst_ix(void);
 INLINE void tsta(void);
 INLINE void tstb(void);
 
+INLINE void pref10(void);
+INLINE void pref11(void);
+
+#if (BIG_SWITCH==0)
 static void (*m6809_main[0x100])(void) = {
 	neg_di, illegal,illegal,com_di, lsr_di, illegal,ror_di, asr_di, 	/* 00 */
 	asl_di, rol_di, dec_di, illegal,inc_di, tst_di, jmp_di, clr_di,
-	illegal,illegal,nop,	sync,	illegal,illegal,lbra,	lbsr,		/* 10 */
+	pref10, pref11, nop,	sync,	illegal,illegal,lbra,	lbsr,		/* 10 */
 	illegal,daa,	orcc,	illegal,andcc,	sex,	exg,	tfr,
 	bra,	brn,	bhi,	bls,	bcc,	bcs,	bne,	beq,		/* 20 */
 	bvc,	bvs,	bpl,	bmi,	bge,	blt,	bgt,	ble,
@@ -309,74 +313,4 @@ static void (*m6809_main[0x100])(void) = {
 	subb_ex,cmpb_ex,sbcb_ex,addd_ex,andb_ex,bitb_ex,ldb_ex, stb_ex, 	/* f0 */
 	eorb_ex,adcb_ex,orb_ex, addb_ex,ldd_ex, std_ex, ldu_ex, stu_ex
 };
-
-static void (*m6809_pref10[0x100])(void) = {
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* 00 */
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* 10 */
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,
-	illegal,lbrn,	lbhi,	lbls,	lbcc,	lbcs,	lbne,	lbeq,		/* 20 */
-	lbvc,	lbvs,	lbpl,	lbmi,	lbge,	lblt,	lbgt,	lble,
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* 30 */
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,swi2,
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* 40 */
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* 50 */
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* 60 */
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* 70 */
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,
-	illegal,illegal,illegal,cmpd_im,illegal,illegal,illegal,illegal,	/* 80 */
-	illegal,illegal,illegal,illegal,cmpy_im,illegal,ldy_im, sty_im,
-	illegal,illegal,illegal,cmpd_di,illegal,illegal,illegal,illegal,	/* 90 */
-	illegal,illegal,illegal,illegal,cmpy_di,illegal,ldy_di, sty_di,
-	illegal,illegal,illegal,cmpd_ix,illegal,illegal,illegal,illegal,	/* a0 */
-	illegal,illegal,illegal,illegal,cmpy_ix,illegal,ldy_ix, sty_ix,
-	illegal,illegal,illegal,cmpd_ex,illegal,illegal,illegal,illegal,	/* b0 */
-	illegal,illegal,illegal,illegal,cmpy_ex,illegal,ldy_ex, sty_ex,
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* c0 */
-	illegal,illegal,illegal,illegal,illegal,illegal,lds_im, sts_im,
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* d0 */
-	illegal,illegal,illegal,illegal,illegal,illegal,lds_di, sts_di,
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* e0 */
-	illegal,illegal,illegal,illegal,illegal,illegal,lds_ix, sts_ix,
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* f0 */
-	illegal,illegal,illegal,illegal,illegal,illegal,lds_ex, sts_ex
-};
-
-static void (*m6809_pref11[0x100])(void) = {
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* 00 */
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* 10 */
-    illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* 20 */
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* 30 */
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,swi3,
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* 40 */
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* 50 */
-    illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* 60 */
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* 70 */
-    illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,
-	illegal,illegal,illegal,cmpu_im,illegal,illegal,illegal,illegal,	/* 80 */
-	illegal,illegal,illegal,illegal,cmps_im,illegal,illegal,illegal,
-	illegal,illegal,illegal,cmpu_di,illegal,illegal,illegal,illegal,	/* 90 */
-	illegal,illegal,illegal,illegal,cmps_di,illegal,illegal,illegal,
-	illegal,illegal,illegal,cmpu_ix,illegal,illegal,illegal,illegal,	/* a0 */
-	illegal,illegal,illegal,illegal,cmps_ix,illegal,illegal,illegal,
-	illegal,illegal,illegal,cmpu_ex,illegal,illegal,illegal,illegal,	/* b0 */
-	illegal,illegal,illegal,illegal,cmps_ex,illegal,illegal,illegal,
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* c0 */
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* d0 */
-    illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* e0 */
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal,	/* f0 */
-	illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal
-};
-
+#endif

@@ -2407,7 +2407,13 @@ static int displaygameinfo(int selected)
 	if (sel == -1)
 	{
 		/* startup info, print MAME version and ask for any key */
+
+		#ifndef MESS
 		strcat(buf,"\n\tMAME ");	/* \t means that the line will be centered */
+		#else
+		strcat(buf,"\n\tMESS ");	/* \t means that the line will be centered */
+ 		#endif
+
 		strcat(buf,build_version);
 		strcat(buf,"\n\tPress any key");
 		drawbox(0,0,Machine->uiwidth,Machine->uiheight);
@@ -2453,8 +2459,11 @@ int showgamewarnings(void)
 	{
 		int done;
 
-
+		#ifndef MESS
 		strcpy(buf, "There are known problems with this game:\n\n");
+		#else
+		strcpy(buf, "There are known problems with this system:\n\n");
+		#endif
 
 
 #ifdef MESS
@@ -2934,8 +2943,13 @@ static void setup_menu_init(void)
 
 	menu_item[menu_total] = "Keys (general)"; menu_action[menu_total++] = UI_DEFKEY;
 	menu_item[menu_total] = "Joystick (general)"; menu_action[menu_total++] = UI_DEFJOY;
+	#ifndef MESS
 	menu_item[menu_total] = "Keys (this game)"; menu_action[menu_total++] = UI_KEY;
 	menu_item[menu_total] = "Joystick (this game)"; menu_action[menu_total++] = UI_JOY;
+	#else
+	menu_item[menu_total] = "Keys (this machine)"; menu_action[menu_total++] = UI_KEY;
+	menu_item[menu_total] = "Joystick (this machine)"; menu_action[menu_total++] = UI_JOY;
+	#endif
 	menu_item[menu_total] = "Dip Switches"; menu_action[menu_total++] = UI_SWITCH;
 
 	/* Determine if there are any analog controls */
@@ -2967,8 +2981,13 @@ static void setup_menu_init(void)
 	}
 
 	menu_item[menu_total] = "Bookkeeping Info"; menu_action[menu_total++] = UI_STATS;
+	#ifndef MESS
 	menu_item[menu_total] = "Game Information"; menu_action[menu_total++] = UI_GAMEINFO;
 	menu_item[menu_total] = "Game History"; menu_action[menu_total++] = UI_HISTORY;
+	#else
+	menu_item[menu_total] = "Machine Information"; menu_action[menu_total++] = UI_GAMEINFO;
+	menu_item[menu_total] = "Machine History"; menu_action[menu_total++] = UI_HISTORY;
+	#endif
 
 	if (options.cheat)
 	{
@@ -2986,8 +3005,13 @@ static void setup_menu_init(void)
 #endif
 #endif
 
+	#ifndef MESS
 	menu_item[menu_total] = "Reset Game"; menu_action[menu_total++] = UI_RESET;
 	menu_item[menu_total] = "Return to Game"; menu_action[menu_total++] = UI_EXIT;
+	#else
+	menu_item[menu_total] = "Reset Machine"; menu_action[menu_total++] = UI_RESET;
+	menu_item[menu_total] = "Return to Machine"; menu_action[menu_total++] = UI_EXIT;
+	#endif
 	menu_item[menu_total] = 0; /* terminate array */
 }
 
@@ -3701,19 +3725,21 @@ int handle_user_interface(void)
 			osd_net_sync();
 #endif /* MAME_NET */
 			profiler_mark(PROFILER_VIDEO);
-			if (need_to_clear_bitmap || bitmap_dirty)
+			if (osd_skip_this_frame() == 0)
 			{
-				osd_clearbitmap(Machine->scrbitmap);
-				need_to_clear_bitmap = 0;
-				(*Machine->drv->vh_update)(Machine->scrbitmap,bitmap_dirty);
-				bitmap_dirty = 0;
-			}
+				if (need_to_clear_bitmap || bitmap_dirty)
+				{
+					osd_clearbitmap(Machine->scrbitmap);
+					need_to_clear_bitmap = 0;
+					(*Machine->drv->vh_update)(Machine->scrbitmap,bitmap_dirty);
+					bitmap_dirty = 0;
+				}
 #ifdef MAME_DEBUG
 /* keep calling vh_screenrefresh() while paused so we can stuff */
 /* debug code in there */
 (*Machine->drv->vh_update)(Machine->scrbitmap,bitmap_dirty);
-bitmap_dirty = 0;
 #endif
+			}
 			profiler_mark(PROFILER_END);
 
 			if (input_ui_pressed(IPT_UI_SNAPSHOT))

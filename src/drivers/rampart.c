@@ -107,7 +107,7 @@ static int opbase_override(int pc)
 		current_bank = bank_list[slapstic_tweak((pc - 0x140000) / 2)];
 
 		/* use a bogus ophw so that we will be called again on the next jump/ret */
-		ophw = 0x80;
+		catch_nextBranch();
 
 		/* compute the new ROM base */
 		OP_RAM = OP_ROM = &slapstic_base[current_bank] - 0x140000;
@@ -585,7 +585,7 @@ static void rampart_init(void)
 	slapstic_init(118);
 
 	/* set up some hacks to handle the slapstic accesses */
-	cpu_setOPbaseoverride(opbase_override);
+	cpu_setOPbaseoverride(0,opbase_override);
 
 	/* display messages */
 	atarigen_show_slapstic_message();

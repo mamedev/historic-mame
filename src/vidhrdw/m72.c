@@ -78,9 +78,6 @@ static void m72_get_bg_tile_info(int col,int row)
 	unsigned char attr = m72_videoram2[tile_index+1];
 	SET_TILE_INFO(2,m72_videoram2[tile_index] + ((attr & 0x3f) << 8),m72_videoram2[tile_index+2] & 0x0f)
 	tile_info.flags = TILE_FLIPYX((attr & 0xc0) >> 6);
-
-	tile_info.priority = (m72_videoram2[tile_index+2] & 0x80) >> 7;
-
 }
 
 static void m72_get_fg_tile_info(int col,int row)
@@ -92,6 +89,17 @@ static void m72_get_fg_tile_info(int col,int row)
 	tile_info.flags = TILE_FLIPYX((attr & 0xc0) >> 6);
 
 	tile_info.priority = (m72_videoram1[tile_index+2] & 0x80) >> 7;
+}
+
+static void dbreed_get_bg_tile_info(int col,int row)
+{
+	int tile_index = 4*(64*row+col);
+	unsigned char attr = m72_videoram2[tile_index+1];
+	SET_TILE_INFO(2,m72_videoram2[tile_index] + ((attr & 0x3f) << 8),m72_videoram2[tile_index+2] & 0x0f)
+	tile_info.flags = TILE_FLIPYX((attr & 0xc0) >> 6);
+
+	/* this seems to apply only to Dragon Breed, it breaks R-Type and Gallop */
+	tile_info.priority = (m72_videoram2[tile_index+2] & 0x80) >> 7;
 }
 
 static void rtype2_get_bg_tile_info(int col,int row)
@@ -157,7 +165,34 @@ static void hharry_get_fg_tile_info(int col,int row)
 
 int m72_vh_start(void)
 {
+	int i;
+
+
 	bg_tilemap = tilemap_create(m72_get_bg_tile_info,TILEMAP_OPAQUE,     8,8,64,64);
+	fg_tilemap = tilemap_create(m72_get_fg_tile_info,TILEMAP_TRANSPARENT,8,8,64,64);
+
+	m72_spriteram = malloc(spriteram_size);
+
+	if (!fg_tilemap || !bg_tilemap || !m72_spriteram)
+		return 1;
+
+	fg_tilemap->transparent_pen = 0;
+
+	memset(m72_spriteram,0,spriteram_size);
+
+	xadjust = 0;
+
+	/* improves bad gfx in nspirit (but this is not a complete fix, maybe there's a */
+	/* layer enalbe register */
+	for (i = 0;i < Machine->drv->total_colors;i++)
+		palette_change_color(i,0,0,0);
+
+	return 0;
+}
+
+int dbreed_vh_start(void)
+{
+	bg_tilemap = tilemap_create(dbreed_get_bg_tile_info,TILEMAP_OPAQUE,     8,8,64,64);
 	fg_tilemap = tilemap_create(m72_get_fg_tile_info,TILEMAP_TRANSPARENT,8,8,64,64);
 
 	m72_spriteram = malloc(spriteram_size);
@@ -571,7 +606,29 @@ static void draw_fg(struct osd_bitmap *bitmap,int priority)
 	draw_layer(bitmap,fg_tilemap,scrollx1,scrolly1,priority);
 }
 
+
 void m72_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	tilemap_set_clip(fg_tilemap,0);
+	tilemap_set_clip(bg_tilemap,0);
+
+	tilemap_update(bg_tilemap);
+	tilemap_update(fg_tilemap);
+
+	palette_init_used_colors();
+	mark_sprite_colors(m72_spriteram);
+	if (palette_recalc())
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+
+	tilemap_render(ALL_TILEMAPS);
+
+	draw_bg(bitmap,0);
+	draw_fg(bitmap,0);
+	draw_sprites(bitmap);
+	draw_fg(bitmap,1);
+}
+
+void dbreed_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	tilemap_set_clip(fg_tilemap,0);
 	tilemap_set_clip(bg_tilemap,0);

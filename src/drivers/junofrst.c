@@ -92,8 +92,6 @@ void tutankhm_flipscreen_w( int offset, int data );
 void tutankhm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-void tutankhm_init_machine(void);
-
 void junofrst_blitter_w( int offset, int data );
 
 void tutankhm_sh_irqtrigger_w(int offset,int data);
@@ -128,8 +126,6 @@ void junofrst_init_machine(void)
 	for (i=0;i<256;i++) {
 		JunoNibbleSwapTable[i] = (i>>4) | ((i & 0xF) << 4);
 	}
-
-	tutankhm_init_machine();
 }
 
 

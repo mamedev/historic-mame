@@ -9,7 +9,7 @@
 	To access test mode, reset with both start buttons held.
 
 	Coins are controlled by the sound cpu, there is a small kludge to allow
-	the game to coin up if sound is off.  (Gives 9 coins though!)
+	the game to coin up if sound is off.
 
 	Raiden (Alternate) has a different memory map, and different fix char
 	layer memory layout!
@@ -46,7 +46,7 @@ static int raiden_soundcpu_r(int offset)
 	orig=sound_shared_ram[offset];
 
 	/* Small kludge to allows coins with sound off */
-	if (offset==4 && (!Machine->sample_rate) && (readinputport(4)&1)!=1) return 1;
+	if (offset==4 && (!Machine->sample_rate) && (readinputport(4)&1)==1) return 1;
 
 	switch (offset)
 	{/* misusing $d006 as a latch...but it works !*/
@@ -348,7 +348,6 @@ static void YM3812_irqhandler(int linestate)
 {
 	cpu_irq_line_vector_w(2,0,0xd7); /* RST 10h */
 	cpu_set_irq_line(2,0,linestate);
-	//cpu_cause_interrupt(2,0xd7); /* RST 10h */
 }
 
 static struct YM3812interface ym3812_interface =
@@ -378,27 +377,27 @@ static struct MachineDriver raiden_machine_driver =
 	{
 		{
 			CPU_V30, /* NEC V30 CPU */
-			14000000, /* 10MHz, but cycle counts are wrong in the core */
+			18000000, /* 18MHz?, the old value of 10MHz is certainly wrong */
 			0,
 			readmem,writemem,0,0,
 			raiden_interrupt,1
 		},
 		{
 			CPU_V30, /* NEC V30 CPU */
-			14000000, /* 10MHz, but cycle counts are wrong in the core */
+			18000000, /* 18MHz?, the old value of 10MHz is certainly wrong */
 			3,
 			sub_readmem,sub_writemem,0,0,
 			raiden_interrupt,1
 		},
 		{
-			CPU_Z80 | CPU_AUDIO_CPU, /* Don't remove the CPU_AUDIO_CPU :P */
-			4000000, /* Although it controls coins, there is a free play dipswitch */
+			CPU_Z80 | CPU_AUDIO_CPU, /* Also controls coins */
+			4000000,
 			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION*2,	/* frames per second, vblank duration */
 	120,	/* CPU interleave  */
 	0,
 
@@ -408,7 +407,7 @@ static struct MachineDriver raiden_machine_driver =
 	2048, 2048,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
 	0,
 	raiden_vh_start,
 	0,
@@ -488,10 +487,10 @@ static struct MachineDriver raidena_machine_driver =
 
 ROM_START( raiden_rom )
 	ROM_REGION(0x100000) /* Region 0 - v30 main cpu */
-	ROM_LOAD_GFX_EVEN( "rai1.bin",   0x0a0000, 0x10000, 0xa4b12785 )
-	ROM_LOAD_GFX_ODD ( "rai2.bin",   0x0a0000, 0x10000, 0x17640bd5 )
-	ROM_LOAD_GFX_EVEN( "rai3.bin",   0x0c0000, 0x20000, 0x9d735bf5 )
-	ROM_LOAD_GFX_ODD ( "rai4.bin",   0x0c0000, 0x20000, 0x8d184b99 )
+	ROM_LOAD_V20_ODD ( "rai1.bin",   0x0a0000, 0x10000, 0xa4b12785 )
+	ROM_LOAD_V20_EVEN( "rai2.bin",   0x0a0000, 0x10000, 0x17640bd5 )
+	ROM_LOAD_V20_ODD ( "rai3.bin",   0x0c0000, 0x20000, 0x9d735bf5 )
+	ROM_LOAD_V20_EVEN( "rai4.bin",   0x0c0000, 0x20000, 0x8d184b99 )
 
 	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - Graphics */
 	ROM_LOAD( "rai9.bin",     0x000000, 0x08000, 0x1922b25e ) /* chars */
@@ -505,8 +504,8 @@ ROM_START( raiden_rom )
 	ROM_LOAD( "rai6.bin", 0x000000, 0x10000, 0x723a483b )
 
 	ROM_REGION(0x100000) /* Region 3 - v30 sub cpu */
-	ROM_LOAD_GFX_EVEN( "rai5.bin",   0x0c0000, 0x20000, 0x7aca6d61 )
-	ROM_LOAD_GFX_ODD ( "rai6a.bin",  0x0c0000, 0x20000, 0xe3d35cc2 )
+	ROM_LOAD_V20_ODD ( "rai5.bin",   0x0c0000, 0x20000, 0x7aca6d61 )
+	ROM_LOAD_V20_EVEN( "rai6a.bin",  0x0c0000, 0x20000, 0xe3d35cc2 )
 
 	ROM_REGION(0x10000)	 /* Region 4 - ADPCM samples */
 	ROM_LOAD( "rai7.bin", 0x000000, 0x10000, 0x8f927822 )
@@ -514,8 +513,8 @@ ROM_END
 
 ROM_START(raidena_rom)
 	ROM_REGION(0x100000) /* Region 0 - v20 main cpu */
-	ROM_LOAD_GFX_EVEN( "rai1.bin",     0x0a0000, 0x10000, 0xa4b12785 )
-	ROM_LOAD_GFX_ODD ( "rai2.bin",     0x0a0000, 0x10000, 0x17640bd5 )
+	ROM_LOAD_V20_ODD ( "rai1.bin",     0x0a0000, 0x10000, 0xa4b12785 )
+	ROM_LOAD_V20_EVEN( "rai2.bin",     0x0a0000, 0x10000, 0x17640bd5 )
 //	ROM_LOAD_GFX_EVEN( "raiden03.rom", 0x0c0000, 0x20000, 0xffffffff )
 //	ROM_LOAD_GFX_ODD ( "raiden04.rom", 0x0c0000, 0x20000, 0xffffffff )
 
@@ -535,8 +534,8 @@ ROM_START(raidena_rom)
 	ROM_REGION(0x100000) /* Region 3 - v20 sub cpu */
 //	ROM_LOAD_GFX_EVEN( "raiden05.rom",   0x0c0000, 0x20000, 0xffffffff )
 //	ROM_LOAD_GFX_ODD ( "raiden06.rom",   0x0c0000, 0x20000, 0xffffffff )
-	ROM_LOAD_GFX_EVEN( "rai5.bin",   0x0c0000, 0x20000, 0x7aca6d61 )
-	ROM_LOAD_GFX_ODD ( "rai6a.bin",  0x0c0000, 0x20000, 0xe3d35cc2 )
+	ROM_LOAD_V20_ODD ( "rai5.bin",   0x0c0000, 0x20000, 0x7aca6d61 )
+	ROM_LOAD_V20_EVEN( "rai6a.bin",  0x0c0000, 0x20000, 0xe3d35cc2 )
 
 	ROM_REGION(0x10000)	 /* Region 4 - ADPCM samples */
 	ROM_LOAD( "rai7.bin", 0x000000, 0x10000, 0x8f927822 )

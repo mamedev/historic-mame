@@ -107,6 +107,7 @@ SOUNDS+=K053260@
 SOUNDS+=SEGAPCM@
 SOUNDS+=RF5C68@
 SOUNDS+=CEM3394@
+SOUNDS+=C140@
 endif
 
 
@@ -637,6 +638,12 @@ SOUNDDEFS += -DHAS_CEM3394=1
 SOUNDOBJS += obj/sound/cem3394.o
 endif
 
+SOUND=$(strip $(findstring C140@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_C140=1
+SOUNDOBJS += obj/sound/c140.o
+endif
+
 
 
 ifdef DEBUG
@@ -911,7 +918,7 @@ obj/toaplan.a: \
          obj/machine/slapfght.o obj/vidhrdw/slapfght.o obj/drivers/slapfght.o \
          obj/machine/twincobr.o obj/vidhrdw/twincobr.o \
          obj/drivers/twincobr.o obj/drivers/wardner.o \
-         obj/vidhrdw/toaplan1.o obj/drivers/zerowing.o \
+         obj/machine/toaplan1.o obj/vidhrdw/toaplan1.o obj/drivers/toaplan1.o \
          obj/vidhrdw/snowbros.o obj/drivers/snowbros.o \
 
 obj/kyugo.a: \
@@ -1053,7 +1060,7 @@ obj/konami.a: \
          obj/vidhrdw/xexex.o obj/drivers/xexex.o \
          obj/machine/simpsons.o obj/vidhrdw/simpsons.o obj/drivers/simpsons.o \
          obj/vidhrdw/vendetta.o obj/drivers/vendetta.o \
-         obj/drivers/twin16.o \
+         obj/vidhrdw/twin16.o obj/drivers/twin16.o \
          obj/vidhrdw/tmnt.o obj/drivers/tmnt.o \
          obj/vidhrdw/wecleman.o obj/drivers/wecleman.o \
 
@@ -1143,6 +1150,7 @@ obj/technos.a: \
          obj/vidhrdw/tagteam.o obj/drivers/tagteam.o \
          obj/vidhrdw/ssozumo.o obj/drivers/ssozumo.o \
          obj/vidhrdw/mystston.o obj/drivers/mystston.o \
+         obj/vidhrdw/bogeyman.o obj/drivers/bogeyman.o \
          obj/vidhrdw/matmania.o obj/drivers/matmania.o obj/machine/maniach.o \
          obj/vidhrdw/renegade.o obj/drivers/renegade.o \
          obj/vidhrdw/xain.o obj/drivers/xain.o \

@@ -28,7 +28,7 @@ static void mem_dump( void );
 #if LSB_FIRST
 	#define BYTE_XOR_BE(a) ((a) ^ 1)
 	#define BYTE_XOR_LE(a) (a)
-	#define BIG_DWORD_BE(x) (((x) >> 16) + ((x) << 16))
+	#define BIG_DWORD_BE(x) (((UINT32)(x) >> 16) + ((x) << 16))
 	#define BIG_DWORD_LE(x) (x)
  	/* GSL 980224 Shift values for bytes within a word, used by the misaligned word load/store code */
 	#define SHIFT0 16
@@ -119,7 +119,8 @@ static int bankreadoffset[HT_BANKMAX+1];
 static int bankwriteoffset[HT_BANKMAX+1];
 
 /* override OP base handler */
-static int (*setOPbasefunc)(int);
+static int (*setOPbasefunc[MAX_CPU])(int);
+static int (*OPbasefunc)(int);
 
 /* current cpu current hardware element map point */
 MHELE *cur_mrhard;
@@ -451,13 +452,13 @@ int initmemoryhandlers(void)
 	/* ASG 980121 -- allocate external memory */
 	if (!memory_allocate_ext ())
 		return 0;
-	setOPbasefunc = 0;
 
 	for( cpu = 0 ; cpu < cpu_gettotalcpu() ; cpu++ )
 	{
 		const struct MemoryReadAddress *_mra;
 		const struct MemoryWriteAddress *_mwa;
 
+		setOPbasefunc[cpu] = NULL;
 
 		ramptr[cpu] = Machine->memory_region[Machine->drv->cpu[cpu].memory_region];
 
@@ -837,6 +838,8 @@ void memorycontextswap(int activecpu)
 	cur_readport = readport[activecpu];
 	cur_writeport = writeport[activecpu];
 	cur_portmask = portmask[activecpu];
+
+	OPbasefunc = setOPbasefunc[activecpu];
 
 	/* op code memory pointer */
 	ophw = HT_RAM;
@@ -1890,9 +1893,9 @@ void cpu_setbankhandler_w(int bank,void (*handler)(int,int) )
 }
 
 /* cpu change op-code memory base */
-void cpu_setOPbaseoverride (int (*f)(int))
+void cpu_setOPbaseoverride (int cpu,int (*function)(int))
 {
-	setOPbasefunc = f;
+	setOPbasefunc[cpu] = function;
 }
 
 
@@ -1902,9 +1905,9 @@ void cpu_setOPbase16 (int pc)
 	MHELE hw;
 
 	/* ASG 970206 -- allow overrides */
-	if (setOPbasefunc)
+	if (OPbasefunc)
 	{
-		pc = setOPbasefunc (pc);
+		pc = OPbasefunc (pc);
 		if (pc == -1)
 			return;
 	}
@@ -1944,9 +1947,9 @@ void cpu_setOPbase16lew (int pc)
 	MHELE hw;
 
 	/* ASG 970206 -- allow overrides */
-	if (setOPbasefunc)
+	if (OPbasefunc)
 	{
-		pc = setOPbasefunc (pc);
+		pc = OPbasefunc (pc);
 		if (pc == -1)
 			return;
 	}
@@ -1986,9 +1989,9 @@ void cpu_setOPbase20 (int pc)
 	MHELE hw;
 
 	/* ASG 970206 -- allow overrides */
-	if (setOPbasefunc)
+	if (OPbasefunc)
 	{
-		pc = setOPbasefunc (pc);
+		pc = OPbasefunc (pc);
 		if (pc == -1)
 			return;
 	}
@@ -2036,9 +2039,9 @@ void cpu_setOPbase24 (int pc)
 	MHELE hw;
 
 	/* ASG 970206 -- allow overrides */
-	if (setOPbasefunc)
+	if (OPbasefunc)
 	{
-		pc = setOPbasefunc (pc);
+		pc = OPbasefunc (pc);
 		if (pc == -1)
 			return;
 	}
@@ -2080,9 +2083,9 @@ void cpu_setOPbase29 (int pc)    /* AJP 980803 */
 	pc = ((unsigned int) pc)>>3;
 
 	/* ASG 970206 -- allow overrides */
-	if (setOPbasefunc)
+	if (OPbasefunc)
 	{
-		pc = setOPbasefunc (pc);
+		pc = OPbasefunc (pc);
 		if (pc == -1)
 			return;
 	}

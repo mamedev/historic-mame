@@ -5,12 +5,11 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 unsigned char *bionicc_fgvideoram;
 unsigned char *bionicc_bgvideoram;
 unsigned char *bionicc_txvideoram;
-extern unsigned char *spriteram;
-extern int spriteram_size;
 
 static struct tilemap *tx_tilemap, *bg_tilemap, *fg_tilemap;
 static int flipscreen;
@@ -229,14 +228,14 @@ static void bionicc_draw_sprites( struct osd_bitmap *bitmap )
 
 	for (offs = spriteram_size-8;offs >= 0;offs -= 8)
 	{
-		int tile_number = READ_WORD(&spriteram[offs])&0x7ff;
+		int tile_number = READ_WORD(&buffered_spriteram[offs])&0x7ff;
 		if( tile_number!=0x7FF ){
-			int attr = READ_WORD(&spriteram[offs+2]);
+			int attr = READ_WORD(&buffered_spriteram[offs+2]);
 			int color = (attr&0x3C)>>2;
 			int flipx = attr&0x02;
 			int flipy = 0;
-			int sx= (signed short)READ_WORD(&spriteram[offs+6]);
-			int sy= (signed short)READ_WORD(&spriteram[offs+4]);
+			int sx= (signed short)READ_WORD(&buffered_spriteram[offs+6]);
+			int sy= (signed short)READ_WORD(&buffered_spriteram[offs+4]);
 			if(sy>512-16) sy-=512;
 			if (flipscreen)
 			{
@@ -267,9 +266,9 @@ void mark_sprite_colors( void )
 	for (offs = 0; offs < 0x500;offs += 8)
 	{
 
-		code = READ_WORD(&spriteram[offs]) & 0x7ff;
+		code = READ_WORD(&buffered_spriteram[offs]) & 0x7ff;
 		if( code != 0x7FF ) {
-			color = (READ_WORD(&spriteram[offs+2]) & 0x3c) >> 2;
+			color = (READ_WORD(&buffered_spriteram[offs+2]) & 0x3c) >> 2;
 			colmask[color] |= Machine->gfx[2]->pen_usage[code];
 		}
 	}
@@ -305,4 +304,12 @@ void bionicc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	bionicc_draw_sprites(bitmap);
 	tilemap_draw(bitmap,fg_tilemap,1);
 	tilemap_draw(bitmap,tx_tilemap,0);
+}
+
+void bionicc_eof_callback(void)
+{
+	/* Mish: Spriteram is always 1 frame ahead, suggesting buffering.  I can't
+		find a register to control this so I assume it happens automatically
+		every frame at the end of vblank */
+	buffer_spriteram_w(0,0);
 }

@@ -1512,7 +1512,7 @@ int m6803_execute(int cycles)
             case 0x89: adca_im(); break;
             case 0x8a: ora_im(); break;
             case 0x8b: adda_im(); break;
-            case 0x8c: cmpx_im(); break;
+            case 0x8c: cpx_im(); /* 6803 difference */ break;
             case 0x8d: bsr(); break;
             case 0x8e: lds_im(); break;
             case 0x8f: sts_im(); /* orthogonality */ break;
@@ -1528,7 +1528,7 @@ int m6803_execute(int cycles)
             case 0x99: adca_di(); break;
             case 0x9a: ora_di(); break;
             case 0x9b: adda_di(); break;
-            case 0x9c: cmpx_di(); break;
+            case 0x9c: cpx_di(); /* 6803 difference */ break;
             case 0x9d: jsr_di(); break;
             case 0x9e: lds_di(); break;
             case 0x9f: sts_di(); break;
@@ -1544,7 +1544,7 @@ int m6803_execute(int cycles)
             case 0xa9: adca_ix(); break;
             case 0xaa: ora_ix(); break;
             case 0xab: adda_ix(); break;
-            case 0xac: cmpx_ix(); break;
+            case 0xac: cpx_ix(); /* 6803 difference */ break;
             case 0xad: jsr_ix(); break;
             case 0xae: lds_ix(); break;
             case 0xaf: sts_ix(); break;
@@ -1560,7 +1560,7 @@ int m6803_execute(int cycles)
             case 0xb9: adca_ex(); break;
             case 0xba: ora_ex(); break;
             case 0xbb: adda_ex(); break;
-            case 0xbc: cmpx_ex(); break;
+            case 0xbc: cpx_ex(); /* 6803 difference */ break;
             case 0xbd: jsr_ex(); break;
             case 0xbe: lds_ex(); break;
             case 0xbf: sts_ex(); break;
@@ -1930,7 +1930,7 @@ int hd63701_execute(int cycles)
             case 0x89: adca_im(); break;
             case 0x8a: ora_im(); break;
             case 0x8b: adda_im(); break;
-            case 0x8c: cmpx_im(); break;
+            case 0x8c: cpx_im(); /* 6803 difference */ break;
             case 0x8d: bsr(); break;
             case 0x8e: lds_im(); break;
             case 0x8f: sts_im(); /* orthogonality */ break;
@@ -1946,7 +1946,7 @@ int hd63701_execute(int cycles)
             case 0x99: adca_di(); break;
             case 0x9a: ora_di(); break;
             case 0x9b: adda_di(); break;
-            case 0x9c: cmpx_di(); break;
+            case 0x9c: cpx_di(); /* 6803 difference */ break;
             case 0x9d: jsr_di(); break;
             case 0x9e: lds_di(); break;
             case 0x9f: sts_di(); break;
@@ -1962,7 +1962,7 @@ int hd63701_execute(int cycles)
             case 0xa9: adca_ix(); break;
             case 0xaa: ora_ix(); break;
             case 0xab: adda_ix(); break;
-            case 0xac: cmpx_ix(); break;
+            case 0xac: cpx_ix(); /* 6803 difference */ break;
             case 0xad: jsr_ix(); break;
             case 0xae: lds_ix(); break;
             case 0xaf: sts_ix(); break;
@@ -1978,7 +1978,7 @@ int hd63701_execute(int cycles)
             case 0xb9: adca_ex(); break;
             case 0xba: ora_ex(); break;
             case 0xbb: adda_ex(); break;
-            case 0xbc: cmpx_ex(); break;
+            case 0xbc: cpx_ex(); /* 6803 difference */ break;
             case 0xbd: jsr_ex(); break;
             case 0xbe: lds_ex(); break;
             case 0xbf: sts_ex(); break;

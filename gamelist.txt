@@ -97,6 +97,7 @@ command to list them.
 | Blockade             |  Yes   |  b/w   |Partl(1)|  n/a   |   No   | blockade |
 | Blood Bros.          |  Yes   |  Yes   |   No   |   No   |   No   | bloodbro |
 | Blue Print           |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | blueprnt |
+| Bogey Manor          |  Yes   |   No   |  Yes   |   No   |   No   | bobeyman |
 | Bomb Jack            |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | bombjack |
 | Bomb Jack Twin       |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | bjtwin   |
 | Boot Hill            |  Yes   |  b/w   | Yes(1) |  n/a   |   No   | boothill |
@@ -126,13 +127,14 @@ command to list them.
 | Challenger           |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | challeng |
 | Champion Baseball    |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | champbas |
 | Championship Sprint  |  Yes   |  Yes   |  Yes   |  Yes   |   No   | csprint  |
-| Changes              |  Yes   |  Yes   |  Yes   |   No   |  Yes   | changes  |
+| Changes              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | changes  |
 | Checkman             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | checkman |
 | Cheeky Mouse         |  Yes   |   No   |Partial |   No   |  Yes   | cheekyms |
 | Chelnov              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | chelnov  |
 | Cheyenne             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | cheyenne |
 | Chiller              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | chiller  |
 | Choplifter           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | chplft   |
+| Chuka Taisen         |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | chukatai |
 | Circus               |  Yes   |Overlay |Partial |  Yes   |   No   | circus   |
 | Circus Charlie       |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | circusc  |
 | City Connection      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | citycon  |
@@ -308,13 +310,14 @@ command to list them.
 | High Way Race        |  Yes   |  Yes   |  Yes   |   No   |  Yes   | hwrace   |
 | Hippodrome           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | hippodrm |
 | Hit 'n Miss          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | hitnmiss |
-| Hoccer               |  Yes   |  Yes   |  Yes   |   No   |  Yes   | hoccer   |
+| Hoccer               |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | hoccer   |
 | Hook                 |Partial.|  Yes   |   No   |   No   |   No   | hook     |
-| Hopper Robo          |  Yes   |  Yes   |  Yes   |   No   |  Yes   | hopprobo |
+| Hopper Robo          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | hopprobo |
 | Hot Chase            |  Yes   |  Yes   |  Yes   |   No   |   No   | hotchase |
 | Hot Shocker          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | hotshock |
 | Hunchback            |  Yes   |   No   |  Yes   |   No   |  Yes   | hunchbkd |
 | Hustle               |  Yes   |  b/w   |   No   |   No   |   No   | hustle   |
+| Hustler, The         |  Yes   |  Yes   |  Yes   |   No   |  Yes   | thehustl |
 | Hydra                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | hydra    |
 | Hyper Sports         |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | hyperspt |
 | I'm Sorry            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | imsorry  |
@@ -411,7 +414,7 @@ command to list them.
 | Mania Challenge      |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | maniach  |
 | Mappy                |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | mappy    |
 | Marble Madness       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | marble   |
-| Marine Boy           |  Yes   |  Yes   |  Yes   |   No   |  Yes   | marineb  |
+| Marine Boy           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | marineb  |
 | Mariner              |  Yes   |  Yes   |  Yes   |   No   |  Yes   | mariner  |
 | Mario Bros.          |  Yes   |  Yes   |Partl(1)|  Yes   |   No   | mario    |
 | Mars                 |  Yes   |  Yes   |  Yes   |   No   |   No   | mars     |
@@ -647,7 +650,7 @@ command to list them.
 | Spelunker II         |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | spelunk2 |
 | Spiders              |  Yes   |  Yes   |   No   |   No   |   No   | spiders  |
 | Splat                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | splat    |
-| Springer             |  Yes   |  Yes   |  Yes   |   No   |  Yes   | springer |
+| Springer             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | springer |
 | Sprint 1             |  Yes   | Maybe  |   No   |  n/a   |  n/a   | sprint1  |
 | Spy Hunter           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | spyhunt  |
 | S.R.D. Mission       |  Yes   |  Yes   |  Yes   |   No   |  Yes   | srdmissn |
@@ -740,13 +743,14 @@ command to list them.
 | Track & Field        |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | trackfld |
 | Tranquilizer Gun     |  Yes   |   No   |   No   |   No   |   No   | tranqgun |
 | Traverse USA         |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | travrusa |
+| Trio the Punch       |  Yes   |  Yes   |  Yes   |   No   |   No   | triothep |
 | Triple Punch         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | triplep  |
 | Trog                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | trog     |
 | Trojan               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | trojan   |
 | Tron                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | tron     |
 | Tropical Angel       |  Yes   |  Yes   |  Yes   |   No   |  Yes   | troangel |
 | Truxton              |  Yes   |  Yes   |  Yes   |   No   |   No   | truxton  |
-| Tumble Pop           |  Yes   |  Yes   |Partial |   No   |   No   | tumblep  |
+| Tumble Pop           |  Yes   |  Yes   |  Yes   |   No   |   No   | tumblep  |
 | Turbo                |   No   |   No   |   No   |   No   |   No   | turbo    |
 | Turbo Force          |  Yes   |  Yes   |  Yes   |   No   |   No   | turbofrc |
 | Turkey Shoot         |   No   |  Yes   |  Yes   |  Yes   |   No   | tshoot   |
@@ -1725,18 +1729,12 @@ Jackal ("jackal")
 =================
 Clones supported:
   Top Gunner ("topgunr")
+  Tokushu Butai Jackal ("jackalj")
   bootleg Top Gunner ("topgunbl")
 
 topgunbl also allows to rotate the gun turret with a rotary switch. This
-feature is not available in the two original sets.
-
-Known issues:
-- The high score table colors are probably not correct (all lines are white).
-- Sprites are not in sync with the scroll.
-- After game over, the first main logo screen is one line out of sync after
-  the scrolling is completed.
-- The Jackal gfx ROMs have some bad bits (look at the '0', for example)
-- One of the bootleg Top Gunner gfx ROMs seems to be bad as well.
+feature is not available in the original sets. In jackalj, the gun faces the
+direction you are moving. In the others, it always faces up.
 
 
 

@@ -32,11 +32,6 @@ void megazone_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
 
-void megazone_init_machine(void)
-{
-	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
-}
 
 int megazone_portA_r(int offset)
 {
@@ -385,7 +380,7 @@ static struct MachineDriver machine_driver =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
 	15,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	megazone_init_machine,
+	0,
 
 	/* video hardware */
 	36*8, 32*8, { 0*8, 36*8-1, 2*8, 30*8-1 },

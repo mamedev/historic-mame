@@ -345,10 +345,13 @@ static const unsigned char *neogeo_palette(const struct rectangle *clip)
 			else fullmode = 0;
 
 			sy = 0x200 - (t1 >> 7);
-			if (sy > 0x110) sy -= 0x200;
-			if (fullmode == 2 || (fullmode == 1 && rzy == 0xff))
+			if (clip->max_y - clip->min_y > 7)	/* kludge to improve the ssideki games */
 			{
-				while (sy < 0) sy += 2 * (rzy + 1);
+				if (sy > 0x110) sy -= 0x200;
+				if (fullmode == 2 || (fullmode == 1 && rzy == 0xff))
+				{
+					while (sy < 0) sy += 2 * (rzy + 1);
+				}
 			}
 			oy = sy;
 
@@ -425,7 +428,7 @@ static const unsigned char *neogeo_palette(const struct rectangle *clip)
 
 			if ( (tileatr>>8) != 0) // crap below zoomed sprite in nam1975 fix??
 									// it breaks OverTop radar so it can't be right
-			if (sy+15 >= clip->min_y && sy <= clip->max_y)
+			if (sy+yskip-1 >= clip->min_y && sy <= clip->max_y)
 			{
 				tileatr=tileatr>>8;
 				tileno %= no_of_tiles;
@@ -928,13 +931,16 @@ static void screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip
 	}
 	#endif
 
-	/* Palette swap occured after last frame but before this one */
-	if (palette_swap_pending) swap_palettes();
+    if (clip->max_y - clip->min_y > 8)	/* kludge to speed up raster effects */
+    {
+		/* Palette swap occured after last frame but before this one */
+		if (palette_swap_pending) swap_palettes();
 
-	/* Do compressed palette stuff */
-	neogeo_palette(clip);
+		/* Do compressed palette stuff */
+		neogeo_palette(clip);
 
-	fillbitmap(bitmap,Machine->pens[4095],clip);
+		fillbitmap(bitmap,Machine->pens[4095],clip);
+	}
 
 #ifdef NEO_DEBUG
 if (!dotiles) { 					/* debug */
@@ -972,10 +978,13 @@ if (!dotiles) { 					/* debug */
 			else fullmode = 0;
 
 			sy = 0x200 - (t1 >> 7);
-			if (sy > 0x110) sy -= 0x200;
-			if (fullmode == 2 || (fullmode == 1 && rzy == 0xff))
+			if (clip->max_y - clip->min_y > 7)	/* kludge to improve the ssideki games */
 			{
-				while (sy < 0) sy += 2 * (rzy + 1);
+				if (sy > 0x110) sy -= 0x200;
+				if (fullmode == 2 || (fullmode == 1 && rzy == 0xff))
+				{
+					while (sy < 0) sy += 2 * (rzy + 1);
+				}
 			}
 			oy = sy;
 
@@ -1094,8 +1103,8 @@ if (!dotiles) { 					/* debug */
 	pen_usage=gfx->pen_usage;
 
 	/* Character foreground */
- 	for (y=0;y<32;y++) {
- 		for (x=0;x<40;x++) {
+	for (y=clip->min_y/8; y<=clip->max_y/8; y++) {
+		for (x=0; x<40; x++) {
 
   			int byte1 = (READ_WORD(&vidram[0xE000 + 2*(y + 32*x)]));
   			int byte2 = byte1 >> 12;
@@ -1249,4 +1258,7 @@ if (errorlog) fprintf(errorlog,"refresh %d-%d\n",clip.min_y,clip.max_y);
 
 void neogeo_vh_raster_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
+    /* Palette swap occured after last frame but before this one */
+    if (palette_swap_pending) swap_palettes();
+    palette_recalc();
 }

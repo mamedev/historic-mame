@@ -166,7 +166,7 @@ void cpu_setOPbase20(int pc);
 void cpu_setOPbase21(int pc);
 void cpu_setOPbase24(int pc);
 void cpu_setOPbase29(int pc);  /* AJP 980803 */
-void cpu_setOPbaseoverride (int (*f)(int));
+void cpu_setOPbaseoverride(int cpu,int (*function)(int));
 
 /* ----- memory setup function ----- */
 int initmemoryhandlers(void);
@@ -240,6 +240,9 @@ extern void cpu_setbankhandler_w(int bank,void (*handler)(int,int) );
 #define change_pc20(pc) {if(cur_mrhard[(pc)>>(ABITS2_20+ABITS_MIN_20)]!=ophw)cpu_setOPbase20(pc);}
 #define change_pc24(pc) {if(cur_mrhard[(pc)>>(ABITS2_24+ABITS_MIN_24)]!=ophw)cpu_setOPbase24(pc);}
 #define change_pc29(pc) {if(cur_mrhard[((unsigned int)pc)>>(ABITS2_29+ABITS_MIN_29+3)]!=ophw)cpu_setOPbase29(pc);}
+
+/* for use OPbaseOverride driver , request override callback to next cpu_setOPbase16 */
+#define catch_nextBranch() (ophw=0xff)
 
 #define change_pc change_pc16
 

@@ -1,10 +1,5 @@
 /***************************************************************************
 
-TODO:
-- fix hanging sprites on the title screen (e.g. if you insert a coin while
-  the car is passing by)
-
-
 Rally X memory map (preliminary)
 
 0000-3fff ROM
@@ -21,47 +16,13 @@ a000      IN0
 a080      IN1
 a100      DSW1
 
-*
- * IN0 (all bits are inverted)
- * bit 7 : ?
- * bit 6 : START 1
- * bit 5 : UP player 1
- * bit 4 : DOWN player 1
- * bit 3 : RIGHT player 1
- * bit 2 : LEFT player 1
- * bit 1 : SMOKE player 1
- * bit 0 : CREDIT
- *
-*
- * IN1 (all bits are inverted)
- * bit 7 : ?
- * bit 6 : START 2
- * bit 5 : UP player 2 (TABLE only)
- * bit 4 : DOWN player 2 (TABLE only)
- * bit 3 : RIGHT player 2 (TABLE only)
- * bit 2 : LEFT player 2 (TABLE only)
- * bit 1 : SMOKE player 2 (TABLE only)
- * bit 0 : COCKTAIL or UPRIGHT cabinet 1 = UPRIGHT
- *
-*
- * DSW1 (all bits are inverted)
- * bit 7 :\ 00 = free play      01 = 2 coins 1 play
- * bit 6 :/ 10 = 1 coin 2 play  11 = 1 coin 1 play
- * bit 5 :\ xxx = cars,rank:
- * bit 4 :| 000 = 2,A  001 = 3,A  010 = 1,B  011 = 2,B
- * bit 3 :/ 100 = 3,B  101 = 1,C  110 = 2,C  111 = 3,C
- * bit 2 :  0 = bonus at 10(1 car)/15(2 cars)/20(3 cars)  1 = bonus at 30/40/60
- * bit 1 :  1 = bonus at xxx points  0 = no bonus
- * bit 0 :  TEST
- *
-
 write:
 8014-801f sprites - 6 pairs: code (including flipping) and X position
 8814-881f sprites - 6 pairs: Y position and color
 8034-880c radar car indicators x position
 8834-883c radar car indicators y position
 a004-a00c radar car indicators color and x position MSB
-a080      watchdog reset?
+a080      watchdog reset
 a105      sound voice 1 waveform (nibble)
 a111-a113 sound voice 1 frequency (nibble)
 a115      sound voice 1 volume (nibble)
@@ -80,7 +41,8 @@ a182      ?
 a183      flip screen
 a184      1 player start lamp
 a185      2 players start lamp
-a186      ?
+a186      coin lockout
+a187	  coin counter
 
 I/O ports:
 OUT on port $0 sets the interrupt vector/instruction (the game uses both
@@ -102,6 +64,7 @@ extern int rallyx_radarram_size;
 extern unsigned char *rallyx_scrollx,*rallyx_scrolly;
 void rallyx_videoram2_w(int offset,int data);
 void rallyx_colorram2_w(int offset,int data);
+void rallyx_spriteram_w(int offset,int data);
 void rallyx_flipscreen_w(int offset,int data);
 void rallyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int rallyx_vh_start(void);
@@ -109,6 +72,11 @@ void rallyx_vh_stop(void);
 void rallyx_init(void);
 void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
+
+static void rallyx_coin_lockout_w(int offset, int data)
+{
+	coin_lockout_w(offset, data ^ 1);
+}
 
 static void rallyx_play_sound_w(int offset, int data)
 {
@@ -145,12 +113,13 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa100, 0xa11f, pengo_sound_w, &pengo_soundregs },
 	{ 0xa130, 0xa130, MWA_RAM, &rallyx_scrollx },
 	{ 0xa140, 0xa140, MWA_RAM, &rallyx_scrolly },
-	{ 0xa170, 0xa170, MWA_NOP },	/* ????? */
+	//{ 0xa170, 0xa170, MWA_NOP },	/* ????? */
 	{ 0xa180, 0xa180, rallyx_play_sound_w },
 	{ 0xa181, 0xa181, interrupt_enable_w },
 	{ 0xa183, 0xa183, rallyx_flipscreen_w },
 	{ 0xa184, 0xa185, osd_led_w },
-	{ 0xa186, 0xa186, MWA_NOP },
+	{ 0xa186, 0xa186, rallyx_coin_lockout_w },
+	{ 0xa187, 0xa187, coin_counter_w },
 	{ 0x8014, 0x801f, MWA_RAM, &spriteram, &spriteram_size },	/* these are here just to initialize */
 	{ 0x8814, 0x881f, MWA_RAM, &spriteram_2 },	/* the pointers. */
 	{ 0x8034, 0x803f, MWA_RAM, &rallyx_radarx, &rallyx_radarram_size },	/* ditto */

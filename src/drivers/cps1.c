@@ -3535,7 +3535,7 @@ static struct MachineDriver DRVNAME##_machine_driver =           \
 			ignore_interrupt,0                               \
 		}                                                        \
 	},                                                               \
-    60, 0,                      \
+    60, 3000,                      \
 	1,                                                               \
 	0,                                                               \
 									 \
@@ -3548,7 +3548,7 @@ static struct MachineDriver DRVNAME##_machine_driver =           \
 	0,                                                               \
 									 \
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,                      \
-	0,                                                               \
+	cps1_eof_callback,                                               \
 	cps1_vh_start,                                                   \
 	cps1_vh_stop,                                                    \
 	cps1_vh_screenrefresh,                                           \
@@ -3580,7 +3580,7 @@ static struct MachineDriver DRVNAME##_machine_driver =           \
 			ignore_interrupt,0                               \
 		}                                                        \
 	},                                                               \
-	60, 4000, /* wrong, but reduces jerkiness */                     \
+	60, 3000, 									                     \
 	1,                                                               \
 	0,                                                               \
 									 \
@@ -3593,7 +3593,7 @@ static struct MachineDriver DRVNAME##_machine_driver =           \
 	0,                                                               \
 									 \
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_16BIT, \
-	0,                                                               \
+	cps1_eof_callback,                                               \
 	cps1_vh_start,                                                   \
 	cps1_vh_stop,                                                    \
 	cps1_vh_screenrefresh,                                           \
@@ -3625,7 +3625,7 @@ static struct MachineDriver CPS1_DRVNAME##_machine_driver =            \
 			interrupt,1                               \
 	}                                                        \
 	},                                                               \
-	60, 4000, /* wrong, but reduces jerkiness */                     \
+	60, 3000, 									                     \
 	1,                                                               \
 	0,                                                               \
 									 \
@@ -3638,7 +3638,7 @@ static struct MachineDriver CPS1_DRVNAME##_machine_driver =            \
 	0,                                                               \
 									 \
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,                      \
-	0,                                                               \
+	cps1_eof_callback,                                               \
 	cps1_vh_start,                                                   \
 	cps1_vh_stop,                                                    \
 	cps1_vh_screenrefresh,                                           \

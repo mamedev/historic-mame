@@ -1083,6 +1083,18 @@ INLINE void cmpx_im( void )
 	SET_NZ16(r); SET_V16(d,b.d,r);
 }
 
+/* $8c CPX immediate -**** (6803) */
+INLINE void cpx_im( void )
+{
+	UINT32 r,d;
+	PAIR b;
+	IMMWORD(b);
+	d = X;
+	r = d - b.d;
+	CLR_NZVC; SET_FLAGS16(d,b.d,r);
+}
+
+
 /* $8d BSR ----- */
 INLINE void bsr( void )
 {
@@ -1227,6 +1239,17 @@ INLINE void cmpx_di( void )
 	r = d - b.d;
 	CLR_NZV;
 	SET_NZ16(r); SET_V16(d,b.d,r);
+}
+
+/* $9c CPX direct -**** (6803) */
+INLINE void cpx_di( void )
+{
+	UINT32 r,d;
+	PAIR b;
+	DIRWORD(b);
+	d = X;
+	r = d - b.d;
+	CLR_NZVC; SET_FLAGS16(d,b.d,r);
 }
 
 /* $9d JSR direct ----- */
@@ -1375,6 +1398,17 @@ INLINE void cmpx_ix( void )
 	SET_NZ16(r); SET_V16(d,b.d,r);
 }
 
+/* $ac CPX indexed -**** (6803)*/
+INLINE void cpx_ix( void )
+{
+	UINT32 r,d;
+	PAIR b;
+	IDXWORD(b);
+	d = X;
+	r = d - b.d;
+	CLR_NZVC; SET_FLAGS16(d,b.d,r);
+}
+
 /* $ad JSR indexed ----- */
 INLINE void jsr_ix( void )
 {
@@ -1518,6 +1552,17 @@ INLINE void cmpx_ex( void )
 	r = d - b.d;
 	CLR_NZV;
 	SET_NZ16(r); SET_V16(d,b.d,r);
+}
+
+/* $bc CPX extended -**** (6803) */
+INLINE void cpx_ex( void )
+{
+	UINT32 r,d;
+	PAIR b;
+	EXTWORD(b);
+	d = X;
+	r = d - b.d;
+	CLR_NZVC; SET_FLAGS16(d,b.d,r);
 }
 
 /* $bd JSR extended ----- */

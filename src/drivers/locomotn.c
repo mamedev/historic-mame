@@ -454,18 +454,41 @@ ROM_START( locomotn_rom )
 	ROM_LOAD( "5.cpu",        0x4000, 0x1000, 0x64cf8dd6 )
 
 	ROM_REGION_DISPOSE(0x2100)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "c1.cpu",       0x0000, 0x1000, 0x5732eda9 )
+	ROM_LOAD( "5l_c1.bin",    0x0000, 0x1000, 0x5732eda9 )
 	ROM_LOAD( "c2.cpu",       0x1000, 0x1000, 0xc3035300 )
-	ROM_LOAD( "5.bpr",        0x2000, 0x0100, BADCRC( 0x21fb583f ) ) /* dots */
+	ROM_LOAD( "10g.bpr",      0x2000, 0x0100, BADCRC( 0x21fb583f ) ) /* dots - from the bootleg, wrong */
 
 	ROM_REGION(0x0160)	/* PROMs */
-	ROM_LOAD( "8b.cpu",       0x0000, 0x0020, 0x75b05da0 ) /* palette */
-	ROM_LOAD( "9d.cpu",       0x0020, 0x0100, 0xaa6cf063 ) /* loookup table */
-	ROM_LOAD( "1.bpr",        0x0120, 0x0020, 0x48c8f094 ) /* ?? */
-	ROM_LOAD( "4.bpr",        0x0140, 0x0020, 0xb8861096 ) /* ?? */
+	ROM_LOAD( "8b.bpr",       0x0000, 0x0020, 0x75b05da0 ) /* palette */
+	ROM_LOAD( "9d.bpr",       0x0020, 0x0100, 0xaa6cf063 ) /* loookup table */
+	ROM_LOAD( "7a.bpr",       0x0120, 0x0020, 0x48c8f094 ) /* ?? */
+	ROM_LOAD( "10a.bpr",      0x0140, 0x0020, 0xb8861096 ) /* ?? */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "s1.snd",       0x0000, 0x1000, 0xa1105714 )
+	ROM_LOAD( "1b_s1.bin",    0x0000, 0x1000, 0xa1105714 )
+ROM_END
+
+ROM_START( gutangtn_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "3d_1.bin",     0x0000, 0x1000, 0xe9757395 )
+	ROM_LOAD( "3e_2.bin",     0x1000, 0x1000, 0x11d21d2e )
+	ROM_LOAD( "3f_3.bin",     0x2000, 0x1000, 0x4d80f895 )
+	ROM_LOAD( "3h_4.bin",     0x3000, 0x1000, 0xaa258ddf )
+	ROM_LOAD( "3j_5.bin",     0x4000, 0x1000, 0x52aec87e )
+
+	ROM_REGION_DISPOSE(0x2100)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5l_c1.bin",    0x0000, 0x1000, 0x5732eda9 )
+	ROM_LOAD( "5m_c2.bin",    0x1000, 0x1000, 0x51c542fd )
+	ROM_LOAD( "10g.bpr",      0x2000, 0x0100, BADCRC( 0x21fb583f ) ) /* dots - from the bootleg, wrong */
+
+	ROM_REGION(0x0160)	/* PROMs */
+	ROM_LOAD( "8b.bpr",       0x0000, 0x0020, 0x75b05da0 ) /* palette */
+	ROM_LOAD( "9d.bpr",       0x0020, 0x0100, 0xaa6cf063 ) /* loookup table */
+	ROM_LOAD( "7a.bpr",       0x0120, 0x0020, 0x48c8f094 ) /* ?? */
+	ROM_LOAD( "10a.bpr",      0x0140, 0x0020, 0xb8861096 ) /* ?? */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "1b_s1.bin",    0x0000, 0x1000, 0xa1105714 )
 ROM_END
 
 ROM_START( cottong_rom )
@@ -483,8 +506,8 @@ ROM_START( cottong_rom )
 	ROM_REGION(0x0160)	/* PROMs */
 	ROM_LOAD( "2.bpr",        0x0000, 0x0020, 0x26f42e6f ) /* palette */
 	ROM_LOAD( "3.bpr",        0x0020, 0x0100, 0x4aecc0c8 ) /* loookup table */
-	ROM_LOAD( "1.bpr",        0x0120, 0x0020, 0x48c8f094 ) /* ?? */
-	ROM_LOAD( "4.bpr",        0x0140, 0x0020, 0xb8861096 ) /* ?? */
+	ROM_LOAD( "7a.bpr",       0x0120, 0x0020, 0x48c8f094 ) /* ?? */
+	ROM_LOAD( "10a.bpr",      0x0140, 0x0020, 0xb8861096 ) /* ?? */
 
 	ROM_REGION(0x10000) /* 64k for the audio CPU */
 	ROM_LOAD( "c7",           0x0000, 0x1000, 0x3d83f6d3 )
@@ -702,6 +725,32 @@ struct GameDriver locomotn_driver =
 	0,
 
 	locomotn_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	locomotn_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	locomotn_hiload, locomotn_hisave
+};
+
+struct GameDriver gutangtn_driver =
+{
+	__FILE__,
+	&locomotn_driver,
+	"gutangtn",
+	"Guttong Gottong",
+	"1982",
+	"Konami (Sega license)",
+	"Nicola Salmoria\nKevin Klopp (color info)",
+	0,
+	&locomotn_machine_driver,
+	0,
+
+	gutangtn_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

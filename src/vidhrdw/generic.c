@@ -17,6 +17,8 @@ unsigned char *colorram;
 unsigned char *spriteram;	/* not used in this module... */
 unsigned char *spriteram_2;	/* ... */
 unsigned char *spriteram_3;	/* ... */
+unsigned char *buffered_spriteram;	/* not used in this module... */
+unsigned char *buffered_spriteram_2;	/* ... */
 int spriteram_size;	/* ... here just for convenience */
 int spriteram_2_size;	/* ... here just for convenience */
 int spriteram_3_size;	/* ... here just for convenience */
@@ -154,4 +156,67 @@ int spriteram_2_r(int offset)
 void spriteram_2_w(int offset,int data)
 {
 	spriteram_2[offset] = data;
+}
+
+/* Mish:  171099
+
+	'Buffered spriteram' is where the graphics hardware draws the sprites
+from private ram that the main CPU cannot access.  The main CPU typically
+prepares sprites for the next frame in it's own sprite ram as the graphics
+hardware renders sprites for the current frame from private ram.  Main CPU
+sprite ram is usually copied across to private ram by setting some flag
+in the VBL interrupt routine.
+
+	The reason for this is to avoid sprite flicker or lag - if a game
+is unable to prepare sprite ram within a frame (for example, lots of sprites
+on screen) then it doesn't trigger the buffering hardware - instead the
+graphics hardware will use the sprites from the last frame. An example is
+Dark Seal - the buffer flag is only written to if the CPU is idle at the time
+of the VBL interrupt.  If the buffering is not emulated the sprites flicker
+at busy scenes.
+
+	Some games seem to use buffering because of hardware constraints -
+Capcom games (Cps1, Last Duel, etc) render spriteram _1 frame ahead_ and
+buffer this spriteram at the end of a frame, so the _next_ frame must be drawn
+from the buffer.  Presumably the graphics hardware and the main cpu cannot
+share the same spriteram for whatever reason.
+
+	Sprite buffering & Mame:
+
+	To use sprite buffering in a driver use VIDEO_BUFFERS_SPRITERAM in the
+machine driver.  This will automatically create an area for buffered spriteram
+equal to the size of normal spriteram.
+
+	Spriteram size _must_ be declared in the memory map:
+
+	{ 0x120000, 0x1207ff, MWA_BANK2, &spriteram, &spriteram_size },
+
+	Then the video driver must draw the sprites from the buffered_spriteram
+pointer.  The function buffer_spriteram_w() is used to simulate hardware
+which buffers the spriteram from a memory location write.  The function
+buffer_spriteram(unsigned char *ptr, int length) can be used where
+more control is needed over what is buffered.
+
+	For examples see darkseal.c, contra.c, lastduel.c, bionicc.c etc.
+
+*/
+
+void buffer_spriteram_w(int offset,int data)
+{
+	memcpy(buffered_spriteram,spriteram,spriteram_size);
+}
+
+void buffer_spriteram_2_w(int offset,int data)
+{
+	memcpy(buffered_spriteram_2,spriteram_2,spriteram_2_size);
+}
+
+void buffer_spriteram(unsigned char *ptr,int length)
+{
+	memcpy(buffered_spriteram,ptr,length);
+}
+
+void buffer_spriteram_2(unsigned char *ptr,int length)
+{
+	memcpy(buffered_spriteram_2,ptr,length);
 }

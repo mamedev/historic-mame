@@ -44,7 +44,6 @@
   Known Bug List
   ==============
   All games
-  * Sprite lag.
   * Large sprites don't exit smoothly on the left side of the screen (e.g. Car
     in Mega Man attract mode, cadillac in Cadillacs and Dinosaurs)
 
@@ -421,6 +420,7 @@ static unsigned char *cps1_scroll1;
 static unsigned char *cps1_scroll2;
 static unsigned char *cps1_scroll3;
 static unsigned char *cps1_obj;
+static unsigned char *cps1_buffered_obj;
 static unsigned char *cps1_palette;
 static unsigned char *cps1_other;
 static unsigned char *cps1_old_palette;
@@ -992,6 +992,13 @@ int cps1_vh_start(void)
 	   palette_change_color(i,0,0,0);
 	}
 
+	cps1_buffered_obj = malloc (cps1_obj_size);
+	if (!cps1_buffered_obj)
+	{
+		return -1;
+	}
+	memset(cps1_buffered_obj, 0x00, cps1_obj_size);
+
 	memset(cps1_gfxram, 0, cps1_gfxram_size);   /* Clear GFX RAM */
 	memset(cps1_output, 0, cps1_output_size);   /* Clear output ports */
 
@@ -1038,6 +1045,8 @@ void cps1_vh_stop(void)
 		osd_free_bitmap(cps1_scroll2_bitmap);
 	if (cps1_scroll2_old)
 		free(cps1_scroll2_old);
+	if (cps1_buffered_obj)
+		free(cps1_buffered_obj);
 	cps1_gfx_stop();
 }
 
@@ -1224,7 +1233,7 @@ void cps1_find_last_sprite(void)    /* Find the offset of last sprite */
 	/* Locate the end of table marker */
 	while (offset < cps1_obj_size)
 	{
-		int colour=READ_WORD(&cps1_obj[offset]);
+		int colour=READ_WORD(&cps1_buffered_obj[offset]);
 		if (colour == 0xff00)
 		{
 			/* Marker found. This is the last sprite. */
@@ -1244,13 +1253,13 @@ void cps1_palette_sprites(unsigned short *base)
 
 	for (i=cps1_last_sprite_offset; i>=0; i-=8)
 	{
-		int x=READ_WORD(&cps1_obj[i]);
-		int y=READ_WORD(&cps1_obj[i+2]);
+		int x=READ_WORD(&cps1_buffered_obj[i]);
+		int y=READ_WORD(&cps1_buffered_obj[i+2]);
 		if (x && y)
 		{
-			int colour=READ_WORD(&cps1_obj[i+6]);
+			int colour=READ_WORD(&cps1_buffered_obj[i+6]);
 			int col=colour&0x1f;
-			unsigned int code=READ_WORD(&cps1_obj[i+4]);
+			unsigned int code=READ_WORD(&cps1_buffered_obj[i+4]);
 			if (cps1_game_config->kludge == 7)
 			{
 			       code += 0x4000;
@@ -1343,16 +1352,16 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 {
     const int mask=0x7fff;
 	int i;
-
+//mish
 	/* Draw the sprites */
 	for (i=cps1_last_sprite_offset; i>=0; i-=8)
 	{
-		int x=READ_WORD(&cps1_obj[i]);
-		int y=READ_WORD(&cps1_obj[i+2]);
+		int x=READ_WORD(&cps1_buffered_obj[i]);
+		int y=READ_WORD(&cps1_buffered_obj[i+2]);
 		if (x && y )
 		{
-			unsigned int code=READ_WORD(&cps1_obj[i+4]);
-			int colour=READ_WORD(&cps1_obj[i+6]);
+			unsigned int code=READ_WORD(&cps1_buffered_obj[i+4]);
+			int colour=READ_WORD(&cps1_buffered_obj[i+6]);
 			int col=colour&0x1f;
 
 			y &= 0x1ff;
@@ -1926,6 +1935,16 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (l2 == 0) cps1_render_high_layer(bitmap,l1);	/* overlay sprites */
 	cps1_render_layer(bitmap,l3,distort_scroll2);
 	if (l3 == 0) cps1_render_high_layer(bitmap,l2);	/* overlay sprites */
+}
+
+void cps1_eof_callback(void)
+{
+	/* Get video memory base registers */
+	cps1_get_video_base();
+
+	/* Mish: 181099: Buffer sprites for next frame - the hardware must do
+		this at the end of vblank */
+	memcpy(cps1_buffered_obj,cps1_obj,cps1_obj_size);
 }
 
 

@@ -10,6 +10,8 @@ static int sram_locked;
 static int sram_protection_hack;
 
 extern int neogeo_has_trackball;
+extern int neogeo_irq2type;
+
 
 /* MARTINEZ.F 990209 Calendar */
 extern int seconds;
@@ -186,6 +188,14 @@ void neogeo_onetime_init_machine(void)
 
 	/* Install custom memory handlers */
 	neogeo_custom_memory();
+
+
+	/* Flag how to handle IRQ2 raster effect */
+	/* 0=write 0,2   1=write2,0 */
+	if (!strcmp(Machine->gamedrv->name,"neocup98") ||
+		!strcmp(Machine->gamedrv->name,"ssideki3") ||
+		!strcmp(Machine->gamedrv->name,"ssideki4"))
+		neogeo_irq2type = 1;
 }
 
 /******************************************************************************/
@@ -292,7 +302,7 @@ NEO_CYCLE_R(fatfury3,0x9c50,0,								READ_WORD(&neogeo_ram[0x418c]))
 NEO_CYCLE_R(tophuntr,0x0ce0,0xffff,							READ_WORD(&neogeo_ram[0x008e]))
 NEO_CYCLE_R(savagere,0x056e,0,								READ_WORD(&neogeo_ram[0x8404]))
 NEO_CYCLE_R(aof2,    0x8c74,0,								READ_WORD(&neogeo_ram[0x8280]))
-NEO_CYCLE_R(ssideki2,0x7850,0xffff,							READ_WORD(&neogeo_ram[0x4292]))
+//NEO_CYCLE_R(ssideki2,0x7850,0xffff,							READ_WORD(&neogeo_ram[0x4292]))
 NEO_CYCLE_R(samsho2, 0x1432,0xffff,							READ_WORD(&neogeo_ram[0x0a30]))
 NEO_CYCLE_R(samsho3, 0x0858,0,								READ_WORD(&neogeo_ram[0x8408]))
 NEO_CYCLE_R(kof95,   0x39474,0xffff,						READ_WORD(&neogeo_ram[0xa784]))
@@ -615,7 +625,7 @@ static void neogeo_custom_memory(void)
 	if (!strcmp(Machine->gamedrv->name,"savagere")) install_mem_read_handler(0, 0x108404, 0x108405, savagere_cycle_r);
 //	if (!strcmp(Machine->gamedrv->name,"kof94"))    install_mem_read_handler(0, 0x10, 0x10, kof94_cycle_r);				// Can't do this I think. There seems to be too much code in the idle loop.
 	if (!strcmp(Machine->gamedrv->name,"aof2"))     install_mem_read_handler(0, 0x108280, 0x108281, aof2_cycle_r);
-	if (!strcmp(Machine->gamedrv->name,"ssideki2")) install_mem_read_handler(0, 0x104292, 0x104293, ssideki2_cycle_r);
+//	if (!strcmp(Machine->gamedrv->name,"ssideki2")) install_mem_read_handler(0, 0x104292, 0x104293, ssideki2_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"samsho2"))  install_mem_read_handler(0, 0x100a30, 0x100a31, samsho2_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"samsho3"))  install_mem_read_handler(0, 0x108408, 0x108409, samsho3_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"kof95"))    install_mem_read_handler(0, 0x10a784, 0x10a785, kof95_cycle_r);
@@ -652,7 +662,7 @@ static void neogeo_custom_memory(void)
 
 	/* AVDB cpu spins based on sound processor status */
 	if (!strcmp(Machine->gamedrv->name,"puzzledp")) install_mem_read_handler(1, 0xfeb1, 0xfeb1, cycle_v3_sr);
-	if (!strcmp(Machine->gamedrv->name,"ssideki2")) install_mem_read_handler(1, 0xfeb1, 0xfeb1, cycle_v3_sr);
+//	if (!strcmp(Machine->gamedrv->name,"ssideki2")) install_mem_read_handler(1, 0xfeb1, 0xfeb1, cycle_v3_sr);
 
 	if (!strcmp(Machine->gamedrv->name,"ssideki"))  install_mem_read_handler(1, 0xfef3, 0xfef3, ssideki_cycle_sr);
 	if (!strcmp(Machine->gamedrv->name,"aof"))      install_mem_read_handler(1, 0xfef3, 0xfef3, aof_cycle_sr);

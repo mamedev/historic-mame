@@ -17,9 +17,9 @@ int nemesis_characterram_size;
 unsigned char *nemesis_xscroll1,*nemesis_xscroll2,*nemesis_yscroll;
 unsigned char *nemesis_yscroll1,*nemesis_yscroll2;
 
-struct osd_bitmap *tmpbitmap2;
-struct osd_bitmap *tmpbitmap3;
-struct osd_bitmap *tmpbitmap4;
+static struct osd_bitmap *tmpbitmap2;
+static struct osd_bitmap *tmpbitmap3;
+static struct osd_bitmap *tmpbitmap4;
 
 static unsigned char *video1_dirty;	/* 0x800 chars - foreground */
 static unsigned char *video2_dirty;	/* 0x800 chars - background */
@@ -313,6 +313,8 @@ static void nemesis_drawgfx_zoomup(struct osd_bitmap *dest,const struct GfxEleme
 	int ex_count;
 	int ey_count;
 	int real_x;
+	int ysize;
+	int xsize;
 	const unsigned short *paldata;	/* ASG 980209 */
 	int transmask;
 
@@ -355,7 +357,6 @@ static void nemesis_drawgfx_zoomup(struct osd_bitmap *dest,const struct GfxEleme
 	if (Machine->orientation & ORIENTATION_FLIP_X)
 	{
 		sx = dest->width - gfx->width - sx;
-		flipx = !(flipx);
 
 		if (clip)
 		{
@@ -373,12 +374,10 @@ static void nemesis_drawgfx_zoomup(struct osd_bitmap *dest,const struct GfxEleme
 	if (Machine->orientation & ORIENTATION_FLIP_Y)
 	{
 		sy = dest->height - gfx->height - sy;
-		flipy = !(flipy);
 
 		if (clip)
 		{
 			int temp;
-
 
 			myclip.min_x = clip->min_x;
 			myclip.max_x = clip->max_x;
@@ -392,9 +391,11 @@ static void nemesis_drawgfx_zoomup(struct osd_bitmap *dest,const struct GfxEleme
 
 
 	/* check bounds */
+	xsize=gfx->width;
+	ysize=gfx->height;
 	/* Clipping currently done in code loop */
-	ex = sx + gfx->width-1;
-	ey = sy + gfx->height-1;
+	ex = sx + xsize -1;
+	ey = sy + ysize -1;
 /*	if (ex >= dest->width) ex = dest->width-1;
 	if (clip && ex > clip->max_x) ex = clip->max_x;
 	if (sx > ex) return;
@@ -420,26 +421,40 @@ static void nemesis_drawgfx_zoomup(struct osd_bitmap *dest,const struct GfxEleme
 
 	if (flipx)	/* X flip */
 	{
-		y=sy;
+		if (Machine->orientation & ORIENTATION_FLIP_Y)
+			y=sy + ysize -1;
+		else
+			y=sy;
 		dda_y=0x80;
 		ey_count=sy;
 		do
 		{
 			if(y>=clip->min_y && y<=clip->max_y)
 			{
-				bm  = dest->line[y]+sx;
-				sd = (gfx->gfxdata + start * gfx->line_modulo + gfx->width -1);
+				if (Machine->orientation & ORIENTATION_FLIP_X)
+				{
+					bm  = dest->line[y]+sx + xsize -1;
+					real_x=sx + xsize -1;
+				} else {
+					bm  = dest->line[y]+sx;
+					real_x=sx;
+				}
+				sd = (gfx->gfxdata + start * gfx->line_modulo + xsize -1);
 				dda_x=0x80;
 				ex_count=sx;
 				col = *(sd);
-				real_x=sx;
 				do
 				{
-					if(real_x>clip->max_x) break;
-					if(real_x>=clip->min_x)
+					if ((real_x<=clip->max_x) && (real_x>=clip->min_x))
 						if (col != transparent_color) *bm = paldata[col];
-					bm++;
-					real_x++;
+					if (Machine->orientation & ORIENTATION_FLIP_X)
+					{
+						bm--;
+						real_x--;
+					} else {
+						bm++;
+						real_x++;
+					}
 					dda_x-=scale;
 					if(dda_x<=0)
 					{
@@ -450,7 +465,10 @@ static void nemesis_drawgfx_zoomup(struct osd_bitmap *dest,const struct GfxEleme
 					}
 				} while(ex_count <= ex);
 			}
-			y++;
+			if (Machine->orientation & ORIENTATION_FLIP_Y)
+				y--;
+			else
+				y++;
 			dda_y-=scale;
 			if(dda_y<=0)
 			{
@@ -463,26 +481,40 @@ static void nemesis_drawgfx_zoomup(struct osd_bitmap *dest,const struct GfxEleme
 	}
 	else		/* normal */
 	{
-		y=sy;
+		if (Machine->orientation & ORIENTATION_FLIP_Y)
+			y=sy + ysize -1;
+		else
+			y=sy;
 		dda_y=0x80;
 		ey_count=sy;
 		do
 		{
 			if(y>=clip->min_y && y<=clip->max_y)
 			{
-				bm  = dest->line[y]+sx;
+				if (Machine->orientation & ORIENTATION_FLIP_X)
+				{
+					bm  = dest->line[y]+sx + xsize -1;
+					real_x=sx + xsize -1;
+				} else {
+					bm  = dest->line[y]+sx;
+					real_x=sx;
+				}
 				sd = (gfx->gfxdata + start * gfx->line_modulo);
 				dda_x=0x80;
 				ex_count=sx;
 				col = *(sd);
-				real_x=sx;
 				do
 				{
-					if(real_x>clip->max_x) break;
-					if(real_x>=clip->min_x)
+					if ((real_x<=clip->max_x) && (real_x>=clip->min_x))
 						if (col != transparent_color) *bm = paldata[col];
-					bm++;
-					real_x++;
+					if (Machine->orientation & ORIENTATION_FLIP_X)
+					{
+						bm--;
+						real_x--;
+					} else {
+						bm++;
+						real_x++;
+					}
 					dda_x-=scale;
 					if(dda_x<=0)
 					{
@@ -493,7 +525,10 @@ static void nemesis_drawgfx_zoomup(struct osd_bitmap *dest,const struct GfxEleme
 					}
 				} while(ex_count <= ex);
 			}
-			y++;
+			if (Machine->orientation & ORIENTATION_FLIP_Y)
+				y--;
+			else
+				y++;
 			dda_y-=scale;
 			if(dda_y<=0)
 			{
@@ -565,7 +600,6 @@ static void nemesis_drawgfx_zoomdown(struct osd_bitmap *dest,const struct GfxEle
 	if (Machine->orientation & ORIENTATION_FLIP_X)
 	{
 		sx = dest->width - gfx->width - sx;
-		flipx = !(flipx);
 
 		if (clip)
 		{
@@ -584,7 +618,6 @@ static void nemesis_drawgfx_zoomdown(struct osd_bitmap *dest,const struct GfxEle
 	if (Machine->orientation & ORIENTATION_FLIP_Y)
 	{
 		sy = dest->height - gfx->height - sy;
-		flipy = !(flipy);
 
 		if (clip)
 		{
@@ -604,11 +637,11 @@ static void nemesis_drawgfx_zoomdown(struct osd_bitmap *dest,const struct GfxEle
 	/* check bounds */
 	xsize=gfx->width;
 	ysize=gfx->height;
-	ex = sx + gfx->width-1;
+	ex = sx + xsize -1;
 	if (ex >= dest->width) ex = dest->width-1;
 	if (clip && ex > clip->max_x) ex = clip->max_x;
 	if (sx > ex) return;
-	ey = sy + gfx->height-1;
+	ey = sy + ysize -1;
 	if (ey >= dest->height) ey = dest->height-1;
 	if (clip && ey > clip->max_y) ey = clip->max_y;
 	if (sy > ey) return;
@@ -631,7 +664,10 @@ static void nemesis_drawgfx_zoomdown(struct osd_bitmap *dest,const struct GfxEle
 
 	if (flipx)	/* X flip */
 	{
-		y=sy;
+		if (Machine->orientation & ORIENTATION_FLIP_Y)
+			y=sy + ysize -1;
+		else
+			y=sy;
 		dda_y=0-scale/2;
 		for(ey_count=0;ey_count<ysize;ey_count++)
 		{
@@ -641,29 +677,43 @@ static void nemesis_drawgfx_zoomdown(struct osd_bitmap *dest,const struct GfxEle
 				dda_y-=scale;
 				if(y>=clip->min_y && y<=clip->max_y)
 				{
-					bm  = dest->line[y]+sx;
-					sd = (gfx->gfxdata + start * gfx->line_modulo + gfx->width -1);
+					if (Machine->orientation & ORIENTATION_FLIP_X)
+					{
+						bm  = dest->line[y]+sx + xsize -1;
+						real_x=sx + xsize -1;
+					} else {
+						bm  = dest->line[y]+sx;
+						real_x=sx;
+					}
+					sd = (gfx->gfxdata + start * gfx->line_modulo + xsize -1);
 					dda_x=0-scale/2;
-					real_x=sx;
 					for(ex_count=0;ex_count<xsize;ex_count++)
 					{
 						if(dda_x<0) dda_x+=0x80;
 						if(dda_x>=0)
 						{
 							dda_x-=scale;
-							if(real_x>clip->max_x) break;
-							if(real_x>=clip->min_x)
+							if ((real_x<=clip->max_x) && (real_x>=clip->min_x))
 							{
 								col = *(sd);
 								if (col != transparent_color) *bm = paldata[col];
 							}
-							bm++;
-							real_x++;
+							if (Machine->orientation & ORIENTATION_FLIP_X)
+							{
+								bm--;
+								real_x--;
+							} else {
+								bm++;
+								real_x++;
+							}
 						}
 						sd--;
 					}
 				}
-				y++;
+				if (Machine->orientation & ORIENTATION_FLIP_Y)
+					y--;
+				else
+					y++;
 			}
 			start+=dy;
 		}
@@ -671,7 +721,10 @@ static void nemesis_drawgfx_zoomdown(struct osd_bitmap *dest,const struct GfxEle
 	}
 	else		/* normal */
 	{
-		y=sy;
+		if (Machine->orientation & ORIENTATION_FLIP_Y)
+			y=sy + ysize -1;
+		else
+			y=sy;
 		dda_y=0-scale/2;
 		for(ey_count=0;ey_count<ysize;ey_count++)
 		{
@@ -681,29 +734,43 @@ static void nemesis_drawgfx_zoomdown(struct osd_bitmap *dest,const struct GfxEle
 				dda_y-=scale;
 				if(y>=clip->min_y && y<=clip->max_y)
 				{
-					bm  = dest->line[y]+sx;
+					if (Machine->orientation & ORIENTATION_FLIP_X)
+					{
+						bm  = dest->line[y]+sx + xsize -1;
+						real_x=sx + xsize -1;
+					} else {
+						bm  = dest->line[y]+sx;
+						real_x=sx;
+					}
 					sd = (gfx->gfxdata + start * gfx->line_modulo);
 					dda_x=0-scale/2;
-					real_x=sx;
 					for(ex_count=0;ex_count<xsize;ex_count++)
 					{
 						if(dda_x<0) dda_x+=0x80;
 						if(dda_x>=0)
 						{
 							dda_x-=scale;
-							if(real_x>clip->max_x) break;
-							if(real_x>=clip->min_x)
+							if ((real_x<=clip->max_x) && (real_x>=clip->min_x))
 							{
 								col = *(sd);
 								if (col != transparent_color) *bm = paldata[col];
 							}
-							bm++;
-							real_x++;
+							if (Machine->orientation & ORIENTATION_FLIP_X)
+							{
+								bm--;
+								real_x--;
+							} else {
+								bm++;
+								real_x++;
+							}
 						}
 						sd++;
 					}
 				}
-				y++;
+				if (Machine->orientation & ORIENTATION_FLIP_Y)
+					y--;
+				else
+					y++;
 			}
 			start+=dy;
 		}
@@ -940,8 +1007,7 @@ static void setup_palette(void)
 					{
 						decodechar(Machine->gfx[char_type],code,nemesis_characterram_gfx,
 								Machine->drv->gfxdecodeinfo[char_type].gfxlayout);
-						sprite_dirty[code] = 2;
-
+						sprite168_dirty[code] = 0;
 					}
 					break;
 				case 0x30:
@@ -1166,7 +1232,6 @@ void nemesis_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int xscroll[256],xscroll2[256],yscroll;
-	struct rectangle clip;
 
 	setup_palette();
 
@@ -1174,11 +1239,7 @@ void nemesis_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	setup_backgrounds();
 
 	/* screen flash */
-	clip.min_x=0;
-	clip.max_x=255;
-	clip.min_y=0;
-	clip.max_y=255;
-	fillbitmap(bitmap,READ_WORD(&paletteram[0x00]),&clip);
+	fillbitmap(bitmap,Machine->pens[READ_WORD(&paletteram[0x00])],&Machine->drv->visible_area);
 
 	/* Copy the background bitmap */
 	yscroll = -(READ_WORD(&nemesis_yscroll[0x300]) & 0xff);	/* used on nemesis level 2 */
@@ -1236,9 +1297,17 @@ void twinbee_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 	copyscrollbitmap(bitmap,tmpbitmap2,256,xscroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
-	Machine->orientation = ORIENTATION_SWAP_XY | ORIENTATION_FLIP_X;
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+		Machine->orientation ^= ORIENTATION_FLIP_X;
+	else
+		Machine->orientation ^= ORIENTATION_FLIP_Y;
+
 	draw_sprites(bitmap);
-	Machine->orientation = ORIENTATION_SWAP_XY;
+
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+		Machine->orientation ^= ORIENTATION_FLIP_X;
+	else
+		Machine->orientation ^= ORIENTATION_FLIP_Y;
 
 	copyscrollbitmap(bitmap,tmpbitmap3,256,xscroll2,1,&yscroll,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 	copyscrollbitmap(bitmap,tmpbitmap4,256,xscroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
@@ -1254,7 +1323,6 @@ void salamand_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,l;
 	int xscroll[256],yscroll[256],xscroll2[256],yscroll2[256];
-	struct rectangle clip;
 	int culumn_scroll = 0;
 
 	setup_palette();
@@ -1263,11 +1331,7 @@ void salamand_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	setup_backgrounds();
 
 	/* screen flash */
-	clip.min_x=0;
-	clip.max_x=255;
-	clip.min_y=0;
-	clip.max_y=255;
-	fillbitmap(bitmap,READ_WORD(&paletteram[0x00]),&clip);
+	fillbitmap(bitmap,Machine->pens[READ_WORD(&paletteram[0x00])],&Machine->drv->visible_area);
 
 	/* Kludge - check if we need row or column scroll */
 	if (READ_WORD(&nemesis_yscroll[0x780]) || READ_WORD(&nemesis_yscroll[0x790])) {

@@ -23,18 +23,12 @@ void mappy_init_machine(void)
 	/* Reset all flags */
 	credits = coin = start1 = start2 = 0;
 	interrupt_enable_1 = interrupt_enable_2 = 0;
-
-	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
 }
 
 void motos_init_machine(void)
 {
 	/* Reset all flags */
 	credits = coin = start1 = start2 = 0;
-
-	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
 }
 
 

@@ -673,6 +673,18 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
+#if (HAS_C140)
+	{
+		SOUND_C140,
+		"C140",
+		0,
+		0,
+		C140_sh_start,
+		C140_sh_stop,
+		0,
+		0
+	},
+#endif
 };
 
 

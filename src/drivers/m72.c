@@ -5,23 +5,25 @@ IREM M72 board
 driver by Nicola Salmoria
 protection information by Nao
 
-                                   Board  Working? Protected?
-R-Type                              M72      Y         N
-Battle Chopper / Mr. Heli           M72      Y         Y
-Ninja Spirit                        M72      Y         Y
-Image Fight                         M72      Y         Y
-Legend of Hero Tonma                M72      Y         Y
-X Multiply                          M74?     Y         Y
-Dragon Breed                        M81      Y         Y
-R-Type II                           M82      Y         N
-Major Title                         M84      Y         N
-Hammerin' Harry	/ Daiku no Gensan   M82*     Y         N
-Gallop - Armed Police Unit          M73?**   Y         N
-Pound for Pound                     M83?     N***      N
+                                   Board    Working? Protected?
+R-Type                              M72        Y         N
+Battle Chopper / Mr. Heli           M72        Y         Y
+Ninja Spirit                        M72        Y         Y
+Image Fight                         M72        Y         Y
+Legend of Hero Tonma                M72        Y         Y
+X Multiply                          M72(1)     Y         Y
+Dragon Breed                        M81        Y         Y
+R-Type II                           M82/M84(2) Y         N
+Major Title                         M84        Y         N
+Hammerin' Harry	/ Daiku no Gensan   M82(3)     Y         N
+Gallop - Armed Police Unit          M73?(4)    Y         N
+Pound for Pound                     M83?       N(5)      N
 
-* multiple versions supported, running on different hardware
-** there is also a M84 version of Gallop
-*** might be close to working, but gfx ROMs are missing
+(1) different addressing PALs, so different memory map
+(2) rtype2j has M84 written on the board, but it's the same hardware as rtype2
+(3) multiple versions supported, running on different hardware
+(4) there is also a M84 version of Gallop
+(5) might be close to working, but gfx ROMs are missing
 
 
 Notes:
@@ -36,6 +38,9 @@ Samples are missing in Gallop. The NMI handler for the sound CPU is just RETN, s
 the hardware has to be different. I also can't make a good sample start offset
 table.
 
+Maybe there is a layer enalbe register, e.g. nspirit shows (for an instant)
+incomplete screens with bad colors when you start a game.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -49,6 +54,7 @@ void m72_init_machine(void);
 void xmultipl_init_machine(void);
 int m72_interrupt(void);
 int m72_vh_start(void);
+int dbreed_vh_start(void);
 int rtype2_vh_start(void);
 int majtitle_vh_start(void);
 int hharry_vh_start(void);
@@ -71,6 +77,7 @@ void m72_spritectrl_w(int offset,int data);
 void hharry_spritectrl_w(int offset,int data);
 void hharryu_spritectrl_w(int offset,int data);
 void m72_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void dbreed_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void majtitle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -194,7 +201,10 @@ static unsigned char bchopper_code[CODE_LEN] =
 	0xc6,0x06,0x00,0x00,0xcb^0xff,	// mov [0000h], byte 0cbh ; retf : bypass protection check during the game
 	0x68,0x00,0xd0,				// push 0d000h
 	0x1f,						// pop ds
-	0xc6,0x06,0x70,0x16,0x77,	// mov [1670h], byte 077h	; mrheli only
+	// the following is for mrheli only, the game checks for
+	// "This game can only be played in Japan..." message in the video text buffer
+	// the message is nowhere to be found in the ROMs, so has to be displayed by the mcu
+	0xc6,0x06,0x70,0x16,0x77,	// mov [1670h], byte 077h
 	0xea,0x68,0x01,0x40,0x00	// jmp  0040:$0168
 };
 static unsigned char bchopper_crc[CRC_LEN] =  {	0x1a,0x12,0x5c,0x08, 0x84,0xb6,0x73,0xd1,
@@ -220,8 +230,11 @@ static unsigned char nspirit_code[CODE_LEN] =
 	0xc6,0x06,0x00,0x0b,0x49^0xff,	// mov [0b00h], byte 049h
 	0x68,0x00,0xd0,				// push 0d000h
 	0x1f,						// pop ds
-	0xc6,0x06,0x70,0x16,0x57,	// mov [1670h], byte 057h	; nspiritj only
-	0xc6,0x06,0x71,0x16,0x00,	// mov [1671h], byte 000h	; nspiritj only
+	// the following is for nspiritj only, the game checks for
+	// "This game can only be played in Japan..." message in the video text buffer
+	// the message is nowhere to be found in the ROMs, so has to be displayed by the mcu
+	0xc6,0x06,0x70,0x16,0x57,	// mov [1670h], byte 057h
+	0xc6,0x06,0x71,0x16,0x00,	// mov [1671h], byte 000h
 	0xea,0x00,0x00,0x40,0x00	// jmp  0040:$0000
 };
 static unsigned char nspirit_crc[CRC_LEN] =   {	0xfe,0x94,0x6e,0x4e, 0xc8,0x33,0xa7,0x2d,
@@ -251,6 +264,9 @@ static unsigned char imgfight_code[CODE_LEN] =
 	0xc6,0x06,0x23,0x09,0x47^0xff,	// mov [0923h], byte 047h
 	0x68,0x00,0xd0,				// push 0d000h
 	0x1f,						// pop ds
+	// the game checks for
+	// "This game can only be played in Japan..." message in the video text buffer
+	// the message is nowhere to be found in the ROMs, so has to be displayed by the mcu
 	0xc6,0x06,0xb0,0x1c,0x57,	// mov [1cb0h], byte 057h
 	0xea,0x00,0x00,0x40,0x00	// jmp  0040:$0000
 };
@@ -264,8 +280,8 @@ static unsigned char loht_code[CODE_LEN] =
 	0x1f,						// pop ds
 	0xc6,0x06,0x3c,0x38,0x47,	// mov [383ch], byte 047h
 	0xc6,0x06,0x3d,0x38,0x47,	// mov [383dh], byte 047h
-	0xc6,0x06,0x42,0x38,0x4d,	// mov [3842h], byte 04dh
-	0xc6,0x06,0x43,0x38,0x4d,	// mov [3843h], byte 04dh
+	0xc6,0x06,0x42,0x38,0x44,	// mov [3842h], byte 044h
+	0xc6,0x06,0x43,0x38,0x44,	// mov [3843h], byte 044h
 	0x68,0x00,0xb0,				// push 0b000h
 	0x1f,						// pop ds
 	0xc6,0x06,0x00,0x09,0x49^0xff,	// mov [0900h], byte 049h
@@ -808,7 +824,7 @@ INPUT_PORTS_START( rtype_input_ports )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", 0, 0 )
+	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
@@ -900,7 +916,7 @@ INPUT_PORTS_START( rtypej_input_ports )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", 0, 0 )
+	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
@@ -2048,9 +2064,9 @@ static struct MachineDriver dbreed_machine_driver =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	m72_vh_start,
+	dbreed_vh_start,
 	m72_vh_stop,
-	m72_vh_screenrefresh,
+	dbreed_vh_screenrefresh,
 
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
@@ -2708,6 +2724,36 @@ ROM_START( rtype2_rom )
 	ROM_LOAD( "ic14.4c",      0x00000, 0x20000, 0x637172d5 )
 ROM_END
 
+ROM_START( rtype2j_rom )
+	ROM_REGION(0x100000)
+	ROM_LOAD_V20_EVEN( "rt2-a-h0.54",  0x00000, 0x20000, 0x7857ccf6 )
+	ROM_LOAD_V20_ODD ( "rt2-a-l0.60",  0x00000, 0x20000, 0xcb22cd6e )
+	ROM_LOAD_V20_EVEN( "rt2-a-h1.53",  0x40000, 0x20000, 0x49e75d28 )
+	ROM_RELOAD_V20_EVEN(               0xc0000, 0x20000 )
+	ROM_LOAD_V20_ODD ( "rt2-a-l1.59",  0x40000, 0x20000, 0x12ec1676 )
+	ROM_RELOAD_V20_ODD (               0xc0000, 0x20000 )
+
+	ROM_REGION_DISPOSE(0x180000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic50.7s",      0x000000, 0x20000, 0xf3f8736e )	/* tiles */
+	ROM_LOAD( "ic51.7u",      0x020000, 0x20000, 0xb4c543af )
+	ROM_LOAD( "ic56.8s",      0x040000, 0x20000, 0x4cb80d66 )
+	ROM_LOAD( "ic57.8u",      0x060000, 0x20000, 0xbee128e0 )
+	ROM_LOAD( "ic65.9r",      0x080000, 0x20000, 0x2dc9c71a )
+	ROM_LOAD( "ic66.9u",      0x0a0000, 0x20000, 0x7533c428 )
+	ROM_LOAD( "ic63.9m",      0x0c0000, 0x20000, 0xa6ad67f2 )
+	ROM_LOAD( "ic64.9p",      0x0e0000, 0x20000, 0x3686d555 )
+	ROM_LOAD( "ic31.6l",      0x100000, 0x20000, 0x2cd8f913 )	/* sprites */
+	ROM_LOAD( "ic21.4l",      0x120000, 0x20000, 0x5033066d )
+	ROM_LOAD( "ic32.6m",      0x140000, 0x20000, 0xec3a0450 )
+	ROM_LOAD( "ic22.4m",      0x160000, 0x20000, 0xdb6176fc )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "ic17.4f",      0x0000, 0x10000, 0x73ffecb4 )
+
+	ROM_REGION(0x20000)	/* samples */
+	ROM_LOAD( "ic14.4c",      0x00000, 0x20000, 0x637172d5 )
+ROM_END
+
 ROM_START( majtitle_rom )
 	ROM_REGION(0x100000)
 	ROM_LOAD_V20_EVEN( "mt_m0.bin",    0x00000, 0x20000, 0xb9682c70 )
@@ -3063,7 +3109,7 @@ struct GameDriver imgfight_driver =
 	__FILE__,
 	0,
 	"imgfight",
-	"Image Fight",
+	"Image Fight (Japan)",
 	"1988",
 	"Irem",
 	"Nicola Salmoria",
@@ -3176,6 +3222,32 @@ struct GameDriver rtype2_driver =
 	0,
 
 	rtype2_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	rtype2_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+struct GameDriver rtype2j_driver =
+{
+	__FILE__,
+	&rtype2_driver,
+	"rtype2j",
+	"R-Type II (Japan)",
+	"1989",
+	"Irem",
+	"Nicola Salmoria",
+	0,
+	&rtype2_machine_driver,
+	0,
+
+	rtype2j_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

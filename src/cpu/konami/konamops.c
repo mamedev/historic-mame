@@ -150,9 +150,9 @@ INLINE void tst_di( void )
 /* $0E JMP direct ----- */
 INLINE void jmp_di( void )
 {
-	DIRECT;
-	PC = EA;
-	change_pc(PC);   /* HJB 990225 */
+    DIRECT;
+	PCD=EAD;
+	change_pc(PCD);
 }
 
 /* $0F CLR direct -0100 */
@@ -184,12 +184,12 @@ INLINE void sync( void )
 	/* SYNC stops processing instructions until an interrupt request happens. */
 	/* This doesn't require the corresponding interrupt to be enabled: if it */
 	/* is disabled, execution continues with the next instruction. */
-	konami.int_state |= KONAMI_SYNC;	 /* HJB 990227 */
+	konami.int_state |= KONAMI_SYNC;
 	CHECK_IRQ_LINES;
 	/* if KONAMI_SYNC has not been cleared by CHECK_IRQ_LINES,
 	 * stop execution until the interrupt lines change. */
-	if( konami.int_state & KONAMI_SYNC )
-		if (konami_ICount > 0) konami_ICount = 0;
+	if( (konami.int_state & KONAMI_SYNC) && konami_ICount > 0 )
+		konami_ICount = 0;
 }
 
 /* $14 ILLEGAL */
@@ -201,11 +201,11 @@ INLINE void lbra( void )
 {
 	IMMWORD(ea);
 	PC += EA;
-	change_pc(PC);	 /* ASG 971005 */
+	change_pc(PCD);
 
-	if ( EA == 0xfffd )  /* EHC 980508 speed up busy loop */
-		if ( konami_ICount > 0)
-			konami_ICount = 0;
+	/* EHC 980508 speed up busy loop */
+	if( EA == 0xfffd && konami_ICount > 0 )
+		konami_ICount = 0;
 }
 
 /* $17 LBSR relative ----- */
@@ -214,7 +214,7 @@ INLINE void lbsr( void )
 	IMMWORD(ea);
 	PUSHWORD(pPC);
 	PC += EA;
-	change_pc(PC);	 /* ASG 971005 */
+	change_pc(PCD);
 }
 
 /* $18 ILLEGAL */
@@ -255,7 +255,7 @@ INLINE void orcc( void )
 	UINT8 t;
 	IMMBYTE(t);
 	CC |= t;
-	CHECK_IRQ_LINES;	/* HJB 990116 */
+	CHECK_IRQ_LINES;
 }
 
 /* $1B ILLEGAL */
@@ -266,7 +266,7 @@ INLINE void andcc( void )
 	UINT8 t;
 	IMMBYTE(t);
 	CC &= t;
-	CHECK_IRQ_LINES;	/* HJB 990116 */
+	CHECK_IRQ_LINES;
 }
 
 /* $1D SEX inherent -**0- */
@@ -316,10 +316,10 @@ INLINE void bra( void )
 	UINT8 t;
 	IMMBYTE(t);
 	PC += SIGNED(t);
-	change_pc(PC);	 /* TS 971002 */
+	change_pc(PCD);
 	/* JB 970823 - speed up busy loops */
-	if( t == 0xfe )
-		if( konami_ICount > 0 ) konami_ICount = 0;
+	if( t == 0xfe && konami_ICount > 0 )
+		konami_ICount = 0;
 }
 
 /* $21 BRN relative ----- */
@@ -560,12 +560,12 @@ INLINE void puls( void )
 	if( t&0x02 ) { PULLBYTE(A);  konami_ICount -= 1; }
 	if( t&0x04 ) { PULLBYTE(B);  konami_ICount -= 1; }
 	if( t&0x08 ) { PULLBYTE(DP); konami_ICount -= 1; }
-	if( t&0x10 ) { PULLWORD(pX); konami_ICount -= 2; }
-	if( t&0x20 ) { PULLWORD(pY); konami_ICount -= 2; }
-	if( t&0x40 ) { PULLWORD(pU); konami_ICount -= 2; }
-	if( t&0x80 ) { PULLWORD(pPC); change_pc(PC); konami_ICount -= 2; }
+	if( t&0x10 ) { PULLWORD(XD); konami_ICount -= 2; }
+	if( t&0x20 ) { PULLWORD(YD); konami_ICount -= 2; }
+	if( t&0x40 ) { PULLWORD(UD); konami_ICount -= 2; }
+	if( t&0x80 ) { PULLWORD(PCD); change_pc(PCD); konami_ICount -= 2; }
 
-	/* HJB 990225: moved check after all PULLs */
+	/* check after all PULLs */
 	if( t&0x01 ) { CHECK_IRQ_LINES; }
 }
 
@@ -593,12 +593,12 @@ INLINE void pulu( void )
 	if( t&0x02 ) { PULUBYTE(A);  konami_ICount -= 1; }
 	if( t&0x04 ) { PULUBYTE(B);  konami_ICount -= 1; }
 	if( t&0x08 ) { PULUBYTE(DP); konami_ICount -= 1; }
-	if( t&0x10 ) { PULUWORD(pX); konami_ICount -= 2; }
-	if( t&0x20 ) { PULUWORD(pY); konami_ICount -= 2; }
-	if( t&0x40 ) { PULUWORD(pS); konami_ICount -= 2; }
-	if( t&0x80 ) { PULUWORD(pPC); change_pc(PC); konami_ICount -= 2; }
+	if( t&0x10 ) { PULUWORD(XD); konami_ICount -= 2; }
+	if( t&0x20 ) { PULUWORD(YD); konami_ICount -= 2; }
+	if( t&0x40 ) { PULUWORD(SD); konami_ICount -= 2; }
+	if( t&0x80 ) { PULUWORD(PCD); change_pc(PCD); konami_ICount -= 2; }
 
-	/* HJB 990225: moved check after all PULLs */
+	/* check after all PULLs */
 	if( t&0x01 ) { CHECK_IRQ_LINES; }
 }
 
@@ -607,8 +607,8 @@ INLINE void pulu( void )
 /* $39 RTS inherent ----- */
 INLINE void rts( void )
 {
-	PULLWORD(pPC);
-	change_pc(PC);	 /* TS 971002 */
+	PULLWORD(PCD);
+	change_pc(PCD);
 }
 
 /* $3A ABX inherent ----- */
@@ -620,22 +620,20 @@ INLINE void abx( void )
 /* $3B RTI inherent ##### */
 INLINE void rti( void )
 {
-	UINT8 t;
 	PULLBYTE(CC);
-	t = CC & CC_E;		/* HJB 990225: entire state saved? */
-	if(t)
+	if( CC & CC_E ) /* entire state saved? */
 	{
         konami_ICount -= 9;
 		PULLBYTE(A);
 		PULLBYTE(B);
 		PULLBYTE(DP);
-		PULLWORD(pX);
-		PULLWORD(pY);
-		PULLWORD(pU);
+		PULLWORD(XD);
+		PULLWORD(YD);
+		PULLWORD(UD);
 	}
-	PULLWORD(pPC);
-	change_pc(PC);		/* TS 971002 */
-	CHECK_IRQ_LINES;	/* HJB 990116 */
+	PULLWORD(PCD);
+	change_pc(PCD);
+	CHECK_IRQ_LINES;
 }
 
 /* $3C CWAI inherent ----1 */
@@ -658,11 +656,10 @@ INLINE void cwai( void )
 	PUSHBYTE(B);
 	PUSHBYTE(A);
 	PUSHBYTE(CC);
-	konami.int_state |= KONAMI_CWAI;	 /* HJB 990228 */
-    CHECK_IRQ_LINES;    /* HJB 990116 */
-	if( konami.int_state & KONAMI_CWAI )
-		if( konami_ICount > 0 )
-			konami_ICount = 0;
+	konami.int_state |= KONAMI_CWAI;
+	CHECK_IRQ_LINES;
+	if( (konami.int_state & KONAMI_CWAI) && konami_ICount > 0 )
+		konami_ICount = 0;
 }
 
 /* $3D MUL inherent --*-@ */
@@ -689,8 +686,8 @@ INLINE void swi( void )
 	PUSHBYTE(A);
 	PUSHBYTE(CC);
 	CC |= CC_IF | CC_II;	/* inhibit FIRQ and IRQ */
-	RM16( 0xfffa, &pPC );
-	change_pc(PC);		 /* TS 971002 */
+	PCD=RM16(0xfffa);
+	change_pc(PCD);
 }
 
 /* $103F SWI2 absolute indirect ----- */
@@ -705,8 +702,8 @@ INLINE void swi2( void )
 	PUSHBYTE(B);
 	PUSHBYTE(A);
     PUSHBYTE(CC);
-	RM16( 0xfff4, &pPC );
-	change_pc(PC);	/* TS 971002 */
+	PCD=RM16(0xfff4);
+	change_pc(PCD);
 }
 
 /* $113F SWI3 absolute indirect ----- */
@@ -721,8 +718,8 @@ INLINE void swi3( void )
 	PUSHBYTE(B);
 	PUSHBYTE(A);
     PUSHBYTE(CC);
-	RM16( 0xfff2, &pPC );
-	change_pc(PC);	/* TS 971002 */
+	PCD=RM16(0xfff2);
+	change_pc(PCD);
 }
 
 #if macintosh
@@ -961,8 +958,8 @@ INLINE void clrb( void )
 INLINE void neg_ix( void )
 {
 	UINT16 r,t;
-	t = RM(EA);
-	r=-t;
+	t = RM(EAD);
+	r = -t;
 	CLR_NZVC;
 	SET_FLAGS8(0,t,r);
 	WM(EAD,r);
@@ -976,7 +973,7 @@ INLINE void neg_ix( void )
 INLINE void com_ix( void )
 {
 	UINT8 t;
-	t = ~RM(EA);
+	t = ~RM(EAD);
 	CLR_NZV;
 	SET_NZ8(t);
 	SEC;
@@ -987,7 +984,7 @@ INLINE void com_ix( void )
 INLINE void lsr_ix( void )
 {
 	UINT8 t;
-	t=RM(EA);
+	t = RM(EAD);
 	CLR_NZC;
 	CC |= (t & CC_C);
 	t>>=1; SET_Z8(t);
@@ -1000,7 +997,7 @@ INLINE void lsr_ix( void )
 INLINE void ror_ix( void )
 {
 	UINT8 t,r;
-	t=RM(EA);
+	t = RM(EAD);
 	r = (CC & CC_C) << 7;
 	CLR_NZC;
 	CC |= (t & CC_C);
@@ -1012,7 +1009,7 @@ INLINE void ror_ix( void )
 INLINE void asr_ix( void )
 {
 	UINT8 t;
-	t=RM(EA);
+	t = RM(EAD);
 	CLR_NZC;
 	CC |= (t & CC_C);
 	t=(t&0x80)|(t>>=1);
@@ -1024,7 +1021,7 @@ INLINE void asr_ix( void )
 INLINE void asl_ix( void )
 {
 	UINT16 t,r;
-	t=RM(EA);
+	t = RM(EAD);
 	r = t << 1;
 	CLR_NZVC;
 	SET_FLAGS8(t,t,r);
@@ -1035,7 +1032,7 @@ INLINE void asl_ix( void )
 INLINE void rol_ix( void )
 {
 	UINT16 t,r;
-	t=RM(EA);
+	t = RM(EAD);
 	r = CC & CC_C;
 	r |= t << 1;
 	CLR_NZVC;
@@ -1047,7 +1044,7 @@ INLINE void rol_ix( void )
 INLINE void dec_ix( void )
 {
 	UINT8 t;
-	t = RM(EA) - 1;
+	t = RM(EAD) - 1;
 	CLR_NZV; SET_FLAGS8D(t);
 	WM(EAD,t);
 }
@@ -1058,7 +1055,7 @@ INLINE void dec_ix( void )
 INLINE void inc_ix( void )
 {
 	UINT8 t;
-	t = RM(EA) + 1;
+	t = RM(EAD) + 1;
 	CLR_NZV; SET_FLAGS8I(t);
 	WM(EAD,t);
 }
@@ -1067,7 +1064,7 @@ INLINE void inc_ix( void )
 INLINE void tst_ix( void )
 {
 	UINT8 t;
-	t = RM(EA);
+	t = RM(EAD);
 	CLR_NZV;
 	SET_NZ8(t);
 }
@@ -1075,8 +1072,8 @@ INLINE void tst_ix( void )
 /* $6E JMP indexed ----- */
 INLINE void jmp_ix( void )
 {
-	PC=EA;
-	change_pc(PC);   /* HJB 990225 */
+	PCD=EAD;
+	change_pc(PCD);
 }
 
 /* $6F CLR indexed -0100 */
@@ -1192,8 +1189,8 @@ INLINE void tst_ex( void )
 INLINE void jmp_ex( void )
 {
 	EXTENDED;
-	PC=EA;
-	change_pc(PC); /* HJB 990225 */
+	PCD=EAD;
+	change_pc(PCD);
 }
 
 /* $7F CLR extended -0100 */
@@ -1403,7 +1400,7 @@ INLINE void bsr( void )
 	IMMBYTE(t);
 	PUSHWORD(pPC);
 	PC += SIGNED(t);
-	change_pc(PC);	 /* TS 971002 */
+	change_pc(PCD);
 }
 
 /* $8E LDX (LDY) immediate -**0- */
@@ -1637,8 +1634,8 @@ INLINE void jsr_di( void )
 {
 	DIRECT;
 	PUSHWORD(pPC);
-	PC = EA;
-	change_pc(PC); /* TS 971002 */
+	PCD=EAD;
+	change_pc(PCD);
 }
 
 /* $9E LDX (LDY) direct -**0- */
@@ -1684,7 +1681,7 @@ INLINE void sty_di( void )
 INLINE void suba_ix( void )
 {
 	UINT16 t,r;
-	t = RM(EA);
+	t = RM(EAD);
 	r = A - t;
 	CLR_NZVC;
 	SET_FLAGS8(A,t,r);
@@ -1695,7 +1692,7 @@ INLINE void suba_ix( void )
 INLINE void cmpa_ix( void )
 {
 	UINT16 t,r;
-	t = RM(EA);
+	t = RM(EAD);
 	r = A - t;
 	CLR_NZVC;
 	SET_FLAGS8(A,t,r);
@@ -1705,7 +1702,7 @@ INLINE void cmpa_ix( void )
 INLINE void sbca_ix( void )
 {
 	UINT16	  t,r;
-	t = RM(EA);
+	t = RM(EAD);
 	r = A - t - (CC & CC_C);
 	CLR_NZVC;
 	SET_FLAGS8(A,t,r);
@@ -1717,7 +1714,7 @@ INLINE void subd_ix( void )
 {
 	UINT32 r,d;
 	PAIR b;
-	RM16(EAD,&b);
+	b.d=RM16(EAD);
 	d = D;
 	r = d - b.d;
 	CLR_NZVC;
@@ -1730,7 +1727,7 @@ INLINE void cmpd_ix( void )
 {
 	UINT32 r,d;
 	PAIR b;
-	RM16(EAD,&b);
+	b.d=RM16(EAD);
 	d = D;
 	r = d - b.d;
 	CLR_NZVC;
@@ -1742,7 +1739,7 @@ INLINE void cmpu_ix( void )
 {
 	UINT32 r;
 	PAIR b;
-	RM16(EAD,&b);
+	b.d=RM16(EAD);
 	r = U - b.d;
 	CLR_NZVC;
 	SET_FLAGS16(U,b.d,r);
@@ -1751,7 +1748,7 @@ INLINE void cmpu_ix( void )
 /* $a4 ANDA indexed -**0- */
 INLINE void anda_ix( void )
 {
-	A &= RM(EA);
+	A &= RM(EAD);
 	CLR_NZV;
 	SET_NZ8(A);
 }
@@ -1760,7 +1757,7 @@ INLINE void anda_ix( void )
 INLINE void bita_ix( void )
 {
 	UINT8 r;
-	r = A & RM(EA);
+	r = A & RM(EAD);
 	CLR_NZV;
 	SET_NZ8(r);
 }
@@ -1768,7 +1765,7 @@ INLINE void bita_ix( void )
 /* $a6 LDA indexed -**0- */
 INLINE void lda_ix( void )
 {
-	A = RM(EA);
+	A = RM(EAD);
 	CLR_NZV;
 	SET_NZ8(A);
 }
@@ -1784,7 +1781,7 @@ INLINE void sta_ix( void )
 /* $a8 EORA indexed -**0- */
 INLINE void eora_ix( void )
 {
-	A ^= RM(EA);
+	A ^= RM(EAD);
 	CLR_NZV;
 	SET_NZ8(A);
 }
@@ -1793,7 +1790,7 @@ INLINE void eora_ix( void )
 INLINE void adca_ix( void )
 {
 	UINT16 t,r;
-	t = RM(EA);
+	t = RM(EAD);
 	r = A + t + (CC & CC_C);
 	CLR_HNZVC;
 	SET_FLAGS8(A,t,r);
@@ -1804,7 +1801,7 @@ INLINE void adca_ix( void )
 /* $aA ORA indexed -**0- */
 INLINE void ora_ix( void )
 {
-	A |= RM(EA);
+	A |= RM(EAD);
 	CLR_NZV;
 	SET_NZ8(A);
 }
@@ -1813,7 +1810,7 @@ INLINE void ora_ix( void )
 INLINE void adda_ix( void )
 {
 	UINT16 t,r;
-	t = RM(EA);
+	t = RM(EAD);
 	r = A + t;
 	CLR_HNZVC;
 	SET_FLAGS8(A,t,r);
@@ -1826,7 +1823,7 @@ INLINE void cmpx_ix( void )
 {
 	UINT32 r,d;
 	PAIR b;
-	RM16(EAD,&b);
+	b.d=RM16(EAD);
 	d = X;
 	r = d - b.d;
 	CLR_NZVC;
@@ -1838,7 +1835,7 @@ INLINE void cmpy_ix( void )
 {
 	UINT32 r,d;
 	PAIR b;
-	RM16(EAD,&b);
+	b.d=RM16(EAD);
 	d = Y;
 	r = d - b.d;
 	CLR_NZVC;
@@ -1850,7 +1847,7 @@ INLINE void cmps_ix( void )
 {
 	UINT32 r,d;
 	PAIR b;
-	RM16(EAD,&b);
+	b.d=RM16(EAD);
 	d = S;
 	r = d - b.d;
 	CLR_NZVC;
@@ -1861,14 +1858,14 @@ INLINE void cmps_ix( void )
 INLINE void jsr_ix( void )
 {
 	PUSHWORD(pPC);
-	PC = EA;
-	change_pc(PC); /* HJB 990225 */
+	PCD=EAD;
+	change_pc(PCD);
 }
 
 /* $aE LDX (LDY) indexed -**0- */
 INLINE void ldx_ix( void )
 {
-	RM16(EAD,&pX);
+	X=RM16(EAD);
 	CLR_NZV;
 	SET_NZ16(X);
 }
@@ -1876,7 +1873,7 @@ INLINE void ldx_ix( void )
 /* $10aE LDY indexed -**0- */
 INLINE void ldy_ix( void )
 {
-	RM16(EAD,&pY);
+	Y=RM16(EAD);
 	CLR_NZV;
 	SET_NZ16(Y);
 }
@@ -2091,8 +2088,8 @@ INLINE void jsr_ex( void )
 {
 	EXTENDED;
 	PUSHWORD(pPC);
-	PC = EA;
-	change_pc(PC); /* HJB 990225 */
+	PCD=EAD;
+	change_pc(PCD);
 }
 
 /* $bE LDX (LDY) extended -**0- */
@@ -2507,7 +2504,7 @@ INLINE void sts_di( void )
 INLINE void subb_ix( void )
 {
 	UINT16	  t,r;
-	t = RM(EA);
+	t = RM(EAD);
 	r = B - t;
 	CLR_NZVC;
 	SET_FLAGS8(B,t,r);
@@ -2518,7 +2515,7 @@ INLINE void subb_ix( void )
 INLINE void cmpb_ix( void )
 {
 	UINT16	  t,r;
-	t = RM(EA);
+	t = RM(EAD);
 	r = B - t;
 	CLR_NZVC;
 	SET_FLAGS8(B,t,r);
@@ -2528,7 +2525,7 @@ INLINE void cmpb_ix( void )
 INLINE void sbcb_ix( void )
 {
 	UINT16	  t,r;
-	t = RM(EA);
+	t = RM(EAD);
 	r = B - t - (CC & CC_C);
 	CLR_NZVC;
 	SET_FLAGS8(B,t,r);
@@ -2540,7 +2537,7 @@ INLINE void addd_ix( void )
 {
 	UINT32 r,d;
 	PAIR b;
-	RM16(EAD,&b);
+	b.d=RM16(EAD);
 	d = D;
 	r = d + b.d;
 	CLR_NZVC;
@@ -2551,7 +2548,7 @@ INLINE void addd_ix( void )
 /* $e4 ANDB indexed -**0- */
 INLINE void andb_ix( void )
 {
-	B &= RM(EA);
+	B &= RM(EAD);
 	CLR_NZV;
 	SET_NZ8(B);
 }
@@ -2560,7 +2557,7 @@ INLINE void andb_ix( void )
 INLINE void bitb_ix( void )
 {
 	UINT8 r;
-	r = B & RM(EA);
+	r = B & RM(EAD);
 	CLR_NZV;
 	SET_NZ8(r);
 }
@@ -2568,7 +2565,7 @@ INLINE void bitb_ix( void )
 /* $e6 LDB indexed -**0- */
 INLINE void ldb_ix( void )
 {
-	B = RM(EA);
+	B = RM(EAD);
 	CLR_NZV;
 	SET_NZ8(B);
 }
@@ -2584,7 +2581,7 @@ INLINE void stb_ix( void )
 /* $e8 EORB indexed -**0- */
 INLINE void eorb_ix( void )
 {
-	B ^= RM(EA);
+	B ^= RM(EAD);
 	CLR_NZV;
 	SET_NZ8(B);
 }
@@ -2593,7 +2590,7 @@ INLINE void eorb_ix( void )
 INLINE void adcb_ix( void )
 {
 	UINT16 t,r;
-	t = RM(EA);
+	t = RM(EAD);
 	r = B + t + (CC & CC_C);
 	CLR_HNZVC;
 	SET_FLAGS8(B,t,r);
@@ -2604,16 +2601,16 @@ INLINE void adcb_ix( void )
 /* $eA ORB indexed -**0- */
 INLINE void orb_ix( void )
 {
-	B |= RM(EA);
+	B |= RM(EAD);
 	CLR_NZV;
 	SET_NZ8(B);
 }
 
-/* $eB ADDB indexed ***** */
+/* $eb ADDB indexed ***** */
 INLINE void addb_ix( void )
 {
 	UINT16 t,r;
-	t = RM(EA);
+	t = RM(EAD);
 	r = B + t;
 	CLR_HNZVC;
 	SET_FLAGS8(B,t,r);
@@ -2621,10 +2618,10 @@ INLINE void addb_ix( void )
 	B = r;
 }
 
-/* $eC LDD indexed -**0- */
+/* $ec LDD indexed -**0- */
 INLINE void ldd_ix( void )
 {
-	RM16(EAD,&pD);
+	D=RM16(EAD);
 	CLR_NZV; SET_NZ16(D);
 }
 
@@ -2639,7 +2636,7 @@ INLINE void std_ix( void )
 /* $eE LDU (LDS) indexed -**0- */
 INLINE void ldu_ix( void )
 {
-	RM16(EAD,&pU);
+	U=RM16(EAD);
 	CLR_NZV;
 	SET_NZ16(U);
 }
@@ -2647,7 +2644,7 @@ INLINE void ldu_ix( void )
 /* $10eE LDS indexed -**0- */
 INLINE void lds_ix( void )
 {
-	RM16(EAD,&pS);
+	S=RM16(EAD);
 	CLR_NZV;
 	SET_NZ16(S);
 	konami.int_state |= KONAMI_LDS;
@@ -3055,7 +3052,7 @@ INLINE void bset( void )
 
 	while( U != 0 ) {
 		t = A;
-		WM(X,t);
+		WM(XD,t);
 		X++;
 		U--;
 		konami_ICount -= 2;
@@ -3065,7 +3062,7 @@ INLINE void bset( void )
 INLINE void bset2( void )
 {
 	while( U != 0 ) {
-		WM16(X,&pD);
+		WM16(XD,&pD);
 		X += 2;
 		U--;
 		konami_ICount -= 3;
@@ -3129,7 +3126,7 @@ INLINE void incw_di( void )
 INLINE void incw_ix( void )
 {
 	PAIR t,r;
-	RM16(EA, &t);
+	t.d=RM16(EAD);
 	r = t;
 	++r.d;
 	CLR_NZV;
@@ -3174,7 +3171,7 @@ INLINE void decw_di( void )
 INLINE void decw_ix( void )
 {
 	PAIR t, r;
-	RM16(EA, &t);
+	t.d=RM16(EAD);
 	r = t;
 	--r.d;
 	CLR_NZV; SET_FLAGS16(t.d, t.d, r.d);
@@ -3213,7 +3210,7 @@ INLINE void tstw_ix( void )
 {
 	PAIR t;
 	CLR_NZV;
-	RM16(EA, &t);
+	t.d=RM16(EAD);
 	SET_NZ16(t.d);
 }
 
@@ -3242,7 +3239,7 @@ INLINE void lsrw_di( void )
 INLINE void lsrw_ix( void )
 {
 	PAIR t;
-	RM16(EA, &t);
+	t.d=RM16(EAD);
 	CLR_NZC;
 	CC |= (t.d & CC_C);
 	t.d >>= 1;
@@ -3279,7 +3276,7 @@ INLINE void rorw_di( void )
 INLINE void rorw_ix( void )
 {
 	PAIR t,r;
-	RM16(EA,&t);
+	t.d=RM16(EAD);
 	r.d = (CC & CC_C) << 15;
 	CLR_NZC;
 	CC |= (t.d & CC_C);
@@ -3317,7 +3314,7 @@ INLINE void asrw_di( void )
 INLINE void asrw_ix( void )
 {
 	PAIR t;
-	RM16(EA,&t);
+	t.d=RM16(EAD);
 	CLR_NZC;
 	CC |= (t.d & CC_C);
 	t.d = (t.d & 0x8000) | (t.d >> 1);
@@ -3352,7 +3349,7 @@ INLINE void aslw_di( void )
 INLINE void aslw_ix( void )
 {
 	PAIR t,r;
-	RM16(EA,&t);
+	t.d=RM16(EAD);
 	r.d = t.d << 1;
 	CLR_NZVC;
 	SET_FLAGS16(t.d,t.d,r.d);
@@ -3385,7 +3382,7 @@ INLINE void rolw_di( void )
 INLINE void rolw_ix( void )
 {
 	PAIR t,r;
-	RM16(EA,&t);
+	t.d=RM16(EAD);
 	r.d = (CC & CC_C) | (t.d << 1);
 	CLR_NZVC;
 	SET_FLAGS16(t.d,t.d,r.d);
@@ -3428,7 +3425,7 @@ INLINE void negw_di( void )
 INLINE void negw_ix( void )
 {
 	PAIR r,t;
-	RM16(EA,&t);
+	t.d=RM16(EAD);
 	r.d = -t.d;
 	CLR_NZVC;
 	SET_FLAGS16(0,t.d,r.d);
@@ -3729,4 +3726,706 @@ INLINE void rold_ex( void )
 		SET_NZ16(r);
 		D = r;
 	}
+}
+
+INLINE void opcode2( void )
+{
+	UINT8 ireg2 = ROP_ARG(PCD);
+	PC++;
+
+	switch ( ireg2 ) {
+//	case 0x00: EA=0; break; /* auto increment */
+//	case 0x01: EA=0; break; /* double auto increment */
+//	case 0x02: EA=0; break; /* auto decrement */
+//	case 0x03: EA=0; break; /* double auto decrement */
+//	case 0x04: EA=0; break; /* postbyte offs */
+//	case 0x05: EA=0; break; /* postword offs */
+//	case 0x06: EA=0; break; /* normal */
+	case 0x07:
+		EAD=0;
+		(*konami_extended[konami.ireg])();
+        konami_ICount -= 2;
+		return;
+//	case 0x08: EA=0; break; /* indirect - auto increment */
+//	case 0x09: EA=0; break; /* indirect - double auto increment */
+//	case 0x0a: EA=0; break; /* indirect - auto decrement */
+//	case 0x0b: EA=0; break; /* indirect - double auto decrement */
+//	case 0x0c: EA=0; break; /* indirect - postbyte offs */
+//	case 0x0d: EA=0; break; /* indirect - postword offs */
+//	case 0x0e: EA=0; break; /* indirect - normal */
+	case 0x0f:				/* indirect - extended */
+		IMMWORD(ea);
+		EA=RM16(EAD);
+        konami_ICount-=4;
+		break;
+//	case 0x10: EA=0; break; /* auto increment */
+//	case 0x11: EA=0; break; /* double auto increment */
+//	case 0x12: EA=0; break; /* auto decrement */
+//	case 0x13: EA=0; break; /* double auto decrement */
+//	case 0x14: EA=0; break; /* postbyte offs */
+//	case 0x15: EA=0; break; /* postword offs */
+//	case 0x16: EA=0; break; /* normal */
+//	case 0x17: EA=0; break; /* extended */
+//	case 0x18: EA=0; break; /* indirect - auto increment */
+//	case 0x19: EA=0; break; /* indirect - double auto increment */
+//	case 0x1a: EA=0; break; /* indirect - auto decrement */
+//	case 0x1b: EA=0; break; /* indirect - double auto decrement */
+//	case 0x1c: EA=0; break; /* indirect - postbyte offs */
+//	case 0x1d: EA=0; break; /* indirect - postword offs */
+//	case 0x1e: EA=0; break; /* indirect - normal */
+//	case 0x1f: EA=0; break; /* indirect - extended */
+
+/* base X */
+    case 0x20:              /* auto increment */
+		EA=X;
+		X++;
+        konami_ICount-=2;
+		break;
+	case 0x21:				/* double auto increment */
+		EA=X;
+		X+=2;
+        konami_ICount-=3;
+        break;
+	case 0x22:				/* auto decrement */
+		X--;
+		EA=X;
+        konami_ICount-=2;
+        break;
+	case 0x23:				/* double auto decrement */
+		X-=2;
+		EA=X;
+        konami_ICount-=3;
+		break;
+	case 0x24:				/* postbyte offs */
+		IMMBYTE(EA);
+		EA=X+SIGNED(EA);
+        konami_ICount-=2;
+		break;
+	case 0x25:				/* postword offs */
+		IMMWORD(ea);
+		EA+=X;
+        konami_ICount-=4;
+		break;
+	case 0x26:				/* normal */
+		EA=X;
+		break;
+//	case 0x27: EA=0; break; /* extended */
+	case 0x28:				/* indirect - auto increment */
+		EA=X;
+		X++;
+		EA=RM16(EAD);
+        konami_ICount-=5;
+		break;
+	case 0x29:				/* indirect - double auto increment */
+		EA=X;
+		X+=2;
+		EA=RM16(EAD);
+        konami_ICount-=6;
+		break;
+	case 0x2a:				/* indirect - auto decrement */
+		X--;
+		EA=X;
+		EA=RM16(EAD);
+        konami_ICount-=5;
+		break;
+	case 0x2b:				/* indirect - double auto decrement */
+		X-=2;
+		EA=X;
+		EA=RM16(EAD);
+        konami_ICount-=6;
+		break;
+	case 0x2c:				/* indirect - postbyte offs */
+		IMMBYTE(EA);
+		EA=X+SIGNED(EA);
+		EA=RM16(EAD);
+        konami_ICount-=4;
+		break;
+	case 0x2d:				/* indirect - postword offs */
+		IMMWORD(ea);
+		EA+=X;
+		EA=RM16(EAD);
+        konami_ICount-=7;
+		break;
+	case 0x2e:				/* indirect - normal */
+		EA=X;
+		EA=RM16(EAD);
+        konami_ICount-=3;
+		break;
+//	case 0x2f: EA=0; break; /* indirect - extended */
+
+/* base Y */
+    case 0x30:              /* auto increment */
+		EA=Y;
+		Y++;
+        konami_ICount-=2;
+		break;
+	case 0x31:				/* double auto increment */
+		EA=Y;
+		Y+=2;
+        konami_ICount-=3;
+		break;
+	case 0x32:				/* auto decrement */
+		Y--;
+		EA=Y;
+        konami_ICount-=2;
+		break;
+	case 0x33:				/* double auto decrement */
+		Y-=2;
+		EA=Y;
+        konami_ICount-=3;
+		break;
+	case 0x34:				/* postbyte offs */
+		IMMBYTE(EA);
+		EA=Y+SIGNED(EA);
+        konami_ICount-=2;
+		break;
+	case 0x35:				/* postword offs */
+		IMMWORD(ea);
+		EA+=Y;
+        konami_ICount-=4;
+		break;
+	case 0x36:				/* normal */
+		EA=Y;
+		break;
+//	case 0x37: EA=0; break; /* extended */
+	case 0x38:				/* indirect - auto increment */
+		EA=Y;
+		Y++;
+		EA=RM16(EAD);
+        konami_ICount-=5;
+		break;
+	case 0x39:				/* indirect - double auto increment */
+		EA=Y;
+		Y+=2;
+		EA=RM16(EAD);
+        konami_ICount-=6;
+		break;
+	case 0x3a:				/* indirect - auto decrement */
+		Y--;
+		EA=Y;
+		EA=RM16(EAD);
+        konami_ICount-=5;
+		break;
+	case 0x3b:				/* indirect - double auto decrement */
+		Y-=2;
+		EA=Y;
+		EA=RM16(EAD);
+        konami_ICount-=6;
+		break;
+	case 0x3c:				/* indirect - postbyte offs */
+		IMMBYTE(EA);
+		EA=Y+SIGNED(EA);
+		EA=RM16(EAD);
+        konami_ICount-=4;
+		break;
+	case 0x3d:				/* indirect - postword offs */
+		IMMWORD(ea);
+		EA+=Y;
+		EA=RM16(EAD);
+        konami_ICount-=7;
+		break;
+	case 0x3e:				/* indirect - normal */
+		EA=Y;
+		EA=RM16(EAD);
+        konami_ICount-=3;
+		break;
+//	case 0x3f: EA=0; break; /* indirect - extended */
+
+//  case 0x40: EA=0; break; /* auto increment */
+//	case 0x41: EA=0; break; /* double auto increment */
+//	case 0x42: EA=0; break; /* auto decrement */
+//	case 0x43: EA=0; break; /* double auto decrement */
+//	case 0x44: EA=0; break; /* postbyte offs */
+//	case 0x45: EA=0; break; /* postword offs */
+//	case 0x46: EA=0; break; /* normal */
+//	case 0x47: EA=0; break; /* extended */
+//	case 0x48: EA=0; break; /* indirect - auto increment */
+//	case 0x49: EA=0; break; /* indirect - double auto increment */
+//	case 0x4a: EA=0; break; /* indirect - auto decrement */
+//	case 0x4b: EA=0; break; /* indirect - double auto decrement */
+//	case 0x4c: EA=0; break; /* indirect - postbyte offs */
+//	case 0x4d: EA=0; break; /* indirect - postword offs */
+//	case 0x4e: EA=0; break; /* indirect - normal */
+//	case 0x4f: EA=0; break; /* indirect - extended */
+
+/* base U */
+    case 0x50:              /* auto increment */
+		EA=U;
+		U++;
+        konami_ICount-=2;
+		break;
+	case 0x51:				/* double auto increment */
+		EA=U;
+		U+=2;
+        konami_ICount-=3;
+		break;
+	case 0x52:				/* auto decrement */
+		U--;
+		EA=U;
+        konami_ICount-=2;
+		break;
+	case 0x53:				/* double auto decrement */
+		U-=2;
+		EA=U;
+        konami_ICount-=3;
+		break;
+	case 0x54:				/* postbyte offs */
+		IMMBYTE(EA);
+		EA=U+SIGNED(EA);
+        konami_ICount-=2;
+		break;
+	case 0x55:				/* postword offs */
+		IMMWORD(ea);
+		EA+=U;
+        konami_ICount-=4;
+		break;
+	case 0x56:				/* normal */
+		EA=U;
+		break;
+//	case 0x57: EA=0; break; /* extended */
+	case 0x58:				/* indirect - auto increment */
+		EA=U;
+		U++;
+		EA=RM16(EAD);
+        konami_ICount-=5;
+		break;
+	case 0x59:				/* indirect - double auto increment */
+		EA=U;
+		U+=2;
+		EA=RM16(EAD);
+        konami_ICount-=6;
+		break;
+	case 0x5a:				/* indirect - auto decrement */
+		U--;
+		EA=U;
+		EA=RM16(EAD);
+        konami_ICount-=5;
+		break;
+	case 0x5b:				/* indirect - double auto decrement */
+		U-=2;
+		EA=U;
+		EA=RM16(EAD);
+        konami_ICount-=6;
+		break;
+	case 0x5c:				/* indirect - postbyte offs */
+		IMMBYTE(EA);
+		EA=U+SIGNED(EA);
+		EA=RM16(EAD);
+        konami_ICount-=4;
+		break;
+	case 0x5d:				/* indirect - postword offs */
+		IMMWORD(ea);
+		EA+=U;
+		EA=RM16(EAD);
+        konami_ICount-=7;
+		break;
+	case 0x5e:				/* indirect - normal */
+		EA=U;
+		EA=RM16(EAD);
+        konami_ICount-=3;
+		break;
+//	case 0x5f: EA=0; break; /* indirect - extended */
+
+/* base S */
+    case 0x60:              /* auto increment */
+		EAD=SD;
+		S++;
+        konami_ICount-=2;
+		break;
+	case 0x61:				/* double auto increment */
+		EAD=SD;
+		S+=2;
+        konami_ICount-=3;
+		break;
+	case 0x62:				/* auto decrement */
+		S--;
+		EAD=SD;
+        konami_ICount-=2;
+		break;
+	case 0x63:				/* double auto decrement */
+		S-=2;
+		EAD=SD;
+        konami_ICount-=3;
+		break;
+	case 0x64:				/* postbyte offs */
+		IMMBYTE(EA);
+		EA=S+SIGNED(EA);
+        konami_ICount-=2;
+		break;
+	case 0x65:				/* postword offs */
+		IMMWORD(ea);
+		EA+=S;
+        konami_ICount-=4;
+		break;
+	case 0x66:				/* normal */
+		EAD=SD;
+		break;
+//	case 0x67: EA=0; break; /* extended */
+	case 0x68:				/* indirect - auto increment */
+		EAD=SD;
+		S++;
+		EA=RM16(EAD);
+        konami_ICount-=5;
+		break;
+	case 0x69:				/* indirect - double auto increment */
+		EAD=SD;
+		S+=2;
+		EA=RM16(EAD);
+        konami_ICount-=6;
+		break;
+	case 0x6a:				/* indirect - auto decrement */
+		S--;
+		EAD=SD;
+		EA=RM16(EAD);
+        konami_ICount-=5;
+		break;
+	case 0x6b:				/* indirect - double auto decrement */
+		S-=2;
+		EAD=SD;
+		EA=RM16(EAD);
+        konami_ICount-=6;
+		break;
+	case 0x6c:				/* indirect - postbyte offs */
+		IMMBYTE(EA);
+		EA=S+SIGNED(EA);
+		EA=RM16(EAD);
+        konami_ICount-=4;
+		break;
+	case 0x6d:				/* indirect - postword offs */
+		IMMWORD(ea);
+		EA+=S;
+		EA=RM16(EAD);
+        konami_ICount-=7;
+		break;
+	case 0x6e:				/* indirect - normal */
+		EAD=SD;
+		EA=RM16(EAD);
+        konami_ICount-=3;
+		break;
+//	case 0x6f: EA=0; break; /* indirect - extended */
+
+/* base PC */
+    case 0x70:              /* auto increment */
+		EAD=PCD;
+		PC++;
+        konami_ICount-=2;
+		break;
+	case 0x71:				/* double auto increment */
+		EAD=PCD;
+		PC+=2;
+        konami_ICount-=3;
+		break;
+	case 0x72:				/* auto decrement */
+		PC--;
+		EAD=PCD;
+        konami_ICount-=2;
+		break;
+	case 0x73:				/* double auto decrement */
+		PC-=2;
+		EAD=PCD;
+        konami_ICount-=3;
+		break;
+	case 0x74:				/* postbyte offs */
+		IMMBYTE(EA);
+		EA=PC-1+SIGNED(EA);
+        konami_ICount-=2;
+		break;
+	case 0x75:				/* postword offs */
+		IMMWORD(ea);
+		EA+=PC-2;
+        konami_ICount-=4;
+		break;
+	case 0x76:				/* normal */
+		EAD=PCD;
+		break;
+//	case 0x77: EA=0; break; /* extended */
+	case 0x78:				/* indirect - auto increment */
+		EAD=PCD;
+		PC++;
+		EA=RM16(EAD);
+        konami_ICount-=5;
+		break;
+	case 0x79:				/* indirect - double auto increment */
+		EAD=PCD;
+		PC+=2;
+		EA=RM16(EAD);
+        konami_ICount-=6;
+		break;
+	case 0x7a:				/* indirect - auto decrement */
+		PC--;
+		EAD=PCD;
+		EA=RM16(EAD);
+        konami_ICount-=5;
+		break;
+	case 0x7b:				/* indirect - double auto decrement */
+		PC-=2;
+		EAD=PCD;
+		EA=RM16(EAD);
+        konami_ICount-=6;
+		break;
+	case 0x7c:				/* indirect - postbyte offs */
+		IMMBYTE(EA);
+		EA=PC-1+SIGNED(EA);
+		EA=RM16(EAD);
+        konami_ICount-=4;
+		break;
+	case 0x7d:				/* indirect - postword offs */
+		IMMWORD(ea);
+		EA+=PC-2;
+		EA=RM16(EAD);
+        konami_ICount-=7;
+		break;
+	case 0x7e:				/* indirect - normal */
+		EAD=PCD;
+		EA=RM16(EAD);
+        konami_ICount-=3;
+		break;
+//	case 0x7f: EA=0; break; /* indirect - extended */
+
+//  case 0x80: EA=0; break; /* register a */
+//	case 0x81: EA=0; break; /* register b */
+//	case 0x82: EA=0; break; /* ???? */
+//	case 0x83: EA=0; break; /* ???? */
+//	case 0x84: EA=0; break; /* ???? */
+//	case 0x85: EA=0; break; /* ???? */
+//	case 0x86: EA=0; break; /* ???? */
+//	case 0x87: EA=0; break; /* register d */
+//	case 0x88: EA=0; break; /* indirect - register a */
+//	case 0x89: EA=0; break; /* indirect - register b */
+//	case 0x8a: EA=0; break; /* indirect - ???? */
+//	case 0x8b: EA=0; break; /* indirect - ???? */
+//	case 0x8c: EA=0; break; /* indirect - ???? */
+//	case 0x8d: EA=0; break; /* indirect - ???? */
+//	case 0x8e: EA=0; break; /* indirect - register d */
+//	case 0x8f: EA=0; break; /* indirect - ???? */
+//	case 0x90: EA=0; break; /* register a */
+//	case 0x91: EA=0; break; /* register b */
+//	case 0x92: EA=0; break; /* ???? */
+//	case 0x93: EA=0; break; /* ???? */
+//	case 0x94: EA=0; break; /* ???? */
+//	case 0x95: EA=0; break; /* ???? */
+//	case 0x96: EA=0; break; /* ???? */
+//	case 0x97: EA=0; break; /* register d */
+//	case 0x98: EA=0; break; /* indirect - register a */
+//	case 0x99: EA=0; break; /* indirect - register b */
+//	case 0x9a: EA=0; break; /* indirect - ???? */
+//	case 0x9b: EA=0; break; /* indirect - ???? */
+//	case 0x9c: EA=0; break; /* indirect - ???? */
+//	case 0x9d: EA=0; break; /* indirect - ???? */
+//	case 0x9e: EA=0; break; /* indirect - register d */
+//	case 0x9f: EA=0; break; /* indirect - ???? */
+	case 0xa0:				/* register a */
+		EA=X+SIGNED(A);
+        konami_ICount-=1;
+		break;
+	case 0xa1:				/* register b */
+		EA=X+SIGNED(B);
+        konami_ICount-=1;
+		break;
+//	case 0xa2: EA=0; break; /* ???? */
+//	case 0xa3: EA=0; break; /* ???? */
+//	case 0xa4: EA=0; break; /* ???? */
+//	case 0xa5: EA=0; break; /* ???? */
+//	case 0xa6: EA=0; break; /* ???? */
+	case 0xa7:				/* register d */
+		EA=X+D;
+        konami_ICount-=4;
+		break;
+	case 0xa8:				/* indirect - register a */
+		EA=X+SIGNED(A);
+		EA=RM16(EAD);
+        konami_ICount-=4;
+		break;
+	case 0xa9:				/* indirect - register b */
+		EA=X+SIGNED(B);
+		EA=RM16(EAD);
+        konami_ICount-=4;
+		break;
+//	case 0xaa: EA=0; break; /* indirect - ???? */
+//	case 0xab: EA=0; break; /* indirect - ???? */
+//	case 0xac: EA=0; break; /* indirect - ???? */
+//	case 0xad: EA=0; break; /* indirect - ???? */
+//	case 0xae: EA=0; break; /* indirect - ???? */
+	case 0xaf:				/* indirect - register d */
+		EA=X+D;
+		EA=RM16(EAD);
+        konami_ICount-=7;
+		break;
+	case 0xb0:				/* register a */
+		EA=Y+SIGNED(A);
+        konami_ICount-=1;
+		break;
+	case 0xb1:				/* register b */
+		EA=Y+SIGNED(B);
+        konami_ICount-=1;
+		break;
+//	case 0xb2: EA=0; break; /* ???? */
+//	case 0xb3: EA=0; break; /* ???? */
+//	case 0xb4: EA=0; break; /* ???? */
+//	case 0xb5: EA=0; break; /* ???? */
+//	case 0xb6: EA=0; break; /* ???? */
+	case 0xb7:				/* register d */
+		EA=Y+D;
+        konami_ICount-=4;
+		break;
+	case 0xb8:				/* indirect - register a */
+		EA=Y+SIGNED(A);
+		EA=RM16(EAD);
+        konami_ICount-=4;
+		break;
+	case 0xb9:				/* indirect - register b */
+		EA=Y+SIGNED(B);
+		EA=RM16(EAD);
+        konami_ICount-=4;
+		break;
+//	case 0xba: EA=0; break; /* indirect - ???? */
+//	case 0xbb: EA=0; break; /* indirect - ???? */
+//	case 0xbc: EA=0; break; /* indirect - ???? */
+//	case 0xbd: EA=0; break; /* indirect - ???? */
+//	case 0xbe: EA=0; break; /* indirect - ???? */
+	case 0xbf:				/* indirect - register d */
+		EA=Y+D;
+		EA=RM16(EAD);
+        konami_ICount-=7;
+		break;
+//	case 0xc0: EA=0; break; /* register a */
+//	case 0xc1: EA=0; break; /* register b */
+//	case 0xc2: EA=0; break; /* ???? */
+//	case 0xc3: EA=0; break; /* ???? */
+	case 0xc4:
+		EAD=0;
+		(*konami_direct[konami.ireg])();
+        konami_ICount -= 1;
+		return;
+//	case 0xc5: EA=0; break; /* ???? */
+//	case 0xc6: EA=0; break; /* ???? */
+//	case 0xc7: EA=0; break; /* register d */
+//	case 0xc8: EA=0; break; /* indirect - register a */
+//	case 0xc9: EA=0; break; /* indirect - register b */
+//	case 0xca: EA=0; break; /* indirect - ???? */
+//	case 0xcb: EA=0; break; /* indirect - ???? */
+	case 0xcc:				/* indirect - direct */
+		DIRWORD(ea);
+        konami_ICount-=4;
+		break;
+//	case 0xcd: EA=0; break; /* indirect - ???? */
+//	case 0xce: EA=0; break; /* indirect - register d */
+//	case 0xcf: EA=0; break; /* indirect - ???? */
+	case 0xd0:				/* register a */
+		EA=U+SIGNED(A);
+        konami_ICount-=1;
+		break;
+	case 0xd1:				/* register b */
+		EA=U+SIGNED(B);
+        konami_ICount-=1;
+		break;
+//	case 0xd2: EA=0; break; /* ???? */
+//	case 0xd3: EA=0; break; /* ???? */
+//	case 0xd4: EA=0; break; /* ???? */
+//	case 0xd5: EA=0; break; /* ???? */
+//	case 0xd6: EA=0; break; /* ???? */
+	case 0xd7:				/* register d */
+		EA=U+D;
+        konami_ICount-=4;
+		break;
+	case 0xd8:				/* indirect - register a */
+		EA=U+SIGNED(A);
+		EA=RM16(EAD);
+        konami_ICount-=4;
+		break;
+	case 0xd9:				/* indirect - register b */
+		EA=U+SIGNED(B);
+		EA=RM16(EAD);
+        konami_ICount-=4;
+		break;
+//	case 0xda: EA=0; break; /* indirect - ???? */
+//	case 0xdb: EA=0; break; /* indirect - ???? */
+//	case 0xdc: EA=0; break; /* indirect - ???? */
+//	case 0xdd: EA=0; break; /* indirect - ???? */
+//	case 0xde: EA=0; break; /* indirect - ???? */
+	case 0xdf:				/* indirect - register d */
+		EA=U+D;
+		EA=RM16(EAD);
+        konami_ICount-=7;
+        break;
+	case 0xe0:				/* register a */
+		EA=S+SIGNED(A);
+        konami_ICount-=1;
+		break;
+	case 0xe1:				/* register b */
+		EA=S+SIGNED(B);
+        konami_ICount-=1;
+		break;
+//	case 0xe2: EA=0; break; /* ???? */
+//	case 0xe3: EA=0; break; /* ???? */
+//	case 0xe4: EA=0; break; /* ???? */
+//	case 0xe5: EA=0; break; /* ???? */
+//	case 0xe6: EA=0; break; /* ???? */
+	case 0xe7:				/* register d */
+		EA=S+D;
+        konami_ICount-=4;
+		break;
+	case 0xe8:				/* indirect - register a */
+		EA=S+SIGNED(A);
+		EA=RM16(EAD);
+        konami_ICount-=4;
+		break;
+	case 0xe9:				/* indirect - register b */
+		EA=S+SIGNED(B);
+		EA=RM16(EAD);
+        konami_ICount-=4;
+		break;
+//	case 0xea: EA=0; break; /* indirect - ???? */
+//	case 0xeb: EA=0; break; /* indirect - ???? */
+//	case 0xec: EA=0; break; /* indirect - ???? */
+//	case 0xed: EA=0; break; /* indirect - ???? */
+//	case 0xee: EA=0; break; /* indirect - ???? */
+	case 0xef:				/* indirect - register d */
+		EA=S+D;
+		EA=RM16(EAD);
+        konami_ICount-=7;
+		break;
+	case 0xf0:				/* register a */
+		EA=PC+SIGNED(A);
+        konami_ICount-=1;
+		break;
+	case 0xf1:				/* register b */
+		EA=PC+SIGNED(B);
+        konami_ICount-=1;
+		break;
+//	case 0xf2: EA=0; break; /* ???? */
+//	case 0xf3: EA=0; break; /* ???? */
+//	case 0xf4: EA=0; break; /* ???? */
+//	case 0xf5: EA=0; break; /* ???? */
+//	case 0xf6: EA=0; break; /* ???? */
+	case 0xf7:				/* register d */
+		EA=PC+D;
+        konami_ICount-=4;
+		break;
+	case 0xf8:				/* indirect - register a */
+		EA=PC+SIGNED(A);
+		EA=RM16(EAD);
+        konami_ICount-=4;
+		break;
+	case 0xf9:				/* indirect - register b */
+		EA=PC+SIGNED(B);
+		EA=RM16(EAD);
+        konami_ICount-=4;
+		break;
+//	case 0xfa: EA=0; break; /* indirect - ???? */
+//	case 0xfb: EA=0; break; /* indirect - ???? */
+//	case 0xfc: EA=0; break; /* indirect - ???? */
+//	case 0xfd: EA=0; break; /* indirect - ???? */
+//	case 0xfe: EA=0; break; /* indirect - ???? */
+	case 0xff:				/* indirect - register d */
+		EA=PC+D;
+		EA=RM16(EAD);
+        konami_ICount-=7;
+		break;
+	default:
+		if ( errorlog )
+			fprintf( errorlog, "KONAMI: Unknown/Invalid postbyte at PC = %04x\n", PC -1 );
+        EAD = 0;
+	}
+	(*konami_indexed[konami.ireg])();
 }

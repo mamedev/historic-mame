@@ -215,9 +215,6 @@ void withmcu_init_machine(void)
 {
 	suspended = 0;
 
-	/* Set OPTIMIZATION FLAGS FOR M6809 */
-	m6809_Flags = M6809_FAST_S;/* | M6809_FAST_U;*/
-
 	pia_unconfig();
 	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &qixmcu_pia_0_intf);
 	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_1_intf);
@@ -234,9 +231,6 @@ void qix_init_machine(void)
 {
 	suspended = 0;
 
-	/* Set OPTIMIZATION FLAGS FOR M6809 */
-	m6809_Flags = M6809_FAST_S;/* | M6809_FAST_U;*/
-
 	pia_unconfig();
 	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_0_intf);
 	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_1_intf);
@@ -252,9 +246,6 @@ void qix_init_machine(void)
 void zoo_init_machine(void)
 {
 	withmcu_init_machine();
-
-	/* Set OPTIMIZATION FLAGS FOR M6809 */
-	m6809_Flags = M6809_FAST_NONE;
 }
 
 

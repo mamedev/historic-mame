@@ -10,6 +10,8 @@ extern unsigned char *spriteram_2;
 extern int spriteram_2_size;
 extern unsigned char *spriteram_3;
 extern int spriteram_3_size;
+extern unsigned char *buffered_spriteram;
+extern unsigned char *buffered_spriteram_2;
 extern unsigned char *flip_screen;
 extern unsigned char *flip_screen_x;
 extern unsigned char *flip_screen_y;
@@ -29,3 +31,8 @@ int spriteram_r(int offset);
 void spriteram_w(int offset,int data);
 int spriteram_2_r(int offset);
 void spriteram_2_w(int offset,int data);
+void buffer_spriteram_w(int offset,int data);
+void buffer_spriteram_2_w(int offset,int data);
+void buffer_spriteram(unsigned char *ptr,int length);
+void buffer_spriteram_2(unsigned char *ptr,int length);
+

@@ -1883,4 +1883,3 @@ struct GameDriver wndrmomo_driver =
 	ORIENTATION_DEFAULT,
 	0, 0
 };
-

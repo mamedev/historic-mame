@@ -1577,7 +1577,9 @@ void wecleman_rom_decode(void)
 	for (i = 0; i < 0x200000; i += 1)
 	{
 		int x = RAM[i];
-		x = ((x&0x0F)<<4)+((x&0xF0)>>4);
+		/* TODO: could be wrong, colors have to be fixed */
+		/* the only certain thing is that 87 must convert to f0 */
+		x = ((x & 0x07) << 5) | ((x & 0xf8) >> 3);
 		RAM[i] = x;
 	}
 
@@ -1602,7 +1604,7 @@ struct GameDriver wecleman_driver =
 	"1986",
 	"Konami",
 	"Luca Elia\n",
-	GAME_NOT_WORKING,
+	GAME_WRONG_COLORS,
 	&wecleman_machine_driver,
 	0,
 

@@ -1003,7 +1003,7 @@ static void indytemp_init(void)
 	atarigen_slapstic_init(0, 0x080000, 105);
 
 	/* special case for the Indiana Jones slapstic */
-	cpu_setOPbaseoverride(indytemp_setopbase);
+	cpu_setOPbaseoverride(0,indytemp_setopbase);
 
 	joystick_type = 1;	/* digital */
 	trackball_type = 0;	/* none */

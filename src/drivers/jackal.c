@@ -4,6 +4,14 @@
 
   Written by Kenneth Lin (kenneth_lin@ai.vancouver.bc.ca)
 
+Notes:
+- The high score table colors are wrong, proms are missing.
+- Sprites are not in sync with the scroll.
+- After game over, the first main logo screen is one line out of sync after
+  the scrolling is completed.
+- One of the bootleg Top Gunner gfx ROMs seems to be bad.
+
+
 1st CPU memory map
 NB. "x", "y" refers to non rotated screen.
 ie.
@@ -582,13 +590,13 @@ ROM_START( jackal_rom )
 	ROM_LOAD( "j-v03.rom",    0x0c000, 0x4000, 0x3e0dfb83 )
 
 	ROM_REGION_DISPOSE(0x80000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "j-t04.rom",    0x00000, 0x20000, BADCRC( 0x5c7aaaa1 ) )
-	ROM_LOAD( "j-t06.rom",    0x20000, 0x20000, 0x5c8f9325 )
-	ROM_LOAD( "j-t05.rom",    0x40000, 0x20000, BADCRC( 0x0b8350e7 ) )
-	ROM_LOAD( "j-t07.rom",    0x60000, 0x20000, 0xcf077092 )
+	ROM_LOAD( "631t04.bin",   0x00000, 0x20000, 0x457f42f0 )
+	ROM_LOAD( "631t06.bin",   0x20000, 0x20000, 0x2d10e56e )
+	ROM_LOAD( "631t05.bin",   0x40000, 0x20000, 0x732b3fc1 )
+	ROM_LOAD( "631t07.bin",   0x60000, 0x20000, 0x4961c397 )
 
 	ROM_REGION(0x10000)     /* 64k for 2nd cpu (Graphics & Sound)*/
-	ROM_LOAD( "j-t01.rom",    0x8000, 0x8000, 0xb189af6a )
+	ROM_LOAD( "631t01.bin",   0x8000, 0x8000, 0xb189af6a )
 
 	ROM_REGION(0x0400)	/* color lookup tables */
 	ROM_LOAD( "prom1",        0x0000, 0x0100, 0x00000000 )
@@ -610,7 +618,29 @@ ROM_START( topgunr_rom )
 	ROM_LOAD( "tgnr13h.bin",  0x60000, 0x20000, 0x22effcc8 )
 
 	ROM_REGION(0x10000)     /* 64k for 2nd cpu (Graphics & Sound)*/
-	ROM_LOAD( "j-t01.rom",    0x8000, 0x8000, 0xb189af6a )
+	ROM_LOAD( "631t01.bin",   0x8000, 0x8000, 0xb189af6a )
+
+	ROM_REGION(0x0400)	/* color lookup tables */
+	ROM_LOAD( "prom1",        0x0000, 0x0100, 0x00000000 )
+	ROM_LOAD( "prom2",        0x0100, 0x0100, 0x00000000 )
+	ROM_LOAD( "prom3",        0x0200, 0x0100, 0x00000000 )
+	ROM_LOAD( "prom4",        0x0300, 0x0100, 0x00000000 )
+ROM_END
+
+ROM_START( jackalj_rom )
+	ROM_REGION(0x20000)	/* Banked 64k for 1st CPU */
+	ROM_LOAD( "631t02.bin",   0x04000, 0x8000, 0x14db6b1a )
+	ROM_CONTINUE(             0x14000, 0x8000 )
+	ROM_LOAD( "631t03.bin",   0x0c000, 0x4000, 0xfd5f9624 )
+
+	ROM_REGION_DISPOSE(0x80000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "631t04.bin",   0x00000, 0x20000, 0x457f42f0 )
+	ROM_LOAD( "631t06.bin",   0x20000, 0x20000, 0x2d10e56e )
+	ROM_LOAD( "631t05.bin",   0x40000, 0x20000, 0x732b3fc1 )
+	ROM_LOAD( "631t07.bin",   0x60000, 0x20000, 0x4961c397 )
+
+	ROM_REGION(0x10000)     /* 64k for 2nd cpu (Graphics & Sound)*/
+	ROM_LOAD( "631t01.bin",   0x8000, 0x8000, 0xb189af6a )
 
 	ROM_REGION(0x0400)	/* color lookup tables */
 	ROM_LOAD( "prom1",        0x0000, 0x0100, 0x00000000 )
@@ -660,7 +690,7 @@ struct GameDriver jackal_driver =
 	__FILE__,
 	0,
 	"jackal",
-	"Jackal",
+	"Jackal (World)",
 	"1986",
 	"Konami",
 	"Kenneth Lin (MAME driver)\n'cas'\nNoah Davis\nChris Hardy",
@@ -686,7 +716,7 @@ struct GameDriver topgunr_driver =
 	__FILE__,
 	&jackal_driver,
 	"topgunr",
-	"Top Gunner",
+	"Top Gunner (US)",
 	"1986",
 	"Konami",
 	"Kenneth Lin (MAME driver)\n'cas'\nNoah Davis\nChris Hardy",
@@ -695,6 +725,32 @@ struct GameDriver topgunr_driver =
 	0,
 
 	topgunr_rom,
+	0, 0,
+	0,
+	0,
+
+	jackal_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver jackalj_driver =
+{
+	__FILE__,
+	&jackal_driver,
+	"jackalj",
+	"Tokushu Butai Jackal (Japan)",
+	"1986",
+	"Konami",
+	"Kenneth Lin (MAME driver)\n'cas'\nNoah Davis\nChris Hardy",
+	0,
+	&machine_driver,
+	0,
+
+	jackalj_rom,
 	0, 0,
 	0,
 	0,

@@ -277,7 +277,7 @@ static void mcu_process_command( void ){
 
 			if( enemy_type<=4 || (enemy_type&1)==0 ) health = 0x18 + difficulty*8;
 			else health = 0x06 + difficulty*2;
-			fprintf( errorlog, "e_type:0x%02x diff:0x%02x -> 0x%02x\n", enemy_type, difficulty, health );
+			if (errorlog) fprintf( errorlog, "e_type:0x%02x diff:0x%02x -> 0x%02x\n", enemy_type, difficulty, health );
 			mcu_buffer[0] = 1;
 			mcu_buffer[1] = health;
 		}

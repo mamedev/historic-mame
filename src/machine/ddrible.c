@@ -16,8 +16,6 @@ int int_enable_0, int_enable_1;
 
 void ddrible_init_machine( void )
 {
-    /* Set optimization flags for M6809 */
-    m6809_Flags = M6809_FAST_S | M6809_FAST_U;
 	int_enable_0 = int_enable_1 = 0;
 }
 

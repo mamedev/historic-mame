@@ -15,9 +15,8 @@ unsigned char *phozon_spriteram;
 unsigned char *phozon_customio_1, *phozon_customio_2;
 static int credits, coincounter1, coincounter2;
 
-void phozon_init_machine( void ){
-    /* Set optimization flags for M6809 */
-    m6809_Flags = M6809_FAST_S | M6809_FAST_U;
+void phozon_init_machine( void )
+{
     credits = coincounter1 = coincounter2 = 0;
 	cpu_halt(1, 1);
 	cpu_halt(2, 1);

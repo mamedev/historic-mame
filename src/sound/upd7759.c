@@ -254,6 +254,8 @@ static int find_sample(int num, int sample_num,struct UPD7759sample *sample)
 	if (!data[j]) j++;
 	if ((data[j] & 0xf0) != 0x50) j++;
 
+	// Added and Modified by Takahiro Nogi. 1999/10/28
+#if 0	// original
 	switch (data[j])
 	{
 		case 0x53: sample->freq = 8000; break;
@@ -262,6 +264,16 @@ static int find_sample(int num, int sample_num,struct UPD7759sample *sample)
 		default:
 			sample->freq = 5000;
 	}
+#else	// modified by Takahiro Nogi. 1999/10/28
+	switch (data[j] & 0x1f)
+	{
+		case 0x13: sample->freq = 8000; break;
+		case 0x19: sample->freq = 6000; break;
+		case 0x1f: sample->freq = 5000; break;
+		default:				// ???
+			sample->freq = 5000;
+	}
+#endif
 
 	if (sample_num == numsam)
 	{
@@ -814,4 +826,3 @@ void UPD7759_reset_w (int num, int data)
 	/* (Note: do we need to do anything else?) */
 	voice->playing = 0;
 }
-

@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-	h6280.c - Portable Hu6280 emulator
+	h6280.c - Portable HuC6280 emulator
 
 	Copyright (c) 1999 Bryan McPhail, mish@tendril.force9.net
 
@@ -8,10 +8,10 @@
 	Juergen Buchmueller.  It is released as part of the Mame emulator project.
 	Let me know if you intend to use this code in any other project.
 
-
-	NOTICE:
  
-	This code is not currently complete!  Several things are unimplemented,
+	NOTICE:
+     
+	This code is around 95% complete!  Several things are unimplemented,
 	some due to lack of time, some due to lack of documentation, mainly
 	due to lack of programs using these features.
 
@@ -20,7 +20,7 @@
 
 	I am unsure if instructions like SBC take an extra cycle when used in
 	decimal mode.  I am unsure if flag B is set upon execution of rti.
-
+  
 	Cycle counts should be quite accurate, illegal instructions are assumed
 	to take two cycles.
 
@@ -36,6 +36,12 @@
 
 	Changelog, version 1.03:
 		Swapped IRQ mask for IRQ1 & IRQ2 (thanks Yasuhiro)
+
+	Changelog, version 1.04, 28/9/99-22/10/99:
+		Adjusted RTI (thanks Karl)
+ 		TST opcodes fixed in disassembler (missing break statements in a case!).
+		TST behaviour fixed.  
+		SMB/RMB/BBS/BBR fixed in disassembler.
 
 ******************************************************************************/
 
@@ -108,15 +114,6 @@ static  h6280_Regs  h6280;
 UINT8	H6280_debug_mmr[8];
 #endif
 
-/* Hardwire zero page memory to Bank 8, only one Hu6280 is supported if this
-is selected */
-//#define FAST_ZERO_PAGE
-
-#ifdef FAST_ZERO_PAGE
-unsigned char *ZEROPAGE;
-#endif
-
-
 /* include the macros */
 #include "h6280ops.h"
 
@@ -145,19 +142,11 @@ void h6280_reset(void *param)
     /* clear pending interrupts */
 	for (i = 0; i < 3; i++)
 		h6280.irq_state[i] = CLEAR_LINE;
-
-#ifdef FAST_ZERO_PAGE
-{
-	extern unsigned char *cpu_bankbase[];
-	ZEROPAGE=cpu_bankbase[8];
-}
-#endif
-
 }
 
 void h6280_exit(void)
 {
-	/* nothing to do ? */
+	/* nothing */
 }
 
 int h6280_execute(int cycles)
@@ -168,23 +157,11 @@ int h6280_execute(int cycles)
     /* Subtract cycles used for taking an interrupt */
     h6280_ICount -= h6280.extra_cycles;
 	h6280.extra_cycles = 0;
-#if 0
-	/* Update timer - very wrong.. */
-	if (h6280.timer_status) {
-		h6280.timer_value-=cycles/2048;
-		if (h6280.timer_value<0) {
-			h6280.timer_value=h6280.timer_load;
-//			H6280_Cause_Interrupt(H6280_INT_TIMER);
-		}
-	}
-#endif
 
 	/* Execute instructions */
 	do
     {
 		h6280.ppc = h6280.pc;
-
-//if (errorlog && (  ((h6280.sp.d)>0x1ff) |  ((h6280.sp.d)<0x100) )) fprintf(errorlog,"SP is %04x\n",h6280.sp.d);
 
 #ifdef  MAME_DEBUG
 	 	{
@@ -208,7 +185,6 @@ int h6280_execute(int cycles)
 		/* If PC has not changed we are stuck in a tight loop, may as well finish */
 		if( h6280.pc.d == h6280.ppc.d )
 		{
-//			if (errorlog && cpu_get_pc()!=0xe0e6) fprintf(errorlog,"Spinning early %04x with %d cycles left\n",cpu_get_pc(),h6280_ICount);
 			if (h6280_ICount > 0) h6280_ICount=0;
 		}
 
@@ -410,7 +386,7 @@ const char *h6280_info(void *context, int regnum)
 			break;
 		case CPU_INFO_NAME: return "H6280";
 		case CPU_INFO_FAMILY: return "Hudsonsoft 6280";
-		case CPU_INFO_VERSION: return "1.03";
+		case CPU_INFO_VERSION: return "1.04";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (c) 1999 Bryan McPhail, mish@tendril.force9.net";
 		case CPU_INFO_REG_LAYOUT: return (const char*)reg_layout;
@@ -439,7 +415,7 @@ int H6280_irq_status_r(int offset)
 	{
 		case 0: /* Read irq mask */
 			return h6280.irq_mask;
-
+ 
 		case 1: /* Read irq status */
 //			if (errorlog) fprintf(errorlog,"Hu6280: %04x: Read irq status\n",cpu_get_pc());
 			status=0;
@@ -458,17 +434,12 @@ void H6280_irq_status_w(int offset, int data)
 	switch (offset)
 	{
 		case 0: /* Write irq mask */
-//			if (errorlog) fprintf(errorlog,"Hu6280: %04x: write irq mask %04x\n",cpu_get_pc(),data);
 			h6280.irq_mask=data&0x7;
 			CHECK_IRQ_LINES;
 			break;
 
 		case 1: /* Reset timer irq */
-
-// aka TIQ acknowledge
-// if not ack'd TIQ cant fire again?!
-//
-		//	if (errorlog) fprintf(errorlog,"Hu6280: %04x: Timer irq reset!\n",cpu_get_pc());
+//			if (errorlog) fprintf(errorlog,"Hu6280: %04x: Timer irq reset!\n",cpu_get_pc());
 			h6280.timer_value = h6280.timer_load; /* hmm */
 			break;
 	}
@@ -493,15 +464,13 @@ void H6280_timer_w(int offset, int data)
 {
 	switch (offset) {
 		case 0: /* Counter preload */
-			//if (errorlog) fprintf(errorlog,"Hu6280: %04x: Wrote counter preload %02x\n",cpu_get_pc(),data);
-
-//H6280_Cause_Interrupt(H6280_INT_TIMER);
-//			h6280.irq_state[2]=
+//if (errorlog) fprintf(errorlog,"Hu6280: %04x: Wrote counter preload %02x\n",cpu_get_pc(),data);
 			h6280.timer_load=h6280.timer_value=data;
 			return;
 
 		case 1: /* Counter enable */
 			h6280.timer_status=data&1;
+//			if (data&1) h6280_set_irq_line(2,1);
 //			if (errorlog) fprintf(errorlog,"Hu6280: %04x: Timer status %02x\n",cpu_get_pc(),data);
 			return;
 	}

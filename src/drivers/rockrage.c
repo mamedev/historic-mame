@@ -234,21 +234,19 @@ static struct GfxLayout charlayout =
 
 static struct GfxLayout spritelayout =
 {
-	16,16,			/* 16*16 sprites */
-	0x40000/128,	/* 2048 sprites */
+	8,8,			/* 8*8 sprites */
+	0x40000/32,	/* 8192 sprites */
 	4,				/* 4 bpp */
 	{ 0, 1, 2, 3 },	/* the four bitplanes are packed in one nibble */
-	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
-		32*8+0*4, 32*8+1*4, 32*8+2*4, 32*8+3*4, 32*8+4*4, 32*8+5*4, 32*8+6*4, 32*8+7*4 },
-	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
-		64*8+0*32, 64*8+1*32, 64*8+2*32, 64*8+3*32, 64*8+4*32, 64*8+5*32, 64*8+6*32, 64*8+7*32 },
-	128*8			/* every sprite takes 128 consecutive bytes */
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
+	32*8			/* every sprite takes 32 consecutive bytes */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x000000, &charlayout,		0,			1 },	/* colors 00..31 */
-	{ 1, 0x040000, &spritelayout,	2*16,		1 },	/* colros 32..63 */
+	{ 1, 0x040000, &spritelayout,	2*16,		1 },	/* colors 32..63 */
 	{ -1 } /* end of array */
 };
 

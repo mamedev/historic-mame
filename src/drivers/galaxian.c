@@ -1981,7 +1981,6 @@ static void pacmanbl_hisave(void)
 	}
 }
 
-
 static int zigzag_hiload(void)
 {
     unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -2035,7 +2034,6 @@ static void zigzag_hisave(void)
     }
 }
 
-
 static int mooncrgx_hiload(void)
 {
     unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -2068,7 +2066,6 @@ static void mooncrgx_hisave(void)
 	   osd_fclose(f);
     }
 }
-
 
 static int scramble_hiload(void)
 {
@@ -2109,7 +2106,6 @@ static void scramble_hisave(void)
 
 }
 
-
 static int jumpbug_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -2149,6 +2145,50 @@ static void jumpbug_hisave(void)
 	}
 }
 
+/****  Levers high score save routine - RJF (Oct 19, 1999)  ****/
+static int levers_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	static int firsttime;
+	/* check if the hi score table has already been initialized */
+	/* the high score table is intialized to all 0, so first of all */
+	/* we dirty it, then we wait for it to be cleared again */
+	if (firsttime == 0)
+	{
+                memset(&RAM[0x41cd], 0xff, 3);    /* high score */
+		firsttime = 1;
+	}
+
+
+	/* wait for the screen to initialize */
+        if (memcmp(&RAM[0x41cd], "\x00\x00\x00", 3) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+                        osd_fread(f,&RAM[0x41cd], 3);
+			osd_fclose(f);
+		}
+		firsttime= 0;
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void levers_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f,&RAM[0x41cd], 3);
+		osd_fclose(f);
+	}
+}
 
 static void pisces_driver_init(void)
 {
@@ -2571,7 +2611,7 @@ struct GameDriver devilfsg_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	0, 0
+        0, 0
 };
 
 struct GameDriver zigzag_driver =
@@ -2756,7 +2796,7 @@ struct GameDriver levers_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+        levers_hiload, levers_hisave
 };
 
 struct GameDriver azurian_driver =
@@ -2782,7 +2822,7 @@ struct GameDriver azurian_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0,0
+        0, 0
 };
 
 struct GameDriver orbitron_driver =
@@ -2808,5 +2848,5 @@ struct GameDriver orbitron_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	0,0
+        0, 0
 };

@@ -26,12 +26,6 @@ void mikie_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-void mikie_init_machine(void)
-{
-        /* Set optimization flags for M6809 */
-        m6809_Flags = M6809_FAST_S | M6809_FAST_U;
-}
-
 int mikie_sh_timer_r(int offset)
 {
 	int clock;
@@ -284,7 +278,7 @@ static struct MachineDriver mikie_machine_driver =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	mikie_init_machine,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },

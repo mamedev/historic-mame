@@ -893,7 +893,7 @@ int old_data, new_data;
 //		case 0x2100+4 :	VREG_FLAG(2)
 		case 0x2108   :	spritebank = new_data;		break;
 		case 0x2200   :	spriteflag = new_data;		break;
-			case 0x2208   : active_layers = (new_data & 0xfffb)^0x300;	break;
+		case 0x2208   : active_layers = new_data;  break;
 		case 0x2308   :	screenflag = new_data;		break;
 
 		default:		SHOW_WRITE_ERROR("vreg %04X <- %04X",offset,data);
@@ -1137,6 +1137,7 @@ struct priority
 
 extern struct GameDriver p47_driver;
 extern struct GameDriver plusalph_driver;
+extern struct GameDriver peekaboo_driver;
 extern struct GameDriver street64_driver;
 extern struct GameDriver chimerab_driver;
 extern struct GameDriver edf_driver;
@@ -1163,6 +1164,10 @@ static struct priority priorities[] =
 	},
 	{	&plusalph_driver,	/* verified with PROM (same as p47) */
 		{ 0x04132,0x02413,0x03142,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,
+		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
+	},
+	{	&peekaboo_driver,	/* verified with PROM */
+		{ 0x0134f,0x034ff,0x0341f,0x3401f,0x1340f,0x3410f,0xfffff,0xfffff,
 		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
 	},
 	{	&street64_driver,

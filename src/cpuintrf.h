@@ -226,7 +226,7 @@ void cpu_set_reset_line(int cpu,int state);
 /* Use this function to stop and restart CPUs */
 void cpu_halt(int cpunum,int running);
 /* This function returns CPUNUM current status (running or halted) */
-int  cpu_getstatus(int cpunum);
+int cpu_getstatus(int cpunum);
 int cpu_gettotalcpu(void);
 int cpu_getactivecpu(void);
 void cpu_setactivecpu(int cpunum);

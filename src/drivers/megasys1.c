@@ -385,7 +385,7 @@ static struct MemoryReadAddress _shortname_##_readmem[] = \
 	{ 0x0e0000, 0x0e0001, dsw_r }, \
 	{ 0x0e8000, 0x0ebfff, MRA_BANK7 }, \
 	{ 0x0f0000, 0x0f0001, coins_r }, /* Coins + P1&P2 Buttons */ \
-	{ 0x0f8000, 0x0f8001, MRA_NOP }, /* OKI M6295 */ \
+	{ 0x0f8000, 0x0f8001, OKIM6295_status_0_r }, \
 	{ 0x100000, 0x100001, _shortname_##_protection_r }, /* Protection */ \
 	{ -1 } \
 }; \
@@ -400,7 +400,7 @@ static struct MemoryWriteAddress _shortname_##_writemem[] = \
 	{ 0x0d8000, 0x0d87ff, paletteram_RRRRRGGGGGBBBBBx_word_w }, \
 	{ 0x0db000, 0x0db7ff, paletteram_RRRRRGGGGGBBBBBx_word_w, &paletteram }, \
 	{ 0x0e8000, 0x0ebfff, megasys1_scrollram_0_w,	&megasys1_scrollram_0 }, \
-	{ 0x0f8000, 0x0f8001, MWA_NOP }, /* OKI M6295 */ \
+	{ 0x0f8000, 0x0f8001, ms_OKIM6295_data_0_w }, \
 	{ 0x100000, 0x100001, _shortname_##_protection_w }, /* Protection */ \
 	{ -1 } \
 };
@@ -946,8 +946,8 @@ static struct OKIM6295interface _shortname_##_okim6295_interface = \
 { \
 	1, \
 	{_oki1_clock_},\
-	{  3 }, \
-	{ 50 } \
+	{  2 }, \
+	{ 100 } \
 }; \
  \
 static struct MachineDriver _shortname_##_machine_driver = \
@@ -1331,7 +1331,7 @@ void street64_init(void)
 }
 
 /* OSC:	? (Main 12, Sound 10 MHz according to KLOV) */
-MEGASYS1_GAME_EXT(	street64, 64street, 0, 64th. Street - A Detective Story,1991 (World), ORIENTATION_DEFAULT,
+MEGASYS1_GAME_EXT(	street64, 64street, 0, 64th. Street - A Detective Story (World),1991, ORIENTATION_DEFAULT,
 					C,0xff0000,0xffffff,
 					12000000,10000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
 					street64_init, 0 )
@@ -2623,19 +2623,20 @@ c2200<-0
 
 ROM_START( peekaboo_rom )
 	ROM_REGION(0x40000)		/* Region 0 - main cpu code */
-	ROM_LOAD_EVEN( "j3", 0x000000, 0x020000, 0xf5f4cf33 )
-	ROM_LOAD_ODD(  "j2", 0x000000, 0x020000, 0x7b3d430d )
+	ROM_LOAD_EVEN( "j3",      0x000000, 0x020000, 0xf5f4cf33 )
+	ROM_LOAD_ODD(  "j2",      0x000000, 0x020000, 0x7b3d430d )
 
 	ROM_REGION_DISPOSE(0x180000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "5",       0x000000, 0x080000, 0x34fa07bb )	// Background
-	ROM_LOAD( "4",       0x080000, 0x020000, 0xf037794b )	// Text
-	ROM_LOAD( "1",       0x100000, 0x080000, 0x5a444ecf )	// Sprites
+	ROM_LOAD( "5",            0x000000, 0x080000, 0x34fa07bb )	// Background
+	ROM_LOAD( "4",            0x080000, 0x020000, 0xf037794b )	// Text
+	ROM_LOAD( "1",            0x100000, 0x080000, 0x5a444ecf )	// Sprites
 
-	ROM_REGION_DISPOSE(0x20000)	/* Region 2 - samples (not dumped yet) */
-	ROM_LOAD( "samples", 0x00000, 0x20000, 0x00000000) /* Not dumped yet */
+	ROM_REGION(0x120000) /* Region 2 - samples */
+	ROM_LOAD( "peeksamp.124", 0x000000, 0x020000, 0xe1206fa8 )
+	ROM_CONTINUE(             0x040000, 0x0e0000             )
 
 	ROM_REGION(0x0200)		/* priority PROM */
-	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
+	ROM_LOAD( "priority.69",  0x0000, 0x0200, 0xb40bff56 )
 ROM_END
 
 INPUT_PORTS_START( input_ports_peekaboo )
@@ -2715,9 +2716,26 @@ int  peekaboo_protection_r(int offset)
 		default:	return peekaboo_protection;
 	}
 }
+
+static struct OKIM6295interface peekaboo_okim6295_interface;
+
 void peekaboo_protection_w(int offset,int data)
 {
+	static int bank;
 	peekaboo_protection = data;
+
+	if ((peekaboo_protection & 0x90) == 0x90)
+	{
+		unsigned char *RAM = Machine->memory_region[peekaboo_okim6295_interface.region[0]];
+		int new_bank = (peekaboo_protection & 0x7) % 7;
+
+		if (bank != new_bank)
+		{
+			memcpy(&RAM[0x20000],&RAM[0x40000 + 0x20000*new_bank],0x20000);
+			bank = new_bank;
+		}
+	}
+
 	cpu_cause_interrupt(0,4);
 }
 
@@ -2726,8 +2744,8 @@ void peekaboo_protection_w(int offset,int data)
 /* KLOV: Jaleco board no. PB-92127A. Main CPU: Motorola 68000P10 */
 MEGASYS1_GAME(	peekaboo,Peek-a-Boo!,1993,ORIENTATION_DEFAULT,
 				D,0x1f0000,0x1fffff,
-				10000000,0,		0,STD_OKI_CLOCK,0,
-				0, GAME_NO_SOUND )
+				10000000,0,		0,12000,0,
+				0, 0 )
 
 
 
@@ -2865,11 +2883,12 @@ ROM_START( rodland_rom )
 	ROM_LOAD_ODD(  "rl_04.rom", 0x040000, 0x010000, 0x44163c86 )
 
 	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "rl_23.rom", 0x000000, 0x020000, 0xac60e771 )	// scroll 0
-	ROM_CONTINUE(          0x040000, 0x010000             ) // "extra mode"
-	ROM_CONTINUE(          0x030000, 0x010000             ) // will display
-	ROM_CONTINUE(          0x020000, 0x010000             ) // correctly
-	ROM_CONTINUE(          0x050000, 0x030000             )
+	ROM_LOAD( "rl_23.rom", 0x000000, 0x020000, 0xac60e771 ) // scroll 0
+	ROM_CONTINUE(          0x030000, 0x010000             )
+	ROM_CONTINUE(          0x050000, 0x010000             )
+	ROM_CONTINUE(          0x020000, 0x010000             )
+	ROM_CONTINUE(          0x040000, 0x010000             )
+	ROM_CONTINUE(          0x060000, 0x020000             )
 	ROM_LOAD( "rl_18.rom", 0x080000, 0x080000, 0xf3b30ca6 )	// scroll 1
 	ROM_LOAD( "rl_19.rom", 0x100000, 0x020000, 0x1b718e2a )	// scroll 2
 	ROM_LOAD( "rl_14.rom", 0x120000, 0x080000, 0x08d01bf4 )	// sprites

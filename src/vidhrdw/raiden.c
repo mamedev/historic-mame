@@ -165,7 +165,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int pri_mask)
 		y = spriteram[offs+0];
 		x = spriteram[offs+4];
 
-		if (spriteram[offs+5]&1) x=0-(0xff-x);
+		if (spriteram[offs+5]&1) x=0-(0x100-x);
 
 		color = spriteram[offs+1]&0xf;
 		sprite = spriteram[offs+2]+(spriteram[offs+3]<<8);

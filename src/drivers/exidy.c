@@ -96,12 +96,25 @@ Targ:
 		bit 0 note
 		bit 1 upper
 
+MouseTrap Digital Sound:
+0000-3FFF ROM
+
+IO:
+	A7 = 0: R Communication from sound processor
+	A6 = 0: R CVSD Clock State
+	A5 = 0: W Busy to sound processor
+	A4 = 0: W Data to CVSD
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/6821pia.h"
 
+
+/* These are defined in sndhrdw/exidy.c */
+void mtrap_voiceio_w(int offset,int data);
+int mtrap_voiceio_r(int offset);
 
 /* These are defined in sndhrdw/exidy.c */
 void exidy_shriot_w(int offset,int data);
@@ -303,6 +316,30 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }  /* end of table */
 };
 
+static struct MemoryWriteAddress dac_writemem[] =
+{
+        {0x0000,0x3fff, MWA_ROM },
+	{ -1 } /* end of table */
+};
+
+static struct MemoryReadAddress dac_readmem[] =
+{
+        {0x0000,0x3fff, MRA_ROM },
+        {0x4000,0xffff, MRA_ROM },
+	{ -1 } /* end of table */
+};
+
+static struct IOWritePort dac_iowrite[] =
+{
+        { 0x00, 0xFF, mtrap_voiceio_w },
+	{ -1 }	/* end of table */
+};
+
+static struct IOReadPort dac_ioread[] =
+{
+	{ 0x00, 0xFF, mtrap_voiceio_r },
+	{ -1 }
+};
 
 /***************************************************************************
 Input Ports
@@ -823,29 +860,29 @@ static unsigned char palette[] =
 /* dip switches on the board. Here are the colors they map to. */
 static unsigned char targ_palette[] =
 {
-					/* color   use                */
-	0x00,0x00,0xFF, /* blue    background         */
+					/* color   use                            */
+	0x00,0x00,0xFF, /* blue    background             */
 	0x00,0xFF,0xFF, /* cyan    characters 192-255 */
 	0xFF,0xFF,0x00, /* yellow  characters 128-191 */
 	0xFF,0xFF,0xFF, /* white   characters  64-127 */
 	0xFF,0x00,0x00, /* red     characters   0- 63 */
-	0x00,0xFF,0xFF, /* cyan    not used           */
-	0xFF,0xFF,0xFF, /* white   bullet sprite      */
-	0x00,0xFF,0x00, /* green   wummel sprite      */
+	0x00,0xFF,0xFF, /* cyan    not used               */
+	0xFF,0xFF,0xFF, /* white   bullet sprite          */
+	0x00,0xFF,0x00, /* green   wummel sprite          */
 };
 
 /* Spectar has different colors */
 static unsigned char spectar_palette[] =
 {
-					/* color   use                */
-	0x00,0x00,0xFF, /* blue    background         */
+					/* color   use                            */
+	0x00,0x00,0xFF, /* blue    background             */
 	0x00,0xFF,0x00, /* green   characters 192-255 */
 	0x00,0xFF,0x00, /* green   characters 128-191 */
 	0xFF,0xFF,0xFF, /* white   characters  64-127 */
 	0xFF,0x00,0x00, /* red     characters   0- 63 */
-	0x00,0xFF,0x00, /* green   not used           */
-	0xFF,0xFF,0x00, /* yellow  bullet sprite      */
-	0x00,0xFF,0x00, /* green   wummel sprite      */
+	0x00,0xFF,0x00, /* green   not used               */
+	0xFF,0xFF,0x00, /* yellow  bullet sprite          */
+	0x00,0xFF,0x00, /* green   wummel sprite          */
 };
 
 
@@ -968,10 +1005,16 @@ static struct MachineDriver targ_machine_driver =
 	}
 };
 
+static struct hc55516_interface cvsd_interface =
+{
+	1,          /* 1 chip */
+        { 80 }
+};
+
 static struct Samplesinterface venture_samples_interface=
 {
-	6,       /* 6 Channels */
-	25	/* volume */
+    6,       /* 6 Channels */
+    20  /* volume */
 };
 
 static struct CustomSound_interface exidy_custom_interface =
@@ -998,6 +1041,13 @@ static struct MachineDriver mtrap_machine_driver =
 			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 	    	ignore_interrupt,0
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3579545/2,
+			3,      /* memory region #3 */
+			dac_readmem,dac_writemem,dac_ioread,dac_iowrite,
+			ignore_interrupt,0
 		}
 	},
 	57, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
@@ -1020,13 +1070,17 @@ static struct MachineDriver mtrap_machine_driver =
 	0,0,0,0,
 	{
 		{
+			SOUND_HC55516,
+			&cvsd_interface
+        },
+		{
 			SOUND_SAMPLES,
 			&venture_samples_interface
 		},
 		{
 			SOUND_CUSTOM,
 			&exidy_custom_interface
-		}
+        }
 	}
 
 
@@ -1181,7 +1235,6 @@ static struct MachineDriver fax_machine_driver =
 			&exidy_custom_interface
 		}
 	}
-
 };
 
 
@@ -1262,6 +1315,14 @@ ROM_START( mtrap_rom )
 	ROM_LOAD( "mta6a.bin",   0x7000, 0x0800, 0xc00f0c05 )
 	ROM_LOAD( "mta7a.bin",   0x7800, 0x0800, 0xf3f16ca7 )
 	ROM_RELOAD(              0xf800, 0x0800 )
+
+	ROM_REGION(0x10000) /* 64k for digital sound processor */
+	ROM_LOAD( "mta2a.bin", 0x0000,0x1000,0x13db8ed3 )
+	ROM_LOAD( "mta3a.bin", 0x1000,0x1000,0x31bdfe5c )
+	ROM_LOAD( "mta4a.bin", 0x2000,0x1000,0x1502d0e8 )
+	ROM_LOAD( "mta1a.bin", 0x3000,0x1000,0x658482a6 )
+
+
 ROM_END
 
 ROM_START( mtrap3_rom )
@@ -1281,6 +1342,14 @@ ROM_START( mtrap3_rom )
 	ROM_LOAD( "mta6a.bin",   0x7000, 0x0800, 0xc00f0c05 )
 	ROM_LOAD( "mta7a.bin",   0x7800, 0x0800, 0xf3f16ca7 )
 	ROM_RELOAD(              0xf800, 0x0800 )
+
+	ROM_REGION(0x10000) /* 64k for digital sound processor */
+	ROM_LOAD( "mta2a.bin", 0x0000,0x1000,0x13db8ed3 )
+	ROM_LOAD( "mta3a.bin", 0x1000,0x1000,0x31bdfe5c )
+	ROM_LOAD( "mta4a.bin", 0x2000,0x1000,0x1502d0e8 )
+	ROM_LOAD( "mta1a.bin", 0x3000,0x1000,0x658482a6 )
+
+
 ROM_END
 
 ROM_START( mtrap4_rom )
@@ -1300,6 +1369,15 @@ ROM_START( mtrap4_rom )
 	ROM_LOAD( "mta6a.bin",    0x7000, 0x0800, 0xc00f0c05 )
 	ROM_LOAD( "mta7a.bin",    0x7800, 0x0800, 0xf3f16ca7 )
 	ROM_RELOAD(               0xf800, 0x0800 )
+
+	ROM_REGION(0x10000) /* 64k for digital sound processor */
+	ROM_LOAD( "mta2a.bin", 0x0000,0x1000,0x13db8ed3 )
+	ROM_LOAD( "mta3a.bin", 0x1000,0x1000,0x31bdfe5c )
+	ROM_LOAD( "mta4a.bin", 0x2000,0x1000,0x1502d0e8 )
+	ROM_LOAD( "mta1a.bin", 0x3000,0x1000,0x658482a6 )
+
+
+
 ROM_END
 
 ROM_START( venture_rom )
@@ -1824,7 +1902,7 @@ struct GameDriver mtrap_driver =
 	"Mouse Trap (version 5)",
 	"1981",
 	"Exidy",
-	"Marc LaFontaine\nBrian Levine\nMike Balfour\nMarco Cassili",
+    "Marc LaFontaine\nBrian Levine\nMike Balfour\nMarco Cassili\nDan Boris(Sound)\nAaron Giles(CVSD)",
 	0,
 	&mtrap_machine_driver,
 	mtrap_driver_init,
@@ -1850,7 +1928,7 @@ struct GameDriver mtrap3_driver =
 	"Mouse Trap (version 3)",
 	"1981",
 	"Exidy",
-	"Marc LaFontaine\nBrian Levine\nMike Balfour\nMarco Cassili",
+    "Marc LaFontaine\nBrian Levine\nMike Balfour\nMarco Cassili\nDan Boris(Sound)\nAaron Giles(CVSD)",
 	0,
 	&mtrap_machine_driver,
 	mtrap_driver_init,
@@ -1876,7 +1954,7 @@ struct GameDriver mtrap4_driver =
 	"Mouse Trap (version 4)",
 	"1981",
 	"Exidy",
-	"Marc LaFontaine\nBrian Levine\nMike Balfour\nMarco Cassili",
+    "Marc LaFontaine\nBrian Levine\nMike Balfour\nMarco Cassili\nDan Boris(Sound)\nAaron Giles(CVSD)",
 	0,
 	&mtrap_machine_driver,
 	mtrap_driver_init,
@@ -1902,7 +1980,7 @@ struct GameDriver venture_driver =
 	"Venture (version 5 set 1)",
 	"1981",
 	"Exidy",
-	"Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)",
+    "Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)\nDan Boris(Sound)",
 	0,
 	&venture_machine_driver,
 	venture_driver_init,
@@ -1928,7 +2006,7 @@ struct GameDriver venture2_driver =
 	"Venture (version 5 set 2)",
 	"1981",
 	"Exidy",
-	"Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)",
+    "Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)\nDan Boris(Sound)",
 	0,
 	&venture_machine_driver,
 	venture_driver_init,
@@ -1954,7 +2032,7 @@ struct GameDriver venture4_driver =
 	"Venture (version 4)",
 	"1981",
 	"Exidy",
-	"Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)",
+    "Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)\nDan Boris(Sound)",
 	0,
 	&venture_machine_driver,
 	venture_driver_init,
@@ -1980,7 +2058,7 @@ struct GameDriver pepper2_driver =
 	"Pepper II",
 	"1982",
 	"Exidy",
-	"Marc LaFontaine\nBrian Levine\nMike Balfour",
+    "Marc LaFontaine\nBrian Levine\nMike Balfour\nDan Boris(Sound)",
 	0,
 	&pepper2_machine_driver,
 	pepper2_driver_init,
@@ -2006,7 +2084,7 @@ struct GameDriver hardhat_driver =
 	"Hard Hat",
 	"1982",
 	"Exidy",
-	"Marc LaFontaine\nBrian Levine\nMike Balfour",
+    "Marc LaFontaine\nBrian Levine\nMike Balfour\nDan Boris(Sound)",
 	0,
 	&pepper2_machine_driver,
 	pepper2_driver_init,
@@ -2032,7 +2110,7 @@ struct GameDriver fax_driver =
 	"Fax",
 	"1983",
 	"Exidy",
-	"Marc LaFontaine\nBrian Levine\nMike Balfour",
+    "Marc LaFontaine\nBrian Levine\nMike Balfour\nDan Boris(Sound)",
 	0,
 	&fax_machine_driver,
 	fax_driver_init,

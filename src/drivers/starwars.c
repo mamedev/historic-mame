@@ -131,6 +131,9 @@ static int esb_setopbase (int pc)
 	{
 //		if (errorlog) fprintf (errorlog, "      new pc inside of slapstic region: %04x (prev = %04x)\n", pc, prevpc);
 		bank = esb_slapstic_tweak ((pc) & 0x1fff);	/* ASG - switched to ESB version */
+		/* catching every branch during slapstic area */
+		catch_nextBranch();
+		return -1;
 	}
 	else if ((prevpc & 0xe000) == 0x8000)
  {
@@ -142,13 +145,11 @@ if (prevpc != 0x8080 && prevpc != 0x8090 && prevpc != 0x80a0 && prevpc !=0x80b0)
 	return pc;
 }
 
-extern int m6809_slapstic;
 void esb_init_machine (void)
 {
 	/* Set up the slapstic */
 	slapstic_init (101);
-	m6809_slapstic = 1;
-	cpu_setOPbaseoverride (esb_setopbase);
+	cpu_setOPbaseoverride (0,esb_setopbase);
 	/* ASG - added the following: */
 	memcpy(slapstic_area, &slapstic_base[slapstic_bank() * 0x2000], 0x2000);
 

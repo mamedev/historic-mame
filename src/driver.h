@@ -217,8 +217,11 @@ struct MachineDriver
 	void (*vh_convert_color_prom)(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 	int video_attributes;	/* ASG 081897 */
-	int obsolete1;
 
+	void (*vh_eof_callback)(void);	/* called every frame after osd_update_video_and_audio() */
+									/* This is useful when there are operations that need */
+									/* to be performed every frame regardless of frameskip, */
+									/* e.g. sprite buffering or collision detection. */
 	int (*vh_start)(void);
 	void (*vh_stop)(void);
 	void (*vh_update)(struct osd_bitmap *bitmap,int full_refresh);
@@ -284,6 +287,9 @@ struct MachineDriver
 #define VIDEO_PIXEL_ASPECT_RATIO_1_2 0x0020
 
 #define VIDEO_DUAL_MONITOR 0x0040
+
+/* Mish 181099:  See comments in vidhrdw/generic.c for details */
+#define VIDEO_BUFFERS_SPRITERAM 0x0080
 
 /* flags for sound_attributes */
 #define	SOUND_SUPPORTS_STEREO		0x0001

@@ -55,9 +55,15 @@
  *                Some optimising
  *                	shl reg,1 -> add reg,reg
  *                  or ecx,ecx:jz -> jecxz
- *
  * 22.08.99 DEO - SBCD/ABCD sets N flag same as carry
- *
+ * 19.10.99 MJC - Change DOS memory routines
+ *                Change DOS Clobber flags (ESI no longer safe)
+ *                Save EAX around memory write where needed
+ *                bit commands optimised
+ * 25.10.99 MJC - Was keeping masked register on read/write
+ *                  if register was preserved over call
+ *                ESI assumed 'safe' again
+ * 25.10.99 MJC - Bank ID moved to CPU context
  *---------------------------------------------------------------
  * Known Problems / Bugs
  *
@@ -91,7 +97,7 @@
 
 #undef  STALLCHECK		/* Affects fetching of Opcode */
 #define SAVEPPC			/* Save Previous PC */
-//#define ENCRYPTED		/* Allows OP_ROM <> OP_RAM (Encrypted CPU code) */
+#undef  ENCRYPTED		/* Allows OP_ROM <> OP_RAM */
 #define ASMBANK         /* Memory banking algorithm to use */
 #define ALIGNMENT 4		/* Alignment to use for branches */
 
@@ -202,7 +208,7 @@ int  AddEACycles    = 0;
 #ifdef DOS
 
 /* Registers normally saved around C routines anyway */
-/* GCC (dos) seems to preserve EBX,EDI,ESI and EBP   */
+/* GCC 2.9.1 (dos) seems to preserve EBX,EDI and EBP */
 
 static char SavedRegs[] = "-B--SDB";
 
@@ -434,7 +440,7 @@ void MemoryBanking(int BaseCode)
 
     #endif
 
-    /* Call Banking Rountine */
+    /* Call Banking Routine */
 
     if (SavedRegs[ESI] == '-')
     {
@@ -781,234 +787,6 @@ void WriteCCR(char Size)
  *        2 : Mask top byte, preserve masked register
  */
 
-/****************/
-/* DOS VERSIONS */
-/****************/
-
-#ifdef DOS
-
-void Memory_Read(char Size,int AReg,char *Flags,int Mask)
-{
-	int Count;
-    int SavedReg = -1;
-
-	ExternalIO += 1;		/* C has been called */
-
-    /* Save PC */
-
-  	fprintf(fp, "\t\t mov   [%s],ESI\n",REG_PC);
-
-
-    /* Check for special mask condition */
-
-    if (Mask == 2)
-    	fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[AReg]);
-
-
-	/* Push registers that we need to save (ignore EAX) */
-
-    for (Count = 1;Count < 6;Count++)
-		if (Flags[Count] != '-')
-			if (SavedRegs[Count] == '-')
-            {
-            	if (SavedReg == -1) SavedReg = Count;
-			if ( ( Count == 2 ) && ( Flags[1] == '-' ))
-				fprintf(fp, "\t\t mov   ebx,ecx\n");
-			else
-	   			fprintf(fp, "\t\t push  %s\n",regnameslong[Count]);
-            }
-
-
-    /* Sort out Addressing */
-
-   	if (Mask == 1)
-    {
-		if ((Flags[AReg] != '-') & (SavedRegs[AReg] != '-'))
-    	{
-       		/* Need to preserve AReg */
-
-        	fprintf(fp, "\t\t mov   eax,%s\n",regnameslong[AReg]);
-	    	fprintf(fp, "\t\t and   eax,0FFFFFFh\n");
-    	    fprintf(fp, "\t\t push  eax\n");
-	    }
-        else
-        {
-	    	fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[AReg]);
-		    fprintf(fp, "\t\t push  %s\n",regnameslong[AReg]);
-        }
-    }
-    else
-    {
-    	/* Just push it onto stack */
-
-	    fprintf(fp, "\t\t push  %s\n",regnameslong[AReg]);
-    }
-
-
-    /* Call Mame memory routine */
-
-    switch(Size)
-    {
-    	case 66 :
-			fprintf(fp, "\t\t call  %s\n",name_cpu_readmem24);
-            break;
-
-        case 87 :
-			fprintf(fp, "\t\t call  %s\n",name_cpu_readmem24_word);
-            break;
-
-        case 76 :
-			fprintf(fp, "\t\t call  %s\n",name_cpu_readmem24_dword);
-            break;
-    }
-
-
-    /* Correct Stack */
-
-    if (SavedReg == -1)
-	    fprintf(fp, "\t\t add   esp,byte 4\n");
-    else
-    	fprintf(fp, "\t\t pop   %s\n",regnameslong[SavedReg]);
-
-
-    for (Count = 5;Count >= 1;Count--)
-		if (Flags[Count] != '-')
-			if (SavedRegs[Count] == '-')
-            {
-				if ( ( Count == 2 ) && ( Flags[1] == '-' ))
-					fprintf(fp, "\t\t mov   ecx,ebx\n");
-				else
-	   				fprintf(fp, "\t\t pop   %s\n",regnameslong[Count]);
-            }
-
-}
-
-/*
- * Flags = "ABCDSDB" - set to '-' if not required to preserve
- *         (order EAX,EBX,ECX,EDX,ESI,EDI,EBP)
- *
- * AReg   = Register containing Address
- * DReg   = Register containing Data
- *
- * Mask   = As for Read Command
- */
-
-void Memory_Write(char Size,int AReg,int DReg,char *Flags,int Mask)
-{
-	int Count;
-    int SavedReg = -1;
-
-	ExternalIO += 1;
-
-    /* Save PC */
-
-  	fprintf(fp, "\t\t mov   [%s],ESI\n",REG_PC);
-
-
-    /* Check for special mask condition */
-
-    if (Mask == 2)
-    	fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[AReg]);
-
-	/* Push registers that we need to save (ignore Dreg!) */
-
-    for (Count = 0;Count < 6;Count++)
-		if ((Flags[Count] != '-') & (Count != DReg))
-			if (SavedRegs[Count] == '-')
-            {
-            	if (SavedReg == -1) SavedReg = Count;
-	   			fprintf(fp, "\t\t push  %s\n",regnameslong[Count]);
-            }
-
-    /* push data onto stack */
-
-	fprintf(fp, "\t\t push  %s\n",regnameslong[DReg]);
-
-    /* Sort Address out */
-
-    if (Mask == 1)
-    {
-    	if ((Flags[AReg] != '-') & (SavedRegs[AReg] != '-'))
-        {
-        	/* Need to preserve AReg */
-
-            fprintf(fp, "\t\t mov   %s,%s\n",regnameslong[DReg],regnameslong[AReg]);
-	    	fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[DReg]);
-            fprintf(fp, "\t\t push  %s\n",regnameslong[DReg]);
-        }
-        else
-        {
-        	/* Don't care - scrap it! */
-
-            fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[AReg]);
-		    fprintf(fp, "\t\t push  %s\n",regnameslong[AReg]);
-        }
-    }
-    else
-    {
-    	/* Just push it onto stack */
-
-	    fprintf(fp, "\t\t push  %s\n",regnameslong[AReg]);
-    }
-
-
-    /* Call Mame Routine */
-
-    switch(Size)
-    {
-    	case 66 :
-			fprintf(fp, "\t\t call  %s\n",name_cpu_writemem24);
-            break;
-
-        case 87 :
-			fprintf(fp, "\t\t call  %s\n",name_cpu_writemem24_word);
-            break;
-
-        case 76 :
-			fprintf(fp, "\t\t call  %s\n",name_cpu_writemem24_dword);
-            break;
-    }
-
-
-    /* Correct Stack - Pop Dreg if needed */
-
-    if (Flags[DReg] != '-')
-    {
-    	/* Two pops can run as paired commands, add esp and pop cannot */
-		if (SavedReg == -1)
-        	fprintf(fp, "\t\t pop   %s\n",regnameslong[DReg]);
-        else
-	    	fprintf(fp, "\t\t pop   %s\n",regnameslong[SavedReg]);
-
-        fprintf(fp, "\t\t pop   %s\n",regnameslong[DReg]);
-    }
-    else
-    {
-		fprintf(fp, "\t\t add   esp,byte 8\n");
-    }
-
-    /* Restore rest of registers */
-
-    for (Count = 5;Count >= 0;Count--)
-		if ((Flags[Count] != '-') & (Count != DReg))
-			if (SavedRegs[Count] == '-')
-	   			fprintf(fp, "\t\t pop   %s\n",regnameslong[Count]);
-}
-
-#else
-
-/******************/
-/* OTHER VERSIONS */
-/******************/
-
-/*
- * Longer winded version, but should be easier to understand
- * and does not assume that variables pushed onto stack will
- * be intact at end of routine. Uses normal store locations
- * where possible, otherwise uses safe memory variables.
- *
- */
-
 void Memory_Read(char Size,int AReg,char *Flags,int Mask)
 {
 	ExternalIO = 1;
@@ -1044,28 +822,36 @@ void Memory_Read(char Size,int AReg,char *Flags,int Mask)
     	fprintf(fp, "\t\t mov   [Safe_EDI],EDI\n");
     }
 
+    /* Sort Address out */
 
 #ifdef FASTCALL
-    /* Sort Address out */
+
+	fprintf(fp, "\t\t mov   %s,%s\n",FASTCALL_FIRST_REG,regnameslong[AReg]);
 
     if (Mask == 1)
-        fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[AReg]);
+        fprintf(fp, "\t\t and   %s,0FFFFFFh\n",FASTCALL_FIRST_REG);
 
-    fprintf(fp,"\t\t mov  %s,%s\n",FASTCALL_FIRST_REG,regnameslong[AReg]);
 #else
-    /* Sort Address out */
 
     if (Mask == 1)
     {
-        fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[AReg]);
-	    fprintf(fp, "\t\t push  %s\n",regnameslong[AReg]);
+    	if((Flags[AReg] != '-') && (SavedRegs[AReg] != '-'))
+        {
+        	/* Don't trash a wanted safe register */
+
+        	fprintf(fp, "\t\t mov   EAX,%s\n",regnameslong[AReg]);
+            fprintf(fp, "\t\t and   EAX,0FFFFFFh\n");
+            fprintf(fp, "\t\t push  EAX\n");
+        }
+        else
+        {
+	        fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[AReg]);
+            fprintf(fp, "\t\t push  %s\n",regnameslong[AReg]);
+        }
     }
     else
-    {
-    	/* Just push it onto stack */
+    	fprintf(fp, "\t\t push  %s\n",regnameslong[AReg]);
 
-	    fprintf(fp, "\t\t push  %s\n",regnameslong[AReg]);
-    }
 #endif
 
     /* Call Mame memory routine */
@@ -1141,6 +927,11 @@ void Memory_Write(char Size,int AReg,int DReg,char *Flags,int Mask)
 
     /* Check to see if registers need saving */
 
+    if ((Flags[EAX] != '-') && (SavedRegs[EAX] == '-'))
+    {
+		fprintf(fp, "\t\t push  EAX\n");
+    }
+
     if ((Flags[EBX] != '-') && (SavedRegs[EBX] == '-'))
     {
     	fprintf(fp, "\t\t mov   [Safe_EBX],EBX\n");
@@ -1161,34 +952,37 @@ void Memory_Write(char Size,int AReg,int DReg,char *Flags,int Mask)
     	fprintf(fp, "\t\t mov   [Safe_EDI],EDI\n");
     }
 
-
 #ifdef FASTCALL
-    fprintf(fp,"\t\t mov  %s,%s\n",FASTCALL_SECOND_REG,regnameslong[DReg]);
 
-    /* Sort Address out */
+    fprintf(fp, "\t\t mov   %s,%s\n",FASTCALL_SECOND_REG,regnameslong[DReg]);
+	fprintf(fp, "\t\t mov   %s,%s\n",FASTCALL_FIRST_REG,regnameslong[AReg]);
 
     if (Mask == 1)
-        fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[AReg]);
+        fprintf(fp, "\t\t and   %s,0FFFFFFh\n",FASTCALL_FIRST_REG);
 
-    fprintf(fp,"\t\t mov  %s,%s\n",FASTCALL_FIRST_REG,regnameslong[AReg]);
 #else
-    /* push data onto stack */
 
 	fprintf(fp, "\t\t push  %s\n",regnameslong[DReg]);
 
-    /* Sort Address out */
-
     if (Mask == 1)
     {
-        fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[AReg]);
-	    fprintf(fp, "\t\t push  %s\n",regnameslong[AReg]);
+    	if((Flags[AReg] != '-') && (SavedRegs[AReg] != '-'))
+        {
+        	/* Don't trash a wanted safe register */
+
+        	fprintf(fp, "\t\t mov   EAX,%s\n",regnameslong[AReg]);
+            fprintf(fp, "\t\t and   EAX,0FFFFFFh\n");
+            fprintf(fp, "\t\t push  EAX\n");
+        }
+        else
+        {
+	        fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[AReg]);
+            fprintf(fp, "\t\t push  %s\n",regnameslong[AReg]);
+        }
     }
     else
-    {
-    	/* Just push it onto stack */
+    	fprintf(fp, "\t\t push  %s\n",regnameslong[AReg]);
 
-	    fprintf(fp, "\t\t push  %s\n",regnameslong[AReg]);
-    }
 #endif
 
     /* Call Mame Routine */
@@ -1208,8 +1002,7 @@ void Memory_Write(char Size,int AReg,int DReg,char *Flags,int Mask)
             break;
     }
 
-
-    /* Correct Stack - Pop Dreg if needed */
+    /* Correct Stack */
 
 #ifndef FASTCALL
 	fprintf(fp, "\t\t add   esp,byte 8\n");
@@ -1248,9 +1041,12 @@ void Memory_Write(char Size,int AReg,int DReg,char *Flags,int Mask)
     {
 	    fprintf(fp, "\t\t mov   ebp,dword [_OP_ROM]\n");
     }
-}
 
-#endif
+    if ((Flags[EAX] != '-') && (SavedRegs[EAX] == '-'))
+    {
+		fprintf(fp, "\t\t pop   EAX\n");
+    }
+}
 
 
 /*
@@ -2432,7 +2228,8 @@ void dump_bit_dynamic( int sreg, int type, int mode, int dreg )
 			else
 				fprintf(fp, "\t\t and   ecx, byte 7\n");
 
-			fprintf(fp,"\t\t mov   eax,1\n");
+            fprintf(fp,"\t\t xor   eax,eax\n");
+            fprintf(fp,"\t\t inc   eax\n");
 			fprintf(fp,"\t\t shl   eax,cl\n");
             fprintf(fp,"\t\t mov   ecx,eax\n");
 
@@ -2444,10 +2241,10 @@ void dump_bit_dynamic( int sreg, int type, int mode, int dreg )
 
     		Label = GenerateLabel(0,1);
 
-			fprintf(fp,"\t\t and   dl,0BFH\t;Clear Zero Flag\n");
+            fprintf(fp,"\t\t or    edx,byte 40h\t; Set Zero Flag\n");
 			fprintf(fp,"\t\t test  %s,%s\n",EAXReg,ECXReg);
-            fprintf(fp,"\t\t jnz   short %s\n",Label);
-            fprintf(fp,"\t\t or    edx,byte 40h\n");
+            fprintf(fp,"\t\t jz    short %s\n",Label);
+			fprintf(fp,"\t\t xor   edx,byte 40h\t; Clear Zero Flag\n");
             fprintf(fp,"%s:\n",Label);
 
             /* Some then modify the data */
@@ -2585,7 +2382,8 @@ void dump_bit_static(int type, int mode, int dreg )
 			else
 				fprintf(fp, "\t\t and   ecx, byte 7\n");
 
-			fprintf(fp,"\t\t mov   eax,1\n");
+            fprintf(fp,"\t\t xor   eax,eax\n");
+            fprintf(fp,"\t\t inc   eax\n");
 			fprintf(fp,"\t\t shl   eax,cl\n");
             fprintf(fp,"\t\t mov   ecx,eax\n");
 
@@ -2596,10 +2394,10 @@ void dump_bit_static(int type, int mode, int dreg )
 
     		Label = GenerateLabel(0,1);
 
-			fprintf(fp,"\t\t and   dl,0BFH\t;Clear Zero Flag\n");
+            fprintf(fp,"\t\t or    edx,byte 40h\t; Set Zero Flag\n");
 			fprintf(fp,"\t\t test  %s,%s\n",EAXReg,ECXReg);
-            fprintf(fp,"\t\t jnz   short %s\n",Label);
-            fprintf(fp,"\t\t or    edx,byte 40h\n");
+            fprintf(fp,"\t\t jz    short %s\n",Label);
+			fprintf(fp,"\t\t xor   edx,byte 40h\t; Clear Zero Flag\n");
             fprintf(fp,"%s:\n",Label);
 
             /* Some then modify the data */
@@ -7054,6 +6852,8 @@ void CodeSegmentEnd(void)
     fprintf(fp, "R_USP\t DD 0\t\t\t ; User Stack\n");
     fprintf(fp, "R_VBR\t DD 0\t\t\t ; Vector Base\n");
 
+    fprintf(fp, "asmbank\t DD 0\n\n");
+
     /* Extra space for variables mame uses for debugger */
 
     fprintf(fp, "\t\t DD 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0\n");
@@ -7064,8 +6864,6 @@ void CodeSegmentEnd(void)
     fprintf(fp, "\t\t DD 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0\n");
     fprintf(fp, "\t\t DD 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0\n");
     fprintf(fp, "\t\t DD 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0\n\n");
-
-    fprintf(fp, "asmbank\t DD 0\n\n");
 
     /* Safe Memory Locations */
 

@@ -45,12 +45,6 @@ extern void contra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern int contra_vh_start(void);
 extern void contra_vh_stop(void);
 
-void contra_init_machine(void)
-{
-	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
-}
-
 
 void contra_bankswitch_w(int offset,int data)
 {
@@ -306,7 +300,7 @@ static struct MachineDriver machine_driver =
 	},
 	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	contra_init_machine, /* init machine */
+	0,
 
 	/* video hardware */
 

@@ -84,6 +84,9 @@ VII. Derivative Works
    the official distribution. Enabling them is NOT considered a derivative
    work, and distribution of executables with those drivers enabled is strictly
    forbidden.
+   If you make a derivative work, you are not allowed to call it MAME. You must
+   use a different name to make clear that it isn't an official distribution
+   from the MAME team.
 
 
 How to Contact Us
@@ -95,7 +98,7 @@ things being worked on. Also, a totally legal and free ROM set of Robby
 Roto is available on the same page.
 
 If you have bugs to report, check the MAME Testing Project at
-http://zan.emuunlim.com/mametesters/
+http://mameworld.retrogames.com/mametesters
 
 Here are some of the people contributing to MAME. If you have comments,
 suggestions or bug reports about an existing driver, check the driver's Credits
@@ -125,9 +128,8 @@ your question, try checking the beginner's sections that many emulation pages
 have, or ask on the appropriate Usenet newsgroups (e.g. comp.emulators.misc) or
 on the official MAME message board, http://www.macmame.org/wwwboard/mame/.
 
-For help in compiling MAME, check these pages:
-http://zan.emuunlim.com/mame/compile/compilemame.html
-http://zan.emuunlim.com/mame/compile/compilemamebeta.html
+For help in compiling MAME, check this page:
+http://mameworld.retrogames.com
 
 Also, DO NOT SEND REQUESTS FOR NEW GAMES TO ADD, unless you have some original
 info on the game hardware or, even better, own the board and have the technical
@@ -430,6 +432,9 @@ Keys
 ----
 Tab          Toggles the configuration menu
 Tilde        Toggles the On Screen Display
+             Use the up and down arrow keys to select the parameter (global
+             volume, mixing level, gamma correction etc.), left and right to
+             arrow keys to modify it.
 P            Pause
 Shift+P      While paused, advance to next frame
 F3           Reset

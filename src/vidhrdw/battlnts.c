@@ -27,6 +27,7 @@ static void tile_callback(int layer, int bank, int *code, int *color)
 static void sprite_callback(int *code,int *color)
 {
 	*code |= ((*color & 0xc0) << 2) | spritebank;
+	*code = (*code << 2) | ((*color & 0x30) >> 4);
 	*color = 0;
 }
 

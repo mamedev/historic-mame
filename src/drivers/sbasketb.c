@@ -34,13 +34,6 @@ void hyperspt_sound_w(int offset, int data);
 int  hyperspt_sh_timer_r(int offset);
 
 
-void sbasketb_init_machine(void)
-{
-	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
-}
-
-
 void sbasketb_sh_irqtrigger_w(int offset,int data)
 {
 	cpu_cause_interrupt(1,0xff);
@@ -265,7 +258,7 @@ static struct MachineDriver machine_driver =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	sbasketb_init_machine,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },

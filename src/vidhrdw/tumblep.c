@@ -283,6 +283,67 @@ void tumblep_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		tumblep_pf3_update();
 
 	/* Background */
+	scrollx=-READ_WORD (&tumblep_control_0[6]);
+	scrolly=-READ_WORD (&tumblep_control_0[8]);
+ 	copyscrollbitmap(bitmap,tumblep_pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+	/* Foreground */
+	scrollx=-READ_WORD (&tumblep_control_0[2]);
+	scrolly=-READ_WORD (&tumblep_control_0[4]);
+
+	/* Draw 16*16 background */
+	if (!pf_bank)
+		copyscrollbitmap(bitmap,tumblep_pf3_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+
+	/* Sprites */
+	tumblep_drawsprites(bitmap);
+
+	/* Draw 8*8 background */
+	if (pf_bank) {
+		mx = -1;
+		my = 0;
+		for (offs = 0; offs < 0x1000 ;offs += 2)
+		{
+			mx++;
+			if (mx == 64)
+			{
+				mx = 0;
+				my++;
+			}
+
+			if (tumblep_pf3_dirty[offs])
+			{
+				tumblep_pf3_dirty[offs] = 0;
+				tile = READ_WORD(&tumblep_pf3_data[offs]);
+				color = (tile & 0xf000) >> 12;
+
+				drawgfx(tumblep_pf1_bitmap,Machine->gfx[0],
+						tile & 0x0fff,
+						color,
+						0,0,
+						8*mx,8*my,
+						0,TRANSPARENCY_NONE,0);
+			}
+		}
+
+		scrollx=-READ_WORD (&tumblep_control_0[2]);
+		scrolly=-READ_WORD (&tumblep_control_0[4]);
+		copyscrollbitmap(bitmap,tumblep_pf1_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	}
+}
+
+void tumblepb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int scrollx,scrolly;
+	int mx,my,offs,tile,color;
+
+	tumblep_update_palette();
+
+	tumblep_pf2_update();
+	if (!pf_bank)
+		tumblep_pf3_update();
+
+	/* Background */
 	scrollx=-READ_WORD (&tumblep_control_0[6])+1;
 	scrolly=-READ_WORD (&tumblep_control_0[8]);
  	copyscrollbitmap(bitmap,tumblep_pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);

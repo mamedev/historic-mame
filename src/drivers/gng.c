@@ -197,14 +197,6 @@ void gng_bankswitch_w(int offset,int data)
 
 
 
-void gng_init_machine(void)
-{
-	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_NONE;
-}
-
-
-
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x2fff, MRA_RAM },
@@ -595,7 +587,7 @@ static struct MachineDriver machine_driver =
 	60, 2500,	/* frames per second, vblank duration */
 				/* hand tuned to get rid of sprite lag */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	gng_init_machine,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },

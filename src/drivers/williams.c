@@ -2138,7 +2138,7 @@ ROM_START( maydaya_rom )
 	/* bank 0 is the place for CMOS ram */
 	ROM_LOAD( "mayday.d", 0x10000, 0x1000, 0xc2ae4716 )
 	ROM_LOAD( "mayday.e", 0x11000, 0x1000, 0x41225666 )
-	ROM_LOAD( "mayday.f", 0x12000, 0x1000, 0x00000000 )
+	ROM_LOAD( "mayday.f", 0x12000, 0x1000, 0xc39be3c0 )
 	ROM_LOAD( "mayday.g", 0x13000, 0x1000, 0x2bd0f106 )
 	ROM_RELOAD(           0x14000, 0x1000 )
 
@@ -2696,16 +2696,16 @@ ROM_END
 
 WILLIAMS_DRIVER      (defender, defender, 1980, ORIENTATION_DEFAULT,    "Defender (Red label)")
 WILLIAMS_CLONE_DRIVER(defendg,  defender, 1980, ORIENTATION_DEFAULT,    "Defender (Green label)", defender)
-EXTERNAL_CLONE_DRIVER(defndjeu, defender, 1980, ORIENTATION_DEFAULT,    "Defender ? (Bootleg)", "Jeutel", defender, defndjeu, GAME_NOT_WORKING)
-EXTERNAL_CLONE_DRIVER(defcmnd,  defender, 1980, ORIENTATION_DEFAULT,    "Defense Command", "bootleg", defender, defender, 0)
-EXTERNAL_CLONE_DRIVER(defcomnd, defender, 1980, ORIENTATION_DEFAULT,    "Defense Command (alternate)", "???", defender, defender, GAME_NOT_WORKING)
+EXTERNAL_CLONE_DRIVER(defndjeu, defender, 1980, ORIENTATION_DEFAULT,    "Defender ? (bootleg)", "Jeutel", defender, defndjeu, GAME_NOT_WORKING)
+EXTERNAL_CLONE_DRIVER(defcmnd,  defender, 1980, ORIENTATION_DEFAULT,    "Defense Command (set 1)", "bootleg", defender, defender, 0)
+EXTERNAL_CLONE_DRIVER(defcomnd, defender, 1980, ORIENTATION_DEFAULT,    "Defense Command (set 2)", "???", defender, defender, GAME_NOT_WORKING)
 EXTERNAL_CLONE_DRIVER(defence,  defender, 1981, ORIENTATION_DEFAULT,    "Defence Command", "Outer Limits", defender, defender, 0)
 
-EXTERNAL_DRIVER      (mayday,   defender, 1980, ORIENTATION_DEFAULT,    "Mayday", "???")
-EXTERNAL_CLONE_DRIVER(maydaya,  defender, 1980, ORIENTATION_DEFAULT,    "Mayday (alternate)", "???", mayday, mayday, GAME_NOT_WORKING)
+EXTERNAL_DRIVER      (mayday,   defender, 1980, ORIENTATION_DEFAULT,    "Mayday (set 1)", "???")
+EXTERNAL_CLONE_DRIVER(maydaya,  defender, 1980, ORIENTATION_DEFAULT,    "Mayday (set 2)", "???", mayday, mayday, 0)
 
-EXTERNAL_DRIVER      (colony7,  defender, 1981, ORIENTATION_ROTATE_270, "Colony 7 (Set 1)", "Taito")
-EXTERNAL_CLONE_DRIVER(colony7a, defender, 1981, ORIENTATION_ROTATE_270, "Colony 7 (Set 2)", "Taito", colony7, colony7, 0)
+EXTERNAL_DRIVER      (colony7,  defender, 1981, ORIENTATION_ROTATE_270, "Colony 7 (set 1)", "Taito")
+EXTERNAL_CLONE_DRIVER(colony7a, defender, 1981, ORIENTATION_ROTATE_270, "Colony 7 (set 2)", "Taito", colony7, colony7, 0)
 
 WILLIAMS_DRIVER      (stargate, williams, 1981, ORIENTATION_DEFAULT,    "Stargate")
 

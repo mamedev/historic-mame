@@ -69,13 +69,14 @@ unsigned int num_tiles ;
 unsigned int video_ofs;
 unsigned int video_ofs3;
 
+int toaplan1_flipscreen;
 int tiles_offsetx ;
 int tiles_offsety ;
 int layers_offset[4] ;
 
 unsigned int fdflag;
 
-extern int int_enable ;
+extern int toaplan1_int_enable ;
 
 typedef struct
 	{
@@ -95,8 +96,7 @@ static int sp_max_list_size;
 static int sp_count;
 
 struct osd_bitmap *tmpbitmap1;
-struct osd_bitmap *tmpbitmap2;
-struct osd_bitmap *tmpbitmap3;
+static struct osd_bitmap *tmpbitmap2;
 
 
 int toaplan1_vh_start(void)
@@ -109,11 +109,6 @@ int toaplan1_vh_start(void)
 					Machine->scrbitmap->depth);
 
 	tmpbitmap2 = osd_new_bitmap(
-					Machine->drv->screen_width,
-					Machine->drv->screen_height,
-					Machine->scrbitmap->depth);
-
-	tmpbitmap3 = osd_new_bitmap(
 					Machine->drv->screen_width,
 					Machine->drv->screen_height,
 					Machine->scrbitmap->depth);
@@ -154,7 +149,6 @@ void toaplan1_vh_stop(void)
 
 	osd_free_bitmap(tmpbitmap1);
 	osd_free_bitmap(tmpbitmap2);
-	osd_free_bitmap(tmpbitmap3);
 
 	free(toaplan1_videoram1);
 	free(toaplan1_videoram2);
@@ -174,7 +168,7 @@ void toaplan1_vh_stop(void)
 
 }
 
-int vblank_r(int offset)
+int toaplan1_vblank_r(int offset)
 {
 	return vblank ^= 1;
 }
@@ -188,17 +182,22 @@ int demonwld_r(int offset)
 		return 0 ;
 }
 
-int framedone_r(int offset)
+int toaplan1_framedone_r(int offset)
 {
 	framedone += 1 ;
-	if ( (!int_enable) && (fdflag==0) )
+	if ( (!toaplan1_int_enable) && (fdflag==0) )
 		return 1;
 	return fdflag ;
 }
 
-void framedone_w(int offset, int data)
+void toaplan1_framedone_w(int offset, int data)
 {
 	fdflag = data ;
+}
+
+void toaplan1_flipscreen_w(int offset, int data)
+{
+	toaplan1_flipscreen = data; /* 8000 flip, 0000 dont */
 }
 
 void video_ofs_w(int offset, int data)
@@ -714,16 +713,12 @@ static void rallybik_find_sprites (void)
 
 
 /* suz */
-void copybitmapnottransparent(struct osd_bitmap *dest_bmp,struct osd_bitmap *source_bmp,
-		const struct rectangle *clip,int transparent_color)
+void copybitmapmask(struct osd_bitmap *dest_bmp,struct osd_bitmap *source_bmp,
+	struct osd_bitmap *mask_bmp,const struct rectangle *clip,int transparent_color)
 {
 	struct rectangle myclip;
 	int sx=0;
 	int sy=0;
-
-	/* if necessary, remap the transparent color */
-//	if (transparency == TRANSPARENCY_COLOR)
-//		transparent_color = Machine->pens[transparent_color];
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
@@ -794,14 +789,16 @@ void copybitmapnottransparent(struct osd_bitmap *dest_bmp,struct osd_bitmap *sou
 			int y;
 			for( y=sy; y<ey; y++ )
 			{
-				unsigned char *source = source_bmp->line[y];
 				unsigned char *dest = dest_bmp->line[y];
+				unsigned char *source = source_bmp->line[y];
+				unsigned char *mask = mask_bmp->line[y];
 				int x;
 
 				for( x=sx; x<ex; x++ )
 				{
-					int c = source[x];
-					if( c == transparent_color ) dest[x] = c;
+					int c = mask[x];
+					if( c != transparent_color )
+						dest[x] = source[x];
 				}
 			}
 		}
@@ -835,14 +832,16 @@ void copybitmapnottransparent(struct osd_bitmap *dest_bmp,struct osd_bitmap *sou
 
 			for( y=sy; y<ey; y++ )
 			{
-				unsigned char *source = source_bmp->line[y];
 				unsigned short *dest = (unsigned short *)dest_bmp->line[y];
+				unsigned char *source = source_bmp->line[y];
+				unsigned char *mask = mask_bmp->line[y];
 				int x;
 
 				for( x=sx; x<ex; x++ )
 				{
-					int c = source[x];
-					if( c == transparent_color ) dest[x] = c;
+					int c = mask[x];
+					if( c != transparent_color )
+						dest[x] = source[x];
 				}
 			}
 		}
@@ -862,7 +861,6 @@ static void toaplan1_render (struct osd_bitmap *bitmap)
 	struct rectangle sp_rect;
 
 	fillbitmap (bitmap, palette_transparent_pen, &Machine->drv->visible_area);
-	fillbitmap (tmpbitmap1, palette_transparent_pen, &Machine->drv->visible_area);
 
 #ifdef BGDBG
 
@@ -930,35 +928,20 @@ if( toaplan_dbg_priority != 0 ){
 			sp_rect.max_x = tinfo->xpos + 7;
 			sp_rect.max_y = tinfo->ypos + 7;
 
-			fillbitmap (tmpbitmap3, palette_transparent_pen, &sp_rect);
+			fillbitmap (tmpbitmap2, palette_transparent_pen, &sp_rect);
 
-			drawgfx(tmpbitmap3,Machine->gfx[(tinfo->color>>7)&1],	/* bit 7 set for sprites */
+			drawgfx(tmpbitmap2,Machine->gfx[(tinfo->color>>7)&1],	/* bit 7 set for sprites */
 				tinfo->tile_num,
 				(tinfo->color&0x3f), 			/* bit 7 not for colour */
 				(tinfo->color & 0x0100),(tinfo->color & 0x0200),	/* flipx,flipy */
 				tinfo->xpos,tinfo->ypos,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 
-			copybitmap(
-				tmpbitmap2,
-				tmpbitmap1,0,0,0,0,
+			copybitmapmask(
+				bitmap,					// dist
+				tmpbitmap1,				// src
+				tmpbitmap2,				// mask
 				&sp_rect,
-				TRANSPARENCY_NONE,
-				0
-			);
-
-			copybitmapnottransparent(
-				tmpbitmap2,
-				tmpbitmap3,
-				&sp_rect,
-				palette_transparent_pen
-			);
-
-			copybitmap(
-				bitmap,
-				tmpbitmap2,0,0,0,0,
-				&sp_rect,
-				TRANSPARENCY_PEN,
 				palette_transparent_pen
 			);
 
@@ -971,7 +954,6 @@ if( toaplan_dbg_priority != 0 ){
 		/* hack to fix black blobs in Demon's World sky */
 		/* truxtun background etc..						*/
 
-//		if ( ((tinfo->color >> 8) == 0) && (priority < 6) )
 		if ( ((tinfo->color >> 8) == 0) && (priority < 4) )
 										/* Layer 0 && priority */
 			pen = TRANSPARENCY_NONE ;

@@ -19,20 +19,21 @@ microcontroller.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern int lastduel_vram_r(int offset);
-extern void lastduel_vram_w(int offset,int value);
-extern void lastduel_flip_w(int offset,int value);
-extern int lastduel_scroll2_r(int offset);
-extern int lastduel_scroll1_r(int offset);
-extern void lastduel_scroll1_w(int offset,int value);
-extern void lastduel_scroll2_w(int offset,int value);
-extern void madgear_scroll1_w(int offset,int value);
-extern void madgear_scroll2_w(int offset,int value);
-extern int lastduel_vh_start(void);
-extern int madgear_vh_start(void);
-extern void lastduel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void ledstorm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void lastduel_scroll_w( int offset, int data );
+int lastduel_vram_r(int offset);
+void lastduel_vram_w(int offset,int value);
+void lastduel_flip_w(int offset,int value);
+int lastduel_scroll2_r(int offset);
+int lastduel_scroll1_r(int offset);
+void lastduel_scroll1_w(int offset,int value);
+void lastduel_scroll2_w(int offset,int value);
+void madgear_scroll1_w(int offset,int value);
+void madgear_scroll2_w(int offset,int value);
+int lastduel_vh_start(void);
+int madgear_vh_start(void);
+void lastduel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void ledstorm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void lastduel_eof_callback(void);
+void lastduel_scroll_w( int offset, int data );
 
 extern unsigned char *lastduel_vram,*lastduel_scroll2,*lastduel_scroll1;
 static unsigned char *lastduel_ram;
@@ -104,7 +105,7 @@ static struct MemoryWriteAddress lastduel_writemem[] =
 {
 	{ 0x000000, 0x05ffff, MWA_ROM },
 	{ 0xfc0000, 0xfc0003, MWA_NOP }, /* Written rarely */
-	{ 0xfc0800, 0xfc0fff, MWA_BANK2, &spriteram },
+	{ 0xfc0800, 0xfc0fff, MWA_BANK2, &spriteram, &spriteram_size },
 	{ 0xfc4000, 0xfc4001, lastduel_flip_w },
 	{ 0xfc4002, 0xfc4003, lastduel_sound_w },
 	{ 0xfc8000, 0xfc800f, lastduel_scroll_w },
@@ -132,7 +133,7 @@ static struct MemoryReadAddress madgear_readmem[] =
 static struct MemoryWriteAddress madgear_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0xfc1800, 0xfc1fff, MWA_BANK2, &spriteram },
+	{ 0xfc1800, 0xfc1fff, MWA_BANK2, &spriteram, &spriteram_size },
 	{ 0xfc4000, 0xfc4001, lastduel_flip_w },
 	{ 0xfc4002, 0xfc4003, lastduel_sound_w },
 	{ 0xfc8000, 0xfc9fff, lastduel_vram_w,    &lastduel_vram },
@@ -396,8 +397,8 @@ static struct MachineDriver lastduel_machine_driver =
 	1024, 1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	lastduel_eof_callback,
 	lastduel_vh_start,
 	0,
 	lastduel_vh_screenrefresh,
@@ -442,8 +443,8 @@ static struct MachineDriver madgear_machine_driver =
 	1024, 1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	lastduel_eof_callback,
 	madgear_vh_start,
 	0,
 	ledstorm_vh_screenrefresh,

@@ -44,7 +44,6 @@ extern unsigned konami_dasm(char *buffer, unsigned pc);
 /****************************************************************************/
 /* Read a byte from given memory location									*/
 /****************************************************************************/
-/* ASG 971005 -- changed to cpu_readmem16/cpu_writemem16 */
 #define KONAMI_RDMEM(Addr) ((unsigned)cpu_readmem16(Addr))
 
 /****************************************************************************/
@@ -65,18 +64,6 @@ extern unsigned konami_dasm(char *buffer, unsigned pc);
 /* use different encoding mechanisms for opcodes and opcode arguments       */
 /****************************************************************************/
 #define KONAMI_RDOP_ARG(Addr) ((unsigned)cpu_readop_arg(Addr))
-
-/****************************************************************************/
-/* Flags for optimizing memory access. Game drivers should set m6809_Flags  */
-/* to a combination of these flags depending on what can be safely          */
-/* optimized. For example, if M6809_FAST_OP is set, opcodes are fetched     */
-/* directly from the ROM array, and cpu_readmem() is not called.            */
-/* The flags affect reads and writes.                                       */
-/****************************************************************************/
-extern int konami_Flags;
-#define KONAMI_FAST_NONE	0x00	/* no memory optimizations */
-#define KONAMI_FAST_S	0x02	/* stack */
-#define KONAMI_FAST_U	0x04	/* user stack */
 
 #ifndef FALSE
 #    define FALSE 0

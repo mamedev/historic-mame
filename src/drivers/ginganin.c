@@ -564,4 +564,3 @@ struct GameDriver ginganin_driver =
 
 	0,0
 };
-

@@ -12,11 +12,6 @@
 
 extern unsigned char *tp84_sharedram;	/* JB 970829 */
 
-/* JB 970829 */
-void tp84_init_machine(void)
-{
-	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
-}
 
 /* JB 970829 - just give it what it wants
 	F104: LDX   $6400

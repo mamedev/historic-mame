@@ -28,21 +28,22 @@ Mr Kabuki/Mr Goemon GX621*1986     Z80           005849
 Jackal              GX631*1986    6809?          005885(x2)
 Contra / Gryzor     GX633*1987    6809?          007121(x2)               007593 (palette)
 Flak Attack         GX669-1987
-Devil World / Dark  GX687+1987 2x68000           TWIN16
+Devil World / Dark  GX687*1987 2x68000           TWIN16
   Adventure / Majuu no Oukoku
 Double Dribble      GX690*1986  3x6809           005885(x2)               007327 (palette) 007452
 Kitten Kaboodle     GX712 1988
 Chequered Flag      GX717-1988  052001               051960 051937(x2)    051316(x2) (zoom/rotation) 051733 (protection)
 Fast Lane           GX752+1987
 Hot Chase           GX763*1988 2x68000									  051316(x3) (zoom/rotation) 007634 007635 007558 007557
-Rack 'Em Up         GX765 1987
+Rack 'Em Up /       GX765*1987    6309 007342        007420               007327 (palette) 007324
+  The Hustler
 Haunted Castle      GX768*1988  052001           007121(x2)               007327 (palette)
 Ajax / Typhoon      GX770*1987   6309+ 052109 051962 051960 051937  PROM  051316 (zoom/rotation) 007327 (palette)
                                 052001
 Labyrinth Runner    GX771 1987    6309           007121                   051733 (protection)
 Super Contra        GX775*1988  052001 052109 051962 051960 051937  PROM  007327 (palette)
 Battlantis          GX777*1987    6309 007342        007420               007327 (palette) 007324
-Vulcan Venture /    GX785+1988 2x68000           TWIN16
+Vulcan Venture /    GX785*1988 2x68000           TWIN16
   Gradius 2
 City Bomber         GX787+1987   68000
 Over Drive          GX789 1990
@@ -50,17 +51,18 @@ Hyper Crash         GX790 1987
 Blades of Steel     GX797*1987    6309 007342        007420               007327 (palette) 051733 (protection)
 The Main Event      GX799*1988    6309 052109 051962 051960 051937  PROM
 Missing in Action   GX808*1989   68000 052109 051962 051960 051937  PROM
+Missing in Action J GX808*1989 2x68000           TWIN16
 Crime Fighters      GX821*1989  052526 052109 051962 051960 051937  PROM
 Special Project Y   GX857-1989  should be similar to GX891 Bottom of the 9th
 '88 Games           GX861*1988  052001 052109 051962 051960 051937  PROM  051316 (zoom/rotation)
-Final Round /       GX870+1988 1x68000           TWIN16?
+Final Round /       GX870*1988 1x68000           TWIN16?
   Hard Puncher
 Thunder Cross       GX873*1988  052001 052109 051962 051960 051937  PROM  007327 (palette) 052591
 Aliens              GX875*1990  052526 052109 051962 051960 051937  PROM
 Gang Busters        GX878*1988  052526 052109 051962 051960 051937  PROM
 Devastators         GX890*1988    6309 052109 051962 051960 051937  PROM  007324 051733 (protection)
 Bottom of the Ninth GX891*1989    6809 052109 051962 051960 051937  PROM  051316 (zoom/rotation)
-Cue Brick           GX903+1989 2x68000           TWIN16
+Cue Brick           GX903*1989 2x68000           TWIN16
 Punk Shot           GX907*1990   68000 052109 051962 051960 051937 053251
 Surprise Attack     GX911*1990  053248 052109 051962 053245 053244 053251
 Lightning Fighters /GX939*1990   68000 052109 051962 053245 053244 053251
@@ -850,10 +852,9 @@ void K007420_w(int offset,int data)
  *   0  | xxxxxxxx | y position
  *   1  | xxxxxxxx | sprite code (low 8 bits)
  *   2  | xxxxxxxx | depends on external conections. Usually banking
- *   3  | xxxxxxxx | x position
- *   4  | x------- | visible
- *   4  | -x------ | 32x32 sprite
- *   4  | --xx---- | unknown
+ *   3  | xxxxxxxx | x position (low 8 bits)
+ *   4  | x------- | x position (high bit)
+ *   4  | -xxx---- | sprite size 000=16x16 001=8x16 010=16x8 011=8x8 100=32x32
  *   4  | ----x--- | flip y
  *   4  | -----x-- | flip x
  *   4  | ------xx | zoom (bits 8 & 9)
@@ -870,33 +871,40 @@ void K007420_sprites_draw(struct osd_bitmap *bitmap)
 	for (offs = K007420_SPRITERAM_SIZE - 8; offs >= 0; offs -= 8)
 	{
 		int ox,oy,code,color,flipx,flipy,zoom,w,h,x,y;
-		static int xoffset[2] = { 0, 1 };
-		static int yoffset[2] = { 0, 2 };
+		static int xoffset[4] = { 0, 1, 4, 5 };
+		static int yoffset[4] = { 0, 2, 8, 10 };
 
-		code = K007420_ram[offs+1];// + ((K007420_ram[offs+2] & 0x40) << 2) + ((K007420_ram[offs+2] & 0x80) << 1)*(rockrage_vreg << 1);
+		code = K007420_ram[offs+1];
 		color = K007420_ram[offs+2];
-		ox = K007420_ram[offs+3];
+		ox = K007420_ram[offs+3] - ((K007420_ram[offs+4] & 0x80) << 1);
 		oy = 256 - K007420_ram[offs+0];
 		flipx = K007420_ram[offs+4] & 0x04;
 		flipy = K007420_ram[offs+4] & 0x08;
 
 		(*K007420_callback)(&code,&color);
 
-		if (((K007420_ram[offs+4] & 0x40) && (K007420_ram[offs+1] == 0xff)) || (K007420_ram[offs+4] & 0x80)) continue;
+//		if ((K007420_ram[offs+4] & 0x40) && K007420_ram[offs+1] == 0xff) continue;
 
 		/* 0x080 = normal scale, 0x040 = double size, 0x100 half size */
 		zoom = K007420_ram[offs+5] | ((K007420_ram[offs+4] & 0x03) << 8);
 		if (!zoom) continue;
 		zoom = 0x10000 * 128 / zoom;
 
-		w = h = 1;
-		if (K007420_ram[offs+4] & 0x40)	/* 32x32 */
-			w = h = 2;
+		switch (K007420_ram[offs+4] & 0x70)
+		{
+			case 0x30: w = h = 1; break;
+			case 0x20: w = 2; h = 1; code &= (~1); break;
+			case 0x10: w = 1; h = 2; code &= (~2); break;
+			case 0x00: w = h = 2; code &= (~3); break;
+			case 0x40: w = h = 4; code &= (~3); break;
+			default: w = 1; h = 1;
+//if (errorlog) fprintf(errorlog,"Unknown sprite size %02x\n",(K007420_ram[offs+4] & 0x70)>>4);
+		}
 
 		if (K007342_flipscreen)
 		{
-			ox = 256 - ox - ((zoom * w + (1<<11)) >> 12);
-			oy = 256 - oy - ((zoom * h + (1<<11)) >> 12);
+			ox = 256 - ox - ((zoom * w + (1<<12)) >> 13);
+			oy = 256 - oy - ((zoom * h + (1<<12)) >> 13);
 			flipx = !flipx;
 			flipy = !flipy;
 		}
@@ -907,24 +915,24 @@ void K007420_sprites_draw(struct osd_bitmap *bitmap)
 
 			for (y = 0;y < h;y++)
 			{
-				sy = oy + 16 * y;
+				sy = oy + 8 * y;
 
 				for (x = 0;x < w;x++)
 				{
 					int c = code;
 
-					sx = ox + 16 * x;
+					sx = ox + 8 * x;
 					if (flipx) c += xoffset[(w-1-x)];
 					else c += xoffset[x];
 					if (flipy) c += yoffset[(h-1-y)];
 					else c += yoffset[y];
 
-					drawgfx(bitmap,Machine->gfx[1],
-							c,
-							color,
-							flipx,flipy,
-							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					drawgfx(bitmap,K007420_gfx,
+						c,
+						color,
+						flipx,flipy,
+						sx,sy,
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 				}
 			}
 		}
@@ -933,27 +941,27 @@ void K007420_sprites_draw(struct osd_bitmap *bitmap)
 			int sx,sy,zw,zh;
 			for (y = 0;y < h;y++)
 			{
-				sy = oy + ((zoom * y + (1<<11)) >> 12);
-				zh = (oy + ((zoom * (y+1) + (1<<11)) >> 12)) - sy;
+				sy = oy + ((zoom * y + (1<<12)) >> 13);
+				zh = (oy + ((zoom * (y+1) + (1<<12)) >> 13)) - sy;
 
 				for (x = 0;x < w;x++)
 				{
 					int c = code;
 
-					sx = ox + ((zoom * x + (1<<11)) >> 12);
-					zw = (ox + ((zoom * (x+1) + (1<<11)) >> 12)) - sx;
+					sx = ox + ((zoom * x + (1<<12)) >> 13);
+					zw = (ox + ((zoom * (x+1) + (1<<12)) >> 13)) - sx;
 					if (flipx) c += xoffset[(w-1-x)];
 					else c += xoffset[x];
 					if (flipy) c += yoffset[(h-1-y)];
 					else c += yoffset[y];
 
-					drawgfxzoom(bitmap,Machine->gfx[1],
-							c,
-							color,
-							flipx,flipy,
-							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
-							(zw << 16) / 16,(zh << 16) / 16);
+					drawgfxzoom(bitmap,K007420_gfx,
+						c,
+						color,
+						flipx,flipy,
+						sx,sy,
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
+						(zw << 16) / 8,(zh << 16) / 8);
 				}
 			}
 		}
@@ -961,7 +969,7 @@ void K007420_sprites_draw(struct osd_bitmap *bitmap)
 #if 0
 	{
 		char baf[100];
-		static int current_sprite = 0;
+                static int current_sprite = 0;
 
 		if (keyboard_pressed_memory(KEYCODE_Z)) current_sprite = (current_sprite+1) & ((K007420_SPRITERAM_SIZE/8)-1);
 		if (keyboard_pressed_memory(KEYCODE_X)) current_sprite = (current_sprite-1) & ((K007420_SPRITERAM_SIZE/8)-1);
@@ -2640,6 +2648,7 @@ void K053247_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 		*/
 		static int xoffset[8] = { 0, 1, 4, 5, 16, 17, 20, 21 };
 		static int yoffset[8] = { 0, 2, 8, 10, 32, 34, 40, 42 };
+		static int offsetkludge;
 
 
 		offs = sortedlist[pri_code];
@@ -2692,13 +2701,22 @@ void K053247_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 		else zoomx = zoomy;
 
 		ox = READ_WORD(&K053247_ram[offs+0x06]);
+		oy = READ_WORD(&K053247_ram[offs+0x04]);
 
 /* TODO: it is not known how the global Y offset works */
 switch (K053247_spriteoffsY)
 {
 	case 0x0261:	/* simpsons */
+	case 0x0262:	/* simpsons (dreamland) */
+	case 0x0263:	/* simpsons (dreamland) */
+	case 0x0264:	/* simpsons (dreamland) */
+	case 0x0265:	/* simpsons (dreamland) */
+	case 0x006d:	/* simpsons flip (dreamland) */
+	case 0x006e:	/* simpsons flip (dreamland) */
+	case 0x006f:	/* simpsons flip (dreamland) */
+	case 0x0070:	/* simpsons flip (dreamland) */
 	case 0x0071:	/* simpsons flip */
-		oy = -READ_WORD(&K053247_ram[offs+0x04]) - 0x278;
+		offsetkludge = 0x017;
 		break;
 	case 0x02fa:	/* vendetta */
 	case 0x02fb:	/* vendetta (fat guy jumping) */
@@ -2706,33 +2724,25 @@ switch (K053247_spriteoffsY)
 	case 0x02fd:	/* vendetta (fat guy jumping) */
 	case 0x02fe:	/* vendetta (fat guy jumping) */
 	case 0x02ff:	/* vendetta (fat guy jumping) */
-/* since sprites are not in sync with background, I'm not sure the Y offset */
-/* adjustment is right - it might have to be negated */
-		oy = -READ_WORD(&K053247_ram[offs+0x04]) - 0x300 + (K053247_spriteoffsY - 0x2fa);
-		break;
 	case 0x03fa:	/* vendetta flip */
 	case 0x03fb:	/* vendetta flip (fat guy jumping) */
 	case 0x03fc:	/* vendetta flip (fat guy jumping) */
 	case 0x03fd:	/* vendetta flip (fat guy jumping) */
 	case 0x03fe:	/* vendetta flip (fat guy jumping) */
 	case 0x03ff:	/* vendetta flip (fat guy jumping) */
-/* since sprites are not in sync with background, I'm not sure the Y offset */
-/* adjustment is right - it might have to be negated */
-		oy = -READ_WORD(&K053247_ram[offs+0x04]) - 0x300 + (K053247_spriteoffsY - 0x3fa);
+		offsetkludge = 0x006;
 		break;
 	case 0x0292:	/* xmen */
 	case 0x0072:	/* xmen flip */
-		oy = -READ_WORD(&K053247_ram[offs+0x04]) - 0x290;
+		offsetkludge = -0x002;
 		break;
 	default:
-		oy = -READ_WORD(&K053247_ram[offs+0x04]) - 0x300;
-#ifdef MAME_DEBUG
+		offsetkludge = 0;
 		{
 			char buf[40];
 			sprintf(buf,"unknown spriteoffsY %04x",K053247_spriteoffsY);
 			usrintf_showmessage(buf);
 		}
-#endif
 		break;
 }
 
@@ -2748,13 +2758,13 @@ switch (K053247_spriteoffsY)
 		}
 		if (K053247_flipscreenY)
 		{
-			oy = 256 - oy;
+			oy = -oy;
 			if (!mirrory) flipy = !flipy;
 		}
 
 		ox = (ox + 0x35 - K053247_spriteoffsX) & 0x3ff;
 		if (ox >= 768) ox -= 1024;
-		oy = oy & 0x3ff;
+		oy = (-(oy + K053247_spriteoffsY + offsetkludge)) & 0x3ff;
 		if (oy >= 640) oy -= 1024;
 
 		/* the coordinates given are for the *center* of the sprite */

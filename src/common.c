@@ -380,7 +380,7 @@ getout:
 void printromlist(const struct RomModule *romp,const char *basename)
 {
 #ifdef MESS
-	if (romp == NULL) return;
+	if (romp == NULL || (!strcmp(basename,"nes"))) return;
 #endif
 
 	printf("This is the list of the ROMs required for driver \"%s\".\n"

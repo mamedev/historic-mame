@@ -1,10 +1,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+#define NEW_TIMER 0    /* CPU slice optimize with new timer system */
+
 #define NAMCO_S1_RAM_REGION 5
 #define NAMCOS1_MAX_BANK 0x400
-
-/* #define NAMCOS1_OPCODE_COPY */
 
 /* from vidhrdw */
 extern int namcos1_videoram_r( int offset );
@@ -283,16 +283,6 @@ void namcos1_bankswitch_w( int offset, int data ) {
 				fprintf(errorlog,"CPU #%d PC %04x:warning unknown chip selected bank %x=$%04x\n", cpu , cpu_get_pc(), bank , chip );
 		}
 
-		if( namcos1_banks[cpu][bank].bank_handler_w == rom_w)
-		/* Since we might be executing code, lets copy it to RAM */
-		{
-#ifdef NAMCOS1_OPCODE_COPY
-			unsigned char *src,*dst;
-			src = namcos1_banks[cpu][bank].bank_pointer;
-			dst = Machine->memory_region[Machine->drv->cpu[cpu].memory_region] + (bank<<13);
-			memcpy( dst, src, 0x2000 );
-#endif
-		}
 		/* renew pc base */
 //		change_pc16(cpu_get_pc());
 	} else {
@@ -305,13 +295,15 @@ void namcos1_bankswitch_w( int offset, int data ) {
 void namcos1_subcpu_bank(int offset,int data)
 {
 	int oldcpu = cpu_getactivecpu();
-	int chip   = ((namcos1_cpu1_banklatch<<8)|data)&0x3ff;
-	//if(errorlog) fprintf(errorlog,"cpu1 bank selected %02x=%02x\n",offset,chip);
+
+	//if(errorlog) fprintf(errorlog,"cpu1 bank selected %02x=%02x\n",offset,data);
+	namcos1_cpu1_banklatch = (namcos1_cpu1_banklatch&0x300)|data;
 	/* Prepare code for Cpu 1 */
 	cpu_setactivecpu( 1 );
-	namcos1_bankswitch_w( 0x0e00, chip>>8  );
-	namcos1_bankswitch_w( 0x0e01, chip&0xff);
+	namcos1_bankswitch_w( 0x0e00, namcos1_cpu1_banklatch>>8  );
+	namcos1_bankswitch_w( 0x0e01, namcos1_cpu1_banklatch&0xff);
 	/* cpu_set_reset_line(1,PULSE_LINE); */
+
 	cpu_setactivecpu( oldcpu );
 }
 
@@ -375,7 +367,7 @@ static int mcu_patch_data;
 
 void namcos1_cpu_control_w( int offset, int data )
 {
-	// if(errorlog) fprintf(errorlog,"reset controll %02x\n",data);
+	//if(errorlog) fprintf(errorlog,"reset controll pc=%04x %02x\n",cpu_get_pc(),data);
 	if (data & 1)
 	{
 		cpu_set_reset_line(1,CLEAR_LINE);
@@ -431,13 +423,24 @@ static int namcos1_sound_spinlock_r(int offset)
 /* mcu banked rom area select */
 void namcos1_mcu_bankswitch_w(int offset,int data)
 {
-	int bank = (((~data)&0xf8)>>1) | (data&7);
-	int addr = 0x10000 + bank*0x8000;
-
+	int addr;
+	/* bit 2-7 : chip select line of ROM chip */
+	switch(data&0xfc)
+	{
+	case 0xf8: addr = 0x10000; break; /* bit 2 : ROM 0 */
+	case 0xf4: addr = 0x30000; break; /* bit 3 : ROM 0 */
+	case 0xec: addr = 0x50000; break; /* bit 4 : ROM 1 */
+	case 0xdc: addr = 0x70000; break; /* bit 5 : ROM 2 */
+	case 0xbc: addr = 0x90000; break; /* bit 6 : ROM 3 */
+	case 0x7c: addr = 0xa0000; break; /* bit 7 : ROM 4 */
+	default:   addr = 0x100000; /* illegal */
+	}
+	/* bit 0-1 : address line A15-A16 */
+	addr += (data&3)*0x8000;
 	if( addr >= Machine->memory_region_length[6])
 	{
 		if(errorlog)
-			fprintf(errorlog,"unmapped mcu bank selected pc=%04x back=%02x\n",cpu_get_pc(),data);
+			fprintf(errorlog,"unmapped mcu bank selected pc=%04x bank=%02x\n",cpu_get_pc(),data);
 		addr = 0x4000;
 	}
 	cpu_setbank( 4, Machine->memory_region[6]+addr );
@@ -472,24 +475,29 @@ extern void mwh_bank3(int _address,int _data);
 *	                                                                                  *
 **************************************************************************************/
 
-static int namcos1_setopbase (int pc) {
-#ifdef NAMCOS1_OPCODE_COPY
-	return -1;
-#else
-	int cpu  = cpu_getactivecpu();
-	if( cpu < 2 )
-	{
-		int bank = (pc>>13)&7;
-		/* cpu 0 ot cpu1 */
-		OP_RAM = OP_ROM = (namcos1_banks[cpu][bank].bank_pointer) - (bank<<13);
-		/* memory.c output warning - op-code execute on mapped i/o */
-		/* but,It is neesarry to continue cpu_setOPbase16 function */
-		/* for update current operationhardware(ophw) code         */
-		return pc;
-	}
-	/* don't care other cpus */
-	return pc;
+static int namcos1_setopbase_0 (int pc)
+{
+	int bank = (pc>>13)&7;
+	OP_RAM = OP_ROM = (namcos1_banks[0][bank].bank_pointer) - (bank<<13);
+#if 1
+	/* hack for escape DragonSpirit lockup after game over */
+	/* b4e0:JSR $0002                                      */
+	if(pc==0x02)
+		cpu_writemem16(0x0002,0x39); /* RTS */
 #endif
+	/* memory.c output warning - op-code execute on mapped i/o */
+	/* but,It is neesarry to continue cpu_setOPbase16 function */
+	/* for update current operationhardware(ophw) code         */
+	return pc;
+}
+
+static int namcos1_setopbase_1 (int pc) {
+	int bank = (pc>>13)&7;
+	OP_RAM = OP_ROM = (namcos1_banks[1][bank].bank_pointer) - (bank<<13);
+	/* memory.c output warning - op-code execute on mapped i/o */
+	/* but,It is neesarry to continue cpu_setOPbase16 function */
+	/* for update current operationhardware(ophw) code         */
+	return pc;
 }
 
 static void namcos1_insatll_bank(int start,int end,handler_r hr,handler_w hw,
@@ -564,14 +572,6 @@ static void namcos1_build_banks(/* int *romsize_maps,*/
 	namcos1_install_rom_bank(0x3c0,0x3ff,0x20000 , 0x00000);
 }
 
-#if 0
-void namcos1_timercallback(int param)
-{
-extern void mwh_bank3(int _address,int _data);
-	mwh_bank3( 0,0xa6);
-}
-#endif
-
 void namcos1_machine_init( void ) {
 
 	int oldcpu = cpu_getactivecpu(), i;
@@ -596,7 +596,7 @@ void namcos1_machine_init( void ) {
 	namcos1_bankswitch_w( 0x0e00, 0x03);
 	namcos1_bankswitch_w( 0x0e01, 0xff);
 #endif
-	namcos1_cpu1_banklatch = 0x03;
+	namcos1_cpu1_banklatch = 0x03ff;
 
 	/* reset starting Cpu */
 	cpu_setactivecpu( oldcpu );
@@ -615,21 +615,28 @@ void namcos1_machine_init( void ) {
 
 	/* mcu patch data clear */
 	mcu_patch_data = 0;
-
-//	timer_pulse(TIME_IN_HZ(15000),0,namcos1_timercallback);
-
 }
 /**************************************************************************************
 *	                                                                                  *
 *	driver specific initialize routine
 *	                                                                                  *
 **************************************************************************************/
+struct namcos1_slice_timer
+{
+	int sync_cpu;	/* synchronus cpu attribute */
+	int sliceHz;	/* slice cycle              */
+	int delayHz;	/* delay>=0 : delay cycle   */
+					/* delay<0  : slide cycle   */
+};
+
 struct namcos1_specific
 {
 	/* keychip */
 	int key_id_query , key_id;
 	handler_r key_r;
 	handler_w key_w;
+	/* cpu slice timer */
+	const struct namcos1_slice_timer *slice_timer;
 	/* optimiaze flag , use tilemap for playfield */
 	int tilemap_use;
 	/* start bank number */
@@ -649,8 +656,8 @@ static void namcos1_driver_init(const struct namcos1_specific *specific )
 	namcos1_build_banks(specific->key_r,specific->key_w);
 
 	/* override opcode handling for extended memory bank handler */
-	/* m6809_slapstic = 1; */
-	cpu_setOPbaseoverride( namcos1_setopbase );
+	cpu_setOPbaseoverride( 0,namcos1_setopbase_0 );
+	cpu_setOPbaseoverride( 1,namcos1_setopbase_1 );
 
 	/* sound cpu speedup optimize (auto ditect) */
 	{
@@ -675,7 +682,36 @@ static void namcos1_driver_init(const struct namcos1_specific *specific )
 			}
 		}
 	}
+#if NEW_TIMER
+	/* all cpu's does not need synchronization to all timers */
+	cpu_set_full_synchronize(SYNC_NO_CPU);
+	{
+		const struct namcos1_slice_timer *slice = specific->slice_timer;
+		while(slice->sync_cpu != SYNC_NO_CPU)
+		{
+			/* start CPU slice timer */
+			cpu_start_extend_time_slice(slice->sync_cpu,
+				TIME_IN_HZ(slice->delayHz),TIME_IN_HZ(slice->sliceHz) );
+			slice++;
+		}
+	}
+#else
+	/* compatible with old timer system */
+	timer_pulse(TIME_IN_HZ(60*25),0,0);
+#endif
 }
+
+#if NEW_TIMER
+/* normaly CPU slice optimize */
+/* slice oeder is 0:2:1:x:0:3:1:x */
+static const struct namcos1_slice_timer normal_slice[]={
+	{ SYNC_2CPU(0,1),60*20,-60*20*2 },	/* CPU 0,1 20/vblank , slide slice */
+	{ SYNC_2CPU(2,3),60*5,-(60*5*2+60*20*4) },	/* CPU 2,3 10/vblank */
+	{ SYNC_NO_CPU }
+};
+#else
+static const struct namcos1_slice_timer normal_slice[]={{0}};
+#endif
 
 /**************************************************************************************
 *	Shadowland / Youkai Douchuuki specific                                            *
@@ -687,6 +723,7 @@ void shadowld_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
+		normal_slice,						/* CPU slice normal */
 		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
@@ -700,10 +737,12 @@ void shadowld_driver_init( void )
 /* Theres is an id check followed by some key nightmare */
 void dspirit_driver_init( void )
 {
+	/* sometime sound stopped */
 	const struct namcos1_specific dspirit_specific=
 	{
 		0x00,0x36,							/* key query , key id */
 		rev2_key_r,rev2_key_w,				/* key handler */
+		normal_slice,						/* CPU slice normal */
 		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
@@ -722,6 +761,7 @@ void quester_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
+		normal_slice,						/* CPU slice normal */
 		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
@@ -741,6 +781,7 @@ void blazer_driver_init( void )
 	{
 		0x00,0x13,							/* key query , key id */
 		rev2_key_r,rev2_key_w,				/* key handler */
+		normal_slice,						/* CPU slice normal */
 		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
@@ -756,6 +797,7 @@ void pacmania_driver_init( void )
 	{
 		0x4b,0x12,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
+		normal_slice,						/* CPU slice normal */
 		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
@@ -771,6 +813,7 @@ void galaga88_driver_init( void )
 	{
 		0x2d,0x31,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
+		normal_slice,						/* CPU slice normal */
 		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
@@ -787,6 +830,7 @@ void wstadium_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
+		normal_slice,						/* CPU slice normal */
 		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
@@ -803,6 +847,7 @@ void berabohm_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
+		normal_slice,						/* CPU slice normal */
 		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
@@ -818,6 +863,7 @@ void alice_driver_init( void )
 	{
 		0x5b,0x25,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
+		normal_slice,						/* CPU slice normal */
 		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03ef						/* start bank   */
 	};
@@ -833,6 +879,7 @@ void bakutotu_driver_init( void )
 	{
 		0x03,0x22,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
+		normal_slice,						/* CPU slice normal */
 		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fe						/* start bank   */
 	};
@@ -848,6 +895,7 @@ void wldcourt_driver_init( void )
 	{
 		0x00,0x35,							/* key query , key id */
 		rev2_key_r,rev2_key_w,				/* key handler */
+		normal_slice,						/* CPU slice normal */
 		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03f8						/* start bank   */
 	};
@@ -866,6 +914,7 @@ void splatter_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev2_key_r,rev2_key_w,				/* key handler */
+		normal_slice,						/* CPU slice normal */
 		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x037f						/* start bank   */
 	};
@@ -882,6 +931,7 @@ void faceoff_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
+		normal_slice,						/* CPU slice normal */
 		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
@@ -898,6 +948,7 @@ void rompers_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
+		normal_slice,						/* CPU slice normal */
 		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fd						/* start bank   */
 	};
@@ -914,6 +965,7 @@ void blastoff_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
+		normal_slice,						/* CPU slice normal */
 		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03f7						/* start bank   */
 	};
@@ -931,6 +983,7 @@ void ws89_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
+		normal_slice,						/* CPU slice normal */
 		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
@@ -947,6 +1000,7 @@ void dangseed_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
+		normal_slice,				/* CPU slice normal */
 		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
@@ -967,6 +1021,7 @@ void ws90_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
+		normal_slice,						/* CPU slice normal */
 		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
@@ -985,6 +1040,7 @@ void pistoldm_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
+		normal_slice,						/* CPU slice normal */
 		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03f1						/* start bank   */
 	};
@@ -1003,6 +1059,7 @@ void soukobdx_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
+		normal_slice,						/* CPU slice normal */
 		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
@@ -1021,6 +1078,7 @@ void tankfrce_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
+		normal_slice,						/* CPU slice normal */
 		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};

@@ -64,13 +64,6 @@ void konami_SN76496_0_w(int offset,int data);
 
 
 
-void yiear_init_machine(void)
-{
-	/* set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_S;
-}
-
-
 static int yiear_speech_r(int offset)
 {
 	return rand();

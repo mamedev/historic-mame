@@ -61,7 +61,6 @@
 #define DO_INTERRUPT(vector)									\
 {																\
 	h6280.extra_cycles += 7;	/* 7 cycles for an int */		\
-	PCW--;														\
 	PUSH(PCH);													\
 	PUSH(PCL);													\
 	COMPOSE_P(0,_fB);											\
@@ -111,20 +110,14 @@
 /***************************************************************
  *  RDMEMZ   read memory - zero page
  ***************************************************************/
-#ifdef FAST_ZERO_PAGE
-#define RDMEMZ(addr) ZEROPAGE[addr];
-#else
-#define RDMEMZ(addr) cpu_readmem21( (h6280.mmr[1] << 13) | ((addr)&0x1fff));
-#endif
+#define RDMEMZ(addr) 											\
+	cpu_readmem21( (h6280.mmr[1] << 13) | ((addr)&0x1fff));
 
 /***************************************************************
  *  WRMEMZ   write memory - zero page
  ***************************************************************/
-#ifdef FAST_ZERO_PAGE
-#define WRMEMZ(addr,data) ZEROPAGE[addr]=data;
-#else
-#define WRMEMZ(addr,data) cpu_writemem21( (h6280.mmr[1] << 13) | ((addr)&0x1fff),data);
-#endif
+#define WRMEMZ(addr,data) 										\
+	cpu_writemem21( (h6280.mmr[1] << 13) | ((addr)&0x1fff),data);
 
 /***************************************************************
  *  RDMEMW   read word from memory
@@ -136,37 +129,23 @@
 /***************************************************************
  *  RDZPWORD    read a word from a zero page address
  ***************************************************************/
-#ifdef FAST_ZERO_PAGE
-#define RDZPWORD(addr)											\
-	((addr&0xff)==0xff) ?										\
-		ZEROPAGE[addr] + (ZEROPAGE[addr-0xff]<<8) :				\
-		ZEROPAGE[addr] + (ZEROPAGE[addr+1]<<8)
-#else
 #define RDZPWORD(addr)											\
 	((addr&0xff)==0xff) ?										\
 		cpu_readmem21( (h6280.mmr[1] << 13) | ((addr)&0x1fff))				\
 		+(cpu_readmem21( (h6280.mmr[1] << 13) | ((addr-0xff)&0x1fff))<<8) : \
 		cpu_readmem21( (h6280.mmr[1] << 13) | ((addr)&0x1fff))				\
 		+(cpu_readmem21( (h6280.mmr[1] << 13) | ((addr+1)&0x1fff))<<8)
-#endif
+
 
 /***************************************************************
  * push a register onto the stack
  ***************************************************************/
-#ifdef FAST_ZERO_PAGE
-#define PUSH(Rg) ZEROPAGE[h6280.sp.d]=Rg; S--
-#else
 #define PUSH(Rg) cpu_writemem21( (h6280.mmr[1] << 13) | h6280.sp.d,Rg); S--
-#endif
 
 /***************************************************************
  * pull a register from the stack
  ***************************************************************/
-#ifdef FAST_ZERO_PAGE
-#define PULL(Rg) S++; Rg = ZEROPAGE[h6280.sp.d];
-#else
 #define PULL(Rg) S++; Rg = cpu_readmem21( (h6280.mmr[1] << 13) | h6280.sp.d)
-#endif
 
 /***************************************************************
  *  RDOP    read an opcode
@@ -299,6 +278,7 @@
 
 /* read a value into tmp */
 #define RD_IMM	tmp = RDOPARG(); PCW++
+#define RD_IMM2	tmp2 = RDOPARG(); PCW++
 #define RD_ACC	tmp = A
 #define RD_ZPG	EA_ZPG; tmp = RDMEMZ(EAD)
 #define RD_ZPX	EA_ZPX; tmp = RDMEMZ(EAD)
@@ -809,7 +789,6 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_get_pc()); \
 		 ((P & _fZ) ^ _fZ); 									\
 	PULL(PCL);													\
 	PULL(PCH);													\
-	PCW++;														\
 	CHECK_IRQ_LINES
 #else
 
@@ -817,7 +796,6 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_get_pc()); \
 	PULL(P);													\
 	PULL(PCL);													\
 	PULL(PCH);													\
-	PCW++;														\
 	CHECK_IRQ_LINES
 #endif
 
@@ -1112,9 +1090,9 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_get_pc()); \
  ***************************************************************/
 #define TST														\
 	P = (P & ~(_fN|_fV|_fT|_fZ))								\
-		| ((EAW&0x80) ? _fN:0)									\
-		| ((EAW&0x40) ? _fV:0)									\
-		| ((EAW&tmp)  ? 0:_fZ)
+		| ((tmp2&0x80) ? _fN:0)									\
+		| ((tmp2&0x40) ? _fV:0)									\
+		| ((tmp2&tmp)  ? 0:_fZ)
 
 /* 6280 ********************************************************
  *	TXA Transfer index X to accumulator

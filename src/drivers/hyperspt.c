@@ -33,11 +33,6 @@ void konami_SN76496_0_w(int offset,int data);
 /* in machine/konami.c */
 unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
 
-void hyperspt_init_machine(void)
-{
-	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
-}
 
 /* handle fake button for speed cheat */
 static int konami_IN1_r(int offset)
@@ -427,7 +422,7 @@ static struct MachineDriver hyperspt_machine_driver =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	hyperspt_init_machine,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -480,7 +475,7 @@ static struct MachineDriver roadf_machine_driver =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	hyperspt_init_machine,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -524,15 +519,51 @@ ROM_START( hyperspt_rom )
 	ROM_LOAD( "c01",          0x4000, 0x2000, 0x0c720eeb )
 	ROM_LOAD( "c02",          0x6000, 0x2000, 0x560258e0 )
 	ROM_LOAD( "c03",          0x8000, 0x2000, 0x9b01c7e6 )
-	ROM_LOAD( "c04",          0xA000, 0x2000, 0x10d7e9a2 )
-	ROM_LOAD( "c05",          0xC000, 0x2000, 0xb105a8cd )
-	ROM_LOAD( "c06",          0xE000, 0x2000, 0x1a34a849 )
+	ROM_LOAD( "c04",          0xa000, 0x2000, 0x10d7e9a2 )
+	ROM_LOAD( "c05",          0xc000, 0x2000, 0xb105a8cd )
+	ROM_LOAD( "c06",          0xe000, 0x2000, 0x1a34a849 )
 
 	ROM_REGION_DISPOSE(0x18000)    /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "c26",          0x00000, 0x2000, 0xa6897eac )
 	ROM_LOAD( "c24",          0x02000, 0x2000, 0x5fb230c0 )
 	ROM_LOAD( "c22",          0x04000, 0x2000, 0xed9271a0 )
 	ROM_LOAD( "c20",          0x06000, 0x2000, 0x183f4324 )
+	ROM_LOAD( "c14",          0x08000, 0x2000, 0xc72d63be )
+	ROM_LOAD( "c13",          0x0a000, 0x2000, 0x76565608 )
+	ROM_LOAD( "c12",          0x0c000, 0x2000, 0x74d2cc69 )
+	ROM_LOAD( "c11",          0x0e000, 0x2000, 0x66cbcb4d )
+	ROM_LOAD( "c18",          0x10000, 0x2000, 0xed25e669 )
+	ROM_LOAD( "c17",          0x12000, 0x2000, 0xb145b39f )
+	ROM_LOAD( "c16",          0x14000, 0x2000, 0xd7ff9f2b )
+	ROM_LOAD( "c15",          0x16000, 0x2000, 0xf3d454e6 )
+
+	ROM_REGION(0x220)	/* color/lookup proms */
+	ROM_LOAD( "c03_c27.bin",  0x0000, 0x0020, 0xbc8a5956 )
+	ROM_LOAD( "j12_c28.bin",  0x0020, 0x0100, 0x2c891d59 )
+	ROM_LOAD( "a09_c29.bin",  0x0120, 0x0100, 0x811a3f3f )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "c10",          0x0000, 0x2000, 0x3dc1a6ff )
+	ROM_LOAD( "c09",          0x2000, 0x2000, 0x9b525c3e )
+
+	ROM_REGION(0x10000)	/*  64k for speech rom    */
+	ROM_LOAD( "c08",          0x0000, 0x2000, 0xe8f8ea78 )
+ROM_END
+
+ROM_START( hpolym84_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "c01",          0x4000, 0x2000, 0x0c720eeb )
+	ROM_LOAD( "c02",          0x6000, 0x2000, 0x560258e0 )
+	ROM_LOAD( "c03",          0x8000, 0x2000, 0x9b01c7e6 )
+	ROM_LOAD( "330e04.bin",   0xa000, 0x2000, 0x9c5e2934 )
+	ROM_LOAD( "c05",          0xc000, 0x2000, 0xb105a8cd )
+	ROM_LOAD( "c06",          0xe000, 0x2000, 0x1a34a849 )
+
+	ROM_REGION_DISPOSE(0x18000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "c26",          0x00000, 0x2000, 0xa6897eac )
+	ROM_LOAD( "330e24.bin",   0x02000, 0x2000, 0xf9bbfe1d )
+	ROM_LOAD( "c22",          0x04000, 0x2000, 0xed9271a0 )
+	ROM_LOAD( "330e20.bin",   0x06000, 0x2000, 0x29969b92 )
 	ROM_LOAD( "c14",          0x08000, 0x2000, 0xc72d63be )
 	ROM_LOAD( "c13",          0x0a000, 0x2000, 0x76565608 )
 	ROM_LOAD( "c12",          0x0c000, 0x2000, 0x74d2cc69 )
@@ -757,7 +788,7 @@ struct GameDriver hyperspt_driver =
 	__FILE__,
 	0,
 	"hyperspt",
-	"HyperSports",
+	"Hyper Sports",
 	"1984",
 	"Konami (Centuri license)",
 	"Chris Hardy (MAME driver)\nPaul Swan (color info)\nTatsuyuki Satoh(speech sound)",
@@ -766,6 +797,32 @@ struct GameDriver hyperspt_driver =
 	0,
 
 	hyperspt_rom,
+	0, hyperspt_decode,
+	hyperspt_sample_names,
+	0,	/* sound_prom */
+
+	hyperspt_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver hpolym84_driver =
+{
+	__FILE__,
+	&hyperspt_driver,
+	"hpolym84",
+	"Hyper Olympics '84",
+	"1984",
+	"Konami",
+	"Chris Hardy (MAME driver)\nPaul Swan (color info)\nTatsuyuki Satoh(speech sound)",
+	0,
+	&hyperspt_machine_driver,
+	0,
+
+	hpolym84_rom,
 	0, hyperspt_decode,
 	hyperspt_sample_names,
 	0,	/* sound_prom */

@@ -2376,7 +2376,6 @@ void narc_init_machine(void)
 	/* set up sound board */
 	narc_music_bank_select_w(0,0);
 	narc_digitizer_bank_select_w(0,0);
-	m6809_Flags = M6809_FAST_S;
 	install_mem_write_handler(0, TOBYTE(0x01e00000), TOBYTE(0x01e0001f), narc_sound_w);
 
 	/* special input handler */
@@ -2410,7 +2409,6 @@ void smashtv_init_machine(void)
 
 	/* set up sound board */
 	smashtv_sound_bank_select_w(0,0);
-	m6809_Flags = M6809_FAST_NONE;
 	pia_unconfig();
 	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &smashtv_pia_intf);
 	pia_reset();
@@ -2443,7 +2441,6 @@ void mk_init_machine(void)
 
 	/* set up sound board */
 	mk_sound_bank_select_w(0,0);
-	m6809_Flags = M6809_FAST_NONE;
 	install_mem_write_handler(0, TOBYTE(0x01e00000), TOBYTE(0x01e0001f), mk_sound_w);
 }
 void term2_init_machine(void)
@@ -2488,7 +2485,6 @@ void trog_init_machine(void)
 
 	/* set up sound board */
 	smashtv_sound_bank_select_w(0,0);
-	m6809_Flags = M6809_FAST_NONE;
 	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &smashtv_pia_intf);
 	pia_reset();
 	pia_0_ca1_w (0, 1);
@@ -2541,7 +2537,6 @@ void nbajam_init_machine(void)
 
 	/* set up sound board */
 	mk_sound_bank_select_w(0,0);
-	m6809_Flags = M6809_FAST_NONE;
 	install_mem_write_handler(0, TOBYTE(0x01d01020), TOBYTE(0x01d0103f), nbajam_sound_w);
 }
 

@@ -45,6 +45,8 @@ typedef struct
     int usp;              /* User Stack (All) */
     int vbr;              /* Vector Base Register. (68010) */
 
+    int BankID;			  /* Memory bank in use */
+
 } m68k_cpu_context;
 
 

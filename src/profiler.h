@@ -8,17 +8,24 @@ enum {
 	PROFILER_CPU2,
 	PROFILER_CPU3,
 	PROFILER_CPU4,
+	PROFILER_CPU5,
+	PROFILER_CPU6,
+	PROFILER_CPU7,
+	PROFILER_CPU8,
 	PROFILER_VIDEO,
 	PROFILER_BLIT,
 	PROFILER_SOUND,
 	PROFILER_TIMER_CALLBACK,
 	PROFILER_EXTRA,
+	PROFILER_HISCORE,	/* high score load can slow things down if incorrectly written */
+
 	/* the USER types are available to driver writers to profile */
 	/* custom sections of the code */
 	PROFILER_USER1,
 	PROFILER_USER2,
 	PROFILER_USER3,
 	PROFILER_USER4,
+
 	PROFILER_PROFILER,
 	PROFILER_IDLE,
 	PROFILER_TOTAL

@@ -24,40 +24,17 @@ Etc.
 
 Emulating this is not trivial.
 
-MCU bank area system (guess)
-
-bank window 4000-bfff (32K)
-
-VOICE ROM 0 : bank f8-ff
-
-bank: 4Mbit ROM : 2Mbit ROM : 1Mbit ROM
- ff :38000-3ffff:-----------:-----------
- fe :30000-37fff:-----------:-----------
- fd :28000-2ffff:-----------:-----------
- fc :20000-27fff:-----------:-----------
- fb :18000-1ffff:18000-1ffff:08000-0ffff
- fa :10000-17fff:10000-17fff:00000-07fff
- f9 :08000-0ffff:08000-0ffff:-----------
- f8 :00000-07fff:00000-07fff:-----------
-
-VOICE ROM 1 : bank f0-f7
-VOICE ROM 2 : bank e8-ef
-VOICE ROM 3 : bank e0-e7
-VOICE ROM 4 : bank d8-df
-VOICE ROM 5 : bank d0-d7
-
 issue:
   not work                   : tankfrce
   not playable               : bakutotu
                                berabohm(addittional key PCB?)
   shadow/highlight sprite    : mmaze, pacmania , soukobdx , dangseed , etc
   playfield offset           : dspirit (1dot shift when flipscreen)
-  sometime stop sound        : dspirit
-  display error (about cpu communication ?)
+  sprite (hide) position     : rompers opening
+  display error (cause is cpu communication ?)
     : dangseed credit and score is not changed.
     : ws90 time count of select is wrong , somwtime no display 'score'
     : gaalga88 flip sprite in opening of 2player case 'TYPE A'
-  dac sound                  : playback rate is wrong , sometime noisy.
 
 stubs for driver.c:
 ------------------
@@ -68,8 +45,6 @@ stubs for driver.c:
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 #include "cpu/m6800/m6800.h"
-
-#define NS1_SLICE 25  /* 25 CPU slice per frame - enough for the cpu's to communicate */
 
 /* from vidhrdw */
 extern void namcos1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -460,7 +435,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	NS1_SLICE,
+	0,/* CPU slice timer is made by machine_init */
 	namcos1_machine_init,
 
 	/* video hardware */
@@ -527,7 +502,7 @@ static struct MachineDriver machine_driver16 =
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	NS1_SLICE,
+	0,/* CPU slice timer is made by machine_init */
 	namcos1_machine_init,
 
 	/* video hardware */
@@ -763,6 +738,7 @@ ROM_START( blazer_rom )
 
 	ROM_REGION(0x3c000)     /* 192k for the sound cpu */
 	ROM_LOAD( "bz1_snd0.bin",	0x0c000, 0x10000, 0x6c3a580b )
+	ROM_LOAD( "bz1_voi4.bin",	0x1c000, 0x20000, 0xd206b1bd )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
@@ -781,13 +757,12 @@ ROM_START( blazer_rom )
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0xb0000 ) /* the MCU & voice */
+	ROM_REGION( 0x90000 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
 	ROM_LOAD_HS( "bz1_voi0.bin",0x10000, 0x10000, 0x3d09d32e )
 	ROM_LOAD( "bz1_voi1.bin",	0x30000, 0x20000, 0x2043b141 )
 	ROM_LOAD( "bz1_voi2.bin",	0x50000, 0x20000, 0x64143442 )
 	ROM_LOAD( "bz1_voi3.bin",	0x70000, 0x20000, 0x26cfc510 )
-	ROM_LOAD( "bz1_voi4.bin",	0x90000, 0x20000, 0xd206b1bd )
 ROM_END
 
 /* Pacmania */

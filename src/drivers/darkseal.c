@@ -42,7 +42,7 @@ static void darkseal_control_w(int offset,int data)
 {
 	switch (offset) {
     case 6: /* DMA flag */
-		darkseal_update_sprites(0,0);
+		buffer_spriteram_w(0,0);
 		return;
     case 8: /* Sound CPU write */
 		soundlatch_w(0,data & 0xff);
@@ -91,7 +91,7 @@ static struct MemoryWriteAddress darkseal_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x100000, 0x103fff, MWA_BANK1, &darkseal_ram },
-	{ 0x120000, 0x1207ff, MWA_BANK2, &spriteram },
+	{ 0x120000, 0x1207ff, MWA_BANK2, &spriteram, &spriteram_size },
 	{ 0x140000, 0x140fff, darkseal_palette_24bit_rg, &paletteram },
 	{ 0x141000, 0x141fff, darkseal_palette_24bit_b, &paletteram_2 },
 	{ 0x180000, 0x18000f, darkseal_control_w },
@@ -355,7 +355,7 @@ static struct MachineDriver darkseal_machine_driver =
 	1280, 1280, /* Space for 2048, but video hardware only uses 1280 */
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	darkseal_vh_start,
 	darkseal_vh_stop,

@@ -21,6 +21,7 @@ static int mcu_type;
 #define MCU_EXTRMATN 1
 #define MCU_ARKANOID 2
 #define MCU_TNZS 3
+#define MCU_CHUKATAI 4
 
 static int mcu_initializing,mcu_coinage_init,mcu_command,mcu_readcredits;
 static int mcu_reportcoin;
@@ -66,28 +67,50 @@ static void mcu_handle_coins(int coin)
 {
 	static int insertcoin;
 
-	/* The coin inputs and coin counter is managed by the i8742 mcu. Here we */
-	/* simulate it. */
+	/* The coin inputs and coin counter is managed by the i8742 mcu. */
+	/* Here we simulate it. */
+	/* Chuka Taisen has a limit of 9 credits, so any */
+	/* coins that could push it over 9 should be rejected */
+	/* Coin/Play settings must also be taken into consideration */
+
 	if (coin & 0x08)	/* tilt */
 		mcu_reportcoin = coin;
 	else if (coin && coin != insertcoin)
 	{
 		if (coin & 0x01)	/* coin A */
 		{
-			mcu_coinsA++;
-			if (mcu_coinsA >= mcu_coinage[0])
+			if ((mcu_type == MCU_CHUKATAI) && ((mcu_credits+mcu_coinage[1]) > 9))
 			{
-				mcu_coinsA -= mcu_coinage[0];
-				mcu_credits += mcu_coinage[1];
+				coin_lockout_global_w(0,1); /* Lock all coin slots */
+			}
+			else
+			{
+				coin_lockout_global_w(0,0); /* Unlock all coin slots */
+				coin_counter_w(0,1); coin_counter_w(0,0); /* Count slot A */
+				mcu_coinsA++;
+				if (mcu_coinsA >= mcu_coinage[0])
+				{
+					mcu_coinsA -= mcu_coinage[0];
+					mcu_credits += mcu_coinage[1];
+				}
 			}
 		}
 		if (coin & 0x02)	/* coin B */
 		{
-			mcu_coinsB++;
-			if (mcu_coinsB >= mcu_coinage[2])
+			if ((mcu_type == MCU_CHUKATAI) && ((mcu_credits+mcu_coinage[3]) > 9))
 			{
-				mcu_coinsB -= mcu_coinage[2];
-				mcu_credits += mcu_coinage[3];
+				coin_lockout_global_w(0,1); /* Lock all coin slots */
+			}
+			else
+			{
+				coin_lockout_global_w(0,0); /* Unlock all coin slots */
+				coin_counter_w(1,1); coin_counter_w(1,0); /* Count slot B */
+				mcu_coinsB++;
+				if (mcu_coinsB >= mcu_coinage[2])
+				{
+					mcu_coinsB -= mcu_coinage[2];
+					mcu_credits += mcu_coinage[3];
+				}
 			}
 		}
 		if (coin & 0x04)	/* service */
@@ -95,8 +118,10 @@ static void mcu_handle_coins(int coin)
 		mcu_reportcoin = coin;
 	}
 	else
+	{
+		coin_lockout_global_w(0,0); /* Unlock all coin slots */
 		mcu_reportcoin = 0;
-
+	}
 	insertcoin = coin;
 }
 
@@ -106,7 +131,7 @@ static int mcu_arkanoi2_r(int offset)
 {
 	char *mcu_startup = "\x55\xaa\x5a";
 
-//if (errorlog) fprintf (errorlog, "PC %04x: read mcu %04x\n", cpu_get_pc(), 0xc000 + offset);
+// if (errorlog) fprintf (errorlog, "PC %04x: read mcu %04x\n", cpu_get_pc(), 0xc000 + offset);
 
 	if (offset == 0)
 	{
@@ -168,7 +193,7 @@ static void mcu_arkanoi2_w(int offset, int data)
 {
 	if (offset == 0)
 	{
-//		if (errorlog) fprintf (errorlog, "PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
+// if (errorlog) fprintf (errorlog, "PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
 		if (mcu_command == 0x41)
 		{
 			mcu_credits = (mcu_credits + data) & 0xff;
@@ -184,8 +209,7 @@ static void mcu_arkanoi2_w(int offset, int data)
 		0x80: release coin lockout (issued only in test mode)
 		during initialization, a sequence of 4 bytes sets coin/credit settings
 		*/
-
-//		if (errorlog) fprintf (errorlog, "PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
+// if (errorlog) fprintf (errorlog, "PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
 
 		if (mcu_initializing)
 		{
@@ -195,6 +219,121 @@ static void mcu_arkanoi2_w(int offset, int data)
 		}
 
 		if (data == 0xc1)
+			mcu_readcredits = 0;	/* reset input port number */
+
+		mcu_command = data;
+	}
+}
+
+
+static int mcu_chukatai_r(int offset)
+{
+	char *mcu_startup = "\xa5\x5a\xaa";
+
+	if (errorlog) fprintf (errorlog, "PC %04x (re %04x): read mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), 0xc000 + offset);
+
+	if (offset == 0)
+	{
+		/* if the mcu has just been reset, return startup code */
+		if (mcu_initializing)
+		{
+			mcu_initializing--;
+			return mcu_startup[2 - mcu_initializing];
+		}
+
+		switch (mcu_command)
+		{
+			case 0x1f:
+				return (readinputport(4) >> 4) ^ 0x0f;
+
+			case 0x03:
+				return readinputport(4) & 0x0f;
+
+			case 0x41:
+				return mcu_credits;
+
+			case 0x93:
+				/* Read the credit counter or the inputs */
+				if (mcu_readcredits == 0)
+				{
+					mcu_readcredits += 1;
+					if (mcu_reportcoin & 0x08)
+					{
+						mcu_initializing = 3;
+						return 0xee;	/* tilt */
+					}
+					else return mcu_credits;
+				}
+				/* player 1 joystick and buttons */
+				if (mcu_readcredits == 1)
+				{
+					mcu_readcredits += 1;
+					return readinputport(2);
+				}
+				/* player 2 joystick and buttons */
+				if (mcu_readcredits == 2)
+				{
+					return readinputport(3);
+				}
+
+			default:
+if (errorlog) fprintf (errorlog, "error, unknown mcu command (%02x)\n",mcu_command);
+				/* should not happen */
+				return 0xff;
+				break;
+		}
+	}
+	else
+	{
+		/*
+		status bits:
+		0 = mcu is ready to send data (read from c000)
+		1 = mcu has read data (from c000)
+		2 = mcu is busy
+		3 = unused
+		4-7 = coin code
+		      0 = nothing
+		      1,2,3 = coin switch pressed
+		      e = tilt
+		*/
+		if (mcu_reportcoin & 0x08) return 0xe1;	/* tilt */
+		if (mcu_reportcoin & 0x01) return 0x11;	/* coin A */
+		if (mcu_reportcoin & 0x02) return 0x21;	/* coin B */
+		if (mcu_reportcoin & 0x04) return 0x31;	/* coin C */
+		return 0x01;
+	}
+}
+
+static void mcu_chukatai_w(int offset, int data)
+{
+	if (errorlog) fprintf (errorlog, "PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
+
+	if (offset == 0)
+	{
+		if (mcu_command == 0x41)
+		{
+			mcu_credits = (mcu_credits + data) & 0xff;
+		}
+	}
+	else
+	{
+		/*
+		0x93: read number of credits, then joysticks/buttons
+		0x03: read service & tilt switches
+		0x1f: read coin switches
+		0x4f+0x41: add value to number of credits
+
+		during initialization, a sequence of 4 bytes sets coin/credit settings
+		*/
+
+		if (mcu_initializing)
+		{
+			/* set up coin/credit settings */
+			mcu_coinage[mcu_coinage_init++] = data;
+			if (mcu_coinage_init == 4) mcu_coinage_init = 0;	/* must not happen */
+		}
+
+		if (data == 0x93)
 			mcu_readcredits = 0;	/* reset input port number */
 
 		mcu_command = data;
@@ -352,10 +491,20 @@ void arkanoi2_init(void)
 	memcpy(&RAM[0x08000],&RAM[0x18000],0x4000);
 }
 
-void tnzs_init(void)
+void chukatai_init(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
+	mcu_type = MCU_CHUKATAI;
+
+	/* there's code which falls through from the fixed ROM to bank #7, I have to */
+	/* copy it there otherwise the CPU bank switching support will not catch it. */
+	memcpy(&RAM[0x08000],&RAM[0x2c000],0x4000);
+}
+
+void tnzs_init(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	mcu_type = MCU_TNZS;
 
 	/* there's code which falls through from the fixed ROM to bank #7, I have to */
@@ -381,6 +530,9 @@ int tnzs_mcu_r(int offset)
 		case MCU_ARKANOID:
 			return mcu_arkanoi2_r(offset);
 			break;
+		case MCU_CHUKATAI:
+			return mcu_chukatai_r(offset);
+			break;
 		case MCU_EXTRMATN:
 		case MCU_TNZS:
 		default:
@@ -395,6 +547,9 @@ void tnzs_mcu_w(int offset,int data)
 	{
 		case MCU_ARKANOID:
 			mcu_arkanoi2_w(offset,data);
+			break;
+		case MCU_CHUKATAI:
+			mcu_chukatai_w(offset,data);
 			break;
 		case MCU_EXTRMATN:
 		case MCU_TNZS:
@@ -421,6 +576,11 @@ int tnzs_interrupt(void)
 			break;
 
 		case MCU_TNZS:
+			coin = (((readinputport(4) & 0x30) >> 4) | ((readinputport(4) & 0x03) << 2)) ^ 0x0f;
+			mcu_handle_coins(coin);
+			break;
+
+		case MCU_CHUKATAI:
 			coin = (((readinputport(4) & 0x30) >> 4) | ((readinputport(4) & 0x03) << 2)) ^ 0x0f;
 			mcu_handle_coins(coin);
 			break;

@@ -535,7 +535,11 @@ static void print_game_driver(FILE* out, const struct GameDriver* game) {
 /* Print the MAME info record for a game */
 static void print_game_info(FILE* out, const struct GameDriver* game) {
 
+	#ifndef MESS
 	fprintf(out, "game" L1B );
+	#else
+	fprintf(out, "machine" L1B );
+	#endif
 
 	fprintf(out, L1P "name %s" L1N, game->name );
 
@@ -563,6 +567,7 @@ static void print_game_info(FILE* out, const struct GameDriver* game) {
 		fprintf(out, L1P "cloneof %s" L1N, game->clone_of->name);
 	}
 
+	if (game->rom) /* MESS */
 	print_game_rom(out,game);
 	print_game_sample(out,game);
 	print_game_micro(out,game);
@@ -582,6 +587,7 @@ void print_mame_info(FILE* out, const struct GameDriver* games[]) {
 	for(j=0;games[j];++j)
 		print_game_info( out, games[j] );
 
+	#ifndef MESS
 	/* addictional fixed record */
 	fprintf(out, "resource" L1B);
 	fprintf(out, L1P "name neogeo" L1N);
@@ -602,4 +608,5 @@ void print_mame_info(FILE* out, const struct GameDriver* games[]) {
 	fprintf(out, L2P "crc 354029fc" L2N);
 	fprintf(out, L2E L1N);
 	fprintf(out, L1E);
+	#endif
 }
