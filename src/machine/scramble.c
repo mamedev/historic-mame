@@ -8,6 +8,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "Z80.h"
 
 
 int scramble_IN2_r(int offset)

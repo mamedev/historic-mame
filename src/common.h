@@ -55,8 +55,8 @@ struct GfxElement
 
 	int color_granularity;	/* number of colors for each color code */
 							/* (for example, 4 for 2 bitplanes gfx) */
-	const unsigned char *colortable;	/* map color codes to screen pens */
-										/* if this is 0, the function does a verbatim copy */
+	unsigned char *colortable;	/* map color codes to screen pens */
+								/* if this is 0, the function does a verbatim copy */
 	int total_colors;
 };
 
@@ -83,6 +83,7 @@ struct DisplayText
 #define TRANSPARENCY_COLOR 2
 
 int readroms(const struct RomModule *romp,const char *basename);
+void decodechar(struct GfxElement *gfx,int num,const unsigned char *src,const struct GfxLayout *gl);
 struct GfxElement *decodegfx(const unsigned char *src,const struct GfxLayout *gl);
 void freegfx(struct GfxElement *gfx);
 void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,

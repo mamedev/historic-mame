@@ -8,16 +8,22 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "Z80.h"
 
 
-/* this looks like some kind of protection. The game doesn't clear the screen */
-/* if a read from this address doesn't return the value it expects. */
-int mrdo_SECRE_r(int offset)
+int centiped_init_machine(const char *gamename)
 {
-	Z80_Regs regs;
+	/* patch the roms to pass the startup test */
+	RAM[0x38a8] = 0xea;
+	RAM[0x38a9] = 0xea;
+	RAM[0x38ae] = 0xea;
+	RAM[0x38af] = 0xea;
+
+	return 0;
+}
 
 
-	Z80_GetRegs(&regs);
-	return RAM[regs.HL.D];
+
+int centiped_rand_r(int offset)
+{
+	return rand();
 }

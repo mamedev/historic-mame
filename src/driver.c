@@ -32,7 +32,10 @@ extern struct MachineDriver carnival_driver;
 extern struct MachineDriver invaders_driver;
 extern struct MachineDriver mario_driver;
 extern struct MachineDriver zaxxon_driver;
+extern struct MachineDriver congo_driver;
 extern struct MachineDriver bombjack_driver;
+extern struct MachineDriver centiped_driver;
+extern struct MachineDriver nibbler_driver;
 
 
 
@@ -229,7 +232,7 @@ ROM_END
 
 
 
-unsigned cclimber_decode(dword A)
+unsigned cclimber_decode(int A)
 {
 	static const unsigned char evetab[] =
 	{
@@ -323,7 +326,7 @@ ROM_END
 
 
 
-unsigned ccjap_decode(dword A)
+unsigned ccjap_decode(int A)
 {
 	static const unsigned char evetab[] =
 	{
@@ -605,10 +608,10 @@ ROM_START( japirem_rom )
 	ROM_LOAD( "n08p_8a.bin", 0x3800, 0x0800 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "k01_1.bin",   0x0000, 0x0800 )
-	ROM_LOAD( "k01_2.bin",   0x0800, 0x0800 )
-	ROM_LOAD( "h01_1.bin",   0x1000, 0x0800 )
-	ROM_LOAD( "h01_2.bin",   0x1800, 0x0800 )
+	ROM_LOAD( "h01_1.bin",   0x0000, 0x0800 )
+	ROM_LOAD( "h01_2.bin",   0x0800, 0x0800 )
+	ROM_LOAD( "k01_1.bin",   0x1000, 0x0800 )
+	ROM_LOAD( "k01_2.bin",   0x1800, 0x0800 )
 ROM_END
 
 
@@ -625,10 +628,10 @@ ROM_START( uniwars_rom )
 	ROM_LOAD( "u8",  0x3800, 0x0800 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "u9",  0x0000, 0x0800 )
-	ROM_LOAD( "u11", 0x0800, 0x0800 )
-	ROM_LOAD( "u10", 0x1000, 0x0800 )
-	ROM_LOAD( "u12", 0x1800, 0x0800 )
+	ROM_LOAD( "u10", 0x0000, 0x0800 )
+	ROM_LOAD( "u12", 0x0800, 0x0800 )
+	ROM_LOAD( "u9",  0x1000, 0x0800 )
+	ROM_LOAD( "u11", 0x1800, 0x0800 )
 ROM_END
 
 
@@ -645,10 +648,10 @@ ROM_START( mooncrst_rom )
 	ROM_LOAD( "mc8", 0x3800, 0x0800 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mca", 0x0000, 0x0800 )
-	ROM_LOAD( "mcc", 0x0800, 0x0800 )
-	ROM_LOAD( "mcb", 0x1000, 0x0800 )
-	ROM_LOAD( "mcd", 0x1800, 0x0800 )
+	ROM_LOAD( "mcb", 0x0000, 0x0800 )
+	ROM_LOAD( "mcd", 0x0800, 0x0800 )
+	ROM_LOAD( "mca", 0x1000, 0x0800 )
+	ROM_LOAD( "mcc", 0x1800, 0x0800 )
 ROM_END
 
 
@@ -665,10 +668,10 @@ ROM_START( mooncrsb_rom )
 	ROM_LOAD( "EPR201", 0x3800, 0x0800 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "EPR202", 0x0000, 0x0800 )
-	ROM_LOAD( "EPR171", 0x0800, 0x0800 )
-	ROM_LOAD( "EPR203", 0x1000, 0x0800 )
-	ROM_LOAD( "EPR172", 0x1800, 0x0800 )
+	ROM_LOAD( "EPR203", 0x0000, 0x0800 )
+	ROM_LOAD( "EPR172", 0x0800, 0x0800 )
+	ROM_LOAD( "EPR202", 0x1000, 0x0800 )
+	ROM_LOAD( "EPR171", 0x1800, 0x0800 )
 ROM_END
 
 
@@ -685,15 +688,15 @@ ROM_START( moonqsr_rom )
 	ROM_LOAD( "mq8", 0x3800, 0x0800 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mqa", 0x0000, 0x0800 )
-	ROM_LOAD( "mqc", 0x0800, 0x0800 )
-	ROM_LOAD( "mqb", 0x1000, 0x0800 )
-	ROM_LOAD( "mqd", 0x1800, 0x0800 )
+	ROM_LOAD( "mqb", 0x0000, 0x0800 )
+	ROM_LOAD( "mqd", 0x0800, 0x0800 )
+	ROM_LOAD( "mqa", 0x1000, 0x0800 )
+	ROM_LOAD( "mqc", 0x1800, 0x0800 )
 ROM_END
 
 
 
-unsigned moonqsr_decode(dword A)
+unsigned moonqsr_decode(int A)
 {
 	static unsigned char evetab[] =
 	{
@@ -1128,6 +1131,43 @@ ROM_END
 
 
 
+ROM_START( congo_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+        ROM_LOAD( "%s1.bin",  0x0000, 0x2000 )
+        ROM_LOAD( "%s2.bin",  0x2000, 0x2000 )
+        ROM_LOAD( "%s3.bin",  0x4000, 0x2000 )
+        ROM_LOAD( "%s4.bin",  0x6000, 0x2000 )
+
+        ROM_REGION(0x13000)      /* temporary space for graphics (disposed after conversion) */
+        ROM_LOAD( "%s5.bin", 0x0000, 0x1000 )
+        ROM_LOAD( "%s16.bin", 0x1000, 0x2000 )
+        ROM_LOAD( "%s15.bin", 0x3000, 0x2000 )
+        ROM_LOAD( "%s12.bin", 0x5000, 0x2000 )
+        ROM_LOAD( "%s14.bin", 0x7000, 0x2000 )
+        ROM_LOAD( "%s11.bin", 0x9000, 0x2000 )
+        ROM_LOAD( "%s13.bin", 0xb000, 0x2000 )
+        ROM_LOAD( "%s10.bin", 0xd000, 0x2000 )
+        ROM_LOAD( "%s9.bin",  0xf000, 0x2000 )
+        ROM_LOAD( "%s8.bin",  0x11000, 0x2000 )
+/*
+*        5 is characters, 3 bitplanes in one rom
+*        16 and 15 are 1 plane of the sprites
+*        12 and 14 the second
+*        11 and 13 third one
+*        10 - 8 are the background graphics
+*/
+        ROM_REGION(0x8000)      /* background data */
+        ROM_LOAD( "%s6.bin",  0x0000, 0x2000 )
+        ROM_LOAD( "%s6.bin",  0x2000, 0x2000 )
+        ROM_LOAD( "%s7.bin",  0x4000, 0x2000 )
+        ROM_LOAD( "%s7.bin", 0x6000, 0x2000 )
+       /* I cheated a little with the background graphics - this
+        * approach involved least writing ;)
+        */
+ROM_END
+
+
+
 ROM_START( bombjack_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "09_j01b.bin",  0x0000, 0x2000 )
@@ -1152,6 +1192,42 @@ ROM_START( bombjack_rom )
 
 	ROM_REGION(0x10000)	/* 64 for sound board */
 	ROM_LOAD( "01_h03t.bin",  0x0000, 0x2000 )
+ROM_END
+
+
+
+ROM_START( centiped_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "%s.307", 0x2000, 0x0800 )
+	ROM_LOAD( "%s.308", 0x2800, 0x0800 )
+	ROM_LOAD( "%s.309", 0x3000, 0x0800 )
+	ROM_LOAD( "%s.310", 0x3800, 0x0800 )
+	ROM_LOAD( "%s.310", 0xf800, 0x0800 )	/* for the reset and interrupt vectors */
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "%s.211", 0x0000, 0x0800 )
+	ROM_LOAD( "%s.212", 0x0800, 0x0800 )
+ROM_END
+
+
+
+ROM_START( nibbler_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "IC12", 0x3000, 0x1000 )
+	ROM_LOAD( "IC07", 0x4000, 0x1000 )
+	ROM_LOAD( "IC08", 0x5000, 0x1000 )
+	ROM_LOAD( "IC09", 0x6000, 0x1000 )
+	ROM_LOAD( "IC10", 0x7000, 0x1000 )
+	ROM_LOAD( "IC14", 0x8000, 0x1000 )
+	ROM_LOAD( "IC15", 0x9000, 0x1000 )
+	ROM_LOAD( "IC16", 0xa000, 0x1000 )
+	ROM_LOAD( "IC17", 0xb000, 0x1000 )
+/*	ROM_LOAD( "IC52", 0x????, 0x0800 )	what is this ??? */
+	ROM_LOAD( "IC14", 0xf000, 0x1000 )	/* for the reset and interrupt vectors */
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "IC50", 0x0000, 0x1000 )
+	ROM_LOAD( "IC51", 0x1000, 0x1000 )
 ROM_END
 
 
@@ -1219,6 +1295,9 @@ struct GameDriver drivers[] =
 	{ "desterth", desterth_rom, 0, 0,               &invaders_driver },
 	{ "mario",    mario_rom,    0, 0,               &mario_driver },
 	{ "zaxxon",   zaxxon_rom,   0, 0,               &zaxxon_driver },
+	{ "congo",    congo_rom,    0, 0,               &congo_driver },
 	{ "bombjack", bombjack_rom, 0, 0,               &bombjack_driver },
+	{ "centiped", centiped_rom, 0, 0,               &centiped_driver },
+	{ "nibbler",  nibbler_rom,  0, 0,               &nibbler_driver },
 	{ 0	}	/* end of array */
 };

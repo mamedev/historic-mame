@@ -8,16 +8,25 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "Z80.h"
+#include "M6502.h"
 
 
-/* this looks like some kind of protection. The game doesn't clear the screen */
-/* if a read from this address doesn't return the value it expects. */
-int mrdo_SECRE_r(int offset)
+int nibbler_interrupt(void)
 {
-	Z80_Regs regs;
+	static int coin;
 
 
-	Z80_GetRegs(&regs);
-	return RAM[regs.HL.D];
+	/* user asks to insert coin: generate an interrupt. */
+	if (osd_key_pressed(OSD_KEY_3))
+	{
+		if (coin == 0)
+		{
+			coin = 1;
+			return INT_NMI;
+		}
+	}
+	else coin = 0;
+
+
+	return INT_IRQ;
 }

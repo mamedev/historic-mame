@@ -37,7 +37,7 @@ int readroms(const struct RomModule *romp,const char *basename)
 
 	while (romp->name || romp->offset || romp->length)
 	{
-		int region_size,i;
+		int region_size;
 
 
 		if (romp->name || romp->length)
@@ -53,9 +53,8 @@ int readroms(const struct RomModule *romp,const char *basename)
 			goto getout;
 		}
 
-		/* fill the newly allocated memory with random data - simulate turning */
-		/* on the original machine! ;-) */
-		for (i = 0;i < region_size;i++) Machine->memory_region[region][i] = rand();
+		/* some games (i.e. Pleiades) want the memory clear on startup */
+		memset(Machine->memory_region[region],0,region_size);
 
 		romp++;
 
@@ -189,9 +188,44 @@ int readbit(const unsigned char *src,int bitnum)
 	else return 0;
 }
 
+
+
+void decodechar(struct GfxElement *gfx,int num,const unsigned char *src,const struct GfxLayout *gl)
+{
+	int plane;
+
+
+	for (plane = 0;plane < gl->planes;plane++)
+	{
+		int offs,y;
+
+
+		offs = num * gl->charincrement + gl->planeoffset[plane];
+		for (y = 0;y < gl->height;y++)
+		{
+			int x;
+
+
+			for (x = 0;x < gl->width;x++)
+			{
+				unsigned char *dp;
+
+
+				dp = gfx->gfxdata->line[num * gl->height + y];
+				if (plane == 0) dp[x] = 0;
+				else dp[x] <<= 1;
+
+				dp[x] += readbit(src,offs + gl->yoffset[y] + gl->xoffset[x]);
+			}
+		}
+	}
+}
+
+
+
 struct GfxElement *decodegfx(const unsigned char *src,const struct GfxLayout *gl)
 {
-	int c,plane,x,y,offs;
+	int c;
 	struct osd_bitmap *bm;
 	struct GfxElement *gfx;
 
@@ -210,26 +244,7 @@ struct GfxElement *decodegfx(const unsigned char *src,const struct GfxLayout *gl
 	gfx->gfxdata = bm;
 
 	for (c = 0;c < gl->total;c++)
-	{
-		for (plane = 0;plane < gl->planes;plane++)
-		{
-			offs = c * gl->charincrement + gl->planeoffset[plane];
-			for (y = 0;y < gl->height;y++)
-			{
-				for (x = 0;x < gl->width;x++)
-				{
-					unsigned char *dp;
-
-
-					dp = bm->line[c * gl->height + y];
-					if (plane == 0) dp[x] = 0;
-					else dp[x] <<= 1;
-
-					dp[x] += readbit(src,offs + gl->yoffset[y] + gl->xoffset[x]);
-				}
-			}
-		}
-	}
+		decodechar(gfx,c,src,gl);
 
 	return gfx;
 }

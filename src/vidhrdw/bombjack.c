@@ -185,7 +185,7 @@ void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap)
 				{
 					struct rectangle clip;
 					int bx,by;
-					int base;
+					int base,bgoffs;
 
 
 					clip.min_x = sx;
@@ -197,11 +197,12 @@ void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap)
 					by = sy & 0xf0;
 
 					base = 0x200 * (background_image & 0x07);
+					bgoffs = base+16*(15-bx/16)+by/16;
 
 					drawgfx(tmpbitmap,Machine->gfx[1],
-							Machine->memory_region[2][base+16*(15-bx/16)+by/16],
-							Machine->memory_region[2][base+16*(15-bx/16)+by/16+0x100],
-							0,0,
+							Machine->memory_region[2][bgoffs],
+							Machine->memory_region[2][bgoffs + 0x100] & 0x0f,
+							Machine->memory_region[2][bgoffs + 0x100] & 0x80,0,
 							bx,by,
 							&clip,TRANSPARENCY_NONE,0);
 				}

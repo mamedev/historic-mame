@@ -25,23 +25,11 @@ struct RunningMachine
 
 
 extern struct RunningMachine *Machine;
+extern unsigned char *RAM;	/* pointer to the memory region of the active CPU */
 
 
 int init_machine(const char *gamename,int argc,char **argv);
 int run_machine(const char *gamename);
-
-/* some useful general purpose functions for the memory map */
-int readinputport(int port);
-int input_port_0_r(int offset);
-int input_port_1_r(int offset);
-int input_port_2_r(int offset);
-int input_port_3_r(int offset);
-int input_port_4_r(int offset);
-int input_port_5_r(int offset);
-void interrupt_enable_w(int offset,int data);
-void interrupt_vector_w(int offset,int data);
-int interrupt(void);
-int nmi_interrupt(void);
-
+int updatescreen(void);
 
 #endif

@@ -93,7 +93,7 @@ void mrdo_vh_convert_color_prom(unsigned char *palette, unsigned char *colortabl
 		else colortable[i] = i;
 	}
 	/* characters with colored pen 0 */
-	colortable[0 + 4 * 64] = 3;	/* black, but avoid avoid transparency */
+	colortable[0 + 4 * 64] = 3;	/* black, but avoid transparency */
 	for (i = 1;i < 4 * 64;i++)
 		colortable[i + 4 * 64] = i;
 
@@ -204,9 +204,6 @@ void mrdo_colorram2_w(int offset,int data)
 
 void mrdo_scrollx_w(int offset,int data)
 {
-	if (offset != 0 && errorlog)
-		fprintf(errorlog,"%04x: warning - write SCROLLX from mirror address %04x\n",Z80_GetPC(),offset);
-
 	scroll_x = data;
 }
 

@@ -124,11 +124,14 @@ word Z80 (void);                   /* Execute until Z80_Running==0          */
 void Z80_RegisterDump (void);      /* Prints a dump to stdout               */
 void Z80_Patch (Z80_Regs *Regs);   /* Called when ED FE occurs. Can be used */
                                    /* to emulate disk access etc.           */
-int Z80_Interrupt(void);           /* This is called after IPeriod T-States */
+/*int Z80_Interrupt(void);*/           /* This is called after IPeriod T-States */
                                    /* have been executed. It should return  */
                                    /* Z80_IGNORE_INT, Z80_NMI_INT or a byte */
                                    /* identifying the device (most often    */
                                    /* 0xFF)                                 */
+extern int cpu_interrupt(void);
+#define Z80_Interrupt() (cpu_interrupt())
+
 void Z80_Reti (void);              /* Called when RETI occurs               */
 void Z80_Retn (void);              /* Called when RETN occurs               */
 

@@ -225,14 +225,14 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo dkong_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &dkong_charlayout,   0,    64 },
-	{ 1, 0x1000, &spritelayout,       64*4, 16 },
+	{ 1, 0x0000, &dkong_charlayout,   0, 64 },
+	{ 1, 0x1000, &spritelayout,    64*4, 16 },
 	{ -1 } /* end of array */
 };
 static struct GfxDecodeInfo dkongjr_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &dkongjr_charlayout, 0,    64 },
-	{ 1, 0x2000, &spritelayout,       64*4, 16 },
+	{ 1, 0x0000, &dkongjr_charlayout,     0, 128 },
+	{ 1, 0x2000, &spritelayout,       128*4,  16 },
 	{ -1 } /* end of array */
 };
 
@@ -240,22 +240,22 @@ static struct GfxDecodeInfo dkongjr_gfxdecodeinfo[] =
 
 static unsigned char palette[] =
 {
-	0x00,0x00,0x00,	/* BLACK */
-	0xff,0xff,0xff,	/* WHITE */
-	0xff,0x00,0x00,	/* RED */
-	0xff,0x00,0xff,	/* PURPLE */
-	0x00,0xff,0xff,	/* CYAN */
-	0xff,0xff,0x80,	/* LTORANGE */
-	0xdb,0x00,0x00,	/* DKRED */
-	0x00,0x00,0xff,	/* BLUE */
-	0xff,0xff,0x00,	/* YELLOW */
-	239,3,239,	/* PINK */
-	3,180,239,	/* LTBLUE */
-	255,131,3,	/* ORANGE */
-	0x00,0xff,0x00,	/* GREEN */
-	167,3,3,	/* DKBROWN */
-	255,183,115,	/* LTBROWN */
-	0x00,0x46,0x00,	/* DKGREEN */
+	0x00,0x00,0x00, /* BLACK */
+	0xff,0xff,0xff, /* WHITE */
+	0xff,0x00,0x00, /* RED */
+	0xff,0x00,0xff, /* PURPLE */
+	0x00,0xff,0xff, /* CYAN */
+	0xff,0xff,0x80, /* LTORANGE */
+	0xdb,0x00,0x00, /* DKRED */
+	0x00,0x00,0xff, /* BLUE */
+	0xff,0xff,0x00, /* YELLOW */
+	239,3,239,      /* PINK */
+	3,180,239,      /* LTBLUE */
+	255,131,3,      /* ORANGE */
+	0x00,0xff,0x00, /* GREEN */
+	167,3,3,        /* DKBROWN */
+	255,183,115,    /* LTBROWN */
+	0x00,0x46,0x00, /* DKGREEN */
 };
 
 enum { BLACK,WHITE,RED,PURPLE,CYAN,LTORANGE,DKRED,BLUE,YELLOW,PINK,
@@ -264,179 +264,245 @@ enum { BLACK,WHITE,RED,PURPLE,CYAN,LTORANGE,DKRED,BLUE,YELLOW,PINK,
 static unsigned char dkong_colortable[] =
 {
 	/* chars */
-	BLACK,0,0,WHITE,	/* 0-9 */
-	BLACK,0,0,WHITE,	/* 0-9 */
-	BLACK,0,0,WHITE,	/* 0-9 */
-	BLACK,0,0,WHITE,	/* 0-9 */
-	BLACK,0,0,RED,	/* A-Z */
-	BLACK,0,0,RED,	/* A-Z */
-	BLACK,0,0,RED,	/* A-Z */
-	BLACK,0,0,RED,	/* A-Z */
-	BLACK,0,0,RED,	/* A-Z */
-	BLACK,0,0,RED,	/* A-Z */
-	BLACK,0,0,RED,	/* A-Z */
-	BLACK,0,0,RED,	/* A-Z */
-	BLACK,0,0,RED,	/* A-Z */
-	BLACK,0,0,RED,	/* A-Z */
-	BLACK,0,0,RED,	/* A-Z */
-	BLACK,0,0,RED,	/* A-Z */
-	0,0,0,RED,	/* RUB END */
-	0,0,0,RED,	/* RUB END */
-	0,5,6,RED,	/* (C), ITC */
-	0,5,6,RED,	/* (C), ITC */
-	0,LTORANGE,DKRED,WHITE,	/* Kong in intermission */
-	0,LTORANGE,DKRED,WHITE,	/* Kong in intermission */
-	0,LTORANGE,DKRED,WHITE,	/* Kong in intermission */
-	0,LTORANGE,DKRED,WHITE,	/* Kong in intermission */
-	0,LTORANGE,DKRED,WHITE,	/* Kong in intermission */
-	0,LTORANGE,DKRED,WHITE,	/* Kong in intermission */
-	BLACK,RED,PURPLE,CYAN,	/* BONUS */
-	BLACK,RED,PURPLE,CYAN,	/* BONUS */
-	BLACK,RED,PURPLE,CYAN,	/* BONUS */
-	BLACK,RED,PURPLE,CYAN,	/* BONUS */
-	BLACK,RED,PURPLE,CYAN,	/* BONUS */
-	BLACK,RED,PURPLE,CYAN,	/* BONUS */
-	BLACK,0,0,LTORANGE,	/* 0-9 in intermission */
-	BLACK,0,0,LTORANGE,	/* 0-9 in intermission */
-	BLACK,0,0,LTORANGE,	/* 0-9 in intermission */
-	BLACK,RED,PURPLE,CYAN,	/* 0-9 in intermission, BONUS */
-	0,0,0,0,	/* unused */
-	0,0,0,0,	/* unused */
-	0,0,0,0,	/* unused */
-	0,0,0,RED,	/* (TM) */
-	0,0,0,0,	/* unused */
-	0,0,0,0,	/* unused */
-	0,0,0,0,	/* unused */
-	0,0,0,0,	/* unused */
-	0,CYAN,BLUE,YELLOW,	/* ziqqurat level */
-	0,CYAN,BLUE,YELLOW,	/* ziqqurat level */
-	0,CYAN,0,0,	/* _ ziqqurat level */
-	0,0,0,0,	/* unused */
-	BLACK,RED,PURPLE,CYAN,	/* barrel level */
-	BLACK,RED,PURPLE,CYAN,	/* barrel level */
-	0,0,0,0,	/* unused */
-	0,0,0,0,	/* unused */
-	BLACK,RED,PURPLE,CYAN,	/* barrel level */
-	BLACK,RED,PURPLE,CYAN,	/* barrel level */
-	0,0,0,0,	/* unused */
-	0,0,0,CYAN,	/* HELP! */
-	BLACK,RED,PURPLE,CYAN,	/* barrel level */
-	BLACK,RED,PURPLE,CYAN,	/* barrel level */
-	0,0,0,0,	/* unused */
-	0,0,0,CYAN,	/* HELP! */
-	BLACK,RED,PURPLE,CYAN,	/* barrel level */
-	BLACK,RED,PURPLE,CYAN,	/* barrel level */
-	0,0,0,RED,	/* ? */
-	0,RED,LTORANGE,BLUE,	/* lives */
+	BLACK,0,0,WHITE,        /* 0-9 */
+	BLACK,0,0,WHITE,        /* 0-9 */
+	BLACK,0,0,WHITE,        /* 0-9 */
+	BLACK,0,0,WHITE,        /* 0-9 */
+	BLACK,0,0,RED,  /* A-Z */
+	BLACK,0,0,RED,  /* A-Z */
+	BLACK,0,0,RED,  /* A-Z */
+	BLACK,0,0,RED,  /* A-Z */
+	BLACK,0,0,RED,  /* A-Z */
+	BLACK,0,0,RED,  /* A-Z */
+	BLACK,0,0,RED,  /* A-Z */
+	BLACK,0,0,RED,  /* A-Z */
+	BLACK,0,0,RED,  /* A-Z */
+	BLACK,0,0,RED,  /* A-Z */
+	BLACK,0,0,RED,  /* A-Z */
+	BLACK,0,0,RED,  /* A-Z */
+	0,0,0,RED,      /* RUB END */
+	0,0,0,RED,      /* RUB END */
+	0,5,6,RED,      /* (C), ITC */
+	0,5,6,RED,      /* (C), ITC */
+	0,LTORANGE,DKRED,WHITE, /* Kong in intermission */
+	0,LTORANGE,DKRED,WHITE, /* Kong in intermission */
+	0,LTORANGE,DKRED,WHITE, /* Kong in intermission */
+	0,LTORANGE,DKRED,WHITE, /* Kong in intermission */
+	0,LTORANGE,DKRED,WHITE, /* Kong in intermission */
+	0,LTORANGE,DKRED,WHITE, /* Kong in intermission */
+	BLACK,RED,PURPLE,CYAN,  /* BONUS */
+	BLACK,RED,PURPLE,CYAN,  /* BONUS */
+	BLACK,RED,PURPLE,CYAN,  /* BONUS */
+	BLACK,RED,PURPLE,CYAN,  /* BONUS */
+	BLACK,RED,PURPLE,CYAN,  /* BONUS */
+	BLACK,RED,PURPLE,CYAN,  /* BONUS */
+	BLACK,0,0,LTORANGE,     /* 0-9 in intermission */
+	BLACK,0,0,LTORANGE,     /* 0-9 in intermission */
+	BLACK,0,0,LTORANGE,     /* 0-9 in intermission */
+	BLACK,RED,PURPLE,CYAN,  /* 0-9 in intermission, BONUS */
+	0,0,0,0,        /* unused */
+	0,0,0,0,        /* unused */
+	0,0,0,0,        /* unused */
+	0,0,0,RED,      /* (TM) */
+	0,0,0,0,        /* unused */
+	0,0,0,0,        /* unused */
+	0,0,0,0,        /* unused */
+	0,0,0,0,        /* unused */
+	0,CYAN,BLUE,YELLOW,     /* ziqqurat level */
+	0,CYAN,BLUE,YELLOW,     /* ziqqurat level */
+	0,CYAN,0,0,     /* _ ziqqurat level */
+	0,0,0,0,        /* unused */
+	BLACK,RED,PURPLE,CYAN,  /* barrel level */
+	BLACK,RED,PURPLE,CYAN,  /* barrel level */
+	0,0,0,0,        /* unused */
+	0,0,0,0,        /* unused */
+	BLACK,RED,PURPLE,CYAN,  /* barrel level */
+	BLACK,RED,PURPLE,CYAN,  /* barrel level */
+	0,0,0,0,        /* unused */
+	0,0,0,CYAN,     /* HELP! */
+	BLACK,RED,PURPLE,CYAN,  /* barrel level */
+	BLACK,RED,PURPLE,CYAN,  /* barrel level */
+	0,0,0,0,        /* unused */
+	0,0,0,CYAN,     /* HELP! */
+	BLACK,RED,PURPLE,CYAN,  /* barrel level */
+	BLACK,RED,PURPLE,CYAN,  /* barrel level */
+	0,0,0,RED,      /* ? */
+	0,RED,LTORANGE,BLUE,    /* lives */
 
 	/* sprites */
-	BLACK,LTBLUE,LTBROWN,RED,	/* Fireball (When Mario has hammer) */
+	BLACK,LTBLUE,LTBROWN,RED,       /* Fireball (When Mario has hammer) */
 							/* Rotating ends on conveyors */
 							/* Springy things (lift screen) */
-	BLACK,RED,YELLOW,WHITE,	/* Fireball (normal) */
+	BLACK,RED,YELLOW,WHITE, /* Fireball (normal) */
 							/* Flames (on top of oil tank) */
-	BLACK,RED,LTORANGE,BLUE,	/* Mario */
-	BLACK,1,2,3,			/* -Moving Ladder (conveyor screen) */
+	BLACK,RED,LTORANGE,BLUE,        /* Mario */
+	BLACK,1,2,3,                    /* -Moving Ladder (conveyor screen) */
 							/* Moving Lift */
 	BLACK,4,5,6,
 	BLACK,7,8,9,
 	BLACK,10,11,12,
-	BLACK,LTBROWN,DKBROWN,WHITE,	/* Kong (Head), Hammer, Scores (100,200,500,800 etc) */
-	BLACK,LTBROWN,DKBROWN,ORANGE,	/* Kong (body) */
-	BLACK,ORANGE,WHITE,PINK,	/* girl (Head), Heart (when screen completed) */
-	BLACK,WHITE,BLUE,PINK,	/* Girl (lower half), Umbrella, Purse, hat */
-	BLACK,ORANGE,BLUE,YELLOW,	/* Rolling Barrel (type 1), Standing Barrel (near Kong)	*/
-	BLACK,WHITE,LTBLUE,BLUE,	/* Oil tank, Rolling Barrel (type 2), Explosion (barrel hit withhammer) */
+	BLACK,LTBROWN,DKBROWN,WHITE,    /* Kong (Head), Hammer, Scores (100,200,500,800 etc) */
+	BLACK,LTBROWN,DKBROWN,ORANGE,   /* Kong (body) */
+	BLACK,ORANGE,WHITE,PINK,        /* girl (Head), Heart (when screen completed) */
+	BLACK,WHITE,BLUE,PINK,  /* Girl (lower half), Umbrella, Purse, hat */
+	BLACK,ORANGE,BLUE,YELLOW,       /* Rolling Barrel (type 1), Standing Barrel (near Kong) */
+	BLACK,WHITE,LTBLUE,BLUE,        /* Oil tank, Rolling Barrel (type 2), Explosion (barrel hit withhammer) */
 	BLACK,3,4,5,
-	BLACK,GREEN,1,2,	/* -Pies (Conveyor screen) */
-	BLACK,YELLOW,RED,BLACK	/* -Thing at top/bottom of lifts, Clipping sprite (all black) */
+	BLACK,GREEN,1,2,        /* -Pies (Conveyor screen) */
+	BLACK,YELLOW,RED,BLACK  /* -Thing at top/bottom of lifts, Clipping sprite (all black) */
 };
+
 static unsigned char dkongjr_colortable[] =
 {
-	/* chars */
-	BLACK,0,0,WHITE,	/* 0-9 */
-	BLACK,0,0,WHITE,	/* 0-9 */
-	BLACK,0,0,WHITE,	/* 0-9 */
-	BLACK,0,0,WHITE,	/* 0-9 */
-	BLACK,0,0,RED,	/* A-Z */
-	BLACK,0,0,RED,	/* A-Z */
-	BLACK,0,0,RED,	/* A-Z */
-	BLACK,0,0,RED,	/* A-Z */
-	BLACK,0,0,RED,	/* A-Z */
-	BLACK,0,0,RED,	/* A-Z */
-	BLACK,0,0,RED,	/* A-Z */
-	BLACK,0,0,RED,	/* A-Z */
-	BLACK,0,0,RED,	/* A-Z */
-	BLACK,0,0,RED,	/* A-Z */
-	BLACK,0,0,RED,	/* A-Z */
-	BLACK,0,0,RED,	/* A-Z */
-	0,0,0,RED,	/* RUB END */
-	0,0,0,RED,	/* RUB END */
-	0,5,6,RED,	/* (C), ITC */
-	0,5,6,RED,	/* (C), ITC */
-	0,LTORANGE,DKRED,WHITE,	/* Kong in intermission */
-	0,LTORANGE,DKRED,WHITE,	/* Kong in intermission */
-	0,LTORANGE,DKRED,WHITE,	/* Kong in intermission */
-	0,LTORANGE,DKRED,WHITE,	/* Kong in intermission */
-	0,LTORANGE,DKRED,WHITE,	/* Kong in intermission */
-	0,LTORANGE,DKRED,WHITE,	/* Kong in intermission */
-	BLACK,RED,PURPLE,CYAN,	/* BONUS */
-	BLACK,RED,PURPLE,CYAN,	/* BONUS */
-	BLACK,RED,PURPLE,CYAN,	/* BONUS */
-	BLACK,RED,PURPLE,CYAN,	/* BONUS */
-	BLACK,RED,PURPLE,CYAN,	/* BONUS */
-	BLACK,RED,PURPLE,CYAN,	/* BONUS */
-	BLACK,0,0,LTORANGE,	/* 0-9 in intermission */
-	BLACK,0,0,LTORANGE,	/* 0-9 in intermission */
-	BLACK,0,0,LTORANGE,	/* 0-9 in intermission */
-	BLACK,RED,PURPLE,CYAN,	/* 0-9 in intermission, BONUS */
-	BLACK,RED,PURPLE,CYAN,	/* 0-9 in intermission, BONUS */
-	0,0,0,0,	/* unused */
-	0,0,0,0,	/* unused */
-	0,0,0,0,	/* unused */
-	0,0,0,0,	/* unused */
-	0,1,2,3,
-	0,11,12,13,
-	0,12,13,14,
-	0,13,14,15,
-	0,LTBLUE,1,YELLOW,
-	0,14,15,1,
-	0,15,1,2,
-	0,1,2,3,
-	0,2,3,4,
-	0,3,4,5,
-	0,4,5,6,
-	0,5,6,7,
-	0,6,7,8,
-	0,7,8,9,
-	0,8,9,10,
-	BLACK,GREEN,DKBROWN,WHITE,	/* pedestal */
-	0,9,10,11,
-	0,11,12,13,
-	0,12,13,14,
-	0,13,14,15,
-	0,14,15,1,
-	0,15,1,2,
-	0,15,1,2,
+	/* chars (first bank) */
+	BLACK,BLACK,BLACK,WHITE,       /* 0-9 */
+	BLACK,BLACK,BLACK,WHITE,       /* 0-9 */
+	BLACK,BLACK,BLACK,WHITE,       /* 0-9 */
+	BLACK,BLACK,BLACK,WHITE,       /* 0-9 */
+	BLACK,BLACK,BLACK,RED,         /* A-Z */
+	BLACK,BLACK,BLACK,RED,         /* A-Z */
+	BLACK,BLACK,BLACK,RED,         /* A-Z */
+	BLACK,BLACK,BLACK,RED,         /* A-Z */
+	BLACK,BLACK,BLACK,RED,         /* A-Z */
+	BLACK,BLACK,BLACK,RED,         /* A-Z */
+	BLACK,BLACK,BLACK,RED,         /* A-Z */
+	BLACK,BLACK,BLACK,RED,         /* A-Z */
+	BLACK,BLACK,BLACK,RED,         /* A-Z */
+	BLACK,BLACK,BLACK,RED,         /* A-Z */
+	BLACK,BLACK,BLACK,RED,         /* A-Z */
+	BLACK,BLACK,BLACK,RED,         /* A-Z */
+	BLACK,BLACK,BLACK,WHITE,       /* RUB END */
+	BLACK,BLACK,BLACK,WHITE,       /* RUB END */
+	BLACK,BLACK,BLACK,WHITE,       /* RUB END */
+	BLACK,BLACK,BLACK,WHITE,       /* RUB END */
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	BLACK,BLACK,RED,BLUE,          /* Bonus */
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	BLACK,BLACK,RED,BLUE,          /* Bonus Box */
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	BLACK,BLACK,RED,BLUE,          /* Bonus Box */
+	BLACK,BLACK,RED,BLUE,          /* Bonus Box */
+	BLACK,BLACK,RED,BLUE,          /* Bonus Box */
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	BLACK,BLACK,ORANGE,BLACK,      /* Screen1: Islands Bottom */
+	BLACK,LTBLUE,BLUE,RED,         /* Screen4: Locks */
+	BLACK,LTBLUE,BLUE,WHITE,       /* Screen1: Water */
+	BLACK,BLACK,BLUE,BLACK,        /* Screen4: Rope Cage-Lock */
+	BLACK,BLACK,BLUE,BLACK,        /* Screen4: Rope Cage-Lock */
+	BLACK,GREEN,RED,LTBROWN,       /* Screen1: Vines */
+	BLACK,GREEN,RED,RED,           /* Rope & Chains */
+	BLACK,GREEN,GREEN,WHITE,       /* Screen4: Wall */
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,1,2,3,                       /* ?? */
+	0,4,5,6,                       /* ?? */
+	BLACK,GREEN,DKGREEN,WHITE,     /* Screen1: Islands Top */
+	BLACK,GREEN,DKGREEN,WHITE,     /* Screen1&2: Top Floor Bottom Part */
+	0,7,8,9,                       /* ?? */
+	0,10,11,12,                    /* ?? */
+	BLACK,WHITE,ORANGE,YELLOW,     /* Screen1&2: Platform */
+	0,13,14,15,                    /* ?? */
+	0,1,1,1,                       /* ?? */
+	BLACK,DKGREEN,DKBROWN,LTBROWN, /* Lives */
+
+	/* chars (second bank) */
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
+	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
+	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
+	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
+	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
+	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
+	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
+	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
+	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
+	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
+	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
+	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
+	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
+	BLACK,LTORANGE,RED,BLUE,       /* Logo: Junior */
+	BLACK,LTORANGE,RED,BLUE,       /* Logo: Junior */
+	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
+	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
+	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
+	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
+	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
+	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
+	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
+	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
+	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
+	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
+	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
+	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
+	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
+	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
+	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
+	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
+	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
+	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
+	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
+	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
+	0,0,0,0,
+	BLACK,GREEN,BLACK,BLACK,       /* Logo: (c) 198 */
+	BLACK,GREEN,BLACK,BLACK,       /*       2 Nin   */
+	BLACK,GREEN,BLACK,BLACK,       /*       tendo   */
+	BLACK,GREEN,BLACK,BLACK,       /*       of Am   */
+	BLACK,GREEN,BLACK,BLACK,       /*       erica   */
+	BLACK,GREEN,BLACK,BLACK,       /*       Inc.    */
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
 
 	/* sprites */
-	BLACK,LTORANGE,BLUE,RED,	/* Mario */
-	BLACK,PINK,PINK,PINK,	/* unused? */
-	BLACK,PINK,PINK,PINK,	/* unused? */
-	BLACK,GREEN,ORANGE,WHITE,	/* bkgnd, vines */
-	BLACK,PINK,PINK,PINK,	/* unused? */
-	BLACK,PINK,PINK,PINK,	/* unused? */
-	BLACK,PINK,PINK,PINK,	/* unused? */
-
-	BLACK,WHITE,DKBROWN,LTBROWN,	/* dk head */
-	BLACK,BLUE,DKBROWN,LTBLUE,	/* dk cage */
-	BLACK,ORANGE,DKBROWN,LTBROWN,	/* donkey kong */
-	BLACK,PINK,PINK,PINK,
-	BLACK,GREEN,ORANGE,YELLOW,	/* bananas & other fruits */
-	BLACK,GREEN,ORANGE,WHITE,	/* oranges */
-	BLACK,YELLOW,BLUE,WHITE,	/* blue key & blue snapjaw, splash */
-	BLACK,YELLOW,RED,WHITE,	/* red snapjaw, snapjaw explosion */
-	BLACK,YELLOW,PINK,WHITE	/* purple key */
+	BLACK,LTBROWN,BLUE,RED,        /* Mario */
+	BLACK,BLACK,BLACK,WHITE,       /* Bonus Score */
+	BLACK,GREEN,ORANGE,WHITE,      /* Screen2: Moving Platform */
+	BLACK,1,2,3,                   /* ?? */
+	BLACK,YELLOW,BLUE,WHITE,       /* Cursor */
+	BLACK,4,5,6,                   /* ?? */
+	BLACK,7,8,9,                   /* ?? */
+	BLACK,WHITE,DKBROWN,LTBROWN,   /* Kong Jr */
+	BLACK,BLUE,BLUE,LTBLUE,        /* Cage */
+	BLACK,ORANGE,DKBROWN,LTBROWN,  /* Kong */
+	BLACK,1,7,9,                   /* ?? */
+	BLACK,GREEN,ORANGE,YELLOW,     /* Banana & Pear */
+	BLACK,GREEN,RED,WHITE,         /* Apple */
+	BLACK,CYAN,BLUE,WHITE,         /* Blue Creature */
+	BLACK,YELLOW,RED,WHITE,        /* Red Creature */
+	BLACK,YELLOW,PURPLE,WHITE      /* Key */
 };
 
 
@@ -463,8 +529,8 @@ const struct MachineDriver dkong_driver =
 	sizeof(palette)/3,sizeof(dkong_colortable),
 	0,0,palette,dkong_colortable,
 	0,17,
-	1,11,
-	8*13,8*16,0,
+	0,45,
+	8*13,8*16,4,
 	0,
 	dkong_vh_start,
 	dkong_vh_stop,
@@ -502,8 +568,8 @@ const struct MachineDriver dkongjr_driver =
 	sizeof(palette)/3,sizeof(dkongjr_colortable),
 	0,0,palette,dkongjr_colortable,
 	0,17,
-	1,11,
-	8*13,8*16,0,
+	0,60,
+	8*13,8*16,4,
 	0,
 	dkong_vh_start,
 	dkong_vh_stop,

@@ -8,6 +8,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "Z80.h"
 
 
 static int shift_data1,shift_data2,shift_amount;

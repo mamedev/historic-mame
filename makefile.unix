@@ -8,15 +8,18 @@ LD	= gcc
 # *** If you have the MIT-SHM extension, uncomment the following:
 MS		= -DMITSHM
 
-# *** Choose your OS (one of linux, sunos, solaris, irix).
-ARCH	= linux
+# choose your OS (one of linux, FREEBSD,  sunos, solaris, irix).
+ARCH    = linux
 
-# *** Set the paths to the X11 libs (-L) / includes (-I) below for your
 # *** architecture.
 
 # Linux
 DEFS.linux   = -DX86_ASM -DLSB_FIRST -DUNIX -Dlinux -m486
 LIBS.linux   = -L/usr/X11/lib -lX11 -lXext
+
+# FreeBSD
+DEFS.FREEBSD   = -DX86_ASM -DLSB_FIRST -DUNIX -Dlinux -DFREEBSD -DFREEBSD_SOUND_WORKAROUND -m486 -I/usr/X11R6/include
+LIBS.FREEBSD   = -L/usr/X11R6/lib -lX11 -lXext
 
 # SunOS
 DEFS.sunos	 = -DUNIX -Dsun -DCLOCKS_PER_SEC=1000000
@@ -33,9 +36,9 @@ LIBS.irix   = -L/usr/X11/lib -lX11 -lXext
 # No configurable options below this line....
 
 CFLAGS = -Isrc -Isrc/Z80 -Isrc/unix -fstrength-reduce -funroll-loops -fomit-frame-pointer -O3 -Wall
-OBJS   = obj/mame.o obj/common.o obj/driver.o obj/osdepend.o \
+OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/machine/pacman.o obj/vidhrdw/pacman.o obj/drivers/pacman.o \
-				 obj/drivers/crush.o \
+		 obj/drivers/crush.o \
          obj/vidhrdw/pengo.o obj/sndhrdw/pengo.o obj/drivers/pengo.o \
          obj/machine/ladybug.o obj/vidhrdw/ladybug.o obj/sndhrdw/ladybug.o obj/drivers/ladybug.o \
          obj/machine/mrdo.o obj/vidhrdw/mrdo.o obj/drivers/mrdo.o \
@@ -59,10 +62,13 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/osdepend.o \
          obj/machine/invaders.o obj/vidhrdw/invaders.o obj/drivers/invaders.o \
          obj/vidhrdw/mario.o obj/drivers/mario.o \
          obj/machine/zaxxon.o obj/vidhrdw/zaxxon.o obj/drivers/zaxxon.o \
+         obj/vidhrdw/congo.o obj/drivers/congo.o \
          obj/vidhrdw/bombjack.o obj/drivers/bombjack.o \
-         obj/Z80/Z80.o
+         obj/machine/centiped.o obj/vidhrdw/centiped.o obj/drivers/centiped.o \
+         obj/machine/nibbler.o obj/vidhrdw/nibbler.o obj/drivers/nibbler.o \
+         obj/Z80/Z80.o obj/M6502/M6502.o
 
-VPATH = src src/z80
+VPATH = src src/Z80 src/M6502
 
 all: mame
 
@@ -79,11 +85,10 @@ sndtest: sndtest.c
 	gcc -o sndtest sndtest.c
 
 # dependencies
-obj/%.o:	    common.h machine.h driver.h
-obj/cclimber/sndhrdw.o:  src/cclimber/psg.c src/cclimber/psg.h
-obj/Z80/Z80.o:  src/Z80/Z80.c src/Z80/Z80.h src/Z80/Z80Codes.h src/Z80/Z80IO.h src/Z80/Z80DAA.h
+obj/sndhrdw/cclimber.o:  src/sndhrdw/psg.c src/sndhrdw/psg.h
+obj/Z80/Z80.o:  Z80.c Z80.h Z80Codes.h Z80IO.h Z80DAA.h
+obj/M6502/M6502.o:	M6502.c M6502.h Tables.h Codes.h
 
 clean:
 	rm -rf *.o */*.o */*/*.o
 	rm -f mame
-

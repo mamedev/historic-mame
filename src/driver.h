@@ -2,9 +2,9 @@
 #define DRIVER_H
 
 
-#include "Z80.h"
 #include "common.h"
 #include "mame.h"
+#include "cpuintrf.h"
 
 
 /***************************************************************************
@@ -125,8 +125,8 @@ struct MachineCPU
 	int interrupts_per_frame;	/* usually 1 */
 };
 
-#define CPU_NONE 0
 #define CPU_Z80 1
+#define CPU_M6502 2
 
 
 
@@ -182,8 +182,8 @@ struct GameDriver
 {
 	const char *name;
 	const struct RomModule *rom;
-	unsigned (*rom_decode)(dword A);	/* used to decrypt the ROMs after loading them */
-	unsigned (*opcode_decode)(dword A);	/* used to decrypt the ROMs when the CPU fetches an opcode */
+	unsigned (*rom_decode)(int A);	/* used to decrypt the ROMs after loading them */
+	unsigned (*opcode_decode)(int A);	/* used to decrypt the ROMs when the CPU fetches an opcode */
 	const struct MachineDriver *drv;
 };
 

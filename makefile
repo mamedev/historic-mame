@@ -2,10 +2,9 @@ CC	= gcc
 LD	= gcc
 
 DEFS   = -DX86_ASM -DLSB_FIRST
-CFLAGS = -Isrc -Isrc/z80 -fstrength-reduce -funroll-loops -fomit-frame-pointer -O3 -m486 -Wall
-#CFLAGS = -pg -Isrc -Isrc/z80 -fstrength-reduce -funroll-loops -O3 -m486 -Wall
+CFLAGS = -Isrc -Isrc/Z80 -Isrc/M6502 -fstrength-reduce -funroll-loops -fomit-frame-pointer -O3 -m486 -Wall
 LIBS   = -lalleg
-OBJS   = obj/mame.o obj/common.o obj/driver.o obj/osdepend.o \
+OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/machine/pacman.o obj/vidhrdw/pacman.o obj/drivers/pacman.o \
 		 obj/drivers/crush.o \
          obj/vidhrdw/pengo.o obj/sndhrdw/pengo.o obj/drivers/pengo.o \
@@ -31,16 +30,18 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/osdepend.o \
          obj/machine/invaders.o obj/vidhrdw/invaders.o obj/drivers/invaders.o \
          obj/vidhrdw/mario.o obj/drivers/mario.o \
          obj/machine/zaxxon.o obj/vidhrdw/zaxxon.o obj/drivers/zaxxon.o \
+         obj/vidhrdw/congo.o obj/drivers/congo.o \
          obj/vidhrdw/bombjack.o obj/drivers/bombjack.o \
-         obj/Z80/Z80.o
+         obj/machine/centiped.o obj/vidhrdw/centiped.o obj/drivers/centiped.o \
+         obj/machine/nibbler.o obj/vidhrdw/nibbler.o obj/drivers/nibbler.o \
+         obj/Z80/Z80.o obj/M6502/M6502.o
 
-VPATH = src src/z80
+VPATH = src src/Z80 src/M6502
 
 all: mame.exe
 
 mame.exe:  $(OBJS)
 	$(LD) -s -o mame.exe $(OBJS) $(DJDIR)/lib/audiodjf.a $(LIBS)
-#	$(LD) -pg -o mame.exe $(OBJS) $(DJDIR)/lib/audiodjf.a $(LIBS)
 
 obj/osdepend.o: src/msdos/msdos.c
 	 $(CC) $(DEFS) $(CFLAGS) -Isrc/msdos -o $@ -c $<
@@ -51,11 +52,13 @@ obj/%.o: src/%.c mame.h common.h driver.h
 # dependencies
 obj/sndhrdw/cclimber.o:  src/sndhrdw/psg.c src/sndhrdw/psg.h
 obj/Z80/Z80.o:  Z80.c Z80.h Z80Codes.h Z80IO.h Z80DAA.h
+obj/M6502/M6502.o:	M6502.c M6502.h Tables.h Codes.h
 
 
 clean:
 	del obj\*.o
 	del obj\Z80\*.o
+	del obj\M6502\*.o
 	del obj\drivers\*.o
 	del obj\machine\*.o
 	del obj\vidhrdw\*.o

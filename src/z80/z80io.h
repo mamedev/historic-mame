@@ -23,12 +23,16 @@ void Z80_Out (byte Port,byte Value);
 /****************************************************************************/
 /* Read a byte from given memory location                                   */
 /****************************************************************************/
-unsigned Z80_RDMEM(dword A);
+/*unsigned Z80_RDMEM(dword A);*/
+extern int cpu_readmem(register int A);
+#define Z80_RDMEM(A) ((unsigned)cpu_readmem(A))
 
 /****************************************************************************/
 /* Write a byte to given memory location                                    */
 /****************************************************************************/
-void Z80_WRMEM(dword A,byte V);
+/*void Z80_WRMEM(dword A,byte V);*/
+extern void cpu_writemem(register int A,register unsigned char V);
+#define Z80_WRMEM(A,V) (cpu_writemem(A,V))
 
 /****************************************************************************/
 /* Just to show you can actually use macros as well                         */

@@ -1,0 +1,16 @@
+Put the files :
+
+IC12
+IC07
+IC08
+IC09
+IC10
+IC14
+IC15
+IC16
+IC17
+IC52
+IC50
+IC51
+
+in this directory.

@@ -19,7 +19,7 @@ Game                         Playable?   Accurate colors?    Sound?
 
 Pac Man                        Yes            Yes             Yes
 Ms Pac Man (bootleg)           Yes            Yes             Yes
-Crush Roller                   Yes             No             Yes
+Crush Roller                   Yes            Yes             Yes
 Pengo                          Yes            Yes             Yes
 Lady Bug                       Yes            Yes           No noise
 Mr. Do!                        Yes            Yes             Yes
@@ -33,10 +33,10 @@ The Adventures of Robby Roto    No             No              No
 Gorf                            No             No              No
 Galaxian                       Yes            Yes           Limited
 Pisces                         Yes            Yes           Limited
-"Japanese Irem game"           Yes             No           Limited
+"Japanese Irem game"           Yes            Yes           Limited
 War of the Bugs                Yes             No           Limited
-Moon Cresta                    Yes             No           Limited
-Moon Quasar                    Yes             No           Limited
+Moon Cresta                    Yes            Yes?          Limited
+Moon Quasar                    Yes            Yes?          Limited
 The End                        Yes             No              No
 Scramble                       Yes            Yes              No
 Super Cobra                    Yes             No              No
@@ -51,7 +51,10 @@ Space Invaders                 Yes            Yes              No
 Carnival                        No             No              No
 Mario Bros.                    Yes             No              No
 Zaxxon                         Yes             No              No
+Congo Bongo                    Yes             No              No
 Bomb Jack                      Yes            Yes              No
+Centipede                      Yes             No              No
+Nibbler                        Yes             No              No
 
 
 
@@ -67,24 +70,40 @@ If you find out something useful, submit it to avdbas@wi.leidenuniv.nl,
 so it will be made available to everybody on the Repository page.
 
 Z80Em Portable Zilog Z80 Emulator Copyright (C) Marcel de Kogel 1996,1997
+   Note: the version used in MAME is slightly modified. You can find the
+   original version at http://www.komkon.org/~dekogel/misc.html.
+M6502 Emulator Copyright (C) Marat Fayzullin, Alex Krasivsky 1996
+   Note: the version used in MAME is slightly modified. You can find the
+   original version at http://freeflight.com/fms/.
 Allegro library by Shawn Hargreaves, 1994/96
 SEAL Synthetic Audio Library API Interface Copyright (C) 1995, 1996
    Carlos Hasan. All Rights Reserved.
 Video modes created using Tweak 1.6b by Robert Schmidt, who also wrote
    TwkUser.c. Thanks to Chuck Cochems for the help in making them more
    compatible.
+224x288 noscanlines video mode provided by Valerio Verrando
+  (v.verrando@mclink.it)
 AY-3-8910 emulation by Ville Hallik (ville@physic.ut.ee) and Michael Cuddy
   (mcuddy@FensEnde.com).
 UNIX port by Allard van der Bas (avdbas@wi.leidenuniv.nl) and Dick de Ridder
   (dick@ph.tn.tudelft.nl).
 
+Phoenix driver provided by Brad Oliver (bradman@primenet.com) and Mirko
+   Buffoni (mix@lim.dsi.unimi.it)
+Mario Bros., Zaxxon and Bomb Jack drivers provided by Mirko Buffoni
+   (mix@lim.dsi.unimi.it)
+Congo Bongo driver provided by Ville Laitinen (ville@sms.fi).
+
 Very special thanks to Sergio Munoz for the precious information about the
    Pengo sound hardware and colors.
 Thanks to Paul Swan for the information on the Lady Bug sound hardware and
    Mr.Do! colors.
-Big thanks to Gary Walton for too many things to mention them all.
-Information about the Crazy Climber machine hardware (including palette) and
-   ROM encryption scheme provided by Lionel Theunissen
+Big thanks to Gary Walton (garyw@excels-w.demon.co.uk) for too many things
+   to mention them all.
+Thanks to Simon Walls (wallss@ecid.cig.mot.com) for the color information
+   on many games.
+Information about the Crazy Climber machine hardware (including palette)
+   and ROM encryption scheme provided by Lionel Theunissen
    (lionelth@ozemail.com.au).
 Thanks to Andy Milne (andy@canetics.com) for the information on the Crazy
    Climber sound roms.
@@ -95,10 +114,7 @@ Info on Bagman, Galaxian, Moon Cresta and many other games taken from Arcade
    Emulator by Robert Anschuetz.
 Pooyan information provided by Michael Cuddy and Allard van der Bas
 Thanks to Mirko Buffoni for the Amidar and Frogger colors.
-Phoenix driver provided by Brad Oliver (bradman@primenet.com) and Mirko
-   Buffoni (mix@lim.dsi.unimi.it)
-Mario Bros., Zaxxon and Bomb Jack drivers provided by Mirko Buffoni
-   (mix@lim.dsi.unimi.it)
+Thanks to Richard Davies for info on Phoenix.
 Thanks to Brad Thomas, Jakob Frendsen and Conny Melin for the info on Bomb
    Jack.
 Thanks to Mike@Dissfulfils.co.uk for the information on the Moon Quasar
@@ -111,6 +127,8 @@ Thanks to Mike Coates (mike@dissfulfils.co.uk) for Carnival ROM placement
 Colors for Donkey Kong, Donkey Kong Jr. and Mario Bros. derived from Kong
    emulator by Gary Shepherdson.
 Colors for Amidar and Frogger derived from SPARCADE by Dave Spicer.
+Thanks to Brad Oliver, Marc Vergoossen (marc.vergoossen@pi.net) and Richard
+   Davies (R.Davies@dcs.hull.ac.uk) for help with Donky Kong Jr. colors.
 Thanks to Dave W. for all his help.
 
 
@@ -634,6 +652,16 @@ CTRL    Fire
 
 
 
+Congo Bongo ("congo")
+---------------------
+
+Runs on the same hardware as Zaxxon.
+
+Arrows  Move around
+CTRL    Jump
+
+
+
 Bomb Jack ("bombjack")
 ----------------------
 
@@ -657,3 +685,31 @@ Known issues:
   confirm?
 - The INITIAL HIGH SCORE setting doesn't only set that, it does something
   else as well - but I don't know what.
+
+
+
+Centipede ("centiped")
+----------------------
+
+Arrows  Move around
+CTRL    Fire
+
+Known issues:
+- What is the clock speed of the original machine? I'm currently using 1Mhz,
+  I don't know if the game runs correctly.
+- The game awards you 18 credits on startup
+
+
+
+Nibbler ("nibbler")
+-------------------
+
+Arrows  Move around
+F1      Skip level
+
+Known issues:
+- What is the clock speed of the original machine? I'm currently using 1Mhz
+- Some input bits seem to be used as debug controls - quite interesting, but
+  I haven't investigated yet.
+- One ROM fails the power on test, but the game seems to work well - maybe
+  it's a bootleg?

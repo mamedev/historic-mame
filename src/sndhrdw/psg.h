@@ -36,7 +36,7 @@
 #define AY_PORTA	(14)
 #define AY_PORTB	(15)
 
-/*typedef unsigned char byte;*/
+typedef unsigned char byte;
 
 /* default clock frequency, frequency in MHz * 100 */
 #ifndef AY8910_CLOCK

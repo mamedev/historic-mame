@@ -7,6 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "Z80.h"
 
 
 unsigned char *wow_videoram;
