@@ -374,7 +374,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80,
-			4000000,	/* 4.0 Mhz (?) */
+			4001000,	/* ??? with 4 MHz, nested NMIs might happen */
 			3,
 			sound_readmem,sound_writemem,0,sound_writeport,
 			ignore_interrupt,0,

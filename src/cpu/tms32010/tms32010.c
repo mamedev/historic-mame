@@ -15,11 +15,11 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "stdlib.h"
-#include "osd_dbg.h"
-#include "tms32010.h"
-#include "cpuintrf.h"
+#include <stdlib.h>
 #include "driver.h"
+#include "cpuintrf.h"
+#include "mamedbg.h"
+#include "tms32010.h"
 
 
 #define M_RDROM(A)		TMS320C10_ROM_RDMEM(A)
@@ -60,15 +60,16 @@ typedef struct
 #define DP_REG		0x0001	/* DP	(Data memory Pointer (bank) bit) */
 
 static UINT8 tms320c10_reg_layout[] = {
-	TMS320C10_PC,TMS320C10_STK3,TMS320C10_ACC,TMS320C10_PREG,TMS320C10_TREG,-1,
-	TMS320C10_AR0,TMS320C10_AR1,TMS320C10_STR,0
+	TMS320C10_PC,TMS320C10_SP,TMS320C10_STR,TMS320C10_ACC,-1,
+	TMS320C10_PREG,TMS320C10_TREG,TMS320C10_AR0,TMS320C10_AR1,-1,
+	TMS320C10_STK0,TMS320C10_STK1,TMS320C10_STK2,TMS320C10_STK3,0
 };
 
 static UINT8 tms320c10_win_layout[] = {
-	 0, 0,80, 4,	/* register window (top rows) */
-	 0, 5,33,17,	/* disassembler window (left colums) */
-	34, 5,46, 8,	/* memory #1 window (right, upper middle) */
-	34,14,46, 8,	/* memory #2 window (right, lower middle) */
+	28, 0,52, 4,	/* register window (top rows) */
+	 0, 0,27,22,	/* disassembler window (left colums) */
+	28, 5,52, 8,	/* memory #1 window (right, upper middle) */
+	28,14,52, 8,	/* memory #2 window (right, lower middle) */
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
@@ -867,35 +868,39 @@ const char *tms320c10_info(void *context, int regnum)
     switch( regnum )
 	{
 		case CPU_INFO_REG+TMS320C10_PC: sprintf(buffer[which], "PC:%04X",  r->PC); break;
-		case CPU_INFO_REG+TMS320C10_STK3: sprintf(buffer[which], "STK3:%04X", r->STACK[3]); break;
-		case CPU_INFO_REG+TMS320C10_STR: sprintf(buffer[which], "STR:%04X", r->STR); break;
+		case CPU_INFO_REG+TMS320C10_SP: sprintf(buffer[which], "SP:%X", 0); /* fake stack pointer */ break;
+        case CPU_INFO_REG+TMS320C10_STR: sprintf(buffer[which], "STR:%04X", r->STR); break;
 		case CPU_INFO_REG+TMS320C10_ACC: sprintf(buffer[which], "ACC:%08X", r->ACC); break;
 		case CPU_INFO_REG+TMS320C10_PREG: sprintf(buffer[which], "P:%08X",   r->Preg); break;
 		case CPU_INFO_REG+TMS320C10_TREG: sprintf(buffer[which], "T:%04X",   r->Treg); break;
 		case CPU_INFO_REG+TMS320C10_AR0: sprintf(buffer[which], "AR0:%04X", r->AR[0]); break;
 		case CPU_INFO_REG+TMS320C10_AR1: sprintf(buffer[which], "AR1:%04X", r->AR[1]); break;
-		case CPU_INFO_FLAGS:
+		case CPU_INFO_REG+TMS320C10_STK0: sprintf(buffer[which], "STK0:%04X", r->STACK[0]); break;
+		case CPU_INFO_REG+TMS320C10_STK1: sprintf(buffer[which], "STK1:%04X", r->STACK[1]); break;
+		case CPU_INFO_REG+TMS320C10_STK2: sprintf(buffer[which], "STK2:%04X", r->STACK[2]); break;
+        case CPU_INFO_REG+TMS320C10_STK3: sprintf(buffer[which], "STK3:%04X", r->STACK[3]); break;
+        case CPU_INFO_FLAGS:
             sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
                 r->STR & 0x8000 ? 'O':'.',
                 r->STR & 0x4000 ? 'M':'.',
                 r->STR & 0x2000 ? 'I':'.',
-                r->STR & 0x1000 ? '?':'.',
-                r->STR & 0x0800 ? 'a':'.',
-                r->STR & 0x0400 ? 'r':'.',
-                r->STR & 0x0200 ? 'p':'.',
-                r->STR & 0x0100 ? '1':'.',
-                r->STR & 0x0080 ? '?':'.',
-                r->STR & 0x0040 ? '?':'.',
-                r->STR & 0x0020 ? '?':'.',
-                r->STR & 0x0010 ? '?':'.',
-                r->STR & 0x0008 ? '?':'.',
-                r->STR & 0x0004 ? 'd':'.',
-                r->STR & 0x0002 ? 'p':'.',
-                r->STR & 0x0001 ? '1':'.');
+				r->STR & 0x1000 ? '.':'?',
+				r->STR & 0x0800 ? 'a':'?',
+				r->STR & 0x0400 ? 'r':'?',
+				r->STR & 0x0200 ? 'p':'?',
+				r->STR & 0x0100 ? '1':'0',
+				r->STR & 0x0080 ? '.':'?',
+				r->STR & 0x0040 ? '.':'?',
+				r->STR & 0x0020 ? '.':'?',
+				r->STR & 0x0010 ? '.':'?',
+				r->STR & 0x0008 ? '.':'?',
+				r->STR & 0x0004 ? 'd':'?',
+				r->STR & 0x0002 ? 'p':'?',
+				r->STR & 0x0001 ? '1':'0');
             break;
-        case CPU_INFO_NAME: return "TMS320C10";
+		case CPU_INFO_NAME: return "320C10";
         case CPU_INFO_FAMILY: return "Texas Instruments 320C10";
-        case CPU_INFO_VERSION: return "1.01";
+		case CPU_INFO_VERSION: return "1.02";
         case CPU_INFO_FILE: return __FILE__;
         case CPU_INFO_CREDITS: return "Copyright (C) 1999 by Quench";
         case CPU_INFO_REG_LAYOUT: return (const char*)tms320c10_reg_layout;
@@ -904,13 +909,12 @@ const char *tms320c10_info(void *context, int regnum)
 	return buffer[which];
 }
 
-unsigned tms320c10_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned tms320c10_dasm(char *buffer, unsigned pc)
 {
-	(void)base;
 #ifdef MAME_DEBUG
-    return Dasm32010( buffer, &ROM[(pc<<1)&0xffff]);
+    return Dasm32010( buffer, pc );
 #else
-	sprintf( buffer, "$%02X%02X", ROM[(pc<<1)&0xffff], ROM[((pc<<1)+1)&0xffff] );
+	sprintf( buffer, "$%04X", cpu_readop16((pc<<1)&0xffff) );
 	return 2;
 #endif
 }

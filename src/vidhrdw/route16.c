@@ -258,24 +258,54 @@ static void common_videoram_w(int offset,int data,
 {
         int x, y, color1, color2, color3, color4;
 
-        y = (offset & 0xffc0) >> 6;
-        x = 255 - ((offset & 0x3f) << 2);
+        x = (offset & 0xffc0) >> 6;
+        y = ((offset & 0x3f) << 2);
 
-        // flip?
-        if (video_flip)
-                osd_mark_dirty(255-y,255-x,255-y,258-x,0);
+        if (Machine->orientation & ORIENTATION_FLIP_X )
+           {
+           x ^= 0xff ;
+           }
+
+        if (Machine->orientation & ORIENTATION_FLIP_Y )
+           {
+           y ^= 0xff ;
+           color1 = ((data & 0x80) >> 6) | ((data & 0x08) >> 3);
+           color2 = ((data & 0x40) >> 5) | ((data & 0x04) >> 2);
+           color3 = ((data & 0x20) >> 4) | ((data & 0x02) >> 1);
+           color4 = ((data & 0x10) >> 3) | ((data & 0x01)     );
+           }
         else
-                osd_mark_dirty(y,x-3,y,x,0);
+           {
+           color4 = ((data & 0x80) >> 6) | ((data & 0x08) >> 3);
+           color3 = ((data & 0x40) >> 5) | ((data & 0x04) >> 2);
+           color2 = ((data & 0x20) >> 4) | ((data & 0x02) >> 1);
+           color1 = ((data & 0x10) >> 3) | ((data & 0x01)     );
+           }
 
-        color1 = ((data & 0x80) >> 6) | ((data & 0x08) >> 3);
-        color2 = ((data & 0x40) >> 5) | ((data & 0x04) >> 2);
-        color3 = ((data & 0x20) >> 4) | ((data & 0x02) >> 1);
-        color4 = ((data & 0x10) >> 3) | ((data & 0x01)     );
-
-        bitmap->line[x    ][y] = Machine->pens[color4 | coloroffset];
-        bitmap->line[x - 1][y] = Machine->pens[color3 | coloroffset];
-        bitmap->line[x - 2][y] = Machine->pens[color2 | coloroffset];
-        bitmap->line[x - 3][y] = Machine->pens[color1 | coloroffset];
+        if (Machine->orientation & ORIENTATION_SWAP_XY )
+           {
+           bitmap->line[y][x] = Machine->pens[color4 | coloroffset];
+           bitmap->line[y-1][x] = Machine->pens[color3 | coloroffset];
+           bitmap->line[y-2][x] = Machine->pens[color2 | coloroffset];
+           bitmap->line[y-3][x] = Machine->pens[color1 | coloroffset];
+           // flip?
+           if (video_flip)
+                osd_mark_dirty(255-x,255-y,255-x,258-y,0);
+           else
+                osd_mark_dirty(x,y-3,x,y,0);
+           }
+        else
+           {
+           bitmap->line[x][y  ] = Machine->pens[color4 | coloroffset];
+           bitmap->line[x][y-1] = Machine->pens[color3 | coloroffset];
+           bitmap->line[x][y-2] = Machine->pens[color2 | coloroffset];
+           bitmap->line[x][y-3] = Machine->pens[color1 | coloroffset];
+           // flip?
+           if (video_flip)
+                osd_mark_dirty(255-y,255-x,255-y,258-x,0);
+           else
+                osd_mark_dirty(y-3,x,y,x,0);
+           }
 }
 
 /***************************************************************************

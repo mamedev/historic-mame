@@ -30,11 +30,11 @@ static int n[12];	/* opcode nibbles */
 static int b[6];	/* opcode bytes */
 static int w[3];	/* opcode words */
 
-void GET_OP(int i, UINT8 *mem)
+void GET_OP(int i, unsigned pc)
 {
-	b[i*2+0] = mem[1];
-	b[i*2+1] = mem[0];
-	w[i] = mem[0] + (mem[1] << 8);
+	w[i] = cpu_readop16(pc);
+	b[i*2+0] = w[i] & 0xff;
+	b[i*2+1] = w[0] >> 8;
 	n[i*4+0] = b[i*2+0] >> 4;
 	n[i*4+1] = b[i*2+0] & 15;
 	n[i*4+2] = b[i*2+1] >> 4;
@@ -62,7 +62,7 @@ int DasmZ8000(char *buff, int pc)
 	char *dst = buff, *src;
 	Z8000_exec *o;
 
-    GET_OP(0, &OP_ROM[new_pc]);
+    GET_OP(0, new_pc);
 	new_pc += 2;
 	switch (pc)
 	{
@@ -77,12 +77,14 @@ int DasmZ8000(char *buff, int pc)
             break;
 		default:
 			o = &z8000_exec[w[0]];
-			if (o->size > 1) { GET_OP(1, &OP_ROM[new_pc]); new_pc += 2; }
-			if (o->size > 2) { GET_OP(2, &OP_ROM[new_pc]); new_pc += 2; }
+			if (o->size > 1) { GET_OP(1, new_pc); new_pc += 2; }
+			if (o->size > 2) { GET_OP(2, new_pc); new_pc += 2; }
 			src = o->dasm;
 
-			while (*src) {
-				if (*src == '%') {
+			while (*src) 
+			{
+				if (*src == '%') 
+				{
 					src++;
 					switch (*src) {
 					case '0': case '1': case '2': case '3':
@@ -135,7 +137,8 @@ int DasmZ8000(char *buff, int pc)
 					case 'R':
 						src++;
 						tmp = ((n[1] & 0x01) << 16) + (n[3] << 8) + (n[7] & 0x08);
-						switch (tmp) {
+						switch (tmp) 
+						{
 							case 0x000: dst += sprintf(dst, "inirb "); break;
 							case 0x008: dst += sprintf(dst, "inib  "); break;
 							case 0x010: dst += sprintf(dst, "sinirb"); break;

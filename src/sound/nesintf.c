@@ -16,7 +16,7 @@ static int emulation_rate;
 static int buffer_len;
 static int sample_bits;
 
-static struct NESinterface *intf;
+static const struct NESinterface *intf;
 
 
 static void *buffer[MAX_NESPSG];
@@ -26,7 +26,7 @@ static int volume[MAX_NESPSG];
 
 static int channel;
 
-int NESPSG_sh_start(struct NESinterface *interface)
+int NESPSG_sh_start(const struct NESinterface *interface)
 {
 	int i;
 

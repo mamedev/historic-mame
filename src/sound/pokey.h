@@ -148,7 +148,7 @@ void Update_pokey_sound (int addr, int val, int chip, int gain);
 void Pokey_process (int chip, void *buffer, int n);
 int Read_pokey_regs (int addr, int chip);
 
-int pokey_sh_start (struct POKEYinterface *interface);
+int pokey_sh_start (const struct POKEYinterface *interface);
 void pokey_sh_stop (void);
 
 int pokey1_r (int offset);
@@ -177,8 +177,6 @@ void pokey1_kbcode_w (int kbcode, int make);
 void pokey2_kbcode_w (int kbcode, int make);
 void pokey3_kbcode_w (int kbcode, int make);
 void pokey4_kbcode_w (int kbcode, int make);
-
-void pokey_sh_update (void);
 
 #ifdef __cplusplus
 }

@@ -26,7 +26,7 @@ struct ex_volume
 };
 
 /* global pointer to the current interface */
-static struct EXVOLUMEinterface *intf;
+static const struct EXVOLUMEinterface *intf;
 
 static struct ex_volume controller[MAX_EXVOLUME];
 

@@ -1,9 +1,6 @@
 /*************************************************************************
 
-  The  system1  machine hardware.   By Jarek Parchanski & Mirko Buffoni.
-
-  This files describes the hardware behaviour of a system1 machine.
-  It also includes common methods for handling of video hardware.
+  System1 / System 2.   By Jarek Parchanski & Mirko Buffoni.
 
   Many thanks to Roberto Ventura, for precious information about
   System 1 hardware.
@@ -45,11 +42,10 @@ static unsigned char palette_lookup[256*3];
 
   Convert the color PROMs into a more useable format.
 
-  There are two kind of color handling in System 1 games: in the older ones,
-  values in the palette RAM are directly mapped to colors with the usual
-  BBGGGRRR format; in the newer ones (Choplifter, WBML), the value in the
-  palette RAM is a lookup offset for three palette PROMs in RRRRGGGGBBBB
-  format.
+  There are two kind of color handling: in the System 1 games, values in the
+  palette RAM are directly mapped to colors with the usual BBGGGRRR format;
+  in the System 2 ones (Choplifter, WBML, etc.), the value in the palette RAM
+  is a lookup offset for three palette PROMs in RRRRGGGGBBBB format.
 
   It's hard to tell for sure because they use resistor packs, but here's
   what I think the values are from measurment with a volt meter:

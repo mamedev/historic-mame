@@ -1,142 +1,6 @@
 #include "driver.h"
 #include "info.h"
 
-/* SOUND information table */
-typedef unsigned (*SOUND_clock)(const void* interface);
-typedef unsigned (*SOUND_num)(const void* interface);
-
-struct sound_desc
-{
-	int sound_type;
-	SOUND_num num;
-	SOUND_clock clock;
-	const char* desc;
-};
-
-
-/* ------------------------------------------------------------------------*/
-/* SOUND information */
-
-unsigned DAC_num(const void* interface) { return ((struct DACinterface*)interface)->num; }
-unsigned ADPCM_num(const void* interface) { return ((struct ADPCMinterface*)interface)->num; }
-unsigned OKIM6295_num(const void* interface) { return ((struct OKIM6295interface*)interface)->num; }
-unsigned MSM5205_num(const void* interface) { return ((struct MSM5205interface*)interface)->num; }
-unsigned HC55516_num(const void* interface) { return ((struct CVSDinterface*)interface)->num; }
-unsigned AY8910_clock(const void* interface) { return ((struct AY8910interface*)interface)->baseclock; }
-unsigned AY8910_num(const void* interface) { return ((struct AY8910interface*)interface)->num; }
-unsigned YM2203_clock(const void* interface) { return ((struct YM2203interface*)interface)->baseclock; }
-unsigned YM2203_num(const void* interface) { return ((struct YM2203interface*)interface)->num; }
-unsigned YM2413_clock(const void* interface) { return ((struct YM2413interface*)interface)->baseclock; }
-unsigned YM2413_num(const void* interface) { return ((struct YM2413interface*)interface)->num; }
-unsigned YM2610_clock(const void* interface) { return ((struct YM2610interface*)interface)->baseclock; }
-unsigned YM2610_num(const void* interface) { return ((struct YM2610interface*)interface)->num; }
-unsigned POKEY_clock(const void* interface) { return ((struct POKEYinterface*)interface)->baseclock; }
-unsigned POKEY_num(const void* interface) { return ((struct POKEYinterface*)interface)->num; }
-unsigned YM3812_clock(const void* interface) { return ((struct YM3812interface*)interface)->baseclock; }
-unsigned YM3812_num(const void* interface) { return ((struct YM3812interface*)interface)->num; }
-unsigned VLM5030_clock(const void* interface) { return ((struct VLM5030interface*)interface)->baseclock; }
-unsigned TMS5220_clock(const void* interface) { return ((struct TMS5220interface*)interface)->baseclock; }
-unsigned YM2151_clock(const void* interface) { return ((struct YM2151interface*)interface)->baseclock; }
-unsigned YM2151_num(const void* interface) { return ((struct YM2151interface*)interface)->num; }
-unsigned NES_clock(const void* interface) { return ((struct NESinterface*)interface)->baseclock; }
-unsigned NES_num(const void* interface) { return ((struct NESinterface*)interface)->num; }
-unsigned SN76496_clock(const void* interface) { return ((struct SN76496interface*)interface)->baseclock; }
-unsigned SN76496_num(const void* interface) { return ((struct SN76496interface*)interface)->num; }
-unsigned UPD7759_clock(const void* interface) { return ((struct UPD7759_interface*)interface)->clock_rate; }
-unsigned ASTROCADE_clock(const void* interface) { return ((struct astrocade_interface*)interface)->baseclock; }
-unsigned ASTROCADE_num(const void* interface) { return ((struct astrocade_interface*)interface)->num; }
-
-struct sound_desc SOUND_DESC[] =
-{
-	{ SOUND_CUSTOM,     0,             0,               "Custom"    },
-	{ SOUND_SAMPLES,    0,             0,               "Samples"   },
-	{ SOUND_DAC,        DAC_num,       0,               "DAC"       },
-	{ SOUND_AY8910,     AY8910_num,    AY8910_clock,    "AY-8910"   },
-	{ SOUND_YM2203,     YM2203_num,    YM2203_clock,    "YM-2203"   },
-	{ SOUND_YM2151,     YM2151_num,    YM2151_clock,    "YM-2151"   },
-	{ SOUND_YM2151_ALT, YM2151_num,    YM2151_clock,    "YM-2151a"  },
-	{ SOUND_YM2413,     YM2413_num,    YM2413_clock,    "YM-2413"   },
-	{ SOUND_YM2610,     YM2610_num,    YM2610_clock,    "YM-2610"   },
-	{ SOUND_YM3812,     YM3812_num,    YM3812_clock,    "YM-3812"   },
-	{ SOUND_YM3526,     YM3812_num,    YM3812_clock,    "YM-3526"   },
-	{ SOUND_SN76496,    SN76496_num,   SN76496_clock,   "SN76496"   },
-	{ SOUND_POKEY,      POKEY_num,     POKEY_clock,     "Pokey"     },
-	{ SOUND_NAMCO,      0,             0,               "Namco"     },
-	{ SOUND_NES,        NES_num,       NES_clock,       "NES"       },
-	{ SOUND_TMS5220,    0,             TMS5220_clock,   "TMS5520"   },
-	{ SOUND_VLM5030,    0,             VLM5030_clock,   "VLM5030"   },
-	{ SOUND_ADPCM,      ADPCM_num,     0,               "ADPCM"     },
-	{ SOUND_OKIM6295,   OKIM6295_num,  0,               "OKI6295"   },
-	{ SOUND_MSM5205,    MSM5205_num,   0,               "MSM5205"   },
-	{ SOUND_UPD7759,    0,             UPD7759_clock,   "uPD7759"   },
-	{ SOUND_HC55516,    HC55516_num,   0,               "HC55516"   },
-	{ SOUND_ASTROCADE,  ASTROCADE_num, ASTROCADE_clock, "Astrocade" },
-	{ SOUND_K007232,    0,             0,               "007232"    },
-	{ 0,0 }
-};
-
-
-
-
-
-const char *info_cpu_name(const struct MachineCPU *cpu)
-{
-	if( cpu->cpu_type )
-		return cputype_name(cpu->cpu_type);
-	return "";
-}
-
-const char *info_sound_name(const struct MachineSound *sound)
-{
-	int k;
-
-
-	if (sound->sound_type == 0) return "";
-
-	k = 0;
-	while (SOUND_DESC[k].sound_type && SOUND_DESC[k].sound_type != sound->sound_type)
-		k++;
-
-	if (SOUND_DESC[k].sound_type)
-		return SOUND_DESC[k].desc;
-	else
-		return "unknown";
-}
-
-int info_sound_num(const struct MachineSound *sound)
-{
-	int k;
-
-
-	if (sound->sound_type == 0) return 0;
-
-	k = 0;
-	while (SOUND_DESC[k].sound_type && SOUND_DESC[k].sound_type != sound->sound_type)
-		k++;
-
-	if (SOUND_DESC[k].sound_type && SOUND_DESC[k].num)
-		return (*SOUND_DESC[k].num)(sound->sound_interface);
-	else
-		return 0;
-}
-
-int info_sound_clock(const struct MachineSound *sound)
-{
-	int k;
-
-
-	if (sound->sound_type == 0) return 0;
-
-	k = 0;
-	while (SOUND_DESC[k].sound_type && SOUND_DESC[k].sound_type != sound->sound_type)
-		k++;
-
-	if (SOUND_DESC[k].sound_type && SOUND_DESC[k].clock)
-		return (*SOUND_DESC[k].clock)(sound->sound_interface);
-	else
-		return 0;
-}
-
 
 
 /* ------------------------------------------------------------------------*/
@@ -204,7 +68,7 @@ static void print_c_string(FILE* out, const char* s) {
 			case '\\' : fprintf(out, "\\\\"); break;
 			case '\"' : fprintf(out, "\\\""); break;
 			default:
-				if ((unsigned char)*s>=(unsigned char)' ' && (unsigned char)*s<=(unsigned char)'')
+				if (*s>=' ' && *s<='~')
 					fprintf(out, "%c", *s);
 				else
 					fprintf(out, "\\x%2x", (int)*s);
@@ -390,11 +254,15 @@ static void print_game_sample(FILE* out, const struct GameDriver* game) {
 			++k;
 		}
 	}
+
+#if (HAS_YM3812 || HAS_YM3526 || HAS_YM2413)
 	/* YM3812 Samples */
-	for(j=0;j<MAX_SOUND;++j) {
-		if (sound[j].sound_type==SOUND_YM3812) {
+	for(j=0;j<MAX_SOUND;++j)
+	{
+		if (sound[j].sound_type==SOUND_YM3812 ||
+			sound[j].sound_type==SOUND_YM3526 ||
+			sound[j].sound_type==SOUND_YM2413)
 			break;
-		}
 	}
 	if (j<MAX_SOUND) {
 		fprintf(out, L1P "sampleof ym3812" L1N);
@@ -404,6 +272,7 @@ static void print_game_sample(FILE* out, const struct GameDriver* game) {
 		fprintf(out, L1P "sample topcmbal.sam" L1N);
 		fprintf(out, L1P "sample hihat.sam" L1N);
 	}
+#endif
 }
 
 static void print_game_micro(FILE* out, const struct GameDriver* game)
@@ -423,7 +292,7 @@ static void print_game_micro(FILE* out, const struct GameDriver* game)
 			else
 				fprintf(out, L2P "type cpu" L2N);
 
-			fprintf(out, L2P "name %s" L2N, info_cpu_name(&cpu[j]));
+			fprintf(out, L2P "name %s" L2N, cputype_name(cpu[j].cpu_type));
 
 			fprintf(out, L2P "clock %d" L2N, cpu[j].cpu_clock);
 			fprintf(out, "%s", L2E L1N);
@@ -434,7 +303,7 @@ static void print_game_micro(FILE* out, const struct GameDriver* game)
 	{
 		if (sound[j].sound_type)
 		{
-			int num = info_sound_num(&sound[j]);
+			int num = sound_num(&sound[j]);
 			int l;
 
 			if (num == 0) num = 1;
@@ -443,9 +312,9 @@ static void print_game_micro(FILE* out, const struct GameDriver* game)
 			{
 				fprintf(out, L1P "chip" L2B);
 				fprintf(out, L2P "type audio" L2N);
-				fprintf(out, L2P "name %s" L2N, info_sound_name(&sound[j]));
-				if (info_sound_num(&sound[j]))
-					fprintf(out, L2P "clock %d" L2N, info_sound_num(&sound[j]));
+				fprintf(out, L2P "name %s" L2N, sound_name(&sound[j]));
+				if (sound_num(&sound[j]))
+					fprintf(out, L2P "clock %d" L2N, sound_num(&sound[j]));
 				fprintf(out, "%s", L2E L1N);
 			}
 		}

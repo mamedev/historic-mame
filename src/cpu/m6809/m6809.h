@@ -5,7 +5,6 @@
 
 #include "memory.h"
 #include "osd_cpu.h"
-#include "osd_dbg.h"
 
 enum {
 	M6809_PC=1, M6809_S, M6809_CC ,M6809_A, M6809_B, M6809_U, M6809_X, M6809_Y,
@@ -40,7 +39,7 @@ extern void m6809_set_irq_callback(int (*callback)(int irqline));
 extern void m6809_state_save(void *file);
 extern void m6809_state_load(void *file);
 extern const char *m6809_info(void *context,int regnum);
-extern unsigned m6809_dasm(UINT8 *base, char *buffer, unsigned pc);
+extern unsigned m6809_dasm(char *buffer, unsigned pc);
 
 /****************************************************************************/
 /* For now the 6309 is using the functions of the 6809						*/
@@ -84,7 +83,7 @@ extern void m6309_set_irq_callback(int (*callback)(int irqline));
 extern void m6309_state_save(void *file);
 extern void m6309_state_load(void *file);
 extern const char *m6309_info(void *context,int regnum);
-extern unsigned m6309_dasm(UINT8 *base, char *buffer, unsigned pc);
+extern unsigned m6309_dasm(char *buffer, unsigned pc);
 #endif
 
 /****************************************************************************/

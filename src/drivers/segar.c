@@ -21,7 +21,7 @@ for all the helpful information, samples, and schematics!
 TODO:
 - redo TMS3617 to use streams (and fix frequencies)
 - abstract TMS3617 into a true sound handler (not SOUND_CUSTOM)
-- Pig Newton, Sindbad Mystery hi load/save
+- fix Pig Newton hi load/save
 - locate Pig Newton cocktail mode?
 - verify Pig Newton and Sindbad Mystery DIPs
 - attempt Pig Newton, 005 sound
@@ -1614,6 +1614,47 @@ static void pignewt_hisave(void)
 
 }
 
+/**** Sindbad Mystery high score save - RJF (April 02, 1999) ****/
+static int sindbadm_hiload(void)
+{
+        unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+        /* check if memory has already been initialized */
+        if (memcmp(&RAM[0xe3a3],"\x4e\x4f\x52",3) == 0)
+        {
+                void *f;
+
+                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+                {
+                        osd_fread(f,&RAM[0xe3a0], 10*6);
+                        osd_fclose(f);
+
+                        /* copy the high score to ram */
+                        RAM[0xc90b] = RAM[0xe3a0];
+                        RAM[0xc90c] = RAM[0xe3a1];
+                        RAM[0xc90d] = RAM[0xe3a2];
+                }
+
+                return 1;
+        }
+        else return 0;  /* we can't load the hi scores yet */
+}
+
+static void sindbadm_hisave(void)
+{
+        void *f;
+        unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+        {
+                osd_fwrite(f,&RAM[0xe3a0], 10*6);
+                osd_fclose(f);
+        }
+
+}
+
+
 /***************************************************************************
   Game drivers
 ***************************************************************************/
@@ -2136,5 +2177,5 @@ struct GameDriver sindbadm_driver =
 
         0, 0, 0,
         ORIENTATION_ROTATE_270,
-        0, 0
+        sindbadm_hiload, sindbadm_hisave
 };

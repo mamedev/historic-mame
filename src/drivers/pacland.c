@@ -31,16 +31,8 @@ f000-ffff MCU internal ROM
 #include "vidhrdw/generic.h"
 #include "cpu/m6800/m6800.h"
 
-/* This is the clock speed in Hz divided by 64 that is connected to the E pin on the MCU */
-/* Each pulse on the E pin increments timer A, wich is used for music tempo. */
-/* I've made the decision to downgrade the timer accuracy to allow better speed. */
-/* Looking at the code tho, its more than accurate for its purpose. */
-#define MCU_E_CLK (1500000/64) /* Hz */
-
 
 static unsigned char *sharedram1;
-static unsigned char *hd_regs;
-static void *pacland_timer = 0;
 
 void pacland_scroll0_w(int offset,int data);
 void pacland_scroll1_w(int offset,int data);
@@ -50,27 +42,6 @@ int pacland_vh_start(void);
 void pacland_vh_stop(void);
 void pacland_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-static void pacland_timer_proc( int param )
-{
-	int current_time, total_time, old_time;
-
-	current_time = ( hd_regs[0x09] << 8 ) | hd_regs[0x0a];
-	total_time = ( hd_regs[0x0b] << 8 ) | hd_regs[0x0c];
-
-	old_time = current_time;
-
-	/* increment timer A */
-	current_time += 64;
-
-	/* update time */
-	hd_regs[0x09] = ( current_time >> 8 ) & 0xff;
-	hd_regs[0x0a] = current_time & 0xff;
-
-	if ( total_time >= old_time && total_time <= current_time ) {
-		if ( hd_regs[0x08] & 8 )
-			cpu_cause_interrupt( 1, M6808_INT_OCI );
-	}
-}
 
 static int sharedram1_r( int offset )
 {
@@ -82,60 +53,17 @@ static void sharedram1_w( int offset, int val )
 	sharedram1[offset] = val;
 }
 
-void pacland_stop_mcu_timer( void )
-{
-	if ( pacland_timer )
-	{
-		timer_remove( pacland_timer );
-		pacland_timer = 0;
-	}
-}
-
 static void pacland_halt_mcu_w( int offset, int data )
 {
 	if ( offset == 0 ) {
 		cpu_reset( 1 );
 
-		/* Init timer A */
-		hd_regs[0x09] = 0;
-		hd_regs[0x0a] = 0;
-
-		pacland_timer = timer_pulse( TIME_IN_HZ( MCU_E_CLK ), 0,pacland_timer_proc );
-
 		cpu_halt( 1, 1 );
 	} else {
 		cpu_halt( 1, 0 );
-		pacland_stop_mcu_timer();
 	}
 }
 
-static void pacland_init_machine(void)
-{
-	/* stop timer if running */
-	pacland_stop_mcu_timer();
-
-	/* make sure we dont trigger interrupts */
-	hd_regs[0x08] = 0;
-
-	/* Init timer A */
-	hd_regs[0x09] = 0;
-	hd_regs[0x0a] = 0;
-
-	/* start up Timer A */
-	pacland_timer = timer_pulse( TIME_IN_HZ( MCU_E_CLK ), 0,pacland_timer_proc );
-}
-
-static int hd_regs_r( int offset )
-{
-	if ( offset == 0x02 ) // MCU input port 0
-		return readinputport( 4 );
-	return hd_regs[offset];
-}
-
-static void hd_regs_w( int offset, int data )
-{
-	hd_regs[offset] = data;
-}
 
 /* Stubs to pass the correct Dip Switch setup to the MCU */
 static int dsw_r0( int offset )
@@ -156,6 +84,16 @@ static int dsw_r1( int offset )
 	r |= readinputport( 1 ) & 0x0f;
 	return ~r; /* Active Low */
 }
+
+static void pacland_coin_w(int offset,int data)
+{
+	coin_lockout_w(0,data & 1);
+	coin_lockout_w(1,data & 1);
+
+	coin_counter_w(0,~data & 2);
+	coin_counter_w(1,~data & 4);
+}
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -190,8 +128,8 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct MemoryReadAddress mcu_readmem[] =
 {
-	{ 0x0000, 0x0027, hd_regs_r },
-	{ 0x0040, 0x013f, MRA_RAM },
+	{ 0x0000, 0x001f, m6803_internal_registers_r },
+	{ 0x0080, 0x00ff, MRA_RAM },
 	{ 0x1100, 0x113f, MRA_RAM, &namco_soundregs }, /* PSG device */
 	{ 0x1000, 0x13ff, sharedram1_r },
 	{ 0x8000, 0x9fff, MRA_ROM },
@@ -206,8 +144,8 @@ static struct MemoryReadAddress mcu_readmem[] =
 
 static struct MemoryWriteAddress mcu_writemem[] =
 {
-	{ 0x0000, 0x0027, hd_regs_w, &hd_regs },
-	{ 0x0040, 0x013f, MWA_RAM },
+	{ 0x0000, 0x001f, m6803_internal_registers_w },
+	{ 0x0080, 0x00ff, MWA_RAM },
 	{ 0x1100, 0x113f, namcos1_sound_w }, /* PSG device */
 	{ 0x1000, 0x13ff, sharedram1_w },
 	{ 0x2000, 0x2000, MWA_NOP }, // ???? (w)
@@ -216,6 +154,18 @@ static struct MemoryWriteAddress mcu_writemem[] =
 	{ 0x8000, 0x9fff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xf000, 0xffff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct IOReadPort mcu_readport[] =
+{
+	{ M6803_PORT1, M6803_PORT1, input_port_4_r },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort mcu_writeport[] =
+{
+	{ M6803_PORT1, M6803_PORT1, pacland_coin_w },
 	{ -1 }	/* end of table */
 };
 
@@ -365,15 +315,15 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_HD63701,	/* or compatible 6808 with extra instructions */
-			3000000,	/* 3.000 Mhz (?) */
+			6000000,		/* ??? */
 			3,
-			mcu_readmem,mcu_writemem,0,0,
+			mcu_readmem,mcu_writemem,mcu_readport,mcu_writeport,
 			interrupt,1
 		},
 	},
 	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	100,	/* we need heavy synching between the MCU and the CPU */
-	pacland_init_machine,
+	0,
 
 	/* video hardware */
 	42*8, 32*8, { 3*8, 39*8-1, 2*8, 30*8-1 },

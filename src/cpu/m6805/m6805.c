@@ -33,11 +33,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "driver.h"
 #include "cpuintrf.h"
 #include "state.h"
-#include "osd_dbg.h"
+#include "mamedbg.h"
 #include "m6805.h"
-#include "driver.h"
 
 #define IRQ_LEVEL_DETECT 0
 
@@ -75,13 +75,14 @@ typedef struct
 
 	UINT8	pending_interrupts; /* MB */
 	int 	(*irq_callback)(int irqline);
-	int 	irq_state;
-
+	int 	irq_state[8];		/* KW Additional lines for HD73705 */
+	int		nmi_state;
 } m6805_Regs;
 
 /* 6805 registers */
 static m6805_Regs m6805;
 
+#define SUBTYPE	m6805.subtype	/* CPU Type */
 #define AMASK	m6805.amask 	/* address mask */
 #define SP_MASK m6805.sp_mask	/* stack pointer mask */
 #define SP_LOW	m6805.sp_low	/* stack pointer low water mark */
@@ -236,7 +237,8 @@ static unsigned char cycles1[] =
   /*5*/  4, 0, 0, 4, 4, 0, 4, 4, 4, 4, 4, 0, 4, 4, 0, 4,
   /*6*/  7, 0, 0, 7, 7, 0, 7, 7, 7, 7, 7, 0, 7, 7, 0, 7,
   /*7*/  6, 0, 0, 6, 6, 0, 6, 6, 6, 6, 6, 0, 6, 6, 0, 6,
-  /*8*/  9, 6, 0,11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  /*8*/ 
+ 9, 6, 0,11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   /*9*/  0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 2,
   /*A*/  2, 2, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 8, 2, 0,
   /*B*/  4, 4, 4, 4, 4, 4, 4, 5, 4, 4, 4, 4, 3, 7, 4, 5,
@@ -276,6 +278,7 @@ static void rd_s_fast_b( UINT8 *b )
 static void rd_s_fast_w( PAIR *p )
 {
 	extern UINT8 *RAM;
+
 
 	CLEAR_PAIR(p);
 	p->b.h = RAM[ S ];
@@ -337,10 +340,9 @@ static void Interrupt(void)
 	/* the 6805 latches interrupt requests internally, so we don't clear */
 	/* pending_interrupts until the interrupt is taken, no matter what the */
 	/* external IRQ pin does. */
-	if( (m6805.pending_interrupts & M6805_INT_IRQ) != 0 && (CC & IFLAG) == 0 )
+
+	if( (m6805.pending_interrupts & (1<<HD63705_INT_NMI)) != 0)
 	{
-        /* standard IRQ */
-		PC |= 0xf800;
 		PUSHWORD(m6805.pc);
 		PUSHBYTE(m6805.x);
 		PUSHBYTE(m6805.a);
@@ -349,8 +351,78 @@ static void Interrupt(void)
 		/* no vectors supported, just do the callback to clear irq_state if needed */
 		if (m6805.irq_callback)
 			(*m6805.irq_callback)(0);
-		m6805.pending_interrupts &= ~M6805_INT_IRQ;
-		RM16( AMASK - 5, &pPC );
+
+		RM16( 0x1ffc, &pPC);
+		m6805.pending_interrupts &= ~(1<<HD63705_INT_NMI);
+
+		m6805_ICount -= 11;
+
+	}
+	else if( (m6805.pending_interrupts & (M6805_INT_IRQ|HD63705_INT_MASK)) != 0 && (CC & IFLAG) == 0 )
+	{
+        /* standard IRQ */
+		if(SUBTYPE!=SUBTYPE_HD63705) PC |= 0xf800;
+		PUSHWORD(m6805.pc);
+		PUSHBYTE(m6805.x);
+		PUSHBYTE(m6805.a);
+		PUSHBYTE(m6805.cc);
+        SEI;
+		/* no vectors supported, just do the callback to clear irq_state if needed */
+		if (m6805.irq_callback)
+			(*m6805.irq_callback)(0);
+
+
+		if(SUBTYPE==SUBTYPE_HD63705)
+		{
+			/* Need to add emulation of other interrupt sources here KW-2/4/99 */
+			/* This is just a quick patch for Namco System 2 operation         */
+
+			if((m6805.pending_interrupts&(1<<HD63705_INT_IRQ1))!=0)
+			{
+				m6805.pending_interrupts &= ~(1<<HD63705_INT_IRQ1);
+				RM16( 0x1ff8, &pPC);
+			}
+			else if((m6805.pending_interrupts&(1<<HD63705_INT_IRQ2))!=0)
+			{
+				m6805.pending_interrupts &= ~(1<<HD63705_INT_IRQ2);
+				RM16( 0x1fec, &pPC);
+			}
+			else if((m6805.pending_interrupts&(1<<HD63705_INT_ADCONV))!=0)
+			{
+				m6805.pending_interrupts &= ~(1<<HD63705_INT_ADCONV);
+				RM16( 0x1fea, &pPC);
+			}
+			else if((m6805.pending_interrupts&(1<<HD63705_INT_TIMER1))!=0)
+			{
+				m6805.pending_interrupts &= ~(1<<HD63705_INT_TIMER1);
+				RM16( 0x1ff6, &pPC);
+			}
+			else if((m6805.pending_interrupts&(1<<HD63705_INT_TIMER2))!=0)
+			{
+				m6805.pending_interrupts &= ~(1<<HD63705_INT_TIMER2);
+				RM16( 0x1ff4, &pPC);
+			}
+			else if((m6805.pending_interrupts&(1<<HD63705_INT_TIMER3))!=0)
+			{
+				m6805.pending_interrupts &= ~(1<<HD63705_INT_TIMER3);
+				RM16( 0x1ff2, &pPC);
+			}
+			else if((m6805.pending_interrupts&(1<<HD63705_INT_PCI))!=0)
+			{
+				m6805.pending_interrupts &= ~(1<<HD63705_INT_PCI);
+				RM16( 0x1ff0, &pPC);
+			}
+			else if((m6805.pending_interrupts&(1<<HD63705_INT_SCI))!=0)
+			{
+				m6805.pending_interrupts &= ~(1<<HD63705_INT_SCI);
+				RM16( 0x1fee, &pPC);
+			}
+		}
+		else
+		{
+			m6805.pending_interrupts &= ~M6805_INT_IRQ;
+			RM16( AMASK - 5, &pPC );
+		}
 		m6805_ICount -= 11;
 	}
 }
@@ -463,7 +535,7 @@ unsigned m6805_get_reg(int regnum)
 		case M6805_S: return SP_ADJUST(S);
 		case M6805_X: return X;
 		case M6805_CC: return CC;
-		case M6805_IRQ_STATE: return m6805.irq_state;
+		case M6805_IRQ_STATE: return m6805.irq_state[0];
 		default:
 			if( regnum < REG_SP_CONTENTS )
 			{
@@ -505,14 +577,16 @@ void m6805_set_reg(int regnum, unsigned val)
 
 void m6805_set_nmi_line(int state)
 {
-	/* 6805 has no NMI line */
+	/* 6805 has no NMI line... but the HD63705 does !! see specific version */
 }
 
 void m6805_set_irq_line(int irqline, int state)
 {
-	if (m6805.irq_state == state) return;
+	/* Basic 6805 only has one IRQ line */
+	/* See HD63705 specific version     */
+	if (m6805.irq_state[0] == state) return;
 
-	m6805.irq_state = state;
+	m6805.irq_state[0] = state;
 	if (state != CLEAR_LINE)
 		m6805.pending_interrupts |= M6805_INT_IRQ;
 }
@@ -531,7 +605,7 @@ static void state_save(void *file, const char *module)
 	state_save_UINT8(file,module,cpu,"X", &X, 1);
 	state_save_UINT8(file,module,cpu,"CC", &CC, 1);
 	state_save_UINT8(file,module,cpu,"PENDING", &m6805.pending_interrupts, 1);
-	state_save_INT32(file,module,cpu,"IRQ_STATE", &m6805.irq_state, 1);
+	state_save_INT32(file,module,cpu,"IRQ_STATE", &m6805.irq_state[0], 1);
 }
 
 static void state_load(void *file, const char *module)
@@ -543,7 +617,7 @@ static void state_load(void *file, const char *module)
 	state_load_UINT8(file,module,cpu,"X", &X, 1);
 	state_load_UINT8(file,module,cpu,"CC", &CC, 1);
 	state_load_UINT8(file,module,cpu,"PENDING", &m6805.pending_interrupts, 1);
-	state_load_INT32(file,module,cpu,"IRQ_STATE", &m6805.irq_state, 1);
+	state_load_INT32(file,module,cpu,"IRQ_STATE", &m6805.irq_state[0], 1);
 }
 
 void m6805_state_save(void *file) { state_save(file,"m6805"); }
@@ -877,18 +951,17 @@ const char *m6805_info(void *context, int regnum)
 		case CPU_INFO_REG+M6805_S: sprintf(buffer[which], "S:%02X", r->s.w.l); break;
 		case CPU_INFO_REG+M6805_X: sprintf(buffer[which], "X:%02X", r->x); break;
 		case CPU_INFO_REG+M6805_CC: sprintf(buffer[which], "CC:%02X", r->cc); break;
-		case CPU_INFO_REG+M6805_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
+		case CPU_INFO_REG+M6805_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state[0]); break;
     }
 	return buffer[which];
 }
 
-unsigned m6805_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned m6805_dasm(char *buffer, unsigned pc)
 {
-	(void)base;
 #ifdef MAME_DEBUG
-    return Dasm6805(base,buffer,pc);
+    return Dasm6805(buffer,pc);
 #else
-	sprintf( buffer, "$%02X", ROM[pc] );
+	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
 #endif
 }
@@ -931,6 +1004,7 @@ void m68705_set_irq_line(int irqline, int state)  { m6805_set_irq_line(irqline,s
 void m68705_set_irq_callback(int (*callback)(int irqline))	{ m6805_set_irq_callback(callback); }
 void m68705_state_save(void *file) { state_save(file,"m68705"); }
 void m68705_state_load(void *file) { state_load(file,"m68705"); }
+
 const char *m68705_info(void *context, int regnum)
 {
 	switch( regnum )
@@ -943,13 +1017,12 @@ const char *m68705_info(void *context, int regnum)
 	return m6805_info(context,regnum);
 }
 
-unsigned m68705_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned m68705_dasm(char *buffer, unsigned pc)
 {
-	(void)base;
 #ifdef MAME_DEBUG
-    return Dasm6805(base,buffer,pc);
+	return Dasm6805(buffer,pc);
 #else
-	sprintf( buffer, "$%02X", ROM[pc] );
+	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
 #endif
 }
@@ -960,7 +1033,8 @@ unsigned m68705_dasm(UINT8 *base, char *buffer, unsigned pc)
  ****************************************************************************/
 #if HAS_HD63705
 static UINT8 hd63705_reg_layout[] = {
-	HD63705_PC, HD63705_S, HD63705_CC, HD63705_A, HD63705_X, HD63705_IRQ_STATE, 0
+	HD63705_PC, HD63705_S, HD63705_CC, HD63705_A, HD63705_X, -1,-1,
+	HD63705_NMI_STATE, HD63705_IRQ1_STATE, HD63705_IRQ2_STATE, HD63705_ADCONV_STATE,0
 };
 
 /* Layout of the debugger windows x,y,w,h */
@@ -979,8 +1053,8 @@ void hd63705_reset(void *param)
 	/* Overide default 6805 types */
 	m6805.subtype	= SUBTYPE_HD63705;
 	AMASK	= 0xffff;
-	SP_MASK = 0x1ff;	/* 0x1bf according to the docs!? */
-	SP_LOW	= 0x100;	/* not sure ... */
+	SP_MASK = 0x17f;
+	SP_LOW	= 0x100;
 	RM16( 0x1ffe, &m6805.pc );
 	S = 0x17f;
 }
@@ -992,15 +1066,72 @@ unsigned hd63705_get_pc(void) { return m6805_get_pc(); }
 void hd63705_set_pc(unsigned val) { m6805_set_pc(val); }
 unsigned hd63705_get_sp(void) { return m6805_get_sp(); }
 void hd63705_set_sp(unsigned val) { m6805_set_pc(val); }
+
 unsigned hd63705_get_reg(int regnum)  { return m6805_get_reg(regnum); }
 void hd63705_set_reg(int regnum, unsigned val)  { m6805_set_reg(regnum,val); }
-void hd63705_set_nmi_line(int state)	{ m6805_set_nmi_line(state); }
-void hd63705_set_irq_line(int irqline, int state)  { m6805_set_irq_line(irqline,state); }
+
+void hd63705_set_nmi_line(int state)
+{
+	if (m6805.nmi_state == state) return;
+
+	m6805.nmi_state = state;
+	if (state != CLEAR_LINE)
+		m6805.pending_interrupts |= HD63705_INT_NMI;	
+}
+
+void hd63705_set_irq_line(int irqline, int state)
+{
+	if(irqline>HD63705_INT_ADCONV) return;
+
+	if (m6805.irq_state[irqline] == state) return;
+	m6805.irq_state[irqline] = state;
+	if (state != CLEAR_LINE) m6805.pending_interrupts |= 1<<irqline;
+}
+
 void hd63705_set_irq_callback(int (*callback)(int irqline))  { m6805_set_irq_callback(callback); }
-void hd63705_state_save(void *file) { state_save(file,"hd63705"); }
-void hd63705_state_load(void *file) { state_load(file,"hd63705"); }
+
+void hd63705_state_save(void *file)
+{
+	int cpu = cpu_getactivecpu();
+	char module[8]="hd63705";
+	state_save(file,module);
+	state_save_INT32(file,module,cpu,"IRQ1_STATE", &m6805.irq_state[0], 1);
+	state_save_INT32(file,module,cpu,"IRQ2_STATE", &m6805.irq_state[1], 1);
+	state_save_INT32(file,module,cpu,"TIMER1_STATE", &m6805.irq_state[2], 1);
+	state_save_INT32(file,module,cpu,"TIMER2_STATE", &m6805.irq_state[3], 1);
+	state_save_INT32(file,module,cpu,"TIMER3_STATE", &m6805.irq_state[4], 1);
+	state_save_INT32(file,module,cpu,"PCI_STATE", &m6805.irq_state[5], 1);
+	state_save_INT32(file,module,cpu,"SCI_STATE", &m6805.irq_state[6], 1);
+	state_save_INT32(file,module,cpu,"ADCONV_STATE", &m6805.irq_state[7], 1);
+}
+
+void hd63705_state_load(void *file)
+{
+	int cpu = cpu_getactivecpu();
+	char module[8]="hd63705";
+	state_load(file,module);
+	state_load_INT32(file,module,cpu,"IRQ1_STATE", &m6805.irq_state[0], 1);
+	state_load_INT32(file,module,cpu,"IRQ2_STATE", &m6805.irq_state[1], 1);
+	state_load_INT32(file,module,cpu,"TIMER1_STATE", &m6805.irq_state[2], 1);
+	state_load_INT32(file,module,cpu,"TIMER2_STATE", &m6805.irq_state[3], 1);
+	state_load_INT32(file,module,cpu,"TIMER3_STATE", &m6805.irq_state[4], 1);
+	state_load_INT32(file,module,cpu,"PCI_STATE", &m6805.irq_state[5], 1);
+	state_load_INT32(file,module,cpu,"SCI_STATE", &m6805.irq_state[6], 1);
+	state_load_INT32(file,module,cpu,"ADCONV_STATE", &m6805.irq_state[7], 1);
+}
+
 const char *hd63705_info(void *context, int regnum)
 {
+	static char buffer[8][47+1];
+	static int which = 0;
+	m6805_Regs *r = context;
+
+	which = ++which % 8;
+    buffer[which][0] = '\0';
+
+    if( !context )
+		r = &m6805;
+
 	switch( regnum )
 	{
 		case CPU_INFO_NAME: return "HD63705";
@@ -1008,17 +1139,20 @@ const char *hd63705_info(void *context, int regnum)
 		case CPU_INFO_CREDITS: return "Keith Wilkins, Juergen Buchmueller";
 		case CPU_INFO_REG_LAYOUT: return (const char *)hd63705_reg_layout;
 		case CPU_INFO_WIN_LAYOUT: return (const char *)hd63705_win_layout;
+		case CPU_INFO_REG+HD63705_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); return buffer[which];
+		case CPU_INFO_REG+HD63705_IRQ1_STATE: sprintf(buffer[which], "IRQ1:%X", r->irq_state[HD63705_INT_IRQ1]); return buffer[which];
+		case CPU_INFO_REG+HD63705_IRQ2_STATE: sprintf(buffer[which], "IRQ2:%X", r->irq_state[HD63705_INT_IRQ2]); return buffer[which];
+		case CPU_INFO_REG+HD63705_ADCONV_STATE: sprintf(buffer[which], "ADCONV:%X", r->irq_state[HD63705_INT_ADCONV]); return buffer[which];
     }
 	return m6805_info(context,regnum);
 }
 
-unsigned hd63705_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned hd63705_dasm(char *buffer, unsigned pc)
 {
-	(void)base;
 #ifdef MAME_DEBUG
-    return Dasm6805(base,buffer,pc);
+	return Dasm6805(buffer,pc);
 #else
-	sprintf( buffer, "$%02X", ROM[pc] );
+	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
 #endif
 }

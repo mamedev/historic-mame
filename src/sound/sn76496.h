@@ -10,13 +10,11 @@ struct SN76496interface
 	int volume[MAX_76496];
 };
 
-int SN76496_sh_start(struct SN76496interface *interface);
-void SN76496_sh_stop(void);
+int SN76496_sh_start(const struct SN76496interface *interface);
 void SN76496_0_w(int offset,int data);
 void SN76496_1_w(int offset,int data);
 void SN76496_2_w(int offset,int data);
 void SN76496_3_w(int offset,int data);
-void SN76496_sh_update(void);
 
 void SN76496_set_clock(int chip,int _clock);
 

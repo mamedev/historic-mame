@@ -385,6 +385,7 @@ static int playstreamedsample(int channel,signed char *data,int len,int freq,int
 		if (throttle)   /* sync with audio only when speed throttling is not turned off */
 		{
 			AGetVoicePosition(hVoice[channel],&pos);
+			if (bits == 16) pos *= 2;
 			if (pos >= c[channel] * len && pos < (c[channel]+1)*len) return 0;
 		}
 

@@ -176,13 +176,27 @@ INLINE void bms( void )
 /* $2e BIL relative ---- */
 INLINE void bil( void )
 {
-	BRANCH( m6805.irq_state!=CLEAR_LINE );
+	if(SUBTYPE==SUBTYPE_HD63705)
+	{
+		BRANCH( m6805.nmi_state!=CLEAR_LINE );
+	}
+	else
+	{
+		BRANCH( m6805.irq_state[0]!=CLEAR_LINE );
+	}
 }
 
 /* $2f BIH relative ---- */
 INLINE void bih( void )
 {
-	BRANCH( m6805.irq_state==CLEAR_LINE );
+	if(SUBTYPE==SUBTYPE_HD63705)
+	{
+		BRANCH( m6805.nmi_state==CLEAR_LINE );
+	}
+	else
+	{
+		BRANCH( m6805.irq_state[0]==CLEAR_LINE );
+	}
 }
 
 
@@ -843,7 +857,7 @@ INLINE void swi( void )
 	PUSHBYTE(m6805.a);
 	PUSHBYTE(m6805.cc);
 	SEI;
-	RM16( AMASK - 3, &pPC );
+	if(SUBTYPE==SUBTYPE_HD63705) RM16( 0x1ffa, &pPC ); else RM16( AMASK - 3, &pPC );
 }
 
 /* $84 ILLEGAL */

@@ -28,22 +28,22 @@ enum {
 	CPU_INFO_WIN_LAYOUT
 };
 
-#define CPU_IS_LE	0	/* emulated CPU is little endian */
-#define CPU_IS_BE	1	/* emulated CPU is big endian */
+#define CPU_IS_LE		0	/* emulated CPU is little endian */
+#define CPU_IS_BE		1	/* emulated CPU is big endian */
 
 /*
- * This value is passed to cpu_get_reg/cpu_set_reg to retrieve the
- * previous program counter value, ie. before a CPU emulation started
- * to fetch opcodes and arguments for the instrution.
+ * This value is passed to cpu_get_reg to retrieve the previous
+ * program counter value, ie. before a CPU emulation started
+ * to fetch opcodes and arguments for the current instrution.
  */
 #define REG_PREVIOUSPC	-1
 
 /*
- * This value is passed to cpu_get_reg/cpu_set_reg instead of one of
+ * This value is passed to cpu_get_reg/cpu_set_reg, instead of one of
  * the names from the enum a CPU core defines for it's registers,
  * to get or set the contents of the memory pointed to by a stack pointer.
  * You can specify the n'th element on the stack by (REG_SP_CONTENTS-n),
- * ie. lower negative values. The actual element size (word or dword)
+ * ie. lower negative values. The actual element size (UINT16 or UINT32)
  * depends on the CPU core.
  * This is also used to replace the cpu_geturnpc() function.
  */
@@ -159,34 +159,35 @@ enum {
 /* ASG 971222 -- added this generic structure */
 struct cpu_interface
 {
-	unsigned cpu_num;
-	void (*reset)(void *param);
-	void (*exit)(void);
-	int (*execute)(int cycles);
-	unsigned (*get_context)(void *reg);
-	void (*set_context)(void *reg);
+    unsigned cpu_num;
+    void (*reset)(void *param);
+    void (*exit)(void);
+    int (*execute)(int cycles);
+    unsigned (*get_context)(void *reg);
+    void (*set_context)(void *reg);
     unsigned (*get_pc)(void);
-	void (*set_pc)(unsigned val);
-	unsigned (*get_sp)(void);
-	void (*set_sp)(unsigned val);
+    void (*set_pc)(unsigned val);
+    unsigned (*get_sp)(void);
+    void (*set_sp)(unsigned val);
     unsigned (*get_reg)(int regnum);
-	void (*set_reg)(int regnum, unsigned val);
+    void (*set_reg)(int regnum, unsigned val);
     void (*set_nmi_line)(int linestate);
-	void (*set_irq_line)(int irqline, int linestate);
-	void (*set_irq_callback)(int(*callback)(int irqline));
-	void (*internal_interrupt)(int type);
-	void (*cpu_state_save)(void *file);
-	void (*cpu_state_load)(void *file);
-	const char* (*cpu_info)(void *context,int regnum);
-	unsigned (*cpu_dasm)(unsigned char *base,char *buffer,unsigned pc);
-	unsigned num_irqs;
+    void (*set_irq_line)(int irqline, int linestate);
+    void (*set_irq_callback)(int(*callback)(int irqline));
+    void (*internal_interrupt)(int type);
+    void (*cpu_state_save)(void *file);
+    void (*cpu_state_load)(void *file);
+    const char* (*cpu_info)(void *context,int regnum);
+    unsigned (*cpu_dasm)(char *buffer,unsigned pc);
+    unsigned num_irqs;
     int *icount;
-	int no_int, irq_int, nmi_int;
-	int (*memory_read)(int offset);
-	void (*memory_write)(int offset, int data);
-	void (*set_op_base)(int pc);
+    int no_int, irq_int, nmi_int;
+    int (*memory_read)(int offset);
+    void (*memory_write)(int offset, int data);
+    void (*set_op_base)(int pc);
+	int address_shift;
 	unsigned address_bits, endianess, align_unit, max_inst_len;
-	unsigned abits1, abits2, abitsmin;
+    unsigned abits1, abits2, abitsmin;
 };
 
 extern struct cpu_interface cpuintf[];
@@ -350,6 +351,8 @@ int cpu_is_saving_context(int _activecpu);
 unsigned cpu_address_bits(void);
 /* Return address mask */
 unsigned cpu_address_mask(void);
+/* Return address shift factor (TMS34010 bit addressing mode) */
+int cpu_address_shift(void);
 /* Return endianess of the emulated CPU (CPU_IS_LE or CPU_IS_BE) */
 unsigned cpu_endianess(void);
 /* Return opcode align unit (1 byte, 2 word, 4 dword) */
@@ -386,6 +389,9 @@ const char *cpu_dump_state(void);
  * Get information for a specific CPU type
  * cputype is a value from the CPU enum in driver.h
  ***************************************************************************/
+/* Return address shift factor */
+/* TMS320C10 -1: word addressing mode, TMS34010 3: bit addressing mode */
+int cputype_address_shift(int cputype);
 /* Return number of address bits */
 unsigned cputype_address_bits(int cputype);
 /* Return address mask */

@@ -14,8 +14,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "osd_dbg.h"
 #include "cpuintrf.h"
+#include "mamedbg.h"
 #include "t11.h"
 
 
@@ -514,10 +514,10 @@ const char *t11_info( void *context, int regnum )
 	return buffer[which];
 }
 
-unsigned t11_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned t11_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-    return DasmT11(base,buffer,pc);
+    return DasmT11(buffer,pc);
 #else
 	sprintf( buffer, "$%04X", cpu_readmem16lew_word(pc) );
 	return 2;

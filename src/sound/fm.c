@@ -94,13 +94,8 @@
 
 #define ADPCM_SHIFT    (16)
 
-#ifdef SIGNED_SAMPLES
-	#define AUDIO_CONV(A) ((A))
-	#define AUDIO_CONV16(A) ((A))
-#else
-	#define AUDIO_CONV(A) ((A)^0x80)
-	#define AUDIO_CONV16(A) ((A)^0x8000)
-#endif
+#define AUDIO_CONV(A) ((A))
+#define AUDIO_CONV16(A) ((A))
 
 /* ------------------------------------------------------------------ */
 #ifdef __RAINE__
@@ -2547,7 +2542,7 @@ void YM2610BUpdateOne(int num, void **buffer, int length)
 #endif
 }
 
-int YM2610Init(int num, int clock, int rate, int *pcmroma, int *pcmromb,
+int YM2610Init(int num, int clock, int rate, const int *pcmroma, const int *pcmromb,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler)
 
 {

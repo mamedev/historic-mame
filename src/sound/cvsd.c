@@ -128,7 +128,7 @@ void CVSD_set_volume(int num,int volume,int gain)
 }
 
 
-int CVSD_sh_start(struct CVSDinterface *interface)
+int CVSD_sh_start(const struct CVSDinterface *interface)
 {
 	int i;
 
@@ -157,12 +157,4 @@ int CVSD_sh_start(struct CVSDinterface *interface)
 		ByteOutput[i] = 0;
 	}
 	return 0;
-}
-
-void CVSD_sh_stop(void)
-{
-}
-
-void CVSD_sh_update(void)
-{
 }

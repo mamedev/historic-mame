@@ -23,9 +23,8 @@ struct UPD7759_interface
 	void (*irqcallback[MAX_UPD7759])(int param);	/* for slave mode only */
 };
 
-int UPD7759_sh_start (struct UPD7759_interface *intf);
+int UPD7759_sh_start (const struct UPD7759_interface *intf);
 void UPD7759_sh_stop (void);
-void UPD7759_sh_update (void);
 
 void UPD7759_reset_w (int num, int data);
 void UPD7759_message_w (int num, int which);

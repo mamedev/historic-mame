@@ -16,7 +16,7 @@ int NESPSG_1_r(int offset);
 void NESPSG_0_w(int offset,int data);
 void NESPSG_1_w(int offset,int data);
 
-int NESPSG_sh_start(struct NESinterface *interface);
+int NESPSG_sh_start(const struct NESinterface *interface);
 void NESPSG_sh_stop(void);
 void NESPSG_sh_update(void);
 

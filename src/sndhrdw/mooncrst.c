@@ -2,11 +2,7 @@
 #include <math.h>
 
 
-#ifdef SIGNED_SAMPLES
-	#define AUDIO_CONV(A) (A-0x80)
-#else
-	#define AUDIO_CONV(A) (A)
-#endif
+#define AUDIO_CONV(A) (A-0x80)
 
 #define SOUND_CLOCK (18432000/6/2) /* 1.536 Mhz */
 
@@ -30,12 +26,8 @@ static int t=0;
 static int LastPort1=0;
 static int LastPort2=0;
 static int lfo_rate=0;
-static int lfo_active=0;
+static int lfo_active[3];
 static int freq=MAXFREQ;
-static int lforate0=0;
-static int lforate1=0;
-static int lforate2=0;
-static int lforate3=0;
 
 static signed char waveform1[4][TOOTHSAW_LENGTH];
 static int pitch,vol;
@@ -97,14 +89,6 @@ void mooncrst_noise_w(int offset,int data)
         }
 }
 
-void mooncrst_background_w(int offset,int data)
-{
-       if (data & 1)
-       lfo_active=1;
-       else
-       lfo_active=0;
-}
-
 void mooncrst_shoot_w(int offset,int data)
 {
 
@@ -122,7 +106,7 @@ int mooncrst_sh_start(void)
 	int i;
 
 
-	channel = get_play_channels(5);
+	channel = get_play_channels(6);
 
 	if (Machine->samples != 0 && Machine->samples->sample[0] != 0)    /* We should check also that Samplename[0] = 0 */
 	  shootsampleloaded = 1;
@@ -167,6 +151,7 @@ int mooncrst_sh_start(void)
 
 	osd_play_sample(channel+3,waveform2,32,1000,0,1);
 	osd_play_sample(channel+4,waveform2,32,1000,0,1);
+	osd_play_sample(channel+5,waveform2,32,1000,0,1);
 
 	return 0;
 }
@@ -181,34 +166,42 @@ void mooncrst_sh_stop(void)
 	osd_stop_sample(channel+2);
 	osd_stop_sample(channel+3);
 	osd_stop_sample(channel+4);
+	osd_stop_sample(channel+5);
+}
+
+void mooncrst_background_w(int offset,int data)
+{
+	lfo_active[offset] = data & 1;
 }
 
 void mooncrst_lfo_freq_w(int offset,int data)
 {
-        if (offset==3) lforate3=(data & 1);
-        if (offset==2) lforate2=(data & 1);
-        if (offset==1) lforate1=(data & 1);
-        if (offset==0) lforate0=(data & 1);
-        lfo_rate=lforate3*8+lforate2*4+lforate1*2+lforate0;
-        lfo_rate=16-lfo_rate;
+	static int lforate[4];
+
+	lforate[offset] = data & 1;
+	lfo_rate = lforate[3]*8 + lforate[2]*4 + lforate[1]*2 + lforate[0];
+	lfo_rate = 16 - lfo_rate;
 }
 
 void mooncrst_sh_update(void)
 {
-    if (lfo_active)
-    {
-      osd_adjust_sample(channel+3,freq*32,LFO_VOLUME);
-      osd_adjust_sample(channel+4,(freq+60)*32,LFO_VOLUME);
-      if (t==0)
-         freq-=lfo_rate;
-      if (freq<=MINFREQ)
-         freq=MAXFREQ;
-    }
-    else
-    {
-      osd_adjust_sample(channel+3,1000,0);
-      osd_adjust_sample(channel+4,1000,0);
-    }
-    t++;
-    if (t==3) t=0;
+	if (lfo_active[0])
+		osd_adjust_sample(channel+3,freq*32,LFO_VOLUME);
+	else
+		osd_adjust_sample(channel+3,1000,0);
+
+	if (lfo_active[1])
+		osd_adjust_sample(channel+4,(freq*1040/760)*32,LFO_VOLUME);
+	else
+		osd_adjust_sample(channel+4,1000,0);
+
+	if (lfo_active[2])
+		osd_adjust_sample(channel+5,(freq*1040/540)*32,LFO_VOLUME);
+	else
+		osd_adjust_sample(channel+5,1000,0);
+
+	if (t == 0) freq -= lfo_rate;
+	if (freq <= MINFREQ) freq = MAXFREQ;
+
+	t = (t + 1) % 3;
 }

@@ -13,7 +13,7 @@
 #include "vidhrdw/generic.h"
 
 /* blit contains parameters for drawing a sprite */
-struct {
+static struct {
 	int x,y,w,h;
 	int clip_left, clip_right, clip_top, clip_bottom;
 
@@ -160,7 +160,7 @@ static void get_bg_tile_info( int col, int row ){
 
 #define NUMSPRITES 128
 #define MAXSPRITESIZE 64
-struct sprite_info {
+static struct sprite_info {
 	unsigned char *pen_data;
 	unsigned short *pal_data;
 	int pen_usage;
@@ -387,34 +387,41 @@ static void draw_sprites( struct osd_bitmap *bitmap, int priority ){
 
 /********************************************************************************/
 
-int gaiden_vh_start(void){
+int gaiden_vh_start(void)
+{
 	text_layer = tilemap_create(
 		get_fg_tile_info,
 		TILEMAP_TRANSPARENT,
 		8,8,	/* tile width, tile height */
-		32,32,	/* number of columns, number of rows */
-		1,1	/* scroll rows, scroll columns */
+		32,32	/* number of columns, number of rows */
 	);
 
 	foreground = tilemap_create(
 		get_bg_tile_info,
 		TILEMAP_TRANSPARENT,
 		16,16,
-		64,32,
-		1,1
+		64,32
 	);
 
 	background = tilemap_create(
 		get_bg_tile_info,
 		0,
 		16,16,
-		64,32,
-		1,1
+		64,32
 	);
 
-	if( text_layer && foreground && background ){
+	if( text_layer && foreground && background )
+	{
+		tilemap_set_scroll_rows(text_layer,1);
+		tilemap_set_scroll_cols(text_layer,1);
+		tilemap_set_scroll_rows(foreground,1);
+		tilemap_set_scroll_cols(foreground,1);
+		tilemap_set_scroll_rows(background,1);
+		tilemap_set_scroll_cols(background,1);
+
 		sprite_info = (struct sprite_info *)malloc( sizeof(struct sprite_info)*NUMSPRITES );
-		if( sprite_info ){
+		if( sprite_info )
+		{
 			text_layer->transparent_pen = 0;
 			foreground->transparent_pen = 0;
 			palette_transparent_color = 0x200; /* background color */

@@ -1688,7 +1688,7 @@ static struct MachineDriver robotron_machine_driver =
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
-			894750, /* 0.89475 Mhz (3.579 / 4) */
+			3579000,	/* 3.579 MHz */
 			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
@@ -1744,7 +1744,7 @@ static struct MachineDriver joust_machine_driver =
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
-			894750, /* 0.89475 Mhz (3.579 / 4) */
+			3579000,	/* 3.579 MHz */
 			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
@@ -1801,7 +1801,7 @@ static struct MachineDriver stargate_machine_driver =
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
-			894750, /* 0.89475 Mhz (3.579 / 4) */
+			3579000,	/* 3.579 MHz */
 			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
@@ -1857,7 +1857,7 @@ static struct MachineDriver bubbles_machine_driver =
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
-			894750, /* 0.89475 Mhz (3.579 / 4) */
+			3579000,	/* 3.579 MHz */
 			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
@@ -1919,7 +1919,7 @@ static struct MachineDriver sinistar_machine_driver =
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
-			894750, /* 0.89475 Mhz (3.579 / 4) */
+			3579000,	/* 3.579 MHz */
 			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
@@ -1979,7 +1979,7 @@ static struct MachineDriver defender_machine_driver =
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
-			894750, /* 0.89475 Mhz (3.579 / 4) */
+			3579000,	/* 3.579 MHz */
 			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
@@ -2035,7 +2035,7 @@ static struct MachineDriver splat_machine_driver =
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
-			894750, /* 0.89475 Mhz (3.579 / 4) */
+			3579000,	/* 3.579 MHz */
 			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
@@ -2091,7 +2091,7 @@ static struct MachineDriver blaster_machine_driver =
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
-			894750, /* 0.89475 Mhz (3.579 / 4) */
+			3579000,	/* 3.579 MHz */
 			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
@@ -2147,7 +2147,7 @@ static struct MachineDriver colony7_machine_driver =
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
-			894750,   /* 0.89475 Mhz (3.579 / 4) */
+			3579000,	/* 3.579 MHz */
 			2,        /* memory region #2 */
 			colony7_sound_readmem,colony7_sound_writemem,0,0,
 			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
@@ -2203,7 +2203,7 @@ static struct MachineDriver lottofun_machine_driver =
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
-			894750, /* 0.89475 Mhz (3.579 / 4) */
+			3579000,	/* 3.579 MHz */
 			2,		/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1		/* interrupts are triggered by the main CPU */
@@ -2259,7 +2259,7 @@ static struct MachineDriver defcomnd_machine_driver =
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
-			894750, /* 0.89475 Mhz (3.579 / 4) */
+			3579000,	/* 3.579 MHz */
 			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
@@ -2314,7 +2314,7 @@ static struct MachineDriver mayday_machine_driver =
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
-			894750, /* 0.89475 Mhz (3.579 / 4) */
+			3579000,	/* 3.579 MHz */
 			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
@@ -2369,7 +2369,7 @@ static struct MachineDriver mysticm_machine_driver =
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
-			894750, 				/* 0.89475 Mhz (3.579 / 4) */
+			3579000,	/* 3.579 MHz */
 			2,						/* memory region #2 */
 			williams2_sound_readmem,/* MemoryReadAddress */
 			williams2_sound_writemem,/* MemoryWriteAddress */
@@ -2427,7 +2427,7 @@ static struct MachineDriver tshoot_machine_driver =
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
-			894750, 				/* 0.89475 Mhz (3.579 / 4) */
+			3579000,	/* 3.579 MHz */
 			2,						/* memory region #2 */
 			williams2_sound_readmem,/* MemoryReadAddress */
 			williams2_sound_writemem,/* MemoryWriteAddress */
@@ -2485,7 +2485,7 @@ static struct MachineDriver inferno_machine_driver =
 		},
 		{
 			CPU_M6802 | CPU_AUDIO_CPU,
-			894750, 				/* 0.89475 Mhz (3.579 / 4) */
+			3579000, 				/* 3.579 Mhz */
 			2,						/* memory region #2 */
 			williams2_sound_readmem,/* MemoryReadAddress */
 			williams2_sound_writemem,/* MemoryWriteAddress */
@@ -2543,7 +2543,7 @@ static struct MachineDriver joust2_machine_driver =
 		},
 		{
 			CPU_M6802 | CPU_AUDIO_CPU,
-			894750, 				/* 0.89475 Mhz (3.579 / 4) */
+			3579000, 				/* 3.579 Mhz */
 			2,						/* memory region #2 */
 			williams2_sound_readmem,/* MemoryReadAddress */
 			williams2_sound_writemem,/* MemoryWriteAddress */

@@ -375,7 +375,7 @@ const char *osd_joy_name(int joycode)
 }
 
 
-void osd_poll_joystick(void)
+void osd_poll_joysticks(void)
 {
 	if (joystick > JOY_TYPE_NONE)
 		poll_joystick();
@@ -490,16 +490,16 @@ int osd_joy_pressed(int joycode)
 }
 
 /* return a value in the range -128 .. 128 (yes, 128, not 127) */
-void osd_analogjoy_read(int *analog_x, int *analog_y)
+void osd_analogjoy_read(int player,int *analog_x, int *analog_y)
 {
 	*analog_x = *analog_y = 0;
 
 	/* is there an analog joystick at all? */
-	if (joystick == JOY_TYPE_NONE)
+	if (player+1 > num_joysticks || joystick == JOY_TYPE_NONE)
 		return;
 
-	*analog_x = joy[0].stick[0].axis[0].pos;
-	*analog_y = joy[0].stick[0].axis[1].pos;
+	*analog_x = joy[player].stick[0].axis[0].pos;
+	*analog_y = joy[player].stick[0].axis[1].pos;
 }
 
 
@@ -507,9 +507,9 @@ static int calibration_target;
 
 int osd_joystick_needs_calibration (void)
 {
-	/* This could be improved, but unfortunately, this version of Allgegro */
+	/* This could be improved, but unfortunately, this version of Allegro */
 	/* lacks a flag which tells if a joystick is calibrationable, it only  */
-	/* remembers wether calibration is yet to be done. */
+	/* remembers whether calibration is yet to be done. */
 	if (joystick == JOY_TYPE_NONE)
 		return 0;
 	else
@@ -549,9 +549,9 @@ void osd_joystick_end_calibration (void)
 }
 
 
-void osd_trak_read(int *deltax,int *deltay)
+void osd_trak_read(int player,int *deltax,int *deltay)
 {
-	if (use_mouse == 0) *deltax = *deltay = 0;
+	if (player != 0 || use_mouse == 0) *deltax = *deltay = 0;
 	else get_mouse_mickeys(deltax,deltay);
 }
 

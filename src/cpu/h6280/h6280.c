@@ -29,8 +29,8 @@
 ******************************************************************************/
 
 #include "memory.h"
-#include "osd_dbg.h"
 #include "cpuintrf.h"
+#include "mamedbg.h"
 #include "h6280.h"
 
 #include <stdio.h>
@@ -52,8 +52,8 @@ static UINT8 reg_layout[] = {
 
 /* Layout of the debugger windows x,y,w,h */
 static UINT8 win_layout[] = {
-	25, 0,80, 4,	/* register window (top rows) */
-	 0, 0,24,17,	/* disassembler window (left colums) */
+	25, 0,55, 4,	/* register window (top rows) */
+	 0, 0,24,22,	/* disassembler window (left colums) */
 	25, 5,55, 8,	/* memory #1 window (right, upper middle) */
 	25,14,55, 8,	/* memory #2 window (right, lower middle) */
 	 0,23,80, 1,	/* command line window (bottom rows) */
@@ -175,7 +175,7 @@ int h6280_execute(int cycles)
 
 #ifdef  MAME_DEBUG
 	 	{
-			if (mame_debug) 
+			if (mame_debug)
 			{
 				/* Copy the segmentation registers for debugger to use */
 				int i;
@@ -397,7 +397,7 @@ const char *h6280_info(void *context, int regnum)
 				r->p & 0x01 ? 'C':'.');
 			break;
 		case CPU_INFO_NAME: return "H6280";
-		case CPU_INFO_FAMILY: return "Hitachi 6280";
+		case CPU_INFO_FAMILY: return "Hudsonsoft 6280";
 		case CPU_INFO_VERSION: return "1.01";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (c) 1999 Bryan McPhail, mish@tendril.force9.net";
@@ -407,13 +407,12 @@ const char *h6280_info(void *context, int regnum)
 	return buffer[which];
 }
 
-unsigned h6280_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned h6280_dasm(char *buffer, unsigned pc)
 {
-	(void)base;
 #ifdef MAME_DEBUG
     return Dasm6280(buffer,pc);
 #else
-	sprintf( buffer, "$%02X", ROM[pc] );
+	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
 #endif
 }

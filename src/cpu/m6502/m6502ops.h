@@ -495,7 +495,7 @@ extern	UINT8	*RAM;
  *	set PC to the effective address
  ***************************************************************/
 #define JMP 													\
-	if( PCD == EAD )											\
+	if( EAD == PPC && !m6502.pending_irq && !m6502.after_cli )	\
 		if( m6502_ICount > 0 ) m6502_ICount = 0;				\
 	PCD = EAD;													\
 	change_pc16(PCD)

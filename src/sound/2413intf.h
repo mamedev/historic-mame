@@ -9,9 +9,8 @@ int  YM2413_status_port_0_r(int offset);
 void YM2413_register_port_0_w(int offset,int data);
 void YM2413_data_port_0_w(int offset,int data);
 
-int  YM2413_sh_start(struct YM2413interface *interface);
+int  YM2413_sh_start(const struct YM2413interface *interface);
 void YM2413_sh_stop(void);
-void YM2413_sh_update(void);
 
 #endif
 

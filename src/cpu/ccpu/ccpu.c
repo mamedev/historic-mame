@@ -6,17 +6,18 @@ architecture.  Really, it's not so bad!
 **********************************************************/
 
 #include "driver.h"
+#include "mamedbg.h"
 #include "ccpu.h"
 
 static UINT8 ccpu_reg_layout[] = {
-	CCPU_PC, CCPU_ACC, CCPU_CMP, CCPU_PA0, CCPU_CFLAG, -1,
-	CCPU_A, CCPU_B, CCPU_I, CCPU_J, CCPU_P, CCPU_CSTATE, 0
+	CCPU_PC, CCPU_CFLAG, CCPU_CSTATE, CCPU_A, CCPU_B, CCPU_I, -1,
+	CCPU_P, CCPU_J, CCPU_ACC, CCPU_CMP, CCPU_PA0, 0,
 };
 
 /* Layout of the debugger windows x,y,w,h */
 static UINT8 ccpu_win_layout[] = {
-	 0, 0,80, 2,	/* register window (top rows) */
-     0, 3,24,19,    /* disassembler window (left colums) */
+	25, 0,55, 2,	/* register window (top rows) */
+	 0, 0,24,22,	/* disassembler window (left colums) */
     25, 3,55, 9,    /* memory #1 window (right, upper middle) */
     25,13,55, 9,    /* memory #2 window (right, lower middle) */
      0,23,80, 1,    /* command line window (bottom rows) */
@@ -245,20 +246,27 @@ const char *ccpu_info(void *context, int regnum)
 
     switch( regnum )
 	{
-		case CPU_INFO_REG+CCPU_ACC: sprintf(buffer[which], "ACC:%04X", r->accVal); break;
-		case CPU_INFO_REG+CCPU_CMP: sprintf(buffer[which], "CMP:%04X", r->cmpVal); break;
-		case CPU_INFO_REG+CCPU_PA0: sprintf(buffer[which], "PA0:%02X", r->pa0); break;
-		case CPU_INFO_REG+CCPU_CFLAG: sprintf(buffer[which], "C:%X", r->cFlag); break;
-		case CPU_INFO_REG+CCPU_PC: sprintf(buffer[which], "PC: %04X", r->eRegPC); break;
-		case CPU_INFO_REG+CCPU_A: sprintf(buffer[which], "A:%04X", r->eRegA); break;
-		case CPU_INFO_REG+CCPU_B: sprintf(buffer[which], "B:%04X", r->eRegB); break;
-		case CPU_INFO_REG+CCPU_I: sprintf(buffer[which], "I:%04X", r->eRegI); break;
-		case CPU_INFO_REG+CCPU_J: sprintf(buffer[which], "J:%04X", r->eRegJ); break;
-		case CPU_INFO_REG+CCPU_P: sprintf(buffer[which], "P:%04X", r->eRegP); break;
-		case CPU_INFO_REG+CCPU_CSTATE: sprintf(buffer[which], "CSTATE:%04X", r->eCState); break;
+        case CPU_INFO_REG+CCPU_PC: sprintf(buffer[which], "PC:%04X", r->eRegPC); break;
+		case CPU_INFO_REG+CCPU_CFLAG: sprintf(buffer[which], "C:%02X", r->cFlag); break;
+        case CPU_INFO_REG+CCPU_CSTATE: sprintf(buffer[which], "S:%X", r->eCState); break;
+		case CPU_INFO_REG+CCPU_A: sprintf(buffer[which], "A:%03X", r->eRegA); break;
+		case CPU_INFO_REG+CCPU_B: sprintf(buffer[which], "B:%03X", r->eRegB); break;
+		case CPU_INFO_REG+CCPU_I: sprintf(buffer[which], "I:%03X", r->eRegI << 1); break;
+        case CPU_INFO_REG+CCPU_P: sprintf(buffer[which], "P:%X", r->eRegP); break;
+		case CPU_INFO_REG+CCPU_J: sprintf(buffer[which], "J:%03X", r->eRegJ); break;
+		case CPU_INFO_REG+CCPU_ACC: sprintf(buffer[which], "ACC:%03X", r->accVal); break;
+        case CPU_INFO_REG+CCPU_CMP: sprintf(buffer[which], "CMP:%03X", r->cmpVal); break;
+        case CPU_INFO_REG+CCPU_PA0: sprintf(buffer[which], "PA0:%02X", r->pa0); break;
+			break;
 		case CPU_INFO_FLAGS:
 			/* TODO: no idea how the flags should look like */
-			break;
+			sprintf(buffer[which], "%c-%c%c%c%c",
+				(r->cFlag) ? 'C' : 'c',
+                (r->eCState == state_A || r->eCState == state_AA) ? 'A':' ',
+                (r->eCState == state_A) ? 'A':' ',
+                (r->eCState == state_B || r->eCState == state_BB) ? 'B':' ',
+                (r->eCState == state_B) ? 'B':' ');
+            break;
 		case CPU_INFO_NAME: return "CCPU";
 		case CPU_INFO_FAMILY: return "Cinematronics CPU";
 		case CPU_INFO_VERSION: return "1.0";
@@ -272,12 +280,14 @@ const char *ccpu_info(void *context, int regnum)
 }
 
 /* TODO: hook up the disassembler */
-unsigned ccpu_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned ccpu_dasm(char *buffer, unsigned pc)
 {
-    (void)base;
-	/* TODO: hoop up the disassembler */
-	sprintf(buffer, "$%02X", ROM[pc]);
+#ifdef MAME_DEBUG
+	return DasmCCPU(buffer,pc);
+#else
+    sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
+#endif
 }
 
 void ccpu_Config (int jmi, int msize, int monitor)
@@ -515,8 +525,6 @@ extern int sdwYOffset;
 #endif
 
 
-/* debug junk */
-#include "cinedbg.c"
 
 /* functions */
 

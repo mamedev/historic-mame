@@ -265,7 +265,7 @@ static struct MachineDriver GAMENAME##_machine_driver =		\
 	0,														\
 															\
 	/* video hardware */									\
-	256, 256, { 8, 256-8-1, 0, 256-1 },						\
+	256, 256, { 0, 256-1, 0, 256-1 },						\
 	0,														\
 	8, 0,													\
 	route16_vh_convert_color_prom,							\
@@ -486,7 +486,7 @@ struct GameDriver route16_driver =
 	route16_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	ORIENTATION_ROTATE_270,
 
 	route16_hiload, route16_hisave
 };
@@ -512,7 +512,7 @@ struct GameDriver stratvox_driver =
 	stratvox_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	ORIENTATION_ROTATE_270,
 
 	stratvox_hiload, stratvox_hisave
 };
@@ -538,7 +538,7 @@ struct GameDriver speakres_driver =
 	stratvox_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	ORIENTATION_ROTATE_270,
 
 	stratvox_hiload, stratvox_hisave
 };

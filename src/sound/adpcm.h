@@ -25,11 +25,11 @@ struct ADPCMinterface
 	int num;			       /* total number of ADPCM decoders in the machine */
 	int frequency;             /* playback frequency */
 	int region;                /* memory region where the samples come from */
-	void (*init)(struct ADPCMinterface *, struct ADPCMsample *, int max); /* initialization function */
+	void (*init)(const struct ADPCMinterface *, struct ADPCMsample *, int max); /* initialization function */
 	int volume[MAX_ADPCM];     /* master volume */
 };
 
-int ADPCM_sh_start (struct ADPCMinterface *interface);
+int ADPCM_sh_start (const struct ADPCMinterface *interface);
 void ADPCM_sh_stop (void);
 void ADPCM_sh_update (void);
 
@@ -52,7 +52,7 @@ struct OKIM6295interface
 	int volume[MAX_OKIM6295]; /* master volume */
 };
 
-int OKIM6295_sh_start (struct OKIM6295interface *intf);
+int OKIM6295_sh_start (const struct OKIM6295interface *intf);
 void OKIM6295_sh_stop (void);
 void OKIM6295_sh_update (void);
 
@@ -75,7 +75,7 @@ struct MSM5205interface
 	int volume[MAX_OKIM6295]; /* master volume */
 };
 
-int MSM5205_sh_start (struct MSM5205interface *intf);
+int MSM5205_sh_start (const struct MSM5205interface *intf);
 void MSM5205_sh_stop (void);
 void MSM5205_sh_update (void);
 

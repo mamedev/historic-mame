@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "m68000.h"
 #include "memory.h"
-#include "osd_cpu.h"
+#include "mamedbg.h"
 
 static UINT8 m68k_reg_layout[] = {
 	M68K_PC, M68K_ISP, -1,
@@ -252,20 +252,24 @@ const char *m68000_info(void *context, int regnum)
             break;
 		case CPU_INFO_NAME: return "68000";
 		case CPU_INFO_FAMILY: return "Motorola 68K";
-		case CPU_INFO_VERSION: return "2.0a";
+		case CPU_INFO_VERSION: return "2.1";
 		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright 1999 Karl Stenerud.  All rights reserved.";
+		case CPU_INFO_CREDITS: return "Copyright 1999 Karl Stenerud. All rights reserved. (2.1 fixes HJB)";
 		case CPU_INFO_REG_LAYOUT: return (const char*)m68k_reg_layout;
         case CPU_INFO_WIN_LAYOUT: return (const char*)m68k_win_layout;
     }
 	return buffer[which];
 }
 
-unsigned m68000_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned m68000_dasm(char *buffer, unsigned pc)
 {
-    (void)base;
 	change_pc24(pc);
-	return m68k_disassemble(buffer, pc);
+#ifdef MAME_DEBUG
+	return m68k_disassemble( buffer, pc );
+#else
+	sprintf( buffer, "$%04X", cpu_readop16(pc) );
+	return 2;
+#endif
 }
 
 /****************************************************************************
@@ -295,11 +299,15 @@ const char *m68010_info(void *context, int regnum)
 	return m68000_info(context,regnum);
 }
 
-unsigned m68010_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned m68010_dasm(char *buffer, unsigned pc)
 {
-    (void)base;
 	change_pc24(pc);
-	return m68k_disassemble(buffer, pc);
+#ifdef MAME_DEBUG
+    return m68k_disassemble(buffer, pc);
+#else
+	sprintf( buffer, "$%04X", cpu_readop16(pc) );
+	return 2;
+#endif
 }
 #endif
 /****************************************************************************
@@ -329,11 +337,15 @@ const char *m68020_info(void *context, int regnum)
 	return m68000_info(context,regnum);
 }
 
-unsigned m68020_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned m68020_dasm(char *buffer, unsigned pc)
 {
-    (void)base;
-	change_pc24(pc);
-	return m68k_disassemble(buffer, pc);
+    change_pc24(pc);
+#ifdef MAME_DEBUG
+    return m68k_disassemble(buffer, pc);
+#else
+	sprintf( buffer, "$%04X", cpu_readop16(pc) );
+	return 2;
+#endif
 }
 #endif
 

@@ -46,7 +46,7 @@ PPPPP : pitch
 static int sample_pos;
 static int buffer_len;
 static int emulation_rate;
-static struct VLM5030interface *intf;
+static const struct VLM5030interface *intf;
 
 static unsigned char *outbuffer;
 static int channel;
@@ -538,7 +538,7 @@ void VLM5030_RST (int pin )
 void VLM5030_VCU(int pin)
 {
 	/* unknown */
-	intf->vcu = pin;
+/*	intf->vcu = pin; */
 	return;
 }
 
@@ -602,7 +602,7 @@ void VLM5030_ST(int pin )
 
 /* start VLM5030 with sound rom              */
 /* speech_rom == 0 -> use sampling data mode */
-int VLM5030_sh_start( struct VLM5030interface *interface )
+int VLM5030_sh_start(const struct VLM5030interface *interface )
 {
     intf = interface;
 

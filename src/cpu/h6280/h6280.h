@@ -14,7 +14,6 @@
 #define _H6280_H
 
 #include "osd_cpu.h"
-#include "osd_dbg.h"
 
 enum {
 	H6280_PC=1, H6280_S, H6280_P, H6280_A, H6280_X, H6280_Y,
@@ -63,7 +62,7 @@ extern void h6280_set_nmi_line(int state);
 extern void h6280_set_irq_line(int irqline, int state);
 extern void h6280_set_irq_callback(int (*callback)(int irqline));
 extern const char *h6280_info(void *context, int regnum);
-extern unsigned h6280_dasm(UINT8 *base, char *buffer, unsigned pc);
+extern unsigned h6280_dasm(char *buffer, unsigned pc);
 
 extern int H6280_irq_status_r(int offset);
 extern void H6280_irq_status_w(int offset, int data);

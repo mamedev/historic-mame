@@ -48,6 +48,7 @@ struct artwork_element
   functions that apply to backdrops AND overlays
 *********************************************************************/
 struct artwork *artwork_load(const char *filename, int start_pen, int max_pens);
+struct artwork *artwork_load_size(const char *filename, int start_pen, int max_pens, int width, int height);
 struct artwork *artwork_create(const struct artwork_element *ae, int start_pen, int max_pens);
 void artwork_elements_scale(struct artwork_element *ae, int width, int height);
 void artwork_free(struct artwork *a);

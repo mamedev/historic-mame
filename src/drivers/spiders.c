@@ -349,7 +349,7 @@ static struct MachineDriver machine_driver =
         },
 //        {
 //            CPU_M6802 | CPU_AUDIO_CPU,
-//            1500000,
+//            3000000,
 //            1,
 //            sound_readmem,sound_writemem,0,0,
 //            0,0,

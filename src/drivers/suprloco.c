@@ -329,7 +329,37 @@ void suprloco_unmangle(void)
 	}
 }
 
+/**** Super Locomotive high score save routine - RJF (April 5, 1999) ****/
+static int suprloco_hiload(void){
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
+        if (memcmp(&RAM[0xfd00],"\x02\x20\x00",3) == 0){
+		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
+		if (f){
+
+			/* the game only show 6 of 10 entries */
+                        osd_fread(f,&RAM[0xfca0], 10*3);	/* initials */
+                        osd_fread(f,&RAM[0xfd00], 10*3);	/* values */
+			osd_fclose(f);
+
+                        /* copy the high score to ram */
+                        RAM[0xfc2c] = RAM[0xfd00];
+                        RAM[0xfc2d] = RAM[0xfd01];
+                        RAM[0xfc2e] = RAM[0xfd02];
+		}
+		return 1;
+	}
+	return 0;  /* we can't load the hi scores yet */
+}
+
+static void suprloco_hisave(void){
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
+
+                        osd_fwrite(f,&RAM[0xfca0],10*3);
+                        osd_fwrite(f,&RAM[0xfd00],10*3);
+			osd_fclose(f);
+}
 
 struct GameDriver suprloco_driver =
 {
@@ -353,5 +383,5 @@ struct GameDriver suprloco_driver =
 
 	PROM_MEMORY_REGION(4), 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+        suprloco_hiload, suprloco_hisave
 };

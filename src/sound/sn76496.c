@@ -2,8 +2,8 @@
 
   sn76496.c
 
-  Routines to emulate the Texas Instruments SN76489 and SN76496 programmable
-  tone /noise generator.
+  Routines to emulate the Texas Instruments SN76489 / SN76496 programmable
+  tone /noise generator. Also known as (or at least compatible with) TMS9919.
 
   Noise emulation is not accurate due to lack of documentation. The noise
   generator uses a shift register with a XOR-feedback network, but the exact
@@ -15,13 +15,8 @@
 #include "driver.h"
 
 
-#ifdef SIGNED_SAMPLES
-	#define MAX_OUTPUT 0x7fff
-	#define AUDIO_CONV(A) (A)
-#else
-	#define MAX_OUTPUT 0xffff
-	#define AUDIO_CONV(A) (A)
-#endif
+#define MAX_OUTPUT 0x7fff
+#define AUDIO_CONV(A) (A)
 
 #define STEP 0x10000
 
@@ -254,7 +249,7 @@ static int SN76496_init(int chip,int clock,int sample_rate,int sample_bits)
 
 
 
-int SN76496_sh_start(struct SN76496interface *interface)
+int SN76496_sh_start(const struct SN76496interface *interface)
 {
 	int chip;
 
@@ -267,12 +262,4 @@ int SN76496_sh_start(struct SN76496interface *interface)
 		SN76496_set_volume(chip,interface->volume[chip] & 0xff,(interface->volume[chip] >> 8) & 0xff);
 	}
 	return 0;
-}
-
-void SN76496_sh_stop(void)
-{
-}
-
-void SN76496_sh_update(void)
-{
 }

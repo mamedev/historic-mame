@@ -4,8 +4,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdarg.h>
-#include "osd_dbg.h"
 #include "osd_cpu.h"
+#include "mamedbg.h"
 #include "osdepend.h"
 #include "state.h"
 
@@ -58,6 +58,21 @@ INLINE char *ultox(unsigned val, unsigned size)
 		val >>= 4;
 	}
 	return buffer;
+}
+
+/**************************************************************************
+ * my_stricmp
+ * Compare strings case insensitive
+ **************************************************************************/
+INLINE int my_stricmp( const char *dst, const char *src)
+{
+	while( *src && *dst )
+	{
+		if( tolower(*src) != tolower(*dst) ) return *dst - *src;
+		src++;
+		dst++;
+	}
+	return 0;
 }
 
 /* free a linked list of state_vars (aka section) */
@@ -143,7 +158,7 @@ void state_save_section( void *s, const char *module, int instance )
 {
 	state_handle *state = (state_handle *)s;
     if( !state->cur_module ||
-		(state->cur_module && stricmp(state->cur_module, module)) ||
+		(state->cur_module && my_stricmp(state->cur_module, module)) ||
 		state->cur_instance != instance )
     {
 		if( state->cur_module )
@@ -291,7 +306,7 @@ void state_load_section( void *s, const char *module, int instance )
 	unsigned offs, data;
 
 	if( state->cur_module &&
-		!stricmp(state->cur_module, module) &&
+		!my_stricmp(state->cur_module, module) &&
 		state->cur_instance == instance )
 		return; /* fine, we already got it */
 
@@ -324,7 +339,7 @@ void state_load_section( void *s, const char *module, int instance )
 		}
 		buffer[ length ] = '\0';
 		p = strchr(buffer, '[');
-		if( p && !stricmp(p, section) )
+		if( p && !my_stricmp(p, section) )
 		{
 			/* skip CR, LF or both */
 			p += strlen(section);
@@ -383,7 +398,7 @@ void state_load_section( void *s, const char *module, int instance )
 				*p++ = '\0';
 
 				/* is there an offs defined ? */
-                d = strchr(buffer, '.');    
+                d = strchr(buffer, '.');
 				if( d )
 				{
 					/* buffer = state_var, d = offs, p = data */
@@ -392,7 +407,7 @@ void state_load_section( void *s, const char *module, int instance )
 					if( offs )
 					{
 						v = state->list;
-						while( v && stricmp(v->name, buffer) )
+						while( v && my_stricmp(v->name, buffer) )
 							v = v->next;
 						if( !v )
 						{
@@ -487,7 +502,7 @@ void state_load_UINT8( void *s, const char *module, int instance,
 	state_load_section( state, module, instance );
 
 	v = state->list;
-	while( v && stricmp(v->name, name) ) v = v->next;
+	while( v && my_stricmp(v->name, name) ) v = v->next;
 
     if( v )
 	{
@@ -511,7 +526,7 @@ void state_load_INT8( void *s, const char *module, int instance,
 	state_load_section( state, module, instance );
 
 	v = state->list;
-	while( v && stricmp(v->name, name) ) v = v->next;
+	while( v && my_stricmp(v->name, name) ) v = v->next;
 
     if( v )
 	{
@@ -535,7 +550,7 @@ void state_load_UINT16( void *s, const char *module, int instance,
     state_load_section( state, module, instance );
 
     v = state->list;
-	while( v && stricmp(v->name, name) ) v = v->next;
+	while( v && my_stricmp(v->name, name) ) v = v->next;
 
     if( v )
 	{
@@ -559,7 +574,7 @@ void state_load_INT16( void *s, const char *module, int instance,
     state_load_section( state, module, instance );
 
     v = state->list;
-	while( v && stricmp(v->name, name) ) v = v->next;
+	while( v && my_stricmp(v->name, name) ) v = v->next;
 
     if( v )
 	{
@@ -583,7 +598,7 @@ void state_load_UINT32( void *s, const char *module, int instance,
     state_load_section( state, module, instance );
 
     v = state->list;
-	while( v && stricmp(v->name, name) ) v = v->next;
+	while( v && my_stricmp(v->name, name) ) v = v->next;
 
     if( v )
 	{
@@ -607,7 +622,7 @@ void state_load_INT32( void *s, const char *module, int instance,
     state_load_section( state, module, instance );
 
     v = state->list;
-	while( v && stricmp(v->name, name) ) v = v->next;
+	while( v && my_stricmp(v->name, name) ) v = v->next;
 
     if( v )
 	{

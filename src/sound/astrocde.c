@@ -21,13 +21,9 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 
-#ifdef SIGNED_SAMPLES
-  #define AUDIO_CONV(A) ((A))
-#else
-  #define AUDIO_CONV(A) ((A)+0x80)
-#endif
+#define AUDIO_CONV(A) ((A))
 
-static struct astrocade_interface *intf;
+static const struct astrocade_interface *intf;
 
 static int emulation_rate;
 static int div_by_N_factor;
@@ -173,7 +169,7 @@ static void astrocade_update(int num, int newpos)
 	sample_pos[num]    = pos;
 }
 
-int astrocade_sh_start(struct astrocade_interface *interface)
+int astrocade_sh_start(const struct astrocade_interface *interface)
 {
 	int i;
 

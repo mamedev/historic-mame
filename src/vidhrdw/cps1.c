@@ -57,10 +57,11 @@
   King of Dragons.
   * Distortion effect missing on character description screen during attract
     mode. The game rapidly toggles on and off the layer enable bit.
+  * Flickering text n the bottom left corner on the player selection screen.
 
   Captain Commando
   * The continue screen is missing the text and counter. The game is playing
-    one many frames of the star animation. The culprit seems to be here:
+    one too many frames of the star animation. The culprit seems to be here:
 00D95A:   70 00                          moveq   #$0, D0
 00D95C:   3b 40 28 28                    move.w  D0, ($2828,A5)
 00D960:   3b 40 28 2c                    move.w  D0, ($282c,A5)
@@ -84,6 +85,9 @@
 	the large plane is scroll2. Therefore, the mask should block sprites but
 	not tiles from the other planes.
 
+  area 88
+  * garbage characters in attract mode
+
   knights
   * garbage characters left on screen during boot and under INSERT COIN
     (patched out in cps1_render_scroll1()).
@@ -91,6 +95,7 @@
   qad
   * in attract mode, "Dragons" is missing from the title screen, only
     "Quiz &" is visible.
+  * garbage sprites scrolling into screen after a victory
 
   mercs
   * a few wrong scroll 2 tiles (check part 2 of the first attract mode round)
@@ -98,14 +103,14 @@
   punisher
   * the van at the beginning of stage 2 shouldn't be there
 
-  qad
-  * garbage sprites scrolling into screen after a victory
-
   dino
   * in level 6, the legs of the big dino which stomps you are almost entirely
     missing.
   * in level 6, palette changes due to lightnings cause a lot of tiling effects
     on scroll2.
+
+  1941
+  * garbage tiles around the final boss
 
 
   Todo
@@ -125,7 +130,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "drivers/cps1.h"
-#include "types.h"
 
 #define VERBOSE 1
 
@@ -434,7 +438,7 @@ CPS1 VIDEO RENDERER
 
 */
 const int cps1_gfx_region=1;	    /* MAME memory region to draw from */
-static dword *cps1_gfx;		 /* Converted GFX memory */
+static UINT32 *cps1_gfx;		 /* Converted GFX memory */
 static int *cps1_char_pen_usage;	/* pen usage array */
 static int *cps1_tile16_pen_usage;      /* pen usage array */
 static int *cps1_tile32_pen_usage;      /* pen usage array */
@@ -444,7 +448,7 @@ static int cps1_max_tile32;	     /* Maximum number of 32x32 tiles */
 
 int cps1_gfx_start(void)
 {
-	dword dwval;
+	UINT32 dwval;
 	int size=Machine->memory_region_length[cps1_gfx_region];
 	unsigned char *data = Machine->memory_region[cps1_gfx_region];
 	int i,j,nchar,penusage,gfxsize;
@@ -456,7 +460,7 @@ int cps1_gfx_start(void)
 	cps1_max_tile16=(gfxsize/4)/8;
 	cps1_max_tile32=(gfxsize/16)/8;
 
-	cps1_gfx=malloc(gfxsize*sizeof(dword));
+	cps1_gfx=malloc(gfxsize*sizeof(UINT32));
 	if (!cps1_gfx)
 	{
 		return -1;
@@ -615,8 +619,8 @@ INLINE void cps1_draw_gfx(
 	int srcdelta)
 {
 	int i, j, ex, ey;
-	dword dwval,n;
-	dword *src;
+	UINT32 dwval,n;
+	UINT32 *src;
 	const unsigned short *paldata;
 
     tpens=(~tpens) & 0xffff;

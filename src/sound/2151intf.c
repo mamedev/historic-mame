@@ -14,7 +14,7 @@
 /* for stream system */
 static int stream[MAX_2151];
 
-static struct YM2151interface *intf;
+static const struct YM2151interface *intf;
 
 static int FMMode;
 #define CHIP_YM2151_DAC 4	/* use Tatsuyuki's FM.C */
@@ -67,7 +67,7 @@ void YM2151UpdateRequest(int chip)
 	stream_update(stream[chip],0);
 }
 
-int YM2151_sh_start(struct YM2151interface *interface,int mode)
+static int my_YM2151_sh_start(const struct YM2151interface *interface,int mode)
 {
 	int i,j;
 	int rate = Machine->sample_rate;
@@ -171,6 +171,16 @@ int YM2151_sh_start(struct YM2151interface *interface,int mode)
 		return 1;
 	}
 	return 1;
+}
+
+int YM2151_sh_start(const struct YM2151interface *interface)
+{
+	return my_YM2151_sh_start(interface,0);
+}
+
+int YM2151_ALT_sh_start(const struct YM2151interface *interface)
+{
+	return my_YM2151_sh_start(interface,1);
 }
 
 void YM2151_sh_stop(void)
@@ -283,19 +293,3 @@ void YM2151_data_port_2_w(int offset,int data)
 		break;
 	}
 }
-
-void YM2151_sh_update(void)
-{
-	int i;
-
-	if (Machine->sample_rate == 0 ) return;
-
-	switch(FMMode)
-	{
-	case CHIP_YM2151_DAC:
-		break;
-	case CHIP_YM2151_ALT:
-		break;
-	}
-}
-

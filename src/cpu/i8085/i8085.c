@@ -25,13 +25,10 @@
 #include "driver.h"
 #include "state.h"
 #include "osd_cpu.h"
+#include "mamedbg.h"
 #include "i8085.h"
 #include "i8085cpu.h"
 #include "i8085daa.h"
-
-#ifdef	MAME_DEBUG
-#include "osd_dbg.h"
-#endif
 
 #if VERBOSE
 #include <stdio.h>
@@ -1568,13 +1565,12 @@ const char *i8085_info(void *context, int regnum)
 	return buffer[which];
 }
 
-unsigned i8085_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned i8085_dasm(char *buffer, unsigned pc)
 {
-	(void)base;
 #ifdef MAME_DEBUG
     return Dasm8085(buffer,pc);
 #else
-	sprintf( buffer, "$%02X", ROM[pc] );
+	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
 #endif
 }
@@ -1682,13 +1678,12 @@ const char *i8080_info(void *context, int regnum)
 	return i8085_info(context,regnum);
 }
 
-unsigned i8080_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned i8080_dasm(char *buffer, unsigned pc)
 {
-	(void)base;
 #ifdef MAME_DEBUG
     return Dasm8085(buffer,pc);
 #else
-	sprintf( buffer, "$%02X", ROM[pc] );
+	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
 #endif
 }

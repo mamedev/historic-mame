@@ -10,7 +10,7 @@ struct TMS5220interface
 	void (*irq)(void);       /* IRQ callback function */
 };
 
-int tms5220_sh_start (struct TMS5220interface *interface);
+int tms5220_sh_start (const struct TMS5220interface *interface);
 void tms5220_sh_stop (void);
 void tms5220_sh_update (void);
 

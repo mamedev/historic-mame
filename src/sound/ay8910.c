@@ -14,11 +14,7 @@
 #include "ay8910.h"
 
 
-#ifdef SIGNED_SAMPLES
-	#define MAX_OUTPUT 0x7fff
-#else
-	#define MAX_OUTPUT 0xffff
-#endif
+#define MAX_OUTPUT 0x7fff
 
 #define STEP 0x8000
 
@@ -439,7 +435,7 @@ static int AY8910_init(int chip,const char *chipname,int clock,int sample_rate,i
 
 
 
-int AY8910_sh_start(struct AY8910interface *interface,const char *chipname)
+int AY8910_sh_start_ex(const struct AY8910interface *interface,const char *chipname)
 {
 	int chip;
 
@@ -455,10 +451,7 @@ int AY8910_sh_start(struct AY8910interface *interface,const char *chipname)
 	return 0;
 }
 
-void AY8910_sh_stop(void)
+int AY8910_sh_start(const struct AY8910interface *interface)
 {
-}
-
-void AY8910_sh_update(void)
-{
+	return AY8910_sh_start_ex(interface,"AY8910");
 }

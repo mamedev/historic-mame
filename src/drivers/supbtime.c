@@ -31,7 +31,7 @@ int supbtime_pf2_data_r(int offset);
 
 void supbtime_control_0_w(int offset,int data);
 
-unsigned char *supbtime_pf2_data,*supbtime_pf1_data,*supbtime_pf1_row;
+extern unsigned char *supbtime_pf2_data,*supbtime_pf1_data,*supbtime_pf1_row;
 static unsigned char *supbtime_ram;
 
 /******************************************************************************/

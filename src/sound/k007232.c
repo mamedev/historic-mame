@@ -268,7 +268,7 @@ void KDAC_A_update(int arg, void **buffer, int buffer_len)
 /************************************************/
 /*    Konami PCM start                          */
 /************************************************/
-int K007232_sh_start( struct K007232_interface *intf )
+int K007232_sh_start( const struct K007232_interface *intf )
 {
 	int i;
 	char buf[2][40];
@@ -301,17 +301,6 @@ int K007232_sh_start( struct K007232_interface *intf )
 	KDAC_A_make_fncode();
 
 	return 0;
-}
-
-/************************************************/
-/*    Konami PCM stop                           */
-/************************************************/
-void K007232_sh_stop( void )
-{
-}
-
-void K007232_sh_update( void )
-{
 }
 
 /************************************************/

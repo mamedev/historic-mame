@@ -122,8 +122,7 @@ int timeplt_vh_start(void)
 		get_bg_tile_info,
 		0,
 		8,8,
-		32,32,
-		0,0
+		32,32
 	);
 
 	if (bg_tilemap)

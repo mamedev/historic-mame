@@ -10,7 +10,7 @@
 
 
 #include "memory.h"
-#include "osd_dbg.h"
+#include "mamedbg.h"
 #include "tms9900.h"
 
 INLINE void execute(UINT16 opcode);
@@ -414,14 +414,14 @@ const char *tms9900_info(void *context, int regnum)
 	return buffer[which];
 }
 
-unsigned tms9900_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned tms9900_dasm(char *buffer, unsigned pc)
 {
-	(void)base;
+
 #ifdef MAME_DEBUG
     return Dasm9900(buffer,pc);
 #else
-	sprintf( buffer, "$%02X", ROM[pc] );
-	return 1;
+	sprintf( buffer, "$%04X", cpu_readop16(pc) );
+	return 2;
 #endif
 }
 

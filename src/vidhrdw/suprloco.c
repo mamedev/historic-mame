@@ -33,7 +33,7 @@ static int control;
 
   Convert the color PROMs into a more useable format.
 
-  I'm not sure about the resistor value, I'm using the Galaxian ones.
+  I'm not sure about the resistor values, I'm using the Galaxian ones.
 
 ***************************************************************************/
 void suprloco_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
@@ -91,10 +91,13 @@ static void get_bg_tile_info(int col,int row)
 
 int suprloco_vh_start(void)
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info,TILEMAP_SPLIT,8,8,32,32,32,1);
+	bg_tilemap = tilemap_create(get_bg_tile_info,0,8,8,32,32);
 
 	if (bg_tilemap)
 	{
+		tilemap_set_scroll_rows(bg_tilemap,32);
+		tilemap_set_scroll_cols(bg_tilemap,1);
+
 		return 0;
 	}
 
@@ -122,8 +125,10 @@ static int suprloco_scrollram[32];
 
 void suprloco_scrollram_w(int offset, int data)
 {
+	int adj = flipscreen ? -8 : 8;
+
 	suprloco_scrollram[offset] = data;
-	tilemap_set_scrollx(bg_tilemap,offset,-data + 8);
+	tilemap_set_scrollx(bg_tilemap,offset, -data + adj);
 }
 
 int suprloco_scrollram_r(int offset)
@@ -140,7 +145,7 @@ void suprloco_control_w(int offset,int data)
    	/* Bit 0   - coin counter A */
 	/* Bit 1   - coin counter B (only used if coinage differs from A) */
 	/* Bit 2-3 - probably unused */
-	/* Bit 4   - ??? pulsed when loco turns "super" */
+	/* Bit 4   - ??? pulsated when loco turns "super" */
 	/* Bit 5   - ??? */
 	/* Bit 6   - probably unused */
 	/* Bit 7   - flip screen */
@@ -155,15 +160,14 @@ void suprloco_control_w(int offset,int data)
 		/*if (errorlog) fprintf(errorlog,"Bit 5 = %d\n", (data >> 5) & 1); */
 	}
 
-	control = data;
-
 	coin_counter_w(0, data & 0x01);
 	coin_counter_w(1, data & 0x02);
 
 	flipscreen = data & 0x80;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
-	if (flipscreen) tilemap_set_scrolly(bg_tilemap,0,4*8);
-	else tilemap_set_scrolly(bg_tilemap,0,0);
+	tilemap_set_scrolly(bg_tilemap,0,flipscreen ? 32 : 0);
+
+	control = data;
 }
 
 
@@ -188,11 +192,6 @@ INLINE void draw_pixel(struct osd_bitmap *bitmap,int x,int y,int color)
 
 	int orientation = Machine->orientation;
 
-	if (x < Machine->drv->visible_area.min_x ||
-		x > Machine->drv->visible_area.max_x ||
-		y < Machine->drv->visible_area.min_y ||
-		y > Machine->drv->visible_area.max_y)
-		return;
 
 	if (flipscreen)
 	{
@@ -209,6 +208,12 @@ INLINE void draw_pixel(struct osd_bitmap *bitmap,int x,int y,int color)
 		adjx = bitmap->width - adjx - 1;
 	if (orientation & ORIENTATION_FLIP_Y)
 		adjy = bitmap->height - adjy - 1;
+
+	if (adjx < Machine->drv->visible_area.min_x ||
+		adjx > Machine->drv->visible_area.max_x ||
+		adjy < Machine->drv->visible_area.min_y ||
+		adjy > Machine->drv->visible_area.max_y)
+		return;
 
 	bitmap->line[adjy][adjx] = color;
 }
@@ -239,7 +244,7 @@ static void render_sprite(struct osd_bitmap *bitmap,int spr_number)
 	}
 	else
 	{
-		adjy = sy+height-1;
+		adjy = sy + height + 30;  /* some of the sprites are still off by a pixel */
 		dy = -1;
 	}
 

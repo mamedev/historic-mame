@@ -88,11 +88,7 @@ it reaches the header of the next sample (FF 00 00 00 00)
 
 
 /* signed/unsigned 8-bit conversion macros */
-#ifdef SIGNED_SAMPLES
-	#define AUDIO_CONV(A) ((A))
-#else
-	#define AUDIO_CONV(A) ((A)+0x80)
-#endif
+#define AUDIO_CONV(A) ((A))
 
 /* number of samples stuffed into the rom */
 static unsigned char numsam;
@@ -151,7 +147,7 @@ struct UPD7759voice
 };
 
 /* global pointer to the current interface */
-static struct UPD7759_interface *upd7759_intf;
+static const struct UPD7759_interface *upd7759_intf;
 
 /* array of ADPCM voices */
 static struct UPD7759voice updadpcm[MAX_UPD7759];
@@ -282,7 +278,7 @@ if (errorlog)
  */
 
 
-int UPD7759_sh_start (struct UPD7759_interface *intf)
+int UPD7759_sh_start (const struct UPD7759_interface *intf)
 {
 	int i, j;
 
@@ -341,9 +337,6 @@ void UPD7759_sh_stop (void)
 	}
 }
 
-void UPD7759_sh_update (void)
-{
-}
 
 
 /*

@@ -1,7 +1,7 @@
 #ifndef __UNZIP_H
 #define __UNZIP_H
 
-#include "types.h"
+#include "osd_cpu.h"
 #include <stdio.h>
 
 /***************************************************************************
@@ -9,25 +9,25 @@
  ***************************************************************************/
 
 struct zipent {
-	dword	cent_file_header_sig;
-	byte	version_made_by;
-	byte	host_os;
-	byte	version_needed_to_extract;
-	byte	os_needed_to_extract;
-	word	general_purpose_bit_flag;
-	word	compression_method;
-	word	last_mod_file_time;
-	word	last_mod_file_date;
-	dword	crc32;
-	dword	compressed_size;
-	dword	uncompressed_size;
-	word	filename_length;
-	word	extra_field_length;
-	word	file_comment_length;
-	word	disk_number_start;
-	word	internal_file_attrib;
-	dword	external_file_attrib;
-	dword	offset_lcl_hdr_frm_frst_disk;
+	UINT32	cent_file_header_sig;
+	UINT8	version_made_by;
+	UINT8	host_os;
+	UINT8	version_needed_to_extract;
+	UINT8	os_needed_to_extract;
+	UINT16	general_purpose_bit_flag;
+	UINT16	compression_method;
+	UINT16	last_mod_file_time;
+	UINT16	last_mod_file_date;
+	UINT32	crc32;
+	UINT32	compressed_size;
+	UINT32	uncompressed_size;
+	UINT16	filename_length;
+	UINT16	extra_field_length;
+	UINT16	file_comment_length;
+	UINT16	disk_number_start;
+	UINT16	internal_file_attrib;
+	UINT32	external_file_attrib;
+	UINT32	offset_lcl_hdr_frm_frst_disk;
 	char*   name; /* 0 terminated */
 };
 
@@ -46,14 +46,14 @@ typedef struct _ZIP {
 	struct zipent ent; /* buffer for readzip */
 
 	/* end_of_cent_dir */
-	dword	end_of_cent_dir_sig;
-	word	number_of_this_disk;
-	word	number_of_disk_start_cent_dir;
-	word	total_entries_cent_dir_this_disk;
-	word	total_entries_cent_dir;
-	dword	size_of_cent_dir;
-	dword	offset_to_start_of_cent_dir;
-	word	zipfile_comment_length;
+	UINT32	end_of_cent_dir_sig;
+	UINT16	number_of_this_disk;
+	UINT16	number_of_disk_start_cent_dir;
+	UINT16	total_entries_cent_dir_this_disk;
+	UINT16	total_entries_cent_dir;
+	UINT32	size_of_cent_dir;
+	UINT32	offset_to_start_of_cent_dir;
+	UINT16	zipfile_comment_length;
 	char*	zipfile_comment; /* pointer in ecd */
 } ZIP;
 
@@ -98,7 +98,7 @@ void rewindzip(ZIP* zip);
      zip opened zip
      ent entry to read
    out:
-     data buffer for data, ent.compressed_size bytes allocated by the caller
+     data buffer for data, ent.compressed_size UINT8s allocated by the caller
    return:
      ==0 success
      <0 error
@@ -110,7 +110,7 @@ int readcompresszip(ZIP* zip, struct zipent* ent, char* data);
      zip zip stream open
      ent entry to read
    out:
-     data buffer for data, ent.uncompressed_size bytes allocated by the caller
+     data buffer for data, ent.uncompressed_size UINT8s allocated by the caller
    return:
      ==0 success
      <0 error

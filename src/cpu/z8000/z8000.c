@@ -22,7 +22,7 @@
  *****************************************************************************/
 
 #include "driver.h"
-#include "osd_dbg.h"
+#include "mamedbg.h"
 #include "z8000.h"
 #include "z8000cpu.h"
 
@@ -474,7 +474,7 @@ int z8000_execute(int cycles)
     do
     {
         /* any interrupt request pending? */
-        if (IRQ_REQ) 
+        if (IRQ_REQ)
 			Interrupt();
 
 		CALL_MAME_DEBUG;
@@ -758,13 +758,12 @@ const char *z8000_info(void *context, int regnum)
 }
 
 
-unsigned z8000_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned z8000_dasm(char *buffer, unsigned pc)
 {
-	(void)base;
 #ifdef MAME_DEBUG
     return DasmZ8000(buffer,pc);
 #else
-	sprintf( buffer, "$%02X%02X", ROM[pc], ROM[(pc+1)&0xffff] );
+	sprintf( buffer, "$%04X", cpu_readop16(pc) );
 	return 2;
 #endif
 }

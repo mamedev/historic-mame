@@ -114,7 +114,6 @@ void	meadows_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void    meadows_videoram_w(int offset, int data);
 void    meadows_sprite_w(int offset, int data);
 
-int 	meadows_sh_init(const char * gamename);
 int     meadows_sh_start(void);
 void    meadows_sh_stop(void);
 void	meadows_sh_dac_w(int data);

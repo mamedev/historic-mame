@@ -22,8 +22,8 @@
 #include "driver.h"
 #include "cpuintrf.h"
 #include "state.h"
+#include "mamedbg.h"
 #include "z80.h"
-#include "osd_dbg.h"
 
 #define VERBOSE 0
 
@@ -157,6 +157,7 @@ typedef struct {
 int z80_ICount;
 static Z80_Regs Z80;
 static UINT16 EA;
+static int after_EI;
 
 static UINT8 SZ[256];		/* zero and sign flags */
 static UINT8 SZP[256];		/* zero, sign and parity flags */
@@ -387,13 +388,13 @@ static void take_interrupt(void);
         _HALT = 1;                                              \
         cpu_writeport(Z80_HALT_PORT,1);                         \
     }                                                           \
-    if( z80_ICount > 0 ) z80_ICount=0;                          \
+	if( after_EI == 0 && z80_ICount > 0 ) z80_ICount=0; 		\
 }
 #else
 #define ENTER_HALT {											\
     _PC--;                                                      \
     _HALT = 1;                                                  \
-    if( z80_ICount > 0 ) z80_ICount=0;                          \
+	if( after_EI == 0 && z80_ICount > 0 ) z80_ICount=0; 		\
 }
 #endif
 
@@ -525,7 +526,8 @@ INLINE UINT16 ARG16(void)
 	/* speed up busy loop */									\
 	if( _PCD == oldpc ) 										\
 	{															\
-		if( z80_ICount > 0 ) z80_ICount = 0;					\
+		if( after_EI == 0 && z80_ICount > 0 )					\
+			z80_ICount = 0; 									\
 	}															\
 	else														\
 	{															\
@@ -535,14 +537,16 @@ INLINE UINT16 ARG16(void)
 			/* NOP - JP $-1 or EI - JP $-1 */					\
 			if ( op == 0x00 || op == 0xfb ) 					\
 			{													\
-				if (z80_ICount > 4) z80_ICount = 4; 			\
+				if (after_EI == 0 && z80_ICount > 4)			\
+					z80_ICount = 4; 							\
 			}													\
 		}														\
 		else													\
 		/* LD SP,#xxxx - JP $-3 (Galaga) */ 					\
 		if( _PCD == oldpc-3 && op == 0x31 ) 					\
 		{														\
-			if( z80_ICount > 10 ) z80_ICount = 10;				\
+			if( after_EI == 0 && z80_ICount > 10 )				\
+				z80_ICount = 10;								\
 		}														\
 	}															\
 	change_pc16(_PCD);											\
@@ -580,7 +584,8 @@ INLINE UINT16 ARG16(void)
 	/* speed up busy loop */									\
 	if( _PCD == oldpc ) 										\
 	{															\
-		if( z80_ICount > 0 ) z80_ICount = 0;					\
+		if( after_EI == 0 && z80_ICount > 0 )					\
+			z80_ICount = 0; 									\
 	}															\
 	else														\
 	{															\
@@ -590,14 +595,16 @@ INLINE UINT16 ARG16(void)
 			/* NOP - JR $-1 or EI - JR $-1 */					\
 			if ( op == 0x00 || op == 0xfb ) 					\
 			{													\
-				if (z80_ICount > 4) z80_ICount = 4; 			\
+				if( after_EI == 0 && z80_ICount > 4 )			\
+					z80_ICount = 4; 							\
 			}													\
 		}														\
 		else													\
 		/* LD SP,#xxxx - JR $-3 */								\
 		if( _PCD == oldpc-3 && op == 0x31 ) 					\
 		{														\
-			if( z80_ICount > 10 ) z80_ICount = 10;				\
+			if( after_EI == 0 && z80_ICount > 10 )				\
+				z80_ICount = 10;								\
 		}														\
     }                                                           \
     change_pc16(_PCD);                                          \
@@ -1585,13 +1592,16 @@ INLINE UINT8 SET(UINT8 bit, UINT8 Value)
         _PPC = _PCD;                                            \
         CALL_MAME_DEBUG;                                        \
         R_INC;                                                  \
-		EXEC(op,ROP()); 										\
 		if( Z80.irq_state != CLEAR_LINE ||						\
 			Z80.request_irq >= 0 )								\
 		{														\
+			after_EI = 1;	/* avoid cycle skip hacks */		\
+			EXEC(op,ROP()); 									\
+			after_EI = 0;										\
             LOG((errorlog, "Z80#%d EI takes irq\n", cpu_getactivecpu())); \
             take_interrupt();                                   \
         }                                                       \
+		else EXEC(op,ROP()); 									\
     } else _IFF2 = 1;                                           \
 }
 
@@ -4007,7 +4017,7 @@ const char *z80_info(void *context, int regnum)
 		case CPU_INFO_REG+Z80_DC1: if(Z80.irq_max >= 2) sprintf(buffer[which], "DC1:%X", r->int_state[1]); break;
 		case CPU_INFO_REG+Z80_DC2: if(Z80.irq_max >= 3) sprintf(buffer[which], "DC2:%X", r->int_state[2]); break;
 		case CPU_INFO_REG+Z80_DC3: if(Z80.irq_max >= 4) sprintf(buffer[which], "DC3:%X", r->int_state[3]); break;
-		case CPU_INFO_REG+Z80_NMI_NESTING: sprintf(buffer[which], "NMI_N:%X", r->nmi_nesting); break;
+		case CPU_INFO_REG+Z80_NMI_NESTING: sprintf(buffer[which], "NMIN:%X", r->nmi_nesting); break;
 		case CPU_INFO_FLAGS:
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
 				r->AF.b.l & 0x80 ? 'S':'.',
@@ -4030,13 +4040,12 @@ const char *z80_info(void *context, int regnum)
 	return buffer[which];
 }
 
-unsigned z80_dasm( UINT8 *base, char *buffer, unsigned pc )
+unsigned z80_dasm( char *buffer, unsigned pc )
 {
-	(void)base;
 #ifdef MAME_DEBUG
     return DasmZ80( buffer, pc );
 #else
-	sprintf( buffer, "$%02X", ROM[pc] );
+	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
 #endif
 }

@@ -1230,11 +1230,17 @@ void paletteram_IIBBGGRR_w(int offset,int data)
 
 	i = (data >> 6) & 0x03;
 	/* red component */
-	r = (((data << 2) & 0x0c) | i) * 0x11;
+	r = (data << 2) & 0x0c;
+	if (r) r |= i;
+	r *= 0x11;
 	/* green component */
-	g = (((data >> 0) & 0x0c) | i) * 0x11;
+	g = (data >> 0) & 0x0c;
+	if (g) g |= i;
+	g *= 0x11;
 	/* blue component */
-	b = (((data >> 2) & 0x0c) | i) * 0x11;
+	b = (data >> 2) & 0x0c;
+	if (b) b |= i;
+	b *= 0x11;
 
 	palette_change_color(offset,r,g,b);
 }

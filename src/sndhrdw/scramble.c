@@ -79,10 +79,10 @@ static void filter_w(int chip, int channel, int data)
 
 void scramble_filter_w(int offset,int data)
 {
-	filter_w(0, 0, (offset >>  0) & 3);
-	filter_w(0, 1, (offset >>  2) & 3);
-	filter_w(0, 2, (offset >>  4) & 3);
-	filter_w(1, 0, (offset >>  6) & 3);
-	filter_w(1, 1, (offset >>  8) & 3);
-	filter_w(1, 2, (offset >> 10) & 3);
+	filter_w(1, 0, (offset >>  0) & 3);
+	filter_w(1, 1, (offset >>  2) & 3);
+	filter_w(1, 2, (offset >>  4) & 3);
+	filter_w(0, 0, (offset >>  6) & 3);
+	filter_w(0, 1, (offset >>  8) & 3);
+	filter_w(0, 2, (offset >> 10) & 3);
 }

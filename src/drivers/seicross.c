@@ -441,8 +441,8 @@ static struct MachineDriver machine_driver =
 			interrupt,1
 		},
 		{
-			CPU_M6808,	/* probably a 6802 not sure */
-			3072000,	/* 3.072 MHz? */
+			CPU_M6802,	/* probably a 6802 not sure */
+			6000000,	/* ??? */
 			3,
 			mcu_readmem,mcu_writemem,0,0,
 			ignore_interrupt,0

@@ -2,7 +2,7 @@
 #define M68000__HEADER
 
 #include "osd_cpu.h"
-#include "osd_dbg.h"
+#include "mamedbg.h"
 
 enum {
 	M68K_PC=1, M68K_ISP, M68K_USP, M68K_SR, M68K_VBR, M68K_SFC, M68K_DFC,
@@ -40,8 +40,6 @@ extern int m68000_ICount;
 #define MC68000_CPU_MODE_68020 4
 
 
-#define Dasm68000		m68k_disassemble
-
 extern void m68000_reset(void *param);
 extern void m68000_exit(void);
 extern int	m68000_execute(int cycles);
@@ -57,7 +55,7 @@ extern void m68000_set_nmi_line(int state);
 extern void m68000_set_irq_line(int irqline, int state);
 extern void m68000_set_irq_callback(int (*callback)(int irqline));
 extern const char *m68000_info(void *context, int regnum);
-extern unsigned m68000_dasm(unsigned char *base, char *buffer, unsigned pc);
+extern unsigned m68000_dasm(char *buffer, unsigned pc);
 
 /****************************************************************************
  * M68010 section
@@ -90,7 +88,7 @@ extern void m68010_set_nmi_line(int state);
 extern void m68010_set_irq_line(int irqline, int state);
 extern void m68010_set_irq_callback(int (*callback)(int irqline));
 const char *m68010_info(void *context, int regnum);
-extern unsigned m68010_dasm(unsigned char *base, char *buffer, unsigned pc);
+extern unsigned m68010_dasm(char *buffer, unsigned pc);
 #endif
 
 /****************************************************************************
@@ -124,7 +122,7 @@ extern void m68020_set_nmi_line(int state);
 extern void m68020_set_irq_line(int irqline, int state);
 extern void m68020_set_irq_callback(int (*callback)(int irqline));
 const char *m68020_info(void *context, int regnum);
-extern unsigned m68020_dasm(unsigned char *base, char *buffer, unsigned pc);
+extern unsigned m68020_dasm(char *buffer, unsigned pc);
 #endif
 
 #ifdef MAME_DEBUG

@@ -149,14 +149,15 @@ int travrusa_vh_start(void)
 		get_bg_tile_info,
 		TILEMAP_SPLIT,
 		8,8,
-		64,32,
-		32,0
+		64,32
 	);
 
 	if (bg_tilemap)
 	{
 		bg_tilemap->transmask[0] = 0xff; /* split type 0 is totally transparent in front half */
 		bg_tilemap->transmask[1] = 0x3f; /* split type 1 has pens 6 and 7 opaque - hack! */
+
+		tilemap_set_scroll_rows(bg_tilemap,32);
 
 		return 0;
 	}

@@ -24,12 +24,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "mamedbg.h"
+#include "memory.h"
 
 typedef unsigned char byte;
 typedef unsigned short int word;
 
 #define FMT(a,b) a, b
 #define PTRS_PER_FORMAT 2
+
+#define READOP16(a) 	((cpu_readop(a)<<8)|cpu_readop((a)+1))
+#define READARG16(a)	((cpu_readop_arg(a)<<8)|cpu_readop_arg((a)+1))
 
 char *arith[4] = { "*" , "*-" , "*+" , "??" } ;
 char *nextar[4] = { ",next AR0" , ",next AR1" , "" , "" } ;
@@ -167,55 +172,59 @@ static void InitDasm32010(void)
     int i;
 
     ops = TMSFormats; i = 0;
-    while (*ops) {
-	p = *ops;
+	while (*ops)
+	{
+		p = *ops;
         mask = 0; bits = 0; bit = 15;
-	while (*p && bit >= 0) {
-	    switch (*p++) {
-		case '1': mask |= 1<<bit; bits |= 1<<bit; bit--; break;
-		case '0': mask |= 1<<bit; bit--; break;
-		case ' ': break;
-                case 'a':
-                case 'b':
-                case 'k':
-                case 'm':
-                case 'n':
-                case 'p':
-                case 'r':
-                case 's':
-		    bit --;
-		    break;
-		default:
+		while (*p && bit >= 0)
+		{
+			switch (*p++)
+			{
+			case '1': mask |= 1<<bit; bits |= 1<<bit; bit--; break;
+			case '0': mask |= 1<<bit; bit--; break;
+			case ' ': break;
+			case 'a':
+			case 'b':
+			case 'k':
+			case 'm':
+			case 'n':
+			case 'p':
+			case 'r':
+			case 's':
+				bit --;
+				break;
+			default:
 		    printf("Invalid instruction encoding '%s %s'\n",
 			ops[0],ops[1]);
 		    exit(1);
-	    }
-	}
-	if (bit != -1 ) {
-	    printf("not enough bits in encoding '%s %s' %d\n",
-			ops[0],ops[1],bit);
-	    exit(1);
-	}
-	while (isspace(*p)) p++;
-	if (*p) Op[i].extcode = *p;
-	Op[i].bits = bits;
-	Op[i].mask = mask;
-	Op[i].fmt = ops[1];
-	Op[i].parse = ops[0];
+			}
+		}
+		if (bit != -1 )
+		{
+			printf("not enough bits in encoding '%s %s' %d\n",
+				ops[0],ops[1],bit);
+			exit(1);
+		}
+		while (isspace(*p)) p++;
+		if (*p) Op[i].extcode = *p;
+		Op[i].bits = bits;
+		Op[i].mask = mask;
+		Op[i].fmt = ops[1];
+		Op[i].parse = ops[0];
 
-	ops += PTRS_PER_FORMAT;
-	i++;
+		ops += PTRS_PER_FORMAT;
+		i++;
     }
 
     OpInizialized = 1;
 }
 
-int Dasm32010(char *str,byte *addr)
+int Dasm32010(char *str, unsigned pc)
 {
     int a, b, k, m, n, p, r, s;  /* these can all be filled in by parsing an instruction */
     int i;
     int op;
-    int cnt = 1;
+	int cnt = 1;
     int code;
     int bit;
     char *strtmp;
@@ -224,29 +233,34 @@ int Dasm32010(char *str,byte *addr)
     if (!OpInizialized) InitDasm32010();
 
     op = -1;	/* no matching opcode */
-    code = (addr[0]<<8) | addr[1];
-    for ( i = 0; i < MAX_OPS; i++) {
-        if ((code & Op[i].mask) == Op[i].bits) {
-	    if (op != -1) {
+	code = READOP16(2*pc);
+	for ( i = 0; i < MAX_OPS; i++)
+	{
+		if ((code & Op[i].mask) == Op[i].bits)
+		{
+			if (op != -1)
+			{
                 printf("Error: opcode %04.4Xh matches %d (%s) and %d (%s)\n",
                     code,i,Op[i].fmt,op,Op[op].fmt);
-	    }
-	    op = i;
-	}
+			}
+			op = i;
+		}
     }
-    if (op == -1) {
+	if (op == -1)
+	{
         sprintf(str,"???? dw %04.4Xh",code);
-	return cnt;
+		return cnt;
     }
     strtmp = str;
-    code = 0;
-    code = (addr[0]<<8) | addr[1];
-    if (Op[op].extcode) {
+	if (Op[op].extcode)
+	{
         bit = 31;
-        cnt++; addr+=2;
         code <<= 16;
-        code |= (addr[0]<<8) | addr[1];
-    } else {
+		code |= READARG16(2*(pc+cnt));
+		cnt++;
+	}
+	else
+	{
         bit = 15;
     }
 
@@ -254,50 +268,57 @@ int Dasm32010(char *str,byte *addr)
     cp = Op[op].parse;
     a = b = k = m = n = p = r = s = 0;
 
-    while (bit >= 0) {
-	/* printf("{%c/%d}",*cp,bit); */
-	switch(*cp) {
+	while (bit >= 0)
+	{
+		/* printf("{%c/%d}",*cp,bit); */
+		switch(*cp)
+		{
 	    case 'a': a <<=1; a |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
 	    case 'b': b <<=1; b |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
-            case 'k': k <<=1; k |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
-            case 'm': m <<=1; m |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
-            case 'n': n <<=1; n |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
-            case 'p': p <<=1; p |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
+		case 'k': k <<=1; k |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
+		case 'm': m <<=1; m |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
+		case 'n': n <<=1; n |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
+		case 'p': p <<=1; p |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
 	    case 'r': r <<=1; r |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
-            case 's': s <<=1; s |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
+		case 's': s <<=1; s |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
 	    case ' ': break;
 	    case '1': case '0':  bit--; break;
 	    case '\0': printf("premature end of parse string, opcode %x, bit = %d\n",code,bit); exit(1);
-	}
-	cp++;
+		}
+		cp++;
     }
 
     /* now traverse format string */
     cp = Op[op].fmt;
-    while (*cp) {
-	if (*cp == '%') {
+	while (*cp)
+	{
+		if (*cp == '%')
+		{
             char num[15], *q;
-	    cp++;
-	    switch (*cp++) {
-                case 'A': sprintf(num,"$%02.2Xh",a); break;
-                case 'B': sprintf(num,"$%04.4Xh",b); break;
-                case 'K': sprintf(num,"%03.3Xh",k); break;
-                case 'N': sprintf(num,"%s",nextar[n]); break;
-                case 'M': sprintf(num,"%s",arith[m]); break;
-                case 'P': sprintf(num,"PA%d",p); break;
-                case 'R': sprintf(num,"AR%d",r); break;
-                case 'S': sprintf(num,",%d",s); break;
-		default:
-		    printf("illegal escape character in format '%s'\n",Op[op].fmt);
-		    exit(1);
-	    }
-	    q = num; while (*q) *str++ = *q++;
-	    *str = '\0';
-	} else {
-	    *str++ = *cp++;
-	    *str = '\0';
-	}
+			cp++;
+			switch (*cp++)
+			{
+			case 'A': sprintf(num,"$%02.2Xh",a); break;
+			case 'B': sprintf(num,"$%04.4Xh",b); break;
+			case 'K': sprintf(num,"%03.3Xh",k); break;
+			case 'N': sprintf(num,"%s",nextar[n]); break;
+			case 'M': sprintf(num,"%s",arith[m]); break;
+			case 'P': sprintf(num,"PA%d",p); break;
+			case 'R': sprintf(num,"AR%d",r); break;
+			case 'S': sprintf(num,",%d",s); break;
+			default:
+				printf("illegal escape character in format '%s'\n",Op[op].fmt);
+				exit(1);
+			}
+			q = num; while (*q) *str++ = *q++;
+			*str = '\0';
+		}
+		else
+		{
+			*str++ = *cp++;
+			*str = '\0';
+		}
     }
 
-    return cnt;
+	return cnt;
 }

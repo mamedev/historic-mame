@@ -143,7 +143,6 @@ M6502 emulator Copyright (c) 1998 Juergen Buchmueller, all rights reserved.
 I86 emulator by David Hedley, modified by Fabrice Frances (frances@ensica.fr)
 M6809 emulator by John Butler, based on L.C. Benschop's 6809 Simulator V09.
 M6808 based on L.C. Benschop's 6809 Simulator V09.
-80x86 asm M6808 emulator Copyright 1998, Neil Bradley, All rights reserved
 M68000 emulator Copyright 1999 Karl Stenerud.  All rights reserved.
 80x86 M68000 emulator Copyright 1998, Mike Coates, Darren Olafson.
 8039 emulator by Mirko Buffoni, based on 8048 emulator by Dan Boris.

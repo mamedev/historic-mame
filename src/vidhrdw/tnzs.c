@@ -104,7 +104,7 @@ void tnzs_vh_stop(void)
 void tnzs_vh_draw_background(struct osd_bitmap *bitmap,
 					  unsigned char *m)
 {
-    int i, b,c,tile,color, x,y, column;
+    int i, b,c,tile,color, x,y, column, tot;
     int scrollx, scrolly;
     unsigned int upperbits;
 
@@ -141,8 +141,7 @@ void tnzs_vh_draw_background(struct osd_bitmap *bitmap,
 	}
 
     /* If the byte at f301 has bit 0 clear, then don't draw the
-       background tiles */
-    if ((tnzs_scrollram[0x101] & 1) == 0) return;
+       background tiles -WRONG- */
 
     /* The byte at f200 is the y-scroll value for the first column.
        The byte at f204 is the LSB of x-scroll value for the first column.
@@ -152,55 +151,34 @@ void tnzs_vh_draw_background(struct osd_bitmap *bitmap,
        The 9th bit of each x-scroll value is combined into 2 bytes
        at f302-f303 */
 
-    /* First draw the background layer (8 columns) */
-    upperbits = tnzs_scrollram[0x102];
-    for (column=7;column >= 0;column--)
+	/* f301 seems to control how many columns are drawn but it's not clear how. */
+	/* Arkanoid 2 also uses f381, which TNZS always leaves at 00. */
+	/* Maybe it's a background / foreground thing? In Arkanoid 2, f381 contains */
+	/* the value we expect for the background stars (2E vs. 2A), while f301 the */
+	/* one we expect at the beginning of a level (2C vs. 2A). */
+	x = tnzs_scrollram[0x101] & 0xf;
+	if (x == 1) x = 16;
+	y = tnzs_scrollram[0x181] & 0xf;
+	if (y == 1) y = 16;
+	/* let's just pick the larger value... */
+	tot = x;
+	if (y > tot) tot = y;
+
+    upperbits = tnzs_scrollram[0x102] + tnzs_scrollram[0x103] * 256;
+    for (column = 0;column < tot;column++)
     {
         scrollx = tnzs_scrollram[column*16+4]
-                - ((upperbits & 0x80) * 2);
+                - ((upperbits & 0x01) * 256);
         scrolly = -15 - tnzs_scrollram[column*16];
 
-        copybitmap(bitmap,tnzs_column[column+8], 0,0, scrollx,scrolly,
+        copybitmap(bitmap,tnzs_column[column^8], 0,0, scrollx,scrolly,
                    &Machine->drv->visible_area,
                    TRANSPARENCY_COLOR,0);
-        copybitmap(bitmap,tnzs_column[column+8], 0,0, scrollx,scrolly+(16*16),
-                   &Machine->drv->visible_area,
-                   TRANSPARENCY_COLOR,0);
-
-        upperbits <<= 1;
-    }
-
-    /* If the byte at f301 has bit 3 clear, then don't draw columns 9-15
-
-       This bit might have another meaning. For instance, it may just
-       reverse the layer priority, which would have the same effect.
-       However, the effect in TNZS is to not display columns 9-15, so
-       we'll use that because it's quicker. */
-
-    upperbits = tnzs_scrollram[0x103];
-    /* If bit 3 is set, skip ahead to just do column 8 */
-    if (tnzs_scrollram[0x101] & 8)
-    {
-        column = 8;
-        upperbits <<= 7;
-    } else {
-        column = 15;
-    }
-
-    for (;column >= 8;column--)
-    {
-        scrollx = tnzs_scrollram[column*16+4]
-                - ((upperbits & 0x80) * 2);
-        scrolly = -15 - tnzs_scrollram[column*16];
-
-        copybitmap(bitmap,tnzs_column[column-8], 0,0, scrollx,scrolly,
-                   &Machine->drv->visible_area,
-                   TRANSPARENCY_COLOR,0);
-        copybitmap(bitmap,tnzs_column[column-8], 0,0, scrollx,scrolly+(16*16),
+        copybitmap(bitmap,tnzs_column[column^8], 0,0, scrollx,scrolly+(16*16),
                    &Machine->drv->visible_area,
                    TRANSPARENCY_COLOR,0);
 
-        upperbits <<= 1;
+        upperbits >>= 1;
     }
 }
 
@@ -350,116 +328,6 @@ IN REVERSE ORDER, FLIPY SUPPORT AND STATIC PALETTE.
 
 ***************************************************************************/
 
-void arkanoi2_vh_draw_background(struct osd_bitmap *bitmap,
-					  unsigned char *m)
-{
-    int i, b,c,tile,color, x,y, column;
-    int scrollx, scrolly;
-    unsigned int upperbits;
-    int column_blanks[16];
-
-    /* The screen is split into 16 columns.
-       So first, update the tiles. */
-    for (i=0,column=0;column<16;column++)
-    {
-	  column_blanks[column] = 0;
-        for (y=0;y<16;y++)
-        {
-            for (x=0;x<2;x++,i++)
-            {
-                c = m[i];
-                b = m[i + 0x1000] & 0x1f;
-                color = m[i + 0x1200] >> 3; /* colours at d600-d7ff */
-
-                /* Construct unique identifier for this tile/color */
-                tile = (color << 16) + (b << 8) + c;
-		    if (((b << 8) + c) == 0)	column_blanks[column]++;
-
-                if (tnzs_dirty_map[column*2+x][y] != tile)
-                {
-                    tnzs_dirty_map[column*2+x][y] = tile;
-
-                    drawgfx(tnzs_column[column],
-                        Machine->gfx[0],            /* bank */
-                        b*0x100+c,                  /* code */
-                        color,                      /* color */
-                        tnzs_screenflip, 0,         /* flipx, flipy */
-                        x*16,                       /* x */
-                        y*16,                       /* y */
-                        0, TRANSPARENCY_NONE, 0);   /* other stuff */
-                }
-            }
-    	  }
-    }
-
-    /* If the byte at f301 has bit 0 clear, then don't draw the
-       background tiles - WRONG -*/
-
-			/*    if ((tnzs_scrollram[0x101] & 1) == 0) return;*/
-
-    /* The byte at f200 is the y-scroll value for the first column.
-       The byte at f204 is the LSB of x-scroll value for the first column.
-
-       The other columns follow at 16-byte intervals.
-
-       The 9th bit of each x-scroll value is combined into 2 bytes
-       at f302-f303 */
-
-    /* First draw the background layer (8 columns) */
-    upperbits = tnzs_scrollram[0x102];
-				/*    for (column=7;column >= 0;column--)*/
-				    for (column=0;column <= 7;column++)
-    {
-        scrollx = tnzs_scrollram[column*16+4]
-			                - ((upperbits & /*0x80*/1) * 256);
-        scrolly = -15 - tnzs_scrollram[column*16];
-
-        copybitmap(bitmap,tnzs_column[column+8], 0,0, scrollx,scrolly,
-                   &Machine->drv->visible_area,
-                   TRANSPARENCY_COLOR,0);
-        copybitmap(bitmap,tnzs_column[column+8], 0,0, scrollx,scrolly+(16*16),
-                   &Machine->drv->visible_area,
-                   TRANSPARENCY_COLOR,0);
-
-				        upperbits /*<<*/ >>= 1;
-    }
-
-    /* If the byte at f301 has bit 3 clear, then don't draw columns 9-15
-
-       This bit might have another meaning. For instance, it may just
-       reverse the layer priority, which would have the same effect.
-       However, the effect in TNZS is to not display columns 9-15, so
-       we'll use that because it's quicker. */
-
-    upperbits = tnzs_scrollram[0x103];
-    /* If bit 3 is set, skip ahead to just do column 8 */
-		/*    if (tnzs_scrollram[0x101] & 8)
-			    {
-		        column = 8;
-		        upperbits <<= 7;
-		    } else {*/
-       column = 15;
-		/*    }*/
-
-    for (;column >= 8;column--)
-    {
-	if (column_blanks[column-8]!=32)
-	{
-        scrollx = tnzs_scrollram[column*16+4]
-                - ((upperbits & /*0x80*/ 1) * 256);
-        scrolly = -15 - tnzs_scrollram[column*16];
-
-        copybitmap(bitmap,tnzs_column[column-8], 0,0, scrollx,scrolly,
-                   &Machine->drv->visible_area,
-                   TRANSPARENCY_COLOR,0);
-        copybitmap(bitmap,tnzs_column[column-8], 0,0, scrollx,scrolly+(16*16),
-                   &Machine->drv->visible_area,
-                   TRANSPARENCY_COLOR,0);
-	}
-        upperbits /*<<*/ >>= 1;
-    }
-}
-
 void arkanoi2_vh_draw_foreground(struct osd_bitmap *bitmap,
 							 unsigned char *char_pointer,
 							 unsigned char *x_pointer,
@@ -527,7 +395,7 @@ void arkanoi2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     fillbitmap(bitmap, Machine->pens[0], &Machine->drv->visible_area);
 
     /* Redraw the background tiles (c400-c5ff) */
-    arkanoi2_vh_draw_background(bitmap, tnzs_objram + 0x400);
+    tnzs_vh_draw_background(bitmap, tnzs_objram + 0x400);
 
     /* Draw the sprites on top */
 	arkanoi2_vh_draw_foreground(bitmap,

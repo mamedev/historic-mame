@@ -36,6 +36,11 @@
  *                NEW INTERRUPT SYSTEM only
  *                interrupt check sped up (when not taken)
  *                STOP checks for interrupt
+ * 01.04.99 MJC - OS2 specifics added
+ *                MOVEM reference point moved
+ *                Data and Address register mode combined for :-
+ *                	movecodes
+ *                  dumpx
  *---------------------------------------------------------------
  * Known Problems / Bugs
  *
@@ -86,7 +91,7 @@ int 		DisOp;
 /* needed for NEW_INTERRUPT_SYSTEM */
 #include "cpuintrf.h"
 
-#define VERSION 	"0.12"
+#define VERSION 	"0.13"
 
 #define TRUE -1
 #define FALSE 0
@@ -102,8 +107,12 @@ int 		DisOp;
 
 
 /* Register Location Offsets */
-
+#ifdef OS2
+#define ICOUNT      "m68000_ICount"
+#else
 #define ICOUNT      "_m68000_ICount"
+#endif
+
 #define REG_DAT     "R_D0"
 #define REG_DAT_EBX "[R_D0+ebx*4]"
 #define REG_ADD     "R_A0"
@@ -489,7 +498,7 @@ void Completed(void)
  *
  */
 
-void SetFlags(char Size,int Sreg,int Testreg,int SetX,int Delayed)
+void TestFlags(char Size,int Sreg)
 {
 	char* Regname="";
 
@@ -511,8 +520,12 @@ void SetFlags(char Size,int Sreg,int Testreg,int SetX,int Delayed)
     /* Test does not update register    */
 	/* so cannot generate partial stall */
 
-    if (Testreg) fprintf(fp, "\t\t test  %s,%s\n",Regname,Regname);
+    fprintf(fp, "\t\t test  %s,%s\n",Regname,Regname);
+}
 
+void SetFlags(char Size,int Sreg,int Testreg,int SetX,int Delayed)
+{
+    if (Testreg) TestFlags(Size,Sreg);
 
 	fprintf(fp, "\t\t pushfd\n");
 
@@ -2657,6 +2670,7 @@ void movep(void)
  *
  * Used to generate MOVE.B, MOVE.W and MOVE.L
  *
+ * NOT CURRENTLY USED
  */
 
 void movereg(void)
@@ -2680,27 +2694,27 @@ void movereg(void)
 
             /* Always read 32 bits - no prefix, no partial stalls */
 
-			fprintf(fp, "\t\t mov   eax,[%d+%s]\n",4+sreg*4,ICOUNT);
+			fprintf(fp, "\t\t mov   eax,[%d+%s]\n",sreg*4,REG_DAT);
 
 			switch( leng )
 			{
 				case 1:
                 	if (sreg != dreg)
-						fprintf(fp, "\t\t mov   [%d+%s],al\n",4+dreg*4,ICOUNT);
+						fprintf(fp, "\t\t mov   [%d+%s],al\n",dreg*4,REG_DAT);
 
 					fprintf(fp, "\t\t test  al,al\n");
 					break;
 
 				case 2:
                 	if (sreg != dreg)
-						fprintf(fp, "\t\t mov   [%d+%s],eax\n",4+dreg*4,ICOUNT);
+						fprintf(fp, "\t\t mov   [%d+%s],eax\n",dreg*4,REG_DAT);
 
 					fprintf(fp, "\t\t test  eax,eax\n");
 					break;
 
 				case 3:
                 	if (sreg != dreg)
-						fprintf(fp, "\t\t mov   [%d+%s],ax\n",4+dreg*4,ICOUNT);
+						fprintf(fp, "\t\t mov   [%d+%s],ax\n",dreg*4,REG_DAT);
 
 					fprintf(fp, "\t\t test  ax,ax\n");
 					break;
@@ -2749,9 +2763,16 @@ void movecodes(int allowfrom[],int allowto[],int Start,char Size)	/* MJC */
             }
         }
 
+        /* If Source = Data or Address register - combine into same routine */
+
+        if (((Opcode & 0x38) == 0x08) && (allowfrom[1]))
+        {
+          	BaseCode &= 0xfff7;
+        }
+
         if (OpcodeArray[BaseCode] == -2)
         {
-	    	Src  = EAtoAMN(Opcode, FALSE);
+		    Src  = EAtoAMN(Opcode, FALSE);
 	        Dest = EAtoAMN(Opcode >> 6, TRUE);
 
         	if ((allowfrom[(Src & 15)]) && (allowto[(Dest & 15)]))
@@ -2771,12 +2792,21 @@ void movecodes(int allowfrom[],int allowto[],int Start,char Size)	/* MJC */
                 	if (Dest < 7)
                     {
 		            	fprintf(fp, "\t\t mov   ebx,ecx\n");
-		            	fprintf(fp, "\t\t and   ebx,byte 7\n");
+
+                        if ((Src == 0) && allowfrom[1])
+			            	fprintf(fp, "\t\t and   ebx,byte 15\n");
+                        else
+			            	fprintf(fp, "\t\t and   ebx,byte 7\n");
+
 						EffectiveAddressRead(Src,Size,EBX,EAX,"--CDS-B",SaveEDX);
                     }
                     else
                     {
-		            	fprintf(fp, "\t\t and   ecx,byte 7\n");
+                        if ((Src == 0) && allowfrom[1])
+			            	fprintf(fp, "\t\t and   ecx,byte 15\n");
+                        else
+			            	fprintf(fp, "\t\t and   ecx,byte 7\n");
+
 						EffectiveAddressRead(Src,Size,ECX,EAX,"---DS-B",SaveEDX);
                     }
                 }
@@ -2827,7 +2857,7 @@ void moveinstructions(void)
 
 	/* Register transfers first */
 
-/*  movereg();*/
+/*  movereg(); not used as seems slower */
 
     /* For Byte */
 
@@ -3527,6 +3557,13 @@ void dumpx( int start, int reg, int type, char * Op, int dir, int leng, int mode
 	if ( (mode == 3 || mode == 4) && ( leng == 0 ) && (sreg == 7 ) )
 		BaseCode |= sreg ;
 
+    /* If Source = Data or Address register - combine into same routine */
+
+    if (((Opcode & 0x38) == 0x08) && (allow[1] != '-'))
+    {
+          BaseCode &= 0xfff7;
+    }
+
     Dest = EAtoAMN(Opcode, FALSE);
     SaveEDX = (Dest == 1) || (type == 3);
 
@@ -3596,7 +3633,11 @@ void dumpx( int start, int reg, int type, char * Op, int dir, int leng, int mode
 		    if (Dest < 7) 	/* Others do not need reg.no. */
 		    {
 			    fprintf(fp, "\t\t mov   ebx,ecx\n");
-			    fprintf(fp, "\t\t and   ebx,byte 7\n");
+
+                if ((Dest == 0) & (allow[1] != '-'))
+				    fprintf(fp, "\t\t and   ebx,byte 15\n");
+                else
+				    fprintf(fp, "\t\t and   ebx,byte 7\n");
 		    }
 
 		    fprintf(fp, "\t\t shr   ecx,byte 9\n");
@@ -4401,15 +4442,15 @@ void movem_reg_ea(void)
 				/* other modes use   a7-a0..d7-d0  d0 first*/
 
 				if ( Dest != 4 )
-					fprintf(fp, "\t\t mov   ecx,4h\n");
+					fprintf(fp, "\t\t xor   ecx,ecx\n");
 				else
-					fprintf(fp, "\t\t mov   ecx,40h\n");
+					fprintf(fp, "\t\t mov   ecx,3Ch\n");
 
 				fprintf(fp, "OP_%4.4x_Again:\n",BaseCode);
 				fprintf(fp, "\t\t test  edx,ebx\n");
 				fprintf(fp, "\t\t je    OP_%4.4x_Skip\n",BaseCode);
 
-				fprintf(fp, "\t\t mov   eax,[%s+ecx]\n",ICOUNT); 	/* load eax with current reg data */
+				fprintf(fp, "\t\t mov   eax,[%s+ecx]\n",REG_DAT); 	/* load eax with current reg data */
 
 				if ( Dest == 4 )
 				{
@@ -4439,12 +4480,12 @@ void movem_reg_ea(void)
 				fprintf(fp, "OP_%4.4x_Skip:\n",BaseCode);
 
 				if ( Dest != 4 )
-					fprintf(fp, "\t\t add   ecx,4h\n");
+					fprintf(fp, "\t\t add   ecx,byte 4h\n");
 				else
-					fprintf(fp, "\t\t sub   ecx,4h\n");
+					fprintf(fp, "\t\t sub   ecx,byte 4h\n");
 
 				fprintf(fp, "\t\t shl   ebx,1\n");
-				fprintf(fp, "\t\t or    bx,bx\n");			/* check low 16 bits */
+				fprintf(fp, "\t\t test  bx,bx\n");			/* check low 16 bits */
 				fprintf(fp, "\t\t jnz   OP_%4.4x_Again\n",BaseCode);
 
 				if ( Dest == 4 )
@@ -4533,7 +4574,7 @@ void movem_ea_reg(void)
 				/* predecrement uses d0-d7..a0-a7  a7 first*/
 				/* other modes use   a7-a0..d7-d0  d0 first*/
 
-				fprintf(fp, "\t\t mov   ecx,4h\n");				/* always start with D0 */
+				fprintf(fp, "\t\t xor   ecx,ecx\n");			/* always start with D0 */
 
 				fprintf(fp, "OP_%4.4x_Again:\n",BaseCode);
 				fprintf(fp, "\t\t test  edx,ebx\n");			/* is bit set for this register? */
@@ -4544,7 +4585,7 @@ void movem_ea_reg(void)
 				if ( Size == 'W' )
 					fprintf(fp, "\t\t cwde\n");				/* word size must be sign extended */
 
-				fprintf(fp, "\t\t mov   [%s+ecx],eax\n",ICOUNT); 		/* load current reg with eax */
+				fprintf(fp, "\t\t mov   [%s+ecx],eax\n",REG_DAT);	/* load current reg with eax */
 
 				if ( Size == 'W' )						/* adjust pointer after write */
 					fprintf(fp, "\t\t add   edi,byte 2\n");
@@ -4561,7 +4602,7 @@ void movem_ea_reg(void)
 				fprintf(fp, "OP_%4.4x_Skip:\n",BaseCode);
 				fprintf(fp, "\t\t add   ecx,byte 4\n");			/* adjust pointer to next reg */
 				fprintf(fp, "\t\t shl   ebx,1\n");
-				fprintf(fp, "\t\t or    bx,bx\n");				/* check low 16 bits */
+				fprintf(fp, "\t\t test  bx,bx\n");				/* check low 16 bits */
 				fprintf(fp, "\t\t jnz   OP_%4.4x_Again\n",BaseCode);
 
 				if ( mode == 3 )
@@ -6322,10 +6363,18 @@ void CodeSegmentBegin(void)
 /* Needed code to make it work! */
 
     fprintf(fp, "\t\t BITS 32\n\n");
+
+#ifdef OS2
+    fprintf(fp, "\t\t GLOBAL M68KRUN\n");
+    fprintf(fp, "\t\t GLOBAL M68KRESET\n");
+    fprintf(fp, "\t\t GLOBAL m68000_ICount\n");
+    fprintf(fp, "\t\t GLOBAL regs\n");
+#else
     fprintf(fp, "\t\t GLOBAL _M68KRUN\n");
     fprintf(fp, "\t\t GLOBAL _M68KRESET\n");
     fprintf(fp, "\t\t GLOBAL _m68000_ICount\n");
     fprintf(fp, "\t\t GLOBAL _regs\n");
+#endif
 
     fprintf(fp, "\t\t EXTERN %s\n",name_cpu_readmem24);
     fprintf(fp, "\t\t EXTERN %s\n",name_cpu_readmem24_word);
@@ -6346,12 +6395,20 @@ void CodeSegmentBegin(void)
     fprintf(fp, "\t\t EXTERN _ophw\n");
     fprintf(fp, "\t\t EXTERN _cur_mrhard\n");
 
-//  fprintf(fp, "\t\t SECTION maincode USE32 FLAT CLASS=CODE\n\n");
+#ifdef OS2
+    fprintf(fp, "\t\t SECTION maincode USE32 FLAT CLASS=CODE\n\n");
+#else
     fprintf(fp, "\t\t SECTION .text\n\n");
+#endif
 
 /* Reset routine */
 
+#ifdef OS2
+	fprintf(fp, "M68KRESET:\n");
+#else
 	fprintf(fp, "_M68KRESET:\n");
+#endif
+
 	fprintf(fp, "\t\t pushad\n\n");
 
     fprintf(fp, "; Build Jump Table (not optimised!)\n\n");
@@ -6381,7 +6438,12 @@ void CodeSegmentBegin(void)
 
 	Align();
 
+#ifdef OS2
+	fprintf(fp, "M68KRUN:\n");
+#else
 	fprintf(fp, "_M68KRUN:\n");
+#endif
+
 	fprintf(fp, "\t\t pushad\n");
 	fprintf(fp, "\t\t mov   esi,[%s]\n",REG_PC);
     fprintf(fp, "\t\t mov   edx,[%s]\n",REG_CCR);
@@ -6577,19 +6639,31 @@ void CodeSegmentBegin(void)
 
 void CodeSegmentEnd(void)
 {
-//  fprintf(fp, "\t\t SECTION maindata USE32 FLAT CLASS=DATA\n\n");
+#ifdef OS2
+    fprintf(fp, "\t\t SECTION maindata USE32 FLAT CLASS=DATA\n\n");
+#else
 	fprintf(fp, "\t\t SECTION .data\n");
+#endif
 
 	fprintf(fp, "\n\t\t align 16\n");
 
+#ifdef OS2
+    fprintf(fp, "m68000_ICount\t DD 0\n\n");
+#else
     fprintf(fp, "_m68000_ICount\t DD 0\n\n");
+#endif
 
     /* Memory structure for 68000 registers  */
     /* Same layout as structure in CPUDEFS.H */
 
     fprintf(fp, "\n\n; Register Structure\n\n");
 
+#ifdef OS2
+    fprintf(fp, "regs\n");
+#else
     fprintf(fp, "_regs\n");
+#endif
+
     fprintf(fp, "R_D0\t DD 0\t\t\t ; Data Registers\n");
     fprintf(fp, "R_D1\t DD 0\n");
     fprintf(fp, "R_D2\t DD 0\n");
@@ -6676,9 +6750,11 @@ void CodeSegmentEnd(void)
 #endif
 	fprintf(fp, "\t\tDD   0,0\n\n");
 
-
-//  fprintf(fp, "\t\t SECTION tempdata USE32 FLAT CLASS=BSS\n\n");
+#ifdef OS2
+    fprintf(fp, "\t\t SECTION tempdata USE32 FLAT CLASS=BSS\n\n");
+#else
 	fprintf(fp, "\t\t SECTION .bss\n");
+#endif
 
 	fprintf(fp, "OPCODETABLE\tRESD  65536\n\n");
 }

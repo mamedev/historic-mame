@@ -13,9 +13,7 @@ struct K007232_interface
 };
 
 
-int K007232_sh_start(struct K007232_interface *intf);
-void K007232_sh_stop(void);
-void K007232_sh_update(void);
+int K007232_sh_start(const struct K007232_interface *intf);
 void K007232_WriteReg(int r,int v);
 int K007232_ReadReg(int r);
 

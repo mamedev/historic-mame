@@ -1,31 +1,32 @@
 /****************************************************************************
- *	The new MAME debugger
+ *	The new MAME debugger V0.51
  *	Written by:   Juergen Buchmueller (so far - help welcome! :)
  *
  *	Based on code found in the preivous version of the MAME debugger
  *	written by:   Martin Scragg, John Butler, Mirko Buffoni
  *				  Chris Moore, Aaron Giles, Ernesto Corvi
  *
- *	Online help is available by pressing F1 (context sensitive!)
+ *  Online help is available by pressing F1 (context sensitive!)
  *
  *	TODO:
  *	- Verify correct endianess handling, ie. look at the word and dword
  *	  modes of the memory and disassembly windows (selected with M)
  *	- Squash thousands of bugs :-/
  *	- Test & improve name_rom()
- *	- Add names for more generic handlers to name_rdmem() and name_wrmem()
+ *	- Add more names for generic handlers to name_rdmem() and name_wrmem()
  *
  *  LATER:
  *	- Add stack view using cpu_get_reg(REG_SP_CONTENTS+offset)
- *	- Add more display modes for the memory windows (ASCII, binary?, decimal?)
+ *	- Add more display modes for the memory windows (binary? octal? decimal?)
  *	- Make the windows resizeable somehow (using win_set_w and win_set_h)
  *	- Anything you like - just contact me to avoid doubled effort.
  *
  ****************************************************************************/
-#include "mamedbg.h"
+
+#include <stdio.h>
 
 #ifdef MAME_DEBUG
-#include <stdio.h>
+#include "mamedbg.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -33,6 +34,8 @@
 #include "driver.h"
 #include "window.h"
 #include "vidhrdw/generic.h"
+#include "osd_dbg.h"
+
 
 #if (HAS_Z80)
 #include "cpu/z80/z80.h"
@@ -99,6 +102,7 @@
 /* Long(er) function names, short macro names... */
 #define ABITS	cpu_address_bits()
 #define AMASK   cpu_address_mask()
+#define ASHIFT	cpu_address_shift()
 #define ALIGN   cpu_align_unit()
 #define INSTL   cpu_max_inst_len()
 #define ENDIAN	cpu_endianess()
@@ -115,11 +119,11 @@ int debug_key_delay = 0;
 /****************************************************************************
  * Limits
  ****************************************************************************/
-#define MAX_DATA	256 		/* Maximum memory size in bytes of a dump window */
+#define MAX_DATA	512 		/* Maximum memory size in bytes of a dump window */
 #define MAX_REGS	64			/* Maximum number of registers for a CPU */
 #define MAX_MEM 	2			/* You can't redefine this... too easy */
 
-#define MAX_LOOPS	32			/* Maximum loop addresses recognized by trace */
+#define MAX_LOOPS	64			/* Maximum loop addresses recognized by trace */
 
 #define MAX_HIST	16			/* Maximum history depth */
 
@@ -145,17 +149,12 @@ int debug_key_delay = 0;
 #define MODE_HEX_UINT16 1
 #define MODE_HEX_UINT32 2
 
-#ifdef LSB_FIRST
 #define UINT16_XOR_LE(o) (((o)&~1)|(((o)&1)^1))
 #define UINT32_XOR_LE(o) (((o)&~3)|(((o)&3)^3))
+#define HOST_XOR_LE  0
 #define UINT16_XOR_BE(o) (o)
 #define UINT32_XOR_BE(o) (o)
-#else
-#define UINT16_XOR_LE(o) (o)
-#define UINT32_XOR_LE(o) (o)
-#define UINT16_XOR_BE(o) (((o)&~1)|(((o)&1)^1))
-#define UINT32_XOR_BE(o) (((o)&~3)|(((o)&3)^3))
-#endif
+#define HOST_XOR_BE  0
 
 /****************************************************************************
  * Statics
@@ -170,6 +169,7 @@ static int cputype = 0;
 static int dbg_fast = 0;
 static int dbg_step = 0;
 static int dbg_trace = 0;
+static int dbg_trace_delay = 0x1000;
 static int dbg_update = 0;
 static int dbg_update_cur = 0;
 static int dbg_active = 0;
@@ -184,6 +184,125 @@ static int dbg_dasm_case = 0;
 static int dbg_dasm_relative_jumps = 0;
 
 static const char *dbg_info_once = NULL;
+
+/****************************************************************************
+ * Color settings
+ ****************************************************************************/
+#define COLOR_NAMES \
+	"BLACK\0" \
+	"BLUE\0" \
+	"GREEN\0" \
+	"CYAN\0" \
+	"RED\0" \
+	"MAGENTA\0" \
+	"BROWN\0" \
+	"LIGHTGRAY\0" \
+	"DARKGRAY\0" \
+	"LIGHTBLUE\0" \
+	"LIGHTGREEN\0" \
+	"LIGHTCYAN\0" \
+	"LIGHTRED\0" \
+	"LIGHTMAGENTA\0" \
+	"YELLOW\0" \
+	"WHITE\0"
+
+#define ELEMENT_NAMES \
+	"TITLE\0" \
+	"FRAME\0" \
+	"REGS\0" \
+	"DASM\0" \
+    "MEM1\0" \
+    "MEM2\0" \
+	"CMDS\0" \
+	"BRK_EXEC\0" \
+	"BRK_DATA\0" \
+	"BRK_REGS\0" \
+    "ERROR\0" \
+    "HELP\0" \
+	"PROMPT\0" \
+    "CHANGES\0" \
+	"PC\0" \
+	"CURSOR\0"
+
+enum ELEMENT {
+	E_TITLE,
+	E_FRAME,
+	E_REGS,
+	E_DASM,
+    E_MEM1,
+    E_MEM2,
+	E_CMDS,
+	E_BRK_EXEC,
+	E_BRK_DATA,
+	E_BRK_REGS,
+    E_ERROR,
+    E_HELP,
+    E_PROMPT,
+    E_CHANGES,
+	E_PC,
+	E_CURSOR,
+	E_COUNT
+};
+
+static UINT8 cur_col[E_COUNT] = {
+	COLOR_TITLE,
+	COLOR_FRAME,
+	COLOR_REGS,
+	COLOR_DASM,
+    COLOR_MEM1,
+    COLOR_MEM2,
+	COLOR_CMDS,
+	COLOR_BRK_EXEC,
+	COLOR_BRK_DATA,
+	COLOR_BRK_REGS,
+    COLOR_ERROR,
+    COLOR_HELP,
+	COLOR_PROMPT,
+    COLOR_CHANGES,
+	COLOR_PC,
+	COLOR_CURSOR,
+};
+
+static UINT8 def_col[E_COUNT] = {
+	COLOR_TITLE,
+	COLOR_FRAME,
+	COLOR_REGS,
+	COLOR_DASM,
+    COLOR_MEM1,
+    COLOR_MEM2,
+	COLOR_CMDS,
+	COLOR_BRK_EXEC,
+	COLOR_BRK_DATA,
+	COLOR_BRK_REGS,
+    COLOR_ERROR,
+    COLOR_HELP,
+	COLOR_PROMPT,
+    COLOR_CHANGES,
+	COLOR_PC,
+    COLOR_CURSOR,
+};
+
+/****************************************************************************
+ * Code to ASCII translation table; may be redefined (later)
+ ****************************************************************************/
+static char trans_table[256] = {
+	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+    '.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+	' ','!','"','#','$','%','&', 39,'(',')','*','+',',','-','.','/',
+	'0','1','2','3','4','5','6','7','8','9',':',';','<','=','>','?',
+	'@','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O',
+	'P','Q','R','S','T','U','V','W','X','Y','Z','[', 92,']','^','_',
+	'`','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o',
+	'p','q','r','s','t','u','v','w','x','y','z','{','|','}','~','.',
+	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+    '.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+    '.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+    '.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+    '.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+};
 
 /****************************************************************************
  * Function prototypes
@@ -209,13 +328,13 @@ static int win_create(int n, UINT8 prio, int x, int y, int w, int h,
 	UINT8 co_text, UINT8 co_frame, UINT8 chr, UINT32 attributes);
 static int DECL_SPEC win_msgbox( UINT8 color, const char *title, const char *fmt, ... );
 static void dbg_open_windows( void );
+static void dbg_close_windows( void );
 
 static unsigned dasm_line( unsigned pc, int times );
 
 static void dump_regs( void );
 static unsigned dump_dasm( unsigned pc );
 static void dump_mem_hex( int which, unsigned len_addr, unsigned len_data );
-static void dump_mem_asc( int which, unsigned len_addr, unsigned len_data );
 static void dump_mem( int which, int set_title );
 
 static int edit_cmds_info( void );
@@ -229,38 +348,45 @@ static void edit_cmds(void);
 
 static void cmd_help( void );
 static void cmd_default( int code );
-static void cmd_brk_exec_set( void );
-static void cmd_brk_exec_clear( void );
-static void cmd_brk_data_set( void );
-static void cmd_brk_data_clear( void );
-static void cmd_brk_regs_set( void );
-static void cmd_brk_regs_clear( void );
+
 static void cmd_display_memory( void );
 static void cmd_edit_memory( void );
-static void cmd_dasm_to_file( void );
-static void cmd_dump_to_file( void );
+static void cmd_set_memory_mode( void );
 static void cmd_fast( void );
 static void cmd_go_break( void );
-static void cmd_here( void );
-static void cmd_set_ignore( void );
-static void cmd_set_observe( void );
 static void cmd_jump( void );
 static void cmd_replace_register( void );
-static void cmd_set_dasm_relative_jumps( void );
+static void cmd_brk_exec_set( void );
+static void cmd_brk_exec_clear( void );
+static void cmd_brk_regs_set( void );
+static void cmd_brk_regs_clear( void );
+static void cmd_brk_data_set( void );
+static void cmd_brk_data_clear( void );
+static void cmd_here( void );
+static void cmd_dasm_to_file( void );
+static void cmd_dump_to_file( void );
 static void cmd_trace_to_file( void );
-static void cmd_switch_window( void );
+static void cmd_save_to_file( void );
+static void cmd_set_ignore( void );
+static void cmd_set_observe( void );
 static void cmd_set_dasm_case( void );
-static void cmd_set_mem_squeezed( void );
 static void cmd_set_dasm_opcodes( void );
+static void cmd_set_dasm_relative_jumps( void );
+static void cmd_set_mem_squeezed( void );
+static void cmd_set_screen_size( void );
+static void cmd_set_element_color( void );
+static void cmd_brk_exec_toggle( void );
+static void cmd_brk_data_toggle( void );
+
+static void cmd_switch_window( void );
 static void cmd_dasm_up( void );
 static void cmd_dasm_down( void );
 static void cmd_dasm_page_up( void );
 static void cmd_dasm_page_down( void );
+static void cmd_dasm_home( void );
+static void cmd_dasm_end( void );
 static void cmd_dasm_hist_follow( void );
 static void cmd_dasm_hist_back( void );
-static void cmd_help( void );
-static void cmd_brk_exec_toggle( void );
-static void cmd_brk_data_toggle( void );
 static void cmd_run_to_cursor( void );
 static void cmd_view_screen( void );
 static void cmd_focus_next_cpu( void );
@@ -268,6 +394,29 @@ static void cmd_step( void );
 static void cmd_animate( void );
 static void cmd_step_over( void );
 static void cmd_go( void );
+static void cmd_search_memory( void );
+
+/****************************************************************************
+ * Generic structure for saving points in the 'follow history'
+ ****************************************************************************/
+typedef struct {
+    UINT32  dasm_top;               /* previous top of window PC */
+    UINT32  dasm_cur;               /* previous cursor PC */
+    UINT32  mem1_base;              /* previous memory 1 base address */
+    UINT32  mem1_offset;            /* previous memory 1 offset */
+    UINT32  mem1_nibble;            /* previous memory 1 nibble */
+}   s_hist;
+
+/****************************************************************************
+ * Symbol table entry
+ ****************************************************************************/
+typedef struct {
+	UINT32	value;					/* value of the symbol */
+	INT32	access; 				/* access mode (EA_... enum) */
+	INT32	size;					/* size of the element */
+	UINT32	times;					/* repeat how many times */
+	char	name[47+1]; 			/* name of the symbol */
+}	s_symbol;
 
 /****************************************************************************
  * Generic structure for editing values
@@ -278,17 +427,6 @@ static void cmd_go( void );
 typedef struct {
 	UINT8	x,y,w,n;
 }	s_edit;
-
-/****************************************************************************
- * Generic structure for saving points in the 'follow history'
- ****************************************************************************/
-typedef struct {
-	UINT32	dasm_top;				/* previous top of window PC */
-	UINT32	dasm_cur;				/* previous cursor PC */
-	UINT32	mem1_base;				/* previous memory 1 base address */
-	UINT32	mem1_offset;			/* previous memory 1 offset */
-	UINT32	mem1_nibble;			/* previous memory 1 nibble */
-}	s_hist;
 
 /****************************************************************************
  * Register display and editing structure
@@ -303,7 +441,6 @@ typedef struct {
     INT32   idx;                    /* index of current register */
     INT32   count;                  /* number of registers */
     INT32   nibble;                 /* edit nibble */
-    INT32   color;                  /* color of the edit window */
     INT32   changed;
 }	s_regs;
 
@@ -321,7 +458,6 @@ typedef struct {
 	INT32	bytes;				/* number of bytes per edit line */
 	INT32	width;				/* width in nibbles of the edit line */
 	INT32	size;				/* number of bytes in the edit window */
-    UINT8   color;              /* color of the edit window */
 	UINT8	mode;				/* 0 bytes, 1 words, 2 dword */
 	UINT8	ascii;				/* display ASCII values */
     UINT8   changed;
@@ -391,9 +527,9 @@ static	s_dbg	dbg[MAX_CPU];
 
 /* Covenience macros... keep the code readable */
 #define DBG 	dbg[activecpu]
-#define REGS	dbg[activecpu].regs
-#define DASM	dbg[activecpu].dasm
-#define MEM 	dbg[activecpu].mem
+#define DBGREGS dbg[activecpu].regs
+#define DBGDASM dbg[activecpu].dasm
+#define DBGMEM	dbg[activecpu].mem
 #define TRACE	dbg[tracecpu].trace
 
 #define CMD 	dbg[activecpu].cmdline
@@ -409,8 +545,8 @@ static int trace_on = 0;
  ****************************************************************************/
 typedef struct {
 	int valid;				/* command is valid for which windows (bit mask) */
-    const char *name;       /* command (NULL none) */
-	const char *alias;		/* alias command (NULL none) */
+	const char *name;		/* command name (NULL none) */
+	const char *alias;		/* command name alias (NULL none) */
 	int key;				/* key code (0 none) */
 	const char *args;		/* description of expected arguments */
 	const char *info;		/* description of the function */
@@ -420,6 +556,46 @@ typedef struct {
 #define ALL 	((1<<EDIT_CMDS)|(1<<EDIT_REGS)|(1<<EDIT_DASM)|(1<<EDIT_MEM1)|(1<<EDIT_MEM2))
 
 static s_command commands[] = {
+{	(1<<EDIT_CMDS),
+	"A",            0,          0,
+	"[<update>]",
+	"Animate (trace) and update display every <update> opcodes only",
+	cmd_animate },
+{   (1<<EDIT_CMDS),
+    "D",            0,          0,
+    "<1|2> <address>",
+    "Display memory <1|2> starting at <address>",
+    cmd_display_memory },
+{   (1<<EDIT_CMDS),
+    "E",            0,          0,
+    "<1|2> [<address>]",
+    "Edit memory window <1|2> [at <address>]",
+    cmd_edit_memory },
+{	(1<<EDIT_CMDS),
+    "M",            0,          0,
+	"<1|2> [BYTE|WORD|DWORD]",
+	"Change memory window mode to default [to BYTE|WORD|DWORD (or 0|1|2)]",
+	cmd_set_memory_mode },
+{   (1<<EDIT_CMDS),
+    "F",            0,          0,
+    "",
+    "Fast",
+    cmd_fast },
+{   (1<<EDIT_CMDS),
+    "G",            0,          0,
+    "[<address>]",
+    "Go [and break at <address>]",
+    cmd_go_break },
+{   (1<<EDIT_CMDS),
+    "J",            0,          0,
+    "<address>",
+    "Jump to <address> in disassembly window",
+    cmd_jump },
+{   (1<<EDIT_CMDS),
+    "R",            0,          0,
+    "<register> <value>",
+	"Replace <register> with <value> (<value> may also be a <register>)",
+    cmd_replace_register },
 {   (1<<EDIT_CMDS),
 	"BP",           "BPX",      0,
 	"<address> [<times>]",
@@ -431,6 +607,16 @@ static s_command commands[] = {
 	"Clear execution breakpoint",
 	cmd_brk_exec_clear },
 {	(1<<EDIT_CMDS),
+    "RP",           0,          0,
+    "<register> [<value> [<mask>]]",
+    "Break if <register> changes [to <value> [compare after applying <mask>]]",
+    cmd_brk_regs_set },
+{   (1<<EDIT_CMDS),
+    "RC",           0,          0,
+    "",
+    "Clear register watchpoint",
+    cmd_brk_regs_clear },
+{   (1<<EDIT_CMDS),
     "WP",           "BPW",      0,
     "<address> [<value>]",
     "Break if data at <address> changes [to <value>]",
@@ -438,54 +624,38 @@ static s_command commands[] = {
 {   (1<<EDIT_CMDS),
     "WC",           0,          0,
     "",
-    "Clear data breakpoint",
+	"Clear data watchpoint",
     cmd_brk_data_clear },
-{   (1<<EDIT_CMDS),
-	"RP",           0,          0,
-	"<register> [<value> [<mask>]]",
-	"Break if <register> changes [to <value> [compare after applying <mask>]]",
-    cmd_brk_regs_set },
-{   (1<<EDIT_CMDS),
-	"RC",           0,          0,
+{	(1<<EDIT_CMDS),
+    "HERE",         0,          0,
     "",
-    "Clear register breakpoint",
-    cmd_brk_regs_clear },
-{   (1<<EDIT_CMDS),
-	"D",            0,          0,
-	"<1|2> <address>",
-	"Display memory <1|2> starting at <address>",
-	cmd_display_memory },
+    "Run to cursor",
+    cmd_here },
 {   (1<<EDIT_CMDS),
 	"DASM",         0,          0,
 	"<filename> <start> <end> [<boolean>]",
-	"Disassemble to <filename> from address <start> to <end> [dump opcodes too]",
+	"Disassemble to <filename> from address <start> to <end>\n" \
+	"Opcode dump on by default [OFF|NO|0 without]",
 	cmd_dasm_to_file },
 {	(1<<EDIT_CMDS),
 	"DUMP",         0,          0,
-	"<filename> <start> <end> [<data size>]",
-	"Dump to <filename> from address <start> to <end>\n[<data size> 1=bytes (default), 2=words, 4=dwords]",
+	"<filename> <start> <end> [<data size> [<ASCII mode>]]",
+	"Dump to <filename> from address <start> to <end>\n" \
+	"[data size BYTE|WORD|DWORD (also 0|1|2)]\n" \
+	"[ASCII mode OFF|TRANSLATE|FULL (also 0|1|2)]\n",
 	cmd_dump_to_file },
 {	(1<<EDIT_CMDS),
-	"E",            0,          0,
-	"<1|2> [<address>]",
-	"Edit memory window <1|2> [at <address>]",
-	cmd_edit_memory },
+    "TRACE",        0,          0,
+    "{<filename> [<reg1> [<reg2>...]]}|OFF",
+    "Trace to <filename> [dumping <reg1> [<reg2>...]] | OFF to stop tracing.",
+    cmd_trace_to_file },
 {	(1<<EDIT_CMDS),
-	"F",            0,          0,
-	"",
-	"Fast",
-	cmd_fast },
-{	(1<<EDIT_CMDS),
-	"G",            0,          0,
-	"[<address>]",
-	"Go [and break at <address>]",
-	cmd_go_break },
-{	(1<<EDIT_CMDS),
-	"HERE",         0,          0,
-	"",
-	"Run to cursor",
-	cmd_here },
-{	(1<<EDIT_CMDS),
+	"SAVE",         0,          0,
+	"<filename> <start> <end> [OPCODES|DATA]",
+	"Save binary to <filename> from address <start> to <end>\n" \
+	"[either OPCODES (from OP_ROM, default) or DATA (from OP_RAM), also 0|1].",
+	cmd_save_to_file },
+{   (1<<EDIT_CMDS),
 	"IGNORE",       0,          0,
 	"<cpunum>",
 	"Ignore CPU #<cpunum> while debugging or tracing",
@@ -495,41 +665,36 @@ static s_command commands[] = {
 	"<cpunum>",
 	"Observe CPU #<cpunum> while debugging or tracing",
 	cmd_set_observe },
-{   (1<<EDIT_CMDS),
-	"J",            0,          0,
-	"<address>",
-	"Jump to <address> in disassembly window",
-	cmd_jump },
-{   (1<<EDIT_CMDS),
-	"R",            0,          0,
-	"<register> <value>",
-	"Replace <register> with <value> (Note: <value> can also be a <register>!)",
-	cmd_replace_register },
 {	(1<<EDIT_CMDS),
-	"RELATIVE",     0,          0,
-	"<boolean>",
-	"Display relative jump addresses in disassembly window",
-	cmd_set_dasm_relative_jumps },
+    "CASE",         0,          0,
+    "DEFAULT|LOWER|UPPER (also 0|1|2)",
+    "Set disassembly case style.",
+    cmd_set_dasm_case },
 {   (1<<EDIT_CMDS),
-	"TRACE",        0,          0,
-	"{<filename> [<reg1> [<reg2>...]]}|OFF",
-	"Trace to <filename> [dumping <reg1> [<reg2>...]] | OFF to stop tracing.",
-	cmd_trace_to_file },
-{	(1<<EDIT_CMDS),
-	"CASE",         0,          0,
-	"DEFAULT|LOWER|UPPER (also 0|1|2)",
-	"Set disassembly case style.",
-	cmd_set_dasm_case },
+    "OPCODES",      0,          0,
+    "<boolean>",
+    "Display opcodes in disassembly window",
+    cmd_set_dasm_opcodes },
+{   (1<<EDIT_CMDS),
+    "RELATIVE",     0,          0,
+    "<boolean>",
+    "Display relative jump addresses in disassembly window",
+    cmd_set_dasm_relative_jumps },
 {	(1<<EDIT_CMDS),
 	"SQUEEZE",      0,        0,
 	"<boolean>",
 	"Allow squeezed memory display",
 	cmd_set_mem_squeezed },
 {	(1<<EDIT_CMDS),
-	"OPCODES",      0,          0,
-	"<boolean>",
-	"Display opcodes in disassembly window",
-	cmd_set_dasm_opcodes },
+	"COLOR",       0,          0,
+	"<element> <foreground> [<background>]",
+	"Set <element> color to <foreground> on BLACK [or <background>].\nFor a list of <elements> and <colors> see mamedbg.cfg",
+	cmd_set_element_color },
+{   (1<<EDIT_CMDS),
+	"SCREEN",       0,          0,
+	"[<column> <lines>]",
+	"Set screen size to default [or to <columns> x <lines>]",
+	cmd_set_screen_size },
 {   (1<<EDIT_CMDS)|(1<<EDIT_DASM),
 	0,				0,			OSD_KEY_UP,
 	"",
@@ -551,6 +716,16 @@ static s_command commands[] = {
 	"Move cursor down one page in disassembly window",
 	cmd_dasm_page_down },
 {	(1<<EDIT_CMDS)|(1<<EDIT_DASM),
+	0,				0,			OSD_KEY_HOME,
+	"",
+	"Move cursor to first page in disassembly window",
+	cmd_dasm_home },
+{	(1<<EDIT_CMDS)|(1<<EDIT_DASM),
+	0,				0,			OSD_KEY_END,
+	"",
+	"Move cursor to last page in disassembly window",
+	cmd_dasm_end },
+{   (1<<EDIT_CMDS)|(1<<EDIT_DASM),
 	0,				0,			OSD_KEY_LEFT,
 	"",
 	"Back to the previous point in 'follow history'",
@@ -585,16 +760,21 @@ static s_command commands[] = {
     "",
 	"Toggle disassembly opcode display mode",
     NULL },
-{	(1<<EDIT_DASM),
+{	(1<<EDIT_MEM1)|(1<<EDIT_MEM2),
 	0,				0,			OSD_KEY_H,
     "",
-	"Toggle between hex and ASCII mode (character codes 0x20 - 0x7f)",
+	"Toggle between hex, ASCII and full character set mode",
     NULL },
 {   (1<<EDIT_MEM1)|(1<<EDIT_MEM2),
 	0,				0,			OSD_KEY_M,
     "",
 	"Switch memory display mode between bytes, words and dwords",
     NULL },
+{	(1<<EDIT_MEM1)|(1<<EDIT_MEM2),
+	0,				0,			OSD_KEY_S,
+    "",
+	"Search memory for a sequence of bytes",
+	cmd_search_memory },
 {   ALL,
 	0,				0,			OSD_KEY_F1,
 	"",
@@ -633,7 +813,7 @@ static s_command commands[] = {
 {	ALL,
 	0,				0,			OSD_KEY_F9,
 	"",
-	"Animate (Trace at high speed)",
+	"Animate (trace) at speed set by last \"A\" command",
 	cmd_animate },
 {	ALL,
 	0,				0,			OSD_KEY_F10,
@@ -653,6 +833,77 @@ static s_command commands[] = {
 /* This is the end of the list! */
 { 0,    },
 };
+
+INLINE unsigned order( unsigned offset, unsigned size )
+{
+	switch( size )
+	{
+	case 1:
+		return offset;
+		break;
+	case 2:
+		switch( ENDIAN )
+		{
+		case CPU_IS_LE: return UINT16_XOR_LE(offset);
+		case CPU_IS_BE: return UINT16_XOR_BE(offset);
+        }
+		break;
+	case 4:
+		switch( ENDIAN )
+		{
+		case CPU_IS_LE: return UINT32_XOR_LE(offset);
+		case CPU_IS_BE: return UINT32_XOR_BE(offset);
+        }
+		break;
+	}
+	return offset;
+}
+
+/* adjust an offset by shifting it left cpu_address_shift() times */
+INLINE unsigned lshift( unsigned offset )
+{
+	switch( ASHIFT )
+	{
+		case -1: return offset / 2;
+		case  3: return offset * 8;
+	}
+	return offset;
+}
+
+/* adjust an offset by shifting it right cpu_address_shift() times */
+INLINE unsigned rshift( unsigned offset )
+{
+	switch( ASHIFT )
+	{
+		case -1: return offset * 2;
+		case  3: return offset / 8;
+	}
+	return offset;
+}
+
+
+/**************************************************************************
+ * dtou
+ * Decimal to unsigned.
+ * The pointer to the char* is placed after all consecutive digits
+ * and trailing space. The pointer to int size (if given) contains the
+ * number of digits found.
+ **************************************************************************/
+INLINE unsigned dtou( char **parg, int *size)
+{
+	unsigned val = 0, digit;
+
+    if (size) *size = 0;
+	while( isdigit( *(*parg) ) )
+	{
+		digit = *(*parg) - '0';
+		val = (val * 10) + digit;
+		if( size ) (*size)++;
+		(*parg) += 1;
+	}
+	while( isspace(*(*parg)) ) *parg += 1;
+	return val;
+}
 
 /**************************************************************************
  * xtou
@@ -696,16 +947,16 @@ const char *set_ea_info( int what, unsigned value, int size, int access )
     /* set source EA? */
 	if( what == EA_SRC )
     {
-        DASM.src_ea_access = access;
-		DASM.src_ea_value = result;
-		DASM.src_ea_size = size;
+		DBGDASM.src_ea_access = access;
+		DBGDASM.src_ea_value = result;
+		DBGDASM.src_ea_size = size;
     }
     else
 	if( what == EA_DST )
     {
-        DASM.dst_ea_access = access;
-		DASM.dst_ea_value = result;
-		DASM.dst_ea_size = size;
+		DBGDASM.dst_ea_access = access;
+		DBGDASM.dst_ea_value = result;
+		DBGDASM.dst_ea_size = size;
     }
 	else
 	{
@@ -829,6 +1080,41 @@ INLINE char *upper( const char *src)
 }
 
 /**************************************************************************
+ * kilobyte
+ * Format a byte count or size to a kilo or mega bytes string
+ **************************************************************************/
+INLINE char *kilobyte( unsigned bytes )
+{
+	static char buffer[2][31+1];
+	static int which = 0;
+	char *dst = buffer[which];
+	which ^= 1;
+	if( bytes < 1024 )
+		sprintf( dst, "%u", bytes );
+	else
+	if( bytes < 1024 * 1024 )
+		sprintf( dst, "%u.%02uK", bytes / 1024, 100 * bytes / 1024 );
+	else
+		sprintf( dst, "%u.%02uM", bytes / 1024 / 1024, 100 * ((bytes / 1024) % 1024) / 1024 );
+	return dst;
+}
+
+/**************************************************************************
+ * my_stricmp
+ * Compare strings case insensitive
+ **************************************************************************/
+INLINE int my_stricmp( const char *dst, const char *src)
+{
+	while( *src && *dst )
+	{
+		if( tolower(*src) != tolower(*dst) ) return *dst - *src;
+		src++;
+		dst++;
+	}
+	return 0;
+}
+
+/**************************************************************************
  * get_boolean
  * Get a boolean argument (on/off, yes/no, y/n, 1/0)
  **************************************************************************/
@@ -904,13 +1190,48 @@ static unsigned get_boolean( char **parg, int *size )
     return result;
 }
 
+/**************************************************************************
+ * get_option_or_value
+ * Get a option argument (from opt_list) or a number in the
+ * range of 0 .. number of options - 1
+ **************************************************************************/
+static unsigned get_option_or_value( char **parg, int *size, const char *opt_list )
+{
+	char *p = *parg;
+	const char *opt;
+	unsigned result = 0, opt_count = 0;
+	int length = 0;
+
+	/* length of the next argument */
+	while( isalnum(*p) ) p++;
+	length = (int) (p - *parg);
+	while( isspace(*p) ) p++;
+
+	/* sacn options */
+    for( opt = opt_list; *opt ; opt += strlen(opt) + 1 )
+	{
+		if( strncmp(*parg, opt, length) == 0 )
+		{
+			*parg = p;
+			if( size ) *size = length;
+			return opt_count;
+		}
+		opt_count++;
+	}
+
+	result = xtou( parg, &length );
+	if( size ) *size += length;
+
+    return result;
+}
+
 static const char *get_file_name( char **parg, int *size )
 {
 	static char filename[127+1];
 	char *s, *d;
 	int l;
 
-	for( l = 0, s = *parg, d = filename; *s && isalnum(*s); l++ )
+	for( l = 0, s = *parg, d = filename; *s && (isalnum(*s) || ispunct(*s)); l++ )
 		*d++ = *s++;
 
     *d = '\0';
@@ -940,7 +1261,7 @@ const char *get_ea_info( unsigned pc )
 
     unsigned wdst, wsrc;
 
-	switch( DASM.dst_ea_size )
+	switch( DBGDASM.dst_ea_size )
 	{
 		case EA_INT8:	wdst = 2; break;
 		case EA_INT16:	wdst = 4; break;
@@ -952,7 +1273,7 @@ const char *get_ea_info( unsigned pc )
 			wdst = (ABITS + 3) / 4;
     }
 
-	switch( DASM.src_ea_size )
+	switch( DBGDASM.src_ea_size )
 	{
 		case EA_INT8:	wsrc = 2; break;
 		case EA_INT16:	wsrc = 4; break;
@@ -964,23 +1285,23 @@ const char *get_ea_info( unsigned pc )
 			wsrc = (ABITS + 3) / 4;
     }
 
-	if( DASM.dst_ea_value != INVALID && DASM.src_ea_value != INVALID )
+	if( DBGDASM.dst_ea_value != INVALID && DBGDASM.src_ea_value != INVALID )
 		sprintf( buffer, "%s\t%s%0*X %s%0*X",
-            name_rdmem(pc),
-			access[DASM.src_ea_access], wsrc, DASM.src_ea_value,
-			access[DASM.dst_ea_access], wdst, DASM.dst_ea_value );
+			name_rdmem(rshift(pc)),
+			access[DBGDASM.src_ea_access], wsrc, DBGDASM.src_ea_value,
+			access[DBGDASM.dst_ea_access], wdst, DBGDASM.dst_ea_value );
 	else
-	if( DASM.dst_ea_value != INVALID )
+	if( DBGDASM.dst_ea_value != INVALID )
 		sprintf( buffer, "%s\t%s%0*X",
-			name_rdmem(pc),
-			access[DASM.dst_ea_access], wdst, DASM.dst_ea_value );
+			name_rdmem(rshift(pc)),
+			access[DBGDASM.dst_ea_access], wdst, DBGDASM.dst_ea_value );
 	else
-	if( DASM.src_ea_value != INVALID )
+	if( DBGDASM.src_ea_value != INVALID )
 		sprintf( buffer, "%s\t%s%0*X",
-			name_rdmem(pc),
-			access[DASM.src_ea_access], wsrc, DASM.src_ea_value );
+			name_rdmem(rshift(pc)),
+			access[DBGDASM.src_ea_access], wsrc, DBGDASM.src_ea_value );
 	else
-		sprintf( buffer, "%s", name_rdmem(pc) );
+		sprintf( buffer, "%s", name_rdmem(rshift(pc)) );
 
     return buffer;
 }
@@ -993,17 +1314,17 @@ const char *get_ea_info( unsigned pc )
 static unsigned get_register_id( char **parg, int *size )
 {
 	int i, l;
-	for( i = 0; i < REGS.count; i++ )
+	for( i = 0; i < DBGREGS.count; i++ )
 	{
-		l = strlen( REGS.name[i] );
-		if( l > 0 && !strncmp( *parg, REGS.name[i], l ) )
+		l = strlen( DBGREGS.name[i] );
+		if( l > 0 && !strncmp( *parg, DBGREGS.name[i], l ) )
 		{
 			if( !isalnum( (*parg)[l] ) )
 			{
 				if( size ) *size = l;
 				*parg += l;
 				while( isspace(*(*parg)) ) *parg += 1;
-				return REGS.id[i];
+				return DBGREGS.id[i];
 			}
 		}
     }
@@ -1018,10 +1339,10 @@ static unsigned get_register_id( char **parg, int *size )
 static const char *get_register_name( int id )
 {
 	int i, l;
-	for( i = 0; i < REGS.count; i++ )
+	for( i = 0; i < DBGREGS.count; i++ )
 	{
-		if( REGS.id[i] == id )
-			return REGS.name[i];
+		if( DBGREGS.id[i] == id )
+			return DBGREGS.name[i];
     }
 	return "??";
 }
@@ -1360,101 +1681,101 @@ static const char *name_rdmem( unsigned base )
 			unsigned offset = base - mr->start;
 
 			if( mr->description )
-				sprintf(dst, "%s+%04X", mr->description, offset );
+				sprintf(dst, "%s+%04X", mr->description, lshift(offset) );
 			else
 			if( mr->base && *mr->base == videoram )
-				sprintf(dst, "video+%04X", offset );
+				sprintf(dst, "video+%04X", lshift(offset) );
 			else
 			if( mr->base && *mr->base == colorram )
-				sprintf(dst, "color+%04X", offset );
+				sprintf(dst, "color+%04X", lshift(offset) );
 			else
 			if( mr->base && *mr->base == spriteram )
-				sprintf(dst, "sprite+%04X", offset );
+				sprintf(dst, "sprite+%04X", lshift(offset) );
 			else
 			switch( (FPTR)mr->handler )
             {
 			case (FPTR)MRA_RAM:
-				sprintf(dst, "RAM%d+%04X", ram_cnt, offset );
+				sprintf(dst, "RAM%d+%04X", ram_cnt, lshift(offset) );
 				break;
 			case (FPTR)MRA_ROM:
 				name = name_rom("ROM", cpu->memory_region, &base, mr->start );
-				sprintf(dst, "%s+%04X", name, base );
+				sprintf(dst, "%s+%04X", name, lshift(base) );
 				break;
 			case (FPTR)MRA_BANK1:
-				sprintf(dst, "BANK1+%04X", offset );
+				sprintf(dst, "BANK1+%04X", lshift(offset) );
 				break;
 			case (FPTR)MRA_BANK2:
-				sprintf(dst, "BANK2+%04X", offset );
+				sprintf(dst, "BANK2+%04X", lshift(offset) );
 				break;
 			case (FPTR)MRA_BANK3:
-				sprintf(dst, "BANK3+%04X", offset );
+				sprintf(dst, "BANK3+%04X", lshift(offset) );
 				break;
 			case (FPTR)MRA_BANK4:
-				sprintf(dst, "BANK4+%04X", offset );
+				sprintf(dst, "BANK4+%04X", lshift(offset) );
 				break;
 			case (FPTR)MRA_BANK5:
-				sprintf(dst, "BANK5+%04X", offset );
+				sprintf(dst, "BANK5+%04X", lshift(offset) );
 				break;
 			case (FPTR)MRA_BANK6:
-				sprintf(dst, "BANK6+%04X", offset );
+				sprintf(dst, "BANK6+%04X", lshift(offset) );
 				break;
 			case (FPTR)MRA_BANK7:
-				sprintf(dst, "BANK7+%04X", offset );
+				sprintf(dst, "BANK7+%04X", lshift(offset) );
 				break;
 			case (FPTR)MRA_BANK8:
-				sprintf(dst, "BANK8+%04X", offset );
+				sprintf(dst, "BANK8+%04X", lshift(offset) );
 				break;
 			case (FPTR)MRA_NOP:
-				sprintf(dst, "NOP%d+%04X", nop_cnt, offset );
+				sprintf(dst, "NOP%d+%04X", nop_cnt, lshift(offset) );
 				break;
 			default:
 				if( (FPTR)mr->handler == (FPTR)input_port_0_r )
-					sprintf(dst, "input_port_0+%04X", offset );
+					sprintf(dst, "input_port_0+%04X", lshift(offset) );
 				else
 				if( (FPTR)mr->handler == (FPTR)input_port_1_r )
-					sprintf(dst, "input_port_1+%04X", offset );
+					sprintf(dst, "input_port_1+%04X", lshift(offset) );
 				else
 				if( (FPTR)mr->handler == (FPTR)input_port_2_r )
-					sprintf(dst, "input_port_2+%04X", offset );
+					sprintf(dst, "input_port_2+%04X", lshift(offset) );
 				else
 				if( (FPTR)mr->handler == (FPTR)input_port_3_r )
-					sprintf(dst, "input_port_3+%04X", offset );
+					sprintf(dst, "input_port_3+%04X", lshift(offset) );
 				else
 				if( (FPTR)mr->handler == (FPTR)input_port_4_r )
-					sprintf(dst, "input_port_4+%04X", offset );
+					sprintf(dst, "input_port_4+%04X", lshift(offset) );
 				else
 				if( (FPTR)mr->handler == (FPTR)input_port_5_r )
-					sprintf(dst, "input_port_5+%04X", offset );
+					sprintf(dst, "input_port_5+%04X", lshift(offset) );
 				else
 				if( (FPTR)mr->handler == (FPTR)input_port_6_r )
-					sprintf(dst, "input_port_6+%04X", offset );
+					sprintf(dst, "input_port_6+%04X", lshift(offset) );
 				else
 				if( (FPTR)mr->handler == (FPTR)input_port_7_r )
-					sprintf(dst, "input_port_7+%04X", offset );
+					sprintf(dst, "input_port_7+%04X", lshift(offset) );
 				else
 				if( (FPTR)mr->handler == (FPTR)input_port_8_r )
-					sprintf(dst, "input_port_8+%04X", offset );
+					sprintf(dst, "input_port_8+%04X", lshift(offset) );
 				else
 				if( (FPTR)mr->handler == (FPTR)input_port_9_r )
-					sprintf(dst, "input_port_9+%04X", offset );
+					sprintf(dst, "input_port_9+%04X", lshift(offset) );
 				else
 				if( (FPTR)mr->handler == (FPTR)input_port_10_r )
-					sprintf(dst, "input_port_10+%04X", offset );
+					sprintf(dst, "input_port_10+%04X", lshift(offset) );
 				else
 				if( (FPTR)mr->handler == (FPTR)input_port_11_r )
-					sprintf(dst, "input_port_11+%04X", offset );
+					sprintf(dst, "input_port_11+%04X", lshift(offset) );
 				else
 				if( (FPTR)mr->handler == (FPTR)input_port_12_r )
-					sprintf(dst, "input_port_12+%04X", offset );
+					sprintf(dst, "input_port_12+%04X", lshift(offset) );
 				else
 				if( (FPTR)mr->handler == (FPTR)input_port_13_r )
-					sprintf(dst, "input_port_13+%04X", offset );
+					sprintf(dst, "input_port_13+%04X", lshift(offset) );
 				else
 				if( (FPTR)mr->handler == (FPTR)input_port_14_r )
-					sprintf(dst, "input_port_14+%04X", offset );
+					sprintf(dst, "input_port_14+%04X", lshift(offset) );
 				else
 				if( (FPTR)mr->handler == (FPTR)input_port_15_r )
-					sprintf(dst, "input_port_15+%04X", offset );
+					sprintf(dst, "input_port_15+%04X", lshift(offset) );
             }
         }
         switch( (FPTR)mr->handler )
@@ -1492,56 +1813,56 @@ static const char *name_wrmem( unsigned base )
         if( base >= mw->start && base <= mw->end )
         {
 			if( mw->description )
-				sprintf(dst, "%s+%04X", mw->description, base - mw->start );
+				sprintf(dst, "%s+%04X", mw->description, lshift(base - mw->start) );
 			else
 			if( mw->base && *mw->base == videoram )
-				sprintf(dst, "video+%04X", base - mw->start );
+				sprintf(dst, "video+%04X", lshift(base - mw->start) );
 			else
 			if( mw->base && *mw->base == colorram )
-				sprintf(dst, "color+%04X", base - mw->start );
+				sprintf(dst, "color+%04X", lshift(base - mw->start) );
 			else
 			if( mw->base && *mw->base == spriteram )
-				sprintf(dst, "sprite+%04X", base - mw->start );
+				sprintf(dst, "sprite+%04X", lshift(base - mw->start) );
             else
             switch( (FPTR)mw->handler )
             {
 			case (FPTR)MWA_RAM:
-				sprintf(dst, "RAM%d+%04X", ram_cnt, base - mw->start );
+				sprintf(dst, "RAM%d+%04X", ram_cnt, lshift(base - mw->start) );
 				break;
 			case (FPTR)MWA_ROM:
 				name = name_rom("ROM", cpu->memory_region, &base, mw->start );
-				sprintf(dst, "%s+%04X", name, base );
+				sprintf(dst, "%s+%04X", name, lshift(base) );
 				break;
 			case (FPTR)MWA_RAMROM:
 				name = name_rom("RAMROM", cpu->memory_region, &base, mw->start);
-				sprintf(dst, "%s+%04X", name, base );
+				sprintf(dst, "%s+%04X", name, lshift(base) );
 				break;
 			case (FPTR)MWA_BANK1:
-				sprintf(dst, "BANK1+%04X", base - mw->start );
+				sprintf(dst, "BANK1+%04X", lshift(base - mw->start) );
 				break;
 			case (FPTR)MWA_BANK2:
-				sprintf(dst, "BANK2+%04X", base - mw->start );
+				sprintf(dst, "BANK2+%04X", lshift(base - mw->start) );
 				break;
 			case (FPTR)MWA_BANK3:
-				sprintf(dst, "BANK3+%04X", base - mw->start );
+				sprintf(dst, "BANK3+%04X", lshift(base - mw->start) );
 				break;
 			case (FPTR)MWA_BANK4:
-				sprintf(dst, "BANK4+%04X", base - mw->start );
+				sprintf(dst, "BANK4+%04X", lshift(base - mw->start) );
 				break;
 			case (FPTR)MWA_BANK5:
-				sprintf(dst, "BANK5+%04X", base - mw->start );
+				sprintf(dst, "BANK5+%04X", lshift(base - mw->start) );
 				break;
 			case (FPTR)MWA_BANK6:
-				sprintf(dst, "BANK6+%04X", base - mw->start );
+				sprintf(dst, "BANK6+%04X", lshift(base - mw->start) );
 				break;
 			case (FPTR)MWA_BANK7:
-				sprintf(dst, "BANK7+%04X", base - mw->start );
+				sprintf(dst, "BANK7+%04X", lshift(base - mw->start) );
 				break;
 			case (FPTR)MWA_BANK8:
-				sprintf(dst, "BANK8+%04X", base - mw->start );
+				sprintf(dst, "BANK8+%04X", lshift(base - mw->start) );
 				break;
 			case (FPTR)MWA_NOP:
-				sprintf(dst, "NOP%d+%04X", nop_cnt, base - mw->start );
+				sprintf(dst, "NOP%d+%04X", nop_cnt, lshift(base - mw->start) );
 				break;
 			}
         }
@@ -1610,7 +1931,7 @@ static int win_create(int n, UINT8 prio, int x, int y, int w, int h,
 	win.flags = NO_SCROLL | NO_WRAP | BORDER_TOP | ((n)? HIDDEN : 0) | attributes;
 	win.co_text = co_text;
 	win.co_frame = co_frame;
-	win.co_title = COLOR_TITLE;
+	win.co_title = cur_col[E_TITLE];
 	win.saved_text = ' ';
 	win.saved_attr = WIN_WHITE;
 	return win_open(n, &win);
@@ -1623,7 +1944,7 @@ static int DECL_SPEC win_msgbox( UINT8 color, const char *title, const char *fmt
 	int i;
 
 	win_create( win, 0,
-		4,6,60,3, color, COLOR_LINE, ' ',
+		4,6,60,3, color, cur_col[E_FRAME], ' ',
 		BORDER_TOP | BORDER_LEFT | BORDER_RIGHT | BORDER_BOTTOM | SHADOW );
 	win_set_title( win, title );
 
@@ -1639,65 +1960,166 @@ static int DECL_SPEC win_msgbox( UINT8 color, const char *title, const char *fmt
 }
 
 /**************************************************************************
+ * dbg_set_rect
+ * set a rectangle from x,y,w and h
+ **************************************************************************/
+INLINE void dbg_set_rect( struct rectangle *r, int x, int y, int w, int h )
+{
+	r->min_x = x;
+	r->max_x = x + w - 1;
+	r->min_y = y;
+	r->max_y = y + h - 1;
+}
+
+/**************************************************************************
  * dbg_open_windows
  * Depending on the CPU type, create a window layout specified
  * by the CPU core - returned by function cputype_win_layout()
  **************************************************************************/
-#define REGS_X	win_layout[0*4+0]
-#define REGS_Y  win_layout[0*4+1]
-#define REGS_W  win_layout[0*4+2]
-#define REGS_H  win_layout[0*4+3]
-#define DASM_X	win_layout[1*4+0]
-#define DASM_Y	win_layout[1*4+1]
-#define DASM_W	win_layout[1*4+2]
-#define DASM_H	win_layout[1*4+3]
-#define MEM1_X	win_layout[2*4+0]
-#define MEM1_Y	win_layout[2*4+1]
-#define MEM1_W	win_layout[2*4+2]
-#define MEM1_H	win_layout[2*4+3]
-#define MEM2_X	win_layout[3*4+0]
-#define MEM2_Y	win_layout[3*4+1]
-#define MEM2_W	win_layout[3*4+2]
-#define MEM2_H	win_layout[3*4+3]
-#define CMDS_X	win_layout[4*4+0]
-#define CMDS_Y	win_layout[4*4+1]
-#define CMDS_W	win_layout[4*4+2]
-#define CMDS_H	win_layout[4*4+3]
 static void dbg_open_windows( void )
 {
     UINT32 flags;
-    int i;
+	UINT32 i, w, h, aw, ah;
 
     /* Initialize windowing engine */
-	win_init_engine(80,25);
+	osd_get_screen_size( &w, &h );
+	win_init_engine( w, h );
 
-	for( i = 0; i < totalcpu; i++ )
+	/* anything more than 80x25 available? */
+	aw = w - 80;
+	ah = h - 25;
+
+    for( i = 0; i < totalcpu; i++ )
 	{
 		const UINT8 *win_layout = (UINT8*)cpunum_win_layout(i);
+		struct rectangle regs, dasm, mem1, mem2, cmds;
 
-		flags = BORDER_TOP;
-		if( REGS_X + REGS_W < 80) flags |= BORDER_RIGHT;
-		win_create(WIN_REGS(i), 1, REGS_X,REGS_Y,REGS_W,REGS_H,
-			COLOR_REGS, COLOR_LINE, ' ', flags );
+        #define REGS_X  win_layout[0*4+0]
+		#define REGS_Y	win_layout[0*4+1]
+		#define REGS_W	win_layout[0*4+2]
+		#define REGS_H	win_layout[0*4+3]
+		#define DASM_X	win_layout[1*4+0]
+		#define DASM_Y	win_layout[1*4+1]
+		#define DASM_W	win_layout[1*4+2]
+		#define DASM_H	win_layout[1*4+3]
+		#define MEM1_X	win_layout[2*4+0]
+		#define MEM1_Y	win_layout[2*4+1]
+		#define MEM1_W	win_layout[2*4+2]
+		#define MEM1_H	win_layout[2*4+3]
+		#define MEM2_X	win_layout[3*4+0]
+		#define MEM2_Y	win_layout[3*4+1]
+		#define MEM2_W	win_layout[3*4+2]
+		#define MEM2_H	win_layout[3*4+3]
+		#define CMDS_X	win_layout[4*4+0]
+		#define CMDS_Y	win_layout[4*4+1]
+		#define CMDS_W	win_layout[4*4+2]
+		#define CMDS_H	win_layout[4*4+3]
+
+		/* cmds window is fixed w and h, always at the bottom */
+		dbg_set_rect(&cmds, CMDS_X,CMDS_Y+ah,CMDS_W+aw,CMDS_H);
+		if( DASM_Y == 0 )
+		{
+			if( DASM_H + 1 == CMDS_Y )
+			{
+				/********************
+				 * dasm   * regs	*
+				 *		  ***********
+				 *		  * mem1	*
+				 *		  ***********
+				 *		  * mem2	*
+				 ********************
+				 * cmds 			*
+				 ********************/
+				 dbg_set_rect(&regs, REGS_X+aw,REGS_Y,REGS_W,REGS_H);
+				 dbg_set_rect(&dasm, DASM_X,DASM_Y,DASM_W+aw,DASM_H+ah);
+				 dbg_set_rect(&mem1, MEM1_X+aw,MEM1_Y,MEM1_W,MEM1_H+(ah+1)/2);
+				 dbg_set_rect(&mem2, MEM2_X+aw,MEM2_Y+(ah+1)/2,MEM2_W,MEM2_H+ah/2);
+            }
+			else
+			if( MEM1_X == MEM2_X )
+			{
+				/********************
+				 * dasm   * regs	*
+				 ********** 		*
+				 * mem1   * 		*
+				 ********** 		*
+				 * mem2   * 		*
+				 ********************
+				 * cmds 			*
+                 ********************/
+                 dbg_set_rect(&regs, REGS_X+aw,REGS_Y,REGS_W,REGS_H);
+				 dbg_set_rect(&dasm, DASM_X,DASM_Y,DASM_W+aw,DASM_H);
+				 dbg_set_rect(&mem1, MEM1_X,MEM1_Y,MEM1_W+aw,MEM1_H+(ah+1)/2);
+				 dbg_set_rect(&mem2, MEM2_X,MEM2_Y+(ah+1)/2,MEM2_W+aw,MEM2_H+ah/2);
+            }
+			else
+			{
+				/********************
+				 * dasm   * regs	*
+				 *		  * 		*
+				 *		  * 		*
+				 ********************
+				 * mem1   * mem2	*
+				 ********************
+				 * cmds 			*
+                 ********************/
+                 dbg_set_rect(&regs, REGS_X+aw,REGS_Y,REGS_W,REGS_H);
+				 dbg_set_rect(&dasm, DASM_X,DASM_Y,DASM_W+aw,DASM_H+(ah+1)/2);
+				 dbg_set_rect(&mem1, MEM1_X,MEM1_Y+(ah+1)/2,MEM1_W+aw,MEM1_H+ah/2);
+				 dbg_set_rect(&mem2, MEM2_X+aw,MEM2_Y,MEM2_W,MEM2_H+ah);
+            }
+        }
+		else
+		{
+			/********************
+			 * regs 			*
+			 ********************
+			 * dasm   * mem1	*
+			 *		  ***********
+			 *		  * mem2	*
+			 ********************
+			 * cmds 			*
+			 ********************/
+			 dbg_set_rect(&regs, REGS_X,REGS_Y,REGS_W+aw,REGS_H);
+			 dbg_set_rect(&dasm, DASM_X,DASM_Y,DASM_W+(aw+1)/2,DASM_H+ah);
+			 dbg_set_rect(&mem1, MEM1_X+(aw+1)/2,MEM1_Y,MEM1_W+aw/2,MEM1_H+(ah+1)/2);
+			 dbg_set_rect(&mem2, MEM2_X+(aw+1)/w,MEM2_Y+(ah+1)/2,MEM2_W+aw/2,MEM2_H+ah/2);
+        }
+
+        flags = BORDER_TOP;
+        if( regs.max_x + 1 < w ) flags |= BORDER_RIGHT;
+        win_create(WIN_REGS(i), 1,
+            regs.min_x,regs.min_y,
+            regs.max_x+1-regs.min_x,regs.max_y+1-regs.min_y,
+			cur_col[E_REGS], cur_col[E_FRAME], ' ', flags );
 
 		flags = BORDER_TOP | BORDER_RIGHT;
-		win_create(WIN_DASM(i), 1, DASM_X,DASM_Y,DASM_W,DASM_H,
-			COLOR_DASM, COLOR_LINE, ' ', flags );
+		win_create(WIN_DASM(i), 1,
+			dasm.min_x, dasm.min_y,
+			dasm.max_x+1-dasm.min_x,dasm.max_y+1-dasm.min_y,
+			cur_col[E_DASM], cur_col[E_FRAME], ' ', flags );
 
 		flags = BORDER_TOP;
-		if( MEM1_X + MEM1_W < 80) flags |= BORDER_RIGHT;
-		win_create(WIN_MEM1(i), 1, MEM1_X,MEM1_Y,MEM1_W,MEM1_H,
-			COLOR_MEM1, COLOR_LINE, ' ', flags );
+		if( mem1.max_x + 1 < w ) flags |= BORDER_RIGHT;
+		win_create(WIN_MEM1(i), 1,
+			mem1.min_x,mem1.min_y,
+			mem1.max_x+1-mem1.min_x,mem1.max_y+1-mem1.min_y,
+			cur_col[E_MEM1], cur_col[E_FRAME], ' ', flags );
 
 		flags = BORDER_TOP;
-		if( MEM2_X + MEM2_W < 80) flags |= BORDER_RIGHT;
-		win_create(WIN_MEM2(i), 1, MEM2_X,MEM2_Y,MEM2_W,MEM2_H,
-			COLOR_MEM2, COLOR_LINE, ' ', flags );
+		if( mem2.max_x + 1 < w) flags |= BORDER_RIGHT;
+		win_create(WIN_MEM2(i), 1,
+			mem2.min_x,mem2.min_y,
+			mem2.max_x+1-mem2.min_x,mem2.max_y+1-mem2.min_y,
+			cur_col[E_MEM2], cur_col[E_FRAME], ' ', flags );
 
 		flags = BORDER_TOP;
-		win_create(WIN_CMDS(i), 1, CMDS_X,CMDS_Y,CMDS_W,CMDS_H,
-			COLOR_CMDS, COLOR_LINE, ' ', flags );
-		win_set_title(WIN_CMDS(i), "Command (press F1 for help)");
+		win_create(WIN_CMDS(i), 1,
+			cmds.min_x,cmds.min_y,
+			cmds.max_x+1-cmds.min_x,cmds.max_y+1-cmds.min_y,
+			cur_col[E_CMDS], cur_col[E_FRAME], ' ', flags );
+
+        win_set_title(WIN_CMDS(i), "Command (press F1 for help)");
 	}
 }
 
@@ -1730,6 +2152,7 @@ static unsigned dasm_line( unsigned pc, int times )
 
     while( times-- > 0 )
 		pc += cpu_dasm( buffer, pc );
+	pc = lshift( rshift(pc) & AMASK );
 
     return pc;
 }
@@ -1746,7 +2169,7 @@ static void dump_regs( void )
 {
 	char title[80+1];
 	UINT32 win = WIN_REGS(activecpu);
-	s_regs *regs = &REGS;
+	s_regs *regs = &DBGREGS;
 	s_edit *pedit = regs->edit;
 	UINT32 *old = regs->backup;
 	UINT32 *val = regs->newval;
@@ -1797,17 +2220,39 @@ static void dump_regs( void )
 		}
 		else
 		{
-			/* Only CPU # and name fit into the caption */
-			sprintf( title, "CPU #%d %-8s", activecpu, name );
+			sprintf( title, "CPU #%d %-8s Cyc:%6u", activecpu, name, cpu_geticount() );
 			l = strlen(title);
-            win_set_title( win, title );
-			if( strlen(cpu_flags()) + 8 < w )
-				win_printf( win, "Flags: %s\n", flags );
+			if( l + 2 < w )
+			{
+				if( l + 4 < w )
+					sprintf( title, "CPU #%d %-8s\tCyc:%6u", activecpu, name, cpu_geticount() );
+				win_set_title( win, title );
+				if( strlen(cpu_flags()) + 8 < w )
+					win_printf( win, "Flags: %s\n", flags );
+				else
+				if( strlen(cpu_flags()) + 2 < w )
+					win_printf( win, "F:%s\n", flags );
+				else
+                    win_printf( win, "%s\n", flags );
+                if( --h <= 0) return;
+            }
 			else
-				win_printf( win, "F:%s\n", flags );
-			if( --h <= 0) return;
-			win_printf( win, "Cycles:%6u\n", cpu_geticount() );
-			if( --h <= 0) return;
+			{
+				/* Only CPU # and name fit into the caption */
+				sprintf( title, "CPU #%d %-8s", activecpu, name );
+				l = strlen(title);
+				win_set_title( win, title );
+				if( strlen(cpu_flags()) + 8 < w )
+					win_printf( win, "Flags: %s\n", flags );
+				else
+				if( strlen(cpu_flags()) + 2 < w )
+					win_printf( win, "F:%s\n", flags );
+				else
+					win_printf( win, "%s\n", flags );
+				if( --h <= 0) return;
+				win_printf( win, "Cycles:%6u\n", cpu_geticount() );
+				if( --h <= 0) return;
+			}
 		}
 	}
 
@@ -1815,6 +2260,7 @@ static void dump_regs( void )
 	{
 		if( *reg == -1 )
 		{
+			win_erase_eol( win, ' ' );
 			win_putc( win, '\n');
 			if( --h <= 0 ) return;
 		}
@@ -1826,13 +2272,13 @@ static void dump_regs( void )
 
             regs->id[j] = *reg;
 			*val = cpu_get_reg(regs->id[j]);
-			color = COLOR_REGS;
+			color = cur_col[E_REGS];
 			if( DBG.brk_regs == *reg )
-				color = COLOR_BRK_REGS;
+				color = cur_col[E_BRK_REGS];
             if( *val != *old )
 			{
 				regs->changed = 1;
-				color = (color & 0xf0) | COLOR_CHANGES;
+				color = (color & 0xf0) | cur_col[E_CHANGES];
 			}
 			win_set_color( win, color );
 
@@ -1883,7 +2329,7 @@ static void dump_regs( void )
 
 			win_printf( win, "%s", name );
 
-			win_set_color( win, COLOR_REGS );
+			win_set_color( win, cur_col[E_REGS] );
             /* If no row break follows, advance to the next tab stop */
 			if( reg[1] != -1 )
 				win_printf( win, "%*s", regs->max_width - pedit->w - pedit->n, "" );
@@ -1893,6 +2339,7 @@ static void dump_regs( void )
 			j++;
 		}
 	}
+	win_erase_eol( win, ' ' );
 
 	/* Set the total count of registers */
 	regs->count = j;
@@ -1921,91 +2368,76 @@ static unsigned dump_dasm( unsigned pc )
 		{
 			win_set_curpos( win, 0, y );
 			if( pc == DBG.brk_exec )
-				color = COLOR_BRK_EXEC;
+				color = cur_col[E_BRK_EXEC];
 			else
-				color = COLOR_CODE;
-			if( pc == DASM.pc_cpu )
+				color = cur_col[E_DASM];
+			if( pc == DBGDASM.pc_cpu )
 			{
-				color = (color & 0x0f) | (COLOR_PC & 0xf0);
+				color = (color & 0x0f) | (cur_col[E_PC] & 0xf0);
 				line_pc_cpu = y;
 			}
-			if( pc == DASM.pc_cur )
+			if( pc == DBGDASM.pc_cur )
 			{
-				color = (color & 0x0f) | (COLOR_CURSOR & 0xf0);
+				color = (color & 0x0f) | (cur_col[E_CURSOR] & 0xf0);
 				line_pc_cur = y;
 			}
             win_set_color( win, color );
 			l = win_printf( win, "%0*X: ", width, pc );
 
-			DASM.dst_ea_value = INVALID;
-			DASM.src_ea_value = INVALID;
+			DBGDASM.dst_ea_value = INVALID;
+			DBGDASM.src_ea_value = INVALID;
 			pc_next = pc + cpu_dasm( dasm, pc );
 
-			if( DASM.pc_cur == pc )
-					win_set_title( win, "%s", get_ea_info(pc) );
+			if( DBGDASM.pc_cur == pc )
+				win_set_title( win, "%s", get_ea_info(pc) );
 
 			if( dbg_dasm_opcodes )
 			{
+				unsigned p = rshift(pc);
+				unsigned n = rshift(pc_next);
 				switch( ALIGN )
 				{
-					case 1:
-						for( x = 0; x < INSTL; x++ )
+				case 1:
+					for( x = 0; x < INSTL; x++ )
+					{
+						if ( p < n )
 						{
-							if ( pc < pc_next )
-							{
-								l += win_printf( win, "%02X ", RDMEM(pc) );
-								pc++;
-							}
-							else l += win_printf( win, "   ");
+							l += win_printf( win, "%02X ",
+								RDMEM(order(p,1)) );
+							p++;
 						}
-						break;
-                    case 2:
-						for( x = 0; x < INSTL; x += 2 )
-                        {
-							if ( pc < pc_next )
-							{
-                                if( ENDIAN == CPU_IS_LE )
-									l += win_printf( win, "%02X%02X ",
-										RDMEM(UINT16_XOR_LE(pc+0)),
-										RDMEM(UINT16_XOR_LE(pc+1)) );
-								else
-									l += win_printf( win, "%02X%02X ",
-										RDMEM(UINT16_XOR_BE(pc+0)),
-										RDMEM(UINT16_XOR_BE(pc+1)) );
-                                pc += 2;
-							}
-							else l += win_printf( win, "     ");
-                        }
-                        break;
-					case 4:
-						for( x = 0; x < INSTL; x += 4 )
-                        {
-							if ( pc < pc_next )
-							{
-                                if( ENDIAN == CPU_IS_LE )
-									l += win_printf( win, "%02X%02X%02X%02X ",
-										RDMEM(UINT32_XOR_LE(pc+0)),
-										RDMEM(UINT32_XOR_LE(pc+1)),
-										RDMEM(UINT32_XOR_LE(pc+2)),
-										RDMEM(UINT32_XOR_LE(pc+3)) );
-								else
-									l += win_printf( win, "%02X%02X%02X%02X ",
-										RDMEM(UINT32_XOR_BE(pc+0)),
-										RDMEM(UINT32_XOR_BE(pc+1)),
-										RDMEM(UINT32_XOR_BE(pc+2)),
-                                        RDMEM(UINT32_XOR_BE(pc+3)) );
-								pc += 2;
-							}
-							else l += win_printf( win, "     ");
-                        }
-                        break;
+						else l += win_printf( win, "   " );
+					}
+					break;
+				case 2:
+					for( x = 0; x < INSTL; x += 2 )
+					{
+						if ( p < n )
+						{
+							l += win_printf( win, "%02X%02X ",
+								RDMEM(order(p+0,2)), RDMEM(order(p+1,2)) );
+							p += 2;
+						}
+						else l += win_printf( win, "     " );
+					}
+					break;
+				case 4:
+					for( x = 0; x < INSTL; x += 4 )
+					{
+						if ( p < n)
+						{
+							l += win_printf( win, "%02X%02X%02X%02X ",
+								RDMEM(order(p+0,4)), RDMEM(order(p+1,4)),
+								RDMEM(order(p+2,4)), RDMEM(order(p+3,4)) );
+							p += 4;
+						}
+						else l += win_printf( win, "         " );
+					}
+					break;
                 }
 			}
-			else
-			{
-				pc = pc_next;
-			}
-			switch( dbg_dasm_case )
+			pc = lshift(rshift(pc_next) & AMASK);
+            switch( dbg_dasm_case )
 			{
 				case 0: win_printf( win, "%-*.*s", w-l, w-l, dasm ); break;
 				case 1: win_printf( win, "%-*.*s", w-l, w-l, lower(dasm) ); break;
@@ -2021,7 +2453,7 @@ static unsigned dump_dasm( unsigned pc )
 			 * is between pc_first and pc (end), try again on next
 			 * instruction size boundary, else bail out...
 			 */
-			if( DASM.pc_cpu > pc_first && DASM.pc_cpu < pc )
+			if( DBGDASM.pc_cpu > pc_first && DBGDASM.pc_cpu < pc )
 				pc_first += ALIGN;
 			else
 				line_pc_cpu = 0;
@@ -2036,17 +2468,17 @@ static unsigned dump_dasm( unsigned pc )
 /**************************************************************************
  * dump_mem_hex
  * Update a memory window using the cpu_readmemXXX function
- * Changed values are displayed using foreground color COLOR_CHANGES
+ * Changed values are displayed using foreground color cur_col[E_CHANGES]
  * The new values are stored into mem->newval[] of the activecpu
  **************************************************************************/
 static void dump_mem_hex( int which, unsigned len_addr, unsigned len_data )
 {
 	UINT32 win = WIN_MEM(activecpu,which);
-	s_edit *pedit = MEM[which].edit;
+	s_edit *pedit = DBGMEM[which].edit;
 	int w = win_get_w(win);
 	int h = win_get_h(win);
-	UINT8 *old = MEM[which].backup;
-	UINT8 *val = MEM[which].newval;
+	UINT8 *old = DBGMEM[which].backup;
+	UINT8 *val = DBGMEM[which].newval;
 	UINT8 color, dim_bright = 0;
 	UINT8 spc_left = 0; 	/* assume no space left of address */
 	UINT8 spc_addr = 0; 	/* assume no space after address */
@@ -2055,81 +2487,75 @@ static void dump_mem_hex( int which, unsigned len_addr, unsigned len_data )
 	unsigned offs, column;
 
 	/* how many elements (bytes,words,dwords) will fit in a line? */
-	MEM[which].width = (w - len_addr - 1) / (len_data + spc_data);
+	DBGMEM[which].width = (w - len_addr - 1) / (len_data + spc_data);
 
 	/* display multiples of eight bytes per line only */
-	if( MEM[which].width > ((16/len_data)-1) )
-		MEM[which].width &= ~((16/len_data)-1);
+	if( DBGMEM[which].width > ((16/len_data)-1) )
+		DBGMEM[which].width &= ~((16/len_data)-1);
 
 	/* Is bytes per line not divideable by eight? */
-	if( dbg_mem_squeezed && (MEM[which].width & 7) )
+	if( dbg_mem_squeezed && (DBGMEM[which].width & 7) )
 	{
 		/* We try an alternating dim,bright layout w/o data spacing */
 		spc_data = 0;
 		/* how many bytes will fit in a line? */
-		MEM[which].width = (w - len_addr - 1) / len_data;
+		DBGMEM[which].width = (w - len_addr - 1) / len_data;
 		/* display multiples of eight data elements per line only */
-		if( MEM[which].width > ((16/len_data)-1) )
-			MEM[which].width &= ~((16/len_data)-1);
+		if( DBGMEM[which].width > ((16/len_data)-1) )
+			DBGMEM[which].width &= ~((16/len_data)-1);
 		dim_bright = 0x08;
 	}
 
 	/* calculate number of bytes per line */
-	MEM[which].bytes = MEM[which].width * len_data / 2;
-	/* calculate the MEM[which].size using that data width */
-	MEM[which].size = MEM[which].bytes * h;
+	DBGMEM[which].bytes = DBGMEM[which].width * len_data / 2;
+	/* calculate the DBGMEM[which].size using that data width */
+	DBGMEM[which].size = DBGMEM[which].bytes * h;
 
 	/* will a space after the address fit into the line? */
-	if( ( len_addr + spc_addr + MEM[which].width * (len_data + spc_data) + 1 ) < w )
+	if( ( len_addr + spc_addr + DBGMEM[which].width * (len_data + spc_data) + 1 ) < w )
 		spc_addr = 1;
 
 	/* will two spaces around the center hyphen fit into the line ? */
-	if( ( len_addr + spc_addr + MEM[which].width * (len_data + spc_data) + 2 ) < w )
+	if( ( len_addr + spc_addr + DBGMEM[which].width * (len_data + spc_data) + 2 ) < w )
 		spc_hyphen = 1;
 
-	while( ( 2*spc_left + len_addr + spc_addr + MEM[which].width * (len_data + spc_data) + spc_hyphen ) + 1 < w )
+	while( ( 2*spc_left + len_addr + spc_addr + DBGMEM[which].width * (len_data + spc_data) - 1 + spc_hyphen ) + 2 < w )
 		spc_left++;
 
 	win_set_curpos( win, 0, 0 );
 
-	for( offs = 0, column = 0; offs < MEM[which].size; offs++, old++, val++ )
+	for( offs = 0, column = 0; offs < DBGMEM[which].size; offs++, old++, val++ )
 	{
-		color = MEM[which].color;
+		color = cur_col[E_MEM1+which];
 		switch( len_data )
 		{
-			case 2:
-				MEM[which].address = (MEM[which].base + offs) & AMASK;
-				break;
-			case 4:
-				if( ENDIAN == CPU_IS_LE )
-					MEM[which].address = (MEM[which].base + UINT16_XOR_LE(offs)) & AMASK;
-				else
-					MEM[which].address = (MEM[which].base + UINT16_XOR_BE(offs)) & AMASK;
-                break;
-			case 8:
-				if( ENDIAN == CPU_IS_LE )
-					MEM[which].address = (MEM[which].base + UINT32_XOR_LE(offs)) & AMASK;
-				else
-					MEM[which].address = (MEM[which].base + UINT32_XOR_BE(offs)) & AMASK;
-                break;
+		case 2: /* UINT8 mode */
+			DBGMEM[which].address = (DBGMEM[which].base + order(offs,1)) & AMASK;
+			break;
+		case 4: /* UINT16 mode */
+			DBGMEM[which].address = (DBGMEM[which].base + order(offs,2)) & AMASK;
+			break;
+		case 8: /* UINT32 mode */
+			DBGMEM[which].address = (DBGMEM[which].base + order(offs,4)) & AMASK;
+			break;
 		}
 
         if( column == 0 )
         {
-			win_set_color( win, MEM[which].color );
+			win_set_color( win, cur_col[E_MEM1+which] );
 			win_printf( win, "%*s%0*X:%*s",
-				spc_left, "", len_addr, (MEM[which].base + offs) & AMASK, spc_addr, "" );
+				spc_left, "", len_addr, lshift((DBGMEM[which].base + offs) & AMASK), spc_addr, "" );
 		}
 
-		if( MEM[which].address == DBG.brk_data )
-            color = COLOR_BRK_DATA;
+		if( DBGMEM[which].address == DBG.brk_data )
+			color = cur_col[E_BRK_DATA];
 
-		*val = RDMEM( MEM[which].address );
+		*val = RDMEM( DBGMEM[which].address );
 
         if( *val != *old )
 		{
-			MEM[which].changed = 1;
-			color = (color & 0xf0) | (COLOR_CHANGES & 0x0f);
+			DBGMEM[which].changed = 1;
+			color = (color & 0xf0) | (cur_col[E_CHANGES] & 0x0f);
 		}
 
 		if( (column * 2 / len_data) & 1 )
@@ -2142,27 +2568,32 @@ static void dump_mem_hex( int which, unsigned len_addr, unsigned len_data )
 			pedit->x = win_get_cx( win );
 			pedit->y = win_get_cy( win );
 			pedit->w = 2;
-			if( ENDIAN == CPU_IS_BE )
-				pedit->n = column % (len_data / 2);
-			else
-				pedit->n = (column % (len_data / 2)) ^ ((len_data / 2) - 1);
+			pedit->n = order(column % (len_data / 2), len_data / 2);
 		}
 		pedit++;
 
 		win_set_color( win, color );
-		if( MEM[which].ascii )
+		switch( DBGMEM[which].ascii )
 		{
-			if( *val < 32 || *val > 127 )
+			case 0: /* hex */
 				win_printf( win, "%02X", *val );
-			else
-				win_printf( win, "%c ", *val );
+				break;
+			case 1: /* translated */
+				win_printf( win, "%c ", trans_table[*val] );
+				break;
+			case 2: /* plain character, except for \r, \n and \t */
+				if( *val == '\0' || *val == '\b' || *val == '\t' ||
+					*val == '\r' || *val == '\n' )
+					win_printf( win, ". " );
+				else
+                    win_printf( win, "%c ", *val );
+				break;
 		}
-		else
-			win_printf( win, "%02X", *val );
 
-		if( ++column < MEM[which].bytes )
+		if( ++column < DBGMEM[which].bytes )
 		{
-			if( column == MEM[which].bytes / 2 )
+			win_set_color( win, cur_col[E_MEM1+which] );
+			if( column == DBGMEM[which].bytes / 2 )
 				win_printf( win, "%*s-%*s", spc_hyphen, "", spc_hyphen, "" );
 			else
 			if( spc_data && (column * 2 % len_data) == 0 )
@@ -2183,12 +2614,12 @@ static void dump_mem_hex( int which, unsigned len_addr, unsigned len_data )
  **************************************************************************/
 static void dump_mem( int which, int set_title )
 {
-	unsigned len_addr = (ABITS + 3) / 4;
+	unsigned len_addr = (ABITS + ASHIFT + 3) / 4;
 
     if( set_title )
-		win_set_title( WIN_MEM(activecpu,which), name_memory(MEM[which].base) );
+		win_set_title( WIN_MEM(activecpu,which), name_memory(DBGMEM[which].base) );
 
-	switch( MEM[which].mode )
+	switch( DBGMEM[which].mode )
 	{
 		case MODE_HEX_UINT8:  dump_mem_hex( which, len_addr, 2 ); break;
 		case MODE_HEX_UINT16: dump_mem_hex( which, len_addr, 4 ); break;
@@ -2203,7 +2634,7 @@ static void dump_mem( int which, int set_title )
 static void edit_regs( void )
 {
 	UINT32 win = WIN_REGS(activecpu);
-	s_regs *regs = &REGS;
+	s_regs *regs = &DBGREGS;
 	s_edit *pedit = regs->edit;
 	unsigned shift, mask, val;
     const char *k;
@@ -2213,7 +2644,7 @@ static void edit_regs( void )
     edit_cmds_info();
 
     win_set_curpos( win, pedit[regs->idx].x + pedit[regs->idx].n + regs->nibble, pedit[regs->idx].y );
-	ScreenSetCursor( win_get_cy_abs(win), win_get_cx_abs(win) );
+	osd_set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
 
     i = osd_debug_readkey();
 	k = osd_key_name(i);
@@ -2336,7 +2767,7 @@ static void edit_dasm(void)
 	/* Eventually update the cmdline window caption */
     edit_cmds_info();
 
-    ScreenSetCursor( win_get_cy_abs(win), win_get_cx_abs(win) );
+	osd_set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
 
     i = osd_debug_readkey();
 	k = osd_key_name(i);
@@ -2377,7 +2808,7 @@ static void edit_dasm(void)
     }
 	if( update_window )
 	{
-		DASM.pc_end = dump_dasm( DASM.pc_top );
+		DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
 	}
 }
 
@@ -2389,7 +2820,7 @@ static void edit_dasm(void)
 static void edit_mem( int which )
 {
 	UINT32 win = WIN_MEM(activecpu,which);
-	s_edit *pedit = MEM[which].edit;
+	s_edit *pedit = DBGMEM[which].edit;
     const char *k;
 	unsigned shift, mask, val;
 	int i, update_window = 0;
@@ -2397,27 +2828,27 @@ static void edit_mem( int which )
 	/* Eventually update the cmdline window caption */
     edit_cmds_info();
 
-    win_set_curpos( win, pedit[MEM[which].offset].x + MEM[which].nibble, pedit[MEM[which].offset].y );
-    ScreenSetCursor( win_get_cy_abs(win), win_get_cx_abs(win) );
+	win_set_curpos( win, pedit[DBGMEM[which].offset].x + DBGMEM[which].nibble, pedit[DBGMEM[which].offset].y );
+	osd_set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
 
-	switch( MEM[which].mode )
+	switch( DBGMEM[which].mode )
 	{
 		case MODE_HEX_UINT8:
-			MEM[which].address = (MEM[which].base + MEM[which].offset) & AMASK;
+			DBGMEM[which].address = (DBGMEM[which].base + DBGMEM[which].offset) & AMASK;
 			break;
 		case MODE_HEX_UINT16:
-			MEM[which].address = (MEM[which].base + (MEM[which].offset & ~1) + pedit[MEM[which].offset].n ) & AMASK;
+			DBGMEM[which].address = (DBGMEM[which].base + (DBGMEM[which].offset & ~1) + pedit[DBGMEM[which].offset].n ) & AMASK;
             break;
 		case MODE_HEX_UINT32:
-			MEM[which].address = (MEM[which].base + (MEM[which].offset & ~3) + pedit[MEM[which].offset].n ) & AMASK;
+			DBGMEM[which].address = (DBGMEM[which].base + (DBGMEM[which].offset & ~3) + pedit[DBGMEM[which].offset].n ) & AMASK;
             break;
 	}
-	win_set_title( win, name_memory( MEM[which].address ) );
+	win_set_title( win, name_memory( DBGMEM[which].address ) );
 
     i = osd_debug_readkey();
 	k = osd_key_name(i);
 
-	shift = (pedit[MEM[which].offset].w - 1 - MEM[which].nibble) * 4;
+	shift = (pedit[DBGMEM[which].offset].w - 1 - DBGMEM[which].nibble) * 4;
 	mask = ~(0x0f << shift);
 
 	if( strlen(k) == 1 )
@@ -2432,7 +2863,7 @@ static void edit_mem( int which )
 				if( val > 9 ) val -= 7;
 				val <<= shift;
 				/* now modify the register */
-				WRMEM( MEM[which].address, ( RDMEM( MEM[which].address ) & mask ) | val );
+				WRMEM( DBGMEM[which].address, ( RDMEM( DBGMEM[which].address ) & mask ) | val );
 				update_window = 1;
 				i = OSD_KEY_RIGHT;	/* advance to next nibble */
 		}
@@ -2441,83 +2872,83 @@ static void edit_mem( int which )
     switch( i )
     {
         case OSD_KEY_LEFT:
-			if( --MEM[which].nibble < 0 )
+			if( --DBGMEM[which].nibble < 0 )
 			{
-				if( --MEM[which].offset < 0 )
+				if( --DBGMEM[which].offset < 0 )
 				{
-					MEM[which].base = (MEM[which].base - MEM[which].bytes) & AMASK;
-					MEM[which].offset += MEM[which].bytes;
+					DBGMEM[which].base = (DBGMEM[which].base - DBGMEM[which].bytes) & AMASK;
+					DBGMEM[which].offset += DBGMEM[which].bytes;
 					update_window = 1;
 				}
-				MEM[which].nibble = pedit[MEM[which].offset].w - 1;
+				DBGMEM[which].nibble = pedit[DBGMEM[which].offset].w - 1;
 			}
 			break;
 
 		case OSD_KEY_RIGHT:
-			if( ++MEM[which].nibble >= pedit[MEM[which].offset].w )
+			if( ++DBGMEM[which].nibble >= pedit[DBGMEM[which].offset].w )
 			{
-				MEM[which].nibble = 0;
-				if( ++MEM[which].offset >= MEM[which].size )
+				DBGMEM[which].nibble = 0;
+				if( ++DBGMEM[which].offset >= DBGMEM[which].size )
 				{
-					MEM[which].base = (MEM[which].base + MEM[which].bytes) & AMASK;
-					MEM[which].offset -= MEM[which].bytes;
+					DBGMEM[which].base = (DBGMEM[which].base + DBGMEM[which].bytes) & AMASK;
+					DBGMEM[which].offset -= DBGMEM[which].bytes;
 					update_window = 1;
                 }
             }
             break;
 
 		case OSD_KEY_UP:
-			MEM[which].offset -= MEM[which].bytes;
-			if( MEM[which].offset < 0 )
+			DBGMEM[which].offset -= DBGMEM[which].bytes;
+			if( DBGMEM[which].offset < 0 )
 			{
-				MEM[which].base = (MEM[which].base - MEM[which].bytes) & AMASK;
-				MEM[which].offset += MEM[which].bytes;
+				DBGMEM[which].base = (DBGMEM[which].base - DBGMEM[which].bytes) & AMASK;
+				DBGMEM[which].offset += DBGMEM[which].bytes;
 				update_window = 1;
             }
 			break;
 
 		case OSD_KEY_DOWN:
-			MEM[which].offset += MEM[which].bytes;
-			if( MEM[which].offset >= MEM[which].size )
+			DBGMEM[which].offset += DBGMEM[which].bytes;
+			if( DBGMEM[which].offset >= DBGMEM[which].size )
             {
-				MEM[which].base = (MEM[which].base + MEM[which].bytes) & AMASK;
-				MEM[which].offset -= MEM[which].bytes;
+				DBGMEM[which].base = (DBGMEM[which].base + DBGMEM[which].bytes) & AMASK;
+				DBGMEM[which].offset -= DBGMEM[which].bytes;
 				update_window = 1;
             }
             break;
 
 		case OSD_KEY_PGUP:
-			MEM[which].base = (MEM[which].base - MEM[which].size) & AMASK;
+			DBGMEM[which].base = (DBGMEM[which].base - DBGMEM[which].size) & AMASK;
 			update_window = 1;
             break;
 
 		case OSD_KEY_PGDN:
-			MEM[which].base = (MEM[which].base + MEM[which].size) & AMASK;
+			DBGMEM[which].base = (DBGMEM[which].base + DBGMEM[which].size) & AMASK;
             update_window = 1;
             break;
 
 		case OSD_KEY_HOME:
-			MEM[which].offset = 0;
-			MEM[which].base = 0x00000000;
+			DBGMEM[which].offset = 0;
+			DBGMEM[which].base = 0x00000000;
             update_window = 1;
             break;
 
 		case OSD_KEY_END:
-			MEM[which].offset = MEM[which].size - 1;
-			MEM[which].base = (0xffffffff - MEM[which].offset) & AMASK;
+			DBGMEM[which].offset = DBGMEM[which].size - 1;
+			DBGMEM[which].base = (0xffffffff - DBGMEM[which].offset) & AMASK;
             update_window = 1;
             break;
 
 		case OSD_KEY_H:
-			MEM[which].ascii ^= 1;
+			DBGMEM[which].ascii = (DBGMEM[which].ascii + 1) % 3;
 			update_window = 1;
 			break;
 
 
         case OSD_KEY_M:
-			MEM[which].mode = ++(MEM[which].mode) % 3;
+			DBGMEM[which].mode = ++(DBGMEM[which].mode) % 3;
 			/* Reset cursor coordinates and sizes of the edit info */
-			memset( MEM[which].edit, 0, sizeof(MEM[which].edit) );
+			memset( DBGMEM[which].edit, 0, sizeof(DBGMEM[which].edit) );
 			update_window = 1;
 			break;
 
@@ -2527,11 +2958,12 @@ static void edit_mem( int which )
 
         default:
 			cmd_default( i );
+			update_window = 1;
     }
 
 	if( update_window )
 	{
-		memcpy( MEM[which].backup, MEM[which].newval, MEM[which].size );
+		memcpy( DBGMEM[which].backup, DBGMEM[which].newval, DBGMEM[which].size );
 		dump_mem( which, 0 );
 	}
 }
@@ -2642,9 +3074,12 @@ static void edit_cmds_append( const char *src )
 
 void edit_cmds_reset( void )
 {
+	unsigned win = WIN_CMDS(activecpu);
 	DBG.cmdline[0] = '\0';
-	win_set_curpos( WIN_CMDS(activecpu), 0, 0 );
-	win_erase_eol( WIN_CMDS(activecpu), ' ' );
+	win_set_color( win, cur_col[E_CMDS] );
+	win_set_curpos( win, 0, 0 );
+	osd_set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
+    win_erase_eol( win, ' ' );
 }
 
 /**************************************************************************
@@ -2657,16 +3092,17 @@ static void edit_cmds(void)
 	UINT32 win = WIN_CMDS(activecpu);
     int w = win_get_w(win);
 	const char *k;
-	int i, cmd;
+	int i, l, cmd;
 
-	ScreenSetCursor( win_get_cy_abs(win), win_get_cx_abs(win) );
+	osd_set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
 
 	cmd = edit_cmds_info();
 
 	i = osd_debug_readkey();
 	k = osd_key_name(i);
+	l = strlen(k);
 
-	if( strlen(k) == 1 )
+	if( l == 1 )
 		edit_cmds_append(k);
 
     switch( i )
@@ -2686,11 +3122,15 @@ static void edit_cmds(void)
 			break;
 
         case OSD_KEY_EQUALS:
-			edit_cmds_append("=");
+			if( l > 1 ) edit_cmds_append("=");
+			break;
+
+		case OSD_KEY_SLASH:
+			if( l > 1 ) edit_cmds_append("/");
 			break;
 
         case OSD_KEY_STOP:
-			edit_cmds_append(".");
+			if( l > 1 ) edit_cmds_append(".");
 			break;
 
         case OSD_KEY_BACKSPACE:
@@ -2714,8 +3154,7 @@ static void edit_cmds(void)
 				/* ENTER in an empty line: do single step... */
                 i = OSD_KEY_F8;
 			}
-			break;
-
+			/* fall through */
         default:
 			cmd_default( i );
     }
@@ -2738,13 +3177,15 @@ static void cmd_help( void )
 {
     UINT32 win = WIN_HELP;
 	const char *title = "";
-    char *help = malloc(4096+1), *dst, *src;
+	char *help = malloc(4096+1), *dst;
+	const char *src;
+	unsigned w, h;
 	int cmd = INVALID;
-	int i, h, k, l, top, lines;
+	int i, k, l, top, lines;
 
     if( !help )
     {
-		win_msgbox( COLOR_ERROR,
+		win_msgbox( cur_col[E_ERROR],
 			"Memory problem!", "Couldn't allocate help text buffer" );
         return;
     }
@@ -2759,21 +3200,31 @@ static void cmd_help( void )
 		/* Did not find the start of a command? */
 		if( cmd == INVALID )
 		{
-			dst += sprintf( dst, "Welcome to the new MAME debugger!") + 1;
+			dst += sprintf( dst, "Welcome to the new MAME debugger V0.51!") + 1;
 			dst += sprintf( dst, " " ) + 1;
 			dst += sprintf( dst, "Many commands accept either a value or a register name.") + 1;
 			dst += sprintf( dst, "You can indeed type either \"R HL = SP\" or \"R HL = 1FD0\".") + 1;
 			dst += sprintf( dst, "In the syntax, where you see <address> you may generally") + 1;
 			dst += sprintf( dst, "use a number or a register name of the active CPU.") + 1;
 			dst += sprintf( dst, "A <boolean> can be specified as ON/OFF, YES/NO, Y/N or 1/0.") + 1;
+			dst += sprintf( dst, "Note: You may put your preferences into a file \"mamedbg.cfg\" in your") + 1;
+			dst += sprintf( dst, "main directory. Furthermore you can put game specific settings into a") + 1;
+			dst += sprintf( dst, "set of files <driver>.cf<cpu>, eg. \"dkong.cf0\" and \"dkong.cf1\".") + 1;
+			dst += sprintf( dst, "The files can contain different settings for the CPUs of a game.") + 1;
         }
 		else
 		{
-			dst += sprintf( dst, "%s %s", commands[cmd].name, commands[cmd].args ) + 1;
 			if( commands[cmd].alias )
-				dst += sprintf( dst, "(%s)\t%s", commands[cmd].alias, commands[cmd].info ) + 1;
+				dst += sprintf( dst, "%s %s (aka %s)", commands[cmd].name, commands[cmd].args, commands[cmd].alias ) + 1;
 			else
-				dst += sprintf( dst, "\t%s", commands[cmd].info ) + 1;
+				dst += sprintf( dst, "%s %s", commands[cmd].name, commands[cmd].args ) + 1;
+			src = commands[cmd].info;
+			while( *src )
+			{
+				*dst++ = (*src == '\n') ? '\0' : *src;
+				src++;
+			}
+			*dst++ = '\0';
         }
 		break;
 	case EDIT_REGS:
@@ -2781,7 +3232,7 @@ static void cmd_help( void )
 		dst += sprintf( dst, "%s [%s] Version %s", cpu_name(), cpu_core_family(), cpu_core_version() ) + 1;
 		dst += sprintf( dst, "Address bits   : %d [%08X]", cpu_address_bits(), cpu_address_mask() ) + 1;
 		dst += sprintf( dst, "Code align unit: %d byte(s)", cpu_align_unit() ) + 1;
-		dst += sprintf( dst, "This CPU is    : %s endian", (cpu_endianess() == CPU_IS_LE) ? "little" : "big" ) + 1;
+		dst += sprintf( dst, "This CPU is    : %s endian", (ENDIAN == CPU_IS_LE) ? "little" : "big") + 1;
 		dst += sprintf( dst, "Source file    : %s", cpu_core_file() ) + 1;
 		dst += sprintf( dst, "%s", cpu_core_credits() ) + 1;
         break;
@@ -2813,8 +3264,20 @@ static void cmd_help( void )
 					dst += sprintf( dst, "%s %s (aka %s)", commands[i].name, commands[i].args, commands[i].alias ) + 1;
 				else
                     dst += sprintf( dst, "%s %s", commands[i].name, commands[i].args ) + 1;
-				dst += sprintf( dst, "%s", commands[i].info ) + 1;
-			}
+				src = commands[i].info;
+				while( *src )
+				{
+					if( *src == '\n' )
+					{
+						if( src[1] != '\0' )
+							*dst++ = '\0';
+					}
+					else
+						*dst++ = *src;
+					src++;
+				}
+				*dst++ = '\0';
+            }
             else
 			{
 				dst += sprintf( dst, "[%s]\t%s", osd_key_name(commands[i].key), commands[i].info ) + 1;
@@ -2829,8 +3292,9 @@ static void cmd_help( void )
     for( lines = 0, src = help; *src && i > 0; src += strlen(src) + 1 )
         lines++;
 
-	win_create( win, 0,
-		2,1,74,18, COLOR_HELP, COLOR_LINE, ' ',
+	osd_get_screen_size( &w, &h );
+    win_create( win, 0,
+		2,1,w-2-4,h-2-3, cur_col[E_HELP], cur_col[E_FRAME], ' ',
         BORDER_TOP | BORDER_LEFT | BORDER_RIGHT | BORDER_BOTTOM | SHADOW );
     win_set_title( win, title );
     win_show( win );
@@ -2850,6 +3314,7 @@ static void cmd_help( void )
                 win_printf( win, src );
                 src += strlen(src) + 1;
             }
+			win_erase_eol( win, ' ' );
             win_putc( win, '\n');
             l++;
         } while( l < win_get_h(win) );
@@ -2908,6 +3373,90 @@ static void cmd_default( int code )
     }
 }
 
+
+/**************************************************************************
+ * cmd_set_element_color
+ * Set a specific color foreground and background
+ **************************************************************************/
+static void cmd_set_element_color( void )
+{
+	char *cmd = CMD;
+	unsigned element, fg, bg, win;
+	int length;
+
+	element = get_option_or_value( &cmd, &length, ELEMENT_NAMES );
+    if( length )
+	{
+		fg = get_option_or_value( &cmd, &length, COLOR_NAMES );
+		if( length )
+		{
+			bg = get_option_or_value( &cmd, &length, COLOR_NAMES );
+			if( !length ) bg = 0;	/* BLACK is default background */
+        }
+		else
+		{
+			bg = def_col[element] >> 4;
+			fg = def_col[element] & 15;
+		}
+		cur_col[element] = fg + 16 * bg;
+		switch( element )
+		{
+			case E_TITLE:
+				for( win = 0; win < MAX_WINDOWS; win++ )
+					win_set_title_color( win, cur_col[element] );
+				break;
+			case E_FRAME:
+				for( win = 0; win < MAX_WINDOWS; win++ )
+					win_set_frame_color( win, cur_col[element] );
+				break;
+        }
+    }
+	else
+	{
+		memcpy( cur_col, def_col, sizeof(cur_col) );
+		for( win = 0; win < MAX_WINDOWS; win++ )
+			win_set_title_color( win, cur_col[E_TITLE] );
+		for( win = 0; win < MAX_WINDOWS; win++ )
+			win_set_frame_color( win, cur_col[E_FRAME] );
+    }
+
+    edit_cmds_reset();
+	dbg_update = 1;
+}
+
+/**************************************************************************
+ * cmd_set_screen_size
+ * Set new screen size width and height
+ **************************************************************************/
+static void cmd_set_screen_size( void )
+{
+	char *cmd = CMD;
+	unsigned w, h, new_w, new_h;
+	int length;
+
+	osd_get_screen_size( &w, &h );
+
+	new_w = dtou( &cmd, &length );
+	if( length )
+	{
+		new_h = dtou( &cmd, &length );
+		if( !length ) new_h = h;
+	}
+	else
+	{
+		new_w = 80;
+		new_h = 25;
+	}
+	if( new_w < 80 ) new_w = 80;
+	if( new_h < 25 ) new_h = 25;
+
+	dbg_close_windows();
+	osd_set_screen_size( new_w, new_h );
+	dbg_open_windows();
+
+    edit_cmds_reset();
+	dbg_update = 1;
+}
 
 /**************************************************************************
  * cmd_brk_regs_set
@@ -3072,7 +3621,7 @@ static void cmd_display_memory( void )
 	if( length )
 	{
 		address = get_register_or_value( &cmd, &length );
-		if( length )
+        if( length )
 		{
 			which = (which - 1) % MAX_MEM;
 		}
@@ -3081,7 +3630,8 @@ static void cmd_display_memory( void )
 			address = which;
 			which = 0;
 		}
-		MEM[which].base = address;
+		address = rshift(address) & AMASK;
+        DBGMEM[which].base = address;
 		dump_mem( which, 1 );
     }
     edit_cmds_reset();
@@ -3102,7 +3652,7 @@ static void cmd_dasm_to_file( void )
 	filename = get_file_name( &cmd, &length );
 	if( !length )
 	{
-		win_msgbox( COLOR_ERROR, "DASM arguments",
+		win_msgbox( cur_col[E_ERROR], "DASM arguments",
 			"Filename missing");
 		edit_cmds_reset();
         return;
@@ -3110,7 +3660,7 @@ static void cmd_dasm_to_file( void )
 	start = get_register_or_value( &cmd, &length );
 	if( !length )
 	{
-		win_msgbox( COLOR_ERROR, "DASM arguments",
+		win_msgbox( cur_col[E_ERROR], "DASM arguments",
 			"Start address missing");
 		edit_cmds_reset();
         return;
@@ -3118,37 +3668,41 @@ static void cmd_dasm_to_file( void )
 	end = get_register_or_value( &cmd, &length );
 	if( !length )
 	{
-		win_msgbox( COLOR_ERROR, "DASM arguments",
+		win_msgbox( cur_col[E_ERROR], "DASM arguments",
 			"End address missing");
 		edit_cmds_reset();
         return;
     }
 	opcodes = get_boolean( &cmd, &length );
-	if( !length )
-		opcodes = 1;
+	if( !length ) opcodes = 1;	/* default to display opcodes */
 
     file = fopen(filename, "w");
 	if( !file )
 	{
-		win_msgbox( COLOR_ERROR, "DASM to file",
+		win_msgbox( cur_col[E_ERROR], "DASM to file",
 			"Could not create %s", filename);
 		edit_cmds_reset();
         return;
     }
 
-	width = (ABITS + 3) / 4;
+	width = (ABITS + ASHIFT + 3) / 4;
 
     for( pc = start; pc <= end; /* */ )
 	{
+		unsigned p = rshift(pc);
+		unsigned s;
 		size = cpu_dasm( buffer, pc );
+		s = rshift(size);
+
 		fprintf(file, "%0*X: ", width, pc );
 		switch( ALIGN )
 		{
 		case 1: /* dump bytes */
 			for( i = 0; i < INSTL; i++ )
 			{
-				if ( i < size )
-					fprintf( file, "%02X ", RDMEM(pc+i) );
+				if ( i < s )
+					fprintf( file, "%02X ",
+						RDMEM(order(p+i,1)) );
 				else
 					fprintf( file, "   ");
 			}
@@ -3156,39 +3710,22 @@ static void cmd_dasm_to_file( void )
 		case 2: /* dump words */
 			for( i = 0; i < INSTL; i += 2 )
 			{
-				if ( i < size )
-				{
-					if( ENDIAN == CPU_IS_LE )
-						fprintf( file, "%02X%02X ",
-							RDMEM(UINT16_XOR_LE(pc+i+0)),
-							RDMEM(UINT16_XOR_LE(pc+i+1)) );
-					else
-						fprintf( file, "%02X%02X ",
-							RDMEM(UINT16_XOR_BE(pc+i+0)),
-							RDMEM(UINT16_XOR_BE(pc+i+1)) );
-				}
-				else fprintf( file, "     ");
+				if ( i < s )
+					fprintf( file, "%02X%02X ",
+						RDMEM(order(p+i+0,2)), RDMEM(order(p+i+1,2)) );
+				else
+					fprintf( file, "     ");
 			}
 			break;
 		case 4: /* dump dwords */
 			for( i = 0; i < INSTL; i += 4 )
 			{
-				if ( i < size )
-				{
-					if( ENDIAN == CPU_IS_LE )
-						fprintf( file, "%02X%02X%02X%02X ",
-							RDMEM(UINT32_XOR_LE(pc+i+0)),
-							RDMEM(UINT32_XOR_LE(pc+i+1)),
-							RDMEM(UINT32_XOR_LE(pc+i+2)),
-							RDMEM(UINT32_XOR_LE(pc+i+3)) );
-					else
-						fprintf( file, "%02X%02X%02X%02X ",
-							RDMEM(UINT32_XOR_BE(pc+i+0)),
-							RDMEM(UINT32_XOR_BE(pc+i+1)),
-							RDMEM(UINT32_XOR_BE(pc+i+2)),
-							RDMEM(UINT32_XOR_BE(pc+i+3)) );
-				}
-				else fprintf( file, "     ");
+				if ( i < s )
+					fprintf( file, "%02X%02X%02X%02X ",
+						RDMEM(order(p+i+0,4)), RDMEM(order(p+i+1,4)),
+						RDMEM(order(p+i+2,4)), RDMEM(order(p+i+3,4)) );
+				else
+					fprintf( file, "     ");
 			}
 			break;
 		}
@@ -3208,89 +3745,108 @@ static void cmd_dasm_to_file( void )
  **************************************************************************/
 static void cmd_dump_to_file( void )
 {
-	char buffer[127+1], *cmd = CMD;
+	UINT8 buffer[16];
+	char *cmd = CMD;
 	const char *filename;
 	int length;
 	FILE *file;
-	unsigned x, offs, address = 0, start, end, width, datasize;
+	unsigned x, offs, address = 0, start, end, width, data;
+	unsigned datasize, asciimode;
 
 	filename = get_file_name( &cmd, &length );
 	if( !length )
 	{
-		win_msgbox( COLOR_ERROR, "DUMP arguments",
-			"Filename missing");
+		win_msgbox( cur_col[E_ERROR], "DUMP arguments",
+			"<filename> missing");
 		edit_cmds_reset();
         return;
 	}
 	start = get_register_or_value( &cmd, &length );
 	if( !length )
 	{
-		win_msgbox( COLOR_ERROR, "DUMP arguments",
-			"Start address missing");
+		win_msgbox( cur_col[E_ERROR], "DUMP arguments",
+			"<start> address missing");
 		edit_cmds_reset();
         return;
 	}
+	start = rshift(start);
 	end = get_register_or_value( &cmd, &length );
 	if( !length )
 	{
-		win_msgbox( COLOR_ERROR, "DUMP arguments",
-			"End address missing");
+		win_msgbox( cur_col[E_ERROR], "DUMP arguments",
+			"<end> address missing");
 		edit_cmds_reset();
         return;
     }
-	datasize = get_register_or_value( &cmd, &length );
+	end = rshift(end);
+	asciimode = 1;		/* default to translation table */
+	datasize = ALIGN*2;	/* default to align unit of that CPU */
+	data = get_option_or_value( &cmd, &length, "BYTE\0WORD\0DWORD\0");
 	if( length )
 	{
-		if( datasize != 1 && datasize != 2 && datasize != 4 )
+		if( data != 1 && data != 2 && data != 4 )
 		{
-			win_msgbox( COLOR_ERROR, "DUMP arguments",
-				"Wrong data size.\nOnly 1=byte, 2=word or 4=dword are supported");
-			edit_cmds_reset();
-			return;
+			win_msgbox( cur_col[E_ERROR], "DUMP arguments",
+				"Wrong <data size>. Only BYTE, WORD or DWORD\n(also 0, 1 or 2) are supported");
+			data = 1;
 		}
-		datasize <<= 1;
-	}
-	else
-	{
-		datasize = 2;
-	}
+		datasize = data << 1;
+		/* look if there's also an ASCII mode specified */
+		data = get_option_or_value( &cmd, &length, "OFF\0TRANSLATE\0FULL\0" );
+		if( length )
+		{
+			if( data > 2 )
+			{
+				win_msgbox( cur_col[E_ERROR], "DUMP arguments",
+					"Wrong ASCII mode. Only OFF, TRANSLATE or FULL\n(also 0,1 or 2) are supported");
+				data = 1;
+			}
+			asciimode = data;
+		}
+    }
 
     file = fopen(filename, "w");
 	if( !file )
 	{
-		win_msgbox( COLOR_ERROR, "DUMP to file",
+		win_msgbox( cur_col[E_ERROR], "DUMP to file",
 			"Could not create %s", filename);
 		edit_cmds_reset();
         return;
     }
 
-	width = (ABITS + 3) / 4;
+	width = (ABITS + ASHIFT + 3) / 4;
 
 	for( x = 0, offs = 0; offs + start <= end; offs++ )
 	{
 		switch( datasize )
         {
             case 2:
-                address = (start + offs) & AMASK;
+				address = (start + order(offs,1)) & AMASK;
                 break;
             case 4:
-                if( ENDIAN == CPU_IS_LE )
-                    address = (start + UINT16_XOR_LE(offs)) & AMASK;
-                else
-                    address = (start + UINT16_XOR_BE(offs)) & AMASK;
+				address = (start + order(offs,2)) & AMASK;
                 break;
             case 8:
-                if( ENDIAN == CPU_IS_LE )
-                    address = (start + UINT32_XOR_LE(offs)) & AMASK;
-                else
-                    address = (start + UINT32_XOR_BE(offs)) & AMASK;
+				address = (start + order(offs,4)) & AMASK;
                 break;
         }
+		buffer[offs & 15] = RDMEM( address );
         if( (offs & 15) == 0 )
-			fprintf(file, "%0*X: ", width, (start + offs) & AMASK );
-		fprintf(file, "%02X", RDMEM( address ) );
+			fprintf(file, "%0*X: ", width, lshift((start + offs) & AMASK) );
+		fprintf(file, "%02X", buffer[offs & 15] );
 		if( (offs & 15) == 15 )
 		{
+			unsigned o;
+			if( asciimode )
+			{
+				fputc( ' ', file );
+				if( asciimode == 1 )
+					for( o = 0; o < 16; o++ )
+						fputc( trans_table[buffer[o]], file );
+				else
+					for( o = offs - 15; o <= offs; o++ )
+						fputc( (buffer[o] < 32) ? '.' : buffer[o], file );
+            }
 			fprintf(file, "\n" );
 			x = 0;
 		}
@@ -3304,6 +3860,67 @@ static void cmd_dump_to_file( void )
 			x = 0;
 		}
 	}
+	fclose( file );
+
+    edit_cmds_reset();
+}
+
+/**************************************************************************
+ * cmd_save_to_file
+ * Save binary image of a range of OP_ROM or OP_RAM
+ **************************************************************************/
+static void cmd_save_to_file( void )
+{
+	UINT8 buffer[16];
+	char *cmd = CMD;
+	const char *filename;
+	int length;
+	FILE *file;
+	unsigned x, offs, address = 0, start, end, width, data;
+	unsigned save_what;
+
+	filename = get_file_name( &cmd, &length );
+	if( !length )
+	{
+		win_msgbox( cur_col[E_ERROR], "SAVE arguments",
+			"<filename> missing");
+		edit_cmds_reset();
+        return;
+	}
+	start = get_register_or_value( &cmd, &length );
+	if( !length )
+	{
+		win_msgbox( cur_col[E_ERROR], "SAVE arguments",
+			"<start> address missing");
+		edit_cmds_reset();
+        return;
+	}
+	end = get_register_or_value( &cmd, &length );
+	if( !length )
+	{
+		win_msgbox( cur_col[E_ERROR], "SAVE arguments",
+			"<end> address missing");
+		edit_cmds_reset();
+        return;
+    }
+
+	save_what = get_option_or_value( &cmd, &length, "OPCODES\0DATA\0");
+	if( !length ) save_what = 0;	/* default to OP_ROM */
+
+    file = fopen(filename, "wb");
+	if( !file )
+	{
+		win_msgbox( cur_col[E_ERROR], "SAVE to file",
+			"Could not create %s", filename);
+		edit_cmds_reset();
+        return;
+    }
+
+	if( save_what )
+		fwrite( &OP_RAM[start], 1, end+1-start, file );
+	else
+		fwrite( &OP_ROM[start], 1, end+1-start, file );
+
 	fclose( file );
 
     edit_cmds_reset();
@@ -3325,11 +3942,12 @@ static void cmd_edit_memory( void )
     {
 		which = (which - 1) % MAX_MEM;
 		address = get_register_or_value( &cmd, &length );
+		address = rshift(address) & AMASK;
         if( length )
 		{
-			MEM[which].offset = address % MEM[which].size;
-			MEM[which].base = address - MEM[which].offset;
-			MEM[which].nibble = 0;
+			DBGMEM[which].offset = address % DBGMEM[which].size;
+			DBGMEM[which].base = address - DBGMEM[which].offset;
+			DBGMEM[which].nibble = 0;
 			dump_mem( which, 0 );
         }
         switch( which )
@@ -3339,6 +3957,190 @@ static void cmd_edit_memory( void )
         }
     }
     edit_cmds_reset();
+}
+
+/**************************************************************************
+ * cmd_search_memory
+ * Search the memory for a sequence of bytes
+ **************************************************************************/
+static void cmd_search_memory(void)
+{
+	static UINT8 search_data[16];
+	static int search_count = 0;
+	UINT32 win = MAX_WINDOWS-3;
+	unsigned which = (DBG.window == WIN_MEM1(activecpu)) ? 0 : 1;
+	unsigned w, h;
+	unsigned shift, mask, val;
+    const char *k;
+	int i, offset, nibble;
+
+	osd_get_screen_size( &w, &h );
+	win_create( win, 1, 2, 2, w-4, 2,
+		cur_col[E_PROMPT], cur_col[E_FRAME], ' ',
+		BORDER_TOP | BORDER_BOTTOM | BORDER_LEFT | BORDER_RIGHT );
+	win_set_title( win, "Search byte(s) in memory");
+	win_show( win );
+
+	offset = 0;
+	nibble = 0;
+
+    do
+	{
+		win_set_curpos( win, 0, 0 );
+		for( i = 0; i < search_count; i++ )
+			win_printf( win, "%02X ", search_data[i] );
+		win_erase_eol( win, ' ' );
+		win_set_curpos( win, 0, 1 );
+		for( i = 0; i < search_count; i++ )
+			win_printf( win, "%c  ", search_data[i] < 32 ? '.' : search_data[i] );
+        win_erase_eol( win, ' ' );
+
+		win_set_curpos( win, offset * 3 + nibble, 0 );
+		osd_set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
+
+        i = osd_debug_readkey();
+		k = osd_key_name(i);
+
+		shift = (1 - nibble) * 4;
+		mask = ~(0xf << shift);
+
+        if( strlen(k) == 1 )
+		{
+			switch( k[0] )
+			{
+				case '0': case '1': case '2': case '3':
+				case '4': case '5': case '6': case '7':
+				case '8': case '9': case 'A': case 'B':
+				case 'C': case 'D': case 'E': case 'F':
+					if( offset == 16 )
+						break;
+					if( offset == search_count )
+						search_count++;
+					val = k[0] - '0';
+					if( val > 9 ) val -= 7;
+					val <<= shift;
+					/* now modify the register */
+					search_data[offset] = (search_data[offset] & mask ) | val;
+					i = OSD_KEY_RIGHT;	/* advance to next nibble */
+                    break;
+            }
+		}
+
+		switch( i )
+		{
+			case OSD_KEY_DEL:
+				if( offset < search_count )
+				{
+					for( i = offset; i < 15; i++ )
+						search_data[i] = search_data[i+1];
+					search_count--;
+				}
+                break;
+
+			case OSD_KEY_INSERT:
+				if( search_count < 16 )
+				{
+					for( i = 15; i > offset; i-- )
+						search_data[i] = search_data[i-1];
+					search_data[offset] = 0;
+					search_count++;
+				}
+                break;
+
+            case OSD_KEY_BACKSPACE:
+				if( nibble > 0 || offset > 0 )
+				{
+					if( nibble > 0 )
+					{
+						nibble--;
+					}
+					else
+					if( offset > 0 )
+					{
+						offset--;
+						nibble = 1;
+					}
+					shift = (1 - nibble) * 4;
+					mask = ~(0xf << shift);
+					/* now modify the value */
+					search_data[offset] = search_data[offset] & mask;
+				}
+				break;
+
+			case OSD_KEY_LEFT:
+				if( nibble > 0 )
+				{
+					nibble--;
+				}
+				else
+				if( offset > 0 )
+				{
+					offset--;
+					nibble = 1;
+				}
+				break;
+
+			case OSD_KEY_RIGHT:
+				if( offset < search_count )
+				{
+					if( nibble < 1 )
+					{
+						nibble++;
+					}
+					else
+					{
+						offset++;
+						nibble = 0;
+					}
+				}
+				break;
+
+			case OSD_KEY_HOME:
+				offset = 0;
+				nibble = 0;
+				break;
+
+			case OSD_KEY_END:
+				offset = search_count;
+				nibble = 0;
+				break;
+		}
+	} while( i != OSD_KEY_ENTER && i != OSD_KEY_ESC );
+
+	if( i == OSD_KEY_ENTER && search_count > 0 )
+	{
+		static char dbg_info[32+1];
+		unsigned addr, start;
+
+		start = (DBGMEM[which].base + DBGMEM[which].offset) & AMASK;
+
+		for( addr = start + 1; addr != start; addr = ++addr & AMASK )
+		{
+			if( (addr & (AMASK >> 8)) == 0 )
+			{
+				win_set_title( win, "[%3.0f%%] %s/%s",
+					100.0 * addr / (AMASK + 1),
+					kilobyte(addr), kilobyte(AMASK + 1) );
+				osd_screen_update();
+			}
+			for( i = 0; i < search_count; i++)
+				if( RDMEM( addr+i ) != search_data[i] )
+					break;
+			if( i == search_count )
+			{
+				sprintf(dbg_info, "Found at address $%X", addr);
+				dbg_info_once = dbg_info;
+				DBGMEM[which].offset = addr % DBGMEM[which].size;
+				DBGMEM[which].base = addr - DBGMEM[which].offset;
+				win_close(win);
+                dbg_update = 1;
+				return;
+			}
+		}
+		sprintf(dbg_info, "Not found");
+		dbg_info_once = dbg_info;
+    }
+    win_close(win);
 }
 
 /**************************************************************************
@@ -3381,7 +4183,7 @@ static void cmd_go_break( void )
  **************************************************************************/
 static void cmd_here( void )
 {
-	DBG.brk_temp = DASM.pc_cur;
+	DBG.brk_temp = DBGDASM.pc_cur;
 
 	dbg_update = 0;
 	dbg_active = 0;
@@ -3413,7 +4215,7 @@ static void cmd_set_ignore( void )
 				if(dbg[i].ignore) ++already_ignored;
 			if( already_ignored + 1 >= totalcpu )
 			{
-				win_msgbox( COLOR_ERROR, "Ignore CPU",
+				win_msgbox( cur_col[E_ERROR], "Ignore CPU",
 					"No, I won't do that! ;-)\nIgnoring all CPUs is a bad idea.");
 				edit_cmds_reset();
 				return;
@@ -3425,7 +4227,7 @@ static void cmd_set_ignore( void )
 	}
 	else
 	{
-		win_msgbox( COLOR_ERROR, "Ignore CPU",
+		win_msgbox( cur_col[E_ERROR], "Ignore CPU",
 			"The selected CPU# is too high.\nOnly %d CPUs (0..%d) are used", totalcpu, totalcpu-1);
 	}
 
@@ -3449,7 +4251,7 @@ static void cmd_set_observe( void )
 	}
 	else
 	{
-		win_msgbox( COLOR_ERROR, "Observe CPU",
+		win_msgbox( cur_col[E_ERROR], "Observe CPU",
 			"The selected CPU# is too high.\nOnly %d CPUs (0..%d) are used", totalcpu, totalcpu-1);
     }
 
@@ -3467,11 +4269,11 @@ static void cmd_jump( void )
 	int length;
 
 	address = get_register_or_value( &cmd, &length );
-	if( length > 0 )
+    if( length > 0 )
 	{
-		DASM.pc_top = address;
-		DASM.pc_cur = DASM.pc_top;
-		DASM.pc_end = dump_dasm( DASM.pc_top );
+		DBGDASM.pc_top = address;
+		DBGDASM.pc_cur = DBGDASM.pc_top;
+		DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
 	}
     edit_cmds_reset();
 }
@@ -3495,23 +4297,54 @@ static void cmd_replace_register( void )
 		if( length )
 		{
 			cpu_set_reg( regnum, address );
-			dump_regs();
+			if( regnum > 1 )
+				dump_regs();
+			else
+				/* Update in case PC changed */
+				dbg_update = 1;
 		}
 		else
 		{
 			/* Edit the first register */
-			for( REGS.idx = 0; REGS.idx < REGS.count; REGS.idx++ )
-				if( REGS.id[REGS.idx] == regnum ) break;
+			for( DBGREGS.idx = 0; DBGREGS.idx < DBGREGS.count; DBGREGS.idx++ )
+				if( DBGREGS.id[DBGREGS.idx] == regnum ) break;
 			DBG.window = EDIT_REGS;
         }
     }
 	else
 	{
 		/* Edit the first register */
-        REGS.idx = 0;
+		DBGREGS.idx = 0;
 		DBG.window = EDIT_REGS;
     }
     edit_cmds_reset();
+}
+
+/**************************************************************************
+ * cmd_set_memory_mode
+ * Set display mode of a memory window
+ **************************************************************************/
+static void cmd_set_memory_mode( void )
+{
+	char *cmd = CMD;
+	unsigned which, mode;
+	int length;
+
+	which = dtou( &cmd, &length );
+    if( length )
+	{
+		which = (which - 1) % 2;
+		mode = get_option_or_value( &cmd, &length, "BYTE\0WORD\0DWORD\0" );
+		if( !length ) mode = 0; /* default to BYTE */
+		DBGMEM[which].mode = mode;
+	}
+    else
+	{
+		DBGMEM[0].mode = 0;
+		DBGMEM[1].mode = 0;
+    }
+	edit_cmds_reset();
+    dbg_update = 1;
 }
 
 /**************************************************************************
@@ -3543,7 +4376,7 @@ static void cmd_trace_to_file( void )
 
 	filename = get_file_name( &cmd, &length );
 
-	if( !stricmp( filename, "OFF" ) )
+	if( !my_stricmp( filename, "OFF" ) )
 	{
 		trace_done();
 	}
@@ -3568,19 +4401,19 @@ static void cmd_trace_to_file( void )
  **************************************************************************/
 static void cmd_dasm_up( void )
 {
-	if ( (DASM.pc_cur >= dasm_line( DASM.pc_top, 1 ) ) &&
-		 (DASM.pc_cur < DASM.pc_end) )
+	if ( (DBGDASM.pc_cur >= dasm_line( DBGDASM.pc_top, 1 ) ) &&
+		 (DBGDASM.pc_cur < DBGDASM.pc_end) )
 	{
-		unsigned dasm_pc_1st = DASM.pc_top;
-		unsigned dasm_pc_2nd = DASM.pc_top;
-		while( dasm_pc_2nd < DASM.pc_end )
+		unsigned dasm_pc_1st = DBGDASM.pc_top;
+		unsigned dasm_pc_2nd = DBGDASM.pc_top;
+		while( dasm_pc_2nd < DBGDASM.pc_end )
 		{
 			dasm_pc_2nd = dasm_line( dasm_pc_1st, 1 );
 
-			if( dasm_pc_2nd == DASM.pc_cur )
+			if( dasm_pc_2nd == DBGDASM.pc_cur )
 			{
-				DASM.pc_cur = dasm_pc_1st;
-				dasm_pc_2nd = DASM.pc_end;
+				DBGDASM.pc_cur = dasm_pc_1st;
+				dasm_pc_2nd = DBGDASM.pc_end;
 			}
 			else
 			{
@@ -3589,30 +4422,30 @@ static void cmd_dasm_up( void )
 		}
 	}
 	else
+	if( DBGDASM.pc_top > 0 )
 	{
 		/*
-		 * Try to find the previous instruction by searching
-		 * from the longest instruction length towards the
-		 * current address.  If we can't find one then
-		 * just go back one byte, which means that a
-		 * previous guess was wrong.
+		 * Try to find the previous instruction by searching from the
+		 * longest instruction length towards the current address.
+		 * If we can't find one then just go back one byte,
+		 * which means that a previous guess was wrong.
 		 */
-		unsigned dasm_pc_tmp = (DASM.pc_top - 2 * INSTL) & AMASK;
-		if (dasm_pc_tmp > DASM.pc_top )
+		unsigned dasm_pc_tmp = lshift((rshift(DBGDASM.pc_top) - INSTL) & AMASK);
+		if( dasm_pc_tmp > DBGDASM.pc_end )
 			dasm_pc_tmp = 0;
-		while( dasm_pc_tmp < DASM.pc_top )
+		while( dasm_pc_tmp < DBGDASM.pc_top )
 		{
-			if( dasm_line( dasm_pc_tmp, 1 ) == DASM.pc_top )
+			if( dasm_line( dasm_pc_tmp, 1 ) == DBGDASM.pc_top )
 				break;
 			dasm_pc_tmp += ALIGN;
 		}
-		if( dasm_pc_tmp == DASM.pc_top )
+		if( dasm_pc_tmp == DBGDASM.pc_top )
 			dasm_pc_tmp -= ALIGN;
-		DASM.pc_cur = dasm_pc_tmp;
-		if( DASM.pc_cur < DASM.pc_top )
-			DASM.pc_top = DASM.pc_cur;
+		DBGDASM.pc_cur = dasm_pc_tmp;
+		if( DBGDASM.pc_cur < DBGDASM.pc_top )
+			DBGDASM.pc_top = DBGDASM.pc_cur;
 	}
-	DASM.pc_end = dump_dasm( DASM.pc_top );
+	DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
     edit_cmds_reset();
 }
 
@@ -3622,10 +4455,10 @@ static void cmd_dasm_up( void )
  **************************************************************************/
 static void cmd_dasm_down( void )
 {
-	DASM.pc_cur = dasm_line( DASM.pc_cur, 1 );
-	if( DASM.pc_cur >= DASM.pc_end )
-		  DASM.pc_top = dasm_line( DASM.pc_top, 1 );
-	DASM.pc_end = dump_dasm( DASM.pc_top );
+	DBGDASM.pc_cur = dasm_line( DBGDASM.pc_cur, 1 );
+	if( DBGDASM.pc_cur >= DBGDASM.pc_end )
+		  DBGDASM.pc_top = dasm_line( DBGDASM.pc_top, 1 );
+	DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
     edit_cmds_reset();
 }
 
@@ -3642,38 +4475,42 @@ static void cmd_dasm_page_up( void )
      *  use to generate the previous pagefull of
      *  disassembly - CM 980428
      */
-    if( DASM.pc_top > 0 )
+	if( DBGDASM.pc_top > 0 )
     {
         unsigned dasm_pc_tmp[50];   /* needs to be > max windows height */
         unsigned h = win_get_h(WIN_DASM(activecpu));
-        unsigned dasm_pc_1st = (DASM.pc_top - INSTL * h) & AMASK;
+		unsigned dasm_pc_1st = lshift((rshift(DBGDASM.pc_top) - INSTL * h) & AMASK);
 
-        if( dasm_pc_1st > DASM.pc_top )
-            dasm_pc_1st = 0;
-
-        for( i= 0; dasm_pc_1st < DASM.pc_top; i++ )
-        {
-            dasm_pc_tmp[i % h] = dasm_pc_1st;
-			dasm_pc_1st = dasm_line( dasm_pc_1st, 1 );
-        }
-
-        /*
-         * If this ever happens, it's because our
-         * max_inst_len member is too small for the CPU
-         */
-        if( i < h )
-        {
-            dasm_pc_1st = dasm_pc_tmp[0];
-			win_msgbox(COLOR_ERROR, "DASM page up",
-				"Increase cpu_intf[].max_inst_len? Line = %d\n", i);
+		if( dasm_pc_1st > DBGDASM.pc_top )
+		{
+			DBGDASM.pc_top = 0;
         }
         else
         {
-            DASM.pc_top = dasm_pc_tmp[(i+ 1) % h];
-        }
+			for( i= 0; dasm_pc_1st < DBGDASM.pc_top; i++ )
+			{
+				dasm_pc_tmp[i % h] = dasm_pc_1st;
+				dasm_pc_1st = dasm_line( dasm_pc_1st, 1 );
+			}
+
+			/*
+			 * If this ever happens, it's because our
+			 * max_inst_len member is too small for the CPU
+			 */
+			if( i < h )
+			{
+				dasm_pc_1st = dasm_pc_tmp[0];
+				win_msgbox(cur_col[E_ERROR], "DBGDASM page up",
+					"Increase cpu_intf[].max_inst_len? Line = %d\n", i);
+			}
+			else
+			{
+				DBGDASM.pc_top = dasm_pc_tmp[(i+ 1) % h];
+			}
+		}
     }
-    DASM.pc_cur = DASM.pc_top;
-	DASM.pc_end = dump_dasm( DASM.pc_top );
+	DBGDASM.pc_cur = DBGDASM.pc_top;
+	DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
     edit_cmds_reset();
 }
 
@@ -3685,9 +4522,42 @@ static void cmd_dasm_page_down( void )
 {
     unsigned h = win_get_h(WIN_DASM(activecpu));
 
-	DASM.pc_top = dasm_line( DASM.pc_top, h );
-	DASM.pc_cur = dasm_line( DASM.pc_cur, h );
-	DASM.pc_end = dump_dasm( DASM.pc_top );
+	DBGDASM.pc_top = dasm_line( DBGDASM.pc_top, h );
+	DBGDASM.pc_cur = dasm_line( DBGDASM.pc_cur, h );
+	DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
+    edit_cmds_reset();
+}
+
+/**************************************************************************
+ * cmd_dasm_home
+ * Disassemble first page
+ **************************************************************************/
+static void cmd_dasm_home( void )
+{
+	DBGDASM.pc_cur = DBGDASM.pc_top = 0;
+	DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
+    edit_cmds_reset();
+}
+
+/**************************************************************************
+ * cmd_dasm_end
+ * Disassemble last page
+ **************************************************************************/
+static void cmd_dasm_end( void )
+{
+	unsigned h = win_get_h(WIN_DASM(activecpu));
+	unsigned tmp_address = lshift(AMASK - h * INSTL);
+	unsigned end_address;
+	for( ; ; )
+	{
+		end_address = dasm_line( tmp_address, h );
+		if( end_address < tmp_address )
+			break;
+		tmp_address += ALIGN;
+	}
+	DBGDASM.pc_top = tmp_address;
+	DBGDASM.pc_cur = dasm_line( DBGDASM.pc_top, h - 1 );
+	DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
     edit_cmds_reset();
 }
 
@@ -3699,13 +4569,13 @@ static void cmd_brk_exec_toggle( void )
 {
 	if( DBG.brk_exec == INVALID )
 	{
-		DBG.brk_exec = DASM.pc_cur;
+		DBG.brk_exec = DBGDASM.pc_cur;
 		DBG.brk_exec_times = 0;
 		DBG.brk_exec_reset = 0;
 		dbg_update = 1;
     }
 	else
-	if( DBG.brk_exec == DASM.pc_cur )
+	if( DBG.brk_exec == DBGDASM.pc_cur )
 	{
 		DBG.brk_exec = INVALID;
 		DBG.brk_exec_times = 0;
@@ -3714,7 +4584,7 @@ static void cmd_brk_exec_toggle( void )
     }
 	else
 	{
-		win_msgbox( COLOR_PROMPT, "Breakpoint",
+		win_msgbox( cur_col[E_PROMPT], "Breakpoint",
 			"Cleared execution break point at $%X", DBG.brk_exec );
 		DBG.brk_exec = INVALID;
 	}
@@ -3729,20 +4599,20 @@ static void cmd_dasm_hist_follow( void )
 	unsigned i, address, access = EA_NONE;
 
     address = INVALID;
-	DASM.dst_ea_value = INVALID;
-	DASM.src_ea_value = INVALID;
+	DBGDASM.dst_ea_value = INVALID;
+	DBGDASM.src_ea_value = INVALID;
 
-    dasm_line( DASM.pc_cur, 1 );
+	dasm_line( DBGDASM.pc_cur, 1 );
 
-    if( DASM.src_ea_value != INVALID )
+	if( DBGDASM.src_ea_value != INVALID )
 	{
-        access = DASM.src_ea_access;
-		address = DASM.src_ea_value;
+		access = DBGDASM.src_ea_access;
+		address = DBGDASM.src_ea_value;
     }
-	if( DASM.dst_ea_value != INVALID )
+	if( DBGDASM.dst_ea_value != INVALID )
 	{
-		access = DASM.dst_ea_access;
-		address = DASM.dst_ea_value;
+		access = DBGDASM.dst_ea_access;
+		address = DBGDASM.dst_ea_value;
 	}
 	if( address != INVALID )
 	{
@@ -3750,24 +4620,24 @@ static void cmd_dasm_hist_follow( void )
 		{
 			i = DBG.hist_cnt;
 			/* Save some current values */
-			DBG.hist[i].dasm_top = DASM.pc_top;
-			DBG.hist[i].dasm_cur = DASM.pc_cur;
-			DBG.hist[i].mem1_base = MEM[0].base;
-			DBG.hist[i].mem1_offset = MEM[0].offset;
-			DBG.hist[i].mem1_nibble = MEM[0].nibble;
+			DBG.hist[i].dasm_top = DBGDASM.pc_top;
+			DBG.hist[i].dasm_cur = DBGDASM.pc_cur;
+			DBG.hist[i].mem1_base = DBGMEM[0].base;
+			DBG.hist[i].mem1_offset = DBGMEM[0].offset;
+			DBG.hist[i].mem1_nibble = DBGMEM[0].nibble;
 			if( access == EA_ABS_PC || access == EA_REL_PC )
 			{
-				DASM.pc_top = address;
-                DASM.pc_cur = address;
-				DASM.pc_end = dump_dasm( DASM.pc_top );
+				DBGDASM.pc_top = address;
+				DBGDASM.pc_cur = address;
+				DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
                 DBG.hist_cnt++;
             }
 			else
 			if( access == EA_MEM_RD || access == EA_MEM_WR || access == EA_MEM_RDWR )
 			{
-				MEM[0].offset = address  % MEM[0].size;
-				MEM[0].base = address - MEM[0].offset;
-				MEM[0].nibble = 0;
+				DBGMEM[0].offset = address	% DBGMEM[0].size;
+				DBGMEM[0].base = address - DBGMEM[0].offset;
+				DBGMEM[0].nibble = 0;
 				dump_mem( 0, 0 );
                 DBG.hist_cnt++;
             }
@@ -3785,12 +4655,12 @@ static void cmd_dasm_hist_back( void )
 	if( DBG.hist_cnt > 0)
 	{
 		i = --DBG.hist_cnt;
-		DASM.pc_top = DBG.hist[i].dasm_top;
-		DASM.pc_cur = DBG.hist[i].dasm_cur;
-		DASM.pc_end = dump_dasm( DASM.pc_top );
-		MEM[0].base = DBG.hist[i].mem1_base;
-		MEM[0].offset = DBG.hist[i].mem1_offset;
-		MEM[0].nibble = DBG.hist[i].mem1_nibble;
+		DBGDASM.pc_top = DBG.hist[i].dasm_top;
+		DBGDASM.pc_cur = DBG.hist[i].dasm_cur;
+		DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
+		DBGMEM[0].base = DBG.hist[i].mem1_base;
+		DBGMEM[0].offset = DBG.hist[i].mem1_offset;
+		DBGMEM[0].nibble = DBG.hist[i].mem1_nibble;
 		dump_mem( 0, 0 );
     }
 }
@@ -3806,13 +4676,13 @@ static void cmd_brk_data_toggle( void )
 	if( DBG.brk_data == INVALID )
 	{
 		unsigned data;
-		DBG.brk_data = MEM[which].address;
+		DBG.brk_data = DBGMEM[which].address;
 		data = RDMEM(DBG.brk_data);
 		DBG.brk_data_oldval = data;
 		DBG.brk_data_newval = INVALID;
     }
 	else
-	if( DBG.brk_data == MEM[which].address )
+	if( DBG.brk_data == DBGMEM[which].address )
 	{
 		DBG.brk_data = INVALID;
 		DBG.brk_data_oldval = INVALID;
@@ -3820,7 +4690,7 @@ static void cmd_brk_data_toggle( void )
 	}
 	else
 	{
-		win_msgbox( COLOR_PROMPT, "Data watchpoint",
+		win_msgbox( cur_col[E_PROMPT], "Data watchpoint",
 			"Cleared data watch point at $%X", DBG.brk_data );
 		DBG.brk_data = INVALID;
 	}
@@ -3834,7 +4704,7 @@ static void cmd_brk_data_toggle( void )
  **************************************************************************/
 static void cmd_run_to_cursor( void )
 {
-	DBG.brk_temp = DASM.pc_cur;
+	DBG.brk_temp = DBGDASM.pc_cur;
 
     edit_cmds_reset();
 
@@ -3847,8 +4717,9 @@ static void cmd_run_to_cursor( void )
  **************************************************************************/
 static void cmd_view_screen( void )
 {
-	int i;
+	unsigned w,h;
 
+	osd_get_screen_size( &w, &h );
     osd_set_display(
 		Machine->scrbitmap->width,
 		Machine->scrbitmap->height,
@@ -3861,7 +4732,7 @@ static void cmd_view_screen( void )
 		osd_update_video_and_audio();
 	} while( !osd_key_pressed_memory(OSD_KEY_ANY) );
 
-	set_gfx_mode (GFX_TEXT,80,25,0,0);
+	osd_set_screen_size( w, h );
 	win_invalidate_video();
 	win_show( WIN_REGS(activecpu) );
 	win_show( WIN_DASM(activecpu) );
@@ -3903,6 +4774,13 @@ static void cmd_step( void )
  **************************************************************************/
 static void cmd_animate( void )
 {
+	char *cmd = CMD;
+	unsigned data;
+	int length;
+	data = dtou( &cmd, &length );
+	if( length )
+		dbg_trace_delay = data;
+
 	dbg_trace = 1;
 	dbg_step = 1;
     edit_cmds_reset();
@@ -3917,7 +4795,7 @@ static void cmd_animate( void )
 static void cmd_step_over( void )
 {
 	/* Set next PC to the instruction after the cursor line */
-	DBG.next_pc = dasm_line( DASM.pc_cur, 1 );
+	DBG.next_pc = dasm_line( DBGDASM.pc_cur, 1 );
 	DBG.prev_sp = cpu_get_sp();
 	dbg_step = 1;
 	edit_cmds_reset();
@@ -4021,7 +4899,7 @@ static void cmd_set_dasm_opcodes( void )
 			win_set_prio( win, 1 );
             win_set_w( win, w - dw );
 		}
-        DASM.pc_end = dump_dasm( DASM.pc_top );
+		DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
     }
 
     edit_cmds_reset();
@@ -4062,8 +4940,7 @@ void mame_debug_init(void)
 	FILE *file;
 
     mame_debug_reset_statics();
-
-    set_gfx_mode (GFX_TEXT,80,25,0,0);
+	osd_set_screen_size( 80, 25 );
 
     totalcpu = cpu_gettotalcpu();
 
@@ -4081,17 +4958,14 @@ void mame_debug_init(void)
 		DBG.brk_regs_newval = INVALID;
 		DBG.brk_regs_mask = 0xffffffff;
 		DBG.brk_temp = INVALID;
-		MEM[0].base = MEM1DEFAULT;
-		MEM[0].color = COLOR_MEM1;
-		MEM[1].base = MEM2DEFAULT;
-		MEM[1].color = COLOR_MEM2;
+		DBGMEM[0].base = 0x0000;
+		DBGMEM[1].base = 1 << (ABITS / 2);
 		switch( cpunum_align_unit(activecpu) )
 		{
-			case 1: MEM[0].mode = MEM[1].mode = MODE_HEX_UINT8;  break;
-			case 2: MEM[0].mode = MEM[1].mode = MODE_HEX_UINT16; break;
-			case 4: MEM[0].mode = MEM[1].mode = MODE_HEX_UINT32; break;
+			case 1: DBGMEM[0].mode = DBGMEM[1].mode = MODE_HEX_UINT8;  break;
+			case 2: DBGMEM[0].mode = DBGMEM[1].mode = MODE_HEX_UINT16; break;
+			case 4: DBGMEM[0].mode = DBGMEM[1].mode = MODE_HEX_UINT32; break;
 		}
-		REGS.color = COLOR_REGS;
 	}
 
 	/* create windows for the active CPU */
@@ -4226,7 +5100,9 @@ void MAME_Debug(void)
 
 	if ( (hit_brk_exec() || hit_brk_data() || hit_brk_regs() || debug_key_pressed) && !dbg_active )
     {
-        uclock_t curr = uclock();
+		clock_t curr = clock();
+		unsigned w, h;
+
         debug_key_pressed = 0;
 
 		if( !first_time )
@@ -4235,12 +5111,12 @@ void MAME_Debug(void)
 			do
 			{
 				osd_update_video_and_audio();	/* give time to the sound hardware to apply the volume change */
-			} while( (uclock() - curr) < (UCLOCKS_PER_SEC / 4) );
+			} while( (clock() - curr) < (CLOCKS_PER_SEC / 15) );
 		}
 
         first_time = 0;
-
-        set_gfx_mode (GFX_TEXT,80,25,0,0);
+		osd_get_screen_size( &w, &h );
+		osd_set_screen_size( w, h );
         win_invalidate_video();
 
 		edit_cmds_reset();
@@ -4253,7 +5129,7 @@ void MAME_Debug(void)
 
 	if( dbg_step )
     {
-        DASM.pc_cur = cpu_get_pc();
+		DBGDASM.pc_cur = cpu_get_pc();
 		dbg_step = 0;
     }
 
@@ -4262,6 +5138,26 @@ void MAME_Debug(void)
 
 	while( dbg_active && !dbg_step )
     {
+        if( dbg_trace )
+        {
+			static int trace_delay;
+			dbg_step = 1;
+            if( ++trace_delay < dbg_trace_delay )
+			{
+				dbg_update = 0;
+			}
+			else
+			{
+				trace_delay = 0;
+
+				if( osd_key_pressed(OSD_KEY_SPACE) )
+				{
+					dbg_trace = 0;
+					dbg_step = 0;
+				}
+			}
+        }
+
 		if( dbg_update )
         {
             if( activecpu != previous_activecpu )
@@ -4284,41 +5180,22 @@ void MAME_Debug(void)
             dump_regs();
             dump_mem( 0, DBG.window != EDIT_MEM1 );
             dump_mem( 1, DBG.window != EDIT_MEM2 );
-			DASM.pc_cpu = cpu_get_pc();
-			/* Check if pc_cpu is outside of our disassembly window */
-            if( DASM.pc_cpu < DASM.pc_top || DASM.pc_cpu >= DASM.pc_end )
-                DASM.pc_top = DASM.pc_cpu;
-            DASM.pc_end = dump_dasm( DASM.pc_top );
-			if( DASM.pc_cur < DASM.pc_top || DASM.pc_cur >= DASM.pc_end || dbg_update_cur )
-			{
-				DASM.pc_cur = DASM.pc_cpu;
-				DASM.pc_end = dump_dasm( DASM.pc_top );
+			DBGDASM.pc_cpu = cpu_get_pc();
+            /* Check if pc_cpu is outside of our disassembly window */
+			if( DBGDASM.pc_cpu < DBGDASM.pc_top || DBGDASM.pc_cpu >= DBGDASM.pc_end )
+				DBGDASM.pc_top = DBGDASM.pc_cpu;
+			DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
+			if( DBGDASM.pc_cur < DBGDASM.pc_top || DBGDASM.pc_cur >= DBGDASM.pc_end || dbg_update_cur )
+            {
+				DBGDASM.pc_cur = DBGDASM.pc_cpu;
+				DBGDASM.pc_end = dump_dasm( DBGDASM.pc_top );
                 dbg_update_cur = 0;
-			}
-			dbg_update = 0;
+            }
+			osd_screen_update();
+            dbg_update = 0;
         }
 
-        if( dbg_trace )
-        {
-			static uclock_t last_time = 0;
-            uclock_t this_time = uclock();
-			/*
-             * If less than 25000 microseconds are gone,
-             * do not update or check for dbg_trace stop
-             */
-            if( (this_time - last_time) < 25000 )
-            {
-				dbg_update = 0;
-            }
-            else
-            {
-                last_time = this_time;
-                if( osd_key_pressed(OSD_KEY_SPACE) )
-                    dbg_trace = 0;
-            }
-			dbg_step = 1;
-        }
-		else
+        if( !dbg_trace )
         {
             switch( DBG.window )
             {
@@ -4332,23 +5209,23 @@ void MAME_Debug(void)
     }
 
     /* update backup copies of memory and registers */
-    if( MEM[0].changed )
+	if( DBGMEM[0].changed )
     {
-        MEM[0].changed = 0;
-        memcpy( MEM[0].backup,
-                MEM[0].newval, MEM[0].size );
+		DBGMEM[0].changed = 0;
+		memcpy( DBGMEM[0].backup,
+				DBGMEM[0].newval, DBGMEM[0].size );
     }
-    if( MEM[1].changed )
+	if( DBGMEM[1].changed )
     {
-        MEM[1].changed = 0;
-        memcpy( MEM[1].backup,
-                MEM[1].newval, MEM[0].size );
+		DBGMEM[1].changed = 0;
+		memcpy( DBGMEM[1].backup,
+				DBGMEM[1].newval, DBGMEM[0].size );
     }
-    if( REGS.changed )
+	if( DBGREGS.changed )
     {
-        REGS.changed = 0;
-        memcpy( REGS.backup,
-                REGS.newval, REGS.count * sizeof(UINT32) );
+		DBGREGS.changed = 0;
+		memcpy( DBGREGS.backup,
+				DBGREGS.newval, DBGREGS.count * sizeof(UINT32) );
     }
 }
 

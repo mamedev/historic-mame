@@ -18,11 +18,13 @@
 /* #define INLINE static */
 
 #include "osd_cpu.h"
+#include "osd_dbg.h"
 #include "cpuintrf.h"
 
 enum {
-	TMS320C10_PC=1, TMS320C10_ACC, TMS320C10_PREG, TMS320C10_TREG,
-	TMS320C10_AR0, TMS320C10_AR1, TMS320C10_STR, TMS320C10_STK3
+	TMS320C10_PC=1, TMS320C10_SP, TMS320C10_STR, TMS320C10_ACC,
+	TMS320C10_PREG, TMS320C10_TREG, TMS320C10_AR0, TMS320C10_AR1,
+	TMS320C10_STK0, TMS320C10_STK1, TMS320C10_STK2, TMS320C10_STK3
 };
 
 extern	int tms320c10_ICount;		/* T-state count */
@@ -55,7 +57,7 @@ void tms320c10_set_nmi_line(int state);
 void tms320c10_set_irq_line(int irqline, int state);
 void tms320c10_set_irq_callback(int (*callback)(int irqline));
 const char *tms320c10_info(void *context, int regnum);
-unsigned tms320c10_dasm(UINT8 *base, char *buffer, unsigned pc);
+unsigned tms320c10_dasm(char *buffer, unsigned pc);
 
 #include "memory.h"
 
@@ -132,8 +134,7 @@ unsigned tms320c10_dasm(UINT8 *base, char *buffer, unsigned pc);
 #endif
 
 #ifdef	MAME_DEBUG
-#include "osd_dbg.h"
-extern unsigned Dasm32010(char * dst, UINT8 *addr);
+extern unsigned Dasm32010(char *buffer, unsigned pc);
 #endif
 
 #endif  /* _TMS320C10_H */

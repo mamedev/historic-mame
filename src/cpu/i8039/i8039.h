@@ -41,7 +41,7 @@ extern void i8039_set_nmi_line(int state);
 extern void i8039_set_irq_line(int irqline, int state);
 extern void i8039_set_irq_callback(int (*callback)(int irqline));
 extern const char *i8039_info(void *context, int regnum);
-extern unsigned i8039_dasm(UINT8 *base, char *buffer, unsigned pc);
+extern unsigned i8039_dasm(char *buffer, unsigned pc);
 
 /*   This handling of special I/O ports should be better for actual MAME
  *   architecture.  (i.e., define access to ports { I8039_p1, I8039_p1, dkong_out_w })
@@ -105,7 +105,7 @@ extern void i8035_set_nmi_line(int state);
 extern void i8035_set_irq_line(int irqline, int state);
 extern void i8035_set_irq_callback(int (*callback)(int irqline));
 extern const char *i8035_info(void *context, int regnum);
-extern unsigned i8035_dasm(UINT8 *base, char *buffer, unsigned pc);
+extern unsigned i8035_dasm(char *buffer, unsigned pc);
 #endif
 
 /**************************************************************************
@@ -145,7 +145,7 @@ extern void i8048_set_nmi_line(int state);
 extern void i8048_set_irq_line(int irqline, int state);
 extern void i8048_set_irq_callback(int (*callback)(int irqline));
 const char *i8048_info(void *context, int regnum);
-extern unsigned i8048_dasm(UINT8 *base, char *buffer, unsigned pc);
+extern unsigned i8048_dasm(char *buffer, unsigned pc);
 #endif
 
 /**************************************************************************
@@ -185,7 +185,7 @@ extern void n7751_set_nmi_line(int state);
 extern void n7751_set_irq_line(int irqline, int state);
 extern void n7751_set_irq_callback(int (*callback)(int irqline));
 extern const char *n7751_info(void *context, int regnum);
-extern unsigned n7751_dasm(UINT8 *base, char *buffer, unsigned pc);
+extern unsigned n7751_dasm(char *buffer, unsigned pc);
 #endif
 
 #include "memory.h"
@@ -230,8 +230,7 @@ extern unsigned n7751_dasm(UINT8 *base, char *buffer, unsigned pc);
 #define I8039_RDOP_ARG(A) ((unsigned)cpu_readop_arg(A))
 
 #ifdef  MAME_DEBUG
-#include "osd_dbg.h"
-int     Dasm8039(char *dst, unsigned char* addr);
+int 	Dasm8039(char *dst, unsigned pc);
 #endif
 
 #endif  /* _I8039_H */

@@ -27,6 +27,7 @@
 
 #include "cpuintrf.h"
 #include "memory.h"
+#include "mamedbg.h"
 #define m68k_read_memory_8(address)          cpu_readmem24(address)
 #define m68k_read_memory_16(address)         cpu_readmem24_word(address)
 #define m68k_read_memory_32(address)         cpu_readmem24_dword(address)

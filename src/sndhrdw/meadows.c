@@ -31,15 +31,6 @@ static	int freq2 = 1000;
 static	signed char waveform[2] = { -120, 120 };
 
 /************************************/
-/* Sound handler init				*/
-/************************************/
-int meadows_sh_init(const char *gamename)
-{
-	if (errorlog) fprintf(errorlog, "meadows sh_init\n");
-    return 0;
-}
-
-/************************************/
 /* Sound handler start				*/
 /************************************/
 int meadows_sh_start(void)

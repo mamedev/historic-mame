@@ -6,11 +6,14 @@
 
 
 Note:	if MAME_DEBUG is defined, pressing Z with:
+
 		Q		shows scroll 1
 		W		shows scroll 2
 		E		shows scroll 3
-		A		shows sprites
-		S		shows sprites with priority bit on, only
+		A		shows sprites with attribute 0-3
+		S		shows sprites with attribute 4-7
+		D		shows sprites with attribute 8-b
+		F		shows sprites with attribute c-f
 
 		Keys can be used togheter!
 
@@ -32,55 +35,53 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
   I don't see a relation.
 
 
-MS1-A	MS1-C
--------------
+MS1-A MS1-B MS1-C
+-----------------
 
-				Scrolling layers:
+					Scrolling layers:
 
-90000 e0000		Scroll 1	(Background)
-94000 e8000		Scroll 2	(Foreground)
-98000 f0000		Scroll 3	(Frontmost)		* Note: missing on MS1-Z
-
+90000 50000 e0000	Scroll 1
+94000 54000 e8000	Scroll 2
+98000 58000 f0000	Scroll 3					* Note: missing on MS1-Z
 
 Tile format:	fedc------------	Palette
 				----ba9876543210	Tile Number
 
 
 
-84000	c2208	Layers Enable				* Note: missing on MS1-Z?
+84000 44000 c2208	Layers Enable				* Note: missing on MS1-Z?
 
-				fedc ---- ---- ---- ? (unused?)
-				---- ba-- ---- ----	? (used!)
-				---- --9- ---- ----	0 <-> fg over sprites. 1 <-> fg below sprites ?
-				---- ---8 ---- ----	0 <-> bg cols 0-8 go below fg? (64street levA Ok, levB No. Maybe swap bg/fg)
-				---- ---- 7654 ----	? (unused?)
-				---- ---- ---- 3---	Enable Sprites
-				---- ---- ---- -210	Enable Layer 321
-
-* bit 9 is reversed in p47j *
+	fedc ---- ---- ---- ? (unused?)
+	---- ba-- ---- ----	? (used!)
+	---- --9- ---- ----	Sprites below fg (sprites over fg on MS1-C?)
+	---- ---8 ---- ----	Swap txt with fg (swap bg with fg on MS1-C?)
+	---- ---- 7654 ----	? (unused?)
+	---- ---- ---- 3---	Enable Sprites
+	---- ---- ---- -210	Enable Layer 321
 
 
-84200 c2000		Scroll 1 Control
-84208 c2008		Scroll 2 Control
-84008 c2100		Scroll 3 Control		* Note: missing on MS1-Z
+
+84200 44200 c2000	Scroll 1 Control
+84208 44208 c2008	Scroll 2 Control
+84008 44008 c2100	Scroll 3 Control		* Note: missing on MS1-Z
 
 Offset:		00					   Scroll X
 			02					   Scroll Y
 			04 fedc ba98 765- ---- ? (unused?)
-			   ---- ---- ---4 ---- 16x16(0)/8x8(1) Tiles
+			   ---- ---- ---4 ---- 16x16 Tiles
 			   ---- ---- ---- 32-- ? (used, by p47!)
 			   ---- ---- ---- --10 N: Layer H pages = 16 / (2^N)
 
 
 
-84300 c2308		Screen Control
+84300 44300 c2308	Screen Control
 
-				fedc ba9- ---- ---- ? (unused?)
-				---- ---8 ---- ---- Portrait F/F (?)
-				---- ---- 765- ---- ? (unused?)
-				---- ---- ---4 ---- ? (used, see p47j copyright screen!)
-				---- ---- ---- 321- ? (unused?)
-				---- ---- ---- ---0	Screen V Flip
+	fedc ba9- ---- ---- ? (unused?)
+	---- ---8 ---- ---- Portrait F/F (?FullFill?)
+	---- ---- 765- ---- ? (unused?)
+	---- ---- ---4 ---- ? (used, see p47j copyright screen!)
+	---- ---- ---- 321- ? (unused?)
+	---- ---- ---- ---0	Screen V Flip
 
 
 
@@ -93,17 +94,17 @@ Colors		MS1-A/C			MS1-Z
 200-2ff		Scroll 3		Scroll 2
 300-3ff		Sprites			-
 
-88000 f8000		Palette
+88000 48000 f8000	Palette
 
-				fedc--------3---	Red
-				----ba98-----2--	Blue
-				--------7654--1-	Green
-				---------------0	? (used, not RGB! [not changed in fades])
+	fedc--------3---	Red
+	----ba98-----2--	Blue
+	--------7654--1-	Green
+	---------------0	? (used, not RGB! [not changed in fades])
 
 
 **********  There are 256 sprites (128 for MS1-Z):
 
-0f8000 0ff8000	Sprite Data	(16 bytes/entry. 128? entries)
+RAM[8000]	Sprite Data	(16 bytes/entry. 128? entries)
 
 Offset:		0-6						? (used, but as normal RAM, I think)
 			08 	fed- ---- ---- ----	?
@@ -119,9 +120,12 @@ Offset:		0-6						? (used, but as normal RAM, I think)
 				---- ba98 7654 3210	Number
 
 
-Object RAM tells the hw how to use Sprite Data (missing on MS1-Z):
 
-8e000 d2000	Object RAM (8 bytes/entry. 256*4 entries)
+Object RAM tells the hw how to use Sprite Data (missing on MS1-Z).
+This makes it possible to group multiple small sprite, up to 256,
+into one big virtual sprite (up to a whole screen):
+
+8e000 4e000 d2000	Object RAM (8 bytes/entry. 256*4 entries)
 
 Offset:		00	Index into Sprite Data RAM
 			02	H	Displacement
@@ -139,24 +143,22 @@ Object RAM entries:		Useb by sprites with:
 300-3ff					Flip X & Y
 
 
-Object RAM makes it possible to group multiple small sprite, up to
-256, into one big virtual sprite (up to a whole screen).
 
 
-No?  c2108	Sprite Bank
+No? No? c2108	Sprite Bank
 
-			fedc ba98 7654 321- ? (unused?)
-			---- ---- ---- ---0 Sprite Bank
+	fedc ba98 7654 321- ? (unused?)
+	---- ---- ---- ---0 Sprite Bank
 
 
 
-84100 c2200 Sprite Control
+84100 44100 c2200 Sprite Control
 
 			fedc ba9- ---- ---- ? (unused?)
 			---- ---8 ---- ---- Enable sprite priority effect ? (see p47j sprite test 1!)
 			---- ---- 765- ---- ? (unused?)
 			---- ---- ---4 ----	Enable Effect (?)
-			---- ---- ---- 3210	Effect Number (?) / sprite-fg priority
+			---- ---- ---- 3210	Effect Number (?)
 
 I think bit 4 enables some sort of color cycling for sprites having priority
 bit set. See code of p7j at 6488,  affecting the rotating sprites before the
@@ -173,25 +175,36 @@ Sprite order is from first in Sprite Data RAM (frontmost) to last.
 
 Foreground isn't splittable in a "back" part using, say, pens 0-7 and a
 "front part" using pens 8-15 usually. Sprites aren't splittable either.
-But level A of 64th street has fg that is splittable.
+But level A of 64th street has fg that is splittable. I think bit 0 of
+the color in paletteram has a role also.
 
 
 Here's how I draw things (surely incomplete/inaccurate):
 
-bit x is priority enable:					bit 8 of c2200	84100
-bit 0 is a foreground priority control:		bit 0 of c2200	84100(<-inverted)
-bit 9 is a foreground priority control:		bit 9 of c2208	84000(<-inverted)
+	MS1-Z/A/B		MS1-C
+bg  Scroll RAM 1	Scroll RAM 2
+fg  Scroll RAM 2	Scroll RAM 1
+txt Scroll RAM 3	Scroll RAM 3
+
+MS1-Z	-
+MS1-A	bit 8 of 84000 is on  -> swap fg, txt
+MS1-B	bit 8 of 44000 is on  -> swap fg, txt
+MS1-C	bit 8 of c2208 is off -> swap bg, fg
+
+
+bit x is sprite priority enable:			bit 8 of 84100 44100 c2200
+bit 9 is a foreground priority control:		bit 9 of 84000 44000 !c2208
 
 					bg
 	if bit x
-		if  bit 0	fg
+		if !bit 9	fg
 					sprites (priority bit 1)
-		if ~bit 0	fg
+		if  bit 9	fg
 					sprites (priority bit 0)
 	else
-		if  bit 9	fg
+		if !bit 9	fg
 					sprites (priority doesn't affect order)
-		if ~bit 9	fg
+		if  bit 9	fg
 
 					txt (missing on MS1-Z)
 
@@ -203,20 +216,22 @@ extern unsigned char *scrollram[3],*scrollram_dirty[3];		// memory pointers
 extern unsigned char *objectram, *videoregs, *ram;
 extern int scrollx[3],scrolly[3],scrollflag[3],nx[3],ny[3];	// video registers
 extern int active_layers, spritebank, screenflag, spriteflag,hardware_type;
+extern int bg, fg, txt;
+extern struct GameDriver avspirit_driver;
 
 struct osd_bitmap *scroll_bitmap[3];
 
 
 /* these are for debug purposes */
-int onlyhisprites;
+int debugsprites;
 
 
-void set_dirty(int n) { memset(scrollram_dirty[n],1,256*256/64*8); }
-void dirtyall(void)
+void mark_dirty(int n) { memset(scrollram_dirty[n],1,256*256/64*8); }
+void mark_dirty_all(void)
 {
-	set_dirty(0);
-	set_dirty(1);
-	set_dirty(2);
+	mark_dirty(0);
+	mark_dirty(1);
+	mark_dirty(2);
 }
 
 int vh_start(void)
@@ -228,12 +243,10 @@ int i;
 	for (i = 0; i < 3; i++)
 	 if ((scrollram_dirty[i] = malloc(256*4*256*2/64))==0) return 1;
 
-/*
-  temporary bitmaps are not created here. They are instead
-  created on the fly when refreshing the screen.
-*/
+/*  temporary bitmaps are not created here. They are instead
+   created on the fly when refreshing the screen. */
 
-	dirtyall();
+	mark_dirty_all();
 
 	return 0;
 }
@@ -291,12 +304,14 @@ unsigned char *spritedata, *objectdata;
 	{
 		for (sprite = 0x80-1; sprite >= 0 ; sprite --)
 		{
-			spritedata = &ram[0x8000+sprite*0x10];
+			spritedata = &spriteram[sprite*0x10];
 
 			attr = READ_WORD(&spritedata[0x08]);
 
 			if ( (attr & 0x08) == priority ) continue;
-					if ( ((attr & 0x08) == 0) && (onlyhisprites) ) continue;
+#ifdef MAME_DEBUG
+if ( (debugsprites) && (((attr & 0x0f)/4) != (debugsprites-1)) ) continue;
+#endif
 
 			objectdata = &objectram[((attr & 0xc0) >> 6) * 0x800];
 
@@ -335,11 +350,13 @@ unsigned char *spritedata, *objectdata;
 
 		for (sprite = 0; sprite < 0x80 ; sprite ++)
 		{
-			spritedata = &ram[0x8000+sprite*0x10];
+			spritedata = &spriteram[sprite*0x10];
 
 			attr = READ_WORD(&spritedata[0x08]);
 			if ( (attr & 0x08) == priority ) continue;
-					if ( ((attr & 0x08) == 0) && (onlyhisprites) ) continue;
+#ifdef MAME_DEBUG
+if ( (debugsprites) && (((attr & 0x0f)/4) == (debugsprites-1)) ) continue;
+#endif
 
 			sx = READ_WORD(&spritedata[0x0A]) % 512;
 			sy = READ_WORD(&spritedata[0x0C]) % 512;
@@ -372,7 +389,7 @@ unsigned char *spritedata, *objectdata;
   Draw the game screen in the given osd_bitmap.
 
 ***************************************************************************/
-
+void paletteram_RRRRGGGGBBBBRGBx_word_w(int offset, int data);
 void vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 int offs,code,sx,sy,attr,i,j;
@@ -380,21 +397,58 @@ unsigned char *current_ram, *current_dirty;
 int current_mask;
 int mask[3] = {0xfff,0xfff,0xfff};
 
-int priority_bit;
-
 unsigned int *pen_usage;
 int color_codes_start, color, colmask[16], layers_n;
 
 int active_layers1;
 
+	active_layers1 = active_layers;
+
 	layers_n = 3;
 
-	/* MS1-Z has scroll 1,2 & Sprites only */
-	if (hardware_type == 'Z')
+	switch (hardware_type)
 	{
-		layers_n = 2;
-		active_layers = 0x000B;
+		/* MS1-Z has scroll 1,2 & Sprites only (always active, no priority ?) */
+		case 'Z':
+		{
+			layers_n = 2;
+			bg = 0;		fg = 1;		txt = 2;
+			active_layers = 0x020B;
+		}	break;
+
+		case 'A':
+		{
+			bg = 0;
+			if (active_layers & 0x0100)	{fg = 2;	txt = 1;}
+			else						{fg = 1;	txt = 2;}
+		}
+
+		case 'B':
+		{
+			if (Machine->gamedrv != &avspirit_driver)
+			{
+				bg = 0;
+				if (active_layers & 0x0100)	{fg = 2;	txt = 1;}
+				else						{fg = 1;	txt = 2;}
+			}
+			else
+			{
+				txt = 2;
+				if (active_layers & 0x0100)	{bg = 0;	fg = 1;}
+				else						{bg = 1;	fg = 0;}
+			}
+		}	break;
+
+		case 'C':
+		{
+			active_layers ^= 0x0200;	/* sprites/fg priority swapped */
+			txt = 2;
+			if (active_layers & 0x0100)	{bg = 0;	fg = 1;}
+			else						{bg = 1;	fg = 0;}
+		}	break;
+
 	}
+
 
 /* Palette stuff */
 
@@ -405,7 +459,7 @@ int active_layers1;
 	for (j = 0 ; j < layers_n ; j++ )
 	{
 		/* let's skip disabled layers */
-		if (!(active_layers & (1 << j )))	continue;
+//		if (!(active_layers & (1 << j )))	continue;
 
 		pen_usage = Machine->gfx[j]->pen_usage;
 		color_codes_start = Machine->drv->gfxdecodeinfo[j].color_codes_start;
@@ -426,12 +480,20 @@ int active_layers1;
 		}
 
 		for (color = 0; color < 16; color++)
-		 for (i = 0; i < 16; i++)
-		  if (colmask[color] & (1 << i)) palette_used_colors[16 * color + i + color_codes_start] = PALETTE_COLOR_USED;
+		{
+			if (colmask[color])
+			{
+				for (i = 0; i < 16; i++)
+					if (colmask[color] & (1 << i))
+						palette_used_colors[16 * color + i + color_codes_start] = PALETTE_COLOR_USED;
+			}
+		}
 
-		if (j!=0)
-		 for (color = 0; color < 16; color++)
-		  palette_used_colors[16 * color + 15 + color_codes_start] = PALETTE_COLOR_TRANSPARENT;
+		if (j != bg)	/* background colors are all used */
+		{
+			for (color = 0; color < 16; color++)
+				palette_used_colors[16 * color + 15 + color_codes_start] = PALETTE_COLOR_TRANSPARENT;
+		}
 	}
 
 
@@ -440,6 +502,7 @@ int active_layers1;
 
 	for (color = 0 ; color < 16 ; color++) colmask[color] = 0;
 
+	/* different sprites hw */
 	if (hardware_type == 'Z')
 	{
 	int sprite;
@@ -451,7 +514,7 @@ int active_layers1;
 		{
 		unsigned char* spritedata;
 
-			spritedata = &ram[0x8000+ sprite*16];
+			spritedata = &spriteram[sprite*16];
 
 			sx = READ_WORD(&spritedata[0x0A]) % 512;
 			sy = READ_WORD(&spritedata[0x0C]) % 512;
@@ -478,7 +541,7 @@ int active_layers1;
 		unsigned char* spritedata;
 
 			sprite = READ_WORD(&objectram[offs+0x00]);
-			spritedata = &ram[0x8000+(sprite&0x7F)*16];
+			spritedata = &spriteram[(sprite&0x7F)*16];
 
 			attr = READ_WORD(&spritedata[0x08]);
 			if ( (attr & 0xc0) != ((offs/0x800)<<6) ) continue;
@@ -504,8 +567,31 @@ int active_layers1;
 	 for (i = 0; i < 16; i++)
 	  if (colmask[color] & (1 << i)) palette_used_colors[16 * color + i + color_codes_start] = PALETTE_COLOR_USED;
 
+/* hack: colors with bit 0 high will flash */
+#if 0
+	{
+	unsigned char tmp_paletteram[256*4*2];
 
-	if (palette_recalc()) dirtyall();
+				for (color = 0; color < 256*4; color++)
+					tmp_paletteram[color*2] = paletteram[color*2];
+
+				for (color = 0; color < 256*4; color++)
+				{
+					if (paletteram_word_r(color*2)&1)
+					{
+						palette_used_colors[color] = PALETTE_COLOR_USED;
+						paletteram_RRRRGGGGBBBBRGBx_word_w(color*2,(cpu_getcurrentframe() & 1)?0xF000:0xFFFF);
+					}
+				}
+
+				if (palette_recalc()) mark_dirty_all();
+
+				for (color = 0; color < 256*4; color++)
+					paletteram[color*2] = tmp_paletteram[color*2];
+	}
+#else
+	if (palette_recalc()) mark_dirty_all();
+#endif
 
 
 
@@ -530,14 +616,33 @@ int active_layers1;
 			}
 		}
 
-		if (scroll_bitmap[i] == 0)
-			if ((scroll_bitmap[i] = osd_new_bitmap(256*nx[i], 256*ny[i], 4))==0) return;
+		/* let's skip disabled layers */
+		if ( (active_layers & (1 << i )) && (scroll_bitmap[i] == 0) )
+		{
+			if ((scroll_bitmap[i] = osd_new_bitmap(256*nx[i], 256*ny[i], 4))==0)
+			{
+			char buf[80];
+				sprintf(buf, "NO MEM FOR %dx%d SCREEN",nx[i],ny[i]);
+				if (errorlog) fprintf(errorlog, "%s\n", buf);
+				usrintf_showmessage(buf);
+				return;
+			}
+			else
+			{
+			char buf[80];
+				sprintf(buf, "MALLOC'D %dx%d SCREEN",nx[i],ny[i]);
+				if (errorlog) fprintf(errorlog, "%s\n", buf);
+//				usrintf_showmessage(buf);
+//				return;
+			}
+
+		}
+
 	}
 
 
-active_layers1 = active_layers;
-onlyhisprites = 0;
 #ifdef MAME_DEBUG
+debugsprites = 0;
 if (osd_key_pressed(OSD_KEY_Z))
 {
 int msk = 0;
@@ -545,8 +650,10 @@ int msk = 0;
 	if (osd_key_pressed(OSD_KEY_Q)) { msk |= 0xfff1;}
 	if (osd_key_pressed(OSD_KEY_W)) { msk |= 0xfff2;}
 	if (osd_key_pressed(OSD_KEY_E)) { msk |= 0xfff4;}
-	if (osd_key_pressed(OSD_KEY_A)) { msk |= 0xfff8;}
-	if (osd_key_pressed(OSD_KEY_S))	{ msk |= 0xfff8; onlyhisprites = 1;}
+	if (osd_key_pressed(OSD_KEY_A))	{ msk |= 0xfff8; debugsprites = 1;}
+	if (osd_key_pressed(OSD_KEY_S))	{ msk |= 0xfff8; debugsprites = 2;}
+	if (osd_key_pressed(OSD_KEY_D))	{ msk |= 0xfff8; debugsprites = 3;}
+	if (osd_key_pressed(OSD_KEY_F))	{ msk |= 0xfff8; debugsprites = 4;}
 
 	if (msk != 0) active_layers &= msk;
 }
@@ -558,6 +665,9 @@ int msk = 0;
 
 	for (i = 0; i < layers_n ; i++)
 	{
+		/* let's skip disabled layers */
+		if (!(active_layers & (1 << i )))	continue;
+
 		current_ram   = scrollram[i];
 		current_dirty = scrollram_dirty[i];
 		current_mask  = mask[i];
@@ -626,37 +736,42 @@ int msk = 0;
 				1,&scrollx[_n_],1,&scrolly[_n_],\
 				&Machine->drv->visible_area,\
 				_transparency_,_pen_);\
-	}\
+	}
 
 
-	/* Either bit 9 of the layer enable reg. or bit 0 of the sprite control reg */
-	priority_bit = (spriteflag&0x0100)?((spriteflag >> 0) & 1):((active_layers >> 9) & 1);
-
-
-	/* Copy the background (always the bottom layer?) */
-	copylayer(0,TRANSPARENCY_NONE,0)
+	/* Copy the background */
+	copylayer(bg,TRANSPARENCY_NONE,0)
 	else	osd_clearbitmap(Machine->scrbitmap);
 
+	/* If priority effect is active .. */
+	if (spriteflag & 0x0100)
+	{
+		/* Copy the foreground below ... */
+		if (!(active_layers &0x0200))	copylayer(fg,TRANSPARENCY_PEN,palette_transparent_pen);
 
-	/* Copy the foreground below sprites if bit 9 is on */
-	if (priority_bit)	copylayer(1,TRANSPARENCY_PEN,palette_transparent_pen);
+		/* draw sprites with color >= 8 */
+		if (active_layers & 0x08)	draw_sprites(bitmap,1);
 
+		/* ... or over sprites with color >= 8 */
+		if (active_layers &0x0200)	copylayer(fg,TRANSPARENCY_PEN,palette_transparent_pen);
 
-	/* Draw sprites with priority bit set. If priority effect isn' t active draw    */
-	/* them all, without priority affecting their order, using the special value -1 */
-	if (active_layers & 0x08)	draw_sprites(bitmap,(spriteflag & 0x0100)?1:-1);
+		/* Draw sprites with color 0-7 */
+		if (active_layers & 0x08)	draw_sprites(bitmap,0);
+	}
+	else
+	{
+		/* Copy the foreground below ... */
+		if (!(active_layers &0x0200))	copylayer(fg,TRANSPARENCY_PEN,palette_transparent_pen);
 
+		/* Draw sprites regardless of their color */
+		if (active_layers & 0x08)	draw_sprites(bitmap,-1);
 
-	/* Copy the foreground over (either some or all) sprites, if bit 9 is off */
-	if (!priority_bit)	copylayer(1,TRANSPARENCY_PEN,palette_transparent_pen);
+		/* ... or over sprites */
+		if (active_layers &0x0200)	copylayer(fg,TRANSPARENCY_PEN,palette_transparent_pen);
+	}
 
+	/* Copy the text layer */
+	copylayer(txt,TRANSPARENCY_PEN,palette_transparent_pen);
 
-	/* If priority effect is active, draw sprites with priority bit not set */
-	if ((spriteflag & 0x0100) && (active_layers & 0x08))		draw_sprites(bitmap,0);
-
-
-	/* Copy the text layer (always the frontmost?) */
-	copylayer(2,TRANSPARENCY_PEN,palette_transparent_pen);
-
-active_layers = active_layers1;
+	active_layers = active_layers1;
 }

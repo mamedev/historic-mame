@@ -112,7 +112,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9860, 0x987f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0xa000, 0xa002, mooncrst_gfxextend_w },	/* Moon Cresta only */
 	{ 0xa004, 0xa007, mooncrst_lfo_freq_w },
-	{ 0xa800, 0xa800, mooncrst_background_w },
+	{ 0xa800, 0xa802, mooncrst_background_w },
 	{ 0xa803, 0xa803, mooncrst_noise_w },
 	{ 0xa805, 0xa805, mooncrst_shoot_w },
 	{ 0xa806, 0xa807, mooncrst_vol_w },
@@ -136,7 +136,7 @@ static struct MemoryWriteAddress moonal2_writemem[] =
 	{ 0x9860, 0x987f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 /*	{ 0xa000, 0xa002, mooncrst_gfxextend_w },	* Moon Cresta only */
 	{ 0xa004, 0xa007, mooncrst_lfo_freq_w },
-	{ 0xa800, 0xa800, mooncrst_background_w },
+	{ 0xa800, 0xa802, mooncrst_background_w },
 	{ 0xa803, 0xa803, mooncrst_noise_w },
 	{ 0xa805, 0xa805, mooncrst_shoot_w },
 	{ 0xa806, 0xa807, mooncrst_vol_w },
@@ -174,7 +174,7 @@ static struct MemoryWriteAddress kingball_writemem[] =
 	{ 0x9880, 0x98ff, MWA_RAM },
 	{ 0xa000, 0xa003, MWA_NOP }, /* lamps */
 	{ 0xa004, 0xa007, mooncrst_lfo_freq_w },
-	{ 0xa800, 0xa800, mooncrst_background_w },
+	{ 0xa800, 0xa802, mooncrst_background_w },
 	{ 0xa803, 0xa803, mooncrst_noise_w }, //
 	{ 0xa805, 0xa805, mooncrst_shoot_w }, //
 	{ 0xa806, 0xa807, mooncrst_vol_w }, //

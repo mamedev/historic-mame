@@ -32,18 +32,13 @@ struct YM2610interface{
 /************************************************/
 /* Sound Hardware Start							*/
 /************************************************/
-int YM2610_sh_start(struct YM2610interface *interface );
-int YM2610B_sh_start(struct YM2610interface *interface );
+int YM2610_sh_start(const struct YM2610interface *interface );
+int YM2610B_sh_start(const struct YM2610interface *interface );
 
 /************************************************/
 /* Sound Hardware Stop							*/
 /************************************************/
 void YM2610_sh_stop(void);
-
-/************************************************/
-/* Sound Hardware Update						*/
-/************************************************/
-void YM2610_sh_update(void);
 
 /************************************************/
 /* Chip 0 functions								*/

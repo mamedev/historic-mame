@@ -34,9 +34,9 @@ void YM2203_write_port_2_w(int offset,int data);
 void YM2203_write_port_3_w(int offset,int data);
 void YM2203_write_port_4_w(int offset,int data);
 
-int YM2203_sh_start(struct YM2203interface *interface);
+int YM2203_sh_start(const struct YM2203interface *interface);
 void YM2203_sh_stop(void);
-void YM2203_sh_update(void);
+void YM2203_sh_reset(void);
 
 void YM2203UpdateRequest(int chip);
 
@@ -61,9 +61,8 @@ void YM2608_address2_1_w(int offset,int data);
 void YM2608_address3_0_w(int offset,int data); /* data port 1    */
 void YM2608_address3_1_w(int offset,int data);
 
-int  YM2608_sh_start(struct YM2608interface *interface);
+int  YM2608_sh_start(const struct YM2608interface *interface);
 void YM2608_sh_stop(void);
-void YM2608_sh_update(void);
 
 /*-------------------- YM2612 -------------------- */
 #define YM2612interface AY8910interface
@@ -86,7 +85,7 @@ void YM2612_address2_1_w(int offset,int data);
 void YM2612_address3_0_w(int offset,int data); /* data port 1    */
 void YM2612_address3_1_w(int offset,int data);
 
-int  YM2612_sh_start(struct YM2612interface *interface);
+int  YM2612_sh_start(const struct YM2612interface *interface);
 void YM2612_sh_stop(void);
 void YM2612_sh_update(void);
 

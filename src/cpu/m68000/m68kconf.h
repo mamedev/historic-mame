@@ -2,7 +2,7 @@
 #define M68KCONF__HEADER
 
 #include "osd_cpu.h"
-#include "osd_dbg.h"
+#include "mamedbg.h"
 
 /* ======================================================================== */
 /* ============================= CONFIGURATION ============================ */

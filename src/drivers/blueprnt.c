@@ -289,7 +289,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	1250000,	/* 1.25 MHz? (hand tuned) */
-	{ 0x20ff, 0x20ff },
+	{ 255, 255 },
 	{            0, input_port_2_r },
 	{ soundlatch_r, input_port_3_r },
 	{ dipsw_w },

@@ -17,13 +17,8 @@
 
 
 /* signed/unsigned 8-bit conversion macros */
-#ifdef SIGNED_SAMPLES
-	#define AUDIO_CONV(A) ((unsigned char)(A))
-	#define AUDIO_UNCONV(A) ((signed char)(A))
-#else
-	#define AUDIO_CONV(A) (((unsigned char))((A)+0x80))
-	#define AUDIO_UNCONV(A) ((signed char)((A)-0x80))
-#endif
+#define AUDIO_CONV(A) ((unsigned char)(A))
+#define AUDIO_UNCONV(A) ((signed char)(A))
 
 
 /* sample rates for each chip */

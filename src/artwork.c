@@ -531,7 +531,7 @@ static void RGBtoHSV( float r, float g, float b, float *h, float *s, float *v )
 
 	delta = max - min;
 
-	if( max != 0 )
+	if( delta > 0  )
 		*s = delta / max;
 	else {
 		*s = 0;
@@ -832,7 +832,7 @@ static struct artwork *allocate_artwork_mem (int width, int height)
 }
 
 /*********************************************************************
-  artwork_load
+  artwork_load(_size)
 
   This is what loads your backdrop in from disk.
   start_pen = the first pen available for the backdrop to use
@@ -842,7 +842,7 @@ static struct artwork *allocate_artwork_mem (int width, int height)
   backdrop = backdrop_load("dotron.png",192,48);
  *********************************************************************/
 
-struct artwork *artwork_load(const char *filename, int start_pen, int max_pens)
+struct artwork *artwork_load_size(const char *filename, int start_pen, int max_pens, int width, int height)
 {
 	struct osd_bitmap *picture = NULL;
 	struct artwork *a = NULL;
@@ -850,7 +850,7 @@ struct artwork *artwork_load(const char *filename, int start_pen, int max_pens)
 	/* If the user turned artwork off, bail */
 	if (!options.use_artwork) return NULL;
 
-	if ((a = allocate_artwork_mem(Machine->scrbitmap->width, Machine->scrbitmap->height))==NULL)
+	if ((a = allocate_artwork_mem(width, height))==NULL)
 		return NULL;
 
 	a->start_pen = start_pen;
@@ -895,6 +895,11 @@ struct artwork *artwork_load(const char *filename, int start_pen, int max_pens)
 	osd_free_bitmap(picture);
 
 	return a;
+}
+
+struct artwork *artwork_load(const char *filename, int start_pen, int max_pens)
+{
+	return artwork_load_size (filename, start_pen, max_pens, Machine->scrbitmap->width, Machine->scrbitmap->height);
 }
 
 /*********************************************************************

@@ -6,8 +6,6 @@ Rolling Thunder Video Hardware
 
 #include "driver.h"
 
-void rt_stop_mcu_timer( void );
-
 
 #define GFX_TILES1	0
 #define GFX_TILES2	1
@@ -137,17 +135,12 @@ static void get_tile_info(int col,int row)
 
 ***************************************************************************/
 
-void rthunder_vh_stop(void)
-{
-	rt_stop_mcu_timer();
-}
-
 int rthunder_vh_start(void)
 {
-	tilemap[0] = tilemap_create(get_tile_info,TILEMAP_TRANSPARENT,8,8,64,32,1,1);
-	tilemap[1] = tilemap_create(get_tile_info,TILEMAP_TRANSPARENT,8,8,64,32,1,1);
-	tilemap[2] = tilemap_create(get_tile_info,TILEMAP_TRANSPARENT,8,8,64,32,1,1);
-	tilemap[3] = tilemap_create(get_tile_info,TILEMAP_TRANSPARENT,8,8,64,32,1,1);
+	tilemap[0] = tilemap_create(get_tile_info,TILEMAP_TRANSPARENT,8,8,64,32);
+	tilemap[1] = tilemap_create(get_tile_info,TILEMAP_TRANSPARENT,8,8,64,32);
+	tilemap[2] = tilemap_create(get_tile_info,TILEMAP_TRANSPARENT,8,8,64,32);
+	tilemap[3] = tilemap_create(get_tile_info,TILEMAP_TRANSPARENT,8,8,64,32);
 
 	if (tilemap[0] && tilemap[1] && tilemap[2] && tilemap[3])
 	{
@@ -155,6 +148,14 @@ int rthunder_vh_start(void)
 		tilemap[1]->transparent_pen = 7;
 		tilemap[2]->transparent_pen = 7;
 		tilemap[3]->transparent_pen = 7;
+		tilemap_set_scroll_rows(tilemap[0],1);
+		tilemap_set_scroll_cols(tilemap[0],1);
+		tilemap_set_scroll_rows(tilemap[1],1);
+		tilemap_set_scroll_cols(tilemap[1],1);
+		tilemap_set_scroll_rows(tilemap[2],1);
+		tilemap_set_scroll_cols(tilemap[2],1);
+		tilemap_set_scroll_rows(tilemap[3],1);
+		tilemap_set_scroll_cols(tilemap[3],1);
 
 		return 0;
 	}

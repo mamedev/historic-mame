@@ -308,7 +308,7 @@ void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* draw the sprites */
 /* kludge to avoid leftover sprites on the title screen */
-if ((videoram[0x20] & 2) || !(videoram[0x21] & 2))
+if ((videoram[0x20] & 1) == 0 || (videoram[0x21] != 2))
 {
 	for (offs = 0;offs < spriteram_size;offs += 2)
 	{

@@ -49,16 +49,14 @@ int gng_vh_start(void)
 		get_fg_tile_info,
 		TILEMAP_TRANSPARENT,
 		8,8, /* tile width, tile height */
-		32,32, /* number of columns, number of rows */
-		0,0	/* scroll rows, scroll columns */
+		32,32 /* number of columns, number of rows */
 	);
 
 	bg_tilemap = tilemap_create(
 		get_bg_tile_info,
 		TILEMAP_SPLIT,
 		16,16,
-		32,32,
-		1,1
+		32,32
 	);
 
 	if (fg_tilemap && bg_tilemap)
@@ -67,6 +65,9 @@ int gng_vh_start(void)
 
 		bg_tilemap->transmask[0] = 0xff; /* split type 0 is totally transparent in front half */
 		bg_tilemap->transmask[1] = 0x01; /* split type 1 has pen 1 transparent in front half */
+
+		tilemap_set_scroll_rows(bg_tilemap,1);
+		tilemap_set_scroll_cols(bg_tilemap,1);
 
 		return 0;
 	}

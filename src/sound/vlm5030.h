@@ -10,7 +10,7 @@ struct VLM5030interface
 };
 
 /* use sampling data when speech_rom == 0 */
-int VLM5030_sh_start( struct VLM5030interface *interface );
+int VLM5030_sh_start(const struct VLM5030interface *interface );
 void VLM5030_sh_stop (void);
 void VLM5030_sh_update (void);
 

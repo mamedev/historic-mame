@@ -9,6 +9,7 @@
 #include "driver.h"
 #include "info.h"
 #include "vidhrdw/vector.h"
+#include "datafile.h"
 
 extern int need_to_clear_bitmap;	/* used to tell updatescreen() to clear the bitmap */
 extern int bitmap_dirty;	/* set by osd_clearbitmap() */
@@ -1354,6 +1355,161 @@ static int setdefkeysettings(int selected)
 
 
 
+static int setdefjoysettings(int selected)
+{
+	const char *menu_item[400];
+	const char *menu_subitem[400];
+	struct ipd *entry[400];
+	char flag[400];
+	int i,sel;
+	struct ipd *in;
+	int total;
+	extern struct ipd inputport_defaults[];
+
+
+	sel = selected - 1;
+
+
+	if (Machine->input_ports == 0)
+		return 0;
+
+	in = inputport_defaults;
+
+	total = 0;
+	while (in->type != IPT_END)
+	{
+		if (in->name != 0 && in->joystick != IP_JOY_NONE && (in->type & IPF_UNUSED) == 0
+			&& !(!options.cheat && (in->type & IPF_CHEAT)))
+		{
+			entry[total] = in;
+			menu_item[total] = in->name;
+
+			total++;
+		}
+
+		in++;
+	}
+
+	if (total == 0) return 0;
+
+	menu_item[total] = "Return to Main Menu";
+	menu_item[total + 1] = 0;	/* terminate array */
+	total++;
+
+	for (i = 0;i < total;i++)
+	{
+		if (i < total - 1)
+			menu_subitem[i] = osd_joy_name(entry[i]->joystick);
+		else menu_subitem[i] = 0;	/* no subitem */
+		flag[i] = 0;
+	}
+
+	if (sel > 255)	/* are we waiting for a new key? */
+	{
+		int newjoy;
+		int joyindex;
+
+
+		menu_subitem[sel & 0xff] = "    ";
+		displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
+
+		/* Check all possible joystick values for switch or button press */
+		if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
+		{
+			sel &= 0xff;
+			/* don't change the setting */
+
+			/* tell updatescreen() to clean after us (in case the window changes size) */
+			need_to_clear_bitmap = 1;
+		}
+
+		/* Allows for "All buttons" */
+		if (osd_key_pressed_memory(OSD_KEY_A))
+		{
+			sel &= 0xff;
+			entry[sel]->joystick = OSD_JOY_FIRE;
+
+			/* tell updatescreen() to clean after us (in case the window changes size) */
+			need_to_clear_bitmap = 1;
+		}
+		if (osd_key_pressed_memory(OSD_KEY_B))
+		{
+			sel &= 0xff;
+			entry[sel]->joystick = OSD_JOY2_FIRE;
+
+			/* tell updatescreen() to clean after us (in case the window changes size) */
+			need_to_clear_bitmap = 1;
+		}
+		/* Clears entry "None" */
+		if (osd_key_pressed_memory(OSD_KEY_N))
+		{
+			sel &= 0xff;
+			entry[sel]->joystick = 0;
+
+			/* tell updatescreen() to clean after us (in case the window changes size) */
+			need_to_clear_bitmap = 1;
+		}
+
+		for (joyindex = 1; joyindex < OSD_MAX_JOY; joyindex++)
+		{
+			if (osd_joy_pressed(joyindex))
+			{
+				sel &= 0xff;
+				entry[sel]->joystick = joyindex;
+
+				/* tell updatescreen() to clean after us (in case the window changes size) */
+				need_to_clear_bitmap = 1;
+				break;
+			}
+		}
+
+		return sel + 1;
+	}
+
+
+	displaymenu(menu_item,menu_subitem,flag,sel,0);
+
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_DOWN,8))
+	{
+		if (sel < total - 1) sel++;
+		else sel = 0;
+	}
+
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,8))
+	{
+		if (sel > 0) sel--;
+		else sel = total - 1;
+	}
+
+	if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
+	{
+		if (sel == total - 1) sel = -1;
+		else
+		{
+			sel |= 0x100;	/* we'll ask for a key */
+
+			/* tell updatescreen() to clean after us (in case the window changes size) */
+			need_to_clear_bitmap = 1;
+		}
+	}
+
+	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
+		sel = -1;
+
+	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+		sel = -2;
+
+	if (sel == -1 || sel == -2)
+	{
+		/* tell updatescreen() to clean after us */
+		need_to_clear_bitmap = 1;
+	}
+
+	return sel + 1;
+}
+
+
+
 static int setkeysettings(int selected)
 {
 	const char *menu_item[40];
@@ -2082,15 +2238,15 @@ static int displaygameinfo(int selected)
 	i = 0;
 	while (i < MAX_SOUND && Machine->drv->sound[i].sound_type)
 	{
-		if (info_sound_num(&Machine->drv->sound[i]))
-			sprintf(&buf[strlen(buf)],"%dx",info_sound_num(&Machine->drv->sound[i]));
+		if (sound_num(&Machine->drv->sound[i]))
+			sprintf(&buf[strlen(buf)],"%dx",sound_num(&Machine->drv->sound[i]));
 
-		sprintf(&buf[strlen(buf)],"%s",info_sound_name(&Machine->drv->sound[i]));
+		sprintf(&buf[strlen(buf)],"%s",sound_name(&Machine->drv->sound[i]));
 
-		if (info_sound_clock(&Machine->drv->sound[i]))
+		if (sound_clock(&Machine->drv->sound[i]))
 			sprintf(&buf[strlen(buf)]," %d.%06d MHz",
-					info_sound_clock(&Machine->drv->sound[i]) / 1000000,
-					info_sound_clock(&Machine->drv->sound[i]) % 1000000);
+					sound_clock(&Machine->drv->sound[i]) / 1000000,
+					sound_clock(&Machine->drv->sound[i]) % 1000000);
 
 		strcat(buf,"\n");
 
@@ -2279,130 +2435,6 @@ int showgamewarnings(void)
 	return 0;
 }
 
-
-struct tHistoryIndex
-{
-	long offset;
-	const struct GameDriver *driver;
-};
-
-/* returns 0 on error, or the number of index entries created */
-int index_history_file (FILE *f, struct tHistoryIndex **_index)
-{
-	struct tHistoryIndex *idx;
-	int max = 0;
-	char buf[1024];
-	int count = 0;
-
-	/* rewind file */
-	if (fseek (f, 0L, SEEK_SET)) return 0;
-
-	/* calculate max size of index */
-	{
-		const struct GameDriver **drv = drivers;
-		while (*drv++) max++;	/* count supported drivers */
-		max += 20;				/* allow some slop */
-	}
-
-	/* allocate index */
-	idx = *_index = malloc (max * sizeof (struct tHistoryIndex));
-	if (NULL == idx) return 0;
-
-	/* loop through history file */
-	while ((count < (max-1)) && (!feof (f)))
-	{
-		char *s = fgets (buf, 510, f);
-		#ifdef macintosh
-			/* remove extraneous LF if it exists */
-			if (s[0] == '\r') strcpy (s, &s[1]);
-		#endif
-
-		/* lines identifying the driver begin with '[' */
-		if (s && s[0] == '[')
-		{
-			char name[32];
-			int	i;
-
-			/* shorten string -- needs max 10 characters to hold [drivername] */
-			s[12] = '\0';
-
-			/* extract driver name from between [] brackets */
-			strcpy (name, &s[1]);
-			if (name[1])
-				name[strlen(name) - 2] = '\0';
-
-			/* search for driver */
-			for (i = 0; drivers[i]; i++)
-			{
-				if (!stricmp (name, drivers[i]->name))
-				{
-					/* found correct driver -- fill in history index entry */
-					idx->driver = drivers[i];
-					idx->offset = ftell (f);
-					idx++;
-					count++;
-					break;
-				}
-			}
-		}
-	}
-
-	/* mark end of index */
-	idx->offset = ftell (f);
-	idx->driver = 0;
-	return count;
-}
-
-/* Loads history entry for driver into the buffer specified. Specify the driver,
-   a pointer to the buffer, the buffer size, the history file stream, and the
-   index created by index_history_file().
-   Returns 0 if successful. */
-int load_driver_history (const struct GameDriver *drv, char *buffer, int bufsize,
-	FILE *f, struct tHistoryIndex *idx)
-{
-	char buf[1024];
-	int	offset = 0;
-
-	/* find driver in history index */
-	while (idx->driver)
-	{
-		if (idx->driver == drv) break;
-		idx++;
-	}
-	if (idx->driver == 0) return 1;	/* driver not found in history index */
-
-	/* seek to correct point in history file */
-	if (fseek (f, idx->offset, SEEK_SET)) return 1;
-
-	/* read lines until buffer is full or end of entry is encountered */
-	while (!feof (f))
-	{
-		char *s;
-		int len;
-
-		s = fgets (buf, 1022, f);
-		if (NULL == s) break;
-		#ifdef macintosh
-			/* remove extraneous LF if it exists */
-			if (s[0] == '\r')
-				strcpy (s, &s[1]);
-		#endif
-
-		/* end entry when next entry is encountered, or a line beginning with . */
-		if (s[0] == '[' || s[0] == '.') break;
-
-		/* ignore comments */
-		if (s[0] == '#') continue;
-
-		len = strlen (s);
-		if ((len + offset) >= bufsize) break;
-		strcpy (buffer, s);
-		buffer += len;
-		offset += len;
-	}
-	return 0;
-}
-
 /* Word-wraps the text in the specified buffer to fit in maxwidth characters per line.
    The contents of the buffer are modified.
    Known limitations: Words longer than maxwidth cause the function to fail. */
@@ -2561,17 +2593,15 @@ static void display_scroll_message (int *scroll, int width, int height, char *bu
 	displaytext(dt,0,0);
 }
 
-/* display entry for current driver from history.dat file */
-/* note: for efficiency's sake, the index is never disposed (intentional leak) */
+
+/* Display text entry for current driver from history.dat and mameinfo.dat. */
 static int displayhistory (int selected)
 {
 	char *msg = "\tHistory not available\n\n\t\x1a Return to Main Menu \x1b";
 	static int scroll = 0;
 	static int lines = 0;
-	static struct tHistoryIndex *idx = 0;
 	static char *buf = 0;
 	int	maxcols,maxrows;
-	FILE *f;
 	int sel;
 
 
@@ -2585,38 +2615,22 @@ static int displayhistory (int selected)
 
 	if (!buf)
 	{
-		/* try to open history file */
-		/* TODO: create another filetype and use osd_fopen() instead */
-		f = fopen ("history.dat", "r");
-		if (f)
+		/* allocate a buffer for the text */
+		buf = malloc (8192);
+		if (buf)
 		{
-			/* create index if necessary */
-			if (!idx)
-				(void)index_history_file (f, &idx);
-
-			if (idx)
+			/* try to load entry */
+			if (load_driver_history (Machine->gamedrv, buf, 8192) == 0)
 			{
-				/* allocate a buffer for history text */
-				buf = malloc (8192);
-				if (buf)
-				{
-					/* try to read driver history */
-					if (!load_driver_history (Machine->gamedrv, buf, 8192, f, idx) ||
-						(Machine->gamedrv->clone_of &&
-							!load_driver_history (Machine->gamedrv->clone_of, buf, 8192, f, idx)))
-					{
-						scroll = 0;
-						wordwrap_text_buffer (buf, maxcols);
-						strcat(buf,"\n\t\x1a Return to Main Menu \x1b\n");
-					}
-					else
-					{
-						free (buf);
-						buf = 0;
-					}
-				}
+				scroll = 0;
+				wordwrap_text_buffer (buf, maxcols);
+				strcat(buf,"\n\t\x1a Return to Main Menu \x1b\n");
 			}
-			fclose (f);
+			else
+			{
+				free (buf);
+				buf = 0;
+			}
 		}
 	}
 
@@ -2666,7 +2680,7 @@ static int displayhistory (int selected)
 }
 
 
-enum { UI_SWITCH = 0,UI_DEFKEY, UI_KEY, UI_JOY,UI_ANALOG, UI_CALIBRATE,
+enum { UI_SWITCH = 0,UI_DEFKEY,UI_DEFJOY,UI_KEY,UI_JOY,UI_ANALOG,UI_CALIBRATE,
 		UI_STATS,UI_CREDITS,UI_GAMEINFO,UI_HISTORY,
 		UI_CHEAT,UI_RESET,UI_EXIT };
 
@@ -2681,9 +2695,10 @@ static void setup_menu_init(void)
 	menu_total = 0;
 
 	menu_item[menu_total] = "Dip Switches"; menu_action[menu_total++] = UI_SWITCH;
-	menu_item[menu_total] = "Default Keys"; menu_action[menu_total++] = UI_DEFKEY;
-	menu_item[menu_total] = "Keys for This Game"; menu_action[menu_total++] = UI_KEY;
-	menu_item[menu_total] = "Joystick"; menu_action[menu_total++] = UI_JOY;
+	menu_item[menu_total] = "Keys (this game)"; menu_action[menu_total++] = UI_KEY;
+	menu_item[menu_total] = "Joystick (this game)"; menu_action[menu_total++] = UI_JOY;
+	menu_item[menu_total] = "Keys (defaults)"; menu_action[menu_total++] = UI_DEFKEY;
+	menu_item[menu_total] = "Joystick (defaults)"; menu_action[menu_total++] = UI_DEFJOY;
 
 	/* Determine if there are any analog controls */
 	{
@@ -2756,6 +2771,17 @@ static int setup_menu(int selected)
 
 			case UI_DEFKEY:
 				res = setdefkeysettings(sel >> 8);
+				if (res == -1)
+				{
+					menu_lastselected = sel;
+					sel = -1;
+				}
+				else
+					sel = (sel & 0xff) | (res << 8);
+				break;
+
+			case UI_DEFJOY:
+				res = setdefjoysettings(sel >> 8);
 				if (res == -1)
 				{
 					menu_lastselected = sel;
@@ -2881,6 +2907,7 @@ sel = sel & 0xff;
 		{
 			case UI_SWITCH:
 			case UI_DEFKEY:
+			case UI_DEFJOY:
 			case UI_KEY:
 			case UI_JOY:
 			case UI_ANALOG:

@@ -84,7 +84,7 @@ void ym2413_setinstrument(int channel, int inst)
         /*    OPL_WRITE(0xc0+channel, ( (*pn) << 1 )); */
 }
 
-int YM2413_sh_start(struct YM2413interface *interface)
+int YM2413_sh_start(const struct YM2413interface *interface)
 {
         int i;
         for (i=0; i<ym2413_channels; i++)
@@ -104,11 +104,6 @@ void YM2413_sh_stop(void)
         }
 
         YM3812_sh_stop();
-}
-
-void YM2413_sh_update(void)
-{
-	YM3812_sh_update();
 }
 
 int  YM2413_status_port_0_r(int offset)

@@ -99,14 +99,13 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 		{{-1,-1,-1,-1},0,0,0,0}
 	};
 
-	struct artwork_element *simple_overlays[]=
-	{
-		no_overlay,
-		starcas_overlay,
-		sundance_overlay,
-		tailg_overlay,
-		solarq_overlay
-	};
+	struct artwork_element *simple_overlays[5];
+
+	simple_overlays[0] = no_overlay;
+	simple_overlays[1] = starcas_overlay;
+	simple_overlays[2] = sundance_overlay;
+	simple_overlays[3] = tailg_overlay;
+	simple_overlays[4] = solarq_overlay;
 
 	overlay = NULL;
 	backdrop = NULL;
@@ -129,11 +128,11 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 		case  CCPU_MONITOR_BILEV:
 		case  CCPU_MONITOR_16COL:
 
+			sprintf (filename, "%s.png", Machine->gamedrv->name );
 			/* Attempt to load overlay if requested */
 			if (color_prom[0] & 0x80)
 			{
 				/* Attempt to load artwork from file */
-				sprintf (filename, "%s.png", Machine->gamedrv->name );
 				overlay=artwork_load(filename, 24, Machine->drv->total_colors-24);
 
 				if ((overlay==NULL) && (color_prom[0] & 0x20))

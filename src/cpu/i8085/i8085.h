@@ -2,7 +2,6 @@
 #define I8085_H
 
 #include "osd_cpu.h"
-#include "osd_dbg.h"
 
 enum {
 	I8085_PC=1, I8085_SP, I8085_AF ,I8085_BC, I8085_DE, I8085_HL,
@@ -44,7 +43,7 @@ extern void i8085_set_irq_callback(int (*callback)(int irqline));
 extern void i8085_state_save(void *file);
 extern void i8085_state_load(void *file);
 extern const char *i8085_info(void *context, int regnum);
-extern unsigned i8085_dasm(UINT8 *base, char *buffer, unsigned pc);
+extern unsigned i8085_dasm(char *buffer, unsigned pc);
 
 /**************************************************************************
  * I8080 section
@@ -93,11 +92,11 @@ extern void i8080_set_irq_callback(int (*callback)(int irqline));
 extern void i8080_state_save(void *file);
 extern void i8080_state_load(void *file);
 extern const char *i8080_info(void *context, int regnum);
-extern unsigned i8080_dasm(UINT8 *base, char *buffer, unsigned pc);
+extern unsigned i8080_dasm(char *buffer, unsigned pc);
 #endif
 
 #ifdef	MAME_DEBUG
-extern unsigned Dasm8085(char * dst, unsigned pc);
+extern unsigned Dasm8085(char *buffer, unsigned pc);
 #endif
 
 #endif

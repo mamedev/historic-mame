@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include "driver.h"
 #include "osd_cpu.h"
-#include "osd_dbg.h"
 
 enum {
 	TMS9900_PC=1, TMS9900_WP, TMS9900_STATUS, TMS9900_IR
@@ -43,10 +42,10 @@ extern void tms9900_set_nmi_line(int state);
 extern void tms9900_set_irq_line(int irqline, int state);
 extern void tms9900_set_irq_callback(int (*callback)(int irqline));
 extern const char *tms9900_info(void *context, int regnum);
-extern unsigned tms9900_dasm(UINT8 *base, char *buffer, unsigned pc);
+extern unsigned tms9900_dasm(char *buffer, unsigned pc);
 
 #ifdef MAME_DEBUG
-extern int Dasm9900 (char *buffer, int pc);
+extern unsigned Dasm9900 (char *buffer, unsigned pc);
 #endif
 
 #endif

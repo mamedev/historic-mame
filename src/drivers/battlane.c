@@ -5,7 +5,6 @@
 
 	2x6809
 
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -17,9 +16,14 @@ void battlane_vh_stop(void);
 void battlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern unsigned char *battlane_bitmap;
 extern int battlane_bitmap_size;
+extern unsigned char *battlane_spriteram;
+extern int battlane_spriteram_size;
+
 extern void battlane_bitmap_w(int, int);
 extern int battlane_bitmap_r(int);
-extern void battlane_vh_convert_color_prom (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+extern void battlane_video_ctrl_w(int, int);
+extern int battlane_video_ctrl_r(int);
+
 
 void battlane_machine_init(void)
 {
@@ -60,7 +64,8 @@ int cpu1_command_r(int offset)
 static struct MemoryReadAddress cpu1_readmem[] =
 {
 	{ 0x0000, 0x0fff, battlane_shared_ram_r },
-	{ 0x1000, 0x18ff, MRA_RAM }, /* Tile RAM  */
+    { 0x1000, 0x17ff, MRA_RAM }, /* Tile RAM  */
+    { 0x1800, 0x18ff, MRA_RAM },
 	{ 0x1c00, 0x1c00, input_port_0_r },
 	{ 0x1c01, 0x1c01, input_port_1_r },
 	{ 0x1c02, 0x1c02, input_port_2_r },
@@ -74,12 +79,13 @@ static struct MemoryReadAddress cpu1_readmem[] =
 static struct MemoryWriteAddress cpu1_writemem[] =
 {
 	{ 0x0000, 0x0fff, battlane_shared_ram_w },
-	// 0x1000-0x11ff ??????
-	{ 0x1000, 0x18ff, MWA_RAM },  /* Tile RAM  */
+    { 0x1000, 0x17ff, MWA_RAM },  /* Tile RAM  */
+    { 0x1800, 0x18ff, MWA_RAM, &battlane_spriteram, &battlane_spriteram_size},
+    { 0x1c00, 0x1c00, battlane_video_ctrl_w },
 	{ 0x1c03, 0x1c03, cpu1_command_w },
 	{ 0x1c04, 0x1c04, YM3526_control_port_0_w },
 	{ 0x1c05, 0x1c05, YM3526_write_port_0_w },
-	{ 0x1e00, 0x1e3f, MWA_RAM }, /* Palette ??? */
+    { 0x1e00, 0x1e3f, MWA_RAM }, /* Palette ??? */
 	{ 0x2000, 0x3fff, battlane_bitmap_w, &battlane_bitmap, &battlane_bitmap_size },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -88,6 +94,10 @@ static struct MemoryWriteAddress cpu1_writemem[] =
 static struct MemoryReadAddress cpu2_readmem[] =
 {
 	{ 0x0000, 0x0fff, battlane_shared_ram_r },
+	{ 0x1c00, 0x1c00, input_port_0_r },
+	{ 0x1c01, 0x1c01, input_port_1_r },
+	{ 0x1c02, 0x1c02, input_port_2_r },
+	{ 0x1c03, 0x1c03, input_port_3_r },
 	{ 0x4000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -95,6 +105,7 @@ static struct MemoryReadAddress cpu2_readmem[] =
 static struct MemoryWriteAddress cpu2_writemem[] =
 {
 	{ 0x0000, 0x0fff, battlane_shared_ram_w },
+//        { 0x1c00, 0x1c00, battlane_video_ctrl_w },
 //        { 0x2000, 0x3fff, battlane_bitmap_w, &battlane_bitmap, &battlane_bitmap_size },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -121,7 +132,7 @@ int battlane_cpu1_interrupt(void)
 		case 1:
 			if (! (battlane_irq_enable & 0x02))
 			{
-					return M6809_INT_IRQ;
+                    return interrupt();
 			}
 			break;
 
@@ -137,13 +148,13 @@ int battlane_cpu1_interrupt(void)
 			if (!(battlane_irq_enable & 0x08))
 			{
 				if (nmipending)
-					return M6809_INT_NMI;
+                    return nmi_interrupt(); //M6809_INT_NMI;
 			}
 		}
 		break;
 	}
 
-	return M6809_INT_NONE;
+    return ignore_interrupt(); //M6809_INT_NONE;
 }
 
 int battlane_cpu2_interrupt(void)
@@ -174,7 +185,7 @@ int battlane_cpu2_interrupt(void)
 		case 1:
 			if (! (battlane_irq_enable & 0x02))
 			{
-					return M6809_INT_IRQ;
+                    return interrupt();
 			}
 			break;
 		case 2:
@@ -189,15 +200,16 @@ int battlane_cpu2_interrupt(void)
 			if (!(battlane_irq_enable & 0x08))
 			{
 				if (nmipending)
-					return M6809_INT_NMI;
+                    return nmi_interrupt();
 			}
 			nmipending=0;
 		}
 	}
 
-	return M6809_INT_NONE;
+    return ignore_interrupt();
 
 }
+
 
 
 INPUT_PORTS_START( input_ports )
@@ -222,40 +234,40 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, "COIN1" )
+    PORT_DIPNAME( 0x03, 0x03, "COIN1" )
 	PORT_DIPSETTING(    0x00, "2 coins 1 credit" )
 	PORT_DIPSETTING(    0x01, "1 coin 3 credits" )
 	PORT_DIPSETTING(    0x02, "1 coin 2 credits" )
 	PORT_DIPSETTING(    0x03, "1 coin 1 credit"  )
 
-	PORT_DIPNAME( 0x0c, 0x0c, "COIN2" )
+    PORT_DIPNAME( 0x0c, 0x0c, "COIN2" )
 	PORT_DIPSETTING(    0x00, "2 coins 1 credit" )
 	PORT_DIPSETTING(    0x04, "1 coin 3 credits" )
 	PORT_DIPSETTING(    0x08, "1 coin 2 credits" )
 	PORT_DIPSETTING(    0x0c, "1 coin 1 credit"  )
 
-	PORT_DIPNAME( 0x10, 0x10, "Attract Sound" )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off )  )
+    PORT_DIPNAME( 0x10, 0x10, "Attract Sound" )
+	PORT_DIPSETTING(    0x10, "On" )
+	PORT_DIPSETTING(    0x00, "Off"  )
 
-	PORT_DIPNAME( 0x20, 0x00, "Game style" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+    PORT_DIPNAME( 0x20, 0x00, "Game style" )
+	PORT_DIPSETTING(    0x00, "Upright" )
 	PORT_DIPSETTING(    0x20, "Table"  )
 
-	PORT_DIPNAME( 0xc0, 0x80, "Game style" )
+    PORT_DIPNAME( 0xc0, 0x80, "Game style" )
 	PORT_DIPSETTING(    0x00, "Very difficult" )
 	PORT_DIPSETTING(    0x40, "Difficult"  )
 	PORT_DIPSETTING(    0x80, "Normal" )
 	PORT_DIPSETTING(    0xc0, "Easy"  )
 
 	PORT_START      /* DSW2 */
-	PORT_DIPNAME( 0x03, 0x03, "Players per game" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+    PORT_DIPNAME( 0x03, 0x03, "Players per game" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x03, "3" )
 
-	PORT_DIPNAME( 0x0c, 0x0c, "Bonus Level" )
+    PORT_DIPNAME( 0x0c, 0x0c, "Bonus Level" )
 	PORT_DIPSETTING(    0x00, "No Bonus" )
 	PORT_DIPSETTING(    0x04, "20,000 & Every 90,000" )
 	PORT_DIPSETTING(    0x08, "20,000 & Every 70,000" )
@@ -271,7 +283,7 @@ static struct GfxLayout spritelayout =
 	16,16,    /* 16*16 sprites */
 	512,    /* ??? sprites */
 	6,      /* 6 bits per pixel ??!!! */
-	{ 0, 8,0x08000*8,0x08000*8+8, 0x10000*8, 0x10000*8+8},    /* plane offset */
+    { 0, 8, 0x08000*8,0x08000*8+8, 0x10000*8, 0x10000*8+8},
 	{ 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
 	  0, 1, 2, 3, 4, 5, 6, 7},
 	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8,
@@ -285,7 +297,7 @@ static struct GfxLayout tilelayout =
 	16,16 ,    /* 16*16 tiles */
 	256,    /* 256 tiles */
 	3,      /* 3 bits per pixel */
-	{ 0, 4, 0x8000*8+4 },    /* plane offset */
+        {  0x8000*8+4, 4, 0},    /* plane offset */
 	{
 	16+8+0, 16+8+1, 16+8+2, 16+8+3,
 	16+0, 16+1, 16+2,   16+3,
@@ -319,9 +331,9 @@ static struct GfxLayout tilelayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &spritelayout,    0, 1 },
-	{ 1, 0x18000, &tilelayout,      0, 1 },
-	{ 1, 0x18000, &tilelayout2,      0, 1 },
+    { 1, 0x00000, &spritelayout,    32, 32},
+    { 1, 0x18000, &tilelayout,       8, 32},
+    { 1, 0x18000, &tilelayout2,      8, 32},
 	{ -1 } /* end of array */
 };
 
@@ -342,27 +354,27 @@ static struct MachineDriver machine_driver =
 			1250000,        /* 1.25 Mhz ? */
 			0,
 			cpu1_readmem,cpu1_writemem,0,0,
-			battlane_cpu1_interrupt,3
+            battlane_cpu1_interrupt,6
 		},
 		{
 			CPU_M6809,
 			1250000,        /* 1.25 Mhz ? */
 			2,      /* memory region #2 */
 			cpu1_readmem,cpu1_writemem,0,0,
-			battlane_cpu2_interrupt,3
+            battlane_cpu2_interrupt,6
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	10,      /* 3 CPU slices per frame */
+    1,      /* 3 CPU slices per frame */
 	battlane_machine_init,      /* init machine */
 
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },       /* not sure */
 	gfxdecodeinfo,
-	256,8+8*8+16*8,
-	battlane_vh_convert_color_prom,
+        0x40,0x40,
+        NULL,
 
-	VIDEO_TYPE_RASTER,
+        VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,
 	battlane_vh_start,
 	battlane_vh_stop,
@@ -372,8 +384,8 @@ static struct MachineDriver machine_driver =
 	0,0,0,0,
 	{
 	    {
-		SOUND_YM3526,
-		&ym3526_interface,
+			SOUND_YM3526,
+			&ym3526_interface,
 	    }
 	}
 };

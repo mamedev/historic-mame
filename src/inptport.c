@@ -5,7 +5,6 @@
   Input ports handling
 
 TODO:	remove the 1 analog device per port limitation
-		support more than 1 "real" analog device
 		support for inputports producing interrupts
 		support for extra "real" hardware (PC throttle's, spinners etc)
 
@@ -46,11 +45,11 @@ static struct InputPort *input_analog[MAX_INPUT_PORTS];
 static int input_analog_value[MAX_INPUT_PORTS];
 static int input_analog_init[MAX_INPUT_PORTS];
 
-static int mouse_last_x,mouse_last_y;
-static int mouse_current_x,mouse_current_y;
-static int mouse_previous_x,mouse_previous_y;
-static int analog_current_x, analog_current_y;
-static int analog_previous_x, analog_previous_y;
+static int mouse_last_x[OSD_MAX_JOY_ANALOG], mouse_last_y[OSD_MAX_JOY_ANALOG];
+static int mouse_current_x[OSD_MAX_JOY_ANALOG], mouse_current_y[OSD_MAX_JOY_ANALOG];
+static int mouse_previous_x[OSD_MAX_JOY_ANALOG], mouse_previous_y[OSD_MAX_JOY_ANALOG];
+static int analog_current_x[OSD_MAX_JOY_ANALOG], analog_current_y[OSD_MAX_JOY_ANALOG];
+static int analog_previous_x[OSD_MAX_JOY_ANALOG], analog_previous_y[OSD_MAX_JOY_ANALOG];
 
 
 /***************************************************************************
@@ -925,7 +924,7 @@ void update_analog_port(int port)
 	int current, delta, type, sensitivity, clip, min, max, default_value;
 	int axis, is_stick, check_bounds;
 	int inckey, deckey, keydelta, incjoy, decjoy;
-	int key,joy;
+	int player;
 
 	/* get input definition */
 	in=input_analog[port];
@@ -987,25 +986,29 @@ void update_analog_port(int port)
 
 	delta = 0;
 
-	/* we can't support more than one analog input for now */
-	if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER1)
+	switch (in->type & IPF_PLAYERMASK)
 	{
-		if (axis == X_AXIS)
-		{
-			int now;
+		case IPF_PLAYER2:          player = 1; break;
+		case IPF_PLAYER3:          player = 2; break;
+		case IPF_PLAYER4:          player = 3; break;
+		case IPF_PLAYER1: default: player = 0; break;
+	}
 
-			now = cpu_scalebyfcount(mouse_current_x - mouse_previous_x) + mouse_previous_x;
-			delta = now - mouse_last_x;
-			mouse_last_x = now;
-		}
-		else
-		{
-			int now;
+	if (axis == X_AXIS)
+	{
+		int now;
 
-			now = cpu_scalebyfcount(mouse_current_y - mouse_previous_y) + mouse_previous_y;
-			delta = now - mouse_last_y;
-			mouse_last_y = now;
-		}
+		now = cpu_scalebyfcount(mouse_current_x[player] - mouse_previous_x[player]) + mouse_previous_x[player];
+		delta = now - mouse_last_x[player];
+		mouse_last_x[player] = now;
+	}
+	else
+	{
+		int now;
+
+		now = cpu_scalebyfcount(mouse_current_y[player] - mouse_previous_y[player]) + mouse_previous_y[player];
+		delta = now - mouse_last_y[player];
+		mouse_last_y[player] = now;
 	}
 
 	if (osd_key_pressed(deckey)) delta -= keydelta;
@@ -1023,77 +1026,72 @@ void update_analog_port(int port)
 
 	if (in->type & IPF_REVERSE) delta = -delta;
 
-	/* we can't support more than one analog input for now */
-	if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER1)
+	if (is_stick)
 	{
-		if (is_stick)
+		int new, prev;
+
+		/* center stick */
+		if ((delta == 0) && (in->type & IPF_CENTER))
 		{
-			int new, prev;
+			if (current > default_value)
+				delta = -100 / sensitivity;
+			if (current < default_value)
+				delta =  100 / sensitivity;
+		}
 
-			/* center stick */
-			if ((delta == 0) && (in->type & IPF_CENTER))
+		/* An analog joystick which is not at zero position (or has just */
+		/* moved there) takes precedence over all other computations */
+		/* analog_x/y holds values from -128 to 128 (yes, 128, not 127) */
+
+		if (axis == X_AXIS)
+		{
+			new  = analog_current_x[player];
+			prev = analog_previous_x[player];
+		}
+		else
+		{
+			new  = analog_current_y[player];
+			prev = analog_previous_y[player];
+		}
+
+		if ((new != 0) || (new-prev != 0))
+		{
+			delta=0;
+
+			if (in->type & IPF_REVERSE)
 			{
-				if (current > default_value)
-					delta = -100 / sensitivity;
-				if (current < default_value)
-					delta =  100 / sensitivity;
+				new  = -new;
+				prev = -prev;
 			}
 
-			/* An analog joystick which is not at zero position (or has just */
-			/* moved there) takes precedence over all other computations */
-			/* analog_x/y holds values from -128 to 128 (yes, 128, not 127) */
+			/* scale by time */
+			new = cpu_scalebyfcount(new - prev) + prev;
 
-			if (axis == X_AXIS)
+			/* apply sensitivity using a logarithmic scale */
+			if (in->mask > 0xff)
 			{
-				new  = analog_current_x;
-				prev = analog_previous_x;
-			}
-			else
-			{
-				new  = analog_current_y;
-				prev = analog_previous_y;
-			}
-
-			if ((new != 0) || (new-prev != 0))
-			{
-				delta=0;
-
-				if (in->type & IPF_REVERSE)
+				if (new > 0)
 				{
-					new  = -new;
-					prev = -prev;
-				}
-
-				/* scale by time */
-
-				new = cpu_scalebyfcount(new - prev) + prev;
-
-				/* apply sensitivity using a logarithmic scale */
-				if (in->mask > 0xff)
-				{
-					if (new > 0)
-					{
-						current = (pow(new / 32768.0, 100.0 / sensitivity) * (max-in->default_value)
-								+ in->default_value) * 100 / sensitivity;
-					}
-					else
-					{
-						current = (pow(-new / 32768.0, 100.0 / sensitivity) * (min-in->default_value)
-								+ in->default_value) * 100 / sensitivity;
-					}
+					current = (pow(new / 32768.0, 100.0 / sensitivity) * (max-in->default_value)
+							+ in->default_value) * 100 / sensitivity;
 				}
 				else
 				{
-					if (new > 0)
-					{
-						current = (pow(new / 128.0, 100.0 / sensitivity) * (max-in->default_value)
-								+ in->default_value) * 100 / sensitivity;
-					}
-					else
-					{
-						current = (pow(-new / 128.0, 100.0 / sensitivity) * (min-in->default_value)
-								+ in->default_value) * 100 / sensitivity;
-					}
+					current = (pow(-new / 32768.0, 100.0 / sensitivity) * (min-in->default_value)
+							+ in->default_value) * 100 / sensitivity;
+				}
+			}
+			else
+			{
+				if (new > 0)
+				{
+					current = (pow(new / 128.0, 100.0 / sensitivity) * (max-in->default_value)
+							+ in->default_value) * 100 / sensitivity;
+				}
+				else
+				{
+					current = (pow(-new / 128.0, 100.0 / sensitivity) * (min-in->default_value)
+							+ in->default_value) * 100 / sensitivity;
 				}
 			}
 		}
@@ -1445,7 +1443,7 @@ if (errorlog && IP_GET_IMPULSE(in) == 0)
 void inputport_vblank_end(void)
 {
 	int port;
-	int deltax,deltay;
+	int i;
 
 
 	for (port = 0;port < MAX_INPUT_PORTS;port++)
@@ -1457,18 +1455,27 @@ void inputport_vblank_end(void)
 		}
 	}
 
-	/* update joysticks */
-	analog_previous_x = analog_current_x;
-	analog_previous_y = analog_current_y;
-	osd_poll_joystick();
-	osd_analogjoy_read(&analog_current_x, &analog_current_y);
+	/* poll all the analog joysticks */
+	osd_poll_joysticks();
 
-	/* update mouse position */
-	mouse_previous_x = mouse_current_x;
-	mouse_previous_y = mouse_current_y;
-	osd_trak_read(&deltax,&deltay);
-	mouse_current_x += deltax;
-	mouse_current_y += deltay;
+	/* update the analog devices */
+	for (i = 0; i < OSD_MAX_JOY_ANALOG; i ++)
+	{
+		int deltax, deltay;
+
+		/* update the analog joystick position */
+		analog_previous_x[i] = analog_current_x[i];
+		analog_previous_y[i] = analog_current_y[i];
+		osd_analogjoy_read (i, &(analog_current_x[i]), &(analog_current_y[i]));
+
+		/* update mouse/trackball position */
+		mouse_previous_x[i] = mouse_current_x[i];
+		mouse_previous_y[i] = mouse_current_y[i];
+		osd_trak_read (i, &deltax, &deltay);
+		mouse_current_x[i] += deltax;
+		mouse_current_y[i] += deltay;
+	}
+
 }
 
 

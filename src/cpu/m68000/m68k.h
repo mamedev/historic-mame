@@ -122,8 +122,6 @@ typedef struct                 /* CPU Context */
    void (*instr_hook_callback)(void);       /* Called every instruction cycle prior to execution */
 } m68k_cpu_context;
 
-
-
 /* ======================================================================== */
 /* ====================== FUNCTIONS CALLED BY THE CPU ===================== */
 /* ======================================================================== */

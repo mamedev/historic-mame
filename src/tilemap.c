@@ -2,6 +2,13 @@
 #include "tilemap.h"
 
 /*
+new:
+tilemap_create no longer supplies scroll_cols and scroll_rows
+tilemap_set_scroll_cols, tilemap_set_scroll_rows can be used dynamically
+tilemap_dispose is public again
+TILE_IGNORE_TRANSPARENCY (new flag for individual tiles)
+TILEMAP_IGNORE_TRANSPARENCY (new flag to tilemap_draw)
+
 to do:
 -	only update scrolled flag when a tilemap scrolls a full tile or more
 -	flag dirtyness per row, not just per tile, so that entire rows of unchanged tiles can be
@@ -184,6 +191,8 @@ static struct {
 #define TILE_HEIGHT	8
 static void draw8x8( int xpos, int ypos )
 #include "tmapdraw.c"
+static void draw8x8_opaque( int xpos, int ypos )
+#include "tmapdrao.c"
 static void mark_visible8x8( int xpos, int ypos )
 #include "tmapmvis.c"
 #undef TILE_HEIGHT
@@ -193,6 +202,8 @@ static void mark_visible8x8( int xpos, int ypos )
 #define TILE_HEIGHT	16
 static void draw16x16( int xpos, int ypos )
 #include "tmapdraw.c"
+static void draw16x16_opaque( int xpos, int ypos )
+#include "tmapdrao.c"
 static void mark_visible16x16( int xpos, int ypos )
 #include "tmapmvis.c"
 #undef TILE_HEIGHT
@@ -202,6 +213,8 @@ static void mark_visible16x16( int xpos, int ypos )
 #define TILE_HEIGHT	32
 static void draw32x32( int xpos, int ypos )
 #include "tmapdraw.c"
+static void draw32x32_opaque( int xpos, int ypos )
+#include "tmapdrao.c"
 static void mark_visible32x32( int xpos, int ypos )
 #include "tmapmvis.c"
 #undef TILE_HEIGHT
@@ -270,53 +283,55 @@ static int create_tile_info( struct tilemap *tilemap ){
 	return 0; /* error */
 }
 
+static int set_scroll_cols( struct tilemap *tilemap, int n ){
+	if( tilemap->scroll_cols ) free( tilemap->colscroll );
+	tilemap->scroll_cols = n;
+	if( n ){
+		tilemap->colscroll = malloc(sizeof(int)*n );
+		if( !tilemap->colscroll ) return 1; /* error */
+		memset( tilemap->colscroll, 0, sizeof(int)*n );
+	}
+	return 0; /* good */
+}
+static int set_scroll_rows( struct tilemap *tilemap, int n ){
+	if( tilemap->scroll_rows ) free( tilemap->rowscroll );
+	tilemap->scroll_rows = n;
+	if( n ){
+		tilemap->rowscroll = malloc(sizeof(int)*n );
+		if( !tilemap->rowscroll ) return 1; /* error */
+		memset( tilemap->rowscroll, 0, sizeof(int)*n );
+	}
+	return 0; /* good */
+}
+
+int tilemap_set_scroll_cols( struct tilemap *tilemap, int scroll_cols ){
+	if( orientation & ORIENTATION_SWAP_XY ){
+		return set_scroll_rows( tilemap, scroll_cols );
+	}
+	return set_scroll_cols( tilemap, scroll_cols );
+}
+
+int tilemap_set_scroll_rows( struct tilemap *tilemap, int scroll_rows ){
+	if( orientation & ORIENTATION_SWAP_XY ){
+		return set_scroll_cols( tilemap, scroll_rows );
+	}
+	return set_scroll_rows( tilemap, scroll_rows );
+}
+
+
 static int create_pixmap( struct tilemap *tilemap ){
-	int error = 0;
-
-	tilemap->scrolled = 1;
-
-	if( tilemap->scroll_rows ){
-		tilemap->rowscroll = malloc(sizeof(int)*tilemap->scroll_rows );
-		if( tilemap->rowscroll ){
-			memset( tilemap->rowscroll, 0, sizeof(int)*tilemap->scroll_rows );
-		}
-		else {
-			error = 1;
-		}
-	}
-	else {
-		tilemap->rowscroll = 0;
-	}
-
-	if( tilemap->scroll_cols ){
-		tilemap->colscroll = malloc(sizeof(int)*tilemap->scroll_cols );
-		if( tilemap->colscroll ){
-			memset( tilemap->colscroll, 0, sizeof(int)*tilemap->scroll_cols );
-		}
-		else {
-			error = 1;
-		}
-	}
-	else {
-		tilemap->colscroll = 0;
-	}
-
-	if( error ==0 ){
-		tilemap->pixmap = create_tmpbitmap( tilemap->width, tilemap->height );
-		if( tilemap->pixmap ){
-			tilemap->pixmap_line_offset = tilemap->pixmap->line[1] - tilemap->pixmap->line[0];
-			return 1; /* done */
-		}
-		if( tilemap->colscroll ) free( tilemap->colscroll );
-		if( tilemap->rowscroll ) free( tilemap->rowscroll );
+	tilemap->pixmap = create_tmpbitmap( tilemap->width, tilemap->height );
+	if( tilemap->pixmap ){
+		tilemap->pixmap_line_offset = tilemap->pixmap->line[1] - tilemap->pixmap->line[0];
+		return 1; /* done */
 	}
 	return 0; /* error */
 }
 
 static void dispose_pixmap( struct tilemap *tilemap ){
 	osd_free_bitmap( tilemap->pixmap );
-	if( tilemap->colscroll ) free( tilemap->colscroll );
-	if( tilemap->rowscroll ) free( tilemap->rowscroll );
+	if( tilemap->scroll_cols ) free( tilemap->colscroll );
+	if( tilemap->scroll_rows ) free( tilemap->rowscroll );
 }
 
 static unsigned char **new_mask_data_table( unsigned char *mask_data, int num_cols, int num_rows ){
@@ -387,22 +402,19 @@ struct tilemap *tilemap_create(
 		void (*tile_get_info)( int col, int row ),
 		int type,
 		int tile_width, int tile_height,
-		int num_cols, int num_rows,
-		int scroll_rows, int scroll_cols ){
+		int num_cols, int num_rows ){
 
 	struct tilemap *tilemap = (struct tilemap *)malloc( sizeof( struct tilemap ) );
 	if( tilemap ){
 		if( orientation & ORIENTATION_SWAP_XY ){
 			SWAP( tile_width, tile_height )
 			SWAP( num_cols,num_rows )
-			SWAP( scroll_rows, scroll_cols )
 		}
 
 		if( errorlog ){
 			fprintf( errorlog, "cached tilemap info:\n" );
 			fprintf( errorlog, "tilewidth,tileheight:%d,%d\n",tile_width,tile_height );
 			fprintf( errorlog, "cols,rows:%d,%d\n",num_cols,num_rows );
-			fprintf( errorlog, "scroll_rows,scroll_cols:%d,%d\n",scroll_rows,scroll_cols );
 		}
 
 		memset( tilemap, 0, sizeof( struct tilemap ) );
@@ -415,18 +427,21 @@ struct tilemap *tilemap_create(
 			if( tile_height==8 ){
 				tilemap->mark_visible = mark_visible8x8;
 				tilemap->draw = draw8x8;
+				tilemap->draw_opaque = draw8x8_opaque;
 			}
 		}
 		else if( tile_width==16 ){
 			if( tile_height==16 ){
 				tilemap->mark_visible = mark_visible16x16;
 				tilemap->draw = draw16x16;
+				tilemap->draw_opaque = draw16x16_opaque;
 			}
 		}
 		else if( tile_width==32 ){
 			if( tile_height==32 ){
 				tilemap->mark_visible = mark_visible32x32;
 				tilemap->draw = draw32x32;
+				tilemap->draw_opaque = draw32x32_opaque;
 			}
 		}
 
@@ -442,8 +457,9 @@ struct tilemap *tilemap_create(
 			tilemap->num_cols = num_cols;
 			tilemap->num_tiles = num_cols*num_rows;
 
-			tilemap->scroll_rows = scroll_rows;
-			tilemap->scroll_cols = scroll_cols;
+			tilemap->scroll_rows = 0;
+			tilemap->scroll_cols = 0;
+			tilemap->scrolled = 1;
 
 			tilemap->transparent_pen = -1; /* default (this is supplied by video driver) */
 
@@ -467,14 +483,21 @@ struct tilemap *tilemap_create(
 	return 0; /* error */
 }
 
-static void tilemap_dispose( struct tilemap *tilemap ){
-	if( tilemap ){
-		dispose_tile_info( tilemap );
-		dispose_bg_mask( tilemap );
-		dispose_fg_mask( tilemap );
-		dispose_pixmap( tilemap );
-		free( tilemap );
+void tilemap_dispose( struct tilemap *tilemap ){
+	if( tilemap==first_tilemap ){
+		first_tilemap = tilemap->next;
 	}
+	else {
+		struct tilemap *prev = first_tilemap;
+		while( prev->next != tilemap ) prev = prev->next;
+		prev->next =tilemap->next;
+	}
+
+	dispose_tile_info( tilemap );
+	dispose_bg_mask( tilemap );
+	dispose_fg_mask( tilemap );
+	dispose_pixmap( tilemap );
+	free( tilemap );
 }
 
 void tilemap_close( void ){
@@ -654,7 +677,12 @@ void tilemap_render( struct tilemap *tilemap ){
 
 					if( type & TILEMAP_SPLIT ){
 						int pen_mask = (transparent_pen<0)?0:(1<<transparent_pen);
-						if( pen_mask == pen_usage ){ /* totally transparent */
+
+						if( flags&TILE_IGNORE_TRANSPARENCY ){
+							tilemap->fg_mask_data_row[row][col] = TILE_OPAQUE;
+							tilemap->bg_mask_data_row[row][col] = TILE_OPAQUE;
+						}
+						else if( pen_mask == pen_usage ){ /* totally transparent */
 							tilemap->fg_mask_data_row[row][col] = TILE_TRANSPARENT;
 							tilemap->bg_mask_data_row[row][col] = TILE_TRANSPARENT;
 						}
@@ -697,7 +725,9 @@ void tilemap_render( struct tilemap *tilemap ){
 				 	}
 				 	else if( type==TILEMAP_TRANSPARENT ){
 				 		unsigned int fg_transmask = 1 << transparent_pen;
-				 	 	if( pen_usage == fg_transmask ){
+				 	 	if( flags&TILE_IGNORE_TRANSPARENCY ) fg_transmask = 0;
+
+						if( pen_usage == fg_transmask ){
 							tilemap->fg_mask_data_row[row][col] = TILE_TRANSPARENT;
 						}
 						else if( pen_usage & fg_transmask ){
@@ -726,7 +756,7 @@ void tilemap_render( struct tilemap *tilemap ){
 
 void tilemap_draw( struct osd_bitmap *dest, struct tilemap *tilemap, int priority ){
 	if( tilemap->enable ){
-		void (*draw)( int, int ) = tilemap->draw;
+		void (*draw)( int, int );
 
 		int rows = tilemap->scroll_rows;
 		const int *rowscroll = tilemap->rowscroll;
@@ -748,19 +778,27 @@ void tilemap_draw( struct osd_bitmap *dest, struct tilemap *tilemap, int priorit
 		blit.source_line_offset = tilemap->pixmap_line_offset;
 		blit.source_row_offset = tile_height*blit.source_line_offset;
 
-		if( priority&TILEMAP_BACK ){
-			blit.bitmask = tilemap->bg_mask;
-			blit.mask_line_offset = tilemap->bg_mask_line_offset;
-			blit.mask_data_row = tilemap->bg_mask_data_row;
+		if( tilemap->type==TILEMAP_OPAQUE || (priority&TILEMAP_IGNORE_TRANSPARENCY) ){
+			draw = tilemap->draw_opaque;
 		}
 		else {
-			blit.bitmask = tilemap->fg_mask;
-			blit.mask_line_offset = tilemap->fg_mask_line_offset;
-			blit.mask_data_row = tilemap->fg_mask_data_row;
+			draw = tilemap->draw;
+
+			if( priority&TILEMAP_BACK ){
+				blit.bitmask = tilemap->bg_mask;
+				blit.mask_line_offset = tilemap->bg_mask_line_offset;
+				blit.mask_data_row = tilemap->bg_mask_data_row;
+			}
+			else {
+				blit.bitmask = tilemap->fg_mask;
+				blit.mask_line_offset = tilemap->fg_mask_line_offset;
+				blit.mask_data_row = tilemap->fg_mask_data_row;
+			}
+
+			blit.mask_row_offset = tile_height*blit.mask_line_offset;
 		}
 
 		blit.priority_data_row = tilemap->priority_row;
-		blit.mask_row_offset = tile_height*blit.mask_line_offset;
 		blit.source_width = tilemap->width;
 		blit.source_height = tilemap->height;
 		blit.priority = priority&0xf;

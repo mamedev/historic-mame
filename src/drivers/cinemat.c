@@ -281,7 +281,7 @@ void cinemat32k_rom_decode (void)
 
 static unsigned char color_prom_bilevel_overlay[] = { CCPU_MONITOR_BILEV | 0x80 };
 static unsigned char color_prom_bilevel_backdrop[] = { CCPU_MONITOR_BILEV | 0x40 };
-static unsigned char color_prom_bilevel[] = { CCPU_MONITOR_BILEV | 0xa0 , 0};
+static unsigned char color_prom_bilevel[] = { CCPU_MONITOR_BILEV };
 static unsigned char color_prom_bilevel_sc[] = { CCPU_MONITOR_BILEV | 0xa0 , 1};
 static unsigned char color_prom_bilevel_sd[] = { CCPU_MONITOR_BILEV | 0xa0 , 2};
 static unsigned char color_prom_bilevel_tg[] = { CCPU_MONITOR_BILEV | 0xa0 , 3};

@@ -53,8 +53,8 @@ TODO:
 #include <stdlib.h>
 #include <string.h>
 #include "cpuintrf.h"
-#include "osd_dbg.h"
 #include "state.h"
+#include "mamedbg.h"
 #include "m6800.h"
 
 extern FILE *errorlog;
@@ -66,6 +66,11 @@ extern FILE *errorlog;
 #else
 #define LOG(x)
 #endif
+
+
+#define M6800_CLKDIV	4
+#define M6803_CLKDIV	4
+#define HD63701_CLKDIV	2
 
 /* 6800 Registers */
 typedef struct
@@ -81,6 +86,16 @@ typedef struct
 	UINT8	irq_state[2];	/* IRQ and OCI line state */
     int     (*irq_callback)(int irqline);
 	int 	extra_cycles;	/* cycles used for interrupts */
+
+	UINT8	port1_ddr;
+	UINT8	port2_ddr;
+	UINT8	port1_data;
+	UINT8	port2_data;
+	UINT8	tcsr;			/* Timer Control and Status Register */
+	UINT32	counter;		/* counter * 4 */
+	UINT32	output_compare;	/* output compare * 4 */
+	UINT8	ram_ctrl;
+
 }   m6800_Regs;
 
 /* 680x registers */
@@ -136,7 +151,7 @@ static void (*wr_s_handler_w)(PAIR *);
 #define PULLWORD(w) (*rd_s_handler_w)(&w)
 
 /* check the IRQ lines for pending interrupts */
-#define CHECK_IRQ_LINES {                                               \
+#define CHECK_IRQ_LINES {												\
 	if( m6800.irq_state[M6800_IRQ_LINE] != CLEAR_LINE && !(CC & 0x10) ) \
 	{																	\
         /* standard IRQ */                                              \
@@ -160,31 +175,28 @@ static void (*wr_s_handler_w)(PAIR *);
 		if( m6800.irq_callback )										\
 			(void)(*m6800.irq_callback)(M6800_IRQ_LINE);				\
 	}																	\
-	else																\
-	if( m6800.irq_state[M6800_OCI_LINE] != CLEAR_LINE ) 				\
-	{																	\
-        /* OCI */                                                       \
-		LOG((errorlog, "M6800#%d take OCI\n", cpu_getactivecpu()));     \
-		if( m6800.wai_state & M6800_WAI )								\
-		{																\
-			m6800.extra_cycles += 4;									\
-		}																\
-        else                                                            \
-        {                                                               \
-			PUSHWORD(pPC);												\
-			PUSHWORD(pX);												\
-			PUSHBYTE(A);												\
-			PUSHBYTE(B);												\
-			PUSHBYTE(CC);												\
-			m6800.extra_cycles += 12;									\
-        }                                                               \
-        SEI;                                                            \
-		RM16( 0xfff4, &pPC );											\
-		change_pc(PC);													\
-		if( m6800.irq_callback )										\
-			(void)(*m6800.irq_callback)(M6800_OCI_LINE);				\
-    }                                                                   \
 }
+
+#define TAKE_OCI {													\
+	LOG((errorlog, "M6800#%d take OCI\n", cpu_getactivecpu()));     \
+	if( m6800.wai_state & M6800_WAI )								\
+	{																\
+		m6800.extra_cycles += 4;									\
+	}																\
+	else                                                            \
+	{                                                               \
+		PUSHWORD(pPC);												\
+		PUSHWORD(pX);												\
+		PUSHBYTE(A);												\
+		PUSHBYTE(B);												\
+		PUSHBYTE(CC);												\
+		m6800.extra_cycles += 12;									\
+	}                                                               \
+	SEI;                                                            \
+	RM16( 0xfff4, &pPC );											\
+	change_pc(PC);													\
+}
+
 
 /* CC masks                       HI NZVC
 								7654 3210	*/
@@ -279,6 +291,37 @@ static UINT8 flags8d[256]= /* decrement */
 #define SEI CC|=0x10
 #define CLI CC&=~0x10
 
+
+
+/* mnemonicos for the Timer Control and Status Register bits */
+#define TCSR_OLVL 0x01
+#define TCSR_IEDG 0x02
+#define TCSR_ETOI 0x04
+#define TCSR_EOCI 0x08
+#define TCSR_EICI 0x10
+#define TCSR_TOF  0x20
+#define TCSR_OCF  0x40
+#define TCSR_ICF  0x80
+
+
+#define INCREMENT_COUNTER(amount)															\
+{																							\
+	UINT32 old_counter;																		\
+																							\
+	old_counter = m6800.counter;															\
+	m6800.counter = (m6800.counter + amount) & 0x3ffff;										\
+	if ((old_counter < m6800.output_compare && m6800.counter >= m6800.output_compare) ||	\
+		((m6800.counter < old_counter) && /* loop around */									\
+		(old_counter < m6800.output_compare || m6800.counter >= m6800.output_compare)))		\
+	{																						\
+		m6800.tcsr |= TCSR_OCF;																\
+		if (m6800.tcsr & TCSR_EOCI)															\
+			TAKE_OCI;																		\
+	}																						\
+}
+
+
+
 /* macros for convenience */
 #define DIRBYTE(b) {DIRECT;b=RM(EAD);}
 #define DIRWORD(w) {DIRECT;RM16(EAD,&w);}
@@ -292,67 +335,73 @@ static UINT8 flags8d[256]= /* decrement */
 #define BRANCH(f) {IMMBYTE(t);if(f){PC+=SIGNED(t);change_pc(PC);}}
 #define NXORV  ((CC&0x08)^((CC&0x02)<<2))
 
+/* Macro to adjust cycle counts to multiples of the internal clock divider */
+#define C(n)   (n*M6800_CLKDIV)
 static unsigned char cycles_6800[] =
 {
-		/* 0  1  2	3  4  5  6	7  8  9  A	B  C  D  E	F */
-	/*0*/  0, 2, 0, 0, 0, 0, 2, 2, 4, 4, 2, 2, 2, 2, 2, 2,
-	/*1*/  2, 2, 0, 0, 0, 0, 2, 2, 0, 2, 0, 2, 0, 0, 0, 0,
-	/*2*/  4, 0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
-	/*3*/  4, 4, 4, 4, 4, 4, 4, 4, 0, 5, 0,10, 0, 0, 9,12,
-	/*4*/  2, 0, 0, 2, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 0, 2,
-	/*5*/  2, 0, 0, 2, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 0, 2,
-	/*6*/  7, 0, 0, 7, 7, 0, 7, 7, 7, 7, 7, 0, 7, 7, 4, 7,
-	/*7*/  6, 0, 0, 6, 6, 0, 6, 6, 6, 6, 6, 0, 6, 6, 3, 6,
-	/*8*/  2, 2, 2, 0, 2, 2, 2, 0, 2, 2, 2, 2, 3, 8, 3, 0,
-	/*9*/  3, 3, 3, 0, 3, 3, 3, 4, 3, 3, 3, 3, 4, 0, 4, 5,
-	/*A*/  5, 5, 5, 0, 5, 5, 5, 6, 5, 5, 5, 5, 6, 8, 6, 7,
-	/*B*/  4, 4, 4, 0, 4, 4, 4, 5, 4, 4, 4, 4, 5, 9, 5, 6,
-	/*C*/  2, 2, 2, 0, 2, 2, 2, 0, 2, 2, 2, 2, 0, 0, 3, 0,
-	/*D*/  3, 3, 3, 0, 3, 3, 3, 4, 3, 3, 3, 3, 0, 0, 4, 5,
-	/*E*/  5, 5, 5, 0, 5, 5, 5, 6, 5, 5, 5, 5, 0, 0, 6, 7,
-	/*F*/  4, 4, 4, 0, 4, 4, 4, 5, 4, 4, 4, 4, 0, 0, 5, 6
+		/*	 0	   1	 2	   3	 4	   5	 6	   7	 8	   9	 A	   B	 C	   D	 E	   F */
+	/*0*/ C( 0),C( 2),C( 0),C( 0),C( 0),C( 0),C( 2),C( 2),C( 4),C( 4),C( 2),C( 2),C( 2),C( 2),C( 2),C( 2),
+	/*1*/ C( 2),C( 2),C( 0),C( 0),C( 0),C( 0),C( 2),C( 2),C( 0),C( 2),C( 0),C( 2),C( 0),C( 0),C( 0),C( 0),
+	/*2*/ C( 4),C( 0),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),
+	/*3*/ C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 0),C( 5),C( 0),C(10),C( 0),C( 0),C( 9),C(12),
+	/*4*/ C( 2),C( 0),C( 0),C( 2),C( 2),C( 0),C( 2),C( 2),C( 2),C( 2),C( 2),C( 0),C( 2),C( 2),C( 0),C( 2),
+	/*5*/ C( 2),C( 0),C( 0),C( 2),C( 2),C( 0),C( 2),C( 2),C( 2),C( 2),C( 2),C( 0),C( 2),C( 2),C( 0),C( 2),
+	/*6*/ C( 7),C( 0),C( 0),C( 7),C( 7),C( 0),C( 7),C( 7),C( 7),C( 7),C( 7),C( 0),C( 7),C( 7),C( 4),C( 7),
+	/*7*/ C( 6),C( 0),C( 0),C( 6),C( 6),C( 0),C( 6),C( 6),C( 6),C( 6),C( 6),C( 0),C( 6),C( 6),C( 3),C( 6),
+	/*8*/ C( 2),C( 2),C( 2),C( 0),C( 2),C( 2),C( 2),C( 0),C( 2),C( 2),C( 2),C( 2),C( 3),C( 8),C( 3),C( 0),
+	/*9*/ C( 3),C( 3),C( 3),C( 0),C( 3),C( 3),C( 3),C( 4),C( 3),C( 3),C( 3),C( 3),C( 4),C( 0),C( 4),C( 5),
+	/*A*/ C( 5),C( 5),C( 5),C( 0),C( 5),C( 5),C( 5),C( 6),C( 5),C( 5),C( 5),C( 5),C( 6),C( 8),C( 6),C( 7),
+	/*B*/ C( 4),C( 4),C( 4),C( 0),C( 4),C( 4),C( 4),C( 5),C( 4),C( 4),C( 4),C( 4),C( 5),C( 9),C( 5),C( 6),
+	/*C*/ C( 2),C( 2),C( 2),C( 0),C( 2),C( 2),C( 2),C( 0),C( 2),C( 2),C( 2),C( 2),C( 0),C( 0),C( 3),C( 0),
+	/*D*/ C( 3),C( 3),C( 3),C( 0),C( 3),C( 3),C( 3),C( 4),C( 3),C( 3),C( 3),C( 3),C( 0),C( 0),C( 4),C( 5),
+	/*E*/ C( 5),C( 5),C( 5),C( 0),C( 5),C( 5),C( 5),C( 6),C( 5),C( 5),C( 5),C( 5),C( 0),C( 0),C( 6),C( 7),
+	/*F*/ C( 4),C( 4),C( 4),C( 0),C( 4),C( 4),C( 4),C( 5),C( 4),C( 4),C( 4),C( 4),C( 0),C( 0),C( 5),C( 6)
 };
 
+#undef	C
+#define C(n)   (n*M6803_CLKDIV)
 static unsigned char cycles_6803[] =
 {
-		/* 0  1  2	3  4  5  6	7  8  9  A	B  C  D  E	F */
-	/*0*/  0, 2, 0, 0, 3, 3, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2,
-	/*1*/  2, 2, 0, 0, 0, 0, 2, 2, 0, 2, 0, 2, 0, 0, 0, 0,
-	/*2*/  3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	/*3*/  3, 3, 4, 4, 3, 3, 3, 3, 5, 5, 3,10, 4,10, 9,12,
-	/*4*/  2, 0, 0, 2, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 0, 2,
-	/*5*/  2, 0, 0, 2, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 0, 2,
-	/*6*/  6, 0, 0, 6, 6, 0, 6, 6, 6, 6, 6, 0, 6, 6, 3, 6,
-	/*7*/  6, 0, 0, 6, 6, 0, 6, 6, 6, 6, 6, 0, 6, 6, 3, 6,
-	/*8*/  2, 2, 2, 4, 2, 2, 2, 0, 2, 2, 2, 2, 4, 6, 3, 0,
-	/*9*/  3, 3, 3, 5, 3, 3, 3, 3, 3, 3, 3, 3, 5, 5, 4, 4,
-	/*A*/  4, 4, 4, 6, 4, 4, 4, 4, 4, 4, 4, 4, 6, 6, 5, 5,
-	/*B*/  4, 4, 4, 6, 4, 4, 4, 4, 4, 4, 4, 4, 6, 6, 5, 5,
-	/*C*/  2, 2, 2, 4, 2, 2, 2, 0, 2, 2, 2, 2, 3, 0, 3, 0,
-	/*D*/  3, 3, 3, 5, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4,
-	/*E*/  4, 4, 4, 6, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5,
-	/*F*/  4, 4, 4, 6, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5
+		/*	 0	   1	 2	   3	 4	   5	 6	   7	 8	   9	 A	   B	 C	   D	 E	   F */
+	/*0*/ C( 0),C( 2),C( 0),C( 0),C( 3),C( 3),C( 2),C( 2),C( 3),C( 3),C( 2),C( 2),C( 2),C( 2),C( 2),C( 2),
+	/*1*/ C( 2),C( 2),C( 0),C( 0),C( 0),C( 0),C( 2),C( 2),C( 0),C( 2),C( 0),C( 2),C( 0),C( 0),C( 0),C( 0),
+	/*2*/ C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),
+	/*3*/ C( 3),C( 3),C( 4),C( 4),C( 3),C( 3),C( 3),C( 3),C( 5),C( 5),C( 3),C(10),C( 4),C(10),C( 9),C(12),
+	/*4*/ C( 2),C( 0),C( 0),C( 2),C( 2),C( 0),C( 2),C( 2),C( 2),C( 2),C( 2),C( 0),C( 2),C( 2),C( 0),C( 2),
+	/*5*/ C( 2),C( 0),C( 0),C( 2),C( 2),C( 0),C( 2),C( 2),C( 2),C( 2),C( 2),C( 0),C( 2),C( 2),C( 0),C( 2),
+	/*6*/ C( 6),C( 0),C( 0),C( 6),C( 6),C( 0),C( 6),C( 6),C( 6),C( 6),C( 6),C( 0),C( 6),C( 6),C( 3),C( 6),
+	/*7*/ C( 6),C( 0),C( 0),C( 6),C( 6),C( 0),C( 6),C( 6),C( 6),C( 6),C( 6),C( 0),C( 6),C( 6),C( 3),C( 6),
+	/*8*/ C( 2),C( 2),C( 2),C( 4),C( 2),C( 2),C( 2),C( 0),C( 2),C( 2),C( 2),C( 2),C( 4),C( 6),C( 3),C( 0),
+	/*9*/ C( 3),C( 3),C( 3),C( 5),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 5),C( 5),C( 4),C( 4),
+	/*A*/ C( 4),C( 4),C( 4),C( 6),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 6),C( 6),C( 5),C( 5),
+	/*B*/ C( 4),C( 4),C( 4),C( 6),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 6),C( 6),C( 5),C( 5),
+	/*C*/ C( 2),C( 2),C( 2),C( 4),C( 2),C( 2),C( 2),C( 0),C( 2),C( 2),C( 2),C( 2),C( 3),C( 0),C( 3),C( 0),
+	/*D*/ C( 3),C( 3),C( 3),C( 5),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 4),C( 4),C( 4),C( 4),
+	/*E*/ C( 4),C( 4),C( 4),C( 6),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 5),C( 5),C( 5),C( 5),
+	/*F*/ C( 4),C( 4),C( 4),C( 6),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 5),C( 5),C( 5),C( 5)
 };
 
+#undef	C
+#define C(n)   (n*HD63701_CLKDIV)
 static unsigned char cycles_63701[] =
 {
-		/* 0  1  2	3  4  5  6	7  8  9  A	B  C  D  E	F */
-	/*0*/  0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-	/*1*/  1, 1, 0, 0, 0, 0, 1, 1, 2, 2, 4, 1, 0, 0, 0, 0,
-	/*2*/  3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	/*3*/  1, 1, 3, 3, 1, 1, 4, 4, 4, 5, 1,10, 5, 7, 9,12,
-	/*4*/  1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1,
-	/*5*/  1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1,
-	/*6*/  6, 7, 7, 6, 6, 7, 6, 6, 6, 6, 6, 5, 6, 4, 3, 5,
-	/*7*/  6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 4, 6, 4, 3, 5,
-	/*8*/  2, 2, 2, 3, 2, 2, 2, 0, 2, 2, 2, 2, 3, 5, 3, 0,
-	/*9*/  3, 3, 3, 4, 3, 3, 3, 3, 3, 3, 3, 3, 4, 5, 4, 4,
-	/*A*/  4, 4, 4, 5, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5,
-	/*B*/  4, 4, 4, 5, 4, 4, 4, 4, 4, 4, 4, 4, 5, 6, 5, 5,
-	/*C*/  2, 2, 2, 3, 2, 2, 2, 0, 2, 2, 2, 2, 3, 0, 3, 0,
-	/*D*/  3, 3, 3, 4, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4,
-	/*E*/  4, 4, 4, 5, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5,
-	/*F*/  4, 4, 4, 5, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5
+		/*	 0	   1	 2	   3	 4	   5	 6	   7	 8	   9	 A	   B	 C	   D	 E	   F */
+	/*0*/ C( 0),C( 1),C( 0),C( 0),C( 1),C( 1),C( 1),C( 1),C( 1),C( 1),C( 1),C( 1),C( 1),C( 1),C( 1),C( 1),
+	/*1*/ C( 1),C( 1),C( 0),C( 0),C( 0),C( 0),C( 1),C( 1),C( 2),C( 2),C( 4),C( 1),C( 0),C( 0),C( 0),C( 0),
+	/*2*/ C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),
+	/*3*/ C( 1),C( 1),C( 3),C( 3),C( 1),C( 1),C( 4),C( 4),C( 4),C( 5),C( 1),C(10),C( 5),C( 7),C( 9),C(12),
+	/*4*/ C( 1),C( 0),C( 0),C( 1),C( 1),C( 0),C( 1),C( 1),C( 1),C( 1),C( 1),C( 0),C( 1),C( 1),C( 0),C( 1),
+	/*5*/ C( 1),C( 0),C( 0),C( 1),C( 1),C( 0),C( 1),C( 1),C( 1),C( 1),C( 1),C( 0),C( 1),C( 1),C( 0),C( 1),
+	/*6*/ C( 6),C( 7),C( 7),C( 6),C( 6),C( 7),C( 6),C( 6),C( 6),C( 6),C( 6),C( 5),C( 6),C( 4),C( 3),C( 5),
+	/*7*/ C( 6),C( 6),C( 6),C( 6),C( 6),C( 6),C( 6),C( 6),C( 6),C( 6),C( 6),C( 4),C( 6),C( 4),C( 3),C( 5),
+	/*8*/ C( 2),C( 2),C( 2),C( 3),C( 2),C( 2),C( 2),C( 0),C( 2),C( 2),C( 2),C( 2),C( 3),C( 5),C( 3),C( 0),
+	/*9*/ C( 3),C( 3),C( 3),C( 4),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 4),C( 5),C( 4),C( 4),
+	/*A*/ C( 4),C( 4),C( 4),C( 5),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 5),C( 5),C( 5),C( 5),
+	/*B*/ C( 4),C( 4),C( 4),C( 5),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 5),C( 6),C( 5),C( 5),
+	/*C*/ C( 2),C( 2),C( 2),C( 3),C( 2),C( 2),C( 2),C( 0),C( 2),C( 2),C( 2),C( 2),C( 3),C( 0),C( 3),C( 0),
+	/*D*/ C( 3),C( 3),C( 3),C( 4),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 4),C( 4),C( 4),C( 4),
+	/*E*/ C( 4),C( 4),C( 4),C( 5),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 5),C( 5),C( 5),C( 5),
+	/*F*/ C( 4),C( 4),C( 4),C( 5),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 5),C( 5),C( 5),C( 5)
 };
 
 /* pre-clear a PAIR union; clearing h2 and h3 only might be faster? */
@@ -462,6 +511,14 @@ void m6800_reset(void *param)
     SEI;            /* IRQ disabled */
 	RM16( 0xfffe, &m6800.pc );
     change_pc(PC);
+
+	m6800.port1_ddr = 0x00;
+	m6800.port2_ddr = 0x00;
+	/* TODO: on reset port 2 should be read to determine the operating mode (bits 0-2) */
+	m6800.tcsr = 0x00;
+	m6800.counter = 0x0000*4;
+	m6800.output_compare = 0xffff*4;
+	m6800.ram_ctrl |= 0x40;
 }
 
 /****************************************************************************
@@ -547,7 +604,6 @@ unsigned m6800_get_reg(int regnum)
 		case M6800_X: return m6800.x.w.l;
 		case M6800_NMI_STATE: return m6800.nmi_state;
 		case M6800_IRQ_STATE: return m6800.irq_state[M6800_IRQ_LINE];
-		case M6800_OCI_STATE: return m6800.irq_state[M6800_OCI_LINE];
 		case REG_PREVIOUSPC: return m6800.ppc.w.l;
 		default:
 			if( regnum <= REG_SP_CONTENTS )
@@ -576,7 +632,6 @@ void m6800_set_reg(int regnum, unsigned val)
 		case M6800_X: m6800.x.w.l = val; break;
 		case M6800_NMI_STATE: m6800_set_nmi_line(val); break;
 		case M6800_IRQ_STATE: m6800_set_irq_line(M6800_IRQ_LINE,val); break;
-		case M6800_OCI_STATE: m6800_set_irq_line(M6800_OCI_LINE,val); break;
 		default:
 			if( regnum <= REG_SP_CONTENTS )
 			{
@@ -644,7 +699,6 @@ static void state_save(void *file, const char *module)
 	state_save_UINT8(file,module,cpu,"CC", &m6800.cc, 1);
 	state_save_UINT8(file,module,cpu,"NMI_STATE", &m6800.nmi_state, 1);
 	state_save_UINT8(file,module,cpu,"IRQ_STATE", &m6800.irq_state[M6800_IRQ_LINE], 1);
-	state_save_UINT8(file,module,cpu,"OCI_STATE", &m6800.irq_state[M6800_OCI_LINE], 1);
 }
 
 static void state_load(void *file, const char *module)
@@ -658,7 +712,6 @@ static void state_load(void *file, const char *module)
 	state_load_UINT8(file,module,cpu,"CC", &m6800.cc, 1);
 	state_load_UINT8(file,module,cpu,"NMI_STATE", &m6800.nmi_state, 1);
 	state_load_UINT8(file,module,cpu,"IRQ_STATE", &m6800.irq_state[M6800_IRQ_LINE], 1);
-	state_load_UINT8(file,module,cpu,"OCI_STATE", &m6800.irq_state[M6800_OCI_LINE], 1);
 }
 
 void m6800_state_save(void *file) { state_save(file,"m6800"); }
@@ -674,11 +727,13 @@ int m6800_execute(int cycles)
 	UINT8 ireg;
 	m6800_ICount = cycles;
 
-	m6800_ICount -= m6800.extra_cycles;
+	INCREMENT_COUNTER(m6800.extra_cycles * M6800_CLKDIV)
+	m6800_ICount -= m6800.extra_cycles * M6800_CLKDIV;
 	m6800.extra_cycles = 0;
 
     if( m6800.wai_state & M6800_WAI )
 	{
+		INCREMENT_COUNTER(m6800_ICount)
 		m6800_ICount = 0;
 		goto getout;
 	}
@@ -948,11 +1003,13 @@ int m6800_execute(int cycles)
 			case 0xfe: ldx_ex(); break;
 			case 0xff: stx_ex(); break;
 		}
+		INCREMENT_COUNTER(cycles_6800[ireg])
 		m6800_ICount -= cycles_6800[ireg];
 	} while( m6800_ICount>0 );
 
 getout:
-	m6800_ICount -= m6800.extra_cycles;
+	INCREMENT_COUNTER(m6800.extra_cycles * M6800_CLKDIV)
+	m6800_ICount -= m6800.extra_cycles * M6800_CLKDIV;
     m6800.extra_cycles = 0;
 
     return cycles - m6800_ICount;
@@ -966,7 +1023,7 @@ const char *m6800_info(void *context, int regnum)
 	/* Layout of the registers in the debugger */
 	static UINT8 m6800_reg_layout[] = {
 		M6800_PC, M6800_S, M6800_CC, M6800_A, M6800_B, M6800_X, -1,
-		M6800_WAI_STATE, M6800_NMI_STATE, M6800_IRQ_STATE, M6800_OCI_STATE, 0
+		M6800_WAI_STATE, M6800_NMI_STATE, M6800_IRQ_STATE, 0
 	};
 
 	/* Layout of the debugger windows x,y,w,h */
@@ -997,7 +1054,6 @@ const char *m6800_info(void *context, int regnum)
 		case CPU_INFO_REG+M6800_CC: sprintf(buffer[which], "CC:%02X", r->cc); break;
 		case CPU_INFO_REG+M6800_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
 		case CPU_INFO_REG+M6800_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state[M6800_IRQ_LINE]); break;
-		case CPU_INFO_REG+M6800_OCI_STATE: sprintf(buffer[which], "OCI:%X", r->irq_state[M6800_OCI_LINE]); break;
 		case CPU_INFO_FLAGS:
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
 				r->cc & 0x80 ? '?':'.',
@@ -1020,13 +1076,12 @@ const char *m6800_info(void *context, int regnum)
 	return buffer[which];
 }
 
-unsigned m6800_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned m6800_dasm(char *buffer, unsigned pc)
 {
-	(void)base;
 #ifdef MAME_DEBUG
     return Dasm680x(6800,buffer,pc);
 #else
-	sprintf( buffer, "$%02X", ROM[pc] );
+	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
 #endif
 }
@@ -1056,7 +1111,7 @@ const char *m6801_info(void *context, int regnum)
 	/* Layout of the registers in the debugger */
 	static UINT8 m6801_reg_layout[] = {
 		M6801_PC, M6801_S, M6801_CC, M6801_A, M6801_B, M6801_X, -1,
-		M6801_WAI_STATE, M6801_NMI_STATE, M6801_IRQ_STATE, M6801_OCI_STATE, 0
+		M6801_WAI_STATE, M6801_NMI_STATE, M6801_IRQ_STATE, 0
 	};
 
 	/* Layout of the debugger windows x,y,w,h */
@@ -1076,13 +1131,12 @@ const char *m6801_info(void *context, int regnum)
     }
 	return m6800_info(context,regnum);
 }
-unsigned m6801_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned m6801_dasm(char *buffer, unsigned pc)
 {
-	(void)base;
 #ifdef MAME_DEBUG
-	return Dasm680x(6801,buffer,pc);
+    return Dasm680x(6801,buffer,pc);
 #else
-	sprintf( buffer, "$%02X", ROM[pc] );
+	sprintf( buffer, "$%02X", cpu_readmem16(pc) );
 	return 1;
 #endif
 }
@@ -1114,7 +1168,7 @@ const char *m6802_info(void *context, int regnum)
 	/* Layout of the registers in the debugger */
 	static UINT8 m6802_reg_layout[] = {
 		M6802_PC, M6802_S, M6802_CC, M6802_A, M6802_B, M6802_X, -1,
-		M6802_WAI_STATE, M6802_NMI_STATE, M6802_IRQ_STATE, M6802_OCI_STATE, 0
+		M6802_WAI_STATE, M6802_NMI_STATE, M6802_IRQ_STATE, 0
 	};
 
 	/* Layout of the debugger windows x,y,w,h */
@@ -1135,13 +1189,12 @@ const char *m6802_info(void *context, int regnum)
 	return m6800_info(context,regnum);
 }
 
-unsigned m6802_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned m6802_dasm(char *buffer, unsigned pc)
 {
-	(void)base;
 #ifdef MAME_DEBUG
-	return Dasm680x(6802,buffer,pc);
+    return Dasm680x(6802,buffer,pc);
 #else
-	sprintf( buffer, "$%02X", ROM[pc] );
+	sprintf( buffer, "$%02X", cpu_readmem16(pc) );
 	return 1;
 #endif
 }
@@ -1164,11 +1217,13 @@ int m6803_execute(int cycles)
     UINT8 ireg;
     m6803_ICount = cycles;
 
-	m6803_ICount -= m6803.extra_cycles;
+	INCREMENT_COUNTER(m6803.extra_cycles * M6803_CLKDIV)
+	m6803_ICount -= m6803.extra_cycles * M6803_CLKDIV;
 	m6803.extra_cycles = 0;
 
     if( m6803.wai_state & M6800_WAI )
     {
+		INCREMENT_COUNTER(m6803_ICount)
         m6803_ICount = 0;
         goto getout;
     }
@@ -1439,11 +1494,13 @@ int m6803_execute(int cycles)
             case 0xfe: ldx_ex(); break;
             case 0xff: stx_ex(); break;
         }
+		INCREMENT_COUNTER(cycles_6803[ireg])
         m6803_ICount -= cycles_6803[ireg];
     } while( m6803_ICount>0 );
 
 getout:
-	m6803_ICount -= m6803.extra_cycles;
+	INCREMENT_COUNTER(m6803.extra_cycles * M6803_CLKDIV)
+	m6803_ICount -= m6803.extra_cycles * M6803_CLKDIV;
     m6803.extra_cycles = 0;
 
     return cycles - m6803_ICount;
@@ -1469,7 +1526,7 @@ const char *m6803_info(void *context, int regnum)
 	/* Layout of the registers in the debugger */
 	static UINT8 m6803_reg_layout[] = {
 		M6803_PC, M6803_S, M6803_CC, M6803_A, M6803_B, M6803_X, -1,
-		M6803_WAI_STATE, M6803_NMI_STATE, M6803_IRQ_STATE, M6803_OCI_STATE, 0
+		M6803_WAI_STATE, M6803_NMI_STATE, M6803_IRQ_STATE, 0
 	};
 
 	/* Layout of the debugger windows x,y,w,h */
@@ -1490,13 +1547,12 @@ const char *m6803_info(void *context, int regnum)
 	return m6800_info(context,regnum);
 }
 
-unsigned m6803_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned m6803_dasm(char *buffer, unsigned pc)
 {
-	(void)base;
 #ifdef MAME_DEBUG
-	return Dasm680x(6803,buffer,pc);
+    return Dasm680x(6803,buffer,pc);
 #else
-	sprintf( buffer, "$%02X", ROM[pc] );
+	sprintf( buffer, "$%02X", cpu_readmem16(pc) );
 	return 1;
 #endif
 }
@@ -1527,7 +1583,7 @@ const char *m6808_info(void *context, int regnum)
 	/* Layout of the registers in the debugger */
 	static UINT8 m6808_reg_layout[] = {
 		M6808_PC, M6808_S, M6808_CC, M6808_A, M6808_B, M6808_X, -1,
-		M6808_WAI_STATE, M6808_NMI_STATE, M6808_IRQ_STATE, M6808_OCI_STATE, 0
+		M6808_WAI_STATE, M6808_NMI_STATE, M6808_IRQ_STATE, 0
 	};
 
 	/* Layout of the debugger windows x,y,w,h */
@@ -1548,13 +1604,12 @@ const char *m6808_info(void *context, int regnum)
 	return m6800_info(context,regnum);
 }
 
-unsigned m6808_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned m6808_dasm(char *buffer, unsigned pc)
 {
-	(void)base;
 #ifdef MAME_DEBUG
 	return Dasm680x(6808,buffer,pc);
 #else
-	sprintf( buffer, "$%02X", ROM[pc] );
+	sprintf( buffer, "$%02X", cpu_readmem16(pc) );
 	return 1;
 #endif
 }
@@ -1574,11 +1629,13 @@ int hd63701_execute(int cycles)
     UINT8 ireg;
     hd63701_ICount = cycles;
 
-	hd63701_ICount -= hd63701.extra_cycles;
+	INCREMENT_COUNTER(hd63701.extra_cycles * HD63701_CLKDIV)
+	hd63701_ICount -= hd63701.extra_cycles * HD63701_CLKDIV;
 	hd63701.extra_cycles = 0;
 
     if( hd63701.wai_state & M6808_WAI )
     {
+		INCREMENT_COUNTER(hd63701_ICount)
         hd63701_ICount = 0;
         goto getout;
     }
@@ -1848,11 +1905,13 @@ int hd63701_execute(int cycles)
             case 0xfe: ldx_ex(); break;
             case 0xff: stx_ex(); break;
         }
+		INCREMENT_COUNTER(cycles_63701[ireg])
 		hd63701_ICount -= cycles_63701[ireg];
     } while( hd63701_ICount>0 );
 
 getout:
-	hd63701_ICount -= hd63701.extra_cycles;
+	INCREMENT_COUNTER(hd63701.extra_cycles * HD63701_CLKDIV)
+	hd63701_ICount -= hd63701.extra_cycles * HD63701_CLKDIV;
     hd63701.extra_cycles = 0;
 
     return cycles - hd63701_ICount;
@@ -1876,7 +1935,7 @@ const char *hd63701_info(void *context, int regnum)
 	/* Layout of the registers in the debugger */
 	static UINT8 hd63701_reg_layout[] = {
 		HD63701_PC, HD63701_S, HD63701_CC, HD63701_A, HD63701_B, HD63701_X, -1,
-		HD63701_WAI_STATE, HD63701_NMI_STATE, HD63701_IRQ_STATE, HD63701_OCI_STATE, 0
+		HD63701_WAI_STATE, HD63701_NMI_STATE, HD63701_IRQ_STATE, 0
 	};
 
 	/* Layout of the debugger windows x,y,w,h */
@@ -1897,14 +1956,164 @@ const char *hd63701_info(void *context, int regnum)
 	return m6800_info(context,regnum);
 }
 
-unsigned hd63701_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned hd63701_dasm(char *buffer, unsigned pc)
 {
-	(void)base;
 #ifdef MAME_DEBUG
 	return Dasm680x(63701,buffer,pc);
 #else
-	sprintf( buffer, "$%02X", ROM[pc] );
+	sprintf( buffer, "$%02X", cpu_readmem16(pc) );
 	return 1;
 #endif
 }
 #endif
+
+
+
+
+int m6803_internal_registers_r(int offset)
+{
+	switch (offset)
+	{
+		case 0x00:
+			return m6800.port1_ddr;
+		case 0x01:
+			return m6800.port2_ddr;
+		case 0x02:
+			return (cpu_readport(M6803_PORT1) & (m6800.port1_ddr ^ 0xff))
+					| (m6800.port1_data & m6800.port1_ddr);
+		case 0x03:
+			return (cpu_readport(M6803_PORT2) & (m6800.port2_ddr ^ 0xff))
+					| (m6800.port2_data & m6800.port2_ddr);
+		case 0x04:
+		case 0x05:
+		case 0x06:
+		case 0x07:
+if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read from unsupported internal register %02x\n",cpu_getactivecpu(),cpu_get_pc(),offset);
+			return 0;
+		case 0x08:
+if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read TCSR register\n",cpu_getactivecpu(),cpu_get_pc());
+			return m6800.tcsr;
+/* TODO:
+ - read 08 (with TCFR_TOF set), read 09 clears TCFR_TOF
+ - read 08 (with TCFR_OCF set), write 0b or 0c clears TCFR_OCF
+ - read 08 (with TCFR_ICF set), read 0d clears TCFR_ICF
+*/
+		case 0x09:
+			return (m6800.counter >> 10) & 0xff;
+		case 0x0a:
+			return (m6800.counter >> 2) & 0xff;
+		case 0x0b:
+			return (m6800.output_compare >> 10) & 0xff;
+		case 0x0c:
+			return (m6800.output_compare >> 2) & 0xff;
+		case 0x0d:
+		case 0x0e:
+		case 0x0f:
+		case 0x10:
+		case 0x11:
+		case 0x12:
+		case 0x13:
+if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read from unsupported internal register %02x\n",cpu_getactivecpu(),cpu_get_pc(),offset);
+			return 0;
+		case 0x14:
+if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: read RAM control register\n",cpu_getactivecpu(),cpu_get_pc());
+			return m6800.ram_ctrl;
+		case 0x15:
+		case 0x16:
+		case 0x17:
+		case 0x18:
+		case 0x19:
+		case 0x1a:
+		case 0x1b:
+		case 0x1c:
+		case 0x1d:
+		case 0x1e:
+		case 0x1f:
+		default:
+if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read from reserved internal register %02x\n",cpu_getactivecpu(),cpu_get_pc(),offset);
+			return 0;
+	}
+}
+
+void m6803_internal_registers_w(int offset,int data)
+{
+	switch (offset)
+	{
+		case 0x00:
+			if (m6800.port1_ddr != data)
+			{
+				m6800.port1_ddr = data;
+				cpu_writeport(M6803_PORT1,(m6800.port1_data & m6800.port1_ddr)
+						| (0xff ^ m6800.port1_ddr));
+			}
+			break;
+		case 0x01:
+			if (m6800.port2_ddr != data)
+			{
+				m6800.port2_ddr = data;
+				cpu_writeport(M6803_PORT2,(m6800.port2_data & m6800.port2_ddr)
+						| (0xff ^ m6800.port2_ddr));
+if (errorlog && (m6800.port2_ddr & 2)) fprintf(errorlog,"CPU #%d PC %04x: warning - port 2 bit 1 set as output (OLVL) - not supported\n",cpu_getactivecpu(),cpu_get_pc());
+			}
+			break;
+		case 0x02:
+			m6800.port1_data = data;
+			cpu_writeport(M6803_PORT1,(m6800.port1_data & m6800.port1_ddr)
+					| (0xff ^ m6800.port1_ddr));
+			break;
+		case 0x03:
+			m6800.port2_data = data;
+			cpu_writeport(M6803_PORT2,(m6800.port2_data & m6800.port2_ddr)
+					| (0xff ^ m6800.port2_ddr));
+			break;
+		case 0x04:
+		case 0x05:
+		case 0x06:
+		case 0x07:
+if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unsupported internal register %02x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
+			break;
+		case 0x08:
+			m6800.tcsr = data;
+if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: TCSR = %02x\n",cpu_getactivecpu(),cpu_get_pc(),data);
+			break;
+		case 0x09:
+		case 0x0a:
+			m6800.counter = 0xfff8*4;
+			break;
+		case 0x0b:
+			m6800.output_compare = (m6800.output_compare & 0x003fc) | ((data << 10) & 0x3fc00);
+			break;
+		case 0x0c:
+			m6800.output_compare = (m6800.output_compare & 0x3fc00) | ((data << 2) & 0x03fc);
+			break;
+		case 0x0d:
+		case 0x0e:
+if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to read only internal register %02x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
+			break;
+		case 0x0f:
+		case 0x10:
+		case 0x11:
+		case 0x12:
+		case 0x13:
+if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unsupported internal register %02x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
+			break;
+		case 0x14:
+if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: write %02x to RAM control register\n",cpu_getactivecpu(),cpu_get_pc(),data);
+			m6800.ram_ctrl = data;
+			break;
+		case 0x15:
+		case 0x16:
+		case 0x17:
+		case 0x18:
+		case 0x19:
+		case 0x1a:
+		case 0x1b:
+		case 0x1c:
+		case 0x1d:
+		case 0x1e:
+		case 0x1f:
+		default:
+if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to reserved internal register %02x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
+			break;
+	}
+}

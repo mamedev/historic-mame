@@ -23,6 +23,15 @@ extern int vgafreq, always_synced, color_depth, skiplines, skipcolumns;
 extern float osd_gamma_correction;
 extern int gfx_mode, gfx_width, gfx_height;
 
+extern unsigned char tw224x288ns_h, tw224x288ns_v, tw224x288sc_h, tw224x288sc_v;
+extern unsigned char tw256x256ns_h, tw256x256ns_v, tw256x256sc_h, tw256x256sc_v;
+extern unsigned char tw256x256ns_hor_h, tw256x256ns_hor_v, tw256x256sc_hor_h, tw256x256sc_hor_v;
+extern unsigned char tw256x256ns_57_h, tw256x256ns_57_v, tw256x256sc_57_h, tw256x256sc_57_v;
+extern unsigned char tw256x256ns_h57_h, tw256x256ns_h57_v, tw256x256sc_h57_h, tw256x256sc_h57_v;
+extern unsigned char tw288x224ns_h, tw288x224ns_v, tw288x224sc_h, tw288x224sc_v;
+extern int tw256x224_hor;
+
+
 /* from sound.c */
 extern int soundcard, usestereo,attenuation;
 extern int use_emulated_ym3812;
@@ -308,7 +317,7 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	vesamode        = get_string ("config", "vesamode",             NULL,  "vesa2l");
 	ntsc        = get_bool   ("config", "ntsc",         NULL,  0);
 	vgafreq     = get_int    ("config", "vgafreq",      NULL,  -1);
-	always_synced = get_bool ("config", "alwayssynced", NULL, 0);
+        always_synced = get_bool ("config", "alwayssynced", NULL, 0);
 	color_depth = get_int    ("config", "depth",        NULL, 16);
 	skiplines   = get_int    ("config", "skiplines",    NULL, 0);
 	skipcolumns = get_int    ("config", "skipcolumns",  NULL, 0);
@@ -335,7 +344,7 @@ void parse_cmdline (int argc, char **argv, int game_index)
 
 	/* read sound configuration */
 	soundcard           = get_int  ("config", "soundcard",  NULL, -1);
-	use_emulated_ym3812 = !get_bool ("config", "ym3812opl",  NULL,  1);
+	options.use_emulated_ym3812 = !get_bool ("config", "ym3812opl",  NULL,  1);
 	options.samplerate = get_int  ("config", "samplerate", "sr", 22050);
 	options.samplebits = get_int  ("config", "samplebits", "sb", 8);
 	usestereo           = get_bool ("config", "stereo",  NULL,  1);
@@ -360,6 +369,33 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	pcxdir     = get_string ("directory", "pcx",     NULL, "PCX");
 	stadir     = get_string ("directory", "sta",     NULL, "STA");
 	artworkdir = get_string ("directory", "artwork", NULL, "ARTWORK");
+
+	/* get tweaked modes info */
+	tw256x224_hor     = get_bool("tweaked", "256x224_hor",    NULL, 1);
+	tw224x288ns_h     = get_int ("tweaked", "224x288ns_h",    NULL, 0x5f);
+	tw224x288ns_v     = get_int ("tweaked", "224x288ns_v",    NULL, 0x53);
+	tw224x288sc_h     = get_int ("tweaked", "224x288sc_h",    NULL, 0x5f);
+	tw224x288sc_v     = get_int ("tweaked", "224x288sc_v",    NULL, 0x43);
+	tw288x224ns_h     = get_int ("tweaked", "288x224ns_h",    NULL, 0x56);
+	tw288x224ns_v     = get_int ("tweaked", "288x224ns_v",    NULL, 0x3f);
+	tw288x224sc_h     = get_int ("tweaked", "288x224sc_h",    NULL, 0x5f);
+	tw288x224sc_v     = get_int ("tweaked", "288x224sc_v",    NULL, 0x0b);
+	tw256x256ns_h     = get_int ("tweaked", "256x256ns_h",    NULL, 0x62);
+	tw256x256ns_v     = get_int ("tweaked", "256x256ns_v",    NULL, 0x42);
+	tw256x256sc_h     = get_int ("tweaked", "256x256sc_h",    NULL, 0x5f);
+	tw256x256sc_v     = get_int ("tweaked", "256x256sc_v",    NULL, 0x23);
+	tw256x256ns_hor_h     = get_int ("tweaked", "256x256ns_hor_h",    NULL, 0x55);
+	tw256x256ns_hor_v     = get_int ("tweaked", "256x256ns_hor_v",    NULL, 0x42);
+	tw256x256sc_hor_h     = get_int ("tweaked", "256x256sc_hor_h",    NULL, 0x52);
+	tw256x256sc_hor_v     = get_int ("tweaked", "256x256sc_hor_v",    NULL, 0x2b);
+	tw256x256ns_57_h     = get_int ("tweaked", "256x256ns_57_h",    NULL, 0x5f);
+	tw256x256ns_57_v     = get_int ("tweaked", "256x256ns_57_v",    NULL, 0x23);
+	tw256x256sc_57_h     = get_int ("tweaked", "256x256sc_57_h",    NULL, 0x5f);
+	tw256x256sc_57_v     = get_int ("tweaked", "256x256sc_57_v",    NULL, 0x10);
+	tw256x256ns_h57_h     = get_int ("tweaked", "256x256ns_h57_h",    NULL, 0x55);
+	tw256x256ns_h57_v     = get_int ("tweaked", "256x256ns_h57_v",    NULL, 0x61);
+	tw256x256sc_h57_h     = get_int ("tweaked", "256x256sc_h57_h",    NULL, 0x54);
+	tw256x256sc_h57_v     = get_int ("tweaked", "256x256sc_h57_v",    NULL, 0x33);
 
 	/* this is handled externally cause the audit stuff needs it, too */
 	get_rom_sample_path (argc, argv, game_index);

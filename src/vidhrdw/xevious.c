@@ -143,20 +143,23 @@ int xevious_vh_start(void)
 		get_fg_tile_info,
 		TILEMAP_TRANSPARENT,
 		8,8,
-		64,32,
-		1,1
+		64,32
 	);
 	bg_tilemap = tilemap_create(
 		get_bg_tile_info,
 		0,
 		8,8,
-		64,32,
-		1,1
+		64,32
 	);
 
 	if (fg_tilemap && bg_tilemap)
 	{
 		fg_tilemap->transparent_pen = 0;
+
+		tilemap_set_scroll_rows(fg_tilemap,1);
+		tilemap_set_scroll_cols(fg_tilemap,1);
+		tilemap_set_scroll_rows(bg_tilemap,1);
+		tilemap_set_scroll_cols(bg_tilemap,1);
 
 		return 0;
 	}

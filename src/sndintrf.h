@@ -1,22 +1,187 @@
 #include "sound/streams.h"
+#if (HAS_SAMPLES)
 #include "sound/samples.h"
+#endif
+#if (HAS_DAC)
 #include "sound/dac.h"
+#endif
+#if (HAS_AY8910 || HAS_YM2203 || HAS_YM2608 || HAS_YM2612 || HAS_YM3438)
 #include "sound/psgintf.h"
+#endif
+#if (HAS_YM2151 || HAS_YM2151_ALT)
 #include "sound/2151intf.h"
+#endif
+#if (HAS_YM2610)
 #include "sound/2610intf.h"
+#endif
+#if (HAS_YM3812 || HAS_YM3526)
 #include "sound/3812intf.h"
+#endif
+#if (HAS_YM2413)
 #include "sound/2413intf.h"
+#endif
+#if (HAS_SN76496)
 #include "sound/sn76496.h"
+#endif
+#if (HAS_POKEY)
 #include "sound/pokey.h"
-#include "sound/namco.h"
+#endif
+#if (HAS_TIA)
+#include "sound/tiaintf.h"
+#endif
+#if (HAS_NES)
 #include "sound/nesintf.h"
-#include "sound/5220intf.h"
-#include "sound/vlm5030.h"
-#include "sound/adpcm.h"
-#include "sound/upd7759.h"
+#endif
+#if (HAS_ASTROCADE)
 #include "sound/astrocde.h"
-#include "sound/k007232.h"
+#endif
+#if (HAS_NAMCO)
+#include "sound/namco.h"
+#endif
+#if (HAS_TMS5220)
+#include "sound/5220intf.h"
+#endif
+#if (HAS_VLM5030)
+#include "sound/vlm5030.h"
+#endif
+#if (HAS_ADPCM || HAS_OKIM6295 || HAS_MSM5205)
+#include "sound/adpcm.h"
+#endif
+#if (HAS_UPD7759)
+#include "sound/upd7759.h"
+#endif
+#if (HAS_HC55516)
 #include "sound/cvsd.h"
+#endif
+#if (HAS_K007232)
+#include "sound/k007232.h"
+#endif
+
+
+
+struct MachineSound
+{
+	int sound_type;
+	void *sound_interface;
+};
+
+
+enum
+{
+	SOUND_DUMMY,
+#if (HAS_CUSTOM)
+	SOUND_CUSTOM,
+#endif
+#if (HAS_SAMPLES)
+	SOUND_SAMPLES,
+#endif
+#if (HAS_DAC)
+	SOUND_DAC,
+#endif
+#if (HAS_AY8910)
+	SOUND_AY8910,
+#endif
+#if (HAS_YM2203)
+	SOUND_YM2203,
+#endif
+#if (HAS_YM2151)
+	SOUND_YM2151,
+#endif
+#if (HAS_YM2151_ALT)
+	SOUND_YM2151_ALT,
+#endif
+#if (HAS_YM2608)
+	SOUND_YM2608,
+#endif
+#if (HAS_YM2610)
+	SOUND_YM2610,
+#endif
+#if (HAS_YM2612)
+	SOUND_YM2612,
+#endif
+#if (HAS_YM3438)
+	SOUND_YM3438,	/* same as YM2612 */
+#endif
+#if (HAS_YM2413)
+	SOUND_YM2413,	/* YM3812 with predefined instruments */
+#endif
+#if (HAS_YM3812)
+	SOUND_YM3812,
+#endif
+#if (HAS_YM3526)
+	SOUND_YM3526,	/* 100% YM3812 compatible, less features */
+#endif
+#if (HAS_SN76496)
+	SOUND_SN76496,
+#endif
+#if (HAS_POKEY)
+	SOUND_POKEY,
+#endif
+#if (HAS_TIA)
+	SOUND_TIA,		/* stripped down Pokey */
+#endif
+#if (HAS_NES)
+	SOUND_NES,
+#endif
+#if (HAS_ASTROCADE)
+	SOUND_ASTROCADE,	/* Custom I/O chip from Bally/Midway */
+#endif
+#if (HAS_NAMCO)
+	SOUND_NAMCO,
+#endif
+#if (HAS_TMS5220)
+	SOUND_TMS5220,
+#endif
+#if (HAS_VLM5030)
+	SOUND_VLM5030,
+#endif
+#if (HAS_ADPCM)
+	SOUND_ADPCM,
+#endif
+#if (HAS_OKIM6295)
+	SOUND_OKIM6295,	/* ROM-based ADPCM system */
+#endif
+#if (HAS_MSM5205)
+	SOUND_MSM5205,	/* CPU-based ADPCM system */
+#endif
+#if (HAS_UPD7759)
+	SOUND_UPD7759,	/* ROM-based ADPCM system */
+#endif
+#if (HAS_HC55516)
+	SOUND_HC55516,	/* Harris family of CVSD CODECs */
+#endif
+#if (HAS_K007232)
+	SOUND_K007232,	/* Konami 007232 */
+#endif
+	SOUND_COUNT
+};
+
+
+/* structure for SOUND_CUSTOM sound drivers */
+struct CustomSound_interface
+{
+	int (*sh_start)(void);
+	void (*sh_stop)(void);
+	void (*sh_update)(void);
+};
+
+
+int get_play_channels(int request);
+void reset_play_channels(void);
+
+int sound_start(void);
+void sound_stop(void);
+void sound_update(void);
+void sound_reset(void);
+
+/* returns name of the sound system */
+const char *sound_name(const struct MachineSound *msound);
+/* returns number of chips, or 0 if the sound type doesn't support multiple instances */
+int sound_num(const struct MachineSound *msound);
+/* returns clock rate, or 0 if the sound type doesn't support a clock frequency */
+int sound_clock(const struct MachineSound *msound);
+
+int sound_scalebufferpos(int value);
 
 
 void soundlatch_w(int offset,int data);
@@ -36,21 +201,3 @@ void soundlatch4_clear_w(int offset,int data);
    something other than 0x00, use this function from machine_init. Note
    that this one call effects all 4 latches */
 void soundlatch_setclearedvalue(int value);
-
-int get_play_channels(int request);
-void reset_play_channels(void);
-
-int sound_start(void);
-void sound_stop(void);
-void sound_update(void);
-
-int sound_scalebufferpos(int value);
-
-
-/* structure for SOUND_CUSTOM sound drivers */
-struct CustomSound_interface
-{
-	int (*sh_start)(void);
-	void (*sh_stop)(void);
-	void (*sh_update)(void);
-};

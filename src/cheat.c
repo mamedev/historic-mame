@@ -6,9 +6,9 @@
 
 /* Please don't move these #define : they'll be easier to find at the top of the file :) */
 
-#define LAST_UPDATE	"99.03.21"
+#define LAST_UPDATE	"99.04.05"
 #define LAST_CODER	"JCK"
-#define CHEAT_VERSION	"v0.6"
+#define CHEAT_VERSION	"v0.7"
 
 /* JCK 981123 Please do not remove ! Just comment it out ! */
 /* #define JCK */
@@ -580,6 +580,30 @@
 |*|			  - OSD_KEY_INSERT adds a space in the text
 |*|			  - OSD_KEY_DEL erases all the text
 |*|
+|*|	JCK 990404: Fixed function IsBCD
+|*|               Fixed display in function ContinueSearch
+|*|               Modified function LoadHelp : it now returns a int
+|*|			In the edit cheat, on the data line :
+|*|			  - OSD_KEY_HOME subs 0x80 to the value
+|*|			  - OSD_KEY_END adds 0x80 to the value
+|*|			Help has been completely rewritten
+|*|			New functions :
+|*|			  - int CreateHelp (char **paDisplayText, struct TextLine *table)
+|*|			Rewritten functions :
+|*|			  - void ShowHelp(int LastHelpLine, struct TextLine *table)
+|*|			  - void CheatListHelp (void)
+|*|			  - void CheatListHelpEmpty (void)
+|*|			  - void StartSearchHelp (void)
+|*|			  - void EditCheatHelp (void)
+|*|			  - void ChooseWatchHelp (void)
+|*|			  - void SelectFastSearchHelp (void)
+|*|			New #define :
+|*|			  - MAX_DT 130
+|*|			  - OFFSET_LINK_CHEAT 500
+|*|			Modified #define :
+|*|			  - TOTAL_CHEAT_TYPES 75
+|*|			Linked cheats are now 500+ instead of 100+
+|*|
 |*|  Modifications by Felipe de Almeida Leme (FAL)
 |*|
 |*|	FAL 981029:	Pointer checking to avoid segmentation fault when reading an incorrect cheat file
@@ -596,9 +620,8 @@
 /*\
 |*|  TO DO list by JCK from The Ultimate Patchers
 |*|
-|*|	JCK 990319: Possibility to search for BCD values in search method 2 (timer)
+|*|	JCK 990405: Possibility to search for BCD values in search method 2 (timer)
 |*|			Rewrite the help (general and other)
-|*|			Improve the xedit function (Left, Right, Home and End)
 |*|			Fix function DisplayWatches (more than one line of watches)
 |*|			Trap the Shift keys : correct bug when they are pressed in xedit function
 |*|			Merge functions DeleteActiveCheatFromTable and DeleteLoadedCheatFromTable
@@ -675,12 +698,14 @@ JCK 981020
  075-Select a BCD value from 1 to maximum
        this value is written once in memory then delete cheat from active list
 
-JCK 981212
- 100 to 144-Used for linked cheats; same as 0 to 44 otherwize
- 999-Comment (can't be activated - marked with a # in the cheat list)
+JCK 990404
+ 500 to 544-Used for linked cheats; same as 0 to 44 otherwize
 
 JCK 990228
  998-"Watch-only" (added as a watch when activated - marked with a ? in the cheat list)
+
+JCK 981212
+ 999-Comment (can't be activated - marked with a # in the cheat list)
 */
 
 /* JCK 990115 BEGIN */
@@ -731,8 +756,6 @@ struct TextLine
 };
 
 static struct TextLine HelpLine[MAX_TEXT_LINE];
-
-static int LastHelpLine;
 /* JCK 990312 END */
 
 
@@ -754,7 +777,11 @@ static int LastHelpLine;
 
 #define MAX_DISPLAYMEM        (MachHeight / FontHeight - 10)    /* JCK 990312 */
 
-#define TOTAL_CHEAT_TYPES	144
+#define MAX_DT          	130                               /* JCK 990404 */
+
+#define OFFSET_LINK_CHEAT	500                               /* JCK 990404 */
+
+#define TOTAL_CHEAT_TYPES	75                                /* JCK 990404 */
 #define CHEAT_NAME_MAXLEN	29
 #define CHEAT_FILENAME_MAXLEN	29
 
@@ -813,7 +840,7 @@ void	StartSearchHelp( void );
 void	ChooseWatchHelp( void );
 void	SelectFastSearchHelp ( void );
 
-void	DisplayHelpFile( struct TextLine *table ); /* JCK 990312 */
+void	DisplayHelpFile( void );
 
 static int	iCheatInitialized = 0;
 
@@ -1293,8 +1320,45 @@ int xedit(int x,int y,char *inputs,int maxlen,int hexaonly)    /* JCK 990318 */
 /* Function to test if a value is BCD (returns 1) or not (returns 0) */
 int IsBCD(int ParamValue)
 {
-  return(ParamValue%0x10<=9?1:0);
+  return(((ParamValue % 0x10 <= 9) & (ParamValue <= 0x99)) ? 1 : 0);    /* JCK 990404 */
 }
+
+/* JCK 990404 BEGIN */
+/* Function to create help (returns the number of lines) */
+int CreateHelp (char **paDisplayText, struct TextLine *table)
+{
+  int i = 0;
+  int flag = 0;
+  int size = 0;
+  char str[32];
+  struct TextLine *txt;
+
+  txt = table;
+
+  while ((paDisplayText[i]) && (!flag))
+  {
+	strcpy (str, paDisplayText[i]);
+
+	size = sizeof(str);
+
+	txt->data = malloc (size + 1);
+	if (txt->data == NULL)
+	{
+		flag = 1;
+	}
+	else
+	{
+		memset (txt->data, '\0', size + 1);
+		memcpy (txt->data, str, size);
+		txt->number = i++;
+
+		txt++;
+	}
+  }
+
+  return(i);
+}
+/* JCK 990404 END */
 
 /* Function to create menus (returns the number of lines) */
 int CreateMenu (char **paDisplayText, struct DisplayText *dt, int yPos)
@@ -1870,6 +1934,7 @@ static int build_tables (void)
       for (i = 0; i < 9;i ++)
       	BankToScanTable[i] = ( fastsearch != 2 );    /* JCK 990131 */
 
+#if (HAS_TMS34010)
 	if ((Machine->drv->cpu[1].cpu_type & ~CPU_FLAGS_MASK) == CPU_TMS34010)
 	{
 		/* 2nd CPU is 34010: games based on Exterminator driver */
@@ -1882,9 +1947,10 @@ static int build_tables (void)
 		CpuToScan = 0;
 		BankToScanTable[2] = 1;
 	}
+#endif
 #ifndef NEOFREE
 #ifndef TINY_COMPILE
-	else if (Machine->gamedrv->clone_of == &neogeo_bios)
+	if (Machine->gamedrv->clone_of == &neogeo_bios)
 	{
 		/* games based on NEOGEO driver */
 		CpuToScan = 0;
@@ -2320,7 +2386,7 @@ void LoadDatabases(int InCheat)
 /* JCK 990307 END */
 
 /* JCK 990312 BEGIN */
-void LoadHelp(char *filename, struct TextLine *table)
+int LoadHelp(char *filename, struct TextLine *table)
 {
   FILE *f;
   char str[32];
@@ -2365,11 +2431,11 @@ void LoadHelp(char *filename, struct TextLine *table)
 		txt++;
 	}
 	fclose(f);
-
-	LastHelpLine = LineNumber;
   }
 
   ClearTextLine (1, yPos);
+
+  return(LineNumber);    /* JCK 990404 */
 }
 /* JCK 990312 END */
 
@@ -2674,7 +2740,7 @@ int FindFreeWatch(void)
 int EditCheatHeader(void)
 {
   int i = 0;
-  static char *paDisplayText[] = {
+  char *paDisplayText[] = {
 		"To edit a Cheat name, press",
 		"<ENTER> when name is selected.",
 		"To edit values or to select a",
@@ -2858,9 +2924,9 @@ void EditCheat(int CheatNo)
 						LoadedCheatTable[CheatNo].Data);
 					break;
 				case 4:	   /* Special */
-                              ClearTextLine(1, dt[4].y);
+					/* JCK 990404 BEGIN */
 					if (LoadedCheatTable[CheatNo].Special <= 0)
-						LoadedCheatTable[CheatNo].Special = TOTAL_CHEAT_TYPES;
+						LoadedCheatTable[CheatNo].Special = TOTAL_CHEAT_TYPES + OFFSET_LINK_CHEAT;
 					else
       					switch (LoadedCheatTable[CheatNo].Special)
 						{
@@ -2876,19 +2942,26 @@ void EditCheat(int CheatNo)
 							case 70:
 								LoadedCheatTable[CheatNo].Special = 65;
 								break;
-							case 100:
+							case OFFSET_LINK_CHEAT:
 								LoadedCheatTable[CheatNo].Special = 75;
 								break;
-							case 120:
-								LoadedCheatTable[CheatNo].Special = 111;
+							case 20 + OFFSET_LINK_CHEAT:
+								LoadedCheatTable[CheatNo].Special = 11 + OFFSET_LINK_CHEAT;
 								break;
-							case 140:
-								LoadedCheatTable[CheatNo].Special = 124;
+							case 40 + OFFSET_LINK_CHEAT:
+								LoadedCheatTable[CheatNo].Special = 24 + OFFSET_LINK_CHEAT;
+								break;
+							case 60 + OFFSET_LINK_CHEAT:
+								LoadedCheatTable[CheatNo].Special = 44 + OFFSET_LINK_CHEAT;
+								break;
+							case 70 + OFFSET_LINK_CHEAT:
+								LoadedCheatTable[CheatNo].Special = 65 + OFFSET_LINK_CHEAT;
 								break;
 							default:
 								LoadedCheatTable[CheatNo].Special --;
 								break;
 						}
+					/* JCK 990404 END */
 
 					sprintf(str2[4],"Type:     %03d",LoadedCheatTable[CheatNo].Special);    /* JCK 990128 */
 					break;
@@ -2932,8 +3005,8 @@ void EditCheat(int CheatNo)
 						LoadedCheatTable[CheatNo].Data);
 					break;
 				case 4:    /* Special */
-                              ClearTextLine(1, dt[4].y);
-					if (LoadedCheatTable[CheatNo].Special >= TOTAL_CHEAT_TYPES)
+					/* JCK 990404 BEGIN */
+					if (LoadedCheatTable[CheatNo].Special >= TOTAL_CHEAT_TYPES + OFFSET_LINK_CHEAT)
 						LoadedCheatTable[CheatNo].Special = 0;
 					else
       					switch (LoadedCheatTable[CheatNo].Special)
@@ -2951,18 +3024,25 @@ void EditCheat(int CheatNo)
 								LoadedCheatTable[CheatNo].Special = 70;
 								break;
 							case 75:
-								LoadedCheatTable[CheatNo].Special = 100;
+								LoadedCheatTable[CheatNo].Special = OFFSET_LINK_CHEAT;
 								break;
-							case 111:
-								LoadedCheatTable[CheatNo].Special = 120;
+							case 11 + OFFSET_LINK_CHEAT:
+								LoadedCheatTable[CheatNo].Special = 20 + OFFSET_LINK_CHEAT;
 								break;
-							case 124:
-								LoadedCheatTable[CheatNo].Special = 140;
+							case 24 + OFFSET_LINK_CHEAT:
+								LoadedCheatTable[CheatNo].Special = 40 + OFFSET_LINK_CHEAT;
+								break;
+							case 44 + OFFSET_LINK_CHEAT:
+								LoadedCheatTable[CheatNo].Special = 60 + OFFSET_LINK_CHEAT;
+								break;
+							case 65 + OFFSET_LINK_CHEAT:
+								LoadedCheatTable[CheatNo].Special = 70 + OFFSET_LINK_CHEAT;
 								break;
 							default:
 								LoadedCheatTable[CheatNo].Special ++;
 								break;
 						}
+					/* JCK 990404 END */
 
 					sprintf(str2[4],"Type:     %03d",LoadedCheatTable[CheatNo].Special);    /* JCK 990128 */
 					break;
@@ -2972,50 +3052,42 @@ void EditCheat(int CheatNo)
 		/* JCK 990128 BEGIN */
 
 		case OSD_KEY_HOME:
+			/* JCK 990404 BEGIN */
 			switch (s)
 			{
 				case 3:	/* Data */
-					LoadedCheatTable[CheatNo].Data = 0;
+					if (LoadedCheatTable[CheatNo].Data >= 0x80)
+						LoadedCheatTable[CheatNo].Data -= 0x80;
 					sprintf(str2[3], "Value:    %03d  (0x%02X)", LoadedCheatTable[CheatNo].Data,
 						LoadedCheatTable[CheatNo].Data);
 					break;
 				case 4:	/* Special */
-                              ClearTextLine(1, dt[4].y);
-					LoadedCheatTable[CheatNo].Special -= 100;
-					if (LoadedCheatTable[CheatNo].Special < 0)
-                              {
-                              	while (LoadedCheatTable[CheatNo].Special <= TOTAL_CHEAT_TYPES - 100)
-	                              {
-							LoadedCheatTable[CheatNo].Special += 100;
-	                              }
-                              }
+					if (LoadedCheatTable[CheatNo].Special >= OFFSET_LINK_CHEAT)
+						LoadedCheatTable[CheatNo].Special -= OFFSET_LINK_CHEAT;
 					sprintf(str2[4],"Type:     %03d",LoadedCheatTable[CheatNo].Special);    /* JCK 990128 */
 					break;
 			}
+			/* JCK 990404 END */
 			break;
 
 		case OSD_KEY_END:
+			/* JCK 990404 BEGIN */
 			switch (s)
 			{
 				case 3:	/* Data */
-					LoadedCheatTable[CheatNo].Data = 0x80;
+					if (LoadedCheatTable[CheatNo].Data < 0x80)
+						LoadedCheatTable[CheatNo].Data += 0x80;
 					sprintf(str2[3], "Value:    %03d  (0x%02X)", LoadedCheatTable[CheatNo].Data,
 						LoadedCheatTable[CheatNo].Data);
 					break;
 				case 4:	/* Special */
-                              ClearTextLine(1, dt[4].y);
-					LoadedCheatTable[CheatNo].Special += 100;
-					if (LoadedCheatTable[CheatNo].Special > TOTAL_CHEAT_TYPES)
-                              {
-	                             	while (LoadedCheatTable[CheatNo].Special >= 100)
-	                              {
-							LoadedCheatTable[CheatNo].Special -= 100;
-	                              }
-                              }
+					if (LoadedCheatTable[CheatNo].Special < OFFSET_LINK_CHEAT)
+						LoadedCheatTable[CheatNo].Special += OFFSET_LINK_CHEAT;
 					sprintf(str2[4],"Type:     %03d",LoadedCheatTable[CheatNo].Special);    /* JCK 990128 */
 					break;
 			}
 			break;
+			/* JCK 990404 END */
 
 		/* JCK 990128 END */
 
@@ -3156,7 +3228,7 @@ void EditCheat(int CheatNo)
  * until I can figure out which function they ideally belong in.
  * They should not be turned into globals; this program has too many globals as it is.
  */
-int build_cheat_list(int Index, struct DisplayText *ext_dt, char ext_str2[60][40])
+int build_cheat_list(int Index, struct DisplayText *ext_dt, char ext_str2[MAX_DT + 1][40])
 {
 	int total = 0;
 	while (total < MAX_DISPLAYCHEATS)
@@ -3217,7 +3289,7 @@ int SelectCheatHeader(void)
 void SelectCheat(void)
 {
 	int i, x, y, highlighted, key, done, total;
-	struct DisplayText dt[60];
+	struct DisplayText dt[MAX_DT + 1];
 	int flag;
 	int Index;
 
@@ -3799,7 +3871,7 @@ void SelectCheat(void)
 						{
 							if (Watches[i] == MAX_ADDRESS(WatchesCpuNo[i]))
 							{
-								WatchesCpuNo[i] = LoadedCheatTable[highlighted + Index].CpuNo;									Watches[i] = LoadedCheatTable[highlighted + Index].Address;
+								WatchesCpuNo[i] = LoadedCheatTable[highlighted + Index].CpuNo;Watches[i] = LoadedCheatTable[highlighted + Index].Address;
 
 								strcpy(fmt, FormatAddr(SearchCpuNo,0));
 								sprintf (buf, fmt, Watches[i]);
@@ -3820,17 +3892,16 @@ void SelectCheat(void)
 				{
 					if (ActiveCheatTable[i].Address == LoadedCheatTable[highlighted + Index].Address)
 					{
-						/* JCK 990120 BEGIN */
+						/* JCK 990404 BEGIN */
 						if (	((ActiveCheatTable[i].Special >=  20) && (ActiveCheatTable[i].Special <=  24))	||
 							((ActiveCheatTable[i].Special >=  40) && (ActiveCheatTable[i].Special <=  44))	||
-							((ActiveCheatTable[i].Special >= 120) && (ActiveCheatTable[i].Special <= 124))	||
-							((ActiveCheatTable[i].Special >= 140) && (ActiveCheatTable[i].Special <= 144))	)
+							((ActiveCheatTable[i].Special >=  20 + OFFSET_LINK_CHEAT) && (ActiveCheatTable[i].Special <= 24 + OFFSET_LINK_CHEAT))	||
+							((ActiveCheatTable[i].Special >=  40 + OFFSET_LINK_CHEAT) && (ActiveCheatTable[i].Special <= 44 + OFFSET_LINK_CHEAT))	)
 						{
 							if (	(ActiveCheatTable[i].Special 	!= LoadedCheatTable[highlighted + Index].Special)	||
 								(ActiveCheatTable[i].Data 	!= LoadedCheatTable[highlighted + Index].Data	)	)
 								continue;
 						}
-						/* JCK 990120 END */
 
 						/* The selected Cheat is already in the list then delete it.*/
 						DeleteActiveCheatFromTable(i);
@@ -3839,7 +3910,7 @@ void SelectCheat(void)
 						/* Delete linked cheats */
 						while (i < ActiveCheatTotal)
 						{
-							if ((ActiveCheatTable[i].Special < 100) ||
+							if ((ActiveCheatTable[i].Special < OFFSET_LINK_CHEAT) ||
 									(ActiveCheatTable[i].Special == COMMENTCHEAT) ||
                                                                         (ActiveCheatTable[i].Special == WATCHCHEAT))    /* JCK 990228 */
 								break;
@@ -3847,6 +3918,7 @@ void SelectCheat(void)
 						}
 
 						break;
+						/* JCK 990404 END */
 					}
 				}
 
@@ -3900,9 +3972,9 @@ void SelectCheat(void)
 						/* Activate linked cheats */
 						for (i = highlighted + Index + 1; i < LoadedCheatTotal && ActiveCheatTotal < MAX_ACTIVECHEATS; i++)
 						{
-							if ((LoadedCheatTable[i].Special < 100) ||
+							if ((LoadedCheatTable[i].Special < OFFSET_LINK_CHEAT) ||
 									(LoadedCheatTable[i].Special == COMMENTCHEAT) ||
-                                                                        (LoadedCheatTable[i].Special == WATCHCHEAT))    /* JCK 990228 */
+                                                                        (LoadedCheatTable[i].Special == WATCHCHEAT))    /* JCK 990404 */
 								break;
 							set_cheat(&ActiveCheatTable[ActiveCheatTotal], &LoadedCheatTable[i]);
 							ActiveCheatTable[ActiveCheatTotal].Count = 0;
@@ -4071,7 +4143,7 @@ void ContinueSearchMatchFooter(int count, int idx)
 }
 
 /* JCK 990131 BEGIN */
-int build_mem_list(int Index, struct DisplayText *ext_dt, char ext_str2[60][40])
+int build_mem_list(int Index, struct DisplayText *ext_dt, char ext_str2[MAX_DT + 1][40])
 {
 	int total = 0;
 	while (total < MAX_DISPLAYMEM)
@@ -4118,7 +4190,7 @@ void SelectMemoryAreas(void)
       int SaveMemoryAreas[MAX_EXT_MEMORY];
 
 	int i, x, y, highlighted, key, done, total;
-	struct DisplayText dt[60];
+	struct DisplayText dt[MAX_DT + 1];
 	int Index;
 
 	char str2[60][40];
@@ -4403,7 +4475,7 @@ void SelectFastSearch(void)
   int s,key,done;
   int total;
 
-  static char *paDisplayText[] = {
+  char *paDisplayText[] = {
 		"Scan All Memory (Slow But Sure)",
 		"Scan all RAM and BANKS (Normal)",
 		"Scan one BANK (Fastest Search)",
@@ -4494,7 +4566,7 @@ int SelectSearchValue(void)
 
   struct DisplayText dt[10];
 
-  static char *paDisplayText[] =
+  char *paDisplayText[] =
   {
 	"Unknown starting value",
 	"Select starting value",
@@ -4553,7 +4625,7 @@ void StartSearch(void)
 
   int StartValueNeeded = 0;    /* JCK 990221 */
 
-  static char *paDisplayText[] = {
+  char *paDisplayText[] = {
 		"Lives, Or Some Other Value",
 		"Timers (+/- Some Value)",
 		"Energy (Greater Or Less)",
@@ -4864,11 +4936,11 @@ void StartSearch(void)
 
 void ContinueSearch(int selected, int ViewLast)    /* JCK 990312 */
 {
-  char str2[60][40];
+  char str2[MAX_DT + 1][40];
 
   int i,j,y,count,s,key,done;
 
-  struct DisplayText dt[60];
+  struct DisplayText dt[MAX_DT + 1];
 
   int total;
   int Continue;
@@ -4962,7 +5034,7 @@ void ContinueSearch(int selected, int ViewLast)    /* JCK 990312 */
 	/******** Method 3 ***********/
 	if (CurrentMethod == SEARCH_ENERGY)    /* JCK 990220 */
 	{
-		static char *paDisplayText[] =
+		char *paDisplayText[] =
 	      {
 			"New Value is Less",
 			"New Value is Equal",
@@ -5010,7 +5082,7 @@ void ContinueSearch(int selected, int ViewLast)    /* JCK 990312 */
 	/* Ask if the value is the same as when we start or the opposite */
 	if (CurrentMethod == SEARCH_BIT)       /* JCK 990220 */
 	{
-		static char *paDisplayText[] =
+		char *paDisplayText[] =
 	      {
 			"Bit is Same as Start",
 			"Bit is Opposite from Start",
@@ -5057,7 +5129,7 @@ void ContinueSearch(int selected, int ViewLast)    /* JCK 990312 */
 	/* Ask if the value is the same as when we start or different */
 	if (CurrentMethod == SEARCH_BYTE)      /* JCK 990220 */
 	{
-		static char *paDisplayText[] =
+		char *paDisplayText[] =
 	      {
 			"Memory is Same as Start",
 			"Memory is Different from Start",
@@ -5399,7 +5471,7 @@ void ContinueSearch(int selected, int ViewLast)    /* JCK 990312 */
 			ptr = strtok(NULL, "=");
 			sscanf(ptr,"%02X", &TrueData);
 
-                  AddCpuToAddr(SearchCpuNo, TrueAddr, TrueData, str2[59]);
+                  AddCpuToAddr(SearchCpuNo, TrueAddr, TrueData, str2[MAX_DT]);
 
 			/* Add the selected address to the LoadedCheatTable */
 			if (LoadedCheatTotal < MAX_LOADEDCHEATS)
@@ -5408,12 +5480,12 @@ void ContinueSearch(int selected, int ViewLast)    /* JCK 990312 */
 				LoadedCheatTable[LoadedCheatTotal].CpuNo   = SearchCpuNo;
 				LoadedCheatTable[LoadedCheatTotal].Address = TrueAddr;
 				LoadedCheatTable[LoadedCheatTotal].Data    = TrueData;
-				strcpy(LoadedCheatTable[LoadedCheatTotal].Name, str2[59]);
+				strcpy(LoadedCheatTable[LoadedCheatTotal].Name, str2[MAX_DT]);
 				LoadedCheatTotal++;
-				xprintf(0, 0,YFOOT_MATCH,"%s Added to List",str2[59]);
+				xprintf(0, 0,YFOOT_MATCH,"%s Added to List",str2[MAX_DT]);
 			}
 			else
-				xprintf(0, 0,YFOOT_MATCH,"%s Not Added to List",str2[59]);
+				xprintf(0, 0,YFOOT_MATCH,"%s Not Added to List",str2[MAX_DT]);
 
 			break;
 
@@ -5438,8 +5510,8 @@ void ContinueSearch(int selected, int ViewLast)    /* JCK 990312 */
 				WatchesFlag = 1;
 				WatchEnabled = 1;
 				strcpy(fmt, FormatAddr(SearchCpuNo,0));
-				sprintf (str2[59], fmt, Watches[j-1]);
-				xprintf(0, 0,YFOOT_MATCH,"%s Added as Watch %d",str2[59],j);
+				sprintf (str2[MAX_DT], fmt, Watches[j-1]);
+				xprintf(0, 0,YFOOT_MATCH,"%s Added as Watch %d",str2[MAX_DT],j);
 			}
 
 			break;
@@ -5471,13 +5543,13 @@ void ContinueSearch(int selected, int ViewLast)    /* JCK 990312 */
 						TrueAddr = i+ext->start;
 						TrueData = ext_sr->data[i];
 
-                  			AddCpuToAddr(SearchCpuNo, TrueAddr, TrueData, str2[59]);
+                  			AddCpuToAddr(SearchCpuNo, TrueAddr, TrueData, str2[MAX_DT]);
 
 						set_cheat(&LoadedCheatTable[LoadedCheatTotal], NEW_CHEAT);
 						LoadedCheatTable[LoadedCheatTotal].CpuNo   = SearchCpuNo;
 						LoadedCheatTable[LoadedCheatTotal].Address = TrueAddr;
 						LoadedCheatTable[LoadedCheatTotal].Data    = TrueData;
-						strcpy(LoadedCheatTable[LoadedCheatTotal].Name,str2[59]);
+						strcpy(LoadedCheatTable[LoadedCheatTotal].Name,str2[MAX_DT]);
 						LoadedCheatTotal++;
 					}
 				}
@@ -5519,7 +5591,7 @@ void ContinueSearch(int selected, int ViewLast)    /* JCK 990312 */
 						WatchesFlag = 1;
 						WatchEnabled = 1;
 						strcpy(fmt, FormatAddr(SearchCpuNo,0));
-						sprintf (str2[59], fmt, Watches[j-1]);
+						sprintf (str2[MAX_DT], fmt, Watches[j-1]);
 					}
 				}
 			}
@@ -5598,7 +5670,7 @@ void RestoreSearch(void)
 int ChooseWatchHeader(void)
 {
   int i = 0;
-  static char *paDisplayText[] = {
+  char *paDisplayText[] = {
  		"<+>: +1 byte    <->: -1 byte",
 		"<1> ... <8>: +1 digit",
 		"<9>: Prev CPU  <0>: Next CPU",
@@ -6139,7 +6211,7 @@ int cheat_menu(void)
   int s,key,done;
   int total;
 
-  static char *paDisplayText[] = {
+  char *paDisplayText[] = {
 		"Load And/Or Enable A Cheat",
 		"Start A New Cheat Search",
 		"Continue Search",
@@ -6213,7 +6285,7 @@ int cheat_menu(void)
 					break;
 
 				case 7:
-					DisplayHelpFile(HelpLine);
+					DisplayHelpFile();
 					done = 0;
 					DisplayActiveCheats(y);
 					break;
@@ -6268,7 +6340,7 @@ void DoCheat(void)
 	for (i = 0; CheatEnabled == 1 && i < ActiveCheatTotal;i ++)
 	{
 		if (	(ActiveCheatTable[i].Special == 0)		||
-			(ActiveCheatTable[i].Special == 100)	)
+			(ActiveCheatTable[i].Special == OFFSET_LINK_CHEAT)	)
 		{
 			WR_GAMERAM (ActiveCheatTable[i].CpuNo,
                   		ActiveCheatTable[i].Address,
@@ -6281,29 +6353,30 @@ void DoCheat(void)
 				/* Check special function */
 				switch(ActiveCheatTable[i].Special)
 				{
+					/* JCK 990404 BEGIN */
 					case 1:
-					case 101:
+					case 1 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     		ActiveCheatTable[i].Address,
 								ActiveCheatTable[i].Data);
                                     DeleteActiveCheatFromTable(i);    /* JCK 981212 */
 						break;
 					case 2:
-					case 102:
+					case 2 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     		ActiveCheatTable[i].Address,
 								ActiveCheatTable[i].Data);
 						ActiveCheatTable[i].Count = 1*60;
 						break;
 					case 3:
-					case 103:
+					case 3 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     		ActiveCheatTable[i].Address,
 								ActiveCheatTable[i].Data);
 						ActiveCheatTable[i].Count = 2*60;
 						break;
 					case 4:
-					case 104:
+					case 4 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     		ActiveCheatTable[i].Address,
 								ActiveCheatTable[i].Data);
@@ -6313,7 +6386,7 @@ void DoCheat(void)
 					/* 5,6,7 check if the value has changed, if yes, start a timer
 					    when the timer end, change the location*/
 					case 5:
-					case 105:
+					case 5 + OFFSET_LINK_CHEAT:
 						if (	RD_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     			ActiveCheatTable[i].Address) !=
                                     		ActiveCheatTable[i].Data)
@@ -6323,7 +6396,7 @@ void DoCheat(void)
 						}
 						break;
 					case 6:
-					case 106:
+					case 6 + OFFSET_LINK_CHEAT:
 						if (	RD_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     			ActiveCheatTable[i].Address) !=
                                     		ActiveCheatTable[i].Data)
@@ -6333,7 +6406,7 @@ void DoCheat(void)
 						}
 						break;
 					case 7:
-					case 107:
+					case 7 + OFFSET_LINK_CHEAT:
 						if (	RD_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     			ActiveCheatTable[i].Address) !=
                                     		ActiveCheatTable[i].Data)
@@ -6348,7 +6421,7 @@ void DoCheat(void)
 					   when a bonus is awarded to it at the end of a level
 					   See Kung Fu Master*/
 					case 8:
-					case 108:
+					case 8 + OFFSET_LINK_CHEAT:
 						if (	RD_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     			ActiveCheatTable[i].Address) !=
                                     		ActiveCheatTable[i].Data)
@@ -6361,7 +6434,7 @@ void DoCheat(void)
 						}
 						break;
 					case 9:
-					case 109:
+					case 9 + OFFSET_LINK_CHEAT:
 						if (	RD_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     			ActiveCheatTable[i].Address) !=
                                     		ActiveCheatTable[i].Data)
@@ -6374,7 +6447,7 @@ void DoCheat(void)
 						}
 						break;
 					case 10:
-					case 110:
+					case 10 + OFFSET_LINK_CHEAT:
 						if (	RD_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     			ActiveCheatTable[i].Address) !=
                                     		ActiveCheatTable[i].Data)
@@ -6387,7 +6460,7 @@ void DoCheat(void)
 						}
 						break;
 					case 11:
-					case 111:
+					case 11 + OFFSET_LINK_CHEAT:
 						if (	RD_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     			ActiveCheatTable[i].Address) !=
                                     		ActiveCheatTable[i].Data)
@@ -6401,7 +6474,7 @@ void DoCheat(void)
 						break;
 
 					case 20:
-					case 120:
+					case 20 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     		ActiveCheatTable[i].Address,
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
@@ -6409,7 +6482,7 @@ void DoCheat(void)
                                                 			ActiveCheatTable[i].Data);
 						break;
 					case 21:
-					case 121:
+					case 21 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     		ActiveCheatTable[i].Address,
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
@@ -6418,7 +6491,7 @@ void DoCheat(void)
                                     DeleteActiveCheatFromTable(i);    /* JCK 981212 */
 						break;
 					case 22:
-					case 122:
+					case 22 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     		ActiveCheatTable[i].Address,
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
@@ -6427,7 +6500,7 @@ void DoCheat(void)
 						ActiveCheatTable[i].Count = 1*60;
 						break;
 					case 23:
-					case 123:
+					case 23 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     		ActiveCheatTable[i].Address,
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
@@ -6436,7 +6509,7 @@ void DoCheat(void)
 						ActiveCheatTable[i].Count = 2*60;
 						break;
 					case 24:
-					case 124:
+					case 24 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     		ActiveCheatTable[i].Address,
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
@@ -6445,7 +6518,7 @@ void DoCheat(void)
 						ActiveCheatTable[i].Count = 5*60;
 						break;
 					case 40:
-					case 140:
+					case 40 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     		ActiveCheatTable[i].Address,
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
@@ -6453,7 +6526,7 @@ void DoCheat(void)
                                                 			~ActiveCheatTable[i].Data);
 						break;
 					case 41:
-					case 141:
+					case 41 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     		ActiveCheatTable[i].Address,
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
@@ -6462,7 +6535,7 @@ void DoCheat(void)
                                     DeleteActiveCheatFromTable(i);    /* JCK 981212 */
 						break;
 					case 42:
-					case 142:
+					case 42 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     		ActiveCheatTable[i].Address,
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
@@ -6471,7 +6544,7 @@ void DoCheat(void)
 						ActiveCheatTable[i].Count = 1*60;
 						break;
 					case 43:
-					case 143:
+					case 43 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     		ActiveCheatTable[i].Address,
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
@@ -6480,7 +6553,7 @@ void DoCheat(void)
 						ActiveCheatTable[i].Count = 2*60;
 						break;
 					case 44:
-					case 144:
+					case 44 + OFFSET_LINK_CHEAT:
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     		ActiveCheatTable[i].Address,
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
@@ -6515,21 +6588,21 @@ void DoCheat(void)
 
 						/*Special case, linked with 5,6,7 */
 					case 1005:    /* JCK 990128 */
-					case 1105:    /* JCK 990128 Linked cheat */
+					case 1005 + OFFSET_LINK_CHEAT:    /* JCK 990128 Linked cheat */
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     		ActiveCheatTable[i].Address,
 								ActiveCheatTable[i].Data);
 						ActiveCheatTable[i].Special -= 1000;    /* JCK 990128 */
 						break;
 					case 1006:    /* JCK 990128 */
-					case 1106:    /* JCK 990128 Linked cheat */
+					case 1006 + OFFSET_LINK_CHEAT:    /* JCK 990128 Linked cheat */
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     		ActiveCheatTable[i].Address,
 								ActiveCheatTable[i].Data);
 						ActiveCheatTable[i].Special -= 1000;    /* JCK 990128 */;
 						break;
 					case 1007:    /* JCK 990128 */
-					case 1107:    /* JCK 990128 Linked cheat */
+					case 1007 + OFFSET_LINK_CHEAT:    /* JCK 990128 Linked cheat */
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     		ActiveCheatTable[i].Address,
 								ActiveCheatTable[i].Data);
@@ -6539,7 +6612,7 @@ void DoCheat(void)
 					/*Special case, linked with 8,9,10,11 */
 					/* Change the memory only if the memory decreased by X */
 					case 1008:    /* JCK 990128 */
-					case 1108:    /* JCK 990128 Linked cheat */
+					case 1008 + OFFSET_LINK_CHEAT:    /* JCK 990128 Linked cheat */
 						if (	RD_GAMERAM (ActiveCheatTable[i].CpuNo,
 	                                   			ActiveCheatTable[i].Address) !=
                                     		ActiveCheatTable[i].Backup-1)
@@ -6549,7 +6622,7 @@ void DoCheat(void)
 						ActiveCheatTable[i].Special -= 1000;    /* JCK 990128 */;
 						break;
 					case 1009:    /* JCK 990128 */
-					case 1109:    /* JCK 990128 Linked cheat */
+					case 1009 + OFFSET_LINK_CHEAT:    /* JCK 990128 Linked cheat */
 						if (	RD_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     			ActiveCheatTable[i].Address) !=
 	                                    	ActiveCheatTable[i].Backup-2)
@@ -6559,7 +6632,7 @@ void DoCheat(void)
 						ActiveCheatTable[i].Special -= 1000;    /* JCK 990128 */;
 						break;
 					case 1010:    /* JCK 990128 */
-					case 1110:    /* JCK 990128 Linked cheat */
+					case 1010 + OFFSET_LINK_CHEAT:    /* JCK 990128 Linked cheat */
 						if (	RD_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     			ActiveCheatTable[i].Address) !=
 	                                    	ActiveCheatTable[i].Backup-3)
@@ -6569,7 +6642,7 @@ void DoCheat(void)
 						ActiveCheatTable[i].Special -= 1000;    /* JCK 990128 */;
 						break;
 					case 1011:    /* JCK 990128 */
-					case 1111:    /* JCK 990128 Linked cheat */
+					case 1011 + OFFSET_LINK_CHEAT:    /* JCK 990128 Linked cheat */
 						if (	RD_GAMERAM (ActiveCheatTable[i].CpuNo,
                                     			ActiveCheatTable[i].Address) !=
                                     		ActiveCheatTable[i].Backup-4)
@@ -6578,6 +6651,7 @@ void DoCheat(void)
 									ActiveCheatTable[i].Data);
 						ActiveCheatTable[i].Special -= 1000;    /* JCK 990128 */;
 						break;
+					/* JCK 990404 END */
 
 					/* JCK 990128 BEGIN */
 					/*Special case, linked with 60 .. 65 */
@@ -6658,443 +6732,15 @@ void DoCheat(void)
   {
 	osd_sound_enable(0);
 	ContinueSearch(0, 0);
-	osd_sound_enable(0);
+	osd_sound_enable(1);
   }
   /* JCK 990316 END */
 
 }
 
 
-/* display help text and wait for key press */
-static void ShowHelp (struct DisplayText *dt)
-{
-  int maxlen = 0;
-  int key;
-  int iCounter = 0;
-  struct DisplayText *text = dt;
-
-  while (dt->text)
-  {
-	if (strlen(dt->text) > maxlen)
-		maxlen = strlen(dt->text);
-	dt++;
-  }
-  dt = text;
-
-  while (dt->text)
-  {
-	dt->x = (MachWidth - maxlen * FontWidth) / 2;
-	dt->y = FontHeight * iCounter++;
-
-	/* @ at beginning of string indicates special text */
-	if (dt->text[0] == '@')
-	{
-		dt->color = DT_COLOR_YELLOW;
-		dt->text++;						/* skip '@' */
-	}
-	else
-		dt->color = DT_COLOR_WHITE;
-	dt++;
-  }
-
-  cheat_clearbitmap();    /* JCK 990305 */
-  displaytext (text, 0,1);    /* Draw Help Text*/
-
-  key = osd_read_keyrepeat();
-  while (osd_key_pressed(key));
-
-  cheat_clearbitmap();    /* JCK 990305 */
-}
-
-void CheatListHelp (void)
-{
-	struct DisplayText	dtHelpText[] =
-	{
-		{ "@       Cheat List Help 1" },				/* Header */
-		{ "" },
-		{ "" },
-		{ "@Delete:" },							/* Delete Cheat Info*/
-		{ "  Delete the selected Cheat" },
-		{ "  from the Cheat List." },
-		{ "  (Not from the Cheat File!)" },
-		{ "" },
-		{ "@Add:" },							/* Add Cheat Info*/
-		{ "  Add a new (blank) Cheat to" },
-		{ "  the Cheat List." },
-		{ "" },
-		{ "@Save (F1):" },						/* Save Cheat Info*/
-		{ "  Save the selected Cheat in" },
-		{ "  the Cheat File." },
-		{ "" },
-		{ "@Watch (F2):" },						/* Address Watcher Info*/
-		{ "  Activate a Memory Watcher" },
-		{ "  at the address that the" },
-		{ "  selected Cheat modifies." },
-		{ "" },
-		{ "@Edit (F3):" },						/* Edit Cheat Info*/
-		{ "  Edit the Properties of the" },
-		{ "  selected Cheat." },
-		{ "" },
-		{ "" },
-		{ "@Press any key to continue..." },			/* Continue Prompt */
-		{ 0 }									/* End Of Text */
-	};
-
-	struct DisplayText	dtHelpText2[] =
-	{
-		{ "@       Cheat List Help 2" },				/* Header */
-		{ "" },
-		{ "@Copy (F4):" },						/* Copy Cheat Info*/
-		{ "  Copy the selected Cheat" },
-		{ "  to the Cheat List." },
-		{ "" },
-		{ "" },
-		{ "@Save All (F6):" },						/* Save All Cheat Info */
-		{ "  Save all the Cheats in" },
-		{ "  the Cheat File." },
-		{ "" },
-		{ "" },
-		{ "@Del All (F7):" },						/* Del All Cheat Info */
-		{ "  Remove all the active Cheats" },
-		{ "" },
-		{ "" },
-		{ "@Info (F12):" },						/* Info Info */
-		{ "  Display Info on a Cheat" },
-		{ "" },
-		{ "" },
-		{ "@More info (+):" },						/* More Info */
-		{ "  Display the Extra Description" },
-		{ "  of a Cheat if any." },
-		{ "" },
-		{ "" },
-		{ "@Press any key to continue..." },			/* Continue Prompt */
-		{ 0 }									/* End Of Text */
-	};
-
-	struct DisplayText	dtHelpText3[] =
-	{
-		{ "@       Cheat List Help 3" },				/* Header */
-		{ "" },
-		{ "@Sologame ON/OFF (F11):" },				/* Sologame Info */
-		{ "  Toggles this option ON/OFF." },
-		{ "  When Sologame is ON, only" },
-		{ "  Cheats for Player 1 are" },
-		{ "  Loaded from the Cheat File."},
-		{ "" },
-		{ "@Load (F5):" },						/* Load Info */
-		{ "  Load a Cheat Database" },
-		{ "" },
-		{ "@Add from file (Shift+F5):" },				/* Merge Info */
-		{ "  Add the Cheats from a Cheat" },
-		{ "  Database to the current" },
-		{ "  Cheat Database." },
-		{ "  (Only In Memory !)" },
-		{ "" },
-		{ "@Reload (F8):" },						/* Reload Database Info */
-		{ "  Reload the Cheat Database" },
-		{ "" },
-		{ "@Rename (F9):" },						/* Rename Database Info */
-		{ "  Rename the Cheat Database" },
-		{ "" },
-		{ "@Help (F10):" },						/* Help Info */
-		{ "  Display this help" },
-		{ "" },
-		{ "" },
-		{ "@ Press any key to return..." },				/* Return Prompt */
-		{ 0 }									/* End Of Text */
-	};
-
-	ShowHelp (dtHelpText);
-	ShowHelp (dtHelpText2);
-	ShowHelp (dtHelpText3);
-}
-
-void CheatListHelpEmpty (void)
-{
-	struct DisplayText	dtHelpText[] =
-	{
-		{ "@       Cheat List Help" },				/* Header */
-		{ "" },
-		{ "" },
-		{ "@Add:" },							/* Add Cheat Info */
-		{ "  Add a new (blank) Cheat to" },
-		{ "  the Cheat List." },
-		{ "" },
-		{ "@Sologame ON/OFF (F11):" },				/* Sologame Info */
-		{ "  Toggles this option ON/OFF." },
-		{ "  When Sologame is ON, only" },
-		{ "  Cheats for Player 1 are" },
-		{ "  Loaded from the Cheat File."},
-		{ "" },
-		{ "@Load (F5):" },						/* Load Database Info */
-		{ "  Load a Cheat Database" },
-		{ "" },
-		{ "@Reload (F8):" },						/* Reload Database Info */
-		{ "  Reload the Cheat Database" },
-		{ "" },
-		{ "@Rename (F9):" },						/* Rename Database Info */
-		{ "  Rename the Cheat Database" },
-		{ "" },
-		{ "" },
-		{ "@Help (F10):" },						/* Help Info */
-		{ "  Display this help" },
-		{ "" },
-		{ "" },
-		{ "@ Press any key to return..." },				/* Return Prompt */
-		{ 0 }									/* End Of Text */
-	};
-
-	ShowHelp (dtHelpText);
-}
-
-void StartSearchHelp (void)
-{
-	struct DisplayText dtHelpText[] =
-	{
-		{ "@   Cheat Search Help 1" },				/* Header */
-		{ "" },
-		{ "" },
-		{ "@Lives Or Some Other Value:" },				/* Lives/# Search Info */
-		{ " Searches for a specific" },
-		{ " value that you specify." },
-		{ "" },
-		{ "@Timers:" },							/* Timers Search Info */
-		{ " Starts by storing all of" },
-		{ " the game's memory, and then" },
-		{ " looking for values that" },
-		{ " have changed by a specific" },
-		{ " amount from the value that" },
-		{ " was stored when the search" },
-		{ " was started or continued." },
-		{ "" },
-		{ "@Energy:" },							/* Energy Search Info */
-		{ " Similar to Timers. Searches" },
-		{ " for values that are Greater" },
-		{ " than, Less than, or Equal" },
-		{ " to the values stored when" },
-		{ " the search was started or" },
-		{ " continued." },
-		{ "" },
-		{ "" },
-		{ "@Press any key to continue..." },			/* Continue Prompt */
-		{ 0 }									/* End Of Text */
-	};
-
-	struct DisplayText dtHelpText2[] =
-	{
-		{ "@   Cheat Search Help 2" },				/* Header */
-		{ "" },
-		{ "" },
-		{ "@Status:" },							/* Status Search Info */
-		{ "  Searches for a Bit or Flag" },
-		{ "  that may or may not have" },
-		{ "  toggled its value since" },
-		{ "  the search was started." },
-		{ "" },
-		{ "@Slow But Sure:" },						/* SBS Search Info */
-		{ "  This search stores all of" },
-		{ "  the game's memory, and then" },
-		{ "  looks for values that are" },
-		{ "  the Same As, or Different" },
-		{ "  from the values stored when" },
-		{ "  the search was started." },
-		{ "" },
-		{ "@Select Search Speed:" },					/* Fastsearch Info */
-		{ "  This allow you scan all" },
-		{ "  or part of memory areas" },
-		{ "" },
-		{ "" },
-		{ "@ Press any key to return..." },				/* Return Prompt */
-		{ 0 }									/* End Of Text */
-	};
-
-	ShowHelp (dtHelpText);
-	ShowHelp (dtHelpText2);
-}
-
-void EditCheatHelp (void)
-{
-	struct DisplayText	dtHelpText[] =
-	{
-		{ "@     Edit Cheat Help 1" },				/* Header */
-		{ "" },
-		{ "" },
-		{ "@Name:" },							/* Cheat Name Info */
-		{ "  Displays the Name of this" },
-		{ "  Cheat. It can be edited by" },
-		{ "  hitting <ENTER> while it is" },
-		{ "  selected.  Cheat Names are" },
-		{ "  limited to 29 characters." },
-		{ "  You can use <SHIFT> to" },
-		{ "  uppercase a character, but" },
-		{ "  only one character at a" },
-		{ "  time!" },
-		{ "" },
-		{ "@CPU:" },							/* Cheat CPU Info */
-		{ "  Specifies the CPU (memory" },
-		{ "  region) that gets affected." },
-		{ "" },
-		{ "@Address:" },							/* Cheat Address Info */
-		{ "  The Address of the location" },
-		{ "  in memory that gets set to" },
-		{ "  the new value." },
-		{ "" },
-		{ "" },
-		{ "@Press any key to continue..." },			/* Continue Prompt */
-		{ 0 }									/* End Of Text */
-	};
-
-	struct DisplayText	dtHelpText2[] =
-	{
-		{ "@     Edit Cheat Help 2" },				/* Header */
-		{ "" },
-		{ "@Value:" },							/* Cheat Value Info */
-		{ "  The new value that gets" },
-		{ "  placed into the specified" },
-		{ "  Address while the Cheat is" },
-		{ "  active." },
-		{ "" },
-		{ "@Type:" },							/* Cheat Type Info */
-		{ "  Specifies how the Cheat" },
-		{ "  will actually work. See the" },
-		{ "  CHEAT.DOC file for details." },
-		{ "" },
-		{ "@More:" },							/* Cheat More Info */
-		{ "  Same as Name. This is" },
-		{ "  the extra description." },
-		{ "" },
-		{ "@Notes:" },							/* Extra Notes */
-		{ "  Use the Right and Left" },
-		{ "  arrow keys to increment and" },
-		{ "  decrement values, or to" },
-		{ "  select from pre-defined" },
-		{ "  Cheat Names." },
-		{ "  The <1> ... <8> keys are used" },
-		{ "  to increment the number in" },
-		{ "  that specific column of a" },
-		{ "  value." },
-		{ "" },
-		{ "@ Press any key to return..." },				/* Return Prompt */
-		{ 0 }									/* End Of Text */
-	};
-
-	ShowHelp (dtHelpText);
-	ShowHelp (dtHelpText2);
-}
-
-void ChooseWatchHelp (void)
-{
-	struct DisplayText	dtHelpText[] =
-	{
-		{ "@     Choose Watch Help 1" },				/* Header */
-		{ "" },
-		{ "" },
-		{ "" },
-		{ "@Delete:" },							/* Delete Watch Info */
-		{ "  Delete the selected Watch" },
-		{ "" },
-		{ "" },
-		{ "@Copy (Enter):" },						/* Copy Watch Info */
-		{ "  Copy the previous Watch" },
-		{ "" },
-		{ "" },
-		{ "@Notes:" },							/* Extra Notes */
-		{ "  Use the Right and Left" },
-		{ "  arrow keys to increment and" },
-		{ "  decrement values."},
-		{ "  The <1> ... <8> keys are used" },
-		{ "  to increment the number in" },
-		{ "  that specific column of a" },
-		{ "  value. The <9> and <0> keys" },
-		{ "  are used to decrement/increment"},
-		{ "  the number of the CPU." },
-		{ "  The <I><J><K><L> keys are used" },
-		{ "  to move the watches up, left," },
-		{ "  down and right." },
-		{ "" },
-		{ "" },
-		{ "" },
-		{ "@Press any key to continue..." },			/* Continue Prompt */
-		{ 0 }									/* End Of Text */
-	};
-
-	struct DisplayText	dtHelpText2[] =
-	{
-		{ "@     Choose Watch Help 2" },				/* Header */
-		{ "" },
-		{ "" },
-		{ "" },
-		{ "@Save (F1):" },						/* Save Watch Info */
-		{ "  Saves the selected Watch" },
-		{ "  as a Cheat in the Cheat List" },
-		{ "" },
-		{ "" },
-		{ "@Far Copy (F4):" },						/* Far Copy Watch Info */
-		{ "  Copy the selected Watch" },
-		{ "" },
-		{ "" },
-		{ "@Save All (F6):" },						/* Save All Watches Info */
-		{ "  Saves all the Watches" },
-		{ "  as Cheats in the Cheat List" },
-		{ "" },
-		{ "" },
-		{ "@Del All (F7):" },						/* Del All Watches Info */
-		{ "  Remove all the Watches" },
-		{ "" },
-		{ "" },
-		{ "@Help (F10):" },						/* Help Info */
-		{ "  Display this help" },
-		{ "" },
-		{ "" },
-		{ "@ Press any key to return..." },				/* Return Prompt */
-		{ 0 }									/* End Of Text */
-	};
-
-	ShowHelp (dtHelpText);
-	ShowHelp (dtHelpText2);
-}
-
-void SelectFastSearchHelp (void)
-{
-	struct DisplayText	dtHelpText[] =
-	{
-		{ "@   Select Search Speed Help" },				/* Header */
-		{ "" },
-		{ "" },
-		{ "" },
-		{ "@Slow search:" },						/* All Memory Info */
-		{ "  Scan all memory to find" },
-		{ "  cheats. Large amount of" },
-		{ "  memory might be needed." },
-		{ "" },
-		{ "" },
-		{ "@Normal search:" },						/* RAM & BANK Info */
-		{ "  Scan all memory areas" },
-		{ "  which are labelled RAM" },
-		{ "  or BANK1 to BANK8." },
-		{ "" },
-		{ "" },
-		{ "@Fastest search:" },						/* One BANK Info */
-		{ "  Scan the useful memory" },
-		{ "  area. Used to scan NEOGEO" },
-		{ "  games and the ones with" },
-		{ "  TM34010 CPU(s)." },
-		{ "" },
-		{ "" },
-		{ "@Help (F10):" },						/* Help Info */
-		{ "  Display this help" },
-		{ "" },
-		{ "" },
-		{ "" },
-		{ "" },
-		{ "@ Press any key to return..." },				/* Return Prompt */
-		{ 0 }									/* End Of Text */
-	};
-
-	ShowHelp (dtHelpText);
-}
-
-void DisplayHelpFile(struct TextLine *table)
+/* JCK 990404 BEGIN */
+void ShowHelp(int LastHelpLine, struct TextLine *table)
 {
   int LineNumber = 0;
   int LinePerPage = MachHeight / FontHeight - 6;
@@ -7103,7 +6749,7 @@ void DisplayHelpFile(struct TextLine *table)
   int key = 0;
   int done = 0;
   struct TextLine *txt;
-  char buffer[32];
+  char buffer[40];
   struct DisplayText dt[2];
 
   sprintf(buffer, "%s Return to Main Menu %s", lefthilight, righthilight);
@@ -7117,14 +6763,10 @@ void DisplayHelpFile(struct TextLine *table)
 
   cheat_clearbitmap();
 
-  LoadHelp(helpfile, HelpLine);
-
   if (!LastHelpLine)
   {
 	yPos = (MachHeight - FontHeight) / 2 - FontHeight;
 	xprintf(0, 0, yPos, "No Help Available !");
-	yPos += FontHeight;
-	xprintf(0, 0, yPos, "%s Not Found or Empty", helpfile);
 	displaytext(dt,0,1);
 	key = osd_read_keyrepeat();
 	while (osd_key_pressed(key));
@@ -7265,3 +6907,318 @@ void DisplayHelpFile(struct TextLine *table)
   cheat_clearbitmap();
 }
 
+void CheatListHelp (void)
+{
+	int LastHelpLine;
+	char *paDisplayText[] = {
+		"        Cheat List Help" ,
+		"" ,
+		"Delete:" ,
+		"  Delete the selected Cheat" ,
+		"  from the Cheat List." ,
+		"  (Not from the Cheat File!)" ,
+		"" ,
+		"Add:" ,
+		"  Add a new (blank) Cheat to" ,
+		"  the Cheat List." ,
+		"" ,
+		"Save (F1):" ,
+		"  Save the selected Cheat in" ,
+		"  the Cheat File." ,
+		"" ,
+		"Watch (F2):" ,
+		"  Activate a Memory Watcher" ,
+		"  at the address that the" ,
+		"  selected Cheat modifies." ,
+		"" ,
+		"Edit (F3):" ,
+		"  Edit the Properties of the" ,
+		"  selected Cheat." ,
+		"" ,
+		"Copy (F4):" ,
+		"  Copy the selected Cheat" ,
+		"  to the Cheat List." ,
+		"" ,
+		"Load (F5):" ,
+		"  Load a Cheat Database" ,
+		"" ,
+		"Save All (F6):" ,
+		"  Save all the Cheats in" ,
+		"  the Cheat File." ,
+		"" ,
+		"Del All (F7):" ,
+		"  Remove all the active Cheats" ,
+		"" ,
+		"Reload (F8):" ,
+		"  Reload the Cheat Database" ,
+		"" ,
+		"Rename (F9):" ,
+		"  Rename the Cheat Database" ,
+		"" ,
+		"Help (F10):" ,
+		"  Display this help" ,
+		"" ,
+		"Sologame ON/OFF (F11):" ,
+		"  Toggles this option ON/OFF." ,
+		"  When Sologame is ON, only" ,
+		"  Cheats for Player 1 are" ,
+		"  Loaded from the Cheat File.",
+		"" ,
+		"Info (F12):" ,
+		"  Display Info on a Cheat" ,
+		"" ,
+		"More info (+):" ,
+		"  Display the Extra Description" ,
+		"  of a Cheat if any." ,
+		"" ,
+		"Add from file (Shift+F5):" ,
+		"  Add the Cheats from a Cheat" ,
+		"  Database to the current" ,
+		"  Cheat Database." ,
+		"  (Only In Memory !)" ,
+		0 };
+
+	LastHelpLine = CreateHelp(paDisplayText, HelpLine);
+	ShowHelp(LastHelpLine, HelpLine);
+	reset_texttable (HelpLine);
+}
+
+void CheatListHelpEmpty (void)
+{
+	int LastHelpLine;
+	char *paDisplayText[] = {
+		"       Cheat List Help",
+		"",
+		"Add:",
+		"  Add a new (blank) Cheat to",
+		"  the Cheat List.",
+		"",
+		"Load (F5):",
+		"  Load a Cheat Database",
+		"",
+		"Reload (F8):",
+		"  Reload the Cheat Database",
+		"",
+		"Rename (F9):",
+		"  Rename the Cheat Database",
+		"",
+		"Help (F10):",
+		"  Display this help",
+		"",
+		"Sologame ON/OFF (F11):",
+		"  Toggles this option ON/OFF.",
+		"  When Sologame is ON, only",
+		"  Cheats for Player 1 are",
+		"  Loaded from the Cheat File.",
+		0 };
+
+	LastHelpLine = CreateHelp(paDisplayText, HelpLine);
+	ShowHelp(LastHelpLine, HelpLine);
+	reset_texttable (HelpLine);
+}
+
+void StartSearchHelp (void)
+{
+	int LastHelpLine;
+	char *paDisplayText[] = {
+		"    Cheat Search Help" ,
+		"" ,
+		"Lives Or Some Other Value:" ,
+		" Searches for a specific" ,
+		" value that you specify." ,
+		"" ,
+		"Timers:" ,
+		" Starts by storing all of" ,
+		" the game's memory, and then" ,
+		" looking for values that" ,
+		" have changed by a specific" ,
+		" amount from the value that" ,
+		" was stored when the search" ,
+		" was started or continued." ,
+		"" ,
+		"Energy:" ,
+		" Similar to Timers. Searches" ,
+		" for values that are Greater" ,
+		" than, Less than, or Equal" ,
+		" to the values stored when" ,
+		" the search was started or" ,
+		" continued." ,
+		"" ,
+		"Status:" ,
+		"  Searches for a Bit or Flag" ,
+		"  that may or may not have" ,
+		"  toggled its value since" ,
+		"  the search was started." ,
+		"" ,
+		"Slow But Sure:" ,
+		"  This search stores all of" ,
+		"  the game's memory, and then" ,
+		"  looks for values that are" ,
+		"  the Same As, or Different" ,
+		"  from the values stored when" ,
+		"  the search was started." ,
+		"" ,
+		"Select Search Speed:" ,
+		"  This allow you scan all" ,
+		"  or part of memory areas" ,
+		0 };
+
+	LastHelpLine = CreateHelp(paDisplayText, HelpLine);
+	ShowHelp(LastHelpLine, HelpLine);
+	reset_texttable (HelpLine);
+}
+
+void EditCheatHelp (void)
+{
+	int LastHelpLine;
+	char *paDisplayText[] = {
+		"      Edit Cheat Help" ,
+		"" ,
+		"Name:" ,
+		"  Displays the Name of this" ,
+		"  Cheat. It can be edited by" ,
+		"  hitting <ENTER> while it is" ,
+		"  selected.  Cheat Names are" ,
+		"  limited to 29 characters." ,
+		"  You can use <SHIFT> to" ,
+		"  uppercase a character, but" ,
+		"  only one character at a" ,
+		"  time!" ,
+		"" ,
+		"CPU:" ,
+		"  Specifies the CPU (memory" ,
+		"  region) that gets affected." ,
+		"" ,
+		"Address:" ,
+		"  The Address of the location" ,
+		"  in memory that gets set to" ,
+		"  the new value." ,
+		"" ,
+		"Value:" ,
+		"  The new value that gets" ,
+		"  placed into the specified" ,
+		"  Address while the Cheat is" ,
+		"  active." ,
+		"" ,
+		"Type:" ,
+		"  Specifies how the Cheat" ,
+		"  will actually work. See the" ,
+		"  general help for details." ,
+		"" ,
+		"More:" ,
+		"  Same as Name. This is" ,
+		"  the extra description." ,
+		"" ,
+		"Notes:" ,
+		"  Use the Right and Left" ,
+		"  arrow keys to increment and" ,
+		"  decrement values, or to" ,
+		"  select from pre-defined" ,
+		"  Cheat Names." ,
+		"  The <1> ... <8> keys are used" ,
+		"  to increment the number in" ,
+		"  that specific column of a" ,
+		"  value." ,
+		0 };
+
+	LastHelpLine = CreateHelp(paDisplayText, HelpLine);
+	ShowHelp(LastHelpLine, HelpLine);
+	reset_texttable (HelpLine);
+}
+
+void ChooseWatchHelp (void)
+{
+	int LastHelpLine;
+	char *paDisplayText[] = {
+		"      Choose Watch Help" ,
+		"" ,
+		"Delete:" ,
+		"  Delete the selected Watch" ,
+		"" ,
+		"Copy (Enter):" ,
+		"  Copy the previous Watch" ,
+		"" ,
+		"Notes:" ,
+		"  Use the Right and Left" ,
+		"  arrow keys to increment and" ,
+		"  decrement values.",
+		"  The <1> ... <8> keys are used" ,
+		"  to increment the number in" ,
+		"  that specific column of a" ,
+		"  value. The <9> and <0> keys" ,
+		"  are used to decrement/increment",
+		"  the number of the CPU." ,
+		"  The <I><J><K><L> keys are used" ,
+		"  to move the watches up, left," ,
+		"  down and right." ,
+		"" ,
+		"Save (F1):" ,
+		"  Save the selected Watch" ,
+		"  as a Cheat in the Cheat List" ,
+		"" ,
+		"Edit (F3):" ,
+		"  Edit the Address of the Watch" ,
+		"" ,
+		"Far Copy (F4):" ,
+		"  Copy the selected Watch" ,
+		"" ,
+		"Save All (F6):" ,
+		"  Save all the Watches" ,
+		"  as Cheats in the Cheat List" ,
+		"" ,
+		"Del All (F7):" ,
+		"  Remove all the Watches" ,
+		"" ,
+		"Help (F10):" ,
+		"  Display this help" ,
+		0 };
+
+	LastHelpLine = CreateHelp(paDisplayText, HelpLine);
+	ShowHelp(LastHelpLine, HelpLine);
+	reset_texttable (HelpLine);
+}
+
+void SelectFastSearchHelp (void)
+{
+	int LastHelpLine;
+	char *paDisplayText[] = {
+		"   Select Search Speed Help" ,
+		"" ,
+		"Slow search:" ,
+		"  Scan all memory to find" ,
+		"  cheats. Large amount of" ,
+		"  memory might be needed." ,
+		"" ,
+		"Normal search:" ,
+		"  Scan all memory areas" ,
+		"  which are labelled RAM" ,
+		"  or BANK1 to BANK8." ,
+		"" ,
+		"Fastest search:" ,
+		"  Scan the useful memory" ,
+		"  area. Used to scan NEOGEO" ,
+		"  games and the ones with" ,
+		"  TM34010 CPU(s)." ,
+		"" ,
+		"Select Memory Area:" ,
+		"  Scan the memory areas" ,
+		"  selected by the user." ,
+		"" ,
+		"Help (F10):" ,
+		"  Display this help" ,
+		0 };
+
+	LastHelpLine = CreateHelp(paDisplayText, HelpLine);
+	ShowHelp(LastHelpLine, HelpLine);
+	reset_texttable (HelpLine);
+}
+
+void DisplayHelpFile(void)
+{
+  int LastHelpLine;
+
+  LastHelpLine = LoadHelp(helpfile, HelpLine);
+  ShowHelp(LastHelpLine, HelpLine);
+  reset_texttable (HelpLine);
+}
+/* JCK 990404 END */

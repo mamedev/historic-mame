@@ -7,11 +7,11 @@
 *****************************************************************************/
 
 #include <stdio.h>
-#include "osd_dbg.h"
+#include "driver.h"
 #include "osd_cpu.h"
+#include "mamedbg.h"
 #include "tms34010.h"
 #include "34010ops.h"
-#include "driver.h"
 
 #ifdef MAME_DEBUG
 extern int debug_key_pressed;

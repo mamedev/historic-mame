@@ -28,7 +28,7 @@ static int stream[MAX_2612];
 static FMSAMPLE *Buf[YM2612_NUMBUF];
 
 /* Global Interface holder */
-static struct YM2612interface *intf;
+static const struct YM2612interface *intf;
 
 static void *Timer[MAX_2612][2];
 static double lastfired[MAX_2612][2];
@@ -101,7 +101,7 @@ void YM2612UpdateRequest(int chip)
 /***********************************************************/
 /*    YM2612 (fm4ch type)                                  */
 /***********************************************************/
-int YM2612_sh_start(struct YM2612interface *interface ){
+int YM2612_sh_start(const struct YM2612interface *interface ){
 	int i,j;
 	int rate = Machine->sample_rate;
 	char buf[YM2612_NUMBUF][40];

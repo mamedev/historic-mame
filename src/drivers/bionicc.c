@@ -41,7 +41,6 @@ ToDo:
 #include "driver.h"
 
 static unsigned char *ram_bc; /* used by high scores */
-static unsigned char *ram_bcvid; /* used by high scores */
 
 void bionicc_fgvideoram_w(int offset,int data);
 void bionicc_bgvideoram_w(int offset,int data);
@@ -512,11 +511,16 @@ static int hiload(void)
 
     void *f;
     /* check if the hi score table has already been initialized */
-    if (READ_WORD(&ram_bc[0x39e2])==0x2 && READ_WORD(&ram_bc[0x39e4])==0 && READ_WORD(&ram_bc[0x3a2e])==0x434f && READ_WORD(&ram_bc[0x3a30])==0x4d20)
-    {
+    if (READ_WORD(&ram_bc[0x39e2])==0x2 && READ_WORD(&ram_bc[0x39e4])==0
+    	&& READ_WORD(&ram_bc[0x3a2e])==0x434f && READ_WORD(&ram_bc[0x3a30])==0x4d20
+	/* and for the score to be on screen */
+		&& bionicc_txvideoram_r(0x0e6) == 0)
+	{
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
         {
+        	UINT8 digit[8];
 			int hi;
+
 			osd_fread_msbfirst(f,&ram_bc[0x39e2],10*8);
 			osd_fclose(f);
 			ram_bc[0x57a]=ram_bc[0x39e2];
@@ -524,31 +528,41 @@ static int hiload(void)
             ram_bc[0x57c]=ram_bc[0x39e4];
             ram_bc[0x57d]=ram_bc[0x39e5];
 
-			hi =(ram_bc[ENDIAN_ALIGN(0x57c)] & 0x0f) +
-				(ram_bc[ENDIAN_ALIGN(0x57c)] >> 4) * 10 +
-				(ram_bc[ENDIAN_ALIGN(0x57d)] & 0x0f) * 100 +
-				(ram_bc[ENDIAN_ALIGN(0x57d)] >> 4) * 1000 +
-				(ram_bc[ENDIAN_ALIGN(0x57a)] & 0x0f) * 10000 +
-				(ram_bc[ENDIAN_ALIGN(0x57a)] >> 4) * 100000 +
-				(ram_bc[ENDIAN_ALIGN(0x57b)] & 0x0f) * 1000000 +
-				(ram_bc[ENDIAN_ALIGN(0x57b)] >> 4) * 10000000;
+			digit[0] = ram_bc[ENDIAN_ALIGN(0x57c)] & 0x0f;
+			digit[1] = ram_bc[ENDIAN_ALIGN(0x57c)] >> 4;
+			digit[2] = ram_bc[ENDIAN_ALIGN(0x57d)] & 0x0f;
+			digit[3] = ram_bc[ENDIAN_ALIGN(0x57d)] >> 4;
+			digit[4] = ram_bc[ENDIAN_ALIGN(0x57a)] & 0x0f;
+			digit[5] = ram_bc[ENDIAN_ALIGN(0x57a)] >> 4;
+			digit[6] = ram_bc[ENDIAN_ALIGN(0x57b)] & 0x0f;
+			digit[7] = ram_bc[ENDIAN_ALIGN(0x57b)] >> 4;
+
+			hi =	digit[0] +
+					digit[1] * 10 +
+					digit[2] * 100 +
+					digit[3] * 1000 +
+					digit[4] * 10000 +
+					digit[5] * 100000 +
+					digit[6] * 1000000 +
+					digit[7] * 10000000;
+
 
 			if (hi >= 10000000)
-				ram_bcvid[ENDIAN_ALIGN(0x0d8)] = ram_bc[ENDIAN_ALIGN(0x57b)] >> 4;
+				bionicc_txvideoram_w(0x0d8, digit[7]);
 			if (hi >= 1000000)
-				ram_bcvid[ENDIAN_ALIGN(0x0da)] = ram_bc[ENDIAN_ALIGN(0x57b)] & 0x0F;
+				bionicc_txvideoram_w(0x0da, digit[6]);
 			if (hi >= 100000)
-				ram_bcvid[ENDIAN_ALIGN(0x0dc)] = ram_bc[ENDIAN_ALIGN(0x57a)] >> 4;
+				bionicc_txvideoram_w(0x0dc, digit[5]);
 			if (hi >= 10000)
-				ram_bcvid[ENDIAN_ALIGN(0x0de)] = ram_bc[ENDIAN_ALIGN(0x57a)] & 0x0F;
+				bionicc_txvideoram_w(0x0de, digit[4]);
 			if (hi >= 1000)
-				ram_bcvid[ENDIAN_ALIGN(0x0e0)] = ram_bc[ENDIAN_ALIGN(0x57d)] >> 4;
+				bionicc_txvideoram_w(0x0e0, digit[3]);
 			if (hi >= 100)
-				ram_bcvid[ENDIAN_ALIGN(0x0e2)] = ram_bc[ENDIAN_ALIGN(0x57d)] & 0x0F;
+				bionicc_txvideoram_w(0x0e2, digit[2]);
 			if (hi >= 10)
-				ram_bcvid[ENDIAN_ALIGN(0x0e4)] = ram_bc[ENDIAN_ALIGN(0x57c)] >> 4;
+				bionicc_txvideoram_w(0x0e4, digit[1]);
 			if (hi >= 0)
-				ram_bcvid[ENDIAN_ALIGN(0x0e6)] = ram_bc[ENDIAN_ALIGN(0x57c)] & 0x0F;
+				bionicc_txvideoram_w(0x0e6, digit[0]);
 
         	if (errorlog)
 				fprintf(errorlog,"hi score: %i\n", hi);

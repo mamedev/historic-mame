@@ -126,9 +126,6 @@ int                             carnival_music_port_t1_r( int offset );
 void                            carnival_music_port_1_w( int offset, int data );
 void                            carnival_music_port_2_w( int offset, int data );
 
-int                             carnival_sh_start( void );
-void                            carnival_sh_stop( void );
-void                            carnival_sh_update( void );
 
 
 

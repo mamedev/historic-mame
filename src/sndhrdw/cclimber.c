@@ -1,11 +1,7 @@
 #include "driver.h"
 
 
-#ifdef SIGNED_SAMPLES
-	#define AUDIO_CONV(a) ((a)-0x80)
-#else
-	#define AUDIO_CONV(a) (a)
-#endif
+#define AUDIO_CONV(a) ((a)-0x80)
 
 #define SND_CLOCK 3072000	/* 3.072 Mhz */
 

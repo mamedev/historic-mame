@@ -3024,6 +3024,8 @@ static void build_opcode_table(void)
    opcode_struct* ostruct;
    uint opcode_info_length = 0;
 
+   (void)copyright_notice;
+
    for(ostruct = g_opcode_info;ostruct->opcode_handler != 0;ostruct++)
       opcode_info_length++;
 

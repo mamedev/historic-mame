@@ -13,6 +13,9 @@
  *	big, hanging out of the screen etc.)
  ****************************************************************************/
 #include <stdio.h>
+
+#ifdef MAME_DEBUG
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -102,7 +105,7 @@ INLINE void win_out(UINT8 bChar, UINT8 bAttr, UINT32 x, UINT32 y, UINT32 idx)
 		p_attr[offs] = bAttr;
 
 		/* Here's where we draw the character */
-		ScreenPutChar(bChar, bAttr, x, y);
+		osd_put_screen_char(bChar, bAttr, x, y);
 	}
 }
 
@@ -1031,9 +1034,6 @@ INT32 win_internal_putchar(UINT32 idx, UINT8 ch)
 		break;
 
     default:
-		if( ch < ' ' )
-			return rel;
-
         x0 = pwin->x + pwin->cx;
 		y0 = pwin->y + pwin->cy;
 
@@ -1290,7 +1290,7 @@ INT32 DECL_SPEC win_printf(UINT32 idx, const char *fmt, ...)
  *
  * Name : win_set_color
  *
- * Entry: Window # and fore- and background colors
+ * Entry: Window # and color
  *
  * Exit : Nothing
  *
@@ -1316,9 +1316,9 @@ void win_set_color(UINT32 idx, UINT32 color)
 
 /************************************************************************
  *
- * Name : win_set_titlecolor
+ * Name : win_set_title_color
  *
- * Entry: Window # and new title colors
+ * Entry: Window # and new title color
  *
  * Exit : Nothing
  *
@@ -1339,6 +1339,34 @@ void win_set_title_color(UINT32 idx, UINT32 color)
 		return;
 
 	pwin->co_title = color;
+	win_update( idx );
+}
+
+/************************************************************************
+ *
+ * Name : win_set_frame_color
+ *
+ * Entry: Window # and new frame color
+ *
+ * Exit : Nothing
+ *
+ * Description:
+ *
+ * This routine sets the color for title of a window
+ *
+ ************************************************************************/
+
+void win_set_frame_color(UINT32 idx, UINT32 color)
+{
+	struct sWindow *pwin = &p_windows[idx];
+
+	ASSERT(idx < MAX_WINDOWS);	/* This had better be in range */
+	ASSERT(p_windows);			/* And this had better be initialized */
+
+    if( NULL == pwin->text )
+		return;
+
+	pwin->co_frame = color;
 	win_update( idx );
 }
 
@@ -1864,4 +1892,4 @@ void win_invalidate_video(void)
 	memset( p_attr, 0xff, screen_w * screen_h );
 }
 
-
+#endif

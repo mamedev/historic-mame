@@ -24,12 +24,6 @@ a 0xff mark.
 #include "cpu/m6809/m6809.h"
 #include "cpu/m6800/m6800.h"
 
-/* This is the clock speed in Hz divided by 64 that is connected to the E pin on the MCU */
-/* Each pulse on the E pin increments timer A, wich is used for music tempo. */
-/* I've made the decision to downgrade the timer accuracy to allow better speed. */
-/* Looking at the code tho, its more than accurate for its purpose. */
-#define MCU_E_CLK (1500000/64) /* Hz */
-
 extern unsigned char *rthunder_videoram, *spriteram, *dirtybuffer;
 
 /*******************************************************************/
@@ -37,7 +31,6 @@ extern unsigned char *rthunder_videoram, *spriteram, *dirtybuffer;
 extern void rthunder_vh_convert_color_prom(	unsigned char *palette, unsigned short *colortable,
 	const unsigned char *color_prom);
 extern int rthunder_vh_start( void );
-extern void rthunder_vh_stop( void );
 extern void rthunder_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
 extern int rthunder_videoram_r(int offset);
 extern void rthunder_videoram_w(int offset,int data);
@@ -89,11 +82,7 @@ static int cpu1_skip_r( int offs ) {
 /* Sampled voices */
 
 /* signed/unsigned 8-bit conversion macros */
-#ifdef SIGNED_SAMPLES
-	#define AUDIO_CONV(A) ((A)^0x80)
-#else
-	#define AUDIO_CONV(A) ((A))
-#endif
+#define AUDIO_CONV(A) ((A)^0x80)
 
 static int rt_totalsamples1;
 static int rt_totalsamples2;
@@ -315,52 +304,18 @@ static void int_enable_w( int offs, int data ) {
 	int_enabled[cpu] = 1;
 }
 
-static void *rt_timer = 0;
-static unsigned char hd_regs[16];
-
-
-static void rt_timer_proc( int param )
-{
-	int current_time, total_time, old_time;
-
-	current_time = ( hd_regs[0x09] << 8 ) | hd_regs[0x0a];
-	total_time = ( hd_regs[0x0b] << 8 ) | hd_regs[0x0c];
-
-	old_time = current_time;
-
-	/* increment timer A */
-	current_time += 64;
-
-	/* update time */
-	hd_regs[0x09] = ( current_time >> 8 ) & 0xff;
-	hd_regs[0x0a] = current_time & 0xff;
-
-	if ( total_time >= old_time && total_time <= current_time ) {
-		if ( hd_regs[0x08] & 8 )
-			cpu_cause_interrupt( 2, M6808_INT_OCI );
-	}
-}
-
-void rt_stop_mcu_timer( void ) {
-	if ( rt_timer ) {
-		timer_remove( rt_timer );
-		rt_timer = 0;
-	}
-}
-
-static int hd_regs_r( int offset )
-{
-	return hd_regs[offset+8];
-}
-
-static void hd_regs_w( int offset, int data )
-{
-	hd_regs[offset+8] = data;
-}
-
 static void mcu_irqtrigger_w(int offset,int data)
 {
-	cpu_cause_interrupt(2,M6808_INT_IRQ);
+	cpu_cause_interrupt(2,HD63701_INT_IRQ);
+}
+
+static void rthunder_coin_w(int offset,int data)
+{
+	coin_lockout_w(0,data & 1);
+	coin_lockout_w(1,data & 1);
+
+	coin_counter_w(0,~data & 2);
+	coin_counter_w(1,~data & 4);
 }
 
 
@@ -447,8 +402,7 @@ static struct MemoryWriteAddress writemem2[] =
 
 static struct MemoryReadAddress mcu_readmem[] =
 {
-	{ 0x0002, 0x0002, input_port_4_r },
-	{ 0x0008, 0x000c, hd_regs_r },
+	{ 0x0000, 0x001f, m6803_internal_registers_r },
 	{ 0x0080, 0x00ff, MRA_RAM },
 	{ 0x1000, 0x10ff, namcos1_wavedata_r }, /* PSG device, shared RAM */
 	{ 0x1100, 0x113f, namcos1_sound_r }, /* PSG device, shared RAM */
@@ -466,8 +420,7 @@ static struct MemoryReadAddress mcu_readmem[] =
 
 static struct MemoryWriteAddress mcu_writemem[] =
 {
-	{ 0x0000, 0x0003, MWA_NOP },	/* port 1 & 2 data & ddr TODO: support correctly */
-	{ 0x0008, 0x000c, hd_regs_w },
+	{ 0x0000, 0x001f, m6803_internal_registers_w },
 	{ 0x0080, 0x00ff, MWA_RAM },
 	{ 0x1000, 0x10ff, namcos1_wavedata_w }, /* PSG device, shared RAM */
 	{ 0x1100, 0x113f, namcos1_sound_w }, /* PSG device, shared RAM */
@@ -481,6 +434,25 @@ static struct MemoryWriteAddress mcu_writemem[] =
 	{ 0xf000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
+
+static struct IOReadPort mcu_readport[] =
+{
+	{ M6803_PORT1, M6803_PORT1, input_port_4_r },
+	{ -1 }	/* end of table */
+};
+
+static void pip2(int offset,int data)
+{
+if (errorlog) fprintf(errorlog,"%04x: write %02x to port 2 ddr %02x\n",cpu_get_pc(),data,m6803_internal_registers_r(M6803_DDR2));
+}
+
+static struct IOWritePort mcu_writeport[] =
+{
+	{ M6803_PORT1, M6803_PORT1, rthunder_coin_w },
+	{ M6803_PORT2, M6803_PORT2, pip2 },
+	{ -1 }	/* end of table */
+};
+
 
 /*******************************************************************/
 
@@ -565,7 +537,7 @@ INPUT_PORTS_START( rthunder_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_PLAYER2 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( rthundr2_input_ports )
+INPUT_PORTS_START( rthundrb_input_ports )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -717,21 +689,9 @@ static struct Samplesinterface samples_interface =
 	2	/* 2 channels for voice effects */
 };
 
-static void rt_init_machine( void ) {
+static void rt_init_machine( void )
+{
 	int_enabled[0] = int_enabled[1] = 1;
-
-	/* stop timer if running */
-	rt_stop_mcu_timer();
-
-	/* make sure we dont trigger interrupts */
-	hd_regs[0x08] = 0;
-
-	/* Init timer A */
-	hd_regs[0x09] = 0;
-	hd_regs[0x0a] = 0;
-
-	/* start up Timer A */
-	rt_timer = timer_pulse( TIME_IN_HZ( MCU_E_CLK ), 0,rt_timer_proc );
 }
 
 static int rt_interrupt( void ) {
@@ -764,15 +724,15 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_HD63701,	/* or compatible 6808 with extra instructions */
-			6000000/4,		/* ??? */
+			6000000,		/* ??? */
 			MEM_MCU,
-			mcu_readmem,mcu_writemem,0,0,
+			mcu_readmem,mcu_writemem,mcu_readport,mcu_writeport,
 			ignore_interrupt, 1 /* irq's triggered by the main cpu */
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,
 	100, /* cpu slices */
-	&rt_init_machine, /* init machine */
+	rt_init_machine, /* init machine */
 
 	/* video hardware */
 	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
@@ -783,7 +743,7 @@ static struct MachineDriver machine_driver =
 	VIDEO_TYPE_RASTER,
 	0,
 	rthunder_vh_start,
-	rthunder_vh_stop,
+	0,
 	rthunder_vh_screenrefresh,
 
 	/* sound hardware */
@@ -862,7 +822,7 @@ ROM_START( rthunder_rom )
 	ROM_LOAD( "mb7112e.7u",	0x0000, 0x0020, 0xe4130804 )
 ROM_END
 
-ROM_START( rthundr2_rom )
+ROM_START( rthundrb_rom )
 	ROM_REGION( 0x10000 ) /* 6809 code for CPU1 */
 	ROM_LOAD( "r1",         0x8000, 0x8000, 0x6f8c1252 )
 
@@ -1063,11 +1023,11 @@ struct GameDriver rthunder_driver =
 	hiload, hisave
 };
 
-struct GameDriver rthundr2_driver =
+struct GameDriver rthundrb_driver =
 {
 	__FILE__,
 	&rthunder_driver,
-	"rthundr2",
+	"rthundrb",
 	"Rolling Thunder (set 2)",
 	"1986",
 	"Namco",
@@ -1076,11 +1036,11 @@ struct GameDriver rthundr2_driver =
 	&machine_driver,
 	0,
 
-	rthundr2_rom,
+	rthundrb_rom,
 	rthunder_gfx_untangle, 0,
 	0,
 	0, /* sound prom */
-	rthundr2_input_ports,
+	rthundrb_input_ports,
 
 	PROM_MEMORY_REGION(MEM_COLOR), 0, 0,
 	ORIENTATION_DEFAULT,

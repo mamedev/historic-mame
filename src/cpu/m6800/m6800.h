@@ -9,16 +9,14 @@
 
 enum {
 	M6800_PC=1, M6800_S, M6800_A, M6800_B, M6800_X, M6800_CC,
-	M6800_WAI_STATE, M6800_NMI_STATE, M6800_IRQ_STATE, M6800_OCI_STATE };
+	M6800_WAI_STATE, M6800_NMI_STATE, M6800_IRQ_STATE };
 
 #define M6800_INT_NONE  0           /* No interrupt required */
 #define M6800_INT_IRQ	1			/* Standard IRQ interrupt */
 #define M6800_INT_NMI	2			/* NMI interrupt		  */
-#define M6800_INT_OCI	4			/* Output Compare interrupt (timer) */
 #define M6800_WAI		8			/* set when WAI is waiting for an interrupt */
 
 #define M6800_IRQ_LINE	0			/* IRQ line number */
-#define M6800_OCI_LINE	1			/* OCI line number */
 
 /* PUBLIC GLOBALS */
 extern int m6800_ICount;
@@ -41,7 +39,7 @@ extern void m6800_set_irq_callback(int (*callback)(int irqline));
 extern void m6800_state_save(void *file);
 extern void m6800_state_load(void *file);
 extern const char *m6800_info(void *context, int regnum);
-extern unsigned m6800_dasm(UINT8 *base, char *buffer, unsigned pc);
+extern unsigned m6800_dasm(char *buffer, unsigned pc);
 
 /****************************************************************************
  * For now make the 6801 using the m6800 variables and functions
@@ -56,15 +54,12 @@ extern unsigned m6800_dasm(UINT8 *base, char *buffer, unsigned pc);
 #define M6801_WAI_STATE 			M6800_WAI_STATE
 #define M6801_NMI_STATE 			M6800_NMI_STATE
 #define M6801_IRQ_STATE 			M6800_IRQ_STATE
-#define M6801_OCI_STATE 			M6800_OCI_STATE
 
 #define M6801_INT_NONE              M6800_INT_NONE
 #define M6801_INT_IRQ				M6800_INT_IRQ
 #define M6801_INT_NMI				M6800_INT_NMI
-#define M6801_INT_OCI				M6800_INT_OCI
 #define M6801_WAI					M6800_WAI
 #define M6801_IRQ_LINE				M6800_IRQ_LINE
-#define M6801_OCI_LINE				M6800_OCI_LINE
 
 #define m6801_ICount				m6800_ICount
 extern void m6801_reset(void *param);
@@ -84,7 +79,7 @@ extern void m6801_set_irq_callback(int (*callback)(int irqline));
 extern void m6801_state_save(void *file);
 extern void m6801_state_load(void *file);
 extern const char *m6801_info(void *context, int regnum);
-extern unsigned m6801_dasm(UINT8 *base, char *buffer, unsigned pc);
+extern unsigned m6801_dasm(char *buffer, unsigned pc);
 #endif
 
 /****************************************************************************
@@ -100,15 +95,12 @@ extern unsigned m6801_dasm(UINT8 *base, char *buffer, unsigned pc);
 #define M6802_WAI_STATE 			M6800_WAI_STATE
 #define M6802_NMI_STATE 			M6800_NMI_STATE
 #define M6802_IRQ_STATE 			M6800_IRQ_STATE
-#define M6802_OCI_STATE 			M6800_OCI_STATE
 
 #define M6802_INT_NONE              M6800_INT_NONE
 #define M6802_INT_IRQ				M6800_INT_IRQ
 #define M6802_INT_NMI				M6800_INT_NMI
-#define M6802_INT_OCI				M6800_INT_OCI
 #define M6802_WAI					M6800_WAI
 #define M6802_IRQ_LINE				M6800_IRQ_LINE
-#define M6802_OCI_LINE				M6800_OCI_LINE
 
 #define m6802_ICount				m6800_ICount
 extern void m6802_reset(void *param);
@@ -128,7 +120,7 @@ extern void m6802_set_irq_callback(int (*callback)(int irqline));
 extern void m6802_state_save(void *file);
 extern void m6802_state_load(void *file);
 extern const char *m6802_info(void *context, int regnum);
-extern unsigned m6802_dasm(UINT8 *base, char *buffer, unsigned pc);
+extern unsigned m6802_dasm(char *buffer, unsigned pc);
 #endif
 
 /****************************************************************************
@@ -144,15 +136,12 @@ extern unsigned m6802_dasm(UINT8 *base, char *buffer, unsigned pc);
 #define M6803_WAI_STATE 			M6800_WAI_STATE
 #define M6803_NMI_STATE 			M6800_NMI_STATE
 #define M6803_IRQ_STATE 			M6800_IRQ_STATE
-#define M6803_OCI_STATE 			M6800_OCI_STATE
 
 #define M6803_INT_NONE              M6800_INT_NONE
 #define M6803_INT_IRQ				M6800_INT_IRQ
 #define M6803_INT_NMI				M6800_INT_NMI
-#define M6803_INT_OCI				M6800_INT_OCI
 #define M6803_WAI					M6800_WAI
 #define M6803_IRQ_LINE				M6800_IRQ_LINE
-#define M6803_OCI_LINE				M6800_OCI_LINE
 
 #define m6803_ICount				m6800_ICount
 extern void m6803_reset(void *param);
@@ -172,7 +161,7 @@ extern void m6803_set_irq_callback(int (*callback)(int irqline));
 extern void m6803_state_save(void *file);
 extern void m6803_state_load(void *file);
 extern const char *m6803_info(void *context, int regnum);
-extern unsigned m6803_dasm(UINT8 *base, char *buffer, unsigned pc);
+extern unsigned m6803_dasm(char *buffer, unsigned pc);
 #endif
 
 /****************************************************************************
@@ -188,15 +177,12 @@ extern unsigned m6803_dasm(UINT8 *base, char *buffer, unsigned pc);
 #define M6808_WAI_STATE 			M6800_WAI_STATE
 #define M6808_NMI_STATE 			M6800_NMI_STATE
 #define M6808_IRQ_STATE 			M6800_IRQ_STATE
-#define M6808_OCI_STATE 			M6800_OCI_STATE
 
 #define M6808_INT_NONE              M6800_INT_NONE
 #define M6808_INT_IRQ               M6800_INT_IRQ
 #define M6808_INT_NMI               M6800_INT_NMI
-#define M6808_INT_OCI               M6800_INT_OCI
 #define M6808_WAI                   M6800_WAI
 #define M6808_IRQ_LINE              M6800_IRQ_LINE
-#define M6808_OCI_LINE              M6800_OCI_LINE
 
 #define m6808_ICount                m6800_ICount
 extern void m6808_reset(void *param);
@@ -216,7 +202,7 @@ extern void m6808_set_irq_callback(int (*callback)(int irqline));
 extern void m6808_state_save(void *file);
 extern void m6808_state_load(void *file);
 extern const char *m6808_info(void *context, int regnum);
-extern unsigned m6808_dasm(UINT8 *base, char *buffer, unsigned pc);
+extern unsigned m6808_dasm(char *buffer, unsigned pc);
 #endif
 
 /****************************************************************************
@@ -232,15 +218,12 @@ extern unsigned m6808_dasm(UINT8 *base, char *buffer, unsigned pc);
 #define HD63701_WAI_STATE			 M6800_WAI_STATE
 #define HD63701_NMI_STATE			 M6800_NMI_STATE
 #define HD63701_IRQ_STATE			 M6800_IRQ_STATE
-#define HD63701_OCI_STATE			 M6800_OCI_STATE
 
 #define HD63701_INT_NONE             M6800_INT_NONE
 #define HD63701_INT_IRQ 			 M6800_INT_IRQ
 #define HD63701_INT_NMI 			 M6800_INT_NMI
-#define HD63701_INT_OCI 			 M6800_INT_OCI
 #define HD63701_WAI 				 M6800_WAI
 #define HD63701_IRQ_LINE			 M6800_IRQ_LINE
-#define HD63701_OCI_LINE			 M6800_OCI_LINE
 
 #define hd63701_ICount				 m6800_ICount
 extern void hd63701_reset(void *param);
@@ -260,7 +243,7 @@ extern void hd63701_set_irq_callback(int (*callback)(int irqline));
 extern void hd63701_state_save(void *file);
 extern void hd63701_state_load(void *file);
 extern const char *hd63701_info(void *context, int regnum);
-extern unsigned hd63701_dasm(UINT8 *base, char *buffer, unsigned pc);
+extern unsigned hd63701_dasm(char *buffer, unsigned pc);
 #endif
 
 /****************************************************************************/
@@ -307,9 +290,20 @@ extern int m6800_Flags;
 #endif
 
 #ifdef	MAME_DEBUG
-#include "osd_dbg.h"
 extern unsigned Dasm680x(int subtype, char *buf, unsigned pc);
 #endif
 
-#endif /* _M6800_H */
 
+/* By default, on a port write port bits which are not set as output in the DDR */
+/* are set to 1. If you need to know the DDR for e.g. port 1, do */
+/* m6803_internal_registers_r(M6801_DDR1) */
+#define M6803_DDR1	0x00
+#define M6803_DDR2	0x01
+
+#define M6803_PORT1 0x100
+#define M6803_PORT2 0x101
+
+int m6803_internal_registers_r(int offset);
+void m6803_internal_registers_w(int offset,int data);
+
+#endif /* _M6800_H */

@@ -4,91 +4,6 @@
 #include "osd_cpu.h"
 #include "osd_dbg.h"
 
-#ifdef  __DJGPP__
-#define ARGFMT	__attribute__((format(printf,2,3)))
-#else
-#define ARGFMT
-#endif
-
-#ifndef DECL_SPEC
-#define DECL_SPEC
-#endif
-
-#ifndef TRUE
-#define	TRUE			1
-#endif
-
-#ifndef FALSE
-#define	FALSE			0
-#endif
-
-#ifndef INVALID
-#define	INVALID		0xffffffff
-#endif
-
-#ifndef MSDOS
-
-#ifndef WIN_EMPTY
-#define WIN_EMPTY	' '
-#endif
-
-#ifndef CAPTION_L
-#define CAPTION_L	'['
-#endif
-#ifndef CAPTION_R
-#define CAPTION_R	']'
-#endif
-#ifndef FRAME_TL
-#define FRAME_TL	'+'
-#endif
-#ifndef FRAME_BL
-#define FRAME_BL	'+'
-#endif
-#ifndef FRAME_TR
-#define FRAME_TR	'+'
-#endif
-#ifndef FRAME_BR
-#define FRAME_BR	'+'
-#endif
-#ifndef FRAME_V
-#define FRAME_V 	'|'
-#endif
-#ifndef FRAME_H
-#define FRAME_H 	'-'
-#endif
-
-#else
-
-#ifndef WIN_EMPTY
-#define WIN_EMPTY	'°'
-#endif
-#ifndef CAPTION_L
-#define CAPTION_L	'®'
-#endif
-#ifndef CAPTION_R
-#define CAPTION_R	'¯'
-#endif
-#ifndef FRAME_TL
-#define FRAME_TL	'Ú'
-#endif
-#ifndef FRAME_BL
-#define FRAME_BL	'À'
-#endif
-#ifndef FRAME_TR
-#define FRAME_TR	'¿'
-#endif
-#ifndef FRAME_BR
-#define FRAME_BR	'Ù'
-#endif
-#ifndef FRAME_V
-#define FRAME_V 	'³'
-#endif
-#ifndef FRAME_H
-#define FRAME_H 	'Ä'
-#endif
-
-#endif
-
 // This is our window structure
 
 struct sWindow
@@ -198,6 +113,7 @@ extern void win_set_w(UINT32 idx, UINT32 w);
 extern void win_set_h(UINT32 idx, UINT32 w);
 extern void win_set_color(UINT32 idx, UINT32 color);
 extern void win_set_title_color(UINT32 idx, UINT32 color);
+extern void win_set_frame_color(UINT32 idx, UINT32 color);
 extern void win_set_curpos(UINT32 idx, UINT32 x, UINT32 y);
 extern void win_set_cursor(UINT32 idx, UINT32 dwCursorState);
 extern void win_hide(UINT32 idx);

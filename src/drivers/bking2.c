@@ -18,34 +18,22 @@ NOTE:  ROM DM03 is missing from all known ROM sets.  This is a color palette.
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
-extern void bking2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void bking2_xld1_w(int offset, int data);
-extern void bking2_yld1_w(int offset, int data);
-extern void bking2_xld2_w(int offset, int data);
-extern void bking2_yld2_w(int offset, int data);
-extern void bking2_xld3_w(int offset, int data);
-extern void bking2_yld3_w(int offset, int data);
-extern void bking2_msk_w(int offset, int data);
-extern void bking2_safe_w(int offset, int data);
-extern void bking2_cont1_w(int offset, int data);
-extern void bking2_cont2_w(int offset, int data);
-extern void bking2_cont3_w(int offset, int data);
-extern void bking2_eport1_w(int offset, int data);
-extern void bking2_eport2_w(int offset, int data);
-extern void bking2_hitclr_w(int offset, int data);
-extern int bking2_pos_r(int offset);
-
-static unsigned char *bking2_ram;
-
-static int bking2_ram_r(int offset)
-{
-	return bking2_ram[offset];
-}
-
-static void bking2_ram_w(int offset, int data)
-{
-	bking2_ram[offset] = data;
-}
+void bking2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void bking2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void bking2_xld1_w(int offset, int data);
+void bking2_yld1_w(int offset, int data);
+void bking2_xld2_w(int offset, int data);
+void bking2_yld2_w(int offset, int data);
+void bking2_xld3_w(int offset, int data);
+void bking2_yld3_w(int offset, int data);
+void bking2_msk_w(int offset, int data);
+void bking2_cont1_w(int offset, int data);
+void bking2_cont2_w(int offset, int data);
+void bking2_cont3_w(int offset, int data);
+void bking2_hitclr_w(int offset, int data);
+int  bking2_input_port_5_r(int offset);
+int  bking2_input_port_6_r(int offset);
+int  bking2_pos_r(int offset);
 
 
 static int sndnmi_enable = 1;
@@ -78,10 +66,7 @@ static void bking2_soundlatch_w(int offset,int data)
 static struct MemoryReadAddress readmem[] =
 {
     { 0x0000, 0x7fff, MRA_ROM },
-    { 0x8000, 0x83ff, bking2_ram_r },
-    { 0x8400, 0x87ff, bking2_ram_r },
-    { 0x8800, 0x8bff, bking2_ram_r },
-    { 0x8c00, 0x8fff, bking2_ram_r },
+    { 0x8000, 0x83ff, MRA_RAM },
     { 0x9000, 0x97ff, MRA_RAM },
     { -1 }  /* end of table */
 };
@@ -89,10 +74,7 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
     { 0x0000, 0x7fff, MWA_ROM },
-    { 0x8000, 0x83ff, bking2_ram_w, &bking2_ram },
-    { 0x8400, 0x87ff, bking2_ram_w },
-    { 0x8800, 0x8bff, bking2_ram_w },
-    { 0x8c00, 0x8fff, bking2_ram_w },
+    { 0x8000, 0x83ff, MWA_RAM },
     { 0x9000, 0x97ff, videoram_w, &videoram, &videoram_size },
     { -1 }  /* end of table */
 };
@@ -104,8 +86,8 @@ static struct IOReadPort readport[] =
     { 0x02, 0x02, input_port_2_r },
     { 0x03, 0x03, input_port_3_r },
     { 0x04, 0x04, input_port_4_r },
-    { 0x05, 0x05, input_port_5_r },
-    { 0x06, 0x06, input_port_6_r },
+    { 0x05, 0x05, bking2_input_port_5_r },
+    { 0x06, 0x06, bking2_input_port_6_r },
 	{ 0x07, 0x1f, bking2_pos_r },
     { -1 }  /* end of table */
 };
@@ -119,12 +101,12 @@ static struct IOWritePort writeport[] =
     { 0x04, 0x04, bking2_xld3_w },
     { 0x05, 0x05, bking2_yld3_w },
     { 0x06, 0x06, bking2_msk_w },
-    { 0x07, 0x07, bking2_safe_w },
+    { 0x07, 0x07, watchdog_reset_w },
     { 0x08, 0x08, bking2_cont1_w },
     { 0x09, 0x09, bking2_cont2_w },
     { 0x0a, 0x0a, bking2_cont3_w },
     { 0x0b, 0x0b, bking2_soundlatch_w },
-    { 0x0c, 0x0c, bking2_eport2_w },
+  //{ 0x0c, 0x0c, bking2_eport2_w },   this is not shown to be connected anywhere
     { 0x0d, 0x0d, bking2_hitclr_w },
     { -1 }  /* end of table */
 };
@@ -158,6 +140,7 @@ INPUT_PORTS_START( bking2_input_ports )
     PORT_START  /* IN0 */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+    PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
 
     PORT_START  /* IN1 */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
@@ -166,97 +149,106 @@ INPUT_PORTS_START( bking2_input_ports )
     PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 ) /* Continue 2 */
     PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE )
     PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
-    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Not Connected? */
-    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Not Connected? */
+    PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED ) /* Not Connected */
 
     PORT_START  /* IN2 - DIP Switch A */
-    PORT_DIPNAME( 0x01, 0x00, "Holes Awarded" )
-    PORT_DIPSETTING(    0x00, "Less" )
+    PORT_DIPNAME( 0x01, 0x00, "Bonus Holes Awarded" )
+    PORT_DIPSETTING(    0x00, "Fewer" )
     PORT_DIPSETTING(    0x01, "More" )
-    PORT_DIPNAME( 0x02, 0x02, "Holes Awarded" )
-    PORT_DIPSETTING(    0x00, "Hole In One = 3" )
-    PORT_DIPSETTING(    0x02, "Hole In One = 9" )
-    PORT_DIPNAME( 0x04, 0x04, "Mode" )
-    PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
-    PORT_DIPSETTING(    0x04, "Normal" )
-    PORT_DIPNAME( 0x18, 0x18, "# of Holes" )
-    PORT_DIPSETTING(    0x00, "9" )
-    PORT_DIPSETTING(    0x08, "5" )
-    PORT_DIPSETTING(    0x10, "4" )
+    PORT_DIPNAME( 0x02, 0x02, "Holes Awarded for Hole-in-One" )
+    PORT_DIPSETTING(    0x00, "3" )
+    PORT_DIPSETTING(    0x02, "9" )
+    PORT_DIPNAME( 0x04, 0x04, DEF_STR(Free_Play) )
+    PORT_DIPSETTING(    0x04, DEF_STR(Off))
+    PORT_DIPSETTING(    0x00, DEF_STR(On))
+    PORT_DIPNAME( 0x18, 0x18, "Holes (Lives)" )
     PORT_DIPSETTING(    0x18, "3" )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-    PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
-    PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-    PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
-    PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-    PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+    PORT_DIPSETTING(    0x08, "4" )
+    PORT_DIPSETTING(    0x10, "5" )
+    PORT_DIPSETTING(    0x00, "9" )
+    PORT_DIPNAME( 0x20, 0x20, DEF_STR(Unused) )
+    PORT_DIPSETTING(    0x20, DEF_STR(Off))
+    PORT_DIPSETTING(    0x00, DEF_STR(On))
+    PORT_DIPNAME( 0x40, 0x40, DEF_STR(Flip_Screen) )
+    PORT_DIPSETTING(    0x40, DEF_STR(Off))
+    PORT_DIPSETTING(    0x00, DEF_STR(On))
+    PORT_DIPNAME( 0x80, 0x00, DEF_STR(Cabinet) )
+    PORT_DIPSETTING(    0x00, DEF_STR(Upright) )
+    PORT_DIPSETTING(    0x80, DEF_STR(Cocktail) )
 
 
     PORT_START  /* IN3 - DIP Switch B */
-    PORT_DIPNAME( 0x0F, 0x00, "Coins/Credit (left)" )
-    PORT_DIPSETTING(    0x00, "1/1" )
-    PORT_DIPSETTING(    0x01, "1/2" )
-    PORT_DIPSETTING(    0x02, "1/3" )
-    PORT_DIPSETTING(    0x03, "1/4" )
-    PORT_DIPSETTING(    0x04, "1/5" )
-    PORT_DIPSETTING(    0x05, "1/6" )
-    PORT_DIPSETTING(    0x06, "1/7" )
-    PORT_DIPSETTING(    0x07, "1/8" )
-    PORT_DIPSETTING(    0x08, "2/1" )
-    PORT_DIPSETTING(    0x09, "3/1" )
-    PORT_DIPSETTING(    0x0A, "4/1" )
-    PORT_DIPSETTING(    0x0B, "5/1" )
-    PORT_DIPSETTING(    0x0C, "6/1" )
-    PORT_DIPSETTING(    0x0D, "7/1" )
-    PORT_DIPSETTING(    0x0E, "8/1" )
-    PORT_DIPSETTING(    0x0F, "9/1" )
-    PORT_DIPNAME( 0xF0, 0x00, "Coins/Credit (right)" )
-    PORT_DIPSETTING(    0x00, "1/1" )
-    PORT_DIPSETTING(    0x10, "1/2" )
-    PORT_DIPSETTING(    0x20, "1/3" )
-    PORT_DIPSETTING(    0x30, "1/4" )
-    PORT_DIPSETTING(    0x40, "1/5" )
-    PORT_DIPSETTING(    0x50, "1/6" )
-    PORT_DIPSETTING(    0x60, "1/7" )
-    PORT_DIPSETTING(    0x70, "1/8" )
-    PORT_DIPSETTING(    0x80, "2/1" )
-    PORT_DIPSETTING(    0x90, "3/1" )
-    PORT_DIPSETTING(    0xA0, "4/1" )
-    PORT_DIPSETTING(    0xB0, "5/1" )
-    PORT_DIPSETTING(    0xC0, "6/1" )
-    PORT_DIPSETTING(    0xD0, "7/1" )
-    PORT_DIPSETTING(    0xE0, "8/1" )
-    PORT_DIPSETTING(    0xF0, "9/1" )
+    PORT_DIPNAME( 0x0f, 0x00, "Coin A" )
+    PORT_DIPSETTING(    0x0f, "9 Coins/1 Credit" )
+    PORT_DIPSETTING(    0x0e, "8 Coins/1 Credit" )
+    PORT_DIPSETTING(    0x0d, "7 Coins/1 Credit" )
+    PORT_DIPSETTING(    0x0c, "6 Coins/1 Credit" )
+    PORT_DIPSETTING(    0x0b, "5 Coins/1 Credit" )
+    PORT_DIPSETTING(    0x0a, "4 Coins/1 Credit" )
+    PORT_DIPSETTING(    0x09, "3 Coins/1 Credit" )
+    PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
+    PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+    PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
+    PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
+    PORT_DIPSETTING(    0x03, "1 Coin/4 Credits" )
+    PORT_DIPSETTING(    0x04, "1 Coin/5 Credits" )
+    PORT_DIPSETTING(    0x05, "1 Coin/6 Credits" )
+    PORT_DIPSETTING(    0x06, "1 Coin/7 Credits" )
+    PORT_DIPSETTING(    0x07, "1 Coin/8 Credits" )
+    PORT_DIPNAME( 0xf0, 0x00, "Coin B" )
+    PORT_DIPSETTING(    0xf0, "9 Coins/1 Credit" )
+    PORT_DIPSETTING(    0xe0, "8 Coins/1 Credit" )
+    PORT_DIPSETTING(    0xd0, "7 Coins/1 Credit" )
+    PORT_DIPSETTING(    0xc0, "6 Coins/1 Credit" )
+    PORT_DIPSETTING(    0xb0, "5 Coins/1 Credit" )
+    PORT_DIPSETTING(    0xa0, "4 Coins/1 Credit" )
+    PORT_DIPSETTING(    0x90, "3 Coins/1 Credit" )
+    PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
+    PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+    PORT_DIPSETTING(    0x10, "1 Coin/2 Credits" )
+    PORT_DIPSETTING(    0x20, "1 Coin/3 Credits" )
+    PORT_DIPSETTING(    0x30, "1 Coin/4 Credits" )
+    PORT_DIPSETTING(    0x40, "1 Coin/5 Credits" )
+    PORT_DIPSETTING(    0x50, "1 Coin/6 Credits" )
+    PORT_DIPSETTING(    0x60, "1 Coin/7 Credits" )
+    PORT_DIPSETTING(    0x70, "1 Coin/8 Credits" )
 
     PORT_START  /* IN4 - DIP Switch C */
-    PORT_DIPNAME( 0x01, 0x01, "Crow Appearance" )
-    PORT_DIPSETTING(    0x00, "Without" )
-    PORT_DIPSETTING(    0x01, "With" )
-    PORT_DIPNAME( 0x06, 0x06, "Crow Flight" )
-    PORT_DIPSETTING(    0x00, "Pattern 1" )
-    PORT_DIPSETTING(    0x02, "Pattern 2" )
-    PORT_DIPSETTING(    0x04, "Pattern 3" )
-    PORT_DIPSETTING(    0x06, "Pattern 4" )
-    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-    PORT_DIPNAME( 0x10, 0x10, "Coin Display" )
-    PORT_DIPSETTING(    0x00, "No Display" )
-    PORT_DIPSETTING(    0x10, "Display" )
+    PORT_DIPNAME( 0x01, 0x01, "Crow" )
+    PORT_DIPSETTING(    0x00, "Off" )
+    PORT_DIPSETTING(    0x01, "On" )
+    PORT_DIPNAME( 0x06, 0x04, "Crow Flight Pattern" )
+    PORT_DIPSETTING(    0x00, "1" )
+    PORT_DIPSETTING(    0x02, "2" )
+    PORT_DIPSETTING(    0x04, "3" )
+    PORT_DIPSETTING(    0x06, "4" )
+    PORT_DIPNAME( 0x08, 0x08, DEF_STR(Unused) )
+    PORT_DIPSETTING(    0x00, DEF_STR(Off))
+    PORT_DIPSETTING(    0x08, DEF_STR(On))
+    PORT_DIPNAME( 0x10, 0x10, "Coinage Display" )
+    PORT_DIPSETTING(    0x00, DEF_STR(Off))
+    PORT_DIPSETTING(    0x10, DEF_STR(On))
     PORT_DIPNAME( 0x20, 0x20, "Year Display" )
-    PORT_DIPSETTING(    0x00, "No Display" )
-    PORT_DIPSETTING(    0x20, "Display" )
+    PORT_DIPSETTING(    0x00, DEF_STR(Off))
+    PORT_DIPSETTING(    0x20, DEF_STR(On))
     PORT_DIPNAME( 0x40, 0x40, "Check" )
     PORT_DIPSETTING(    0x00, "Check" )
     PORT_DIPSETTING(    0x40, "Normal" )
-    PORT_DIPNAME( 0x80, 0x80, "Coin System" )
-    PORT_DIPSETTING(    0x00, "1 Way" )
-    PORT_DIPSETTING(    0x80, "2 Way" )
+    PORT_DIPNAME( 0x80, 0x80, "Coin Chutes" )
+    PORT_DIPSETTING(    0x00, "1" )
+    PORT_DIPSETTING(    0x80, "2" )
 
     PORT_START  /* IN5 */
     PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_X, 25, 0, 0, 0 ) /* Sensitivity, clip, min, max */
 
     PORT_START  /* IN6 */
     PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE, 25, 0, 0, 0 ) /* Sensitivity, clip, min, max */
+
+    PORT_START  /* IN7 */
+    PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_COCKTAIL, 25, 0, 0, 0 ) /* Sensitivity, clip, min, max */
+
+    PORT_START  /* IN8 */
+    PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_COCKTAIL, 25, 0, 0, 0 ) /* Sensitivity, clip, min, max */
 INPUT_PORTS_END
 
 
@@ -278,13 +270,13 @@ struct GfxLayout crowlayout =
 	2,		/* 2 bits per pixel */
 	{ 0, 4 },
 	{ 3*32*8+3, 3*32*8+2, 3*32*8+1, 3*32*8+0,
-			2*32*8+3, 2*32*8+2, 2*32*8+1, 2*32*8+0,
-			32*8+3, 32*8+2, 32*8+1, 32*8+0,
-			3, 2, 1, 0 }, /* reverse layout */
+	  2*32*8+3, 2*32*8+2, 2*32*8+1, 2*32*8+0,
+	    32*8+3,   32*8+2,   32*8+1,   32*8+0,
+		     3,        2,        1,        0 }, /* reverse layout */
 	{ 31*8, 30*8, 29*8, 28*8, 27*8, 26*8, 25*8, 24*8,
-			23*8, 22*8, 21*8, 20*8, 19*8, 18*8, 17*8, 16*8,
-			15*8, 14*8, 13*8, 12*8, 11*8, 10*8, 9*8, 8*8,
-			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
+	  23*8, 22*8, 21*8, 20*8, 19*8, 18*8, 17*8, 16*8,
+	  15*8, 14*8, 13*8, 12*8, 11*8, 10*8,  9*8,  8*8,
+	   7*8,  6*8,  5*8,  4*8,  3*8,  2*8,  1*8,  0*8 },
 	128*8    /* every sprite takes 128 consecutive bytes */
 };
 
@@ -302,29 +294,11 @@ struct GfxLayout balllayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-    { 1, 0x0000, &charlayout,      0, 1 }, /* playfield */
-    { 1, 0x6000, &crowlayout,      0, 1 }, /* crow */
-    { 1, 0x6800, &balllayout,      8, 1 }, /* ball */
-    { 1, 0x7000, &balllayout,      8, 1 }, /* ball */
+    { 1, 0x0000, &charlayout, 0,           4  }, /* playfield */
+    { 1, 0x6000, &crowlayout, 4*8,         4  }, /* crow */
+    { 1, 0x6800, &balllayout, 4*8+4*4,     4  }, /* ball 1 */
+    { 1, 0x7000, &balllayout, 4*8+4*4+4*2, 4  }, /* ball 2 */
     { -1 } /* end of array */
-};
-
-static unsigned char palette[] =
-{
-	0x00,0xff,0x00,
-	0x80,0x40,0x00,
-	0x00,0x00,0x00,
-	0xff,0xff,0x00,
-	0x00,0x80,0x00,
-	0xff,0x00,0x00,
-	0x00,0x00,0xff,
-	0xff,0xff,0xff
-};
-
-static unsigned short colortable[] =
-{
-    0, 1, 2, 3, 4, 5, 6, 7,
-	2, 7
 };
 
 
@@ -337,7 +311,7 @@ static void portb_w(int offset,int data)
 static struct AY8910interface ay8910_interface =
 {
 	2,      /* 2 chips */
-	2000000,	/* 2 MHz ??? */
+	2000000,	/* 2 MHz */
 	{ 25, 25 },
 	{ 0, 0 },
 	{ 0, 0 },
@@ -359,7 +333,7 @@ static struct MachineDriver machine_driver =
     {
         {
             CPU_Z80,
-			4000000,	/* 4 Mhz ??? */
+			4000000,	/* 4 Mhz */
             0,
             readmem,writemem,
             readport,writeport,
@@ -367,7 +341,7 @@ static struct MachineDriver machine_driver =
         },
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 Mhz ??? */
+			3000000,	/* 3 Mhz */
 			2,
 			sound_readmem,sound_writemem,0,0,
 			/* interrupts (from Jungle King hardware, might be wrong): */
@@ -386,8 +360,8 @@ static struct MachineDriver machine_driver =
     /* video hardware */
     32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
     gfxdecodeinfo,
-    sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-    0,
+    512, 4*8+4*4+4*2+4*2,
+    bking2_vh_convert_color_prom,
 
     VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
     0,  /* video hardware init */
@@ -433,13 +407,19 @@ ROM_START( bking2_rom )
 	ROM_LOAD( "11.10a",       0x3000, 0x1000, 0x2b949987 )
 	ROM_LOAD( "10.11a",       0x4000, 0x1000, 0xeb96f948 )
 	ROM_LOAD( "09.13a",       0x5000, 0x1000, 0x595e3dd4 )
-	ROM_LOAD( "17",           0x6000, 0x0800, 0xe5663f0b )
-	ROM_LOAD( "18",           0x6800, 0x0800, 0xfc9cec31 )
-	ROM_LOAD( "19",           0x7000, 0x0800, 0xfc9cec31 )
+	ROM_LOAD( "17",           0x6000, 0x0800, 0xe5663f0b )	/* crow graphics */
+	ROM_LOAD( "18",           0x6800, 0x0800, 0xfc9cec31 )	/* ball 1 graphics. Only the first 128 bytes used */
+	ROM_LOAD( "19",           0x7000, 0x0800, 0xfc9cec31 )  /* ball 2 graphics. Only the first 128 bytes used */
 
 	ROM_REGION(0x10000)         /* Sound ROMs */
 	ROM_LOAD( "15",           0x0000, 0x1000, 0xf045d0fe )
 	ROM_LOAD( "16",           0x1000, 0x1000, 0x92d50410 )
+
+	ROM_REGION(0x0200)          /* Color PROM */
+	ROM_LOAD( "82s141.2d",    0x0000, 0x0200, 0x61b7a9ff )
+
+	ROM_REGION(0x0020)          /* Collision detection prom 32x1 (not currently used) */
+	ROM_LOAD( "mb7051.2c",    0x0000, 0x0020, 0x4cb5bd32 )  /* HIT0-1 go to A3-A4. Character image goes to A0-A2 */
 ROM_END
 
 
@@ -464,7 +444,7 @@ struct GameDriver bking2_driver =
 
 	bking2_input_ports,
 
-	0, palette, colortable,
+	PROM_MEMORY_REGION(3), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	0, 0

@@ -16,8 +16,6 @@ void sample_stop(int channel);
 int sample_playing(int channel);
 
 
-int samples_sh_start(struct Samplesinterface *interface);
-void samples_sh_stop(void);
-void samples_sh_update(void);
+int samples_sh_start(const struct Samplesinterface *interface);
 
 #endif

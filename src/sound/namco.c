@@ -13,11 +13,7 @@
 #include "driver.h"
 
 /* note: we work with signed samples here, unlike other drivers */
-#ifdef SIGNED_SAMPLES
-	#define AUDIO_CONV(A) (A)
-#else
-	#define AUDIO_CONV(A) (A+0x80)
-#endif
+#define AUDIO_CONV(A) (A)
 
 /* 8 voices max */
 #define MAX_VOICES 8
@@ -274,7 +270,7 @@ static void namco_update_stereo(int ch, void **buffer, int length)
 }
 
 
-int namco_sh_start(struct namco_interface *intf)
+int namco_sh_start(const struct namco_interface *intf)
 {
 	const char *mono_name = "NAMCO sound";
 	const char *stereo_names[] =
@@ -347,11 +343,6 @@ void namco_sh_stop(void)
 {
 	free (mixer_table);
 	free (mixer_buffer);
-}
-
-
-void namco_sh_update(void)
-{
 }
 
 

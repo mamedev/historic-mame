@@ -64,7 +64,7 @@ void DAC_set_volume(int num,int volume,int gain)
 }
 
 
-int DAC_sh_start(struct DACinterface *interface)
+int DAC_sh_start(const struct DACinterface *interface)
 {
 	int i;
 
@@ -87,12 +87,4 @@ int DAC_sh_start(struct DACinterface *interface)
 		latch[i] = 0;
 	}
 	return 0;
-}
-
-void DAC_sh_stop(void)
-{
-}
-
-void DAC_sh_update(void)
-{
 }

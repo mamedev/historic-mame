@@ -30,17 +30,17 @@ void errormsg(const char* extmsg, const char* usermsg, const char* zipname) {
  ------------------------------------------------------------------------- */
 
 /* Use these to avoid structure padding and byte-ordering problems */
-static word read_word (char *buf) {
+static UINT16 read_word (char *buf) {
    unsigned char *ubuf = (unsigned char *) buf;
 
-   return ((word)ubuf[1] << 8) | (word)ubuf[0];
+   return ((UINT16)ubuf[1] << 8) | (UINT16)ubuf[0];
 }
 
 /* Use these to avoid structure padding and byte-ordering problems */
-static dword read_dword (char *buf) {
+static UINT32 read_dword (char *buf) {
    unsigned char *ubuf = (unsigned char *) buf;
 
-   return ((dword)ubuf[3] << 24) | ((dword)ubuf[2] << 16) | ((dword)ubuf[1] << 8) | (dword)ubuf[0];
+   return ((UINT32)ubuf[3] << 24) | ((UINT32)ubuf[2] << 16) | ((UINT32)ubuf[1] << 8) | (UINT32)ubuf[0];
 }
 
 /* Locate end-of-central-dir sig in buffer and return offset
@@ -324,6 +324,14 @@ struct zipent* readzip(ZIP* zip) {
 	zip->ent.external_file_attrib = read_dword (zip->cd+zip->cd_pos+ZIPEXT);
 	zip->ent.offset_lcl_hdr_frm_frst_disk = read_dword (zip->cd+zip->cd_pos+ZIPOFST);
 
+    /* check to see if filename length is illegally long (past the size of this directory
+       entry) */
+    if (zip->cd_pos + ZIPCFN + zip->ent.filename_length > zip->size_of_cent_dir)
+    {
+        errormsg("Invalid filename length in directory", ERROR_CORRUPT,zip->zip);
+        return 0;
+    }
+
 	/* copy filename */
 	free(zip->ent.name);
 	zip->ent.name = (char*)malloc(zip->ent.filename_length + 1);
@@ -416,8 +424,8 @@ int seekcompresszip(ZIP* zip, struct zipent* ent) {
 	}
 
 	{
-		word filename_length = read_word (buf+ZIPFNLN);
-		word extra_field_length = read_word (buf+ZIPXTRALN);
+		UINT16 filename_length = read_word (buf+ZIPFNLN);
+		UINT16 extra_field_length = read_word (buf+ZIPXTRALN);
 
 		/* calculate offset to data and fseek() there */
 		offset = ent->offset_lcl_hdr_frm_frst_disk + ZIPNAME + filename_length + extra_field_length;

@@ -22,6 +22,7 @@
 #include <stdio.h>
 #ifdef MAME_DEBUG
 #include "driver.h"
+#include "mamedbg.h"
 #include "m6502.h"
 
 #define OPCODE(A)	cpu_readop(A)

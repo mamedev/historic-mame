@@ -10,6 +10,7 @@
 #include <strings.h>
 #include "driver.h"
 #include "state.h"
+#include "mamedbg.h"
 #include "s2650.h"
 #include "s2650cpu.h"
 
@@ -1503,13 +1504,12 @@ const char *s2650_info(void *context, int regnum)
 	return buffer[which];
 }
 
-unsigned s2650_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned s2650_dasm(char *buffer, unsigned pc)
 {
-	(void)base;
 #ifdef MAME_DEBUG
     return Dasm2650(buffer,pc);
 #else
-	sprintf( buffer, "$%02X", ROM[pc] );
+	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
 #endif
 }

@@ -84,17 +84,9 @@ int sample_playing(int channel)
 }
 
 
-int samples_sh_start(struct Samplesinterface *interface)
+int samples_sh_start(const struct Samplesinterface *interface)
 {
 	numchannels = interface->channels;
 	firstchannel = get_play_channels(numchannels);
 	return 0;
-}
-
-void samples_sh_stop(void)
-{
-}
-
-void samples_sh_update(void)
-{
 }

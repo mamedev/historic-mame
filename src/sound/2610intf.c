@@ -26,7 +26,7 @@ static int stream[MAX_2610];
 static FMSAMPLE *Buf[YM2610_NUMBUF];
 
 /* Global Interface holder */
-static struct YM2610interface *intf;
+static const struct YM2610interface *intf;
 
 static void *Timer[MAX_2610][2];
 
@@ -85,7 +85,7 @@ void YM2610UpdateRequest(int chip)
 	stream_update(stream[chip],100);
 }
 
-int YM2610_sh_start(struct YM2610interface *interface ){
+int YM2610_sh_start(const struct YM2610interface *interface ){
 	int i,j;
 	int rate = Machine->sample_rate;
 	char buf[YM2610_NUMBUF][40];
@@ -95,7 +95,7 @@ int YM2610_sh_start(struct YM2610interface *interface ){
 	intf = interface;
 	if( intf->num > MAX_2610 ) return 1;
 
-	if( AY8910_sh_start((struct AY8910interface *)interface,"YM2610(SSG)") ) return 1;
+	if( AY8910_sh_start_ex((struct AY8910interface *)interface,"YM2610(SSG)") ) return 1;
 
 	/* FM init */
 #if 0
@@ -141,11 +141,10 @@ int YM2610_sh_start(struct YM2610interface *interface ){
 		return 0;
 
 	/* error */
-	AY8910_sh_stop();
 	return 1;
 }
 
-int YM2610B_sh_start(struct YM2610interface *interface ){
+int YM2610B_sh_start(const struct YM2610interface *interface ){
 	int i,j;
 	int rate = Machine->sample_rate;
 	char buf[YM2610_NUMBUF][40];
@@ -155,7 +154,7 @@ int YM2610B_sh_start(struct YM2610interface *interface ){
 	intf = interface;
 	if( intf->num > MAX_2610 ) return 1;
 
-	if( AY8910_sh_start((struct AY8910interface *)interface,"YM2610(SSG)") ) return 1;
+	if( AY8910_sh_start_ex((struct AY8910interface *)interface,"YM2610(SSG)") ) return 1;
 
 	/* FM init */
 #if 0
@@ -201,7 +200,6 @@ int YM2610B_sh_start(struct YM2610interface *interface ){
 		return 0;
 
 	/* error */
-	AY8910_sh_stop();
 	return 1;
 }
 
@@ -210,7 +208,6 @@ int YM2610B_sh_start(struct YM2610interface *interface ){
 /************************************************/
 void YM2610_sh_stop(void)
 {
-	AY8910_sh_stop();
 	YM2610Shutdown();
 }
 
@@ -307,13 +304,6 @@ void YM2610_data_port_1_A_w(int offset,int data){
 }
 void YM2610_data_port_1_B_w(int offset,int data){
 	YM2610Write(1,3,data);
-}
-
-/************************************************/
-/* Sound Hardware Update						*/
-/************************************************/
-void YM2610_sh_update(void)
-{
 }
 
 /**************** end of file ****************/

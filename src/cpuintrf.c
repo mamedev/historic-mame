@@ -10,8 +10,9 @@
 
 #include <signal.h>
 #include "driver.h"
-#include "state.h"
 #include "timer.h"
+#include "state.h"
+#include "mamedbg.h"
 
 #if (HAS_Z80)
 #include "cpu/z80/z80.h"
@@ -86,7 +87,7 @@
 
 #define CPUINFO_SIZE	(5*sizeof(int)+4*sizeof(void*)+2*sizeof(double))
 /* How do I calculate the next power of two from CPUINFO_SIZE using a macro? */
-#define CPUINFO_ALIGN	(64-CPUINFO_SIZE)
+#define CPUINFO_ALIGN   (64-CPUINFO_SIZE)
 
 struct cpuinfo
 {
@@ -197,7 +198,7 @@ static void Dummy_set_irq_line(int irqline, int state);
 static void Dummy_set_irq_callback(int (*callback)(int irqline));
 static int dummy_icount;
 static const char *Dummy_info(void *context, int regnum);
-static unsigned Dummy_dasm(UINT8 *base, char *buffer, unsigned pc);
+static unsigned Dummy_dasm(char *buffer, unsigned pc);
 
 /* Convenience macros - not in cpuintrf.h because they shouldn't be used by everyone */
 #define RESET(index)                    ((*cpu[index].intf->reset)(Machine->drv->cpu[index].reset_param))
@@ -215,7 +216,7 @@ static unsigned Dummy_dasm(UINT8 *base, char *buffer, unsigned pc);
 #define SETIRQCALLBACK(index,callback)	((*cpu[index].intf->set_irq_callback)(callback))
 #define INTERNAL_INTERRUPT(index,type)	if( cpu[index].intf->internal_interrupt ) ((*cpu[index].intf->internal_interrupt)(type))
 #define CPUINFO(index,context,regnum)	((*cpu[index].intf->cpu_info)(context,regnum))
-#define CPUDASM(index,base,buffer,pc)	((*cpu[index].intf->cpu_dasm)(base,buffer,pc))
+#define CPUDASM(index,buffer,pc)		((*cpu[index].intf->cpu_dasm)(buffer,pc))
 #define ICOUNT(index)                   (*cpu[index].intf->icount)
 #define INT_TYPE_NONE(index)            (cpu[index].intf->no_int)
 #define INT_TYPE_IRQ(index) 			(cpu[index].intf->irq_int)
@@ -262,7 +263,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16,CPU_IS_LE,1,1,					/* CPU address bits, endianess, align unit, max. instruction length */
+		0,16,CPU_IS_LE,1,1, 				/* CPU address shift, bits, endianess, align unit, max. instruction length */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
 #if (HAS_Z80)
@@ -295,7 +296,7 @@ struct cpu_interface cpuintf[] =
         cpu_readmem16,                      /* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16,CPU_IS_LE,1,4,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,16,CPU_IS_LE,1,4, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
 #endif
@@ -329,7 +330,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,                      /* Memory read */
 		cpu_writemem16,                     /* Memory write */
 		cpu_setOPbase16,                    /* Update CPU opcode base */
-		16,CPU_IS_LE,1,3,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,16,CPU_IS_LE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
 #endif
@@ -363,7 +364,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,                      /* Memory read */
 		cpu_writemem16,                     /* Memory write */
 		cpu_setOPbase16,                    /* Update CPU opcode base */
-		16,CPU_IS_LE,1,3,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,16,CPU_IS_LE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
 #endif
@@ -397,7 +398,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16,CPU_IS_LE,1,3,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,16,CPU_IS_LE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
 #endif
@@ -431,7 +432,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16,CPU_IS_LE,1,3,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,16,CPU_IS_LE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
 #endif
@@ -465,7 +466,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16,CPU_IS_LE,1,3,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,16,CPU_IS_LE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
 #endif
@@ -499,7 +500,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem21,						/* Memory read */
 		cpu_writemem21, 					/* Memory write */
 		cpu_setOPbase21,					/* Update CPU opcode base */
-		21,CPU_IS_LE,1,3,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,21,CPU_IS_LE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_21,ABITS2_21,ABITS_MIN_21	/* Address bits, for the memory system */
     },
 #endif
@@ -533,7 +534,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem20,						/* Memory read */
 		cpu_writemem20, 					/* Memory write */
 		cpu_setOPbase20,					/* Update CPU opcode base */
-		20,CPU_IS_LE,1,5,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,20,CPU_IS_LE,1,5, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_20,ABITS2_20,ABITS_MIN_20	/* Address bits, for the memory system */
     },
 #endif
@@ -567,7 +568,7 @@ struct cpu_interface cpuintf[] =
         cpu_readmem16,                      /* Memory read */
         cpu_writemem16,                     /* Memory write */
         cpu_setOPbase16,                    /* Update CPU opcode base */
-		16,CPU_IS_LE,1,1,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,16,CPU_IS_LE,1,1, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
         ABITS1_16,ABITS2_16,ABITS_MIN_16    /* Address bits, for the memory system */
     },
 #endif
@@ -601,7 +602,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16,CPU_IS_LE,1,1,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,16,CPU_IS_LE,1,1, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
 #endif
@@ -635,7 +636,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16,CPU_IS_LE,1,1,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,16,CPU_IS_LE,1,1, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
 #endif
@@ -669,7 +670,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16,CPU_IS_LE,1,1,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,16,CPU_IS_LE,1,1, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
 #endif
@@ -695,7 +696,7 @@ struct cpu_interface cpuintf[] =
 		m6800_state_load,					/* Load CPU state */
 		m6800_info, 						/* Get formatted string for a specific register */
 		m6800_dasm, 						/* Disassemble one instruction */
-        2,                                  /* Number of IRQ lines */
+		1,									/* Number of IRQ lines */
 		&m6800_ICount,						/* Pointer to the instruction count */
 		M6800_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		M6800_INT_IRQ,
@@ -703,7 +704,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16,CPU_IS_BE,1,4,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,16,CPU_IS_BE,1,4, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
 #endif
@@ -729,7 +730,7 @@ struct cpu_interface cpuintf[] =
 		m6801_state_load,					/* Load CPU state */
 		m6801_info, 						/* Get formatted string for a specific register */
 		m6801_dasm, 						/* Disassemble one instruction */
-        2,                                  /* Number of IRQ lines */
+		1,									/* Number of IRQ lines */
 		&m6801_ICount,						/* Pointer to the instruction count */
 		M6801_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		M6801_INT_IRQ,
@@ -737,7 +738,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16,CPU_IS_BE,1,4,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,16,CPU_IS_BE,1,4, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
 #endif
@@ -763,7 +764,7 @@ struct cpu_interface cpuintf[] =
 		m6802_state_load,					/* Load CPU state */
         m6802_info,                         /* Get formatted string for a specific register */
 		m6802_dasm, 						/* Disassemble one instruction */
-        2,                                  /* Number of IRQ lines */
+		1,									/* Number of IRQ lines */
 		&m6802_ICount,						/* Pointer to the instruction count */
 		M6802_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		M6802_INT_IRQ,
@@ -771,7 +772,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16,CPU_IS_BE,1,4,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,16,CPU_IS_BE,1,4, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
 #endif
@@ -797,7 +798,7 @@ struct cpu_interface cpuintf[] =
 		m6803_state_load,					/* Load CPU state */
         m6803_info,                         /* Get formatted string for a specific register */
 		m6803_dasm, 						/* Disassemble one instruction */
-        2,                                  /* Number of IRQ lines */
+		1,									/* Number of IRQ lines */
 		&m6803_ICount,						/* Pointer to the instruction count */
 		M6803_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		M6803_INT_IRQ,
@@ -805,7 +806,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16,CPU_IS_BE,1,4,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,16,CPU_IS_BE,1,4, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
 #endif
@@ -831,7 +832,7 @@ struct cpu_interface cpuintf[] =
 		m6808_state_load,					/* Load CPU state */
         m6808_info,                         /* Get formatted string for a specific register */
 		m6808_dasm, 						/* Disassemble one instruction */
-        2,                                  /* Number of IRQ lines */
+		1,									/* Number of IRQ lines */
 		&m6808_ICount,						/* Pointer to the instruction count */
 		M6808_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		M6808_INT_IRQ,
@@ -839,7 +840,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16,CPU_IS_BE,1,4,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,16,CPU_IS_BE,1,4, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
 #endif
@@ -865,7 +866,7 @@ struct cpu_interface cpuintf[] =
 		hd63701_state_load, 				/* Load CPU state */
         hd63701_info,                       /* Get formatted string for a specific register */
 		hd63701_dasm,						/* Disassemble one instruction */
-        2,                                  /* Number of IRQ lines */
+		1,									/* Number of IRQ lines */
 		&hd63701_ICount,					/* Pointer to the instruction count */
 		HD63701_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
 		HD63701_INT_IRQ,
@@ -873,7 +874,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16,CPU_IS_BE,1,4,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,16,CPU_IS_BE,1,4, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
 #endif
@@ -907,7 +908,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		11,CPU_IS_BE,1,3,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,11,CPU_IS_BE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
 #endif
@@ -941,7 +942,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		11,CPU_IS_BE,1,3,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,11,CPU_IS_BE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
 #endif
@@ -967,7 +968,7 @@ struct cpu_interface cpuintf[] =
 		hd63705_state_load, 				/* Load CPU state */
 		hd63705_info,						/* Get formatted string for a specific register */
 		hd63705_dasm,						/* Disassemble one instruction */
-        1,                                  /* Number of IRQ lines */
+		8,									/* Number of IRQ lines */
 		&hd63705_ICount,					/* Pointer to the instruction count */
 		HD63705_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
 		HD63705_INT_IRQ,
@@ -975,7 +976,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16,CPU_IS_BE,1,3,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,16,CPU_IS_BE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
 #endif
@@ -1009,7 +1010,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16,CPU_IS_BE,1,4,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,16,CPU_IS_BE,1,4, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
 #endif
@@ -1043,7 +1044,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16,CPU_IS_BE,1,4,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,16,CPU_IS_BE,1,4, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
 #endif
@@ -1077,7 +1078,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem24,						/* Memory read */
 		cpu_writemem24, 					/* Memory write */
 		cpu_setOPbase24,					/* Update CPU opcode base */
-		24,CPU_IS_BE,2,10,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,24,CPU_IS_BE,2,10,				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_24,ABITS2_24,ABITS_MIN_24	/* Address bits, for the memory system */
 	},
 #endif
@@ -1111,7 +1112,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem24,						/* Memory read */
 		cpu_writemem24, 					/* Memory write */
 		cpu_setOPbase24,					/* Update CPU opcode base */
-		24,CPU_IS_BE,2,10,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,24,CPU_IS_BE,2,10,				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_24,ABITS2_24,ABITS_MIN_24	/* Address bits, for the memory system */
     },
 #endif
@@ -1145,7 +1146,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem24,						/* Memory read */
 		cpu_writemem24, 					/* Memory write */
 		cpu_setOPbase24,					/* Update CPU opcode base */
-		24,CPU_IS_BE,2,10,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,24,CPU_IS_BE,2,10,				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_24,ABITS2_24,ABITS_MIN_24	/* Address bits, for the memory system */
     },
 #endif
@@ -1179,7 +1180,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16lew,					/* Memory read */
 		cpu_writemem16lew,					/* Memory write */
 		cpu_setOPbase16lew, 				/* Update CPU opcode base */
-		16,CPU_IS_LE,2,6,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,16,CPU_IS_LE,2,6, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16LEW,ABITS2_16LEW,ABITS_MIN_16LEW  /* Address bits, for the memory system */
 	},
 #endif
@@ -1213,7 +1214,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,                      /* Memory read */
 		cpu_writemem16,                     /* Memory write */
 		cpu_setOPbase16,                    /* Update CPU opcode base */
-		15,CPU_IS_LE,1,3,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,15,CPU_IS_LE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
 #endif
@@ -1247,7 +1248,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem29,						/* Memory read */
 		cpu_writemem29, 					/* Memory write */
 		cpu_setOPbase29,					/* Update CPU opcode base */
-		29,CPU_IS_LE,16,80, 				/* CPU address bits, endianess, align unit, max. instruction length  */
+		3,29,CPU_IS_LE,2,10,				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_29,ABITS2_29,ABITS_MIN_29	/* Address bits, for the memory system */
 	},
 #endif
@@ -1281,7 +1282,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16,CPU_IS_BE,2,6,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,16,CPU_IS_BE,2,6, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
         ABITS1_16,ABITS2_16,ABITS_MIN_16    /* Address bits, for the memory system */
 	},
 #endif
@@ -1315,7 +1316,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,                      /* Memory read */
 		cpu_writemem16,                     /* Memory write */
 		cpu_setOPbase16,                    /* Update CPU opcode base */
-		16,CPU_IS_LE,1,6,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		0,16,CPU_IS_LE,2,6, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
 #endif
@@ -1349,7 +1350,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16,CPU_IS_LE,1,4,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		-1,16,CPU_IS_BE,2,4,				/* CPU address shift, bits, endianess, align unit, max. instruction length */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
 #endif
@@ -1377,13 +1378,13 @@ struct cpu_interface cpuintf[] =
 		ccpu_dasm,							/* Disassemble one instruction */
         2,                                  /* Number of IRQ lines */
 		&ccpu_ICount,						/* Pointer to the instruction count  */
-		0,								   /* Interrupt types: none, IRQ, NMI  */
+		0,									/* Interrupt types: none, IRQ, NMI	*/
 		-1,
 		-1,
 		cpu_readmem16,						/* Memory read	*/
 		cpu_writemem16, 					/* Memory write  */
 		cpu_setOPbase16,					/* Update CPU opcode base  */
-		16,CPU_IS_LE,1,3,					/* CPU address bits, endianess, align unit, max. instruction length   */
+		0,15,CPU_IS_LE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	 */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system	*/
 	},
 #endif
@@ -1417,7 +1418,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read	*/
 		cpu_writemem16, 					/* Memory write  */
 		cpu_setOPbase16,					/* Update CPU opcode base  */
-		16,CPU_IS_LE,1,3,					/* CPU address bits, endianess, align unit, max. instruction length   */
+		0,18,CPU_IS_LE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	 */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system	*/
     },
 #endif
@@ -1516,6 +1517,9 @@ reset:
 	/* initialize the various timers (suspends all CPUs at startup) */
 	cpu_inittimers ();
 	watchdog_counter = -1;
+
+	/* reset sound chips */
+	sound_reset();
 
 	/* enable all CPUs (except for audio CPUs if the sound is off) */
 	for (i = 0; i < totalcpu; i++)
@@ -1930,9 +1934,9 @@ double cpu_getscanlinetime(int scanline)
 {
 	double ret;
 	double scantime = timer_starttime (refresh_timer) + (double)scanline * scanline_period;
-	double time = timer_get_time ();
-	if (time >= scantime) scantime += TIME_IN_HZ(Machine->drv->frames_per_second);
-	ret = scantime - time;
+	double abstime = timer_get_time ();
+	if (abstime >= scantime) scantime += TIME_IN_HZ(Machine->drv->frames_per_second);
+	ret = scantime - abstime;
 	if (ret < TIME_IN_NSEC(1))
 	{
 		ret = TIME_IN_HZ (Machine->drv->frames_per_second);
@@ -2559,64 +2563,22 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
             case CPU_N7751:             irq_line = 0; LOG((errorlog,"N7751 IRQ\n")); break;
 #endif
 #if (HAS_M6800)
-			case CPU_M6800:
-				switch (num)
-				{
-				case M6800_INT_IRQ: 	irq_line = 0; LOG((errorlog,"M6800 IRQ\n")); break;
-				case M6800_INT_OCI: 	irq_line = 1; LOG((errorlog,"M6800 OCI\n")); break;
-				default:				irq_line = 0; LOG((errorlog,"M6800 unknown\n"));
-                }
-                break;
+			case CPU_M6800: 			irq_line = 0; LOG((errorlog,"M6800 IRQ\n")); break;
 #endif
 #if (HAS_M6801)
-			case CPU_M6801:
-				switch (num)
-				{
-				case M6801_INT_IRQ: 	irq_line = 0; LOG((errorlog,"M6801 IRQ\n")); break;
-				case M6801_INT_OCI: 	irq_line = 1; LOG((errorlog,"M6801 OCI\n")); break;
-				default:				irq_line = 0; LOG((errorlog,"M6801 unknown\n"));
-                }
-                break;
+			case CPU_M6801:				irq_line = 0; LOG((errorlog,"M6801 IRQ\n")); break;
 #endif
 #if (HAS_M6802)
-            case CPU_M6802:
-				switch (num)
-				{
-				case M6802_INT_IRQ: 	irq_line = 0; LOG((errorlog,"M6802 IRQ\n")); break;
-				case M6802_INT_OCI: 	irq_line = 1; LOG((errorlog,"M6802 OCI\n")); break;
-				default:				irq_line = 0; LOG((errorlog,"M6802 unknown\n"));
-                }
-                break;
+            case CPU_M6802:				irq_line = 0; LOG((errorlog,"M6802 IRQ\n")); break;
 #endif
 #if (HAS_M6803)
-            case CPU_M6803:
-				switch (num)
-				{
-				case M6803_INT_IRQ: 	irq_line = 0; LOG((errorlog,"M6803 IRQ\n")); break;
-				case M6803_INT_OCI: 	irq_line = 1; LOG((errorlog,"M6803 OCI\n")); break;
-				default:				irq_line = 0; LOG((errorlog,"M6803 unknown\n"));
-                }
-                break;
+            case CPU_M6803:				irq_line = 0; LOG((errorlog,"M6803 IRQ\n")); break;
 #endif
 #if (HAS_M6808)
-            case CPU_M6808:
-				switch (num)
-				{
-				case M6808_INT_IRQ: 	irq_line = 0; LOG((errorlog,"M6808 IRQ\n")); break;
-				case M6808_INT_OCI: 	irq_line = 1; LOG((errorlog,"M6808 OCI\n")); break;
-				default:				irq_line = 0; LOG((errorlog,"M6808 unknown\n"));
-                }
-				break;
+            case CPU_M6808:				irq_line = 0; LOG((errorlog,"M6808 IRQ\n")); break;
 #endif
 #if (HAS_HD63701)
-            case CPU_HD63701:
-				switch (num)
-				{
-				case HD63701_INT_IRQ:	irq_line = 0; LOG((errorlog,"HD63701 IRQ\n")); break;
-				case HD63701_INT_OCI:	irq_line = 1; LOG((errorlog,"HD63701 OCI\n")); break;
-				default:				irq_line = 0; LOG((errorlog,"HD63701 unknown\n"));
-                }
-                break;
+            case CPU_HD63701:			irq_line = 0; LOG((errorlog,"HD63701 IRQ\n")); break;
 #endif
 #if (HAS_M6805)
             case CPU_M6805:             irq_line = 0; LOG((errorlog,"M6805 IRQ\n")); break;
@@ -3141,12 +3103,14 @@ void* cpu_getcontext (int _activecpu)
 
 unsigned cpu_get_context(void *context)
 {
-    return GETCONTEXT(activecpu,context);
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	return GETCONTEXT(cpunum,context);
 }
 
 void cpu_set_context(void *context)
 {
-    SETCONTEXT(activecpu,context);
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	SETCONTEXT(cpunum,context);
 }
 
 /***************************************************************************
@@ -3155,12 +3119,14 @@ void cpu_set_context(void *context)
 
 unsigned cpu_get_reg(int regnum)
 {
-	return GETREG(activecpu,regnum);
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	return GETREG(cpunum,regnum);
 }
 
 void cpu_set_reg(int regnum, unsigned val)
 {
-	SETREG(activecpu,regnum,val);
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	SETREG(cpunum,regnum,val);
 }
 
 /***************************************************************************
@@ -3185,6 +3151,15 @@ unsigned cpu_address_mask(void)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
 	return (1 << cpuintf[CPU_TYPE(cpunum)].address_bits) - 1;
+}
+
+/***************************************************************************
+  Returns the address shift factor for the active CPU
+***************************************************************************/
+int cpu_address_shift(void)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	return cpuintf[CPU_TYPE(cpunum)].address_shift;
 }
 
 /***************************************************************************
@@ -3289,29 +3264,8 @@ const char *cpu_win_layout(void)
 ***************************************************************************/
 unsigned cpu_dasm(char *buffer, unsigned pc)
 {
-	UINT8 *base;
-/*
- * Unfortunately we need some kludges here :(
- * I'm not entirely sure if &ROM[pc] and &OP_ROM[pc]
- * couldn't be the same, though.
- */
-	switch( CPU_TYPE(activecpu) )
-	{
-#if (HAS_I86)
-	case CPU_I86:
-		base = &OP_ROM[pc];
-		break;
-#endif
-#if (HAS_TMS34010)
-	case CPU_TMS34010:
-		base = &OP_ROM[pc>>3];
-        break;
-#endif
-    default:
-		base = &ROM[pc];
-    }
     if( activecpu >= 0 )
-		return CPUDASM(activecpu,base,buffer,pc);
+		return CPUDASM(activecpu,buffer,pc);
 	return 0;
 }
 
@@ -3398,6 +3352,17 @@ unsigned cputype_address_mask(int cpu_type)
 	cpu_type &= ~CPU_FLAGS_MASK;
 	if( cpu_type < CPU_COUNT )
 		return (1 << cpuintf[cpu_type].address_bits) - 1;
+    return 0;
+}
+
+/***************************************************************************
+  Returns the address shift factor for a specific CPU type
+***************************************************************************/
+int cputype_address_shift(int cpu_type)
+{
+	cpu_type &= ~CPU_FLAGS_MASK;
+	if( cpu_type < CPU_COUNT )
+		return cpuintf[cpu_type].address_shift;
     return 0;
 }
 
@@ -3692,7 +3657,6 @@ void cpunum_set_reg(int cpunum, int regnum, unsigned val)
 ***************************************************************************/
 unsigned cpunum_dasm(int cpunum,char *buffer,unsigned pc)
 {
-	UINT8 *base;
 	unsigned result;
 	int oldactive;
 
@@ -3705,27 +3669,7 @@ unsigned cpunum_dasm(int cpunum,char *buffer,unsigned pc)
     memorycontextswap (activecpu);
 	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
 
-/*
- * Unfortunately we need some kludges here :(
- * I'm not entirely sure if &ROM[pc] and &OP_ROM[pc]
- * couldn't be the same, though.
- */
-	switch( CPU_TYPE(activecpu) )
-	{
-#if (HAS_I86)
-	case CPU_I86:
-		base = &OP_ROM[pc];
-		break;
-#endif
-#if (HAS_TMS34010)
-	case CPU_TMS34010:
-		base = &OP_ROM[pc>>3];
-        break;
-#endif
-    default:
-		base = &ROM[pc];
-    }
-    result = CPUDASM(activecpu,base,buffer,pc);
+	result = CPUDASM(activecpu,buffer,pc);
 
 	/* update the CPU's context */
     if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
@@ -3866,7 +3810,7 @@ static const char *Dummy_info(void *context, int regnum)
 	return "";
 }
 
-static unsigned Dummy_dasm(UINT8 *base, char *buffer, unsigned pc)
+static unsigned Dummy_dasm(char *buffer, unsigned pc)
 {
 	strcpy(buffer, "???");
 	return 1;

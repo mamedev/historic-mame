@@ -1,4 +1,5 @@
 /* tilemap.h */
+
 #ifndef TILEMAP_H
 #define TILEMAP_H
 
@@ -16,8 +17,9 @@
 	can appear in more than one plane.
 */
 
-#define TILEMAP_BACK			0x10
-#define TILEMAP_FRONT			0x20
+#define TILEMAP_IGNORE_TRANSPARENCY		0x10
+#define TILEMAP_BACK					0x20
+#define TILEMAP_FRONT					0x40
 /*
 	when rendering a split layer, pass TILEMAP_FRONT or TILEMAP_BACK or'd with the
 	tile_priority value to specify the part to draw.
@@ -46,13 +48,14 @@ extern struct tile_info {
 }
 
 /* tile flags, set by get_tile_info callback */
-#define TILE_FLIPX				0x01
-#define TILE_FLIPY				0x02
-
-#define TILE_SPLIT(T)			((T)<<2)
+#define TILE_FLIPX					0x01
+#define TILE_FLIPY					0x02
+#define TILE_SPLIT(T)				((T)<<2)
 /* TILE_SPLIT is for use with TILEMAP_SPLIT layers.  It selects transparency type. */
+#define TILE_IGNORE_TRANSPARENCY	0x10
+/* TILE_IGNORE_TRANSPARENCY is used if you need an opaque tile in a transparent layer */
 
-#define TILE_FLIPYX(YX)			(YX)
+#define TILE_FLIPYX(YX)				(YX)
 #define TILE_FLIPXY(XY)			((((XY)>>1)|((XY)<<1))&3)
 /*
 	TILE_FLIPYX is a shortcut that can be used by approx 80% of games,
@@ -72,6 +75,7 @@ struct tilemap {
 
 	void (*mark_visible)( int, int );
 	void (*draw)( int, int );
+	void (*draw_opaque)( int, int );
 
 	unsigned char **pendata;
 	unsigned short **paldata;
@@ -123,9 +127,16 @@ struct tilemap *tilemap_create(
 	void (*tile_get_info)( int col, int row ),
 	int type,
 	int tile_width, int tile_height, /* in pixels */
-	int num_cols, int num_rows, /* in tiles */
-	int scroll_rows, int scroll_cols
+	int num_cols, int num_rows /* in tiles */
 );
+
+void tilemap_dispose( struct tilemap *tilemap );
+/* you needn't to call this in vh_close.  It's supplied for games that need to change
+	tile size or cols/rows dynamically */
+
+int tilemap_set_scroll_cols( struct tilemap *tilemap, int scroll_cols );
+int tilemap_set_scroll_rows( struct tilemap *tilemap, int scroll_rows );
+/* these return 1 if there is insufficient memory */
 
 void tilemap_mark_tile_dirty( struct tilemap *tilemap, int col, int row );
 void tilemap_mark_all_tiles_dirty( struct tilemap *tilemap );
@@ -133,6 +144,9 @@ void tilemap_mark_all_pixels_dirty( struct tilemap *tilemap );
 
 void tilemap_set_scrollx( struct tilemap *tilemap, int row, int value );
 void tilemap_set_scrolly( struct tilemap *tilemap, int col, int value );
+
+//void tilemap_set_screen_linescroll( struct tilemap *tilemap, int row, int value );
+/* not yet supported */
 
 #define TILEMAP_FLIPX 0x1
 #define TILEMAP_FLIPY 0x2
@@ -143,5 +157,6 @@ void tilemap_set_enable( struct tilemap *tilemap, int enable );
 void tilemap_update( struct tilemap *tilemap );
 void tilemap_render( struct tilemap *tilemap );
 void tilemap_draw( struct osd_bitmap *dest, struct tilemap *tilemap, int priority );
+
 
 #endif

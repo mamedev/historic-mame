@@ -20,9 +20,6 @@
 
 #define OPL3CONVERTFREQUENCY
 
-/* Main emulated vs non-emulated switch */
-/* default : Use emulated YM3812 */
-int use_emulated_ym3812 = 1;
 
 /* Emulated YM3812 variables and defines */
 static ym3812* ym = 0;
@@ -43,14 +40,13 @@ static double timer_scale;
 static int aOPLFreqArray[16];		// Up to 9 channels..
 
 /* These ones are used by both */
-struct YM3812interface *intf;
+static const struct YM3812interface *intf;
 static void *timer1;
 static void *timer2;
 
 /* Function procs to access the selected YM type */
-static int ( *sh_start )( struct YM3812interface *interface );
+static int ( *sh_start )( const struct YM3812interface *interface );
 static void ( *sh_stop )( void );
-static void ( *sh_update )( void );
 static int ( *status_port_0_r )( int offset );
 static void ( *control_port_0_w )( int offset, int data );
 static void ( *write_port_0_w )( int offset, int data );
@@ -88,7 +84,7 @@ void timer2_callback (int param)
 	timer2 = timer_set (TIME_IN_USEC (timer2_val * 320) * timer_scale, 0, timer2_callback);
 }
 
-int nonemu_YM3812_sh_start(struct YM3812interface *interface)
+int nonemu_YM3812_sh_start(const struct YM3812interface *interface)
 {
 	pending_register = -1;
 	timer1 = timer2 = 0;
@@ -106,9 +102,6 @@ void nonemu_YM3812_sh_stop(void)
 {
 }
 
-void nonemu_YM3812_sh_update(void)
-{
-}
 
 
 int nonemu_YM3812_status_port_0_r(int offset)
@@ -280,7 +273,7 @@ void emu_ym3812_fixed_pointer_problem_update( int nNoll, void *pBuffer, int nLen
 	ym3812_Update( ym, pBuffer, nLength );
 }
 
-int emu_YM3812_sh_start( struct YM3812interface *interface ) {
+int emu_YM3812_sh_start(const struct YM3812interface *interface ) {
 	int rate = Machine->sample_rate;
 
 	if ( ym )		/* duplicate entry */
@@ -325,9 +318,6 @@ void emu_YM3812_sh_stop( void ) {
 		free( buffer );
 }
 
-void emu_YM3812_sh_update( void ) {
-}
-
 int emu_YM3812_status_port_0_r( int offset ) {
 	return ym3812_ReadStatus( ym );
 }
@@ -354,12 +344,11 @@ int emu_YM3812_read_port_0_r( int offset ) {
 	Begin of YM3812 interface stubs block
  **********************************************************************************************/
 
-int YM3812_sh_start( struct YM3812interface *interface ) {
+int YM3812_sh_start(const struct YM3812interface *interface ) {
 
-	if ( use_emulated_ym3812 ) {
+	if ( options.use_emulated_ym3812 ) {
 		sh_start = emu_YM3812_sh_start;
 		sh_stop = emu_YM3812_sh_stop;
-		sh_update = emu_YM3812_sh_update;
 		status_port_0_r = emu_YM3812_status_port_0_r;
 		control_port_0_w = emu_YM3812_control_port_0_w;
 		write_port_0_w = emu_YM3812_write_port_0_w;
@@ -367,7 +356,6 @@ int YM3812_sh_start( struct YM3812interface *interface ) {
 	} else {
 		sh_start = nonemu_YM3812_sh_start;
 		sh_stop = nonemu_YM3812_sh_stop;
-		sh_update = nonemu_YM3812_sh_update;
 		status_port_0_r = nonemu_YM3812_status_port_0_r;
 		control_port_0_w = nonemu_YM3812_control_port_0_w;
 		write_port_0_w = nonemu_YM3812_write_port_0_w;
@@ -380,10 +368,6 @@ int YM3812_sh_start( struct YM3812interface *interface ) {
 
 void YM3812_sh_stop( void ) {
 	(*sh_stop)();
-}
-
-void YM3812_sh_update( void ) {
-	(*sh_update)();
 }
 
 int YM3812_status_port_0_r( int offset ) {

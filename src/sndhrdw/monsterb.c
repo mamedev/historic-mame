@@ -8,11 +8,7 @@ struct TMS3617_interface
 };
 
 /* note: we work with signed samples here, unlike other drivers */
-#ifdef SIGNED_SAMPLES
-	#define AUDIO_CONV(A) (A)
-#else
-	#define AUDIO_CONV(A) (A+0x80)
-#endif
+#define AUDIO_CONV(A) (A)
 
 static int emulation_rate;
 static struct TMS3617_interface *interface;

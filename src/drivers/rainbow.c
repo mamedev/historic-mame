@@ -96,25 +96,31 @@ static struct MemoryWriteAddress rainbow_writemem[] =
 	{ 0xd00000, 0xd0ffff, MWA_BANK4 },
 	{ 0x380000, 0x380003, rastan_videocontrol_w },	/* sprite palette bank, coin counters, other unknowns */
 	{ 0x3e0000, 0x3e0003, rastan_sound_w },
+#ifdef MAME_DEBUG
 	{ 0x3c0000, 0x3c0003, MWA_NOP },
+#endif
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryReadAddress jumping_readmem[] =
 {
 	{ 0x000000, 0x08ffff, MRA_ROM },
-	{ 0x10c000, 0x10ffff, MRA_BANK1 },	/* RAM */
+	{ 0x10c000, 0x10ffff, MRA_BANK1 },				/* RAM */
 	{ 0x200000, 0x20ffff, paletteram_word_r },
     { 0x400000, 0x400001, input_port_0_r },
     { 0x400002, 0x400003, input_port_1_r },
 	{ 0x400006, 0x400007, rastan_sound_r },			/* What Chip ? */
-    { 0x401000, 0x401001, input_port_3_r },
-    { 0x401002, 0x401003, input_port_4_r },
+    { 0x401000, 0x401001, input_port_2_r },
+    { 0x401002, 0x401003, input_port_3_r },
 	{ 0xc00000, 0xc03fff, rastan_videoram1_r },
 	{ 0xc04000, 0xc07fff, MRA_BANK2 },
 	{ 0xc08000, 0xc0bfff, rastan_videoram3_r },
 	{ 0xc0c000, 0xc0ffff, MRA_BANK3 },
 	{ 0x440000, 0x4407ff, MRA_BANK4, &rastan_spriteram },
+    { 0xd00800, 0xd00fff, MRA_BANK5 }, 				/* Needed for Attract Mode */
+#ifdef MAME_DEBUG
+    { 0x420000, 0x420001, MRA_NOP},					/* Read, but result not used */
+#endif
 	{ -1 }  /* end of table */
 };
 
@@ -131,6 +137,11 @@ static struct MemoryWriteAddress jumping_writemem[] =
    	{ 0xc40000, 0xc40003, rastan_scrollX_w, &rastan_scrollx },  /* scroll X  1st.w plane1  2nd.w plane2 */
     { 0x440000, 0x4407ff, MWA_BANK4 },
 	{ 0x3e0000, 0x3e0003, rastan_sound_w },
+    { 0xd00800, 0xd00fff, MWA_BANK5 }, 				/* Needed for Attract Mode */
+#ifdef MAME_DEBUG
+    { 0x3c0000, 0x3c0001, MWA_NOP },				/* Watchdog ? */
+    { 0x800000, 0x80ffff, MWA_NOP },				/* C-Chip (not used) */
+#endif
 	{ -1 }  /* end of table */
 };
 
@@ -247,14 +258,15 @@ INPUT_PORTS_START( rainbow_input_ports )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( jumping_input_ports )
+
 	PORT_START	/* DIP SWITCH A */
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
@@ -278,49 +290,35 @@ INPUT_PORTS_START( jumping_input_ports )
 	PORT_DIPSETTING(    0x01, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "100k,1000k" )
-	PORT_DIPSETTING(    0x04, "None" )
+	PORT_DIPSETTING(    0x04, "100k,1000k" )
+	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPNAME( 0x08, 0x00, "Complete Bonus" )
-	PORT_DIPSETTING(    0x00, "1 Up" )
-	PORT_DIPSETTING(    0x08, "None" )
+	PORT_DIPSETTING(    0x08, "1 Up" )
+	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x10, "1" )
-	PORT_DIPSETTING(    0x30, "2" )
-	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "4" )
-	PORT_DIPNAME( 0x40, 0x00, "Language" )
-	PORT_DIPSETTING(    0x00, "English" )
-	PORT_DIPSETTING(    0x40, "Japanese" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, "Coin Type" )
 	PORT_DIPSETTING(    0x00, "Type 1" )
 	PORT_DIPSETTING(    0x80, "Type 2" )
 
-	PORT_START	/* Probably not used! */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE )
-
     PORT_START  /* 401001 - Coins Etc. */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )						/* OK */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )              		/* OK */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )             		/* OK */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )             		/* OK */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START	/* 401003 - Player Controls */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )            		/* OK */
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 )            		/* OK */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )	/* OK */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )   /* OK */
+  	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
+  	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 )
+  	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+  	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
 
-	PORT_START	/* Probably not used */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_PLAYER2 )
-
-	PORT_START	/* Probably not used */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 

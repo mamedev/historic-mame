@@ -22,7 +22,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "driver.h"
-#include "osd_dbg.h"
+#include "mamedbg.h"
 #include "m6800.h"
 
 #ifdef MAME_DEBUG

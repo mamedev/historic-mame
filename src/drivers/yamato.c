@@ -460,7 +460,39 @@ ROM_START( yamato2_rom )
 	ROM_LOAD( "1.5v",         0x0000, 0x0800, 0x3aad9e3c )
 ROM_END
 
+/**** Yamato high score save routine - RJF (Apr 1, 1999) ****/
+static int yamato_hiload(void){
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
+        if (memcmp(&RAM[0x6106],"\x11\x11\x11",3) == 0){
+		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
+		if (f){
+                        osd_fread(f,&RAM[0x6038], 3);
+                        osd_fread(f,&RAM[0x6100], 9);
+                        osd_fread(f,&RAM[0x6110], 9);
+                        osd_fread(f,&RAM[0x6120], 9);
+                        osd_fread(f,&RAM[0x6130], 9);
+                        osd_fread(f,&RAM[0x6140], 9);
+			osd_fclose(f);
+
+		}
+		return 1;
+	}
+	return 0;  /* we can't load the hi scores yet */
+}
+
+static void yamato_hisave(void){
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
+
+                        osd_fwrite(f,&RAM[0x6038], 3);
+                        osd_fwrite(f,&RAM[0x6100], 9);
+                        osd_fwrite(f,&RAM[0x6110], 9);
+                        osd_fwrite(f,&RAM[0x6120], 9);
+                        osd_fwrite(f,&RAM[0x6130], 9);
+                        osd_fwrite(f,&RAM[0x6140], 9);
+			osd_fclose(f);
+}
 
 struct GameDriver yamato_driver =
 {
@@ -484,7 +516,7 @@ struct GameDriver yamato_driver =
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
-	0, 0
+        yamato_hiload, yamato_hisave
 };
 
 struct GameDriver yamato2_driver =
@@ -509,5 +541,5 @@ struct GameDriver yamato2_driver =
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
-	0, 0
+        yamato_hiload, yamato_hisave
 };

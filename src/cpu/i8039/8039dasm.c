@@ -23,6 +23,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "memory.h"
+
 typedef unsigned char byte;
 
 #define FMT(a,b) a, b
@@ -189,7 +191,7 @@ static void InitDasm8039(void)
     OpInizialized = 1;
 }
 
-int Dasm8039(char *str,byte *addr)
+int Dasm8039(char *buffer, unsigned pc)
 {
     int b, a, d, r, p;	/* these can all be filled in by parsing an instruction */
     int i;
@@ -200,72 +202,86 @@ int Dasm8039(char *str,byte *addr)
 
     if (!OpInizialized) InitDasm8039();
 
-    op = -1;	/* no matching opcode */
-    for ( i = 0; i < MAX_OPS; i++) {
-	if ((*addr & Op[i].mask) == Op[i].bits) {
-	    if (op != -1) {
-		printf("Error: opcode %02.2X matches %d (%s) and %d (%s)\n",
-		    *addr,i,Op[i].fmt,op,Op[op].fmt);
-	    }
-	    op = i;
+	code = cpu_readop(pc);
+    op = -1;    /* no matching opcode */
+	for ( i = 0; i < MAX_OPS; i++)
+	{
+		if( (code & Op[i].mask) == Op[i].bits )
+		{
+			if (op != -1)
+			{
+				fprintf(stderr, "Error: opcode %02.2X matches %d (%s) and %d (%s)\n",
+					code,i,Op[i].fmt,op,Op[op].fmt);
+			}
+			op = i;
+		}
 	}
+	if (op == -1)
+	{
+		sprintf(buffer,"db %2.2x",code);
+		return cnt;
     }
-    if (op == -1) {
-	sprintf(str,"db %2.2x",*addr);
-	return cnt;
-    }
-    code = *addr;
-    if (Op[op].extcode) {
-	cnt++; addr++;
-	code <<= 8;
-	code |= *addr;
-	bit = 15;
-    } else {
-	bit = 7;
+	if (Op[op].extcode)
+	{
+		cnt++;
+		code <<= 8;
+		code |= cpu_readop_arg((pc+1)&0xffff);
+		bit = 15;
+	}
+	else
+	{
+		bit = 7;
     }
 
     /* shift out operands */
     cp = Op[op].parse;
     b = a = d = r = p = 0;
 
-    while (bit >= 0) {
-	/* printf("{%c/%d}",*cp,bit); */
-	switch(*cp) {
-	    case 'a': a <<=1; a |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
-	    case 'b': b <<=1; b |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
-	    case 'd': d <<=1; d |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
-	    case 'r': r <<=1; r |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
-	    case 'p': p <<=1; p |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
-	    case ' ': break;
-	    case '1': case '0':  bit--; break;
-	    case '\0': printf("premature end of parse string, opcode %x, bit = %d\n",code,bit); exit(1);
-	}
-	cp++;
+	while (bit >= 0)
+	{
+		/* printf("{%c/%d}",*cp,bit); */
+		switch(*cp)
+		{
+			case 'a': a <<=1; a |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
+			case 'b': b <<=1; b |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
+			case 'd': d <<=1; d |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
+			case 'r': r <<=1; r |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
+			case 'p': p <<=1; p |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
+			case ' ': break;
+			case '1': case '0':  bit--; break;
+			case '\0': printf("premature end of parse string, opcode %x, bit = %d\n",code,bit); exit(1);
+		}
+		cp++;
     }
 
     /* now traverse format string */
     cp = Op[op].fmt;
-    while (*cp) {
-	if (*cp == '%') {
-	    char num[10], *q;
-	    cp++;
-	    switch (*cp++) {
-		case 'A': sprintf(num,"$%04.4X",a); break;
-		case 'B': sprintf(num,"%d",b); break;
-		case 'D': sprintf(num,"%d",d); break;
-		case 'R': sprintf(num,"r%d",r); break;
-		case 'P': sprintf(num,"p%d",p); break;
-		default:
-		    printf("illegal escape character in format '%s'\n",Op[op].fmt);
-		    exit(1);
-	    }
-	    q = num; while (*q) *str++ = *q++;
-	    *str = '\0';
-	} else {
-	    *str++ = *cp++;
-	    *str = '\0';
+	while (*cp)
+	{
+		if (*cp == '%')
+		{
+			char num[10], *q;
+			cp++;
+			switch (*cp++)
+			{
+				case 'A': sprintf(num,"$%04.4X",a); break;
+				case 'B': sprintf(num,"%d",b); break;
+				case 'D': sprintf(num,"%d",d); break;
+				case 'R': sprintf(num,"r%d",r); break;
+				case 'P': sprintf(num,"p%d",p); break;
+				default:
+				printf("illegal escape character in format '%s'\n",Op[op].fmt);
+				exit(1);
+			}
+			q = num; while (*q) *buffer++ = *q++;
+			*buffer = '\0';
+		}
+		else
+		{
+			*buffer++ = *cp++;
+			*buffer = '\0';
+		}
 	}
-    }
 
     return cnt;
 }

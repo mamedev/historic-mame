@@ -124,6 +124,7 @@ char *mode_desc;
 int gfx_mode;
 int gfx_width;
 int gfx_height;
+int tw256x224_hor;
 
 static int auto_resolution;
 static int viswidth;
@@ -157,17 +158,14 @@ static uclock_t start_time,end_time;    /* to calculate fps average on exit */
 #define FRAMES_TO_SKIP 20       /* skip the first few frames from the FPS calculation */
 							/* to avoid counting the copyright and info screens */
 
+unsigned char tw224x288ns_h, tw224x288ns_v, tw224x288sc_h, tw224x288sc_v;
+unsigned char tw256x256ns_h, tw256x256ns_v, tw256x256sc_h, tw256x256sc_v;
+unsigned char tw256x256ns_hor_h, tw256x256ns_hor_v, tw256x256sc_hor_h, tw256x256sc_hor_v;
+unsigned char tw256x256ns_57_h, tw256x256ns_57_v, tw256x256sc_57_h, tw256x256sc_57_v;
+unsigned char tw256x256ns_h57_h, tw256x256ns_h57_v, tw256x256sc_h57_h, tw256x256sc_h57_v;
+unsigned char tw288x224ns_h, tw288x224ns_v, tw288x224sc_h, tw288x224sc_v;
 
 struct vga_tweak { int x, y; Register *reg; int reglen; int syncvgafreq; int scanlines; };
-struct vga_tweak vga_orig_tweaked[] = {
-	{ 256, 256, orig_scr256x256scanlines, sizeof(scr256x256scanlines)/sizeof(Register), 0, 1},
-	{ 288, 224, orig_scr288x224scanlines, sizeof(scr288x224scanlines)/sizeof(Register), 0, 1},
-	{ 224, 288, orig_scr224x288scanlines, sizeof(scr224x288scanlines)/sizeof(Register), 0, 1},
-	{ 256, 256, orig_scr256x256, sizeof(scr256x256)/sizeof(Register),  0, 0 },
-	{ 288, 224, orig_scr288x224, sizeof(scr288x224)/sizeof(Register),  0, 0 },
-	{ 224, 288, orig_scr224x288, sizeof(scr224x288)/sizeof(Register),  0, 0 },
-	{ 0, 0 }
-};
 struct vga_tweak vga_tweaked[] = {
 	{ 256, 256, scr256x256scanlines, sizeof(scr256x256scanlines)/sizeof(Register), 1, 1},
 	{ 288, 224, scr288x224scanlines, sizeof(scr288x224scanlines)/sizeof(Register), 0, 1},
@@ -455,6 +453,21 @@ static void select_display_mode(void)
 			use_vesa = 0;
 	}
 
+	/* Select desired tweaked mode for 256x224 */
+	/* still no real 256x224 mode supported */
+	if (use_vesa == 0 && width <= 256 && height <= 244)
+	{
+		if (tw256x224_hor)
+		{
+			gfx_width = 256;
+			gfx_height = 256;
+		}
+		else
+		{
+			gfx_width = 288;
+			gfx_height = 224;
+		}
+	}
 
 	/* If using tweaked modes, check if there exists one to fit
 	   the screen in, otherwise use VESA */
@@ -1013,25 +1026,6 @@ int osd_set_display(int width,int height, int attributes)
 
 		/* find the matching tweaked mode */
 		/* use noscanline modes if scanline modes not possible */
-                if (!found && video_sync == 0 && always_synced == 0 && wait_vsync == 0)
-		{
-			/* if vsync not requested, first look for more compatible modes */
-			for (i=0; ((vga_orig_tweaked[i].x != 0) && !found); i++)
-			{
-				int scan;
-				scan = vga_orig_tweaked[i].scanlines;
-
-				if (gfx_width  == vga_orig_tweaked[i].x &&
-					gfx_height == vga_orig_tweaked[i].y &&
-					(scanlines == scan || scan == 0))
-				{
-					reg = vga_orig_tweaked[i].reg;
-					reglen = vga_orig_tweaked[i].reglen;
-					videofreq = 0;  /* always use the most compatible vgafreq 0 */
-					found = 1;
-				}
-			}
-		}
 		for (i=0; ((vga_tweaked[i].x != 0) && !found); i++)
 		{
 			int scan;
@@ -1197,7 +1191,99 @@ int osd_set_display(int width,int height, int attributes)
 			return 0;
 
 		/* set the VGA clock */
-		reg[0].value = (reg[0].value & 0xf3) | (videofreq << 2);
+		if (video_sync || always_synced || wait_vsync)
+			reg[0].value = (reg[0].value & 0xf3) | (videofreq << 2);
+
+		/* set the horizontal and vertical total */
+		if ((gfx_width == 224) && (gfx_height == 288))
+		{
+			if (scanlines)
+			{
+				reg[1].value = tw224x288sc_h;
+				reg[7].value = tw224x288sc_v;
+			}
+			else
+			{
+				reg[1].value = tw224x288ns_h;
+				reg[7].value = tw224x288ns_v;
+			}
+		}
+		else if ((gfx_width == 288) && (gfx_height == 224))
+		{
+			if (scanlines)
+			{
+				reg[1].value = tw288x224sc_h;
+				reg[7].value = tw288x224sc_v;
+			}
+			else
+			{
+				reg[1].value = tw288x224ns_h;
+				reg[7].value = tw288x224ns_v;
+			}
+		}
+		else if ((gfx_width == 256) && (gfx_height == 256))
+		{
+			if (Machine->orientation & ORIENTATION_SWAP_XY)
+			{
+				/* vertical 256x256 */
+				if (Machine->drv->frames_per_second != 57)
+				{
+					if (scanlines)
+					{
+						reg[1].value = tw256x256sc_h;
+						reg[7].value = tw256x256sc_v;
+					}
+					else
+					{
+						reg[1].value = tw256x256ns_h;
+						reg[7].value = tw256x256ns_v;
+					}
+				}
+				else
+				{
+					if (scanlines)
+					{
+						reg[1].value = tw256x256sc_57_h;
+						reg[7].value = tw256x256sc_57_v;
+					}
+					else
+					{
+						reg[1].value = tw256x256ns_57_h;
+						reg[7].value = tw256x256ns_57_v;
+					}
+				}
+			}
+			else
+			{
+				/* horizontal 256x256 */
+				if (Machine->drv->frames_per_second != 57)
+				{
+					if (scanlines)
+					{
+						reg[1].value = tw256x256sc_hor_h;
+						reg[7].value = tw256x256sc_hor_v;
+					}
+					else
+					{
+						reg[1].value = tw256x256ns_hor_h;
+						reg[7].value = tw256x256ns_hor_v;
+					}
+				}
+				else
+				{
+					if (scanlines)
+					{
+						reg[1].value = tw256x256sc_h57_h;
+						reg[7].value = tw256x256sc_h57_v;
+					}
+					else
+					{
+						reg[1].value = tw256x256ns_h57_h;
+						reg[7].value = tw256x256ns_h57_v;
+					}
+				}
+			}
+		}
 
 		outRegArray(reg,reglen);
 	}
@@ -1791,7 +1877,7 @@ void osd_update_video_and_audio(void)
 
 			divdr = 100 * FRAMESKIP_LEVELS;
 			fps = (Machine->drv->frames_per_second * (FRAMESKIP_LEVELS - frameskip) * speed + (divdr / 2)) / divdr;
-			sprintf(buf,"fskp%2d %3d%%(%3d/%d fps)",frameskip,speed,fps,Machine->drv->frames_per_second);
+			sprintf(buf,"%s%2d %3d%%(%2d/%d fps)",autoframeskip?"autofskp":"fskp",frameskip,speed,fps,Machine->drv->frames_per_second);
 			ui_text(buf,Machine->uiwidth-strlen(buf)*Machine->uifontwidth,0);
 			if (vector_game)
 			{
@@ -1873,7 +1959,7 @@ void osd_update_video_and_audio(void)
 				frameskip += 2;
 				if (frameskip >= FRAMESKIP_LEVELS) frameskip = FRAMESKIP_LEVELS-1;
 			}
-			else if (adjspeed < 99)	/* allow 99% speed */
+			else if (adjspeed < 99) /* allow 99% speed */
 			{
 				frameskipadjust = 0;
 				/* don't push frameskip too far if we are close to 100% speed */
@@ -1898,7 +1984,17 @@ void osd_update_video_and_audio(void)
 
 	if (osd_key_pressed_memory(OSD_KEY_FRAMESKIP))
 	{
-		frameskip = (frameskip + 1) % 12;
+		if (autoframeskip)
+		{
+			autoframeskip = 0;
+			frameskip = 0;
+		}
+		else
+		{
+			frameskip = (frameskip + 1) % 12;
+			if (frameskip == 0) autoframeskip = 1;
+		}
+
 		if (showfps == 0)
 			showfpstemp = 2*Machine->drv->frames_per_second;
 

@@ -242,10 +242,10 @@ struct osd_bitmap
 #define OSD_JOY4_FIRE   60      /* any of the fourth joystick fire buttons */
 #define OSD_MAX_JOY     60
 
+/* We support 4 players for each analog control */
+#define OSD_MAX_JOY_ANALOG	4
 #define X_AXIS          1
 #define Y_AXIS          2
-
-
 
 int osd_init(void);
 void osd_exit(void);
@@ -304,7 +304,7 @@ int osd_read_keyrepeat(void);
 int osd_key_invalid(int keycode);
 const char *osd_joy_name(int joycode);
 const char *osd_key_name(int keycode);
-void osd_poll_joystick(void);
+void osd_poll_joysticks(void);
 int osd_joy_pressed(int joycode);
 
 /* Joystick calibration routines BW 19981216 */
@@ -321,10 +321,10 @@ void osd_joystick_calibrate (void);
 void osd_joystick_end_calibration (void);
 
 
-void osd_trak_read(int *deltax,int *deltay);
+void osd_trak_read(int player,int *deltax,int *deltay);
 
 /* return values in the range -128 .. 128 (yes, 128, not 127) */
-void osd_analogjoy_read(int *analog_x, int *analog_y);
+void osd_analogjoy_read(int player,int *analog_x, int *analog_y);
 
 
 /* inp header */

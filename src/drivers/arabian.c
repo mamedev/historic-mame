@@ -406,7 +406,7 @@ struct GameDriver arabian_driver =
 	"1983",
 	"Atari",
 	"Jarek Burczynski (MAME driver)\nMarco Cassili",
-	0,
+	GAME_WRONG_COLORS,
 	&machine_driver,
 	0,
 

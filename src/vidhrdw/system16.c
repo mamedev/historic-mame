@@ -13,7 +13,6 @@ Each page is an arrangement of 8x8 tiles, 64 tiles wide, and 32 tiles high.
 ***************************************************************************/
 
 #include "driver.h"
-//#include "vidhrdw/generic.h"
 #include "sprite.h" /* WIP */
 
 #define MAX_SPRITES 64
@@ -198,26 +197,26 @@ int sys16_vh_start( void ){
 		get_bg_tile_info,
 		TILEMAP_OPAQUE,
 		8,8,
-		64*2,32*2,
-		1,1 );
+		64*2,32*2 );
 
 	foreground = tilemap_create(
 		get_fg_tile_info,
 		TILEMAP_TRANSPARENT,
 		8,8,
-		64*2,32*2,
-		1,1 );
+		64*2,32*2 );
 
 	text_layer = tilemap_create(
 		get_text_tile_info,
 		TILEMAP_TRANSPARENT,
 		8,8,
-		40,28,
-		0,0 );
+		40,28 );
 
 
-	if( background && foreground && text_layer ){
+	if( background && foreground && text_layer )
+	{
 		int i;
+
+
 		/* initialize all entries to black - needed for Golden Axe*/
 		for( i=0; i<2048; i++ ){
 			palette_change_color( i, 0,0,0 );
@@ -225,6 +224,11 @@ int sys16_vh_start( void ){
 
 		foreground->transparent_pen = 0;
 		text_layer->transparent_pen = 0;
+
+		tilemap_set_scroll_rows(background,1);
+		tilemap_set_scroll_cols(background,1);
+		tilemap_set_scroll_rows(foreground,1);
+		tilemap_set_scroll_cols(foreground,1);
 
 		sys16_tile_bank0 = 0;
 		sys16_tile_bank1 = 1;
@@ -256,6 +260,7 @@ void sys16_draw_sprites( struct osd_bitmap *bitmap, int priority ){
 
 	unsigned short *source = (unsigned short *)sys16_spriteram;
 	unsigned short *finish = source+MAX_SPRITES*8;
+
 
 	switch( sys16_spritesystem  ){
 		case 1: /* standard sprite hardware */
@@ -340,13 +345,11 @@ void sys16_draw_sprites( struct osd_bitmap *bitmap, int priority ){
 
 					sprite_info.dest_h = end_line - sy;
 					sprite_info.source_h = sprite_info.dest_h*(0x400+zoom)/0x400;
-					sprite_info.source_baseaddr = base_gfx + number*4 + (sys16_obj_bank[bank] << 17);
 
 					if( vertical_flip ){
 						width &= 0x7f;
 						width = 0x80-width;
 						sprite_info.source_w = width*4;
-						sprite_info.source_baseaddr -= sprite_info.source_w*sprite_info.source_h;
 					}
 					else{
 						width &= 0x7f;
@@ -362,6 +365,9 @@ void sys16_draw_sprites( struct osd_bitmap *bitmap, int priority ){
 							number += 1-width;
 						}
 					}
+
+					sprite_info.source_baseaddr = base_gfx + number*4 + (sys16_obj_bank[bank] << 17);
+					if( vertical_flip ) sprite_info.source_baseaddr -= sprite_info.source_h*sprite_info.source_w;
 
 					sprite_info.dest_x = sx;
 					sprite_info.dest_y = sy;

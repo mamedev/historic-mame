@@ -11,7 +11,28 @@ static struct osd_bitmap *screen_bitmap;
 
 int battlane_bitmap_size;
 unsigned char *battlane_bitmap;
+static int battlane_video_ctrl;
 
+int battlane_spriteram_size;
+unsigned char *battlane_spriteram;
+
+
+void battlane_video_ctrl_w(int offset, int data)
+{
+#if 1
+	if (errorlog)
+	{
+                fprintf(errorlog, "Video control =%02x)\n", data);
+	}
+#endif
+
+	battlane_video_ctrl=data;
+}
+
+int battlane_video_ctrl_r(int offset)
+{
+	return battlane_video_ctrl;
+}
 
 void battlane_bitmap_w(int offset, int data)
 {
@@ -19,6 +40,7 @@ void battlane_bitmap_w(int offset, int data)
 
 	unsigned char *RAM =
 		Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 #if 0
 	if (errorlog)
 	{
@@ -27,7 +49,7 @@ void battlane_bitmap_w(int offset, int data)
 	}
 #endif
 
-	orval=(RAM[0x1c00]>>2)&0x07;
+    orval=(~battlane_video_ctrl>>1)&0x07;
 
 	if (orval==0)
 		orval=7;
@@ -42,9 +64,7 @@ void battlane_bitmap_w(int offset, int data)
 		{
 		    screen_bitmap->line[(offset / 0x100) * 8+i][(0x2000-offset) % 0x100]&=~orval;
 		}
-
 	}
-
 	battlane_bitmap[offset]=data;
 }
 
@@ -53,7 +73,7 @@ int battlane_bitmap_r(int offset)
 	return battlane_bitmap[offset];
 }
 
-
+#if 0
 void battlane_vh_convert_color_prom (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
@@ -82,11 +102,27 @@ void battlane_vh_convert_color_prom (unsigned char *palette, unsigned short *col
 		bit2 = (i >> 7) & 0x01;
 		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 	}
-
 }
 
+#endif
 
 
+
+#ifdef MAME_DEBUG
+void battlane_dump_bitmap(void)
+{
+    int i,j;
+    FILE *fp=fopen("SCREEN.DMP", "w+b");
+    if (fp)
+    {
+        for ( i=0; i<0x20*8-1; i++)
+        {
+            fwrite(screen_bitmap->line[i], 0x20*8, 1, fp);
+        }
+        fclose(fp);
+    }
+}
+#endif
 
 
 
@@ -110,6 +146,8 @@ int battlane_vh_start(void)
 		return 1;
 	}
 
+	memset(battlane_spriteram, 0, battlane_spriteram_size);
+
 	return 0;
 }
 
@@ -131,6 +169,33 @@ void battlane_vh_stop(void)
 		free(battlane_bitmap);
 	}
 }
+
+/***************************************************************************
+
+  Build palette from palette RAM
+
+***************************************************************************/
+
+INLINE void battlane_build_palette(void)
+{
+	int offset;
+    unsigned char *PALETTE =
+        Machine->memory_region[3];
+
+/*    unsigned char *RAM =
+		Machine->memory_region[Machine->drv->cpu[0].memory_region];
+ */
+    for (offset = 0; offset < 0x40; offset++)
+	{
+          int palette = PALETTE[offset];
+          int red, green, blue, bright;
+          red   = (palette&0x07) * 16*2;
+          green = ((palette>>3)&0x07) * 16*2;
+          blue  = ((palette>>6)&0x07) * 16*4;
+          palette_change_color (offset, red, green, blue);
+	}
+}
+
 
 /***************************************************************************
 
@@ -159,6 +224,11 @@ void battlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 
+    battlane_build_palette();
+	if (palette_recalc ())
+    {
+
+    }
 
 
 	/* Blank screen */
@@ -188,19 +258,61 @@ void battlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	for (offs=0x0100-4; offs>=0; offs-=4)
 	{
-	      int code=RAM[0x00f3+offs];
-	      if (!(RAM[0xf1]&0x80))
+	      int code=battlane_spriteram[offs+3];
+//          if (!(battlane_spriteram[offs+1]&0x80))
 	      {
-	      drawgfx(bitmap,Machine->gfx[0],
+               drawgfx(bitmap,Machine->gfx[0],
 					 code,
-					 RAM[0xf1+offs]&0x07,
+					 battlane_spriteram[offs+1]&0x07,
 					 0,1,
-					 256-RAM[0x00f2+offs],
-					 RAM[0x00f0+offs],
+					 256-battlane_spriteram[offs+2],
+					 battlane_spriteram[offs],
 					 &Machine->drv->visible_area,
 					 TRANSPARENCY_PEN, 15);
-	       }
+          }
 	}
 
-	copybitmap(bitmap,screen_bitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+    for (y=0; y<0x20*8; y++)
+    {
+        for (x=0; x<0x20*8; x++)
+        {
+            int data=screen_bitmap->line[y][x];
+            if (data)
+            {
+                bitmap->line[y][x]=Machine->pens[data];
+            }
+       }
+	}
+
+#ifdef MAME_DEBUG
+    if (osd_key_pressed(OSD_KEY_SPACE))
+    {
+        /* Display current palette */
+        const int numblocks=0x08;
+        const int left=(0x20*8-numblocks*16)/2;
+        int pal;
+        int nX=left;
+        int nY=64;
+        for (pal=0; pal<0x40; pal++)
+        {
+            for (y=0; y<16;y++)
+            {
+                for (x=0; x<16;x++)
+                {
+                    bitmap->line[nY+y][nX+x]=Machine->pens[pal];
+                }
+            }
+            nX+=16;
+            if (nX >= left+numblocks*16)
+            {
+                nX=left;
+                nY+=16;
+            }
+        }
+    }
+    if (osd_key_pressed(OSD_KEY_F))
+    {
+         battlane_dump_bitmap();
+    }
+#endif
 }

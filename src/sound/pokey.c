@@ -253,7 +253,7 @@
 
 static int channel[MAXPOKEYS];
 
-static struct POKEYinterface *intf;
+static const struct POKEYinterface *intf;
 
 /* number of pokey chips currently emulated */
 static int Num_pokeys;
@@ -1359,7 +1359,7 @@ void Pokey_process (int chip, void *buffer, int n)
     }
 }
 
-int pokey_sh_start (struct POKEYinterface *interface)
+int pokey_sh_start (const struct POKEYinterface *interface)
 {
 	int res;
 
@@ -1686,8 +1686,3 @@ void pokey4_kbcode_w(int kbcode, int make)
 {
 	pokey_kbcode_w(3, kbcode, make);
 }
-
-void pokey_sh_update (void)
-{
-}
-

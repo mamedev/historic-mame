@@ -249,11 +249,7 @@ use the DMA transfer approach.
 
 
 
-#ifdef SIGNED_SAMPLES
-	#define MAX_OUTPUT 0x7fff
-#else
-	#define MAX_OUTPUT 0xffff
-#endif
+#define MAX_OUTPUT 0x7fff
 
 #define STEP 0x10000
 

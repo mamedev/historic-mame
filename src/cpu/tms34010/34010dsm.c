@@ -8,16 +8,18 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "memory.h"
+#include "mamedbg.h"
+#include "osd_cpu.h"
 
-#define PARAM_WORD(v) ((v) = *(unsigned short *)&p[0], p += 2)
-#define PARAM_LONG(v) ((v) = *(unsigned short *)&p[0] + (*(unsigned short *)&p[2] << 16), p += 4)
+#define PARAM_WORD(v) { v = cpu_readmem29_word(_pc>>3); _pc += 16; }
+#define PARAM_LONG(v) { v = cpu_readmem29_dword(_pc>>3); _pc += 32; }
 
 static char rf;
-static long __pc;
-static short op,rs,rd;
+static UINT32 __pc, _pc;
+static UINT16 op,rs,rd;
 
 static char *buffer;
-static unsigned char *p;
 static char temp[20];
 
 
@@ -72,25 +74,25 @@ static void print_word_parm_1s_comp(void)
 
 static void print_long_parm(void)
 {
-	unsigned long l;
+	UINT32 l;
 
 	PARAM_LONG(l);
-	sprintf(temp, "%lXh", l);
+	sprintf(temp, "%Xh", l);
 	strcat(buffer, temp);
 }
 
 static void print_long_parm_1s_comp(void)
 {
-	unsigned long l;
+	UINT32 l;
 
 	PARAM_LONG(l);
-	sprintf(temp, "%lXh", ~l);
+	sprintf(temp, "%Xh", ~l);
 	strcat(buffer, temp);
 }
 
 static void print_constant(void)
 {
-	short constant = (op >> 5) & 0x1f;
+	UINT16 constant = (op >> 5) & 0x1f;
 
 	sprintf(temp, "%Xh", constant);
 	strcat(buffer, temp);
@@ -98,7 +100,7 @@ static void print_constant(void)
 
 static void print_constant_1_32(void)
 {
-	short constant = (op >> 5) & 0x1f;
+	UINT16 constant = (op >> 5) & 0x1f;
 	if (!constant) constant = 0x20;
 
 	sprintf(temp, "%Xh", constant);
@@ -129,7 +131,7 @@ static void print_relative(void)
 	PARAM_WORD(l);
 	ls = (signed short)l;
 
-	sprintf(temp, "%lXh", __pc + 32 + (ls << 4));
+	sprintf(temp, "%Xh", __pc + 32 + (ls << 4));
 	strcat(buffer, temp);
 }
 
@@ -137,7 +139,7 @@ static void print_relative_8bit(void)
 {
 	signed char ls = (signed char)(op & 0xff);
 
-	sprintf(temp, "%lXh", __pc + 16 + (ls << 4));
+	sprintf(temp, "%Xh", __pc + 16 + (ls << 4));
 	strcat(buffer, temp);
 }
 
@@ -146,7 +148,7 @@ static void print_relative_5bit(void)
 	signed char ls = (signed char)((op >> 5) & 0x1f);
 	if (op & 0x0400) ls = -ls;
 
-	sprintf(temp, "%lXh", __pc + 16 + (ls << 4));
+	sprintf(temp, "%Xh", __pc + 16 + (ls << 4));
 	strcat(buffer, temp);
 }
 
@@ -211,13 +213,12 @@ static void print_reg_list(int rev)
 }
 
 
-unsigned Dasm34010 (unsigned char *pBase, char *buff, unsigned _pc)
+unsigned Dasm34010 (char *buff, unsigned pc)
 {
-	short bad = 0;
-	short subop;
-	p = pBase;
+	int bad = 0;
+	UINT16 subop;
 
-	__pc = _pc;
+	__pc = _pc = pc;
 	buffer = buff;
 
 	PARAM_WORD(op);
@@ -1284,5 +1285,5 @@ unsigned Dasm34010 (unsigned char *pBase, char *buff, unsigned _pc)
 		sprintf (buffer, "DW     %04Xh", op & 0xffff);
 	}
 
-	return (p - pBase)<<3;
+	return _pc - __pc;
 }

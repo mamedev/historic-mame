@@ -415,8 +415,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
+	99,	/* 99 CPU slices per frame - with 100, galagab2 hangs on coin insertion */
 	galaga_init_machine,
 
 	/* video hardware */

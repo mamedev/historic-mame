@@ -9,13 +9,8 @@ extern "C" {
 
 // Signed or unsigned samples? (^80, ^8000 are unsigned)
 
-#ifdef SIGNED_SAMPLES
 #define ym3812_Sign8(n) (n)
 #define ym3812_Sign16(n) (n)
-#else
-#define ym3812_Sign8(n) (n^0x80)
-#define ym3812_Sign16(n) (n^0x8000)
-#endif
 
 
 // This specifies whether the update routine updates the timers. Remove define if not automatic timers

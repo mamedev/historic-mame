@@ -608,7 +608,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_M6802 | CPU_AUDIO_CPU,
-			3680000/4,	/* 0.92 MHz */
+			3680000,	/* 0.92 MHz */
 			2,			/* memory region #2 */
 			readmem_sound,writemem_sound,0,0,
 			ignore_interrupt,0
@@ -663,7 +663,7 @@ static struct MachineDriver mcu_machine_driver =
 		},
 		{
 			CPU_M6802 | CPU_AUDIO_CPU,
-			3680000/4,	/* 0.92 MHz */
+			3680000,	/* 0.92 MHz */
 			2,			/* memory region #2 */
 			readmem_sound,writemem_sound,0,0,
 			ignore_interrupt,0
@@ -725,7 +725,7 @@ static struct MachineDriver zoo_machine_driver =
 		},
 		{
 			CPU_M6802 | CPU_AUDIO_CPU,
-			3680000/4,		/* 0.92 MHz */
+			3680000,		/* 0.92 MHz */
 			2,				/* memory region #2 */
 			zoo_readmem_sound,zoo_writemem_sound,0,0,
 			ignore_interrupt,0

@@ -5,7 +5,8 @@
 
 #include "driver.h"
 #include "m68000.h"
-#include "osd_dbg.h"
+#include "d68k.h"
+#include "mamedbg.h"
 
 #ifdef WIN32
 #define CONVENTION __cdecl
@@ -364,14 +365,13 @@ extern int m68k_disassemble(char* str_buff, int pc);
 	return buffer[which];
 }
 
-unsigned m68000_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned m68000_dasm(char *buffer, unsigned pc)
 {
-    (void)base;
 	change_pc24(pc);
 #ifdef MAME_DEBUG
     return m68k_disassemble(buffer, pc);
 #else
-	sprintf(buffer, "$%04X", cpu_readmem24_word(pc) );
+	sprintf(buffer, "$%04X", cpu_readop16(pc) );
 	return 2;
 #endif
 }
@@ -410,7 +410,7 @@ unsigned m68010_dasm(UINT8 *base, char *buffer, unsigned pc)
 #ifdef MAME_DEBUG
     return m68k_disassemble(buffer, pc);
 #else
-	sprintf(buffer, "$%04X", cpu_readmem24_word(pc) );
+	sprintf(buffer, "$%04X", cpu_readop16(pc) );
 	return 2;
 #endif
 }
@@ -449,7 +449,7 @@ unsigned m68020_dasm(UINT8 *base, char *buffer, unsigned pc)
 #ifdef MAME_DEBUG
     return m68k_disassemble(buffer, pc);
 #else
-	sprintf(buffer, "$%04X", cpu_readmem24_word(pc) );
+	sprintf(buffer, "$%04X", cpu_readop16(pc) );
 	return 2;
 #endif
 }

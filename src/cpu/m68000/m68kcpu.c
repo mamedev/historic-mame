@@ -36,7 +36,6 @@ static const char* copyright_notice =
 #include "m68kcpu.h"
 #include "m68kops.h"
 
-
 /* ======================================================================== */
 /* =============================== PROTOTYPES ============================= */
 /* ======================================================================== */
@@ -418,6 +417,9 @@ int m68k_execute(int num_clks)
          else
             m68ki_service_interrupt();
       } while(m68k_clks_left > 0);
+
+	  /* set previous PC to current PC for the next entry into the loop */
+      CPU_PPC = CPU_PC;
       /* return how many clocks we used */
       return num_clks - m68k_clks_left;
    }

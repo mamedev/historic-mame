@@ -23,7 +23,7 @@ static int buffer_len;
 static int emulation_rate;
 static signed char *buffer;
 
-static struct TMS5220interface *intf;
+static const struct TMS5220interface *intf;
 static int channel;
 
 
@@ -38,7 +38,7 @@ static void tms5220_update (int force);
 
 ***********************************************************************************************/
 
-int tms5220_sh_start (struct TMS5220interface *interface)
+int tms5220_sh_start (const struct TMS5220interface *interface)
 {
     intf = interface;
 

@@ -1,4 +1,4 @@
-/*** TMS34010: Portable Texas Instruments TMS34010 emulator **************
+/*** TMS34010: Portable Texas Instruments TMS34010 emulator *****************
 
 	Copyright (C) Alex Pasadyn/Zsolt Vasvari 1998
 	 Parts based on code by Aaron Giles
@@ -7,10 +7,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "osd_cpu.h"
-#include "osd_dbg.h"
-#include "cpuintrf.h"
 #include "driver.h"
+#include "osd_cpu.h"
+#include "cpuintrf.h"
+#include "mamedbg.h"
 #include "tms34010.h"
 #include "34010ops.h"
 
@@ -50,10 +50,10 @@ static UINT8 tms34010_reg_layout[] = {
 };
 
 static UINT8 tms34010_win_layout[] = {
-	46, 0,34,22,	/* register window (top right) */
-	 0, 0,45, 8,	/* disassembler window (left, upper) */
-	 0, 9,45, 8,	/* memory #1 window (left, middle) */
-	 0,18,45, 4,	/* memory #2 window (lower) */
+	40, 0,39,17,	/* register window (top right) */
+	 0, 0,39,17,	/* disassembler window (left, upper) */
+	 0,18,39, 4,	/* memory #1 window (left, middle) */
+	40,18,39, 4,	/* memory #2 window (lower) */
 	 0,23,80, 1 	/* command line window (bottom rows) */
 };
 
@@ -1103,11 +1103,11 @@ int tms34010_execute(int cycles)
  ****************************************************************************/
 const char *tms34010_info(void *context, int regnum)
 {
-	static char buffer[32][63+1];
+	static char buffer[40][63+1];
 	static int which = 0;
 	TMS34010_Regs *r = context;
 
-	which = ++which % 32;
+	which = ++which % 40;
 	buffer[which][0] = '\0';
 	if( !context )
 		r = &state;
@@ -1194,12 +1194,12 @@ const char *tms34010_info(void *context, int regnum)
 	return buffer[which];
 }
 
-unsigned tms34010_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned tms34010_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-    return Dasm34010(base,buffer,pc);
+    return Dasm34010(buffer,pc);
 #else
-	sprintf( buffer, "$%04X", cpu_readmem29_word(pc>>3) );
+	sprintf( buffer, "$%04X", cpu_readop16(pc>>3) );
 	return 2;
 #endif
 }

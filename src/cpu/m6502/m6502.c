@@ -22,18 +22,26 @@
 #include <stdio.h>
 #include "driver.h"
 #include "state.h"
-#include "osd_dbg.h"
+#include "mamedbg.h"
 #include "m6502.h"
 #include "m6502ops.h"
 
 extern FILE * errorlog;
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 #if VERBOSE
 #define LOG(x)	if( errorlog ) fprintf x
 #else
 #define LOG(x)
+#endif
+
+#define SUBTYPE_6502	0
+#if HAS_M65C02
+#define SUBTYPE_65C02	1
+#endif
+#if HAS_M6510
+#define SUBTYPE_6510	2
 #endif
 
 /* Layout of the registers in the debugger */
@@ -56,7 +64,7 @@ static UINT8 m6502_win_layout[] = {
  ****************************************************************************/
 typedef struct
 {
-	UINT8	cpu_subtype;	/* currently selected cpu sub type */
+	UINT8	subtype;		/* currently selected cpu sub type */
     void    (**insn)(void); /* pointer to the function pointer table */
 	PAIR	ppc;			/* previous program counter */
     PAIR    pc;             /* program counter */
@@ -67,7 +75,7 @@ typedef struct
     UINT8   x;              /* X index register */
     UINT8   y;              /* Y index register */
     UINT8   p;              /* Processor status */
-    UINT8   pending_interrupt; /* nonzero if a NMI or IRQ is pending */
+	UINT8	pending_irq;	/* nonzero if an IRQ is pending */
     UINT8   after_cli;      /* pending IRQ and last insn cleared I */
 	UINT8	nmi_state;
 	UINT8	irq_state;
@@ -99,22 +107,8 @@ static m6502_Regs m6502;
 
 void m6502_reset(void *param)
 {
-	switch (m6502.cpu_subtype)
-    {
-#if HAS_M65C02
-		case CPU_M65C02:
-            m6502.insn = insn65c02;
-            break;
-#endif
-#if HAS_M6510
-		case CPU_M6510:
-            m6502.insn = insn6510;
-            break;
-#endif
-        default:
-            m6502.insn = insn6502;
-            break;
-    }
+	m6502.subtype = SUBTYPE_6502;
+    m6502.insn = insn6502;
 
 	/* wipe out the rest of the m6502 structure */
 	/* read the reset vector into PC */
@@ -127,7 +121,7 @@ void m6502_reset(void *param)
 	m6502.x = 0;			/* X index register */
 	m6502.y = 0;			/* Y index register */
 	m6502.p = F_T|F_I|F_Z;	/* set T, I and Z flags */
-	m6502.pending_interrupt = 0; /* nonzero if a NMI or IRQ is pending */
+	m6502.pending_irq = 0;	/* nonzero if an IRQ is pending */
 	m6502.after_cli = 0;	/* pending IRQ and last insn cleared I */
 	m6502.nmi_state = CLEAR_LINE;
 	m6502.irq_state = CLEAR_LINE;
@@ -192,7 +186,7 @@ unsigned m6502_get_reg (int regnum)
 		case M6502_ZP: return m6502.zp.w.l;
 		case M6502_NMI_STATE: return m6502.nmi_state;
 		case M6502_IRQ_STATE: return m6502.irq_state;
-		case M6502_SUBTYPE: return m6502.cpu_subtype;
+		case M6502_SUBTYPE: return m6502.subtype;
 		case REG_PREVIOUSPC: return m6502.ppc.w.l;
 		default:
 			if( regnum <= REG_SP_CONTENTS )
@@ -232,21 +226,6 @@ void m6502_set_reg (int regnum, unsigned val)
     }
 }
 
-INLINE void take_nmi(void)
-{
-	EAD = M6502_NMI_VEC;
-	m6502_ICount -= 7;
-	PUSH(PCH);
-	PUSH(PCL);
-	PUSH(P & ~F_B);
-	P = (P & ~F_D) | F_I;		/* knock out D and set I flag */
-	PCL = RDMEM(EAD);
-	PCH = RDMEM(EAD+1);
-	LOG((errorlog,"M6502#%d takes NMI ($%04x)\n", cpu_getactivecpu(), PCD));
-    m6502.pending_interrupt &= ~M6502_INT_NMI;
-    change_pc16(PCD);
-}
-
 INLINE void take_irq(void)
 {
 	if( !(P & F_I) )
@@ -264,8 +243,7 @@ INLINE void take_irq(void)
 		if (m6502.irq_callback) (*m6502.irq_callback)(0);
 	    change_pc16(PCD);
 	}
-
-	m6502.pending_interrupt &= ~M6502_INT_IRQ;
+	m6502.pending_irq = 0;
 }
 
 int m6502_execute(int cycles)
@@ -282,8 +260,6 @@ int m6502_execute(int cycles)
 
 		(*m6502.insn[RDOP()])();
 
-		if (m6502.pending_interrupt & M6502_INT_NMI)
-            take_nmi();
         /* check if the I flag was just reset (interrupts enabled) */
 		if (m6502.after_cli)
 		{
@@ -292,14 +268,15 @@ int m6502_execute(int cycles)
 			if (m6502.irq_state != CLEAR_LINE)
 			{
 				LOG((errorlog,": irq line is asserted: set pending IRQ\n"));
-                m6502.pending_interrupt |= M6502_INT_IRQ;
+				m6502.pending_irq = 1;
 			}
 			else
 			{
 				LOG((errorlog,": irq line is clear\n"));
             }
 		}
-		else if (m6502.pending_interrupt)
+		else
+		if (m6502.pending_irq)
 			take_irq();
 
     } while (m6502_ICount > 0);
@@ -314,8 +291,17 @@ void m6502_set_nmi_line(int state)
 	if( state != CLEAR_LINE )
 	{
 		LOG((errorlog, "M6502#%d set_nmi_line(ASSERT)\n", cpu_getactivecpu()));
-        m6502.pending_interrupt |= M6502_INT_NMI;
-	}
+		EAD = M6502_NMI_VEC;
+		m6502_ICount -= 7;
+		PUSH(PCH);
+		PUSH(PCL);
+		PUSH(P & ~F_B);
+		P = (P & ~F_D) | F_I;		/* knock out D and set I flag */
+		PCL = RDMEM(EAD);
+		PCH = RDMEM(EAD+1);
+		LOG((errorlog,"M6502#%d takes NMI ($%04x)\n", cpu_getactivecpu(), PCD));
+		change_pc16(PCD);
+    }
 }
 
 void m6502_set_irq_line(int irqline, int state)
@@ -324,7 +310,7 @@ void m6502_set_irq_line(int irqline, int state)
 	if( state != CLEAR_LINE )
 	{
 		LOG((errorlog, "M6502#%d set_irq_line(ASSERT)\n", cpu_getactivecpu()));
-		m6502.pending_interrupt |= M6502_INT_IRQ;
+		m6502.pending_irq = 1;
 	}
 }
 
@@ -336,7 +322,7 @@ void m6502_set_irq_callback(int (*callback)(int))
 void m6502_state_save(void *file)
 {
 	int cpu = cpu_getactivecpu();
-	state_save_UINT8(file,"m6502",cpu,"TYPE",&m6502.cpu_subtype,1);
+	state_save_UINT8(file,"m6502",cpu,"TYPE",&m6502.subtype,1);
 	/* insn is set at restore since it's a pointer */
 	state_save_UINT16(file,"m6502",cpu,"PC",&m6502.pc.w.l,2);
 	state_save_UINT16(file,"m6502",cpu,"SP",&m6502.sp.w.l,2);
@@ -344,7 +330,7 @@ void m6502_state_save(void *file)
 	state_save_UINT8(file,"m6502",cpu,"A",&m6502.a,1);
 	state_save_UINT8(file,"m6502",cpu,"X",&m6502.x,1);
 	state_save_UINT8(file,"m6502",cpu,"Y",&m6502.y,1);
-	state_save_UINT8(file,"m6502",cpu,"PENDING",&m6502.pending_interrupt,1);
+	state_save_UINT8(file,"m6502",cpu,"PENDING",&m6502.pending_irq,1);
 	state_save_UINT8(file,"m6502",cpu,"AFTER_CLI",&m6502.after_cli,1);
 	state_save_UINT8(file,"m6502",cpu,"NMI_STATE",&m6502.nmi_state,1);
 	state_save_UINT8(file,"m6502",cpu,"IRQ_STATE",&m6502.irq_state,1);
@@ -353,17 +339,17 @@ void m6502_state_save(void *file)
 void m6502_state_load(void *file)
 {
 	int cpu = cpu_getactivecpu();
-	state_load_UINT8(file,"m6502",cpu,"TYPE",&m6502.cpu_subtype,1);
+	state_load_UINT8(file,"m6502",cpu,"TYPE",&m6502.subtype,1);
     /* insn is set at restore since it's a pointer */
-	switch (m6502.cpu_subtype)
+	switch (m6502.subtype)
 	{
 #if HAS_M65C02
-		case CPU_M65C02:
+		case SUBTYPE_65C02:
 			m6502.insn = insn65c02;
 			break;
 #endif
 #if HAS_M6510
-		case CPU_M6510:
+		case SUBTYPE_6510:
 			m6502.insn = insn6510;
 			break;
 #endif
@@ -377,7 +363,7 @@ void m6502_state_load(void *file)
 	state_load_UINT8(file,"m6502",cpu,"A",&m6502.a,1);
 	state_load_UINT8(file,"m6502",cpu,"X",&m6502.x,1);
 	state_load_UINT8(file,"m6502",cpu,"Y",&m6502.y,1);
-	state_load_UINT8(file,"m6502",cpu,"PENDING",&m6502.pending_interrupt,1);
+	state_load_UINT8(file,"m6502",cpu,"PENDING",&m6502.pending_irq,1);
 	state_load_UINT8(file,"m6502",cpu,"AFTER_CLI",&m6502.after_cli,1);
 	state_load_UINT8(file,"m6502",cpu,"NMI_STATE",&m6502.nmi_state,1);
 	state_load_UINT8(file,"m6502",cpu,"IRQ_STATE",&m6502.irq_state,1);
@@ -431,13 +417,12 @@ const char *m6502_info(void *context, int regnum)
 	return buffer[which];
 }
 
-unsigned m6502_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned m6502_dasm(char *buffer, unsigned pc)
 {
-	(void)base;
 #ifdef MAME_DEBUG
     return Dasm6502( buffer, pc );
 #else
-	sprintf( buffer, "$%02X", ROM[pc] );
+	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
 #endif
 }
@@ -464,8 +449,9 @@ static UINT8 m65c02_win_layout[] = {
 
 void m65c02_reset (void *param)
 {
-	m6502.cpu_subtype = CPU_M65C02;
 	m6502_reset(param);
+	m6502.subtype = SUBTYPE_65C02;
+	m6502.insn = insn65c02;
 }
 void m65c02_exit  (void) { m6502_exit(); }
 int  m65c02_execute(int cycles) { return m6502_execute(cycles); }
@@ -493,13 +479,12 @@ const char *m65c02_info(void *context, int regnum)
     }
 	return m6502_info(context,regnum);
 }
-unsigned m65c02_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned m65c02_dasm(char *buffer, unsigned pc)
 {
-	(void)base;
 #ifdef MAME_DEBUG
     return Dasm6502( buffer, pc );
 #else
-	sprintf( buffer, "$%02X", ROM[pc] );
+	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
 #endif
 }
@@ -526,8 +511,9 @@ static UINT8 m6510_win_layout[] = {
 
 void m6510_reset (void *param)
 {
-	m6502.cpu_subtype = CPU_M6510;
 	m6502_reset(param);
+	m6502.subtype = SUBTYPE_6510;
+	m6502.insn = insn6510;
 }
 void m6510_exit  (void) { m6502_exit(); }
 int  m6510_execute(int cycles) { return m6502_execute(cycles); }
@@ -556,13 +542,12 @@ const char *m6510_info(void *context, int regnum)
 	return m6502_info(context,regnum);
 }
 
-unsigned m6510_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned m6510_dasm(char *buffer, unsigned pc)
 {
-	(void)base;
 #ifdef MAME_DEBUG
     return Dasm6502( buffer, pc );
 #else
-	sprintf( buffer, "$%02X", ROM[pc] );
+	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
 #endif
 }

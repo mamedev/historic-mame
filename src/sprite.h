@@ -1,3 +1,6 @@
+#ifndef SPRITE_H
+#define SPRITE_H
+
 #define SPRITE_FLIPX					0x01
 #define SPRITE_FLIPY					0x02
 
@@ -13,3 +16,5 @@ extern struct sprite_info {
 } sprite_info;
 
 void draw_sprite( struct osd_bitmap *bitmap );
+
+#endif

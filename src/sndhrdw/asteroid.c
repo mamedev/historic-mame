@@ -33,13 +33,8 @@
 #define MIN_SLICE 10
 #define LANDER_OVERSAMPLE_RATE	768000
 
-#ifdef SIGNED_SAMPLES
-  #define AUDIO_CONV8(A) ((A)-0x80)
-  #define AUDIO_CONV16(A) ((A)-0x8000)
-#else
-  #define AUDIO_CONV8(A) ((A))
-  #define AUDIO_CONV16(A) ((A))
-#endif
+#define AUDIO_CONV8(A) ((A)-0x80)
+#define AUDIO_CONV16(A) ((A)-0x8000)
 
 static int sinetable[64]=
 {

@@ -11,8 +11,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include "cpuintrf.h"
-#include "osd_dbg.h"
-#include "I8039.h"
+#include "mamedbg.h"
+#include "i8039.h"
 
 extern FILE *errorlog;
 
@@ -820,13 +820,12 @@ const char *i8039_info(void *context, int regnum)
     return buffer[which];
 }
 
-unsigned i8039_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned i8039_dasm(char *buffer, unsigned pc)
 {
-	(void)base;
 #ifdef	MAME_DEBUG
-    return Dasm8039(buffer,&ROM[pc]);
+    return Dasm8039(buffer,pc);
 #else
-	sprintf( buffer, "$%02X", ROM[pc] );
+	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
 #endif
 }
@@ -875,13 +874,12 @@ const char *i8035_info(void *context, int regnum)
 	return i8039_info(context,regnum);
 }
 
-unsigned i8035_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned i8035_dasm(char *buffer, unsigned pc)
 {
-	(void)base;
 #ifdef MAME_DEBUG
-    return Dasm8039(buffer,&ROM[pc]);
+	return Dasm8039(buffer,pc);
 #else
-	sprintf( buffer, "$%02X", ROM[pc] );
+	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
 #endif
 }
@@ -932,13 +930,12 @@ const char *i8048_info(void *context, int regnum)
 	return i8039_info(context,regnum);
 }
 
-unsigned i8048_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned i8048_dasm(char *buffer, unsigned pc)
 {
-	(void)base;
 #ifdef MAME_DEBUG
-    return Dasm8039(buffer,&ROM[pc]);
+	return Dasm8039(buffer,pc);
 #else
-	sprintf( buffer, "$%02X", ROM[pc] );
+	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
 #endif
 }
@@ -987,13 +984,12 @@ const char *n7751_info(void *context, int regnum)
 	return i8039_info(context,regnum);
 }
 
-unsigned n7751_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned n7751_dasm(char *buffer, unsigned pc)
 {
-	(void)base;
 #ifdef	MAME_DEBUG
-    return Dasm8039(buffer,&ROM[pc]);
+	return Dasm8039(buffer,pc);
 #else
-	sprintf( buffer, "$%02X", ROM[pc] );
+	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
 #endif
 }

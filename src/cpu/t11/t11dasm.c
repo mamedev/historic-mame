@@ -11,6 +11,7 @@
 #include <string.h>
 #ifdef	MAME_DEBUG
 #include "driver.h"
+#include "mamedbg.h"
 #include "t11.h"
 
 static char *regs[8] = { "R0", "R1", "R2", "R3", "R4", "R5", "SP", "PC" };
@@ -104,7 +105,7 @@ unsigned MakeEA (char **ea, int is_src, int lo, unsigned pc, int size, int amode
 }
 
 
-unsigned DasmT11 (unsigned char *pBase, char *buffer, unsigned pc)
+unsigned DasmT11 (char *buffer, unsigned pc)
 {
     const char *symbol;
 	char *dst = buffer, *ea1, *ea2;

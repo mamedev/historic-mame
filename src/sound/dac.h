@@ -9,9 +9,7 @@ struct DACinterface
 	int volume[MAX_DAC];
 };
 
-int DAC_sh_start(struct DACinterface *interface);
-void DAC_sh_stop(void);
-void DAC_sh_update(void);
+int DAC_sh_start(const struct DACinterface *interface);
 void DAC_data_w(int num,int data);
 void DAC_signed_data_w(int num,int data);
 void DAC_set_volume(int num,int volume,int gain);

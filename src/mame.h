@@ -60,6 +60,7 @@ struct GameOptions {
 	int samplebits;
 	char no_fm;
 	char use_samples;
+	char use_emulated_ym3812;
 
 	int norotate;
 	int ror;

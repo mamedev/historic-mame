@@ -8,7 +8,7 @@ static int stream[MAX_2203];
 
 static double syncTime[MAX_2203];
 
-static struct YM2203interface *intf;
+static const struct YM2203interface *intf;
 
 static void *Timer[MAX_2203][2];
 static void (*timer_callback)(int param);
@@ -82,12 +82,12 @@ static void YM2203UpdateCallback(int chip,void *buffer,int length)
 }
 #endif
 
-int YM2203_sh_start(struct YM2203interface *interface)
+int YM2203_sh_start(const struct YM2203interface *interface)
 {
 	int i;
 	int rate = Machine->sample_rate;
 
-	if( AY8910_sh_start(interface,"YM2203") ) return 1;
+	if( AY8910_sh_start_ex(interface,"YM2203") ) return 1;
 
 	intf = interface;
 
@@ -114,16 +114,20 @@ int YM2203_sh_start(struct YM2203interface *interface)
 	}
 	/* error */
 	/* stream close */
-	AY8910_sh_stop();
 	return 1;
 }
 
 void YM2203_sh_stop(void)
 {
+	YM2203Shutdown();
+}
+
+void YM2203_sh_reset(void)
+{
 	int i;
 
-	AY8910_sh_stop();
-	YM2203Shutdown();
+	for (i = 0;i < intf->num;i++)
+		YM2203ResetChip(i);
 }
 
 
@@ -182,9 +186,4 @@ void YM2203_write_port_3_w(int offset,int data)
 void YM2203_write_port_4_w(int offset,int data)
 {
 	YM2203Write(4,1,data);
-}
-
-void YM2203_sh_update(void)
-{
-	if (Machine->sample_rate == 0 ) return;
 }

@@ -518,22 +518,22 @@ int frontend_help (int argc, char **argv)
 					for(j=0;j<MAX_CPU;j++)
 					{
 						if (x_cpu[j].cpu_type & CPU_AUDIO_CPU)
-							printf("[%-6s] ",info_cpu_name(&x_cpu[j]));
+							printf("[%-6s] ",cputype_name(x_cpu[j].cpu_type));
 						else
-							printf("%-8s ",info_cpu_name(&x_cpu[j]));
+							printf("%-8s ",cputype_name(x_cpu[j].cpu_type));
 					}
 
 					/* Then, sound chips */
 
 					for(j=0;j<MAX_CPU;j++)
 					{
-						if (info_sound_num(&x_sound[j]))
+						if (sound_num(&x_sound[j]))
 						{
-							printf("%dx",info_sound_num(&x_sound[j]));
-							printf("%-9s ",info_sound_name(&x_sound[j]));
+							printf("%dx",sound_num(&x_sound[j]));
+							printf("%-9s ",sound_name(&x_sound[j]));
 						}
 						else
-							printf("%-11s ",info_sound_name(&x_sound[j]));
+							printf("%-11s ",sound_name(&x_sound[j]));
 					}
 
 					/* Lastly, the name of the game and a \newline */
@@ -649,6 +649,10 @@ int frontend_help (int argc, char **argv)
 						strcmp(drivers[i]->name,"punchout") &&
 						strcmp(drivers[i]->name,"spnchout") &&
 						strcmp(drivers[i]->name,"armwrest") &&
+						strcmp(drivers[i]->name,"route16") &&
+						strcmp(drivers[i]->name,"stratvox") &&
+						strcmp(drivers[i]->name,"irobot") &&
+						strcmp(drivers[i]->name,"leprechn") &&
 						1)
 						printf("%s %dx%d\n",drivers[i]->name,
 								drivers[i]->drv->visible_area.max_x - drivers[i]->drv->visible_area.min_x + 1,

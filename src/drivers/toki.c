@@ -303,8 +303,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M68000,
-			16000000,	/* the real speed should be 8MHz or less (68000-8 CPU), */
-						/* but with less than 14MHz there are slowdowns and the */
+			16000000,	/* with less than 14MHz there are slowdowns and the */
 						/* title screen doesn't wave correctly */
 			0,
 			readmem,writemem,
@@ -313,7 +312,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80,
-			4000000,	/* 4 MHz ??? */
+			4000000,	/* 4 MHz (?) */
 			2,
 			sound_readmem,sound_writemem,
 			0,0,

@@ -240,7 +240,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5860, 0x587f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x6000, 0x6001, osd_led_w },
 	{ 0x6004, 0x6007, mooncrst_lfo_freq_w },
-	{ 0x6800, 0x6800, mooncrst_background_w },
+	{ 0x6800, 0x6802, mooncrst_background_w },
 	{ 0x6803, 0x6803, mooncrst_noise_w },
 	{ 0x6805, 0x6805, mooncrst_shoot_w },
 	{ 0x6806, 0x6807, mooncrst_vol_w },
@@ -262,7 +262,7 @@ static struct MemoryWriteAddress scramblb_writemem[] =
 	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x6000, 0x6001, MWA_NOP },  /* sound triggers */
 	{ 0x6004, 0x6007, mooncrst_lfo_freq_w },
-	{ 0x6800, 0x6800, mooncrst_background_w },
+	{ 0x6800, 0x6802, mooncrst_background_w },
 	{ 0x6803, 0x6803, mooncrst_noise_w },
 	{ 0x6805, 0x6805, mooncrst_shoot_w },
 	{ 0x6806, 0x6807, mooncrst_vol_w },

@@ -322,7 +322,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 		    CPU_HD63701,	/* or compatible 6808 with extra instructions */
-		    3000000,        /* 3 Mhz ??? */
+		    6000000,        /* ??? */
 		    7,
 		    mcu_readmem,mcu_writemem,0,0,
 		    interrupt,1

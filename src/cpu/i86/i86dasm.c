@@ -1030,14 +1030,14 @@ static void ua_str(char *str)
   }
 }
 
-unsigned DasmI86(unsigned char* data, char* buffer, unsigned pc)
+unsigned DasmI86(char* buffer, unsigned pc)
 {
   	unsigned c;
 
 	instruction_offset = pc;
 
 	/* input buffer */
-	getbyte_map = data;
+	getbyte_map = &OP_ROM[pc];
 	getbyte_mac = 0;
 
 	/* output buffer */

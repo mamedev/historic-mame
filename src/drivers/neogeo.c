@@ -264,8 +264,32 @@ static void neo_z80_w(int offset, int data)
 
 
 
-static int controller1_r (int offset) { return ( (readinputport(0) << 8) + readinputport(3) ); }
-static int controller2_r (int offset) { return (readinputport(1) << 8); }
+static int controller1_r (int offset)
+{
+	int res;
+
+	res = (readinputport(0) << 8) + readinputport(3);
+
+	if (readinputport(7) & 0x01) res &= 0xcfff;	/* A+B */
+	if (readinputport(7) & 0x02) res &= 0x3fff;	/* C+D */
+	if (readinputport(7) & 0x04) res &= 0x8fff;	/* A+B+C */
+	if (readinputport(7) & 0x08) res &= 0x0fff;	/* A+B+C+D */
+
+	return res;
+}
+static int controller2_r (int offset)
+{
+	int res;
+
+	res = (readinputport(1) << 8);
+
+	if (readinputport(7) & 0x10) res &= 0xcfff;	/* A+B */
+	if (readinputport(7) & 0x20) res &= 0x3fff;	/* C+D */
+	if (readinputport(7) & 0x40) res &= 0x8fff;	/* A+B+C */
+	if (readinputport(7) & 0x80) res &= 0x0fff;	/* A+B+C+D */
+
+	return res;
+}
 static int controller3_r (int offset) {	return (readinputport(2) << 8); }
 static int controller4_r (int offset) { return readinputport(6); }
 
@@ -299,8 +323,13 @@ extern int neogeo_game_fix;
 /* Temporary, Todo: Figure out how this really works! :) */
 static int neo_control_r(int offset)
 {
-if (errorlog) fprintf(errorlog,"PC %06x: read 0x3c0006\n",cpu_get_pc());
+	if (neogeo_game_fix == 3)
+			return 0x80;            /* sam sho3 */
 
+    return ((0x0100*cpu_getscanline())+(neogeo_frame_counter & 0x0007));
+
+#if 0
+if (errorlog) fprintf(errorlog,"PC %06x: read 0x3c0006\n",cpu_get_pc());
 	switch(neogeo_game_fix)
 	{
 		case 0:
@@ -323,6 +352,7 @@ if (errorlog) fprintf(errorlog,"PC %06x: read 0x3c0006\n",cpu_get_pc());
 			return 0x4000; /* KOF98 */
 	}
 	return(0x8000);              /* anything 0x8000 seems better than 0*/
+#endif
 }
 
 /* this does much more than this, but I'm not sure exactly what */
@@ -653,9 +683,9 @@ INPUT_PORTS_START( neogeo_ports )
 	PORT_DIPNAME( 0x01, 0x01, "Test Switch" )
 	PORT_DIPSETTING(    0x01, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x02, 0x02, "Unknown" )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x02, "Coin Chutes?" )
+	PORT_DIPSETTING(    0x00, "1?" )
+	PORT_DIPSETTING(    0x02, "2?" )
 	PORT_DIPNAME( 0x04, 0x04, "Autofire (in some games)" )
 	PORT_DIPSETTING(    0x04, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
@@ -696,6 +726,16 @@ INPUT_PORTS_START( neogeo_ports )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* This bit is used.. */
 	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "Test Switch", OSD_KEY_F2, IP_JOY_NONE )
+
+	PORT_START      /* FAKE */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_CHEAT )	/* A+B */
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_CHEAT )	/* C+D */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_CHEAT )	/* A+B+C */
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON8 | IPF_CHEAT )	/* A+B+C+D */
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_CHEAT | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_CHEAT | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_CHEAT | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON8 | IPF_CHEAT | IPF_PLAYER2 )
 INPUT_PORTS_END
 
 /******************************************************************************/
@@ -4168,6 +4208,24 @@ ROM_START( breakers_rom )
     ROM_LOAD( "break_v2.rom", 0x400000, 0x400000, 0x1d43e420 )
 ROM_END
 
+ROM_START( flipshot_rom )
+	ROM_REGION(0x100000)
+	ROM_LOAD_WIDE_SWAP( "flip_p1.rom", 0x000000, 0x080000, 0xd2e7a7e3 )
+
+	NEO_SFIX_128K( "flip_s1.rom", 0x6300185c )
+
+	ROM_REGION(0x200000)
+	ROM_LOAD( "flip_c1.rom",  0x000000, 0x200000, 0xc9eedcb2 ) /* Plane 0,1 */
+
+	ROM_REGION(0x200000)
+	ROM_LOAD( "flip_c2.rom",  0x000000, 0x200000, 0x7d6d6e87 ) /* Plane 2,3 */
+
+	NEO_BIOS_SOUND_128K( "flip_m1.rom", 0xa9fe0144 )
+
+	ROM_REGION_OPTIONAL(0x200000) /* sound samples */
+	ROM_LOAD( "flip_v1.rom", 0x000000, 0x200000, 0x42ec743d )
+ROM_END
+
 
 /******************************************************************************/
 
@@ -4351,6 +4409,7 @@ NEODRIVER(goalx3,  "Goal! Goal! Goal!","1995","Visco",&neogeo_mvs_machine_driver
 NEODRIVER(neodrift,"Neo Drift Out - New Technology","1996","Visco",&neogeo_mvs_machine_driver)
 NEODRIVER(neomrdo, "Neo Mr Do!","1996","Visco",&neogeo_mvs_machine_driver)
 NEODRIVER(breakers,"Breakers","1996","Visco",&neogeo_mvs_16bit_machine_driver)
+NEODRIVER(flipshot,"Battle Flip Shot","1998","Visco",&neogeo_mvs_machine_driver)
 
 /* Data East Corporation */
 NEODRIVER(spinmast,"Spinmaster / Miracle Adventure","1993","Data East Corporation",&neogeo_mvs_machine_driver)
@@ -4403,7 +4462,7 @@ NEODRIVER(viewpoin,"Viewpoint","1992","Sammy",&neogeo_mvs_machine_driver)
 
 /* Face */
 NEODRIVER(gururin, "Gururin","1994","Face",&neogeo_mvs_machine_driver)
-NEODRIVER(miexchng,"Money Puzzle Exchanger","1997","Face",&neogeo_mvs_machine_driver)
+NEODRIVER(miexchng,"Money Puzzle Exchanger","1997","Face",&neogeo_mvs_16bit_machine_driver)
 
 /* Takara */
 NEODRIVER(marukodq,"Maruko Deluxe Quiz","1995","Takara",&neogeo_mvs_machine_driver)
@@ -4427,7 +4486,7 @@ NEODRIVER(tophuntr,"Top Hunter","1994","SNK",&neogeo_mvs_machine_driver)
 NEODRIVER(kof94,   "The King of Fighters '94","1994","SNK",&neogeo_mvs_16bit_machine_driver)
 NEODRIVER(aof2,    "Art of Fighting 2 / Ryuu Ko No Ken 2","1994","SNK",&neogeo_mvs_machine_driver)
 NEODRIVER(ssideki2,"Super Sidekicks 2 - The World Championship","1994","SNK",&neogeo_mvs_machine_driver)
-NEODRIVER(samsho2, "Samurai Shodown 2 / Samurai Spirits 2","1994","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(samsho2, "Samurai Shodown 2 / Samurai Spirits 2","1994","SNK",&neogeo_mvs_16bit_machine_driver)
 NEODRIVER(ssideki3,"Super Sidekicks 3 - The Next Glory","1995","SNK",&neogeo_mvs_raster_machine_driver)
 NEODRIVER(savagere,"Savage Reign","1995","SNK",&neogeo_mvs_16bit_machine_driver)
 NEODRIVER(samsho3, "Samurai Shodown 3 / Samurai Spirits 3","1995","SNK",&neogeo_mvs_machine_driver)

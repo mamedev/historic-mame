@@ -597,6 +597,7 @@ INLINE void m68ki_set_sr(uint value);                    /* set the status regis
 INLINE void m68ki_set_pc(uint address);                  /* set the program counter */
 INLINE void m68ki_service_interrupt(void);               /* service a pending interrupt */
 INLINE void m68ki_exception(uint vector);                /* process an exception */
+INLINE void m68ki_interrupt(uint vector);				 /* process an interrupt */
 
 /* ======================================================================== */
 /* =========================== UTILITY FUNCTIONS ========================== */
@@ -924,6 +925,31 @@ INLINE void m68ki_exception(uint vector)
    /* Push a stack frame */
    if(CPU_MODE & CPU_MODE_010_PLUS)
       m68ki_push_16(vector<<2); /* This is format 0 */
+   m68ki_push_32(CPU_PPC);	/* save previous PC, ie. PC that contains an offending instruction */
+   m68ki_push_16(old_sr);
+   /* Generate a new program counter from the vector */
+   m68ki_set_pc(m68ki_read_32((vector<<2)+CPU_VBR));
+}
+
+
+/* Process an interrupt (or trap) */
+INLINE void m68ki_interrupt(uint vector)
+{
+   /* Save the old status register */
+   uint old_sr = m68ki_get_sr();
+
+   /* Use up some clock cycles */
+   USE_CLKS(m68k_exception_cycle_table[vector]);
+
+   /* Turn off stopped state and trace flag, clear pending traces */
+   CPU_STOPPED = 0;
+   CPU_T1 = CPU_T0 = 0;
+   m68ki_clear_trace();
+   /* Enter supervisor mode */
+   m68ki_set_s_flag(1);
+   /* Push a stack frame */
+   if(CPU_MODE & CPU_MODE_010_PLUS)
+      m68ki_push_16(vector<<2); /* This is format 0 */
    m68ki_push_32(CPU_PC);
    m68ki_push_16(old_sr);
    /* Generate a new program counter from the vector */
@@ -998,8 +1024,8 @@ INLINE void m68ki_service_interrupt(void)
    if(m68ki_read_32(vector<<2) == 0)
       vector = EXCEPTION_UNINITIALIZED_INTERRUPT;
 
-   /* Generate an exception */
-   m68ki_exception(vector);
+   /* Generate an interupt */
+   m68ki_interrupt(vector);
 
    /* Set the interrupt mask to the level of the one being serviced */
    CPU_INT_MASK = int_level;

@@ -1,11 +1,7 @@
 #include "driver.h"
 
 /* signed/unsigned 8-bit conversion macros */
-#ifdef SIGNED_SAMPLES
-	#define AUDIO_CONV(A) ((A)-0x80)
-#else
-	#define AUDIO_CONV(A) ((A))
-#endif
+#define AUDIO_CONV(A) ((A)-0x80)
 
 
 static signed char *speech;	/* 24k for speech */

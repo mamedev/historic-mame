@@ -174,8 +174,8 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct IOReadPort spacfury_readport[] =
 {
- 	{ 0x3f, 0x3f, sega_sh_r },
- 	{ 0xbe, 0xbe, sega_mult_r },
+	{ 0x3f, 0x3f, sega_sh_r },
+	{ 0xbe, 0xbe, sega_mult_r },
 	{ 0xf8, 0xfb, sega_read_ports },
 	{ -1 }	/* end of table */
 };
@@ -185,16 +185,16 @@ static struct IOWritePort spacfury_writeport[] =
 	{ 0x38, 0x38, sega_sh_speech_w },
 	{ 0x3e, 0x3e, spacfury1_sh_w },
 	{ 0x3f, 0x3f, spacfury2_sh_w },
-  	{ 0xbd, 0xbd, sega_mult1_w },
- 	{ 0xbe, 0xbe, sega_mult2_w },
+	{ 0xbd, 0xbd, sega_mult1_w },
+	{ 0xbe, 0xbe, sega_mult2_w },
 	{ 0xf9, 0xf9, coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
 	{ -1 }	/* end of table */
 };
 
 static struct IOReadPort zektor_readport[] =
 {
- 	{ 0x3f, 0x3f, sega_sh_r },
- 	{ 0xbe, 0xbe, sega_mult_r },
+	{ 0x3f, 0x3f, sega_sh_r },
+	{ 0xbe, 0xbe, sega_mult_r },
 	{ 0xf8, 0xfb, sega_read_ports },
 	{ 0xfc, 0xfc, sega_IN4_r },
 	{ -1 }	/* end of table */
@@ -203,9 +203,9 @@ static struct IOReadPort zektor_readport[] =
 static struct IOWritePort zektor_writeport[] =
 {
 	{ 0x38, 0x38, sega_sh_speech_w },
-  	{ 0xbd, 0xbd, sega_mult1_w },
- 	{ 0xbe, 0xbe, sega_mult2_w },
- 	{ 0xf8, 0xf8, sega_switch_w },
+	{ 0xbd, 0xbd, sega_mult1_w },
+	{ 0xbe, 0xbe, sega_mult2_w },
+	{ 0xf8, 0xf8, sega_switch_w },
 	{ 0xf9, 0xf9, coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
 	{ -1 }	/* end of table */
 };
@@ -213,17 +213,17 @@ static struct IOWritePort zektor_writeport[] =
 static struct IOWritePort tacscan_writeport[] =
 {
 	{ 0x3f, 0x3f, tacscan_sh_w },
-  	{ 0xbd, 0xbd, sega_mult1_w },
- 	{ 0xbe, 0xbe, sega_mult2_w },
- 	{ 0xf8, 0xf8, sega_switch_w },
+	{ 0xbd, 0xbd, sega_mult1_w },
+	{ 0xbe, 0xbe, sega_mult2_w },
+	{ 0xf8, 0xf8, sega_switch_w },
 	{ 0xf9, 0xf9, coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
 	{ -1 }	/* end of table */
 };
 
 static struct IOReadPort elim2_readport[] =
 {
- 	{ 0x3f, 0x3f, sega_sh_r },
- 	{ 0xbe, 0xbe, sega_mult_r },
+	{ 0x3f, 0x3f, sega_sh_r },
+	{ 0xbe, 0xbe, sega_mult_r },
 	{ 0xf8, 0xfb, sega_read_ports },
 	{ 0xfc, 0xfc, input_port_4_r },
 	{ -1 }	/* end of table */
@@ -231,8 +231,8 @@ static struct IOReadPort elim2_readport[] =
 
 static struct IOReadPort elim4_readport[] =
 {
- 	{ 0x3f, 0x3f, sega_sh_r },
- 	{ 0xbe, 0xbe, sega_mult_r },
+	{ 0x3f, 0x3f, sega_sh_r },
+	{ 0xbe, 0xbe, sega_mult_r },
 	{ 0xf8, 0xfb, sega_read_ports },
 	{ 0xfc, 0xfc, elim4_IN4_r },
 	{ -1 }	/* end of table */
@@ -242,9 +242,9 @@ static struct IOWritePort elim_writeport[] =
 {
 	{ 0x3e, 0x3e, elim1_sh_w },
 	{ 0x3f, 0x3f, elim2_sh_w },
-  	{ 0xbd, 0xbd, sega_mult1_w },
- 	{ 0xbe, 0xbe, sega_mult2_w },
- 	{ 0xf8, 0xf8, sega_switch_w },
+	{ 0xbd, 0xbd, sega_mult1_w },
+	{ 0xbe, 0xbe, sega_mult2_w },
+	{ 0xf8, 0xf8, sega_switch_w },
 	{ 0xf9, 0xf9, coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
 	{ -1 }	/* end of table */
 };
@@ -253,12 +253,54 @@ static struct IOWritePort startrek_writeport[] =
 {
 	{ 0x38, 0x38, sega_sh_speech_w },
 	{ 0x3f, 0x3f, startrek_sh_w },
-  	{ 0xbd, 0xbd, sega_mult1_w },
- 	{ 0xbe, 0xbe, sega_mult2_w },
- 	{ 0xf8, 0xf8, sega_switch_w },
+	{ 0xbd, 0xbd, sega_mult1_w },
+	{ 0xbe, 0xbe, sega_mult2_w },
+	{ 0xf8, 0xf8, sega_switch_w },
 	{ 0xf9, 0xf9, coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
 	{ -1 }	/* end of table */
 };
+
+/*************************************************************************
+Input Ports
+*************************************************************************/
+
+/* This fake input port is used for DIP Switch 2
+   for all games except Eliminato 4 players */
+#define COINAGE PORT_START \
+        PORT_DIPNAME( 0x0f, 0x0c, DEF_STR ( Coin_B ) ) \
+        PORT_DIPSETTING(    0x00, DEF_STR ( 4C_1C ) ) \
+        PORT_DIPSETTING(    0x08, DEF_STR ( 3C_1C ) ) \
+        PORT_DIPSETTING(    0x09, "2 Coins/1 Credit 5/3 6/4" ) \
+        PORT_DIPSETTING(    0x05, "2 Coins/1 Credit 4/3" ) \
+        PORT_DIPSETTING(    0x04, DEF_STR ( 2C_1C ) ) \
+        PORT_DIPSETTING(    0x0c, DEF_STR ( 1C_1C ) ) \
+        PORT_DIPSETTING(    0x0d, "1 Coin/1 Credit 5/6" ) \
+        PORT_DIPSETTING(    0x03, "1 Coin/1 Credit 4/5" ) \
+        PORT_DIPSETTING(    0x0b, "1 Coin/1 Credit 2/3" ) \
+        PORT_DIPSETTING(    0x02, DEF_STR ( 1C_2C ) ) \
+        PORT_DIPSETTING(    0x0f, "1 Coin/2 Credits 4/9" ) \
+        PORT_DIPSETTING(    0x07, "1 Coin/2 Credits 5/11" ) \
+        PORT_DIPSETTING(    0x0a, DEF_STR ( 1C_3C ) ) \
+        PORT_DIPSETTING(    0x06, DEF_STR ( 1C_4C ) ) \
+        PORT_DIPSETTING(    0x0e, DEF_STR ( 1C_5C ) ) \
+        PORT_DIPSETTING(    0x01, DEF_STR ( 1C_6C ) ) \
+        PORT_DIPNAME( 0xf0, 0xc0, DEF_STR ( Coin_A ) ) \
+        PORT_DIPSETTING(    0x00, DEF_STR ( 4C_1C ) ) \
+        PORT_DIPSETTING(    0x80, DEF_STR ( 3C_1C ) ) \
+        PORT_DIPSETTING(    0x90, "2 Coins/1 Credit 5/3 6/4" ) \
+        PORT_DIPSETTING(    0x50, "2 Coins/1 Credit 4/3" ) \
+        PORT_DIPSETTING(    0x40, DEF_STR ( 2C_1C ) ) \
+        PORT_DIPSETTING(    0xc0, DEF_STR ( 1C_1C ) ) \
+        PORT_DIPSETTING(    0xd0, "1 Coin/1 Credit 5/6" ) \
+        PORT_DIPSETTING(    0x30, "1 Coin/1 Credit 4/5" ) \
+        PORT_DIPSETTING(    0xb0, "1 Coin/1 Credit 2/3" ) \
+        PORT_DIPSETTING(    0x20, DEF_STR ( 1C_2C ) ) \
+        PORT_DIPSETTING(    0xf0, "1 Coin/2 Credits 4/9" ) \
+        PORT_DIPSETTING(    0x70, "1 Coin/2 Credits 5/11" ) \
+        PORT_DIPSETTING(    0xa0, DEF_STR ( 1C_3C ) ) \
+        PORT_DIPSETTING(    0x60, DEF_STR ( 1C_4C ) ) \
+        PORT_DIPSETTING(    0xe0, DEF_STR ( 1C_5C ) ) \
+        PORT_DIPSETTING(    0x10, DEF_STR ( 1C_6C ) )
 
 
 INPUT_PORTS_START( spacfury_input_ports )
@@ -293,65 +335,30 @@ INPUT_PORTS_START( spacfury_input_ports )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 1 */
-        PORT_DIPNAME( 0x03, 0x01, "Bonus Ship" )
-        PORT_DIPSETTING(    0x03, "40K Points" )
-        PORT_DIPSETTING(    0x01, "30K Points" )
-        PORT_DIPSETTING(    0x02, "20K Points" )
-        PORT_DIPSETTING(    0x00, "10K Points" )
-        PORT_DIPNAME( 0x0c, 0x00, "Difficulty" )
-        PORT_DIPSETTING(    0x0c, "Very Hard" )
-        PORT_DIPSETTING(    0x04, "Hard" )
-        PORT_DIPSETTING(    0x08, "Moderate" )
+        PORT_DIPNAME( 0x03, 0x01, DEF_STR ( Bonus_Life ) )
+        PORT_DIPSETTING(    0x00, "10000" )
+        PORT_DIPSETTING(    0x02, "20000" )
+        PORT_DIPSETTING(    0x01, "30000" )
+        PORT_DIPSETTING(    0x03, "40000" )
+        PORT_DIPNAME( 0x0c, 0x00, DEF_STR ( Difficulty ) )
         PORT_DIPSETTING(    0x00, "Easy" )
-        PORT_DIPNAME( 0x30, 0x30, "Number of Ships" )
-        PORT_DIPSETTING(    0x30, "5 Ships" )
-        PORT_DIPSETTING(    0x10, "4 Ships" )
-        PORT_DIPSETTING(    0x20, "3 Ships" )
-        PORT_DIPSETTING(    0x00, "2 Ships" )
-        PORT_DIPNAME( 0x40, 0x00, "Attract Sound" )
-        PORT_DIPSETTING(    0x40, "Off" )
-        PORT_DIPSETTING(    0x00, "On" )
-        PORT_DIPNAME( 0x80, 0x80, "Orientation" )
-        PORT_DIPSETTING(    0x80, "Upright" )
-        PORT_DIPSETTING(    0x00, "Cocktail" )
+        PORT_DIPSETTING(    0x08, "Normal" )
+        PORT_DIPSETTING(    0x04, "Hard" )
+        PORT_DIPSETTING(    0x0c, "Very Hard" )
+        PORT_DIPNAME( 0x30, 0x30, DEF_STR ( Lives ) )
+        PORT_DIPSETTING(    0x00, "2" )
+        PORT_DIPSETTING(    0x20, "3" )
+        PORT_DIPSETTING(    0x10, "4" )
+        PORT_DIPSETTING(    0x30, "5" )
+        PORT_DIPNAME( 0x40, 0x00, DEF_STR ( Demo_Sounds) )
+        PORT_DIPSETTING(    0x40, DEF_STR ( Off ) )
+        PORT_DIPSETTING(    0x00, DEF_STR ( On ) )
+        PORT_DIPNAME( 0x80, 0x80, DEF_STR ( Cabinet ) )
+        PORT_DIPSETTING(    0x80, DEF_STR ( Upright ) )
+        PORT_DIPSETTING(    0x00, DEF_STR ( Cocktail ) )
 
-	PORT_START	/* FAKE */
-        /* This fake input port is used for DIP Switch 2 */
-        PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)" )
-        PORT_DIPSETTING(    0x00, "4 / 1" )
-        PORT_DIPSETTING(    0x08, "3 / 1" )
-        PORT_DIPSETTING(    0x04, "2 / 1" )
-        PORT_DIPSETTING(    0x0C, "1 / 1" )
-        PORT_DIPSETTING(    0x02, "1 / 2" )
-        PORT_DIPSETTING(    0x0A, "1 / 3" )
-        PORT_DIPSETTING(    0x06, "1 / 4" )
-        PORT_DIPSETTING(    0x0E, "1 / 5" )
-        PORT_DIPSETTING(    0x01, "1 / 6" )
-        PORT_DIPSETTING(    0x09, "2/4/5 / 1/2/3" )
-        PORT_DIPSETTING(    0x05, "2/4 / 1/3" )
-        PORT_DIPSETTING(    0x0D, "1/2/3/4/5 / 1/2/3/4/6" )
-        PORT_DIPSETTING(    0x03, "1/2/3/4 / 1/2/3/5" )
-        PORT_DIPSETTING(    0x0B, "1/2 / 1/3" )
-        PORT_DIPSETTING(    0x07, "1/2/3/4/5 / 2/4/6/8/11" )
-        PORT_DIPSETTING(    0x0F, "1/2/3/4 / 2/4/6/9" )
+        COINAGE
 
-        PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)" )
-        PORT_DIPSETTING(    0x00, "4 / 1" )
-        PORT_DIPSETTING(    0x80, "3 / 1" )
-        PORT_DIPSETTING(    0x40, "2 / 1" )
-        PORT_DIPSETTING(    0xC0, "1 / 1" )
-        PORT_DIPSETTING(    0x20, "1 / 2" )
-        PORT_DIPSETTING(    0xA0, "1 / 3" )
-        PORT_DIPSETTING(    0x60, "1 / 4" )
-        PORT_DIPSETTING(    0xE0, "1 / 5" )
-        PORT_DIPSETTING(    0x10, "1 / 6" )
-        PORT_DIPSETTING(    0x90, "2/4/5 / 1/2/3" )
-        PORT_DIPSETTING(    0x50, "2/4 / 1/3" )
-        PORT_DIPSETTING(    0xD0, "1/2/3/4/5 / 1/2/3/4/6" )
-        PORT_DIPSETTING(    0x30, "1/2/3/4 / 1/2/3/5" )
-        PORT_DIPSETTING(    0xB0, "1/2 / 1/3" )
-        PORT_DIPSETTING(    0x70, "1/2/3/4/5 / 2/4/6/8/11" )
-        PORT_DIPSETTING(    0xF0, "1/2/3/4 / 2/4/6/9" )
 
 INPUT_PORTS_END
 
@@ -385,69 +392,34 @@ INPUT_PORTS_START( zektor_input_ports )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 1 */
-        PORT_DIPNAME( 0x03, 0x01, "Bonus Ship" )
-        PORT_DIPSETTING(    0x03, "10K Points" )
-        PORT_DIPSETTING(    0x01, "20K Points" )
-        PORT_DIPSETTING(    0x02, "30K Points" )
+        PORT_DIPNAME( 0x03, 0x01, DEF_STR ( Bonus_Life ) )
+        PORT_DIPSETTING(    0x03, "10000" )
+        PORT_DIPSETTING(    0x01, "20000" )
+        PORT_DIPSETTING(    0x02, "30000" )
         PORT_DIPSETTING(    0x00, "None" )
-        PORT_DIPNAME( 0x0c, 0x00, "Difficulty" )
-        PORT_DIPSETTING(    0x0c, "Very Hard" )
-        PORT_DIPSETTING(    0x04, "Hard" )
-        PORT_DIPSETTING(    0x08, "Moderate" )
+        PORT_DIPNAME( 0x0c, 0x00, DEF_STR ( Difficulty ) )
         PORT_DIPSETTING(    0x00, "Easy" )
-        PORT_DIPNAME( 0x30, 0x30, "Number of Ships" )
-        PORT_DIPSETTING(    0x30, "5 Ships" )
-        PORT_DIPSETTING(    0x10, "4 Ships" )
-        PORT_DIPSETTING(    0x20, "3 Ships" )
-        PORT_DIPSETTING(    0x00, "2 Ships" )
-        PORT_DIPNAME( 0x40, 0x00, "Attract Sound" )
-        PORT_DIPSETTING(    0x40, "Off" )
-        PORT_DIPSETTING(    0x00, "On" )
-        PORT_DIPNAME( 0x80, 0x80, "Orientation" )
-        PORT_DIPSETTING(    0x80, "Upright" )
-        PORT_DIPSETTING(    0x00, "Cocktail" )
+        PORT_DIPSETTING(    0x08, "Normal" )
+        PORT_DIPSETTING(    0x04, "Hard" )
+        PORT_DIPSETTING(    0x0c, "Very Hard" )
+        PORT_DIPNAME( 0x30, 0x30, DEF_STR ( Lives ) )
+        PORT_DIPSETTING(    0x00, "2" )
+        PORT_DIPSETTING(    0x20, "3" )
+        PORT_DIPSETTING(    0x10, "4" )
+        PORT_DIPSETTING(    0x30, "5" )
+        PORT_DIPNAME( 0x40, 0x00, DEF_STR ( Demo_Sounds ) )
+        PORT_DIPSETTING(    0x40, DEF_STR ( Off ) )
+        PORT_DIPSETTING(    0x00, DEF_STR ( On ) )
+        PORT_DIPNAME( 0x80, 0x80, DEF_STR ( Cabinet ) )
+        PORT_DIPSETTING(    0x80, DEF_STR ( Upright ) )
+        PORT_DIPSETTING(    0x00, DEF_STR ( Cocktail ) )
 
-	PORT_START	/* FAKE */
-        /* This fake input port is used for DIP Switch 2 */
-        PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)" )
-        PORT_DIPSETTING(    0x00, "4 / 1" )
-        PORT_DIPSETTING(    0x08, "3 / 1" )
-        PORT_DIPSETTING(    0x04, "2 / 1" )
-        PORT_DIPSETTING(    0x0C, "1 / 1" )
-        PORT_DIPSETTING(    0x02, "1 / 2" )
-        PORT_DIPSETTING(    0x0A, "1 / 3" )
-        PORT_DIPSETTING(    0x06, "1 / 4" )
-        PORT_DIPSETTING(    0x0E, "1 / 5" )
-        PORT_DIPSETTING(    0x01, "1 / 6" )
-        PORT_DIPSETTING(    0x09, "2/4/5 / 1/2/3" )
-        PORT_DIPSETTING(    0x05, "2/4 / 1/3" )
-        PORT_DIPSETTING(    0x0D, "1/2/3/4/5 / 1/2/3/4/6" )
-        PORT_DIPSETTING(    0x03, "1/2/3/4 / 1/2/3/5" )
-        PORT_DIPSETTING(    0x0B, "1/2 / 1/3" )
-        PORT_DIPSETTING(    0x07, "1/2/3/4/5 / 2/4/6/8/11" )
-        PORT_DIPSETTING(    0x0F, "1/2/3/4 / 2/4/6/9" )
-
-        PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)" )
-        PORT_DIPSETTING(    0x00, "4 / 1" )
-        PORT_DIPSETTING(    0x80, "3 / 1" )
-        PORT_DIPSETTING(    0x40, "2 / 1" )
-        PORT_DIPSETTING(    0xC0, "1 / 1" )
-        PORT_DIPSETTING(    0x20, "1 / 2" )
-        PORT_DIPSETTING(    0xA0, "1 / 3" )
-        PORT_DIPSETTING(    0x60, "1 / 4" )
-        PORT_DIPSETTING(    0xE0, "1 / 5" )
-        PORT_DIPSETTING(    0x10, "1 / 6" )
-        PORT_DIPSETTING(    0x90, "2/4/5 / 1/2/3" )
-        PORT_DIPSETTING(    0x50, "2/4 / 1/3" )
-        PORT_DIPSETTING(    0xD0, "1/2/3/4/5 / 1/2/3/4/6" )
-        PORT_DIPSETTING(    0x30, "1/2/3/4 / 1/2/3/5" )
-        PORT_DIPSETTING(    0xB0, "1/2 / 1/3" )
-        PORT_DIPSETTING(    0x70, "1/2/3/4/5 / 2/4/6/8/11" )
-        PORT_DIPSETTING(    0xF0, "1/2/3/4 / 2/4/6/9" )
+        COINAGE
 
         PORT_START      /* IN8 - FAKE port for the dial */
 	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL|IPF_CENTER, 100, 0, 0, 0 )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( startrek_input_ports )
 	PORT_START	/* IN0 - port 0xf8 */
@@ -481,69 +453,34 @@ INPUT_PORTS_START( startrek_input_ports )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 1 */
-        PORT_DIPNAME( 0x03, 0x01, "Bonus Ship" )
-        PORT_DIPSETTING(    0x03, "40K Points" )
-        PORT_DIPSETTING(    0x01, "30K Points" )
-        PORT_DIPSETTING(    0x02, "20K Points" )
-        PORT_DIPSETTING(    0x00, "10K Points" )
-        PORT_DIPNAME( 0x0c, 0x00, "Difficulty" )
-        PORT_DIPSETTING(    0x0c, "Tournament" )
-        PORT_DIPSETTING(    0x04, "Hard" )
-        PORT_DIPSETTING(    0x08, "Medium" )
+        PORT_DIPNAME( 0x03, 0x01, DEF_STR ( Bonus_Life ) )
+        PORT_DIPSETTING(    0x00, "10000" )
+        PORT_DIPSETTING(    0x02, "20000" )
+        PORT_DIPSETTING(    0x01, "30000" )
+        PORT_DIPSETTING(    0x03, "40000" )
+        PORT_DIPNAME( 0x0c, 0x00, DEF_STR ( Difficulty ) )
         PORT_DIPSETTING(    0x00, "Easy" )
+        PORT_DIPSETTING(    0x08, "Medium" )
+        PORT_DIPSETTING(    0x04, "Hard" )
+        PORT_DIPSETTING(    0x0c, "Tournament" )
         PORT_DIPNAME( 0x30, 0x30, "Photon Torpedoes" )
-        PORT_DIPSETTING(    0x30, "4" )
-        PORT_DIPSETTING(    0x10, "3" )
-        PORT_DIPSETTING(    0x20, "2" )
         PORT_DIPSETTING(    0x00, "1" )
-        PORT_DIPNAME( 0x40, 0x00, "Attract Sound" )
-        PORT_DIPSETTING(    0x40, "Off" )
-        PORT_DIPSETTING(    0x00, "On" )
-        PORT_DIPNAME( 0x80, 0x80, "Orientation" )
-        PORT_DIPSETTING(    0x80, "Upright" )
-        PORT_DIPSETTING(    0x00, "Cocktail" )
+        PORT_DIPSETTING(    0x20, "2" )
+        PORT_DIPSETTING(    0x10, "3" )
+        PORT_DIPSETTING(    0x30, "4" )
+        PORT_DIPNAME( 0x40, 0x00, "Demo Sounds?" )
+        PORT_DIPSETTING(    0x40, DEF_STR ( Off ) )
+        PORT_DIPSETTING(    0x00, DEF_STR ( On ) )
+        PORT_DIPNAME( 0x80, 0x80, DEF_STR ( Cabinet ) )
+        PORT_DIPSETTING(    0x80, DEF_STR ( Upright ) )
+        PORT_DIPSETTING(    0x00, DEF_STR ( Cocktail ) )
 
-	PORT_START	/* FAKE */
-        /* This fake input port is used for DIP Switch 2 */
-        PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)" )
-        PORT_DIPSETTING(    0x00, "4 / 1" )
-        PORT_DIPSETTING(    0x08, "3 / 1" )
-        PORT_DIPSETTING(    0x04, "2 / 1" )
-        PORT_DIPSETTING(    0x0C, "1 / 1" )
-        PORT_DIPSETTING(    0x02, "1 / 2" )
-        PORT_DIPSETTING(    0x0A, "1 / 3" )
-        PORT_DIPSETTING(    0x06, "1 / 4" )
-        PORT_DIPSETTING(    0x0E, "1 / 5" )
-        PORT_DIPSETTING(    0x01, "1 / 6" )
-        PORT_DIPSETTING(    0x09, "2/4/5 / 1/2/3" )
-        PORT_DIPSETTING(    0x05, "2/4 / 1/3" )
-        PORT_DIPSETTING(    0x0D, "1/2/3/4/5 / 1/2/3/4/6" )
-        PORT_DIPSETTING(    0x03, "1/2/3/4 / 1/2/3/5" )
-        PORT_DIPSETTING(    0x0B, "1/2 / 1/3" )
-        PORT_DIPSETTING(    0x07, "1/2/3/4/5 / 2/4/6/8/11" )
-        PORT_DIPSETTING(    0x0F, "1/2/3/4 / 2/4/6/9" )
-
-        PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)" )
-        PORT_DIPSETTING(    0x00, "4 / 1" )
-        PORT_DIPSETTING(    0x80, "3 / 1" )
-        PORT_DIPSETTING(    0x40, "2 / 1" )
-        PORT_DIPSETTING(    0xC0, "1 / 1" )
-        PORT_DIPSETTING(    0x20, "1 / 2" )
-        PORT_DIPSETTING(    0xA0, "1 / 3" )
-        PORT_DIPSETTING(    0x60, "1 / 4" )
-        PORT_DIPSETTING(    0xE0, "1 / 5" )
-        PORT_DIPSETTING(    0x10, "1 / 6" )
-        PORT_DIPSETTING(    0x90, "2/4/5 / 1/2/3" )
-        PORT_DIPSETTING(    0x50, "2/4 / 1/3" )
-        PORT_DIPSETTING(    0xD0, "1/2/3/4/5 / 1/2/3/4/6" )
-        PORT_DIPSETTING(    0x30, "1/2/3/4 / 1/2/3/5" )
-        PORT_DIPSETTING(    0xB0, "1/2 / 1/3" )
-        PORT_DIPSETTING(    0x70, "1/2/3/4/5 / 2/4/6/8/11" )
-        PORT_DIPSETTING(    0xF0, "1/2/3/4 / 2/4/6/9" )
+        COINAGE
 
         PORT_START      /* IN8 - dummy port for the dial */
 	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL|IPF_CENTER, 100, 0, 0, 0 )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( tacscan_input_ports )
 	PORT_START	/* IN0 - port 0xf8 */
@@ -575,68 +512,33 @@ INPUT_PORTS_START( tacscan_input_ports )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 1 */
-        PORT_DIPNAME( 0x03, 0x01, "Bonus Ship" )
-        PORT_DIPSETTING(    0x03, "10K Points" )
-        PORT_DIPSETTING(    0x01, "20K Points" )
-        PORT_DIPSETTING(    0x02, "30K Points" )
+        PORT_DIPNAME( 0x03, 0x01, DEF_STR ( Bonus_Life ) )
+        PORT_DIPSETTING(    0x03, "10000" )
+        PORT_DIPSETTING(    0x01, "20000" )
+        PORT_DIPSETTING(    0x02, "30000" )
         PORT_DIPSETTING(    0x00, "None" )
-        PORT_DIPNAME( 0x0c, 0x00, "Difficulty" )
-        PORT_DIPSETTING(    0x0c, "Very Hard" )
-        PORT_DIPSETTING(    0x04, "Hard" )
-        PORT_DIPSETTING(    0x08, "Moderate" )
+        PORT_DIPNAME( 0x0c, 0x00, DEF_STR ( Difficulty ) )
         PORT_DIPSETTING(    0x00, "Easy" )
+        PORT_DIPSETTING(    0x08, "Normal" )
+        PORT_DIPSETTING(    0x04, "Hard" )
+        PORT_DIPSETTING(    0x0c, "Very Hard" )
         PORT_DIPNAME( 0x30, 0x30, "Number of Ships" )
-        PORT_DIPSETTING(    0x30, "8 Ships" )
-        PORT_DIPSETTING(    0x10, "6 Ships" )
-        PORT_DIPSETTING(    0x20, "4 Ships" )
-        PORT_DIPSETTING(    0x00, "2 Ships" )
-        PORT_DIPNAME( 0x40, 0x00, "Attract Sound" )
-        PORT_DIPSETTING(    0x40, "Off" )
-        PORT_DIPSETTING(    0x00, "On" )
-        PORT_DIPNAME( 0x80, 0x80, "Orientation" )
-        PORT_DIPSETTING(    0x80, "Upright" )
-        PORT_DIPSETTING(    0x00, "Cocktail" )
+        PORT_DIPSETTING(    0x00, "2" )
+        PORT_DIPSETTING(    0x20, "4" )
+        PORT_DIPSETTING(    0x10, "6" )
+        PORT_DIPSETTING(    0x30, "8" )
+        PORT_DIPNAME( 0x40, 0x00, "Demo Sounds?" )
+        PORT_DIPSETTING(    0x40, DEF_STR ( Off ) )
+        PORT_DIPSETTING(    0x00, DEF_STR ( On ) )
+        PORT_DIPNAME( 0x80, 0x80, DEF_STR ( Cabinet ) )
+        PORT_DIPSETTING(    0x80, DEF_STR ( Upright ) )
+        PORT_DIPSETTING(    0x00, DEF_STR ( Cocktail ) )
 
-	PORT_START	/* FAKE */
-        /* This fake input port is used for DIP Switch 2 */
-        PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)" )
-        PORT_DIPSETTING(    0x00, "4 / 1" )
-        PORT_DIPSETTING(    0x08, "3 / 1" )
-        PORT_DIPSETTING(    0x04, "2 / 1" )
-        PORT_DIPSETTING(    0x0C, "1 / 1" )
-        PORT_DIPSETTING(    0x02, "1 / 2" )
-        PORT_DIPSETTING(    0x0A, "1 / 3" )
-        PORT_DIPSETTING(    0x06, "1 / 4" )
-        PORT_DIPSETTING(    0x0E, "1 / 5" )
-        PORT_DIPSETTING(    0x01, "1 / 6" )
-        PORT_DIPSETTING(    0x09, "2/4/5 / 1/2/3" )
-        PORT_DIPSETTING(    0x05, "2/4 / 1/3" )
-        PORT_DIPSETTING(    0x0D, "1/2/3/4/5 / 1/2/3/4/6" )
-        PORT_DIPSETTING(    0x03, "1/2/3/4 / 1/2/3/5" )
-        PORT_DIPSETTING(    0x0B, "1/2 / 1/3" )
-        PORT_DIPSETTING(    0x07, "1/2/3/4/5 / 2/4/6/8/11" )
-        PORT_DIPSETTING(    0x0F, "1/2/3/4 / 2/4/6/9" )
-
-        PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)" )
-        PORT_DIPSETTING(    0x00, "4 / 1" )
-        PORT_DIPSETTING(    0x80, "3 / 1" )
-        PORT_DIPSETTING(    0x40, "2 / 1" )
-        PORT_DIPSETTING(    0xC0, "1 / 1" )
-        PORT_DIPSETTING(    0x20, "1 / 2" )
-        PORT_DIPSETTING(    0xA0, "1 / 3" )
-        PORT_DIPSETTING(    0x60, "1 / 4" )
-        PORT_DIPSETTING(    0xE0, "1 / 5" )
-        PORT_DIPSETTING(    0x10, "1 / 6" )
-        PORT_DIPSETTING(    0x90, "2/4/5 / 1/2/3" )
-        PORT_DIPSETTING(    0x50, "2/4 / 1/3" )
-        PORT_DIPSETTING(    0xD0, "1/2/3/4/5 / 1/2/3/4/6" )
-        PORT_DIPSETTING(    0x30, "1/2/3/4 / 1/2/3/5" )
-        PORT_DIPSETTING(    0xB0, "1/2 / 1/3" )
-        PORT_DIPSETTING(    0x70, "1/2/3/4/5 / 2/4/6/8/11" )
-        PORT_DIPSETTING(    0xF0, "1/2/3/4 / 2/4/6/9" )
+        COINAGE
 
         PORT_START      /* IN8 - FAKE port for the dial */
 	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL|IPF_CENTER, 100, 0, 0, 0 )
+
 INPUT_PORTS_END
 
 
@@ -676,64 +578,29 @@ INPUT_PORTS_START( elim2_input_ports )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 1 */
-        PORT_DIPNAME( 0x03, 0x02, "Bonus Ship" )
+        PORT_DIPNAME( 0x03, 0x02, DEF_STR ( Bonus_Life ) )
+        PORT_DIPSETTING(    0x01, "10000" )
+        PORT_DIPSETTING(    0x02, "20000" )
+        PORT_DIPSETTING(    0x00, "30000" )
         PORT_DIPSETTING(    0x03, "None" )
-        PORT_DIPSETTING(    0x00, "30K Points" )
-        PORT_DIPSETTING(    0x02, "20K Points" )
-        PORT_DIPSETTING(    0x01, "10K Points" )
-        PORT_DIPNAME( 0x0c, 0x00, "Difficulty" )
-        PORT_DIPSETTING(    0x0c, "Very Hard" )
-        PORT_DIPSETTING(    0x04, "Hard" )
-        PORT_DIPSETTING(    0x08, "Moderate" )
+        PORT_DIPNAME( 0x0c, 0x00, DEF_STR ( Difficulty ) )
         PORT_DIPSETTING(    0x00, "Easy" )
-        PORT_DIPNAME( 0x30, 0x30, "Number of Ships" )
-        PORT_DIPSETTING(    0x30, "5 Ships" )
-        PORT_DIPSETTING(    0x10, "4 Ships" )
-        PORT_DIPSETTING(    0x20, "3 Ships" )
-        PORT_DIPSETTING(    0x00, "2 Ships" )
-        PORT_DIPNAME( 0x80, 0x80, "Orientation" )
-        PORT_DIPSETTING(    0x80, "Upright" )
-        PORT_DIPSETTING(    0x00, "Cocktail" )
+        PORT_DIPSETTING(    0x08, "Normal" )
+        PORT_DIPSETTING(    0x04, "Hard" )
+        PORT_DIPSETTING(    0x0c, "Very Hard" )
+        PORT_DIPNAME( 0x30, 0x20, DEF_STR ( Lives ) )
+        PORT_DIPSETTING(    0x20, "3" )
+        PORT_DIPSETTING(    0x10, "4" )
+        PORT_DIPSETTING(    0x00, "5" )
+        /* 0x30 gives 5 Lives */
+        PORT_DIPNAME( 0x80, 0x80, DEF_STR ( Cabinet ) )
+        PORT_DIPSETTING(    0x80, DEF_STR ( Upright ) )
+        PORT_DIPSETTING(    0x00, DEF_STR ( Cocktail ) )
 
-	PORT_START	/* FAKE */
-        /* This fake input port is used for DIP Switch 2 */
-        PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)" )
-        PORT_DIPSETTING(    0x00, "4 / 1" )
-        PORT_DIPSETTING(    0x08, "3 / 1" )
-        PORT_DIPSETTING(    0x04, "2 / 1" )
-        PORT_DIPSETTING(    0x0C, "1 / 1" )
-        PORT_DIPSETTING(    0x02, "1 / 2" )
-        PORT_DIPSETTING(    0x0A, "1 / 3" )
-        PORT_DIPSETTING(    0x06, "1 / 4" )
-        PORT_DIPSETTING(    0x0E, "1 / 5" )
-        PORT_DIPSETTING(    0x01, "1 / 6" )
-        PORT_DIPSETTING(    0x09, "2/4/5 / 1/2/3" )
-        PORT_DIPSETTING(    0x05, "2/4 / 1/3" )
-        PORT_DIPSETTING(    0x0D, "1/2/3/4/5 / 1/2/3/4/6" )
-        PORT_DIPSETTING(    0x03, "1/2/3/4 / 1/2/3/5" )
-        PORT_DIPSETTING(    0x0B, "1/2 / 1/3" )
-        PORT_DIPSETTING(    0x07, "1/2/3/4/5 / 2/4/6/8/11" )
-        PORT_DIPSETTING(    0x0F, "1/2/3/4 / 2/4/6/9" )
-
-        PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)" )
-        PORT_DIPSETTING(    0x00, "4 / 1" )
-        PORT_DIPSETTING(    0x80, "3 / 1" )
-        PORT_DIPSETTING(    0x40, "2 / 1" )
-        PORT_DIPSETTING(    0xC0, "1 / 1" )
-        PORT_DIPSETTING(    0x20, "1 / 2" )
-        PORT_DIPSETTING(    0xA0, "1 / 3" )
-        PORT_DIPSETTING(    0x60, "1 / 4" )
-        PORT_DIPSETTING(    0xE0, "1 / 5" )
-        PORT_DIPSETTING(    0x10, "1 / 6" )
-        PORT_DIPSETTING(    0x90, "2/4/5 / 1/2/3" )
-        PORT_DIPSETTING(    0x50, "2/4 / 1/3" )
-        PORT_DIPSETTING(    0xD0, "1/2/3/4/5 / 1/2/3/4/6" )
-        PORT_DIPSETTING(    0x30, "1/2/3/4 / 1/2/3/5" )
-        PORT_DIPSETTING(    0xB0, "1/2 / 1/3" )
-        PORT_DIPSETTING(    0x70, "1/2/3/4/5 / 2/4/6/8/11" )
-        PORT_DIPSETTING(    0xF0, "1/2/3/4 / 2/4/6/9" )
+        COINAGE
 
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( elim4_input_ports )
 	PORT_START	/* IN0 - port 0xf8 */
@@ -776,62 +643,27 @@ INPUT_PORTS_START( elim4_input_ports )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 1 */
-        PORT_DIPNAME( 0x03, 0x02, "Bonus Ship" )
+        PORT_DIPNAME( 0x03, 0x02, DEF_STR ( Bonus_Life ) )
+        PORT_DIPSETTING(    0x01, "10000" )
+        PORT_DIPSETTING(    0x02, "20000" )
+        PORT_DIPSETTING(    0x00, "30000" )
         PORT_DIPSETTING(    0x03, "None" )
-        PORT_DIPSETTING(    0x00, "30K Points" )
-        PORT_DIPSETTING(    0x02, "20K Points" )
-        PORT_DIPSETTING(    0x01, "10K Points" )
-        PORT_DIPNAME( 0x0c, 0x00, "Difficulty" )
-        PORT_DIPSETTING(    0x0c, "Very Hard" )
-        PORT_DIPSETTING(    0x04, "Hard" )
-        PORT_DIPSETTING(    0x08, "Moderate" )
+        PORT_DIPNAME( 0x0c, 0x00, DEF_STR ( Difficulty ) )
         PORT_DIPSETTING(    0x00, "Easy" )
-        PORT_DIPNAME( 0x30, 0x30, "Number of Ships" )
-        PORT_DIPSETTING(    0x30, "5 Ships" )
-        PORT_DIPSETTING(    0x10, "4 Ships" )
-        PORT_DIPSETTING(    0x20, "3 Ships" )
-        PORT_DIPSETTING(    0x00, "2 Ships" )
-        PORT_DIPNAME( 0x80, 0x80, "Orientation" )
-        PORT_DIPSETTING(    0x80, "Upright" )
-        PORT_DIPSETTING(    0x00, "Cocktail" )
+        PORT_DIPSETTING(    0x08, "Normal" )
+        PORT_DIPSETTING(    0x04, "Hard" )
+        PORT_DIPSETTING(    0x0c, "Very Hard" )
+        PORT_DIPNAME( 0x30, 0x30, DEF_STR ( Lives ) )
+        PORT_DIPSETTING(    0x20, "3" )
+        PORT_DIPSETTING(    0x10, "4" )
+        PORT_DIPSETTING(    0x00, "5" )
+        /* 0x30 gives 5 Lives */
+        PORT_DIPNAME( 0x80, 0x80, DEF_STR ( Cabinet ) )
+        PORT_DIPSETTING(    0x80, DEF_STR ( Upright ) )
+        PORT_DIPSETTING(    0x00, DEF_STR ( Cocktail ) )
 
-	PORT_START	/* FAKE */
-        /* This fake input port is used for DIP Switch 2 */
-        PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)" )
-        PORT_DIPSETTING(    0x00, "4 / 1" )
-        PORT_DIPSETTING(    0x08, "3 / 1" )
-        PORT_DIPSETTING(    0x04, "2 / 1" )
-        PORT_DIPSETTING(    0x0C, "1 / 1" )
-        PORT_DIPSETTING(    0x02, "1 / 2" )
-        PORT_DIPSETTING(    0x0A, "1 / 3" )
-        PORT_DIPSETTING(    0x06, "1 / 4" )
-        PORT_DIPSETTING(    0x0E, "1 / 5" )
-        PORT_DIPSETTING(    0x01, "1 / 6" )
-        PORT_DIPSETTING(    0x09, "2/4/5 / 1/2/3" )
-        PORT_DIPSETTING(    0x05, "2/4 / 1/3" )
-        PORT_DIPSETTING(    0x0D, "1/2/3/4/5 / 1/2/3/4/6" )
-        PORT_DIPSETTING(    0x03, "1/2/3/4 / 1/2/3/5" )
-        PORT_DIPSETTING(    0x0B, "1/2 / 1/3" )
-        PORT_DIPSETTING(    0x07, "1/2/3/4/5 / 2/4/6/8/11" )
-        PORT_DIPSETTING(    0x0F, "1/2/3/4 / 2/4/6/9" )
-
-        PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)" )
-        PORT_DIPSETTING(    0x00, "4 / 1" )
-        PORT_DIPSETTING(    0x80, "3 / 1" )
-        PORT_DIPSETTING(    0x40, "2 / 1" )
-        PORT_DIPSETTING(    0xC0, "1 / 1" )
-        PORT_DIPSETTING(    0x20, "1 / 2" )
-        PORT_DIPSETTING(    0xA0, "1 / 3" )
-        PORT_DIPSETTING(    0x60, "1 / 4" )
-        PORT_DIPSETTING(    0xE0, "1 / 5" )
-        PORT_DIPSETTING(    0x10, "1 / 6" )
-        PORT_DIPSETTING(    0x90, "2/4/5 / 1/2/3" )
-        PORT_DIPSETTING(    0x50, "2/4 / 1/3" )
-        PORT_DIPSETTING(    0xD0, "1/2/3/4/5 / 1/2/3/4/6" )
-        PORT_DIPSETTING(    0x30, "1/2/3/4 / 1/2/3/5" )
-        PORT_DIPSETTING(    0xB0, "1/2 / 1/3" )
-        PORT_DIPSETTING(    0x70, "1/2/3/4/5 / 2/4/6/8/11" )
-        PORT_DIPSETTING(    0xF0, "1/2/3/4 / 2/4/6/9" )
+        PORT_START /* That is the coinage port in all the other games */
+        PORT_BIT ( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
         PORT_START      /* IN8 - FAKE - port 0xfc - read in machine/sega.c */
 	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 3 )

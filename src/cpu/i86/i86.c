@@ -7,7 +7,7 @@
 #include "host.h"
 #include "cpuintrf.h"
 #include "memory.h"
-#include "osd_dbg.h"
+#include "mamedbg.h"
 #include "I86.h"
 #include "I86intrf.h"
 
@@ -3124,7 +3124,7 @@ void i86_set_context(void *src)
 
 unsigned i86_get_pc(void)
 {
-	return I.base[CS] + (WORD)I.ip;
+	return (I.base[CS] + (WORD)I.ip) & I.amask;
 }
 
 void i86_set_pc(unsigned val)
@@ -3609,12 +3609,12 @@ const char *i86_info(void *context, int regnum)
 	return buffer[which];
 }
 
-unsigned i86_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned i86_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-    return DasmI86(base,buffer,pc);
+    return DasmI86(buffer,pc);
 #else
-	sprintf( buffer, "$%02X", ROM[pc] );
+	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
 #endif
 }

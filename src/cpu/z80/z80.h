@@ -3,7 +3,6 @@
 
 #include "cpuintrf.h"
 #include "osd_cpu.h"
-#include "osd_dbg.h"
 
 enum {
 	Z80_PC=1, Z80_SP, Z80_AF, Z80_BC, Z80_DE, Z80_HL,
@@ -38,7 +37,7 @@ extern void z80_set_irq_callback(int (*irq_callback)(int));
 extern void z80_state_save(void *file);
 extern void z80_state_load(void *file);
 extern const char *z80_info(void *context, int regnum);
-extern unsigned z80_dasm(UINT8 *base, char *buffer, unsigned pc);
+extern unsigned z80_dasm(char *buffer, unsigned pc);
 
 #ifdef MAME_DEBUG
 extern unsigned DasmZ80(char *buffer, unsigned pc);

@@ -119,13 +119,14 @@
   315-5018 Yamato
   315-5028 Sindbad Mystery
   315-5033 Regulus
-  ???-???? Mister Viking
+  315-5041 Mister Viking
   315-5048 SWAT                   used Bull Fight for k.p.a.
   315-5051 Flicky &
            Ninja Princess (bootleg)
   ???-???? Water Match            not available yet
   315-5061 Future Spy
   315-5065 Bull Fight
+  315-5069 Star Force             game by Tehkan; same key as Super Locomotive
   315-5093 Pitfall II
   315-5098 Ninja Princess         unencrypted version available
   315-5102 Sega Ninja             unencrypted version available
@@ -164,6 +165,7 @@
   Mister Viking    SECURITY BY S.KATAGI  CONTROL CHIP M140
   SWAT             SECURITY BY S.KATAGI
   Flicky           SECURITY BY S.KATAGI
+  Star Force       STAR FORCE TEHKAN. SECURITY BY SEGA ENTERPRISESE
 
 ******************************************************************************/
 

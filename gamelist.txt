@@ -17,7 +17,7 @@ to list them.
 | 1943                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | 1943     |
 | 1943 Kai             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | 1943kai  |
 | 4D Warriors          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | 4dwarrio |
-| 64th Street          |  Yes   |  Yes   |  Yes   |   No   |   No   | street64 |
+| 64th Street          |  Yes   |  Yes   |  Yes   |   No   |   No   | 64street |
 | 720 Degrees          |   No   |  Yes   |  Yes   |  Yes   |   No   | 720      |
 | APB                  |   No   |  Yes   |  Yes   |  Yes   |   No   | apb      |
 | Adv.of Robby Roto,The|  Yes   |   No   |   No   |  Yes   |  Yes   | robby    |
@@ -47,6 +47,7 @@ to list them.
 | Aurail               |   No   |  Yes   |   No   |   No   |   No   | aurail   |
 | Avalanche            |  Yes   |  b/w   |  Yes   |  Yes   |  n/a   | avalnche |
 | Avengers             |   No   |   No   |  Yes   |   No   |   No   | avengers |
+| Avenging Spirit      |  Yes   |  Yes   |  Yes   |   No   |   No   | avspirit |
 | Bad Dudes            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | baddudes |
 | Bagman               |  Yes   |  Yes   |No Speech  Yes   |  Yes   | bagman   |
 | Bandido              |  Yes   |  b/w   |   No   |   No   |   No   | bandido  |
@@ -58,7 +59,7 @@ to list them.
 | Berzerk              |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | berzerk  |
 | Bio Attack           |   No   |  Yes   |  Yes   |   No   |  Yes   | bioatack |
 | Bionic Commando      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | bionicc  |
-| Birdie King 2        |  Yes   |   No   |  Yes   |   No   |   No   | bking2   |
+| Birdie King 2        |  Yes   |  Yes   |  Yes   |   No   |  Yes   | bking2   |
 | Black Tiger          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | blktiger |
 | Black Widow          |  Yes   | Close  |  Yes   |  Yes   |   No   | bwidow   |
 | Blaster              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | blaster  |
@@ -143,6 +144,7 @@ to list them.
 | Dig Dug              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | digdug   |
 | Dig Dug 2            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | digdug2  |
 | Digger               |  Yes   |  Yes   |   No   |   No   |   No   | digger   |
+| Disco No. 1          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | disco    |
 | Discs of Tron        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | dotron   |
 | Domino Man           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | domino   |
 | Dominos              |  Yes   |  b/w   |   No   |   No   |   No   | dominos  |
@@ -154,6 +156,7 @@ to list them.
 | Dynamite Dux         |   No   |  Yes   |   No   |   No   |   No   | dduxbl   |
 | Dynasty Wars         |  Yes   |  Yes   |  Yes   |   No   |   No   | dwj      |
 | E-Swat               |   No   |  Yes   |   No   |   No   |   No   | eswatbl  |
+| Earth Defense Force  |  Yes   |  Yes   |  Yes   |   No   |   No   | edf      |
 | Eggs                 |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | eggs     |
 | Electric Yo-Yo,The   |  Yes   |  Yes   |  Yes   |  Yes   |   No   | elecyoyo |
 | Elevator Action      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | elevator |
@@ -426,6 +429,7 @@ to list them.
 | Robot Bowl           |  Yes   |  Yes   |   No   |   No   |   No   | robotbwl |
 | Robotron             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | robotron |
 | Roc'n Rope           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | rocnrope |
+| RodLand              |  Yes   |  Yes   |  Yes   |   No   |   No   | rodlandj |
 | Rolling Crash        |  Yes   |  Yes   |   No   |   No   |   No   | rollingc |
 | Rolling Thunder      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | rthunder |
 | Round-Up             |  Yes   | Close  |  Yes   |  Yes   |  Yes   | roundup  |
@@ -447,16 +451,18 @@ to list them.
 | Section Z            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | sectionz |
 | Sega Ninja           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | seganinj |
 | Seicross             |Partial.|  Yes   |  Yes   |  Yes   |   No   | seicross |
+| Senjyo               |  Yes   |  Yes   |  Yes   |   No   |   No   | senjyo   |
 | Shackled             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | shackled |
 | Shark Attack         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | sharkatt |
 | Shinobi              |  Yes   |  Yes   |  Yes   |   No   |   No   | shinobi  |
 | Shoot Out            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | shootout |
+| Shooting Master      |   No   |   No   |  Yes   |   No   |   No   | shtngmst |
 | Showdown             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | showdown |
 | Side Pocket          |  Yes   |   No   |  Yes   |  Yes   |   No   | sidepckt |
 | Side Track           |  Yes   |   No   | Yes(1) |  Yes   |   No   | sidetrac |
 | Sidearms             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | sidearms |
 | Silkworm             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | silkworm |
-| Sindbad Mystery      |  Yes   |  Yes   | Wrong  |   No   |   No   | sinbadm  |
+| Sindbad Mystery      |  Yes   |  Yes   | Wrong  |  Yes   |   No   | sindbadm |
 | Sinistar             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | sinistar |
 | Sky Diver            |  Yes   |  b/w   |   No   |   No   |   No   | skydiver |
 | Slap Fight           |  Yes   |  Yes   |  Yes   |   No   |   No   | slapfigh |
@@ -511,7 +517,7 @@ to list them.
 | Super Casino         |  Yes   |  Yes   |  Yes   |  n/a   |  Yes   | sucasino |
 | Super Cobra          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | scobra   |
 | Super Hi Impact      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | shimpact |
-| Super Locomotive     |  Yes   |  Yes   |  Yes   |   No   |  Yes   | suprloco |
+| Super Locomotive     |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | suprloco |
 | Super Mouse          |  Yes   |   No   |  Yes   |  Yes   |  Yes   | suprmous |
 | Super Pac Man        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | superpac |
 | Super Pang           |  Yes   |  Yes   |Partial |  Yes   |   No   | spang    |
@@ -581,7 +587,7 @@ to list them.
 | Ufo Senshi Yohko Chan|   No   |  Yes   |  Yes   |   No   |   No   | ufosensi |
 | Up'n Down            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | upndown  |
 | Us vs Them           |Partial.|  Yes   |  Yes   |  Yes   |  n/a   | usvsthem |
-| Van Van Car          |  Yes   |   No   |  Yes   |   No   |  Yes   | vanvan   |
+| Van Van Car          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | vanvan   |
 | Vanguard             |  Yes   |  Yes   |No Speech  Yes   |  Yes   | vanguard |
 | Varth                |  Yes   |  Yes   |  Yes   |   No   |   No   | varth    |
 | Vastar               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | vastar   |
@@ -611,6 +617,7 @@ to list them.
 | Xenophobe            |  Yes   |  Yes   |  Yes   |  n/a   |   No   | xenophob |
 | Xevious              |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | xevious  |
 | Xybots               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | xybots   |
+| Yamato               |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | yamato   |
 | Yie Ar Kung Fu       |  Yes   |  Yes   |Partial |  Yes   |  Yes   | yiear    |
 | Zaxxon               |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | zaxxon   |
 | Zektor               |  Yes   | Close  |Partl(1)|  Yes   |   No   | zektor   |
@@ -1355,6 +1362,7 @@ Clone supported:
   Another bootleg, with Namco copyright left in ("galagab2")
 
 Known issues:
+- The background starfield is wrong (using the Galaxian one, which is different)
 - Sometimes explosion sprites appear on the left of the screen.
 
 
@@ -2374,6 +2382,18 @@ Clones supported:
 Known issues:
 - The bootleg version crashes when you start a game. This might be due to a
   slightly different encryption scheme.
+
+
+
+Rolling Thunder ("rthunder")
+============================
+Clones supported:
+  alternate version, older ("rthundrb")
+
+(set2), called 'old version' in japan.(1986/12)
+(set1), called 'new version' in japan.(1987/1)
+In 1987/1, All 'old version' romset changed 'new version' in amusement center.
+because (i think) 'old version' was overdone that too hard difficulty game.
 
 
 

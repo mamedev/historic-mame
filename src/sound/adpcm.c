@@ -22,11 +22,7 @@
 #define OVERSAMPLING	0	/* breaks 10 Yard Fight */
 
 /* signed/unsigned 8-bit conversion macros */
-#ifdef SIGNED_SAMPLES
-	#define AUDIO_CONV(A) ((A))
-#else
-	#define AUDIO_CONV(A) ((A)+0x80)
-#endif
+#define AUDIO_CONV(A) ((A))
 
 /* struct describing a single playing ADPCM voice */
 struct ADPCMVoice
@@ -46,7 +42,7 @@ struct ADPCMVoice
 };
 
 /* global pointer to the current interface */
-static struct ADPCMinterface *adpcm_intf;
+static const struct ADPCMinterface *adpcm_intf;
 
 /* global pointer to the current array of samples */
 static struct ADPCMsample *sample_list;
@@ -113,7 +109,7 @@ static void ComputeTables (void)
  *   Start emulation of several ADPCM output streams
  */
 
-int ADPCM_sh_start (struct ADPCMinterface *intf)
+int ADPCM_sh_start (const struct ADPCMinterface *intf)
 {
 	int i;
 
@@ -559,7 +555,7 @@ int ADPCM_playing (int num)
 */
 
 
-static struct OKIM6295interface *okim6295_interface;
+static const struct OKIM6295interface *okim6295_interface;
 static int okim6295_command[MAX_OKIM6295];
 
 
@@ -568,7 +564,7 @@ static int okim6295_command[MAX_OKIM6295];
  *    Start emulation of an OKIM6295-compatible chip
  */
 
-int OKIM6295_sh_start (struct OKIM6295interface *intf)
+int OKIM6295_sh_start (const struct OKIM6295interface *intf)
 {
 	static struct ADPCMinterface generic_interface;
 	int i;
@@ -787,7 +783,7 @@ void OKIM6295_data_1_w (int num, int data)
  */
 
 
-static struct MSM5205interface *msm5205_interface;
+static const struct MSM5205interface *msm5205_interface;
 
 
 
@@ -795,7 +791,7 @@ static struct MSM5205interface *msm5205_interface;
  *    Start emulation of an MSM5205-compatible chip
  */
 
-int MSM5205_sh_start (struct MSM5205interface *intf)
+int MSM5205_sh_start (const struct MSM5205interface *intf)
 {
 	static struct ADPCMinterface generic_interface;
 	int i, stream_size, result;
