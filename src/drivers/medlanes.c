@@ -336,7 +336,7 @@ INPUT_PORTS_START(medlanes_input_ports)
     PORT_START                     /* IN2 coinage & start */
 		PORT_BIT(0xff, IP_ACTIVE_HIGH, IPT_UNUSED)
 	PORT_START					   /* IN3 dip switch */
-		PORT_BITX(0x01, 0x00, IPT_DIPSWITCH_NAME, "Coins", IP_KEY_NONE, IP_JOY_NONE, 0)
+		PORT_BITX(0x01, 0x00, IPT_DIPSWITCH_NAME, "Coins", IP_KEY_NONE, IP_JOY_NONE )
             PORT_DIPSETTING(0x00, "1 Coin Game")
 			PORT_DIPSETTING(0x01, "2 Coin Game")
 		PORT_BIT( 0x06, IP_ACTIVE_HIGH, IPT_UNUSED)

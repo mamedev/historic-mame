@@ -59,7 +59,8 @@ static UINT8 i8039_win_layout[] = {
 
 typedef struct
 {
-    PAIR    PC;             /* HJB */
+	PAIR	PPC;			/* previous program counter */
+    PAIR    PC;             /* program counter */
     UINT8   A, SP, PSW;
     UINT8   RAM[128];
     UINT8   bus, f1;        /* Bus data, and flag1 */
@@ -603,21 +604,13 @@ int i8039_execute(int cycles)
 		}
         R.pending_irq = I8039_IGNORE_INT;
 
-        #ifdef MAME_DEBUG
-        {
-            extern int mame_debug;
-            if (mame_debug) MAME_Debug();
-		}
-        #endif
+        R.PPC = R.PC;
 
-        opcode=M_RDOP(R.PC.w.l);
+		CALL_MAME_DEBUG;
+
+		opcode=M_RDOP(R.PC.w.l);
 
 /*      if (errorlog) fprintf(errorlog, "I8039:  PC = %04x,  opcode = %02x\n", R.PC.w.l, opcode); */
-
-        {   /* NS 971024 */
-            extern int previouspc;
-            previouspc = R.PC.w.l;
-		}
 
         R.PC.w.l++;
 		i8039_ICount -= opcode_main[opcode].cycles;
@@ -722,9 +715,9 @@ unsigned i8039_get_reg (int regnum)
 		case I8039_PSW: return R.PSW;
         case I8039_A: return R.A;
 		case I8039_IRQ_STATE: return R.irq_state;
-/* TODO: return contents of [SP + wordsize * (REG_SP_CONTENTS-regnum)] */
+		case REG_PREVIOUSPC: return R.PPC.w.l;
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
 				unsigned offset = R.SP + 2 * (REG_SP_CONTENTS - regnum);
 				return 0;
@@ -748,7 +741,7 @@ void i8039_set_reg (int regnum, unsigned val)
 		case I8039_IRQ_STATE: i8039_set_irq_line( 0, val ); break;
 /* TODO: set contents of [SP + wordsize * (REG_SP_CONTENTS-regnum)] */
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
 				unsigned offset = R.SP + 2 * (REG_SP_CONTENTS - regnum);
 			}
@@ -800,21 +793,11 @@ const char *i8039_info(void *context, int regnum)
 
     switch( regnum )
     {
-		case CPU_INFO_NAME: return "I8039";
-		case CPU_INFO_FAMILY: return "Intel 8039";
-		case CPU_INFO_VERSION: return "1.0";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (C) 1997 by Mirko Buffoni\nBased on the original work (C) 1997 by Dan Boris";
-		case CPU_INFO_REG_LAYOUT: return (const char*)i8039_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)i8039_win_layout;
-
-		case CPU_INFO_PC: sprintf(buffer[which], "%03X:", r->PC.w.l & 0x7ff); break;
-		case CPU_INFO_SP: sprintf(buffer[which], "%02X", r->SP); break;
-#ifdef MAME_DEBUG
-		case CPU_INFO_DASM: r->PC.w.l++; /* TODO: disassemble an instruction */ break;
-#else
-		case CPU_INFO_DASM: r->PC.w.l++; /* TODO: dump memory byte at PC */ break;
-#endif
+		case CPU_INFO_REG+I8039_PC: sprintf(buffer[which], "PC:%04X", r->PC.w.l); break;
+		case CPU_INFO_REG+I8039_SP: sprintf(buffer[which], "SP:%02X", r->SP); break;
+		case CPU_INFO_REG+I8039_PSW: sprintf(buffer[which], "PSW:%02X", r->PSW); break;
+        case CPU_INFO_REG+I8039_A: sprintf(buffer[which], "A:%02X", r->A); break;
+		case CPU_INFO_REG+I8039_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
 		case CPU_INFO_FLAGS:
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
                 r->PSW & 0x80 ? 'x':'.',
@@ -826,18 +809,32 @@ const char *i8039_info(void *context, int regnum)
                 r->PSW & 0x02 ? 'x':'.',
                 r->PSW & 0x01 ? 'x':'.');
 			break;
-		case CPU_INFO_REG+I8039_PC: sprintf(buffer[which], "PC:%04X", r->PC.w.l); break;
-		case CPU_INFO_REG+I8039_SP: sprintf(buffer[which], "SP:%02X", r->SP); break;
-		case CPU_INFO_REG+I8039_PSW: sprintf(buffer[which], "PSW:%02X", r->PSW); break;
-        case CPU_INFO_REG+I8039_A: sprintf(buffer[which], "A:%02X", r->A); break;
-		case CPU_INFO_REG+I8039_IRQ_STATE: sprintf(buffer[which], "A:%X", r->irq_state); break;
+		case CPU_INFO_NAME: return "I8039";
+		case CPU_INFO_FAMILY: return "Intel 8039";
+		case CPU_INFO_VERSION: return "1.0";
+		case CPU_INFO_FILE: return __FILE__;
+		case CPU_INFO_CREDITS: return "Copyright (C) 1997 by Mirko Buffoni\nBased on the original work (C) 1997 by Dan Boris";
+		case CPU_INFO_REG_LAYOUT: return (const char*)i8039_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)i8039_win_layout;
 	}
     return buffer[which];
+}
+
+unsigned i8039_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+	(void)base;
+#ifdef	MAME_DEBUG
+    return Dasm8039(buffer,&ROM[pc]);
+#else
+	sprintf( buffer, "$%02X", ROM[pc] );
+	return 1;
+#endif
 }
 
 /**************************************************************************
  * I8035 section
  **************************************************************************/
+#if HAS_I8035
 /* Layout of the registers in the debugger */
 static UINT8 i8035_reg_layout[] = {
 	I8035_PC, I8035_SP, I8035_PSW, I8035_A, I8035_IRQ_STATE, 0
@@ -878,9 +875,23 @@ const char *i8035_info(void *context, int regnum)
 	return i8039_info(context,regnum);
 }
 
+unsigned i8035_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+	(void)base;
+#ifdef MAME_DEBUG
+    return Dasm8039(buffer,&ROM[pc]);
+#else
+	sprintf( buffer, "$%02X", ROM[pc] );
+	return 1;
+#endif
+}
+
+#endif
+
 /**************************************************************************
  * I8048 section
  **************************************************************************/
+#if HAS_I8048
 /* Layout of the registers in the debugger */
 static UINT8 i8048_reg_layout[] = {
 	I8048_PC, I8048_SP, I8048_PSW, I8048_A, I8048_IRQ_STATE, 0
@@ -921,10 +932,21 @@ const char *i8048_info(void *context, int regnum)
 	return i8039_info(context,regnum);
 }
 
-
+unsigned i8048_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+	(void)base;
+#ifdef MAME_DEBUG
+    return Dasm8039(buffer,&ROM[pc]);
+#else
+	sprintf( buffer, "$%02X", ROM[pc] );
+	return 1;
+#endif
+}
+#endif
 /**************************************************************************
  * N7751 section
  **************************************************************************/
+#if HAS_N7751
 /* Layout of the registers in the debugger */
 static UINT8 n7751_reg_layout[] = {
 	N7751_PC, N7751_SP, N7751_PSW, N7751_A, N7751_IRQ_STATE, 0
@@ -964,4 +986,16 @@ const char *n7751_info(void *context, int regnum)
 	}
 	return i8039_info(context,regnum);
 }
+
+unsigned n7751_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+	(void)base;
+#ifdef	MAME_DEBUG
+    return Dasm8039(buffer,&ROM[pc]);
+#else
+	sprintf( buffer, "$%02X", ROM[pc] );
+	return 1;
+#endif
+}
+#endif
 

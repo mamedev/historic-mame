@@ -5,7 +5,11 @@
 #include <string.h>
 #include <stdlib.h>
 
-extern char mameversion[];
+#ifdef MESS
+#include "mess.h"
+#endif
+
+extern char build_version[];
 extern FILE *errorlog;
 
 #define MAX_GFX_ELEMENTS 32
@@ -42,24 +46,41 @@ struct RunningMachine
 	int ui_orientation;
 };
 
+/* The host platform should fill these fields with the preferences specified in the GUI */
+/* or on the commandline. */
 struct GameOptions {
 	FILE *errorlog;
 	void *record;
 	void *playback;
 	int mame_debug;
-	int cheat;
+	char cheat;
+	char gui_host;
+
 	int samplerate;
 	int samplebits;
+	char no_fm;
+	char use_samples;
+
 	int norotate;
 	int ror;
 	int rol;
 	int flipx;
 	int flipy;
+	int beam;
+	int flicker;
+	char translucency;
+	char antialias;
+	char use_artwork;
+
+#ifdef MESS
+	char file_list[MAX_ROM+MAX_FLOPPY+MAX_HARD+MAX_CASSETTE][32];
+#endif
 };
 
+extern struct GameOptions options;
 extern struct RunningMachine *Machine;
 
-int run_game (int game, struct GameOptions *options);
+int run_game (int game);
 int updatescreen(void);
 /* osd_fopen() must use this to know if high score files can be used */
 int mame_highscore_enabled(void);

@@ -22,15 +22,16 @@
 #ifndef _M6502_H
 #define _M6502_H
 
-#include "osd_cpu.h"
 #include "cpuintrf.h"
+#include "osd_cpu.h"
+#include "osd_dbg.h"
 
 /* set to 1 to test cur_mrhard/cur_wmhard to avoid calls */
 #define FAST_MEMORY 1
 
 enum {
 	M6502_PC=1, M6502_S, M6502_P, M6502_A, M6502_X, M6502_Y,
-	M6502_EA, M6502_ZP, M6502_NMI_STATE, M6502_IRQ_STATE
+	M6502_EA, M6502_ZP, M6502_NMI_STATE, M6502_IRQ_STATE, M6502_SUBTYPE
 };
 
 #define M6502_INT_NONE  0
@@ -60,6 +61,7 @@ extern void m6502_set_irq_callback(int (*callback)(int irqline));
 extern void m6502_state_save(void *file);
 extern void m6502_state_load(void *file);
 extern const char *m6502_info(void *context, int regnum);
+extern unsigned m6502_dasm(UINT8 *base, char *buffer, unsigned pc);
 
 /****************************************************************************
  * The 65C02
@@ -103,6 +105,7 @@ extern void m65c02_set_irq_callback(int (*callback)(int irqline));
 extern void m65c02_state_save(void *file);
 extern void m65c02_state_load(void *file);
 extern const char *m65c02_info(void *context, int regnum);
+extern unsigned m65c02_dasm(UINT8 *base, char *buffer, unsigned pc);
 #endif
 
 /****************************************************************************
@@ -147,11 +150,11 @@ extern void m6510_set_irq_callback(int (*callback)(int irqline));
 extern void m6510_state_save(void *file);
 extern void m6510_state_load(void *file);
 extern const char *m6510_info(void *context, int regnum);
+extern unsigned m6510_dasm(UINT8 *base, char *buffer, unsigned pc);
 #endif
 
 #ifdef MAME_DEBUG
-extern int mame_debug;
-extern int Dasm6502(char *buffer, int pc);
+extern unsigned Dasm6502( char *dst, unsigned pc );
 #endif
 
 #endif /* _M6502_H */

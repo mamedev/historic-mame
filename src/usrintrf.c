@@ -8,22 +8,16 @@
 
 #include "driver.h"
 #include "info.h"
-
+#include "vidhrdw/vector.h"
 
 extern int need_to_clear_bitmap;	/* used to tell updatescreen() to clear the bitmap */
 extern int bitmap_dirty;	/* set by osd_clearbitmap() */
 
-extern int nocheat;
-
 /* Variables for stat menu */
-extern char mameversion[];
+extern char build_version[];
 extern unsigned int dispensed_tickets;
 extern unsigned int coins[COIN_COUNTERS];
 
-/* Prototypes for routines found in inptport.c */
-const char *default_name(const struct InputPort *in);
-int default_key(const struct InputPort *in);
-int default_joy(const struct InputPort *in);
 
 
 void set_ui_visarea (int xmin, int ymin, int xmax, int ymax)
@@ -1088,12 +1082,12 @@ static int setdipswitches(int selected)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if ((in->type & ~IPF_MASK) == IPT_DIPSWITCH_NAME && default_name(in) != 0 &&
+		if ((in->type & ~IPF_MASK) == IPT_DIPSWITCH_NAME && input_port_name(in) != 0 &&
 				(in->type & IPF_UNUSED) == 0 &&
-				!(nocheat && (in->type & IPF_CHEAT)))
+				!(!options.cheat && (in->type & IPF_CHEAT)))
 		{
 			entry[total] = in;
-			menu_item[total] = default_name(in);
+			menu_item[total] = input_port_name(in);
 
 			total++;
 		}
@@ -1120,7 +1114,7 @@ static int setdipswitches(int selected)
 
 			if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING)
 				menu_subitem[i] = "INVALID";
-			else menu_subitem[i] = default_name(in);
+			else menu_subitem[i] = input_port_name(in);
 		}
 		else menu_subitem[i] = 0;	/* no subitem */
 	}
@@ -1139,7 +1133,7 @@ static int setdipswitches(int selected)
 		else
 		{
 			if (((in-1)->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
-					!(nocheat && ((in-1)->type & IPF_CHEAT)))
+					!(!options.cheat && ((in-1)->type & IPF_CHEAT)))
 				arrowize |= 1;
 		}
 	}
@@ -1156,7 +1150,7 @@ static int setdipswitches(int selected)
 		else
 		{
 			if (((in+1)->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
-					!(nocheat && ((in+1)->type & IPF_CHEAT)))
+					!(!options.cheat && ((in+1)->type & IPF_CHEAT)))
 				arrowize |= 2;
 		}
 	}
@@ -1190,7 +1184,7 @@ static int setdipswitches(int selected)
 			else
 			{
 				if (((in+1)->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
-						!(nocheat && ((in+1)->type & IPF_CHEAT)))
+						!(!options.cheat && ((in+1)->type & IPF_CHEAT)))
 					entry[sel]->default_value = (in+1)->default_value & entry[sel]->mask;
 			}
 
@@ -1214,7 +1208,7 @@ static int setdipswitches(int selected)
 			else
 			{
 				if (((in-1)->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
-						!(nocheat && ((in-1)->type & IPF_CHEAT)))
+						!(!options.cheat && ((in-1)->type & IPF_CHEAT)))
 					entry[sel]->default_value = (in-1)->default_value & entry[sel]->mask;
 			}
 
@@ -1269,8 +1263,7 @@ static int setdefkeysettings(int selected)
 	while (in->type != IPT_END)
 	{
 		if (in->name != 0 && in->keyboard != IP_KEY_NONE && (in->type & IPF_UNUSED) == 0
-			&& (((in->type & 0xff) < IPT_ANALOG_START) || ((in->type & 0xff) > IPT_ANALOG_END))
-			&& !(nocheat && (in->type & IPF_CHEAT)))
+			&& !(!options.cheat && (in->type & IPF_CHEAT)))
 		{
 			entry[total] = in;
 			menu_item[total] = in->name;
@@ -1383,12 +1376,10 @@ static int setkeysettings(int selected)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if (default_name(in) != 0 && default_key(in) != IP_KEY_NONE && (in->type & IPF_UNUSED) == 0
-			&& (((in->type & 0xff) < IPT_ANALOG_START) || ((in->type & 0xff) > IPT_ANALOG_END))
-			&& !(nocheat && (in->type & IPF_CHEAT)))
+		if (input_port_name(in) != 0 && input_port_key(in) != IP_KEY_NONE)
 		{
 			entry[total] = in;
-			menu_item[total] = default_name(in);
+			menu_item[total] = input_port_name(in);
 
 			total++;
 		}
@@ -1406,7 +1397,7 @@ static int setkeysettings(int selected)
 	{
 		if (i < total - 1)
 		{
-			menu_subitem[i] = osd_key_name(default_key(entry[i]));
+			menu_subitem[i] = osd_key_name(input_port_key(entry[i]));
 			/* If the key isn't the default, flag it */
 			if (entry[i]->keyboard != IP_KEY_DEFAULT)
 				flag[i] = 1;
@@ -1430,10 +1421,9 @@ static int setkeysettings(int selected)
 			sel &= 0xff;
 
 			if (osd_key_invalid(newkey))	/* pseudo key code? */
-				entry[sel]->keyboard = IP_KEY_DEFAULT;
-				/* BUG: hitting a pseudo-key to restore the default for a custom key removes it */
-			else
-				entry[sel]->keyboard = newkey;
+				newkey = IP_KEY_DEFAULT;
+
+			entry[sel]->keyboard = newkey;
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
 			need_to_clear_bitmap = 1;
@@ -1508,12 +1498,10 @@ static int setjoysettings(int selected)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if (default_name(in) != 0 && default_joy(in) != IP_JOY_NONE && (in->type & IPF_UNUSED) == 0
-			&& (((in->type & 0xff) < IPT_ANALOG_START) || ((in->type & 0xff) > IPT_ANALOG_END))
-			&& !(nocheat && (in->type & IPF_CHEAT)))
+		if (input_port_name(in) != 0 && input_port_joy(in) != IP_JOY_NONE)
 		{
 			entry[total] = in;
-			menu_item[total] = default_name(in);
+			menu_item[total] = input_port_name(in);
 
 			total++;
 		}
@@ -1531,7 +1519,7 @@ static int setjoysettings(int selected)
 	{
 		if (i < total - 1)
 		{
-			menu_subitem[i] = osd_joy_name(default_joy(entry[i]));
+			menu_subitem[i] = osd_joy_name(input_port_joy(entry[i]));
 			if (entry[i]->joystick != IP_JOY_DEFAULT)
 				flag[i] = 1;
 			else
@@ -1588,8 +1576,7 @@ static int setjoysettings(int selected)
 
 		for (joyindex = 1; joyindex < OSD_MAX_JOY; joyindex++)
 		{
-			newjoy = osd_joy_pressed(joyindex);
-			if (newjoy)
+			if (osd_joy_pressed(joyindex))
 			{
 				sel &= 0xff;
 				entry[sel]->joystick = joyindex;
@@ -1733,7 +1720,7 @@ static int settraksettings(int selected)
 	while (in->type != IPT_END)
 	{
 		if (((in->type & 0xff) > IPT_ANALOG_START) && ((in->type & 0xff) < IPT_ANALOG_END)
-				&& !(nocheat && (in->type & IPF_CHEAT)))
+				&& !(!options.cheat && (in->type & IPF_CHEAT)))
 		{
 			entry[total] = in;
 			total++;
@@ -1742,9 +1729,10 @@ static int settraksettings(int selected)
 	}
 
 	if (total == 0) return 0;
-	/* Each analog control has 7 entries - deckey, inckey, key & joy delta, decjoy, incjoy, reverse, sensitivity */
 
-#define ENTRIES 7
+	/* Each analog control has 3 entries - key & joy delta, reverse, sensitivity */
+
+#define ENTRIES 3
 
 	total2 = total * ENTRIES;
 
@@ -1759,50 +1747,32 @@ static int settraksettings(int selected)
 		{
 			char label[30][40];
 			char setting[30][40];
-			int key, joy;
-			int sensitivity;
+			int sensitivity,delta;
 			int reverse;
 
-			strcpy (label[i], default_name(entry[i/ENTRIES]));
-			key = default_key (entry[i/ENTRIES]);
-			joy = default_joy (entry[i/ENTRIES]);
-			sensitivity = (entry[i/ENTRIES]->arg & 0x000000ff);
+			strcpy (label[i], input_port_name(entry[i/ENTRIES]));
+			sensitivity = IP_GET_SENSITIVITY(entry[i/ENTRIES]);
+			delta = IP_GET_DELTA(entry[i/ENTRIES]);
 			reverse = (entry[i/ENTRIES]->type & IPF_REVERSE);
 
 			switch (i%ENTRIES)
 			{
 				case 0:
-					strcat (label[i], " Key Dec");
-					strcpy (setting[i], osd_key_name (key & 0xff));
-					break;
-				case 1:
-					strcat (label[i], " Key Inc");
-					strcpy (setting[i], osd_key_name ((key & 0xff00) >> 8));
-					break;
-				case 2:
-					strcat (label[i], " Joy Dec");
-					strcpy (setting[i], osd_joy_name (joy & 0xff));
-					break;
-				case 3:
-					strcat (label[i], " Joy Inc");
-					strcpy (setting[i], osd_joy_name ((joy & 0xff00) >> 8));
-					break;
-				case 4:
 					strcat (label[i], " Key/Joy Delta");
-					sprintf(setting[i],"%d",(key & 0xff0000) >> 16);
+					sprintf(setting[i],"%d",delta);
 					if (i == sel) arrowize = 3;
 					break;
-				case 5:
-					strcat (label[i], " Reverse ");
+				case 1:
+					strcat (label[i], " Reverse");
 					if (reverse)
 						sprintf(setting[i],"On");
 					else
 						sprintf(setting[i],"Off");
 					if (i == sel) arrowize = 3;
 					break;
-				case 6:
-					strcat (label[i], " Sensitivity (%)");
-					sprintf(setting[i],"%3d",sensitivity);
+				case 2:
+					strcat (label[i], " Sensitivity");
+					sprintf(setting[i],"%3d%%",sensitivity);
 					if (i == sel) arrowize = 3;
 					break;
 			}
@@ -1814,116 +1784,6 @@ static int settraksettings(int selected)
 		}
 		else menu_subitem[i] = 0;	/* no subitem */
 	}
-
-	if (sel > 255)	/* are we waiting for a new key? */
-	{
-		switch ((sel & 0xff) % ENTRIES)
-		{
-			case 0:
-			case 1:
-			/* We're changing either the dec key or the inc key */
-			{
-				int newkey;
-				int oldkey = default_key(entry[(sel & 0xff)/ENTRIES]);
-
-				menu_subitem[sel & 0xff] = "    ";
-				displaymenu(menu_item,menu_subitem,0,sel & 0xff,3);
-				newkey = osd_read_key_immediate();
-				if (newkey != OSD_KEY_NONE)
-				{
-					sel &= 0xff;
-
-					if (osd_key_invalid(newkey))	/* pseudo key code ? */
-						newkey = 0;/*IP_KEY_DEFAULT;*/
-
-					if (sel % ENTRIES)
-					{
-						oldkey &= ~0xff00;
-						oldkey |= (newkey << 8);
-					}
-					else
-					{
-						oldkey &= ~0xff;
-						oldkey |= (newkey);
-					}
-					entry[sel/ENTRIES]->keyboard = oldkey;
-				}
-				break;
-			}
-			case 2:
-			case 3:
-			/* We're changing either the dec joy or the inc joy */
-			{
-				int newjoy;
-				int oldjoy = default_joy(entry[(sel & 0xff)/ENTRIES]);
-				int joyindex;
-
-
-				menu_subitem[sel & 0xff] = "    ";
-				displaymenu(menu_item,menu_subitem,0,sel & 0xff,3);
-
-				/* Check all possible joystick values for switch or button press */
-				newjoy = -1;
-
-				if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
-				{
-					sel &= 0xff;
-					newjoy = 0;/*IP_JOY_DEFAULT;*/
-				}
-
-				/* Allows for "All buttons" */
-				if (osd_key_pressed_memory(OSD_KEY_A))
-				{
-					sel &= 0xff;
-					newjoy = OSD_JOY_FIRE;
-				}
-				if (osd_key_pressed_memory(OSD_KEY_B))
-				{
-					sel &= 0xff;
-					newjoy = OSD_JOY2_FIRE;
-				}
-				/* Clears entry "None" */
-				if (osd_key_pressed_memory(OSD_KEY_N))
-				{
-					sel &= 0xff;
-					newjoy = 0;
-				}
-
-				if (newjoy == -1)
-				{
-					for (joyindex = 1; joyindex < OSD_MAX_JOY; joyindex++)
-					{
-						newjoy = osd_joy_pressed(joyindex);
-						if (newjoy)
-						{
-							sel &= 0xff;
-							newjoy = joyindex;
-							break;
-						}
-					}
-				}
-
-				if (newjoy != -1)
-				{
-					if ((sel % ENTRIES) == 3)
-					{
-						oldjoy &= ~0xff00;
-						oldjoy |= (newjoy << 8);
-					}
-					else
-					{
-						oldjoy &= ~0xff;
-						oldjoy |= (newjoy);
-					}
-					entry[sel/ENTRIES]->joystick = oldjoy;
-				}
-				break;
-			}
-		}
-
-		return sel + 1;
-	}
-
 
 	displaymenu(menu_item,menu_subitem,0,sel,arrowize);
 
@@ -1941,19 +1801,16 @@ static int settraksettings(int selected)
 
 	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_LEFT,8))
 	{
-		if ((sel % ENTRIES) == 4)
+		if ((sel % ENTRIES) == 0)
 		/* keyboard/joystick delta */
 		{
-			int oldval = default_key (entry[sel/ENTRIES]);
-			int val = (oldval & 0xff0000) >> 16;
+			int val = IP_GET_DELTA(entry[sel/ENTRIES]);
 
 			val --;
-			if (val < 1) val = entry[sel/ENTRIES]->mask - 1;
-			oldval &= ~0xff0000;
-			oldval |= (val & 0xff) << 16;
-			entry[sel/ENTRIES]->keyboard = oldval;
+			if (val < 1) val = 1;
+			IP_SET_DELTA(entry[sel/ENTRIES],val);
 		}
-		else if ((sel % ENTRIES) == 5)
+		else if ((sel % ENTRIES) == 1)
 		/* reverse */
 		{
 			int reverse = entry[sel/ENTRIES]->type & IPF_REVERSE;
@@ -1964,35 +1821,29 @@ static int settraksettings(int selected)
 			entry[sel/ENTRIES]->type &= ~IPF_REVERSE;
 			entry[sel/ENTRIES]->type |= reverse;
 		}
-		else if ((sel % ENTRIES) == 6)
+		else if ((sel % ENTRIES) == 2)
 		/* sensitivity */
 		{
-			int oldval = (entry[sel/ENTRIES]->arg);
-			int val = (oldval & 0xff);
+			int val = IP_GET_SENSITIVITY(entry[sel/ENTRIES]);
 
 			val --;
 			if (val < 1) val = 1;
-			oldval &= ~0xff;
-			oldval |= (val & 0xff);
-			entry[sel/ENTRIES]->arg = oldval;
+			IP_SET_SENSITIVITY(entry[sel/ENTRIES],val);
 		}
 	}
 
 	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_RIGHT,8))
 	{
-		if ((sel % ENTRIES) == 4)
+		if ((sel % ENTRIES) == 0)
 		/* keyboard/joystick delta */
 		{
-			int oldval = default_key (entry[sel/ENTRIES]);
-			int val = (oldval & 0xff0000) >> 16;
+			int val = IP_GET_DELTA(entry[sel/ENTRIES]);
 
 			val ++;
-			if (val > entry[sel/ENTRIES]->mask - 1) val = 1;
-			oldval &= ~0xff0000;
-			oldval |= (val & 0xff) << 16;
-			entry[sel/ENTRIES]->keyboard = oldval;
+			if (val > 255) val = 255;
+			IP_SET_DELTA(entry[sel/ENTRIES],val);
 		}
-		else if ((sel % ENTRIES) == 5)
+		else if ((sel % ENTRIES) == 1)
 		/* reverse */
 		{
 			int reverse = entry[sel/ENTRIES]->type & IPF_REVERSE;
@@ -2003,24 +1854,20 @@ static int settraksettings(int selected)
 			entry[sel/ENTRIES]->type &= ~IPF_REVERSE;
 			entry[sel/ENTRIES]->type |= reverse;
 		}
-		else if ((sel % ENTRIES) == 6)
+		else if ((sel % ENTRIES) == 2)
 		/* sensitivity */
 		{
-			int oldval = (entry[sel/ENTRIES]->arg);
-			int val = (oldval & 0xff);
+			int val = IP_GET_SENSITIVITY(entry[sel/ENTRIES]);
 
 			val ++;
 			if (val > 255) val = 255;
-			oldval &= ~0xff;
-			oldval |= (val & 0xff);
-			entry[sel/ENTRIES]->arg = oldval;
+			IP_SET_SENSITIVITY(entry[sel/ENTRIES],val);
 		}
 	}
 
 	if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
 	{
 		if (sel == total2 - 1) sel = -1;
-		else if ((sel % ENTRIES) <= 3) sel |= 0x100;	/* we'll ask for a key/joy */
 	}
 
 	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
@@ -2110,7 +1957,6 @@ static int mame_stats(int selected)
 
 int showcopyright(void)
 {
-#ifndef macintosh /* LBO - This text is displayed in a dialog box. */
 	int done;
 	char buf[] =
 			"Do not distribute the source code and/or the executable "
@@ -2141,8 +1987,6 @@ int showcopyright(void)
 
 	osd_clearbitmap(Machine->scrbitmap);
 	osd_update_video_and_audio();
-
-#endif
 
 	return 0;
 }
@@ -2257,17 +2101,39 @@ static int displaygameinfo(int selected)
 		sprintf(&buf[strlen(buf)],"\nVector Game\n");
 	else
 	{
-		sprintf(&buf[strlen(buf)],"\nScreen resolution:\n");
-		if (Machine->gamedrv->orientation & ORIENTATION_SWAP_XY)
-			sprintf(&buf[strlen(buf)],"%d x %d (vert) %d Hz\n",
-					Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1,
-					Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x + 1,
-					Machine->drv->frames_per_second);
+		int pixelx,pixely,tmax,tmin,rem;
+
+		pixelx = 4 * (Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1);
+		pixely = 3 * (Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x + 1);
+
+		/* calculate MCD */
+		if (pixelx >= pixely)
+		{
+			tmax = pixelx;
+			tmin = pixely;
+		}
 		else
-			sprintf(&buf[strlen(buf)],"%d x %d (horz) %d Hz\n",
-					Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x + 1,
-					Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1,
-					Machine->drv->frames_per_second);
+		{
+			tmax = pixely;
+			tmin = pixelx;
+		}
+		while ( (rem = tmax % tmin) )
+		{
+			tmax = tmin;
+			tmin = rem;
+		}
+		/* tmin is now the MCD */
+
+		pixelx /= tmin;
+		pixely /= tmin;
+
+		sprintf(&buf[strlen(buf)],"\nScreen resolution:\n");
+		sprintf(&buf[strlen(buf)],"%d x %d (%s) %d Hz\npixel aspect ratio %d:%d\n",
+				Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x + 1,
+				Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1,
+				(Machine->gamedrv->orientation & ORIENTATION_SWAP_XY) ? "V" : "H",
+				Machine->drv->frames_per_second,
+				pixelx,pixely);
 		sprintf(&buf[strlen(buf)],"%d colors ",Machine->drv->total_colors);
 		if (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT)
 			strcat(buf,"(16-bit required)\n");
@@ -2281,7 +2147,7 @@ static int displaygameinfo(int selected)
 	{
 		/* startup info, print MAME version and ask for any key */
 		strcat(buf,"\n\tMAME ");	/* \t means that the line will be centered */
-		strcat(buf,mameversion);
+		strcat(buf,build_version);
 		strcat(buf,"\n\tPress any key");
 
 		drawbox(0,0,Machine->uiwidth,Machine->uiheight);
@@ -2320,7 +2186,6 @@ static int displaygameinfo(int selected)
 int showgamewarnings(void)
 {
 	int i;
-	int counter;
 	char buf[2048];
 
 	if (Machine->gamedrv->flags)
@@ -2338,6 +2203,16 @@ int showgamewarnings(void)
 		if (Machine->gamedrv->flags & GAME_WRONG_COLORS)
 		{
 			strcat(buf, "The colors are completely wrong.\n");
+		}
+
+		if (Machine->gamedrv->flags & GAME_IMPERFECT_SOUND)
+		{
+			strcat(buf, "The sound emulation isn't 100% accurate.\n");
+		}
+
+		if (Machine->gamedrv->flags & GAME_NO_SOUND)
+		{
+			strcat(buf, "The game lacks sound.\n");
 		}
 
 		if (Machine->gamedrv->flags & GAME_NOT_WORKING)
@@ -2391,12 +2266,8 @@ int showgamewarnings(void)
 
 	osd_clearbitmap(Machine->scrbitmap);
 
-	/* don't stay on screen for more than 15 seconds */
-	counter = 15 * Machine->drv->frames_per_second;
-
-	while (displaygameinfo(0) == 1 && --counter > 0)
+	while (displaygameinfo(0) == 1)
 		osd_update_video_and_audio();
-	osd_update_video_and_audio();
 
 	osd_clearbitmap(Machine->scrbitmap);
 	/* make sure that the screen is really cleared, in case autoframeskip kicked in */
@@ -2825,7 +2696,7 @@ static void setup_menu_init(void)
 		while (in->type != IPT_END)
 		{
 			if (((in->type & 0xff) > IPT_ANALOG_START) && ((in->type & 0xff) < IPT_ANALOG_END)
-					&& !(nocheat && (in->type & IPF_CHEAT)))
+					&& !(!options.cheat && (in->type & IPF_CHEAT)))
 				num++;
 			in++;
 		}
@@ -2842,12 +2713,12 @@ static void setup_menu_init(void)
 		menu_item[menu_total] = "Calibrate Joysticks"; menu_action[menu_total++] = UI_CALIBRATE;
 	}
 
-	menu_item[menu_total] = "Stats"; menu_action[menu_total++] = UI_STATS;
+	menu_item[menu_total] = "Bookkeeping Info"; menu_action[menu_total++] = UI_STATS;
 	menu_item[menu_total] = "Credits"; menu_action[menu_total++] = UI_CREDITS;
 	menu_item[menu_total] = "Game Information"; menu_action[menu_total++] = UI_GAMEINFO;
 	menu_item[menu_total] = "Game History"; menu_action[menu_total++] = UI_HISTORY;
 
-	if (nocheat == 0)
+	if (options.cheat)
 	{
 		menu_item[menu_total] = "Cheat"; menu_action[menu_total++] = UI_CHEAT;
 	}
@@ -3218,16 +3089,35 @@ static void onscrd_gamma(int increment,int arg)
 	char buf[20];
 	float gamma_correction;
 
-
-	if (increment)
+	/* MLR 990316 different gamma handling for vector games */
+	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
 	{
-		gamma_correction = osd_get_gamma();
-		gamma_correction += 0.05 * increment;
-		if (gamma_correction < 0.5) gamma_correction = 0.5;
-		if (gamma_correction > 2.0) gamma_correction = 2.0;
-		osd_set_gamma(gamma_correction);
+		if (increment)
+		{
+			gamma_correction = vector_get_gamma();
+
+			gamma_correction += 0.05 * increment;
+			if (gamma_correction < 0.5) gamma_correction = 0.5;
+			if (gamma_correction > 2.0) gamma_correction = 2.0;
+
+			vector_set_gamma(gamma_correction);
+		}
+		gamma_correction = vector_get_gamma();
 	}
-	gamma_correction = osd_get_gamma();
+	else
+	{
+		if (increment)
+		{
+			gamma_correction = osd_get_gamma();
+
+			gamma_correction += 0.05 * increment;
+			if (gamma_correction < 0.5) gamma_correction = 0.5;
+			if (gamma_correction > 2.0) gamma_correction = 2.0;
+
+			osd_set_gamma(gamma_correction);
+		}
+		gamma_correction = osd_get_gamma();
+	}
 
 	sprintf(buf,"Gamma %1.2f",gamma_correction);
 	displayosd(buf,100*(gamma_correction-0.5)/(2.0-0.5));
@@ -3361,7 +3251,7 @@ int handle_user_interface(void)
 		osd_save_snapshot();
 
 	/* This call is for the cheat, it must be called at least each frames */
-	if (nocheat == 0) DoCheat();
+	if (options.cheat) DoCheat();
 
 	if (osd_key_pressed_memory (OSD_KEY_FAST_EXIT)) return 1;
 

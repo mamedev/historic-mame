@@ -31,8 +31,12 @@ INLINE void brset (UINT8 bit)
 	if (r&bit)
 		PC+=SIGNED(t);
 	else
+	if (t==0xfd)
+	{
 		/* speed up busy loops */
-		if (t==0xfd) m6805_ICount = 0;
+		if(m6805_ICount > 0)
+			m6805_ICount = 0;
+	}
 }
 
 /* $01/$03/$05/$07/$09/$0B/$0D/$0F BRCLR direct,relative ---- */
@@ -44,8 +48,11 @@ INLINE void brclr (UINT8 bit)
 	if (!(r&bit))
 		PC+=SIGNED(t);
 	else
+	{
 		/* speed up busy loops */
-		if (t==0xfd) m6805_ICount = 0;
+		if(m6805_ICount > 0)
+			m6805_ICount = 0;
+    }
 }
 
 
@@ -79,8 +86,12 @@ INLINE void bra( void )
 {
 	UINT8 t;
 	IMMBYTE(t);PC+=SIGNED(t);
-	/* speed up busy loops */
-	if (t==0xfe) m6805_ICount = 0;
+	if (t==0xfe)
+	{
+		/* speed up busy loops */
+		if(m6805_ICount > 0)
+			m6805_ICount = 0;
+    }
 }
 
 /* $21 BRN relative ---- */
@@ -804,10 +815,11 @@ INLINE void clr_ix( void )
 /* $80 RTI inherent #### */
 INLINE void rti( void )
 {
-	PULLBYTE(m6805.cc);
-	PULLBYTE(m6805.a);
-	PULLBYTE(m6805.x);
-	PULLWORD(m6805.pc);
+	PULLBYTE(CC);
+	PULLBYTE(A);
+	PULLBYTE(X);
+	PULLWORD(pPC);
+	PC &= m6805.amask;
 #if IRQ_LEVEL_DETECT
 	if( m6805.irq_state != CLEAR_LINE && (CC & IFLAG) == 0 )
 		m6805.pending_interrupts |= M6805_INT_IRQ;
@@ -817,7 +829,8 @@ INLINE void rti( void )
 /* $81 RTS inherent ---- */
 INLINE void rts( void )
 {
-	PULLWORD(m6805.pc);
+	PULLWORD(pPC);
+	PC &= m6805.amask;
 }
 
 /* $82 ILLEGAL */
@@ -830,7 +843,7 @@ INLINE void swi( void )
 	PUSHBYTE(m6805.a);
 	PUSHBYTE(m6805.cc);
 	SEI;
-	RM16( 0x07fc, &m6805.pc );
+	RM16( AMASK - 3, &pPC );
 }
 
 /* $84 ILLEGAL */
@@ -893,7 +906,7 @@ INLINE void tax (void)
 /* $9C RSP inherent ---- */
 INLINE void rsp (void)
 {
-	S = 0x7f;
+	S = SP_MASK;
 }
 
 /* $9D NOP inherent ---- */

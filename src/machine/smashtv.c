@@ -258,7 +258,7 @@ int wms_dma_r(int offset)
 
 void wms_dma_w(int offset, int data)
 {
-	unsigned int i, j, pal, write_data, line_skip, dma_skip;
+	unsigned int i, j, pal, write_data, line_skip, dma_skip=0;
 	int write_cols;
 	unsigned char *rda;
 	unsigned short *wrva;
@@ -800,7 +800,7 @@ void wms_dma2_w(int offset, int data)
 	 * --> approximately 2 cycles per pixel
 	 */
 
-	unsigned int i, pal, write_data=0, line_skip, dma_skip;
+	unsigned int i, pal, write_data=0, line_skip, dma_skip=0;
 	int j, write_cols, write_cols_do;
 	unsigned char *rda;
 	unsigned short *wrva, *wrvatop, *wrvabot;

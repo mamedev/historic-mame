@@ -46,9 +46,13 @@
 
 /***************************************************************************/
 
-extern int sys16_vh_start( void );
-extern void sys16_vh_stop( void );
-extern void sys16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+int sys16_tileram_r(int offset);
+void sys16_tileram_w(int offset,int data);
+int sys16_textram_r(int offset);
+void sys16_textram_w(int offset,int data);
+int sys16_vh_start( void );
+void sys16_vh_stop( void );
+void sys16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /* video driver constants (vary with game) */
 extern int sys16_spritesystem;
@@ -101,11 +105,11 @@ static int mirror3_word;
 #define MRA_SPRITERAM	MRA_BANK2
 #define MWA_SPRITERAM	MWA_BANK2,&sys16_spriteram
 
-#define MRA_TILERAM		MRA_BANK3
-#define MWA_TILERAM		MWA_BANK3,&sys16_tileram
+#define MRA_TILERAM		sys16_tileram_r
+#define MWA_TILERAM		sys16_tileram_w,&sys16_tileram
 
-#define MRA_TEXTRAM		MRA_BANK4
-#define MWA_TEXTRAM		MWA_BANK4,&sys16_textram
+#define MRA_TEXTRAM		sys16_textram_r
+#define MWA_TEXTRAM		sys16_textram_w,&sys16_textram
 
 #define MRA_EXTRAM		MRA_BANK5
 #define MWA_EXTRAM		MWA_BANK5,&sys16_extraram
@@ -496,17 +500,24 @@ void sys16_sprite_decode( int num_banks, int bank_size ){
 
 		memcpy (temp, base+bank_size*(i-1), bank_size);
 
+/*
+	note: both pen#0 and pen#15 are transparent.
+	we replace references to pen#15 with pen#0, to simplify the sprite rendering
+*/
 		do {
 			data = *p2++;
+			if( (data&0xf0) == 0xf0 ) data &= 0x0f;
+			if( (data&0x0f) == 0x0f ) data &= 0xf0;
 			*dest++ = data >> 4;
 			*dest++ = data & 0xF;
 
 			data = *p1++;
+			if( (data&0xf0) == 0xf0 ) data &= 0x0f;
+			if( (data&0x0f) == 0x0f ) data &= 0xf0;
 			*dest++ = data >> 4;
 			*dest++ = data & 0xF;
 		} while( dest<finish );
 	}
-
 	free( temp );
 }
 
@@ -577,7 +588,7 @@ static void patch_code( int offset, int data ){
 #define SYS16_SERVICE PORT_START \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) \
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 ) \
-	PORT_BITX(0x04, 0x04, 0, "Test Mode", OSD_KEY_F1, IP_JOY_NONE, 0 ) \
+	PORT_BITX(0x04, 0x04, 0, "Test Mode", OSD_KEY_F1, IP_JOY_NONE ) \
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 ) \
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 ) \
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 ) \
@@ -585,7 +596,7 @@ static void patch_code( int offset, int data ){
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 #define SYS16_COINAGE PORT_START \
-	PORT_DIPNAME( 0x0f, 0x0f, "Coin A", IP_KEY_NONE ) \
+	PORT_DIPNAME( 0x0f, 0x0f, "Coin A" ) \
 	PORT_DIPSETTING(    0x07, "4 Coins/1 Credit") \
 	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit") \
 	PORT_DIPSETTING(    0x09, "2 Coins/1 Credit") \
@@ -602,7 +613,7 @@ static void patch_code( int offset, int data ){
 	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits") \
 	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits") \
 	PORT_DIPSETTING(    0x00, "Free Play (if Coin B too) or 1/1") \
-	PORT_DIPNAME( 0xf0, 0xf0, "Coin B", IP_KEY_NONE ) \
+	PORT_DIPNAME( 0xf0, 0xf0, "Coin B" ) \
 	PORT_DIPSETTING(    0x70, "4 Coins/1 Credit") \
 	PORT_DIPSETTING(    0x80, "3 Coins/1 Credit") \
 	PORT_DIPSETTING(    0x90, "2 Coins/1 Credit") \
@@ -621,26 +632,26 @@ static void patch_code( int offset, int data ){
 	PORT_DIPSETTING(    0x00, "Free Play (if Coin A too) or 1/1")
 
 #define SYS16_OPTIONS PORT_START \
-	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE ) \
-	PORT_DIPSETTING(    0x00, "Upright") \
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) ) \
 	PORT_DIPSETTING(    0x01, "Cocktail") \
-	PORT_DIPNAME( 0x02, 0x02, "Attract Mode Sound", IP_KEY_NONE ) \
+	PORT_DIPNAME( 0x02, 0x02, "Attract Mode Sound" ) \
 	PORT_DIPSETTING(    0x02, "Off" ) \
 	PORT_DIPSETTING(    0x00, "On" ) \
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE ) \
+	PORT_DIPNAME( 0x0c, 0x0c, "Lives" ) \
 	PORT_DIPSETTING(    0x08, "2" ) \
 	PORT_DIPSETTING(    0x0c, "3" ) \
 	PORT_DIPSETTING(    0x04, "5" ) \
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "240", IP_KEY_NONE, IP_JOY_NONE, 0 ) \
-	PORT_DIPNAME( 0x30, 0x30, "Difficulty", IP_KEY_NONE ) \
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "240", IP_KEY_NONE, IP_JOY_NONE ) \
+	PORT_DIPNAME( 0x30, 0x30, "Difficulty" ) \
 	PORT_DIPSETTING(    0x20, "Easy" ) \
 	PORT_DIPSETTING(    0x30, "Normal" ) \
 	PORT_DIPSETTING(    0x10, "Hard" ) \
 	PORT_DIPSETTING(    0x00, "Hardest" ) \
-	PORT_DIPNAME( 0x40, 0x40, "Enemy's Bullet Speed", IP_KEY_NONE ) \
+	PORT_DIPNAME( 0x40, 0x40, "Enemy's Bullet Speed" ) \
 	PORT_DIPSETTING(    0x40, "Slow" ) \
 	PORT_DIPSETTING(    0x00, "Fast" ) \
-	PORT_DIPNAME( 0x80, 0x80, "Language", IP_KEY_NONE ) \
+	PORT_DIPNAME( 0x80, 0x80, "Language" ) \
 	PORT_DIPSETTING(    0x80, "Japanese" ) \
 	PORT_DIPSETTING(    0x00, "English" )
 
@@ -875,23 +886,23 @@ INPUT_PORTS_START( aliensyn_input_ports )
 	SYS16_COINAGE
 
 	PORT_START	/* DSW1 */
-		PORT_DIPNAME( 0x01, 0x00, "Unknown", IP_KEY_NONE )
+		PORT_DIPNAME( 0x01, 0x00, "Unknown" )
 		PORT_DIPSETTING(    0x00, "On")
 		PORT_DIPSETTING(    0x01, "Off")
-		PORT_DIPNAME( 0x02, 0x02, "Demo Sound?", IP_KEY_NONE )
+		PORT_DIPNAME( 0x02, 0x02, "Demo Sound?" )
 		PORT_DIPSETTING(    0x02, "Off" )
 		PORT_DIPSETTING(    0x00, "On" )
-		PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+		PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
 		PORT_DIPSETTING(    0x08, "2" )
 		PORT_DIPSETTING(    0x0c, "3" )
 		PORT_DIPSETTING(    0x04, "4" )
-		PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Free (127?)", IP_KEY_NONE, IP_JOY_NONE, 0 )
-		PORT_DIPNAME( 0x30, 0x30, "Timer", IP_KEY_NONE )
+		PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Free (127?)", IP_KEY_NONE, IP_JOY_NONE )
+		PORT_DIPNAME( 0x30, 0x30, "Timer" )
 		PORT_DIPSETTING(    0x30, "150" )
 		PORT_DIPSETTING(    0x20, "140" )
 		PORT_DIPSETTING(    0x10, "130" )
 		PORT_DIPSETTING(    0x00, "120" )
-		PORT_DIPNAME( 0xc0, 0xc0, "Difficulty", IP_KEY_NONE )
+		PORT_DIPNAME( 0xc0, 0xc0, "Difficulty" )
 		PORT_DIPSETTING(    0x80, "Easy" )
 		PORT_DIPSETTING(    0xc0, "Normal" )
 		PORT_DIPSETTING(    0x40, "Hard" )
@@ -1049,23 +1060,23 @@ INPUT_PORTS_START( altbeast_input_ports )
 	SYS16_COINAGE
 
 	PORT_START	/* DSW1 */
-		PORT_DIPNAME( 0x01, 0x01, "Credits needed", IP_KEY_NONE )
+		PORT_DIPNAME( 0x01, 0x01, "Credits needed" )
 		PORT_DIPSETTING(    0x01, "1 to start, 1 to continue")
 		PORT_DIPSETTING(    0x00, "2 to start, 1 to continue")
-		PORT_DIPNAME( 0x02, 0x02, "Demo Sounds", IP_KEY_NONE )
+		PORT_DIPNAME( 0x02, 0x02, "Demo Sounds" )
 		PORT_DIPSETTING(    0x02, "Off" )
 		PORT_DIPSETTING(    0x00, "On" )
-		PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+		PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
 		PORT_DIPSETTING(    0x08, "2" )
 		PORT_DIPSETTING(    0x0c, "3" )
 		PORT_DIPSETTING(    0x04, "4" )
-		PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "240", IP_KEY_NONE, IP_JOY_NONE, 0 )
-		PORT_DIPNAME( 0x30, 0x30, "Energy Meter", IP_KEY_NONE )
+		PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "240", IP_KEY_NONE, IP_JOY_NONE )
+		PORT_DIPNAME( 0x30, 0x30, "Energy Meter" )
 		PORT_DIPSETTING(    0x20, "2" )
 		PORT_DIPSETTING(    0x30, "3" )
 		PORT_DIPSETTING(    0x10, "4" )
 		PORT_DIPSETTING(    0x00, "5" )
-		PORT_DIPNAME( 0xc0, 0xc0, "Difficulty", IP_KEY_NONE )
+		PORT_DIPNAME( 0xc0, 0xc0, "Difficulty" )
 		PORT_DIPSETTING(    0x80, "Easy" )
 		PORT_DIPSETTING(    0xc0, "Normal" )
 		PORT_DIPSETTING(    0x40, "Hard" )
@@ -2131,18 +2142,18 @@ INPUT_PORTS_START( goldnaxe_input_ports )
 	SYS16_COINAGE
 
 	PORT_START	/* DSW1 */
-		PORT_DIPNAME( 0x01, 0x01, "Credits needed", IP_KEY_NONE )
+		PORT_DIPNAME( 0x01, 0x01, "Credits needed" )
 		PORT_DIPSETTING(    0x01, "1 to start, 1 to continue")
 		PORT_DIPSETTING(    0x00, "2 to start, 1 to continue")
-		PORT_DIPNAME( 0x02, 0x02, "Attract Mode Sound", IP_KEY_NONE )
+		PORT_DIPNAME( 0x02, 0x02, "Attract Mode Sound" )
 		PORT_DIPSETTING(    0x02, "Off" )
 		PORT_DIPSETTING(    0x00, "On" )
-		PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+		PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
 		PORT_DIPSETTING(    0x08, "1" )
 		PORT_DIPSETTING(    0x0c, "2" )
 		PORT_DIPSETTING(    0x04, "3" )
 		PORT_DIPSETTING(    0x00, "4" )
-		PORT_DIPNAME( 0x30, 0x30, "Energy Meter", IP_KEY_NONE )
+		PORT_DIPNAME( 0x30, 0x30, "Energy Meter" )
 		PORT_DIPSETTING(    0x20, "2" )
 		PORT_DIPSETTING(    0x30, "3" )
 		PORT_DIPSETTING(    0x10, "4" )
@@ -2544,10 +2555,10 @@ INPUT_PORTS_START( passshtb_input_ports )
 	SYS16_COINAGE
 
 	PORT_START	/* DSW1 */
-		PORT_DIPNAME( 0x01, 0x01, "Attract Mode Sound", IP_KEY_NONE )
+		PORT_DIPNAME( 0x01, 0x01, "Attract Mode Sound" )
 		PORT_DIPSETTING(    0x01, "Off" )
 		PORT_DIPSETTING(    0x00, "On" )
-		PORT_DIPNAME( 0x0e, 0x0e, "Initial Point", IP_KEY_NONE )
+		PORT_DIPNAME( 0x0e, 0x0e, "Initial Point" )
 		PORT_DIPSETTING(    0x06, "2000" )
 		PORT_DIPSETTING(    0x0a, "3000" )
 		PORT_DIPSETTING(    0x0c, "4000" )
@@ -2556,12 +2567,12 @@ INPUT_PORTS_START( passshtb_input_ports )
 		PORT_DIPSETTING(    0x04, "7000" )
 		PORT_DIPSETTING(    0x02, "8000" )
 		PORT_DIPSETTING(    0x00, "9000" )
-		PORT_DIPNAME( 0x30, 0x30, "Point Table", IP_KEY_NONE )
+		PORT_DIPNAME( 0x30, 0x30, "Point Table" )
 		PORT_DIPSETTING(    0x20, "Easy" )
 		PORT_DIPSETTING(    0x30, "Normal" )
 		PORT_DIPSETTING(    0x10, "Hard" )
 		PORT_DIPSETTING(    0x00, "Hardest" )
-		PORT_DIPNAME( 0xc0, 0xc0, "Game Difficulty", IP_KEY_NONE )
+		PORT_DIPNAME( 0xc0, 0xc0, "Game Difficulty" )
 		PORT_DIPSETTING(    0x80, "Easy" )
 		PORT_DIPSETTING(    0xc0, "Normal" )
 		PORT_DIPSETTING(    0x40, "Hard" )
@@ -2591,7 +2602,7 @@ struct GameDriver passshtb_driver =
 	0,
 	passshtb_input_ports,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 	0, 0
 };
 
@@ -3086,26 +3097,26 @@ INPUT_PORTS_START( tetrisbl_input_ports )
 	SYS16_COINAGE /* unconfirmed */
 
 	PORT_START	/* DSW1 */
-		PORT_DIPNAME( 0x01, 0x01, "Cabinet?", IP_KEY_NONE )
-		PORT_DIPSETTING(    0x01, "Upright")
+		PORT_DIPNAME( 0x01, 0x01, "Cabinet?" )
+		PORT_DIPSETTING(    0x01, DEF_STR( Upright ))
 		PORT_DIPSETTING(    0x00, "Cocktail")
-		PORT_DIPNAME( 0x02, 0x02, "Demo Sounds", IP_KEY_NONE )
+		PORT_DIPNAME( 0x02, 0x02, "Demo Sounds" )
 		PORT_DIPSETTING(    0x02, "Off" )
 		PORT_DIPSETTING(    0x00, "On" )
-		PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+		PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
 		PORT_DIPSETTING(    0x0c, "3" )
 		PORT_DIPSETTING(    0x08, "2" )
 		PORT_DIPSETTING(    0x04, "5" )
 		PORT_DIPSETTING(    0x00, "FREE" )
-		PORT_DIPNAME( 0x30, 0x30, "Difficulty", IP_KEY_NONE )
+		PORT_DIPNAME( 0x30, 0x30, "Difficulty" )
 		PORT_DIPSETTING(    0x30, "Normal" )
 		PORT_DIPSETTING(    0x20, "Easy" )
 		PORT_DIPSETTING(    0x10, "Hard" )
 		PORT_DIPSETTING(    0x00, "Hardest" )
-		PORT_DIPNAME( 0x40, 0x40, "Bullets Speed", IP_KEY_NONE )
+		PORT_DIPNAME( 0x40, 0x40, "Bullets Speed" )
 		PORT_DIPSETTING(    0x40, "Slow" )
 		PORT_DIPSETTING(    0x00, "Fast" )
-		PORT_DIPNAME( 0x80, 0x80, "Language", IP_KEY_NONE )
+		PORT_DIPNAME( 0x80, 0x80, "Language" )
 		PORT_DIPSETTING(    0x80, "Japanese" )
 	PORT_DIPSETTING(    0x00, "English" )
 INPUT_PORTS_END
@@ -3258,7 +3269,7 @@ struct GameDriver timscanr_driver =
 	0,
 	timscanr_input_ports,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 	0, 0
 };
 

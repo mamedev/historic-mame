@@ -1,5 +1,14 @@
 /* tilemap.h */
+#ifndef TILEMAP_H
+#define TILEMAP_H
 
+
+#define ALL_TILEMAPS	0
+/* ALL_TILEMAPS may be used with:
+	tilemap_update, tilemap_render, tilemap_set_flip, tilemap_mark_all_pixels_dirty
+*/
+
+#define TILEMAP_OPAQUE			0x00
 #define TILEMAP_TRANSPARENT		0x01
 #define TILEMAP_SPLIT			0x02
 /*
@@ -53,6 +62,7 @@ extern struct tile_info {
 
 struct tilemap {
 	int type;
+	int enable;
 	int attributes;
 	int transparent_pen;
 	unsigned int transmask[4];
@@ -69,14 +79,13 @@ struct tilemap {
 
 	char *priority, **priority_row;
 	char *visible, **visible_row;
-	char *dirty_vram;//, **dirty_vram_row;
-//	char *dirty_vramrow;
+	char *dirty_vram;
 
 	char *dirty_pixels;
 	unsigned char *flags;
 
 	/* callback to interpret video VRAM for the tilemap */
-	void (*tile_get_info)( int col, int row ); /* public */
+	void (*tile_get_info)( int col, int row );
 
 	int scrolled;
 	int scroll_rows, scroll_cols;
@@ -96,25 +105,27 @@ struct tilemap {
 	int fg_mask_line_offset;
 	unsigned short *fg_span, **fg_span_row;
 
-
 	/* background mask (for the back half of a split layer) */
 	struct osd_bitmap *bg_mask;
 	unsigned char *bg_mask_data;
 	unsigned char **bg_mask_data_row;
 	int bg_mask_line_offset;
 	unsigned short *bg_span, **bg_span_row;
+
+	struct tilemap *next; /* resource management */
 };
 
+/* don't call these from drivers - they are called from mame.c */
 void tilemap_init( void );
+void tilemap_close( void );
 
 struct tilemap *tilemap_create(
+	void (*tile_get_info)( int col, int row ),
 	int type,
 	int tile_width, int tile_height, /* in pixels */
 	int num_cols, int num_rows, /* in tiles */
 	int scroll_rows, int scroll_cols
 );
-
-void tilemap_dispose( struct tilemap *tilemap );
 
 void tilemap_mark_tile_dirty( struct tilemap *tilemap, int col, int row );
 void tilemap_mark_all_tiles_dirty( struct tilemap *tilemap );
@@ -125,10 +136,12 @@ void tilemap_set_scrolly( struct tilemap *tilemap, int col, int value );
 
 #define TILEMAP_FLIPX 0x1
 #define TILEMAP_FLIPY 0x2
-void tilemap_set_attributes( struct tilemap *tilemap, int attributes );
-
+void tilemap_set_flip( struct tilemap *tilemap, int attributes );
 void tilemap_set_clip( struct tilemap *tilemap, const struct rectangle *clip );
+void tilemap_set_enable( struct tilemap *tilemap, int enable );
 
 void tilemap_update( struct tilemap *tilemap );
 void tilemap_render( struct tilemap *tilemap );
 void tilemap_draw( struct osd_bitmap *dest, struct tilemap *tilemap, int priority );
+
+#endif

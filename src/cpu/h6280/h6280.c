@@ -44,15 +44,16 @@ static UINT8 reg_layout[] = {
 	H6280_IRQ_MASK, H6280_TIMER_STATE, H6280_NMI_STATE, H6280_IRQ1_STATE, H6280_IRQ2_STATE, H6280_IRQT_STATE,
 #ifdef MAME_DEBUG
 	-1,
-	H6280_M1, H6280_M2, H6280_M3, H6280_M4, H6280_M5, H6280_M6, H6280_M7, H6280_M8,
+	H6280_M1, H6280_M2, H6280_M3, H6280_M4, -1,
+	H6280_M5, H6280_M6, H6280_M7, H6280_M8,
 #endif
 	0
 };
 
 /* Layout of the debugger windows x,y,w,h */
 static UINT8 win_layout[] = {
-	 0, 0,80, 4,	/* register window (top rows) */
-	 0, 5,24,17,	/* disassembler window (left colums) */
+	25, 0,80, 4,	/* register window (top rows) */
+	 0, 0,24,17,	/* disassembler window (left colums) */
 	25, 5,55, 8,	/* memory #1 window (right, upper middle) */
 	25,14,55, 8,	/* memory #2 window (right, lower middle) */
 	 0,23,80, 1,	/* command line window (bottom rows) */
@@ -65,26 +66,27 @@ int 	h6280_ICount = 0;
  ****************************************************************************/
 typedef struct
 {
-    PAIR  pc;                       /* program counter */
-    PAIR  sp;                       /* stack pointer (always 100 - 1FF) */
-    PAIR  zp;                       /* zero page address */
-    PAIR  ea;                       /* effective address */
-    UINT8 a;                        /* Accumulator */
-    UINT8 x;                        /* X index register */
-    UINT8 y;                        /* Y index register */
-    UINT8 p;                        /* Processor status */
-    UINT8 mmr[8];                   /* Hu6280 memory mapper registers */
-    UINT8 irq_mask;                 /* interrupt enable/disable */
-    UINT8 timer_status;             /* timer status */
-    int timer_value;                /* timer interrupt */
-    UINT8 timer_load;               /* reload value */
-    int pending_interrupt;          /* nonzero if an interrupt is pending */
+	PAIR  ppc;			/* previous program counter */
+    PAIR  pc;           /* program counter */
+    PAIR  sp;           /* stack pointer (always 100 - 1FF) */
+    PAIR  zp;           /* zero page address */
+    PAIR  ea;           /* effective address */
+    UINT8 a;            /* Accumulator */
+    UINT8 x;            /* X index register */
+    UINT8 y;            /* Y index register */
+    UINT8 p;            /* Processor status */
+    UINT8 mmr[8];       /* Hu6280 memory mapper registers */
+    UINT8 irq_mask;     /* interrupt enable/disable */
+    UINT8 timer_status; /* timer status */
+    int timer_value;    /* timer interrupt */
+    UINT8 timer_load;   /* reload value */
+	int extra_cycles;	/* cycles used taking an interrupt */
     int nmi_state;
     int irq_state[3];
     int (*irq_callback)(int irqline);
 
 #if LAZY_FLAGS
-    int NZ;                         /* last value (lazy N and Z flag) */
+    int NZ;             /* last value (lazy N and Z flag) */
 #endif
 
 }   h6280_Regs;
@@ -130,13 +132,8 @@ void h6280_reset(void *param)
 	PCH = RDMEM((H6280_RESET_VEC+1));
 
     /* clear pending interrupts */
-#if NEW_INTERRUPT_SYSTEM
 	for (i = 0; i < 3; i++)
 		h6280.irq_state[i] = CLEAR_LINE;
-	h6280.pending_interrupt = 0;
-#else
-	H6280_Clear_Pending_Interrupts();
-#endif
 
 #ifdef FAST_ZERO_PAGE
 {
@@ -154,10 +151,12 @@ void h6280_exit(void)
 
 int h6280_execute(int cycles)
 {
-	extern int previouspc;
 	int in;
 	h6280_ICount = cycles;
 
+    /* Subtract cycles used for taking an interrupt */
+    h6280_ICount -= h6280.extra_cycles;
+	h6280.extra_cycles = 0;
 #if 0
 	/* Update timer - very wrong.. */
 	if (h6280.timer_status) {
@@ -172,12 +171,12 @@ int h6280_execute(int cycles)
 	/* Execute instructions */
 	do
     {
-		previouspc = PCD;
+		h6280.ppc = h6280.pc;
 
-		#ifdef  MAME_DEBUG
+#ifdef  MAME_DEBUG
 	 	{
-			extern int mame_debug;
-			if (mame_debug) {
+			if (mame_debug) 
+			{
 				/* Copy the segmentation registers for debugger to use */
 				int i;
 				for (i=0; i<8; i++)
@@ -186,47 +185,27 @@ int h6280_execute(int cycles)
 				MAME_Debug();
 			}
 		}
-		#endif
+#endif
 
 		/* Execute 1 instruction */
 		in=RDOP();
 		PCW++;
 		insnh6280[in]();
 
-		/* Check interrupts */
-		if (h6280.pending_interrupt) {
-			if (!(P & _fI)) {
-				if ((h6280.pending_interrupt&H6280_IRQ2_MASK) && !(h6280.irq_mask&0x2))
-				{
-					DO_INTERRUPT(H6280_IRQ2_MASK,H6280_IRQ2_VEC);
-				}
-
-				if ((h6280.pending_interrupt&H6280_IRQ1_MASK) && !(h6280.irq_mask&0x1))
-				{
-					DO_INTERRUPT(H6280_IRQ1_MASK,H6280_IRQ1_VEC);
-				}
-
-				if ((h6280.pending_interrupt&H6280_TIMER_MASK) && !(h6280.irq_mask&0x4))
-				{
-					DO_INTERRUPT(H6280_TIMER_MASK,H6280_TIMER_VEC);
-				}
-			}
-
-			if (h6280.pending_interrupt&H6280_NMI_MASK)
-			{
-				DO_INTERRUPT(H6280_NMI_MASK,H6280_NMI_VEC);
-			}
-		}
-
 		/* If PC has not changed we are stuck in a tight loop, may as well finish */
-		if (PCD==previouspc) {
+		if( h6280.pc.d == h6280.ppc.d )
+		{
 //			if (errorlog && cpu_get_pc()!=0xe0e6) fprintf(errorlog,"Spinning early %04x with %d cycles left\n",cpu_get_pc(),h6280_ICount);
-			if (h6280_ICount>0) h6280_ICount=0;
+			if (h6280_ICount > 0) h6280_ICount=0;
 		}
 
 	} while (h6280_ICount > 0);
 
-	return cycles - h6280_ICount;
+	/* Subtract cycles used for taking an interrupt */
+    h6280_ICount -= h6280.extra_cycles;
+    h6280.extra_cycles = 0;
+
+    return cycles - h6280_ICount;
 }
 
 unsigned h6280_get_context (void *dst)
@@ -289,8 +268,9 @@ unsigned h6280_get_reg (int regnum)
 		case H6280_M7: return h6280.mmr[6];
 		case H6280_M8: return h6280.mmr[7];
 #endif
+		case REG_PREVIOUSPC: return h6280.ppc.d;
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
 				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
 				if( offset < 0x1ff )
@@ -310,7 +290,7 @@ void h6280_set_reg (int regnum, unsigned val)
 		case H6280_A: A = val; break;
 		case H6280_X: X = val; break;
 		case H6280_Y: Y = val; break;
-		case H6280_IRQ_MASK: h6280.irq_mask = val; break;
+		case H6280_IRQ_MASK: h6280.irq_mask = val; CHECK_IRQ_LINES; break;
 		case H6280_TIMER_STATE: h6280.timer_status = val; break;
 		case H6280_NMI_STATE: h6280_set_nmi_line( val ); break;
 		case H6280_IRQ1_STATE: h6280_set_irq_line( 0, val ); break;
@@ -327,7 +307,7 @@ void h6280_set_reg (int regnum, unsigned val)
 		case H6280_M8: h6280.mmr[7] = val; break;
 #endif
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
 				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
 				if( offset < 0x1ff )
@@ -346,30 +326,20 @@ void h6280_set_nmi_line(int state)
 	if (h6280.nmi_state == state) return;
 	h6280.nmi_state = state;
 	if (state != CLEAR_LINE)
-        h6280.pending_interrupt |= H6280_INT_NMI;
+    {
+		DO_INTERRUPT(H6280_NMI_VEC);
+	}
 }
 
 void h6280_set_irq_line(int irqline, int state)
 {
     h6280.irq_state[irqline] = state;
-	if (state == CLEAR_LINE)
-	{
-		switch (irqline)
-		{
-			case 0: h6280.pending_interrupt &= ~H6280_IRQ1_MASK; break;
-			case 1: h6280.pending_interrupt &= ~H6280_IRQ2_MASK; break;
-			case 2: h6280.pending_interrupt &= ~H6280_TIMER_MASK; break;
-		}
-	}
-	else
-	{
-		switch (irqline)
-		{
-			case 0: h6280.pending_interrupt |= H6280_IRQ1_MASK; break;
-			case 1: h6280.pending_interrupt |= H6280_IRQ2_MASK; break;
-			case 2: h6280.pending_interrupt |= H6280_TIMER_MASK; break;
-        }
-    }
+
+	/* If line is cleared, just exit */
+	if (state == CLEAR_LINE) return;
+
+	/* Check if interrupts are enabled and the IRQ mask is clear */
+	CHECK_IRQ_LINES;
 }
 
 void h6280_set_irq_callback(int (*callback)(int irqline))
@@ -393,32 +363,6 @@ const char *h6280_info(void *context, int regnum)
 
 	switch( regnum )
 	{
-		case CPU_INFO_NAME: return "H6280";
-		case CPU_INFO_FAMILY: return "Hitachi 6280";
-		case CPU_INFO_VERSION: return "1.01";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (c) 1999 Bryan McPhail, mish@tendril.force9.net";
-		case CPU_INFO_REG_LAYOUT: return (const char*)reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)win_layout;
-
-		case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->pc.w.l); break;
-		case CPU_INFO_SP: sprintf(buffer[which], "%02X", r->sp.b.l); break;
-#ifdef MAME_DEBUG
-		case CPU_INFO_DASM: r->pc.w.l += Dasm6280(buffer[which], r->pc.w.l); break;
-#else
-		case CPU_INFO_DASM: sprintf(buffer[which], "$%02x", ROM[r->pc.w.l]); r->pc.w.l++; break;
-#endif
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->p & 0x80 ? 'N':'.',
-				r->p & 0x40 ? 'V':'.',
-				r->p & 0x20 ? 'R':'.',
-				r->p & 0x10 ? 'B':'.',
-				r->p & 0x08 ? 'D':'.',
-				r->p & 0x04 ? 'I':'.',
-				r->p & 0x02 ? 'Z':'.',
-				r->p & 0x01 ? 'C':'.');
-			break;
 		case CPU_INFO_REG+H6280_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
         case CPU_INFO_REG+H6280_S: sprintf(buffer[which], "S:%02X", r->sp.b.l); break;
         case CPU_INFO_REG+H6280_P: sprintf(buffer[which], "P:%02X", r->p); break;
@@ -441,8 +385,37 @@ const char *h6280_info(void *context, int regnum)
 		case CPU_INFO_REG+H6280_M7: sprintf(buffer[which], "M7:%02X", r->mmr[6]); break;
 		case CPU_INFO_REG+H6280_M8: sprintf(buffer[which], "M8:%02X", r->mmr[7]); break;
 #endif
+		case CPU_INFO_FLAGS:
+			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
+				r->p & 0x80 ? 'N':'.',
+				r->p & 0x40 ? 'V':'.',
+				r->p & 0x20 ? 'R':'.',
+				r->p & 0x10 ? 'B':'.',
+				r->p & 0x08 ? 'D':'.',
+				r->p & 0x04 ? 'I':'.',
+				r->p & 0x02 ? 'Z':'.',
+				r->p & 0x01 ? 'C':'.');
+			break;
+		case CPU_INFO_NAME: return "H6280";
+		case CPU_INFO_FAMILY: return "Hitachi 6280";
+		case CPU_INFO_VERSION: return "1.01";
+		case CPU_INFO_FILE: return __FILE__;
+		case CPU_INFO_CREDITS: return "Copyright (c) 1999 Bryan McPhail, mish@tendril.force9.net";
+		case CPU_INFO_REG_LAYOUT: return (const char*)reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)win_layout;
     }
 	return buffer[which];
+}
+
+unsigned h6280_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+	(void)base;
+#ifdef MAME_DEBUG
+    return Dasm6280(buffer,pc);
+#else
+	sprintf( buffer, "$%02X", ROM[pc] );
+	return 1;
+#endif
 }
 
 /*****************************************************************************/
@@ -451,7 +424,8 @@ int H6280_irq_status_r(int offset)
 {
 	int status;
 
-	switch (offset) {
+	switch (offset)
+	{
 		case 0: /* Read irq mask */
 			return h6280.irq_mask;
 
@@ -470,20 +444,22 @@ int H6280_irq_status_r(int offset)
 
 void H6280_irq_status_w(int offset, int data)
 {
-	switch (offset) {
+	switch (offset)
+	{
 		case 0: /* Write irq mask */
 //			if (errorlog) fprintf(errorlog,"Hu6280: %04x: write irq mask %04x\n",cpu_get_pc(),data);
 			h6280.irq_mask=data&0x7;
-			return;
+			CHECK_IRQ_LINES;
+			break;
 
 		case 1: /* Reset timer irq */
 
-//aka TIQ acknowledge
+// aka TIQ acknowledge
 // if not ack'd TIQ cant fire again?!
 //
 		//	if (errorlog) fprintf(errorlog,"Hu6280: %04x: Timer irq reset!\n",cpu_get_pc());
-			h6280.timer_value=h6280.timer_load; /* hmm */
-			return;
+			h6280.timer_value = h6280.timer_load; /* hmm */
+			break;
 	}
 }
 

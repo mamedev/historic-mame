@@ -223,7 +223,7 @@ int Dasm6280(char *buffer, int pc)
 			PC+=6;
             break;
 		case _zrl:
-			sprintf(buffer,"%-5s#$%02X $%04X", token[opc], RDBYTE(PC), (PC + 2 + (signed char)RDBYTE(PC+1)) & 0xffff);
+			sprintf(buffer,"%-5s$%02X $%04X", token[opc], RDBYTE(PC), (PC + 2 + (signed char)RDBYTE(PC+1)) & 0xffff);
 			PC+=2;
 			break;
 		case _imz:

@@ -340,7 +340,7 @@ int frontend_help (int argc, char **argv)
 	if (help)  /* brief help - useful to get current version info */
 	{
 		printf("M.A.M.E. v%s - Multiple Arcade Machine Emulator\n"
-				"Copyright (C) 1997-99 by Nicola Salmoria and the MAME Team\n\n",mameversion);
+				"Copyright (C) 1997-99 by Nicola Salmoria and the MAME Team\n\n",build_version);
 		showdisclaimer();
 		printf("Usage:  MAME gamename [options]\n\n"
 				"        MAME -list      for a brief list of supported games\n"
@@ -648,6 +648,7 @@ int frontend_help (int argc, char **argv)
 						strcmp(drivers[i]->name,"nitedrvr") &&
 						strcmp(drivers[i]->name,"punchout") &&
 						strcmp(drivers[i]->name,"spnchout") &&
+						strcmp(drivers[i]->name,"armwrest") &&
 						1)
 						printf("%s %dx%d\n",drivers[i]->name,
 								drivers[i]->drv->visible_area.max_x - drivers[i]->drv->visible_area.min_x + 1,

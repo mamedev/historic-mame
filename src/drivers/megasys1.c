@@ -638,7 +638,7 @@ static struct IOWritePort sound_writeport[] =
 	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )\
 	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )\
 	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )\
-	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Test Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )\
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Test Mode", OSD_KEY_F2, IP_JOY_NONE )\
 	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_COIN1 )\
 	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
@@ -669,7 +669,7 @@ static struct IOWritePort sound_writeport[] =
 /* IN4 - DSW1 MS1-A */
 #define COINAGE_A \
 	PORT_START\
-	PORT_DIPNAME( 0x07, 0x07, "Coin SW 1", IP_KEY_NONE )\
+	PORT_DIPNAME( 0x07, 0x07, "Coin SW 1" )\
 	PORT_DIPSETTING(    0x07, "1 Coin / 1 Credit" )\
 	PORT_DIPSETTING(    0x06, "1 Coin / 2 Credit" )\
 	PORT_DIPSETTING(    0x05, "1 Coin / 3 Credit" )\
@@ -677,8 +677,8 @@ static struct IOWritePort sound_writeport[] =
 	PORT_DIPSETTING(    0x03, "2 Coin / 1 Credit" )\
 	PORT_DIPSETTING(    0x02, "3 Coin / 1 Credit" )\
 	PORT_DIPSETTING(    0x01, "4 Coin / 1 Play" )\
-	PORT_DIPSETTING(    0x00, "Free Play" )\
-	PORT_DIPNAME( 0x38, 0x38, "Coin SW 2", IP_KEY_NONE )\
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )\
+	PORT_DIPNAME( 0x38, 0x38, "Coin SW 2" )\
 	PORT_DIPSETTING(    0x38, "1 Coin / 1 Credit" )\
 	PORT_DIPSETTING(    0x30, "1 Coin / 2 Credit" )\
 	PORT_DIPSETTING(    0x28, "1 Coin / 3 Credit" )\
@@ -686,18 +686,18 @@ static struct IOWritePort sound_writeport[] =
 	PORT_DIPSETTING(    0x18, "2 Coin / 1 Credit" )\
 	PORT_DIPSETTING(    0x10, "3 Coin / 1 Credit" )\
 	PORT_DIPSETTING(    0x08, "4 Coin / 1 Play" )\
-	PORT_DIPSETTING(    0x00, "Free Play" )\
-	PORT_DIPNAME( 0x40, 0x40, "Advertise Sound", IP_KEY_NONE )\
-	PORT_DIPSETTING(    0x40, "On" )\
-	PORT_DIPSETTING(    0x00, "Off" )\
-	PORT_DIPNAME( 0x80, 0x80, "No Death Mode", IP_KEY_NONE )\
-	PORT_DIPSETTING(    0x80, "No" )\
-	PORT_DIPSETTING(    0x00, "Yes" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )\
+	PORT_DIPNAME( 0x40, 0x40, "Advertise Sound" )\
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )\
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )\
+	PORT_DIPNAME( 0x80, 0x80, "No Death Mode" )\
+	PORT_DIPSETTING(    0x80, DEF_STR( No ) )\
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 
 /* IN4 - DSW1 MS1-C */
 #define COINAGE_C \
 	PORT_START\
-	PORT_DIPNAME( 0x0f, 0x0f, "Coin SW 1", IP_KEY_NONE )\
+	PORT_DIPNAME( 0x0f, 0x0f, "Coin SW 1" )\
 	PORT_DIPSETTING(    0x0f, "1 Coin / 1 Credit" )\
 	PORT_DIPSETTING(    0x0e, "1 Coin / 2 Credits" )\
 	PORT_DIPSETTING(    0x0d, "1 Coin / 3 Credits" )\
@@ -713,8 +713,8 @@ static struct IOWritePort sound_writeport[] =
 	PORT_DIPSETTING(    0x03, "1 Coin / 1 Credit" )\
 	PORT_DIPSETTING(    0x02, "1 Coin / 1 Credit" )\
 	PORT_DIPSETTING(    0x01, "1 Coin / 1 Credit" )\
-	PORT_DIPSETTING(    0x00, "Free Play" )\
-	PORT_DIPNAME( 0xf0, 0xf0, "Coin SW 2", IP_KEY_NONE )\
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )\
+	PORT_DIPNAME( 0xf0, 0xf0, "Coin SW 2" )\
 	PORT_DIPSETTING(    0xf0, "1 Coin / 1 Credit" )\
 	PORT_DIPSETTING(    0xe0, "1 Coin / 2 Credits" )\
 	PORT_DIPSETTING(    0xd0, "1 Coin / 3 Credits" )\
@@ -730,7 +730,7 @@ static struct IOWritePort sound_writeport[] =
 	PORT_DIPSETTING(    0x30, "1 Coin / 1 Credit" )\
 	PORT_DIPSETTING(    0x20, "1 Coin / 1 Credit" )\
 	PORT_DIPSETTING(    0x10, "1 Coin / 1 Credit" )\
-	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 
 /* IN5 - DSW2 */
 #define UNKNOWN \
@@ -1012,28 +1012,28 @@ INPUT_PORTS_START( input_ports_street64 )
 	JOY(IPF_PLAYER2)
 	COINAGE_C
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "Screen Flip", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x01, "No" )
-	PORT_DIPSETTING(    0x00, "Yes" )
-	PORT_DIPNAME( 0x02, 0x02, "Demo Sound", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "No" )
-	PORT_DIPSETTING(    0x00, "Yes" )
-	PORT_DIPNAME( 0x04, 0x04, "Continue Play", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "Yes" )
-	PORT_DIPSETTING(    0x00, "No" )
-	PORT_DIPNAME( 0x18, 0x18, "Game Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x01, "Screen Flip" )
+	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x02, 0x02, "Demo Sound" )
+	PORT_DIPSETTING(    0x02, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x04, 0x04, "Continue Play" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Yes ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPNAME( 0x18, 0x18, "Game Difficulty" )
 	PORT_DIPSETTING(    0x18, "Normal" )
 	PORT_DIPSETTING(    0x10, "Easy" )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Very Hard" )
-	PORT_DIPNAME( 0x60, 0x60, "Player Stock", IP_KEY_NONE )
+	PORT_DIPNAME( 0x60, 0x60, "Player Stock" )
 	PORT_DIPSETTING(    0x60, "2" )
 	PORT_DIPSETTING(    0x40, "1" )
 	PORT_DIPSETTING(    0x20, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x80, 0x80, "Service", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "No" )
-	PORT_DIPSETTING(    0x00, "Yes" )
+	PORT_DIPNAME( 0x80, 0x80, "Service" )
+	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 
 INPUT_PORTS_END
 
@@ -1248,21 +1248,21 @@ INPUT_PORTS_START( input_ports_lomakaj )
 	JOY(IPF_PLAYER2)	/* IN3 0x80005.b */
 	COINAGE_A			/* IN4 0x80006.b */
 	PORT_START			/* IN5 0x80007.b */
-	PORT_DIPNAME( 0x03, 0x03, "Initial Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, "Initial Lives" )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x30, 0x30, "?Game Difficulty?", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, "?Game Difficulty?" )
 	PORT_DIPSETTING(    0x30, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x10, "Hardest" )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x80, 0x80, "Monitor Invert", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "No" )
-	PORT_DIPSETTING(    0x00, "Yes" )
+	PORT_DIPNAME( 0x80, 0x80, "Monitor Invert" )
+	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
 
@@ -1315,21 +1315,21 @@ INPUT_PORTS_START( input_ports_p47 )
 	JOY(IPF_PLAYER2)	/* IN3 0x80005.b */
 	COINAGE_A			/* IN4 0x80006.b */
 	PORT_START			/* IN5 0x80007.b */
-	PORT_DIPNAME( 0x03, 0x03, "Initial Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, "Initial Lives" )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "2" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x30, 0x30, "Game Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, "Game Difficulty" )
 	PORT_DIPSETTING(    0x30, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x10, "Hardest" )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x80, 0x80, "Monitor Invert", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "No" )
-	PORT_DIPSETTING(    0x00, "Yes" )
+	PORT_DIPNAME( 0x80, 0x80, "Monitor Invert" )
+	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
 
@@ -1381,21 +1381,21 @@ INPUT_PORTS_START( input_ports_p47j )
 	JOY(IPF_PLAYER2)	/* IN3 0x80005.b */
 	COINAGE_A			/* IN4 0x80006.b */
 	PORT_START			/* IN5 0x80007.b */
-	PORT_DIPNAME( 0x03, 0x03, "Initial Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, "Initial Lives" )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "2" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x30, 0x30, "Game Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, "Game Difficulty" )
 	PORT_DIPSETTING(    0x30, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x10, "Hardest" )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x80, 0x80, "Monitor Invert", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "No" )
-	PORT_DIPSETTING(    0x00, "Yes" )
+	PORT_DIPNAME( 0x80, 0x80, "Monitor Invert" )
+	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
 

@@ -14,8 +14,8 @@ VPATH=src $(wildcard src/cpu/*)
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1
-TINY_NAME = rthunder_driver
-TINY_OBJS = obj/drivers/rthunder.o obj/vidhrdw/rthunder.o
+TINY_NAME = kopunch_driver
+TINY_OBJS = obj/drivers/kopunch.o
 
 # uncomment one of the two next lines to not compile the NeoGeo games or to
 # compile only the NeoGeo games
@@ -37,32 +37,32 @@ CPUS+=8080
 CPUS+=8085A
 CPUS+=M6502
 CPUS+=M65C02
-# CPUS+=M6510
+CPUS+=M6510
 CPUS+=H6280
 CPUS+=I86
 CPUS+=I8035
 CPUS+=I8039
-# CPUS+=I8048
+CPUS+=I8048
 CPUS+=N7751
-# CPUS+=M6800
-# CPUS+=M6801
+CPUS+=M6800
+CPUS+=M6801
 CPUS+=M6802
 CPUS+=M6803
 CPUS+=M6808
 CPUS+=HD63701
-# CPUS+=M6805
+CPUS+=M6805
 CPUS+=M68705
 CPUS+=HD63705
 CPUS+=M6309
 CPUS+=M6809
 CPUS+=M68000
-# CPUS+=M68010
-# CPUS+=M68020
+CPUS+=M68010
+CPUS+=M68020
 CPUS+=T11
 CPUS+=S2650
 CPUS+=TMS34010
 CPUS+=TMS9900
-# CPUS+=Z8000
+CPUS+=Z8000
 CPUS+=TMS320C10
 CPUS+=CCPU
 # CPUS+=PDP1
@@ -308,7 +308,7 @@ CPU=$(strip $(findstring Z8000,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_Z8000=1
 CPUOBJS += obj/cpu/z8000/z8000.o
-DBGOBJS += obj/cpu/z8000/9900dasm.o
+DBGOBJS += obj/cpu/z8000/8000dasm.o
 endif
 
 CPU=$(strip $(findstring TMS320C10,$(CPUS)))
@@ -372,27 +372,28 @@ COREOBJS = obj/version.o obj/driver.o obj/mame.o obj/common.o obj/usrintrf.o \
          obj/cpuintrf.o obj/memory.o obj/timer.o obj/palette.o \
          obj/inptport.o obj/cheat.o obj/unzip.o obj/inflate.o \
          obj/audit.o obj/info.o obj/crc32.o obj/png.o obj/artwork.o \
-	 obj/tilemap.o obj/state.o \
-	 $(sort $(CPUOBJS)) \
-         obj/sndhrdw/adpcm.o \
-         obj/sndhrdw/ay8910.o obj/sndhrdw/2203intf.o \
-         obj/sndhrdw/2151intf.o obj/sndhrdw/fm.o \
-         obj/sndhrdw/ym2151.o obj/sndhrdw/ym2413.o \
-         obj/sndhrdw/2610intf.o obj/sndhrdw/2612intf.o \
-         obj/sndhrdw/ym3812.o obj/sndhrdw/3812intf.o \
-		 obj/sndhrdw/tms5220.o obj/sndhrdw/5220intf.o obj/sndhrdw/vlm5030.o \
-		 obj/sndhrdw/pokey.o obj/sndhrdw/sn76496.o \
-		 obj/sndhrdw/nes.o obj/sndhrdw/nesintf.o obj/sndhrdw/astrocde.o \
-		 obj/sndhrdw/votrax.o obj/sndhrdw/dac.o obj/sndhrdw/samples.o \
-		 obj/sndhrdw/k007232.o obj/sndhrdw/upd7759.o obj/sndhrdw/cvsd.o \
-         obj/sndhrdw/namco.o \
-		 obj/sndhrdw/streams.o obj/sndhrdw/exvolume.o \
+         obj/tilemap.o obj/sprite.o obj/state.o \
+         $(sort $(CPUOBJS)) \
+         obj/sndintrf.o \
+         obj/sound/adpcm.o \
+         obj/sound/ay8910.o obj/sound/2203intf.o \
+         obj/sound/2151intf.o obj/sound/fm.o \
+         obj/sound/ym2151.o obj/sound/ym2413.o \
+         obj/sound/2610intf.o obj/sound/2612intf.o \
+         obj/sound/ym3812.o obj/sound/3812intf.o \
+		 obj/sound/tms5220.o obj/sound/5220intf.o obj/sound/vlm5030.o \
+		 obj/sound/pokey.o obj/sound/sn76496.o \
+		 obj/sound/nes.o obj/sound/nesintf.o obj/sound/astrocde.o \
+		 obj/sound/votrax.o obj/sound/dac.o obj/sound/samples.o \
+		 obj/sound/k007232.o obj/sound/upd7759.o obj/sound/cvsd.o \
+         obj/sound/namco.o \
+		 obj/sound/streams.o obj/sound/exvolume.o \
          obj/machine/z80fmly.o obj/machine/6821pia.o \
-	 obj/vidhrdw/generic.o obj/sndhrdw/generic.o obj/vidhrdw/vector.o \
-	 obj/vidhrdw/avgdvg.o obj/machine/mathbox.o \
+         obj/vidhrdw/generic.o obj/vidhrdw/vector.o \
+         obj/vidhrdw/avgdvg.o obj/machine/mathbox.o \
          obj/machine/ticket.o \
          obj/mamedbg.o obj/window.o \
-	 $(sort $(DBGOBJS)) \
+         $(sort $(DBGOBJS)) \
 
 DRVLIBS = obj/pacman.a obj/galaxian.a obj/scramble.a obj/cclimber.a \
          obj/phoenix.a obj/namco.a obj/univers.a obj/nintendo.a \
@@ -401,7 +402,7 @@ DRVLIBS = obj/pacman.a obj/galaxian.a obj/scramble.a obj/cclimber.a \
          obj/qixtaito.a obj/taito.a obj/taito2.a obj/williams.a \
          obj/capcom.a obj/capbowl.a obj/gremlin.a obj/vicdual.a \
          obj/segav.a obj/segar.a obj/zaxxon.a obj/system1.a \
-         obj/system16.a obj/btime.a obj/dataeast.a obj/dec8.a \
+         obj/sega.a obj/system16.a obj/btime.a obj/dataeast.a obj/dec8.a \
          obj/dec0.a obj/tehkan.a obj/konami.a obj/nemesis.a \
          obj/tmnt.a obj/exidy.a obj/atarivg.a obj/centiped.a \
          obj/kangaroo.a obj/missile.a obj/ataribw.a obj/atarisy1.a \
@@ -409,7 +410,7 @@ DRVLIBS = obj/pacman.a obj/galaxian.a obj/scramble.a obj/cclimber.a \
          obj/berzerk.a obj/gameplan.a obj/stratvox.a obj/zaccaria.a \
          obj/upl.a obj/tms.a obj/cinemar.a obj/cinemav.a obj/thepit.a \
          obj/valadon.a obj/seibu.a obj/nichibut.a obj/jaleco.a obj/visco.a \
-         obj/toaplan.a obj/other.a \
+         obj/toaplan.a obj/leland.a obj/other.a \
 
 NEOLIBS = obj/neogeo.a \
 
@@ -448,7 +449,7 @@ romcmp.exe: obj/romcmp.o obj/inflate.o obj/unzip.o
 compress: mame.exe
 	upx mame.exe
 
-obj/%.o: src/%.c mame.h driver.h
+obj/%.o: src/%.c
 	 $(CC) $(CDEFS) $(CFLAGS) $(TINYFLAGS) -c $< -o $@
 
 obj/cpu/m68000/68kem.asm:  src/cpu/m68000/make68k.c
@@ -464,7 +465,7 @@ obj/cpu/m6800/m6800.asm:  src/cpu/m6800/make6808.c
 	 obj/cpu/m6800/make6808 obj/cpu/m6800/m6800.asm -s -m -h
 
 obj/%.oa:  obj/%.asm
-	 $(ASM) -o $@ $(ASMFLAGS) $(ASMDEFS) $<
+	 $(ASM) -o $@ $(ASMFLAGS) $(subst -D,-d,$(ASMDEFS)) $<
 
 obj/%.a:
 	 $(AR) cr $@ $^
@@ -485,11 +486,11 @@ obj/scramble.a: \
          obj/vidhrdw/frogger.o obj/sndhrdw/frogger.o obj/drivers/frogger.o \
          obj/drivers/scobra.o \
          obj/vidhrdw/amidar.o obj/drivers/amidar.o \
-         obj/vidhrdw/jumpbug.o obj/drivers/jumpbug.o \
          obj/vidhrdw/fastfred.o obj/drivers/fastfred.o \
 
 obj/cclimber.a: \
          obj/vidhrdw/cclimber.o obj/sndhrdw/cclimber.o obj/drivers/cclimber.o \
+         obj/drivers/yamato.o \
          obj/vidhrdw/seicross.o obj/drivers/seicross.o \
 
 obj/phoenix.a: \
@@ -506,6 +507,7 @@ obj/namco.a: \
          obj/vidhrdw/xevious.o obj/machine/xevious.o obj/drivers/xevious.o \
          obj/machine/superpac.o obj/vidhrdw/superpac.o obj/drivers/superpac.o \
          obj/machine/mappy.o obj/vidhrdw/mappy.o obj/drivers/mappy.o \
+         obj/machine/gaplus.o obj/vidhrdw/gaplus.o obj/drivers/gaplus.o \
          obj/vidhrdw/pacland.o obj/drivers/pacland.o \
          obj/vidhrdw/rthunder.o obj/drivers/rthunder.o \
          obj/machine/namcos1.o obj/vidhrdw/namcos1.o obj/drivers/namcos1.o \
@@ -635,6 +637,13 @@ obj/system1.a: \
          obj/machine/segacrpt.o \
          obj/vidhrdw/system1.o obj/drivers/system1.o \
 
+obj/sega.a: \
+         obj/machine/turbo.o obj/vidhrdw/turbo.o obj/drivers/turbo.o \
+         obj/drivers/kopunch.o \
+         obj/vidhrdw/suprloco.o obj/drivers/suprloco.o \
+         obj/vidhrdw/champbas.o obj/drivers/champbas.o \
+         obj/vidhrdw/bankp.o obj/drivers/bankp.o \
+
 obj/system16.a: \
          obj/vidhrdw/system16.o obj/drivers/system16.o \
 
@@ -660,6 +669,7 @@ obj/dec0.a: \
          obj/machine/dec0.o obj/vidhrdw/dec0.o obj/drivers/dec0.o \
          obj/vidhrdw/darkseal.o obj/drivers/darkseal.o \
          obj/vidhrdw/cninja.o obj/drivers/cninja.o \
+         obj/vidhrdw/supbtime.o obj/drivers/supbtime.o \
          obj/vidhrdw/tumblep.o obj/drivers/tumblep.o \
 
 obj/tehkan.a: \
@@ -839,6 +849,9 @@ obj/toaplan.a: \
          obj/vidhrdw/toaplan1.o obj/drivers/zerowing.o \
          obj/vidhrdw/snowbros.o obj/drivers/snowbros.o \
 
+obj/leland.a: \
+         obj/vidhrdw/leland.o obj/drivers/leland.o \
+
 obj/cinemat.a: \
          obj/vidhrdw/cinemat.o obj/drivers/cinemat.o \
 
@@ -850,11 +863,8 @@ obj/other.a: \
          obj/vidhrdw/ccastles.o obj/drivers/ccastles.o \
          obj/vidhrdw/blueprnt.o obj/drivers/blueprnt.o \
          obj/drivers/omegrace.o \
-         obj/vidhrdw/bankp.o obj/drivers/bankp.o \
          obj/machine/espial.o obj/vidhrdw/espial.o obj/drivers/espial.o \
          obj/machine/cloak.o obj/vidhrdw/cloak.o obj/drivers/cloak.o \
-         obj/vidhrdw/champbas.o obj/drivers/champbas.o \
-         obj/drivers/sinbadm.o \
          obj/machine/foodf.o obj/vidhrdw/foodf.o obj/drivers/foodf.o \
          obj/machine/vastar.o obj/vidhrdw/vastar.o obj/drivers/vastar.o \
          obj/machine/jedi.o obj/vidhrdw/jedi.o obj/sndhrdw/jedi.o obj/drivers/jedi.o \
@@ -872,7 +882,6 @@ obj/other.a: \
          obj/vidhrdw/goldstar.o obj/drivers/goldstar.o \
          obj/vidhrdw/vigilant.o obj/drivers/vigilant.o \
          obj/vidhrdw/sharkatt.o obj/drivers/sharkatt.o \
-         obj/machine/turbo.o obj/vidhrdw/turbo.o obj/drivers/turbo.o \
          obj/vidhrdw/kingobox.o obj/drivers/kingobox.o \
          obj/vidhrdw/zerozone.o obj/drivers/zerozone.o \
          obj/machine/exctsccr.o obj/vidhrdw/exctsccr.o obj/drivers/exctsccr.o \
@@ -881,6 +890,7 @@ obj/other.a: \
          obj/vidhrdw/pow.o obj/drivers/pow.o \
          obj/vidhrdw/galpanic.o obj/drivers/galpanic.o \
          obj/vidhrdw/ambush.o obj/drivers/ambush.o \
+         obj/vidhrdw/polepos.o obj/drivers/polepos.o obj/machine/polepos.o \
 
 # dependencies
 obj/cpu/z80/z80.o:  z80.c z80.h z80daa.h
@@ -892,7 +902,7 @@ obj/cpu/m6800/m6800.o:	m6800.c m6800.h 6800ops.c
 obj/cpu/m6805/m6805.o:	m6805.c m6805.h 6805ops.c
 obj/cpu/m6809/m6809.o:	m6809.c m6809.h 6809ops.c 6809tbl.c
 obj/cpu/tms34010/tms34010.o: tms34010.c tms34010.h 34010ops.c 34010tbl.c
-obj/cpu/tms9900/tms9900.o: tms9900.h
+obj/cpu/tms9900/tms9900.o: tms9900.c tms9900.h 9900stat.h
 obj/cpu/z8000/z8000.o: z8000.c z8000.h z8000cpu.h z8000dab.h z8000ops.c z8000tbl.c
 obj/cpu/tms32010/tms32010.o: tms32010.c tms32010.h
 obj/cpu/ccpu/ccpu.o: ccpu.h ccpudasm.c cinedbg.c
@@ -918,6 +928,7 @@ makedir:
 	md obj\cpu\z8000
 	md obj\cpu\tms32010
 	md obj\cpu\ccpu
+	md obj\sound
 	md obj\drivers
 	md obj\machine
 	md obj\vidhrdw
@@ -952,6 +963,7 @@ clean:
 	del obj\cpu\z8000\*.o
 	del obj\cpu\tms32010\*.o
 	del obj\cpu\ccpu\*.o
+	del obj\sound\*.o
 	del obj\drivers\*.o
 	del obj\machine\*.o
 	del obj\vidhrdw\*.o

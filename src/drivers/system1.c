@@ -314,7 +314,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 #define IN0_PORT \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) \
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 ) \
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 ) \
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE ) \
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 ) \
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 ) \
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 ) \
@@ -322,7 +322,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 #define DSW1_PORT \
-	PORT_DIPNAME( 0x0f, 0x0f, "A Coin/Cred", IP_KEY_NONE ) \
+	PORT_DIPNAME( 0x0f, 0x0f, "A Coin/Cred" ) \
 	PORT_DIPSETTING(    0x07, "4/1" ) \
 	PORT_DIPSETTING(    0x08, "3/1" ) \
 	PORT_DIPSETTING(    0x09, "2/1" ) \
@@ -339,7 +339,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	PORT_DIPSETTING(    0x0b, "1/5" ) \
 	PORT_DIPSETTING(    0x0a, "1/6" ) \
 /*	PORT_DIPSETTING(    0x00, "1/1" ) */ \
-	PORT_DIPNAME( 0xf0, 0xf0, "B Coin/Cred", IP_KEY_NONE ) \
+	PORT_DIPNAME( 0xf0, 0xf0, "B Coin/Cred" ) \
 	PORT_DIPSETTING(    0x70, "4/1" ) \
 	PORT_DIPSETTING(    0x80, "3/1" ) \
 	PORT_DIPSETTING(    0x90, "2/1" ) \
@@ -386,15 +386,15 @@ INPUT_PORTS_START( starjack_input_ports )
 	DSW1_PORT
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x01, "Cocktail" )
-	PORT_DIPNAME( 0x06, 0x06, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x06, 0x06, "Lives" )
 	PORT_DIPSETTING(    0x06, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x38, 0x30, "Bonus Life", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x38, 0x30, "Bonus Life" )
 	PORT_DIPSETTING(    0x30, "20000 50000" )
 	PORT_DIPSETTING(    0x20, "30000 70000" )
 	PORT_DIPSETTING(    0x10, "40000 90000" )
@@ -403,7 +403,7 @@ INPUT_PORTS_START( starjack_input_ports )
 	PORT_DIPSETTING(    0x28, "30000" )
 	PORT_DIPSETTING(    0x18, "40000" )
 	PORT_DIPSETTING(    0x08, "50000" )
-	PORT_DIPNAME( 0xc0, 0xc0, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0xc0, 0xc0, "Difficulty" )
 	PORT_DIPSETTING(    0xc0, "Easy" )
 	PORT_DIPSETTING(    0x80, "Medium" )
 	PORT_DIPSETTING(    0x40, "Hard" )
@@ -438,23 +438,23 @@ INPUT_PORTS_START( starjacs_input_ports )
 	DSW1_PORT
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x01, "Cocktail" )
-	PORT_DIPNAME( 0x06, 0x06, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x06, 0x06, "Lives" )
 	PORT_DIPSETTING(    0x06, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x08, 0x08, "Ship", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x08, 0x08, "Ship" )
 	PORT_DIPSETTING(    0x08, "Single" )
 	PORT_DIPSETTING(    0x00, "Multi" )
-	PORT_DIPNAME( 0x30, 0x30, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, "Bonus Life" )
 	PORT_DIPSETTING(    0x30, "30000 70000" )
 	PORT_DIPSETTING(    0x20, "40000 90000" )
 	PORT_DIPSETTING(    0x10, "50000 110000" )
 	PORT_DIPSETTING(    0x00, "60000 130000" )
-	PORT_DIPNAME( 0xc0, 0xc0, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0xc0, 0xc0, "Difficulty" )
 	PORT_DIPSETTING(    0xc0, "Easy" )
 	PORT_DIPSETTING(    0x80, "Medium" )
 	PORT_DIPSETTING(    0x40, "Hard" )
@@ -489,27 +489,27 @@ INPUT_PORTS_START( regulus_input_ports )
 	DSW1_PORT
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x01, "Cocktail" )
-	PORT_DIPNAME( 0x02, 0x02, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown" )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Difficulty" )
 	PORT_DIPSETTING(    0x40, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x80, 0x00, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x80, "No" )
 	PORT_DIPSETTING(    0x00, "Yes" )
 INPUT_PORTS_END
@@ -542,15 +542,15 @@ INPUT_PORTS_START( upndown_input_ports )
 	DSW1_PORT
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x01, "Cocktail" )
-	PORT_DIPNAME( 0x06, 0x06, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x06, 0x06, "Lives" )
 	PORT_DIPSETTING(    0x06, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x38, 0x38, "Bonus Life", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x38, 0x38, "Bonus Life" )
 	PORT_DIPSETTING(    0x38, "10000" )
 	PORT_DIPSETTING(    0x30, "20000" )
 	PORT_DIPSETTING(    0x28, "30000" )
@@ -559,7 +559,7 @@ INPUT_PORTS_START( upndown_input_ports )
 	PORT_DIPSETTING(    0x10, "60000" )
 	PORT_DIPSETTING(    0x08, "70000" )
 	PORT_DIPSETTING(    0x00, "None" )
-	PORT_DIPNAME( 0xc0, 0xc0, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0xc0, 0xc0, "Difficulty" )
 	PORT_DIPSETTING(    0xc0, "Easy" )
 	PORT_DIPSETTING(    0x80, "Medium" )
 	PORT_DIPSETTING(    0x40, "Hard" )
@@ -594,26 +594,26 @@ INPUT_PORTS_START( mrviking_input_ports )
 	DSW1_PORT
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x01, "Cocktail" )
-	PORT_DIPNAME( 0x02, 0x02, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown" )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x30, 0x30, "Bonus Life", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, "Bonus Life" )
 	PORT_DIPSETTING(    0x30, "10000 30000 60000" )
 	PORT_DIPSETTING(    0x20, "20000 40000 70000" )
 	PORT_DIPSETTING(    0x10, "30000 60000 90000" )
 	PORT_DIPSETTING(    0x00, "40000 70000 100000" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Difficulty" )
 	PORT_DIPSETTING(    0x80, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
 INPUT_PORTS_END
@@ -646,15 +646,15 @@ INPUT_PORTS_START( swat_input_ports )
 	DSW1_PORT
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x01, "Cocktail" )
-	PORT_DIPNAME( 0x06, 0x06, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x06, 0x06, "Lives" )
 	PORT_DIPSETTING(    0x06, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x38, 0x38, "Bonus Life", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x38, 0x38, "Bonus Life" )
 	PORT_DIPSETTING(    0x38, "30000" )
 	PORT_DIPSETTING(    0x30, "40000" )
 	PORT_DIPSETTING(    0x28, "50000" )
@@ -663,10 +663,10 @@ INPUT_PORTS_START( swat_input_ports )
 	PORT_DIPSETTING(    0x10, "80000" )
 	PORT_DIPSETTING(    0x08, "90000" )
 	PORT_DIPSETTING(    0x00, "None" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
@@ -699,23 +699,23 @@ INPUT_PORTS_START( flicky_input_ports )
 	DSW1_PORT
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x01, "Cocktail" )
-	PORT_DIPNAME( 0x02, 0x02, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown" )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x30, 0x30, "Bonus Life", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, "Bonus Life" )
 	PORT_DIPSETTING(    0x30, "30000 80000 160000" )
 	PORT_DIPSETTING(    0x20, "30000 100000 200000" )
 	PORT_DIPSETTING(    0x10, "40000 120000 240000" )
 	PORT_DIPSETTING(    0x00, "40000 140000 280000" )
-	PORT_DIPNAME( 0xc0, 0xc0, "Difficulty?", IP_KEY_NONE )
+	PORT_DIPNAME( 0xc0, 0xc0, "Difficulty?" )
 	PORT_DIPSETTING(    0xc0, "Easy?" )
 	PORT_DIPSETTING(    0x80, "Medium?" )
 	PORT_DIPSETTING(    0x40, "Hard?" )
@@ -750,26 +750,26 @@ INPUT_PORTS_START( bullfgtj_input_ports )
 	DSW1_PORT
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x01, "Cocktail" )
-	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds" )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x30, 0x30, "Bonus Life", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, "Bonus Life" )
 	PORT_DIPSETTING(    0x30, "30000" )
 	PORT_DIPSETTING(    0x20, "50000" )
 	PORT_DIPSETTING(    0x10, "70000" )
 	PORT_DIPSETTING(    0x00, "None" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
@@ -802,27 +802,27 @@ INPUT_PORTS_START( pitfall2_input_ports )
 	DSW1_PORT
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x01, "Cocktail" )
-	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds" )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x10, 0x10, "Bonus Life", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Bonus Life" )
 	PORT_DIPSETTING(    0x10, "20000 50000" )
 	PORT_DIPSETTING(    0x00, "30000 70000" )
-	PORT_DIPNAME( 0x20, 0x00, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x20, "No" )
 	PORT_DIPSETTING(    0x00, "Yes" )
-	PORT_DIPNAME( 0x40, 0x40, "Time", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Time" )
 	PORT_DIPSETTING(    0x00, "2 Minutes" )
 	PORT_DIPSETTING(    0x40, "3 Minutes" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
@@ -855,26 +855,26 @@ INPUT_PORTS_START( pitfallu_input_ports )
 	DSW1_PORT
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x01, "Cocktail" )
-	PORT_DIPNAME( 0x06, 0x06, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x06, 0x06, "Lives" )
 	PORT_DIPSETTING(    0x06, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x18, 0x18, "Starting Stage", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x18, 0x18, "Starting Stage" )
 	PORT_DIPSETTING(    0x18, "1" )
 	PORT_DIPSETTING(    0x10, "2" )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x00, "4" )
-	PORT_DIPNAME( 0x20, 0x00, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x20, "No" )
 	PORT_DIPSETTING(    0x00, "Yes" )
-	PORT_DIPNAME( 0x40, 0x40, "Time", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Time" )
 	PORT_DIPSETTING(    0x00, "2 Minutes" )
 	PORT_DIPSETTING(    0x40, "3 Minutes" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
@@ -907,27 +907,27 @@ INPUT_PORTS_START( seganinj_input_ports )
 	DSW1_PORT
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x01, "Cocktail" )
-	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds" )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x10, 0x10, "Bonus Life", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Bonus Life" )
 	PORT_DIPSETTING(    0x10, "20k 70k 120k 170k" )
 	PORT_DIPSETTING(    0x00, "60k 100k 160k 200k" )
-	PORT_DIPNAME( 0x20, 0x00, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x20, "No" )
 	PORT_DIPSETTING(    0x00, "Yes" )
-	PORT_DIPNAME( 0x40, 0x40, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Difficulty" )
 	PORT_DIPSETTING(    0x40, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
@@ -960,26 +960,26 @@ INPUT_PORTS_START( imsorry_input_ports )
 	DSW1_PORT
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x01, "Cocktail" )
-	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds" )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x0C, 0x0C, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0C, 0x0C, "Lives" )
 	PORT_DIPSETTING(    0x0C, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x30, 0x30, "Bonus Life", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, "Bonus Life" )
 	PORT_DIPSETTING(    0x30, "30000" )
 	PORT_DIPSETTING(    0x20, "40000" )
 	PORT_DIPSETTING(    0x10, "50000" )
 	PORT_DIPSETTING(    0x00, "None" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
@@ -1012,26 +1012,26 @@ INPUT_PORTS_START( teddybb_input_ports )
 	DSW1_PORT
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x01, "Cocktail" )
-	PORT_DIPNAME( 0x02, 0x02, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x02, "Demo Sounds" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x02, "On" )
-	PORT_DIPNAME( 0x0C, 0x0C, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0C, 0x0C, "Lives" )
 	PORT_DIPSETTING(    0x08, "2" )
 	PORT_DIPSETTING(    0x0C, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x30, 0x30, "Bonus Life", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, "Bonus Life" )
 	PORT_DIPSETTING(    0x30, "100k 400k" )
 	PORT_DIPSETTING(    0x20, "200k 600k" )
 	PORT_DIPSETTING(    0x10, "400k 800k" )
 	PORT_DIPSETTING(    0x00, "600k" )
-	PORT_DIPNAME( 0x40, 0x40, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Difficulty" )
 	PORT_DIPSETTING(    0x40, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
@@ -1064,26 +1064,26 @@ INPUT_PORTS_START( hvymetal_input_ports )
 	DSW1_PORT
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x01, "Cocktail" )
-	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds" )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x0C, 0x0C, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0C, 0x0C, "Lives" )
 	PORT_DIPSETTING(    0x0C, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x30, 0x30, "Bonus Life", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, "Bonus Life" )
 	PORT_DIPSETTING(    0x30, "50000 100000" )
 	PORT_DIPSETTING(    0x20, "60000 120000" )
 	PORT_DIPSETTING(    0x10, "70000 150000" )
 	PORT_DIPSETTING(    0x00, "100000" )
-	PORT_DIPNAME( 0x40, 0x40, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Difficulty" )
 	PORT_DIPSETTING(    0x40, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x80, 0x00, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x80, "No" )
 	PORT_DIPSETTING(    0x00, "Yes" )
 INPUT_PORTS_END
@@ -1116,26 +1116,26 @@ INPUT_PORTS_START( myhero_input_ports )
 	DSW1_PORT
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x01, "Cocktail" )
-	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds" )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x0C, 0x0C, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0C, 0x0C, "Lives" )
 	PORT_DIPSETTING(    0x0C, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x30, 0x30, "Bonus Life", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, "Bonus Life" )
 	PORT_DIPSETTING(    0x30, "30000" )
 	PORT_DIPSETTING(    0x20, "50000" )
 	PORT_DIPSETTING(    0x10, "70000" )
 	PORT_DIPSETTING(    0x00, "90000" )
-	PORT_DIPNAME( 0x40, 0x40, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Difficulty" )
 	PORT_DIPSETTING(    0x40, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
@@ -1165,27 +1165,27 @@ INPUT_PORTS_START( chplft_input_ports )
 	IN0_PORT
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x01, "Cocktail" )
-	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds" )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
 	PORT_DIPSETTING(    0x08, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x00, "Bonus Life" )
 	PORT_DIPSETTING(    0x00, "20000 70000" )
 	PORT_DIPSETTING(    0x20, "50000 100000" )
-	PORT_DIPNAME( 0x40, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x00, "Difficulty" )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x40, "Hard" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
@@ -1221,15 +1221,15 @@ INPUT_PORTS_START( fdwarrio_input_ports )
 	DSW1_PORT
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x01, "Cocktail" )
-	PORT_DIPNAME( 0x06, 0x06, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x06, 0x06, "Lives" )
 	PORT_DIPSETTING(    0x06, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x38, 0x38, "Bonus Life", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x38, 0x38, "Bonus Life" )
 	PORT_DIPSETTING(    0x38, "30000" )
 	PORT_DIPSETTING(    0x30, "40000" )
 	PORT_DIPSETTING(    0x28, "50000" )
@@ -1238,10 +1238,10 @@ INPUT_PORTS_START( fdwarrio_input_ports )
 	PORT_DIPSETTING(    0x10, "80000" )
 	PORT_DIPSETTING(    0x08, "90000" )
 	PORT_DIPSETTING(    0x00, "None" )
-	PORT_DIPNAME( 0x40, 0x40, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Difficulty" )
 	PORT_DIPSETTING(    0x40, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
@@ -1274,27 +1274,27 @@ INPUT_PORTS_START( brain_input_ports )
 	DSW1_PORT
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x01, "Cocktail" )
-	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds" )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
@@ -1327,27 +1327,27 @@ INPUT_PORTS_START( wboy_input_ports )
 	DSW1_PORT
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x01, "Cocktail" )
-	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds" )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x10, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x10, 0x00, "Bonus Life" )
 	PORT_DIPSETTING(    0x10, "30k 100k 170k 240k" )
 	PORT_DIPSETTING(    0x00, "30k 120k 210k 300k" )
-	PORT_DIPNAME( 0x20, 0x20, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, "No" )
 	PORT_DIPSETTING(    0x20, "Yes" )
-	PORT_DIPNAME( 0x40, 0x40, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Difficulty" )
 	PORT_DIPSETTING(    0x40, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
@@ -1382,27 +1382,27 @@ INPUT_PORTS_START( wbdeluxe_input_ports )
 	DSW1_PORT
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x01, "Cocktail" )
-	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds" )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x10, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x10, 0x00, "Bonus Life" )
 	PORT_DIPSETTING(    0x10, "30k 100k 170k 240k" )
 	PORT_DIPSETTING(    0x00, "30k 120k 210k 300k" )
-	PORT_DIPNAME( 0x20, 0x20, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, "No" )
 	PORT_DIPSETTING(    0x20, "Yes" )
-	PORT_DIPNAME( 0x40, 0x40, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Difficulty" )
 	PORT_DIPSETTING(    0x40, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x80, 0x00, "Energy Consumption", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Energy Consumption" )
 	PORT_DIPSETTING(    0x00, "Slow" )
 	PORT_DIPSETTING(    0x80, "Fast" )
 INPUT_PORTS_END
@@ -1432,32 +1432,32 @@ INPUT_PORTS_START( wboyu_input_ports )
 	IN0_PORT
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x01, "Cocktail" )
-	PORT_DIPNAME( 0x06, 0x06, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x06, 0x06, "Lives" )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x06, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown" )
 	PORT_DIPSETTING(    0x08, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x00, "Demo Sounds" )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x07, 0x07, "Coin A", IP_KEY_NONE )
+	PORT_DIPNAME( 0x07, 0x07, "Coin A" )
 	PORT_DIPSETTING(    0x04, "4 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x00, "4 Coins/2 Credits" )
@@ -1466,16 +1466,16 @@ INPUT_PORTS_START( wboyu_input_ports )
 	PORT_DIPSETTING(    0x07, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x03, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x02, "2 Coins/2 Credits" )
-	PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown" )
 	PORT_DIPSETTING(    0x08, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x10, 0x10, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, "No" )
 	PORT_DIPSETTING(    0x10, "Yes" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0xc0, 0xc0, "Mode", IP_KEY_NONE )
+	PORT_DIPNAME( 0xc0, 0xc0, "Mode" )
 	PORT_DIPSETTING(    0xc0, "Normal Game" )
 	PORT_DIPSETTING(    0x80, "Free Play" )
 	PORT_DIPSETTING(    0x40, "Test Mode" )
@@ -1507,27 +1507,27 @@ INPUT_PORTS_START( tokisens_input_ports )
 	IN0_PORT
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x01, "Cocktail" )
-	PORT_DIPNAME( 0x02, 0x02, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x02, "Demo Sounds" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x02, "On" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x08, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
@@ -1560,27 +1560,27 @@ INPUT_PORTS_START( wbml_input_ports )
 	IN0_PORT
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x01, "Unknown" )
 	PORT_DIPSETTING(    0x01, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x02, 0x02, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown" )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
 	PORT_DIPSETTING(    0x04, "3" )
 	PORT_DIPSETTING(    0x0c, "4" )
 	PORT_DIPSETTING(    0x08, "5" )
 /*	PORT_DIPSETTING(    0x00, "4" ) */
-	PORT_DIPNAME( 0x10, 0x10, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Bonus Life" )
 	PORT_DIPSETTING(    0x10, "30000 100000 200000" )
 	PORT_DIPSETTING(    0x00, "50000 150000 250000" )
-	PORT_DIPNAME( 0x20, 0x20, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Difficulty" )
 	PORT_DIPSETTING(    0x20, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Test Mode", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Test Mode", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
@@ -2531,6 +2531,48 @@ ROM_START( myheroj_rom )
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "ry-01.rom",    0x0000, 0x2000, 0xaf467223 )
 ROM_END
+
+void myheroj_unmangle(void)
+{
+	int A;
+	unsigned char *RAM;
+
+	/* additionally to the usual protection, all the program ROMs have data lines */
+	/* D0 and D1 swapped. */
+	RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	for (A = 0;A < 0xc000;A++)
+		RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
+
+	/* the tile gfx ROMs are mangled as well: */
+	RAM = Machine->memory_region[1];
+
+	/* the first ROM has data lines D0 and D6 swapped. */
+	for (A = 0x0000;A < 0x4000;A++)
+		RAM[A] = (RAM[A] & 0xbe) | ((RAM[A] & 0x01) << 6) | ((RAM[A] & 0x40) >> 6);
+
+	/* the second ROM has data lines D1 and D5 swapped. */
+	for (A = 0x4000;A < 0x8000;A++)
+		RAM[A] = (RAM[A] & 0xdd) | ((RAM[A] & 0x02) << 4) | ((RAM[A] & 0x20) >> 4);
+
+	/* the third ROM has data lines D0 and D6 swapped. */
+	for (A = 0x8000;A < 0xc000;A++)
+		RAM[A] = (RAM[A] & 0xbe) | ((RAM[A] & 0x01) << 6) | ((RAM[A] & 0x40) >> 6);
+
+	/* also, all three ROMs have address lines A4 and A5 swapped. */
+	for (A = 0;A < 0xc000;A++)
+	{
+		int A1;
+		unsigned char temp;
+
+		A1 = (A & 0xffcf) | ((A & 0x0010) << 1) | ((A & 0x0020) >> 1);
+		if (A < A1)
+		{
+			temp = RAM[A];
+			RAM[A] = RAM[A1];
+			RAM[A1] = temp;
+		}
+	}
+}
 
 ROM_START( chplft_rom )
 	ROM_REGION(0x20000)	/* 128k for code */
@@ -4372,7 +4414,7 @@ struct GameDriver myheroj_driver =
 	0,
 
 	myheroj_rom,
-	0, myheroj_decode,
+	myheroj_unmangle, myheroj_decode,	/* additional data and address line scrambling */
 	0,
 	0,
 
@@ -4831,64 +4873,4 @@ struct GameDriver wbml_driver =
 	PROM_MEMORY_REGION(4), 0, 0,
 	ORIENTATION_DEFAULT,
 	wbml_hiload, wbml_hisave
-};
-
-
-
-
-
-
-
-/* the following is not a System 1 game, it's here only temporarily to decrypt the code */
-ROM_START( suprloco_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ic37.bin",     0x0000, 0x4000, 0x57f514dd )	/* encrypted */
-	ROM_LOAD( "ic15.bin",     0x4000, 0x4000, 0x5a1d2fb0 )	/* encrypted */
-	ROM_LOAD( "ic28.bin",     0x8000, 0x4000, 0xa597828a )
-
-	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic61.bin",     0x0000, 0x2000, 0x3b03004e )
-							/*0x2000 empty */
-	ROM_LOAD( "ic62.bin",     0x4000, 0x2000, 0x6130f93c )
-							/*0x6000 empty */
-	ROM_LOAD( "ic63.bin",     0x8000, 0x2000, 0xe571fe81 )
-							/*0xa000 empty */
-
-	ROM_REGION(0x6000)	/* 24k for sprites data */
-	ROM_LOAD( "ic55.bin",     0x0000, 0x4000, 0xee2d3ed3 )
-	ROM_LOAD( "ic56.bin",     0x4000, 0x2000, 0xf04a4b50 )
-
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "ic64.bin",     0x0000, 0x2000, 0x0aa57207 )
-
-	ROM_REGION(0x0620)	/* I don't know about the following ROMs */
-	ROM_LOAD( "ic100.bin",    0x0000, 0x0200, 0x7b0c8ce5 )
-	ROM_LOAD( "ic7.bin",      0x0200, 0x0020, 0x89ba674f )
-	ROM_LOAD( "ic89.bin",     0x0220, 0x0400, 0x1d4b02cb )
-ROM_END
-
-void suprloco_decode(void);
-struct GameDriver suprloco_driver =
-{
-	__FILE__,
-	0,
-	"suprloco",
-	"Super Locomotive",
-	"1983",
-	"Sega",
-	BASE_CREDITS,
-	0,
-	&system1_small_machine_driver,
-	0,
-
-	suprloco_rom,
-	0, suprloco_decode,
-	0,
-	0,
-
-	starjack_input_ports,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0, 0
 };

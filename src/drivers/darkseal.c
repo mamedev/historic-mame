@@ -197,51 +197,51 @@ INPUT_PORTS_START( darkseal_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* Dip switch bank 1 */
-	PORT_DIPNAME( 0x07, 0x07, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x07, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x06, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x05, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x04, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x03, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x02, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x01, "2 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x00, "3 Coin/1 Credit" )
-	PORT_DIPNAME( 0x38, 0x38, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x38, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x30, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x28, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x20, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x18, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x10, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x08, "2 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x00, "3 Coin/1 Credit" )
-	PORT_DIPNAME( 0x40, 0x40, "Flip Screen", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* Dip switch bank 2 */
-	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x01, "2" )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x08, "Easy" )
 	PORT_DIPSETTING(    0x0c, "Normal" )
 	PORT_DIPSETTING(    0x04, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x30, 0x30, "Energy", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, "Energy" )
 	PORT_DIPSETTING(    0x00, "2" )
   	PORT_DIPSETTING(    0x10, "2.5" )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "4" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "No" )
-	PORT_DIPSETTING(    0x40, "Yes" )
-  	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
+  	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 /******************************************************************************/
@@ -544,7 +544,7 @@ struct GameDriver darkseal_driver =
 	__FILE__,
 	0,
 	"darkseal",
-	"Dark Seal (revision 3)",
+	"Dark Seal (Japan revision 3)",
 	"1990",
 	"Data East Corporation",
 	"Bryan McPhail",
@@ -569,7 +569,7 @@ struct GameDriver darksea1_driver =
 	__FILE__,
 	&darkseal_driver,
 	"darksea1",
-	"Dark Seal (revision 1)",
+	"Dark Seal (Japan revision 1)",
 	"1990",
 	"Data East Corporation",
 	"Bryan McPhail",
@@ -594,7 +594,7 @@ struct GameDriver gatedoom_driver =
 	__FILE__,
 	&darkseal_driver,
 	"gatedoom",
-	"Gate Of Doom (revision 4)",
+	"Gate of Doom (US revision 4)",
 	"1990",
 	"Data East Corporation",
 	"Bryan McPhail",
@@ -619,7 +619,7 @@ struct GameDriver gatedom1_driver =
 	__FILE__,
 	&darkseal_driver,
 	"gatedom1",
-	"Gate Of Doom (revision 1)",
+	"Gate of Doom (US revision 1)",
 	"1990",
 	"Data East Corporation",
 	"Bryan McPhail",

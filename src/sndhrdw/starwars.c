@@ -12,7 +12,6 @@ See drivers\starwars.c for notes
 ***************************************************************************/
 
 #include "driver.h"
-#include "5220intf.h"
 #include "cpu/m6809/m6809.h"
 
 /* Sound commands from the main CPU are stored in a single byte */

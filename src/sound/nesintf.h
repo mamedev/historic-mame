@@ -1,7 +1,7 @@
 #ifndef NESINTF_H
 #define NESINTF_H
 
-#include "nes.h"
+#include "sound/nes.h"
 
 
 struct NESinterface

@@ -67,99 +67,10 @@ extern FILE *errorlog;
 #define LOG(x)
 #endif
 
-/* Layout of the registers in the debugger */
-static UINT8 m6800_reg_layout[] = {
-	M6800_PC, M6800_S, M6800_CC, M6800_A, M6800_B, M6800_X, -1,
-	M6800_WAI_STATE, M6800_NMI_STATE, M6800_IRQ_STATE, M6800_OCI_STATE, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 m6800_win_layout[] = {
-	27, 0,53, 4,	/* register window (top rows) */
-	 0, 0,26,22,	/* disassembler window (left colums) */
-	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-     0,23,80, 1,    /* command line window (bottom rows) */
-};
-
-/* Layout of the registers in the debugger */
-static UINT8 m6801_reg_layout[] = {
-	M6801_PC, M6801_S, M6801_CC, M6801_A, M6801_B, M6801_X, -1,
-	M6801_WAI_STATE, M6801_NMI_STATE, M6801_IRQ_STATE, M6801_OCI_STATE, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 m6801_win_layout[] = {
-	27, 0,53, 4,	/* register window (top rows) */
-	 0, 0,26,22,	/* disassembler window (left colums) */
-	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-     0,23,80, 1,    /* command line window (bottom rows) */
-};
-
-/* Layout of the registers in the debugger */
-static UINT8 m6802_reg_layout[] = {
-	M6802_PC, M6802_S, M6802_CC, M6802_A, M6802_B, M6802_X, -1,
-	M6802_WAI_STATE, M6802_NMI_STATE, M6802_IRQ_STATE, M6802_OCI_STATE, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 m6802_win_layout[] = {
-	27, 0,53, 4,	/* register window (top rows) */
-	 0, 0,26,22,	/* disassembler window (left colums) */
-	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-     0,23,80, 1,    /* command line window (bottom rows) */
-};
-
-/* Layout of the registers in the debugger */
-static UINT8 m6803_reg_layout[] = {
-	M6803_PC, M6803_S, M6803_CC, M6803_A, M6803_B, M6803_X, -1,
-	M6803_WAI_STATE, M6803_NMI_STATE, M6803_IRQ_STATE, M6803_OCI_STATE, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 m6803_win_layout[] = {
-	27, 0,53, 4,	/* register window (top rows) */
-	 0, 0,26,22,	/* disassembler window (left colums) */
-	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-     0,23,80, 1,    /* command line window (bottom rows) */
-};
-
-/* Layout of the registers in the debugger */
-static UINT8 m6808_reg_layout[] = {
-	M6808_PC, M6808_S, M6808_CC, M6808_A, M6808_B, M6808_X, -1,
-	M6808_WAI_STATE, M6808_NMI_STATE, M6808_IRQ_STATE, M6808_OCI_STATE, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 m6808_win_layout[] = {
-	27, 0,53, 4,	/* register window (top rows) */
-	 0, 0,26,22,	/* disassembler window (left colums) */
-	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-     0,23,80, 1,    /* command line window (bottom rows) */
-};
-
-/* Layout of the registers in the debugger */
-static UINT8 hd63701_reg_layout[] = {
-	HD63701_PC, HD63701_S, HD63701_CC, HD63701_A, HD63701_B, HD63701_X, -1,
-	HD63701_WAI_STATE, HD63701_NMI_STATE, HD63701_IRQ_STATE, HD63701_OCI_STATE, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 hd63701_win_layout[] = {
-	27, 0,53, 4,	/* register window (top rows) */
-	 0, 0,26,22,	/* disassembler window (left colums) */
-	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-     0,23,80, 1,    /* command line window (bottom rows) */
-};
-
 /* 6800 Registers */
 typedef struct
 {
+	PAIR	ppc;			/* Previous program counter */
 	PAIR	pc; 			/* Program counter */
 	PAIR	s;				/* Stack pointer */
 	PAIR	x;				/* Index register */
@@ -181,18 +92,19 @@ static m6800_Regs m6800;
 #define m6808	m6800
 #define hd63701 m6800
 
-#define pPC m6800.pc
-#define pS	m6800.s
-#define pX	m6800.x
-#define pD	m6800.d
+#define	pPPC    m6800.ppc
+#define pPC 	m6800.pc
+#define pS		m6800.s
+#define pX		m6800.x
+#define pD		m6800.d
 
-#define PC	m6800.pc.w.l
-#define S	m6800.s.w.l
-#define X	m6800.x.w.l
-#define D	m6800.d.w.l
-#define A	m6800.d.b.h
-#define B	m6800.d.b.l
-#define CC	m6800.cc
+#define PC		m6800.pc.w.l
+#define S		m6800.s.w.l
+#define X		m6800.x.w.l
+#define D		m6800.d.w.l
+#define A		m6800.d.b.h
+#define B		m6800.d.b.l
+#define CC		m6800.cc
 
 static PAIR ea; 		/* effective address */
 #define EAD ea.d
@@ -627,17 +539,18 @@ unsigned m6800_get_reg(int regnum)
 {
 	switch( regnum )
 	{
-		case M6800_A: return m6800.d.b.h;
-		case M6800_B: return m6800.d.b.l;
 		case M6800_PC: return m6800.pc.w.l;
 		case M6800_S: return m6800.s.w.l;
-		case M6800_X: return m6800.x.w.l;
 		case M6800_CC: return m6800.cc;
+		case M6800_A: return m6800.d.b.h;
+		case M6800_B: return m6800.d.b.l;
+		case M6800_X: return m6800.x.w.l;
 		case M6800_NMI_STATE: return m6800.nmi_state;
 		case M6800_IRQ_STATE: return m6800.irq_state[M6800_IRQ_LINE];
 		case M6800_OCI_STATE: return m6800.irq_state[M6800_OCI_LINE];
+		case REG_PREVIOUSPC: return m6800.ppc.w.l;
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
 				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
 				if( offset < 0xffff )
@@ -655,17 +568,17 @@ void m6800_set_reg(int regnum, unsigned val)
 {
 	switch( regnum )
 	{
-		case M6800_A: m6800.d.b.h = val; break;
-		case M6800_B: m6800.d.b.l = val; break;
 		case M6800_PC: m6800.pc.w.l = val; break;
 		case M6800_S: m6800.s.w.l = val; break;
-		case M6800_X: m6800.x.w.l = val; break;
 		case M6800_CC: m6800.cc = val; break;
-		case M6800_NMI_STATE: m6800.nmi_state = val; break;
-		case M6800_IRQ_STATE: m6800.irq_state[M6800_IRQ_LINE] = val; break;
-		case M6800_OCI_STATE: m6800.irq_state[M6800_OCI_LINE] = val; break;
+		case M6800_A: m6800.d.b.h = val; break;
+		case M6800_B: m6800.d.b.l = val; break;
+		case M6800_X: m6800.x.w.l = val; break;
+		case M6800_NMI_STATE: m6800_set_nmi_line(val); break;
+		case M6800_IRQ_STATE: m6800_set_irq_line(M6800_IRQ_LINE,val); break;
+		case M6800_OCI_STATE: m6800_set_irq_line(M6800_OCI_LINE,val); break;
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
 				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
 				if( offset < 0xffff )
@@ -772,22 +685,9 @@ int m6800_execute(int cycles)
 
 	do
 	{
-
-#if ASGARD680X_DEBUG
-{
-extern void Asgard63701MiniTrace(unsigned long sx, unsigned long pcab, unsigned long flags, int icount);
-	Asgard63701MiniTrace ((S<<16)+X, (PC<<16)+(A<<8)+B, (wai_state<<16)+CC, m6800_ICount);
-}
-#endif
-
-#if 0
-		asg_6808Trace(OP_ROM, PC);
-#endif
-
-#ifdef	MAME_DEBUG
-		if (mame_debug) MAME_Debug();
-#endif
-		ireg=M_RDOP(PC++);
+		pPPC = pPC;
+		CALL_MAME_DEBUG;
+        ireg=M_RDOP(PC++);
 
 		switch( ireg )
 		{
@@ -1061,9 +961,24 @@ getout:
 /****************************************************************************
  * Return a formatted string for a register
  ****************************************************************************/
-const char *m680x_info(int subtype, void *context, int regnum)
+const char *m6800_info(void *context, int regnum)
 {
-	static char buffer[16][47+1];
+	/* Layout of the registers in the debugger */
+	static UINT8 m6800_reg_layout[] = {
+		M6800_PC, M6800_S, M6800_CC, M6800_A, M6800_B, M6800_X, -1,
+		M6800_WAI_STATE, M6800_NMI_STATE, M6800_IRQ_STATE, M6800_OCI_STATE, 0
+	};
+
+	/* Layout of the debugger windows x,y,w,h */
+	static UINT8 m6800_win_layout[] = {
+		27, 0,53, 4,	/* register window (top rows) */
+		 0, 0,26,22,	/* disassembler window (left colums) */
+		27, 5,53, 8,	/* memory #1 window (right, upper middle) */
+		27,14,53, 8,	/* memory #2 window (right, lower middle) */
+		 0,23,80, 1,	/* command line window (bottom rows) */
+	};
+
+    static char buffer[16][47+1];
 	static int which = 0;
 	m6800_Regs *r = context;
 
@@ -1074,55 +989,15 @@ const char *m680x_info(int subtype, void *context, int regnum)
 
 	switch( regnum )
 	{
-		case CPU_INFO_NAME:
-			switch( subtype )
-			{
-				case 6800: return "M6800";
-				case 6801: return "M6801";
-				case 6802: return "M6802";
-				case 6803: return "M6803";
-				case 6808: return "M6808";
-				default: return "HD63701";
-			}
-			break;
-		case CPU_INFO_FAMILY: return "Motorola 6800";
-		case CPU_INFO_VERSION: return "1.1";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "The MAME team.\n" \
-			"References:\n" \
-			"   6809 Simulator V09, By L.C. Benschop, Eidnhoven The Netherlands.\n" \
-			"   m6809: Portable 6809 emulator, DS (6809 code in MAME, derived from the 6809 Simulator V09)\n" \
-			"   6809 Microcomputer Programming & Interfacing with Experiments by Andrew C. Staugaard, Jr.; Howard W. Sams & Co., Inc.";
-		case CPU_INFO_REG_LAYOUT:
-			switch( subtype )
-			{
-				case 6800: return (const char *)m6800_reg_layout;
-				case 6801: return (const char *)m6801_reg_layout;
-				case 6802: return (const char *)m6802_reg_layout;
-				case 6803: return (const char *)m6803_reg_layout;
-				case 6808: return (const char *)m6808_reg_layout;
-				default: return (const char *)hd63701_reg_layout;
-			}
-            break;
-		case CPU_INFO_WIN_LAYOUT:
-			switch( subtype )
-			{
-				case 6800: return (const char *)m6800_win_layout;
-				case 6801: return (const char *)m6801_win_layout;
-				case 6802: return (const char *)m6802_win_layout;
-				case 6803: return (const char *)m6803_win_layout;
-				case 6808: return (const char *)m6808_win_layout;
-				default: return (const char *)hd63701_win_layout;
-			}
-            break;
-
-        case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->pc.w.l); break;
-		case CPU_INFO_SP: sprintf(buffer[which], "%04X", r->s.w.l); break;
-#if MAME_DEBUG
-		case CPU_INFO_DASM: r->pc.w.l += Dasm680x(subtype,buffer[which], r->pc.w.l); break;
-#else
-		case CPU_INFO_DASM: sprintf(buffer[which], "$%02x", ROM[r->pc.w.l]); r->pc.w.l++; break;
-#endif
+		case CPU_INFO_REG+M6800_A: sprintf(buffer[which], "A:%02X", r->d.b.h); break;
+		case CPU_INFO_REG+M6800_B: sprintf(buffer[which], "B:%02X", r->d.b.l); break;
+		case CPU_INFO_REG+M6800_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
+        case CPU_INFO_REG+M6800_S: sprintf(buffer[which], "S:%04X", r->s.w.l); break;
+		case CPU_INFO_REG+M6800_X: sprintf(buffer[which], "X:%04X", r->x.w.l); break;
+		case CPU_INFO_REG+M6800_CC: sprintf(buffer[which], "CC:%02X", r->cc); break;
+		case CPU_INFO_REG+M6800_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
+		case CPU_INFO_REG+M6800_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state[M6800_IRQ_LINE]); break;
+		case CPU_INFO_REG+M6800_OCI_STATE: sprintf(buffer[which], "OCI:%X", r->irq_state[M6800_OCI_LINE]); break;
 		case CPU_INFO_FLAGS:
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
 				r->cc & 0x80 ? '?':'.',
@@ -1134,27 +1009,32 @@ const char *m680x_info(int subtype, void *context, int regnum)
 				r->cc & 0x02 ? 'V':'.',
 				r->cc & 0x01 ? 'C':'.');
             break;
-		case CPU_INFO_REG+M6800_A: sprintf(buffer[which], "A:%02X", r->d.b.h); break;
-		case CPU_INFO_REG+M6800_B: sprintf(buffer[which], "B:%02X", r->d.b.l); break;
-		case CPU_INFO_REG+M6800_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
-        case CPU_INFO_REG+M6800_S: sprintf(buffer[which], "S:%04X", r->s.w.l); break;
-		case CPU_INFO_REG+M6800_X: sprintf(buffer[which], "X:%04X", r->x.w.l); break;
-		case CPU_INFO_REG+M6800_CC: sprintf(buffer[which], "CC:%02X", r->cc); break;
-		case CPU_INFO_REG+M6800_NMI_STATE: sprintf(buffer[which], "NMI:%d", r->nmi_state); break;
-		case CPU_INFO_REG+M6800_IRQ_STATE: sprintf(buffer[which], "IRQ:%d", r->irq_state[M6800_IRQ_LINE]); break;
-		case CPU_INFO_REG+M6800_OCI_STATE: sprintf(buffer[which], "OCI:%d", r->irq_state[M6800_OCI_LINE]); break;
+		case CPU_INFO_NAME: return "M6800";
+		case CPU_INFO_FAMILY: return "Motorola 6800";
+		case CPU_INFO_VERSION: return "1.1";
+		case CPU_INFO_FILE: return __FILE__;
+		case CPU_INFO_CREDITS: return "The MAME team.";
+		case CPU_INFO_REG_LAYOUT: return (const char *)m6800_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: case 6800: return (const char *)m6800_win_layout;
 	}
 	return buffer[which];
 }
 
-const char *m6800_info(void *context, int regnum)
+unsigned m6800_dasm(UINT8 *base, char *buffer, unsigned pc)
 {
-	return m680x_info(6800,context,regnum);
+	(void)base;
+#ifdef MAME_DEBUG
+    return Dasm680x(6800,buffer,pc);
+#else
+	sprintf( buffer, "$%02X", ROM[pc] );
+	return 1;
+#endif
 }
 
 /****************************************************************************
  * M6801 almost (fully?) equal to the M6803
  ****************************************************************************/
+#if HAS_M6801
 void m6801_reset(void *param) { m6800_reset(param); }
 void m6801_exit(void) { m6800_exit(); }
 int  m6801_execute(int cycles) { return m6803_execute(cycles); }
@@ -1171,11 +1051,48 @@ void m6801_set_irq_line(int irqline, int state) { m6800_set_irq_line(irqline,sta
 void m6801_set_irq_callback(int (*callback)(int irqline)) { m6800_set_irq_callback(callback); }
 void m6801_state_save(void *file) { state_save(file,"m6801"); }
 void m6801_state_load(void *file) { state_load(file,"m6801"); }
-const char *m6801_info(void *context, int regnum) { return m680x_info(6801,context,regnum); }
+const char *m6801_info(void *context, int regnum)
+{
+	/* Layout of the registers in the debugger */
+	static UINT8 m6801_reg_layout[] = {
+		M6801_PC, M6801_S, M6801_CC, M6801_A, M6801_B, M6801_X, -1,
+		M6801_WAI_STATE, M6801_NMI_STATE, M6801_IRQ_STATE, M6801_OCI_STATE, 0
+	};
+
+	/* Layout of the debugger windows x,y,w,h */
+	static UINT8 m6801_win_layout[] = {
+		27, 0,53, 4,	/* register window (top rows) */
+		 0, 0,26,22,	/* disassembler window (left colums) */
+		27, 5,53, 8,	/* memory #1 window (right, upper middle) */
+		27,14,53, 8,	/* memory #2 window (right, lower middle) */
+		 0,23,80, 1,	/* command line window (bottom rows) */
+	};
+
+    switch( regnum )
+	{
+		case CPU_INFO_NAME: return "M6801";
+        case CPU_INFO_REG_LAYOUT: return (const char*)m6801_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)m6801_win_layout;
+    }
+	return m6800_info(context,regnum);
+}
+unsigned m6801_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+	(void)base;
+#ifdef MAME_DEBUG
+	return Dasm680x(6801,buffer,pc);
+#else
+	sprintf( buffer, "$%02X", ROM[pc] );
+	return 1;
+#endif
+}
+
+#endif
 
 /****************************************************************************
  * M6802 almost (fully?) equal to the M6800
  ****************************************************************************/
+#if HAS_M6802
 void m6802_reset(void *param) { m6800_reset(param); }
 void m6802_exit(void) { m6800_exit(); }
 int  m6802_execute(int cycles) { return m6800_execute(cycles); }
@@ -1192,16 +1109,56 @@ void m6802_set_irq_line(int irqline, int state) { m6800_set_irq_line(irqline,sta
 void m6802_set_irq_callback(int (*callback)(int irqline)) { m6800_set_irq_callback(callback); }
 void m6802_state_save(void *file) { state_save(file,"m6802"); }
 void m6802_state_load(void *file) { state_load(file,"m6802"); }
-const char *m6802_info(void *context, int regnum) { return m680x_info(6802,context,regnum); }
+const char *m6802_info(void *context, int regnum)
+{
+	/* Layout of the registers in the debugger */
+	static UINT8 m6802_reg_layout[] = {
+		M6802_PC, M6802_S, M6802_CC, M6802_A, M6802_B, M6802_X, -1,
+		M6802_WAI_STATE, M6802_NMI_STATE, M6802_IRQ_STATE, M6802_OCI_STATE, 0
+	};
+
+	/* Layout of the debugger windows x,y,w,h */
+	static UINT8 m6802_win_layout[] = {
+		27, 0,53, 4,	/* register window (top rows) */
+		 0, 0,26,22,	/* disassembler window (left colums) */
+		27, 5,53, 8,	/* memory #1 window (right, upper middle) */
+		27,14,53, 8,	/* memory #2 window (right, lower middle) */
+		 0,23,80, 1,	/* command line window (bottom rows) */
+	};
+
+    switch( regnum )
+	{
+		case CPU_INFO_NAME: return "M6802";
+		case CPU_INFO_REG_LAYOUT: return (const char*)m6802_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)m6802_win_layout;
+    }
+	return m6800_info(context,regnum);
+}
+
+unsigned m6802_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+	(void)base;
+#ifdef MAME_DEBUG
+	return Dasm680x(6802,buffer,pc);
+#else
+	sprintf( buffer, "$%02X", ROM[pc] );
+	return 1;
+#endif
+}
+
+#endif
 
 /****************************************************************************
  * M6803 almost (fully?) equal to the M6801
  ****************************************************************************/
+#if HAS_M6803
 void m6803_reset(void *param) { m6800_reset(param); }
 void m6803_exit(void) { m6800_exit(); }
+#endif
 /****************************************************************************
  * Execute cycles CPU cycles. Return number of cycles really executed
  ****************************************************************************/
+#if HAS_M6803||HAS_M6801
 int m6803_execute(int cycles)
 {
     UINT8 ireg;
@@ -1219,24 +1176,9 @@ int m6803_execute(int cycles)
     do
     {
 
-#if ASGARD680X_DEBUG
-{
-extern void Asgard63701MiniTrace(unsigned long sx, unsigned long pcab, unsigned long flags, int icount);
-    Asgard63701MiniTrace ((S<<16)+X, (PC<<16)+(A<<8)+B, (wai_state<<16)+CC, m6803_ICount);
-}
-#endif
-
-#if 0
-        asg_6808Trace(OP_ROM, PC);
-#endif
-
-#ifdef  MAME_DEBUG
-        {
-            extern int mame_debug;
-            if (mame_debug) MAME_Debug();
-        }
-#endif
-        ireg=M_RDOP(PC++);
+		pPPC = pPC;
+		CALL_MAME_DEBUG;
+		ireg=M_RDOP(PC++);
 
         switch( ireg )
         {
@@ -1506,6 +1448,9 @@ getout:
 
     return cycles - m6803_ICount;
 }
+#endif
+
+#if HAS_M6803
 unsigned m6803_get_context(void *dst) { return m6800_get_context(dst); }
 void m6803_set_context(void *src) { m6800_set_context(src); }
 unsigned m6803_get_pc(void) { return m6800_get_pc(); }
@@ -1519,11 +1464,48 @@ void m6803_set_irq_line(int irqline, int state) { m6800_set_irq_line(irqline,sta
 void m6803_set_irq_callback(int (*callback)(int irqline)) { m6800_set_irq_callback(callback); }
 void m6803_state_save(void *file) { state_save(file,"m6803"); }
 void m6803_state_load(void *file) { state_load(file,"m6803"); }
-const char *m6803_info(void *context, int regnum) { return m680x_info(6803,context,regnum); }
+const char *m6803_info(void *context, int regnum)
+{
+	/* Layout of the registers in the debugger */
+	static UINT8 m6803_reg_layout[] = {
+		M6803_PC, M6803_S, M6803_CC, M6803_A, M6803_B, M6803_X, -1,
+		M6803_WAI_STATE, M6803_NMI_STATE, M6803_IRQ_STATE, M6803_OCI_STATE, 0
+	};
+
+	/* Layout of the debugger windows x,y,w,h */
+	static UINT8 m6803_win_layout[] = {
+		27, 0,53, 4,	/* register window (top rows) */
+		 0, 0,26,22,	/* disassembler window (left colums) */
+		27, 5,53, 8,	/* memory #1 window (right, upper middle) */
+		27,14,53, 8,	/* memory #2 window (right, lower middle) */
+		 0,23,80, 1,	/* command line window (bottom rows) */
+	};
+
+    switch( regnum )
+	{
+		case CPU_INFO_NAME: return "M6803";
+		case CPU_INFO_REG_LAYOUT: return (const char*)m6803_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)m6803_win_layout;
+    }
+	return m6800_info(context,regnum);
+}
+
+unsigned m6803_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+	(void)base;
+#ifdef MAME_DEBUG
+	return Dasm680x(6803,buffer,pc);
+#else
+	sprintf( buffer, "$%02X", ROM[pc] );
+	return 1;
+#endif
+}
+#endif
 
 /****************************************************************************
  * M6808 almost (fully?) equal to the M6800
  ****************************************************************************/
+#if HAS_M6808
 void m6808_reset(void *param) { m6800_reset(param); }
 void m6808_exit(void) { m6800_exit(); }
 int  m6808_execute(int cycles) { return m6800_execute(cycles); }
@@ -1540,11 +1522,48 @@ void m6808_set_irq_line(int irqline, int state) { m6800_set_irq_line(irqline,sta
 void m6808_set_irq_callback(int (*callback)(int irqline)) { m6800_set_irq_callback(callback); }
 void m6808_state_save(void *file) { state_save(file,"m6808"); }
 void m6808_state_load(void *file) { state_load(file,"m6808"); }
-const char *m6808_info(void *context, int regnum) { return m680x_info(6808,context,regnum); }
+const char *m6808_info(void *context, int regnum)
+{
+	/* Layout of the registers in the debugger */
+	static UINT8 m6808_reg_layout[] = {
+		M6808_PC, M6808_S, M6808_CC, M6808_A, M6808_B, M6808_X, -1,
+		M6808_WAI_STATE, M6808_NMI_STATE, M6808_IRQ_STATE, M6808_OCI_STATE, 0
+	};
+
+	/* Layout of the debugger windows x,y,w,h */
+	static UINT8 m6808_win_layout[] = {
+		27, 0,53, 4,	/* register window (top rows) */
+		 0, 0,26,22,	/* disassembler window (left colums) */
+		27, 5,53, 8,	/* memory #1 window (right, upper middle) */
+		27,14,53, 8,	/* memory #2 window (right, lower middle) */
+		 0,23,80, 1,	/* command line window (bottom rows) */
+	};
+
+    switch( regnum )
+	{
+		case CPU_INFO_NAME: return "M6808";
+		case CPU_INFO_REG_LAYOUT: return (const char*)m6808_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)m6808_win_layout;
+    }
+	return m6800_info(context,regnum);
+}
+
+unsigned m6808_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+	(void)base;
+#ifdef MAME_DEBUG
+	return Dasm680x(6808,buffer,pc);
+#else
+	sprintf( buffer, "$%02X", ROM[pc] );
+	return 1;
+#endif
+}
+#endif
 
 /****************************************************************************
  * HD63701 similiar to the M6800
  ****************************************************************************/
+#if HAS_HD63701
 void hd63701_reset(void *param) { m6800_reset(param); }
 void hd63701_exit(void) { m6800_exit(); }
 /****************************************************************************
@@ -1566,24 +1585,8 @@ int hd63701_execute(int cycles)
 
     do
     {
-
-#if ASGARD680X_DEBUG
-{
-extern void Asgard63701MiniTrace(unsigned long sx, unsigned long pcab, unsigned long flags, int icount);
-    Asgard63701MiniTrace ((S<<16)+X, (PC<<16)+(A<<8)+B, (wai_state<<16)+CC, hd63701_ICount);
-}
-#endif
-
-#if 0
-        asg_6808Trace(OP_ROM, PC);
-#endif
-
-#ifdef  MAME_DEBUG
-        {
-            extern int mame_debug;
-            if (mame_debug) MAME_Debug();
-        }
-#endif
+		pPPC = pPC;
+		CALL_MAME_DEBUG;
         ireg=M_RDOP(PC++);
 
         switch( ireg )
@@ -1868,5 +1871,40 @@ void hd63701_set_irq_line(int irqline, int state) { m6800_set_irq_line(irqline,s
 void hd63701_set_irq_callback(int (*callback)(int irqline)) { m6800_set_irq_callback(callback); }
 void hd63701_state_save(void *file) { state_save(file,"hd63701"); }
 void hd63701_state_load(void *file) { state_load(file,"hd63701"); }
-const char *hd63701_info(void *context, int regnum) { return m680x_info(63701,context,regnum); }
+const char *hd63701_info(void *context, int regnum)
+{
+	/* Layout of the registers in the debugger */
+	static UINT8 hd63701_reg_layout[] = {
+		HD63701_PC, HD63701_S, HD63701_CC, HD63701_A, HD63701_B, HD63701_X, -1,
+		HD63701_WAI_STATE, HD63701_NMI_STATE, HD63701_IRQ_STATE, HD63701_OCI_STATE, 0
+	};
 
+	/* Layout of the debugger windows x,y,w,h */
+	static UINT8 hd63701_win_layout[] = {
+		27, 0,53, 4,	/* register window (top rows) */
+		 0, 0,26,22,	/* disassembler window (left colums) */
+		27, 5,53, 8,	/* memory #1 window (right, upper middle) */
+		27,14,53, 8,	/* memory #2 window (right, lower middle) */
+		 0,23,80, 1,	/* command line window (bottom rows) */
+	};
+
+    switch( regnum )
+	{
+		case CPU_INFO_NAME: return "HD63701";
+		case CPU_INFO_REG_LAYOUT: return (const char*)hd63701_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)hd63701_win_layout;
+    }
+	return m6800_info(context,regnum);
+}
+
+unsigned hd63701_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+	(void)base;
+#ifdef MAME_DEBUG
+	return Dasm680x(63701,buffer,pc);
+#else
+	sprintf( buffer, "$%02X", ROM[pc] );
+	return 1;
+#endif
+}
+#endif

@@ -229,7 +229,7 @@ int osd_key_pressed_memory(int keycode)
 	return res;
 }
 
-/* report kay as pulsing while it is pressed */
+/* report key as pulsing while it is pressed */
 int osd_key_pressed_memory_repeat(int keycode,int speed)
 {
 	static int counter,keydelay;

@@ -193,6 +193,7 @@ to list them.
 | Galaxian             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | galaxian |
 | Galivan              |  Yes   | Close  |  Yes   |  Yes   |  Yes   | galivan  |
 | Gals Panic           |  Yes   |  Yes   |  Yes   |   No   |   No   | galpanic |
+| Gaplus               |  Yes   |  Yes   | Yes(1) |   No   |   No   | gaplus   |
 | Gardia               |   No   |  Yes   |  Yes   |   No   |   No   | gardia   |
 | Gauntlet             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | gauntlet |
 | Gauntlet 2           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | gaunt2   |
@@ -374,7 +375,7 @@ to list them.
 | Peter Packrat        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | peterpak |
 | Phoenix              |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | phoenix  |
 | Pickin'              |  Yes   |  Yes   |  Yes   |   No   |  Yes   | pickin   |
-| Pig Newton           |  Yes   |   No   |   No   |  Yes   |   No   | pignewt  |
+| Pig Newton           |  Yes   |  Yes   |   No   |  Yes   |   No   | pignewt  |
 | Pinball Action       |  Yes   |  Yes   |  Yes   |   No   |  Yes   | pbaction |
 | Ping Pong            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | pingpong |
 | Pioneer Balloon      |  Yes   |  Yes   |  Yes   |   No   |  Yes   | pballoon |
@@ -455,6 +456,7 @@ to list them.
 | Side Track           |  Yes   |   No   | Yes(1) |  Yes   |   No   | sidetrac |
 | Sidearms             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | sidearms |
 | Silkworm             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | silkworm |
+| Sindbad Mystery      |  Yes   |  Yes   | Wrong  |   No   |   No   | sinbadm  |
 | Sinistar             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | sinistar |
 | Sky Diver            |  Yes   |  b/w   |   No   |   No   |   No   | skydiver |
 | Slap Fight           |  Yes   |  Yes   |  Yes   |   No   |   No   | slapfigh |
@@ -505,9 +507,11 @@ to list them.
 | Super Basketball     |  Yes   |  Yes   |No Speech  Yes   |  Yes   | sbasketb |
 | Super Bond           |  Yes   |   No   |  Yes   |   No   |   No   | superbon |
 | Super Breakout       |  Yes   |Overlay | Wrong  |  Yes   |  n/a   | sbrkout  |
+| Super Burger Time    |  Yes   |  Yes   |  Yes   |   No   |   No   | supbtime |
 | Super Casino         |  Yes   |  Yes   |  Yes   |  n/a   |  Yes   | sucasino |
 | Super Cobra          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | scobra   |
 | Super Hi Impact      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | shimpact |
+| Super Locomotive     |  Yes   |  Yes   |  Yes   |   No   |  Yes   | suprloco |
 | Super Mouse          |  Yes   |   No   |  Yes   |  Yes   |  Yes   | suprmous |
 | Super Pac Man        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | superpac |
 | Super Pang           |  Yes   |  Yes   |Partial |  Yes   |   No   | spang    |
@@ -577,6 +581,7 @@ to list them.
 | Ufo Senshi Yohko Chan|   No   |  Yes   |  Yes   |   No   |   No   | ufosensi |
 | Up'n Down            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | upndown  |
 | Us vs Them           |Partial.|  Yes   |  Yes   |  Yes   |  n/a   | usvsthem |
+| Van Van Car          |  Yes   |   No   |  Yes   |   No   |  Yes   | vanvan   |
 | Vanguard             |  Yes   |  Yes   |No Speech  Yes   |  Yes   | vanguard |
 | Varth                |  Yes   |  Yes   |  Yes   |   No   |   No   | varth    |
 | Vastar               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | vastar   |
@@ -604,7 +609,7 @@ to list them.
 | Wrestle War          |   No   |  Yes   |   No   |   No   |   No   | wrestwar |
 | Xain'd Sleena        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | xsleena  |
 | Xenophobe            |  Yes   |  Yes   |  Yes   |  n/a   |   No   | xenophob |
-| Xevious              |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | xevious  |
+| Xevious              |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | xevious  |
 | Xybots               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | xybots   |
 | Yie Ar Kung Fu       |  Yes   |  Yes   |Partial |  Yes   |  Yes   | yiear    |
 | Zaxxon               |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | zaxxon   |
@@ -1368,7 +1373,6 @@ Original version with Namco copyright
   Galaxian Turbo ("galturbo")
 
 Known issues:
-- The star background is probably not entirely accurate.
 - Bullet placement is not correct in cocktail mode
 - Sound is not completely emulated.
 
@@ -1619,7 +1623,7 @@ The transform button is the start button.
 Jump Bug ("jumpbug")
 ====================
 Clones supported:
-  "Sega" version (probably a bootleg) ("jbugsega")
+  "Sega" version (probably a bootleg) ("jumpbugb")
 
 
 
@@ -1929,7 +1933,6 @@ Clones supported:
 
 Known issues:
 - Dip switches for the alternate sets might be inaccurate.
-- The star background is probably not entirely accurate.
 - Wrong dip switches in "mooncrgx".
 
 
@@ -2159,14 +2162,6 @@ Clones supported:
 
 Known issues:
 - The alternate set has code for a third Z80, whose function is unknown.
-
-
-
-Pisces ("pisces")
-=================
-Known issues:
-- The star background is probably not entirely accurate.
-- What do the dip switches do?
 
 
 

@@ -16,9 +16,10 @@ const struct GameDriver *drivers[] =
 
 /* "Pacman hardware" games */
 extern struct GameDriver pacman_driver;
-extern struct GameDriver pacmod_driver;
-extern struct GameDriver namcopac_driver;
 extern struct GameDriver pacmanjp_driver;
+extern struct GameDriver pacmanm_driver;
+extern struct GameDriver npacmod_driver;
+extern struct GameDriver pacmod_driver;
 extern struct GameDriver hangly_driver;
 extern struct GameDriver puckman_driver;
 extern struct GameDriver pacheart_driver;
@@ -37,6 +38,8 @@ extern struct GameDriver lizwiz_driver;
 extern struct GameDriver theglob_driver;
 extern struct GameDriver beastf_driver;
 extern struct GameDriver jumpshot_driver;
+extern struct GameDriver vanvan_driver;
+extern struct GameDriver vanvanb_driver;
 extern struct GameDriver pengo_driver;
 extern struct GameDriver pengo2_driver;
 extern struct GameDriver pengo2u_driver;
@@ -62,6 +65,8 @@ extern struct GameDriver pacmanbl_driver;
 extern struct GameDriver devilfsh_driver;
 extern struct GameDriver zigzag_driver;
 extern struct GameDriver zigzag2_driver;
+extern struct GameDriver jumpbug_driver;
+extern struct GameDriver jumpbugb_driver;
 extern struct GameDriver mooncrgx_driver;
 extern struct GameDriver mooncrst_driver;
 extern struct GameDriver mooncrsg_driver;
@@ -119,8 +124,6 @@ extern struct GameDriver amigo_driver;
 extern struct GameDriver turtles_driver;
 extern struct GameDriver turpin_driver;
 extern struct GameDriver k600_driver;
-extern struct GameDriver jumpbug_driver;
-extern struct GameDriver jbugsega_driver;
 extern struct GameDriver flyboy_driver;
 extern struct GameDriver fastfred_driver;
 extern struct GameDriver jumpcoas_driver;
@@ -129,6 +132,7 @@ extern struct GameDriver jumpcoas_driver;
 extern struct GameDriver cclimber_driver;
 extern struct GameDriver ccjap_driver;
 extern struct GameDriver ccboot_driver;
+extern struct GameDriver ccboot2_driver;
 extern struct GameDriver ckong_driver;
 extern struct GameDriver ckonga_driver;
 extern struct GameDriver ckongjeu_driver;
@@ -137,6 +141,8 @@ extern struct GameDriver ckongalc_driver;
 extern struct GameDriver monkeyd_driver;
 extern struct GameDriver rpatrolb_driver;
 extern struct GameDriver silvland_driver;
+extern struct GameDriver yamato_driver;
+extern struct GameDriver yamato2_driver;
 extern struct GameDriver swimmer_driver;
 extern struct GameDriver swimmera_driver;
 extern struct GameDriver guzzler_driver;
@@ -190,6 +196,10 @@ extern struct GameDriver digdug2_driver;
 extern struct GameDriver todruaga_driver;
 extern struct GameDriver todruagb_driver;
 extern struct GameDriver motos_driver;
+extern struct GameDriver gaplus_driver;
+extern struct GameDriver gaplusa_driver;
+extern struct GameDriver galaga3_driver;
+extern struct GameDriver galaga3a_driver;
 extern struct GameDriver pacland_driver;
 extern struct GameDriver pacland2_driver;
 extern struct GameDriver pacland3_driver;
@@ -684,6 +694,7 @@ extern struct GameDriver monsterb_driver;
 extern struct GameDriver spaceod_driver;
 extern struct GameDriver pignewt_driver;
 extern struct GameDriver pignewta_driver;
+extern struct GameDriver sindbadm_driver;
 
 /* Sega "Zaxxon hardware" games */
 extern struct GameDriver zaxxon_driver;
@@ -734,6 +745,16 @@ extern struct GameDriver tokisens_driver;
 extern struct GameDriver dakkochn_driver;
 extern struct GameDriver ufosensi_driver;
 extern struct GameDriver wbml_driver;
+
+/* other Sega 8-bit games */
+extern struct GameDriver turbo_driver;
+extern struct GameDriver turboa_driver;
+extern struct GameDriver turbob_driver;
+extern struct GameDriver kopunch_driver;
+extern struct GameDriver suprloco_driver;
+extern struct GameDriver champbas_driver;
+extern struct GameDriver champbb2_driver;
+extern struct GameDriver bankp_driver;
 
 /* Sega System 16 games */
 extern struct GameDriver alexkidd_driver;
@@ -800,20 +821,20 @@ extern struct GameDriver spool3_driver;
 extern struct GameDriver spool3i_driver;
 
 /* Data East 8-bit games */
-extern struct GameDriver ghostb_driver;
-extern struct GameDriver ghostb3_driver;
-extern struct GameDriver mazeh_driver;
-extern struct GameDriver srdarwin_driver;
-extern struct GameDriver cobracom_driver;
-extern struct GameDriver gondo_driver;
-extern struct GameDriver mekyosen_driver;
-extern struct GameDriver oscar_driver;
-extern struct GameDriver oscarj_driver;
 extern struct GameDriver lastmiss_driver;
 extern struct GameDriver lastmss2_driver;
 extern struct GameDriver shackled_driver;
 extern struct GameDriver breywood_driver;
 extern struct GameDriver csilver_driver;
+extern struct GameDriver ghostb_driver;
+extern struct GameDriver ghostb3_driver;
+extern struct GameDriver mazeh_driver;
+extern struct GameDriver srdarwin_driver;
+extern struct GameDriver gondo_driver;
+extern struct GameDriver mekyosen_driver;
+extern struct GameDriver cobracom_driver;
+extern struct GameDriver oscar_driver;
+extern struct GameDriver oscarj_driver;
 
 /* Data East 16-bit games */
 extern struct GameDriver karnov_driver;
@@ -836,6 +857,7 @@ extern struct GameDriver darkseal_driver;
 extern struct GameDriver darksea1_driver;
 extern struct GameDriver gatedoom_driver;
 extern struct GameDriver gatedom1_driver;
+extern struct GameDriver supbtime_driver;
 extern struct GameDriver cninja_driver;
 extern struct GameDriver cninjau_driver;
 extern struct GameDriver joemac_driver;
@@ -1261,23 +1283,34 @@ extern struct GameDriver vimana2_driver;
 extern struct GameDriver snowbros_driver;
 extern struct GameDriver snowbroa_driver;
 
+/* Leland games */
+extern struct GameDriver strkzone_driver;
+extern struct GameDriver dblplay_driver;
+extern struct GameDriver basebal2_driver;
+extern struct GameDriver pigout_driver;
+extern struct GameDriver pigoutj_driver;
+extern struct GameDriver pigoutja_driver;
+extern struct GameDriver offroad_driver;
+extern struct GameDriver offroadt_driver;
+extern struct GameDriver teamqb_driver;
+extern struct GameDriver redlin2p_driver;
+extern struct GameDriver viper_driver;
+extern struct GameDriver aafb_driver;
+extern struct GameDriver aafb2p_driver;
+
 extern struct GameDriver spacefb_driver;
 extern struct GameDriver spacefbg_driver;
 extern struct GameDriver spacebrd_driver;
 extern struct GameDriver spacedem_driver;
+extern struct GameDriver polepos_driver;
+extern struct GameDriver foodf_driver;
 extern struct GameDriver ccastles_driver;
 extern struct GameDriver ccastle2_driver;
 extern struct GameDriver blueprnt_driver;
 extern struct GameDriver omegrace_driver;
-extern struct GameDriver bankp_driver;
 extern struct GameDriver espial_driver;
 extern struct GameDriver espiale_driver;
 extern struct GameDriver cloak_driver;
-extern struct GameDriver champbas_driver;
-extern struct GameDriver champbb2_driver;
-extern struct GameDriver sinbadm_driver;
-extern struct GameDriver suprloco_driver;
-extern struct GameDriver foodf_driver;
 extern struct GameDriver vastar_driver;
 extern struct GameDriver vastar2_driver;
 extern struct GameDriver jedi_driver;
@@ -1298,9 +1331,6 @@ extern struct GameDriver goldstar_driver;
 extern struct GameDriver goldstbl_driver;
 extern struct GameDriver exterm_driver;
 extern struct GameDriver sharkatt_driver;
-extern struct GameDriver turbo_driver;
-extern struct GameDriver turboa_driver;
-extern struct GameDriver turbob_driver;
 extern struct GameDriver kingofb_driver;
 extern struct GameDriver kingofbj_driver;
 extern struct GameDriver ringking_driver;
@@ -1439,10 +1469,11 @@ const struct GameDriver *drivers[] =
 {
 #ifndef NEOMAME
 	/* "Pacman hardware" games */
-	&pacman_driver,		/* (c) 1980 Midway */
-	&pacmod_driver,		/* (c) 1981 Midway */
-	&namcopac_driver,	/* (c) 1980 Namco */
+	&pacman_driver,		/* (c) 1980 Namco */
 	&pacmanjp_driver,	/* (c) 1980 Namco */
+	&pacmanm_driver,	/* (c) 1980 Midway */
+	&npacmod_driver,	/* (c) 1981 Namco */
+	&pacmod_driver,		/* (c) 1981 Midway */
 	&hangly_driver,		/* hack */
 	&puckman_driver,	/* hack */
 	&pacheart_driver,	/* hack */
@@ -1461,6 +1492,8 @@ const struct GameDriver *drivers[] =
 	&theglob_driver,	/* (c) 1983 Epos Corporation */
 	&beastf_driver,		/* (c) 1984 Epos Corporation */
 	&jumpshot_driver,
+	&vanvan_driver,		/* (c) 1983 Karateco */
+	&vanvanb_driver,	/* bootleg */
 	&pengo_driver,		/* 834-0386 (c) 1982 Sega */
 	&pengo2_driver,		/* 834-0386 (c) 1982 Sega */
 	&pengo2u_driver,	/* 834-0386 (c) 1982 Sega */
@@ -1486,6 +1519,8 @@ const struct GameDriver *drivers[] =
 	&devilfsh_driver,	/* (c) 1984 Vision / Artic */
 	&zigzag_driver,		/* (c) 1982 LAX */
 	&zigzag2_driver,	/* (c) 1982 LAX */
+	&jumpbug_driver,	/* (c) 1981 Rock-ola */
+	&jumpbugb_driver,	/* (c) 1981 Sega */
 	&mooncrgx_driver,	/* bootleg */
 	&mooncrst_driver,	/* (c) 1980 Nichibutsu */
 	&mooncrsg_driver,	/* (c) 1980 Gremlin */
@@ -1543,8 +1578,6 @@ const struct GameDriver *drivers[] =
 	&turtles_driver,	/* (c) 1981 Stern */
 	&turpin_driver,		/* (c) 1981 Sega */
 	&k600_driver,		/* GX353 (c) 1981 Konami */
-	&jumpbug_driver,	/* (c) 1981 Rock-ola */
-	&jbugsega_driver,	/* (c) 1981 Sega */
 	&flyboy_driver,		/* (c) 1982 Kaneko (bootleg?) */
 	&fastfred_driver,	/* (c) 1982 Atari */
 	&jumpcoas_driver,	/* (c) 1983 Kaneko */
@@ -1553,6 +1586,7 @@ const struct GameDriver *drivers[] =
 	&cclimber_driver,	/* (c) 1980 Nichibutsu */
 	&ccjap_driver,		/* (c) 1980 Nichibutsu */
 	&ccboot_driver,		/* bootleg */
+	&ccboot2_driver,	/* bootleg */
 	&ckong_driver,		/* (c) 1981 Falcon */
 	&ckonga_driver,		/* (c) 1981 Falcon */
 	&ckongjeu_driver,	/* bootleg */
@@ -1561,6 +1595,8 @@ const struct GameDriver *drivers[] =
 	&monkeyd_driver,	/* bootleg */
 	&rpatrolb_driver,	/* bootleg */
 	&silvland_driver,	/* Falcon */
+	&yamato_driver,		/* (c) 1983 Sega */
+	&yamato2_driver,	/* (c) 1983 Sega */
 	&swimmer_driver,	/* (c) 1982 Tehkan */
 	&swimmera_driver,	/* (c) 1982 Tehkan */
 	&guzzler_driver,	/* (c) 1983 Tehkan */
@@ -1617,6 +1653,10 @@ const struct GameDriver *drivers[] =
 	&todruaga_driver,	/* (c) 1984 */
 	&todruagb_driver,	/* (c) 1984 */
 	&motos_driver,		/* (c) 1985 */
+	&gaplus_driver,		/* (c) 1984 */
+	&gaplusa_driver,	/* (c) 1984 */
+	&galaga3_driver,	/* (c) 1984 */
+	&galaga3a_driver,	/* (c) 1984 */
 	/* no custom I/O in the following, HD63701 (or compatible) microcontroller instead */
 	&pacland_driver,	/* (c) 1984 */
 	&pacland2_driver,	/* (c) 1984 */
@@ -1626,14 +1666,49 @@ const struct GameDriver *drivers[] =
 	/* Namco System 86 games */
 	&rthunder_driver,	/* (c) 1986 */
 	&rthundr2_driver,	/* (c) 1986 */
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
 //	&wndrmomo_driver,	/* (c) 1987 */
 
 	/* Namco System 1 games */
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
 //	&blazer_driver,
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
 //	&ws90_driver,
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
 //	&dspirits_driver,
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
 //	&splatter_driver,
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
 //	&galaga88_driver,
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
 //	&pacmania_driver,
 
 	/* Universal games */
@@ -1676,7 +1751,17 @@ const struct GameDriver *drivers[] =
 	&dkong3_driver,		/* (c) 1983 Nintendo of America */
 	&mario_driver,		/* (c) 1983 Nintendo of America */
 	&masao_driver,		/* bootleg */
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
 //	&hunchy_driver,		/* hacked Donkey Kong board */
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
 //	&herocast_driver,
 	&popeye_driver,
 	&popeye2_driver,
@@ -1792,6 +1877,11 @@ const struct GameDriver *drivers[] =
 	&sarge_driver,		/* (c) 1985 */
 	&rampage_driver,	/* (c) 1986 */
 	&rampage2_driver,	/* (c) 1986 */
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
 //	&powerdrv_driver,
 	&maxrpm_driver,		/* (c) 1986 */
 	/* MCR 68000 */
@@ -1889,7 +1979,17 @@ Six Flags (?)
 	&sboblbob_driver,	/* bootleg */
 	&tokio_driver,		/* (c) 1986 */
 	&tokiob_driver,		/* bootleg */
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
 //	&mexico86_driver,
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
 //	&kicknrun_driver,
 	&rastan_driver,		/* (c) 1987 Taito Japan */
 	&rastsaga_driver,	/* (c) 1987 Taito */
@@ -1919,6 +2019,11 @@ Six Flags (?)
 	&slapbtuk_driver,	/* bootleg */
 	&getstar_driver,	/* (c) 1986 Taito, but bootleg */
 	&superman_driver,	/* (c) 1988 */
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
 //	&lkage_driver,		/* (c) 1984 */
 
 	/* Taito F2 games */
@@ -2010,6 +2115,11 @@ Six Flags (?)
 	&c1943kai_driver,	/* (c) 1987 (Japan) */
 	&lastduel_driver,	/* (c) 1988 (US) */
 	&lstduelb_driver,	/* bootleg */
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
 //	&forgottn_driver,	/* (c) 1988 (CPS1) */
 	&ghouls_driver,		/* (c) 1988 (CPS1) */
 	&ghoulsj_driver,	/* (c) 1988 (CPS1) */
@@ -2065,6 +2175,11 @@ Six Flags (?)
 	&knightsj_driver,	/* (c) 1991 (Japan) (CPS1) */
 	&sf2ce_driver,		/* (c) 1992 (World) (CPS1) */
 	&sf2cej_driver,		/* (c) 1992 (Japan) (CPS1) */
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
 //	&sf2rb_driver,		/* hack */
 	&varth_driver,		/* (c) 1992 (World) (CPS1) */
 	&varthj_driver,		/* (c) 1992 (Japan) (CPS1) */
@@ -2210,6 +2325,7 @@ World Class Bowling
 	&spaceod_driver,	/* (c) 1981 */
 	&pignewt_driver,	/* (c) 1983 */
 	&pignewta_driver,	/* (c) 1983 */
+	&sindbadm_driver,	/* 834-5244 (c) 1983 Sega */
 
 	/* Sega "Zaxxon hardware" games */
 	&zaxxon_driver,		/* (c) 1982 */
@@ -2270,6 +2386,21 @@ Sanrin Sanchan
 DokiDoki Penguin Land *not confirmed
 */
 
+/* other Sega 8-bit games */
+	&turbo_driver,		/* (c) 1981 Sega */
+	&turboa_driver,		/* (c) 1981 Sega */
+	&turbob_driver,		/* (c) 1981 Sega */
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
+//	&kopunch_driver,	/* 834-0103 (c) 1981 Sega */
+	&suprloco_driver,	/* (c) 1982 Sega */
+	&champbas_driver,	/* (c) 1983 Sega */
+	&champbb2_driver,
+	&bankp_driver,		/* (c) 1984 Sega */
+
 	/* Sega System 16 games */
 	&alexkidd_driver,	/* (c) 1986 (but bootleg) */
 	&aliensyn_driver,	/* (c) 1987 */
@@ -2306,6 +2437,11 @@ DokiDoki Penguin Land *not confirmed
 	&scregg_driver,		/* TA-0001 (c) 1983 Technos Japan */
 	&tagteam_driver,	/* TA-0007 (c) 1983 + Technos Japan license */
 	/* cassette system */
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
 //	&decocass_driver,
 	&cookrace_driver,	/* bootleg */
 
@@ -2315,67 +2451,68 @@ DokiDoki Penguin Land *not confirmed
 	&astrof3_driver,	/* (c) [1980?] */
 	&tomahawk_driver,	/* (c) [1980?] */
 	&tomahaw5_driver,	/* (c) [1980?] */
-	&kchamp_driver,		/* (c) 1984 Data East USA */
-	&kchampvs_driver,	/* (c) 1984 Data East USA */
-	&karatedo_driver,	/* (c) 1984 Data East Corporation */
+	&kchamp_driver,		/* (c) 1984 Data East USA (US) */
+	&kchampvs_driver,	/* (c) 1984 Data East USA (US) */
+	&karatedo_driver,	/* (c) 1984 Data East Corporation (Japan) */
 	&firetrap_driver,	/* (c) 1986 */
 	&firetpbl_driver,	/* bootleg */
-	&brkthru_driver,	/* (c) 1986 Data East USA */
-	&brkthruj_driver,	/* (c) 1986 Data East Corporation */
-	&darwin_driver,
-	&shootout_driver,	/* (c) 1985 */
-	&sidepckt_driver,	/* (c) 1986 */
-	&exprraid_driver,	/* (c) 1986 Data East USA */
-	&wexpress_driver,	/* (c) 1986 Data East Corporation */
+	&brkthru_driver,	/* (c) 1986 Data East USA (US) */
+	&brkthruj_driver,	/* (c) 1986 Data East Corporation (Japan) */
+	&darwin_driver,		/* (c) 1986 Data East Corporation (Japan) */
+	&shootout_driver,	/* (c) 1985 Data East USA (US) */
+	&sidepckt_driver,	/* (c) 1986 Data East Corporation (World?) */
+	&exprraid_driver,	/* (c) 1986 Data East USA (US) */
+	&wexpress_driver,	/* (c) 1986 Data East Corporation (World?) */
 	&wexpresb_driver,	/* bootleg */
-	&pcktgal_driver,	/* (c) 1987 */
+	&pcktgal_driver,	/* (c) 1987 Data East Corporation (Japan) */
 	&pcktgalb_driver,	/* bootleg */
-	&pcktgal2_driver,	/* (c) 1989 */
-	&spool3_driver,		/* (c) 1989 */
-	&spool3i_driver,	/* (c) 1990 + I-Vics license */
+	&pcktgal2_driver,	/* (c) 1989 Data East Corporation (World?) */
+	&spool3_driver,		/* (c) 1989 Data East Corporation (World?) */
+	&spool3i_driver,	/* (c) 1990 Data East Corporation + I-Vics license */
 
 	/* Data East 8-bit games */
-	&ghostb_driver,		/* (c) 1987 Data East USA */
-	&ghostb3_driver,	/* (c) 1987 Data East USA */
-	&mazeh_driver,		/* (c) 1987 Data East Corporation */
-	&srdarwin_driver,	/* (c) 1987 Data East Corporation */
-	&cobracom_driver,	/* (c) 1988 Data East Corporation */
-	&gondo_driver,		/* (c) 1987 Data East USA */
-	&mekyosen_driver,	/* (c) 1987 Data East Corporation */
-	&oscar_driver,		/* (c) 1988 Data East USA */
-	&oscarj_driver,		/* (c) 1988 Data East Corporation */
-	&lastmiss_driver,	/* (c) 1986 Data East USA */
-	&lastmss2_driver,	/* (c) 1986 Data East USA */
-	&shackled_driver,	/* (c) 1986 Data East USA */
-	&breywood_driver,	/* (c) 1986 Data East Corporation */
-	&csilver_driver,	/* (c) 1987 Data East Corporation */
+	&lastmiss_driver,	/* (c) 1986 Data East USA (US) */
+	&lastmss2_driver,	/* (c) 1986 Data East USA (US) */
+	&shackled_driver,	/* (c) 1986 Data East USA (US) */
+	&breywood_driver,	/* (c) 1986 Data East Corporation (Japan) */
+	&csilver_driver,	/* (c) 1987 Data East Corporation (Japan) */
+	&ghostb_driver,		/* (c) 1987 Data East USA (US) */
+	&ghostb3_driver,	/* (c) 1987 Data East USA (US) */
+	&mazeh_driver,		/* (c) 1987 Data East Corporation (Japan) */
+	&srdarwin_driver,	/* (c) 1987 Data East Corporation (Japan) */
+	&gondo_driver,		/* (c) 1987 Data East USA (US) */
+	&mekyosen_driver,	/* (c) 1987 Data East Corporation (Japan) */
+	&cobracom_driver,	/* (c) 1988 Data East Corporation (Japan) */
+	&oscar_driver,		/* (c) 1988 Data East USA (US) */
+	&oscarj_driver,		/* (c) 1988 Data East Corporation (Japan) */
 
 	/* Data East 16-bit games */
-	&karnov_driver,		/* (c) 1987 Data East USA */
-	&karnovj_driver,	/* (c) 1987 Data East Corporation */
-	&chelnov_driver,	/* (c) 1988 Data East USA */
-	&chelnovj_driver,	/* (c) 1988 Data East Corporation */
+	&karnov_driver,		/* (c) 1987 Data East USA (US) */
+	&karnovj_driver,	/* (c) 1987 Data East Corporation (Japan) */
+	&chelnov_driver,	/* (c) 1988 Data East USA (US) */
+	&chelnovj_driver,	/* (c) 1988 Data East Corporation (Japan) */
 	/* the following ones all run on similar hardware */
-	&hbarrel_driver,	/* (c) 1987 Data East USA */
-	&hbarrelj_driver,	/* (c) 1987 Data East Corporation */
-	&baddudes_driver,	/* (c) 1988 Data East USA */
-	&drgninja_driver,	/* (c) 1988 Data East Corporation */
-	&robocopp_driver,	/* (c) 1988 Data East Corp. */
-	&hippodrm_driver,	/* (c) 1989 Data East USA */
-	&ffantasy_driver,	/* (c) 1989 Data East Corporation */
-	&midres_driver,		/* (c) 1989 Data East USA */
-	&midresj_driver,	/* (c) 1989 Data East Corporation */
-	&slyspy_driver,		/* (c) 1989 Data East USA */
-	&slyspy2_driver,	/* (c) 1989 Data East USA */
+	&hbarrel_driver,	/* (c) 1987 Data East USA (US) */
+	&hbarrelj_driver,	/* (c) 1987 Data East Corporation (Japan) */
+	&baddudes_driver,	/* (c) 1988 Data East USA (US) */
+	&drgninja_driver,	/* (c) 1988 Data East Corporation (Japan) */
+	&robocopp_driver,	/* bootleg */
+	&hippodrm_driver,	/* (c) 1989 Data East USA (US) */
+	&ffantasy_driver,	/* (c) 1989 Data East Corporation (Japan) */
+	&midres_driver,		/* (c) 1989 Data East USA (US) */
+	&midresj_driver,	/* (c) 1989 Data East Corporation (Japan) */
+	&slyspy_driver,		/* (c) 1989 Data East USA (US) */
+	&slyspy2_driver,	/* (c) 1989 Data East USA (US) */
 	&bouldash_driver,	/* (c) 1990 Data East Corporation */
 	/* evolution of the hardware */
-	&darkseal_driver,	/* (c) 1990 */
-	&darksea1_driver,	/* (c) 1990 */
-	&gatedoom_driver,	/* (c) 1990 */
-	&gatedom1_driver,	/* (c) 1990 */
-	&cninja_driver,		/* (c) 1991 */
-	&cninjau_driver,	/* (c) 1991 */
-	&joemac_driver,		/* (c) 1991 */
+	&darkseal_driver,	/* (c) 1990 Data East Corporation (Japan) */
+	&darksea1_driver,	/* (c) 1990 Data East Corporation (Japan) */
+	&gatedoom_driver,	/* (c) 1990 Data East Corporation (US) */
+	&gatedom1_driver,	/* (c) 1990 Data East Corporation (US) */
+	&supbtime_driver,	/* (c) 1990 Data East Corporation (Japan) */
+	&cninja_driver,		/* (c) 1991 Data East Corporation (World) */
+	&cninjau_driver,	/* (c) 1991 Data East Corporation (US) */
+	&joemac_driver,		/* (c) 1991 Data East Corporation (Japan) */
 	&stoneage_driver,	/* bootleg */
 	&tumblep_driver,	/* 1991 bootleg */
 	&tumblep2_driver,	/* 1991 bootleg */
@@ -2461,6 +2598,11 @@ DokiDoki Penguin Land *not confirmed
 	&nemesis_driver,	/* GX456 (c) 1985 */
 	&nemesuk_driver,	/* GX456 (c) 1985 */
 	&konamigt_driver,	/* GX561 (c) 1985 */
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
 //	&salamand_driver,
 	/* GX400 BIOS based games */
 	&rf2_driver,		/* GX561 (c) 1985 */
@@ -2652,6 +2794,7 @@ DokiDoki Penguin Land *not confirmed
 	&battlan3_driver,	/* TA-???? (c) 1986 + Taito license */
 	&ddragon_driver,
 	&ddragonb_driver,	/* TA-0021 bootleg */
+	/* TA-0022 Super Dodge Ball */
 	/* TA-0023 China Gate */
 	/* TA-0024 WWF Superstars */
 	/* TA-0025 Champ V'Ball */
@@ -2793,12 +2936,47 @@ Rad Action
 	&p47_driver,		/* (c) 1988 */
 	&p47j_driver,		/* (c) 1988 */
 	&street64_driver,	/* (c) 1991 */
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
 //	&astyanax_driver,
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
 //	&edf_driver,
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
 //	&hachoo_driver,
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
 //	&plusalph_driver,
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
 //	&phantasm_driver,
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
 //	&rodlande_driver,
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
 //	&stdragon_driver,
 
 	/* Video System Co. games */
@@ -2815,23 +2993,104 @@ Rad Action
 	&snowbros_driver,	/* (c) 1990 Toaplan + Romstar license */
 	&snowbroa_driver,	/* (c) 1990 Toaplan + Romstar license */
 
+	/* Leland games */
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
+//	&strkzone_driver,	/* (c) 1988 The Leland Corporation */
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
+//	&dblplay_driver,	/* (c) 1987 Tradewest / The Leland Corp. */
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
+//	&basebal2_driver,	/* (c) 1987 Cinematronics Inc. */
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
+//	&pigout_driver,		/* (c) 1990 The Leland Corporation */
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
+//	&pigoutj_driver,	/* (c) 1990 The Leland Corporation */
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
+//	&pigoutja_driver,	/* (c) 1990 The Leland Corporation */
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
+//	&offroad_driver,
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
+//	&offroadt_driver,
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
+//	&teamqb_driver,		/* (c) 1988 Leland Corp. */
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
+//	&redlin2p_driver,
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
+//	&viper_driver,
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
+//	&aafb_driver,
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
+//	&aafb2p_driver,
+
 	&spacefb_driver,	/* (c) [1980?] Nintendo */
 	&spacefbg_driver,	/* 834-0031 (c) 1980 Gremlin */
 	&spacebrd_driver,	/* bootleg */
 	&spacedem_driver,	/* (c) 1980 Nintendo / Fortrek */
+/* please don't distribute binaries with these drivers uncommented. They are */
+/* disabled for a reason. Don't think you are cool because you release a */
+/* binary with more enabled drivers than the official MAME, any idiot with */
+/* a compiler can do that. If this happens again, we'll be forced to remove */
+/* unfinished drivers from the source distribution. */
+//	&polepos_driver,
+	&foodf_driver,		/* (c) 1982 Atari */	/* made by Gencomp */
 	&ccastles_driver,	/* (c) 1983 Atari */
 	&ccastle2_driver,	/* (c) 1983 Atari */
 	&blueprnt_driver,	/* (c) 1982 Bally Midway */
 	&omegrace_driver,	/* (c) 1981 Midway */
-	&bankp_driver,		/* (c) 1984 Sega */
 	&espial_driver,		/* (c) 1983 Thunderbolt */
 	&espiale_driver,	/* (c) 1983 Thunderbolt */
 	&cloak_driver,		/* (c) 1983 Atari */
-	&champbas_driver,	/* (c) 1983 Sega */
-	&champbb2_driver,
-//	&sinbadm_driver,	/* 834-5244 */
-//	&suprloco_driver,
-	&foodf_driver,		/* (c) 1982 Atari */	/* made by Gencomp */
 	&vastar_driver,		/* (c) 1983 Sesame Japan */
 	&vastar2_driver,	/* (c) 1983 Sesame Japan */
 	&jedi_driver,		/* (c) 1984 Atari */
@@ -2852,9 +3111,6 @@ Rad Action
 	&goldstbl_driver,
 	&exterm_driver,		/* (c) 1989 Premier Technology - a Gottlieb game */
 	&sharkatt_driver,	/* (c) Pacific Novelty */
-	&turbo_driver,		/* (c) 1981 Sega */
-	&turboa_driver,		/* (c) 1981 Sega */
-	&turbob_driver,		/* (c) 1981 Sega */
 	&kingofb_driver,	/* (c) 1985 Woodplace Inc. */
 	&kingofbj_driver,	/* (c) 1985 Woodplace Inc. */
 	&ringking_driver,	/* (c) 1985 Data East USA */

@@ -72,12 +72,50 @@ void cloak_paletteram_w(int offset,int data)
 	palette_change_color(offset & 0x3f,r,g,b);
 }
 
-void plotmap(int data)
+static void plotmap(int data)
 {
+	int x,y,temp;
+
+	x = (bx-6)&0xff;
+	y = by;
+
+	/* rotate if necessary */
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		temp = x; x = y; y = temp;
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_X)
+		x = ~x & 0xff;
+	if (Machine->orientation & ORIENTATION_FLIP_Y)
+		y = ~y & 0xff;
+
 	if (bmap)
-		tmpbitmap->line[by][bx] = Machine->pens[(data & 0x07) + 16];
+		tmpbitmap->line[y][x] = Machine->pens[(data & 0x07) + 16];
 	else
-		tmpbitmap2->line[by][bx] = Machine->pens[(data & 0x07) + 16];
+		tmpbitmap2->line[y][x] = Machine->pens[(data & 0x07) + 16];
+}
+
+static int readmap(void)
+{
+	int x,y,temp;
+
+	x = (bx-6)&0xff;
+	y = by;
+
+	/* rotate if necessary */
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		temp = x; x = y; y = temp;
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_X)
+		x = ~x & 0xff;
+	if (Machine->orientation & ORIENTATION_FLIP_Y)
+		y = ~y & 0xff;
+
+	if (!bmap)
+		return inverse_palette[tmpbitmap->line[y][x]] & 7;
+	else
+		return inverse_palette[tmpbitmap2->line[y][x]] & 7;
 }
 
 void cloak_clearbmp_w(int offset, int data)
@@ -94,15 +132,12 @@ void cloak_clearbmp_w(int offset, int data)
 
 int graph_processor_r(int offset)
 {
-        int n;
+	int n;
 
-        if (!bmap)
-                n = inverse_palette[tmpbitmap->line[by][bx]] & 0x07;
-	else
-                n = inverse_palette[tmpbitmap2->line[by][bx]] & 0x07;
+	n = readmap();
 
 	switch(offset)
-        {
+	{
 		case 0x0:
 			bx--;
 			by++;
@@ -124,13 +159,13 @@ int graph_processor_r(int offset)
 			bx++;
 			break;
 	}
-        return n;
+	return n;
 }
 
 void graph_processor_w(int offset, int data)
 {
-        switch (offset)
-        {
+	switch (offset)
+	{
 		case 0x3:
 			bx=data;
 			break;
@@ -163,7 +198,7 @@ void graph_processor_w(int offset, int data)
 			plotmap(data);
 			bx++;
 			break;
-        }
+	}
 }
 
 
@@ -217,10 +252,10 @@ int cloak_vh_start(void)
 ***************************************************************************/
 void cloak_vh_stop(void)
 {
-        osd_free_bitmap(charbitmap);
+	osd_free_bitmap(charbitmap);
 	osd_free_bitmap(tmpbitmap2);
 	osd_free_bitmap(tmpbitmap);
-        free(dirtybuffer);
+	free(dirtybuffer);
 }
 
 
@@ -233,7 +268,7 @@ void cloak_vh_stop(void)
 ***************************************************************************/
 void cloak_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-        int offs;
+	int offs;
 
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -248,7 +283,7 @@ void cloak_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			dirtybuffer[offs] = 0;
 
 			sx = offs % 32;
-			sy = offs / 32 - 3;
+			sy = offs / 32;
 
 			drawgfx(charbitmap,Machine->gfx[0],
 					videoram[offs],0,
@@ -263,9 +298,9 @@ void cloak_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 	if (bmap)
-                copybitmap(bitmap,tmpbitmap2,0,0,-6,-24,&Machine->drv->visible_area,TRANSPARENCY_COLOR,16);
+		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,16);
 	else
-                copybitmap(bitmap,tmpbitmap,0,0,-6,-24,&Machine->drv->visible_area,TRANSPARENCY_COLOR,16);
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,16);
 
 
 	/* Draw the sprites */
@@ -275,7 +310,7 @@ void cloak_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				spriteram[offs+64] & 0x7f,
 				0,
 				spriteram[offs+64] & 0x80,0,
-				spriteram[offs+192],216-spriteram[offs],
+				spriteram[offs+192],240-spriteram[offs],
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

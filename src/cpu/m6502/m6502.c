@@ -36,18 +36,6 @@ extern FILE * errorlog;
 #define LOG(x)
 #endif
 
-extern int previouspc;
-
-#define SUBTYPE_6502	0
-
-#if HAS_M65C02
-#define SUBTYPE_65C02	1
-#endif
-
-#if HAS_M6510
-#define SUBTYPE_6510	2
-#endif
-
 /* Layout of the registers in the debugger */
 static UINT8 m6502_reg_layout[] = {
 	M6502_PC, M6502_S, M6502_P, M6502_A, M6502_X, M6502_Y, -1,
@@ -63,16 +51,14 @@ static UINT8 m6502_win_layout[] = {
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
-int m6502_type = 0;
-int m6502_ICount = 0;
-
 /****************************************************************************
  * The 6502 registers.
  ****************************************************************************/
 typedef struct
 {
-    UINT8   cpu_type;       /* currently selected cpu sub type */
+	UINT8	cpu_subtype;	/* currently selected cpu sub type */
     void    (**insn)(void); /* pointer to the function pointer table */
+	PAIR	ppc;			/* previous program counter */
     PAIR    pc;             /* program counter */
     PAIR    sp;             /* stack pointer (always 100 - 1FF) */
     PAIR    zp;             /* zero page address */
@@ -88,15 +74,19 @@ typedef struct
     int     (*irq_callback)(int irqline);   /* IRQ callback */
 }   m6502_Regs;
 
+int m6502_ICount = 0;
+
 static m6502_Regs m6502;
 
 /***************************************************************
  * include the opcode macros, functions and tables
  ***************************************************************/
 #include "tbl6502.c"
+
 #if HAS_M65C02
 #include "tbl65c02.c"
 #endif
+
 #if HAS_M6510
 #include "tbl6510.c"
 #endif
@@ -109,42 +99,41 @@ static m6502_Regs m6502;
 
 void m6502_reset(void *param)
 {
-	/* wipe out the m6502 structure */
-    memset(&m6502, 0, sizeof(m6502_Regs));
-
-	m6502.cpu_type = m6502_type;
-
-	switch (m6502.cpu_type)
-	{
+	switch (m6502.cpu_subtype)
+    {
 #if HAS_M65C02
-		case SUBTYPE_65C02:
-			m6502.insn = insn65c02;
-			break;
+		case CPU_M65C02:
+            m6502.insn = insn65c02;
+            break;
 #endif
 #if HAS_M6510
-		case SUBTYPE_6510:
-			m6502.insn = insn6510;
-			break;
+		case CPU_M6510:
+            m6502.insn = insn6510;
+            break;
 #endif
-		default:
-			m6502.insn = insn6502;
-			break;
-	}
+        default:
+            m6502.insn = insn6502;
+            break;
+    }
 
-	/* set T, I and Z flags */
-	P = F_T | F_I | F_Z;
+	/* wipe out the rest of the m6502 structure */
+	/* read the reset vector into PC */
+    PCL = RDMEM(M6502_RST_VEC);
+    PCH = RDMEM(M6502_RST_VEC+1);
+	m6502.sp.d = 0x01ff;	/* stack pointer (always 100 - 1FF) */
+	m6502.zp.d = 0; 		/* zero page address */
+	m6502.ea.d = 0; 		/* effective address */
+	m6502.a = 0;			/* Accumulator */
+	m6502.x = 0;			/* X index register */
+	m6502.y = 0;			/* Y index register */
+	m6502.p = F_T|F_I|F_Z;	/* set T, I and Z flags */
+	m6502.pending_interrupt = 0; /* nonzero if a NMI or IRQ is pending */
+	m6502.after_cli = 0;	/* pending IRQ and last insn cleared I */
+	m6502.nmi_state = CLEAR_LINE;
+	m6502.irq_state = CLEAR_LINE;
+	m6502.irq_callback = NULL;
 
-    /* stack starts at 0x01ff */
-	m6502.sp.d = 0x1ff;
-
-    /* read the reset vector into PC */
-	PCL = RDMEM(M6502_RST_VEC);
-	PCH = RDMEM(M6502_RST_VEC+1);
 	change_pc16(PCD);
-
-    m6502.pending_interrupt = 0;
-    m6502.nmi_state = 0;
-    m6502.irq_state = 0;
 }
 
 void m6502_exit(void)
@@ -203,8 +192,10 @@ unsigned m6502_get_reg (int regnum)
 		case M6502_ZP: return m6502.zp.w.l;
 		case M6502_NMI_STATE: return m6502.nmi_state;
 		case M6502_IRQ_STATE: return m6502.irq_state;
+		case M6502_SUBTYPE: return m6502.cpu_subtype;
+		case REG_PREVIOUSPC: return m6502.ppc.w.l;
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
 				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
 				if( offset < 0x1ff )
@@ -229,7 +220,7 @@ void m6502_set_reg (int regnum, unsigned val)
 		case M6502_NMI_STATE: m6502_set_nmi_line( val ); break;
 		case M6502_IRQ_STATE: m6502_set_irq_line( 0, val ); break;
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
 				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
 				if( offset < 0x1ff )
@@ -285,10 +276,9 @@ int m6502_execute(int cycles)
 
 	do
 	{
-#ifdef  MAME_DEBUG
-		if (mame_debug) MAME_Debug();
-#endif
-		previouspc = PCW;
+		PPC = PCD;
+
+		CALL_MAME_DEBUG;
 
 		(*m6502.insn[RDOP()])();
 
@@ -346,7 +336,7 @@ void m6502_set_irq_callback(int (*callback)(int))
 void m6502_state_save(void *file)
 {
 	int cpu = cpu_getactivecpu();
-	state_save_UINT8(file,"m6502",cpu,"TYPE",&m6502.cpu_type,1);
+	state_save_UINT8(file,"m6502",cpu,"TYPE",&m6502.cpu_subtype,1);
 	/* insn is set at restore since it's a pointer */
 	state_save_UINT16(file,"m6502",cpu,"PC",&m6502.pc.w.l,2);
 	state_save_UINT16(file,"m6502",cpu,"SP",&m6502.sp.w.l,2);
@@ -363,16 +353,17 @@ void m6502_state_save(void *file)
 void m6502_state_load(void *file)
 {
 	int cpu = cpu_getactivecpu();
-    state_load_UINT8(file,"m6502",cpu,"TYPE",&m6502.cpu_type,1);
-	switch (m6502.cpu_type)
+	state_load_UINT8(file,"m6502",cpu,"TYPE",&m6502.cpu_subtype,1);
+    /* insn is set at restore since it's a pointer */
+	switch (m6502.cpu_subtype)
 	{
 #if HAS_M65C02
-		case SUBTYPE_65C02:
+		case CPU_M65C02:
 			m6502.insn = insn65c02;
 			break;
 #endif
 #if HAS_M6510
-		case SUBTYPE_6510:
+		case CPU_M6510:
 			m6502.insn = insn6510;
 			break;
 #endif
@@ -380,7 +371,6 @@ void m6502_state_load(void *file)
 			m6502.insn = insn6502;
 			break;
 	}
-	/* insn is set at restore since it's a pointer */
 	state_load_UINT16(file,"m6502",cpu,"PC",&m6502.pc.w.l,2);
 	state_load_UINT16(file,"m6502",cpu,"SP",&m6502.sp.w.l,2);
 	state_load_UINT8(file,"m6502",cpu,"P",&m6502.p,1);
@@ -409,32 +399,6 @@ const char *m6502_info(void *context, int regnum)
 
     switch( regnum )
 	{
-		case CPU_INFO_NAME: return "M6502";
-		case CPU_INFO_FAMILY: return "Motorola 6502";
-		case CPU_INFO_VERSION: return "1.1";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (c) 1998 Juergen Buchmueller, all rights reserved.";
-		case CPU_INFO_REG_LAYOUT: return (const char*)m6502_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)m6502_win_layout;
-
-        case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->pc.w.l); break;
-		case CPU_INFO_SP: sprintf(buffer[which], "%03X", r->sp.w.l); break;
-#ifdef MAME_DEBUG
-		case CPU_INFO_DASM: r->pc.w.l += Dasm6502(buffer[which], r->pc.w.l); break;
-#else
-		case CPU_INFO_DASM: sprintf(buffer[which], "$%02x", ROM[r->pc.w.l]); r->pc.w.l++; break;
-#endif
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->p & 0x80 ? 'N':'.',
-				r->p & 0x40 ? 'V':'.',
-				r->p & 0x20 ? 'R':'.',
-				r->p & 0x10 ? 'B':'.',
-				r->p & 0x08 ? 'D':'.',
-				r->p & 0x04 ? 'I':'.',
-				r->p & 0x02 ? 'Z':'.',
-				r->p & 0x01 ? 'C':'.');
-			break;
 		case CPU_INFO_REG+M6502_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
 		case CPU_INFO_REG+M6502_S: sprintf(buffer[which], "S:%02X", r->sp.b.l); break;
 		case CPU_INFO_REG+M6502_P: sprintf(buffer[which], "P:%02X", r->p); break;
@@ -445,8 +409,37 @@ const char *m6502_info(void *context, int regnum)
 		case CPU_INFO_REG+M6502_ZP: sprintf(buffer[which], "ZP:%03X", r->zp.w.l); break;
 		case CPU_INFO_REG+M6502_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
 		case CPU_INFO_REG+M6502_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
+        case CPU_INFO_FLAGS:
+			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
+				r->p & 0x80 ? 'N':'.',
+				r->p & 0x40 ? 'V':'.',
+				r->p & 0x20 ? 'R':'.',
+				r->p & 0x10 ? 'B':'.',
+				r->p & 0x08 ? 'D':'.',
+				r->p & 0x04 ? 'I':'.',
+				r->p & 0x02 ? 'Z':'.',
+				r->p & 0x01 ? 'C':'.');
+			break;
+		case CPU_INFO_NAME: return "M6502";
+		case CPU_INFO_FAMILY: return "Motorola 6502";
+		case CPU_INFO_VERSION: return "1.1";
+		case CPU_INFO_FILE: return __FILE__;
+		case CPU_INFO_CREDITS: return "Copyright (c) 1998 Juergen Buchmueller, all rights reserved.";
+		case CPU_INFO_REG_LAYOUT: return (const char*)m6502_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)m6502_win_layout;
 	}
 	return buffer[which];
+}
+
+unsigned m6502_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+	(void)base;
+#ifdef MAME_DEBUG
+    return Dasm6502( buffer, pc );
+#else
+	sprintf( buffer, "$%02X", ROM[pc] );
+	return 1;
+#endif
 }
 
 /****************************************************************************
@@ -471,7 +464,7 @@ static UINT8 m65c02_win_layout[] = {
 
 void m65c02_reset (void *param)
 {
-	m6502_type = SUBTYPE_65C02;
+	m6502.cpu_subtype = CPU_M65C02;
 	m6502_reset(param);
 }
 void m65c02_exit  (void) { m6502_exit(); }
@@ -500,6 +493,17 @@ const char *m65c02_info(void *context, int regnum)
     }
 	return m6502_info(context,regnum);
 }
+unsigned m65c02_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+	(void)base;
+#ifdef MAME_DEBUG
+    return Dasm6502( buffer, pc );
+#else
+	sprintf( buffer, "$%02X", ROM[pc] );
+	return 1;
+#endif
+}
+
 #endif
 /****************************************************************************
  * 6510 section
@@ -522,7 +526,7 @@ static UINT8 m6510_win_layout[] = {
 
 void m6510_reset (void *param)
 {
-	m6502_type = SUBTYPE_6510;
+	m6502.cpu_subtype = CPU_M6510;
 	m6502_reset(param);
 }
 void m6510_exit  (void) { m6502_exit(); }
@@ -550,6 +554,17 @@ const char *m6510_info(void *context, int regnum)
 		case CPU_INFO_WIN_LAYOUT: return (const char*)m6510_win_layout;
     }
 	return m6502_info(context,regnum);
+}
+
+unsigned m6510_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+	(void)base;
+#ifdef MAME_DEBUG
+    return Dasm6502( buffer, pc );
+#else
+	sprintf( buffer, "$%02X", ROM[pc] );
+	return 1;
+#endif
 }
 #endif
 

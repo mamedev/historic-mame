@@ -1,6 +1,7 @@
 #ifndef Z8K_H
 
 #include "osd_cpu.h"
+#include "osd_dbg.h"
 
 enum {
 	Z8000_PC=1, Z8000_NSP, Z8000_FCW, Z8000_PSAP, Z8000_REFRESH,
@@ -37,6 +38,7 @@ extern void z8000_set_nmi_line(int state);
 extern void z8000_set_irq_line(int irqline, int state);
 extern void z8000_set_irq_callback(int (*callback)(int irqline));
 extern const char *z8000_info(void *context, int regnum);
+extern unsigned z8000_dasm(UINT8 *base, char *buffer, unsigned pc);
 
 extern void z8000_State_Save(int cpunum, void *f);
 extern void z8000_State_Load(int cpunum, void *f);
@@ -45,7 +47,6 @@ extern void z8000_State_Load(int cpunum, void *f);
 extern int z8000_ICount;
 
 #ifdef MAME_DEBUG
-extern int mame_debug;
 extern int DasmZ8000(char *buff, int pc);
 #endif
 

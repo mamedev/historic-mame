@@ -94,6 +94,7 @@ INLINE UINT8 fetch_effective_address( void );
 /* 6809 Registers */
 typedef struct
 {
+	PAIR	ppc;	/* Previous program counter */
     PAIR    pc;     /* Program counter */
     PAIR    u, s;   /* Stack pointers */
     PAIR    x, y;   /* Index registers */
@@ -120,23 +121,25 @@ typedef struct
 /* 6809 registers */
 static m6809_Regs m6809;
 
-#define pPC m6809.pc
-#define pU	m6809.u
-#define pS	m6809.s
-#define pX	m6809.x
-#define pY	m6809.y
-#define pD	m6809.d
+#define	pPPC    m6809.ppc
+#define pPC 	m6809.pc
+#define pU		m6809.u
+#define pS		m6809.s
+#define pX		m6809.x
+#define pY		m6809.y
+#define pD		m6809.d
 
-#define PC  m6809.pc.w.l
-#define U	m6809.u.w.l
-#define S	m6809.s.w.l
-#define X	m6809.x.w.l
-#define Y	m6809.y.w.l
-#define D   m6809.d.w.l
-#define A   m6809.d.b.h
-#define B	m6809.d.b.l
-#define DP	m6809.dp
-#define CC  m6809.cc
+#define	PPC		m6809.ppc.w.l
+#define PC  	m6809.pc.w.l
+#define U		m6809.u.w.l
+#define S		m6809.s.w.l
+#define X		m6809.x.w.l
+#define Y		m6809.y.w.l
+#define D   	m6809.d.w.l
+#define A   	m6809.d.b.h
+#define B		m6809.d.b.l
+#define DP		m6809.dp
+#define CC  	m6809.cc
 
 static PAIR ea;         /* effective address */
 #define EA	ea.w.l
@@ -666,8 +669,9 @@ unsigned m6809_get_reg(int regnum)
 		case M6809_NMI_STATE: return m6809.nmi_state;
 		case M6809_IRQ_STATE: return m6809.irq_state[M6809_IRQ_LINE];
 		case M6809_FIRQ_STATE: return m6809.irq_state[M6809_FIRQ_LINE];
+		case REG_PREVIOUSPC: return PPC;
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
 				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
 				if( offset < 0xffff )
@@ -698,7 +702,7 @@ void m6809_set_reg(int regnum, unsigned val)
 		case M6809_IRQ_STATE: m6809.irq_state[M6809_IRQ_LINE] = val; break;
 		case M6809_FIRQ_STATE: m6809.irq_state[M6809_FIRQ_LINE] = val; break;
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
 				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
 				if( offset < 0xffff )
@@ -884,13 +888,6 @@ const char *m6809_info(void *context, int regnum)
 		case CPU_INFO_REG_LAYOUT: return (const char*)m6809_reg_layout;
 		case CPU_INFO_WIN_LAYOUT: return (const char*)m6809_win_layout;
 
-        case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->pc.w.l); break;
-		case CPU_INFO_SP: sprintf(buffer[which], "%04X", r->s.w.l); break;
-#if MAME_DEBUG
-		case CPU_INFO_DASM: r->pc.w.l += Dasm6809(buffer[which], r->pc.w.l); break;
-#else
-		case CPU_INFO_DASM: sprintf(buffer[which], "$%02x", ROM[r->pc.w.l]); r->pc.w.l++; break;
-#endif
 		case CPU_INFO_FLAGS:
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
 				r->cc & 0x80 ? 'E':'.',
@@ -918,6 +915,17 @@ const char *m6809_info(void *context, int regnum)
 	return buffer[which];
 }
 
+unsigned m6809_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+	(void)base;
+#ifdef MAME_DEBUG
+    return Dasm6809(buffer,pc);
+#else
+	sprintf( buffer, "$%02X", ROM[pc] );
+	return 1;
+#endif
+}
+
 /* includes the static function prototypes and the master opcode table */
 #include "6809tbl.c"
 
@@ -943,13 +951,10 @@ int m6809_execute(int cycles)	/* NS 970908 */
 
 	do
 	{
-		extern int previouspc;
+		pPPC = pPC;
 
-		previouspc = PC;
+		CALL_MAME_DEBUG;
 
-#ifdef	MAME_DEBUG
-		if (mame_debug) MAME_Debug();
-#endif
 		ireg=M_RDOP(PC++);
 
 		if( (op_count = cycles1[ireg]) != 0xff ) {
@@ -1270,6 +1275,7 @@ INLINE UINT8 fetch_effective_address( void )
 /****************************************************************************
  * M6309 section
  ****************************************************************************/
+#if HAS_M6309
 static UINT8 m6309_reg_layout[] = {
 	M6309_PC, M6309_S, M6309_CC, M6309_A, M6309_B, M6309_X, -1,
 	M6309_Y, M6309_U, M6309_DP, M6309_NMI_STATE, M6309_IRQ_STATE, M6309_FIRQ_STATE, 0
@@ -1310,4 +1316,15 @@ const char *m6309_info(void *context, int regnum)
     }
     return m6809_info(context,regnum);
 }
+unsigned m6309_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+	(void)base;
+#ifdef MAME_DEBUG
+    return Dasm6809(buffer,pc);
+#else
+	sprintf( buffer, "$%02X", ROM[pc] );
+	return 1;
+#endif
+}
+#endif
 

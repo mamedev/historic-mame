@@ -178,39 +178,36 @@ INPUT_PORTS_START( zaxxon_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
 	/* the coin inputs must stay active for exactly one frame, otherwise */
 	/* the game will keep inserting coins. */
-	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE,
-			"Coin A", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE,
-			"Coin B", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_COIN3 | IPF_IMPULSE,
-			"Coin Aux", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH, IPT_COIN3, 1 )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x03, 0x03, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x03, "10000" )
 	PORT_DIPSETTING(    0x01, "20000" )
 	PORT_DIPSETTING(    0x02, "30000" )
 	PORT_DIPSETTING(    0x00, "40000" )
 	/* The Super Zaxxon manual lists the following as unused. */
-	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty???", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty???" )
 	PORT_DIPSETTING(    0x0c, "Easy?" )
 	PORT_DIPSETTING(    0x04, "Medium?" )
 	PORT_DIPSETTING(    0x08, "Hard?" )
 	PORT_DIPSETTING(    0x00, "Hardest?" )
-	PORT_DIPNAME( 0x30, 0x30, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x20, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x40, 0x40, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x80, "Cocktail" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
 	PORT_START	/* DSW1 */
- 	PORT_DIPNAME( 0x0f, 0x03, "B Coin/Cred", IP_KEY_NONE )
+ 	PORT_DIPNAME( 0x0f, 0x03, "B Coin/Cred" )
 	PORT_DIPSETTING(    0x0f, "4/1" )
 	PORT_DIPSETTING(    0x07, "3/1" )
 	PORT_DIPSETTING(    0x0b, "2/1" )
@@ -227,7 +224,7 @@ INPUT_PORTS_START( zaxxon_input_ports )
 	PORT_DIPSETTING(    0x09, "1/4" )
 	PORT_DIPSETTING(    0x01, "1/5" )
 	PORT_DIPSETTING(    0x0e, "1/6" )
-	PORT_DIPNAME( 0xf0, 0x30, "A Coin/Cred", IP_KEY_NONE )
+	PORT_DIPNAME( 0xf0, 0x30, "A Coin/Cred" )
 	PORT_DIPSETTING(    0xf0, "4/1" )
 	PORT_DIPSETTING(    0x70, "3/1" )
 	PORT_DIPSETTING(    0xb0, "2/1" )
@@ -248,7 +245,7 @@ INPUT_PORTS_START( zaxxon_input_ports )
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( futspy_input_ports )
@@ -280,15 +277,12 @@ INPUT_PORTS_START( futspy_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
 	/* the coin inputs must stay active for exactly one frame, otherwise */
 	/* the game will keep inserting coins. */
-	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE,
-			"Coin A", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE,
-			"Coin B", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_COIN3 | IPF_IMPULSE,
-			"Coin Aux", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH, IPT_COIN3, 1 )
 
 	PORT_START	/* DSW1 */
- 	PORT_DIPNAME( 0x0f, 0x00, "A Coin/Cred", IP_KEY_NONE )
+ 	PORT_DIPNAME( 0x0f, 0x00, "A Coin/Cred" )
 	PORT_DIPSETTING(    0x08, "4/1" )
 	PORT_DIPSETTING(    0x07, "3/1" )
 	PORT_DIPSETTING(    0x06, "2/1" )
@@ -305,7 +299,7 @@ INPUT_PORTS_START( futspy_input_ports )
 	PORT_DIPSETTING(    0x03, "1/4" )
 	PORT_DIPSETTING(    0x04, "1/5" )
 	PORT_DIPSETTING(    0x05, "1/6" )
-	PORT_DIPNAME( 0xf0, 0x00, "B Coin/Cred", IP_KEY_NONE )
+	PORT_DIPNAME( 0xf0, 0x00, "B Coin/Cred" )
 	PORT_DIPSETTING(    0x80, "4/1" )
 	PORT_DIPSETTING(    0x70, "3/1" )
 	PORT_DIPSETTING(    0x60, "2/1" )
@@ -324,23 +318,23 @@ INPUT_PORTS_START( futspy_input_ports )
 	PORT_DIPSETTING(    0x50, "1/6" )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x01, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x01, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
-	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x0c, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPSETTING(    0x08, "5" )
-	PORT_BITX( 0,       0x0c, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x30, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_BITX( 0,       0x0c, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "20k 40k 60k" )
 	PORT_DIPSETTING(    0x10, "30k 60k 90k" )
 	PORT_DIPSETTING(    0x20, "40k 70k 100k" )
 	PORT_DIPSETTING(    0x30, "40k 80k 120k" )
-	PORT_DIPNAME( 0xc0, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x40, "Medium" )
 	PORT_DIPSETTING(    0x80, "Hard" )
@@ -349,7 +343,7 @@ INPUT_PORTS_START( futspy_input_ports )
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
 INPUT_PORTS_END
 
 

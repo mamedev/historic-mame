@@ -32,6 +32,10 @@
  *                ASL/ASR - Flag Handling now correct
  *                some minor optimisations
  * 13.03.99 DEO - Added new cycle timing
+ * 24.03.99 MJC - TRACE68K define removed
+ *                NEW INTERRUPT SYSTEM only
+ *                interrupt check sped up (when not taken)
+ *                STOP checks for interrupt
  *---------------------------------------------------------------
  * Known Problems / Bugs
  *
@@ -82,7 +86,7 @@ int 		DisOp;
 /* needed for NEW_INTERRUPT_SYSTEM */
 #include "cpuintrf.h"
 
-#define VERSION 	"0.11"
+#define VERSION 	"0.12"
 
 #define TRUE -1
 #define FALSE 0
@@ -112,9 +116,7 @@ int 		DisOp;
 #define REG_PC      "R_PC"
 #define REG_IRQ		"R_IRQ"
 #define REG_SR		"R_SR"
-#if NEW_INTERRUPT_SYSTEM
 #define REG_IRQ_CALLBACK	"R_IRQ_CALLBACK"
-#endif
 
 #define FASTCALL_CPU_READMEM24        "@cpu_readmem24@4"
 #define FASTCALL_CPU_READMEM24_WORD   "@cpu_readmem24_word@4"
@@ -152,7 +154,6 @@ int  AddEACycles    = 0;
 static char SavedRegs[] = "-B--SDB";
 
 #else
-
 
 #ifdef WIN32
 /* visual C++, win32, says it preserves ebx, edi, esi, and ebp */
@@ -308,11 +309,6 @@ void CopyX(void)
 	/* Copy bit 0 from X flag store into Carry */
 
     fprintf(fp, "\t\t bt    dword [%s],0\n",REG_X);
-
-	#if 0
-	fprintf(fp, "\t\t mov   edx,[%s]\n",REG_X);
-	fprintf(fp, "\t\t rcr   edx,1\n");
-    #endif
 }
 
 /*
@@ -441,10 +437,6 @@ void Completed(void)
         FlagProcess = 0;
     }
 
-    /* Perform fetch cycle here */
-
-	#ifndef TRACE68K
-
 	/* Use assembler timing routines */
 
 	if (TimingCycles != 0)
@@ -461,14 +453,6 @@ void Completed(void)
 	{
 		fprintf(fp, "\t\t or    dword [%s],0\n",ICOUNT);
 	}
-
-	#else
-
-	/* Always use 12 cycles */
-
-	fprintf(fp, "\t\t sub   dword [%s],byte 12\n",ICOUNT);
-
-	#endif
 
 	fprintf(fp, "\t\t js    near MainExit\n\n");
 
@@ -691,9 +675,7 @@ void WriteCCR(char Size)
 
         /* Mask may now allow Interrupt */
 
-        #ifndef TRACE68K
   		CheckInterrupt += 1;
-        #endif
     }
 
     /* Flags */
@@ -815,12 +797,6 @@ void Memory_Read(char Size,int AReg,char *Flags,int Mask)
 				else
 	   				fprintf(fp, "\t\t pop   %s\n",regnameslong[Count]);
             }
-
-    /* Test! */
-
-#if 0
-    fprintf(fp, "%s_X%d:\n",codebuf,CheckInterrupt);
-#endif
 
 	CheckInterrupt += 1;			/* Interrupt flag can now be changed */
 }
@@ -4455,12 +4431,10 @@ void movem_reg_ea(void)
 
                 /* Update Cycle Count */
 
-                #ifndef TRACE68K
 				if ( Size == 'W' )
 					fprintf(fp, "\t\t sub   dword [%s],byte 4\n",ICOUNT);
 				else
 					fprintf(fp, "\t\t sub   dword [%s],byte 8\n",ICOUNT);
-                #endif
 
 				fprintf(fp, "OP_%4.4x_Skip:\n",BaseCode);
 
@@ -4579,12 +4553,10 @@ void movem_ea_reg(void)
 
                 /* Update Cycle Count */
 
-                #ifndef TRACE68K
 				if ( Size == 'W' )
 					fprintf(fp, "\t\t sub   dword [%s],byte 4\n",ICOUNT);
 				else
 					fprintf(fp, "\t\t sub   dword [%s],byte 8\n",ICOUNT);
-                #endif
 
 				fprintf(fp, "OP_%4.4x_Skip:\n",BaseCode);
 				fprintf(fp, "\t\t add   ecx,byte 4\n");			/* adjust pointer to next reg */
@@ -4694,9 +4666,9 @@ void trap(void)
 		Align();
 		fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-        fprintf(fp, "\t\t and   ecx,byte 15\n");
-        fprintf(fp, "\t\t mov   eax,32\n");
-        fprintf(fp, "\t\t add   eax,ecx\n");
+        fprintf(fp, "\t\t mov   eax,ecx\n");
+        fprintf(fp, "\t\t and   eax,byte 15\n");
+        fprintf(fp, "\t\t or    eax,byte 32\n");
         Exception(-1,BaseCode);
         Completed();
 	}
@@ -4748,6 +4720,7 @@ void nop(void)
 void stop(void)
 {
 	char *Label;
+	char TrueLabel[16];
 	int	 BaseCode = 0x4e72 ;
 
 	if ( OpcodeArray[BaseCode] == -2 )
@@ -4759,16 +4732,10 @@ void stop(void)
 
 	    /* Must be in Supervisor Mode */
 
-		Label = GenerateLabel(0,1);
+	    sprintf(TrueLabel,GenerateLabel(0,1));
 
 		fprintf(fp, "\t\t test  byte [%s],20h \t\t\t; Supervisor Mode ?\n",REG_SRH);
-		fprintf(fp, "\t\t jne   near %s\n\n",Label);
-
-        /* User Mode - Exception */
-
-        Exception(8,BaseCode);
-
-        fprintf(fp, "%s:\n",Label);
+		fprintf(fp, "\t\t je    near %s\n\n",TrueLabel);
 
         /* Next WORD is new SR */
 
@@ -4777,11 +4744,28 @@ void stop(void)
 
         WriteCCR('W');
 
-        fprintf(fp, "\t\t or    byte [%s],80h\n",REG_IRQ);
-        fprintf(fp, "\t\t xor   eax,eax\n");
-        fprintf(fp, "\t\t mov   [%s],eax\n",ICOUNT);
+        /* See if Valid interrupt waiting */
 
+		CheckInterrupt = 0;
+
+        fprintf(fp, "\t\t mov   al,byte [%s]\n",REG_IRQ);
+	    fprintf(fp, "\t\t mov   ebx,[%s]\t\t; int mask\n",REG_SRH);
+        fprintf(fp, "\t\t and   ebx,byte 07H\n");
+        fprintf(fp, "\t\t test  byte [IntMask+ebx],al\n");
+        fprintf(fp, "\t\t jne   near procint\n\n");
+
+        /* No int waiting - clear count, set stop */
+
+        fprintf(fp, "\t\t xor   ecx,ecx\n");
+        fprintf(fp, "\t\t mov   [%s],ecx\n",ICOUNT);
+        fprintf(fp, "\t\t or    byte [%s],80h\n",REG_IRQ);
 		Completed();
+
+        /* User Mode - Exception */
+
+        Align();
+        fprintf(fp, "%s:\n",TrueLabel);
+        Exception(8,BaseCode);
 
 		OpcodeArray[BaseCode] = BaseCode ;
 	}
@@ -4922,7 +4906,7 @@ void rts(void)
 		/* Previous PC (Indy & Temple of Doom need this) */
 
         fprintf(fp, "\t\t sub   esi,byte 2\n");
-	    fprintf(fp, "\t\t mov   [_previouspc],esi\n");
+	    fprintf(fp, "\t\t mov   [R_PPC],esi\n");
 
 		OpcodeArray[BaseCode] = BaseCode ;
 
@@ -6212,12 +6196,10 @@ void divides(void)
 
                 Cycles = divide_cycles[Dest & 0x0f] + 95 + (type * 17);
 
-                #ifndef TRACE68K
 		    	if (Cycles > 127)
 				    fprintf(fp, "\t\t sub   dword [%s],%d\n",ICOUNT,Cycles);
 		        else
 				    fprintf(fp, "\t\t sub   dword [%s],byte %d\n",ICOUNT,Cycles);
-                #endif
 
 				if ( mode < 7 )
 				{
@@ -6361,10 +6343,10 @@ void CodeSegmentBegin(void)
     fprintf(fp, "\t\t EXTERN _OP_ROM\n");
     fprintf(fp, "\t\t EXTERN _OP_RAM\n");
 
-    fprintf(fp, "\t\t EXTERN _previouspc\n");
     fprintf(fp, "\t\t EXTERN _ophw\n");
     fprintf(fp, "\t\t EXTERN _cur_mrhard\n");
 
+//  fprintf(fp, "\t\t SECTION maincode USE32 FLAT CLASS=CODE\n\n");
     fprintf(fp, "\t\t SECTION .text\n\n");
 
 /* Reset routine */
@@ -6452,25 +6434,26 @@ void CodeSegmentBegin(void)
 
 	fprintf(fp, "interrupt:\n");
 
+    /* Quicker check to exclude interrupts */
+
     fprintf(fp, "\t\t mov   al,byte [%s]\n",REG_IRQ);
+	fprintf(fp, "\t\t mov   ebx,[%s]\t\t; int mask\n",REG_SRH);
+    fprintf(fp, "\t\t and   ebx,byte 07H\n");
+    fprintf(fp, "\t\t test  byte [IntMask+ebx],al\n");
+    fprintf(fp, "\t\t je    short IntCont\n\n");
+
+    /* Valid interrupt waiting - so process */
+
+    fprintf(fp, "procint:\n");
 	fprintf(fp, "\t\t mov   ah,40h\t\t; Mask\n");
     fprintf(fp, "\t\t mov   ecx,7h\t\t; Int #\n");
     fprintf(fp, "inttest:\n");
 	fprintf(fp, "\t\t test   al,ah\n");
-    fprintf(fp, "\t\t jne   short highint\t\t; Highest int found\n\n");
+    fprintf(fp, "\t\t jne   short TAKEINT\t\t; Highest int found\n\n");
 
     fprintf(fp, "\t\t ror   ah,1\t\t; move mask\n");
     fprintf(fp, "\t\t dec   ecx\n");
     fprintf(fp, "\t\t jne   short inttest\n\n");
-
-	fprintf(fp, "highint:\n");
-	fprintf(fp, "\t\t cmp   ecx,byte 07h\t\t; Always do a 7\n");
-	fprintf(fp, "\t\t je    short TAKEINT\n\n");
-
-	fprintf(fp, "\t\t mov   ebx,[%s]\t\t; int mask\n",REG_SRH);
-    fprintf(fp, "\t\t and   ebx,byte 07H\n");
-    fprintf(fp, "\t\t cmp   ecx,ebx\n");
-    fprintf(fp, "\t\t jbe   near IntCont\t\t; Ignore at the moment\n\n");
 
 /* Take pending Interrupt */
 
@@ -6480,8 +6463,6 @@ void CodeSegmentBegin(void)
 	fprintf(fp, "\t\t xor   al,ah\t\t; clear bit\n");
     fprintf(fp, "\t\t and   al,7Fh\t\t; remove STOP flag\n");
     fprintf(fp, "\t\t mov   byte [%s],al\n\n",REG_IRQ);
-
-#if NEW_INTERRUPT_SYSTEM
 
 	/* Get Interrupt Vector from callback */
 
@@ -6499,7 +6480,6 @@ void CodeSegmentBegin(void)
     {
 	    fprintf(fp, "\t\t mov   [%s],edx\n",REG_CCR);
     }
-
 
     fprintf(fp, "\t\t push  ecx\t\t; irq line #\n");
 	fprintf(fp, "\t\t call  dword [%s]\t; get the IRQ level\n", REG_IRQ_CALLBACK);
@@ -6530,8 +6510,6 @@ void CodeSegmentBegin(void)
     }
 
 
-#endif
-
 	/* Just get default vector */
 
     fprintf(fp, "\t\t mov   eax,ecx\n");
@@ -6560,17 +6538,8 @@ void CodeSegmentBegin(void)
 
 	/*  Update Cycle Count */
 
-	#ifdef TRACE68K
-
-	/* Always use 12 cycles */
-	fprintf(fp, "\t\t sub   dword [%s],byte 12\n",ICOUNT);
-
-	#else
-
 	fprintf(fp, "\t\t mov   al,[exception_cycles+eax]\t\t; Get Cycles\n");
   	fprintf(fp, "\t\t sub   [%s],eax\t\t; Decrement ICount\n",ICOUNT);
-
-	#endif
 
    	ReadCCR('W',ECX);
 
@@ -6608,16 +6577,17 @@ void CodeSegmentBegin(void)
 
 void CodeSegmentEnd(void)
 {
-    fprintf(fp, "\t\tSECTION .data\n\n");
+//  fprintf(fp, "\t\t SECTION maindata USE32 FLAT CLASS=DATA\n\n");
+	fprintf(fp, "\t\t SECTION .data\n");
 
 	fprintf(fp, "\n\t\t align 16\n");
+
+    fprintf(fp, "_m68000_ICount\t DD 0\n\n");
 
     /* Memory structure for 68000 registers  */
     /* Same layout as structure in CPUDEFS.H */
 
     fprintf(fp, "\n\n; Register Structure\n\n");
-
-    fprintf(fp, "_m68000_ICount\t DD 0\n\n");
 
     fprintf(fp, "_regs\n");
     fprintf(fp, "R_D0\t DD 0\t\t\t ; Data Registers\n");
@@ -6649,9 +6619,9 @@ void CodeSegmentEnd(void)
     fprintf(fp, "R_IRQ\t DD 0\t\t\t ; IRQ Request Level\n\n");
     fprintf(fp, "R_SR\t DD 0\t\t\t ; Motorola Format SR\n\n");
 
-#if NEW_INTERRUPT_SYSTEM
 	fprintf(fp, "R_IRQ_CALLBACK\t DD 0\t\t\t ; irq callback (get vector)\n\n");
-#endif
+
+	fprintf(fp, "R_PPC\t DD 0\t\t\t ; Previous Program Counter\n");
 
     /* Extra space for variables mame uses for debugger */
 
@@ -6680,6 +6650,11 @@ void CodeSegmentEnd(void)
     fprintf(fp, "\t\t DD 0100h,0101h,0900h,0901h,0140h,0141h,0940h,0941h\n");
     fprintf(fp, "\t\t DD 0180h,0181h,0980h,0981h,01C0h,01C1h,09C0h,09C1h\n");
 
+    /* Interrupt Masks */
+
+    fprintf(fp, "\n\nIntMask\t\t\t\t; Interrupt Masks\n");
+    fprintf(fp, "\t\t DB 7Fh,7Eh,7Ch,78h,70h,60h,40h,40h\n");
+
     #if 0
 	fprintf(fp, "\n\nImmTable\n");
 	fprintf(fp, "\t\t DD 8,1,2,3,4,5,6,7\n\n");
@@ -6700,7 +6675,11 @@ void CodeSegmentEnd(void)
 	fprintf(fp, "%cinclude 'obj\\cpu\\m68000\\comptab.asm'\n\n",'%');
 #endif
 	fprintf(fp, "\t\tDD   0,0\n\n");
-    fprintf(fp, "\t\tSECTION .bss\n\n");
+
+
+//  fprintf(fp, "\t\t SECTION tempdata USE32 FLAT CLASS=BSS\n\n");
+	fprintf(fp, "\t\t SECTION .bss\n");
+
 	fprintf(fp, "OPCODETABLE\tRESD  65536\n\n");
 }
 

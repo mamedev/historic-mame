@@ -181,8 +181,16 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct IOWritePort writeport[] =
 {
-	{ 0, 0, interrupt_vector_w },	/* Pac Man only */
+	{ 0x00, 0x00, interrupt_vector_w },	/* Pac Man only */
 	{ -1 }	/* end of table */
+};
+
+
+static struct IOWritePort vanvanport[] =
+{
+	{ 0x01, 0x01, SN76496_0_w },
+	{ 0x02, 0x02, SN76496_1_w },
+	{ -1 }
 };
 
 
@@ -211,7 +219,7 @@ INPUT_PORTS_START( pacman_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -223,35 +231,35 @@ INPUT_PORTS_START( pacman_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
 	PORT_START	/* DSW 1 */
- 	PORT_DIPNAME( 0x03, 0x01, "Coinage", IP_KEY_NONE )
+ 	PORT_DIPNAME( 0x03, 0x01, "Coinage" )
 	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0x0c, 0x08, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x08, "Lives" )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x04, "2" )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x0c, "5" )
-	PORT_DIPNAME( 0x30, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x00, "Bonus Life" )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x10, "15000" )
 	PORT_DIPSETTING(    0x20, "20000" )
 	PORT_DIPSETTING(    0x30, "Never" )
-	PORT_DIPNAME( 0x40, 0x40, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Difficulty" )
 	PORT_DIPSETTING(    0x40, "Normal" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x80, 0x80, "Ghost Names", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Ghost Names" )
 	PORT_DIPSETTING(    0x80, "Normal" )
 	PORT_DIPSETTING(    0x00, "Alternate" )
 
@@ -261,7 +269,7 @@ INPUT_PORTS_START( pacman_input_ports )
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the fire button */
 	/* and activate the speedup cheat if it is. */
-	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Speedup Cheat", OSD_KEY_LCONTROL, OSD_JOY_FIRE1, 0 )
+	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Speedup Cheat", OSD_KEY_LCONTROL, OSD_JOY_FIRE1 )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x01, "On" )
 INPUT_PORTS_END
@@ -274,7 +282,7 @@ INPUT_PORTS_START( mspacman_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -286,32 +294,32 @@ INPUT_PORTS_START( mspacman_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
 	PORT_START	/* DSW 1 */
- 	PORT_DIPNAME( 0x03, 0x01, "Coinage", IP_KEY_NONE )
+ 	PORT_DIPNAME( 0x03, 0x01, "Coinage" )
 	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0x0c, 0x08, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x08, "Lives" )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x04, "2" )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x0c, "5" )
-	PORT_DIPNAME( 0x30, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x00, "Bonus Life" )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x10, "15000" )
 	PORT_DIPSETTING(    0x20, "20000" )
 	PORT_DIPSETTING(    0x30, "Never" )
-	PORT_DIPNAME( 0x40, 0x40, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Difficulty" )
 	PORT_DIPSETTING(    0x40, "Normal" )
 	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -322,7 +330,7 @@ INPUT_PORTS_START( mspacman_input_ports )
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the fire button */
 	/* and activate the speedup cheat if it is. */
-	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Speedup Cheat", OSD_KEY_LCONTROL, OSD_JOY_FIRE1, 0 )
+	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Speedup Cheat", OSD_KEY_LCONTROL, OSD_JOY_FIRE1 )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x01, "On" )
 INPUT_PORTS_END
@@ -333,9 +341,9 @@ INPUT_PORTS_START( maketrax_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_DIPNAME( 0x10, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x10, "Cocktail" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
@@ -351,20 +359,20 @@ INPUT_PORTS_START( maketrax_input_ports )
  	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Protection */
 
 	PORT_START	/* DSW 1 */
- 	PORT_DIPNAME( 0x03, 0x01, "Coinage", IP_KEY_NONE )
+ 	PORT_DIPNAME( 0x03, 0x01, "Coinage" )
 	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0x0c, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x00, "Lives" )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPSETTING(    0x08, "5" )
 	PORT_DIPSETTING(    0x0c, "6" )
-	PORT_DIPNAME( 0x10, 0x10, "First Pattern", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "First Pattern" )
 	PORT_DIPSETTING(    0x10, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x20, 0x20, "Teleport Holes", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Teleport Holes" )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
  	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Protection */
@@ -379,9 +387,9 @@ INPUT_PORTS_START( mbrush_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_DIPNAME( 0x10, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x10, "Cocktail" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
@@ -397,20 +405,20 @@ INPUT_PORTS_START( mbrush_input_ports )
  	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Protection in Make Trax */
 
 	PORT_START	/* DSW 1 */
- 	PORT_DIPNAME( 0x03, 0x01, "Coinage", IP_KEY_NONE )
+ 	PORT_DIPNAME( 0x03, 0x01, "Coinage" )
 	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0x0c, 0x08, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x08, "Lives" )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x04, "2" )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x0c, "4" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 1" )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown 2" )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
  	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Protection in Make Trax */
@@ -442,30 +450,30 @@ INPUT_PORTS_START( ponpoko_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* DSW 1 */
-	PORT_DIPNAME( 0x03, 0x01, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x01, "Bonus Life" )
 	PORT_DIPSETTING(    0x01, "10000" )
 	PORT_DIPSETTING(    0x02, "30000" )
 	PORT_DIPSETTING(    0x03, "50000" )
 	PORT_DIPSETTING(    0x00, "None" )
-	PORT_DIPNAME( 0x0c, 0x00, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x00, "Unknown 1" )
 	PORT_DIPSETTING(    0x00, "0" )
 	PORT_DIPSETTING(    0x04, "1" )
 	PORT_DIPSETTING(    0x08, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
-	PORT_DIPNAME( 0x30, 0x20, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x20, "Lives" )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x10, "3" )
 	PORT_DIPSETTING(    0x20, "4" )
 	PORT_DIPSETTING(    0x30, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 2" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START	/* DSW 2 */
- 	PORT_DIPNAME( 0x0f, 0x01, "Coinage", IP_KEY_NONE )
+ 	PORT_DIPNAME( 0x0f, 0x01, "Coinage" )
 	PORT_DIPSETTING(    0x04, "A 3/1 B 3/1" )
 	PORT_DIPSETTING(    0x0e, "A 3/1 B 1/2" )
 	PORT_DIPSETTING(    0x0f, "A 3/1 B 1/4" )
@@ -482,16 +490,16 @@ INPUT_PORTS_START( ponpoko_input_ports )
 	PORT_DIPSETTING(    0x09, "A 1/1 B 1/6" )
 	PORT_DIPSETTING(    0x03, "A 1/2 B 1/2" )
 	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown 3", IP_KEY_NONE )  /* Most likely unused */
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 3" )  /* Most likely unused */
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown 4", IP_KEY_NONE )  /* Most likely unused */
+	PORT_DIPNAME( 0x20, 0x20, "Unknown 4" )  /* Most likely unused */
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x00, "Demo Sounds" )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown 5", IP_KEY_NONE )  /* Most likely unused */
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 5" )  /* Most likely unused */
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
@@ -502,7 +510,7 @@ INPUT_PORTS_START( eyes_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_BITX(0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_BITX(0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(0x10, "Off" )
 	PORT_DIPSETTING(0x00, "On" )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -520,25 +528,25 @@ INPUT_PORTS_START( eyes_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 
 	PORT_START	/* DSW 1 */
- 	PORT_DIPNAME( 0x03, 0x03, "Coinage", IP_KEY_NONE )
+ 	PORT_DIPNAME( 0x03, 0x03, "Coinage" )
 	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0x0c, 0x08, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x08, "Lives" )
 	PORT_DIPSETTING(    0x0c, "2" )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x30, 0x30, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, "Bonus Life" )
 	PORT_DIPSETTING(    0x30, "50000" )
 	PORT_DIPSETTING(    0x20, "75000" )
 	PORT_DIPSETTING(    0x10, "100000" )
 	PORT_DIPSETTING(    0x00, "125000" )
-	PORT_DIPNAME( 0x40, 0x40, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )  /* Not accessed */
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )  /* Not accessed */
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
@@ -552,7 +560,7 @@ INPUT_PORTS_START( lizwiz_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BITX(0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_BITX(0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(0x10, "Off" )
 	PORT_DIPSETTING(0x00, "On" )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -570,25 +578,25 @@ INPUT_PORTS_START( lizwiz_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 
 	PORT_START	/* DSW 1 */
- 	PORT_DIPNAME( 0x03, 0x03, "Coinage", IP_KEY_NONE )
+ 	PORT_DIPNAME( 0x03, 0x03, "Coinage" )
 	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0x0c, 0x08, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x08, "Lives" )
 	PORT_DIPSETTING(    0x0c, "2" )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x30, 0x30, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, "Bonus Life" )
 	PORT_DIPSETTING(    0x30, "75000" )
 	PORT_DIPSETTING(    0x20, "100000" )
 	PORT_DIPSETTING(    0x10, "125000" )
 	PORT_DIPSETTING(    0x00, "150000" )
-	PORT_DIPNAME( 0x40, 0x40, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Difficulty" )
 	PORT_DIPSETTING(    0x40, "Normal" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
@@ -617,17 +625,17 @@ INPUT_PORTS_START( theglob_input_ports )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
 	PORT_START	/* DSW 1 */
- 	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+ 	PORT_DIPNAME( 0x03, 0x03, "Lives" )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x00, "6" )
-	PORT_DIPNAME( 0x1c, 0x1c, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x1c, 0x1c, "Difficulty" )
 	PORT_DIPSETTING(    0x1c, "1 (Easiest)" )
 	PORT_DIPSETTING(    0x18, "2" )
 	PORT_DIPSETTING(    0x14, "3" )
@@ -636,19 +644,68 @@ INPUT_PORTS_START( theglob_input_ports )
 	PORT_DIPSETTING(    0x08, "6" )
 	PORT_DIPSETTING(    0x04, "7" )
 	PORT_DIPSETTING(    0x00, "8 (Hardest)" )
-	PORT_DIPNAME( 0x20, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x00, "Demo Sounds" )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START	/* DSW 2 */
  	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
+
+INPUT_PORTS_START( vanvan_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	/* The 2nd player controls are used even in upright mode */
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW 1 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x02, "Flip Screen" )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown" )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown" )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x30, 0x30, "Lives" )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPSETTING(    0x00, "6" )
+	PORT_DIPNAME( 0x40, 0x40, "Coin A" )
+	PORT_DIPSETTING(    0x40, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPNAME( 0x80, 0x80, "Coin B" )
+	PORT_DIPSETTING(    0x80, "1 Coin/1 Credits" )
+	PORT_DIPSETTING(    0x00, "1 Coin/3 Credits" )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout tilelayout =
@@ -692,6 +749,13 @@ static struct namco_interface namco_interface =
 	32,			/* gain adjustment */
 	255,		/* playback volume */
 	3			/* memory region */
+};
+
+static struct SN76496interface sn76496_interface =
+{
+	2,
+	1789750,	/* 1.78975 Mhz ? */
+	{ 75, 75 }
 };
 
 
@@ -774,6 +838,44 @@ static struct MachineDriver theglob_machine_driver =
 };
 
 
+static struct MachineDriver vanvan_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			18432000/6,	/* 3.072 Mhz */
+			0,
+			readmem,writemem,0,vanvanport,
+			nmi_interrupt,1
+		}
+	},
+	60, 2500,	/* frames per second, vblank duration */
+	1,	/* single CPU, no need for interleaving */
+	pacman_init_machine,
+
+	/* video hardware */
+	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
+	gfxdecodeinfo,
+	16, 4*32,
+	pacman_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	0,
+	pacman_vh_start,
+	generic_vh_stop,
+	pengo_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SN76496,
+			&sn76496_interface
+		}
+	}
+};
+
 
 /***************************************************************************
 
@@ -782,26 +884,6 @@ static struct MachineDriver theglob_machine_driver =
 ***************************************************************************/
 
 ROM_START( pacman_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "pacman.6e",    0x0000, 0x1000, 0xc1e6ab10 )
-	ROM_LOAD( "pacman.6f",    0x1000, 0x1000, 0x1a6fb2d4 )
-	ROM_LOAD( "pacman.6h",    0x2000, 0x1000, 0xbcdd1beb )
-	ROM_LOAD( "pacman.6j",    0x3000, 0x1000, 0x817d94e3 )
-
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "pacman.5e",    0x0000, 0x1000, 0x0c944964 )
-	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
-
-	ROM_REGION(0x0120)	/* color PROMs */
-	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
-	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
-
-	ROM_REGION(0x0200)	/* sound PROMs */
-	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
-	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
-ROM_END
-
-ROM_START( namcopac_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "namcopac.6e",  0x0000, 0x1000, 0xfee263b3 )
 	ROM_LOAD( "namcopac.6f",  0x1000, 0x1000, 0x39d1fc83 )
@@ -821,22 +903,58 @@ ROM_START( namcopac_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
+ROM_START( npacmod_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "namcopac.6e",  0x0000, 0x1000, 0xfee263b3 )
+	ROM_LOAD( "namcopac.6f",  0x1000, 0x1000, 0x39d1fc83 )
+	ROM_LOAD( "namcopac.6h",  0x2000, 0x1000, 0x02083b03 )
+	ROM_LOAD( "npacmod.6j",  0x3000, 0x1000, 0x7d98d5f5 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pacman.5e",    0x0000, 0x1000, 0x0c944964 )
+	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
+
+	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
+	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
+
+	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+ROM_END
+
 ROM_START( pacmanjp_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "prg1",         0x0000, 0x0800, 0xf36e88ab )
-	ROM_LOAD( "prg2",         0x0800, 0x0800, 0x618bd9b3 )
-	ROM_LOAD( "prg3",         0x1000, 0x0800, 0x7d177853 )
-	ROM_LOAD( "prg4",         0x1800, 0x0800, 0xd3e8914c )
-	ROM_LOAD( "prg5",         0x2000, 0x0800, 0x6bf4f625 )
-	ROM_LOAD( "prg6",         0x2800, 0x0800, 0xa948ce83 )
+	ROM_LOAD( "pacman.6e",    0x0000, 0x1000, 0xc1e6ab10 )
+	ROM_LOAD( "pacman.6f",    0x1000, 0x1000, 0x1a6fb2d4 )
+	ROM_LOAD( "pacman.6h",    0x2000, 0x1000, 0xbcdd1beb )
 	ROM_LOAD( "prg7",         0x3000, 0x0800, 0xb6289b26 )
 	ROM_LOAD( "prg8",         0x3800, 0x0800, 0x17a88c13 )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "chg1",         0x0000, 0x0800, 0x2066a0b7 )
 	ROM_LOAD( "chg2",         0x0800, 0x0800, 0x3591b89d )
-	ROM_LOAD( "chg3",         0x1000, 0x0800, 0x9e39323a )
-	ROM_LOAD( "chg4",         0x1800, 0x0800, 0x1b1d9096 )
+	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
+
+	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
+	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
+
+	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+ROM_END
+
+ROM_START( pacmanm_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "pacman.6e",    0x0000, 0x1000, 0xc1e6ab10 )
+	ROM_LOAD( "pacman.6f",    0x1000, 0x1000, 0x1a6fb2d4 )
+	ROM_LOAD( "pacman.6h",    0x2000, 0x1000, 0xbcdd1beb )
+	ROM_LOAD( "pacman.6j",    0x3000, 0x1000, 0x817d94e3 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pacman.5e",    0x0000, 0x1000, 0x0c944964 )
+	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
 
 	ROM_REGION(0x0120)	/* color PROMs */
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
@@ -911,7 +1029,7 @@ ROM_START( pacheart_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "pacheart.pg1", 0x0000, 0x0800, 0xd844b679 )
 	ROM_LOAD( "pacheart.pg2", 0x0800, 0x0800, 0xb9152a38 )
-	ROM_LOAD( "prg3",         0x1000, 0x0800, 0x7d177853 )
+	ROM_LOAD( "pacheart.pg3", 0x1000, 0x0800, 0x7d177853 )
 	ROM_LOAD( "pacheart.pg4", 0x1800, 0x0800, 0x842d6574 )
 	ROM_LOAD( "pacheart.pg5", 0x2000, 0x0800, 0x9045a44c )
 	ROM_LOAD( "pacheart.pg6", 0x2800, 0x0800, 0x888f3c3e )
@@ -922,7 +1040,7 @@ ROM_START( pacheart_rom )
 	ROM_LOAD( "pacheart.ch1", 0x0000, 0x0800, 0xc62bbabf )
 	ROM_LOAD( "chg2",         0x0800, 0x0800, 0x3591b89d )
 	ROM_LOAD( "pacheart.ch3", 0x1000, 0x0800, 0xca8c184c )
-	ROM_LOAD( "chg4",         0x1800, 0x0800, 0x1b1d9096 )
+	ROM_LOAD( "pacheart.ch4", 0x1800, 0x0800, 0x1b1d9096 )
 
 	ROM_REGION(0x0120)      /* color PROMs */
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
@@ -1252,6 +1370,39 @@ ROM_START( jumpshot_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
+ROM_START( vanvan_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "van1.bin",        0x0000, 0x1000, 0x00f48295 )
+	ROM_LOAD( "van2.bin",        0x1000, 0x1000, 0xdf58e1cb )
+	ROM_LOAD( "van3.bin",        0x2000, 0x1000, 0x15571e24 )
+	ROM_LOAD( "van4.bin",        0x3000, 0x1000, 0xf8b37ed5 )
+	ROM_LOAD( "van5.bin",        0x8000, 0x1000, 0xb8c1e089 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "van20.bin",       0x0000, 0x1000, 0x60efbe66 )
+	ROM_LOAD( "van21.bin",       0x1000, 0x1000, 0x5dd53723 )
+
+	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_LOAD( "vanvan.006",	   0x0000, 0x0020, 0x00000000 ) /* a bad read, new one on the way */
+	ROM_LOAD( "vanvan.037",    0x0020, 0x0100, 0xef2674c9 )
+ROM_END
+
+ROM_START( vanvanb_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "vanvan.050",      0x0000, 0x1000, 0xcf1b2df0 )
+	ROM_LOAD( "vanvan.051",      0x1000, 0x1000, 0x80eca6a5 )
+	ROM_LOAD( "van3.bin",        0x2000, 0x1000, 0x15571e24 )
+	ROM_LOAD( "vanvan.053",      0x3000, 0x1000, 0xb1f04006 )
+	ROM_LOAD( "vanvan.039",      0x8000, 0x1000, 0xdb67414c )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "van20.bin",       0x0000, 0x1000, 0x60efbe66 )
+	ROM_LOAD( "van21.bin",       0x1000, 0x1000, 0x5dd53723 )
+
+	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_LOAD( "vanvan.006",	   0x0000, 0x0020, 0x00000000 ) /* a bad read, new one on the way */
+	ROM_LOAD( "vanvan.037",    0x0020, 0x0100, 0xef2674c9 )
+ROM_END
 
 
 
@@ -1789,9 +1940,9 @@ struct GameDriver pacman_driver =
 	__FILE__,
 	0,
 	"pacman",
-	"Pac Man (Midway)",
+	"Pac Man (set 1)",
 	"1980",
-	"[Namco] (Midway license)",
+	"Namco",
 	BASE_CREDITS,
 	0,
 	&machine_driver,
@@ -1810,38 +1961,12 @@ struct GameDriver pacman_driver =
 	pacman_hiload, pacman_hisave
 };
 
-struct GameDriver namcopac_driver =
-{
-	__FILE__,
-	&pacman_driver,
-	"namcopac",
-	"Pac Man (Namco)",
-	"1980",
-	"Namco",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	namcopac_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	pacman_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pacman_hiload, pacman_hisave
-};
-
 struct GameDriver pacmanjp_driver =
 {
 	__FILE__,
 	&pacman_driver,
 	"pacmanjp",
-	"Pac Man (Namco, alternate)",
+	"Pac Man (set 2)",
 	"1980",
 	"Namco",
 	BASE_CREDITS,
@@ -1862,12 +1987,64 @@ struct GameDriver pacmanjp_driver =
 	pacman_hiload, pacman_hisave
 };
 
+struct GameDriver pacmanm_driver =
+{
+	__FILE__,
+	&pacman_driver,
+	"pacmanm",
+	"Pac Man (Midway)",
+	"1980",
+	"[Namco] (Midway license)",
+	BASE_CREDITS,
+	0,
+	&machine_driver,
+	0,
+
+	pacmanm_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	pacman_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	pacman_hiload, pacman_hisave
+};
+
+struct GameDriver npacmod_driver =
+{
+	__FILE__,
+	&pacman_driver,
+	"npacmod",
+	"Pac Man (harder?)",
+	"1981",					/* Notice the (c) difference */
+	"Namco",
+	BASE_CREDITS,
+	0,
+	&machine_driver,
+	0,
+
+	npacmod_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	pacman_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	pacman_hiload, pacman_hisave
+};
+
 struct GameDriver pacmod_driver =
 {
 	__FILE__,
 	&pacman_driver,
 	"pacmod",
-	"Pac Man (harder)",
+	"Pac Man (Midway, harder)",
 	"1981",
 	"[Namco] (Midway license)",
 	BASE_CREDITS,
@@ -2353,6 +2530,58 @@ struct GameDriver jumpshot_driver =
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+
+struct GameDriver vanvan_driver =
+{
+	__FILE__,
+	0,
+	"vanvan",
+	"Van Van Car",
+	"1983",
+	"Karateco",
+	BASE_CREDITS,
+	GAME_WRONG_COLORS,
+	&vanvan_machine_driver,
+	0,
+
+	vanvan_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	vanvan_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	0, 0
+};
+
+struct GameDriver vanvanb_driver =
+{
+	__FILE__,
+	&vanvan_driver,
+	"vanvanb",
+	"Van Van Car (bootleg)",
+	"1983",
+	"bootleg",
+	BASE_CREDITS,
+	GAME_WRONG_COLORS,
+	&vanvan_machine_driver,
+	0,
+
+	vanvanb_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	vanvan_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_270,
 
 	0, 0
 };

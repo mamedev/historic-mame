@@ -158,7 +158,7 @@ static char *opcode_strings[0x0100] =
 };
 #endif
 
-int Dasm6805 (unsigned char *base, char *buf, int pc)
+unsigned Dasm6805 (unsigned char *base, char *buf, unsigned pc)
 {
 	int code = *base++;
 	const char *opstr = op_name_str[disasm[code][0]];

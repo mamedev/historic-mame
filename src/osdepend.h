@@ -1,6 +1,14 @@
 #ifndef OSDEPEND_H
 #define OSDEPEND_H
 
+#include "osd_cpu.h"
+
+/* The Win32 port requires this constant for variable arg routines. */
+#ifndef CLIB_DECL
+#define CLIB_DECL
+#endif
+
+/* TODO: this should be removed and put into a unix-specific header */
 /** suggested by  Scott Trent */
 #ifdef aix
 #include <sys/time.h>
@@ -168,8 +176,9 @@ struct osd_bitmap
 #define OSD_KEY_UI_DOWN				147
 #define OSD_KEY_UI_SELECT			148
 #define OSD_KEY_ANY					149
+#define OSD_KEY_CHAT_ENABLE         150
 
-#define OSD_MAX_PSEUDO				149
+#define OSD_MAX_PSEUDO				150
 
 #define OSD_JOY_LEFT    1
 #define OSD_JOY_RIGHT   2
@@ -236,7 +245,6 @@ struct osd_bitmap
 #define X_AXIS          1
 #define Y_AXIS          2
 
-extern int video_sync;
 
 
 int osd_init(void);
@@ -317,6 +325,15 @@ void osd_trak_read(int *deltax,int *deltay);
 
 /* return values in the range -128 .. 128 (yes, 128, not 127) */
 void osd_analogjoy_read(int *analog_x, int *analog_y);
+
+
+/* inp header */
+typedef struct {
+    char name[9];      /* 8 bytes for game->name + NULL */
+    char version[3];   /* byte[0] = 0, byte[1] = version byte[2] = beta_version */
+    char reserved[20]; /* for future use, possible store game options? */
+} INP_HEADER;
+
 
 /* file handling routines */
 #define OSD_FILETYPE_ROM 1
@@ -402,7 +419,17 @@ osd_profiler(OSD_PROFILE_END);
 void osd_profiler(int type);
 
 #ifdef MAME_NET
-void osd_net_sync(void);
+/* network */
+int osd_net_init(void);
+int osd_net_send(int player, unsigned char buf[], int *size);
+int osd_net_recv(int player, unsigned char buf[], int *size);
+int osd_net_sync(void);
+int osd_net_input_sync(void);
+int osd_net_exit(void);
+int osd_net_add_player(void);
+int osd_net_remove_player(int player);
+int osd_net_game_init(void);
+int osd_net_game_exit(void);
 #endif /* MAME_NET */
 
 #endif

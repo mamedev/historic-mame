@@ -641,34 +641,34 @@ INPUT_PORTS_START( neogeo_ports )
 
 	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )   /* Player 1 Start */
-	PORT_BITX( 0x02, IP_ACTIVE_LOW, 0, "SELECT 1",OSD_KEY_6, IP_JOY_NONE, 0) /* Player 1 Select */
+	PORT_BITX( 0x02, IP_ACTIVE_LOW, 0, "SELECT 1",OSD_KEY_6, IP_JOY_NONE ) /* Player 1 Select */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )   /* Player 2 Start */
-	PORT_BITX( 0x08, IP_ACTIVE_LOW, 0, "SELECT 2",OSD_KEY_7, IP_JOY_NONE, 0) /* Player 2 Select */
+	PORT_BITX( 0x08, IP_ACTIVE_LOW, 0, "SELECT 2",OSD_KEY_7, IP_JOY_NONE ) /* Player 2 Select */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Bits 10 & 20 have significance.. don't know what yet */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN3 */
-	PORT_DIPNAME( 0x01, 0x01, "Test Switch", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x01, "Test Switch" )
 	PORT_DIPSETTING(    0x01, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x02, 0x02, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown" )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x04, 0x04, "Autofire (in some games)", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x04, "Autofire (in some games)" )
 	PORT_DIPSETTING(    0x04, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x38, 0x38, "COMM Setting", IP_KEY_NONE )
+	PORT_DIPNAME( 0x38, 0x38, "COMM Setting" )
 	PORT_DIPSETTING(    0x38, "Off" )
 	PORT_DIPSETTING(    0x30, "1" )
 	PORT_DIPSETTING(    0x20, "2" )
 	PORT_DIPSETTING(    0x10, "3" )
 	PORT_DIPSETTING(    0x00, "4" )
-	PORT_DIPNAME( 0x40, 0x40, "Free Play", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Free Play" )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Freeze", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Freeze" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
@@ -679,11 +679,11 @@ INPUT_PORTS_START( neogeo_ports )
 
 	/* Fake  IN 5 */
 	PORT_START
-	PORT_DIPNAME( 0x03, 0x02,"Territory", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x02,"Territory" )
 	PORT_DIPSETTING(    0x00,"Japan" )
 	PORT_DIPSETTING(    0x01,"USA" )
 	PORT_DIPSETTING(    0x02,"Europe" )
-	PORT_DIPNAME( 0x04, 0x04,"Machine Mode", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x04,"Machine Mode" )
 	PORT_DIPSETTING(    0x00,"Home" )
 	PORT_DIPSETTING(    0x04,"Arcade" )
 
@@ -695,7 +695,7 @@ INPUT_PORTS_START( neogeo_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* This bit is used.. */
-	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "Test Switch", OSD_KEY_F2, IP_JOY_NONE, 0)
+	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "Test Switch", OSD_KEY_F2, IP_JOY_NONE )
 INPUT_PORTS_END
 
 /******************************************************************************/
@@ -810,6 +810,9 @@ static struct MachineDriver neogeo_mgd2_machine_driver =
 	4096,4096,
 	0,
 
+	/* please don't put VIDEO_SUPPRTS_16BIT in all games. It is stupid, because */
+	/* most games don't need it. Only put it in games that use more than 256 colors */
+	/* at the same time (and let the MAME team know about it) */
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	neogeo_mgd2_vh_start,
@@ -852,6 +855,9 @@ static struct MachineDriver neogeo_mvs_machine_driver =
 	4096,4096,
 	0,
 
+	/* please don't put VIDEO_SUPPRTS_16BIT in all games. It is stupid, because */
+	/* most games don't need it. Only put it in games that use more than 256 colors */
+	/* at the same time (and let the MAME team know about it) */
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	neogeo_mvs_vh_start,
@@ -3630,8 +3636,8 @@ ROM_START( pulstar_rom )
 	NEO_BIOS_SOUND_128K( "pstar_m1.rom", 0xff3df7c7 )
 
 	ROM_REGION_OPTIONAL(0x800000) /* sound samples */
-	ROM_LOAD( "pstar_v1.rom", 0x000000, 0x400000, 0x00000000 )
-	ROM_LOAD( "pstar_v2.rom", 0x400000, 0x400000, 0x00000000 )
+	ROM_LOAD( "pstar_v1.rom", 0x000000, 0x400000, 0xb458ded2 )
+	ROM_LOAD( "pstar_v2.rom", 0x400000, 0x400000, 0x9d2db551 )
 ROM_END
 
 ROM_START( rbff1_rom )
@@ -3752,8 +3758,8 @@ ROM_START( ragnagrd_rom )
 	NEO_BIOS_SOUND_128K( "rgard_m1.rom", 0x17028bcf )
 
 	ROM_REGION_OPTIONAL(0x800000) /* sound samples */
-	ROM_LOAD( "rgard_v1.rom", 0x000000, 0x400000, 0x00000000 )
-	ROM_LOAD( "rgard_v2.rom", 0x400000, 0x400000, 0x00000000 )
+	ROM_LOAD( "rgard_v1.rom", 0x000000, 0x400000, 0x61eee7f4 )
+	ROM_LOAD( "rgard_v2.rom", 0x400000, 0x400000, 0x6104e20b )
 ROM_END
 
 ROM_START( blazstar_rom )
@@ -3820,7 +3826,7 @@ ROM_START( ninjamas_rom )
 	NEO_BIOS_SOUND_128K( "ninjm_m1.rom", 0xd00fb2af )
 
     ROM_REGION_OPTIONAL(0x600000) /* sound samples */
-	ROM_LOAD( "ninjm_v1.rom", 0x000000, 0x400000, 0x00000000 )
+	ROM_LOAD( "ninjm_v1.rom", 0x000000, 0x400000, 0x1c34e013 )
     ROM_LOAD( "ninjm_v2.rom", 0x400000, 0x200000, 0x22f1c681 )
 ROM_END
 

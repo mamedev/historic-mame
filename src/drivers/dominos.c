@@ -66,12 +66,12 @@ static struct MemoryWriteAddress writemem[] =
 
 INPUT_PORTS_START( dominos_input_ports )
 		PORT_START		/* DSW - fake port, gets mapped to Dominos ports */
-		PORT_DIPNAME( 0x03, 0x01, "Points To Win", IP_KEY_NONE )
+		PORT_DIPNAME( 0x03, 0x01, "Points To Win" )
 		PORT_DIPSETTING(	0x03, "6" )
 		PORT_DIPSETTING(	0x02, "5" )
 		PORT_DIPSETTING(	0x01, "4" )
 		PORT_DIPSETTING(	0x00, "3" )
-		PORT_DIPNAME( 0x0C, 0x08, "Cost", IP_KEY_NONE )
+		PORT_DIPNAME( 0x0C, 0x08, "Cost" )
 		PORT_DIPSETTING(	0x0C, "2 players/coin" )
 		PORT_DIPSETTING(	0x08, "1 coin/player" )
 		PORT_DIPSETTING(	0x04, "2 coins/player" )
@@ -91,7 +91,7 @@ INPUT_PORTS_START( dominos_input_ports )
 		PORT_BIT (0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
 		PORT_BIT (0x10, IP_ACTIVE_LOW, IPT_START1 )
 		PORT_BIT (0x20, IP_ACTIVE_LOW, IPT_START2 )
-		PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_SERVICE | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE, 0 )
+		PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_SERVICE | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
 
 		PORT_START		/* IN2 */
 		PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )

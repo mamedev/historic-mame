@@ -63,21 +63,21 @@ static struct MemoryWriteAddress writemem[] =
 
 INPUT_PORTS_START( subs_input_ports )
 	PORT_START		/* OPTIONS */
-		PORT_DIPNAME( 0x01, 0x00, "Attract Sound", IP_KEY_NONE )
-		PORT_DIPSETTING(	0x00, "On" )
-		PORT_DIPSETTING(	0x01, "Off" )
-		PORT_DIPNAME( 0x02, 0x00, "Credit/Time", IP_KEY_NONE )
+		PORT_DIPNAME( 0x01, 0x00, "Attract Sound" )
+		PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+		PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
+		PORT_DIPNAME( 0x02, 0x00, "Credit/Time" )
 		PORT_DIPSETTING(	0x00, "Each Coin Buys Time" )
 		PORT_DIPSETTING(	0x02, "Fixed Time" )
-		PORT_DIPNAME( 0x0C, 0x00, "Game Language", IP_KEY_NONE )
+		PORT_DIPNAME( 0x0C, 0x00, "Game Language" )
 		PORT_DIPSETTING(	0x00, "English" )
 		PORT_DIPSETTING(	0x04, "Spanish" )
 		PORT_DIPSETTING(	0x08, "French" )
 		PORT_DIPSETTING(	0x0C, "German" )
-		PORT_DIPNAME( 0x10, 0x00, "Game Cost", IP_KEY_NONE )
-		PORT_DIPSETTING(	0x10, "Free Play" )
-		PORT_DIPSETTING(	0x00, "Coinage" )
-		PORT_DIPNAME( 0xE0, 0x40, "Game Length", IP_KEY_NONE )
+		PORT_DIPNAME( 0x10, 0x00, "Game Cost" )
+		PORT_DIPSETTING(	0x10, DEF_STR( Free_Play ) )
+		PORT_DIPSETTING(	0x00, DEF_STR( Coinage ) )
+		PORT_DIPNAME( 0xE0, 0x40, "Game Length" )
 		PORT_DIPSETTING(	0x00, "0:30 Minutes" )
 		PORT_DIPSETTING(	0x20, "1:00 Minutes" )
 		PORT_DIPSETTING(	0x40, "1:30 Minutes" )
@@ -101,7 +101,7 @@ INPUT_PORTS_START( subs_input_ports )
 		PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_START2 )	/* START 2 */
 		PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_VBLANK )	/* VBLANK */
 		PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )	/* FIRE 1 */
-		PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_SERVICE | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE, 0 )
+		PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_SERVICE | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
 		PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )	/* FIRE 2 */
 
 	PORT_START      /* IN3 */

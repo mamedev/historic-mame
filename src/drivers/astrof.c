@@ -123,25 +123,25 @@ INPUT_PORTS_START( astrof_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
 
-	PORT_DIPNAME( 0x0c, 0x00, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "1 Coin/2 Credits" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credits" )
-	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
 /* 0x0c gives 2 Coins/1 Credit */
 
-	PORT_DIPNAME( 0x30, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "3000" )
 	PORT_DIPSETTING(    0x10, "5000" )
 	PORT_DIPSETTING(    0x20, "7000" )
 	PORT_DIPSETTING(    0x30, "None" )
 
-	PORT_DIPNAME( 0x40, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x40, "Hard" )
 
@@ -150,15 +150,15 @@ INPUT_PORTS_START( astrof_input_ports )
 	PORT_START	/* FAKE */
 	/* The coin slots are not memory mapped. Coin insertion causes a NMI. */
 	/* This fake input port is used by the interrupt */
-	/* handler to be notified of coin insertions. We use IPF_IMPULSE to */
+	/* handler to be notified of coin insertions. We use IMPULSE to */
 	/* trigger exactly one interrupt, without having to check when the */
 	/* user releases the key. */
 	/* The cabinet selector is not memory mapped, but just disables the */
 	/* screen flip logic */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE, "Coin", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_DIPNAME( 0x02, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x02, "Cocktail" )
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
 
@@ -174,25 +174,25 @@ INPUT_PORTS_START( tomahawk_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
 
-	PORT_DIPNAME( 0x0c, 0x00, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "1 Coin/2 Credits" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credits" )
-	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
 /* 0x0c gives 2 Coins/1 Credit */
 
-	PORT_DIPNAME( 0x30, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "5000" )
 	PORT_DIPSETTING(    0x10, "7000" )
 	PORT_DIPSETTING(    0x20, "10000" )
 	PORT_DIPSETTING(    0x30, "None" )
 
-	PORT_DIPNAME( 0x40, 0x00, "Difficulty", IP_KEY_NONE )  /* Only on Tomahawk 777 */
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Difficulty ) )  /* Only on Tomahawk 777 */
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x40, "Hard" )
 
@@ -201,15 +201,15 @@ INPUT_PORTS_START( tomahawk_input_ports )
 	PORT_START	/* FAKE */
 	/* The coin slots are not memory mapped. Coin insertion causes a NMI. */
 	/* This fake input port is used by the interrupt */
-	/* handler to be notified of coin insertions. We use IPF_IMPULSE to */
+	/* handler to be notified of coin insertions. We use IMPULSE to */
 	/* trigger exactly one interrupt, without having to check when the */
 	/* user releases the key. */
 	/* The cabinet selector is not memory mapped, but just disables the */
 	/* screen flip logic */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE, "Coin", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_DIPNAME( 0x02, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x02, "Cocktail" )
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
 

@@ -188,7 +188,7 @@ int msdos_init_sound(void)
 		if(!getenv("BLASTER"))
 		{
 			printf("\nBLASTER variable not found, disabling fm sound!\n");
-                        No_OPL = No_FM = 1;
+                        No_OPL = options.no_fm = 1;
 		}
 		else
 		{

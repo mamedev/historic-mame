@@ -267,6 +267,7 @@ INLINE int MAKE_INT_32(int value)
 #define CPU_MODE         m68k_cpu.mode
 #define CPU_D            m68k_cpu.dr
 #define CPU_A            m68k_cpu.ar
+#define CPU_PPC 		 m68k_cpu.ppc
 #define CPU_PC           m68k_cpu.pc
 #define CPU_SP           m68k_cpu.sp
 #define CPU_USP          m68k_cpu.sp[0]
@@ -509,6 +510,7 @@ typedef struct
    uint mode;        /* CPU Operation Mode: 68000, 68010, or 68020 */
    uint dr[8];       /* Data Registers */
    uint ar[8];       /* Address Registers */
+   uint ppc;		 /* Previous program counter */
    uint pc;          /* Program Counter */
    uint sp[4];       /* User, Interrupt, and Master Stack Pointers */
    uint vbr;         /* Vector Base Register (68010+) */

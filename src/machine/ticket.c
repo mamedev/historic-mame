@@ -16,7 +16,7 @@
 
 /*#define DEBUG_TICKET*/
 
-unsigned int dispensed_tickets = 0;
+extern unsigned int dispensed_tickets;
 
 static int status;
 static int power;
@@ -44,6 +44,7 @@ void ticket_dispenser_init(int msec, int motoronhigh, int statusactivehigh)
 	ticketnotdispensed = ticketdispensed ^ active_bit;
 
 	status = ticketnotdispensed;
+	dispensed_tickets = 0;
 	power  = 0x00;
 }
 

@@ -2,163 +2,21 @@
 #define DRIVER_H
 
 
+#include "osdepend.h"
 #include "common.h"
 #include "palette.h"
 #include "mame.h"
 #include "cpuintrf.h"
+#include "sndintrf.h"
 #include "memory.h"
-#include "sndhrdw/generic.h"
 #include "inptport.h"
 #include "usrintrf.h"
 #include "cheat.h"
+#include "tilemap.h"
 
-
-
-/***************************************************************************
-
-Don't confuse this with the I/O ports in memory.h. This is used to handle game
-inputs (joystick, coin slots, etc). Typically, you will read them using
-input_port_[n]_r(), which you will associate to the appropriate memory
-address or I/O port.
-
-***************************************************************************/
-struct InputPort
-{
-	UINT16 mask;			/* bits affected */
-	UINT16 default_value;	/* default value for the bits affected */
-							/* you can also use one of the IP_ACTIVE defines below */
-	UINT32 type;			/* see defines below */
-	const char *name;		/* name to display */
-	UINT32 keyboard;		/* key affecting the input bits */
-	UINT32 joystick;		/* joystick command affecting the input bits */
-	UINT32 arg;				/* extra argument needed in some cases */
-	UINT16 min, max;		/* for analog controls */
-};
-
-
-#define IP_ACTIVE_HIGH 0x0000
-#define IP_ACTIVE_LOW 0xffff
-
-enum { IPT_END=1,IPT_PORT,
-	/* use IPT_JOYSTICK for panels where the player has one single joystick */
-	IPT_JOYSTICK_UP, IPT_JOYSTICK_DOWN, IPT_JOYSTICK_LEFT, IPT_JOYSTICK_RIGHT,
-	/* use IPT_JOYSTICKLEFT and IPT_JOYSTICKRIGHT for dual joystick panels */
-	IPT_JOYSTICKRIGHT_UP, IPT_JOYSTICKRIGHT_DOWN, IPT_JOYSTICKRIGHT_LEFT, IPT_JOYSTICKRIGHT_RIGHT,
-	IPT_JOYSTICKLEFT_UP, IPT_JOYSTICKLEFT_DOWN, IPT_JOYSTICKLEFT_LEFT, IPT_JOYSTICKLEFT_RIGHT,
-	IPT_BUTTON1, IPT_BUTTON2, IPT_BUTTON3, IPT_BUTTON4,	/* action buttons */
-	IPT_BUTTON5, IPT_BUTTON6, IPT_BUTTON7, IPT_BUTTON8,
-
-	/* analog inputs */
-	/* the "arg" field contains the default sensitivity expressed as a percentage */
-	/* (100 = default, 50 = half, 200 = twice) */
-	IPT_ANALOG_START,
-	IPT_PADDLE, IPT_DIAL, IPT_TRACKBALL_X, IPT_TRACKBALL_Y, IPT_AD_STICK_X, IPT_AD_STICK_Y,
-	IPT_ANALOG_END,
-
-	IPT_COIN1, IPT_COIN2, IPT_COIN3, IPT_COIN4,	/* coin slots */
-	IPT_START1, IPT_START2, IPT_START3, IPT_START4,	/* start buttons */
-	IPT_SERVICE, IPT_TILT,
-	IPT_DIPSWITCH_NAME, IPT_DIPSWITCH_SETTING,
-/* Many games poll an input bit to check for vertical blanks instead of using */
-/* interrupts. This special value allows you to handle that. If you set one of the */
-/* input bits to this, the bit will be inverted while a vertical blank is happening. */
-	IPT_VBLANK,
-	IPT_UNKNOWN
-};
-
-#define IPT_UNUSED     IPF_UNUSED
-
-#define IPF_MASK       0xffff0000
-#define IPF_UNUSED     0x80000000	/* The bit is not used by this game, but is used */
-									/* by other games running on the same hardware. */
-									/* This is different from IPT_UNUSED, which marks */
-									/* bits not connected to anything. */
-#define IPF_COCKTAIL   IPF_PLAYER2	/* the bit is used in cocktail mode only */
-
-#define IPF_CHEAT      0x40000000	/* Indicates that the input bit is a "cheat" key */
-									/* (providing invulnerabilty, level advance, and */
-									/* so on). MAME will not recognize it when the */
-									/* -nocheat command line option is specified. */
-
-#define IPF_PLAYERMASK 0x00030000	/* use IPF_PLAYERn if more than one person can */
-#define IPF_PLAYER1    0         	/* play at the same time. The IPT_ should be the same */
-#define IPF_PLAYER2    0x00010000	/* for all players (e.g. IPT_BUTTON1 | IPF_PLAYER2) */
-#define IPF_PLAYER3    0x00020000	/* IPF_PLAYER1 is the default and can be left out to */
-#define IPF_PLAYER4    0x00030000	/* increase readability. */
-
-#define IPF_8WAY       0         	/* Joystick modes of operation. 8WAY is the default, */
-#define IPF_4WAY       0x00080000	/* it prevents left/right or up/down to be pressed at */
-#define IPF_2WAY       0         	/* the same time. 4WAY prevents diagonal directions. */
-									/* 2WAY should be used for joysticks wich move only */
-                                 	/* on one axis (e.g. Battle Zone) */
-
-#define IPF_IMPULSE    0x00100000	/* When this is set, when the key corrisponding to */
-									/* the input bit is pressed it will be reported as */
-									/* pressed for a certain number of video frames and */
-									/* then released, regardless of the real status of */
-									/* the key. This is useful e.g. for some coin inputs. */
-									/* The number of frames the signal should stay active */
-									/* is specified in the "arg" field. */
-#define IPF_TOGGLE     0x00200000	/* When this is set, the key acts as a toggle - press */
-									/* it once and it goes on, press it again and it goes off. */
-									/* useful e.g. for sone Test Mode dip switches. */
-#define IPF_REVERSE    0x00400000	/* By default, analog inputs like IPT_TRACKBALL increase */
-									/* when going right/up. This flag inverts them. */
-
-#define IPF_CENTER     0x00800000	/* always preload in->default, autocentering the STICK/TRACKBALL */
-
-#define IPF_CUSTOM_UPDATE 0x01000000 /* normally, analog ports are updated when they are accessed. */
-									/* When this flag is set, they are never updated automatically, */
-									/* it is the responsibility of the driver to call */
-									/* update_analog_port(int port). */
-
-#define IPF_RESETCPU   0x02000000	/* when the key is pressed, reset the first CPU */
-
-
-/* The "arg" field contains 2 bytes fields */
-#define IPF_SENSITIVITY(percent)   (percent &   0xff)
-#define IPF_CLIP(clip)			  ((clip    &   0xff) << 8  )
-
-/* LBO - these fields are packed into in->keyboard & in->joystick for analog controls */
-#define IPF_DEC(key)			((key&0xff)       )
-#define IPF_INC(key)			((key&0xff) << 8  )
-#define IPF_DELTA(val)			((val&0xff) << 16 )
-
-#define IP_NAME_DEFAULT ((const char *)-1)
-
-#define IP_KEY_DEFAULT -1
-#define IP_KEY_NONE -2
-#define IP_KEY_PREVIOUS -3	/* use the same key as the previous input bit */
-
-#define IP_JOY_DEFAULT -1
-#define IP_JOY_NONE -2
-#define IP_JOY_PREVIOUS -3	/* use the same joy as the previous input bit */
-
-/* start of table */
-#define INPUT_PORTS_START(name) static struct InputPort name[] = {
-/* end of table */
-#define INPUT_PORTS_END { 0, 0, IPT_END, 0, 0 } };
-/* start of a new input port */
-#define PORT_START { 0, 0, IPT_PORT, 0, 0, 0, 0 },
-/* input bit definition */
-#define PORT_BIT(mask,default,type) { mask, default, type, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 },
-/* input bit definition with extended fields */
-#define PORT_BITX(mask,default,type,name,key,joy,arg) { mask, default, type, name, key, joy, arg },
-/* analog input */
-#define PORT_ANALOG(mask,default,type,sensitivity,clip,min,max) \
-	{ mask, default, type, IP_NAME_DEFAULT, \
-	IP_KEY_DEFAULT, IP_JOY_DEFAULT, \
-	IPF_SENSITIVITY(sensitivity) | IPF_CLIP(clip), min, max },
-/* analog input with extended fields for defining default keys & sensitivities */
-#define PORT_ANALOGX(mask,default,type,sensitivity,clip,min,max,keydec,keyinc,joydec,joyinc,delta) \
-	{ mask, default, type, IP_NAME_DEFAULT, \
-	IPF_DEC(keydec) | IPF_INC(keyinc) | IPF_DELTA(delta), IPF_DEC(joydec) | IPF_INC(joyinc) | IPF_DELTA(delta), \
-	IPF_SENSITIVITY(sensitivity) | IPF_CLIP(clip), min, max },
-
-/* dip switch definition */
-#define PORT_DIPNAME(mask,default,name,key) { mask, default, IPT_DIPSWITCH_NAME, name, key, IP_JOY_NONE, 0 },
-#define PORT_DIPSETTING(default,name) { 0, default, IPT_DIPSWITCH_SETTING, name, IP_KEY_NONE, IP_JOY_NONE, 0 },
-
+#ifdef MAME_NET
+#include "network.h"
+#endif /* MAME_NET */
 
 
 struct MachineCPU
@@ -335,6 +193,10 @@ struct MachineSound
 #define SOUND_UPD7759	22	/* ROM-based ADPCM system */
 #define SOUND_HC55516   23	/* Harris family of CVSD CODECs */
 #define SOUND_K007232   24	/* Konami 007232 */
+#ifdef MESS
+#define SOUND_YM2612    25
+#define SOUND_TIA       26
+#endif
 
 #define MAX_SOUND 4	/* MAX_SOUND is the maximum number of sound subsystems */
 					/* which can run at the same time. Currently, 4 is enough. */
@@ -488,6 +350,8 @@ struct GameDriver
 #define GAME_NOT_WORKING		0x0001
 #define GAME_WRONG_COLORS		0x0002	/* colors are totally wrong */
 #define GAME_IMPERFECT_COLORS	0x0004	/* colors are not 100% accurate, but close */
+#define GAME_NO_SOUND			0x0008	/* sound is missing */
+#define GAME_IMPERFECT_SOUND	0x0010	/* sound is known to be wrong */
 
 
 #define PROM_MEMORY_REGION(region) ((const unsigned char *)((-(region))-1))

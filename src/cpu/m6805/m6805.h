@@ -5,6 +5,7 @@
 
 #include "memory.h"
 #include "osd_cpu.h"
+#include "osd_dbg.h"
 
 enum { M6805_PC=1, M6805_S, M6805_CC, M6805_A, M6805_X, M6805_IRQ_STATE };
 
@@ -32,10 +33,12 @@ extern void m6805_set_irq_callback(int (*callback)(int irqline));
 extern void m6805_state_save(void *file);
 extern void m6805_state_load(void *file);
 extern const char *m6805_info(void *context, int regnum);
+extern unsigned m6805_dasm(UINT8 *base, char *buffer, unsigned pc);
 
 /****************************************************************************
  * 68705 section
  ****************************************************************************/
+#if HAS_M68705
 #define M68705_A					M6805_A
 #define M68705_PC					M6805_PC
 #define M68705_S					M6805_S
@@ -64,10 +67,13 @@ extern void m68705_set_irq_callback(int (*callback)(int irqline));
 extern void m68705_state_save(void *file);
 extern void m68705_state_load(void *file);
 extern const char *m68705_info(void *context, int regnum);
+extern unsigned m68705_dasm(UINT8 *base, char *buffer, unsigned pc);
+#endif
 
 /****************************************************************************
  * HD63705 section
  ****************************************************************************/
+#if HAS_HD63705
 #define HD63705_A					M6805_A
 #define HD63705_PC					M6805_PC
 #define HD63705_S					M6805_S
@@ -96,6 +102,8 @@ extern void hd63705_set_irq_callback(int (*callback)(int irqline));
 extern void hd63705_state_save(void *file);
 extern void hd63705_state_load(void *file);
 extern const char *hd63705_info(void *context, int regnum);
+extern unsigned hd63705_dasm(UINT8 *base, char *buffer, unsigned pc);
+#endif
 
 /****************************************************************************/
 /* Read a byte from given memory location                                   */
@@ -141,7 +149,6 @@ extern int m6805_Flags;
 #endif
 
 #ifdef MAME_DEBUG
-extern int mame_debug;
 extern int Dasm6805(unsigned char *base, char *buf, int pc);
 #endif
 

@@ -27,20 +27,20 @@ static int bankreg;
 
 static struct rectangle scrollvisiblearea =
 {
-	0*8, 28*8-1,
-	2*8, 34*8-1
+	2*8, 34*8-1,
+	0*8, 28*8-1
 };
 
-static struct rectangle topvisiblearea =
+static struct rectangle leftvisiblearea =
 {
-	0*8, 28*8-1,
-	0*8, 2*8-1
+	0*8, 2*8-1,
+	0*8, 28*8-1
 };
 
-static struct rectangle bottomvisiblearea =
+static struct rectangle rightvisiblearea =
 {
-	0*8, 28*8-1,
-	34*8, 36*8-1
+	34*8, 36*8-1,
+	0*8, 28*8-1
 };
 
 
@@ -138,7 +138,7 @@ int naughtyb_vh_start(void)
 		return 1;
 	memset(dirtybuffer, 1, videoram_size);
 
-	if ((tmpbitmap = osd_create_bitmap(28*8,68*8)) == 0)
+	if ((tmpbitmap = osd_create_bitmap(68*8,28*8)) == 0)
 	{
 		free(dirtybuffer);
 		return 1;
@@ -271,13 +271,13 @@ void naughtyb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			if (offs < 0x700)
 			{
-				sx = 27 - offs / 64;
-				sy = offs % 64;
+				sx = offs % 64;
+				sy = offs / 64;
 			}
 			else
 			{
-				sx = 27 - (offs - 0x700) / 4;
-				sy = 64 + (offs - 0x700) % 4;
+				sx = 64 + (offs - 0x700) % 4;
+				sy = (offs - 0x700) / 4;
 			}
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
@@ -299,13 +299,13 @@ void naughtyb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* copy the temporary bitmap to the screen */
 	{
-		int scrolly;
+		int scrollx;
 
 
-		copybitmap(bitmap,tmpbitmap,0,0,0,-66*8,&topvisiblearea,TRANSPARENCY_NONE,0);
-		copybitmap(bitmap,tmpbitmap,0,0,0,-30*8,&bottomvisiblearea,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,tmpbitmap,0,0,-66*8,0,&leftvisiblearea,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,tmpbitmap,0,0,-30*8,0,&rightvisiblearea,TRANSPARENCY_NONE,0);
 
-		scrolly = -*naughtyb_scrollreg + 16;
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scrolly,&scrollvisiblearea,TRANSPARENCY_NONE,0);
+		scrollx = -*naughtyb_scrollreg + 16;
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,0,0,&scrollvisiblearea,TRANSPARENCY_NONE,0);
 	}
 }

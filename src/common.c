@@ -8,10 +8,8 @@
 
 #include "driver.h"
 
-int use_samples;
-
 /* These globals are only kept on a machine basis - LBO 042898 */
-extern unsigned int dispensed_tickets;
+unsigned int dispensed_tickets;
 unsigned int coins[COIN_COUNTERS];
 unsigned int lastcoin[COIN_COUNTERS];
 unsigned int coinlockedout[COIN_COUNTERS];
@@ -109,6 +107,13 @@ void showdisclaimer(void)   /* MAURY_BEGIN: dichiarazione */
                                  as defined in common.h.
 
 ***************************************************************************/
+
+#ifdef MESS
+#define ROM_FILETYPE	OSD_FILETYPE_IMAGE /* The IMAGE type requires different handling */
+#else
+#define ROM_FILETYPE	OSD_FILETYPE_ROM
+#endif
+
 int readroms(void)
 {
 	int region;
@@ -116,6 +121,7 @@ int readroms(void)
 	int checksumwarning = 0;
 	int lengthwarning = 0;
 	int total_roms,current_rom;
+	char buf[2048] = "";
 
 
 	total_roms = current_rom = 0;
@@ -196,16 +202,16 @@ int readroms(void)
 			if (osd_display_loading_rom_message(name,++current_rom,total_roms) != 0)
                goto getout;
 
-			f = osd_fopen(Machine->gamedrv->name,name,OSD_FILETYPE_ROM,0);
+			f = osd_fopen(Machine->gamedrv->name,name,ROM_FILETYPE,0);
 			if (f == 0 && Machine->gamedrv->clone_of)
 			{
 				/* if the game is a clone, try loading the ROM from the main version */
-				f = osd_fopen(Machine->gamedrv->clone_of->name,name,OSD_FILETYPE_ROM,0);
+				f = osd_fopen(Machine->gamedrv->clone_of->name,name,ROM_FILETYPE,0);
 
 				if (f == 0 && Machine->gamedrv->clone_of->clone_of)
 				{
 					/* clone of a clone (for NeoGeo clones) */
-					f = osd_fopen(Machine->gamedrv->clone_of->clone_of->name,name,OSD_FILETYPE_ROM,0);
+					f = osd_fopen(Machine->gamedrv->clone_of->clone_of->name,name,ROM_FILETYPE,0);
 				}
 			}
 			if (f == 0)
@@ -214,27 +220,26 @@ int readroms(void)
 				char crc[9];
 
 				sprintf(crc,"%08x",romp->crc);
-				f = osd_fopen(Machine->gamedrv->name,crc,OSD_FILETYPE_ROM,0);
+				f = osd_fopen(Machine->gamedrv->name,crc,ROM_FILETYPE,0);
 				if (f == 0 && Machine->gamedrv->clone_of)
 				{
 					/* if the game is a clone, try loading the ROM from the main version */
-					f = osd_fopen(Machine->gamedrv->clone_of->name,crc,OSD_FILETYPE_ROM,0);
+					f = osd_fopen(Machine->gamedrv->clone_of->name,crc,ROM_FILETYPE,0);
 
 					if (f == 0 && Machine->gamedrv->clone_of->clone_of)
 					{
 						/* clone of a clone (for NeoGeo clones) */
-						f = osd_fopen(Machine->gamedrv->clone_of->clone_of->name,crc,OSD_FILETYPE_ROM,0);
+						f = osd_fopen(Machine->gamedrv->clone_of->clone_of->name,crc,ROM_FILETYPE,0);
 					}
 				}
 			}
 
 			if (f == 0)
 			{
-				#ifdef macintosh
+				if (options.gui_host)
 					printf ("Unable to open ROM %s\n", name);
-				#else
+				else
 					fprintf(stderr, "Unable to open ROM %s\n",name);
-				#endif
 				goto printromlist;
 			}
 
@@ -350,25 +355,19 @@ int readroms(void)
 
 			if (explength != osd_fsize (f))
 			{
-				printf ("%-12s WRONG LENGTH (expected: %08x found: %08x)\n",
+				sprintf (&buf[strlen(buf)], "%-12s WRONG LENGTH (expected: %08x found: %08x)\n",
 						name,explength,osd_fsize(f));
 				lengthwarning++;
 			}
 
 			if (expchecksum != osd_fcrc (f))
 			{
-				#ifdef macintosh
-					printf ("The checksum of ROM '%s' does not match the one MacMAME was tested with.\r"
-							"WARNING: the game might not run correctly.\r"
-							"Expected:%08x  Found:%08x\r", name, expchecksum, osd_fcrc (f));
-				#else
 				checksumwarning++;
 				if (expchecksum)
-					printf("%-12s WRONG CRC (expected: %08x found: %08x)\n",
+					sprintf(&buf[strlen(buf)], "%-12s WRONG CRC (expected: %08x found: %08x)\n",
 							name,expchecksum,osd_fcrc(f));
 				else
-					printf("%-12s NO GOOD DUMP EXISTS\n",name);
-				#endif
+					sprintf(&buf[strlen(buf)],"%-12s NO GOOD DUMP EXISTS\n",name);
 			}
 
 			osd_fclose(f);
@@ -380,13 +379,17 @@ int readroms(void)
 	/* final status display */
 	osd_display_loading_rom_message(0,current_rom,total_roms);
 
-#ifndef macintosh
 	if ((checksumwarning > 0) || (lengthwarning > 0))
 	{
-		printf ("WARNING: the game might not run correctly.\nPress return to continue\n");
-		getchar();
+		strcat (buf, "WARNING: the game might not run correctly.\n");
+		printf ("%s", buf);
+
+		if (!options.gui_host)
+		{
+			printf ("Press return to continue\n");
+			getchar();
+		}
 	}
-#endif
 
 	return 0;
 
@@ -396,14 +399,15 @@ printromlist:
 	/* final status display */
 	osd_display_loading_rom_message(0,current_rom,total_roms);
 
-#ifndef macintosh
-	printf("\n");                         /* MAURY_BEGIN: dichiarazione */
-	showdisclaimer();
-	printf("Press return to continue\n"); /* MAURY_END: dichiarazione */
-	getchar();
+	if (!options.gui_host)
+	{
+		printf("\n");
+		showdisclaimer();
+		printf("Press return to continue\n");
+		getchar();
 
-	printromlist(Machine->gamedrv->rom,Machine->gamedrv->name);
-#endif
+		printromlist(Machine->gamedrv->rom,Machine->gamedrv->name);
+	}
 
 getout:
 	/* final status display */
@@ -470,7 +474,9 @@ struct GameSamples *readsamples(const char **samplenames,const char *basename)
 	struct GameSamples *samples;
 	int skipfirst = 0;
 
-	if (!use_samples) return 0;
+	/* if the user doesn't want to use samples, bail */
+	if (!options.use_samples) return 0;
+
 	if (samplenames == 0 || samplenames[0] == 0) return 0;
 
 	if (samplenames[0][0] == '*')

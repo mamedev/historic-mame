@@ -102,9 +102,6 @@ Program ROM (48K bytes)                   4000-FFFF   R    D0-D7
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/pokey.h"
-#include "sndhrdw/5220intf.h"
-#include "sndhrdw/2151intf.h"
 
 
 int blstroid_io_r (int offset);
@@ -219,9 +216,9 @@ INPUT_PORTS_START( blstroid_ports )
 	PORT_ANALOG ( 0xff, 0, IPT_DIAL | IPF_PLAYER2, 100, 0xff, 0, 0 )
 
 	PORT_START		/* DSW */
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x80, "Off")
-	PORT_DIPSETTING(    0x00, "On")
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )

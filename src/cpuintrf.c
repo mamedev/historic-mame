@@ -76,6 +76,8 @@
 
 #define VERBOSE 0
 
+#define SAVE_STATE_TEST 0
+
 #if VERBOSE
 #define LOG(x)	if( errorlog ) fprintf x
 #else
@@ -109,8 +111,6 @@ static int running;	/* number of cycles that the CPU emulation was requested to 
 					/* (needed by cpu_getfcount) */
 static int have_to_reset;
 static int hiscoreloaded;
-
-int previouspc;
 
 static int interrupt_enable[MAX_CPU];
 static int interrupt_vector[MAX_CPU];
@@ -197,9 +197,9 @@ static void Dummy_set_irq_line(int irqline, int state);
 static void Dummy_set_irq_callback(int (*callback)(int irqline));
 static int dummy_icount;
 static const char *Dummy_info(void *context, int regnum);
+static unsigned Dummy_dasm(UINT8 *base, char *buffer, unsigned pc);
 
 /* Convenience macros - not in cpuintrf.h because they shouldn't be used by everyone */
-#define CPU_FAMILY(index)				(cpu[index].intf->cpu_family)
 #define RESET(index)                    ((*cpu[index].intf->reset)(Machine->drv->cpu[index].reset_param))
 #define EXECUTE(index,cycles)           ((*cpu[index].intf->execute)(cycles))
 #define GETCONTEXT(index,context)		((*cpu[index].intf->get_context)(context))
@@ -215,6 +215,7 @@ static const char *Dummy_info(void *context, int regnum);
 #define SETIRQCALLBACK(index,callback)	((*cpu[index].intf->set_irq_callback)(callback))
 #define INTERNAL_INTERRUPT(index,type)	if( cpu[index].intf->internal_interrupt ) ((*cpu[index].intf->internal_interrupt)(type))
 #define CPUINFO(index,context,regnum)	((*cpu[index].intf->cpu_info)(context,regnum))
+#define CPUDASM(index,base,buffer,pc)	((*cpu[index].intf->cpu_dasm)(base,buffer,pc))
 #define ICOUNT(index)                   (*cpu[index].intf->icount)
 #define INT_TYPE_NONE(index)            (cpu[index].intf->no_int)
 #define INT_TYPE_IRQ(index) 			(cpu[index].intf->irq_int)
@@ -233,7 +234,7 @@ struct cpu_interface cpuintf[] =
 {
 	/* Dummy CPU -- placeholder for type 0 */
 	{
-		CPU_DUMMY,0,						/* CPU number and family cores sharing resources */
+		CPU_DUMMY,							/* CPU number and family cores sharing resources */
 		Dummy_reset,						/* Reset CPU */
 		Dummy_exit, 						/* Shut down the CPU */
 		Dummy_execute,						/* Execute a number of cycles */
@@ -252,7 +253,8 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Save CPU state */
 		NULL,								/* Load CPU state */
         Dummy_info,                         /* Get formatted string for a specific register */
-		1,									/* Number of IRQ lines */
+		Dummy_dasm, 						/* Disassemble one instruction */
+        1,                                  /* Number of IRQ lines */
 		&dummy_icount,						/* Pointer to the instruction count */
 		0,									/* Interrupt types: none, IRQ, NMI */
 		-1,
@@ -265,7 +267,7 @@ struct cpu_interface cpuintf[] =
 	},
 #if (HAS_Z80)
     {
-		CPU_Z80,1,							/* CPU number and family cores sharing resources */
+		CPU_Z80,							/* CPU number and family cores sharing resources */
         z80_reset,                          /* Reset CPU */
 		z80_exit,							/* Shut down the CPU */
 		z80_execute,						/* Execute a number of cycles */
@@ -284,6 +286,7 @@ struct cpu_interface cpuintf[] =
 		z80_state_save, 					/* Save CPU state */
 		z80_state_load, 					/* Load CPU state */
         z80_info,                           /* Get formatted string for a specific register */
+		z80_dasm,							/* Disassemble one instruction */
         1,                                  /* Number of IRQ lines */
 		&z80_ICount,						/* Pointer to the instruction count */
 		Z80_IGNORE_INT, 					/* Interrupt types: none, IRQ, NMI */
@@ -298,7 +301,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_8080)
     {
-		CPU_8080,2, 						/* CPU number and family cores sharing resources */
+		CPU_8080,							/* CPU number and family cores sharing resources */
         i8080_reset,                        /* Reset CPU */
 		i8080_exit, 						/* Shut down the CPU */
 		i8080_execute,						/* Execute a number of cycles */
@@ -317,6 +320,7 @@ struct cpu_interface cpuintf[] =
 		i8080_state_save,					/* Save CPU state */
 		i8080_state_load,					/* Load CPU state */
         i8080_info,                         /* Get formatted string for a specific register */
+		i8080_dasm, 						/* Disassemble one instruction */
         4,                                  /* Number of IRQ lines */
 		&i8080_ICount,						/* Pointer to the instruction count */
 		I8080_NONE, 						/* Interrupt types: none, IRQ, NMI */
@@ -331,7 +335,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_8085A)
     {
-		CPU_8085A,2,						/* CPU number and family cores sharing resources */
+		CPU_8085A,							/* CPU number and family cores sharing resources */
         i8085_reset,                        /* Reset CPU */
 		i8085_exit, 						/* Shut down the CPU */
 		i8085_execute,						/* Execute a number of cycles */
@@ -350,6 +354,7 @@ struct cpu_interface cpuintf[] =
 		i8085_state_save,					/* Save CPU state */
 		i8085_state_load,					/* Load CPU state */
         i8085_info,                         /* Get formatted string for a specific register */
+		i8085_dasm, 						/* Disassemble one instruction */
         4,                                  /* Number of IRQ lines */
 		&i8085_ICount,						/* Pointer to the instruction count */
 		I8085_NONE, 						/* Interrupt types: none, IRQ, NMI */
@@ -364,7 +369,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_M6502)
     {
-		CPU_M6502,3,						/* CPU number and family cores sharing resources */
+		CPU_M6502,							/* CPU number and family cores sharing resources */
         m6502_reset,                        /* Reset CPU */
 		m6502_exit, 						/* Shut down the CPU */
 		m6502_execute,						/* Execute a number of cycles */
@@ -383,6 +388,7 @@ struct cpu_interface cpuintf[] =
 		m6502_state_save,					/* Save CPU state */
 		m6502_state_load,					/* Load CPU state */
         m6502_info,                         /* Get formatted string for a specific register */
+		m6502_dasm, 						/* Disassemble one instruction */
         1,                                  /* Number of IRQ lines */
 		&m6502_ICount,						/* Pointer to the instruction count */
 		M6502_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
@@ -397,7 +403,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_M65C02)
     {
-		CPU_M65C02,3,						/* CPU number and family cores sharing resources */
+		CPU_M65C02, 						/* CPU number and family cores sharing resources */
         m65c02_reset,                       /* Reset CPU */
 		m65c02_exit,						/* Shut down the CPU */
 		m65c02_execute, 					/* Execute a number of cycles */
@@ -416,6 +422,7 @@ struct cpu_interface cpuintf[] =
 		m65c02_state_save,					/* Save CPU state */
 		m65c02_state_load,					/* Load CPU state */
         m65c02_info,                        /* Get formatted string for a specific register */
+		m65c02_dasm,						/* Disassemble one instruction */
         1,                                  /* Number of IRQ lines */
 		&m65c02_ICount, 					/* Pointer to the instruction count */
 		M65C02_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
@@ -430,7 +437,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_M6510)
     {
-		CPU_M6510,3,						/* CPU number and family cores sharing resources */
+		CPU_M6510,							/* CPU number and family cores sharing resources */
         m6510_reset,                        /* Reset CPU */
 		m6510_exit, 						/* Shut down the CPU */
 		m6510_execute,						/* Execute a number of cycles */
@@ -449,6 +456,7 @@ struct cpu_interface cpuintf[] =
 		m6510_state_save,					/* Save CPU state */
 		m6510_state_load,					/* Load CPU state */
         m6510_info,                         /* Get formatted string for a specific register */
+		m6510_dasm, 						/* Disassemble one instruction */
         1,                                  /* Number of IRQ lines */
 		&m6510_ICount,						/* Pointer to the instruction count */
 		M6510_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
@@ -463,7 +471,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_H6280)
     {
-		CPU_H6280,4,						/* CPU number and family cores sharing resources */
+		CPU_H6280,							/* CPU number and family cores sharing resources */
         h6280_reset,                        /* Reset CPU */
 		h6280_exit, 						/* Shut down the CPU */
 		h6280_execute,						/* Execute a number of cycles */
@@ -482,7 +490,8 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Save CPU state */
 		NULL,								/* Load CPU state */
         h6280_info,                         /* Get formatted string for a specific register */
-		3,									/* Number of IRQ lines */
+		h6280_dasm, 						/* Disassemble one instruction */
+        3,                                  /* Number of IRQ lines */
 		&h6280_ICount,						/* Pointer to the instruction count */
 		H6280_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		-1,
@@ -496,7 +505,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_I86)
     {
-		CPU_I86,5,							/* CPU number and family cores sharing resources */
+		CPU_I86,							/* CPU number and family cores sharing resources */
         i86_reset,                          /* Reset CPU */
 		i86_exit,							/* Shut down the CPU */
 		i86_execute,						/* Execute a number of cycles */
@@ -515,6 +524,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Save CPU state */
 		NULL,								/* Load CPU state */
         i86_info,                           /* Get formatted string for a specific register */
+		i86_dasm,							/* Disassemble one instruction */
         1,                                  /* Number of IRQ lines */
 		&i86_ICount,						/* Pointer to the instruction count */
 		I86_INT_NONE,						/* Interrupt types: none, IRQ, NMI */
@@ -529,7 +539,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_I8035)
     {
-		CPU_I8035,6,						/* CPU number and family cores sharing resources */
+		CPU_I8035,							/* CPU number and family cores sharing resources */
         i8035_reset,                        /* Reset CPU */
 		i8035_exit, 						/* Shut down the CPU */
 		i8035_execute,						/* Execute a number of cycles */
@@ -548,6 +558,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Save CPU state */
 		NULL,								/* Load CPU state */
         i8035_info,                         /* Get formatted string for a specific register */
+		i8035_dasm, 						/* Disassemble one instruction */
         1,                                  /* Number of IRQ lines */
 		&i8035_ICount,						/* Pointer to the instruction count */
 		I8035_IGNORE_INT,					/* Interrupt types: none, IRQ, NMI */
@@ -562,7 +573,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_I8039)
     {
-		CPU_I8039,6,						/* CPU number and family cores sharing resources */
+		CPU_I8039,							/* CPU number and family cores sharing resources */
         i8039_reset,                        /* Reset CPU */
 		i8039_exit, 						/* Shut down the CPU */
 		i8039_execute,						/* Execute a number of cycles */
@@ -581,6 +592,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Save CPU state */
 		NULL,								/* Load CPU state */
         i8039_info,                         /* Get formatted string for a specific register */
+		i8039_dasm, 						/* Disassemble one instruction */
         1,                                  /* Number of IRQ lines */
 		&i8039_ICount,						/* Pointer to the instruction count */
 		I8039_IGNORE_INT,					/* Interrupt types: none, IRQ, NMI */
@@ -595,7 +607,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_I8048)
     {
-		CPU_I8048,6,						/* CPU number and family cores sharing resources */
+		CPU_I8048,							/* CPU number and family cores sharing resources */
         i8048_reset,                        /* Reset CPU */
 		i8048_exit, 						/* Shut down the CPU */
 		i8048_execute,						/* Execute a number of cycles */
@@ -614,6 +626,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Save CPU state */
 		NULL,								/* Load CPU state */
         i8048_info,                         /* Get formatted string for a specific register */
+		i8048_dasm, 						/* Disassemble one instruction */
         1,                                  /* Number of IRQ lines */
 		&i8048_ICount,						/* Pointer to the instruction count */
 		I8048_IGNORE_INT,					/* Interrupt types: none, IRQ, NMI */
@@ -628,7 +641,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_N7751)
     {
-		CPU_N7751,6,						/* CPU number and family cores sharing resources */
+		CPU_N7751,							/* CPU number and family cores sharing resources */
         n7751_reset,                        /* Reset CPU */
 		n7751_exit, 						/* Shut down the CPU */
 		n7751_execute,						/* Execute a number of cycles */
@@ -647,6 +660,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Save CPU state */
 		NULL,								/* Load CPU state */
         n7751_info,                         /* Get formatted string for a specific register */
+		n7751_dasm, 						/* Disassemble one instruction */
         1,                                  /* Number of IRQ lines */
 		&n7751_ICount,						/* Pointer to the instruction count */
 		N7751_IGNORE_INT,					/* Interrupt types: none, IRQ, NMI */
@@ -661,7 +675,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_M6800)
     {
-		CPU_M6800,7,						/* CPU number and family cores sharing resources */
+		CPU_M6800,							/* CPU number and family cores sharing resources */
         m6800_reset,                        /* Reset CPU */
 		m6800_exit, 						/* Shut down the CPU */
 		m6800_execute,						/* Execute a number of cycles */
@@ -680,7 +694,8 @@ struct cpu_interface cpuintf[] =
 		m6800_state_save,					/* Save CPU state */
 		m6800_state_load,					/* Load CPU state */
 		m6800_info, 						/* Get formatted string for a specific register */
-		2,									/* Number of IRQ lines */
+		m6800_dasm, 						/* Disassemble one instruction */
+        2,                                  /* Number of IRQ lines */
 		&m6800_ICount,						/* Pointer to the instruction count */
 		M6800_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		M6800_INT_IRQ,
@@ -694,7 +709,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_M6801)
     {
-		CPU_M6801,7,						/* CPU number and family cores sharing resources */
+		CPU_M6801,							/* CPU number and family cores sharing resources */
         m6801_reset,                        /* Reset CPU */
 		m6801_exit, 						/* Shut down the CPU */
 		m6801_execute,						/* Execute a number of cycles */
@@ -713,7 +728,8 @@ struct cpu_interface cpuintf[] =
 		m6801_state_save,					/* Save CPU state */
 		m6801_state_load,					/* Load CPU state */
 		m6801_info, 						/* Get formatted string for a specific register */
-		2,									/* Number of IRQ lines */
+		m6801_dasm, 						/* Disassemble one instruction */
+        2,                                  /* Number of IRQ lines */
 		&m6801_ICount,						/* Pointer to the instruction count */
 		M6801_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		M6801_INT_IRQ,
@@ -727,7 +743,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_M6802)
     {
-		CPU_M6802,7,						/* CPU number and family cores sharing resources */
+		CPU_M6802,							/* CPU number and family cores sharing resources */
         m6802_reset,                        /* Reset CPU */
 		m6802_exit, 						/* Shut down the CPU */
 		m6802_execute,						/* Execute a number of cycles */
@@ -746,7 +762,8 @@ struct cpu_interface cpuintf[] =
 		m6802_state_save,					/* Save CPU state */
 		m6802_state_load,					/* Load CPU state */
         m6802_info,                         /* Get formatted string for a specific register */
-		2,									/* Number of IRQ lines */
+		m6802_dasm, 						/* Disassemble one instruction */
+        2,                                  /* Number of IRQ lines */
 		&m6802_ICount,						/* Pointer to the instruction count */
 		M6802_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		M6802_INT_IRQ,
@@ -760,7 +777,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_M6803)
     {
-		CPU_M6803,7,						/* CPU number and family cores sharing resources */
+		CPU_M6803,							/* CPU number and family cores sharing resources */
         m6803_reset,                        /* Reset CPU */
 		m6803_exit, 						/* Shut down the CPU */
 		m6803_execute,						/* Execute a number of cycles */
@@ -779,7 +796,8 @@ struct cpu_interface cpuintf[] =
 		m6803_state_save,					/* Save CPU state */
 		m6803_state_load,					/* Load CPU state */
         m6803_info,                         /* Get formatted string for a specific register */
-		2,									/* Number of IRQ lines */
+		m6803_dasm, 						/* Disassemble one instruction */
+        2,                                  /* Number of IRQ lines */
 		&m6803_ICount,						/* Pointer to the instruction count */
 		M6803_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		M6803_INT_IRQ,
@@ -793,7 +811,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_M6808)
     {
-		CPU_M6808,7,						/* CPU number and family cores sharing resources */
+		CPU_M6808,							/* CPU number and family cores sharing resources */
         m6808_reset,                        /* Reset CPU */
 		m6808_exit, 						/* Shut down the CPU */
         m6808_execute,                      /* Execute a number of cycles */
@@ -812,7 +830,8 @@ struct cpu_interface cpuintf[] =
 		m6808_state_save,					/* Save CPU state */
 		m6808_state_load,					/* Load CPU state */
         m6808_info,                         /* Get formatted string for a specific register */
-		2,									/* Number of IRQ lines */
+		m6808_dasm, 						/* Disassemble one instruction */
+        2,                                  /* Number of IRQ lines */
 		&m6808_ICount,						/* Pointer to the instruction count */
 		M6808_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		M6808_INT_IRQ,
@@ -826,7 +845,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_HD63701)
     {
-		CPU_HD63701,7,						/* CPU number and family cores sharing resources */
+		CPU_HD63701,						/* CPU number and family cores sharing resources */
         hd63701_reset,                      /* Reset CPU */
 		hd63701_exit,						/* Shut down the CPU */
 		hd63701_execute,					/* Execute a number of cycles */
@@ -845,7 +864,8 @@ struct cpu_interface cpuintf[] =
 		hd63701_state_save, 				/* Save CPU state */
 		hd63701_state_load, 				/* Load CPU state */
         hd63701_info,                       /* Get formatted string for a specific register */
-		2,									/* Number of IRQ lines */
+		hd63701_dasm,						/* Disassemble one instruction */
+        2,                                  /* Number of IRQ lines */
 		&hd63701_ICount,					/* Pointer to the instruction count */
 		HD63701_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
 		HD63701_INT_IRQ,
@@ -859,7 +879,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_M6805)
     {
-		CPU_M6805,8,						/* CPU number and family cores sharing resources */
+		CPU_M6805,							/* CPU number and family cores sharing resources */
         m6805_reset,                        /* Reset CPU */
 		m6805_exit, 						/* Shut down the CPU */
         m6805_execute,                      /* Execute a number of cycles */
@@ -878,6 +898,7 @@ struct cpu_interface cpuintf[] =
 		m6805_state_save,					/* Save CPU state */
 		m6805_state_load,					/* Load CPU state */
         m6805_info,                         /* Get formatted string for a specific register */
+		m6805_dasm, 						/* Disassemble one instruction */
         1,                                  /* Number of IRQ lines */
 		&m6805_ICount,						/* Pointer to the instruction count */
 		M6805_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
@@ -892,7 +913,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_M68705)
     {
-		CPU_M68705,8,						/* CPU number and family cores sharing resources */
+		CPU_M68705, 						/* CPU number and family cores sharing resources */
         m68705_reset,                       /* Reset CPU */
 		m68705_exit,						/* Shut down the CPU */
 		m68705_execute, 					/* Execute a number of cycles */
@@ -907,10 +928,11 @@ struct cpu_interface cpuintf[] =
         m68705_set_nmi_line,                /* Set state of the NMI line */
 		m68705_set_irq_line,				/* Set state of the IRQ line */
 		m68705_set_irq_callback,			/* Set IRQ enable/vector callback */
-		NULL,								/* Cause internal interrupt */
+        NULL,                               /* Cause internal interrupt */
 		m68705_state_save,					/* Save CPU state */
 		m68705_state_load,					/* Load CPU state */
         m68705_info,                        /* Get formatted string for a specific register */
+		m68705_dasm,						/* Disassemble one instruction */
         1,                                  /* Number of IRQ lines */
 		&m68705_ICount, 					/* Pointer to the instruction count */
 		M68705_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
@@ -925,7 +947,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_HD63705)
     {
-		CPU_HD63705,8,						/* CPU number and family cores sharing resources */
+		CPU_HD63705,						/* CPU number and family cores sharing resources */
 		hd63705_reset,						/* Reset CPU */
 		hd63705_exit,						/* Shut down the CPU */
 		hd63705_execute,					/* Execute a number of cycles */
@@ -940,10 +962,11 @@ struct cpu_interface cpuintf[] =
 		hd63705_set_nmi_line,				/* Set state of the NMI line */
 		hd63705_set_irq_line,				/* Set state of the IRQ line */
 		hd63705_set_irq_callback,			/* Set IRQ enable/vector callback */
-		NULL,								/* Cause internal interrupt */
+        NULL,                               /* Cause internal interrupt */
 		hd63705_state_save, 				/* Save CPU state */
 		hd63705_state_load, 				/* Load CPU state */
 		hd63705_info,						/* Get formatted string for a specific register */
+		hd63705_dasm,						/* Disassemble one instruction */
         1,                                  /* Number of IRQ lines */
 		&hd63705_ICount,					/* Pointer to the instruction count */
 		HD63705_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
@@ -958,7 +981,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_M6309)
     {
-		CPU_M6309,9,						/* CPU number and family cores sharing resources */
+		CPU_M6309,							/* CPU number and family cores sharing resources */
         m6309_reset,                        /* Reset CPU */
 		m6309_exit, 						/* Shut down the CPU */
 		m6309_execute,						/* Execute a number of cycles */
@@ -977,6 +1000,7 @@ struct cpu_interface cpuintf[] =
 		m6309_state_save,					/* Save CPU state */
 		m6309_state_load,					/* Load CPU state */
         m6309_info,                         /* Get formatted string for a specific register */
+		m6309_dasm, 						/* Disassemble one instruction */
         2,                                  /* Number of IRQ lines */
 		&m6309_ICount,						/* Pointer to the instruction count */
 		M6309_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
@@ -991,7 +1015,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_M6809)
     {
-		CPU_M6809,9,						/* CPU number and family cores sharing resources */
+		CPU_M6809,							/* CPU number and family cores sharing resources */
         m6809_reset,                        /* Reset CPU */
 		m6809_exit, 						/* Shut down the CPU */
         m6809_execute,                      /* Execute a number of cycles */
@@ -1010,6 +1034,7 @@ struct cpu_interface cpuintf[] =
 		m6809_state_save,					/* Save CPU state */
 		m6809_state_load,					/* Load CPU state */
         m6809_info,                         /* Get formatted string for a specific register */
+		m6809_dasm, 						/* Disassemble one instruction */
         2,                                  /* Number of IRQ lines */
 		&m6809_ICount,						/* Pointer to the instruction count */
 		M6809_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
@@ -1024,7 +1049,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_M68000)
     {
-		CPU_M68000,10,						/* CPU number and family cores sharing resources */
+		CPU_M68000, 						/* CPU number and family cores sharing resources */
         m68000_reset,                       /* Reset CPU */
 		m68000_exit,						/* Shut down the CPU */
 		m68000_execute, 					/* Execute a number of cycles */
@@ -1043,6 +1068,7 @@ struct cpu_interface cpuintf[] =
         NULL,                               /* Save CPU state */
         NULL,                               /* Load CPU state */
         m68000_info,                        /* Get formatted string for a specific register */
+		m68000_dasm,						/* Disassemble one instruction */
         8,                                  /* Number of IRQ lines */
 		&m68000_ICount, 					/* Pointer to the instruction count */
 		MC68000_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
@@ -1057,7 +1083,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_M68010)
     {
-		CPU_M68010,10,						/* CPU number and family cores sharing resources */
+		CPU_M68010, 						/* CPU number and family cores sharing resources */
         m68010_reset,                       /* Reset CPU */
 		m68010_exit,						/* Shut down the CPU */
 		m68010_execute, 					/* Execute a number of cycles */
@@ -1076,6 +1102,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Save CPU state */
 		NULL,								/* Load CPU state */
 		m68010_info,						/* Get formatted string for a specific register */
+		m68010_dasm,						/* Disassemble one instruction */
         8,                                  /* Number of IRQ lines */
 		&m68010_ICount, 					/* Pointer to the instruction count */
 		MC68010_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
@@ -1090,7 +1117,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_M68020)
     {
-		CPU_M68020,10,						/* CPU number and family cores sharing resources */
+		CPU_M68020, 						/* CPU number and family cores sharing resources */
         m68020_reset,                       /* Reset CPU */
 		m68020_exit,						/* Shut down the CPU */
 		m68020_execute, 					/* Execute a number of cycles */
@@ -1109,6 +1136,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Save CPU state */
 		NULL,								/* Load CPU state */
 		m68020_info,						/* Get formatted string for a specific register */
+		m68020_dasm,						/* Disassemble one instruction */
         8,                                  /* Number of IRQ lines */
 		&m68020_ICount, 					/* Pointer to the instruction count */
 		MC68020_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
@@ -1123,7 +1151,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_T11)
     {
-		CPU_T11,11, 						/* CPU number and family cores sharing resources */
+		CPU_T11,							/* CPU number and family cores sharing resources */
         t11_reset,                          /* Reset CPU */
 		t11_exit,							/* Shut down the CPU */
         t11_execute,                        /* Execute a number of cycles */
@@ -1142,6 +1170,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Save CPU state */
 		NULL,								/* Load CPU state */
         t11_info,                           /* Get formatted string for a specific register */
+		t11_dasm,							/* Disassemble one instruction */
         4,                                  /* Number of IRQ lines */
 		&t11_ICount,						/* Pointer to the instruction count */
 		T11_INT_NONE,						/* Interrupt types: none, IRQ, NMI */
@@ -1156,7 +1185,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_S2650)
     {
-		CPU_S2650,12,						/* CPU number and family cores sharing resources */
+		CPU_S2650,							/* CPU number and family cores sharing resources */
         s2650_reset,                        /* Reset CPU */
 		s2650_exit, 						/* Shut down the CPU */
 		s2650_execute,						/* Execute a number of cycles */
@@ -1175,6 +1204,7 @@ struct cpu_interface cpuintf[] =
 		s2650_state_save,					/* Save CPU state */
 		s2650_state_load,					/* Load CPU state */
         s2650_info,                         /* Get formatted string for a specific register */
+		s2650_dasm, 						/* Disassemble one instruction */
         2,                                  /* Number of IRQ lines */
 		&s2650_ICount,						/* Pointer to the instruction count */
 		S2650_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
@@ -1189,7 +1219,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_TMS34010)
     {
-		CPU_TMS34010,13,					/* CPU number and family cores sharing resources */
+		CPU_TMS34010,						/* CPU number and family cores sharing resources */
         tms34010_reset,                     /* Reset CPU */
 		tms34010_exit,						/* Shut down the CPU */
 		tms34010_execute,					/* Execute a number of cycles */
@@ -1208,6 +1238,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Save CPU state */
 		NULL,								/* Load CPU state */
 		tms34010_info,						/* Get formatted string for a specific register */
+		tms34010_dasm,						/* Disassemble one instruction */
         2,                                  /* Number of IRQ lines */
 		&tms34010_ICount,					/* Pointer to the instruction count */
 		TMS34010_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
@@ -1222,7 +1253,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_TMS9900)
     {
-		CPU_TMS9900,14, 					/* CPU number and family cores sharing resources */
+		CPU_TMS9900,						/* CPU number and family cores sharing resources */
         tms9900_reset,                      /* Reset CPU */
 		tms9900_exit,						/* Shut down the CPU */
 		tms9900_execute,					/* Execute a number of cycles */
@@ -1241,6 +1272,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Save CPU state */
 		NULL,								/* Load CPU state */
 		tms9900_info,						/* Get formatted string for a specific register */
+		tms9900_dasm,						/* Disassemble one instruction */
         1,                                  /* Number of IRQ lines */
 		&tms9900_ICount,					/* Pointer to the instruction count */
 		TMS9900_NONE,						/* Interrupt types: none, IRQ, NMI */
@@ -1249,14 +1281,13 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		29,CPU_IS_BE,2,6,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		16,CPU_IS_BE,2,6,					/* CPU address bits, endianess, align unit, max. instruction length  */
         ABITS1_16,ABITS2_16,ABITS_MIN_16    /* Address bits, for the memory system */
-        /* Were all ...LEW */
 	},
 #endif
 #if (HAS_Z8000)
     {
-		CPU_Z8000,15,						/* CPU number and family cores sharing resources */
+		CPU_Z8000,							/* CPU number and family cores sharing resources */
         z8000_reset,                        /* Reset CPU */
 		z8000_exit, 						/* Shut down the CPU */
 		z8000_execute,						/* Execute a number of cycles */
@@ -1275,6 +1306,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Save CPU state */
 		NULL,								/* Load CPU state */
         z8000_info,                         /* Get formatted string for a specific register */
+		z8000_dasm, 						/* Disassemble one instruction */
         2,                                  /* Number of IRQ lines */
 		&z8000_ICount,						/* Pointer to the instruction count */
 		Z8000_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
@@ -1289,7 +1321,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_TMS320C10)
     {
-		CPU_TMS320C10,16,					/* CPU number and family cores sharing resources */
+		CPU_TMS320C10,						/* CPU number and family cores sharing resources */
         tms320c10_reset,                    /* Reset CPU */
 		tms320c10_exit, 					/* Shut down the CPU */
 		tms320c10_execute,					/* Execute a number of cycles */
@@ -1308,7 +1340,8 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Save CPU state */
 		NULL,								/* Load CPU state */
 		tms320c10_info, 					/* Get formatted string for a specific register */
-		2,									/* Number of IRQ lines */
+		tms320c10_dasm, 					/* Disassemble one instruction */
+        2,                                  /* Number of IRQ lines */
 		&tms320c10_ICount,					/* Pointer to the instruction count */
 		TMS320C10_INT_NONE, 				/* Interrupt types: none, IRQ, NMI */
 		-1,
@@ -1322,7 +1355,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_CCPU)
     {
-		CPU_CCPU,17,						/* CPU number and family cores sharing resources */
+		CPU_CCPU,							/* CPU number and family cores sharing resources */
         ccpu_reset,                         /* Reset CPU  */
 		ccpu_exit,							/* Shut down CPU  */
 		ccpu_execute,						/* Execute a number of cycles  */
@@ -1341,9 +1374,12 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Save CPU state */
 		NULL,								/* Load CPU state */
 		ccpu_info,							/* Get formatted string for a specific register */
+		ccpu_dasm,							/* Disassemble one instruction */
         2,                                  /* Number of IRQ lines */
 		&ccpu_ICount,						/* Pointer to the instruction count  */
-		0,-1,-1,							/* Interrupt types: none, IRQ, NMI	*/
+		0,								   /* Interrupt types: none, IRQ, NMI  */
+		-1,
+		-1,
 		cpu_readmem16,						/* Memory read	*/
 		cpu_writemem16, 					/* Memory write  */
 		cpu_setOPbase16,					/* Update CPU opcode base  */
@@ -1353,7 +1389,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_PDP1)
     {
-		CPU_PDP1,18,						/* CPU number and family cores sharing resources */
+		CPU_PDP1,							/* CPU number and family cores sharing resources */
         pdp1_reset,                         /* Reset CPU  */
 		pdp1_exit,							/* Shut down CPU  */
 		pdp1_execute,						/* Execute a number of cycles  */
@@ -1372,9 +1408,12 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Save CPU state */
 		NULL,								/* Load CPU state */
 		pdp1_info,							/* Get formatted string for a specific register */
-		0,									/* Number of IRQ lines */
+		pdp1_dasm,							/* Disassemble one instruction */
+        0,                                  /* Number of IRQ lines */
 		&pdp1_ICount,						/* Pointer to the instruction count  */
-		0,-1,-1,							/* Interrupt types: none, IRQ, NMI	*/
+		0,									/* Interrupt types: none, IRQ, NMI	*/
+		-1,
+		-1,
 		cpu_readmem16,						/* Memory read	*/
 		cpu_writemem16, 					/* Memory write  */
 		cpu_setOPbase16,					/* Update CPU opcode base  */
@@ -1426,6 +1465,7 @@ void cpu_run(void)
     /* determine which CPUs need a context switch */
 	for (i = 0; i < totalcpu; i++)
 	{
+		const char *f1, *f2;
 		int j, size;
 
         /* allocate a context buffer for the CPU */
@@ -1452,7 +1492,7 @@ void cpu_run(void)
 		cpu[i].save_context = 0;
 
 		for (j = 0; j < totalcpu; j++)
-			if ( i != j && CPU_FAMILY(i) == CPU_FAMILY(j) )
+			if ( i != j && !strcmp(cpunum_core_file(i),cpunum_core_file(j)) )
 				cpu[i].save_context = 1;
 
 		#ifdef MAME_DEBUG
@@ -1465,6 +1505,12 @@ void cpu_run(void)
 
 		#endif
 	}
+
+#ifdef	MAME_DEBUG
+	/* Initialize the debugger */
+	if( mame_debug )
+		mame_debug_init();
+#endif
 
 reset:
 	/* initialize the various timers (suspends all CPUs at startup) */
@@ -1533,7 +1579,7 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 		}
         osd_profiler(OSD_PROFILE_EXTRA);
 
-#if 1
+#if SAVE_STATE_TEST
         {
             static int pressed_s = 0;
             static int pressed_l = 0;
@@ -1625,7 +1671,13 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
     if (Machine->drv->stop_machine) (*Machine->drv->stop_machine)();
 #endif
 
-	/* shut down the CPU cores */
+#ifdef	MAME_DEBUG
+	/* Shut down the debugger */
+    if( mame_debug )
+		mame_debug_exit();
+#endif
+
+    /* shut down the CPU cores */
 	for (i = 0; i < totalcpu; i++)
 	{
 		/* if the CPU core defines an exit function, call it now */
@@ -1768,26 +1820,6 @@ void cpu_set_sp(unsigned val)
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
 	SETSP (cpunum,val);
 }
-
-
-/***************************************************************************
-
-  This is similar to cpu_get_pc(), but instead of returning the current PC,
-  it returns the address of the opcode that is doing the read/write. The PC
-  has already been incremented by some unknown amount by the time the actual
-  read or write is being executed. This helps to figure out what opcode is
-  actually doing the reading or writing, and therefore the amount of cycles
-  it's taking. The Missile Command driver needs to know this.
-
-  WARNING: this function might return -1, meaning that there isn't a valid
-  previouspc (e.g. a memory push caused by an interrupt).
-
-***************************************************************************/
-int cpu_getpreviouspc(void)  /* -RAY- */
-{
-	return previouspc;
-}
-
 
 /* these are available externally, for the timer system */
 int cycles_currently_ran(void)
@@ -3253,33 +3285,34 @@ const char *cpu_win_layout(void)
 }
 
 /***************************************************************************
-  Returns the current program counter for the active CPU
-***************************************************************************/
-const char *cpu_pc(void)
-{
-	if( activecpu >= 0 )
-		return CPUINFO(activecpu,NULL,CPU_INFO_PC);
-	return "";
-}
-
-/***************************************************************************
-  Returns the current stack pointer for the active CPU
-***************************************************************************/
-const char *cpu_sp(void)
-{
-	if( activecpu >= 0 )
-		return CPUINFO(activecpu,NULL,CPU_INFO_SP);
-	return "";
-}
-
-/***************************************************************************
   Returns a dissassembled instruction for the active CPU
 ***************************************************************************/
-const char *cpu_dasm(void)
+unsigned cpu_dasm(char *buffer, unsigned pc)
 {
+	UINT8 *base;
+/*
+ * Unfortunately we need some kludges here :(
+ * I'm not entirely sure if &ROM[pc] and &OP_ROM[pc]
+ * couldn't be the same, though.
+ */
+	switch( CPU_TYPE(activecpu) )
+	{
+#if (HAS_I86)
+	case CPU_I86:
+		base = &OP_ROM[pc];
+		break;
+#endif
+#if (HAS_TMS34010)
+	case CPU_TMS34010:
+		base = &OP_ROM[pc>>3];
+        break;
+#endif
+    default:
+		base = &ROM[pc];
+    }
     if( activecpu >= 0 )
-		return CPUINFO(activecpu,NULL,CPU_INFO_DASM);
-    return "";
+		return CPUDASM(activecpu,base,buffer,pc);
+	return 0;
 }
 
 /***************************************************************************
@@ -3308,11 +3341,12 @@ const char *cpu_dump_reg(int regnum)
 const char *cpu_dump_state(void)
 {
 	static char buffer[1024+1];
+	unsigned addr_width = (cpu_address_bits() + 3) / 4;
 	char *dst = buffer;
 	const char *src, *regs;
 	int regnum, width;
 
-	dst += sprintf(dst, "\nCPU #%d [%s]\n", activecpu, cputype_name(CPU_TYPE(activecpu)));
+	dst += sprintf(dst, "CPU #%d [%s]\n", activecpu, cputype_name(CPU_TYPE(activecpu)));
 	width = 0;
 	regs = cpu_reg_layout();
 	while( *regs )
@@ -3338,7 +3372,9 @@ const char *cpu_dump_state(void)
 		}
 		regs++;
 	}
-	dst += sprintf(dst, "\n%s %s\n", cpu_pc(), cpu_dasm());
+	dst += sprintf(dst, "\n%0*X: ", addr_width, cpu_get_pc());
+	cpu_dasm( dst, cpu_get_pc() );
+	strcat(dst, "\n\n");
 
     return buffer;
 }
@@ -3563,7 +3599,7 @@ const char *cpunum_core_version(int cpunum)
 const char *cpunum_core_file(int cpunum)
 {
     if( cpunum < totalcpu )
-        return cputype_core_version(CPU_TYPE(cpunum));
+		return cputype_core_file(CPU_TYPE(cpunum));
     return "";
 }
 
@@ -3573,7 +3609,7 @@ const char *cpunum_core_file(int cpunum)
 const char *cpunum_core_credits(int cpunum)
 {
     if( cpunum < totalcpu )
-        return cputype_core_version(CPU_TYPE(cpunum));
+		return cputype_core_credits(CPU_TYPE(cpunum));
     return "";
 }
 
@@ -3605,6 +3641,9 @@ unsigned cpunum_get_reg(int cpunum, int regnum)
     int oldactive;
     unsigned val = 0;
 
+	if( cpunum == activecpu )
+		return cpu_get_reg( regnum );
+
     /* swap to the CPU's context */
     oldactive = activecpu;
     activecpu = cpunum;
@@ -3628,6 +3667,12 @@ void cpunum_set_reg(int cpunum, int regnum, unsigned val)
 {
     int oldactive;
 
+	if( cpunum == activecpu )
+	{
+		cpu_set_reg( regnum, val );
+		return;
+	}
+
     /* swap to the CPU's context */
     oldactive = activecpu;
     activecpu = cpunum;
@@ -3643,71 +3688,16 @@ void cpunum_set_reg(int cpunum, int regnum, unsigned val)
 }
 
 /***************************************************************************
-  Return the current program counter, formatted as a hex string with a
-  colon, for a specific CPU number of the running machine
-***************************************************************************/
-const char *cpunum_pc(int cpunum)
-{
-	const char *result;
-	int oldactive;
-
-	if( cpunum == activecpu )
-		return cpu_pc();
-
-    /* swap to the CPU's context */
-	oldactive = activecpu;
-    activecpu = cpunum;
-    memorycontextswap (activecpu);
-	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
-
-	result = CPUINFO(activecpu,NULL,CPU_INFO_PC);
-
-    /* update the CPU's context */
-    if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
-	activecpu = oldactive;
-    if (activecpu >= 0) memorycontextswap (activecpu);
-
-    return result;
-}
-
-/***************************************************************************
-  Return the current stack pointer, formatted as a hex string,
-  for a specific CPU number of the running machine
-***************************************************************************/
-const char *cpunum_sp(int cpunum)
-{
-	const char *result;
-	int oldactive;
-
-	if( cpunum == activecpu )
-		return cpu_sp();
-
-    /* swap to the CPU's context */
-	oldactive = activecpu;
-    activecpu = cpunum;
-    memorycontextswap (activecpu);
-	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
-
-	result = CPUINFO(activecpu,NULL,CPU_INFO_SP);
-
-    /* update the CPU's context */
-    if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
-	activecpu = oldactive;
-    if (activecpu >= 0) memorycontextswap (activecpu);
-
-    return result;
-}
-
-/***************************************************************************
   Return a dissassembled instruction for a specific CPU
 ***************************************************************************/
-const char *cpunum_dasm(int cpunum)
+unsigned cpunum_dasm(int cpunum,char *buffer,unsigned pc)
 {
-	const char *result;
+	UINT8 *base;
+	unsigned result;
 	int oldactive;
 
 	if( cpunum == activecpu )
-		return cpu_dasm();
+		return cpu_dasm(buffer,pc);
 
     /* swap to the CPU's context */
 	oldactive = activecpu;
@@ -3715,7 +3705,27 @@ const char *cpunum_dasm(int cpunum)
     memorycontextswap (activecpu);
 	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
 
-	result = CPUINFO(activecpu,NULL,CPU_INFO_DASM);
+/*
+ * Unfortunately we need some kludges here :(
+ * I'm not entirely sure if &ROM[pc] and &OP_ROM[pc]
+ * couldn't be the same, though.
+ */
+	switch( CPU_TYPE(activecpu) )
+	{
+#if (HAS_I86)
+	case CPU_I86:
+		base = &OP_ROM[pc];
+		break;
+#endif
+#if (HAS_TMS34010)
+	case CPU_TMS34010:
+		base = &OP_ROM[pc>>3];
+        break;
+#endif
+    default:
+		base = &ROM[pc];
+    }
+    result = CPUDASM(activecpu,base,buffer,pc);
 
 	/* update the CPU's context */
     if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
@@ -3785,37 +3795,20 @@ const char *cpunum_dump_reg(int cpunum, int regnum)
 const char *cpunum_dump_state(int cpunum)
 {
 	static char buffer[1024+1];
-	char *dst = buffer;
-	const char *src, *regs;
-	int width;
+	int oldactive;
 
-	dst += sprintf(dst, "\nCPU #%d [%s]\n", cpunum, cpunum_name(cpunum));
-	width = 0;
-	regs = cpunum_reg_layout(cpunum);
-	while( *regs )
-	{
-		if( *regs == -1 )
-		{
-			dst += sprintf(dst, "\n");
-			width = 0;
-		}
-		else
-		{
-			src = cpunum_dump_reg( cpunum, *regs );
-			if( *src )
-			{
-				if( width + strlen(src) + 1 >= 80 )
-				{
-					dst += sprintf(dst, "\n");
-					width = 0;
-				}
-				dst += sprintf(dst, "%s ", src);
-				width += strlen(src) + 1;
-			}
-		}
-		regs++;
-    }
-	dst += sprintf(dst, "\n%s %s\n", cpunum_pc(cpunum), cpunum_dasm(cpunum));
+	/* swap to the CPU's context */
+	oldactive = activecpu;
+    activecpu = cpunum;
+    memorycontextswap (activecpu);
+	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+
+	strcpy( buffer, cpu_dump_state() );
+
+	/* update the CPU's context */
+    if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
+	activecpu = oldactive;
+    if (activecpu >= 0) memorycontextswap (activecpu);
 
     return buffer;
 }
@@ -3829,8 +3822,9 @@ void cpu_dump_states(void)
 	for( i = 0; i < MAX_CPU; i++ )
 	{
 		if( CPU_TYPE(i) != CPU_DUMMY )
-			fprintf(stderr, "%s\n", cpunum_dump_state(i));
+			fputs( cpunum_dump_state(i), stderr );
 	}
+	fflush(stderr);
 }
 
 /***************************************************************************
@@ -3870,5 +3864,11 @@ static const char *Dummy_info(void *context, int regnum)
 		case CPU_INFO_CREDITS: return "The MAME team.";
 	}
 	return "";
+}
+
+static unsigned Dummy_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+	strcpy(buffer, "???");
+	return 1;
 }
 

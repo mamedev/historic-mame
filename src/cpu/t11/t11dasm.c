@@ -7,253 +7,272 @@
  *
  */
 
-#include <string.h>
 #include <stdio.h>
-
-#include "memory.h"
+#include <string.h>
+#ifdef	MAME_DEBUG
+#include "driver.h"
+#include "t11.h"
 
 static char *regs[8] = { "R0", "R1", "R2", "R3", "R4", "R5", "SP", "PC" };
+static UINT8 ridx[8] = { T11_R0,T11_R1,T11_R2,T11_R3,T11_R4,T11_R5,T11_SP,T11_PC };
 
 #define PARAM_WORD(v) ((v) = cpu_readmem16lew_word (pc), pc += 2)
+#define RWORD(a)	cpu_readmem16lew_word(a)
 
-/* PM 980508: access mode for symbols */
-#define JUMP            0
-#define READ            1
-#define WRITE           2
-#define READWRITE       3
-
-/* return symbol name for addr or default to $%X */
-static char *symbol (unsigned addr, int amode)
+unsigned MakeEA (char **ea, int is_src, int lo, unsigned pc, int size, int amode)
 {
-static char buffer[2][32];
-static int which = 0;
-        which ^= 1;
-		sprintf(buffer[which], "$%X", addr);
-        return buffer[which];
-}
+    static char buffer[2][80];
+	static int which = 0;
+	const char *symbol;
+    char *dst;
+	int reg, pm;
 
-static char *MakeEA (int lo, int pc, int amode, int *count)
-{
-	static char buffer[2][80];
-        static int which = 0;
+    dst = buffer[which];
+    which ^= 1;
 
-	int pcbase = pc;
-	char *buf = buffer[which];
-	int reg = lo & 7, pm;
+    reg = lo & 7;
 
-	which ^= 1;
 	switch ((lo >> 3) & 7)
 	{
 		case 0:
-			sprintf (buf, "%s", regs[reg]);
+			sprintf (dst, "%s", regs[reg]);
 			break;
 		case 1:
-			sprintf (buf, "(%s)", regs[reg]);
+			sprintf (dst, "(%s)", regs[reg]);
+			set_ea_info( is_src, t11_get_reg(ridx[reg]), size, amode );
 			break;
 		case 2:
-			if (reg != 7)
-				sprintf (buf, "(%s)+", regs[reg]);
-			else
-			{
+			if (reg == 7)
+            {
 				PARAM_WORD (pm);
-                                sprintf (buf, "#$%X", pm & 0xffff);
-			}
-			break;
+                symbol = set_ea_info( is_src, pm, size, EA_VALUE );
+                sprintf (dst, "#%s", symbol);
+            }
+			else
+            {
+                set_ea_info( is_src, t11_get_reg(ridx[reg]), size, amode );
+                sprintf (dst, "(%s)+", regs[reg]);
+            }
+            break;
 		case 3:
-			if (reg != 7)
-				sprintf (buf, "@(%s)+", regs[reg]);
+			if (reg == 7)
+			{
+                PARAM_WORD (pm);
+                symbol = set_ea_info( is_src, pm, size, amode );
+                sprintf (dst, "%s", symbol);
+			}
 			else
 			{
-				PARAM_WORD (pm);
-                                sprintf (buf, "%s", symbol (pm & 0xffff, amode));
+                symbol = set_ea_info( is_src, RWORD(t11_get_reg(ridx[reg])), size, amode );
+                sprintf (dst, "@(%s)+", regs[reg]);
 			}
-			break;
+            break;
 		case 4:
-			sprintf (buf, "-(%s)", regs[reg]);
+			set_ea_info( is_src, t11_get_reg(ridx[reg]), size, amode );
+            sprintf (dst, "-(%s)", regs[reg]);
 			break;
 		case 5:
-			sprintf (buf, "@-(%s)", regs[reg]);
+			set_ea_info( is_src, RWORD(t11_get_reg(ridx[reg])), size, amode );
+			sprintf (dst, "@-(%s)", regs[reg]);
 			break;
 		case 6:
-                        PARAM_WORD (pm);
-                        if (reg == 7)
-                                sprintf(buf, "%s", symbol ((pc+pm) & 0xffff, amode));
-                        else
-                                sprintf(buf, "%s$%X(%s)",
-                                        (pm&0x8000)?"-":"",
-                                        (pm&0x8000)?-(signed short)pm:pm,
-                                        regs[reg]);
+			PARAM_WORD (pm);
+			symbol = set_ea_info( is_src, (t11_get_reg(ridx[reg])+pm) & 0xffff, size, amode );
+            if (reg == 7)
+				sprintf(dst, "%s", symbol);
+			else
+				sprintf(dst, "%s$%X(%s)",
+					(pm&0x8000)?"-":"",
+					(pm&0x8000)?-(signed short)pm:pm,
+					regs[reg]);
 			break;
 		case 7:
 			PARAM_WORD (pm);
-                        if (reg == 7)
-                                sprintf(buf, "@%s", symbol ((pc+pm) & 0xffff, amode));
-                        else
-                                sprintf(buf, "@%s$%X(%s)",
-                                        (pm&0x8000)?"-":"",
-                                        (pm&0x8000)?-(signed short)pm:pm,
-                                        regs[reg]);
-                        break;
+			symbol = set_ea_info( is_src, RWORD((t11_get_reg(ridx[reg])+pm) & 0xffff), size, amode );
+            if (reg == 7)
+				sprintf(dst, "@%s", symbol);
+			else
+				sprintf(dst, "@%s$%X(%s)",
+					(pm&0x8000)?"-":"",
+					(pm&0x8000)?-(signed short)pm:pm,
+					regs[reg]);
+			break;
 	}
 
-	*count = pc - pcbase;
-	return buf;
+	*ea = dst;
+    return pc;
 }
 
 
-int DasmT11 (unsigned char *pBase, char *buffer, int pc)
+unsigned DasmT11 (unsigned char *pBase, char *buffer, unsigned pc)
 {
-	char *ea, *ea2;
-	unsigned short op, lo;
-	int count, pcbase = pc;
+    const char *symbol;
+	char *dst = buffer, *ea1, *ea2;
+	unsigned PC = pc;
+	UINT16 op, lo, hi, addr;
+    INT16 offset;
 
 	PARAM_WORD(op);
-
-	lo = op & 077;
+    lo = op & 077;
+	hi = (op >> 6) & 077;
 
 	switch (op & 0xffc0)
 	{
 		case 0x0000:
 			switch (lo)
 			{
-				case 0x00:	sprintf (buffer, "HALT"); break;
-				case 0x01:	sprintf (buffer, "WAIT"); break;
-				case 0x02:	sprintf (buffer, "RTI"); break;
-				case 0x03:	sprintf (buffer, "BPT"); break;
-				case 0x04:	sprintf (buffer, "IOT"); break;
-				case 0x05:	sprintf (buffer, "RESET"); break;
-				case 0x06:	sprintf (buffer, "RTT"); break;
-				default: 	sprintf (buffer, "???? (%04X)", op); break;
+				case 0x00:	sprintf (dst, "HALT"); break;
+				case 0x01:	sprintf (dst, "WAIT"); break;
+				case 0x02:	sprintf (dst, "RTI"); break;
+				case 0x03:	sprintf (dst, "BPT"); break;
+				case 0x04:	sprintf (dst, "IOT"); break;
+				case 0x05:	sprintf (dst, "RESET"); break;
+				case 0x06:	sprintf (dst, "RTT"); break;
+				default:	sprintf (dst, "???? (%04X)", op); break;
 			}
 			break;
 		case 0x0040:
-                        ea = MakeEA (lo, pc, JUMP, &count); pc += count;
-			sprintf (buffer, "JMP   %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT16, EA_ABS_PC);
+			sprintf (dst, "JMP   %s", ea1);
 			break;
 		case 0x0080:
 			switch (lo & 070)
 			{
 				case 000:
-					if ((lo & 7) == 7)
-						sprintf (buffer, "RTS");
+					if( (lo & 7) == 7 )
+						sprintf (dst, "RTS");
 					else
-						sprintf (buffer, "RTS   %s", regs[lo & 7]);
+						sprintf (dst, "RTS   %s", regs[lo & 7]);
 					break;
 				case 040:
 				case 050:
-					switch (lo & 15)
+					switch( lo & 15 )
 					{
-						case 0x00:	sprintf (buffer, "NOP"); break;
-						case 0x0f:	sprintf (buffer, "CCC"); break;
-						case 0x01:	sprintf (buffer, "CEC"); break;
-						case 0x02:	sprintf (buffer, "CEV"); break;
-						case 0x04:	sprintf (buffer, "CEZ"); break;
-						case 0x08:	sprintf (buffer, "CEN"); break;
-						default:	sprintf (buffer, "Ccc   #$%X", lo & 15); break;
+						case 0x00:	sprintf (dst, "NOP"); break;
+						case 0x0f:	sprintf (dst, "CCC"); break;
+						case 0x01:	sprintf (dst, "CEC"); break;
+						case 0x02:	sprintf (dst, "CEV"); break;
+						case 0x04:	sprintf (dst, "CEZ"); break;
+						case 0x08:	sprintf (dst, "CEN"); break;
+						default:	sprintf (dst, "Ccc   #$%X", lo & 15); break;
 					}
 					break;
 				case 060:
 				case 070:
-					switch (lo & 15)
+					switch( lo & 15 )
 					{
-						case 0x00:	sprintf (buffer, "NOP"); break;
-						case 0x0f:	sprintf (buffer, "SCC"); break;
-						case 0x01:	sprintf (buffer, "SEC"); break;
-						case 0x02:	sprintf (buffer, "SEV"); break;
-						case 0x04:	sprintf (buffer, "SEZ"); break;
-						case 0x08:	sprintf (buffer, "SEN"); break;
-						default:	sprintf (buffer, "Scc   #$%X", lo & 15); break;
+						case 0x00:	sprintf (dst, "NOP"); break;
+						case 0x0f:	sprintf (dst, "SCC"); break;
+						case 0x01:	sprintf (dst, "SEC"); break;
+						case 0x02:	sprintf (dst, "SEV"); break;
+						case 0x04:	sprintf (dst, "SEZ"); break;
+						case 0x08:	sprintf (dst, "SEN"); break;
+						default:	sprintf (dst, "Scc   #$%X", lo & 15); break;
 					}
 					break;
 			}
 			break;
 		case 0x00c0:
-                        ea = MakeEA (lo, pc, READWRITE, &count); pc += count;
-			sprintf (buffer, "SWAB  %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT16, EA_MEM_RDWR);
+			sprintf (dst, "SWAB  %s", ea1);
 			break;
 		case 0x0100: case 0x0140: case 0x0180: case 0x01c0:
-			sprintf (buffer, "BR    $%X", (pc + 2 * (signed char)(op & 0xff)) & 0xffff);
+			offset = 2 * (INT8)(op & 0xff);
+			symbol = set_ea_info( EA_DST, pc, offset, EA_REL_PC );
+            sprintf (dst, "BR    %s", symbol);
 			break;
 		case 0x0200: case 0x0240: case 0x0280: case 0x02c0:
-			sprintf (buffer, "BNE   $%X", (pc + 2 * (signed char)(op & 0xff)) & 0xffff);
+			offset = 2 * (INT8)(op & 0xff);
+			symbol = set_ea_info( EA_DST, pc, offset, EA_REL_PC );
+            sprintf (dst, "BNE   %s", symbol);
 			break;
 		case 0x0300: case 0x0340: case 0x0380: case 0x03c0:
-			sprintf (buffer, "BEQ   $%X", (pc + 2 * (signed char)(op & 0xff)) & 0xffff);
+			offset = 2 * (INT8)(op & 0xff);
+			symbol = set_ea_info( EA_DST, pc, offset, EA_REL_PC );
+            sprintf (dst, "BEQ   %s", symbol);
 			break;
 		case 0x0400: case 0x0440: case 0x0480: case 0x04c0:
-			sprintf (buffer, "BGE   $%X", (pc + 2 * (signed char)(op & 0xff)) & 0xffff);
+			offset = 2 * (INT8)(op & 0xff);
+			symbol = set_ea_info( EA_DST, pc, offset, EA_REL_PC );
+            sprintf (dst, "BGE   %s", symbol);
 			break;
 		case 0x0500: case 0x0540: case 0x0580: case 0x05c0:
-			sprintf (buffer, "BLT   $%X", (pc + 2 * (signed char)(op & 0xff)) & 0xffff);
+			offset = 2 * (INT8)(op & 0xff);
+			symbol = set_ea_info( EA_DST, pc, offset, EA_REL_PC );
+            sprintf (dst, "BLT   %s", symbol);
 			break;
 		case 0x0600: case 0x0640: case 0x0680: case 0x06c0:
-			sprintf (buffer, "BGT   $%X", (pc + 2 * (signed char)(op & 0xff)) & 0xffff);
+			offset = 2 * (INT8)(op & 0xff);
+			symbol = set_ea_info( EA_DST, pc, offset, EA_REL_PC );
+            sprintf (dst, "BGT   %s", symbol);
 			break;
 		case 0x0700: case 0x0740: case 0x0780: case 0x07c0:
-			sprintf (buffer, "BLE   $%X", (pc + 2 * (signed char)(op & 0xff)) & 0xffff);
+			offset = 2 * (INT8)(op & 0xff);
+			symbol = set_ea_info( EA_DST, pc, offset, EA_REL_PC );
+            sprintf (dst, "BLE   %s", symbol);
 			break;
 		case 0x0800: case 0x0840: case 0x0880: case 0x08c0:
 		case 0x0900: case 0x0940: case 0x0980: case 0x09c0:
-                        ea = MakeEA (lo, pc, JUMP, &count); pc += count;
-			if (((op >> 6) & 7) == 7)
-				sprintf (buffer, "JSR   %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT16, EA_ABS_PC);
+			if ( (hi & 7) == 7 )
+				sprintf (dst, "JSR   %s", ea1);
 			else
-				sprintf (buffer, "JSR   %s,%s", regs[(op >> 6) & 7], ea);
+				sprintf (dst, "JSR   %s,%s", regs[hi & 7], ea1);
 			break;
 		case 0x0a00:
-                        ea = MakeEA (lo, pc, WRITE, &count); pc += count;
-			sprintf (buffer, "CLR   %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT16, EA_MEM_WR);
+			sprintf (dst, "CLR   %s", ea1);
 			break;
 		case 0x0a40:
-                        ea = MakeEA (lo, pc, READWRITE, &count); pc += count;
-			sprintf (buffer, "COM   %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT16, EA_MEM_RDWR);
+			sprintf (dst, "COM   %s", ea1);
 			break;
 		case 0x0a80:
-                        ea = MakeEA (lo, pc, READWRITE, &count); pc += count;
-			sprintf (buffer, "INC   %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT16, EA_MEM_RDWR);
+			sprintf (dst, "INC   %s", ea1);
 			break;
 		case 0x0ac0:
-                        ea = MakeEA (lo, pc, READWRITE, &count); pc += count;
-			sprintf (buffer, "DEC   %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT16, EA_MEM_RDWR);
+			sprintf (dst, "DEC   %s", ea1);
 			break;
 		case 0x0b00:
-                        ea = MakeEA (lo, pc, READWRITE, &count); pc += count;
-			sprintf (buffer, "NEG   %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT16, EA_MEM_RDWR);
+			sprintf (dst, "NEG   %s", ea1);
 			break;
 		case 0x0b40:
-                        ea = MakeEA (lo, pc, READWRITE, &count); pc += count;
-			sprintf (buffer, "ADC   %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT16, EA_MEM_RDWR);
+			sprintf (dst, "ADC   %s", ea1);
 			break;
 		case 0x0b80:
-                        ea = MakeEA (lo, pc, READWRITE, &count); pc += count;
-			sprintf (buffer, "SBC   %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT16, EA_MEM_RDWR);
+			sprintf (dst, "SBC   %s", ea1);
 			break;
 		case 0x0bc0:
-                        ea = MakeEA (lo, pc, READ, &count); pc += count;
-			sprintf (buffer, "TST   %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT16, EA_MEM_RD);
+			sprintf (dst, "TST   %s", ea1);
 			break;
 		case 0x0c00:
-                        ea = MakeEA (lo, pc, READWRITE, &count); pc += count;
-			sprintf (buffer, "ROR   %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT16, EA_MEM_RDWR);
+			sprintf (dst, "ROR   %s", ea1);
 			break;
 		case 0x0c40:
-                        ea = MakeEA (lo, pc, READWRITE, &count); pc += count;
-			sprintf (buffer, "ROL   %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT16, EA_MEM_RDWR);
+			sprintf (dst, "ROL   %s", ea1);
 			break;
 		case 0x0c80:
-                        ea = MakeEA (lo, pc, READWRITE, &count); pc += count;
-			sprintf (buffer, "ASR   %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT16, EA_MEM_RDWR);
+			sprintf (dst, "ASR   %s", ea1);
 			break;
 		case 0x0cc0:
-                        ea = MakeEA (lo, pc, READWRITE, &count); pc += count;
-			sprintf (buffer, "ASL   %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT16, EA_MEM_RDWR);
+			sprintf (dst, "ASL   %s", ea1);
 			break;
 /*		case 0x0d00:
-			sprintf (buffer, "MARK  #$%X", lo);
+			sprintf (dst, "MARK  #$%X", lo);
 			break;*/
 		case 0x0dc0:
-                        ea = MakeEA (lo, pc, WRITE, &count); pc += count;
-			sprintf (buffer, "SXT   %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT16, EA_MEM_RDWR);
+			sprintf (dst, "SXT   %s", ea1);
 			break;
 		case 0x1000: case 0x1040: case 0x1080: case 0x10c0: case 0x1100: case 0x1140: case 0x1180: case 0x11c0:
 		case 0x1200: case 0x1240: case 0x1280: case 0x12c0: case 0x1300: case 0x1340: case 0x1380: case 0x13c0:
@@ -262,17 +281,16 @@ int DasmT11 (unsigned char *pBase, char *buffer, int pc)
 		case 0x1800: case 0x1840: case 0x1880: case 0x18c0: case 0x1900: case 0x1940: case 0x1980: case 0x19c0:
 		case 0x1a00: case 0x1a40: case 0x1a80: case 0x1ac0: case 0x1b00: case 0x1b40: case 0x1b80: case 0x1bc0:
 		case 0x1c00: case 0x1c40: case 0x1c80: case 0x1cc0: case 0x1d00: case 0x1d40: case 0x1d80: case 0x1dc0:
-                case 0x1e00: case 0x1e40: case 0x1e80: case 0x1ec0: case 0x1f00: case 0x1f40: case 0x1f80: case 0x1fc0:
-                        ea = MakeEA ((op >> 6) & 077, pc, READ, &count);
-                        pc += count;
-                        ea2 = MakeEA (lo, pc, WRITE, &count);
-                        pc += count;
-                        if ((op & 077) == 046)              /* MOV src,-(SP) */
-                                sprintf (buffer, "PUSH  %s", ea);
-                        else if (((op >> 6) & 077) == 026)  /* MOV (SP)+,dst */
-                                sprintf (buffer, "POP   %s", ea2);
-                        else                                /* all other */
-                                sprintf (buffer, "MOV   %s,%s", ea, ea2);
+		case 0x1e00: case 0x1e40: case 0x1e80: case 0x1ec0: case 0x1f00: case 0x1f40: case 0x1f80: case 0x1fc0:
+			pc = MakeEA (&ea1, 1, hi, pc, EA_UINT16, EA_MEM_RD);
+			pc = MakeEA (&ea2, 0, lo, pc, EA_UINT16, EA_MEM_WR);
+			if (lo == 046)		/* MOV src,-(SP) */
+				sprintf (dst, "PUSH  %s", ea1);
+			else
+			if (hi == 026)		/* MOV (SP)+,dst */
+				sprintf (dst, "POP   %s", ea2);
+			else				/* all other */
+				sprintf (dst, "MOV   %s,%s", ea1, ea2);
 			break;
 		case 0x2000: case 0x2040: case 0x2080: case 0x20c0: case 0x2100: case 0x2140: case 0x2180: case 0x21c0:
 		case 0x2200: case 0x2240: case 0x2280: case 0x22c0: case 0x2300: case 0x2340: case 0x2380: case 0x23c0:
@@ -282,9 +300,9 @@ int DasmT11 (unsigned char *pBase, char *buffer, int pc)
 		case 0x2a00: case 0x2a40: case 0x2a80: case 0x2ac0: case 0x2b00: case 0x2b40: case 0x2b80: case 0x2bc0:
 		case 0x2c00: case 0x2c40: case 0x2c80: case 0x2cc0: case 0x2d00: case 0x2d40: case 0x2d80: case 0x2dc0:
 		case 0x2e00: case 0x2e40: case 0x2e80: case 0x2ec0: case 0x2f00: case 0x2f40: case 0x2f80: case 0x2fc0:
-                        ea = MakeEA ((op >> 6) & 077, pc, READ, &count); pc += count;
-                        ea2 = MakeEA (lo, pc, READ, &count); pc += count;
-			sprintf (buffer, "CMP   %s,%s", ea, ea2);
+			pc = MakeEA (&ea1, 1, hi, pc, EA_UINT16, EA_MEM_RD);
+			pc = MakeEA (&ea2, 0, lo, pc, EA_UINT16, EA_MEM_RD);
+			sprintf (dst, "CMP   %s,%s", ea1, ea2);
 			break;
 		case 0x3000: case 0x3040: case 0x3080: case 0x30c0: case 0x3100: case 0x3140: case 0x3180: case 0x31c0:
 		case 0x3200: case 0x3240: case 0x3280: case 0x32c0: case 0x3300: case 0x3340: case 0x3380: case 0x33c0:
@@ -294,9 +312,9 @@ int DasmT11 (unsigned char *pBase, char *buffer, int pc)
 		case 0x3a00: case 0x3a40: case 0x3a80: case 0x3ac0: case 0x3b00: case 0x3b40: case 0x3b80: case 0x3bc0:
 		case 0x3c00: case 0x3c40: case 0x3c80: case 0x3cc0: case 0x3d00: case 0x3d40: case 0x3d80: case 0x3dc0:
 		case 0x3e00: case 0x3e40: case 0x3e80: case 0x3ec0: case 0x3f00: case 0x3f40: case 0x3f80: case 0x3fc0:
-                        ea = MakeEA ((op >> 6) & 077, pc, READ, &count); pc += count;
-                        ea2 = MakeEA (lo, pc, WRITE, &count); pc += count;
-			sprintf (buffer, "BIT   %s,%s", ea, ea2);
+			pc = MakeEA (&ea1, 1, hi, pc, EA_UINT16, EA_MEM_RD);
+			pc = MakeEA (&ea2, 0, lo, pc, EA_UINT16, EA_MEM_RD);
+			sprintf (dst, "BIT   %s,%s", ea1, ea2);
 			break;
 		case 0x4000: case 0x4040: case 0x4080: case 0x40c0: case 0x4100: case 0x4140: case 0x4180: case 0x41c0:
 		case 0x4200: case 0x4240: case 0x4280: case 0x42c0: case 0x4300: case 0x4340: case 0x4380: case 0x43c0:
@@ -306,9 +324,9 @@ int DasmT11 (unsigned char *pBase, char *buffer, int pc)
 		case 0x4a00: case 0x4a40: case 0x4a80: case 0x4ac0: case 0x4b00: case 0x4b40: case 0x4b80: case 0x4bc0:
 		case 0x4c00: case 0x4c40: case 0x4c80: case 0x4cc0: case 0x4d00: case 0x4d40: case 0x4d80: case 0x4dc0:
 		case 0x4e00: case 0x4e40: case 0x4e80: case 0x4ec0: case 0x4f00: case 0x4f40: case 0x4f80: case 0x4fc0:
-                        ea = MakeEA ((op >> 6) & 077, pc, READ, &count); pc += count;
-                        ea2 = MakeEA (lo, pc, WRITE, &count); pc += count;
-			sprintf (buffer, "BIC   %s,%s", ea, ea2);
+			pc = MakeEA (&ea1, 1, hi, pc, EA_UINT16, EA_MEM_RD);
+			pc = MakeEA (&ea2, 0, lo, pc, EA_UINT16, EA_MEM_WR);
+			sprintf (dst, "BIC   %s,%s", ea1, ea2);
 			break;
 		case 0x5000: case 0x5040: case 0x5080: case 0x50c0: case 0x5100: case 0x5140: case 0x5180: case 0x51c0:
 		case 0x5200: case 0x5240: case 0x5280: case 0x52c0: case 0x5300: case 0x5340: case 0x5380: case 0x53c0:
@@ -318,9 +336,9 @@ int DasmT11 (unsigned char *pBase, char *buffer, int pc)
 		case 0x5a00: case 0x5a40: case 0x5a80: case 0x5ac0: case 0x5b00: case 0x5b40: case 0x5b80: case 0x5bc0:
 		case 0x5c00: case 0x5c40: case 0x5c80: case 0x5cc0: case 0x5d00: case 0x5d40: case 0x5d80: case 0x5dc0:
 		case 0x5e00: case 0x5e40: case 0x5e80: case 0x5ec0: case 0x5f00: case 0x5f40: case 0x5f80: case 0x5fc0:
-                        ea = MakeEA ((op >> 6) & 077, pc, READ, &count); pc += count;
-                        ea2 = MakeEA (lo, pc, WRITE, &count); pc += count;
-			sprintf (buffer, "BIS   %s,%s", ea, ea2);
+			pc = MakeEA (&ea1, 1, hi, pc, EA_UINT16, EA_MEM_RD);
+			pc = MakeEA (&ea2, 0, lo, pc, EA_UINT16, EA_MEM_WR);
+			sprintf (dst, "BIS   %s,%s", ea1, ea2);
 			break;
 		case 0x6000: case 0x6040: case 0x6080: case 0x60c0: case 0x6100: case 0x6140: case 0x6180: case 0x61c0:
 		case 0x6200: case 0x6240: case 0x6280: case 0x62c0: case 0x6300: case 0x6340: case 0x6380: case 0x63c0:
@@ -330,106 +348,126 @@ int DasmT11 (unsigned char *pBase, char *buffer, int pc)
 		case 0x6a00: case 0x6a40: case 0x6a80: case 0x6ac0: case 0x6b00: case 0x6b40: case 0x6b80: case 0x6bc0:
 		case 0x6c00: case 0x6c40: case 0x6c80: case 0x6cc0: case 0x6d00: case 0x6d40: case 0x6d80: case 0x6dc0:
 		case 0x6e00: case 0x6e40: case 0x6e80: case 0x6ec0: case 0x6f00: case 0x6f40: case 0x6f80: case 0x6fc0:
-                        ea = MakeEA ((op >> 6) & 077, pc, READ, &count); pc += count;
-                        ea2 = MakeEA (lo, pc, WRITE, &count); pc += count;
-			sprintf (buffer, "ADD   %s,%s", ea, ea2);
+			pc = MakeEA (&ea1, 1, hi, pc, EA_UINT16, EA_MEM_RD);
+			pc = MakeEA (&ea2, 0, lo, pc, EA_UINT16, EA_MEM_WR);
+			sprintf (dst, "ADD   %s,%s", ea1, ea2);
 			break;
 
 		case 0x7800: case 0x7840: case 0x7880: case 0x78c0: case 0x7900: case 0x7940: case 0x7980: case 0x79c0:
-                        ea = MakeEA (lo, pc, WRITE, &count); pc += count;
-			sprintf (buffer, "XOR   %s,%s", regs[(op >> 6) & 7], ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT16, EA_MEM_WR);
+			sprintf (dst, "XOR   %s,%s", regs[hi & 7], ea1);
 			break;
 
 		case 0x7e00: case 0x7e40: case 0x7e80: case 0x7ec0: case 0x7f00: case 0x7f40: case 0x7f80: case 0x7fc0:
-			sprintf (buffer, "SOB   %s,$%X", regs[(op >> 6) & 7], (pc + 2 - 2 * lo) & 0xffff);
+			addr = (pc + 2 - 2 * lo) & 0xffff;
+			symbol = set_ea_info( EA_DST, addr, EA_UINT16, EA_REL_PC );
+			sprintf (dst, "SOB   %s,$%X", regs[hi & 7], addr);
 			break;
 
 		case 0x8000: case 0x8040: case 0x8080: case 0x80c0:
-			sprintf (buffer, "BPL   $%X", (pc + 2 * (signed char)(op & 0xff)) & 0xffff);
+			offset = 2 * (INT8)(op & 0xff);
+			symbol = set_ea_info( EA_DST, pc, offset, EA_REL_PC );
+            sprintf (dst, "BPL   %s", symbol);
 			break;
 		case 0x8100: case 0x8140: case 0x8180: case 0x81c0:
-			sprintf (buffer, "BMI   $%X", (pc + 2 * (signed char)(op & 0xff)) & 0xffff);
+			offset = 2 * (INT8)(op & 0xff);
+			symbol = set_ea_info( EA_DST, pc, offset, EA_REL_PC );
+            sprintf (dst, "BMI   %s", symbol);
 			break;
 		case 0x8200: case 0x8240: case 0x8280: case 0x82c0:
-			sprintf (buffer, "BHI   $%X", (pc + 2 * (signed char)(op & 0xff)) & 0xffff);
+			offset = 2 * (INT8)(op & 0xff);
+			symbol = set_ea_info( EA_DST, pc, offset, EA_REL_PC );
+            sprintf (dst, "BHI   %s", symbol);
 			break;
 		case 0x8300: case 0x8340: case 0x8380: case 0x83c0:
-			sprintf (buffer, "BLOS  $%X", (pc + 2 * (signed char)(op & 0xff)) & 0xffff);
+			offset = 2 * (INT8)(op & 0xff);
+			symbol = set_ea_info( EA_DST, pc, offset, EA_REL_PC );
+            sprintf (dst, "BLOS  %s", symbol);
 			break;
 		case 0x8400: case 0x8440: case 0x8480: case 0x84c0:
-			sprintf (buffer, "BVC   $%X", (pc + 2 * (signed char)(op & 0xff)) & 0xffff);
+			offset = 2 * (INT8)(op & 0xff);
+			symbol = set_ea_info( EA_DST, pc, offset, EA_REL_PC );
+            sprintf (dst, "BVC   %s", symbol);
 			break;
 		case 0x8500: case 0x8540: case 0x8580: case 0x85c0:
-			sprintf (buffer, "BVS   $%X", (pc + 2 * (signed char)(op & 0xff)) & 0xffff);
+			offset = 2 * (INT8)(op & 0xff);
+			symbol = set_ea_info( EA_DST, pc, offset, EA_REL_PC );
+            sprintf (dst, "BVS   %s", symbol);
 			break;
 		case 0x8600: case 0x8640: case 0x8680: case 0x86c0:
-			sprintf (buffer, "BCC   $%X", (pc + 2 * (signed char)(op & 0xff)) & 0xffff);
-			break;
+			offset = 2 * (INT8)(op & 0xff);
+			symbol = set_ea_info( EA_DST, pc, offset, EA_REL_PC );
+            sprintf (dst, "BCC   %s", symbol);
+            break;
 		case 0x8700: case 0x8740: case 0x8780: case 0x87c0:
-			sprintf (buffer, "BCS   $%X", (pc + 2 * (signed char)(op & 0xff)) & 0xffff);
+			offset = 2 * (INT8)(op & 0xff);
+			symbol = set_ea_info( EA_DST, pc, offset, EA_REL_PC );
+            sprintf (dst, "BCS   %s", symbol);
 			break;
 		case 0x8800: case 0x8840: case 0x8880: case 0x88c0:
-			sprintf (buffer, "EMT   #$%X", op & 0xff);
+			symbol = set_ea_info( 0, op & 0xff, EA_UINT8, EA_VALUE );
+			sprintf (dst, "EMT   #%s", symbol);
 			break;
 		case 0x8900: case 0x8940: case 0x8980: case 0x89c0:
-			sprintf (buffer, "TRAP  #$%02X", op & 0xff);
+			symbol = set_ea_info( 0, op & 0xff, EA_UINT8, EA_VALUE );
+			sprintf (dst, "TRAP  #%s", symbol);
 			break;
 
 		case 0x8a00:
-                        ea = MakeEA (lo, pc, WRITE, &count); pc += count;
-			sprintf (buffer, "CLRB  %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT8, EA_MEM_WR);
+			sprintf (dst, "CLRB  %s", ea1);
 			break;
 		case 0x8a40:
-                        ea = MakeEA (lo, pc, READWRITE, &count); pc += count;
-			sprintf (buffer, "COMB  %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT8, EA_MEM_RDWR);
+			sprintf (dst, "COMB  %s", ea1);
 			break;
 		case 0x8a80:
-                        ea = MakeEA (lo, pc, READWRITE, &count); pc += count;
-			sprintf (buffer, "INCB  %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT8, EA_MEM_RDWR);
+			sprintf (dst, "INCB  %s", ea1);
 			break;
 		case 0x8ac0:
-                        ea = MakeEA (lo, pc, READWRITE, &count); pc += count;
-			sprintf (buffer, "DECB  %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT8, EA_MEM_RDWR);
+			sprintf (dst, "DECB  %s", ea1);
 			break;
 		case 0x8b00:
-                        ea = MakeEA (lo, pc, READWRITE, &count); pc += count;
-			sprintf (buffer, "NEGB  %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT8, EA_MEM_RDWR);
+			sprintf (dst, "NEGB  %s", ea1);
 			break;
 		case 0x8b40:
-                        ea = MakeEA (lo, pc, WRITE, &count); pc += count;
-			sprintf (buffer, "ADCB  %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT8, EA_MEM_WR);
+			sprintf (dst, "ADCB  %s", ea1);
 			break;
 		case 0x8b80:
-                        ea = MakeEA (lo, pc, WRITE, &count); pc += count;
-			sprintf (buffer, "SBCB  %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT8, EA_MEM_WR);
+			sprintf (dst, "SBCB  %s", ea1);
 			break;
 		case 0x8bc0:
-                        ea = MakeEA (lo, pc, READ, &count); pc += count;
-			sprintf (buffer, "TSTB  %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT8, EA_MEM_RD);
+			sprintf (dst, "TSTB  %s", ea1);
 			break;
 		case 0x8c00:
-                        ea = MakeEA (lo, pc, READWRITE, &count); pc += count;
-			sprintf (buffer, "RORB  %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT8, EA_MEM_RDWR);
+			sprintf (dst, "RORB  %s", ea1);
 			break;
 		case 0x8c40:
-                        ea = MakeEA (lo, pc, READWRITE, &count); pc += count;
-			sprintf (buffer, "ROLB  %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT8, EA_MEM_RDWR);
+			sprintf (dst, "ROLB  %s", ea1);
 			break;
 		case 0x8c80:
-                        ea = MakeEA (lo, pc, READWRITE, &count); pc += count;
-			sprintf (buffer, "ASRB  %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT8, EA_MEM_RDWR);
+			sprintf (dst, "ASRB  %s", ea1);
 			break;
 		case 0x8cc0:
-                        ea = MakeEA (lo, pc, READWRITE, &count); pc += count;
-			sprintf (buffer, "ASLB  %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT8, EA_MEM_RDWR);
+			sprintf (dst, "ASLB  %s", ea1);
 			break;
 		case 0x8d00:
-                        ea = MakeEA (lo, pc, READ, &count); pc += count;
-			sprintf (buffer, "MTPS  %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT8, EA_MEM_RD);
+			sprintf (dst, "MTPS  %s", ea1);
 			break;
 		case 0x8dc0:
-                        ea = MakeEA (lo, pc, WRITE, &count); pc += count;
-			sprintf (buffer, "MFPS  %s", ea);
+			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT8, EA_MEM_WR);
+			sprintf (dst, "MFPS  %s", ea1);
 			break;
 		case 0x9000: case 0x9040: case 0x9080: case 0x90c0: case 0x9100: case 0x9140: case 0x9180: case 0x91c0:
 		case 0x9200: case 0x9240: case 0x9280: case 0x92c0: case 0x9300: case 0x9340: case 0x9380: case 0x93c0:
@@ -439,9 +477,9 @@ int DasmT11 (unsigned char *pBase, char *buffer, int pc)
 		case 0x9a00: case 0x9a40: case 0x9a80: case 0x9ac0: case 0x9b00: case 0x9b40: case 0x9b80: case 0x9bc0:
 		case 0x9c00: case 0x9c40: case 0x9c80: case 0x9cc0: case 0x9d00: case 0x9d40: case 0x9d80: case 0x9dc0:
 		case 0x9e00: case 0x9e40: case 0x9e80: case 0x9ec0: case 0x9f00: case 0x9f40: case 0x9f80: case 0x9fc0:
-                        ea = MakeEA ((op >> 6) & 077, pc, READ, &count); pc += count;
-                        ea2 = MakeEA (lo, WRITE, pc, &count); pc += count;
-			sprintf (buffer, "MOVB  %s,%s", ea, ea2);
+			pc = MakeEA (&ea1, 1, hi, pc, EA_UINT8, EA_MEM_RD);
+			pc = MakeEA (&ea2, 0, lo, pc, EA_UINT8, EA_MEM_WR);
+			sprintf (dst, "MOVB  %s,%s", ea1, ea2);
 			break;
 		case 0xa000: case 0xa040: case 0xa080: case 0xa0c0: case 0xa100: case 0xa140: case 0xa180: case 0xa1c0:
 		case 0xa200: case 0xa240: case 0xa280: case 0xa2c0: case 0xa300: case 0xa340: case 0xa380: case 0xa3c0:
@@ -451,9 +489,9 @@ int DasmT11 (unsigned char *pBase, char *buffer, int pc)
 		case 0xaa00: case 0xaa40: case 0xaa80: case 0xaac0: case 0xab00: case 0xab40: case 0xab80: case 0xabc0:
 		case 0xac00: case 0xac40: case 0xac80: case 0xacc0: case 0xad00: case 0xad40: case 0xad80: case 0xadc0:
 		case 0xae00: case 0xae40: case 0xae80: case 0xaec0: case 0xaf00: case 0xaf40: case 0xaf80: case 0xafc0:
-                        ea = MakeEA ((op >> 6) & 077, pc, READ, &count); pc += count;
-                        ea2 = MakeEA (lo, pc, WRITE, &count); pc += count;
-			sprintf (buffer, "CMPB  %s,%s", ea, ea2);
+			pc = MakeEA (&ea1, 1, hi, pc, EA_UINT8, EA_MEM_RD);
+			pc = MakeEA (&ea2, 0, lo, pc, EA_UINT8, EA_MEM_RD);
+			sprintf (dst, "CMPB  %s,%s", ea1, ea2);
 			break;
 		case 0xb000: case 0xb040: case 0xb080: case 0xb0c0: case 0xb100: case 0xb140: case 0xb180: case 0xb1c0:
 		case 0xb200: case 0xb240: case 0xb280: case 0xb2c0: case 0xb300: case 0xb340: case 0xb380: case 0xb3c0:
@@ -463,9 +501,9 @@ int DasmT11 (unsigned char *pBase, char *buffer, int pc)
 		case 0xba00: case 0xba40: case 0xba80: case 0xbac0: case 0xbb00: case 0xbb40: case 0xbb80: case 0xbbc0:
 		case 0xbc00: case 0xbc40: case 0xbc80: case 0xbcc0: case 0xbd00: case 0xbd40: case 0xbd80: case 0xbdc0:
 		case 0xbe00: case 0xbe40: case 0xbe80: case 0xbec0: case 0xbf00: case 0xbf40: case 0xbf80: case 0xbfc0:
-                        ea = MakeEA ((op >> 6) & 077, pc, READ, &count); pc += count;
-                        ea2 = MakeEA (lo, pc, WRITE, &count); pc += count;
-			sprintf (buffer, "BITB  %s,%s", ea, ea2);
+			pc = MakeEA (&ea1, 1, hi, pc, EA_UINT8, EA_MEM_RD);
+			pc = MakeEA (&ea2, 0, lo, pc, EA_UINT8, EA_MEM_RD);
+			sprintf (dst, "BITB  %s,%s", ea1, ea2);
 			break;
 		case 0xc000: case 0xc040: case 0xc080: case 0xc0c0: case 0xc100: case 0xc140: case 0xc180: case 0xc1c0:
 		case 0xc200: case 0xc240: case 0xc280: case 0xc2c0: case 0xc300: case 0xc340: case 0xc380: case 0xc3c0:
@@ -475,9 +513,9 @@ int DasmT11 (unsigned char *pBase, char *buffer, int pc)
 		case 0xca00: case 0xca40: case 0xca80: case 0xcac0: case 0xcb00: case 0xcb40: case 0xcb80: case 0xcbc0:
 		case 0xcc00: case 0xcc40: case 0xcc80: case 0xccc0: case 0xcd00: case 0xcd40: case 0xcd80: case 0xcdc0:
 		case 0xce00: case 0xce40: case 0xce80: case 0xcec0: case 0xcf00: case 0xcf40: case 0xcf80: case 0xcfc0:
-                        ea = MakeEA ((op >> 6) & 077, pc, READ, &count); pc += count;
-                        ea2 = MakeEA (lo, pc, WRITE, &count); pc += count;
-			sprintf (buffer, "BICB  %s,%s", ea, ea2);
+			pc = MakeEA (&ea1, 1, hi, pc, EA_UINT8, EA_MEM_RD);
+			pc = MakeEA (&ea2, 0, lo, pc, EA_UINT8, EA_MEM_WR);
+			sprintf (dst, "BICB  %s,%s", ea1, ea2);
 			break;
 		case 0xd000: case 0xd040: case 0xd080: case 0xd0c0: case 0xd100: case 0xd140: case 0xd180: case 0xd1c0:
 		case 0xd200: case 0xd240: case 0xd280: case 0xd2c0: case 0xd300: case 0xd340: case 0xd380: case 0xd3c0:
@@ -487,9 +525,9 @@ int DasmT11 (unsigned char *pBase, char *buffer, int pc)
 		case 0xda00: case 0xda40: case 0xda80: case 0xdac0: case 0xdb00: case 0xdb40: case 0xdb80: case 0xdbc0:
 		case 0xdc00: case 0xdc40: case 0xdc80: case 0xdcc0: case 0xdd00: case 0xdd40: case 0xdd80: case 0xddc0:
 		case 0xde00: case 0xde40: case 0xde80: case 0xdec0: case 0xdf00: case 0xdf40: case 0xdf80: case 0xdfc0:
-                        ea = MakeEA ((op >> 6) & 077, pc, READ, &count); pc += count;
-                        ea2 = MakeEA (lo, pc, WRITE, &count); pc += count;
-			sprintf (buffer, "BISB  %s,%s", ea, ea2);
+			pc = MakeEA (&ea1, 1, hi, pc, EA_UINT8, EA_MEM_RD);
+			pc = MakeEA (&ea2, 0, lo, pc, EA_UINT8, EA_MEM_WR);
+			sprintf (dst, "BISB  %s,%s", ea1, ea2);
 			break;
 		case 0xe000: case 0xe040: case 0xe080: case 0xe0c0: case 0xe100: case 0xe140: case 0xe180: case 0xe1c0:
 		case 0xe200: case 0xe240: case 0xe280: case 0xe2c0: case 0xe300: case 0xe340: case 0xe380: case 0xe3c0:
@@ -499,15 +537,17 @@ int DasmT11 (unsigned char *pBase, char *buffer, int pc)
 		case 0xea00: case 0xea40: case 0xea80: case 0xeac0: case 0xeb00: case 0xeb40: case 0xeb80: case 0xebc0:
 		case 0xec00: case 0xec40: case 0xec80: case 0xecc0: case 0xed00: case 0xed40: case 0xed80: case 0xedc0:
 		case 0xee00: case 0xee40: case 0xee80: case 0xeec0: case 0xef00: case 0xef40: case 0xef80: case 0xefc0:
-                        ea = MakeEA ((op >> 6) & 077, pc, READ, &count); pc += count;
-                        ea2 = MakeEA (lo, pc, WRITE, &count); pc += count;
-			sprintf (buffer, "SUB   %s,%s", ea, ea2);
+			pc = MakeEA (&ea1, 1, hi, pc, EA_UINT16, EA_MEM_RD);
+			pc = MakeEA (&ea2, 0, lo, pc, EA_UINT16, EA_MEM_WR);
+			sprintf (dst, "SUB   %s,%s", ea1, ea2);
 			break;
 
-		default:
-			sprintf (buffer, "???? (%06o)", op);
+        default:
+			sprintf (dst, "???? (%06o)", op);
 			break;
 	}
 
-	return pc - pcbase;
+    return pc - PC;
 }
+
+#endif

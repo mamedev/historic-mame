@@ -319,49 +319,49 @@ INPUT_PORTS_START( karnov_input_ports )
 	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* Dip switch bank 2 */
-	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x01, "1" )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x00, "Infinite" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Number of K for bonus", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Number of K for bonus" )
 	PORT_DIPSETTING(    0x0c, "50" )
 	PORT_DIPSETTING(    0x08, "70" )
 	PORT_DIPSETTING(    0x04, "90" )
 	PORT_DIPSETTING(    0x00, "100" )
-	PORT_DIPNAME( 0x30, 0x30, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x30, "Easy" )
 	PORT_DIPSETTING(    0x10, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x00, "Very Hard" )
-	PORT_DIPNAME( 0x40, 0x40, "Atract Mode Sound", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Yes" )
-	PORT_DIPSETTING(    0x00, "No" )
-	PORT_DIPNAME( 0x80, 0x80, "Timer Speed", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Atract Mode Sound" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPNAME( 0x80, 0x80, "Timer Speed" )
 	PORT_DIPSETTING(    0x80, "Normal" )
 	PORT_DIPSETTING(    0x00, "Fast" )
 
 	PORT_START	/* Dip switch bank 1 */
-	PORT_DIPNAME( 0x03, 0x03, "Right Coin", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Left Coin", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
+	PORT_DIPNAME( 0x03, 0x03, "Right Coin" )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, "Left Coin" )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x20, 0x20, "Screen Rotation", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Screen Rotation" )
 	PORT_DIPSETTING(    0x20, "Normal" )
 	PORT_DIPSETTING(    0x00, "Reverse" )
-	PORT_DIPNAME( 0x40, 0x40, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Cocktail" )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPNAME( 0x80, 0x80, "No Die Mode", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPNAME( 0x80, 0x80, "No Die Mode" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( chelnov_input_ports )
@@ -402,46 +402,46 @@ INPUT_PORTS_START( chelnov_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
 
 	PORT_START	/* Dip switch bank 2 */
-	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x01, "1" )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x00, "Infinite" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x04, "Easy" )
 	PORT_DIPSETTING(    0x0c, "Normal" )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x10, 0x10, "Continues", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Yes" )
-	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPNAME( 0x10, 0x10, "Continues" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x40, 0x40, "Video Freeze", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Video Freeze" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* Dip switch bank 1 */
-	PORT_DIPNAME( 0x03, 0x03, "Right Coin", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Left Coin", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
+	PORT_DIPNAME( 0x03, 0x03, "Right Coin" )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, "Left Coin" )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
- 	PORT_DIPNAME( 0x20, 0x20, "Attract Mode Sound", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "Yes" )
-	PORT_DIPSETTING(    0x00, "No" )
-	PORT_DIPNAME( 0x40, 0x40, "Screen Rotation", IP_KEY_NONE )
+ 	PORT_DIPNAME( 0x20, 0x20, "Attract Mode Sound" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPNAME( 0x40, 0x40, "Screen Rotation" )
 	PORT_DIPSETTING(    0x40, "Normal" )
 	PORT_DIPSETTING(    0x00, "Reverse" )
-	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Cocktail" )
-	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 INPUT_PORTS_END
 
 /******************************************************************************/
@@ -516,7 +516,7 @@ static void sound_irq(void)
 static struct YM2203interface ym2203_interface =
 {
 	1,
-	2900000,	/* Correct? */
+	1500000,	/* ??? */
 	{ YM2203_VOL(255,255) },
 	{ 0 },
 	{ 0 },
@@ -527,7 +527,7 @@ static struct YM2203interface ym2203_interface =
 static struct YM3526interface ym3526_interface =
 {
 	1,			/* 1 chip */
-	3580000,	/* 3.580000 MHz */
+	3000000,	/* ??? */
 	{ 255 },	/*  */
 	sound_irq,
 };
@@ -552,7 +552,7 @@ static struct MachineDriver karnov_machine_driver =
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			700000,
+			1500000,	/* ??? */
 			3,
 			karnov_s_readmem,karnov_s_writemem,0,0,
 			ignore_interrupt,0	/* Interrupts from OPL chip */

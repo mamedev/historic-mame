@@ -12,9 +12,9 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "sndhrdw/ay8910.h"
-#include "sndhrdw/fm.h"
-#include "sndhrdw/2612intf.h"
+#include "sound/psgintf.h"
+#include "sound/fm.h"
+#include "sound/2612intf.h"
 
 
 #ifdef BUILD_YM2612

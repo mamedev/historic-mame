@@ -39,32 +39,34 @@
 #include "m6805.h"
 #include "driver.h"
 
-#define IRQ_LEVEL_DETECT 1
-
-#define SUBTYPE_M6805	0
-#define SUBTYPE_M68705	1
-#define SUBTYPE_HD63705 2
+#define IRQ_LEVEL_DETECT 0
 
 static UINT8 m6805_reg_layout[] = {
 	M6805_PC, M6805_S, M6805_CC, M6805_A, M6805_X, M6805_IRQ_STATE, 0
 };
 
+enum {
+	SUBTYPE_M6805,
+	SUBTYPE_M68705,
+	SUBTYPE_HD63705
+};
+
 /* Layout of the debugger windows x,y,w,h */
 static UINT8 m6805_win_layout[] = {
-     0, 0,80, 2,    /* register window (top rows) */
-     0, 3,24,19,    /* disassembler window (left colums) */
-    25, 3,55, 9,    /* memory #1 window (right, upper middle) */
-    25,13,55, 9,    /* memory #2 window (right, lower middle) */
+	27, 0,53, 4,	/* register window (top, right rows) */
+	 0, 0,26,22,	/* disassembler window (left colums) */
+	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
+	27,14,53, 8,	/* memory #2 window (right, lower middle) */
      0,23,80, 1,    /* command line window (bottom rows) */
 };
 
 /* 6805 Registers */
 typedef struct
 {
-	int 	cpu_subtype;	/* Which sub-type is being emulated */
-	UINT32	cpu_addr_mask;	/* Address bus width */
-	UINT32	cpu_sp_mask;	/* Stack pointer mask */
-	UINT32	cpu_sp_floor;	/* Stack pointer low water mark or floor */
+	int 	subtype;		/* Which sub-type is being emulated */
+	UINT32	amask;			/* Address bus width */
+	UINT32	sp_mask;		/* Stack pointer address mask */
+	UINT32	sp_low; 		/* Stack pointer low water mark (or floor) */
     PAIR    pc;             /* Program counter */
 	PAIR	s;				/* Stack pointer */
 	UINT8	a;				/* Accumulator */
@@ -80,11 +82,15 @@ typedef struct
 /* 6805 registers */
 static m6805_Regs m6805;
 
-#define PC  m6805.pc.w.l
-#define S	m6805.s.w.l
-#define A   m6805.a
-#define X	m6805.x
-#define CC	m6805.cc
+#define AMASK	m6805.amask 	/* address mask */
+#define SP_MASK m6805.sp_mask	/* stack pointer mask */
+#define SP_LOW	m6805.sp_low	/* stack pointer low water mark */
+#define pPC 	m6805.pc		/* program counter PAIR */
+#define PC		m6805.pc.w.l	/* program counter lower word */
+#define S		m6805.s.w.l 	/* stack pointer lower word */
+#define A		m6805.a 		/* accumulator */
+#define X		m6805.x 		/* index register */
+#define CC		m6805.cc		/* condition codes */
 
 static PAIR ea; 		/* effective address */
 #define EAD ea.d
@@ -101,15 +107,15 @@ static void (*wr_s_handler_b)(UINT8 *r);
 static void (*wr_s_handler_w)(PAIR *r);
 
 /* DS -- THESE ARE RE-DEFINED IN m6805.h TO RAM, ROM or FUNCTIONS IN cpuintrf.c */
-#define RM(Addr)			M6805_RDMEM((Addr)&m6805.cpu_addr_mask)
-#define WM(Addr,Value)      M6805_WRMEM((Addr)&m6805.cpu_addr_mask,Value)
+#define RM(Addr)			M6805_RDMEM((Addr) & AMASK)
+#define WM(Addr,Value)		M6805_WRMEM((Addr) & AMASK,Value)
 #define M_RDOP(Addr)        M6805_RDOP(Addr)
 #define M_RDOP_ARG(Addr)	M6805_RDOP_ARG(Addr)
 
 /* macros to tweak the PC and SP */
-#define SP_INC	if( ++S > 0x7f ) S = 0x60
-#define SP_DEC	if( --S < 0x60 ) S = 0x7f
-#define SP_ADJUST(s) (((s)&m6805.cpu_sp_mask)|m6805.cpu_sp_floor)
+#define SP_INC	if( ++S > SP_MASK) S = SP_LOW
+#define SP_DEC	if( --S < SP_LOW) S = SP_MASK
+#define SP_ADJUST(s) ( ( (s) & SP_MASK ) | SP_LOW )
 
 /* macros to access memory */
 #define IMMBYTE(b) {b = M_RDOP_ARG(PC++);}
@@ -314,14 +320,14 @@ INLINE void RM16( UINT32 Addr, PAIR *p )
 {
 	CLEAR_PAIR(p);
     p->b.h = RM(Addr);
-	if( ++Addr > m6805.cpu_addr_mask ) Addr = 0;
+	if( ++Addr > AMASK ) Addr = 0;
 	p->b.l = RM(Addr);
 }
 
 INLINE void WM16( UINT32 Addr, PAIR *p )
 {
 	WM( Addr, p->b.h );
-	if( ++Addr > m6805.cpu_addr_mask ) Addr = 0;
+	if( ++Addr > AMASK ) Addr = 0;
 	WM( Addr, p->b.l );
 }
 
@@ -344,7 +350,7 @@ static void Interrupt(void)
 		if (m6805.irq_callback)
 			(*m6805.irq_callback)(0);
 		m6805.pending_interrupts &= ~M6805_INT_IRQ;
-		RM16( 0x07fa, &m6805.pc );
+		RM16( AMASK - 5, &pPC );
 		m6805_ICount -= 11;
 	}
 }
@@ -353,15 +359,16 @@ static void Interrupt(void)
 void m6805_reset(void *param)
 {
 	memset(&m6805, 0, sizeof(m6805));
-	RM16( 0x07fe, &m6805.pc );
-
-    /* Force CPU sub-type and relevant masks */
-	m6805.cpu_subtype	= SUBTYPE_M6805;
-	m6805.cpu_addr_mask = 0x7ff;
-	m6805.cpu_sp_mask	= 0x7f;
-	m6805.cpu_sp_floor	= 0x60;
-    S = m6805.cpu_sp_mask; /* SP = 0x7f */
-    SEI;            /* IRQ disabled */
+	/* Force CPU sub-type and relevant masks */
+	m6805.subtype	= SUBTYPE_M6805;
+	AMASK	= 0x7ff;
+	SP_MASK = 0x07f;
+	SP_LOW	= 0x060;
+	/* Initial stack pointer */
+	S = SP_MASK;
+	/* IRQ disabled */
+    SEI;
+	RM16( AMASK - 1 , &pPC );
 
     /* default to unoptimized memory access */
 	rd_s_handler_b = rd_s_slow_b;
@@ -413,7 +420,7 @@ void m6805_set_context(void *src)
  ****************************************************************************/
 unsigned m6805_get_pc(void)
 {
-	return PC & m6805.cpu_addr_mask;
+	return PC & AMASK;
 }
 
 
@@ -422,7 +429,7 @@ unsigned m6805_get_pc(void)
  ****************************************************************************/
 void m6805_set_pc(unsigned val)
 {
-	PC = val & m6805.cpu_addr_mask;
+	PC = val & AMASK;
 }
 
 
@@ -461,7 +468,7 @@ unsigned m6805_get_reg(int regnum)
 			if( regnum < REG_SP_CONTENTS )
 			{
 				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < m6805.cpu_sp_mask )
+				if( offset < SP_MASK )
 					return (RM( offset ) << 8) | RM( offset+1 );
 			}
 	}
@@ -477,7 +484,7 @@ void m6805_set_reg(int regnum, unsigned val)
 	switch( regnum )
 	{
 		case M6805_A: A = val; break;
-		case M6805_PC: PC = val & m6805.cpu_addr_mask; break;
+		case M6805_PC: PC = val & AMASK; break;
 		case M6805_S: S = SP_ADJUST(val); break;
 		case M6805_X: X = val; break;
 		case M6805_CC: CC = val; break;
@@ -486,7 +493,7 @@ void m6805_set_reg(int regnum, unsigned val)
 			if( regnum < REG_SP_CONTENTS )
 			{
 				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < m6805.cpu_sp_mask )
+				if( offset < SP_MASK )
 				{
                     WM( offset, (val >> 8) & 0xff );
 					WM( offset+1, val & 0xff );
@@ -556,16 +563,8 @@ int m6805_execute(int cycles)
 		if (m6805.pending_interrupts != 0)
 			Interrupt();
 
-#if 0
-		asg_6805Trace(OP_ROM, PC);
-#endif
+		CALL_MAME_DEBUG;
 
-#ifdef	MAME_DEBUG
-		{
-			extern int mame_debug;
-			if (mame_debug) MAME_Debug();
-		}
-#endif
 		ireg=M_RDOP(PC++);
 
 		switch( ireg )
@@ -832,7 +831,7 @@ int m6805_execute(int cycles)
 			case 0xff: stx_ix(); break;
 		}
 		m6805_ICount -= cycles1[ireg];
-	} while( m6805_ICount>0 );
+	} while( m6805_ICount > 0 );
 
 	return cycles - m6805_ICount;
 }
@@ -858,26 +857,10 @@ const char *m6805_info(void *context, int regnum)
 		case CPU_INFO_FAMILY: return "Motorola 6805";
 		case CPU_INFO_VERSION: return "1.0";
 		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "The MAME team.\n" \
-			"References:\n" \
-			"   6809 Simulator V09, By L.C. Benschop, Eidnhoven The Netherlands.\n" \
-			"   m6809: Portable 6809 emulator, DS (6809 code in MAME, derived from the 6809 Simulator V09)\n" \
-            "   6809 Microcomputer Programming & Interfacing with Experiments by Andrew C. Staugaard, Jr.; Howard W. Sams & Co., Inc.";
+		case CPU_INFO_CREDITS: return "The MAME team.";
 		case CPU_INFO_REG_LAYOUT: return (const char *)m6805_reg_layout;
 		case CPU_INFO_WIN_LAYOUT: return (const char *)m6805_win_layout;
 
-        case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->pc.w.l); break;
-		case CPU_INFO_SP: sprintf(buffer[which], "%02X", r->s.b.l); break;
-#if MAME_DEBUG
-		case CPU_INFO_DASM:
-			r->pc.w.l += Dasm6805(&ROM[r->pc.w.l], buffer[which], r->pc.w.l);
-			break;
-#else
-		case CPU_INFO_DASM:
-			sprintf(buffer[which], "$%02x", ROM[r->pc.w.l]);
-			r->pc.w.l++;
-			break;
-#endif
 		case CPU_INFO_FLAGS:
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
 				r->cc & 0x80 ? '?':'.',
@@ -894,47 +877,58 @@ const char *m6805_info(void *context, int regnum)
 		case CPU_INFO_REG+M6805_S: sprintf(buffer[which], "S:%02X", r->s.w.l); break;
 		case CPU_INFO_REG+M6805_X: sprintf(buffer[which], "X:%02X", r->x); break;
 		case CPU_INFO_REG+M6805_CC: sprintf(buffer[which], "CC:%02X", r->cc); break;
-		case CPU_INFO_REG+M6805_IRQ_STATE: sprintf(buffer[which], "IRQ:%d", r->irq_state); break;
+		case CPU_INFO_REG+M6805_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
     }
 	return buffer[which];
+}
+
+unsigned m6805_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+	(void)base;
+#ifdef MAME_DEBUG
+    return Dasm6805(base,buffer,pc);
+#else
+	sprintf( buffer, "$%02X", ROM[pc] );
+	return 1;
+#endif
 }
 
 /****************************************************************************
  * M68705 section
  ****************************************************************************/
+#if HAS_M68705
 static UINT8 m68705_reg_layout[] = {
-	M68705_A, M68705_PC, M68705_S, M68705_X, M68705_CC, M68705_IRQ_STATE, 0
+	M68705_PC, M68705_S, M68705_CC, M68705_A, M68705_X, M68705_IRQ_STATE, 0
 };
 
 /* Layout of the debugger windows x,y,w,h */
 static UINT8 m68705_win_layout[] = {
-     0, 0,80, 2,    /* register window (top rows) */
-     0, 3,24,19,    /* disassembler window (left colums) */
-    25, 3,55, 9,    /* memory #1 window (right, upper middle) */
-    25,13,55, 9,    /* memory #2 window (right, lower middle) */
+	27, 0,53, 4,	/* register window (top, right rows) */
+	 0, 0,26,22,	/* disassembler window (left colums) */
+	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
+	27,14,53, 8,	/* memory #2 window (right, lower middle) */
      0,23,80, 1,    /* command line window (bottom rows) */
 };
 
-extern void m68705_reset(void *param)
+void m68705_reset(void *param)
 {
     m6805_reset(param);
-
-    /* Overide default 6805 types */
-	m6805.cpu_subtype = SUBTYPE_M68705;
+	/* Overide default 6805 type */
+	m6805.subtype = SUBTYPE_M68705;
 }
-extern void m68705_exit(void) { m6805_exit(); }
-extern int	m68705_execute(int cycles) { return m6805_execute(cycles); }
-extern unsigned m68705_get_context(void *dst) { return m6805_get_context(dst); }
-extern void m68705_set_context(void *src) { m6805_set_context(src); }
-extern unsigned m68705_get_pc(void) { return m6805_get_pc(); }
-extern void m68705_set_pc(unsigned val) { m6805_set_pc(val); }
-extern unsigned m68705_get_sp(void) { return m6805_get_sp(); }
-extern void m68705_set_sp(unsigned val) { m6805_set_pc(val); }
-extern unsigned m68705_get_reg(int regnum)  { return m6805_get_reg(regnum); }
-extern void m68705_set_reg(int regnum, unsigned val)  { m6805_set_reg(regnum,val); }
-extern void m68705_set_nmi_line(int state)	{ m6805_set_nmi_line(state); }
-extern void m68705_set_irq_line(int irqline, int state)  { m6805_set_irq_line(irqline,state); }
-extern void m68705_set_irq_callback(int (*callback)(int irqline))  { m6805_set_irq_callback(callback); }
+void m68705_exit(void) { m6805_exit(); }
+int  m68705_execute(int cycles) { return m6805_execute(cycles); }
+unsigned m68705_get_context(void *dst) { return m6805_get_context(dst); }
+void m68705_set_context(void *src) { m6805_set_context(src); }
+unsigned m68705_get_pc(void) { return m6805_get_pc(); }
+void m68705_set_pc(unsigned val) { m6805_set_pc(val); }
+unsigned m68705_get_sp(void) { return m6805_get_sp(); }
+void m68705_set_sp(unsigned val) { m6805_set_pc(val); }
+unsigned m68705_get_reg(int regnum)  { return m6805_get_reg(regnum); }
+void m68705_set_reg(int regnum, unsigned val)  { m6805_set_reg(regnum,val); }
+void m68705_set_nmi_line(int state)  { m6805_set_nmi_line(state); }
+void m68705_set_irq_line(int irqline, int state)  { m6805_set_irq_line(irqline,state); }
+void m68705_set_irq_callback(int (*callback)(int irqline))	{ m6805_set_irq_callback(callback); }
 void m68705_state_save(void *file) { state_save(file,"m68705"); }
 void m68705_state_load(void *file) { state_load(file,"m68705"); }
 const char *m68705_info(void *context, int regnum)
@@ -949,31 +943,44 @@ const char *m68705_info(void *context, int regnum)
 	return m6805_info(context,regnum);
 }
 
+unsigned m68705_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+	(void)base;
+#ifdef MAME_DEBUG
+    return Dasm6805(base,buffer,pc);
+#else
+	sprintf( buffer, "$%02X", ROM[pc] );
+	return 1;
+#endif
+}
+#endif
+
 /****************************************************************************
  * HD63705 section
  ****************************************************************************/
+#if HAS_HD63705
 static UINT8 hd63705_reg_layout[] = {
-	HD63705_A, HD63705_PC, HD63705_S, HD63705_X, HD63705_CC, HD63705_IRQ_STATE, 0
+	HD63705_PC, HD63705_S, HD63705_CC, HD63705_A, HD63705_X, HD63705_IRQ_STATE, 0
 };
 
 /* Layout of the debugger windows x,y,w,h */
 static UINT8 hd63705_win_layout[] = {
-     0, 0,80, 2,    /* register window (top rows) */
-     0, 3,24,19,    /* disassembler window (left colums) */
-    25, 3,55, 9,    /* memory #1 window (right, upper middle) */
-    25,13,55, 9,    /* memory #2 window (right, lower middle) */
+	27, 0,53, 4,	/* register window (top, right rows) */
+	 0, 0,26,22,	/* disassembler window (left colums) */
+	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
+	27,14,53, 8,	/* memory #2 window (right, lower middle) */
      0,23,80, 1,    /* command line window (bottom rows) */
 };
 
 void hd63705_reset(void *param)
-{	
+{
 	m6805_reset(param);
 
 	/* Overide default 6805 types */
-	m6805.cpu_subtype	= SUBTYPE_HD63705;
-	m6805.cpu_addr_mask = 0xffff;
-	m6805.cpu_sp_mask	= 0x1ff;	/* 0x1bf according to the docs!? */
-	m6805.cpu_sp_floor	= 0x000;	/* not sure ... */
+	m6805.subtype	= SUBTYPE_HD63705;
+	AMASK	= 0xffff;
+	SP_MASK = 0x1ff;	/* 0x1bf according to the docs!? */
+	SP_LOW	= 0x100;	/* not sure ... */
 	RM16( 0x1ffe, &m6805.pc );
 	S = 0x17f;
 }
@@ -1005,3 +1012,14 @@ const char *hd63705_info(void *context, int regnum)
 	return m6805_info(context,regnum);
 }
 
+unsigned hd63705_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+	(void)base;
+#ifdef MAME_DEBUG
+    return Dasm6805(base,buffer,pc);
+#else
+	sprintf( buffer, "$%02X", ROM[pc] );
+	return 1;
+#endif
+}
+#endif

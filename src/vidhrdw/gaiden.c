@@ -4,11 +4,13 @@
 
   Functions to emulate the video hardware of the machine.
 
+172: title
+182: ice cream hang
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "tilemap.h"
 
 /* blit contains parameters for drawing a sprite */
 struct {
@@ -386,44 +388,44 @@ static void draw_sprites( struct osd_bitmap *bitmap, int priority ){
 /********************************************************************************/
 
 int gaiden_vh_start(void){
-	sprite_info = (struct sprite_info *)malloc( sizeof(struct sprite_info)*NUMSPRITES );
-	if( !sprite_info ) return 1; /* error */
-
 	text_layer = tilemap_create(
+		get_fg_tile_info,
 		TILEMAP_TRANSPARENT,
 		8,8,	/* tile width, tile height */
 		32,32,	/* number of columns, number of rows */
 		1,1	/* scroll rows, scroll columns */
 	);
 
-	foreground = tilemap_create(TILEMAP_TRANSPARENT,16,16,64,32,1,1);
+	foreground = tilemap_create(
+		get_bg_tile_info,
+		TILEMAP_TRANSPARENT,
+		16,16,
+		64,32,
+		1,1
+	);
 
-	background = tilemap_create(0,16,16,64,32,1,1);
+	background = tilemap_create(
+		get_bg_tile_info,
+		0,
+		16,16,
+		64,32,
+		1,1
+	);
 
 	if( text_layer && foreground && background ){
-		text_layer->tile_get_info = get_fg_tile_info;
-		text_layer->transparent_pen = 0;
-
-		foreground->tile_get_info = get_bg_tile_info;
-		foreground->transparent_pen = 0;
-
-		background->tile_get_info = get_bg_tile_info;
-
-		palette_transparent_color = 0x200; /* background color */
-
-		return 0;
+		sprite_info = (struct sprite_info *)malloc( sizeof(struct sprite_info)*NUMSPRITES );
+		if( sprite_info ){
+			text_layer->transparent_pen = 0;
+			foreground->transparent_pen = 0;
+			palette_transparent_color = 0x200; /* background color */
+			return 0;
+		}
 	}
-
-	gaiden_vh_stop();
 
 	return 1;
 }
 
 void gaiden_vh_stop(void){
-	tilemap_dispose(background);
-	tilemap_dispose(foreground);
-	tilemap_dispose(text_layer);
-
 	free( sprite_info );
 }
 
@@ -518,33 +520,25 @@ int gaiden_spriteram_r(int offset){
 	return READ_WORD (&spriteram[offset]);
 }
 
-static void pre_update_background( void ){
+void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
 	gfxbank = 1;
 	videoram1 = (const unsigned short *)&gaiden_videoram3[0x1000];
 	videoram2 = (const unsigned short *)gaiden_videoram3;
-}
+	tilemap_update(background);
 
-static void pre_update_foreground( void ){
 	gfxbank = 2;
 	videoram1 = (const unsigned short *)&gaiden_videoram2[0x1000];
 	videoram2 = (const unsigned short *)gaiden_videoram2;
-}
+	tilemap_update(foreground);
 
-static void pre_update_text_layer( void ){
 	gfxbank = 0;
 	videoram1 = (const unsigned short *)&gaiden_videoram[0x0800];
 	videoram2 = (const unsigned short *)gaiden_videoram;
-}
-
-void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-	pre_update_background(); tilemap_update(background);
-	pre_update_foreground(); tilemap_update(foreground);
-	pre_update_text_layer(); tilemap_update(text_layer);
+	tilemap_update(text_layer);
 
 	palette_init_used_colors();
 	mark_sprite_colors();
-
 	{
 		/* the following is required to make the colored background work */
 		int i;
@@ -552,15 +546,10 @@ void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			palette_used_colors[i] = PALETTE_COLOR_TRANSPARENT;
 	}
 
-	if( palette_recalc() ){
-		tilemap_mark_all_pixels_dirty(text_layer);
-		tilemap_mark_all_pixels_dirty(foreground);
-		tilemap_mark_all_pixels_dirty(background);
-	}
+	if (palette_recalc())
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 
-	tilemap_render(background);
-	tilemap_render(foreground);
-	tilemap_render(text_layer);
+	tilemap_render(ALL_TILEMAPS);
 
 	tilemap_draw(bitmap,background,0);
 	draw_sprites(bitmap,3); /* behind bg */

@@ -60,6 +60,8 @@
 #define PCW m6502.pc.w.l
 #define PCD m6502.pc.d
 
+#define PPC m6502.ppc.d
+
 #if FAST_MEMORY
 extern  MHELE   *cur_mwhard;
 extern	MHELE	*cur_mrhard;
@@ -391,21 +393,12 @@ extern	UINT8	*RAM;
 /* 6502 ********************************************************
  * CLI	Clear interrupt flag
  ***************************************************************/
-#if NEW_INTERRUPT_SYSTEM
 #define CLI 													\
 	if ((m6502.irq_state != CLEAR_LINE) && (P & F_I)) { 		\
 		LOG((errorlog, "M6502#%d CLI sets after_cli\n",cpu_getactivecpu())); \
 		m6502.after_cli = 1;									\
 	}															\
 	P &= ~F_I
-#else
-#define CLI                                                     \
-	if (m6502.pending_interrupt && (P & F_I)) { 				\
-		LOG((errorlog, "M6502#%d CLI sets after_cli\n",cpu_getactivecpu())); \
-        m6502.after_cli = 1;                                    \
-	}															\
-    P &= ~F_I
-#endif
 
 /* 6502 ********************************************************
  * CLV	Clear overflow flag
@@ -585,7 +578,6 @@ extern	UINT8	*RAM;
 /* 6502 ********************************************************
  *	PLP Pull processor status (flags)
  ***************************************************************/
-#if NEW_INTERRUPT_SYSTEM
 #define PLP 													\
 	if ( P & F_I ) {											\
 		PULL(P);												\
@@ -597,19 +589,6 @@ extern	UINT8	*RAM;
 		PULL(P);												\
 	}															\
 	P |= F_T
-#else
-#define PLP                                                     \
-	if ( P & F_I ) {											\
-		PULL(P);												\
-		if (m6502.pending_interrupt && !(P & F_I)) {			\
-			LOG((errorlog, "M6502#%d PLP sets after_cli\n",cpu_getactivecpu())); \
-            m6502.after_cli = 1;                                \
-		}														\
-	} else {													\
-		PULL(P);												\
-	}															\
-	P |= F_T
-#endif
 
 /* 6502 ********************************************************
  * ROL	Rotate left
@@ -636,29 +615,17 @@ extern	UINT8	*RAM;
  * pull flags, pull PC lo, pull PC hi and increment PC
  *	PCW++;
  ***************************************************************/
-#if NEW_INTERRUPT_SYSTEM
 #define RTI 													\
 	PULL(P);													\
 	PULL(PCL);													\
     PULL(PCH);                                                  \
 	P |= F_T;													\
-	if ((m6502.irq_state != CLEAR_LINE) && !(P & F_I)) {		\
+	if( (m6502.irq_state != CLEAR_LINE) && !(P & F_I) ) 		\
+	{															\
 		LOG((errorlog, "M6502#%d RTI sets after_cli\n",cpu_getactivecpu())); \
         m6502.after_cli = 1;                                    \
 	}															\
     change_pc16(PCD)
-#else
-#define RTI                                                     \
-	PULL(P);													\
-	PULL(PCL);													\
-    PULL(PCH);                                                  \
-	P |= F_T;													\
-	if (m6502.pending_interrupt && !(P & F_I)) {				\
-		LOG((errorlog, "M6502#%d RTI sets after_cli\n",cpu_getactivecpu())); \
-        m6502.after_cli = 1;                                    \
-	}															\
-    change_pc16(PCD)
-#endif
 
 /* 6502 ********************************************************
  *	RTS Return from subroutine

@@ -242,19 +242,18 @@ static struct IOWritePort writeport[] =
 
 INPUT_PORTS_START( blockade_input_ports )
     PORT_START  /* IN0 */
-    PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
-              "Coin", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+    PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
                                 /* this is really used for the coin latch,  */
                                 /* see blockade_interrupt()                 */
-    PORT_DIPNAME ( 0x70, 0x70, "Lives", IP_KEY_NONE )
+    PORT_DIPNAME( 0x70, 0x70, DEF_STR( Lives ) )
     PORT_DIPSETTING ( 0x70, "6 Crashes" )
     PORT_DIPSETTING ( 0x30, "5 Crashes" )
     PORT_DIPSETTING ( 0x50, "4 Crashes" )
     PORT_DIPSETTING ( 0x60, "3 Crashes" )
     PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
-    PORT_DIPNAME ( 0x04, 0x04, "Boom Switch", IP_KEY_NONE )
-    PORT_DIPSETTING ( 0x00, "Off" )
-    PORT_DIPSETTING ( 0x04, "On" )
+    PORT_DIPNAME( 0x04, 0x04, "Boom Switch" )
+    PORT_DIPSETTING ( 0x00, DEF_STR( Off ) )
+    PORT_DIPSETTING ( 0x04, DEF_STR( On ) )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -285,19 +284,18 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( comotion_input_ports )
     PORT_START  /* IN0 */
-    PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
-              "Coin", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+    PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
                                 /* this is really used for the coin latch,  */
                                 /* see blockade_interrupt()                 */
     PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
     PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
     PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
-    PORT_DIPNAME( 0x08, 0x08, "Lives", IP_KEY_NONE )
+    PORT_DIPNAME( 0x08, 0x08, DEF_STR( Lives ) )
     PORT_DIPSETTING ( 0x00, "3 Crashes" )
     PORT_DIPSETTING ( 0x08, "4 Crashes" )
-    PORT_DIPNAME ( 0x04, 0x04, "Boom Switch", IP_KEY_NONE )
-    PORT_DIPSETTING ( 0x00, "Off" )
-    PORT_DIPSETTING ( 0x04, "On" )
+    PORT_DIPNAME( 0x04, 0x04, "Boom Switch" )
+    PORT_DIPSETTING ( 0x00, DEF_STR( Off ) )
+    PORT_DIPSETTING ( 0x04, DEF_STR( On ) )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -329,21 +327,20 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( blasto_input_ports )
     PORT_START  /* IN0 */
-    PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
-              "Coin", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+    PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
                                 /* this is really used for the coin latch,  */
                                 /* see blockade_interrupt()                 */
     PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
     PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
     PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 
-    PORT_DIPNAME ( 0x08, 0x08, "Game Time", IP_KEY_NONE )
+    PORT_DIPNAME( 0x08, 0x08, "Game Time" )
     PORT_DIPSETTING ( 0x00, "70 Secs" )
     PORT_DIPSETTING ( 0x08, "90 Secs" )
-    PORT_DIPNAME ( 0x04, 0x04, "Boom Switch", IP_KEY_NONE )
-    PORT_DIPSETTING ( 0x00, "Off" )
-    PORT_DIPSETTING ( 0x04, "On" )
-    PORT_DIPNAME ( 0x03, 0x03, "Coins", IP_KEY_NONE )
+    PORT_DIPNAME( 0x04, 0x04, "Boom Switch" )
+    PORT_DIPSETTING ( 0x00, DEF_STR( Off ) )
+    PORT_DIPSETTING ( 0x04, DEF_STR( On ) )
+    PORT_DIPNAME( 0x03, 0x03, "Coins" )
     PORT_DIPSETTING ( 0x00, "4 Coins" )
     PORT_DIPSETTING ( 0x01, "3 Coins" )
     PORT_DIPSETTING ( 0x02, "2 Coins" )
@@ -378,18 +375,17 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( hustle_input_ports )
     PORT_START  /* IN0 */
-    PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
-              "Coin", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+    PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
                                 /* this is really used for the coin latch,  */
                                 /* see blockade_interrupt()                 */
     PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
     PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
     PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
     PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
-    PORT_DIPNAME ( 0x04, 0x04, "Game Time", IP_KEY_NONE )
+    PORT_DIPNAME( 0x04, 0x04, "Game Time" )
     PORT_DIPSETTING ( 0x00, "1.5 mins" )
     PORT_DIPSETTING ( 0x04, "2 mins" )
-    PORT_DIPNAME ( 0x03, 0x03, "Coins", IP_KEY_NONE )
+    PORT_DIPNAME( 0x03, 0x03, "Coins" )
     PORT_DIPSETTING ( 0x00, "4 Coins" )
     PORT_DIPSETTING ( 0x01, "3 Coins" )
 	PORT_DIPSETTING ( 0x02, "2 Coins" )
@@ -406,7 +402,7 @@ INPUT_PORTS_START( hustle_input_ports )
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_PLAYER2 )
 
     PORT_START  /* IN2 */
-	PORT_DIPNAME ( 0xf1, 0xf0, "Free Game", IP_KEY_NONE )
+	PORT_DIPNAME( 0xf1, 0xf0, "Free Game" )
 	PORT_DIPSETTING ( 0x71, "11000" )
     PORT_DIPSETTING ( 0xb1, "13000" )
 	PORT_DIPSETTING ( 0xd1, "15000" )

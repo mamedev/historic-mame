@@ -4,7 +4,7 @@
  *
  *      Written by J. Buchmueller for use with MAME
  *
- *      Partially based on Z80Em from M. De Kogel
+ *		Partially based on Z80Em by Marcel De Kogel
  *
  *      CPU related macros
  *
@@ -180,8 +180,7 @@ int q = I.AF.b.h+R; 											\
 
 #define M_IN													\
 	I.XX.d=ARG();												\
-	I.AF.b.h=cpu_readport(I.XX.d);								\
-	I.AF.b.l=(I.AF.b.l&CF)|ZSP[I.AF.b.h]
+	I.AF.b.h=cpu_readport(I.XX.d);
 
 #define M_OUT													\
 	I.XX.d=ARG();												\

@@ -34,6 +34,8 @@ void vector_draw_to (int x2, int y2, int col, int intensity, int dirty);
 void vector_add_point (int x, int y, int color, int intensity);
 void vector_add_clip (int minx, int miny, int maxx, int maxy);
 void vector_set_shift (int shift);
+void vector_set_gamma(float _gamma);
+float vector_get_gamma(void);
 
 void vector_vh_update_backdrop(struct osd_bitmap *bitmap, struct artwork *a, int full_refresh);
 void vector_vh_update_overlay(struct osd_bitmap *bitmap, struct artwork *a, int full_refresh);

@@ -202,12 +202,12 @@ INPUT_PORTS_START( exterm_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 
 	PORT_START      /* IN0 HI */
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1, "Aim Left",  OSD_KEY_Z, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1, "Aim Right", OSD_KEY_X, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1, "Aim Left",  OSD_KEY_Z, IP_JOY_DEFAULT )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1, "Aim Right", OSD_KEY_X, IP_JOY_DEFAULT )
 	PORT_BIT( 0xec, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* IN1 LO */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -220,8 +220,8 @@ INPUT_PORTS_START( exterm_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 
 	PORT_START      /* IN1 HI */
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2, "2 Aim Left",  OSD_KEY_H, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2, "2 Aim Right", OSD_KEY_J, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2, "2 Aim Left",  OSD_KEY_H, IP_JOY_DEFAULT )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2, "2 Aim Right", OSD_KEY_J, IP_JOY_DEFAULT )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW */
@@ -229,12 +229,12 @@ INPUT_PORTS_START( exterm_input_ports )
 	/* Note that the coin settings don't match the setting shown on the test screen,
 	   but instead what the game appears to used. This is either a bug in the game,
 	   or I don't know what else. */
-	PORT_DIPNAME( 0x06, 0x06, "Coin A", IP_KEY_NONE )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x06, "1 Credit/Coin" )
 	PORT_DIPSETTING(    0x02, "2 Credits/Coin" )
 	PORT_DIPSETTING(    0x04, "3 Credits/Coin" )
 	PORT_DIPSETTING(    0x00, "4 Credits/Coin" )
-	PORT_DIPNAME( 0x38, 0x38, "Coin B", IP_KEY_NONE )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x38, "1 Credit/Coin" )
 	PORT_DIPSETTING(    0x18, "2 Credits/Coin" )
 	PORT_DIPSETTING(    0x28, "3 Credits/Coin" )
@@ -243,12 +243,12 @@ INPUT_PORTS_START( exterm_input_ports )
 	PORT_DIPSETTING(    0x10, "6 Credits/Coin" )
 	PORT_DIPSETTING(    0x20, "7 Credits/Coin" )
 	PORT_DIPSETTING(    0x00, "8 Credits/Coin" )
-	PORT_DIPNAME( 0x40, 0x40, "Memory Test", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Memory Test" )
 	PORT_DIPSETTING(    0x40, "Single" )
 	PORT_DIPSETTING(    0x00, "Continous" )
-	PORT_DIPNAME( 0x80, 0x80, "Free Play", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 

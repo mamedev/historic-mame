@@ -10,6 +10,8 @@
   for vector games. Mathis Rosenhauer - 10/09/1998
 
   MAB - 09 MAR 1999 - made some changes to artwork_create
+  MLR - 29 MAR 1999 - added circles to artwork_create
+
 *********************************************************************/
 
 #include "driver.h"
@@ -845,6 +847,9 @@ struct artwork *artwork_load(const char *filename, int start_pen, int max_pens)
 	struct osd_bitmap *picture = NULL;
 	struct artwork *a = NULL;
 
+	/* If the user turned artwork off, bail */
+	if (!options.use_artwork) return NULL;
+
 	if ((a = allocate_artwork_mem(Machine->scrbitmap->width, Machine->scrbitmap->height))==NULL)
 		return NULL;
 
@@ -870,7 +875,6 @@ struct artwork *artwork_load(const char *filename, int start_pen, int max_pens)
 	}
 
 	/* Scale the original picture to be the same size as the visible area */
-	/*copybitmap(a->orig_artwork,picture,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);*/
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 		copybitmapzoom(a->orig_artwork,picture,0,0,0,0,
 			       0, TRANSPARENCY_PEN, 0,
@@ -894,6 +898,85 @@ struct artwork *artwork_load(const char *filename, int start_pen, int max_pens)
 }
 
 /*********************************************************************
+  create_circle
+
+  Creates a circle with radius r in the color of pen. A new bitmap
+  is allocated for the circle. The background is set to pen 255.
+
+*********************************************************************/
+static struct osd_bitmap *create_circle (int r, int pen)
+{
+	struct osd_bitmap *circle;
+
+	int x = 0, twox = 0;
+	int y = r;
+	int twoy = r+r;
+	int p = 1 - r;
+
+	if ((circle = osd_create_bitmap(twoy, twoy)) == 0)
+	{
+		if (errorlog) fprintf(errorlog,"Not enough memory for artwork!\n");
+		return NULL;
+	}
+
+	/* background */
+	fillbitmap (circle, 255, 0);
+
+	while (x < y)
+	{
+		x++;
+		twox +=2;
+		if (p < 0)
+			p += twox + 1;
+		else
+		{
+			y--;
+			twoy -= 2;
+			p += twox - twoy + 1;
+		}
+		memset (&circle->line[r-y][r-x], pen, twox);
+		memset (&circle->line[r+y-1][r-x], pen, twox);
+		memset (&circle->line[r-x][r-y], pen, twoy);
+		memset (&circle->line[r+x-1][r-y], pen, twoy);
+	}
+	return circle;
+}
+
+/*********************************************************************
+  artwork_elements scale
+
+  scales an array of artwork elements to width and height. The first
+  element (which has to be a box) is used as reference. This is useful
+  for atwork with circles.
+
+*********************************************************************/
+
+void artwork_elements_scale(struct artwork_element *ae, int width, int height)
+{
+	int scale_w, scale_h;
+
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		scale_w = (height << 16)/(ae->box.max_x + 1);
+		scale_h = (width << 16)/(ae->box.max_y + 1);
+	}
+	else
+	{
+		scale_w = (width << 16)/(ae->box.max_x + 1);
+		scale_h = (height << 16)/(ae->box.max_y + 1);
+	}
+	while (ae->box.min_x >= 0)
+	{
+		ae->box.min_x = (ae->box.min_x * scale_w) >> 16;
+		ae->box.max_x = (ae->box.max_x * scale_w) >> 16;
+		ae->box.min_y = (ae->box.min_y * scale_h) >> 16;
+		if (ae->box.max_y >= 0)
+			ae->box.max_y = (ae->box.max_y * scale_h) >> 16;
+		ae++;
+	}
+}
+
+/*********************************************************************
   artwork_create
 
   This works similar to artwork_load but generates artwork from
@@ -901,6 +984,8 @@ struct artwork *artwork_load(const char *filename, int start_pen, int max_pens)
   like the overlay in the Space invaders series of games.  The overlay
   is defined to be the same size as the screen.
   The end of the array is marked by an entry with negative coordinates.
+  Boxes and circles are supported. Circles are marked max_y == -1,
+  min_x == x coord. of center, min_y == y coord. of center, max_x == radius.
   If there are transparent and opaque overlay elements, the opaque ones
   have to be at the end of the list to stay compatible with the PNG
   artwork.
@@ -908,6 +993,7 @@ struct artwork *artwork_load(const char *filename, int start_pen, int max_pens)
 struct artwork *artwork_create(const struct artwork_element *ae, int start_pen, int max_pens)
 {
 	struct artwork *a;
+	struct osd_bitmap *circle;
 	int pen;
 
 	if ((a = allocate_artwork_mem(Machine->scrbitmap->width, Machine->scrbitmap->height))==NULL)
@@ -939,7 +1025,8 @@ struct artwork *artwork_create(const struct artwork_element *ae, int start_pen, 
 		while ((pen < a->num_pens_used) &&
 		       ((ae->red != a->orig_palette[3*pen]) ||
 				(ae->green != a->orig_palette[3*pen+1]) ||
-				(ae->blue != a->orig_palette[3*pen+2])))
+				(ae->blue != a->orig_palette[3*pen+2]) ||
+				((ae->alpha < 255) && (ae->alpha != a->transparency[pen]))))
 			pen++;
 
 		if (pen == a->num_pens_used)
@@ -955,8 +1042,21 @@ struct artwork *artwork_create(const struct artwork_element *ae, int start_pen, 
 			}
 		}
 
-		fillbitmap (a->orig_artwork, pen, &ae->box);
+		if (ae->box.max_y == -1) /* circle */
+		{
+			int r = ae->box.max_x;
 
+			if ((circle = create_circle (r, pen)) != NULL)
+			{
+				copybitmap(a->orig_artwork,circle,0, 0,
+						   ae->box.min_x - r,
+						   ae->box.min_y - r,
+						   0,TRANSPARENCY_PEN,255);
+				osd_free_bitmap(circle);
+			}
+		}
+		else
+			fillbitmap (a->orig_artwork, pen, &ae->box);
 		ae++;
 	}
 

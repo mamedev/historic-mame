@@ -38,14 +38,15 @@
 #endif
 typedef struct
 {
-        UINT16  PC;
-        INT32   ACC, Preg;
-        INT32   ALU;
-        UINT16  Treg;
-        UINT16  AR[2], STACK[4], STR;
-        int     pending_irq, BIO_pending_irq;
-        int     irq_state;
-        int     (*irq_callback)(int irqline);
+	UINT16	PPC;		/* previous program counter */
+	UINT16  PC;
+	INT32   ACC, Preg;
+	INT32   ALU;
+	UINT16  Treg;
+	UINT16  AR[2], STACK[4], STR;
+	int     pending_irq, BIO_pending_irq;
+	int     irq_state;
+	int     (*irq_callback)(int irqline);
 } tms320c10_Regs;
 
 
@@ -672,13 +673,11 @@ int tms320c10_execute(int cycles)
 
 	do
 	{
-
-#if NEW_INTERRUPT_SYSTEM
-		if (R.pending_irq & TMS320C10_PENDING) {
+		if (R.pending_irq & TMS320C10_PENDING)
+		{
 			int type = (*R.irq_callback)(0);
 			R.pending_irq |= type;
 		}
-#endif
 
 		if (R.pending_irq) {
 			/* Dont service INT if prev instruction was MPY, MPYK or EINT */
@@ -686,21 +685,13 @@ int tms320c10_execute(int cycles)
 				tms320c10_ICount -= Ext_IRQ();
 		}
 
-		#ifdef MAME_DEBUG
-		{
-			extern int mame_debug;
-			if (mame_debug) MAME_Debug();
-		}
-		#endif
+		R.PPC = R.PC;
+
+		CALL_MAME_DEBUG;
 
 		opcode=M_RDOP(R.PC);
 		opcode_major = ((opcode & 0x0ff00) >> 8);
 		opcode_minor = (opcode & 0x0ff);
-
-		{
-		extern int previouspc;
-		previouspc = R.PC;
-		}
 
 		R.PC++;
 		if (opcode_major != 0x07f) { /* Do all opcodes except the 7Fxx ones */
@@ -782,7 +773,7 @@ unsigned tms320c10_get_reg(int regnum)
 	{
 		case TMS320C10_PC: return R.PC;
 		/* This is actually not a stack pointer, but the stack contents */
-		case TMS320C10_STK3: return R.STACK[3];	
+		case TMS320C10_STK3: return R.STACK[3];
 		case TMS320C10_ACC: return R.ACC;
 		case TMS320C10_STR: return R.STR;
 		case TMS320C10_PREG: return R.Preg;
@@ -790,9 +781,9 @@ unsigned tms320c10_get_reg(int regnum)
 		case TMS320C10_AR0: return R.AR[0];
 		case TMS320C10_AR1: return R.AR[1];
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
-				unsigned offset = REG_SP_CONTENTS - regnum;
+				unsigned offset = (REG_SP_CONTENTS - regnum);
 				if( offset < 4 )
 					return R.STACK[offset];
 			}
@@ -818,9 +809,9 @@ void tms320c10_set_reg(int regnum, unsigned val)
 		case TMS320C10_AR0: R.AR[0] = val; break;
 		case TMS320C10_AR1: R.AR[1] = val; break;
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
-				unsigned offset = REG_SP_CONTENTS - regnum;
+				unsigned offset = (REG_SP_CONTENTS - regnum);
 				if( offset < 4 )
 					R.STACK[offset] = val;
 			}
@@ -875,45 +866,6 @@ const char *tms320c10_info(void *context, int regnum)
 
     switch( regnum )
 	{
-		case CPU_INFO_NAME: return "TMS320C10";
-		case CPU_INFO_FAMILY: return "Texas Instruments 320C10";
-		case CPU_INFO_VERSION: return "1.01";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (C) 1999 by Quench";
-		case CPU_INFO_REG_LAYOUT: return (const char*)tms320c10_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)tms320c10_win_layout;
-
-		case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->PC); break;
-		case CPU_INFO_SP: sprintf(buffer[which], "%08X", r->ACC); break;
-#ifdef MAME_DEBUG
-		case CPU_INFO_DASM:
-			r->PC += Dasm32010(buffer[which], &ROM[r->PC]);
-			break;
-#else
-		case CPU_INFO_DASM:
-			sprintf(buffer[which], "$%02x", ROM[r->PC]);
-			r->PC++;
-			break;
-#endif
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
-				r->STR & 0x8000 ? 'O':'.',
-				r->STR & 0x4000 ? 'M':'.',
-				r->STR & 0x2000 ? 'I':'.',
-				r->STR & 0x1000 ? '?':'.',
-				r->STR & 0x0800 ? 'a':'.',
-				r->STR & 0x0400 ? 'r':'.',
-				r->STR & 0x0200 ? 'p':'.',
-				r->STR & 0x0100 ? '1':'.',
-				r->STR & 0x0080 ? '?':'.',
-				r->STR & 0x0040 ? '?':'.',
-				r->STR & 0x0020 ? '?':'.',
-				r->STR & 0x0010 ? '?':'.',
-				r->STR & 0x0008 ? '?':'.',
-				r->STR & 0x0004 ? 'd':'.',
-				r->STR & 0x0002 ? 'p':'.',
-				r->STR & 0x0001 ? '1':'.');
-            break;
 		case CPU_INFO_REG+TMS320C10_PC: sprintf(buffer[which], "PC:%04X",  r->PC); break;
 		case CPU_INFO_REG+TMS320C10_STK3: sprintf(buffer[which], "STK3:%04X", r->STACK[3]); break;
 		case CPU_INFO_REG+TMS320C10_STR: sprintf(buffer[which], "STR:%04X", r->STR); break;
@@ -922,8 +874,44 @@ const char *tms320c10_info(void *context, int regnum)
 		case CPU_INFO_REG+TMS320C10_TREG: sprintf(buffer[which], "T:%04X",   r->Treg); break;
 		case CPU_INFO_REG+TMS320C10_AR0: sprintf(buffer[which], "AR0:%04X", r->AR[0]); break;
 		case CPU_INFO_REG+TMS320C10_AR1: sprintf(buffer[which], "AR1:%04X", r->AR[1]); break;
-	}
+		case CPU_INFO_FLAGS:
+            sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+                r->STR & 0x8000 ? 'O':'.',
+                r->STR & 0x4000 ? 'M':'.',
+                r->STR & 0x2000 ? 'I':'.',
+                r->STR & 0x1000 ? '?':'.',
+                r->STR & 0x0800 ? 'a':'.',
+                r->STR & 0x0400 ? 'r':'.',
+                r->STR & 0x0200 ? 'p':'.',
+                r->STR & 0x0100 ? '1':'.',
+                r->STR & 0x0080 ? '?':'.',
+                r->STR & 0x0040 ? '?':'.',
+                r->STR & 0x0020 ? '?':'.',
+                r->STR & 0x0010 ? '?':'.',
+                r->STR & 0x0008 ? '?':'.',
+                r->STR & 0x0004 ? 'd':'.',
+                r->STR & 0x0002 ? 'p':'.',
+                r->STR & 0x0001 ? '1':'.');
+            break;
+        case CPU_INFO_NAME: return "TMS320C10";
+        case CPU_INFO_FAMILY: return "Texas Instruments 320C10";
+        case CPU_INFO_VERSION: return "1.01";
+        case CPU_INFO_FILE: return __FILE__;
+        case CPU_INFO_CREDITS: return "Copyright (C) 1999 by Quench";
+        case CPU_INFO_REG_LAYOUT: return (const char*)tms320c10_reg_layout;
+        case CPU_INFO_WIN_LAYOUT: return (const char*)tms320c10_win_layout;
+    }
 	return buffer[which];
 }
 
+unsigned tms320c10_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+	(void)base;
+#ifdef MAME_DEBUG
+    return Dasm32010( buffer, &ROM[(pc<<1)&0xffff]);
+#else
+	sprintf( buffer, "$%02X%02X", ROM[(pc<<1)&0xffff], ROM[((pc<<1)+1)&0xffff] );
+	return 2;
+#endif
+}
 

@@ -233,8 +233,8 @@ INPUT_PORTS_START( tnzs_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
 
 	PORT_START      /* IN1 */
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2 )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2 )
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_LOW, IPT_COIN2, 2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -243,7 +243,7 @@ INPUT_PORTS_START( tnzs_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 */
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2 )
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_LOW, IPT_COIN3, 2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -274,49 +274,49 @@ INPUT_PORTS_START( tnzs_input_ports )
 
  /* DIP switch settings supplied by Greg Best <gregbest98@hotmail.com> */
 	PORT_START      /* DSW A - ef0e */
-    PORT_DIPNAME( 0x01, 0x01, "Cabinet", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x00, "Upright" )
-    PORT_DIPSETTING(    0x01, "Cocktail" )
-    PORT_DIPNAME( 0x02, 0x02, "Flip Screen", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x02, "Off" )
-    PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+    PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+    PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+    PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+    PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
     PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED ) /* Always off */
-    PORT_DIPNAME( 0x30, 0x30, "Coin A", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
-    PORT_DIPSETTING(    0x10, "3 Coins/1 Credit" )
-    PORT_DIPSETTING(    0x20, "2 Coins/1 Credit" )
-    PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
-    PORT_DIPNAME( 0xc0, 0xc0, "Coin B", IP_KEY_NONE )
-    PORT_DIPSETTING(    0xc0, "1 Coin/2 Credits" )
-    PORT_DIPSETTING(    0x80, "1 Coin/3 Credits" )
-    PORT_DIPSETTING(    0x40, "1 Coin/4 Credits" )
-    PORT_DIPSETTING(    0x00, "1 Coin/6 Credits" )
+    PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+    PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
+    PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
+    PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+    PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
+    PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
+    PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
 
 	PORT_START      /* DSW B - ef0f */
-    PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE)
+    PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
     PORT_DIPSETTING(    0x02, "Easy" )
     PORT_DIPSETTING(    0x03, "Medium" )
     PORT_DIPSETTING(    0x01, "Hard" )
     PORT_DIPSETTING(    0x00, "Hardest" )
-    PORT_DIPNAME( 0x0c, 0x0c, "Bonus Life", IP_KEY_NONE )
+    PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
     PORT_DIPSETTING(    0x00, "50000 150000" )
     PORT_DIPSETTING(    0x0c, "70000 200000" )
     PORT_DIPSETTING(    0x04, "100000 250000" )
     PORT_DIPSETTING(    0x08, "200000 300000" )
-    PORT_DIPNAME( 0x30, 0x30, "Lives", IP_KEY_NONE )
+    PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
     PORT_DIPSETTING(    0x20, "2" )
     PORT_DIPSETTING(    0x30, "3" )
     PORT_DIPSETTING(    0x00, "4" )
     PORT_DIPSETTING(    0x10, "5" )
-    PORT_DIPNAME( 0x40, 0x40, "Allow Continue", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x00, "No" )
-    PORT_DIPSETTING(    0x40, "Yes" )
-    PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x80, "Off" )
-    PORT_DIPSETTING(    0x00, "On" )
+    PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+    PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
+    PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( tnzsb_input_ports )
@@ -351,49 +351,49 @@ INPUT_PORTS_START( tnzsb_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSW A - ef0e */
-    PORT_DIPNAME( 0x01, 0x01, "Cabinet", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x00, "Upright" )
-    PORT_DIPSETTING(    0x01, "Cocktail" )
-    PORT_DIPNAME( 0x02, 0x02, "Flip Screen", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x02, "Off" )
-    PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+    PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+    PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+    PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+    PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
     PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED ) /* Always off */
-    PORT_DIPNAME( 0x30, 0x30, "Coin A", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
-    PORT_DIPSETTING(    0x10, "3 Coins/1 Credit" )
-    PORT_DIPSETTING(    0x20, "2 Coins/1 Credit" )
-    PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
-    PORT_DIPNAME( 0xc0, 0xc0, "Coin B", IP_KEY_NONE )
-    PORT_DIPSETTING(    0xc0, "1 Coin/2 Credits" )
-    PORT_DIPSETTING(    0x80, "1 Coin/3 Credits" )
-    PORT_DIPSETTING(    0x40, "1 Coin/4 Credits" )
-    PORT_DIPSETTING(    0x00, "1 Coin/6 Credits" )
+    PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+    PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
+    PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
+    PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+    PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
+    PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
+    PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
 
 	PORT_START      /* DSW B - ef0f */
-    PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE)
+    PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
     PORT_DIPSETTING(    0x02, "Easy" )
     PORT_DIPSETTING(    0x03, "Medium" )
     PORT_DIPSETTING(    0x01, "Hard" )
     PORT_DIPSETTING(    0x00, "Hardest" )
-    PORT_DIPNAME( 0x0c, 0x0c, "Bonus Life", IP_KEY_NONE )
+    PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
     PORT_DIPSETTING(    0x00, "50000 150000" )
     PORT_DIPSETTING(    0x0c, "70000 200000" )
     PORT_DIPSETTING(    0x04, "100000 250000" )
     PORT_DIPSETTING(    0x08, "200000 300000" )
-    PORT_DIPNAME( 0x30, 0x30, "Lives", IP_KEY_NONE )
+    PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
     PORT_DIPSETTING(    0x20, "2" )
     PORT_DIPSETTING(    0x30, "3" )
     PORT_DIPSETTING(    0x00, "4" )
     PORT_DIPSETTING(    0x10, "5" )
-    PORT_DIPNAME( 0x40, 0x40, "Allow Continue", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x00, "No" )
-    PORT_DIPSETTING(    0x40, "Yes" )
-    PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x80, "Off" )
-    PORT_DIPSETTING(    0x00, "On" )
+    PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+    PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
+    PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( tnzs2_input_ports )
@@ -408,8 +408,8 @@ INPUT_PORTS_START( tnzs2_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
 
 	PORT_START      /* IN1 */
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2 )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2 )
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_LOW, IPT_COIN2, 2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -418,7 +418,7 @@ INPUT_PORTS_START( tnzs2_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 */
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2 )
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_LOW, IPT_COIN3, 2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -449,49 +449,49 @@ INPUT_PORTS_START( tnzs2_input_ports )
 
  /* DIP switch settings supplied by Greg Best <gregbest98@hotmail.com> */
 	PORT_START      /* DSW A - ef0e */
-    PORT_DIPNAME( 0x01, 0x01, "Cabinet", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x00, "Upright" )
-    PORT_DIPSETTING(    0x01, "Cocktail" )
-    PORT_DIPNAME( 0x02, 0x02, "Flip Screen", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x02, "Off" )
-    PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+    PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+    PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+    PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+    PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
     PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED ) /* Always off */
-    PORT_DIPNAME( 0x30, 0x30, "Coin A", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
-    PORT_DIPSETTING(    0x10, "3 Coins/1 Credit" )
-    PORT_DIPSETTING(    0x20, "2 Coins/1 Credit" )
-    PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
-    PORT_DIPNAME( 0xc0, 0xc0, "Coin B", IP_KEY_NONE )
-    PORT_DIPSETTING(    0xc0, "1 Coin/2 Credits" )
-    PORT_DIPSETTING(    0x80, "1 Coin/3 Credits" )
-    PORT_DIPSETTING(    0x40, "1 Coin/4 Credits" )
-    PORT_DIPSETTING(    0x00, "1 Coin/6 Credits" )
+    PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+    PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
+    PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
+    PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+    PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
+    PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
+    PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
 
 	PORT_START      /* DSW B - ef0f */
-    PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE)
+    PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
     PORT_DIPSETTING(    0x02, "Easy" )
     PORT_DIPSETTING(    0x03, "Medium" )
     PORT_DIPSETTING(    0x01, "Hard" )
     PORT_DIPSETTING(    0x00, "Hardest" )
-    PORT_DIPNAME( 0x0c, 0x0c, "Bonus Life", IP_KEY_NONE )
+    PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
     PORT_DIPSETTING(    0x00, "10000 100000" )
     PORT_DIPSETTING(    0x0c, "10000 150000" )
     PORT_DIPSETTING(    0x08, "10000 200000" )
     PORT_DIPSETTING(    0x04, "10000 300000" )
-    PORT_DIPNAME( 0x30, 0x30, "Lives", IP_KEY_NONE )
+    PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
     PORT_DIPSETTING(    0x20, "2" )
     PORT_DIPSETTING(    0x30, "3" )
     PORT_DIPSETTING(    0x00, "4" )
     PORT_DIPSETTING(    0x10, "5" )
-    PORT_DIPNAME( 0x40, 0x40, "Allow Continue", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x00, "No" )
-    PORT_DIPSETTING(    0x40, "Yes" )
-    PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x80, "Off" )
-    PORT_DIPSETTING(    0x00, "On" )
+    PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+    PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
+    PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -552,14 +552,14 @@ static struct MachineDriver tnzs_machine_driver =
 	{				/* MachineCPU */
 		{
 			CPU_Z80,
-			6000000,		/* 6 Mhz??? */
+			6000000,		/* 6 Mhz(?) */
 			0,			/* memory_region */
 			readmem,writemem,0,0,
 			tnzs_interrupt,1
 		},
 		{
 			CPU_Z80,
-			6000000,        /* 6 Mhz??? */
+			6000000,        /* 6 Mhz(?) */
 			2,			/* memory_region */
 			readmem1,writemem1,0,0,
 			interrupt,1
@@ -599,14 +599,14 @@ static struct MachineDriver tnzsb_machine_driver =
 	{				/* MachineCPU */
 		{
 			CPU_Z80,
-			6000000,		/* 6 Mhz??? */
+			6000000,		/* 6 Mhz(?) */
 			0,			/* memory_region */
 			tnzsb_readmem,tnzsb_writemem,0,0,
 			tnzs_interrupt,1
 		},
 		{
 			CPU_Z80,
-			6000000,        /* 6 Mhz??? */
+			6000000,        /* 6 Mhz(?) */
 			2,			/* memory_region */
 			tnzsb_readmem1,tnzsb_writemem1,0,0,
 			interrupt,1

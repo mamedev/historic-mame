@@ -58,9 +58,9 @@
 #define PCW h6280.pc.w.l
 #define PCD h6280.pc.d
 
-#define DO_INTERRUPT(clear,vector) 								\
-	h6280.pending_interrupt &= ~clear;							\
-	h6280_ICount -= 7;		/* 7 cycles for an int */			\
+#define DO_INTERRUPT(vector)									\
+{																\
+	h6280.extra_cycles += 7;	/* 7 cycles for an int */		\
 	PCW--;														\
 	PUSH(PCH);													\
 	PUSH(PCL);													\
@@ -68,7 +68,33 @@
 	PUSH(P);													\
 	P = (P & ~_fD) | _fI;	/* knock out D and set I flag */	\
 	PCL = RDMEM(vector);										\
-	PCH = RDMEM((vector+1))
+	PCH = RDMEM((vector+1));									\
+}
+
+#define CHECK_IRQ_LINES 										\
+	if( !(P & _fI) )											\
+	{															\
+		if ( h6280.irq_state[0] != CLEAR_LINE &&				\
+			 !(h6280.irq_mask & 0x1) )							\
+		{														\
+			DO_INTERRUPT(H6280_IRQ1_VEC);						\
+			(*h6280.irq_callback)(0);							\
+		}														\
+		else													\
+		if ( h6280.irq_state[1] != CLEAR_LINE &&				\
+			 !(h6280.irq_mask & 0x2) )							\
+		{														\
+			DO_INTERRUPT(H6280_IRQ2_VEC);						\
+			(*h6280.irq_callback)(1);							\
+        }                                                       \
+		else													\
+        if ( h6280.irq_state[2] != CLEAR_LINE &&                \
+			 !(h6280.irq_mask & 0x4) )							\
+		{														\
+			DO_INTERRUPT(H6280_TIMER_VEC);						\
+			(*h6280.irq_callback)(2);							\
+        }                                                       \
+    }
 
 /***************************************************************
  *  RDMEM   read memory
@@ -105,7 +131,7 @@
  ***************************************************************/
 #define RDMEMW(addr)											\
 	cpu_readmem21( (h6280.mmr[(addr)  >>13] << 13) | ((addr  )&0x1fff)) \
-| (	cpu_readmem21( (h6280.mmr[(addr+1)>>13] << 13) | ((addr+1)&0x1fff)) << 8 )
+| ( cpu_readmem21( (h6280.mmr[(addr+1)>>13] << 13) | ((addr+1)&0x1fff)) << 8 )
 
 /***************************************************************
  *  RDZPWORD    read a word from a zero page address
@@ -508,7 +534,12 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_get_pc()); \
  *	CLI Clear interrupt flag
  ***************************************************************/
 #define CLI 													\
-	P &= ~_fI
+	if( P & _fI )												\
+	{															\
+		P &= ~_fI;												\
+		CHECK_IRQ_LINES;										\
+	}
+
 
 /* 6280 ********************************************************
  *	CLV Clear overflow flag
@@ -725,12 +756,14 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_get_pc()); \
 #define PLP 													\
 	PULL(P);													\
 	NZ = ((P & _fN) << 8) | 									\
-		 ((P & _fZ) ^ _fZ)
+		 ((P & _fZ) ^ _fZ); 									\
+	CHECK_IRQ_LINES
 
 #else
 
 #define PLP 													\
-	PULL(P)
+	PULL(P) 													\
+	CHECK_IRQ_LINES
 #endif
 
 /* 6280 ********************************************************
@@ -783,14 +816,16 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_get_pc()); \
 		 ((P & _fZ) ^ _fZ); 									\
 	PULL(PCL);													\
 	PULL(PCH);													\
-	PCW++;
+	PCW++;														\
+	CHECK_IRQ_LINES
 #else
 
 #define RTI 													\
 	PULL(P);													\
 	PULL(PCL);													\
 	PULL(PCH);													\
-	PCW++;
+	PCW++;														\
+	CHECK_IRQ_LINES
 #endif
 
 /* 6280 ********************************************************

@@ -857,7 +857,7 @@ unsigned tms34010_get_reg(int regnum)
         case TMS34010_B14: return state.regs.Bregs[14<<4];
 /* TODO: return contents of [SP + wordsize * (CPU_SP_CONTENTS-regnum)] */
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
 				unsigned offset = state.regs.a.Aregs[15] + 4 * (REG_SP_CONTENTS - regnum);
 				return cpu_readmem29_dword( offset >> 3 );
@@ -909,7 +909,7 @@ void tms34010_set_reg(int regnum, unsigned val)
         case TMS34010_B14: state.regs.Bregs[14<<4] = val; break;
 /* TODO: set contents of [SP + wordsize * (CPU_SP_CONTENTS-regnum)] */
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
 				unsigned offset = state.regs.a.Aregs[15] + 4 * (REG_SP_CONTENTS - regnum);
 				cpu_writemem29_word( offset >> 3, val ); /* ??? */
@@ -1054,10 +1054,6 @@ static void check_interrupt(void)
 }
 
 
-#ifdef MAME_DEBUG
-extern int mame_debug;
-#endif
-
 /* execute instructions on this CPU until icount expires */
 int tms34010_execute(int cycles)
 {
@@ -1126,20 +1122,6 @@ const char *tms34010_info(void *context, int regnum)
 		case CPU_INFO_REG_LAYOUT: return (const char *)tms34010_reg_layout;
 		case CPU_INFO_WIN_LAYOUT: return (const char *)tms34010_win_layout;
 
-		case CPU_INFO_PC: sprintf(buffer[which], "%08X:", r->pc); break;
-		case CPU_INFO_SP: sprintf(buffer[which], "%08X", r->regs.a.Aregs[15]); break;
-#ifdef MAME_DEBUG
-		case CPU_INFO_DASM:
-			r->pc += Dasm34010(&OP_ROM[r->pc>>3], buffer[which], r->pc);
-			break;
-#else
-		case CPU_INFO_DASM:
-			sprintf(buffer[which], "$%02x%02x%02x%02x",
-				OP_ROM[(r->pc >> 3)+0], OP_ROM[(r->pc >> 3)+1],
-				OP_ROM[(r->pc >> 3)+2], OP_ROM[(r->pc >> 3)+3]);
-			r->pc += 32;
-			break;
-#endif
 		case CPU_INFO_FLAGS:
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
 				r->st & 0x80000000 ? 'N':'.',
@@ -1210,6 +1192,16 @@ const char *tms34010_info(void *context, int regnum)
 		case CPU_INFO_REG+TMS34010_B14: sprintf(buffer[which],"B14:%08X", r->regs.Bregs[14<<4]); break;
 	}
 	return buffer[which];
+}
+
+unsigned tms34010_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+#ifdef MAME_DEBUG
+    return Dasm34010(base,buffer,pc);
+#else
+	sprintf( buffer, "$%04X", cpu_readmem29_word(pc>>3) );
+	return 2;
+#endif
 }
 
 

@@ -88,23 +88,23 @@ static struct IOWritePort writeport[] =
 
 INPUT_PORTS_START( input_ports )
 	PORT_START      /* IN0 */
-	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Check Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Check Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_COIN3 )
-	PORT_BITX(0x04, IP_ACTIVE_LOW,  0, "Reset All", OSD_KEY_F5, IP_JOY_NONE, 0)  /* including battery backed RAM */
-	PORT_BITX(0x08, IP_ACTIVE_LOW,  0, "Clear Stats", OSD_KEY_F6, IP_JOY_NONE, 0)
-	PORT_BITX(0x10, IP_ACTIVE_LOW,  0, "Call Attendant", OSD_KEY_6, IP_JOY_NONE, 0)
-	PORT_BITX(0x20, IP_ACTIVE_LOW,  0, "Reset Hopper", OSD_KEY_7, IP_JOY_NONE, 0)
+	PORT_BITX(0x04, IP_ACTIVE_LOW,  0, "Reset All", OSD_KEY_F5, IP_JOY_NONE )  /* including battery backed RAM */
+	PORT_BITX(0x08, IP_ACTIVE_LOW,  0, "Clear Stats", OSD_KEY_F6, IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_LOW,  0, "Call Attendant", OSD_KEY_6, IP_JOY_NONE )
+	PORT_BITX(0x20, IP_ACTIVE_LOW,  0, "Reset Hopper", OSD_KEY_7, IP_JOY_NONE )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW,  IPT_UNUSED ) /*  ne donne rien */
 
 	PORT_START      /* IN1 */
 	PORT_BIT(0x07, IP_ACTIVE_LOW,  IPT_UNUSED ) /* ne donne rien */
-	PORT_BITX(0x08, IP_ACTIVE_LOW,  IPT_BUTTON1, "Bonus Game", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x10, IP_ACTIVE_LOW,  IPT_BUTTON2, "Stand",      IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x20, IP_ACTIVE_LOW,  IPT_BUTTON3, "Hit",        IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x08, IP_ACTIVE_LOW,  IPT_BUTTON1, "Bonus Game", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x10, IP_ACTIVE_LOW,  IPT_BUTTON2, "Stand",      IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x20, IP_ACTIVE_LOW,  IPT_BUTTON3, "Hit",        IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_BUTTON5 )
-	PORT_BITX(0x80, IP_ACTIVE_LOW,  IPT_BUTTON4, "Pay Out",    IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x80, IP_ACTIVE_LOW,  IPT_BUTTON4, "Pay Out",    IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 
 	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNKNOWN )   /* Token Drop */
@@ -113,11 +113,11 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_COIN1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_UNKNOWN )	/* Token In */
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Overflow */
-	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN, "Coin Out", OSD_KEY_8, IP_JOY_NONE, 0 )
+	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN, "Coin Out", OSD_KEY_8, IP_JOY_NONE )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNUSED )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x07, 0x07, "Winning Percentage", IP_KEY_NONE )
+	PORT_DIPNAME( 0x07, 0x07, "Winning Percentage" )
 	PORT_DIPSETTING(    0x06, "70%" )
 	PORT_DIPSETTING(    0x05, "74%" )
 	PORT_DIPSETTING(    0x04, "78%" )
@@ -126,49 +126,49 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x07, "90%" )
 	PORT_DIPSETTING(    0x01, "94%" )
 	PORT_DIPSETTING(    0x00, "98%" )
-	PORT_DIPNAME( 0x08, 0x08, "Dip 1  Switch 3", IP_KEY_NONE )   /* Doesn't appear on the test menu */
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x10, 0x10, "Dip 1  Switch 4", IP_KEY_NONE )   /* Doesn't appear on the test menu */
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Dip 1  Switch 5", IP_KEY_NONE )   /* Doesn't appear on the test menu */
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x60, 0x20, "Payment Method", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x08, "Dip 1  Switch 3" )   /* Doesn't appear on the test menu */
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Dip 1  Switch 4" )   /* Doesn't appear on the test menu */
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Dip 1  Switch 5" )   /* Doesn't appear on the test menu */
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x60, 0x20, "Payment Method" )
 	PORT_DIPSETTING(    0x00, "Credit In/Coin Out" )
 	PORT_DIPSETTING(    0x20, "Coin In/Coin Out" )
 	PORT_DIPSETTING(    0x40, "Credit In/Credit Out" )
   /*PORT_DIPSETTING(    0x60, "Credit In/Coin Out" ) */
-	PORT_DIPNAME( 0x80, 0x80, "Reset All Switch", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Reset All Switch" )
 	PORT_DIPSETTING(    0x80, "Disable" )
 	PORT_DIPSETTING(    0x00, "Enable" )
 
 	PORT_START      /* DSW2 */
-	PORT_DIPNAME( 0x07, 0x06, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x05, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x06, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x03, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x01, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x00, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x07, "1 Coin/6 Credits" )
-	PORT_DIPNAME( 0x38, 0x30, "Coin B", IP_KEY_NONE )
+	PORT_DIPNAME( 0x07, 0x06, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x38, 0x30, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x28, "2 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x20, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x38, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x18, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x10, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x08, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x38, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x00, "1 Coin/10 Credits" )
-	PORT_DIPNAME( 0x40, 0x40, "Coin C", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Coin C" )
 	PORT_DIPSETTING(    0x00, "1 Coin/10 Credits" )
-	PORT_DIPSETTING(    0x40, "1 Coin/1 Credit" )
-	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 

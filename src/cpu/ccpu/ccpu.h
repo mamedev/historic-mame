@@ -26,9 +26,10 @@
 
 /* added these includes */
 #include "osd_cpu.h"
+#include "osd_dbg.h"
 
 enum {
-	CCPU_PC=1, CCPU_ACC, CCPU_CMP, CCPU_PA0, CCPU_CFLAG, 
+	CCPU_PC=1, CCPU_ACC, CCPU_CMP, CCPU_PA0, CCPU_CFLAG,
 	CCPU_A, CCPU_B, CCPU_I, CCPU_J, CCPU_P, CCPU_CSTATE };
 
 #ifndef FALSE
@@ -57,6 +58,7 @@ void ccpu_set_nmi_line(int state);
 void ccpu_set_irq_line(int irqline, int state);
 void ccpu_set_irq_callback(int (*callback)(int irqline));
 const char *ccpu_info(void *context, int regnum);
+unsigned ccpu_dasm(UINT8 *base, char *buffer, unsigned pc);
 
 /* I/O routine */
 void ccpu_SetInputs(int inputs, int switches);
@@ -83,8 +85,7 @@ void ccpu_SetInputs(int inputs, int switches);
 void ccpu_Config (int jmi, int msize, int monitor);
 
 #ifdef MAME_DEBUG
-extern int mame_debug;
-extern void MAME_Debug(void);
+//extern unsigned DasmCCPU(char *buffer, unsigned pc);
 #endif
 
 /*============================================================================================*

@@ -116,12 +116,6 @@ void naughtyb_vh_stop(void);
 void naughtyb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void naughtyb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-// Let's skip the sound for now.. ;)
-// void naughtyb_sound_control_a_w(int offset, int data);
-// void naughtyb_sound_control_b_w(int offset, int data);
-// int naughtyb_sh_start(void);
-// void naughtyb_sh_update(void);
-
 void phoenix_sound_control_a_w(int offset, int data);
 void phoenix_sound_control_b_w(int offset, int data);
 int phoenix_sh_start(void);
@@ -193,22 +187,22 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
 
 	PORT_START	/* DSW0 & VBLANK */
-	PORT_DIPNAME( 0x03, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x03, "5" )
-	PORT_DIPNAME( 0x0c, 0x04, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x04, "30000" )
 	PORT_DIPSETTING(    0x08, "50000" )
 	PORT_DIPSETTING(    0x0c, "70000" )
-	PORT_DIPNAME( 0x30, 0x10, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x10, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x20, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x30, "1 Coin/3 Credits" )
-	PORT_DIPNAME( 0x40, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x10, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x40, "Hard" )
 	/* This is a bit of a mystery. Bit 0x80 is read as the vblank, but
@@ -218,11 +212,10 @@ INPUT_PORTS_START( input_ports )
 	PORT_START	/* FAKE */
 	/* The coin slots are not memory mapped. */
 	/* This fake input port is used by the interrupt */
-	/* handler to be notified of coin insertions. We use IPF_IMPULSE to */
+	/* handler to be notified of coin insertions. We use IMPULSE to */
 	/* trigger exactly one interrupt, without having to check when the */
 	/* user releases the key. */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
 INPUT_PORTS_END
 
 
@@ -233,8 +226,8 @@ static struct GfxLayout charlayout =
 	512,    /* 512 characters */
 	2,      /* 2 bits per pixel */
 	{ 512*8*8, 0 }, /* the two bitplanes are separated */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0 },     /* pretty straightforward layout */
+	{ 7, 6, 5, 4, 3, 2, 1, 0 },	/* pretty straightforward layout */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
@@ -309,7 +302,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	28*8, 36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },
+	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
 	256,32*4+32*4,
 	naughtyb_vh_convert_color_prom,
@@ -345,7 +338,7 @@ static struct MachineDriver popflame_machine_driver =
 	0,
 
 	/* video hardware */
-	28*8, 36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },
+	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
 	256,32*4+32*4,
 	naughtyb_vh_convert_color_prom,
@@ -566,7 +559,7 @@ struct GameDriver naughtyb_driver =
 	input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	naughtyb_hiload, naughtyb_hisave
 };
@@ -592,7 +585,7 @@ struct GameDriver popflame_driver =
 	input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	popflame_hiload, popflame_hisave
 };

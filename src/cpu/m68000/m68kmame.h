@@ -52,7 +52,6 @@ extern  FILE* errorlog;
 */
 
 
-extern int previouspc;
 extern int m68k_clks_left;
 
 

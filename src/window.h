@@ -10,6 +10,10 @@
 #define ARGFMT
 #endif
 
+#ifndef DECL_SPEC
+#define DECL_SPEC
+#endif
+
 #ifndef TRUE
 #define	TRUE			1
 #endif
@@ -180,8 +184,8 @@ extern UINT32 win_is_initalized(UINT32 idx);
 extern void win_exit_engine(void);
 extern void win_close(UINT32 idx);
 extern INT32 win_vprintf(UINT32 idx, const char *pszString, va_list arg);
-extern INT32 win_printf(UINT32 idx, const char *pszString, ...) ARGFMT;
-extern UINT32 win_set_title(UINT32 idx, const char *pszTitle, ... ) ARGFMT;
+extern INT32 DECL_SPEC win_printf(UINT32 idx, const char *pszString, ...) ARGFMT;
+extern UINT32 DECL_SPEC win_set_title(UINT32 idx, const char *pszTitle, ... ) ARGFMT;
 extern UINT32 win_get_cx(UINT32 idx);
 extern UINT32 win_get_cy(UINT32 idx);
 extern UINT32 win_get_cx_abs(UINT32 idx);
@@ -193,6 +197,7 @@ extern UINT32 win_get_h(UINT32 idx);
 extern void win_set_w(UINT32 idx, UINT32 w);
 extern void win_set_h(UINT32 idx, UINT32 w);
 extern void win_set_color(UINT32 idx, UINT32 color);
+extern void win_set_title_color(UINT32 idx, UINT32 color);
 extern void win_set_curpos(UINT32 idx, UINT32 x, UINT32 y);
 extern void win_set_cursor(UINT32 idx, UINT32 dwCursorState);
 extern void win_hide(UINT32 idx);

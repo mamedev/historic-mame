@@ -386,7 +386,7 @@ void pengo_sound_w(int offset,int data)
 		else
 			voice->frequency = voice->frequency * 16;
 
-		voice->volume[0] = namco_soundregs[0x15 + base];
+		voice->volume[0] = namco_soundregs[0x15 + base] & 0x0f;
 		voice->wave = &sound_prom[32 * (namco_soundregs[0x05 + base] & 7)];
 	}
 }
@@ -417,7 +417,7 @@ void mappy_sound_w(int offset,int data)
 		voice->frequency = voice->frequency * 256 + namco_soundregs[0x05 + base];
 		voice->frequency = voice->frequency * 256 + namco_soundregs[0x04 + base];
 
-		voice->volume[0] = namco_soundregs[0x03 + base];
+		voice->volume[0] = namco_soundregs[0x03 + base] & 0x0f;
 		voice->wave = &sound_prom[32 * ((namco_soundregs[0x06 + base] >> 4) & 7)];
 	}
 }
@@ -451,8 +451,8 @@ void namcos1_sound_w(int offset, int data)
 		voice->frequency = voice->frequency * 256 + namco_soundregs[0x02 + base];
 		voice->frequency = voice->frequency * 256 + namco_soundregs[0x03 + base];
 
-		voice->volume[0] = namco_soundregs[0x00 + base];
-		voice->volume[1] = namco_soundregs[0x04 + base];
+		voice->volume[0] = namco_soundregs[0x00 + base] & 0x0f;
+		voice->volume[1] = namco_soundregs[0x04 + base] & 0x0f;
 		voice->wave = &sound_prom[32/samples_per_byte * ((namco_soundregs[0x01 + base] >> 4) & 15)];
 	}
 }

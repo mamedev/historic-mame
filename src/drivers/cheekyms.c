@@ -62,23 +62,23 @@ static int cheekyms_interrupt(void)
 
 INPUT_PORTS_START( input_ports )
 	PORT_START      /* IN0 */
-	PORT_DIPNAME( 0x03, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x03, "5" )
-	PORT_DIPNAME( 0x0c, 0x04, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x00, "1 Coin/2 Credits" )
-  //PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
-	PORT_DIPNAME( 0x10, 0x10, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
-	PORT_DIPNAME( 0x20, 0x20, "Attract Sound", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0xc0, 0x40, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
+  //PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x20, 0x20, "Attract Sound" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0x40, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x40, "3000" )
 	PORT_DIPSETTING(    0x80, "4500" )
 	PORT_DIPSETTING(    0xc0, "6000" )
@@ -97,10 +97,10 @@ INPUT_PORTS_START( input_ports )
 	PORT_START	/* FAKE */
 	/* The coin slots are not memory mapped. Coin  causes a NMI, */
 	/* This fake input port is used by the interrupt */
-	/* handler to be notified of coin insertions. We use IPF_IMPULSE to */
+	/* handler to be notified of coin insertions. We use IMPULSE to */
 	/* trigger exactly one interrupt, without having to check when the */
 	/* user releases the key. */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE, "Coin", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
 INPUT_PORTS_END
 
 

@@ -2,11 +2,6 @@
 #include "tilemap.h"
 
 /*
-new:
--	tile priority and orientation should now work with non-transparent layers
--	a bug in tilemap_set_clip when width!=height (hopefully the only bug, but I still
-	need to do testing).
-
 to do:
 -	only update scrolled flag when a tilemap scrolls a full tile or more
 -	flag dirtyness per row, not just per tile, so that entire rows of unchanged tiles can be
@@ -43,17 +38,29 @@ to do:
 
 ********************************************************************************/
 
+static struct tilemap *first_tilemap;
+
 static int orientation, screen_width, screen_height;
 struct tile_info tile_info;
 
 #define SWAP(X,Y) {int temp=X; X=Y; Y=temp; }
 
-void tilemap_set_attributes( struct tilemap *tilemap, int attributes ){
-	if( tilemap->attributes!=attributes ){
+void tilemap_set_enable( struct tilemap *tilemap, int enable ){
+	tilemap->enable = enable;
+}
+
+void tilemap_set_flip( struct tilemap *tilemap, int attributes ){
+	if( tilemap==ALL_TILEMAPS ){
+		tilemap = first_tilemap;
+		while( tilemap ){
+			tilemap_set_flip( tilemap, attributes );
+			tilemap = tilemap->next;
+		}
+	}
+	else if( tilemap->attributes!=attributes ){
 		orientation = Machine->orientation;
 		if( attributes&TILEMAP_FLIPY ) orientation ^= ORIENTATION_FLIP_Y;
 		if( attributes&TILEMAP_FLIPX ) orientation ^= ORIENTATION_FLIP_X;
-
 		tilemap_mark_all_tiles_dirty( tilemap );
 		tilemap->attributes = attributes;
 	}
@@ -98,6 +105,7 @@ void tilemap_init( void ){
 	orientation = Machine->orientation;
 	screen_width = Machine->scrbitmap->width;
 	screen_height = Machine->scrbitmap->height;
+	first_tilemap = 0;
 }
 
 /***********************************************************************************/
@@ -207,7 +215,6 @@ static void dispose_tile_info( struct tilemap *tilemap ){
 	if( tilemap->pen_usage ) free( tilemap->pen_usage );
 	if( tilemap->priority ) free( tilemap->priority );
 	if( tilemap->visible ) free( tilemap->visible );
-//	if( tilemap->dirty_vramrow ) free( tilemap->dirty_vramrow );
 	if( tilemap->dirty_vram ) free( tilemap->dirty_vram );
 	if( tilemap->dirty_pixels ) free( tilemap->dirty_pixels );
 	if( tilemap->flags ) free( tilemap->flags );
@@ -227,7 +234,6 @@ static int create_tile_info( struct tilemap *tilemap ){
 	tilemap->priority = malloc( num_tiles );
 	tilemap->visible = malloc( num_tiles );
 	tilemap->dirty_vram = malloc( num_tiles );
-//	tilemap->dirty_vramrow = malloc( num_rows );
 	tilemap->dirty_pixels = malloc( num_tiles );
 	tilemap->flags = malloc( num_tiles );
 
@@ -236,7 +242,7 @@ static int create_tile_info( struct tilemap *tilemap ){
 
 	if( tilemap->pendata && tilemap->paldata && tilemap->pen_usage &&
 		tilemap->priority && tilemap->visible &&
-		tilemap->dirty_vram && //tilemap->dirty_vramrow &&
+		tilemap->dirty_vram &&
 		tilemap->dirty_pixels &&
 		tilemap->flags &&
 		tilemap->priority_row && tilemap->visible_row )
@@ -256,7 +262,6 @@ static int create_tile_info( struct tilemap *tilemap ){
 		memset( tilemap->priority, 0, num_tiles );
 		memset( tilemap->visible, 0, num_tiles );
 		memset( tilemap->dirty_vram, 1, num_tiles );
-		//memset( tilemap->dirty_vramrow, 1, num_rows );
 		memset( tilemap->dirty_pixels, 1, num_tiles );
 
 		return 1; /* done */
@@ -379,6 +384,7 @@ static void dispose_bg_mask( struct tilemap *tilemap ){
 /***********************************************************************************/
 
 struct tilemap *tilemap_create(
+		void (*tile_get_info)( int col, int row ),
 		int type,
 		int tile_width, int tile_height,
 		int num_cols, int num_rows,
@@ -386,8 +392,6 @@ struct tilemap *tilemap_create(
 
 	struct tilemap *tilemap = (struct tilemap *)malloc( sizeof( struct tilemap ) );
 	if( tilemap ){
-		tilemap->attributes = 0;
-
 		if( orientation & ORIENTATION_SWAP_XY ){
 			SWAP( tile_width, tile_height )
 			SWAP( num_cols,num_rows )
@@ -402,10 +406,10 @@ struct tilemap *tilemap_create(
 		}
 
 		memset( tilemap, 0, sizeof( struct tilemap ) );
-		{
-			const struct rectangle *clip = &Machine->drv->visible_area;
-			tilemap_set_clip( tilemap, clip );
-		}
+		tilemap->tile_get_info = tile_get_info;
+		tilemap->attributes = 0;
+		tilemap->enable = 1;
+		tilemap_set_clip( tilemap, &Machine->drv->visible_area );
 
 		if( tile_width==8 ){
 			if( tile_height==8 ){
@@ -447,6 +451,8 @@ struct tilemap *tilemap_create(
 				if( create_fg_mask( tilemap ) ){
 					if( create_bg_mask( tilemap ) ){
 						if( create_tile_info( tilemap ) ){
+							tilemap->next = first_tilemap;
+							first_tilemap = tilemap;
 							return tilemap;
 						}
 						dispose_bg_mask( tilemap );
@@ -461,13 +467,50 @@ struct tilemap *tilemap_create(
 	return 0; /* error */
 }
 
-void tilemap_dispose( struct tilemap *tilemap ){
+static void tilemap_dispose( struct tilemap *tilemap ){
 	if( tilemap ){
 		dispose_tile_info( tilemap );
 		dispose_bg_mask( tilemap );
 		dispose_fg_mask( tilemap );
 		dispose_pixmap( tilemap );
 		free( tilemap );
+	}
+}
+
+void tilemap_close( void ){
+	while( first_tilemap ){
+		struct tilemap *next = first_tilemap->next;
+		tilemap_dispose( first_tilemap );
+		first_tilemap = next;
+	}
+}
+
+/***********************************************************************************/
+
+void tilemap_mark_tile_dirty( struct tilemap *tilemap, int col, int row ){
+	/* convert logical coordinates to cached coordinates */
+	if( orientation & ORIENTATION_SWAP_XY ) SWAP(col,row)
+	if( orientation & ORIENTATION_FLIP_X ) col = tilemap->num_cols-1-col;
+	if( orientation & ORIENTATION_FLIP_Y ) row = tilemap->num_rows-1-row;
+
+//	tilemap->dirty_vram_row[row][col] = 1;
+	tilemap->dirty_vram[row*tilemap->num_cols + col] = 1;
+}
+
+void tilemap_mark_all_tiles_dirty( struct tilemap *tilemap ){
+	memset( tilemap->dirty_vram, 1, tilemap->num_tiles );
+}
+
+void tilemap_mark_all_pixels_dirty( struct tilemap *tilemap ){
+	if( tilemap==ALL_TILEMAPS ){
+		tilemap = first_tilemap;
+		while( tilemap ){
+			tilemap_mark_all_pixels_dirty( tilemap );
+			tilemap = tilemap->next;
+		}
+	}
+	else {
+		memset( tilemap->dirty_pixels, 1, tilemap->num_tiles );
 	}
 }
 
@@ -574,349 +617,116 @@ static void draw_mask(
 
 /***********************************************************************************/
 
-void tilemap_mark_tile_dirty( struct tilemap *tilemap, int col, int row ){
-	/* convert logical coordinates to cached coordinates */
-	if( orientation & ORIENTATION_SWAP_XY ) SWAP(col,row)
-	if( orientation & ORIENTATION_FLIP_X ) col = tilemap->num_cols-1-col;
-	if( orientation & ORIENTATION_FLIP_Y ) row = tilemap->num_rows-1-row;
-
-//	tilemap->dirty_vram_row[row][col] = 1;
-	tilemap->dirty_vram[row*tilemap->num_cols + col] = 1;
-}
-
-void tilemap_mark_all_tiles_dirty( struct tilemap *tilemap ){
-	memset( tilemap->dirty_vram, 1, tilemap->num_tiles );
-}
-
-void tilemap_mark_all_pixels_dirty( struct tilemap *tilemap ){
-	memset( tilemap->dirty_pixels, 1, tilemap->num_tiles );
-}
-
-/***********************************************************************************/
-
 void tilemap_render( struct tilemap *tilemap ){
-	int type = tilemap->type;
-	int transparent_pen = tilemap->transparent_pen;
-	unsigned int *transmask = tilemap->transmask;
+	if( tilemap==ALL_TILEMAPS ){
+		tilemap = first_tilemap;
+		while( tilemap ){
+			tilemap_render( tilemap );
+			tilemap = tilemap->next;
+		}
+	}
+	else if( tilemap->enable ){
+		int type = tilemap->type;
+		int transparent_pen = tilemap->transparent_pen;
+		unsigned int *transmask = tilemap->transmask;
 
-	int tile_width = tilemap->tile_width;
-	int tile_height = tilemap->tile_height;
+		int tile_width = tilemap->tile_width;
+		int tile_height = tilemap->tile_height;
 
-	char *dirty_pixels = tilemap->dirty_pixels;
-	char *visible = tilemap->visible;
-	int tile_index = 0;
-	int row,col;
+		char *dirty_pixels = tilemap->dirty_pixels;
+		char *visible = tilemap->visible;
+		int tile_index = 0;
+		int row,col;
 
-	for( row=0; row<tilemap->num_rows; row++ ){
-		for( col=0; col<tilemap->num_cols; col++ ){
-			if( dirty_pixels[tile_index] && visible[tile_index] ){
-				unsigned int pen_usage = tilemap->pen_usage[tile_index];
-				const unsigned char *pendata = tilemap->pendata[tile_index];
-				unsigned char flags = tilemap->flags[tile_index];
+		for( row=0; row<tilemap->num_rows; row++ ){
+			for( col=0; col<tilemap->num_cols; col++ ){
+				if( dirty_pixels[tile_index] && visible[tile_index] ){
+					unsigned int pen_usage = tilemap->pen_usage[tile_index];
+					const unsigned char *pendata = tilemap->pendata[tile_index];
+					unsigned char flags = tilemap->flags[tile_index];
 
-				draw_tile(
-					tilemap->pixmap,
-					col, row, tile_width, tile_height,
-					pendata,
-					tilemap->paldata[tile_index],
-					flags );
+					draw_tile(
+						tilemap->pixmap,
+						col, row, tile_width, tile_height,
+						pendata,
+						tilemap->paldata[tile_index],
+						flags );
 
-				if( type & TILEMAP_SPLIT ){
-					int pen_mask = (transparent_pen<0)?0:(1<<transparent_pen);
-					if( pen_mask == pen_usage ){ /* totally transparent */
-						tilemap->fg_mask_data_row[row][col] = TILE_TRANSPARENT;
-						tilemap->bg_mask_data_row[row][col] = TILE_TRANSPARENT;
-					}
-					else {
-						unsigned int fg_transmask = transmask[(flags>>2)&3];
-						unsigned int bg_transmask = (~fg_transmask)|pen_mask;
-						if( (pen_usage & fg_transmask)==0 ){ /* foreground totally opaque */
+					if( type & TILEMAP_SPLIT ){
+						int pen_mask = (transparent_pen<0)?0:(1<<transparent_pen);
+						if( pen_mask == pen_usage ){ /* totally transparent */
+							tilemap->fg_mask_data_row[row][col] = TILE_TRANSPARENT;
+							tilemap->bg_mask_data_row[row][col] = TILE_TRANSPARENT;
+						}
+						else {
+							unsigned int fg_transmask = transmask[(flags>>2)&3];
+							unsigned int bg_transmask = (~fg_transmask)|pen_mask;
+							if( (pen_usage & fg_transmask)==0 ){ /* foreground totally opaque */
+								tilemap->fg_mask_data_row[row][col] = TILE_OPAQUE;
+								tilemap->bg_mask_data_row[row][col] = TILE_TRANSPARENT;
+							}
+							else if( (pen_usage & bg_transmask)==0 ){ /* background totally opaque */
+								tilemap->fg_mask_data_row[row][col] = TILE_TRANSPARENT;
+								tilemap->bg_mask_data_row[row][col] = TILE_OPAQUE;
+							}
+							else if( (pen_usage & ~bg_transmask)==0 ){ /* background transparent */
+								draw_mask( tilemap->fg_mask,
+									col, row, tile_width, tile_height,
+									pendata, fg_transmask, flags );
+								tilemap->fg_mask_data_row[row][col] = TILE_MASKED;
+								tilemap->bg_mask_data_row[row][col] = TILE_TRANSPARENT;
+							}
+							else if( (pen_usage & ~fg_transmask)==0 ){ /* foreground transparent */
+								draw_mask( tilemap->bg_mask,
+									col, row, tile_width, tile_height,
+									pendata, bg_transmask, flags );
+								tilemap->fg_mask_data_row[row][col] = TILE_TRANSPARENT;
+								tilemap->bg_mask_data_row[row][col] = TILE_MASKED;
+							}
+							else { /* split tile - opacity in both foreground and background */
+								draw_mask( tilemap->fg_mask,
+									col, row, tile_width, tile_height,
+									pendata, fg_transmask, flags );
+								draw_mask( tilemap->bg_mask,
+									col, row, tile_width, tile_height,
+									pendata, bg_transmask, flags );
+								tilemap->fg_mask_data_row[row][col] = TILE_MASKED;
+								tilemap->bg_mask_data_row[row][col] = TILE_MASKED;
+							}
+						}
+				 	}
+				 	else if( type==TILEMAP_TRANSPARENT ){
+				 		unsigned int fg_transmask = 1 << transparent_pen;
+				 	 	if( pen_usage == fg_transmask ){
+							tilemap->fg_mask_data_row[row][col] = TILE_TRANSPARENT;
+						}
+						else if( pen_usage & fg_transmask ){
+							draw_mask( tilemap->fg_mask,
+								col, row, tile_width, tile_height,
+								pendata, fg_transmask, flags );
+							tilemap->fg_mask_data_row[row][col] = TILE_MASKED;
+						}
+						else {
 							tilemap->fg_mask_data_row[row][col] = TILE_OPAQUE;
-							tilemap->bg_mask_data_row[row][col] = TILE_TRANSPARENT;
 						}
-						else if( (pen_usage & bg_transmask)==0 ){ /* background totally opaque */
-							tilemap->fg_mask_data_row[row][col] = TILE_TRANSPARENT;
-							tilemap->bg_mask_data_row[row][col] = TILE_OPAQUE;
-						}
-						else if( (pen_usage & ~bg_transmask)==0 ){ /* background transparent */
-							draw_mask( tilemap->fg_mask,
-								col, row, tile_width, tile_height,
-								pendata, fg_transmask, flags );
-							tilemap->fg_mask_data_row[row][col] = TILE_MASKED;
-							tilemap->bg_mask_data_row[row][col] = TILE_TRANSPARENT;
-						}
-						else if( (pen_usage & ~fg_transmask)==0 ){ /* foreground transparent */
-							draw_mask( tilemap->bg_mask,
-								col, row, tile_width, tile_height,
-								pendata, bg_transmask, flags );
-							tilemap->fg_mask_data_row[row][col] = TILE_TRANSPARENT;
-							tilemap->bg_mask_data_row[row][col] = TILE_MASKED;
-						}
-						else { /* split tile - opacity in both foreground and background */
-							draw_mask( tilemap->fg_mask,
-								col, row, tile_width, tile_height,
-								pendata, fg_transmask, flags );
-							draw_mask( tilemap->bg_mask,
-								col, row, tile_width, tile_height,
-								pendata, bg_transmask, flags );
-							tilemap->fg_mask_data_row[row][col] = TILE_MASKED;
-							tilemap->bg_mask_data_row[row][col] = TILE_MASKED;
-						}
-					}
-			 	}
-			 	else if( type==TILEMAP_TRANSPARENT ){
-			 		unsigned int fg_transmask = 1 << transparent_pen;
-			 	 	if( pen_usage == fg_transmask ){
-						tilemap->fg_mask_data_row[row][col] = TILE_TRANSPARENT;
-					}
-					else if( pen_usage & fg_transmask ){
-						draw_mask( tilemap->fg_mask,
-							col, row, tile_width, tile_height,
-							pendata, fg_transmask, flags );
-						tilemap->fg_mask_data_row[row][col] = TILE_MASKED;
 					}
 					else {
 						tilemap->fg_mask_data_row[row][col] = TILE_OPAQUE;
-					}
-				}
-				else {
-					tilemap->fg_mask_data_row[row][col] = TILE_OPAQUE;
-			 	}
+				 	}
 
-				dirty_pixels[tile_index] = 0;
-			}
-			tile_index++;
-		} /* next col */
-	} /* next row */
+					dirty_pixels[tile_index] = 0;
+				}
+				tile_index++;
+			} /* next col */
+		} /* next row */
+	}
 }
 
 /***********************************************************************************/
 
 void tilemap_draw( struct osd_bitmap *dest, struct tilemap *tilemap, int priority ){
-	void (*draw)( int, int ) = tilemap->draw;
-
-	int rows = tilemap->scroll_rows;
-	const int *rowscroll = tilemap->rowscroll;
-	int cols = tilemap->scroll_cols;
-	const int *colscroll = tilemap->colscroll;
-
-	int left = tilemap->clip_left;
-	int right = tilemap->clip_right;
-	int top = tilemap->clip_top;
-	int bottom = tilemap->clip_bottom;
-
-	int tile_height = tilemap->tile_height;
-
-//	if( tilemap->type==0 ){
-//		copyscrollbitmap(dest,tilemap->pixmap,rows,rowscroll,cols,colscroll,&tilemap->clip,TRANSPARENCY_NONE,0);
-//		return;
-//	}
-
-	blit.screen = dest;
-	blit.dest_line_offset = dest->line[1] - dest->line[0];
-	blit.dest_row_offset = tile_height*blit.dest_line_offset;
-
-	blit.pixmap = tilemap->pixmap;
-	blit.source_line_offset = tilemap->pixmap_line_offset;
-	blit.source_row_offset = tile_height*blit.source_line_offset;
-
-	if( priority&TILEMAP_BACK ){
-		blit.bitmask = tilemap->bg_mask;
-		blit.mask_line_offset = tilemap->bg_mask_line_offset;
-		blit.mask_data_row = tilemap->bg_mask_data_row;
-	}
-	else {
-		blit.bitmask = tilemap->fg_mask;
-		blit.mask_line_offset = tilemap->fg_mask_line_offset;
-		blit.mask_data_row = tilemap->fg_mask_data_row;
-	}
-
-	blit.priority_data_row = tilemap->priority_row;
-	blit.mask_row_offset = tile_height*blit.mask_line_offset;
-	blit.source_width = tilemap->width;
-	blit.source_height = tilemap->height;
-	blit.priority = priority&0xf;
-
-	if( rows == 0 && cols == 0 ){ /* no scrolling */
- 		blit.clip_left = left;
- 		blit.clip_top = top;
- 		blit.clip_right = right;
- 		blit.clip_bottom = bottom;
-
-		draw( 0,0 );
-	}
-	else if( rows == 0 ){ /* scrolling columns */
-		int col,colwidth;
-
-		colwidth = blit.source_width / cols;
-
-		blit.clip_top = top;
-		blit.clip_bottom = bottom;
-
-		col = 0;
-		while( col < cols ){
-			int cons,scroll;
-
- 			/* count consecutive columns scrolled by the same amount */
-			scroll = colscroll[col];
-			cons = 1;
-			while( col + cons < cols &&	colscroll[col + cons] == scroll ) cons++;
-
-			if (scroll < 0) scroll = blit.source_height - (-scroll) % blit.source_height;
-			else scroll %= blit.source_height;
-
-			blit.clip_left = col * colwidth;
-			if (blit.clip_left < left) blit.clip_left = left;
-			blit.clip_right = (col + cons) * colwidth;
-			if (blit.clip_right > right) blit.clip_right = right;
-
-			draw( 0,scroll );
-			draw( 0,scroll - blit.source_height );
-
-			col += cons;
-		}
-	}
-	else if( cols == 0 ){ /* scrolling rows */
-		int row,rowheight;
-
-		rowheight = blit.source_height / rows;
-
-		blit.clip_left = left;
-		blit.clip_right = right;
-
-		row = 0;
-		while( row < rows ){
-			int cons,scroll;
-
-			/* count consecutive rows scrolled by the same amount */
-			scroll = rowscroll[row];
-			cons = 1;
-			while( row + cons < rows &&	rowscroll[row + cons] == scroll ) cons++;
-
-			if (scroll < 0) scroll = blit.source_width - (-scroll) % blit.source_width;
-			else scroll %= blit.source_width;
-
-			blit.clip_top = row * rowheight;
-			if (blit.clip_top < top) blit.clip_top = top;
-			blit.clip_bottom = (row + cons) * rowheight;
-			if (blit.clip_bottom > bottom) blit.clip_bottom = bottom;
-
-			draw( scroll,0 );
-			draw( scroll - blit.source_width,0 );
-
-			row += cons;
-		}
-	}
-	else if( rows == 1 && cols == 1 ){ /* XY scrolling playfield */
-		int scrollx,scrolly;
-
-		if (rowscroll[0] < 0) scrollx = blit.source_width - (-rowscroll[0]) % blit.source_width;
-		else scrollx = rowscroll[0] % blit.source_width;
-
-		if (colscroll[0] < 0) scrolly = blit.source_height - (-colscroll[0]) % blit.source_height;
-		else scrolly = colscroll[0] % blit.source_height;
-
- 		blit.clip_left = left;
- 		blit.clip_top = top;
- 		blit.clip_right = right;
- 		blit.clip_bottom = bottom;
-
-		draw( scrollx,scrolly );
-		draw( scrollx,scrolly - blit.source_height );
-		draw( scrollx - blit.source_width,scrolly );
-		draw( scrollx - blit.source_width,scrolly - blit.source_height );
-	}
-	else if( rows == 1 ){ /* scrolling columns + horizontal scroll */
-		int col,colwidth;
-		int scrollx;
-
-		if (rowscroll[0] < 0) scrollx = blit.source_width - (-rowscroll[0]) % blit.source_width;
-		else scrollx = rowscroll[0] % blit.source_width;
-
-		colwidth = blit.source_width / cols;
-
-		blit.clip_top = top;
-		blit.clip_bottom = bottom;
-
-		col = 0;
-		while( col < cols ){
-			int cons,scroll;
-
- 			/* count consecutive columns scrolled by the same amount */
-			scroll = colscroll[col];
-			cons = 1;
-			while( col + cons < cols &&	colscroll[col + cons] == scroll ) cons++;
-
-			if (scroll < 0) scroll = blit.source_height - (-scroll) % blit.source_height;
-			else scroll %= blit.source_height;
-
-			blit.clip_left = col * colwidth + scrollx;
-			if (blit.clip_left < left) blit.clip_left = left;
-			blit.clip_right = (col + cons) * colwidth + scrollx;
-			if (blit.clip_right > right) blit.clip_right = right;
-
-			draw( scrollx,scroll );
-			draw( scrollx,scroll - blit.source_height );
-
-			blit.clip_left = col * colwidth + scrollx - blit.source_width;
-			if (blit.clip_left < left) blit.clip_left = left;
-			blit.clip_right = (col + cons) * colwidth + scrollx - blit.source_width;
-			if (blit.clip_right > right) blit.clip_right = right;
-
-			draw( scrollx - blit.source_width,scroll );
-			draw( scrollx - blit.source_width,scroll - blit.source_height );
-
-			col += cons;
-		}
-	}
-	else if( cols == 1 ){ /* scrolling rows + vertical scroll */
-		int row,rowheight;
-		int scrolly;
-
-		if (colscroll[0] < 0) scrolly = blit.source_height - (-colscroll[0]) % blit.source_height;
-		else scrolly = colscroll[0] % blit.source_height;
-
-		rowheight = blit.source_height / rows;
-
-		blit.clip_left = left;
-		blit.clip_right = right;
-
-		row = 0;
-		while( row < rows ){
-			int cons,scroll;
-
-			/* count consecutive rows scrolled by the same amount */
-			scroll = rowscroll[row];
-			cons = 1;
-			while (row + cons < rows &&	rowscroll[row + cons] == scroll) cons++;
-
-			if (scroll < 0) scroll = blit.source_width - (-scroll) % blit.source_width;
-			else scroll %= blit.source_width;
-
-			blit.clip_top = row * rowheight + scrolly;
-			if (blit.clip_top < top) blit.clip_top = top;
-			blit.clip_bottom = (row + cons) * rowheight + scrolly;
-			if (blit.clip_bottom > bottom) blit.clip_bottom = bottom;
-
-			draw( scroll,scrolly );
-			draw( scroll - blit.source_width,scrolly );
-
-			blit.clip_top = row * rowheight + scrolly - blit.source_height;
-			if (blit.clip_top < top) blit.clip_top = top;
-			blit.clip_bottom = (row + cons) * rowheight + scrolly - blit.source_height;
-			if (blit.clip_bottom > bottom) blit.clip_bottom = bottom;
-
-			draw( scroll,scrolly - blit.source_height );
-			draw( scroll - blit.source_width,scrolly - blit.source_height );
-
-			row += cons;
-		}
-	}
-}
-
-void tilemap_update( struct tilemap *tilemap ){
-	if( tilemap->scrolled ){
-		void (*mark_visible)( int, int ) = tilemap->mark_visible;
+	if( tilemap->enable ){
+		void (*draw)( int, int ) = tilemap->draw;
 
 		int rows = tilemap->scroll_rows;
 		const int *rowscroll = tilemap->rowscroll;
@@ -928,11 +738,32 @@ void tilemap_update( struct tilemap *tilemap ){
 		int top = tilemap->clip_top;
 		int bottom = tilemap->clip_bottom;
 
+		int tile_height = tilemap->tile_height;
+
+		blit.screen = dest;
+		blit.dest_line_offset = dest->line[1] - dest->line[0];
+		blit.dest_row_offset = tile_height*blit.dest_line_offset;
+
+		blit.pixmap = tilemap->pixmap;
+		blit.source_line_offset = tilemap->pixmap_line_offset;
+		blit.source_row_offset = tile_height*blit.source_line_offset;
+
+		if( priority&TILEMAP_BACK ){
+			blit.bitmask = tilemap->bg_mask;
+			blit.mask_line_offset = tilemap->bg_mask_line_offset;
+			blit.mask_data_row = tilemap->bg_mask_data_row;
+		}
+		else {
+			blit.bitmask = tilemap->fg_mask;
+			blit.mask_line_offset = tilemap->fg_mask_line_offset;
+			blit.mask_data_row = tilemap->fg_mask_data_row;
+		}
+
+		blit.priority_data_row = tilemap->priority_row;
+		blit.mask_row_offset = tile_height*blit.mask_line_offset;
 		blit.source_width = tilemap->width;
 		blit.source_height = tilemap->height;
-		blit.visible_row = tilemap->visible_row;
-
-		memset( tilemap->visible, 0, tilemap->num_tiles );
+		blit.priority = priority&0xf;
 
 		if( rows == 0 && cols == 0 ){ /* no scrolling */
 	 		blit.clip_left = left;
@@ -940,7 +771,7 @@ void tilemap_update( struct tilemap *tilemap ){
 	 		blit.clip_right = right;
 	 		blit.clip_bottom = bottom;
 
-			mark_visible( 0,0 );
+			draw( 0,0 );
 		}
 		else if( rows == 0 ){ /* scrolling columns */
 			int col,colwidth;
@@ -967,8 +798,8 @@ void tilemap_update( struct tilemap *tilemap ){
 				blit.clip_right = (col + cons) * colwidth;
 				if (blit.clip_right > right) blit.clip_right = right;
 
-				mark_visible( 0,scroll );
-				mark_visible( 0,scroll - blit.source_height );
+				draw( 0,scroll );
+				draw( 0,scroll - blit.source_height );
 
 				col += cons;
 			}
@@ -998,8 +829,8 @@ void tilemap_update( struct tilemap *tilemap ){
 				blit.clip_bottom = (row + cons) * rowheight;
 				if (blit.clip_bottom > bottom) blit.clip_bottom = bottom;
 
-				mark_visible( scroll,0 );
-				mark_visible( scroll - blit.source_width,0 );
+				draw( scroll,0 );
+				draw( scroll - blit.source_width,0 );
 
 				row += cons;
 			}
@@ -1018,10 +849,10 @@ void tilemap_update( struct tilemap *tilemap ){
 	 		blit.clip_right = right;
 	 		blit.clip_bottom = bottom;
 
-			mark_visible( scrollx,scrolly );
-			mark_visible( scrollx,scrolly - blit.source_height );
-			mark_visible( scrollx - blit.source_width,scrolly );
-			mark_visible( scrollx - blit.source_width,scrolly - blit.source_height );
+			draw( scrollx,scrolly );
+			draw( scrollx,scrolly - blit.source_height );
+			draw( scrollx - blit.source_width,scrolly );
+			draw( scrollx - blit.source_width,scrolly - blit.source_height );
 		}
 		else if( rows == 1 ){ /* scrolling columns + horizontal scroll */
 			int col,colwidth;
@@ -1052,16 +883,16 @@ void tilemap_update( struct tilemap *tilemap ){
 				blit.clip_right = (col + cons) * colwidth + scrollx;
 				if (blit.clip_right > right) blit.clip_right = right;
 
-				mark_visible( scrollx,scroll );
-				mark_visible( scrollx,scroll - blit.source_height );
+				draw( scrollx,scroll );
+				draw( scrollx,scroll - blit.source_height );
 
 				blit.clip_left = col * colwidth + scrollx - blit.source_width;
 				if (blit.clip_left < left) blit.clip_left = left;
 				blit.clip_right = (col + cons) * colwidth + scrollx - blit.source_width;
 				if (blit.clip_right > right) blit.clip_right = right;
 
-				mark_visible( scrollx - blit.source_width,scroll );
-				mark_visible( scrollx - blit.source_width,scroll - blit.source_height );
+				draw( scrollx - blit.source_width,scroll );
+				draw( scrollx - blit.source_width,scroll - blit.source_height );
 
 				col += cons;
 			}
@@ -1095,72 +926,279 @@ void tilemap_update( struct tilemap *tilemap ){
 				blit.clip_bottom = (row + cons) * rowheight + scrolly;
 				if (blit.clip_bottom > bottom) blit.clip_bottom = bottom;
 
-				mark_visible( scroll,scrolly );
-				mark_visible( scroll - blit.source_width,scrolly );
+				draw( scroll,scrolly );
+				draw( scroll - blit.source_width,scrolly );
 
 				blit.clip_top = row * rowheight + scrolly - blit.source_height;
 				if (blit.clip_top < top) blit.clip_top = top;
 				blit.clip_bottom = (row + cons) * rowheight + scrolly - blit.source_height;
 				if (blit.clip_bottom > bottom) blit.clip_bottom = bottom;
 
-				mark_visible( scroll,scrolly - blit.source_height );
-				mark_visible( scroll - blit.source_width,scrolly - blit.source_height );
+				draw( scroll,scrolly - blit.source_height );
+				draw( scroll - blit.source_width,scrolly - blit.source_height );
 
 				row += cons;
 			}
 		}
-
-		tilemap->scrolled = 0;
 	}
+}
 
-	{
-		int tile_index;
-		char *visible = tilemap->visible;
-		char *dirty_vram = tilemap->dirty_vram;
-		char *dirty_pixels = tilemap->dirty_pixels;
+void tilemap_update( struct tilemap *tilemap ){
+	if( tilemap==ALL_TILEMAPS ){
+		tilemap = first_tilemap;
+		while( tilemap ){
+			tilemap_update( tilemap );
+			tilemap = tilemap->next;
+		}
+	}
+	else if( tilemap->enable ){
+		if( tilemap->scrolled ){
+			void (*mark_visible)( int, int ) = tilemap->mark_visible;
 
-		unsigned char **pendata = tilemap->pendata;
-		unsigned short **paldata = tilemap->paldata;
-		unsigned int *pen_usage = tilemap->pen_usage;
+			int rows = tilemap->scroll_rows;
+			const int *rowscroll = tilemap->rowscroll;
+			int cols = tilemap->scroll_cols;
+			const int *colscroll = tilemap->colscroll;
 
-		int tile_flip = 0;
-		if( tilemap->attributes&TILEMAP_FLIPX ) tile_flip |= TILE_FLIPX;
-		if( tilemap->attributes&TILEMAP_FLIPY ) tile_flip |= TILE_FLIPY;
+			int left = tilemap->clip_left;
+			int right = tilemap->clip_right;
+			int top = tilemap->clip_top;
+			int bottom = tilemap->clip_bottom;
 
-		tile_info.flags = 0;
-		tile_info.priority = 0;
+			blit.source_width = tilemap->width;
+			blit.source_height = tilemap->height;
+			blit.visible_row = tilemap->visible_row;
 
-		for( tile_index=0; tile_index<tilemap->num_tiles; tile_index++ ){
-			if( visible[tile_index] && dirty_vram[tile_index] ){
-				int row = tile_index/tilemap->num_cols;
-				int col = tile_index%tilemap->num_cols;
-				int flags;
+			memset( tilemap->visible, 0, tilemap->num_tiles );
 
-				if( orientation & ORIENTATION_FLIP_Y ) row = tilemap->num_rows-1-row;
-				if( orientation & ORIENTATION_FLIP_X ) col = tilemap->num_cols-1-col;
-				if( orientation & ORIENTATION_SWAP_XY ) SWAP(col,row)
+			if( rows == 0 && cols == 0 ){ /* no scrolling */
+		 		blit.clip_left = left;
+		 		blit.clip_top = top;
+		 		blit.clip_right = right;
+		 		blit.clip_bottom = bottom;
 
-				palette_decrease_usage_count( (paldata[tile_index]-Machine->colortable), pen_usage[tile_index] );
+				mark_visible( 0,0 );
+			}
+			else if( rows == 0 ){ /* scrolling columns */
+				int col,colwidth;
 
-				tilemap->tile_get_info( col, row );
+				colwidth = blit.source_width / cols;
 
-				flags = tile_info.flags ^ tile_flip;
-				if( orientation & ORIENTATION_SWAP_XY ){
-					flags =
-						(flags&0xfc) |
-						((flags&1)<<1) | ((flags&2)>>1);
+				blit.clip_top = top;
+				blit.clip_bottom = bottom;
+
+				col = 0;
+				while( col < cols ){
+					int cons,scroll;
+
+		 			/* count consecutive columns scrolled by the same amount */
+					scroll = colscroll[col];
+					cons = 1;
+					while( col + cons < cols &&	colscroll[col + cons] == scroll ) cons++;
+
+					if (scroll < 0) scroll = blit.source_height - (-scroll) % blit.source_height;
+					else scroll %= blit.source_height;
+
+					blit.clip_left = col * colwidth;
+					if (blit.clip_left < left) blit.clip_left = left;
+					blit.clip_right = (col + cons) * colwidth;
+					if (blit.clip_right > right) blit.clip_right = right;
+
+					mark_visible( 0,scroll );
+					mark_visible( 0,scroll - blit.source_height );
+
+					col += cons;
 				}
+			}
+			else if( cols == 0 ){ /* scrolling rows */
+				int row,rowheight;
 
-				pen_usage[tile_index] = tile_info.pen_usage;
-				pendata[tile_index] = tile_info.pen_data;
-				paldata[tile_index] = tile_info.pal_data;
-				tilemap->flags[tile_index] = flags;
-				tilemap->priority[tile_index] = tile_info.priority;
+				rowheight = blit.source_height / rows;
 
-				palette_increase_usage_count( (paldata[tile_index]-Machine->colortable), pen_usage[tile_index] );
+				blit.clip_left = left;
+				blit.clip_right = right;
 
-				dirty_pixels[tile_index] = 1;
-				dirty_vram[tile_index] = 0;
+				row = 0;
+				while( row < rows ){
+					int cons,scroll;
+
+					/* count consecutive rows scrolled by the same amount */
+					scroll = rowscroll[row];
+					cons = 1;
+					while( row + cons < rows &&	rowscroll[row + cons] == scroll ) cons++;
+
+					if (scroll < 0) scroll = blit.source_width - (-scroll) % blit.source_width;
+					else scroll %= blit.source_width;
+
+					blit.clip_top = row * rowheight;
+					if (blit.clip_top < top) blit.clip_top = top;
+					blit.clip_bottom = (row + cons) * rowheight;
+					if (blit.clip_bottom > bottom) blit.clip_bottom = bottom;
+
+					mark_visible( scroll,0 );
+					mark_visible( scroll - blit.source_width,0 );
+
+					row += cons;
+				}
+			}
+			else if( rows == 1 && cols == 1 ){ /* XY scrolling playfield */
+				int scrollx,scrolly;
+
+				if (rowscroll[0] < 0) scrollx = blit.source_width - (-rowscroll[0]) % blit.source_width;
+				else scrollx = rowscroll[0] % blit.source_width;
+
+				if (colscroll[0] < 0) scrolly = blit.source_height - (-colscroll[0]) % blit.source_height;
+				else scrolly = colscroll[0] % blit.source_height;
+
+		 		blit.clip_left = left;
+		 		blit.clip_top = top;
+		 		blit.clip_right = right;
+		 		blit.clip_bottom = bottom;
+
+				mark_visible( scrollx,scrolly );
+				mark_visible( scrollx,scrolly - blit.source_height );
+				mark_visible( scrollx - blit.source_width,scrolly );
+				mark_visible( scrollx - blit.source_width,scrolly - blit.source_height );
+			}
+			else if( rows == 1 ){ /* scrolling columns + horizontal scroll */
+				int col,colwidth;
+				int scrollx;
+
+				if (rowscroll[0] < 0) scrollx = blit.source_width - (-rowscroll[0]) % blit.source_width;
+				else scrollx = rowscroll[0] % blit.source_width;
+
+				colwidth = blit.source_width / cols;
+
+				blit.clip_top = top;
+				blit.clip_bottom = bottom;
+
+				col = 0;
+				while( col < cols ){
+					int cons,scroll;
+
+		 			/* count consecutive columns scrolled by the same amount */
+					scroll = colscroll[col];
+					cons = 1;
+					while( col + cons < cols &&	colscroll[col + cons] == scroll ) cons++;
+
+					if (scroll < 0) scroll = blit.source_height - (-scroll) % blit.source_height;
+					else scroll %= blit.source_height;
+
+					blit.clip_left = col * colwidth + scrollx;
+					if (blit.clip_left < left) blit.clip_left = left;
+					blit.clip_right = (col + cons) * colwidth + scrollx;
+					if (blit.clip_right > right) blit.clip_right = right;
+
+					mark_visible( scrollx,scroll );
+					mark_visible( scrollx,scroll - blit.source_height );
+
+					blit.clip_left = col * colwidth + scrollx - blit.source_width;
+					if (blit.clip_left < left) blit.clip_left = left;
+					blit.clip_right = (col + cons) * colwidth + scrollx - blit.source_width;
+					if (blit.clip_right > right) blit.clip_right = right;
+
+					mark_visible( scrollx - blit.source_width,scroll );
+					mark_visible( scrollx - blit.source_width,scroll - blit.source_height );
+
+					col += cons;
+				}
+			}
+			else if( cols == 1 ){ /* scrolling rows + vertical scroll */
+				int row,rowheight;
+				int scrolly;
+
+				if (colscroll[0] < 0) scrolly = blit.source_height - (-colscroll[0]) % blit.source_height;
+				else scrolly = colscroll[0] % blit.source_height;
+
+				rowheight = blit.source_height / rows;
+
+				blit.clip_left = left;
+				blit.clip_right = right;
+
+				row = 0;
+				while( row < rows ){
+					int cons,scroll;
+
+					/* count consecutive rows scrolled by the same amount */
+					scroll = rowscroll[row];
+					cons = 1;
+					while (row + cons < rows &&	rowscroll[row + cons] == scroll) cons++;
+
+					if (scroll < 0) scroll = blit.source_width - (-scroll) % blit.source_width;
+					else scroll %= blit.source_width;
+
+					blit.clip_top = row * rowheight + scrolly;
+					if (blit.clip_top < top) blit.clip_top = top;
+					blit.clip_bottom = (row + cons) * rowheight + scrolly;
+					if (blit.clip_bottom > bottom) blit.clip_bottom = bottom;
+
+					mark_visible( scroll,scrolly );
+					mark_visible( scroll - blit.source_width,scrolly );
+
+					blit.clip_top = row * rowheight + scrolly - blit.source_height;
+					if (blit.clip_top < top) blit.clip_top = top;
+					blit.clip_bottom = (row + cons) * rowheight + scrolly - blit.source_height;
+					if (blit.clip_bottom > bottom) blit.clip_bottom = bottom;
+
+					mark_visible( scroll,scrolly - blit.source_height );
+					mark_visible( scroll - blit.source_width,scrolly - blit.source_height );
+
+					row += cons;
+				}
+			}
+
+			tilemap->scrolled = 0;
+		}
+
+		{
+			int tile_index;
+			char *visible = tilemap->visible;
+			char *dirty_vram = tilemap->dirty_vram;
+			char *dirty_pixels = tilemap->dirty_pixels;
+
+			unsigned char **pendata = tilemap->pendata;
+			unsigned short **paldata = tilemap->paldata;
+			unsigned int *pen_usage = tilemap->pen_usage;
+
+			int tile_flip = 0;
+			if( tilemap->attributes&TILEMAP_FLIPX ) tile_flip |= TILE_FLIPX;
+			if( tilemap->attributes&TILEMAP_FLIPY ) tile_flip |= TILE_FLIPY;
+
+			tile_info.flags = 0;
+			tile_info.priority = 0;
+
+			for( tile_index=0; tile_index<tilemap->num_tiles; tile_index++ ){
+				if( visible[tile_index] && dirty_vram[tile_index] ){
+					int row = tile_index/tilemap->num_cols;
+					int col = tile_index%tilemap->num_cols;
+					int flags;
+
+					if( orientation & ORIENTATION_FLIP_Y ) row = tilemap->num_rows-1-row;
+					if( orientation & ORIENTATION_FLIP_X ) col = tilemap->num_cols-1-col;
+					if( orientation & ORIENTATION_SWAP_XY ) SWAP(col,row)
+
+					palette_decrease_usage_count( (paldata[tile_index]-Machine->colortable), pen_usage[tile_index] );
+
+					tilemap->tile_get_info( col, row );
+
+					flags = tile_info.flags ^ tile_flip;
+					if( orientation & ORIENTATION_SWAP_XY ){
+						flags =
+							(flags&0xfc) |
+							((flags&1)<<1) | ((flags&2)>>1);
+					}
+
+					pen_usage[tile_index] = tile_info.pen_usage;
+					pendata[tile_index] = tile_info.pen_data;
+					paldata[tile_index] = tile_info.pal_data;
+					tilemap->flags[tile_index] = flags;
+					tilemap->priority[tile_index] = tile_info.priority;
+
+					palette_increase_usage_count( (paldata[tile_index]-Machine->colortable), pen_usage[tile_index] );
+
+					dirty_pixels[tile_index] = 1;
+					dirty_vram[tile_index] = 0;
+				}
 			}
 		}
 	}

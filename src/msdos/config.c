@@ -15,17 +15,12 @@
 /* from main() */
 extern int ignorecfg;
 
-/* from vector.c */
-extern int translucency;
-
 /* from video.c */
 extern int frameskip,autoframeskip;
-extern int scanlines, use_vesa, video_sync, wait_vsync, antialias, ntsc;
+extern int scanlines, use_vesa, video_sync, wait_vsync, ntsc;
 extern int stretch, use_double;
-extern int use_artwork, use_samples;
 extern int vgafreq, always_synced, color_depth, skiplines, skipcolumns;
-extern int beam, flicker;
-extern float gamma_correction;
+extern float osd_gamma_correction;
 extern int gfx_mode, gfx_width, gfx_height;
 
 /* from sound.c */
@@ -274,7 +269,7 @@ void init_inpdir(void)
     inpdir = get_string ("directory", "inp",     NULL, "INP");
 }
 
-void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game_index)
+void parse_cmdline (int argc, char **argv, int game_index)
 {
 	static float f_beam, f_flicker;
 	char *resolution;
@@ -302,14 +297,14 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	{
 		stretch = 0;
 	}
-        use_artwork = get_bool   ("config", "artwork",      NULL,  1);
-        use_samples = get_bool   ("config", "samples",      NULL,  1);
+	options.use_artwork = get_bool   ("config", "artwork",      NULL,  1);
+	options.use_samples = get_bool   ("config", "samples",      NULL,  1);
 	use_double  = get_bool   ("config", "double",       NULL, -1);
 	video_sync  = get_bool   ("config", "vsync",        NULL,  0);
 	wait_vsync  = get_bool   ("config", "waitvsync",    NULL,  0);
-	antialias   = get_bool   ("config", "antialias",    NULL,  1);
+	options.antialias   = get_bool   ("config", "antialias",    NULL,  1);
 	use_vesa    = get_bool   ("config", "vesa",         NULL,  0);
-	translucency = get_bool    ("config", "translucency", NULL, 1);
+	options.translucency = get_bool    ("config", "translucency", NULL, 1);
 	vesamode        = get_string ("config", "vesamode",             NULL,  "vesa2l");
 	ntsc        = get_bool   ("config", "ntsc",         NULL,  0);
 	vgafreq     = get_int    ("config", "vgafreq",      NULL,  -1);
@@ -319,7 +314,7 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	skipcolumns = get_int    ("config", "skipcolumns",  NULL, 0);
 	f_beam      = get_float  ("config", "beam",         NULL, 1.0);
 	f_flicker   = get_float  ("config", "flicker",      NULL, 0.0);
-	gamma_correction = get_float ("config", "gamma",   NULL, 1.2);
+	osd_gamma_correction = get_float ("config", "gamma",   NULL, 1.2);
 
 	tmpstr             = get_string ("config", "frameskip", "fs", "auto");
 	if (!stricmp(tmpstr,"auto"))
@@ -332,17 +327,17 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 		frameskip = atoi(tmpstr);
 		autoframeskip = 0;
 	}
-	options->norotate  = get_bool ("config", "norotate",  NULL, 0);
-	options->ror       = get_bool ("config", "ror",       NULL, 0);
-	options->rol       = get_bool ("config", "rol",       NULL, 0);
-	options->flipx     = get_bool ("config", "flipx",     NULL, 0);
-	options->flipy     = get_bool ("config", "flipy",     NULL, 0);
+	options.norotate  = get_bool ("config", "norotate",  NULL, 0);
+	options.ror       = get_bool ("config", "ror",       NULL, 0);
+	options.rol       = get_bool ("config", "rol",       NULL, 0);
+	options.flipx     = get_bool ("config", "flipx",     NULL, 0);
+	options.flipy     = get_bool ("config", "flipy",     NULL, 0);
 
 	/* read sound configuration */
 	soundcard           = get_int  ("config", "soundcard",  NULL, -1);
 	use_emulated_ym3812 = !get_bool ("config", "ym3812opl",  NULL,  1);
-	options->samplerate = get_int  ("config", "samplerate", "sr", 22050);
-	options->samplebits = get_int  ("config", "samplebits", "sb", 8);
+	options.samplerate = get_int  ("config", "samplerate", "sr", 22050);
+	options.samplebits = get_int  ("config", "samplebits", "sb", 8);
 	usestereo           = get_bool ("config", "stereo",  NULL,  1);
 	attenuation         = get_int  ("config", "volume",  NULL,  0);
 
@@ -351,8 +346,8 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	joyname   = get_string ("config", "joystick", "joy", "none");
 
 	/* misc configuration */
-	options->cheat      = get_bool ("config", "cheat", NULL, 0);
-	options->mame_debug = get_bool ("config", "debug", NULL, 0);
+	options.cheat      = get_bool ("config", "cheat", NULL, 0);
+	options.mame_debug = get_bool ("config", "debug", NULL, 0);
 	cheatfile  = get_string ("config", "cheatfile", "cf", "CHEAT.DAT");    /* JCK 980917 */
 	use_profiler        = get_bool ("config", "profiler", NULL,  0);
 
@@ -370,17 +365,17 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	get_rom_sample_path (argc, argv, game_index);
 
 	/* process some parameters */
-	beam = (int)(f_beam * 0x00010000);
-	if (beam < 0x00010000)
-		beam = 0x00010000;
-	if (beam > 0x00100000)
-		beam = 0x00100000;
+	options.beam = (int)(f_beam * 0x00010000);
+	if (options.beam < 0x00010000)
+		options.beam = 0x00010000;
+	if (options.beam > 0x00100000)
+		options.beam = 0x00100000;
 
-	flicker = (int)(f_flicker * 2.55);
-	if (flicker < 0)
-		flicker = 0;
-	if (flicker > 255)
-		flicker = 255;
+	options.flicker = (int)(f_flicker * 2.55);
+	if (options.flicker < 0)
+		options.flicker = 0;
+	if (options.flicker > 255)
+		options.flicker = 255;
 
 	if (use_vesa == 1)
 	{

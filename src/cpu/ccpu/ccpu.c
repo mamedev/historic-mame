@@ -177,7 +177,7 @@ unsigned ccpu_get_reg(int regnum)
 		case CCPU_CSTATE: return context.eCState;
 /* TODO: return contents of [SP + wordsize * (REG_SP_CONTENTS-regnum)] */
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 				return 0;
 	}
 	return 0;
@@ -203,7 +203,7 @@ void ccpu_set_reg(int regnum, unsigned val)
 		case CCPU_CSTATE: context.eCState = val; break;
 /* TODO: set contents of [SP + wordsize * (REG_SP_CONTENTS-regnum)] */
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
 				unsigned offset = /* SP? + */ (REG_SP_CONTENTS-regnum);
 				(void)offset;
@@ -245,37 +245,6 @@ const char *ccpu_info(void *context, int regnum)
 
     switch( regnum )
 	{
-		case CPU_INFO_NAME: return "CCPU";
-		case CPU_INFO_FAMILY: return "Cinematronics CPU";
-		case CPU_INFO_VERSION: return "1.0";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright 1997/1998 Jeff Mitchell and the Retrocade Alliance\nCopyright 1997 Zonn Moore";
-		case CPU_INFO_REG_LAYOUT: return (const char *)ccpu_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char *)ccpu_win_layout;
-
-		case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->eRegPC); break;
-		case CPU_INFO_SP:
-			/* TODO: is there something like a stack pointer? */
-			break;
-#if MAME_DEBUG
-		case CPU_INFO_DASM:
-			/* TODO: how to use the diassembler? */
-			sprintf(buffer[which], "$%02x", ROM[r->eRegPC]);
-			r->eRegPC++;
-			if( !context )
-                cSetContext(r);
-            break;
-#else
-		case CPU_INFO_DASM:
-			sprintf(buffer[which], "$%02x", ROM[r->eRegPC]);
-			r->eRegPC++;
-			if( !context )
-				cSetContext(r);
-			break;
-#endif
-		case CPU_INFO_FLAGS:
-			/* TODO: no idea how the flags should look like */
-			break;
 		case CPU_INFO_REG+CCPU_ACC: sprintf(buffer[which], "ACC:%04X", r->accVal); break;
 		case CPU_INFO_REG+CCPU_CMP: sprintf(buffer[which], "CMP:%04X", r->cmpVal); break;
 		case CPU_INFO_REG+CCPU_PA0: sprintf(buffer[which], "PA0:%02X", r->pa0); break;
@@ -287,9 +256,28 @@ const char *ccpu_info(void *context, int regnum)
 		case CPU_INFO_REG+CCPU_J: sprintf(buffer[which], "J:%04X", r->eRegJ); break;
 		case CPU_INFO_REG+CCPU_P: sprintf(buffer[which], "P:%04X", r->eRegP); break;
 		case CPU_INFO_REG+CCPU_CSTATE: sprintf(buffer[which], "CSTATE:%04X", r->eCState); break;
+		case CPU_INFO_FLAGS:
+			/* TODO: no idea how the flags should look like */
+			break;
+		case CPU_INFO_NAME: return "CCPU";
+		case CPU_INFO_FAMILY: return "Cinematronics CPU";
+		case CPU_INFO_VERSION: return "1.0";
+		case CPU_INFO_FILE: return __FILE__;
+		case CPU_INFO_CREDITS: return "Copyright 1997/1998 Jeff Mitchell and the Retrocade Alliance\nCopyright 1997 Zonn Moore";
+		case CPU_INFO_REG_LAYOUT: return (const char *)ccpu_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char *)ccpu_win_layout;
     }
 	return buffer[which];
 
+}
+
+/* TODO: hook up the disassembler */
+unsigned ccpu_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+    (void)base;
+	/* TODO: hoop up the disassembler */
+	sprintf(buffer, "$%02X", ROM[pc]);
+	return 1;
 }
 
 void ccpu_Config (int jmi, int msize, int monitor)
@@ -549,6 +537,7 @@ CINELONG cineExec (CINELONG cycles)
    	{
    		int opcode;
 
+		CALL_MAME_DEBUG;
 		/*
 		 * goto the correct piece of code
 		 * for the current opcode. That piece of code will set the state
@@ -557,10 +546,6 @@ CINELONG cineExec (CINELONG cycles)
 
 		opcode = CCPU_FETCH (register_PC++);
 		state = (*cineops[state][opcode]) (opcode);
-
-#ifdef	MAME_DEBUG
-		if( mame_debug ) MAME_Debug();
-#endif
 
         ccpu_ICount --;
 

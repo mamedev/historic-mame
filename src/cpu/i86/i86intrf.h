@@ -4,6 +4,7 @@
 
 #include "memory.h"
 #include "osd_cpu.h"
+#include "osd_dbg.h"
 
 enum {
 	I86_IP=1, I86_AX, I86_CX, I86_DX, I86_BX, I86_SP, I86_BP, I86_SI, I86_DI,
@@ -32,9 +33,9 @@ extern void i86_set_nmi_line(int state);
 extern void i86_set_irq_line(int irqline, int state);
 extern void i86_set_irq_callback(int (*callback)(int irqline));
 extern const char *i86_info(void *context, int regnum);
+extern unsigned i86_dasm(UINT8 *base, char *buffer, unsigned pc);
 
 #ifdef MAME_DEBUG
-extern int mame_debug;
 extern unsigned DasmI86(unsigned char* data, char* buffer, unsigned pc);
 #endif
 

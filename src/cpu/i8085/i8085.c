@@ -59,11 +59,9 @@ static UINT8 i8085_win_layout[] = {
 };
 
 
-int i8085_ICount = 0;
-
 typedef struct {
 	int 	cputype;	/* 0 8080, 1 8085A */
-	PAIR	AF,BC,DE,HL,SP,PC,XX;
+	PAIR	PC,SP,AF,BC,DE,HL,XX;
     UINT8   HALT;
 	UINT8	IM; 		/* interrupt mask */
 	UINT8	IREQ;		/* requested interrupts */
@@ -77,6 +75,8 @@ typedef struct {
     int     (*irq_callback)(int);
     void    (*sod_callback)(int state);
 }   i8085_Regs;
+
+int i8085_ICount = 0;
 
 static i8085_Regs I;
 static UINT8 ZS[256];
@@ -1114,9 +1114,7 @@ int i8085_execute(int cycles)
 	i8085_ICount = cycles;
 	do
 	{
-#ifdef  MAME_DEBUG
-		if (mame_debug) MAME_Debug();
-#endif
+		CALL_MAME_DEBUG;
 		/* interrupts enabled or TRAP pending ? */
 		if ( (I.IM & IM_IEN) || (I.IREQ & IM_TRAP) )
 		{
@@ -1259,10 +1257,11 @@ unsigned i8085_get_reg(int regnum)
 		case I8085_RST55_STATE: return I.irq_state[I8085_RST55_LINE];
 		case I8085_RST65_STATE: return I.irq_state[I8085_RST65_LINE];
 		case I8085_RST75_STATE: return I.irq_state[I8085_RST75_LINE];
+		case REG_PREVIOUSPC: return 0; /* previous pc not supported */
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
-				unsigned offset = I.SP.w.l + 2 + (REG_SP_CONTENTS - regnum);
+				unsigned offset = I.SP.w.l + 2 * (REG_SP_CONTENTS - regnum);
 				if( offset < 0xffff )
 					return RM( offset ) + ( RM( offset+1 ) << 8 );
 			}
@@ -1294,10 +1293,10 @@ void i8085_set_reg(int regnum, unsigned val)
 		case I8085_RST65_STATE: I.irq_state[I8085_RST65_LINE] = val; break;
 		case I8085_RST75_STATE: I.irq_state[I8085_RST75_LINE] = val; break;
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
-				unsigned offset = 2 + (REG_SP_CONTENTS - regnum);
-				if( I.SP.w.l + offset < 0xfffe )
+				unsigned offset = I.SP.w.l + 2 * (REG_SP_CONTENTS - regnum);
+				if( offset < 0xffff )
 				{
 					WM( offset, val&0xff );
 					WM( offset+1, (val>>8)&0xff );
@@ -1531,32 +1530,6 @@ const char *i8085_info(void *context, int regnum)
 
     switch( regnum )
 	{
-		case CPU_INFO_NAME: return "8085A";
-		case CPU_INFO_FAMILY: return "Intel 8080";
-		case CPU_INFO_VERSION: return "1.1";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (c) 1999 Juergen Buchmueller, all rights reserved.";
-		case CPU_INFO_REG_LAYOUT: return (const char *)i8085_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char *)i8085_win_layout;
-
-        case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->PC.w.l); break;
-		case CPU_INFO_SP: sprintf(buffer[which], "%04X", r->SP.w.l); break;
-#ifdef MAME_DEBUG
-		case CPU_INFO_DASM: r->PC.w.l += Dasm8085(buffer[which], r->PC.w.l); break;
-#else
-		case CPU_INFO_DASM: sprintf(buffer[which], "$%02x", ROM[r->PC.w.l]); r->PC.w.l++; break;
-#endif
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->AF.b.l & 0x80 ? 'S':'.',
-				r->AF.b.l & 0x40 ? 'Z':'.',
-				r->AF.b.l & 0x20 ? '?':'.',
-				r->AF.b.l & 0x10 ? 'H':'.',
-				r->AF.b.l & 0x08 ? '?':'.',
-				r->AF.b.l & 0x04 ? 'P':'.',
-				r->AF.b.l & 0x02 ? 'N':'.',
-				r->AF.b.l & 0x01 ? 'C':'.');
-			break;
 		case CPU_INFO_REG+I8085_AF: sprintf(buffer[which], "AF:%04X", r->AF.w.l); break;
 		case CPU_INFO_REG+I8085_BC: sprintf(buffer[which], "BC:%04X", r->BC.w.l); break;
 		case CPU_INFO_REG+I8085_DE: sprintf(buffer[which], "DE:%04X", r->DE.w.l); break;
@@ -1573,14 +1546,44 @@ const char *i8085_info(void *context, int regnum)
 		case CPU_INFO_REG+I8085_RST55_STATE: sprintf(buffer[which], "RST55:%X", I.irq_state[I8085_RST55_LINE]); break;
 		case CPU_INFO_REG+I8085_RST65_STATE: sprintf(buffer[which], "RST65:%X", I.irq_state[I8085_RST65_LINE]); break;
 		case CPU_INFO_REG+I8085_RST75_STATE: sprintf(buffer[which], "RST75:%X", I.irq_state[I8085_RST75_LINE]); break;
+		case CPU_INFO_FLAGS:
+			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
+				r->AF.b.l & 0x80 ? 'S':'.',
+				r->AF.b.l & 0x40 ? 'Z':'.',
+				r->AF.b.l & 0x20 ? '?':'.',
+				r->AF.b.l & 0x10 ? 'H':'.',
+				r->AF.b.l & 0x08 ? '?':'.',
+				r->AF.b.l & 0x04 ? 'P':'.',
+				r->AF.b.l & 0x02 ? 'N':'.',
+				r->AF.b.l & 0x01 ? 'C':'.');
+			break;
+		case CPU_INFO_NAME: return "8085A";
+		case CPU_INFO_FAMILY: return "Intel 8080";
+		case CPU_INFO_VERSION: return "1.1";
+		case CPU_INFO_FILE: return __FILE__;
+		case CPU_INFO_CREDITS: return "Copyright (c) 1999 Juergen Buchmueller, all rights reserved.";
+		case CPU_INFO_REG_LAYOUT: return (const char *)i8085_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char *)i8085_win_layout;
     }
 	return buffer[which];
 }
 
+unsigned i8085_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+	(void)base;
+#ifdef MAME_DEBUG
+    return Dasm8085(buffer,pc);
+#else
+	sprintf( buffer, "$%02X", ROM[pc] );
+	return 1;
+#endif
+}
+
+
 /**************************************************************************
  * 8080 section
  **************************************************************************/
-
+#if HAS_8080
 /* Layout of the registers in the debugger */
 static UINT8 i8080_reg_layout[] = {
 	I8080_AF, I8080_BC, I8080_DE, I8080_HL, I8080_SP, I8080_PC, -1,
@@ -1679,3 +1682,14 @@ const char *i8080_info(void *context, int regnum)
 	return i8085_info(context,regnum);
 }
 
+unsigned i8080_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+	(void)base;
+#ifdef MAME_DEBUG
+    return Dasm8085(buffer,pc);
+#else
+	sprintf( buffer, "$%02X", ROM[pc] );
+	return 1;
+#endif
+}
+#endif

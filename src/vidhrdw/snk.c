@@ -179,7 +179,7 @@ static void tnk3_draw_background( struct osd_bitmap *bitmap, int scrollx, int sc
 	const struct GfxElement *gfx = Machine->gfx[GFX_TILES];
 	int offs;
 
-	if( osd_key_pressed(OSD_KEY_G ) ) dirty_all();
+//	if( osd_key_pressed(OSD_KEY_G ) ) dirty_all();
 
 	for( offs=0; offs<64*64*2; offs+=2 ){
 		int tile_number = videoram[offs];
@@ -189,7 +189,7 @@ static void tnk3_draw_background( struct osd_bitmap *bitmap, int scrollx, int sc
 			int sy = ((offs/2)%64)*8;
 			int sx = ((offs/2)/64)*8;
 			int color = 0xe;
-			if( (k&0xf)==(attributes&0xf) && osd_key_pressed(OSD_KEY_G) ) color = random()&0xff;
+//			if( (k&0xf)==(attributes&0xf) && osd_key_pressed(OSD_KEY_G) ) color = random()&0xff;
 
 			dirtybuffer[offs] = tile_number;
 			dirtybuffer[offs+1] = attributes;

@@ -55,6 +55,7 @@ void tms320c10_set_nmi_line(int state);
 void tms320c10_set_irq_line(int irqline, int state);
 void tms320c10_set_irq_callback(int (*callback)(int irqline));
 const char *tms320c10_info(void *context, int regnum);
+unsigned tms320c10_dasm(UINT8 *base, char *buffer, unsigned pc);
 
 #include "memory.h"
 
@@ -131,8 +132,8 @@ const char *tms320c10_info(void *context, int regnum);
 #endif
 
 #ifdef	MAME_DEBUG
-extern int mame_debug;
-extern int Dasm32010(char * dst, UINT8 *addr);
+#include "osd_dbg.h"
+extern unsigned Dasm32010(char * dst, UINT8 *addr);
 #endif
 
 #endif  /* _TMS320C10_H */

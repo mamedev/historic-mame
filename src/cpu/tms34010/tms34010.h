@@ -11,6 +11,7 @@
 #define _TMS34010_H
 
 #include "osd_cpu.h"
+#include "osd_dbg.h"
 
 enum {
 	TMS34010_PC=1, TMS34010_SP, TMS34010_ST,
@@ -48,6 +49,7 @@ extern void tms34010_set_irq_line(int irqline, int linestate);
 extern void tms34010_set_irq_callback(int (*callback)(int irqline));
 extern void tms34010_internal_interrupt(int type);
 extern const char *tms34010_info(void *context, int regnum);
+extern unsigned tms34010_dasm(UINT8 *base, char *buffer, unsigned pc);
 
 extern void TMS34010_State_Save(int cpunum, void *f);
 extern void TMS34010_State_Load(int cpunum, void *f);
@@ -85,8 +87,7 @@ extern int tms34010_ICount;
 #define TOBYTE(bitaddr) ((UINT32) (bitaddr)>>3)
 
 #ifdef MAME_DEBUG
-extern int mame_debug;
-extern int Dasm34010 (unsigned char *pBase, char *buff, int _pc);
+extern unsigned Dasm34010 (unsigned char *pBase, char *buff, unsigned _pc);
 #endif
 
 #endif /* _TMS34010_H */

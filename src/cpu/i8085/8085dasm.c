@@ -33,11 +33,12 @@
 #define ARG(A)  cpu_readop_arg(A)
 #define ARGW(A) cpu_readop_arg(A) + (cpu_readop_arg((A+1)&0xffff) << 8)
 
-int Dasm8085(char *buff, int PC)
+unsigned Dasm8085(char *buff, unsigned pc)
 {
 	UINT8 op;
-	int pc = PC;
-	switch (op = OP(pc++)) {
+	unsigned PC = pc;
+	switch (op = OP(pc++))
+	{
 #ifdef  Z80_MNEMONICS
 		case 0x00: sprintf (buff,"nop");                             break;
 		case 0x01: sprintf (buff,"ld   bc,$%04x", ARGW(pc)); pc+=2;  break;

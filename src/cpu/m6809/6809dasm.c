@@ -371,7 +371,7 @@ static char *hexstring (int address)
 	return labtemp;
 }
 
-int Dasm6809 (char *buffer, int pc)
+unsigned Dasm6809 (char *buffer, unsigned pc)
 {
 	int i, j, k, page, opcode, numoperands, mode;
 	unsigned char operandarray[4];

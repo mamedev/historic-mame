@@ -294,54 +294,54 @@ static struct MemoryWriteAddress dd2_sound_writemem[] =
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 ) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 ) \
 	PORT_START \
-	PORT_DIPNAME( 0x07, 0x07, "Coin A", IP_KEY_NONE ) \
-	PORT_DIPSETTING(	0x00, "4 Coins/1 Credit" ) \
-	PORT_DIPSETTING(	0x01, "3 Coins/1 Credit" ) \
-	PORT_DIPSETTING(	0x02, "2 Coins/1 Credit" ) \
-	PORT_DIPSETTING(	0x07, "1 Coin/1 Credit" ) \
-	PORT_DIPSETTING(	0x06, "1 Coin/2 Credits" ) \
-	PORT_DIPSETTING(	0x05, "1 Coin/3 Credits" ) \
-	PORT_DIPSETTING(	0x04, "1 Coin/4 Credits" ) \
-	PORT_DIPSETTING(	0x03, "1 Coin/5 Credits" ) \
-	PORT_DIPNAME( 0x38, 0x38, "Coin B", IP_KEY_NONE ) \
-	PORT_DIPSETTING(	0x00, "4 Coins/1 Credit" ) \
-	PORT_DIPSETTING(	0x08, "3 Coins/1 Credit" ) \
-	PORT_DIPSETTING(	0x10, "2 Coins/1 Credit" ) \
-	PORT_DIPSETTING(	0x38, "1 Coin/1 Credit" ) \
-	PORT_DIPSETTING(	0x30, "1 Coin/2 Credits" ) \
-	PORT_DIPSETTING(	0x28, "1 Coin/3 Credits" ) \
-	PORT_DIPSETTING(	0x20, "1 Coin/4 Credits" ) \
-	PORT_DIPSETTING(	0x18, "1 Coin/5 Credits" ) \
-	PORT_DIPNAME( 0x40, 0x40, "Screen Orientation", IP_KEY_NONE ) \
-	PORT_DIPSETTING(	0x00, "On" ) \
-	PORT_DIPSETTING(	0x40, "Off") \
-	PORT_DIPNAME( 0x80, 0x80, "Screen Reverse", IP_KEY_NONE ) \
-	PORT_DIPSETTING(	0x00, "On" ) \
-	PORT_DIPSETTING(	0x80, "Off")
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) ) \
+	PORT_DIPSETTING(	0x00, DEF_STR( 4C_1C ) ) \
+	PORT_DIPSETTING(	0x01, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(	0x02, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(	0x07, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(	0x06, DEF_STR( 1C_2C ) ) \
+	PORT_DIPSETTING(	0x05, DEF_STR( 1C_3C ) ) \
+	PORT_DIPSETTING(	0x04, DEF_STR( 1C_4C ) ) \
+	PORT_DIPSETTING(	0x03, DEF_STR( 1C_5C ) ) \
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) ) \
+	PORT_DIPSETTING(	0x00, DEF_STR( 4C_1C ) ) \
+	PORT_DIPSETTING(	0x08, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(	0x10, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(	0x38, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(	0x30, DEF_STR( 1C_2C ) ) \
+	PORT_DIPSETTING(	0x28, DEF_STR( 1C_3C ) ) \
+	PORT_DIPSETTING(	0x20, DEF_STR( 1C_4C ) ) \
+	PORT_DIPSETTING(	0x18, DEF_STR( 1C_5C ) ) \
+	PORT_DIPNAME( 0x40, 0x40, "Screen Orientation" ) \
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) ) \
+	PORT_DIPSETTING(	0x40, DEF_STR( Off )) \
+	PORT_DIPNAME( 0x80, 0x80, "Screen Reverse" ) \
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) ) \
+	PORT_DIPSETTING(	0x80, DEF_STR( Off ))
 
 INPUT_PORTS_START( dd1_input_ports )
 	COMMON_INPUT_PORTS
 
     PORT_START      /* DSW1 */
-    PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+    PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
     PORT_DIPSETTING(    0x02, "Easy")
     PORT_DIPSETTING(    0x03, "Normal")
     PORT_DIPSETTING(    0x01, "Hard")
     PORT_DIPSETTING(    0x00, "Very Hard")
-    PORT_DIPNAME( 0x04, 0x04, "Attract Mode Sound", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x00, "Off" )
-    PORT_DIPSETTING(    0x04, "On")
+    PORT_DIPNAME( 0x04, 0x04, "Attract Mode Sound" )
+    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x04, DEF_STR( On ))
     PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
-    PORT_DIPNAME( 0x30, 0x30, "Bonus Life", IP_KEY_NONE )
+    PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
     PORT_DIPSETTING(    0x10, "20K")
     PORT_DIPSETTING(    0x00, "40K" )
     PORT_DIPSETTING(    0x30, "30K and every 60K")
     PORT_DIPSETTING(    0x20, "40K and every 80K" )
-    PORT_DIPNAME( 0xc0, 0xc0, "Lives", IP_KEY_NONE )
+    PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
     PORT_DIPSETTING(    0xc0, "2")
     PORT_DIPSETTING(    0x80, "3" )
     PORT_DIPSETTING(    0x40, "4")
-    PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
+    PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
 
     COMMON_PORT4
 INPUT_PORTS_END
@@ -350,23 +350,23 @@ INPUT_PORTS_START( dd2_input_ports )
 	COMMON_INPUT_PORTS
 
   PORT_START      /* DSW1 */
-    PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+    PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
     PORT_DIPSETTING(    0x02, "Easy")
     PORT_DIPSETTING(    0x03, "Normal")
     PORT_DIPSETTING(    0x01, "Medium")
     PORT_DIPSETTING(    0x00, "Hard")
-    PORT_DIPNAME( 0x04, 0x04, "Attract Mode Sound", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x00, "Off" )
-    PORT_DIPSETTING(    0x04, "On")
-    PORT_DIPNAME( 0x08, 0x08, "Hurricane Kick", IP_KEY_NONE )
+    PORT_DIPNAME( 0x04, 0x04, "Attract Mode Sound" )
+    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x04, DEF_STR( On ))
+    PORT_DIPNAME( 0x08, 0x08, "Hurricane Kick" )
     PORT_DIPSETTING(    0x00, "Easy" )
     PORT_DIPSETTING(    0x08, "Normal")
-    PORT_DIPNAME( 0x30, 0x30, "Timer", IP_KEY_NONE )
+    PORT_DIPNAME( 0x30, 0x30, "Timer" )
     PORT_DIPSETTING(    0x20, "80" )
     PORT_DIPSETTING(    0x30, "70")
     PORT_DIPSETTING(    0x10, "65")
     PORT_DIPSETTING(    0x00, "60" )
-    PORT_DIPNAME( 0xc0, 0xc0, "Lives", IP_KEY_NONE )
+    PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
     PORT_DIPSETTING(    0xc0, "1")
     PORT_DIPSETTING(    0x80, "2" )
     PORT_DIPSETTING(    0x40, "3")

@@ -5,7 +5,6 @@ Rolling Thunder Video Hardware
 *******************************************************************/
 
 #include "driver.h"
-#include "tilemap.h"
 
 void rt_stop_mcu_timer( void );
 
@@ -140,27 +139,18 @@ static void get_tile_info(int col,int row)
 
 void rthunder_vh_stop(void)
 {
-	tilemap_dispose(tilemap[0]);
-	tilemap_dispose(tilemap[1]);
-	tilemap_dispose(tilemap[2]);
-	tilemap_dispose(tilemap[3]);
-
 	rt_stop_mcu_timer();
 }
 
 int rthunder_vh_start(void)
 {
-	tilemap[0] = tilemap_create(TILEMAP_TRANSPARENT,8,8,64,32,1,1);
-	tilemap[1] = tilemap_create(TILEMAP_TRANSPARENT,8,8,64,32,1,1);
-	tilemap[2] = tilemap_create(TILEMAP_TRANSPARENT,8,8,64,32,1,1);
-	tilemap[3] = tilemap_create(TILEMAP_TRANSPARENT,8,8,64,32,1,1);
+	tilemap[0] = tilemap_create(get_tile_info,TILEMAP_TRANSPARENT,8,8,64,32,1,1);
+	tilemap[1] = tilemap_create(get_tile_info,TILEMAP_TRANSPARENT,8,8,64,32,1,1);
+	tilemap[2] = tilemap_create(get_tile_info,TILEMAP_TRANSPARENT,8,8,64,32,1,1);
+	tilemap[3] = tilemap_create(get_tile_info,TILEMAP_TRANSPARENT,8,8,64,32,1,1);
 
 	if (tilemap[0] && tilemap[1] && tilemap[2] && tilemap[3])
 	{
-		tilemap[0]->tile_get_info = get_tile_info;
-		tilemap[1]->tile_get_info = get_tile_info;
-		tilemap[2]->tile_get_info = get_tile_info;
-		tilemap[3]->tile_get_info = get_tile_info;
 		tilemap[0]->transparent_pen = 7;
 		tilemap[1]->transparent_pen = 7;
 		tilemap[2]->transparent_pen = 7;
@@ -168,8 +158,6 @@ int rthunder_vh_start(void)
 
 		return 0;
 	}
-
-	rthunder_vh_stop();
 
 	return 1;
 }
@@ -267,10 +255,7 @@ void rthunder_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap2_preupdate(); tilemap_update(tilemap[2]);
 	tilemap3_preupdate(); tilemap_update(tilemap[3]);
 
-	tilemap_render(tilemap[0]);
-	tilemap_render(tilemap[1]);
-	tilemap_render(tilemap[2]);
-	tilemap_render(tilemap[3]);
+	tilemap_render(ALL_TILEMAPS);
 
 	/* the background color can be changed but I don't know to which address it's mapped */
 	fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);

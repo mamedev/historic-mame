@@ -116,9 +116,6 @@ Program ROM (48K bytes)                   4000-FFFF   R    D0-D7
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/pokey.h"
-#include "sndhrdw/5220intf.h"
-#include "sndhrdw/2151intf.h"
 
 
 extern unsigned char *gauntlet_speed_check;
@@ -302,15 +299,15 @@ INPUT_PORTS_START( gauntlet_ports )
 
 	PORT_START	/* DSW */
 	PORT_BIT( 0x07, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BITX(    0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x08, "Off")
-	PORT_DIPSETTING(    0x00, "On")
+	PORT_BITX(    0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
 	PORT_BIT( 0x30, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_VBLANK )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* Fake! */
-	PORT_DIPNAME( 0x03, 0x00, "Player 1 Plays", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x00, "Player 1 Plays" )
 	PORT_DIPSETTING(    0x00, "Red/Warrior" )
 	PORT_DIPSETTING(    0x01, "Blue/Valkyrie" )
 	PORT_DIPSETTING(    0x02, "Yellow/Wizard" )

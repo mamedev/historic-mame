@@ -414,8 +414,6 @@ static int read_png(const char *file_name, struct png_info *p)
 	p->trans = NULL;
 	p->palette = NULL;
 
-        if (!use_artwork) return 0;
-
 	if (!(png = osd_fopen(Machine->gamedrv->name, file_name, OSD_FILETYPE_ARTWORK, 0)))
 	{
 		if (errorlog)

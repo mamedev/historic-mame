@@ -36,6 +36,14 @@ typedef struct
 
     int (*irq_callback)(int irqline);
 
+
+    int   previous_pc;      /* last PC used */
+
+    						/* This holds the previous opcode address used */
+                            /* it is currently only updated on RET opcode  */
+                            /* as Indiana Jones needs it for the slapstic  */
+
+
     int vbr;                /* Vector Base Register.  Will be used in 68010 */
     int sfc;                /* Source Function Code.  Will be used in 68010 */
     int dfc;                /* Destination Function Code.  Will be used in 68010 */
@@ -80,7 +88,10 @@ void m68000_reset(void *param)
     regs.a[7] = regs.isp = cpu_readmem24_dword(0);
     regs.pc   = cpu_readmem24_dword(4) & 0xffffff;
     regs.sr_high = 0x27;
-   	regs.sr = 0x2700;
+
+	#ifdef MAME_DEBUG
+		regs.sr = 0x2700;
+	#endif
 
     M68KRESET();
 }
@@ -99,10 +110,9 @@ int  m68000_execute(int cycles)
 	m68000_ICount = cycles;
 
 #ifdef MAME_DEBUG
-
     do
     {
-        #if 0				/* Trace */
+		#ifdef TRACE68K 							/* Trace */
 
         if (errorlog)
         {
@@ -116,22 +126,27 @@ int  m68000_execute(int cycles)
             }
 
            	fprintf(errorlog,"=> %8x %8x ",areg,dreg);
-			fprintf(errorlog,"%6x %4x %d\n",regs.pc,regs.sr,m68000_ICount);
+			fprintf(errorlog,"%6x %4x %d\n",regs.pc,regs.sr & 0x271F,m68000_ICount);
         }
-        #endif
+		#endif
 
-		{
-			extern int mame_debug;
+		if (mame_debug)
+        {
+        	int StartCycle = m68000_ICount;
 
-			if (mame_debug)
-            {
-				MAME_Debug();
-            }
-		}
+			MAME_Debug();
 
-		M68KRUN();
-    }
-	while (m68000_ICount > 0);
+            M68KRUN();
+
+            if (regs.IRQ_level & 0x80)
+    			m68000_ICount = 0;
+            else
+				m68000_ICount = StartCycle - 12;
+        }
+        else
+			M68KRUN();
+
+    } while (m68000_ICount > 0);
 
 #else
 
@@ -203,9 +218,10 @@ unsigned m68000_get_reg(int regnum)
 		case M68K_A5: return regs.a[5];
 		case M68K_A6: return regs.a[6];
 		case M68K_A7: return regs.a[7];
+		case REG_PREVIOUSPC: return regs.previous_pc;
 /* TODO: Verify that this is the right thing to do for the purpose? */
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
 				unsigned offset = regs.isp + 4 * (REG_SP_CONTENTS - regnum);
 				if( offset < 0xfffffd )
@@ -244,7 +260,7 @@ void m68000_set_reg(int regnum, unsigned val)
 		case M68K_A7: regs.a[7] = val; break;
 /* TODO: Verify that this is the right thing to do for the purpose? */
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
 				unsigned offset = regs.isp + 4 * (REG_SP_CONTENTS - regnum);
 				if( offset < 0xfffffd )
@@ -260,8 +276,6 @@ void m68000_set_nmi_line(int state)
 
 void m68000_set_irq_line(int irqline, int state)
 {
-//	if (errorlog) fprintf(errorlog, "Set IRQ Line %x = %x\n",irqline,state);
-
 	if (state == CLEAR_LINE)
 	{
 		regs.IRQ_level &= ~(1 << (irqline - 1));
@@ -297,47 +311,6 @@ extern int m68k_disassemble(char* str_buff, int pc);
 
 	switch( regnum )
 	{
-		case CPU_INFO_NAME: return "68000";
-		case CPU_INFO_FAMILY: return "Motorola 68K";
-		case CPU_INFO_VERSION: return "0.11";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright 1998,99 Mike Coates, Darren Olafson. All rights reserved";
-		case CPU_INFO_REG_LAYOUT: return (const char*)m68k_reg_layout;
-        case CPU_INFO_WIN_LAYOUT: return (const char*)m68k_win_layout;
-
-		case CPU_INFO_PC: sprintf(buffer[which], "%06X:", r->pc); break;
-		case CPU_INFO_SP: sprintf(buffer[which], "%08X", r->isp); break;
-#ifdef MAME_DEBUG
-		case CPU_INFO_DASM:
-			change_pc24(r->pc);
-			r->pc += m68k_disassemble(buffer[which], r->pc);
-			break;
-#else
-		case CPU_INFO_DASM:
-			change_pc24(r->pc);
-			sprintf(buffer[which],"$%02x", ROM[r->pc]);
-			r->pc++;
-			break;
-#endif
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
-				r->sr & 0x8000 ? 'T':'.',
-				r->sr & 0x4000 ? '?':'.',
-				r->sr & 0x2000 ? 'S':'.',
-				r->sr & 0x1000 ? '?':'.',
-				r->sr & 0x0800 ? '?':'.',
-				r->sr & 0x0400 ? 'I':'.',
-				r->sr & 0x0200 ? 'I':'.',
-				r->sr & 0x0100 ? 'I':'.',
-				r->sr & 0x0080 ? '?':'.',
-				r->sr & 0x0040 ? '?':'.',
-				r->sr & 0x0020 ? '?':'.',
-				r->sr & 0x0010 ? 'X':'.',
-				r->sr & 0x0008 ? 'N':'.',
-				r->sr & 0x0004 ? 'Z':'.',
-				r->sr & 0x0002 ? 'V':'.',
-				r->sr & 0x0001 ? 'C':'.');
-            break;
 		case CPU_INFO_REG+M68K_PC: sprintf(buffer[which], "PC:%06X", r->pc); break;
 		case CPU_INFO_REG+M68K_ISP: sprintf(buffer[which], "ISP:%08X", r->isp); break;
 		case CPU_INFO_REG+M68K_USP: sprintf(buffer[which], "USP:%08X", r->usp); break;
@@ -361,13 +334,52 @@ extern int m68k_disassemble(char* str_buff, int pc);
 		case CPU_INFO_REG+M68K_A5: sprintf(buffer[which], "A5:%08X", r->a[5]); break;
 		case CPU_INFO_REG+M68K_A6: sprintf(buffer[which], "A6:%08X", r->a[6]); break;
 		case CPU_INFO_REG+M68K_A7: sprintf(buffer[which], "A7:%08X", r->a[7]); break;
+		case CPU_INFO_FLAGS:
+			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+				r->sr & 0x8000 ? 'T':'.',
+				r->sr & 0x4000 ? '?':'.',
+				r->sr & 0x2000 ? 'S':'.',
+				r->sr & 0x1000 ? '?':'.',
+				r->sr & 0x0800 ? '?':'.',
+				r->sr & 0x0400 ? 'I':'.',
+				r->sr & 0x0200 ? 'I':'.',
+				r->sr & 0x0100 ? 'I':'.',
+				r->sr & 0x0080 ? '?':'.',
+				r->sr & 0x0040 ? '?':'.',
+				r->sr & 0x0020 ? '?':'.',
+				r->sr & 0x0010 ? 'X':'.',
+				r->sr & 0x0008 ? 'N':'.',
+				r->sr & 0x0004 ? 'Z':'.',
+				r->sr & 0x0002 ? 'V':'.',
+				r->sr & 0x0001 ? 'C':'.');
+            break;
+		case CPU_INFO_NAME: return "68000";
+		case CPU_INFO_FAMILY: return "Motorola 68K";
+		case CPU_INFO_VERSION: return "0.11";
+		case CPU_INFO_FILE: return __FILE__;
+		case CPU_INFO_CREDITS: return "Copyright 1998,99 Mike Coates, Darren Olafson. All rights reserved";
+		case CPU_INFO_REG_LAYOUT: return (const char*)m68k_reg_layout;
+        case CPU_INFO_WIN_LAYOUT: return (const char*)m68k_win_layout;
 	}
 	return buffer[which];
+}
+
+unsigned m68000_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+    (void)base;
+	change_pc24(pc);
+#ifdef MAME_DEBUG
+    return m68k_disassemble(buffer, pc);
+#else
+	sprintf(buffer, "$%04X", cpu_readmem24_word(pc) );
+	return 2;
+#endif
 }
 
 /****************************************************************************
  * M68010 section
  ****************************************************************************/
+#if HAS_M68010
 void m68010_reset(void *param) { m68000_reset(param); }
 void m68010_exit(void) { m68000_exit(); }
 int  m68010_execute(int cycles) { return m68000_execute(cycles); }
@@ -391,9 +403,22 @@ const char *m68010_info(void *context, int regnum)
 	return m68000_info(context,regnum);
 }
 
+unsigned m68010_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+    (void)base;
+	change_pc24(pc);
+#ifdef MAME_DEBUG
+    return m68k_disassemble(buffer, pc);
+#else
+	sprintf(buffer, "$%04X", cpu_readmem24_word(pc) );
+	return 2;
+#endif
+}
+#endif
 /****************************************************************************
  * M68020 section
  ****************************************************************************/
+#if HAS_M68020
 void m68020_reset(void *param) { m68000_reset(param); }
 void m68020_exit(void) { m68000_exit(); }
 int  m68020_execute(int cycles) { return m68000_execute(cycles); }
@@ -417,4 +442,16 @@ const char *m68020_info(void *context, int regnum)
 	return m68000_info(context,regnum);
 }
 
+unsigned m68020_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+    (void)base;
+	change_pc24(pc);
+#ifdef MAME_DEBUG
+    return m68k_disassemble(buffer, pc);
+#else
+	sprintf(buffer, "$%04X", cpu_readmem24_word(pc) );
+	return 2;
+#endif
+}
+#endif
 

@@ -159,14 +159,14 @@ subs_options_r
 ***************************************************************************/
 int subs_options_r(int offset)
 {
-	int options = input_port_0_r(offset);
+	int opts = input_port_0_r(offset);
 
 	switch (offset & 0x03)
 	{
-		case 0x00:		return ((options & 0xC0) >> 6);		/* language */
-		case 0x01:		return ((options & 0x30) >> 4);		/* credits */
-		case 0x02:		return ((options & 0x0C) >> 2);		/* game time */
-		case 0x03:		return ((options & 0x03) >> 0);		/* extended time */
+		case 0x00:		return ((opts & 0xC0) >> 6);		/* language */
+		case 0x01:		return ((opts & 0x30) >> 4);		/* credits */
+		case 0x02:		return ((opts & 0x0C) >> 2);		/* game time */
+		case 0x03:		return ((opts & 0x03) >> 0);		/* extended time */
 	}
 
 	return 0;

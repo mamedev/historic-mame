@@ -2,6 +2,7 @@
 #define S2650_H
 
 #include "osd_cpu.h"
+#include "osd_dbg.h"
 
 enum {
 	S2650_PC=1, S2650_PS, S2650_R0, S2650_R1, S2650_R2, S2650_R3,
@@ -40,6 +41,7 @@ extern void s2650_set_irq_callback(int (*callback)(int irqline));
 extern void s2650_state_save(void *file);
 extern void s2650_state_load(void *file);
 extern const char *s2650_info(void *context, int regnum);
+extern unsigned s2650_dasm(UINT8 *base, char *buffer, unsigned pc);
 
 extern void s2650_set_flag(int state);
 extern int s2650_get_flag(void);
@@ -47,8 +49,6 @@ extern void s2650_set_sense(int state);
 extern int s2650_get_sense(void);
 
 #ifdef  MAME_DEBUG
-extern int mame_debug;
-extern void MAME_Debug(void);
 extern int Dasm2650(char *buff, int PC);
 #endif
 

@@ -17,12 +17,6 @@
 #include <time.h>
 #include <ctype.h>
 
-/* inp header - should be moved to osdepend.h */
-typedef struct {
-    char name[9];      /* 8 bytes for game->name + NULL */
-    char version[3];   /* byte[0] = 0, byte[1] = version byte[2] = beta_version */
-    char reserved[20]; /* for future use, possible store game options? */
-} INP_HEADER;
 
 int  msdos_init_seal (void);
 int  msdos_init_sound(void);
@@ -30,11 +24,9 @@ void msdos_init_input(void);
 void msdos_shutdown_sound(void);
 void msdos_shutdown_input(void);
 int  frontend_help (int argc, char **argv);
-void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game);
+void parse_cmdline (int argc, char **argv, int game);
 void init_inpdir(void);
 
-/* platform independent options go here */
-struct GameOptions options;
 
 int  ignorecfg;
 
@@ -280,7 +272,7 @@ int main (int argc, char **argv)
     }
 
 	/* parse generic (os-independent) options */
-	parse_cmdline (argc, argv, &options, game_index);
+	parse_cmdline (argc, argv, game_index);
 
 {	/* Mish:  I need sample rate initialised _before_ rom loading for optional rom regions */
 	extern int soundcard;
@@ -321,7 +313,7 @@ int main (int argc, char **argv)
     }
 
 	/* go for it */
-	res = run_game (game_index , &options);
+	res = run_game (game_index);
 
 	/* close open files */
 	if (options.errorlog) fclose (options.errorlog);

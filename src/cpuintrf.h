@@ -13,24 +13,30 @@
 #define HOLD_LINE       2       /* hold interrupt line until enable is true */
 #define PULSE_LINE		3		/* pulse interrupt line for one instruction */
 
+#define MAX_REGS		64		/* maximum number of register of any CPU */
+
 /* Values passed to the cpu_info function of a core to retrieve information */
 enum {
-    CPU_INFO_NAME,
+	CPU_INFO_REG,
+	CPU_INFO_FLAGS=MAX_REGS,
+	CPU_INFO_NAME,
     CPU_INFO_FAMILY,
     CPU_INFO_VERSION,
     CPU_INFO_FILE,
     CPU_INFO_CREDITS,
     CPU_INFO_REG_LAYOUT,
-    CPU_INFO_WIN_LAYOUT,
-    CPU_INFO_PC,
-    CPU_INFO_SP,
-    CPU_INFO_DASM,
-    CPU_INFO_FLAGS,
-    CPU_INFO_REG
+	CPU_INFO_WIN_LAYOUT
 };
 
 #define CPU_IS_LE	0	/* emulated CPU is little endian */
 #define CPU_IS_BE	1	/* emulated CPU is big endian */
+
+/*
+ * This value is passed to cpu_get_reg/cpu_set_reg to retrieve the
+ * previous program counter value, ie. before a CPU emulation started
+ * to fetch opcodes and arguments for the instrution.
+ */
+#define REG_PREVIOUSPC	-1
 
 /*
  * This value is passed to cpu_get_reg/cpu_set_reg instead of one of
@@ -41,7 +47,7 @@ enum {
  * depends on the CPU core.
  * This is also used to replace the cpu_geturnpc() function.
  */
-#define REG_SP_CONTENTS -1
+#define REG_SP_CONTENTS -2
 
 /*
  * These flags can be defined in the makefile (or project) to
@@ -153,7 +159,7 @@ enum {
 /* ASG 971222 -- added this generic structure */
 struct cpu_interface
 {
-	unsigned cpu_num, cpu_family;
+	unsigned cpu_num;
 	void (*reset)(void *param);
 	void (*exit)(void);
 	int (*execute)(int cycles);
@@ -172,6 +178,7 @@ struct cpu_interface
 	void (*cpu_state_save)(void *file);
 	void (*cpu_state_load)(void *file);
 	const char* (*cpu_info)(void *context,int regnum);
+	unsigned (*cpu_dasm)(unsigned char *base,char *buffer,unsigned pc);
 	unsigned num_irqs;
     int *icount;
 	int no_int, irq_int, nmi_int;
@@ -224,7 +231,8 @@ unsigned cpu_get_reg(int regnum);
 void cpu_set_reg(int regnum, unsigned val);
 
 /* Returns previous pc (start of opcode causing read/write) */
-int cpu_getpreviouspc(void);  /* -RAY- */
+/* int cpu_getpreviouspc(void); */
+#define cpu_getpreviouspc() cpu_get_reg(REG_PREVIOUSPC)
 
 /* Returns the return address from the top of the stack (Z80 only) */
 /* int cpu_getreturnpc(void); */
@@ -364,12 +372,8 @@ const char *cpu_reg_layout(void);
 /* Return (debugger) window layout definition for the active CPU */
 const char *cpu_win_layout(void);
 
-/* Return the active CPU program counter formatted as a hex number with a colon */
-const char *cpu_pc(void);
-/* Return the CPU stack pointer formatted as a hex number */
-const char *cpu_sp(void);
-/* Return a disassembled string for the instruction at the active CPU program counter */
-const char *cpu_dasm(void);
+/* Disassemble an instruction at PC into the given buffer */
+unsigned cpu_dasm(char *buffer, unsigned pc);
 /* Return a string describing the currently set flag (status) bits of the active CPU */
 const char *cpu_flags(void);
 /* Return a string with a register name and hex value for the active CPU */
@@ -432,12 +436,8 @@ void cpunum_set_reg(int cpunum, int regnum, unsigned val);
 const char *cpunum_reg_layout(int cpunum);
 /* Return (debugger) window layout definition for the CPU core */
 const char *cpunum_win_layout(int cpunum);
-/* Return the CPU program counter formatted as a hex number with a colon */
-const char *cpunum_pc(int cpunum);
-/* Return the CPU stack pointer formatted as a hex number */
-const char *cpunum_sp(int cpunum);
-/* Return a disassembled string for the instruction at the CPU program counter */
-const char *cpunum_dasm(int cpunum);
+
+unsigned cpunum_dasm(int cpunum,char *buffer,unsigned pc);
 /* Return a string describing the currently set flag (status) bits of the CPU */
 const char *cpunum_flags(int cpunum);
 /* Return a string with a register name and value */
@@ -445,6 +445,16 @@ const char *cpunum_flags(int cpunum);
 const char *cpunum_dump_reg(int cpunum, int regnum);
 /* Return a string describing the CPUs current state */
 const char *cpunum_dump_state(int cpunum);
+/* Return a name for the specified cpu number */
+const char *cpunum_name(int cpunum);
+/* Return a family name for the specified cpu number */
+const char *cpunum_core_family(int cpunum);
+/* Return a version for the specified cpu number */
+const char *cpunum_core_version(int cpunum);
+/* Return a the source filename for the specified cpu number */
+const char *cpunum_core_file(int cpunum);
+/* Return a the credits for the specified cpu number */
+const char *cpunum_core_credits(int cpunum);
 
 /* Dump all of the running machines CPUs state to stderr */
 void cpu_dump_states(void);

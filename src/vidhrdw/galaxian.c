@@ -18,9 +18,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static void mooncrgx_gfxextend_w(int offset,int data);
-static void pisces_gfxbank_w(int offset,int data);
-
 static struct rectangle spritevisiblearea =
 {
 	2*8+1, 32*8-1,
@@ -54,23 +51,30 @@ static struct star stars[MAX_STARS];
 static int total_stars;
 static void (*modify_charcode  )(int*,int)           = 0;  /* function to call to do character banking */
 static void (*modify_spritecode)(int*,int*,int*,int) = 0;  /* function to call to do sprite banking */
-static int gfx_extend;	/* used by Moon Cresta only */
+static int mooncrst_gfxextend;
 static int pisces_gfxbank;
+static int jumpbug_gfxbank[5];
 static int flipscreen[2];
 
 static int background_on;
 static unsigned char backcolour[256];
 
+static void mooncrgx_gfxextend_w      (int offset,int data);
+static void   pisces_gfxbank_w        (int offset,int data);
+       void  jumpbug_gfxbank_w        (int offset,int data);
+
 static void mooncrst_modify_charcode  (int *charcode,int offs);
 static void  moonqsr_modify_charcode  (int *charcode,int offs);
 static void   pisces_modify_charcode  (int *charcode,int offs);
 static void  mariner_modify_charcode  (int *charcode,int offs);
+static void  jumpbug_modify_charcode  (int *charcode,int offs);
 
 static void mooncrst_modify_spritecode(int *spritecode,int *flipx,int *flipy,int offs);
 static void  moonqsr_modify_spritecode(int *spritecode,int *flipx,int *flipy,int offs);
 static void   ckongs_modify_spritecode(int *spritecode,int *flipx,int *flipy,int offs);
 static void  calipso_modify_spritecode(int *spritecode,int *flipx,int *flipy,int offs);
 static void   pisces_modify_spritecode(int *spritecode,int *flipx,int *flipy,int offs);
+static void  jumpbug_modify_spritecode(int *spritecode,int *flipx,int *flipy,int offs);
 
 /***************************************************************************
 
@@ -219,6 +223,26 @@ void rescue_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
     }
 }
 
+void stratgyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+
+
+    galaxian_vh_convert_color_prom(palette, colortable, color_prom);
+
+	/* set up background colors */
+
+   	/* blue and dark brown */
+
+	palette[96*3 + 0] = 0;
+	palette[96*3 + 1] = 0;
+	palette[96*3 + 2] = 0x55;
+
+	palette[97*3 + 0] = 0x40;
+	palette[97*3 + 1] = 0x20;
+	palette[97*3 + 2] = 0x0;
+}
+
 void mariner_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
@@ -273,7 +297,7 @@ int galaxian_vh_start(void)
 	int generator;
 	int x,y;
 
-	gfx_extend = 0;
+	mooncrst_gfxextend = 0;
 	stars_on = 0;
 	flipscreen[0] = 0;
 	flipscreen[1] = 0;
@@ -310,10 +334,7 @@ int galaxian_vh_start(void)
 
 			if (bit1 ^ bit2) generator |= 1;
 
-			if (y >= Machine->drv->visible_area.min_y &&
-				y <= Machine->drv->visible_area.max_y &&
-				((~generator >> 16) & 1) &&
-				(generator & 0xff) == 0xff)
+			if (((~generator >> 16) & 1) && (generator & 0xff) == 0xff)
 			{
 				int color;
 
@@ -423,6 +444,30 @@ int minefld_vh_start(void)
     return ans;
 }
 
+int stratgyx_vh_start(void)
+{
+	int ans,x;
+
+	stars_type = 0;
+	ans = galaxian_vh_start();
+
+    /* Setup background colour array (blue left side, brown ground */
+
+    for (x=0;x<48;x++)
+	{
+		backcolour[x] = 0;
+    }
+
+    for (x=48;x<256;x++)
+	{
+		backcolour[x] = 1;
+    }
+
+    decode_background();
+
+    return ans;
+}
+
 int ckongs_vh_start(void)
 {
 	stars_type = 1;
@@ -467,6 +512,15 @@ int mariner_vh_start(void)
 
 	return ans;
 }
+
+int jumpbug_vh_start(void)
+{
+	modify_charcode   = jumpbug_modify_charcode;
+	modify_spritecode = jumpbug_modify_spritecode;
+	stars_type = 1;
+	return galaxian_vh_start();
+}
+
 
 
 void galaxian_flipx_w(int offset,int data)
@@ -523,8 +577,8 @@ void galaxian_stars_w(int offset,int data)
 
 void mooncrst_gfxextend_w(int offset,int data)
 {
-	if (data) gfx_extend |= (1 << offset);
-	else gfx_extend &= ~(1 << offset);
+	if (data) mooncrst_gfxextend |= (1 << offset);
+	else mooncrst_gfxextend &= ~(1 << offset);
 }
 
 
@@ -539,10 +593,18 @@ static void mooncrgx_gfxextend_w(int offset,int data)
 	mooncrst_gfxextend_w(offset, data);
 }
 
-
 static void pisces_gfxbank_w(int offset,int data)
 {
 	pisces_gfxbank = data & 1;
+}
+
+void jumpbug_gfxbank_w(int offset,int data)
+{
+	if (jumpbug_gfxbank[offset] != data)
+	{
+		jumpbug_gfxbank[offset] = data;
+		memset(dirtybuffer,1,videoram_size);
+	}
 }
 
 
@@ -587,9 +649,9 @@ INLINE void plot_star(struct osd_bitmap *bitmap, int x, int y, int code)
 /* Character banking routines */
 static void mooncrst_modify_charcode(int *charcode,int offs)
 {
-	if ((gfx_extend & 4) && (*charcode & 0xc0) == 0x80)
+	if ((mooncrst_gfxextend & 4) && (*charcode & 0xc0) == 0x80)
 	{
-		*charcode = (*charcode & 0x3f) | (gfx_extend << 6);
+		*charcode = (*charcode & 0x3f) | (mooncrst_gfxextend << 6);
 	}
 }
 
@@ -622,12 +684,24 @@ static void mariner_modify_charcode(int *charcode,int offs)
 	}
 }
 
+static void jumpbug_modify_charcode(int *charcode,int offs)
+{
+	if (((*charcode & 0xc0) == 0x80) &&
+		 (jumpbug_gfxbank[2] & 1) != 0)
+	{
+		*charcode += 128 + (( jumpbug_gfxbank[0] & 1) << 6) +
+				           (( jumpbug_gfxbank[1] & 1) << 7) +
+						   ((~jumpbug_gfxbank[4] & 1) << 8);
+	}
+}
+
+
 /* Sprite banking routines */
 static void mooncrst_modify_spritecode(int *spritecode,int *flipx,int *flipy,int offs)
 {
-	if ((gfx_extend & 4) && (*spritecode & 0x30) == 0x20)
+	if ((mooncrst_gfxextend & 4) && (*spritecode & 0x30) == 0x20)
 	{
-		*spritecode = (*spritecode & 0x0f) | (gfx_extend << 4);
+		*spritecode = (*spritecode & 0x0f) | (mooncrst_gfxextend << 4);
 	}
 }
 
@@ -662,6 +736,17 @@ static void pisces_modify_spritecode(int *spritecode,int *flipx,int *flipy,int o
 	if (pisces_gfxbank)
 	{
 		*spritecode += 64;
+	}
+}
+
+static void jumpbug_modify_spritecode(int *spritecode,int *flipx,int *flipy,int offs)
+{
+	if (((*spritecode & 0x30) == 0x20) &&
+		 (jumpbug_gfxbank[2] & 1) != 0)
+	{
+		*spritecode += 32 + (( jumpbug_gfxbank[0] & 1) << 4) +
+		                    (( jumpbug_gfxbank[1] & 1) << 5) +
+		                    ((~jumpbug_gfxbank[4] & 1) << 6);
 	}
 }
 
@@ -837,19 +922,23 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				int x,y;
 
 
-				x = (stars[offs].x + stars_scroll/2) % 256;
-				y = stars[offs].y;
+				x = ((stars[offs].x + stars_scroll) % 512) / 2;
+				y = (stars[offs].y + (stars_scroll + stars[offs].x) / 512) % 256;
 
-				/* No stars below row (column) 64, between rows 176 and 215 or
-				   between 224 and 247 */
-				if ((stars_type == 3) &&
-					((x < 64) ||
-					((x >= 176) && (x < 216)) ||
-					((x >= 224) && (x < 248)))) continue;
-
-				if ((y & 1) ^ ((x >> 4) & 1))
+				if (y >= Machine->drv->visible_area.min_y &&
+					y <= Machine->drv->visible_area.max_y)
 				{
-					plot_star(bitmap, x, y, stars[offs].code);
+					/* No stars below row (column) 64, between rows 176 and 215 or
+					   between 224 and 247 */
+					if ((stars_type == 3) &&
+						((x < 64) ||
+						((x >= 176) && (x < 216)) ||
+						((x >= 224) && (x < 248)))) continue;
+
+					if ((y & 1) ^ ((x >> 4) & 1))
+					{
+						plot_star(bitmap, x, y, stars[offs].code);
+					}
 				}
 			}
 			break;
@@ -864,26 +953,30 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				x = stars[offs].x / 2;
 				y = stars[offs].y;
 
-				if ((stars_type != 2 || x < 128) &&	/* draw only half screen in Rescue */
-				   ((y & 1) ^ ((x >> 4) & 1)))
+				if (y >= Machine->drv->visible_area.min_y &&
+					y <= Machine->drv->visible_area.max_y)
 				{
-					/* Determine when to skip plotting */
-					switch (stars_blink)
+					if ((stars_type != 2 || x < 128) &&	/* draw only half screen in Rescue */
+					   ((y & 1) ^ ((x >> 4) & 1)))
 					{
-					case 0:
-						if (!(stars[offs].code & 1))  continue;
-						break;
-					case 1:
-						if (!(stars[offs].code & 4))  continue;
-						break;
-					case 2:
-						if (!(stars[offs].x & 4))  continue;
-						break;
-					case 3:
-					    /* Always plot */
-						break;
+						/* Determine when to skip plotting */
+						switch (stars_blink)
+						{
+						case 0:
+							if (!(stars[offs].code & 1))  continue;
+							break;
+						case 1:
+							if (!(stars[offs].code & 4))  continue;
+							break;
+						case 2:
+							if (!(stars[offs].x & 4))  continue;
+							break;
+						case 3:
+							/* Always plot */
+							break;
+						}
+						plot_star(bitmap, x, y, stars[offs].code);
 					}
-					plot_star(bitmap, x, y, stars[offs].code);
 				}
 			}
 			break;

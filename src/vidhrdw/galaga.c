@@ -143,10 +143,7 @@ int galaga_vh_start(void)
 
 			if (bit1 ^ bit2) generator |= 1;
 
-			if (y >= Machine->drv->visible_area.min_y &&
-					y <= Machine->drv->visible_area.max_y &&
-					((~generator >> 16) & 1) &&
-					(generator & 0xff) == 0xff)
+			if (((~generator >> 16) & 1) && (generator & 0xff) == 0xff)
 			{
 				int color;
 
@@ -339,25 +336,29 @@ void galaga_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if ((stars[offs].set == starset[set][0]) ||
 					(stars[offs].set == starset[set][1]))
 			{
-				x = (stars[offs].x + stars_scroll/2) % 256 + 16;
-				y = stars[offs].y;
+				x = ((stars[offs].x + stars_scroll) % 512) / 2 + 16;
+				y = (stars[offs].y + (stars_scroll + stars[offs].x) / 512) % 256;
 
-				if (Machine->orientation & ORIENTATION_SWAP_XY)
+				if (y >= Machine->drv->visible_area.min_y &&
+					y <= Machine->drv->visible_area.max_y)
 				{
-					int temp;
+					if (Machine->orientation & ORIENTATION_SWAP_XY)
+					{
+						int temp;
 
 
-					temp = x;
-					x = y;
-					y = temp;
+						temp = x;
+						x = y;
+						y = temp;
+					}
+					if (Machine->orientation & ORIENTATION_FLIP_X)
+						x = bitmap->width - 1 - x;
+					if (Machine->orientation & ORIENTATION_FLIP_Y)
+						y = bitmap->height - 1 - y;
+
+					if (bitmap->line[y][x] == bpen)
+						bitmap->line[y][x] = stars[offs].col;
 				}
-				if (Machine->orientation & ORIENTATION_FLIP_X)
-					x = bitmap->width - 1 - x;
-				if (Machine->orientation & ORIENTATION_FLIP_Y)
-					y = bitmap->height - 1 - y;
-
-				if (bitmap->line[y][x] == bpen)
-					bitmap->line[y][x] = stars[offs].col;
 			}
 		}
 	}

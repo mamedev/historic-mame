@@ -40,7 +40,8 @@ extern void i8039_set_reg(int regnum, unsigned val);    /* Set specific register
 extern void i8039_set_nmi_line(int state);
 extern void i8039_set_irq_line(int irqline, int state);
 extern void i8039_set_irq_callback(int (*callback)(int irqline));
-const char *i8039_info(void *context, int regnum);
+extern const char *i8039_info(void *context, int regnum);
+extern unsigned i8039_dasm(UINT8 *base, char *buffer, unsigned pc);
 
 /*   This handling of special I/O ports should be better for actual MAME
  *   architecture.  (i.e., define access to ports { I8039_p1, I8039_p1, dkong_out_w })
@@ -69,6 +70,7 @@ const char *i8039_info(void *context, int regnum);
 /**************************************************************************
  * I8035 section
  **************************************************************************/
+#if HAS_I8035
 #define I8035_PC				I8039_PC
 #define I8035_SP				I8039_SP
 #define I8035_PSW				I8039_PSW
@@ -103,10 +105,13 @@ extern void i8035_set_nmi_line(int state);
 extern void i8035_set_irq_line(int irqline, int state);
 extern void i8035_set_irq_callback(int (*callback)(int irqline));
 extern const char *i8035_info(void *context, int regnum);
+extern unsigned i8035_dasm(UINT8 *base, char *buffer, unsigned pc);
+#endif
 
 /**************************************************************************
  * I8048 section
  **************************************************************************/
+#if HAS_I8048
 #define I8048_PC				I8039_PC
 #define I8048_SP				I8039_SP
 #define I8048_PSW				I8039_PSW
@@ -140,10 +145,13 @@ extern void i8048_set_nmi_line(int state);
 extern void i8048_set_irq_line(int irqline, int state);
 extern void i8048_set_irq_callback(int (*callback)(int irqline));
 const char *i8048_info(void *context, int regnum);
+extern unsigned i8048_dasm(UINT8 *base, char *buffer, unsigned pc);
+#endif
 
 /**************************************************************************
  * N7751 section
  **************************************************************************/
+#if HAS_N7751
 #define N7751_PC				I8039_PC
 #define N7751_SP				I8039_SP
 #define N7751_PSW				I8039_PSW
@@ -177,6 +185,8 @@ extern void n7751_set_nmi_line(int state);
 extern void n7751_set_irq_line(int irqline, int state);
 extern void n7751_set_irq_callback(int (*callback)(int irqline));
 extern const char *n7751_info(void *context, int regnum);
+extern unsigned n7751_dasm(UINT8 *base, char *buffer, unsigned pc);
+#endif
 
 #include "memory.h"
 
@@ -220,7 +230,8 @@ extern const char *n7751_info(void *context, int regnum);
 #define I8039_RDOP_ARG(A) ((unsigned)cpu_readop_arg(A))
 
 #ifdef  MAME_DEBUG
-int     Dasm8039(char * dst, unsigned char* addr);
+#include "osd_dbg.h"
+int     Dasm8039(char *dst, unsigned char* addr);
 #endif
 
 #endif  /* _I8039_H */

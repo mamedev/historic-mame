@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "tilemap.h"
 
 extern unsigned char *spriteram,*spriteram_2;
 extern int spriteram_size;
@@ -117,23 +116,20 @@ static void get_bg_tile_info(int col,int row)
 
 ***************************************************************************/
 
-void timeplt_vh_stop(void)
-{
-	tilemap_dispose(bg_tilemap);
-}
-
 int timeplt_vh_start(void)
 {
-	bg_tilemap = tilemap_create(0,8,8,32,32,0,0);
+	bg_tilemap = tilemap_create(
+		get_bg_tile_info,
+		0,
+		8,8,
+		32,32,
+		0,0
+	);
 
 	if (bg_tilemap)
 	{
-		bg_tilemap->tile_get_info = get_bg_tile_info;
-
 		return 0;
 	}
-
-	timeplt_vh_stop();
 
 	return 1;
 }
@@ -166,11 +162,8 @@ void timeplt_colorram_w(int offset,int data)
 
 void timeplt_flipscreen_w(int offset,int data)
 {
-	int attr;
-
 	flipscreen = data & 1;
-	attr = flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0;
-	tilemap_set_attributes(bg_tilemap,attr);
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 }
 
 /* Return the current video scan line */
@@ -232,9 +225,9 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(bg_tilemap);
+	tilemap_update(ALL_TILEMAPS);
 
-	tilemap_render(bg_tilemap);
+	tilemap_render(ALL_TILEMAPS);
 
 	tilemap_draw(bitmap,bg_tilemap,0);
 	draw_sprites(bitmap);

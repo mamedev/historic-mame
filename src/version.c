@@ -1,1 +1,1 @@
-char mameversion[] = "0.35 BETA 8 ("__DATE__")";
+char build_version[] = "0.35 BETA 9 ("__DATE__")";

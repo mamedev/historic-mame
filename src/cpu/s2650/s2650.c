@@ -44,6 +44,7 @@ static UINT8 s2650_win_layout[] = {
 int s2650_ICount = 0;
 
 typedef struct {
+	UINT16	ppc;	/* previous program counter (page + iar) */
     UINT16  page;   /* 8K page select register (A14..A13) */
     UINT16  iar;    /* instruction address register (A12..A0) */
     UINT16  ea;     /* effective address (A14..A0) */
@@ -780,11 +781,13 @@ unsigned s2650_get_reg(int regnum)
 		case S2650_IRQ_STATE: return S.irq_state;
 		case S2650_SI: return s2650_get_sense(); break;
 		case S2650_FO: return s2650_get_flag(); break;
+		case REG_PREVIOUSPC: return S.ppc; break;
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
-				if( (REG_SP_CONTENTS - regnum) < 8 )
-					return S.ras[(REG_SP_CONTENTS - regnum)];
+				unsigned offset = (REG_SP_CONTENTS - regnum);
+				if( offset < 8 )
+					return S.ras[offset];
 			}
 	}
 	return 0;
@@ -808,10 +811,11 @@ void s2650_set_reg(int regnum, unsigned val)
 		case S2650_SI: s2650_set_sense(val); break;
 		case S2650_FO: s2650_set_flag(val); break;
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
-				if( (REG_SP_CONTENTS - regnum) < 8 )
-					S.ras[(REG_SP_CONTENTS - regnum)] = val;
+				unsigned offset = (REG_SP_CONTENTS - regnum);
+				if( offset < 8 )
+					S.ras[offset] = val;
 			}
     }
 }
@@ -890,9 +894,10 @@ int s2650_execute(int cycles)
 	s2650_ICount = cycles;
 	do
 	{
-#ifdef  MAME_DEBUG
-		if (mame_debug) MAME_Debug();
-#endif
+		S.ppc = S.page + S.iar;
+
+		CALL_MAME_DEBUG;
+
 		S.ir = ROP();
 		s2650_ICount -= S2650_Cycles[S.ir];
 		S.r = S.ir & 3; 		/* register / value */
@@ -1455,37 +1460,20 @@ const char *s2650_info(void *context, int regnum)
 
     switch( regnum )
 	{
-		case CPU_INFO_NAME: return "S2650";
-		case CPU_INFO_FAMILY: return "Signetics 2650";
-		case CPU_INFO_VERSION: return "1.1";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Written by Juergen Buchmueller for use with MAME";
-		case CPU_INFO_REG_LAYOUT: return (const char *)s2650_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char *)s2650_win_layout;
-
-        case CPU_INFO_PC: sprintf(buffer[which], "%04X:", (r->page + r->iar) & 0x7fff); break;
-		case CPU_INFO_SP: sprintf(buffer[which], "%X", r->psu & SP); break;
-#ifdef MAME_DEBUG
-		case CPU_INFO_DASM:
-			r->iar += Dasm2650(buffer[which], r->page + r->iar);
-			if (r->iar > PMSK)
-			{
-				r->iar &= PMSK;
-				r->page = (r->page + PMSK + 1) & PAGE;
-			}
-			break;
-#else
-		case CPU_INFO_DASM:
-			sprintf(buffer[which], "$%02x", ROM[r->page + r->iar]);
-			r->iar++;
-			if (r->iar > PMSK)
-			{
-				r->iar &= PMSK;
-				r->page = (r->page + PMSK + 1) & PAGE;
-            }
-            break;
-#endif
 		case CPU_INFO_FLAGS:
+		case CPU_INFO_REG+S2650_PC: sprintf(buffer[which], "PC:%04X", r->page + r->iar); break;
+		case CPU_INFO_REG+S2650_PS: sprintf(buffer[which], "PS:%02X%02X", r->psu, r->psl); break;
+		case CPU_INFO_REG+S2650_R0: sprintf(buffer[which], "R0:%02X", r->reg[0]); break;
+		case CPU_INFO_REG+S2650_R1: sprintf(buffer[which], "R1:%02X", r->reg[1]); break;
+		case CPU_INFO_REG+S2650_R2: sprintf(buffer[which], "R2:%02X", r->reg[2]); break;
+		case CPU_INFO_REG+S2650_R3: sprintf(buffer[which], "R3:%02X", r->reg[3]); break;
+		case CPU_INFO_REG+S2650_R1A: sprintf(buffer[which], "R1'%02X", r->reg[4]); break;
+		case CPU_INFO_REG+S2650_R2A: sprintf(buffer[which], "R2'%02X", r->reg[5]); break;
+		case CPU_INFO_REG+S2650_R3A: sprintf(buffer[which], "R3'%02X", r->reg[6]); break;
+		case CPU_INFO_REG+S2650_HALT: sprintf(buffer[which], "HALT:%X", r->halt); break;
+		case CPU_INFO_REG+S2650_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
+		case CPU_INFO_REG+S2650_SI: sprintf(buffer[which], "SI:%X", (r->psu & SI) ? 1 : 0); break;
+		case CPU_INFO_REG+S2650_FO: sprintf(buffer[which], "FO:%X", (r->psu & FO) ? 1 : 0); break;
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
 				r->psu & 0x80 ? 'S':'.',
 				r->psu & 0x40 ? 'O':'.',
@@ -1504,22 +1492,25 @@ const char *s2650_info(void *context, int regnum)
 				r->psl & 0x02 ? '2':'.',
 				r->psl & 0x01 ? 'C':'.');
 			break;
-		case CPU_INFO_REG+S2650_PC: sprintf(buffer[which], "PC:%04X", r->page + r->iar); break;
-		case CPU_INFO_REG+S2650_PS: sprintf(buffer[which], "PS:%02X%02X", r->psu, r->psl); break;
-		case CPU_INFO_REG+S2650_R0: sprintf(buffer[which], "R0:%02X", r->reg[0]); break;
-		case CPU_INFO_REG+S2650_R1: sprintf(buffer[which], "R1:%02X", r->reg[1]); break;
-		case CPU_INFO_REG+S2650_R2: sprintf(buffer[which], "R2:%02X", r->reg[2]); break;
-		case CPU_INFO_REG+S2650_R3: sprintf(buffer[which], "R3:%02X", r->reg[3]); break;
-		case CPU_INFO_REG+S2650_R1A: sprintf(buffer[which], "R1'%02X", r->reg[4]); break;
-		case CPU_INFO_REG+S2650_R2A: sprintf(buffer[which], "R2'%02X", r->reg[5]); break;
-		case CPU_INFO_REG+S2650_R3A: sprintf(buffer[which], "R3'%02X", r->reg[6]); break;
-		case CPU_INFO_REG+S2650_HALT: sprintf(buffer[which], "HALT:%X", r->halt); break;
-		case CPU_INFO_REG+S2650_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
-		case CPU_INFO_REG+S2650_SI: sprintf(buffer[which], "SI:%X", (r->psu & SI) ? 1 : 0); break;
-		case CPU_INFO_REG+S2650_FO: sprintf(buffer[which], "FO:%X", (r->psu & FO) ? 1 : 0); break;
+		case CPU_INFO_NAME: return "S2650";
+		case CPU_INFO_FAMILY: return "Signetics 2650";
+		case CPU_INFO_VERSION: return "1.1";
+		case CPU_INFO_FILE: return __FILE__;
+		case CPU_INFO_CREDITS: return "Written by Juergen Buchmueller for use with MAME";
+		case CPU_INFO_REG_LAYOUT: return (const char *)s2650_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char *)s2650_win_layout;
 	}
 	return buffer[which];
 }
 
-
+unsigned s2650_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+	(void)base;
+#ifdef MAME_DEBUG
+    return Dasm2650(buffer,pc);
+#else
+	sprintf( buffer, "$%02X", ROM[pc] );
+	return 1;
+#endif
+}
 

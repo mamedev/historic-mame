@@ -212,11 +212,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-
-#if !defined(macintosh) && !defined(ACORN)
-#include <malloc.h>
-#include <memory.h>
-#endif
+#include <string.h>
 
 // Include MAME stuff. If not Mame, then default to LSB_FIRST (PC)
 
@@ -444,7 +440,7 @@ ym3812* ym3812_Init( int nReplayFrq, int nClock, int f16Bit )
 	{
 		pOPL->pDrum[l] = NULL;
 		pOPL->nDrumOffs[l] = -1;
-		if( psSamples->sample[l] != 0 )
+		if( psSamples && psSamples->sample[l] != 0 )
 		{
 			pOPL->nDrumRate[l] = psSamples->sample[l]->smpfreq; 			// Get frequency
 			pOPL->nDrumSize[l] = psSamples->sample[l]->length;				// Get size

@@ -33,15 +33,6 @@
 #define LOG(x)
 #endif
 
-#ifdef  MAME_DEBUG
-extern int mame_debug;
-#define CALL_MAME_DEBUG if( mame_debug ) MAME_Debug()
-#else
-#define CALL_MAME_DEBUG
-#endif
-
-extern int previouspc;
-
 /* execute main opcodes inside a big switch statement */
 #define BIG_SWITCH          1
 
@@ -61,6 +52,9 @@ extern int previouspc;
 /* after reset set the stack pointer to F000 */
 #define SP_HACK 			0
 
+/* on entering/leaving HALT state call cpu_writeport(Z80_HALT_PORT,1/0) */
+#define HALT_HACK           0
+
 #ifdef X86_ASM
 #undef  BIG_FLAGS_ARRAY
 #define BIG_FLAGS_ARRAY     0
@@ -70,7 +64,7 @@ static UINT8 z80_reg_layout[] = {
 	Z80_PC, Z80_SP, Z80_AF, Z80_BC, Z80_DE, Z80_HL, -1,
 	Z80_IX, Z80_IY, Z80_AF2,Z80_BC2,Z80_DE2,Z80_HL2,-1,
 	Z80_R,	Z80_I,	Z80_IM, Z80_IFF1,Z80_IFF2, -1,
-	Z80_NMI_STATE,Z80_IRQ_STATE,Z80_DC0,Z80_DC1,Z80_DC2,Z80_DC3, 0
+	Z80_NMI_STATE,Z80_IRQ_STATE,Z80_DC0,Z80_DC1,Z80_DC2,Z80_DC3, Z80_NMI_NESTING, 0
 };
 
 static UINT8 z80_win_layout[] = {
@@ -86,19 +80,19 @@ static UINT8 z80_win_layout[] = {
 /* register is calculated as follows: refresh=(Regs.R&127)|(Regs.R2&128)    */
 /****************************************************************************/
 typedef struct {
-/* 00 */    PAIR    AF,BC,DE,HL,IX,IY,PC,SP;
-/* 20 */    PAIR    AF2,BC2,DE2,HL2;
-/* 30 */    UINT8   R,R2,IFF1,IFF2,HALT,IM,I;
-/* 37 */    UINT8   irq_max;            /* number of daisy chain devices        */
-/* 38 */	INT8	request_irq;		/* daisy chain next request device		*/
-/* 39 */	INT8	service_irq;		/* daisy chain next reti handling devicve */
-/* 3a */    UINT8   int_state[Z80_MAXDAISY];
-/* 3e */	UINT8	nmi_state;			/* nmi line state */
-/* 3f */	UINT8	irq_state;			/* irq line state */
-/* 40 */    Z80_DaisyChain irq[Z80_MAXDAISY];
-/* 80 */    int     (*irq_callback)(int irqline);
-/* 84 */    int     extra_cycles;       /* extra cycles for interrupts */
-/* 88 */    int     nmi_nesting;        /* nested NMI depth */
+/* 00 */    PAIR    PPC,PC,SP,AF,BC,DE,HL,IX,IY;
+/* 24 */    PAIR    AF2,BC2,DE2,HL2;
+/* 34 */    UINT8   R,R2,IFF1,IFF2,HALT,IM,I;
+/* 3B */    UINT8   irq_max;            /* number of daisy chain devices        */
+/* 3C */	INT8	request_irq;		/* daisy chain next request device		*/
+/* 3D */	INT8	service_irq;		/* daisy chain next reti handling devicve */
+/* 3E */	UINT8	nmi_state;			/* nmi line state */
+/* 3F */	UINT8	irq_state;			/* irq line state */
+/* 40 */    UINT8   int_state[Z80_MAXDAISY];
+/* 44 */    Z80_DaisyChain irq[Z80_MAXDAISY];
+/* 84 */    int     (*irq_callback)(int irqline);
+/* 88 */    int     extra_cycles;       /* extra cycles for interrupts */
+/* 8C */    int     nmi_nesting;        /* nested NMI depth */
 }   Z80_Regs;
 
 #define CF  0x01
@@ -113,6 +107,19 @@ typedef struct {
 
 #define INT_IRQ 0x01
 #define NMI_IRQ 0x02
+
+#define	_PPC	Z80.PPC.d		/* previous program counter */
+
+#define _PCD	Z80.PC.d
+#define _PC 	Z80.PC.w.l
+
+#define _SPD	Z80.SP.d
+#define _SP 	Z80.SP.w.l
+
+#define _AFD	Z80.AF.d
+#define _AF 	Z80.AF.w.l
+#define _A		Z80.AF.b.h
+#define _F		Z80.AF.b.l
 
 #define _BCD	Z80.BC.d
 #define _BC 	Z80.BC.w.l
@@ -129,11 +136,6 @@ typedef struct {
 #define _H		Z80.HL.b.h
 #define _L		Z80.HL.b.l
 
-#define _AFD	Z80.AF.d
-#define _AF 	Z80.AF.w.l
-#define _A		Z80.AF.b.h
-#define _F		Z80.AF.b.l
-
 #define _IXD	Z80.IX.d
 #define _IX 	Z80.IX.w.l
 #define _HX 	Z80.IX.b.h
@@ -143,12 +145,6 @@ typedef struct {
 #define _IY 	Z80.IY.w.l
 #define _HY 	Z80.IY.b.h
 #define _LY 	Z80.IY.b.l
-
-#define _PCD	Z80.PC.d
-#define _PC 	Z80.PC.w.l
-
-#define _SPD	Z80.SP.d
-#define _SP 	Z80.SP.w.l
 
 #define _I      Z80.I
 #define _R      Z80.R
@@ -383,27 +379,45 @@ static void take_interrupt(void);
 /***************************************************************
  * Enter HALT state; write 1 to fake port on first execution
  ***************************************************************/
-#define ENTER_HALT {                                            \
+#if HALT_HACK
+#define ENTER_HALT {											\
     _PC--;                                                      \
-	if( z80_ICount > 0 ) z80_ICount=0;							\
-	if( !_HALT )												\
+    if( !_HALT )                                                \
     {                                                           \
         _HALT = 1;                                              \
         cpu_writeport(Z80_HALT_PORT,1);                         \
     }                                                           \
+    if( z80_ICount > 0 ) z80_ICount=0;                          \
 }
+#else
+#define ENTER_HALT {											\
+    _PC--;                                                      \
+    _HALT = 1;                                                  \
+    if( z80_ICount > 0 ) z80_ICount=0;                          \
+}
+#endif
 
 /***************************************************************
  * Leave HALT state; write 0 to fake port
  ***************************************************************/
+#if HALT_HACK
 #define LEAVE_HALT {											\
 	if( _HALT ) 												\
 	{															\
 		_HALT = 0;												\
 		_PC++;													\
-		cpu_writeport(Z80_HALT_PORT,0); 						\
+        cpu_writeport(Z80_HALT_PORT,0);                         \
 	}															\
 }
+#else
+#define LEAVE_HALT {                                            \
+	if( _HALT ) 												\
+	{															\
+		_HALT = 0;												\
+		_PC++;													\
+	}															\
+}
+#endif
 
 /***************************************************************
  * Input a byte from given I/O port
@@ -1568,9 +1582,9 @@ INLINE UINT8 SET(UINT8 bit, UINT8 Value)
 	if( _IFF1 == 0 )											\
 	{															\
         _IFF1 = _IFF2 = 1;                                      \
+        _PPC = _PCD;                                            \
         CALL_MAME_DEBUG;                                        \
         R_INC;                                                  \
-        previouspc = _PCD;                                      \
 		EXEC(op,ROP()); 										\
 		if( Z80.irq_state != CLEAR_LINE ||						\
 			Z80.request_irq >= 0 )								\
@@ -3432,8 +3446,8 @@ static void take_interrupt(void)
     {
         int irq_vector;
 
-        /* there isn't a valid previouspc */
-        previouspc = -1;
+        /* there isn't a valid previous program counter */
+        _PPC = -1;
 
         /* Check if processor was halted */
 		LEAVE_HALT;
@@ -3639,9 +3653,9 @@ int z80_execute(int cycles)
     Z80.extra_cycles = 0;
 
     do {
+        _PPC = _PCD;
         CALL_MAME_DEBUG;
         R_INC;
-        previouspc = _PCD;
         EXEC_INLINE(op,ROP());
     } while (z80_ICount > 0);
 
@@ -3736,8 +3750,9 @@ unsigned z80_get_reg (int regnum)
 		case Z80_DC2: return Z80.int_state[2];
 		case Z80_DC3: return Z80.int_state[3];
 		case Z80_NMI_NESTING: return Z80.nmi_nesting;
+		case REG_PREVIOUSPC: return Z80.PPC.w.l;
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
 				unsigned offset = _SPD + 2 * (REG_SP_CONTENTS - regnum);
 				if( offset < 0xffff )
@@ -3772,15 +3787,15 @@ void z80_set_reg (int regnum, unsigned val)
 		case Z80_IFF1: Z80.IFF1 = val; break;
 		case Z80_IFF2: Z80.IFF2 = val; break;
 		case Z80_HALT: Z80.HALT = val; break;
-		case Z80_NMI_STATE: Z80.nmi_state = val; break;
-		case Z80_IRQ_STATE: Z80.irq_state = val; break;
+		case Z80_NMI_STATE: z80_set_nmi_line(val); break;
+		case Z80_IRQ_STATE: z80_set_irq_line(0,val); break;
 		case Z80_DC0: Z80.int_state[0] = val; break;
 		case Z80_DC1: Z80.int_state[1] = val; break;
 		case Z80_DC2: Z80.int_state[2] = val; break;
 		case Z80_DC3: Z80.int_state[3] = val; break;
 		case Z80_NMI_NESTING: Z80.nmi_nesting = val; break;
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
 				unsigned offset = _SPD + 2 * (REG_SP_CONTENTS - regnum);
 				if( offset < 0xffff )
@@ -3804,7 +3819,7 @@ void z80_set_nmi_line(int state)
 	if( state == CLEAR_LINE ) return;
 
     LOG((errorlog, "Z80#%d take NMI\n", cpu_getactivecpu()));
-	previouspc = -1;	/* there isn't a valid previouspc */
+	_PPC = -1;			/* there isn't a valid previous program counter */
 	LEAVE_HALT; 		/* Check if processor was halted */
 
     /* log nested NMIs */
@@ -3968,32 +3983,6 @@ const char *z80_info(void *context, int regnum)
 
     switch( regnum )
 	{
-		case CPU_INFO_NAME: return "Z80";
-		case CPU_INFO_FAMILY: return "Zilog Z80";
-		case CPU_INFO_VERSION: return "1.5";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (C) 1998,1999 Juergen Buchmueller, all rights reserved.";
-		case CPU_INFO_REG_LAYOUT: return (const char *)z80_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char *)z80_win_layout;
-
-        case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->PC.w.l); break;
-		case CPU_INFO_SP: sprintf(buffer[which], "%04X", r->SP.w.l); break;
-#if MAME_DEBUG
-		case CPU_INFO_DASM: r->PC.w.l += DasmZ80(buffer[which], r->PC.w.l); break;
-#else
-		case CPU_INFO_DASM: sprintf(buffer[which], "$%02x", ROM[r->PC.w.l]); r->PC.w.l++; break;
-#endif
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->AF.b.l & 0x80 ? 'S':'.',
-				r->AF.b.l & 0x40 ? 'Z':'.',
-				r->AF.b.l & 0x20 ? '?':'.',
-				r->AF.b.l & 0x10 ? 'H':'.',
-				r->AF.b.l & 0x08 ? '?':'.',
-				r->AF.b.l & 0x04 ? 'P':'.',
-				r->AF.b.l & 0x02 ? 'N':'.',
-				r->AF.b.l & 0x01 ? 'C':'.');
-			break;
 		case CPU_INFO_REG+Z80_PC: sprintf(buffer[which], "PC:%04X", r->PC.w.l); break;
 		case CPU_INFO_REG+Z80_SP: sprintf(buffer[which], "SP:%04X", r->SP.w.l); break;
 		case CPU_INFO_REG+Z80_AF: sprintf(buffer[which], "AF:%04X", r->AF.w.l); break;
@@ -4018,8 +4007,36 @@ const char *z80_info(void *context, int regnum)
 		case CPU_INFO_REG+Z80_DC1: if(Z80.irq_max >= 2) sprintf(buffer[which], "DC1:%X", r->int_state[1]); break;
 		case CPU_INFO_REG+Z80_DC2: if(Z80.irq_max >= 3) sprintf(buffer[which], "DC2:%X", r->int_state[2]); break;
 		case CPU_INFO_REG+Z80_DC3: if(Z80.irq_max >= 4) sprintf(buffer[which], "DC3:%X", r->int_state[3]); break;
-		case CPU_INFO_REG+Z80_NMI_NESTING: sprintf(buffer[which], "nested NMI:%X", r->nmi_nesting); break;
+		case CPU_INFO_REG+Z80_NMI_NESTING: sprintf(buffer[which], "NMI_N:%X", r->nmi_nesting); break;
+		case CPU_INFO_FLAGS:
+			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
+				r->AF.b.l & 0x80 ? 'S':'.',
+				r->AF.b.l & 0x40 ? 'Z':'.',
+				r->AF.b.l & 0x20 ? '?':'.',
+				r->AF.b.l & 0x10 ? 'H':'.',
+				r->AF.b.l & 0x08 ? '?':'.',
+				r->AF.b.l & 0x04 ? 'P':'.',
+				r->AF.b.l & 0x02 ? 'N':'.',
+				r->AF.b.l & 0x01 ? 'C':'.');
+			break;
+		case CPU_INFO_NAME: return "Z80";
+		case CPU_INFO_FAMILY: return "Zilog Z80";
+		case CPU_INFO_VERSION: return "1.5";
+		case CPU_INFO_FILE: return __FILE__;
+		case CPU_INFO_CREDITS: return "Copyright (C) 1998,1999 Juergen Buchmueller, all rights reserved.";
+		case CPU_INFO_REG_LAYOUT: return (const char *)z80_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char *)z80_win_layout;
 	}
 	return buffer[which];
 }
 
+unsigned z80_dasm( UINT8 *base, char *buffer, unsigned pc )
+{
+	(void)base;
+#ifdef MAME_DEBUG
+    return DasmZ80( buffer, pc );
+#else
+	sprintf( buffer, "$%02X", ROM[pc] );
+	return 1;
+#endif
+}

@@ -1,6 +1,9 @@
 #ifndef M68000__HEADER
 #define M68000__HEADER
 
+#include "osd_cpu.h"
+#include "osd_dbg.h"
+
 enum {
 	M68K_PC=1, M68K_ISP, M68K_USP, M68K_SR, M68K_VBR, M68K_SFC, M68K_DFC,
 	M68K_D0, M68K_D1, M68K_D2, M68K_D3, M68K_D4, M68K_D5, M68K_D6, M68K_D7,
@@ -54,12 +57,24 @@ extern void m68000_set_nmi_line(int state);
 extern void m68000_set_irq_line(int irqline, int state);
 extern void m68000_set_irq_callback(int (*callback)(int irqline));
 extern const char *m68000_info(void *context, int regnum);
+extern unsigned m68000_dasm(unsigned char *base, char *buffer, unsigned pc);
 
 /****************************************************************************
  * M68010 section
  ****************************************************************************/
+#if HAS_M68010
 #define MC68010_INT_NONE                MC68000_INT_NONE
-#define m68010_ICount					m68000_ICount
+#define MC68010_IRQ_1					MC68000_IRQ_1
+#define MC68010_IRQ_2					MC68000_IRQ_2
+#define MC68010_IRQ_3					MC68000_IRQ_3
+#define MC68010_IRQ_4					MC68000_IRQ_4
+#define MC68010_IRQ_5					MC68000_IRQ_5
+#define MC68010_IRQ_6					MC68000_IRQ_6
+#define MC68010_IRQ_7					MC68000_IRQ_7
+#define MC68010_INT_ACK_AUTOVECTOR		MC68000_INT_ACK_AUTOVECTOR
+#define MC68010_INT_ACK_SPURIOUS		MC68000_INT_ACK_SPURIOUS
+
+#define m68010_ICount                   m68000_ICount
 extern void m68010_reset(void *param);
 extern void m68010_exit(void);
 extern int	m68010_execute(int cycles);
@@ -75,12 +90,25 @@ extern void m68010_set_nmi_line(int state);
 extern void m68010_set_irq_line(int irqline, int state);
 extern void m68010_set_irq_callback(int (*callback)(int irqline));
 const char *m68010_info(void *context, int regnum);
+extern unsigned m68010_dasm(unsigned char *base, char *buffer, unsigned pc);
+#endif
 
 /****************************************************************************
  * M68020 section
  ****************************************************************************/
+#if HAS_M68020
 #define MC68020_INT_NONE				MC68000_INT_NONE
-#define m68020_ICount					m68000_ICount
+#define MC68020_IRQ_1					MC68000_IRQ_1
+#define MC68020_IRQ_2					MC68000_IRQ_2
+#define MC68020_IRQ_3					MC68000_IRQ_3
+#define MC68020_IRQ_4					MC68000_IRQ_4
+#define MC68020_IRQ_5					MC68000_IRQ_5
+#define MC68020_IRQ_6					MC68000_IRQ_6
+#define MC68020_IRQ_7					MC68000_IRQ_7
+#define MC68020_INT_ACK_AUTOVECTOR		MC68000_INT_ACK_AUTOVECTOR
+#define MC68020_INT_ACK_SPURIOUS		MC68000_INT_ACK_SPURIOUS
+
+#define m68020_ICount                   m68000_ICount
 extern void m68020_reset(void *param);
 extern void m68020_exit(void);
 extern int	m68020_execute(int cycles);
@@ -96,10 +124,10 @@ extern void m68020_set_nmi_line(int state);
 extern void m68020_set_irq_line(int irqline, int state);
 extern void m68020_set_irq_callback(int (*callback)(int irqline));
 const char *m68020_info(void *context, int regnum);
+extern unsigned m68020_dasm(unsigned char *base, char *buffer, unsigned pc);
+#endif
 
 #ifdef MAME_DEBUG
-extern int mame_debug;
-extern void MAME_Debug(void);
 extern int Dasm68000(char *buffer, int pc);
 #endif /* MAME_DEBUG */
 

@@ -5,7 +5,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "tilemap.h"
 
 unsigned char *bionicc_fgvideoram;
 unsigned char *bionicc_bgvideoram;
@@ -14,7 +13,7 @@ extern unsigned char *spriteram;
 extern int spriteram_size;
 
 static struct tilemap *tx_tilemap, *bg_tilemap, *fg_tilemap;
-static int flipscreen,fg_enable,bg_enable;
+static int flipscreen;
 
 
 /***************************************************************************
@@ -81,34 +80,41 @@ static void get_tx_tile_info( int col, int row )
 
 ***************************************************************************/
 
-void bionicc_vh_stop(void)
-{
-	tilemap_dispose(tx_tilemap);
-	tilemap_dispose(fg_tilemap);
-	tilemap_dispose(bg_tilemap);
-}
-
 int bionicc_vh_start(void)
 {
-	tx_tilemap = tilemap_create(TILEMAP_TRANSPARENT, 8, 8,32,32,0,0);
-	fg_tilemap = tilemap_create(TILEMAP_TRANSPARENT,16,16,64,64,1,1);
-	bg_tilemap = tilemap_create(TILEMAP_TRANSPARENT, 8, 8,64,64,1,1);
+	tx_tilemap = tilemap_create(
+		get_tx_tile_info,
+		TILEMAP_TRANSPARENT,
+		8,8,
+		32,32,
+		0,0
+	);
+	fg_tilemap = tilemap_create(
+		get_fg_tile_info,
+		TILEMAP_TRANSPARENT,
+		16,16,
+		64,64,
+		1,1
+	);
+	bg_tilemap = tilemap_create(
+		get_bg_tile_info,
+		TILEMAP_TRANSPARENT,
+		8,8,
+		64,64,
+		1,1
+	);
 
 	if (fg_tilemap && bg_tilemap && tx_tilemap)
 	{
-		fg_tilemap->tile_get_info = get_fg_tile_info;
 		fg_tilemap->transparent_pen = 15;
 
-		bg_tilemap->tile_get_info = get_bg_tile_info;
 		bg_tilemap->transparent_pen = 15;
 
-		tx_tilemap->tile_get_info = get_tx_tile_info;
 		tx_tilemap->transparent_pen = 3;
 
 		return 0;
 	}
 
-	bionicc_vh_stop();
 	return 1;
 }
 
@@ -200,18 +206,13 @@ void bionicc_scroll_w(int offset,int data)
 
 void bionicc_gfxctrl_w(int offset,int data)
 {
-	int attr;
-
 	data >>= 8;
 
 	flipscreen = data & 1;
-	attr = flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0;
-	tilemap_set_attributes(bg_tilemap,attr);
-	tilemap_set_attributes(fg_tilemap,attr);
-	tilemap_set_attributes(tx_tilemap,attr);
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
-	bg_enable = data & 0x20;	/* guess */
-	fg_enable = data & 0x10;	/* guess */
+	tilemap_set_enable(bg_tilemap,data & 0x20);	/* guess */
+	tilemap_set_enable(fg_tilemap,data & 0x10);	/* guess */
 
 	coin_counter_w(0,data & 0x80);
 	coin_counter_w(1,data & 0x40);
@@ -297,22 +298,16 @@ void bionicc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	palette_init_used_colors();
 	mark_sprite_colors();
 
-	if( palette_recalc() )
-	{
-		tilemap_mark_all_pixels_dirty(fg_tilemap);
-		tilemap_mark_all_pixels_dirty(bg_tilemap);
-		tilemap_mark_all_pixels_dirty(tx_tilemap);
-	}
+	if (palette_recalc())
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 
-	tilemap_render(fg_tilemap);
-	tilemap_render(bg_tilemap);
-	tilemap_render(tx_tilemap);
+	tilemap_render(ALL_TILEMAPS);
 
 	fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
-	if (fg_enable) tilemap_draw(bitmap,fg_tilemap,2);
-	if (bg_enable) tilemap_draw(bitmap,bg_tilemap,0);
-	if (fg_enable) tilemap_draw(bitmap,fg_tilemap,0);
+	tilemap_draw(bitmap,fg_tilemap,2);
+	tilemap_draw(bitmap,bg_tilemap,0);
+	tilemap_draw(bitmap,fg_tilemap,0);
 	bionicc_draw_sprites(bitmap);
-	if (fg_enable) tilemap_draw(bitmap,fg_tilemap,1);
+	tilemap_draw(bitmap,fg_tilemap,1);
 	tilemap_draw(bitmap,tx_tilemap,0);
 }

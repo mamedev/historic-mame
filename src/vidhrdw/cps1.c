@@ -126,7 +126,6 @@
 #include "vidhrdw/generic.h"
 #include "drivers/cps1.h"
 #include "types.h"
-#include "osdepend.h"
 
 #define VERBOSE 1
 

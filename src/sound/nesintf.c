@@ -8,7 +8,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "sndhrdw/nes.h"
 
 
 #define MIN_SLICE 10

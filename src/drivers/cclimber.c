@@ -239,23 +239,23 @@ INPUT_PORTS_START( cclimber_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 
 	PORT_START      /* DSW */
-	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x00, "Lives" )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
-	PORT_DIPNAME( 0x04, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x00, "Bonus Life" )
 	PORT_DIPSETTING(    0x00, "30000" )
 	PORT_DIPSETTING(    0x04, "50000" )
-	PORT_BITX(    0x08, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_BITX(    0x08, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x08, "On" )
-	PORT_DIPNAME( 0x30, 0x00, "Coin A", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x00, "Coin A" )
 	PORT_DIPSETTING(    0x30, "4 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x20, "3 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPNAME( 0xc0, 0x00, "Coin B", IP_KEY_NONE )
+	PORT_DIPNAME( 0xc0, 0x00, "Coin B" )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x40, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x80, "1 Coin/3 Credits" )
@@ -266,9 +266,9 @@ INPUT_PORTS_START( cclimber_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_DIPNAME( 0x10, 0x10, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -292,17 +292,17 @@ INPUT_PORTS_START( ckong_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
 
 	PORT_START      /* DSW */
-	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x00, "Lives" )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
-	PORT_DIPNAME( 0x0c, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x00, "Bonus Life" )
 	PORT_DIPSETTING(    0x00, "7000" )
 	PORT_DIPSETTING(    0x04, "10000" )
 	PORT_DIPSETTING(    0x08, "15000" )
 	PORT_DIPSETTING(    0x0c, "20000" )
-	PORT_DIPNAME( 0x70, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPNAME( 0x70, 0x00, "Coinage" )
 	PORT_DIPSETTING(    0x70, "5 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x50, "4 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x30, "3 Coins/1 Credit" )
@@ -311,9 +311,9 @@ INPUT_PORTS_START( ckong_input_ports )
 	PORT_DIPSETTING(    0x20, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x40, "1 Coin/3 Credits" )
 	PORT_DIPSETTING(    0x60, "1 Coin/4 Credits" )
-	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
 	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -337,26 +337,26 @@ INPUT_PORTS_START( rpatrolb_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 
 	PORT_START      /* DSW */
-	PORT_DIPNAME( 0x03, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x00, "Coinage" )
 	PORT_DIPSETTING(    0x02, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x03, "Free Play" )
-	PORT_DIPNAME( 0x0c, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x00, "Lives" )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPSETTING(    0x08, "5" )
 	PORT_DIPSETTING(    0x0c, "6" )
-	PORT_DIPNAME( 0x10, 0x10, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
-	PORT_DIPNAME( 0x20, 0x00, "Unknown 1", IP_KEY_NONE )  /* Probably unused */
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown 1" )  /* Probably unused */
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown 2", IP_KEY_NONE )  /* Probably unused */
+	PORT_DIPNAME( 0x40, 0x00, "Unknown 2" )  /* Probably unused */
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Memory Test", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Memory Test" )
 	PORT_DIPSETTING(    0x00, "Retry on Error" )
 	PORT_DIPSETTING(    0x80, "Stop on Error" )
 
@@ -663,6 +663,36 @@ ROM_START( ccboot_rom )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
+ROM_START( ccboot2_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "11.4k",        0x0000, 0x1000, 0xb2b17e24 )
+	ROM_LOAD( "10.4j",        0x1000, 0x1000, 0x8382bc0f )
+	ROM_LOAD( "cc09j.bin",    0x2000, 0x1000, 0x26489069 )
+	ROM_LOAD( "m08.bin",      0x3000, 0x1000, 0xe3c542d6 )
+	ROM_LOAD( "cc07j.bin",    0x4000, 0x1000, 0xfbc9626c )
+
+	ROM_REGION_DISPOSE(0x5000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cc06",         0x0000, 0x0800, 0x481b64cc )
+	/* empty hole - Crazy Kong has an additional ROM here */
+	ROM_LOAD( "cc04",         0x1000, 0x0800, 0x332347cb )
+	/* empty hole - Crazy Kong has an additional ROM here */
+	ROM_LOAD( "cc05",         0x2000, 0x0800, 0x2c33b760 )
+	/* empty hole - Crazy Kong has an additional ROM here */
+	ROM_LOAD( "cc03",         0x3000, 0x0800, 0x4e4b3658 )
+	/* empty hole - Crazy Kong has an additional ROM here */
+	ROM_LOAD( "cc02",         0x4000, 0x0800, 0x14f3ecc9 )
+	ROM_LOAD( "cc01",         0x4800, 0x0800, 0x21c0f9fb )
+
+	ROM_REGION(0x60)        /* color proms */
+	ROM_LOAD( "cclimber.pr1", 0x0000, 0x20, 0x751c3325 )
+	ROM_LOAD( "cclimber.pr2", 0x0020, 0x20, 0xab1940fa )
+	ROM_LOAD( "cclimber.pr3", 0x0040, 0x20, 0x71317756 )
+
+	ROM_REGION(0x2000)      /* samples */
+	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
+	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
+ROM_END
+
 static void ccjap_decode(void)
 {
 /*
@@ -759,8 +789,8 @@ ROM_START( ckong_rom )
 	ROM_LOAD( "prom.t6",      0x0040, 0x20, 0x676b3166 )
 
 	ROM_REGION(0x2000)      /* samples */
-	ROM_LOAD( "s05-14.bin",   0x0000, 0x1000, 0x5f0bcdfb )
-	ROM_LOAD( "r05-13.bin",   0x1000, 0x1000, 0x9003ffbd )
+	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
+	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
 ROM_START( ckonga_rom )
@@ -786,8 +816,8 @@ ROM_START( ckonga_rom )
 	ROM_LOAD( "prom.t6",      0x0040, 0x20, 0x676b3166 )
 
 	ROM_REGION(0x2000)      /* samples */
-	ROM_LOAD( "s05-14.bin",   0x0000, 0x1000, 0x5f0bcdfb )
-	ROM_LOAD( "r05-13.bin",   0x1000, 0x1000, 0x9003ffbd )
+	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
+	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
 ROM_START( ckongjeu_rom )
@@ -813,8 +843,8 @@ ROM_START( ckongjeu_rom )
 	ROM_LOAD( "prom.t6",      0x0040, 0x20, 0x676b3166 )
 
 	ROM_REGION(0x2000)      /* samples */
-	ROM_LOAD( "s05-14.bin",   0x0000, 0x1000, 0x5f0bcdfb )
-	ROM_LOAD( "r05-13.bin",   0x1000, 0x1000, 0x9003ffbd )
+	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
+	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
 ROM_START( ckongo_rom )
@@ -845,8 +875,8 @@ ROM_START( ckongo_rom )
 	ROM_LOAD( "prom.t6",      0x0040, 0x20, 0x676b3166 )
 
 	ROM_REGION(0x2000)      /* samples */
-	ROM_LOAD( "s05-14.bin",   0x0000, 0x1000, 0x5f0bcdfb )
-	ROM_LOAD( "r05-13.bin",   0x1000, 0x1000, 0x9003ffbd )
+	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
+	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
 ROM_START( ckongalc_rom )
@@ -867,12 +897,12 @@ ROM_START( ckongalc_rom )
 	ROM_LOAD( "ck1.bin",      0x4800, 0x0800, 0x80eb517d )
 
 	ROM_REGION(0x60)        /* color proms */
-	ROM_LOAD( "ck6v.bin",     0x0000, 0x20, 0x751c3325 )
-	ROM_LOAD( "ck6u.bin",     0x0020, 0x20, 0xab1940fa )
+	ROM_LOAD( "cclimber.pr1", 0x0000, 0x20, 0x751c3325 )
+	ROM_LOAD( "cclimber.pr2", 0x0020, 0x20, 0xab1940fa )
 	ROM_LOAD( "ck6t.bin",     0x0040, 0x20, 0xb4e827a5 )
 
 	ROM_REGION(0x2000)      /* samples */
-	ROM_LOAD( "ck13.bin",     0x0000, 0x1000, 0x5f0bcdfb )
+	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "ck12.bin",     0x1000, 0x1000, 0x2eb23b60 )
 ROM_END
 
@@ -894,12 +924,12 @@ ROM_START( monkeyd_rom )
 	ROM_LOAD( "ck1.bin",      0x4800, 0x0800, 0x80eb517d )
 
 	ROM_REGION(0x60)        /* color proms */
-	ROM_LOAD( "ck6v.bin",     0x0000, 0x20, 0x751c3325 )
-	ROM_LOAD( "ck6u.bin",     0x0020, 0x20, 0xab1940fa )
-	ROM_LOAD( "ck6t.bin",     0x0040, 0x20, 0xb4e827a5 )
+	ROM_LOAD( "cclimber.pr1", 0x0000, 0x20, 0x00000000 )
+	ROM_LOAD( "cclimber.pr2", 0x0020, 0x20, 0x00000000 )
+	ROM_LOAD( "ck6t.bin",     0x0040, 0x20, 0x00000000 )
 
 	ROM_REGION(0x2000)      /* samples */
-	ROM_LOAD( "ck13.bin",     0x0000, 0x1000, 0x5f0bcdfb )
+	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "ck12.bin",     0x1000, 0x1000, 0x2eb23b60 )
 ROM_END
 
@@ -1151,7 +1181,7 @@ struct GameDriver ccboot_driver =
 	__FILE__,
 	&cclimber_driver,
 	"ccboot",
-	"Crazy Climber (bootleg)",
+	"Crazy Climber (bootleg set 1)",
 	"1980",
 	"bootleg",
 	"Lionel Theunissen (hardware info and ROM decryption)\nNicola Salmoria (MAME driver)",
@@ -1160,6 +1190,32 @@ struct GameDriver ccboot_driver =
 	0,
 
 	ccboot_rom,
+	0, ccjap_decode,
+	0,
+	0,      /* sound_prom */
+
+	cclimber_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	cclimber_hiload, cclimber_hisave
+};
+
+struct GameDriver ccboot2_driver =
+{
+	__FILE__,
+	&cclimber_driver,
+	"ccboot2",
+	"Crazy Climber (bootleg set 2)",
+	"1980",
+	"bootleg",
+	"Lionel Theunissen (hardware info and ROM decryption)\nNicola Salmoria (MAME driver)",
+	0,
+	&machine_driver,
+	0,
+
+	ccboot2_rom,
 	0, ccjap_decode,
 	0,
 	0,      /* sound_prom */
@@ -1498,22 +1554,22 @@ INPUT_PORTS_START( swimmer_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x00, "Lives" )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x0c, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x0c, 0x00, "Bonus Life" )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x04, "20000" )
 	PORT_DIPSETTING(    0x08, "30000" )
 	PORT_DIPSETTING(    0x0c, "None" )
-	PORT_DIPNAME( 0x30, 0x00, "Coin A", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x00, "Coin A" )
 	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x20, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x30, "1 Coin/3 Credits" )
-	PORT_DIPNAME( 0xc0, 0x00, "Coin B", IP_KEY_NONE )
+	PORT_DIPNAME( 0xc0, 0x00, "Coin B" )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x40, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x80, "1 Coin/3 Credits" )
@@ -1524,13 +1580,13 @@ INPUT_PORTS_START( swimmer_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_DIPNAME( 0x10, 0x10, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
-	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0xc0, 0x80, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0xc0, 0x80, "Difficulty" )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x40, "???" )
 	PORT_DIPSETTING(    0x80, "Normal" )
@@ -1564,22 +1620,22 @@ INPUT_PORTS_START( guzzler_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x00, "Lives" )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "64", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x0c, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "64", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x0c, 0x00, "Bonus Life" )
 	PORT_DIPSETTING(    0x04, "20000 50000" )
 	PORT_DIPSETTING(    0x00, "30000 100000" )
 	PORT_DIPSETTING(    0x08, "30000" )
 	PORT_DIPSETTING(    0x0c, "None" )
-	PORT_DIPNAME( 0x30, 0x00, "Coin A", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x00, "Coin A" )
 	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x20, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x30, "1 Coin/3 Credits" )
-	PORT_DIPNAME( 0xc0, 0x00, "Coin B", IP_KEY_NONE )
+	PORT_DIPNAME( 0xc0, 0x00, "Coin B" )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x40, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x80, "1 Coin/3 Credits" )
@@ -1587,21 +1643,21 @@ INPUT_PORTS_START( guzzler_input_ports )
 
 	PORT_START      /* DSW1 */
 	PORT_BIT( 0x0f, IP_ACTIVE_HIGH, IPT_UNKNOWN )     /* probably unused */
-	PORT_DIPNAME( 0x10, 0x10, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
-	PORT_DIPNAME( 0x20, 0x00, "High Score Names", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x20, 0x00, "High Score Names" )
 	PORT_DIPSETTING(    0x20, "3 Letters" )
 	PORT_DIPSETTING(    0x00, "10 Letters" )
-	PORT_DIPNAME( 0xc0, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0xc0, 0x00, "Difficulty" )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x40, "Medium" )
 	PORT_DIPSETTING(    0x80, "Hard" )
 	PORT_DIPSETTING(    0xc0, "Hardest" )
 
 	PORT_START      /* coin */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE, "Coin A", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2)
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE, "Coin B", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2)
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 2)
+	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN2, 2)
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )     /* probably unused */

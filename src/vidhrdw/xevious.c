@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "tilemap.h"
 
 
 unsigned char *xevious_fg_videoram,*xevious_fg_colorram;
@@ -19,7 +18,7 @@ extern int spriteram_size;
 static struct tilemap *fg_tilemap,*bg_tilemap;
 
 /* scroll position controller write (CUSTOM 13-1J on seet 7B) */
-static int flip;
+static int flipscreen;
 
 
 
@@ -138,28 +137,29 @@ static void get_bg_tile_info(int col,int row)
 
 ***************************************************************************/
 
-void xevious_vh_stop(void)
-{
-	tilemap_dispose(fg_tilemap);
-	tilemap_dispose(bg_tilemap);
-}
-
 int xevious_vh_start(void)
 {
-	fg_tilemap = tilemap_create(TILEMAP_TRANSPARENT,8,8,64,32,1,1);
-	bg_tilemap = tilemap_create(0,                  8,8,64,32,1,1);
+	fg_tilemap = tilemap_create(
+		get_fg_tile_info,
+		TILEMAP_TRANSPARENT,
+		8,8,
+		64,32,
+		1,1
+	);
+	bg_tilemap = tilemap_create(
+		get_bg_tile_info,
+		0,
+		8,8,
+		64,32,
+		1,1
+	);
 
 	if (fg_tilemap && bg_tilemap)
 	{
-		fg_tilemap->tile_get_info = get_fg_tile_info;
 		fg_tilemap->transparent_pen = 0;
-
-		bg_tilemap->tile_get_info = get_bg_tile_info;
 
 		return 0;
 	}
-
-	xevious_vh_stop();
 
 	return 1;
 }
@@ -218,7 +218,10 @@ void xevious_vh_latch_w(int offset, int data)
 	switch (reg)
 	{
 	case 0:
-		tilemap_set_scrollx(bg_tilemap,0,-data-20);
+		if (flipscreen)
+			tilemap_set_scrollx(bg_tilemap,0,-data+312);
+		else
+			tilemap_set_scrollx(bg_tilemap,0,-data-20);
 		break;
 	case 1:
 		tilemap_set_scrollx(fg_tilemap,0,-data-32);
@@ -230,7 +233,8 @@ void xevious_vh_latch_w(int offset, int data)
 		tilemap_set_scrolly(fg_tilemap,0,-data-18);
 		break;
 	case 7:		/* DISPLAY XY FLIP ?? */
-		flip = data&1;
+		flipscreen = data & 1;
+		tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 		break;
    default:
 		   if (errorlog)
@@ -314,6 +318,11 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 			color = spriteram[offs + 1] & 0x7f;
 			flipx = spriteram_3[offs + 1] & 4;
 			flipy = spriteram_3[offs] & 4;
+			if (flipscreen)
+			{
+				flipx = !flipx;
+				flipy = !flipy;
+			}
 			sx = spriteram_2[offs + 1] - 40 + 0x100*(spriteram_3[offs + 1] & 1);
 			sy = 28*8-spriteram_2[offs]-1;
 			if (spriteram_3[offs] & 2)	/* double height (?) */
@@ -365,11 +374,9 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 void xevious_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(bg_tilemap);
-	tilemap_update(fg_tilemap);
+	tilemap_update(ALL_TILEMAPS);
 
-	tilemap_render(bg_tilemap);
-	tilemap_render(fg_tilemap);
+	tilemap_render(ALL_TILEMAPS);
 
 	tilemap_draw(bitmap,bg_tilemap,0);
 	draw_sprites(bitmap);

@@ -12,7 +12,6 @@ J Clegg
 ***************************************************************************/
 
 #include "driver.h"
-#include "tilemap.h"
 
 extern unsigned char *spriteram;
 extern int spriteram_size;
@@ -143,25 +142,24 @@ static void get_bg_tile_info(int col,int row)
   Start the video hardware emulation.
 
 ***************************************************************************/
-void travrusa_vh_stop(void)
-{
-	tilemap_dispose(bg_tilemap);
-}
 
 int travrusa_vh_start(void)
 {
-	bg_tilemap = tilemap_create(TILEMAP_SPLIT,8,8,64,32,32,0);
+	bg_tilemap = tilemap_create(
+		get_bg_tile_info,
+		TILEMAP_SPLIT,
+		8,8,
+		64,32,
+		32,0
+	);
 
 	if (bg_tilemap)
 	{
-		bg_tilemap->tile_get_info = get_bg_tile_info;
 		bg_tilemap->transmask[0] = 0xff; /* split type 0 is totally transparent in front half */
 		bg_tilemap->transmask[1] = 0x3f; /* split type 1 has pens 6 and 7 opaque - hack! */
 
 		return 0;
 	}
-
-	travrusa_vh_stop();
 
 	return 1;
 }
@@ -210,14 +208,11 @@ void travrusa_scroll_x_high_w(int offset,int data)
 
 void travrusa_flipscreen_w(int offset,int data)
 {
-	int attributes;
-
 	/* screen flip is handled both by software and hardware */
 	data ^= ~readinputport(4) & 1;
 
 	flipscreen = data & 1;
-	attributes = flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0;
-	tilemap_set_attributes(bg_tilemap,attributes);
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
 	coin_counter_w(0,data & 0x02);
 	coin_counter_w(1,data & 0x20);
@@ -273,9 +268,9 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 void travrusa_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(bg_tilemap);
+	tilemap_update(ALL_TILEMAPS);
 
-	tilemap_render(bg_tilemap);
+	tilemap_render(ALL_TILEMAPS);
 
 	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK);
 	draw_sprites(bitmap);

@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "tilemap.h"
 
 extern unsigned char *spriteram;
 extern int spriteram_size;
@@ -23,36 +22,19 @@ static int flipscreen;
 
 ***************************************************************************/
 
-static const unsigned char *videoram1, *videoram2;
-static int gfxbank;
-
-static void fg_tilemap_preupdate(void)
-{
-	gfxbank = 0;
-	videoram1 = gng_fgvideoram;
-	videoram2 = gng_fgcolorram;
-}
-
 static void get_fg_tile_info( int col, int row )
 {
 	int tile_index = row*32+col;
-	unsigned char attr = videoram2[tile_index];
-	SET_TILE_INFO(gfxbank,videoram1[tile_index] + ((attr & 0xc0) << 2),attr & 0x0f)
+	unsigned char attr = gng_fgcolorram[tile_index];
+	SET_TILE_INFO(0,gng_fgvideoram[tile_index] + ((attr & 0xc0) << 2),attr & 0x0f)
 	tile_info.flags = TILE_FLIPYX((attr & 0x30) >> 4);
-}
-
-static void bg_tilemap_preupdate(void)
-{
-	gfxbank = 1;
-	videoram1 = gng_bgvideoram;
-	videoram2 = gng_bgcolorram;
 }
 
 static void get_bg_tile_info( int col, int row )
 {
 	int tile_index = col*32+row;
-	unsigned char attr = videoram2[tile_index];
-	SET_TILE_INFO(gfxbank,videoram1[tile_index] + ((attr & 0xc0) << 2),attr & 0x07)
+	unsigned char attr = gng_bgcolorram[tile_index];
+	SET_TILE_INFO(1,gng_bgvideoram[tile_index] + ((attr & 0xc0) << 2),attr & 0x07)
 	tile_info.flags = TILE_FLIPYX((attr & 0x30) >> 4) | TILE_SPLIT((attr & 0x08) >> 3);
 }
 
@@ -61,35 +43,33 @@ static void get_bg_tile_info( int col, int row )
   Start the video hardware emulation.
 
 ***************************************************************************/
-void gng_vh_stop(void)
-{
-	tilemap_dispose(bg_tilemap);
-	tilemap_dispose(fg_tilemap);
-}
-
 int gng_vh_start(void)
 {
 	fg_tilemap = tilemap_create(
+		get_fg_tile_info,
 		TILEMAP_TRANSPARENT,
 		8,8, /* tile width, tile height */
 		32,32, /* number of columns, number of rows */
 		0,0	/* scroll rows, scroll columns */
 	);
 
-	bg_tilemap = tilemap_create(TILEMAP_SPLIT,16,16,32,32,1,1);
+	bg_tilemap = tilemap_create(
+		get_bg_tile_info,
+		TILEMAP_SPLIT,
+		16,16,
+		32,32,
+		1,1
+	);
 
-	if (fg_tilemap && bg_tilemap){
-		fg_tilemap->tile_get_info = get_fg_tile_info;
+	if (fg_tilemap && bg_tilemap)
+	{
 		fg_tilemap->transparent_pen = 3;
 
-		bg_tilemap->tile_get_info = get_bg_tile_info;
 		bg_tilemap->transmask[0] = 0xff; /* split type 0 is totally transparent in front half */
 		bg_tilemap->transmask[1] = 0x01; /* split type 1 has pen 1 transparent in front half */
 
 		return 0;
 	}
-
-	gng_vh_stop();
 
 	return 1;
 }
@@ -137,13 +117,10 @@ void gng_bgscrolly_w(int offset,int data){
 }
 
 
-void gng_flipscreen_w(int offset,int data){
+void gng_flipscreen_w(int offset,int data)
+{
 	flipscreen = ~data & 1;
-	{
-		int attributes = flipscreen?(TILEMAP_FLIPY|TILEMAP_FLIPX):0;
-		tilemap_set_attributes( bg_tilemap, attributes );
-		tilemap_set_attributes( fg_tilemap, attributes );
-	}
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 }
 
 
@@ -155,7 +132,8 @@ void gng_flipscreen_w(int offset,int data){
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap){
+static void draw_sprites(struct osd_bitmap *bitmap)
+{
 	const struct GfxElement *gfx = Machine->gfx[2];
 	const struct rectangle *clip = &Machine->drv->visible_area;
 	int offs;
@@ -182,12 +160,11 @@ static void draw_sprites(struct osd_bitmap *bitmap){
 	}
 }
 
-void gng_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
-	bg_tilemap_preupdate(); tilemap_update(bg_tilemap);
-	fg_tilemap_preupdate(); tilemap_update(fg_tilemap);
+void gng_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	tilemap_update(ALL_TILEMAPS);
 
-	tilemap_render(bg_tilemap);
-	tilemap_render(fg_tilemap);
+	tilemap_render(ALL_TILEMAPS);
 
 	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK);
 	draw_sprites(bitmap);

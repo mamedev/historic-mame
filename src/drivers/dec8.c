@@ -9,13 +9,13 @@ Various Data East 8 bit games:
 	Super Real Darwin           (c) 1987 Data East Corporation (6809 + I8751)
 	Psycho-Nics Oscar           (c) 1988 Data East USA (2*6809 + I8751)
 	Psycho-Nics Oscar (Japan)   (c) 1987 Data East Corporation (2*6809 + I8751)
-	Gondomania					(c) 1987 Data East USA (6809 + I8751)
-	Makyou Senshi				(c) 1987 Data East Corporation (6809 + I8751)
+	Gondomania                  (c) 1987 Data East USA (6809 + I8751)
+	Makyou Senshi               (c) 1987 Data East Corporation (6809 + I8751)
 	Last Mission (rev 6)        (c) 1986 Data East USA (2*6809 + I8751)
 	Last Mission (rev 5)        (c) 1986 Data East USA (2*6809 + I8751)
 	Shackled                    (c) 1986 Data East USA (2*6809 + I8751)
-    Breywood                    (c) 1986 Data East Corporation (2*6809 + I8751)
-    Captain Silver (Japan)      (c) 1987 Data East Corporation (2*6809 + I8751)
+	Breywood                    (c) 1986 Data East Corporation (2*6809 + I8751)
+	Captain Silver (Japan)      (c) 1987 Data East Corporation (2*6809 + I8751)
 
 	All games use a 6502 for sound (some are encrypted), all games except Cobracom
 	use an Intel 8751 for protection & coinage.  For these games the coinage dip
@@ -59,22 +59,14 @@ void lastmiss_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void oscar_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 int dec8_vh_start(void);
 void dec8_vh_stop(void);
-
-
 void dec8_dma_flag(int offset, int data);
-
 void srdarwin_control_w(int offset, int data);
-
 void gondo_scroll_w(int offset, int data);
-
 void lastmiss_control_w(int offset, int data);
 void lastmiss_scrollx_w(int offset, int data);
 void lastmiss_scrolly_w(int offset, int data);
-
-
 void dec8_bac06_0_w(int offset, int data);
 void dec8_bac06_1_w(int offset, int data);
-
 void ghostb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 /******************************************************************************/
@@ -165,11 +157,7 @@ static void srdarwin_i8751_w(int offset, int data)
 	if ((i8751_value&0xff00)==0x4000) i8751_return=i8751_value; /* Coinage settings */
  	if (i8751_value==0x5000) i8751_return=((coins / 10) << 4) | (coins % 10); /* Coin request */
  	if (i8751_value==0x6000) {i8751_value=-1; coins--; } /* Coin clear */
-
 	/* Nb:  Command 0x4000 for setting coinage options is not supported */
-
-// bcd or hex value for coins!!!!
-
  	if ((readinputport(1)&1)==1) latch=1;
  	if ((readinputport(1)&1)!=1 && latch) {coins++; latch=0;}
 
@@ -177,17 +165,52 @@ static void srdarwin_i8751_w(int offset, int data)
 	each table controls the end of level bad guy, wrong values crash the
 	cpu right away via a bogus jump.
 
-	Level number requested is in low byte, I'm assuming the
-	table values are stored in sequential order (ie, level 1 is the
-	first table, level 2 is the second, etc).
+	Level number requested is in low byte
 
-	See location 0xf580 in rom dy_01.rom
+	Addresses on left hand side are from the protection vector table which is
+	stored at location 0xf580 in rom dy_01.rom
 
-	A real board would be nice to check against :)
+ba5e (lda #00) = Level 0?
+ba82 (lda #01) = Pyramid boss, Level 1?
+baaa           = No boss appears, game hangs
+bacc (lda #04) = Killer Bee boss, Level 4?
+bae0 (lda #03) = Snake type boss, Level 3?
+baf9           = Double grey thing boss...!
+bb0a      	   = Single grey thing boss!
+bb18 (lda #00) = Hailstorm from top of screen.
+bb31 (lda #28) = Small hailstorm
+bb47 (ldb #05) = Small hailstorm
+bb5a (lda #08) = Weird square things..
+bb63           = Square things again
+(24)           = Another square things boss..
+(26)           = Clock boss! (level 3)
+(28)           = Big dragon boss, perhaps an end-of-game baddy
+(30)           = 4 things appear at corners, seems to fit with attract mode (level 1)
+(32)           = Grey things teleport onto screen..
+(34)           = Grey thing appears in middle of screen
+(36)           = As above
+(38)           = Circle thing with two pincers
+(40)           = Grey bird
+(42)           = Crash (end of table)
 
-	*/
-	if ((i8751_value&0xff00)==0x8000)
-		i8751_return=0xf580 + ((i8751_value&0xff)*2);
+	I'm afraid the table below is probably wrong, I don't know the order the
+bosses should appear in, nor can I play the game well enough to get to the later
+bosses.
+
+*/
+	if (i8751_value==0x8000) i8751_return=0xf580 +  0;
+	if (i8751_value==0x8001) i8751_return=0xf580 + 30; /* 4 Corners */
+	if (i8751_value==0x8002) i8751_return=0xf580 + 26; /* Clock */
+	if (i8751_value==0x8003) i8751_return=0xf580 +  6; /* Pyramid */
+	if (i8751_value==0x8004) i8751_return=0xf580 +  8; /* Bee */
+	if (i8751_value==0x8005) i8751_return=0xf580 + 10; /* Snake */
+	if (i8751_value==0x8006) i8751_return=0xf580 + 12; /* Grey things */
+	if (i8751_value==0x8007) i8751_return=0xf580 + 16; /* Hailstorm */
+	if (i8751_value==0x8008) i8751_return=0xf580 + 20; /* Square */
+	if (i8751_value==0x8009) i8751_return=0xf580 + 28; /* Dragon */
+	if (i8751_value==0x800a) i8751_return=0xf580 + 32; /* Teleport */
+	if (i8751_value==0x800b) i8751_return=0xf580 + 38; /* Pincer */
+	if (i8751_value==0x800c) i8751_return=0xf580 + 40; /* Bird */
 }
 
 static void gondo_i8751_w(int offset, int data)
@@ -983,50 +1006,50 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
 	PORT_START	/* Dip switch bank 1 */
-	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, "Coin A" )
 	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Coin B", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Coin B" )
 	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Flip Screen" )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x80, "Cocktail" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
 	PORT_START	/* Dip switch bank 2 */
-	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, "Lives" )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x01, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty" )
 	PORT_DIPSETTING(    0x04, "Easy" )
 	PORT_DIPSETTING(    0x0c, "Normal" )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x10, 0x10, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, "No" )
 	PORT_DIPSETTING(    0x10, "Yes" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x80, "On" )
 INPUT_PORTS_END
@@ -1061,16 +1084,16 @@ INPUT_PORTS_START( ghostb_input_ports )
  	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START3 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Flip Screen" )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x80, "On" )
 
@@ -1081,28 +1104,28 @@ INPUT_PORTS_START( ghostb_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* Dip switch */
-	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, "Lives" )
 	PORT_DIPSETTING(    0x01, "1" )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty" )
 	PORT_DIPSETTING(    0x04, "Easy" )
 	PORT_DIPSETTING(    0x0c, "Normal" )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x30, 0x30, "Scene Time", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, "Scene Time" )
 	PORT_DIPSETTING(    0x00, "4.00" )
 	PORT_DIPSETTING(    0x10, "4.30" )
 	PORT_DIPSETTING(    0x30, "5.00" )
 	PORT_DIPSETTING(    0x20, "6.00" )
-	PORT_DIPNAME( 0x40, 0x00, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x40, "No" )
 	PORT_DIPSETTING(    0x00, "Yes" )
-	PORT_DIPNAME( 0x80, 0x80, "Beam Energy Pickup", IP_KEY_NONE ) /* Ghostb only */
+	PORT_DIPNAME( 0x80, 0x80, "Beam Energy Pickup" ) /* Ghostb only */
 	PORT_DIPSETTING(    0x00, "Up 1.5%" )
 	PORT_DIPSETTING(    0x80, "Normal" )
-//	PORT_DIPNAME( 0x80, 0x80, "Freeze", IP_KEY_NONE ) /* Mazeh only */
+//	PORT_DIPNAME( 0x80, 0x80, "Freeze" ) /* Mazeh only */
 //	PORT_DIPSETTING(    0x80, "Off" )
 //	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
@@ -1131,41 +1154,41 @@ INPUT_PORTS_START( srdarwin_input_ports )
 	PORT_START
 	/* The bottom bits of this dip (coinage) are for the i8751 */
 	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Flip Screen" )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x80, "On" )
 
 	PORT_START
-	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, "Lives" )
 	PORT_DIPSETTING(    0x01, "1" )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "28", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x04, 0x04, "Unknown", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "28", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x04, "On" )
-	PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x08, "On" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x80, "On" )
 INPUT_PORTS_END
@@ -1211,40 +1234,40 @@ INPUT_PORTS_START( gondo_input_ports )
 
 	PORT_START	/* Dip switch bank 1 */
 	/* Coinage not currently supported */
-	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Flip Screen" )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x80, "On" )
 
 	PORT_START	/* Dip switch bank 2 */
-	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, "Lives" )
 	PORT_DIPSETTING(    0x01, "1" )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty" )
 	PORT_DIPSETTING(    0x04, "Easy" )
 	PORT_DIPSETTING(    0x0c, "Normal" )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x10, 0x00, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, "Yes" )
 	PORT_DIPSETTING(    0x10, "No" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x80, "On" )
 INPUT_PORTS_END
@@ -1275,49 +1298,49 @@ INPUT_PORTS_START( oscar_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
 	PORT_START	/* Dip switch bank 1 */
-	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, "Coin A" )
 	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x01, "1 Coin/3 Credits" )
 	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Coin B", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Coin B" )
 	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
 	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPNAME( 0x20, 0x20, "Demo Freeze Mode", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Demo Freeze Mode" )
 	PORT_DIPSETTING(    0x20, "No" )
 	PORT_DIPSETTING(    0x00, "Yes" )
-	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Flip Screen" )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x80, "Cocktail" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
 	PORT_START	/* Dip switch bank 2 */
-	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, "Lives" )
 	PORT_DIPSETTING(    0x01, "1" )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty" )
 	PORT_DIPSETTING(    0x04, "Easy" )
 	PORT_DIPSETTING(    0x0c, "Normal" )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x30, 0x30, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, "Bonus Life" )
 	PORT_DIPSETTING(    0x30, "Every 40000" )
 	PORT_DIPSETTING(    0x20, "Every 60000" )
 	PORT_DIPSETTING(    0x10, "Every 90000" )
 	PORT_DIPSETTING(    0x00, "50000 only" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, "No" )
 	PORT_DIPSETTING(    0x80, "Yes" )
 INPUT_PORTS_END
@@ -1349,40 +1372,40 @@ INPUT_PORTS_START( lastmiss_input_ports )
 
 	PORT_START	/* Dip switch bank 1 */
 	/* Coinage options not supported (controlled by the i8751) */
-	PORT_DIPNAME( 0x10, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x00, "Demo Sounds" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown 1" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Invincible", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Invincible" )
 	PORT_DIPSETTING(    0x40, "No" )
 	PORT_DIPSETTING(    0x00, "Yes" )
-	PORT_DIPNAME( 0x80, 0x80, "Cabinet?", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Cabinet?" )
 	PORT_DIPSETTING(    0x00, "Upright" )
 	PORT_DIPSETTING(    0x80, "Cocktail" )
 
 	PORT_START	/* Dip switch bank 2 */
-	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, "Lives" )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x01, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty" )
 	PORT_DIPSETTING(    0x04, "Easy" )
 	PORT_DIPSETTING(    0x0c, "Normal" )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x10, 0x10, "Allow Continue?", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Allow Continue?" )
 	PORT_DIPSETTING(    0x00, "No" )
 	PORT_DIPSETTING(    0x10, "Yes" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x80, "On" )
 INPUT_PORTS_END
@@ -1414,40 +1437,40 @@ INPUT_PORTS_START( shackled_input_ports )
 
 	PORT_START	/* Dip switch bank 1 */
 	/* Coinage not supported */
-	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Flip Screen" )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Freeze", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Freeze" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START	/* Dip switch bank 2 */
-	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, "Lives" )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x01, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty" )
 	PORT_DIPSETTING(    0x04, "Easy" )
 	PORT_DIPSETTING(    0x0c, "Normal" )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x10, 0x10, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, "No" )
 	PORT_DIPSETTING(    0x10, "Yes" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x80, "On" )
 INPUT_PORTS_END
@@ -1479,40 +1502,40 @@ INPUT_PORTS_START( csilver_input_ports )
 
 	PORT_START	/* Dip switch bank 1 */
 	/* Coinage not supported */
-	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Flip Screen" )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x80, "Cocktail" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
 	PORT_START	/* Dip switch bank 2 */
-	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, "Lives" )
 	PORT_DIPSETTING(    0x01, "1" )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty" )
 	PORT_DIPSETTING(    0x04, "Easy" )
 	PORT_DIPSETTING(    0x0c, "Normal" )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x10, 0x10, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, "No" )
 	PORT_DIPSETTING(    0x10, "Yes" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x80, "On" )
 INPUT_PORTS_END
@@ -1584,9 +1607,7 @@ static struct GfxLayout sr_sprites =
  	{ 0x10000*8,0x20000*8,0x00000*8 },
 	{ 16*8, 1+(16*8), 2+(16*8), 3+(16*8), 4+(16*8), 5+(16*8), 6+(16*8), 7+(16*8),
 		0,1,2,3,4,5,6,7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 ,8*8,9*8,10*8,11*8,12*8,13*8,14*8,15*8
-//15*8, 14*8, 13*8, 12*8, 11*8, 10*8, 9*8, 8*8 ,7*8,6*8,5*8,4*8,3*8,2*8,1*8,0*8
-},
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 ,8*8,9*8,10*8,11*8,12*8,13*8,14*8,15*8 },
 	16*16
 };
 
@@ -2995,7 +3016,7 @@ struct GameDriver cobracom_driver =
 	__FILE__,
 	0,
 	"cobracom",
-	"Cobra Command",
+	"Cobra Command (Japan)",
 	"1988",
 	"Data East Corporation",
 	"Bryan McPhail",
@@ -3021,7 +3042,7 @@ struct GameDriver ghostb_driver =
 	__FILE__,
 	0,
 	"ghostb",
-	"The Real Ghostbusters (2 Players)",
+	"The Real Ghostbusters (US 2 Players)",
 	"1987",
 	"Data East USA",
 	"Bryan McPhail",
@@ -3047,7 +3068,7 @@ struct GameDriver ghostb3_driver =
 	__FILE__,
 	&ghostb_driver,
 	"ghostb3",
-	"The Real Ghostbusters (3 Players)",
+	"The Real Ghostbusters (US 3 Players)",
 	"1987",
 	"Data East USA",
 	"Bryan McPhail",
@@ -3073,7 +3094,7 @@ struct GameDriver mazeh_driver =
 	__FILE__,
 	&ghostb_driver,
 	"mazeh",
-	"Maze Hunter",
+	"Maze Hunter (Japan)",
 	"1987",
 	"Data East Corporation",
 	"Bryan McPhail",
@@ -3099,7 +3120,7 @@ struct GameDriver srdarwin_driver =
 	__FILE__,
 	0,
 	"srdarwin",
-	"Super Real Darwin",
+	"Super Real Darwin (Japan)",
 	"1987",
 	"Data East Corporation",
 	"Bryan McPhail",
@@ -3125,7 +3146,7 @@ struct GameDriver gondo_driver =
 	__FILE__,
 	0,
 	"gondo",
-	"Gondomania",
+	"Gondomania (US)",
 	"1987",
 	"Data East USA",
 	"Bryan McPhail",
@@ -3151,7 +3172,7 @@ struct GameDriver mekyosen_driver =
 	__FILE__,
 	&gondo_driver,
 	"mekyosen",
-	"Makyou Senshi",
+	"Makyou Senshi (Japan)",
 	"1987",
 	"Data East Corporation",
 	"Bryan McPhail",
@@ -3177,7 +3198,7 @@ struct GameDriver oscar_driver =
 	__FILE__,
 	0,
 	"oscar",
-	"Psycho-Nics Oscar",
+	"Psycho-Nics Oscar (US)",
 	"1988",
 	"Data East USA",
 	"Bryan McPhail",
@@ -3229,7 +3250,7 @@ struct GameDriver lastmiss_driver =
 	__FILE__,
 	0,
 	"lastmiss",
-	"Last Mission (Rev 6)",
+	"Last Mission (US revision 6)",
 	"1986",
 	"Data East USA",
 	"Bryan McPhail",
@@ -3255,7 +3276,7 @@ struct GameDriver lastmss2_driver =
 	__FILE__,
 	&lastmiss_driver,
 	"lastmss2",
-	"Last Mission (Rev 5)",
+	"Last Mission (US revision 5)",
 	"1986",
 	"Data East USA",
 	"Bryan McPhail",
@@ -3281,7 +3302,7 @@ struct GameDriver shackled_driver =
 	__FILE__,
 	0,
 	"shackled",
-	"Shackled",
+	"Shackled (US)",
 	"1986",
 	"Data East USA",
 	"Bryan McPhail",
@@ -3307,7 +3328,7 @@ struct GameDriver breywood_driver =
 	__FILE__,
 	&shackled_driver,
 	"breywood",
-	"Breywood",
+	"Breywood (Japan)",
 	"1986",
 	"Data East Corporation",
 	"Bryan McPhail",
@@ -3333,7 +3354,7 @@ struct GameDriver csilver_driver =
 	__FILE__,
 	0,
 	"csilver",
-	"Captain Silver",
+	"Captain Silver (Japan)",
 	"1987",
 	"Data East Corporation",
 	"Bryan McPhail",

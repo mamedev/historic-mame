@@ -105,6 +105,7 @@ int vgafreq;
 int always_synced;
 int video_sync;
 int wait_vsync;
+int vsync_frame_rate;
 int color_depth;
 int skiplines;
 int skipcolumns;
@@ -115,7 +116,7 @@ int use_triple;
 int use_quadra;
 int use_vesa;
 int gfx_mode;
-float gamma_correction = 1.0;
+float osd_gamma_correction = 1.0;
 int brightness = 100;
 char *pcxdir;
 char *resolution;
@@ -159,21 +160,21 @@ static uclock_t start_time,end_time;    /* to calculate fps average on exit */
 
 struct vga_tweak { int x, y; Register *reg; int reglen; int syncvgafreq; int scanlines; };
 struct vga_tweak vga_orig_tweaked[] = {
-	{ 288, 224, orig_scr288x224scanlines, sizeof(scr288x224scanlines)/sizeof(Register), 0, 1},
 	{ 256, 256, orig_scr256x256scanlines, sizeof(scr256x256scanlines)/sizeof(Register), 0, 1},
+	{ 288, 224, orig_scr288x224scanlines, sizeof(scr288x224scanlines)/sizeof(Register), 0, 1},
 	{ 224, 288, orig_scr224x288scanlines, sizeof(scr224x288scanlines)/sizeof(Register), 0, 1},
-	{ 288, 224, orig_scr288x224, sizeof(scr288x224)/sizeof(Register),  0, 0 },
 	{ 256, 256, orig_scr256x256, sizeof(scr256x256)/sizeof(Register),  0, 0 },
+	{ 288, 224, orig_scr288x224, sizeof(scr288x224)/sizeof(Register),  0, 0 },
 	{ 224, 288, orig_scr224x288, sizeof(scr224x288)/sizeof(Register),  0, 0 },
 	{ 0, 0 }
 };
 struct vga_tweak vga_tweaked[] = {
-	{ 288, 224, scr288x224scanlines, sizeof(scr288x224scanlines)/sizeof(Register), 0, 1},
 	{ 256, 256, scr256x256scanlines, sizeof(scr256x256scanlines)/sizeof(Register), 1, 1},
+	{ 288, 224, scr288x224scanlines, sizeof(scr288x224scanlines)/sizeof(Register), 0, 1},
 	{ 224, 288, scr224x288scanlines, sizeof(scr224x288scanlines)/sizeof(Register), 2, 1},
 	{ 320, 204, scr320x204, sizeof(scr320x204)/sizeof(Register), -1, 0 },
-	{ 288, 224, scr288x224, sizeof(scr288x224)/sizeof(Register),  0, 0 },
 	{ 256, 256, scr256x256, sizeof(scr256x256)/sizeof(Register),  1, 0 },
+	{ 288, 224, scr288x224, sizeof(scr288x224)/sizeof(Register),  0, 0 },
 	{ 224, 288, scr224x288, sizeof(scr224x288)/sizeof(Register),  1, 0 },
 	{ 200, 320, scr200x320, sizeof(scr200x320)/sizeof(Register), -1, 0 },
 	{ 0, 0 }
@@ -980,18 +981,39 @@ int osd_set_display(int width,int height, int attributes)
 		}
 
 		/* handle special noscanlines 256x256 57Hz tweaked mode */
-		if (gfx_width == 256 && gfx_height == 256 && scanlines == 0 &&
+		if (!found && gfx_width == 256 && gfx_height == 256 &&
 				video_sync && Machine->drv->frames_per_second == 57)
 		{
-			reg = scr256x256_57;
-			reglen = sizeof(scr256x256_57)/sizeof(Register);
+			if (!(Machine->orientation & ORIENTATION_SWAP_XY))
+			{
+				reg = (scanlines ? scr256x256horscanlines_57 : scr256x256hor_57);
+				reglen = sizeof(scr256x256hor_57)/sizeof(Register);
+				videofreq = 0;
+				found = 1;
+			}
+			else
+			{
+				reg = scr256x256_57;
+						/* still no -scanlines mode */
+				reglen = sizeof(scr256x256_57)/sizeof(Register);
+				videofreq = 0;
+				found = 1;
+			}
+		}
+
+		/* handle special 256x256 horizontal tweaked mode */
+		if (!found && gfx_width == 256 && gfx_height == 256 &&
+				!(Machine->orientation & ORIENTATION_SWAP_XY))
+		{
+			reg = (scanlines ? scr256x256horscanlines : scr256x256hor);
+			reglen = sizeof(scr256x256hor)/sizeof(Register);
 			videofreq = 0;
 			found = 1;
 		}
 
 		/* find the matching tweaked mode */
 		/* use noscanline modes if scanline modes not possible */
-		if (video_sync == 0 && always_synced == 0 && wait_vsync == 0)
+                if (!found && video_sync == 0 && always_synced == 0 && wait_vsync == 0)
 		{
 			/* if vsync not requested, first look for more compatible modes */
 			for (i=0; ((vga_orig_tweaked[i].x != 0) && !found); i++)
@@ -1184,6 +1206,8 @@ int osd_set_display(int width,int height, int attributes)
 	gone_to_gfx_mode = 1;
 
 
+	vsync_frame_rate = Machine->drv->frames_per_second;
+
 	if (video_sync)
 	{
 		uclock_t a,b;
@@ -1218,6 +1242,9 @@ if (errorlog) fprintf(errorlog,"-vsync option cannot be used with this display m
 					(int)(UCLOCKS_PER_SEC/(b-a)),Machine->drv->frames_per_second);
 			return 0;
 		}
+
+if (errorlog) fprintf(errorlog,"adjusted video frame rate = %3.2fHz\n",rate);
+		vsync_frame_rate = rate;
 
 		if (Machine->sample_rate)
 		{
@@ -1270,9 +1297,9 @@ void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,u
 			{
 				for (b1 = 0; b1 < 32; b1++)
 				{
-					r = 255 * brightness * pow(r1 / 31.0, 1 / gamma_correction) / 100;
-					g = 255 * brightness * pow(g1 / 31.0, 1 / gamma_correction) / 100;
-					b = 255 * brightness * pow(b1 / 31.0, 1 / gamma_correction) / 100;
+					r = 255 * brightness * pow(r1 / 31.0, 1 / osd_gamma_correction) / 100;
+					g = 255 * brightness * pow(g1 / 31.0, 1 / osd_gamma_correction) / 100;
+					b = 255 * brightness * pow(b1 / 31.0, 1 / osd_gamma_correction) / 100;
 					*pens++ = makecol(r,g,b);
 				}
 			}
@@ -1792,9 +1819,9 @@ void osd_update_video_and_audio(void)
 
 						dirtycolor[i] = 0;
 
-						r = 255 * brightness * pow(current_palette[i][0] / 255.0, 1 / gamma_correction) / 100;
-						g = 255 * brightness * pow(current_palette[i][1] / 255.0, 1 / gamma_correction) / 100;
-						b = 255 * brightness * pow(current_palette[i][2] / 255.0, 1 / gamma_correction) / 100;
+						r = 255 * brightness * pow(current_palette[i][0] / 255.0, 1 / osd_gamma_correction) / 100;
+						g = 255 * brightness * pow(current_palette[i][1] / 255.0, 1 / osd_gamma_correction) / 100;
+						b = 255 * brightness * pow(current_palette[i][2] / 255.0, 1 / osd_gamma_correction) / 100;
 
 						adjusted_palette[i].r = r >> 2;
 						adjusted_palette[i].g = g >> 2;
@@ -1829,26 +1856,30 @@ void osd_update_video_and_audio(void)
 		if (throttle && autoframeskip && frameskip_counter == 0)
 		{
 			static int frameskipadjust;
+			int adjspeed;
 
-			if (speed < 60)
+			/* adjust speed to video refresh rate if vsync is on */
+			adjspeed = speed * Machine->drv->frames_per_second / vsync_frame_rate;
+
+			if (adjspeed < 60)
 			{
 				frameskipadjust = 0;
 				frameskip += 3;
 				if (frameskip >= FRAMESKIP_LEVELS) frameskip = FRAMESKIP_LEVELS-1;
 			}
-			else if (speed < 80)
+			else if (adjspeed < 80)
 			{
 				frameskipadjust = 0;
 				frameskip += 2;
 				if (frameskip >= FRAMESKIP_LEVELS) frameskip = FRAMESKIP_LEVELS-1;
 			}
-			else if (speed < 98)	/* allow 98-99% speed */
+			else if (adjspeed < 99)	/* allow 99% speed */
 			{
 				frameskipadjust = 0;
 				/* don't push frameskip too far if we are close to 100% speed */
 				if (frameskip < 8) frameskip++;
 			}
-			else if (speed >= 100)
+			else if (adjspeed >= 100)
 			{
 				/* increase frameskip quickly, decrease it slowly */
 				frameskipadjust++;
@@ -1898,7 +1929,7 @@ void osd_set_gamma(float _gamma)
 		int i;
 
 
-		gamma_correction = _gamma;
+		osd_gamma_correction = _gamma;
 
 		for (i = 0;i < 256;i++)
 		{
@@ -1911,7 +1942,7 @@ void osd_set_gamma(float _gamma)
 
 float osd_get_gamma(void)
 {
-	return gamma_correction;
+	return osd_gamma_correction;
 }
 
 /* brightess = percentage 0-100% */

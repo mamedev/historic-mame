@@ -35,7 +35,7 @@ typedef union
 typedef struct
 {
     i86basicregs regs;
-	int 	amask;			/* HJB 990320 Address mask moved into the registers */
+	int 	amask;			/* address mask */
     int     ip;
 	UINT16	flags;
 	UINT32	base[4];
@@ -84,11 +84,12 @@ void i86_reset (void *param)
 	memset( &I, 0, sizeof(I) );
 
 	/* If a reset parameter is given, take it as pointer to an address mask */
-    if( param )             
+    if( param )
 		I.amask = *(unsigned*)param;
 	else
 		I.amask = 0x00ffff;
     I.sregs[CS] = 0xffff;
+	I.base[CS] = I.sregs[CS] << 4;
 
 	change_pc20( (I.base[CS] + I.ip) & I.amask);
 
@@ -3181,10 +3182,11 @@ unsigned i86_get_reg(int regnum)
 		case I86_PENDING: return I.pending_irq;
 		case I86_NMI_STATE: return I.nmi_state;
 		case I86_IRQ_STATE: return I.irq_state;
+		case REG_PREVIOUSPC: return 0;	/* not supported */
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
-				unsigned offset = ((SegBase(SS) + I.regs.w[SP]) & I.amask) + 2 * (REG_SP_CONTENTS - regnum);
+				unsigned offset = ((I.base[SS] + I.regs.w[SP]) & I.amask) + 2 * (REG_SP_CONTENTS - regnum);
 				if( offset < I.amask )
 					return cpu_readmem20( offset ) | ( cpu_readmem20( offset + 1) << 8 );
 			}
@@ -3215,9 +3217,9 @@ void i86_set_reg(int regnum, unsigned val)
 		case I86_NMI_STATE: i86_set_nmi_line(val); break;
 		case I86_IRQ_STATE: i86_set_irq_line(0,val); break;
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
-				unsigned offset = ((SegBase(SS) + I.regs.w[SP]) & I.amask) + 2 * (REG_SP_CONTENTS - regnum);
+				unsigned offset = ((I.base[SS] + I.regs.w[SP]) & I.amask) + 2 * (REG_SP_CONTENTS - regnum);
 				if( offset < I.amask - 1 )
 				{
 					cpu_writemem20( offset, val & 0xff );
@@ -3270,12 +3272,7 @@ printf("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n",sregs[CS],I.ip,G
 	if ((I.pending_irq && I.IF) || (I.pending_irq & NMI_IRQ))
 		external_int(); 	 /* HJB 12/15/98 */
 
-#ifdef MAME_DEBUG
-	{
-	  extern int mame_debug;
-	  if (mame_debug) MAME_Debug();
-	}
-#endif
+	CALL_MAME_DEBUG;
 
 	seg_prefix=FALSE;
 #if defined(BIGCASE) && !defined(RS6000)
@@ -3563,52 +3560,24 @@ const char *i86_info(void *context, int regnum)
 
 	switch( regnum )
 	{
-		case CPU_INFO_NAME: return "I86";
-		case CPU_INFO_FAMILY: return "Intel 80x86";
-		case CPU_INFO_VERSION: return "1.4";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Real mode i286 emulator v1.4 by Fabrice Frances\n(initial work I.based on David Hedley's pcemu)";
-		case CPU_INFO_REG_LAYOUT: return (const char*)i86_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)i86_win_layout;
-
-		case CPU_INFO_PC: sprintf(buffer[which], "%05X:", ((r->sregs[CS]<<4) + r->ip) & 0xffffff); break;
-		case CPU_INFO_SP: sprintf(buffer[which], "%05X", ((r->sregs[SS]<<4) + r->regs.w[4]) & 0xffffff); break;
-#ifdef	MAME_DEBUG
-		case CPU_INFO_DASM:
-			{
-				unsigned pc = r->base[CS] + (WORD)r->ip;
-				pc += DasmI86(&ROM[pc & r->amask], buffer[which], pc & r->amask);
-				if( pc - r->base[CS] < 0x10000 )
-				{
-					r->ip = pc - r->base[CS];
-				}
-				else
-				{
-					r->base[CS] = pc & 0xffff0;
-					r->sregs[CS] = r->base[CS] >> 4;
-					r->ip = pc & 0x0000f;
-				}
-			}
-			break;
-#else
-		case CPU_INFO_DASM:
-			{
-				unsigned pc = r->base[CS] + (WORD)r->ip;
-				sprintf(buffer[which], "$%02x", ROM[pc & r->amask]);
-				pc++;
-				if( pc - r->base[CS] < 0x10000 )
-				{
-					r->ip = pc - r->base[CS];
-				}
-				else
-				{
-					r->base[CS] = pc & 0xffff0;
-					r->sregs[CS] = r->base[CS] >> 4;
-					r->ip = pc & 0x0000f;
-                }
-            }
-			break;
-#endif
+		case CPU_INFO_REG+I86_IP: sprintf(buffer[which], "IP:%04X", r->ip); break;
+		case CPU_INFO_REG+I86_SP: sprintf(buffer[which], "SP:%04X", r->regs.w[SP]); break;
+		case CPU_INFO_REG+I86_FLAGS: sprintf(buffer[which], "F:%04X", r->flags); break;
+		case CPU_INFO_REG+I86_AX: sprintf(buffer[which], "AX:%04X", r->regs.w[AX]); break;
+		case CPU_INFO_REG+I86_CX: sprintf(buffer[which], "CX:%04X", r->regs.w[CX]); break;
+		case CPU_INFO_REG+I86_DX: sprintf(buffer[which], "DX:%04X", r->regs.w[DX]); break;
+		case CPU_INFO_REG+I86_BX: sprintf(buffer[which], "BX:%04X", r->regs.w[BX]); break;
+		case CPU_INFO_REG+I86_BP: sprintf(buffer[which], "BP:%04X", r->regs.w[BP]); break;
+		case CPU_INFO_REG+I86_SI: sprintf(buffer[which], "SI:%04X", r->regs.w[SI]); break;
+		case CPU_INFO_REG+I86_DI: sprintf(buffer[which], "DI:%04X", r->regs.w[DI]); break;
+        case CPU_INFO_REG+I86_ES: sprintf(buffer[which], "ES:%04X", r->sregs[ES]); break;
+        case CPU_INFO_REG+I86_CS: sprintf(buffer[which], "CS:%04X", r->sregs[CS]); break;
+        case CPU_INFO_REG+I86_SS: sprintf(buffer[which], "SS:%04X", r->sregs[SS]); break;
+        case CPU_INFO_REG+I86_DS: sprintf(buffer[which], "DS:%04X", r->sregs[DS]); break;
+        case CPU_INFO_REG+I86_VECTOR: sprintf(buffer[which], "V:%02X", r->int_vector); break;
+		case CPU_INFO_REG+I86_PENDING: sprintf(buffer[which], "P:%X", r->pending_irq); break;
+		case CPU_INFO_REG+I86_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
+		case CPU_INFO_REG+I86_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
 		case CPU_INFO_FLAGS:
 			r->flags = CompressFlags();
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
@@ -3629,26 +3598,23 @@ const char *i86_info(void *context, int regnum)
 				r->flags & 0x0002 ? 'N':'.',
 				r->flags & 0x0001 ? 'C':'.');
 			break;
-		case CPU_INFO_REG+I86_IP: sprintf(buffer[which], "IP:%04X", r->ip); break;
-		case CPU_INFO_REG+I86_SP: sprintf(buffer[which], "SP:%04X", r->regs.w[SP]); break;
-		case CPU_INFO_REG+I86_FLAGS: sprintf(buffer[which], "F:%04X", r->flags); break;
-		case CPU_INFO_REG+I86_AX: sprintf(buffer[which], "AX:%04X", r->regs.w[AX]); break;
-		case CPU_INFO_REG+I86_CX: sprintf(buffer[which], "CX:%04X", r->regs.w[CX]); break;
-		case CPU_INFO_REG+I86_DX: sprintf(buffer[which], "DX:%04X", r->regs.w[DX]); break;
-		case CPU_INFO_REG+I86_BX: sprintf(buffer[which], "BX:%04X", r->regs.w[BX]); break;
-		case CPU_INFO_REG+I86_BP: sprintf(buffer[which], "BP:%04X", r->regs.w[BP]); break;
-		case CPU_INFO_REG+I86_SI: sprintf(buffer[which], "SI:%04X", r->regs.w[SI]); break;
-		case CPU_INFO_REG+I86_DI: sprintf(buffer[which], "DI:%04X", r->regs.w[DI]); break;
-        case CPU_INFO_REG+I86_ES: sprintf(buffer[which], "ES:%04X", r->sregs[ES]); break;
-        case CPU_INFO_REG+I86_CS: sprintf(buffer[which], "CS:%04X", r->sregs[CS]); break;
-        case CPU_INFO_REG+I86_SS: sprintf(buffer[which], "SS:%04X", r->sregs[SS]); break;
-        case CPU_INFO_REG+I86_DS: sprintf(buffer[which], "DS:%04X", r->sregs[DS]); break;
-        case CPU_INFO_REG+I86_VECTOR: sprintf(buffer[which], "V:%02X", r->int_vector); break;
-		case CPU_INFO_REG+I86_PENDING: sprintf(buffer[which], "P:%X", r->pending_irq); break;
-		case CPU_INFO_REG+I86_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
-		case CPU_INFO_REG+I86_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
+		case CPU_INFO_NAME: return "I86";
+		case CPU_INFO_FAMILY: return "Intel 80x86";
+		case CPU_INFO_VERSION: return "1.4";
+		case CPU_INFO_FILE: return __FILE__;
+		case CPU_INFO_CREDITS: return "Real mode i286 emulator v1.4 by Fabrice Frances\n(initial work I.based on David Hedley's pcemu)";
+		case CPU_INFO_REG_LAYOUT: return (const char*)i86_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)i86_win_layout;
 	}
 	return buffer[which];
 }
 
-
+unsigned i86_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+#ifdef MAME_DEBUG
+    return DasmI86(base,buffer,pc);
+#else
+	sprintf( buffer, "$%02X", ROM[pc] );
+	return 1;
+#endif
+}

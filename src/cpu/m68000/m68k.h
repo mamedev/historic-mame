@@ -101,6 +101,7 @@ typedef struct                 /* CPU Context */
 {
    unsigned int  mode;         /* CPU Operation Mode (68000, 68010, or 68020) */
    unsigned int  sr;           /* Status Register */
+   unsigned int  ppc;		   /* Previous program counter */
    unsigned int  pc;           /* Program Counter */
    unsigned int  d[8];         /* Data Registers */
    unsigned int  a[8];         /* Address Registers */
@@ -258,6 +259,7 @@ void m68k_pulse_halt(void);
 int m68k_peek_dr(int reg_num);
 int m68k_peek_ar(int reg_num);
 unsigned int m68k_peek_pc(void);
+unsigned int m68k_peek_ppc(void);
 int m68k_peek_sr(void);
 int m68k_peek_ir(void);
 int m68k_peek_t1_flag(void);

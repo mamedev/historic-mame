@@ -31,6 +31,7 @@
 #define SP      15
 
 /* programm status */
+#define PPC     Z.ppc
 #define PC		Z.pc
 #define PSAP    Z.psap
 #define FCW     Z.fcw

@@ -185,11 +185,11 @@ INPUT_PORTS_START( kaos_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
 	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_TILT,
-			  "Slam", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "Slam", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BITX(0x08, IP_ACTIVE_LOW, 0,
-			  "Do Tests", OSD_KEY_F1, IP_JOY_NONE, 0)
+			  "Do Tests", OSD_KEY_F1, IP_JOY_NONE )
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_SERVICE,
-			  "Select Test", OSD_KEY_F2, IP_JOY_NONE, 0)
+			  "Select Test", OSD_KEY_F2, IP_JOY_NONE )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN3 )	 /* coin sw. no.3 */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 )	 /* coin sw. no.2 */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )	 /* coin sw. no.1 */
@@ -207,36 +207,36 @@ INPUT_PORTS_START( kaos_input_ports )
 	PORT_START      /* IN2 - from "TEST NO.8 - status locator - player no.1" */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1,
-			  "P1 Jump", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P1 Jump", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1,
-			  "P1 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P1 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1,
-			  "P1 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P1 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1,
-			  "P1 Fire Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P1 Fire Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
 	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1,
-			  "P1 Fire Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P1 Fire Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
 
 	PORT_START      /* IN3 - from "TEST NO.8 - status locator - player no.2" */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2,
-			  "P2 Fire Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P2 Fire Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2,
-			  "P2 Fire Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P2 Fire Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2,
-			  "P2 Fire Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P2 Fire Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2,
-			  "P2 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P2 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
 	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2,
-			  "P2 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P2 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
 
 	PORT_START      /* IN4 - from "TEST NO.6 - dip switch A" */
 
-	PORT_DIPNAME(0x0f, 0x0f, "Coinage", IP_KEY_NONE ) /* -> 039F */
+	PORT_DIPNAME(0x0f, 0x0f, DEF_STR( Coinage ) ) /* -> 039F */
 	PORT_DIPSETTING(   0x0f, " 1 Coin / 1 Credit" )
 	PORT_DIPSETTING(   0x0e, " 1 Coin / 1 Credit" )
 	PORT_DIPSETTING(   0x0d, " 1 Coin / 2 Credits" )
@@ -254,51 +254,51 @@ INPUT_PORTS_START( kaos_input_ports )
 	PORT_DIPSETTING(   0x01, " 1 Coin / 14 Credits" )
 	PORT_DIPSETTING(   0x00, "2 Coins / 1 Credit" )
 
-	PORT_DIPNAME(0x10, 0x10, "A4", IP_KEY_NONE ) /* -> 039A */
+	PORT_DIPNAME(0x10, 0x10, "A4" ) /* -> 039A */
 	PORT_DIPSETTING(   0x10, "10" )
 	PORT_DIPSETTING(   0x00, "00" )
 
-	PORT_DIPNAME(0x60, 0x20, "A5", IP_KEY_NONE ) /* -> 039C */
+	PORT_DIPNAME(0x60, 0x20, "A5" ) /* -> 039C */
 	PORT_DIPSETTING(   0x60, "10" )
 	PORT_DIPSETTING(   0x40, "20" )
 	PORT_DIPSETTING(   0x20, "30" )
 	PORT_DIPSETTING(   0x00, "40" )
 
-	PORT_DIPNAME(0x80, 0x80, "A7", IP_KEY_NONE ) /* -> 039D */
+	PORT_DIPNAME(0x80, 0x80, "A7" ) /* -> 039D */
 	PORT_DIPSETTING(   0x80, "Insert Coin To Play" )
-	PORT_DIPSETTING(   0x00, "Free Play" )
+	PORT_DIPSETTING(   0x00, DEF_STR( Free_Play ) )
 
 	PORT_START      /* IN5 - from "TEST NO.6 - dip switch B" */
 
-	PORT_DIPNAME(0x01, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME(0x01, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(   0x01, "3" )
 	PORT_DIPSETTING(   0x00, "4" )
 
-	PORT_DIPNAME(0x02, 0x00, "$0397 (?)", IP_KEY_NONE )
+	PORT_DIPNAME(0x02, 0x00, "$0397 (?)" )
 	PORT_DIPSETTING(   0x00, "2" )
 	PORT_DIPSETTING(   0x02, "1" )
 
-	PORT_DIPNAME(0x0c, 0x00, "$03a4 (?)", IP_KEY_NONE )
+	PORT_DIPNAME(0x0c, 0x00, "$03a4 (?)" )
 	PORT_DIPSETTING(   0x00, "3" )
 	PORT_DIPSETTING(   0x04, "2" )
 	PORT_DIPSETTING(   0x08, "1" )
 	PORT_DIPSETTING(   0x0c, "0" )
 
-	PORT_DIPNAME(0x10, 0x00, "$03be (?)", IP_KEY_NONE )
+	PORT_DIPNAME(0x10, 0x00, "$03be (?)" )
 	PORT_DIPSETTING(   0x00, "c" )
 	PORT_DIPSETTING(   0x10, "8" )
 
-	PORT_DIPNAME(0x20, 0x00, "$03a5 (?)", IP_KEY_NONE )
+	PORT_DIPNAME(0x20, 0x00, "$03a5 (?)" )
 	PORT_DIPSETTING(   0x00, "1" )
 	PORT_DIPSETTING(   0x20, "0" )
 
-	PORT_DIPNAME(0x40, 0x00, "$0398 (?)", IP_KEY_NONE )
+	PORT_DIPNAME(0x40, 0x00, "$0398 (?)" )
 	PORT_DIPSETTING(   0x00, "40" )
 	PORT_DIPSETTING(   0x40, "0" )
 
-	PORT_DIPNAME(0x80, 0x80, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(   0x80, "Upright" )
-	PORT_DIPSETTING(   0x00, "Cocktail" )
+	PORT_DIPNAME(0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(   0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
 
@@ -307,11 +307,11 @@ INPUT_PORTS_START( killcom_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
 	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_TILT,
-			  "Slam", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "Slam", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BITX(0x08, IP_ACTIVE_LOW, 0,
-			  "Do Tests", OSD_KEY_F1, IP_JOY_NONE, 0)
+			  "Do Tests", OSD_KEY_F1, IP_JOY_NONE )
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_SERVICE,
-			  "Select Test", OSD_KEY_F2, IP_JOY_NONE, 0)
+			  "Select Test", OSD_KEY_F2, IP_JOY_NONE )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN3 )	 /* coin sw. no.3 */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 )	 /* coin sw. no.2 */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )	 /* coin sw. no.1 */
@@ -328,53 +328,53 @@ INPUT_PORTS_START( killcom_input_ports )
 
 	PORT_START      /* IN2 - from "TEST NO.8 - status locator - player no.1" */
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1,
-			  "P1 Hyperspace", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P1 Hyperspace", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
     PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1,
-			  "P1 Fire Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P1 Fire Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
     PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1,
-			  "P1 Fire Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P1 Fire Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
     PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1,
-			  "P1 Fire Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P1 Fire Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1,
-			  "P1 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P1 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1,
-			  "P1 Move Down", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P1 Move Down", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1,
-			  "P1 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P1 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1,
-			  "P1 Move Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P1 Move Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 
 	PORT_START      /* IN3 - from "TEST NO.8 - status locator - player no.2" */
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2,
-			  "P2 Hyperspace", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P2 Hyperspace", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
     PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2,
-			  "P2 Fire Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P2 Fire Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
     PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2,
-			  "P2 Fire Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P2 Fire Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
     PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2,
-			  "P2 Fire Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P2 Fire Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2,
-			  "P2 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P2 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2,
-			  "P2 Move Down", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P2 Move Down", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2,
-			  "P2 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P2 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2,
-			  "P2 Move Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+			  "P2 Move Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 
     PORT_START      /* IN4 - from "TEST NO.6 - dip switch A" */
 
-    PORT_DIPNAME(0x03, 0x03, "Coinage 1p/2p", IP_KEY_NONE )
-    PORT_DIPSETTING(   0x00, "Free Play" )
+    PORT_DIPNAME(0x03, 0x03, "Coinage 1p/2p" )
+    PORT_DIPSETTING(   0x00, DEF_STR( Free_Play ) )
     PORT_DIPSETTING(   0x03, "1 Credit/2 Credits" )
     PORT_DIPSETTING(   0x02, "2 Credits/3 Credits" )
     PORT_DIPSETTING(   0x01, "2 Credits/4 Credits" )
 
-    PORT_DIPNAME(0x08, 0x08, "Lives", IP_KEY_NONE )
+    PORT_DIPNAME(0x08, 0x08, DEF_STR( Lives ) )
 	PORT_DIPSETTING(   0x00, "4" )
 	PORT_DIPSETTING(   0x08, "5" )
 
-	PORT_DIPNAME(0xc0, 0xc0, "Reaction", IP_KEY_NONE )
+	PORT_DIPNAME(0xc0, 0xc0, "Reaction" )
 	PORT_DIPSETTING(   0xc0, "Slowest" )
 	PORT_DIPSETTING(   0x80, "Slow" )
 	PORT_DIPSETTING(   0x40, "Fast" )
@@ -382,13 +382,13 @@ INPUT_PORTS_START( killcom_input_ports )
 
 	PORT_START      /* IN5 - from "TEST NO.6 - dip switch B" */
 
-    PORT_DIPNAME(0x40, 0x40, "Flip Screen", IP_KEY_NONE )
-	PORT_DIPSETTING(   0x40, "Off" )
-	PORT_DIPSETTING(   0x00, "On" )
+    PORT_DIPNAME(0x40, 0x40, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(   0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 
-	PORT_DIPNAME(0x80, 0x80, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(   0x80, "Upright" )
-	PORT_DIPSETTING(   0x00, "Cocktail" )
+	PORT_DIPNAME(0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(   0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
 
@@ -397,11 +397,11 @@ INPUT_PORTS_START( megatack_input_ports )
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
     PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_TILT,
-                      "Slam", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+                      "Slam", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
     PORT_BITX(0x08, IP_ACTIVE_LOW, 0,
-                      "Do Tests", OSD_KEY_F1, IP_JOY_NONE, 0)
+                      "Do Tests", OSD_KEY_F1, IP_JOY_NONE )
     PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_SERVICE,
-                      "Select Test", OSD_KEY_F2, IP_JOY_NONE, 0)
+                      "Select Test", OSD_KEY_F2, IP_JOY_NONE )
     PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN3 )      /* coin sw. no.3 */
     PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 )      /* coin sw. no.2 */
     PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )      /* coin sw. no.1 */
@@ -419,48 +419,48 @@ INPUT_PORTS_START( megatack_input_ports )
     PORT_START      /* IN2 - from "TEST NO.8 - status locator - player no.1" */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
     PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1,
-                      "Player 1 Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+                      "Player 1 Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 /*        PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1,
-                          "P1 Fire Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+                          "P1 Fire Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
         PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1,
-                          "P1 Fire Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)*/
+                          "P1 Fire Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT )*/
         PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1,
-                      "Player 1 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+                      "Player 1 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
     PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
     PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1,
-                      "Player 1 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+                      "Player 1 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
 
     PORT_START      /* IN3 - from "TEST NO.8 - status locator - player no.2" */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
     PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2,
-                      "Player 2 Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+                      "Player 2 Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 /*        PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2,
-                          "P2 Fire Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+                          "P2 Fire Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
         PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2,
-                          "P2 Fire Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)*/
+                          "P2 Fire Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT )*/
     PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2,
-                      "Player 2 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+                      "Player 2 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
     PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
     PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2,
-                      "Player 2 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+                      "Player 2 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
 
     PORT_START      /* IN4 - from "TEST NO.6 - dip switch A" */
 
-    PORT_DIPNAME(0x03, 0x03, "Coinage 1p/2p", IP_KEY_NONE )
-    PORT_DIPSETTING(   0x00, "Free Play" )
+    PORT_DIPNAME(0x03, 0x03, "Coinage 1p/2p" )
+    PORT_DIPSETTING(   0x00, DEF_STR( Free_Play ) )
     PORT_DIPSETTING(   0x03, "1 Credit/2 Credits" )
     PORT_DIPSETTING(   0x02, "2 Credits/3 Credits" )
     PORT_DIPSETTING(   0x01, "2 Credits/4 Credits" )
 
-    PORT_DIPNAME(0x08, 0x08, "Lives", IP_KEY_NONE )
+    PORT_DIPNAME(0x08, 0x08, DEF_STR( Lives ) )
     PORT_DIPSETTING(   0x08, "3" )
     PORT_DIPSETTING(   0x00, "4" )
 
     PORT_START      /* IN5 - from "TEST NO.6 - dip switch B" */
 
-    PORT_DIPNAME(0x07, 0x07, "Bonus Life", IP_KEY_NONE )
+    PORT_DIPNAME(0x07, 0x07, DEF_STR( Bonus_Life ) )
     PORT_DIPSETTING(   0x07, "20000" )
     PORT_DIPSETTING(   0x06, "30000" )
     PORT_DIPSETTING(   0x05, "40000" )
@@ -470,21 +470,21 @@ INPUT_PORTS_START( megatack_input_ports )
     PORT_DIPSETTING(   0x01, "80000" )
     PORT_DIPSETTING(   0x00, "90000" )
 
-    PORT_DIPNAME(0x10, 0x10, "Monitor View", IP_KEY_NONE )
+    PORT_DIPNAME(0x10, 0x10, "Monitor View" )
     PORT_DIPSETTING(   0x10, "Direct" )
     PORT_DIPSETTING(   0x00, "Mirror" )
 
-    PORT_DIPNAME(0x20, 0x20, "Monitor Orientation", IP_KEY_NONE )
+    PORT_DIPNAME(0x20, 0x20, "Monitor Orientation" )
     PORT_DIPSETTING(   0x20, "Horizontal" )
     PORT_DIPSETTING(   0x00, "Vertical" )
 
-    PORT_DIPNAME(0x40, 0x40, "Flip Screen", IP_KEY_NONE )
-    PORT_DIPSETTING(   0x40, "Off" )
-    PORT_DIPSETTING(   0x00, "On" )
+    PORT_DIPNAME(0x40, 0x40, DEF_STR( Flip_Screen ) )
+    PORT_DIPSETTING(   0x40, DEF_STR( Off ) )
+    PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 
-    PORT_DIPNAME(0x80, 0x80, "Cabinet", IP_KEY_NONE )
-    PORT_DIPSETTING(   0x80, "Upright" )
-    PORT_DIPSETTING(   0x00, "Cocktail" )
+    PORT_DIPNAME(0x80, 0x80, DEF_STR( Cabinet ) )
+    PORT_DIPSETTING(   0x80, DEF_STR( Upright ) )
+    PORT_DIPSETTING(   0x00, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
 
@@ -493,11 +493,11 @@ INPUT_PORTS_START( challeng_input_ports )
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
     PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_TILT,
-                      "Slam", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+                      "Slam", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
     PORT_BITX(0x08, IP_ACTIVE_LOW, 0,
-                      "Do Tests", OSD_KEY_F1, IP_JOY_NONE, 0)
+                      "Do Tests", OSD_KEY_F1, IP_JOY_NONE )
     PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_SERVICE,
-                      "Select Test", OSD_KEY_F2, IP_JOY_NONE, 0)
+                      "Select Test", OSD_KEY_F2, IP_JOY_NONE )
     PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )      /* coin sw. no.3 */
     PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )      /* coin sw. no.2 */
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )      /* coin sw. no.1 */
@@ -516,51 +516,51 @@ INPUT_PORTS_START( challeng_input_ports )
     PORT_START      /* IN2 - from "TEST NO.8 - status locator - player no.1" */
 
     PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1,
-                          "P1 Warp", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+                          "P1 Warp", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
     PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1,
-                          "P1 Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+                          "P1 Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
     PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1,
-                          "P1 Bomb", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+                          "P1 Bomb", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
     PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1,
-                          "P1 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+                          "P1 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
     PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
     PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1,
-                          "P1 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+                          "P1 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
 
     PORT_START      /* IN3 - from "TEST NO.8 - status locator - player no.2" */
 
     PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2,
-                          "P2 Warp", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+                          "P2 Warp", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
     PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2,
-                          "P2 Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+                          "P2 Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
     PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2,
-                          "P2 Bomb", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+                          "P2 Bomb", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
     PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2,
-                          "P2 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+                          "P2 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
     PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
     PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2,
-                          "P2 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+                          "P2 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
 
     PORT_START      /* IN4 - from "TEST NO.6 - dip switch A" */
 
-    PORT_DIPNAME(0x03, 0x03, "Coinage 1p/2p", IP_KEY_NONE )
-    PORT_DIPSETTING(   0x00, "Free Play" )
+    PORT_DIPNAME(0x03, 0x03, "Coinage 1p/2p" )
+    PORT_DIPSETTING(   0x00, DEF_STR( Free_Play ) )
     PORT_DIPSETTING(   0x03, "1 Credit/2 Credits" )
     PORT_DIPSETTING(   0x02, "2 Credits/3 Credits" )
     PORT_DIPSETTING(   0x01, "2 Credits/4 Credits" )
 
-    PORT_DIPNAME(0xc0, 0xc0, "Lives", IP_KEY_NONE )
+    PORT_DIPNAME(0xc0, 0xc0, DEF_STR( Lives ) )
     PORT_DIPSETTING(   0xc0, "3" )
     PORT_DIPSETTING(   0x80, "4" )
     PORT_DIPSETTING(   0x40, "5" )
     PORT_DIPSETTING(   0x00, "6" )
 
     PORT_START      /* IN5 - from "TEST NO.6 - dip switch B" */
-    PORT_DIPNAME(0x07, 0x07, "Bonus Life", IP_KEY_NONE )
+    PORT_DIPNAME(0x07, 0x07, DEF_STR( Bonus_Life ) )
     PORT_DIPSETTING(   0x01, "20000" )
     PORT_DIPSETTING(   0x00, "30000" )
     PORT_DIPSETTING(   0x07, "40000" )
@@ -569,18 +569,18 @@ INPUT_PORTS_START( challeng_input_ports )
     PORT_DIPSETTING(   0x04, "70000" )
     PORT_DIPSETTING(   0x03, "80000" )
     PORT_DIPSETTING(   0x02, "90000" )
-    PORT_DIPNAME(0x10, 0x10, "Monitor View", IP_KEY_NONE )
+    PORT_DIPNAME(0x10, 0x10, "Monitor View" )
     PORT_DIPSETTING(   0x10, "Direct" )
     PORT_DIPSETTING(   0x00, "Mirror" )
-    PORT_DIPNAME(0x20, 0x20, "Monitor Orientation", IP_KEY_NONE )
+    PORT_DIPNAME(0x20, 0x20, "Monitor Orientation" )
     PORT_DIPSETTING(   0x20, "Horizontal" )
     PORT_DIPSETTING(   0x00, "Vertical" )
-    PORT_DIPNAME(0x40, 0x40, "Flip Screen", IP_KEY_NONE )
-    PORT_DIPSETTING(   0x40, "Off" )
-    PORT_DIPSETTING(   0x00, "On" )
-    PORT_DIPNAME(0x80, 0x80, "Cabinet", IP_KEY_NONE )
-    PORT_DIPSETTING(   0x80, "Upright" )
-    PORT_DIPSETTING(   0x00, "Cocktail" )
+    PORT_DIPNAME(0x40, 0x40, DEF_STR( Flip_Screen ) )
+    PORT_DIPSETTING(   0x40, DEF_STR( Off ) )
+    PORT_DIPSETTING(   0x00, DEF_STR( On ) )
+    PORT_DIPNAME(0x80, 0x80, DEF_STR( Cabinet ) )
+    PORT_DIPSETTING(   0x80, DEF_STR( Upright ) )
+    PORT_DIPSETTING(   0x00, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
 

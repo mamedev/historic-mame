@@ -94,14 +94,14 @@ INPUT_PORTS_START( astinvad_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_START      /* IN1 */
-	PORT_DIPNAME( 0x01, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
-	PORT_DIPNAME( 0x02, 0x00, "Extra Live", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x00, "Extra Live" )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x02, "20000" )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x08, 0x00, "Coins", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x00, "Coins" )
 	PORT_DIPSETTING(    0x08, "1 Coin  Per 2 Plays" )
 	PORT_DIPSETTING(    0x00, "1 Coin  Per Play" )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Left */
@@ -381,14 +381,14 @@ INPUT_PORTS_START( spaceint_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL)
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL)
 	PORT_START      /* IN1 */
-	PORT_DIPNAME( 0x01, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
-	PORT_DIPNAME( 0x02, 0x00, "Extra Live", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x00, "Extra Live" )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x02, "20000" )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x08, 0x00, "Coins", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x00, "Coins" )
 	PORT_DIPSETTING(    0x08, "1 Coin  Per 2 Plays" )
 	PORT_DIPSETTING(    0x00, "1 Coin  Per Play" )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Left */
@@ -398,12 +398,12 @@ INPUT_PORTS_START( spaceint_input_ports )
 	PORT_START	/* FAKE */
 	/* The coin slots are not memory mapped. Coin insertion causes a NMI. */
 	/* This fake input port is used by the interrupt */
-	/* handler to be notified of coin insertions. We use IPF_IMPULSE to */
+	/* handler to be notified of coin insertions. We use IMPULSE to */
 	/* trigger exactly one interrupt, without having to check when the */
 	/* user releases the key. */
 	/* The cabinet selector is not memory mapped, but just disables the */
 	/* screen flip logic */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE, "Coin", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
 INPUT_PORTS_END
 
 

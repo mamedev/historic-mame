@@ -49,10 +49,12 @@ int beam;                                 /* size of vector beam    */
 int flicker;                              /* beam flicker value     */
 int translucency;
 
-static int beam_diameter_is_one = 0;      /* flag that beam is one pixel wide */
+static int beam_diameter_is_one;		  /* flag that beam is one pixel wide */
 
 static int vector_scale_x;                /* scaling to screen */
 static int vector_scale_y;                /* scaling to screen */
+
+static float gamma_correction = 1.0;
 
 /* The vectices are buffered here */
 typedef struct
@@ -171,6 +173,25 @@ static unsigned char find_color(unsigned char r,unsigned char g,unsigned char b)
 	return(bi);
 }
 
+/* MLR 990316 new gamma handling added */
+void vector_set_gamma(float _gamma)
+{
+	int i, h;
+
+	gamma_correction = _gamma;
+
+	for (i=0; i<256; i++)
+	{
+		h = 255.0*pow(i/255.0, 1.0/gamma_correction);
+		if( h > 255) h = 255;
+		Tgamma[i] = Tgammar[255-i] = h;
+	}
+}
+
+float vector_get_gamma(void)
+{
+	return gamma_correction;
+}
 
 /*
  * Initializes vector game video emulation
@@ -180,10 +201,18 @@ int vector_vh_start (void)
 {
 	int h,i,j,k,c[3];
 
+	/* Grab the settings for this session */
+	antialias = options.antialias;
+	translucency = options.translucency;
+	flicker = options.flicker;
+	beam = options.beam;
+
 	if (beam == 0x00010000)
 		beam_diameter_is_one = 1;
+	else
+		beam_diameter_is_one = 0;
 
-	p_index=0;
+	p_index = 0;
 
 	new_index = 0;
 	old_index = 0;
@@ -260,12 +289,8 @@ int vector_vh_start (void)
 	}
 
 	/* build gamma correction table */
-	for (i=0; i<256; i++)
-	{
-		h = i + (i>>2);
-		if( h > 255) h = 255;
-		Tgamma[i] = Tgammar[255-i] = h;
-	}
+	vector_set_gamma (gamma_correction);
+
 
 	return 0;
 }
@@ -808,7 +833,8 @@ void vector_vh_update(struct osd_bitmap *bitmap,int full_refresh)
 		else
 		{
 			new->arg1 = p_index;
-			vector_draw_to (new->x, new->y, new->col, new->intensity, new->status);
+			vector_draw_to (new->x, new->y, new->col, Tgamma[new->intensity], new->status);
+
 			new->arg2 = p_index;
 		}
 		new++;
@@ -918,7 +944,8 @@ void vector_vh_update_backdrop(struct osd_bitmap *bitmap, struct artwork *a, int
 		else
 		{
 			new->arg1 = p_index;
-			vector_draw_to (new->x, new->y, new->col, new->intensity, new->status);
+			vector_draw_to (new->x, new->y, new->col, Tgamma[new->intensity], new->status);
+
 			new->arg2 = p_index;
 		}
 		new++;

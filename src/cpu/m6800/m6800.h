@@ -41,10 +41,12 @@ extern void m6800_set_irq_callback(int (*callback)(int irqline));
 extern void m6800_state_save(void *file);
 extern void m6800_state_load(void *file);
 extern const char *m6800_info(void *context, int regnum);
+extern unsigned m6800_dasm(UINT8 *base, char *buffer, unsigned pc);
 
 /****************************************************************************
  * For now make the 6801 using the m6800 variables and functions
  ****************************************************************************/
+#if HAS_M6801
 #define M6801_A 					M6800_A
 #define M6801_B 					M6800_B
 #define M6801_PC					M6800_PC
@@ -82,10 +84,13 @@ extern void m6801_set_irq_callback(int (*callback)(int irqline));
 extern void m6801_state_save(void *file);
 extern void m6801_state_load(void *file);
 extern const char *m6801_info(void *context, int regnum);
+extern unsigned m6801_dasm(UINT8 *base, char *buffer, unsigned pc);
+#endif
 
 /****************************************************************************
  * For now make the 6802 using the m6800 variables and functions
  ****************************************************************************/
+#if HAS_M6802
 #define M6802_A 					M6800_A
 #define M6802_B 					M6800_B
 #define M6802_PC					M6800_PC
@@ -123,10 +128,13 @@ extern void m6802_set_irq_callback(int (*callback)(int irqline));
 extern void m6802_state_save(void *file);
 extern void m6802_state_load(void *file);
 extern const char *m6802_info(void *context, int regnum);
+extern unsigned m6802_dasm(UINT8 *base, char *buffer, unsigned pc);
+#endif
 
 /****************************************************************************
  * For now make the 6803 using the m6800 variables and functions
  ****************************************************************************/
+#if HAS_M6803
 #define M6803_A 					M6800_A
 #define M6803_B 					M6800_B
 #define M6803_PC					M6800_PC
@@ -164,10 +172,13 @@ extern void m6803_set_irq_callback(int (*callback)(int irqline));
 extern void m6803_state_save(void *file);
 extern void m6803_state_load(void *file);
 extern const char *m6803_info(void *context, int regnum);
+extern unsigned m6803_dasm(UINT8 *base, char *buffer, unsigned pc);
+#endif
 
 /****************************************************************************
  * For now make the 6808 using the m6800 variables and functions
  ****************************************************************************/
+#if HAS_M6808
 #define M6808_A 					M6800_A
 #define M6808_B 					M6800_B
 #define M6808_PC					M6800_PC
@@ -205,10 +216,13 @@ extern void m6808_set_irq_callback(int (*callback)(int irqline));
 extern void m6808_state_save(void *file);
 extern void m6808_state_load(void *file);
 extern const char *m6808_info(void *context, int regnum);
+extern unsigned m6808_dasm(UINT8 *base, char *buffer, unsigned pc);
+#endif
 
 /****************************************************************************
  * For now make the HD63701 using the m6800 variables and functions
  ****************************************************************************/
+#if HAS_HD63701
 #define HD63701_A					 M6800_A
 #define HD63701_B					 M6800_B
 #define HD63701_PC					 M6800_PC
@@ -246,6 +260,8 @@ extern void hd63701_set_irq_callback(int (*callback)(int irqline));
 extern void hd63701_state_save(void *file);
 extern void hd63701_state_load(void *file);
 extern const char *hd63701_info(void *context, int regnum);
+extern unsigned hd63701_dasm(UINT8 *base, char *buffer, unsigned pc);
+#endif
 
 /****************************************************************************/
 /* Read a byte from given memory location									*/
@@ -291,8 +307,8 @@ extern int m6800_Flags;
 #endif
 
 #ifdef	MAME_DEBUG
-extern	int mame_debug;
-extern	int Dasm680x(int subtype, char *buf, int pc);
+#include "osd_dbg.h"
+extern unsigned Dasm680x(int subtype, char *buf, unsigned pc);
 #endif
 
 #endif /* _M6800_H */

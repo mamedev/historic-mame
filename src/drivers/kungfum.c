@@ -107,7 +107,7 @@ Puertos OUT;  (00)      ;Sound related. (Look at subrutine 0DE5h)
 |   5                           |           On   On                       |
 |                               |                                         |
 |                               |               Coin Mode 2               |
-|                               |           (DIP SW2 #3 = "On")           |
+|                               |           (DIP SW2 #3 = DEF_STR( On ))           |
 |   Selector A:                 |                                         |
 |   -----------                 |                                         |
 |   1 Coin  1 Credit            |                     Off  Off            |
@@ -122,7 +122,7 @@ Puertos OUT;  (00)      ;Sound related. (Look at subrutine 0DE5h)
 |   1 Coin  5 Credits           |                               Off  On   |
 |   1 Coin  6 Credits           |                               On   On   |
 |                               |               Coin Mode 1               |
-|                               |           (DIP SW2 #3 = "Off")          |
+|                               |           (DIP SW2 #3 = DEF_STR( Off ))          |
 |   1 Coin  1 Credit            |                     Off  Off  Off  Off  |
 |   2 Coins 1 Credit            |                     On   Off  Off  Off  |
 |   3 Coins 1 Credit            |                     Off  On   Off  Off  |
@@ -163,7 +163,7 @@ Puertos OUT;  (00)      ;Sound related. (Look at subrutine 0DE5h)
 |   On                          |                                    On   |
 |-------------------------------------------------------------------------|
 
-Note #1: SW#4 and SW#6 are supposed to be in the "Off" position.
+Note #1: SW#4 and SW#6 are supposed to be in the DEF_STR( Off ) position.
 
 Note #2: Initiate "Stop Mode" with 2P Start button.
          Start again with 1P Start button.
@@ -238,8 +238,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	/* coin input must be active for 19 frames to be consistently recognized */
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE,
-		"Coin Aux", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 19 )
+	PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_LOW, IPT_COIN3, 19 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -264,62 +263,62 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x01, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x02, 0x02, "Energy Loss", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x02, "Energy Loss" )
 	PORT_DIPSETTING(    0x02, "Slow" )
 	PORT_DIPSETTING(    0x00, "Fast" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
 	/* TODO: support the different settings which happen in Coin Mode 2 */
-	PORT_DIPNAME( 0xf0, 0xf0, "Coinage", IP_KEY_NONE ) /* mapped on coin mode 1 */
-	PORT_DIPSETTING(    0xa0, "6 Coins/1 Credit" )
-	PORT_DIPSETTING(    0xb0, "5 Coins/1 Credit" )
-	PORT_DIPSETTING(    0xc0, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0xd0, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0xe0, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x70, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x60, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x50, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x40, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x30, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coinage ) ) /* mapped on coin mode 1 */
+	PORT_DIPSETTING(    0xa0, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	/* settings 0x10, 0x20, 0x80, 0x90 all give 1 Coin/1 Credit */
 
 	PORT_START	/* DSW2 */
-	PORT_DIPNAME( 0x01, 0x01, "Flip Screen", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x02, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x02, "Cocktail" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
 /* This activates a different coin mode. Look at the dip switch setting schematic */
-	PORT_DIPNAME( 0x04, 0x04, "Coin Mode", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x04, "Coin Mode" )
 	PORT_DIPSETTING(    0x04, "Mode 1" )
 	PORT_DIPSETTING(    0x00, "Mode 2" )
 	/* In slowmo mode, press 2 to slow game speed */
-	PORT_BITX   ( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Slow Motion Mode", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX   ( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Slow Motion Mode", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* In stop mode, press 2 to stop and 1 to restart */
-	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* In level selection mode, press 1 to select and 2 to restart */
-	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Level Selection Mode", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Level Selection Mode", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 

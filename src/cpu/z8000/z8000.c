@@ -34,10 +34,23 @@
 #define LOG(x)
 #endif
 
-int z8000_ICount;
+static UINT8 z8000_reg_layout[] = {
+	Z8000_PC, Z8000_NSP, Z8000_FCW, Z8000_PSAP, Z8000_REFRESH, -1,
+	Z8000_R0, Z8000_R1, Z8000_R2, Z8000_R3, Z8000_R4, Z8000_R5, Z8000_R6, Z8000_R7, -1,
+	Z8000_R8, Z8000_R9, Z8000_R10,Z8000_R11,Z8000_R12,Z8000_R13,Z8000_R14,Z8000_R15,-1,
+	Z8000_IRQ_REQ, Z8000_IRQ_SRV, Z8000_IRQ_VEC, Z8000_NMI_STATE, Z8000_NVI_STATE, Z8000_VI_STATE, 0
+};
+
+static UINT8 z8000_win_layout[] = {
+	 0, 0,80, 4,	/* register window (top rows) */
+	 0, 5,26,17,	/* disassembler window (left colums) */
+	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
+	27,14,53, 8,	/* memory #2 window (right, lower middle) */
+	 0,23,80, 1,	/* command line window (bottom rows) */
+};
 
 /* opcode execution table */
-Z8000_exec *z8000_exec = 0;
+Z8000_exec *z8000_exec = NULL;
 
 typedef union {
     UINT8   B[16]; /* RL0,RH0,RL1,RH1...RL7,RH7 */
@@ -48,6 +61,7 @@ typedef union {
 
 typedef struct {
     UINT16  op[4];      /* opcodes/data of current instruction */
+	UINT16	ppc;		/* previous program counter */
     UINT16  pc;         /* program counter */
     UINT16  psap;       /* program status pointer */
     UINT16  fcw;        /* flags and control word */
@@ -61,6 +75,8 @@ typedef struct {
 	int irq_state[2];	/* IRQ line states (NVI, VI) */
     int (*irq_callback)(int irqline);
 }   z8000_Regs;
+
+int z8000_ICount;
 
 /* current CPU context */
 static z8000_Regs Z;
@@ -458,11 +474,12 @@ int z8000_execute(int cycles)
     do
     {
         /* any interrupt request pending? */
-        if (IRQ_REQ) Interrupt();
-#ifdef  MAME_DEBUG
-        if (mame_debug) MAME_Debug();
-#endif
-        if (IRQ_REQ & Z8000_HALT)
+        if (IRQ_REQ) 
+			Interrupt();
+
+		CALL_MAME_DEBUG;
+
+		if (IRQ_REQ & Z8000_HALT)
         {
             z8000_ICount = 0;
         }
@@ -555,12 +572,13 @@ unsigned z8000_get_reg(int regnum)
 		case Z8000_NMI_STATE: return Z.nmi_state;
 		case Z8000_NVI_STATE: return Z.irq_state[0];
 		case Z8000_VI_STATE: return Z.irq_state[1];
+		case REG_PREVIOUSPC: return PPC;
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if( regnum <= REG_SP_CONTENTS )
 			{
 				unsigned offset = NSP + 2 * (REG_SP_CONTENTS - regnum);
 				if( offset < 0xffff )
-					return RDMEM_W( offset ); 
+					return RDMEM_W( offset );
 			}
 	}
     return 0;
@@ -680,14 +698,11 @@ const char *z8000_info(void *context, int regnum)
 		case CPU_INFO_VERSION: return "1.1";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (C) 1998,1999 Juergen Buchmueller, all rights reserved.";
-		case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->pc); break;
-		case CPU_INFO_SP: sprintf(buffer[which], "%04X", r->nsp); break;
-#if MAME_DEBUG
-		case CPU_INFO_DASM: r->pc += DasmZ8000(buffer[which], r->pc); break;
-#else
-		case CPU_INFO_DASM: sprintf(buffer[which], "$%02x", ROM[r->pc]); r->pc++; break;
-#endif
-		case CPU_INFO_FLAGS:
+
+		case CPU_INFO_REG_LAYOUT: return (const char*)z8000_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)z8000_win_layout;
+
+        case CPU_INFO_FLAGS:
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
 				r->fcw & 0x8000 ? 's':'.',
 				r->fcw & 0x4000 ? 'n':'.',
@@ -706,11 +721,11 @@ const char *z8000_info(void *context, int regnum)
 				r->fcw & 0x0002 ? '?':'.',
 				r->fcw & 0x0001 ? '?':'.');
             break;
-		case CPU_INFO_REG+Z8000_PC: sprintf(buffer[which], "PC:%04X", r->pc); break;
-        case CPU_INFO_REG+Z8000_NSP: sprintf(buffer[which], "NSP:%04X", r->nsp); break;
+		case CPU_INFO_REG+Z8000_PC: sprintf(buffer[which], "PC :%04X", r->pc); break;
+		case CPU_INFO_REG+Z8000_NSP: sprintf(buffer[which], "SP :%04X", r->nsp); break;
 		case CPU_INFO_REG+Z8000_FCW: sprintf(buffer[which], "FCW:%04X", r->fcw); break;
-		case CPU_INFO_REG+Z8000_PSAP: sprintf(buffer[which], "PSAP:%04X", r->psap); break;
-		case CPU_INFO_REG+Z8000_REFRESH: sprintf(buffer[which], "REFRESH:%04X", r->refresh); break;
+		case CPU_INFO_REG+Z8000_PSAP: sprintf(buffer[which], "NSP:%04X", r->psap); break;
+		case CPU_INFO_REG+Z8000_REFRESH: sprintf(buffer[which], "REFR:%04X", r->refresh); break;
 		case CPU_INFO_REG+Z8000_IRQ_REQ: sprintf(buffer[which], "IRQR:%04X", r->irq_req); break;
 		case CPU_INFO_REG+Z8000_IRQ_SRV: sprintf(buffer[which], "IRQS:%04X", r->irq_srv); break;
 		case CPU_INFO_REG+Z8000_IRQ_VEC: sprintf(buffer[which], "IRQV:%04X", r->irq_vec); break;
@@ -737,9 +752,20 @@ const char *z8000_info(void *context, int regnum)
 		case CPU_INFO_REG+Z8000_R15: sprintf(buffer[which], "R15:%04X", r->regs.W[15^REG_XOR]); break;
 		case CPU_INFO_REG+Z8000_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
 		case CPU_INFO_REG+Z8000_NVI_STATE: sprintf(buffer[which], "NVI:%X", r->irq_state[0]); break;
-		case CPU_INFO_REG+Z8000_VI_STATE: sprintf(buffer[which], "VI:%X", r->irq_state[1]); break;
+		case CPU_INFO_REG+Z8000_VI_STATE: sprintf(buffer[which], "VI :%X", r->irq_state[1]); break;
     }
 	return buffer[which];
 }
 
+
+unsigned z8000_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+	(void)base;
+#ifdef MAME_DEBUG
+    return DasmZ8000(buffer,pc);
+#else
+	sprintf( buffer, "$%02X%02X", ROM[pc], ROM[(pc+1)&0xffff] );
+	return 2;
+#endif
+}
 

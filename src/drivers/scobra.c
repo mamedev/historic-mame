@@ -77,11 +77,13 @@ extern int galaxian_bulletsram_size;
 void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void rescue_vh_convert_color_prom  (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void minefld_vh_convert_color_prom (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void stratgyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 int  scramble_vh_start(void);
 int  rescue_vh_start  (void);
 int  minefld_vh_start (void);
 int  calipso_vh_start (void);
+int  stratgyx_vh_start(void);
 
 void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void galaxian_flipx_w(int offset,int data);
@@ -290,10 +292,10 @@ INPUT_PORTS_START( scobra_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START      /* IN1 */
-	PORT_DIPNAME( 0x01, 0x00, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, "No" )
 	PORT_DIPSETTING(    0x01, "Yes" )
-	PORT_DIPNAME( 0x02, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x00, "Lives" )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
@@ -305,14 +307,14 @@ INPUT_PORTS_START( scobra_input_ports )
 
 	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_DIPNAME( 0x06, 0x02, "Coinage", IP_KEY_NONE )
+	PORT_DIPNAME( 0x06, 0x02, "Coinage" )
 	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x06, "4 Coins/3 Credits" )
 	PORT_DIPSETTING(    0x02, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x00, "1 Coin/99 Credits" )
-	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -332,10 +334,10 @@ INPUT_PORTS_START( scobrak_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START      /* IN1 */
-	PORT_DIPNAME( 0x01, 0x00, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, "No" )
 	PORT_DIPSETTING(    0x01, "Yes" )
-	PORT_DIPNAME( 0x02, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x00, "Lives" )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
@@ -347,14 +349,14 @@ INPUT_PORTS_START( scobrak_input_ports )
 
 	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_DIPNAME( 0x06, 0x02, "Coinage", IP_KEY_NONE )
+	PORT_DIPNAME( 0x06, 0x02, "Coinage" )
 	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x06, "4 Coins/3 Credits" )
 	PORT_DIPSETTING(    0x02, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x00, "1 Coin/99 Credits" )
-	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -373,40 +375,40 @@ INPUT_PORTS_START( stratgyx_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START      /* IN1 */
-	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x00, "Lives" )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "99" )
-	PORT_DIPNAME( 0x04, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x00, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x04, "On" )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x08, "On" )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_DIPNAME( 0x20, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x20, "On" )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2  )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START      /* IN2 */
-	PORT_DIPNAME( 0x01, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x01, "On" )
-	PORT_DIPNAME( 0x06, 0x02, "Coinage", IP_KEY_NONE )
+	PORT_DIPNAME( 0x06, 0x02, "Coinage" )
 	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x06, "4 Coins/3 Credits" )
 	PORT_DIPSETTING(    0x02, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x00, "1 Coin/99 Credit" )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x08, "On" )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_DIPNAME( 0x80, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off")
 	PORT_DIPSETTING(    0x80, "On" )
 INPUT_PORTS_END
@@ -415,7 +417,7 @@ INPUT_PORTS_START( armorcar_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_DIPNAME( 0x04, 0x04, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown 1" )
 	PORT_DIPSETTING(    0x04, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -425,10 +427,10 @@ INPUT_PORTS_START( armorcar_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* IN1 */
-	PORT_DIPNAME( 0x01, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x01, "Lives" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds" )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
@@ -440,20 +442,20 @@ INPUT_PORTS_START( armorcar_input_ports )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
-	PORT_DIPNAME( 0x06, 0x02, "Coinage", IP_KEY_NONE )
+	PORT_DIPNAME( 0x06, 0x02, "Coinage" )
 	PORT_DIPSETTING(    0x02, "Coin A 1/1 Coin B 1/1" )
 	PORT_DIPSETTING(    0x00, "Coin A 1/2 Coin B 2/1" )
 	PORT_DIPSETTING(    0x04, "Coin A 1/3 Coin B 3/1" )
 	PORT_DIPSETTING(    0x06, "Coin A 1/4 Coin B 4/1" )
-	PORT_DIPNAME( 0x08, 0x08, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown 2" )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown 3", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 3" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
@@ -466,7 +468,7 @@ INPUT_PORTS_START( moonwar2_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START      /* IN1 */
-	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x00, "Lives" )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
@@ -479,16 +481,16 @@ INPUT_PORTS_START( moonwar2_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
 	PORT_START      /* IN2 */
-	PORT_DIPNAME( 0x01, 0x00, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, "Unknown 2" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x01, "On" )
-	PORT_DIPNAME( 0x06, 0x02, "Coinage", IP_KEY_NONE )
+	PORT_DIPNAME( 0x06, 0x02, "Coinage" )
 	PORT_DIPSETTING(    0x02, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x00, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
 	PORT_DIPSETTING(    0x06, "1 Coin/4 Credits" )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x10, 0x00, "Unknown 3", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x00, "Unknown 3" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x10, "On" )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -511,10 +513,10 @@ INPUT_PORTS_START( spdcoin_input_ports )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
     PORT_START      /* IN1 */
-    PORT_DIPNAME( 0x01, 0x00, "Test?", IP_KEY_NONE )   /* Dip Sw #2 */
+    PORT_DIPNAME( 0x01, 0x00, "Test?" )   /* Dip Sw #2 */
     PORT_DIPSETTING(    0x01, "Frozen" )
     PORT_DIPSETTING(    0x00, "Normal" )
-    PORT_DIPNAME( 0x02, 0x02, "Unknown 1", IP_KEY_NONE ) /* Dip Sw #1 */
+    PORT_DIPNAME( 0x02, 0x02, "Unknown 1" ) /* Dip Sw #1 */
     PORT_DIPSETTING(    0x02, "Off" )
     PORT_DIPSETTING(    0x00, "On" )
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -526,13 +528,13 @@ INPUT_PORTS_START( spdcoin_input_ports )
 
     PORT_START      /* IN2 */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
-    PORT_DIPNAME( 0x02, 0x00, "Unknown 5", IP_KEY_NONE )    /* Dip Sw #5 */
+    PORT_DIPNAME( 0x02, 0x00, "Unknown 5" )    /* Dip Sw #5 */
     PORT_DIPSETTING(    0x02, "Off" )
     PORT_DIPSETTING(    0x00, "On" )
-    PORT_DIPNAME( 0x04, 0x00, "Unknown 4", IP_KEY_NONE )    /* Dip Sw #4 */
+    PORT_DIPNAME( 0x04, 0x00, "Unknown 4" )    /* Dip Sw #4 */
     PORT_DIPSETTING(    0x04, "Off" )
     PORT_DIPSETTING(    0x00, "On" )
-    PORT_DIPNAME( 0x08, 0x00, "Lives", IP_KEY_NONE )    /* Dip Sw #3 */
+    PORT_DIPNAME( 0x08, 0x00, "Lives" )    /* Dip Sw #3 */
     PORT_DIPSETTING(    0x08, "3" )
     PORT_DIPSETTING(    0x00, "5" )
     PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -556,10 +558,10 @@ INPUT_PORTS_START( darkplnt_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* IN1 */
-	PORT_DIPNAME( 0x01, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x01, "Lives" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds" )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
@@ -571,14 +573,14 @@ INPUT_PORTS_START( darkplnt_input_ports )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x06, 0x02, "Coinage", IP_KEY_NONE )
+	PORT_DIPNAME( 0x06, 0x02, "Coinage" )
 	PORT_DIPSETTING(    0x02, "Coin A 1/1 Coin B 1/1" )
 	PORT_DIPSETTING(    0x00, "Coin A 1/2 Coin B 2/1" )
 	PORT_DIPSETTING(    0x04, "Coin A 1/3 Coin B 3/1" )
 	PORT_DIPSETTING(    0x06, "Coin A 1/4 Coin B 4/1" )
-	PORT_DIPNAME( 0x08, 0x08, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -597,10 +599,10 @@ INPUT_PORTS_START( tazmania_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* IN1 */
-	PORT_DIPNAME( 0x01, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x01, "Lives" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds" )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
@@ -612,22 +614,22 @@ INPUT_PORTS_START( tazmania_input_ports )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_DIPNAME( 0x06, 0x02, "Coinage", IP_KEY_NONE )
+	PORT_DIPNAME( 0x06, 0x02, "Coinage" )
 	PORT_DIPSETTING(    0x02, "Coin A 1/1 Coin B 1/1" )
 	PORT_DIPSETTING(    0x00, "Coin A 1/2 Coin B 2/1" )
 	PORT_DIPSETTING(    0x04, "Coin A 1/3 Coin B 3/1" )
 	PORT_DIPSETTING(    0x06, "Coin A 1/4 Coin B 4/1" )
-	PORT_DIPNAME( 0x08, 0x08, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 1" )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown 2" )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown 3", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 3" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
@@ -645,10 +647,10 @@ INPUT_PORTS_START( calipso_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START      /* IN1 */
-	PORT_DIPNAME( 0x01, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x01, "Lives" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds" )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
@@ -660,14 +662,14 @@ INPUT_PORTS_START( calipso_input_ports )
 
 	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_DIPNAME( 0x06, 0x02, "Coinage", IP_KEY_NONE )
+	PORT_DIPNAME( 0x06, 0x02, "Coinage" )
 	PORT_DIPSETTING(    0x02, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x00, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
 	PORT_DIPSETTING(    0x06, "1 Coin/4 Credits" )
-	PORT_DIPNAME( 0x08, 0x08, "Cabinet (Not Supported)", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0x08, 0x08, "Cabinet (Not Supported)" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -687,10 +689,10 @@ INPUT_PORTS_START( anteater_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* IN1 */
-	PORT_DIPNAME( 0x01, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x01, "Lives" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds" )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
@@ -702,22 +704,22 @@ INPUT_PORTS_START( anteater_input_ports )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_DIPNAME( 0x06, 0x02, "Coinage", IP_KEY_NONE )
+	PORT_DIPNAME( 0x06, 0x02, "Coinage" )
 	PORT_DIPSETTING(    0x02, "Coin A 1/1 Coin B 1/1" )
 	PORT_DIPSETTING(    0x00, "Coin A 1/2 Coin B 2/1" )
 	PORT_DIPSETTING(    0x04, "Coin A 1/3 Coin B 3/1" )
 	PORT_DIPSETTING(    0x06, "Coin A 1/4 Coin B 4/1" )
-	PORT_DIPNAME( 0x08, 0x08, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown 3", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 3" )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown 4", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown 4" )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown 5", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 5" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
@@ -725,7 +727,7 @@ INPUT_PORTS_END
 INPUT_PORTS_START( rescue_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_DIPNAME( 0x02, 0x02, "Starting Level", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x02, "Starting Level" )
 	PORT_DIPSETTING(    0x02, "1" )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_8WAY )
@@ -736,41 +738,41 @@ INPUT_PORTS_START( rescue_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* IN1 */
-	PORT_DIPNAME( 0x01, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x01, "Lives" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds" )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown 1" )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 2" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_DIPNAME( 0x06, 0x02, "Coinage", IP_KEY_NONE )
+	PORT_DIPNAME( 0x06, 0x02, "Coinage" )
 	PORT_DIPSETTING(    0x02, "Coin A 1/1 Coin B 1/1" )
 	PORT_DIPSETTING(    0x00, "Coin A 1/2 Coin B 2/1" )
 	PORT_DIPSETTING(    0x04, "Coin A 1/3 Coin B 3/1" )
 	PORT_DIPSETTING(    0x06, "Coin A 1/4 Coin B 4/1" )
-	PORT_DIPNAME( 0x08, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x00, "Difficulty" )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x08, "Hard" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown 4", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 4" )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown 5", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown 5" )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown 6", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 6" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
@@ -778,7 +780,7 @@ INPUT_PORTS_END
 INPUT_PORTS_START( minefld_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_DIPNAME( 0x02, 0x02, "Starting Level", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x02, "Starting Level" )
 	PORT_DIPSETTING(    0x02, "1" )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_8WAY )
@@ -789,41 +791,41 @@ INPUT_PORTS_START( minefld_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* IN1 */
-	PORT_DIPNAME( 0x01, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x01, "Lives" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds" )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown 1" )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 2" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_DIPNAME( 0x02, 0x02, "Coinage", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x02, "Coinage" )
 	PORT_DIPSETTING(    0x02, "Coin A 1/1 Coin B 1/1" )
 	PORT_DIPSETTING(    0x00, "Coin A 1/2 Coin B 2/1" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty" )
 	PORT_DIPSETTING(    0x0c, "Easy" )
 	PORT_DIPSETTING(    0x08, "Medium" )
 	PORT_DIPSETTING(    0x04, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown 3", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 3" )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown 4", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown 4" )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown 5", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 5" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
@@ -841,42 +843,42 @@ INPUT_PORTS_START( losttomb_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START      /* IN1 */
-	PORT_DIPNAME( 0x03, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x01, "Lives" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "Free Play" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_8WAY)
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT | IPF_8WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_DIPNAME( 0x80, 0x00, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown 1" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, "Unknown 2" )
 	PORT_DIPSETTING(    0x01, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x06, 0x02, "Coinage", IP_KEY_NONE )
+	PORT_DIPNAME( 0x06, 0x02, "Coinage" )
 	PORT_DIPSETTING(    0x02, "A 1/1 B 1/1" )
 	PORT_DIPSETTING(    0x00, "A 1/2 B 2/1" )
 	PORT_DIPSETTING(    0x04, "A 1/3 B 3/1" )
 	PORT_DIPSETTING(    0x06, "A 1/4 B 4/1" )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown 3", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown 3" )
 	PORT_DIPSETTING(    0x08, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x10, 0x00, "Unknown 4", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x00, "Unknown 4" )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x00, "Unknown 5", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown 5" )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown 6", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown 6" )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x00, "Unknown 7", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown 7" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
@@ -894,48 +896,48 @@ INPUT_PORTS_START( superbon_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* IN1 */
-	PORT_DIPNAME( 0x03, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x01, "Lives" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "Free Play" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x04, 0x00, "Unknown 1", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x04, 0x00, "Unknown 1" )
 	PORT_DIPSETTING(    0x04, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_DIPNAME( 0x10, 0x00, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x00, "Unknown 2" )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x00, "Unknown 3", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown 3" )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_DIPNAME( 0x80, 0x00, "Unknown 4", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown 4" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Unknown 5", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, "Unknown 5" )
 	PORT_DIPSETTING(    0x01, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x06, 0x02, "Coinage", IP_KEY_NONE )
+	PORT_DIPNAME( 0x06, 0x02, "Coinage" )
 	PORT_DIPSETTING(    0x02, "A 1/1 B 1/1" )
 	PORT_DIPSETTING(    0x00, "A 1/2 B 2/1" )
 	PORT_DIPSETTING(    0x04, "A 1/3 B 3/1" )
 	PORT_DIPSETTING(    0x06, "A 1/4 B 4/1" )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown 6", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown 6" )
 	PORT_DIPSETTING(    0x08, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x10, 0x00, "Unknown 7", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x00, "Unknown 7" )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x00, "Unknown 8", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown 8" )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown 9", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown 9" )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x00, "Unknown A", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown A" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
@@ -952,10 +954,10 @@ INPUT_PORTS_START( hustler_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START      /* IN1 */
-	PORT_DIPNAME( 0x01, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x01, "Lives" )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x01, "2" )
-	PORT_BITX(    0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", OSD_KEY_LCONTROL, OSD_JOY_FIRE1, 0 )
+	PORT_BITX(    0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x02, "On" )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -967,14 +969,14 @@ INPUT_PORTS_START( hustler_input_ports )
 
 	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_DIPNAME( 0x06, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPNAME( 0x06, 0x00, "Coinage" )
 	PORT_DIPSETTING(    0x04, "3 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x02, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x06, "1 Coin/2 Credits" )
-	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -1218,7 +1220,7 @@ static struct MachineDriver armorcar_machine_driver =
 	}
 };
 
-/* Rescue and Minefield have extra colours, and custom video initialise */
+/* Rescue, Minefield and Strategy X have extra colours, and custom video initialise */
 /* routines to set up the graduated colour backgound they use */
 static struct MachineDriver rescue_machine_driver =
 {
@@ -1297,6 +1299,51 @@ static struct MachineDriver minefld_machine_driver =
 	VIDEO_TYPE_RASTER,
 	0,
 	minefld_vh_start,
+	generic_vh_stop,
+	galaxian_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
+};
+
+static struct MachineDriver stratgyx_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			18432000/6,	/* 3.072 Mhz */
+			0,
+			type2_readmem,type2_writemem,0,0,
+			scramble_vh_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			14318000/8,	/* 1.78975 Mhz */
+			3,	/* memory region #3 */
+			sound_readmem,sound_writemem,sound_readport,sound_writeport,
+			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
+		}
+	},
+	60, 2500,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	scobra_init_machine,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo,
+	32+64+2,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 2 for background */
+	stratgyx_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	stratgyx_vh_start,
 	generic_vh_stop,
 	galaxian_vh_screenrefresh,
 
@@ -2375,7 +2422,7 @@ struct GameDriver stratgyx_driver =
 	"[Konami] (Stern license)",
 	"Lee Taylor",
 	0,
-	&type2_machine_driver,
+	&stratgyx_machine_driver,
 	0,
 
 	stratgyx_rom,
@@ -2400,7 +2447,7 @@ struct GameDriver stratgyb_driver =
 	"bootleg",
 	"Lee Taylor",
 	0,
-	&type2_machine_driver,
+	&stratgyx_machine_driver,
 	0,
 
 	stratgyb_rom,

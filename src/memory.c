@@ -1723,7 +1723,7 @@ void cpu_writeport(int Port,int Value)
 		}
 	}
 
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped I/O port %02x\n",cpu_getactivecpu(),cpu_get_pc(),Value,Port & cur_portmask);
+	if (errorlog && Port != 0x10000) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped I/O port %02x\n",cpu_getactivecpu(),cpu_get_pc(),Value,Port);
 }
 
 

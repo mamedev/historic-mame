@@ -286,27 +286,27 @@ INPUT_PORTS_START( input_ports )
         PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED  )
 
         PORT_START      /* DSW0 */
-        PORT_DIPNAME( 0x03, 0x03, "Coin B", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
-        PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
-        PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
-        PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-        PORT_DIPNAME( 0x0c, 0x0c, "Coin A", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
-        PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
-        PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
-        PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
-        PORT_DIPNAME( 0x30, 0x10, "Difficulty", IP_KEY_NONE )
+        PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_B ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+        PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+        PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+        PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+        PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_A ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+        PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+        PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+        PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+        PORT_DIPNAME( 0x30, 0x10, DEF_STR( Difficulty ) )
         PORT_DIPSETTING(    0x30, "Easy" )
         PORT_DIPSETTING(    0x20, "Medium" )
         PORT_DIPSETTING(    0x10, "Hard" )
         PORT_DIPSETTING(    0x00, "Hardest" )
-        PORT_DIPNAME( 0x40, 0x00, "Demo Sounds", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x40, "Off" )
-        PORT_DIPSETTING(    0x00, "On" )
-        PORT_DIPNAME( 0x80, 0x80, "Free Play", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x80, "Off" )
-        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
+        PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+        PORT_DIPNAME( 0x80, 0x80, DEF_STR( Free_Play ) )
+        PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -346,28 +346,28 @@ INPUT_PORTS_START( kc_input_ports )
         PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED  )
 
         PORT_START      /* DSW0 */
-        PORT_DIPNAME( 0x03, 0x03, "Coin B", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
-        PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
-        PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
-        PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-        PORT_DIPNAME( 0x0c, 0x0c, "Coin A", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
-        PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
-        PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
-        PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
-        PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x10, "Off" )
-        PORT_DIPSETTING(    0x00, "On" )
-        PORT_DIPNAME( 0x20, 0x20, "Free Play", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x20, "Off" )
-        PORT_DIPSETTING(    0x00, "On" )
-        PORT_DIPNAME( 0x40, 0x00, "Demo Sounds", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x40, "Off" )
-        PORT_DIPSETTING(    0x00, "On" )
-        PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x80, "Off" )
-        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_B ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+        PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+        PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+        PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+        PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_A ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+        PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+        PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+        PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+        PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+        PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+        PORT_DIPNAME( 0x20, 0x20, DEF_STR( Free_Play ) )
+        PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+        PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
+        PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+        PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+        PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 static struct GfxLayout tilelayout =
@@ -831,7 +831,7 @@ struct GameDriver kchamp_driver =
 	__FILE__,
 	0,
 	"kchamp",
-	"Karate Champ",
+	"Karate Champ (US)",
 	"1984",
 	"Data East USA",
 	"Ernesto Corvi\nGareth Hall\nCarlos Lozano\nHowie Cohen\nFrank Palazzolo",
@@ -857,7 +857,7 @@ struct GameDriver kchampvs_driver =
 	__FILE__,
 	0,
 	"kchampvs",
-	"Karate Champ (VS version)",
+	"Karate Champ (US VS version)",
 	"1984",
 	"Data East USA",
 	"Ernesto Corvi\nGareth Hall\nCarlos Lozano\nHowie Cohen\nFrank Palazzolo",
@@ -883,7 +883,7 @@ struct GameDriver karatedo_driver =
 	__FILE__,
 	&kchampvs_driver,
 	"karatedo",
-	"Taisen Karate Dou (VS version)",
+	"Taisen Karate Dou (Japan VS version)",
 	"1984",
 	"Data East Corporation",
 	"Ernesto Corvi\nGareth Hall\nCarlos Lozano\nHowie Cohen\nFrank Palazzolo",

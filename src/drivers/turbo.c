@@ -229,44 +229,44 @@ INPUT_PORTS_START( turbo_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON4 ) //SERVICE
-	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_SERVICE, "Test Mode", OSD_KEY_F2, IP_JOY_NONE, 0)
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_SERVICE, "Test Mode", OSD_KEY_F2, IP_JOY_NONE )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_TOGGLE ) // SHIFT
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) //ACCEL A
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 ) //ACCEL B
 
 	PORT_START  /* DSW 1 */
-	PORT_DIPNAME( 0x03, 0x00, "Car On Extended Play", IP_KEY_NONE)
+	PORT_DIPNAME( 0x03, 0x00, "Car On Extended Play" )
 	PORT_DIPSETTING(    0x00, "1")
 	PORT_DIPSETTING(    0x01, "2")
 	PORT_DIPSETTING(    0x02, "3")
 	PORT_DIPSETTING(    0x03, "4")
-	PORT_DIPNAME( 0x04, 0x00, "Game Time", IP_KEY_NONE)
+	PORT_DIPNAME( 0x04, 0x00, "Game Time" )
 	PORT_DIPSETTING(    0x04, "Fixed (55 sec)")
 	PORT_DIPSETTING(    0x00, "Adjustable")
-	PORT_DIPNAME( 0x08, 0x00, "Difficulty", IP_KEY_NONE)
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x08, "Easy")
 	PORT_DIPSETTING(    0x00, "Hard")
-	PORT_DIPNAME( 0x10, 0x00, "Game Mode", IP_KEY_NONE)
+	PORT_DIPNAME( 0x10, 0x00, "Game Mode" )
 	PORT_DIPSETTING(    0x10, "No Collisions (cheat)")
 	PORT_DIPSETTING(    0x00, "Normal")
-	PORT_DIPNAME( 0x20, 0x20, "Initial Entry", IP_KEY_NONE)
-	PORT_DIPSETTING(    0x20, "On")
-	PORT_DIPSETTING(    0x00, "Off")
-	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE) //unused?
-	PORT_DIPSETTING(    0x40, "Off")
-	PORT_DIPSETTING(    0x00, "On")
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE) //unused?
-	PORT_DIPSETTING(    0x80, "Off")
-	PORT_DIPSETTING(    0x00, "On")
+	PORT_DIPNAME( 0x20, 0x20, "Initial Entry" )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ))
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) ) //unused?
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) ) //unused?
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
 
 	PORT_START  /* DSW 2 */
-	PORT_DIPNAME( 0x03, 0x03, "Game Time", IP_KEY_NONE)
+	PORT_DIPNAME( 0x03, 0x03, "Game Time" )
 	PORT_DIPSETTING(    0x01, "70 seconds")
 	PORT_DIPSETTING(    0x00, "60 seconds")
 	PORT_DIPSETTING(    0x02, "80 seconds")
 	PORT_DIPSETTING(    0x03, "90 seconds")
-	PORT_DIPNAME( 0xe0, 0xe0, "Coinage 1", IP_KEY_NONE)
+	PORT_DIPNAME( 0xe0, 0xe0, "Coinage 1" )
 	PORT_DIPSETTING(    0x00, "1 coin/1 credits")
 	PORT_DIPSETTING(    0x20, "1 coin/2 credits")
 	PORT_DIPSETTING(    0x40, "1 coin/3 credits")
@@ -275,7 +275,7 @@ INPUT_PORTS_START( turbo_input_ports )
 	PORT_DIPSETTING(    0xa0, "3 coin/1 credits")
 	PORT_DIPSETTING(    0xc0, "4 coin/1 credits")
 	PORT_DIPSETTING(    0xe0, "1 coin/1 credits")
-	PORT_DIPNAME( 0x1c, 0x1c, "Coinage 2", IP_KEY_NONE)
+	PORT_DIPNAME( 0x1c, 0x1c, "Coinage 2" )
 	PORT_DIPSETTING(    0x00, "1 coin/1 credits")
 	PORT_DIPSETTING(    0x04, "1 coin/2 credits")
 	PORT_DIPSETTING(    0x08, "1 coin/3 credits")
@@ -286,20 +286,20 @@ INPUT_PORTS_START( turbo_input_ports )
 	PORT_DIPSETTING(    0x1c, "1 coin/1 credits")
 
 	PORT_START  /* DSW 3 */
-	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE) //unused
-	PORT_DIPSETTING(    0x10, "Off")
-	PORT_DIPSETTING(    0x00, "On")
-	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE) //unused
-	PORT_DIPSETTING(    0x20, "Off")
-	PORT_DIPSETTING(    0x00, "On")
-	PORT_DIPNAME( 0x40, 0x40, "Tachometer", IP_KEY_NONE)
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) ) //unused
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) ) //unused
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x40, 0x40, "Tachometer" )
 	PORT_DIPSETTING(    0x40, "Analog (Meter)")
 	PORT_DIPSETTING(    0x00, "Digital (led)")
-	PORT_DIPNAME( 0x80, 0x80, "Sound System", IP_KEY_NONE)
+	PORT_DIPNAME( 0x80, 0x80, "Sound System" )
 	PORT_DIPSETTING(    0x80, "upright")
 	PORT_DIPSETTING(    0x00, "cockpit")
-	PORT_DIPNAME( 0x0f, 0x00, "Unused", IP_KEY_NONE)
-	PORT_DIPSETTING(    0x00, "Unused")
+	PORT_DIPNAME( 0x0f, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Unused ))
 
 	PORT_START      /* IN0 */
 	PORT_ANALOGX( 0xff, 0, IPT_DIAL | IPF_CENTER, 1, 0, 0, 0,

@@ -109,7 +109,7 @@ static struct IOWritePort writeport[] =
 
 
 #define COINAGE(CHUTE)											\
-        PORT_DIPNAME( 0x0f, 0x00, "Coin "#CHUTE, IP_KEY_NONE )	\
+        PORT_DIPNAME( 0x0f, 0x00, "Coin "#CHUTE )	\
         PORT_DIPSETTING(    0x09, "1 Credit/2 Coins" )			\
         PORT_DIPSETTING(    0x0d, "3 Credits/4 Coins" )			\
         PORT_DIPSETTING(    0x00, "1 Credit/1 Coin" )			\
@@ -153,35 +153,35 @@ INPUT_PORTS_START( berzerk_input_ports )
         PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
         PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
         PORT_BIT( 0x60, IP_ACTIVE_LOW, IPT_UNUSED )
-        PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x80, "Upright" )
-        PORT_DIPSETTING(    0x00, "Cocktail" )
+        PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+        PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
         PORT_START      /* IN3 */
-		PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Input Test Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-		PORT_DIPSETTING(    0x00, "Off" )
-		PORT_DIPSETTING(    0x01, "On" )
-		PORT_BITX(    0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Crosshair Pattern", OSD_KEY_F4, IP_JOY_NONE, 0 )
-		PORT_DIPSETTING(    0x00, "Off" )
-		PORT_DIPSETTING(    0x02, "On" )
+		PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Input Test Mode", OSD_KEY_F2, IP_JOY_NONE )
+		PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+		PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+		PORT_BITX(    0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Crosshair Pattern", OSD_KEY_F4, IP_JOY_NONE )
+		PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+		PORT_DIPSETTING(    0x02, DEF_STR( On ) )
         PORT_BIT( 0x3c, IP_ACTIVE_LOW,  IPT_UNUSED )
-        PORT_DIPNAME( 0xc0, 0x00, "Language", IP_KEY_NONE )
+        PORT_DIPNAME( 0xc0, 0x00, "Language" )
         PORT_DIPSETTING(    0x00, "English" )
         PORT_DIPSETTING(    0x40, "German" )
         PORT_DIPSETTING(    0x80, "French" )
         PORT_DIPSETTING(    0xc0, "Spanish" )
 
         PORT_START      /* IN4 */
-		PORT_BITX(    0x03, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Color Test", OSD_KEY_F5, IP_JOY_NONE, 0 )
-		PORT_DIPSETTING(    0x00, "Off" )
-		PORT_DIPSETTING(    0x03, "On" )
+		PORT_BITX(    0x03, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Color Test", OSD_KEY_F5, IP_JOY_NONE )
+		PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+		PORT_DIPSETTING(    0x03, DEF_STR( On ) )
         PORT_BIT( 0x3c, IP_ACTIVE_LOW,  IPT_UNUSED )
-        PORT_DIPNAME( 0x40, 0x40, "Extra Life at  5000 Pts", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "Off" )
-        PORT_DIPSETTING(    0x40, "On" )
-        PORT_DIPNAME( 0x80, 0x80, "Extra Life at 10000 Pts", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "Off" )
-        PORT_DIPSETTING(    0x80, "On" )
+        PORT_DIPNAME( 0x40, 0x40, "Extra Life at  5000 Pts" )
+        PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+        PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+        PORT_DIPNAME( 0x80, 0x80, "Extra Life at 10000 Pts" )
+        PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+        PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
         PORT_START      /* IN5 */
 		COINAGE(C)
@@ -193,11 +193,11 @@ INPUT_PORTS_START( berzerk_input_ports )
 		COINAGE(A)
 
         PORT_START      /* IN8 */
-        PORT_DIPNAME( 0x01, 0x00, "Free Play", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "Off" )
-        PORT_DIPSETTING(    0x01, "On" )
+        PORT_DIPNAME( 0x01, 0x00, DEF_STR( Free_Play ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+        PORT_DIPSETTING(    0x01, DEF_STR( On ) )
         PORT_BIT( 0x7e, IP_ACTIVE_LOW,  IPT_UNUSED )
-        PORT_BITX(0x80, IP_ACTIVE_HIGH, 0, "Stats", OSD_KEY_F1, IP_JOY_NONE, 0 )
+        PORT_BITX(0x80, IP_ACTIVE_HIGH, 0, "Stats", OSD_KEY_F1, IP_JOY_NONE )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( frenzy_input_ports )
@@ -223,12 +223,12 @@ INPUT_PORTS_START( frenzy_input_ports )
         PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
         PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
         PORT_BIT( 0x60, IP_ACTIVE_LOW, IPT_UNUSED )
-        PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x80, "Upright" )
-        PORT_DIPSETTING(    0x00, "Cocktail" )
+        PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+        PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
         PORT_START      /* IN3 */
-        PORT_DIPNAME( 0x0f, 0x03, "Bonus Life", IP_KEY_NONE )
+        PORT_DIPNAME( 0x0f, 0x03, DEF_STR( Bonus_Life ) )
         PORT_DIPSETTING(    0x00, "Never" )
         PORT_DIPSETTING(    0x01, "1000" )
         PORT_DIPSETTING(    0x02, "2000" )
@@ -246,7 +246,7 @@ INPUT_PORTS_START( frenzy_input_ports )
         PORT_DIPSETTING(    0x0e, "14000" )
         PORT_DIPSETTING(    0x0f, "15000" )
         PORT_BIT( 0x30, IP_ACTIVE_HIGH, IPT_UNUSED )
-        PORT_DIPNAME( 0xc0, 0x00, "Language", IP_KEY_NONE )
+        PORT_DIPNAME( 0xc0, 0x00, "Language" )
         PORT_DIPSETTING(    0x00, "English" )
         PORT_DIPSETTING(    0x40, "German" )
         PORT_DIPSETTING(    0x80, "French" )
@@ -254,18 +254,18 @@ INPUT_PORTS_START( frenzy_input_ports )
 
         PORT_START      /* IN4 */
         PORT_BIT( 0x03, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Bit 0 does some more hardware tests */
-		PORT_BITX(    0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Input Test Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-		PORT_DIPSETTING(    0x00, "Off" )
-		PORT_DIPSETTING(    0x04, "On" )
-		PORT_BITX(    0x08, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Crosshair Pattern", OSD_KEY_F4, IP_JOY_NONE, 0 )
-		PORT_DIPSETTING(    0x00, "Off" )
-		PORT_DIPSETTING(    0x08, "On" )
+		PORT_BITX(    0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Input Test Mode", OSD_KEY_F2, IP_JOY_NONE )
+		PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+		PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+		PORT_BITX(    0x08, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Crosshair Pattern", OSD_KEY_F4, IP_JOY_NONE )
+		PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+		PORT_DIPSETTING(    0x08, DEF_STR( On ) )
         PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 		/* The following 3 ports use all 8 bits, but I didn't feel like adding
 		   all 256 values :-) */
         PORT_START      /* IN5 */
-        PORT_DIPNAME( 0x0f, 0x01, "Coins/Credit B", IP_KEY_NONE )
+        PORT_DIPNAME( 0x0f, 0x01, "Coins/Credit B" )
       /*PORT_DIPSETTING(    0x00, "0" )    Can't insert coins  */
         PORT_DIPSETTING(    0x01, "1" )
         PORT_DIPSETTING(    0x02, "2" )
@@ -285,7 +285,7 @@ INPUT_PORTS_START( frenzy_input_ports )
         PORT_BIT( 0xf0, IP_ACTIVE_HIGH,  IPT_UNUSED )
 
         PORT_START      /* IN6 */
-        PORT_DIPNAME( 0x0f, 0x01, "Coins/Credit A", IP_KEY_NONE )
+        PORT_DIPNAME( 0x0f, 0x01, "Coins/Credit A" )
       /*PORT_DIPSETTING(    0x00, "0" )    Can't insert coins  */
         PORT_DIPSETTING(    0x01, "1" )
         PORT_DIPSETTING(    0x02, "2" )
@@ -305,8 +305,8 @@ INPUT_PORTS_START( frenzy_input_ports )
         PORT_BIT( 0xf0, IP_ACTIVE_HIGH,  IPT_UNUSED )
 
         PORT_START      /* IN7 */
-        PORT_DIPNAME( 0x0f, 0x01, "Coin Multiplier", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "Free Play" )
+        PORT_DIPNAME( 0x0f, 0x01, "Coin Multiplier" )
+        PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
         PORT_DIPSETTING(    0x01, "1" )
         PORT_DIPSETTING(    0x02, "2" )
         PORT_DIPSETTING(    0x03, "3" )
@@ -327,7 +327,7 @@ INPUT_PORTS_START( frenzy_input_ports )
         PORT_START      /* IN8 */
         PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 )
         PORT_BIT( 0x7e, IP_ACTIVE_LOW,  IPT_UNUSED )
-        PORT_BITX(0x80, IP_ACTIVE_HIGH, 0, "Stats", OSD_KEY_F1, IP_JOY_NONE, 0 )
+        PORT_BITX(0x80, IP_ACTIVE_HIGH, 0, "Stats", OSD_KEY_F1, IP_JOY_NONE )
 INPUT_PORTS_END
 
 
@@ -542,7 +542,7 @@ static int frenzy_hiload(void)
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			osd_fread(f,&RAM[0x406f],59);
+			osd_fread(f,&RAM[0x406e],60);
 			osd_fclose(f);
 		}
 
@@ -560,7 +560,7 @@ static void frenzy_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		osd_fwrite(f,&RAM[0x406f],59);
+		osd_fwrite(f,&RAM[0x406e],60);
 		osd_fclose(f);
 	}
 }

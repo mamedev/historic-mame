@@ -211,7 +211,7 @@ static void print_reg_list(int rev)
 }
 
 
-int Dasm34010 (unsigned char *pBase, char *buff, int _pc)
+unsigned Dasm34010 (unsigned char *pBase, char *buff, unsigned _pc)
 {
 	short bad = 0;
 	short subop;

@@ -145,29 +145,29 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 
 	PORT_START	/* Dip switch */
-	PORT_DIPNAME( 0x03, 0x03, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x01, "1 Coin/3 Credits" )
- 	PORT_DIPNAME( 0x04, 0x04, "Flip Screen", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
- 	PORT_DIPNAME( 0x08, 0x08, "Allow 2 Players Game", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "No" )
-	PORT_DIPSETTING(    0x08, "Yes" )
- 	PORT_DIPNAME( 0x10, 0x10, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
- 	PORT_DIPNAME( 0x20, 0x20, "Time", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+ 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+ 	PORT_DIPNAME( 0x08, 0x08, "Allow 2 Players Game" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Yes ) )
+ 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+ 	PORT_DIPNAME( 0x20, 0x20, "Time" )
 	PORT_DIPSETTING(    0x00, "100" )
 	PORT_DIPSETTING(    0x20, "120" )
-	PORT_DIPNAME( 0x40, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x40, "4" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 /***************************************************************************/
@@ -523,7 +523,7 @@ struct GameDriver pcktgal_driver =
 	__FILE__,
 	0,
 	"pcktgal",
-	"Pocket Gal",
+	"Pocket Gal (Japan)",
 	"1987",
 	"Data East Corporation",
 	"Bryan McPhail\nNicola Salmoria",
@@ -575,7 +575,7 @@ struct GameDriver pcktgal2_driver =
 	__FILE__,
 	&pcktgal_driver,
 	"pcktgal2",
-	"Pocket Gal 2",
+	"Pocket Gal 2 (World?)",
 	"1989",
 	"Data East Corporation",
 	"Bryan McPhail\nNicola Salmoria",
@@ -601,7 +601,7 @@ struct GameDriver spool3_driver =
 	__FILE__,
 	&pcktgal_driver,
 	"spool3",
-	"Super Pool III",
+	"Super Pool III (World?)",
 	"1989",
 	"Data East Corporation",
 	"Bryan McPhail\nNicola Salmoria",

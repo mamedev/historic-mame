@@ -39,8 +39,6 @@ void CinemaVectorData (int fromx, int fromy, int tox, int toy, int color)
 	lasty = toy;
 }
 
-
-
 #define RED   0x04
 #define GREEN 0x02
 #define BLUE  0x01
@@ -61,7 +59,6 @@ static void shade_fill (unsigned char *palette, int rgb, int start_index, int en
 	}
 }
 
-
 void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i,j,k;
@@ -70,6 +67,46 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 	int trcl1[] = { 0,0,2,2,1,1 };
 	int trcl2[] = { 1,2,0,1,0,2 };
 	int trcl3[] = { 2,1,1,0,2,0 };
+
+	struct artwork_element no_overlay[]=
+	{
+		{{0, 400-1, 0, 300-1}, 255, 255, 255, 0},
+		{{-1,-1,-1,-1},0,0,0,0}
+	};
+	struct artwork_element starcas_overlay[]=
+	{
+		{{0, 400-1, 0, 300-1}, 0, 6, 25, 64},
+		{{ 200, 49, 150, -1},33, 0, 16, 64},
+		{{ 200, 38, 150, -1},32, 15, 0, 64},
+		{{ 200, 29, 150, -1},30, 33, 0, 64},
+		{{-1,-1,-1,-1},0,0,0,0}
+	};
+	struct artwork_element sundance_overlay[]=
+	{
+		{{0, 400-1, 0, 300-1}, 32, 32, 0, 32},
+		{{-1,-1,-1,-1},0,0,0,0}
+	};
+	struct artwork_element tailg_overlay[]=
+	{
+		{{0, 400-1, 0, 300-1}, 0, 64, 64, 32},
+		{{-1,-1,-1,-1},0,0,0,0}
+	};
+	struct artwork_element solarq_overlay[]=
+	{
+		{{0, 400-1, 0, 300-1}, 0, 6, 25, 64},
+		{{ 0,  399, 279, 299},31, 0, 12, 64},
+		{{ 200, 12, 150,  -1},31, 31, 0, 64},
+		{{-1,-1,-1,-1},0,0,0,0}
+	};
+
+	struct artwork_element *simple_overlays[]=
+	{
+		no_overlay,
+		starcas_overlay,
+		sundance_overlay,
+		tailg_overlay,
+		solarq_overlay
+	};
 
 	overlay = NULL;
 	backdrop = NULL;
@@ -82,58 +119,49 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 		palette[3*i+2] = (i & BLUE ) ? 0xff : 0;
 	}
 
-	vgColor = RED|GREEN|BLUE;
+	vgColor = WHITE;
+
+	shade_fill (palette, WHITE, 8, 23, 0, 255);
 
 	/* fill the rest of the 256 color entries depending on the game */
 	switch (color_prom[0] & 0x0f)
 	{
 		case  CCPU_MONITOR_BILEV:
 		case  CCPU_MONITOR_16COL:
-			sprintf (filename, "%s.png", Machine->gamedrv->name );
 
 			/* Attempt to load overlay if requested */
 			if (color_prom[0] & 0x80)
 			{
-				if ((overlay=artwork_load(filename, 8, Machine->drv->total_colors-8))!=NULL)
+				/* Attempt to load artwork from file */
+				sprintf (filename, "%s.png", Machine->gamedrv->name );
+				overlay=artwork_load(filename, 24, Machine->drv->total_colors-24);
+
+				if ((overlay==NULL) && (color_prom[0] & 0x20))
+				{
+					/* no overlay file found - use simple artwork */
+					artwork_elements_scale(simple_overlays[color_prom[1]],
+										   Machine->scrbitmap->width,
+										   Machine->scrbitmap->height);
+					overlay=artwork_create(simple_overlays[color_prom[1]], 24,
+										   Machine->drv->total_colors-24);
+				}
+
+				if (overlay != NULL)
 				{
 					if (overlay_set_palette (overlay, palette, Machine->drv->total_colors-24))
 						return;
-					shade_fill (palette, RED|GREEN|BLUE, Machine->drv->total_colors-16, Machine->drv->total_colors-1, 0, 255);
 				}
 				else
-					shade_fill (palette, RED|GREEN|BLUE, 8, 128+8, 0, 255);
+					shade_fill (palette, WHITE, 24, 128+24, 0, 255);
 			}
 			else
 			/* Attempt to load backdrop if requested */
 			if (color_prom[0] & 0x40)
 			{
-				if ((backdrop=artwork_load(filename, 8, Machine->drv->total_colors-8))!=NULL)
-				{
+				if ((backdrop=artwork_load(filename, 24, Machine->drv->total_colors-24))!=NULL)
 					memcpy (palette+3*backdrop->start_pen, backdrop->orig_palette, 3*backdrop->num_pens_used);
-					shade_fill (palette, RED|GREEN|BLUE, Machine->drv->total_colors-16, Machine->drv->total_colors-1, 0, 255);
-				}
 				else
-					shade_fill (palette, RED|GREEN|BLUE, 8, 128+8, 0, 255);
-			}
-			else
-			{
-				if (color_prom[0] & 0x10)
-				{
-					vgColor = RED|GREEN;
-					/* Shades of yellow for Sundance */
-					shade_fill (palette, RED|GREEN, 8, 128+8, 0, 255);
-				}
-				else if (color_prom[0] & 0x20)
-				{
-					vgColor = BLUE;
-					/* Shades of blue for Tailgunner */
-					shade_fill (palette, BLUE, 8, 128+8, 0, 255);
-				}
-				else
-				{
-					/* Shades of grey for everything else */
-					shade_fill (palette, RED|GREEN|BLUE, 8, 128+8, 0, 255);
-				}
+					shade_fill (palette, WHITE, 24, 128+24, 0, 255);
 			}
 			break;
 

@@ -271,6 +271,7 @@ static void default_instr_hook_callback(void)
 int m68k_peek_dr(int reg_num)   { return (reg_num < 8) ? CPU_D[reg_num] : 0; }
 int m68k_peek_ar(int reg_num)   { return (reg_num < 8) ? CPU_A[reg_num] : 0; }
 unsigned int m68k_peek_pc(void) { return ADDRESS_68K(CPU_PC); }
+unsigned int m68k_peek_ppc(void) { return ADDRESS_68K(CPU_PPC); }
 int m68k_peek_sr(void)          { return m68ki_get_sr(); }
 int m68k_peek_ir(void)          { return CPU_IR; }
 int m68k_peek_t1_flag(void)     { return CPU_T1 != 0; }
@@ -383,7 +384,8 @@ int m68k_execute(int num_clks)
    {
 #endif /* M68K_HALT */
    /* Make sure we're not stopped */
-   if(!CPU_STOPPED)
+   if(!CPU_STOPPED ||
+         (CPU_INTS_PENDING & m68k_int_masks[CPU_INT_MASK]))
    {
       /* Set our pool of clock cycles available */
       m68k_clks_left = num_clks;
@@ -401,14 +403,8 @@ int m68k_execute(int num_clks)
             m68ki_instr_hook(); /* auto-disable (see m68kcpu.h) */
 
             /* MAME */
-#ifdef MAME_DEBUG
-			{
-            extern int mame_debug;
-			extern void MAME_Debug(void);
-            if(mame_debug) MAME_Debug();
-			}
-#endif /* MAME_DEBUG */
-            previouspc = CPU_PC;
+            CPU_PPC = CPU_PC;
+			CALL_MAME_DEBUG;
             /* MAME */
 
             /* Read an instruction and call its handler */

@@ -823,7 +823,7 @@ UINT32 win_open(UINT32 idx, struct sWindow *psWin)
 	ch = psWin->filler;
 	color = psWin->co_text;
 
-	for (i = 0; i < (psWin->w * psWin->h); i++)
+	for (i = 0; i < screen_w * (yadd + psWin->h); i++)
 	{
 		psWin->text[i] = ch;
 		psWin->attr[i] = color;
@@ -1024,8 +1024,10 @@ INT32 win_internal_putchar(UINT32 idx, UINT8 ch)
 		break;
 
 	case '\t':  /* Tab? */
-		while( pwin->cx % TAB_STOP )
+		do
+		{
 			rel += win_internal_putchar( idx, ' ');
+		} while( pwin->cx % TAB_STOP );
 		break;
 
     default:
@@ -1255,7 +1257,7 @@ INT32 win_vprintf(UINT32 idx, const char *fmt, va_list arg)
  *
  ************************************************************************/
 
-INT32 win_printf(UINT32 idx, const char *fmt, ...)
+INT32 DECL_SPEC win_printf(UINT32 idx, const char *fmt, ...)
 {
 	struct sWindow *pwin = &p_windows[idx];
 	char *src = tmp_text;
@@ -1310,6 +1312,34 @@ void win_set_color(UINT32 idx, UINT32 color)
 		return;
 
 	pwin->co_text = color;
+}
+
+/************************************************************************
+ *
+ * Name : win_set_titlecolor
+ *
+ * Entry: Window # and new title colors
+ *
+ * Exit : Nothing
+ *
+ * Description:
+ *
+ * This routine sets the color for title of a window
+ *
+ ************************************************************************/
+
+void win_set_title_color(UINT32 idx, UINT32 color)
+{
+	struct sWindow *pwin = &p_windows[idx];
+
+	ASSERT(idx < MAX_WINDOWS);	/* This had better be in range */
+	ASSERT(p_windows);			/* And this had better be initialized */
+
+    if( NULL == pwin->text )
+		return;
+
+	pwin->co_title = color;
+	win_update( idx );
 }
 
 /************************************************************************
@@ -1426,7 +1456,7 @@ void win_show(UINT32 idx)
  *
  ************************************************************************/
 
-UINT32 win_set_title(UINT32 idx, const char *fmt, ... )
+UINT32 DECL_SPEC win_set_title(UINT32 idx, const char *fmt, ... )
 {
 	struct sWindow *pwin = &p_windows[idx];
 	va_list arg;

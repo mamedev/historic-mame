@@ -264,9 +264,9 @@ static struct IOWritePort startrek_writeport[] =
 INPUT_PORTS_START( spacfury_input_ports )
 	PORT_START	/* IN0 - port 0xf8 */
 	/* The next bit is referred to as the Service switch in the self test - it just adds a credit */
-	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
-	PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
-	PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN3, 3 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN2, 3 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 3 )
 
 	PORT_START	/* IN1 - port 0xf9 */
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_START2 )
@@ -289,35 +289,35 @@ INPUT_PORTS_START( spacfury_input_ports )
 	PORT_START	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 1 */
-        PORT_DIPNAME( 0x03, 0x01, "Bonus Ship", IP_KEY_NONE )
+        PORT_DIPNAME( 0x03, 0x01, "Bonus Ship" )
         PORT_DIPSETTING(    0x03, "40K Points" )
         PORT_DIPSETTING(    0x01, "30K Points" )
         PORT_DIPSETTING(    0x02, "20K Points" )
         PORT_DIPSETTING(    0x00, "10K Points" )
-        PORT_DIPNAME( 0x0c, 0x00, "Difficulty", IP_KEY_NONE )
+        PORT_DIPNAME( 0x0c, 0x00, "Difficulty" )
         PORT_DIPSETTING(    0x0c, "Very Hard" )
         PORT_DIPSETTING(    0x04, "Hard" )
         PORT_DIPSETTING(    0x08, "Moderate" )
         PORT_DIPSETTING(    0x00, "Easy" )
-        PORT_DIPNAME( 0x30, 0x30, "Number of Ships", IP_KEY_NONE )
+        PORT_DIPNAME( 0x30, 0x30, "Number of Ships" )
         PORT_DIPSETTING(    0x30, "5 Ships" )
         PORT_DIPSETTING(    0x10, "4 Ships" )
         PORT_DIPSETTING(    0x20, "3 Ships" )
         PORT_DIPSETTING(    0x00, "2 Ships" )
-        PORT_DIPNAME( 0x40, 0x00, "Attract Sound", IP_KEY_NONE )
+        PORT_DIPNAME( 0x40, 0x00, "Attract Sound" )
         PORT_DIPSETTING(    0x40, "Off" )
         PORT_DIPSETTING(    0x00, "On" )
-        PORT_DIPNAME( 0x80, 0x80, "Orientation", IP_KEY_NONE )
+        PORT_DIPNAME( 0x80, 0x80, "Orientation" )
         PORT_DIPSETTING(    0x80, "Upright" )
         PORT_DIPSETTING(    0x00, "Cocktail" )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 2 */
-        PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)", IP_KEY_NONE )
+        PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)" )
         PORT_DIPSETTING(    0x00, "4 / 1" )
         PORT_DIPSETTING(    0x08, "3 / 1" )
         PORT_DIPSETTING(    0x04, "2 / 1" )
@@ -335,7 +335,7 @@ INPUT_PORTS_START( spacfury_input_ports )
         PORT_DIPSETTING(    0x07, "1/2/3/4/5 / 2/4/6/8/11" )
         PORT_DIPSETTING(    0x0F, "1/2/3/4 / 2/4/6/9" )
 
-        PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)", IP_KEY_NONE )
+        PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)" )
         PORT_DIPSETTING(    0x00, "4 / 1" )
         PORT_DIPSETTING(    0x80, "3 / 1" )
         PORT_DIPSETTING(    0x40, "2 / 1" )
@@ -358,9 +358,9 @@ INPUT_PORTS_END
 INPUT_PORTS_START( zektor_input_ports )
 	PORT_START	/* IN0 - port 0xf8 */
 	/* The next bit is referred to as the Service switch in the self test - it just adds a credit */
-	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
-	PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
-	PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN3, 3 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN2, 3 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 3 )
 
 	PORT_START	/* IN1 - port 0xf9 */
 	PORT_BIT ( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -381,35 +381,35 @@ INPUT_PORTS_START( zektor_input_ports )
 	PORT_START	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 1 */
-        PORT_DIPNAME( 0x03, 0x01, "Bonus Ship", IP_KEY_NONE )
+        PORT_DIPNAME( 0x03, 0x01, "Bonus Ship" )
         PORT_DIPSETTING(    0x03, "10K Points" )
         PORT_DIPSETTING(    0x01, "20K Points" )
         PORT_DIPSETTING(    0x02, "30K Points" )
         PORT_DIPSETTING(    0x00, "None" )
-        PORT_DIPNAME( 0x0c, 0x00, "Difficulty", IP_KEY_NONE )
+        PORT_DIPNAME( 0x0c, 0x00, "Difficulty" )
         PORT_DIPSETTING(    0x0c, "Very Hard" )
         PORT_DIPSETTING(    0x04, "Hard" )
         PORT_DIPSETTING(    0x08, "Moderate" )
         PORT_DIPSETTING(    0x00, "Easy" )
-        PORT_DIPNAME( 0x30, 0x30, "Number of Ships", IP_KEY_NONE )
+        PORT_DIPNAME( 0x30, 0x30, "Number of Ships" )
         PORT_DIPSETTING(    0x30, "5 Ships" )
         PORT_DIPSETTING(    0x10, "4 Ships" )
         PORT_DIPSETTING(    0x20, "3 Ships" )
         PORT_DIPSETTING(    0x00, "2 Ships" )
-        PORT_DIPNAME( 0x40, 0x00, "Attract Sound", IP_KEY_NONE )
+        PORT_DIPNAME( 0x40, 0x00, "Attract Sound" )
         PORT_DIPSETTING(    0x40, "Off" )
         PORT_DIPSETTING(    0x00, "On" )
-        PORT_DIPNAME( 0x80, 0x80, "Orientation", IP_KEY_NONE )
+        PORT_DIPNAME( 0x80, 0x80, "Orientation" )
         PORT_DIPSETTING(    0x80, "Upright" )
         PORT_DIPSETTING(    0x00, "Cocktail" )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 2 */
-        PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)", IP_KEY_NONE )
+        PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)" )
         PORT_DIPSETTING(    0x00, "4 / 1" )
         PORT_DIPSETTING(    0x08, "3 / 1" )
         PORT_DIPSETTING(    0x04, "2 / 1" )
@@ -427,7 +427,7 @@ INPUT_PORTS_START( zektor_input_ports )
         PORT_DIPSETTING(    0x07, "1/2/3/4/5 / 2/4/6/8/11" )
         PORT_DIPSETTING(    0x0F, "1/2/3/4 / 2/4/6/9" )
 
-        PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)", IP_KEY_NONE )
+        PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)" )
         PORT_DIPSETTING(    0x00, "4 / 1" )
         PORT_DIPSETTING(    0x80, "3 / 1" )
         PORT_DIPSETTING(    0x40, "2 / 1" )
@@ -452,9 +452,9 @@ INPUT_PORTS_END
 INPUT_PORTS_START( startrek_input_ports )
 	PORT_START	/* IN0 - port 0xf8 */
 	/* The next bit is referred to as the Service switch in the self test - it just adds a credit */
-	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
-	PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
-	PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN3, 3 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN2, 3 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 3 )
 
 	PORT_START	/* IN1 - port 0xf9 */
 	PORT_BIT ( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -477,35 +477,35 @@ INPUT_PORTS_START( startrek_input_ports )
 	PORT_START	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 1 */
-        PORT_DIPNAME( 0x03, 0x01, "Bonus Ship", IP_KEY_NONE )
+        PORT_DIPNAME( 0x03, 0x01, "Bonus Ship" )
         PORT_DIPSETTING(    0x03, "40K Points" )
         PORT_DIPSETTING(    0x01, "30K Points" )
         PORT_DIPSETTING(    0x02, "20K Points" )
         PORT_DIPSETTING(    0x00, "10K Points" )
-        PORT_DIPNAME( 0x0c, 0x00, "Difficulty", IP_KEY_NONE )
+        PORT_DIPNAME( 0x0c, 0x00, "Difficulty" )
         PORT_DIPSETTING(    0x0c, "Tournament" )
         PORT_DIPSETTING(    0x04, "Hard" )
         PORT_DIPSETTING(    0x08, "Medium" )
         PORT_DIPSETTING(    0x00, "Easy" )
-        PORT_DIPNAME( 0x30, 0x30, "Photon Torpedoes", IP_KEY_NONE )
+        PORT_DIPNAME( 0x30, 0x30, "Photon Torpedoes" )
         PORT_DIPSETTING(    0x30, "4" )
         PORT_DIPSETTING(    0x10, "3" )
         PORT_DIPSETTING(    0x20, "2" )
         PORT_DIPSETTING(    0x00, "1" )
-        PORT_DIPNAME( 0x40, 0x00, "Attract Sound", IP_KEY_NONE )
+        PORT_DIPNAME( 0x40, 0x00, "Attract Sound" )
         PORT_DIPSETTING(    0x40, "Off" )
         PORT_DIPSETTING(    0x00, "On" )
-        PORT_DIPNAME( 0x80, 0x80, "Orientation", IP_KEY_NONE )
+        PORT_DIPNAME( 0x80, 0x80, "Orientation" )
         PORT_DIPSETTING(    0x80, "Upright" )
         PORT_DIPSETTING(    0x00, "Cocktail" )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 2 */
-        PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)", IP_KEY_NONE )
+        PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)" )
         PORT_DIPSETTING(    0x00, "4 / 1" )
         PORT_DIPSETTING(    0x08, "3 / 1" )
         PORT_DIPSETTING(    0x04, "2 / 1" )
@@ -523,7 +523,7 @@ INPUT_PORTS_START( startrek_input_ports )
         PORT_DIPSETTING(    0x07, "1/2/3/4/5 / 2/4/6/8/11" )
         PORT_DIPSETTING(    0x0F, "1/2/3/4 / 2/4/6/9" )
 
-        PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)", IP_KEY_NONE )
+        PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)" )
         PORT_DIPSETTING(    0x00, "4 / 1" )
         PORT_DIPSETTING(    0x80, "3 / 1" )
         PORT_DIPSETTING(    0x40, "2 / 1" )
@@ -548,9 +548,9 @@ INPUT_PORTS_END
 INPUT_PORTS_START( tacscan_input_ports )
 	PORT_START	/* IN0 - port 0xf8 */
 	/* The next bit is referred to as the Service switch in the self test - it just adds a credit */
-	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
-	PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
-	PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN3, 3 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN2, 3 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 3 )
 
 	PORT_START	/* IN1 - port 0xf9 */
 	PORT_BIT ( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -571,35 +571,35 @@ INPUT_PORTS_START( tacscan_input_ports )
 	PORT_START	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 1 */
-        PORT_DIPNAME( 0x03, 0x01, "Bonus Ship", IP_KEY_NONE )
+        PORT_DIPNAME( 0x03, 0x01, "Bonus Ship" )
         PORT_DIPSETTING(    0x03, "10K Points" )
         PORT_DIPSETTING(    0x01, "20K Points" )
         PORT_DIPSETTING(    0x02, "30K Points" )
         PORT_DIPSETTING(    0x00, "None" )
-        PORT_DIPNAME( 0x0c, 0x00, "Difficulty", IP_KEY_NONE )
+        PORT_DIPNAME( 0x0c, 0x00, "Difficulty" )
         PORT_DIPSETTING(    0x0c, "Very Hard" )
         PORT_DIPSETTING(    0x04, "Hard" )
         PORT_DIPSETTING(    0x08, "Moderate" )
         PORT_DIPSETTING(    0x00, "Easy" )
-        PORT_DIPNAME( 0x30, 0x30, "Number of Ships", IP_KEY_NONE )
+        PORT_DIPNAME( 0x30, 0x30, "Number of Ships" )
         PORT_DIPSETTING(    0x30, "8 Ships" )
         PORT_DIPSETTING(    0x10, "6 Ships" )
         PORT_DIPSETTING(    0x20, "4 Ships" )
         PORT_DIPSETTING(    0x00, "2 Ships" )
-        PORT_DIPNAME( 0x40, 0x00, "Attract Sound", IP_KEY_NONE )
+        PORT_DIPNAME( 0x40, 0x00, "Attract Sound" )
         PORT_DIPSETTING(    0x40, "Off" )
         PORT_DIPSETTING(    0x00, "On" )
-        PORT_DIPNAME( 0x80, 0x80, "Orientation", IP_KEY_NONE )
+        PORT_DIPNAME( 0x80, 0x80, "Orientation" )
         PORT_DIPSETTING(    0x80, "Upright" )
         PORT_DIPSETTING(    0x00, "Cocktail" )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 2 */
-        PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)", IP_KEY_NONE )
+        PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)" )
         PORT_DIPSETTING(    0x00, "4 / 1" )
         PORT_DIPSETTING(    0x08, "3 / 1" )
         PORT_DIPSETTING(    0x04, "2 / 1" )
@@ -617,7 +617,7 @@ INPUT_PORTS_START( tacscan_input_ports )
         PORT_DIPSETTING(    0x07, "1/2/3/4/5 / 2/4/6/8/11" )
         PORT_DIPSETTING(    0x0F, "1/2/3/4 / 2/4/6/9" )
 
-        PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)", IP_KEY_NONE )
+        PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)" )
         PORT_DIPSETTING(    0x00, "4 / 1" )
         PORT_DIPSETTING(    0x80, "3 / 1" )
         PORT_DIPSETTING(    0x40, "2 / 1" )
@@ -643,9 +643,9 @@ INPUT_PORTS_END
 INPUT_PORTS_START( elim2_input_ports )
 	PORT_START	/* IN0 - port 0xf8 */
 	/* The next bit is referred to as the Service switch in the self test - it just adds a credit */
-	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
-	PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
-	PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN3, 3 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN2, 3 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 3 )
 
 	PORT_START	/* IN1 - port 0xf9 */
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_START2 )
@@ -672,32 +672,32 @@ INPUT_PORTS_START( elim2_input_ports )
 	PORT_START	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 1 */
-        PORT_DIPNAME( 0x03, 0x02, "Bonus Ship", IP_KEY_NONE )
+        PORT_DIPNAME( 0x03, 0x02, "Bonus Ship" )
         PORT_DIPSETTING(    0x03, "None" )
         PORT_DIPSETTING(    0x00, "30K Points" )
         PORT_DIPSETTING(    0x02, "20K Points" )
         PORT_DIPSETTING(    0x01, "10K Points" )
-        PORT_DIPNAME( 0x0c, 0x00, "Difficulty", IP_KEY_NONE )
+        PORT_DIPNAME( 0x0c, 0x00, "Difficulty" )
         PORT_DIPSETTING(    0x0c, "Very Hard" )
         PORT_DIPSETTING(    0x04, "Hard" )
         PORT_DIPSETTING(    0x08, "Moderate" )
         PORT_DIPSETTING(    0x00, "Easy" )
-        PORT_DIPNAME( 0x30, 0x30, "Number of Ships", IP_KEY_NONE )
+        PORT_DIPNAME( 0x30, 0x30, "Number of Ships" )
         PORT_DIPSETTING(    0x30, "5 Ships" )
         PORT_DIPSETTING(    0x10, "4 Ships" )
         PORT_DIPSETTING(    0x20, "3 Ships" )
         PORT_DIPSETTING(    0x00, "2 Ships" )
-        PORT_DIPNAME( 0x80, 0x80, "Orientation", IP_KEY_NONE )
+        PORT_DIPNAME( 0x80, 0x80, "Orientation" )
         PORT_DIPSETTING(    0x80, "Upright" )
         PORT_DIPSETTING(    0x00, "Cocktail" )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 2 */
-        PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)", IP_KEY_NONE )
+        PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)" )
         PORT_DIPSETTING(    0x00, "4 / 1" )
         PORT_DIPSETTING(    0x08, "3 / 1" )
         PORT_DIPSETTING(    0x04, "2 / 1" )
@@ -715,7 +715,7 @@ INPUT_PORTS_START( elim2_input_ports )
         PORT_DIPSETTING(    0x07, "1/2/3/4/5 / 2/4/6/8/11" )
         PORT_DIPSETTING(    0x0F, "1/2/3/4 / 2/4/6/9" )
 
-        PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)", IP_KEY_NONE )
+        PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)" )
         PORT_DIPSETTING(    0x00, "4 / 1" )
         PORT_DIPSETTING(    0x80, "3 / 1" )
         PORT_DIPSETTING(    0x40, "2 / 1" )
@@ -739,9 +739,9 @@ INPUT_PORTS_START( elim4_input_ports )
 	PORT_START	/* IN0 - port 0xf8 */
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	/* The next bit is referred to as the Service switch in the self test - it just adds a credit */
-	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
-	PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
-	PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN1, 3 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN2, 3 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN3, 3 )
 
 	PORT_START	/* IN1 - port 0xf9 */
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -772,32 +772,32 @@ INPUT_PORTS_START( elim4_input_ports )
 	PORT_START	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 1 */
-        PORT_DIPNAME( 0x03, 0x02, "Bonus Ship", IP_KEY_NONE )
+        PORT_DIPNAME( 0x03, 0x02, "Bonus Ship" )
         PORT_DIPSETTING(    0x03, "None" )
         PORT_DIPSETTING(    0x00, "30K Points" )
         PORT_DIPSETTING(    0x02, "20K Points" )
         PORT_DIPSETTING(    0x01, "10K Points" )
-        PORT_DIPNAME( 0x0c, 0x00, "Difficulty", IP_KEY_NONE )
+        PORT_DIPNAME( 0x0c, 0x00, "Difficulty" )
         PORT_DIPSETTING(    0x0c, "Very Hard" )
         PORT_DIPSETTING(    0x04, "Hard" )
         PORT_DIPSETTING(    0x08, "Moderate" )
         PORT_DIPSETTING(    0x00, "Easy" )
-        PORT_DIPNAME( 0x30, 0x30, "Number of Ships", IP_KEY_NONE )
+        PORT_DIPNAME( 0x30, 0x30, "Number of Ships" )
         PORT_DIPSETTING(    0x30, "5 Ships" )
         PORT_DIPSETTING(    0x10, "4 Ships" )
         PORT_DIPSETTING(    0x20, "3 Ships" )
         PORT_DIPSETTING(    0x00, "2 Ships" )
-        PORT_DIPNAME( 0x80, 0x80, "Orientation", IP_KEY_NONE )
+        PORT_DIPNAME( 0x80, 0x80, "Orientation" )
         PORT_DIPSETTING(    0x80, "Upright" )
         PORT_DIPSETTING(    0x00, "Cocktail" )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 2 */
-        PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)", IP_KEY_NONE )
+        PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)" )
         PORT_DIPSETTING(    0x00, "4 / 1" )
         PORT_DIPSETTING(    0x08, "3 / 1" )
         PORT_DIPSETTING(    0x04, "2 / 1" )
@@ -815,7 +815,7 @@ INPUT_PORTS_START( elim4_input_ports )
         PORT_DIPSETTING(    0x07, "1/2/3/4/5 / 2/4/6/8/11" )
         PORT_DIPSETTING(    0x0F, "1/2/3/4 / 2/4/6/9" )
 
-        PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)", IP_KEY_NONE )
+        PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)" )
         PORT_DIPSETTING(    0x00, "4 / 1" )
         PORT_DIPSETTING(    0x80, "3 / 1" )
         PORT_DIPSETTING(    0x40, "2 / 1" )
@@ -834,10 +834,10 @@ INPUT_PORTS_START( elim4_input_ports )
         PORT_DIPSETTING(    0xF0, "1/2/3/4 / 2/4/6/9" )
 
         PORT_START      /* IN8 - FAKE - port 0xfc - read in machine/sega.c */
-	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
-	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
-	PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
-	PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_COIN4 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 3 )
+	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN2, 3 )
+	PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_HIGH, IPT_COIN3, 3 )
+	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_HIGH, IPT_COIN4, 3 )
 	PORT_BIT ( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 

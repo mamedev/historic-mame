@@ -1,11 +1,12 @@
 #ifndef Z80_H
 #define Z80_H
 
-#include "osd_cpu.h"
 #include "cpuintrf.h"
+#include "osd_cpu.h"
+#include "osd_dbg.h"
 
 enum {
-	Z80_PC=1, Z80_SP, Z80_AF, Z80_BC, Z80_DE, Z80_HL, 
+	Z80_PC=1, Z80_SP, Z80_AF, Z80_BC, Z80_DE, Z80_HL,
 	Z80_IX, Z80_IY,	Z80_AF2, Z80_BC2, Z80_DE2, Z80_HL2,
 	Z80_R, Z80_I, Z80_IM, Z80_IFF1, Z80_IFF2, Z80_HALT,
 	Z80_NMI_STATE, Z80_IRQ_STATE, Z80_DC0, Z80_DC1, Z80_DC2, Z80_DC3,
@@ -37,9 +38,10 @@ extern void z80_set_irq_callback(int (*irq_callback)(int));
 extern void z80_state_save(void *file);
 extern void z80_state_load(void *file);
 extern const char *z80_info(void *context, int regnum);
+extern unsigned z80_dasm(UINT8 *base, char *buffer, unsigned pc);
 
 #ifdef MAME_DEBUG
-extern int DasmZ80(char *buffer, int PC);
+extern unsigned DasmZ80(char *buffer, unsigned pc);
 #endif
 
 #endif

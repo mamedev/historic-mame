@@ -5,6 +5,7 @@
 
 #include "memory.h"
 #include "osd_cpu.h"
+#include "osd_dbg.h"
 
 enum {
 	T11_R0=1, T11_R1, T11_R2, T11_R3, T11_R4, T11_R5, T11_SP, T11_PC, T11_PSW,
@@ -47,6 +48,7 @@ extern void t11_set_nmi_line(int state);
 extern void t11_set_irq_line(int irqline, int state);
 extern void t11_set_irq_callback(int (*callback)(int irqline));
 extern const char *t11_info(void *context, int regnum);
+extern unsigned t11_dasm(UINT8 *base, char *buffer, unsigned pc);
 
 extern void t11_SetBank(int banknum, unsigned char *address);
 
@@ -63,8 +65,7 @@ extern void t11_SetBank(int banknum, unsigned char *address);
 #define T11_WRMEM_WORD(A,V) (cpu_writemem16lew_word(A,V))
 
 #ifdef MAME_DEBUG
-extern int mame_debug;
-extern int DasmT11(unsigned char *pBase, char *buffer, int pc);
+extern unsigned DasmT11(UINT8 *base, char *buffer, unsigned pc);
 #endif
 
 #endif /* _T11_H */

@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "tilemap.h"
 
 
 static struct RunningMachine machine;
@@ -7,20 +6,23 @@ struct RunningMachine *Machine = &machine;
 static const struct GameDriver *gamedrv;
 static const struct MachineDriver *drv;
 
-int nocheat;    /* 0 when the -cheat option was specified */
-int mame_debug; /* !0 when -debug option is specified */
+/* Variables to hold the status of various game options */
+struct GameOptions	options;
 
-int VolumePTR = 0;
+FILE *errorlog;
+void *record;   /* for -record */
+void *playback; /* for -playback */
+int mame_debug; /* !0 when -debug option is specified */
+int No_FM;
+
+int bailing;	/* set to 1 if the startup is aborted to prevent multiple error messages */
+
 static int settingsloaded;
 
 int bitmap_dirty;	/* set by osd_clearbitmap() */
 
 unsigned char *ROM;
 
-FILE *errorlog;
-
-void *record;   /* for -record */
-void *playback; /* for -playback */
 
 
 int init_machine(void);
@@ -28,29 +30,46 @@ void shutdown_machine(void);
 int run_machine(void);
 
 
-int run_game(int game, struct GameOptions *options)
+int run_game(int game)
 {
-	int err;
+	int i,err;
 
-	errorlog   = options->errorlog;
-	record     = options->record;
-	playback   = options->playback;
-	mame_debug = options->mame_debug;
+
+	/* validity checks */
+	i = 0;
+#ifdef MAME_DEBUG
+	while (drivers[i])
+	{
+		if (drivers[i]->clone_of == drivers[i])
+		{
+			printf("%s is set as a clone of itself\n",drivers[i]->name);
+			return 1;
+		}
+		i++;
+	}
+#endif
+
+
+	/* copy some settings into easier-to-handle variables */
+	errorlog   = options.errorlog;
+	record     = options.record;
+	playback   = options.playback;
+	mame_debug = options.mame_debug;
+	No_FM      = options.no_fm;
 
 	Machine->gamedrv = gamedrv = drivers[game];
 	Machine->drv = drv = gamedrv->drv;
 
 	/* copy configuration */
-	Machine->sample_rate = options->samplerate;
-	Machine->sample_bits = options->samplebits;
-	nocheat = !options->cheat;
+	Machine->sample_rate = options.samplerate;
+	Machine->sample_bits = options.samplebits;
 
 	/* get orientation right */
 	Machine->orientation = gamedrv->orientation;
 	Machine->ui_orientation = ORIENTATION_DEFAULT;
-	if (options->norotate)
+	if (options.norotate)
 		Machine->orientation = ORIENTATION_DEFAULT;
-	if (options->ror)
+	if (options.ror)
 	{
 		/* if only one of the components is inverted, switch them */
 		if ((Machine->orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_X ||
@@ -66,7 +85,7 @@ int run_game(int game, struct GameOptions *options)
 
 		Machine->ui_orientation ^= ORIENTATION_ROTATE_90;
 	}
-	if (options->rol)
+	if (options.rol)
 	{
 		/* if only one of the components is inverted, switch them */
 		if ((Machine->orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_X ||
@@ -82,12 +101,12 @@ int run_game(int game, struct GameOptions *options)
 
 		Machine->ui_orientation ^= ORIENTATION_ROTATE_270;
 	}
-	if (options->flipx)
+	if (options.flipx)
 	{
 		Machine->orientation ^= ORIENTATION_FLIP_X;
 		Machine->ui_orientation ^= ORIENTATION_FLIP_X;
 	}
-	if (options->flipy)
+	if (options.flipy)
 	{
 		Machine->orientation ^= ORIENTATION_FLIP_Y;
 		Machine->ui_orientation ^= ORIENTATION_FLIP_Y;
@@ -96,6 +115,7 @@ int run_game(int game, struct GameOptions *options)
 
 	/* Do the work*/
 	err = 1;
+	bailing = 0;
 
 	if (init_machine() == 0)
 	{
@@ -103,15 +123,27 @@ int run_game(int game, struct GameOptions *options)
 		{
 			if (run_machine() == 0)
 				err = 0;
-			else printf("Unable to start machine emulation\n");
+			else if (!bailing)
+			{
+				bailing = 1;
+				printf("Unable to start machine emulation\n");
+			}
 
 			osd_exit();
 		}
-		else printf ("Unable to initialize system\n");
+		else if (!bailing)
+		{
+			bailing = 1;
+			printf ("Unable to initialize system\n");
+		}
 
 		shutdown_machine();
 	}
-	else printf("Unable to initialize machine emulation\n");
+	else if (!bailing)
+	{
+		bailing = 1;
+		printf("Unable to initialize machine emulation\n");
+	}
 
 	return err;
 }
@@ -391,22 +423,32 @@ int run_machine(void)
 				const struct RomModule *romp = gamedrv->rom;
 				int	region;
 
-				/* free memory regions allocated with ROM_REGION_DISPOSE (typically gfx roms) */
-				for (region = 0; romp->name || romp->offset || romp->length; region++)
+				if (romp)
 				{
-					if (romp->offset & ROMFLAG_DISPOSE)
+					/* free memory regions allocated with ROM_REGION_DISPOSE (typically gfx roms) */
+					for (region = 0; romp->name || romp->offset || romp->length; region++)
 					{
-						free (Machine->memory_region[region]);
-						Machine->memory_region[region] = 0;
+						if (romp->offset & ROMFLAG_DISPOSE)
+						{
+							free (Machine->memory_region[region]);
+							Machine->memory_region[region] = 0;
+						}
+						do { romp++; } while (romp->length);
 					}
-					do { romp++; } while (romp->length);
 				}
 
 				if (settingsloaded == 0)
 				{
 					/* if there is no saved config, it must be first time we run this game, */
 					/* so show the disclaimer and driver credits. */
-					if (showcopyright()) goto userquit;
+					if (!options.gui_host)
+					{
+						/* LBO - If the host port has a gui, skip this message under the assumption */
+						/* that the host will take care of printing the message once. The best */
+						/* opportunity for a gui to do this is IMHO before the front-end has */
+						/* been displayed. */
+						if (showcopyright()) goto userquit;
+					}
 					showcredits();
 				}
 
@@ -414,11 +456,11 @@ int run_machine(void)
 				{
 					init_user_interface();
 
-					if (nocheat == 0) InitCheat();
+					if (options.cheat) InitCheat();
 
 					cpu_run();      /* run the emulation! */
 
-					if (nocheat == 0) StopCheat();
+					if (options.cheat) StopCheat();
 
 					/* save input ports settings */
 					save_input_port_settings();
@@ -432,13 +474,26 @@ userquit:
 
 				res = 0;
 			}
-			else printf("Unable to start audio emulation\n");
+			else if (!bailing)
+			{
+				bailing = 1;
+				printf("Unable to start audio emulation\n");
+			}
 		}
-		else printf("Unable to start video emulation\n");
+		else if (!bailing)
+		{
+			bailing = 1;
+			printf("Unable to start video emulation\n");
+		}
 
+		tilemap_close();
 		vh_close();
 	}
-	else printf("Unable to initialize display\n");
+	else if (!bailing)
+	{
+		bailing = 1;
+		printf("Unable to initialize display\n");
+	}
 
 	return res;
 }
@@ -452,6 +507,12 @@ int mame_highscore_enabled(void)
 
 	/* disable high score when cheats are used */
 	if (he_did_cheat != 0) return 0;
+
+#ifdef MAME_NET
+    /* disable high score when playing network game */
+    /* (this forces all networked machines to start from the same state!) */
+    if (net_active()) return 0;
+#endif /* MAME_NET */
 
 	return 1;
 }

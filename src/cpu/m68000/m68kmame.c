@@ -99,6 +99,7 @@ unsigned m68000_get_reg(int regnum)
 		case M68K_A5: return m68k_peek_ar(5);
 		case M68K_A6: return m68k_peek_ar(6);
 		case M68K_A7: return m68k_peek_ar(7);
+		case REG_PREVIOUSPC: return m68k_peek_ppc();
 /* TODO: return contents of [SP + wordsize * (REG_SP_CONTENTS-regnum)] */
 		default:
 			if( regnum < REG_SP_CONTENTS )
@@ -207,53 +208,6 @@ const char *m68000_info(void *context, int regnum)
 
 	switch( regnum )
 	{
-		case CPU_INFO_NAME: return "68000";
-		case CPU_INFO_FAMILY: return "Motorola 68K";
-		case CPU_INFO_VERSION: return "2.0a";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright 1999 Karl Stenerud.  All rights reserved.";
-		case CPU_INFO_PC: sprintf(buffer[which], "%06X:", r->pc); break;
-		case CPU_INFO_SP: sprintf(buffer[which], "%08X", r->isp); break;
-		case CPU_INFO_REG_LAYOUT: return (const char*)m68k_reg_layout;
-        case CPU_INFO_WIN_LAYOUT: return (const char*)m68k_win_layout;
-
-#ifdef MAME_DEBUG
-		case CPU_INFO_DASM:
-			change_pc24(r->pc);
-			r->pc += Dasm68000(buffer[which], r->pc);
-			/* need to update PC in the core's context */
-			if( !context)
-				m68k_poke_pc(r->pc);
-			break;
-#else
-		case CPU_INFO_DASM:
-			change_pc24(r->pc);
-			sprintf(buffer[which],"$%02x", ROM[r->pc]);
-			r->pc++;
-			/* need to update PC in the core's context */
-			if( !context)
-				m68k_poke_pc(r->pc);
-            break;
-#endif
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
-				r->sr & 0x8000 ? 'T':'.',
-				r->sr & 0x4000 ? '?':'.',
-				r->sr & 0x2000 ? 'S':'.',
-				r->sr & 0x1000 ? '?':'.',
-				r->sr & 0x0800 ? '?':'.',
-				r->sr & 0x0400 ? 'I':'.',
-				r->sr & 0x0200 ? 'I':'.',
-				r->sr & 0x0100 ? 'I':'.',
-				r->sr & 0x0080 ? '?':'.',
-				r->sr & 0x0040 ? '?':'.',
-				r->sr & 0x0020 ? '?':'.',
-				r->sr & 0x0010 ? 'X':'.',
-				r->sr & 0x0008 ? 'N':'.',
-				r->sr & 0x0004 ? 'Z':'.',
-				r->sr & 0x0002 ? 'V':'.',
-				r->sr & 0x0001 ? 'C':'.');
-            break;
 		case CPU_INFO_REG+M68K_PC:	sprintf(buffer[which], "PC :%06X", r->pc); break;
 		case CPU_INFO_REG+M68K_ISP: sprintf(buffer[which], "ISP:%08X", r->isp); break;
 		case CPU_INFO_REG+M68K_SR:  sprintf(buffer[which], "SR :%08X", r->sr); break;
@@ -277,13 +231,47 @@ const char *m68000_info(void *context, int regnum)
 		case CPU_INFO_REG+M68K_A5:	sprintf(buffer[which], "A5 :%08X", r->a[5]); break;
 		case CPU_INFO_REG+M68K_A6:	sprintf(buffer[which], "A6 :%08X", r->a[6]); break;
 		case CPU_INFO_REG+M68K_A7:	sprintf(buffer[which], "A7 :%08X", r->a[7]); break;
+        case CPU_INFO_FLAGS:
+			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+				r->sr & 0x8000 ? 'T':'.',
+				r->sr & 0x4000 ? '?':'.',
+				r->sr & 0x2000 ? 'S':'.',
+				r->sr & 0x1000 ? '?':'.',
+				r->sr & 0x0800 ? '?':'.',
+				r->sr & 0x0400 ? 'I':'.',
+				r->sr & 0x0200 ? 'I':'.',
+				r->sr & 0x0100 ? 'I':'.',
+				r->sr & 0x0080 ? '?':'.',
+				r->sr & 0x0040 ? '?':'.',
+				r->sr & 0x0020 ? '?':'.',
+				r->sr & 0x0010 ? 'X':'.',
+				r->sr & 0x0008 ? 'N':'.',
+				r->sr & 0x0004 ? 'Z':'.',
+				r->sr & 0x0002 ? 'V':'.',
+				r->sr & 0x0001 ? 'C':'.');
+            break;
+		case CPU_INFO_NAME: return "68000";
+		case CPU_INFO_FAMILY: return "Motorola 68K";
+		case CPU_INFO_VERSION: return "2.0a";
+		case CPU_INFO_FILE: return __FILE__;
+		case CPU_INFO_CREDITS: return "Copyright 1999 Karl Stenerud.  All rights reserved.";
+		case CPU_INFO_REG_LAYOUT: return (const char*)m68k_reg_layout;
+        case CPU_INFO_WIN_LAYOUT: return (const char*)m68k_win_layout;
     }
 	return buffer[which];
+}
+
+unsigned m68000_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+    (void)base;
+	change_pc24(pc);
+	return m68k_disassemble(buffer, pc);
 }
 
 /****************************************************************************
  * M68010 section
  ****************************************************************************/
+#if HAS_M68010
 void m68010_reset(void *param) { m68000_reset(param); }
 void m68010_exit(void) { m68000_exit(); }
 int  m68010_execute(int cycles) { return m68000_execute(cycles); }
@@ -307,9 +295,17 @@ const char *m68010_info(void *context, int regnum)
 	return m68000_info(context,regnum);
 }
 
+unsigned m68010_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+    (void)base;
+	change_pc24(pc);
+	return m68k_disassemble(buffer, pc);
+}
+#endif
 /****************************************************************************
  * M68020 section
  ****************************************************************************/
+#if HAS_M68020
 void m68020_reset(void *param) { m68000_reset(param); }
 void m68020_exit(void) { m68000_exit(); }
 int  m68020_execute(int cycles) { return m68000_execute(cycles); }
@@ -333,5 +329,12 @@ const char *m68020_info(void *context, int regnum)
 	return m68000_info(context,regnum);
 }
 
+unsigned m68020_dasm(UINT8 *base, char *buffer, unsigned pc)
+{
+    (void)base;
+	change_pc24(pc);
+	return m68k_disassemble(buffer, pc);
+}
+#endif
 
 
